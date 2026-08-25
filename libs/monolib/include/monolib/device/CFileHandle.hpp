@@ -27,7 +27,7 @@ struct CFileHandle {
 
     void call(CBM cbm);
     bool checkExistRsrc(CBM cbm);
-    UNKTYPE* getRsrc();
+    void* getRsrc() const;
 
     inline void* getData(){
         void* r31 = mData;

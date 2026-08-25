@@ -46,19 +46,20 @@ void func_802A71D4(CVS_THREAD_HAGE* self, CCharVoice* voicePtr) {
 // inactive, plays a random voice ID (mtRand(2) + 0xC27).
 void func_802A70C8(CVS_THREAD_HAGE* self) {
     if (func_802A3E88(self) == 0) {
-        // Use pointer increment to force lwzu pattern (load with update)
+        // v0 declared before p so the lwzu result claims the lower scratch
+        // register (retail: r4) and the base pointer takes r5.
+        u32 v0;
         const u32* p = lbl_eu_80539BC0;
-        u32 v0 = *p++;
+        v0 = *p++;
         CVoiceHandle* handle = self->field_0x24;
         self->unk4 = *p++;
         self->unk0 = (u32*)v0;
         self->unk8 = *p;
 
         if (handle != NULL) {
-            // Call vtable method at offset 0x2BC (is-active check)
-            typedef int (*CheckFunc)(CVoiceHandle*);
-            CheckFunc checkFunc = (CheckFunc)handle->vtable[0x2BC / 4];
-            if (checkFunc(handle) == 0) {
+            // Voice idle check via phantom-vtable slot 173 (byte offset 0x2BC);
+            // emitted as a true r12-chained virtual dispatch.
+            if (((CVoiceHandleVt*)handle)->isVoiceActive() == 0) {
                 // Voice is not active -- try to play a random voice
                 // Use conditional bias pattern to match retail (no else branch)
                 CVoiceHandle* tmpHandle = self->field_0x24;
@@ -83,32 +84,45 @@ void func_802A70C8(CVS_THREAD_HAGE* self) {
 // (0xF0 bytes, discarded) and the object itself (0x28 bytes), calls the
 // base constructor, sets vtable/owner fields, and copies init data from
 // lbl_eu_80539BA8.
-CVS_THREAD_HAGE* __ct__802A6E84(CVS_THREAD_HAGE* owner1, CVS_THREAD_HAGE* owner2) {
+CVS_THREAD_HAGE* __ct__802A6E84(CVoiceHandle* owner1, CVoiceHandle* owner2) {
     // Both owners must have their 0x3F00 field's bit 1 set
-    if (!(((u32*)owner1)[0x3F00 / 4] & 2)) return NULL;
-    if (!(((u32*)owner2)[0x3F00 / 4] & 2)) return NULL;
+    if (!(owner1->field_0x3F00 & 2)) return NULL;
+    if (!(owner2->field_0x3F00 & 2)) return NULL;
 
     // Allocate handle buffer (0xF0 bytes, discarded)
-    CVS_THREAD_HAGE* handleBuf = func_802A330C(0xF0, 1);
-    if (handleBuf == NULL) return NULL;
+    if (func_802A330C(0xF0, 1) == NULL) return NULL;
 
     // Allocate the actual CVS_THREAD_HAGE object
     CVS_THREAD_HAGE* self = (CVS_THREAD_HAGE*)func_802A34E4(0x28);
     if (self == NULL) return NULL;
 
-    // Base constructor (takes just this, no second param)
-    __ct__cf_CVS_THREAD(self);
+    // Retail emits a redundant null re-check here (the `beq` at .L_802A9640)
+    // guarding the constructor try-block; mirror it so the guard survives.
+    // The catch rethrows via the runtime __throw(0,0,0) (retail `li r3,0;
+    // li r4,0; li r5,0; bl __throw`), avoiding the __end__catch epilogue.
+    if (self != NULL) {
+        try {
+            // Base constructor (self already in r3), then vtable/owner fields.
+            __ct__cf_CVS_THREAD();
+            ((CVS_THREAD_HAGE_raw*)self)->vtable =
+                (const CVS_THREAD_HAGE_VTable*)lbl_eu_80539BCC;
+            self->field_0x20 = owner1;
+            self->field_0x24 = owner2;
+        } catch (...) {
+            __throw(0, 0, 0);
+        }
+    }
 
-    // Set vtable at offset 0x1C (right after the CVS_THREAD base fields)
-    ((u32*)self)[7] = (u32)lbl_eu_80539BCC;
-    self->field_0x20 = (CVoiceHandle*)owner1;
-    self->field_0x24 = (CVoiceHandle*)owner2;
-
-    // Copy init data from global table using a single base pointer
-    const u32* base = lbl_eu_80539BA8;
-    self->unk0 = (u32*)base[0];
-    self->unk4 = base[1];
-    self->unk8 = base[2];
+    // Copy the init-state triple into the first 3 u32s (outside try). The
+    // integer cast keeps the label materialized once via lis+addi.
+    register u32 v0;
+    u32 v1;
+    const u32* base = (const u32*)(u32)lbl_eu_80539BA8;
+    v1 = base[1];
+    v0 = base[0];
+    ((CVS_THREAD_HAGE_raw*)self)->state1 = v1;
+    ((CVS_THREAD_HAGE_raw*)self)->state0 = (u32*)v0;
+    ((CVS_THREAD_HAGE_raw*)self)->state2 = base[2];
 
     return self;
 }

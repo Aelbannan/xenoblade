@@ -4,7 +4,7 @@
 #include "kyoshin/help/CHelp.hpp"
 
 namespace cf {
-class CHelp_Pg : public CHelp {
+class __declspec(novtable) CHelp_Pg : public CHelp {
 public:
     bool func_802B85A4();
 

@@ -142,6 +142,18 @@ extern "C" void func_8046E780__Q23LOD9LODMemManFv(LOD::LODMemMan* self, CTaskLOD
 extern "C" void func_8046E7D0__Q23LOD9LODMemManFv(LOD::LODMemMan* self, CTaskLOD* task);
 extern "C" void func_8046E820__Q23LOD9LODMemManFv(LOD::LODMemMan* self, CTaskLOD* task, int flag);
 extern "C" void func_8046E594__Q23LOD9LODMemManFv(LOD::LODMemMan* self, int param);
+extern "C" void func_8046E5BC__Q23LOD9LODMemManFv(LOD::LODMemMan* self, CTaskLOD* task);
+extern "C" void* func_8046E8C8__Q23LOD9LODMemManFv(LOD::LODMemMan* self, CTaskLOD* task);
+extern "C" void func_8046F024__Q23LOD9LODMemManFv(LOD::LODMemMan* self, int a, int b);
+extern "C" void func_8046F088__Q23LOD9LODMemManFv(LOD::LODMemMan* self, CTaskLOD* task);
+extern "C" void func_8046E920__Q23LOD9LODMemManFv(LOD::LODMemMan* self, CTaskLOD* task);
+extern "C" void func_8046EB50__Q23LOD9LODMemManFv(LOD::LODMemMan* self, CTaskLOD* task);
+extern "C" void func_8046EBEC__Q23LOD9LODMemManFv(LOD::LODMemMan* self, CTaskLOD* task);
+extern "C" float func_8046EC88__Q23LOD9LODMemManFv(LOD::LODMemMan* self, CTaskLOD* task);
+extern "C" void* func_8046EE9C__Q23LOD9LODMemManFv(LOD::LODMemMan* self, CTaskLOD* task);
+extern "C" void func_8046EEE8__Q23LOD9LODMemManFv(LOD::LODMemMan* self, CTaskLOD* task);
+extern "C" float func_8046EF30__Q23LOD9LODMemManFv(LOD::LODMemMan* self, CTaskLOD* task);
+extern "C" void* func_8046EF7C__Q23LOD9LODMemManFv(LOD::LODMemMan* self, CTaskLOD* task);
 extern "C" void func_804717FC__Q23LOD9LODMemManFv();
 extern "C" void __dt__8046D144(void* self, int flag);
 extern "C" void __ct__Q23LOD9LODMemManFv(void* self);
@@ -193,19 +205,21 @@ void CTaskLOD::func_80462BFC() {
 
 void CTaskLOD::func_80462B30() {
     if (lbl_eu_80665730[0]) {
-        lbl_eu_80665730[0]->mpActiveLOD->func_8046E594(1);
+        // Retail symbol is .Fv though r4 carries the arg; route through the
+        // extern "C" retail-named wrapper so the reloc name matches.
+        func_8046E594__Q23LOD9LODMemManFv(lbl_eu_80665730[0]->mpActiveLOD, 1);
     }
 }
 
 void CTaskLOD::func_80462B4C() {
     if (lbl_eu_80665730[0]) {
-        lbl_eu_80665730[0]->mpActiveLOD->func_8046E594(0);
+        func_8046E594__Q23LOD9LODMemManFv(lbl_eu_80665730[0]->mpActiveLOD, 0);
     }
 }
 
 void CTaskLOD::func_80462BC8() {
     if (lbl_eu_80665730[0]) {
-        lbl_eu_80665730[0]->mpActiveLOD->func_8046E5BC(this);
+        func_8046E5BC__Q23LOD9LODMemManFv(lbl_eu_80665730[0]->mpActiveLOD, this);
     }
 }
 
@@ -374,16 +388,16 @@ void CTaskLOD::func_80462C48() {
 void CTaskLOD::func_80462C80() {
     if (lbl_eu_80665730[0]) {
         if (this) {
-            lbl_eu_80665730[0]->mpActiveLOD->func_8046F024(1, (int)this - 1);
+            func_8046F024__Q23LOD9LODMemManFv(lbl_eu_80665730[0]->mpActiveLOD, 1, (int)this - 1);
         } else {
-            lbl_eu_80665730[0]->mpActiveLOD->func_8046F024(0, 0);
+            func_8046F024__Q23LOD9LODMemManFv(lbl_eu_80665730[0]->mpActiveLOD, 0, 0);
         }
     }
 }
 
 void CTaskLOD::func_80462CBC() {
     if (lbl_eu_80665730[0]) {
-        lbl_eu_80665730[0]->mpActiveLOD->func_8046F088(this);
+        func_8046F088__Q23LOD9LODMemManFv(lbl_eu_80665730[0]->mpActiveLOD, this);
     }
 }
 
@@ -430,14 +444,14 @@ extern "C" void func_80462DB4__8CTaskLODFv(CTaskLOD* self, int flag) {
 // pointer/float returns come straight back from the delegate.
 void* CTaskLOD::func_80462E1C() {
     if (lbl_eu_80665730[0]) {
-        return lbl_eu_80665730[0]->mpActiveLOD->func_8046E8C8(this);
+        return func_8046E8C8__Q23LOD9LODMemManFv(lbl_eu_80665730[0]->mpActiveLOD, this);
     }
     return 0;
 }
 
 void CTaskLOD::func_80462E3C() {
     if (lbl_eu_80665730[0]) {
-        lbl_eu_80665730[0]->mpActiveLOD->func_8046E920(this);
+        func_8046E920__Q23LOD9LODMemManFv(lbl_eu_80665730[0]->mpActiveLOD, this);
     }
 }
 
@@ -461,19 +475,19 @@ void func_80462ED0__8CTaskLODFv(CTaskLOD* self, void* a, void* b) {
 
 void CTaskLOD::func_80462EF4() {
     if (lbl_eu_80665730[0]) {
-        lbl_eu_80665730[0]->mpActiveLOD->func_8046EB50(this);
+        func_8046EB50__Q23LOD9LODMemManFv(lbl_eu_80665730[0]->mpActiveLOD, this);
     }
 }
 
 void CTaskLOD::func_80462F10() {
     if (lbl_eu_80665730[0]) {
-        lbl_eu_80665730[0]->mpActiveLOD->func_8046EBEC(this);
+        func_8046EBEC__Q23LOD9LODMemManFv(lbl_eu_80665730[0]->mpActiveLOD, this);
     }
 }
 
 float CTaskLOD::func_80462F2C() {
     if (lbl_eu_80665730[0]) {
-        return lbl_eu_80665730[0]->mpActiveLOD->func_8046EC88(this);
+        return func_8046EC88__Q23LOD9LODMemManFv(lbl_eu_80665730[0]->mpActiveLOD, this);
     }
     return 0.0f;
 }
@@ -496,20 +510,20 @@ void func_80462F94__8CTaskLODFv(CTaskLOD* self, void* a, void* b) {
 }
 void* CTaskLOD::func_80462FB8() {
     if (lbl_eu_80665730[0]) {
-        return lbl_eu_80665730[0]->mpActiveLOD->func_8046EE9C(this);
+        return func_8046EE9C__Q23LOD9LODMemManFv(lbl_eu_80665730[0]->mpActiveLOD, this);
     }
     return 0;
 }
 
 void CTaskLOD::func_80462FD8() {
     if (lbl_eu_80665730[0]) {
-        lbl_eu_80665730[0]->mpActiveLOD->func_8046EEE8(this);
+        func_8046EEE8__Q23LOD9LODMemManFv(lbl_eu_80665730[0]->mpActiveLOD, this);
     }
 }
 
 float CTaskLOD::func_80462FF4() {
     if (lbl_eu_80665730[0]) {
-        return lbl_eu_80665730[0]->mpActiveLOD->func_8046EF30(this);
+        return func_8046EF30__Q23LOD9LODMemManFv(lbl_eu_80665730[0]->mpActiveLOD, this);
     }
     return 0.0f;
 }
@@ -518,7 +532,7 @@ float CTaskLOD::func_80462FF4() {
 // body returns `this` unchanged (beqlr with r3 still holding `this`).
 void* CTaskLOD::func_80463014() {
     if (lbl_eu_80665730[0]) {
-        return lbl_eu_80665730[0]->mpActiveLOD->func_8046EF7C(this);
+        return func_8046EF7C__Q23LOD9LODMemManFv(lbl_eu_80665730[0]->mpActiveLOD, this);
     }
     return this;
 }

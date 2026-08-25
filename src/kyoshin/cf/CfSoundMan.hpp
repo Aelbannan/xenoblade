@@ -131,6 +131,13 @@ namespace cf {
         /* 0x08 */ u32 field_0x08;
     };
 
+    // 3-float staging block used by func_801C03C8: the struct member layout
+    // pins the frame slots (x lowest) while the assignment statement order
+    // controls the retail lfs load sequence.
+    struct CfSoundPos3f {
+        f32 x, y, z;
+    };
+
     // func_800B708C(id) result view ("voice source"): the sound-slot starters
     // call the vtable+0xAC slot (getPosition) and the vtable+0x12C slot
     // (vf73, position query) to fetch the actor's position blocks. 74
@@ -334,12 +341,18 @@ struct CfSndPoseBlock {
     u8 data[0x20];
 };
 
-// Minimal view of the func_800821F8 result (only field_0xC is read).
+// Minimal data view of the func_800821F8 result (only field_0xC is read);
+// call sites cast from the canonical UnkClass_800821F8* returned by the
+// owner decl on CfGameManagerApi.hpp.
 struct UnkClass_800821F8Snd {
     u8 field_0x00[0xC];
     CfSndCamObj* field_0xC;
 };
-extern "C" UnkClass_800821F8Snd* func_800821F8__Q22cf13CfGameManagerFv();
+
+// func_800821F8__Q22cf13CfGameManagerFv: single winning decl lives on
+// CfGameManagerApi.hpp (canonical UnkClass_800821F8* view); this TU's call
+// sites cast to the minimal UnkClass_800821F8Snd data view above.
+#include "kyoshin/cf/CfGameManagerApi.hpp"
 
 // Sound-start gate helpers used by cf::CfSoundMan::func_801BFC38 (defined in
 // other TUs).

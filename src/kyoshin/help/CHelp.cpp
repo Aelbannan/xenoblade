@@ -2,18 +2,15 @@
 
 cf::CHelp::CHelp(void* owner, u32 param) {
     this->mOwner = owner;
-    this->mVtbl = &lbl_eu_8053B3A0;
+    this->vtbl() = &lbl_eu_8053B3A0;
     this->mParam = param;
 }
 
 namespace cf {
 
 void CHelp::CHelp_UnkVirtualFunc2() {
-    // Retail calls the interface-table slots as virtuals (vptr-shaped table at
-    // +8); the polymorphic view makes MWCC emit the r12 virtual-call sequence.
-    CHelpVtblView* view = reinterpret_cast<CHelpVtblView*>(this);
-    UNKWORD a = view->f18(); // slot 6 first, result kept across the next call
-    UNKWORD b = view->f14();
+    UNKWORD a = this->CHelp_UnkVirtualFunc5();
+    UNKWORD b = this->CHelp_UnkVirtualFunc4();
     func_80134D18(static_cast<u8>(mParam), b, a);
     func_8009D018((u32)mOwner, 1);
 }

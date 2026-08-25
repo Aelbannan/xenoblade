@@ -5,7 +5,7 @@
 
 namespace cf {
 
-class CHelp_LandMark : public CHelp {
+class __declspec(novtable) CHelp_LandMark : public CHelp {
 public:
     CHelp_LandMark();
     ~CHelp_LandMark();

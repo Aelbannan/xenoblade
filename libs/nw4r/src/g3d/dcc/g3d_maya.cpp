@@ -306,6 +306,10 @@ void ProductTexSrtMtx_SRT(math::MTX34* pMtx, const TexSrt& rSrt) {
 
 } // namespace
 
+// This emitter is load-bearing: the TexSrt matrix builders are referenced only
+// through the retail dispatch tables (lbl_eu_8051D6C0/lbl_eu_8051D6DC in
+// nw4r_data.s), which are invisible to the compiler, so without it -ipa file
+// dead-strips all 14 retail-present functions (attempts 61552/61553).
 DECOMP_FORCEACTIVE(g3d_maya_cpp,
                    MakeTexSrtMtx_S, MakeTexSrtMtx_R, MakeTexSrtMtx_T,
                    MakeTexSrtMtx_SR, MakeTexSrtMtx_RT, MakeTexSrtMtx_ST,

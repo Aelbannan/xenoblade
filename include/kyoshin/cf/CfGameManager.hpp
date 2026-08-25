@@ -732,7 +732,7 @@ extern u32 lbl_eu_80663D90;
 extern u32 lbl_eu_80663E6C;
 extern "C" void* func_80190840(void* object, u32* e04);
 extern "C" void func_801889D0(u32 object);
-extern "C" void func_800D9354(CBattleManagerView* self);
+// func_800D9354: single shared decl on kyoshin/cf/CBattleManagerApi.hpp.
 extern "C" void func_80295A88(cf::CHelpManager* object);
 extern "C" void func_802A1610();
 extern "C" void func_8006A75C();

@@ -12,6 +12,7 @@
 
 #include <revolution/GX.h>
 #include "monolib/math/CMat34.hpp"
+#include "monolib/scn/CScnTimeApi.hpp"  // func_80496288 scene delta-time
 #include "kyoshin/cf/CfGameManagerData.hpp"  // H3 label-owner decl (lbl_eu_80663E14; lbl_eu_80663E24)
 
 using cf::CfGimmickEne;
@@ -119,7 +120,7 @@ cf::CfGimmickEne::~CfGimmickEne() {
     this->vtable = (void*)lbl_eu_80537A78;
     func_80208EE4(this);
     if (this->field_BC != 0) {
-        nw4r::g3d::ScnGroup* group = func_8048EC14(lbl_eu_80663E14, 8);
+        nw4r::g3d::ScnGroup* group = (nw4r::g3d::ScnGroup*)func_8048EC14(lbl_eu_80663E14, 8);
         if (group->Size() != 0) {
             group->Remove(this->field_BC);
             this->field_BC->Destroy();
@@ -478,7 +479,7 @@ void func_8026F254(CfGimmickEne* self) {
     // Detach and destroy the ScnProc marker node if one is bound (same
     // teardown as the destructor).
     if (self->field_BC != 0) {
-        nw4r::g3d::ScnGroup* group = func_8048EC14(lbl_eu_80663E14, 8);
+        nw4r::g3d::ScnGroup* group = (nw4r::g3d::ScnGroup*)func_8048EC14(lbl_eu_80663E14, 8);
         if (group->Size() != 0) {
             group->Remove(self->field_BC);
             self->field_BC->Destroy();

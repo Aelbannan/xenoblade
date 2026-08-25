@@ -7,7 +7,7 @@ extern cf::CfObjectPc* func_800BFC68(cf::CfObjectMove* objMove);
 
 namespace cf {
 
-bool CHelp_ArtsAttack::func_802B7D00() {
+u32 CHelp_ArtsAttack::func_802B7D00() {
     CfObjectPc* objPc = func_800BFC68(CfGameManager::getPlayer(0));
 
     if (objPc != nullptr) {
@@ -18,7 +18,7 @@ bool CHelp_ArtsAttack::func_802B7D00() {
         u32 funcResult = func_80174C98(objPc, &localVal, 0xA);
         u32 boolVal = funcResult == 0;
 
-        return this->f1C(boolVal);
+        return this->func_802B7CBC(boolVal);
     }
 
     return false;

@@ -154,6 +154,37 @@ extern "C" char    lbl_eu_80665A66 = 0;
 // gate compares size+align only, so an anonymous tail byte closes it.
 extern "C" char    lbl_eu_80665A67 = 0;
 
+// ---------------------------------------------------------------------------
+// Virtual-dispatch interfaces. Both object families carry their vtable
+// pointer inside the retail layout (SLList at 0x00 as mSelfVtbl; CSchedule
+// at 0xEC as mTablePtr), so the retail entry points are reached with
+// genuine C++ virtual calls. These abstract interface types mirror the
+// retail slots (two reserved entries precede the destructor slot in both
+// tables); nothing here is constructed or deleted, so MWCC emits no
+// compiler-generated vtables or typeinfo for them.
+// ---------------------------------------------------------------------------
+struct SLDispatch {
+    virtual void destroy(int flag) = 0;                     // +0x08
+    virtual void step(f32 dt) = 0;                          // +0x0c
+    virtual void updateAll() = 0;                           // +0x10
+    virtual void find(void* x) = 0;                         // +0x14
+    virtual CSchedule* add(ScheduleEntry* entries, void* p8,
+                           void* pc, u32 fa, u32 fb, void* p10) = 0; // +0x18
+    virtual void removeItem(CSchedule* item) = 0;           // +0x1c
+    virtual void clearTimes(u32 x) = 0;                     // +0x20
+    virtual void slSlot24(u8* x) = 0;                       // +0x24
+    virtual u32 count() = 0;                                // +0x28
+};
+
+struct CSchedDispatchBase { u8 opaque[0xec]; };
+struct CSchedDispatch : CSchedDispatchBase {
+    virtual void destroy(int flag) = 0;                     // +0x08
+};
+
+static void scheduleDestroy(CSchedule* item) {
+    ((CSchedDispatch*)item)->destroy(1);
+}
+
 // Global schedule-list mode flag (bit 12 selects the alternate list) packed
 // with the mem-manager allocation handle at +2 / +4. Defined in another TU;
 // incomplete-array extern keeps MWCC from choosing sda21 (retail uses lis+@l
@@ -199,7 +230,9 @@ static void scheduleListCtor(SLList* list) {
 void func_804E45F4(SLList* self, f32 dt) {
     SLNode* node;
     u32 count = 0;
+    CSchedule* item;
     SLNode* sentinel;
+    u16 flags;
     SLNode* rnode;
     int removed;
 
@@ -220,12 +253,11 @@ void func_804E45F4(SLList* self, f32 dt) {
             sentinel = self->mRes.mStartNodePtr;
             rnode = sentinel->mNext;
             while (rnode != sentinel && rnode != 0) {
-                CSchedule* item = (CSchedule*)rnode->mItem;
-                u16 flags = *(u16*)&item->field_0x00;
-                if ((flags & 0x400) && !(flags & 0x8000)) {
+                item = (CSchedule*)rnode->mItem;
+                if ((*(u16*)&item->field_0x00 << 22) < 0 && (*(u16*)&item->field_0x00 << 17) >= 0) {
                     if (item != 0) {
                         if (item != 0) {
-                            __dt__9CScheduleFv(item, 1);
+                            scheduleDestroy(item);
                         }
                         rnode->mItem = 0;
                     }
@@ -350,7 +382,7 @@ void func_804E498C(SLList* self, CSchedule* x) {
     if (node == sentinel) return;
     if (x != 0) {
         if (x != 0) {
-            __dt__9CScheduleFv(x, 1);
+            scheduleDestroy(x);
         }
     }
     {
@@ -377,7 +409,7 @@ void func_804E4A20(SLList* self, u32 x) {
         if (item->field_0x14 == x) {
             if (item != 0) {
                 if (item != 0) {
-                    __dt__9CScheduleFv(item, 1);
+                    scheduleDestroy(item);
                 }
                 cur->mItem = 0;
             }
@@ -527,14 +559,14 @@ void func_804E4D58(u32 x) {
     if (x != 0) {
         if (lbl_eu_80665A54 != 0) {
             if (lbl_eu_80665A54 != 0) {
-                __dt__12ScheduleListFv(lbl_eu_80665A54, 1);
+                ((SLDispatch*)lbl_eu_80665A54)->destroy(1);
             }
             lbl_eu_80665A54 = 0;
         }
     }
     if (lbl_eu_80665A50 != 0) {
         if (lbl_eu_80665A50 != 0) {
-            __dt__12ScheduleListFv(lbl_eu_80665A50, 1);
+            ((SLDispatch*)lbl_eu_80665A50)->destroy(1);
         }
         lbl_eu_80665A50 = 0;
     }
@@ -544,11 +576,11 @@ void func_804E4D58(u32 x) {
 void func_804E4E38() {
     SLList* a = lbl_eu_80665A50;
     if (a != 0) {
-        func_804E4718(a);
+        ((SLDispatch*)a)->updateAll();
     }
     SLList* b = lbl_eu_80665A54;
     if (b != 0) {
-        func_804E4718(b);
+        ((SLDispatch*)b)->updateAll();
     }
 }
 
@@ -556,11 +588,11 @@ void func_804E4E38() {
 void func_804E4DD4(f32 x) {
     SLList* a = lbl_eu_80665A50;
     if (a != 0) {
-        func_804E45F4(a, x);
+        ((SLDispatch*)a)->step(x);
     }
     SLList* b = lbl_eu_80665A54;
     if (b != 0) {
-        func_804E45F4(b, x);
+        ((SLDispatch*)b)->step(x);
     }
 }
 
@@ -568,11 +600,11 @@ void func_804E4DD4(f32 x) {
 void func_804E4E8C(u32 x) {
     SLList* a = lbl_eu_80665A50;
     if (a != 0) {
-        func_804E479C(a, (u8*)x);
+        ((SLDispatch*)a)->find((void*)x);
     }
     SLList* b = lbl_eu_80665A54;
     if (b != 0) {
-        func_804E479C(b, (u8*)x);
+        ((SLDispatch*)b)->find((void*)x);
     }
 }
 
@@ -584,7 +616,8 @@ void func_804E4EF8(u32 p0, u32 p1, u32 p2, u32 p3, u32 p4, u32 p5) {
         use54 = 1;
     }
     list = use54 ? lbl_eu_80665A54 : lbl_eu_80665A50;
-    func_804E4830(list, (ScheduleEntry*)p0, (u8*)p1, (u8*)p2, p3, p4, (u8*)p5);
+    ((SLDispatch*)list)->add((ScheduleEntry*)p0, (void*)p1,
+                             (void*)p2, p3, p4, (void*)p5);
 }
 
 // ---------------------------------------------------------------------------
@@ -631,11 +664,11 @@ void __ct__804E4F9C() {
 void func_804E536C(u32 x) {
     SLList* a = lbl_eu_80665A50;
     if (a != 0) {
-        func_804E4A20(a, x);
+        ((SLDispatch*)a)->removeItem((CSchedule*)x);
     }
     SLList* b = lbl_eu_80665A54;
     if (b != 0) {
-        func_804E4A20(b, x);
+        ((SLDispatch*)b)->removeItem((CSchedule*)x);
     }
 }
 
@@ -644,11 +677,11 @@ u32 func_804E53D8() {
     u32 total = 0;
     SLList* a = lbl_eu_80665A50;
     if (a != 0) {
-        total = func_804E4B24(a);
+        total = ((SLDispatch*)a)->count();
     }
     SLList* b = lbl_eu_80665A54;
     if (b != 0) {
-        total += func_804E4B24(b);
+        total += ((SLDispatch*)b)->count();
     }
     return total;
 }

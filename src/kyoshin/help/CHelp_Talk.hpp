@@ -102,15 +102,8 @@ struct CPlayerTalkRec {
     CParamSub4C field_3E9C;
 };
 
-// CHelp interface-table view extended to flat offset 0x20 (the switch-check
-// slot dispatched by func_802B86F0).
-struct CHelpTalkVtblView : public CHelpVtblView {
-    virtual bool vf20(bool flag); // vtable 0x20
-};
-
-// CHelp_Talk inherits from CHelpSwitch (which adds mFlag at +0xC).
-// Additional fields at +0x10..+0x16.
-class CHelp_Talk : public CHelpSwitch {
+// CHelp_Talk inherits CHelpSwitch (mFlag at +0xC). Extra fields at +0x10..+0x16.
+class __declspec(novtable) CHelp_Talk : public CHelpSwitch {
 public:
     void func_802B86BC();
     bool func_802B86F0();

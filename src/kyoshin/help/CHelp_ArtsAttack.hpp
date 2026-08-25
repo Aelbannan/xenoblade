@@ -5,10 +5,9 @@
 
 namespace cf {
 
-// size: 0xC (no extra members beyond CHelp).
-class CHelp_ArtsAttack : public CHelp {
+class __declspec(novtable) CHelp_ArtsAttack : public CHelpSwitch {
 public:
-    bool func_802B7D00();
+    u32 func_802B7D00();
 };
 
 } // namespace cf

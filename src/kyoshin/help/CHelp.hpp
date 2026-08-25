@@ -4,60 +4,49 @@
 
 namespace cf {
 
-// Manual interface table at CHelp+0x8 (not a C++ vptr at +0).
+// Retail __vt__Q22cf5CHelp (US/EU symbols.txt: lbl_eu_8053B3A0, size 0x20).
+// The object lives in retail .data, not in CHelp.cpp (that TU has no .data).
 struct CHelpVtbl {
     void* mSlots[8]; // +0x00..+0x1C
 };
 
-// Non-polymorphic prefix matching CHelp's first 8 bytes (owner@0, param@4).
-struct CHelpVtblPrefix {
+// owner@0, param@4. CHelp's C++ vptr follows at +8.
+struct CHelpPrefix {
     void* mOwner; // 0x0
     u32 mParam; // 0x4
 };
 
-// CHelp viewed as a polymorphic class: prefix data at +0, vptr at +8 (the
-// vptr offset MWCC assigns to the class that first declares virtuals after a
-// non-polymorphic base). Retail stores a manual interface table at +8, not a
-// C++ vptr, so calling through this view emits the r12 virtual-call sequence
-// (`lwz r12, 8(r3)`) instead of the r4 scratch-load of a raw slot cast. The
-// class is never instantiated, so no out-of-line definitions and no vtable are
-// emitted (same pattern as CHelp_EnemyEnableSub).
-//
-// MWCC vtables carry two leading entries (offset-to-top@0x00, RTTI@0x04), so
-// the 6 real virtuals land at vtable offsets 0x08..0x1C; UnkVirtualFunc2
-// calls the ones at 0x14/0x18 (flat-table slots 5/6).
-class CHelpVtblView : public CHelpVtblPrefix {
+// novtable: do not emit __vt__ from this TU. The ctor writes the symbols.txt
+// label (lbl_eu_8053B3A0) at +8, same pattern as CToken / CHelpManager.
+class __declspec(novtable) CHelp : public CHelpPrefix {
 public:
-    virtual void f08(); // vtable 0x08
-    virtual void f0C(); // vtable 0x0C
-    virtual void f10(); // vtable 0x10
-    virtual UNKWORD f14(); // vtable 0x14 (flat slot 5) - called by UnkVirtualFunc2
-    virtual UNKWORD f18(); // vtable 0x18 (flat slot 6) - called by UnkVirtualFunc2
-    virtual void f1C(); // vtable 0x1C
-};
+    virtual void CHelp_UnkVirtualFunc1(); // vtable 0x08
+    virtual void CHelp_UnkVirtualFunc2(); // vtable 0x0C
+    virtual UNKWORD f10(); // vtable 0x10 (null in the base table)
+    virtual UNKWORD CHelp_UnkVirtualFunc4(); // vtable 0x14
+    virtual UNKWORD CHelp_UnkVirtualFunc5(); // vtable 0x18
+    // No +0x1C on CHelp: that slot belongs to CHelpSwitch. Direct leaves
+    // (Target, Sp, ArtsSet) stop at +0x18.
 
-// Retail ctor writes: owner@0, param@4, vtbl@8. Base size is 0xC.
-// Construction uses retail symbol __ct__Q22cf5CHelpFv(self, owner, param).
-class CHelp {
-public:
-    void CHelp_UnkVirtualFunc2();
+    CHelp(void* owner, u32 param);
     void func_802B7C68();
 
-    void* mOwner; // 0x0
-    u32 mParam; // 0x4 (low byte used by UnkVirtualFunc2)
-    CHelpVtbl* mVtbl; // 0x8
-    CHelp(void* owner, u32 param);
+    // Overlay on the vptr at +8 so CHelpManager can swap retail tables.
+    CHelpVtbl*& vtbl() {
+        return *reinterpret_cast<CHelpVtbl**>(reinterpret_cast<u8*>(this) + 8);
+    }
 };
 
-// Flag helper sharing the CHelp prefix; flag byte at +0xC.
-// CBC/CE4 take the new flag value in r4 (retail annotations say Fv).
-class CHelpSwitch : public CHelp {
+class __declspec(novtable) CHelpSwitch : public CHelp {
 public:
+    // Non-virtual: a new virtual here would append, not override Unk1.
+    // Retail leaf tables still store this at +0x08; we do not emit them.
     void func_802B7CB0();
 
+    virtual u32 func_802B7CBC(u32 flag); // vtable 0x1C (Fv linker name)
+    virtual u32 func_802B7CE4(u8 flag); // vtable 0x20 (Fv linker name)
+
     u8 mFlag; // 0xC
-    u32 func_802B7CBC(u32 flag);
-    u32 func_802B7CE4(u8 flag);
 };
 
 } // namespace cf
@@ -70,7 +59,5 @@ extern "C" void func_80134D18(u32 param0, UNKWORD param1, UNKWORD param2);
 extern "C" void func_8009D018(u32, u32);
 extern "C" void* func_8013DB6C(int, u32, s32, s32);
 extern "C" void func_8029A658();
-// CHelp interface table (vptr-shaped table at +8, referenced by the ctor).
-// Global-scope variable: MWCC does not mangle the name, so plain extern is
-// enough to emit the retail lbl_eu_8053B3A0 symbol.
+// US symbols.txt name for __vt__Q22cf5CHelp. Plain extern (not mangled).
 extern cf::CHelpVtbl lbl_eu_8053B3A0;

@@ -207,7 +207,6 @@ public:
     u8 getCrystalStateA();
     u8 getCrystalStateB();
     u8 getCrystalStateC();
-    void setCrystalPosEntry(unsigned short index, short a, short b);
     void setCrystalCursor(u32 val);
     void destroyCrystalDispThunk4();
     void releaseCrystalDispThunk();

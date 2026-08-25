@@ -9,7 +9,7 @@
 extern "C" void func_8018C180();
 
 namespace cf {
-class CHelp_ShopBuy : public CHelp {
+class __declspec(novtable) CHelp_ShopBuy : public CHelp {
 public:
     void func_802B864C();
 };

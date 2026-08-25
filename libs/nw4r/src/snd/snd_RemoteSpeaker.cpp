@@ -184,12 +184,7 @@ void RemoteSpeaker::UpdateStreamData(const s16* pRmtSamples) {
                                SAMPLES_PER_ENCODED_PACKET) != WPAD_ERR_OK) {
             mState = STATE_INVALID;
             mInternalCommand = COMMAND_SPEAKER_ON;
-            mPlayFlag = false;
-            mEnableFlag = false;
-            OSCancelAlarm(&mContinueAlarm);
-            mContinueFlag = false;
-            OSCancelAlarm(&mIntervalAlarm);
-            mIntervalFlag = false;
+            ClearParam();
             mContinueFlag = false;
             mPlayFlag = false;
             mEnableFlag = true;

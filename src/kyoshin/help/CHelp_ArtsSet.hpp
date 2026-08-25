@@ -5,7 +5,7 @@
 
 namespace cf {
 // size: 0x10
-class CHelp_ArtsSet : public CHelp {
+class __declspec(novtable) CHelp_ArtsSet : public CHelp {
 public:
     bool func_802B7D9C();
 

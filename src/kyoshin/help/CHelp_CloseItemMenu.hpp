@@ -4,7 +4,7 @@
 #include "kyoshin/help/CHelp.hpp"
 
 namespace cf {
-class CHelp_CloseItemMenu : public CHelp {
+class __declspec(novtable) CHelp_CloseItemMenu : public CHelpSwitch {
 public:
     void func_802B7E34();
 };

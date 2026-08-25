@@ -2415,6 +2415,17 @@ void cf::CfResTask::Term() {
 // CProcess sub-process of `parent` (base ctor, interim CTTask vtable, null
 // PTMF slots, CfRes vtable, storage subobject, entry tables), publishes the
 // globals and registers the process.
+// Zero a run of entry-table slots; kept as a count-parameterized helper so
+// each inline expansion keeps the generic guarded counted-loop form.
+static void CfRes_zeroSlots(CfResSlot* slot, CfResSlot* end) {
+    while (slot < end) {
+        slot->field_00 = 0;
+        slot->field_04 = 0;
+        slot->field_08 = 0;
+        slot++;
+    }
+}
+
 __declspec(noinline) CfResManager* __ct__Q22cf5CfResFv(CProcess* parent, int archiveId) {
     u32 handle = getWorkMem__17CWorkThreadSystemFv();
     CfResManager* mgr = (CfResManager*)allocate__Q23mtl10MemManagerFUlUl(0x1fa4, handle);
@@ -2432,32 +2443,21 @@ __declspec(noinline) CfResManager* __ct__Q22cf5CfResFv(CProcess* parent, int arc
         *(PTMF12*)&mgr->mDrawFunc[0] = *(PTMF12*)(uintptr_t)__ptmf_null;
         mgr->vtable = (u32)lbl_eu_805267A4;
         *base54 = (u32)lbl_eu_80526830;
-        __ct__80066F9C(&mgr->storage[0]);
+        __ct__80066F9C((u8*)&base54[1]);
         // Entry tables live past the storage blob; deriving their addresses
         // from the +0x54 pointer keeps the retail r30-relative offsets.
         u32* tbl1 = base54 + 0x7B6;   // abs 0x1F2C
         tbl1[0] = 0;
+        CfResSlot* s1 = (CfResSlot*)(tbl1 + 3);
         tbl1[1] = 0;
         tbl1[2] = 0;
-        CfResSlot* slot = (CfResSlot*)(tbl1 + 3);
-        int i;
-        for (i = 0; i < 2; i++) {
-            slot[i].field_00 = 0;
-            slot[i].field_04 = 0;
-            slot[i].field_08 = 0;
-        }
-        u32* tbl2 = base54 + 0x7FB;   // abs 0x1F50
+        CfRes_zeroSlots(s1, s1 + 2);
+        u32* tbl2 = base54 + 0x7BF;   // abs 0x1F50
         tbl2[0] = 0;
+        CfResSlot* s2 = (CfResSlot*)(tbl2 + 3);
         tbl2[1] = 0;
         tbl2[2] = 0;
-        slot = (CfResSlot*)(tbl2 + 3);
-        CfResSlot* slotEnd = slot + 6;
-        while (slot < slotEnd) {
-            slot->field_00 = 0;
-            slot->field_04 = 0;
-            slot->field_08 = 0;
-            slot++;
-        }
+        CfRes_zeroSlots(s2, s2 + 6);
         lbl_eu_80663D7C = (u32)base54;
         func_80063120((u8*)&base54[1], archiveId);
     }

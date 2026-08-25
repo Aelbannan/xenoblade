@@ -7,27 +7,27 @@
 
 namespace cf {
 
-class CHelp_EtherMakeTIPS : public CHelp {
+class __declspec(novtable) CHelp_EtherMakeTIPS : public CHelp {
 public:
     void func_80295D8C();
 };
 
-class CHelp_KizunaTIPS : public CHelp {
+class __declspec(novtable) CHelp_KizunaTIPS : public CHelp {
 public:
     void func_80295D9C();
 };
 
-class CHelp_AlwaysTIPS : public CHelp {
+class __declspec(novtable) CHelp_AlwaysTIPS : public CHelp {
 public:
     void func_80295DAC();
 };
 
-class CHelp_TalkTIPS : public CHelp {
+class __declspec(novtable) CHelp_TalkTIPS : public CHelp {
 public:
     void func_80295D98();
 };
 
-class CHelp_EndEventTIPS : public CHelp {
+class __declspec(novtable) CHelp_EndEventTIPS : public CHelp {
 public:
     void func_80295DA0();
 };
@@ -72,18 +72,6 @@ struct CHelpManagerVtblSlot : CHelpManagerData {
     u8* mVptr; // 0x1C
 };
 
-// Cast-only dispatch interface mirroring the CHelp manual interface table
-// (vptr at +0x8; MWCC hides two typeinfo slots, so the Nth declared virtual
-// lands at vtable +0x8 + 4*N == CHelpVtbl::mSlots[2+N]). Never constructed.
-class CHelpDispatchIface {
-public:
-    u32 mOwner; // 0x0
-    u32 mParam; // 0x4
-    virtual void Slot2(); // vtable+0x8 (mSlots[2])
-    virtual void Slot3(); // vtable+0xC (mSlots[3])
-    virtual int Slot4();  // vtable+0x10 (mSlots[4])
-};
-
 // 8-byte entry of the scenario-help table (lbl_eu_80538E90): mKey is compared
 // against CHelpManager::mField10; mItems is a NULL-terminated CHelp array.
 struct CHelpTableEntry {
@@ -91,29 +79,15 @@ struct CHelpTableEntry {
     void** mItems; // 0x4
 };
 
-// Static help-table entry view (lbl_eu_80576D08): CHelp-shaped object whose
-// interface-table pointer sits at +0x8; dispatched as a virtual call through
-// this polymorphic view so retail's r12 call sequence is emitted.
-class CHelpTblView : public CHelpVtblPrefix {
-public:
-    virtual void f08(); // vtable 0x08
-    virtual void f0C(); // vtable 0x0C - slot func_80295BF4 drives
-    virtual void f10(); // vtable 0x10
-};
-
-// Never-instantiated derivative; its existence keeps MWCC from
-// devirtualizing the CHelpTblView calls below (retail stays indirect).
-struct CHelpTblViewDerived : CHelpTblView {};
-
 // Static help-dispatch table (lbl_eu_80576D08) embedding the CHelp objects
 // func_80295BF4 drives when mField10 is 3 / 5.
 struct CHelpManagerTbl {
     u8 pad_00[0x20];
-    cf::CHelpTblView mHelp1; // 0x20 (mField10 == 3)
+    cf::CHelp mHelp1; // 0x20 (mField10 == 3)
     u8 pad_2C[0x24];
-    cf::CHelpTblView mHelp2; // 0x50 (mField10 == 5)
+    cf::CHelp mHelp2; // 0x50 (mField10 == 5)
     u8 pad_5C[0x4];
-    cf::CHelpTblView mHelp3; // 0x60 (mField10 == 5)
+    cf::CHelp mHelp3; // 0x60 (mField10 == 5)
 };
 
 // Battle-object argument for func_80295CC8 (flags word at +0x3F08).
@@ -166,19 +140,6 @@ public:
     CHelpBmResList mActorList3; // 0x44
 };
 
-// Data-only shift base (mOwner@0, mParam@4) so the C++ vptr lands at +0x8
-// (retail reads the interface table pointer from object+8) and the first
-// virtual lands at vtable+0x8 - the slot func_802968B8 dispatches.
-struct CHelpTIPSShift {
-    void* mOwner; // 0x0
-    u32 mParam;   // 0x4
-};
-
-class CHelpTIPS : public CHelpTIPSShift {
-public:
-    virtual void UnkVirtual1(); // vtable+0x8
-};
-
 // --- Static help-table entry shapes (lbl_eu_80576D08) ---
 // The TU static initializer (sinit_80295DB0) builds every entry of the help
 // table: base CHelp ctor call, then interface-table (vtable) override at +0x8
@@ -186,35 +147,35 @@ public:
 // writes after the ctor (nothing is ever read back through them).
 
 // 0x10-byte entry: extra word at +0xC.
-struct CHelpWordC : public CHelp {
+struct __declspec(novtable) CHelpWordC : public CHelp {
     u32 mFieldC; // 0xC
 };
 
 // 0x10-byte entry: extra float at +0xC.
-struct CHelpFloatC : public CHelp {
+struct __declspec(novtable) CHelpFloatC : public CHelp {
     f32 mFieldC; // 0xC
 };
 
 // 0x10-byte entry: extra halfword at +0xC.
-struct CHelpHalfC : public CHelp {
+struct __declspec(novtable) CHelpHalfC : public CHelp {
     u16 mFieldC; // 0xC
 };
 
 // 0x14-byte entry: extra word at +0x10.
-struct CHelpWord10 : public CHelp {
+struct __declspec(novtable) CHelpWord10 : public CHelp {
     u8 mPadC[4];  // 0xC..0xF
     u32 mField10; // 0x10
 };
 
 // 0x14-byte entry: word at +0xC and byte at +0x10.
-struct CHelpWordCByte10 : public CHelp {
+struct __declspec(novtable) CHelpWordCByte10 : public CHelp {
     u32 mFieldC;  // 0xC
     u8 mField10;  // 0x10
     u8 mPad11[3]; // 0x11..0x13
 };
 
 // 0x18-byte entry: word at +0x10 and bytes at +0x14..+0x16.
-struct CHelpWord10Bytes : public CHelp {
+struct __declspec(novtable) CHelpWord10Bytes : public CHelp {
     u8 mPadC[4];  // 0xC..0xF
     u32 mField10; // 0x10
     u8 mField14;  // 0x14
@@ -224,7 +185,7 @@ struct CHelpWord10Bytes : public CHelp {
 };
 
 // 0x18-byte entry: only the word at +0x10 is initialized.
-struct CHelpWord10_18 : public CHelp {
+struct __declspec(novtable) CHelpWord10_18 : public CHelp {
     u8 mPadC[4];  // 0xC..0xF
     u32 mField10; // 0x10
     u8 mPad14[4]; // 0x14..0x17
@@ -233,7 +194,7 @@ struct CHelpWord10_18 : public CHelp {
 // 0x1C-byte entry: word at +0xC; +0x10 doubles as the atexit-registration
 // cookie slot for the following CHelp_LandMark entry (sinit passes its
 // address to __register_global_object).
-struct CHelpWordC_1C : public CHelp {
+struct __declspec(novtable) CHelpWordC_1C : public CHelp {
     u32 mFieldC;  // 0xC
     u32 mField10; // 0x10 (atexit cookie)
     u32 mField14; // 0x14

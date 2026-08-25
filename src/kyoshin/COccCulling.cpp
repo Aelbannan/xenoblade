@@ -3,6 +3,22 @@
 
 using namespace ml;
 
+// Retail-owned .bss corner-point table, initialized at static-init time from
+// four shared .sdata constants -- this dynamic initialization is what emits
+// retail's __sinit_\COccCulling_cpp + .ctors entry. Flat float array (the
+// retail init is 12 bare stfs stores, no per-element ctor calls).
+extern const f32 lbl_eu_80667C88;  // 1.0f
+extern const f32 lbl_eu_80667C8C;  // 0.0f
+extern const f32 lbl_eu_80667C94;
+extern const f32 lbl_eu_80667C98;
+
+f32 lbl_eu_805757F0[12] = {
+    lbl_eu_80667C94, lbl_eu_80667C8C, lbl_eu_80667C8C,
+    lbl_eu_80667C98, lbl_eu_80667C8C, lbl_eu_80667C8C,
+    lbl_eu_80667C98, lbl_eu_80667C88, lbl_eu_80667C8C,
+    lbl_eu_80667C94, lbl_eu_80667C88, lbl_eu_80667C8C,
+};
+
 COccCulling::COccCulling() : 
 mFrustumList1(mtl::INVALID_HANDLE),
 mFrustumList2(mtl::INVALID_HANDLE),
@@ -82,7 +98,7 @@ void COccCulling::setFrustum(CCullFrustum* pFrustum){
     pFrustum->unk128 = lbl_eu_80667C8C;
 
     // Walk the retail-owned corner table with a persistent cursor.
-    CVec3* coord = lbl_eu_805757F0;
+    CVec3* coord = reinterpret_cast<CVec3*>(lbl_eu_805757F0);
     for(int i = 0; i < 4; i++){
         CVec3* unk90i = &pFrustum->unk90[i];
         pFrustum->mMat.mul(*unk90i, *coord);

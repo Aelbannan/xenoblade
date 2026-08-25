@@ -372,8 +372,9 @@ u32 func_804BE4AC(void) {
 void func_804BE4B4(ScnResHead* dst, int index) {
     extern unsigned char lbl_eu_8065F428[];
     ScnResourceEntry* entries = (ScnResourceEntry*)lbl_eu_8065F428;
+    u32 head0 = entries[index].head.field_0x00;
     dst->field_0x04 = entries[index].head.field_0x04;
-    dst->field_0x00 = entries[index].head.field_0x00;
+    dst->field_0x00 = head0;
     dst->field_0x08 = entries[index].head.field_0x08;
 }
 

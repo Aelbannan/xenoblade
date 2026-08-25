@@ -350,18 +350,18 @@ void func_800896F4(CCtrlMoveBase* self, ml::CVec3* dst, const ml::CVec3* src) {
 // (struct copy -> retail's integer bit-move stores), then normalize.
 // Zero-constant checks reference lbl_eu_806665A0 directly (retail reloads it
 // through sda21 at each site rather than caching it in a register).
+// Tail shape: zero-length guard + normalize-or-snap.
 void func_800898D4(CCtrlMoveBase* self, ml::CVec3* dir) {
     self->mVelocity.x += self->mFloatParam2 * (dir->x - self->mVelocity.x);
     self->mVelocity.z += self->mFloatParam2 * (dir->z - self->mVelocity.z);
     *dir = self->mVelocity;
-// (volatile reads: retail reloads the copied fields from memory for the
-// comparisons instead of forwarding the registers held by the struct copy)
-    ml::CVec3* chk = (ml::CVec3*)dir;
-    if (*(volatile f32*)&chk->x == 0.0f && *(volatile f32*)&chk->y == 0.0f
-            && *(volatile f32*)&chk->z == 0.0f) {
+    // Negated form: same branch lattice as retail (bne/bne/beqlr); testing
+    // whether the != tree avoids the pool-temp operand normalization.
+    if (!(dir->x != 0.0f || dir->y != 0.0f || dir->z != 0.0f)) {
         return;
     }
-    if (lbl_eu_806665A0 == dir->x * dir->x + dir->y * dir->y + dir->z * dir->z) {
+    if (dir->x * dir->x + dir->y * dir->y + dir->z * dir->z
+            == *(volatile f32*)&lbl_eu_806665A0) {
         *dir = ml::CVec3::zero;
     } else {
         PSVECNormalize(*dir, *dir);

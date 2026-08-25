@@ -40,9 +40,8 @@ bool CHelp_Talk::func_802B86F0() {
         }
     }
 
-    // Dispatch to interface-table slot 0x20 with the voice-active flag.
-    // Control flow mirrors retail: both failure exits share the function tail.
-    if (!reinterpret_cast<CHelpTalkVtblView*>(this)->vf20(voiceActive)) {
+    // Slot 0x20 is CHelpSwitch::func_802B7CE4 (not a Talk-only vf20).
+    if (!this->func_802B7CE4(voiceActive)) {
         goto retFalse;
     }
 

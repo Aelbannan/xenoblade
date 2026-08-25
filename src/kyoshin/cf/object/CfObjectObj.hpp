@@ -23,6 +23,14 @@ namespace cf {
         void func_800BFB90();
         int func_800BFAB0(u32 arg4, u32 arg5);
 
+        // Declared but NOT defined in this fork: retail's CfObjectObj dtor
+        // exists under the forced flat name __dt__800BFA14 (defined as a
+        // free function in CfObjectObj.cpp). Derived dtors (CfObjectTbox)
+        // synthesize an UNDEF bl to the mangled name, which postprocess
+        // exact_renames maps onto that retail-named definition so both the
+        // call target and codegen shape match retail's dtor-chain.
+        ~CfObjectObj();
+
         //0x71C helper field (first field past the 0x71C base)
         u16 field_71C;
     };

@@ -16,7 +16,7 @@ struct CHelp_EnemyList {
     CHelp_EnemyListNode* mHead; // 0x4
 };
 
-class CHelp_EnemyCount : public CHelp {
+class __declspec(novtable) CHelp_EnemyCount : public CHelp {
 public:
     void func_802B7F54();
     bool func_802B7F60();

@@ -49,6 +49,13 @@ CTTask<CUIWindowManager::CTest>::~CTTask() {}
 // Batch 2026-07-14g: window-mgr-move owns Move() exclusively in this TU.
 
 extern "C" {
+void func_8009D0B4();
+void func_8009D514(cf::IFlagEvent*);
+cf::IFlagEvent* func_8009D414(cf::IFlagEvent*);
+extern void __ct__8CProcessFv(void* self);
+extern u32 __ptmf_null[3];
+extern const u8 lbl_eu_8052E670[0x10];
+extern const u8 lbl_eu_8052E628[0x10];
 CUIWindowManager* lbl_eu_80664088;
 s16 lbl_eu_8066408C;
 
@@ -110,13 +117,8 @@ typedef _reslist_node<IUIWindow*> WindowNode;
 extern "C" void Term__Q216CUIWindowManager5CTestFv(){}
 extern "C" void Move__Q216CUIWindowManager5CTestFv(){}
 
-// Init support: temp CProcess vtables + null PTMF callback slots.
-extern void __ct__8CProcessFv(void* self);
-extern u32 __ptmf_null[3];
-// Init's two temp vtables (retail data, other split). Sized >= 8 bytes so
-// MWCC addresses them via lis/addi like retail.
-extern const u8 lbl_eu_8052E670[0x10];
-extern const u8 lbl_eu_8052E628[0x10];
+// Init support: temp CProcess vtables + null PTMF callback slots are
+// declared in the extern "C" block above.
 
 // Byte-offset view of the CTTask prefix fields Init lays out by hand.
 struct CUIWindowManagerInitShim {
@@ -141,8 +143,8 @@ void CUIWindowManager::Init() {
         // __ptmf_null[1]/[0]/[2] per slot), then the vtable again.
         inst->vtable = (void*)&lbl_eu_8052E670;
         const u32* ptmf = __ptmf_null;
-        u32 w1 = ptmf[1];
         u32 w0 = ptmf[0];
+        u32 w1 = ptmf[1];
         inst->callbacks[0] = w0;
         inst->callbacks[1] = w1;
         u32 w2 = ptmf[2];

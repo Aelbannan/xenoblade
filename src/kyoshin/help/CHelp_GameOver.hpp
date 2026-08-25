@@ -4,7 +4,7 @@
 #include "kyoshin/help/CHelp.hpp"
 
 namespace cf {
-class CHelp_GameOver : public CHelp {
+class __declspec(novtable) CHelp_GameOver : public CHelp {
 public:
     bool func_802B80F4();
 

@@ -1122,7 +1122,6 @@ void func_8029194C(void);
 int rand(void);
 
 // Battle-manager effect/party helpers.
-void func_800F3970(void* mgr, void* obj, u32 a, u32 b, u32 c);
 void func_802A216C(void* obj);
 void func_800EA9A8(void* mgr, void* item, void* rec, u32 id, u32 flag);
 int func_80260FB0(void* obj, u32 id, u32* outA, u32* outB, f32* outC);
@@ -1149,7 +1148,7 @@ void func_800BF29C(void* obj, int a, int b, u32 c, f32 d, f32 e);
 void func_800BC3B0(void* obj, f32 value);
 int func_8012CD24(void);
 void func_8013D1E8(void* obj);
-void func_8009D018(void* obj, int flag);
+void func_8009D018(u32 destination, u32 value);
 void func_80291A04(void);
 void func_8009ECD0(u32 id);
 void* func_80140AFC(u32 id);

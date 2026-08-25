@@ -15,6 +15,10 @@ struct ScnResData {
     u8* field_0x60; // array of 0xE0-byte elements
     u8 field_0x64[0x78 - 0x64];
     int count; // 0x78
+    // Retail .bss block lbl_eu_8065F32C spans 0xC4 bytes; only the fields
+    // above (0x7C) are modeled. Fold the anonymous block tail in here so no
+    // separate file-scope static pads (which -ipa file strips) are needed.
+    u8 blockTail[0xC4 - 0x7C];
 };
 
 extern ScnResData lbl_eu_8065F32C;

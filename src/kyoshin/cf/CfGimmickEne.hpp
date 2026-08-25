@@ -270,8 +270,9 @@ extern cf::CfGimmickEneSceneState* func_8048ECD0(cf::CfGimmickEneScene* scene); 
 // Base gimmick deactivation helper (CfGimmick.cpp).
 extern void func_80208EE4(cf::CfGimmick* self);
 
-// Scene root-group accessor (monolib CScnMem): returns the scene root group.
-extern nw4r::g3d::ScnGroup* func_8048EC14(cf::CfGimmickEneScene* scene, int index);
+// Scene root-group accessor (monolib CScnMem): retail symbol is unmangled
+// (C linkage), takes the shared scene pointer and a child index.
+extern "C" nw4r::g3d::ScnObj* func_8048EC14(CScn* scene, unsigned int index);
 
 // Gimmick-state setter on the CfGimmickGlobal (sound/event dispatcher).
 extern void func_801F4B68(int value, int id);

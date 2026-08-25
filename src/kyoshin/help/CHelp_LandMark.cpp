@@ -15,7 +15,7 @@ extern "C" cf::CHelp_LandMark* __ct__cf_CHelp_LandMark(cf::CHelp_LandMark* self,
     s32 zero = 0;
 
     // Set up vtable pointers and fields
-    self->mVtbl = vtbl;
+    self->vtbl() = vtbl;
     self->mSecondBase = (char*)vtbl + 0x1c;
     self->field_10 = field_10_val;
     self->mTimer = zero;
@@ -37,7 +37,7 @@ extern "C" __declspec(noinline) cf::CHelp_LandMark* __dt__Q22cf14CHelp_LandMarkF
     if (self != nullptr) {
         // Restore vtable before destruction
         cf::CHelpVtbl* vtbl = &lbl_eu_8053B5F8;
-        self->mVtbl = vtbl;
+        self->vtbl() = vtbl;
         self->mSecondBase = reinterpret_cast<void*>(reinterpret_cast<u32>(vtbl) + 0x1c);
 
         // Call subobject destructor on second base (same pattern as constructor)

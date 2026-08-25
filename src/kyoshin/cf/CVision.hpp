@@ -644,7 +644,6 @@ extern "C" const f64 lbl_eu_80667D58;
 
 // Mode-dispatch helpers used by func_801A8244's per-mode FX setup.
 extern "C" void func_801ACD5C(u32 a);
-extern "C" void func_800F3970(void* a, void* b, u32 c, u32 d, u32 e);
 extern "C" void func_802A2078(u32 a, u32 b, void* c);
 extern "C" void func_80280D04(u32 a);
 

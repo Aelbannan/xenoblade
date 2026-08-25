@@ -5,7 +5,7 @@
 
 namespace cf {
 // size: 0x10
-class CHelp_Target : public CHelp {
+class __declspec(novtable) CHelp_Target : public CHelp {
 public:
     bool CHelp_UnkVirtualFunc3();
 

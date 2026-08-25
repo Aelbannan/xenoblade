@@ -653,6 +653,14 @@ namespace cf {
         s16 shortArr[6];   // +0x1C..0x27
     };
 
+    // Distinct-class view of the same +0x1C slot array; retail reads the
+    // slot entry twice through differently-typed expressions (no CSE), so
+    // the matching source needs a second, aliasing-legal member name.
+    struct CtrlObjectParamEquipRowSlots {
+        u8  pad_00[0x1C];
+        s16 entries[6];    // +0x1C..0x27 (same storage as EquipRow::shortArr)
+    };
+
     // ── func_800A3594 view: node header written into the data area ────────
     // The split writes the new node's header through the row pointer plus
     // +0x20 displacement (fields at +0x20..0x2F of the 0x1111 row).

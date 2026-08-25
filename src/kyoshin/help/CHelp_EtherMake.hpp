@@ -4,7 +4,7 @@
 #include "kyoshin/help/CHelp.hpp"
 
 namespace cf {
-class CHelp_EtherMake : public CHelp {
+class __declspec(novtable) CHelp_EtherMake : public CHelp {
 public:
     bool func_802B80A4();
     void func_802B80EC();

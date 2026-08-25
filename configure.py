@@ -541,7 +541,7 @@ config.libs = [
             Object(NonMatching, "kyoshin/cf/CTaskREvent.cpp"),
             Object(NonMatching, "kyoshin/cf/CInfoCf.cpp"),
             Object(NonMatching, "kyoshin/menu/CMenuItem.cpp"),
-            Object(NonMatching, "kyoshin/realtimeevt/CREvtMem.cpp"),
+            Object(Matching, "kyoshin/realtimeevt/CREvtMem.cpp"),
             Object(NonMatching, "kyoshin/cf/CTaskREvtSequence.cpp"),
             Object(Matching, "kyoshin/cf/CfResObjImpl.cpp"),
             Object(NonMatching, "kyoshin/cf/CfResReloadImpl.cpp", mw_version="GC/3.0a5.2"),  # retail func_8016E100 struct-copy store order (stfs f0 first) only matches under GC/3.0a5.2; Wii/1.1 hoists the last-load store (sth r3) first

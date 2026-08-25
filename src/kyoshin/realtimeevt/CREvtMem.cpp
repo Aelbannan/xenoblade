@@ -65,7 +65,7 @@ cf::CREvtMem::~CREvtMem() {
 // r3 = size, r4 = offset
 // Returns the chunk size
 // ============================================================================
-extern "C" u32 func_80167D40(u32 size, u32 offset) {
+u32 func_80167D40(u32 size, u32 offset) {
     // Establish the arena bounds from the realtime event region.
     lbl_eu_80664260->field_08 = func_8016676C();
     lbl_eu_80664260->field_0C = func_80166778();
@@ -82,7 +82,7 @@ extern "C" u32 func_80167D40(u32 size, u32 offset) {
     // so the ptr1 store below reloads the global.
     cf::CREvtMem* m1 = lbl_eu_80664260;
     if (offset + chunk + 0x1000 < m1->arenaSize) {
-        void* res;
+        u8* res;
         u32 pos = m1->currentPos;
         if (pos + chunk > m1->arenaEnd) {
             res = nullptr;
@@ -90,7 +90,7 @@ extern "C" u32 func_80167D40(u32 size, u32 offset) {
             u32 low = pos & 0xFF;
             u32 pad = 0;
             if (low != 0) pad = 0x100 - low;
-            res = (void*)(pos + pad);
+            res = (u8*)(pos + pad);
             m1->currentPos += chunk + pad;
         }
         lbl_eu_80664260->ptr1 = res;
@@ -104,7 +104,7 @@ extern "C" u32 func_80167D40(u32 size, u32 offset) {
     // ---- Second allocation -> ptr2 ----
     cf::CREvtMem* m2 = lbl_eu_80664260;
     if (offset + (chunk * 2) + 0x1000 < m2->arenaSize) {
-        void* res;
+        u8* res;
         u32 pos = m2->currentPos;
         if (pos + chunk > m2->arenaEnd) {
             res = nullptr;
@@ -112,7 +112,7 @@ extern "C" u32 func_80167D40(u32 size, u32 offset) {
             u32 low = pos & 0xFF;
             u32 pad = 0;
             if (low != 0) pad = 0x100 - low;
-            res = (void*)(pos + pad);
+            res = (u8*)(pos + pad);
             m2->currentPos += chunk + pad;
         }
         lbl_eu_80664260->ptr2 = res;
@@ -128,7 +128,7 @@ extern "C" u32 func_80167D40(u32 size, u32 offset) {
 // ============================================================================
 // func_80167EF8: Deallocate both MEM2 allocations
 // ============================================================================
-extern "C" void func_80167EF8(void) {
+void func_80167EF8(void) {
     // Check flag bit 1 (0x2)
     if (lbl_eu_80664260->flags & 0x2) {
         if (lbl_eu_80664260->ptr1 != nullptr) {
@@ -153,7 +153,7 @@ extern "C" void func_80167EF8(void) {
 // r3 = size, r4 = alignment, r5 = useMEM1 flag
 // Returns pointer to allocated memory, or 0 if fails
 // ============================================================================
-extern "C" void* func_80167F6C(u32 size, u32 alignment, int useMEM1) {
+u8* func_80167F6C(u32 size, u32 alignment, int useMEM1) {
     cf::CREvtMem* m = lbl_eu_80664260;
     u32 end = m->arenaEnd;
 
@@ -161,7 +161,7 @@ extern "C" void* func_80167F6C(u32 size, u32 alignment, int useMEM1) {
         // Doesn't fit in the arena - allocate fresh from the heap.
         if (useMEM1) {
             mtl::ALLOC_HANDLE handle = mtl::MemManager::getHandleMEM1();
-            return mtl::MemManager::allocate_head(handle, size, 0x20);
+            return (u8*)mtl::MemManager::allocate_head(handle, size, 0x20);
         }
         return nullptr;
     }
@@ -170,7 +170,7 @@ extern "C" void* func_80167F6C(u32 size, u32 alignment, int useMEM1) {
     u32 rem = m->currentPos % alignment;
     u32 pad = 0;
     if (rem != 0) pad = alignment - rem;
-    void* result = (void*)(m->currentPos + pad);
+    u8* result = (u8*)(m->currentPos + pad);
     m->currentPos += size + pad;
     return result;
 }
@@ -179,7 +179,7 @@ extern "C" void* func_80167F6C(u32 size, u32 alignment, int useMEM1) {
 // func_80167FFC: Bounds-checked deallocation
 // If ptr is within the arena, do nothing. Otherwise, deallocate from heap.
 // ============================================================================
-extern "C" void func_80167FFC(void* ptr) {
+void func_80167FFC(u8* ptr) {
     cf::CREvtMem* mem = lbl_eu_80664260;
 
     // If ptr lies inside the arena, it was arena-allocated - do nothing.
@@ -196,7 +196,7 @@ extern "C" void func_80167FFC(void* ptr) {
 // ============================================================================
 // func_80168028: Get pointer from indexed slot
 // ============================================================================
-extern "C" void* func_80168028(u32 idx) {
+u8* func_80168028(u32 idx) {
     // Reads slot [idx] from the pointer array that begins at ptr1 (+0x10).
-    return ((void**)&lbl_eu_80664260->ptr1)[idx];
+    return ((u8**)&lbl_eu_80664260->ptr1)[idx];
 }

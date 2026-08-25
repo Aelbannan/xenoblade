@@ -39,7 +39,17 @@ extern cf::CREvtMem* lbl_eu_80664260;
 extern const f32 lbl_eu_80667650;
 
 // Arena bounds helpers imported from the CInfoCf TU (bodies in
-// kyoshin/cf/CInfoCf.cpp, reading singleton lbl_eu_80664250). Their retail
-// reloc names are flat/unmangled - same naming policy as the lbl_eu_* data
-// relocs above - so they must stay C-linkage declarations.
-extern "C" u32 func_8016676C(void); extern "C" u32 func_80166778(void); // flat lbl-style relocs
+// kyoshin/cf/CInfoCf.cpp, reading singleton lbl_eu_80664250).
+u32 func_8016676C(void);
+u32 func_80166778(void);
+
+// Initialise the arena and allocate the two realtime-event chunks.
+u32 func_80167D40(u32 size, u32 offset);
+// Release both chunks if they were backed by MEM2 allocations.
+void func_80167EF8(void);
+// Aligned allocation: carve from the arena while it fits, else heap/MEM1.
+u8* func_80167F6C(u32 size, u32 alignment, int useMEM1);
+// Free a pointer only if it came from outside the arena (heap-backed).
+void func_80167FFC(u8* ptr);
+// Indexed accessor over the pointer slot array starting at ptr1 (+0x10).
+u8* func_80168028(u32 idx);

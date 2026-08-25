@@ -551,27 +551,32 @@ static const u8* ParseStringW(u16 encode, const u8* str, OSFontHeader** fontOut,
     return str;
 }
 
+// Copy one character cell from the font sheet into dst as I4 texels,
+// starting at horizontal offset xOfs. arg3 is the width of the destination
+// image in pixels.
 const char* OSGetFontTexel(const char* str, void* dst, s32 xOfs, s32 arg3,
                            u32* widthOut) {
     OSFontHeader* font;
     s32 numRestTex;
-    u8* local_24;
+    u8* dstTexel; // texel in the destination image
     s32 row;
-    u8* local_20;
+    u8* srcTexel; // texel in the source sheet
     s32 col;
-    s32 local_48;
+    s32 srcSub;   // sub-texel nibble within the source byte (0-3)
     u32 code;
     int j;
     int i;
     u32 sheet;
-    u8* local_4C;
+    const u8* palette;
     u8* font_u8;
     u8* tex;
-    s32 local_44;
+    s32 dstSub; // sub-texel nibble within the destination byte (0-1)
 
     str = (const char*)ParseString(OSGetFontEncode(), (const u8*)str, &font,
                                    &code);
-    local_4C = &font->c0;
+    // The four palette entries following the header map the 2-bit sheet
+    // texels to intensity/alpha nibbles.
+    palette = &font->c0;
 
     /**
      * Find font code texture (See OSGetFontTexture)
@@ -592,24 +597,28 @@ const char* OSGetFontTexel(const char* str, void* dst, s32 xOfs, s32 arg3,
 
     for (i = 0; i < font->cellHeight; i++) {
         for (j = 0; j < font->cellWidth; j++) {
-            local_20 =
+            // Address the source texel within the tiled (CMPR-style)
+            // sheet layout: 8x8 tiles of 2-bit texels packed into bytes.
+            srcTexel =
                 tex + (((font->sheetWidth / 8) * 32) / 2) * ((row + i) / 8);
-            local_20 += ((col + j) / 8) * 16;
-            local_20 += ((row + i) % 8) * 2;
-            local_20 += ((col + j) % 8) / 4;
+            srcTexel += ((col + j) / 8) * 16;
+            srcTexel += ((row + i) % 8) * 2;
+            srcTexel += ((col + j) % 8) / 4;
 
-            local_44 = (col + j) % 4;
+            srcSub = (col + j) % 4;
 
-            local_24 = (u8*)dst + ((i / 8) * (((arg3 * 4) / 8) * 32));
-            local_24 += (((xOfs + j) / 8) * 32);
-            local_24 += ((i % 8) * 4);
-            local_24 += ((xOfs + j) % 8) / 2;
+            // Address the destination texel in its own tiled layout.
+            dstTexel = (u8*)dst + ((i / 8) * (((arg3 * 4) / 8) * 32));
+            dstTexel += (((xOfs + j) / 8) * 32);
+            dstTexel += ((i % 8) * 4);
+            dstTexel += ((xOfs + j) % 8) / 2;
 
-            local_48 = (xOfs + j) % 2;
+            dstSub = (xOfs + j) % 2;
 
-            *local_24 |=
-                (u8)(local_4C[(*local_20 >> (6 - (local_44 * 2))) & 3] &
-                     (local_48 != 0 ? 0x0F : 0xF0));
+            // OR the palette-mapped nibble into the destination halfbyte.
+            *dstTexel |=
+                (u8)(palette[(*srcTexel >> (6 - (srcSub * 2))) & 3] &
+                     (dstSub != 0 ? 0x0F : 0xF0));
         }
     }
 

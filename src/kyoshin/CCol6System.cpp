@@ -823,19 +823,19 @@ extern "C" void func_8015E0BC(CCol6Hint* self) {
     CCol6PadData* pad = (CCol6PadData*)getCfPadData__Q22cf13CfGameManagerFv();
     int sels, confirm, up2, down2, up, down;
     if (func_80086F9C__Q22cf13CfGameManagerFv(-1) != 0) {
+        sels    = (pad->mField104 & 0x8004) != 0;
+        confirm = (pad->mField104 & 0x2001) != 0;
+        up2     = (pad->mField104 & 0x4002) != 0;
+        down2   = ((pad->mField104 & 0x8000) | (pad->mField104 & 0x10000000)) != 0;
         up      = (pad->mField04 >> 10) & 1;
         down    = (pad->mField04 >> 9) & 1;
+    } else {
         sels    = (pad->mField104 & 0x8004) != 0;
         confirm = (pad->mField104 & 0x2001) != 0;
         up2     = (pad->mField104 & 0x4002) != 0;
         down2   = ((pad->mField104 & 0x8000) | (pad->mField104 & 0x10000000)) != 0;
-    } else {
         up      = (pad->mField04 >> 27) & 1;
         down    = (pad->mField04 >> 26) & 1;
-        sels    = (pad->mField104 & 0x8004) != 0;
-        confirm = (pad->mField104 & 0x2001) != 0;
-        up2     = (pad->mField104 & 0x4002) != 0;
-        down2   = ((pad->mField104 & 0x8000) | (pad->mField104 & 0x10000000)) != 0;
     }
 
     if (up) {

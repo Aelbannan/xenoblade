@@ -42,9 +42,6 @@ struct CfNandEvent {
           mFieldF(ff) {}
 };
 
-// TU-local helper removed: ring slots are constructed natively via the
-// CfNandEventQueue member's default initialization inside the real ctor.
-
 // Event queue embedded in CfNandManager at +0x60. Its destructor is the retail
 // __dt__8023BFCC, which zeroes the head/tail counters (0x104/0x108 relative to
 // this struct) before freeing the block. Entries are pushed through mRingBase
@@ -190,7 +187,6 @@ namespace cf{
         /* 0x188 */ void (CfNandManager::*mMoveHook)(); // 12-byte ptmf hook (dispatched by Move)
 
         virtual ~CfNandManager();
-        CfNandManager();
         void Term();
         void Move();
         void cbRenderBefore();

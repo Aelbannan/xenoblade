@@ -14,13 +14,13 @@ The three `*shim`/`side-effect` rows are **fakematch-candidate** families: sourc
 | extern "C" (total lines) | 14407 |
 | extern "C" declarations (non-lbl_*, imports) | 6021 |
 | extern "C" definitions (forced names) | 4152 |
-| `self`/register-style params | 13409 |
+| `self`/register-style params | 13408 |
 | `void*` (params + locals) | 7830 |
 | raw pointer offset arithmetic | 7265 |
 | deref-through-cast arithmetic | 2731 |
 | inline asm / `register` | 118 |
 | rN-named params | 509 |
-| goto | 3340 |
+| goto | 3339 |
 | DECOMP_ASM_INSN asm shims (fakematch candidate) | 11 |
 | #pragma schedule once/twice (fakematch candidate) | 6 |
 | assignment inside cast / init-list (fakematch candidate) | 1 |
@@ -340,7 +340,7 @@ The three `*shim`/`side-effect` rows are **fakematch-candidate** families: sourc
 | src/kyoshin/CSysWin.cpp | 1 | 21 | 25 | 8 | 3 | 3 | 0 | 0 | 14 | 0 | 0 | 0 |
 | src/kyoshin/CSysWinBuff.cpp | 3 | 6 | 8 | 8 | 0 | 0 | 0 | 0 | 0 | 0 | 0 | 0 |
 | src/kyoshin/CSysWinSave.cpp | 1 | 7 | 9 | 5 | 0 | 0 | 0 | 0 | 2 | 0 | 0 | 0 |
-| src/kyoshin/CSysWinScenarioLog.cpp | 2 | 7 | 38 | 18 | 8 | 0 | 0 | 0 | 17 | 0 | 0 | 0 |
+| src/kyoshin/CSysWinScenarioLog.cpp | 2 | 7 | 38 | 18 | 8 | 0 | 0 | 0 | 16 | 0 | 0 | 0 |
 | src/kyoshin/CSysWinSelect.cpp | 2 | 1 | 13 | 12 | 4 | 0 | 0 | 0 | 2 | 0 | 0 | 0 |
 | src/kyoshin/CSystemWindow.cpp | 1 | 0 | 2 | 2 | 3 | 2 | 0 | 0 | 0 | 0 | 0 | 0 |
 | src/kyoshin/CTagProcessor.cpp | 1 | 24 | 87 | 88 | 19 | 1 | 0 | 5 | 8 | 0 | 0 | 0 |
@@ -405,7 +405,7 @@ The three `*shim`/`side-effect` rows are **fakematch-candidate** families: sourc
 | src/kyoshin/cf/CfMapEffectManager.cpp | 1 | 5 | 7 | 3 | 1 | 1 | 0 | 1 | 0 | 0 | 0 | 0 |
 | src/kyoshin/cf/CfMapItemManager.cpp | 29 | 5 | 48 | 25 | 3 | 0 | 0 | 0 | 0 | 0 | 0 | 0 |
 | src/kyoshin/cf/CfMapMineManager.cpp | 3 | 15 | 26 | 28 | 28 | 18 | 0 | 0 | 0 | 0 | 0 | 0 |
-| src/kyoshin/cf/CfNandManager.cpp | 2 | 11 | 39 | 17 | 1 | 0 | 0 | 16 | 0 | 0 | 0 | 0 |
+| src/kyoshin/cf/CfNandManager.cpp | 2 | 11 | 38 | 17 | 1 | 0 | 0 | 16 | 0 | 0 | 0 | 0 |
 | src/kyoshin/cf/CfObjectEnumList.cpp | 42 | 6 | 40 | 41 | 2 | 0 | 0 | 0 | 0 | 0 | 0 | 0 |
 | src/kyoshin/cf/CfObjectSelectorObj.cpp | 6 | 2 | 1 | 2 | 0 | 0 | 0 | 0 | 0 | 0 | 0 | 0 |
 | src/kyoshin/cf/CfPadTask.cpp | 6 | 0 | 1 | 0 | 0 | 0 | 0 | 1 | 0 | 0 | 0 | 0 |
@@ -3712,7 +3712,7 @@ TUs with any of the three fakematch-candidate families above. Each row is a cand
   "asm_insn_shim": 0,
   "extern_c_nonlbl_decl": 2,
   "extern_c_nonlbl_def": 7,
-  "goto_count": 17,
+  "goto_count": 16,
   "init_side_effect": 0,
   "ptr_arith": 8,
   "schedule_pragma": 0,
@@ -4389,7 +4389,7 @@ TUs with any of the three fakematch-candidate families above. Each row is a cand
   "ptr_arith": 1,
   "rn_params": 16,
   "schedule_pragma": 0,
-  "self_params": 39,
+  "self_params": 38,
   "void_ptr": 17
  },
  "src/kyoshin/cf/CfObjectEnumList.cpp": {

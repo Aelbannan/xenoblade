@@ -581,10 +581,11 @@ extern "C" void __declspec(noinline) func_80118058(CMiniMap* self) {
         MiniMapCleanupNode* node2 = clist2->first;
         MiniMapCleanupNode* end2 = (MiniMapCleanupNode*)&clist2->first;
         MiniMapLayout* markLayout = (MiniMapLayout*)self->mLayout0C;
+        const char* pf = (const char*)lbl_eu_8052CB40;
+        const char* ps = (const char*)lbl_eu_8052CB1C;
         while (node2 != end2) {
             if (!node2) {
-                Panic__Q24nw4r2dbFPCciPCce((const char*)lbl_eu_8052CB40, 573,
-                                           (const char*)lbl_eu_8052CB1C);
+                Panic__Q24nw4r2dbFPCciPCce(pf, 573, ps);
             }
             MiniMapCleanupNode* next2 = node2->next;
             void* pane = markLayout->mgr->v03C(node2->name, 1);

@@ -962,20 +962,15 @@ void func_80169A38(cf::CTaskREvtSequence* self) {
     // cond (retail r31): unsigned field_0x100 >= entry->field_0xC, kept in a
     // callee-saved register across the walks and re-tested before BB38.
     u32 cond;
-    u32 n;
     UnkStateTable_D0* entry;
-    u32 scaled;
     if (flag2 != 0) {
         func_80496294(lbl_eu_80663E14, lbl_eu_80667668);
         cond = 0;
     } else {
         func_80496294(lbl_eu_80663E14, lbl_eu_8066766C);
-        // Single multi-def web: born at the field_0xD0 load, then advanced
-        // to the selected entry (keeps entry's live range long enough that
-        // the allocator colors it ahead of the walk counter, like retail).
-        entry = self->field_0xD0;
+        UnkStateTable_D0* d0 = self->field_0xD0;
         entry = reinterpret_cast<UnkStateTable_D0*>(
-            reinterpret_cast<u8*>(entry) + entry->field_0x4 * self->field_0xF8);
+            reinterpret_cast<u8*>(d0) + d0->field_0x4 * self->field_0xF8);
         if (func_80496288(lbl_eu_80663E14) > lbl_eu_80667658) {
             self->field_0x104 += 1;
             self->field_0x100 += 1;

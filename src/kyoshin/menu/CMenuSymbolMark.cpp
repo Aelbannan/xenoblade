@@ -757,9 +757,11 @@ extern "C" void func_8011EDDC(CMenuSymbolMark* self) {
             continue;
         }
         u32 n = self->mField_8A8;
-        self->mArray6A8[n] = obj->name74;
-        self->mField_8A8 = n + 1;
-        if (n + 1 >= 0x80) {
+        u32 next = n + 1;
+        u32 val = obj->name74;
+        self->mArray6A8[n] = val;
+        self->mField_8A8 = next;
+        if (next >= 0x80) {
             return;
         }
     }

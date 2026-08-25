@@ -690,7 +690,6 @@ void G3DState::LoadResTlutObj(const ResTlutObj tlutObj) {
 // ScnDependentMtxFunc::EnvironmentMapping (retail .data at 8051D660).
 extern const unsigned char lbl_eu_8051D660[];
 
-void EnvironmentSpecularMapping__Q44nw4r3g3d6detail19ScnDependentMtxFuncFPQ34nw4r4math5MTX34ScSc(){}
 
 namespace nw4r {
 namespace g3d {

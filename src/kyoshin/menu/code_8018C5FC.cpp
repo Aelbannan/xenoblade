@@ -85,25 +85,25 @@ UnkClass_8018C5FC::UnkClass_8018C5FC() : unk0(0) {
 // When the timer elapses and there are no active battles, the counter
 // decrements by 1 (if a qualifying party member is present) or by 2.
 void func_8018C610(UnkClass_8018C5FC* _this) {
-    u32 cf8cVal = func_8009CF8C(0x3357);
-    u32 cntlz = (u32)__cntlzw(cf8cVal);
-    if ((cntlz >> 5) != 0) return;
+    if ((__cntlzw(func_8009CF8C(0x3357)) >> 5) != 0) return;
     if (cf::CfGameManager::func_800829B8()) return;
     if (lbl_eu_80663E24 & 0xafa40000) return;
 
     f32 scale = func_80496288(&lbl_eu_80663E14);
-    _this->unk4 += CDeviceVI::getSecPerFrame() * scale;
+    f32 val = CDeviceVI::getSecPerFrame() * scale + _this->unk4;
+    _this->unk4 = val;
 
-    if (_this->unk4 >= lbl_eu_80667A34) {
-        _this->unk4 = 0.0f;
+    if (val >= lbl_eu_80667A34) {
+        _this->unk4 = lbl_eu_80667A30;
+        s32 adjust = 0;
 
         // Count active battles by walking the battle manager's actor list.
         // Retail hoists the head-sentinel into a register once (r5).
-        s32 battleCount = 0;
-        s32 adjust = 0;
         CMB_Bm_8018C5FC* bm = getInstance__Q22cf14CBattleManagerFv();
-        for (CMB_ListNode_8018C5FC* node = bm->listHead->next;
-             node != bm->listHead; node = node->next)
+        CMB_ListNode_8018C5FC* sentinel = bm->listHead;
+        s32 battleCount = 0;
+        for (CMB_ListNode_8018C5FC* node = sentinel->next;
+             node != sentinel; node = node->next)
         {
             battleCount++;
         }
@@ -111,20 +111,20 @@ void func_8018C610(UnkClass_8018C5FC* _this) {
         if (battleCount == 0) {
             // No active battle: scan the party member list for a qualifying
             // character (virtual call via vtable+0x290 on the low-priority
-            // subobject) to decide whether to drop the gauge by 1 or 2. The
-            // loop reloads list->headNode at its bottom like retail.
+            // subobject at data-0x3e9c, null-guarded) to decide whether to
+            // drop the gauge by 1 or 2. The loop reloads list->headNode at
+            // its bottom like retail.
             CMB_PartyList_8018C5FC* list = func_800B6BA4__Fv();
             s32 found = 0;
             for (CMB_ListNode_8018C5FC* node = list->headNode->next;
                  node != list->headNode; node = node->next)
             {
-                s32 ret = 0;
-                if (node->data != 0) {
-                    ret = node->data->obj.vtable->func_290(&node->data->obj);
-                }
+                CMB_CfObj_8018C5FC* obj =
+                    node->data ? &node->data->obj : (CMB_CfObj_8018C5FC*)0;
+                s32 ret = obj->vtable->func_290(obj);
 
                 if (ret != 0) {
-                    ret = node->data->obj.vtable->func_290(&node->data->obj);
+                    ret = obj->vtable->func_290(obj);
                     ret = func_8026178C(ret, 0x69);
                 }
 
@@ -141,9 +141,7 @@ void func_8018C610(UnkClass_8018C5FC* _this) {
             // unk0+adjust into a reg ahead of the call); oldVal is reloaded
             // only after the guard passes.
             s32 newVal = _this->unk0 + adjust;
-            u32 cf8cVal2 = func_8009CF8C(0x3357);
-            u32 cntlz2 = (u32)__cntlzw(cf8cVal2);
-            if ((cntlz2 >> 5) != 0) return;
+            if ((__cntlzw(func_8009CF8C(0x3357)) >> 5) != 0) return;
 
             s32 oldVal = _this->unk0;
             _this->unk0 = newVal;

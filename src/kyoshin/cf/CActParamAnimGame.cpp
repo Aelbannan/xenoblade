@@ -1439,9 +1439,11 @@ void cf::CActParamAnimGame::func_8005DCA8() {
     // cos, sin, then negated sin) while the matrix keeps raw float copies;
     // the ctor arg order (y, x, z) reproduces MWCC's right-to-left argument
     // evaluation and thus its temp allocation.
+    double dsin = sinv;
+    double dcos = cosv;
     ml::CVec3 rot(m[0][0] * lbl_eu_80666040 + m[0][1] * lbl_eu_80666044 + m[0][2] * lbl_eu_80666040,
-                  m[0][0] * (f32)-(double)sinv + m[0][1] * lbl_eu_80666040 + m[0][2] * (f32)(double)cosv,
-                  m[0][0] * (f32)(double)cosv + m[0][1] * lbl_eu_80666040 + m[0][2] * (f32)(double)sinv);
+                  m[0][0] * -(f32)dsin + m[0][1] * lbl_eu_80666040 + m[0][2] * (f32)dcos,
+                  m[0][0] * (f32)dcos + m[0][1] * lbl_eu_80666040 + m[0][2] * (f32)dsin);
     func_8004B7C0(this, &rot);
     func_8004CEF8(this, 0);
     d.x = nw4r::math::SinFIdx(v->f444 * lbl_eu_806660CC) * lbl_eu_80666104;
@@ -1454,8 +1456,8 @@ void cf::CActParamAnimGame::func_8005DCA8() {
     target.z = delta.z;
     ((bool (*)(void*, ml::CVec3*, const ml::CVec3*, const ml::CVec3*))func_8004B354)(this, &target, &delta, &d);
     // Interleaved RMW pair: load both words before either store (retail shape).
-    u32 flags4ec = v->flags4EC;
     u32 flags0c = v->flags0C;
+    u32 flags4ec = v->flags4EC;
     v->flags4EC = flags4ec | 0x40000;
     v->flags0C = flags0c & ~0x80;
 }

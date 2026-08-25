@@ -1577,19 +1577,17 @@ int func_804B5088(CColiQueryResult* self, const Vec* a, const Vec* b,
     if (isFirst == 0) {
         st = &lbl_eu_8065D138;
         st->flag = 0;
-        // Creation order drives FPR coloring: AEC8 -> f0, AEC4 -> f1.
-        const f32* p8 = &lbl_eu_8066AEC8;
-        f32 v92 = *p8;
+        // One-shot volatile reads pin each pool load to its statement
+        // position (plain const refs/pointers get hoisted to block start).
+        f32 v76 = *(const volatile f32*)&lbl_eu_8066AEC4;
         init = 1;
-        const f32* p4 = &lbl_eu_8066AEC4;
-        f32 v76 = *p4;
+        f32 v92 = *(const volatile f32*)&lbl_eu_8066AEC8;
         // Src snapshot: load x/y, store y (hi) before x (lo), then z.
         const CColiSrcVec* av = (const CColiSrcVec*)a;
         u32 lo = av->x;
         u32 hi = av->y;
         st->src.y = hi;
-        const f32* p0 = &lbl_eu_8066AEC0;
-        f32 zero = *p0;
+        f32 zero = *(const volatile f32*)&lbl_eu_8066AEC0;
         st->src.x = lo;
         st->src.z = av->z;
         st->bbMax[2] = v76;
@@ -1625,28 +1623,27 @@ int func_804B5088(CColiQueryResult* self, const Vec* a, const Vec* b,
     }
 
     if (init != 0) {
-        if (found != 0 && lbl_eu_8065D138.flag != 0) {
-            // Word copies of the accumulated AABB: each 3-word group is a
-            // pipelined pair (load x/y, store y/x) plus a trailing z word.
-            const CColiSrcVec* smin =
-                (const CColiSrcVec*)&lbl_eu_8065D138.bbMin[0];
-            CColiSrcVec* dmin = (CColiSrcVec*)&self->bbMin[0];
-            u32 mlo = smin->x;
-            u32 mhi = smin->y;
-            dmin->y = mhi;
-            dmin->x = mlo;
-            dmin->z = smin->z;
-            const CColiSrcVec* smax =
-                (const CColiSrcVec*)&lbl_eu_8065D138.bbMax[0];
-            CColiSrcVec* dmax = (CColiSrcVec*)&self->bbMax[0];
-            u32 xlo = smax->x;
-            u32 xhi = smax->y;
-            dmax->y = xhi;
-            dmax->x = xlo;
-            dmax->z = smax->z;
-            return 1;
-        }
-        return 0;
+        if (found == 0) return 0;
+        if (lbl_eu_8065D138.flag == 0) return 0;
+        // Word copies of the accumulated AABB: each 3-word group is a
+        // pipelined pair (load x/y, store y/x) plus a trailing z word.
+        const CColiSrcVec* smin =
+            (const CColiSrcVec*)&lbl_eu_8065D138.bbMin[0];
+        CColiSrcVec* dmin = (CColiSrcVec*)&self->bbMin[0];
+        u32 mlo = smin->x;
+        u32 mhi = smin->y;
+        dmin->y = mhi;
+        dmin->x = mlo;
+        dmin->z = smin->z;
+        const CColiSrcVec* smax =
+            (const CColiSrcVec*)&lbl_eu_8065D138.bbMax[0];
+        CColiSrcVec* dmax = (CColiSrcVec*)&self->bbMax[0];
+        u32 xlo = smax->x;
+        u32 xhi = smax->y;
+        dmax->y = xhi;
+        dmax->x = xlo;
+        dmax->z = smax->z;
+        return 1;
     }
     return found;
 }

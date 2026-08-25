@@ -43,11 +43,21 @@ int func_8023CD9C(CfNandSaveBlock* block);
 void func_8023E544(cf::CfNandManager* self, void* unk, u8* flag, u32* out);
 void func_8023EABC(cf::CfNandManager* self, u32 type, u8* status, u32* out);
 
-// Constructor body lives in the real default ctor; members (event-ring
-// slots, pending scratch) are constructed natively by the compiler, which
-// reproduces retail's inlined array-construction expansion.
-cf::CfNandManager::CfNandManager() {
-    u32* w = reinterpret_cast<u32*>(this);
+// Constructor (retail flat symbol __ct__cf_CfNandManager). Takes the scene
+// pointer create() forwards in r4, but the body ignores it.
+// Event-ring slots are constructed through a TU-local wrapper object so
+// MWCC expands the 15-element array construction inline.
+struct CfNandEventArrayInit {
+    CfNandEvent m[15];
+    CfNandEventArrayInit() : m() {}
+};
+
+extern "C" void* __ct__cf_CfNandManager(void* self, CScn* pScene) {
+    (void)pScene;
+    cf::CfNandManager* mgr = (cf::CfNandManager*)self;
+    __ct__8CProcessFv(mgr);
+
+    u32* w = reinterpret_cast<u32*>(mgr);
     const u32* nullPtmf = __ptmf_null;
 
     // CTTask base vtable first, then the composite/derived vtables and the
@@ -69,34 +79,43 @@ cf::CfNandManager::CfNandManager() {
     w[4] = reinterpret_cast<u32>(vt);                 // +0x10 derived
     w[0x15] = reinterpret_cast<u32>(vt) + 0x24;       // +0x54 IWorkEvent
     w[0x16] = reinterpret_cast<u32>(vt) + 0xac;       // +0x58 IScnRender
-    field_0x5C = 0;
+    mgr->field_0x5C = 0;
 
-    // Event-ring metadata; the ring slots themselves were constructed by the
-    // implicit member initialization (slot 0 inline stores, slots 1..15 via
-    // the array-construction expansion - tags left untouched).
-    mEventQueue.mSize = 0x10;
-    mEventQueue.mRingBase = &mEventQueue.mFirst;
-    mEventQueue.mTail = 0;
-    mEventQueue.mHead = 0;
+    // Event-ring init: slot 0 inline, slots 1..15 through the wrapper's
+    // inlined array-construction expansion (tags left untouched), then the
+    // ring metadata.
+    CfNandEvent* e0 = &mgr->mEventQueue.mFirst;
+    e0->mWord = 0;
+    e0->mField8 = 0;
+    e0->mFieldC = 0;
+    e0->mFieldE = 0;
+    e0->mFieldF = 0;
 
-    CfNandPendingEvent* p = &mPending;
+    new (&mgr->mEventQueue.mRest) CfNandEventArrayInit;
+
+    mgr->mEventQueue.mSize = 0x10;
+    mgr->mEventQueue.mRingBase = &mgr->mEventQueue.mFirst;
+    mgr->mEventQueue.mTail = 0;
+    mgr->mEventQueue.mHead = 0;
+
+    CfNandPendingEvent* p = &mgr->mPending;
     p->mCb = 0;
     p->mPayload = 0;
     p->mType = 0;
     p->mSubtype = 0;
     p->mFlag = 0;
-    field_180 = 0;
-    field_184 = 0;
-    field_186 = 0;
+    mgr->field_180 = 0;
+    mgr->field_184 = 0;
+    mgr->field_186 = 0;
 
     // Default null move hook (+0x188 ptmf), then register the singleton and
     // clear the NAND state globals, then install the static default hook.
-    u32* hook = reinterpret_cast<u32*>(&mMoveHook);
+    u32* hook = reinterpret_cast<u32*>(&mgr->mMoveHook);
     hook[0] = nullPtmf[0];
     hook[1] = nullPtmf[1];
     hook[2] = nullPtmf[2];
 
-    lbl_eu_80664768 = this;
+    lbl_eu_80664768 = mgr;
     lbl_eu_8066476C = 0;
     lbl_eu_8066476D = 0;
     lbl_eu_80664770 = 0;
@@ -110,17 +129,10 @@ cf::CfNandManager::CfNandManager() {
     hook[2] = lbl_eu_80536B20[2];
 
     lbl_eu_80664774 = 0;
-    mPending.mType = 0;
-    mPending.mPayload = 0;
-    mPending.mFlag = 0;
-}
-
-// Retail flat-named entry (create() calls this); the real ctor (with native
-// base + member construction) inlines in, giving one function whose body
-// matches retail byte-for-byte.
-extern "C" void* __ct__cf_CfNandManager(void* self, CScn* pScene) {
-    (void)pScene;
-    return new (self) cf::CfNandManager;
+    mgr->mPending.mType = 0;
+    mgr->mPending.mPayload = 0;
+    mgr->mPending.mFlag = 0;
+    return mgr;
 }
 
 // Destructor of the CfNandEventQueue member embedded in CfNandManager at +0x60

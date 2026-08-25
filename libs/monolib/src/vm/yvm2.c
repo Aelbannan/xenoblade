@@ -2014,8 +2014,8 @@ int vmc_call_ind(VMThread* pThread, u8 code){
             //Far call: switch the thread over to the target package first
             int target = arg->value.intVal;
             int retPc = pThread->reg.pc + 1;
-            SBHeader* scriptData = vmState.packages[arg->unk2].scriptDataPtr;
             pThread->unk2C = arg->unk2;
+            SBHeader* scriptData = vmState.packages[arg->unk2].scriptDataPtr;
             pThread->scriptData = scriptData;
             pThread->codeData = getSectionEntriesPtr(scriptData->codeOfs);
             pThread->staticVarsEntries = getSectionEntriesPtr(scriptData->staticVarsOfs);
@@ -2030,8 +2030,8 @@ int vmc_call_ind(VMThread* pThread, u8 code){
         //(NOTE: different packing than pluginSubTail, which uses bit 8).
         //Read directly through the arg pointer so MWCC emits retail's single
         //"lwz r29, -4(arg)" instead of re-deriving it from reg.sp
-        PluginFunc func = vmState.plugins[arg->unk2].unk4[arg->value.uintVal].func;
         u32 argCnt = (arg - 1)->value.uintVal;
+        PluginFunc func = vmState.plugins[arg->unk2].unk4[arg->value.uintVal].func;
         pThread->waitMode = FALSE;
         int result = func(pThread);
 

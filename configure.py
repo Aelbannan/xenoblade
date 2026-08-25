@@ -1737,7 +1737,7 @@ config.libs = [
             Object(NonMatching, "nw4r/src/snd/snd_SoundSystem.cpp"),
             Object(NonMatching, "nw4r/src/snd/snd_SoundThread.cpp"),
             Object(NonMatching, "nw4r/src/snd/snd_StrmChannel.cpp"),
-            Object(NonMatching, "nw4r/src/snd/snd_StrmFile.cpp"),
+            Object(Matching, "nw4r/src/snd/snd_StrmFile.cpp"),
             Object(NonMatching, "nw4r/src/snd/snd_StrmPlayer.cpp"),
             Object(NonMatching, "nw4r/src/snd/snd_StrmSound.cpp"),
             Object(NonMatching, "nw4r/src/snd/snd_StrmSoundHandle.cpp"),

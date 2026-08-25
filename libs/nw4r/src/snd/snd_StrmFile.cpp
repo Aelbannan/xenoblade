@@ -73,7 +73,15 @@ inline bool LoaderReaderAvailable(const StrmFileLoader* pLoader) {
            NULL;
 }
 
-bool StrmFileReader::IsValidFileHeader(const void* pStrmBin) {
+// Retail has no standalone IsValidFileHeader / Setup symbol: MWCC inlines
+// both into StrmFileLoader::LoadFileHeader, so they are defined inline here to
+// avoid emitting extra out-of-line copies (same approach as snd_WsdFile.cpp).
+// Their signatures take the raw file image as declared in the locked header;
+// StrmBinaryData names that untyped image type locally.
+typedef const void StrmBinaryData;
+
+inline bool StrmFileReader::IsValidFileHeader(
+    const StrmBinaryData* pStrmBin) {
     const ut::BinaryFileHeader* pFileHeader =
         static_cast<const ut::BinaryFileHeader*>(pStrmBin);
 
@@ -94,7 +102,7 @@ bool StrmFileReader::IsValidFileHeader(const void* pStrmBin) {
 
 StrmFileReader::StrmFileReader() : mHeader(NULL), mHeadBlock(NULL) {}
 
-void StrmFileReader::Setup(const void* pStrmBin) {
+inline void StrmFileReader::Setup(const StrmBinaryData* pStrmBin) {
     if (!IsValidFileHeader(pStrmBin)) {
         return;
     }
@@ -104,60 +112,22 @@ void StrmFileReader::Setup(const void* pStrmBin) {
     mHeadBlock = static_cast<const StrmFile::HeadBlock*>(
         ut::AddOffsetToPtr(mHeader, mHeader->headBlockOffset));
 
+    // Retail performs this dead ref resolution (debug leftover); keep it so
+    // the instruction schedule matches.
     (void)Util::GetDataRefAddress0(
         mHeadBlock->refDataHeader,
-        &mHeadBlock->refDataHeader); // debug leftover
+        &mHeadBlock->refDataHeader);
 }
 
-bool StrmFileReader::ReadStrmInfo(StrmInfo* pStrmInfo) const {
-    const StrmFile::StrmDataInfo* pStrmData = Util::GetDataRefAddress0(
-        mHeadBlock->refDataHeader, &mHeadBlock->refDataHeader);
-
-    pStrmInfo->format = pStrmData->format;
-    pStrmInfo->loopFlag = pStrmData->loopFlag;
-    pStrmInfo->numChannels = pStrmData->numChannels;
-    pStrmInfo->sampleRate =
-        (pStrmData->sampleRate24 << 16) + pStrmData->sampleRate;
-    pStrmInfo->blockHeaderOffset = pStrmData->blockHeaderOffset;
-    pStrmInfo->loopStart = pStrmData->loopStart;
-    pStrmInfo->loopEnd = pStrmData->loopEnd;
-    pStrmInfo->dataOffset = pStrmData->dataOffset;
-    pStrmInfo->numBlocks = pStrmData->numBlocks;
-    pStrmInfo->blockSize = pStrmData->blockSize;
-    pStrmInfo->blockSamples = pStrmData->blockSamples;
-    pStrmInfo->lastBlockSize = pStrmData->lastBlockSize;
-    pStrmInfo->lastBlockSamples = pStrmData->lastBlockSamples;
-    pStrmInfo->lastBlockPaddedSize = pStrmData->lastBlockPaddedSize;
-    pStrmInfo->adpcmDataInterval = pStrmData->adpcmDataInterval;
-    pStrmInfo->adpcmDataSize = pStrmData->adpcmDataSize;
-
-    return true;
-}
-
-bool StrmFileReader::ReadAdpcmInfo(AdpcmInfo* pAdpcmInfo, int channels) const {
-    const StrmFile::StrmDataInfo* pStrmData = Util::GetDataRefAddress0(
-        mHeadBlock->refDataHeader, &mHeadBlock->refDataHeader);
-
-    if (pStrmData->format != WaveFile::FORMAT_ADPCM) {
-        return false;
-    }
-
-    const StrmFile::ChannelTable* pChannelTable = Util::GetDataRefAddress0(
-        mHeadBlock->refChannelTable, &mHeadBlock->refDataHeader);
-
-    if (channels >= pChannelTable->channelCount) {
-        return false;
-    }
-
-    const StrmFile::ChannelInfo* pChannelInfo = Util::GetDataRefAddress0(
-        pChannelTable->refChannelHeader[channels], &mHeadBlock->refDataHeader);
-
-    const AdpcmInfo* pSrcInfo = Util::GetDataRefAddress0(
-        pChannelInfo->refAdpcmInfo, &mHeadBlock->refDataHeader);
-
-    *pAdpcmInfo = *pSrcInfo;
-    return true;
-}
+// NOTE: StrmFileReader::ReadStrmInfo / ReadStrmTrackInfo and the StrmFileLoader
+// read entry points below are emitted with their retail mangled names via C
+// linkage: their signatures use the nested types
+// StrmFileReader::StrmInfo / StrmFileReader::StrmTrackInfo, which the locked
+// header cannot declare as member functions.
+//
+// StrmFileReader::ReadAdpcmInfo has no retail symbol in this unit (retail
+// resolves ADPCM channel params through StrmFileLoader::ReadAdpcmInfo only),
+// so it is not defined here.
 
 bool StrmFileLoader::LoadFileHeader(void* pStrmBin, u32 size) {
     u8 headerArea[HEADER_ALIGNED_SIZE + 32];
@@ -173,6 +143,7 @@ bool StrmFileLoader::LoadFileHeader(void* pStrmBin, u32 size) {
         static_cast<StrmFile::Header*>(ut::RoundUp(headerArea, 32));
 
     StrmFileReader reader;
+
     if (!reader.IsValidFileHeader(pHeader)) {
         return false;
     }
@@ -190,6 +161,7 @@ bool StrmFileLoader::LoadFileHeader(void* pStrmBin, u32 size) {
     }
 
     mReader.Setup(pStrmBin);
+
     return true;
 }
 
@@ -227,19 +199,25 @@ bool StrmFileLoader::ReadAdpcBlockData(u16* pYN1, u16* pYN2, int block,
 extern "C" bool ReadStrmInfo__Q44nw4r3snd6detail14StrmFileReaderCFPQ54nw4r3snd6detail14StrmFileReader8StrmInfo(
     const StrmFileReader* self, StrmInfoLayout* pStrmInfo) {
     const StrmFile::HeadBlock* pHead = ReaderHeadBlock(self);
-    const StrmFile::StrmDataInfo* pStrmData = Util::GetDataRefAddress0(
-        pHead->refDataHeader, &pHead->refDataHeader);
+    // Pointer-local for the ref makes MWCC materialize the base address
+    // before reading the ref fields (retail schedule).
+    const Util::DataRef<StrmFile::StrmDataInfo>* pRef =
+        &pHead->refDataHeader;
+    const StrmFile::StrmDataInfo* pStrmData =
+        Util::GetDataRefAddress0(*pRef, pRef);
 
+    // File format tag -> runtime StrmInfo format id (SampleFormat).
+    // Retail lowers this as a signed-range comparison BST.
     int format;
     switch (pStrmData->format) {
+    case 2:
+        format = 3;
+        break;
     case 1:
         format = 1;
         break;
     case 0:
         format = 2;
-        break;
-    case 2:
-        format = 3;
         break;
     default:
         format = 3;
@@ -351,12 +329,19 @@ extern "C" bool ReadStrmInfo__Q44nw4r3snd6detail14StrmFileLoaderCFPQ54nw4r3snd6d
 // StrmFileLoader::ReadStrmTrackInfo(StrmFileReader::StrmTrackInfo*, int)
 extern "C" bool ReadStrmTrackInfo__Q44nw4r3snd6detail14StrmFileLoaderCFPQ54nw4r3snd6detail14StrmFileReader13StrmTrackInfoi(
     const StrmFileLoader* self, StrmTrackInfoLayout* pTrackInfo, int trackNo) {
-    if (!LoaderReaderAvailable(self)) {
+    // The embedded reader starts at the loader's mReader.mHeader field.
+    const StrmLoaderLayout* pLayout =
+        reinterpret_cast<const StrmLoaderLayout*>(self);
+
+    if (pLayout->readerHeader == NULL) {
         return false;
     }
 
+    const StrmFileReader* pReader =
+        reinterpret_cast<const StrmFileReader*>(&pLayout->readerHeader);
+
     ReadStrmTrackInfo__Q44nw4r3snd6detail14StrmFileReaderCFPQ54nw4r3snd6detail14StrmFileReader13StrmTrackInfoi(
-        LoaderReaderPtr(self), pTrackInfo, trackNo);
+        pReader, pTrackInfo, trackNo);
     return true;
 }
 
@@ -375,6 +360,14 @@ extern "C" int GetChannelCount__Q44nw4r3snd6detail14StrmFileLoaderCFv(
     return pChannelTable->channelCount;
 }
 
+// Head-block accessor: the embedded reader's mHeadBlock lives at loader+0x8.
+// Written as a per-use expression so MWCC rematerializes the load at each
+// ref resolution (retail schedule), instead of caching it in a register.
+inline const StrmFile::HeadBlock*
+LoaderReaderHeadBlock(const StrmFileLoader* pLoader) {
+    return reinterpret_cast<const StrmLoaderLayout*>(pLoader)->readerHeadBlock;
+}
+
 // StrmFileLoader::ReadAdpcmInfo(AdpcmParam*, AdpcmLoopParam*, int)
 extern "C" bool ReadAdpcmInfo__Q44nw4r3snd6detail14StrmFileLoaderCFPQ44nw4r3snd6detail10AdpcmParamPQ44nw4r3snd6detail14AdpcmLoopParami(
     const StrmFileLoader* self, AdpcmParam* pParam, AdpcmLoopParam* pLoopParam,
@@ -383,30 +376,29 @@ extern "C" bool ReadAdpcmInfo__Q44nw4r3snd6detail14StrmFileLoaderCFPQ44nw4r3snd6
         return false;
     }
 
-    const StrmFile::HeadBlock* pHead =
-        reinterpret_cast<const StrmLoaderLayout*>(self)->readerHeadBlock;
     const StrmFile::StrmDataInfo* pStrmData = Util::GetDataRefAddress0(
-        pHead->refDataHeader, &pHead->refDataHeader);
+        LoaderReaderHeadBlock(self)->refDataHeader,
+        &LoaderReaderHeadBlock(self)->refDataHeader);
 
-    if (pStrmData->format != WaveFile::FORMAT_ADPCM) {
-        return true;
+    // Both guard checks branch forward to the shared "return true" tail.
+    if (pStrmData->format == WaveFile::FORMAT_ADPCM) {
+        const StrmFile::ChannelTable* pChannelTable = Util::GetDataRefAddress0(
+            LoaderReaderHeadBlock(self)->refChannelTable,
+            &LoaderReaderHeadBlock(self)->refDataHeader);
+
+        if (channel < pChannelTable->channelCount) {
+            const StrmFile::ChannelInfo* pChannelInfo = Util::GetDataRefAddress0(
+                pChannelTable->refChannelHeader[channel],
+                &LoaderReaderHeadBlock(self)->refDataHeader);
+
+            const AdpcmInfo* pAdpcmData = Util::GetDataRefAddress0(
+                pChannelInfo->refAdpcmInfo,
+                &LoaderReaderHeadBlock(self)->refDataHeader);
+
+            *pParam = pAdpcmData->param;
+            *pLoopParam = pAdpcmData->loopParam;
+        }
     }
-
-    const StrmFile::ChannelTable* pChannelTable = Util::GetDataRefAddress0(
-        pHead->refChannelTable, &pHead->refDataHeader);
-
-    if (channel >= pChannelTable->channelCount) {
-        return true;
-    }
-
-    const StrmFile::ChannelInfo* pChannelInfo = Util::GetDataRefAddress0(
-        pChannelTable->refChannelHeader[channel], &pHead->refDataHeader);
-
-    const AdpcmInfo* pAdpcmData = Util::GetDataRefAddress0(
-        pChannelInfo->refAdpcmInfo, &pHead->refDataHeader);
-
-    *pParam = pAdpcmData->param;
-    *pLoopParam = pAdpcmData->loopParam;
     return true;
 }
 

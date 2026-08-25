@@ -342,8 +342,10 @@ u32 lbl_eu_8066571C;
 
 // ===== Dissolved monolibdata2 data owned by this TU =====
 // Forward decls (definition order follows the retail address order).
-extern "C" u32 lbl_eu_806637D8[2];           // [.sdata] RTTI locator
-extern "C" const char lbl_eu_805231B0[0xC]; // [.rodata] "CLibLayout" name
+// Global-scope variables are not C++-mangled, so plain extern decls emit the
+// exact retail lbl_eu_* symbols (no extern "C" needed).
+extern u32 lbl_eu_806637D8[2];           // [.sdata] RTTI locator
+extern const char lbl_eu_805231B0[0xC]; // [.rodata] "CLibLayout" name
 // NOTE: the base typeinfo objects (__RTTI__10IWorkEvent / __RTTI__11CWorkThread)
 // cannot be spelled here: declaring an __RTTI__* name in a TU with a
 // novtable-predeclared class trips an MWCC -ipa file ICE ("illegal name
@@ -353,7 +355,7 @@ extern u32 rtti_10IWorkEvent[];
 extern u32 rtti_11CWorkThread[];
 // [.data] 0x8056D350-0x8056D3F0 (0xA0): __vt__10CLibLayout. Base class
 // CWorkThread is novtable in retail, so the vtable/RTTI are all manual.
-extern "C" u32 lbl_eu_8056D350[40] = {
+u32 lbl_eu_8056D350[40] = {
     (u32)&lbl_eu_806637D8, 0x00000000, (u32)&__dt__10CLibLayoutFv,
     (u32)&WorkEvent1__10IWorkEventFPvPCc, (u32)&OnFileEvent__10IWorkEventFP10CEventFile,
     (u32)&WorkEvent3__10IWorkEventFPv, (u32)&WorkEvent4__10IWorkEventFv,
@@ -378,18 +380,18 @@ extern "C" u32 lbl_eu_8056D350[40] = {
 };
 // [.data] 0x8056D3F0-0x8056D408 (0x18): RTTI base list [IWorkEvent,0,
 // CWorkThread,0, 0,0].
-extern "C" u32 lbl_eu_8056D3F0[6] = {
+u32 lbl_eu_8056D3F0[6] = {
     (u32)&rtti_10IWorkEvent, 0x00000000, (u32)&rtti_11CWorkThread,
     0x00000000, 0x00000000, 0x00000000,
 };
 // [.sdata] 0x806637D8-0x806637E0 (0x8): __RTTI__10CLibLayout locator.
-extern "C" u32 lbl_eu_806637D8[2] = { (u32)&lbl_eu_805231B0, (u32)&lbl_eu_8056D3F0 };
+u32 lbl_eu_806637D8[2] = { (u32)&lbl_eu_805231B0, (u32)&lbl_eu_8056D3F0 };
 
 // [.rodata] 0x805231B0-0x805231BC (0xC): "CLibLayout" RTTI name string + pad.
 // NOTE: no __declspec(align(8)) here -- retail emits this 0xB-byte string
 // first at +0x0 followed directly by lbl_eu_805231BC at +0xC; an 8-byte
 // alignment makes MWCC re-order/re-pad .rodata (decomp grew to 0x24).
-extern "C" const char lbl_eu_805231B0[0xC] = "CLibLayout";
+const char lbl_eu_805231B0[0xC] = "CLibLayout";
 // [.rodata] 0x805231BC-0x805231D0 (0x14): layout region name + thread name;
 // packs tight against lbl_eu_805231B0 (retail has no pad at +0xC).
 extern const char lbl_eu_805231BC[0x14] = "Layout Mem\0LAYOUT\0";

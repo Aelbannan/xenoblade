@@ -456,7 +456,7 @@ config.libs = [
             Object(Matching, "kyoshin/plugin/pluginPad.cpp"),
             Object(NonMatching, "kyoshin/cf/CfRes.cpp"),
             Object(NonMatching, "kyoshin/cf/IResInfo.cpp"),
-            Object(NonMatching, "kyoshin/cf/CfScript.cpp"),
+            Object(Matching, "kyoshin/cf/CfScript.cpp"),
             Object(NonMatching, "kyoshin/cf/CfTaskMain.cpp"),
             Object(NonMatching, "kyoshin/cf/CfTFile.cpp"),
             Object(NonMatching, "kyoshin/cf/CfCamEvent.cpp"),

@@ -6,14 +6,14 @@
 #include "monolib/util/FixStr.hpp"
 #include "monolib/util/CPathUtil.hpp"
 #include "monolib/vm/yvm2.h"
-#include <cstring>
+#include <stdio.h>
+#include <stdarg.h>
+#include <string.h>
 
 // ml::FixStr<128>::format is defined below (inside namespace ml).  NOTE: MWCC
 // mangles the in-TU member call at func_80068ECC to the generic-template name
 // format__Q22ml11FixStr<128>FPCce instead of the retail specialization name
 // (...10FixStr...) regardless of declaration order or scope - open item.
-#include <cstdio>
-#include <cstdarg>
 
 // ml::FixStr<128>::format (retail standalone symbol): vsnprintf into a 0x100
 // stack buffer, then copy into the fixed string.  Defined BEFORE its callers
@@ -30,8 +30,8 @@ void FixStr<128>::format(const char* fmt, ...) {
     vsnprintf(buffer, sizeof(buffer), fmt, args);
     va_end(args);
 
-    mLength = (int)std::strlen(buffer);
-    std::strcpy(mString, buffer);
+    mLength = (int)strlen(buffer);
+    strcpy(mString, buffer);
 }
 } // namespace ml
 
@@ -83,7 +83,9 @@ __declspec(noinline) void CfScriptManager::func_80068B20(const char* name) {
     func_80068ECC(&mScripts[0], name);
 }
 
-// func_80068B24 - get singleton and call func_80068B58
+// func_80068B24 - get singleton and call func_80068B58 (free function: loads
+// slot 1 by offsetting the singleton base, mirroring the retail split where
+// slot 1 has no member thunk).
 void func_80068B24(const char* name) {
     CfScriptManager* mgr = CfScriptManager::getInstance();
     func_80068B58(mgr, name);
@@ -272,8 +274,8 @@ extern "C" bool func_80068ECC(CfScript* script, const char* name) {
 
     // Ignore the two reserved "no-op" script names.
     if (name != nullptr) {
-        if (std::strcmp(name, &lbl_eu_804FB3A4[0xA]) == 0 ||
-            std::strcmp(name, &lbl_eu_804FB3A4[0x14]) == 0) {
+        if (strcmp(name, &lbl_eu_804FB3A4[0xA]) == 0 ||
+            strcmp(name, &lbl_eu_804FB3A4[0x14]) == 0) {
             return false;
         }
     }
@@ -288,7 +290,7 @@ extern "C" bool func_80068ECC(CfScript* script, const char* name) {
     if (length == 0) {
         index = -1;
     } else {
-        int sepLen = std::strlen(lbl_eu_80661AD0);
+        int sepLen = strlen(lbl_eu_80661AD0);
         char* p = &(*(ml::FixStr<128>*)pathStorage).mString[-1] + length;
         char* end = &(*(ml::FixStr<128>*)pathStorage).mString[-1];
         while (true) {
@@ -296,7 +298,7 @@ extern "C" bool func_80068ECC(CfScript* script, const char* name) {
                 index = -1;
                 break;
             }
-            if (std::strncmp(p, lbl_eu_80661AD0, sepLen) == 0) {
+            if (strncmp(p, lbl_eu_80661AD0, sepLen) == 0) {
                 index = (int)(p - (*(ml::FixStr<128>*)pathStorage).mString);
                 break;
             }
@@ -313,11 +315,11 @@ extern "C" bool func_80068ECC(CfScript* script, const char* name) {
             if (cut == -1) {
                 cut = (*(ml::FixStr<128>*)pathStorage).mLength;
             }
-            std::strncpy(((ml::FixStr<128>*)tempStorage)->mString,
+            strncpy(((ml::FixStr<128>*)tempStorage)->mString,
                          (*(ml::FixStr<128>*)pathStorage).mString, cut);
             ((ml::FixStr<128>*)tempStorage)->mString[cut] = '\0';
             ((ml::FixStr<128>*)tempStorage)->mLength =
-                std::strlen(((ml::FixStr<128>*)tempStorage)->mString);
+                strlen(((ml::FixStr<128>*)tempStorage)->mString);
         }
         (*(ml::FixStr<128>*)pathStorage) = ((ml::FixStr<128>*)tempStorage)->mString;
     }
@@ -331,10 +333,10 @@ extern "C" bool func_80068ECC(CfScript* script, const char* name) {
     (*(ml::FixStr<128>*)pathStorage) += &lbl_eu_804FB3A4[0x21];
 
     // If the current directory already matches, sanity-check the file exists.
-    if (std::strcmp(lbl_eu_805708D0, lbl_eu_80661AC0) == 0) {
+    if (strcmp(lbl_eu_805708D0, lbl_eu_80661AC0) == 0) {
         if (getFileSize__11CDeviceFileFPCc((*(ml::FixStr<128>*)pathStorage).mString, 1) < 0) {
-            if (std::strstr((*(ml::FixStr<128>*)pathStorage).mString, &lbl_eu_804FB3A4[0x25]) == nullptr) {
-                std::strstr((*(ml::FixStr<128>*)pathStorage).mString, &lbl_eu_804FB3A4[0x2B]);
+            if (strstr((*(ml::FixStr<128>*)pathStorage).mString, &lbl_eu_804FB3A4[0x25]) == nullptr) {
+                strstr((*(ml::FixStr<128>*)pathStorage).mString, &lbl_eu_804FB3A4[0x2B]);
             }
             return false;
         }
@@ -342,7 +344,7 @@ extern "C" bool func_80068ECC(CfScript* script, const char* name) {
 
     // If the slot holds a different loaded script, leave it alone.
     if (extBuffer.mLength != 0) {
-        if (std::strcmp(extBuffer.mString, script->mName) != 0) {
+        if (strcmp(extBuffer.mString, script->mName) != 0) {
             u32 flags = script->mFlags;
             if (!(flags & 0x2) && (flags & 0x1)) {
                 return true;
@@ -372,8 +374,8 @@ extern "C" bool func_80068ECC(CfScript* script, const char* name) {
     // neg/or/srwi. r27, then `beq` on the same bits).
     bool loaded = handle != nullptr;
     if (loaded) {
-        script->mNameLen = std::strlen(extBuffer.mString);
-        std::strcpy(script->mName, extBuffer.mString);
+        script->mNameLen = strlen(extBuffer.mString);
+        strcpy(script->mName, extBuffer.mString);
         script->mFlags |= 0x1;
     }
 
@@ -413,14 +415,14 @@ extern "C" bool OnFileEvent__8CfScriptFP10CEventFile(cf::CfScript* self, cf::CEv
             self->mFlags |= 0x2;
             CfScriptNameBuffer tmp;
             ml::CPathUtil::getNoPathExtName(*(ml::FixStr<64>*)&tmp, event->field_0C);
-            self->mNameLen = std::strlen(tmp.mString);
-            std::strcpy(self->mName, tmp.mString);
+            self->mNameLen = strlen(tmp.mString);
+            strcpy(self->mName, tmp.mString);
         } else {
             // Failed/other event: look for fallback names, mark "ready".
             const char* path = event->field_0C;
-            if (std::strstr(path, lbl_eu_80661AC0) != nullptr &&
-                std::strstr(path, &lbl_eu_804FB3A4[0x25]) == nullptr) {
-                std::strstr(path, &lbl_eu_804FB3A4[0x2B]);
+            if (strstr(path, lbl_eu_80661AC0) != nullptr &&
+                strstr(path, &lbl_eu_804FB3A4[0x25]) == nullptr) {
+                strstr(path, &lbl_eu_804FB3A4[0x2B]);
             }
             self->mFlags |= 0x10;
         }

@@ -86,11 +86,10 @@ public:
     // 0x56: script index (u16)
     u16 mIndex;            // 0x56
 
+    // Dispatched through the retail ptmf table lbl_eu_80526DD0 while the
+    // slot is loading (mWaitCount 0/1).
     void waitLoad();
     void update();
-
-    // Reset this script slot
-    void reset();
 };
 
 // CfScriptManager - manages an array of up to 3 CfScript objects.
@@ -102,11 +101,10 @@ public:
 
     CfScript mScripts[3]; // 0x00, 0x58, 0xB0 (total 0x108)
 
-    // Script loading functions for each slot
+    // Script loading thunks for each slot.
     // noinline: these are retail `bl`-thunks (forward this+name to func_80068ECC);
     // prevents MWCC -inline auto from inlining them into the wrappers (REF §8616).
     void __declspec(noinline) func_80068B20(const char* name);  // load slot 0 (this == &mScripts[0])
-    void func_80068B58(const char* name); // load slot 1 (offset 0x58)
     void __declspec(noinline) func_80068B94(const char* name);  // load slot 2 (offset 0xB0)
 
     // Set "ready" flag on each slot
@@ -122,13 +120,8 @@ public:
     void func_80068D38();  // reset slot 1
     void func_80068DD0();  // reset slot 2
 
-    // Check script state
-    void func_80068E44();
-    void func_80068E7C();
-    void func_80068E9C();
-
     // Main update and exec
-    void func_800694B0();
+    void __declspec(noinline) func_800694B0();
     void func_8006953C();
 };
 

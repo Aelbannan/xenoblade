@@ -37,56 +37,37 @@ CLibStaticData* CLibStaticData::getInstance(){
     return spInstance;
 }
 
-// Read-only view over the singleton's thread flag / message-queue tail fields
-struct CMsgParamEntryView {
-    u32 command; //0x0
-    u32 wid; //0x4
-    u32 unk8;
-    u32 unkC;
-    u32 unk10;
-    u32 unk14;
-    u32 unk18;
-    u32 unk1C;
-    u16 unk20;
-    u8 unk22;
-    u8 unk23;
-};
-
-// (the private CMsgParam<8> members mArrayPtr/mFront/mSize/mCapacity sit at
-// 0x1A4..0x1B0 inside CWorkThread::mMsgQueue). The retail inlines
-// CMsgParam<8>::find(EVT_EXCEPTION) here, so we scan the queue directly.
-class CWorkThreadFieldsView {
+// Read-only view over the private CMsgParam<8> tail inside
+// CWorkThread::mMsgQueue. The mEntries array ends at 0x1A4 (0x80 queue base +
+// vtable + 8 * 0x24-byte entries); retail folds CMsgParam<8>::find()'s ring
+// walk straight into isInitialized's body, so we scan the queue directly
+// instead of calling the out-of-line find().
+class CMsgQueueView {
 public:
-    u8 field_0x0[0x48];              //0x0
-    int mState;                      //0x48 (CWorkThread::ThreadState)
-    u8 field_0x4C[0x7C - 0x4C];      //0x4C
-    u32 mThreadFlags;                //0x7C (CWorkThread::ThreadFlags)
-    u8 field_0x80[0x1A4 - 0x80];     //0x80..0x1A4 (queue vtable + entries)
-    CMsgParamEntryView* mMsgArray;   //0x1A4 (CMsgParam::mArrayPtr)
-    u32 mMsgFront;                   //0x1A8 (CMsgParam::mFront)
-    u32 mMsgSize;                    //0x1AC (CMsgParam::mSize)
-    u32 mMsgCapacity;                //0x1B0 (CMsgParam::mCapacity)
+    u8 field_0x0[0x1A4];             //0x0..0x1A4 (CWorkThread head + queue vtable + entries)
+    CMsgParamEntry* mArrayPtr;       //0x1A4 (CMsgParam::mArrayPtr)
+    u32 mFront;                      //0x1A8 (CMsgParam::mFront)
+    u32 mSize;                       //0x1AC (CMsgParam::mSize)
+    u32 mCapacity;                   //0x1B0 (CMsgParam::mCapacity)
 };
 
-// Retail folds CMsgParam<8>::find(EVT_EXCEPTION)'s ring walk straight into
-// this call site, with the this-arg bound to the instance: view-cast THIS
-// (born at entry, ahead of the loop index -> inst claims the lower volatile)
-// rather than re-loading the singleton global.
-// Retail folds CMsgParam<8>::find(EVT_EXCEPTION)'s ring walk straight into
-// isInitialized's body (the member isRunning call is inlined with this bound
-// to the singleton). Written directly - no wrapper, no helper call.
+// True once the singleton thread has logged in and started running and no
+// EVT_EXCEPTION is pending -- either flagged in mFlags or still queued in the
+// message ring. The member isRunning() is inlined with 'this' bound to the
+// singleton global.
 bool CLibStaticData::isInitialized(){
-    const CWorkThreadFieldsView* inst = (const CWorkThreadFieldsView*)lbl_eu_80665718;
+    const CLibStaticData* inst = lbl_eu_80665718;
 
     bool exception;
-    if (inst->mThreadFlags & THREAD_FLAG_EXCEPTION) {
+    if (inst->mFlags & THREAD_FLAG_EXCEPTION) {
         exception = true;
     } else {
-        // Inlined queue scan for a queued EVT_EXCEPTION event.
+        // Inlined CMsgParam<8>::find(EVT_EXCEPTION): ring walk over the queue.
+        const CMsgQueueView* queue = (const CMsgQueueView*)inst;
         int found;
         u32 i = 0;
-        for (; i < inst->mMsgSize; i++) {
-            if (inst->mMsgArray[(inst->mMsgFront + i) % inst->mMsgCapacity].command == EVT_EXCEPTION) {
+        for (; i < queue->mSize; i++) {
+            if (queue->mArrayPtr[(queue->mFront + i) % queue->mCapacity].command == EVT_EXCEPTION) {
                 found = (int)i;
                 goto merged;
             }
@@ -96,11 +77,13 @@ merged:
         exception = found >= 0;
     }
 
-    // Running once the thread has logged in and started running.
+    // Running once the thread has logged in and started running. Note this
+    // reads CWorkThread::mState (0x48), not the derived-class CLibStaticData
+    // state machine field that shadows it.
     bool result = false;
     if (!exception) {
         bool stateOK = true;
-        int state = inst->mState;
+        int state = inst->CWorkThread::mState;
         if (state != THREAD_STATE_LOGIN && state != THREAD_STATE_RUN) {
             stateOK = false;
         }

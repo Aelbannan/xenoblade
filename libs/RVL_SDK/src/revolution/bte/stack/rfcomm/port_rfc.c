@@ -5,6 +5,12 @@
 // (tPORT) held in the global rfc_cb control block.  Structure field offsets
 // were recovered from the retail assembly and cross-checked against the
 // already-decompiled sibling unit port_utils.c.
+//
+// PORT_* functions here are the callbacks invoked by the RFCOMM multiplexer
+// finite-state machines (rfc_mx_fsm.c / rfc_port_fsm.c): start/parameter
+// negotiation, DLC establishment/release, MSC control, line status and data
+// delivery.  Events reported to the application through p_mgmt_cb mirror the
+// serial-port event bits defined in port_api.c (PORT_EV_*).
 
 #include <harness_catalog.h>
 #include <string.h>
@@ -492,7 +498,10 @@ void PORT_PortNegCnf(tRFC_MCB* p_mcb, u8 dlci, void* p_port_ctrl, u16 result)
 }
 
 /* ========================================================================
- * PORT_ControlInd
+ * PORT_ControlInd - remote MSC received.  Differs from the local signals,
+ * forwards control info back if we have not done so yet, then reports any
+ * signal changes / transmitted data to the application.
+ *
  * ======================================================================== */
 void PORT_ControlInd(tRFC_MCB* p_mcb, u8 dlci, tPORT_CTRL* p_port_ctrl)
 {
@@ -733,7 +742,9 @@ void PORT_FlowInd(tRFC_MCB* p_mcb, u8 dlci, u8 fc)
 }
 
 /* ========================================================================
- * port_rfc_send_tx_data
+ * port_rfc_send_tx_data - drain queued buffers onto the multiplexer while
+ * neither side has flow off.  Returns the PORT_EV_* mask of what happened.
+ *
  * ======================================================================== */
 u32 port_rfc_send_tx_data(tPORT* p_port)
 {
@@ -774,7 +785,10 @@ u32 port_rfc_send_tx_data(tPORT* p_port)
 }
 
 /* ========================================================================
- * port_rfc_closed
+ * port_rfc_closed - tear down the port's RFCOMM side.  While still OPENING
+ * with a pending open, silently release back to the idle state instead of
+ * reporting an error to the application.
+ *
  * ======================================================================== */
 void port_rfc_closed(tPORT* p_port, u8 result)
 {

@@ -576,7 +576,7 @@ config.libs = [
             Object(NonMatching, "kyoshin/COccCulling.cpp"),
             Object(NonMatching, "kyoshin/CSimpleEveTalkWin.cpp"),
             Object(NonMatching, "kyoshin/cf/CTaskCulling.cpp"),
-            Object(NonMatching, "kyoshin/cf/CVision.cpp"),
+            Object(Matching, "kyoshin/cf/CVision.cpp"),
             Object(NonMatching, "kyoshin/code_801A929C.cpp"),
             Object(NonMatching, "kyoshin/plugin/pluginSnd.cpp"),
             Object(Matching, "kyoshin/plugin/pluginGame.cpp"),

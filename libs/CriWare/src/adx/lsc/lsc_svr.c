@@ -61,8 +61,9 @@ void lsc_StatEnd(struct LSC_Hndl *h);
 /* Wait for a stream operation, then bind (or re-bind) the active file entry. */
 void lsc_StatWait(struct LSC_Hndl *h) {
     struct LSC_Entry *e = lsc_entry(h);
+    s32 flen;
+    u32 sum, i, cnt;
     const char *fname;
-    s32 flen, sum, i, cnt;
 
     if (h->count <= 0) {
         return;
@@ -71,22 +72,23 @@ void lsc_StatWait(struct LSC_Hndl *h) {
     ADXSTM_StopNw(h->stream);
     ADXSTM_ReleaseFileNw(h->stream);
 
+    /* fname is loaded only after the stream quiesce calls - keeping it
+       dead across them is what gives MWCC its retail allocation. */
     fname = e->fname;
-    flen = (s32)strlen(fname);
-    sum = 0;
+    flen = (s32)strlen(fname);    sum = 0;
     i = 0;
     if ((u32)flen > 0) {
-        s32 d8 = flen - 8; /* residual bytes afer one unrolled chunk */
+        s32 d8 = flen - 8; /* residual bytes after one unrolled chunk */
         if ((u32)flen > 8) {
-            cnt = (s32)((u32)(d8 + 7) >> 3);
             if ((u32)d8 > 0) {
                 /* Unrolled checksum pass, 8 bytes per iteration. */
+                cnt = (u32)(d8 + 7) >> 3;
                 do {
                     sum += (u8)fname[i + 0] + (u8)fname[i + 1] + (u8)fname[i + 2]
                          + (u8)fname[i + 3] + (u8)fname[i + 4] + (u8)fname[i + 5]
                          + (u8)fname[i + 6] + (u8)fname[i + 7];
                     i += 8;
-                } while (--cnt > 0);
+                } while (--cnt);
             }
         }
         /* Remainder bytes after the unrolled pass. */
@@ -94,7 +96,7 @@ void lsc_StatWait(struct LSC_Hndl *h) {
             cnt = flen - i;
             do {
                 sum += (u8)fname[i++];
-            } while (--cnt > 0);
+            } while (--cnt);
         }
     }
 
@@ -120,32 +122,26 @@ void lsc_StatWait(struct LSC_Hndl *h) {
 
 /* End a stat operation: advance to the next slot and start it if eligible. */
 void lsc_StatEnd(struct LSC_Hndl *h) {
-    s32 offLo = 0, offHi = 0, size = 0;
     const char *fname = NULL;
-    s32 idx, hb, rot, cnt;
+    s32 offLo = 0, offHi = 0, size = 0;
 
     if (h->stream == NULL) {
         return;
     }
 
     if (h->mode3 == 1) {
-        struct LSC_Entry *e = (struct LSC_Entry *)((char *)h + (h->index << 5));
+        struct LSC_Entry *e = lsc_entry(h);
         fname = e->fname;
         offLo = e->offLo;
         offHi = e->offHi;
         size = e->size;
     }
 
-    /* Advance slot index (circular over 16): rotate (idx<<28 - hb) left by 4. */
-    idx = h->index + 1;
-    rot = idx << 28;
-    cnt = h->count - 1;
-    h->count = cnt;
-    hb = (u32)idx >> 31;
-    rot -= hb;
-    h->index = (((u32)rot << 4) | ((u32)rot >> 28)) + hb;
+    /* Advance slot index (circular over the 16 fixed slots). */
+    --h->count;
+    h->index = (h->index + 1) % 16;
 
-    if (cnt <= 0) {
+    if (h->count <= 0) {
         LSC_CallStatFunc(h);
         h->st = 1;
     }

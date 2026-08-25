@@ -1039,7 +1039,7 @@ config.libs = [
             # chains instead of jump tables and schedules li/stb differently.
             # -func_align 4 matches the bte family layout (retail packed, not
             # 16-aligned) and removes the spurious mtctr/bdnz loop nop.
-            Object(NonMatching, "RVL_SDK/src/revolution/bte/bta/hh/bta_hh_act.c", mw_version="GC/3.0a5.2", extra_cflags=["-func_align 16"]),  # demoted 2026-08: bta_hh_cback 39.5% (89 structural) and split OVER by 0x94 — re-match before promoting
+            Object(Matching, "RVL_SDK/src/revolution/bte/bta/hh/bta_hh_act.c", mw_version="GC/3.0a5.2", extra_cflags=["-func_align 4"]),  # promoted 2026-08: -func_align 4 (bte-family packed convention) fixes bta_hh_cback 39.5%->100% and the 0x94 split overage; HID event enum corrected to hidh_api.h order (CTRL_DATC frees p_data) making .data byte+reloc exact — 18/18 FULL_MATCH (us-802e5ee8 cycle-certified) + data MATCH
             Object(Matching, "RVL_SDK/src/revolution/bte/bta/hh/bta_hh_api.c", mw_version="GC/3.0a5.2", extra_cflags=["-func_align 4", "-ipa off"]),
             Object(Matching, "RVL_SDK/src/revolution/bte/bta/hh/bta_hh_main.c", mw_version="GC/3.0a5.2", extra_cflags=["-func_align 4"]),
             Object(Matching, "RVL_SDK/src/revolution/bte/bta/hh/bta_hh_utils.c", mw_version="GC/3.0a5.2", extra_cflags=["-func_align 4"]),
@@ -1471,7 +1471,7 @@ config.libs = [
             Object(NonMatching, "CriWare/src/adx/gcci/gcci_sub.c", mw_version = "Wii/1.1"),
             Object(NonMatching, "CriWare/src/adx/lsc/lsc_err.c", mw_version = "Wii/1.1"),  # retail lsc_err is Wii/1.1-built (LSC_EntryErrFunc byte-identical; SVM/sj ADX units same family)
             Object(NonMatching, "CriWare/src/adx/lsc/lsc_ini.c", mw_version = "Wii/1.1"),
-            Object(NonMatching, "CriWare/src/adx/lsc/lsc_svr.c", mw_version = "Wii/1.1"),
+            Object(Matching, "CriWare/src/adx/lsc/lsc_svr.c", mw_version = "Wii/1.1"),
             Object(NonMatching, "CriWare/src/adx/lsc/lsc.c", mw_version = "Wii/1.1"),
             Object(NonMatching, "CriWare/src/adx/lsc/lsc_crs.c", mw_version = "Wii/1.1"),
             Object(NonMatching, "CriWare/src/adx/mfci/mfci.c", mw_version = "Wii/1.1"),

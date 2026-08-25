@@ -17,7 +17,6 @@ This is a **fork** of [xbret/xenoblade](https://github.com/xbret/xenoblade).
 | **Upstream** | [xbret/xenoblade](https://github.com/xbret/xenoblade) |
 | **Agent workflow** | [`AGENTS.md`](AGENTS.md) → [`xenoblade-decomp` skill](.agents/skills/xenoblade-decomp/SKILL.md) |
 | **Architecture** | [`PLAN.md`](PLAN.md) |
-| **Implementation map** | [`COOP_IMPLEMENTATION_MAP.md`](COOP_IMPLEMENTATION_MAP.md) |
 
 This repo does **not** ship game assets or retail assembly. You need a legally
 obtained copy of the game to extract them yourself.
@@ -70,8 +69,8 @@ Region: `us` · acceptance bar: `EQUIVALENT_MATCH` or `FULL_MATCH` (policy `equi
 |---|---|
 | Targets (registry) | 19300 |
 | Buildable | 19300 |
-| Accepted | 15547 (`FULL_MATCH` 15311 · `EQUIVALENT_MATCH` 236) |
-| Active (in progress) | 3741 |
+| Accepted | 15559 (`FULL_MATCH` 15323 · `EQUIVALENT_MATCH` 236) |
+| Active (in progress) | 3726 |
 
 <!-- END GENERATED COOP STATUS -->
 
@@ -307,7 +306,6 @@ This project's runner config passes `functionRelocDiffs=data_value` (see
 |----------|----------|
 | [`AGENTS.md`](AGENTS.md) | Entry point: reading order, quick commands, do-not list |
 | [`PLAN.md`](PLAN.md) | Architecture invariants, matching policy, decomp loop (§17) |
-| [`COOP_IMPLEMENTATION_MAP.md`](COOP_IMPLEMENTATION_MAP.md) | Capability graph and handoffs |
 | [`docs/MWCC_CASES.md`](docs/MWCC_CASES.md) | Compiler behaviour, proven patterns, pitfalls — append breakthroughs here |
 | [`docs/MWCC_PATTERNS.md`](docs/MWCC_PATTERNS.md) | Search protocol for `mwcc_kb.py` |
 | [`docs/coding_style_guidelines.md`](docs/coding_style_guidelines.md) | Style for shared decomp code |

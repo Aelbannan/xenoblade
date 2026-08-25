@@ -1,10 +1,14 @@
 #include "kyoshin/cf/CBattleManagerApi.hpp"
 #include "kyoshin/cf/object/CfObjectActor.hpp"
-#include "kyoshin/code_802B8A3C.hpp"  // func_80174C98 / func_800B708C imports
+#include "kyoshin/code_802B8A3C.hpp"  // func_800B708C imports
+#include "kyoshin/cf/CfGameManagerData.hpp"  // H3 label-owner decl (lbl_eu_80663E14; lbl_eu_80663E24)
 
-// LOCAL 5-arg view of func_80174B4C for this TU's constructor call site
-// (shared headers declare the common 2-arg form; the two extern "C"
-// signatures cannot coexist - MWCC error 10197).
+// LOCAL views of the battle-status helpers for this TU: the constructor call
+// site uses the 5-arg table ABI of func_80174B4C while other TUs use the
+// common 2-arg form (the two extern "C" signatures cannot coexist in one TU -
+// MWCC error 10197), so both helpers are declared here instead of including
+// kyoshin/cf/CfMapItemManager.hpp.
+extern "C" s32 func_80174C98(void* obj, void* outFlags, u32 id);
 extern "C" void func_80174B4C(void* actor, u32 flags, const void* a, const void* b, const void* c);
 
 namespace cf {
@@ -38,9 +42,10 @@ float CfObjectActor::CfObjectActor_UnkVirtualFunc6() {
 }
 }
 
-// Forward declarations for thunks
+// Forward declarations for thunks (extern "C" so MWCC emits the retail
+// unmangled symbol names exactly as written - no extra __FPv suffix).
 void __dt__Q22cf13CfObjectActorFv(void* self);
-void CObjectParam_UnkVirtualFunc2__Q22cf12CfObjectMoveFv(void* self);
+extern "C" void CObjectParam_UnkVirtualFunc2__Q22cf12CfObjectMoveFv(void* self);
 
 // Retail symbol is Fv; the real ABI passes (self, f1, r4). Delegates to the
 // CActorParam_UnkVirtualFunc35 vtable slot (+0x120, takes (float, int, int,

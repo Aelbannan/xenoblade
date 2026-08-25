@@ -15,10 +15,12 @@
 // Retail C-linkage constructor names (forward decls; defined below).
 CScnRootNw4r* __ct__CScnRootNw4r(CScnRootNw4r* obj, void* mgr, void* param);
 
-// Constructor (retail C-linkage name __ct__CScnRoot__FP8CScnRootPv):
+// Constructor (retail C-linkage name __ct__CScnRoot per symbols.txt):
 // installs the vtable, stores the mgr pointer, zeroes the reserved word.
-extern "C" void __ct__CScnRoot__FP8CScnRootPv(CScnRoot* root, void* mgr);
-void __ct__CScnRoot__FP8CScnRootPv(CScnRoot* root, void* mgr) {
+// extern "C" is required - as a plain C++ member-style name MWCC remangles
+// it to __ct__CScnRoot__FP8CScnRootPv, which no longer pairs with retail.
+extern "C" void __ct__CScnRoot(CScnRoot* root, void* mgr);
+void __ct__CScnRoot(CScnRoot* root, void* mgr) {
     CScnRootLayout* s = (CScnRootLayout*)root;
     s->vtable = (void*)lbl_eu_8056E730;
     s->mpMgr = mgr;
@@ -77,7 +79,7 @@ extern "C" int func_8048EDE0()
 
 // Constructor for CScnRootNw4r (inherits CScnRoot).
 CScnRootNw4r* __ct__CScnRootNw4r(CScnRootNw4r* obj, void* mgr, void* param) {
-    __ct__CScnRoot__FP8CScnRootPv((CScnRoot*)obj, mgr);
+    __ct__CScnRoot((CScnRoot*)obj, mgr);
 
     CScnRootNw4rLayout* s = (CScnRootNw4rLayout*)obj;
 

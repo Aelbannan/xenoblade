@@ -226,7 +226,6 @@ int  func_804BE5A4(int a, int b);
 
 // Additional engine helpers (retail C names).
 void* func_8009ECB0();
-extern "C" int  func_80174C98(void* actor, u32* outVal, u32 flags);   // unified: int return (ABI-identical to u32)
 cf::CfGlobalSettings* getUnk80664658();
 int  func_801F4ED8(void* a, void* b);
 void func_800D59FC(void* a);

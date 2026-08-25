@@ -3,6 +3,7 @@
 #include <types.h>
 #include "kyoshin/cf/IFactoryEvent.hpp"
 #include "monolib/util/MemManager.hpp"
+#include "kyoshin/cf/CfGameManagerData.hpp"  // H3 label-owner decl (lbl_eu_80663E14; lbl_eu_80663E24)
 
 namespace cf{
 
@@ -286,12 +287,10 @@ extern "C" cf::CCharVoiceMan* __ct__CCharVoiceMan(cf::CCharVoiceMan* self);
 // kyoshin/CExchangeWin lfs-hoist rule).
 extern "C" const float lbl_eu_80668C68;
 // Retail @sda21 globals.
-extern "C" u32 lbl_eu_80663E24;    // presentation/event bitfield (bit 0x00400000)
 // Retail vtable data for CCharVoiceMan (shared data pool; stored explicitly
 // by the ctor via *(void**)this).
 extern "C" u8 lbl_eu_805398CC[28];
 class CScn;
-extern "C" CScn* lbl_eu_80663E14;  // scene / allocation-source handle (defined CScn* in kyoshin/cf/CfGameManager.cpp)
 extern "C" u32 lbl_eu_80664A5C;    // global character-voice counter
 // Scene-model helper returning an allocation-region handle (mtl MemManager).
 extern "C" mtl::ALLOC_HANDLE func_80496004(void* src);
@@ -362,7 +361,6 @@ extern "C" void func_802A3ACC(void* node);
 // Post-dispatch handler for a node whose +0x14 voice probe returned nonzero.
 extern "C" void func_802A3E74(void* node);
 // Check a just-resolved voice action against a source handle.
-extern "C" int func_80174C98(void* r3, int* r4, int r5);
 // Byte/word/shift @sda21 globals used by func_802A1610.
 extern "C" u8  lbl_eu_80663DA0;
 extern "C" u16 lbl_eu_80663E42;

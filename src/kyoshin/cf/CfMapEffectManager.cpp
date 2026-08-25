@@ -10,6 +10,7 @@
 #include "kyoshin/cf/CfMapMineManager.hpp" // extern "C" func_800B8920/800B9404/8003B1EC/8003B41C
 #include "monolib/device/CDeviceSC.hpp"   // CDeviceSC::getLanguage
 #include <string.h>
+#include "kyoshin/cf/CfGameManagerData.hpp"  // H3 label-owner decl (lbl_eu_80663E14; lbl_eu_80663E24)
 
 namespace cf {
 // Local minimal view of cf::CfGameManager used by func_8016F9D4. The full

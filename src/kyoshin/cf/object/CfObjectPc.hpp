@@ -3,6 +3,7 @@
 #include <types.h>
 #include "kyoshin/cf/object/CfObjectActor.hpp"
 #include "kyoshin/plugin/ocBdat.hpp"
+#include "kyoshin/cf/CfGameManagerData.hpp"  // H3 label-owner decl (lbl_eu_80663E14; lbl_eu_80663E24)
 
 extern UNKTYPE* func_800B708C(BOOL r3);
 extern UNKTYPE* func_800AD860(UNKTYPE* r3);
@@ -47,7 +48,6 @@ extern "C" void __ct__8009F8B8(u8* obj);   // CtrlObjectParam.cpp (arts/param ct
 extern "C" void func_800A03F4(u8* obj);    // CtrlObjectParam.cpp
 extern "C" void func_800A145C(u8* obj);    // CtrlObjectParam.cpp
 extern "C" void func_800CA42C(u8* obj);    // CfObjectImplPc.cpp
-extern "C" void func_80174B4C(void* obj, u32 flag);       // battle-manager flag setter
 extern "C" void func_800A18A4(u8* obj, int value);      // CtrlObjectParam.cpp
 extern "C" UnkStruct_8009D7E4_Ret* func_8009D7E4(u8* obj, int index);  // arts data lookup
 extern "C" void func_8014B7B0(u8* obj);                  // CAIAction.cpp
@@ -75,7 +75,6 @@ extern "C" void func_800A11A4(u8* obj, int flag);         // CtrlObjectParam.cpp
 extern "C" void func_800A13C4(u8* obj, int flag);         // CtrlObjectParam.cpp
 extern "C" void func_8018CBE8(u8* obj);                   // CfResPcImpl.cpp
 extern "C" void func_8012FAA8();                          // camera/screen reset
-extern "C" int func_80174C98(void* obj, int* out, int flags);   // matches the established (void*, int*, int) form
 extern "C" void func_801765A4(void* actor, f32 value, u32 arg); // CActorParam.cpp
 extern "C" int func_8013EB90(int flag);                   // CfObjectImplWalker.cpp
 extern float lbl_eu_80666B24;   // .sdata2 gauge constants (UnkVirtualFunc4)
@@ -122,7 +121,6 @@ struct Res10View {
 };
 
 // Imports used by func_800C0DD4.
-extern u32 lbl_eu_80663E24;
 extern u16 lbl_eu_80663E42;
 extern u16 lbl_eu_80663E44;
 extern void* lbl_eu_806640D4;

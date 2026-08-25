@@ -16,6 +16,7 @@
  */
 
 #include <types.h>
+#include "kyoshin/cf/CfGameManagerData.hpp"  // H3 label-owner decl (lbl_eu_80663E14; lbl_eu_80663E24)
 
 // Opaque event-file descriptor (mField88 target; +0x04 is a flag word)
 struct CREvtCamFile {
@@ -187,7 +188,6 @@ public:
 extern unsigned long lbl_eu_806642A8;  // CREvtCamera* singleton
 // +0x00: "CamEvent" string pool (offsets used as sub-string names)
 extern const char lbl_eu_805036D8[];
-extern u32 lbl_eu_80663E14;            // global scene/object manager ptr
 // +0x00: "Cam2", +0x04: "Cam" animation names
 // (const char* string pointers)
 extern const char* lbl_eu_80662448;

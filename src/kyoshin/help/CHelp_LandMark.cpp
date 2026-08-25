@@ -1,7 +1,6 @@
 #include "kyoshin/help/CHelp_LandMark.hpp"
 #include "kyoshin/cf/CfGameManager.hpp"
 
-extern u32 lbl_eu_80663E24;
 
 // Vtable symbol
 extern cf::CHelpVtbl lbl_eu_8053B5F8;

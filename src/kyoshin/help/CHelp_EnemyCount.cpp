@@ -1,7 +1,6 @@
 #include "kyoshin/help/CHelp_EnemyCount.hpp"
 #include "kyoshin/cf/CfGameManager.hpp"
 
-extern u32 lbl_eu_80663E24;
 
 namespace cf {
 void CHelp_EnemyCount::func_802B7F54() {

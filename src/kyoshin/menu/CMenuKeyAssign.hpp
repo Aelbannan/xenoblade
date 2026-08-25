@@ -214,7 +214,6 @@ int func_8017FD44(void*);
 int func_800FF738();
 // Arts-state gate helpers used by Move (retail unmangled; declared in their
 // own TUs but not by any included header).
-u32 func_80174C98(void* actor, u32* outVal, u32 flags);
 void* func_800BF324(void* objParam);
 void* func_8016FE34(void* source);
 bool CMenuArtsSelect_isCreated();

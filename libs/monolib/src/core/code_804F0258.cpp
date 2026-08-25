@@ -420,23 +420,30 @@ void func_804F1B88(f32 scale, ml::CVec3* origin, ml::CVec3* extent, ml::CVec3* s
     // then reads/converts the width).
     f32 scrX = convU16ToF(getRenderModeObj__9CDeviceVIFv()->efbHeight, lbl_eu_8066B498);
     f32 fkCount = convS32ToF(count, lbl_eu_8066B4A0);
-    GXRenderModeObj* rmode = getRenderModeObj__9CDeviceVIFv();
+    // Width halfword is loaded before the vector setup but converted after it
+    // (retail keeps the raw value live across the delta computation).
+    u16 rawW = getRenderModeObj__9CDeviceVIFv()->fbWidth;
 
-    ml::CVec3 dir = *extent - *origin;
-    f32 w = convU16ToF(rmode->fbWidth, lbl_eu_8066B498);
+    ml::CVec3 delta;
+    nw4r::math::VEC3Sub(delta, extent, origin);
+    ml::CVec3 dir = delta;
+    f32 w = convU16ToF(rawW, lbl_eu_8066B498);
     f32 k = lbl_eu_8066B488 / fkCount;
-    ml::CVec3 inc = dir * k;
+    ml::CVec3 inc;
+    nw4r::math::VEC3Scale(inc, dir, k);
     ml::CVec3 cur = *origin;
     ml::CVec3 incStep = inc;
 
     for (s16 i = 0; i < count; i++) {
-        ml::CVec3 diff = cur - *step;
+        ml::CVec3 diff;
+        nw4r::math::VEC3Sub(diff, cur, *step);
         ml::CVec3 nrm = diff;
         ml::CVec3 work = nrm;
         f32 mag = PSVECMag(work);
         if (lbl_eu_8066B4A8 >= mag) {
             // Far path: fixed falloff factor times the distance factor.
-            work *= lbl_eu_8066B4AC * scale * provider->getDistFactor();
+            nw4r::math::VEC3Scale(work, work,
+                                  lbl_eu_8066B4AC * scale * provider->getDistFactor());
         } else {
             // Near path: normalize the offset (degenerate -> zero vector),
             // then scale by the distance factor alone.
@@ -445,7 +452,7 @@ void func_804F1B88(f32 scale, ml::CVec3* origin, ml::CVec3* extent, ml::CVec3* s
             } else {
                 PSVECNormalize(work, work);
             }
-            work *= scale * provider->getDistFactor();
+            nw4r::math::VEC3Scale(work, work, scale * provider->getDistFactor());
         }
 
         f32 px = cur.x * scrX + work.x;
@@ -471,7 +478,7 @@ void func_804F1B88(f32 scale, ml::CVec3* origin, ml::CVec3* extent, ml::CVec3* s
             lbl_eu_80665A70 = cur.x;
             lbl_eu_80665A74 = cur.y;
         }
-        cur += incStep;
+        nw4r::math::VEC3Add(cur, cur, incStep);
     }
 }
 

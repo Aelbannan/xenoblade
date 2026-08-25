@@ -253,7 +253,6 @@ public:
 // C-linkage imports (retail symbol names - keep linkage/signatures verbatim)
 extern "C" void func_800F4798(void* self);
 extern "C" int func_804B5088(void* self, void* a, void* b, int filter, int isFirst); // object enum probe
-extern "C" int func_80174C98(void* actor, u32* val, int flags); // arts-state gate
 extern "C" int func_804BE348(void* a, void* b, int c, int d, int e);   // coli probe query
 // cone probe on aux+0x60C (self, spot, range, cone half-angle, angle offset)
 extern "C" int func_804B1C9C(void* self, void* spot, float a, float b, float c);

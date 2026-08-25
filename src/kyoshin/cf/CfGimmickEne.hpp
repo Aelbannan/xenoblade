@@ -16,6 +16,7 @@
 #include "kyoshin/cf/CfGimmick.hpp"
 #include <nw4r/g3d/g3d_scnproc.h>
 #include <revolution/gx/GXTypes.h>
+#include "kyoshin/cf/CfGameManagerData.hpp"  // H3 label-owner decl (lbl_eu_80663E14; lbl_eu_80663E24)
 
 namespace cf {
 
@@ -263,7 +264,6 @@ extern unsigned short func_801BFC38__Q22cf10CfSoundManFUlUlUlUlf(
     u32 a, u32 b, u32 c, u32 d, f32 vol);
 
 // Scene / frame helpers (monolib scn).
-extern cf::CfGimmickEneScene* lbl_eu_80663E14;            // CScn* global (@sda21)
 extern cf::CfGimmickEneScene* func_8049698C();            // current-scene global
 extern cf::CfGimmickEneSceneState* func_8048ECD0(cf::CfGimmickEneScene* scene);  // -> +0x8C
 

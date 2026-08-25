@@ -9,7 +9,6 @@
 #define KYOSHIN_SKIP_CMAPSEL_LEGACY_LAYOUT_IMPORTS
 // code_80135FDC.hpp declares lbl_eu_8066A208 as u32; we need the float
 // (.sdata2 epsilon) view, so rename that declaration away.
-#define lbl_eu_8066A208 menuMapSelEpsilonU32Unused
 // CFloorMap.hpp carries a legacy u32-returning pseudo-import for
 // func_8013606C; code_80135FDC.hpp declares the canonical u16 one
 // (matching the definition in code_80135FDC.cpp). Rename the legacy
@@ -34,9 +33,8 @@
 #include "kyoshin/CMapSel.hpp"
 #include "kyoshin/CFade.hpp"
 #include <monolib/math/MTRand.hpp>
+#include "monolib/math/FloatUtils.hpp"  // H3 label-owner decl (lbl_eu_8066A208)
 
-#undef lbl_eu_8066A208
-extern const float lbl_eu_8066A208;
 
 // Copy helpers for member sub-object initialization
 // func_801BE108: copies CBgTex field-by-field from src to dest

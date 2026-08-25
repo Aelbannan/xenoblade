@@ -1,6 +1,7 @@
 #pragma once
 
 #include <types.h>
+#include "kyoshin/cf/CfGameManagerData.hpp"  // H3 label-owner decl (lbl_eu_80663E14; lbl_eu_80663E24)
 
 // C-linkage runtime imports (retail symbol names - keep linkage/signatures verbatim)
 extern "C" void func_80261A80();
@@ -65,7 +66,6 @@ extern f32 lbl_eu_80667658;
 #include "monolib/scn/IScnRender.hpp"
 // ResAnmChr is returned by value (single pointer word) by func_8049E708.
 #include "nw4r/g3d/res/g3d_resanmchr.h"
-extern CScn* lbl_eu_80663E14; // scene object
 
 // Move-callback ptmf table copied into CTaskREvtSequence::field_0x3C by Init
 // (retail .data:0x80530AF4, size 0x18; only the first 3 words are read).

@@ -2,6 +2,7 @@
 
 #include <types.h>
 #include "kyoshin/cf/CfGimmick.hpp"
+#include "kyoshin/cf/CfGameManagerData.hpp"  // H3 label-owner decl (lbl_eu_80663E14; lbl_eu_80663E24)
 
 namespace cf {
 
@@ -222,6 +223,4 @@ extern void* lbl_eu_8066412C;    // bdat holder seed (sda21 pointer global)
 extern u8* lbl_eu_80662798;      // sda21 pointer to the lock-id column name buffer
 extern char lbl_eu_805086EC[];   // column-name string for configFlags
 extern void* lbl_eu_80663E10;    // scene/manager global
-extern void* lbl_eu_80663E14;    // scene/manager global
 extern u32 lbl_eu_806646BC;
-extern u32 lbl_eu_80663E24;

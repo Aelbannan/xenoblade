@@ -1,6 +1,7 @@
 #pragma once
 
 #include <types.h>
+#include "kyoshin/cf/CfGameManagerData.hpp"  // H3 label-owner decl (lbl_eu_80663E14; lbl_eu_80663E24)
 
 struct ResInfoEntry;  // full def in kyoshin/cf/IResInfo.hpp
 class CScn;  // shared scene (CfObjectMove.hpp declares lbl_eu_80663E14 as CScn*)
@@ -160,10 +161,8 @@ extern u32 __ptmf_null[3];
 extern u8 lbl_eu_80535204[];
 
 // Shared scene pointer used as the archive handle by func_80489A60 (.sdata).
-extern CScn* lbl_eu_80663E14;
 
 // Global mode flag (.sbss; bit 0x100000 gates the open path).
-extern u32 lbl_eu_80663E24;
 
 // sdata2 float literals (resource-anim timing values).
 extern float lbl_eu_806681D0;

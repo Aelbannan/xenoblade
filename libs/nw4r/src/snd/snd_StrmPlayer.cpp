@@ -882,11 +882,13 @@ bool StrmPlayer::LoadStreamData(ut::FileStream* pFileStream, int offset,
                                 u32 size, u32 blockSize, int blockIndex,
                                 bool needUpdateAdpcmLoop) {
     // Downcast to DvdFileStream by walking the retail runtime type-info chain
-    // (lbl_eu_80665550 is the DvdFileStream type-info object).
+    // (lbl_eu_80665550 is the DvdFileStream type-info object). Retail hoists
+    // the type-info address into a register before the null-check branch.
+    const ut::detail::RuntimeTypeInfo* pDvdTypeInfo = &lbl_eu_80665550;
     ut::DvdFileStream* pDvdStream;
     if (pFileStream != NULL &&
         TypeInfoIsDerivedFrom(pFileStream->GetRuntimeTypeInfo(),
-                              &lbl_eu_80665550)) {
+                              pDvdTypeInfo)) {
         pDvdStream = static_cast<ut::DvdFileStream*>(pFileStream);
     } else {
         pDvdStream = NULL;
@@ -901,16 +903,16 @@ bool StrmPlayer::LoadStreamData(ut::FileStream* pFileStream, int offset,
     // OSUnlockMutex at every exit).
     OSMutex* pMutex = &lbl_eu_80653E00;
     OSLockMutex(pMutex);
-    DCInvalidateRange(lbl_eu_8064FE00, 0x4000);
 
     StrmPlayerRetailLayout* self =
         reinterpret_cast<StrmPlayerRetailLayout*>(this);
 
     s32 streamOffset = offset + self->mStrmInfo.blockHeaderOffset;
-    // Separate working pointer into the shared load buffer (retail keeps the
-    // extern-array reference for Read and this pointer for the fan-out).
+    // Single working pointer into the shared load buffer.
     u8* pLoadBuf = lbl_eu_8064FE00;
     u16 adpcmPredScale[16];
+
+    DCInvalidateRange(pLoadBuf, 0x4000);
 
     // Loads arrive in groups of up to 2 channels per stream block; each group
     // is read at streamOffset and fanned out to the channel buffers.
@@ -922,7 +924,7 @@ bool StrmPlayer::LoadStreamData(ut::FileStream* pFileStream, int offset,
 
         u32 readSize = blockSize * blockCount;
         pFileStream->Seek(streamOffset, ut::FileStream::SEEK_ORIGIN_BEG);
-        if (pFileStream->Read(lbl_eu_8064FE00, readSize) != readSize) {
+        if (pFileStream->Read(pLoadBuf, readSize) != readSize) {
             OSUnlockMutex(pMutex);
             return false;
         }

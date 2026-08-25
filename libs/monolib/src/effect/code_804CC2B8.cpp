@@ -35,7 +35,7 @@ extern "C" void func_804D920C(ml::CMat34* out);
 extern "C" void func_804D9274(Mtx mtx);
 extern "C" void func_804D927C(Mtx mtx, const void* obj);
 extern "C" void func_804D928C(Mtx mtx, const u8* obj);
-extern f32 lbl_eu_8066A208;
+#include "monolib/math/FloatUtils.hpp"
 extern f32 lbl_eu_8066B0FC;
 extern f32 lbl_eu_8066B12C;
 extern f32 lbl_eu_8066B138;
@@ -1762,8 +1762,7 @@ extern "C" void __attribute__((never_inline)) func_804CE79C(EffectScene* self, V
 // The color is read inside the call expression so its load schedules with the
 // argument setup (before the -1 cache stores).
 extern "C" void __attribute__((never_inline)) func_804D0194() {
-    GXColor color;
-    *(u32*)&color = *(const u32*)&lbl_eu_8066B124;
+    const GXColor& color = *(const GXColor*)&lbl_eu_8066B124;
     lbl_eu_806659A8 = -1;
     lbl_eu_806659AC = -1;
     GXSetChanMatColor(GX_COLOR0A0, color);

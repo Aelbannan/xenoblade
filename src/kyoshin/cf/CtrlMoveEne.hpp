@@ -3,6 +3,7 @@
 #include <types.h>
 #include <monolib/math/CVec3.hpp>
 #include "kyoshin/plugin/ocBdat.hpp"
+#include "kyoshin/cf/CfGameManagerData.hpp"  // H3 label-owner decl (lbl_eu_80663E14; lbl_eu_80663E24)
 
 namespace cf {
 
@@ -1536,7 +1537,6 @@ struct CFunc80091864View {
     f32 field_0x4;                                      // 0x04
     u8 _pad08[0x0C - 0x08];                             // 0x08-0x0B
     CFunc8008E760Vec3W mPos0W;                          // 0x0C
-    u8 _pad18[0x18 - 0x18];                             // -
     CFunc8008E760Vec3W mVel18W;                         // 0x18 velocity words
     u8 _pad24[0x34 - 0x24];                             // 0x24-0x33
     CNpcBaseDataView* field_0x34;                       // 0x34
@@ -1602,7 +1602,6 @@ extern "C" void func_800896F4(cf::CfObjectMove* self, ml::CVec3* out,
 // Circular gimmick-object list accessor (CfGimmick.cpp) and battle-event
 // helper (CfObjectImpl.cpp); func_80174C98 queries an actor word (CfAct.cpp).
 extern "C" cf::CFunc8009156CList* func_800B6BC8();
-extern "C" u32 func_80174C98(void* actor, u32* outVal, u32 flags);
 // Icon-display helper (CActParamAnim.cpp).
 extern "C" void func_8004B9D4(void* w, int a, int b, int c, int d);
 // bdat row-value reader (CfObjectEne.cpp): (obj, column, row) -> raw word.
@@ -1653,7 +1652,6 @@ extern "C" void* getFP__FPCc(const char* name);
 // refresh (retail C-ABI names; func_8004C5EC is declared in CtrlNpc.hpp).
 // func_8004B7C0 is declared in include/kyoshin/cf/CfGameManager.hpp
 // (returns void*); do not redeclare it here with a different return type.
-extern "C" void func_80174B4C(void* obj, u32 flags);   // unified with CVision.hpp/CtrlAct.hpp forms (ABI-identical)
 extern "C" void func_80193710(void* self);
 // func_8008FE8C call site: direction-commit helper (CtrlMoveBase.cpp) and the
 // C runtime rand() used for the turn jitter.
@@ -1670,6 +1668,7 @@ extern "C" void* getPlayer__Q22cf13CfGameManagerFi(int index);
 extern "C" void* getUnk80664658(void);
 #include "kyoshin/cf/CBattleManagerApi.hpp"
 extern "C" void func_800D9CA0(void* self, void* obj);
+extern "C" void func_800BE12C(void* obj, int a, int b, int c, int d);
 // func_8008A2C8 call site: game-flag query (C++ linkage mangles to the retail
 // func_8006EF04__Fi).
 int func_8006EF04(int r3);
@@ -1744,7 +1743,6 @@ extern const f32 lbl_eu_80666664;
 extern const f64 lbl_eu_80666620;
 extern const f64 lbl_eu_80666650;
 // func_8008D51C bdat-state pointer (retail .sdata word).
-extern void* lbl_eu_80663E14;
 // bdat column-name table func_8008E06C passes to func_800AF7E4 (+0xA column).
 extern const char lbl_eu_804FB9E8[];
 

@@ -130,7 +130,6 @@ extern "C" Fd44State* func_8017FD44();
 extern "C" void* func_800451D8(u32 cls, void* param);
 
 // Actor-state gate probe (retail unmangled C-ABI name; see CfCam.hpp).
-extern "C" int func_80174C98(void* actor, u32* val, int flags);
 
 // Voice-manager sweep helpers and the sudden-commu active check. Retail
 // relocs are the unmangled C names, so these are extern "C" imports.

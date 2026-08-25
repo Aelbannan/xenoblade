@@ -9,6 +9,7 @@
 #include <revolution/MTX.h>
 #include <math.h>
 #include "monolib/math/CVec3.hpp"
+#include "monolib/math/FloatUtils.hpp"  // H3 label-owner decl (lbl_eu_8066A208)
 
 // Model-look controller: keeps a set of vectors/scales synced to a model.
 class CMdlLook {
@@ -41,7 +42,6 @@ struct MdlLookWork {
 
 // sdata2 float pool constants used by the look controller
 extern const float lbl_eu_8066A200; // pi/2
-extern const float lbl_eu_8066A208; // 1e-6 epsilon
 extern const float lbl_eu_8066B370; // 0.0f
 extern const float lbl_eu_8066B37C; // 0.1f
 extern const float lbl_eu_8066B380; // 1.0f

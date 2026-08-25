@@ -7,6 +7,7 @@
 #include "kyoshin/cf/chain/CChainTime.hpp"
 #include "kyoshin/cf/chain/CChainChance.hpp"
 #include "kyoshin/cf/chain/CChainCombo.hpp"
+#include "kyoshin/cf/CfGameManagerData.hpp"  // H3 label-owner decl (lbl_eu_80663E14; lbl_eu_80663E24)
 
 // Retail .data vtable mirrors assigned by the inlined sub-object ctors below.
 // Full-size (0x10) so MWCC emits the lis/addi HA-LO pair instead of sda21.
@@ -800,7 +801,6 @@ extern float lbl_eu_80668A54;
 extern u8 lbl_eu_80663DA0;
 // Battle-manager mode-flag word (.sbss) probed by func_80277B38's chain-start
 // gate (bit 22). Same declaration as CBattleManager.hpp's extern "C" row.
-extern u32 lbl_eu_80663E24;
 
 // Voice-timing threshold compared against the voice sub-object's slot-0x110
 // result by func_8027A8C8 (.sdata2 float; const lets MWCC schedule the

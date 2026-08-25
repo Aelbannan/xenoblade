@@ -1,9 +1,8 @@
 // (func_800BE12C now has a single unified decl on CfObjectMove.hpp; only one
 // form exists, so no pre-include rename is needed here.)
-#define func_80174C98 battleManagerAiActionWalkerVoidUnused
 #include "kyoshin/cf/object/CAIAction.hpp"
+#include "kyoshin/cf/CfMapItemManager.hpp"
 #include "monolib/scn/CScnTimeApi.hpp"
-#undef func_80174C98
 #include "kyoshin/cf/CBattleManager.hpp"
 #include "monolib/math/CVec3.hpp"
 
@@ -15,51 +14,10 @@ struct BMIf {
 };
 #include "kyoshin/UnkClass_805764CC.hpp"
 #include "kyoshin/cf/object/CfObjectPc.hpp"
-#define func_800BB618 battleManagerEnemyResourceForwardUnused
-#define func_800BCFA0 battleManagerEnemyPositionRefreshUnused
-#define lbl_eu_80663E14 battleManagerEnemySceneUnused
-#define lbl_eu_8066A208 battleManagerEnemyEpsilonUnused
-#define getUnk80664658 battleManagerEnemyGimmickGetUnused
-#define BasicSound BattleManagerEnemyBasicSoundUnused
-// Guard against the include/ shadow-copy's C-ABI import decls colliding
-// with the already-visible cfsys/chain decls in this TU (MWCC: illegal
-// function overloading); none of these imports are referenced below the
-// include (call sites resolve to the global-scope decls, same symbol names).
-#define func_80174C98 battleManagerEnemyIDGateUnused
-#define func_801BA2C8 battleManagerEnemyVoiceGateUnused
-#define func_80061FFC battleManagerEnemyMemHandleUnused
-#define func_800BE33C battleManagerEnemyStubUnused
-#define func_800BE824 battleManagerEnemyStubUnused2
-#define func_8014B7B0 battleManagerEnemyBdatUnused
-#define func_8015396C battleManagerEnemyBdatSetUnused
-#define func_801765A4 battleManagerEnemyArtsWriteUnused
-#define func_8003B41C battleManagerEnemyBdatRowUnused
-#define func_8003B1EC battleManagerEnemyBdatCountUnused
-#define func_802617B8 battleManagerEnemyArtsSlotUnused
-#define func_804B0AD4 battleManagerEnemyHookUnused
-#define func_801F4DDC battleManagerEnemyActorUnused
-#define func_8003AA34 battleManagerEnemyBdatLookupUnused
+// (func_800BB618/func_800BCFA0/getUnk80664658/BasicSound + the C-ABI import
+// names below now resolve via their single owner-header decls; only the
+// other agents' guards (lbl_eu_*) remain.)
 #include "kyoshin/cf/object/CfObjectEne.hpp"
-#undef func_8003AA34
-#undef func_801F4DDC
-#undef func_804B0AD4
-#undef func_802617B8
-#undef func_8003B1EC
-#undef func_8003B41C
-#undef func_801765A4
-#undef func_8015396C
-#undef func_8014B7B0
-#undef func_800BE824
-#undef func_800BE33C
-#undef func_80061FFC
-#undef func_801BA2C8
-#undef func_80174C98
-#undef BasicSound
-#undef getUnk80664658
-#undef lbl_eu_8066A208
-#undef lbl_eu_80663E14
-#undef func_800BCFA0
-#undef func_800BB618
 // CfSoundMan.hpp's import of func_800821F8__Q22cf13CfGameManagerFv uses a
 // different UnkClass_800821F8Snd return type than CfGameManager.hpp's decl
 // already visible here; alias it out (this TU calls the CfGameManager form).
@@ -495,7 +453,6 @@ extern "C" int func_80145F78(int);
 extern "C" int func_80145BC4(int);
 extern "C" int func_80145C00(int);
 extern "C" int func_80146148(int);
-extern "C" int func_80174C98(void*, int*, int);
 extern "C" int mtRand__Q22ml4mathFi(int n);
 extern "C" f32 lbl_eu_80666DF4;  // 15.0f
 extern "C" f32 lbl_eu_80666DD0;  // 0.6f

@@ -11,6 +11,7 @@
 #include "monolib/lib/CLibLayout.hpp"
 #include "monolib/work/CEventFile.hpp"
 #include "monolib/work/IWorkEvent.hpp"
+#include "kyoshin/cf/CfGameManagerData.hpp"  // H3 label-owner decl (lbl_eu_80663E14; lbl_eu_80663E24)
 
 // Sets the vtable, builds the scratch memory region, zeroes the panel state
 // fields, constructs the embedded cursor, and initializes the byte flags.

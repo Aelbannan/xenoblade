@@ -1,134 +1,283 @@
-// NOTE: this minimal preamble exists ONLY so the tombstone compiles.
-// It is superseded by the restored pre-incident source (see runbook below).
-#include <types.h>
-#include <string.h>
-#include "libs/monolib/src/scn/UnkClass_8047E110.hpp"
-#include <nw4r/math/math_arithmetic.h>
-
-// Pool allocator provided by monolib coli (returns the arena cursor).
-extern "C" u32 func_804B5A68(void);
-// Reachability predicate over a walk node (retail member, called with the
-// current edge pool and the caller's selector word).
-extern "C" s32 func_8047EEB0__17UnkClass_8047E110Fv(UnkClass_8047E110* self,
-    ScnWalkNode* node, u16 id, s32 kind);
-// Edge-list resolver: maps the queried position to an id in the candidate
-// cell's list (returns -1 when nothing matches).
-extern "C" s32 func_8047E1B0__17UnkClass_8047E110Fv(UnkClass_8047E110* self,
-    const ml::CVec3* pos);
-// Frontier-crossing resolver: invoked when the two seeded searches touch the
-// same node with mismatching seed markers; its return value becomes ours.
-extern "C" s32 func_8047EFBC__17UnkClass_8047E110Fv(UnkClass_8047E110* self,
-    u16* arg4, u16 id);
-
-// func_8047EAD4 -- walk-graph connectivity query.
+// Translation unit: monolib/src/scn/UnkClass_8047E110
+// Unknown scene class implementation.
 //
-// Selects the kd-cell record for startId (stride-12 table at manager+0x8:
-// +0 base id, +2 range, +4 edge-list index). When the goal node is flagged
-// (bit 0 of its +8 halfword), scans the cell's record list (stride-10 records
-// at manager+0xC) for the endpoint paired with goalId, collects every record
-// whose matching-side group byte agrees, writing their ids into outIds, and
-// returns the count. Otherwise performs a breadth-first flood fill from
-// goalId across each node's edge list (bounded to [base, base+range), gated
-// by func_8047EEB0 with a pooled visited bitmap); reaching any flagged node
-// runs the same collection scan and returns its count, else returns 0.
+// Status: Only sinit_80481E68 is FULL_MATCH (empty .ctors hook, 4 bytes).
+//         Remaining 29 functions are NOT_STARTED stubs.
+
+#include "libs/monolib/src/scn/UnkClass_8047E110.hpp"
+#include <monolib/math/CVec3.hpp>
+#include <revolution/os/OSFastCast.h>
+#include <math.h>
+#include <string.h>
 
 using ml::CVec3;
 
-// Manager field view (retail offsets).
-struct ScnManagerLayout {
-    u32 field_0x0;
-    ScnWalkNode* nodes;
-    ScnNodeRef* field_0x8;
-    ScnNodeMap* field_0xC;
-    u32 field_0x10;
-    u16* edges;
-    f32 field_0x18;
-    f32 field_0x1C;
-    f32 field_0x20;
-    f32 field_0x24;
-    f32 field_0x28;
-    u32 field_0x2C;
-    u32 field_0x30;
-    u32 field_0x34;
-    u32 field_0x38;
-    u32 field_0x3C;
-    u32 field_0x40;
-    u32 field_0x44;
-    f32 field_0x48;
-    f32 field_0x4C;
-    f32 field_0x50;
-    f32 field_0x54;
-    f32 field_0x58;
-    f32 field_0x5C;
-    CVec3 dir;
-    f32 field_0x6C;
-    f32 field_0x70;
-    f32 field_0x74;
-    u8 field_0x78[4];
-    f32 field_0x7C;
-    f32 field_0x80;
-    f32 field_0x84;
-    f32 field_0x88;
-    f32 field_0x8C;
-    u16 field_0x90;
-    u8 field_0x92[2];
-    u32 field_0x94;
-    u32 field_0x98;
-    ScnPtmf field_0x9C;
+// scratch bitmap allocator (coli unit); retail symbol is C-linkage
+extern "C" void* func_804B5A68();
+
+// stride-8 threshold slot overlaid at 0x24 by func_8047EEB0
+struct ScnSlot8 {
+    f32 value;
+    f32 pad;
 };
 
-// Float-pool imports; A890/A8A0 are OWNED by this TU per
-// tools/coop/lbls_exclusions.json, so their definitions must survive here
-// until the full source is restored.
-extern const f32 lbl_eu_8066A898;
-extern const f32 lbl_eu_8066A8A8;
-extern const f32 lbl_eu_8066A8AC;
-extern const f32 lbl_eu_8066A8BC;
+// Manager field view (retail offsets) used by the accessor methods below.
+struct ScnManagerLayout {
+    u32 field_0x0;         // 0x00
+    ScnWalkNode* nodes;    // 0x04 node pool
+    u32 field_0x8;         // 0x08 quantized waypoint pool
+    u32 field_0xC;         // 0x0C stride-10 record pool
+    u32 field_0x10;        // 0x10 (retail loads edges from 0x14 - keep the hole)
+    u16* edges;            // 0x14 edge pool
+    f32 field_0x18;        // 0x18
+    f32 field_0x1C;        // 0x1C
+    f32 field_0x20;        // 0x20
+    f32 field_0x24;        // 0x24
+    f32 field_0x28;        // 0x28
+    u32 field_0x2C;        // 0x2C
+    u32 field_0x30;        // 0x30
+    u32 field_0x34;        // 0x34
+    u32 field_0x38;        // 0x38 flags (bit 0 = box active)
+    u32 field_0x3C;        // 0x3C bounds block pointer
+    u32 field_0x40;        // 0x40 kd-tree node pool
+    u32 field_0x44;        // 0x44 projection slot pool
+    f32 field_0x48;        // 0x48 box minX
+    f32 field_0x4C;        // 0x4C box minY
+    f32 field_0x50;        // 0x50 box minZ
+    f32 field_0x54;        // 0x54 box maxX
+    f32 field_0x58;        // 0x58 box maxY
+    f32 field_0x5C;        // 0x5C box maxZ
+    CVec3 dir;             // 0x60 travel direction
+    f32 field_0x6C;        // 0x6C contact pos x
+    f32 field_0x70;        // 0x70 contact pos y
+    f32 field_0x74;        // 0x74 contact pos z
+    u8 field_0x78[4];      // 0x78
+    f32 field_0x7C;        // 0x7C
+    f32 field_0x80;        // 0x80
+    f32 field_0x84;        // 0x84
+    f32 field_0x88;        // 0x88 x-portal threshold scale
+    f32 field_0x8C;        // 0x8C z-portal threshold scale
+    u16 field_0x90;        // 0x90
+    u8 field_0x92[2];      // 0x92
+    u32 field_0x94;        // 0x94 waypoint table pointer
+    u32 field_0x98;        // 0x98 current table cursor
+    ScnPtmf field_0x9C;    // 0x9C..0xA7
+};
+
+// Data-global imports referenced by the accessors below (retail names).
+// A890/A8A0 are defined in this TU (see tools/coop/lbls_exclusions.json):
+// planting the conversion magic under its retail name lets MWCC's literal
+// pool unify the builtin int->float conversions onto it.
+const f32 lbl_eu_8066A890 = 1.0f; // box half-size / clearance radius
+extern const f32 lbl_eu_8066A8B0; // waypoint min-distance epsilon
+extern const f32 lbl_eu_8066A8B4; // waypoint table constant
+extern const f32 lbl_eu_8066A8BC; // forward-projection threshold
+// nw4r db Warning rodata strings
 extern const char lbl_eu_80526300[];
 extern const char lbl_eu_80526324[];
-const f32 lbl_eu_8066A890 = 1.0f;
+extern const Fe48Table lbl_eu_80658540; // walk-table locator block (+0x8 pointer)
+extern u32 lbl_eu_8056DC68[3];    // default reference block (defined below)
+// Walk-box waypoint table (3 x 12-byte blocks, initialized on first use by
+// func_8047F658) and its init-once flag. Defined in UnkClass_8047CD0C.cpp.
+extern u8 lbl_eu_80658608[0x30];
+extern s8 lbl_eu_806658D0[8]; // init-once flag (read as signed char)
+extern ScnPtmf lbl_eu_8056DC74;   // default 12-byte reference block
+
+// Retail s16/s32->f32 conversion magic (lbl_eu_8066A8A0 = 0x4330000080000000),
+// owned by this TU so the builtin conversions resolve to the retail name.
 extern const f64 lbl_eu_8066A8A0 = 4503601774854144.0;
+union F64Conv_A8A0 {
+    f64 d;
+    u32 w[2];
+};
+static inline f32 s32ToF_A8A0(s32 v) {
+    F64Conv_A8A0 c;
+    c.w[0] = 0x43300000u;
+    c.w[1] = (u32)v ^ 0x80000000u;
+    return (f32)(c.d - lbl_eu_8066A8A0);
+}
+
+// Same conversion but kept in double precision so MWCC can fuse the
+// following cell-size multiply into a single fmuls/fmadds.
+static inline f64 s32ToF64_A8A0(s32 v) {
+    F64Conv_A8A0 c;
+    c.w[0] = 0x43300000u;
+    c.w[1] = (u32)v ^ 0x80000000u;
+    return c.d - lbl_eu_8066A8A0;
+}
+
+// Scaled node-coordinate conversion: MWCC's builtin int->float path subtracts
+// the 0x4330000080000000 magic (unified onto lbl_eu_8066A8A0) with single
+// rounding, then the cell-size multiply contracts into one fmuls.
+static inline f32 scaleNodeCoord(s32 v) {
+    return (f32)(lbl_eu_8066A898 * v);
+}
+
+// Real-signature views of the func_8047E390 member stub
+// (retail Fv mangling; signatures recovered from caller register setup).
+extern "C" s32 func_8047E1B0__17UnkClass_8047E110Fv(UnkClass_8047E110* self, const ml::CVec3* pos);
+extern "C" s32 func_8047E390__17UnkClass_8047E110Fv(UnkClass_8047E110* self, const ml::CVec3* pos, s32 index, f32 clearance);
+extern "C" s32 func_8047EAD4__17UnkClass_8047E110Fv(
+    UnkClass_8047E110* self, u16* out, s32 a, s32 b, s32 mode);
+extern "C" s32 func_8047F730__17UnkClass_8047E110Fv(
+    UnkClass_8047E110* self, u16* out, s32 count1, s32 count2);
+extern "C" bool func_8047EEB0__17UnkClass_8047E110Fv(UnkClass_8047E110* self,
+    const WalkQueryInfo* info, s32 value, s32 slotSel);
+
+static inline void setWalkRect(CVec3& min, CVec3& max, const ScnWalkNode& node) {
+    min.x = lbl_eu_8066A898 * s32ToF_A8A0(node.x);
+    max.x = min.x + lbl_eu_8066A898 * s32ToF_A8A0(node.width + 1);
+    min.z = lbl_eu_8066A898 * s32ToF_A8A0(node.z);
+    max.z = min.z + lbl_eu_8066A898 * s32ToF_A8A0(node.depth + 1);
+}
+
+// ============================================================
+// FULL_MATCH functions
+// ============================================================
+
+/**
+ * sinit_80481E68 -- static initializer registered in .ctors.
+ *
+ * Empty body (just blr). Referenced from the .ctors section at
+ * 0x804FA158 to trigger TU-level construction ordering.
+ *
+ * Retail: 4E 80 00 20  (blr)
+ */
+extern "C" void sinit_80481E68() {}
+
+// ============================================================
+// NOT_STARTED stubs (to be decompiled)
+// ============================================================
+
+// func_8047E110 -- rebase-copy a spawn descriptor into this manager: raw
+// offsets in the descriptor are converted to absolute pointers, the two
+// distance fields are summed with the clearance radius, the referenced sub-
+// block pointer is stored and the null member-pointer slot is filled.
+// __ptmf_null viewed as a u32 triplet (see CREvtModelMap ptmf-copy shape):
+// the post-increment walk makes MWCC fold the low half into a single
+// lwzu @l at first use instead of an eager addi.
+extern const u32 __ptmf_null[3];
+
+extern "C" void func_8047E110__17UnkClass_8047E110Fv(UnkClass_8047E110* self,
+    WalkSpawnDesc* desc) {
+    // null member-pointer slot: triplet copy; elem0 through a temp stored
+    // late (retail keeps it across the [4]-slot store), elem1/elem2 direct
+    u32 w0;
+    const u32* src = __ptmf_null;
+    self->field_0x0 = (u32)desc;
+    // clearance radius: loaded up front so the f-sum below reuses it
+    f32 clearance = lbl_eu_8066A890;
+    self->nodes = (ScnWalkNode*)((u32)desc + desc->offNodes);
+    self->field_0x8 = (u32)desc + desc->offEdges;
+    self->field_0xC = (u32)desc + desc->offField14;
+    self->field_0x10 = (u32)desc + desc->offField24;
+    self->edges = (u16*)((u32)desc + desc->offField1C);
+    self->field_0x18 = desc->field_0x2C;
+    self->field_0x20 = self->field_0x1C = clearance + desc->field_0x30;
+    const WalkDescRef* ref = (const WalkDescRef*)((u32)desc + desc->offRef);
+    self->field_0x3C = (u32)ref;
+    self->field_0x40 = (u32)desc + ref->relField1C;
+    self->field_0x44 = (u32)desc + ref->relField18;
+    w0 = *src++;
+    self->callback.field_0x4 = *src++;
+    self->callback.field_0x0 = w0;
+    u32 w2 = *src++;
+    self->callback.field_0x8 = w2;
+}
+
+// func_8047E1B0 -- point-in-walk-region lookup: validate the position against
+// the open interval of the bounds block pointed to by 0x3C (strict compares),
+// then walk the kd-tree (node pool at 0x40, projection slots at 0x44, lists at
+// 0x14 offset by bounds word 5) down to a leaf and scan its quantized waypoint
+// rects for one containing the point. Returns the entry index or -1.
+// Retail mangles this member as Fv (empty parameter list) even though the
+// body consumes the caller-supplied position in r4, so the definition keeps
+// the verbatim retail symbol via C linkage (self/pos ABI).
+extern "C" s32 func_8047E1B0__17UnkClass_8047E110Fv(UnkClass_8047E110* self,
+    const ml::CVec3* pos) {
+    ScnManagerLayout& m = *(ScnManagerLayout*)self;
+    const f32* bnd = (const f32*)m.field_0x3C;
+    // inclusive bounds interval, stored high/low; nested ifs so every failed
+    // test converges on the single shared return block
+    if (bnd[1] >= pos->x)
+        if (pos->x >= bnd[2])
+            if (bnd[3] >= pos->z)
+                if (pos->z >= bnd[4]) {
+
+    u32 word5 = ((const u32*)bnd)[5];
+    const ScnSlot8* slots = (const ScnSlot8*)m.field_0x44;
+    const ScnKdNode* nodePool = (const ScnKdNode*)m.field_0x40;
+    const u16* edges = self->edges;
+    const ScnKdNode* node = nodePool;
+    const u16* list = edges + word5;
+    u32 probe = 1;
+    for (;;) {
+        const ScnKdNode& nd = *node;
+        const ScnSlot8* sb = &slots[nd.slotB];
+        const ScnSlot8* sa = &slots[nd.slotA];
+        // cell projection against the A-slot origin, scaled by the B-slot size
+        f32 dx = pos->x - sa->value;
+        s32 ix = dx * sb->value;
+        f32 dz = pos->z - sa->pad;
+        s32 iz = dz * sb->pad;
+        s32 cell;
+        if (ix < 0 || ix >= ((nd.dims >> 4) & 0xF))
+            return -1;
+        if (iz < 0 || iz >= (nd.dims & 0xF))
+            return -1;
+        cell = ix * (nd.dims & 0xF) + iz;
+        u16 edgeBase = nd.edgeBase;
+        u16 mask = nd.mask;
+        cell = ix * (nd.dims & 0xF) + iz;
+        u16 e = list[edgeBase + cell];
+        if (((probe << cell) & mask) != 0) {
+            // leaf: the list word indexes a waypoint rect sublist (count +
+            // entries)
+            const u16* q = &list[e + 1];
+            for (s32 k = list[e]; k > 0; --k) {
+                u16 ent = *q++;
+                const ScnWpQ& wp = ((const ScnWpQ*)m.field_0x8)[ent];
+                f32 fy = __OSs16tof32((s16*)&wp.q0); // GQR5 dequantized
+                f32 fz = __OSs16tof32((s16*)&wp.q1);
+                f32 cc = m.field_0x18;
+                if (fy + cc > pos->x && fy > pos->x && fz + cc > pos->z
+                    && fz > pos->z)
+                    return ent;
+            }
+            return -1;
+        }
+        // internal cell: the list word is the stride-8 child index
+        if (e == 0)
+            return -1;
+        node = (const ScnKdNode*)((const u8*)nodePool + ((e << 3) & 0xFFFF));
+    }
+                }
+    return -1;
+}
 
 // func_8047E390 -- neighbour search around a walk cell: scan the second
-// candidate list of record `index` (stride-12 cell table at 0x8), apply the
-// box/flag visibility gate, expand each node's s16 rect by `clearance` and
-// track the closest node to `pos`, with a priority scheme for flagged nodes.
-//
-// OPEN ITEM PACKET (us-80482360, best mismatch=171 structural=148 reg_swap=23,
-// 688B vs 668B): dominant residual is register allocation - decomp emits
-// bl _savegpr_26 + mflr/LR spill + frame -64, while retail has NO calls, NO
-// LR save, frame -0x30, and saves exactly r29/r30/r31 which are then DEAD
-// (never read in the body). Reproducing three phantom callee-saved stores
-// plus volatile-only allocation has resisted: bool-vs-s32 flags, hoisted vs
-// per-iteration flags reload, do-while vs for loop, helper-union vs plain
-// (f32) int casts (plain casts ARE required - they unify onto lbl_eu_8066A8A0),
-// statement reordering, u16-vs-s32 counts (u16 made it WORSE: savegpr_27+
-// restgpr_27). Root cause is likely wall #6/#13: the mtctr/bdnz loop shape
-// needs a per-function opt level the unit lock denies, so count2 stays in a
-// GPR and pushes allocation over the volatile budget. KB corroboration:
-// __wudSyncDone sibling shows the same split - retail individual r29-r31
-// stw saves are an -O4,p-style prologue while our unit emits -O4,s-style
-// _savegpr/_restgpr outliner calls; not reachable from high-level source. Next experiments: (a) restore the full pre-incident TU
-// first (-ipa file scheduling depends on the whole file); (b) try declaring
-// three locals that die immediately after init to lure r29-31 allocation;
-// (c) check whether retail used register-keyword locals.
+// candidate list of record `index` (stride-10 pool at 0x8), apply the box/
+// flag visibility gate, expand each node's s16 rect by `clearance` and track
+// the closest node to `pos`, with a priority scheme for flagged nodes.
 extern "C" s32 func_8047E390__17UnkClass_8047E110Fv(UnkClass_8047E110* self,
     const ml::CVec3* pos, s32 index, f32 clearance) {
     ScnManagerLayout& m = *(ScnManagerLayout*)self;
-    f32 pxLo = pos->x - clearance; // f6
-    f32 pzLo = pos->z - clearance; // f7
-    f32 pxHi = pos->x + clearance; // f8
-    f32 pzHi = pos->z + clearance; // f9
-    const ScnWalkNode* node = m.nodes;
+    f32 posX = pos->x;
     const u16* rec = (const u16*)(m.field_0x8 + index * 12);
+    f32 posZ = pos->z;
+    f32 pxLo = posX - clearance; // f6
+    f32 pzLo = posZ - clearance; // f7
+    f32 pxHi = posX + clearance; // f8
+    f32 pzHi = posZ + clearance; // f9
+    const ScnWalkNode* node = m.nodes;
     s32 count1 = rec[0];
     s32 count2 = rec[1];
     node += count1;
-    s32 best = -1;                    // r7
-    f32 bestDist = lbl_eu_8066A894;   // f5
-    s32 haveStrict = 1;               // r8: any strict candidate seen
-    s32 haveMargin = 1;               // r9: any margin-only candidate seen
-    s32 haveFlagged = 1;              // r10: no flagged strict take yet
+    s32 best = -1;                  // r7
+    f32 bestDist = lbl_eu_8066A894; // f5
+    s32 haveStrict = 1;             // r8: any strict candidate seen
+    s32 haveMargin = 1;             // r9: any margin-only candidate seen
+    s32 haveFlagged = 1;            // r10: no flagged strict take yet
     for (s32 i = 0; i < count2; ++i, ++node) {
         // visibility gate: box-active flag plus two manager/node flag pairs
         u32 flags = m.field_0x38;
@@ -201,898 +350,1540 @@ extern "C" s32 func_8047E390__17UnkClass_8047E110Fv(UnkClass_8047E110* self,
     return best;
 }
 
-// OPEN ITEM PACKET (us-80482aa4, best 936B vs 988B, structural=218,
-// mismatch=236): semantics fully decoded and frame now matches (-112, stmw
-// r14-r31). Residual is register allocation + scheduling: decomp copies
-// params/spills in a different order (retail: self->r15, goalId->r17,
-// arg7->r16, then stw out), emits lhzx+copy where retail folds the edge-list
-// count load into lhzux (update-form *p++ whose result register feeds the
-// neighbors pointer), and still differs by ~52B inside the BFS inner loop.
-// Ruled out: ScnRec10 pointer-vs-repeated-index loop shapes, hoisted vs
-// branch-local list/count, cached base/range locals vs direct cell reloads
-// (direct reloads required for the call-aliasing shape), u16-vs-s32 counts.
-// Next experiments: (a) recover the pre-incident TU (see INCIDENT note
-// below) since -ipa file scheduling depends on the whole file; (b) try
-// update-form idiom variants for the count load; (c) reorder the BFS init
-// statements to interleave like retail (nxt computed before alloc call).
-extern "C" s32 func_8047EAD4__17UnkClass_8047E110Fv(UnkClass_8047E110* self,
-    u16* out1, s32 arg5, s32 arg6, s32 arg7) {
-    ScnManagerLayout& m = *(ScnManagerLayout*)self;
-    const ScnNodeRef& ref = m.field_0x8[arg5];
-    const ScnWalkNode& target = m.nodes[arg6];
-    u16* nlist = m.edges + ref.field_0x4;
-    s32 edgeCount = *nlist++;
-
-    if (target.reserved8 & 1) {
-        // Endpoint collection: find which side of the lookup records pairs
-        // with arg6 and remember its flag byte, then emit every record
-        // whose value is arg5 with a matching same-side flag byte.
-        u8 match;
-        for (s32 i = 0; i < edgeCount; ++i) {
-            const ScnNodeMap& lk = m.field_0xC[nlist[i]];
-            if (arg6 == lk.field_0x0) {
-                match = lk.field_0x8;
-                break;
-            }
-            if (arg6 == lk.field_0x2) {
-                match = lk.field_0x9;
-                break;
-            }
-        }
-        s32 count = 0;
-        for (s32 i = 0; i < edgeCount; ++i) {
-            const ScnNodeMap& lk = m.field_0xC[nlist[i]];
-            if (arg5 == lk.field_0x4) {
-                if (match != lk.field_0x8)
-                    continue;
-            } else if (match != lk.field_0x9) {
-                continue;
-            }
-            out1[count] = nlist[i];
-            count++;
-        }
-        return count;
-    }
-
-    // Bounded BFS from arg6 over each node's edge list, restricted to the
-    // id window [ref.edgeStart, ref.edgeStart+ref.edgeCount), with one bit
-    // per id in a pooled visited map. Reaching a flagged node runs the
-    // endpoint-collection scan above into out1 and returns its count.
-    // ref fields are re-read inside the loops on purpose: the calls below
-    // may alias the manager, forcing retail's reload shape.
-    u16* cur = out1;
-    u16* other = out1 + ref.edgeCount;
-    u32* bits = (u32*)func_804B5A68();
-    memset(bits, 0, ((m.field_0x8[arg5].edgeCount >> 5) + 1) * 4);
-    out1[0] = arg6;
-    s32 level = 1;
-    s32 d = arg6 - m.field_0x8[arg5].edgeStart;
-    bits[d >> 5] |= 1 << (d & 31);
-    while (level != 0) {
-        const u16* cin = cur;
-        u16* fout = other;
-        s32 n = level;
-        level = 0;
-        for (s32 i = 0; i < n; ++i) {
-            u16 id = *cin++;
-            ScnWalkNode* node = m.nodes + id;
-            u16 ecnt = m.edges[node->edgeOffset];
-            const u16* el = &m.edges[node->edgeOffset + 1];
-            for (s32 j = 0; j < ecnt; ++j) {
-                u16 nb = *el++;
-                s32 dd = m.field_0x8[arg5].edgeStart - nb;
-                if (dd < 0 || dd >= m.field_0x8[arg5].edgeCount)
-                    continue;
-                s32 wi = dd >> 5;
-                u32 mask = 1 << (dd & 31);
-                if (bits[wi] & mask)
-                    continue;
-                ScnWalkNode* en = m.nodes + nb;
-                if (!func_8047EEB0__17UnkClass_8047E110Fv(self, en, id, arg7))
-                    continue;
-                if (en->reserved8 & 1) {
-                    // Reached a flagged node: run the endpoint collection
-                    // over the reference list and return its count.
-                    u8 match;
-                    for (s32 k = 0; k < edgeCount; ++k) {
-                        const ScnNodeMap& lk = m.field_0xC[nlist[k]];
-                        if (nb == lk.field_0x0) {
-                            match = lk.field_0x8;
-                            break;
-                        }
-                        if (nb == lk.field_0x2) {
-                            match = lk.field_0x9;
-                            break;
-                        }
-                    }
-                    s32 count = 0;
-                    for (s32 k = 0; k < edgeCount; ++k) {
-                        const ScnNodeMap& lk = m.field_0xC[nlist[k]];
-                        if (arg5 == lk.field_0x4) {
-                            if (match != lk.field_0x8)
-                                continue;
-                        } else if (match != lk.field_0x9) {
-                            continue;
-                        }
-                        out1[count] = nlist[k];
-                        count++;
-                    }
-                    return count;
-                }
-                *fout++ = nb;
-                level++;
-                bits[wi] |= mask;
-            }
-        }
-        // ping-pong the frontier halves inside the shared output buffer
-        u16* t = cur;
-        cur = other;
-        other = t;
+// Real-signature views of the func_8047E1B0 / func_8047E390 member stubs
+// (retail Fv mangling; signatures recovered from caller register setup).
+// func_8047E62C -- two-stage segment solve: E1B0 (point-in-box) then E390
+// (neighbour search with clearance); both results stored, 1 on success.
+extern "C" s32 func_8047E62C__17UnkClass_8047E110Fv(UnkClass_8047E110* self, u32* outSeg,
+    u32* outNode, const ml::CVec3* pos, f32 clearance) {
+    s32 seg = ::func_8047E1B0__17UnkClass_8047E110Fv(self, pos);
+    *outSeg = seg;
+    if (seg != -1) {
+        s32 node = ::func_8047E390__17UnkClass_8047E110Fv(self, pos, seg, clearance);
+        *outNode = node;
+        if (node != -1)
+            return 1;
     }
     return 0;
 }
 
-// =====================================================================
-// INCIDENT - DO NOT BLINDLY REBUILD FROM THIS FILE
-//
-// During session batch-16 (2026-08-24 ~17:40 UTC) an agent destroyed this
-// translation unit by calling `write` (full-file overwrite) on it instead of
-// `edit`. The previous ~1889-line content of UnkClass_8047E110.cpp was lost
-// from the working tree. Only the func_80481074 body below survives.
-//
-// UNAFFECTED: libs/monolib/src/scn/UnkClass_8047E110.hpp (never touched).
-// The last good build artifact is build/us/src/monolib/src/scn/
-// UnkClass_8047E110.o (compiled from the pre-loss source after the session's
-// first edit).
-//
-// RECOVERY SOURCES (verified to exist):
-// - build/pi-harness/sessions/monolib__src__scn__UnkClass_8047E110/*/ *.jsonl
-//   Every prior session's tool calls/results are recorded there, including
-//   full edit oldText/newText pairs and file reads. Sessions editing this
-//   cpp: 08-23 batch-0/5/10/15/20, 08-24 batch-0/1/4/6/9/11/12/14, batch-16.
-// - build/pi-harness/sessions/monolib__src__scn__UnkClass_8047E110/batch-20/
-//   batch-20-session-1.transcript.md lines ~1963-2082 + ~2103-2235 hold
-//   line:crc3|content annotated dumps of cpp lines 1-120 and 1111-1223
-//   (state as of 08-23 07:40), plus a full dump of the .hpp as of then.
-// - git history / reflog (human with shell access) can restore the last
-//   committed version directly; transcripts cover post-commit edits.
-//
-// RECOMMENDED: restore via git first, then replay recorded edits from the
-// 08-24 session jsonls (batch-14 is the last session before the loss).
-// Verify with: unit-status monolib/src/scn/UnkClass_8047E110 -> must return
-// to "matched: 10/30" before any further matching work in this unit.
-// LINK WARNING: blob-surgery .data definitions lost with the file
-// (lbl_eu_8056DC68/74/80/90/B8/CCC, RTTI lists, vtable) will fail the final
-// link until the restore is done; this preamble only fixes TU compilation.
-// =====================================================================
+// func_8047E6C4 -- resolve the walk node under `pos`: test node `idx`'s cell
+// (expanded by clearance, then strictly), otherwise scan idx's edge list for
+// the closest visible flagged neighbour and re-probe through func_8047E1B0.
+extern "C" s32 func_8047E6C4__17UnkClass_8047E110Fv(UnkClass_8047E110* self,
+    u32* outValue, u32* outNode, s32 value, s32 idx, const ml::CVec3* pos,
+    f32 clearance) {
+    ScnManagerLayout& m = *(ScnManagerLayout*)self;
+    const ScnWalkNode* nodes = m.nodes;
+    const ScnWalkNode& node = nodes[idx];
+    f32 posX = pos->x;
+    s16 x0 = node.x;
+    f32 pxHi = posX + clearance;
+    s16 z0 = node.z;
+    f32 pzHi = pos->z + clearance;
+    f32 minX = lbl_eu_8066A898 * (f32)x0;
+    f32 minZ = lbl_eu_8066A898 * (f32)z0;
+    f32 maxX = lbl_eu_8066A898 * (f32)(x0 + node.width + 1);
+    f32 maxZ = lbl_eu_8066A898 * (f32)(z0 + node.depth + 1);
+    f32 dist0 = __fabs(pos->y - node.xPos);
+    s32 looseOk = 0;
+    // expanded-cell test (clearance margin)
+    if (pxHi >= minX && pzHi >= minZ && pxHi < maxX && pzHi < maxZ
+        && dist0 <= m.field_0x20) {
+        if ((node.reserved8 & 2) && (m.field_0x38 & 1)) {
+            *outValue = value;
+            *outNode = idx;
+            return 1;
+        }
+        looseOk = 1;
+    }
+    // strict-cell test (no clearance)
+    if (pos->x >= minX && pos->z >= minZ && pos->x < maxX && pos->z < maxZ
+        && dist0 <= m.field_0x20) {
+        *outValue = value;
+        *outNode = idx;
+        return 1;
+    }
+    // neighbour scan: pick the best visible neighbour
+    s32 best = -1;
+    u16 cnt = m.edges[node.edgeOffset];
+    const u16* ep = &m.edges[node.edgeOffset + 1];
+    for (u16 k = 0; k < cnt; ++k) {
+        const ScnWalkNode& nb = m.nodes[ep[k]];
+        u32 flags = m.field_0x38;
+        // visibility gate (same shape as func_8047E390)
+        if (!(flags & 1)) {
+            if (nb.reserved8 & 2)
+                continue;
+        }
+        if (!(flags & 2)) {
+            if (nb.reserved8 & 4)
+                continue;
+        } else if (!(flags & 4)) {
+            if (nb.reserved8 & 4)
+                continue;
+        }
+        f32 nMinX = lbl_eu_8066A898 * (f32)nb.x;
+        f32 nMinZ = lbl_eu_8066A898 * (f32)nb.z;
+        f32 nMaxX = lbl_eu_8066A898 * (f32)(nb.x + nb.width + 1);
+        f32 nMaxZ = lbl_eu_8066A898 * (f32)(nb.z + nb.depth + 1);
+        if (pxHi < nMinX || pzHi < nMinZ || pxHi >= nMaxX || pzHi >= nMaxZ)
+            continue;
+        if (__fabs(pos->y - nb.xPos) > m.field_0x20)
+            continue;
+        if ((nb.reserved8 & 2) && ep[k] != 0) {
+            // flagged neighbour: distance-gated toward the reference plane
+            f32 diff = __fabs(node.xPos - nb.xPos);
+            if (node.xPos >= nb.xPos) {
+                if (m.field_0x24 >= diff)
+                    best = ep[k];
+            } else {
+                if (diff <= m.field_0x28)
+                    best = ep[k];
+            }
+        } else {
+            if (pos->x >= nMinX && pos->z >= nMinZ && pos->x < nMaxX
+                && pos->z < nMaxZ
+                && __fabs(pos->y - nb.xPos) <= m.field_0x20)
+                best = ep[k];
+        }
+    }
+    if (best != -1) {
+        s32 hit = ::func_8047E1B0__17UnkClass_8047E110Fv(self, pos);
+        *outValue = hit;
+        if (hit != -1) {
+            *outNode = best;
+            return 1;
+        }
+    }
+    if (looseOk) {
+        *outValue = value;
+        *outNode = idx;
+        return 1;
+    }
+    return 0;
+}
+
+// func_8047EAD4 -- build a candidate node list for record pair (a,b). When
+// node b's low flag is set, filter the edge list selected by walk-table record
+// a: keep entries whose group byte (found by locating b in the candidate
+// slots) matches a's slot for the requested side. Otherwise breadth-first
+// expand from b through EEB0-vetted neighbours until a flagged node yields a
+// filtered sublist.
+extern "C" s32 func_8047EAD4__17UnkClass_8047E110Fv(
+    UnkClass_8047E110* self, u16* out, s32 a, s32 b, s32 mode) {
+    UnkClass_8047E110& m = *self;
+    const ScnWalkNode& nb = m.nodes[b];
+    const ScnWalkNode* nodes = m.nodes;
+    // locate the edge list via walk-table record a (+4 halfword)
+    u16 edgeIdx = ((const u16*)m.field_0x8)[a * 6 / 2 + 2];
+    u16 cnt = m.edges[edgeIdx];
+    const u16* p = &m.edges[edgeIdx + 1];
+    const u8* pool = (const u8*)m.field_0xC;
+    if (nb.reserved8 & 1) {
+        // direct filter: find which candidate slot holds b, take its group byte
+        u8 grp = 0;
+        for (u16 k = 0; k < cnt; ++k) {
+            const u16* rc = (const u16*)(pool + p[k] * 10);
+            if (rc[0] == (u16)b) {
+                grp = ((const u8*)rc)[8];
+                break;
+            }
+            if (rc[1] == (u16)b) {
+                grp = ((const u8*)rc)[9];
+                break;
+            }
+        }
+        s32 count = 0;
+        for (u16 k = 0; k < cnt; ++k) {
+            u16 e = p[k];
+            const u16* rc = (const u16*)(pool + e * 10);
+            if ((rc[2] == (u16)a && ((const u8*)rc)[8] == grp)
+                || (rc[3] == (u16)a && ((const u8*)rc)[9] == grp)) {
+                out[count++] = e;
+            }
+        }
+        return count;
+    }
+    // BFS path: expand from b, collecting the first flagged node's matches
+    const Fe48Table& tbl = lbl_eu_80658540;
+    u32* bitmap = (u32*)::func_804B5A68();
+    memset(bitmap, 0, (((const u16*)m.field_0x8)[a * 3 + 1] >> 5) * 4);
+    u16* work = (u16*)tbl.field_0x8;
+    u16* frontier = work + cnt;
+    u16* other = frontier;
+    frontier[0] = (u16)b;
+    bitmap[b >> 5] |= 1 << (b & 31);
+    s32 curCount = 1;
+    while (curCount != 0) {
+        const u16* fr = frontier;
+        s32 prevCount = curCount;
+        curCount = 0;
+        for (s32 i = 0; i < prevCount; ++i) {
+            u16 id = *fr++;
+            const ScnWalkNode& node = nodes[id];
+            u16 ecnt = m.edges[node.edgeOffset];
+            const u16* ep = &m.edges[node.edgeOffset + 1];
+            for (s32 k = 0; k < ecnt; ++k) {
+                u16 nEnt = ep[k];
+                if (bitmap[nEnt >> 5] & (1 << (nEnt & 31)))
+                    continue;
+                if (!::func_8047EEB0__17UnkClass_8047E110Fv(self,
+                        (const WalkQueryInfo*)&nodes[nEnt], id, mode))
+                    continue;
+                if (nodes[nEnt].reserved8 & 1) {
+                    // flagged: run the group filter for this subtree
+                    const u16* rc0 = (const u16*)(pool + nEnt * 10);
+                    u8 grp = 0;
+                    for (u16 j = 0; j < ecnt; ++j) {
+                        const u16* rc = (const u16*)(pool + ep[j] * 10);
+                        if (rc[0] == nEnt) {
+                            grp = ((const u8*)rc)[8];
+                            break;
+                        }
+                        if (rc[1] == nEnt) {
+                            grp = ((const u8*)rc)[9];
+                            break;
+                        }
+                    }
+                    s32 count = 0;
+                    for (u16 j = 0; j < ecnt; ++j) {
+                        u16 e = ep[j];
+                        const u16* rc = (const u16*)(pool + e * 10);
+                        if ((rc[2] == (u16)a && ((const u8*)rc)[8] == grp)
+                            || (rc[3] == (u16)a && ((const u8*)rc)[9] == grp)) {
+                            out[count++] = e;
+                        }
+                    }
+                    return count;
+                }
+                *other++ = nEnt;
+                ++curCount;
+                bitmap[nEnt >> 5] |= 1 << (nEnt & 31);
+            }
+        }
+        u16* tmp = frontier;
+        frontier = other;
+        other = tmp;
+    }
+    return 0;
+}
+
+// Stride-8 threshold slot overlay of the region starting at 0x24, indexed by
+// func_8047EEB0.
+struct ScnSlotView {
+    u8 pad[0x24];
+    ScnSlot8 slots8[4];
+};
+
+// func_8047EEB0 -- neighbour scan with per-slot distance thresholds. When the
+// walk box is inactive only the flag bits decide; otherwise every neighbour of
+// info's edge list (except `value`) must pass a distance test whose threshold
+// slot is selected by `slotSel`.
+extern "C" bool func_8047EEB0__17UnkClass_8047E110Fv(UnkClass_8047E110* self,
+    const WalkQueryInfo* info, s32 value, s32 slotSel) {
+    ScnManagerLayout& m = *(ScnManagerLayout*)self;
+    u32 flags = m.field_0x38;
+    u16 f8;
+    if (flags & 1) {
+        f8 = info->field_0x8;
+        if (f8 & 2) {
+            s32 idx = info->field_0x4;
+            const u16* edges = m.edges;
+            u16 count = edges[idx];
+            const u16* p = &edges[idx + 1];
+            // scan neighbours; every non-matching entry terminates
+            // (pass/fail), so the loop only continues past entries equal
+            // to `value`
+            for (s32 c = count; c > 0; --c, ++p) {
+                u16 n = *p;
+                if (n == value)
+                    continue;
+                const ScnWalkNode* nodes = m.nodes;
+                f32 dn = nodes[n].xPos;
+                f32 dv = nodes[value].xPos;
+                if (dv < dn) {
+                    // byte-granular threshold slot selected by leading zeros
+                    f32 thr = *(const f32*)((const u8*)self + 0x24
+                        + ((u32)__cntlzw(slotSel) >> 3));
+                    if (thr >= dn - dv)
+                        return true;
+                    return false;
+                } else {
+                    if (dv == dn)
+                        return true;
+                    // stride-4 threshold slot indexed by the selector
+                    f32 thr = ((const f32*)((const u8*)self + 0x24))[slotSel];
+                    if (thr >= dv - dn)
+                        return true;
+                    return false;
+                }
+            }
+            return false;
+        }
+    } else {
+        f8 = info->field_0x8;
+        if (f8 & 2)
+            return false;
+    }
+    // shared flag gate
+    if (flags & 2)
+        return true;
+    return (f8 & 4) == 0;
+}
+
+// func_8047EFBC -- expand a walk path from `seed` in `dir` directions: each
+// pass picks the neighbour whose table value (low 14 bits) beats the running
+// threshold, carries the pass flag (0x8000 backwards / 0x4000 forwards),
+// matches threshold groups and is already marked in the scratch visit bitmap,
+// writing ids into consecutive output slots. Retail mangles this member as
+// Fv although it consumes four arguments (self/out/seed/dir ABI).
+extern "C" s32 func_8047EFBC__17UnkClass_8047E110Fv(UnkClass_8047E110* self,
+    u16* out, s32 seed, s32 dir = 0) {
+    ScnManagerLayout& m = *(ScnManagerLayout*)self;
+    const u16* tbl = (const u16*)m.field_0x94;
+    u32* bitmap = (u32*)::func_804B5A68();
+    u32 v = tbl[seed];
+    // per-pass cursor counts and thresholds, filled by the direction select
+    s32 cur[2];
+    u16 thr[2];
+    if (v & 0x8000) {
+        cur[0] = dir - 1;
+        cur[1] = dir;
+        thr[0] = tbl[seed] & 0x3FFF;
+        thr[1] = (tbl[seed] & 0x3FFF) + 1;
+    } else {
+        cur[0] = dir + 1;
+        cur[1] = dir - 1;
+        thr[1] = tbl[seed] & 0x3FFF;
+        thr[0] = thr[1] + 2;
+    }
+    if ((u32)(cur[0] + cur[1] + 1)
+        >= ((const Fe48TableExt*)&lbl_eu_80658540)->field_0x14)
+        return 0;
+    out[cur[0]] = (u16)seed;
+    u16 best;
+    for (s32 pass = 0; pass < 2; ++pass) {
+        u16 bestThr = thr[pass];
+        best = (u16)seed;
+        s32 step;
+        u32 flagBit;
+        if (pass != 0) {
+            step = 1;
+            flagBit = 0x4000;
+        } else {
+            step = -1;
+            flagBit = 0x10000 - 0x8000;
+        }
+        u16* dst = &out[cur[0] + step];
+        s32 iters = cur[pass];
+        for (s32 it = 0; it < iters; ++it) {
+            const ScnRec10* rec = (const ScnRec10*)m.field_0xC + best;
+            for (s32 axis = 0; axis < 2; ++axis) {
+                s32 cc = rec->coord[axis];
+                const ScnBlockC* blk = (const ScnBlockC*)m.field_0x8 + cc;
+                u32 eb = blk->edgeBase;
+                u8 g = rec->grp[axis];
+                u16 cnt = m.edges[eb];
+                const u16* p = &m.edges[eb + 1];
+                for (; cnt != 0; --cnt) {
+                    u16 nEnt = *p;
+                    if (nEnt != best) {
+                        const ScnRec10* rn = (const ScnRec10*)m.field_0xC
+                            + nEnt;
+                        s32 nc = rn->coord[axis];
+                        // sign trick: 1 iff the axis coordinates differ
+                        u32 differ =
+                            (((u32)(cc - nc)) | ((u32)(nc - cc))) >> 31;
+                        // must share the threshold group and be visited
+                        if (rn->grp[differ] == g
+                            && ((1u << (nEnt & 31)) & bitmap[nEnt >> 6])) {
+                            u32 tv = tbl[nEnt];
+                            if ((tv & flagBit)) {
+                                u32 tval = tv & 0x3FFF;
+                                if (tval < bestThr) {
+                                    *dst = nEnt;
+                                    bestThr = tval;
+                                    best = *p;
+                                    // terminate both loops through the
+                                    // shared axis tail
+                                    axis = 10;
+                                    break;
+                                }
+                            }
+                        }
+                    }
+                    ++p;
+                }
+            }
+            dst += step;
+        }
+    }
+    return cur[0] + cur[1] + 1;
+}
+
+// func_8047F214 -- compute the walking direction from `pos` toward node idxB
+// (relative to node idxA) into `out`, y forced to zero. When idxB is in
+// idxA's edge list the direction aims at the midpoint of the shared portal
+// edge (whichever side matches), otherwise straight at idxB's center.
+extern "C" void func_8047F214__17UnkClass_8047E110Fv(UnkClass_8047E110* self,
+    ml::CVec3* out, const ml::CVec3* pos, s32 idxA, s32 idxB) {
+    ScnManagerLayout& m = *(ScnManagerLayout*)self;
+    const ScnWalkNode& na = m.nodes[idxA];
+    const ScnWalkNode& nb = m.nodes[idxB];
+    // rect of B (cell size scaled; max = min + cell*(extent+1))
+    f32 minXb = scaleNodeCoord(nb.x);
+    f32 minZb = scaleNodeCoord(nb.z);
+    f32 maxXb = lbl_eu_8066A898 * s32ToF_A8A0(nb.width + 1) + minXb;
+    f32 maxZb = lbl_eu_8066A898 * s32ToF_A8A0(nb.depth + 1) + minZb;
+
+    f32 xSlot;
+    f32 zSlot;
+    // search for B in A's edge list
+    u16 cnt = m.edges[na.edgeOffset];
+    const u16* ep = &m.edges[na.edgeOffset + 1];
+    s32 found = 0;
+    for (u16 i = 0; i < cnt; ++i) {
+        if (*ep++ == idxB) {
+            found = 1;
+            break;
+        }
+    }
+
+    if (!found) {
+        // not adjacent: aim at B's center
+        xSlot = lbl_eu_8066A898 * (maxXb + minXb);
+        zSlot = lbl_eu_8066A898 * (maxZb + minZb);
+    } else {
+        // rect of A + vertical midpoint term
+        f32 minXa = scaleNodeCoord(na.x);
+        f32 minZa = scaleNodeCoord(na.z);
+        f32 maxXa = lbl_eu_8066A898 * s32ToF_A8A0(na.width + 1) + minXa;
+        f32 maxZa = lbl_eu_8066A898 * s32ToF_A8A0(na.depth + 1) + minZa;
+        f32 midY = lbl_eu_8066A898 * (na.xPos + nb.xPos);
+        (void)midY;
+
+        if (maxXa == minXb) {
+            // shared edge on A's +x side: clamp the z overlap of both rects
+            f32 hi = (maxZa >= maxZb) ? maxZb : maxZa;
+            f32 lo = (minZa >= minZb) ? minZb : minZa;
+            zSlot = lbl_eu_8066A898 * (hi + lo);
+            if (pos->x > lo && pos->x < hi)
+                xSlot = maxXb;
+            else
+                xSlot = maxXa;
+        } else if (maxXb == minXa) {
+            // shared edge on B's +x side
+            f32 hi = (maxZa >= maxZb) ? maxZb : maxZa;
+            f32 lo = (minZa >= minZb) ? minZb : minZa;
+            zSlot = lbl_eu_8066A898 * (hi + lo);
+            if (pos->x > lo && pos->x < hi)
+                xSlot = minXb;
+            else
+                xSlot = maxXa;
+        } else if (maxZa == minZb) {
+            // shared edge on A's +z side: clamp the x overlap
+            f32 hi = (maxXa >= maxXb) ? maxXb : maxXa;
+            f32 lo = (minXa >= minXb) ? minXb : minXa;
+            xSlot = lbl_eu_8066A898 * (hi + lo);
+            if (pos->x > lo && pos->x < hi)
+                zSlot = maxZb;
+            else
+                zSlot = maxZa;
+        } else if (maxZb == minZa) {
+            // shared edge on B's +z side
+            f32 hi = (maxXa >= maxXb) ? maxXb : maxXa;
+            f32 lo = (minXa >= minXb) ? minXb : minXa;
+            xSlot = lbl_eu_8066A898 * (hi + lo);
+            if (pos->x > lo && pos->x < hi)
+                zSlot = minZb;
+            else
+                zSlot = maxZb;
+        } else {
+            xSlot = lbl_eu_8066A898 * (maxXb + minZa);
+            zSlot = lbl_eu_8066A898 * (maxZb + maxZa);
+        }
+    }
+
+    out->x = xSlot - pos->x;
+    out->y = lbl_eu_8066A8AC;
+    out->z = zSlot - pos->z;
+    if (out->x == lbl_eu_8066A8AC && out->z == lbl_eu_8066A8AC) {
+        *out = CVec3::zero;
+    } else {
+        f32 lenSq = out->x * out->x + out->y * out->y + out->z * out->z;
+        if (lenSq == lbl_eu_8066A8AC)
+            *out = CVec3::zero;
+        else
+            PSVECNormalize(*out, *out);
+    }
+}
+
+// func_8047F658 -- fetch the walk-target point for node `idx`: validates the
+// walk box, the node flag bits and a distance test against node `idx2`, then
+// copies the selected 12-byte waypoint block into `out`. The 0x30-byte
+// waypoint table is filled in on first use.
+extern "C" s32 func_8047F658__17UnkClass_8047E110Fv(UnkClass_8047E110* self, ScnVecWords* out,
+    s32 idx, s32 idx2) {
+    UnkClass_8047E110& m = *self;
+    const ScnWalkNode& node = m.nodes[idx];
+
+    if ((m.field_0x38 & 1) && (node.reserved8 & 2) &&
+        node.xPos - m.nodes[idx2].xPos >= lbl_eu_8066A8B0) {
+        const ScnWalkNode* nodes = m.nodes;
+        u16 flags = node.reserved8;
+        s32 sel = (flags >> 12) & 0xF;
+        if (!(s8)lbl_eu_806658D0[0]) {
+            // waypoint table layout (f32 triples):
+            //   block 0: {A8AC, A8AC, A8B4}  block 1: {A8AC, A8AC, A890}
+            //   block 2: {A8B4, A8AC, A8AC}  block 3: {A890, A8AC, A8AC}
+            const f32 vFlat = lbl_eu_8066A8AC;
+            ((f32*)lbl_eu_80658608)[0] = vFlat;
+            f32* wp = (f32*)lbl_eu_80658608;
+            const f32 vDepth = lbl_eu_8066A8B4;
+            const f32 vHalf = lbl_eu_8066A890;
+            wp[1] = vFlat;
+            wp[2] = vDepth;
+            wp[3] = vFlat;
+            wp[4] = vFlat;
+            wp[5] = vHalf;
+            wp[6] = vDepth;
+            wp[7] = vFlat;
+            wp[8] = vFlat;
+            wp[9] = vHalf;
+            wp[10] = vFlat;
+            wp[11] = vFlat;
+            lbl_eu_806658D0[0] = 1;
+        }
+
+        // high nibble of the flag halfword selects the waypoint block
+        const ScnVecWords* blocks = (const ScnVecWords*)lbl_eu_80658608;
+        *out = blocks[sel];
+        return 1;
+    }
+    return 0;
+}
+
+// func_8047F730 -- flood-fill the walk table from the FE48 candidate lists:
+// the first `count1` entries of the 0x98 buffer are seeded with the 0x8000
+// flag and `count2` more with 0x4000 (all marked visited in the scratch
+// bitmap). Each pass expands every listed node's edge lists into the swap
+// buffer, assigning child distances (parent + 1); when an expansion touches
+// a node whose phase flag differs from its parent's, the opposite frontier
+// was met and func_8047EFBC backfills the path. Returns its result, or 0.
+extern "C" s32 func_8047F730__17UnkClass_8047E110Fv(
+    UnkClass_8047E110* self, u16* out, s32 count1, s32 count2) {
+    ScnManagerLayout& m = *(ScnManagerLayout*)self;
+    u16* dist = (u16*)m.field_0x94;
+    u32* bitmap = (u32*)::func_804B5A68();
+    const WalkSpawnDesc* desc = (const WalkSpawnDesc*)m.field_0x0;
+    u16* buf = (u16*)m.field_0x98;
+    u16* other = buf + (desc->field_0x10 >> 1) + 10;
+    memset(bitmap, 0, ((desc->field_0x10 >> 5) + 1) * 4);
+
+    // seed phase flags: list one = 0x8000, list two = 0x4000
+    u16* sp = buf;
+    for (s32 i = 0; i < count1; ++i) {
+        u16 v = *sp++;
+        bitmap[v >> 5] |= 1 << (v & 31);
+        dist[v] = 0x8000;
+    }
+    for (s32 i = 0; i < count2; ++i) {
+        u16 v = *sp++;
+        bitmap[v >> 5] |= 1 << (v & 31);
+        dist[v] = 0x4000;
+    }
+
+    const ScnRec10* recs = (const ScnRec10*)m.field_0xC;
+    const ScnBlockC* blocks = (const ScnBlockC*)m.field_0x8;
+    s32 remaining = count1 + count2;
+    u16* cur = buf;
+    u16* nxt = other;
+    while (remaining != 0) {
+        s32 found = 0;
+        u32 orFlags = 0;
+        u16* dst = nxt;
+        for (s32 j = 0; j < remaining; ++j) {
+            u16 id = cur[j];
+            const ScnRec10& rec = recs[id];
+            for (s32 axis = 0; axis < 2; ++axis) {
+                const ScnBlockC& blk = blocks[rec.coord[axis]];
+                u16 cnt = m.edges[blk.edgeBase];
+                const u16* p = &m.edges[blk.edgeBase + 1];
+                for (u16 k = 0; k < cnt; ++k) {
+                    u16 nEnt = p[k];
+                    const ScnRec10& rn = recs[nEnt];
+                    // sign trick: 1 iff the axis coordinates differ
+                    s32 cc = rec.coord[axis];
+                    s32 nc = rn.coord[axis];
+                    u32 differ = (((u32)(cc - nc)) | ((u32)(nc - cc))) >> 31;
+                    if (rec.grp[axis] != rn.grp[differ])
+                        continue;
+                    u32 word = nEnt >> 5;
+                    u32 bit = 1u << (nEnt & 31);
+                    if (bitmap[word] & bit) {
+                        // already visited: extend the wavefront
+                        ++found;
+                        *dst++ = nEnt;
+                        dist[nEnt] = dist[id] + 1;
+                        orFlags |= dist[nEnt];
+                    } else if ((dist[nEnt] ^ dist[id]) & 0x8000) {
+                        // phases met: backfill the path
+                        return ::func_8047EFBC__17UnkClass_8047E110Fv(self,
+                            out, id);
+                    }
+                }
+            }
+        }
+        if ((orFlags & 0xC000) != 0xC000)
+            return 0;
+        u16* tmp = cur;
+        cur = nxt;
+        nxt = tmp;
+        remaining = found;
+    }
+    return 0;
+}
+
+// func_8047FE48 -- query the walk table: fetch two candidate lists via
+// func_8047EAD4 (modes 0/1), report the first common entry, falling back to
+// func_8047F730 when the lists share nothing.
+extern "C" s32 func_8047FE48__17UnkClass_8047E110Fv(UnkClass_8047E110* self,
+    u16* outResult, u16* outValue, s32 p1, s32 p2, s32 p3, s32 p4) {
+    ScnManagerLayout& m = *(ScnManagerLayout*)self;
+    u32 wpTable = lbl_eu_80658540.field_0x8;
+    m.field_0x94 = wpTable;
+    const WalkSpawnDesc* desc = (const WalkSpawnDesc*)m.field_0x0;
+    m.field_0x98 = wpTable + desc->field_0x10 * 2;
+    s32 count1 = ::func_8047EAD4__17UnkClass_8047E110Fv(
+        self, (u16*)m.field_0x98, p1, p2, 0);
+    if (count1 == 0)
+        return 0;
+    s32 count2 = ::func_8047EAD4__17UnkClass_8047E110Fv(
+        self, (u16*)(m.field_0x98 + count1 * 2), p3, p4, 1);
+    if (count2 == 0)
+        return 0;
+    // scan list1 x list2 for the first shared entry
+    const u16* list1 = (const u16*)m.field_0x98;
+    const u16* list2 = list1 + count1;
+    s32 i;
+    for (i = 0; i < count1; ++i) {
+        const u16* q = list2;
+        s32 j;
+        for (j = count2; j > 0; --j, ++q) {
+            if (*q == list1[i]) {
+                *outValue = list1[i];
+                *outResult = 1;
+                return 1;
+            }
+        }
+    }
+    u16 res = (u16)::func_8047F730__17UnkClass_8047E110Fv(
+        self, outValue, count1, count2);
+    *outResult = res;
+    return res != 0;
+}
+
+// func_8047FF9C -- seed a path table from two candidate start nodes: the node
+// whose weight is below the 10000 cap seeds out[], its edge list fills the
+// preceding slots backwards (lighter-weight neighbours only, chaining sel),
+// then a forward walk appends heavy (>=10000, lighter than current) neighbours
+// into successive slots. Edge entries carry a flag in bit 15.
+extern "C" s32 func_8047FF9C__17UnkClass_8047E110Fv(UnkClass_8047E110* self,
+    u16* out, const u16* weights, const u32* bits, s32, s32, s32 startA,
+    s32 startB, s32 limit) {
+    s32 sel;
+    s32 cur;
+    s32 end;
+    if (weights[startA] >= 10000) {
+        sel = startB;
+        cur = startA;
+        end = limit + 1;
+    } else {
+        sel = startA;
+        cur = startB;
+        end = limit;
+    }
+    out[end - 1] = (u16)sel;
+    // backwards fill: first lighter marked neighbour of `sel`; the hit
+    // becomes the next `sel` (chain walks back through the table)
+    s32 i = end - 2;
+    while (i >= 0) {
+        u16 wsel = weights[sel];
+        s32 cnt = self->edges[self->nodes[sel].edgeOffset];
+        const u16* p = &self->edges[self->nodes[sel].edgeOffset + 1];
+        for (; cnt > 0; --cnt) {
+            u16 nEnt = *p;
+            if (bits[nEnt >> 5] & (1u << (nEnt & 31))) {
+                if (weights[nEnt & 0x7FFF] < wsel) {
+                    // re-read through p: the store above may alias it
+                    out[i] = nEnt;
+                    sel = *p;
+                    break;
+                }
+            }
+            ++p;
+        }
+        --i;
+    }
+    out[end] = (u16)cur;
+    // forward walk: append heavy neighbours of the running node
+    u16* fwd = out + end + 1;
+    s32 j = 1;
+    while (j < limit) {
+        u16 wcur = weights[cur];
+        s32 cnt = self->edges[self->nodes[cur].edgeOffset];
+        const u16* p = &self->edges[self->nodes[cur].edgeOffset + 1];
+        for (; cnt > 0; --cnt) {
+            u16 nEnt = *p;
+            if (bits[nEnt >> 5] & (1u << (nEnt & 31))) {
+                u16 cw = weights[nEnt & 0x7FFF];
+                if (cw < wcur && cw >= 10000) {
+                    *fwd = nEnt;
+                    cur = *p;
+                    break;
+                }
+            }
+            ++p;
+        }
+        ++fwd;
+        ++j;
+    }
+    return end + limit;
+}
+
+// func_80480140 -- for each of `count` outputs, walk the edge list of node
+// `start` and pick the first neighbour that lies inside the [baseIndex,
+// limit) range, has its bit set in `bits`, and whose weight beats the current
+// node's weight; that neighbour becomes the next start.
+extern "C" void func_80480140__17UnkClass_8047E110Fv(UnkClass_8047E110* self, u16* out,
+    const u16* weights, const u32* bits, s32 start, s32 count, const WalkDistInfo& info) {
+    // per-output greedy step: take the first lighter flagged neighbour of
+    // `start` inside [base, base+limit) as the next node.
+    s32 i = 0;
+    do {
+        s32 base = info.baseIndex;
+        u16 w = weights[start - base];
+        u32 off = self->nodes[start].edgeOffset;
+        u16 cnt = self->edges[off];
+        const u16* p = &self->edges[off + 1];
+        if (cnt > 0) {
+            do {
+                u16 n = *p;
+                s32 d = n - base;
+                if (d >= 0 && d < info.limit && (bits[d >> 5] & (1 << (d & 31)))
+                    && (u32)weights[d] < (u32)w) {
+                    *out = n;
+                    start = *p;
+                    break;
+                }
+                ++p;
+            } while (--cnt);
+        }
+        ++out;
+        ++i;
+    } while (i < count);
+}
+// func_8048020C -- BFS path search between two walk records: resolve the start
+// node from record `recIdx` (candidate slot matching `key`), then breadth-first
+// expand the graph (distance map + visited bitmap in the scratch area, frontier
+// queues in the FE48 work buffer) until `goal` is reached; func_80480140
+// backfills the path into outBuf.
+extern "C" s32 func_8048020C__17UnkClass_8047E110Fv(UnkClass_8047E110* self,
+    u16* outFound, u16* outBuf, s32 limit, s32 key, s32 goal, s32 recIdx) {
+    UnkClass_8047E110& m = *self;
+    u32 recOff = recIdx * 10;
+    const u16* rec = (const u16*)(m.field_0xC + recOff);
+    u16 start;
+    s32 selFlag;
+    if (key == rec[2]) {
+        selFlag = 1;
+        start = rec[0];
+    } else {
+        selFlag = 0;
+        start = rec[1];
+    }
+    if (start == goal) {
+        *outFound = 1;
+        *outBuf = rec[2 + selFlag];
+        return 1;
+    }
+    ScnWpKey& wp = ((ScnWpKey*)m.field_0x8)[key];
+    const Fe48Table& tbl = lbl_eu_80658540;
+    u32* bitmap = (u32*)::func_804B5A68();
+    memset(bitmap, 0, ((wp.range >> 5) + 1) * 4);
+    u16* buf = (u16*)tbl.field_0x8; // distance map, indexed by id-base
+    u16* frontier = buf + wp.range; // frontier queue area
+    u16* other = frontier;
+    frontier[0] = start;
+    buf[start - wp.base] = 0;
+    bitmap[(start - wp.base) >> 5] |= 1 << ((start - wp.base) & 31);
+    s32 curCount = 1;
+    s32 dist = 1;
+    while (curCount != 0) {
+        const u16* fr = frontier;
+        s32 prevCount = curCount;
+        u16* dst = other;
+        curCount = 0;
+        for (s32 i = 0; i < prevCount; ++i) {
+            u16 id = *fr++;
+            const ScnWalkNode& node = m.nodes[id];
+            u16 ecnt = m.edges[node.edgeOffset];
+            const u16* ep = &m.edges[node.edgeOffset + 1];
+            for (s32 k = 0; k < ecnt; ++k) {
+                u16 nEnt = ep[k];
+                s32 c = nEnt - wp.base;
+                if (c < 0 || c >= wp.range)
+                    continue;
+                if (bitmap[c >> 5] & (1 << (c & 31)))
+                    continue;
+                if (!::func_8047EEB0__17UnkClass_8047E110Fv(self,
+                        (const WalkQueryInfo*)&m.nodes[nEnt], id, 1))
+                    continue;
+                buf[c] = (u16)dist;
+                if (goal == nEnt) {
+                    if (dist + 1 >= limit)
+                        return 0;
+                    ::func_80480140__17UnkClass_8047E110Fv(self, outBuf, buf,
+                        bitmap, goal, dist, *(const WalkDistInfo*)&wp);
+                    outBuf[dist] = rec[selFlag];
+                    *outFound = (u16)(dist + 1);
+                    return 1;
+                }
+                *dst++ = nEnt;
+                ++curCount;
+                bitmap[c >> 5] |= 1 << (c & 31);
+            }
+        }
+        u16* tmp = frontier;
+        frontier = other;
+        other = tmp;
+        ++dist;
+    }
+    return 0;
+}
+
+// func_804804DC -- bidirectional walk search: seed a combined queue with two
+// start nodes in the FE48 work area, expand neighbours of whichever side has
+// remaining capacity (dist map capped at 10000), and when both sides added
+// nodes, swap the queue halves. func_8047FF9C backfills the path once a
+// connection is found.
+extern "C" s32 func_804804DC__17UnkClass_8047E110Fv(UnkClass_8047E110* self,
+    u16* outPath, u16* outAux, s32 limit, s32 seedA, s32 seedB) {
+    UnkClass_8047E110& m = *self;
+    const ScnWalkNode* nodes = m.nodes;
+    u32 total = ((const WalkSpawnDesc*)m.field_0x0)->field_0x0;
+    u32 cap = (total >= 500) ? total >> 1 : total;
+    u16* work = (u16*)lbl_eu_80658540.field_0x8;
+    u16* qA = work + cap; // forward queue half
+    u16* qB = qA + cap;   // backward queue half / dist map
+    u32* bitmap = (u32*)::func_804B5A68();
+    memset(bitmap, 0, ((total >> 5) + 1) * 4);
+    work[0] = (u16)seedA;
+    work[1] = (u16)seedB;
+    bitmap[seedA >> 5] |= 1 << (seedA & 31);
+    bitmap[seedB >> 5] |= 1 << (seedB & 31);
+    s32 pass = 1;
+    s32 count = 2;
+    while (count != 0) {
+        s32 prevCount = count;
+        s32 addedA = 0;
+        s32 addedB = 0;
+        u16* dst = qA + cap * 0;
+        for (s32 i = 0; i < prevCount; ++i) {
+            u16 id = work[i];
+            s32 nextDist = qB[id] + 1;
+            const ScnWalkNode& node = nodes[id];
+            u16 ecnt = m.edges[node.edgeOffset];
+            const u16* ep = &m.edges[node.edgeOffset + 1];
+            s32 sel = (nextDist < 10000) ? 1 : 0;
+            for (s32 k = 0; k < ecnt; ++k) {
+                u16 nEnt = ep[k];
+                if (bitmap[nEnt >> 5] & (1 << (nEnt & 31)))
+                    continue;
+                if (!::func_8047EEB0__17UnkClass_8047E110Fv(self,
+                        (const WalkQueryInfo*)&nodes[nEnt], id, sel))
+                    continue;
+                if (nextDist < 10000)
+                    ++addedA;
+                else
+                    ++addedB;
+                qB[nEnt] = (u16)nextDist;
+                *dst++ = nEnt;
+                bitmap[nEnt >> 5] |= 1 << (nEnt & 31);
+                if (nextDist >= limit)
+                    return ::func_8047FF9C__17UnkClass_8047E110Fv(self,
+                        outPath, qB, bitmap, 0, 0, seedA, seedB, limit);
+            }
+        }
+        if (addedA != 0 && addedB != 0) {
+            u16* tmp = qA;
+            qA = qB;
+            qB = tmp;
+            ++pass;
+        }
+        count = addedA + addedB;
+    }
+    return 0;
+}
+
+extern "C" bool func_804808A0__17UnkClass_8047E110Fv(
+    UnkClass_8047E110* self, const CVec3* position, s32 startNode,
+    s32 goalNode, f32 clearance) {
+    if (startNode == goalNode) return true;
+
+    ScnWalkGraph& graph = *(ScnWalkGraph*)self;
+    const ScnWalkNode& goalNodeData = graph.nodes[goalNode];
+    CVec3 goalCenter;
+    goalCenter.y = position->y;
+    goalCenter.z = lbl_eu_8066A898 * s32ToF_A8A0(goalNodeData.z)
+        + lbl_eu_8066A8A8 * s32ToF_A8A0(goalNodeData.depth + 1);
+    goalCenter.x = lbl_eu_8066A898 * s32ToF_A8A0(goalNodeData.x)
+        + lbl_eu_8066A8A8 * s32ToF_A8A0(goalNodeData.width + 1);
+    CVec3 direction;
+    direction = goalCenter - *position;
+
+    f32 crossingX;
+    f32 crossingZ;
+    f32 deltaX;
+    f32 deltaZ;
+    f32 distance;
+    f32 dzPerX;
+    f32 dxPerZ;
+    f32 maxX;
+    f32 maxZ;
+    f32 minX;
+    f32 minZ;
+    dzPerX = lbl_eu_8066A8AC;
+    dxPerZ = lbl_eu_8066A8AC;
+    if (direction.x != lbl_eu_8066A8AC) dzPerX = direction.z / direction.x;
+    if (direction.z != lbl_eu_8066A8AC) dxPerZ = direction.x / direction.z;
+
+    if (goalCenter.x < position->x) {
+        maxX = position->x;
+        minX = goalCenter.x;
+    } else {
+        maxX = goalCenter.x;
+        minX = position->x;
+    }
+
+    if (goalCenter.z < position->z) {
+        maxZ = position->z;
+        minZ = goalCenter.z;
+    } else {
+        maxZ = goalCenter.z;
+        minZ = position->z;
+    }
+
+    s32 frontierA[10];
+    s32 frontierB[10];
+    s32 pass;
+    s32* frontier = frontierA;
+    s32* next = frontierB;
+    s32 frontierCount = 1;
+    frontier[0] = startNode;
+    f32 bestDistance = lbl_eu_8066A8B8;
+
+    pass = 0;
+    while (frontierCount != 0 && ++pass < 90) {
+        s32 nextCount = 0;
+        for (s32 i = 0; i < frontierCount; ++i) {
+            CVec3 currentMax;
+            CVec3 currentMin;
+            const ScnWalkNode& currentNode = graph.nodes[frontier[i]];
+            u16* edges = graph.edges;
+            setWalkRect(currentMin, currentMax, currentNode);
+            u32 edgeOffset = currentNode.edgeOffset;
+            u32 neighborOffset = edgeOffset + 1;
+            u16 edgeCount = edges[edgeOffset];
+            const u16* neighbors = edges + neighborOffset;
+
+            for (s32 edge = 0; edge < edgeCount; ++edge) {
+                s32 candidateIndex = neighbors[edge];
+                const ScnWalkNode& candidateNode = graph.nodes[candidateIndex];
+                CVec3 portalMax;
+                CVec3 portalMin;
+                CVec3 candidateMax;
+                CVec3 candidateMin;
+                setWalkRect(candidateMin, candidateMax, candidateNode);
+                if (currentMax.x == candidateMin.x) {
+                    if (maxX < currentMax.x - clearance || minX > currentMax.x + clearance)
+                        continue;
+                    if (currentMax.z < candidateMax.z)
+                        portalMax.z = currentMax.z;
+                    else
+                        portalMax.z = candidateMax.z;
+                    if (currentMin.z > candidateMin.z)
+                        portalMin.z = currentMin.z;
+                    else
+                        portalMin.z = candidateMin.z;
+                    portalMax.x = currentMax.x;
+                    portalMin.x = currentMax.x;
+                    if (dzPerX == lbl_eu_8066A8AC) continue;
+                    crossingX = portalMax.x;
+                    crossingZ = goalCenter.z + dzPerX * (crossingX - goalCenter.x);
+                    if (portalMax.z - clearance < crossingZ) continue;
+                    if (portalMin.z + clearance > crossingZ) continue;
+                    goto crossingAccepted;
+                } else if (candidateMax.x == currentMin.x) {
+                    if (maxX < candidateMax.x - clearance || minX > candidateMax.x + clearance)
+                        continue;
+                    if (currentMax.z < candidateMax.z)
+                        portalMax.z = currentMax.z;
+                    else
+                        portalMax.z = candidateMax.z;
+                    if (currentMin.z > candidateMin.z)
+                        portalMin.z = currentMin.z;
+                    else
+                        portalMin.z = candidateMin.z;
+                    portalMax.x = candidateMax.x;
+                    portalMin.x = candidateMax.x;
+                    if (dzPerX == lbl_eu_8066A8AC) continue;
+                    crossingX = portalMax.x;
+                    crossingZ = goalCenter.z + dzPerX * (crossingX - goalCenter.x);
+                    if (portalMax.z - clearance < crossingZ) continue;
+                    if (portalMin.z + clearance > crossingZ) continue;
+                    goto crossingAccepted;
+                } else if (currentMax.z == candidateMin.z) {
+                    if (maxZ < currentMax.z - clearance || minZ > currentMax.z + clearance)
+                        continue;
+                    portalMax.x = currentMax.x < candidateMax.x ? currentMax.x : candidateMax.x;
+                    portalMin.x = currentMin.x > candidateMin.x ? currentMin.x : candidateMin.x;
+                    portalMax.z = currentMax.z;
+                    portalMin.z = currentMax.z;
+                    if (dxPerZ == lbl_eu_8066A8AC) continue;
+                    crossingZ = portalMax.z;
+                    crossingX = goalCenter.x + dxPerZ * (crossingZ - goalCenter.z);
+                    if (portalMax.x - clearance < crossingX) continue;
+                    if (portalMin.x + clearance > crossingX) continue;
+                    goto crossingAccepted;
+                } else if (candidateMax.z == currentMin.z) {
+                    if (maxZ < candidateMax.z - clearance || minZ > candidateMax.z + clearance)
+                        continue;
+                    portalMax.x = currentMax.x < candidateMax.x ? currentMax.x : candidateMax.x;
+                    portalMin.x = currentMin.x > candidateMin.x ? currentMin.x : candidateMin.x;
+                    portalMax.z = candidateMax.z;
+                    portalMin.z = candidateMax.z;
+                    if (dxPerZ == lbl_eu_8066A8AC) continue;
+                    crossingZ = portalMax.z;
+                    crossingX = goalCenter.x + dxPerZ * (crossingZ - goalCenter.z);
+                    if (portalMax.x - clearance < crossingX) continue;
+                    if (portalMin.x + clearance > crossingX) continue;
+                    goto crossingAccepted;
+                } else {
+                    return false;
+                }
+
+crossingAccepted:
+                deltaX = position->x - crossingX;
+                deltaZ = position->z - crossingZ;
+                distance = deltaX * deltaX + deltaZ * deltaZ;
+                if (bestDistance < distance) {
+                    bestDistance = distance;
+                    if (goalNode == candidateIndex) return true;
+                    next[nextCount++] = candidateIndex;
+                }
+            }
+        }
+
+        s32* swap = next;
+        next = frontier;
+        frontier = swap;
+        frontierCount = nextCount;
+    }
+    return false;
+}
+
+// func_80480EF0 -- scan a node's neighbour list for `value` (direct edge test).
+extern "C" s32 func_80480EF0__17UnkClass_8047E110Fv(UnkClass_8047E110* self, u32 nodeIndex, s32 value) {
+    ScnManagerLayout& m = *(ScnManagerLayout*)self;
+    u16* edges = m.edges;
+    s32 count = edges[m.nodes[nodeIndex].edgeOffset];
+    const u16* e = &edges[m.nodes[nodeIndex].edgeOffset + 1];
+    for (; count > 0; --count) {
+        if (value == *e) return 1;
+        ++e;
+    }
+    return 0;
+}
+
+// func_80480F48 -- compare two stride-10 records against `value`: locate which
+// endpoint slot (+4/+6) of record A holds it, likewise for record B, then
+// report whether the two slots' paired ids (+0/+2) agree.
+extern "C" bool func_80480F48__17UnkClass_8047E110Fv(UnkClass_8047E110* self, s32 value,
+    s32 idxA, s32 idxB) {
+    const u16* recs = (const u16*)self->field_0xC;
+    const u16* lo = recs + 2; // +4 endpoint slots
+    const u16* hi;            // +6 endpoint slots (else arm only)
+    s32 slotA;
+    s32 slotB;
+    if (lo[idxA * 5] == value) {
+        slotA = 0;
+        if (lo[idxB * 5] == value)
+            slotB = 0;
+        else if (recs[idxB * 5 + 3] == value)
+            slotB = 1;
+        else
+            return false;
+    } else {
+        hi = recs + 3;
+        if (hi[idxA * 5] == value) {
+            slotA = 1;
+            if (lo[idxB * 5] == value)
+                slotB = 0;
+            else if (hi[idxB * 5] == value)
+                slotB = 1;
+            else
+                return false;
+        } else {
+            return false;
+        }
+    }
+    const u16* ra = recs + idxA * 5;
+    const u16* rb = recs + idxB * 5;
+    return ra[slotA] == rb[slotB];
+}
+
+// func_80481014 -- activate/clear the walk box: a==b==0 clears it (flag bit 0
+// off); otherwise write the clearance pair, position words and set the flag.
+// Either way, advance the accumulated distance by `c`.
+extern "C" void func_80481014__17UnkClass_8047E110Fv(UnkClass_8047E110* self, f32 a, f32 b, const ScnVecWords* v, f32 c) {
+    ScnManagerLayout& m = *(ScnManagerLayout*)self;
+    if (a == lbl_eu_8066A8AC) {
+        if (b == lbl_eu_8066A8AC)
+            goto clear;
+    }
+    // set: write the clearance pair, position words and raise the flag
+    m.field_0x24 = b;
+    m.field_0x28 = a;
+    m.field_0x2C = v->field_0x0;
+    m.field_0x30 = v->field_0x4;
+    m.field_0x34 = v->field_0x8;
+    m.field_0x38 |= 1;
+    goto end;
+clear:
+    m.field_0x38 &= ~1;
+end:
+    m.field_0x20 = m.field_0x1C + c;
+}
 
 // func_80481074 -- walker contact probe: build the world position of the
 // queried grid cell, reject it when it leaves the box (radius 0x7C, direction
 // dot test); otherwise normalize the offset and record either the farthest
 // miss (flags bit 0) or the best forward projection (bit 1).
-// Session batch-16 progress on us-80485044 before the incident:
-// structural 153 -> 137 vs retail (len = threshold-default + conditional
-// dist2*FrSqrt(dist2) rematerialization shape identified from retail asm).
-//
-// OPEN ITEM PACKET (us-80485044, best structural=137 mismatch=151, 592B vs
-// 612B): remaining divergence is dominated by two fixed-codegen shapes:
-// (1) PROLOGUE FPR-SAVE ENCODING: decomp (monolib Wii/1.1 flags) spills
-//     callee-saved f30/f31 as stfd + psq_st(...,W=1,qr3) [single-word save];
-//     retail uses stfd + psq_st(...,W=0,qr0) [pair save]. Same open item as
-//     src/kyoshin/code_800B06A4.cpp func_800B68A8 ("psq_st words differ,
-//     W=1,qr3 vs W=0,qr0"). Suspect compiler-config difference (GC/3.0a5.2
-//     vs Wii/1.1); not reachable from high-level source. Any function in
-//     this unit needing f14-f31 callee saves inherits this wall.
-// (2) FRAME/SCHEDULING DRIFT: decomp frame -128 vs retail -80; decomp hoists
-//     all four WalkHitQuery loads (lbz/lha) ahead of the lis 0x4330 and
-//     interleaves the stfd saves among the int->float conversion buffer
-//     writes; retail converts strictly in statement order with two SHARED
-//     conversion buffers at 0x18/0x1c and 0x20/0x24. Likely downstream of
-//     (1): different save layout shifts the scheduler's slot budget.
-// Ruled out: operand order variants (const*val vs val*const), flat-vs-nested
-// miss gating, ternary len forms, dir.x-first dot order, self-> vs overlay-
-// reference access (byte-identical output). Next experiments: (a) retry under
-// mw_version GC/3.0a5.2 in an off-branch build; (b) re-diff after the TU
-// restore, since -ipa file scheduling depends on the whole TU.
 extern "C" s32 func_80481074__17UnkClass_8047E110Fv(UnkClass_8047E110* self,
     const WalkHitQuery* q) {
     ScnManagerLayout& m = *(ScnManagerLayout*)self;
-    // cell position: cell-size * (cell+1) evaluated before grid-coord term
-    f32 wx = lbl_eu_8066A8A8 * (q->gxCell + 1) + lbl_eu_8066A898 * q->gridX;
-    f32 wz = lbl_eu_8066A8A8 * (q->gzCell + 1) + lbl_eu_8066A898 * q->gridZ;
+    f32 wx = lbl_eu_8066A8A8 * (f32)(q->gxCell + 1)
+        + lbl_eu_8066A898 * (f32)q->gridX;
+    f32 wz = lbl_eu_8066A8A8 * (f32)(q->gzCell + 1)
+        + lbl_eu_8066A898 * (f32)q->gridZ;
     f32 py = q->field_0x0;
     f32 dx = wx - m.field_0x54;
     f32 dz = wz - m.field_0x5C;
     f32 dist2 = dx * dx + dz * dz;
-    // outside the clearance circle or behind the walk direction: miss path
-    if (m.field_0x7C * m.field_0x7C <= dist2) {
-        f32 fwd = m.dir.z * dz + m.dir.x * dx;
-        if (lbl_eu_8066A8AC < fwd) {
-            if (dist2 < lbl_eu_8066A8AC)
-                nw4r::db::Warning(lbl_eu_80526324, 0x273, lbl_eu_80526300);
-            // normalize; len defaults to the floor and dist2 is
-            // rematerialized around the FrSqrt call like retail
-            f32 len = lbl_eu_8066A8AC;
-            if (dist2 > lbl_eu_8066A8AC)
-                len = dist2 * nw4r::math::FrSqrt(dist2);
-            f32 inv = lbl_eu_8066A890 / len;
-            dz *= inv;
-            dx *= inv;
-            fwd = m.dir.z * dz + m.dir.x * dx;
-            if (lbl_eu_8066A8BC < fwd) {
-                m.field_0x6C = wx;
-                m.field_0x70 = py;
-                m.field_0x74 = wz;
-                return 1;
-            }
-            u16 flags = m.field_0x90;
-            if (flags & 2) {
-                if (m.field_0x84 < fwd) {
-                    m.field_0x6C = wx;
-                    m.field_0x70 = py;
-                    m.field_0x74 = wz;
-                    m.field_0x84 = fwd;
-                }
-            } else {
-                m.field_0x90 = flags | 2;
-                m.field_0x6C = wx;
-                m.field_0x70 = py;
-                m.field_0x74 = wz;
-                m.field_0x84 = fwd;
-            }
-            return 0;
-        }
-    }
-    // farthest-miss tracking (flag bit 0)
-    u16 flags = m.field_0x90;
-    if (!(flags & 2)) {
-        if (m.field_0x80 < dist2) {
+    if (m.field_0x7C * m.field_0x7C < dist2
+        || m.dir.x * dx + m.dir.z * dz <= lbl_eu_8066A8AC) {
+        // outside the box or moving away: track farthest miss only
+        u16 flags = m.field_0x90;
+        if (!(flags & 2) && m.field_0x80 < dist2) {
             m.field_0x80 = dist2;
             m.field_0x90 = flags | 1;
             m.field_0x6C = wx;
             m.field_0x70 = py;
             m.field_0x74 = wz;
         }
+        return 0;
+    }
+    if (dist2 < 1.0f)
+        nw4r::db::Warning(lbl_eu_80526324, 0x273, lbl_eu_80526300);
+    f32 d2 = dx * dx + dz * dz;
+    f32 len = (d2 > 1.0f) ? d2 * nw4r::math::FrSqrt(d2) : d2;
+    f32 inv = lbl_eu_8066A890 / len;
+    dx *= inv;
+    dz *= inv;
+    f32 proj = m.dir.x * dx + m.dir.z * dz;
+    if (lbl_eu_8066A8BC < proj) {
+        m.field_0x6C = wx;
+        m.field_0x70 = py;
+        m.field_0x74 = wz;
+        return 1;
+    }
+    u16 flags = m.field_0x90;
+    if (flags & 2) {
+        if (m.field_0x84 < proj) {
+            m.field_0x6C = wx;
+            m.field_0x70 = py;
+            m.field_0x74 = wz;
+            m.field_0x84 = proj;
+        }
+    } else {
+        m.field_0x90 = flags | 2;
+        m.field_0x6C = wx;
+        m.field_0x70 = py;
+        m.field_0x74 = wz;
+        m.field_0x84 = proj;
     }
     return 0;
 }
 
-// NOTE: retail symbol ends in Fv yet the body reads r4-r7 (Fv-with-hidden-params
-// shape, see MWCC_PATTERNS.md) - defined via extern "C" under the exact retail
-// mangled name with explicit ABI params.
-// OPEN ITEM PACKET (us-804831e4, best mismatch=271 structural=225 reg_swap=46,
-// 1056B vs 1092B): semantics fully decoded - adjacency search of idB in
-// idA's edge list, then rect-intersection boundary-point selection over the
-// two scaled cell rects, then normalize(cx-pos.x, staleY, cz-pos.z).
-// Retail symbol ends Fv yet reads r4-r7 (Fv-with-hidden-params shape):
-// defined via extern "C" under the exact retail mangled name.
-// volatile on the eight rect locals + cy was the key lever so far (size
-// 872->1056B, structural 245->225): retail keeps every rect intermediate in
-// a frame slot (stfs/lfs pairs, frame 0x60) while plain locals stay in FPRs.
-// Residual is pure scheduling/reloc-slot placement: conversion-buffer
-// (0x4330 magic double lbl_eu_8066A8A0) and scale (lbl_eu_8066A898) SDA21
-// relocs land at shifted offsets, and the epilogue zero-copy/PSVECNormalize
-// order differs slightly. Ruled out: bool-vs-s32 adjacent flag, cached nodes
-// pointer vs direct self->nodes indexing (direct required - kills the r31
-// callee-saved spill), u16-vs-u32 idB (u32 required - no rlwinm mask).
-// Also RULED OUT: volatile on cx/cz (overshoots size to 1104B, mismatch 275
-// vs 271 - retail keeps the chosen point in FPRs until the epilogue store).
-// Next experiments: (a) drop volatile from the phase-A (na) group only;
-// (b) reorder cx/cz assignments to interleave like retail epilogue;
-// (c) try hi/lo ternaries as fmin/fmax-style if/else statements.
-extern "C" void func_8047F214__17UnkClass_8047E110Fv(UnkClass_8047E110* self,
-    ml::CVec3* out, ml::CVec3* pos, u32 idA, u32 idB);
-
-// func_8047F214 -- resolve the transition point between walk cells idA and
-// idB: confirm idB is listed in idA's edge list, intersect the two cell
-// rects (scaled to world units), pick the shared boundary point, and write
-// the normalized offset from pos toward it into out. Degenerate offsets
-// collapse to epsilon / zero vectors.
-extern "C" void func_8047F214__17UnkClass_8047E110Fv(UnkClass_8047E110* self,
-    ml::CVec3* out, ml::CVec3* pos, u32 idA, u32 idB) {
-    ScnWalkNode& nb = self->nodes[idB];
-    const f32 S = lbl_eu_8066A898;
-    ScnWalkNode& na = self->nodes[idA];
-    u16* it = self->edges + na.edgeOffset;
-
-    // rect of the queried node in world units (volatile: retail keeps these
-    // in frame slots across the adjacency search)
-    volatile f32 bx0 = S * (f32)nb.x;
-    volatile f32 bz0 = S * (f32)nb.z;
-    volatile f32 bx1 = S * (f32)(nb.width + 1) + bx0;
-    volatile f32 bz1 = S * (f32)(nb.depth + 1) + bz0;
-
-    // adjacency check: does idB appear in idA's edge list?
-    s32 adjacent = 0;
-    s32 count = *it++;
-    for (; count != 0; --count) {
-        if (*it == idB) {
-            adjacent = 1;
-            break;
-        }
-        ++it;
-    }
-
-    f32 cx, cz; // chosen transition point
-    if (adjacent == 0) {
-        // not connected: fall back to the centre of the queried node's rect
-        cx = lbl_eu_8066A898 * (bx0 + bx1);
-        cz = lbl_eu_8066A898 * (bz0 + bz1);
-    } else {
-        volatile f32 ax0 = lbl_eu_8066A898 * (f32)na.x;
-        volatile f32 az0 = lbl_eu_8066A898 * (f32)na.z;
-        volatile f32 ax1 = lbl_eu_8066A898 * (f32)(na.width + 1) + ax0;
-        volatile f32 az1 = lbl_eu_8066A898 * (f32)(na.depth + 1) + az0;
-        volatile f32 cy = lbl_eu_8066A898 * (na.xPos + nb.xPos);
-        if (ax1 == bx0) {
-            f32 hi = (ax1 >= bz1) ? bz1 : ax1;
-            f32 lo = (az0 <= bz0) ? bz0 : az0;
-            cz = lbl_eu_8066A898 * (hi + lo);
-            f32 pz = pos->z;
-            cx = (lo < pz && pz < hi) ? bx1 : ax1;
-        } else if (bx1 == ax0) {
-            f32 hi = (ax1 >= bz1) ? bz1 : ax1;
-            f32 lo = (az0 <= bz0) ? bz0 : az0;
-            cz = lbl_eu_8066A898 * (hi + lo);
-            f32 pz = pos->z;
-            cx = (lo < pz && pz < hi) ? bx0 : bx1;
-        } else if (ax1 == bz0) {
-            f32 hi = (az1 >= bx1) ? bx1 : az1;
-            f32 lo = (ax0 <= bx0) ? bx0 : ax0;
-            cx = lbl_eu_8066A898 * (hi + lo);
-            f32 px = pos->x;
-            cz = (lo < px && px < hi) ? bz0 : bz1;
-        } else {
-            // degenerate corner-touch case
-            cx = bx1 + bx0;
-            cz = cy + bz0;
-        }
-    }
-
-    // aim vector from pos toward the chosen point
-    out->x = cx - pos->x;
-    out->z = cz - pos->z;
-    if (out->x != lbl_eu_8066A8AC || out->z != lbl_eu_8066A8AC) {
-        // NOTE: reads the stale out->y on purpose (retail behavior)
-        if (out->y * out->y + out->x * out->x + out->z * out->z
-            == lbl_eu_8066A8AC) {
-            *out = ml::CVec3::zero;
-        } else {
-            PSVECNormalize((const Vec*)out, (Vec*)out);
-        }
-    } else {
-        out->x = lbl_eu_8066A8AC;
-        out->y = lbl_eu_8066A8AC;
-        out->z = lbl_eu_8066A8AC;
-    }
+// func_804812D8 -- point-in-node test against the active walk box: the node
+// cell (expanded one cell up/right) must overlap the box horizontally and in z,
+// and the node plane must be within vertical clearance of the box floor.
+extern "C" bool func_804812D8__17UnkClass_8047E110Fv(UnkClass_8047E110* self,
+    const ScnWalkNode* node) {
+    ScnManagerLayout& m = *(ScnManagerLayout*)self;
+    // branch-forward shape: beq takes the check body, fall-through returns 0
+    if (!(node->reserved8 & 2))
+        goto checks;
+    return false;
+checks:
+    if (!(scaleNodeCoord(node->x) <= m.field_0x54))
+        goto fail;
+    if (!(scaleNodeCoord(node->x + node->width + 1) >= m.field_0x48))
+        goto fail;
+    if (!(scaleNodeCoord(node->z) <= m.field_0x5C))
+        goto fail;
+    if (!(scaleNodeCoord(node->z + node->depth + 1) >= m.field_0x50))
+        goto fail;
+    // float local forces the frsp rounding step seen in retail
+    f32 dy = __fabs(m.field_0x4C - node->xPos);
+    if (dy < m.field_0x20)
+        return true;
+fail:
+    return false;
 }
 
-// func_804819C4 -- walk-step driver: ask the walker callback whether the
-// queried cell is acceptable; otherwise greedily step to the neighbouring
-// cell sharing the boundary the travel direction points at (up to 90 steps,
-// re-asking the callback at every candidate). Each neighbour is classified
-// by which pair of cell rects touch (left/right along x, below/above along
-// z) and gated by the corresponding direction component sign.
-//
-// OPEN ITEM PACKET (us-80485994, best mismatch=274 structural=210 reg_swap=64,
-// 1192B vs 1188B): semantics fully decoded (see body); frame/prologue shape
-// matches retail (individual r28-r31 + f29-f31 saves, no _savegpr outliner,
-// ptmf via __ptmf_scall twice). Residual is frame-slot layout + scheduling:
-// retail frame is -0xa0 vs decomp -0x80; retail keeps FOUR extra f32 temps in
-// memory slots (overlap-window hi/lo at 0x34/0x28 and the boundary coordinate
-// stored TWICE at 0x20/0x2c), with a regular every-other-slot 4-byte gap
-// pattern across all 14 float slots. Ruled out: volatile on bxA/bxB (+56B,
-// loses constant hoisting), volatile on zHi/zLo only (296 mism.), volatile on
-// everything incl. per-case xHi/xLo (+144B, drops f29-f31 callee caching and
-// reloads S/EPS/magic inside the loop), cached pmf reference local (extra
-// callee-saved GPR -> _savegpr_27 outliner; inline (self->**(ScnWalkFn*)&m
-// .field_0x9C) at both call sites instead - REQUIRED). Next experiments:
-// (a) recover pre-incident TU then re-diff (-ipa file scheduling);
-// (b) try declaring the window/boundary temps as separate variables PER CASE
-// (8 distinct names instead of 4 shared) to reproduce retail's slot set;
-// (c) try ternaries for zHi/zLo instead of if/else to shift scheduling.
-// SESSION 2 ADDITIONS (ruled out): volatile on bxA/bxB+zHi/zLo together
-// (+112B, frame -144), per-case distinct names aHi/aLo/bHi/bLo (byte-identical
-// to shared - MWCC merges them), double-typed Z-case bounds xHiD/xLoD (+24B,
-// 283 mism), hoisting the maxX==cMinX compare into a bool flag ahead of the
-// other cand-rect slots (286 mism - MWCC's early first-compare is NOT from a
-// source-level flag). Reg-mapping shows decomp int callee-saved assignment is
-// shifted +1 vs retail (retail self/best/list/idx = r28/r29/r30/r31, decomp =
-// r29/r30/r31+...) - one fewer live int value; retail keeps FOUR extra f32
-// temps in memory (window hi/lo + boundary stored twice) that our source
-// leaves in FPRs, explaining both the -0x80-vs--0xa0 frame gap and the temp
-// spilling. Next experiments: (a) restore pre-incident TU (-ipa scheduling);
-// (b) find a source shape that adds exactly one live value / four spilled
-// float temps without volatility (e.g. temps live-across-the-callback via a
-// restructured hit path); (c) kb search 'spill f32 temps register pressure
-// frame layout' patterns.
-extern "C" s32 func_804819C4__17UnkClass_8047E110Fv(UnkClass_8047E110* self,
-    s32 id) {
+// func_804813E8 -- point-in-node test around the reference point kept at
+// 0x54/0x58/0x5C: the point must lie inside the node cell expanded by one cell
+// on every side and within vertical clearance of the node plane.
+extern "C" bool func_804813E8__17UnkClass_8047E110Fv(UnkClass_8047E110* self,
+    const ScnWalkNode* node) {
     ScnManagerLayout& m = *(ScnManagerLayout*)self;
-    if ((self->**(ScnWalkFn*)&m.field_0x9C)(&m.nodes[id]))
+    if (!(scaleNodeCoord(node->x) <= m.field_0x54))
+        goto fail;
+    if (!(scaleNodeCoord(node->x + node->width + 1) >= m.field_0x54))
+        goto fail;
+    if (!(scaleNodeCoord(node->z) <= m.field_0x5C))
+        goto fail;
+    if (!(scaleNodeCoord(node->z + node->depth + 1) >= m.field_0x5C))
+        goto fail;
+    // float local forces the frsp rounding step seen in retail
+    f32 dy = __fabs(m.field_0x58 - node->xPos);
+    if (!(dy < m.field_0x20))
+        goto fail;
+    return true;
+fail:
+    return false;
+}
+
+// func_804814DC -- rebuild the walk box corners from two points, derive the
+// travel direction (normalized, with degenerate handling), reset the visit
+// counter and refresh the reference block at 0x9C.
+extern "C" void func_804814DC__17UnkClass_8047E110Fv(UnkClass_8047E110* self,
+    const ml::CVec3* cornerA, const ml::CVec3* cornerB, f32 paramF) {
+    UnkClass_8047E110& mgr = *self;
+    mgr.field_0x90 = 0;
+    *(ScnVecWords*)&mgr.boxMin = *(const ScnVecWords*)cornerA;
+    *(ScnVecWords*)&mgr.boxMax = *(const ScnVecWords*)cornerB;
+    const CVec3& boxMin = mgr.boxMin;
+    const CVec3& boxMax = mgr.boxMax;
+    CVec3 dir = boxMin - boxMax;
+    mgr.field_0x7C = paramF;
+    mgr.field_0x80 = lbl_eu_8066A8AC;
+    mgr.field_0x84 = lbl_eu_8066A8B4;
+    mgr.dir = dir;
+    if (mgr.dir.x != lbl_eu_8066A8AC || mgr.dir.z != lbl_eu_8066A8AC) {
+        f32 lenSq = mgr.dir.z * mgr.dir.z
+            + (mgr.dir.x * mgr.dir.x + mgr.dir.y * mgr.dir.y);
+        if (lbl_eu_8066A8AC == lenSq) {
+            mgr.dir = CVec3::zero;
+        } else {
+            PSVECNormalize(mgr.dir, mgr.dir);
+        }
+    } else {
+        // degenerate: axis-aligned fallback direction
+        mgr.dir.x = lbl_eu_8066A8AC;
+        mgr.dir.y = lbl_eu_8066A8AC;
+        mgr.dir.z = lbl_eu_8066A890;
+    }
+    // interleaved load/store order matters for byte-identity: word A is
+    // fetched (lwzu), word B feeds its store before A's, then word C loads.
+    u32* ref = (u32*)&lbl_eu_8056DC68;
+    u32 wordA = *ref++;
+    mgr.callback.field_0x4 = *ref++;
+    mgr.callback.field_0x0 = wordA;
+    mgr.callback.field_0x8 = *ref;}
+
+// func_8048163C -- build the walk box (half-size lbl_eu_8066A890) around `v`
+// into 0x48-0x5C, reset the 0x90 counter and refresh the reference block at
+// 0x9C from the data global.
+extern "C" void func_8048163C__17UnkClass_8047E110Fv(UnkClass_8047E110* self, const ml::CVec3* v) {
+    ScnManagerLayout& m = *(ScnManagerLayout*)self;
+    m.field_0x90 = 0;
+    m.field_0x4C = v->y;
+    m.field_0x58 = v->y;
+    m.field_0x48 = v->x - lbl_eu_8066A890;
+    m.field_0x50 = v->z - lbl_eu_8066A890;
+    m.field_0x54 = lbl_eu_8066A890 + v->x;
+    m.field_0x5C = lbl_eu_8066A890 + v->z;
+    // interleaved load/store order matters for byte-identity: word A is
+    // fetched (lwzu), word B feeds its store before A's, then word C loads.
+    u32* ref = (u32*)&lbl_eu_8056DC74;
+    u32 wordA = *ref++;
+    m.field_0x9C.field_0x4 = *ref++;
+    m.field_0x9C.field_0x0 = wordA;
+    m.field_0x9C.field_0x8 = *ref;
+}
+
+// func_8048169C -- build the walk box from a min/max corner pair: corners go
+// to 0x48/0x54, the size delta seeds the travel direction at 0x60-0x68, the
+// x/z portal threshold scales start at 1.0 and fall back to the cross-axis
+// ratios z/x and x/z whenever the corresponding direction axis isn't 1.0,
+// the visit counter clears and the reference block at 0x9C reloads.
+extern "C" void func_8048169C__17UnkClass_8047E110Fv(UnkClass_8047E110* self,
+    const ml::CVec3* cornerMin, const ml::CVec3* cornerMax) {
+    ScnManagerLayout& m = *(ScnManagerLayout*)self;
+    m.field_0x90 = 0;
+    *(ScnVecWords*)&m.field_0x48 = *(const ScnVecWords*)cornerMin;
+    *(ScnVecWords*)&m.field_0x54 = *(const ScnVecWords*)cornerMax;
+    const CVec3& boxMin = *(const CVec3*)&m.field_0x48;
+    const CVec3& boxMax = *(const CVec3*)&m.field_0x54;
+    // operator- lowers to a VEC3Sub temp plus set(); keeping the named local
+    // makes MWCC spill through two stack blocks like retail before the copy
+    // into the direction member.
+    CVec3 dir = boxMax - boxMin;
+    m.dir = dir;
+    m.field_0x8C = lbl_eu_8066A8AC;
+    m.field_0x88 = lbl_eu_8066A8AC;
+    if (m.dir.x != lbl_eu_8066A8AC) {
+        m.field_0x88 = m.dir.z / m.dir.x;
+    }
+    if (m.dir.z != lbl_eu_8066A8AC) {
+        m.field_0x8C = m.dir.x / m.dir.z;
+    }
+    // w-locals declared first: scratch allocator colors low-to-high by birth;
+    // w1 born before w0 gives w1->r0, w0->r4 like retail
+    u32 w1;
+    u32 w0;
+    u32 w2;
+    u32* ref = lbl_eu_8056DC80;
+    w0 = *ref++;
+    w1 = *ref++;
+    m.field_0x9C.field_0x4 = w1;
+    m.field_0x9C.field_0x0 = w0;
+    w2 = *ref;
+    m.field_0x9C.field_0x8 = w2;
+}
+
+// func_80481790 -- BFS over the walk graph from `startNode`: each pass scans
+// the frontier's edge lists, filters unvisited entries through the EEB0
+// neighbour test and the step callback (ptmf at 0x9C), marks visited entries
+// in a scratch bitmap and swaps double-buffered frontiers (work area comes
+// from the FE48 locator block). Returns 1 when the callback accepts a node or
+// the finish flags are set.
+extern "C" s32 func_80481790__17UnkClass_8047E110Fv(UnkClass_8047E110* self,
+    s32 startNode) {
+    UnkClass_8047E110& mgr = *self;
+    // the ptmf slot stays in memory; calls lower to __ptmf_scall with r12 =
+    // self + 0x9C recomputed at each call site
+    if ((self->**(ScnWalkFn*)&self->callback)(&mgr.nodes[startNode]))
         return 1;
+    u32 total = ((const WalkSpawnDesc*)mgr.field_0x0)->field_0x0;
+    // speculative shift shape: compute cap>>1 first, overwrite when small
+    u32 cap = total >> 1;
+    if (total < 500)
+        cap = total;
+    u32* bits;
+    s32 count;
+    s32 pass;
+    u16* front = (u16*)lbl_eu_80658540.field_0x8;
+    bits = (u32*)::func_804B5A68();
+    // size re-read through the manager so the load isn't reused
+    memset(bits, 0,
+        ((((const WalkSpawnDesc*)mgr.field_0x0)->field_0x0 >> 5) + 1) * 4);
+    front[0] = (u16)startNode;
+    bits[startNode >> 5] |= 1u << (startNode & 31);
+    count = 1;
+    pass = 0;
+    u16* next = front + cap;
+    while (count != 0) {
+        s32 prevCount = count;
+        count = 0;
+        u16* dst = next;
+        for (s32 i = 0; i < prevCount; ++i) {
+            const ScnWalkNode& node = mgr.nodes[front[i]];
+            u16 ecnt = mgr.edges[node.edgeOffset];
+            const u16* ep = &mgr.edges[node.edgeOffset + 1];
+            for (s32 k = 0; k < ecnt; ++k) {
+                u16 ent = ep[k];
+                if (bits[ent >> 5] & (1u << (ent & 31)))
+                    continue;
+                // entries re-read through ep/front after every call: the dst/
+                // bitmap stores may alias the queues, forcing the reloads
+                if (!::func_8047EEB0__17UnkClass_8047E110Fv(self,
+                        (const WalkQueryInfo*)&mgr.nodes[ep[k]], front[i],
+                        0))
+                    continue;
+                if ((self->**(ScnWalkFn*)&self->callback)(&mgr.nodes[ep[k]]))
+                    return 1;
+                *dst++ = ep[k];
+                bits[ep[k] >> 5] |= 1u << (ep[k] & 31);
+                ++count;
+            }
+        }
+        u16* tmp = front;
+        front = next;
+        next = tmp;
+        if (pass >= 30)
+            break;
+        ++pass;
+    }
+    if (mgr.field_0x90 & 3)
+        return 1;
+    return 0;
+}
 
-    const f32 S = lbl_eu_8066A898;   // cell-size scale
-    const f32 EPS = lbl_eu_8066A8AC; // epsilon
-    s32 best;
-    for (s32 i = 0; i < 90; ++i) {
-        ScnWalkNode& nd = m.nodes[id];
-        volatile f32 minX = S * (f32)nd.x;
-        volatile f32 minZ = S * (f32)nd.z;
-        volatile f32 maxX = S * (f32)(nd.width + 1) + minX;
-        volatile f32 maxZ = S * (f32)(nd.depth + 1) + minZ;
-        u16 cnt = m.edges[nd.edgeOffset];
-        u16* rec = &m.edges[nd.edgeOffset + 1];
-        best = -1;
-        for (; cnt != 0; --cnt) {
-            u32 nid = *rec++;
-            ScnWalkNode& cn = m.nodes[nid];
-            if (cn.reserved8 & 2)
+// func_804819AC -- test bit 1 of the node flag word (offset 0x8); the walker
+// skips nodes whose closed/blocked bit is set.
+extern "C" s32 func_804819AC__17UnkClass_8047E110Fv(UnkClass_8047E110* self, u32 nodeIndex) {
+    ScnManagerLayout& m = *(ScnManagerLayout*)self;
+    return (m.nodes[nodeIndex].reserved8 & 2) != 0;
+}
+
+// func_804819C4 -- step the walker from `idx`: run the 0x9C callback on the
+// start node, then hop up to 90 times: each pass scans the current node's
+// edge list for a neighbour sharing a portal edge (x+, z+ or z- side) that
+// passes the per-axis distance threshold (0x88/0x8C scaled, gated by the
+// travel direction at 0x60/0x68); the callback runs on each accepted hop and
+// ends the walk with 1 when it accepts.
+extern "C" s32 func_804819C4__17UnkClass_8047E110Fv(UnkClass_8047E110* self,
+    s32 idx) {
+    ScnManagerLayout& m = *(ScnManagerLayout*)self;
+    // the ptmf slot stays in memory; MWCC lowers calls through it to
+    // __ptmf_scall with r12 pointing at the slot
+    ScnWalkFn& walkFn = *(ScnWalkFn*)&self->callback;
+    if ((self->*walkFn)(&m.nodes[idx]))
+        return 1;
+    // loop-invariant constants (retail pins these in f29-f31)
+    const f32 cell = lbl_eu_8066A898;
+    const f32 zeroF = lbl_eu_8066A8AC;
+    for (s32 pass = 0; pass < 90; ++pass) {
+        const ScnWalkNode& cn = m.nodes[idx];
+        f32 curMinX = scaleNodeCoord(cn.x);
+        f32 curMinZ = scaleNodeCoord(cn.z);
+        f32 curMaxX = (f32)(cell * s32ToF64_A8A0(cn.width + 1)) + curMinX;
+        f32 curMaxZ = (f32)(cell * s32ToF64_A8A0(cn.depth + 1)) + curMinZ;
+
+        u16 cnt = m.edges[cn.edgeOffset];
+        const u16* p = &m.edges[cn.edgeOffset + 1];
+        s32 next = -1;
+        for (u16 k = 0; k < cnt; ++k) {
+            u16 n = *p++;
+            const ScnWalkNode& nn = m.nodes[n];
+            if (nn.reserved8 & 2)
                 continue;
-            volatile f32 cMinX = S * (f32)cn.x;
-            volatile f32 cMinZ = S * (f32)cn.z;
-            volatile f32 cMaxX = S * (f32)(cn.width + 1) + cMinX;
-            volatile f32 cMaxZ = S * (f32)(cn.depth + 1) + cMinZ;
+            f32 nMinX = scaleNodeCoord(nn.x);
+            f32 nMinZ = scaleNodeCoord(nn.z);
+            f32 nMaxX = (f32)(cell * s32ToF64_A8A0(nn.width + 1)) + nMinX;
+            f32 nMaxZ = (f32)(cell * s32ToF64_A8A0(nn.depth + 1)) + nMinZ;
 
-            f32 bxA, bxB; // boundary coordinate
-            f32 zHi, zLo; // shared-overlap window
-            if (maxX == cMinX) {
-                // neighbour left of us: need forward -x motion
-                if (!(m.dir.x > EPS))
+            if (curMaxX == nMinX) {
+                // neighbour directly on the +x side: vertical portal
+                if (!(m.dir.x > zeroF))
                     continue;
-                if (maxZ >= cMaxZ)
-                    zHi = maxZ;
-                else
-                    zHi = cMaxZ;
-                if (minZ <= cMinZ)
-                    zLo = cMinZ;
-                else
-                    zLo = minZ;
-                bxA = maxX;
-                bxB = maxX;
-                if (m.field_0x88 == EPS)
+                f32 portalHi = (curMaxZ >= nMaxZ) ? nMaxZ : curMaxZ;
+                f32 portalLo = (curMinZ >= nMinZ) ? curMinZ : nMinZ;
+                if (m.field_0x88 == zeroF)
                     continue;
-                f32 y = m.field_0x88 * (bxB - m.field_0x54) + m.field_0x5C;
-                if (zHi < y || zLo > y)
+                f32 thr = m.field_0x5C + m.field_0x88 * (curMaxX - m.field_0x54);
+                if (!(portalHi < thr) || !(portalLo <= thr))
                     continue;
-            } else if (cMaxX == minX) {
-                // neighbour right of us: need forward +x motion
-                if (!(m.dir.x < EPS))
+            } else if (curMaxZ == nMinZ) {
+                // neighbour above (-z): horizontal portal
+                if (!(m.dir.z < zeroF))
                     continue;
-                if (maxZ >= cMaxZ)
-                    zHi = maxZ;
-                else
-                    zHi = cMaxZ;
-                if (minZ <= cMinZ)
-                    zLo = cMinZ;
-                else
-                    zLo = minZ;
-                bxA = cMaxX;
-                bxB = cMaxX;
-                if (m.field_0x88 == EPS)
+                if (m.field_0x8C == zeroF)
                     continue;
-                f32 y = m.field_0x88 * (bxB - m.field_0x54) + m.field_0x5C;
-                if (zHi < y || zLo > y)
+                f32 thr = m.field_0x54 + m.field_0x8C * (curMaxZ - m.field_0x5C);
+                f32 hiX = (curMaxX >= nMaxX) ? nMaxX : curMaxX;
+                f32 loX = (curMinX >= nMinX) ? nMinX : curMinX;
+                if (!(hiX >= thr) || !(loX <= thr))
                     continue;
-            } else if (cMinZ == maxZ) {
-                // neighbour below us: need forward -z motion
-                if (!(m.dir.z > EPS))
+            } else if (nMaxZ == curMinZ) {
+                // neighbour below (+z): horizontal portal
+                if (!(m.dir.z > zeroF))
                     continue;
-                f32 xHi = (maxX >= cMaxX) ? maxX : cMaxX;
-                f32 xLo = (minX <= cMinX) ? cMinX : minX;
-                bxA = xLo;
-                bxB = xHi;
-                zHi = maxZ;
-                zLo = maxZ;
-                if (m.field_0x8C == EPS)
+                if (m.field_0x8C == zeroF)
                     continue;
-                f32 y = m.field_0x8C * (zLo - m.field_0x5C) + m.field_0x54;
-                if (bxB < y || bxA > y)
+                f32 thr = m.field_0x54 + m.field_0x8C * (nMaxZ - m.field_0x5C);
+                f32 hiX = (curMaxX >= nMaxX) ? nMaxX : curMaxX;
+                f32 loX = (curMinX >= nMinX) ? nMinX : curMinX;
+                if (!(hiX >= thr) || !(loX <= thr))
                     continue;
             } else {
-                if (cMaxZ != minZ)
-                    continue;
-                // neighbour above us: need forward +z motion
-                if (!(m.dir.z < EPS))
-                    continue;
-                f32 xHi = (maxX >= cMaxX) ? maxX : cMaxX;
-                f32 xLo = (minX <= cMinX) ? cMinX : minX;
-                bxA = xLo;
-                bxB = xHi;
-                zHi = cMaxZ;
-                zLo = cMaxZ;
-                if (m.field_0x8C == EPS)
-                    continue;
-                f32 y = m.field_0x8C * (zLo - m.field_0x5C) + m.field_0x54;
-                if (bxB < y || bxA > y)
-                    continue;
+                continue;
             }
-
-            if ((self->**(ScnWalkFn*)&m.field_0x9C)(&cn))
+            if ((self->*walkFn)(&nn))
                 return 1;
-            best = nid;
+            next = n;
             break;
         }
-        if (best == -1)
+        if (next == -1)
             return 0;
-        id = best;
+        idx = next;
     }
     return 0;
 }
 
-// func_804808A0 -- walk search: breadth-first expansion from startId toward
-// goalId over axis-aligned adjacent cells. For every edge the shared boundary
-// is identified (which pair of cell sides touch), the walker's travel line
-// through pos (slope dz/dx or dx/dz) is projected onto that boundary, and the
-// projection must fall inside the shared-overlap window (+/- 1 tolerance).
-// Among passing neighbours the one whose boundary point is closest to pos is
-// kept as the next frontier; reaching goalId returns 1. Returns 0 when the
-// frontier dies, a non-axis-aligned edge is met, or 90 levels run out.
-// NOTE: retail symbol ends in Fv yet reads r3-r6 (Fv-with-hidden-params
-// shape) - defined via extern "C" under the exact retail mangled name.
-extern "C" s32 func_804808A0__17UnkClass_8047E110Fv(UnkClass_8047E110* self,
-    const ml::CVec3* pos, s32 startId, s32 goalId) {
-    ScnManagerLayout& m = *(ScnManagerLayout*)self;
-    if (startId == goalId)
-        return 1;
+// ===== Dissolved monolibdata2 (blob surgery) data owned by this TU =====
+// [.data] 0x8056DC68-0x8056DCD8 (112B): three 12-byte reference blocks, the
+// CScnItemCameraNw4r vtable, and two RTTI base-lists.
+// The own-member symbols func_80481074/804812D8/804813E8 are the stub member
+// functions defined above (retail Fv mangling); the remaining slots are
+// foreign functions/locators.
+// (func_80481074__17UnkClass_8047E110Fv declared/defined above)
+extern "C" bool func_804812D8__17UnkClass_8047E110Fv(UnkClass_8047E110* self,
+    const ScnWalkNode* node);
+extern "C" bool func_804813E8__17UnkClass_8047E110Fv(UnkClass_8047E110* self,
+    const ScnWalkNode* node);
+extern "C" void __dt__18CScnItemCameraNw4rFv();
+extern "C" void func_8049F9A4();
+extern "C" void func_80482048();
+extern "C" void func_80481F9C();
+extern "C" void func_8048204C();
+extern "C" void func_80482040();
+extern "C" void func_80482038();
+extern "C" void func_80481F00();
+extern "C" u32 lbl_eu_806638A8;   // .sdata RTTI locator (foreign unit)
+extern "C" u32 lbl_eu_806624D8;   // .sdata RTTI locator (foreign unit)
+extern "C" u32 lbl_eu_806638B0;   // .sdata RTTI locator (foreign unit)
 
-    const f32 S = lbl_eu_8066A898;    // sub-cell scale
-    const f32 CELL = lbl_eu_8066A8A8; // cell-pitch scale / boundary tolerance
-    const f32 EPS = lbl_eu_8066A8AC;  // degenerate-slope epsilon
-
-    // world-space anchor of the goal cell and its offset from pos
-    const ScnWalkNode& gn = m.nodes[goalId];
-    ml::CVec3 anchor;
-    anchor.y = pos->y;
-    anchor.z = S * (f32)gn.z + CELL * (f32)(gn.depth + 1);
-    anchor.x = S * (f32)gn.x + CELL * (f32)(gn.width + 1);
-    ml::CVec3 off = anchor - *pos;
-
-    // travel-line slopes through pos (defaulted to epsilon when axis-degenerate)
-    f32 slopeX = EPS; // dz/dx
-    if (off.x != EPS)
-        slopeX = off.z / off.x;
-    f32 slopeZ = EPS; // dx/dz
-    if (off.z != EPS)
-        slopeZ = off.x / off.z;
-
-    // pos +/- window along each axis
-    f32 hiX = anchor.x >= pos->x ? anchor.x : pos->x;
-    f32 loX = anchor.x >= pos->x ? pos->x : anchor.x;
-    f32 hiZ = anchor.z >= pos->z ? anchor.z : pos->z;
-    f32 loZ = anchor.z >= pos->z ? pos->z : anchor.z;
-
-    // ping-pong BFS frontiers
-    u32 bufA[10];
-    u32 bufB[10];
-    bufB[0] = startId;
-    u32* cur = bufB;
-    u32* nxt = bufA;
-    s32 level = 1;
-    f32 bestDist2 = lbl_eu_8066A8B8;
-    for (s32 n = 0; n < 90; ++n) {
-        if (level == 0)
-            return 0;
-        s32 produced = 0;
-        for (s32 i = 0; i < level; ++i) {
-            s32 id = *cur++;
-            ScnWalkNode& nd = m.nodes[id];
-            volatile f32 minX = S * (f32)nd.x;
-            volatile f32 minZ = S * (f32)nd.z;
-            volatile f32 maxX = S * (f32)(nd.width + 1) + minX;
-            volatile f32 maxZ = S * (f32)(nd.depth + 1) + minZ;
-            u16 cnt = m.edges[nd.edgeOffset];
-            u16* rec = &m.edges[nd.edgeOffset + 1];
-            for (; cnt != 0; --cnt) {
-                u32 nb = *rec++;
-                ScnWalkNode& cn = m.nodes[nb];
-                volatile f32 cMinX = S * (f32)cn.x;
-                volatile f32 cMinZ = S * (f32)cn.z;
-                volatile f32 cMaxX = S * (f32)(cn.width + 1) + cMinX;
-                volatile f32 cMaxZ = S * (f32)(cn.depth + 1) + cMinZ;
-
-                f32 bxA, bxB; // boundary point coordinates
-                f32 proj;
-                if (maxX == cMinX) {
-                    // neighbour shares our +x edge; project onto x = maxX
-                    if (hiX < maxX - CELL || loX > maxX + CELL)
-                        continue;
-                    volatile f32 hi = maxZ < cMaxZ ? maxZ : cMaxZ;
-                    volatile f32 lo = minZ > cMinZ ? minZ : cMinZ;
-                    bxA = maxX;
-                    bxB = maxX;
-                    if (slopeX == EPS)
-                        continue;
-                    proj = slopeX * (maxX - anchor.x) + anchor.z;
-                    if (hi - CELL < proj || lo + CELL > proj)
-                        continue;
-                } else if (cMaxX == minX) {
-                    // neighbour shares our -x edge; project onto x = cMaxX
-                    if (hiX < cMaxX - CELL || loX > cMaxX + CELL)
-                        continue;
-                    volatile f32 hi = maxZ < cMaxZ ? maxZ : cMaxZ;
-                    volatile f32 lo = minZ > cMinZ ? minZ : cMinZ;
-                    bxA = cMaxX;
-                    bxB = cMaxX;
-                    if (slopeX == EPS)
-                        continue;
-                    proj = slopeX * (cMaxX - anchor.x) + anchor.z;
-                    if (hi - CELL < proj || lo + CELL > proj)
-                        continue;
-                } else if (maxZ == cMinZ) {
-                    // neighbour shares our +z edge; project onto z = maxZ
-                    if (hiZ < maxZ - CELL || loZ > maxZ + CELL)
-                        continue;
-                    bxB = loX < cMaxX ? loX : cMaxX;
-                    bxA = minX < cMinX ? minX : cMinX;
-                    volatile f32 bz = maxZ;
-                    if (slopeZ == EPS)
-                        continue;
-                    proj = slopeZ * (maxZ - anchor.z) + anchor.x;
-                    if (bxB - CELL < proj || bxA + CELL > proj)
-                        continue;
-                } else if (cMaxZ == minZ) {
-                    // neighbour shares our -z edge; project onto z = cMaxZ
-                    if (hiZ < cMaxZ - CELL || loZ > cMaxZ + CELL)
-                        continue;
-                    bxB = loX < cMaxX ? loX : cMaxX;
-                    bxA = minX < cMinX ? minX : cMinX;
-                    volatile f32 bz = cMaxZ;
-                    if (slopeZ == EPS)
-                        continue;
-                    proj = slopeZ * (cMaxZ - anchor.z) + anchor.x;
-                    if (bxB - CELL < proj || bxA + CELL > proj)
-                        continue;
-                } else {
-                    // edges only connect axis-aligned neighbours
-                    return 0;
-                }
-
-                // keep the closest boundary point to pos
-                f32 dy2 = (pos->z - proj) * (pos->z - proj);
-                f32 dist2 = dy2 + (pos->x - bxA) * (pos->x - bxA);
-                if (bestDist2 <= dist2)
-                    continue;
-                bestDist2 = dist2;
-                if (nb == goalId)
-                    return 1;
-                nxt[produced++] = nb;
-            }
-        }
-        // ping-pong the frontier buffers
-        u32* t = cur;
-        cur = nxt;
-        nxt = t;
-        level = produced;
-    }
-    return 0;
-}
-
-// func_8047E6C4 -- reachability query against the walk cell `cellIdx`.
-// The margin-offset point must lie fully OUTSIDE the cell rect while the raw
-// point lies fully INSIDE it (both with the vertical plane threshold); that
-// combination, or the raw point alone when the cell is a portal/box-active,
-// is an immediate hit. Otherwise scan the cell's edge list (same visibility
-// gate as func_8047E390) for the best adjacent cell and resolve it through
-// func_8047E1B0.
-extern "C" s32 func_8047E6C4__17UnkClass_8047E110Fv(UnkClass_8047E110* self,
-    u32* outId, u32* outCell, u32 arg6, s32 cellIdx, const ml::CVec3* pos,
-    f32 margin) {
-    ScnManagerLayout& m = *(ScnManagerLayout*)self;
-    const ScnWalkNode& nd = m.nodes[cellIdx];
-    f32 pxHi = pos->x + margin; // f0
-    f32 pzHi = pos->z + margin; // f2
-    f32 loX = lbl_eu_8066A898 * (f32)nd.x;
-    f32 loZ = lbl_eu_8066A898 * (f32)nd.z;
-    f32 hiX = lbl_eu_8066A898 * (f32)(nd.x + nd.width + 1);
-    f32 hiZ = lbl_eu_8066A898 * (f32)(nd.z + nd.depth + 1);
-    f32 pxLo = pos->x - margin; // f3
-    f32 pzLo = pos->z - margin; // f1
-    s32 hitCenter = 0;          // r12: center-inside but flags rejected
-
-    // margin-expanded point inside the cell rect, vertical threshold ok
-    if (pxHi >= loX && pzHi >= loZ && pxLo <= hiX && pzLo <= hiZ
-        && __fabs(pos->y - nd.xPos) <= m.field_0x20) {
-        if ((nd.reserved8 & 2) || (m.field_0x38 & 1)) {
-            *outId = arg6;
-            *outCell = cellIdx;
-            return 1;
-        }
-        hitCenter = 1;
-    }
-
-    // raw point inside the rect: unconditional hit
-    if (pos->x >= loX && pos->z >= loZ && pos->x <= hiX && pos->z <= hiZ
-        && __fabs(pos->y - nd.xPos) <= m.field_0x20) {
-        *outId = arg6;
-        *outCell = cellIdx;
-        return 1;
-    }
-
-    // scan the cell's edge list for an adjacent reachable node
-    u16* list = m.edges + nd.edgeOffset;
-    s32 count = *list++;
-    const ScnWalkNode* nodes = m.nodes;
-    s32 best = -1; // r31
-    for (s32 i = 0; i < count; ++i) {
-        u16 id = *list++;
-        u32 flags = m.field_0x38;
-        const ScnWalkNode& cn = nodes[id];
-        // visibility gate (same shape as func_8047E390)
-        if (!(flags & 1)) {
-            if (cn.reserved8 & 2)
-                continue;
-        }
-        if (!(flags & 2)) {
-            if (cn.reserved8 & 4)
-                continue;
-        } else if (!(flags & 4)) {
-            if (cn.reserved8 & 4)
-                continue;
-        }
-        // expanded candidate rect must overlap [point-margin, point+margin]
-        f32 minX = lbl_eu_8066A898 * (f32)cn.x;
-        f32 minZ = lbl_eu_8066A898 * (f32)cn.z;
-        if (pxHi < minX)
-            continue;
-        if (pzHi < minZ)
-            continue;
-        f32 maxX = lbl_eu_8066A898 * (f32)(cn.x + cn.width + 1);
-        f32 maxZ = lbl_eu_8066A898 * (f32)(cn.z + cn.depth + 1);
-        if (pxLo >= maxX)
-            continue;
-        if (pzLo >= maxZ)
-            continue;
-        f32 dist = __fabs(pos->y - cn.xPos);
-        if (dist >= m.field_0x20)
-            continue;
-        if (cn.reserved8 & 2) {
-            // flagged neighbour: only accept when the vertical step between
-            // the two cells stays within the up/down limits
-            if (!(flags & 1))
-                continue;
-            f32 cy = cn.xPos;
-            f32 ty = nd.xPos;
-            if (cy < ty) {
-                if (ty - cy > m.field_0x24)
-                    continue;
-            } else if (cy > ty) {
-                if (cy - ty > m.field_0x28)
-                    continue;
-            }
-            best = id;
-            break;
-        } else {
-            // unflagged neighbour: raw point must be inside its rect
-            if (pos->x < minX || pos->z < minZ || pos->x > maxX || pos->z > maxZ)
-                continue;
-            best = id;
-            break;
-        }
-    }
-
-    if (best != -1) {
-        s32 res = func_8047E1B0__17UnkClass_8047E110Fv(self, pos);
-        *outId = res;
-        if (res == -1)
-            return 0;
-        *outCell = best;
-        return 1;
-    }
-    if (hitCenter) {
-        *outId = arg6;
-        *outCell = cellIdx;
-        return 1;
-    }
-    return 0;
-}
-
-// func_8047F730 -- bidirectional reachability search over the walk graph.
-// The shared cursor buffer holds two seed sets: the first `count` ids belong
-// to search A (label-table entries seeded 0x8000) and the following `arg6`
-// ids to search B (seeded 0x4000); labels live at manager+0x94, two halfwords
-// per node id. A pooled bitmap marks visited ids. Every level expands each
-// frontier node through BOTH endpoints of its map record's edge lists,
-// appending unvisited neighbours to the opposite half of the cursor buffer.
-// When one level produces expansions whose accumulated labels carry BOTH
-// seed markers, the searches met: func_8047EFBC resolves the crossing node
-// and its result becomes ours. Frontier exhaustion returns 0.
-//
-// OPEN ITEM PACKET (us-80483700, best mismatch=294 structural=282
-// reg_swap=12, 1384B vs 1816B): preamble + phase-1 unrolled seed loop are
-// BYTE-IDENTICAL (incl. register allocation). Divergence starts at loop 2:
-// decomp allocates the frontier-seed/bound temp (retail r8) into r7 and
-// hoists the strength-reduced walker (cur[count]) above the unroll guard
-// chain, while retail sinks it below and materializes FOUR guard-flag
-// booleans (li r4/r5/r7/r9) fed by a cr1 compare reused between the early
-// exit and the overflow-proof chain. Semantics fully decoded (bidirectional
-// BFS, labels[v] halfword per id, 0x8000/0x4000 seed markers, meet test
-// acc&0xC000==0xC000 -> func_8047EFBC(self, arg4, cur[j]) return-through).
-// Ruled out: labels[v*2] indexing (wrong - byte offset is v*2 = labels[v]);
-// i-continuation loop 2 (reg_swap explodes to 116); pointer-walk q loop
-// (walker hoists even higher); mutating-count walk form; produced==end
-// merged variable (byte-identical to separate end); cached cur[j] id local
-// (retail reloads lhz every use); ternary grp select (indexed (&f8)[d]
-// required). Key insight kept: loop 2 must mutate `count` itself so the
-// induction stays in r24 (matches retail addi r24,+8 in unrolled body).
-// Next experiments: (a) find a loop-2 bound expression shape that makes MWCC
-// reuse the loop-condition cr1 compare inside its overflow-proof chain;
-// (b) try declaring the seed constants (0x8000/1) as named locals so they
-// stay live across the loop boundary and push allocation to r8;
-// (c) re-check after any unit flag negotiation (unroll guard shapes are
-// -O4,p sensitive).
-extern "C" s32 func_8047F730__17UnkClass_8047E110Fv(UnkClass_8047E110* self,
-    u16* arg4, s32 count, s32 arg6) {
-    ScnManagerLayout& m = *(ScnManagerLayout*)self;
-    u16* labels = (u16*)m.field_0x94;
-    u32* bits = (u32*)func_804B5A68();
-    u16* cur = (u16*)m.field_0x98;
-    u32 n = ((ScnWalkHeader*)m.field_0x0)->field_0x10;
-    u16* mid = &cur[(n >> 1) + 10];
-    memset(bits, 0, ((n >> 5) + 1) * 4);
-
-    // seed pass: mark every seed id as visited and stamp its marker label
-    s32 i;
-    for (i = 0; i < count; ++i) {
-        u16 v = cur[i];
-        bits[v >> 5] |= 1 << (v & 31);
-        labels[cur[i]] = 0x8000;
-    }
-    s32 produced = count + arg6;
-    for (; count < produced; ++count) {
-        u16 v = cur[count];
-        bits[v >> 5] |= 1 << (v & 31);
-        labels[cur[count]] = 0x4000;
-    }
-
-    while (produced != 0) {
-        s32 lvl = produced;
-        produced = 0;
-        u32 acc = 0; // OR of all newly written labels (marker-bit detector)
-        u16* wr = mid;
-        for (s32 j = 0; j < lvl; ++j) {
-            const ScnNodeMap& rec = m.field_0xC[cur[j]];
-            for (s32 ep = 0; ep < 2; ++ep) {
-                u8 g = (&rec.field_0x8)[ep];
-                u16 coord = (&rec.field_0x4)[ep];
-                u32 eo = m.field_0x8[coord].field_0x4;
-                u16 ecnt = m.edges[eo];
-                const u16* el = m.edges + eo + 1;
-                for (s32 k = 0; k < ecnt; ++k) {
-                    u16 nb = *el++;
-                    const ScnNodeMap& lk = m.field_0xC[nb];
-                    // neighbour record side must agree with ours for coord
-                    u8 g2 = (&lk.field_0x8)[coord != lk.field_0x4];
-                    if (g2 != g)
-                        continue;
-                    u32 mask = 1 << (nb & 31);
-                    if (bits[nb >> 5] & mask) {
-                        // already labelled this run: exactly one side carrying
-                        // the A-marker means the frontiers crossed here
-                        if (labels[nb] & 0x8000) {
-                            if (!(labels[cur[j]] & 0x8000))
-                                return func_8047EFBC__17UnkClass_8047E110Fv(
-                                    self, arg4, cur[j]);
-                        } else if (labels[cur[j]] & 0x8000) {
-                            return func_8047EFBC__17UnkClass_8047E110Fv(
-                                self, arg4, cur[j]);
-                        }
-                        continue;
-                    }
-                    bits[nb >> 5] |= mask;
-                    wr[produced] = nb;
-                    ++produced;
-                    labels[nb] = labels[cur[j]] + 1;
-                    acc |= labels[nb];
-                }
-            }
-        }
-        if ((acc & 0xC000) != 0xC000)
-            return 0;
-        // ping-pong the frontier halves inside the shared cursor buffer
-        u16* t = cur;
-        cur = mid;
-        mid = t;
-    }
-    return 0;
-}
+extern "C" u32 lbl_eu_8056DC68[3] = {
+    0x00000000, 0xFFFFFFFF, (u32)&func_80481074__17UnkClass_8047E110Fv,
+};
+// The default 12-byte reference block (also the retail symbol referenced by
+// func_8048163C). Defined as the ScnPtmf struct so the field copy compiles.
+// NOTE: declared AFTER lbl_eu_8056DC68 so MWCC emits the .data symbols in
+// retail offset order (definition order = section order for .data).
+ScnPtmf lbl_eu_8056DC74 = { 0x00000000, 0xFFFFFFFF, (u32)&func_804812D8__17UnkClass_8047E110Fv };
+DECOMP_FORCEACTIVE(UnkClass_8047E110_cpp, lbl_eu_8056DC74);
+extern "C" u32 lbl_eu_8056DC80[4] = {
+    0x00000000, 0xFFFFFFFF, (u32)&func_804813E8__17UnkClass_8047E110Fv,
+    0x00000000,
+};
+extern "C" u32 lbl_eu_8056DC90[10] = {
+    (u32)&lbl_eu_806638A8, 0x00000000,
+    (u32)&__dt__18CScnItemCameraNw4rFv, (u32)&func_8049F9A4,
+    (u32)&func_80482048, (u32)&func_80481F9C,
+    (u32)&func_8048204C, (u32)&func_80482040,
+    (u32)&func_80482038, (u32)&func_80481F00,
+};
+extern "C" u32 lbl_eu_8056DCB8[5] = {
+    (u32)&lbl_eu_806624D8, 0x00000000, (u32)&lbl_eu_806638B0, 0x00000000,
+    0x00000000,
+};
+extern "C" u32 lbl_eu_8056DCCC[3] = { (u32)&lbl_eu_806624D8, 0x00000000, 0x00000000 };
+DECOMP_FORCEACTIVE(UnkClass_8047E110_cpp, lbl_eu_8056DC68);
+DECOMP_FORCEACTIVE(UnkClass_8047E110_cpp, lbl_eu_8056DC90);
+DECOMP_FORCEACTIVE(UnkClass_8047E110_cpp, lbl_eu_8056DCB8);

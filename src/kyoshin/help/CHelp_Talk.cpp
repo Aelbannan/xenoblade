@@ -1,6 +1,7 @@
 // Decompilation of kyoshin/help/CHelp_Talk
 
 #include "kyoshin/help/CHelp_Talk.hpp"
+#include "kyoshin/cf/CfMapItemManager.hpp"
 #include "kyoshin/cf/CfGameManager.hpp"
 
 // C++ linkage at global scope -> MWCC emits retail symbol func_800B708C__Fi.

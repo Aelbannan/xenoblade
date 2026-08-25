@@ -2,6 +2,8 @@
 #define KYOSHIN_CODE_800B06A4_HPP
 #include <types.h>
 #include "kyoshin/cf/CBattleManagerApi.hpp"
+#include "kyoshin/plugin/ocBdat.hpp"  // getBdatStringColumnValue (owner)
+#include "kyoshin/cf/CfGameManagerData.hpp"  // H3 label-owner decl (lbl_eu_80663E14; lbl_eu_80663E24)
 namespace cf {
 struct CfObject { char _pad[4]; };
 struct TboxInfo { char _pad[4]; };
@@ -981,7 +983,6 @@ extern int lbl_eu_80661CDC;
 struct B47Vec3;
 
 // Globals used by func_800B8FC4.
-extern u32 lbl_eu_80663E24;
 extern u32 lbl_eu_80663E28;
 
 // Float/double pool constants shared by the cf object scan routines.
@@ -1431,7 +1432,8 @@ extern float lbl_eu_80661CD0;
 extern void* lbl_eu_806640A8;
 extern u32 lbl_eu_80664184;
 extern const double lbl_eu_806669D0;
-extern "C" u32 getBdatStringColumnValue(void* bdat, const char* column, s32 row);
+// getBdatStringColumnValue comes from kyoshin/plugin/ocBdat.hpp via the
+// include chain (canonical u32(void*, const char*, s32) decl).
 
 // u32 word-pair / f64 view for MWCC's 0x43300000 unsigned->float conversion
 // (CfObjectImplMove.hpp convention).
@@ -1642,9 +1644,10 @@ extern "C" void func_800B3A60(void* list, void* obj);
 extern "C" int func_8007F91C__Q22cf13CfGameManagerFv();
 extern "C" void* func_8009ECB0();
 extern "C" void* func_8009EC9C(unsigned long index);
-extern "C" int func_80174C98(void* dst, void* src, int size); // keep 3rd param int - must match the family-canonical decls (CTaskGame.hpp 10197 note)
+// func_80174C98 is owned by kyoshin/cf/CfMapItemManager.hpp.
 extern "C" int func_80148778(void* obj, int arg);
 extern "C" int CfRes_getD80Flag();
+// func_80496288 is owned by monolib/src/scn/CScn (decl: monolib/scn/CScnTimeApi.hpp).
 extern "C" void func_80496288();
 extern "C" void func_801765A4(void* obj, int arg);
 
@@ -2096,7 +2099,6 @@ extern const float lbl_eu_806669F0;
 extern const float lbl_eu_80666A0C;
 // Runtime-tuned globals.
 extern float lbl_eu_80663ED0;
-extern void* lbl_eu_80663E14;
 
 // Object behind the global pointer used by func_800B47A8; field +0xB4 holds
 // the listener instance.

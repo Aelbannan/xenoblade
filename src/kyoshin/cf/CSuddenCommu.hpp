@@ -3,6 +3,7 @@
 #include <types.h>
 #include "kyoshin/cf/object/IObjectInfo.hpp"
 #include "kyoshin/cf/CBattleManagerApi.hpp"
+#include "kyoshin/cf/CfGameManagerData.hpp"  // H3 label-owner decl (lbl_eu_80663E14; lbl_eu_80663E24)
 
 namespace cf{
     //size: 0x30?
@@ -277,7 +278,6 @@ extern "C" {
     // Voice/help imports used by the sudden-commu triggers (unmangled retail
     // names - C linkage keeps the call relocs verbatim).
     u32 func_8009CF8C(u32 resourceId);
-    int func_80174C98(void* actor, int* outVal, int flags);
     int func_8017FD44(void* global);
     CSuddenCommuGlobal* getUnk80664658();
 }
@@ -330,8 +330,6 @@ extern "C" {
 // Commu camera/trigger globals (.sdata). E14's CScn* matches CfObjectMove.hpp
 // / CTaskGame.hpp / code_8027513C.hpp; a void* decl here would clash with
 // those in any TU that includes both this header and the scene headers.
-extern u32 lbl_eu_80663E24;
-extern CScn* lbl_eu_80663E14;
 
 // Pad button-flag view (retail CPad first word).
 struct CSuddenCommuPadView {

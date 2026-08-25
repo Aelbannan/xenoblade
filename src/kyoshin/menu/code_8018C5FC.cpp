@@ -13,8 +13,6 @@
 extern const f32 lbl_eu_80667A30;
 extern f32 lbl_eu_80667A34;
 extern f32 lbl_eu_80667A38;
-extern u32 lbl_eu_80663E14;
-extern u32 lbl_eu_80663E24;
 
 namespace cf {
 

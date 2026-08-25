@@ -10,7 +10,8 @@ extern const float lbl_eu_80666934; // 0.15f
 extern const float lbl_eu_80666948; // 0.75f
 
 // Collision query helper: process capsule against collision context.
-void func_800A4C48(void* query, const ml::CVec3* start,
+// Retail names this symbol UNMANGLED (plain C linkage).
+extern "C" void func_800A4C48(void* query, const ml::CVec3* start,
                                const ml::CVec3* end, float radius);
 
 // Render the capsule for debug visualization.

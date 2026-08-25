@@ -1723,18 +1723,18 @@ __declspec(noinline) int func_80127FB4(nw4r::lyt::AnimTransform* tag,
         member = tsrc->field_98;
 
     outbuf[0] = 0;
-    u16 idx = msg->field_810;
-    u16 tagcode = msg->mBuf[idx];
+    const u16* p = &msg->mBuf[msg->field_810];
+    u16 tagcode = *p;
     switch (tagcode) {
     case 1: {
         // <1 hi|lo data...> raw text-range tag: copy hi+lo chars to the
         // pane with the header preserved.
-        u16 h = msg->mBuf[idx + 3];
+        u16 h = p[3];
         u32 count = (h >> 8) + (h & 0xff);
         outbuf[0] = tagcode;
         outbuf[1] = h;
         for (u32 j = 0; j < count; j++)
-            outbuf[2 + j] = msg->mBuf[idx + 4 + j];
+            outbuf[2 + j] = msg->mBuf[msg->field_810 + 4 + j];
         outbuf[count + 2] = 0;
         u16 adv = count + 2;
         msg->field_810 += adv;
@@ -1745,13 +1745,13 @@ __declspec(noinline) int func_80127FB4(nw4r::lyt::AnimTransform* tag,
 
     case 2: {
         // <2 d0 d1> color tag: push both operands plus a 0 tail.
-        u16 d0 = msg->mBuf[idx + 3];
-        u16 d1 = msg->mBuf[idx + 4];
+        u16 d0 = p[3];
+        u16 d1 = p[4];
         outbuf[0] = tagcode;
         outbuf[1] = d0;
         outbuf[2] = d1;
         outbuf[3] = 0;
-        msg->field_810 = idx + 3;
+        msg->field_810 += 3;
         pane->v7C(outbuf, msg->field_820);
         msg->field_820 += 3;
         goto finish;
@@ -1762,8 +1762,8 @@ __declspec(noinline) int func_80127FB4(nw4r::lyt::AnimTransform* tag,
 
     case 4: {
         // <4 v> wait-for-click tag: v == -1 holds the page.
-        s16 v = (s16)msg->mBuf[idx + 3];
-        msg->field_810 = idx + 2;
+        s16 v = (s16)p[3];
+        msg->field_810 += 2;
         msg->field_820 = 0;
         return v == -1;
     }
@@ -1772,7 +1772,7 @@ __declspec(noinline) int func_80127FB4(nw4r::lyt::AnimTransform* tag,
         // <5 v> text-speed / skip tag: v == -1 selects the button-driven
         // auto-advance, v == -2 skips unconditionally, otherwise v is the
         // per-char speed threshold.
-        s16 v = (s16)msg->mBuf[idx + 3];
+        s16 v = (s16)p[3];
         if (v == -1) {
             // NOTE: keep field_824 reads adjacent to their compares (no
             // float local live across the calls below) so MWCC never
@@ -1814,7 +1814,13 @@ __declspec(noinline) int func_80127FB4(nw4r::lyt::AnimTransform* tag,
             }
             return 2;
         }
-        if (msg->field_824 < (f32)(int)v) {
+        // General path: convert v with the retail sdata2 magic idiom
+        // (seed 0x43300000 hi, v^0x80000000 lo, subtract the shared
+        // 2^52+2^31 blob) and compare in double.
+        TagConvTemp conv;
+        conv.w.hi = 0x43300000;
+        conv.w.lo = (u32)v ^ 0x80000000;
+        if ((f64)msg->field_824 < conv.d - lbl_eu_80667200) {
             if (msg->field_824 < lbl_eu_806671F4 && msg->field_804 != 0 &&
                 member != 0)
                 member->v58(0, 0);
@@ -1833,9 +1839,8 @@ __declspec(noinline) int func_80127FB4(nw4r::lyt::AnimTransform* tag,
         // <8 b0 b1 ...> icon tag: map the three header bytes through the
         // 0x1B-entry flag table into icon ids (func_8004B9D4 call or
         // pending field_828/830/838 stores), then advance 3.
-        u16 h0 = msg->mBuf[idx + 3];
-        u16 h1 = msg->mBuf[idx + 4];
-        hdr[0] = h0 >> 8;
+        u16 h0 = p[3];
+        u16 h1 = p[4];        hdr[0] = h0 >> 8;
         hdr[1] = h0 & 0xff;
         hdr[2] = h1 >> 8;
         if (msg->field_804 != 0 && tsrc != 0) {
@@ -1866,21 +1871,21 @@ __declspec(noinline) int func_80127FB4(nw4r::lyt::AnimTransform* tag,
                 }
             }
         }
-        msg->field_810 = idx + 3;
+        msg->field_810 += 3;
         goto finish;
     }
 
     case 9: {
         // <9 v> party-member emphasis tag: v == 0 enables, v == -1 disables
         // the member's follow highlight.
-        s16 v = (s16)msg->mBuf[idx + 3];
+        s16 v = (s16)p[3];
         if (msg->field_804 != 0 && member != 0) {
             if (v == 0)
                 member->v58(1, 0);
             else if (v == -1)
                 member->v58(0, 0);
         }
-        msg->field_810 = idx + 2;
+        msg->field_810 += 2;
         goto finish;
     }
 
@@ -1888,7 +1893,7 @@ __declspec(noinline) int func_80127FB4(nw4r::lyt::AnimTransform* tag,
         // Unknown code: push <code, 0> verbatim and advance both counters.
         outbuf[0] = tagcode;
         outbuf[1] = 0;
-        msg->field_810 = idx + 1;
+        msg->field_810 += 1;
         pane->v7C(outbuf, msg->field_820);
         msg->field_820 += 1;
         goto finish;

@@ -1146,45 +1146,48 @@ s32 func_804ED18C(MdlDynObj* obj, nw4r::math::VEC3* pos, nw4r::math::VEC3* out,
 // list and dispatches on each element's update kind: kinds 1/3 run a sphere/
 // ray helper (func_804ECEB4 / func_804ED18C) accumulating its output vector
 // into both target velocities; kind 2 transforms the target position through
-// the element's local/view/world matrices and accumulates the delta scaled by
-// lbl_eu_8066B3F4 when view-space z is in front of the camera.
+// the element's local/view/world matrices and accumulates the (negated)
+// delta scaled by lbl_eu_8066B3F4 when view-space y is in front of the camera.
 void func_804ECAC4(MdlDynObj* obj, CMdlDynTarget* tgt, nw4r::math::MTX34* matrices) {
-    // The element array base lives at obj+0x18 with a 0x98-byte stride.
-    u8* elemBase = obj->elems18;
-    u32* it = tgt->ids90;
-    while (it != tgt->ids90 + tgt->count94) {
-        CMdlDynElem98* e = (CMdlDynElem98*)(elemBase + *it * 0x98);
+    // Volatile re-reads stop MWCC from hoisting the id-array base/count;
+    // retail reloads both fields from the target every iteration.
+    volatile CMdlDynTarget* vt = tgt;
+    u32* it = vt->ids90;
+    while (it != vt->ids90 + vt->count94) {
+        // Element array base lives at obj+0x18 with a 0x98-byte stride.
+        CMdlDynElem98* e = (CMdlDynElem98*)(obj->elems18 + *it * 0x98);
         it++;
         switch (e->field_0x94) {
         case 1: {
-            // Sphere-cast helper; accumulate its output into both velocities.
-            nw4r::math::VEC3 delta;
-            if (!func_804ECEB4(obj, &tgt->pos68, &delta, &e->field_0x0, matrices)) {
-                continue;
+            // Sphere push-out helper; accumulate its output into both velocities.
+            ml::CVec3 delta;
+            if (!func_804ECEB4(obj, (nw4r::math::VEC3*)&vt->pos68,
+                               (nw4r::math::VEC3*)&delta, &e->field_0x0, matrices)) {
+                break;
             }
-            tgt->vel74.x += delta.x;
-            tgt->vel74.y += delta.y;
-            tgt->vel74.z += delta.z;
-            tgt->vel7C.x += delta.x;
-            tgt->vel7C.y += delta.y;
-            tgt->vel7C.z += delta.z;
+            *(ml::CVec3*)&vt->vel74 += delta;
+            *(ml::CVec3*)&vt->vel7C += delta;
             break;
         }
         case 2: {
-            s32 hit = 0;
-            nw4r::math::VEC3 world;
-            PSMTXMultVec(e->field_0x4.mtx, (const Vec*)&tgt->pos68, (Vec*)&world);
-            nw4r::math::VEC3 view;
-            PSMTXMultVec(e->field_0x64.mtx, (const Vec*)&world, (Vec*)&view);
-            if (view.z > lbl_eu_8066B3D0) {
+            // world = view * (local * pos); proceed only when the view-space
+            // point is on the camera side (y > 0).
+            nw4r::math::VEC3 tmp;
+            PSMTXMultVec(e->field_0x4.mtx, (const Vec*)&vt->pos68, (Vec*)&tmp);
+            ml::CVec3 view;
+            PSMTXMultVec(e->field_0x64.mtx, (const Vec*)&tmp, (Vec*)&view);
+            nw4r::math::VEC3 world = *(nw4r::math::VEC3*)&view;
+            if (world.y > lbl_eu_8066B3D0) {
+                // Resolve the element's res node (offset at 0x5C, 4-aligned).
                 MdlResRoot* root = (MdlResRoot*)obj->field_0x4;
                 nw4r::g3d::ResMdl mdl((void*)root->field_0x146C);
-                unsigned long raw = GetResNode__Q34nw4r3g3d6ResMdlCFUl(&mdl, e->field_0x0);
-                if (raw == 0) {
+                unsigned long raw =
+                    GetResNode__Q34nw4r3g3d6ResMdlCFUl(&mdl, e->field_0x0);
+                u8* node = (u8*)raw;
+                if (node == 0) {
                     nw4r::db::Panic(lbl_eu_8056E850, 0x2c, lbl_eu_8056E834,
                                     lbl_eu_80663910, lbl_eu_80663CB8);
                 }
-                u8* node = (u8*)raw;
                 u32 off = *(u32*)(node + 0x5C);
                 if (off != 0) {
                     node += off;
@@ -1199,40 +1202,31 @@ void func_804ECAC4(MdlDynObj* obj, CMdlDynTarget* tgt, nw4r::math::MTX34* matric
                 }
                 u32 n = (raw != 0) ? *(u32*)(node + 0x10) : 0;
 
+                // Project onto the anchor plane: flatten view-space y, push
+                // back through the element world matrix then the anchor matrix.
+                world.y = lbl_eu_8066B3D0;
                 nw4r::math::VEC3 p1;
                 PSMTXMultVec(e->field_0x34.mtx, (const Vec*)&world, (Vec*)&p1);
                 nw4r::math::VEC3 p2;
                 PSMTXMultVec(matrices[n].mtx, (const Vec*)&p1, (Vec*)&p2);
 
-                nw4r::math::VEC3 delta;
-                delta.x = (p2.x - tgt->pos68.x) * lbl_eu_8066B3F4;
-                delta.y = (p2.y - tgt->pos68.y) * lbl_eu_8066B3F4;
-                delta.z = (p2.z - tgt->pos68.z) * lbl_eu_8066B3F4;
-                tgt->pos68 = p2;
-                hit = 1;
-
-                if (hit) {
-                    tgt->vel74.x += delta.x;
-                    tgt->vel74.y += delta.y;
-                    tgt->vel74.z += delta.z;
-                    tgt->vel7C.x += delta.x;
-                    tgt->vel7C.y += delta.y;
-                    tgt->vel7C.z += delta.z;
-                }
+                ml::CVec3 delta =
+                    (*(ml::CVec3*)&vt->pos68 - *(ml::CVec3*)&p2) * lbl_eu_8066B3F4;
+                ((CMdlDynTarget*)vt)->pos68 = p2;
+                *(ml::CVec3*)&vt->vel74 += delta;
+                *(ml::CVec3*)&vt->vel7C += delta;
             }
             break;
         }
         case 3: {
-            nw4r::math::VEC3 delta;
-            if (!func_804ED18C(obj, &tgt->pos68, &delta, &e->field_0x0, matrices)) {
-                continue;
+            // Capsule projection helper; accumulate its output into both velocities.
+            ml::CVec3 delta;
+            if (!func_804ED18C(obj, (nw4r::math::VEC3*)&vt->pos68,
+                               (nw4r::math::VEC3*)&delta, &e->field_0x0, matrices)) {
+                break;
             }
-            tgt->vel74.x += delta.x;
-            tgt->vel74.y += delta.y;
-            tgt->vel74.z += delta.z;
-            tgt->vel7C.x += delta.x;
-            tgt->vel7C.y += delta.y;
-            tgt->vel7C.z += delta.z;
+            *(ml::CVec3*)&vt->vel74 += delta;
+            *(ml::CVec3*)&vt->vel7C += delta;
             break;
         }
         default:

@@ -8,6 +8,7 @@
 #include "monolib/device/CDeviceFile.hpp"
 #include "monolib/util/MemManager.hpp"
 #include "include/kyoshin/cf/CfGameManager.hpp"
+#include "kyoshin/cf/CfGameManagerData.hpp"  // H3 label-owner decl (lbl_eu_80663E14; lbl_eu_80663E24)
 
 // ---------------------------------------------------------------------------
 // Action table entries - {startTime, creatureId, callback}
@@ -103,7 +104,6 @@ extern "C" {
     // Global pointers
     extern CREvtModelMap* lbl_eu_806642B0;  // current active model map
     extern CREvtModelMap* lbl_eu_806642B4;  // current visible model map
-    extern void* lbl_eu_80663E14;            // CDeviceFile instance
     extern float lbl_eu_806678C0;            // 1.0f scale
     extern double lbl_eu_806678C8;           // 0x43300000_80000000 double for int→float conv
 extern "C" void* func_80086B10__Q22cf13CfGameManagerFv();

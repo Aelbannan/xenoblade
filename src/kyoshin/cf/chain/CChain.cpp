@@ -1,4 +1,5 @@
 #include "kyoshin/cf/CBattleManagerApi.hpp"
+#include "kyoshin/cf/CfMapItemManager.hpp"
 #include "kyoshin/cf/chain/CChain.hpp"
 #include "kyoshin/cf/CfGameManager.hpp"
 #include "kyoshin/cf/CfSoundMan.hpp"
@@ -10,6 +11,7 @@ extern "C" int func_801537E0(void* self);
 // spellings) by CBattleManager.cpp / CVision.cpp, which include CChain.hpp
 // via CBattleManager.hpp - keep them out of the header like the trio above.
 extern "C" void func_800F3970(void* bm, void* target, void* src, s32 a, s32 b);
+extern "C" void func_800BE12C(u8* obj, int a, int b, int c, int d);
 
 struct ChIf {
     virtual void _v0008();
@@ -495,11 +497,10 @@ void func_8027732C(cf::CChain* self) {
 // gauge-accumulating ranges (0xA..0xC or 0x14..0x15); resolves the member
 // entry for the target battle object, registers the combo, and refreshes the
 // arts-voice flag from the current arts id.
-// Params are copied to locals up-front: retail colors them by the
-// locals rule (first-declared -> r31), not the parameter rule.
-void func_802773EC(cf::CChain* chain, cf::CChainBattleObj2A4* battleObj) {
-    cf::CChain* self = chain;
-    cf::CChainBattleObj2A4* target = battleObj;
+void func_802773EC(cf::CChain* chain, cf::CChainBattleObj2A4* target) {
+    // One mirror-typed local carries every head-byte and member access, so
+    // retail's single r31 base register maps to this first-declared local.
+    cf::CChainMemberListMirror* self = (cf::CChainMemberListMirror*)chain;
     // Mirror the retail gate shape: one byte load feeding two unsigned
     // range checks, each setting an ok flag; falling through both clears
     // the run flag and exits.
@@ -526,11 +527,10 @@ void func_802773EC(cf::CChain* chain, cf::CChainBattleObj2A4* battleObj) {
     }
     if (flag == 0) return;
 
-    cf::CChainMemberListMirror* mv = (cf::CChainMemberListMirror*)self;
     s8 idx = (s8)self->unk0[0];
     cf::CChainActor* actor;
-    if ((int)idx < (int)mv->mChainMember.mCount) {
-        actor = mv->mChainMember.mActors[idx];
+    if ((int)idx < (int)self->mChainMember.mCount) {
+        actor = self->mChainMember.mActors[idx];
     } else {
         actor = 0;
     }
@@ -542,7 +542,7 @@ void func_802773EC(cf::CChain* chain, cf::CChainBattleObj2A4* battleObj) {
     }
     if ((u32)target != actorKey) return;
     if (self->unk0[3] != 0) return;
-    func_80293E24(&self->mChainCombo, (cf::CfObjectActor*)target);
+    func_80293E24(&((cf::CChain*)self)->mChainCombo, (cf::CfObjectActor*)target);
     if (self->unk0[8] == 0) return;
     cf::CChainArtsId* arts = (cf::CChainArtsId*)target->v167()->mArtsCategory;
     self->unk0[9] = (u8)(func_80146300(arts->field_48, 1) == 0);

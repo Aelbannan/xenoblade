@@ -8,7 +8,6 @@
 
 // Event/presentation flag bitfields (.sbss)
 extern u32 lbl_eu_80663E28; // secondary mode bitfield (fade/skip status bits)
-extern u32 lbl_eu_80663E24; // primary event/presentation bitfield
 
 extern "C" u32 func_8009CF8C(u32 addr); // global data/flag memory reader
 

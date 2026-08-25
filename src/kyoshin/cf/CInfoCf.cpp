@@ -11,7 +11,6 @@
 #include <revolution/gx/GXPixel.h>
 
 // Global: UI state flag read by func_80166830.
-extern u32 lbl_eu_80663E24;
 
 // Body-copy helpers defined below in this TU (called by CMenuItem::Init).
 // extern "C": the retail reloc names are unmangled (same convention as

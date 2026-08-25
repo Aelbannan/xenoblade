@@ -12,9 +12,7 @@
 // code_80135FDC.hpp declares lbl_eu_8066A208 as u32 (line 188);
 // CfObjectMove.hpp (via the CBattleManager.hpp include above) declares it
 // const float. This TU uses neither copy.
-#define lbl_eu_8066A208 menuBmbCode35FDCepsilonUnused
 #include "kyoshin/code_80135FDC.hpp"
-#undef lbl_eu_8066A208
 #include "monolib/device/CDeviceVI.hpp"
 #include "monolib/util/MemManager.hpp"
 #include "monolib/work/CProcess.hpp"

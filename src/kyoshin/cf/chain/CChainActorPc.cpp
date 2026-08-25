@@ -1,5 +1,6 @@
 
 #include "kyoshin/cf/chain/CChainActorPc.hpp"
+#include "kyoshin/cf/CfMapItemManager.hpp"
 #include "kyoshin/cf/CBattleManagerApi.hpp"
 
 namespace cf { class CBattleManager; class CfObjectMove; class CfGameManager; class CChain; }
@@ -101,7 +102,6 @@ struct CChainBigObj {
 extern void func_804B1DC0(void*, int);
 extern void func_80279B34(cf::CChainActorPc*);
 extern u8* func_80282380(cf::CChainActorPc*);
-extern int func_80174C98(u8*, int*, int);
 extern void func_80279E48(cf::CChainActorPc*, int);
 extern f32 lbl_eu_80668AEC;
 extern f32 lbl_eu_80668AF0;

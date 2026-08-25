@@ -7,6 +7,8 @@
 #include "monolib/math.hpp"
 #include <nw4r/math.h>
 #include <math.h>
+#include "kyoshin/cf/CfGameManagerData.hpp"  // H3 label-owner decl (lbl_eu_80663E14; lbl_eu_80663E24)
+#include "monolib/math/FloatUtils.hpp"  // H3 label-owner decl (lbl_eu_8066A208)
 
 struct OMIfShift { char pad[0x10]; };
 struct OMIf : OMIfShift {
@@ -875,7 +877,7 @@ void cf::CfObjectMove::CfObjectMove_UnkVirtualFunc14() {
 // action-advance query result). The header declares the vtable slot with the
 // int return so the vtable entry keeps the retail name.
 // const self: MWCC hoists the first member load (lwz r3,0x6c0(r3)) above the
-// LR save (stw r0,0x14(r1)) — the documented plateau closed by the const-self
+// LR save (stw r0,0x14(r1)) -- the documented plateau closed by the const-self
 // lever (CScnEffectActNw4r getters family; non-const emits stw-first).
 // extern "C" + the mangled name keeps the vtable reference verbatim.
 extern "C" int CfObjectMove_UnkVirtualFunc9__Q22cf12CfObjectMoveFv(const cf::CfObjectMove* self) {
@@ -1588,13 +1590,11 @@ extern "C" void func_800BC8D8(cf::CfObjectMove* self) {
         }
     }
     cf::CfObjectMoveA8View* view = (cf::CfObjectMoveA8View*)self;
-    // v = lbl_eu_80666A94 - AC * (A8 * ((lbl_eu_80666A94 - A0) * A4)).
-    // NOTE: retail emits the inner fmuls with the computed difference as frA
-    // (fmuls f3,f4,f3); MWCC canonicalizes every tried source shape (both
-    // text orders, named temps, const locals) to the load-first form
-    // (fmuls f3,f3,f4) - documented fp operand-order cap, 1 reg_swap.
+    // Sign-flipped difference: negation propagates exactly through the
+    // multiplies (IEEE), keeping the final fnmsubs bit-identical.
+    float d = self->field_A0 - lbl_eu_80666A94;
     float v = lbl_eu_80666A94 - view->field_AC * (view->field_A8 *
-              ((lbl_eu_80666A94 - self->field_A0) * view->field_A4));
+              (d * view->field_A4));
     if (v > lbl_eu_80666A88) {
         if ((self->mFlags68 & 0x100000) != 0) {
             func_800BB618(self, 1);
@@ -1989,7 +1989,7 @@ extern "C" void func_800BE0F8(cf::CfObjectMove* self, u32 value) {
     u32 flags = __rlwimi(self->mFlags6C9, value, 1, 27, 30);
     self->mFlags6C9 = (u8)flags;
     if (target != 0) {
-        // Retail: rlwinm r4,r0,31,28,31 = (flags >> 1) & 0xF — the flag-word
+        // Retail: rlwinm r4,r0,31,28,31 = (flags >> 1) & 0xF -- the flag-word
         // nibble at bits 1-4 (untouched by the 27-30 insertion), NOT the
         // inserted field nibble ((flags >> 27) & 0xF is a different value).
         ((cf::CfObjectMoveSub98Vt64*)target)->m64((flags >> 1) & 0xF);

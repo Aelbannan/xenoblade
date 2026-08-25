@@ -1,6 +1,7 @@
 // Auto-scaffolded catalog TU for kyoshin/CSysWinScenarioLog
 
 #include "kyoshin/cf/CBattleManagerApi.hpp"
+#include "kyoshin/cf/CfMapItemManager.hpp"
 #include <types.h>
 
 #include "kyoshin/CSysWinScenarioLog.hpp"

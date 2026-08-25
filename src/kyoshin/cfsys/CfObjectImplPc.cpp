@@ -2,6 +2,7 @@
 // Replace stubs with high-level C/C++ during decomp.
 
 #include "kyoshin/harness_catalog.hpp"
+#include "kyoshin/cf/CfMapItemManager.hpp"
 #include "kyoshin/cfsys/CfObjectImplPc.hpp"
 
 #include "monolib/util/MemManager.hpp"

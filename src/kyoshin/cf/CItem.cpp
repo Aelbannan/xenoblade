@@ -1427,8 +1427,8 @@ CItemExt* func_80157D6C(u32 arg, s16* pOut, u32 family) {
         if (flag) {
             // Pass 1: prefer a family-matching record with capacity.
             for (s32 i = 0; i < count; i++) {
+                u32 word = *(u32*)((char*)list + i * stride);
                 CItemExt* rec = (CItemExt*)((char*)list + i * stride);
-                u32 word = rec->field_00;
                 if (family == (word >> 20) && rec->field_06 < 0x63) {
                     if (word == 0) return 0;
                     *pOut = (s16)i;

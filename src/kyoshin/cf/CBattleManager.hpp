@@ -16,6 +16,7 @@
 #include "kyoshin/cf/CSuddenCommu.hpp"
 #include "monolib/util.hpp"
 #include <cstring>
+#include "kyoshin/cf/CfGameManagerData.hpp"  // H3 label-owner decl (lbl_eu_80663E14; lbl_eu_80663E24)
 
 namespace cf{
     class UnkClass_8018C5FC {
@@ -416,7 +417,6 @@ extern "C" float lbl_eu_80666DEC;   // time/frame-delta scale (func_800D9354)
 extern "C" float lbl_eu_8066A1FC;   // 2*pi (angle-wrap step)
 extern "C" BattleTableEntry lbl_eu_804FC828[];
 extern u32 lbl_eu_804FCA08[];       // attack sound-id table (retail .rodata)
-extern u32 lbl_eu_80663E24;
 
 // reslist<...> base-class vtables (named so the reslist deleting-dtor vtable
 // store emits the retail symbol rather than an auto-mangled __vt__ name).

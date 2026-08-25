@@ -17,6 +17,7 @@
 #include <nw4r/lyt/lyt_layout.h>
 #include <nw4r/lyt/lyt_pane.h>
 #include <nw4r/math/math_types.h>
+#include "kyoshin/cf/CfGameManagerData.hpp"  // H3 label-owner decl (lbl_eu_80663E14; lbl_eu_80663E24)
 
 // CBaseCur shared helpers (defined in CCur.cpp)
 extern void func_801D21CC(CBaseCur* cur);

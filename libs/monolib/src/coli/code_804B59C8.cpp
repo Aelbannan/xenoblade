@@ -737,13 +737,14 @@ extern "C" void func_804B61FC(CColiObj* self, CColiQuery* query) {
     if (query->field_0x00 != 0) return;
     CColiEntry* entry = &self->field_0x40[query->field_0x02];
     u32 flags = entry->field_0x02;
-    u32* bits = w->b.bitTable;
+    u32* bits = (u32*)((u8*)w + 0x2000);
     if (bits[(flags >> 3) & 0x7F] & (1u << (flags & 0x1F))) return;
     if (!func_804BAE1C((const Vec3*)&entry->field_0x64, (const Vec3*)&entry->field_0x70)) return;
-    CColiListMgr* lm = &w->l.listMgr;
-    if (lm->count >= 0x10) return;
-    lm->list[lm->count] = query->field_0x02;
-    lm->count = lm->count + 1;
+    u16* count = (u16*)((u8*)w + 0x215E);
+    u16* list = (u16*)((u8*)w + 0x2160);
+    if (*count >= 0x10) return;
+    list[*count] = query->field_0x02;
+    *count = *count + 1;
 }
 
 extern "C" void func_804B62B0(CColiObj* self, CColiQuery* query) {

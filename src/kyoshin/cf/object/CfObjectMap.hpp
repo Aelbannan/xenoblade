@@ -3,6 +3,7 @@
 #include <types.h>
 #include "kyoshin/cf/object/CfObjectModel.hpp"
 #include "kyoshin/plugin/ocBdat.hpp"
+#include "kyoshin/cf/CfGameManagerData.hpp"  // H3 label-owner decl (lbl_eu_80663E14; lbl_eu_80663E24)
 
 class CScn;
 class CView;
@@ -205,9 +206,7 @@ extern "C" {
 }
 
 // ---- data symbols (global scope: no mangling, plain extern is enough) ----
-extern CScn* lbl_eu_80663E14;      // global scene object
 extern CView* lbl_eu_80663E10;     // global scene object (secondary)
-extern u32 lbl_eu_80663E24;        // global flag word
 extern u32 lbl_eu_80663E28;        // global flag word
 extern void* lbl_eu_806640A8;      // bdat table pointer
 extern u32 lbl_eu_80664184;        // bdat row index

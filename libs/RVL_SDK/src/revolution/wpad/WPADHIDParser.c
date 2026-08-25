@@ -1467,6 +1467,8 @@ void __a1_32_data_type(u8 chan, u8* data, WPADStatusEx* status) {
     WPADiDecode(chan, data + 3, 8, 0);
 
     if (cb->wpInfo.attach) {
+        WPADCB* extCb = __rvl_p_wpadcb[chan];
+
         if (cb->devType == WPAD_DEV_FREESTYLE) {
             ((WPADFSStatus*)status)->fsStickX = data[3];
             ((WPADFSStatus*)status)->fsStickY = data[4];
@@ -1474,31 +1476,31 @@ void __a1_32_data_type(u8 chan, u8* data, WPADStatusEx* status) {
             ((WPADFSStatus*)status)->fsAccX =
                 (s16)((s16)((s16)((s16)((s16)((s16)data[5]) << 2) & (s16)0xFFFC) |
                          ((data[8] >> 2) & 3))) -
-                (s16)__rvl_p_wpadcb[chan]->extConfig.u.fs.accX0g;
+                (s16)extCb->extConfig.u.fs.accX0g;
             ((WPADFSStatus*)status)->fsAccY =
                 (s16)((s16)((s16)((s16)((s16)((s16)data[6]) << 2) & (s16)0xFFFC) |
                          ((data[8] >> 4) & 3))) -
-                (s16)__rvl_p_wpadcb[chan]->extConfig.u.fs.accY0g;
+                (s16)extCb->extConfig.u.fs.accY0g;
             ((WPADFSStatus*)status)->fsAccZ =
                 (s16)((s16)((s16)((s16)((s16)((s16)data[7]) << 2) & (s16)0xFFFC) |
                          (data[8] >> 6))) -
-                (s16)__rvl_p_wpadcb[chan]->extConfig.u.fs.accZ0g;
+                (s16)extCb->extConfig.u.fs.accZ0g;
 
             ((WPADFSStatus*)status)->button =
                 (u16)((u16)((WPADFSStatus*)status)->button |
                       (u16)(((~data[8] & 0x3) << 13)));
 
-            if (cb->calibrated == 0) {
-                cb->calibrated = 1;
-                cb->extConfig.u.fs.stickXCenter =
+            if (extCb->calibrated == 0) {
+                extCb->calibrated = 1;
+                extCb->extConfig.u.fs.stickXCenter =
                     ((WPADFSStatus*)status)->fsStickX;
-                cb->extConfig.u.fs.stickYCenter =
+                extCb->extConfig.u.fs.stickYCenter =
                     ((WPADFSStatus*)status)->fsStickY;
             }
 
             {
                 s16 v = (s16)((u8)((WPADFSStatus*)status)->fsStickX -
-                               (u8)cb->extConfig.u.fs.stickXCenter);
+                               (u8)extCb->extConfig.u.fs.stickXCenter);
                 if (v < -0x80) {
                     v = -0x80;
                 }
@@ -1509,7 +1511,7 @@ void __a1_32_data_type(u8 chan, u8* data, WPADStatusEx* status) {
             }
             {
                 s16 v = (s16)((u8)((WPADFSStatus*)status)->fsStickY -
-                               (u8)cb->extConfig.u.fs.stickYCenter);
+                               (u8)extCb->extConfig.u.fs.stickYCenter);
                 if (v < -0x80) {
                     v = -0x80;
                 }

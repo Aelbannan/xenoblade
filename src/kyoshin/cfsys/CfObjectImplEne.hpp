@@ -4,6 +4,7 @@
 #include "monolib/util/FixStr.hpp"
 #include "kyoshin/cf/CBattleManager.hpp"
 #include "kyoshin/cf/CfSoundMan.hpp"
+#include "monolib/math/FloatUtils.hpp"  // H3 label-owner decl (lbl_eu_8066A208)
 
 namespace cf {
 
@@ -741,7 +742,6 @@ void* func_80043F18(void* holder);
 void func_800F4A98(void* list, u32 type, u32 filter);
 void* func_800F6EAC(void* list, u32 idx);
 void __dt__80043E88(void* holder, int);
-void func_80174B4C(void* actor, u32 flags);
 }
 
 // C++-mangled imports (declared so MWCC emits the retail mangled names).
@@ -758,4 +758,3 @@ extern f32 lbl_eu_80666CE0;
 extern f32 lbl_eu_80666CE8;
 extern f32 lbl_eu_80666CF0;
 extern f32 lbl_eu_80666CF4;
-extern f32 lbl_eu_8066A208;

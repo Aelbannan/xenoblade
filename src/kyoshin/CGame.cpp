@@ -21,7 +21,6 @@
 // out of the way (same scheme as CMenuArtsSelect.cpp). This TU only uses
 // func_80137038 / func_80137250 from that header.
 #define getCurrentView__5CViewFv cgameGetCurrentViewUnused
-#define lbl_eu_8066A208 cgameCode35FDCepsilonUnused
 // CTaskLOD helper param widths differ from CTaskREvent.hpp (s16): s8/u8 here.
 #define func_80462D04__8CTaskLODFv cgameLod62D04Unused
 #define func_80462D5C__8CTaskLODFv cgameLod62D5CUnused
@@ -31,7 +30,6 @@
 #undef getInstance__14Class_80296898Fv
 #undef func_80462D5C__8CTaskLODFv
 #undef func_80462D04__8CTaskLODFv
-#undef lbl_eu_8066A208
 #undef getCurrentView__5CViewFv
 #include "monolib/lib.hpp"
 #include "monolib/core.hpp"

@@ -9,6 +9,7 @@
 #include "libs/monolib/src/scn/CScn_8049603C.hpp" // func_8049603C (single owner decl)
 #include "kyoshin/cf/object/CfObjectMove.hpp"
 #include <nw4r/math.h>
+#include "kyoshin/cf/CfGameManagerData.hpp"  // H3 label-owner decl (lbl_eu_80663E14; lbl_eu_80663E24)
 
 // Forward declarations for cross-TU callees (resolved via the retail symbol map).
 class UnkClass_805764CC;

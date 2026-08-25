@@ -2,6 +2,7 @@
 // Replace stubs with high-level C/C++ during decomp.
 
 #include "kyoshin/harness_catalog.hpp"
+#include "kyoshin/cf/CfGameManagerData.hpp"  // H3 label-owner decl (lbl_eu_80663E14; lbl_eu_80663E24)
 
 // ---------------------------------------------------------------------------
 // C-ABI sound-system imports (retail symbols are unmangled; no proper C++
@@ -47,7 +48,6 @@ extern "C" {
     extern void func_801AACBC(SndVec3* pos, SndVec3* target);              // set map camera position
 }
 
-extern u32 lbl_eu_80663E24;  // presentation/event flag word (.sbss)
 extern u8 lbl_eu_8066443A;   // camera-position registered flag (.sbss)
 
 // Resolve ml::FixStr<128>::format calls to the explicit specialization that

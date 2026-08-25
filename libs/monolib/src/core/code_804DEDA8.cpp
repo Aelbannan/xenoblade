@@ -2184,7 +2184,7 @@ void func_804E214C(CSchedAnimItem* item, u8* base, u8 arg3) {
           item->mField24 == lbl_eu_8066B290)) {
         // volatile: retail re-loads these floats instead of CSE-ing them
         // with the copies taken above.
-        f32 rnd = s32ToF32_B2A0(ml::math::mtRand()) / lbl_eu_8066B2AC -
+        f32 rnd = (f32)ml::math::mtRand() / lbl_eu_8066B2AC -
                   lbl_eu_8066B2B0;
         if (base != NULL) {
             sc = *(volatile f32*)(base - 0xC);
@@ -2192,7 +2192,7 @@ void func_804E214C(CSchedAnimItem* item, u8* base, u8 arg3) {
             sc = lbl_eu_8066B290;
         }
         item->mField1C = lbl_eu_8066B2A8 - rnd * sc;
-        rnd = s32ToF32_B2A0(ml::math::mtRand()) / lbl_eu_8066B2AC -
+        rnd = (f32)ml::math::mtRand() / lbl_eu_8066B2AC -
               lbl_eu_8066B2B0;
         if (base != NULL) {
             sc = *(volatile f32*)(base - 8);
@@ -2200,7 +2200,7 @@ void func_804E214C(CSchedAnimItem* item, u8* base, u8 arg3) {
             sc = lbl_eu_8066B290;
         }
         item->mField20 = lbl_eu_8066B2A8 - rnd * sc;
-        rnd = s32ToF32_B2A0(ml::math::mtRand()) / lbl_eu_8066B2AC -
+        rnd = (f32)ml::math::mtRand() / lbl_eu_8066B2AC -
               lbl_eu_8066B2B0;
         if (base != NULL) {
             sc = *(volatile f32*)(base - 4);
@@ -2354,31 +2354,31 @@ void func_804E26D8(CSchedAnimItem* item, u8* base) {
             item->mField14 = lbl_eu_8066B2A8;
             item->mField10 = lbl_eu_8066B2A8;
             item->mField0C = lbl_eu_8066B2A8;
-            f32 rnd = s32ToF32_B2A0(ml::math::mtRand()) / lbl_eu_8066B2AC -
+            f32 rnd = (f32)ml::math::mtRand() / lbl_eu_8066B2AC -
                       lbl_eu_8066B2B0;
             f32 sc = (base != NULL) ? *(volatile f32*)(base - 0x14)
                                     : lbl_eu_8066B290;
             item->mField24 = lbl_eu_8066B2A8 - rnd * sc;
         } else {
-            f32 rnd = s32ToF32_B2A0(ml::math::mtRand()) / lbl_eu_8066B2AC -
+            f32 rnd = (f32)ml::math::mtRand() / lbl_eu_8066B2AC -
                       lbl_eu_8066B2B0;
             f32 sc = (base != NULL) ? *(volatile f32*)(base - 0x14)
                                     : lbl_eu_8066B290;
             item->mField0C = lbl_eu_8066B2A8 - rnd * sc;
-            rnd = s32ToF32_B2A0(ml::math::mtRand()) / lbl_eu_8066B2AC -
+            rnd = (f32)ml::math::mtRand() / lbl_eu_8066B2AC -
                   lbl_eu_8066B2B0;
             sc = (base != NULL) ? *(volatile f32*)(base - 0x10)
                                 : lbl_eu_8066B2CC;
             item->mField10 = lbl_eu_8066B2A8 - rnd * sc;
             f32 c = lbl_eu_8066B2A8;
             item->mField24 = c;
-            rnd = s32ToF32_B2A0(ml::math::mtRand()) / lbl_eu_8066B2AC -
+            rnd = (f32)ml::math::mtRand() / lbl_eu_8066B2AC -
                   lbl_eu_8066B2B0;
             sc = (base != NULL) ? *(volatile f32*)(base - 0xC)
                                 : lbl_eu_8066B2CC;
             item->mField14 = c - rnd * sc;
         }
-        f32 rnd = s32ToF32_B2A0(ml::math::mtRand()) / lbl_eu_8066B2AC -
+        f32 rnd = (f32)ml::math::mtRand() / lbl_eu_8066B2AC -
                   lbl_eu_8066B2B0;
         f32 sc = (base != NULL) ? *(volatile f32*)(base - 8) : lbl_eu_8066B290;
         u8 flag = item->field_0x04 | 0x10;

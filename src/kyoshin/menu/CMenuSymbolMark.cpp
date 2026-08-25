@@ -16,6 +16,7 @@
 #include <monolib/util.hpp>         // ml::FixStr
 #include <string.h>
 #include <math.h>
+#include "kyoshin/cf/CfGameManagerData.hpp"  // H3 label-owner decl (lbl_eu_80663E14; lbl_eu_80663E24)
 
 // Retail helper imports (unmangled retail symbol names).
 extern "C" u32 func_801380A0(u16);
@@ -105,7 +106,6 @@ extern "C" int func_8013BE50();
 struct CMenuGimmickGlobal { u8 mPad[0x214]; u32 field_214; };
 extern "C" CMenuGimmickGlobal* getUnk80664658();
 extern u32 lbl_eu_80663E28;
-extern u32 lbl_eu_80663E24;
 // C++-linkage helpers - retail emits the mangled forms
 // func_80137250__FPQ34nw4r3lyt8DrawInfo / func_80137038__FPQ34nw4r3lyt6Layout...
 void func_80137250(nw4r::lyt::DrawInfo* drawInfo);
@@ -1743,7 +1743,6 @@ extern u32 lbl_eu_80661EB4;
 extern u32 lbl_eu_806670D0;
 extern const f32 lbl_eu_804FE6D8[12];
 // Current scene pointer (also used by Term/Init).
-extern u8* lbl_eu_80663E14;
 // Light color floats (rgb triple) used by both light and chan setup.
 extern const f32 lbl_eu_8052CD38[8];
 // Retail ml statics (data_defs.cpp).
@@ -2165,7 +2164,6 @@ extern "C" void Move__8CArrow3DFv() {
 // Wait for the draw to finish, release the layout (vtable+0x8 with flags=1),
 // then remove the IScnRender callback at +0x54 from the current scene.
 extern "C" void removeRenderCB__4CScnFP10IScnRender(void* self, void* cb);
-extern u8* lbl_eu_80663E14;
 void CArrow3D::Term() {
     CDeviceVI::waitForDrawDone();
     // delete through the Layout type: the retail dispatches vtable slot 2

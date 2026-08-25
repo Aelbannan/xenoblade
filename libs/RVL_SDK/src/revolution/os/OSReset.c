@@ -20,8 +20,8 @@ volatile BOOL __OSIsReturnToIdle;
  * distinct objects so MWCC emits two lis pairs.
  */
 #pragma force_active on
-char lbl_80552AF0[0xC] = "OSReset.c\0\0";
-char OSReset_hotResetPool[0x60] =
+char lbl_80552AF0[0xA] = "OSReset.c";
+char OSReset_hotResetPool[0x60] __attribute__((aligned(4))) =
     "__OSHotReset(): Falied to reset system.\n\0\0\0\0"
     "__OSReturnToMenu(): Falied to boot system menu.\n\0\0\0";
 char OSReset_menuPool[0x180] =

@@ -66,13 +66,14 @@ extern f32 lbl_eu_806677C4;
 extern f32 lbl_eu_806677C8;
 extern f32 lbl_eu_806677CC;
 extern f32 lbl_eu_806677D0;
-extern u32 lbl_eu_80663E24;   // global flag word (bit 0x400000 / 0xAFA40000 gates)
 extern u32 lbl_eu_806640A8;   // bdat table handle
 extern f32 lbl_eu_806677D4;
 extern f32 lbl_eu_806677D8;
 extern f32 lbl_eu_80667790;
 
-extern "C" s32 func_80174C98(u8* obj, u32* flags, u32 id);
+// func_80174C98 / func_80174B4C: single unified decls live in
+// kyoshin/cf/CfMapItemManager.hpp (owner header).
+#include "kyoshin/cf/CfMapItemManager.hpp"
 
 // Read-only view of the player object up to the position getter at vtable
 // slot 0xAC (returns ml::CVec3*).
@@ -1102,7 +1103,8 @@ void func_80174C24(CfMapItemLoader* self, u32 id) {
 //  - otherwise: per-category dispatch (retail jump table jumptable_eu_80531710);
 //    each category ORs range equalities, category 3 mixes in recursive
 //    sub-category probes.
-extern "C" s32 func_80174C98(u8* obj, u32* flags, u32 id) {
+extern "C" s32 func_80174C98(void* obj, void* outFlagsV, u32 id) {
+    u32* flags = (u32*)outFlagsV;
     s32 hit;
     if (id <= 0x3f) {
         u32 v = flags[0] & 0x3F;
@@ -1141,23 +1143,24 @@ extern "C" s32 func_80174C98(u8* obj, u32* flags, u32 id) {
             if (!hit) hit = func_80174C98(obj, flags, 0xa);
             if (!hit) hit = func_80174C98(obj, flags, 0xb);
         }
-        if (!hit) hit = LOW6(0x13);
-        if (!hit) hit = LOW6(0x12);
-        if (!hit) hit = LOW6(0x14);
         if (!hit) {
             hit = func_80174C98(obj, flags, 0x16);
             if (!hit) hit = func_80174C98(obj, flags, 0x17);
             if (!hit) hit = func_80174C98(obj, flags, 0xf);
         }
-        if (!hit) hit = (low6 - 0x15) == 0;
-        if (!hit) hit = (low6 - 0x18) == 0;
-        if (!hit) hit = (low6 - 0x19) == 0;
-        if (!hit) hit = (low6 - 0x1a) == 0;
-        if (!hit) hit = (low6 - 0x1b) == 0;
-        if (!hit) hit = (low6 - 0x10) == 0;
-        if (!hit) hit = (low6 - 0xd) == 0;
-        if (!hit) hit = (low6 - 0xf) == 0;
-        if (!hit) hit = (low6 - 0x1f) == 0;
+        // Re-read the flag word after the recursive probes.
+        if (!hit) hit = ((flags[0] & 0x3F) - 0x13) == 0;
+        if (!hit) hit = ((flags[0] & 0x3F) - 0x12) == 0;
+        if (!hit) hit = ((flags[0] & 0x3F) - 0x14) == 0;
+        if (!hit) hit = ((flags[0] & 0x3F) - 0x15) == 0;
+        if (!hit) hit = ((flags[0] & 0x3F) - 0x18) == 0;
+        if (!hit) hit = ((flags[0] & 0x3F) - 0x19) == 0;
+        if (!hit) hit = ((flags[0] & 0x3F) - 0x1a) == 0;
+        if (!hit) hit = ((flags[0] & 0x3F) - 0x1b) == 0;
+        if (!hit) hit = ((flags[0] & 0x3F) - 0x10) == 0;
+        if (!hit) hit = ((flags[0] & 0x3F) - 0xd) == 0;
+        if (!hit) hit = ((flags[0] & 0x3F) - 0xf) == 0;
+        if (!hit) hit = ((flags[0] & 0x3F) - 0x1f) == 0;
         return hit;
     }
     case 0x806: {

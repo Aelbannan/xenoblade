@@ -2,6 +2,8 @@
 
 #include <types.h>
 #include "kyoshin/cf/object/CfObjectModel.hpp"
+#include "kyoshin/cf/CfGameManagerData.hpp"  // H3 label-owner decl (lbl_eu_80663E14; lbl_eu_80663E24)
+#include "monolib/math/FloatUtils.hpp"  // H3 label-owner decl (lbl_eu_8066A208)
 
 namespace cf {
 class CtrlNpc;
@@ -70,10 +72,8 @@ extern u32 lbl_eu_80663E28;   // global flag word (bit 26) gating the func_800BC
 // extern so the type agrees with CSystemWindow.hpp and the .sbss definition in
 // CUICfManager.cpp; reads that must stay separate use explicit volatile casts
 // in CfObjectMove.cpp (retail loads it twice there - see the double-lwz note).
-extern u32 lbl_eu_80663E24;
 extern u16 lbl_eu_80663E42;   // mode words checked by CfObject_UnkVirtualFunc26 (== 4 / == 1)
 extern u16 lbl_eu_80663E44;
-extern CScn* lbl_eu_80663E14;  // shared scene pointer passed to the func_80496288 time query
 // Shared speed constant (retail unmangled name; the .cpp also defines a
 // namespace-cf copy used by the resetMoveSpeed helper). Declared const so
 // MWCC treats the SDA load as read-only and hoists/schedules it at retail's
@@ -96,7 +96,6 @@ extern const float lbl_eu_80666AB4;   // CfObject_UnkVirtualFunc5 movement-rate 
 // threshold, lbl_eu_80666AD8 the sum-vector Y offset.
 extern const float lbl_eu_80666AD4;
 extern const float lbl_eu_80666AD8;
-extern const float lbl_eu_8066A208;   // ml::epsilon (sdata2)
 // Movement constants for func_800BC4CC: lbl_eu_80666A98 is the squared-
 // distance threshold, lbl_eu_80666A9C the fallback distance, lbl_eu_80666AA0
 // the addend applied when the camera/player distance check fails.

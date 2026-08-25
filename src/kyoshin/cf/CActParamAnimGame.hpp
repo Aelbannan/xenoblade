@@ -13,6 +13,8 @@
 #undef func_80053B24
 #undef func_80055B88
 #include "monolib/math/CVec3.hpp"
+#include "kyoshin/cf/CfGameManagerData.hpp"  // H3 label-owner decl (lbl_eu_80663E14; lbl_eu_80663E24)
+#include "monolib/math/FloatUtils.hpp"  // H3 label-owner decl (lbl_eu_8066A208)
 
 namespace cf {
 
@@ -415,7 +417,6 @@ extern const float lbl_eu_806660C4;   // sdata2: f3D8.y bound (func_8005EEB4)
 extern const float lbl_eu_806660C8;   // sdata2: height bound (func_8005EEB4)
 extern const float lbl_eu_80666104;   // sdata2: dir scale (func_8005DCA8)
 extern const float lbl_eu_80666100;   // sdata2: commit scale (func_8005E990)
-extern const u32 lbl_eu_80663E14;     // sdata: expected +0x4 tag (func_8005DB1C)
 extern const float lbl_eu_80666128;   // sdata2: 3C0.y bound (func_8005EEB4)
 extern const float lbl_eu_8066612C;   // sdata2: B840 scale (func_8005EEB4)
 extern const float lbl_eu_80666130;   // sdata2: probe arg (func_8005EEB4)
@@ -438,7 +439,6 @@ extern const float lbl_eu_80666114;   // sdata2: ground-probe constant (func_800
 extern const float lbl_eu_80666118;   // sdata2: ground-probe constant (func_8005D2C4)
 extern const float lbl_eu_8066611C;   // sdata2: matrix row init (func_8005DCA8)
 extern const float lbl_eu_80666124;   // sdata2: probe arg (func_8005E60C)
-extern float lbl_eu_8066A208;   // sdata2: near-zero epsilon (func_80060110)
 extern f32 lbl_eu_8066AF20;   // sdata2: probe arg (func_8005E60C); f32 form to match CtrlMoveBase.hpp
 extern u8 lbl_eu_80526458[];  // retail CActParamAnimGame vtable (.data split1)
 

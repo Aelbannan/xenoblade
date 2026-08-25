@@ -4,6 +4,7 @@
 #include "monolib/work/CProcess.hpp"
 #include "kyoshin/CTitleAHelp.hpp"
 #include "kyoshin/CTutorial.hpp"
+#include "kyoshin/cf/CfGameManagerData.hpp"  // H3 label-owner decl (lbl_eu_80663E14; lbl_eu_80663E24)
 
 // Local IScnRender declaration with NO destructor and no inline bodies. The
 // real monolib IScnRender (libs/monolib/include/monolib/scn/IScnRender.hpp)
@@ -146,6 +147,5 @@ extern u32 __ptmf_null[3];
 extern char lbl_eu_8052BF70[];   // CProcess primary vtable (pre-PMF copy)
 extern char lbl_eu_805391C0[];   // CMenuTutorial composite vtable
 extern u32 lbl_eu_80663E28;      // render-gate mode bitfield (bit 21 = busy)
-extern u32 lbl_eu_80663E24;      // Init flag word (bit 1 = tutorial)
 extern u32 lbl_eu_80664A28;      // singleton instance pointer (.sbss)
 extern char lbl_eu_80510260[];   // message-name string pool (Init title lookup)

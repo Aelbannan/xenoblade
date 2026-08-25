@@ -4,6 +4,7 @@
 
 #include "kyoshin/action/CActParamData.hpp"
 #include "monolib/math/CVec3.hpp"  // ml::CVec3 for func_80053490 (same-TU helper)
+#include "monolib/math/FloatUtils.hpp"  // H3 label-owner decl (lbl_eu_8066A208)
 
 // Full object layout for C-linkage accessors
 struct CActParamAnimFull {
@@ -855,7 +856,6 @@ extern const float lbl_eu_80665F5C; // (func_80053490 dot threshold)
 extern float lbl_eu_80665F6C;
 extern float lbl_eu_80665F70;
 extern float lbl_eu_8066A1F8; // pi (angle wrap, func_8004BC28)
-extern float lbl_eu_8066A208; // position-delta epsilon (func_8004C608)
 extern float lbl_eu_8066A1FC; // two*pi (angle wrap, func_8004BC28)
 extern const float lbl_eu_8066A20C; // angle gate scale (func_80050F5C / func_800512A8) - const to match CfObjectModel.hpp's declaration (MWCC rejects const/non-const redeclaration)
 

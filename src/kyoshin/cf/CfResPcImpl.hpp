@@ -1,6 +1,7 @@
 #pragma once
 
 #include <types.h>
+#include "kyoshin/cf/CfGameManagerData.hpp"  // H3 label-owner decl (lbl_eu_80663E14; lbl_eu_80663E24)
 
 namespace cf {
 
@@ -678,7 +679,6 @@ extern "C" void func_8004302C(int a, int b);
 
 // Game-manager flag words read/written by func_8018F2EC / func_8018F520 /
 // func_8018F164 / func_8018F1FC.
-extern u32 lbl_eu_80663E24;
 extern u32 lbl_eu_80663E28;
 extern u16 lbl_eu_80663E46;
 extern u16 lbl_eu_80663E42;  // current area id (written by func_8018F1FC)
@@ -739,7 +739,6 @@ extern cf::CfResPcPosTable lbl_eu_80503B30;
 extern const float lbl_eu_80667A60;
 
 // Model-layer global passed as the first func_80489A60 argument (.sbss).
-extern u8* lbl_eu_80663E14;
 
 // C-ABI imports used by func_8018DE8C (defined in CfRes.cpp / IResInfo.cpp /
 // the model layer / monolib scn). extern "C" keeps the call-site relocs at

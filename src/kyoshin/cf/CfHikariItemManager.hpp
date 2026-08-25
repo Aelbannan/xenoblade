@@ -1,6 +1,7 @@
 #pragma once
 
 #include <types.h>
+#include "kyoshin/cf/CfGameManagerData.hpp"  // H3 label-owner decl (lbl_eu_80663E14; lbl_eu_80663E24)
 
 struct CfHikariItemRecord;
 
@@ -9,7 +10,6 @@ class CScn;
 // C-linkage imports (retail symbol names - keep linkage/signatures verbatim).
 // Global-scope data/function names are not mangled by MWCC; lbl_* keeps the
 // exact retail label.
-extern "C" CScn* lbl_eu_80663E14; // scene singleton (removeRenderCB receiver)
 extern char lbl_eu_8053AE90[];    // CfHikariItemManager vtable (.data)
 void* allocate__Q23mtl10MemManagerFUlUl(u32 size, u32 heap);
 u32 func_80061FFC();
@@ -135,7 +135,6 @@ extern cf::CfHikariItemManager* lbl_eu_80664C10;
 // Current view / game-state flags (retail globals defined in CfGameManager).
 class CView;
 extern CView* lbl_eu_80663E10;
-extern u32 lbl_eu_80663E24;
 
 // Scene/camera helpers (retail C-linkage symbols).
 extern "C" void* func_8049626C(void* scene, void* view);

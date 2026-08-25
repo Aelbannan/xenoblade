@@ -2,6 +2,7 @@
 // Replace stubs with high-level C/C++ during decomp.
 
 #include "kyoshin/harness_catalog.hpp"
+#include "kyoshin/cf/CfMapItemManager.hpp"
 
 // CChainBattleObj / CChainSub4: virtual-dispatch mirrors of the battle objects
 // reached from the gimmick list (-0x3E9C) in func_801F4998. Never instantiated

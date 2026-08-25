@@ -2,10 +2,12 @@
 // Replace stubs with high-level C/C++ during decomp.
 
 #include "kyoshin/cf/CBattleManagerApi.hpp"
+#include "kyoshin/cf/CfMapItemManager.hpp"
 #include "kyoshin/harness_catalog.hpp"
 #include "monolib/scn/CScnTimeApi.hpp"
 
 #include "kyoshin/cf/CtrlAct.hpp"
+#include "kyoshin/cf/CfGameManagerData.hpp"  // H3 label-owner decl (lbl_eu_80663E14; lbl_eu_80663E24)
 
 // Polymorphic view of cf::CAttackParam (retail: 0x84 bytes of data, vptr at
 // +0x84, virtual slot +0x0C = the gauge-max getter used by UnkVirtualFunc4).

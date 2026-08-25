@@ -5,6 +5,8 @@
 #include <monolib/math/CMat33.hpp>
 #include <monolib/math/CQuat.hpp>
 #include "kyoshin/plugin/ocBdat.hpp"
+#include "kyoshin/cf/CfGameManagerData.hpp"  // H3 label-owner decl (lbl_eu_80663E14; lbl_eu_80663E24)
+#include "monolib/math/FloatUtils.hpp"  // H3 label-owner decl (lbl_eu_8066A208)
 
 namespace cf {
 struct CfCamFollow; // fwd decl for extern-C imports below (full layout later)
@@ -19,7 +21,6 @@ extern "C" bool func_800755B0(void*, int);
 extern "C" bool func_8049EB60(void* obj);
 extern "C" u32 func_8006BFBC();                          // CfCam sibling gate
 extern "C" int func_8006BFC4(int controllerId, int unk); // CfCam sibling pad check
-extern "C" u32 lbl_eu_80663E24;
 // Copies a 12-byte vector (dst, src); returns dst (retail: func_8004B3F0 leaves
 // its first arg in r3). C linkage so call relocs keep the unmangled retail
 // symbol name (MWCC mangles plain C++ global declarations).
@@ -45,7 +46,6 @@ extern "C" float lbl_eu_80661B4C;     // .sdata float (retail 0x80661B4C)
 extern "C" int lbl_eu_80661BA4;       // .sdata word (retail 0x80661BA4)
 extern "C" u32 func_80061FE8();                          // mtl heap handle for cf allocations
 extern "C" void* allocate__Q23mtl10MemManagerFUlUl(u32 size, u32 heap);
-extern "C" int func_80174C98(void* actor, u32* val, int flags); // actor-state gate
 // func_8006F5C8 callees (flat retail names, same naming class)
 extern "C" int func_80075640();
 extern "C" int func_8006D72C(void* self);
@@ -83,7 +83,6 @@ extern "C" float lbl_eu_80661B48;
 extern "C" float lbl_eu_80661B74;
 extern "C" float lbl_eu_806662B0;     // .sdata2 constant (retail 0x806662B0)
 extern "C" float lbl_eu_806662B4;     // .sdata2 constant (retail 0x806662B4)
-extern "C" const float lbl_eu_8066A208;     // .sdata2 epsilon (retail 0x8066A208)
 extern "C" float lbl_eu_806662D8;     // .sdata2 angle offset (retail 0x806662D8)
 extern "C" float lbl_eu_806662E0;     // .sdata2 divisor (retail 0x806662E0)
 extern "C" float const lbl_eu_806662E4;     // .sdata2 sine multiplier (retail 0x806662E4)

@@ -3,6 +3,7 @@
 #include <types.h>
 #include "kyoshin/help/CHelp.hpp"
 #include "kyoshin/help/CHelp_LandMark.hpp"
+#include "kyoshin/cf/CfGameManagerData.hpp"  // H3 label-owner decl (lbl_eu_80663E14; lbl_eu_80663E24)
 
 namespace cf {
 
@@ -348,7 +349,6 @@ extern "C" DECOMP_DONT_INLINE void func_80296924(cf::CHelpListHolder* self);
 
 // C-linkage imports (retail symbol names - keep linkage/signatures verbatim)
 extern cf::CHelpManager* lbl_eu_80664A10;
-extern u32 lbl_eu_80663E24;
 extern u32 lbl_eu_80663E28; // menu-open flag (bit 24)
 extern u8 lbl_eu_8053911C[]; // CHelpManager vtable (retail .data)
 extern cf::CHelpManagerTbl lbl_eu_80576D08; // static CHelp dispatch objects

@@ -3,6 +3,7 @@
 // advance, slot-2 play, and the standalone EHP voice selector.
 
 #include "kyoshin/cf/voice/cvsys/CVS_THREAD_EHP.hpp"
+#include "kyoshin/cf/CfMapItemManager.hpp"
 #include "monolib/math/Random.hpp"
 
 // Init-data tables (3 u32s each: {0, -1, callback}). Each slot state carries

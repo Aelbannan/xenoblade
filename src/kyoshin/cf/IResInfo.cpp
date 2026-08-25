@@ -7,12 +7,12 @@
 #include "monolib/device/CFileHandle.hpp"
 #include "monolib/device/CDeviceFile.hpp"
 #include "monolib/device/CDeviceVI.hpp"
+#include "kyoshin/cf/CfGameManagerData.hpp"  // H3 label-owner decl (lbl_eu_80663E14; lbl_eu_80663E24)
 
 // ============================================================
 // External globals
 // ============================================================
 extern "C" {
-    extern u32 lbl_eu_80663E24;
     extern u32 lbl_eu_80663E28;
     extern u32 lbl_eu_80663E30;
     extern u32 lbl_eu_8065FC18[];

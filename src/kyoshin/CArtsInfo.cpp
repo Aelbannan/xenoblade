@@ -950,35 +950,33 @@ extern "C" __declspec(noinline) int func_8023719C(CArtsInfo* self, u8 arg2, u8 a
 // layout (all guards jump forward to it).
 int func_80237238(CArtsInfo* self) {
     CArtsCharData* obj = (CArtsCharData*)func_8009EC9C(self->field_0x54);
-    if (obj->field_0x26 == -1) goto fail;
+    s16 weapon = obj->field_0x26;
+    if (weapon == -1) return 0;
     CArtsInfoListEntry* e = func_80157C4C(2);
-    if (e == 0) goto fail;
+    if (e == 0) return 0;
     u32 v0 = e->field_0x0;
-    if (v0 == 0) goto fail;
+    if (v0 == 0) return 0;
     u16 id = func_80139358(v0 >> 20);
     int hp = (int)func_80136254((const void*)lbl_eu_806640F4, lbl_eu_8050B00C + 0x1f8, id);
     u8 b = (u8)func_801361E8(lbl_eu_806640F4, lbl_eu_8050B00C + 0x200, id);
     if ((b & 4) != 0) {
-        int base = func_800A082C(obj);
-        // Both operands are masked to u16 before the multiply; the scaled
-        // product goes through the shared s32->f64 magic and is clamped to
-        // 999 with an unsigned compare.
-        hp = (int)(lbl_eu_80668690 * (float)((base & 0xffff) * (hp & 0xffff)));
+        // u16 local: retail masks the scale at definition (clrlwi in r3).
+        u16 base = (u16)func_800A082C(obj);
+        hp = (int)(lbl_eu_80668690 * (float)((hp & 0xffff) * base));
         if ((hp & 0xffffu) >= 0x3e7u) hp = 0x3e7;  // unsigned cmpli, clamp 999
     }
     // Both lookups inline: MWCC evaluates + right-to-left, so func_802370A8
     // (rightmost) runs first and its result survives in r31 like retail.
     return (int)(lbl_eu_80668694 * (float)((hp & 0xffff) * ((int)func_80236E6C(self, 0x52) + (int)func_802370A8(self) + 100))) & 0xffff;
-fail:
-    return 0;
 }
 
-// func_80237394 - arts info damage/level helper. Same shape as
+// func_80237394
 // func_80237238 but the name-row string offset is 0x205 and the HP
 // scale factor is lbl_eu_806686A0.
 int func_80237394(CArtsInfo* self) {
     CArtsCharData* obj = (CArtsCharData*)func_8009EC9C(self->field_0x54);
-    if (obj->field_0x26 == -1) goto fail;
+    s16 weapon = obj->field_0x26;
+    if (weapon == -1) goto fail;
     CArtsInfoListEntry* e = func_80157C4C(2);
     if (e == 0) goto fail;
     u32 v0 = e->field_0x0;

@@ -3,6 +3,7 @@
 #include "types.h"
 #include "monolib/util.hpp"
 #include "monolib/math.hpp"
+#include "monolib/math/FloatUtils.hpp"  // H3 label-owner decl (lbl_eu_8066A208)
 
 // C-linkage imports (retail symbol names - keep linkage/signatures verbatim)
 // Retail SDA 1.0f -- used by inlined CCullFrustum::init (addFrustum reloc match).
@@ -15,7 +16,6 @@ extern char lbl_eu_80526324[];
 extern char lbl_eu_80526300[];
 // Retail-owned .bss corner-point table (0x805757F0) read by setFrustum.
 extern ml::CVec3 lbl_eu_805757F0[4];
-extern "C" const float lbl_eu_8066A208; // ml::epsilon (sdata2)
 // Retail COccCulling vtable (.data:0x80532ED0, split1); decomp __vt__11COccCulling
 // fails reloc name match, so the class is __declspec(novtable) and the ctor/dtor
 // store the retail label explicitly (MWCC_CASES "Retail-owned vtable data").

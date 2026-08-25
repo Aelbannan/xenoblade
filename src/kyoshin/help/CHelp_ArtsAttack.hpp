@@ -14,4 +14,3 @@ public:
 } // namespace cf
 
 // C-linkage imports (retail symbol names - keep linkage/signatures verbatim)
-extern "C" u32 func_80174C98(void* actor, u32* outVal, u32 flags);

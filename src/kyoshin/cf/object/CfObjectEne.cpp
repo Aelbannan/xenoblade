@@ -11,14 +11,9 @@
 // labels) come from the CfObjectEne.hpp / CfObjectActor.hpp chain.
 #include "monolib/util/MemManager.hpp"
 #include "kyoshin/plugin/ocBdat.hpp"
-// CfObjectActor.hpp declares func_80174B4C with the 5-arg table ABI used by
-// the CfObjectActor ctor TU; this TU's retail call sites pass only
-// (actor, flags) - r5..r7 are dead. Rename the shared declaration out of the
-// way for the include, then declare the 2-arg form used here.
-#define func_80174B4C func_80174B4C_tableargs
-#include "kyoshin/cf/object/CfObjectEne.hpp"
-#undef func_80174B4C
-extern "C" void func_80174B4C(void* actor, u32 flags);
+// func_80174B4C / func_80174C98: single unified decls on the owner header.
+#include "kyoshin/cf/CfMapItemManager.hpp"
+#include "kyoshin/cf/CfGameManagerData.hpp"  // H3 label-owner decl (lbl_eu_80663E14; lbl_eu_80663E24)
 
 
 // Copy block: 0x00-0x78 (120 bytes), loaded from r4 then stored to self+0x17E4/0x1650

@@ -451,10 +451,7 @@ public:
     void Term();
     void Move();
 
-
-
-        unk120 = 30;
-    }
+    void setTimeout30() { unk120 = 30; }
     void setFlagState(bool value) {
         if (value) {
             mInitSlots[0].unk00[1] = 1;

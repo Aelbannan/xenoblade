@@ -1,6 +1,7 @@
 #pragma once
 
 #include <types.h>
+#include "kyoshin/cf/CfGameManagerData.hpp"  // H3 label-owner decl (lbl_eu_80663E14; lbl_eu_80663E24)
 class UnkClass_800821F8;
 class CItemImplInstances;
 
@@ -72,8 +73,7 @@ class BdatFilePointer;
 struct CfMapMineManager;
 
 // External runtime / game functions (retail-unmangled symbols)
-extern "C" u32 getBdatStringColumnValue(void* file,
-                                                const char* column, s32 index);
+#include "kyoshin/plugin/ocBdat.hpp"  // getBdatStringColumnValue (owner)
 extern "C" u32 func_8003B1EC(void* file);
 extern "C" u32 func_8003B41C(void* file);
 extern "C" int CfRes_getD80Flag();
@@ -125,7 +125,6 @@ extern "C" void* getFP__FPCc(const char* name);
 
 // External data (retail linker symbols)
 extern "C" CfMapMineManager* lbl_eu_806646A0;   // sbss: singleton instance
-extern "C" u32 lbl_eu_80663E24;                 // sbss: game state flags
 extern "C" u16 lbl_eu_80663E42;                 // sbss: current area id
 extern "C" u16 lbl_eu_80663E44;                 // sbss: current area sub-id
 extern "C" BdatFilePointer* lbl_eu_806640C8;    // sbss: bdat file handle

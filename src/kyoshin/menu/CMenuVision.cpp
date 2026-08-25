@@ -8,10 +8,10 @@
 #include "monolib/lib/CLibStaticData.hpp"
 #include "monolib/work/CProcess.hpp"
 #include "monolib/work/CWorkThreadSystem.hpp"
+#include "kyoshin/cf/CfGameManagerData.hpp"  // H3 label-owner decl (lbl_eu_80663E14; lbl_eu_80663E24)
 
 // Globals shared across menu units
 extern "C" {
-extern u32 lbl_eu_80663E24;
 extern u32 lbl_eu_80663E28;
 extern const f32 lbl_eu_80667DC0; // 0.0f
 extern const f32 lbl_eu_80667DC4; // 1.0f

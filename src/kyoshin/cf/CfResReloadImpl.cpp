@@ -3,8 +3,11 @@
 
 #include "kyoshin/harness_catalog.hpp"
 #include "kyoshin/cf/object/CfObjectModel.hpp"
+#include "kyoshin/cf/object/CfObjectMove.hpp"  // func_800BE12C (owner decl)
 #include "kyoshin/cf/CfResReloadImpl.hpp"
 #include "monolib/math/Random.hpp"
+#include "kyoshin/cf/CfGameManagerData.hpp"  // H3 label-owner decl (lbl_eu_80663E14; lbl_eu_80663E24)
+#include "monolib/math/FloatUtils.hpp"  // H3 label-owner decl (lbl_eu_8066A208)
 
 void* memset(void*, int, unsigned long);
 
@@ -436,7 +439,7 @@ extern "C" void func_8016D688(cf::CfResReloadImpl* self) {
         if (self->field_00->field_98 == 0) {
             u8* slot18 = ((cf::CfResEntryIf2*)entry->field_2C)->_v018(entry);
             self->field_00->field_90 = slot18;
-            u8* h = func_80489A60(lbl_eu_80663E14, self->field_00->field_90, -1, 1, 0, 0x76);
+            u8* h = func_80489A60((u8*)lbl_eu_80663E14, self->field_00->field_90, -1, 1, 0, 0x76);
             func_800BBADC(self->field_00, h);
         }
     }

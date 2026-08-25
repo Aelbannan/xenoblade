@@ -1159,25 +1159,29 @@ searchDone:
 // Retail saves r28-r31 with individual stw's (speed-style frame), unlike the
 // -O4,s stmw/helpers the unit default produces for this function.
 #pragma optimize_for_size off
+#pragma use_lmw_stmw off
 extern "C" void func_8025F9AC(CPcKizunaChart* self, int a, int b) {
     // Retail keeps the total-chart position (self + a*0xC4 + b*0x20) as the
     // base register and reads the working-copy entry at +0x3D4 displacements.
     u32 off = a * 0xC4;
     u32 sub = b << 5;
-    CPcKizunaWorkEntryPos* wp = (CPcKizunaWorkEntryPos*)((u8*)self + off + sub);
     CPcKizunaSlotEntry* nxt;
     CPcKizunaSlotEntry* prv;
     u8 saved;
     u16 id;
-    nxt = wp->entry.pField18;
-    id = wp->entry.field04;
-    prv = wp->entry.pField1C;
+    // The unlink block uses the position expression inline (a caller-saved
+    // temp); only the clear block keeps the position in a nonvolatile.
+    nxt = ((CPcKizunaWorkEntryPos*)((u8*)self + off + sub))->entry.pField18;
+    id = ((CPcKizunaWorkEntryPos*)((u8*)self + off + sub))->entry.field04;
+    prv = ((CPcKizunaWorkEntryPos*)((u8*)self + off + sub))->entry.pField1C;
     if (nxt != 0) nxt->pField1C = prv;
     if (prv != 0) prv->pField18 = nxt;
 
     // The retail re-derives the position base after the unlink, so recompute
     // it here instead of reusing the first pointer.
-    CPcKizunaWorkEntryPos* wq = (CPcKizunaWorkEntryPos*)((u8*)self + off + sub);
+    // Operand order flipped vs the unlink expression so GVN keeps two
+    // computations, matching retail's rematerialized base register.
+    CPcKizunaWorkEntryPos* wq = (CPcKizunaWorkEntryPos*)((u8*)self + sub + off);
     saved = wq->entry.byte14 & 1;
     memset(&wq->entry, 0, 0x20);
     wq->entry.byte14 = saved;
@@ -1187,8 +1191,7 @@ extern "C" void func_8025F9AC(CPcKizunaChart* self, int a, int b) {
         found = 0;
     } else {
         CPcKizunaSlot* sp = &self->searchSlots[0];
-        int n = 0xb;
-        do {
+        for (int j = 0; j < 11; j++) {
             const CPcKizunaSlotEntry* e = &sp->sub[1];
             if (sp->data00.field04 == id) { found = 1; goto searchDone; }
             if (sp->sub[0].field04 == id) { found = 1; goto searchDone; }
@@ -1197,7 +1200,7 @@ extern "C" void func_8025F9AC(CPcKizunaChart* self, int a, int b) {
             if (e[2].field04 == id) { found = 1; goto searchDone; }
             if (e[3].field04 == id) { found = 1; goto searchDone; }
             sp++;
-        } while (--n != 0);
+        }
         found = 0;
     }
 searchDone:

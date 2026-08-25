@@ -9,21 +9,16 @@
 // CfGameManager.hpp (via code_8018F8D8.hpp) internally mixes a void* and a
 // CBattleManagerView* declaration of this getter; this TU calls none of them,
 // so rename it out of the way for every include below.
-// Several headers redeclare battle-manager imports with incompatible
-// signatures; this TU calls none of them. Pre-include CfObjectActor.hpp so
-// its 5-arg func_80174B4C declaration keeps the real name, then rename the
-// CChainTimer / CVision copies and every free-function singleton getter out
-// of the way (same idiom as CMenuBattlePlayerState.cpp).
+// (func_80174B4C / func_80174C98 now have single unified decls on the
+// CfMapItemManager owner header; no pre-include renames needed for them.)
 #include "kyoshin/cf/object/CfObjectActor.hpp"
-#define func_80174B4C f8d8ChainTimer74B4CUnused
 #include "kyoshin/cf/CBattleManager.hpp"
-#undef func_80174B4C
+#include "kyoshin/cf/CfGameManagerData.hpp"  // H3 label-owner decl (lbl_eu_80663E14; lbl_eu_80663E24)
 
 
 // C-linkage (unmangled) helpers referenced by the catalog functions below.
 // These retail symbols are defined in other TUs / the linked library.
 extern "C" {
-    extern u32 lbl_eu_80663E24;
     extern u32 lbl_eu_80663E28;
     extern u32 lbl_eu_80664300;
     extern float lbl_eu_80667A70;
@@ -35,7 +30,6 @@ extern "C" {
     void func_800628C4(u32 a, u32 b);
     void func_8008064C__Q22cf13CfGameManagerFv(void* element0, int idx, float* stk);
     void func_8007FE18__Q22cf13CfGameManagerFv(int flag);
-    int  func_80174C98(void* actor, int* outVal, int flags);
     bool func_8006EF04__Fi(int mask);
     u32  func_8009CF8C(u32 resource);
     int  func_80148778(void* obj, int id);
@@ -43,6 +37,8 @@ extern "C" {
     void __dt__80043E88(void* holder, int flag);
     int func_80061A80(u32 a, u32 b, u32 c, u32 d, u32 e, u32 f);
     int func_80061870(u32 a, u32 b, u32 c, u32 d, u32 e, u32 f);
+    void func_80068DAC();
+    void func_800B98C8(int);
     void func_8012F860();
     void func_801338C8();
     void func_80133AE8();
@@ -321,12 +317,27 @@ int func_80190254(int a, int b) { extern int func_801C0094(int); func_801C0094(b
 int func_8019027C(void* self) { return 0; }
 
 unsigned long func_80190284() {
-    extern unsigned long lbl_eu_80663E24;
     lbl_eu_80663E24 |= 8;
     return 0;
 }
 
-void func_80190298(){}
+// Menu-open request dispatcher: forward cmd 0x12 to the task queue unless the
+// manager is locked (sentinel id -1 at +0x88, or busy per func_80085838), in
+// which case abort: clear the pending-event bit, reset the scene state and
+// disable the menu input path.
+int func_80190298(CFuncHost* self, u32 p1, u32 p2, u32 p3, u32 p4) {
+    cf::CfGameManager* mgr = self->manager;
+    if (mgr->field_0x88 != -1 && func_80085838__Q22cf13CfGameManagerFv() == 0) {
+        func_80061A80((u32)self, 0x12, p1, p2, p3, p4);
+        return 1;
+    }
+    lbl_eu_80663E24 &= ~0x100;
+    // Retail invokes the reset hook with a null this pointer.
+    ((cf::CfGameManager*)NULL)->func_80085FB8();
+    func_80068DAC();
+    func_800B98C8(0);
+    return 0;
+}
 
 int func_80190334(u32 p0, u16 p1, u32 p2, u32 p3, u32 p4) {
     int r = 0;
@@ -430,7 +441,6 @@ int func_80190690(u32 p0, u32 p1, u32 p2, u32 p3, u32 p4) {
 }
 
 extern "C" unsigned long func_801906FC() {
-    extern unsigned long lbl_eu_80663E24;
     lbl_eu_80663E24 &= ~0x80000;
     return 0;
 }

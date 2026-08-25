@@ -6,26 +6,19 @@
 #define func_801B481C menuBpsUiCfMgr481CUnused
 #include "kyoshin/CUICfManager.hpp"
 #undef func_801B481C
-// CChainTimer.hpp (via CBattleManager.hpp) declares func_80174B4C(void*, u32)
-// while CfObjectActor.hpp declares it with its full 5-arg ABI signature - an
-// illegal overload when both are visible. Pre-include CfObjectActor.hpp so its
-// declaration keeps the real name, then rename the CChainTimer/CVision copies
-// out of the way (this TU uses neither).
+// (func_80174B4C / func_80174C98 now have single unified decls on the
+// CfMapItemManager owner header; the old pre-include rename is gone.)
 #include "kyoshin/cf/object/CfObjectActor.hpp"
-#define func_80174B4C menuBpsChainTimer74B4CUnused
 // CfObjectImplMove.hpp declares the BM singleton as extern "C" void* while
 // CSuddenCommu.hpp / CfGameManager.hpp use CBattleManagerView* - an illegal
 // overload when both are visible in this TU (which only calls the member
 // getInstance). Rename every free-function copy out of the way.
 #include "kyoshin/cf/CBattleManager.hpp"
 #include "kyoshin/cf/CfGameManager.hpp"
-#undef func_80174B4C
 // code_80135FDC.hpp declares lbl_eu_8066A208 as u32 (line 188);
 // CfObjectMove.hpp (via the CBattleManager.hpp include above) declares it
 // const float. This TU uses neither copy.
-#define lbl_eu_8066A208 menuBpsCode35FDCepsilonUnused
 #include "kyoshin/code_80135FDC.hpp"
-#undef lbl_eu_8066A208
 #include "monolib/device/CDeviceVI.hpp"
 #include "monolib/util/MemManager.hpp"
 #include "monolib/work/CWorkThreadSystem.hpp"
@@ -59,7 +52,6 @@ extern "C" void* __dt__8010B444(CMenuBattlePlayerStateSlot* self, s16 del) {
 }
 extern "C" {
 extern CMenuBattlePlayerState* lbl_eu_80663F48;
-extern u32 lbl_eu_80663E24;
 extern u32 lbl_eu_80663E28;
 char lbl_eu_8052C1C0[];
 char lbl_eu_8052C330[];

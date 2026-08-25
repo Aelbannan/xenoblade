@@ -8,6 +8,7 @@
 // conflicting with the CBattleManagerView* declaration this TU already gets
 // via kyoshin/harness_catalog.hpp (cf/CfGameManager.hpp).
 #include "monolib/util/MemManager.hpp"
+#include "kyoshin/cf/CfGameManagerData.hpp"  // H3 label-owner decl (lbl_eu_80663E14; lbl_eu_80663E24)
 
 // Free-function form (not the member ctor): the retail ignores the incoming
 // `this` and carves the real instance from MEM2 - the member form makes MWCC

@@ -2,14 +2,12 @@
 
 #include <types.h>
 #include "monolib/math/CVec3.hpp"
+#include "kyoshin/plugin/ocBdat.hpp"  // getBdatStringColumnValue (owner)
+#include "kyoshin/cf/CfGameManagerData.hpp"  // H3 label-owner decl (lbl_eu_80663E14; lbl_eu_80663E24)
+#include "monolib/math/FloatUtils.hpp"  // H3 label-owner decl (lbl_eu_8066A208)
 
 // Resource getter (retail unmangled symbol; defined in kyoshin/CMiniMap.cpp).
 extern "C" u32 func_8009CF8C(u32 resourceId);
-
-// BDAT table column accessor (retail unmangled C-ABI import; func_80195384).
-// Third param spelled s32 (long) to match the canonical decl in
-// code_801862C0.hpp - under MWCC int and s32 are distinct types.
-extern "C" u32 getBdatStringColumnValue(void* bdat, const char* column, s32 index);
 
 // BDAT table pointer + column-name blob read by func_80195384.
 extern void* lbl_eu_806640CC;
@@ -47,7 +45,6 @@ u32 func_80082354__Q22cf13CfGameManagerFv(u32 a);
 void* func_80081A40__Q22cf13CfGameManagerFv(const char* col, u32 a, u32 b, u32 c);
 }
 // Global event/presentation flag word (.sbss); bit 0x200000 gates re-arming.
-extern u32 lbl_eu_80663E24;
 
 // Party-change refresh helpers (func_80197538): battle-membership check
 // (retail unmangled C-ABI import); the battle-manager instance getter
@@ -218,7 +215,6 @@ extern const f32 lbl_eu_80667B04;
 // and distance thresholds, the collision-out scalar, and the fallback
 // speeds. lbl_eu_80663ED0 is a writable global (defined in
 // kyoshin/code_800B06A4.cpp).
-extern const f32 lbl_eu_8066A208;   // ml::epsilon
 // .sdata2 pool entries used by func_80194610 / func_80194D5C (retail names).
 extern const f32 lbl_eu_80667B08;
 extern const f32 lbl_eu_80667B0C;

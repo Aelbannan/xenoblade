@@ -9,6 +9,7 @@
 // this TU needs are declared in CfResPcImpl.hpp instead.
 #include <nw4r/math/math_types.h>
 #include <string.h>
+#include "kyoshin/cf/CfGameManagerData.hpp"  // H3 label-owner decl (lbl_eu_80663E14; lbl_eu_80663E24)
 
 // Resolve ml::FixStr<128>::format calls to the explicit specialization that
 // CfScript.cpp defines (retail symbol format__Q22ml10FixStr<128>FPCce).  The
@@ -17,6 +18,7 @@
 template <> void ml::FixStr<128>::format(const char* fmt, ...);
 
 namespace cf {}
+extern "C" void func_800BE12C(void* obj, int a, int b, int c, int d);
 using namespace cf;
 
 // Retail ctor: writes the parent ref last (after the constant fields),

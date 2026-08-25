@@ -2,6 +2,7 @@
 // Replace stubs with high-level C/C++ during decomp.
 
 #include "kyoshin/harness_catalog.hpp"
+#include "kyoshin/cf/CfMapItemManager.hpp"
 #include "kyoshin/cf/object/CfObjectMove.hpp" // func_800BE12C (owner decl)
 #include "libs/monolib/src/scn/CScn_8049603C.hpp" // func_8049603C (single owner decl)
 #include "monolib/scn/CScnTimeApi.hpp"
@@ -11,6 +12,7 @@
 #include <math.h>
 #include <stdlib.h>
 #include "monolib/math/CVec3.hpp"
+#include "kyoshin/cf/CfGameManagerData.hpp"  // H3 label-owner decl (lbl_eu_80663E14; lbl_eu_80663E24)
 
 void func_800CEE80(CfObjectImplMoveObj* self);
 void func_800CF064(CfObjectImplMoveObj* self, CfMoveContact* param);
@@ -104,7 +106,7 @@ void func_800CAB30(CfObjectImplMoveObj* self, CfMoveEvtParam* param) {
                 ((CfMoveHandler8*)base)->h20(kHandlers[i]);
             }
         }
-        func_800BE12C(&actor->sub, 0xb, 0, -1, 1);
+        func_800BE12C((u8*)&actor->sub, 0xb, 0, -1, 1);
         if (!(param->field_30 & 0x10)) {
             func_801BFC38__Q22cf10CfSoundManFUlUlUlUlf(nullptr, 0, 0x194, 0, 0,
                 lbl_eu_80666C64);
@@ -119,9 +121,9 @@ void func_800CAB30(CfObjectImplMoveObj* self, CfMoveEvtParam* param) {
         if (v805check == 0) {
             CfMoveC4Obj* c4 = (CfMoveC4Obj*)actor->sub.field_C4;
             if (c4->field_374 != 5) {
-                func_800BE12C(&actor->sub, 0xc, 0, -1, 1);
+                func_800BE12C((u8*)&actor->sub, 0xc, 0, -1, 1);
                 if (((CfMoveC4Obj*)actor->sub.field_C4)->field_374 != 5)
-                    func_800BE12C(&actor->sub, 0x31, 0, -1, 1);
+                    func_800BE12C((u8*)&actor->sub, 0x31, 0, -1, 1);
             }
         } else {
             func_8014B2DC(actor->mst.buf);
@@ -243,9 +245,9 @@ void func_800CB454(CfObjectImplMoveObj* self, CfMoveEvtParam* param) {
             break;
         CfEmbeddedSubObj_3E9C* sub = &self->field_0x18->sub;
         if ((sub->field_64 & 2) == 0) {
-            func_800BE12C(sub, 0x30, 0, -1, 1);
+            func_800BE12C((u8*)sub, 0x30, 0, -1, 1);
         } else if ((((CfMoveC4Obj*)sub->field_C4)->field_4EC & 2) == 0) {
-            func_800BE12C(sub, 0x30, 0, -1, 1);
+            func_800BE12C((u8*)sub, 0x30, 0, -1, 1);
         }
         break;
     }
@@ -293,7 +295,7 @@ void func_800CB454(CfObjectImplMoveObj* self, CfMoveEvtParam* param) {
             break;
         CfEmbeddedSubObj_3E9C* subF = &self->field_0x18->sub;
         if ((subF->field_64 & 2) != 0)
-            func_800BE12C(subF, 0x31, 0, -1, 1);
+            func_800BE12C((u8*)subF, 0x31, 0, -1, 1);
         break;
     }
     case 0x33:
@@ -430,7 +432,7 @@ void func_800CBBD8(CfObjectImplMoveObj* self) {
         self->field_0x18->mst.field_214 = 0;
         self->field_0x18->mst.field_210 = 0;
         func_8014B2DC(self->field_0x18->mst.buf);
-        func_800BE12C(&self->field_0x18->sub, 0x31, 0, -1, 1);
+        func_800BE12C((u8*)&self->field_0x18->sub, 0x31, 0, -1, 1);
     } else {
         self->vf70(func_800F6E08(func_80043F18(&holder)));
         void* entry = func_800F6EAC(func_80043F18(&holder), 0);

@@ -1,6 +1,7 @@
 #pragma once
 
 #include <types.h>
+#include "kyoshin/cf/CfGameManagerData.hpp"  // H3 label-owner decl (lbl_eu_80663E14; lbl_eu_80663E24)
 
 /// Returns 1 (always-active sentinel or default state check)
 int func_8015CB88();
@@ -209,7 +210,6 @@ struct CCharEffect {
 
 // External data referenced by func_8015C9A0 / func_8015C404 (MWCC does not
 // mangle global data names).
-extern void* lbl_eu_80663E14;        // .sbss scene/handle pointer (func_8015BB3C)
 extern f32 lbl_eu_80667534;          // sdata2 float constant (func_8015C404)
 extern f64 lbl_eu_80667538;          // sdata2 double constant 0x4330000080000000 (func_8015C404)
 extern s8 lbl_eu_80501DCC[];         // per-type keep/release table (func_8015C404)

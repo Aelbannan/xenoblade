@@ -297,7 +297,7 @@ void CMenuQstCnt::Move() {
     if (cf::CfGameManager::func_800829B8()) return;
     if (lbl_eu_80663E24 & (1u << 9)) return;
     {
-        CTaskGameCamView* cam = func_8049603C(lbl_eu_80663E14);
+        CTaskGameCamView* cam = (CTaskGameCamView*)func_8049603C(lbl_eu_80663E14);
         // Load camDist into a local first so MWCC emits lfs f1,0xc(r3)
         // before lfs f0,CONST (retail operand order for the fsubs/fcmpo).
         f32 camDist = *(f32*)((u8*)cam + 0xC);
@@ -336,7 +336,7 @@ void CMenuQstCnt::cbRenderBefore() {
     if (!(e24a & (1u << 24)) && (e24b & 0xAFE40000u)) return;
     if (cf::CfGameManager::func_800829B8()) return;
     {
-        CTaskGameCamView* cam = func_8049603C(lbl_eu_80663E14);
+        CTaskGameCamView* cam = (CTaskGameCamView*)func_8049603C(lbl_eu_80663E14);
         f32 camDist = *(f32*)((u8*)cam + 0xC);
         f32 result = lbl_eu_8066856C - camDist;
         if (result < lbl_eu_8066856C) return;

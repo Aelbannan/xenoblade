@@ -83,7 +83,6 @@ extern "C" {
     extern u32 lbl_eu_80531EF8[];     // various data
     extern char lbl_eu_8050375C[];   // string base
     extern char lbl_eu_806623C0[];   // string
-    extern u32 lbl_eu_80663E14;      // alloc handle
     extern void* lbl_eu_806642B8;    // global data ptr
     extern void* lbl_eu_806642BC;    // global file handle
     extern s32 lbl_eu_806642C0;      // global counter
@@ -599,7 +598,7 @@ extern "C" void func_80182B2C(void* self) {
             }
 
             // Create model
-            u32 allocHandle = lbl_eu_80663E14;
+            u32 allocHandle = (u32)lbl_eu_80663E14;
             void* parent2 = FLD(void*, s, 0x1C);
             u32 parentFlags2 = FLD(u32, parent2, 0x58);
             int priority = 7;

@@ -2,6 +2,7 @@
 // Replace stubs with high-level C/C++ during decomp.
 
 #include "kyoshin/harness_catalog.hpp"
+#include "kyoshin/cf/CfMapItemManager.hpp"
 #include "kyoshin/CTitle.hpp"
 #include "kyoshin/code_80135FDC.hpp" // func_80136E84 / func_80136F08 layout+anim builders
 

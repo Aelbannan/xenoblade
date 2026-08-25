@@ -2,6 +2,8 @@
 
 #include <types.h>
 #include "kyoshin/plugin/ocBdat.hpp"
+#include "kyoshin/cf/CfGameManagerData.hpp"  // H3 label-owner decl (lbl_eu_80663E14; lbl_eu_80663E24)
+#include "monolib/math/FloatUtils.hpp"  // H3 label-owner decl (lbl_eu_8066A208)
 
 // Minimal nw4r sound-object interface used by func_8016CFDC (slot entry +0x00
 // dereferenced to call SetPlayerPriority). Declared here rather than via
@@ -317,14 +319,12 @@ extern "C" void func_800BB618(cf::CfResReloadParent* parent, int arg);
 extern "C" void func_800BCFA0(cf::CfResReloadParent* parent);
 extern "C" void func_800BE824(cf::CfResReloadParent* parent, int flag);
 extern "C" void func_804B0A6C(u8* subObj, u8* handle);
-extern "C" void func_800BE12C(void* parent, int handle, int a, int b, int c);  // signature matches CBattleManager.cpp:451 (same C symbol)
+// func_800BE12C is owned by kyoshin/cf/object/CfObjectMove.hpp.
 
 // Scene/manager globals read by func_8016D688.
-extern u8* lbl_eu_80663E14;
 // .sdata2 floats used by func_8016D688 / func_8016E1AC.
 extern float lbl_eu_8066769C;
 extern float lbl_eu_806676A0;
-extern float lbl_eu_8066A208;
 extern float lbl_eu_806676CC;
 extern const double lbl_eu_806676D0;
 
@@ -352,7 +352,6 @@ extern "C" void func_800BC4A0(cf::CfObjectMove* player);
 
 // Flag words defined in CUICfManager.cpp (.sbss); read by func_8016D2FC /
 // func_8016E9CC.
-extern u32 lbl_eu_80663E24;
 extern u32 lbl_eu_80663E28;
 // Delay/timer floats (.sdata2) selected by func_8016E9CC.
 extern float lbl_eu_806676B4;

@@ -1189,14 +1189,22 @@ extern "C" int func_802067E4(CfMapMineManager* self, MinePoint* pt,
 // func_802074F0 - top-level update: timers, nearest point, collection input.
 // ---------------------------------------------------------------------------
 extern "C" void func_802074F0(CfMapMineManager* self) {
+    // Local scratch shaped like the ring's message records; retail keeps
+    // both temporaries as real stack objects (text+len+time), not loose vars.
+    struct MsgScratch {
+        char mText[0x40];
+        u32 mLen;
+        f32 mTime;
+    } oldMsg;
+    MineNode* nearest;
     CfMapMineManager* mgr = self;
     void* player = cf::CfGameManager::getPlayer(0);
     if (player == 0) return;
 
     func_802073CC(mgr);
     f32 dt = func_80496288((void*)CfRes_getD80Flag());
-    const f64 zeroD = lbl_eu_806682D8;
     const f32 zero = lbl_eu_806682B0;
+    const f64 zeroD = lbl_eu_806682D8;
 
     // Sound-timer countdown over the 16 fixed slots.
     MineSoundTimer* snd = mgr->mSnd;
@@ -1232,7 +1240,6 @@ extern "C" void func_802074F0(CfMapMineManager* self) {
 
     // Scan window open: clear the collected flag and find the nearest point.
     lbl_eu_80663E24 &= ~0x80000000u;
-    MineNode* nearest = 0;
     func_8020712C(&nearest, mgr, (CfMapMineManager*)((u8*)mgr + 0x4), pos);
     if (nearest == 0) return;
     if (func_8007F91C__Q22cf13CfGameManagerFv() != 0) return;
@@ -1333,33 +1340,29 @@ extern "C" void func_802074F0(CfMapMineManager* self) {
     }
 
     // Push a message into the ring buffer (evicting the oldest when full).
-    char msgText[0x40];
-    msgText[0] = 0;
     CItemImplInstances* im = CItem_initItemImplInstances();
     const char* nm = ((CItemInstVt50*)im)->_v20(&drop);
-    u32 mlen = strlen(nm);
-    strcpy(msgText, nm);
-    f32 mtime = lbl_eu_806682F4;
+    MsgScratch msg;
+    msg.mText[0] = 0;
+    msg.mLen = strlen(nm);
+    strcpy(msg.mText, nm);
+    msg.mTime = lbl_eu_806682F4;
 
     MineMsgRing* ring = &mgr->mMsgs;
     if (ring->mCount == 16) {
         u32 old = ring->mReadIdx;
         MineMsg* oldest = &ring->mBase[old];
-        u32 olen = strlen(oldest->mText);
-        char obuf[0x40];
-        strcpy(obuf, oldest->mText);
-        f32 otime = oldest->mTime;
+        oldMsg.mLen = strlen(oldest->mText);
+        strcpy(oldMsg.mText, oldest->mText);
+        oldMsg.mTime = oldest->mTime;
         ring->mCount -= 1;
         ring->mReadIdx = (old + 1) % ring->mCapacity;
-        (void)olen;
-        (void)obuf;
-        (void)otime;
     }
     u32 widx = (ring->mReadIdx + ring->mCount) % ring->mCapacity;
     MineMsg* slot = &ring->mBase[widx];
-    slot->mLen = strlen(msgText);
-    strcpy(slot->mText, msgText);
-    slot->mTime = mtime;
+    slot->mLen = msg.mLen;
+    strcpy(slot->mText, msg.mText);
+    slot->mTime = msg.mTime;
     ring->mCount += 1;
 
     u32 cid = func_80082694__Q22cf13CfGameManagerFv(0x70);

@@ -2,6 +2,7 @@
 // Replace stubs with high-level C/C++ during decomp.
 
 #include "kyoshin/cf/CBattleManagerApi.hpp"
+#include "kyoshin/cf/CfMapItemManager.hpp"
 #include <stddef.h>
 #include "monolib/scn/CScnTimeApi.hpp"
 
@@ -10,6 +11,7 @@
 #include "kyoshin/cf/CtrlMoveEne.hpp"
 #include "kyoshin/cf/CtrlNpc.hpp"
 #include "monolib/math/Random.hpp"
+#include "kyoshin/cf/CfGameManagerData.hpp"  // H3 label-owner decl (lbl_eu_80663E14; lbl_eu_80663E24)
 
 // In-TU forward declarations (definitions below).
 void func_8008D444(cf::CfObjectMove* self, cf::CFunc8008D444Obj* obj, int flag);

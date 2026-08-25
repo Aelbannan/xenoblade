@@ -3,6 +3,7 @@
 // standalone by the label-centralization gate.
 #include <types.h>
 #include <monolib/util/FixStr.hpp>  // ml::FixStr<64>
+#include "kyoshin/cf/CfGameManagerData.hpp"  // H3 label-owner decl (lbl_eu_80663E14; lbl_eu_80663E24)
 
 namespace ml {
 #pragma dont_inline on
@@ -1544,10 +1545,9 @@ extern "C" Unk80EE4Data* func_80081D2C__Q22cf13CfGameManagerFv(
 #pragma dont_inline reset
 
 class BdatFilePointer;
+#include "kyoshin/plugin/ocBdat.hpp"  // getBdatStringColumnValue (owner)
 extern "C" void* func_8003AA34();
 extern "C" void* getFP__FPCc(const char* name);
-extern "C" u32 getBdatStringColumnValue(void* file,
-                                                  const char* column, s32 index);
 extern "C" u32 func_8003B1EC(void* file);
 extern "C" u32 func_8003B41C(void* file);
 #pragma dont_inline on
@@ -1773,11 +1773,11 @@ extern "C" Unk80338Object* __ct__80080338(Unk80338Object* self) {
     self->field_0x14 = zero;
     self->field_0x18 = zero;
     self->field_0x1C = zero;
-    UnkCharEffect304* effect = &self->effect_0x68;
     __ct__CCharVoice(&self->voice_0x28);
     result->vtable_0x0 = lbl_eu_8052A7E8;
     result->vtable_0xC = &lbl_eu_8052A7E8[0xB4];
     result->vtable_0x10 = &lbl_eu_8052A7E8[0xC4];
+    UnkCharEffect304* effect = &result->effect_0x68;
     __ct__CCharEffect(effect);
     effect->vtable_0x0 = lbl_eu_8052FE68;
     result->field_0x36C = zero;

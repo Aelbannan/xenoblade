@@ -109,16 +109,19 @@ extern "C" int func_804E3434(CSchedule* self, ScheduleEntry* entries, u8* field_
     if (entries == nullptr) return 0;
     if (field_0x08_ptr == nullptr) return 0;
 
-    float zero = lbl_eu_8066B2E4;
     float one = lbl_eu_8066B2E0;
+    float zero = lbl_eu_8066B2E4;
 
     self->mEntries = entries;
     self->field_0x08 = field_0x08_ptr;
 
     // Build flags: 0xC000 base with bits 21/22 merged from flags_a/flags_b
     // (ori 0xC000 + two rlwimi inserts per retail)
-    u32 flags = ((flags_a & 0x800) << 10) | 0xC000;
-    flags |= (flags_b & 0x2000) << 9;
+    // Build flags: 0xC000 base with bits 21/22 merged from flags_a/flags_b
+    // (ori 0xC000 + two rlwimi inserts per retail)
+    u32 flags = 0xC000;
+    flags = (flags & ~0x200000) | ((flags_a << 10) & 0x200000);
+    flags = (flags & ~0x400000) | ((flags_b << 9) & 0x400000);
     self->field_0x00 = static_cast<s16>(flags);
 
     self->field_0x0c = field_0x0c_ptr;

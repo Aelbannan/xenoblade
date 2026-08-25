@@ -6,6 +6,7 @@
 #include <nw4r/db/db_assert.h>
 #include <nw4r/g3d/res/g3d_resmdl.h>
 #include "libs/monolib/src/scn/CScnEffectActNw4r.hpp"
+#include "monolib/math/FloatUtils.hpp"  // H3 label-owner decl (lbl_eu_8066A208)
 
 // Constructor: installs the vtable and clears the act-table count.
 extern "C" u32 lbl_eu_8056EAD8[];

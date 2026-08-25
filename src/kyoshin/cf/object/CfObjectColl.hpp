@@ -3,6 +3,7 @@
 #include <types.h>
 #include <revolution/MTX.h>
 #include "monolib/util/FixStr.hpp"
+#include "kyoshin/cf/CfGameManagerData.hpp"  // H3 label-owner decl (lbl_eu_80663E14; lbl_eu_80663E24)
 
 // Retail data symbols referenced from this unit.
 extern const float lbl_eu_80666910;
@@ -14,7 +15,6 @@ extern const float lbl_eu_80666950;
 extern char lbl_eu_804FC134[];
 
 // Presentation/event bitfield owned by CUICfManager (.sbss).
-extern u32 lbl_eu_80663E24;
 
 // Static coll-impl instance registry (lazily initialized singletons).
 extern s8 lbl_eu_80663EA0;

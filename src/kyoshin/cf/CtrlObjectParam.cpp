@@ -2,6 +2,7 @@
 // Replace stubs with high-level C/C++ during decomp.
 
 #include "kyoshin/cf/CtrlObjectParam.hpp"
+#include "kyoshin/cf/CfMapItemManager.hpp"
 #include "kyoshin/cf/CfGameManager.hpp"        // cf::CfGameManager static accessors
 #include "kyoshin/cf/object/CActorParam.hpp"
 #include "kyoshin/cf/object/CObjectParam.hpp"
@@ -456,16 +457,12 @@ void func_8009E0C4(cf::CtrlObjectParamU16RowTable* table, u16 index, u16 value) 
 extern "C" u32 func_8009E120(cf::CtrlObjectParamRowView* p, u32 value) {
     // Arts/row lookup: read the u16 table at +0x02 at index (u16)value; a
     // 0xFFFF table entry means "empty" and is folded to 0 before dispatch.
-    // NOTE (us-8009eaf8): every other instruction is byte-identical to
-    // retail; the single residual is retail's clrlwi r4,r5,16 before the
-    // func_80142074 tail-call versus our register move. Retail masks a
-    // provably-16-bit phi {lhz result, li 0}; ruled out: u16/u32/int/s16
-    // locals, explicit narrowing casts, ternary statement/initializer,
-    // store-back truncation, s16 routing (adds early extsh / lha load).
     u16 v = p->field_02[(u16)value];
     if (v == 0xFFFF) v = 0;
-    if (v != 0)
-        return func_80142074(p->field_00, v, 0);
+    if (v != 0) {
+        u32 w = v;
+        return func_80142074(p->field_00, w, 0);
+    }
     return func_80141E90(p->field_00, (s16)v, (u16)(value + 1), 0);
 }
 

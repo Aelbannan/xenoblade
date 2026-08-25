@@ -6,6 +6,7 @@
 #include "kyoshin/CBaseCur.hpp"
 #include "monolib/lib/UnkClass_8045F564.hpp"
 #include "monolib/device/CFileHandle.hpp"
+#include "kyoshin/cf/CfGameManagerData.hpp"  // H3 label-owner decl (lbl_eu_80663E14; lbl_eu_80663E24)
 
 /* Cursor widget embedded at +0x34 (loads layout "curs22"). Its constructor
    and destructor are defined in the CCur unit (__ct__CCur22 / __dt__6CCur22Fv);
@@ -211,7 +212,6 @@ extern "C" int getFileSize__11CDeviceFileFPCc(const char*, int);
 // Scene object behind the common-archive alloc handle (virtual at vtable
 // 0x2C of *lbl_eu_80663E14; returns an mtl alloc handle).
 class CScn;
-extern CScn* lbl_eu_80663E14;
 extern "C" u32 func_80495FF0(CScn*);
 
 // Party-state layout arc path pointer (.sdata).

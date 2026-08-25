@@ -4,6 +4,7 @@
 #include "monolib/device/CDeviceSC.hpp"
 #include "monolib/util/MemManager.hpp"
 #include <math.h>
+#include "kyoshin/cf/CfGameManagerData.hpp"  // H3 label-owner decl (lbl_eu_80663E14; lbl_eu_80663E24)
 
 using namespace cf;
 
@@ -28,7 +29,7 @@ extern "C" u32 func_801C0DC4(CfSoundRecord* rec, s32 id, float volume,
 extern "C" u32 func_801C0F5C(u32 a, s32 userParam, float f1, u32 b);
 extern "C" void func_801C0C88(CfSoundRecord* rec, nw4r::snd::AuxBus bus, float volume);
 extern "C" void func_801C1218(CfSoundRecord* rec, bool pause, int fade);
-extern "C" void func_801C1618(CfSoundRecord* rec);
+extern "C" void func_801C1618(CfSoundRecord* rec, s32 targetId, u32 pauseFlag, u32 fadeFrames);
 extern "C" void func_801C12A0(CfSoundRecord* rec, s32 mode);
 extern "C" void func_801C13D8(CfSoundRecord* rec, s32 mode, u32 fadeFrames);
 extern "C" void func_eu_801C22F0(u32 soundId, s32 stopFlag);
@@ -267,7 +268,7 @@ u32 cf::CfSoundMan::func_801BFC38(u32 idx, u32 a, u32 b, u32 c, float volume) {
                 if (scn == 0) {
                     goto skipScale;
                 }
-                CfSndCamView* view = (CfSndCamView*)func_8049603C(scn);
+                CfSndCamView* view = (CfSndCamView*)func_8049603C((CScn*)scn);
                 volume = volume * (lbl_eu_80667E88 - view->field_0x0C);
             }
         skipScale:;
@@ -378,7 +379,7 @@ void func_801BFF04(u32 idx, s32 mode, bool a, u32 b) {
     if (mode == -1) {
         func_801C1218(rec, a, b);
     } else {
-        func_801C1618(rec);
+        func_801C1618(rec, mode, a, b);
     }
 }
 
@@ -694,7 +695,7 @@ extern "C" void func_801C055C(CfSoundSlot* slot) {
             if (scn != 0) {
                 vol = vol *
                       (lbl_eu_80667E9C -
-                       ((CfSndCamView*)func_8049603C(scn))->field_0x0C);
+                       ((CfSndCamView*)func_8049603C((CScn*)scn))->field_0x0C);
             }
             if (slot->mSound != 0) {
                 slot->mSound->SetVolume(vol * slot->field_0x1C, 0);
@@ -1298,7 +1299,7 @@ extern "C" void func_801C150C(CfSoundRecord* rec, u32 soundId, s32 stopFlag) {
 // Pause request: pause the slot's sound when its id matches the global
 // pause target (or the target is the "all sounds" sentinel -1), using the
 // recorded fade frames.
-void func_801C15C0(CfSoundSlot* slot) {
+extern "C" void func_801C15C0(CfSoundSlot* slot) {
     nw4r::snd::detail::BasicSound* sound = slot->mSound;
     CfSoundPauseParam* g = &lbl_eu_80576528;
     u32 soundId = (sound != 0) ? sound->GetId() : 0xFFFFFFFF;
@@ -1314,7 +1315,47 @@ void func_801C15C0(CfSoundSlot* slot) {
     }
 }
 
-void func_801C1618(CfSoundRecord* rec){}
+#pragma push
+#pragma auto_inline off
+// Stop request for every sound playing through the record: resolves the
+// target sound id by user param (func_801C0D28), publishes the pause/fade
+// request block read back by func_801C15C0, then walks each player's
+// BasicSound list and pauses every playing sound via a temp handle. The null
+// checks mirror nw4r ut_list's checked-deref assertions.
+extern "C" void func_801C1618(CfSoundRecord* rec, s32 targetId, u32 pauseFlag,
+                              u32 fadeFrames) {
+    int id = func_801C0D28(rec, targetId);
+    if ((rec->mFlag & 1) == 0) {
+        return;
+    }
+    lbl_eu_80576528.field_0x00 = id;
+    lbl_eu_80576528.field_0x08 = pauseFlag;
+    lbl_eu_80576528.field_0x04 = fadeFrames;
+    for (u32 i = 0; i < rec->mArchive.GetPlayerCount(); i++) {
+        CfSoundPlayerView& sp = reinterpret_cast<CfSoundPlayerView&>(
+            rec->mArchivePlayer.GetSoundPlayer(i));
+        CfSoundListNode* it = sp.mList.mNext;
+        while (it != &sp.mList) {
+            CfSoundListNode* curr = it;
+            it = it->mNext;
+            nw4r::snd::SoundHandle handle;
+            if (curr == NULL) {
+                nw4r::db::Panic(lbl_eu_80533C54, 0x23d, lbl_eu_80533C30);
+            }
+            // Container back-pointer: the play-list node sits at +0xF4 inside
+            // detail::BasicSound.
+            nw4r::snd::detail::BasicSound* sound = reinterpret_cast<nw4r::snd::detail::BasicSound*>(
+                reinterpret_cast<u8*>(curr) - 0xF4);
+            if (sound == NULL) {
+                nw4r::db::Panic(lbl_eu_80533C84, 0x193, lbl_eu_80533C60);
+            }
+            handle.detail_AttachSoundAsTempHandle(sound);
+            func_801C15C0(reinterpret_cast<CfSoundSlot*>(&handle));
+            handle.DetachSound();
+        }
+    }
+}
+#pragma pop
 
 // Sets the pan of every slot whose 16-bit id matches `soundId` (only while
 // the record is active, mFlag bit 0). The pan float is kept in f31 across the

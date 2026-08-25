@@ -259,8 +259,6 @@ namespace cf {
 extern "C" {
 int func_800B8920(void* addr);
 int func_80148778(void*, int);
-int func_80174C98(void*, int*, int);
-void func_80174B4C(void* obj, u32 flag);
 void* func_8016FE34(void* source);
 unsigned long func_801BA2C8(void* self);
 void func_800BBA7C(void* obj, f32* vec);

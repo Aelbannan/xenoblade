@@ -6,6 +6,8 @@
 #include <nw4r/math/math_triangular.h>
 #include <revolution/mtx/vec.h>
 #include "monolib/math/CVec3.hpp"
+#include "kyoshin/cf/CfGameManagerData.hpp"  // H3 label-owner decl (lbl_eu_80663E14; lbl_eu_80663E24)
+#include "monolib/math/FloatUtils.hpp"  // H3 label-owner decl (lbl_eu_8066A208)
 
 // Retail constructor(C) at 0x8005AA64 (unmangled symbol): base-constructs
 // the ::CActParamAnim subobject, stores the retail vtable manually
@@ -1380,7 +1382,7 @@ bool func_8005DAE4__Q22cf17CActParamAnimGame(void* self) {
 bool cf::CActParamAnimGame::func_8005DB1C(u32 type) {
     CActParamAnimGameObj3A0* obj = (CActParamAnimGameObj3A0*)field_3A0;
     if (obj == 0) return false;
-    if (*(u32*)obj->_00 != lbl_eu_80663E14) return false;
+    if (*(u32*)obj->_00 != (u32)lbl_eu_80663E14) return false;
 
     CActParamAnimGameListNode* node =
         (CActParamAnimGameListNode*)((CActParamAnimGameMgr*)func_80086B04__Q22cf13CfGameManagerFv())->head;

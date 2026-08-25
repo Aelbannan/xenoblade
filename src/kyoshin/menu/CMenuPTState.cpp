@@ -3,6 +3,7 @@
 
 #include "kyoshin/menu/CMenuPTState.hpp"
 #include "monolib/scn/CScnTimeApi.hpp"
+#include "kyoshin/cf/CfGameManagerData.hpp"  // H3 label-owner decl (lbl_eu_80663E14; lbl_eu_80663E24)
 
 // Retail CProcess / mem-manager / win-ctor imports (defined in other TUs).
 extern "C" void __ct__8CProcessFv(CProcess* self);
@@ -10,7 +11,7 @@ extern "C" void Regist__8CProcessFP8CProcessb(CProcess* self, CProcess* parent, 
 extern "C" void* getWorkMem__17CWorkThreadSystemFv();
 extern "C" void* allocate__Q23mtl10MemManagerFUlUl(u32 size, u32 handle);
 extern "C" void __ct__CBgTex(CBgTex* self, u8 arg);
-extern "C" void __ct__14CPartyStateWinFUlUl(CPartyStateWin* self, u32 arg1, u32 arg2);
+extern "C" void __ct__CPartyStateWin(CPartyStateWin* self, u32 arg1, u32 arg2);
 
 // Real member functions defined in code_8018F8D8.cpp -- retail slice names keep
 // the exact (already-mangled) linker symbols so tail-call relocs match.
@@ -26,61 +27,65 @@ extern const f32 lbl_eu_80667AA8;        // float pool: timer decay multiplier
 
 // Singleton factory constructor.
 // MWCC allocating-ctor: not a real C++ ctor -- a free function that allocates a
-// fresh CMenuPTState, builds it, registers it under `parent`, and returns it.
-// Returns a null pointer if the singleton already exists.
-extern "C" void __ct__CMenuPTState(CProcess* _this, CProcess* storedParent) {
-    // If singleton already exists, return 0
+// fresh CMenuPTState, builds it, registers it under `parent`, and returns the
+// singleton (null if it already existed).
+extern "C" CMenuPTState* __ct__CMenuPTState(CProcess* _this, CProcess* storedParent) {
+    CMenuPTState* result;
     if (lbl_eu_80664300 != 0) {
-        return;
+        // Singleton already exists: return null.
+        result = 0;
+    } else {
+        // Allocate memory for the new object
+        CMenuPTStateCtorShim* shim = (CMenuPTStateCtorShim*)allocate__Q23mtl10MemManagerFUlUl(
+            0x6c70, (u32)getWorkMem__17CWorkThreadSystemFv());
+
+        if (shim != 0) {
+            // Construct CProcess (primary base) on the freshly allocated memory.
+            __ct__8CProcessFv((CProcess*)shim);
+
+            // vtable / terminal-state ptmf slots come from the retail's inlined
+            // vtable-store sequence (see shim layout comment).
+            shim->vtable = lbl_eu_8052BF70;
+            u32* ptmf = __ptmf_null;
+            char* vtFinal = lbl_eu_80532A38;
+
+            u32 cbHi = ptmf[1];
+            u8 zero = 0;
+            u32 cbLo = ptmf[0];
+            shim->callbacks[0] = cbLo;
+            char* iscnVtbl = vtFinal + 0x24;
+            CMenuPTState* obj = (CMenuPTState*)shim;
+            shim->callbacks[1] = cbHi;
+            u32 cbMid = ptmf[2];
+
+            shim->callbacks[2] = cbMid;
+            shim->field54 = zero;
+            shim->field55 = zero;
+            shim->callbacks[3] = ptmf[0];
+            shim->callbacks[4] = ptmf[1];
+            shim->callbacks[5] = ptmf[2];
+
+            shim->field54 = 0;
+            shim->field55 = 0;
+
+            shim->vtable = vtFinal;
+            *(u32*)((u8*)obj + 0x58) = (u32)iscnVtbl;
+            obj->mStoredParent = storedParent;
+
+            __ct__CBgTex(&obj->mBgTex, 0);
+            __ct__CPartyStateWin(&obj->mPartyStateWin, 0, 0);
+            obj->mField_6C6C = 0;
+        }
+
+        // Store singleton
+        lbl_eu_80664300 = (u32)shim;
+
+        // Register with this (parent) -- insertTop = false
+        Regist__8CProcessFP8CProcessb((CProcess*)shim, _this, false);
+        result = (CMenuPTState*)lbl_eu_80664300;
     }
 
-    // Allocate memory for the new object
-    CMenuPTStateCtorShim* shim = (CMenuPTStateCtorShim*)allocate__Q23mtl10MemManagerFUlUl(
-        0x6c70, (u32)getWorkMem__17CWorkThreadSystemFv());
-
-    if (shim != 0) {
-        // Construct CProcess (primary base) on the freshly allocated memory.
-        __ct__8CProcessFv((CProcess*)shim);
-
-        // vtable / terminal-state ptmf slots come from the retail's inlined
-        // vtable-store sequence (see shim layout comment).
-        shim->vtable = lbl_eu_8052BF70;
-        u32* ptmf = __ptmf_null;
-        char* vtFinal = lbl_eu_80532A38;
-
-        u32 ptmf1 = ptmf[1];
-        u32 ptmf0 = ptmf[0];
-        char* iscnVtbl = vtFinal + 0x24;
-        u32 ptmf2 = ptmf[2];
-
-        shim->callbacks[0] = ptmf0;
-        shim->callbacks[1] = ptmf1;
-        shim->callbacks[2] = ptmf2;
-        ptmf1 = ptmf[1];
-        ptmf0 = ptmf[0];
-        ptmf2 = ptmf[2];
-        shim->callbacks[3] = ptmf0;
-        shim->callbacks[4] = ptmf1;
-        shim->callbacks[5] = ptmf2;
-
-        shim->field54 = 0;
-        shim->field55 = 0;
-
-        CMenuPTState* obj = (CMenuPTState*)shim;
-        shim->vtable = vtFinal;
-        *(u32*)((u8*)obj + 0x58) = (u32)iscnVtbl;
-        obj->mStoredParent = storedParent;
-
-        __ct__CBgTex(&obj->mBgTex, 0);
-        __ct__14CPartyStateWinFUlUl(&obj->mPartyStateWin, 0, 0);
-        obj->mField_6C6C = 0;
-    }
-
-    // Store singleton
-    lbl_eu_80664300 = (u32)shim;
-
-    // Register with this (parent) -- insertTop = false
-    Regist__8CProcessFP8CProcessb((CProcess*)shim, _this, false);
+    return result;
 }
 
 extern "C" unsigned long func_80192BD0() { return lbl_eu_80664300 != 0; }

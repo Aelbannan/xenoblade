@@ -6,6 +6,7 @@
 #include <nw4r/g3d/res/g3d_resfile.h>
 #include <nw4r/g3d/res/g3d_resanmchr.h>
 #include <nw4r/g3d/res/g3d_resdict.h>
+#include "kyoshin/cf/CfGameManagerData.hpp"  // H3 label-owner decl (lbl_eu_80663E14; lbl_eu_80663E24)
 
 // External declarations (C++ linkage for non-mangled symbols)
 extern "C" {
@@ -40,7 +41,6 @@ extern void __ct__CREvtModelPc(void* self, void* parent);
 extern void func_8049E708(void* data, int index);
 extern const void* lbl_eu_8053167C[];
 extern const char lbl_eu_80503344[];
-extern void* lbl_eu_80663E14;
 extern const float lbl_eu_80667770;
 extern const float lbl_eu_80667774;
 extern const float lbl_eu_80667778;

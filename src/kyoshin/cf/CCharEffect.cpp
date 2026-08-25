@@ -2,6 +2,7 @@
 // Replace stubs with high-level C/C++ during decomp.
 
 #include "kyoshin/harness_catalog.hpp"
+#include "kyoshin/cf/CfMapItemManager.hpp"
 #include "kyoshin/cf/CCharEffect.hpp"
 #include "kyoshin/cf/CfGameManager.hpp"
 #include "kyoshin/code_802B8A3C.hpp"

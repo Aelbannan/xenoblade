@@ -6,6 +6,7 @@
 #include "kyoshin/cf/object/CfObjectMap.hpp"
 #include "monolib/device/CDeviceVI.hpp"
 #include "monolib/math/CVec3.hpp"
+#include "kyoshin/cf/CfGameManagerData.hpp"  // H3 label-owner decl (lbl_eu_80663E14; lbl_eu_80663E24)
 
 // Retail data + dtor imports for the D1 (the header declares the virtual
 // dtor; the symbol is provided by the freestanding definition below).

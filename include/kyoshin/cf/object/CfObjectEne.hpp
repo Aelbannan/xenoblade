@@ -1334,16 +1334,19 @@ extern "C" void func_800BE824(void* obj, int flag);
 extern "C" void func_804B0AD4(void* obj, int param, float a, float b);
 extern "C" void func_801F4DDC(void* obj, void* actor);
 extern "C" void func_801F4D50(void* obj, void* actor);
-extern "C" void* getUnk80664658();
+// getUnk80664658: single typed view lives on CSuddenCommu.hpp (extern "C"
+// block); this tail must not redeclare it with a divergent return type.
 
 // C-ABI imports used by func_800AEC68 / func_800ADBD4 / func_800AF870
 // (retail symbols are unmangled).
-extern "C" void func_8003AA34();
-extern "C" u32 func_8003B41C(u8* bdat);   // bdat first row
-extern "C" u32 func_8003B1EC(u8* bdat);   // bdat row count
+// func_8003B41C / func_8003B1EC: aligned with CfObjectPc.hpp's block
+// (int(void*)) so TUs including both see identical redeclarations.
+extern "C" void* func_8003AA34();
+extern "C" u32 func_8003B41C(void* bdat);   // bdat first row (matches CfBdat.hpp)
+extern "C" int func_8003B1EC(void* bdat);   // bdat row count
 extern "C" void func_8014B7B0(u8* obj);
 extern "C" void func_8015396C(u8* obj, u32 a, u32 b);
-extern "C" int func_80174C98(void* actor, int* outVal, int flags); // family-canonical form (CAIAction.hpp) - ABI-identical
+// func_80174C98 / func_80174B4C are owned by kyoshin/cf/CfMapItemManager.hpp.
 extern "C" void func_801765A4(u8* actor, f32 value, u32 arg);
 extern "C" int func_801BA2C8(u8* self);
 // func_80148778 and getInstance__Q22cf14CBattleManagerFv are declared in

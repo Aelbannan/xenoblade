@@ -1,4 +1,5 @@
 #include "kyoshin/CUIBattleManager.hpp"
+#include "kyoshin/cf/CfMapItemManager.hpp"
 
 // --- CTTask<CUIBattleManager> out-of-line specializations ---
 // The canonical declared-only template emits no bodies; these explicit
@@ -104,7 +105,6 @@ int func_801042B4();
 int func_800FF738();
 // Family-canonical form - must match CfObjectPc.hpp / CAIAction.hpp /
 // code_802B8A3C.hpp (see the 10197 note in CTaskGame.hpp).
-int func_80174C98(void* actor, int* outVal, int flags);
 bool func_8006EF04__Fi(UNKWORD r3);
 void* func_801355F4();
 }

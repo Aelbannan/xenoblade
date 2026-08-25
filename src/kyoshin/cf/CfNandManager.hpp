@@ -4,6 +4,7 @@
 #include "monolib/work/CTTask.hpp"
 #include "monolib/work/IWorkEvent.hpp"
 #include "monolib/scn/IScnRender.hpp"
+#include "kyoshin/cf/CfGameManagerData.hpp"  // H3 label-owner decl (lbl_eu_80663E14; lbl_eu_80663E24)
 
 // C-linkage runtime imports (retail symbol names - keep linkage/signature verbatim).
 extern "C" long __ptmf_test(void* ptmf);
@@ -219,7 +220,6 @@ extern "C" int CfRes_getD80Flag();
 // Global mode flag (.sbss); bit 0x200000 gates CfNandManager::Move's NAND pump.
 extern u32 lbl_eu_80663E28;
 // Global presentation/event bitfield; 0xafa40000 mask gates func_8023F3C0.
-extern u32 lbl_eu_80663E24;
 // NAND teardown in-progress flag (.sbss u16) set around func_8023D3D8 in the
 // __dt__8023E448 teardown path (also polled by CSysWinScenarioLog).
 extern u16 lbl_eu_80664772;

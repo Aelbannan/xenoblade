@@ -3,6 +3,9 @@
 
 #include "kyoshin/menu/CMenuGetItemMulti.hpp"
 
+// code_80135FDC.hpp declares lbl_eu_8066A208 as u32, conflicting with the
+// const-float ml::math epsilon copy in monolib FloatUtils.hpp (pulled in via
+// the CfPadData.hpp include chain). Rename it away; this TU never uses it.
 #include "kyoshin/code_80135FDC.hpp"
 // The battle-manager singleton getter has ONE canonical declaration in
 // kyoshin/cf/CBattleManagerApi.hpp; no rename guard is needed anymore.
@@ -2518,18 +2521,18 @@ __declspec(noinline) void func_801B82E8(CMenuGetItemMulti* self) {
         maskHeld = pad->mTurboPressButtonFlags & 0x8004;
         curHeld = pad->mTurboPressButtonFlags & 0x10000;
         curHeld |= pad->mTurboPressButtonFlags & 0x8;
-        up = (pad->mPad.mPressedButtonFlags >> 10) & 1;
-        down = (pad->mPad.mPressedButtonFlags >> 9) & 1;
-        aPressed = (pad->mPad.mPressedButtonFlags >> 22) & 1;
+        up = (pad->mPad.mPressedButtonFlags >> 21) & 1;
+        down = (pad->mPad.mPressedButtonFlags >> 22) & 1;
+        aPressed = (pad->mPad.mPressedButtonFlags >> 9) & 1;
         maskHeld = maskHeld != 0;
         curHeld = curHeld != 0;
     } else {
         maskHeld = pad->mTurboPressButtonFlags & 0x8004;
         curHeld = pad->mTurboPressButtonFlags & 0x10000;
         curHeld |= pad->mTurboPressButtonFlags & 0x8;
-        up = (pad->mPad.mPressedButtonFlags >> 27) & 1;
-        down = (pad->mPad.mPressedButtonFlags >> 26) & 1;
-        aPressed = (pad->mPad.mPressedButtonFlags >> 22) & 1;
+        up = (pad->mPad.mPressedButtonFlags >> 4) & 1;
+        down = (pad->mPad.mPressedButtonFlags >> 5) & 1;
+        aPressed = (pad->mPad.mPressedButtonFlags >> 9) & 1;
         maskHeld = maskHeld != 0;
         curHeld = curHeld != 0;
     }
@@ -2589,10 +2592,11 @@ __declspec(noinline) void func_801B82E8(CMenuGetItemMulti* self) {
             func_801D216C(&self->mCursor, 1);
             return;
         }
+        u8 mv = self->mMaxVisibleItems;
         self->field_20C = 0;
         {
             char buf[32];
-            s8 m = (s8)self->mMaxVisibleItems;
+            s8 m = (s8)mv;
             if (m == 5) {
                 sprintf(buf, &lbl_eu_80504A3C[0x16b]);
             } else if (m == 4) {
@@ -2807,8 +2811,10 @@ __declspec(noinline) void func_801B82E8(CMenuGetItemMulti* self) {
             for (u8 i = 0; i < 12; ++i) {
                 if (self->mRankSlotIds[i] != 0) {
                     sel = i;
+                    self->field_2E8 = i;
                     if (self->mRankSlotIds[8] != 0) {
                         sel = 8;
+                        self->field_2E8 = 8;
                     }
                     found = 1;
                     break;
@@ -2819,12 +2825,15 @@ __declspec(noinline) void func_801B82E8(CMenuGetItemMulti* self) {
                 return;
             }
             self->field_20C = 1;
-            f64 selF = (f64)sel;
-            self->field_20D = (u8)(s32)(lbl_eu_80667E2C * selF);
-            self->field_20E = (u8)(sel - (s8)self->field_20D * 4);
+            // Retail converts the selected slot via the unsigned int->double
+            // magic (lbl_eu_80667E08) and multiplies in single precision.
+            u8 sel2 = self->field_2E8;
+            f64 selF = (f64)(u32)sel2;
+            self->field_20D = (u8)(s32)(lbl_eu_80667E2C * (f32)selF);
+            self->field_20E = (u8)(sel2 - (s8)self->field_20D * 4);
             nw4r::math::VEC3 pos;
-            if (sel < 0xc) {
-                pos = self->mRankSlotPos[sel];
+            if (sel2 < 0xc) {
+                pos = self->mRankSlotPos[sel2];
             }
             reinterpret_cast<CMenuGetItemMultiCur*>(&self->mCursor)->vfn4(&pos);
             func_80138078__FUl(2);

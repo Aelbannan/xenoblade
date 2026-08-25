@@ -12,6 +12,7 @@
 
 #include <revolution/GX.h>
 #include "monolib/math/CMat34.hpp"
+#include "kyoshin/cf/CfGameManagerData.hpp"  // H3 label-owner decl (lbl_eu_80663E14; lbl_eu_80663E24)
 
 using cf::CfGimmickEne;
 using cf::CfGimmickEneActor;

@@ -1,5 +1,6 @@
 // Voice thread state machines for the battle-main voice system.
 #include "kyoshin/harness_catalog.hpp"
+#include "kyoshin/cf/CfMapItemManager.hpp"
 #include "kyoshin/cf/voice/cvsys/CVS_THREAD.hpp"
 #include "kyoshin/code_802B8A3C.hpp" // func_802A3D54 playback helper decl
 #include "kyoshin/cf/CfGameManager.hpp"

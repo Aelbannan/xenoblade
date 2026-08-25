@@ -2,11 +2,13 @@
 // Replace stubs with high-level C/C++ during decomp.
 
 #include "kyoshin/cf/CBattleManagerApi.hpp"
+#include "kyoshin/cf/CfMapItemManager.hpp"
 #include "kyoshin/cf/object/CfObjectPc.hpp"
 #include "kyoshin/cf/CfSoundMan.hpp"   // cf::CfSoundMan::func_801BFC38 (single decl on owner header)
 #include "monolib/scn/CScnTimeApi.hpp"
 #include "kyoshin/cf/object/CActorParam.hpp"
 #include "kyoshin/CArtsInfo.hpp"   // declares extern "C" func_8009EC9C(u32)
+#include "kyoshin/cf/CfGameManagerData.hpp"  // H3 label-owner decl (lbl_eu_80663E14; lbl_eu_80663E24)
 
 struct PCIf {
     virtual void _v0008();

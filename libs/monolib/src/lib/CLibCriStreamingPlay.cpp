@@ -793,8 +793,7 @@ extern "C" void func_8045C700__20CLibCriStreamingPlayFv(int id, float volume) {
     if (entry != NULL) {
         // Set volume and fade parameters
         entry->field_0x64 = volume;
-        double d = volume;
-        float vol = (float)d;
+        float vol = volume;
         entry->field_0x68 = volume;
         entry->field_0x6C = vol;
         float zero = lbl_eu_8066A50C;

@@ -75,7 +75,6 @@ extern "C" {
     CVoiceHandle*       func_802A330C(int size, int align);
     void*               func_802A34E4(int size);
     void*               func_8016FE34(void* r3);
-    int func_80174C98(void* actor, int* val, int flags); // family-canonical (void*, int*, int)
     OrderGimmickList*   func_800B6BC8();
     void                __ct__cf_CVS_THREAD();
 }

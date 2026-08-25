@@ -8,6 +8,7 @@
 #include <revolution/KPAD.h>
 #include <revolution/PAD.h>
 #include <cstring>
+#include "monolib/math/FloatUtils.hpp"  // H3 label-owner decl (lbl_eu_8066A208)
 
 extern "C" {
     extern u32 lbl_eu_80663E28;
@@ -22,7 +23,6 @@ extern "C" {
     const wchar_t* func_eu_802B13CC();
     // Retail symbols.txt recovers this as Fv (wrong mangling); call by that name for reloc match.
     void setPad__Q22cf13CfGameManagerFv(int r3, CPad* pPad, u32 r5);
-    extern const float lbl_eu_8066A208;
     // Retail sbss singleton (config symbols.txt); mangled spInstance fails reloc name match.
     extern cf::CfPadTask* lbl_eu_80664448;
     // Retail sbss battery slot; mangled sWiimoteBattery fails reloc name match.

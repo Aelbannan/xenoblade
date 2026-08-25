@@ -9,6 +9,7 @@
 #include "monolib/device/CDeviceFile.hpp"
 #include "monolib/util/CPathUtil.hpp"
 #include "monolib/work/CEventFile.hpp"
+#include "kyoshin/cf/CfGameManagerData.hpp"  // H3 label-owner decl (lbl_eu_80663E14; lbl_eu_80663E24)
 extern "C" char* getEntryPtrGrid(char* self, int a, int b);
 extern "C" void* func_80495FF0(void* scene);
 extern "C" mtl::ALLOC_HANDLE func_80496004(void* src);
@@ -143,7 +144,8 @@ bool func_80061D2C(CfResBuffer* buffer, u32 mode) {
     u32 saved404 = buffer->field_404;
     while (buffer->field_404 != 0) {
         u32 oldIdx = buffer->field_400;
-        CfResRingPair pr = CfRes_popPair(buffer);
+        CfResRingPair pr;
+        pr = CfRes_popPair(buffer);
         if ((pr.header >> 24) == mode) {
             ((u32*)buffer->buffer)[oldIdx] |= 0x00080000;
             found = true;
@@ -171,7 +173,8 @@ bool func_80061E8C(CfResBuffer* buffer, u32 mode) {
     u32 saved400 = buffer->field_400;
     u32 saved404 = buffer->field_404;
     while (buffer->field_404 != 0) {
-        CfResRingPair pr = CfRes_popPair(buffer);
+        CfResRingPair pr;
+        pr = CfRes_popPair(buffer);
         if ((pr.header >> 24) == mode) {
             found = true;
             break;
@@ -440,12 +443,10 @@ run:
     func_800A9134();
 }
 
-extern u32 lbl_eu_80663E24;
 extern "C" __declspec(noinline) int CfRes_checkFlags_48000() {
     return (lbl_eu_80663E24 & 0x00048000) != 0 ? 1 : 0;
 }
 
-extern u32 lbl_eu_80663E24;
 extern "C" __declspec(noinline) int CfRes_checkFlags_2000400() {
     return (lbl_eu_80663E24 & 0x02000400) != 0 ? 1 : 0;
 }
@@ -1341,7 +1342,6 @@ extern "C" unsigned long CfRes_getE24Bit22() {
 }
 
 extern "C" int CfRes_getE24Bit18() {
-    extern u32 lbl_eu_80663E24;
     return (lbl_eu_80663E24 >> 18) & 1;
 }
 
@@ -1824,8 +1824,8 @@ extern "C" void CfRes_orBits_649B4(u8* self, u32 bits) {
     *(u32*)self |= bits;
 }
 
-extern u32 lbl_eu_80663E14;
-extern "C" int CfRes_getE14() { return lbl_eu_80663E14; }
+// lbl_eu_80663E14 is declared by the shared headers (CScn*); cast at use.
+extern "C" int CfRes_getE14() { return (int)(uintptr_t)lbl_eu_80663E14; }
 
 extern "C" void CfRes_orBits_649CC(u8* self, u32 bits) {
     *(u32*)self |= bits;

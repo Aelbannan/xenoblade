@@ -7,6 +7,7 @@
 #include "monolib/work/CWorkThreadSystem.hpp"
 #include "kyoshin/plugin/ocBdat.hpp"
 #include <new>
+#include "kyoshin/cf/CfGameManagerData.hpp"  // H3 label-owner decl (lbl_eu_80663E14; lbl_eu_80663E24)
 
 class IUIWindow;
 class IUIWindowSubView; // timer view behind IUIWindow::unk5C (defined in CUIWindowManager.cpp)
@@ -190,7 +191,6 @@ extern const u8 lbl_eu_8052E61C[1];
 
 // Presentation/event bitfield (.sbss, other splits) - talk-event bit gates
 // the 0x608 window path of func_8013CBB4.
-extern u32 lbl_eu_80663E24;
 
 // Actor id -> actor object lookup (plain decl so the call reloc binds to the
 // C++-mangled retail symbol func_800B708C__Fi).

@@ -3,6 +3,7 @@
 #include <types.h>
 #include "kyoshin/cf/CtrlMoveBase.hpp"
 #include "kyoshin/cf/voice/CCharVoice.hpp"
+#include "kyoshin/cf/CfGameManagerData.hpp"  // H3 label-owner decl (lbl_eu_80663E14; lbl_eu_80663E24)
 
 // Forward decls: full player-object layouts are declared after the cf
 // namespace (global scope) - see CtrlPlayerObj below.
@@ -276,7 +277,6 @@ CtrlPlayerObj* func_800BFC68(cf::CfObjectMove* objMove);
 // Global-scope data arrays (MWCC does not mangle global variable names).
 extern u32 lbl_eu_80527E98[];
 extern u32 lbl_eu_80527F10[];
-extern u32 lbl_eu_80663E24;   // global state flags (bit 25/10 tested by func_80097134)
 // sdata2 float constants used by func_80098694 / func_80098194. const
 // declarations so MWCC treats the loads as constants and hoists them into
 // the prologue (see MWCC_CASES §extern const float hoist).

@@ -292,10 +292,10 @@ void func_804C1AFC(CScnEnvLgtCtrl* self, float f) {
 
 // distance-style walk over the light-item ring; taking the iterators by
 // value reproduces retail's four frame-spilled cursor slots.
-static inline int LgtRingDistance(
+static inline u32 LgtRingDistance(
     reslist<CScnEnvLgtCtrlListItem*>::iterator last,
     reslist<CScnEnvLgtCtrlListItem*>::iterator first) {
-    int n = 0;
+    u32 n = 0;
     while (first != last) {
         ++first;
         n++;
@@ -1538,6 +1538,7 @@ extern "C" __declspec(noinline) void func_804C406C(CScnEnvLgtCtrl* self, float f
     // slot index, j = the two unconditional counters, q = third-walk offset.
     // i/j are signed so the gate walk compares with `cmp` (the count compares
     // widen to unsigned because the counts are u32 fields).
+    u8* p;
     u8* q;
     int i;
     int j;
@@ -1611,9 +1612,9 @@ extern "C" __declspec(noinline) void func_804C406C(CScnEnvLgtCtrl* self, float f
             i = self->lgt2.field_0xBE + 1;
         }
         j = 0;
-        q = (u8*)0;
-        for (; j < self->alt2.field_0x48->mCount; j++, q += 0xd8) {
-            func_804C7190((u8*)self->field_0x14_ptr + (u32)q,
+        p = (u8*)0;
+        for (; j < self->alt2.field_0x48->mCount; p += 0xd8, j++) {
+            func_804C7190((u8*)self->field_0x14_ptr + (u32)p,
                           self->alt7.field_0xA8, i,
                           self->lgt2.field_0xC0);
         }

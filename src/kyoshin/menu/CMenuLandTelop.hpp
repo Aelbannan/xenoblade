@@ -5,6 +5,7 @@
 #include "monolib/work/CProcess.hpp"
 #include "monolib/scn/IScnRender.hpp"
 #include "monolib/lib/UnkClass_8045F564.hpp"
+#include "kyoshin/cf/CfGameManagerData.hpp"  // H3 label-owner decl (lbl_eu_80663E14; lbl_eu_80663E24)
 
 namespace nw4r {
 namespace lyt {
@@ -231,7 +232,6 @@ extern CLandTelopGlobal* lbl_eu_806641A0;
 extern u8* lbl_eu_806640E0;
 extern char lbl_eu_805018A8[];
 extern u32 lbl_eu_80663E28;      // render-gate mode bitfield (.sbss; bit 21 = busy)
-extern u32 lbl_eu_80663E24;      // misc game-mode flags (.sbss)
 extern f32 lbl_eu_806673C8;      // layout reset frame constant
 extern u32 __ptmf_null[3];       // null pointer-to-member-function constant
 extern u32 lbl_eu_8052D238[];    // primary vtable

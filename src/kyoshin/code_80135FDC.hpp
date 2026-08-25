@@ -14,6 +14,8 @@
 #include <nw4r/ut/ut_Font.h>
 
 #include "monolib/math/CMat34.hpp"
+#include "kyoshin/cf/CfGameManagerData.hpp"  // H3 label-owner decl (lbl_eu_80663E14; lbl_eu_80663E24)
+#include "monolib/math/FloatUtils.hpp"  // H3 label-owner decl (lbl_eu_8066A208)
 
 class CScn;
 
@@ -250,11 +252,10 @@ extern f32 lbl_eu_80667348;
 extern f64 lbl_eu_80667350;
 extern f64 lbl_eu_80667358;
 extern f64 lbl_eu_80667360;
-extern u32 lbl_eu_8066A208;
+#ifndef CODE_80135FDC_CPP
+#endif
 extern const float lbl_eu_8066A20C;
 extern u32 lbl_eu_806621F4;
-extern CScn* lbl_eu_80663E14;
-extern u32 lbl_eu_80663E24;
 extern char lbl_eu_80500664[];
 
 // string/rodata data (Block B)

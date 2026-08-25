@@ -186,7 +186,6 @@ struct CAIActionEnumHolder {
 // code_802B8A3C.hpp / the other ~30 TU-local declarations (divergent extern
 // "C" type lists for one symbol break every TU whose include chain pulls two
 // of them together with "illegal function overloading" 10197).
-extern "C" int func_80174C98(void* obj, int* out, int tag);
 
 extern "C" void* func_8016FE34(void*);          // -> func_8016FE34
 // NOTE (agent pi-019fef06, 2026-08-11): the two declarations below were

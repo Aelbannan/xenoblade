@@ -569,7 +569,6 @@ void func_80043D90(u8* holder);
 u8* func_80043F18(u8* holder);
 void func_800F4A98(u8* list, u32 type, u32 filter);
 void __dt__80043E88(u8* holder, int flag);
-int func_80174C98(u8* actor, u32* outId, u32 flags);
 void func_800AA318(u32 packed, u32* out0, u32* out1, u32* out2, u32* out3);
 void func_800CB9AC(u8* self, u32 param);
 u8* __ct__cf_CPcEffect07(u8* obj, u8* actor);

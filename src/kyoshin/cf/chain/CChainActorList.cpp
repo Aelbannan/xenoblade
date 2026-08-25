@@ -1,4 +1,5 @@
 #include "kyoshin/cf/chain/CChainActorList.hpp"
+#include "kyoshin/cf/CfMapItemManager.hpp"
 #include "kyoshin/cf/chain/CChainChance.hpp"
 #include "kyoshin/cf/CVision.hpp"
 #include "kyoshin/cf/object/CfObjectActor.hpp"

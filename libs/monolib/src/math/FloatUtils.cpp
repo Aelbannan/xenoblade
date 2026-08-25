@@ -1,5 +1,6 @@
 #include "monolib/math.hpp"
 #include <cmath>
+#include "monolib/math/FloatUtils.hpp"  // H3 label-owner decl (lbl_eu_8066A208)
 
 // ============================================================================
 // Blob monolibdata1.s dissolve: this TU owns the ENTIRE pooled .sdata2 range

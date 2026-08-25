@@ -2,6 +2,7 @@
 
 #include <types.h>
 #include "monolib/math/CVec3.hpp"
+#include "monolib/math/FloatUtils.hpp"  // H3 label-owner decl (lbl_eu_8066A208)
 
 namespace nw4r {
 namespace g3d {
@@ -11,7 +12,6 @@ struct ResMdlData;
 
 // .sdata2 float constants (effect-range thresholds), retail linker names.
 extern const f32 lbl_eu_8066AB74;
-extern const f32 lbl_eu_8066A208;
 
 // Tag prefix the effect-act node names are matched against (pointer held in
 // .sdata, retail linker name).

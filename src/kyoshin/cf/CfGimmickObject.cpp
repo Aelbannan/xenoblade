@@ -3,6 +3,7 @@
 
 #include "kyoshin/harness_catalog.hpp"
 #include "kyoshin/cf/CfGimmickObject.hpp"
+#include "kyoshin/cf/CfGameManagerData.hpp"  // H3 label-owner decl (lbl_eu_80663E14; lbl_eu_80663E24)
 
 using namespace cf;
 

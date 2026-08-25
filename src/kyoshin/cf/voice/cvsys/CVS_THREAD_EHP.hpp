@@ -60,7 +60,6 @@ int func_802A3C44(CVS_THREAD* self, CCharVoice* voicePtr, int voiceId);
 int func_802A3D54(CCharVoice* voicePtr, int voiceId, int arg);
 CVoiceHandle* func_802A7998(CVoiceHandle* exclude);
 CVoiceHandle* func_802A330C(int size, int align);
-int func_80174C98(void* handle, u32* value, int arg);
 CVoiceHandleList* func_800B6BC8();
 int func_802A7FE4(CVoiceHandle* handle);
 }

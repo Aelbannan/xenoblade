@@ -6,6 +6,7 @@
 #include "monolib/lib/CLibCri.hpp"
 #include "monolib/util/FixStr.hpp"
 #include "monolib/util/MemManager.hpp"
+#include "kyoshin/cf/CfGameManagerData.hpp"  // H3 label-owner decl (lbl_eu_80663E14; lbl_eu_80663E24)
 
 extern "C" {
     extern s32 lbl_eu_80575798[];
@@ -18,7 +19,6 @@ extern "C" {
     extern u16 lbl_eu_806642E0;
     extern float lbl_eu_806642E4;
     extern s32* lbl_eu_80663E60;
-    extern volatile u32 lbl_eu_80663E24;
     extern float lbl_eu_80667A08;
     extern float lbl_eu_80667A0C;
     extern float lbl_eu_80667A10;
@@ -1078,7 +1078,7 @@ extern "C" s32 func_801897A0(s32 wantId, s32 type, float f1) {
     if (func_8008585C__Q22cf13CfGameManagerFv()) return 0;
     // Two explicit volatile loads (retail emits both up front).
     // Bit 22 (0x400000) set and bit 18 (0x40000) clear -> refuse.
-    u32 flagsA = lbl_eu_80663E24;
+    u32 flagsA = *(volatile u32*)&lbl_eu_80663E24;  // canonical decl: CfGameManagerData.hpp (non-volatile)
     u32 flagsB = lbl_eu_80663E24;
     if ((flagsA & 0x400000) != 0 && (flagsB & 0x40000) == 0) return 0;
     if (func_80189A04(wantId) == 0) return 0;

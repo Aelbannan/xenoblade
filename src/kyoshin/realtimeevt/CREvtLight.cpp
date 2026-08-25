@@ -14,7 +14,6 @@
 // Resource globals / imports (C ABI from external TUs).
 // lbl_eu_80663E14 must be at global scope (not anonymous namespace) so the
 // SDA21 reloc keeps the plain symbol name.
-extern void* lbl_eu_80663E14;
 extern "C" void* func_804C1BA0(void* mgr, const char* name, int flag);
 extern "C" void  func_804C1D7C(void* mgr, void* handle);
 extern "C" u32   func_80180940(void);

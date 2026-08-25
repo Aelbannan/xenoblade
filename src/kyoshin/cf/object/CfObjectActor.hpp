@@ -4,6 +4,7 @@
 #include "kyoshin/cf/object/CfObjectMove.hpp"
 #include "kyoshin/cf/object/CAIAction.hpp"
 #include "kyoshin/cf/object/CActorParam.hpp"
+#include "kyoshin/cf/CfGameManagerData.hpp"  // H3 label-owner decl (lbl_eu_80663E14; lbl_eu_80663E24)
 
 // Retail float constants referenced by CfObjectActor functions (SDA2 access).
 extern float lbl_eu_80667738;   // CActorParam_UnkVirtualFunc34 / CfObjectActor_UnkVirtualFunc5 threshold
@@ -14,7 +15,6 @@ extern float lbl_eu_8066773C;   // CActorParam_UnkVirtualFunc179 CfObjectMove vf
 
 extern float lbl_eu_80667740;   // CActorParam_UnkVirtualFunc33 clamp threshold
 
-extern u32 lbl_eu_80663E24;     // event/presentation bitfield (.sbss; bit 0x10000000 gates the 33 path); non-volatile extern (see CfObjectMove.hpp); reads that must stay separate use explicit volatile casts
 
 extern u32 lbl_eu_80663E28;     // mode bitfield (.sbss; bit 0x800 gates the 33 path)
 

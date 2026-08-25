@@ -6,6 +6,7 @@
 #include "kyoshin/cf/object/CfObjectObj.hpp"
 #include "kyoshin/cf/IResInfo.hpp"
 #include "monolib/util/MemManager.hpp"
+#include "kyoshin/cf/CfGameManagerData.hpp"  // H3 label-owner decl (lbl_eu_80663E14; lbl_eu_80663E24)
 
 using namespace cf;
 

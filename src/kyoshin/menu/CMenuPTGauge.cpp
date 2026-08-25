@@ -8,21 +8,19 @@
 // code_80135FDC.hpp declares lbl_eu_8066A208 as u32 (line 188), conflicting
 // with the const float epsilon copies elsewhere; rename it out of the way.
 // This TU uses none of them.
-#define lbl_eu_8066A208 ptgCode35FDCepsilonUnused
 #include "kyoshin/code_80135FDC.hpp"
-#undef lbl_eu_8066A208
 #include "monolib/device/CDeviceFont.hpp"
 #include "monolib/util/MemManager.hpp"
 
 #include "decomp.h"
 #include <revolution/GX.h>
+#include "kyoshin/cf/CfGameManagerData.hpp"  // H3 label-owner decl (lbl_eu_80663E14; lbl_eu_80663E24)
 
 // Batch 2026-07-14e: menu-ptgauge-move and menu-ptgauge-cbrender own their methods exclusively.
 // Batch 2026-07-14l: menu-ptgauge-init owns Init exclusively.
 // CLEANUP: renamed all unk fields to descriptive names.
 
 extern "C" {
-extern u32 lbl_eu_80663E24; // Primary event/presentation bitfield (0xAFA40000 = UI suppress)
 extern u32 lbl_eu_80663E28; // Secondary mode bitfield (bit 21/IBM bit 10 = realtime event busy)
 extern char lbl_eu_805039C8[]; // String table base; offsets used for layout/animation/pane names
 extern const f32 lbl_eu_806679E0; // 0.0f

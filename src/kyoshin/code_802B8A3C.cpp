@@ -2,6 +2,7 @@
 // FULL_MATCH: func_802B8D44 -- buffer-size getter (virtual method override).
 
 #include "kyoshin/cf/voice/cvsys/CVS_THREAD_ORDER.hpp"
+#include "kyoshin/cf/CfMapItemManager.hpp"
 #include "kyoshin/harness_catalog.hpp"
 
 #include "kyoshin/code_802B8A3C.hpp"

@@ -1,6 +1,7 @@
 #pragma once
 
 #include <types.h>
+#include "kyoshin/cf/CfGameManagerData.hpp"  // H3 label-owner decl (lbl_eu_80663E14; lbl_eu_80663E24)
 
 // ---------------------------------------------------------------------------
 // C-linkage imports
@@ -17,7 +18,6 @@ extern "C" float lbl_eu_806689EC; // 30.0
 extern "C" float lbl_eu_806689F0; // 0.001
 extern "C" float lbl_eu_806689F4; // 0.1
 extern "C" float lbl_eu_806689F8; // 0.4
-extern "C" CScn* lbl_eu_80663E14;
 
 namespace cf {
 

@@ -2,12 +2,14 @@
 // Replace stubs with high-level C/C++ during decomp.
 
 #include "kyoshin/cf/CBattleManagerApi.hpp"
+#include "kyoshin/cf/CfMapItemManager.hpp"
 #include "kyoshin/harness_catalog.hpp"
 #include "monolib/scn/CScnTimeApi.hpp"
 
 #include "kyoshin/cfsys/CfObjectImplWalker.hpp"
 #include <monolib/device/CDeviceVI.hpp>
 #include <string.h>
+#include "kyoshin/cf/CfGameManagerData.hpp"  // H3 label-owner decl (lbl_eu_80663E14; lbl_eu_80663E24)
 namespace cf {
     void* CfObjectImplWalker::func_800C22C4() { return (void*)((u8*)this + 0x68); }
     u32 CfObjectImplWalker::func_800C5970() { return *(u32*)((u8*)this + 0x380); }

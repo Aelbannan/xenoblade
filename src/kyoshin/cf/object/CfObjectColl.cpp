@@ -5,6 +5,7 @@
 #include <nw4r/math.h>
 
 #include "kyoshin/cf/object/CfObjectColl.hpp"
+#include "kyoshin/cf/CfGameManagerData.hpp"  // H3 label-owner decl (lbl_eu_80663E14; lbl_eu_80663E24)
 
 // Minimal local view: the shared CfGameManager.hpp declares func_80086B48 as
 // a void member, but retail returns the frame delta in f1 (call sites add it

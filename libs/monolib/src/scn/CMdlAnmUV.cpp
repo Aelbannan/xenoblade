@@ -9,6 +9,7 @@
 #include <string.h>
 #include <monolib/util/FixStr.hpp>
 #include "libs/monolib/src/scn/CMdlAnmUV.hpp"
+#include "monolib/math/FloatUtils.hpp"  // H3 label-owner decl (lbl_eu_8066A208)
 
 // Foreign Panic/file/format strings (other TUs' data).
 extern const char lbl_eu_8056E068[];

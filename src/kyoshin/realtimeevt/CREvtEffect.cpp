@@ -12,6 +12,7 @@
 #include "kyoshin/realtimeevt/CREvtEffect.hpp"
 #include "kyoshin/realtimeevt/CREvtObj.hpp"
 #include "kyoshin/code_801862C0.hpp"
+#include "kyoshin/cf/CfGameManagerData.hpp"  // H3 label-owner decl (lbl_eu_80663E14; lbl_eu_80663E24)
 
 // C-linkage imports relocated to CREvtEffect.hpp (see the "C-linkage imports"
 // section there). This TU still defines the CREvt* functions below.

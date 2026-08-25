@@ -1,4 +1,5 @@
 #include "kyoshin/CUIWindowManager.hpp"
+#include "kyoshin/cf/CfGameManagerData.hpp"  // H3 label-owner decl (lbl_eu_80663E14; lbl_eu_80663E24)
 
 // --- CTTask<CUIWindowManager> out-of-line specializations ---
 // The canonical declared-only template emits no bodies; these explicit
@@ -872,10 +873,11 @@ void func_8013D1E8(u32 id) {
         return;
     }
 
+    IUIWindow* window;
     WindowIter endIt = inst->mWindowList2.end();
     WindowIter it = inst->mWindowList2.begin();
     for (; it != endIt; ++it) {
-        IUIWindow* window = *it;
+        window = *it;
         if (window->field_0x68 == id) {
             void* cast = __dynamic_cast(window, 0x10, &lbl_eu_80662170,
                                         &lbl_eu_80661EC8, NULL);

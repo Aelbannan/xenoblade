@@ -2,6 +2,7 @@
 // Replace stubs with high-level C/C++ during decomp.
 
 #include "kyoshin/cf/CBattleManagerApi.hpp"
+#include "kyoshin/cf/CfMapItemManager.hpp"
 #include "kyoshin/plugin/ocUnit.hpp"
 #include "kyoshin/cf/CfGameManager.hpp"
 #include "monolib/device/CDeviceVI.hpp"
@@ -144,7 +145,6 @@ struct CfObjIf {
 
 // C-linkage retail symbols referenced by the plugin functions below.
 extern "C" {
-    extern u32 lbl_eu_80663E24;  // non-volatile extern (see CfObjectMove.hpp); reads needing separate loads cast explicitly
     extern u32 lbl_eu_80663E28;
     extern u16 lbl_eu_80663E42;
     extern u16 lbl_eu_80663E44;
@@ -173,7 +173,6 @@ extern "C" {
     void func_8013D07C(void* subObj, const char* str, int flag);
     void func_8013D448(void* subObj, const char* str);
     unsigned int func_8013EC58();
-    int func_80174C98(void* player, u32* val, int flag);
     int code80135FDC_getByte_64058();
     void* __dynamic_cast(void* obj, int offset, void* rtti, void* targetRtti, int flag);
     int strcmp(const char* s1, const char* s2);

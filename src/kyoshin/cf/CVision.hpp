@@ -3,6 +3,7 @@
 #include <types.h>
 #include "kyoshin/cf/object/IObjectInfo.hpp"
 #include "monolib/core/CSchedule.hpp"
+#include "kyoshin/cf/CfGameManagerData.hpp"  // H3 label-owner decl (lbl_eu_80663E14; lbl_eu_80663E24)
 
 namespace cf{
     // One of the four vision-effect objects referenced by CVision::effectArray.
@@ -609,7 +610,6 @@ extern "C" void* func_80043F18(void* list);
 extern "C" void __dt__80043E88(void* list, int tags);
 extern "C" u8* getGlobalSda(void);
 extern "C" void func_8006E2FC(int id);
-extern u32 lbl_eu_80663E24;
 extern u8 lbl_eu_80663DA0;
 extern "C" void* __dynamic_cast(void* src, long offset, const void* src_type,
                                 const void* dst_type, void* src2dst);
@@ -618,7 +618,6 @@ extern "C" void* __dynamic_cast(void* src, long offset, const void* src_type,
 extern "C" void func_800F4A98(void* list, u32 type, u32 filter);
 extern "C" void* func_800F6EAC(void* list, u32 idx);
 extern "C" void func_80081F90__Q22cf13CfGameManagerFv(u32 a, u32 b);
-extern "C" void func_80174B4C(void* obj, u32 flag);
 
 // Typeinfo names for __dynamic_cast in the player-list loops.
 extern "C" const void* lbl_eu_806618E8;
@@ -661,7 +660,6 @@ extern u32 lbl_eu_80663E28;
 
 // Scene handle whose frame-time drives the vision element decay.
 namespace cf { class CScn; }
-extern CScn* lbl_eu_80663E14;
 
 // Typeinfo name for __dynamic_cast in func_801A7704's second list loop.
 extern "C" const void* lbl_eu_80661970;

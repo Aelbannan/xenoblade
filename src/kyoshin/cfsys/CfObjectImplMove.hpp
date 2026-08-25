@@ -1,6 +1,7 @@
 #pragma once
 
 #include <types.h>
+#include "kyoshin/cf/CfGameManagerData.hpp"  // H3 label-owner decl (lbl_eu_80663E14; lbl_eu_80663E24)
 
 namespace cf {
 
@@ -717,14 +718,13 @@ extern bool func_8006EF04(int mask);
 // C-linkage imports (retail symbol names are unmangled - keep verbatim).
 extern "C" {
 void* func_8016FE34(void* source);
-void func_80174B4C(void* actor, u32 mask);
 void func_8014B2DC(u8* buf);
 void func_80482AB8(u32 id, void* source);
 void* func_800EA444(void* bm);
+#include "kyoshin/cf/CfMapItemManager.hpp" // func_80174C98 (owner decl)
 void* getInstance__Q22cf13CfGameManagerFv();
 void func_802A0E08(void* self);
 void func_802A31AC(void* a, void* b, void* c);
-u32 func_80174C98(void* actor, u32* outVal, u32 flags);
 void func_80043D90(CfMoveEnumHolder* holder);
 CfMoveEnumList* func_80043F18(CfMoveEnumHolder* holder);
 void func_800F4A98(CfMoveEnumList* list, u32 type, u32 filter);
@@ -802,9 +802,7 @@ extern const f64 lbl_eu_80666C90;
 extern const f32 lbl_eu_80666C64;   // func_804E3CDC second argument
 
 extern u32 lbl_eu_80663EF0;
-extern u32 lbl_eu_80663E24;         // global presentation/mode word (CTaskGame.hpp)
 class CScn;  // monolib scene (canonical decl: cf/object/CfObjectMove.hpp)
-extern CScn* lbl_eu_80663E14;       // pointer consumed by func_80496288
 
 // float-returning probe over the lbl_eu_80663E14 object (retail symbol is
 // unmangled - keep C linkage, declared above).

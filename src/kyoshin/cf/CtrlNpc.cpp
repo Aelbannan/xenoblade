@@ -13,6 +13,7 @@
 #include <nw4r/math/math_triangular.h>
 
 #include "kyoshin/cf/CtrlNpc.hpp"
+#include "kyoshin/cf/CfGameManagerData.hpp"  // H3 label-owner decl (lbl_eu_80663E14; lbl_eu_80663E24)
 
 // Retail ctor is a free function (MWCC_CASES §4193): stores the base
 // vtable, initializes the base fields, creates the character object, then

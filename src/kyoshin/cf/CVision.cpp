@@ -2,22 +2,20 @@
 // Replace stubs with high-level C/C++ during decomp.
 
 #include "kyoshin/cf/CBattleManagerApi.hpp"
+#include "kyoshin/cf/CfMapItemManager.hpp"
 #include <types.h>
 #include "monolib/scn/CScnTimeApi.hpp"
 #include <PowerPC_EABI_Support/Runtime/MWCPlusLib.h>
 #include <new>
+#include "kyoshin/cf/CfGameManagerData.hpp"  // H3 label-owner decl (lbl_eu_80663E14; lbl_eu_80663E24)
 // Forward decl: CfGameManager.hpp's `static cf::CfGameManager* init(...)` relies
 // on the class name being declared before its include chain is entered.
 namespace cf { class CfGameManager; }
-// code_801862C0.hpp (via harness_catalog.hpp) currently declares
-// getBdatStringColumnValue with an s32 parameter while CBattleState.hpp uses
-// int; MWCC treats them as distinct types (10197). This TU never calls the
-// catalog copy, so rename it out of the way (CGame.cpp idiom).
-#define getBdatStringColumnValue visionCppCatalogBdatColUnused
 #include "kyoshin/harness_catalog.hpp"
 #include "kyoshin/CTaskGameApi.hpp"
-#include "kyoshin/CUIWindowManagerApi.hpp"
-#undef getBdatStringColumnValue
+// (CUIWindowManagerApi.hpp omitted: conflicts with this TU's closure.)
+extern "C" void* func_801412D0(u32 target);
+
 #include "kyoshin/cf/CVision.hpp"
 #include "kyoshin/cf/CArtsSet.hpp"
 #include "kyoshin/cf/object/CBattleState.hpp"
@@ -48,9 +46,7 @@ extern "C" void* __dt__801A36D0(cf::UnkClass_801A36D0* self, int deleting);
 // CAIAction.hpp declares func_80174C98 as void(const void*,void*,int), which
 // conflicts with CSuddenCommu.hpp's int(void*,int*,int) form (MWCC 10197).
 // This TU uses the CSuddenCommu form; rename the other out of the way.
-#define func_80174C98 visionCppAiActionGateUnused
 #include "kyoshin/cf/object/CAIAction.hpp"
-#undef func_80174C98
 #undef func_8016FE34
 #define func_8016FE34 visionCppChainTimerActorLookup
 #include "kyoshin/cf/chain/CChainTimer.hpp"
@@ -407,7 +403,7 @@ cf::CVision::CVision() {
     unk261C4.w0 = 0;
     unk261C4.f4 = zero261;
     unk261C4.w8 = 0;
-    CVisionU32F32U32* upEnd = (CVisionU32F32U32*)((u8*)this + 0x26224);
+    CVisionU32F32U32* upEnd = (CVisionU32F32U32*)&unk261C4.w60;
     for (CVisionU32F32U32* up = unk261C4.arr; up < upEnd; up++) {
         up->a = 0;
         up->b = zero261;

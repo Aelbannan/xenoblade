@@ -2,6 +2,7 @@
 
 #include <types.h>
 #include "monolib/core/CViewFrame.hpp"
+#include "kyoshin/cf/CfGameManagerData.hpp"  // H3 label-owner decl (lbl_eu_80663E14; lbl_eu_80663E24)
 
 // Verbatim-mangled import: the real retail CfGameManager::func_80086F9C
 // takes the selector argument (call sites pass -1). The inline s16 overload
@@ -299,7 +300,6 @@ extern "C" u32 func_8009CF8C(u32);
 
 // Scene object behind the common-archive alloc handle; its alloc-handle
 // getter (retail unmangled, same declarations as CPartyState.hpp).
-extern CScn* lbl_eu_80663E14;
 extern "C" u32 func_80495FF0(CScn*);
 
 // Window-state word read by func_801FBC7C (.sdata, retail unmangled). const

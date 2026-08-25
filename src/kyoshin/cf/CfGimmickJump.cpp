@@ -2,6 +2,7 @@
 #include "monolib/scn/CScnTimeApi.hpp"
 #include "kyoshin/cf/object/CfObjectActor.hpp"
 #include <nw4r/math.h>
+#include "kyoshin/cf/CfGameManagerData.hpp"  // H3 label-owner decl (lbl_eu_80663E14; lbl_eu_80663E24)
 
 // Warning string literals used by the jump pull-vector sanity check.
 extern const char lbl_eu_80526324[];
@@ -13,8 +14,6 @@ extern "C" {
 extern void* lbl_eu_80535A18[];
 extern char lbl_eu_8050873C[];
 extern char lbl_eu_805357E8[];
-extern void* lbl_eu_80663E14;
-extern int lbl_eu_80663E24;
 extern void* lbl_eu_80664138;
 extern const f32 lbl_eu_80668400;
 extern const f32 lbl_eu_80668404;

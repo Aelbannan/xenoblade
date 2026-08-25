@@ -4016,7 +4016,6 @@ void __wudVendorSpecificEventStackCallback(UINT8 len, UINT8* pData) {
     case WUD_VSE_DELETE_ALL_KEYS: {
         BOOL busyEnabled;
         BOOL busy;
-        u32 libStatus;
 
         DEBUGPrint(pMsg + 0xE00);
 

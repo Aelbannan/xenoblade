@@ -180,9 +180,7 @@ extern u32 lbl_eu_80664244; // auto-sleep/dimming state word written by the ctor
 // Frame-target word: getTargetFramerate() * 300 (ctor + func_80166050/80166150).
 extern u32 lbl_eu_80664248;
 extern u32 lbl_eu_80663E28; // event flag word (bit7 tested by func_80164910)
-extern u32 lbl_eu_80663E24; // global event/presentation bitfield (bit6 cleared by func_80164CFC)
 extern s16 lbl_eu_80502F90[]; // event-id table walked by func_801644D8 (32 entries)
-extern CScn* lbl_eu_80663E14; // scene object (alloc-handle source for func_80495FF0)
 extern const char lbl_eu_80503008[];  // Init: base string copied into each entry
 // Init: 0xAE suffix strings appended to each entry (walked by pointer).
 extern const char* lbl_eu_80530458[];

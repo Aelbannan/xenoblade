@@ -134,7 +134,6 @@ extern "C" int lbl_eu_80662A80;
 extern "C" float lbl_eu_8050EDE0[4];
 extern "C" int func_800B8920(void* addr);
 extern "C" int func_80148778(void*, int);
-extern "C" int func_80174C98(void*, int*, int);
 extern "C" void func_80082568__Q22cf13CfGameManagerFv(int, int, int);
 extern "C" int func_8017FD44(void*);
 extern "C" int func_8017FD4C(int);

@@ -12,6 +12,7 @@
 #include <monolib/math/CVec3.hpp>
 #include <revolution/MTX.h>
 #include "kyoshin/cf/CfGameManager.hpp"
+#include "monolib/math/FloatUtils.hpp"  // H3 label-owner decl (lbl_eu_8066A208)
 
 // ---------------------------------------------------------------------------
 // Types (unit-private)
@@ -224,7 +225,6 @@ extern const f32 lbl_eu_80667C5C;
 extern const f32 lbl_eu_80667C60;
 extern const f32 lbl_eu_80667C64;
 extern const f32 lbl_eu_80667C68;
-extern const f32 lbl_eu_8066A208;   // ml::epsilon
 extern const f32 lbl_eu_80667C6C;
 extern const f32 lbl_eu_80667C70;
 extern const f32 lbl_eu_80667C74;
@@ -235,7 +235,6 @@ extern const f32 lbl_eu_8066A210;   // pi/2
 extern const char lbl_eu_80503D30[];
 extern u32 lbl_eu_805757E0[];
 extern void* lbl_eu_806640B4;   // active table bdat data
-extern u32 lbl_eu_80663E24;     // global flags
 extern u32 lbl_eu_80663D90;     // global value copied into mField78
 
 // ---------------------------------------------------------------------------

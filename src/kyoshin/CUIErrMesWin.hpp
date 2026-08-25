@@ -373,7 +373,6 @@ void* func_8016FE34(void* source);
 int func_802A77E8(void* handle);
 void __ct__8CProcessFv(CProcess* self);
 void __ct__CSysWin(void* syswin, int arg);
-int func_80174C98(void* actor, u32* val, int flags);
 void* func_802A330C(int size, int align);
 int func_802A3D54(CCharVoice* voicePtr, int voiceId, int arg);
 }

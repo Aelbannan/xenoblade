@@ -185,43 +185,77 @@ s32 SFD_SetSeekPos(void* self, s32 seekPos) {
 
 // Fin analysis: once decoding is finishing up, accumulate the final playback
 // position/time into the avplay handle from the seek target or stream header.
+
+// View of the SEE work area fields used here.
+struct SfdAvp;
+struct SfdAvp {
+    u8 pad0[0xDAC];
+    s32 field_0xDAC;
+    s32 field_0xDB0;
+    s32 field_0xDB4;
+    u8 pad1[0xDD4 - 0xDB8];
+    s32 field_0xDD4;
+};
+
+struct SfdSeeWork {
+    u8 pad0[0xE50];
+    s32 field_0xE50;
+    s32 field_0xE54;
+    u8 pad1[0x1FEC - 0xE58];
+    s32 field_0x1FEC;
+    u8 pad2[0x2670 - 0x1FF0];
+    struct SfdAvp* avp;
+    u8 pad3[4]; // 0x2674
+    s32 field_0x2678;
+};
+
+// Channel status entry indexed by field_0x1FEC * 0x74.
+struct SfdSeeChEnt {
+    u8 pad[0x1408];
+    s32 field_0x1408;
+};
+
+// Per-channel record indexed by field_0x1408 * 0x44 into the table at 0x1FD8.
+struct SfdSeeChRec {
+    u8 pad[0x20];
+    s32 field_0x20;
+};
+
 void sfsee_ExecFinAnaly(void* self) {
-    u8* sub = (u8*)self + 0x2674;
-    u8* p = *(u8**)((u8*)self + 0x2670);
+    struct SfdSeeWork* work = (struct SfdSeeWork*)self;
+    u8* selfb = (u8*)self;
+    struct SfdAvp* p = work->avp;
     s32 flag = 0;
 
     if (SFCON_IsEndcodeSkip(self) != 0)
         return;
 
-    if (*(s32*)(p + 0xDAC) <= 0) {
+    if (p->field_0xDAC <= 0) {
         s32 v6;
 
-        if (*(s32*)(sub + 4) == -3)
+        if (work->field_0x2678 == -3)
             v6 = 0;
         else
-            v6 = *(s32*)(p + 0xDD4);
+            v6 = p->field_0xDD4;
         if (v6 >= 0) {
             // Look up the current channel's remaining duration; only apply it
             // when the header carried a valid (non-negative) value.
             s32 r0 = -1;
-            s32 t = *(s32*)((u8*)self + 0x1FEC);
-            u8* ent = (u8*)self + t * 0x74;
-            s32 ch = *(s32*)(ent + 0x1408);
-            u8* q = ((u8*)self + 0x1FD8) + ch * 0x44;
-            s32 v = *(s32*)(q + 0x20);
+            struct SfdSeeChEnt* ent = (struct SfdSeeChEnt*)(selfb + work->field_0x1FEC * 0x74);
+            struct SfdSeeChRec* rec = (struct SfdSeeChRec*)(selfb + 0x1FD8 + ent->field_0x1408 * 0x44);
+            s32 v = rec->field_0x20;
             if (v >= 0)
                 r0 = v;
             if (r0 != -1) {
-                *(s32*)(p + 0xDAC) = v6 + r0;
+                p->field_0xDAC = v6 + r0;
                 flag = 1;
             }
         }
     }
-
-    if (*(s32*)(p + 0xDB0) <= 0 && *(s32*)((u8*)self + 0xE50) > 0) {
-        *(s32*)(p + 0xDB0) = *(s32*)((u8*)self + 0xE50);
+    if (p->field_0xDB0 <= 0 && work->field_0xE50 > 0) {
+        p->field_0xDB0 = work->field_0xE50;
         flag = 1;
-        *(s32*)(p + 0xDB4) = *(s32*)((u8*)self + 0xE54);
+        p->field_0xDB4 = work->field_0xE54;
     }
 
     if (flag)

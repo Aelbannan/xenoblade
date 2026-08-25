@@ -4,6 +4,7 @@
 // pluginUnitRegist.
 
 #include <math.h>
+#include "kyoshin/cf/CfMapItemManager.hpp"
 
 #include "monolib/vm/yvm2.h"
 #include "kyoshin/plugin/ocBdat.hpp"
@@ -43,7 +44,6 @@ extern "C" {
     void func_800EC8FC(cf::CBattleManager*, cf::CfObjectActor*,
                       cf::CBattleStateEntry*, int);
     void* func_800EA444(cf::CBattleManager*);
-    int func_80174C98(void*, int*, int);
     bool func_8006EF04__Fi(int mask);
     cf::CfUnknownSub* func_800F477C(cf::CfCode800F42AC* self);
 

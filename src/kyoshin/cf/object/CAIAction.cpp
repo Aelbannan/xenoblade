@@ -1,4 +1,5 @@
 #include "kyoshin/cf/CBattleManagerApi.hpp"
+#include "kyoshin/cf/CfMapItemManager.hpp"
 #include "kyoshin/cf/object/CAIAction.hpp"
 
 #include <cstring>

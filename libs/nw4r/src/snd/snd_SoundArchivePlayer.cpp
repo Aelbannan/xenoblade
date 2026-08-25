@@ -735,12 +735,8 @@ const void* SoundArchivePlayer::detail_GetFileWaveDataAddress(u32 id) const {
         }
 
         // GetGroupWaveDataAddress, inlined
-        const void* pGroup = NULL;
-        const detail::Util::Table<SoundArchivePlayer::Group>* pTable =
-            SAP_LAYOUT(this)->mGroupTable;
-        if (pTable != NULL && pos.groupId < pTable->count) {
-            pGroup = pTable->items[pos.groupId].waveDataAddress;
-        }
+        const void* pGroup = SapLookupTableWaveDataAddress(
+            SAP_LAYOUT(this)->mGroupTable, pos.groupId);
 
         if (pGroup == NULL) {
             continue;
@@ -748,7 +744,7 @@ const void* SoundArchivePlayer::detail_GetFileWaveDataAddress(u32 id) const {
 
         SoundArchive::GroupItemInfo item;
         if (SAP_LAYOUT(this)->mSoundArchive->detail_ReadGroupItemInfo(
-                id, pos.index, &item)) {
+                pos.groupId, pos.index, &item)) {
             return static_cast<const u8*>(pGroup) + item.waveDataOffset;
         }
     }

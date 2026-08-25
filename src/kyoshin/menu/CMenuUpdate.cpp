@@ -2,9 +2,16 @@
 #include <string.h>
 #include <types.h>
 #include "kyoshin/menu/CMenuUpdate.hpp"
-#include "libs/monolib/src/scn/CScn_8049603C.hpp" // func_8049603C (single owner decl)
 #include "monolib/lib/UnkClass_8045F564.hpp"
-#include "kyoshin/cf/CfGameManagerUnityHelpers.hpp" // code80135FDC_getByte_64059 (owner-API decl)
+// code80135FDC_getByte_64059: owner decl (u8 return) lives in
+// CfGameManagerUnityHelpers.hpp, which isn't self-contained here; local
+// caller-shape copy with the owner's exact signature until that header is
+// includable (owner: kyoshin/code_80135FDC).
+extern "C" u8 code80135FDC_getByte_64059();
+// func_8049603C: retail branches here WITHOUT setting up r3 (stale-register
+// call), so this TU keeps a private no-arg declaration and must not include
+// libs/monolib/src/scn/CScn_8049603C.hpp (owner: monolib CScn).
+extern "C" void* func_8049603C();
 #include "kyoshin/cf/CfGameManager.hpp"
 #include "kyoshin/cf/IResInfo.hpp"
 #include "monolib/util/FixStr.hpp"
@@ -807,7 +814,7 @@ extern "C" __declspec(noinline) void func_801440A8(void* self) {
 
 // func_801443E4
 extern "C" __declspec(noinline) f32 func_801443E4() {
-    Unk_8049603C* mgr = func_8049603C();
+    Unk_8049603C* mgr = (Unk_8049603C*)func_8049603C();
     f32 val = mgr->field_C;
     return lbl_eu_806673C4 - val;
 }

@@ -1,7 +1,7 @@
 #include "kyoshin/help/CHelp_EndEvent.hpp"
 #include <cstring>
+#include "kyoshin/cf/CfGameManagerData.hpp"  // H3 label-owner decl (lbl_eu_80663E14; lbl_eu_80663E24)
 
-extern u32 lbl_eu_80663E24;
 extern char lbl_eu_80571628[0x24];
 
 namespace cf {

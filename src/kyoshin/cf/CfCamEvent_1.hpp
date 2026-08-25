@@ -2,14 +2,14 @@
 
 #include <types.h>
 #include <monolib/math/CVec3.hpp>
+#include "kyoshin/plugin/ocBdat.hpp"  // getBdatStringColumnValue (owner)
+#include "monolib/math/FloatUtils.hpp"  // H3 label-owner decl (lbl_eu_8066A208)
 
 class UnkClass_800821F8;  // fwd decl: only pointer-position use (func_800821F8__Q22cf13CfGameManagerFv result)
 
 // Forward declaration sufficient for CfCamEvent_1.cpp's out-of-line
 // definition of CActorParam's battle-state entry accessor (vtable slot
-// 0x298). The full class lives in kyoshin/cf/object/CActorParam.hpp; it
-// cannot be included here because its CBattleState.hpp dependency declares
-// getBdatStringColumnValue with a conflicting tail type.
+// 0x298). The full class lives in kyoshin/cf/object/CActorParam.hpp.
 namespace cf {
 struct CActorParam_UnkStruct1;
 class CActorParam {
@@ -571,14 +571,12 @@ extern "C" f32   lbl_eu_80666448;
 extern "C" f32   lbl_eu_80666444;
 extern "C" f32   lbl_eu_8066644C;
 extern "C" f32   lbl_eu_80666454;
-extern "C" f32   lbl_eu_8066A208;
 extern const float lbl_eu_8066A210;
 extern "C" void* lbl_eu_806640BC;
 extern "C" u8    lbl_eu_804FB5D0[];
 extern "C" int   func_8003B1EC(void* self);
 extern "C" void* func_8003AA34(void);
 extern "C" u32   func_8003B41C(void* bdat);
-extern "C" u32   getBdatStringColumnValue(void* bdat, const char* column, s32 index); // s32(long) - must match code_801862C0.hpp verbatim
 extern void* lbl_eu_80664164;      // sbss bdat-table pointer (set by func_8003AA34)
 extern char  lbl_eu_80661BB8[6];   // sdata column-name buffer (digit at +4)
 extern char  lbl_eu_80527638[0xA]; // data column-name buffer (digit at +8)

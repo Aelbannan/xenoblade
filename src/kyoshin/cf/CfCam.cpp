@@ -1,4 +1,5 @@
 #include "kyoshin/cf/CfCam.hpp"
+#include "kyoshin/cf/CfMapItemManager.hpp"
 #include "monolib/scn/CScnTimeApi.hpp"
 
 #include "kyoshin/cf/CfGameManagerData.hpp"
@@ -8,7 +9,11 @@
 #include <string.h>
 #include <monolib/math.hpp>
 #include "kyoshin/cf/CfCam_ps.inl"
-#include "libs/monolib/src/scn/CScn_8049603C.hpp" // func_8049603C (single owner decl)
+#include "monolib/math/FloatUtils.hpp"  // H3 label-owner decl (lbl_eu_8066A208)
+// func_8049603C: retail branches here WITHOUT setting up r3 (stale-register
+// call), so this TU keeps a private no-arg declaration and must not include
+// libs/monolib/src/scn/CScn_8049603C.hpp (owner: monolib CScn).
+extern "C" void* func_8049603C();
 // TEMP unblock: monolib/core/CPadManager.hpp currently fails under MWCC
 // (C++11 static_assert / illegal offsetof constant expressions) and
 // CDeviceRemotePad.hpp pulls it in. This TU only needs CDeviceRemotePad::
@@ -100,6 +105,11 @@ extern const f32 lbl_eu_806662DC; // 0.0f
 extern const f32 lbl_eu_806662B8; // 8.0f
 extern f32 lbl_eu_80661B50;       // 40.0f (.sdata)
 extern const f32 lbl_eu_806662A0; // 0.1f
+
+// NOTE: this declaration went missing from the include closure (concurrent
+// edit); restored TU-locally so the TU keeps compiling. Definition is at the
+// bottom of this file (_declspec(noinline) bool func_80074A74).
+extern "C" bool func_80074A74(void* self, f32 argF);
 extern const f32 lbl_eu_806662F0; // 0.4f
 extern const f32 lbl_eu_806662D0; // 1.0f
 }

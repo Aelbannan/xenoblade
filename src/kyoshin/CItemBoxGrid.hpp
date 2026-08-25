@@ -560,7 +560,7 @@ extern "C" void func_801D4C3C(void*, u32);
 extern "C" void func_80124270(void*, u32);
 extern "C" void func_80137E7C(void*, void*, void*);
 extern "C" void func_80137924(void*, void*, void*, void*);
-extern "C" u32 func_8013600C(void*, const char*, u32);
+extern "C" u8 func_8013600C(const void*, const void*, u32);
 extern "C" void func_80136B4C(nw4r::lyt::Layout*, char*, char*, u32);
 extern "C" void func_80136A1C(nw4r::lyt::Layout*, char*, char*, u32);
 extern "C" char* func_8013639C(const void*, const void*, int);

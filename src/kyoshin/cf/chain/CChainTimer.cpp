@@ -12,6 +12,7 @@
 // vtable slots are reached through the CChainBattleObj interface mirror.
 
 #include "kyoshin/cf/chain/CChainTimer.hpp"
+#include "kyoshin/cf/CfMapItemManager.hpp"
 #include "kyoshin/cf/chain/UnkClass_800D8DBC.hpp"
 #include "kyoshin/cf/CBattleManager.hpp"
 #include "kyoshin/cf/CArtsSet.hpp"

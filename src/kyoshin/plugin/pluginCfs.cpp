@@ -32,10 +32,8 @@ extern const f64 lbl_eu_80665E40;
 // External declarations (called functions not declared in included headers)
 // ============================================================================
 extern "C" {
-    extern unsigned long lbl_eu_80663E24;  // game state flags
     extern unsigned long lbl_eu_80663E28;  // game state flags 2
     extern float lbl_eu_80663EDC;          // wait pop timer
-    extern unsigned long lbl_eu_80663E14;  // ignore PAL flag
     extern float lbl_eu_80665E30;          // fixed-point divisor (4096.0f)
     extern float lbl_eu_80665E34;          // 0.5f
     extern float lbl_80665E38__Q23mtl10MemManager;          // scale factor
@@ -1987,7 +1985,7 @@ int setIgnorePal(VMThread* vmThread) {
     int val = vmArgBoolGet(2, arg);
     int neg = -val;
     int orVal = neg | val;
-    func_eu_8049AB50(lbl_eu_80663E14, (unsigned int)orVal >> 31);
+    func_eu_8049AB50((int)lbl_eu_80663E14, (unsigned int)orVal >> 31);
     return 0;
 }
 

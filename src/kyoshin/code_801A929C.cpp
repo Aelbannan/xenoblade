@@ -3,6 +3,7 @@
 
 #include "kyoshin/harness_catalog.hpp"
 #include "monolib/math/CVec3.hpp"
+#include "kyoshin/cf/CfGameManagerData.hpp"  // H3 label-owner decl (lbl_eu_80663E14; lbl_eu_80663E24)
 
 // SDA/sdata2 float pool labels used by the direction helpers below.
 extern const f32 lbl_eu_80667D60; // 0.0f
@@ -14,7 +15,6 @@ extern const f32 lbl_eu_8066A1F8; // pi
 extern const f32 lbl_eu_8066A1FC; // 2*pi
 
 // Global runtime-flag word (bit 0x2000 = bit 13 gates target selection).
-extern u32 lbl_eu_80663E24;
 
 // Retail C-symbol import: camera/scene gate query.
 extern "C" int func_8007BAE4();

@@ -15,6 +15,7 @@
 
 #include "kyoshin/action/CActParamAnim.hpp"
 #include "monolib/scn/CScnTimeApi.hpp"
+#include "monolib/math/FloatUtils.hpp"  // H3 label-owner decl (lbl_eu_8066A208)
 #undef func_80055B88
 #undef func_80053960
 
@@ -3638,17 +3639,15 @@ void func_800527E8(CActParamAnim* self) {
     CActParamAnimStateView* view = reinterpret_cast<CActParamAnimStateView*>(self);
     f32 animSpeed = view->field390;
     f32 field380 = view->field380;
-    f32 secPerFrame = CDeviceVI::getSecPerFrame();
-    f32 field384 = view->field384;
-    f32 frameScale = animSpeed * secPerFrame;
-    f32 z = view->field3C8;
-    f32 speedProd = field384 * field380;
-    Vec v;
+    f32 frameScale = animSpeed * CDeviceVI::getSecPerFrame();
     f32 x = view->field3C0;
+    f32 z = view->field3C8;
+    f32 field384 = view->field384;
+    Vec v;
+    f32 limit = frameScale * (field384 * field380);
     v.x = x;
     v.y = lbl_eu_80665EA0;
     v.z = z;
-    f32 limit = speedProd * frameScale;
     if (PSVECMag(&v) > limit) {
         if (v.x * v.x + v.y * v.y + v.z * v.z == lbl_eu_80665EA0) {
             *reinterpret_cast<ml::CVec3*>(&v) = ml::CVec3::zero;
@@ -3691,10 +3690,10 @@ extern "C" f32 func_80052554(void* obj) {
 
 
 extern "C" int func_80052568(void* data) {
-    u32 mode = *(u32*)(reinterpret_cast<u8*>(data) + 0x260);
-    u32 cleared = mode & ~0x7000;
-    *(u32*)(reinterpret_cast<u8*>(data) + 0x260) = cleared;
-    return 0;
+    u8* base = reinterpret_cast<u8*>(data);
+    int result = (*(u32*)(base + 0x260) >> 18) & 1;
+    *(u32*)(base + 0x260) &= ~0x40000;
+    return result;
 }
 
 extern "C" void func_80052924(CActParamAnim* self, f32 param) {

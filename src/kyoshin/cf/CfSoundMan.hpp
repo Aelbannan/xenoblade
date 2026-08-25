@@ -2,6 +2,7 @@
 
 #include <types.h>
 #include <nw4r/snd.h>
+#include "kyoshin/cf/CfGameManagerData.hpp"  // H3 label-owner decl (lbl_eu_80663E14; lbl_eu_80663E24)
 
 // FX-slot record (0x4FC bytes): two of these sit at CfSoundManGlobal +0x04
 // (mFxSlots). The full field layout lives in code_801C2C14.cpp; this TU only
@@ -204,6 +205,27 @@ namespace cf {
 // 64-entry sound-slot table (retail .bss, 0xC00 bytes).
 extern cf::CfSoundSlot lbl_eu_80575928[64];
 
+// Minimal linked-list node view matching nw4r::ut::LinkListNode's layout
+// (its real members are private), used for manual BasicSound list walks.
+struct CfSoundListNode {
+    CfSoundListNode* mNext; // at 0x0
+    CfSoundListNode* mPrev; // at 0x4
+};
+
+// Prefix view of nw4r::snd::SoundPlayer: one leading word, then the
+// BasicSound play-list head node at +0x04 (begin = mList.mNext,
+// end = &mList).
+struct CfSoundPlayerView {
+    u8 field_0x00[0x04];
+    /* 0x04 */ CfSoundListNode mList;
+};
+
+// nw4r assertion strings used by func_801C1618's checked list deref.
+extern const char lbl_eu_80533C54[];
+extern const char lbl_eu_80533C30[];
+extern const char lbl_eu_80533C84[];
+extern const char lbl_eu_80533C60[];
+
 // C++-mangled retail helper func_800B708C__Fi (actor id -> voice source).
 void* func_800B708C(int id);
 
@@ -244,7 +266,6 @@ extern cf::CfSoundManGlobal* lbl_eu_80664430;
 
 // Global event/presentation flag words (.sbss). lbl_eu_80663E24 bit 9 / bit 11
 // and lbl_eu_80663E28 bit 7 gate the func_801BFB34 sound-start dispatch.
-extern u32 lbl_eu_80663E24;
 extern u32 lbl_eu_80663E28;
 
 // Sound-start gate helpers (defined in other TUs; C ABI so the call relocs

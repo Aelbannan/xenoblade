@@ -6,6 +6,7 @@
 #include "kyoshin/realtimeevt/CREvtModelMap.hpp"
 
 #include <cstring>
+#include "kyoshin/cf/CfGameManagerData.hpp"  // H3 label-owner decl (lbl_eu_80663E14; lbl_eu_80663E24)
 
 // Helper macros for field access
 #define FLD(type, base, off) (*(type*)((char*)(base) + (off)))
@@ -26,7 +27,6 @@ extern "C" {
     extern u32 lbl_eu_805321D4[];    // ptmf constant
     extern u32 lbl_eu_805321E0[];    // ptmf constant
     extern u32 lbl_eu_805037A8[];    // slot param lookup table
-    extern void* lbl_eu_80663E14;      // scene / alloc handle
     extern f32 lbl_eu_80667918;      // float constant (0.0f)
     extern f64 lbl_eu_80667920;      // double constant (int-to-float conversion)
 }

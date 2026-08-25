@@ -10,14 +10,7 @@
 #include "kyoshin/cf/CfPadTask.hpp"
 #include "kyoshin/cf/IResInfo.hpp"
 #include "kyoshin/cf/object/CfObject.hpp"
-// CActorParam.hpp pulls CBattleState.hpp, which declares
-// getBdatStringColumnValue(void*, const char*, int); the unity-helpers header
-// (included later) declares the canonical u32(void*, const char*, s32) form and
-// MWCC forbids overloading an extern "C" function. Rename the CBattleState copy
-// away; this TU uses the unity-helpers declaration.
-#define getBdatStringColumnValue cbattleStateGetBdatStringColumnValue
 #include "kyoshin/cf/object/CActorParam.hpp"
-#undef getBdatStringColumnValue
 #include "kyoshin/cf/object/CObjectParam.hpp"
 // CfObjectMove.hpp declares func_80081900__Q22cf13CfGameManagerFv as void* and
 // getPlayer__Q22cf13CfGameManagerFi as void*(int) to avoid pulling the
@@ -31,17 +24,15 @@
 #undef func_80081900__Q22cf13CfGameManagerFv
 #undef getPlayer__Q22cf13CfGameManagerFi
 // CfObjectMap.hpp's import block declares func_800AA33C as int(char*,...)
-// and getBdatStringColumnValue with s32, clashing with the proper extern "C"
-// versions already in scope from CfObjectMove.hpp / IResInfo.hpp /
-// CActorParam.hpp#CBattleState.hpp (MWCC forbids overloading an extern "C"
+// clashing with the proper extern "C"
+// versions already in scope from CfObjectMove.hpp / IResInfo.hpp
+// (MWCC forbids overloading an extern "C"
 // function). Rename CfObjectMap.hpp's copies out of the way; this TU uses the
 // properly-typed declarations from those headers. (func_80496288 now has a
 // single unified decl.)
 #define func_800AA33C cfObjectMapFunc_800AA33C
-#define getBdatStringColumnValue cfObjectMapGetBdatStringColumnValue
 #include "kyoshin/cf/object/CfObjectMap.hpp"
 #undef func_800AA33C
-#undef getBdatStringColumnValue
 #include "kyoshin/cf/voice/CCharVoice.hpp"
 #include "kyoshin/code_801862C0.hpp"
 
@@ -51,6 +42,7 @@
 #include "monolib/scn/CScn.hpp"
 #include "monolib/util/FixStr.hpp"
 #include <string.h>
+#include "monolib/math/FloatUtils.hpp"  // H3 label-owner decl (lbl_eu_8066A208)
 
 // Local complete type for func_8049603C's result (canonical name per
 // CfGameManager.hpp's fwd-decl; layout matches CTaskGame.hpp's view;
@@ -62,7 +54,6 @@ struct CTaskGameCamView {
     float field_C;
 };
 
-extern "C" CScn* lbl_eu_80663E14;
 extern "C" void func_800B9404(void* object);
 // TU-local decl: func_8007EEF0 is a tail-call thunk (addi r3,r3,0x1c; b func_8009D790)
 // that passes r4 through, so the 1-arg form is intentional here. The retail
@@ -296,7 +287,6 @@ void func_80189424(float value);
 
 extern "C" u32 func_8009CF8C(u32 resourceId);
 extern void func_801BFFAC(float value, float fadeTime);
-extern const float lbl_eu_8066A208;
 extern const float lbl_eu_8066650C;
 extern const float lbl_eu_80666510;
 extern const float lbl_eu_80666548;
@@ -1428,7 +1418,6 @@ u32 cf::CfGameManager::func_80087424() {
     return mObjectFlags;
 }
 
-extern u32 lbl_eu_80663E24;
 bool cf::CfGameManager::func_8007CBC8() {
     return (lbl_eu_80663E24 & 0x80) != 0;
 }
@@ -1451,7 +1440,6 @@ void** cf::CfGameManager::func_8007F8D0() {
 
 extern void __fill_mem(void*, int, int);
 
-extern u32 lbl_eu_80663E24;
 bool cf::CfGameManager::func_800817B0() {
     return (*reinterpret_cast<const u32*>(reinterpret_cast<const u8*>(this) + 0x82C) >> 2) & 1;
 }
@@ -1480,7 +1468,6 @@ extern "C" void CObjectParam_UnkVirtualFunc4__Q22cf12CObjectParamFv(u8* data) {
     *reinterpret_cast<u32*>(data + 0x34) = 0;
 }
 
-extern u32 lbl_eu_80663E24;
 #pragma dont_inline on
 bool cf::CfGameManager::func_80083538() {
     return (lbl_eu_80663E24 & 0x20) != 0;

@@ -1,4 +1,5 @@
 #include "kyoshin/cf/CArtsSet.hpp"
+#include "kyoshin/cf/CfMapItemManager.hpp"
 #include <monolib/device/CDeviceVI.hpp>
 
 #include "kyoshin/cf/CArtsParam.hpp"
@@ -26,7 +27,6 @@ public:
 // keeps the call-site relocs at the retail unmangled names.
 extern "C" int func_80154280(void* param, void* actor, int flags);
 extern "C" int func_80148778(void* obj, int id);
-extern "C" int func_80174C98(void* obj, int* out, int key);
 extern "C" void func_80043D90(void* holder);
 extern "C" void* func_80043F18(void* holder);
 extern "C" void __dt__80043E88(void* holder, int tags);

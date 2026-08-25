@@ -3092,8 +3092,8 @@ int func_80057670(u32 flags, ActParamHost5* host, ActParamVals5* vals, ActParamS
     {
         int keep = 0;
         int edge = 0;
-        int hit = 0;
         if (t == vals->mFloat54) {
+            int hit = 0;
             if (t == vals->mFloat50) {
                 if (static_cast<ActParamData388*>(host->mObj04)->mFloat388 >
                     lbl_eu_80665F80) {

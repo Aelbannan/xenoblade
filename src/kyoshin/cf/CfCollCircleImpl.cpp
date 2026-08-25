@@ -1,6 +1,7 @@
 #include "types.h"
 #include "monolib/core/CDrawGX.hpp"
 #include "kyoshin/cf/CfCollCircleImpl.hpp"
+#include "kyoshin/cf/CfGameManagerData.hpp"  // H3 label-owner decl (lbl_eu_80663E14; lbl_eu_80663E24)
 
 // Shared debug color constants (sdata2). Referencing the named globals keeps
 // the reloc names identical to retail instead of literal pool constants.

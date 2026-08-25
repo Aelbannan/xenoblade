@@ -17,11 +17,24 @@
 // no-arg in CfMapMineManager/pluginCfs); unifying them would change r3
 // setup at the no-arg sites, so both decls stay.
 #define CItem_initItemImplInstances makeCrystalCItemInitItemImplInstancesUnused
+// code_80135FDC.hpp declares func_8049603C as CTaskGameCamView*, while
+// CfGameManager.hpp declares it as UnkScnResult* - rename one away here
+// (this TU never calls it).
+#define func_8049603C makeCrystalCode35FDC9603CUnused
 #include "kyoshin/code_80135FDC.hpp"
+#undef func_8049603C
+// code_80135FDC.hpp:254 declares lbl_eu_8066A208 as extern u32 while
+// monolib/math/FloatUtils.hpp (via CDeviceVI.hpp) declares it const float -
+// MWCC 10563. This TU never references the symbol; rename the later copies.
 #include "monolib/device/CDeviceVI.hpp"
 #include "monolib/core/CPadManager.hpp"
 #define CItem_initItemImplInstances makeCrystalCItemInitItemImplInstancesUnused
+// CfGameManager.hpp:710 re-declares getInstance__Q22cf14CBattleManagerFv
+// with a CBattleManagerView* return while CBattleManagerApi.hpp (included at
+// its top) already carries the shared extern "C" void* copy - MWCC 10505.
+#define getInstance__Q22cf14CBattleManagerFv makeCrystalBmGetInstanceUnused
 #include "kyoshin/cf/CfGameManager.hpp"
+#undef getInstance__Q22cf14CBattleManagerFv
 #undef CItem_initItemImplInstances
 #include "kyoshin/cf/CfPadData.hpp"
 #include "monolib/util/MemManager.hpp"

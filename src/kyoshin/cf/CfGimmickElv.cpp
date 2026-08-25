@@ -3,6 +3,7 @@
 
 #include "kyoshin/cf/CfGimmickElv.hpp"
 #include "monolib/scn/CScnTimeApi.hpp"
+#include "kyoshin/cf/CfGameManagerData.hpp"  // H3 label-owner decl (lbl_eu_80663E14; lbl_eu_80663E24)
 
 // External globals
 extern "C" {
@@ -15,7 +16,6 @@ typedef void (CfGimmickElvData::*CfGimmickElvStateFunc)();
 extern CfGimmickElvStateFunc lbl_eu_80535868[];   // PTMF state table
 extern u32 lbl_eu_805765B0[];  // bit array
 extern f32 lbl_eu_805765A0[3];  // vec3 constant (player-relative check center)
-extern void* lbl_eu_80663E14;  // global pointer (via sda21)
 extern f32 lbl_eu_80668380;    // float constant (0.0f)
 extern f32 lbl_eu_80668384;    // float constant (1.0f)
 extern f64 lbl_eu_80668388;    // double constant

@@ -2,6 +2,7 @@
 // Replace stubs with high-level C/C++ during decomp.
 
 #include "kyoshin/cf/CBattleManagerApi.hpp"
+#include "kyoshin/cf/CfMapItemManager.hpp"
 #include "kyoshin/harness_catalog.hpp"
 #include "monolib/scn/CScnTimeApi.hpp"
 
@@ -14,6 +15,8 @@
 
 
 #include "kyoshin/cf/CPartsChange.hpp"
+#include "kyoshin/cf/CfGameManagerData.hpp"  // H3 label-owner decl (lbl_eu_80663E14; lbl_eu_80663E24)
+#include "monolib/math/FloatUtils.hpp"  // H3 label-owner decl (lbl_eu_8066A208)
 
 using cf::CfPartyInfo;
 using cf::CfPartyInfoSortKey;
@@ -27,6 +30,7 @@ using cf::CPartsChange;
 // the retail `bl` boundaries (MWCC would otherwise inline the tiny bodies).
 #pragma push
 #pragma auto_inline off
+extern "C" void func_800BE12C(void* obj, int a, int b, int c, int d);
 extern "C" CfElemA4Full* func_80193B0C(CfPartsManager* self, u16 arg2);
 extern "C" int func_80198138(CfPartsSlots* self, CfPartsSlotChgView* other,
                               u32 unused, u32 flag);

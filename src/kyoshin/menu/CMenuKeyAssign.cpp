@@ -1,6 +1,7 @@
 // kyoshin/menu/CMenuKeyAssign - key-assign (button mapping) menu (singleton).
 
 #include "kyoshin/cf/CBattleManagerApi.hpp"
+#include "kyoshin/cf/CfMapItemManager.hpp"
 #include "kyoshin/menu/CMenuKeyAssign.hpp"
 
 #include "kyoshin/cf/CfGameManager.hpp"

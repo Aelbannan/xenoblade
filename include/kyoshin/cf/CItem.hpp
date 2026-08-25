@@ -1,13 +1,10 @@
 #pragma once
 
 #include <types.h>
+#include "kyoshin/plugin/ocBdat.hpp"  // getBdatStringColumnValue (owner)
 
 // C-linkage imports (retail symbol names - keep linkage/signatures verbatim)
 extern "C" u32 func_8009CF8C(u32 resourceId);
-
-// BDAT column lookup (retail C-linkage name; declared here like
-// CfObjectPoint.hpp - ocBdat.hpp intentionally does not promote it).
-extern "C" u32 getBdatStringColumnValue(void*, const char*, s32);
 
 // BDAT row base/count helpers (used by func_8015B25C's item-box scan).
 extern "C" u32 func_8003B41C(void* bdat);

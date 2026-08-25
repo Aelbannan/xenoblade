@@ -11,6 +11,7 @@
 #include <monolib/math/CVec4.hpp>
 #include <nw4r/math.h>
 #include <math.h>
+#include "monolib/math/FloatUtils.hpp"  // H3 label-owner decl (lbl_eu_8066A208)
 
 // ---------------------------------------------------------------------------
 // Sin/cos lookup tables: 360 entries of {value, delta} in BSS, built at
@@ -34,7 +35,6 @@ extern f32 lbl_eu_8066B274; // 0.0f
 extern f32 lbl_eu_8066B278; // pi/180
 extern f64 lbl_eu_8066B280; // 0x4330000080000000 (2^52+2^31), pool copy used
                             // by the table initializer's int->float path
-extern f32 lbl_eu_8066A208; // 1e-6f
 
 // 0x4330000080000000 (2^52 + 2^31): MWCC's signed int -> float conversion
 // magic. Retail keeps it in .sdata2 at lbl_eu_8066B268 (same bytes as

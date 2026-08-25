@@ -1,6 +1,7 @@
 #pragma once
 
 #include <types.h>
+#include "kyoshin/cf/CfGameManagerData.hpp"  // H3 label-owner decl (lbl_eu_80663E14; lbl_eu_80663E24)
 
 class CScn;
 class CProcess;
@@ -165,7 +166,6 @@ void addRenderCB__4CScnFP10IScnRenderUlUl(CScn* self, IScnRender* cb,
                                           u32 prio, u32 flag);
 // Battle actor helpers (unmangled retail symbols).
 CBattleCommuActor2* func_8016FE34(CBattleCommuPlayer* source);
-int func_80174C98(CBattleCommuActor2* actor, u32* val, int flags);
 void* __dynamic_cast(void* src, long offset, const void* src_type,
                      const void* dst_type, void* src2dst);
 // Shared ARC resource accessor / message manager.
@@ -187,7 +187,6 @@ extern const f32 lbl_eu_80667DE0;           // 0.0f (animation frame reset)
 extern const f32 lbl_eu_80667DE4;           // animation "reached frame" bound
 extern void* lbl_eu_80664090;               // localized message table handle
 extern u32 lbl_eu_80663E28;                 // global state flags (bit 21 = event busy)
-extern u32 lbl_eu_80663E24;                 // global event/presentation flags
 extern const void* lbl_eu_80661C60;         // RTTI typeinfo (actor source type)
 extern const void* lbl_eu_80661BE8;         // RTTI typeinfo (actor dest type)
 

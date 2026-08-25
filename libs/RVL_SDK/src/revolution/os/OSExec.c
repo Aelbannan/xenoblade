@@ -10,6 +10,7 @@
 #define TICKET_VIEW_SIZE 0xD8
 
 BOOL __OSInReboot;
+volatile int Prepared;
 
 void Run(void (*func)(void)) {
     ICFlashInvalidate();
@@ -232,9 +233,10 @@ extern BOOL DVDLowOpenPartitionWithTmdAndTicketView(const u32 offset,
 extern BOOL DVDLowOpenPartition(const u32 offset, const ESTicket *ticket,
                                 const u32 certsSize, const u8 *certs,
                                 ESTitleMeta *tmd, DVDLowCallback callback);
-extern volatile u32 DVDLowIntType;
-extern void callback(u32 type);
-extern DVDDiskID id;
+/* Retail defines these in OSExec.o (.sbss/.bss). */
+volatile u32 DVDLowIntType;
+void* __OSNextPartitionType;
+DVDDiskID id ALIGN(32);
 
 extern void __OSGetPlayTime(ESTicketView *ticket, u32 *pLimit, u32 *pUsed);
 extern void __OSWriteExpiredFlag(void);
@@ -250,8 +252,10 @@ extern s32 IPCCltReInit(void);
 /* Retail pool strings (.data).
  * lbl_80551F30 = "\nOSExec(): Failed to exec %d in %d\n"
  * lbl_80551F54 = "\nOSExec(): The specified game doesn't exist in the disc\n" */
-extern const char lbl_80551F30[];
-extern const char lbl_80551F54[];
+static char lbl_80551F30[0x24] =
+    "\nOSExec(): Failed to exec %d in %d\n";
+static char lbl_80551F54[0x39] =
+    "\nOSExec(): The specified game doesn't exist in the disc\n";
 
 void __OSLaunchNextFirmware(void) {
     u8 *bootInfo;
@@ -482,17 +486,16 @@ void __OSLaunchNextFirmware(void) {
 
 /* .sdata:0x80663240 "%016llx" - retail snprintf format, referenced via
  * sda21 from __OSBootDolSimple. */
-extern const char lbl_80665B70[8];
+static char lbl_80665B70[8] = "%016llx";
 
 /* .data:0x8054E8B0 "2004/02/01" - retail apploader date string. */
-extern const char lbl_80551F90[0x10];
+static char lbl_80551F90[0xB] = "2004/02/01";
 
 /* Missing from revolution/dvd.h. */
 extern void DVDSetAutoInvalidation(BOOL invalidate);
 
 /* Defined at the end of this TU (retail .fn Callback, local). */
 extern void Callback(void);
-extern volatile int Prepared;
 
 /*
  * Reads the apploader/DOL start sector from the disc and caches it.
@@ -702,7 +705,7 @@ void __OSBootDolSimple(s32 param1, u32 param2, u32 regionStart, u32 regionEnd,
 /* .sdata:0x80663248 "%d" - retail sprintf format string, referenced via
  * sda21 from __OSBootDol (MWCC_CASES §1h: fixed-size extern keeps the
  * retail pool label instead of a TU-local @N pool symbol). */
-extern const char lbl_80665B78[8];
+static char lbl_80665B78[3] = "%d";
 
 void __OSBootDol(u32 doloffset, u32 restartCode, u32* argv) {
     char doloffInString[20];
@@ -735,7 +738,6 @@ void __OSBootDol(u32 doloffset, u32 restartCode, u32* argv) {
 }
 
 
-extern volatile int Prepared;
 void Callback() {
     Prepared = 1;
 }

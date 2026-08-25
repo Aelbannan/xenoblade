@@ -147,7 +147,7 @@ void func_80275454(UnkCode8027513C* self) {
                 }
                 
                 // Play sound effect at position
-                camObj = func_8049603C(lbl_eu_80663E14);
+                camObj = (UnkCamObj*)func_8049603C(lbl_eu_80663E14);
                 camVal = lbl_eu_806689E8 - camObj->field_0xC;
                 func_801BFDE8(0, mode, pos, camVal, lbl_eu_806689EC);
             }

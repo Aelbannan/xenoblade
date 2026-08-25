@@ -304,7 +304,7 @@ struct CTaskGameCamView {
 // at the top of this file).
 CUICfGlobalSettings* getUnk80664658();
 void* __ct__8011C1B8(void* ctx, u32 scene);
-extern u8* lbl_eu_80663E14;
+// lbl_eu_80663E14 comes from CfGameManagerData.hpp (CScn*) - no local redecl.
 }
 
 // Busy/state probe called by func_80134538 with the singleton as its arg

@@ -8,6 +8,7 @@
 #include "monolib/util/MemManager.hpp"
 #include "monolib/core/CScheduleItem.hpp"
 #include "monolib/effect/CERand.hpp"
+#include "monolib/math/FloatUtils.hpp"  // H3 label-owner decl (lbl_eu_8066A208)
 extern "C" void func_804E4DD4(f32);
 #include "monolib/effect/code_804CC2B8.hpp"
 #include <revolution/MTX.h>
@@ -213,7 +214,6 @@ void func_804D9F00(ml::CVec3* out, const ml::CVec3* a, const ml::CVec3* b);
 struct CScnRootEnv;
 extern CScnRootEnv* lbl_eu_806659B8;
 extern u8 lbl_eu_80663B3C;
-extern f32 lbl_eu_8066A208;
 extern f32 lbl_eu_8066B0A8;
 extern f32 lbl_eu_8066B0C0;
 extern f32 lbl_eu_8066B0C4;

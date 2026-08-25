@@ -3,6 +3,7 @@
 #include "monolib/math.hpp"
 #include "monolib/core/CDrawGX.hpp"
 #include <nw4r/math.h>
+#include "kyoshin/cf/CfGameManagerData.hpp"  // H3 label-owner decl (lbl_eu_80663E14; lbl_eu_80663E24)
 
 // Render an AABB debug box: builds a Y-axis rotation matrix from the shape's
 // angle plus its world position, then draws the min/max cube through CDrawGX.

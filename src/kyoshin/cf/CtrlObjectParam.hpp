@@ -4,6 +4,7 @@
 #include "kyoshin/cf/object/CActorParam.hpp"
 #include "monolib/util/FixStr.hpp"   // ml::FixStr<64> for the func_800AA33C import
 #include "kyoshin/plugin/ocBdat.hpp"  // getBdatStringColumnValue (defining TU: ocBdat.cpp)
+#include "kyoshin/cf/CfGameManagerData.hpp"  // H3 label-owner decl (lbl_eu_80663E14; lbl_eu_80663E24)
 
 // C-ABI imports used by func_800A18A4 (bdat file lookup / bdat init hook).
 extern "C" void* getFP__FPCc(const char* name);
@@ -11,7 +12,6 @@ extern "C" void* func_8003AA34();
 
 // Global data imports (MWCC does not mangle global-scope variable names).
 extern u32 lbl_eu_80663E88;    // work-buffer pointer (.sbss, sda21)
-extern u32 lbl_eu_80663E24;    // global state flag (.sbss, sda21, func_8009DBF4 bit-20 test)
 extern u32 lbl_eu_8052E9B0[];   // 0x90-byte .data object; its address is snapshot to the stack (.data, __ct__8009ED08)
 namespace cf { struct CHelpManager; }
 extern cf::CHelpManager* lbl_eu_80664A10;  // CHelpManager singleton pointer (.sbss, func_800A18A4 byte flag at +0x16)
@@ -108,7 +108,6 @@ extern "C" void func_80280F44();                                            // p
 
 extern "C" void func_80174AE8(void* self);                                  // CfMapItemManager.cpp (row-sync helper)
 extern "C" void func_80174B3C(void* self, u8 a, u8 b, u8 c);               // CfMapItemManager.cpp (row-sync helper)
-extern "C" void func_80174B4C(void* actor, u32 flags);                     // CfMapItemManager.cpp / CtrlAct.hpp (status write)
 
 struct CPcKizunagramBig;  // defined in src/kyoshin/CPcKizunagram.hpp (only used through a pointer here)
 struct CEventDataTable;   // defined in src/kyoshin/cf/CTaskREvent.hpp (global scope; only used through a pointer here)

@@ -13,9 +13,10 @@
 // func_8016FE34, func_800BE924), the base constructor __ct__cf_CVS_THREAD,
 // and func_800B6BA4 are declared in CVS_THREAD_VISION_BREAK.hpp.
 
-// Active-check function type: vtable[0x2BC/4] on a CVoiceHandle.
-typedef int (*IsActiveFunc)(CVoiceHandle*);
-
+// Sibling-voice imports (func_802A3E88, func_802A3BEC, func_802A3C44,
+// func_802A3D54, func_802A330C, func_802A34E4, func_802A7A54,
+// func_8016FE34, func_800BE924) and the base constructor
+// __ct__cf_CVS_THREAD are declared in CVS_THREAD_VISION_BREAK.hpp.
 // us-802abc94 (func_802A955C)
 // Completion callback: if no active voice is playing, invoke the playback
 // virtual (CVS_THREAD::func_802A3B50, vtable slot 1).
@@ -133,13 +134,13 @@ CVS_THREAD_VISION_BREAK* __ct__802A92D8(CVoiceHandle* handle, int param) {
         }
     }
 
-    // Copy the init-state triple (lbl_eu_80539D70). Word 1 is read first per
-    // retail load order; the single pointer keeps the label materialized
-    // once via lis+addi (retail r5).
-    u32 v1;
-    u32* p0;
-    v1 = (p0 = lbl_eu_80539D70)[1];
-    ((CVS_THREAD_VISION_BREAK_raw*)obj)->state0 = (u32*)p0[0];
+    // Copy the init-state triple (lbl_eu_80539D70). Scratch temporaries
+    // claim low->high by birth, so reading word 1 first colours its load
+    // into r0 and the word-0 load into r4 (retail's pairing).
+    u32* p0 = lbl_eu_80539D70;
+    u32 v1 = p0[1];
+    u32 v0 = p0[0];
+    ((CVS_THREAD_VISION_BREAK_raw*)obj)->state0 = (u32*)v0;
     ((CVS_THREAD_VISION_BREAK_raw*)obj)->state1 = v1;
     ((CVS_THREAD_VISION_BREAK_raw*)obj)->state2 = p0[2];
 
@@ -152,6 +153,9 @@ CVS_THREAD_VISION_BREAK* __ct__802A92D8(CVoiceHandle* handle, int param) {
 // voice handles, then selects a voice ID from one of two tables (based on
 // field_0x24 threshold) and plays it. Falls back to vtable[2] if play fails.
 void func_802A93FC(CVS_THREAD_VISION_BREAK* self) {
+    // Declared first so MWCC colours the object-list walk into r31/r30,
+    // leaving r29 for `self` (retail's allocation).
+    reslist<cf::CfObject*>* list;
     // Reset the state triple from lbl_eu_80539D7C. Pointer increment
     // reproduces the lwzu/spread load-with-update fold (same shape as the
     // CVS_THREAD_BATTLE_END triple copy); v0 declared first so MWCC colours
@@ -168,13 +172,14 @@ void func_802A93FC(CVS_THREAD_VISION_BREAK* self) {
         return;
     }
 
-    // Check if the handle is already active.
-    if (((IsActiveFunc)handle->vtable[0x2BC / 4])(handle) != 0) {
+    // Check if the handle is already active. Phantom-vtable view so the
+    // dispatch emits the retail lwz r12 chain (slot 173 = offset 0x2BC).
+    if (((CVoiceHandleVTable*)handle)->isVoiceActive() != 0) {
         return;
     }
 
     // Iterate through the global object list, processing voice handles.
-    reslist<cf::CfObject*>* list = func_800B6BA4();
+    list = func_800B6BA4();
     for (reslist<cf::CfObject*>::iterator it = list->begin(); it != list->end(); ++it) {
         cf::CfObject* obj = *it;
         // func_8016FE34 returns a CVoiceHandle*, and the CCharVoice is embedded at +0x3E9C.

@@ -14,6 +14,7 @@
  */
 
 #include "kyoshin/cf/CfGimmick.hpp"
+#include "kyoshin/cf/CfGameManagerData.hpp"  // H3 label-owner decl (lbl_eu_80663E14; lbl_eu_80663E24)
 
 // View of the singleton returned by func_8003AA34 whose members are the
 // per-gimmick-type bdat table pointers; the ctor loads the object-gimmick
@@ -388,7 +389,6 @@ void func_80080F44__Q22cf13CfGameManagerFv(void* obj);
 // Small-data globals read by this TU (retail @sda21 accesses; global-scope
 // variables keep their names without `extern "C"`).
 // ---------------------------------------------------------------------------
-extern void* lbl_eu_80663E14;   // .sbss scene/handle pointer
 // .sdata2 countdown constants (func_801F75CC).
 extern f32 lbl_eu_806681A0;
 extern f32 lbl_eu_806681B8;

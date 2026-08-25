@@ -55,6 +55,7 @@ public:
 // the cf::CfGameManager statics whose identifiers already carry the C++
 // mangling and are therefore emitted verbatim. Declared at global scope
 // (outside namespace cf) so the TU's global-scope helpers can call them.
+#include "kyoshin/plugin/ocBdat.hpp"  // getBdatStringColumnValue (owner)
 extern "C" {
 __declspec(noinline) int func_8006A53C(u16 a, u16 b);
 int func_800AA33C(ml::FixStr<64>& buf, u32 packed, int prefixFlag, int suffixFlag);
@@ -62,7 +63,6 @@ int getFileSize__11CDeviceFileFPCc(const char* pPath, int flags);
 void func_800C1CAC(u32 arg0, u32 arg1);
 void* func_8003AA34();
 int CfRes_getD80Flag();
-u32 getBdatStringColumnValue(void* bdat, const char* column, int index);
 u32 func_80086B1C__Q22cf13CfGameManagerFv();
 u32 func_80086B2C__Q22cf13CfGameManagerFv();
 }

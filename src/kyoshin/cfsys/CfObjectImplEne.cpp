@@ -2,9 +2,12 @@
 // Replace stubs with high-level C/C++ during decomp.
 
 #include "kyoshin/cfsys/CfObjectImplEne.hpp"
+#include "kyoshin/cf/CfMapItemManager.hpp"
 #include "monolib/scn/CScnTimeApi.hpp"
 #include "monolib/math/CVec3.hpp"
 #include "kyoshin/realtimeevt/CREvtEffect.hpp"
+#include "kyoshin/cf/CfGameManagerData.hpp"  // H3 label-owner decl (lbl_eu_80663E14; lbl_eu_80663E24)
+#include "monolib/math/FloatUtils.hpp"  // H3 label-owner decl (lbl_eu_8066A208)
 
 void __dt__Q22cf15CfObjectImplEneFv();
 

@@ -211,6 +211,7 @@ void func_8024577C(void* self, u16 val) {
     u8 oldA;
     u8 oldB;
     int off;
+    int roff;
     i = 0;
     oldA = cur->field_0A;
     oldB = cur->field_0B;
@@ -219,7 +220,8 @@ void func_8024577C(void* self, u16 val) {
     count = base[0x318];
 
     while (i < count) {
-        if (*(const u16*)(i * 0x18 + 0x18 + base) == val) {
+        roff = i * 0x18;
+        if (*(const u16*)((int)base + roff + 0x18) == val) {
             if (i >= 5) {
                 cur->field_0A = 4;
                 cur->field_0B = i - 4;

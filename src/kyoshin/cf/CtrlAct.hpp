@@ -870,11 +870,10 @@ struct CtrlActChainObj {
 // ---------------------------------------------------------------------------
 // C-linkage imports (retail symbol names - keep linkage/signatures verbatim)
 // ---------------------------------------------------------------------------
+extern "C" long func_80174C98(void* actor, void* outVal, unsigned long flags); // matches CfMapItemManager.hpp
 extern "C" void func_80174C24(void* obj, u32 flag);
 extern "C" void* func_8016FE34(void* r3);       // voice/battle-list resolve
 extern "C" int func_8004C5EC(void* battleObj);  // battle-state page id
-extern "C" void func_80174B4C(void* actor, u32 flags);
-extern "C" int func_80174C98(void* actor, u32* val, int flags);
 extern "C" int func_80148778(void* obj, int id);
 // func_800D11B0 / func_800D69D8 extra imports (retail C-ABI names).
 extern "C" f32 func_80190938();                    // battle-list fallback height
@@ -947,7 +946,7 @@ extern "C" int func_800D64E8(CtrlActView* self);
 extern "C" int func_800D6720(CtrlActView* self, int flag);
 
 // Scene object pointer fed to func_80496288 (.sbss).
-extern void* lbl_eu_80663E14;
+class CScn;
 
 // Retail vtables stored manually by the novtable ctors (.data).
 extern const u32 lbl_eu_80527BB0[];

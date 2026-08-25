@@ -1,6 +1,7 @@
 #pragma once
 
 #include <types.h>
+#include "kyoshin/cf/CfGameManagerData.hpp"  // H3 label-owner decl (lbl_eu_80663E14; lbl_eu_80663E24)
 
 // Declared BEFORE the monolib includes: functions.hpp (pulled in via
 // monolib/scn/CScnNw4r.hpp) declares func_8004302C as a plain C++ function,
@@ -572,7 +573,6 @@ extern "C" void func_eu_804520D0(char* str);
 extern "C" cf::CTaskGameCf* create__Q22cf11CTaskGameCfFv(CProcess* pParent, int arg2);
 // Scene object (alloc-handle source for func_80495FF0; same symbol as
 // CTaskREvent.hpp).
-extern CScn* lbl_eu_80663E14;
 // Global flag word raised to 0x10000000 by retail func_80042274 after the
 // cf::CTaskGameCf create call.
 extern u32 lbl_eu_80663E28;
@@ -610,7 +610,6 @@ extern u32 lbl_eu_80663D24;
 extern u32 lbl_eu_80663D28;
 extern u32 lbl_eu_80663D30;
 extern u32 lbl_eu_80663D34;
-extern u32 lbl_eu_80663E24;
 extern u32 lbl_eu_806649F4;
 extern const f32 lbl_eu_80665D78;
 

@@ -1,6 +1,7 @@
 #pragma once
 
 #include <types.h>
+#include "kyoshin/cf/CfGameManagerData.hpp"  // H3 label-owner decl (lbl_eu_80663E14; lbl_eu_80663E24)
 
 // Minimal nw4r sound-object interface used by func_8016C888 (sound slot +0x00
 // dereferenced to call SetPlayerPriority). Declared here at global scope
@@ -244,4 +245,3 @@ extern "C" cf::SoundSlotEntry* func_801BFAE4(u16 handle);
 // Model-layer global passed as the first func_80489A60 argument (.sbss).
 // CScn* to stay compatible with CfObjectMove.hpp's declaration (both TUs
 // include this header).
-extern CScn* lbl_eu_80663E14;

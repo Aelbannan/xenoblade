@@ -1,5 +1,6 @@
 #include "kyoshin/cf/voice/CCharVoice.hpp"
 #include <string.h>
+#include "kyoshin/cf/CfGameManagerData.hpp"  // H3 label-owner decl (lbl_eu_80663E14; lbl_eu_80663E24)
 
 // ---------------------------------------------------------------------
 // Imported linker symbols (data).  At global scope MWCC does not mangle
@@ -7,7 +8,6 @@
 // ---------------------------------------------------------------------
 extern const char lbl_eu_805106D4[];   // empty default voice name ("")
 extern char*       lbl_eu_80662C98;    // default voice path template string
-extern CVoiceSndMgr* lbl_eu_80663E14;   // sound-manager singleton (scene lookup)
 extern char        lbl_eu_805398B0[];  // vtable for CCharVoice
 
 // Volume/coefficient floats used by the archive-voice sound system.

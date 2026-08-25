@@ -1,8 +1,10 @@
 #include "kyoshin/cf/CBattleManagerApi.hpp"
+#include "kyoshin/cf/CfMapItemManager.hpp"
 #include "kyoshin/cf/voice/CCharVoiceMan.hpp"
 #include "kyoshin/UnkClass_805764CC.hpp"
 #include "monolib/math/Random.hpp"
 #include "monolib/util/MemManager.hpp"
+#include "kyoshin/cf/CfGameManagerData.hpp"  // H3 label-owner decl (lbl_eu_80663E14; lbl_eu_80663E24)
 
 // Global-scope free functions matching the retail C names: MWCC mangles a
 // global no-arg func_800B07E8() to func_800B07E8__Fv and a global

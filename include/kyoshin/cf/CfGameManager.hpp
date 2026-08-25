@@ -2,6 +2,7 @@
 
 #include <types.h>
 #include "kyoshin/cf/CBattleManagerApi.hpp"
+#include "kyoshin/cf/CfGameManagerData.hpp"  // lbl_eu_80663E14 / lbl_eu_80663E24 (defined in this module)
 
 class CPad;
 class CScn;
@@ -768,7 +769,7 @@ namespace ml { class CVec3; }
 // CfObjectMove.hpp declares the same prototype.
 void* func_800AD860(void* object);
 extern "C" void func_8009D018(u32 first, u32 second);
-extern "C" void* func_801412D0(u32);
+// func_801412D0 is owned by kyoshin/CUIWindowManager.hpp.
 extern "C" void func_8013F244();
 extern "C" void func_8015B11C();
 extern "C" void* func_802A2424();

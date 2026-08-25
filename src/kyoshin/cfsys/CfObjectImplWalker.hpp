@@ -3,6 +3,7 @@
 #include <types.h>
 #include <monolib/math/CVec3.hpp>
 #include "kyoshin/plugin/ocBdat.hpp"
+#include "kyoshin/cf/CfGameManagerData.hpp"  // H3 label-owner decl (lbl_eu_80663E14; lbl_eu_80663E24)
 
 namespace cf {
 
@@ -1088,8 +1089,6 @@ void func_800FE738();
 void func_800C819C();
 void func_800C86E8(void* self);
 void func_800D9978(void* mgr, void* obj);
-u32 func_80174C98(void* actor, u32* outVal, u32 flags);
-void func_80174B4C(void* actor, u32 flags);
 void func_8006BBF4(void* obj, u32 mask, int flag);
 u32 func_8009CF8C(u32 resourceId);
 int func_80133F48(int id, float f);
@@ -1188,9 +1187,7 @@ extern const f32 lbl_eu_80666BBC;   // sdata2 constant
 extern const f32 lbl_eu_80666BC0;   // sdata2 constant
 
 // Global-scope data symbols (MWCC does not mangle global variable names).
-extern u32 lbl_eu_80663E24;   // presentation/event bitfield (.sbss)
 extern u32 lbl_eu_80663E28;   // presentation bitfield 2 (.sbss)
-extern void* lbl_eu_80663E14; // scene object pointer (.sbss)
 extern f32 lbl_eu_80666B8C;   // sdata2 constant
 extern const f32 lbl_eu_80666B88;  // sdata2 constant (0.5f)
 extern const f32 lbl_eu_80666B90;  // sdata2 constant

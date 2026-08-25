@@ -6,6 +6,7 @@
 #include "monolib/lib/UnkClass_8045F564.hpp"
 #include "monolib/math/CVec3.hpp"
 #include "monolib/work/CProcess.hpp"
+#include "kyoshin/cf/CfGameManagerData.hpp"  // H3 label-owner decl (lbl_eu_80663E14; lbl_eu_80663E24)
 
 // Forward declarations (full definitions live in the monolib/nw4r headers,
 // included by the TU that needs them).
@@ -71,7 +72,6 @@ extern char lbl_eu_8052C858[];  // CMenuMiniMap2 composite vtable block (+0x24/+
 extern char lbl_eu_8052CA88[];  // CMMClock vtable
 // Presentation/mode flag words (.sbss) tested by cbRenderBefore.
 extern u32 lbl_eu_80663E28;
-extern u32 lbl_eu_80663E24;
 // Minimap process singleton instance pointer (.sbss).
 extern u32 lbl_eu_80663FB0;
 // CMiniMap vtable + the +0x2C subobject vtable (ctor stores).

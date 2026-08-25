@@ -900,7 +900,6 @@ extern "C" void* func_8009EC9C(u16 index);            // character-data lookup
 extern "C" u32 func_800A32BC();                       // character-data category
 extern "C" u32 func_8003B1EC(void* fp);               // BDAT row count
 extern "C" u32 func_8009CF8C(u32 resourceId);         // message-count lookup
-extern "C" u32 func_80174C98(void* actor, u32* outVal, u32 flags);
 extern "C" u32 func_8013606C(const void*, const void*, u32);   // msg-id lookup
 // func_80136254 / func_8013639C return wider-than-u16 values in retail; the
 // call sites truncate with an explicit (u16) cast (see func_8027EA6C).

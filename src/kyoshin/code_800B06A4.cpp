@@ -2,10 +2,12 @@
 // Replace stubs with high-level C/C++ during decomp.
 
 #include <types.h>
+#include "kyoshin/cf/CfMapItemManager.hpp"
 #include "kyoshin/code_800B06A4.hpp"
 #include <string.h>
 #include <math.h>
 #include <new>
+#include "kyoshin/cf/CfGameManagerData.hpp"  // H3 label-owner decl (lbl_eu_80663E14; lbl_eu_80663E24)
 
 void UnkClass_800B0AD8::clearCounters() {
     unkB00 = 0;
@@ -2086,9 +2088,7 @@ reslist<cf::TboxInfo>::~reslist() {
     extern void* lbl_eu_805290DC[];
     TboxInfoReslistLayout& obj = *(TboxInfoReslistLayout*)this;
     obj.mVtable = (void*)lbl_eu_805290DC;
-    CfReslistNode* cur;
-    CfReslistNode* node;
-    node = obj.mStartNodePtr->mNext;
+    CfReslistNode* node = obj.mStartNodePtr->mNext;
     // The sentinel pointer is re-read from the object each iteration
     // (the node stores may alias it), so it is not cached in a local.
     // Comparison written sentinel-first to mirror retail's cmpl operand

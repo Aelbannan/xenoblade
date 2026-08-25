@@ -3,6 +3,7 @@
 // control flow; all implementation below is ordinary C/C++.
 
 #include "kyoshin/cf/CBattleManagerApi.hpp"
+#include "kyoshin/cf/CfMapItemManager.hpp"
 #include "kyoshin/harness_catalog.hpp"
 #include "monolib/scn/CScnTimeApi.hpp"
 #include "kyoshin/cf/CfGimmickWarp.hpp"
@@ -316,7 +317,6 @@ extern WarpJumpProc jumptable_eu_80535830[];
 extern WarpVec3 lbl_eu_805765A0;
 extern void* lbl_eu_80664134;
 extern u32 lbl_eu_806646BC;
-extern void* lbl_eu_80663E14;
 extern f32 lbl_eu_806683C8;
 extern f32 lbl_eu_806683CC;
 extern f32 lbl_eu_806683D0;
@@ -353,7 +353,6 @@ void func_8020A1DC(WarpData*);
 void func_801BFED0(int, u16, int);
 WarpObject* func_800817BC__Q22cf13CfGameManagerFv(u8, int);
 void func_8006CC4C();
-u32 func_80174C98(WarpPlayer*, u32*, u32);
 void func_800ACC14(WarpObject*, int);
 int func_804BE398(WarpVec3*, u32, u32, u32, f32, f32);
 void func_804BE4B4(WarpVec3*, int);

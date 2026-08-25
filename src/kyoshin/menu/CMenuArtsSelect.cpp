@@ -8,11 +8,10 @@
 // the CBattleManager.hpp include below). Rename that CTaskGame.hpp copy out
 // of the way (same scheme as CMenuKizunaTalk.hpp's func_801361E8 rename).
 // (func_8004392C now has a single unified decl.)
-#define lbl_eu_80663E24 artsSelectCtaskGameE24Unused
 // The battle-manager singleton getter has ONE canonical declaration in
 // kyoshin/cf/CBattleManagerApi.hpp; no rename guards are needed anymore.
 #include "kyoshin/CTaskGame.hpp"
-#undef lbl_eu_80663E24
+#include "kyoshin/cf/CfMapItemManager.hpp"
 
 #include "kyoshin/menu/CMenuArtsSelect.hpp"
 
@@ -38,9 +37,7 @@
 // CSystemWindow.hpp); this TU reads E24 via the CfObjectMove copy, so rename
 // CVision's copy out of the way. (CVision.hpp's func_80496288 copy is gone;
 // the symbol now has a single unified decl.)
-#define lbl_eu_80663E24 artsSelectVisionE24Unused
 #include "kyoshin/cf/CVision.hpp"
-#undef lbl_eu_80663E24
 // CSuddenCommu.hpp's import signatures now match the chain / CfObjectActor
 // headers (see CSuddenCommu.hpp); its battle-manager singleton copy is now
 // unified in kyoshin/cf/CBattleManagerApi.hpp.
@@ -57,9 +54,7 @@
 // CChainActorList.hpp (via CChain.hpp) declares func_8017FD44(void*);
 // this TU uses the C-linkage no-arg version.
 #define func_8017FD44 artsSelectChainFd44Unused
-#define lbl_eu_80663E24 artsSelectChainE24Unused
 #include "kyoshin/cf/chain/CChain.hpp"
-#undef lbl_eu_80663E24
 #undef func_80107C54
 #undef func_8017FD44
 #include "kyoshin/cf/CBattleManager.hpp"
@@ -68,11 +63,7 @@
 // CfObjectMove.hpp:97's const float), :172 declares lbl_eu_80663E24 as
 // non-volatile u32 (conflicting with CfObjectMove.hpp:71's volatile u32).
 // This TU uses none of these copies.
-#define lbl_eu_8066A208 artsSelectCode35FDCepsilonUnused
-#define lbl_eu_80663E24 artsSelectCode35FDCe24Unused
 #include "kyoshin/code_80135FDC.hpp"
-#undef lbl_eu_80663E24
-#undef lbl_eu_8066A208
 
 #include "decomp.h"
 #include <revolution/GX.h>
@@ -300,7 +291,6 @@ void* func_8012FD04(const char* name);
 int func_8012FA5C();
 void func_80138078__FUl(u32);
 nw4r::lyt::ArcResourceAccessor* func_801355F4();
-int func_80174C98(void* actor, int* outVal, int flags);
 int func_8010EDD4(void*);
 int func_8010A840(void*);
 

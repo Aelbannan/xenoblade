@@ -525,18 +525,23 @@ UNIT_RULES: dict[str, UnitRules] = {
         # against a FRESH RAW build of the current source (do not diagnose
         # against the shared build/ object — hexdiff leaves it postprocessed
         # in place). Patch r_addend to retail here.
+        # 2026-08-25 (re-derived from fresh build): sel3..13 raw == retail-4
+        # (case3/case2 bodies each one insn short of retail); sel0..2 exact.
+        # 2026-08-25 re-derivation via marker experiment (bake applies once;
+        # data-diff temp-copy applies a second time — never diagnose against
+        # an already-baked shared object): raw sels 3 (@12) and 0..2 are
+        # EXACT vs retail; sels 4..13 (@16..52) are uniformly retail-4.
         addend_patches=(
-            (".data", 12, 4),
-            (".data", 16, 8),
-            (".data", 20, 8),
-            (".data", 24, 8),
-            (".data", 28, 8),
-            (".data", 32, 8),
-            (".data", 36, 8),
-            (".data", 40, 8),
-            (".data", 44, 8),
-            (".data", 48, 8),
-            (".data", 52, 8),
+            (".data", 16, 4),
+            (".data", 20, 4),
+            (".data", 24, 4),
+            (".data", 28, 4),
+            (".data", 32, 4),
+            (".data", 36, 4),
+            (".data", 40, 4),
+            (".data", 44, 4),
+            (".data", 48, 4),
+            (".data", 52, 4),
         ),
         drop_data_tail=((".sdata2", 0x11B6),),
 
@@ -2217,6 +2222,9 @@ UNIT_RULES: dict[str, UnitRules] = {
             (struct.pack(">I", 0x3F800000), "float_8066B818"),
             (struct.pack(">I", 0x3F000000), "float_8066B81C"),
         ),
+        # Retail split carries no .sdata2; after the content renames above
+        # both slots resolve to monolibdata floats at link. Strip.
+        extern_data_sections=(".sdata2",),
     ),
     "CChainTime.o": UnitRules(
         exact_renames=(
@@ -2305,7 +2313,20 @@ UNIT_RULES: dict[str, UnitRules] = {
             ("func_80236408__FP9CArtsInfo", "func_80236408"),
             ("func_80236454__FP9CArtsInfo", "func_80236454"),
             ("func_80236508__FP9CArtsInfo", "func_80236508"),
+            # Data dissolve: retail keeps ALL data in the split blobs.
+            # - func_8023587C / func_802375A8 switch jumptables ship from
+            #   split1.o (site-confirmed: lis/addi jumptable_eu_805369A0 at
+            #   802377A0, jumptable_eu_805369D4 at 8023955C).
+            ("@7793", "jumptable_eu_805369A0"),
+            ("@8105", "jumptable_eu_805369D4"),
         ),
+        # int->double conversion magics live in split1.s .sdata2 (bytes
+        # verified: 80668698 = 2^52+2^31, 806686A8 = 2^52).
+        pool_patterns=(
+            (struct.pack(">II", 0x43300000, 0x80000000), "lbl_eu_80668698"),
+            (struct.pack(">II", 0x43300000, 0x00000000), "lbl_eu_806686A8"),
+        ),
+        extern_data_sections=(".sdata2", ".data"),
     ),
     "CMenuArtsSelect.o": UnitRules(),
     "CMenuBattlePlayerState.o": UnitRules(
@@ -2657,10 +2678,6 @@ UNIT_RULES: dict[str, UnitRules] = {
     "OSFont.o": UnitRules(
         # MWCC pads .data to 8 (0xB10); retail split ends at 0xB0A.
         drop_data_tail=((".data", 0xB0A),),
-    ),
-    "OSReset.o": UnitRules(
-        # MWCC pads .data to 4 (0x26C); retail ends at 0x268.
-        drop_data_tail=((".data", 0x268),),
     ),
     "OSRtc.o": UnitRules(
         # MWCC pads .bss to 8 (0x58); retail ends at 0x54.
@@ -6362,6 +6379,30 @@ UNIT_RULES: dict[str, UnitRules] = {
         ),
     ),
     # === RVL_SDK data dissolve (os/sc/vi/wpad/wud) ============================
+    "OSReset.o": UnitRules(
+        # Merged duplicate entries: MWCC 8-aligns the large string-init
+        # pools, inserting 4 pad bytes after lbl_80552AF0 (retail packs them
+        # at 4), AND pads .data to 0x26C where retail ends at 0x268.
+        drop_data_range=((".data", 0xC, 0x10),),
+        pad_data_section=((".data", 0x268),),
+        drop_data_tail=((".data", 0x268),),
+    ),
+    "OSNet.o": UnitRules(
+        # MWCC pools the retail "NWC24iPrepareShutdown" string (kept alive by
+        # a discarded-value cast in NWC24iRequestShutdown) AFTER the real-ref
+        # "/dev/net/kd/request" block; retail has them in the opposite order.
+        # Rotate [kd/req(0x14)][Prepare(0x18)] -> [Prepare][kd/req]: swap the
+        # 0x14 tail of Prepare's slot with kd/req, then bubble the remaining
+        # word into place. No .data relocs exist in this range.
+        swap_data_blocks=(
+            (".data", 0xA8, 0xC0, 0x14),
+            (".data", 0xB8, 0xBC, 0x04),
+            (".data", 0xB4, 0xB8, 0x04),
+            (".data", 0xB0, 0xB4, 0x04),
+            (".data", 0xAC, 0xB0, 0x04),
+            (".data", 0xA8, 0xAC, 0x04),
+        ),
+    ),
     "WPADEncrypt.o": UnitRules(
         # Retail .data ends with the final "sb  : %d ... %d\n" debug-format
         # string padded to a 4-byte tail (0x1328); MWCC emits a single NUL
@@ -6373,6 +6414,160 @@ UNIT_RULES: dict[str, UnitRules] = {
         # (0x297) but MWCC pads the final string one byte further (0x298).
         # No relocs point into the dropped byte.
         drop_data_tail=((".data", 0x297),),
+    ),
+    # === kyoshin data dissolve, batch 2 (retail split objects are .text-only;
+    # all class data ships from split1.s; ground truth = each unit's split-asm
+    # lbl_eu_*@sda21/@ha/@l refs + jumptable target-function correspondence) ===
+    "CTaskGamePic.o": UnitRules(
+        # Vtable/RTTI names/typeinfo strings are dead local copies (the ctor
+        # stores blob vtables lbl_eu_80538AD8/BC0 directly); no reloc refs.
+        extern_data_sections=(".data", ".rodata", ".sdata"),
+    ),
+    "CTaskGameEvt.o": UnitRules(
+        # Same shape as CTaskGamePic: unreferenced vtable/RTTI/string copies.
+        extern_data_sections=(".data", ".rodata", ".sdata"),
+    ),
+    "CHelpManager.o": UnitRules(
+        # Unreferenced local data copies; strip to empty retail sections.
+        extern_data_sections=(".data", ".rodata", ".sdata"),
+    ),
+    "CMenuTutorial.o": UnitRules(
+        # Unreferenced local data copies (incl. phantom 4-byte .sdata2 slot).
+        extern_data_sections=(".data", ".rodata", ".sdata", ".sdata2"),
+    ),
+    "CTutorial.o": UnitRules(
+        extern_data_sections=(".data", ".rodata", ".sdata"),
+    ),
+    "CMenuSkipTimer.o": UnitRules(
+        extern_data_sections=(".data", ".rodata", ".sdata", ".sdata2"),
+    ),
+    "CVS_THREAD_BUF.o": UnitRules(
+        extern_data_sections=(".data", ".rodata", ".sdata"),
+    ),
+    "CVS_THREAD_FAINT.o": UnitRules(
+        extern_data_sections=(".data", ".rodata", ".sdata"),
+    ),
+    "CVS_THREAD_HAGE.o": UnitRules(
+        extern_data_sections=(".data", ".rodata", ".sdata"),
+    ),
+    "CVS_THREAD_REVIVE.o": UnitRules(
+        extern_data_sections=(".data", ".rodata", ".sdata"),
+    ),
+    "CVS_THREAD_SUDDEN.o": UnitRules(
+        extern_data_sections=(".data", ".rodata", ".sdata"),
+    ),
+    "CVS_THREAD_TENSION_UP.o": UnitRules(
+        extern_data_sections=(".data", ".rodata", ".sdata"),
+    ),
+    "CVS_THREAD_VISION_TELL.o": UnitRules(
+        extern_data_sections=(".data", ".rodata", ".sdata"),
+    ),
+    "CVS_THREAD_BATTLE_END_SP.o": UnitRules(
+        extern_data_sections=(".data", ".rodata", ".sdata"),
+    ),
+    "CVS_THREAD_BATTLE_BEGIN.o": UnitRules(
+        extern_data_sections=(".data", ".rodata", ".sdata"),
+    ),
+    "CMCGetItemBox.o": UnitRules(
+        # int->double conversion pool: first slot is the 2^52 double loaded
+        # before the magic lfd at GetNum's site (retail 802992C4 ->
+        # lbl_eu_80668BD8), second is the int->double magic itself (site
+        # 802992DC -> lbl_eu_80668BE0); both content-unique in this TU.
+        pool_patterns=(
+            (struct.pack(">d", 4503599627370496.0), "lbl_eu_80668BD8"),
+            (struct.pack(">II", MAGIC_HI, MAGIC_LO), "lbl_eu_80668BE0"),
+        ),
+        extern_data_sections=(".sdata2",),
+    ),
+    "COption.o": UnitRules(
+        # Five zero-init switch jumptables map 1:1 by their case-target
+        # functions (split1.s jumptable entries): func_8029D634 ->
+        # jumptable_eu_805394E8, D7FC -> 8053953C, D990 -> 80539590,
+        # DD6C -> 805395E4, C4F4 (0x2C table) -> 805394BC.
+        exact_renames=(
+            ("@8509", "jumptable_eu_805394E8"),
+            ("@8536", "jumptable_eu_8053953C"),
+            ("@8599", "jumptable_eu_80539590"),
+            ("@8700", "jumptable_eu_805395E4"),
+            ("@8790", "jumptable_eu_805394BC"),
+        ),
+        extern_data_sections=(".data",),
+    ),
+    "CSkipTimer.o": UnitRules(
+        # int->double pool pair: site order matches retail (lfd f3 at
+        # 802A2B58 loads the magic lbl_eu_80668C38, lfd f1 at 802A2BB8 the
+        # 2^52 double lbl_eu_80668C40); contents disambiguate as well.
+        exact_renames=(
+            ("@7276", "lbl_eu_80668C38"),
+            ("@7278", "lbl_eu_80668C40"),
+        ),
+        extern_data_sections=(".sdata2",),
+    ),
+    "CChainEffect.o": UnitRules(
+        # ctor stores the cf::CChainEffect vtable; retail site 802A300C
+        # loads it as lbl_eu_80539890.
+        exact_renames=(("__vt__Q22cf12CChainEffect", "lbl_eu_80539890"),),
+        extern_data_sections=(".data", ".rodata", ".sdata"),
+    ),
+    "CCharVoiceMan.o": UnitRules(
+        # The lone .sbss static already carries its retail name
+        # (lbl_eu_80664A58); UNDEF resolves it to the split1 copy.
+        extern_data_sections=(".sbss",),
+    ),
+    "CVS_THREAD.o": UnitRules(
+        # The 0x24 zero table is the Move switch jumptable; retail loads it
+        # via lis/addi jumptable_eu_80539930 (@ha/@l) at 802A6D70.
+        exact_renames=(("@517", "jumptable_eu_80539930"),),
+        extern_data_sections=(".data", ".rodata", ".sdata"),
+    ),
+    "CVS_THREAD_HP.o": UnitRules(
+        # int->double magic; content-equal unit-ref'd label (retail site
+        # 802A9A38 lfd f2).
+        exact_renames=(("@2702", "lbl_eu_80668CA8"),),
+        extern_data_sections=(".data", ".rodata", ".sdata", ".sdata2"),
+    ),
+    "CMenuBattleChain.o": UnitRules(
+        # Two switch jumptables map by case-target function: Move ->
+        # jumptable_eu_80539E00, func_802AA588 -> jumptable_eu_80539E24.
+        # The .sbss statics already carry their retail lbl_eu_80664Axx names.
+        exact_renames=(
+            ("@7268", "jumptable_eu_80539E00"),
+            ("@7321", "jumptable_eu_80539E24"),
+        ),
+        extern_data_sections=(".data", ".sbss"),
+    ),
+    "CNandData.o": UnitRules(
+        # Singleton sInstance (0x328 bss) -> lbl_eu_80577358 and the 0xc
+        # banner-path buffer -> lbl_eu_80577348 (retail __sinit_ sites
+        # 802B11D4/125C load exactly these two labels).
+        exact_renames=(
+            ("sInstance__9CNandData", "lbl_eu_80577358"),
+            ("@1745", "lbl_eu_80577348"),
+        ),
+        extern_data_sections=(".bss",),
+    ),
+    "CVS_THREAD_BATTLE_MAIN.o": UnitRules(
+        # int->double magic (content match; retail sites lfd f2/f4 around
+        # 802B1C50 use this label).
+        exact_renames=(("@2721", "lbl_eu_80668EB8"),),
+        extern_data_sections=(".sdata2",),
+    ),
+    "CfHikariItemManager.o": UnitRules(
+        # int->double magic; content-equal unit-ref'd label (first retail
+        # use site 802B6074 lfd f2).
+        exact_renames=(("@9335", "lbl_eu_80668EF0"),),
+        extern_data_sections=(".sdata2",),
+    ),
+    "CTitle.o": UnitRules(
+        # CTitleLogo ctor stores the vtable; retail site 802B8D9C loads it
+        # as lbl_eu_8053B368. The .sdata2 slot is the 2^52 double loaded by
+        # both remaining lfd f2 sites (retail 802B9070/802B9804 ->
+        # lbl_eu_80668FE8). Remaining local data is unreferenced.
+        exact_renames=(
+            ("__vt__10CTitleLogo", "lbl_eu_8053B368"),
+            ("@7665", "lbl_eu_80668FE8"),
+        ),
+        extern_data_sections=(".data", ".rodata", ".sdata", ".sdata2"),
     ),
 }
 
@@ -7655,19 +7850,52 @@ def pad_data_section_func(path: Path, section: str, new_size: int) -> bool:
 
     pad = new_size - sec_size
     sec_end = sec_off + sec_size
-    data = data[:sec_end] + (b"\0" * pad) + data[sec_end:]
+    # Insert the pad, then re-emit every later section at an offset that
+    # keeps its sh_addralign congruence (plain shifting can leave e.g. an
+    # 8-aligned .data at a misaligned file offset, which strict ELF
+    # consumers like objdiff-cli reject). Extra inter-section gap bytes are
+    # legal ELF; only monotonic non-overlap matters.
+    body = bytearray(data[:sec_end]) + (b"\0" * pad)
+    delta = pad
+    order = []
+    for i in range(e_shnum):
+        hoff_i = e_shoff + i * e_shentsize
+        o = struct.unpack_from(">I", data, hoff_i + 16)[0]
+        if o >= sec_end:
+            order.append((o, i))
+    new_offsets = {}
+    for _old_off, i in sorted(order):
+        hoff_i = e_shoff + i * e_shentsize
+        old_off = struct.unpack_from(">I", data, hoff_i + 16)[0]
+        typ = struct.unpack_from(">I", data, hoff_i + 4)[0]
+        addralign = struct.unpack_from(">I", data, hoff_i + 32)[0] or 1
+        cand = old_off + delta
+        if addralign > 1:
+            rem = cand % addralign
+            if rem:
+                gap = addralign - rem
+                # only real bytes need the gap; NOBITS occupy no file space,
+                # but keeping their offsets congruent is harmless and simple
+                body += b"\0" * gap
+                delta += gap
+                cand += gap
+        if typ != 8:  # NOBITS bodies have no file bytes to copy
+            old_size = struct.unpack_from(">I", data, hoff_i + 20)[0]
+            body += data[old_off : old_off + old_size]
+        else:
+            # drop any stale file reservation for NOBITS (none expected)
+            pass
+        new_offsets[i] = cand
+    data = body
     e_shoff = struct.unpack_from(">I", data, 32)[0]
-    if e_shoff >= sec_end:
-        e_shoff += pad
-        struct.pack_into(">I", data, 32, e_shoff)
     for i in range(e_shnum):
         hoff = e_shoff + i * e_shentsize
         sh_offset = struct.unpack_from(">I", data, hoff + 16)[0]
         if i == sec_idx:
             struct.pack_into(">I", data, hoff + 20, new_size)
-        elif sh_offset >= sec_end:
-            struct.pack_into(">I", data, hoff + 16, sh_offset + pad)
-
+            continue
+        if sh_offset >= sec_end and i in new_offsets:
+            struct.pack_into(">I", data, hoff + 16, new_offsets[i])
     path.write_bytes(data)
     return True
 

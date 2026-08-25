@@ -2,6 +2,7 @@
 
 #include <types.h>
 #include <nw4r/math/math_types.h>
+#include "kyoshin/cf/CfGameManagerData.hpp"  // H3 label-owner decl (lbl_eu_80663E14; lbl_eu_80663E24)
 
 namespace ml {
 struct CVec3;
@@ -442,7 +443,6 @@ extern f32 lbl_eu_8066657C;    // 1.0f
 extern f32 lbl_eu_80666580;    // 0.15f
 extern f32 lbl_eu_80666584;    // 100.0f
 extern f64 lbl_eu_80666588;    // 2^52 + 2^31 (signed int -> double magic)
-extern u32 lbl_eu_80663E24;
 
 // C++-linkage imports (mangle to the retail __Fi forms).
 void* func_800B708C(int id);       // func_800B708C__Fi
@@ -479,8 +479,6 @@ void func_800FB270(cf::CtrlEnemyEnumList* list, void* obj, f32 a, f32 b,
                    f32 c, int d);
 int func_80148778(void* obj, int id);
 void* func_80149154(void* obj, int id);
-extern "C" int func_80174C98(void* obj, u32* out, u32 flags);
-extern "C" void func_80174B4C(void* obj, u32 flags);   // C linkage: matches CVision.hpp/CChainTimer.hpp forms (error 10197 otherwise)
 void func_800D9CA0(void* mgr, void* target);
 void func_8008B580(void* sub);
 void func_8008A23C(void* sub);

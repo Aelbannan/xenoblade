@@ -111,7 +111,6 @@ extern const float lbl_eu_8066AE20;
 // radians -> FIdx scale (128/pi) fed to SinFIdx/CosFIdx (func_804A763C / func_804A70F8).
 extern const float lbl_eu_8066AE28;
 // ml::epsilon - plane-distance guard (func_804AD1E0 loop).
-extern const float lbl_eu_8066A208;
 // nw4r FSqrt assert strings (retail .data, shared with other TUs).
 extern char lbl_eu_80526324[];
 extern char lbl_eu_80526300[];
@@ -783,7 +782,7 @@ extern "C" void func_804A7834(CColiObject* self, const CColiObject* other) {
     self->field_0x00[3].y = z;
     self->field_0x00[3].z = lbl_eu_8066AE24;
 }
-// Constructor with angular parameters: run the embedded CColiProc base ctor
+// Constructor with angular parameters
 // at +0x04, copy the 3-word sub-spec into the +0x44/+0x50 point slots (raw
 // word copies; +0x48 is later re-written as the float sum), seed the +0x40
 // sub-object offset (= 5) and the +0x5c/+0x60 angle-pair scalars. When the

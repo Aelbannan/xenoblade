@@ -1,6 +1,7 @@
 #pragma once
 
 #include <types.h>
+#include "kyoshin/cf/CfGameManagerData.hpp"  // H3 label-owner decl (lbl_eu_80663E14; lbl_eu_80663E24)
 
 namespace nw4r { namespace lyt {
     class Layout;
@@ -127,8 +128,6 @@ extern "C" u32 __ptmf_null[];
 extern "C" u32 lbl_eu_8052D238[];
 extern "C" u32 lbl_eu_80536128[];
 extern "C" u32 lbl_eu_80663E28;
-extern "C" u32 lbl_eu_80663E24;
-extern "C" CScn* lbl_eu_80663E14;
 extern "C" f32 lbl_eu_8066856C;
 extern "C" f32 lbl_eu_80668568;
 extern "C" void* lbl_eu_80664094;

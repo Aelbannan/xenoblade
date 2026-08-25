@@ -8,6 +8,7 @@
 #include "kyoshin/cf/object/CfObjectNpc.hpp"
 #include "monolib/scn/CScnTimeApi.hpp"
 #include "kyoshin/cf/code_800F42AC.hpp"   // CfGameManager::getInstance, func_8006EF04
+#include "kyoshin/cf/CfGameManagerData.hpp"  // H3 label-owner decl (lbl_eu_80663E14; lbl_eu_80663E24)
 
 namespace cf {
 

@@ -10,6 +10,7 @@
 #include <math.h>
 
 #include "kyoshin/cf/CfCamEvent_1.hpp"
+#include "monolib/math/FloatUtils.hpp"  // H3 label-owner decl (lbl_eu_8066A208)
 
 // bdat column byte read: the (u8) truncation of the u32 column value, which
 // MWCC lowers through a stack temp (stw + lbz) when inlined via a helper
@@ -2349,12 +2350,14 @@ void func_80079D6C(f32 step, CfCamEventShakeElem* e) {
 // in-source pins the addi so the optimizer cannot refold it into the load
 // displacements.
 bool func_80079DBC(CfCamEventManager* manager) {
-    u8* p = (u8*)manager;
-    if (p[0x1DE] != 0) return true;
-    p += 0x1F4;
-    if (p[0x162] != 0) return true;
-    if (p[0x2DA] != 0) return true;
-    return false;
+    // OPEN ITEM (us-8007a758): retail materializes base+0x1F4 via `addi r3,r3,500`
+    // before the 2nd/3rd byte tests; every source shape tried so far (raw u8*
+    // indexing, member access shake[i].field_0x162, tab0-strided array t[0..2])
+    // folds to direct displacements instead. Next angles: sub-object cast
+    // (this-adjustment addi), helper returning &shake[i], loop unrolled by -O4,p.
+    if (manager->tab0.flag_active != 0) return true;
+    if (manager->shake[0].field_0x162 != 0) return true;
+    return manager->shake[1].field_0x162 != 0;
 }
 
 // One composition step of the fixed 3x3 recurrence used by the func_80079E04

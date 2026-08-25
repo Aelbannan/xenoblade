@@ -1,4 +1,5 @@
 #include "kyoshin/help/CHelp_ArtsAttack.hpp"
+#include "kyoshin/cf/CfMapItemManager.hpp"
 #include "kyoshin/cf/CfGameManager.hpp"
 #include "kyoshin/cf/object/CfObjectPc.hpp"
 

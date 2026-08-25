@@ -2,6 +2,7 @@
 
 #include <types.h>
 #include "kyoshin/realtimeevt/CREvtObj.hpp"
+#include "kyoshin/cf/CfGameManagerData.hpp"  // H3 label-owner decl (lbl_eu_80663E14; lbl_eu_80663E24)
 
 // CREvtEffect - realtime event effect controller
 //
@@ -163,7 +164,6 @@ extern "C" bool getStaticFileData__14CLibStaticDataFPCcP16StaticDataHandlePUl(
 extern "C" {
     extern void* lbl_eu_805322D8[];
     extern u32 lbl_eu_8065FC18[];    // effect-singleton manager object (array forces @ha/@l)
-    extern void* lbl_eu_80663E14;    // scene / alloc handle (4-byte pointer, sda21)
     extern const char* lbl_eu_80662470;  // "effTgt"
     extern const char* lbl_eu_80662474;  // "effAtr"
     extern const char* lbl_eu_80662478;  // "eff"

@@ -853,9 +853,6 @@ extern "C" void func_802B403C(CfHikariItemRecord* self,
         return;
     }
 
-    nw4r::math::VEC3 va;
-    nw4r::math::VEC3 vb;
-
     for (int i = 0; i < 2; i++) {
         if (!(self->field_42 & (0x4 << i))) {
             continue;
@@ -864,22 +861,27 @@ extern "C" void func_802B403C(CfHikariItemRecord* self,
         f32 s = lbl_eu_80668F44 *
                 (lbl_eu_80668F48 - lbl_eu_80668F4C * k);
         f32 bright = k + (&self->field_28)[i];
+        f32 px = self->field_00f;
+        f32 py = self->field_04f;
+        f32 pz = self->field_08f;
 
-        // Scaled corner terms; the +/- results share the position loads
-        // (retail keeps one pos pair copy for both sides).
-        f32 scx = corners->v[0][0] * s;
-        f32 scy = corners->v[0][1] * s;
-        f32 scz = corners->v[0][2] * s;
-        f32 vax = self->field_00f + scx;
-        f32 vay = self->field_04f + scy;
-        f32 vaz = self->field_08f + scz;
-        f32 vbx = self->field_00f - scx;
-        f32 vby = self->field_04f - scy;
-        f32 vbz = self->field_08f - scx; // retail quirk: z uses the x-scaled term
+        nw4r::math::VEC3 va;
+        nw4r::math::VEC3 vb;
+        // Scaled corner folded into va/vb in place (retail reuses the temp
+        // slots for the +/- results); each product computed independently.
+        va.x = corners->v[0][0] * s;
+        va.y = corners->v[0][1] * s;
+        va.z = corners->v[0][2] * s;
+        nw4r::math::VEC3Add(&va, (nw4r::math::VEC3*)&px, &va);
 
-        WGPIPE.f = vax;
-        WGPIPE.f = vay + bright;
-        WGPIPE.f = vaz;
+        vb.x = corners->v[0][0] * s;
+        vb.y = corners->v[0][1] * s;
+        vb.z = corners->v[0][0] * s; // retail quirk: z uses the x-scaled term
+        nw4r::math::VEC3Sub(&vb, (nw4r::math::VEC3*)&px, &vb);
+
+        WGPIPE.f = va.x;
+        WGPIPE.f = va.y + bright;
+        WGPIPE.f = va.z;
         WGPIPE.ui = self->colors[2 + i];
         WGPIPE.uc = 1;
         WGPIPE.uc = 0;

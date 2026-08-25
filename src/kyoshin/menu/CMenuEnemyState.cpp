@@ -1,4 +1,5 @@
 #include "kyoshin/menu/CMenuEnemyState.hpp"
+#include "kyoshin/cf/CfMapItemManager.hpp"
 
 #include "monolib/scn.hpp"
 #include "kyoshin/cf/object/CfObjectSelectorObj.hpp"
@@ -13,6 +14,7 @@
 #include "decomp.h"
 #include <nw4r/math.h>
 #include <revolution/GX.h>
+#include "kyoshin/cf/CfGameManagerData.hpp"  // H3 label-owner decl (lbl_eu_80663E14; lbl_eu_80663E24)
 
 // ---------------------------------------------------------------------------
 // Local overlay structs for external objects accessed via pointer arithmetic.
@@ -394,7 +396,6 @@ CPcSelectCursor::~CPcSelectCursor() {
 }
 
 extern "C" {
-extern u32 lbl_eu_80663E24;
 extern u32 lbl_eu_80663E28;
 }
 
@@ -491,7 +492,6 @@ int func_8013A4B4(void* a, void* b, void* c);
 // Retail leaves f1=vt+0x128 and f2=vt+0x12C live into these calls.
 
 
-int func_80174C98(void* actor, int* outVal, int flags);
 void* func_80496264(void* obj, int index);
 
 // Retail leaves func_80137510 unmangled (declared extern "C" in

@@ -219,7 +219,6 @@ void* func_800BF324(void* objParam);
 void func_8013D07C(void* obj, const char* str, int mode);
 void func_8013D448(void* obj, const char* str);
 unsigned int func_8013EC58();
-int func_80174C98(void* player, u32* val, int mode);
 // Retail caller compares the raw register (cmpwi), so declare as int, not u8.
 int code80135FDC_getByte_64058();
 

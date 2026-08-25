@@ -5,7 +5,6 @@
 
 // C-linkage imports (retail symbol names - keep linkage/signatures verbatim)
 extern "C" void* func_8016FE34(void* source);
-extern "C" u32 func_80174C98(void* actor, u32* outVal, u32 flags);
 extern "C" u32 func_8009CF8C(u32 resourceId);
 extern "C" void* func_800BF324(void* objParam);
 

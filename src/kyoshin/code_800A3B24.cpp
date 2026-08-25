@@ -5,6 +5,8 @@
 #include "monolib/math/CVec3.hpp"
 #include "monolib/math/MTRand.hpp"
 #include "monolib/core/CDrawGX.hpp"
+#include "kyoshin/cf/CfGameManagerData.hpp"  // H3 label-owner decl (lbl_eu_80663E14; lbl_eu_80663E24)
+#include "monolib/math/FloatUtils.hpp"  // H3 label-owner decl (lbl_eu_8066A208)
 
 // Retail SDA2/data constants referenced by the PS math helpers below. Declared
 // by retail label so the emitted @sda21 relocs match retail byte-for-byte; the
@@ -13,7 +15,6 @@ extern const float lbl_eu_806667D8;  // 0.0f
 // 1.0f (lbl_eu_806667E8)
 extern const float lbl_eu_806667E8;
 // ml::epsilon (lbl_eu_8066A208)
-extern const float lbl_eu_8066A208;
 // pi (lbl_eu_8066A1F8)
 extern const float lbl_eu_8066A1F8;
 // 2*pi (lbl_eu_8066A1FC)
@@ -57,7 +58,6 @@ extern double lbl_eu_806667E0;
 // Scene/view globals consumed by the debug-draw setup helper.
 class CScn;
 class CView;
- extern CScn* lbl_eu_80663E14;
  extern CView* lbl_eu_80663E10;
 // random-angle table index / one-time init flag (.sbss bytes)
  extern u8 lbl_eu_80663E90;

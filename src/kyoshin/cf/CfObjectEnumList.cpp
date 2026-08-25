@@ -2,6 +2,7 @@
 // Replace stubs with high-level C/C++ during decomp.
 
 #include "kyoshin/cf/CfObjectEnumList.hpp"
+#include "kyoshin/cf/CfMapItemManager.hpp"
 #include "kyoshin/cf/CBattleManagerApi.hpp"
 #include "monolib/math.hpp"      // ml::CVec3
 #include "monolib/util/MemManager.hpp"  // mtl::MemManager (allocate_array)

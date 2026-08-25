@@ -2,6 +2,7 @@
 // Battle commu menu screen process reconstruction.
 
 #include "kyoshin/menu/CMenuBattleCommu.hpp"
+#include "kyoshin/cf/CfMapItemManager.hpp"
 #include "kyoshin/CTaskGame.hpp"
 #include "kyoshin/cf/CfGameManager.hpp"
 #include "kyoshin/code_80135FDC.hpp"

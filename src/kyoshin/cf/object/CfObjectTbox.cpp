@@ -4,12 +4,12 @@
 #include "kyoshin/harness_catalog.hpp"
 #include "kyoshin/cf/object/CfObjectTbox.hpp"
 #include "monolib/util/MemManager.hpp"
+#include "kyoshin/cf/CfGameManagerData.hpp"  // H3 label-owner decl (lbl_eu_80663E14; lbl_eu_80663E24)
 
 namespace cf {}
 using namespace cf;
 
 // Global presentation event/presentation bitfield shared across kyoshin.
-extern u32 lbl_eu_80663E24;
 
 // us-801fa970 - constructor: base CfObjectObj ctor, retail vtable restore,
 // clear field_73C, release any inherited +0xB0 resource (manual-vtable slot

@@ -86,8 +86,9 @@ void func_804E75B8(CMdlAnmEye* self, void* modelArg) {
     }
 }
 
-void func_804E77BC(u8* self, u32 val) {
-    ((CMdlAnmEye*)self)->value2C = val;
+// Eye-anim state setter (called from CScnItemModelNw4r.cpp).
+void func_804E77BC(CMdlAnmEye* self, u32 val) {
+    self->value2C = val;
 }
 
 // Per-frame blink update: integrate the owner model's scale*delta into the
@@ -167,7 +168,10 @@ void func_804E77C4(CMdlAnmEye* self) {
 // the hpp but the ctor/dtor are defined as fragments below so MWCC emits no
 // auto vtable/RTTI for the class.
 
-// Retail fragments: ctor (unmangled) + dtor (delete-flag form).
+// Retail fragments. NOTE: these must stay free functions with C linkage:
+// the retail symbols are literally `__ct__CMdlAnmEye` (unmangled) and
+// `__dt__10CMdlAnmEyeFv`; defining them as real CMdlAnmEye members would
+// change the emitted mangled names.
 extern "C" CMdlAnmEye* __ct__CMdlAnmEye(CMdlAnmEye* self) {
     *(void**)self = (void*)&lbl_eu_805701D0;
     self->field_04 = 0;
@@ -205,10 +209,5 @@ extern "C" u32 lbl_eu_805701D0[4] = {
     (u32)&lbl_eu_80663C90, 0x00000000,
     (u32)&__dt__10CMdlAnmEyeFv, 0x00000000,
 };
-DECOMP_FORCEACTIVE(CMdlAnmEye_cpp, lbl_eu_805247E8);
-DECOMP_FORCEACTIVE(CMdlAnmEye_cpp, lbl_eu_805247F4);
-DECOMP_FORCEACTIVE(CMdlAnmEye_cpp, lbl_eu_80524800);
-DECOMP_FORCEACTIVE(CMdlAnmEye_cpp, lbl_eu_80663C88);
-DECOMP_FORCEACTIVE(CMdlAnmEye_cpp, lbl_eu_80663C90);
-DECOMP_FORCEACTIVE(CMdlAnmEye_cpp, lbl_eu_80663C98);
-DECOMP_FORCEACTIVE(CMdlAnmEye_cpp, lbl_eu_805701D0);
+// Every data symbol above is referenced either by live code or by the
+// vtable/RTTI data defined in this TU.

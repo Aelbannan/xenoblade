@@ -1999,7 +1999,7 @@ config.libs = [
             Object(NonMatching, "monolib/src/scn/CMdlMaterial.cpp"),
             Object(Matching, "monolib/src/scn/CMdlMouth.cpp"),
             Object(NonMatching, "monolib/src/scn/CMdlAnmUV.cpp"),
-            Object(NonMatching, "monolib/src/scn/CMdlAnmEye.cpp"),
+            Object(Matching, "monolib/src/scn/CMdlAnmEye.cpp"),
             Object(NonMatching, "monolib/src/scn/CMdlLook.cpp"),
             Object(NonMatching, "monolib/src/scn/CMdlDynamics.cpp"),
             Object(Matching, "monolib/src/util/CErrorWii.cpp", extra_cflags=["-func_align 4"]),  # retail packed (fn sizes sum exactly to the 0x504 slice); align 16 inserted ori r0,r0,0 loop-head pads in removeCallback + inter-fn padding; IErrorWii dtor lives in CDeviceVI.o, not here

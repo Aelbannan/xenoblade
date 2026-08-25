@@ -10,6 +10,7 @@
 #include <nw4r/math/math_triangular.h>
 #include "monolib/math/Random.hpp"
 
+
 #include "kyoshin/cf/CPartsChange.hpp"
 
 using cf::CfPartyInfo;
@@ -17,6 +18,19 @@ using cf::CfPartyInfoSortKey;
 using cf::CfActorAccessors;
 using cf::CfObjectPcExt;
 using cf::CPartsChange;
+
+// Same-TU helpers called by func_80196E04 whose retail symbols are
+// unmangled: the early C-linkage declarations give the definitions below
+// their retail symbol names (func_80198284 precedent). auto_inline off keeps
+// the retail `bl` boundaries (MWCC would otherwise inline the tiny bodies).
+#pragma push
+#pragma auto_inline off
+extern "C" CfElemA4Full* func_80193B0C(CfPartsManager* self, u16 arg2);
+extern "C" int func_80198138(CfPartsSlots* self, CfPartsSlotChgView* other,
+                              u32 unused, u32 flag);
+extern "C" void func_80198524(CfPartsSlots* slots);
+extern "C" int func_8019876C(CfPartyInfoState* self, CfPartsTri* goal);
+#pragma pop
 
 // .sdata2 pool plant (ocUnit.cpp / CfMapEffectManager convention): the retail
 // magic double at 0x80667B58 (2^52 + 2^31 = 4503601774854144.0) is referenced
@@ -180,6 +194,8 @@ void func_801930A0(CPartsChange* self, u32 idx, u32 flag) {
 // conversion; its 2^52 magic pools to a TU-local @N entry (retail names it
 // lbl_eu_80667AC8 - name-only reloc drift, MWCC_CASES 7i class; the manual
 // union form that names it adds an fsub+frsp and breaks byte-identity).
+#pragma push
+#pragma auto_inline off
 void func_801931D0(CfPartsElem4C* self) {
     self->field_1E &= ~4u;
     u32 val = getBdatStringColumnValue(lbl_eu_806640A8, lbl_eu_80503C48,
@@ -191,6 +207,7 @@ void func_801931D0(CfPartsElem4C* self) {
     self->field_10 = lbl_eu_80667AB8 * scale;
     memset(&self->field_42[0], 0, 9);
 }
+#pragma pop
 
 // Manager constructor (retail splitter name __ct__80193270): inline the
 // reslist<CfPartyInfo> ctor (the _reslist_base vtable store is a dead store
@@ -807,17 +824,17 @@ int func_80194264(f32 f, ml::CVec3* out, const ml::CVec3* in) {
 // (func_80194264), and the facing index is returned; otherwise the retry
 // loop continues. flag == 0 returns the first nudge without probing.
 u32 func_801943E4(ml::CVec3* out, const ml::CVec3* in, int flag, f32 fA, f32 fB) {
-    F64Conv c1, c2;
-    ml::CVec3 tmp14;
     ml::CVec3 tmp8;
-    const f32* tbl = lbl_eu_80532AB8;
+    ml::CVec3 tmp14;
+    F64Conv c1, c2;
     f64 magic = lbl_eu_80667AF0;
-    f32 c27 = lbl_eu_80667AF8;
     f32 c26 = lbl_eu_8066A210;
-    f32 c25 = lbl_eu_80667AEC;
     f32 f30 = lbl_eu_80667AFC * c26;
-    u32 rnd = 0;
+    f32 c25 = lbl_eu_80667AEC;
+    f32 c27 = lbl_eu_80667AF8;
+    const f32* tbl = lbl_eu_80532AB8;
     int i = 0;
+    u32 rnd = 0;
     do {
         rnd = (u32)ml::math::mtRand(0x168);
         u32 r3 = (u32)ml::math::mtRand(0x64);
@@ -829,9 +846,7 @@ u32 func_801943E4(ml::CVec3* out, const ml::CVec3* in, int flag, f32 fA, f32 fB)
         f32 t1 = *tbl * f2;
         f32 f24 = (f32)(c2.d - magic) * c26;
         f32 f23 = fA * t1;
-        out->x = in->x;
-        out->y = in->y;
-        out->z = in->z;
+        *out = *in;
         out->x += f23 * nw4r::math::CosFIdx(c27 * f24);
         out->z += f23 * nw4r::math::SinFIdx(c27 * f24);
         if (flag != 0) {
@@ -971,53 +986,70 @@ extern "C" int func_801949E0(u32 flags, u8 stage) {
 // actor's arts-state object (func_8016FE34 + sub-slot 0x30) whether to set
 // the +0x60 bit. Returns whether any element was processed.
 int func_80194AFC() {
-    CfActorList* list = (CfActorList*)func_800B6BC8();
-    if (list->mHead->mNext == list->mHead) return 0;
-    u32 bdat = func_80086B24__Q22cf13CfGameManagerFv();
-    const char* cols = lbl_eu_80503C48;
-    int result = 0;
-    CfActorListNode* node = list->mHead->mNext;
-    while (node != list->mHead) {
+    CfActorList* alist;
+    u32 bdat;
+    int result;
+    CfActorListNode* node;
+    alist = (CfActorList*)func_800B6BC8();
+    if (alist->mHead->mNext == alist->mHead) return 0;
+    bdat = func_80086B24__Q22cf13CfGameManagerFv();
+    result = 0;
+    node = alist->mHead->mNext;
+    while (node != alist->mHead) {
         CfPartyScanElem* elem = (CfPartyScanElem*)node->mElem;
-        s32 shifted = (s32)elem->field_6D0 >> 4;
-        if (shifted != 0) {
+        s32 shifted;
+        // Inline shift-in-condition so MWCC fuses to the record-form srawi.
+        if ((shifted = (s32)elem->field_6D0 >> 4) == 0) {
+            node = node->mNext;
+            continue;
+        }
+            // Narrow re-reads of the column values go through memory so MWCC
+            // emits the retail stw+lhz/lbz round-trips.
             u16 id = (u16)shifted;
-            u32 val = getBdatStringColumnValue((void*)bdat, cols + 0x6c, id);
-            int lo = 1;
-            int hi = 0xfc;
-            int cnt = func_80082354__Q22cf13CfGameManagerFv((u16)val);
+            u32 val = getBdatStringColumnValue((void*)bdat, lbl_eu_80503C48 + 0x6c, id);
+            u16 lower = 1;
+            u16 upper = 0xfc;
+            u32 cnt = func_80082354__Q22cf13CfGameManagerFv(*(const u16*)&val);
             if (cnt != 0) {
-                u32 w = getBdatStringColumnValue((void*)bdat, cols + 0x74, id);
-                if ((u8)w != 0) {
-                    lo = (u8)w;
-                    hi = (u8)w;
+                u32 lim = getBdatStringColumnValue((void*)bdat, lbl_eu_80503C48 + 0x74, id);
+                u8 limByte = *(const u8*)&lim;
+                if (limByte != 0) {
+                    lower = limByte;
+                    upper = limByte;
                 }
             }
+            // Party-count gate: pass when the slot has no count column or
+            // the count sits inside [lower, upper].
             int ok1;
-            if ((u16)val == 0) ok1 = 1;
-            else if ((u32)(u16)lo > (u32)cnt) ok1 = 0;
-            else if ((u32)cnt <= (u32)(u16)hi) ok1 = 1;
-            else ok1 = 0;
+            if (*(const u16*)&val == 0) {
+                ok1 = 1;
+            } else if ((u32)lower > cnt) {
+                ok1 = 0;
+            } else {
+                ok1 = cnt <= (u32)upper;
+            }
+            // Retail evaluates this bounds check twice (two independent
+            // variable sets); keep them separate so each gets its own
+            // registers/spill slots.
             int ok2 = 0;
             if (ok1) {
-                u16 cnt2 = (u16)func_800822F4__Q22cf13CfGameManagerFv();
-                u32 c2 = getBdatStringColumnValue((void*)bdat, cols + 0x80, id);
-                u32 d2 = getBdatStringColumnValue((void*)bdat, cols + 0x8a, id);
-                if ((u16)c2 <= cnt2 && cnt2 <= (u16)d2) ok2 = 1;
+                u16 curCount = (u16)func_800822F4__Q22cf13CfGameManagerFv();
+                u32 colMin = getBdatStringColumnValue((void*)bdat, lbl_eu_80503C48 + 0x80, id);
+                u32 colMax = getBdatStringColumnValue((void*)bdat, lbl_eu_80503C48 + 0x8a, id);
+                if (*(const u16*)&colMin <= curCount && curCount <= *(const u16*)&colMax)
+                    ok2 = 1;
             }
             if (!ok2) {
-                u16 id2 = (u16)shifted;
-                u16 cnt3 = (u16)func_800822F4__Q22cf13CfGameManagerFv();
-                u32 c3 = getBdatStringColumnValue((void*)bdat, cols + 0x80, id2);
-                u32 d3 = getBdatStringColumnValue((void*)bdat, cols + 0x8a, id2);
-                int ok3 = 0;
-                if ((u16)c3 <= cnt3 && cnt3 <= (u16)d3) ok3 = 1;
-                if (ok3) {
+                u16 idB = (u16)shifted;
+                u16 curCountB = (u16)func_800822F4__Q22cf13CfGameManagerFv();
+                u32 colMinB = getBdatStringColumnValue((void*)bdat, lbl_eu_80503C48 + 0x80, idB);
+                u32 colMaxB = getBdatStringColumnValue((void*)bdat, lbl_eu_80503C48 + 0x8a, idB);
+                if (*(const u16*)&colMinB <= curCountB && curCountB <= *(const u16*)&colMaxB) {
                     if (!(elem->field_68 & 0x20)) {
                         void* obj = func_8016FE34(elem);
                         void* sub = *(void**)((u8*)obj + 4);
                         u32 word = ((CfVt30If*)sub)->vf30()->field_00;
-                        if (func_80174C98(obj, &word, 0x803) == 0) {
+                        if (func_80174C98(obj, (int*)&word, 0x803) == 0) {
                             if (((cf::CfResPcPlayerVtIf*)obj)->_v2BC() == 0) {
                                 elem->field_68 |= 0x60;
                             }
@@ -1028,7 +1060,6 @@ int func_80194AFC() {
                 }
                 result = 1;
             }
-        }
         node = node->mNext;
     }
     return result;
@@ -1041,24 +1072,26 @@ int func_80194AFC() {
 // append (element, squared distance) to the +0x9804 distance array while the
 // squared distance stays below f*f.
 void func_80194D5C(CfPartsManager* mgr, const ml::CVec3* pos, f32 f) {
+    f32 fv = f;
     u32 r28 = func_8006A6D0();
     void* bdat = (void*)func_80086B24__Q22cf13CfGameManagerFv();
     getPlayer__Q22cf13CfGameManagerFi(0);
     u32 w = lbl_eu_80663E28;
-    mgr->field_B272 = (u16)r28;
-    mgr->field_A804 = 0;
-    int r29 = (w >> 4) & 1;
-    f32 f30 = lbl_eu_80667B18;
-    f32 f29 = lbl_eu_80667B0C;
-    f32 f28 = lbl_eu_80667AD0;
-    f32 f27 = lbl_eu_80667B14;
     f32 f26 = f * f;
     const char* cols = lbl_eu_80503C48;
+    mgr->field_B272 = (u16)r28;
+    f32 f27 = lbl_eu_80667B14;
+    mgr->field_A804 = 0;
+    int r29 = (w >> 4) & 1;
+    f32 f28 = lbl_eu_80667AD0;
+    f32 f29 = lbl_eu_80667B0C;
+    f32 f30 = lbl_eu_80667B18;
+    f32 f31 = f;
     float local20;
     CfCollideOut local8;
     for (CfPartsElem4C* e = mgr->mElems.mElems; e != &mgr->mElems.mElems[mgr->mElems.mCount]; e++) {
         u8 b = e->field_24;
-        f32 f1 = f;
+        f32 f1 = fv;
         int flag2 = 1;
         if (b != 0) {
             int t = 0;
@@ -1071,13 +1104,13 @@ void func_80194D5C(CfPartsManager* mgr, const ml::CVec3* pos, f32 f) {
         if (b2 & 0x48) {
             f1 = e->field_0C;
         } else if (flag2) {
-            f1 = ml::math::abs(f - e->field_0C);
-        } else if ((b2 & 2) != 0 && (e->field_20 & 1) != 0 && f > f27) {
-            f1 = f - f27;
+            f1 = ml::math::abs(fv - e->field_0C);
+        } else if ((b2 & 2) && (e->field_20 & 1) && fv > f27) {
+            f1 = fv - f27;
         }
         u16 field20 = e->field_20;
         int r24 = 0;
-        if ((field20 & 4) != 0 && r29 == 0 && b48 == 0) r24 = 1;
+        if ((field20 & 4) && r29 == 0 && b48 == 0) r24 = 1;
         if (r24) {
             e->field_1E |= 0x40;
         } else {
@@ -1086,6 +1119,7 @@ void func_80194D5C(CfPartsManager* mgr, const ml::CVec3* pos, f32 f) {
         e->field_18 = f1;
         int ret = func_800B998C((void*)pos, e, 1, r24, &local20, &local8);
         int ok = (ret != 0) && (local8.data[0] == 0);
+        // Retail only applies the height fallback inside the bit-0x10 case.
         if (field20 & 0x10) {
             if (ok) {
                 local20 = f28;
@@ -1094,9 +1128,6 @@ void func_80194D5C(CfPartsManager* mgr, const ml::CVec3* pos, f32 f) {
                 local20 = f28;
                 ok = ml::math::abs(pos->y - e->mPos.y) < f29 * lbl_eu_80663ED0;
             }
-        } else if (field20 & 0x40) {
-            local20 = f28;
-            ok = ml::math::abs(pos->y - e->mPos.y) < f29 * lbl_eu_80663ED0;
         }
         if (!ok) continue;
         u16 id = e->field_1C;
@@ -1107,7 +1138,7 @@ void func_80194D5C(CfPartsManager* mgr, const ml::CVec3* pos, f32 f) {
         if (cnt != 0) {
             u32 w74 = getBdatStringColumnValue(bdat, cols + 0x74, id);
             u8 w74b = *(const u8*)&w74;
-            if (w74b != 0) {
+            if (w74b) {
                 lo = w74b;
                 hi = w74b;
             }
@@ -1139,7 +1170,6 @@ void func_80194D5C(CfPartsManager* mgr, const ml::CVec3* pos, f32 f) {
         mgr->mDist[count].dist = d;
     }
 }
-
 // Frame update over the parts element array: decay the +0x14 speed toward 0
 // (or reset it to the busy speed when bit 0x400 is set), then when the +0x10
 // speed is above the fallback and neither busy bit is set, decay it too;
@@ -1215,6 +1245,8 @@ extern "C" void func_801952CC(int id) {
 // retail stw+lbz round-trip (MWCC_CASES: cast would fold to rlwinm).
 // Retail callers pass four args (r3, r4, r5, r6); the r5 arg is dead, but its
 // slot lets MWCC move index out of r3 early (the retail `mr r5, r3`).
+#pragma push
+#pragma auto_inline off
 u8 func_80195384(int index, int unused, int unused2, CfActorAccessors* actor) {
     u8 result = 1;
     if (actor->mFlags1E & 0x20) {
@@ -1224,6 +1256,7 @@ u8 func_80195384(int index, int unused, int unused2, CfActorAccessors* actor) {
     }
     return result;
 }
+#pragma pop
 
 // Party-element update helper called by func_80195B04 (retail `bl` kept
 // opaque with the same auto_inline-off pattern as func_80197538; the C
@@ -1233,9 +1266,187 @@ u8 func_80195384(int index, int unused, int unused2, CfActorAccessors* actor) {
 // `bl` kept opaque with the same auto_inline-off pattern; the C linkage from
 // the declaration above makes the call reloc name the retail symbol). The
 // retail body returns a success flag (callers branch on r3).
+// Forward declarations for same-TU helpers defined below.
+int func_80198340(CfPartsListEntry* list);
+void func_80197AA0(CfPartsManager* self, u32 id);
+
+// Party-element refresh: resolve/allocate the actor-table entry for the
+// element, read its BDAT spawn columns, and roll the dice to (re)spawn the
+// party-change objects for each of the five character slots. Two paths:
+// bit 3 of +0x1E selects the "full refresh" path (speed reset, table entry
+// update, per-slot spawn with effect/sound side effects) and the fallback
+// path (count-limited random spawns only). *flag receives whether anything
+// spawned; the return value is the actor-table entry handle.
 #pragma push
 #pragma auto_inline off
-extern "C" int func_801953E8(CfPartsElemArray* arr, CfPartsElem4C* elem, u8* flag, int arg4) { return 0; }
+extern "C" int func_801953E8(CfPartsElemArray* arr, CfPartsElem4C* elem, u8* flag, int arg4) {
+    CfElemA4Full* handle = 0;
+    u32 bdat = func_80086B24__Q22cf13CfGameManagerFv();
+    u32 spawned = 0;
+    (void)func_8006A6D0();
+    *flag = 0;
+    if (elem->field_1E & 0x10) return 0;
+    u32 id = elem->field_1C;
+    if ((id & 1) == 0 && arg4 != 0) return 0;
+    // Column +0x9d lookup result is discarded (write-side effect only).
+    getBdatStringColumnValue((void*)bdat, lbl_eu_80503C48 + 0x9d, id);
+    if (((CfActorAccessors*)elem)->func_80195AC0() != 0) {
+        // Full-refresh path.
+        if (elem->field_10 > lbl_eu_80667AD4) return 0;
+        u32 v34 = getBdatStringColumnValue((void*)bdat, lbl_eu_80503C48 + 0x34, id);
+        u8 col34 = *(u8*)&v34;
+        u32 vA7 = getBdatStringColumnValue((void*)bdat, lbl_eu_80503C48 + 0xa7, id);
+        // Plain u32->f64 conversion: MWCC builds the 0x43300000-prefixed
+        // bit pattern in memory and subtracts its 2^52 magic (pooled under
+        // the retail name lbl_eu_80667AC8). Do NOT spell the magic
+        // subtraction explicitly - that duplicates the conversion.
+        // The spawn speed falls back to the shared default when it matches
+        // the column value.
+        double spd = (double)(u32)*(u8*)&vA7;
+        if (spd == lbl_eu_80667AD4) spd = lbl_eu_80667B04;
+        if (elem->field_22 != 0)
+            handle = (CfElemA4Full*)func_80193AB0((CfTableA4*)arr, elem->field_22);
+        else
+            handle = func_80193B0C((CfPartsManager*)arr, id);
+        if (handle == 0) return 0;
+        elem->field_22 = ((CfActorAccessors*)handle)->func_80193B04();
+        if (elem->field_14 <= lbl_eu_80667AD4) {
+            if (((CfActorAccessors*)elem)->func_80195284() != 0)
+                elem->field_14 = lbl_eu_80667AC0;
+            else
+                memset(elem->field_30, 0, 9);
+        }
+        for (int i = 1; i <= 5; i++) {
+            // Build the per-slot column names by patching the digit in the
+            // shared 4-byte name buffers.
+            lbl_eu_80662500[3] = '0' + i;
+            u32 colId = getBdatStringColumnValue((void*)bdat, lbl_eu_80662500, id);
+            if (*(u16*)&colId == 0) break;
+            lbl_eu_80662510[3] = '0' + i;
+            u32 cnt = getBdatStringColumnValue((void*)bdat, lbl_eu_80662510, id);
+            int limit = *(u8*)&cnt - (elem->field_27[i] + elem->field_30[i]);
+            for (int j = 0; j < limit; j++) {
+                lbl_eu_80662508[3] = '0' + i;
+                u32 vB = getBdatStringColumnValue((void*)bdat, lbl_eu_80662508, id);
+                int force = 0;
+                u32 altId = 0;
+                u8 pct = *(u8*)&vB;
+                if (i == 1) {
+                    // Slot 1 consults the extra resource column: a live
+                    // resource forces the spawn chance to 100% (or forces the
+                    // reset helper when the roll fails).
+                    u32 vB2 = getBdatStringColumnValue((void*)bdat, lbl_eu_80503C48 + 0xb2, id);
+                    u8 rid = *(u8*)&vB2;
+                    if (rid != 0) {
+                        if (func_80195290((CfResSlot*)rid)) {
+                            altId = rid;
+                            pct = 100;
+                        } else {
+                            force = 1;
+                        }
+                    }
+                }
+                if ((s32)ml::math::mtRand(100) < (s32)pct) {
+                    if (func_80195384(*(u16*)&colId, id, i, (CfActorAccessors*)elem) != 0) {
+                        CfPartsChgObj3F04* obj = func_80194610((CfPartsManager*)arr, *(u16*)&colId, id, i, elem);
+                        if (obj != 0) {
+                            spawned = 1;
+                            func_80198138((CfPartsSlots*)handle, (CfPartsSlotChgView*)obj, id, i);
+                            ((CfActorAccessors*)handle)->func_80195ACC((float)spd);
+                            ((CfObjectPcExt*)obj)->func_80195AD4(col34);
+                            ((CfObjectPcExt*)obj)->func_80195ADC(altId);
+                            ++elem->field_27[i];
+                            ((CfActorAccessors*)elem)->func_80193A88(1);
+                            elem->field_42[i] = elem->field_27[i];
+                            if (elem->field_39[i] != 0) elem->field_39[i]--;
+                            if ((elem->field_24 & 0x40) != 0 || col34 != 0) {
+                                if (i > 1) {
+                                    CfObjectPcExt* sub = (CfObjectPcExt*)&obj->mSub;
+                                    CfPartsChgSub* subIf = &obj->mSub;
+                                    f32 s1 = *(f32*)sub->func_80195AF4();
+                                    f32 s2 = *(f32*)((CfActorAccessors*)sub)->func_80195AEC();
+                                    f32 sum = s2 + s1;
+                                    u32 dir = sub->func_80195AE4();
+                                    f32 base = obj->vt->fn_0x5B4(obj);
+                                    ml::CVec3 vec34;
+                                    func_8004B79C(&vec34, subIf->vfAC());
+                                    CfPartyInfo info;
+                                    func_80198710(&info, &vec34, base, spd, col34, dir);
+                                    if (func_8006DFBC(sub)) info.func_80195AFC(0);
+                                    ml::CVec3 vec40;
+                                    func_8004B0B0(&vec40);
+                                    if (func_8019876C((CfPartyInfoState*)&info, (CfPartsTri*)&vec40) != 0) {
+                                        if (func_8006DFBC(sub))
+                                            subIf->vf9C((const f32*)&vec40);
+                                        else
+                                            subIf->vfB8(&vec40, lbl_eu_80667B1C);
+                                    }
+                                }
+                            }
+                        }
+                    }
+                } else {
+                    if (force != 0) func_801931D0(elem);
+                }
+            }
+        }
+        if (func_80198340((CfPartsListEntry*)handle) != 0) {
+            elem->field_1E |= 4;
+            func_80198524((CfPartsSlots*)handle);
+        } else {
+            func_80197AA0((CfPartsManager*)arr, elem->field_22);
+        }
+    } else {
+        // Fallback path: random spawns only, bounded by the remaining counts.
+        if (elem->field_10 > lbl_eu_80667AD4) return 0;
+        for (int i = 1; i <= 5; i++) {
+            lbl_eu_80662500[3] = '0' + i;
+            u32 colId = getBdatStringColumnValue((void*)bdat, lbl_eu_80662500, id);
+            if (*(u16*)&colId == 0) break;
+            u8 cnt27 = elem->field_27[i];
+            lbl_eu_80662510[3] = '0' + i;
+            u32 v14 = getBdatStringColumnValue((void*)bdat, lbl_eu_80662510, id);
+            int limit = *(u8*)&v14 - elem->field_30[i];
+            for (int j = 0; j < limit; j++) {
+                if (cnt27 >= limit) break;
+                u32 rnd = ml::math::mtRand(100);
+                lbl_eu_80662508[3] = '0' + i;
+                u32 v10 = getBdatStringColumnValue((void*)bdat, lbl_eu_80662508, id);
+                int force = 0;
+                u32 altId = 0;
+                u8 pct = *(u8*)&v10;
+                if (i == 1) {
+                    u32 vc = getBdatStringColumnValue((void*)bdat, lbl_eu_80503C48 + 0xb2, id);
+                    u8 rid = *(u8*)&vc;
+                    if (rid != 0) {
+                        if (func_80195290((CfResSlot*)rid)) {
+                            altId = rid;
+                            pct = 100;
+                        } else {
+                            force = 1;
+                        }
+                    }
+                }
+                if ((s32)rnd >= (s32)pct) {
+                    if (force != 0) func_801931D0(elem);
+                    continue;
+                }
+                if (func_80195384(*(u16*)&colId, id, i, (CfActorAccessors*)elem) == 0) continue;
+                CfPartsChgObj3F04* obj = func_80194610((CfPartsManager*)arr, *(u16*)&colId, id, i, elem);
+                if (obj == 0) continue;
+                ((CfObjectPcExt*)obj)->func_80195ADC(altId);
+                ++elem->field_27[i];
+                ((CfActorAccessors*)elem)->func_80193A88(1);
+                elem->field_42[i] = elem->field_27[i];
+                if (elem->field_39[i] != 0) elem->field_39[i]--;
+                spawned = 1;
+            }
+        }
+        if (spawned != 0) elem->field_1E |= 4;
+    }
+    *flag = spawned;
+    return (int)handle;
+}
 #pragma pop
 
 u32 CfActorAccessors::func_80195AC0() { return (mFlags1E >> 3) & 0x1u; }
@@ -1323,15 +1534,15 @@ int func_80195BD4(u16 id, int arg2) {
     scan1:
         if (found == 0) break;
         int hasData = 0;
-        if (found->field_27[1] != 0) hasData = 1;
-        else if (found->field_27[2] != 0) hasData = 1;
-        else if (found->field_27[3] != 0) hasData = 1;
-        else if (found->field_27[4] != 0) hasData = 1;
-        else if (found->field_27[5] != 0) hasData = 1;
-        else if (found->field_27[6] != 0) hasData = 1;
-        else if (found->field_27[7] != 0) hasData = 1;
-        else if (found->field_27[8] != 0) hasData = 1;
-        if (!hasData) {
+        if (found->field_27[1] != 0) { hasData = 1; }
+        else if (found->field_27[2] != 0) { hasData = 1; }
+        else if (found->field_27[3] != 0) { hasData = 1; }
+        else if (found->field_27[4] != 0) { hasData = 1; }
+        else if (found->field_27[5] != 0) { hasData = 1; }
+        else if (found->field_27[6] != 0) { hasData = 1; }
+        else if (found->field_27[7] != 0) { hasData = 1; }
+        else if (found->field_27[8] != 0) { hasData = 1; }
+        if (hasData == 0) {
             CfPartsElem4C* e2;
             if (id != 0) {
                 const CfPartsElem4C* p = mgr->mElems.mElems;
@@ -1382,7 +1593,8 @@ extern "C" void func_80195E5C(CfPartsManager* mgr, f32 f) {
     if (bdat == 0) return;
     if (partyCount == 0) return;
     if (lbl_eu_80663E28 & 0x20) {
-        if (mgr->field_B276 > 0) mgr->field_B276 = 0;
+        s16 retry = mgr->field_B276;
+        if (retry > 0) mgr->field_B276 = 0;
     }
     if (mgr->field_B276 > 0) {
         mgr->field_B276 -= 1;
@@ -1390,152 +1602,166 @@ extern "C" void func_80195E5C(CfPartsManager* mgr, f32 f) {
         return;
     }
     if (func_80084BAC__Q22cf13CfGameManagerFv() != 0) return;
-    if ((lbl_eu_80663E24 & 0x02000000) != 0 || (lbl_eu_80663E24 & 0x400) != 0) return;
-    if ((lbl_eu_80663E24 & 0x00400000) != 0 && (lbl_eu_80663E28 & 0x30) == 0) return;
+    // Two || mask terms straight off the global: branch context blocks the
+    // mask fold, yielding two loads + rlwinm/rlwimi. record test.
+    if ((lbl_eu_80663E24 & 0x20) != 0 || (lbl_eu_80663E24 & 0x400) != 0) return;
+    u32 e24b = lbl_eu_80663E24;
+    if ((e24b & 0x400000) != 0 && (lbl_eu_80663E28 & 0x60) == 0) return;
     if (func_800829B8__Q22cf13CfGameManagerFv() != 0) return;
     if (player == 0) return;
     func_8019514C(mgr);
-    u32 t = (lbl_eu_80663E28 >> 6) & 3;
-    int notT = (t == 0) ? 1 : 0;
-    u32 bit23 = (lbl_eu_80663EE0 >> 8) & 1;
-    u32 r28 = func_8006A6D0();
-    u32 r16 = lbl_eu_80663D90;
-    u32 bit27 = (lbl_eu_80663E28 >> 4) & 1;
-    u32 bit25 = (lbl_eu_80663E28 >> 6) & 1;
-    CfGlobalGimmickView* g = getUnk80664658();
-    u32 unkBit = 0;
-    if (g != 0) {
-        unkBit = (getUnk80664658()->field_214 >> 15) & 1;
+    int r27 = (lbl_eu_80663E28 & 0x60) != 0;
+    int bit23 = (lbl_eu_80663EE0 & 0x100) != 0;
+    u32 sceneFlag = func_8006A6D0();
+    u32 d90 = lbl_eu_80663D90;
+    int bit10 = (lbl_eu_80663E28 & 0x10) != 0;
+    int bit40 = (lbl_eu_80663E28 & 0x40) != 0;
+    int unkBit;
+    if (getUnk80664658() != 0) {
+        unkBit = (getUnk80664658()->field_214 & 0x8000) != 0;
+    } else {
+        unkBit = 0;
     }
     int gt = lbl_eu_80663ED8 > lbl_eu_8066A208;
-    u32 bit26 = (lbl_eu_80663E28 >> 5) & 1;
-    if (bit27 != 0 && bit25 != 0) {
+    int bit20 = (lbl_eu_80663E28 & 0x20) != 0;
+    if (bit10 && bit40) {
         f = lbl_eu_80667B08;
     } else if (gt) {
         f = lbl_eu_80667ABC;
-    } else if (unkBit != 0) {
-        f *= lbl_eu_80667B20;
-    } else if (bit27 != 0) {
-        f *= lbl_eu_80667B20;
-    } else if (bit26 != 0 && bit25 != 0) {
+    } else if (unkBit) {
+        f = f * lbl_eu_80667B20;
+    } else if (bit10) {
+        f = f * lbl_eu_80667B20;
+    } else if (bit20 && bit40) {
         f = lbl_eu_80667ABC;
-    } else if (bit26 != 0) {
-        f *= lbl_eu_80667B20;
+    } else if (bit20) {
+        f = f * lbl_eu_80667B20;
     }
     int changed = mgr->field_B26C != f;
     mgr->field_B26C = f;
-    if (mgr->field_B278 == 0 && (r16 & 3) != 0 && r28 == mgr->field_B272 &&
-        notT == 0 && bit23 == 0 && changed == 0) {
+    // Skip the reset pass when nothing moved: speed unchanged, D90 low bits
+    // clear, scene flag matches the stored slot count, and both gate bits 0.
+    if (changed == 0 && (d90 & 3) == 0 && sceneFlag == mgr->field_B272 &&
+        r27 == 0 && bit23 == 0) {
         goto afterLoop;
     }
-    for (u32 i = 0; i < 16; i++) {
-        CfElemA4Full* t = &((CfElemA4Full*)mgr->mTable)[i];
-        if (!(t->field_A0 & 1)) continue;
-        if (t->field_A2 != 0) continue;
-        u16 id = t->field_9E;
-        CfPartsElem4C* elem;
-        if (id != 0) {
+    {
+        u32 i = 0;
+        CfElemA4Full* it = (CfElemA4Full*)mgr->mTable;
+        for (; i < 0x10; i++, it++) {
+            if (!(it->field_A0 & 1)) continue;
+            if (it->field_A2 != 0) continue;
+            u16 id = it->field_9E;
+            CfPartsElem4C* elem;
             CfPartsManager* gm = (CfPartsManager*)lbl_eu_8066430C;
-            const CfPartsElem4C* p = gm->mElems.mElems;
-            for (u32 k = 0; k < gm->mElems.mCount; p++, k++) {
-                if (id == p->field_1C) {
-                    elem = &gm->mElems.mElems[k];
-                    goto foundInList;
+            if (id != 0) {
+                const CfPartsElem4C* p = gm->mElems.mElems;
+                for (u32 k = 0; k < gm->mElems.mCount; p++, k++) {
+                    if (id == p->field_1C) {
+                        elem = &gm->mElems.mElems[k];
+                        goto foundInList;
+                    }
                 }
             }
+            elem = 0;
+        foundInList:
+            if (elem != 0 && elem->field_22 != 0) elem->field_22 = 0;
+            it->field_94 = 0;
+            it->field_A0 &= ~1u;
         }
-        elem = 0;
-    foundInList:
-        if (elem != 0 && elem->field_22 != 0) elem->field_22 = 0;
-        t->field_94 = 0;
-        t->field_A0 &= ~1u;
     }
     {
         CfPlayerPosView* pv = (CfPlayerPosView*)player;
         ml::CVec3* pos = pv->vt->vfAC(player);
         func_80194D5C(mgr, pos, f);
     }
-    if (notT == 0 && bit23 == 0 && mgr->field_B278 == 0) return;
+    if (r27 == 0 && bit23 == 0 && mgr->field_B278 == 0) return;
     mgr->field_B278 = 0;
 afterLoop:
-    ((int (*)(void*))func_80194AFC)(mgr);
-    if (r28 != mgr->field_B272 && bit23 == 0) return;
+    func_80194AFC();
+    if (sceneFlag != mgr->field_B272 && bit23 == 0) return;
     {
         CfActorList* list = (CfActorList*)func_800B6BC8();
-        int n = 0;
-        CfActorListNode* node = list->mHead->mNext;
-        while (node != list->mHead) {
+        u32 n = 0;
+        CfActorListNode* head = list->mHead;
+        CfActorListNode* node = head->mNext;
+        while (node != head) {
             node = node->mNext;
             n++;
         }
-        if ((u32)n >= 0x20) return;
+        if (n >= 0x20) return;
     }
     u32 cnt = mgr->field_A804;
     func_80196434((CfPartsSwapEntry*)mgr->mDist, (CfPartsSwapEntry*)&mgr->mDist[cnt],
                   (CfPartsSwapCmp)func_8019641C);
     func_80196E04(mgr, f);
+    // Rebuild refreshes the distance array; reload the count.
     u32 count = mgr->field_A804;
     int hit = 0;
     int limit = 0x10;
     if (bit23 != 0) {
         mgr->field_B274 = 0;
         limit = (int)count;
-        lbl_eu_80663EE0 &= ~0x80u;
-    } else if (notT != 0 && (count >> 1) > 0x10) {
-        limit = (int)(count >> 1);
+        lbl_eu_80663EE0 &= ~0x100u;
+    } else if (r27 != 0) {
+        u32 half = count >> 1;
+        if (half > 0x10) limit = (int)half;
     }
     const char* cols = lbl_eu_80503C48;
-    for (int i = 0; i < (int)count && i < limit; i++) {
-        u16 idx = mgr->field_B274;
-        idx++;
+    for (u32 i = 0; i < count && i < (u32)limit; i++) {
+        u16 idx = mgr->field_B274 + 1;
         mgr->field_B274 = idx;
         if (idx >= count) mgr->field_B274 = 0;
         idx = mgr->field_B274;
         CfPartsElem4C* elem = (CfPartsElem4C*)mgr->mDist[idx].elem;
         u16 eid = elem->field_1C;
+        // Column value goes to a stack slot so the narrow re-read below is a
+        // fresh halfword load (retail stw+lhz).
         u32 val = getBdatStringColumnValue(bdat, cols + 0x6c, eid);
-        int lo = 1;
-        int hi = 0xfc;
-        int cnt3 = func_80082354__Q22cf13CfGameManagerFv(*(const u16*)&val);
-        if (cnt3 != 0) {
+        u16 lo = 1;
+        u16 hi = 0xfc;
+        u32 slotCnt = func_80082354__Q22cf13CfGameManagerFv(*(const u16*)&val);
+        if (slotCnt != 0) {
             u32 w = getBdatStringColumnValue(bdat, cols + 0x74, eid);
             u8 wb = *(const u8*)&w;
             if (wb != 0) {
-                lo = wb;
                 hi = wb;
+                lo = wb;
             }
         }
         int ok1;
-        if (*(const u16*)&val == 0) ok1 = 1;
-        else if ((u32)(u16)lo > (u32)cnt3) ok1 = 0;
-        else if ((u32)cnt3 <= (u32)(u16)hi) ok1 = 1;
-        else ok1 = 0;
+        if (*(const u16*)&val == 0) {
+            ok1 = 1;
+        } else if ((u32)lo > slotCnt) {
+            ok1 = 0;
+        } else if (slotCnt <= (u32)hi) {
+            ok1 = 1;
+        } else {
+            ok1 = 0;
+        }
         int ok2 = 0;
         if (ok1) {
-            u16 cnt2 = (u16)func_800822F4__Q22cf13CfGameManagerFv();
-            u32 c2 = getBdatStringColumnValue(bdat, cols + 0x80, eid);
-            u32 d2 = getBdatStringColumnValue(bdat, cols + 0x8a, eid);
-            if ((u16)c2 <= cnt2 && cnt2 <= (u16)d2) ok2 = 1;
+            u16 curCnt = (u16)func_800822F4__Q22cf13CfGameManagerFv();
+            u32 colMin = getBdatStringColumnValue(bdat, cols + 0x80, eid);
+            u32 colMax = getBdatStringColumnValue(bdat, cols + 0x8a, eid);
+            if (*(const u16*)&colMin <= curCnt && curCnt <= *(const u16*)&colMax)
+                ok2 = 1;
         }
-        if (ok2) {
-            if (!(elem->field_20 & 8) && (bit23 == 0 || (elem->field_1E & 0x200))) {
-                u8 flag;
-                func_801953E8((CfPartsElemArray*)mgr, elem, &flag, 1);
-                if (flag != 0) {
-                    hit++;
-                    if (notT == 0 || hit > 8) return;
-                }
-            }
-        }
+        if (ok2 == 0) continue;
+        if (elem->field_20 & 8) continue;
+        // When re-arming (bit23), only elements with the 0x200 flag spawn.
+        if (bit23 != 0 && !(elem->field_1E & 0x200)) continue;
+        u8 flag;
+        func_801953E8((CfPartsElemArray*)mgr, elem, &flag, 1);
+        if (flag == 0) continue;
+        hit++;
+        if (r27 == 0) return;
+        if (hit > 8) return;
     }
 }
 
 // 8-byte entry swap used by the three-way sort of func_80196C94 and the
-// quicksorts. The old entry is homed in a u32 pair on the stack: field_00
-// keeps its value in a register (its slot store is the dead sibling of the
-// bitcast slot), while field_04 is re-read as float through its own slot
-// (the MWCC lwz/stw/lfs round-trip) so the value travels as f32 on the y
-// side.
+// quicksorts (kept for func_80196864).
 static inline void swapPartsEntry(CfPartsSwapEntry* x, CfPartsSwapEntry* y) {
     struct { u32 field_00; u32 field_04; } t;
     t.field_00 = x->field_00;
@@ -1559,12 +1785,16 @@ bool func_8019641C(const CfPartyInfoSortKey* a, const CfPartyInfoSortKey* b) {
 // it ends up at the front (equal-element scans), and tail-recurse on the
 // smaller half.
 void func_80196434(CfPartsSwapEntry* a, CfPartsSwapEntry* b, CfPartsSwapCmp cmp) {
+    // Taking the parameter's address homes it in a stack slot (retail
+    // stw r5, 0x8(r1)); the slot doubles as the comparator object passed
+    // to the helpers.
     for (;;) {
-        s32 count = (s32)(b - a);
+        // Element count as a signed byte-distance division (retail srawi/addze).
+        s32 count = (s32)((u8*)b - (u8*)a) / 8;
         if (count <= 1) return;
         if (count <= 20) {
             CfPartsSwapEntry* i;
-            for (i = a; i != b - 1; i++) {
+            for (i = a;; i++) {
                 CfPartsSwapEntry* min = i;
                 if (i != b) {
                     CfPartsSwapEntry* j;
@@ -1573,19 +1803,18 @@ void func_80196434(CfPartsSwapEntry* a, CfPartsSwapEntry* b, CfPartsSwapCmp cmp)
                     }
                 }
                 if (min != i) swapPartsEntry(i, min);
+                if (i == b - 1) return;
             }
-            return;
         }
+        // Pseudo-random pivot offsets from the wrap-around state in [-4, 4];
+        // offsets use state % 5 (MWCC 0x66666667 magic, single-shift idiom).
         s32 state = lbl_eu_80662518;
-        s32 q1 = count / 4;
         s32 s = state + 1;
-        s32 p1i = q1 + (state % 10);
-        if (s >= 5) s = -4;
-        s32 p2r = s % 10;
+        s32 p1i = count / 4 + state % 5;
+        s = (s >= 5) ? -4 : s;
+        s32 p2i = (count * 3) / 4 + s % 5;
         s32 s2 = s + 1;
-        lbl_eu_80662518 = s2;
-        if (s2 >= 5) lbl_eu_80662518 = -4;
-        s32 p2i = (count * 3) / 4 + p2r;
+        lbl_eu_80662518 = (s2 >= 5) ? -4 : s2;
         CfPartsSwapEntry* pivot = b - 1;
         func_80196C94(&a[p1i], &a[p2i], pivot, (CfPartsSwapCmpObj*)&cmp);
         CfPartsSwapEntry* lo = a;
@@ -1603,21 +1832,28 @@ void func_80196434(CfPartsSwapEntry* a, CfPartsSwapEntry* b, CfPartsSwapCmp cmp)
             } while (cmp(hi, pivot) == 0);
         }
         if (lo == a) {
+            // Everything equaled the pivot: swap it to the front and rotate
+            // the equal run toward the back, shrinking [lo, pivot).
+            pivot = b - 1;
             swapPartsEntry(a, pivot);
             lo = a + 1;
-            if (cmp(a, pivot) == 0) {
+            lo = a + 1;
+            if (cmp(a, lo) == 0) {
                 while (lo != b && cmp(a, lo) == 0) lo++;
                 if (lo < pivot) swapPartsEntry(lo, pivot);
             }
             while (lo < pivot) {
                 while (cmp(a, lo) == 0) lo++;
-                while (cmp(a, pivot) != 0) pivot--;
+                do {
+                    pivot--;
+                } while (cmp(a, pivot) != 0);
                 if (lo >= pivot) break;
                 swapPartsEntry(lo, pivot);
                 lo++;
             }
         } else {
-            if ((lo - a) < (b - lo)) {
+            // Tail-recurse on the smaller half.
+            if ((s32)((u8*)lo - (u8*)a) < (s32)((u8*)b - (u8*)lo)) {
                 func_80196864(a, lo, (CfPartsSwapCmpObj*)&cmp);
                 a = lo;
             } else {
@@ -1636,31 +1872,34 @@ void func_80196864(CfPartsSwapEntry* a, CfPartsSwapEntry* b, CfPartsSwapCmpObj* 
         s32 count = (s32)(b - a);
         if (count <= 1) return;
         if (count <= 20) {
-            CfPartsSwapEntry* i;
-            for (i = a; i != b - 1; i++) {
+            CfPartsSwapEntry* i = a;
+            // Selection sort; count >= 2 guarantees at least one iteration.
+            do {
+                CfPartsSwapEntry* j;
                 CfPartsSwapEntry* min = i;
                 if (i != b) {
-                    CfPartsSwapEntry* j;
                     for (j = i + 1; j != b; j++) {
                         if (f->cmp(j, min) != 0) min = j;
                     }
                 }
                 if (min != i) swapPartsEntry(i, min);
-            }
+                i++;
+            } while (i != b - 1);
             return;
         }
+        // Pivot pick: two pseudo-random indices derived from the cycling
+        // state global (-4..4); count/4 is computed once and 3*count/4 is
+        // folded as (half<<2)-half. The state advances twice per call.
         s32 state = lbl_eu_8066251C;
-        s32 q1 = count / 4;
+        s32 half = count / 4;
+        CfPartsSwapEntry* p1 = &a[half + state % 5];
         s32 s = state + 1;
-        s32 p1i = q1 + (state % 10);
         if (s >= 5) s = -4;
-        s32 p2r = s % 10;
         s32 s2 = s + 1;
-        lbl_eu_8066251C = s2;
-        if (s2 >= 5) lbl_eu_8066251C = -4;
-        s32 p2i = (count * 3) / 4 + p2r;
+        lbl_eu_8066251C = (s2 < 5) ? s2 : -4;
+        CfPartsSwapEntry* p2 = &a[4 * half - half + s % 5];
         CfPartsSwapEntry* pivot = b - 1;
-        func_80196C94(&a[p1i], &a[p2i], pivot, f);
+        func_80196C94(p1, p2, pivot, f);
         CfPartsSwapEntry* lo = a;
         CfPartsSwapEntry* hi = pivot;
         while (f->cmp(lo, pivot) != 0) lo++;
@@ -1720,7 +1959,188 @@ void func_80196C94(CfPartsSwapEntry* a, CfPartsSwapEntry* b,
     else swapPartsEntry(a, c);
 }
 
-extern "C" void func_80196E04(CfPartsManager* mgr, f32 f) {}
+// Slot rebuild pass over the sorted distance array (called from
+// func_80195E5C right after the sort): for each of the first 16 entries with
+// the active bit, refresh the equipment counters and respawn the party
+// members listed in the element's +0x39 counts. Each spawn re-keys the actor
+// into a 16-slot busy table (allocating through func_80193B0C when free),
+// rebuilds a CfPartyInfo via func_80198710 and picks a goal position through
+// the pmf dispatcher func_8019876C. Afterwards, if any element spawned while
+// its 0x10 flag was set, the element is rebound to a slot: when all eight of
+// the slot's entries are free the slot is reset (func_80198524) and the
+// element's re-arm bit is set.
+void func_80196E04(CfPartsManager* mgr, f32 f) {
+    // All state declared at function top (C-style); declaration order drives
+    // MWCC's callee-saved register allocation.
+    u32 bdat;
+    CfPartsTailView* view;
+    f64 convMagic;
+    f32 fallback;
+    u32 count;
+    u32 i;
+    CfPartsElem4C* elem;
+    u16 id;
+    u32 v34;
+    u8 col34;
+    u32 va7;
+    u8 va7b;
+    F64Conv conv;
+    f64 speed;
+    u16 flags;
+    int k;
+    int spawned;
+    int j;
+    s32 cnt;
+    u32 colv;
+    u16 colh;
+    u8 resId;
+    u32 vb2;
+    int n;
+    CfPartsChgObj3F04* obj;
+    CfPartsSlots* slot;
+    u16 key;
+    CfElemA4Full* p;
+    int t;
+    u16 slotIdx;
+    CfPartsChgSub* sub;
+    ml::CVec3* srcPos;
+    ml::CVec3 posLocal;
+    cf::CfPartyInfo info;
+    f32 f44;
+    CfPartsTri goal;
+    bool occupied;
+
+    bdat = func_80086B24__Q22cf13CfGameManagerFv();
+    func_8006A6D0();
+    // Single tail view over the distance array + its live count.
+    view = (CfPartsTailView*)(void*)mgr->mDist;
+    convMagic = lbl_eu_80667AC8;
+    count = view->count;
+    fallback = lbl_eu_80667AD4;
+    for (i = 0; i < count && i < 0x10; i++) {
+        elem = (CfPartsElem4C*)view->mDist[i].elem;
+        if (!(elem->field_1E & 1)) continue;
+        id = elem->field_1C;
+        // Column values are deref'd out of storage so MWCC emits the retail
+        // stw+lbz round-trips instead of folding to rlwinm.
+        v34 = getBdatStringColumnValue((void*)bdat, lbl_eu_80503C48 + 0x34, id);
+        col34 = *(const u8*)&v34;
+        va7 = getBdatStringColumnValue((void*)bdat, lbl_eu_80503C48 + 0xa7, id);
+        va7b = *(const u8*)&va7;
+        // Named-magic u32->f32 conversion; kept as double so MWCC schedules
+        // the fcmpu before any frsp (retail rounds only at the stfs sites).
+        conv.w[0] = 0x43300000;
+        conv.w[1] = va7b;
+        speed = conv.d - convMagic;
+        if (fallback == speed) speed = lbl_eu_80667B04;
+        flags = elem->field_1E;
+        if ((flags & 1) && elem->field_14 <= fallback &&
+            elem->field_10 <= fallback && !(flags & 0x400)) {
+            // Fold each equipment counter into its accumulator and clear it.
+            for (k = 1; k <= 8; k++) {
+                if (elem->field_30[k] != 0) {
+                    elem->field_39[k] += elem->field_30[k];
+                    elem->field_30[k] = 0;
+                }
+            }
+        }
+        spawned = 0;
+        for (j = 1; j <= 8; j++) {
+            cnt = elem->field_39[j];
+            if (cnt <= 0) continue;
+            lbl_eu_80662520[3] = (char)(j + 0x30);
+            colv = getBdatStringColumnValue((void*)bdat, lbl_eu_80662520, id);
+            colh = *(const u16*)&colv;
+            resId = 0;
+            if (j == 1) {
+                vb2 = getBdatStringColumnValue((void*)bdat, lbl_eu_80503C48 + 0xb2, id);
+                resId = *(const u8*)&vb2;
+                if (resId != 0 && func_8009CF8C(resId + 0x1d44) == 0) resId = 0;
+            }
+            for (n = 0; n < cnt; n++) {
+                obj = func_80194610(mgr, colh, id, j, elem);
+                if (obj == 0) continue;
+                obj->field_45C8 = resId;
+                spawned = 1;
+                elem->field_27[j]++;
+                elem->field_1E |= 0x400;
+                elem->field_39[j]--;
+                if (!(elem->field_1E & 0x10)) continue;
+                // Re-key the actor into the busy-slot table: allocate a fresh
+                // slot when unbound, otherwise look the key up.
+                key = elem->field_22;
+                if (key == 0) {
+                    slot = (CfPartsSlots*)func_80193B0C(mgr, id);
+                    elem->field_22 = slot->field_94;
+                } else {
+                    slot = 0;
+                    p = (CfElemA4Full*)mgr->mTable;
+                    for (t = 0; t < 16; t++, p++) {
+                        if (key == p->field_94) {
+                            slot = (CfPartsSlots*)p;
+                            break;
+                        }
+                    }
+                }
+                if (slot == 0) continue;
+                func_80198138(slot, (CfPartsSlotChgView*)obj, id, j);
+                slot->field_8C = speed;
+                obj->field_45C4 = col34;
+                if ((elem->field_24 & 2) || col34 != 0) {
+                    if (j > 1) {
+                        slotIdx = obj->field_45C6;
+                        sub = &obj->mSub;
+                        srcPos = sub->vfAC();
+                        posLocal.x = srcPos->x;
+                        posLocal.y = srcPos->y;
+                        posLocal.z = srcPos->z;
+                        obj->vt->fn_0x5B4(obj);
+                        f44 = obj->field_44D8;
+                        func_80198710(&info, &posLocal, f44 + f44, speed,
+                                      col34, slotIdx);
+                        if (obj->field_3F00 & 8) info.field_2D = 0;
+                        if (func_8019876C((CfPartyInfoState*)&info, &goal) != 0) {
+                            if (obj->field_3F00 & 8) {
+                                sub->vf9C((const f32*)&goal);
+                            } else {
+                                sub->vfB8((const ml::CVec3*)&goal, lbl_eu_80667B1C);
+                            }
+                        }
+                    }
+                }
+            }
+        }
+        if (spawned == 0) continue;
+        if (!(elem->field_1E & 0x10)) return;
+        key = elem->field_22;
+        if (key == 0) {
+            slot = (CfPartsSlots*)func_80193B0C(mgr, id);
+        } else {
+            slot = 0;
+            p = (CfElemA4Full*)mgr->mTable;
+            for (t = 0; t < 16; t++, p++) {
+                if (key == p->field_94) {
+                    slot = (CfPartsSlots*)p;
+                    break;
+                }
+            }
+        }
+        if (slot == 0) return;
+        elem->field_22 = slot->field_94;
+        // Only rebind when at least one of the first eight entries is live.
+        occupied = false;
+        for (k = 0; k < 8; k++) {
+            if (slot->mEntries[k].field_00 != 0) {
+                occupied = true;
+                break;
+            }
+        }
+        if (!occupied) return;
+        func_80198524(slot);
+        elem->field_1E |= 4;
+        return;
+    }
+}
 
 // Linear scan of the 0x4C-stride element array: return the element whose u16
 // id at +0x1C matches, or null (count at +0x9800).
@@ -1774,13 +2194,18 @@ extern "C" int func_80198284(CfPartsSlots* self, CfPartsSlots* other);
 // the element speed from the BDAT columns; the field_27[1..8] data check
 // clears the +0x400 re-arm bit. auto_inline off keeps the retail `bl` from
 // callers (same pattern as func_80193810).
+// Register-coloring notes: the two busy computations are separate variables
+// (disjoint live ranges) so MWCC colors them independently; declaring them
+// adjacently after `active` lands both on retail's r29. elem is declared
+// first so it shares obj's r31 after obj dies.
 #pragma push
 #pragma auto_inline off
 extern "C" void func_80197538(unsigned long manager, int arg) {
+    CfPartsElem4C* elem;            // actor-half element
     CfPartsChgObjFull* obj;         // r31
     int active;                     // r30
-    int busy;                       // r29
-    CfPartsElem4C* elem;            // second part (reuses obj's r31 once dead)
+    int busy;                       // inner-loop busy
+    int busy2;                      // outer busy
     const CfPartsListEntry* p;      // r28 (mEntries walk)
     void* bm;                       // r27
     CfElemA4Full* tbl;              // r26
@@ -1797,10 +2222,11 @@ extern "C" void func_80197538(unsigned long manager, int arg) {
     if (actor->field_3F00 & 0x04000000) {
         bm = getInstance__Q22cf14CBattleManagerFv();
         if (active == 0) {
-            u16 id = actor->field_45C0;
             tbl = 0;
+            u32 id = actor->field_45C0;
             if (id != 0) {
-                for (u32 i = 0; i < 16; i++) {
+                u32 i = 0;
+                for (; i < 16; i++) {
                     if (id == mgr->mTable[i].field_94) {
                         tbl = (CfElemA4Full*)&mgr->mTable[i];
                         break;
@@ -1858,9 +2284,9 @@ extern "C" void func_80197538(unsigned long manager, int arg) {
             }
         }
     }
-    busy = 1;
+    busy2 = 1;
     if (((cf::CfResPcPlayerVtIf*)actor)->_v2BC() == 0 && (actor->field_3F08 & 0x08000000) == 0) {
-        busy = 0;
+        busy2 = 0;
     }
     if (actor->field_3F00 & 4) {
         u16 shifted = (u16)(actor->field_456C >> 4);
@@ -1886,7 +2312,7 @@ elemFound2:
         u8 n = elem->field_27[o];
         if (n != 0) {
             elem->field_27[o] = n - 1;
-            if (busy != 0) {
+            if (busy2 != 0) {
                 elem->field_30[o] += 1;
             } else {
                 elem->field_39[o] += 1;
@@ -2064,42 +2490,49 @@ extern "C" int func_80198284(CfPartsSlots* self, CfPartsSlots* other);
 // args are given, spawns the party-drop via func_80197C6C with the table's
 // +0x9A part (or the actor's +0x3F28 when no table slot matched), the
 // actor's +0x3F10 id, and the +0x3E9C sub-object position (vfAC).
+// Party-slot removal / spawn dispatch. See the comment above the forward
+// declarations for the full behavior description.
 extern "C" void func_80197DE8(CfPartsManager* mgr, CfPartsChgObjFull* actor, int opt1, int opt2) {
+    // Linear scan of the 16-entry 0xA4 table for the actor id (+0x94 key).
+    CfElemA4* tbl;
+    u16 id;
     int flag = 1;
     if (((cf::CfResPcPlayerVtIf*)actor)->_v2BC() == 0 && !(actor->field_3F08 & 0x08000000)) {
         flag = 0;
     }
-    u16 id = actor->field_45C0;
-    CfElemA4Full* tbl = 0;
+    id = actor->field_45C0;
+    tbl = 0;
     if (id != 0) {
-        const u32* p = &((CfElemA4Full*)mgr->mTable)[0].field_94;
         for (u32 i = 0; i < 16; i++) {
-            if (*p == id) {
-                tbl = &((CfElemA4Full*)mgr->mTable)[i];
+            if (id == mgr->mTable[i].field_94) {
+                tbl = &mgr->mTable[i];
                 break;
             }
-            p = (const u32*)((const u8*)p + 0xA4);
         }
     }
     if (tbl != 0) {
         if (func_80198284((CfPartsSlots*)tbl, (CfPartsSlots*)actor) == 0) return;
         if (!(tbl->field_A0 & 1)) {
+            // Element lookup duplicated inline (retail emits the identical
+            // scan twice); the two elem = 0 sites mirror retail's separate
+            // li blocks (bit-clear vs shifted-zero/exhausted-scan).
             CfPartsElem4C* elem;
             if (actor->field_3F00 & 0x4) {
-                s32 shifted = (s32)actor->field_456C >> 4;
-                if (shifted != 0) {
-                    u16 sid = (u16)shifted;
-                    const CfPartsElem4C* p = mgr->mElems.mElems;
-                    for (u32 j = 0; j < mgr->mElems.mCount; p++, j++) {
-                        if (sid == p->field_1C) {
+                if (((s32)actor->field_456C >> 4) != 0) {
+                    u16 sid = (u16)((s32)actor->field_456C >> 4);
+                    u32 count = mgr->mElems.mCount;
+                    for (u32 j = 0; j < count; j++) {
+                        if (sid == mgr->mElems.mElems[j].field_1C) {
                             elem = &mgr->mElems.mElems[j];
-                            goto elemFound1;
+                            goto merged1;
                         }
                     }
                 }
+                elem = 0;
+            } else {
+                elem = 0;
             }
-            elem = 0;
-        elemFound1:
+        merged1:
             if (elem != 0) {
                 elem->field_22 = 0;
                 if (flag && (elem->field_1E & 0x200)) {
@@ -2111,45 +2544,51 @@ extern "C" void func_80197DE8(CfPartsManager* mgr, CfPartsChgObjFull* actor, int
             CfPartsDNode* node = head->next;
             while (node != head) {
                 CfPartsDNode* next = node->next;
-                if (node->data == (CfElemA4*)tbl) {
-                    node->prev->next = next;
-                    next->prev = node->prev;
+                if (node->data == tbl) {
+                    CfPartsDNode* prev = node->prev;
+                    prev->next = next;
+                    next->prev = prev;
                     node->next = 0;
                 }
                 node = next;
             }
             if (flag && opt1 == 0 && opt2 != 0) {
+                u16 part = tbl->field_9A;
+                u32 objId = actor->field_3F10;
                 f32 f = actor->vt->fn_0x5B4(actor);
                 ml::CVec3* pos =
                     (ml::CVec3*)((cf::CfResPcParentVtIf*)&actor->mSubVt)->_v0AC();
-                func_80197C6C(f, actor->field_3F10, tbl->field_9A, pos, 1);
+                func_80197C6C(f, objId, part, pos, 1);
             }
         }
     } else {
         if (id == 0 && flag && opt1 == 0 && opt2 != 0) {
+            u16 part = actor->field_3F28;
+            u32 objId = actor->field_3F10;
             f32 f = actor->vt->fn_0x5B4(actor);
             ml::CVec3* pos =
                 (ml::CVec3*)((cf::CfResPcParentVtIf*)&actor->mSubVt)->_v0AC();
-            func_80197C6C(f, actor->field_3F10, actor->field_3F28, pos, 0);
+            func_80197C6C(f, objId, part, pos, 0);
         }
     }
     if (tbl == 0) {
         CfPartsElem4C* elem;
         if (actor->field_3F00 & 0x4) {
-            s32 shifted = (s32)actor->field_456C >> 4;
-            if (shifted != 0) {
-                u16 sid = (u16)shifted;
-                const CfPartsElem4C* p = mgr->mElems.mElems;
-                for (u32 j = 0; j < mgr->mElems.mCount; p++, j++) {
-                    if (sid == p->field_1C) {
+            if (((s32)actor->field_456C >> 4) != 0) {
+                u16 sid = (u16)((s32)actor->field_456C >> 4);
+                u32 count = mgr->mElems.mCount;
+                for (u32 j = 0; j < count; j++) {
+                    if (sid == mgr->mElems.mElems[j].field_1C) {
                         elem = &mgr->mElems.mElems[j];
-                        goto elemFound2;
+                        goto merged2;
                     }
                 }
             }
+            elem = 0;
+        } else {
+            elem = 0;
         }
-        elem = 0;
-    elemFound2:
+    merged2:
         if (elem != 0 && flag && (elem->field_1E & 0x200)) {
             elem->field_1E |= 0x80;
         }
@@ -2371,9 +2810,12 @@ void CfPartyInfo::func_80198710(void* r4, float f1, int r5, int r6, float f2, fl
 // Dispatch the party-info state handler selected by the +0x0C state word
 // through the retail pmf table lbl_eu_80532AF0; the goal pointer passes
 // through in r4. MWCC lowers the pmf call to lis/addi + mulli + bl __ptmf_scall.
+#pragma push
+#pragma auto_inline off
 int func_8019876C(CfPartyInfoState* self, CfPartsTri* goal) {
     return (self->*lbl_eu_80532AF0[self->field_0C])(goal);
 }
+#pragma pop
 
 // Stub - the retail symbol is unmangled and callers emit `bl func_801987A4`;
 // auto_inline off keeps the call opaque (same pattern as func_80197538).
@@ -2385,55 +2827,61 @@ int func_8019876C(CfPartyInfoState* self, CfPartsTri* goal) {
 // probe fails or the chosen result is inside the +0x2E gate radius.
 extern "C" int func_801987A4(CfPartsTri* src, CfPartsTri* dstTri) {
     CfPartyPosSel* self = (CfPartyPosSel*)src;
-    ml::CVec3* dst = (ml::CVec3*)dstTri;
-    if (self->field_2D == 0) return 1;
-    ml::CVec3 out;
-    ml::CVec3 tmp14;
-    ml::CVec3 tmp8;
-    tmp14.x = lbl_eu_80667B28;
-    tmp14.y = lbl_eu_80667B2C;
-    tmp14.z = lbl_eu_80667B28;
-    tmp8 = *dst + tmp14;
-    out.x = tmp8.x;
-    out.y = tmp8.y;
-    out.z = tmp8.z;
-    if (func_804BE398(&out, 0x4a05, 0, 1, lbl_eu_80667B30 - self->field_28,
-                      lbl_eu_80667B34) == 0) {
-        return 0;
-    }
-    f32 yThresh = lbl_eu_80667B28;
-    f32 bestDist = lbl_eu_80667B38;
-    f32 secondDist = bestDist;
-    f32 secondY = dst->y;
-    f32 bestY = secondY;
-    f32 bound = secondY - lbl_eu_80667B3C;
-    f32 hiBound = lbl_eu_80667B40 + secondY;
-    int bestIdx = 0;
-    int secondIdx = 0;
-    u32 i = 0;
-    while (i < func_804BE4AC()) {
+    if (self->field_2D != 0) {
+        ml::CVec3* dst = (ml::CVec3*)dstTri;
+        // MWCC packs these in reverse declaration order: this yields the
+        // retail sp+0x08(sum)/0x14(offset)/0x20(pos)/0x2c(res) layout.
+        ml::CVec3 res;
+        ml::CVec3 pos;
+        ml::CVec3 offset;
+        ml::CVec3 sum;
+        offset.x = lbl_eu_80667B28;
+        offset.y = lbl_eu_80667B2C;
+        offset.z = lbl_eu_80667B28;
+        nw4r::math::VEC3Add((nw4r::math::VEC3*)&sum, (const nw4r::math::VEC3*)dst,
+                            (const nw4r::math::VEC3*)&offset);
+    pos.x = sum.x;
+    pos.y = sum.y;
+    pos.z = sum.z;
+    if (func_804BE398(&pos, 0x4a05, 0, 1, lbl_eu_80667B30 - self->field_28,
+                      lbl_eu_80667B34) != 0) {
+    // Homes mirror declaration order; assignments are ordered to match
+    // the retail load/copy schedule.
+    int bestIdx;
+    int secondIdx;
+    int i;
+    f32 bestY, yThresh, secondDist, secondY, bound, hiBound, bestDist;
+    secondDist = lbl_eu_80667B38;
+    bestIdx = 0;
+    secondY = dst->y;
+    secondIdx = 0;
+    bestDist = secondDist;
+    bestY = secondY;
+    bound = secondY - lbl_eu_80667B3C;
+    yThresh = lbl_eu_80667B28;
+    hiBound = lbl_eu_80667B40 + secondY;
+    i = 0;
+    while (i < (int)func_804BE4AC()) {
         ml::CVec3* obj = (ml::CVec3*)func_804BE520(i);
         if (obj->y > yThresh) {
-            ml::CVec3* obj2 = (ml::CVec3*)func_804BE50C(i);
-            f32 dist = ml::math::abs(obj2->y - dst->y);
+            f32 dist = ml::math::abs(((ml::CVec3*)func_804BE50C(i))->y - dst->y);
             if (func_804BE5A4(0x40000, i) != 0) {
-                if (bestDist <= dist) {
+                if (bestDist >= dist) {
                     bestDist = dist;
-                    bestY = obj2->y;
-                    bestIdx = (int)i + 1;
+                    bestY = ((ml::CVec3*)func_804BE50C(i))->y;
+                    bestIdx = i + 1;
                 }
-            } else {
-                if (obj2->y > bound && obj2->y <= hiBound) {
-                    secondDist = dist;
-                    secondY = obj2->y;
-                    secondIdx = (int)i + 1;
-                    bound = secondY;
-                } else if (secondDist <= dist) {
-                    secondDist = dist;
-                    secondY = obj2->y;
-                    secondIdx = (int)i + 1;
-                    bound = secondY;
-                }
+            } else if (bound < ((ml::CVec3*)func_804BE50C(i))->y
+                       && ((ml::CVec3*)func_804BE50C(i))->y <= hiBound) {
+                secondDist = dist;
+                secondY = ((ml::CVec3*)func_804BE50C(i))->y;
+                secondIdx = i + 1;
+                bound = secondY;
+            } else if (secondDist >= dist) {
+                secondDist = dist;
+                secondY = ((ml::CVec3*)func_804BE50C(i))->y;
+                secondIdx = i + 1;
+                bound = secondY;
             }
         }
         i++;
@@ -2445,19 +2893,23 @@ extern "C" int func_801987A4(CfPartsTri* src, CfPartsTri* dstTri) {
             secondIdx = bestIdx;
             dst->y = bestY;
             self->field_24 = bestY - lbl_eu_80667B3C;
-        } else if (bestDist < secondDist && secondY - bestY <= lbl_eu_80667B44) {
-            self->field_2C = 1;
+        } else if (bestDist < secondDist) {
             secondIdx = bestIdx;
-            dst->y = bestY;
-            self->field_24 = secondY;
+            if (secondY - bestY <= lbl_eu_80667B44) {
+                self->field_2C = 1;
+                dst->y = bestY;
+                self->field_24 = secondY;
+            }
         }
     }
-    if (self->field_2E != 0 && secondIdx != 0) {
-        ml::CVec3 out2;
-        if (func_804BE53C(&out2, (u32)secondIdx - 1) != 0) {
-            if (lbl_eu_80667B48 <= out2.x * out2.x + out2.z * out2.z) {
-                return 0;
-            }
+    if (self->field_2E != 0 && secondIdx != 0
+        && func_804BE53C(&res, secondIdx - 1) != 0
+        && lbl_eu_80667B48 <= res.x * res.x + res.z * res.z) {
+        return 0;
+    }
+    return 1;
+        } else {
+            return 0;
         }
     }
     return 1;

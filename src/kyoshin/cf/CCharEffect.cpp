@@ -364,7 +364,7 @@ int func_8015CBC0() {
 int func_8015CBEC(CCharEffect* self) {
     cf::CCharEffectBattleObj* battleObj = self->mBattleObj;
     if (battleObj != NULL) {
-        u32 id = *battleObj->field_04->bf30();
+        int id = *battleObj->field_04->bf30();
         return func_80174C98(battleObj, &id, 0x802);
     }
     return 1;
@@ -375,7 +375,7 @@ int func_8015CBEC(CCharEffect* self) {
 int func_8015CC50(CCharEffect* self) {
     cf::CCharEffectBattleObj* battleObj = self->mBattleObj;
     if (battleObj != NULL) {
-        u32 id = *battleObj->field_04->bf30();
+        int id = *battleObj->field_04->bf30();
         return func_80174C98(battleObj, &id, 0x803);
     }
     return 0;

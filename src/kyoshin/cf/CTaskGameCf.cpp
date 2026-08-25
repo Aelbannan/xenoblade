@@ -272,7 +272,9 @@ void CTaskGameCf::finishExit() {
 
 extern const u32 lbl_eu_80525B9C[];
 extern const u32 lbl_eu_80525B54[];
-extern const u32 __ptmf_null[3];
+// __ptmf_null: declared (non-const u32[3]) by CfNandManager.hpp etc -
+// local const form conflicts (10563)
+extern u32 __ptmf_null[3];
 
 extern "C" cf::CTaskGameCf* __ct__cf_CTaskGameCf(cf::CTaskGameCf* pThis, CProcess* pParent, int arg2) {
     __ct__8CProcessFv(pThis);

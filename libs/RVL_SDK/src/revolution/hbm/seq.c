@@ -57,6 +57,10 @@ u8 __HBMSEQMidiEventLength[128] = {
 static u32 __init;
 HBMSEQSEQUENCE *__HBMSEQSequenceList;
 
+/* Dead 0x18 allocation the retail homebutton lib keeps in .bss (unreferenced
+   gap_eu_805CAD28); defined so section sizes match. */
+u8 gap_eu_805CAD28[0x18];
+
 extern "C" void HBMSYNMidiInput(void *syn, const u8 *data);
 extern "C" void HBMSYNInitSynth(void *syn, u32 config, u32 p3, u32 p4);
 extern "C" void HBMSYNQuitSynth(void *syn);

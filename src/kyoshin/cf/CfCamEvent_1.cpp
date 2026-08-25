@@ -2,8 +2,8 @@
 // Replace stubs with high-level C/C++ during decomp.
 
 #include "kyoshin/harness_catalog.hpp"
-#include "kyoshin/cf/object/CActorParam.hpp"
 #include <monolib/math/Random.hpp>
+#include "monolib/util/FixStr.hpp"
 #include <math.h>
 
 #include "kyoshin/cf/CfCamEvent_1.hpp"
@@ -13,6 +13,284 @@
 // (same shape as CfGimmickElv.cpp's getCol8/getCol16 helpers).
 static inline u8 getCol8(void* table, const char* col, int row) {
     return (u8)getBdatStringColumnValue(table, col, row);
+}
+
+// Outlined helpers defined further down in this TU are declared in
+// CfCamEvent_1.hpp; declaring them before any use keeps MWCC from inlining
+// their bodies into func_800784A0 - retail calls them with real bl relocs.// Word view of a camera-vector triplet: retail copies the slot accessor
+// results as raw GPR words (load pair high+low, store low/high, then the
+// single), so the snapshot block goes through this POD view instead of
+// ml::CVec3::operator= (which would emit an out-of-line __as__ call).
+struct CamEventVecWords {
+    u32 w[3];
+};
+
+// Memory-resident triplet locals (POD: ml::CVec3 would emit default ctor
+// calls). Used by func_800778E4's column reads and func_800784A0's out
+// vectors.
+struct CamTripletLocals {
+    f32 x, y, z;
+};
+
+// Raw 0x28-byte vector snapshot handed to func_8007990C. Word-based so no
+// CVec3 ctor/operator= calls are emitted - retail fills it with raw GPR
+// word copies from the slot accessors.
+struct CamEventVecSrcRaw {
+    CamEventVecWords v0;   // +0x00
+    CamEventVecWords v1;   // +0x0C
+    CamEventVecWords v2;   // +0x18
+    f32 f_24;              // +0x24
+};
+
+// Re-seat a cam slot. Categorises `first` into a 0/1/2 slot index via
+// func_800755BC; when the slot at that index does not already hold the
+// current cam state the old slot is deleted and a new one constructed from
+// `second` (with the pose returned by func_80496264 as its second ctor
+// arg). Then every slot is handed off to func_8006BC1C and the freshly
+// seated slot woken via func_8006BBF4.
+// Category 0 forwards the outgoing slot's vectors through func_8006D450;
+// category 1 rebuilds a cam table from `sixth` (or falls back to
+// func_800778E4) and runs the shared follow-cam setup func_80076F88.
+// NOTE: the fourth func_80077F20 call passes `first` as its source argument
+// (retail quirk - the source argument is the category id, not the voice).
+CfCamEventObj* func_800784A0(u32 first, CfCamEventObj* second,
+                              CfCamEventObj* third, CfCamEventObj* fourth,
+                              CfCamEventObj* fifth,
+                              CfCamDataTable* sixth, CfCamEventObj* seventh) {
+    CfCamEventManager* mgr = (CfCamEventManager*)lbl_eu_80663DF0;
+    if (mgr == 0) return 0;
+
+    // Retail reads the current state word twice: a throwaway temp picks the
+    // outgoing slot, then the state is re-loaded after the categorize call.
+    CfCamEventSlot* cur = mgr->slots[mgr->field_0x3C];
+    int idx = func_800755BC(mgr, first);
+    CfCamEventManager* m = (CfCamEventManager*)lbl_eu_80663DF0;
+    s16 oldState = m->field_0x3C;
+
+    // Snapshot the outgoing slot's four camera vectors into the manager
+    // before it gets replaced (retail duplicates this block per branch).
+    if (first == 0) {
+        if (oldState != 0 && cur != 0) {
+            CfCamEventManager* m = (CfCamEventManager*)lbl_eu_80663DF0;
+            CamEventVecWords* v =
+                (CamEventVecWords*)((CfCamEventSlotObj*)cur)->vtable->fn_0x10(cur);
+            CamEventVecWords* d = (CamEventVecWords*)&m->field_0x54;
+            u32 vy = v->w[1];
+            u32 vx = v->w[0];
+            d->w[0] = vx;
+            d->w[1] = vy;
+            d->w[2] = v->w[2];
+            v = (CamEventVecWords*)((CfCamEventSlotObj*)cur)->vtable->fn_0x34(cur);
+            d = (CamEventVecWords*)&m->field_0x60;
+            vy = v->w[1];
+            vx = v->w[0];
+            d->w[0] = vx;
+            d->w[1] = vy;
+            d->w[2] = v->w[2];
+            v = (CamEventVecWords*)((CfCamEventSlotObj*)cur)->vtable->fn_0x1C(cur);
+            d = (CamEventVecWords*)&m->field_0x6C;
+            vy = v->w[1];
+            vx = v->w[0];
+            d->w[0] = vx;
+            d->w[1] = vy;
+            d->w[2] = v->w[2];
+            m->field_0x78 = ((CfCamEventSlotObj*)cur)->vtable->fn_0x58(cur);
+        }
+    } else {
+        if (cur != 0) {
+            CfCamEventManager* m = (CfCamEventManager*)lbl_eu_80663DF0;
+            CamEventVecWords* v =
+                (CamEventVecWords*)((CfCamEventSlotObj*)cur)->vtable->fn_0x10(cur);
+            CamEventVecWords* d = (CamEventVecWords*)&m->field_0x54;
+            u32 vy = v->w[1];
+            u32 vx = v->w[0];
+            d->w[0] = vx;
+            d->w[1] = vy;
+            d->w[2] = v->w[2];
+            v = (CamEventVecWords*)((CfCamEventSlotObj*)cur)->vtable->fn_0x34(cur);
+            d = (CamEventVecWords*)&m->field_0x60;
+            vy = v->w[1];
+            vx = v->w[0];
+            d->w[0] = vx;
+            d->w[1] = vy;
+            d->w[2] = v->w[2];
+            v = (CamEventVecWords*)((CfCamEventSlotObj*)cur)->vtable->fn_0x1C(cur);
+            d = (CamEventVecWords*)&m->field_0x6C;
+            vy = v->w[1];
+            vx = v->w[0];
+            d->w[0] = vx;
+            d->w[1] = vy;
+            d->w[2] = v->w[2];
+            m->field_0x78 = ((CfCamEventSlotObj*)cur)->vtable->fn_0x58(cur);
+        }
+    }
+
+    // Rebuild the target slot unless the current cam state already sits in
+    // it with a live object.
+    if (!(((CfCamEventManager*)lbl_eu_80663DF0)->field_0x3C == idx &&
+          ((CfCamEventManager*)lbl_eu_80663DF0)->slots[idx] != 0)) {
+        if (((CfCamEventManager*)lbl_eu_80663DF0)->slots[idx] == 0) {
+            CfCamEventManager* g = (CfCamEventManager*)lbl_eu_80663DF0;
+            g->tab0.flag_active = 0;
+            g->shake[0].field_0x162 = 0;
+            g->shake[1].field_0x162 = 0;
+            CfCamEventManager* g2 = (CfCamEventManager*)lbl_eu_80663DF0;
+            CfCamEventSlot* p = g2->slots[idx];
+            if (p != 0) {
+                if (p != 0) {
+                    if (p != 0) {
+                        delete p;
+                    }
+                    g2->slots[idx] = 0;
+                }
+                g2->slots[idx] = 0;
+            }
+            g2->field_0x47 = 0;
+            CfCamEventObj* pose = (CfCamEventObj*)func_80496264((void*)CfRes_getD80Flag(), 0);
+            if (idx == 0) {
+                g2->slots[idx] = (CfCamEventSlot*)func_80074CEC(second, pose);
+            } else if (idx == 2) {
+                g2->slots[idx] = (CfCamEventSlot*)__ct__8006B310(second, pose);
+            } else if (idx == 1) {
+                g2->slots[idx] = (CfCamEventSlot*)__ct__8006B310(second, pose);
+            }
+        }
+        ((CfCamEventManager*)lbl_eu_80663DF0)->field_0x3C = (s16)idx;
+    }
+
+    // Hand every slot off to the shared cam-event cleanup, then wake the
+    // freshly-seated slot.
+    {
+        CfCamEventManager* g = (CfCamEventManager*)lbl_eu_80663DF0;
+        for (int i = 0; i < 3; i++) {
+            if (g->slots[i] != 0) func_8006BC1C(g->slots[i], 0x8000);
+        }
+        func_8006BBF4(((CfCamEventManager*)lbl_eu_80663DF0)->slots[idx],
+                      0x8000, 1);
+    }
+
+    if (cur != 0) {
+        ((CfCamEventManager*)lbl_eu_80663DF0)->field_0x46 = 0;
+        if (idx == 0) {
+            CfCamEventSlotObj* s0 = (CfCamEventSlotObj*)
+                ((CfCamEventManager*)lbl_eu_80663DF0)->slots[idx];
+            if (s0 != 0) {
+                s0->vtable->fn_0x5C(s0, second);
+            }
+            // Feed the outgoing slot's vectors into the new slot; the
+            // trailing three arguments select blend-vs-hold mode.
+            CfCamEventSlotObj* cs = (CfCamEventSlotObj*)cur;
+            f32 f = cs->vtable->fn_0x58(cs);
+            ml::CVec3* p34 = cs->vtable->fn_0x34(cs);
+            ml::CVec3* p10 = cs->vtable->fn_0x10(cs);
+            if (third != 0) {
+                func_8006D450(
+                    ((CfCamEventManager*)lbl_eu_80663DF0)->slots[idx],
+                    p10, p34, f, 0, third, seventh);
+            } else {
+                func_8006D450(
+                    ((CfCamEventManager*)lbl_eu_80663DF0)->slots[idx],
+                    p10, p34, f, fourth, 0, 0);
+            }
+        } else if (idx == 1) {
+            CfCamEventObj* result;
+            if (sixth != 0) {
+                // Stack temporaries declared low-to-high to mirror retail's
+                // stack map (out vectors at 0x08..0x2C, table at 0x38).
+                // Plain POD triplets: ml::CVec3 locals would emit default
+                // ctor calls that retail does not have.
+                CamTripletLocals toutD;
+                CamTripletLocals toutC;
+                CamTripletLocals toutB;
+                CamTripletLocals toutA;
+                CfCamDataTable tbl;
+
+                tbl.h00 = sixth->h00;
+                tbl.h02 = sixth->h02;
+                tbl.h04 = sixth->h04;
+                tbl.h06 = sixth->h06;
+                tbl.h08 = sixth->h08;
+                tbl.h0A = sixth->h0A;
+                tbl.h0C = sixth->h0C;
+                tbl.h0E = sixth->h0E;
+                tbl.h10 = sixth->h10;
+                tbl.f14 = sixth->f14;
+                tbl.f18 = sixth->f18;
+                f32 q1 = sixth->f1C;
+                f32 q2 = sixth->f20;
+                tbl.f20 = q2;
+                tbl.f1C = q1;
+                tbl.f24 = sixth->f24;
+                f32 q3 = sixth->f28;
+                f32 q4 = sixth->f2C;
+                tbl.f2C = q4;
+                tbl.f28 = q3;
+                tbl.f30 = sixth->f30;
+                f32 q5 = sixth->f34;
+                f32 q6 = sixth->f38;
+                tbl.f38 = q6;
+                tbl.f34 = q5;
+                tbl.f3C = sixth->f3C;
+                f32 q7 = sixth->f40;
+                f32 q8 = sixth->f44;
+                tbl.f44 = q8;
+                tbl.f40 = q7;
+                tbl.f48 = sixth->f48;
+
+                // Resolve the follow object: the source's voice sub-object,
+                // falling back to player 1.
+                CfCamEventObj* player = 0;
+                if (second != 0) {
+                    CfCamEventObj* v =
+                        (CfCamEventObj*)((CamEventVoice*)second)->vtable->fn_0x4C(second);
+                    if (v != 0) player = (CfCamEventObj*)func_800B708C__Fi((int)v);
+                    if (player == 0)
+                        player = (CfCamEventObj*)getPlayer__Q22cf13CfGameManagerFi(1);
+                }
+
+                u16 c1 = (u16)func_80078400(sixth->h0A, sixth->h0C);
+                u16 c2 = (u16)func_80078400(sixth->h0E, sixth->h10);
+                func_80077F20(&toutA, second, player, c1,
+                              sixth->h0A, &sixth->f1C);
+                tbl.f1C = toutA.x;
+                tbl.f20 = toutA.y;
+                tbl.f24 = toutA.z;
+                func_80077F20(&toutB, second, player, c1,
+                              sixth->h0C, &sixth->f28);
+                tbl.f28 = toutB.x;
+                tbl.f2C = toutB.y;
+                tbl.f30 = toutB.z;
+                func_80077F20(&toutC, second, player, c2,
+                              sixth->h0E, &sixth->f34);
+                tbl.f34 = toutC.x;
+                tbl.f38 = toutC.y;
+                tbl.f3C = toutC.z;
+                // Retail quirk: this call passes `first`, not `second`.
+                func_80077F20(&toutD, (CfCamEventObj*)first, player, c2,
+                              sixth->h10, &sixth->f40);
+                tbl.f40 = toutD.x;
+                tbl.f44 = toutD.y;
+                tbl.f48 = toutD.z;
+                result = (CfCamEventObj*)func_80076F88((CfCamEventManager*)lbl_eu_80663DF0,
+                                       first, second, &tbl);
+            } else {
+                result = (CfCamEventObj*)func_800778E4((CfCamEventManager*)lbl_eu_80663DF0,
+                                       first, second, (u32)fifth);
+            }
+            if (result == 0 && oldState != idx) {
+                func_8006BC1C(
+                    ((CfCamEventManager*)lbl_eu_80663DF0)->slots[idx], 0x8000);
+                func_8006BBF4(
+                    ((CfCamEventManager*)lbl_eu_80663DF0)->slots[0], 0x8000, 1);
+                idx = 0;
+                first = 0;
+                ((CfCamEventManager*)lbl_eu_80663DF0)->field_0x3C = 0;
+            }
+        }
+    }
+
+    ((CfCamEventManager*)lbl_eu_80663DF0)->field_0x3E = (s16)first;
+    return (CfCamEventObj*)((CfCamEventManager*)lbl_eu_80663DF0)->slots[idx];
 }
 
 // Advance one frame of a shake-table object. Returns whether the table was
@@ -31,10 +309,10 @@ int func_80074F4C(CfCamShakeState* self, int mode) {
         goto done;
 
     {
-    int r26 = 0;
+    int startedFinished = 0;
     if (lbl_eu_8066641C == self->val) {
         self->flag_finish = 1;
-        r26 = 1;
+        startedFinished = 1;
     }
 
     // Advance the running value by a frame step.
@@ -60,7 +338,7 @@ int func_80074F4C(CfCamShakeState* self, int mode) {
     if (self->val >= self->end - lbl_eu_8066642C) {
         self->val = self->end;
         self->flag_active = 0;
-        if (r26 == 0)
+        if (startedFinished == 0)
             self->flag_finish = 0;
     }
 
@@ -145,10 +423,13 @@ int func_80074F4C(CfCamShakeState* self, int mode) {
 done:
     return result;
 }
-void func_80082088__Q22cf13CfGameManagerFv(){}
-void func_80082060__Q22cf13CfGameManagerFv(){}
+void func_80082088__Q22cf13CfGameManagerFv(int idx, void* vecA, void* vecB, int mode, f32 val){}
+void func_80082008__Q22cf13CfGameManagerFv(int a, u8 b, int c, int d, int e){}
 void func_80081E90__Q22cf13CfGameManagerFv(int a, int b, int c){}
-extern "C" void func_800A3F8C(void*){}
+// Vector-normalize helper; the body is provided by this TU (declared in
+// CfCamEvent_1.hpp). Callers pass raw triplet/element storage, so the
+// call sites view it through the CVec3 parameter type.
+extern void func_800A3F8C(ml::CVec3*) {}
 void func_800B24B0(){}
 
 // CfCamEventManager constructor. Clears the field/flag words, walks the two
@@ -177,22 +458,30 @@ CfCamEventManager::CfCamEventManager() {
     }
     lbl_eu_80663DF0 = (CfCamEventGlobal*)this;
     memset(this, 0, 0xc);
+    // Load the 0x78 float up front so MWCC hoists the lfs next to the
+    // CVec3::zero address computation (matches retail's schedule).
+    const f32 f78 = lbl_eu_80666440;
     field_0x54 = ml::CVec3::zero;
     field_0x60 = ml::CVec3::zero;
     field_0x6C = ml::CVec3::zero;
-    field_0x78 = lbl_eu_80666440;
+    field_0x78 = f78;
     field_0x42 = 0;
     field_0x44 = 0;
     field_0x46 = 0;
-    void* mem = mtl::MemManager::allocate(0xc40, func_80061FFC());
+    // Declared end-first: MWCC colors these locals in reverse declaration
+    // order (p -> r28, mem -> r29, end -> r30), matching retail.
+    u8* end;
+    u8* mem;
+    u8* p;
+    mem = (u8*)mtl::MemManager::allocate(0xc40, func_80061FFC());
     if (mem != 0) {
-        u8* p = (u8*)mem;
-        u8* end = p + 0xc40;
+        end = mem + 0xc40;
+        p = mem;
         do {
             func_80240878(p);
             p += 0x188;
         } while (p < end);
-        func_80240A64((u8*)mem);
+        func_80240A64(mem);
     }
     field_0x38 = (u32)mem;
 }
@@ -256,14 +545,18 @@ void* func_800755B0(void* self, unsigned long idx) {
 }
 
 // Categorise an environment/prompt id (r4) into a 0/1/2 bucket. The
-// manager pointer in r3 is unused by this helper. extern "C" keeps the
-// call reloc name unmangled (retail symbol func_800755BC).
+// manager pointer in r3 is unused by this helper. The declaration in
+// CfCamEvent_1.hpp keeps the call reloc name unmangled (retail symbol
+// func_800755BC).
 // NOTE: retail lays the four result blocks at the end (checks fall through
 // with jump-on-true); Wii/1.1 -O4,p inlines them with jump-on-false, and a
 // goto/switch form that reproduces the end layout instead normalizes the
 // == 0xb equality into a setnz chain (same version wall as func_8007560C's
 // two-cmpi range check).
-extern "C" int func_800755BC(CfCamEventManager* /*unused*/, u32 idx) {
+// Retail calls these outlined from func_800784A0; dont_inline keeps IPA from
+// folding their bodies into the caller (repo convention, cf. CfGameManager).
+#pragma dont_inline on
+int func_800755BC(CfCamEventManager* /*unused*/, u32 idx) {
     int result = 0;
     if (idx >= 0x10 && idx <= 0x2b) result = 1;
     else if (idx >= 0x8 && idx <= 0xa) result = 2;
@@ -271,6 +564,7 @@ extern "C" int func_800755BC(CfCamEventManager* /*unused*/, u32 idx) {
     else if ((s32)idx == 0xb) result = 2;
     return result;
 }
+#pragma dont_inline reset
 
 // True when the global cam state exists and is in a "busy" frame range.
 // NOTE: canonical shape for the [0x10, 0x2b] two-compare range check
@@ -330,114 +624,351 @@ void func_80075674(CfCamEventManager* dst, CfCamEventCopySrc* src) {
     dst->field_0x78 = src->f_1E0;
 }
 
-// Camera aim/position computation. Fills `out` (representing the camera
-// aim point) from the source's body/virtual accessors, applying a vertical
-// follow/lag that approaches the source's anchor value. Rows mirror the
-// retail branch structure.
+// Camera aim/position computation. Fills `out` (the camera aim point) from
+// the source's body accessor, optionally applying a vertical snap toward the
+// anchor accessor, then clamps/follows against the voice's current vector.
+// Body/anchor coordinates are staged through locals so MWCC emits the
+// retail stfs-to-stack + GPR block-copy schedule; the follow-snap block is
+// textually duplicated because retail emits two identical copies.
 void func_800756D0(ml::CVec3* out, CinemCamSrc* src) {
-    if (src == nullptr) {
-        *out = ml::CVec3::zero;
-        return;
-    }
+    CinemAimBody* body;
+    CinemAimBody* anchor;
 
-    CinemAimBody* body = src->vtable->fn_0x12C(src, 100);
-    CinemAimBody* anchor = src->vtable->fn_0x128(src);
+    if (src == nullptr)
+        goto zero_init;
+
+    body = src->vtable->fn_0x12C(src, 100);
+    anchor = src->vtable->fn_0x128(src);
+
+    // Two independent ifs (no shared diamond join): keeps retail's
+    // duplicated follow-snap block from being tail-merged.
     if (body != nullptr) {
-        out->x = body->x;
-        out->y = body->y;
-        out->z = body->z;
+        // Named float temps pin the register allocation to retail's
+        // right-to-left schedule (z -> f0, y -> f1, x -> f2).
+        ml::CVec3 pos;
+        f32 pz = body->z;
+        f32 py = body->y;
+        f32 px = body->x;
+        pos.set(px, py, pz);
+        *out = pos;
 
-        if (anchor != nullptr && (src->field_0x64 & 0x4) &&
-            func_800AA300(5, 4, 1) == src->field_0x70) {
-            f32 d = anchor->y - src->vtable->fn_0xAC(src)->v.y;
-            if (d > 0.0f)
+        if (anchor != nullptr && (src->field_0x64 & 4) &&
+            src->field_0x70 == func_800AA300(5, 4, 1)) {
+            ml::CVec3 av;
+            f32 az = anchor->z;
+            f32 ay = anchor->y;
+            f32 ax = anchor->x;
+            av.set(ax, ay, az);
+            f32 d = av.y - src->vtable->fn_0xAC(src)->v.y;
+            if (d > lbl_eu_8066641C)
                 out->y += d;
         }
-    }
 
-    CinemVecOut* vo = src->vtable->fn_0xAC(src);
-    if (out->y > vo->v.y) {
-        if (src->field_0x64 & 0x2) {
-            out->y -= 0.25f;
+        CinemVecOut* vo = src->vtable->fn_0xAC(src);
+        if (out->y > vo->v.y) {
+            if (src->field_0x64 & 2) {
+                out->y -= lbl_eu_80666444;
+            } else {
+                f32 rel = out->y - vo->v.y;
+                if (rel >= lbl_eu_80666448)
+                    out->y = lbl_eu_8066644C * rel + vo->v.y;
+                else
+                    out->y = out->y - lbl_eu_80666444;
+            }
         } else {
-            f32 rel = out->y - vo->v.y;
-            if (rel >= 1.5f)
-                out->y = 0.8f * rel + vo->v.y;
-            else
-                out->y = out->y - 0.25f;
+            // Below the follow line: snap to it plus the follow offset.
+            *out = vo->v;
+            out->y += lbl_eu_80666448;
         }
     } else {
-        // Follow: snap to anchor then add the follow offset.
-        out->x = vo->v.x;
-        out->y = vo->v.y;
-        out->z = vo->v.z;
-        out->y += 1.5f;
+        // No body: snap straight to the voice vector plus follow offset.
+        CinemVecOut* vo = src->vtable->fn_0xAC(src);
+        *out = vo->v;
+        out->y += lbl_eu_80666448;
     }
+    return;
+
+zero_init:
+    *out = ml::CVec3::zero;
 }
 
-// Camera depth/pose solver. Computes two aim vectors from a pair of camera
-// sources; b == null skips the paired branch. The retail body is very large
-// (paired-single vector math); this is a faithful structural reconstruction.
+// Camera depth/pose solver for the event cam. Computes a blended aim point
+// from one or two camera sources:
+//  - c1==4 short-circuits to raw vector copies;
+//  - otherwise both sources are run through func_800756D0, summed and scaled
+//    by a yaw term derived from Atan2FIdx of the two voices' position delta
+//    (or re-queried per-source when the sources differ / match c1/c2 pairs);
+//  - the global cam-table flag word (0x4C) then shapes two working copies of
+//    the v1/v2 vectors (dead-end stack temps in retail);
+//  - finally out1/out2 are produced by func_80074010 blends selected by
+//    c1/c2, with demo-mode y-corrections applied at the tail.
 void func_80075934(ml::CVec3* out1, ml::CVec3* out2, CamCamSrc* a, CamCamSrc* b,
                    ml::CVec3* v1, ml::CVec3* v2, u16 c1, u16 c2, u8 s0, u8 s1) {
-    f32 f31 = a->vtable->fn_0x5B4(a);
+    f32 scale = a->vtable->fn_0x5B4(a);
     if (c1 == 4) {
-        out1->set(*v1);
-        out2->set(*v2);
+        // Word copies (retail uses GPR loads/stores, not vector moves).
+        CamEventVecWords* sw1 = (CamEventVecWords*)v1;
+        u32 t1 = sw1->w[1];
+        u32 t0 = sw1->w[0];
+        CamEventVecWords* dw1 = (CamEventVecWords*)out1;
+        dw1->w[0] = t0;
+        dw1->w[1] = t1;
+        dw1->w[2] = sw1->w[2];
+        CamEventVecWords* sw2 = (CamEventVecWords*)v2;
+        u32 u1 = sw2->w[1];
+        u32 u0 = sw2->w[0];
+        CamEventVecWords* dw2 = (CamEventVecWords*)out2;
+        dw2->w[0] = u0;
+        dw2->w[1] = u1;
+        dw2->w[2] = sw2->w[2];
         return;
     }
 
-    ml::CVec3 aim1;
-    func_800756D0(&aim1, a ? (CinemCamSrc*)&a->voice : (CinemCamSrc*)a);
-    ml::CVec3 aim2;
+    // Blended aim accumulator; func_800756D0 fills it from source a.
+    CamTripletLocals aimA; // retail stack slot 0x1E8
+    func_800756D0((ml::CVec3*)&aimA,
+                  a ? (CinemCamSrc*)&a->voice : (CinemCamSrc*)a);
+
+    CamTripletLocals anchB; // b's follow limits snapshot (retail 0x1F4)
     if (b != 0) {
-        ml::CVec3 aimb;
-        func_800756D0(&aimb, (CinemCamSrc*)&b->voice);
-        CinemVecOut* va = a->voice.vtable->fn_0xAC(&a->voice);
-        CinemVecOut* vb = b->voice.vtable->fn_0xAC(&b->voice);
-        f32 mul = lbl_eu_80666454 *
-            Atan2FIdx__Q24nw4r4mathFff(vb->v.y - va->v.y, vb->v.x - va->v.x);
-        f31 *= mul;
-        aim1.set(aim1.x + aimb.x, aim1.y + aimb.y, aim1.z + aimb.z);
+        CamTripletLocals aimB; // retail stack slot 0x194
+        func_800756D0((ml::CVec3*)&aimB, (CinemCamSrc*)&b->voice);
+
+        // Sum the two aims, then scale by the constant yaw factor.
+        CamTripletLocals sum; // retail stack slot 0x110
+        sum.x = aimB.x + aimA.x;
+        sum.y = aimB.y + aimA.y;
+        sum.z = aimB.z + aimA.z;
+        CamTripletLocals sc; // retail stack slot 0x104
+        sc.x = sum.x * lbl_eu_80666454;
+        sc.y = sum.y * lbl_eu_80666454;
+        sc.z = sum.z * lbl_eu_80666454;
+        aimA.x = sc.x;
+        aimA.y = sc.y;
+        aimA.z = sc.z;
+
+        CinemVecOut* va = (CinemVecOut*)((CamEventVoice*)&a->voice)->vtable->fn_0xAC(&a->voice);
+        CinemVecOut* vb = (CinemVecOut*)((CamEventVoice*)&b->voice)->vtable->fn_0xAC(&b->voice);
+        CamTripletLocals diff; // retail stack slot 0xF8
+        diff.x = vb->v.x - va->v.x;
+        diff.y = vb->v.y - va->v.y;
+        diff.z = vb->v.z - va->v.z;
+        scale = lbl_eu_80666454 * Atan2FIdx__Q24nw4r4mathFff(diff.x, diff.z);
+
+        if (a != b) scale = a->vtable->fn_0x5B4(a);
+        if (c1 == 1 && c2 == 1) {
+            scale = a->vtable->fn_0x5B4(a);
+        } else if (c1 == 2 && c2 == 2) {
+            scale = b->vtable->fn_0x5B4(b);
+        }
+
+        anchB.x = b->f_44D8;
+        anchB.y = b->f_44DC;
+        anchB.z = b->f_44E0;
     }
-    out1->set(aim1.x, aim1.y, aim1.z);
-    out2->set(f31, aim2.y, aim2.z);
+
+    // Working copies of both input vectors; s1 mirrors x of the second.
+    CamTripletLocals p1; // retail stack slot 0x1D0
+    p1.x = v1->x; p1.y = v1->y; p1.z = v1->z;
+    CamTripletLocals p2; // retail stack slot 0x1C4
+    p2.x = v2->x; p2.y = v2->y; p2.z = v2->z;
+    if (s1 != 0) p1.x = -p1.x;
+
+    // Flag-driven shaping of the working vectors (dead-end temps in retail,
+    // kept as explicit locals so the flag reads/writes stay observable).
+    if (c1 == 1) {
+        CfCamEventGlobal* g = lbl_eu_80663DF0;
+        u32 flags = g->field_0x4C;
+        CamTripletLocals w;
+        w.x = p1.x; w.y = p1.y; w.z = p1.z;
+        if (flags & 3) {
+            f32 lim = a->f_44D8;
+            if (__fabs(w.x) < lim) {
+                if (w.x >= lbl_eu_8066641C) w.x += lim;
+                else w.x -= lim;
+            }
+        }
+        flags = g->field_0x4C;
+        if (flags & 5) w.y = lbl_eu_8066641C;
+        if (flags & 8) w.y -= lbl_eu_80666450 * a->f_44DC;
+    } else if (c2 == 1) {
+        CfCamEventGlobal* g = lbl_eu_80663DF0;
+        u32 flags = g->field_0x4C;
+        CamTripletLocals w;
+        w.x = p2.x; w.y = p2.y; w.z = p2.z;
+        if (flags & 3) {
+            f32 lim = a->f_44D8;
+            if (__fabs(w.x) < lim) {
+                if (w.x >= lbl_eu_8066641C) w.x += lim;
+                else w.x -= lim;
+            }
+        }
+        flags = g->field_0x4C;
+        if (flags & 5) w.y = lbl_eu_8066641C;
+        if (flags & 8) w.y -= lbl_eu_80666450 * a->f_44DC;
+    } else if (c1 == 2) {
+        CfCamEventGlobal* g = lbl_eu_80663DF0;
+        u32 flags = g->field_0x4C;
+        CamTripletLocals w;
+        w.x = p1.x; w.y = p1.y; w.z = p1.z;
+        if (flags & 3) {
+            f32 lim = anchB.x;
+            if (__fabs(w.x) < lim) {
+                if (w.x >= lbl_eu_8066641C) w.x += lim;
+                else w.x -= lim;
+            }
+        }
+        flags = g->field_0x4C;
+        if (flags & 5) w.y = lbl_eu_8066641C;
+        if (flags & 8) w.y -= lbl_eu_80666450 * anchB.y;
+    } else if (c2 == 2) {
+        CfCamEventGlobal* g = lbl_eu_80663DF0;
+        u32 flags = g->field_0x4C;
+        CamTripletLocals w;
+        w.x = p2.x; w.y = p2.y; w.z = p2.z;
+        if (flags & 3) {
+            f32 lim = anchB.x;
+            if (__fabs(w.x) < lim) {
+                if (w.x >= lbl_eu_8066641C) w.x += lim;
+                else w.x -= lim;
+            }
+        }
+        flags = g->field_0x4C;
+        if (flags & 5) w.y = lbl_eu_8066641C;
+        if (flags & 8) w.y -= lbl_eu_80666450 * anchB.y;
+    }
+
+    // Build out1 from c1.
+    if (c1 == 1 || c1 == 2) {
+        CamCamSrc* src = (c1 == 1) ? a : b;
+        CamTripletLocals in;  // retail 0xE0 / 0xC8
+        CamTripletLocals res; // retail 0xEC / 0xD4
+        CinemCamSrc* v = src ? (CinemCamSrc*)&src->voice : (CinemCamSrc*)src;
+        if (v != 0) {
+            func_800756D0((ml::CVec3*)&in, v);
+            func_80074010(&res, &in, scale, &p1);
+        } else {
+            res.x = p1.x; res.y = p1.y; res.z = p1.z;
+        }
+        CamEventVecWords* rw = (CamEventVecWords*)&res;
+        CamEventVecWords* ow = (CamEventVecWords*)out1;
+        u32 ry = rw->w[1];
+        u32 rx = rw->w[0];
+        ow->w[0] = rx;
+        ow->w[1] = ry;
+        ow->w[2] = rw->w[2];
+    } else if (c1 == 3) {
+        CamTripletLocals res; // retail 0x140
+        func_80074010(&res, &aimA, scale, &p1);
+        CamEventVecWords* rw = (CamEventVecWords*)&res;
+        CamEventVecWords* ow = (CamEventVecWords*)out1;
+        u32 ry = rw->w[1];
+        u32 rx = rw->w[0];
+        ow->w[0] = rx;
+        ow->w[1] = ry;
+        ow->w[2] = rw->w[2];
+    }
+
+    // Build out2 from c2.
+    if (c2 == 1 || c2 == 2) {
+        CamCamSrc* src = (c2 == 1) ? a : b;
+        CamTripletLocals in;  // retail 0xB0 / 0x98
+        CamTripletLocals res; // retail 0xBC / 0xA4
+        CinemCamSrc* v = src ? (CinemCamSrc*)&src->voice : (CinemCamSrc*)src;
+        if (v != 0) {
+            func_800756D0((ml::CVec3*)&in, v);
+            func_80074010(&res, &in, scale, &p2);
+        } else {
+            res.x = p2.x; res.y = p2.y; res.z = p2.z;
+        }
+        CamEventVecWords* rw = (CamEventVecWords*)&res;
+        CamEventVecWords* ow = (CamEventVecWords*)out2;
+        u32 ry = rw->w[1];
+        u32 rx = rw->w[0];
+        ow->w[0] = rx;
+        ow->w[1] = ry;
+        ow->w[2] = rw->w[2];
+    } else if (c2 == 3) {
+        CamTripletLocals res; // retail 0x11C
+        func_80074010(&res, &aimA, scale, &p2);
+        CamEventVecWords* rw = (CamEventVecWords*)&res;
+        CamEventVecWords* ow = (CamEventVecWords*)out2;
+        u32 ry = rw->w[1];
+        u32 rx = rw->w[0];
+        ow->w[0] = rx;
+        ow->w[1] = ry;
+        ow->w[2] = rw->w[2];
+    }
+
+    // s0 forces the second output's pitch onto the first.
+    if (s0 != 0) out2->y = out1->y;
+
+    // Demo-mode pitch correction between the two voices' current positions.
+    if (c1 == 1 && c2 == 1 && func_800FE68C() != 0) {
+        void* sel = func_800FE68C();
+        void* handle = func_800B708C__Fi((int)*(u32*)((u8*)sel + 0x90E4));
+        if (handle != 0) {
+            f32 ya = ((CinemVecOut*)((CamEventVoice*)&a->voice)->vtable->fn_0xAC(&a->voice))->v.y;
+            CinemVecOut* vb = (CinemVecOut*)((CamEventVoice*)handle)
+                                  ->vtable->fn_0xAC(handle);
+            if (vb->v.y - ya >= lbl_eu_80666428) {
+                if (func_804BE398((float*)out2, 0x4044a05, 0, 0,
+                                  lbl_eu_80666448, lbl_eu_8066641C)) {
+                    CamTripletLocals t; // retail 0x1B8
+                    func_804BE4B4((float*)&t, 0);
+                    out2->y = t.y + lbl_eu_80666428;
+                } else {
+                    out2->y = out2->y + lbl_eu_80666428;
+                }
+            }
+        }
+    }
+    if (func_804BE348(out2, out1, 0x4044a03, 0)) {
+        out1->y = out1->y + lbl_eu_80666428;
+    }
 }
 
 
-// Per-frame camera-event advance. Early-out when inactive; otherwise snapshots
-// the global cam table's four aim vectors and forwards them (plus the two
-// bit flags from field_0x48) into the shared pose solver.
 // Fill a table-element pair from the two aim vectors. When the demo flag
 // (global cam table h00) is set, dst1 receives the raw `o2` words and dst2
 // receives the yaw/pitch pair derived from the (o1 - o2) difference, with
 // the difference magnitude snapped to 1.0 when all components are below the
-// epsilon threshold. Otherwise both targets are plain word copies. The
-// subtraction is written component-wise so MWCC emits the paired-single
-// sub sequence (same shape as the retail bodies).
-static inline void camEventAnglePair(const ml::CVec3* o1, const ml::CVec3* o2,
+// epsilon threshold. Otherwise both targets are plain word copies. Fully
+// inlined at every call site (retail emits four copies of this body).
+static inline void camEventAnglePair(ml::CVec3* o1, ml::CVec3* o2,
                                      CfCamEventElem* dst1, CfCamEventElem* dst2) {
     if (lbl_eu_80570C90.h00 != 0) {
-        ml::CVec3 d;
+        CamTripletLocals d;
         d.x = o1->x - o2->x;
         d.y = o1->y - o2->y;
         d.z = o1->z - o2->z;
-        dst1->x0 = o2->x;
-        dst1->x4 = o2->y;
-        dst1->x8 = o2->z;
-        f32 len = (f32)sqrt((f64)(d.z * d.z + d.x * d.x));
+        // Word-copy the aim point into the table element.
+        CamEventVecWords* srcW = (CamEventVecWords*)o2;
+        CamEventVecWords* dstW = (CamEventVecWords*)dst1;
+        u32 wy = srcW->w[1];
+        u32 wx = srcW->w[0];
+        dstW->w[0] = wx;
+        dstW->w[1] = wy;
+        dstW->w[2] = srcW->w[2];
+        f32 len = (f32)sqrt((f64)(d.x * d.x + d.z * d.z));
         dst2->x0 = lbl_eu_80666454 * Atan2FIdx__Q24nw4r4mathFff(d.y, len);
         dst2->x4 = lbl_eu_80666454 * Atan2FIdx__Q24nw4r4mathFff(d.z, d.x);
         dst2->x8 = lbl_eu_8066641C;
-        func_800A3F8C(dst2);
-        // The difference is address-taken (PSVECMag), so MWCC reloads its
-        // components from the stack after the call - no FPR saves needed.
-        if ((f32)__fabs((f64)d.x) <= lbl_eu_8066A208 &&
-            (f32)__fabs((f64)d.y) <= lbl_eu_8066A208 &&
-            (f32)__fabs((f64)d.z) <= lbl_eu_8066A208)
-            dst2->x8 = lbl_eu_8066641C;
+        func_800A3F8C((ml::CVec3*)dst2);
+        // Second stack copy of the difference: PSVECMag takes its address,
+        // so the epsilon checks below read back through memory.
+        ml::CVec3 dm;
+        dm.x = d.x;
+        dm.y = d.y;
+        dm.z = d.z;
+        f32 mag;
+        if ((f32)__fabs((f64)dm.x) <= lbl_eu_8066A208 &&
+            (f32)__fabs((f64)dm.y) <= lbl_eu_8066A208 &&
+            (f32)__fabs((f64)dm.z) <= lbl_eu_8066A208)
+            mag = lbl_eu_8066641C;
         else
-            dst2->x8 = PSVECMag(d);
+            mag = PSVECMag(dm);
+        dst2->x8 = mag;
     } else {
         dst1->x0 = o1->x;
         dst1->x4 = o1->y;
@@ -568,18 +1099,30 @@ int func_80076CE4(int type_, int flags) {
 // two capability masks, then walks the runtime-named columns 1..4 subtracting
 // each column's byte weight from a rand(100) draw until one is hit. Stores the
 // winning row and column byte into *outRow / *outCol and returns 1.
+// Declared in CfCamEvent_1.hpp; retail calls it with a bare unmangled bl.
 int func_80076D8C(int unused, int type_, CamEventSrc* src, CamEventTargetInfo* other,
                   u32* outRow, u32* outCol) {
+    char* buf2;                             // inner-loop column buffer
+    const char* colBase;                    // base of the type-column names
+    char* digitBuf;                         // runtime-built weight-column name
+    void* g;
+    int state;
+    u16 typeB;
+    u32 typeA;
+    int rowEnd;
+    int row;
+    u8 c0, c1, c2, w, w2;                   // per-row column bytes
+
     func_8003AA34();
-    void* g = lbl_eu_80664164;
+    g = lbl_eu_80664164;
     *outRow = 0;
     *outCol = 0;
     if (type_ == 0x2b) return 0;
 
     CamEventBody* body = src->vtable->fn_0x298(src);
-    int state = 1;
-    u16 typeB = 0;
-    u32 typeA = 2;
+    state = 1;
+    typeB = 0;
+    typeA = 2;
     if ((const void*)src != (const void*)other) {
         u32 v = body->field_0x50;
         if (v == 0) return 0;
@@ -588,12 +1131,12 @@ int func_80076D8C(int unused, int type_, CamEventSrc* src, CamEventTargetInfo* o
         typeA = other->field_0x15E4;
     }
 
-    int rowBase = (int)func_8003B41C(g);
-    int rowEnd = rowBase + (int)func_8003B1EC(g);
-    char* buf2 = (char*)lbl_eu_80527638;    // inner-loop column buffer
-    const char* colBase = (const char*)lbl_eu_804FB5D0; // base of the type-column names
-    u8 c0, c1, c2, w, w2;                   // per-row column bytes
-    for (int row = rowBase; row < rowEnd; row++) {
+    row = (int)func_8003B41C(g);
+    rowEnd = row + (int)func_8003B1EC(g);
+    buf2 = (char*)lbl_eu_80527638;
+    colBase = (const char*)lbl_eu_804FB5D0;
+    digitBuf = lbl_eu_80661BB8;
+    for (; row < rowEnd; row++) {
         c0 = getCol8(g, (const char*)lbl_eu_804FB5D0, row);
         if (type_ != c0) continue;
         c1 = getCol8(g, colBase + 8, row);
@@ -604,7 +1147,7 @@ int func_80076D8C(int unused, int type_, CamEventSrc* src, CamEventTargetInfo* o
         u32 rem = (u32)ml::math::mtRand(100);
         for (int i = 1; i <= 4; i++) {
             u8 digit = (u8)(i + 0x30);
-            lbl_eu_80661BB8[4] = digit;
+            digitBuf[4] = digit;
             buf2[8] = digit;
             w = getCol8(g, (const char*)lbl_eu_80661BB8, row);
             if (rem < w) {
@@ -628,43 +1171,51 @@ cf::CActorParam_UnkStruct1* cf::CActorParam::CActorParam_UnkVirtualFunc129() {
 // manager's shake groups, and feeds the two aim pairs into the shared pose
 // solver (func_80075934 / func_80078D08). The shake-table tail duplicates
 // func_80079B34's busy/flag logic. Returns 1 on success.
-extern "C" void* func_80076F88(CfCamEventManager* self, int unk34,
+// __declspec(noinline): retail calls it outlined from func_800784A0.
+#pragma dont_inline on
+void* func_80076F88(CfCamEventManager* self, int unk34,
                                 void* srcArg, CfCamDataTable* cam) {
     CamEventSrc* src = (CamEventSrc*)func_8016FE34(srcArg);
     u32 field_0x3F10 = (u32)src->field_0x3F10;
     CamEventBody* body = src->vtable->fn_0x298(src);
     void* p31 = body->field_0x04;
-    void* r29 = (src != 0) ? (void*)&src->voice : (void*)src;
+    // Pointer selects written init + conditional overwrite so MWCC emits
+    // retail's mr/beq/addi shape instead of a branch-around ternary.
+    void* followObj = src;
+    if (src != 0) followObj = &src->voice;
     if (p31 == 0) {
-        r29 = func_800BBC0C(func_800B708C__Fi((int)field_0x3F10));
+        followObj = func_800BBC0C(func_800B708C__Fi((int)field_0x3F10));
     }
-    void* r28 = func_8016FE34((src != 0) ? (void*)&src->voice : (void*)src);
-    int r27 = (int)func_8016FE34(r29);
+    void* srcSel = src;
+    if (src != 0) srcSel = &src->voice;
+    void* srcVoice = func_8016FE34(srcSel);
+    int otherVoice = (int)func_8016FE34(followObj);
 
     // "Band" check: any of the four cam halfwords selects waveform 2/3.
-    int band = 0;
-    if (cam->h0A == 2 || cam->h0A == 3) band = 1;
-    if (cam->h0C == 2 || cam->h0C == 3) band = 1;
-    if (cam->h0E == 2 || cam->h0E == 3) band = 1;
-    if ((u16)(cam->h10 + 0xFFFE) <= 1) band = 1;
-
-    if (band && p31 == 0) {
+    // Single short-circuit chain so MWCC lays out the beq-to-block /
+    // fall-through / final-bgt-past-body shape retail uses.
+    if (cam->h0A == 2 || cam->h0A == 3 ||
+        cam->h0C == 2 || cam->h0C == 3 ||
+        cam->h0E == 2 || cam->h0E == 3 ||
+        (u16)(cam->h10 - 2) <= 1) {
+        if (p31 == 0) {
         void* v = src->voice.vtable->fn_0x4C(&src->voice);
-        r29 = func_800BBC0C(func_800B708C__Fi((int)v));
+        followObj = func_800BBC0C(func_800B708C__Fi((int)v));
         if (unk34 == 0x2B) {
             void* p0 = getPlayer__Q22cf13CfGameManagerFi(0);
             if (p0 == 0) {
-                r29 = 0;
+                followObj = 0;
             } else {
-                r29 = 0;
+                followObj = 0;
                 void* q = ((CamEventVoice*)p0)->vtable->fn_0x4C(p0);
-                if (q != 0) r29 = func_800BBC0C(func_800B708C__Fi((int)q));
-                if (r29 == 0) r29 = getPlayer__Q22cf13CfGameManagerFi(1);
+                if (q != 0) followObj = func_800BBC0C(func_800B708C__Fi((int)q));
+                if (followObj == 0) followObj = getPlayer__Q22cf13CfGameManagerFi(1);
             }
-            self->field_0x34 = (u32)r29;
+            self->field_0x34 = (u32)followObj;
         }
-        if (r29 == 0) return 0;
-        r27 = (int)func_8016FE34(r29);
+        if (followObj == 0) return 0;
+        otherVoice = (int)func_8016FE34(followObj);
+        }
     }
 
     // Copy the cam table into the global (pair loads / store-descend).
@@ -700,7 +1251,8 @@ extern "C" void* func_80076F88(CfCamEventManager* self, int unk34,
     lbl_eu_80570C90.f40 = q7;
     lbl_eu_80570C90.f48 = cam->f48;
 
-    void* r31 = (src != 0) ? (void*)&src->voice : (void*)src;
+    void* voice = src;
+    if (src != 0) voice = &src->voice;
 
     // Reset the manager's three shake groups (id 1, default speeds).
     {
@@ -736,30 +1288,35 @@ extern "C" void* func_80076F88(CfCamEventManager* self, int unk34,
 
     // Seed the aim vectors from the source voice (or clear them).
     CfCamEventAimRegion* aim = (CfCamEventAimRegion*)self;
-    if (r31 != 0) {
-        aim->field_0x0C = r31;
-        aim->field_0x10 = ((CamEventAimObj*)r31)->field_0x74;
-        ml::CVec3 tmp;
-        func_800756D0(&tmp, (CinemCamSrc*)r31);
-        f32 tx = tmp.x;
-        f32 ty = tmp.y;
-        aim->field_0x18 = ty;
-        aim->field_0x14 = tx;
-        aim->field_0x1C = tmp.z;
+    if (voice != 0) {
+        aim->field_0x0C = voice;
+        aim->field_0x10 = ((CamEventAimObj*)voice)->field_0x74;
+        CamTripletLocals tmp;
+        func_800756D0((ml::CVec3*)&tmp, (CinemCamSrc*)voice);
+        // Word-copy the out vector (retail uses GPR loads/stores here).
+        CamEventVecWords* tw = (CamEventVecWords*)&tmp;
+        CamEventVecWords* d14 = (CamEventVecWords*)&aim->field_0x14;
+        u32 wy = tw->w[1];
+        u32 wx = tw->w[0];
+        d14->w[1] = wy;
+        d14->w[0] = wx;
+        d14->w[2] = tw->w[2];
     } else {
         aim->field_0x0C = 0;
         aim->field_0x10 = 0;
     }
-    if (r29 != 0) {
-        aim->field_0x20 = r29;
-        aim->field_0x24 = ((CamEventAimObj*)r29)->field_0x74;
-        ml::CVec3 tmp;
-        func_800756D0(&tmp, (CinemCamSrc*)r29);
-        f32 tx = tmp.x;
-        f32 ty = tmp.y;
-        aim->field_0x2C = ty;
-        aim->field_0x28 = tx;
-        aim->field_0x30 = tmp.z;
+    if (followObj != 0) {
+        aim->field_0x20 = followObj;
+        aim->field_0x24 = ((CamEventAimObj*)followObj)->field_0x74;
+        CamTripletLocals tmp;
+        func_800756D0((ml::CVec3*)&tmp, (CinemCamSrc*)followObj);
+        CamEventVecWords* tw = (CamEventVecWords*)&tmp;
+        CamEventVecWords* d28 = (CamEventVecWords*)&aim->field_0x28;
+        u32 wy = tw->w[1];
+        u32 wx = tw->w[0];
+        d28->w[1] = wy;
+        d28->w[0] = wx;
+        d28->w[2] = tw->w[2];
     } else {
         aim->field_0x20 = 0;
         aim->field_0x24 = 0;
@@ -767,14 +1324,14 @@ extern "C" void* func_80076F88(CfCamEventManager* self, int unk34,
 
     // Push the follow state into the manager's follow-cam object.
     void* obj4 = self->slots[1];
-    self->field_0x34 = (u32)r29;
+    self->field_0x34 = (u32)followObj;
     ((CamEventMgrSub*)obj4)->vtable->fn_0x40(obj4, (void*)unk34);
-    ((CamEventMgrSub*)obj4)->vtable->fn_0x5C(obj4, r31);
+    ((CamEventMgrSub*)obj4)->vtable->fn_0x5C(obj4, voice);
 
     self->field_0x48 = cam->h02;
     self->field_0x4C = cam->h04;
     void* blk = ((CfCamEventSlotView*)self->slots[0])->field_0x0C;
-    void* va = ((CamEventVoice*)r29)->vtable->fn_0xAC(r29);
+    void* va = ((CamEventVoice*)followObj)->vtable->fn_0xAC(followObj);
     void* vb = src->voice.vtable->fn_0xAC(&src->voice);
     if (func_800A4050((u8*)blk + 0x10C, vb, va) != 0 &&
         (self->field_0x48 & 0x10) == 0) {
@@ -783,50 +1340,88 @@ extern "C" void* func_80076F88(CfCamEventManager* self, int unk34,
 
     // Dispatch on the state word bits: 0x4 selects the manager's own aim
     // vectors, 0x20 copies the slot's four vectors into a local block.
-    int r29i = 0;
+    int stateArg = 0;
     if (self->field_0x48 & 0x4) {
         func_8007990C(self, 0, 1, (CamEventVecSrc*)&self->field_0x54, 0);
-        r29i = 0x1E;
+        stateArg = 0x1E;
     } else if (self->field_0x48 & 0x20) {
-        CamEventVecSrc tmp;
+        CamEventVecSrcRaw tmp;
         if (self->slots[0] != 0) {
             CfCamEventSlotObj* s = (CfCamEventSlotObj*)self->slots[0];
-            tmp.v0 = *s->vtable->fn_0x10(s);
-            tmp.v1 = *s->vtable->fn_0x34(s);
-            tmp.v2 = *s->vtable->fn_0x1C(s);
+            // Per-vector raw word copy (load pair, store high first).
+            CamEventVecWords* v =
+                (CamEventVecWords*)s->vtable->fn_0x10(s);
+            u32 b = v->w[1];
+            u32 a = v->w[0];
+            tmp.v0.w[1] = b;
+            tmp.v0.w[0] = a;
+            tmp.v0.w[2] = v->w[2];
+            v = (CamEventVecWords*)s->vtable->fn_0x34(s);
+            b = v->w[1];
+            a = v->w[0];
+            tmp.v1.w[1] = b;
+            tmp.v1.w[0] = a;
+            tmp.v1.w[2] = v->w[2];
+            v = (CamEventVecWords*)s->vtable->fn_0x1C(s);
+            b = v->w[1];
+            a = v->w[0];
+            tmp.v2.w[1] = b;
+            tmp.v2.w[0] = a;
+            tmp.v2.w[2] = v->w[2];
             tmp.f_24 = s->vtable->fn_0x58(s);
         }
-        func_8007990C(self, 0, 1, &tmp, 0);
-        r29i = 0x1E;
+        func_8007990C(self, 0, 1, (CamEventVecSrc*)&tmp, 0);
+        stateArg = 0x1E;
     }
 
-    ml::CVec3 o1, o2;
+    CamTripletLocals o1, o2;
     if ((self->field_0x48 & 0x4) == 0) {
-        func_80075934(&o1, &o2, (CamCamSrc*)r28, (CamCamSrc*)r27,
+        func_80075934((ml::CVec3*)&o1, (ml::CVec3*)&o2, (CamCamSrc*)srcVoice,
+                      (CamCamSrc*)otherVoice,
                       (ml::CVec3*)&cam->f1C, (ml::CVec3*)&cam->f28,
                       cam->h0A, cam->h0C,
                       (u8)((self->field_0x48 >> 1) & 1),
                       (u8)((self->field_0x48 >> 16) & 1));
-        func_80078D08(self, r29i, &o1, &o2, cam->h08, 0, cam->f14);
-        r29i += cam->h06;
+        func_80078D08(self, stateArg, (ml::CVec3*)&o1, (ml::CVec3*)&o2, cam->h08,
+                      0, cam->f14);
+        stateArg += cam->h06;
     }
-    func_80075934(&o1, &o2, (CamCamSrc*)r28, (CamCamSrc*)r27,
+    func_80075934((ml::CVec3*)&o1, (ml::CVec3*)&o2, (CamCamSrc*)srcVoice,
+                  (CamCamSrc*)otherVoice,
                   (ml::CVec3*)&cam->f34, (ml::CVec3*)&cam->f40,
                   cam->h0E, cam->h10,
                   (u8)((self->field_0x48 >> 1) & 1),
                   (u8)((self->field_0x48 >> 16) & 1));
-    func_80078D08(self, (u16)r29i, &o1, &o2, 0, 0, cam->f18);
-    func_80078D08(self, (u16)r29i, &o1, &o2, 4, 0, cam->f18);
+    func_80078D08(self, (u16)stateArg, (ml::CVec3*)&o1, (ml::CVec3*)&o2, 0, 0,
+                  cam->f18);
+    func_80078D08(self, (u16)stateArg, (ml::CVec3*)&o1, (ml::CVec3*)&o2, 4, 0,
+                  cam->f18);
     if (self->field_0x48 & 0x40) {
-        CamEventVecSrc tmp2;
+        CamEventVecSrcRaw tmp2;
         if (self->slots[0] != 0) {
             CfCamEventSlotObj* s = (CfCamEventSlotObj*)self->slots[0];
-            tmp2.v0 = *s->vtable->fn_0x10(s);
-            tmp2.v1 = *s->vtable->fn_0x34(s);
-            tmp2.v2 = *s->vtable->fn_0x1C(s);
+            CamEventVecWords* v =
+                (CamEventVecWords*)s->vtable->fn_0x10(s);
+            u32 b = v->w[1];
+            u32 a = v->w[0];
+            tmp2.v0.w[1] = b;
+            tmp2.v0.w[0] = a;
+            tmp2.v0.w[2] = v->w[2];
+            v = (CamEventVecWords*)s->vtable->fn_0x34(s);
+            b = v->w[1];
+            a = v->w[0];
+            tmp2.v1.w[1] = b;
+            tmp2.v1.w[0] = a;
+            tmp2.v1.w[2] = v->w[2];
+            v = (CamEventVecWords*)s->vtable->fn_0x1C(s);
+            b = v->w[1];
+            a = v->w[0];
+            tmp2.v2.w[1] = b;
+            tmp2.v2.w[0] = a;
+            tmp2.v2.w[2] = v->w[2];
             tmp2.f_24 = s->vtable->fn_0x58(s);
         }
-        func_8007990C(self, (u16)(r29i + 0x1E), 0, &tmp2, 0);
+        func_8007990C(self, (u16)(stateArg + 0x1E), 0, (CamEventVecSrc*)&tmp2, 0);
     }
 
     // Shake tail (same busy/flag logic as func_80079B34).
@@ -890,16 +1485,188 @@ extern "C" void* func_80076F88(CfCamEventManager* self, int unk34,
     }
     return (void*)1;
 }
+#pragma dont_inline reset
 
-extern "C" void* func_800778E4(void* self, u32 a,
-                                                       void* b, void* c) { return 0; }
+// Union temp reproducing MWCC's 0x4330-magic int->double conversion slots.
+// Hand-built (like CItemBoxGrid's converters) so the pool references are the
+// named sdata2 magics lbl_eu_80666420/80666438 instead of anonymous @-labels;
+// retail alternates two of these slots per conversion site.
+union CamConvTmp {
+    u32 w[2];
+    f64 d;
+};
 
-extern "C" void func_80077F20(void* out, void* a,
+// Bit-cast for word-copied vector components: lets base-anchor stores go
+// through the same GPR words the element fill loaded (retail never does
+// float round-trips here).
+union CamWordBits {
+    u32 w;
+    f32 f;
+};
+
+// Build the cam-event follow state from a bdat row: resolve the source's
+// follow target, pick a table row (or take the caller override), fill a
+// local CfCamDataTable from the row's byte/angle columns, run the shared
+// pose setup (func_80076F88), then patch the cam-table entry selected by
+// the row's speed columns. Returns 1 on success.
+// __declspec(noinline): retail calls it outlined from func_800784A0.
+#pragma dont_inline on
+void* func_800778E4(
+    CfCamEventManager* self, int unk34, void* srcArg,
+    u32 rowOverride) {
+    // Declared low-to-high in retail's stack map: MWCC gives the first
+    //-declared local the lowest address.
+    s32 colVal[14];   // 0x08..0x3C
+    u32 row;          // 0x40 - filled via the picker's 6th arg / override
+    u32 colTmp;       // 0x44 - picker's 5th arg, unused afterwards
+    CamTripletLocals t4;
+    CamTripletLocals t3;
+    CamTripletLocals t2;
+    CamTripletLocals t1;
+    CfCamDataTable tbl;
+    CamConvTmp convA;
+    CamConvTmp convB;
+    void* bdat;
+    const char* colBase;
+
+    convA.w[0] = 0x43300000;
+    convB.w[0] = 0x43300000;
+
+    CamEventSrc* src = (CamEventSrc*)func_8016FE34(srcArg);
+    u32 field3F10 = (u32)src->field_0x3F10;
+    CamEventBody* body = src->vtable->fn_0x298(src);
+    void* follow = body->field_0x04;
+    if (follow == 0)
+        follow = (void*)field3F10;
+    CamEventTargetInfo* other =
+        (CamEventTargetInfo*)func_800BBC0C(func_800B708C__Fi((int)follow));
+    if (other == 0)
+        return 0;
+
+    CinemCamSrc* voice =
+        (src != 0) ? (CinemCamSrc*)&src->voice : (CinemCamSrc*)src;
+    CamEventSrc* voiceSrc = (CamEventSrc*)func_8016FE34(voice);
+    CamEventTargetInfo* otherArg = (CamEventTargetInfo*)func_8016FE34(other);
+
+    // NOTE: retail reads the winning row back from the SIXTH argument slot,
+    // so the row target goes last here (the fifth is never read again).
+    int hit = func_80076D8C((int)self, unk34, voiceSrc, otherArg, &colTmp, &row);
+    if (rowOverride != 0) {
+        row = rowOverride;
+    } else if (hit == 0 || row == 0) {
+        return 0;
+    }
+
+    // Fill the local cam table from the bdat row. Byte columns go into the
+    // halfword flags; angle columns are converted to floats (unsigned for
+    // f14/f18, signed for the four aim triplets).
+    // Retail materialises the bdat pointer and column-name base only here,
+    // after the row has been picked.
+    bdat = lbl_eu_80664168;
+    colBase = (const char*)lbl_eu_804FB5D0;
+    colVal[0] = getBdatStringColumnValue(bdat, colBase + 0x19, row);
+    tbl.h00 = colVal[0];
+    colVal[1] = getBdatStringColumnValue(bdat, colBase + 0x21, row);
+    tbl.h02 = colVal[1];
+    colVal[2] = getBdatStringColumnValue(bdat, colBase + 0x28, row);
+    tbl.h04 = colVal[2];
+    colVal[3] = getBdatStringColumnValue(bdat, colBase + 0x30, row);
+    tbl.h06 = colVal[3];
+    colVal[4] = getBdatStringColumnValue(bdat, colBase + 0x35, row);
+    tbl.h08 = colVal[4];
+    colVal[5] = getBdatStringColumnValue(bdat, colBase + 0x3a, row);
+    tbl.h0A = colVal[5];
+    colVal[6] = getBdatStringColumnValue(bdat, colBase + 0x47, row);
+    tbl.h0C = colVal[6];
+    colVal[7] = getBdatStringColumnValue(bdat, colBase + 0x55, row);
+    tbl.h0E = colVal[7];
+    colVal[8] = getBdatStringColumnValue(bdat, colBase + 0x62, row);
+    tbl.h10 = colVal[8];
+    colVal[9] = getBdatStringColumnValue(bdat, colBase + 0x70, row);
+    convA.w[1] = (u32)(u8)colVal[9];
+    tbl.f14 = (f32)(convA.d - lbl_eu_80666420);
+    colVal[10] = getBdatStringColumnValue(bdat, colBase + 0x76, row);
+    convA.w[1] = (u32)(u8)colVal[10];
+    tbl.f18 = (f32)(convA.d - lbl_eu_80666420);
+
+    convA.w[1] = (u32)getBdatStringColumnValue(bdat, colBase + 0x7c, row) ^ 0x80000000u;
+    t1.x = (f32)(convA.d - lbl_eu_80666438);
+    convB.w[1] = (u32)getBdatStringColumnValue(bdat, colBase + 0x83, row) ^ 0x80000000u;
+    t1.y = (f32)(convB.d - lbl_eu_80666438);
+    convA.w[1] = (u32)getBdatStringColumnValue(bdat, colBase + 0x8a, row) ^ 0x80000000u;
+    t1.z = (f32)(convA.d - lbl_eu_80666438);
+    tbl.f1C = t1.x;
+    tbl.f20 = t1.y;
+    tbl.f24 = t1.z;
+
+    convA.w[1] = (u32)getBdatStringColumnValue(bdat, colBase + 0x91, row) ^ 0x80000000u;
+    t2.x = (f32)(convA.d - lbl_eu_80666438);
+    convB.w[1] = (u32)getBdatStringColumnValue(bdat, colBase + 0x99, row) ^ 0x80000000u;
+    t2.y = (f32)(convB.d - lbl_eu_80666438);
+    convA.w[1] = (u32)getBdatStringColumnValue(bdat, colBase + 0xa1, row) ^ 0x80000000u;
+    t2.z = (f32)(convA.d - lbl_eu_80666438);
+    tbl.f28 = t2.x;
+    tbl.f2C = t2.y;
+    tbl.f30 = t2.z;
+
+    convA.w[1] = (u32)getBdatStringColumnValue(bdat, colBase + 0xa9, row) ^ 0x80000000u;
+    t3.x = (f32)(convA.d - lbl_eu_80666438);
+    convB.w[1] = (u32)getBdatStringColumnValue(bdat, colBase + 0xb0, row) ^ 0x80000000u;
+    t3.y = (f32)(convB.d - lbl_eu_80666438);
+    convA.w[1] = (u32)getBdatStringColumnValue(bdat, colBase + 0xb7, row) ^ 0x80000000u;
+    t3.z = (f32)(convA.d - lbl_eu_80666438);
+    tbl.f34 = t3.x;
+    tbl.f38 = t3.y;
+    tbl.f3C = t3.z;
+
+    convA.w[1] = (u32)getBdatStringColumnValue(bdat, colBase + 0xbe, row) ^ 0x80000000u;
+    t4.x = (f32)(convA.d - lbl_eu_80666438);
+    convB.w[1] = (u32)getBdatStringColumnValue(bdat, colBase + 0xc6, row) ^ 0x80000000u;
+    t4.y = (f32)(convB.d - lbl_eu_80666438);
+    convA.w[1] = (u32)getBdatStringColumnValue(bdat, colBase + 0xce, row) ^ 0x80000000u;
+    t4.z = (f32)(convA.d - lbl_eu_80666438);
+    tbl.f40 = t4.x;
+    tbl.f44 = t4.y;
+    tbl.f48 = t4.z;
+
+    if (func_80076F88(self, unk34, srcArg, &tbl) == 0)
+        return 0;
+
+    // Patch the cam-table entry picked by this row's speed columns.
+    colVal[11] = getBdatStringColumnValue(bdat, colBase + 0xd6, row);
+    u8 flag = (u8)colVal[11];
+    colVal[12] = getBdatStringColumnValue(bdat, colBase + 0xdf, row);
+    colVal[13] = getBdatStringColumnValue(bdat, colBase + 0xea, row);
+    u16 hEA = (u16)colVal[13];
+    if (flag != 0 && hEA != 0) {
+        CamEventTableEntry* e = &lbl_eu_805273C8[(u16)(flag - 1)];
+        u16 hDF = (u16)colVal[12];
+        convA.w[1] = (u32)hDF;
+        convB.w[1] = (u32)hEA;
+        e->f_1C = (f32)((f32)(convA.d - lbl_eu_80666420) / lbl_eu_80666460);
+        f32 t = (f32)(convB.d - lbl_eu_80666420) / lbl_eu_80666460;
+        e->f_20 = t;
+        e->f_24 = lbl_eu_80666464 * ((f32)(convB.d - lbl_eu_80666420) /
+                                     lbl_eu_80666460);
+        e->f_28 = lbl_eu_80666464 * t;
+        CfCamEventGlobal* g = lbl_eu_80663DF0;
+        if (g != 0 && g->field_0x38 != 0) {
+            func_80240C98(g->field_0x38, (int)e, 0);
+        }
+    }
+    return (void*)1;
+}
+
+// Compile-only stub; retail calls it outlined (dont_inline keeps the bl).
+#pragma dont_inline on
+void func_80077F20(void* out, void* a,
                                                      void* b, u16 c, u16 d,
                                                      void* e) {}
+#pragma dont_inline reset
 
 // Maps an (action, parameter) pair to a campaign-state id; default 5.
-extern "C" int func_80078400(int action, int param) {
+#pragma dont_inline on
+int func_80078400(int action, int param) {
     int result = 5;
     if (action == 1 && param == 1) { result = 1; goto done; }
     if (action == 2 && param == 2) { result = 2; goto done; }
@@ -911,203 +1678,7 @@ extern "C" int func_80078400(int action, int param) {
 done:
     return result;
 }
-
-// Copy a slot's four camera-vector accessor results into the manager's
-// 0x54..0x78 range. The vector words are copied as bit patterns (GPR
-// load-pair / store-descend schedule, same shape as func_80075674).
-// Written inline twice below because the retail body duplicates it; a
-// shared helper would alter the register allocation.
-
-// Re-seat a cam slot. Categorises `first` into a 0/1/2 slot index; when the
-// slot at that index does not already hold the current cam state the old
-// slot is deleted and a new one constructed from `second` (with the pose
-// returned by func_80496264 as its second ctor arg). Then the manager's
-// three slots are handed off, and for category 1 the cam table `sixth` is
-// copied into a local, reshaped via func_80077F20 and pushed into the
-// shared pose solver (func_80076F88 / func_800778E4). Returns slots[idx].
-extern "C" void* func_800784A0(u32 first, void* second,
-                                                      void* third, void* fourth,
-                                                      void* fifth,
-                                                      CfCamDataTable* sixth,
-                                                      void* seventh) {
-    CfCamEventManager* mgr = (CfCamEventManager*)lbl_eu_80663DF0;
-    if (mgr == 0) return 0;
-
-    CfCamEventSlot* cur = mgr->slots[mgr->field_0x3C];
-    int idx = func_800755BC(mgr, first);
-    CfCamEventManager* m = (CfCamEventManager*)lbl_eu_80663DF0;
-    int old = m->field_0x3C;
-
-    if (first == 0) {
-        if (old != 0 && cur != 0) {
-            m->field_0x54 = *((CfCamEventSlotObj*)cur)->vtable->fn_0x10(cur);
-            m->field_0x60 = *((CfCamEventSlotObj*)cur)->vtable->fn_0x34(cur);
-            m->field_0x6C = *((CfCamEventSlotObj*)cur)->vtable->fn_0x1C(cur);
-            m->field_0x78 = ((CfCamEventSlotObj*)cur)->vtable->fn_0x58(cur);
-        }
-    } else {
-        if (cur != 0) {
-            m->field_0x54 = *((CfCamEventSlotObj*)cur)->vtable->fn_0x10(cur);
-            m->field_0x60 = *((CfCamEventSlotObj*)cur)->vtable->fn_0x34(cur);
-            m->field_0x6C = *((CfCamEventSlotObj*)cur)->vtable->fn_0x1C(cur);
-            m->field_0x78 = ((CfCamEventSlotObj*)cur)->vtable->fn_0x58(cur);
-        }
-    }
-
-    // Re-fetch the manager: the copy blocks called through vtables, so the
-    // global may have been modified (retail reloads before this test and
-    // reuses the loaded pointer for the flag stores below).
-    CfCamEventManager* gm = (CfCamEventManager*)lbl_eu_80663DF0;
-    if (gm->field_0x3C != idx || gm->slots[idx] == 0) {
-        gm->tab0.flag_active = 0;
-        gm->shake[0].field_0x162 = 0;
-        gm->shake[1].field_0x162 = 0;
-        CfCamEventManager* g = (CfCamEventManager*)lbl_eu_80663DF0;
-        CfCamEventSlot* p = g->slots[idx];
-        if (p) {
-            if (p) {
-                if (p) {
-                    delete p;
-                    g->slots[idx] = 0;
-                }
-                g->slots[idx] = 0;
-            }
-        }
-        g->field_0x47 = 0;
-        void* pose = func_80496264((void*)CfRes_getD80Flag(), 0);
-        if (idx == 0) {
-            g->slots[idx] = (CfCamEventSlot*)func_80074CEC(second, pose);
-        } else if (idx == 2) {
-            g->slots[idx] = (CfCamEventSlot*)__ct__8006B310(second, pose);
-        } else if (idx == 1) {
-            g->slots[idx] = (CfCamEventSlot*)__ct__8006B310(second, pose);
-        }
-        g->field_0x3C = (s16)idx;
-    }
-
-    // Hand every slot off to the shared cam-event cleanup, then wake the
-    // freshly-seated slot.
-    {
-        CfCamEventManager* g = (CfCamEventManager*)lbl_eu_80663DF0;
-        for (int i = 0; i < 3; i++) {
-            if (g->slots[i] != 0) func_8006BC1C(g->slots[i], 0x8000);
-        }
-        func_8006BBF4(((CfCamEventManager*)lbl_eu_80663DF0)->slots[idx], 0x8000, 1);
-    }
-
-    if (cur != 0) {
-        ((CfCamEventManager*)lbl_eu_80663DF0)->field_0x46 = 0;
-        if (idx == 0) {
-            CfCamEventSlotObj* s0 =
-                (CfCamEventSlotObj*)((CfCamEventManager*)lbl_eu_80663DF0)->slots[idx];
-            if (s0 != 0) {
-                s0->vtable->fn_0x5C(s0, second);
-            }
-            if (third != 0) {
-                CfCamEventSlotObj* cs = (CfCamEventSlotObj*)cur;
-                f32 f = cs->vtable->fn_0x58(cs);
-                void* p34 = cs->vtable->fn_0x34(cs);
-                void* p10 = cs->vtable->fn_0x10(cs);
-                func_8006D450(((CfCamEventManager*)lbl_eu_80663DF0)->slots[idx],
-                              p10, p34, f, 0, third, seventh);
-            } else {
-                CfCamEventSlotObj* cs = (CfCamEventSlotObj*)cur;
-                f32 f = cs->vtable->fn_0x58(cs);
-                void* p34 = cs->vtable->fn_0x34(cs);
-                void* p10 = cs->vtable->fn_0x10(cs);
-                func_8006D450(((CfCamEventManager*)lbl_eu_80663DF0)->slots[idx],
-                              p10, p34, f, fourth, 0, 0);
-            }
-        } else if (idx == 1) {
-            void* result;
-            if (sixth != 0) {
-                CfCamDataTable tbl;
-                tbl.h00 = sixth->h00;
-                tbl.h02 = sixth->h02;
-                tbl.h04 = sixth->h04;
-                tbl.h06 = sixth->h06;
-                tbl.h08 = sixth->h08;
-                tbl.h0A = sixth->h0A;
-                tbl.h0C = sixth->h0C;
-                tbl.h0E = sixth->h0E;
-                tbl.h10 = sixth->h10;
-                tbl.f14 = sixth->f14;
-                tbl.f18 = sixth->f18;
-                f32 q1 = sixth->f1C;
-                f32 q2 = sixth->f20;
-                tbl.f20 = q2;
-                tbl.f1C = q1;
-                tbl.f24 = sixth->f24;
-                f32 q3 = sixth->f28;
-                f32 q4 = sixth->f2C;
-                tbl.f2C = q4;
-                tbl.f28 = q3;
-                tbl.f30 = sixth->f30;
-                f32 q5 = sixth->f34;
-                f32 q6 = sixth->f38;
-                tbl.f38 = q6;
-                tbl.f34 = q5;
-                tbl.f3C = sixth->f3C;
-                f32 q7 = sixth->f40;
-                f32 q8 = sixth->f44;
-                tbl.f44 = q8;
-                tbl.f40 = q7;
-                tbl.f48 = sixth->f48;
-
-                // Resolve the follow object: the player's voice sub-object,
-                // falling back to player 1.
-                void* player;
-                if (second == 0) {
-                    player = 0;
-                } else {
-                    player = 0;
-                    void* v = ((CamEventVoice*)second)->vtable->fn_0x4C(second);
-                    if (v != 0) player = func_800B708C__Fi((int)v);
-                    if (player == 0) player = getPlayer__Q22cf13CfGameManagerFi(1);
-                }
-
-                fourth = (void*)func_80078400(sixth->h0A, sixth->h0C);
-                third = (void*)func_80078400(sixth->h0E, sixth->h10);
-                ml::CVec3 t1, t2, t3, t4;
-                func_80077F20(&t1, second, player, (u16)(u32)fourth, sixth->h0A,
-                              &sixth->f1C);
-                tbl.f1C = t1.x;
-                tbl.f20 = t1.y;
-                tbl.f24 = t1.z;
-                func_80077F20(&t2, second, player, (u16)(u32)fourth, sixth->h0C,
-                              &sixth->f28);
-                tbl.f28 = t2.x;
-                tbl.f2C = t2.y;
-                tbl.f30 = t2.z;
-                func_80077F20(&t3, second, player, (u16)(u32)third, sixth->h0E,
-                              &sixth->f34);
-                tbl.f34 = t3.x;
-                tbl.f38 = t3.y;
-                tbl.f3C = t3.z;
-                func_80077F20(&t4, second, player, (u16)(u32)third, sixth->h10,
-                              &sixth->f40);
-                tbl.f40 = t4.x;
-                tbl.f44 = t4.y;
-                tbl.f48 = t4.z;
-                result = func_80076F88((CfCamEventManager*)lbl_eu_80663DF0,
-                                       first, second, &tbl);
-            } else {
-                result = func_800778E4((CfCamEventManager*)lbl_eu_80663DF0,
-                                       first, second, fifth);
-            }
-            if (result == 0 && old != idx) {
-                func_8006BC1C(((CfCamEventManager*)lbl_eu_80663DF0)->slots[idx], 0x8000);
-                func_8006BBF4(((CfCamEventManager*)lbl_eu_80663DF0)->slots[0], 0x8000, 1);
-                idx = 0;
-                first = 0;
-                ((CfCamEventManager*)lbl_eu_80663DF0)->field_0x3C = 0;
-            }
-        }
-    }
-
-    ((CfCamEventManager*)lbl_eu_80663DF0)->field_0x3E = (s16)first;
-    return ((CfCamEventManager*)lbl_eu_80663DF0)->slots[idx];
-}
+#pragma dont_inline reset
 
 void func_80078B60(CfCamEventManager* self, u32 idx, u32 param) {
     u32 n = (u32)func_800755BC(self, idx);
@@ -1119,7 +1690,7 @@ void func_80078B60(CfCamEventManager* self, u32 idx, u32 param) {
         }
         self->slots[n] = 0;
     }
-    func_800784A0(idx, (void*)param, 0, 0, 0, 0, 0);
+    func_800784A0(idx, (CfCamEventObj*)param, 0, 0, 0, 0, 0);
 }
 
 // Reset the cam-event manager: clear the low halfword of the flags word,
@@ -1131,9 +1702,8 @@ void func_80078C08(CfCamEventManager* self, u32 first, u32 second,
     func_8008212C__Q22cf13CfGameManagerFv(first);
     f32 f1C = lbl_eu_8066641C;
     f32 f18 = lbl_eu_80666418;
-    u32 flags = self->field_0x50 & 0xFFFF0000u;
     self->field_0x40 = 0;
-    self->field_0x50 = flags;
+    self->field_0x50 &= 0xFFFEFFFFu;
     self->tab0.field_0x160 = (u16)second;
     self->tab0.count = 0;
     self->tab0.field_0x168 = 0;
@@ -1173,40 +1743,69 @@ void func_80078C08(CfCamEventManager* self, u32 first, u32 second,
 // on the two +0x00/+0x0C aim vectors; the default state appends the raw pair
 // when the global cam state is in its busy frame range [0x10, 0x2b].
 void func_8007990C(CfCamEventManager* self, u32 a, u32 b, CamEventVecSrc* c, u32 d) {
-    s16 st = self->field_0x3E;
+    // Keep the state id in an int after the lha so the busy-range compare
+    // below stays as two signed cmpi (an s16 local would let MWCC fold the
+    // [0x10,0x2b] test into a subi/rlwinm/cmpli trio).
+    int st = self->field_0x3E;
     if (st == 9) {
+        // Scale the +0x18 triplet into a temp, append it (p5 stays the raw
+        // source pointer).
         ml::CVec3 tmp;
-        tmp.x = c->v2.x * lbl_eu_8066A20C;
-        tmp.y = c->v2.y * lbl_eu_8066A20C;
-        tmp.z = c->v2.z * lbl_eu_8066A20C;
+        // Compound-scale per component: keeps MWCC's lfs/fmuls/stfs
+        // per-component schedule closest to retail.
+        tmp.x = c->v2.x;
+        tmp.y = c->v2.y;
+        tmp.z = c->v2.z;
+        tmp.x *= lbl_eu_8066A20C;
+        tmp.y *= lbl_eu_8066A20C;
+        tmp.z *= lbl_eu_8066A20C;
         func_80078D08(self, a, (ml::CVec3*)c, &tmp, b, 0, c->f_24);
     } else if (st == 8) {
-        ml::CVec3 v1, v2;
-        v1.x = c->v0.x; v1.y = c->v0.y; v1.z = c->v0.z;
-        v2.x = c->v1.x; v2.y = c->v1.y; v2.z = c->v1.z;
+        // Copy both aim vectors, then (when the follow cam exists) subtract
+        // its aim vector from each.
+        ml::CVec3 v1;
+        ml::CVec3 v2;
+        v1.x = c->v0.x;
+        v1.y = c->v0.y;
+        v1.z = c->v0.z;
+        v2.x = c->v1.x;
+        v2.y = c->v1.y;
+        v2.z = c->v1.z;
         if (self->field_0x34 != 0) {
             CinemCamSrc* src34 = (CinemCamSrc*)(void*)self->field_0x34;
-            CinemVecOut* sv = src34->vtable->fn_0xAC(src34);
-            v1 -= sv->v;
-            v2 -= sv->v;
+            // Named locals pin the register-asm VEC3Sub arguments into
+            // materialised address registers (retail's addi r4/r5 schedule).
+            nw4r::math::VEC3* pv1 = (nw4r::math::VEC3*)&v1;
+            nw4r::math::VEC3* pv2 = (nw4r::math::VEC3*)&v2;
+            const nw4r::math::VEC3* pd =
+                (const nw4r::math::VEC3*)&src34->vtable->fn_0xAC(src34)->v;
+            nw4r::math::VEC3Sub(pv1, pv1, pd);
+            nw4r::math::VEC3Sub(pv2, pv2, pd);
         }
         func_80078D08(self, a, &v1, &v2, b, 0, c->f_24);
     } else if (st == 0xA) {
-        ml::CVec3 v1, v2;
-        v1.x = c->v0.x; v1.y = c->v0.y; v1.z = c->v0.z;
-        v2.x = c->v1.x; v2.y = c->v1.y; v2.z = c->v1.z;
+        ml::CVec3 v1;
+        ml::CVec3 v2;
+        v1.x = c->v0.x;
+        v1.y = c->v0.y;
+        v1.z = c->v0.z;
+        v2.x = c->v1.x;
+        v2.y = c->v1.y;
+        v2.z = c->v1.z;
         if (self->field_0x34 != 0) {
             func_80074230(&v1, &v2);
         }
         func_80078D08(self, a, &v1, &v2, b, 0, c->f_24);
     } else {
-        int busy = 0;
+        // Default: only append while the global cam state is in its busy
+        // frame range.
+        int on = 0;
         if (lbl_eu_80663DF0 != 0) {
-            s16 g = lbl_eu_80663DF0->field_0x3E;
-            if (g >= 0x10 && g <= 0x2b) busy = 1;
+            int g = lbl_eu_80663DF0->field_0x3E;
+            if (g >= 0x10 && g <= 0x2b) on = 1;
         }
-        if (busy) {
-            func_80078D08(self, a, (ml::CVec3*)c, (ml::CVec3*)&c->v1, b, d, c->f_24);
+        if (on != 0) {
+            func_80078D08(self, a, (ml::CVec3*)c, &c->v1, b, d, c->f_24);
         }
     }
 }
@@ -1229,19 +1828,31 @@ void func_8007990C(CfCamEventManager* self, u32 a, u32 b, CamEventVecSrc* c, u32
 // retail duplicates it (a helper would add a call).
 void func_80078D08(CfCamEventManager* self, int add, ml::CVec3* p5, ml::CVec3* r6,
                    int p7, int p8, f32 p1) {
-    u16 id = (u16)(add + self->field_0x40);
+    // Retail zero-extends the truncated sum into a u32 (clrlwi r31); the
+    // element stores narrow it back to a halfword.
+    u32 id = (u16)(add + self->field_0x40);
+    // Two hand-built 0x4330-magic int->double conversion slots (retail stack
+    // 0xc8/0xd0), both pre-stored at entry; each append tail alternates
+    // between them.
+    CamConvTmp convB;
+    CamConvTmp convA;
+    convB.w[0] = 0x43300000;
+    convA.w[0] = 0x43300000;
     if (p1 <= lbl_eu_8066A208)
         self->field_0x50 |= 0x10000;
 
     s16 state = self->field_0x3E;
     if (state == 9) {
         // Scale the r6 aim vector and normalize it; all three tables get it.
-        ml::CVec3 sv;
+        CamTripletLocals sv;
         f32 k = lbl_eu_8066A210;
-        sv.x = r6->x * k;
-        sv.y = r6->y * k;
-        sv.z = r6->z * k;
-        func_800A3F8C(&sv);
+        f32 sx = r6->x * k;
+        f32 sy = r6->y * k;
+        f32 sz = r6->z * k;
+        sv.x = sx;
+        sv.y = sy;
+        sv.z = sz;
+        func_800A3F8C((ml::CVec3*)&sv);
 
         // table0 (0x7C) - elements start at the table base; count at 0x1E2.
         // Retail stores the raw p5 words here; the scaled vector goes to
@@ -1262,7 +1873,8 @@ void func_80078D08(CfCamEventManager* self, int add, ml::CVec3* p5, ml::CVec3* r
                 self->tab0.baseZ = p5->z;
             }
             self->tab0.count = cnt0 + 1;
-            self->tab0.field_0x174 = (f32)id;
+            convA.w[1] = id;
+            self->tab0.field_0x174 = (f32)(convA.d - lbl_eu_80666420);
         }
 
         // table1 (0x1F4) - shake unit 0 element array
@@ -1284,7 +1896,8 @@ void func_80078D08(CfCamEventManager* self, int add, ml::CVec3* p5, ml::CVec3* r
                 self->shake[0].u.tab.baseZ = sv.z;
             }
             self->shake[0].field_0x166 = cnt1 + 1;
-            self->shake[0].field_0x174 = (f32)id;
+            convB.w[1] = id;
+            self->shake[0].field_0x174 = (f32)(convB.d - lbl_eu_80666420);
         }
 
         // table2 (0x36C): stores the (p1, 1, 1) constant triplet. Retail
@@ -1305,11 +1918,13 @@ void func_80078D08(CfCamEventManager* self, int add, ml::CVec3* p5, ml::CVec3* r
                 self->shake[1].u.tab.baseZ = c2[2];
             }
             self->shake[1].field_0x166 = cnt2 + 1;
-            self->shake[1].field_0x174 = (f32)id;
+            convA.w[1] = id;
+            self->shake[1].field_0x174 = (f32)(convA.d - lbl_eu_80666420);
         }
     } else if (state == 8) {
         if (self->field_0x47 != 0) {
-            // One-shot path: raw pair, d word cleared.
+            // One-shot path: raw pair, d word cleared. NOTE: this branch's
+            // three tails use the conversion slots in reverse order (B/A/B).
             s16 cnt0 = self->tab0.count;
             if (cnt0 < 0x10) {
                 CfCamEventElem* e = &self->tab0.elems[cnt0];
@@ -1325,7 +1940,8 @@ void func_80078D08(CfCamEventManager* self, int add, ml::CVec3* p5, ml::CVec3* r
                     self->tab0.baseZ = r6->z;
                 }
                 self->tab0.count = cnt0 + 1;
-                self->tab0.field_0x174 = (f32)id;
+                convB.w[1] = id;
+                self->tab0.field_0x174 = (f32)(convB.d - lbl_eu_80666420);
             }
             s16 cnt1 = self->shake[0].field_0x166;
             if (cnt1 < 0x10) {
@@ -1342,7 +1958,8 @@ void func_80078D08(CfCamEventManager* self, int add, ml::CVec3* p5, ml::CVec3* r
                     self->shake[0].u.tab.baseZ = p5->z;
                 }
                 self->shake[0].field_0x166 = cnt1 + 1;
-                self->shake[0].field_0x174 = (f32)id;
+                convA.w[1] = id;
+                self->shake[0].field_0x174 = (f32)(convA.d - lbl_eu_80666420);
             }
             s16 cnt2 = self->shake[1].field_0x166;
             f32 c2[3] = { p1, lbl_eu_8066641C, lbl_eu_8066641C };
@@ -1360,27 +1977,28 @@ void func_80078D08(CfCamEventManager* self, int add, ml::CVec3* p5, ml::CVec3* r
                     self->shake[1].u.tab.baseZ = c2[2];
                 }
                 self->shake[1].field_0x166 = cnt2 + 1;
-                self->shake[1].field_0x174 = (f32)id;
+                convB.w[1] = id;
+                self->shake[1].field_0x174 = (f32)(convB.d - lbl_eu_80666420);
             }
         } else {
             // One-shot clear path: table0 gets the raw r6 vector, table1 the
             // yaw/pitch angles of the (p5 - r6) difference.
-            ml::CVec3 d;
+            CamTripletLocals d;
             d.x = p5->x - r6->x;
             d.y = p5->y - r6->y;
             d.z = p5->z - r6->z;
             f32 len = (f32)sqrt((f64)(d.z * d.z + d.x * d.x));
-            ml::CVec3 out;
+            CamTripletLocals out;
             out.x = lbl_eu_80666454 * Atan2FIdx__Q24nw4r4mathFff(d.y, len);
             out.y = lbl_eu_80666454 * Atan2FIdx__Q24nw4r4mathFff(d.x, d.z);
             out.z = lbl_eu_8066641C;
-            func_800A3F8C(&out);
+            func_800A3F8C((ml::CVec3*)&out);
             if ((f32)__fabs((f64)d.x) <= lbl_eu_8066A208 &&
                 (f32)__fabs((f64)d.y) <= lbl_eu_8066A208 &&
                 (f32)__fabs((f64)d.z) <= lbl_eu_8066A208)
                 out.z = lbl_eu_8066641C;
             else
-                out.z = PSVECMag(d);
+                out.z = PSVECMag((const Vec*)&d);
 
             s16 cnt0 = self->tab0.count;
             if (cnt0 < 0x10) {
@@ -1397,7 +2015,8 @@ void func_80078D08(CfCamEventManager* self, int add, ml::CVec3* p5, ml::CVec3* r
                     self->tab0.baseZ = r6->z;
                 }
                 self->tab0.count = cnt0 + 1;
-                self->tab0.field_0x174 = (f32)id;
+                convA.w[1] = id;
+                self->tab0.field_0x174 = (f32)(convA.d - lbl_eu_80666420);
             }
             s16 cnt1 = self->shake[0].field_0x166;
             if (cnt1 < 0x10) {
@@ -1417,7 +2036,8 @@ void func_80078D08(CfCamEventManager* self, int add, ml::CVec3* p5, ml::CVec3* r
                     self->shake[0].u.tab.baseZ = out.z;
                 }
                 self->shake[0].field_0x166 = cnt1 + 1;
-                self->shake[0].field_0x174 = (f32)id;
+                convB.w[1] = id;
+                self->shake[0].field_0x174 = (f32)(convB.d - lbl_eu_80666420);
             }
             s16 cnt2 = self->shake[1].field_0x166;
             f32 c2[3] = { p1, lbl_eu_8066641C, lbl_eu_8066641C };
@@ -1435,27 +2055,28 @@ void func_80078D08(CfCamEventManager* self, int add, ml::CVec3* p5, ml::CVec3* r
                     self->shake[1].u.tab.baseZ = c2[2];
                 }
                 self->shake[1].field_0x166 = cnt2 + 1;
-                self->shake[1].field_0x174 = (f32)id;
+                convA.w[1] = id;
+                self->shake[1].field_0x174 = (f32)(convA.d - lbl_eu_80666420);
             }
         }
     } else if (state == 0xA) {
         // Same angle pair as state 8's clear path.
-        ml::CVec3 d;
+        CamTripletLocals d;
         d.x = p5->x - r6->x;
         d.y = p5->y - r6->y;
         d.z = p5->z - r6->z;
         f32 len = (f32)sqrt((f64)(d.z * d.z + d.x * d.x));
-        ml::CVec3 out;
+        CamTripletLocals out;
         out.x = lbl_eu_80666454 * Atan2FIdx__Q24nw4r4mathFff(d.y, len);
         out.y = lbl_eu_80666454 * Atan2FIdx__Q24nw4r4mathFff(d.x, d.z);
         out.z = lbl_eu_8066641C;
-        func_800A3F8C(&out);
+        func_800A3F8C((ml::CVec3*)&out);
         if ((f32)__fabs((f64)d.x) <= lbl_eu_8066A208 &&
             (f32)__fabs((f64)d.y) <= lbl_eu_8066A208 &&
             (f32)__fabs((f64)d.z) <= lbl_eu_8066A208)
             out.z = lbl_eu_8066641C;
         else
-            out.z = PSVECMag(d);
+            out.z = PSVECMag((const Vec*)&d);
 
         s16 cnt0 = self->tab0.count;
         if (cnt0 < 0x10) {
@@ -1472,7 +2093,8 @@ void func_80078D08(CfCamEventManager* self, int add, ml::CVec3* p5, ml::CVec3* r
                 self->tab0.baseZ = r6->z;
             }
             self->tab0.count = cnt0 + 1;
-            self->tab0.field_0x174 = (f32)id;
+            convA.w[1] = id;
+            self->tab0.field_0x174 = (f32)(convA.d - lbl_eu_80666420);
         }
         s16 cnt1 = self->shake[0].field_0x166;
         if (cnt1 < 0x10) {
@@ -1492,7 +2114,8 @@ void func_80078D08(CfCamEventManager* self, int add, ml::CVec3* p5, ml::CVec3* r
                 self->shake[0].u.tab.baseZ = out.z;
             }
             self->shake[0].field_0x166 = cnt1 + 1;
-            self->shake[0].field_0x174 = (f32)id;
+            convB.w[1] = id;
+            self->shake[0].field_0x174 = (f32)(convB.d - lbl_eu_80666420);
         }
         s16 cnt2 = self->shake[1].field_0x166;
         f32 c2[3] = { p1, lbl_eu_8066641C, lbl_eu_8066641C };
@@ -1510,7 +2133,8 @@ void func_80078D08(CfCamEventManager* self, int add, ml::CVec3* p5, ml::CVec3* r
                 self->shake[1].u.tab.baseZ = c2[2];
             }
             self->shake[1].field_0x166 = cnt2 + 1;
-            self->shake[1].field_0x174 = (f32)id;
+            convA.w[1] = id;
+            self->shake[1].field_0x174 = (f32)(convA.d - lbl_eu_80666420);
         }
     } else {
         // Default states: only append while the global cam state is inside
@@ -1521,9 +2145,9 @@ void func_80078D08(CfCamEventManager* self, int add, ml::CVec3* p5, ml::CVec3* r
             if (g >= 0x10 && g <= 0x2b) busy = 1;
         }
         if (busy) {
-            ml::CVec3 t0, t1;
+            CamTripletLocals t0, t1;
             if (lbl_eu_80570C90.h00 != 0) {
-                ml::CVec3 d;
+                CamTripletLocals d;
                 d.x = p5->x - r6->x;
                 d.y = p5->y - r6->y;
                 d.z = p5->z - r6->z;
@@ -1534,13 +2158,13 @@ void func_80078D08(CfCamEventManager* self, int add, ml::CVec3* p5, ml::CVec3* r
                 t1.x = lbl_eu_80666454 * Atan2FIdx__Q24nw4r4mathFff(d.y, len);
                 t1.y = lbl_eu_80666454 * Atan2FIdx__Q24nw4r4mathFff(d.x, d.z);
                 t1.z = lbl_eu_8066641C;
-                func_800A3F8C(&t1);
+                func_800A3F8C((ml::CVec3*)&t1);
                 if ((f32)__fabs((f64)d.x) <= lbl_eu_8066A208 &&
                     (f32)__fabs((f64)d.y) <= lbl_eu_8066A208 &&
                     (f32)__fabs((f64)d.z) <= lbl_eu_8066A208)
                     t1.z = lbl_eu_8066641C;
                 else
-                    t1.z = PSVECMag(d);
+                    t1.z = PSVECMag((const Vec*)&d);
             } else {
                 t0.x = p5->x;
                 t0.y = p5->y;
@@ -1564,7 +2188,8 @@ void func_80078D08(CfCamEventManager* self, int add, ml::CVec3* p5, ml::CVec3* r
                     self->tab0.baseZ = t0.z;
                 }
                 self->tab0.count = cnt0 + 1;
-                self->tab0.field_0x174 = (f32)id;
+                convA.w[1] = id;
+                self->tab0.field_0x174 = (f32)(convA.d - lbl_eu_80666420);
             }
             s16 cnt1 = self->shake[0].field_0x166;
             if (cnt1 < 0x10) {
@@ -1584,25 +2209,27 @@ void func_80078D08(CfCamEventManager* self, int add, ml::CVec3* p5, ml::CVec3* r
                     self->shake[0].u.tab.baseZ = t1.z;
                 }
                 self->shake[0].field_0x166 = cnt1 + 1;
-                self->shake[0].field_0x174 = (f32)id;
+                convB.w[1] = id;
+                self->shake[0].field_0x174 = (f32)(convB.d - lbl_eu_80666420);
             }
             s16 cnt2 = self->shake[1].field_0x166;
-            ml::CVec3 c2(p1, lbl_eu_8066641C, lbl_eu_8066641C);
+            f32 c2[3] = { p1, lbl_eu_8066641C, lbl_eu_8066641C };
             if (cnt2 < 0x10) {
                 CfCamEventElem* e = &self->shake[1].u.tab.elems[cnt2];
-                e->x0 = c2.x;
-                e->x4 = c2.y;
-                e->x8 = c2.z;
+                e->x0 = c2[0];
+                e->x4 = c2[1];
+                e->x8 = c2[2];
                 e->id = id;
                 e->c = (u16)p7;
                 e->d = (u16)p8;
                 if (cnt2 == 0) {
-                    self->shake[1].u.tab.baseX = c2.x;
-                    self->shake[1].u.tab.baseY = c2.y;
-                    self->shake[1].u.tab.baseZ = c2.z;
+                    self->shake[1].u.tab.baseX = c2[0];
+                    self->shake[1].u.tab.baseY = c2[1];
+                    self->shake[1].u.tab.baseZ = c2[2];
                 }
                 self->shake[1].field_0x166 = cnt2 + 1;
-                self->shake[1].field_0x174 = (f32)id;
+                convA.w[1] = id;
+                self->shake[1].field_0x174 = (f32)(convA.d - lbl_eu_80666420);
             }
         }
     }
@@ -1610,33 +2237,52 @@ void func_80078D08(CfCamEventManager* self, int add, ml::CVec3* p5, ml::CVec3* r
 
 
 // Advance each element of the shake table toward its predecessor by 2*PI once
-// the gap reaches PI. Written inline in both branches below (retail keeps two
+// the gap reaches PI. Written inline in each path below (retail keeps several
 // copies of the loop).
 void func_80079B34(CfCamEventManager* self) {
     self->tab0.flag_active = 1;
     self->tab0.field_0x163 = 0;
 
+    // Degenerate advance over tab0 kept from the original source (the same
+    // broken pointer-vs-count comparison as func_80079D6C): the table pointer
+    // is compared against its own s16 count word, so the loop never iterates
+    // at runtime - retail still emits the body.
+    {
+        CfCamEventElem* e = (CfCamEventElem*)self;
+        f32 step = lbl_eu_8066A1FC;
+        while ((s32)e < (s32)self->tab0.count) {
+            f32 cur = e->x4;
+            f32 d = cur - (e - 1)->x4;
+            f32 ad = (f32)__fabs((f64)d);
+            if (ad >= step) {
+                if (ad > step)
+                    e->x4 = cur - step;
+                else
+                    e->x4 = cur + step;
+            }
+        }
+    }
+
     // Whether the global cam manager is inside its busy frame range.
+    // Keep the state id in an int so the [0x10,0x2b] test stays as two cmpi.
     int busy = 0;
     if (lbl_eu_80663DF0 != nullptr) {
-        s16 g = lbl_eu_80663DF0->field_0x3E;
+        int g = lbl_eu_80663DF0->field_0x3E;
         if (g >= 0x10 && g <= 0x2b) busy = 1;
     }
 
     if (busy) {
         // Demo-mode flag drives the shake update.
         self->shake[0].field_0x162 = 1;
-        u16 demo = lbl_eu_80570C90.h00;
-        u8 on = (demo != 0);
+        u8 on = (lbl_eu_80570C90.h00 != 0);
         self->shake[0].field_0x163 = on;
         if (on) {
             s16 count = self->shake[0].field_0x166;
             CfCamEventElem* e = self->shake[0].u.elems + 1;
             for (int i = 1; i < count; i++, e++) {
                 f32 cur = e->x4;
-                f32 prev = (e - 1)->x4;
-                f32 d = cur - prev;
-                if (fabsf(d) >= lbl_eu_8066A1F8) {
+                f32 d = cur - (e - 1)->x4;
+                if ((f32)__fabs((f64)d) >= lbl_eu_8066A1F8) {
                     if (d > lbl_eu_8066641C)
                         e->x4 = cur - lbl_eu_8066A1FC;
                     else
@@ -1645,25 +2291,25 @@ void func_80079B34(CfCamEventManager* self) {
             }
         }
     } else {
-        // When not busy, field_0x47 decides whether to shake.
+        // When not busy, field_0x47 decides whether to shake; the advance
+        // loop is shared between the two arms (retail duplicates its body).
         if (self->field_0x47) {
             self->shake[0].field_0x162 = 1;
             self->shake[0].field_0x163 = 0;
         } else {
             self->shake[0].field_0x162 = 1;
             self->shake[0].field_0x163 = 1;
-            s16 count = self->shake[0].field_0x166;
-            CfCamEventElem* e = self->shake[0].u.elems + 1;
-            for (int i = 1; i < count; i++, e++) {
-                f32 cur = e->x4;
-                f32 prev = (e - 1)->x4;
-                f32 d = cur - prev;
-                if (fabsf(d) >= lbl_eu_8066A1F8) {
-                    if (d > lbl_eu_8066641C)
-                        e->x4 = cur - lbl_eu_8066A1FC;
-                    else
-                        e->x4 = cur + lbl_eu_8066A1FC;
-                }
+        }
+        s16 count = self->shake[0].field_0x166;
+        CfCamEventElem* e = self->shake[0].u.elems + 1;
+        for (int i = 1; i < count; i++, e++) {
+            f32 cur = e->x4;
+            f32 d = cur - (e - 1)->x4;
+            if ((f32)__fabs((f64)d) >= lbl_eu_8066A1F8) {
+                if (d > lbl_eu_8066641C)
+                    e->x4 = cur - lbl_eu_8066A1FC;
+                else
+                    e->x4 = cur + lbl_eu_8066A1FC;
             }
         }
     }
@@ -1677,9 +2323,12 @@ void func_80079B34(CfCamEventManager* self) {
 }
 
 // Advance one shake-table element toward its predecessor by `step`. The
-// retail body is a degenerate while-loop: the first argument is used both as
-// the element pointer (previous element one stride back at -0x10) and as the
-// base for the table count at +0x4D2, and it never advances.
+// retail body is a degenerate while-loop: the element pointer is used both
+// as the element base (previous element one stride back at -0x10) and as
+// the base for the table count at +0x4D2, and it never advances.
+// NOTE: retail consumes `step` from f0 (no prologue homes the incoming f1
+// param); MWCC keeps a float param in f1 in every tested source shape, so
+// the d-chain/step FPR colors stay transposed (documented open item).
 void func_80079D6C(f32 step, CfCamEventShakeElem* e) {
     while ((s32)e < (s32)e->count) {
         f32 d = (f32)__fabs((f64)(e->x4 - ((CfCamEventElem*)e - 1)->x4));
@@ -1692,37 +2341,22 @@ void func_80079D6C(f32 step, CfCamEventShakeElem* e) {
     }
 }
 
-// True while any of three "active" flags are set on the manager.
 // NOTE: retail materializes the sub pointer (addi r3,r3,0x1f4) and keeps the
-// three checks branchy with separate return blocks. The constant-bounds
-// indexed loop reproduces the branchy unrolled shape byte-for-byte except
-// the base addi (Wii/1.1 -O4,p folds &shake[0] into the load displacements:
-// lbz 0x356/0x4CE from this instead of addi + lbz 0x162/0x2da). Direct
-// if-return forms merge the final check into the neg/or/rlwinm bool idiom.
+// three checks branchy with separate return blocks. Advancing a byte pointer
+// in-source pins the addi so the optimizer cannot refold it into the load
+// displacements.
 bool func_80079DBC(CfCamEventManager* manager) {
-    if (manager->tab0.flag_active != 0) return true;
-    for (int i = 0; i < 2; i++) {
-        if (manager->shake[i].field_0x162 != 0) return true;
-    }
+    u8* p = (u8*)manager;
+    if (p[0x1DE] != 0) return true;
+    p += 0x1F4;
+    if (p[0x162] != 0) return true;
+    if (p[0x2DA] != 0) return true;
     return false;
 }
 
-// One step of the fixed 3x3 float recurrence used by the func_80079E04
-// rotation body. The base block is [c,-s,1 / s,c,1 / 1,1,0.5]; each step
-// folds the next sin/cos pair into the running block (row 2 is constant).
-// Written inline twice below exactly as retail duplicates it.
-#define CAMEVENT_ROT_STEP(dst, src, sn, cs)                              \
-    do {                                                                 \
-        (dst).m[8] = (src).m[2] + sn * (src).m[5] + cs * (src).m[8];     \
-        (dst).m[7] = (src).m[1] + sn * (src).m[4] + cs * (src).m[7];     \
-        (dst).m[6] = (src).m[0] + sn * (src).m[1] + cs * (src).m[6];     \
-        (dst).m[2] = (src).m[8] + (src).m[2] + (src).m[5];               \
-        (dst).m[1] = (src).m[7] + (src).m[1] + (src).m[4];               \
-        (dst).m[0] = (src).m[6] + (src).m[0] + (src).m[1];               \
-        (dst).m[4] = (src).m[1] + cs * (src).m[4] - sn * (src).m[7];     \
-        (dst).m[3] = (src).m[0] + cs * (src).m[1] - sn * (src).m[6];     \
-        (dst).m[5] = (src).m[2] + cs * (src).m[5] - sn * (src).m[8];     \
-    } while (0)
+// One composition step of the fixed 3x3 recurrence used by the func_80079E04
+// rotation body. Folds a fresh sin/cos pair into the running block; written
+// inline twice per branch exactly as retail duplicates it.
 
 // Per-frame cam-event update (state machine). Resolves the game manager via
 // dynamic_cast and checks its busy flag and the frame-speed value before
@@ -1740,7 +2374,8 @@ int func_80079E04(CfCamEventManager* self) {
 
     CfRes_getD80Flag();
     f32 val = func_80496288();
-    if (val <= lbl_eu_8066641C) return 0;
+    // cror eq,lt,eq / bne: proceed only when val <= k.
+    if (!(val <= lbl_eu_8066641C)) return 0;
 
     if (self->tab0.flag_active == 0) {
         // Flag 0x1DE clear: busy range still hands off to func_8007AA4C;
@@ -1784,142 +2419,161 @@ int func_80079E04(CfCamEventManager* self) {
     if (state == 9) {
         // Normalize the unit-0 base anchor, then push it (and the table-0
         // base anchor) into the dynamic object's vector setters.
-        ml::CVec3 v;
+        CamTripletLocals v;
         v.x = u0->u.tab.baseX;
         v.y = u0->u.tab.baseY;
         v.z = u0->u.tab.baseZ;
-        func_800A3F8C(&v);
+        func_800A3F8C((ml::CVec3*)&v);
         adv->vtable->fn_0x14(adv, &self->tab0.baseX);
         adv->vtable->fn_0x4C(adv, &v);
-    } else if (state == 8 || state == 0xA) {
-        if (state == 8 && self->field_0x47 != 0) {
+    } else if (state == 8) {
+        if (self->field_0x47 != 0) {
                 // One-shot: table-0 base into slot 2, unit-0 base into slot 1.
-                ml::CVec3 a, b;
+                CamTripletLocals a, b;
                 a.x = self->tab0.baseX;
                 a.y = self->tab0.baseY;
                 a.z = self->tab0.baseZ;
-                b.x = self->shake[0].u.tab.baseX;
-                b.y = self->shake[0].u.tab.baseY;
-                b.z = self->shake[0].u.tab.baseZ;
+                b.x = u0->u.tab.baseX;
+                b.y = u0->u.tab.baseY;
+                b.z = u0->u.tab.baseZ;
                 adv->vtable->fn_0x14(adv, &b);
                 adv->vtable->fn_0x64(adv, &a);
         } else {
             // Rotate the table-0 base anchor by the fixed two-step float
-            // recurrence built from sin/cos of (1, unit-0 baseX, unit-0 baseY);
-            // the offset magnitude is |unit-0 baseZ|. Constants are re-read
-            // from sdata at each use so MWCC keeps products in FPRs.
+            // recurrence built from sin/cos of (k*1, unit-0 baseX, unit-0
+            // baseY); the offset magnitude is |unit-0 baseZ|. Each step folds
+            // a fresh sin/cos pair into the running 9-float block; the base
+            // pair (s1,c1) stays live across both steps.
             f32 Vx = self->tab0.baseX;
             f32 Vy = self->tab0.baseY;
             f32 Vz = self->tab0.baseZ;
+            f32 k1 = lbl_eu_8066641C;
+            f32 half = lbl_eu_80666428;
             f32 ax = u0->u.tab.baseX;
             f32 ay = u0->u.tab.baseY;
             f32 mag = (f32)__fabs((f64)u0->u.tab.baseZ);
-            f32 s1 = SinFIdx__Q24nw4r4mathFf(lbl_eu_80666430 * lbl_eu_8066641C);
-            f32 c1 = CosFIdx__Q24nw4r4mathFf(lbl_eu_80666430 * lbl_eu_8066641C);
-            f32 s2 = SinFIdx__Q24nw4r4mathFf(lbl_eu_80666430 * ax);
-            f32 c2 = CosFIdx__Q24nw4r4mathFf(lbl_eu_80666430 * ax);
-            CamEventMtx a;
-            a.m[0] = c1; a.m[1] = -s1; a.m[2] = lbl_eu_8066641C;
-            a.m[3] = s1; a.m[4] = c1; a.m[5] = lbl_eu_8066641C;
-            a.m[6] = lbl_eu_8066641C; a.m[7] = lbl_eu_8066641C; a.m[8] = lbl_eu_80666428;
-            CamEventMtx n;
-            CAMEVENT_ROT_STEP(n, a, s2, c2);
-            a = n;
+            f32 s1 = SinFIdx__Q24nw4r4mathFf(lbl_eu_80666430 * k1);
+            f32 c1 = CosFIdx__Q24nw4r4mathFf(lbl_eu_80666430 * k1);
+            CamEventMtx m;
+            m.m[0] = c1; m.m[1] = -s1; m.m[2] = k1;
+            m.m[3] = s1; m.m[4] = c1; m.m[5] = k1;
+            m.m[6] = k1; m.m[7] = k1; m.m[8] = half;
+            f32 sn = SinFIdx__Q24nw4r4mathFf(lbl_eu_80666430 * ax);
+            f32 cs = CosFIdx__Q24nw4r4mathFf(lbl_eu_80666430 * ax);
+            CamEventMtx n1;
+            n1.m[8] = k1 * m.m[2] + sn * k1 + cs * m.m[8];
+            n1.m[7] = k1 * m.m[1] + sn * c1 + cs * m.m[7];
+            n1.m[6] = k1 * m.m[0] + sn * s1 + cs * m.m[6];
+            n1.m[2] = k1 * m.m[8] + (half * m.m[2] + k1 * m.m[5]);
+            n1.m[1] = half * m.m[1] + k1 * m.m[4];
+            n1.m[0] = k1 * m.m[6] + (half * m.m[0] + sn * s1);
+            n1.m[4] = cs * m.m[4] + k1 * m.m[1] - sn * m.m[7];
+            n1.m[3] = k1 * m.m[0] + cs * s1 - sn * m.m[6];
+            n1.m[5] = cs * m.m[5] - sn * m.m[8];
             f32 s3 = SinFIdx__Q24nw4r4mathFf(lbl_eu_80666430 * ay);
             f32 c3 = CosFIdx__Q24nw4r4mathFf(lbl_eu_80666430 * ay);
-            CamEventMtx b;
-            b.m[0] = c3; b.m[1] = -s3; b.m[2] = lbl_eu_8066641C;
-            b.m[3] = s3; b.m[4] = c3; b.m[5] = lbl_eu_8066641C;
-            b.m[6] = lbl_eu_8066641C; b.m[7] = lbl_eu_8066641C; b.m[8] = lbl_eu_80666428;
             CamEventMtx n2;
-            CAMEVENT_ROT_STEP(n2, b, s3, c3);
-            f32 mx = lbl_eu_8066641C * n2.m[1] + lbl_eu_8066641C * n2.m[0]
-                - mag * n2.m[2];
-            f32 my = lbl_eu_8066641C * n2.m[4] + lbl_eu_8066641C * n2.m[3]
-                - mag * n2.m[5];
-            f32 mz = lbl_eu_8066641C * n2.m[7] + lbl_eu_8066641C * n2.m[6]
-                - mag * n2.m[8];
+            n2.m[8] = k1 * n1.m[2] + s3 * k1 + c3 * n1.m[8];
+            n2.m[7] = k1 * n1.m[1] + s3 * c1 + c3 * n1.m[7];
+            n2.m[6] = k1 * n1.m[0] + s3 * s1 + c3 * n1.m[6];
+            n2.m[2] = k1 * n1.m[8] + (half * n1.m[2] + k1 * n1.m[5]);
+            n2.m[1] = half * n1.m[1] + k1 * n1.m[4];
+            n2.m[0] = k1 * n1.m[6] + (half * n1.m[0] + s3 * s1);
+            n2.m[4] = c3 * n1.m[4] + k1 * n1.m[1] - s3 * n1.m[7];
+            n2.m[3] = k1 * n1.m[0] + c3 * s1 - s3 * n1.m[6];
+            n2.m[5] = c3 * n1.m[5] - s3 * n1.m[8];
+            f32 nmag = -mag;
+            f32 mx = nmag * n2.m[2] + (half * n2.m[1] + half * n2.m[0]);
+            f32 my = nmag * n2.m[5] + (half * n2.m[4] + half * n2.m[3]);
+            f32 mz = nmag * n2.m[8] + (half * n2.m[7] + half * n2.m[6]);
             f32 o1x = Vx - mx;
             f32 o1y = Vy + my;
             f32 o1z = Vz - mz;
-            if (self->field_0x34 != 0) {
-                CinemCamSrc* src = (CinemCamSrc*)(void*)self->field_0x34;
-                ml::CVec3* rv = &src->vtable->fn_0xAC(src)->v;
-                o1x += rv->x;
-                o1y += rv->y;
-                o1z += rv->z;
-                Vx += rv->x;
-                Vy += rv->y;
-                Vz += rv->z;
-            }
-            ml::CVec3 out1;
+            CamTripletLocals out1;
             out1.x = o1x;
             out1.y = o1y;
             out1.z = o1z;
-            ml::CVec3 out2;
+            CamTripletLocals out2;
             out2.x = Vx;
             out2.y = Vy;
             out2.z = Vz;
+            if (self->field_0x34 != 0) {
+                CinemCamSrc* src = (CinemCamSrc*)(void*)self->field_0x34;
+                ml::CVec3* rv = &src->vtable->fn_0xAC(src)->v;
+                out1.x += rv->x;
+                out1.y += rv->y;
+                out1.z += rv->z;
+                out2.x += rv->x;
+                out2.y += rv->y;
+                out2.z += rv->z;
+            }
             adv->vtable->fn_0x14(adv, &out1);
             adv->vtable->fn_0x64(adv, &out2);
         }
-    }
-    if (state == 0xA) {
+    } else if (state == 0xA) {
         // Same recurrence as state 8's clear path (retail duplicates it).
         f32 Vx = self->tab0.baseX;
         f32 Vy = self->tab0.baseY;
         f32 Vz = self->tab0.baseZ;
+        f32 k1 = lbl_eu_8066641C;
+        f32 half = lbl_eu_80666428;
         f32 ax = u0->u.tab.baseX;
         f32 ay = u0->u.tab.baseY;
         f32 mag = (f32)__fabs((f64)u0->u.tab.baseZ);
-        f32 s1 = SinFIdx__Q24nw4r4mathFf(lbl_eu_80666430 * lbl_eu_8066641C);
-        f32 c1 = CosFIdx__Q24nw4r4mathFf(lbl_eu_80666430 * lbl_eu_8066641C);
-        f32 s2 = SinFIdx__Q24nw4r4mathFf(lbl_eu_80666430 * ax);
-        f32 c2 = CosFIdx__Q24nw4r4mathFf(lbl_eu_80666430 * ax);
-        CamEventMtx a;
-        a.m[0] = c1; a.m[1] = -s1; a.m[2] = lbl_eu_8066641C;
-        a.m[3] = s1; a.m[4] = c1; a.m[5] = lbl_eu_8066641C;
-        a.m[6] = lbl_eu_8066641C; a.m[7] = lbl_eu_8066641C; a.m[8] = lbl_eu_80666428;
-        CamEventMtx n;
-        CAMEVENT_ROT_STEP(n, a, s2, c2);
-        a = n;
+        f32 s1 = SinFIdx__Q24nw4r4mathFf(lbl_eu_80666430 * k1);
+        f32 c1 = CosFIdx__Q24nw4r4mathFf(lbl_eu_80666430 * k1);
+        CamEventMtx m;
+        m.m[0] = c1; m.m[1] = -s1; m.m[2] = k1;
+        m.m[3] = s1; m.m[4] = c1; m.m[5] = k1;
+        m.m[6] = k1; m.m[7] = k1; m.m[8] = half;
+        f32 sn = SinFIdx__Q24nw4r4mathFf(lbl_eu_80666430 * ax);
+        f32 cs = CosFIdx__Q24nw4r4mathFf(lbl_eu_80666430 * ax);
+        CamEventMtx n1;
+        n1.m[8] = k1 * m.m[2] + sn * k1 + cs * m.m[8];
+        n1.m[7] = k1 * m.m[1] + sn * c1 + cs * m.m[7];
+        n1.m[6] = k1 * m.m[0] + sn * s1 + cs * m.m[6];
+        n1.m[2] = k1 * m.m[8] + (half * m.m[2] + k1 * m.m[5]);
+        n1.m[1] = half * m.m[1] + k1 * m.m[4];
+        n1.m[0] = k1 * m.m[6] + (half * m.m[0] + sn * s1);
+        n1.m[4] = cs * m.m[4] + k1 * m.m[1] - sn * m.m[7];
+        n1.m[3] = k1 * m.m[0] + cs * s1 - sn * m.m[6];
+        n1.m[5] = cs * m.m[5] - sn * m.m[8];
         f32 s3 = SinFIdx__Q24nw4r4mathFf(lbl_eu_80666430 * ay);
         f32 c3 = CosFIdx__Q24nw4r4mathFf(lbl_eu_80666430 * ay);
-        CamEventMtx b;
-        b.m[0] = c3; b.m[1] = -s3; b.m[2] = lbl_eu_8066641C;
-        b.m[3] = s3; b.m[4] = c3; b.m[5] = lbl_eu_8066641C;
-        b.m[6] = lbl_eu_8066641C; b.m[7] = lbl_eu_8066641C; b.m[8] = lbl_eu_80666428;
         CamEventMtx n2;
-        CAMEVENT_ROT_STEP(n2, b, s3, c3);
-        f32 mx = lbl_eu_8066641C * n2.m[1] + lbl_eu_8066641C * n2.m[0]
-            - mag * n2.m[2];
-        f32 my = lbl_eu_8066641C * n2.m[4] + lbl_eu_8066641C * n2.m[3]
-            - mag * n2.m[5];
-        f32 mz = lbl_eu_8066641C * n2.m[7] + lbl_eu_8066641C * n2.m[6]
-            - mag * n2.m[8];
+        n2.m[8] = k1 * n1.m[2] + s3 * k1 + c3 * n1.m[8];
+        n2.m[7] = k1 * n1.m[1] + s3 * c1 + c3 * n1.m[7];
+        n2.m[6] = k1 * n1.m[0] + s3 * s1 + c3 * n1.m[6];
+        n2.m[2] = k1 * n1.m[8] + (half * n1.m[2] + k1 * n1.m[5]);
+        n2.m[1] = half * n1.m[1] + k1 * n1.m[4];
+        n2.m[0] = k1 * n1.m[6] + (half * n1.m[0] + s3 * s1);
+        n2.m[4] = c3 * n1.m[4] + k1 * n1.m[1] - s3 * n1.m[7];
+        n2.m[3] = k1 * n1.m[0] + c3 * s1 - s3 * n1.m[6];
+        n2.m[5] = c3 * n1.m[5] - s3 * n1.m[8];
+        f32 nmag = -mag;
+        f32 mx = nmag * n2.m[2] + (half * n2.m[1] + half * n2.m[0]);
+        f32 my = nmag * n2.m[5] + (half * n2.m[4] + half * n2.m[3]);
+        f32 mz = nmag * n2.m[8] + (half * n2.m[7] + half * n2.m[6]);
         f32 o1x = Vx - mx;
         f32 o1y = Vy + my;
         f32 o1z = Vz - mz;
-        if (self->field_0x34 != 0) {
-            CinemCamSrc* src = (CinemCamSrc*)(void*)self->field_0x34;
-            ml::CVec3* rv = &src->vtable->fn_0xAC(src)->v;
-            o1x += rv->x;
-            o1y += rv->y;
-            o1z += rv->z;
-            Vx += rv->x;
-            Vy += rv->y;
-            Vz += rv->z;
-        }
-        ml::CVec3 out1;
+        CamTripletLocals out1;
         out1.x = o1x;
         out1.y = o1y;
         out1.z = o1z;
-        ml::CVec3 out2;
+        CamTripletLocals out2;
         out2.x = Vx;
         out2.y = Vy;
         out2.z = Vz;
-        adv->vtable->fn_0x14(adv, &out1);
-        adv->vtable->fn_0x64(adv, &out2);
+        // With a source object present the pair goes through the
+        // pointer-taking setters instead.
+        if (self->field_0x34 != 0) {
+            adv->vtable->fn_0x68(adv, (void*)self->field_0x34, &out1, 0);
+            adv->vtable->fn_0x6C(adv, (void*)self->field_0x34, &out2, 0);
+        } else {
+            adv->vtable->fn_0x14(adv, &out1);
+            adv->vtable->fn_0x64(adv, &out2);
+        }
     }
 
     // One-shot active flag: push the unit-1 base value into the dynamic
@@ -1931,9 +2585,112 @@ int func_80079E04(CfCamEventManager* self) {
 }
 
 
-int func_8007AA4C(CfCamEventManager* self) { return 0; }
+// Busy-range cam-event advance (called from func_80079E04). Advances the
+// three shake tables, then pushes the current aim pair into the dynamic
+// object obtained from the game manager: in demo mode (global cam table
+// h00 set) the pair is composed from the same fixed 3x3 recurrence used by
+// func_80079E04 - base matrix from sin/cos of (k*1), stepped by the unit-0
+// base axis (baseX, then baseY), with the unit-0 baseZ magnitude folded in -
+// otherwise the raw table/unit base anchors are forwarded. Returns whether
+// either shake table finished.
+int func_8007AA4C(CfCamEventManager* self) {
+    int flag = self->field_0x48 & 1;
+    int ret = func_800762A0(self);
+    if (flag != 0 && ret == 0) return 0;
 
-extern "C" void func_8007B030(u8* self) {
+    func_80074F4C((CfCamShakeState*)&self->tab0, flag);
+    func_80074F4C((CfCamShakeState*)&self->shake[0], flag);
+    func_80074F4C((CfCamShakeState*)&self->shake[1], flag);
+
+    f32 wx = self->tab0.baseX;
+    f32 wy = self->tab0.baseY;
+    f32 wz = self->tab0.baseZ;
+
+    // vecB defaults to the table-0 base anchor (staged first, like retail).
+    ml::CVec3 vB;
+    vB.set(wx, wy, wz);
+    ml::CVec3 vA;
+
+    if (lbl_eu_80570C90.h00 != 0) {
+        // Demo mode: fold the unit-0 baseZ magnitude, force z to 1, and run
+        // the two-step rotation over the unit-0 base axis.
+        f32 mag = (f32)__fabs((f64)self->shake[0].u.tab.baseZ);
+        self->shake[0].u.tab.baseZ = lbl_eu_8066641C;
+        f32 bx = self->shake[0].u.tab.baseX;
+        f32 by = self->shake[0].u.tab.baseY;
+
+        f32 s1 = SinFIdx__Q24nw4r4mathFf(lbl_eu_80666430 * lbl_eu_8066641C);
+        f32 c1 = CosFIdx__Q24nw4r4mathFf(lbl_eu_80666430 * lbl_eu_8066641C);
+        f32 s2 = SinFIdx__Q24nw4r4mathFf(lbl_eu_80666430 * bx);
+        f32 c2 = CosFIdx__Q24nw4r4mathFf(lbl_eu_80666430 * bx);
+        CamEventMtx a;
+        a.m[0] = c1; a.m[1] = -s1; a.m[2] = lbl_eu_8066641C;
+        a.m[3] = s1; a.m[4] = c1; a.m[5] = lbl_eu_8066641C;
+        a.m[6] = lbl_eu_8066641C; a.m[7] = lbl_eu_8066641C; a.m[8] = lbl_eu_80666428;
+        // Step the matrix in place through scalar temporaries (the macro's
+        // two-matrix form costs stack slots retail does not spend).
+        {
+            f32 t6 = a.m[0] + s2 * a.m[1] + c2 * a.m[2];
+            f32 t7 = a.m[3] + s2 * a.m[4] + c2 * a.m[5];
+            f32 t8 = a.m[2] + s2 * a.m[5] + c2 * a.m[8];
+            f32 t3 = a.m[0] + c2 * a.m[1] - s2 * a.m[6];
+            f32 t4 = a.m[1] + c2 * a.m[4] - s2 * a.m[7];
+            f32 t5 = a.m[2] + c2 * a.m[5] - s2 * a.m[8];
+            f32 t0 = a.m[6] + a.m[0] + a.m[1];
+            f32 t1 = a.m[7] + a.m[1] + a.m[4];
+            f32 t2 = a.m[8] + a.m[2] + a.m[5];
+            a.m[8] = t8; a.m[7] = t7; a.m[6] = t6;
+            a.m[2] = t2; a.m[1] = t1; a.m[0] = t0;
+            a.m[5] = t5; a.m[4] = t4; a.m[3] = t3;
+        }
+        f32 s3 = SinFIdx__Q24nw4r4mathFf(lbl_eu_80666430 * by);
+        f32 c3 = CosFIdx__Q24nw4r4mathFf(lbl_eu_80666430 * by);
+        // Reuse the same matrix storage for the second step (the stepped
+        // values from step one are no longer needed).
+        a.m[0] = c3; a.m[1] = -s3; a.m[2] = lbl_eu_8066641C;
+        a.m[3] = s3; a.m[4] = c3; a.m[5] = lbl_eu_8066641C;
+        a.m[6] = lbl_eu_8066641C; a.m[7] = lbl_eu_8066641C; a.m[8] = lbl_eu_80666428;
+        {
+            f32 t6 = a.m[0] + s3 * a.m[1] + c3 * a.m[2];
+            f32 t7 = a.m[3] + s3 * a.m[4] + c3 * a.m[5];
+            f32 t8 = a.m[2] + s3 * a.m[5] + c3 * a.m[8];
+            f32 t3 = a.m[0] + c3 * a.m[1] - s3 * a.m[6];
+            f32 t4 = a.m[1] + c3 * a.m[4] - s3 * a.m[7];
+            f32 t5 = a.m[2] + c3 * a.m[5] - s3 * a.m[8];
+            f32 t0 = a.m[6] + a.m[0] + a.m[1];
+            f32 t1 = a.m[7] + a.m[1] + a.m[4];
+            f32 t2 = a.m[8] + a.m[2] + a.m[5];
+            a.m[8] = t8; a.m[7] = t7; a.m[6] = t6;
+            a.m[2] = t2; a.m[1] = t1; a.m[0] = t0;
+            a.m[5] = t5; a.m[4] = t4; a.m[3] = t3;
+        }
+        f32 mx = lbl_eu_8066641C * a.m[1] + lbl_eu_8066641C * a.m[0]
+            - mag * a.m[2];
+        f32 my = lbl_eu_8066641C * a.m[4] + lbl_eu_8066641C * a.m[3]
+            - mag * a.m[5];
+        f32 mz = lbl_eu_8066641C * a.m[7] + lbl_eu_8066641C * a.m[6]
+            - mag * a.m[8];
+        vA.set(wx - mx, wy + my, wz - mz);
+    } else {
+        // Plain mode: forward both base anchors unchanged.
+        vA = vB;
+        vB.set(self->shake[0].u.tab.baseX, self->shake[0].u.tab.baseY,
+               self->shake[0].u.tab.baseZ);
+    }
+
+    UnkClass_800821F8* gm = func_800821F8__Q22cf13CfGameManagerFv();
+    CfCamAdvObj* adv =
+        (CfCamAdvObj*)__dynamic_cast(gm, 0, (const void*)&lbl_eu_80661B00,
+                                     (const void*)&lbl_eu_80661B30, 0);
+    adv->vtable->fn_0x14(adv, &vA);
+    adv->vtable->fn_0x64(adv, &vB);
+    adv->vtable->fn_0x3C(adv, self->shake[1].u.tab.baseX);
+
+    // Finished when either shake table raised its finish flag.
+    return (self->tab0.flag_finish != 0) || (self->shake[0].field_0x164 != 0);
+}
+
+extern void func_8007B030(u8* self) {
     *(u8*)((u8*)self + 0x1de) = 0;
     *(u8*)((u8*)self + 0x356) = 0;
     *(u8*)((u8*)self + 0x4ce) = 0;
@@ -1964,38 +2721,224 @@ int func_8007B0A0(int val) {
     return func_80241344(state, val);
 }
 
-// Initialize camera-event slot from the Bdat table. Walks down a chain of
-// column probes (0Xf4/0Xfa -> 0X100 -> 0X106 -> 0X10d -> 0X114); the deepest
-// non-empty one gates the rest. Heavily elided in retail so the body here
-// captures the probe chain and the routing tail.
+// bdat column reads as function-like macros: MWCC ignores inline hints for
+// these helpers under the TU flags, and retail emits the truncated read
+// (call + stw/lbz or stw/lhz stack temp) directly at each site.
+#define getColH(table, col, row) ((u16)getBdatStringColumnValue(table, col, row))
+#define getColB(table, col, row) ((u8)getBdatStringColumnValue(table, col, row))
+
+// Snapshot a cam slot's four camera vectors into the raw 0x28-byte block
+// layout retail builds on the stack before calling func_8007990C.
+// Accessor order (0x10 / 0x34 / 0x1C / 0x58) matches retail.
+#define slotSnapRaw(dst, slot) \
+    do { \
+        CfCamEventSlotObj* s = (CfCamEventSlotObj*)(slot); \
+        CamEventVecWords* v = (CamEventVecWords*)s->vtable->fn_0x10(s); \
+        (dst).v0.w[1] = v->w[1]; (dst).v0.w[0] = v->w[0]; (dst).v0.w[2] = v->w[2]; \
+        v = (CamEventVecWords*)s->vtable->fn_0x34(s); \
+        (dst).v1.w[1] = v->w[1]; (dst).v1.w[0] = v->w[0]; (dst).v1.w[2] = v->w[2]; \
+        v = (CamEventVecWords*)s->vtable->fn_0x1C(s); \
+        (dst).v2.w[1] = v->w[1]; (dst).v2.w[0] = v->w[0]; (dst).v2.w[2] = v->w[2]; \
+        (dst).f_24 = s->vtable->fn_0x58(s); \
+    } while (0)
+
+// Initialize camera-event state from the Bdat table row `idx`.
+//
+// Two paths:
+// 1. When the whole probe chain (columns 0xf4..0x114) is empty, a cam-table
+//    entry at lbl_eu_805273C8[(u16)(col_11b + 5)] is seeded from columns
+//    0x126/0x132 (angle / duration, divided by the cam-table speed divisor
+//    and scaled by the sdata2 factor) and the shared handler is notified.
+// 2. Otherwise the event-cam mode is programmed (func_8008212C/80082008),
+//    an optional slot snapshot is fed to func_8007990C, and up to six
+//    per-frame rows are walked: runtime-built column names (ml::FixStr<16>
+//    + format) feed two aim triplets through func_80082088, and each row's
+//    follow column seeds another cam-table entry.
 void func_8007B0C8(int idx) {
     if (lbl_eu_80663DF0 == 0) return;
     void* mgr = lbl_eu_806640BC;
     if (idx < 1) return;
     if (idx > func_8003B1EC(mgr)) return;
 
+    const char* colBase = (const char*)lbl_eu_804FB5D0;
+
+    // Probe chain: each deeper column is only read while all shallower ones
+    // came back empty; `b` set means every probe column was empty.
     int b = 0, c = 0, d = 0, e = 0, f = 0;
-    if (getBdatStringColumnValue(mgr, (const char*)&lbl_eu_804FB5D0[0xf4], idx) == 0 &&
-        getBdatStringColumnValue(mgr, (const char*)&lbl_eu_804FB5D0[0xfa], idx) == 0)
+    if (getBdatStringColumnValue(mgr, colBase + 0xf4, idx) == 0 &&
+        getBdatStringColumnValue(mgr, colBase + 0xfa, idx) == 0)
         f = 1;
-    if (f && getBdatStringColumnValue(mgr, (const char*)&lbl_eu_804FB5D0[0x100], idx) == 0) e = 1;
-    if (e && getBdatStringColumnValue(mgr, (const char*)&lbl_eu_804FB5D0[0x106], idx) == 0) d = 1;
-    if (d && getBdatStringColumnValue(mgr, (const char*)&lbl_eu_804FB5D0[0x10d], idx) == 0) c = 1;
-    if (c && getBdatStringColumnValue(mgr, (const char*)&lbl_eu_804FB5D0[0x114], idx) == 0) b = 1;
+    if (f && getBdatStringColumnValue(mgr, colBase + 0x100, idx) == 0) e = 1;
+    if (e && getBdatStringColumnValue(mgr, colBase + 0x106, idx) == 0) d = 1;
+    if (d && getBdatStringColumnValue(mgr, colBase + 0x10d, idx) == 0) c = 1;
+    if (c && getBdatStringColumnValue(mgr, colBase + 0x114, idx) == 0) b = 1;
 
     if (b) {
-        u32 r40 = getBdatStringColumnValue(mgr, (const char*)&lbl_eu_804FB5D0[0x11b], idx);
-        u32 r3c = getBdatStringColumnValue(mgr, (const char*)&lbl_eu_804FB5D0[0x126], idx);
-        u32 r38 = getBdatStringColumnValue(mgr, (const char*)&lbl_eu_804FB5D0[0x132], idx);
-        u8 v = (u8)r40;
-        if (v && (((v + 6) & 0xffff) != 0)) {
-            u16 h38 = (u16)r38;
-            if (h38 != 0) {
-                func_80082088__Q22cf13CfGameManagerFv();
-            } else {
-                func_80082088__Q22cf13CfGameManagerFv();
-            }
+        // Seed a single cam-table entry from the deep columns.
+        u8 v = getColB(mgr, colBase + 0x11b, idx);
+        u16 h3c = getColH(mgr, colBase + 0x126, idx);
+        u16 h38 = getColH(mgr, colBase + 0x132, idx);
+        // Retail quirk: v == 0 and v == 0xfffa both bail out.
+        if (v == 0 || (u16)(v + 6) == 0 || h38 == 0) return;
+
+        CamEventTableEntry* entry = &lbl_eu_805273C8[(u16)(v + 5)];
+        entry->f_1C = (f32)h3c / lbl_eu_80666460;
+        entry->f_20 = (f32)h38 / lbl_eu_80666460;
+        f32 t = entry->f_20;
+        entry->f_24 = lbl_eu_80666464 * t;
+        entry->f_28 = lbl_eu_80666464 * t;
+
+        CfCamEventGlobal* g = lbl_eu_80663DF0;
+        if (g == 0) return;
+        if (g->field_0x38 == 0) return;
+        func_80240C98(g->field_0x38, (int)entry, 0);
+        return;
+    }
+
+    // Program the event-cam mode from column 0x19 (mode 2 forces the flag).
+    func_8008212C__Q22cf13CfGameManagerFv(8);
+    u8 mode = getColB(mgr, colBase + 0x19, idx);
+    ((CfCamEventManager*)lbl_eu_80663DF0)->field_0x47 = 0;
+    if (mode == 2) ((CfCamEventManager*)lbl_eu_80663DF0)->field_0x47 = 1;
+    func_80082008__Q22cf13CfGameManagerFv(8, mode, 0, 0, 0);
+
+    // Mirror the dynamic-cast target's "busy" flag byte.
+    u8 dynFlag = (getColB(mgr, colBase + 0x13e, idx) != 0);
+    UnkClass_800821F8* gm = func_800821F8__Q22cf13CfGameManagerFv();
+    void* casted = __dynamic_cast(gm, 0, (const void*)&lbl_eu_80661B00,
+                                  (const void*)&lbl_eu_80661B30, 0);
+    if (casted != 0)
+        ((CfCamDynObj*)casted)->field_0x294 = dynFlag;
+
+    u32 angle = 0;
+    if (getColB(mgr, colBase + 0x148, idx) == 1) {
+        CfCamEventManager* m = (CfCamEventManager*)lbl_eu_80663DF0;
+        CfCamEventSlot* slot0 = m->slots[0];
+        if (slot0 != 0) {
+            // Snapshot the current slot vectors and seed the pose solver
+            // with them at table index 1.
+            CamEventVecSrcRaw snap;
+            slotSnapRaw(snap, slot0);
+            func_8007990C(m, 0, 1, (CamEventVecSrc*)&snap, 0);
         }
+        angle = getColH(mgr, colBase + 0x157, idx);
+    }
+
+    // Runtime-built column-name buffers. A single POD struct of 11 raw
+    // FixStr-shaped slots so every access folds to a fixed sp offset
+    // (retail never materialises pointers to them) and no implicit ctor is
+    // generated; cleared field-by-field like retail.
+    struct ColNameRaw { char s[16]; int len; };
+    struct {
+        ColNameRaw a, b, c, d, e, f2, g, h, i2, j, k;
+    } nm;
+    // Cast helper: view a raw slot as the real FixStr<16> for format().
+    #define COLN(m) (*(ml::FixStr<16>*)&nm.m)
+    nm.a.s[0] = 0; nm.a.len = 0;
+    nm.b.s[0] = 0; nm.b.len = 0;
+    nm.c.s[0] = 0; nm.c.len = 0;
+    nm.d.s[0] = 0; nm.d.len = 0;
+    nm.e.s[0] = 0; nm.e.len = 0;
+    nm.f2.s[0] = 0; nm.f2.len = 0;
+    nm.g.s[0] = 0; nm.g.len = 0;
+    nm.h.s[0] = 0; nm.h.len = 0;
+    nm.i2.s[0] = 0; nm.i2.len = 0;
+    nm.j.s[0] = 0; nm.j.len = 0;
+    nm.k.s[0] = 0; nm.k.len = 0;
+
+    // The two aim triplets live across iterations in stack memory (retail
+    // keeps them at sp+0x50 / sp+0x44); arrays force memory residency so
+    // MWCC cannot cache them in FP registers across the blend calls.
+    f32 tripA[3];
+    f32 tripB[3];
+    f32 lift = 0;
+
+    // Walk the six per-frame rows. Loop exits early once row i (>1) has a
+    // zero first-column value.
+    for (int i = 1; i <= 6; i++) {
+        COLN(a).format(colBase + 0x162, i);
+        COLN(b).format(colBase + 0x169, i);
+        COLN(c).format(colBase + 0x170, i);
+        COLN(d).format(colBase + 0x177, i);
+        COLN(e).format(colBase + 0x17f, i);
+        COLN(f2).format(colBase + 0x187, i);
+        COLN(g).format(colBase + 0x18f, i);
+        COLN(h).format(colBase + 0x195, i);
+        COLN(i2).format(colBase + 0x19f, i);
+        COLN(j).format(colBase + 0x1ab, i);
+        COLN(k).format(colBase + 0x1b8, i);
+
+        u16 colA = getColH(mgr, COLN(h).mString, idx);
+        int haveNext = 1;
+        if (i < 6) {
+            // Peek at row i+1's follow column to pick the blend mode.
+            COLN(h).format(colBase + 0x195, i + 1);
+            u16 colNext = getColH(mgr, COLN(h).mString, idx);
+            haveNext = (colNext == 0);
+        }
+        if (i > 1 && colA == 0) break;
+
+        // Two scaled aim triplets (sdata2 factor x signed halfword column).
+        tripA[0] = lbl_eu_80666458 * (f32)(s16)getColH(mgr, COLN(a).mString, idx);
+        tripA[1] = lbl_eu_80666458 * (f32)(s16)getColH(mgr, COLN(b).mString, idx);
+        tripA[2] = lbl_eu_80666458 * (f32)(s16)getColH(mgr, COLN(c).mString, idx);
+        tripB[0] = lbl_eu_80666458 * (f32)(s16)getColH(mgr, COLN(d).mString, idx);
+        tripB[1] = lbl_eu_80666458 * (f32)(s16)getColH(mgr, COLN(e).mString, idx);
+        tripB[2] = lbl_eu_80666458 * (f32)(s16)getColH(mgr, COLN(f2).mString, idx);
+        u8 colAc = getColB(mgr, COLN(g).mString, idx);
+        lift = (f32)colAc;
+        int nextMode = (haveNext != 0) ? 4 : 0;
+
+        // First frame of mode-1 runs an extra blend at mode 0.
+        if (mode == 1 && i == 1) {
+            func_80082088__Q22cf13CfGameManagerFv((u32)(u16)angle,
+                                                  tripA, tripB, 0, lift);
+            angle += 1;
+        }
+        func_80082088__Q22cf13CfGameManagerFv((u32)(u16)angle,
+                                              tripA, tripB, nextMode, lift);
+
+        // Optional per-row cam-table entry (follow column w70 -> index,
+        // w5c -> duration).
+        u8 w84 = getColB(mgr, COLN(i2).mString, idx);
+        u16 w70 = getColH(mgr, COLN(j).mString, idx);
+        u16 w5c = getColH(mgr, COLN(k).mString, idx);
+        u16 nextIdx = angle + w70;
+        if (w84 != 0 && (u16)(w84 + 6) != 0 && w5c != 0) {
+            CamEventTableEntry* e2 = &lbl_eu_805273C8[(u16)(w84 + 5)];
+            e2->f_1C = (f32)nextIdx / lbl_eu_80666460;
+            e2->f_20 = (f32)w5c / lbl_eu_80666460;
+            f32 t2 = e2->f_20;
+            e2->f_24 = lbl_eu_80666464 * t2;
+            e2->f_28 = lbl_eu_80666464 * t2;
+            CfCamEventGlobal* g = lbl_eu_80663DF0;
+            if (g != 0 && g->field_0x38 != 0)
+                func_80240C98(g->field_0x38, (int)e2, 0);
+        }
+        angle += colA;
+    }
+
+    // Tail: program the final blend from the last row's values.
+    u8 col1c5 = getColB(mgr, colBase + 0x1c5, idx);
+    CfCamEventManager* g = (CfCamEventManager*)lbl_eu_80663DF0;
+    g->field_0x42 = (col1c5 != 0);
+    g->field_0x44 = getColH(mgr, colBase + 0x1d2, idx);
+    g->field_0x46 = 1;
+    if (g->field_0x42 != 0 && g->field_0x44 != 0) {
+        func_80082088__Q22cf13CfGameManagerFv((u32)(u16)angle,
+                                              tripA, tripB, 4, lift);
+        CfCamEventManager* m = (CfCamEventManager*)lbl_eu_80663DF0;
+        CfCamEventSlot* slot0 = m->slots[0];
+        angle += m->field_0x44;
+        if (slot0 != 0) {
+            // Feed the freshly blended vectors into the pose solver.
+            CamEventVecSrcRaw snap;
+            slotSnapRaw(snap, slot0);
+            func_8007990C(m, (u16)angle, 4, (CamEventVecSrc*)&snap, 0);
+        }
+    } else {
+        func_80082088__Q22cf13CfGameManagerFv((u32)(u16)angle,
+                                              tripA, tripB, 0, lift);
     }
     func_80082060__Q22cf13CfGameManagerFv();
 }
@@ -2030,8 +2973,8 @@ void func_8007BAFC(CfCamEventManager* self) {
     u8 flag = 0;
     if (lbl_eu_80663DF0 != 0) flag = lbl_eu_80663DF0->field_0x46;
 
-    int r30 = func_80079E04(self);
-    if (r30 != 0) {
+    int updateResult = func_80079E04(self);
+    if (updateResult != 0) {
         if (self->field_0x3C == 2 && flag == 0) {
             // Snapshot the slot's camera-vector block before the update call;
             // the squared lengths below are recomputed from the snapshot.
@@ -2076,7 +3019,7 @@ void func_8007BAFC(CfCamEventManager* self) {
 
                 f32 a2 = acos(f30);
                 if (a2 <= lbl_eu_8066646C * lbl_eu_8066A210) {
-                    r30 = 0;
+                    updateResult = 0;
                 }
             }
         } else {
@@ -2084,7 +3027,7 @@ void func_8007BAFC(CfCamEventManager* self) {
         }
     }
 
-    if (r30 != 0) {
+    if (updateResult != 0) {
         func_80085878__Q22cf13CfGameManagerFv();
         func_8016FD84(lbl_eu_80666470, lbl_eu_80666428);
     }
@@ -2099,58 +3042,156 @@ void func_8007BAFC(CfCamEventManager* self) {
 }
 
 // --- hard-symbol stubs (scaffold_hard_symbols) ---
-// Static initializer: fills a local prototype array and the global cam-table
-// (0x805273C8, 12 entries x 0x34 with two aim vectors each) with the same
-// 24 triplets. The local copy is discarded (stack frame 0x130 = 0x120 local
-// + linkage); MWCC hoists the 12 sdata2 constants into f5..f11 / f0..f4.
+// Static initializer: fills a discarded local prototype array (back to
+// front, local[23] first) and the global cam-table (0x805273C8, 12 entries
+// x 0x34 with two aim vectors each) front to back, one interleaved pair of
+// triplets at a time. Members are assigned x,y,z directly (not via set())
+// so MWCC allocates the pool constants in retail's first-use order.
 void sinit_8007BE74() {
+    // Discarded prototype vectors, declared front-to-back.
     ml::CVec3 local[24];
-    local[0].set(lbl_eu_80666458, lbl_eu_80666458, lbl_eu_8066641C);
-    lbl_eu_805273C8[0].v0.set(lbl_eu_80666458, lbl_eu_80666458, lbl_eu_8066641C);
-    local[1].set(lbl_eu_80666458, lbl_eu_80666458, lbl_eu_8066641C);
-    lbl_eu_805273C8[0].v1.set(lbl_eu_80666458, lbl_eu_80666458, lbl_eu_8066641C);
-    local[2].set(lbl_eu_80666474, lbl_eu_80666474, lbl_eu_8066641C);
-    lbl_eu_805273C8[1].v0.set(lbl_eu_80666474, lbl_eu_80666474, lbl_eu_8066641C);
-    local[3].set(lbl_eu_80666474, lbl_eu_80666474, lbl_eu_8066641C);
-    lbl_eu_805273C8[1].v1.set(lbl_eu_80666474, lbl_eu_80666474, lbl_eu_8066641C);
-    local[4].set(lbl_eu_80666478, lbl_eu_80666478, lbl_eu_8066641C);
-    lbl_eu_805273C8[2].v0.set(lbl_eu_80666478, lbl_eu_80666478, lbl_eu_8066641C);
-    local[5].set(lbl_eu_80666478, lbl_eu_80666478, lbl_eu_8066641C);
-    lbl_eu_805273C8[2].v1.set(lbl_eu_80666478, lbl_eu_80666478, lbl_eu_8066641C);
-    local[6].set(lbl_eu_8066647C, lbl_eu_8066647C, lbl_eu_80666478);
-    lbl_eu_805273C8[3].v0.set(lbl_eu_8066647C, lbl_eu_8066647C, lbl_eu_80666478);
-    local[7].set(lbl_eu_8066647C, lbl_eu_8066647C, lbl_eu_80666478);
-    lbl_eu_805273C8[3].v1.set(lbl_eu_8066647C, lbl_eu_8066647C, lbl_eu_80666478);
-    local[8].set(lbl_eu_80666480, lbl_eu_80666480, lbl_eu_80666484);
-    lbl_eu_805273C8[4].v0.set(lbl_eu_80666480, lbl_eu_80666480, lbl_eu_80666484);
-    local[9].set(lbl_eu_80666480, lbl_eu_80666480, lbl_eu_80666484);
-    lbl_eu_805273C8[4].v1.set(lbl_eu_80666480, lbl_eu_80666480, lbl_eu_80666484);
-    local[10].set(lbl_eu_80666480, lbl_eu_80666480, lbl_eu_80666484);
-    lbl_eu_805273C8[5].v0.set(lbl_eu_80666480, lbl_eu_80666480, lbl_eu_80666484);
-    local[11].set(lbl_eu_80666480, lbl_eu_80666480, lbl_eu_80666484);
-    lbl_eu_805273C8[5].v1.set(lbl_eu_80666480, lbl_eu_80666480, lbl_eu_80666484);
-    local[12].set(lbl_eu_8066641C, lbl_eu_80666458, lbl_eu_8066641C);
-    lbl_eu_805273C8[6].v0.set(lbl_eu_8066641C, lbl_eu_80666458, lbl_eu_8066641C);
-    local[13].set(lbl_eu_80666478, lbl_eu_80666458, lbl_eu_8066641C);
-    lbl_eu_805273C8[6].v1.set(lbl_eu_80666478, lbl_eu_80666458, lbl_eu_8066641C);
-    local[14].set(lbl_eu_80666458, lbl_eu_80666474, lbl_eu_80666458);
-    lbl_eu_805273C8[7].v0.set(lbl_eu_80666458, lbl_eu_80666474, lbl_eu_80666458);
-    local[15].set(lbl_eu_80666488, lbl_eu_80666478, lbl_eu_8066641C);
-    lbl_eu_805273C8[7].v1.set(lbl_eu_80666488, lbl_eu_80666478, lbl_eu_8066641C);
-    local[16].set(lbl_eu_80666478, lbl_eu_80666458, lbl_eu_80666458);
-    lbl_eu_805273C8[8].v0.set(lbl_eu_80666478, lbl_eu_80666458, lbl_eu_80666458);
-    local[17].set(lbl_eu_8066648C, lbl_eu_8066647C, lbl_eu_80666478);
-    lbl_eu_805273C8[8].v1.set(lbl_eu_8066648C, lbl_eu_8066647C, lbl_eu_80666478);
-    local[18].set(lbl_eu_8066641C, lbl_eu_80666458, lbl_eu_8066641C);
-    lbl_eu_805273C8[9].v0.set(lbl_eu_8066641C, lbl_eu_80666458, lbl_eu_8066641C);
-    local[19].set(lbl_eu_80666478, lbl_eu_80666474, lbl_eu_8066641C);
-    lbl_eu_805273C8[9].v1.set(lbl_eu_80666478, lbl_eu_80666474, lbl_eu_8066641C);
-    local[20].set(lbl_eu_80666478, lbl_eu_80666474, lbl_eu_80666458);
-    lbl_eu_805273C8[10].v0.set(lbl_eu_80666478, lbl_eu_80666474, lbl_eu_80666458);
-    local[21].set(lbl_eu_80666490, lbl_eu_80666464, lbl_eu_8066647C);
-    lbl_eu_805273C8[10].v1.set(lbl_eu_80666490, lbl_eu_80666464, lbl_eu_8066647C);
-    local[22].set(lbl_eu_80666474, lbl_eu_80666480, lbl_eu_80666458);
-    lbl_eu_805273C8[11].v0.set(lbl_eu_80666474, lbl_eu_80666480, lbl_eu_80666458);
-    local[23].set(lbl_eu_80666428, lbl_eu_8066647C, lbl_eu_8066647C);
-    lbl_eu_805273C8[11].v1.set(lbl_eu_80666428, lbl_eu_8066647C, lbl_eu_8066647C);
+    local[23].x = lbl_eu_80666458;
+    local[23].y = lbl_eu_80666458;
+    local[23].z = lbl_eu_8066641C;
+    lbl_eu_805273C8[0].v0.x = lbl_eu_80666458;
+    lbl_eu_805273C8[0].v0.y = lbl_eu_80666458;
+    lbl_eu_805273C8[0].v0.z = lbl_eu_8066641C;
+    local[22].x = lbl_eu_80666458;
+    local[22].y = lbl_eu_80666458;
+    local[22].z = lbl_eu_8066641C;
+    lbl_eu_805273C8[0].v1.x = lbl_eu_80666458;
+    lbl_eu_805273C8[0].v1.y = lbl_eu_80666458;
+    lbl_eu_805273C8[0].v1.z = lbl_eu_8066641C;
+    local[21].x = lbl_eu_80666474;
+    local[21].y = lbl_eu_80666474;
+    local[21].z = lbl_eu_8066641C;
+    lbl_eu_805273C8[1].v0.x = lbl_eu_80666474;
+    lbl_eu_805273C8[1].v0.y = lbl_eu_80666474;
+    lbl_eu_805273C8[1].v0.z = lbl_eu_8066641C;
+    local[20].x = lbl_eu_80666474;
+    local[20].y = lbl_eu_80666474;
+    local[20].z = lbl_eu_8066641C;
+    lbl_eu_805273C8[1].v1.x = lbl_eu_80666474;
+    lbl_eu_805273C8[1].v1.y = lbl_eu_80666474;
+    lbl_eu_805273C8[1].v1.z = lbl_eu_8066641C;
+    local[19].x = lbl_eu_80666478;
+    local[19].y = lbl_eu_80666478;
+    local[19].z = lbl_eu_8066641C;
+    lbl_eu_805273C8[2].v0.x = lbl_eu_80666478;
+    lbl_eu_805273C8[2].v0.y = lbl_eu_80666478;
+    lbl_eu_805273C8[2].v0.z = lbl_eu_8066641C;
+    local[18].x = lbl_eu_80666478;
+    local[18].y = lbl_eu_80666478;
+    local[18].z = lbl_eu_8066641C;
+    lbl_eu_805273C8[2].v1.x = lbl_eu_80666478;
+    lbl_eu_805273C8[2].v1.y = lbl_eu_80666478;
+    lbl_eu_805273C8[2].v1.z = lbl_eu_8066641C;
+    local[17].x = lbl_eu_8066647C;
+    local[17].y = lbl_eu_8066647C;
+    local[17].z = lbl_eu_80666478;
+    lbl_eu_805273C8[3].v0.x = lbl_eu_8066647C;
+    lbl_eu_805273C8[3].v0.y = lbl_eu_8066647C;
+    lbl_eu_805273C8[3].v0.z = lbl_eu_80666478;
+    local[16].x = lbl_eu_8066647C;
+    local[16].y = lbl_eu_8066647C;
+    local[16].z = lbl_eu_80666478;
+    lbl_eu_805273C8[3].v1.x = lbl_eu_8066647C;
+    lbl_eu_805273C8[3].v1.y = lbl_eu_8066647C;
+    lbl_eu_805273C8[3].v1.z = lbl_eu_80666478;
+    local[15].x = lbl_eu_80666480;
+    local[15].y = lbl_eu_80666480;
+    local[15].z = lbl_eu_80666484;
+    lbl_eu_805273C8[4].v0.x = lbl_eu_80666480;
+    lbl_eu_805273C8[4].v0.y = lbl_eu_80666480;
+    lbl_eu_805273C8[4].v0.z = lbl_eu_80666484;
+    local[14].x = lbl_eu_80666480;
+    local[14].y = lbl_eu_80666480;
+    local[14].z = lbl_eu_80666484;
+    lbl_eu_805273C8[4].v1.x = lbl_eu_80666480;
+    lbl_eu_805273C8[4].v1.y = lbl_eu_80666480;
+    lbl_eu_805273C8[4].v1.z = lbl_eu_80666484;
+    local[13].x = lbl_eu_80666480;
+    local[13].y = lbl_eu_80666480;
+    local[13].z = lbl_eu_80666484;
+    lbl_eu_805273C8[5].v0.x = lbl_eu_80666480;
+    lbl_eu_805273C8[5].v0.y = lbl_eu_80666480;
+    lbl_eu_805273C8[5].v0.z = lbl_eu_80666484;
+    local[12].x = lbl_eu_80666480;
+    local[12].y = lbl_eu_80666480;
+    local[12].z = lbl_eu_80666484;
+    lbl_eu_805273C8[5].v1.x = lbl_eu_80666480;
+    lbl_eu_805273C8[5].v1.y = lbl_eu_80666480;
+    lbl_eu_805273C8[5].v1.z = lbl_eu_80666484;
+    local[11].x = lbl_eu_8066641C;
+    local[11].y = lbl_eu_80666458;
+    local[11].z = lbl_eu_8066641C;
+    lbl_eu_805273C8[6].v0.x = lbl_eu_8066641C;
+    lbl_eu_805273C8[6].v0.y = lbl_eu_80666458;
+    lbl_eu_805273C8[6].v0.z = lbl_eu_8066641C;
+    local[10].x = lbl_eu_80666478;
+    local[10].y = lbl_eu_80666458;
+    local[10].z = lbl_eu_8066641C;
+    lbl_eu_805273C8[6].v1.x = lbl_eu_80666478;
+    lbl_eu_805273C8[6].v1.y = lbl_eu_80666458;
+    lbl_eu_805273C8[6].v1.z = lbl_eu_8066641C;
+    local[9].x = lbl_eu_80666458;
+    local[9].y = lbl_eu_80666474;
+    local[9].z = lbl_eu_80666458;
+    lbl_eu_805273C8[7].v0.x = lbl_eu_80666458;
+    lbl_eu_805273C8[7].v0.y = lbl_eu_80666474;
+    lbl_eu_805273C8[7].v0.z = lbl_eu_80666458;
+    local[8].x = lbl_eu_80666488;
+    local[8].y = lbl_eu_80666478;
+    local[8].z = lbl_eu_8066641C;
+    lbl_eu_805273C8[7].v1.x = lbl_eu_80666488;
+    lbl_eu_805273C8[7].v1.y = lbl_eu_80666478;
+    lbl_eu_805273C8[7].v1.z = lbl_eu_8066641C;
+    local[7].x = lbl_eu_80666478;
+    local[7].y = lbl_eu_80666458;
+    local[7].z = lbl_eu_80666458;
+    lbl_eu_805273C8[8].v0.x = lbl_eu_80666478;
+    lbl_eu_805273C8[8].v0.y = lbl_eu_80666458;
+    lbl_eu_805273C8[8].v0.z = lbl_eu_80666458;
+    local[6].x = lbl_eu_8066648C;
+    local[6].y = lbl_eu_8066647C;
+    local[6].z = lbl_eu_80666478;
+    lbl_eu_805273C8[8].v1.x = lbl_eu_8066648C;
+    lbl_eu_805273C8[8].v1.y = lbl_eu_8066647C;
+    lbl_eu_805273C8[8].v1.z = lbl_eu_80666478;
+    local[5].x = lbl_eu_8066641C;
+    local[5].y = lbl_eu_80666458;
+    local[5].z = lbl_eu_8066641C;
+    lbl_eu_805273C8[9].v0.x = lbl_eu_8066641C;
+    lbl_eu_805273C8[9].v0.y = lbl_eu_80666458;
+    lbl_eu_805273C8[9].v0.z = lbl_eu_8066641C;
+    local[4].x = lbl_eu_80666478;
+    local[4].y = lbl_eu_80666474;
+    local[4].z = lbl_eu_8066641C;
+    lbl_eu_805273C8[9].v1.x = lbl_eu_80666478;
+    lbl_eu_805273C8[9].v1.y = lbl_eu_80666474;
+    lbl_eu_805273C8[9].v1.z = lbl_eu_8066641C;
+    local[3].x = lbl_eu_80666478;
+    local[3].y = lbl_eu_80666474;
+    local[3].z = lbl_eu_80666458;
+    lbl_eu_805273C8[10].v0.x = lbl_eu_80666478;
+    lbl_eu_805273C8[10].v0.y = lbl_eu_80666474;
+    lbl_eu_805273C8[10].v0.z = lbl_eu_80666458;
+    local[2].x = lbl_eu_80666490;
+    local[2].y = lbl_eu_80666464;
+    local[2].z = lbl_eu_8066647C;
+    lbl_eu_805273C8[10].v1.x = lbl_eu_80666490;
+    lbl_eu_805273C8[10].v1.y = lbl_eu_80666464;
+    lbl_eu_805273C8[10].v1.z = lbl_eu_8066647C;
+    local[1].x = lbl_eu_80666474;
+    local[1].y = lbl_eu_80666480;
+    local[1].z = lbl_eu_80666458;
+    lbl_eu_805273C8[11].v0.x = lbl_eu_80666474;
+    lbl_eu_805273C8[11].v0.y = lbl_eu_80666480;
+    lbl_eu_805273C8[11].v0.z = lbl_eu_80666458;
+    local[0].x = lbl_eu_80666428;
+    local[0].y = lbl_eu_8066647C;
+    local[0].z = lbl_eu_8066647C;
+    lbl_eu_805273C8[11].v1.x = lbl_eu_80666428;
+    lbl_eu_805273C8[11].v1.y = lbl_eu_8066647C;
+    lbl_eu_805273C8[11].v1.z = lbl_eu_8066647C;
 }

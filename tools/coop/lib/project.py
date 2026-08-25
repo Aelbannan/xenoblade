@@ -68,7 +68,12 @@ class Project:
         self.run(cmd)
 
     def ninja_build(self, target: str) -> None:
-        self.run([self.ninja_bin(), target])
+        # An empty target would make ninja fail with "error: empty path"
+        # (cmd_baseline passes "" to mean "default goal"); omit it instead.
+        if target:
+            self.run([self.ninja_bin(), target])
+        else:
+            self.run([self.ninja_bin()])
 
     def build_object_for_source(self, source: Path) -> Path:
         rel = source.relative_to(self.root)

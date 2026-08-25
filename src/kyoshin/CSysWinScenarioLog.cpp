@@ -9,7 +9,11 @@
 #include "monolib/device/CDeviceFont.hpp"
 #include "kyoshin/cf/CfGameManager.hpp"
 #include "kyoshin/cf/object/CfObject.hpp"
+// CTaskGame.hpp re-declares func_8049603C with a typed return that conflicts
+// with CfGameManager.hpp's void* form; this TU never calls it, so hide it.
+#define func_8049603C scenarioLog9603CUnused
 #include "kyoshin/CTaskGame.hpp"
+#undef func_8049603C
 #include "monolib/device/CDeviceFile.hpp"
 #include "monolib/work/IWorkEvent.hpp"
 #include "monolib/device/CDeviceVI.hpp"
@@ -217,13 +221,29 @@ struct CScenarioFlagObj {
     u32 field_0x3F00;   // flags
 };
 
+// Bump sequence counter 0xB once (while not paused), then close it once the
+// counter passes 100. Written as a two-arm if/else so MWCC emits retail's
+// `beq bump; b after` guard pair; the keep-arm copy is the phi resolution.
 void func_80280804(CScenarioFlagObj* self) {
     if ((self->field_0x3F00 & 0x2) != 0) {
-        // Bump sequence counter 0xB while active, then close it past 100.
-        // Bump sequence counter 0xB while active, then close it past 100.
-        u32 cur = scenarioBump(0xB);
-        if (cur >= 0x64) {
-            scenarioClose(0xB);
+        u32 n;
+        u32 cur = func_80082694__Q22cf13CfGameManagerFv(0xB);
+        u16 pauseFlag = lbl_eu_80664772;
+        if (pauseFlag != 0) {
+            // Scene frozen by a subwindow: keep the un-bumped value.
+            n = cur;
+        } else {
+            n = cur + 1;
+            if (n >= 0xFFFF) {
+                n = 0xFFFF;
+            }
+            func_8008269C__Q22cf13CfGameManagerFv(0xB, n);
+        }
+        if (n >= 0x64) {
+            bool booting = func_800822F4__Q22cf13CfGameManagerFv() <= 3;
+            if (!booting && lbl_eu_80664772 == 0) {
+                func_800826F0__Q22cf13CfGameManagerFv(0xB);
+            }
         }
     }
 }
@@ -1160,31 +1180,40 @@ void func_80280DBC(u8* self) {
 
 // ---------------------------------------------------------------------------
 // ---- Target 1: func_80280E9C (us-80283320) --------------------------------
-// Walk 2 segments of 3 runs; each run scans 5 slots (stride 0x20) for a free
-// one at +0x24. Returns when a whole run is free; otherwise closes the
-// sequence for 0x4E once all segments have at least one taken slot. Void
-// return keeps the final func_8027EEF4 call a tail jump (no callee-saved regs/
-// frame needed, matching retail).
+// Walk 2 segments of 3 runs; each run scans 5 slots (stride 0x20) for any
+// taken slot at +0x24. Returns early when a whole run is free; otherwise
+// closes the sequence for 0x4E once all segments have at least one taken
+// slot. The three run-scans are written out inline (retail unrolls them),
+// and the segment stride is +0x24C (3 * 0xC4).
 // ---------------------------------------------------------------------------
 void func_80280E9C(u8* self) {
+    u8* r;
+    u8* s;
+    int seg;
+    int i;
+    int run;
     u8* p = self + 0x3D4;
-    for (int s = 0; s < 2; s++) {
-        for (int run = 0; run < 3; run++) {
-            u16* q = (u16*)(p + 0x24);
-            int i;
-            for (i = 0; i < 5; i++) {
-                if (q[0] != 0) {
+    for (seg = 0; seg < 4; seg += 2) {
+        // Three identical run-scans (written as a 3-trip run loop; each scan
+        // walks 5 slots of stride 0x20 looking for a taken u16 at +0x24; a
+        // fully-free run makes the whole function return early).
+        r = p;
+        for (run = 0; run < 3; run++) {
+            s = r;
+            for (i = 0;; i++) {
+                if (i >= 5)
+                    return;
+                if (*(u16*)(s + 0x24) != 0)
                     break;
-                }
-                q += 0x10;   /* slot stride 0x20 / sizeof(u16) */
+                s += 0x20;
             }
-            if (i >= 5) {
-                return;
-            }
-            p += 0xC4;
+            r += 0xC4;
         }
+        p = r;
     }
-    func_8027EEF4(0x4E);
+    // seg == 4 at loop exit. Keeping this live-out use of seg is what makes
+    // MWCC retain retail's segment-counter update inside the bdnz loop.
+    func_8027EEF4(0x4A + seg);
 }
 
 // ---------------------------------------------------------------------------

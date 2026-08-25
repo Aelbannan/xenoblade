@@ -178,8 +178,19 @@ struct CAIActionEnumHolder {
     u32 handle;               // 0x4
 };
 
-extern "C" int func_80174C98(const void* obj, void* out, int tag);
-extern "C" void func_800BE12C(void* moveObj, int a, int b, int c, int d);
+// Canonical (void*, int*, int) form - MUST match code_802B8A3C.hpp and the
+// other ~30 TU-local declarations (divergent extern "C" type lists for one
+// symbol break every TU whose include chain pulls two of them together with
+// "illegal function overloading" 10197).
+// Canonical family form (void*, int*, int) - MUST match CfObjectPc.hpp:77 /
+// code_802B8A3C.hpp / the other ~30 TU-local declarations (divergent extern
+// "C" type lists for one symbol break every TU whose include chain pulls two
+// of them together with "illegal function overloading" 10197).
+extern "C" int func_80174C98(void* obj, int* out, int tag);
+// Canonical u8* form - MUST match CfObjectMove.hpp:340 / CfObjectActor.hpp:49
+// (divergent extern "C" type lists for one symbol break every TU whose include
+// chain pulls two of them together with "illegal function overloading" 10197).
+extern "C" void func_800BE12C(u8* moveObj, int a, int b, int c, int d);
 
 extern "C" void* func_8016FE34(void*);          // -> func_8016FE34
 // NOTE (agent pi-019fef06, 2026-08-11): the two declarations below were

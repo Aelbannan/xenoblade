@@ -103,30 +103,32 @@ struct CColiMover {
 };
 
 void func_804B2FF0(CColiMover* self) {
-    Vec tmp;
-    if (self->src != 0 && self->off.y > lbl_eu_8066AEA8) {
-        // First pass uses the +0x90 matrix, second pass the base matrix.
-        PSMTXMultVec((const f32(*)[4])&self->src->mtx1[0], &self->pos, &tmp);
-        PSMTXMultVec((const f32(*)[4])&self->src->mtx0[0], &tmp, &tmp);
-
-        // Paired-single delta + accumulate: the nw4r SDK inline ASM helpers
-        // emit the retail psq_l/ps_sub/ps_add sequences (MWCC reschedules the
-        // loads first, matching the retail load-all-first shape).
-        nw4r::math::VEC3Sub((nw4r::math::VEC3*)&tmp, (nw4r::math::VEC3*)&tmp,
-                            (nw4r::math::VEC3*)&self->pos);
-        nw4r::math::VEC3Add((nw4r::math::VEC3*)&self->acc,
-                            (nw4r::math::VEC3*)&self->acc,
-                            (nw4r::math::VEC3*)&tmp);
-        func_804A7ED0(self->target);
+    // Null-check the matrix source first; the vertical-offset gate only
+    // evaluates when a source exists (short-circuit, matching retail's
+    // early beq to the shared tail).
+    if (self->src != NULL) {
+        if (self->off.y > lbl_eu_8066AEA8) {
+            Vec tmp;
+            Vec* pos = &self->pos;
+            PSMTXMultVec((const f32 (*)[4])self->src->mtx1, pos, (Vec*)&tmp);
+            PSMTXMultVec((const f32 (*)[4])self->src->mtx0, (Vec*)&tmp,
+                         (Vec*)&tmp);
+            nw4r::math::VEC3Sub((nw4r::math::VEC3*)&tmp,
+                                (nw4r::math::VEC3*)&tmp,
+                                (nw4r::math::VEC3*)&self->pos);
+            nw4r::math::VEC3Add((nw4r::math::VEC3*)&self->acc,
+                                (nw4r::math::VEC3*)&self->acc,
+                                (nw4r::math::VEC3*)&tmp);
+            func_804A7ED0(self->target);
+        }
     }
 
-    // Block 2: retail materialises the off base into r4 (addi r31,0x24) for
-    // the two off reads, so pass it through a named pointer local.
-    const nw4r::math::VEC3* offp = (const nw4r::math::VEC3*)&self->off;
+    // Tail: acc += off, then notify the target object.
     nw4r::math::VEC3Add((nw4r::math::VEC3*)&self->acc,
-                        (nw4r::math::VEC3*)&self->acc, offp);
-    func_804A7ED0(self->target);
-}
+                        (nw4r::math::VEC3*)&self->acc,
+                        (nw4r::math::VEC3*)&self->off);
+    func_804A7ED0(self->target)
+;}
 
 // Dual-index collision node: primary index + flags at 0x0/0x2 and a secondary
 // index at 0x30 (both written by func_804B31EC).
@@ -536,9 +538,6 @@ extern "C" void func_804B453C(CColiCapsule*);
 
 void func_804B453C(CColiCapsule* p) {
     for (int i = 0; i < 3; i++) {
-        // Max pass: fully inline, same shape as the matching min pass
-        // (reproduces the retail allocation; only the fadds operand-slot
-        // order remains swapped vs retail).
         {
             f32 r = p->radius;
             if (lbl_eu_80665944->max[i] < p->endPos[i] + r) {
@@ -569,55 +568,31 @@ void func_804B453C(CColiCapsule* p) {
 // Another bounds-expansion source: position x/y/z at +0x10/+0x20/+0x30
 // and a single uniform radius at +0x70.
 struct CColiBoundsPoint {
-    f32 field_0x00[4];  //0x0-0xF
-    f32 x;              //0x10
-    f32 field_0x14[3];  //0x14-0x1F
-    f32 y;              //0x20
-    f32 field_0x24[3];  //0x24-0x2F
-    f32 z;              //0x30
-    f32 field_0x34[15]; //0x34-0x6F
+    struct Axis {
+        f32 value;    // axis value
+        f32 pad[3];
+    };
+    f32 field_0x00[4]; //0x0-0xF
+    Axis pos[3];       //0x10, 0x20, 0x30
+    f32 field_0x34[12]; //0x40-0x6F
     f32 radius;         //0x70
 };
 
 extern "C" void func_804B45E4(CColiBoundsPoint*);
 
 void func_804B45E4(CColiBoundsPoint* p) {
-    // Per-sub-block radius temp: retail reloads it at the top of every check
-    // (the bound loads reuse the FPR, so the radius is re-fetched per block).
-    {
+    // Per-check radius temp: retail reloads it at the top of every check.
+    // Retail unrolls a 3-axis loop (max check then min check per axis).
+    for (int i = 0; i < 3; i++) {
+        f32 v;
         f32 r = p->radius;
-        if (lbl_eu_80665944->max[0] < p->x + r) {
-            lbl_eu_80665944->max[0] = p->x + r;
+        v = p->pos[i].value;
+        if (lbl_eu_80665944->max[i] < v + r) {
+            lbl_eu_80665944->max[i] = v + r;
         }
-    }
-    {
-        f32 r = p->radius;
-        if (lbl_eu_80665944->min[0] > p->x - r) {
-            lbl_eu_80665944->min[0] = p->x - r;
-        }
-    }
-    {
-        f32 r = p->radius;
-        if (lbl_eu_80665944->max[1] < p->y + r) {
-            lbl_eu_80665944->max[1] = p->y + r;
-        }
-    }
-    {
-        f32 r = p->radius;
-        if (lbl_eu_80665944->min[1] > p->y - r) {
-            lbl_eu_80665944->min[1] = p->y - r;
-        }
-    }
-    {
-        f32 r = p->radius;
-        if (lbl_eu_80665944->max[2] < p->z + r) {
-            lbl_eu_80665944->max[2] = p->z + r;
-        }
-    }
-    {
-        f32 r = p->radius;
-        if (lbl_eu_80665944->min[2] > p->z - r) {
-            lbl_eu_80665944->min[2] = p->z - r;
+        r = p->radius;
+        if (lbl_eu_80665944->min[i] > p->pos[i].value - r) {
+            lbl_eu_80665944->min[i] = p->pos[i].value - r;
         }
     }
 }
@@ -641,6 +616,8 @@ extern "C" void func_804B476C();
 void func_804B46A8(CColiBoundsPoint2* p) {
     // Per-sub-block radius temp: retail reloads it at the top of every check
     // (the bound loads reuse the FPR, so the radius is re-fetched per block).
+    // NOTE residual: the final block's bounds-pointer reload colors r3 in our
+    // build vs retail r4 (see docs/MWCC_CASES.md bounds-expansion family).
     {
         f32 r = p->radius;
         if (lbl_eu_80665944->max[0] < p->x + r) {
@@ -793,17 +770,17 @@ void func_804B30CC(CColiHead* self, const char* name, const CModelRes* model) {
 // (x, 0, 0) normal, and expand the global AABB around the new position.
 // ---------------------------------------------------------------------------
 void func_804B34F4(CColiSphereOb* self, const CColiMgr* mgr, const Vec* other) {
-    f32 (*src)[4];
+    // Struct-typed matrix source (vs array-pointer) to steer scheduling.
+    const CObjMtx* src;
     if (self->hd.flags & 2) {
-        src = mgr->mesh->rootMtx;
+        src = (const CObjMtx*)mgr->mesh->rootMtx;
     } else {
-        src = mgr->mesh->boneTable[self->hd.index];
+        src = (const CObjMtx*)mgr->mesh->boneTable[self->hd.index];
     }
 
-    // Retail emits the translation loads back-to-front (z, y, x).
-    const f32 pz = src[2][3];
-    const f32 py = src[1][3];
-    const f32 px = src[0][3];
+    const f32 pz = src->m[2][3];
+    const f32 px = src->m[0][3];
+    const f32 py = src->m[1][3];
     self->pos[0] = px;
     self->pos[1] = py;
     self->pos[2] = pz;
@@ -812,17 +789,18 @@ void func_804B34F4(CColiSphereOb* self, const CColiMgr* mgr, const Vec* other) {
     n.x = other->x;
     n.y = lbl_eu_8066AEB0;
     n.z = lbl_eu_8066AEB0;
-    nw4r::math::VEC3TransformNormal(&n, (const nw4r::math::MTX34*)src, &n);
+    nw4r::math::VEC3TransformNormal(&n, (const nw4r::math::MTX34*)&src->m,
+                                    &n);
 
-    // Radius goes straight from the magnitude return value to the field;
-    // the first bounds check's radius local is store-forwarded (frsp).
+    // Direct field uses: the first read is store-forwarded (frsp) from the
+    // call result; later reads (across aliasing stores) reload from memory.
     self->radius = PSVECMag((const Vec*)&n);
     self->hd.flags |= 1;
 
     {
         f32 r = self->radius;
-        if (lbl_eu_80665944->max[0] < self->pos[0] + r)
-            lbl_eu_80665944->max[0] = self->pos[0] + r;
+        if (lbl_eu_80665944->max[0] < r + self->pos[0])
+            lbl_eu_80665944->max[0] = r + self->pos[0];
     }
     {
         f32 r = self->radius;
@@ -831,8 +809,8 @@ void func_804B34F4(CColiSphereOb* self, const CColiMgr* mgr, const Vec* other) {
     }
     {
         f32 r = self->radius;
-        if (lbl_eu_80665944->max[1] < self->pos[1] + r)
-            lbl_eu_80665944->max[1] = self->pos[1] + r;
+        if (lbl_eu_80665944->max[1] < r + self->pos[1])
+            lbl_eu_80665944->max[1] = r + self->pos[1];
     }
     {
         f32 r = self->radius;
@@ -841,8 +819,8 @@ void func_804B34F4(CColiSphereOb* self, const CColiMgr* mgr, const Vec* other) {
     }
     {
         f32 r = self->radius;
-        if (lbl_eu_80665944->max[2] < self->pos[2] + r)
-            lbl_eu_80665944->max[2] = self->pos[2] + r;
+        if (lbl_eu_80665944->max[2] < r + self->pos[2])
+            lbl_eu_80665944->max[2] = r + self->pos[2];
     }
     {
         f32 r = self->radius;
@@ -1152,29 +1130,27 @@ void func_804B3EA8(CColiNode* self, const CColiMgr* mgr, const CColiRigid* other
     PSMTXConcat(src, other->mtx, self->mtxW);
     PSMTXInverse(self->mtxW, self->invW);
 
-    // Retail loads the other-space position back-to-front (z, y, x) while
-    // allocating registers in forward declaration order, so declare the
-    // components forward and let MWCC emit the loads reversed.
-    const f32 pz = other->pos[2];
-    const f32 py = other->pos[1];
+    nw4r::math::VEC3 n;
+
+    // Forward locals give retail's fp-reg allocation (x->f0..z->f2) and
+    // ascending stores.
     const f32 px = other->pos[0];
+    const f32 py = other->pos[1];
+    const f32 pz = other->pos[2];
+
     self->vec[0] = px;
     self->vec[1] = py;
     self->vec[2] = pz;
-
-    nw4r::math::VEC3 n;
     nw4r::math::VEC3TransformNormal(&n, (const nw4r::math::MTX34*)self->mtxW,
                                     (const nw4r::math::VEC3*)self->vec);
 
-    // Radius stored straight from the magnitude; the first bounds check's
-    // radius local is store-forwarded (frsp).
+    // First bounds check store-forwards the live magnitude (frsp); later
+    // checks re-read self->radius after the possible-aliasing AABB stores.
     self->radius = PSVECMag((const Vec*)&n);
     self->hd.flags |= 1;
 
     // Expand the shared AABB around the world matrix translation column;
-    // every check re-dereferences the shared bounds pointer and re-reads the
-    // radius through a per-check local (retail reloads both per check; the
-    // first check's local is store-forwarded to the live magnitude via frsp).
+    // every check re-dereferences the bounds pointer and re-reads radius.
     {
         f32 r = self->radius;
         if (lbl_eu_80665944->max[0] < self->mtxW[0][3] + r)
@@ -1224,19 +1200,19 @@ extern "C" void func_804B3658(CColiSphereOb*, const CColiMgr*,
 
 void func_804B3658(CColiSphereOb* self, const CColiMgr* mgr,
                    const CColiSphereSeed* other) {
-    // Retail keeps `other` in the early-clobbered NV (r31) and defers the
-    // self copy (r29) until after the source selection.
-    const f32 (*src)[4];
-    if (self->hd.flags & 2) {
-        src = mgr->mesh->rootMtx;
-    } else {
-        src = mgr->mesh->boneTable[self->hd.index];
-    }
+    // Two-statement typed copy (void* intermediate): keeps `other` as a
+    // distinct local web born before `src`, so locals color r31-down
+    // (o -> r31, src -> r30) and only self stays a saved param (r29).
+    const void* ov = other;
+    const CColiSphereSeed* o = (const CColiSphereSeed*)ov;
+    const f32 (*src)[4] = (self->hd.flags & 2)
+                              ? mgr->mesh->rootMtx
+                              : mgr->mesh->boneTable[self->hd.index];
 
     Vec outv;
-    PSMTXMultVec(src, (const Vec*)other, &outv);
-    // Retail emits the loads back-to-front (z, y, x); declare them reversed
-    // so MWCC emits them in that order.
+    PSMTXMultVec(src, (const Vec*)o, &outv);
+    // Declared back-to-front: MWCC schedules the outv loads z, y, x like
+    // retail.
     const f32 pz = outv.z;
     const f32 py = outv.y;
     const f32 px = outv.x;
@@ -1245,46 +1221,28 @@ void func_804B3658(CColiSphereOb* self, const CColiMgr* mgr,
     self->pos[2] = pz;
 
     nw4r::math::VEC3 n;
-    n.x = other->val;
+    n.x = o->val;
     n.y = lbl_eu_8066AEB0;
     n.z = lbl_eu_8066AEB0;
     nw4r::math::VEC3TransformNormal(&n, (const nw4r::math::MTX34*)src, &n);
 
-    // Radius stored straight from the magnitude; the first bounds check's
-    // radius local is store-forwarded (frsp).
+    // Radius stored straight from the magnitude; the first bounds check
+    // store-forwards the live value (frsp).
     self->radius = PSVECMag((const Vec*)&n);
     self->hd.flags |= 1;
 
-    {
-        f32 r = self->radius;
-        if (lbl_eu_80665944->max[0] < self->pos[0] + r)
-            lbl_eu_80665944->max[0] = self->pos[0] + r;
-    }
-    {
-        f32 r = self->radius;
-        if (lbl_eu_80665944->min[0] > self->pos[0] - r)
-            lbl_eu_80665944->min[0] = self->pos[0] - r;
-    }
-    {
-        f32 r = self->radius;
-        if (lbl_eu_80665944->max[1] < self->pos[1] + r)
-            lbl_eu_80665944->max[1] = self->pos[1] + r;
-    }
-    {
-        f32 r = self->radius;
-        if (lbl_eu_80665944->min[1] > self->pos[1] - r)
-            lbl_eu_80665944->min[1] = self->pos[1] - r;
-    }
-    {
-        f32 r = self->radius;
-        if (lbl_eu_80665944->max[2] < self->pos[2] + r)
-            lbl_eu_80665944->max[2] = self->pos[2] + r;
-    }
-    {
-        f32 r = self->radius;
-        if (lbl_eu_80665944->min[2] > self->pos[2] - r)
-            lbl_eu_80665944->min[2] = self->pos[2] - r;
-    }
+    if (lbl_eu_80665944->max[0] < self->pos[0] + self->radius)
+        lbl_eu_80665944->max[0] = self->pos[0] + self->radius;
+    if (lbl_eu_80665944->min[0] > self->pos[0] - self->radius)
+        lbl_eu_80665944->min[0] = self->pos[0] - self->radius;
+    if (lbl_eu_80665944->max[1] < self->pos[1] + self->radius)
+        lbl_eu_80665944->max[1] = self->pos[1] + self->radius;
+    if (lbl_eu_80665944->min[1] > self->pos[1] - self->radius)
+        lbl_eu_80665944->min[1] = self->pos[1] - self->radius;
+    if (lbl_eu_80665944->max[2] < self->pos[2] + self->radius)
+        lbl_eu_80665944->max[2] = self->pos[2] + self->radius;
+    if (lbl_eu_80665944->min[2] > self->pos[2] - self->radius)
+        lbl_eu_80665944->min[2] = self->pos[2] - self->radius;
 }
 
 // ---------------------------------------------------------------------------

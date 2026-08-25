@@ -137,8 +137,7 @@ const ut::detail::RuntimeTypeInfo* Picture::GetRuntimeTypeInfo() const {
 } // namespace lyt
 } // namespace nw4hbm
 
-/* retail .rodata = 8 zero bytes (0.0f const + 4 pad); retail .bss = typeInfo + 4 pad
-   (sdata_threshold 0 keeps 4-byte globals in .bss). External linkage so -ipa file
-   keeps them. */
+/* retail .rodata = 8 zero bytes (0.0f const + 4 pad); retail .bss = typeInfo
+   only (0x4 - sdata_threshold 0 keeps the 4-byte global in .bss). External
+   linkage so -ipa file keeps them. */
 extern const float lyt_picture_rodata_pad = 0.0f;
-u8 lyt_picture_bss_pad[4];

@@ -44,7 +44,7 @@ extern "C" CView* getView1__11CSplitFrameFv(void* splitFrame);
 extern "C" CView* getView2__11CSplitFrameFv(void* splitFrame);
 s16 getSplitLine__11CSplitFrameFv(void* splitFrame);
 void setSplitLine__11CSplitFrameFs(void* splitFrame, s16 line);
-bool isActive__11CSplitFrameFv(void* splitFrame);
+extern "C" bool isActive__11CSplitFrameFv(void* splitFrame);
 void apply__11CSplitFrameFv(void* splitFrame);
 void setCurrent__9CViewRootFP5CView(CView* view);
 CWorkThread* getWorkThread__9CWorkUtilFUl(u32 workId);
@@ -52,6 +52,9 @@ extern "C" void func_804592F0__17CViewRectDataCoreFRCQ22ml6CPnt16(CViewRectDataC
 extern "C" void func_8043FD10__10CViewFrameFR7CRect16PC10CViewFrame(ml::CRect16* rect, const CViewFrame* frame);
 extern "C" void func_80459384__17CViewRectDataCoreFRCQ22ml6CPnt16(CViewRectDataCore* data, const ml::CPnt16& maxSize);
 extern "C" void __ct__CViewFrame(CViewFrame* frame);
+// CFontLayer base ctor (un-mangled retail symbol; defined in the shipped
+// CFontLayer.o, which is NonMatching so no C++ declaration exists anywhere).
+extern "C" void __ct__CFontLayer(CFontLayer* layer);
 // Third arg is forwarded from CView::func_8043CCCC's own r4 (retail keeps
 // the dead mr r5,r4 because the callee prototype has three parameters).
 extern "C" void func_80441EF0__10CViewFrameFR7CRect16PC10CViewFrame(ml::CRect16* rect,
@@ -157,10 +160,10 @@ extern "C" void wkUpdate__11CWorkThreadFv();
 extern "C" void wkRender__11CWorkThreadFv();
 extern "C" void wkRenderAfter__11CWorkThreadFv();
 extern "C" void wkStandbyExceptionRetry__11CWorkThreadFUl(unsigned int);
-extern "C" bool wkStandbyLogin__11CWorkThreadFv();
-extern "C" void wkStandbyLogout__11CWorkThreadFv();
+extern "C" bool wkStandbyLogin__11CWorkThreadFv(CView* self);
+extern "C" bool wkStandbyLogout__11CWorkThreadFv(CWorkThread* self);
 extern "C" bool wkStandbyLogin__5CViewFv(CView* self);
-extern "C" void wkStandbyLogout__5CViewFv();
+extern "C" bool wkStandbyLogout__5CViewFv(CView* self);
 extern "C" void wkUpdate__5CViewFv();
 
 #include "decomp.h"
@@ -233,8 +236,8 @@ extern "C" u32 lbl_eu_80663598[2] = { (u32)&lbl_eu_80522624, 0 };
 extern "C" void func_8043FBC4(u8* self);
 extern "C" void CView_UnkVirtualFunc1__5CViewFv(CView* self);
 extern "C" void detachRenderWork__5CViewFP11CWorkThread(void* self, void* thread);
-extern "C" void CView_UnkVirtualFunc3__5CViewFv();
-extern "C" void CView_UnkVirtualFunc4__5CViewFv();
+extern "C" int CView_UnkVirtualFunc3__5CViewFv(CView* self, IWorkEvent* event);
+extern "C" int CView_UnkVirtualFunc4__5CViewFv(CView* self, IWorkEvent* event);
 extern "C" int CView_UnkVirtualFunc5__5CViewFv();
 extern "C" int CView_UnkVirtualFunc6__5CViewFv();
 extern "C" void CView_UnkVirtualFunc7__5CViewFv();
@@ -282,6 +285,108 @@ u32 lbl_eu_8056B6B0[7] = {
 // Fake interface for the +0xC4 vt-dispatch in CView_UnkVirtualFunc7: real
 // virtuals emit the retail r12 dispatch (lwz r12,0(r3); lwz r12,0xC4(r12))
 // instead of the manual cast's scratch r4. 41 fillers + 8 hidden = slot 49.
+// Fake interface for the +0xC4 vt-dispatch in CView_UnkVirtualFunc7: real
+// virtuals emit the retail r12 dispatch (lwz r12,0(r3); lwz r12,0xC4(r12))
+// instead of the manual cast's scratch r4. 41 fillers + 8 hidden = slot 49.
+// Same trick, tuned for the +0xB8 slot used by CView_UnkVirtualFunc4: the
+// dispatched method takes the forwarded event in r4.
+struct CViewVtB8If {
+    virtual void f00();
+    virtual void f01();
+    virtual void f02();
+    virtual void f03();
+    virtual void f04();
+    virtual void f05();
+    virtual void f06();
+    virtual void f07();
+    virtual void f08();
+    virtual void f09();
+    virtual void f0A();
+    virtual void f0B();
+    virtual void f0C();
+    virtual void f0D();
+    virtual void f0E();
+    virtual void f0F();
+    virtual void f10();
+    virtual void f11();
+    virtual void f12();
+    virtual void f13();
+    virtual void f14();
+    virtual void f15();
+    virtual void f16();
+    virtual void f17();
+    virtual void f18();
+    virtual void f19();
+    virtual void f1A();
+    virtual void f1B();
+    virtual void f1C();
+    virtual void f1D();
+    virtual void f1E();
+    virtual void f1F();
+    virtual void f20();
+    virtual void f21();
+    virtual void f22();
+    virtual void f23();
+    virtual void f24();
+    virtual void f25();
+    virtual void f26();
+    virtual void f27();
+    virtual void f28();
+    virtual void f29();
+    virtual void f2A();
+    virtual void f2B();
+    virtual void fnB8(IWorkEvent* event);
+};
+
+// Same trick, one slot below CViewVtB8If: the +0xB4 slot dispatched by
+// CView_UnkVirtualFunc3 to each split-frame pane (takes the forwarded event).
+struct CViewVtB4If {
+    virtual void f00();
+    virtual void f01();
+    virtual void f02();
+    virtual void f03();
+    virtual void f04();
+    virtual void f05();
+    virtual void f06();
+    virtual void f07();
+    virtual void f08();
+    virtual void f09();
+    virtual void f0A();
+    virtual void f0B();
+    virtual void f0C();
+    virtual void f0D();
+    virtual void f0E();
+    virtual void f0F();
+    virtual void f10();
+    virtual void f11();
+    virtual void f12();
+    virtual void f13();
+    virtual void f14();
+    virtual void f15();
+    virtual void f16();
+    virtual void f17();
+    virtual void f18();
+    virtual void f19();
+    virtual void f1A();
+    virtual void f1B();
+    virtual void f1C();
+    virtual void f1D();
+    virtual void f1E();
+    virtual void f1F();
+    virtual void f20();
+    virtual void f21();
+    virtual void f22();
+    virtual void f23();
+    virtual void f24();
+    virtual void f25();
+    virtual void f26();
+    virtual void f27();
+    virtual void f28();
+    virtual void f29();
+    virtual void f2A();
+    virtual void fnB4(IWorkEvent* event);
+};
+
 struct CViewVtC4If {
     virtual void f00();
     virtual void f01();
@@ -538,159 +643,213 @@ void CView::detachRenderWork(CWorkThread* pThread) {
     mFrame.detachRenderWork(pThread);
 }
 
+// us-804405b8: enqueue a tag-1 message carrying `param` onto this view's
+// context ring, flag the just-written slot consumed (byte 0x23 = 3), then
+// store `param` into the payload word of the previous-index slot -- the same
+// three-step tail as CView::attachRenderWork. Note the first modulo is
+// computed signed (retail divw); the two later modulos are unsigned (divwu).
+bool func_8043DC20__5CViewFUl(CView* view, u32 param) {
+    // Uninitialized stack entry: retail only reads its payload fields
+    // (wid..unk22) once each from the frame home.
+    volatile CMsgParamEntry msg;
+    s32 sumSigned;
+    s32 capSigned;
+    s32 slotIndex;
+    u32 byteOff;
+    u8* slotPtr;
+    u8* ringBase;
+    u32 prevIdx;
+    u32 writeIdx;
+    u32 sum;
+    u32 slot;
+
+    capSigned = (s32)view->mContextRingCapacity;
+    sumSigned = (s32)view->unk3F0 + (s32)view->mContextRingWriteIndex;
+    slotIndex = sumSigned % capSigned;
+    byteOff = (u32)slotIndex * 0x24u;
+    // Update-form pointer: advancing the pointer itself makes MWCC emit the
+    // retail stwux (base+=offset) for the first payload store.
+    u8* entry = view->mContextRingBase;
+    entry += byteOff;
+    *(u32*)entry = 1; // tag 1
+    *(u32*)(entry + 0x4) = msg.wid;
+    *(u32*)(entry + 0x8) = msg.unk8;
+    *(u32*)(entry + 0xC) = msg.unkC;
+    *(u32*)(entry + 0x10) = msg.unk10;
+    *(u32*)(entry + 0x14) = msg.unk14;
+    *(u32*)(entry + 0x18) = msg.unk18;
+    *(u32*)(entry + 0x1C) = msg.unk1C;
+    *(u16*)(entry + 0x20) = (u16)msg.unk20;
+    entry[0x22] = msg.unk22;
+    entry[0x23] = 0;
+
+    writeIdx = view->mContextRingWriteIndex + 1;
+    prevIdx = writeIdx - 1;
+    view->mContextRingWriteIndex = writeIdx;
+    view->unk3FC = prevIdx;
+
+    sum = view->unk3F0 + prevIdx;
+    slot = sum % view->mContextRingCapacity;
+    slotPtr = view->mContextRingBase + slot * 0x24;
+    slotPtr[0x23] = 3;
+
+    sum = view->unk3F0 + view->unk3FC;
+    slot = sum % view->mContextRingCapacity;
+    slotPtr = view->mContextRingBase + slot * 0x24;
+    *(u32*)(slotPtr + 0x4) = param;
+    return true;
+}
+
 // us-804409a8: three bubble passes over the child-view list, ordering views
 // whose first attached work resolves to this view's proc root ahead of others,
 // then by root priority (unk1E8), then by the view's own unk460.
 void func_8043E010__5CViewFv(CView* view) {
     // Everything is ordered relative to the *current* view's proc root.
-    CView* current = CViewRoot::getCurrent();
+    CView* current;
+    _reslist_node<WORK_ID>* endNode;
+    _reslist_node<WORK_ID>* curNode;
+    u32 count;
+
+    current = CViewRoot::getCurrent();
     if (current == nullptr) {
         return;
     }
 
-    _reslist_node<WORK_ID>* selfSentinel =
-        reinterpret_cast<_reslist_node<WORK_ID>*>(current->unk238.mStartNodePtr);
-
-    // Count the current view's attached-work list; bail if empty.
-    u32 count = 0;
-    _reslist_node<WORK_ID>* n = selfSentinel->mNext;
-    goto count_check;
-    for (;;) {
-        n = n->mNext;
-        count++;
-    count_check:
-        if (n == selfSentinel) break;
-    }
-    if (count == 0) {
+    // Count the work IDs attached to the current view; bail if empty.
+    reslist<WORK_ID>* selfList = (reslist<WORK_ID>*)&current->unk238;
+    if (selfList->size() == 0) {
         return;
     }
 
     // Resolve the current view's proc root from its first attached work ID.
-    CProc* thisRoot = pssGetRoot__5CProcFP5CProc(CProc::convertToProc(
-        getWorkThread__9CWorkUtilFUl(selfSentinel->mNext->mItem)));
-
-    _reslist_node<CWorkThread*>* childSentinel = reinterpret_cast<
-        _reslist_node<CWorkThread*>*>(view->mChildren.mStartNodePtr);
+    CProc* thisRoot;
+    thisRoot = pssGetRoot__5CProcFP5CProc(CProc::convertToProc(
+        getWorkThread__9CWorkUtilFUl(selfList->front())));
 
     bool swapped;
+    _reslist_node<CWorkThread*>* cur;
+    _reslist_node<CWorkThread*>* next;
+    CView* itemCur;
+    CView* itemNext;
+    _reslist_node<WORK_ID>* s1;
+    _reslist_node<WORK_ID>* n1;
+    u32 c1;
+    _reslist_node<WORK_ID>* s2;
+    _reslist_node<WORK_ID>* n2;
+    u32 c2;
+    CProc* rootCur;
+    CProc* rootNext;
 
     // Pass 1: move views sharing our proc root ahead of foreign-root views.
     do {
         swapped = false;
-        for (_reslist_node<CWorkThread*>* cur = childSentinel->mNext;
-             cur != childSentinel; cur = cur->mNext) {
-            _reslist_node<CWorkThread*>* next = cur->mNext;
-            if (next == childSentinel) {
+        cur = ((_reslist_node<CWorkThread*>*)view->mChildren.mStartNodePtr)->mNext;
+        while (cur != (_reslist_node<CWorkThread*>*)view->mChildren.mStartNodePtr) {
+            next = cur->mNext;
+            if (next == (_reslist_node<CWorkThread*>*)view->mChildren.mStartNodePtr) {
                 break;
             }
-            CWorkThread* itemCur = cur->mItem;
-            if (CView::convertToView(itemCur) != nullptr) {
-                CWorkThread* itemNext = next->mItem;
-                if (CView::convertToView(itemNext) != nullptr) {
-                    _reslist_node<WORK_ID>* s1 = reinterpret_cast<_reslist_node<WORK_ID>*>(
-                        reinterpret_cast<CView*>(itemCur)->unk238.mStartNodePtr);
-                    u32 c1 = 0;
-                    _reslist_node<WORK_ID>* n1 = s1->mNext;
-                    while (n1 != s1) {
-                        n1 = n1->mNext;
-                        c1++;
+            itemCur = CView::convertToView(cur->mItem);
+            itemNext = CView::convertToView(next->mItem);
+            {
+                c1 = 0;
+                s1 = (_reslist_node<WORK_ID>*)itemCur->unk238.mStartNodePtr;
+                n1 = s1->mNext;
+                while (n1 != s1) {
+                    c1++;
+                    n1 = n1->mNext;
+                }
+                if (c1 != 0) {
+                    c2 = 0;
+                    s2 = (_reslist_node<WORK_ID>*)itemNext->unk238.mStartNodePtr;
+                    n2 = s2->mNext;
+                    while (n2 != s2) {
+                        c2++;
+                        n2 = n2->mNext;
                     }
-                    if (c1 != 0) {
-                        _reslist_node<WORK_ID>* s2 = reinterpret_cast<_reslist_node<WORK_ID>*>(
-                            reinterpret_cast<CView*>(itemNext)->unk238.mStartNodePtr);
-                        u32 c2 = 0;
-                        _reslist_node<WORK_ID>* n2 = s2->mNext;
-                        while (n2 != s2) {
-                            n2 = n2->mNext;
-                            c2++;
-                        }
-                        if (c2 != 0) {
-                            CProc* rootCur = pssGetRoot__5CProcFP5CProc(CProc::convertToProc(
-                                getWorkThread__9CWorkUtilFUl(s1->mNext->mItem)));
-                            CProc* rootNext = pssGetRoot__5CProcFP5CProc(CProc::convertToProc(
-                                getWorkThread__9CWorkUtilFUl(s2->mNext->mItem)));
-                            if (rootCur != nullptr && rootNext != nullptr &&
-                                rootCur == thisRoot && rootNext != thisRoot) {
-                                next->mItem = itemCur;
-                                swapped = true;
-                                cur->mItem = itemNext;
-                            }
+                    if (c2 != 0) {
+                        rootCur = pssGetRoot__5CProcFP5CProc(CProc::convertToProc(
+                            getWorkThread__9CWorkUtilFUl(s1->mNext->mItem)));
+                        rootNext = pssGetRoot__5CProcFP5CProc(CProc::convertToProc(
+                            getWorkThread__9CWorkUtilFUl(s2->mNext->mItem)));
+                        // Swap when only the earlier view shares our root.
+                        if (rootCur != nullptr && rootNext != nullptr &&
+                            rootCur == thisRoot && rootNext != thisRoot) {
+                            next->mItem = itemCur;
+                            swapped = true;
+                            cur->mItem = itemNext;
                         }
                     }
                 }
             }
+            cur = cur->mNext;
         }
     } while (swapped);
 
     // Pass 2: within our proc root, order by root priority field unk1E8.
     do {
         swapped = false;
-        for (_reslist_node<CWorkThread*>* cur = childSentinel->mNext;
-             cur != childSentinel; cur = cur->mNext) {
-            _reslist_node<CWorkThread*>* next = cur->mNext;
-            if (next == childSentinel) {
+        cur = ((_reslist_node<CWorkThread*>*)view->mChildren.mStartNodePtr)->mNext;
+        while (cur != (_reslist_node<CWorkThread*>*)view->mChildren.mStartNodePtr) {
+            next = cur->mNext;
+            if (next == (_reslist_node<CWorkThread*>*)view->mChildren.mStartNodePtr) {
                 break;
             }
-            CWorkThread* itemCur = cur->mItem;
-            if (CView::convertToView(itemCur) != nullptr) {
-                CWorkThread* itemNext = next->mItem;
-                if (CView::convertToView(itemNext) != nullptr) {
-                    _reslist_node<WORK_ID>* s1 = reinterpret_cast<_reslist_node<WORK_ID>*>(
-                        reinterpret_cast<CView*>(itemCur)->unk238.mStartNodePtr);
-                    u32 c1 = 0;
-                    _reslist_node<WORK_ID>* n1 = s1->mNext;
-                    while (n1 != s1) {
-                        n1 = n1->mNext;
-                        c1++;
+            itemCur = CView::convertToView(cur->mItem);
+            itemNext = CView::convertToView(next->mItem);
+            {
+                c1 = 0;
+                s1 = (_reslist_node<WORK_ID>*)itemCur->unk238.mStartNodePtr;
+                n1 = s1->mNext;
+                while (n1 != s1) {
+                    c1++;
+                    n1 = n1->mNext;
+                }
+                if (c1 != 0) {
+                    c2 = 0;
+                    s2 = (_reslist_node<WORK_ID>*)itemNext->unk238.mStartNodePtr;
+                    n2 = s2->mNext;
+                    while (n2 != s2) {
+                        c2++;
+                        n2 = n2->mNext;
                     }
-                    if (c1 != 0) {
-                        _reslist_node<WORK_ID>* s2 = reinterpret_cast<_reslist_node<WORK_ID>*>(
-                            reinterpret_cast<CView*>(itemNext)->unk238.mStartNodePtr);
-                        u32 c2 = 0;
-                        _reslist_node<WORK_ID>* n2 = s2->mNext;
-                        while (n2 != s2) {
-                            n2 = n2->mNext;
-                            c2++;
-                        }
-                        if (c2 != 0) {
-                            CProc* rootCur = pssGetRoot__5CProcFP5CProc(CProc::convertToProc(
-                                getWorkThread__9CWorkUtilFUl(s1->mNext->mItem)));
-                            CProc* rootNext = pssGetRoot__5CProcFP5CProc(CProc::convertToProc(
-                                getWorkThread__9CWorkUtilFUl(s2->mNext->mItem)));
-                            if (rootCur != nullptr && rootNext != nullptr &&
-                                rootCur == thisRoot && rootNext == thisRoot &&
-                                (s32)rootCur->unk1E8 < (s32)rootNext->unk1E8) {
-                                next->mItem = itemCur;
-                                swapped = true;
-                                cur->mItem = itemNext;
-                            }
+                    if (c2 != 0) {
+                        rootCur = pssGetRoot__5CProcFP5CProc(CProc::convertToProc(
+                            getWorkThread__9CWorkUtilFUl(s1->mNext->mItem)));
+                        rootNext = pssGetRoot__5CProcFP5CProc(CProc::convertToProc(
+                            getWorkThread__9CWorkUtilFUl(s2->mNext->mItem)));
+                        // Both under our root: order by root priority.
+                        if (rootCur != nullptr && rootNext != nullptr &&
+                            rootCur == thisRoot && rootNext == thisRoot &&
+                            (s32)rootCur->unk1E8 < (s32)rootNext->unk1E8) {
+                            next->mItem = itemCur;
+                            swapped = true;
+                            cur->mItem = itemNext;
                         }
                     }
                 }
             }
+            cur = cur->mNext;
         }
     } while (swapped);
 
     // Pass 3: final ordering by the view's own unk460 value.
     do {
         swapped = false;
-        for (_reslist_node<CWorkThread*>* cur = childSentinel->mNext;
-             cur != childSentinel; cur = cur->mNext) {
-            _reslist_node<CWorkThread*>* next = cur->mNext;
-            if (next == childSentinel) {
+        cur = ((_reslist_node<CWorkThread*>*)view->mChildren.mStartNodePtr)->mNext;
+        while (cur != (_reslist_node<CWorkThread*>*)view->mChildren.mStartNodePtr) {
+            next = cur->mNext;
+            if (next == (_reslist_node<CWorkThread*>*)view->mChildren.mStartNodePtr) {
                 break;
             }
-            CWorkThread* itemCur = cur->mItem;
-            if (CView::convertToView(itemCur) != nullptr) {
-                CWorkThread* itemNext = next->mItem;
-                if (CView::convertToView(itemNext) != nullptr &&
-                    (s32)reinterpret_cast<CView*>(itemCur)->unk460 <
-                        (s32)reinterpret_cast<CView*>(itemNext)->unk460) {
-                    next->mItem = itemCur;
-                    swapped = true;
-                    cur->mItem = itemNext;
-                }
+            itemCur = CView::convertToView(cur->mItem);
+            itemNext = CView::convertToView(next->mItem);
+            if ((s32)itemCur->unk460 < (s32)itemNext->unk460) {
+                next->mItem = itemCur;
+                swapped = true;
+                cur->mItem = itemNext;
             }
+            cur = cur->mNext;
         }
     } while (swapped);
 }
@@ -1104,6 +1263,53 @@ void CView::wkUpdate() {
             wkSetEvent(EVT_NONE);
         }
     }
+}
+
+// TU-local clone of reslist::size() with retail's temp order (end/cur node
+// temps before length) so the inlined expansion allocates count into the
+// higher register like the original build.
+static u32 ResListWorkSize(const reslist<WORK_ID>* list) {
+    _reslist_node<WORK_ID>* endNode = list->mStartNodePtr;
+    u32 length = 0;
+    _reslist_node<WORK_ID>* curNode = endNode->mNext;
+    while (curNode != endNode) {
+        curNode = curNode->mNext;
+        length++;
+    }
+    return length;
+}
+
+// us-8044237c: standby logout gate. Logout only proceeds once every child
+// thread is gone, no attached work remains, and any split frame has already
+// been torn down. A stalled logout is reported through the watchdog.
+// (Defined as a retail-named free function: CWorkThread's virtual slot is
+// shared and the member cannot be declared in the read-only shared header.)
+bool wkStandbyLogout__5CViewFv(CView* self) {
+    // Logout gate: every child thread gone, no attached work IDs left, and
+    // any split frame lacking both panes. Stalled logouts hit the watchdog.
+    // 30000 frames (~30s) until the check-timeout message fires.
+    self->CWorkThread::wkCheckTimeout(
+        30000,
+        self->mChildren.empty() &&
+            ResListWorkSize(reinterpret_cast<const reslist<WORK_ID>*>(&self->unk238)) == 0 &&
+            !(self->unk45C != nullptr &&
+              getView1__11CSplitFrameFv(self->unk45C) != nullptr &&
+              getView2__11CSplitFrameFv(self->unk45C) != nullptr),
+        lbl_eu_80522630);
+
+    if (self->unk45C != nullptr && !isActive__11CSplitFrameFv(self->unk45C)) {
+        if (self->unk45C != nullptr) {
+            delete static_cast<CSplitFrame*>(self->unk45C);
+            self->unk45C = nullptr;
+        }
+    }
+
+    if (self->mChildren.empty() && self->unk45C == nullptr &&
+        ResListWorkSize(reinterpret_cast<const reslist<WORK_ID>*>(&self->unk238)) == 0) {
+        CViewRoot::invalidCurrent(self);
+        return wkStandbyLogout__11CWorkThreadFv(self);
+    }
+    return false;
 }
 
 void CView::renderView() {
@@ -2059,12 +2265,119 @@ setSplitLine_no_view2:
     setSplitLine__11CSplitFrameFs(unk45C, line);
 }
 
+// Offset view of the CView context-ring control block at +0x280 (used by
+// ~CView's guarded index reset).
+struct CViewRingCtl {
+    u8 pad[0x170];   // 0x00..0x16F (mContextMsgVtable + ring buffer)
+    u32 readIndex;   // 0x170 -> CView::unk3F0
+    u32 writeIndex;  // 0x174 -> CView::mContextRingWriteIndex
+};
+
+// us-8043f178 (~85%, size-equal 432B, 63 mismatch): retag both vptrs by hand
+// (novtable; the leading null-this test is compiler-generated - do NOT add an
+// explicit `if (this != nullptr)`, it duplicates the branch), drain both
+// attached-work lists with empty() + iterator walks (the empty() guard is
+// REQUIRED - without it MWCC DCEs the bare traversal), reset the context-ring
+// indices behind two address-null guards via a local CViewRingCtl (chains the
+// second addic off the first pointer like retail), then run the inlined
+// _reslist_base dtors (vptr retag + unlink + free) for unk258 then unk238;
+// base dtors (CFontLayer @+0x1C4, CWorkThread) run implicitly afterwards.
+// OPEN ITEM: retail's two walk loops are UNROTATED [init][b check][body]
+// [check;bne]; every guarded source form here emits the rotated
+// [check;beq-exit] layout (+stray b), shifting the __dla__/base-dtor call
+// sites (all reloc drift below is that layout shift). Tried: plain-pointer
+// walks (DCE'd or swapped regs), goto bottom-check (re-folded), do-while+goto
+// guard (worse), manual sentinel-empty guard (regs swapped). The unrotated
+// layout looks like a fixed rotation-heuristic wall under unit -O4.
+CView::~CView() {
+    {
+        *(void**)this = (void*)&lbl_eu_8056B5E0;
+        *(void**)((char*)this + 0x1C4) = (char*)&lbl_eu_8056B5E0 + 0xA0;
+
+        // Empty iterator walks over unk238 / unk258.
+        // Empty iterator walks over unk238 / unk258.
+        {
+            reslist<WORK_ID>* workList = reinterpret_cast<reslist<WORK_ID>*>(&unk238);
+            if (!workList->empty()) {
+                reslist<WORK_ID>::iterator endIt = workList->end();
+                reslist<WORK_ID>::iterator it = workList->begin();
+                while (it != endIt) {
+                    ++it;
+                }
+            }
+        }
+        {
+            reslist<IWorkEvent*>* eventList =
+                reinterpret_cast<reslist<IWorkEvent*>*>(&unk258);
+            if (!eventList->empty()) {
+                reslist<IWorkEvent*>::iterator endIt = eventList->end();
+                reslist<IWorkEvent*>::iterator it = eventList->begin();
+                while (it != endIt) {
+                    ++it;
+                }
+            }
+        }
+
+        CViewRingCtl* ring = reinterpret_cast<CViewRingCtl*>(&mContextMsgVtable);
+        if (ring != nullptr && &ring->pad[4] != nullptr) {
+            ring->writeIndex = 0;
+            ring->readIndex = 0;
+        }
+
+        // Inlined _reslist_base<IWorkEvent*> dtor for unk258 (the doubled
+        // address-null test mirrors the retail guard pair).
+        CViewResList* pEventList = &unk258;
+        if (pEventList != nullptr && pEventList != nullptr) {
+            _reslist_node<void*>* sentinel =
+                static_cast<_reslist_node<void*>*>(pEventList->mStartNodePtr);
+            *reinterpret_cast<void**>(pEventList) = lbl_eu_8056B6F0;
+            _reslist_node<void*>* node = sentinel->mNext;
+            while (node != sentinel) {
+                _reslist_node<void*>* cur = node;
+                node = node->mNext;
+                cur->mNext = nullptr;
+            }
+            sentinel->mNext = sentinel;
+            sentinel->mPrev = sentinel;
+            if (pEventList->unk1C == false && pEventList->mList != nullptr) {
+                delete[] static_cast<_reslist_node<IWorkEvent*>*>(pEventList->mList);
+                pEventList->mList = nullptr;
+            }
+        }
+
+        // Inlined _reslist_base<u32> dtor for unk238.
+        CViewResList* pWorkList = &unk238;
+        if (pWorkList != nullptr && pWorkList != nullptr) {
+            _reslist_node<WORK_ID>* sentinel =
+                static_cast<_reslist_node<WORK_ID>*>(pWorkList->mStartNodePtr);
+            *reinterpret_cast<void**>(pWorkList) = lbl_eu_8056B298;
+            _reslist_node<WORK_ID>* node = sentinel->mNext;
+            while (node != sentinel) {
+                _reslist_node<WORK_ID>* cur = node;
+                node = node->mNext;
+                cur->mNext = nullptr;
+            }
+            sentinel->mNext = sentinel;
+            sentinel->mPrev = sentinel;
+            if (pWorkList->unk1C == false && pWorkList->mList != nullptr) {
+                delete[] static_cast<_reslist_node<WORK_ID>*>(pWorkList->mList);
+                pWorkList->mList = nullptr;
+            }
+        }
+    }
+}
+
 CView::CView(const char* pName, CWorkThread* pParent)
-    : CWorkThread(pName, pParent, 2),
-      mName(false) {
-    // novtable: write the retail vptr (lbl_eu_8056B5E0) by hand -- the retail
-    // ctor's first store is the CView vtable pointer.
+    : CWorkThread(pName, pParent, 2) {
+    // novtable: construct the CFontLayer base explicitly, then write both
+    // retail vptrs by hand -- main vtbl at +0 and the CFontLayer secondary
+    // vtbl at +0x1C4 (= main vtbl + 0xA0).
+    // Cast through char* so MWCC does not emit its guarded derived-to-base
+    // this-adjustment sequence -- retail performs the plain addi+bl.
+    __ct__CFontLayer(reinterpret_cast<CFontLayer*>(reinterpret_cast<char*>(this) + 0x1c4));
     *(void**)this = (void*)&lbl_eu_8056B5E0;
+    *(void**)(reinterpret_cast<char*>(this) + 0x1c4) =
+        (void*)(&lbl_eu_8056B5E0 + 0xa0);
     // The typed reserve calls below recover retail's shared 0x10 capacity
     // lifetime; guarded postprocessing closes the final register permutation.
     u32 zero;
@@ -2133,37 +2446,157 @@ CView::CView(const char* pName, CWorkThread* pParent)
 // returns to the head); for each node calls vtable+0xC4 on the item when its
 // +0x50 code is in [48,53), otherwise on NULL (retail keeps the call for the
 // NULL/invalid case - genuine low-memory read on Wii).
-// OPEN ITEM: retail's range check is [cmpi 48; blt; cmpi 53; blt] with ONE
-// merged li r3,0 (|| layout without the -O4 range fold); MWCC either folds
-// (subi/cmpli) or emits two li's (else-if, chosen below). ~30 shapes probed.
+// OPEN ITEM: size PASS (136B) but mismatch 8. Retail's range check emits two
+// raw cmpi's (48/53) with a tail-merged li reached by branch+fallthrough;
+// every source form probed either range-folds into subi/cmpli (all signed
+// same-CFG forms: ||, &&, else-if, nested ifs, gotos) or refuses to merge the
+// identical null blocks when folding is blocked (u32 carrier + s32 casts,
+// switch/case-ranges, dead-statement barriers). MWCC only combines the two
+// tests into one shared block when it can also fold them - the unfolded
+// shared-li shape is not reachable from high-level C under unit -O4.
+// ~40 shapes probed across two sessions; see docs/MWCC_CASES.md range-fold.
 void CView::CView_UnkVirtualFunc7() {
     u8* head = *reinterpret_cast<u8**>((u8*)this + 0x60);
     u8* node = *reinterpret_cast<u8**>(head);
     while (node != *reinterpret_cast<u8**>((u8*)this + 0x60)) {
         void* obj = *reinterpret_cast<void**>(node + 8);
-        if (obj == 0) {
-            obj = 0;
-        } else {
+        // Shared null-set block (reproduces retail's merged li + exact size).
+        // Residual: retail's two raw cmpi 48/53 vs our -O4 range-folded
+        // subi/cmpli - fixed-codegen wall (see note above).
+        if (obj != NULL) {
             s32 code = *reinterpret_cast<s32*>((u8*)obj + 0x50);
-            // Retail: two cmpi's (48/53) sharing one li r3,0 set.  MWCC
-            // range-splits every || / negated-&& form of this check into
-            // subi/cmpli (0x7c), so the two-set else-if is the closest
-            // honest shape (the || merges to 0x84 and the shared li stays
-            // out of reach).
             if (code < 48) {
-                obj = 0;
-            } else if (code < 53) {
-                // keep obj
-            } else {
-                obj = 0;
+                goto set_null;
             }
+            if (code >= 53) {
+                goto set_null;
+            }
+            goto call_item;
         }
+        obj = NULL;
+        goto call_item;
+    set_null:
+        obj = NULL;
+    call_item:
         reinterpret_cast<CViewVtC4If*>((u8*)obj)->fnC4();
         node = *reinterpret_cast<u8**>(node);
     }
 }
-void CView::CView_UnkVirtualFunc3() {}
-void CView::CView_UnkVirtualFunc4() {}
+// us-80440380: same skeleton as UnkVirtualFunc4, but it strips the event's
+// WORK_ID (CWorkThread::mWorkID @0x4C) from the view's work-ID reslist
+// (unk238), then re-dispatches the event to each split-frame pane through
+// virtual slot 0xB4 and finally to this view via slot 0xB8.
+// Every textual getView1/getView2 occurrence is a fresh call in retail (opaque
+// callee), hence the repeated short-circuit guard/ternary pairs.
+extern "C" int CView_UnkVirtualFunc3__5CViewFv(CView* self, IWorkEvent* event) {
+    // Unlink every node whose WORK_ID matches, marking removed nodes mNext=NULL
+    // (explicitly expanded reslist<WORK_ID>::remove, statement-ordered to match
+    // retail's register allocation).
+    const WORK_ID removedId = reinterpret_cast<CWorkThread*>(event)->mWorkID;
+    _reslist_node<WORK_ID>* head =
+        reinterpret_cast<reslist<WORK_ID>*>(&self->unk238)->mStartNodePtr;
+    _reslist_node<WORK_ID>* next = head->mNext;
+    _reslist_node<WORK_ID>* curr = next;
+    while (curr != head) {
+        next = curr->mNext;
+        if (removedId == curr->mItem) {
+            _reslist_node<WORK_ID>* prev = curr->mPrev;
+            prev->mNext = next;
+            next->mPrev = prev;
+            curr->mNext = nullptr;
+        }
+        curr = next;
+    }
+
+    // Pane 1: three-way guard into saved-reg flags, ternary select of pane 1,
+    // test, then recompute the guard and the pane for the dispatch itself.
+    CView* pane1 =
+        (self->unk45C != nullptr &&
+         getView1__11CSplitFrameFv(self->unk45C) != nullptr &&
+         getView2__11CSplitFrameFv(self->unk45C) != nullptr)
+            ? getView1__11CSplitFrameFv(self->unk45C)
+            : nullptr;
+    if (pane1 != nullptr) {
+        CView* target1 =
+            (self->unk45C != nullptr &&
+             getView1__11CSplitFrameFv(self->unk45C) != nullptr &&
+             getView2__11CSplitFrameFv(self->unk45C) != nullptr)
+                ? getView1__11CSplitFrameFv(self->unk45C)
+                : nullptr;
+        reinterpret_cast<CViewVtB4If*>(target1)->fnB4(event);
+    }
+
+    // Pane 2: same guard/ternary pair with getView2 as the dispatched pane.
+    CView* pane2 =
+        (self->unk45C != nullptr &&
+         getView1__11CSplitFrameFv(self->unk45C) != nullptr &&
+         getView2__11CSplitFrameFv(self->unk45C) != nullptr)
+            ? getView2__11CSplitFrameFv(self->unk45C)
+            : nullptr;
+    if (pane2 != nullptr) {
+        CView* target2 =
+            (self->unk45C != nullptr &&
+             getView1__11CSplitFrameFv(self->unk45C) != nullptr &&
+             getView2__11CSplitFrameFv(self->unk45C) != nullptr)
+                ? getView2__11CSplitFrameFv(self->unk45C)
+                : nullptr;
+        reinterpret_cast<CViewVtB4If*>(target2)->fnB4(event);
+    }
+
+    // Final hop: forward the event to this view's own virtual slot 0xB8.
+    reinterpret_cast<CViewVtB8If*>(self)->fnB8(event);
+
+    return 1;
+}
+
+// us-804406b8: remove the given event from this view's attached-event reslist
+// (unk258), then -- if any split frame has both panes -- re-dispatch the event
+// to pane 1's and pane 2's view through virtual slot 0xB8. Each textual
+// occurrence of getView1/getView2 is a fresh call in retail (opaque callee, no
+// caching), hence the repeated short-circuit conditions.
+extern "C" int CView_UnkVirtualFunc4__5CViewFv(CView* self, IWorkEvent* event) {
+    // Unlink every node whose item matches, marking removed nodes mNext=NULL
+    // (inlined reslist<IWorkEvent*>::remove).
+    reinterpret_cast<reslist<IWorkEvent*>*>(&self->unk258)->remove(event);
+
+    // Pane 1: retail computes the three-way guard into saved-reg flags,
+    // selects pane 1 through a ternary, tests it, then recomputes the guard
+    // and the pane for the dispatch itself.
+    CView* pane1 =
+        (self->unk45C != nullptr &&
+         getView1__11CSplitFrameFv(self->unk45C) != nullptr &&
+         getView2__11CSplitFrameFv(self->unk45C) != nullptr)
+            ? getView1__11CSplitFrameFv(self->unk45C)
+            : nullptr;
+    if (pane1 != nullptr) {
+        CView* target1 =
+            (self->unk45C != nullptr &&
+             getView1__11CSplitFrameFv(self->unk45C) != nullptr &&
+             getView2__11CSplitFrameFv(self->unk45C) != nullptr)
+                ? getView1__11CSplitFrameFv(self->unk45C)
+                : nullptr;
+        reinterpret_cast<CViewVtB8If*>(target1)->fnB8(event);
+    }
+
+    // Pane 2: same guard/ternary pair with getView2 as the dispatched pane.
+    CView* pane2 =
+        (self->unk45C != nullptr &&
+         getView1__11CSplitFrameFv(self->unk45C) != nullptr &&
+         getView2__11CSplitFrameFv(self->unk45C) != nullptr)
+            ? getView2__11CSplitFrameFv(self->unk45C)
+            : nullptr;
+    if (pane2 != nullptr) {
+        CView* target2 =
+            (self->unk45C != nullptr &&
+             getView1__11CSplitFrameFv(self->unk45C) != nullptr &&
+             getView2__11CSplitFrameFv(self->unk45C) != nullptr)
+                ? getView2__11CSplitFrameFv(self->unk45C)
+                : nullptr;
+        reinterpret_cast<CViewVtB8If*>(target2)->fnB8(event);
+    }
+
+    return 1;
+}
 
 // Retail stubs (0x8 bytes): addi r3,r3,476 (cast to the embedded
 // CViewFrame base) followed by a sibcall 'b' to the base implementation.
@@ -2230,34 +2663,36 @@ static CView* CView_toView(CWorkThread* thread);
 
 // us-8043E46C: walker that accumulates each ancestor's content origin + view
 // offset straight into rect (no tail-offset application, no size stores).
+// Retail computes dy before dx each iteration and re-reads rect.mPos from
+// memory (no cached start locals), so keep those orderings here.
 extern "C" void func_8043E46C__5CViewFRQ22ml5CRectP5CView(ml::CRect& rect,
                                                           CView* other) {
-    CWorkThread* parentSnap;
     CView* cur;
-    ml::CPnt16 walkBuf[1];
-    s16 startX = other->mFrame.mContentX;
-    s16 startY = other->mFrame.mContentY;
-    rect.mPos.x = startX;
-    rect.mPos.y = startY;
+    CWorkThread* parentSnap;
+    ml::CRect16 off;
+    rect.mPos.x = other->mFrame.mContentX;
+    rect.mPos.y = other->mFrame.mContentY;
     parentSnap = other->mParent;
 
+    // Walk init: root parent terminates the chain; otherwise cast via
+    // convertToView (null + thread-type range check).
     if (getInstance__9CViewRootFv() == parentSnap) {
         cur = nullptr;
     } else {
         cur = CView_toView(other->mParent);
     }
     while (cur != nullptr) {
-        getFrame2ViewOffset__10CViewFrameFR7CRect16PC10CViewFrame(
-            (ml::CRect16*)&walkBuf[0], &cur->mFrame);
-        s16 dy = cur->mFrame.mContentY + walkBuf[0].y;
-        s16 dx = cur->mFrame.mContentX + walkBuf[0].x;
-        rect.mPos.x = rect.mPos.x + dx;
-        rect.mPos.y = rect.mPos.y + dy;
+        getFrame2ViewOffset__10CViewFrameFR7CRect16PC10CViewFrame(&off, &cur->mFrame);
+        s16 dy = cur->mFrame.mContentY + off.mPos.y;
+        s16 dx = cur->mFrame.mContentX + off.mPos.x;
         parentSnap = cur->mParent;
+        rect.mPos.x += dx;
+        rect.mPos.y += dy;
+
         if (getInstance__9CViewRootFv() == parentSnap) {
             cur = nullptr;
         } else {
-            cur = CView_toView(cur->mParent);
+            cur = CView_toView(parentSnap);
         }
     }
 }
@@ -2278,16 +2713,48 @@ extern "C" CView* func_8043DF3C__5CViewFv(CView* self) {
     return cur;
 }
 
-// us-8043E9D8-ish standby login: guards, enqueue(6) into the context ring,
-// then the base-class login. The bit-3 test of unk278 gates on split mode.
+// us-80442278: standby login. Guards on CLib/CViewRoot init, enqueues a raw
+// tag-6 context-ring message when the split-mode bit (unk278 bit 3) is CLEAR,
+// then forwards to the CWorkThread base login. Bit set skips straight to the
+// base call.
 extern "C" bool wkStandbyLogin__5CViewFv(CView* self) {
-    if (isInitialized__4CLibFv() && isInitialized__9CViewRootFv() &&
-        (self->unk278 & 8) != 0) {
-        CMsgParam<10>& messages =
-            *reinterpret_cast<CMsgParam<10>*>(&self->mContextMsgVtable);
-        messages.enqueue(6);
-        return wkStandbyLogin__11CWorkThreadFv();
+    if (!isInitialized__4CLibFv()) {
+        goto login_fail;
     }
+    if (!isInitialized__9CViewRootFv()) {
+        goto login_fail;
+    }
+    if ((self->unk278 & 8) == 0) {
+        // Tag-6 context-ring enqueue (inlined CMsgParam<10>::enqueue shape;
+        // signed index, update-form stwux tag store). Payload fields are
+        // uninitialized frame homes -- only read once each.
+        volatile CMsgParamEntry msg;
+        s32 capSigned = (s32)self->mContextRingCapacity;
+        s32 sumSigned = (s32)self->unk3F0 + (s32)self->mContextRingWriteIndex;
+        // Volatile-qualified view pins the base-field load above the payload
+        // home reads (retail issues it right after the index-sum).
+        u8* volatile& baseRef = self->mContextRingBase;
+        u8* entry = baseRef + (u32)(sumSigned % capSigned) * 0x24u;
+        *(u32*)entry = 6; // tag 6
+        *(u32*)(entry + 0x4) = msg.wid;
+        *(u32*)(entry + 0x8) = msg.unk8;
+        *(u32*)(entry + 0xC) = msg.unkC;
+        *(u32*)(entry + 0x10) = msg.unk10;
+        *(u32*)(entry + 0x14) = msg.unk14;
+        *(u32*)(entry + 0x18) = msg.unk18;
+        *(u32*)(entry + 0x1C) = msg.unk1C;
+        *(u16*)(entry + 0x20) = (u16)msg.unk20;
+        entry[0x22] = msg.unk22;
+        entry[0x23] = 0;
+
+        u32 writeIdx = self->mContextRingWriteIndex + 1;
+        u32 prevIdx = writeIdx - 1;
+        self->mContextRingWriteIndex = writeIdx;
+        self->unk3FC = prevIdx;
+    }
+    return wkStandbyLogin__11CWorkThreadFv(self);
+
+login_fail:
     return false;
 }
 
@@ -2317,12 +2784,16 @@ extern "C" void sinit_8043FB70() {
 // member-scoped name is emitted as a free function (rect=r3, other=r4).
 extern "C" void func_8043EA88__5CViewFRQ22ml5CRectP5CView(ml::CRect& rect,
                                                           CView* other) {
+    // Best-known shape: both size chains compound, then the zero origin via
+    // chained assignment. Byte diff vs retail is exactly one scheduler
+    // transposition (retail issues 'sth r0,0(r3)' between the two final
+    // subfs); every statement layout tried keeps either this swap, extsh
+    // insertion, or reg drift.
     s16 w = other->mRectData.mViewSize.x - other->mRectData.mInsetLeft -
             other->mRectData.mInsetRight;
     s16 h = other->mRectData.mViewSize.y - other->mRectData.mInsetTop -
             other->mRectData.mInsetBottom;
-    rect.mPos.x = 0;
-    rect.mPos.y = 0;
+    rect.mPos.y = rect.mPos.x = 0;
     rect.mSize.x = w;
     rect.mSize.y = h;
 }
@@ -2393,11 +2864,13 @@ extern "C" void func_8043E58C__5CViewFRQ22ml5CRectP5CView(ml::CRect& rect,
 // offset (position only, no size).
 extern "C" void func_8043E6AC__5CViewFRQ22ml5CRectP5CView(ml::CRect& rect,
                                                           CView* other) {
-    s16 x = other->mFrame.mContentX;
-    s16 y = other->mFrame.mContentY;
     CWorkThread* parentSnap;
     CView* cur;
     ml::CPnt16 walkBuf[3];
+    s16 x = other->mFrame.mContentX;
+    s16 y = other->mFrame.mContentY;
+    ml::CRect16 tailOff;
+    ml::CRect16 off;
     parentSnap = other->mParent;
 
     if (getInstance__9CViewRootFv() == parentSnap) {
@@ -2428,8 +2901,6 @@ extern "C" void func_8043E6AC__5CViewFRQ22ml5CRectP5CView(ml::CRect& rect,
 // then the walk recomputes the absolute origin.
 extern "C" void func_8043E7CC__5CViewFRQ22ml5CRectP5CView(ml::CRect& rect,
                                                           CView* other) {
-    s16 x = other->mFrame.mContentX;
-    s16 y = other->mFrame.mContentY;
     CWorkThread* parentSnap;
     CView* cur;
     ml::CPnt16 walkBuf[3];
@@ -2441,6 +2912,9 @@ extern "C" void func_8043E7CC__5CViewFRQ22ml5CRectP5CView(ml::CRect& rect,
     rect.mPos.y = py;
     rect.mSize.x = other->mRectData.mViewSize.x;
     rect.mSize.y = other->mRectData.mViewSize.y;
+    // Retail hoists these loads after the provisional stores.
+    s16 x = other->mFrame.mContentX;
+    s16 y = other->mFrame.mContentY;
 
     parentSnap = other->mParent;
 
@@ -2495,18 +2969,18 @@ extern "C" void func_8043E928__5CViewFRQ22ml5CRectP5CView(ml::CRect& rect,
         CVIEW_WALK_NEXT(cur, parentSnap);
     }
 
+    // Tail statement order mirrors retail scheduling: origin-Y first, then
+    // the y-basis loads, then origin-X / x-basis, sizes last.
     getFrame2ViewOffset__10CViewFrameFR7CRect16PC10CViewFrame(
         (ml::CRect16*)&walkBuf[1], &other->mFrame);
-    s16 insetTop = other->mRectData.mInsetTop;
     s16 py = y + walkBuf[1].y;
-    py += insetTop;
-    s16 sizeY = other->mRectData.mViewSize.y - insetTop -
-                other->mRectData.mInsetBottom;
-    s16 insetLeft = other->mRectData.mInsetLeft;
     s16 px = x + walkBuf[1].x;
-    px += insetLeft;
-    s16 sizeX = other->mRectData.mViewSize.x - insetLeft -
+    py += other->mRectData.mInsetTop;
+    px += other->mRectData.mInsetLeft;
+    s16 sizeX = other->mRectData.mViewSize.x - other->mRectData.mInsetLeft -
                 other->mRectData.mInsetRight;
+    s16 sizeY = other->mRectData.mViewSize.y - other->mRectData.mInsetTop -
+                other->mRectData.mInsetBottom;
     rect.mPos.x = px;
     rect.mPos.y = py;
     rect.mSize.x = sizeX;
@@ -2518,12 +2992,16 @@ extern "C" void func_8043E928__5CViewFRQ22ml5CRectP5CView(ml::CRect& rect,
 // from parent or render mode); otherwise size = frame rect extent. Bit4
 // (0x10) skips the func_80459384 max-size clamp.
 extern "C" void func_8043CCCC__5CViewFv(CView* self, u32 arg) {
-    // Slot order mirrors retail: tmp@0x20 > offElse@0x14 > offIf@0xC >
-    // modeSize@0x8. The negated-offset and extent pairs are written into
-    // each rect's .mSize half (slot sharing -- no separate CPnt16 locals).
+    // Retail slot map (ascending): modeSize@0x8, ifPos@0xC, ifOff@0x10,
+    // elsePos@0x14, elseOff@0x18, hole@0x1C, tmp@0x20. The per-branch rects
+    // are split into pos/off CPnt16 halves; the callee's size half lands in
+    // the off slot and is overwritten by the negated/diff values.
     CViewStackRect tmp;
-    CViewStackRect offElse;
-    CViewStackRect offIf;
+    CWorkThread* parentSnap;
+    ml::CPnt16 elseOff;
+    ml::CPnt16 elsePos;
+    ml::CPnt16 ifOff;
+    ml::CPnt16 ifPos;
     struct {
         u16 x;
         u16 y;
@@ -2534,13 +3012,13 @@ extern "C" void func_8043CCCC__5CViewFv(CView* self, u32 arg) {
 
     if ((self->unk278 & 1) != 0) {
         getFrame2ViewOffset__10CViewFrameFR7CRect16PC10CViewFrame(
-            (ml::CRect16*)&offIf, &self->mFrame);
-        offIf.mSize.x = -offIf.mPos.x;
+            (ml::CRect16*)&ifPos, &self->mFrame);
+        ifOff.x = -ifPos.x;
         // Load anchored here so the scheduler places the mParent fetch
         // between the second neg and its store, matching retail.
-        CWorkThread* parentSnap = self->mParent;
-        offIf.mSize.y = -offIf.mPos.y;
-        *(u32*)&self->mFrame.mContentX = *(u32*)&offIf.mSize;
+        parentSnap = self->mParent;
+        ifOff.y = -ifPos.y;
+        *(u32*)&self->mFrame.mContentX = *(u32*)&ifOff;
 
         CView* parentView;
         if (getInstance__9CViewRootFv() == parentSnap) {
@@ -2557,18 +3035,18 @@ extern "C" void func_8043CCCC__5CViewFv(CView* self, u32 arg) {
             GXRenderModeObj* renderMode = getRenderModeObj__9CDeviceVIFv();
             u16 modeHeight = renderMode->efbHeight;
             renderMode = getRenderModeObj__9CDeviceVIFv();
-            u16 modeWidth = renderMode->fbWidth;
-            modeSize.x = modeWidth;
+            u16 modeW = renderMode->fbWidth;
+            modeSize.x = modeW;
             modeSize.y = modeHeight;
             func_804592F0__17CViewRectDataCoreFRCQ22ml6CPnt16(
                 &self->mRectData, *(const ml::CPnt16*)&modeSize);
         }
     } else {
         getFrame2ViewOffset__10CViewFrameFR7CRect16PC10CViewFrame(
-            (ml::CRect16*)&offElse, &self->mFrame);
-        offElse.mSize.x = tmp.mPos.x - offElse.mPos.x;
-        offElse.mSize.y = tmp.mPos.y - offElse.mPos.y;
-        *(u32*)&self->mFrame.mContentX = *(u32*)&offElse.mSize;
+            (ml::CRect16*)&elsePos, &self->mFrame);
+        elseOff.x = tmp.mPos.x - elsePos.x;
+        elseOff.y = tmp.mPos.y - elsePos.y;
+        *(u32*)&self->mFrame.mContentX = *(u32*)&elseOff;
         // NOTE: passes tmp.mSize (first-call rect), not the computed extent.
         func_804592F0__17CViewRectDataCoreFRCQ22ml6CPnt16(&self->mRectData, tmp.mSize);
     }

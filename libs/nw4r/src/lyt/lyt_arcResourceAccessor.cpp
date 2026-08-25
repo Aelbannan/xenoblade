@@ -4,6 +4,11 @@
 
 #include <cstring>
 
+// Retail vtable label (data object in nw4r_data.s). The class is novtable, so
+// the ctor stores this label explicitly (keeps the ctor relocs byte-identical
+// to retail while emitting no local .data vtable copy).
+extern "C" unsigned char lbl_eu_80569CB8[];
+
 /******************************************************************************
  *
  * Utility functions
@@ -114,7 +119,9 @@ ut::Font* FindFont(FontRefLinkList* pFontList, const char* pName) {
  * ArcResourceAccessor
  *
  ******************************************************************************/
-ArcResourceAccessor::ArcResourceAccessor() : mArcBuf(NULL) {}
+ArcResourceAccessor::ArcResourceAccessor() : mArcBuf(NULL) {
+    *(void**)this = (void*)lbl_eu_80569CB8;
+}
 
 bool ArcResourceAccessor::Attach(void* pArchive, const char* pRootDir) {
     BOOL success = ARCInitHandle(pArchive, &mArcHandle);

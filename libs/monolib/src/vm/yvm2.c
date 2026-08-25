@@ -933,25 +933,18 @@ u32 vmOCSearch(const char* name){
 }
 
 u32 vmPropertySearch(OCData* pOC, const char* pName){
-    OCProperty* base = pOC->properties;
     int length = strlen(pName);
 
-    if(base != NULL){
-        //Byte-offset iterator walked alongside the pointer; MWCC keeps the
-        //(base + offset) recompute per entry in retail
-        OCProperty* it = base;
+    if(pOC->properties != NULL){
         u32 i = 0;
-        int offset = 0;
 
-        while(it->name != NULL){
-            OCProperty* entry = (OCProperty*)((char*)base + offset);
+        while(pOC->properties[i].name != NULL){
+            OCProperty* entry = &pOC->properties[i];
 
             if(length == entry->nameLength && strcmp(pName, entry->name) == 0){
                 return i;
             }
-            it++;
             i++;
-            offset += sizeof(OCProperty);
         }
     }
 
@@ -962,15 +955,15 @@ u32 vmSelectorSearch(OCData* pOC, const char* pName){
     int length = strlen(pName);
 
     if (pOC->selectors != NULL) {
-        OCSelector* it = pOC->selectors;
+        int i = 0;
 
-        //Why the extra pointer iterator variable?
-        for(u32 i = 0; it->name != NULL; it++, i++) {
+        while(pOC->selectors[i].name != NULL){
             OCSelector* entry = &pOC->selectors[i];
 
             if (length == entry->nameLength && strcmp(pName, entry->name) == 0) {
                 return i;
             }
+            i++;
         }
     }
 
@@ -980,17 +973,24 @@ u32 vmSelectorSearch(OCData* pOC, const char* pName){
 //Searches for a function in a specific package/file. If successful, the package index and function
 //name are returned (lower 16 bits: function pool index, upper: package index). If not, -1 is returned.
 u32 vmFuncFarSearch(const char* pPackageName, const char* pFuncName){
-    for(int i = 0; i < MAX_PACKAGES; i++){
-        const char* name = (const char*)vmState.packages[i].unk4;
+    int i;
+    int j;
+    for(i = 0; i < MAX_PACKAGES; i++){
         //Check if the package name matches
-        if (name != NULL && strcmp(name, pPackageName) == 0) {
+        if(vmState.packages[i].unk4 == NULL){
+            continue;
+        }
+        if(strcmp((const char*)vmState.packages[i].unk4, pPackageName) != 0){
+            continue;
+        }
+        {
             SBHeader* struct1 = vmState.packages[i].scriptDataPtr;
             SBSectionHeader* funcPoolSectionHeader = struct1->functionPoolOfs;
-            FunctionPoolEntry* r29 = (FunctionPoolEntry*)getSectionEntriesPtr(funcPoolSectionHeader);
+            FunctionPoolEntry* entries = (FunctionPoolEntry*)getSectionEntriesPtr(funcPoolSectionHeader);
 
             //Check all functions in the package's function pool for a match
-            for(int j = 0; j < funcPoolSectionHeader->entries; j++) {
-                const char* curFuncName = vmIdPoolGet(struct1, r29[j].unk0);
+            for(j = 0; j < funcPoolSectionHeader->entries; j++) {
+                const char* curFuncName = (const char*)poolEntryGet(struct1->idPoolOfs, entries[j].unk0);
 
                 if (strcmp(curFuncName, pFuncName) == 0) {
                     return (i << 16) | j;

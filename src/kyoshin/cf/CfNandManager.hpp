@@ -147,30 +147,34 @@ struct CfNandSaveTailCalc {
 };
 
 namespace cf{
-    // The IWorkEvent base is omitted from the C++ declaration (CfTaskMain
-    // scheme): retail's dtor only calls CProcess::~CProcess, so a declared
-    // IWorkEvent base would add a compiler-generated ~IWorkEvent call. The
-    // secondary vtable slot at +0x54 is modelled as a plain member; the retail
-    // dtor stores all three subobject vtables explicitly. IScnRender stays a
-    // base (its dtor is inline-empty, so no call is emitted) so
-    // static_cast<IScnRender*> keeps the retail null-checked +0x58 upcast.
-    class CfNandManager : public CTTask<CfNandManager>, public IScnRender{
+    // +0x54 interface slot (retail IWorkEvent): modelled as a novtable base so
+    // IScnRender lands at +0x58 like retail. Declared-only virtuals and the
+    // implicit trivial dtor keep the derived ctor/dtor free of base calls.
+    class __declspec(novtable) CIWorkEventSlot {
+    public:
+        virtual void vf0C();
+    };
+    // The retail TU references its vtable blob through the plain
+    // lbl_eu_80536BBC label, so suppress MWCC's auto __vt__ emission and the
+    // auto vptr stores in ctors/dtors; the ctor/dtor hand-store all three
+    // subobject vtables explicitly (Clib/CLibLayout recipe).
+    class __declspec(novtable) CfNandManager : public CTTask<CfNandManager>, public CIWorkEventSlot, public IScnRender{
     public:
         // Retail US symbol for this getter is the unmangled func_8024005C
         // (called as a static member only from kyoshin/CTaskGameCf.cpp).
         static u32 func_8024005C();
 
         //0x000-0x054 CTTask
-        //0x054-0x058 IWorkEvent vtable slot (interface base omitted from C++)
-        /* 0x54 */ u32 mIWorkEventVtable;
+        //0x054-0x058 CIWorkEventSlot (novtable interface base, hand-stored)
         //0x058-0x05C IScnRender
         /* 0x5C */ u8* field_0x5C;          // heap buffer (freed by Term)
         /* 0x60 */ CfNandEventQueue mEventQueue; // event queue + ring metadata
         /* 0x170 */ CfNandPendingEvent mPending;
-        /* 0x178 */ CfNandSaveBlock* mSaveBlock; // save block checked by func_8023E544
-        /* 0x17C */ u16 field_17C;
-        /* 0x17E */ u8 field_17E;
-        /* 0x17F */ u8 field_17F;
+        // NOTE: there is no separate save-block member: mPending.mPayload
+        // (0x178) doubles as the CfNandSaveBlock pointer checked by
+        // func_8023E544 / func_8023CD9C.
+        /* 0x17C-0x17F: no separate members - mPending.mType/mSubtype/mFlag
+           live here (retail aliases). */
         /* 0x180 */ u32 field_180;              // status flags (bit0/bit29 read by func_8023EABC)
         /* 0x184 */ u16 field_184;
         /* 0x186 */ u16 field_186;
@@ -261,7 +265,7 @@ struct CfNandPartySnapshot {
 
 // --- imports used by the CfNandManager TU (declared here so the .cpp stays
 // free of local extern "C" scaffolding) ---
-extern "C" u32 func_8009CF8C();                 // message-count lookup
+extern "C" u32 func_8009CF8C(u32 resourceId);   // message-count lookup - (u32) form must match CUICfManager.hpp (10197)
 extern "C" u32 func_8009CF84();                 // save-region size lookup
 extern "C" u32 func_8006A80C();                 // game-progress bitfield
 extern "C" void* func_8009EC9C(u16 index);      // character-data lookup

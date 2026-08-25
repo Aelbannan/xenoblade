@@ -1,6 +1,5 @@
 #include "kyoshin/cf/CTaskCulling.hpp"
 #include "kyoshin/cf/CfGameManager.hpp"
-#include "kyoshin/code_800AA008.hpp"
 #include "monolib/scn.hpp"
 #include <cstring>
 
@@ -24,9 +23,6 @@ void CTTask<cf::CTaskCulling>::Draw() {
 template<>
 CTTask<cf::CTaskCulling>::~CTTask() {}
 
-// cf::CfGameManager accessor (returns void* due to UnkClass type mismatch)
-void* func_80083298__Q22cf13CfGameManagerFv(void);
-
 // Buffer header for spInstance->unk94 (occ culling data)
 #pragma pack(push, 1)
 struct OccBufferHead {
@@ -48,6 +44,14 @@ struct OccFrustumEntry {
 
 // Retail sbss singleton (config symbols.txt); mangled spInstance fails reloc name match.
 cf::CTaskCulling* lbl_eu_80664328;
+
+// Merged rodata string blob: "/" at +0, "occ" at +2 (defined in data_defs.cpp).
+extern const char lbl_eu_80503F58[];
+
+// Retail symbols are C-linkage (unmangled); declared here because the declaring
+// header code_800AA008.hpp uses C++ mangling that drifts the reloc names.
+extern "C" void func_800AA318(u32 packed, u32* out0, u32* out1, u32* out2, u32* out3);
+extern "C" int func_800AA33C(ml::FixStr<64>& buf, u32 packed, int prefixFlag, int suffixFlag);
 
 namespace cf{
     //unused
@@ -114,19 +118,29 @@ void CTaskCulling::func_801A2C94(){
 
         func_801A2C94();
 
-        cf::CfGameManager* gm = (cf::CfGameManager*)func_80083298__Q22cf13CfGameManagerFv();
-        u32 r4, r5, r6, r7;
+        cf::CfGameManager* gm = (cf::CfGameManager*)cf::CfGameManager::func_80083298();
+        u32 outA, outB, outC, outD;
 
-        func_800AA318(gm->unk70, &r4, &r5, &r6, &r7);
+        func_800AA318(gm->unk70, &outA, &outB, &outC, &outD);
         func_800AA33C(lbl_eu_80664328->unk98, gm->unk70, 0, 0);
         func_800AA33C(lbl_eu_80664328->unkDC, gm->unk70, 1, 0);
 
-        lbl_eu_80664328->unkDC.unkInline1("\\");
+        // Cached after the last external call.
+        ml::FixStr<64>* path = &lbl_eu_80664328->unkDC;
+        const char* sep = lbl_eu_80503F58;
+
+        // Inlined FixStr path trim: find the last "/" and cut right after it
+        // (the stored length keeps the trailing separator).
+        int index = path->rfind(sep, -1);
+        if(index != -1 && index + 1 < path->mLength){
+            path->mString[index + 1] = '\0';
+            path->mLength = index + 1;
+        }
 
         OccBufferHead* head = (OccBufferHead*)lbl_eu_80664328->unk94;
 
-        if(std::strcmp("occ", head->magic) == 0){
-            OccFrustumEntry* entry = (OccFrustumEntry*)(head + 1); // at offset 0x10
+        if(std::strcmp(head->magic, sep + 2) == 0){
+            OccFrustumEntry* entry = (OccFrustumEntry*)(head + 1); // entries at offset 0x10
 
             for (int i = 0; i < head->count; i++) {
                 if(lbl_eu_80664328 != nullptr){

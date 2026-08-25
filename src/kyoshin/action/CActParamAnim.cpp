@@ -7,9 +7,15 @@
 // declaration in this TU so the byte-exact bare 1-arg bl (locked FULL_MATCH
 // us-8004bd94) still compiles.
 #define func_80055B88 func_80055B88_typed_hidden
+// CActParamData.hpp also declares func_80053960 with an ActParamData388*
+// parameter; retail's func_80053960 lives in this TU and takes the anim
+// object (CActParamAnim*). Hide that typed declaration so the extern "C"
+// definition below does not collide with it as an illegal overload.
+#define func_80053960 func_80053960_typed_hidden
 
 #include "kyoshin/action/CActParamAnim.hpp"
 #undef func_80055B88
+#undef func_80053960
 
 // Legacy 1-arg prototype kept for the func_8004B6BC call site (see above).
 extern "C" bool func_80055B88(void* data);
@@ -445,7 +451,236 @@ void func_8004BC94(CActParamAnim* self, u32 param) {
     }
 }
 
-void func_8004BDCC(){}
+// func_8004BDCC: start (or switch) the anim `param` on the attached
+// sub-object. sel selects the heading/frame source pair, resId overrides the
+// sub-object's resource file when non-zero, useDefaultScale forces the blend
+// frame count to the lbl_eu_80665EA0 default.
+void func_8004BDCC(CActParamAnim* self, u32 param, u32 sel, u32 resId,
+                   u32 useDefaultScale) {
+    CActParamAnimStateView* view = reinterpret_cast<CActParamAnimStateView*>(self);
+    if ((s32)param < 0) return;
+    // Retail reuses the resource-id argument itself when falling back to the
+    // sub-object's cached state word.
+    if (resId == 0) resId = view->state3A4;
+    if (resId == 0) return;
+    if ((s32)param >= (s32)GetResAnmChrNumEntries__Q34nw4r3g3d7ResFileCFv(
+                          reinterpret_cast<u8*>(resId) + 0xC))
+        return;
+
+    f32 prevBlend = reinterpret_cast<CActParamAnimVt0C*>(view)->f01();
+    f32 blendTime = reinterpret_cast<CActParamAnimVt14*>(view)->f03();
+
+    if ((view->field0C & 1) != 0) {
+        // Rewind the previous anim's playback offset before switching.
+        f32 v49c = view->field49C;
+        if ((view->field270 & 0x1000) != 0)
+            func_80484E5C(view->object3A0, -v49c);
+        else
+            func_80484E5C(view->object3A0, v49c);
+        view->field0C &= ~1u;
+    }
+
+    view->field37C = -1;
+    f32 blendFrames =
+        func_80053DE8(reinterpret_cast<CActParamData*>(view->mChildData10), sel);
+    if (useDefaultScale != 0) blendFrames = lbl_eu_80665EA0;
+
+    f32 startAngle = (sel != 0) ? view->field334 : view->field2B4;
+    if (startAngle != lbl_eu_80665EA0) {
+        // Blend the stored heading toward the target, wrapped into (-pi, pi].
+        // Each wrap branch duplicates the owner-gate store + sub-object mirror
+        // tail (retail layout).
+        f32 angle = startAngle + view->field444;
+        blendFrames = lbl_eu_80665EA0;
+        const f32 pi = lbl_eu_8066A1F8;
+        const f32 twoPi = lbl_eu_8066A1FC;
+        if (angle > pi) {
+            angle -= twoPi;
+            int ownerGate = 0;
+            if (view->owner08 != NULL) ownerGate = view->owner08->v3();
+            if (ownerGate == 0 && (view->field0C & 0x20) == 0)
+                view->field440 = angle;
+            if ((view->field0C & 0x20) == 0) {
+                view->field444 = angle;
+                u8* obj = view->object3A0;
+                if (obj != NULL) {
+                    // Mirror the blended heading onto the sub-object position.
+                    CActParamAnimData3 pos;
+                    pos.x = reinterpret_cast<const u32&>(lbl_eu_80665EA0);
+                    pos.y = reinterpret_cast<const u32&>(angle);
+                    pos.z = reinterpret_cast<const u32&>(lbl_eu_80665EA0);
+                    *reinterpret_cast<CActParamAnimData3*>(func_8048315C(obj)) = pos;
+                }
+            }
+        } else if (angle < -pi) {
+            angle += twoPi;
+            int ownerGate = 0;
+            if (view->owner08 != NULL) ownerGate = view->owner08->v3();
+            if (ownerGate == 0 && (view->field0C & 0x20) == 0)
+                view->field440 = angle;
+            if ((view->field0C & 0x20) == 0) {
+                view->field444 = angle;
+                u8* obj = view->object3A0;
+                if (obj != NULL) {
+                    CActParamAnimData3 pos;
+                    pos.x = reinterpret_cast<const u32&>(lbl_eu_80665EA0);
+                    pos.y = reinterpret_cast<const u32&>(angle);
+                    pos.z = reinterpret_cast<const u32&>(lbl_eu_80665EA0);
+                    *reinterpret_cast<CActParamAnimData3*>(func_8048315C(obj)) = pos;
+                }
+            }
+        } else {
+            int ownerGate = 0;
+            if (view->owner08 != NULL) ownerGate = view->owner08->v3();
+            if (ownerGate == 0 && (view->field0C & 0x20) == 0)
+                view->field440 = angle;
+            if ((view->field0C & 0x20) == 0) {
+                view->field444 = angle;
+                u8* obj = view->object3A0;
+                if (obj != NULL) {
+                    CActParamAnimData3 pos;
+                    pos.x = reinterpret_cast<const u32&>(lbl_eu_80665EA0);
+                    pos.y = reinterpret_cast<const u32&>(angle);
+                    pos.z = reinterpret_cast<const u32&>(lbl_eu_80665EA0);
+                    *reinterpret_cast<CActParamAnimData3*>(func_8048315C(obj)) = pos;
+                }
+            }
+        }
+    }
+
+    reinterpret_cast<CActParamAnimVt18F0*>(view)->dispatchF0();
+
+    if (sel != 0) {
+        s32 frameS = static_cast<s32>(blendFrames);
+        func_80484164(view->object3A0, resId, param, static_cast<u16>(frameS),
+                      view->field36C);
+    } else {
+        if (func_80055EA0(view->mChildData10) == NULL) view->field4BD = 1;
+        if (view->field4BD != 0 || (view->field270 & 0x800) == 0) {
+            if (func_80055EBC(view->mChildData10) != 0) {
+                // Reset the child data blocks before the fresh anim start.
+                func_80054D34(view->mChildData10);
+                func_80055DF0(view->mChildData10);
+            }
+        }
+        s32 frameS = static_cast<s32>(blendFrames);
+        func_804839D4(view->object3A0, resId, param,
+                      static_cast<u16>(frameS),
+                      (view->field270 >> 6) & 1,
+                      ((view->field4BD != 0) || ((view->field270 & 0x800) == 0)) ? 1 : 0,
+                      (sel != 0) ? view->field36C : view->field2EC);
+    }
+
+    view->field370 = param;
+    f32 speed27 = lbl_eu_80665E9C;
+    if ((view->field270 & 0x4) != 0) {
+        if ((view->field0C & 0x10000) == 0)
+            speed27 = reinterpret_cast<CActParamAnimSubObjView*>(view->object3A0)->field304;
+        f32 sp390 = view->field390;
+        f32 scale24 = view->field24;
+        f32 spf = getSecPerFrame__9CDeviceVIFv();
+        f32 f3 = sp390 * spf;
+        f32 f1 = lbl_eu_80665EC8;
+        f32 f2 = (lbl_eu_80665EC4 * scale24) / f1;
+        f2 *= f3;
+        speed27 = (view->field448 / f2) / speed27;
+    }
+    f32 speedVal = (speed27 * view->field388) * view->field38C;
+    if ((view->field270 & 0x1000) != 0) speedVal = -speedVal;
+    func_80484E5C(view->object3A0, speedVal);
+
+    if (((view->field274 & 0x10) != 0 || (view->field274 & 0x8) != 0) &&
+        (view->field270 & 0x10) == 0 && (view->field270 & 0x8) == 0 &&
+        blendTime > lbl_eu_80665EA0) {
+        f32 t = reinterpret_cast<CActParamAnimVt14*>(view)->f03();
+        func_80484F80(view->object3A0, prevBlend * t / blendTime);
+    }
+
+    if (view->field370 == (s32)param) {
+        f32 spdBase = lbl_eu_80665E9C;
+        if ((view->field0C & 0x10000) == 0)
+            spdBase = reinterpret_cast<CActParamAnimSubObjView*>(view->object3A0)->field304;
+        f32 spd2 = lbl_eu_80665E9C;
+        if ((view->field270 & 0x4) != 0) {
+            f32 sp390 = view->field390;
+            f32 scale24 = view->field24;
+            f32 spf = getSecPerFrame__9CDeviceVIFv();
+            f32 f3 = sp390 * spf;
+            f32 f1 = lbl_eu_80665EC8;
+            f32 f2 = (lbl_eu_80665EC4 * scale24) / f1;
+            f2 *= f3;
+            spd2 = (view->field448 / f2) / spdBase;
+        }
+        if ((view->field270 & 0x1000) != 0) spd2 = -spd2;
+        func_80484E5C(view->object3A0, (spd2 * view->field388) * view->field38C);
+    }
+
+    if ((view->field270 & 0x80) != 0) {
+        // Wrap the anim ratio difference into [-pi, pi] and derive the
+        // normalized progress from the object's own scale virtual.
+        f32 diff = view->field440 - view->field444;
+        while (!(lbl_eu_8066A1F8 > diff)) diff -= lbl_eu_8066A1FC;
+        while (diff < -lbl_eu_8066A1F8) diff += lbl_eu_8066A1FC;
+        f32 absDiff = __fabs(diff);
+        f32 len = reinterpret_cast<CActParamAnimVt14*>(view)->f03();
+        view->field4A0 = absDiff / len;
+        view->field4D0 = reinterpret_cast<CActParamAnimVt14*>(view)->f03();
+    } else if (lbl_eu_80665EA0 == view->field4D0) {
+        view->field4A0 = view->field4A4;
+    }
+
+    if (((view->field274 & 0x100000) != 0) && ((view->field270 & 0x200000) == 0))
+        reinterpret_cast<CActParamAnimVt18F0*>(view)->dispatch18();
+
+    if ((view->field0C & 0x2000000) != 0) {
+        if (view->field26C == NULL) {
+            if (view->object3A0 != NULL)
+                reinterpret_cast<CActParamAnimObjVt6468*>(view->object3A0)->dispatch64(
+                    view->field4E4);
+            view->field0C &= ~0x40u;
+        } else {
+            view->field0C |= 0x2000000;
+            if (view->object3A0 != NULL) {
+                view->field4E4 =
+                    reinterpret_cast<CActParamAnimObjVt6468*>(view->object3A0)->dispatch68();
+                reinterpret_cast<CActParamAnimObjVt6468*>(view->object3A0)->dispatch64(
+                    view->field26C[8]);
+            }
+        }
+    } else if (view->field26C != NULL) {
+        view->field0C |= 0x2000000;
+        if (view->object3A0 != NULL) {
+            view->field4E4 =
+                reinterpret_cast<CActParamAnimObjVt6468*>(view->object3A0)->dispatch68();
+            reinterpret_cast<CActParamAnimObjVt6468*>(view->object3A0)->dispatch64(
+                view->field26C[8]);
+        }
+    }
+
+    if (view->field2C >= 0) view->field374 = view->field2C;
+
+    if (((view->field274 & 0x20) != 0 || (view->field270 & 0x20) != 0) &&
+        (view->field0C & 0x4000000) == 0) {
+        view->field45C = view->field44C;
+        view->field0C &= ~0x1000u;
+        view->field464 = reinterpret_cast<const f32&>(view->field3AC);
+    }
+
+    func_80054980(reinterpret_cast<ActParamWalkHost*>(view->mChildData10));
+    view->field4BD = 0;
+    view->field4D6 = 0;
+    view->field4BE = 0;
+    view->field4BF = 0;
+    view->field4C0 = 0;
+    if (sel == 0) {
+        if (func_804978D0(view->object3A0 + 0xC) == 0)
+            func_800554DC(view->mChildData10, 0);
+    } else {
+        if (func_80497914(view->object3A0 + 0xC) == 0)
+            func_800554DC(view->mChildData10, 1);
+    }
+    view->field4C4 = 0;
+}
 
 void CActParamAnim::func_8004C5E8() {}
 
@@ -455,7 +690,172 @@ void* CActParamAnim::getModelObj() {
     return *(void**)((char*)this + 0x27c);
 }
 
-void func_8004C608(){}
+// Position-delta sources on the model objects returned by func_80496264:
+// previous position at +0x10C, current at +0x138.
+struct CActParamAnimDeltaSrcA {
+    u8 _pad[0x10C];
+    f32 x;
+    f32 y;
+    f32 z;
+};
+struct CActParamAnimDeltaSrcB {
+    u8 _pad[0x138];
+    f32 x;
+    f32 y;
+    f32 z;
+};
+
+// Per-frame movement-direction update. Zeroes the anim offset triple
+// (+0x3CC/+0x3D0/+0x3D4), blends the heading (+0x440) from either the owner's
+// stored value, the sub-object's frame-to-frame position delta, or field444,
+// then writes the resulting sin/cos-scaled offsets back into the triple.
+// Plateau packet for func_8004C608 (best 344 mismatch / 297 structural /
+// 47 reg-swap, decomp 1296B vs retail 1400B, size PASS):
+// - Semantics fully reconstructed (heading blend + sin/cos offset triple).
+// - Known residual walls (same families as func_8004D2F8/D4AC packets):
+//   the "finished" gate appears twice and retail emits fcmpo with the const
+//   as frA plus mfcr/srwi materialization that no source form reproduces;
+//   retail keeps resX/Y/Z as memory locals copied word-wise at the tail
+//   (VEC3 local adopted, closest so far); fabs must be (f32)__fabs((f64)x)
+//   intrinsics, never fabsf calls.
+// - Tried: direct if-return vs guard-int flag (guard-int WORSE, 302/345),
+//   single owner variable with explicit reloads, early noOwner bool so all
+//   six zero-stores precede the early-return branch.
+// - Next experiments: reorder the two finished-gate copies to share one
+//   code shape; try word-copy (u32) assignment of res into field3CC/3D0/3D4.
+void func_8004C608(CActParamAnim* self) {
+    CActParamAnimStateView* view = reinterpret_cast<CActParamAnimStateView*>(self);
+    view->field3CC = ml::CVec3::zero.x;
+    nw4r::math::VEC3 res;
+    res.x = ml::CVec3::zero.x;
+    CActParamAnimOwnerIf* owner = view->owner08;
+    bool noOwner = owner == NULL;
+    view->field3D0 = ml::CVec3::zero.y;
+    res.y = ml::CVec3::zero.y;
+    res.z = ml::CVec3::zero.z;
+    view->field3D4 = ml::CVec3::zero.z;
+    if (noOwner) return;
+    owner->v1();
+    // The 0x274 flag suppresses the whole update unless the 0x270 override
+    // bit is also set.
+    if ((view->field274 & 0x100000) != 0 && (view->field270 & 0x200000) == 0) return;
+
+    // Heading offset saved before the dispatch below.
+    f32 saved = owner->field0C;
+    if (owner->v2() != 0) {
+        // "Anim finished" gate: skip when the scaled remaining time is spent.
+        owner = view->owner08;
+        bool finished;
+        if (owner == NULL || view->field394 == lbl_eu_80665EA0) {
+            finished = true;
+        } else {
+            finished = (owner->field14 * view->field430) < lbl_eu_80665ECC;
+        }
+        if (!finished) {
+            // Derive the heading from the sub-object's frame-to-frame move.
+            u8* obj = view->object3A0;
+            void* objA = func_80496264(*(void**)(obj + 4), -1);
+            void* objB = func_80496264(*(void**)(obj + 4), -1);
+            nw4r::math::VEC3 diff;
+            diff.x = reinterpret_cast<CActParamAnimDeltaSrcB*>(objB)->x -
+                     reinterpret_cast<CActParamAnimDeltaSrcA*>(objA)->x;
+            diff.y = reinterpret_cast<CActParamAnimDeltaSrcB*>(objB)->y -
+                     reinterpret_cast<CActParamAnimDeltaSrcA*>(objA)->y;
+            diff.z = reinterpret_cast<CActParamAnimDeltaSrcB*>(objB)->z -
+                     reinterpret_cast<CActParamAnimDeltaSrcA*>(objA)->z;
+            bool xySmall = (f32)__fabs((f64)diff.x) <= lbl_eu_8066A208 &&
+                           (f32)__fabs((f64)diff.y) <= lbl_eu_8066A208;
+            if (!(xySmall && (f32)__fabs((f64)diff.z) <= lbl_eu_8066A208)) {
+                // Horizontal direction only: y is forced to zero and the
+                // delta's y feeds dir.z.
+                nw4r::math::VEC3 dir;
+                dir.x = diff.x;
+                dir.z = diff.y;
+                dir.y = lbl_eu_80665EA0;
+                if (dir.z * dir.z + dir.x * dir.x + dir.y * dir.y == lbl_eu_80665EA0) {
+                    dir = *reinterpret_cast<const nw4r::math::VEC3*>(&ml::CVec3::zero);
+                } else {
+                    PSVECNormalize(dir, dir);
+                }
+                view->field440 =
+                    lbl_eu_80665ED0 * nw4r::math::Atan2FIdx(dir.x, dir.z) - saved;
+            }
+        }
+    } else {
+        // Same finished gate; when not finished the owner's saved heading is
+        // adopted directly, otherwise fall back to field444 under the flag.
+        owner = view->owner08;
+        bool finished;
+        if (owner == NULL || view->field394 == lbl_eu_80665EA0) {
+            finished = true;
+        } else {
+            finished = (owner->field14 * view->field430) < lbl_eu_80665ECC;
+        }
+        if (!finished) {
+            view->field440 = saved;
+        } else {
+            if ((view->field0C & 0x400) != 0) {
+                view->field440 = view->field444;
+            }
+        }
+    }
+
+    // Clear the one-shot heading-hold flag.
+    if ((view->field0C & 0x400) != 0) {
+        view->field0C &= ~0x400;
+    }
+    // Wrap the blended heading into [-pi, pi].
+    if (view->field440 > lbl_eu_8066A1F8) view->field440 -= lbl_eu_8066A1FC;
+    if (view->field440 < -lbl_eu_8066A1F8) view->field440 += lbl_eu_8066A1FC;
+    // Distance from the stored target angle, wrapped to [-pi, pi].
+    f32 d = view->field440 - view->field444;
+    while (lbl_eu_8066A1F8 <= d) d -= lbl_eu_8066A1FC;
+    while (d < -lbl_eu_8066A1F8) d += lbl_eu_8066A1FC;
+    f32 m = (f32)__fabs((f64)(d * lbl_eu_8066A20C));
+    if (m > lbl_eu_80665ED4) m -= lbl_eu_80665ED4;
+    if (m <= lbl_eu_80665E9C) {
+        // Close enough to the target: count the guard down.
+        s16 g = view->field4D4;
+        if (g > 0) view->field4D4 = g - 1;
+    } else {
+        view->field4D4 = 3;
+    }
+    owner = view->owner08;
+    f32 speed = lbl_eu_80665EA0;
+    f32 prod = owner->field14 * view->field430;
+    if (prod < lbl_eu_80665ECC) speed = owner->field14 * view->field394;
+    f32 sx = lbl_eu_80665ED8 * view->field440;
+    f32 spf1 = CDeviceVI::getSecPerFrame();
+    f32 sinv = nw4r::math::SinFIdx(sx);
+    res.x = speed * sinv * (lbl_eu_80665EC4 * view->field43C / lbl_eu_80665EC8) *
+            (view->field390 * spf1);
+    f32 cosv = nw4r::math::CosFIdx(sx);
+    f32 spf2 = CDeviceVI::getSecPerFrame();
+    res.z = speed * cosv * (lbl_eu_80665EC4 * view->field43C / lbl_eu_80665EC8) *
+            (view->field390 * spf2);
+
+    if ((view->field270 & 0x100) == 0) return;
+    if ((view->field0C & 0x2) != 0) {
+        view->field3CC = res.x;
+        view->field3D0 = res.y;
+        view->field3D4 = res.z;
+        return;
+    }
+    if ((view->field270 & 0x20) == 0) {
+        view->field3CC = res.x;
+        view->field3D0 = res.y;
+        view->field3D4 = res.z;
+        return;
+    }
+    // Curved-turn branch: offsets swing around the turn radius.
+    f32 amp2 = speed * (lbl_eu_80665EC4 * view->field43C / lbl_eu_80665EC8);
+    view->field3CC = view->field398 * (amp2 * nw4r::math::SinFIdx(lbl_eu_80665ED8 * view->field440));
+    view->field3D4 = view->field398 * (amp2 * nw4r::math::CosFIdx(lbl_eu_80665ED8 * view->field440));
+    f32 sc = view->field390 * CDeviceVI::getSecPerFrame();
+    view->field3CC *= sc;
+    view->field3D4 *= sc;
+    view->field440 = view->field444;
+}
 
 extern "C" void func_8004CB80(f32* out, const f32* a, const f32* b){
     nw4r::math::VEC3 result =
@@ -999,6 +1399,74 @@ void CActParamAnim::clearEffObj() {
     *(int *)((char *)this + 0x4c0) = 0;
 }
 
+
+extern "C" void* func_8004B344(CActParamAnim* self) {
+    return reinterpret_cast<u8*>(self) + 16;
+}
+
+extern "C" f32 func_8004B34C(CActParamAnim* self) {
+    return *(f32*)(reinterpret_cast<u8*>(self) + 0x43C);
+}
+
+extern "C" void* func_8004B51C(CActParamAnim* self) {
+    return *(void**)(reinterpret_cast<u8*>(self) + 8);
+}
+
+extern "C" u32 func_8004B524() {
+    return 1;
+}
+
+extern "C" void func_8004B730(CActParamAnim* self, void* val) {
+    *(void**)(reinterpret_cast<u8*>(self) + 8) = val;
+}
+
+extern "C" void func_8004B840(CActParamAnim* self, f32 val) {
+    *(f32*)(reinterpret_cast<u8*>(self) + 0x3C4) = val;
+}
+
+extern "C" void func_8004B5F0(void* dstObj, const f32* srcVec) {
+    u8* base = reinterpret_cast<u8*>(dstObj);
+    *(u32*)(base + 12) = *(const u32*)&srcVec[0];
+    *(u32*)(base + 16) = *(const u32*)&srcVec[1];
+    *(u32*)(base + 20) = *(const u32*)&srcVec[2];
+}
+
+extern "C" void func_8004B60C(void* out, f32 a, f32 b, f32 c) {
+    *(f32*)(reinterpret_cast<u8*>(out) + 0) = a;
+    *(f32*)(reinterpret_cast<u8*>(out) + 4) = b;
+    *(f32*)(reinterpret_cast<u8*>(out) + 8) = c;
+}
+
+extern "C" void func_8004B694(u32* flags, u32 mask) {
+    *flags &= ~mask;
+}
+
+extern "C" void func_8004B79C(f32* out, const f32* src) {
+    out[0] = src[0];
+    out[1] = src[1];
+    out[2] = src[2];
+}
+
+extern "C" void func_8004B7C0(CActParamAnim* self, const u32* srcVec) {
+    u8* base = reinterpret_cast<u8*>(self);
+    *(u32*)(base + 0x3C0) = srcVec[0];
+    *(u32*)(base + 0x3C4) = srcVec[1];
+    *(u32*)(base + 0x3C8) = srcVec[2];
+}
+
+extern "C" int func_8004B3D8(u32* flags, u32 mask) {
+    u32 tmp = *flags & mask;
+    return ((-(u32)tmp | tmp) >> 31) & 1;
+}
+
+extern "C" void* func_8004B9B8(CActParamAnim* self) {
+    void* ptr = *(void**)(reinterpret_cast<u8*>(self) + 8);
+    if (ptr == NULL) {
+        return *(void**)(reinterpret_cast<u8*>(self) + 0x4B4);
+    }
+    return *(void**)(reinterpret_cast<u8*>(ptr) + 24);
+}
+
 void CActParamAnim::func_8004DAE0() {}
 
 // Retail symbol is Fv but the body reads r4 (one extra param) — forced-name
@@ -1429,7 +1897,9 @@ int func_8004E828__13CActParamAnimFv(CActParamAnim* self, u32 param) {
     return 1;
 }
 
-void CActParamAnim::func_8004E9EC() {}
+void func_8004E9EC__13CActParamAnimFv(CActParamAnim* self) {
+    // TODO: reconstruct body (retail 0x26c bytes)
+}
 
 f32 func_8004EC78(f32 value) {
     // nw4r FSqrt semantics: warn on negative input, then x<=0 ? 0 : x*FrSqrt(x).
@@ -1456,24 +1926,26 @@ int func_8004ECF4__13CActParamAnimFv(CActParamAnim* self, u32 param) {
     if ((flags & 0x2) != 0) return 0;
     if (sview->field4D8 <= 2) return 0;
 
+    // Movement gate: horizontal anim delta above threshold, or the stopped
+    // fallback (direction below gate, clamped Y, and last value outside band).
     f32 v1 = view->field3AC - view->field47C;
-    f32 v2 = view->field488 - view->field3AC;
     int gate = v1 >= lbl_eu_80665EF8;
-    int r5 = 0;
-    int r0 = 0;
+    f32 v2 = view->field488 - view->field3AC;
+    int stop = 0;
+    int cond = 0;
     if (view->field3DC < lbl_eu_80663D48 && view->field3C4 <= lbl_eu_80665EFC) {
-        r0 = 1;
+        cond = 1;
     }
-    if (r0 != 0) {
-        r0 = 0;
+    if (cond != 0) {
+        cond = 0;
         if (v2 <= lbl_eu_80665EA0 || v2 >= lbl_eu_80665F00) {
-            r0 = 1;
+            cond = 1;
         }
-        if (r0 != 0) {
-            r5 = 1;
+        if (cond != 0) {
+            stop = 1;
         }
     }
-    if (gate == 0 && r5 == 0) return 0;
+    if (gate == 0 && stop == 0) return 0;
 
     u32 localSmall;
     u32 localBig;
@@ -2065,7 +2537,122 @@ int func_80050744__13CActParamAnimFv(CActParamAnim* self, u32 param) {
     return 0;
 }
 
-void CActParamAnim::func_80050890() {}
+// Anim-start request dispatcher variant (forced-name free function): compares
+// val against our own eff timer (+0x4C0) when armed, else against the owner
+// object's +0x18 timer (or fallback timer +0x4B4 when no owner). On a match
+// latches val into +0x4C4 (only on the +0x4C0 half), then runs the same
+// small (<0x68, func_80054170) / big (func_80054614) split as func_8004F5FC.
+// Each half shares one pass/fail exit pair placed between halves (as retail
+// emits them), hence the gotos.
+#define ACT_PARAM_ANIM_START_SMALL(outLocal, passLabel)                         \
+    do {                                                                        \
+        if ((view->field0C & 0x40000) != 0 && param == 0x12) {                  \
+            goto passLabel;                                                     \
+        }                                                                       \
+        if (view->field4BD == 0) {                                              \
+            view->field4BD = 0;                                                 \
+        }                                                                       \
+        flag = 0;                                                               \
+        model = view->field2FC;                                                 \
+        b = view->field4BD;                                                     \
+        view->field0C &= ~0x200u;                                               \
+        model = (model != 0) ? model : view->field27C;                          \
+        if (model == 1) {                                                       \
+            u32 m = view->field270;                                             \
+            if ((m & 0x10) == 0 && (m & 0x8) == 0) flag = 1;                    \
+        }                                                                       \
+        u32 startRet =                                                          \
+            func_80054170(view->mChildData10, &outLocal, param, b, flag);        \
+        func_8004BDCC(self, outLocal, startRet, view->field2A4, 0);              \
+        view->field0C &= ~0x200u;                                               \
+    } while (0)
+
+#define ACT_PARAM_ANIM_START_BIG(outLocal)                                      \
+    do {                                                                        \
+        flag = 0;                                                               \
+        if (view->field278 == 1) {                                              \
+            u32 m = view->field270;                                             \
+            if ((m & 0x10) == 0 && (m & 0x8) == 0) flag = 1;                    \
+        }                                                                       \
+        u32 ret = func_80054614(view->mChildData10, &outLocal, param, flag, 0); \
+        func_8004BDCC(self, outLocal, ret, view->field2A4,                      \
+                      (view->field0C >> 9) & 1);                                \
+    } while (0)
+
+int func_80050890__13CActParamAnimFv(CActParamAnim* self, u32 param, s32 val) {
+    CActParamAnimStateView* view = reinterpret_cast<CActParamAnimStateView*>(self);
+    // Shared scratch across the three halves.
+    u32 model;
+    u8 b;
+    u32 flag;
+    if (view->field4C0 != 0) {
+        if (static_cast<s32>(view->field4C0) != val) {
+            goto failSelf;
+        }
+        view->field4C4 = val;
+        if (param == 0) {
+            goto passSelf;
+        }
+        if (param < 0x68) {
+            // The 0x40000 guard flag skips the anim start while the requested
+            // anim is 0x12 (same guard as the sibling helpers).
+            u32 localSmall;
+            ACT_PARAM_ANIM_START_SMALL(localSmall, passSelf);
+        } else {
+            u32 localBig;
+            ACT_PARAM_ANIM_START_BIG(localBig);
+        }
+        goto passSelf;
+passSelf:
+    return 1;
+failSelf:
+    return 0;
+    }
+    if (view->owner08 == 0) {
+        // No owner attached: match against the eff-timer fallback.
+        if (static_cast<s32>(view->field4B4) != val) {
+            goto failFallback;
+        }
+        if (param == 0) {
+            goto passFallback;
+        }
+        if (param < 0x68) {
+            u32 localSmall;
+            ACT_PARAM_ANIM_START_SMALL(localSmall, passFallback);
+        } else {
+            u32 localBig;
+            ACT_PARAM_ANIM_START_BIG(localBig);
+        }
+        goto passFallback;
+passFallback:
+    return 1;
+failFallback:
+    return 0;
+    } else {
+        // Owner object attached: match against its +0x18 timer.
+        // (Operand order reversed vs the other halves - retail emits cmpw r5, r0.)
+        if (val != static_cast<s32>(view->owner08->field18)) {
+            goto failOwner;
+        }
+        if (param == 0) {
+            goto passOwner;
+        }
+        if (param < 0x68) {
+            u32 localSmall;
+            ACT_PARAM_ANIM_START_SMALL(localSmall, passOwner);
+        } else {
+            u32 localBig;
+            ACT_PARAM_ANIM_START_BIG(localBig);
+        }
+        goto passOwner;
+    }
+passOwner:
+    return 1;
+failOwner:
+    return 0;
+#undef ACT_PARAM_ANIM_START_SMALL
+#undef ACT_PARAM_ANIM_START_BIG
+}
 
 // Retail symbol is Fv but the body reads r4/r5 (anim id + rng arg) —
 // forced-name free function, same scheme as func_80053164__13CActParamAnimFv.
@@ -3076,6 +3663,41 @@ void func_800527E8(CActParamAnim* self) {
     }
 }
 
+
+extern "C" void func_80051B84(CActParamAnim* self) {
+    u32 flags = *(u32*)(reinterpret_cast<u8*>(self) + 12);
+    *(u32*)(reinterpret_cast<u8*>(self) + 0x4A8) = 0x00044A05;
+    *(u32*)(reinterpret_cast<u8*>(self) + 0x0C) = flags | 0x00800000;
+}
+
+extern "C" int func_80052540(CActParamAnim* self) {
+    return (*(u32*)(reinterpret_cast<u8*>(self) + 0x260) >> 13) & 1;
+}
+
+extern "C" f32 func_8005254C(CActParamAnim* self) {
+    return *(f32*)(reinterpret_cast<u8*>(self) + 0x4A0);
+}
+
+extern "C" f32 func_80052554(void* obj) {
+    return *(f32*)(reinterpret_cast<u8*>(obj) + 16);
+}
+
+
+extern "C" int func_80052568(void* data) {
+    u32 mode = *(u32*)(reinterpret_cast<u8*>(data) + 0x260);
+    u32 cleared = mode & ~0x7000;
+    *(u32*)(reinterpret_cast<u8*>(data) + 0x260) = cleared;
+    return 0;
+}
+
+extern "C" void func_80052924(CActParamAnim* self, f32 param) {
+    *(f32*)(reinterpret_cast<u8*>(self) + 0x3C4) *= param;
+}
+
+extern "C" int func_8005255C(CActParamAnim* self) {
+    return (*(u32*)(reinterpret_cast<u8*>(self) + 0x260) >> 16) & 1;
+}
+
 void CActParamAnim::mulVec3Y(float param_2) {
     *(float*)((char*)this + 0x3c4) *= param_2;
 }
@@ -3085,9 +3707,27 @@ void CActParamAnim::mulVec3Y(float param_2) {
 // applied twice depending on the 0x100000 flag), then either commits the new
 // position to the attached sub-object or reports arrival through the +0xE8
 // virtual.
+// Open-item packet (us-80052f6c, best ~531 mismatch / ~484 structural / 47
+// reg-swap, decomp 2148B vs retail 2096B, size PASS):
+// - Semantics fully reconstructed (history shift, flag juggling, snap/decay
+//   clamps, blend countdown, ground probe, FrSqrt len + cap, overshoot
+//   scaling, dispatchE8/BCC10 branches, commit, tail cleanup).
+// - Residual 1: decomp frame is 192B vs retail 176B - one extra saved GPR
+//   (r30). Routed every call through the single state-view local (`s`) and it
+//   did not drop; the extra live value is likely a VEC3 local MWCC keeps in
+//   r30 that retail keeps on the stack.
+// - Residual 2: history-shift load order - retail loads px(3A8) first then
+//   py/pz before any store; our build hoists flags first and defers the px
+//   load. Explicit temps did not reproduce retail's scheduling.
+// - Tail semantics CORRECTED vs banked draft: retail clears 0x10 always,
+//   then (when bit1 set) clears 0x80 and zeroes byte 0x498 - NOT ~0x180.
+//   Also corrected: field3C4 stored BEFORE flags |= 2 in the dispatchE8-hit
+//   branch (order swapped in the BCC10-false branch).
+// - Next experiments: identify the r30 value from a full decomp disasm;
+//   try splitting the advance-block VEC3 locals into component floats to
+//   push them to stack slots.
 void CActParamAnim::func_80052934() {
     CActParamAnimStateView* s = reinterpret_cast<CActParamAnimStateView*>(this);
-    CActParamAnimInitView* iv = reinterpret_cast<CActParamAnimInitView*>(this);
 
     // Shift the position history: 3A8/3AC/3B0 -> 3B4/3B8/3BC.
     s->field3B4 = s->field3A8;
@@ -3113,10 +3753,11 @@ void CActParamAnim::func_80052934() {
 
         if ((flags & 0x10000) != 0) {
             // Snap mode: clamp the direction triple to the per-frame limit.
-            func_800504DC(this);
+            func_800504DC(reinterpret_cast<CActParamAnim*>(s));
             f32 speed = s->field390;
+            f32 base = s->field380;
             f32 sec = CDeviceVI::getSecPerFrame();
-            f32 limit = s->field384 * s->field380 * (speed * sec);
+            f32 limit = s->field384 * base * (speed * sec);
             nw4r::math::VEC3 v;
             v.x = s->field3C0;
             v.y = lbl_eu_80665EA0;
@@ -3149,8 +3790,9 @@ void CActParamAnim::func_80052934() {
             if ((s->field0C & 0x2) != 0) {
                 // Same per-frame clamp as above, active while bit30 is set.
                 f32 speed = s->field390;
+                f32 base = s->field380;
                 f32 sec = CDeviceVI::getSecPerFrame();
-                f32 limit = s->field384 * s->field380 * (speed * sec);
+                f32 limit = s->field384 * base * (speed * sec);
                 nw4r::math::VEC3 v;
                 v.x = s->field3C0;
                 v.y = lbl_eu_80665EA0;
@@ -3255,11 +3897,13 @@ void CActParamAnim::func_80052934() {
             }
             s->field448 = len;
             if ((s->field0C & 0x80) == 0) {
-                if ((s->field270 & 0x20) != 0 && iv->field498 != 0) {
+                if ((s->field270 & 0x20) != 0 &&
+                    reinterpret_cast<CActParamAnimInitView*>(s)->field498 != 0) {
                     // Scale the step down so it never overshoots the last
                     // committed anim value.
                     f32 rl = (f32)len;
-                    f32 last = iv->field48C;
+                    f32 last =
+                        reinterpret_cast<CActParamAnimInitView*>(s)->field48C;
                     if (rl > last) {
                         f32 k = last / rl;
                         p.x *= k;
@@ -3292,12 +3936,13 @@ void CActParamAnim::func_80052934() {
         func_804BC9EC();
         if (func_804BCC10() != 0) {
             if ((s->field0C & 0x00400000) != 0) {
-                func_80053198(this, reinterpret_cast<const ml::CVec3*>(&p));
+                func_80053198(reinterpret_cast<CActParamAnim*>(s),
+                              reinterpret_cast<ml::CVec3*>(&p));
             }
-            if (reinterpret_cast<CActParamAnimVtE8*>(this)->dispatchE8(
+            if (reinterpret_cast<CActParamAnimVtE8*>(s)->dispatchE8(
                     reinterpret_cast<const ml::CVec3*>(&cur)) != 0) {
-                s->field0C |= 0x2;
                 s->field3C4 = lbl_eu_80665EA0;
+                s->field0C |= 0x2;
             } else {
                 if ((s->field0C & 0x40) == 0) {
                     s->field0C &= ~0x2;
@@ -3326,16 +3971,15 @@ void CActParamAnim::func_80052934() {
     }
 
     if ((s->field0C & 0x20) == 0) {
-        func_80051CD4(this);
+        func_80051CD4(reinterpret_cast<CActParamAnim*>(s));
     }
-    // Final flag cleanup: clear the pending-arrival bits.
-    u32 fl = s->field0C;
+    // Final flag cleanup: always drop 0x10; when the arrival bit (0x2) is
+    // set, also drop 0x80 and reset the last-anim-value byte.
+    u32 fl = s->field0C & ~0x10u;
+    s->field0C = fl;
     if ((fl & 0x2) != 0) {
-        fl &= ~0x10;
-        s->field0C = fl;
-        iv->field498 = 0;
-        fl &= ~0x180;
-        s->field0C = fl;
+        reinterpret_cast<CActParamAnimInitView*>(s)->field498 = 0;
+        s->field0C = fl & ~0x80u;
     }
 }
 
@@ -3351,6 +3995,26 @@ void func_80053164__13CActParamAnimFv(CActParamAnim* self, void* a, void* b) {
 void func_80053198(CActParamAnim* self, const ml::CVec3* v) {}
 
 // func_80053490: align the anim quaternion at +0x414 to the Y axis.
+// Open-item packet (banked rank 4, best 296 mismatch / 232 structural / 64
+// reg-swap, decomp 1220B vs retail 1224B, no size fail):
+// - Residual is pervasive instruction-order drift from the prologue onward:
+//   retail evaluates cmpwi r4,0 FIRST (before LR/spill stores), parks param
+//   in r29 then dir=r30=param and self=r28 last, and recomputes &unitY into
+//   a scratch reg for each of the three inline paired-single dot products;
+//   our build groups the spills first and keeps different temps live.
+// - Ruled out (this session): hoisting `dir = dirParam` before the null
+//   check with view second (303/260, +4B); inline component-form dot
+//   expressions `x*ux+y*uy+z*uz` with a shared `const CVec3& uy` reference
+//   (adds a 5th live pointer -> _savegpr_27/_restgpr_27 helpers appear,
+//   frame 176->192, 303/260) - the reference local must NOT be used; inline
+//   component-form dots WITHOUT a ref (3x direct ml::CVec3::unitY member
+//   access, 301/266, +24B - MWCC does not fold the expanded form back into
+//   psq_l/ps_mul/ps_madd/ps_sum0 like ml::CVec3::dot does, so dot() is the
+//   correct spelling for all three dot sites).
+// - Next experiments: statement reorder of
+//   the FSqrt-inlined quat writes (retail emits 420 before 41C in both late
+//   branches), and matching the probe-call float-arg liveness (f2=EA0 held
+//   across the sum computation).
 // When dirParam is null the direction is recovered from the sub-object state
 // (+0x3A8) through the probe helpers and the current quaternion is slerped
 // toward the result; when non-null the caller-provided direction is used and
@@ -3490,6 +4154,35 @@ int CActParamAnim::getChainInt() {
 }
 
 extern u8 lbl_eu_80663D4C;
+
+void func_80051A9C(CActParamAnim* self) {
+    *(f32*)(reinterpret_cast<u8*>(self) + 0x3C4) = lbl_eu_80665EA0;
+}
+
+
+extern "C" void func_80051AA8(CActParamAnim* self, u32 param) {
+    if (param != 0) {
+        *(u32*)(reinterpret_cast<u8*>(self) + 12) |= 2;
+        return;
+    }
+    *(u32*)(reinterpret_cast<u8*>(self) + 12) &= 0xBFFFFFFFu;
+}
+
+
+extern "C" f32 func_80053958() {
+    return lbl_eu_80665ECC;
+}
+
+extern "C" u32 func_80053960(ActParamData388* obj) {
+    u8* base = reinterpret_cast<u8*>(obj);
+    if (*(u32*)(base + 0x4C4) != 0)
+        return *(u32*)(base + 0x4C4);
+    void* ptr = *(void**)(base + 8);
+    if (ptr != 0)
+        return *(u32*)(reinterpret_cast<u8*>(ptr) + 24);
+    return *(u32*)(base + 0x4B4);
+}
+
 extern "C" void func_eu_80053FC8() { lbl_eu_80663D4C = 0; }
 
 extern "C" u8 func_eu_80053FD4() { return lbl_eu_80663D4C; }

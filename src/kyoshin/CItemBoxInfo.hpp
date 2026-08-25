@@ -180,6 +180,8 @@ struct CItemBoxInfoEntry {
 };
 
 // 8-byte color (4 s16 channels) used by the item-box layout renderer.
+// Colour quad used by the item-box layout renderer. The default ctor is
+// zero-initializing; stack locals are built member-wise at their use sites.
 struct CItemBoxQuadColor {
     s16 r, g, b, a;
     CItemBoxQuadColor() : r(0), g(0), b(0), a(0) {}
@@ -207,6 +209,13 @@ struct CItemBoxSlotFlags {
     u8 flags[22];    // 0x06 (f1 @ +0, f2 @ +7, f3 @ +14)
 };
 
+// Word-array view: assigning the union copies the whole 0x1C-byte object as
+// one block, reproducing the retail mtctr 8-byte-pair copy loop.
+union CItemBoxSlotFlagsAny {
+    CItemBoxSlotFlags rec;
+    u32 w[7];
+};
+
 // 0x34-byte per-slot comparison record built by func_801D4E2C / func_801E197C
 // and copied out as one unit. The three flag banks at +0x1D/+0x24/+0x2B hold
 // per-slot {1,2,0} comparison results (candidate vs current item values); the
@@ -230,21 +239,56 @@ struct CItemBoxCompRecord {
 
 
 // 0xA4-byte item-name record written by func_801D5564 (copied out as one
-// unit): count byte, label string pointer, name buffer, two state bytes, an
-// equip-state colour and a 0x20-byte text buffer used by the SJIS-aware
-// width scan.
+// unit): header word, count byte, label string pointer, 0x10-byte name
+// buffer, two state bytes, an equip-state colour and a 0x20-byte text buffer
+// used by the SJIS-aware width scan; the 0xA4 copy drags in the unused tail.
 struct CItemBoxNameRecord {
     u32 _00;        // 0x00
     u8 count;       // 0x04
     u8 _05[3];      // 0x05
     u32 str;        // 0x08
-    char name[0x20];// 0x0C
-    u8 e0;          // 0x2C
-    u8 e1;          // 0x2D
-    u8 _2E[2];      // 0x2E
-    u32 color;      // 0x30
-    char text[0x20];// 0x34
-    u8 _54[0x50];   // 0x54..0xA3
+    char name[0x10];// 0x0C..0x1B
+    u8 e0;          // 0x1C
+    u8 e1;          // 0x1D
+    u8 _1E[2];      // 0x1E
+    u32 color;      // 0x20
+    char text[0x20];// 0x24..0x43
+    u8 _44[0x60];   // 0x44..0xA3
+};
+
+// Stack copy of the static label-pointer table (lbl_eu_8050634C): a header
+// word precedes the four char* entries; padded so the 0x1C-byte move stays a
+// 3-pair mtctr loop + 4-byte tail.
+struct CItemBoxLabelTable {
+    u32 hdr;         // 0x00
+    char* labels[4]; // 0x04
+    u32 tail[2];     // 0x14..0x1B
+};
+
+// u32-returning view of CItemImplVt::_v54: retail keeps the raw call result
+// live in a register and narrows at each use site, so the interface must not
+// force a u16 narrowing at the call.
+struct CItemImplVt54 {
+    virtual void _v08();
+    virtual void _v0C();
+    virtual void _v10();
+    virtual void _v14();
+    virtual void _v18();
+    virtual void _v1C();
+    virtual void* _v20(void* item);
+    virtual void _v24();
+    virtual void _v28();
+    virtual CItemBoxSubRecord* _v2C(void* item, u32 i);
+    virtual u8 _v30(void* item);
+    virtual void _v34();
+    virtual void _v38();
+    virtual void _v3C();
+    virtual s16 _v40(void* item, u32 i);
+    virtual void _v44();
+    virtual void _v48();
+    virtual u16 _v4C(void* item, u32 i);
+    virtual void _v50();
+    virtual u32 _v54(void* item);  // vtable+0x54 (raw slot 21)
 };
 
 // 0xA4-byte item-name record written by func_801E20FC (ItemBox2 twin of
@@ -293,6 +337,7 @@ struct CItemBoxLabelRec {
 };
 
 extern "C" char lbl_eu_805063BC[];
+extern "C" char lbl_eu_8050634C[];
 extern "C" char lbl_eu_80506380[];extern "C" void func_80136B4C(nw4r::lyt::Layout*, const char*, const char*, u32);
 extern "C" int func_8026178C(void*, u32);extern "C" u32 func_8025FB10(void*, u32);
 extern "C" u32 func_80137510(nw4r::lyt::AnimTransform*, float);
@@ -355,11 +400,11 @@ extern "C" void* CItem_initItemImplInstances(void*);
 #define CItem_initItemImplInstances(item) itemimplshim::CItem_initItemImplInstances(item)
 extern "C" void func_801D62F8(void*, u32, const void*);
 extern "C" void func_801D8930(CItemBoxInfo*);
-// 9-byte flag-record builder: (out, unused, data) — param2 is never read in
+// 9-byte flag-record builder: (out, unused, data) - param2 is never read in
 // retail (callers pass the item-box pointer through it).
 extern "C" void func_801D5AA0(CItemBoxInfo* out, void* unused, void* data);
 extern "C" void func_801E37C4(CItemBoxInfo2*, void*, void*);
-extern "C" u32 func_8013600C(void*, const char*, u32);
+extern "C" u8 func_8013600C(const void*, const void*, u32);
 extern "C" u32 func_800A32BC();
 extern "C" void func_801D4A2C(void*);
 extern "C" int func_801C6E90(void*);
@@ -388,7 +433,75 @@ extern "C" void func_801D8C0C(CItemBoxInfo*);
 extern "C" void func_801E4194(CItemBoxInfo2*);
 extern "C" void func_801E14DC(CItemBoxInfo2*, u16, void*, u16, u32);
 extern "C" void func_801D80EC(CItemBoxInfo*, u16, void*);
-extern "C" void func_801E2638(CItemBoxInfo2*, u16, void*);
+// Slot-selection table filled by func_801E2638: arr[0] is the selected-count
+// category flag, arr[1+i] the per-slot "selected" flag consumed by
+// func_801E2FEC; flag2 is the extra category-gate byte.
+struct CItemBoxSlotSelTable {
+    u32 selWords[2];   // byte [0] = category flag, bytes [1..7] = per-slot flags
+    u8 flag2;          // also selects the row-height label size (0x2c vs 0x2b)
+};
+
+// 0xA0-byte label record written by func_801E20FC and consumed by
+// func_801E3228 (CItemBoxNameRecord2 minus its unused 4-byte tail).
+struct CItemBoxInfo2LabelRec {
+    u32 count;       // 0x00
+    char* str;       // 0x04 - pane text pointer for the fixed label
+    char name[0x10]; // 0x08..0x17 (name[0] checked against '0', used as %s)
+    u8 e0;           // 0x18 equip-state flag
+    u8 e1;           // 0x19
+    u8 _1A[2];
+    u32 color;       // 0x1C
+    char text[0x20]; // 0x20
+    u8 _40[0x60];    // 0x40..0x9F
+};
+
+// Per-slot equip-value entry staged in func_801E3228: the table handle pair
+// comes from two .sdata2 constants, the six s16 values from the slot's item
+// table record.
+struct CItemBoxSlotEntry {
+    u32 tbl;       // 0x00
+    u16 h;         // 0x04
+    u8 _06[2];
+    s16 vals[6];   // 0x08..0x13 ([0] = +0x26 field, [1..5] = +0x1c..+0x24)
+};
+
+// Hoisted table-handle pair (lbl_eu_80668064 / lbl_eu_80668068) staged once
+// before the per-slot loop in func_801E3228.
+struct CItemBoxTagStage {
+    u32 tbl;
+    u16 h;
+};
+
+// POD (ctor-less) 8-byte colours used by func_801E2FEC: the s16 view builds
+// the alpha-only defaults with individual halfword stores, the u32 view lets
+// the selected-item pair move as word loads/stores (retail stw/lwz shape).
+struct CItemBoxColorRaw {
+    s16 r, g, b, a;
+};
+struct CItemBoxColorBlock {
+    u32 w[2];
+};
+
+// Halfword/word dual view of one 8-byte colour: built via the s16 members,
+// moved as whole words (retail lwz/stw shape).
+union CItemBoxColorAny {
+    CItemBoxColorRaw c;
+    CItemBoxColorBlock w;
+};
+// .sdata2 table-handle pair staged by func_801E3228.
+extern const u32 lbl_eu_80668064;
+extern const u16 lbl_eu_80668068;
+// 0x10-byte POD vertex-colour pair passed as one sprintf vararg in
+// func_801E3228; built memberwise (retail stw zero-fill + word copies).
+struct CItemBoxVertexColors {
+    u32 w[4];
+};
+
+// Unmangled retail imports (plain symbol names in the retail binary).
+extern "C" void func_801E20FC(void*, void*, void*, void*);
+extern "C" void func_80136A1C(nw4r::lyt::Layout*, const char*, const char*, u32);
+extern "C" char* func_801394D4(u32);
+extern "C" void func_801E2638(CItemBoxSlotSelTable*, CItemBoxInfo2*, void*);
 extern "C" void* func_801571FC();
 extern "C" void func_80137F88(void*, u32);
 extern "C" void func_80137C1C(void*, u32);
@@ -452,5 +565,13 @@ struct CItemBoxSlotRecord1 {
     u8 counter;    // 0x21 (build counter)
     u16 counts[4]; // 0x22 (indexed up to counter-1)
     u8 _26[2];     // 0x2A - pad to 0x2C
+};
+
+// Word-array view: assigning the union copies the whole object as one block
+// (reproduces the retail mtctr lwzu/stwu pair loop) instead of expanding
+// field-by-field.
+union CItemBoxSlotRecAny1 {
+    CItemBoxSlotRecord1 rec;
+    u32 w[11];
 };
 

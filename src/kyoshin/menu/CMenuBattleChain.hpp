@@ -14,6 +14,7 @@ class Layout;
 class AnimTransform;
 class Pane;
 class ArcResourceAccessor;
+class DrawInfo;
 }
 }
 
@@ -185,6 +186,10 @@ extern u32 lbl_eu_80662DCC;
 
 // Font-pane helper (retail mangled name func_801355A0__Fv).
 u32 func_801355A0();
+
+// lyt DrawInfo lifetime helpers (retail pre-mangled symbol names).
+extern "C" void __ct__Q34nw4r3lyt8DrawInfoFv(nw4r::lyt::DrawInfo* self);
+extern "C" void __dt__Q34nw4r3lyt8DrawInfoFv(nw4r::lyt::DrawInfo* self, int);
 
 // Result of CMenuArtsSelect_getSelectState: signed state bytes at +0x0/+0x1
 // (see cf::chain CArtsSelectStateView).

@@ -126,15 +126,41 @@ int VER1_IsEffFtrInf(void *work, u32 stm_id, u32 *out) {
     return r;
 }
 
+/* Parse a decimal version component; advances *pp past the parsed number and
+   its terminator (the second call's trailing pointer bump is dead and removed). */
+static inline void VER1_ParseVerNum(char **pp, u32 *out) {
+    u32 zz_acc = 0;
+    char *zz_ptr = *pp;
+    int zz_ch;
+    u32 zz_flg;
+    for (;;) {
+        zz_ch = *zz_ptr;
+        if (zz_ch == '.' || zz_ch == ' ' || zz_ch == 0) {
+            break;
+        }
+        zz_flg = 0;
+        if ((u32)(zz_ch - '0') <= 9) {
+            zz_flg = 1;
+        }
+        if (zz_flg == 0) {
+            break;
+        }
+        zz_acc = zz_acc * 10 + zz_ch - '0';
+        zz_ptr++;
+    }
+    *out = zz_acc;
+    *pp = zz_ptr + 1;
+}
+
 int VER1_AnlyHdrToolVer(void *work, u32 *out1, u32 *out2) {
-    char buf[0x50];
-    u32 t1;
-    u32 t2;
-    char *p;
-    u32 hdr_major;
     u32 hdr_minor;
-    u32 ok;
+    u32 hdr_major;
+    u32 t2;
+    u32 t1;
+    char buf[0x50];
+    char *p;
     int c;
+    u32 ok;
 
     *out1 = 0;
     *out2 = 0;
@@ -149,38 +175,8 @@ int VER1_AnlyHdrToolVer(void *work, u32 *out1, u32 *out2) {
         ok = 0;
     } else {
         p += 4;
-        t1 = 0;
-        for (;;) {
-            c = *p;
-            if (c == '.' || c == ' ' || c == 0) {
-                break;
-            }
-            u32 d = 0;
-            if ((u32)(c - '0') <= 9) {
-                d = 1;
-            }
-            if (d == 0) {
-                break;
-            }
-            t1 = t1 * 10 + c - '0';
-            p++;
-        }
-        p++;
-        for (t2 = 0;;) {
-            c = *p;
-            if (c == '.' || c == ' ' || c == 0) {
-                break;
-            }
-            u32 d = 0;
-            if ((u32)(c - '0') <= 9) {
-                d = 1;
-            }
-            if (d == 0) {
-                break;
-            }
-            t2 = t2 * 10 + c - '0';
-            p++;
-        }
+        VER1_ParseVerNum(&p, &t1);
+        VER1_ParseVerNum(&p, &t2);
         ok = 1;
     }
     if (ok == 0) {

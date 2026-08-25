@@ -138,10 +138,12 @@ public:
     FindAnimationLink(AnimTransform* pAnimTrans); // at 0x20
     virtual void SetAnimationEnable(AnimTransform* pAnimTrans,
                                     bool enable); // at 0x24
-    virtual AnimationLink*
+    /* Retail's Material vtable ends here: the AnimResource overloads are
+       NON-virtual members (not in the 0x28-byte vtable). */
+    AnimationLink*
     FindAnimationLink(const AnimResource& rResource); // at 0x28
-    virtual void SetAnimationEnable(const AnimResource& rResource,
-                                    bool enable); // at 0x2C
+    void SetAnimationEnable(const AnimResource& rResource,
+                            bool enable); // at 0x2C
 
     void AddAnimationLink(AnimationLink* pAnimLink);
 

@@ -259,7 +259,11 @@ extern "C" void func_8023FD4C(int mode);
 // retail call site in func_80040B38 passes (self, 0, vec4) with the flat
 // verbatim reloc, so declare the caller's shape (CScnNw4r.hpp's member form
 // would mangle an __FiP... suffix).
-extern "C" void func_8049602C(CScnNw4r* self, int arg1, func_800407C8_tmp* arg2);
+// NOTE: params are void* so this prototype is IDENTICAL to the one in
+// cf/CTaskREvtSequence.hpp - two different extern "C" type lists for the same
+// symbol make any TU that includes both headers fail with "illegal function
+// overloading" (10197). Pointer params are ABI-identical either way.
+extern "C" void func_8049602C(void* scene, int index, void* vec);
 // Scene current-process query (flat retail name; defined in CfGameManager.cpp).
 extern "C" void* func_80496034(CScn* scene);
 
@@ -592,7 +596,7 @@ struct CTaskGameCamView {
     f32 field_8;
     f32 field_C;
 };
-extern "C" CTaskGameCamView* func_8049603C(CScn* scene);
+extern "C" CTaskGameCamView* func_8049603C(CScn* scene); // typed return: callers deref ->field_* (10140 void* deref)
 // func_804960A8 is declared in CfGameManager.hpp (bool (CScn*)).
 
 // Loading-screen object (CLoad) helpers / gates (flat retail names; defined

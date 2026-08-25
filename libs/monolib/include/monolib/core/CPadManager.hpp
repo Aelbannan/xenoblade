@@ -1,6 +1,7 @@
 #pragma once
 
 #include <types.h>
+#include <cstddef>
 #include "monolib/util/MemManager.hpp"
 #include "monolib/math/CVec2.hpp"
 #include "monolib/math/CVec3.hpp"
@@ -145,7 +146,9 @@ struct CPadConfig{
 
 struct CWpadStatus : public KPADStatus {
     float unk84;
-    u8 unk88[0xB00 - 0x88]; //0x88
+    // KPADStatus is 0xB0, +0x4 float -> tail 0xB4..0xB00 (total 0xB00,
+    // matching retail CPadData::mWpadStatuses stride).
+    u8 unk88[0xB00 - 0xB4];
 };
 
 //size: 0xF8
@@ -223,6 +226,11 @@ struct CPad{
 };
 
 struct CPadData {
+    // Layout bisect asserts (retail offsets per comments below)
+    typedef char __cpad_sa[sizeof(CPad) == 0xF8];
+    typedef char __ws_sa[sizeof(CWpadStatus) == 2816];
+    typedef char __ps_sa[sizeof(PADStatus) == 0xC];
+    typedef char __ku_sa[sizeof(KPADUnifiedWpadStatus) == 0x38];
     mtl::ALLOC_HANDLE mAllocHandle;
     CPadConfig mConfig; //0x4
     //The first 4 are for Wii controllers, the last 4 are probably for GC controllers

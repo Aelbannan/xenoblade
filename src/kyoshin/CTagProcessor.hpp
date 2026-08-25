@@ -883,7 +883,7 @@ u16* func_80129008(void* unused, u16* dst, wchar_t* str);
 int func_801365E4(u16* src, u16 delim, u16** outTokens);
 // BDAT s16-keyed lookup (code_80135FDC.cpp): maps a key into the table pair
 // to an s16 value (func_8012A460's tag-2 name chain).
-s16 func_80136130(const void* a, const void* b, u8 key);
+s16 func_80136130(const void* a, const void* b, u32 key); // u32: matches defining TU code_80135FDC.cpp verbatim
 // Message pre-processor: copy the raw message, normalize/compact the buffer
 // (CRLF strip + '<name=value>' tag dispatch), return the buffer.
 u16* func_80125B58(CTagProcessorBase* self, const void* src, f32 a, f32 b,

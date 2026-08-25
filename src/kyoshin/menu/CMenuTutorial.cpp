@@ -7,18 +7,18 @@
 #include "monolib/util/MemManager.hpp"
 #include "monolib/device/CDeviceVI.hpp"
 #include "monolib/scn/CScn.hpp"
-#include "kyoshin/CTaskGame.hpp"
+// CfGameManager.hpp declares func_8049603C as CTaskGameCamView*(CScn*), which
+// conflicts with code_80135FDC.hpp's void*(CScn*). Rename it out for this
+// include (repo convention, see CTaskGame.cpp / CGame.cpp).
+#define func_8049603C menuTutCfGameMgr9603CUnused
 #include "kyoshin/cf/CfGameManager.hpp"
+#undef func_8049603C
 #include "kyoshin/code_80135FDC.hpp"
 #include "monolib/core/CPadManager.hpp"
 
 #include <revolution/GX.h>
 #include <nw4r/lyt/lyt_layout.h>
 #include <nw4r/lyt/lyt_drawInfo.h>
-
-// Retail destructor symbol (mangled member name); C-linkage literal so the
-// IScnRender thunk (func_8029A92C) binds to the real dtor symbol.
-extern "C" void __dt__13CMenuTutorialFv(CMenuTutorial* self);
 
 /*
  * Retail constructor symbol (unmangled global in US). Written as a free
@@ -87,6 +87,11 @@ extern "C" __declspec(noinline) CMenuTutorial* __ct__CMenuTutorial(
     cf::CfGameManager::enablePadFlags(padFlags, true);
     return self;
 }
+
+// Compiler-generated body destroys mTitleAHelp and mTutorial, then chains to
+// the base destructor. The local body-less IScnRender declaration (see
+// CMenuTutorial.hpp) keeps this TU free of a standalone ~IScnRender copy.
+extern "C" void __dt__13CMenuTutorialFv(CMenuTutorial* self);
 
 CMenuTutorial::~CMenuTutorial() {}
 
@@ -184,11 +189,11 @@ void CMenuTutorial::Term() {
 }
 
 void CMenuTutorial::Move() {
-    CTaskGame::getInstance();
+    getInstance__9CTaskGameFv();
     // Gate: skip the whole move when the task is busy or the global mode bit
     // (0x200000) is set. The &&-chain + goto body + return shape reproduces
     // retail's branch-over-branch `beq body; b exit` (MWCC_CASES §8960).
-    if (CTaskGame::func_800426F0() == 0 &&
+    if (func_800426F0__9CTaskGameFv() == 0 &&
         (lbl_eu_80663E28 & (1u << 21)) == 0) {
         goto body;
     }
@@ -213,13 +218,15 @@ body:
     return;
 }
 
-void CMenuTutorial::Draw() {}
+// NOTE: Draw() is intentionally NOT defined here. The class vtable is
+// imported (lbl_eu_805391C0), so nothing odr-uses the override and retail's
+// split for this TU contains no local Draw__13CMenuTutorialFv copy.
 
 void CMenuTutorial::cbRenderBefore() {
-    CTaskGame::getInstance();
+    getInstance__9CTaskGameFv();
     // Gate: skip the render when the task is busy or the global mode bit
     // (0x200000) is set. Same branch-over-branch shape as Move().
-    if (CTaskGame::func_800426F0() == 0 &&
+    if (func_800426F0__9CTaskGameFv() == 0 &&
         (lbl_eu_80663E28 & (1u << 21)) == 0) {
         goto body;
     }
@@ -379,4 +386,4 @@ void func_8029A92C(IScnRender* sub) {
     __dt__13CMenuTutorialFv((CMenuTutorial*)((char*)sub - 0x58));
 }
 
-extern "C" unsigned long func_8029A658(void) { return lbl_eu_80664A28 != 0; }
+unsigned long func_8029A658(void) { return lbl_eu_80664A28 != 0; }

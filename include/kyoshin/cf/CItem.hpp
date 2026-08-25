@@ -256,11 +256,12 @@ struct CItemFamilyBuf {
     /* 0x640 */ s32 mCount;
 };
 
-// Sort helper for __dt__801589BC: sorts the pointer range [base, end) with
 // Sort the pointer range [base, end) using the func_801589A0 comparator
-// (retail symbol unmangled - C linkage).
-extern "C" void func_80158AF4(CItemFamilyRec** base, CItemFamilyRec** end,
-                              u32 (*cmp)(CItemFamilyRec*, CItemFamilyRec*));
+// (retail symbol unmangled - C linkage). The comparator receives element
+// slot addresses; callers pass a record-typed callback whose first field
+// aliases the stored pointer.
+extern "C" void func_80158AF4(u32* base, u32* end,
+                              int (*cmp)(u32*, u32*));
 
 // Comparator used by __dt__801589BC's sort: 1 when a's family id < b's.
 extern "C" u32 func_801589A0(CItemFamilyRec* a, CItemFamilyRec* b);
@@ -496,8 +497,8 @@ extern "C" void func_801591F4(u32* a, u32* b, u32* c, int (**pCmp)(u32*, u32*));
 
 // Recursive half-sort used by func_80158AF4's introsort loop (retail
 // symbol unmangled - C linkage).
-extern "C" void func_80158E74(CItemFamilyRec** base, CItemFamilyRec** end,
-                              u32 (**cmp)(CItemFamilyRec*, CItemFamilyRec*));
+extern "C" void __declspec(noinline) func_80158E74(u32* base, u32* end,
+                              int (**cmp)(u32*, u32*));
 
 // Item-family BDAT resolver (unit-local): returns the BDAT file handle for
 // family id v and writes the kind/row sub-ids into outA/outB. The retail

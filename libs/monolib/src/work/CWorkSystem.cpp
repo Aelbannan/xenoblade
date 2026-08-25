@@ -145,13 +145,26 @@ void CWorkSystem::wkUpdate(){
     }
 }
 
+#pragma push
+// Retail uses stmw/lmw r30 (size-optimized codegen) in this function.
+#pragma optimize_for_size on
 bool CWorkSystem::wkStandbyLogin(){
     if(!CDeviceFile::isInitialized()) return false;
 
-    CWorkSystemMem::create(&lbl_eu_8052279C[0x24], this); // "CWorkSystemMem"
+    // Named locals force MWCC to evaluate each name pointer before the create()
+    // call's getWorkMem and keep it live across the inlined body (retail r31).
+    const char* memName = &lbl_eu_8052279C[0x24];   // "CWorkSystemMem"
+    CWorkSystemMem* systemMem = CWorkSystemMem::create(memName, this);
+    (void)systemMem;
     mMemHandle = CWorkSystemMem::getHandle();
-    CWorkSystemCache::create(&lbl_eu_8052279C[0x33], this); // "CWorkSystemCache"
-    CWorkSystemPack::create(&lbl_eu_8052279C[0x44], this); // "CWorkSystemPack"
+
+    const char* cacheName = &lbl_eu_8052279C[0x33]; // "CWorkSystemCache"
+    CWorkSystemCache* systemCache = CWorkSystemCache::create(cacheName, this);
+    (void)systemCache;
+
+    const char* packName = &lbl_eu_8052279C[0x44];  // "CWorkSystemPack"
+    CWorkSystemPack* systemPack = CWorkSystemPack::create(packName, this);
+    (void)systemPack;
     CScriptCode::create(this);
     CProcRoot::create(this);
     CViewRoot::create(this);
@@ -170,6 +183,7 @@ bool CWorkSystem::wkStandbyLogin(){
     //Call base
     return CWorkThread::wkStandbyLogin();
 }
+#pragma pop
 
 bool CWorkSystem::wkStandbyLogout(){
     //"Failed to log out"
@@ -197,19 +211,44 @@ bool CWorkSystem::wkStandbyLogout(){
 // string "CWorkSystem" is pooled at lbl_eu_8052279C+109) -> entryWork.
 // auto_inline off keeps the same-TU ctor a real call (retail reloc
 // __ct__11CWorkSystemFPCcP11CWorkThread; MWCC would otherwise inline it).
+//
+// OPEN ITEM (best: 0 structural / 6 reg-swap / size 120==120):
+// - retail prologue stmw/lmw r29 needs optimize_for_size (pragma below);
+//   plain -O4,p emits individual stw/lwz and use_lmw_stmw has no pragma form.
+// - retail shows a remat artifact (name base materialized in scratch r4 then
+//   copied to r31 AFTER the getInstance call) while parent=getInstance() is
+//   declared first. Every source permutation trades one defect for another:
+//   * pName-init-first: correct colors (name=r31,parent=r30,obj=r29) but the
+//     lis/addi stays above the bl getInstance call (structural).
+//   * parent-init-first (current): correct schedule + obj already in r29, but
+//     parent/name colors swap (parent=r31,name=r30).
+//   * all-uninit decls / null-init / dead-def re-assign: colors become
+//     parent=r29..30/name=r29..30/obj=r31, never retail's 30/31/29.
+// Hypothesis: retail was built with -use_lmw_stmw on at -O4,p; the speed-mode
+// scheduler rematerializes the constant name at use (after the call) which
+// also yields the 31/30/29 coloring. Not reproducible from source under the
+// size-mode pragma. Needs configure.py per-object flag negotiation.
+// Additional data (2026 session 2): with the single-guard body, colors are
+// stably parent=r30/name=r29/obj=r31 across ALL declaration permutations
+// (init-at-decl vs uninit+assign, decl order, extra handle local). Splitting
+// raw/inst adds a 4th saved reg (stmw r28, size +16); explicit if() adds a
+// duplicate beq and flips to parent=r31/name=r30/obj=r29. The remaining swap
+// is allocation-internal, unreachable from source shape.
 #pragma push
 #pragma auto_inline off
+// retail prologue/epilogue saves r29-r31 with a single stmw/lmw pair; MWCC
+// only merges consecutive saves into stmw under optimize-for-size.
+#pragma optimize_for_size on
 CWorkSystem* CWorkSystem::create() {
     CWorkThread* parent = CWorkControl::getInstance();
     const char* pName = &lbl_eu_8052279C[0x6D]; // "CWorkSystem"
     CWorkSystem* obj = static_cast<CWorkSystem*>(
         mtl::MemManager::allocate(0x1D0, CWorkThreadSystem::getWorkMem()));
-    if (obj != NULL) {
-        obj = new (obj) CWorkSystem(pName, parent);
-    }
+    obj = new (obj) CWorkSystem(pName, parent);
     CWorkUtil::entryWork(obj, parent, false);
     return obj;
 }
+#pragma optimize_for_size reset
 #pragma pop
 
 void CWorkSystem::setExitFunc(ExitFunc func){

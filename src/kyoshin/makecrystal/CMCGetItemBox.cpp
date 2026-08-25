@@ -120,11 +120,15 @@ void* __dt__80296BB0(CMCGetItemBox* _this, int flags) {
 #pragma push
 #pragma optimize_for_size on
 void func_80296B44(CMCItemBoxSub* x) {
-    // Retail walks a pointer over the table (cmplw loop), not an unrolled int loop.
+    // Retail walks a pointer over the table (cmplw loop); the inline bound is
+    // CSE-hoisted as an r0 temp, matching retail coloring. Known residual:
+    // retail emits the hoisted addi before the param copy; every tested shape
+    // (decl order, dependent derivation, alias, comma-seq, while-guard) keeps
+    // the copy first.
     s16* p = x->table;
     do {
         *p++ = -1;
-    } while (p < &x->table[0x80]);
+    } while (p < x->table + 0x80);
     x->count = 0;
     x->pad_102 = 0;
     x->limit = 0;

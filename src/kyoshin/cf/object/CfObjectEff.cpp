@@ -3,7 +3,12 @@
 
 #include "kyoshin/harness_catalog.hpp"
 #include "kyoshin/cf/object/CfObjectEff.hpp"
+// code_800F42AC.hpp declares 'void* func_801412D0(u32)', which clashes with
+// the 'u32 func_801412D0(u32)' declaration pulled in above (same workaround
+// as CBattleManager.cpp). This TU doesn't use it, so rename it out of the way.
+#define func_801412D0 cfObjectEffGameMgr1412D0Unused
 #include "kyoshin/cf/code_800F42AC.hpp"
+#undef func_801412D0
 #include "kyoshin/realtimeevt/CREvtEffect.hpp"
 
 struct CfObjIf {
@@ -290,15 +295,23 @@ extern "C" void func_800ACC94__Q22cf11CfObjectEffFv(cf::CfObjectEff* self, const
 // Retail symbol func_800ACCE4__Q22cf11CfObjectEffFv is Fv-mangled but the
 // body consumes a position-vector pointer in r4 - defined at global scope so
 // MWCC's mangled name still contains the retail symbol as a prefix.
-void func_800ACCE4__Q22cf11CfObjectEffFv(cf::CfObjectEff* self, const cf::CfObjectEffU32Vec3* src) {
+// Non-const on purpose: MWCC must assume the child stores may alias src,
+// which pins both word loads above the stores (retail scheduling).
+void func_800ACCE4__Q22cf11CfObjectEffFv(cf::CfObjectEff* self, cf::CfObjectEffU32Vec3* src) {
     self->CfObject::CfObject_UnkVirtualFunc25();
+    // x's zero-init is dead (overwritten below) but fixes its slot as the
+    // first-created local; the visible loads all stay inside the copy block.
+    u32 x = 0;
     cf::CfObjectEffChild* child = self->mChildEff;
     self->mFlags68 |= 0x100;
-    if (child != nullptr) {
-        child->field_1C[0] = src->x;
-        child->field_1C[1] = src->y;
-        child->field_1C[2] = src->z;
-    }
+    // Early-return shape: the retail branch targets the shared epilogue.
+    if (child == nullptr)
+        return;
+    x = src->x;
+    u32 y = src->y;
+    child->field_1C[0] = x;
+    child->field_1C[1] = y;
+    child->field_1C[2] = src->z;
 }
 
 namespace cf {
@@ -569,16 +582,22 @@ void CfObjectEff::func_800AD3A4() {
         reinterpret_cast<CfObjIf*>(mSubObj38)->_v00A4();
     }
     if (mChildEff != nullptr) {
-        // Sync a child flag bit with slot-0x160's status word: retail reads
-        // bit 18 of the 16-bit flag word (a zero bit for a u16 - kept verbatim)
-        // and on mismatch writes status bit 28 into flag bit 14 (0x4000). The
-        // mask form stops MWCC from constant-folding the u16 range.
-        u16 flags = reinterpret_cast<CfObjectEffChildFlagsView*>(mChildEff)->field_00;
-        bool b = (flags & 0x40000) != 0;
-        if (b != reinterpret_cast<CfObjectEffVtable160If*>(this)->func160()) {
-            reinterpret_cast<CfObjectEffChildFlagsView*>(mChildEff)->field_00 =
-                (reinterpret_cast<CfObjectEffChildFlagsView*>(mChildEff)->field_00 & ~0x4000) |
-                ((reinterpret_cast<CfObjectEffVtable160If*>(this)->func160() >> 14) & 0x4000);
+        // Sync the child's flag bit 14 (0x4000) with slot-0x160's status
+        // word. The flag halfword is read through the volatile raw-u16 view;
+        // `active` is materialized before the opaque virtual call, so MWCC
+        // keeps the neg/or/srwi booleanize idiom and compares with xor.
+        // Bitfield read converted to bool: MWCC emits the extrwi +
+        // neg/or/srwi booleanize for this shape.
+        bool flagSet = mChildEff->flag4000;
+        bool status = reinterpret_cast<CfObjectEffVtable160If*>(this)->func160();
+        if (flagSet ^ status) {
+            status = reinterpret_cast<CfObjectEffVtable160If*>(this)->func160();
+            // Re-read mChildEff after the opaque virtual calls (retail reloads
+            // the pointer), then insert the status flag into flag bit 14.
+            CfObjectEffChildFlagsView* dst =
+                reinterpret_cast<CfObjectEffChildFlagsView*>(mChildEff);
+            // rlwimi merge of the status flag into bit 14 (retail shape).
+            dst->field_00 = __rlwimi(dst->field_00, status, 14, 17, 17);
         }
     }
     if (mFieldA0 != nullptr && func_800B8920(mFieldA0) == 0) {

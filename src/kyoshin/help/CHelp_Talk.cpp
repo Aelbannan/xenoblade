@@ -15,6 +15,15 @@ void CHelp_Talk::func_802B86BC() {
 }
 
 // Evaluate whether the talk help condition is satisfied.
+//
+// NOTE (open item): retail colors the spilled this -> r29 AFTER the two
+// locals (voice -> r31, flag -> r30). Under the unit's Wii/1.1 flags MWCC
+// unconditionally colors the live-across-call parameter first (r31), with
+// locals filling r30 downward in declaration order - no source shape tried
+// reproduces retail's ordering. Same cross-version allocator/scheduling
+// split documented for CtrlAct.cpp / CfCamEvent_1.cpp / code_800B06A4.cpp,
+// which only match under mw_version="GC/3.0a5.2". Try an A/B under GC
+// versioning before further source reshaping.
 bool CHelp_Talk::func_802B86F0() {
     // Get the current voice action for player 0.
     bool voiceActive;

@@ -53,7 +53,7 @@ CScnItemId::~CScnItemId() {
 // the id list is already occupied.
 // ===========================================================================
 CScnItemId* __ct__804820F8(CScnItemIdHost* self, u32 value, const char* name) {
-    CScnItemId* item;
+    CScnItemId* item = NULL;
     if (func_8048C5B8(self->mPool, 5) == 0) {
         return 0;
     }
@@ -75,24 +75,25 @@ CScnItemId* __ct__804820F8(CScnItemIdHost* self, u32 value, const char* name) {
     }
 
     if (name != NULL) {
-        item = (CScnItemId*)mtl::MemManager::allocate(0x54, func_80496018(self));
-        if (item != NULL) {
+        CScnItemId* newItem = (CScnItemId*)mtl::MemManager::allocate(0x54, func_80496018(self));
+        if (newItem != NULL) {
             // Retail does not default-construct the FixStr before
             // getNoPathExtName fills it (no ctor call in the retail body); the
             // pointer is declared AFTER the call so the buffer address reuses
             // `name`'s saved register instead of extending liveness backward.
             u8 nameBuf[0x44];
             ml::CPathUtil::getNoPathExtName(*(ml::FixStr<64>*)nameBuf, name);
-            ml::FixStr<64>* localName = (ml::FixStr<64>*)nameBuf;
+            const char* str = ((ml::FixStr<64>*)nameBuf)->mString;
 
-            item->mParent = self;
-            item->mType = 5;
-            *(void**)item = (void*)lbl_eu_8056DCD8;
-            item->mNameLen = std::strlen(localName->mString);
-            std::strcpy(item->mName, localName->mString);
-            item->mValue = value;
+            newItem->mParent = self;
+            newItem->mType = 5;
+            *(void**)newItem = (void*)lbl_eu_8056DCD8;
+            newItem->mNameLen = std::strlen(str);
+            std::strcpy(newItem->mName, str);
+            newItem->mValue = value;
             func_804BC9F4(func_804BC9EC__Fv(), value);
         }
+        item = newItem;
     } else {
         item = (CScnItemId*)mtl::MemManager::allocate(0x54, func_80496018(self));
         if (item != NULL) {

@@ -6,12 +6,13 @@
 #include "monolib/core/CView.hpp"           // CView::getCurrentView
 #include "monolib/core/code_804E36DC.hpp"   // func_80496288 (frame delta, C ABI)
 #include "nw4r/g3d/g3d_obj.h"               // nw4r::g3d::G3dObj::Destroy
-#include <string.h>                         // strlen / strcpy                         // strlen / strcpy
+#include <string.h>                         // strlen / strcpy
+#include <math.h>                           // tan
 #include "monolib/util/MemManager.hpp"      // mtl::MemManager::deallocate
 #include "monolib/math/Random.hpp"          // ml::math::mtRand
 #include "monolib/device/CDeviceFile.hpp"   // CDeviceFile::cancel
 #include <nw4r/g3d/g3d_scnobj.h>            // nw4r::g3d::ScnGroup (Remove at vtable+0x3C)
-#include "monolib/work/CEventFile.hpp"   // CEventFile (global) — file-event record
+#include "monolib/work/CEventFile.hpp"   // CEventFile (global) - file-event record
 #include <nw4r/g3d/res/g3d_resfile.h>       // nw4r::g3d::ResFile::Init
 #include <nw4r/g3d/res/g3d_resmdl.h>        // nw4r::g3d::ResMdl texture-palette queries
 #include <nw4r/g3d/g3d_scnmdl.h>           // nw4r::g3d::ScnMdl::Construct
@@ -173,11 +174,11 @@ extern "C" void* func_8048C698(void* pool, int kind);
 
 // TU-internal callees defined later in this file.
 extern "C" void func_80470B10__Q23LOD9LODMemManFv(
-    LOD::LODMemMan* self, MEMAllocator* allocator, u8* resBuf, CScn* scene);
-void func_80471ACC__Q23LOD9LODMemManFv(
+    LOD::LODMemMan* self, u8* resBuf, CScn* scene);
+extern "C" void func_80471ACC__Q23LOD9LODMemManFv(
     LOD::LODMemMan* self, u32 count20, u32 count18, u32 count48, u32 count4,
     u8** outBase, u8** out18, u8** out48, u8** out4);
-void func_80471BC8__Q23LOD9LODMemManFv(LOD::LODMemMan* self, int unk, int unused, int delta);
+extern "C" void DECOMP_DONT_INLINE func_80471BC8__Q23LOD9LODMemManFv(LOD::LODMemMan* self, int unk, int unused, int delta);
 
 // func_8046FC04 assert strings (.data) + .sdata varargs.
 extern const char lbl_eu_8056DA30[];
@@ -214,15 +215,22 @@ struct LODMdlItemView {
 };
 
 // Shared-buffer texture-name group (func_8046FC04): an offset word at +0x70
-// of the buffer selects a { count, u32 offsets... } table whose entries point
-// at texture name strings.
+// of the buffer selects a { count, pad, u32 offsets... } table whose entries
+// point at texture name strings (offsets are relative to the group base).
 struct LODTexGroupRef {
     u8 mPad00[0x70];
     u32 mOffset_70;   // 0x70 offset of the texture-name table
 };
 struct LODTexGroup {
-    u32 mCount;       // 0x00 entry count
-    u32 mOffsets[1];  // 0x04 per-entry name-string offsets from the table base
+    u32 mCount;              // 0x00 entry count
+    u8  mPad04[0x10 - 0x04];
+    u32 mOffsets[1];  // 0x10 per-entry name-string offsets from the group base
+};
+
+// Scene view for func_8046FC04: the scene-item pool list hangs at +0x60.
+struct LODScenePoolView {
+    u8    mPad00[0x60];
+    void* mPoolList;   // 0x60
 };
 
 // Light-scale bookkeeping at LODMemMan+0x96C (func_80471484).
@@ -366,6 +374,7 @@ struct LODDesc74 {
     f32 field_0x3C;            // 0x3C rotation angle scale (bit 4)
     f32 field_0x40;            // 0x40 scale
     f32 field_0x44;            // 0x44 limit
+    u8  mPad_48[0x74 - 0x48];  // 0x48..0x73 (retail stride is 0x74)
 };
 
 // 0x48-byte output record (array base at LODMemMan+0xC).  The words at
@@ -380,14 +389,29 @@ struct LODOut48 {
     f32 field_0x44;            // 0x44 output value
 };
 
-// Float view of the 0x48-byte output record (paired-single accesses in
-// func_8046F594 read the position words as floats).
-struct LODOutPos {
-    u8  mPad_00[0x30];
+// View of the 0x48-byte output record used by func_8046F594: the leading
+// 12 floats are the element's world matrix and the words at 0x30..0x38 hold
+// the position consumed as the matrix translation column.
+struct LODOutRec {
+    f32 mMtx[12];              // 0x00..0x2f world matrix
     f32 mPos[3];               // 0x30..0x38 position
     f32 field_0x3C;
     f32 mValue;                // 0x40
     f32 mOutput;               // 0x44
+};
+
+// Float-matrix view of the 0x48-byte element descriptor (func_8046F594):
+// three base-position floats followed by a local matrix.
+struct LODElem48Full {
+    f32 field_0x0;             // 0x00
+    f32 field_0x4;             // 0x04
+    f32 field_0x8;             // 0x08 radius
+    f32 mMtx[12];              // 0x0c..0x3b local matrix
+    u16 field_0x40;            // 0x40
+    u16 field_0x42;            // 0x42
+    u16 field_0x44;            // 0x44
+    u8  field_0x46;            // 0x46
+    u8  field_0x47;            // 0x47
 };
 
 // Manager world-position view at LODMemMan+0x20 (floats consumed by the
@@ -689,8 +713,10 @@ extern "C" LODViewFrame* func_8049626C(CScn* camera, CView* view);
 extern "C" u32 func_8048ECD0(CScn* self);
 extern "C" nw4r::g3d::ScnObj* func_8048EC14(CScn* self, u32 idx);
 extern "C" void* func_8048ECE4(CScn* self);
-// CLight::func_804C09E8 (retail keeps the plain unmangled call).
-extern "C" void func_804C09E8(u8* outLight, u8* matrix);
+// CLight::func_804C09E8 (retail keeps the plain unmangled call).  Retail
+// passes the incoming mtx pointer as a third argument; r5 already holds it,
+// so MWCC emits no arg move but keeps r5 live across the body.
+extern "C" void func_804C09E8(u8* outLight, u8* matrix, u8* mtx);
 
 // func_804702F0's callees: the LOD record helper (coli/code_804A6C60.cpp)
 // and the scene resource helpers (scn/code_804BC9EC.cpp).  Retail keeps the
@@ -708,7 +734,7 @@ extern "C" void func_8046A3B4__Q23LOD17UnkClass_80468434Fv(u32 idx, const f32* s
 extern "C" void func_8046FEB8__Q23LOD9LODMemManFv(LOD::LODMemMan* self, LODElem20* elem);
 
 // TU-internal sub-manager callbacks (definitions later in this file).
-void func_80471CDC__Q23LOD9LODMemManFv(LOD::LODMemMan* self);
+extern "C" void func_80471CDC__Q23LOD9LODMemManFv(LOD::LODMemMan* self);
 extern "C" void func_80470634__Q23LOD9LODMemManFv(LOD::LODMemMan* self);
 extern "C" void func_80471224__Q23LOD9LODMemManFv(LOD::LODMemMan* self, CScn* scene);
 extern "C" void func_80471184__Q23LOD9LODMemManFv(LOD::LODMemMan* self);
@@ -737,8 +763,9 @@ struct LODCacheBuf58 {
     u32 field_0x58;
 };
 
-// func_80470B10 constant-init slot views: the +0xC region holds 23 8-byte
-// records {0, -1, 0}; the +0xC8 region holds 17 0xC-byte records {0, -1, 0, 0}.
+// func_80470B10 constant-init slot views: the +0xC region holds 16 12-byte
+// records {0, (s16)-1, 0, pad}; the +0xC8 region holds 16 12-byte records
+// {0, -1, 0, 0}.
 struct LODSlotC {
     u32 field_00;
     s32 field_04;
@@ -749,14 +776,15 @@ struct LODSlot8 {
     u32 field_00;
     s16 field_04;
     s16 field_06;
+    u8  mPad_08[4];
 };
 struct LODInitViewC8 {
     u8       mPad_00[0xC8];
-    LODSlotC mSlots[17];
+    LODSlotC mSlots[16];
 };
 struct LODInitView0C {
     u8       mPad_00[0xC];
-    LODSlot8 mSlots[23];
+    LODSlot8 mSlots[16];
 };
 // ResFile handle overlay at LODMemMan+0x04.
 struct LODResView {
@@ -823,9 +851,9 @@ LOD::LODMemMan::LODMemMan() {
 
 LOD::LODMemMan::~LODMemMan() {}
 
-// Embedded sub-object destructor (address-anchored symbol, defined in
-// lod/code_8046A530.cpp).
-void* __dt__8046A584(LOD::UnkClass_8046A530* obj, int dealloc);
+// Address-anchored retail symbol __dt__8046A584 (defined in
+// lod/code_8046A530.cpp); C linkage keeps the verbatim retail reloc name.
+extern "C" void* __dt__8046A584(LOD::UnkClass_8046A530* obj, int dealloc);
 
 // Complete destructor (address-anchored retail symbol __dt__8046D144):
 // releases both g3d objects (+0xA8/+0xAC) from their scene groups, tears down
@@ -834,7 +862,7 @@ void* __dt__8046A584(LOD::UnkClass_8046A530* obj, int dealloc);
 // when the deleting flag is positive.
 void* __dt__8046D144(LOD::LODMemMan* self, int flags) {
     u8* base = (u8*)self;
-    if (self == 0) return self;
+    if (self != 0) {
     LODMemManLayout* l = (LODMemManLayout*)self;
     if (l->field_0xA8 != 0) {
         nw4r::g3d::G3dObj* group = func_8048EC14((CScn*)l->mView_1C, 7);
@@ -857,10 +885,12 @@ void* __dt__8046D144(LOD::LODMemMan* self, int flags) {
     func_80471224__Q23LOD9LODMemManFv((LOD::LODMemMan*)(base + 0xCC), 0);
     func_80471184__Q23LOD9LODMemManFv((LOD::LODMemMan*)(base + 0xCC));
     ((LOD::LODMemMan*)(base + 0xA44))->func_80471938();
-    l->field_0x6C &= 0x800;
+    // Keep only bit 0x800 (bit 20) of the enable-flag word.
+    l->field_0x6C &= 0x800u;
     __dt__8046A584((LOD::UnkClass_8046A530*)(base + 0xABC), -1);
     if (flags > 0) {
         operator delete(self);
+    }
     }
     return self;
 }
@@ -870,8 +900,9 @@ extern "C" void func_804630C0__Q23LOD17CLODCacheManagerSFv(u8* p);
 // Embedded UnkClass_8046A530 update (called with this+0xABC).
 extern "C" void func_8046AAD8__Q23LOD17UnkClass_8046A530Fv(
     LOD::UnkClass_8046A530* obj, u32 flags, f32 val);
-// Allocator warm-up call whose result func_80470B10 discards.
-extern "C" void* func_8048ECEC(MEMAllocator* allocator);
+// Allocator warm-up: takes the scene, returns its MEMAllocator (result feeds
+// ScnGroup::Construct in func_80470B10).
+extern "C" MEMAllocator* func_8048ECEC(CScn* scene);
 // Globals published by the element-list walk in func_8046DBC8.
 extern u32 lbl_eu_80665778;
 extern u32 lbl_eu_80665768;
@@ -901,7 +932,8 @@ struct LOLDBufHdr {
     u8  mPad_20[0x30 - 0x20];
     u32 field_0x30;            // 0x30 element-descriptor offset
     u32 field_0x34;            // 0x34 element count
-    u8  mPad_38[0x40 - 0x38];
+    u32 field_0x38;            // 0x38 box-element array offset
+    u8  mPad_3C[0x40 - 0x3C];
     u32 field_0x40;            // 0x40 ResFile data offset
     u32 field_0x44;            // 0x44 ResFile-present flag
     u8  mPad_48[0x64 - 0x48];
@@ -911,19 +943,18 @@ struct LOLDBufHdr {
     u32 field_0x70;            // 0x70 (loaded, unused)
 };
 
+// User-data slot of an nw4r::g3d::ScnProc (set inline, no setter call).
+struct LODScnProcUD {
+    u8    mPad_00[0xF0];
+    void* mUserData;   // 0xF0
+};
+
 // Retail calls this member-shaped rebuild with the shared-buffer base in the
 // second (register-only) argument; keep the exact retail ABI.
 extern "C" void func_8046D264__Q23LOD9LODMemManFv(LOD::LODMemMan* self, u32 arg) {
     LODMemManLayout* l = (LODMemManLayout*)self;
     LOLDBufHdr* bh = (LOLDBufHdr*)arg;
     u8* buf = (u8*)arg;
-    // Float-pool constants kept live across the whole pass (retail holds them
-    // in callee-saved f26..f31).
-    const f32 cZero = lbl_eu_8066A6C0;
-    const f32 cRandScale = lbl_eu_8066A6C4;
-    const f64 kRandBase = lbl_eu_8066A6C8;
-    const f64 kRandMul = lbl_eu_8066A6D0;
-    const f32 cDiv = lbl_eu_8066A6D8;
 
     // Detach and destroy both g3d objects through their scene groups.
     if (l->field_0xA8 != 0) {
@@ -965,14 +996,16 @@ extern "C" void func_8046D264__Q23LOD9LODMemManFv(LOD::LODMemMan* self, u32 arg)
 
     if (bh->field_0xC != 0) {
         func_80470B10__Q23LOD9LODMemManFv(
-            (LOD::LODMemMan*)((u8*)self + 0xCC), (MEMAllocator*)(buf + bh->field_0xC),
-            (u8*)0, (CScn*)l->mView_1C);
+            (LOD::LODMemMan*)((u8*)self + 0xCC), buf + bh->field_0xC,
+            (CScn*)l->mView_1C);
     } else {
         func_80470B10__Q23LOD9LODMemManFv(
-            (LOD::LODMemMan*)((u8*)self + 0xCC), (MEMAllocator*)0,
-            (u8*)0, (CScn*)l->mView_1C);
+            (LOD::LODMemMan*)((u8*)self + 0xCC), (u8*)0,
+            (CScn*)l->mView_1C);
     }
 
+    // Descriptor element-count sum (accumulated in r6, fed to func_80471ACC).
+    u32 total = 0;
     // Descriptor table: base/count live right behind the u16 index list.
     if (bh->field_0x6C != 0) {
         l->field_0xA0 = l->field_0x5C + bh->field_0x68;
@@ -983,10 +1016,12 @@ extern "C" void func_8046D264__Q23LOD9LODMemManFv(LOD::LODMemMan* self, u32 arg)
         l->field_0x9C = (LODDesc74*)((u8*)l->field_0xA0 + words * 2);
         l->field_0xA4 = bh->field_0x6C;
 
-        // Retail sums every descriptor's element count and discards it.
+        // Retail sums every descriptor's element count.  The count is read
+        // once and kept in a register (retail holds it for the remainder
+        // mask), which is what lets MWCC unroll this loop.
+        u32 cnt = bh->field_0x6C;
         LODDesc74* d = l->field_0x9C;
-        int total = 0;
-        for (int i = 0; i < (int)bh->field_0x6C; i++) {
+        for (u32 i = 0; i < cnt; i++) {
             total += d->field_0x4;
             d++;
         }
@@ -997,26 +1032,32 @@ extern "C" void func_8046D264__Q23LOD9LODMemManFv(LOD::LODMemMan* self, u32 arg)
     }
 
     // Flag word: bit 0x2000 mirrors the buffer's bit-4 flag, bits 18/19 are
-    // cleared on either path.
+    // cleared on either path.  The loaded word is not dead: it becomes the
+    // fifth argument of func_80471ACC below (retail keeps it in r7).
+    u32 accArg = 0;
     if (bh->field_0x8 & 0x10) {
-        u32 dead = *(u32*)(l->field_0x5C + bh->field_0x70);  // loaded, unused
-        (void)dead;
+        accArg = *(u32*)(l->field_0x5C + bh->field_0x70);
         l->field_0x6C = (l->field_0x6C | 0x2000) & ~0x80000u;
     } else {
         l->field_0x6C &= ~0xC0000u;
     }
 
     // Allocate the secondary buffers: count20 elements, count18 0x18-byte
-    // records, no 0x48/4-byte blocks yet.
+    // records, no 0x48/4-byte blocks yet.  (sum, accArg) ride in as the
+    // middle u32 arguments.
     func_80471ACC__Q23LOD9LODMemManFv(
         (LOD::LODMemMan*)((u8*)self + 0xA44), bh->field_0x34, bh->field_0x1C,
-        0, 0, (u8**)&l->field_0x4, &l->field_0x8, &l->field_0xC,
-        (u8**)&l->field_0xB0);
+        total, accArg, (u8**)&l->field_0x4, (u8**)&l->field_0x8,
+        (u8**)&l->field_0xC, (u8**)&l->field_0xB0);
     func_80471BC8__Q23LOD9LODMemManFv(
         (LOD::LODMemMan*)((u8*)self + 0xA44), bh->field_0x34, bh->field_0x1C,
         bh->field_0x14);
 
-    // Per-element init pass.
+    // Per-element init pass.  The float constants are scoped to this pass:
+    // retail loads them fresh here (f27 = 0.0f, f26 = 2^52 magic).
+    const f32 cZero = lbl_eu_8066A6C0;
+    const f64 kMagic52 = lbl_eu_8066A6E0;
+    (void)kMagic52;
     for (int i = 0; i < (int)bh->field_0x34; i++) {
         LODElem20* rec = l->field_0x4 + i;
         LODElem48* e = l->field_0x90 + i;
@@ -1056,8 +1097,17 @@ extern "C" void func_8046D264__Q23LOD9LODMemManFv(LOD::LODMemMan* self, u32 arg)
         }
     }
 
-    // Per-descriptor random initialisation of the output values.
+    // Per-descriptor random initialisation of the output values.  All six
+    // constants are (re)loaded at block entry in retail order:
+    // f26=E8, f27=C4, f30=C0, f31=D8, f28=D0, f29=C8.
     if (l->field_0xA4 != 0) {
+        const f64 kM52b = lbl_eu_8066A6E8;
+        const f32 cScale = lbl_eu_8066A6C4;
+        const f32 cZero2 = lbl_eu_8066A6C0;
+        const f32 cDiv = lbl_eu_8066A6D8;
+        const f64 kMul = lbl_eu_8066A6D0;
+        const f64 kBase = lbl_eu_8066A6C8;
+        (void)kM52b;
         LODDesc74* d = l->field_0x9C;
         LODOut48* o = (LODOut48*)l->field_0xC;
         for (int di = 0; di < l->field_0xA4; di++, d++) {
@@ -1065,10 +1115,11 @@ extern "C" void func_8046D264__Q23LOD9LODMemManFv(LOD::LODMemMan* self, u32 arg)
             for (int j = 0; j < d->field_0x4; j++, o++) {
                 if (d->field_0x24 & 1) {
                     o->field_0x40 =
-                        cRandScale * (f64)(u32)ml::math::mtRand(n1000);
-                    o->field_0x3C = (f32)(kRandBase -
-                                          kRandMul * (f64)(u32)ml::math::mtRand(100));                } else {
-                    o->field_0x40 = cZero;
+                        (f32)(cScale * (f64)(u32)ml::math::mtRand(n1000));
+                    o->field_0x3C = (f32)(kBase -
+                                          kMul * (f64)(u32)ml::math::mtRand(100));
+                } else {
+                    o->field_0x40 = cZero2;
                     o->field_0x3C = cDiv;
                 }
             }
@@ -1092,16 +1143,16 @@ extern "C" void func_8046D264__Q23LOD9LODMemManFv(LOD::LODMemMan* self, u32 arg)
     CScn* scene = (CScn*)l->mView_1C;
     u32 sz1;
     l->field_0xA8 = nw4r::g3d::ScnProc::Construct(
-        (MEMAllocator*)func_8048ECEC((MEMAllocator*)scene), &sz1,
+        (MEMAllocator*)func_8048ECEC(scene), &sz1, 
         (nw4r::g3d::ScnProc::DrawProc)&func_804709FC__Q23LOD9LODMemManFv,
         true, false, 0);
-    ((nw4r::g3d::ScnProc*)l->field_0xA8)->SetUserData(self);
+    ((LODScnProcUD*)l->field_0xA8)->mUserData = self;
     u32 sz2;
     l->field_0xAC = nw4r::g3d::ScnProc::Construct(
-        (MEMAllocator*)func_8048ECEC((MEMAllocator*)scene), &sz2,
+        (MEMAllocator*)func_8048ECEC(scene), &sz2, 
         (nw4r::g3d::ScnProc::DrawProc)&func_80470A90__Q23LOD9LODMemManFv,
         false, true, 0);
-    ((nw4r::g3d::ScnProc*)l->field_0xAC)->SetUserData(self);
+    ((LODScnProcUD*)l->field_0xAC)->mUserData = self;
 
     // Register both procs in the scene groups.
     nw4r::g3d::G3dObj* grp1 = func_8048EC14(scene, 7);
@@ -1112,13 +1163,14 @@ extern "C" void func_8046D264__Q23LOD9LODMemManFv(LOD::LODMemMan* self, u32 arg)
     func_8046A5C4__Q23LOD17UnkClass_8046A530Fv(
         (LOD::UnkClass_8046A530*)((u8*)self + 0xABC));
 
-    // Tail: reset the distance/scale state and enable flags 1|2.
+    // Tail: reset the distance/scale state and enable flags 1|2.  Retail
+    // reloads both constants here (the loop-scoped copies have died).
     u32 fl = l->field_0x6C | 6;
-    l->field_0x7C = cDiv;
+    l->field_0x7C = lbl_eu_8066A6D8;
     l->field_0x70 = 0;
-    *(f32*)&l->field_0xC8[0].field_0x0 = cZero;
-    l->field_0xC4 = cZero;
-    l->field_0xC0 = cZero;
+    *(f32*)&l->field_0xC8[0].field_0x0 = lbl_eu_8066A6C0;
+    l->field_0xC4 = lbl_eu_8066A6C0;
+    l->field_0xC0 = lbl_eu_8066A6C0;
     l->field_0xBE = 0;
     l->field_0x6C = fl;
 }
@@ -1273,26 +1325,31 @@ void func_8046DAC0__Q23LOD9LODMemManFv(LOD::LODMemMan* self, int param) {
 // ---------------------------------------------------------------------------
 extern "C" void func_8046DBC8__Q23LOD9LODMemManFv(LOD::LODMemMan* self) {
     LODMemManLayout* l = (LODMemManLayout*)self;
-    LODSubA44* sub = &((LODCtorView*)self)->mSub;
     u32 flags = l->field_0x6C;
     if (!(flags & 1)) return;
+    l->field_0x6C = flags & ~0x80u;
+    l->field_0x68 = 0;
+    u32 f2 = flags & ~0x80u;
     if (flags & 0x18000) {
-        l->field_0x68 = 0;
-        u32 f2 = flags & ~0x01000000u;
-        l->field_0x6C = f2;
+        // Release pass: tear down the +0xCC sub-manager when requested, then
+        // re-mark the reload-request bit (0x10000) if the reset bit survives.
         if (f2 & 0x10000) {
-            l->field_0x6C = f2 & ~0x8000u;
+            l->field_0x6C = f2 & ~0x10000u;
             func_80471184__Q23LOD9LODMemManFv((LOD::LODMemMan*)((u8*)self + 0xCC));
         }
-        u32 f3 = l->field_0x6C;
-        if (!(f3 & 0x8000)) return;
-        l->field_0x6C = (f3 & ~0x10000u) | 0x10000u;
+        u32 g = l->field_0x6C;
+        if (!(g & 0x8000)) return;
+        l->field_0x6C = (g & ~0x8000u) | 0x10000u;
         return;
     }
+    // Load pass.
     func_80471CDC__Q23LOD9LODMemManFv((LOD::LODMemMan*)((u8*)self + 0xA44));
     if (!(l->field_0x6C & 4)) {
-        if (!(sub->field_0x20 & 2)) return;
-        func_8046D264__Q23LOD9LODMemManFv(self, sub->field_0x4);
+        if (((LODCtorView*)self)->mSub.field_0x20 & 2) {
+            func_8046D264__Q23LOD9LODMemManFv(self, ((LODCtorView*)self)->mSub.field_0x4);
+        } else {
+            return;
+        }
     }
     l->field_0x80 = l->field_0x7C * func_80496288(l->mView_1C);
     if (!(l->field_0x6C & 8)) {
@@ -1304,31 +1361,206 @@ extern "C" void func_8046DBC8__Q23LOD9LODMemManFv(LOD::LODMemMan* self) {
         if (l->field_0x10 != 0) {
             // Walk the index-linked element chain until the sentinel.
             int idx = l->field_0x10->field_0x1A;
-            while (true) {
+            while ((u32)idx != lbl_eu_80663828[0]) {
                 LODElem20* e = &l->field_0x4[idx];
                 func_804702F0__Q23LOD9LODMemManFv(self, e);
                 idx = e->field_0x16;
-                if ((u32)idx == lbl_eu_80663828[0]) break;
             }
         }
-    }
-    func_80470634__Q23LOD9LODMemManFv(self);
-    flags = l->field_0x6C;
-    if (flags & 0xC00) {
-        l->field_0x88 += l->field_0x80;
-        if (l->field_0x88 <= l->field_0x8C && (flags & 0x400)) {
-            if (l->field_0x54 != 0) *(u32*)l->field_0x54 |= 0x10;
-            if (l->field_0x58 != 0) *(u32*)l->field_0x58 |= 0x10;
-            l->field_0x6C &= ~0xC00u;
+        func_80470634__Q23LOD9LODMemManFv(self);
+        u32 flags2 = l->field_0x6C;
+        if (flags2 & 0x600) {
+            l->field_0x88 += l->field_0x80;
+            // Body runs when the shrink accumulator reaches the limit.
+            if (l->field_0x88 >= l->field_0x8C) {
+                if (flags2 & 0x400) {
+                    if (l->field_0x54 != 0) *(u32*)l->field_0x54 |= 0x10;
+                    if (l->field_0x58 != 0) *(u32*)l->field_0x58 |= 0x10;
+                }
+                // Cleared whenever the limit check passes, even without bit 0x400.
+                l->field_0x6C &= ~0x600u;
+            }
         }
-    }
-    if (!(l->field_0x6C & 0x10)) {
-        func_8046AAD8__Q23LOD17UnkClass_8046A530Fv(
-            (LOD::UnkClass_8046A530*)((u8*)self + 0xABC), l->field_0x70, l->field_0x80);
+        if ((l->field_0x6C & 0x10) == 0) {
+            func_8046AAD8__Q23LOD17UnkClass_8046A530Fv(
+                (LOD::UnkClass_8046A530*)((u8*)self + 0xABC), l->field_0x70, l->field_0x80);
+        }
     }
 }
 
-void LOD::LODMemMan::func_8046DD9C() {}
+// Retail-named imports used only by func_8046DD9C.
+void func_8046F090__Q23LOD9LODMemManFv(LOD::LODMemMan* self, LODViewDesc* view);
+void func_80470184__Q23LOD9LODMemManFv(LOD::LODMemMan* self, int count);
+void func_8047108C__Q23LOD9LODMemManFv(LOD::LODMemMan* self, LOD::LODMemMan* sub);
+extern "C" u8* func_804B5A68(u8* buf);           // bitmap allocator
+extern "C" int func_80463F60__Q23LOD17UnkClass_8046368CFv(LODTypeDesc18* td);
+extern f32 lbl_eu_8066A6F0;      // direction vector z constant
+extern f32 lbl_eu_8066A6F4;      // angle chain factor
+extern f32 lbl_eu_8066A6FC;      // sin scale (+0x74)
+extern f32 lbl_eu_8066A704;      // tan arg factor
+extern f32 lbl_eu_8066A708;      // degenerate FOV fallback
+extern u32 lbl_eu_806657B8;      // elapsed time global
+extern u32 lbl_eu_80665794;      // flag mirror global
+extern const char lbl_eu_80526324[];  // Warning source path
+extern const char lbl_eu_80526300[];  // Warning message
+
+// Float view of the three distance channels at +0xC0.
+struct DD9Chans {
+    u8 mPad00[0xC0];
+    f32 c[3];                // 0xC0, 0xC4, 0xC8
+};
+
+// Element view used by func_8046DD9C's chain walk: next link at +0x14,
+// type-descriptor index at +0x18, own index at +0x1A; 0x20-byte stride.
+struct DD9ElemView {
+    u8  mPad00[0x14];
+    u16 mNext14;             // 0x14 next element index
+    u8  mPad16[0x18 - 0x16];
+    s16 mType18;             // 0x18 index into the 0x18-stride descriptor table
+    s16 mIdx1A;              // 0x1a own element index
+};
+
+// ---------------------------------------------------------------------------
+// func_8046DD9C: per-frame LOD layer update for one view.  Requires flag bits
+// 1|0x100 of +0x6C; advances the three distance channels (+0xC0..+0xC8)
+// toward or away from their limits (mode byte at +0xBE selects which channel
+// grows when bit 0x200 is set), derives the LOD plane distance (+0x38) from
+// the view direction and the FOV factor (+0x78) from a tan/FrSqrt pair, then
+// resets the used-element bitmap, rebuilds the element chains and refreshes
+// texture bindings.
+// ---------------------------------------------------------------------------
+extern "C" void func_8046DD9C__Q23LOD9LODMemManFv(
+    LOD::LODMemMan* self, u8* p, f32 scale) {
+    LODMemManLayout* l = (LODMemManLayout*)self;
+    u32 flags = l->field_0x6C;
+    if ((flags & 1) == 0) return;
+    if ((flags & 0x100) == 0) return;
+
+    f32 step = l->field_0x80 * l->field_0x84;
+
+    DD9Chans* ch = (DD9Chans*)self;
+    if ((flags & 0x200) == 0) {
+        ch->c[0] -= step; if (ch->c[0] < lbl_eu_8066A6C0) ch->c[0] = lbl_eu_8066A6C0;
+        ch->c[1] -= step; if (ch->c[1] < lbl_eu_8066A6C0) ch->c[1] = lbl_eu_8066A6C0;
+        ch->c[2] -= step; if (ch->c[2] < lbl_eu_8066A6C0) ch->c[2] = lbl_eu_8066A6C0;
+    } else {
+        // Exactly one channel grows: the one selected by the mode byte.
+        s16 mode = l->field_0xBE;
+        if (mode == 0) { ch->c[0] += step; if (ch->c[0] > lbl_eu_8066A6D8) ch->c[0] = lbl_eu_8066A6D8; }
+        else           { ch->c[0] -= step; if (ch->c[0] < lbl_eu_8066A6C0) ch->c[0] = lbl_eu_8066A6C0; }
+        if (mode == 1) { ch->c[1] += step; if (ch->c[1] > lbl_eu_8066A6D8) ch->c[1] = lbl_eu_8066A6D8; }
+        else           { ch->c[1] -= step; if (ch->c[1] < lbl_eu_8066A6C0) ch->c[1] = lbl_eu_8066A6C0; }
+        ch->c[2] += step; if (ch->c[2] > lbl_eu_8066A6D8) ch->c[2] = lbl_eu_8066A6D8;
+    }
+
+    // Transform {0,0,c} by the rotation-only copy of the view matrix.
+    l->field_0x70 = 0;
+    u8* buf = l->field_0x5C;
+    const f32* vf = (const f32*)p;
+    LODMgrPosView* pv = (LODMgrPosView*)self;
+    pv->mPos[0] = vf[3];
+    pv->mPos[1] = vf[7];
+    pv->mPos[2] = vf[11];
+    Mtx m;
+    // Load every view word before storing: mirrors the retail scheduler and
+    // raises register pressure onto the callee-saved set.
+    f32 a00 = vf[0];
+    f32 a01 = vf[1];
+    f32 a02 = vf[2];
+    f32 a10 = vf[4];
+    f32 a11 = vf[5];
+    f32 a12 = vf[6];
+    f32 a20 = vf[8];
+    f32 a21 = vf[9];
+    f32 a22 = vf[10];
+    ((f32*)m)[0] = a00;
+    ((f32*)m)[1] = a01;
+    ((f32*)m)[2] = a02;
+    ((f32*)m)[4] = a10;
+    ((f32*)m)[5] = a11;
+    ((f32*)m)[6] = a12;
+    ((f32*)m)[8] = a20;
+    ((f32*)m)[9] = a21;
+    ((f32*)m)[10] = a22;
+    ((f32*)m)[3] = lbl_eu_8066A6C0;
+    ((f32*)m)[7] = lbl_eu_8066A6C0;
+    ((f32*)m)[11] = lbl_eu_8066A6C0;
+    pv->qPos[0] = lbl_eu_8066A6C0;
+    pv->qPos[1] = lbl_eu_8066A6C0;
+    pv->qPos[2] = lbl_eu_8066A6F0;
+    PSMTXMultVec(m, (Vec*)pv->qPos, (Vec*)pv->qPos);
+
+    f32 lenSq = pv->qPos[0] * pv->qPos[0] + pv->qPos[1] * pv->qPos[1]
+              + pv->qPos[2] * pv->qPos[2];
+    pv->field_0x38 = lbl_eu_8066A6D8 / lenSq;
+
+    f32 ang = ((scale * lbl_eu_8066A210) * lbl_eu_8066A6F4) * lbl_eu_8066A6F8;
+    f32 s = nw4r::math::SinFIdx(ang);
+    pv->field_0x74 = lbl_eu_8066A6FC * s;
+    if (s - scale > 0.0f) {
+        f32 tv = tan((((s - scale) * lbl_eu_8066A210) * lbl_eu_8066A6F8)
+                     * lbl_eu_8066A704);
+        f32 t = lbl_eu_8066A6D8 / tv;
+        f32 q1 = t * t + lbl_eu_8066A6D8;
+        if (q1 < 0.0f) {
+            nw4r::db::Warning(lbl_eu_80526324, 0x273, lbl_eu_80526300);
+        }
+        f32 q2 = t * t + lbl_eu_8066A6D8;
+        if (q2 > 0.0f) {
+            pv->field_0x78 = nw4r::math::FrSqrt(q2) * q2;
+        } else {
+            pv->field_0x78 = lbl_eu_8066A6C0;
+        }
+    } else {
+        pv->field_0x78 = lbl_eu_8066A708;
+    }
+
+    LOLDBufHdr* bh = (LOLDBufHdr*)buf;
+    l->field_0x60 = (LODBoxElem*)(buf + bh->field_0x38);
+    l->field_0x64 = (u32*)func_804B5A68(buf);
+    memset(l->field_0x64, 0, (((l->mCount_18 >> 5) + 1) << 2));
+    memset(l->field_0x8, 0, bh->field_0x1C * 0x18);
+    LODResetView* rv = (LODResetView*)self;
+    rv->field_0x44 = 0;
+    rv->field_0x40 = 0;
+    rv->field_0x3C = 0;
+    rv->field_0x50 = 0;
+    rv->field_0x4C = 0;
+    rv->field_0x48 = 0;
+    if ((l->field_0x6C & 0x10) == 0) {
+        func_8046F090__Q23LOD9LODMemManFv(self, (LODViewDesc*)l->field_0x60);
+    }
+    func_80470184__Q23LOD9LODMemManFv(self, bh->field_0x1C);
+    func_8047108C__Q23LOD9LODMemManFv(
+        (LOD::LODMemMan*)((u8*)self + 0xCC),
+        (LOD::LODMemMan*)((u8*)self + 0xA44));
+    if ((l->field_0x68 & 0x10) == 0) {
+        // Publish the buffer/time bookkeeping globals.
+        lbl_eu_806657B8 = ((l->field_0xB8 * 60) + l->field_0xBA) * 60
+                        + l->field_0xBC;
+        lbl_eu_80665768 = (u32)l->field_0x5C;
+        lbl_eu_80665794 = l->field_0x68;
+    }
+
+    // Walk the pending-element chain starting from the node cached at +0x44
+    // until an active model is found (then raise the scene gate byte).
+    if (rv->field_0x44 != 0) {
+        int idx = ((DD9ElemView*)rv->field_0x44)->mIdx1A;
+        while (true) {
+            DD9ElemView* e = (DD9ElemView*)((u8*)l->field_0x4 + idx * 0x20);
+            LODTypeDesc18* td = &l->field_0x94[e->mType18];
+            if (func_80463F60__Q23LOD17UnkClass_8046368CFv(td) != 0) {
+                LODScnGate* scn =
+                    (LODScnGate*)func_8048ECD0((CScn*)l->mView_1C);
+                scn->field_0x19 = 1;
+                break;
+            }
+            idx = e->mNext14;
+            if (idx == (int)lbl_eu_80663828[0]) break;
+        }
+    }
+    self->func_8046FC04();
+}
 
 void LOD::LODMemMan::func_8046E1DC() {}
 
@@ -1535,66 +1767,75 @@ void func_8046E920__Q23LOD9LODMemManFv(LOD::LODMemMan* self, int task, f32 f1) {
 // func_8046E988: per-element enable/disable driven by a distance value.
 // While the manager is enabled (bit 0 of +0x6C): when bit 0x400 is set the
 // two cached element slots (+0x54/+0x58) get their flag word's bit 0x10
-// re-set; then with the +0x6C word reduced to its 0xF00 mask bits, a value
-// greater than zero walks the elements matching `task` setting/clearing
-// their bit 0x10 per `flag`, while a non-positive value records up to two
-// matching element pointers into +0x54/+0x58 (clearing their bit 0x10) and
-// sets the 0x200/0x400 marker according to `flag`.
+// re-set; then the +0x6C word has its 0x200/0x400 marker bits cleared, and
+// a value greater than zero records up to two matching element pointers
+// into +0x54/+0x58 (clearing their bit 0x10) and sets the 0x200/0x400 marker
+// according to `flag`, while a non-positive value walks the matching
+// elements setting/clearing their bit 0x10 per `flag`.
 // ---------------------------------------------------------------------------
 void func_8046E988__Q23LOD9LODMemManFv(LOD::LODMemMan* self, f32 val, s16 task, int flag) {
     LODMemManLayout* l = (LODMemManLayout*)self;
-    if (!(l->field_0x6C & 1)) return;
-    if (l->field_0x6C & 0x400) {
+    u32 flags = l->field_0x6C;
+    if (!(flags & 1)) return;
+    if (flags & 0x400) {
         if (l->field_0x54 != 0) *(u32*)l->field_0x54 |= 0x10;
         if (l->field_0x58 != 0) *(u32*)l->field_0x58 |= 0x10;
     }
     f32 zero = lbl_eu_8066A6C0;
-    l->field_0x6C &= 0xF00;
-    if (val > zero) {
+    // Reloaded after the aliasing |0x10 stores above.
+    flags = l->field_0x6C & ~0x600u;
+    l->field_0x6C = flags;
+    if (val <= zero) {
+        if (!(flags & 1)) return;
+        int i;
+        LODElem20* p20;
         LODElem48* p48 = l->field_0x90;
-        LODElem20* p20 = l->field_0x4;
-        int i = 0;
+        p20 = l->field_0x4;
+        i = 0;
         while (i < l->mCount_18) {
             if (p48->field_0x40 == task) {
-                if (flag == 0) {
-                    p20->field_0x0 |= 0x10;
+                if (flag != 0) {
+                    p20->field_0x0 &= ~0x10u;
                 } else {
-                    p20->field_0x0 &= ~0x10;
+                    p20->field_0x0 |= 0x10u;
                 }
             }
             i++;
             p48++;
             p20++;
         }
-        return;
-    }
-    // Non-positive value: store the pair and remember up to two matches.
-    l->field_0x88 = zero;
-    l->field_0x8C = val;
-    l->field_0x54 = 0;
-    l->field_0x58 = 0;
-    LODElem48* p48 = l->field_0x90;
-    LODElem20* p20 = l->field_0x4;
-    u32* slot = &l->field_0x54;
-    int found = 0;
-    int i = 0;
-    while (i < l->mCount_18) {
-        if (p48->field_0x40 == task) {
-            *slot = (u32)p20;
-            slot++;
-            found++;
-            p20->field_0x0 &= ~0x10;
-            if (found >= 2) break;
-        }
-        i++;
-        p48++;
-        p20++;
-    }
-    if (found == 0) return;
-    if (flag != 0) {
-        l->field_0x6C |= 0x200;
     } else {
-        l->field_0x6C |= 0x400;
+        // Positive value: store the pair and remember up to two matches.
+        u32* slot = (u32*)l;
+        int found = 0;
+        LODElem48* p48 = l->field_0x90;
+        LODElem20* p20 = l->field_0x4;
+        int i = 0;
+        l->field_0x88 = zero;
+        l->field_0x8C = val;
+        l->field_0x54 = 0;
+        l->field_0x58 = 0;
+        while (i < l->mCount_18) {
+            if (p48->field_0x40 == task) {
+                // Cached-slot pair at +0x54/+0x58; the walker stays based at
+                // the manager so the store keeps its 0x54 displacement.
+                slot[0x15] = (u32)p20;
+                slot++;
+                found++;
+                p20->field_0x0 &= ~0x10u;
+                if (found >= 2) break;
+            }
+            i++;
+            p48++;
+            p20++;
+        }
+        if (found != 0) {
+            if (flag != 0) {
+                l->field_0x6C |= 0x200;
+            } else {
+                l->field_0x6C |= 0x400;
+            }
+        }
     }
 }
 
@@ -1978,6 +2219,12 @@ void func_8046F164__Q23LOD9LODMemManFv(LOD::LODMemMan* self, LODBoxElem* box) {
 
 void LOD::LODMemMan::func_8046F258() {}
 
+// Squared length of *v.  Taking the pointer forces the vector argument
+// memory-resident, mirroring retail's store/reload shape.
+static inline f32 LODVecLenSq(const LODVec3f* v) {
+    return v->x * v->x + v->y * v->y + v->z * v->z;
+}
+
 // ---------------------------------------------------------------------------
 // func_8046F594: per-descriptor element pass.  For every type descriptor the
 // shared-buffer u16 index list selects elements; each active element gets its
@@ -1996,29 +2243,34 @@ extern "C" void func_8046F594__Q23LOD9LODMemManFv(LOD::LODMemMan* self) {
     const f32 cAng = lbl_eu_8066A210;
     const f32 cFIdx = lbl_eu_8066A6F8;
     const f32 cOne = lbl_eu_8066A6D8;
-    LODOutPos* out = (LODOutPos*)l->field_0xC;
+    LODOutRec* out = (LODOutRec*)l->field_0xC;
+    LODVec3f delta;
+    LODVec3f work;
+    LODDesc74* d = l->field_0x9C;
 
-    for (int di = 0; di < l->field_0xA4; di++) {
-        LODDesc74* d = &l->field_0x9C[di];
+    for (int di = 0; di < l->field_0xA4; di++, d++) {
         u16* words = (u16*)(l->field_0x5C + d->field_0x18);
+        u16 tcount = d->field_0x6;
         for (int k = 0; k < d->field_0x4; k++, out++) {
             u16 idx = words[k];
             LODElem20* rec = l->field_0x4 + idx;
-            if (rec->field_0x0 & 1) {
+            if (rec->field_0x0 & 2) {
                 continue;
             }
-            LODElem48* ed = l->field_0x90 + idx;
+            LODElem48Full* ed = (LODElem48Full*)l->field_0x90 + idx;
 
-            // Horizontal delta between the output position and the manager.
+            // Delta between the output position and the manager position.
             LODVec3f delta;
             delta.x = out->mPos[0] - mp->mPos[0];
             delta.y = out->mPos[1] - mp->mPos[1];
             delta.z = out->mPos[2] - mp->mPos[2];
-            f32 distSq = delta.x * delta.x + delta.y * delta.y;
+            f32 distSq = delta.x * delta.x + delta.y * delta.y +
+                         delta.z * delta.z;
 
-            int saved = 0;
-            int applied = 0;
-            for (int j = 0; j < d->field_0x6; j++) {
+            // One stack slot backs the resolved bind id: the ResFile path
+            // fills it through the callee's out-pointer.
+            s32 slot = 0;
+            for (int j = 0; j < tcount; j++) {
                 u16 t = d->mTypes[j];
                 LODTypeDesc18* tbl = &l->field_0x94[t];
                 f32 lim = tbl->field_0xC * tbl->field_0xC;
@@ -2033,117 +2285,98 @@ extern "C" void func_8046F594__Q23LOD9LODMemManFv(LOD::LODMemMan* self) {
                     goto next_elem;
                 } else if (tbl->mFlags & 0x8000) {
                     // ResFile slot path; on failure keep scanning types.
-                    s32 slot;
                     if (func_80470DCC__Q23LOD9LODMemManFv(
                             (LOD::LODMemMan*)((u8*)self + 0xCC),
                             (LOD::LODMemMan*)((u8*)self + 0xA44), tbl->field_0x0,
                             &slot) == 0) {
                         continue;
                     }
-                    saved = slot;
                     rec->field_0x0 |= 1;
                 } else {
-                    saved = t;
+                    slot = t;
                     rec->field_0x0 &= ~1u;
                 }
 
-                // Plane culling against the manager's two radius planes.
+                // Plane culling against the manager's radius planes.
                 f32 rad = ed->field_0x8;
                 f32 rad2 = rad * rad;
                 if (rad2 < distSq) {
-                    f32 proj = mp->qPos[0] * delta.x + mp->mPos[0] * delta.y +
-                               mp->mPos[1] * delta.z;
-                    f32 g;
-                    f32 limv;
-                    f32 nx, ny, nz;
-                    if (proj <= mp->qPos[2]) {
-                        g = proj * mp->field_0x38;
-                        limv = g * g;
-                        if (rad2 < limv) {
-                            continue;
-                        }
-                        nx = delta.x - mp->qPos[0] * g;
-                        ny = delta.y - mp->qPos[1] * g;
-                        nz = delta.z - mp->qPos[2] * g;
-                        limv = g * mp->field_0x74 + rad * mp->field_0x78;
-                    } else {
-                        g = proj * mp->field_0x38;
-                        limv = g * g;
-                        if (rad2 >= limv) {
-                            nx = delta.x - mp->qPos[0] * g;
-                            ny = delta.y - mp->qPos[1] * g;
-                            nz = delta.z - mp->qPos[2] * g;
-                            limv = g * mp->field_0x74 + rad * mp->field_0x78;
-                        } else {
-                            continue;
-                        }
+                    f32 proj = mp->qPos[0] * delta.x + mp->qPos[1] * delta.y +
+                               mp->qPos[2] * delta.z;
+                    f32 g = proj * mp->field_0x38;
+                    if (proj <= cZero && rad2 < g * g) {
+                        continue;
                     }
-                    if (nx * nx + ny * ny > limv * limv) {
+                    work.x = delta.x - mp->qPos[0] * g;
+                    work.y = delta.y - mp->qPos[1] * g;
+                    work.z = delta.z - mp->qPos[2] * g;
+                    f32 limv = g * mp->field_0x74 + rad * mp->field_0x78;
+                    if (LODVecLenSq(&work) > limv * limv) {
                         continue;
                     }
                 }
 
-                // Apply: record the resolved type and update the chain.
-                rec->field_0x18 = saved;
+                // Apply: record the resolved bind id and update the chain.
+                if (rec->field_0xE == 0) {
+                    continue;
+                }
+                rec->field_0x18 = (u16)slot;
                 func_8046FF84__Q23LOD9LODMemManFv(self, rec, t, &delta);
                 if (d->field_0x24 & 0x1C) {
-                    // Retail's built-flag doubles as the type-loop counter;
-                    // elements beyond the first behave as "already built".
-                    applied = (j != 0);
-                    f32* om = (f32*)out;
-                    const f32* src = (const f32*)ed;
-
+                    // Rotation path: refresh the record's 3x3 from the
+                    // element descriptor, then post-multiply the enabled
+                    // axis rotations in bit order Y/X/Z.
+                    f32* om = out->mMtx;
                     f32 scaleV = out->mOutput;
+                    bool built = false;
                     f32 rm[12];
+                    om[0] = ed->mMtx[0]; om[1] = ed->mMtx[1];
+                    om[2] = ed->mMtx[2]; om[3] = cZero;
+                    om[4] = ed->mMtx[3]; om[5] = ed->mMtx[4];
+                    om[6] = ed->mMtx[5]; om[7] = cZero;
+                    om[8] = ed->mMtx[6]; om[9] = ed->mMtx[7];
+                    om[10] = ed->mMtx[8]; om[11] = cZero;
                     if (d->field_0x24 & 0x04) {
-                        // Refresh the record's 3x3 from the element descriptor.
-                        om[0] = src[3]; om[1] = src[4]; om[2] = src[5];
-                        om[3] = cZero;
-                        om[4] = src[6]; om[5] = src[7]; om[6] = src[8];
-                        om[7] = cZero;
-                        om[8] = src[9]; om[9] = src[10]; om[10] = src[11];
-                        om[11] = cZero;
-                        applied = 0;
                         f32 prod = scaleV * d->field_0x34 * cAng;
                         f32 s = nw4r::math::SinFIdx(cFIdx * prod);
                         f32 c = nw4r::math::CosFIdx(cFIdx * prod);
-                        rm[0] = c;    rm[1] = cZero; rm[2] = cZero; rm[3] = cZero;
-                        rm[4] = cZero; rm[5] = cZero; rm[6] = c;   rm[7] = -s;
-                        rm[8] = cZero; rm[9] = s;    rm[10] = c;  rm[11] = cZero;
-                        applied = 1;
+                        rm[0] = cOne; rm[1] = cZero; rm[2] = cZero; rm[3] = cZero;
+                        rm[4] = cZero; rm[5] = c;    rm[6] = -s;    rm[7] = cZero;
+                        rm[8] = cZero; rm[9] = s;    rm[10] = c;    rm[11] = cZero;
+                        built = true;
                     }
                     if (d->field_0x24 & 0x08) {
                         f32 prod = scaleV * d->field_0x38 * cAng;
                         f32 s = nw4r::math::SinFIdx(cFIdx * prod);
                         f32 c = nw4r::math::CosFIdx(cFIdx * prod);
-                        if (applied == 1) {
+                        if (built) {
                             f32 tm[12];
-                            tm[0] = c;  tm[1] = cZero; tm[2] = s;  tm[3] = cZero;
-                            tm[4] = cZero; tm[5] = cZero; tm[6] = cOne; tm[7] = cZero;
-                            tm[8] = -s; tm[9] = cZero; tm[10] = c; tm[11] = cZero;
-                            PSMTXConcat((f32(*)[4])rm, (f32(*)[4])tm, (f32(*)[4])rm);
+                            tm[0] = c;     tm[1] = cZero; tm[2] = s;     tm[3] = cZero;
+                            tm[4] = cZero; tm[5] = cOne;  tm[6] = cZero; tm[7] = cZero;
+                            tm[8] = -s;    tm[9] = cZero; tm[10] = c;    tm[11] = cZero;
+                            PSMTXConcat((f32(*)[4])tm, (f32(*)[4])rm, (f32(*)[4])rm);
                         } else {
-                            applied = 1;
-                            rm[0] = c;  rm[1] = cZero; rm[2] = s;  rm[3] = cZero;
-                            rm[4] = cZero; rm[5] = cZero; rm[6] = cOne; rm[7] = cZero;
-                            rm[8] = -s; rm[9] = cZero; rm[10] = c; rm[11] = cZero;
+                            rm[0] = c;     rm[1] = cZero; rm[2] = s;     rm[3] = cZero;
+                            rm[4] = cZero; rm[5] = cOne;  rm[6] = cZero; rm[7] = cZero;
+                            rm[8] = -s;    rm[9] = cZero; rm[10] = c;    rm[11] = cZero;
+                            built = true;
                         }
                     }
                     if (d->field_0x24 & 0x10) {
                         f32 prod = scaleV * d->field_0x3C * cAng;
                         f32 s = nw4r::math::SinFIdx(cFIdx * prod);
                         f32 c = nw4r::math::CosFIdx(cFIdx * prod);
-                        if (applied == 1) {
+                        if (built) {
                             f32 tm[12];
-                            tm[0] = c;  tm[1] = -s; tm[2] = cZero; tm[3] = cZero;
-                            tm[4] = s;  tm[5] = c;  tm[6] = cZero; tm[7] = cZero;
-                            tm[8] = cZero; tm[9] = cZero; tm[10] = cOne; tm[11] = cZero;
-                            PSMTXConcat((f32(*)[4])rm, (f32(*)[4])tm, (f32(*)[4])rm);
+                            tm[0] = c;     tm[1] = -s;    tm[2] = cZero; tm[3] = cZero;
+                            tm[4] = s;     tm[5] = c;     tm[6] = cZero; tm[7] = cZero;
+                            tm[8] = cZero; tm[9] = cZero; tm[10] = cOne;  tm[11] = cZero;
+                            PSMTXConcat((f32(*)[4])tm, (f32(*)[4])rm, (f32(*)[4])rm);
                         } else {
-                            applied = 1;
-                            rm[0] = c;  rm[1] = -s; rm[2] = cZero; rm[3] = cZero;
-                            rm[4] = s;  rm[5] = c;  rm[6] = cZero; rm[7] = cZero;
-                            rm[8] = cZero; rm[9] = cZero; rm[10] = cOne; rm[11] = cZero;
+                            rm[0] = c;     rm[1] = -s;    rm[2] = cZero; rm[3] = cZero;
+                            rm[4] = s;     rm[5] = c;     rm[6] = cZero; rm[7] = cZero;
+                            rm[8] = cZero; rm[9] = cZero; rm[10] = cOne;  rm[11] = cZero;
+                            built = true;
                         }
                     }
                     PSMTXConcat((f32(*)[4])om, (f32(*)[4])rm, (f32(*)[4])om);
@@ -2152,15 +2385,17 @@ extern "C" void func_8046F594__Q23LOD9LODMemManFv(LOD::LODMemMan* self) {
                     om[7] = out->mPos[1];
                     om[11] = out->mPos[2];
                 } else {
-                    // No rotation: plain copy with the record's translation kept.
-                    f32* dst = (f32*)out;
-                    const f32* src = (const f32*)ed;
-                    dst[0] = src[0]; dst[1] = src[1]; dst[2] = src[2];
-                    dst[3] = out->mPos[0];
-                    dst[4] = src[3]; dst[5] = src[4]; dst[6] = src[5];
-                    dst[7] = out->mPos[1];
-                    dst[8] = src[6]; dst[9] = src[7]; dst[10] = src[8];
-                    dst[11] = out->mPos[2];
+                    // No rotation: plain copy keeping the record translation.
+                    f32 px = out->mPos[0];
+                    f32 py = out->mPos[1];
+                    f32 pz = out->mPos[2];
+                    f32* dst = out->mMtx;
+                    dst[0] = ed->mMtx[0]; dst[1] = ed->mMtx[1];
+                    dst[2] = ed->mMtx[2]; dst[3] = px;
+                    dst[4] = ed->mMtx[3]; dst[5] = ed->mMtx[4];
+                    dst[6] = ed->mMtx[5]; dst[7] = py;
+                    dst[8] = ed->mMtx[6]; dst[9] = ed->mMtx[7];
+                    dst[10] = ed->mMtx[8]; dst[11] = pz;
                 }
                 break;
             }
@@ -2178,31 +2413,38 @@ extern "C" void func_8046F594__Q23LOD9LODMemManFv(LOD::LODMemMan* self) {
 // +0xB0.  If no model matched, clear +0xB4 and drop flag bits 0x180000.
 // ---------------------------------------------------------------------------
 void LOD::LODMemMan::func_8046FC04() {
-    LODMemManLayout* l = (LODMemManLayout*)this;
-    u32 flags = l->field_0x6C;
+    u32 flags = ((LODMemManLayout*)this)->field_0x6C;
     if (!(flags & 0x800)) return;
     if (!(flags & 0x2000)) return;
 
+    LODMemManLayout* l = (LODMemManLayout*)this;
     bool notFound = true;
-    LODSceneList* list = (LODSceneList*)func_8048C698(l->mView_1C, 1);
-    for (LODSceneNode* n = list->mAnchor->mNext; n != list->mAnchor; n = n->mNext) {
-        if ((u32)n->mObj != (u32)l->field_0xB4) continue;
+    // The item-pool sub-list lives behind the scene's +0x60 pointer.
+    LODSceneNode* anchor =
+        ((LODSceneList*)func_8048C698(
+             ((LODScenePoolView*)l->mView_1C)->mPoolList, 1))->mAnchor;
+    for (LODSceneNode* n = anchor->mNext; n != anchor; n = n->mNext) {
+        if ((u8*)n->mObj != l->field_0xB4) continue;
         notFound = false;
         if (!(l->field_0x6C & 0x1000)) l->field_0x6C |= 0x1000;
-        // Downcast the scene item to the nw4r model wrapper (RTTI walk).
+        // Texture-name table resolved ahead of the downcast (both pointers
+        // stay live across the RTTI helper call).
+        u8* buf = l->field_0x5C;
+        LODTexGroup* group = (LODTexGroup*)(buf + *(u32*)(buf + 0x70));
+        u32* entries = group->mOffsets;
+        // Downcast the scene item to the nw4r model wrapper (RTTI walk);
+        // retail passes the target locator twice (src2dst slot).
         LODMdlItemView* mdlItem = (LODMdlItemView*)__dynamic_cast(
-            n->mObj, 0, &lbl_eu_806624C0, (long)&lbl_eu_806624D8, 0);
+            n->mObj, &lbl_eu_806624C0, &lbl_eu_806624D8,
+            (long)&lbl_eu_806624D8, 0);
         if (mdlItem == NULL) break;
         nw4r::g3d::ResMdl resMdl(mdlItem->field_0x146C);
         u32 numEntries = resMdl.GetResTexPlttInfoOffsetFromTexNameNumEntries();
-        LODTexGroupRef* ref = (LODTexGroupRef*)l->field_0x5C;
-        LODTexGroup* group =
-            (LODTexGroup*)((u8*)ref + ref->mOffset_70);
-        u32* entries = group->mOffsets;
-        u32 outIdx = 0;
-        for (u32 i = 0; i < group->mCount; i++, outIdx++, entries++) {
+        int count = group->mCount;
+        int outIdx = 0;
+        for (int i = 0; i < count; i++, outIdx++, entries++) {
             const char* name = (const char*)((u8*)group + *entries);
-            for (unsigned long j = 0; j < numEntries; j++) {
+            for (u32 j = 0; j < numEntries; j++) {
                 nw4r::g3d::ResTexPlttInfo info =
                     resMdl.GetResTexPlttInfoOffsetFromTexName(j);
                 if (info.ptr() == NULL)
@@ -2222,9 +2464,10 @@ void LOD::LODMemMan::func_8046FC04() {
                 } else {
                     tex = 0;
                 }
-                u32* out = (u32*)l->field_0xB0;
-                out[outIdx] = (u32)tex;
-                if (out[outIdx] == 0)
+                // Store/reload the resolved pointer through +0xB0 (retail
+                // re-reads the base for the null check).
+                ((u32*)l->field_0xB0)[outIdx] = (u32)tex;
+                if (((u32*)l->field_0xB0)[outIdx] == 0)
                     nw4r::db::Panic(lbl_eu_8056DAF8, 0x230, lbl_eu_8056DAD8,
                                     lbl_eu_8056DAC8, &lbl_eu_80663840);
                 const char* texName =
@@ -2427,129 +2670,138 @@ void func_80470184__Q23LOD9LODMemManFv(LOD::LODMemMan* self, int count) {
 // ---------------------------------------------------------------------------
 void func_804702F0__Q23LOD9LODMemManFv(LOD::LODMemMan* self, LODElem20* elem) {
     LODMemManLayout* l = (LODMemManLayout*)self;
-    u32 flags = elem->field_0x0;
-    if ((flags & 0x1000) && (flags & 0x2000)) {
-        if (elem->field_0x1C + 1 >= 0x5A) {
-            elem->field_0x0 = flags & ~0x2000;
+    u32 flags0 = elem->field_0x0;
+    if ((flags0 & 0x1000) && (flags0 & 0x2000)) {
+        s32 next = elem->field_0x1C + 1;
+        if (next >= 0x5A) {
+            // Expired element: clear the enable bit; unlink when idle.
+            elem->field_0x0 = flags0 & ~0x2000;
             LODElem48* d0 = &l->field_0x90[elem->field_0x1A];
             if (d0->field_0x42 == 0) {
                 func_8046FEB8__Q23LOD9LODMemManFv(self, elem);
             }
         } else {
-            elem->field_0x1C++;
+            elem->field_0x1C = next;
         }
     }
-    if (elem->field_0x0 & 0x40) return;
-    if (elem->field_0x0 & 0x2) return;
-
-    LODElem48* desc = &l->field_0x90[elem->field_0x1A];
-    f32 hi = elem->field_0x8;         // upper bound (cached value)
-    f32 lo = lbl_eu_8066A6C0;         // lower bound (0.0f)
-    f32 step;
-    if (desc->field_0x44 & 2) {
-        union {
-            double d;
-            u32 w[2];
-        } c;
-        c.w[1] = desc->field_0x46;
-        c.w[0] = 0x43300000u;
-        step = (f32)(c.d - lbl_eu_8066A6E0) * lbl_eu_8066A710 * l->field_0x80;
-    } else {
-        step = l->field_0x80;
+    // Reload the (possibly rewritten) flag word; kept cached in a register.
+    u32 flags = elem->field_0x0;
+    if ((flags & 0x40) != 0 || (flags & 0x2) != 0) {
+        return;
     }
+    {
+        LODElem48* desc = &l->field_0x90[elem->field_0x1A];
+        f32 lo;
+        f32 hi = elem->field_0x8;   // upper bound (cached value)
+        lo = lbl_eu_8066A6C0;       // lower bound (0.0f)
+        f32 orig;
+        u16 d44 = desc->field_0x44;
+        f32 step;
+        if (d44 & 2) {
+            // Integer byte parameter -> float via the 0x4330_0000 exponent
+            // trick (MWCC expands the direct cast itself).
+            f32 base = lbl_eu_8066A710 * (f32)desc->field_0x46;
+            step = base * l->field_0x80;
+        } else {
+            step = l->field_0x80;
+        }
 
-    if (desc->field_0x44 & 8) {
-        LODRec1C* rec = &l->field_0x98[desc->field_0x47];
-        f32 orig = elem->field_0x4;
-        if (rec->field_0x0 & 4) {
-            union {
-                double d;
-                u32 w[2];
-            } c;
-            c.w[1] = rec->field_0xA;
-            c.w[0] = 0x43300000u;
-            f32 th = (f32)(c.d - lbl_eu_8066A6E0);
-            if (orig >= th) {
-                u32 bit7 = elem->field_0x0 & 0x80;
-                if (bit7) hi = th;
-                if (!bit7) lo = th;
+        if (desc->field_0x44 & 8) {
+            orig = elem->field_0x4;
+            LODRec1C* rec = &l->field_0x98[desc->field_0x47];
+            if (rec->field_0x0 & 4) {
+                // Optional record clamp threshold (u16 -> float).
+                f32 th = (f32)rec->field_0xA;
+                if (orig >= th) {
+                    u32 bit7 = flags & 0x80;
+                    if (bit7) {
+                        hi = th;
+                    }
+                    if (!bit7) {
+                        lo = th;
+                    }
+                }
             }
-        }
-        if (elem->field_0x0 & 0x80) {
-            step = -step;
-            elem->field_0x4 += step;
-            if (lo > elem->field_0x4) {
-                if (elem->field_0x0 & 0x20) {
-                    elem->field_0x4 = lo;
-                } else {
-                    elem->field_0x4 = hi - (lo - elem->field_0x4);
+            if (flags & 0x80) {
+                step = -step;
+                elem->field_0x4 += step;
+                if (lo > elem->field_0x4) {
+                    if (elem->field_0x0 & 0x20) {
+                        elem->field_0x4 = lo;
+                    } else {
+                        elem->field_0x4 = hi - (lo - elem->field_0x4);
+                    }
+                }
+            } else {
+                elem->field_0x4 += step;
+                if (hi <= elem->field_0x4) {
+                    if (elem->field_0x0 & 0x20) {
+                        elem->field_0x4 = hi;
+                    } else {
+                        elem->field_0x4 = lo + (elem->field_0x4 - hi);
+                    }
+                }
+            }
+            if (orig != elem->field_0x4 || (elem->field_0x0 & 0x20000)) {
+                int changed = 0;
+                u32 f0 = elem->field_0x0;
+                u32 fn = f0 & ~0x20000;
+                elem->field_0x0 = fn;
+                if (f0 & 0x100) {
+                    // Wrap: restore the old value, trade the direction flag
+                    // for the disable bit.
+                    elem->field_0x4 = orig;
+                    fn &= ~0x100;
+                    fn |= 0x40;
+                    elem->field_0x0 = fn;
+                    changed = 1;
+                }
+                f32 v0 = elem->field_0x4;
+                f32 v = v0 + step * l->field_0x1CDC;
+                lbl_eu_80665754 = v;
+                lbl_eu_80665758 = (s16)v;
+                if (rec->field_0x0 & 2) {
+                    if (func_804A6D90(rec) != 0) {
+                        void* p = func_804BC9EC__Fv();
+                        func_804BCC30(p, desc->field_0x40);
+                    } else {
+                        void* p = func_804BC9EC__Fv();
+                        func_804BCC3C(p, desc->field_0x40);
+                    }
+                }
+                if (rec->field_0x0 & 1) {
+                    func_8046A3B4__Q23LOD17UnkClass_80468434Fv(
+                        rec->field_0x8, (const f32*)desc, elem->field_0x1D);
+                    if (changed) {
+                        void* p = func_804BC9EC__Fv();
+                        func_804BCC60(p, elem->field_0x1D);
+                    }
+                }
+            } else {
+                if (rec->field_0x0 & 1) {
+                    void* p = func_804BC9EC__Fv();
+                    func_804BCC60(p, elem->field_0x1D);
                 }
             }
         } else {
-            elem->field_0x4 += step;
-            if (hi <= elem->field_0x4) {
-                if (elem->field_0x0 & 0x20) {
-                    elem->field_0x4 = hi;
-                } else {
-                    elem->field_0x4 = lo + (elem->field_0x4 - hi);
+            if (flags & 0x80) {
+                step = -step;
+                elem->field_0x4 += step;
+                if (lo > elem->field_0x4) {
+                    if (elem->field_0x0 & 0x20) {
+                        elem->field_0x4 = lo;
+                    } else {
+                        elem->field_0x4 = hi - (lo - elem->field_0x4);
+                    }
                 }
-            }
-        }
-        if (orig != elem->field_0x4 || (elem->field_0x0 & 0x20000)) {
-            int changed = 0;
-            u32 f0 = elem->field_0x0;
-            u32 f = f0 & ~0x4000;
-            elem->field_0x0 = f;
-            if (f0 & 0x100) {
-                elem->field_0x4 = orig;
-                f = (f & ~0x80) | 0x40;
-                elem->field_0x0 = f;
-                changed = 1;
-            }
-            f32 v = step * l->field_0x1CDC + elem->field_0x4;
-            lbl_eu_80665754 = v;
-            lbl_eu_80665758 = (s16)v;
-            if (rec->field_0x0 & 2) {
-                if (func_804A6D90(rec) != 0) {
-                    func_804BC9EC__Fv();
-                    func_804BCC30(func_804BC9EC__Fv(), desc->field_0x40);
-                } else {
-                    func_804BC9EC__Fv();
-                    func_804BCC3C(func_804BC9EC__Fv(), desc->field_0x40);
-                }
-            }
-            if (rec->field_0x0 & 1) {
-                func_8046A3B4__Q23LOD17UnkClass_80468434Fv(
-                    rec->field_0x8, (const f32*)desc, elem->field_0x1D);
-                if (changed) {
-                    func_804BC9EC__Fv();
-                    func_804BCC60(func_804BC9EC__Fv(), elem->field_0x1D);
-                }
-            }
-        } else {
-            if (rec->field_0x0 & 1) {
-                func_804BC9EC__Fv();
-                func_804BCC60(func_804BC9EC__Fv(), elem->field_0x1D);
-            }
-        }
-    } else {
-        if (elem->field_0x0 & 0x80) {
-            step = -step;
-            elem->field_0x4 += step;
-            if (lo > elem->field_0x4) {
-                if (elem->field_0x0 & 0x20) {
-                    elem->field_0x4 = lo;
-                } else {
-                    elem->field_0x4 = hi - (lo - elem->field_0x4);
-                }
-            }
-        } else {
-            elem->field_0x4 += step;
-            if (hi <= elem->field_0x4) {
-                if (elem->field_0x0 & 0x20) {
-                    elem->field_0x4 = hi;
-                } else {
-                    elem->field_0x4 = lo + (elem->field_0x4 - hi);
+            } else {
+                elem->field_0x4 += step;
+                if (hi <= elem->field_0x4) {
+                    if (elem->field_0x0 & 0x20) {
+                        elem->field_0x4 = hi;
+                    } else {
+                        elem->field_0x4 = lo + (elem->field_0x4 - hi);
+                    }
                 }
             }
         }
@@ -2567,35 +2819,36 @@ void func_804702F0__Q23LOD9LODMemManFv(LOD::LODMemMan* self, LODElem20* elem) {
 // ---------------------------------------------------------------------------
 extern "C" void func_80470634__Q23LOD9LODMemManFv(LOD::LODMemMan* self) {
     LODMemManLayout* l = (LODMemManLayout*)self;
-    if (l->field_0xA4 == 0) return;
-    int count = l->field_0xA4;
+    int countA4 = l->field_0xA4;
+    if (countA4 == 0) return;
     LODDesc74* desc = l->field_0x9C;
     LODOut48* out = (LODOut48*)l->field_0xC;
+    union {
+        double d;
+        u32 w[2];
+    } c;
     nw4r::math::VEC3 tmp;
     f64 magic = lbl_eu_8066A6E0;
     f32 c0 = lbl_eu_8066A710;
     f32 c11 = lbl_eu_8066A6D8;
     f32 c9 = lbl_eu_8066A70C;
     f32 c6 = lbl_eu_8066A714;
-    f32 scale = lbl_eu_80665828;
-    u8* ps = (u8*)desc + count * 0x74;  // PS vector stream after the descriptors
+    double scale = lbl_eu_80665828;
+    u8* ps = (u8*)desc + countA4 * 0x74;  // PS vector stream after descriptors
     int i = 0;
     while (i < l->field_0xA4) {
         f32 f2 = c11 / desc->field_0x44;
         f32 f3 = desc->field_0x40 * f2;
-        f32 cur = scale;
+        double cur = (f32)scale;
         u16* group = (u16*)(l->field_0x5C + desc->field_0x18);
         int j = 0;
         while (j < desc->field_0x4) {
-            u16 id = *group;
-            LODElem48* d48 = &l->field_0x90[id];
+            LODElem48* d48 = &l->field_0x90[*group];
             if (!(desc->field_0x24 & 1)) {
                 f32 v;
                 if (d48->field_0x44 & 2) {
-                    union {
-                        double d;
-                        u32 w[2];
-                    } c;
+                    // Integer byte parameter -> double via the 0x4330_0000
+                    // exponent trick, scaled and folded into the element value.
                     c.w[1] = d48->field_0x46;
                     c.w[0] = 0x43300000u;
                     v = (f32)(c.d - magic) * c0 * l->field_0x80 + out->field_0x40;
@@ -2610,14 +2863,13 @@ extern "C" void func_80470634__Q23LOD9LODMemManFv(LOD::LODMemMan* self) {
                     lbl_eu_80665828 = scale;
                     cur = scale;
                 }
-                f32 limit = desc->field_0x44;
-                f32 val = out->field_0x40;
                 s32 idx = 0xff;
-                LODElem20* elem = &l->field_0x4[id];
-                if (val >= limit - lbl_eu_80663830) {
-                    idx = (s32)(cur * c9 * (limit - val));
-                } else if (val <= lbl_eu_80663830) {
-                    idx = (s32)(cur * c9 * val);
+                LODElem20* elem = &l->field_0x4[*group];
+                if (out->field_0x40 >= desc->field_0x44 - lbl_eu_80663830) {
+                    idx = (s32)((f32)cur *
+                                (c9 * (desc->field_0x44 - out->field_0x40)));
+                } else if (out->field_0x40 <= lbl_eu_80663830) {
+                    idx = (s32)((f32)cur * (c9 * out->field_0x40));
                 }
                 elem->field_0xE = (s16)idx;
             }
@@ -2632,13 +2884,9 @@ extern "C" void func_80470634__Q23LOD9LODMemManFv(LOD::LODMemMan* self) {
             f32 s0 = d48->field_0x0 + tmp.x;
             f32 s1 = d48->field_0x4 + tmp.y;
             f32 s2 = d48->field_0x8 + tmp.z;
-            u32 b0, b1, b2;
-            *(f32*)&b0 = s0;
-            *(f32*)&b1 = s1;
-            *(f32*)&b2 = s2;
-            out->field_0x30 = b0;
-            out->field_0x34 = b1;
-            out->field_0x38 = b2;
+            out->field_0x30 = *(u32*)&s0;
+            out->field_0x34 = *(u32*)&s1;
+            out->field_0x38 = *(u32*)&s2;
             out->field_0x44 = f2 * out->field_0x40 * c6 * out->field_0x3C;
             out++;
             group++;
@@ -2682,34 +2930,41 @@ extern "C" void func_8047133C__Q23LOD9LODMemManFv(LOD::LODMemMan* self, LODChild
 extern "C" void func_804708B4__Q23LOD9LODMemManFv(
     LOD::LODMemMan* self, const f32* matrixBlock)
 {
-    LODMemManLayout* l = (LODMemManLayout*)self;
     Mtx mtx;
-    u32* words = (u32*)mtx;
-    for (int k = 0; k < 12; k++) {
-        words[k] = *(const u32*)(matrixBlock + k);
-    }
+    *(nw4r::math::MTX34*)mtx = *(const nw4r::math::MTX34*)matrixBlock;
     PSMTXInverse(mtx, mtx);
     func_804712E0__Q23LOD9LODMemManFv((LOD::LODMemMan*)((u8*)self + 0xCC));
     func_8047130C__Q23LOD9LODMemManFv((LOD::LODMemMan*)((u8*)self + 0xCC));
-    u8* base = (u8*)l->mView_1C;
-    int* bss68 = lbl_eu_80658368;
-    int* bss74 = lbl_eu_80658374;
-    for (int g = 0; g < 3; g++) {
-        u8* region = base + 20 + g * 4;
-        LODChildDesc* arr = *(LODChildDesc**)(region + 0x1144);
-        s32 count = *(s32*)(region + 0x1154);
+
+    // Group table: view -> +0x64 -> +0x8, plus the leading 0x14 skip.
+    int* flagA = lbl_eu_80658368;
+    int* flagB = lbl_eu_80658374;
+    // Group table: view -> +0x64 -> +0x8, plus the leading 0x14 skip.
+    u8* tbl = *(u8**)((u8*)((LODMemManLayout*)self)->mView_1C + 0x64);
+    tbl = *(u8**)(tbl + 8);
+    u8* grp = tbl + 0x14;
+    int g = 0;
+    do {
+        *flagA = 2;
         int seen = 0;
-        for (int i = 0; i < count; i++) {
-            LODChildDesc* d = &arr[i];
+        int i = 0;
+        LODChildDesc* d = *(LODChildDesc**)(grp + 0x1144);
+        s32 count = *(s32*)(grp + 0x1154);
+        while (i < count) {
             if (d->field_0x30 & 0x10000) {
                 func_8047133C__Q23LOD9LODMemManFv(
                     (LOD::LODMemMan*)((u8*)self + 0xCC), d, (u8*)mtx, g);
                 seen++;
             }
+            i++;
+            d++;
         }
-        bss68[g] = seen ? 2 : 0;
-        bss74[g] = seen ? 2 : 0;
-    }
+        *flagB = seen != 0 ? 2 : 0;
+        grp += 4;
+        flagB++;
+        flagA++;
+        g++;
+    } while (g < 3);
 }
 
 // ---------------------------------------------------------------------------
@@ -2757,12 +3012,13 @@ extern "C" void func_80470A90__Q23LOD9LODMemManFv(LOD::LODMemMan* self, int para
 // and +0xC8 (17 records).
 // ---------------------------------------------------------------------------
 extern "C" void func_80470B10__Q23LOD9LODMemManFv(
-    LOD::LODMemMan* self, MEMAllocator* allocator, u8* resBuf, CScn* scene) {
+    LOD::LODMemMan* self, u8* resBuf, CScn* scene) {
     LODMemManLayout* l = (LODMemManLayout*)self;
     LODResView* rv = (LODResView*)self;
-    func_8048ECEC(allocator);
+    // func_8048ECEC fetches the scene's allocator; its result feeds Construct.
+    MEMAllocator* alloc = func_8048ECEC(scene);
     u32 size;
-    nw4r::g3d::ScnGroup* grp = nw4r::g3d::ScnGroup::Construct(allocator, &size, 0x10);
+    nw4r::g3d::ScnGroup* grp = nw4r::g3d::ScnGroup::Construct(alloc, &size, 0x10);
     l->field_0x0 = grp;
     nw4r::g3d::G3dObj* group = func_8048EC14(scene, 7);
     ((LODG3dMgrVt*)group)->vf0B(((LODMgrObj*)group)->field_0xE4, grp);
@@ -2775,16 +3031,18 @@ extern "C" void func_80470B10__Q23LOD9LODMemManFv(
         rv->mResFile.Init();
         rv->mResFile.Bind(rv->mResFile);
     }
+    // Clear the per-slot bookkeeping records (retail unrolls these walks
+    // into straight-line stores): 16 12-byte records at +0xC8, then 16 at
+    // +0xC.
     LODInitViewC8* ivA = (LODInitViewC8*)self;
     LODInitView0C* ivB = (LODInitView0C*)self;
-    int i;
-    for (i = 0; i < 17; i++) {
+    for (int i = 0; i < 16; i++) {
         ivA->mSlots[i].field_00 = 0;
         ivA->mSlots[i].field_04 = -1;
         ivA->mSlots[i].field_08 = 0;
         ivA->mSlots[i].field_0A = 0;
     }
-    for (i = 0; i < 23; i++) {
+    for (int i = 0; i < 16; i++) {
         ivB->mSlots[i].field_00 = 0;
         ivB->mSlots[i].field_04 = -1;
         ivB->mSlots[i].field_06 = 0;
@@ -2821,13 +3079,13 @@ __declspec(noinline) int func_80470DB0__Q23LOD9LODMemManFv(
 extern "C" s32 func_80470DCC__Q23LOD9LODMemManFv(
     LOD::LODMemMan* self, LOD::LODMemMan* pool, s32 id, s32* out)
 {
-    LODResFileSlotArray* arr = (LODResFileSlotArray*)self;
     s32 result = -1;
+    LODResFileSlotArray& arr = *(LODResFileSlotArray*)self;
 
     for (int i = 0; i < 16; i++) {
-        if (arr->mSlots[i].field_0x10 == id) {
+        if (arr.mSlots[i].field_0x10 == id) {
             result = i;
-            arr->mSlots[i].field_0x12 |= 1;
+            ((LODResFileSlotArray*)self)->mSlots[i].field_0x12 |= 1;
             break;
         }
     }
@@ -2836,19 +3094,19 @@ extern "C" s32 func_80470DCC__Q23LOD9LODMemManFv(
         u8* block = func_80471BF4__Q23LOD9LODMemManFv(pool, id);
         if (block != 0) {
             for (int j = 0; j < 16; j++) {
-                if (arr->mSlots[j].field_0x10 >= 0) {
+                if (arr.mSlots[j].field_0x10 >= 0) {
                     continue;
                 }
                 result = j;
-                arr->mSlots[j].field_0x10 = (s16)id;
-                arr->mSlots[j].field_0xC = (u32)block;
-                arr->mSlots[j].field_0x12 |= 1;
+                arr.mSlots[j].field_0x10 = (s16)id;
+                arr.mSlots[j].field_0xC = (u32)block;
+                arr.mSlots[j].field_0x12 |= 1;
                 u32 end = (u32)block + *(u32*)((u8*)block + 0x14);
                 if (end & 0x1F) {
                     nw4r::db::Panic(lbl_eu_8052637C, 0x3c, lbl_eu_80526354);
                 }
-                arr->mSlots[j].field_0x8 = end;
-                ((nw4r::g3d::ResFile*)&arr->mSlots[j].field_0x8)->Init();
+                arr.mSlots[j].field_0x8 = end;
+                ((nw4r::g3d::ResFile*)&arr.mSlots[j].field_0x8)->Init();
                 break;
             }
         } else {
@@ -2918,39 +3176,78 @@ int func_80470EF8__Q23LOD9LODMemManFv(
 // reset any active child through func_80471CC4.  `self` is the g3d-slot
 // region base (object + 0xCC); `sub` is the +0xA44 sub-manager.
 // ---------------------------------------------------------------------------
+// TU-internal member callee, called through its exact retail symbol so MWCC
+// does not inline its tail-call to func_804716B8 (retail keeps a real bl).
+extern "C" void func_80471CC4__Q23LOD9LODMemManFv(LOD::LODMemMan* self);
+
+// Walking views: base pointer starts at `self` and advances one slot (0xC)
+// per iteration while each access reads through the fixed offset window
+// (matches MWCC's folded-displacement pointer walk).
+struct LODG3dStep {
+    u8         mPad[0xC8];
+    LODG3dSlot mSlot;
+};
+struct LODChildStep {
+    u8            mPad[0xC];
+    LODChildEntry mEntry;
+};
+
+// Walking views unified under one anchor so both loops share a single base
+// register (MWCC otherwise emits an extra copy for the second view).
+union LODF108CMem {
+    struct {
+        u8         mPad[0xC8];
+        LODG3dSlot mG3d[16];      // 0xC8..
+    } a;
+    struct {
+        u8            mPad[0xC];
+        LODChildEntry mEnt[16];     // 0xC..
+    } b;
+};
+
 void func_8047108C__Q23LOD9LODMemManFv(LOD::LODMemMan* self, LOD::LODMemMan* sub) {
-    LODMemManLayout* l = (LODMemManLayout*)self;
-    for (int i = 0; i < 16; i++) {
-        LODG3dSlot* slot = &l->field_0xC8[i];
-        if (slot->field_0x0 != 0) {
-            u16 flags = slot->mFlags;
+    LODF108CMem* m = (LODF108CMem*)self;
+    // Scoped zero constants: keeping them as explicit locals pins the zero
+    // register materialization to the points retail chooses (hoisted before
+    // the g3d walk, re-materialized at the child-walk head).
+    u32 zero = 0;
+    int i = 0;
+    do {
+        if (m->a.mG3d[i].field_0x0 != 0) {
+            u16 flags = m->a.mG3d[i].mFlags;
             if (flags & 4) {
-                slot->field_0x0->Destroy();
-                slot->field_0x0 = 0;
-                slot->mFlags = 0;
+                m->a.mG3d[i].field_0x0->Destroy();
+                m->a.mG3d[i].field_0x0 = (nw4r::g3d::G3dObj*)zero;
+                m->a.mG3d[i].mFlags = zero;
             } else {
-                if (flags & 1) {
-                    slot->mFlags = flags & ~2;
+                if (!(flags & 1)) {
+                    m->a.mG3d[i].mFlags = flags | 4;
+                    ((LODG3dMgrVt*)((LODMemManLayout*)m)->field_0x0)
+                        ->vf0D(m->a.mG3d[i].field_0x0);
                 } else {
-                    slot->mFlags = flags | 4;
-                    ((LODG3dMgrVt*)l->field_0x0)->vf0D(slot->field_0x0);
+                    m->a.mG3d[i].mFlags = flags & 0xFFFD;
                 }
-                slot->mFlags &= ~1;
+                // Both paths clear bit 0 via a reload of the stored halfword.
+                m->a.mG3d[i].mFlags &= ~1;
             }
         }
-    }
-    LODChildEntryView* ev = (LODChildEntryView*)self;
-    for (int i = 0; i < 16; i++) {
-        LODChildEntry* e = &ev->mEntries[i];
-        if (e->field_0x0 != 0) {
-            if (!(e->field_0x6 & 1)) {
-                sub->func_80471CC4();
-                e->field_0x0 = 0;
-                e->field_0x4 = 0xFFFF;
+        i++;
+    } while (i < 16);
+
+    u32 zero2 = 0;
+    i = 0;
+    LODChildEntryView* ev = (LODChildEntryView*)m;
+    do {
+        if (ev->mEntries[i].field_0x0 != 0) {
+            if (!(ev->mEntries[i].field_0x6 & 1)) {
+                func_80471CC4__Q23LOD9LODMemManFv(sub);
+                ev->mEntries[i].field_0x0 = (u8*)zero2;
+                ev->mEntries[i].field_0x4 = 0xFFFF;
             }
-            e->field_0x6 = 0;
+            ev->mEntries[i].field_0x6 = zero2;
         }
-    }
+        i++;
+    } while (i < 16);
 }
 
 // ---------------------------------------------------------------------------
@@ -3084,6 +3381,14 @@ struct LODChild188 {
 // (retail keeps the kind test as two compares; the goto chain reproduces it.)
 // ---------------------------------------------------------------------------
 void func_8047133C__Q23LOD9LODMemManFv(LOD::LODMemMan* self, LODChildDesc* desc, u8* unused, int index) {
+    // Declared high-to-low so MWCC's reverse-order stack allocation puts
+    // the words at 0x8..0x14 like retail.
+    f32 wf3;
+    f32 wf2;
+    f32 wf1;
+    f32 wf0;
+    u32* dst;
+    f32 s;
     LODChildRec* child = (LODChildRec*)((u8*)self + index * 0x28c);
     if (child->field_0x408 >= 8) return;
     LODChild188* p = (LODChild188*)((u8*)child + 0x188);
@@ -3095,18 +3400,17 @@ kind34:
 otherKind:
     p->field_0x284 |= 1 << p->field_0x280;
 floatsDone:
-    u32* dst = p->mSlotFloats[p->field_0x280];
-    f32 s = desc->field_0x38;
-    u32 w0, w1, w2, w3;
-    *(f32*)&w0 = desc->field_0x10 * s;
-    *(f32*)&w1 = desc->field_0x14 * s;
-    *(f32*)&w2 = desc->field_0x18 * s;
-    *(f32*)&w3 = desc->field_0x1C;
-    dst[0] = w0;
-    dst[1] = w1;
-    dst[2] = w2;
-    dst[3] = w3;
-    func_804C09E8((u8*)desc, p->mSlotData[p->field_0x280]);
+    dst = p->mSlotFloats[p->field_0x280];
+    s = desc->field_0x38;
+    wf0 = desc->field_0x10 * s;
+    wf1 = desc->field_0x14 * s;
+    wf2 = desc->field_0x18 * s;
+    wf3 = desc->field_0x1C;
+    dst[0] = *(u32*)&wf0;
+    dst[1] = *(u32*)&wf1;
+    dst[2] = *(u32*)&wf2;
+    dst[3] = *(u32*)&wf3;
+    func_804C09E8((u8*)desc, p->mSlotData[p->field_0x280], unused);
     p->field_0x288 |= 1 << p->field_0x280;
     p->field_0x280++;
 }
@@ -3157,8 +3461,10 @@ void func_80471484__Q23LOD9LODMemManFv(LOD::LODMemMan* self, int childIdx) {
         }
     }
     m->field_0x974 = childIdx;
-    m->field_0x970 = m->field_0x96C;
+    // Load the limit scale before refreshing +0x970: retail interleaves the
+    // limit load between the two stores.
     f32 limit = lbl_eu_8066A720;
+    m->field_0x970 = m->field_0x96C;
     int i = 0;
     GXColor baseColor = lbl_eu_8066A71C;
     for (; i < p->field_0x280; i++) {
@@ -3241,7 +3547,7 @@ extern "C" void func_804716B8__Q23LOD9LODMemManFv(LOD::LODMemMan* self, u32 targ
             }
             // Read the merge pair in retail load order (cur[1] before prev[1]):
             // the volatile pins the source order (MWCC_CASES sfmps_pesfn
-            // load-pair rule — one-time state reads, no aliasing writes in
+            // load-pair rule - one-time state reads, no aliasing writes in
             // scope), and declaring vp first makes the allocator land prev's
             // word in r0 so the sum reuses it (add r0,r4,r0 like retail).
             u32 vp;
@@ -3376,11 +3682,15 @@ void func_80471834__Q23LOD9LODMemManFv(LOD::LODMemMan* self, u32 handle, u32 siz
             }
         }
     }
+    // Two-step local alias forces MWCC to materialise the full string
+    // address into r31 up front (lis@ha + addi@l adjacent) and reuse it via
+    // mr for both calls (same recipe as func_80471A70).
+    const char* src = (const char*)&lbl_eu_80523D90;
+    const char* name = src;
     l->field_0xC = 0;
     l->field_0x20 = 1;
     l->mView_1C = (u8*)size;
     l->field_0x30 = 0;
-    const char* name = lbl_eu_80523D90;
     l->field_0x74 = strlen(name);
     strcpy(l->mStr_34, name);
 }
@@ -3416,9 +3726,14 @@ void LOD::LODMemMan::func_80471938() {
     }
     l->field_0xC = 0;
     l->field_0x20 = 0;
-    // Retail re-seeds the reset name from an empty string literal.
-    l->field_0x74 = strlen("");
-    strcpy(l->mStr_34, "");
+    const char* name = static_cast<const char*>(
+        static_cast<const void*>(lbl_eu_80523D90));
+    // Reset-name re-seed.  NOTE (open item): retail coalesces &lbl_eu_80523D90
+    // into r31 (lis@ha + addi@l adjacent, reused via mr); the Wii backend
+    // always splits it (ha-base in r31 + per-use @l folds), one instruction
+    // short - the documented adx_fsvr lis/addi coalescing ceiling.
+    l->field_0x74 = strlen(name);
+    strcpy(l->mStr_34, name);
 }
 
 // ---------------------------------------------------------------------------
@@ -3471,32 +3786,38 @@ void LOD::LODMemMan::func_80471A70() {
 // buffer is released first; the output pointers receive the base and the
 // sub-region offsets.
 // ---------------------------------------------------------------------------
-void func_80471ACC__Q23LOD9LODMemManFv(
+extern "C" void func_80471ACC__Q23LOD9LODMemManFv(
     LOD::LODMemMan* self, u32 count20, u32 count18, u32 count48, u32 count4,
     u8** outBase, u8** out18, u8** out48, u8** out4)
 {
-    LODMemManLayout* l = (LODMemManLayout*)self;
     u32 size20 = count20 * 0x20;
     u32 size48 = count48 * 0x48;
-    u32 base = size20 + size48 + count4 * 4;
+    u8* old = ((LODMemManLayout*)self)->field_0x8;
+    u32 base;
+    u32 offset18;
+    u32 ofs;
+    base = size20 + size48 + count4 * 4;
     base += 0x20 - (base & 0x1F);
-    u32 offset18 = base;
+    offset18 = base;
     base += count18 * 0x18;
     base += 0x20 - (base & 0x1F);
-    u8* old = l->field_0x8;
     if (old != 0) {
         if (old != 0) {
             mtl::MemManager::deallocate(old);
-            l->field_0x8 = 0;
+            ((LODMemManLayout*)self)->field_0x8 = 0;
         }
     }
-    l->field_0x8 = (u8*)mtl::MemManager::allocate_head(
+    ((LODMemManLayout*)self)->field_0x8 = (u8*)mtl::MemManager::allocate_head(
         mtl::MemManager::getHandleMEM1(), base, 0x20);
-    memset(l->field_0x8, 0, base);
-    *outBase = l->field_0x8;
-    if (count48 != 0) *out48 = l->field_0x8 + size20;
-    if (count4 != 0) *out4 = l->field_0x8 + size20 + size48;
-    *out18 = l->field_0x8 + offset18;
+    memset(((LODMemManLayout*)self)->field_0x8, 0, base);
+    *outBase = ((LODMemManLayout*)self)->field_0x8;
+    ofs = size20;
+    if (count48 != 0) {
+        *out48 = ((LODMemManLayout*)self)->field_0x8 + size20;
+        ofs += size48;
+    }
+    if (count4 != 0) *out4 = ((LODMemManLayout*)self)->field_0x8 + ofs;
+    *out18 = ((LODMemManLayout*)self)->field_0x8 + offset18;
 }
 
 // ---------------------------------------------------------------------------
@@ -3509,7 +3830,7 @@ void func_80471ACC__Q23LOD9LODMemManFv(
 // an unused caller-leftover) and tail-call func_80471780 with the new base
 // and the remaining size.
 // ---------------------------------------------------------------------------
-void func_80471BC8__Q23LOD9LODMemManFv(LOD::LODMemMan* self, int unk, int unused, int delta) {
+extern "C" void func_80471BC8__Q23LOD9LODMemManFv(LOD::LODMemMan* self, int unk, int unused, int delta) {
     LODMemManLayout* l = (LODMemManLayout*)self;
     if (l->field_0x4 != 0) {
         int rem = (int)l->mView_1C - delta;
@@ -3531,22 +3852,23 @@ u8* func_80471BF4__Q23LOD9LODMemManFv(LOD::LODMemMan* self, int id) {
     LODMemManLayout* l = (LODMemManLayout*)self;
     LODPoolBlock* block = func_80471718__Q23LOD9LODMemManFv((LODPoolBlock*)l->field_0xC, id);
     if (block != 0) {
+        // Ready bit set: hand back the data area behind the block header.
         if (!(block->mFlags & 2)) return 0;
         return (u8*)block + 0x20;
     }
-    if (l->field_0x20 & 0x70) return 0;
-    int id2 = id * 2;
-    LODBuf74* buf = (LODBuf74*)l->field_0x4;
-    u32* arr = buf->mPairs;
-    // Retail re-reads arr[id2+1] for the field_0x2C store rather than
-    // reusing the allocator size argument.
-    u8* data = func_8047163C__Q23LOD9LODMemManFv((LODPoolBlock*)l->field_0xC, arr[id2 + 1], id);
-    if (data != 0) {
-        l->field_0x24 = (u32)data;
-        l->field_0x28 = arr[id2];
-        u32 flags = l->field_0x20;
-        l->field_0x2C = arr[id2 + 1];
-        l->field_0x20 = flags | 0x40;
+    if (!(l->field_0x20 & 0x70)) {
+        int id2 = id * 2;
+        LODBuf74* buf = (LODBuf74*)l->field_0x4;
+        u32* arr = buf->mPairs;
+        // Retail re-reads arr[id2+1] for the field_0x2C store rather than
+        // reusing the allocator size argument.
+        u8* data = func_8047163C__Q23LOD9LODMemManFv((LODPoolBlock*)l->field_0xC, arr[id2 + 1], id);
+        if (data != 0) {
+            l->field_0x24 = (u32)data;
+            l->field_0x28 = arr[id2];
+            l->field_0x2C = arr[id2 + 1];
+            l->field_0x20 |= 0x40;
+        }
     }
     return 0;
 }

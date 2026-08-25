@@ -547,7 +547,7 @@ Together these shapes reach 98.8% CODE_MATCH, exact `0x650` size, zero structura
 | Ghidra `r13` SDA | Misleading decompilation | Set SDA bases in Ghidra |
 | Retail materialises a struct base (`addi r3,rX,0x3e`) for a long run of stores; all pointer/volatile/field-store forms fold back to direct offsets | MWCC keeps a **walked pointer** in a base register but folds constant-index/field accesses | Declare `u16* q = &obj->sub.vDelta;` and advance with `*q++` per store; start one field before the run so MWCC materialises at the retail base after the first folded store (HBMMIXInitChannel tail, 594/594; **__MIXRmtUpdateSettings phase-3**: walk `u16* q = (u16*)((u8*)out + 0x102)` so the folded cur0 store lands at `258(r30)` and the run materialises `addi r3,r30,260` with `sth 0..28(r3)` — 167 structural → 0, FULL_MATCH us-8034f910) |
 | 3-op load-order reg-swaps in a top-level sum (`lwz` order differs, adds identical) | MWCC rotates a top-level sum chain `[s0,s1,s2]` into loads `[s2,s0,s1]` (tree `((s2+s0)+s1)`) | Write the source in rotated order: retail loads `[panFrontL, fader, X]` require `fader + X + panFrontL`; sums nested in a larger tree (`(a+b+c)-30`) are NOT rotated (HBMMIXInitChannel) |
-| 0 structural, pure reg-swaps, but `cycle` witness never certifies | **Gate 6 reject-list: any prologue that saves FPRs emits `stfd`+`psq_st` pairs (MWCC always does this for f14–f31 saves), and the register-renaming witness unconditionally rejects `psq_*`** — witness-ineligible no matter how clean the body diff. Also: commutative `add` operand-order swaps break rho (r6 maps to both r6 and r0) and the region-sliced fallback refuses. **Confirmed 2026-08-03: the witness also never applies to any function containing a `bl` call** — 0/11 witness-certified certs in the sidecar contain `bl`; opaque-EABI callee contracts make the terminal-state comparison diverge on callee effects. For ANY call-containing target, the only no-SMT acceptance is FULL_MATCH (byte-identical) | Record stall with `next_change: accept via --smt out-of-band` (SMT is out-of-band per orchestrator). Skip further regalloc attempts — no source lever flips MWCC's callee-save colors for FPR-saving functions (hbm/seq.c `__HBMSEQInitTracks` 12 swaps, `HBMSEQRunAudioFrame` 16 swaps; `__HBMSEQReadHeader` 1 swap via rho conflict); for bl-containing targets the reg-swap levers are equally unlikely to pay off unless a FULL_MATCH shape is reachable (e.g. wpad `WPADiExcludeButton` r5↔r6 pointer color: 3 source variants no-op, 17 swaps — recorded for SMT acceptance) |
+| 0 structural, pure reg-swaps, but `cycle` witness never certifies | **Gate 6 reject-list: any prologue that saves FPRs emits `stfd`+`psq_st` pairs (MWCC always does this for f14–f31 saves), and the register-renaming witness unconditionally rejects `psq_*`** — witness-ineligible no matter how clean the body diff. Also: commutative `add` operand-order swaps break rho (r6 maps to both r6 and r0) and the region-sliced fallback refuses. **Confirmed 2026-08-03: the witness also never applies to any function containing a `bl` call** — 0/11 witness-certified certs in the sidecar contain `bl`; opaque-EABI callee contracts make the terminal-state comparison diverge on callee effects. For ANY call-containing target, the only no-SMT acceptance is FULL_MATCH (byte-identical) **— 2026-08 REFINEMENT (nw4r campaign, 5 probes): bl does NOT categorically block the witness.** Four bl-containing pure-regswap/near-pure targets were cycled: the witness ran past calls and refused on real divergences — observed gate sequence: (1) mnemonic (`or` vs `rlwinm`/`stw`), (2) fields (frame-slot displacement differing by 0x4), (3) abi-boundary for BOTH FPR (`fpr f0 -> f1`) and GPR (`gpr r30 -> r31`) permutations that cross ABI-fixed positions, (4) deadline/cfg-exploration on loop-heavy bodies. Practical rule: a bl-containing target IS certifiable at EQUIVALENT_MATCH iff its residual reduces to a color permutation that never touches ABI-fixed registers AND its CFG is shallow enough to explore. The 0/11 sidecar sample likely reflected mnemonic/fields divergences hiding upstream of the bl question | Record stall with `next_change: accept via --smt out-of-band` (SMT is out-of-band per orchestrator). Skip further regalloc attempts — no source lever flips MWCC's callee-save colors for FPR-saving functions (hbm/seq.c `__HBMSEQInitTracks` 12 swaps, `HBMSEQRunAudioFrame` 16 swaps; `__HBMSEQReadHeader` 1 swap via rho conflict); for bl-containing targets the reg-swap levers are equally unlikely to pay off unless a FULL_MATCH shape is reachable (e.g. wpad `WPADiExcludeButton` r5↔r6 pointer color: 3 source variants no-op, 17 swaps — recorded for SMT acceptance). For abi-boundary rejections: the flipped colors feed ABI-fixed positions, so only original-source statement order resolves them (see attempts.jsonl us-803dd448/us-803e41e8/us-803f4600 packets) |
 | **Branchy pure reg-swap pairs reject as "terminal pair diverges structurally — gpr r0"** | The cheap disjointness simplify (`_z3_simplify`) is a local rewrite: cross-path pairs of branchy functions build `And(X, Not(X))` from per-side byte-read memory equalities that are NOT structurally identical across sides, so `is_false` returns False and the impossible pair is compared (diverges on a lane live on only one path). **FIXED 2026-08 in `run_structural_witness`**: bounded QF_BV `unsat` fallback (`_path_conditions_disjoint_sat`, 10 s timeout, fail-closed on sat/unknown/timeout) proves the cross paths cannot co-occur and skips the pair. Sound: `unsat` for the conjunction is a proof of infeasibility. 142 tests green incl. `test_branchy_cross_pair_disjointness_sat_fallback`. Unblocked `CMMTex::OnFileEvent` (us-801184b8, rho r5↔r6, EQUIVALENT_MATCH witness-certified). Apply to any branchy reg-swap target whose witness reason is `structural … gpr r0` |
 
 
@@ -2824,6 +2824,30 @@ be the intended fix rather than externing the data.
 - Confidence: repo_proven
 - Applies to/a.k.a.: any float compare used as a branch condition; same family as the != 0 -O4,p/-O4,s lowering note. Try the De-Morgan/negated form first whenever a float branch shows cror on the compare result. SCOPE NOTE (CScnItemCamera/EFF8 negative result): the merge only appears when the compare runs on the plain value - if retail's branch follows a fneg of the compared value, the cror comes from elsewhere and negated-lt/ge rewrites are codegen-neutral
 
+## Narrow-return declarations force mask-at-store: declare lookup helpers returning int when retail defers narrowing (func_80285708 discovery, Wii/1.1 -O4,p)
+- Symptom:   `u16 v = func_80136254(...);` emits `rlwinm r3, r3, 0, 16, 31` after every call, shifting all downstream register allocations vs retail which has no post-call mask
+- Cause:     MWCC trusts the declared return type: u16 return → upper 16 bits of r3 assumed garbage → narrowing mask emitted after every call. Retail source likely declared the helper returning int/wider, deferring all narrowing to explicit use-site casts
+- Fix:       REMOVE the declaration from the shared header entirely; declare it as `extern "C" int func(...)` directly in each .cpp that needs wide-return codegen. Each TU compiles independently so there's no cross-TU redefinition conflict. Add `(u16)` casts at use sites that need the narrowed value.
+- Result:    func_80285708 went 94.8% → 100% (FULL MATCH); CPartyState.cpp compiles clean with its own u16 declaration
+- Confidence: repo_proven (CEquipItemBox func_80285708 + cross-TU break in CPartyState confirmed)
+- Applies to/a.k.a.: any extern-C lookup/table function returning u8/u16/u32 where retail's codegen lacks post-call masks; grep for functions called by both matched and unmatched functions
+
+## stmw save-area observability blocks witness certification for regswap-only diffs (func_80284DCC/func_80284F1C finding, Wii/1.1 -O4,p)
+- Symptom:   functions with 0 structural mismatches and only pure register swaps fail the equivalence witness with "rho perm maps gpr rN -> rM; ABI registers must be fixed"
+- Cause:     `stmw rN, off(sp)` / `lmw rN, off(sp)` write callee-saved register values to the caller-visible stack frame. If decomp assigns a different saved-register SET (e.g. stmw r25 vs retail's stmw r26), the save-area bytes observably differ even though program semantics are identical
+- Fix:       none via source reshaping — requires exact saved-register allocation match (i.e. FULL byte match) or extending the witness/SMT tooling to model save areas as implementation-private
+- Result:    func_80284DCC, func_80284F1C, func_80289AA4 permanently classified as needing FULL match; witness path closed for all stmw-using near-misses
+- Confidence: repo_proven (confirmed on 3 independent functions)
+- Applies to/a.k.a.: any function using stmw/lmw with register allocation differences; check prologue `stmw` range first before attempting source-level fixes
+
+## Vtable offset decode convention: vtable offset_bytes / 4 - 2 = declared virtual index (CEquipItemBox func_80286454 discovery, Wii/1.1 -RTTI on)
+- Symptom:   source calls the wrong virtual method through a view class; decomp emits `lwz r12, 0x14(r12)` where retail has `lwz r12, 0xC(r12)`
+- Cause:     MWCC with -RTTI on prepends offset-to-top and typeinfo pointers before the virtual function table, so declared index N maps to vtable offset (N+2)*4 bytes
+- Fix:       decode: offset_bytes / 4 - 2 = declared index. E.g. offset 0x0C → index 1 → v01(); offset 0x88 → index 32 → v32(). Verify against known-good matched functions using the same view class
+- Result:    func_80286454 26.8% → 100% FULL MATCH by fixing v03() → v01()
+- Confidence: repo_proven (CEquipItemBox func_80286454 + func_802861A8 slot-34 confirmation)
+- Applies to/a.k.a.: any virtual call through a view class; grep for `lwz r12,` followed by `mtctr/bctrl` in unmatched functions
+
 ## Diff-1 return pairs: `if (c) return K; return K+1;` lowers to branchless addic/subfe — route through a named local (func_8028876C fix, Wii/1.1 -O4,p)
 - Symptom:   state-code dispatchers returning adjacent constants (`if (vis) return 0x1d; return 0x1c;`) emitted branchless `addic r0,c,-1 / subfe / addi r3,r3,K` selects where retail has explicit `cmpi / li FALSE / beq / li TRUE / b`
 - Cause:     MWCC's integer-select formation fires only when the two result constants differ by exactly 1 (carry trick yields 0/1 offset); diff>=2 pairs keep branches
@@ -3095,3 +3119,150 @@ The build preprocesses every source through `tools/sjiswrap.exe`; non-ASCII comm
 - Result:    FULL_MATCH on func_801CC4E8 + func_801CC3F4 (kyoshin/CItemBoxGrid), 100%, semantic-certified.
 - Confidence: repo_proven
 - Applies to/a.k.a.: any single-instruction bc-polarity residual; combine with ternary-vs-two-statement local init shape for scratch-color fixes in the same function tail.
+
+## Compound-|| guards and if/else-if dispatch: split early-returns + real switch (CPassiveSkill func_80264BE4 + func_8026D894, Wii/1.1 -O4,p)
+- Symptom:   (a) guarded draw/update function has its FIRST branch targeting the post-call join instead of the shared epilogue (one bc displacement differs, everything else identical); (b) state-byte dispatch emits inverted `bne`-over-body branches plus an extra unconditional jump where retail shows a clean compare chain of `beq` into case bodies.
+- Cause:     (a) `if (a != 0) { call; } if (b && c) { call2; }` nests the second block under the first's join; retail source used sequential `if (x == 0) return;` guards that all funnel to one epilogue. (b) MWCC lowers if/else-if chains to bne-over style; a small `switch` lowers to cmpi/beq chains with break-jumps to the tail - byte-identical to retail.
+- Fix:       rewrite guards as separate `if (field == 0) { return; }` statements (never compound `||` when retail shares one exit), and transcribe multi-case byte dispatch as an actual `switch` with `break`s. Verified combo took func_80264BE4 96.6%->100% in one change and func_8026D894 73.1%->100% in two changes.
+- Result:    FULL_MATCH x2, semantic-certified (us-80267054, us-8026fd18).
+- Confidence: repo_proven
+- Applies to/a.k.a.: any visibility-gated update/draw helper with flag guards + state machine dispatch; check bc polarity at each guard before touching anything else.
+
+## getBdatStringColumnValue signature: spell param 3 `s32` everywhere, never `int` (repo-wide header rule)
+- Symptom:   `(10197) illegal function overloading` at whichever header declares it SECOND, after a sibling agent touches any copy.
+- Cause:     defining TU is ocBdat.cpp: `extern "C" u32 getBdatStringColumnValue(void*, const char*, s32 index)`. Under MWCC `s32` = `signed long`, a distinct type from `int`; mixed spellings across headers are an extern-"C" overload error. Both directions have been tried; only all-s32 builds.
+- Fix:       every declaration (code_80135FDC.hpp, code_801862C0.hpp, CUIWindowManager.hpp, CPcKizunagram.hpp, cfsys/CfObjectImplWalker.hpp, plugin/ocUnit.hpp, include/kyoshin/cf/CItem.hpp, cf/object/CfObjectPoint.hpp) must read `s32`. No ABI effect for extern "C" calls; int-expression args convert implicitly with zero codegen impact.
+- Result:    resolves the recurring cross-agent build break permanently.
+- Confidence: repo_proven
+- Applies to/a.k.a.: any helper whose definition spells narrow-int params as s32/s64 typedefs - declarations must copy the DEFINITION'S spelling verbatim, not the "natural" type.
+
+## Table[b*8+c] lookups: hoist the scaled term into an explicit temp (CPassiveSkill func_8026DD84, Wii/1.1 -O4,p)
+- Symptom:   row-lookup block loads both out-param locals in the "wrong" order and folds the base pointer with the UNSCALED term (`add base+b0` before `rlwinm b1*8`), where retail loads multiplier-first and associates base with the scaled term; residual shows as swapped lbz pairs + one add-operand swap.
+- Cause:     bare `tbl[b1 * 8 + b0 - 9]` gives MWCC freedom to commute the adds and schedule either load first. Retail source associated `base + (b1*8)` first - reproduced only when the scaled term is a named lvalue.
+- Fix:       write `u32 idxN = bN * 8; u8 row = tbl[idxN + c - K];` - the temp forces lbz(multiplier local first)/rlwinm/add-base/add-other byte-for-byte. Took func_8026DD84 87.9% -> 100% in two changes (one per mirrored block).
+- Result:    FULL_MATCH, semantic-certified (us-80270208). NOTE: does NOT transfer to func_8026D5A8, whose residual is whole-loop-body coloring, not association.
+- Confidence: repo_proven
+- Applies to/a.k.a.: any stride-8/stride-N table lookup fed by paired out-param locals after a call boundary.
+
+## Single-bit test decode: emitted rlwinm rotate = 32 − C shift (func_80054614, Wii/1.1 -O4,p)
+- Symptom:   retail `rlwinm r0,r0,17,31,31` vs decomp `rlwinm r0,r0,18,31,31` after writing what looks like the same bit test; every shift/mask variant lands one rotation off.
+- Cause:     for single-bit extractions feeding a bool normalize (`neg`/`or`/`rlwinm 1,31,31` chain), MWCC emits rotate = 32 − (C right-shift count). Naively decoding "rotate N selects bit (31−N)" sends you to the WRONG source bit: rotate 17 corresponds to C `(x & 0x8000) >> 15`, i.e. bit15 — not bit14. Verified empirically: shift 13→rot 19, shift 14→rot 18, shift 15→rot 17 on Wii/1.1 -O4,p.
+- Fix:       to match an emitted rotate R, write `(x & (1 << (32-R))) >> (32-R)` (mask+shift form; pure-mask and shift-mask forms also worked for rotl0 mask-pair sites like `rlwinm …,0,21,21` ⇔ `& 0x400`). Cross-check polarity of the surrounding branch (`bc 12,x` vs `bc 4,x`) before assuming the condition is inverted — a beq-to-continuation reads backwards from early-return style.
+- Result:    func_80054614 field260 bit-test matched exactly (was the last instruction-class mismatch besides saved-reg colors).
+- Confidence: repo_proven
+- Applies to/a.k.a.: any flag-merge idiom `byte | ((word >> n) & 1)` normalized through neg/or; also explains "off-by-one" rlwinm residuals in guard-heavy state machines.
+
+## Missing retail-named stubs: declared-but-undefined externs poison symbol resolution TU-wide (CActParamAnim/CActParamData, Wii/1.1)
+- Symptom:   hexdiff shows a target at 0% with decomp side = a 4-byte unrelated function or wrong body; objdiff cycle fails with `ambiguous decomp symbol 'func_XXXXXXXX' (N candidates)`.
+- Cause:     header declares `extern "C" func_XXXXXXXX(...)` but no TU defines it, so `_resolve_candidates` falls through exact → substring → digit-strip fuzzy matching, which matches several unrelated mangled names.
+- Fix:       reconstruct the tiny getter/setter/copy from its retail asm (usually 1–7 instructions) and define it under the EXACT retail name in the owning TU. For blr-only stubs previously given invented names (e.g. `initSub1`), rename to the retail symbol — ambiguous fuzzy resolution then disappears. Watch signature spelling against the header (`void*` vs typed params → 10197 illegal overloading if they diverge).
+- Result:    func_8004B61C/B7B8/B3F0/51BC4/51BDC + B0B0/B0B4 renames → six FULL_MATCH accepts in one session.
+- Confidence: repo_proven
+- Applies to/a.k.a.: any unit where targets.json shows FULL_MATCH 0.0% ACCEPTED rows alongside ACTIVE COMPILES rows — audit `nm` for undefined `U func_*` symbols before believing the registry.
+
+## sret helpers consumed as by-value args: use the value-returning spelling + nested call (CPassiveSkill func_80269004, Wii/1.1 -O4,p)
+- Symptom:   function is exact-size but a pair of stack slots is mirrored - local VEC3 at sp+20 / by-value argument copy at sp+8, where retail has them the other way round; every load/store between the two calls differs only in displacement.
+- Cause:     retail source nested the sret call directly into the consumer (`g(f(a,b,c))`), so MWCC allocated the hidden return buffer at sp+8 and the outgoing struct copy above it. A named local `VEC3 pos; f(&pos,...); g(pos)` allocates pos AFTER the arg area, mirroring the layout.
+- Fix:       declare the helper TU-locally with the value-returning spelling - `extern "C" VEC3 f(Pane*,Pane*,Pane*);` - which is ABI-identical on PPC EABI (hidden pointer in r3 either way) but lets you write `g(f(...))`. If a shared header declares it sret-style, `#define`-rename it away BEFORE the include chain that pulls it (watch transitive includes!), #undef after, then declare locally. Sites that reuse the result twice keep the named-local form via direct-init `VEC3 pos = f(...)`; NEVER plain assignment `pos = f(...)` - that materializes an anonymous temp plus a copy-assign and grows the function (+0x50 across three sites).
+- Result:    FULL_MATCH on func_80269004, 91.1% -> 100%, semantic-certified (us-8026b474).
+- Confidence: repo_proven
+- Applies to/a.k.a.: any GetPanePosition-style helper whose result feeds one by-value struct parameter; check which of the two stack objects sits lower before picking the spelling.
+
+## Memberwise pointer copies batch unless accesses are volatile-qualified (CPassiveSkill func_80267268, Wii/1.1 -O4,p -ipa file)
+- Symptom:   dst/src member-copy helper compiles to ALL loads into separate registers followed by ALL stores, while retail interleaves load/store through one scratch register per member; dozens of structural mismatches at exact size.
+- Cause:     retail could not prove dst/src disjoint, so every store ordered before the next load (conservative aliasing). With `-ipa file`, MWCC proves the in-TU call sites pass disjoint objects and reorders freely.
+- Fix:       qualify both sides volatile for the copies (`((volatile T*)dst)->m = ((volatile const T*)src)->m;`) - volatile ordering forbids hoisting/batching and reproduces the strict interleave byte-for-byte. Named volatile pointer locals vs inline casts produce identical code.
+- Result:    func_80267268 32.4% -> 91.2% in one change (exact size). Residual: first volatile load hoists above the r31 prologue save (scheduler-internal; named-local vs cast spellings identical).
+- Confidence: repo_proven
+- Applies to/a.k.a.: any small dst/src struct copy helper whose retail body shows single-register interleaved pairs.
+- Boundary:   does NOT help when the copies are already interleaved in decomp but surrounding scheduling drifts (OnFileEvent) - volatile member copies there were byte-identical to plain ones; MWCC still floats independent loop setup across the sequence. Only cures load-BATCHING.
+
+## Union word-field write order pins the int->double conversion register flow (CPassiveSkill func_8026D210 + func_8026DD84, Wii/1.1 -O4,p)
+- Symptom:   u8-to-float conversion via the {hi=0x43300000, lo=value} stack union emits lbz into a different register than retail and shifts every subsequent fp-operation coloring.
+- Cause:     writing conv.w.hi first forces MWCC to move the GetAlpha byte out of r3 (its call-return register) before the magic constant load; writing conv.w.lo first uses r3 directly for the first store and lets lis take the dead register instead.
+- Fix:       order union member writes value-first (lo), magic-second (hi) whenever the value comes from a call return. Proven in func_8026D210 (13.4->17%, byte in r3 matching retail) and consistent with func_8026DD84's learn-loop shape.
+- Result:    improved match + aligned the whole downstream fp section's register coloring.
+- Confidence: repo_proven
+- Applies to/a.k.a.: any 0x43300000-magic int-to-double conversion idiom; pairs with the lbl_eu_80668910 named-pool rule earlier in this file.
+
+## 6. Composite downcast offset = base-class sizes (CfPlayerExtraData fix)
+
+**Symptom:** `subi r3, r3, <K>` after a getter differs from retail by a power-of-2-ish
+constant (here exactly 0x80) while every other instruction matches.
+
+**Cause:** the class used for a `static_cast` downcast has a byte-array stub base whose
+size is wrong; the compiler computes `offsetof(Composite, ThirdBase)` from it and folds
+it into one immediate.
+
+**Diagnosis:** compute expected offset = sizeof(base1)+sizeof(base2); compare against
+retail's immediate. The delta tells you which stub to resize.
+
+**Fix:** resize the stub (`u8 field[0xA9C]` → `u8 field[0xB1C]`). Safe when the composite
+type is referenced only by the affected functions and the stub has no named fields.
+
+**Tool note:** hexdiff columns are **LEFT=retail, RIGHT=decomp** — verify by editing the
+source once and confirming the RIGHT side changes.
+
+## 7. %360-then-float-cast of the same int: temp birth order is CALLER-CONTEXT dependent — give conflicting callers private helper copies (func_804DD0A0 fix, Wii/1.1 -O4,p)
+
+**Symptom:** in table-interpolated trig (`deg = 57.29578f*rad; n = (int)deg; frac = deg - (f32)n;
+idx = n % 360;`) some inline sites show the pure-reg-swap quartet: retail `mulhw r3,r0,r4` /
+`xoris r0,r4,0x8000` vs decomp `mulhw r0` / `xoris r3` (plus the dependent stw/add) — while other
+sites inlining the SAME static helper match with the original declaration order.
+
+**Cause:** the two temps color by birth order (scratch claims low→high), but MWCC's vreg birth
+order for the pair depends on the CALLER's register context once the helper is inlined — one
+textual order cannot satisfy every site. func_804DD0A0 needed idx-first; the cardinal-axis
+builders (func_804DD388/44F8/4F8 family) need frac-first.
+
+**Fix:** keep the shared helper in the order most sites need and add a private idx-first variant
+(`CERotTrigIdxFirst`, byte-identical body) used only by the conflicting caller. Verify per-site
+with hexdiff --all after each move.
+
+**Result:** FULL_MATCH on func_804DD0A0 (12 reg_swaps -> 0). Also fixed in the same unit: the
+§17.6 pool_patterns target was a first-match mistake — verify against the retail split asm which
+byte-identical pool copy (here lbl_eu_8066B268 vs lbl_eu_8066A388) the unit actually references
+before pinning a content rule (`grep -c 'lbl_eu_8066XXXX@' build/us/asm/<unit>.s`).
+
+**Confidence:** repo_proven (hexdiff byte-verified; frac-first confirmed required by the
+cardinal builders — an earlier blanket reorder regressed them to +8 structural).
+
+**Applies to/a.k.a.:** any `n % const` + `(float)n` pair from one integer (rotation tables,
+angle normalization); pairs with the magic-conversion union-store-order pattern above.
+
+## 7. Impure predicates: verify purity before declaring branches dead
+
+**Trap:** an `if (f()) / else if (!f())` ladder looks like a decompilation bug
+(the second arm unreachable) when `f()` is assumed pure.
+
+**Reality check:** trace the callee to its leaf. `func_80086D9C -> func_8006A2E0`
+reads a live frame counter (fmod of play-clock); consecutive calls differ as time
+advances, so re-checking is meaningful and retail's five call sites are genuine.
+
+**Rule:** before flagging "unreachable branch / wrong second condition", confirm
+the predicate has no side effects and reads no mutable state. Extern C thunks
+hiding time/input-dependent logic are common in this codebase.
+
+## func_80124270 else-path argument correction (CPassiveSkill func_8026440C/4470)
+- Symptom:   0% match on small if/else helper functions that call a shared tail with different bool args.
+- Cause:     source incorrectly passed `1` in both branches; retail passes `0` in the else path. The semantic error masked the real codegen difference (non-tail bl + stack frame vs tail b).
+- Fix:       correct the argument. The codegen gap persists independently: retail's if-path emits `bl` with a stack frame while the else-path uses a tail `b`, plus an orphaned dead `bl` between the paths that cannot be reproduced from clean C++.
+- Result:    semantic correctness improved; hexdiff score unchanged at 0% due to the irreducible frame/dead-code delta.
+- Confidence: repo_proven
+- Applies to/a.k.a.: any paired enable/disable helpers calling func_80124270(anim, bool) — verify per-branch arguments against retail asm before assuming symmetry.
+
+## Duplicate extern "C" wrappers shadow member bodies under the same mangled name (repo_proven, CLibCriMoviePlay)
+- Symptom:   a function whose retail symbol equals a member's mangled name (e.g. wkUpdate__16CLibCriMoviePlayFv) compiles to a 0x10-byte tail-call instead of the full body; hexdiff shows size 0x10/0x1C8.
+- Cause:     defining BOTH the member `void wkUpdate()` AND `extern "C" void wkUpdate__16CLibCriMoviePlayFv(CLibCriMoviePlay*)` in one TU collides on the linker symbol; MWCC keeps ONE definition (the wrapper), silently discarding the member body.
+- Fix:       keep only ONE provider. For members whose mangled name IS the retail symbol: delete the extern "C" wrapper and add a plain declaration for &-references in vtables. For retail names that are NOT member manglings (func_8045A260 etc.): move the body into the extern "C" free function and delete the member (update internal call sites).
+- Result:    wkUpdate/wkStandbyLogout went 0% -> 22.8%/12.2% from deletion alone; bodies land under retail names directly.
+- Confidence: repo_proven
+- Applies to/a.k.a.: novtable classes with hand-spelled vtables; also applies to statics referenced from free functions (call as Class::member()).
+
+## postprocess strtab appends must pad to 4 bytes — unaligned .rela* kills objdiff (repo_proven, tooling)
+- Symptom:   after retarget_relocs/exact_renames runs, objdiff-cli rejects the object with "Invalid ELF section header offset/size/alignment" while lenient parsers accept it.
+- Cause:     retarget_reloc_to_symbol appends name+NUL to .strtab and shifts every later section by the raw length; odd append lengths leave .rela* sections at non-4-aligned offsets.
+- Fix:       pad the appended bytes to a 4-byte multiple before shifting (strtab consumers only need NUL termination).
+- Result:    objects pass objdiff again (CLibCriMoviePlay cycle unblocked).
+- Confidence: repo_proven
+- Applies to/a.k.a.: any rule that grows .strtab by manual section surgery.

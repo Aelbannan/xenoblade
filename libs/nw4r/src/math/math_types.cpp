@@ -171,6 +171,13 @@ MTX34* MTX34RotAxisFIdx(MTX34* pMtx, const VEC3* pAxis, f32 fidx) {
 // every spelling that would emit it -- `@sda21` (err 33135), bare symbol
 // (33023), `sym - _SDA_BASE_` (33024) -- so the kernel uses `X@l`
 // (R_PPC_ADDR16_LO): byte-identical instructions, reloc type differs.
+// Hybrid probe record (2026 session): computing pTable/pConst as real C++
+// pointers around a raw ASM_VOLATILE kernel block reproduces retail's exact
+// instruction schedule (structural: 0), and MWCC emits the EMB_SDA21 reloc --
+// but its allocator never colors an asm-block-referenced variable into r0
+// (probed declaration/assignment orders and binding the mid-kernel r0 chain
+// to a named var; all regress), so `li r0` stays unreachable from compiled
+// code.  Revisit with a newer MWCC or a linked-DOL prove.
 #include "nw4r/math/detail/math_types_ps.inl"
 
 #else

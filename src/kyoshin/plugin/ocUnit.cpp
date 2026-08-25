@@ -5,14 +5,11 @@
 #include "kyoshin/cf/CfGameManager.hpp"
 #include "monolib/device/CDeviceVI.hpp"
 
-// .sdata2 pool plant (GXTexture.c convention): the retail magic double at
-// 0x80665C38 (2^52 + 2^31) is referenced by MWCC's direct u32->float
-// conversion idiom. Planting it with the retail name makes MWCC's literal
-// pool unify the conversion's lfd reloc to this symbol instead of a
-// synthesized @N entry, so the reloc name matches retail.
-// .sdata2 pool plant: external linkage so MWCC's literal pool unifies the
-// implicit s32->float conversion magic with this named symbol.
-const f64 lbl_eu_80665C38 = 4503601774854144.0;
+// .sdata2 pool plant: MWCC's implicit int->double conversion magic
+// (2^52 + 2^31). With this planted under its retail name AND the other
+// sdata2 scales referenced through named externs, the literal pool unifies
+// every conversion lfd/lfs reloc onto the retail symbols
+// (MWCC_CASES "naming ONE pooled scale constant unifies the WHOLE pool").
 
 struct CfObjIf {
     virtual void _v0008();
@@ -137,7 +134,7 @@ struct CfObjIf {
     virtual void _v01E0(int a, int b, int n, Vec3f* pts, double angle);
     virtual void _v01E4();
     virtual int vf01E8();          // 0x1E8: busy/idle check
-    virtual void _v01EC();
+    virtual void _v01EC(float rate); // 0x1EC: walk-rate setter
     virtual void vf01F0(int arg); // 0x1F0: time-unit setter
     virtual void _v01F4(void* src);
     virtual void _v01F8();
@@ -158,7 +155,6 @@ extern "C" {
     extern void* lbl_eu_806618F0;
     extern void* lbl_eu_806618E8;
     extern "C" void* __RTTI__Q22cf13CfObjectActor;
-    extern float lbl_eu_80665C30;
     void func_800BE824(void* obj, int flag);
     void func_800BE0F8(void* obj, int target);
     void func_800BE33C(void* obj, int flag);
@@ -177,7 +173,7 @@ extern "C" {
     void func_8013D448(void* subObj, const char* str);
     unsigned int func_8013EC58();
     int func_80174C98(void* player, u32* val, int flag);
-    unsigned char code80135FDC_getByte_64058();
+    int code80135FDC_getByte_64058();
     void* __dynamic_cast(void* obj, int offset, void* rtti, void* targetRtti, int flag);
     int strcmp(const char* s1, const char* s2);
     void* memset(void* ptr, int val, u32 size);
@@ -187,25 +183,31 @@ extern "C" {
     void* func_8008187C__Q22cf13CfGameManagerFv(int index);
 }
 
+// Checks whether the current OC context object can start a battle/talk
+// interaction. Returns 1 to block, 0 to allow.
 extern "C" int func_8003BC10(void* obj) {
+    // Declaration order controls MWCC's r28/r29 naming (cur -> r28).
     s32 result = 1;
-    void* a = func_800BBC0C();
-    if (a == 0) {
+    int bit;
+    int talkable;
+    void* cur = func_800BBC0C();
+    if (cur == NULL) {
         goto done;
     }
     if (lbl_eu_80663E28 & 0x04000000) {
         goto done;
     }
-    u32 bit = *(u8*)((u8*)a + 0x6C9) & 1;
-    u32 r29 = (u32)(-(s32)bit | (s32)bit) & 1;
-    func_800BF314(a, 0);
+    // Booleanize the state byte's low bit (MWCC clrlwi/neg/or/srwi idiom).
+    bit = *(u8*)((u8*)cur + 0x6C9) & 1;
+    talkable = (u32)(-bit | bit) >> 31;
+    func_800BF314(cur, 0);
     if (lbl_eu_80663E24 & 0x00400000) {
         goto done;
     }
-    if (!(*(u32*)((u8*)a + 0x64) & 8)) {
+    if (!(*(u32*)((u8*)cur + 0x64) & 8)) {
         goto done;
     }
-    cf::CfObject* ca = (cf::CfObject*)a;
+    cf::CfObject* ca = (cf::CfObject*)cur;
     s32 v1 = ca->CfObject_UnkVirtualFunc50();
     s32 v2 = ca->CfObject_UnkVirtualFunc51();
     s32 ok = 0;
@@ -213,14 +215,17 @@ extern "C" int func_8003BC10(void* obj) {
         ok = 1;
     }
     if (ok == 0) {
-        r29 = 0;
+        talkable = 0;
     }
+    // Two separate compares in retail (not range-folded).
     s32 is12 = (v2 == 1 || v2 == 2) ? 1 : 0;
-    if (is12) {
-        if (v1 == 4 || v1 == 5 || (r29 != 0 && v1 == 3)) {
+    if (is12 != 0) {
+        // Busy states 4/5 always block; state 3 blocks only when talkable.
+        if (v1 == 4 || v1 == 5 || (talkable != 0 && v1 == 3)) {
             return 1;
         }
-    } else if (!(v2 == 3 && v1 > 2)) {
+    }
+    if (is12 == 0 && !(v2 == 3 && (u32)(v1 - 1) <= 1)) {
         goto done;
     }
     result = 0;
@@ -235,68 +240,66 @@ int cf::CfObjectMove::CfObject_UnkVirtualFunc51() { return field_6CF; }
 // us-8003c2f8: spawns/looks up an object by bdat name and returns it as an
 // OC-reference retval. Third parameter is stored raw into the retval.
 extern "C" int func_8003BD7C(VMThread* pThread, int handle, u16 unk) {
-    VMArg* a1 = vmArgPtrGet(pThread, 1);
-    const char* str = vmArgStringGet(2, a1);
+    const char* str = vmArgStringGet(2, vmArgPtrGet(pThread, 1));
+    int argIdx;
     int idx;
     if (vmArgOmitChk(pThread, 2)) {
         idx = 0;
+        argIdx = 3;
     } else {
-        VMArg* a2 = vmArgPtrGet(pThread, 2);
-        idx = vmArgIntGet(3, a2);
+        argIdx = 3;
+        idx = vmArgIntGet(argIdx, vmArgPtrGet(pThread, 2));
     }
     int extra;
-    if (vmArgOmitChk(pThread, 3)) {
+    if (vmArgOmitChk(pThread, argIdx)) {
         extra = 0;
     } else {
-        VMArg* a3 = vmArgPtrGet(pThread, 3);
-        extra = vmArgIntGet(4, a3);
+        VMArg* ptr3 = vmArgPtrGet(pThread, argIdx);
+        ++argIdx;
+        extra = vmArgIntGet(argIdx, ptr3);
     }
-    // Move the talk-lock bit (0x2000) of the global flag word into bit
-    // 0x40000; the same source bit is applied twice (before and after the
-    // dispatch below), matching retail.
-    u32 flags = lbl_eu_80663E24;
-    u32 bit = (flags >> 13) & 1;
-    u32 newFlags = (flags & ~0x2000) | (bit != 0 ? 0x40000 : 0);
-    lbl_eu_80663E24 = newFlags;
-
-    void* found = NULL;
+    // Save the talk-lock bit (volatile read keeps this load separate from
+    // the reloads in the ternaries below, matching retail), then lift bit
+    // 0x2000 into 0x40000 depending on the omitted-arg value.
+    u32 talkBit = (*(volatile u32*)&lbl_eu_80663E24 >> 13) & 1;
+    u32 flags = *(volatile u32*)&lbl_eu_80663E24;
+    lbl_eu_80663E24 = (extra != 0) ? (flags | 0x40000u) : (flags & ~0x2000u);
+    OcSpawnObjView* found = NULL;
     if (strcmp(str, lbl_eu_804FA74C) == 0 || strcmp(str, lbl_eu_804FA74C + 0xC) == 0) {
-        found = func_80081990__Q22cf13CfGameManagerFv(lbl_eu_804FA74C, (u16)idx);
-        if (found) {
+        found = (OcSpawnObjView*)func_80081990__Q22cf13CfGameManagerFv(lbl_eu_804FA74C, (u16)idx);
+        if (found != NULL) {
             func_8003AA34();
             getFP__FPCc(lbl_eu_804FA74C); // init side effect only; result unused
             u32 col = getBdatStringColumnValue((void*)lbl_eu_804FA74C, lbl_eu_804FA74C + 0x10, idx);
-            if ((u8)col == 0) {
-                *(u32*)((u8*)found + 0x64) |= 0x1000;
+            if (*(u8*)&col == 0) {
+                found->field_0x64 |= 0x1000;
             }
         }
     } else if (strcmp(str, lbl_eu_804FA74C + 0x17) == 0 || strcmp(str, lbl_eu_804FA74C + 0x23) == 0) {
-        found = func_80081A40__Q22cf13CfGameManagerFv(lbl_eu_804FA74C + 0x17, (u16)idx, 0, 0);
+        found = (OcSpawnObjView*)func_80081A40__Q22cf13CfGameManagerFv(lbl_eu_804FA74C + 0x17, (u16)idx, 0, 0);
     } else if (strcmp(str, lbl_eu_804FA74C + 0x27) == 0 || strcmp(str, lbl_eu_804FA74C + 0x32) == 0) {
-        found = func_80081358__Q22cf13CfGameManagerFv(lbl_eu_804FA74C + 0x27, (u16)idx, 1, 0);
+        found = (OcSpawnObjView*)func_80081358__Q22cf13CfGameManagerFv(lbl_eu_804FA74C + 0x27, (u16)idx, 1, 0);
     } else if (strcmp(str, lbl_eu_804FA74C + 0x35) == 0) {
         if (idx > 0) {
             idx--;
         }
-        found = cf::CfGameManager::getPlayer(idx);
+        found = (OcSpawnObjView*)cf::CfGameManager::getPlayer(idx);
     }
 
-    flags = lbl_eu_80663E24;
-    lbl_eu_80663E24 = (flags & ~0x2000) | (bit != 0 ? 0x40000 : 0);
-    if (!found) {
+    // Same bit lift as above, keyed on the saved talk bit this time.
+    u32 flags2 = *(volatile u32*)&lbl_eu_80663E24;
+    lbl_eu_80663E24 = (talkBit != 0) ? (flags2 | 0x40000u) : (flags2 & ~0x2000u);
+    if (found == NULL) {
         vmOCExceptionThrow(pThread);
         return 0;
     }
     void* oc;
-    // func_801863F4's shared header declares it 1-arg; retail call sites pass
-    // (ctx, object) - go through a correctly-shaped pointer.
-    typedef void* (*CtxObjFn)(void*, void*);
     if (strcmp(str, lbl_eu_804FA74C + 0x35) == 0) {
-        oc = ((CtxObjFn)&func_80186460)(func_801862C0(), found);
+        oc = func_80186460(func_801862C0(), found);
     } else {
-        oc = ((CtxObjFn)&func_801863F4)(func_801862C0(), found);
+        oc = func_801863F4(func_801862C0(), found);
     }
-    *(u32*)((u8*)found + 0x68) |= 0x4000;
+    found->field_0x68 |= 0x4000;
     VMArg retVal;
     retVal.type = 9;
     retVal.unk2 = unk;
@@ -684,10 +687,10 @@ int walkR(VMThread* pThread, int handle) {
     int fixed = vmArgFixedGet(2, ptr);
     void* ctx = func_801862C0();
     cf::CfObject* obj = (cf::CfObject*)func_801864DC(ctx, handle);
-    // Fixed-point walk rate (u32) -> float via MWCC's direct 2^52 conversion,
-    // then divided by the fixed-point scale and dispatched to vtable slot 0x1EC.
-    float f = (float)(u32)fixed / lbl_eu_80665C30;
-    (*(CfObjVt_1EC**)obj)->fn(obj, f);
+    // Fixed-point walk rate -> float via MWCC's s32 double-trick, then
+    // dispatched to vtable slot 0x1EC.
+    float f = (float)(s32)fixed / lbl_eu_80665C30;
+    ((CfObjIf*)obj)->_v01EC(f);
     return 0;
 }
 
@@ -723,48 +726,42 @@ extern "C" int func_8003CF48(VMThread* pThread, int handle) {
 // us-8003d5dc: reads a VM array of fixed-point positions and hands them to
 // vtable slot 0x1E0 (path/move-list setter).
 extern "C" int func_8003D060(VMThread* pThread, int handle) {
-    VMArg* a1 = vmArgPtrGet(pThread, 1);
-    int modeA = vmArgIntGet(2, a1);
-    VMArg* a2 = vmArgPtrGet(pThread, 2);
-    int modeB = vmArgIntGet(3, a2);
-    VMArg* a3 = vmArgPtrGet(pThread, 3);
-    // vmArgArrayGet's shared header declares (u32, VMArg*); the actual ABI is
-    // (pThread, index) - go through a correctly-shaped pointer.
-    typedef void* (*ArgArrayGetFn)(VMThread*, int);
-    VMArg* arr = (VMArg*)((ArgArrayGetFn)&vmArgArrayGet)(pThread, 4);
-    u32 angle;
+    // Declaration order controls MWCC's callee-saved register assignment;
+    // ordered here to match retail's allocation.
+    int angle;
+    cf::CfObject* obj;
+    Vec3f pts[9];
+    Vec3f* out;
+    int modeA;
+    int modeB;
+    VMArg* arr;
+
+    modeA = vmArgIntGet(2, vmArgPtrGet(pThread, 1));
+    modeB = vmArgIntGet(3, vmArgPtrGet(pThread, 2));
+    arr = (VMArg*)vmArgArrayGet(4, vmArgPtrGet(pThread, 3));
     if (vmArgOmitChk(pThread, 4)) {
         angle = 0x168;
     } else {
-        VMArg* a4 = vmArgPtrGet(pThread, 4);
-        angle = (u32)vmArgIntGet(5, a4);
+        angle = vmArgIntGet(5, vmArgPtrGet(pThread, 4));
     }
-    cf::CfObject* obj = (cf::CfObject*)func_801864DC(func_801862C0(), handle);
+    obj = (cf::CfObject*)func_801864DC(func_801862C0(), handle);
     u16 count = *(u16*)((u8*)arr + 2);
     // Element count must be a non-zero multiple of 3, at most 0x18.
     if ((count % 3) != 0 || (u32)(count - 3) > 0x18) {
         vmOCExceptionThrow(pThread);
         return 0;
     }
-    Vec3f start;
-    Vec3f* p = ((CfObjIf*)obj)->_v00AC();
-    start.x = p->x;
-    start.y = p->y;
-    start.z = p->z;
-    Vec3f pts[9];
-    Vec3f* out = pts;
-    for (u16 i = 0; i < count; i += 3) {
+    Vec3f start = *((CfObjIf*)obj)->_v00AC();
+    out = pts;
+    for (int i = 0; i < count; i += 3) {
         // Fixed-point array elements -> floats via the signed 2^52 conversion
         // divided by lbl_eu_80665C30 (2048.0).
-        VMArg* e0 = (VMArg*)vmArrayGet(pThread, arr, i);
-        VMArg* e1 = (VMArg*)vmArrayGet(pThread, arr, i + 1);
-        VMArg* e2 = (VMArg*)vmArrayGet(pThread, arr, i + 2);
-        out->x = (s32)e0->value.intVal / lbl_eu_80665C30;
-        out->y = (s32)e1->value.intVal / lbl_eu_80665C30;
-        out->z = (s32)e2->value.intVal / lbl_eu_80665C30;
+        out->x = (s32)((VMArg*)vmArrayGet(pThread, arr, i))->value.intVal / lbl_eu_80665C30;
+        out->y = (s32)((VMArg*)vmArrayGet(pThread, arr, i + 1))->value.intVal / lbl_eu_80665C30;
+        out->z = (s32)((VMArg*)vmArrayGet(pThread, arr, i + 2))->value.intVal / lbl_eu_80665C30;
         out++;
     }
-    ((CfObjIf*)obj)->_v01E0(modeA, modeB, count / 3 + 1, &start, (double)(u32)angle);
+    ((CfObjIf*)obj)->_v01E0(modeA, modeB, count / 3 + 1, &start, (float)angle);
     return 0;
 }
 
@@ -820,34 +817,38 @@ int isTalk(VMThread* pThread, int handle) {
     void* ctx = func_801862C0();
     cf::CfObject* obj = (cf::CfObject*)func_801864DC(ctx, handle);
     u32 flags = obj->unk64;
-    u8 ret;
+    // volatile keeps the per-arm type stores as separate memory writes
+    // (MWCC would otherwise merge the diff-1 select into branchless arithmetic)
+    volatile VMArg retVal;
     if ((flags & 0x4) || (flags & 0x2)) {
-        // Embedded move-object pointer: obj sits at +0x3E9C inside it.
+        // The talk state lives in an object embedded 0x3E9C bytes before the
+        // CfObject; query it through its vtable slot 0x30 and pass the result
+        // to the battle-state checker.
         u8* base = (u8*)obj;
-        if (obj != 0) {
+        if (obj != NULL) {
             base -= 0x3E9C;
         }
-        // Read the talk state through the sub-object's vtable slot 0x30.
-        void* sub = *(void**)(base + 4);
-        u32 val = *(u32*)(*(CfObjVt_30**)sub)->fn(sub);
+        cf::CfObject* sub = *(cf::CfObject**)(base + 4);
+        u32 val = *((TalkSubIf*)sub)->_v0030();
+        // Battle-side talk permission check.
         if (func_80174C98(base, &val, 1) != 0) {
-            ret = 1;
+            retVal.type = 1;
         } else {
-            ret = 2;
+            retVal.type = 2;
         }
-        vmRetValSet(pThread, (VMArg*)&ret);
+        vmRetValSet(pThread, (VMArg*)&retVal);
         return 1;
     }
     if (flags & 0x8) {
         if (((CfObjIf*)obj)->_v0024(1) != 0) {
-            ret = 1;
+            retVal.type = 1;
         } else {
-            ret = 2;
+            retVal.type = 2;
         }
-        vmRetValSet(pThread, (VMArg*)&ret);
+        vmRetValSet(pThread, (VMArg*)&retVal);
         return 1;
     }
-    ret = 2;
+    retVal.type = 2;
     vmOCExceptionThrow(pThread);
     return 0;
 }
@@ -860,21 +861,27 @@ int onEvent(VMThread* pThread, int handle) {
     void* ctx = func_801862C0();
     cf::CfObject* obj = (cf::CfObject*)func_801864DC(ctx, handle);
     u32 flags = obj->unk64;
-    u8 ret;
+    VMArg retVal;
     if ((flags & 0x8) || (flags & 0x2) || (flags & 0x4000) || (flags & 0x8000)) {
         // Talkable / event object: ask the state machine (vtable slot 0x2C)
-        // which talk mode is active and report TRUE/FALSE to the VM.
+        // which talk mode is active and report TRUE/FALSE type to the VM.
         if (((CfObjIf*)obj)->_v002C(1, 1) != 0 || ((CfObjIf*)obj)->_v002C(2, 1) != 0) {
-            ret = (lbl_eu_80663E24 & 0x08000000) ? 2 : 1;
+            if ((lbl_eu_80663E24 & 0x08000000) == 0) {
+                retVal.type = 1;
+            } else {
+                retVal.type = 2;
+            }
         } else {
-            ret = 2;
+            retVal.type = 2;
         }
-        vmRetValSet(pThread, (VMArg*)&ret);
-        return 1;
+    } else {
+        // Not a talk/event object: the OC query fails.
+        retVal.type = 2;
+        vmOCExceptionThrow(pThread);
+        return 0;
     }
-    ret = 2;
-    vmOCExceptionThrow(pThread);
-    return 0;
+    vmRetValSet(pThread, &retVal);
+    return 1;
 }
 
 extern "C" int CObjectState_UnkVirtualFunc10__Q22cf12CObjectStateFv(cf::CObjectState* self, void* arg, int flag) {
@@ -930,54 +937,86 @@ extern "C" int func_8003D9C4(VMThread* pThread, int handle) {
     VMArg retVal;
     if (obj->unk64 & 0x8) {
         // State-mask query through vtable slot 0x2C: report TRUE/FALSE type.
-        if (((CfObjIf*)obj)->_v002C(0x2000, 1) == 0) {
-            *(volatile u8*)&retVal.type = 2;
+        if (((CfObjIf*)obj)->_v002C(0x2000, 1) != 0) {
+            retVal.type = 1;
         } else {
-            *(volatile u8*)&retVal.type = 1;
+            retVal.type = 2;
         }
-        vmRetValSet(pThread, &retVal);
-        return 1;
+    } else {
+        retVal.type = 2;
+        vmOCExceptionThrow(pThread);
+        return 0;
     }
-    retVal.type = 2;
-    vmOCExceptionThrow(pThread);
-    return 0;
+    vmRetValSet(pThread, &retVal);
+    return 1;
 }
+
+// Interface view of the talk-state controller object embedded 0x3E9C bytes
+// into the player actor: slot 0x8 sets a talk flag, slot 0x50 opens the talk
+// window targeting the given object.
+struct TalkCtrlIf {
+    virtual void _v0008(int flag);
+    virtual void _v000C();
+    virtual void _v0010();
+    virtual void _v0014();
+    virtual void _v0018();
+    virtual void _v001C();
+    virtual void _v0020();
+    virtual void _v0024();
+    virtual void _v0028();
+    virtual void _v002C();
+    virtual void _v0030();
+    virtual void _v0034();
+    virtual void _v0038();
+    virtual void _v003C();
+    virtual void _v0040();
+    virtual void _v0044();
+    virtual void _v0048();
+    virtual void _v004C();
+    virtual void _v0050(cf::CfObject* target);
+};
+
+// View of the player actor whose talk controller is an EMBEDDED member at
+// +0x3E9C (member access lets MWCC use displaced vtable loads).
+struct PlayerTalkView {
+    u8 _0000[0x3E9C];
+    TalkCtrlIf talk;
+};
 
 // us-8003dfec: winTalk
 // Starts a talk window interaction
 extern "C" int winTalk(VMThread* pThread, int handle) {
-    VMArg* arg1 = vmArgPtrGet(pThread, 1);
-    const char* str = vmArgStringGet(2, arg1);
-    void* ctx = func_801862C0();
-    cf::CfObject* obj = (cf::CfObject*)func_801864DC(ctx, handle);
-    cf::CfObjectMove* player = (cf::CfObjectMove*)cf::CfGameManager::getPlayer(0);
-    if (player) {
+    const char* str = vmArgStringGet(2, vmArgPtrGet(pThread, 1));
+    cf::CfObject* obj = (cf::CfObject*)func_801864DC(func_801862C0(), handle);
+    cf::CfObjectMove* player;
+    // Talk state lives 0x3E9C bytes below the player object base.
+    player = cf::CfGameManager::getPlayer(0);
+    if (player != NULL) {
         player = (cf::CfObjectMove*)((u8*)player - 0x3E9C);
     }
     func_8013D07C(*(void**)((u8*)obj + 0x74), str, 1);
-    if (obj->unk64 & 0x8) {
-        if (!((cf::CObjectState*)obj)->CObjectState_UnkVirtualFunc10((void*)1, 1)) {
+    u32 flags = obj->unk64;
+    if (flags & 0x8) {
+        if (((cf::CObjectState*)obj)->CObjectState_UnkVirtualFunc10((void*)1, 1) == 0) {
             ((cf::CObjectState*)obj)->CObjectState_UnkVirtualFunc1(1);
         }
         if (!code80135FDC_getByte_64058()) {
-            u32* valPtr = (u32*)((cf::CObjectState*)player->mTargetC4)->CObjectState_UnkVirtualFunc8(0);
-            u32 val = *valPtr;
-            if (!func_80174C98((void*)player, (u32*)&val, 1)) {
-                cf::CObjectState* state = (cf::CObjectState*)((u8*)player + 0x3E9C);
-                state->CObjectState_UnkVirtualFunc1(1);
-                ((void(*)(void*, void*))(*(void***)((u8*)player + 0x3E9C))[0x50/4])((u8*)player + 0x3E9C, *(void**)((u8*)obj + 0x74));
+            // Query the actor's sub-object (offset 4) for the current value,
+            // then ask the battle side whether talking is allowed.
+            u32 val = *((TalkSubIf*)*(cf::CfObject**)((u8*)player + 4))->_v0030();
+            if (func_80174C98(player, &val, 1) == 0) {
+                ((PlayerTalkView*)player)->talk._v0008(1);
+                ((PlayerTalkView*)player)->talk._v0050(*(cf::CfObject**)((u8*)obj + 0x74));
             }
         }
-    } else if ((obj->unk64 & 0x4000) || (obj->unk64 & 0x8000)) {
-        if (!((cf::CObjectState*)obj)->CObjectState_UnkVirtualFunc8(1)) {
+    } else if ((flags & 0x4000) || (flags & 0x8000)) {
+        if (((cf::CObjectState*)obj)->CObjectState_UnkVirtualFunc8(1) == 0) {
             ((cf::CObjectState*)obj)->CObjectState_UnkVirtualFunc1(1);
         }
-        u32* valPtr = (u32*)((cf::CObjectState*)player->mTargetC4)->CObjectState_UnkVirtualFunc8(0);
-        u32 val = *valPtr;
-        if (!func_80174C98((void*)player, (u32*)&val, 1)) {
-            cf::CObjectState* state = (cf::CObjectState*)((u8*)player + 0x3E9C);
-            state->CObjectState_UnkVirtualFunc1(1);
-            ((void(*)(void*, void*))(*(void***)((u8*)player + 0x3E9C))[0x50/4])((u8*)player + 0x3E9C, *(void**)((u8*)obj + 0x74));
+        u32 val = *((TalkSubIf*)*(cf::CfObject**)((u8*)player + 4))->_v0030();
+        if (func_80174C98(player, &val, 1) == 0) {
+            ((PlayerTalkView*)player)->talk._v0008(1);
+            ((PlayerTalkView*)player)->talk._v0050(*(cf::CfObject**)((u8*)obj + 0x74));
         }
     }
     return 0;
@@ -1099,17 +1138,19 @@ static void lookAtBone(cf::CfObject* self, cf::CfObject* actor, int snap, const 
 // us-8003e5ec: makes an object look at another OC object (by bone name when
 // both support it) or directly at its position vector.
 extern "C" int lookAt(VMThread* pThread, int handle) {
-    // Running VM argument index (r28 in retail), advanced as each optional
-    // argument is consumed.
-    int idx = 2;
+    // Running VM argument index, advanced as each optional argument is consumed.
     int targetOC;
+    int idx;
+    int snap;
+    int rotate;
     if (vmArgOmitChk(pThread, 1)) {
         targetOC = 0;
+        idx = 2;
     } else {
         VMArg* ptr = vmArgPtrGet(pThread, 1);
-        targetOC = (int)vmArgOCGet(idx++, ptr);
+        idx = 2;
+        targetOC = (int)vmArgOCGet(2, ptr);
     }
-    int snap;
     if (vmArgOmitChk(pThread, idx)) {
         snap = 0;
         idx++;
@@ -1118,7 +1159,6 @@ extern "C" int lookAt(VMThread* pThread, int handle) {
         idx++;
         snap = vmArgBoolGet(idx, ptr);
     }
-    int rotate;
     if (vmArgOmitChk(pThread, idx)) {
         rotate = 1;
     } else {
@@ -1128,7 +1168,8 @@ extern "C" int lookAt(VMThread* pThread, int handle) {
     }
     cf::CfObject* self = (cf::CfObject*)func_801864DC(func_801862C0(), handle);
     if (targetOC != 0) {
-        cf::CfObject* target = (cf::CfObject*)func_801864DC(func_801862C0(), *(int*)((u8*)targetOC + 4));
+        OcTargetView* oc = (OcTargetView*)targetOC;
+        cf::CfObject* target = (cf::CfObject*)func_801864DC(func_801862C0(), (int)oc->field_0x04);
         CfObjIf* actor = (CfObjIf*)__dynamic_cast(target, 0, lbl_eu_806618E8, lbl_eu_806618F0, 0);
         if (actor == NULL) {
             // Target is not an actor: aim straight at its position vector.
@@ -1137,7 +1178,7 @@ extern "C" int lookAt(VMThread* pThread, int handle) {
         } else if ((((cf::CfObject*)actor)->unk64 & 0x2) || (((cf::CfObject*)actor)->unk64 & 0x8)) {
             // Talkable/event actor: only look when the self object has a bone
             // target set and the actor owns one of the known attach bones.
-            if (*(void**)((u8*)self + 0xC4)) {
+            if (((CfObjBoneView*)self)->field_0xC4 != NULL) {
                 if (((CfObjIf*)actor)->_v0120(&lbl_eu_804FA74C[0x3C])) {
                     lookAtBone(self, (cf::CfObject*)actor, snap, &lbl_eu_804FA74C[0x3C]);
                 } else if (((CfObjIf*)actor)->_v0120(&lbl_eu_804FA74C[0x43])) {
@@ -1149,7 +1190,7 @@ extern "C" int lookAt(VMThread* pThread, int handle) {
         } else {
             lookAtBone(self, (cf::CfObject*)actor, snap, &lbl_eu_804FA74C[0x4B]);
         }
-        ((CfObjIf*)self)->_v01B4(rotate != 0 ? 1 : 0);
+        ((CfObjIf*)self)->_v01B4(rotate != 0);
     } else {
         // No target: face the default direction via slot 0x1B0 with NULL
         // (no rotate-flag call in this path).
@@ -1237,25 +1278,19 @@ extern "C" int func_8003E528(VMThread* pThread, int handle) {
 }
 
 // us-8003ebe8: func_8003E66C
-// Gets the current battle target's OC handle
+// Gets the current battle target's unit. The +0x4C virtual returns this
+// unit's own OC handle; when valid it is fed through the same virtual again
+// and resolved back to an object whose +0x8C halfword becomes the result.
 extern "C" int func_8003E66C(VMThread* pThread, int handle) {
-    void* ctx = func_801862C0();
-    cf::CfObject* obj = (cf::CfObject*)func_801864DC(ctx, handle);
-    u32 ocHandle = obj->CObjectParam_UnkVirtualFunc5();
-    if (ocHandle) {
-        ctx = func_801862C0();
-        obj = (cf::CfObject*)func_801864DC(ctx, ocHandle);
-        u8 type = 3;
-        u16 hp = *(u16*)((u8*)obj + 0x8C);
-        VMArg retVal;
-        retVal.type = type;
-        retVal.value.uintVal = hp;
-        vmRetValSet(pThread, &retVal);
-    } else {
-        VMArg retVal;
-        retVal.type = 0;
-        vmRetValSet(pThread, &retVal);
+    cf::CfObject* obj = (cf::CfObject*)func_801864DC(func_801862C0(), handle);
+    VMArg retVal;
+    if (((cf::CObjectParam*)obj)->CObjectParam_UnkVirtualFunc5()) {
+        u32 id = ((cf::CObjectParam*)obj)->CObjectParam_UnkVirtualFunc5();
+        void* target = func_801864DC(func_801862C0(), id);
+        retVal.type = 3;
+        retVal.value.uintVal = *(u16*)((u8*)target + 0x8C);
     }
+    vmRetValSet(pThread, &retVal);
     return 1;
 }
 
@@ -1334,55 +1369,71 @@ extern "C" int invin(VMThread* pThread, int handle) {
 }
 
 // us-8003eef0: func_8003E974
-// Complex battle AI function - sets up a battle event with ID, type, etc.
+// Reads up to 5 VM args (arg 1 always present, 2..5 optional/omittable), looks
+// up the handle's object as a CfObjectActor and queues a battle event for it.
 extern "C" int func_8003E974(VMThread* pThread, int handle) {
+    // Sequential omittable-arg reader: idx is a running counter shared by
+    // all blocks (each block advances it whether or not its arg was omitted).
+    int idx;
     VMArg* ptr = vmArgPtrGet(pThread, 1);
     int eventId = vmArgIntGet(2, ptr);
+
     int arg2;
     if (vmArgOmitChk(pThread, 2)) {
         arg2 = 0;
+        idx = 3;
     } else {
-        VMArg* ptr2 = vmArgPtrGet(pThread, 2);
-        arg2 = vmArgIntGet(3, ptr2);
+        VMArg* p = vmArgPtrGet(pThread, 2);
+        arg2 = vmArgIntGet(3, p);
+        idx = 3;
     }
+
     int arg3;
-    if (vmArgOmitChk(pThread, 3)) {
+    if (vmArgOmitChk(pThread, idx)) {
         arg3 = 0;
+        idx++;
     } else {
-        VMArg* ptr3 = vmArgPtrGet(pThread, 3);
-        arg3 = vmArgIntGet(4, ptr3);
+        VMArg* p = vmArgPtrGet(pThread, idx);
+        idx++;
+        arg3 = vmArgIntGet(idx, p);
     }
+
     int arg4;
-    if (vmArgOmitChk(pThread, 4)) {
+    if (vmArgOmitChk(pThread, idx)) {
         arg4 = 0;
+        idx++;
     } else {
-        VMArg* ptr4 = vmArgPtrGet(pThread, 4);
-        arg4 = vmArgIntGet(5, ptr4);
+        VMArg* p = vmArgPtrGet(pThread, idx);
+        idx++;
+        arg4 = vmArgIntGet(idx, p);
     }
+
     int arg5;
-    if (vmArgOmitChk(pThread, 5)) {
+    if (vmArgOmitChk(pThread, idx)) {
         arg5 = 0;
     } else {
-        VMArg* ptr5 = vmArgPtrGet(pThread, 5);
-        arg5 = vmArgIntGet(6, ptr5);
+        VMArg* p = vmArgPtrGet(pThread, idx);
+        idx++;
+        arg5 = vmArgIntGet(idx, p);
     }
+
     void* ctx = func_801862C0();
-    cf::CfObject* obj = (cf::CfObject*)func_801864DC(ctx, handle);
-    void* actor = (void*)__dynamic_cast(obj, 0, (void*)&lbl_eu_806618D8, (void*)&lbl_eu_806618F0, 0);
+    CfObjectActorView* actor =
+        (CfObjectActorView*)__dynamic_cast(func_801864DC(ctx, handle), 0,
+                                               (void*)&__RTTI__Q22cf13CfObjectActor,
+                                               (void*)&lbl_eu_806618F0, 0);
     if (actor) {
-        u8 data[0x34];
-        memset(data, 0, sizeof(data));
-        float f1 = (float)(s32)arg2 / 2048.0f;
-        float f2 = (float)(s32)arg5 / 2048.0f;
-        *(u32*)&data[0] = *(u32*)((u8*)actor + 0x3F10);
-        *(u32*)&data[4] = 0;
-        *(u16*)&data[0x14] = (u16)eventId;
-        *(u32*)&data[0x18] = arg3;
-        *(u16*)&data[0x1C] = (u16)arg4;
-        *(float*)&data[0x28] = f1;
-        *(float*)&data[0x2C] = f2;
-        void* battleMgr = getInstance__Q22cf14CBattleManagerFv();
-        func_800EC8FC(battleMgr, actor, data, 0);
+        BattleEventWork data;
+        memset(&data, 0, sizeof(data));
+        // Plain int->float converts: MWCC lowers these via its shared
+        // sdata2 0x43300000-magic double (one lfd, two fsubs in retail).
+        data.field_00 = actor->field_0x3F10;
+        data.field_0C = (u16)eventId;
+        data.field_10 = arg3;
+        data.field_14 = (u16)arg4;
+        data.field_20 = arg2;
+        data.field_24 = arg5;
+        func_800EC8FC(getInstance__Q22cf14CBattleManagerFv(), actor, &data, 0);
     }
     return 0;
 }
@@ -1495,46 +1546,49 @@ extern "C" int func_8003EE74(VMThread* pThread, int handle) {
 }
 
 // us-8003f45c: func_8003EEE0
-// Battle party selection/generation
+// Spawns a battle party object: reads (partyId[, arg2[, arg3]]), toggles the
+// 0x40000 bit of the global flag word around the spawn, throws a VM exception
+// when the spawn fails, and returns the spawned context as a VM object.
 extern "C" int func_8003EEE0(VMThread* pThread, int handle, int r5) {
+    void* ctx;
     VMArg* ptr = vmArgPtrGet(pThread, 1);
     int partyId = vmArgIntGet(2, ptr);
     int arg2;
+    int idx;
     if (vmArgOmitChk(pThread, 2)) {
         arg2 = 0;
+        idx = 3;
     } else {
         VMArg* ptr2 = vmArgPtrGet(pThread, 2);
-        arg2 = vmArgIntGet(3, ptr2);
+        idx = 3;
+        arg2 = vmArgIntGet(idx, ptr2);
     }
     int arg3;
-    if (vmArgOmitChk(pThread, 3)) {
+    if (vmArgOmitChk(pThread, idx)) {
         arg3 = 0;
     } else {
-        VMArg* ptr3 = vmArgPtrGet(pThread, 3);
-        arg3 = vmArgIntGet(4, ptr3);
+        VMArg* ptr3 = vmArgPtrGet(pThread, idx);
+        ++idx;
+        arg3 = vmArgIntGet(idx, ptr3);
     }
-    u32 flag = lbl_eu_80663E24;
-    int hadFlag = (flag >> 13) & 1;
-    u32 newFlag = flag & ~0x00020000;
-    if (arg3) {
-        newFlag |= 0x00040000;
-    }
-    lbl_eu_80663E24 = newFlag;
-    void* result = func_80081694__Q22cf13CfGameManagerFv((u16)partyId, (u16)arg2);
-    newFlag = lbl_eu_80663E24;
-    u32 restoredFlag = newFlag & ~0x00020000;
-    if (hadFlag) {
-        restoredFlag |= 0x00040000;
-    }
-    lbl_eu_80663E24 = restoredFlag;
-    void* ctx;
-    if (!result) {
+    // Save the spawn-flag bit (volatile read keeps this load separate from
+    // the reloads in the ternaries below, matching retail), toggle the bit
+    // around the spawn, then restore the saved state.
+    u32 flags = *(volatile u32*)&lbl_eu_80663E24;
+    u32 savedFlag = (flags >> 14) & 1;
+    lbl_eu_80663E24 = (arg3 != 0) ? (lbl_eu_80663E24 | 0x40000u)
+                                  : (lbl_eu_80663E24 & ~0x40000u);
+    cf::CfObject* obj = (cf::CfObject*)func_80081694__Q22cf13CfGameManagerFv((u16)partyId, (u16)arg2);
+    lbl_eu_80663E24 = (savedFlag != 0) ? (lbl_eu_80663E24 | 0x40000u)
+                                       : (lbl_eu_80663E24 & ~0x40000u);
+    if (!obj) {
         vmOCExceptionThrow(pThread);
         return 0;
     }
-    ctx = func_801862C0();
-    func_801863F4(ctx);
-    *(u32*)((u8*)result + 0x68) |= 0x40000000;
+    // func_801863F4's shared header declares it 1-arg; retail passes (ctx, obj).
+    typedef void* (*CtxObjFn)(void*, void*);
+    ctx = ((CtxObjFn)&func_801863F4)(func_801862C0(), obj);
+    obj->mFlags68 |= 0x40000000;
     u8 type = 9;
     VMArg retVal;
     retVal.type = type;
@@ -1578,11 +1632,13 @@ extern "C" int gravity(VMThread* pThread, int handle) {
 // us-8003f78c: func_8003F210
 // Battle party lookup by name, returns OC handle
 extern "C" int func_8003F210(VMThread* pThread, int handle, int r5) {
-    void* ctx;
+    int param;
+    int hadFlag;
+    const char* name;
     VMArg* ptr1 = vmArgPtrGet(pThread, 1);
-    const char* name = vmArgStringGet(2, ptr1);
+    name = vmArgStringGet(2, ptr1);
     VMArg* ptr2 = vmArgPtrGet(pThread, 2);
-    int param = vmArgIntGet(3, ptr2);
+    param = vmArgIntGet(3, ptr2);
     int arg3;
     if (vmArgOmitChk(pThread, 3)) {
         arg3 = 0;
@@ -1590,14 +1646,13 @@ extern "C" int func_8003F210(VMThread* pThread, int handle, int r5) {
         VMArg* ptr3 = vmArgPtrGet(pThread, 3);
         arg3 = vmArgIntGet(4, ptr3);
     }
-    u32 flag = lbl_eu_80663E24;
-    int hadFlag = (flag >> 13) & 1;
-    u32 newFlag = flag & ~0x00020000;
-    if (arg3) {
-        newFlag |= 0x00040000;
-    }
-    lbl_eu_80663E24 = newFlag;
-    void* result = 0;
+    void* result = NULL;
+    // Save event-flag bit 0x40000, force it on/off around the lookup.
+    // Volatile cast keeps this load independent of the ternary-arm loads.
+    u32 prevFlags = *(volatile u32*)&lbl_eu_80663E24;
+    hadFlag = (prevFlags & 0x00040000) != 0;
+    lbl_eu_80663E24 = (arg3 != 0) ? (lbl_eu_80663E24 | 0x00040000u)
+                                  : (lbl_eu_80663E24 & ~0x00040000u);
     if (strcmp(name, &lbl_eu_804FA74C[0x6B]) == 0 || strcmp(name, &lbl_eu_804FA74C[0x54]) == 0) {
         result = func_80081CBC__Q22cf13CfGameManagerFv(&lbl_eu_804FA74C[0x6B], (u16)param);
     } else if (strcmp(name, &lbl_eu_804FA74C[0x79]) == 0) {
@@ -1607,14 +1662,11 @@ extern "C" int func_8003F210(VMThread* pThread, int handle, int r5) {
         vmOCExceptionThrow(pThread);
         return 0;
     }
-    newFlag = lbl_eu_80663E24;
-    u32 restoredFlag = newFlag & ~0x00020000;
-    if (hadFlag) {
-        restoredFlag |= 0x00040000;
-    }
-    lbl_eu_80663E24 = restoredFlag;
-    ctx = func_801862C0();
-    func_801863F4(ctx);
+    lbl_eu_80663E24 = (hadFlag != 0) ? (lbl_eu_80663E24 | 0x00040000u)
+                                     : (lbl_eu_80663E24 & ~0x00040000u);
+    // Retail chains these: the ctx flowing into the retval is the return
+    // value of func_801863F4 (kept in r3 across the call).
+    void* ctx = func_801863F4(func_801862C0(), result);
     *(u32*)((u8*)result + 0x68) |= 0x40000000;
     u8 type = 9;
     VMArg retVal;
@@ -1652,9 +1704,10 @@ extern "C" int func_8003F418(VMThread* pThread, int handle) {
 }
 
 // us-8003fa14: func_8003F498
-// Battle party member lookup by name/type
+// Battle party member lookup by name/type. Saves event-flag bit 0x40000
+// aside, forces it per arg3 around the lookup, then restores it.
 extern "C" int func_8003F498(VMThread* pThread, int handle, int r5) {
-    void* ctx;
+    int hadFlag;
     VMArg* ptr1 = vmArgPtrGet(pThread, 1);
     const char* name = vmArgStringGet(2, ptr1);
     VMArg* ptr2 = vmArgPtrGet(pThread, 2);
@@ -1666,14 +1719,11 @@ extern "C" int func_8003F498(VMThread* pThread, int handle, int r5) {
         VMArg* ptr3 = vmArgPtrGet(pThread, 3);
         arg3 = vmArgIntGet(4, ptr3);
     }
-    u32 flag = lbl_eu_80663E24;
-    int hadFlag = (flag >> 13) & 1;
-    u32 newFlag = flag & ~0x00020000;
-    if (arg3) {
-        newFlag |= 0x00040000;
-    }
-    lbl_eu_80663E24 = newFlag;
-    void* result = 0;
+    u32 prevFlags = *(volatile u32*)&lbl_eu_80663E24;
+    hadFlag = (prevFlags & 0x00040000) != 0;
+    lbl_eu_80663E24 = (arg3 != 0) ? (lbl_eu_80663E24 | 0x00040000u)
+                                  : (lbl_eu_80663E24 & ~0x00040000u);
+    void* result = NULL;
     if (strcmp(name, &lbl_eu_804FA74C[0x85]) == 0 || strcmp(name, &lbl_eu_804FA74C[0x89]) == 0) {
         result = func_800817BC__Q22cf13CfGameManagerFv(index, 0);
     } else if (strcmp(name, &lbl_eu_804FA74C[0x8C]) == 0 || strcmp(name, &lbl_eu_804FA74C[0x93]) == 0) {
@@ -1684,21 +1734,17 @@ extern "C" int func_8003F498(VMThread* pThread, int handle, int r5) {
         return 0;
     }
     cf::CfGameManager::getInstance();
-    if (lbl_eu_80663E24 & 0x00040000) {
-        *(u32*)((u8*)result + 0x64) |= 0x00010000;
+    if ((lbl_eu_80663E24 & 0x00040000) != 0) {
+        *(u32*)((char*)result + 0x64) |= 0x00010000;
     }
-    newFlag = lbl_eu_80663E24;
-    u32 restoredFlag = newFlag & ~0x00020000;
-    if (hadFlag) {
-        restoredFlag |= 0x00040000;
-    }
-    lbl_eu_80663E24 = restoredFlag;
-    ctx = func_801862C0();
-    func_801863F4(ctx);
-    *(u32*)((u8*)result + 0x68) |= 0x40000000;
-    u8 type = 9;
+    lbl_eu_80663E24 = (hadFlag != 0) ? (lbl_eu_80663E24 | 0x00040000u)
+                                     : (lbl_eu_80663E24 & ~0x00040000u);
+    // Retail chains these: the ctx flowing into the retval is the return
+    // value of func_801863F4 (kept in r3 across the call).
+    void* ctx = func_801863F4(func_801862C0(), result);
+    *(u32*)((char*)result + 0x68) |= 0x40000000;
     VMArg retVal;
-    retVal.type = type;
+    retVal.type = 9;
     retVal.unk2 = (u16)r5;
     retVal.value.pointerVal = ctx;
     vmRetValSet(pThread, &retVal);
@@ -1909,7 +1955,10 @@ extern "C" int func_8003FC18(VMThread* pThread, int handle) {
 }
 
 // us-800402c4: func_8003FD48
-// Moves an object to a position using 3 fixed-point coordinates
+// Moves an object to a fixed-point position plus yaw angle: fetches four
+// fixed-point args, resolves the object, converts to floats (/2048 via the
+// 0x43300000 double trick), queries the move object through vtable slot 0xAC,
+// then forwards everything to func_800ABFC4.
 extern "C" int func_8003FD48(VMThread* pThread, int handle) {
     VMArg* ptr1 = vmArgPtrGet(pThread, 1);
     int x = vmArgFixedGet(2, ptr1);
@@ -1917,13 +1966,25 @@ extern "C" int func_8003FD48(VMThread* pThread, int handle) {
     int y = vmArgFixedGet(3, ptr2);
     VMArg* ptr3 = vmArgPtrGet(pThread, 3);
     int z = vmArgFixedGet(4, ptr3);
+    VMArg* ptr4 = vmArgPtrGet(pThread, 4);
+    int angle = vmArgFixedGet(5, ptr4);
+
     void* ctx = func_801862C0();
     cf::CfObject* obj = (cf::CfObject*)func_801864DC(ctx, handle);
-    float fx = (float)(s32)x / 2048.0f;
-    float fy = (float)(s32)y / 2048.0f;
-    float fz = (float)(s32)z / 2048.0f;
-    float pos[3] = { fx, fy, fz };
-    ((void(*)(void*, void*))(*(void***)obj)[0xBC/4])(obj, pos);
+
+    float fx = (float)(s32)x / lbl_eu_80665C30;
+    float fy = (float)(s32)y / lbl_eu_80665C30;
+    float fz = (float)(s32)z / lbl_eu_80665C30;
+    float fAngle = (float)(s32)angle / lbl_eu_80665C30;
+
+    if (obj != NULL) {
+        void* moveObj = ((CfObjIf_AC*)obj)->getMoveObj();
+        Vec3f pos;
+        pos.x = fx;
+        pos.y = fy;
+        pos.z = fz;
+        func_800ABFC4(obj, moveObj, (ml::CVec3*)&pos, fAngle * lbl_eu_8066A210);
+    }
     return 0;
 }
 

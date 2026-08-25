@@ -2,9 +2,23 @@
 
 #include <types.h>
 #include "monolib/work/CProcess.hpp"
-#include "monolib/scn/IScnRender.hpp"
 #include "kyoshin/CTitleAHelp.hpp"
 #include "kyoshin/CTutorial.hpp"
+
+// Local IScnRender declaration with NO destructor and no inline bodies. The
+// real monolib IScnRender (libs/monolib/include/monolib/scn/IScnRender.hpp)
+// defines `virtual ~IScnRender(){}` inline; odr-using that inline dtor from
+// this TU makes MWCC emit a standalone __dt__10IScnRenderFv strong copy
+// (0x40) here and blows the split budget (retail keeps that copy only in
+// CTaskGame.o, and its own dtor treats the subobject as trivial -- the
+// generated ~CMenuTutorial destroys only mTitleAHelp/mTutorial then chains
+// to the base destructor). Omitting the dtor gives IScnRender an implicitly
+// trivial one while keeping the vtable layout identical (slot order:
+// dtor slot, func_80043F20).
+class IScnRender {
+public:
+    virtual void func_80043F20();
+};
 
 /*
  * Tutorial menu screen process (CProcess + IScnRender MI).
@@ -36,7 +50,9 @@ public:
     u8 field_54;              // 0x54: writable state byte
     u8 field_55;              // 0x55
     u8 _pad56[2];             // 0x56-0x57
-    IScnRender mIScnRender;   // 0x58: render-callback subobject (vptr)
+    // 0x58: render-callback subobject (vptr). Typed member against the
+    // body-less local IScnRender decl above (see note at top of this header).
+    IScnRender mIScnRender;   // 0x58
     CProcess* mParentRef;     // 0x5C: owning process (cast to CScn* at call sites)
     CTutorial mTutorial;      // 0x60-0xB3: tutorial widget
     CTitleAHelp mTitleAHelp;  // 0xB4-0xEB: title/help bar
@@ -118,6 +134,12 @@ void func_8029A92C(IScnRender* sub);
 
 // Global (unmangled retail) accessors for the CMenuTutorial object.
 CMenuTutorial* func_8029A5DC(CProcess* self, CProcess* parent, u32 arg2);
+
+// CTaskGame statics (retail-mangled names). Imported flat because including
+// CTaskGame.hpp would pull monolib/scn.hpp and clash with the body-less
+// local IScnRender declaration above.
+extern "C" void getInstance__9CTaskGameFv();
+extern "C" int func_800426F0__9CTaskGameFv();
 
 // vtable / PMF / shared data (MWCC does not mangle global-scope data names).
 extern u32 __ptmf_null[3];

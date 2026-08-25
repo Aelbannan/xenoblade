@@ -3,8 +3,15 @@
 
 #include "kyoshin/harness_catalog.hpp"
 #include "kyoshin/CKizunagram.hpp"
+// code_80135FDC.hpp declares func_8049603C (UnkScnResult* return) which
+// conflicts with CTaskGame.hpp's CTaskGameCamView* declaration pulled in via
+// CKizunagram.hpp. This TU never calls it, so rename it away for the include.
+#define func_8049603C kizunaCode35FDC9603CUnused
 #include "kyoshin/code_80135FDC.hpp"  // layout/anim/font helpers (extern "C" pre-mangled names)
+#undef func_8049603C
 #include "monolib/device/CDeviceFile.hpp"
+#include "monolib/device/CFileHandle.hpp"
+#include "monolib/work/CEventFile.hpp"
 #include "monolib/util/MemManager.hpp"
 #include <revolution/TPL.h>
 #include <new>
@@ -50,7 +57,7 @@ void func_80138078(u32 number);
 // same self pointer. func_8025CE78 / func_8025CF1C are still-unknown stubs.
 // noinline: -ipa would fold the empty stub into func_8025CAB4's case-1 tail
 // call, turning the retail `b func_8025CE78` into a bare return.
-static __declspec(noinline) void func_8025CE78();
+extern "C" __declspec(noinline) void func_8025CE78(UnkKizunaSelfCE78* self);
 extern "C" void func_80257F9C(UnkKizunaSelf57D90* self, u32 a);
 extern "C" void func_8025CF1C(void* self) {
     if (*(u8*)((char*)self + 0x8C) != 0) {
@@ -83,7 +90,9 @@ extern "C" __declspec(noinline) void func_80257F9C(UnkKizunaSelf57D90* self, u32
 
 // ctor: retail __ct__CKizunaRadar (unmangled). Stores the manual vtable
 // label, the r4 arg, then zero/float fields.
-extern "C" void __ct__CKizunaRadar(CKizunaRadar* self, void* arg) {
+// noinline: keeps -O4,s IPA from folding these small ctors into callers like
+// CKizunagram::OnFileEvent (retail calls them out-of-line).
+extern "C" __declspec(noinline) void __ct__CKizunaRadar(CKizunaRadar* self, void* arg) {
     f32 idle = lbl_eu_80668828;
     *(void**)self = (void*)lbl_eu_80537608;
     self->mArg = arg;
@@ -98,7 +107,9 @@ CKizunaRadar::~CKizunaRadar() {}
 
 CKizunaCur::~CKizunaCur() {}
 
-extern "C" void __ct__CKizunaLine(CKizunaLine* self, u32 arg4, u32 arg8, u8 arg3D) {
+// noinline keeps -O4,s IPA from folding this into same-TU callers
+// (func_8025CF40 calls it out-of-line in retail).
+extern "C" __declspec(noinline) void __ct__CKizunaLine(CKizunaLine* self, u32 arg4, u32 arg8, u8 arg3D) {
     f32 idle = lbl_eu_80668828;
     self->mVtable = lbl_eu_805375F0;
     self->field4 = arg4;
@@ -345,7 +356,7 @@ extern "C" __declspec(noinline) void func_802580CC(UnkKizunaLineBuild* self) {
 
     lbl_eu_80664858 = 0;
     lbl_eu_8066485A = 0;
-    func_80259820((UnkKizunaSelf57D90*)self);
+    func_80259820(reinterpret_cast<UnkKizunaSelf9820*>(self));
 
     // Pick the progress message tag from the game-progress byte at 0x20.
     u32 prog20 = (u16)func_8009CF8C(0x20);
@@ -543,7 +554,7 @@ extern "C" void func_80258F80(float* dst, const float* src, float scale) {
 __declspec(noinline) void func_80258F9C(UnkKizunaSelf58F9C* self) {
     if (self->field0C != 0) {
         if (func_80259DE8(reinterpret_cast<UnkKizunaSelf59DE8*>(self))) {
-            if (func_8025A11C(self)) {
+            if (func_8025A11C(reinterpret_cast<UnkKizunaSelfA11C*>(self))) {
                 // mode-specific line-state handler
                 switch (self->field34) {
                 case 0:
@@ -667,12 +678,12 @@ extern "C" __declspec(noinline) UnkKizunaPair func_80259344(UnkKizunaSelf59344* 
 // pane position instead.
 extern "C" __declspec(noinline) int func_8025949C(UnkKizunaSelf5949C* self) {
     self->field24 = 0;
-    UnkKizunaMidC5C* child = self->field0C;
     self->field26 = 0;
+    // retail reloads field0C per access (no cached child pointer)
     UnkKizunaRes59344* linePane =
-        child->field10->target((int)(lbl_eu_8050CB20 + 0xa4), 1);
+        self->field0C->field10->target((int)(lbl_eu_8050CB20 + 0xa4), 1);
     UnkKizunaRes59344* tagPane =
-        child->field10->target((int)(lbl_eu_8050CB20 + 0x9a), 1);
+        self->field0C->field10->target((int)(lbl_eu_8050CB20 + 0x9a), 1);
     // the second pane embeds a tag processor at +0x10 driving the iteration
     u8* ctx = (u8*)&reinterpret_cast<UnkKizunaCtxPane59098*>(tagPane)->ctx;
     UnkKizunaVec3 linePos = linePane->pos;   // saved before the walk
@@ -680,10 +691,8 @@ extern "C" __declspec(noinline) int func_8025949C(UnkKizunaSelf5949C* self) {
     const wchar_t* cur = getContextStr(ctx);
     f32 c50 = lbl_eu_80668850;
     f32 nearThr = (c50 + c50) * (c50 + c50);
-    f32 c31 = lbl_eu_8066884C;
-    f32 c54 = lbl_eu_80668854;
-    // local declaration order drives MWCC stack-slot assignment
-    const wchar_t* tmp;
+    // local declaration order drives MWCC stack-slot assignment (retail:
+    // cur@0x10, condCur@0xc, condEnd@0x8)
     const wchar_t* condCur;
     const wchar_t* condEnd;
     while (condEnd = (const wchar_t*)getContextStrPtr(ctx), condCur = cur,
@@ -691,26 +700,35 @@ extern "C" __declspec(noinline) int func_8025949C(UnkKizunaSelf5949C* self) {
         UnkKizunaVec3 work = linePos;   // refreshed every pass
         const UnkKizunaCtxItem* item =
             reinterpret_cast<const UnkKizunaCtxItem*>(func_80127670(&cur));
-        UnkKizunaVec3 sum1;
-        func_80258F5C(&sum1.x, &tagPos.x, &item->pos.x);
-        UnkKizunaVec3 sum2;
-        func_80258F5C(&work.x, &work.x, &sum1.x);
-        f32 nx = -work.x;
+        // retail materializes the item position copy (@0x6c) before the
+        // delta temp (@0x48), then adds into work in place
+        UnkKizunaVec3 itemPos = item->pos;
+        UnkKizunaVec3 delta;
+        func_80258F5C(&delta.x, &tagPos.x, &itemPos.x);
+        func_80258F5C(&work.x, &work.x, &delta.x);
+        // retail negates y before x
         f32 ny = -work.y;
+        f32 nx = -work.x;
         f32 distSq = ny * ny + nx * nx;
         if (distSq <= nearThr) {
+            UnkKizunaVec3 scaled;
             f32 snapA[2] = { lbl_eu_80668834, lbl_eu_80668834 };
             const UnkKizunaCtxItem* it2 =
                 reinterpret_cast<const UnkKizunaCtxItem*>(func_80127670(&cur));
             func_80231848((UnkKizunaFunc31848Obj*)it2,
                           reinterpret_cast<const UnkKizunaPair*>(&snapA[0]));
-            UnkKizunaVec3 scaled;
             func_80258F80(&scaled.x, &work.x, lbl_eu_80668830);
             copyVEC3(&self->field18.x, &scaled.x);
-            if (distSq <= (c54 + c54) * (c54 + c54)) {
+            // threshold recomputed from the constant at the use site
+            // (retail does not cache it across the loop)
+            if (distSq <=
+                (lbl_eu_80668854 + lbl_eu_80668854) *
+                    (lbl_eu_80668854 + lbl_eu_80668854)) {
                 const UnkKizunaCtxItem* it3 =
                     reinterpret_cast<const UnkKizunaCtxItem*>(func_80127670(&cur));
-                self->field26 = func_8025AA38(self, it3);
+                // the item's name lives at +0xBC of the context item
+                self->field26 =
+                    func_8025AA38(self, reinterpret_cast<const char*>(it3) + 0xBC);
             }
             if (self->field3C == 0) {
                 self->field3C = 1;
@@ -718,7 +736,7 @@ extern "C" __declspec(noinline) int func_8025949C(UnkKizunaSelf5949C* self) {
             }
             return 1;
         } else {
-            f32 far_[2] = { c31, c31 };
+            f32 far_[2] = { lbl_eu_8066884C, lbl_eu_8066884C };
             const UnkKizunaCtxItem* it4 =
                 reinterpret_cast<const UnkKizunaCtxItem*>(func_80127670(&cur));
             func_80231848((UnkKizunaFunc31848Obj*)it4,
@@ -726,24 +744,23 @@ extern "C" __declspec(noinline) int func_8025949C(UnkKizunaSelf5949C* self) {
             func_801276E0(&cur, 0);
         }
     }
-    // list exhausted: ease toward the pane's registered position
-    nw4r::lyt::Pane* reg1 = (nw4r::lyt::Pane*)
-        ((UnkKizunaObj59344*)linePane)->target((int)(lbl_eu_8050CB20 + 0xe3), 1);
-    UnkKizunaVec3 sum3;
-    func_80258F5C(&sum3.x, &linePos.x,
-                  &reinterpret_cast<UnkKizunaRes59344*>(reg1)->pos.x);
-    nw4r::lyt::Pane* reg2 = (nw4r::lyt::Pane*)
-        ((UnkKizunaObj59344*)linePane)->target((int)(lbl_eu_8050CB20 + 0xe3), 1);
+    // list exhausted: ease toward the pane's registered position.
+    // retail copies linePos into its own slot (@0x60) before fetching
+    // the registered pane, then adds the registered pos in place.
+    UnkKizunaVec3 eased = linePos;
+    UnkKizunaRes59344* reg1 = ((UnkKizunaObj59344*)linePane)->target(
+        (int)(lbl_eu_8050CB20 + 0xe3), 1);
+    UnkKizunaVec3 regPos = reg1->pos;
+    func_80258F5C(&eased.x, &eased.x, &regPos.x);
+    UnkKizunaRes59344* reg2 = ((UnkKizunaObj59344*)linePane)->target(
+        (int)(lbl_eu_8050CB20 + 0xe3), 1);
     f32 sz[2];
-    func_80127BC4(sz, reinterpret_cast<UnkKizunaRes59344*>(reg2)->scale);
-    f32 sxm = sz[0] - lbl_eu_80668858;
-    f32 rad = lbl_eu_8066884C * sxm;
-    f32 fx = -sum3.x;
-    f32 fy = -sum3.y;
-    f32 distSq2 = fy * fy + fx * fx;
+    func_80127BC4(sz, reg2->scale);
+    f32 rad = lbl_eu_8066884C * (sz[0] - lbl_eu_80668858);
+    f32 distSq2 = -eased.y * -eased.y + -eased.x * -eased.x;
     if (distSq2 <= (rad + rad) * (rad + rad)) {
         UnkKizunaVec3 scaled;
-        func_80258F80(&scaled.x, &sum3.x, lbl_eu_80668830);
+        func_80258F80(&scaled.x, &eased.x, lbl_eu_80668830);
         copyVEC3(&self->field18.x, &scaled.x);
         u8 played = self->field3C;
         self->field24 = 1;
@@ -757,14 +774,92 @@ extern "C" __declspec(noinline) int func_8025949C(UnkKizunaSelf5949C* self) {
     return 0;
 }
 
-extern "C" __declspec(noinline) void func_80259820(UnkKizunaSelf57D90* self) {}
+// us-8025ba5c (0x80259820): refresh the kizuna entry panes for the selected
+// id. Shows the shared line pane, then for every BDAT row whose display name
+// matches the current selection's name (or its region-shifted +3 variant)
+// with matching anchor position and unlocked progress flag, rewrites the
+// row's five text tags from the per-state formatted strings.
+// Same-TU callee defined below (retail links both unmangled).
+extern "C" void func_80259B18(UnkKizunaSelf59B18* self);
+extern "C" __declspec(noinline) void func_80259AF4(char* dest, const char* src);
 
-extern "C" void func_80259AF4(char* dest, const char* src) { dest[0] = src[0]; dest[1] = src[1]; dest[2] = src[2]; dest[3] = 0; }
+__declspec(noinline) void func_80259820(UnkKizunaSelf9820* self) {
+    func_80259B18(reinterpret_cast<UnkKizunaSelf59B18*>(self));
+    if (self->field26 == 0) {
+        return;
+    }
+
+    func_80124270(
+        (nw4r::lyt::Pane*)((UnkKizunaMid59344*)self->field0C)->field10->target(
+            (int)(lbl_eu_8050CB20 + 0x3f5), 1),
+        1);
+
+    UnkKizunaMgr* mgr = reinterpret_cast<UnkKizunaMgr*>(lbl_eu_80664098);
+    char* curName = func_8013639C(mgr, lbl_eu_8050CB20 + 0xca, self->field26);
+
+    // 4-byte (3 chars + NUL) name copies compared as words
+    char nameCur[4];
+    func_80259AF4(nameCur, curName);
+
+    void* fp = getFP__FPCc(lbl_eu_8050CB20 + 0x402);
+    u16 count = func_8003B1EC(fp);
+
+    // single base pointer for the shared arc string table (CSE of the above)
+    char* str = &lbl_eu_8050CB20[0];
+
+    char nameRow[4];
+    char nameRowAlt[4];
+    char fmtBuf[0x20];
+    for (u16 i = 1; (u32)i <= (u32)count; i++) {
+        char* rowName = func_8013639C(fp, str + 0x411, i);
+        func_80259AF4(nameRow, rowName);
+        func_80259AF4(nameRowAlt, rowName + 3);
+
+        // word compare: current name equals the row name or its offset-3 form
+        if (*(s32*)nameCur != *(s32*)nameRow && *(s32*)nameCur != *(s32*)nameRowAlt) {
+            continue;
+        }
+
+        UnkKizunaRes59344* resA = self->field0C->field10->target((int)curName, 1);
+        UnkKizunaRes59344* resB = self->field0C->field10->target((int)rowName, 1);
+        if (resA == NULL || resB == NULL) {
+            continue;
+        }
+        u8 state = (u8)func_8009CF8C(i + 0x608);
+        if (!state) {
+            continue;
+        }
+
+        // matching position selects the offset-0x417 tag variant
+        UnkKizunaVec3 posA = resA->pos;
+        char* tag = str + 0x421;
+        UnkKizunaVec3 posB = resB->pos;
+        bool samePos = posA.x == posB.x && posA.y == posB.y && posA.z == posB.z;
+        if (samePos) {
+            tag = str + 0x417;
+        }
+        char* tagName = func_8013639C(fp, tag, i);
+        sprintf(fmtBuf, str + 0x42b, state);
+        char* newName = func_8013639C(fp, fmtBuf, i);
+        func_80136B4C((nw4r::lyt::Layout*)self->field0C, tagName, newName, 0);
+        sprintf(fmtBuf, str + 0x435, tagName);
+        func_80136B4C((nw4r::lyt::Layout*)self->field0C, fmtBuf, newName, 0);
+        sprintf(fmtBuf, str + 0x439, tagName);
+        func_80136B4C((nw4r::lyt::Layout*)self->field0C, fmtBuf, newName, 0);
+        sprintf(fmtBuf, str + 0x43d, tagName);
+        func_80136B4C((nw4r::lyt::Layout*)self->field0C, fmtBuf, newName, 0);
+        sprintf(fmtBuf, str + 0x441, tagName);
+        func_80136B4C((nw4r::lyt::Layout*)self->field0C, fmtBuf, newName, 0);
+    }
+}
+
+extern "C" __declspec(noinline) void func_80259AF4(char* dest, const char* src) { dest[0] = src[0]; dest[1] = src[1]; dest[2] = src[2]; dest[3] = 0; }
 
 // us-8025bd54 (0x8025BD54): if the shared arc layout's named root pane is
 // visible, hide it and re-apply the 5 kizuna pane-name groups for indices
 // 1..0x11 to the layout.
-void func_80259B18(UnkKizunaSelf59B18* self) {
+// noinline: retail callers (func_80259820) branch to it out-of-line.
+extern "C" __declspec(noinline) void func_80259B18(UnkKizunaSelf59B18* self) {
     // retail buffer is 0x1c bytes; size drives MWCC frame allocation
     char buf[0x1C];
     nw4r::lyt::Pane* pane = (nw4r::lyt::Pane*)((UnkKizunaLayoutSub57AFC*)self->field0C)
@@ -809,18 +904,24 @@ void func_80259C5C(UnkKizunaSelf59C5C* self) {
 // and size, add the requested offset, clamp into the scaled pane bounds, and
 // write the clamped position back.
 extern "C" __declspec(noinline) void func_80259394(UnkKizunaSelf59394* self,
-                                                   const UnkKizunaVec3* arg) {
+                                                   UnkKizunaVec3* arg) {
     UnkKizunaRes59344* res =
         self->field0C->field10->target((int)(lbl_eu_8050CB20 + 0xa4), 1);
     UnkKizunaVec3 pos = res->pos;      // word-copy of the animated position
-    f32 scale[2];
-    func_80127BC4(scale, res->scale);  // copy the pane's current size pair
-    f32 minX = lbl_eu_8066884C * scale[0];
-    f32 minY = lbl_eu_8066884C * scale[1];
-    f32 maxX = lbl_eu_80668830 * minX;
-    f32 maxY = lbl_eu_80668830 * minY;
+    f32 size[2];
+    func_80127BC4(size, res->scale);  // copy the pane's current size pair
+    // Statement order is load-bearing for byte-identity (MWCC scheduling):
+    // x offset, both C1-scaled bounds, y offset, then the two C2 bounds.
+    // The `arg` parameter must stay non-const: const-qualified TBAA changes
+    // the store/commit schedule and breaks the match. Residual vs retail is
+    // pure float register coloring only (0 structural, no reloc drift).
     pos.x = pos.x + arg->x;
-    pos.y = pos.y + arg->y;
+    f32 minX, minY, maxX, maxY;
+    minX = lbl_eu_8066884C * size[0];
+    minY = lbl_eu_8066884C * size[1];
+    pos.y += arg->y;
+    maxX = lbl_eu_80668830 * minX;
+    maxY = lbl_eu_80668830 * minY;
     if (pos.x > minX) pos.x = minX;
     if (pos.x < maxX) pos.x = maxX;
     if (pos.y > minY) pos.y = minY;
@@ -831,7 +932,9 @@ extern "C" __declspec(noinline) void func_80259394(UnkKizunaSelf59394* self,
 
 // Build the line layout from the shared arc string(+0x4C), then copy the
 // animated position at +0x4C of the slot-15 result into the +0x14 Vec2.
-void func_80257AFC(UnkKizunaSelfAFC* self) {
+// extern "C" + noinline keeps same-TU callers (CKizunagram::OnFileEvent)
+// emitting retail's unmangled `bl` without inlining.
+extern "C" __declspec(noinline) void func_80257AFC(UnkKizunaSelfAFC* self) {
     func_80136E84__FPPQ34nw4r3lyt6LayoutPQ34nw4r3lyt19ArcResourceAccessorPCc(
         &self->field8, self->field4, lbl_eu_8050CB20);
     UnkKizunaLCBRes57AFC* res =
@@ -846,73 +949,82 @@ void func_80257AFC(UnkKizunaSelfAFC* self) {
 // tint it when appropriate. Returns true once the cursor passes the row limit.
 __declspec(noinline) bool func_80259DE8(UnkKizunaSelf59DE8* self) {
     UnkKizunaMgr* mgr = reinterpret_cast<UnkKizunaMgr*>(lbl_eu_80664098);
-    int rowCount = (int)func_8003B1EC(mgr);
-    u16 limit = (u16)(rowCount - 0x64);
-    // retail computes this as a full-width 64-bit subtract; its sign drives
-    // the tint gate (subfc/subfze high-word test)
-    s64 chk = (s64)(int)func_8009CF8C(0x20) - 0x155;
+    u16 limit = (u16)(func_8003B1EC(mgr) - 0x64);
+    // Unsigned 64-bit subtract; its high word gates the legacy tint below.
+    u64 sub = 0x155;
+    u64 chk = func_8009CF8C(0x20) - sub;
+    const char* str = lbl_eu_8050CB20;
+    f32 scale = lbl_eu_8066884C;
+    f32 posZ = lbl_eu_80668828;
+    u32 i = 0;
+    const u32 feConst = 0xfe;
+    const u32 texTag = 0x74696d67;
+    const u32 tintColor = 0x777777ff;
 
-    for (int i = 0; i < 0x10; i++) {
+    for (; i < 0x10; i++) {
         u16 cnt = lbl_eu_80664858;
         if (cnt >= limit) {
             return true;
         }
         u16 id = cnt + 0x65;
-        u32 curId = (self->field3D == 0) ? func_8009ECE0() : 0;
-        if ((u16)curId == id) {
-            continue;
-        }
-        bool tinted = false;
-        if (chk < 0 && id == 0x30a) {
-            tinted = func_8009CF8C(0x54b) >= 0xfe;
-        }
-        char* unlockStr = func_80136254(mgr, lbl_eu_8050CB20 + 0xc1, id);
-        if (func_8009CF8C((u32)(u16)(u32)unlockStr + 0xa20) == 0) {
-            continue;
-        }
-        char* nameStr = func_8013639C(mgr, lbl_eu_8050CB20 + 0xca, id);
-        if (strcmp(nameStr, lbl_eu_8050CB20 + 0xd3) == 0) {
-            continue;
-        }
-        char* texName =
-            func_80138F78((u32)(u16)(u32)func_80136254(mgr, lbl_eu_8050CB20 + 0xd4, id));
-        void* pal = self->field08->getTex(0x74696d67, (u32)texName, 0);
-        nw4r::lyt::Picture* pic = 0;
-        if (pal != 0) {
-            void* raw = ((KizunaAllocFn)&allocate__Q23mtl10MemManagerFUlUl)(
-                (void*)getAllocHandle__10CLibLayoutFv(), 0xf0, (u32)texName);
-            if (raw != 0) {
-                nw4r::lyt::TexMap texMap(reinterpret_cast<TPLPalette*>(pal), 0);
-                pic = new (raw) nw4r::lyt::Picture(texMap);
-            }
+        u16 curId = (self->field3D == 0) ? (u16)func_8009ECE0() : 0;
+        if (curId == id) {
+            goto next;
         }
         {
-            f32 pairA[2] = { lbl_eu_8066884C, lbl_eu_8066884C };
-            func_80231848(reinterpret_cast<UnkKizunaFunc31848Obj*>(pic),
-                          reinterpret_cast<const UnkKizunaPair*>(&pairA[0]));
-            char name[0x40];
-            sprintf(name, lbl_eu_8050CB20 + 0xe0, nameStr);
-            pic->SetName(name);
-            s16 px = (s16)func_80136330(mgr, lbl_eu_8050CB20 + 0xaf, id);
-            s16 py = (s16)func_80136330(mgr, lbl_eu_8050CB20 + 0xb8, id);
-            UnkKizunaVec3 v;
-            v.x = (f32)px;
-            v.y = (f32)py;
-            v.z = lbl_eu_80668828;
-            copyVEC3(const_cast<f32*>(&pic->GetTranslate().x), &v.x);
-            func_80124270(reinterpret_cast<nw4r::lyt::Pane*>(pic), 1);
-            nw4r::lyt::Pane* parent = reinterpret_cast<nw4r::lyt::Pane*>(
-                self->field0C->field10->target((int)(lbl_eu_8050CB20 + 0x9a), 1));
-            parent->AppendChild(reinterpret_cast<nw4r::lyt::Pane*>(pic));
-        }
-        if (tinted) {
-            func_80137C1C(pic, 0x777777ff);
-        } else if (func_8009CF8C(0x20) >= 0x167) {
-            int w = func_80138E1C(id);
-            if ((u8)(w + 0xfe) <= 1) {
-                func_80137C1C(pic, 0x777777ff);
+            u32 tinted = 0;
+            if ((u32)(chk >> 32) != 0 && id == 0x30a) {
+                tinted = func_8009CF8C(0x54b) >= feConst;
+            }
+            char* unlockStr = func_80136254(mgr, str + 0xc1, id);
+            if (func_8009CF8C((u32)(u16)(u32)unlockStr + 0xa20) == 0) {
+                goto next;
+            }
+            char* nameStr = func_8013639C(mgr, str + 0xca, id);
+            if (strcmp(nameStr, str + 0xd3) == 0) {
+                goto next;
+            }
+            u32 texName =
+                (u32)func_80138F78((u32)(u16)(u32)func_80136254(mgr, str + 0xd4, id));
+            void* pal = self->field08->getTex(texTag, texName, 0);
+            nw4r::lyt::Picture* pic = NULL;
+            if (pal != 0) {
+                void* raw =
+                    allocate__Q23mtl10MemManagerFUlUl(0xf0, getAllocHandle__10CLibLayoutFv());
+                if (raw != 0) {
+                    nw4r::lyt::TexMap texMap(reinterpret_cast<TPLPalette*>(pal), 0);
+                    pic = new (raw) nw4r::lyt::Picture(texMap);
+                }
+            }
+            {
+                f32 pairA[2] = { scale, scale };
+                func_80231848(reinterpret_cast<UnkKizunaFunc31848Obj*>(pic),
+                              reinterpret_cast<const UnkKizunaPair*>(&pairA[0]));
+                char name[0x40];
+                sprintf(name, str + 0xe0, nameStr);
+                pic->SetName(name);
+                s16 px = (s16)func_80136330(mgr, str + 0xaf, id);
+                s16 py = (s16)func_80136330(mgr, str + 0xb8, id);
+                UnkKizunaVec3 v;
+                v.x = (f32)px;
+                v.y = (f32)py;
+                v.z = posZ;
+                copyVEC3((f32*)&((KizunaPaneTranslateView*)pic)->translate, &v.x);
+                func_80124270(reinterpret_cast<nw4r::lyt::Pane*>(pic), 1);
+                nw4r::lyt::Pane* parent = reinterpret_cast<nw4r::lyt::Pane*>(
+                    self->field0C->field10->target((int)(str + 0x9a), 1));
+                parent->AppendChild(reinterpret_cast<nw4r::lyt::Pane*>(pic));
+            }
+            if (tinted != 0) {
+                func_80137C1C(pic, tintColor);
+            } else if (func_8009CF8C(0x20) >= 0x167) {
+                int w = func_80138E1C(id);
+                if ((u8)(w + 0xfe) <= 1) {
+                    func_80137C1C(pic, tintColor);
+                }
             }
         }
+    next:
         lbl_eu_80664858 = lbl_eu_80664858 + 1;
     }
     return false;
@@ -929,7 +1041,7 @@ __declspec(noinline) void func_80257EE0(UnkKizunaSelf57EE0* self) {
     }
 }
 
-extern "C" void __ct__CKizunaCur(CKizunaCur* self,
+extern "C" __declspec(noinline) void __ct__CKizunaCur(CKizunaCur* self,
                                  nw4r::lyt::ArcResourceAccessor* accessor) {
     self->mVtable = lbl_eu_805375FC;
     self->mArcResAcc = accessor;
@@ -940,9 +1052,23 @@ extern "C" void __ct__CKizunaCur(CKizunaCur* self,
     self->mField12 = 0;
 }
 
-// Selects the kizuna entry whose payload word sits in arg's +0xBC field
-// (retail returns the new selection id stored into the +0x26 halfword).
-u16 func_8025AA38(UnkKizunaSelf5949C* self, const UnkKizunaCtxItem* arg) { return 0; }
+// Selects the kizuna entry matching the given context-item name (the item's
+// +0xBC string): walk all BDAT rows, compare each row's name against it, and
+// return the first row id whose unlock progress flag (row value + 0xa20) is set.
+extern "C" __declspec(noinline) u16 func_8025AA38(UnkKizunaSelf5949C* self,
+                                                  const char* name) {
+    UnkKizunaMgr* mgr = reinterpret_cast<UnkKizunaMgr*>(lbl_eu_80664098);
+    u16 count = (u16)func_8003B1EC(mgr);
+    for (u16 id = 1; (u32)id <= count; id++) {
+        if (strcmp(func_8013639C(mgr, lbl_eu_8050CB20 + 0xca, id),
+                   name) == 0 &&
+            func_8009CF8C((u32)(u16)(u32)func_80136254(mgr, lbl_eu_8050CB20 + 0xc1,
+                                                       id) + 0xa20) != 0) {
+            return id;
+        }
+    }
+    return 0;
+}
 
 // retail: if (field26) { field34=1; field36=field26; field38=const }
 extern "C" void func_8025AAE0(void* self) {
@@ -989,7 +1115,144 @@ void CKizunagram_resetFields(u8* self){
     *(float*)(self + 0x38) = lbl_eu_80668828;
 }
 
-extern "C" __declspec(noinline) void func_8025AC1C(UnkKizunaSelfAB* self, u32 a) {}
+// us-8025ce58 (0x8025AC1C): rewrite the kizuna entry pane text for every BDAT
+// row whose display name matches the current selection's name (or its
+// region-shifted +3 variant), formatting the per-state string for the row's
+// progress state and binding the 'timg' texture onto the resulting pane.
+__declspec(noinline) void func_8025AC1C(UnkKizunaSelfAB* self, u32 a) {
+    if (self->field36 == 0) {
+        return;
+    }
+    if (a > 1) {
+        return;
+    }
+
+    UnkKizunaMgr* mgr = reinterpret_cast<UnkKizunaMgr*>(lbl_eu_80664098);
+    char* curName = func_8013639C(mgr, &lbl_eu_8050CB20[0xca], self->field36);
+
+    // 4-byte (3 chars + NUL) name copies compared as words
+    char nameCur[4];
+    func_8025B5D4(nameCur, curName);
+
+    void* fp = getFP__FPCc(&lbl_eu_8050CB20[0x402]);
+    u16 count = (u16)func_8003B1EC(fp);
+
+    // shared arc string table base (CSE'd into a register across the loop)
+    char* str = &lbl_eu_8050CB20[0];
+
+    // fourcc of the texture tag ('timg'), hoisted out of the loop by MWCC
+    const int timg = 0x74696d67;
+
+    char nameRow[4];
+    char nameRowAlt[4];
+    char fmtBuf[0x20];
+    for (u32 i = 1; (u16)i <= count; i++) {
+        char* rowName = func_8013639C(fp, str + 0x411, i);
+        func_8025B5D4(nameRow, rowName);
+        func_8025B5D4(nameRowAlt, rowName + 3);
+
+        // word compare: current name equals the row name or its offset-3 form
+        if (*(s32*)nameCur != *(s32*)nameRow && *(s32*)nameCur != *(s32*)nameRowAlt) {
+            continue;
+        }
+
+        nw4r::lyt::Pane* paneA =
+            (nw4r::lyt::Pane*)self->field0C->field10->target((int)curName, 1);
+        nw4r::lyt::Pane* paneB =
+            (nw4r::lyt::Pane*)self->field0C->field10->target((int)rowName, 1);
+        if (paneA == NULL || paneB == NULL) {
+            continue;
+        }
+
+        u8 state = (u8)func_8009CF8C(i + 0x608);
+        if (state != 0) {
+            // Per-state label: pick the format string from the row's tag name.
+            // (the tag lookup is repeated in every arm, matching retail)
+            if (state == 1) {
+                char* label = func_8013639C(fp, str + 0x417, i);
+                if (strcmp(label, str + 0x494) == 0 || strcmp(label, str + 0x4ba) == 0) {
+                    sprintf(fmtBuf, str + 0x7ef, a);
+                } else if (strcmp(label, str + 0x4c7) == 0) {
+                    sprintf(fmtBuf, str + 0x80a, a);
+                } else if (strcmp(label, str + 0x4ed) == 0 || strcmp(label, str + 0x513) == 0) {
+                    sprintf(fmtBuf, str + 0x825, a);
+                } else if (strcmp(label, str + 0x3f5) == 0) {
+                    sprintf(fmtBuf, str + 0x840, a);
+                } else if (strcmp(label, str + 0x539) == 0 || strcmp(label, str + 0x55f) == 0) {
+                    sprintf(fmtBuf, str + 0x85b, a);
+                } else if (strcmp(label, str + 0x56c) == 0) {
+                    sprintf(fmtBuf, str + 0x876, a);
+                }
+            } else if (state == 2) {
+                char* label = func_8013639C(fp, str + 0x417, i);
+                if (strcmp(label, str + 0x494) == 0 || strcmp(label, str + 0x4ba) == 0) {
+                    sprintf(fmtBuf, str + 0x891, a);
+                } else if (strcmp(label, str + 0x4c7) == 0) {
+                    sprintf(fmtBuf, str + 0x8ac, a);
+                } else if (strcmp(label, str + 0x4ed) == 0 || strcmp(label, str + 0x513) == 0) {
+                    sprintf(fmtBuf, str + 0x8c7, a);
+                } else if (strcmp(label, str + 0x3f5) == 0) {
+                    sprintf(fmtBuf, str + 0x8e2, a);
+                } else if (strcmp(label, str + 0x539) == 0 || strcmp(label, str + 0x55f) == 0) {
+                    sprintf(fmtBuf, str + 0x8fd, a);
+                } else if (strcmp(label, str + 0x56c) == 0) {
+                    sprintf(fmtBuf, str + 0x918, a);
+                }
+            } else if (state == 3) {
+                char* label = func_8013639C(fp, str + 0x417, i);
+                if (strcmp(label, str + 0x494) == 0 || strcmp(label, str + 0x4ba) == 0) {
+                    sprintf(fmtBuf, str + 0x933, a);
+                } else if (strcmp(label, str + 0x4c7) == 0) {
+                    sprintf(fmtBuf, str + 0x94e, a);
+                } else if (strcmp(label, str + 0x4ed) == 0 || strcmp(label, str + 0x513) == 0) {
+                    sprintf(fmtBuf, str + 0x969, a);
+                } else if (strcmp(label, str + 0x3f5) == 0) {
+                    sprintf(fmtBuf, str + 0x984, a);
+                } else if (strcmp(label, str + 0x539) == 0 || strcmp(label, str + 0x55f) == 0) {
+                    sprintf(fmtBuf, str + 0x99f, a);
+                } else if (strcmp(label, str + 0x56c) == 0) {
+                    sprintf(fmtBuf, str + 0x9ba, a);
+                }
+            } else if (state == 4) {
+                char* label = func_8013639C(fp, str + 0x417, i);
+                if (strcmp(label, str + 0x494) == 0 || strcmp(label, str + 0x4ba) == 0) {
+                    sprintf(fmtBuf, str + 0x9d5, a);
+                } else if (strcmp(label, str + 0x4c7) == 0) {
+                    sprintf(fmtBuf, str + 0x9f0, a);
+                } else if (strcmp(label, str + 0x4ed) == 0 || strcmp(label, str + 0x513) == 0) {
+                    sprintf(fmtBuf, str + 0xa0b, a);
+                } else if (strcmp(label, str + 0x3f5) == 0) {
+                    sprintf(fmtBuf, str + 0xa26, a);
+                } else if (strcmp(label, str + 0x539) == 0 || strcmp(label, str + 0x55f) == 0) {
+                    sprintf(fmtBuf, str + 0xa41, a);
+                } else if (strcmp(label, str + 0x56c) == 0) {
+                    sprintf(fmtBuf, str + 0xa5c, a);
+                }
+            } else if (state == 5) {
+                char* label = func_8013639C(fp, str + 0x417, i);
+                if (strcmp(label, str + 0x494) == 0 || strcmp(label, str + 0x4ba) == 0) {
+                    sprintf(fmtBuf, str + 0xa77, a);
+                } else if (strcmp(label, str + 0x4c7) == 0) {
+                    sprintf(fmtBuf, str + 0xa92, a);
+                } else if (strcmp(label, str + 0x4ed) == 0 || strcmp(label, str + 0x513) == 0) {
+                    sprintf(fmtBuf, str + 0xaad, a);
+                } else if (strcmp(label, str + 0x3f5) == 0) {
+                    sprintf(fmtBuf, str + 0xac8, a);
+                } else if (strcmp(label, str + 0x539) == 0 || strcmp(label, str + 0x55f) == 0) {
+                    sprintf(fmtBuf, str + 0xae3, a);
+                } else if (strcmp(label, str + 0x56c) == 0) {
+                    sprintf(fmtBuf, str + 0xafe, a);
+                }
+            }
+
+            // Bind the shared 'timg' texture resource onto the refreshed pane.
+            void* tex = self->field04->getTex(timg, fmtBuf, 0);
+            if (tex != NULL) {
+                func_80137F88(paneB, (u32)tex);
+            }
+        }
+    }
+}
 
 void CKizunagram_copyString(unsigned char* dst, const unsigned char* src) {
     dst[0] = src[0];
@@ -998,7 +1261,7 @@ void CKizunagram_copyString(unsigned char* dst, const unsigned char* src) {
     dst[3] = 0;
 }
 
-extern "C" void __ct__CKizunaInfo(CKizunaInfo* self,
+extern "C" __declspec(noinline) void __ct__CKizunaInfo(CKizunaInfo* self,
                                   nw4r::lyt::ArcResourceAccessor* accessor) {
     self->mArcResAcc = accessor;
     self->mVtable = lbl_eu_805375E4;
@@ -1016,7 +1279,8 @@ CKizunaInfo::~CKizunaInfo() {}
 // us-8025d8ac (0x8025B670): build the kizuna line layout + two anim
 // transforms, bind the font to the root pane, publish the 4 font-format
 // values and 6 localized labels, then reset the +0x18 counter.
-void func_8025B670(UnkKizunaSelfB670* self) {
+// extern "C" + noinline for OnFileEvent's unmangled call shape (see func_80257AFC).
+extern "C" __declspec(noinline) void func_8025B670(UnkKizunaSelfB670* self) {
     func_80136E84__FPPQ34nw4r3lyt6LayoutPQ34nw4r3lyt19ArcResourceAccessorPCc(
         &self->field8, self->field4, lbl_eu_8050CB20 + 0xb19);
     func_80136F08__FPQ34nw4r3lyt6LayoutPPQ34nw4r3lyt13AnimTransformPQ34nw4r3lyt19ArcResourceAccessorPc(
@@ -1104,9 +1368,184 @@ extern "C" __declspec(noinline) void func_8025B9C8(UnkKizunaSelfB958* self) {
     self->field8->slot11(self->field10, 1);
 }
 
-extern "C" __declspec(noinline) void func_8025BA38(UnkKizunaSelf57D90* self, u16 v) {}
+// Kizuna-line display refresh for a selected kizuna id. Guards on the cached
+// id at +0x18, then either resets all text panes to blanks/zero (v == 0) or
+// rebinds every pane from the BDAT progress tables (name/color/heart counts).
+extern "C" __declspec(noinline) void func_8025BA38(UnkKizunaSelf57D90* selfArg,
+                                                    u16 v) {
+    // Callers hand us embedded sub-objects typed as UnkKizunaSelf57D90; the
+    // real layout also carries the cached-id u16 at +0x18.
+    UnkKizunaSelfBA38* self = (UnkKizunaSelfBA38*)selfArg;
+    if (self->field18 == v) {
+        return;
+    }
+    self->field18 = v;
+    if (v == 0) {
+        // Reset path: blank all ten text panes with the shared empty string.
+        func_80136B4C(self->field8, lbl_eu_8050CB20 + 0xbd1, lbl_eu_8050CB20 + 0xd3, 0);
+        func_80136B4C(self->field8, lbl_eu_8050CB20 + 0xbdc, lbl_eu_8050CB20 + 0xd3, 0);
+        func_80136B4C(self->field8, lbl_eu_8050CB20 + 0xbe7, lbl_eu_8050CB20 + 0xd3, 0);
+        func_80136B4C(self->field8, lbl_eu_8050CB20 + 0xbf2, lbl_eu_8050CB20 + 0xd3, 0);
+        func_80136B4C(self->field8, lbl_eu_8050CB20 + 0xb87, lbl_eu_8050CB20 + 0xd3, 0);
+        func_80136B4C(self->field8, lbl_eu_8050CB20 + 0xbfd, lbl_eu_8050CB20 + 0xd3, 0);
+        func_80136B4C(self->field8, lbl_eu_8050CB20 + 0xc0b, lbl_eu_8050CB20 + 0xd3, 0);
+        func_80136B4C(self->field8, lbl_eu_8050CB20 + 0xb5d, lbl_eu_8050CB20 + 0xd3, 0);
+        func_80136B4C(self->field8, lbl_eu_8050CB20 + 0xb79, lbl_eu_8050CB20 + 0xd3, 0);
+        func_80136B4C(self->field8, lbl_eu_8050CB20 + 0xb6b, lbl_eu_8050CB20 + 0xd3, 0);
+        // Hide the root pane fetched through slot 15 of the layout child.
+        func_80124270(reinterpret_cast<nw4r::lyt::Pane*>(
+                          reinterpret_cast<UnkKizunaLayoutSub57AFC*>(self->field8)
+                              ->field10->slot15(lbl_eu_8050CB20 + 0xc16, 1)),
+                      0);
+        return;
+    }
 
-extern "C" __declspec(noinline) void func_8025C16C(UnkKizunaSelfC21C* self) {}
+    UnkKizunaMgr* mgr = reinterpret_cast<UnkKizunaMgr*>(lbl_eu_80664098);
+
+    // Progress-column color selector: look up the row value then map it to a
+    // color index; the low byte picks which timg texture tag to bind.
+    char* progRow = func_80136254(mgr, lbl_eu_8050CB20 + 0x2fb, v);
+    u8 colIdx = func_8013600C(lbl_eu_8050CB20 + 0x303, lbl_eu_8050CB20 + 0x310,
+                              (u16)(u32)progRow);
+    char* texName = NULL;
+    switch (func_801372B4(colIdx)) {
+    case 1:
+        texName = ((UnkKizunaAccBA38*)func_801355F4())
+                      ->getTex(0x74696d67, lbl_eu_8050CB20 + 0xc22, 0);
+        break;
+    case 2:
+        texName = ((UnkKizunaAccBA38*)func_801355F4())
+                      ->getTex(0x74696d67, lbl_eu_8050CB20 + 0xc3d, 0);
+        break;
+    case 3:
+        texName = ((UnkKizunaAccBA38*)func_801355F4())
+                      ->getTex(0x74696d67, lbl_eu_8050CB20 + 0xc58, 0);
+        break;
+    case 4:
+        texName = ((UnkKizunaAccBA38*)func_801355F4())
+                      ->getTex(0x74696d67, lbl_eu_8050CB20 + 0xc73, 0);
+        break;
+    case 5:
+        texName = ((UnkKizunaAccBA38*)func_801355F4())
+                      ->getTex(0x74696d67, lbl_eu_8050CB20 + 0xc8e, 0);
+        break;
+    }
+    if (texName != NULL) {
+        // Bind the color texture and show the tinted root pane.
+        func_80137E7C(self->field8, lbl_eu_8050CB20 + 0xc16, texName);
+        func_80124270(
+            reinterpret_cast<nw4r::lyt::Pane*>(
+                reinterpret_cast<UnkKizunaLayoutSub57AFC*>(self->field8)
+                    ->field10->slot15(lbl_eu_8050CB20 + 0xc16, 1)),
+            1);
+    }
+
+    // Progress color name for this save column and the kizuna's own color.
+    func_80136B4C(self->field8, lbl_eu_8050CB20 + 0xbd1,
+                  func_8013639C(lbl_eu_806640A8, lbl_eu_8050CB20 + 0x321, colIdx), 0);
+    func_80136B4C(self->field8, lbl_eu_8050CB20 + 0xbdc,
+                  func_8013639C(mgr, lbl_eu_8050CB20 + 0x321, v), 0);
+
+    // Bond-stage label: stage indexes a per-language label table; stages above
+    // 10 clamp to the first label.
+    char* stageLabel;
+    switch ((u8)func_80138E1C(v)) {
+    case 0:
+        stageLabel = func_80136190(lbl_eu_8050CB20 + 0x316, lbl_eu_8050CB20 + 0x321, 0x16);
+        break;
+    case 1:
+        stageLabel = func_80136190(lbl_eu_8050CB20 + 0x316, lbl_eu_8050CB20 + 0x321, 0x17);
+        break;
+    case 2:
+        stageLabel = func_80136190(lbl_eu_8050CB20 + 0x316, lbl_eu_8050CB20 + 0x321, 0x18);
+        break;
+    case 3:
+        stageLabel = func_80136190(lbl_eu_8050CB20 + 0x316, lbl_eu_8050CB20 + 0x321, 0x19);
+        break;
+    case 4:
+        stageLabel = func_80136190(lbl_eu_8050CB20 + 0x316, lbl_eu_8050CB20 + 0x321, 0x1a);
+        break;
+    case 5:
+        stageLabel = func_80136190(lbl_eu_8050CB20 + 0x316, lbl_eu_8050CB20 + 0x321, 0x1b);
+        break;
+    case 6:
+        stageLabel = func_80136190(lbl_eu_8050CB20 + 0x316, lbl_eu_8050CB20 + 0x321, 0x1c);
+        break;
+    case 7:
+        stageLabel = func_80136190(lbl_eu_8050CB20 + 0x316, lbl_eu_8050CB20 + 0x321, 0x1d);
+        break;
+    case 8:
+        stageLabel = func_80136190(lbl_eu_8050CB20 + 0x316, lbl_eu_8050CB20 + 0x321, 0x1e);
+        break;
+    case 9:
+        stageLabel = func_80136190(lbl_eu_8050CB20 + 0x316, lbl_eu_8050CB20 + 0x321, 0x18);
+        break;
+    case 10:
+        stageLabel = func_80136190(lbl_eu_8050CB20 + 0x316, lbl_eu_8050CB20 + 0x321, 0x19);
+        break;
+    default:
+        stageLabel = func_80136190(lbl_eu_8050CB20 + 0x316, lbl_eu_8050CB20 + 0x321, 0x16);
+        break;
+    }
+    func_80136B4C(self->field8, lbl_eu_8050CB20 + 0xbe7, stageLabel, 0);
+
+    // Heart-level icon name from the heart-state table (0 hides the icon).
+    char* heartLabel;
+    switch ((u8)func_80138E90(v)) {
+    case 0:
+        heartLabel = NULL;
+        break;
+    case 1:
+        heartLabel = func_80136190(lbl_eu_8050CB20 + 0x316, lbl_eu_8050CB20 + 0x321, 0x20);
+        break;
+    case 2:
+        heartLabel = func_80136190(lbl_eu_8050CB20 + 0x316, lbl_eu_8050CB20 + 0x321, 0x21);
+        break;
+    case 3:
+        heartLabel = func_80136190(lbl_eu_8050CB20 + 0x316, lbl_eu_8050CB20 + 0x321, 0x22);
+        break;
+    case 4:
+        heartLabel = func_80136190(lbl_eu_8050CB20 + 0x316, lbl_eu_8050CB20 + 0x321, 0x23);
+        break;
+    case 5:
+        heartLabel = func_80136190(lbl_eu_8050CB20 + 0x316, lbl_eu_8050CB20 + 0x321, 0x24);
+        break;
+    }
+    func_80136B4C(self->field8, lbl_eu_8050CB20 + 0xbf2, heartLabel, 0);
+
+    // Encounter counter, both names, formatted "current/max" heart counts.
+    func_80136910__FPQ34nw4r3lyt6LayoutPcUc(
+        self->field8, lbl_eu_8050CB20 + 0xb87,
+        (u8)func_80136254(mgr, lbl_eu_8050CB20 + 0xca9, v));
+    func_80136B4C(self->field8, lbl_eu_8050CB20 + 0xbfd,
+                  func_80136190(lbl_eu_8050CB20 + 0x316, lbl_eu_8050CB20 + 0x321, 0x15), 0);
+    func_80136B4C(self->field8, lbl_eu_8050CB20 + 0xc0b,
+                  func_8013639C(mgr, lbl_eu_8050CB20 + 0xcb1, v), 0);
+    u8 heartsCur = func_801361E8((u32)mgr, lbl_eu_8050CB20 + 0xcc9, v);
+    u8 heartsMax = func_801361E8((u32)mgr, lbl_eu_8050CB20 + 0xcc1, v);
+    char buf[0x14];
+    sprintf(buf, lbl_eu_8050CB20 + 0xcc9, heartsCur);
+    func_80136A1C(self->field8, lbl_eu_8050CB20 + 0xb5d, buf, 0);
+    sprintf(buf, lbl_eu_8050CB20 + 0xcc9, heartsMax);
+    func_80136A1C(self->field8, lbl_eu_8050CB20 + 0xb79, buf, 0);
+    func_80136B4C(self->field8, lbl_eu_8050CB20 + 0xb6b,
+                  func_80136190(lbl_eu_8050CB20 + 0x316, lbl_eu_8050CB20 + 0x321, 0x14), 0);
+}
+
+// Mode-2 update: when the +0x0C anim transform reaches its last frame,
+// switch the mode byte to 2, set the +0x16 flag, and publish state through
+// the child at +0x08 (slots 14/8 with the transform id, slots 7/11 with
+// the +0x10 transform and a 1 flag).
+extern "C" __declspec(noinline) void func_8025C16C(UnkKizunaSelfC21C* self) {
+    if (func_80137444((nw4r::lyt::AnimTransform*)self->field0C, lbl_eu_80668834) != 0) {
+        self->field14 = 2;
+        self->field16 = 1;
+        self->field8->target14(0);
+        self->field8->target8(self->field0C);
+        self->field8->slot7((u32)self->field10);
+        self->field8->slot11((u32)self->field10, 1);
+    }
+}
 
 extern "C" __declspec(noinline) void func_8025C21C(UnkKizunaSelfC21C* self) {
     if (func_80137444(self->field10, lbl_eu_80668834) != 0) {
@@ -1118,7 +1557,19 @@ extern "C" __declspec(noinline) void func_8025C21C(UnkKizunaSelfC21C* self) {
     }
 }
 
-extern "C" __declspec(noinline) void func_8025C298(UnkKizunaSelfC21C* self) {}
+// Mode-4 update: same shape as func_8025C16C but mode byte 5 and the
+// +0x10 transform published through slots 8/7/11.
+extern "C" __declspec(noinline) void func_8025C298(UnkKizunaSelfC21C* self) {
+    if (func_80137510(self->field10, lbl_eu_80668834) != 0) {
+        // anim reached its last frame: switch to mode 5, publish via the child.
+        self->field14 = 5;
+        self->field16 = 1;
+        self->field8->target14(0);
+        self->field8->target8((u32)self->field10);
+        self->field8->slot7(self->field0C);
+        self->field8->slot11(self->field0C, 1);
+    }
+}
 
 // func_8025C348 (us-8025e494): kizuna-line update gate. Retail: reads the
 // global float lbl_eu_80668834 (sdata), calls func_80137510([self+0xC], f1)
@@ -1139,7 +1590,7 @@ extern "C" __declspec(noinline) void func_8025C348(UnkKizunaSelfC21C* self) {
 // Retail __ct__CKizunagram (unmangled): manual vtable label, both memory
 // regions, the scalar state block, then the four embedded sub-objects and the
 // trailing flag bytes (the ctor argument lands at +0xDE).
-extern "C" void __ct__CKizunagram(CKizunagram* self, int arg) {
+extern "C" CKizunagram* __ct__CKizunagram(CKizunagram* self, int arg) {
     *(void**)self = (void*)lbl_eu_80537550;
     __ct__17UnkClass_8045F564Fv(&self->mMemRegionA);
     __ct__17UnkClass_8045F564Fv(&self->mMemRegionB);
@@ -1163,6 +1614,7 @@ extern "C" void __ct__CKizunagram(CKizunagram* self, int arg) {
     self->fieldDC = 0;
     self->fieldDD = 1;
     self->fieldDE = (u8)arg;
+    return self;
 }
 
 CKizunagram::~CKizunagram() {}
@@ -1269,45 +1721,63 @@ void func_8025C7FC(UnkKizunaSelfC7FC* self, int arg4) {
 // Each display reset: place a fixed color into the +0x68 sub-object, clear
 // its state byte, reset the two line panes, and step the sub-anim.
 extern "C" __declspec(noinline) void func_8025C874(UnkKizunaSelfC874* self) {
-    UnkKizunaVec3 tmp;
-    UnkKizunaVec3 v = *code80135FDC_setVec3(&tmp.x, lbl_eu_80668828,
-                                            lbl_eu_80668868, lbl_eu_80668828);
-    func_80259394(reinterpret_cast<UnkKizunaSelf59394*>(&self->sub68), &v);
+    // Array member forces a block copy on assignment (retail's interleaved
+    // lwz/stw shape); last-declared tmp sits at sp+8, v spans sp+0x14+.
+    struct VecA { u32 a[3]; };
+    VecA v;
+    VecA tmp;
+    VecA* src = reinterpret_cast<VecA*>(code80135FDC_setVec3(
+        reinterpret_cast<float*>(&tmp.a[0]), lbl_eu_80668828,
+        lbl_eu_80668868, lbl_eu_80668828));
+    v = *src;
+    func_80259394(reinterpret_cast<UnkKizunaSelf59394*>(&self->sub68),
+                  reinterpret_cast<UnkKizunaVec3*>(&v));
     func_8025949C(reinterpret_cast<UnkKizunaSelf5949C*>(&self->sub68));
     self->field3A = 0;
     func_80257F9C(&self->subAC, 0);
     func_8025BA38(&self->sub4C, self->field8E);
-    func_80259820(&self->sub68);
+    func_80259820(reinterpret_cast<UnkKizunaSelf9820*>(&self->sub68));
 }
 
 // Same display reset as func_8025C874 but with the second color constant.
 extern "C" __declspec(noinline) void func_8025C904(UnkKizunaSelfC874* self) {
-    UnkKizunaVec3 tmp;
-    UnkKizunaVec3 v = *code80135FDC_setVec3(&tmp.x, lbl_eu_80668828,
-                                            lbl_eu_8066886C, lbl_eu_80668828);
-    func_80259394(reinterpret_cast<UnkKizunaSelf59394*>(&self->sub68), &v);
+    // Array member forces a block copy on assignment (retail's interleaved
+    // lwz/stw shape); last-declared tmp sits at sp+8, v spans sp+0x14+.
+    struct VecA { u32 a[3]; };
+    VecA v;
+    VecA tmp;
+    VecA* src = reinterpret_cast<VecA*>(code80135FDC_setVec3(
+        reinterpret_cast<float*>(&tmp.a[0]), lbl_eu_80668828,
+        lbl_eu_8066886C, lbl_eu_80668828));
+    v = *src;
+    func_80259394(reinterpret_cast<UnkKizunaSelf59394*>(&self->sub68),
+                  reinterpret_cast<UnkKizunaVec3*>(&v));
     func_8025949C(reinterpret_cast<UnkKizunaSelf5949C*>(&self->sub68));
     self->field3A = 0;
     func_80257F9C(&self->subAC, 0);
     func_8025BA38(&self->sub4C, self->field8E);
-    func_80259820(&self->sub68);
+    func_80259820(reinterpret_cast<UnkKizunaSelf9820*>(&self->sub68));
 }
 
 // Same display reset as func_8025C874 but with the color constants swapped
 // (retail loads f2 first then fmr f3, so the source order is x/y/z with the
 // shared constant in y/z).
 extern "C" __declspec(noinline) void func_8025C994(UnkKizunaSelfC874* self) {
-    UnkKizunaVec3 tmp;
-    // retail keeps setVec3's temp at sp+8 and the copied vec at sp+0x14; MWCC
-    // allocates the two locals in the opposite order (known Vec3 slot-swap class).
-    UnkKizunaVec3 v = *code80135FDC_setVec3(&tmp.x, lbl_eu_8066886C,
-                                            lbl_eu_80668828, lbl_eu_80668828);
-    func_80259394(reinterpret_cast<UnkKizunaSelf59394*>(&self->sub68), &v);
+    // u32-array view forces retail's word-copy shape; declaring v first puts
+    // it at sp+0x14 and the setVec3 temp at sp+8, matching retail's layout.
+    struct VecW { u32 w[3]; };
+    VecW v;
+    VecW tmp;
+    v = *reinterpret_cast<VecW*>(code80135FDC_setVec3(
+        reinterpret_cast<f32*>(&tmp.w[0]), lbl_eu_8066886C,
+        lbl_eu_80668828, lbl_eu_80668828));
+    func_80259394(reinterpret_cast<UnkKizunaSelf59394*>(&self->sub68),
+                  reinterpret_cast<UnkKizunaVec3*>(&v));
     func_8025949C(reinterpret_cast<UnkKizunaSelf5949C*>(&self->sub68));
     self->field3A = 0;
     func_80257F9C(&self->subAC, 0);
     func_8025BA38(&self->sub4C, self->field8E);
-    func_80259820(&self->sub68);
+    func_80259820(reinterpret_cast<UnkKizunaSelf9820*>(&self->sub68));
 }
 
 void func_8025CA24(){}
@@ -1317,15 +1787,22 @@ void func_8025CA24(){}
 // (retail loads f2 first then fmr f3, so the source order is x/y/z with the
 // shared constant in y/z).
 extern "C" __declspec(noinline) void func_8025CA24(UnkKizunaSelfC874* self) {
-    UnkKizunaVec3 tmp;
-    UnkKizunaVec3 v = *code80135FDC_setVec3(&tmp.x, lbl_eu_80668868,
-                                            lbl_eu_80668828, lbl_eu_80668828);
-    func_80259394(reinterpret_cast<UnkKizunaSelf59394*>(&self->sub68), &v);
+    // u32-array view forces retail's word-copy shape (lwz/stw, not lfs/stfs);
+    // declaring v first puts it at sp+0x14 and the setVec3 temp at sp+8
+    // (matches retail's slot assignment; see func_8025C994)
+    struct VecW { u32 w[3]; };
+    VecW v;
+    VecW tmp;
+    v = *reinterpret_cast<VecW*>(code80135FDC_setVec3(
+        reinterpret_cast<f32*>(&tmp.w[0]), lbl_eu_80668868,
+        lbl_eu_80668828, lbl_eu_80668828));
+    func_80259394(reinterpret_cast<UnkKizunaSelf59394*>(&self->sub68),
+                  reinterpret_cast<UnkKizunaVec3*>(&v));
     func_8025949C(reinterpret_cast<UnkKizunaSelf5949C*>(&self->sub68));
     self->field3A = 0;
     func_80257F9C(&self->subAC, 0);
     func_8025BA38(&self->sub4C, self->field8E);
-    func_80259820(&self->sub68);
+    func_80259820(reinterpret_cast<UnkKizunaSelf9820*>(&self->sub68));
 }
 
 void func_8025CAB4(UnkKizunaDisp* self) {
@@ -1333,7 +1810,7 @@ void func_8025CAB4(UnkKizunaDisp* self) {
     case 0:
         return func_8025CE00((UnkKizunaSelfCE00*)self);
     case 1:
-        return func_8025CE78();
+        return func_8025CE78((UnkKizunaSelfCE78*)self);
     case 2:
         return func_8025CF1C(self);
     }
@@ -1441,7 +1918,28 @@ extern "C" __declspec(noinline) void func_8025CE00(UnkKizunaSelfCE00* self) {
 }
 
 
-__declspec(noinline) void func_8025CE78(){}
+// Move the line target down by the +0x48 step; once it reaches the floor,
+// latch state 2 and refresh the info/line displays.
+extern "C" __declspec(noinline) void func_8025CE78(UnkKizunaSelfCE78* self) {
+    // u32 words force retail's lwz/stw struct copy of the setVec3 result
+    // (see func_8025CA24); v lands at sp+0x14 and the setVec3 temp at sp+8.
+    struct VecW { u32 w[3]; };
+    VecW v;
+    VecW tmp;
+    v = *reinterpret_cast<VecW*>(code80135FDC_setVec3(
+        reinterpret_cast<f32*>(&tmp.w[0]), self->field40, self->field44,
+        lbl_eu_80668828));
+    func_80259394(reinterpret_cast<UnkKizunaSelf59394*>(&self->sub68),
+                  reinterpret_cast<UnkKizunaVec3*>(&v));
+    f32 f = self->field48 - lbl_eu_80668834;
+    self->field48 = f;
+    if (f <= lbl_eu_80668828) {
+        self->field3A = 2;
+        func_8025949C(reinterpret_cast<UnkKizunaSelf5949C*>(&self->sub68));
+        func_8025BA38(&self->sub4C, self->field8E);
+        func_80259820(reinterpret_cast<UnkKizunaSelf9820*>(&self->sub68));
+    }
+}
 
 void func_8025CF1C(){}
 
@@ -1449,7 +1947,8 @@ void func_8025CF1C(){}
 // fresh CKizunaLine, copy it into the +0x68 line state (field-by-field,
 // including the +0x18..+0x20 pad words the ctor leaves uninitialized), then
 // rebuild the line display and re-fetch the two cur/line panes via slot 15.
-void func_8025CF40(UnkKizunaSelfCF40* self) {
+// extern "C" + noinline for OnFileEvent's unmangled call shape (see func_80257AFC).
+extern "C" __declspec(noinline) void func_8025CF40(UnkKizunaSelfCF40* self) {
 // explicit == 0 early-return reproduces retail's beq / bne-b branch pair
     if (self->field30 == 0 || self->field34 == 0)
         return;
@@ -1489,7 +1988,114 @@ void func_8025CF40(UnkKizunaSelfCF40* self) {
                 (int)(lbl_eu_8050CB20 + 0x8b), 1);
 }
 
-void CKizunagram::OnFileEvent() {}
+// File-load completion callback for the kizuna chart: whichever bind file
+// finished (line-data handle at +0x28 or current-kizuna handle at +0x2C) gets
+// its buffer detached and re-attached into a fresh ArcResourceAccessor built
+// under a scratch MEM2 region (RAII Class_8045F858 guard), then the matching
+// sub-display is rebuilt. Sub-objects are constructed into stack temps and
+// copied member-wise into place (the manual vtable word is not part of the
+// copy). Retail builds this with the block stmw/lmw save, so the function is
+// compiled under optimize_for_size like COption::OnFileEvent.
+#pragma optimize_for_size on
+
+// Word-wise view of the radar build temp: retail moves the float members as
+// integer bits (lwz/stw), so the copy aliases them through u32 fields.
+struct KizunaRadarWords {
+    u8 _00[0x04];
+    u32 w04; // mArg
+    u32 w08;
+    u32 w0C;
+    u32 w10;
+    u32 w14; // mField14 bits
+    u32 w18; // mField18 bits
+};
+
+bool CKizunagram::OnFileEvent(CEventFile* pEventFile) {
+    // Sub-object build temps live on raw buffers: the classes are polymorphic,
+    // so a typed local would make MWCC emit a vtable store + dtor call that
+    // retail (built via free __ct__ functions) does not have.
+    if (field28 == (u32)pEventFile->mFileHandle) {
+        u8 infoBuf[0x1C];
+        u8 curBuf[0x14];
+        u8 radarBuf[0x1C];
+        mMemRegionA.createRegion((int)mtl::MemManager::getHandleMEM2(), 0x40000,
+                                 lbl_eu_8050CB20 + 0xd07, 0);
+        Class_8045F858 host(&mMemRegionA);
+        void* fileData = ((CFileHandle*)field28)->getData();
+        mtl::MemManager::func_80434A4C(false);
+        // Store the accessor straight into the field and re-load it from there
+        // at each use - retail never keeps it live in a register across calls.
+        field30 = (u32)createArcResourceAccessor__10CLibLayoutFv();
+        ((nw4r::lyt::ArcResourceAccessor*)field30)->Attach(fileData,
+                                                           lbl_eu_8050CB20 + 0xd13);
+
+        // Info display: build temp, copy body (manual vtable word excluded),
+        // then build its layout.
+        __ct__CKizunaInfo((CKizunaInfo*)infoBuf,
+                          (nw4r::lyt::ArcResourceAccessor*)field30);
+        mInfo.mArcResAcc = ((CKizunaInfo*)infoBuf)->mArcResAcc;
+        mInfo.mField08 = ((CKizunaInfo*)infoBuf)->mField08;
+        mInfo.mField0C = ((CKizunaInfo*)infoBuf)->mField0C;
+        mInfo.mField10 = ((CKizunaInfo*)infoBuf)->mField10;
+        mInfo.mField14 = ((CKizunaInfo*)infoBuf)->mField14;
+        mInfo.mField15 = ((CKizunaInfo*)infoBuf)->mField15;
+        mInfo.mField16 = ((CKizunaInfo*)infoBuf)->mField16;
+        mInfo.mField18 = ((CKizunaInfo*)infoBuf)->mField18;
+        func_8025B670((UnkKizunaSelfB670*)&mInfo);
+
+        // Current-kizuna cursor: build temp, copy body, then init + publish.
+        __ct__CKizunaCur((CKizunaCur*)curBuf,
+                         (nw4r::lyt::ArcResourceAccessor*)field30);
+        mCur.mArcResAcc = ((CKizunaCur*)curBuf)->mArcResAcc;
+        mCur.mField08 = ((CKizunaCur*)curBuf)->mField08;
+        mCur.mField0C = ((CKizunaCur*)curBuf)->mField0C;
+        mCur.mField10 = ((CKizunaCur*)curBuf)->mField10;
+        mCur.mField11 = ((CKizunaCur*)curBuf)->mField11;
+        mCur.mField12 = ((CKizunaCur*)curBuf)->mField12;
+        func_80257E58((UnkKizunaSelf57E58*)&mCur);
+        func_80257F9C((UnkKizunaSelf57D90*)&mCur, 0xFF);
+
+        // Radar: both sides aliased as words - retail moves the float fields
+        // as integer bits and stores the last two words in reverse order.
+        __ct__CKizunaRadar((CKizunaRadar*)radarBuf,
+                           (nw4r::lyt::ArcResourceAccessor*)field30);
+        KizunaRadarWords* rw = (KizunaRadarWords*)&mRadar;
+        const KizunaRadarWords* rt = (const KizunaRadarWords*)radarBuf;
+        rw->w04 = rt->w04;
+        rw->w08 = rt->w08;
+        rw->w0C = rt->w0C;
+        rw->w10 = rt->w10;
+        { u32 t14 = rt->w14; u32 t18 = rt->w18;
+        rw->w18 = t18; rw->w14 = t14; }
+        func_80257AFC((UnkKizunaSelfAFC*)&mRadar);
+
+        if (func_8009ECE0() == 0 || fieldDE != 0) {
+            fieldDC = 4;
+        }
+        func_8025CF40((UnkKizunaSelfCF40*)this);
+        field28 = 0;
+        mMemRegionA.func_8045F810();
+        return true;
+    }
+    if (field2C == (u32)pEventFile->mFileHandle) {
+        mMemRegionB.createRegion((int)mtl::MemManager::getHandleMEM2(), 0x100,
+                                 lbl_eu_8050CB20 + 0xd17, 0);
+        // Retail quirk: the branch-2 guard is still constructed against
+        // mMemRegionA (r31+8), not the region just created.
+        Class_8045F858 host(&mMemRegionA);
+        void* fileData = ((CFileHandle*)field2C)->getData();
+        mtl::MemManager::func_80434A4C(false);
+        field34 = (u32)createArcResourceAccessor__10CLibLayoutFv();
+        ((nw4r::lyt::ArcResourceAccessor*)field34)->Attach(fileData,
+                                                           lbl_eu_8050CB20 + 0xd13);
+        func_8025CF40((UnkKizunaSelfCF40*)this);
+        field2C = 0;
+        mMemRegionB.func_8045F810();
+        return true;
+    }
+    return false;
+}
+#pragma optimize_for_size off
 
 // --- hard-symbol stubs (scaffold_hard_symbols) ---
 // sinit_8025D304: init the 14-color kizuna line palette via func_801C4B60.
@@ -1558,7 +2164,170 @@ __declspec(noinline) void func_80257B6C(UnkKizunaSelf57B6C* self) {
     }
 }
 
-extern "C" __declspec(noinline) bool func_8025A11C(UnkKizunaSelf58F9C* self) { return false; }
+// us-8025a11c: reveal up to 16 newly-unlocked kizuna entries starting at the
+// shared row cursor lbl_eu_8066485A. For each row, resolve its named pane and
+// toggle its visibility per unlock state; unlocked rows get their texture tag
+// rewritten from per-state string tables, then the texture is bound to the
+// pane. Returns true once the cursor passes the table row count.
+extern "C" __declspec(noinline) bool func_8025A11C(UnkKizunaSelfA11C* self) {
+    // declaration/statement order mirrors retail's register assignment
+    // (self=r28, str=r26, fp=r31, count=r30, i=r29, tag-const=r27)
+    char buf[0x24];
+
+    func_8003AA34();
+    const char* str = lbl_eu_8050CB20;
+    void* fp = getFP__FPCc(str + 0x402);
+    u32 count = func_8003B1EC(fp) & 0xffff;
+
+    for (u32 i = 0; i < 0x10; i++) {
+        u16 cnt = lbl_eu_8066485A;
+        if ((u32)(u16)cnt >= count) {
+            return true;
+        }
+        u32 id = ((u16)cnt + 1) & 0xffff;
+        char* rowName = func_8013639C(fp, str + 0x411, id);
+        nw4r::lyt::Pane* pane =
+            (nw4r::lyt::Pane*)self->field0C->field10->target((int)rowName, 1);
+        u32 state = func_8009CF8C(id + 0x608) & 0xff;
+        if (pane != NULL) {
+            func_80124270(pane, state != 0);
+        }
+        if (state == 0) {
+            // still locked: just advance the cursor
+            lbl_eu_8066485A = lbl_eu_8066485A + 1;
+            continue;
+        }
+
+        // Per-state tag: pick the formatted texture name from this row's tag.
+        char* tag = func_8013639C(fp, str + 0x417, id);
+        switch (state) {
+        case 1:
+            if (strcmp(tag, str + 0x494) == 0) {
+                sprintf(buf, str + 0x4a1);
+            } else if (strcmp(tag, str + 0x4ba) == 0) {
+                sprintf(buf, str + 0x4a1);
+            } else if (strcmp(tag, str + 0x4c7) == 0) {
+                sprintf(buf, str + 0x4d4);
+            } else if (strcmp(tag, str + 0x4ed) == 0) {
+                sprintf(buf, str + 0x4fa);
+            } else if (strcmp(tag, str + 0x513) == 0) {
+                sprintf(buf, str + 0x4fa);
+            } else if (strcmp(tag, str + 0x3f5) == 0) {
+                sprintf(buf, str + 0x520);
+            } else if (strcmp(tag, str + 0x539) == 0) {
+                sprintf(buf, str + 0x546);
+            } else if (strcmp(tag, str + 0x55f) == 0) {
+                sprintf(buf, str + 0x546);
+            } else if (strcmp(tag, str + 0x56c) == 0) {
+                sprintf(buf, str + 0x579);
+            } else {
+                sprintf(buf, str + 0x592);
+            }
+            break;
+        case 2:
+            if (strcmp(tag, str + 0x494) == 0) {
+                sprintf(buf, str + 0x597);
+            } else if (strcmp(tag, str + 0x4ba) == 0) {
+                sprintf(buf, str + 0x597);
+            } else if (strcmp(tag, str + 0x4c7) == 0) {
+                sprintf(buf, str + 0x5b0);
+            } else if (strcmp(tag, str + 0x4ed) == 0) {
+                sprintf(buf, str + 0x5c9);
+            } else if (strcmp(tag, str + 0x513) == 0) {
+                sprintf(buf, str + 0x5c9);
+            } else if (strcmp(tag, str + 0x3f5) == 0) {
+                sprintf(buf, str + 0x5e2);
+            } else if (strcmp(tag, str + 0x539) == 0) {
+                sprintf(buf, str + 0x5fb);
+            } else if (strcmp(tag, str + 0x55f) == 0) {
+                sprintf(buf, str + 0x5fb);
+            } else if (strcmp(tag, str + 0x56c) == 0) {
+                sprintf(buf, str + 0x614);
+            } else {
+                sprintf(buf, str + 0x592);
+            }
+            break;
+        case 3:
+            if (strcmp(tag, str + 0x494) == 0) {
+                sprintf(buf, str + 0x62d);
+            } else if (strcmp(tag, str + 0x4ba) == 0) {
+                sprintf(buf, str + 0x62d);
+            } else if (strcmp(tag, str + 0x4c7) == 0) {
+                sprintf(buf, str + 0x646);
+            } else if (strcmp(tag, str + 0x4ed) == 0) {
+                sprintf(buf, str + 0x65f);
+            } else if (strcmp(tag, str + 0x513) == 0) {
+                sprintf(buf, str + 0x65f);
+            } else if (strcmp(tag, str + 0x3f5) == 0) {
+                sprintf(buf, str + 0x678);
+            } else if (strcmp(tag, str + 0x539) == 0) {
+                sprintf(buf, str + 0x691);
+            } else if (strcmp(tag, str + 0x55f) == 0) {
+                sprintf(buf, str + 0x691);
+            } else if (strcmp(tag, str + 0x56c) == 0) {
+                sprintf(buf, str + 0x6aa);
+            } else {
+                sprintf(buf, str + 0x592);
+            }
+            break;
+        case 4:
+            if (strcmp(tag, str + 0x494) == 0) {
+                sprintf(buf, str + 0x6c3);
+            } else if (strcmp(tag, str + 0x4ba) == 0) {
+                sprintf(buf, str + 0x6c3);
+            } else if (strcmp(tag, str + 0x4c7) == 0) {
+                sprintf(buf, str + 0x6dc);
+            } else if (strcmp(tag, str + 0x4ed) == 0) {
+                sprintf(buf, str + 0x6f5);
+            } else if (strcmp(tag, str + 0x513) == 0) {
+                sprintf(buf, str + 0x6f5);
+            } else if (strcmp(tag, str + 0x3f5) == 0) {
+                sprintf(buf, str + 0x70e);
+            } else if (strcmp(tag, str + 0x539) == 0) {
+                sprintf(buf, str + 0x727);
+            } else if (strcmp(tag, str + 0x55f) == 0) {
+                sprintf(buf, str + 0x727);
+            } else if (strcmp(tag, str + 0x56c) == 0) {
+                sprintf(buf, str + 0x740);
+            } else {
+                sprintf(buf, str + 0x592);
+            }
+            break;
+        case 5:
+            if (strcmp(tag, str + 0x494) == 0) {
+                sprintf(buf, str + 0x759);
+            } else if (strcmp(tag, str + 0x4ba) == 0) {
+                sprintf(buf, str + 0x759);
+            } else if (strcmp(tag, str + 0x4c7) == 0) {
+                sprintf(buf, str + 0x772);
+            } else if (strcmp(tag, str + 0x4ed) == 0) {
+                sprintf(buf, str + 0x78b);
+            } else if (strcmp(tag, str + 0x513) == 0) {
+                sprintf(buf, str + 0x78b);
+            } else if (strcmp(tag, str + 0x3f5) == 0) {
+                sprintf(buf, str + 0x7a4);
+            } else if (strcmp(tag, str + 0x539) == 0) {
+                sprintf(buf, str + 0x7bd);
+            } else if (strcmp(tag, str + 0x55f) == 0) {
+                sprintf(buf, str + 0x7bd);
+            } else if (strcmp(tag, str + 0x56c) == 0) {
+                sprintf(buf, str + 0x7d6);
+            } else {
+                sprintf(buf, str + 0x592);
+            }
+            break;
+        }
+
+        if (pane != NULL) {
+            void* tex = self->texSrc->getTex(0x74696D67, (u32)buf, 0);
+            if (tex != 0) {
+                func_80137F88(pane, (u32)tex);
+            }
+        }
+        lbl_eu_8066485A = lbl_eu_8066485A + 1;
+    }
+    return false;
+}
 
 // Per-frame update: dispatch on the mode byte at +0x39, then step every child
 // (line display, kizuna sub, cur layout, line panes).
@@ -1605,17 +2374,18 @@ void func_80259D44(UnkKizunaSelf59D44* self) {
 // Kizuna-line status query: when the anim at +0x78 sits at frame 0, refine the
 // answer with whether the +0x68 sub-anim has finished.
 int func_8025CBCC(UnkKizunaSelfCBCC* self) {
+    // Sense: constant status when the anim sits AT frame 0; sub-anim query
+    // runs while it is still moving.
     if (self->field8C != 0) {
         bool atZero = (lbl_eu_80668828 == self->field78->GetFrame());
-        if (!atZero) {
+        if (atZero) {
             return 0x54;
         }
-        // bool-materialized condition flips MWCC's select branch to beq
         bool finished = func_802592D8((UnkKizunaSelf592D8*)&self->sub68);
         return finished ? 0x55 : 0x53;
     } else {
         bool atZero = (lbl_eu_80668828 == self->field78->GetFrame());
-        if (!atZero) {
+        if (atZero) {
             return 0x57;
         }
         bool finished = func_802592D8((UnkKizunaSelf592D8*)&self->sub68);

@@ -18,6 +18,11 @@
 
 // CRI middleware extern declarations
 extern "C" {
+    // Retail exports these ctors under aliased short names (the defining
+    // units emit the full mangled symbols); declared here per the approved
+    // reloc-name fix so the bl targets carry the retail reloc names.
+    void* __ct__CLibCriMoviePlay(void* mem, const char* name, CWorkThread* parent);
+    void* __ct__CLibCriStreamingPlay(void* mem, const char* name, CWorkThread* parent);
     void MIXUpdateSettings(void);
     void MIXInit(void);
     void MIXQuit(void);
@@ -174,14 +179,14 @@ extern "C" void __ct__7CLibCriFPCcP11CWorkThread(CLibCri* self, const char* pNam
 #pragma auto_inline off
 extern "C" void* __dt__7CLibCriFv(CLibCri* self, int flag) {
     char* base = (char*)self;
-    IErrorWii* errCb = static_cast<IErrorWii*>(self);
     if (self != nullptr) {
+        IErrorWii* errCb = reinterpret_cast<IErrorWii*>(base);
         // full-object destruction: restore the primary + both MI sub-vptrs
         *(void**)base = &lbl_eu_8056CE58;
         *(void**)(base + 0x1C4) = (char*)&lbl_eu_8056CE58 + 0xA0;
         *(void**)(base + 0x1C8) = (char*)&lbl_eu_8056CE58 + 0xB8;
-        if (self != nullptr) {
-            errCb = (IErrorWii*)(base + 0x1C8);
+        if (errCb != nullptr) {
+            errCb = reinterpret_cast<IErrorWii*>(base + 0x1C8);
         }
         CErrorWii::removeCallback(errCb);
         lbl_eu_806656D8 = nullptr;
@@ -275,41 +280,43 @@ CLibCri* CLibCri::getInstance() {
 // Login initialization sequence
 // ============================================================================
 extern "C" bool wkStandbyLogin__7CLibCriFv(CLibCri* self) {
-    if (!CDevice::isColdStartReady()) {
-        return false;
+    // Retail shape: branch FORWARD over the whole init body when the device
+    // is not cold-start ready, falling into a shared `li r3, 0` exit.
+    bool result;
+    if (CDevice::isColdStartReady()) {
+        ADXM_SetCbErr((void (*)())func_80459C70, (void*)self);
+        ADXWII_SetupDvdFs(0);
+        ADXM_SetupFramework(2, 0);
+        ADXT_SetDefSvrFreq(30);
+        AIInit(nullptr);
+        AXInit();
+        MIXInit();
+        lbl_eu_806656DC = AXRegisterCallback((void (*)(void))&CLibCri::func_80459830);
+        ADXT_Init();
+
+        // Create CLibCriMoviePlay (0x668 bytes)
+        const char* movieName = &lbl_eu_80522FD8[5];
+        u32 workMem = CWorkThreadSystem::getWorkMem();
+        void* movieMem = mtl::MemManager::allocate(0x668, workMem);
+        if (movieMem != nullptr) {
+            movieMem = __ct__CLibCriMoviePlay(movieMem, movieName, self);
+        }
+        CWorkUtil::entryWork((CWorkThread*)movieMem, self, false);
+
+        // Create CLibCriStreamingPlay (0x4B8 bytes)
+        const char* streamName = &lbl_eu_80522FD8[0x16];
+        workMem = CWorkThreadSystem::getWorkMem();
+        void* streamMem = mtl::MemManager::allocate(0x4B8, workMem);
+        if (streamMem != nullptr) {
+            streamMem = __ct__CLibCriStreamingPlay(streamMem, streamName, self);
+        }
+        CWorkUtil::entryWork((CWorkThread*)streamMem, self, false);
+
+        result = wkStandbyLogin__11CWorkThreadFv(self);
+    } else {
+        result = false;
     }
-
-    ADXM_SetCbErr((void (*)())func_80459C70, (void*)self);
-    ADXWII_SetupDvdFs(0);
-    ADXM_SetupFramework(2, 0);
-    ADXT_SetDefSvrFreq(30);
-    AIInit(nullptr);
-    AXInit();
-    MIXInit();
-    lbl_eu_806656DC = AXRegisterCallback((void (*)(void))&CLibCri::func_80459830);
-    ADXT_Init();
-
-    // Create CLibCriMoviePlay (0x668 bytes)
-    const char* movieName = &lbl_eu_80522FD8[5];
-    u32 workMem = CWorkThreadSystem::getWorkMem();
-    CLibCriMoviePlay* moviePlay =
-        (CLibCriMoviePlay*)mtl::MemManager::allocate(0x668, workMem);
-    if (moviePlay != nullptr) {
-        moviePlay = new (moviePlay) CLibCriMoviePlay(movieName, self);
-    }
-    CWorkUtil::entryWork(moviePlay, self, false);
-
-    // Create CLibCriStreamingPlay (0x4B8 bytes)
-    const char* streamName = &lbl_eu_80522FD8[0x16];
-    workMem = CWorkThreadSystem::getWorkMem();
-    CLibCriStreamingPlay* streamPlay =
-        (CLibCriStreamingPlay*)mtl::MemManager::allocate(0x4B8, workMem);
-    if (streamPlay != nullptr) {
-        streamPlay = new (streamPlay) CLibCriStreamingPlay(streamName, self);
-    }
-    CWorkUtil::entryWork(streamPlay, self, false);
-
-    return wkStandbyLogin__11CWorkThreadFv(self);
+    return result;
 }
 
 // ============================================================================

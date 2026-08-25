@@ -48,8 +48,8 @@ struct CREvtModelObj {
     u32 mFileState;
     // 0x48: u8* - allocated data
     u8* mAllocData;
-    // 0x4C: u32
-    u32 mField4C;
+    // 0x4C: s32 (signed: retail emits bc 4,1 "<= 0 continue" for this check)
+    s32 mField4C;
     // 0x50: u32 - model type (1=arc, 2=chr, 3=?)
     u32 mModelType;
     // 0x54: owner holding a refcount on our resource
@@ -89,7 +89,7 @@ struct ParentTask {
     u32 mField30; // 0x30
     u8 _pad34[0x48 - 0x34];
     u8* mField48; // 0x48
-    u32 mField4C; // 0x4C
+    s32 mField4C; // 0x4C (signed: retail compares > 0 with bng/bc 4,1)
     u8 _pad50[0x58 - 0x50];
     u32 mField58; // 0x58
     u8 _pad5C[0x5C - 0x58];

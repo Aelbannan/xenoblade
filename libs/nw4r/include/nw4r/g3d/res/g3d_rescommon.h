@@ -130,7 +130,7 @@ public:
         return TTo(NULL);
     }
 
-private:
+protected:
     T* mpData;
 };
 

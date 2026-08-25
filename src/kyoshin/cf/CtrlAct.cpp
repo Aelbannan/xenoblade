@@ -31,19 +31,21 @@ public:
 // zero the 0x2C position block and the tail bytes.
 // Retail signature has a third (unused) argument; it affects MWCC's
 // saved-register coloring (see CtrlPc.hpp declaration).
-void __ct__800D10DC(CtrlActView* self, void* posObj, void* arg5) {
-    u32 zero = 0;
-    self->mField4 = zero;
+// Retail signature has a third (unused) argument. Dropping it does not
+// change codegen (verified); kept for ABI fidelity with the CtrlPc.hpp /
+// CtrlEnemy.hpp declarations.
+CtrlActView* __ct__800D10DC(CtrlActView* self, void* posObj, void* arg5) {
+    self->mField4 = 0;
     self->mField8 = lbl_eu_80666CF8;
     self->mFieldC = lbl_eu_80666CF8;
     self->mField10 = lbl_eu_80666CF8;
     self->mField14 = lbl_eu_80666CF8;
-    self->mField18 = zero;
+    self->mField18 = 0;
     self->mField1C = 2;
     self->mField24 = -1;
     *(void**)self = (void*)lbl_eu_80527BB0;   // base vtable
     self->mField28 = (CtrlActViewSub28*)func_800BBC0C(posObj);
-    self->mField2C = zero;
+    self->mField2C = 0;
     *(void**)self = (void*)lbl_eu_8052B080;   // derived vtable
     memset(&self->mPos30, 0, 0x2c);
     self->mPlayer = (CtrlActPlayerView*)func_8016FE34(posObj);
@@ -54,6 +56,7 @@ void __ct__800D10DC(CtrlActView* self, void* posObj, void* arg5) {
     self->mField7A = 0;
     self->mField7B = 0;
     self->mField70 = lbl_eu_80666CFC;
+    return self;
 }
 
 // Target us-800d1c98. Player-facing action drive: gate on the battle-manager
@@ -67,8 +70,8 @@ extern "C" void func_800D11B0(CtrlActView* self) {
     // matches retail: src->r31, r30->r30, r29->r29, self->r28 (param),
     // player-cache->r27. The gate flag below stays volatile (r0).
     CtrlActSrc* src;
-    int r30 = 1;
-    int r29 = 0;
+    int r30;
+    int r29;
     // Battle-state gate: when the battle-manager range byte is outside
     // [1, 0x18], the action is only kept alive while the voice-owner height
     // probe reads exactly 0 (otherwise the source resolution below runs).
@@ -89,6 +92,8 @@ extern "C" void func_800D11B0(CtrlActView* self) {
     // Action-source resolution: the 0x10 control bit plus the player's
     // 0x3388 bit 4 latch make the source the player itself (r30=0), else the
     // source is resolved from the voice-owner handle and the latch cleared.
+    // Retail initializes the flag register here (li r30,1 before the test).
+    r30 = 1;
     if (self->mField74 & 0x10) {
         self->mField7A++;
         if ((self->mPlayer->mField3388 & 0x10) && (u8)self->mField7A <= 0x1e) {
@@ -111,6 +116,7 @@ extern "C" void func_800D11B0(CtrlActView* self) {
     if (src == 0) {
         return;
     }
+    r29 = 0;
     // Probe the player state words; any failure latches r29 (the "stuck"
     // flag that clears the state value at the end). Retail re-caches the
     // player pointer into r27 at each func_80174C98 probe site (lwz r27,
@@ -236,18 +242,24 @@ extern "C" void func_800D11B0(CtrlActView* self) {
         f32 f28 = pos58.y - self->mPlayer->mSub3E9C.getPosition()->f[1];
         if (f28 != lbl_eu_80666CF8) {
             f32 mag2 = f28 * f28 + f30 * f30;
-            if (!(mag2 >= lbl_eu_80666CF8)) {
+            if (mag2 < lbl_eu_80666CF8) {
                 nw4r::db::Warning((const char*)lbl_eu_80526324, 0x273,
                                   (const char*)lbl_eu_80526300);
             }
-            f30 = (mag2 <= lbl_eu_80666CF8)
-                      ? lbl_eu_80666CF8
-                      : mag2 * nw4r::math::FrSqrt(mag2);
+            if (mag2 <= lbl_eu_80666CF8) {
+                mag2 = mag2 * nw4r::math::FrSqrt(mag2);
+            }
+            f30 = mag2;
         }
         // Distance from the (blended) anchor to the source; f27 is the
         // clearance margin = mag - scale * (height + radius).
+        // Component-wise (no operator- temp): retail inlines the pair
+        // subtract with psq_l/ps_sub, so no hidden return-slot local.
         CVoicePos* spos = src->mOwner3E9C.getPosition();
-        ml::CVec3 diff = *(ml::CVec3*)spos - pos58;
+        ml::CVec3 diff;
+        diff.x = spos->f[0] - pos58.x;
+        diff.y = spos->f[1] - pos58.y;
+        diff.z = spos->f[2] - pos58.z;
         ml::CVec3 magVec = diff;   // retail materializes a second slot
         f28 = PSVECMag((const Vec*)&magVec);   // f28 reused (retail fmr f28)
         if (self->mField74 & 0x8000) {
@@ -275,7 +287,9 @@ extern "C" void func_800D11B0(CtrlActView* self) {
                     &((CtrlActBmView*)getInstance__Q22cf14CBattleManagerFv())
                          ->mField1A8,
                     self->mPlayer);
-                f27 = (r == 0) ? lbl_eu_80666D1C : lbl_eu_80666CF8;
+                // Retail lowers this via cntlzw/srwi: nonzero result picks
+                // D1C, zero keeps CF8.
+                f27 = (r != 0) ? lbl_eu_80666D1C : lbl_eu_80666CF8;
             }
         }
         if (f27 <= lbl_eu_80666CF8) {
@@ -433,35 +447,37 @@ extern "C" void func_800D11B0(CtrlActView* self) {
 // target is in a reserved state-page range (0x21..0x2A). The second
 // 0x1000 gate then marks the owner with v02(1) + func_80174B4C.
 void func_800D1CFC(CtrlActView* self) {
+    // Initialized here so the interference range starts before the gate
+    // blocks; the dead store itself is removed by the optimizer.
+    CtrlActSrc* src = NULL;
     if (self->mPlayer->mSub3E9C.v01(1) == 0) {
         return;
     }
     {
         CtrlActPlayerView* player = self->mPlayer;
-        u32 local = *player->mField4->vf30();
-        if (func_80174C98(player, &local, 0x1000) != 0) {
+        u32 localC = *player->mField4->vf30();
+        if (func_80174C98(player, &localC, 0x1000) != 0) {
             return;
         }
     }
-    void* x = func_800B708C((int)(intptr_t)self->mPlayer->mSub3E9C.v17());
-    if (x != 0) {
-        // Normalize the actor pointer for the voice-owner slot call: the
-        // handle may alias the +0x3E9C owner region, so de-bias and re-bias
-        // it (retail's double null-check collapses a zero/low address to 0).
-        void* owner = x;
-        if (x != 0) {
-            owner = (u8*)x - 0x3E9C;
+    src = (CtrlActSrc*)func_800B708C(
+        (int)(intptr_t)self->mPlayer->mSub3E9C.v17());
+    if (src != NULL) {
+        // Normalize the handle: if it points at our own +0x3E9C owner
+        // region, pass NULL. Retail emits a copy plus guarded de-bias,
+        // then a re-bias null check; MWCC shapes this ternary closest.
+        void* arg = (src != NULL) ? (void*)((u8*)src - 0x3E9C) : (void*)src;
+        if (arg != NULL) {
+            arg = (u8*)arg + 0x3E9C;
         }
-        if (owner != 0) {
-            owner = (u8*)owner + 0x3E9C;
-        }
-        ((CtrlActVoiceOwnerIntf*)&self->mPlayer->mSub3E9C)
-            ->m1AC((u32)(intptr_t)owner, lbl_eu_804FC81C);
+        ((CtrlActVoiceOwnerView*)&self->mPlayer->mSub3E9C)
+            ->vtbl->fn_0x1AC(&self->mPlayer->mSub3E9C, arg,
+                             lbl_eu_804FC81C);
         if (self->mPlayer->mField3F60 != 0) {
             int page = func_8004C5EC(self->mPlayer->mField3F60);
             if (page < 0x21 || page > 0x2a) {
                 CVoicePos* p1 = self->mPlayer->mSub3E9C.getPosition();
-                CVoicePos* p2 = (CVoicePos*)((CtrlVoiceHandle*)x)->vf41();
+                CVoicePos* p2 = (CVoicePos*)((CtrlVoiceHandle*)src)->vf41();
                 ml::CVec3 diff;
                 nw4r::math::VEC3Sub((nw4r::math::VEC3*)&diff,
                                     (const nw4r::math::VEC3*)p2,
@@ -475,15 +491,333 @@ void func_800D1CFC(CtrlActView* self) {
     }
     {
         CtrlActPlayerView* player = self->mPlayer;
-        u32 local = *player->mField4->vf30();
-        if (func_80174C98(player, &local, 0x1000) == 0) {
-            self->mPlayer->mSub3E9C.v02(1);
-            func_80174B4C(self->mPlayer, 1);
+        u32 local8 = *player->mField4->vf30();
+        if (func_80174C98(player, &local8, 0x1000) != 0) {
+            return;
         }
     }
+    self->mPlayer->mSub3E9C.v02(1);
+    func_80174B4C(self->mPlayer, 1);
 }
 
-void func_800D1F0C(){}
+// Target us-800d29f4. Per-frame action driver for the controlled actor.
+// Gate phase: usable-gate virtual (slot 0x2BC), control word 0x2000, the
+// action-container id probes 15/9 and the 0x805 command gate feeding the
+// voice-height probe into func_8014B2EC. Then a cascade of func_80174C98
+// command gates - any match (or a non-empty battle ring) runs the body. The
+// body fetches a 0x20-byte action entry via func_8014B8BC and either rebuilds
+// the +0x2A4 action-state block or dispatches the entry's kind byte through a
+// 25-way switch; the no-entry path re-checks the current state instead.
+void func_800D1F0C(CtrlActView* self) {
+    // NOTE: no cached mPlayer local - retail reloads 0x5c(r30) at every use.
+    // Typed virtuals keep retail's register flow (no temp-register copies).
+    if (((CtrlActPlayerReal*)self->mPlayer)->vf173() != 0) {
+        return;
+    }
+    if (self->mPlayer->mField3374 & 0x2000) {
+        return;
+    }
+
+    if (func_80148778(&self->mPlayer->mField8, 0xf) == 0 &&
+        func_80148778(&self->mPlayer->mField8, 9) == 0) {
+        u32 cmd805 = *self->mPlayer->mField4->vf30();
+        if (func_80174C98(self->mPlayer, &cmd805, 0x805) == 0) {
+            f32 h = ((CtrlActVoiceHeightIntf*)&self->mPlayer->mSub3E9C)
+                        ->getHeight();
+            if (h != lbl_eu_80666CF8) {
+                if (func_80496288(lbl_eu_80663E14) != lbl_eu_80666CF8) {
+                    f32 scale = func_80496288(lbl_eu_80663E14);
+                    f32 h2 = ((CtrlActVoiceHeightIntf*)&self->mPlayer->mSub3E9C)
+                                 ->getHeight();
+                    func_8014B2EC(&self->mPlayer->mField3380,
+                                  h2 * scale / lbl_eu_80666D44);
+                }
+            }
+        }
+    }
+
+    // Command gate cascade: evaluated sequentially like retail - any match
+    // runs the body; otherwise only a non-empty battle ring does.
+    // Branch-only cascade like retail (no materialized bool): any match
+    // breaks to the body; falling through all gates with an empty ring
+    // returns.
+    {
+        // Retail pins mPlayer in r29 across this whole cascade.
+        CtrlActPlayerView* p = self->mPlayer;
+        u32 gate9 = *p->mField4->vf30();
+        if (func_80174C98(p, &gate9, 9) == 0) {
+            u32 gateA = *p->mField4->vf30();
+            if (func_80174C98(p, &gateA, 0xa) == 0) {
+                u32 gateB = *p->mField4->vf30();
+                if (func_80174C98(p, &gateB, 0xb) == 0) {
+                    u32 gate6 = *p->mField4->vf30();
+                    if (func_80174C98(p, &gate6, 6) == 0) {
+                        u32 gate806 = *p->mField4->vf30();
+                        if (func_80174C98(p, &gate806, 0x806) == 0) {
+                            u32 gate14 = *p->mField4->vf30();
+                            if (func_80174C98(p, &gate14, 0x14) == 0) {
+                                u32 gate1F = *p->mField4->vf30();
+                                if (func_80174C98(p, &gate1F, 0x1f) == 0 &&
+                                    p->mField3594 == 0) {
+                                    return;
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        }
+    }
+
+    u8 buf4C[0xE];
+    CtrlActActionEntry entry;
+    u8 buf34[0xE];
+    memset(buf4C, 0, sizeof(buf4C));
+    memset(&entry, 0, sizeof(entry));
+    memset(buf34, 0, sizeof(buf34));
+
+    if (func_8014B8BC(&self->mPlayer->mField3380, &entry) == 0) {
+        // No fresh entry: re-validate the current action state.
+        if (!(entry.mFlags10 & 0x20)) {
+            // L_3460: compare the owner's id probe against the stale entry.
+            CtrlActVoiceOwnerView* vo =
+                (CtrlActVoiceOwnerView*)&self->mPlayer->mSub3E9C;
+            if (vo->vtbl->fn_0x4C(vo) != (int)entry.mField0) {
+                if (entry.mFlags10 & 0x400) {
+                    self->mPlayer->vtbl->fn_0x70(
+                        self->mPlayer->mField3ED4,
+                        (void*)(uintptr_t)entry.mField0);
+                }
+            }
+            return;
+        }
+        u32 st = entry.mState;
+        if ((st - 4 <= 2 || st == 0xa)) {
+            // L_3370: cancel the action.
+            self->mPlayer->mField3E6C &= ~0x20;
+            ((CtrlActEntryObj*)entry.mPtr18)->mField7C = lbl_eu_80666CF8;
+            func_800BE12C(&self->mPlayer->mSub3E9C, 0x31, 0, -1, 1);
+            func_8014B2DC(&self->mPlayer->mField3380);
+        } else if (st == 2) {
+            // L_33B8: restart via command gates 0x806/0x10/0x18.
+            u32 c1 = *self->mPlayer->mField4->vf30();
+            if (func_80174C98(self->mPlayer, &c1, 0x806) == 0 &&
+                func_80148778(&self->mPlayer->mField8, 0x10) == 0) {
+                u32 c2 = *self->mPlayer->mField4->vf30();
+                if (func_80174C98(self->mPlayer, &c2, 0x18) == 0) {
+                    func_800BE12C(&self->mPlayer->mSub3E9C, 0x11, 0, -1, 1);
+                }
+            }
+        }
+        return;
+    }
+
+    if (entry.mFlags10 & 0x20) {
+        if (entry.mState == 2) {
+            return;
+        }
+        // Rebuild the +0x2A4 action-state block from the entry.
+        CtrlActSub2A4* sub = ((CtrlActPlayerReal*)self->mPlayer)->vf167();
+        sub->mField0 = 0;
+        sub->mField4 = 0;
+        sub->mField48 = 0;
+        sub->mField4C = -1;
+        sub->mField50 = 0;
+        sub->mField54 = lbl_eu_80666CF8;
+        sub->mField58 = lbl_eu_80666CF8;
+        sub->mField5C = lbl_eu_80666CF8;
+        sub->mField60 = lbl_eu_80666CF8;
+        sub->mField64 = lbl_eu_80666CF8;
+        sub->mField7C = 0;
+        sub->mField80 = 0;
+        sub->mFieldB8 = 0;
+        sub->mField68 = lbl_eu_80666CF8;
+        sub->mField6C = lbl_eu_80666CF8;
+        sub->mField70 = 0;
+        sub->mField72 = 0;
+        memset((u8*)sub + 8, 0, 0x40);
+        memset(sub->_84, 0, sizeof(sub->_84));
+        sub->mField74 = 0;
+        sub->mField78 = 0;
+        sub->mField4 = entry.mField0;
+        sub->mField50 = (u32)(uintptr_t)entry.mPtr18;
+
+        CtrlActAtkParam* ap = (CtrlActAtkParam*)sub->mField50;
+        if (self->mPlayer->mField3F00 & 2) {
+            if (entry.mKind >= 5 && entry.mKind <= 0xc) {
+                sub->mField48 = ap->mField76 + 7;
+                sub->mField78 |= 0x40000800;
+            } else {
+                sub->mField48 = ap->mField76 + 0x10;
+                if ((self->mPlayer->mField3F00 & 4) && ap->mField42 == 1) {
+                    sub->mField78 |= 0x40000800;
+                } else {
+                    sub->mField78 |= 0x40000400;
+                }
+            }
+        } else {
+            sub->mField48 = ap->mField76 + 0x10;
+            if ((self->mPlayer->mField3F00 & 4) && ap->mField42 == 1) {
+                sub->mField78 |= 0x40000800;
+            } else {
+                sub->mField78 |= 0x40000400;
+            }
+        }
+        if (ap->mField78 & 0x8000) {
+            self->mPlayer->vtbl->fn_0x5C8(self->mPlayer, 1);
+        }
+        u32 g806 = *self->mPlayer->mField4->vf30();
+        if (func_80174C98(self->mPlayer, &g806, 0x806) == 0) {
+            func_800BE12C(&self->mPlayer->mSub3E9C, 0x11, 0, -1, 1);
+            CtrlActEntryObj* eo = (CtrlActEntryObj*)entry.mPtr18;
+            eo->mField7C = eo->mField2C;
+            void* bm = getInstance__Q22cf14CBattleManagerFv();
+            ((CtrlActBm2*)bm)->vtbl->fn2C(bm, self->mPlayer, sub);
+        }
+        return;
+    }
+
+    if (entry.mKind > 0x58) {
+        return;
+    }
+    switch (entry.mKind) {
+    case 0:
+    case 1:
+        ((CtrlActSelfView*)self)
+            ->vtbl->fn_0x78(self, &entry);
+        break;
+    case 2:
+    case 3:
+        ((CtrlActSelfView*)self)
+            ->vtbl->fn_0x7C(self, &entry);
+        break;
+    case 4:
+        func_8016FE34(func_800B708C((int)entry.mField0));
+        func_800BE12C(&self->mPlayer->mSub3E9C, 0x1b, 0, 4, 1);
+        break;
+    case 5: {
+        void* src = func_8016FE34(func_800B708C((int)entry.mField0));
+        func_800BE12C(&self->mPlayer->mSub3E9C, 0x1b, 0, 1, 1);
+        func_802A29A4(self->mPlayer, src);
+        break;
+    }
+    case 6: {
+        void* src = func_8016FE34(func_800B708C((int)entry.mField0));
+        func_800BE12C(&self->mPlayer->mSub3E9C, 0x1b, 0, 0, 1);
+        func_802A2A0C(self->mPlayer, src);
+        break;
+    }
+    case 7: {
+        void* src = func_8016FE34(func_800B708C((int)entry.mField0));
+        func_800BE12C(&self->mPlayer->mSub3E9C, 0x1b, 0, 2, 1);
+        func_802A2ADC(self->mPlayer, src);
+        break;
+    }
+    case 8:
+        func_80174B4C(self->mPlayer, 0x80);
+        func_800D5874(self, 1, 0);
+        break;
+    case 9:
+        func_80174B4C(self->mPlayer, 0xc0);
+        func_800D5874(self, 2, entry.mKind);
+        break;
+    case 10:
+        func_80174B4C(self->mPlayer, 0x100);
+        func_800D5874(self, 3, 0);
+        break;
+    case 11:
+        func_80174B4C(self->mPlayer, 0x140);
+        func_800D5874(self, 3, 5);
+        break;
+    case 12:
+        func_80174B4C(self->mPlayer, 0x180);
+        func_800D5874(self, 3, 0xa);
+        break;
+    case 13:
+        func_80174B4C(self->mPlayer, 0x1c0);
+        if (func_80148778(&self->mPlayer->mField8, 0xb) != 0) {
+            func_800D5874(self, 0xa, 0);
+        } else {
+            func_800D5874(self, 4, 0);
+        }
+        break;
+    case 14:
+        func_80174B4C(self->mPlayer, 0x200);
+        func_800D5874(self, 5, 0);
+        break;
+    case 15:
+        func_80174B4C(self->mPlayer, 0x240);
+        func_800D5874(self, 6, 0);
+        break;
+    case 16:
+        func_80174B4C(self->mPlayer, 0x280);
+        func_800D5874(self, 7, 0);
+        break;
+    case 17:
+        func_80174B4C(self->mPlayer, 0x2c0);
+        func_800D5874(self, 8, 0);
+        break;
+    case 18:
+        func_80174B4C(self->mPlayer, 0x300);
+        func_800D5874(self, 9, 0);
+        break;
+    case 19: {
+        void* t = func_8016FE34(func_800B708C((int)entry.mField0));
+        if (t != NULL) {
+            ((CtrlActSrc*)t)->mField3388 |= 8;
+        }
+        break;
+    }
+    case 20: {
+        CtrlActFxReq req;
+        memset(&req, 0, sizeof(req));
+        req.mField20 = lbl_eu_80666D48;
+        req.mIdC = 0x111;
+        void* bm = getInstance__Q22cf14CBattleManagerFv();
+        func_800EC8FC(bm, self->mPlayer, &req, 0);
+        break;
+    }
+    case 21: {
+        CtrlActFxReq req;
+        memset(&req, 0, sizeof(req));
+        req.mField20 = lbl_eu_80666D48;
+        req.mIdC = 0x112;
+        void* bm = getInstance__Q22cf14CBattleManagerFv();
+        func_800EC8FC(bm, self->mPlayer, &req, 0);
+        break;
+    }
+    case 22: {
+        void* base = self->mPlayer->vtbl->fn_0x27C(self->mPlayer);
+        CtrlActArtsParam* p =
+            (CtrlActArtsParam*)getArtsParamByIdx(base, entry.mArtsIdx);
+        p->mField80 = p->vtbl->fn14(p);
+        break;
+    }
+    case 23: {
+        if ((self->mPlayer->mField3F00 & 4) == 0) {
+            break;
+        }
+        void* arg =
+            (self->mPlayer != NULL) ? (void*)&self->mPlayer->mSub3E9C : NULL;
+        CtrlActChainObj* obj = (CtrlActChainObj*)func_800AD860(arg);
+        void* o2 = func_80193670(obj);
+        if (func_80193AB0(o2, obj->mField45C0) != NULL) {
+            ((CtrlActChainObj*)o2)->mFieldA0 |= 2;
+        }
+        break;
+    }
+    case 24: {
+        if ((self->mPlayer->mField3F00 & 4) == 0) {
+            break;
+        }
+        void* bm = getInstance__Q22cf14CBattleManagerFv();
+        func_8027936C(&((CtrlActBmView*)bm)->mField1A8, (int)self->mPlayer);
+        break;
+    }
+    default:
+        break;
+    }
+}
 
 // Attack-param virtual #4: scale a per-frame effect by the count-scaled
 // rate. Calls the +0x0C virtual on itself (retail r12 ABI dispatch). The
@@ -497,63 +831,88 @@ float cf::CAttackParam::CAttackParam_UnkVirtualFunc4() {
 // Target us-800d3544. Attack-action setup: gate on the player and source
 // state words, then fill the player's +0x2A4 action block from the argument
 // (attack index, actor id, kind flags 0x54/0x55 select the 0x78 flag bits).
+// (gate helper experiments reverted: direct calls reproduce retail's
+// stack-slot order)
 int func_800D2A5C(CtrlActView* self, CtrlActAtkArg* arg) {
-    CtrlActPlayerView* player = self->mPlayer;
-    CtrlActSub2A4* sub = player->vtbl->fn_0x2A4(player);
+    // self->mPlayer is re-read at every use site (no cached local) so the
+    // compiler reloads it per block like the retail code; the casts only
+    // select real virtual dispatch (see CtrlActPlayerReal in CtrlAct.hpp).
+    CtrlActSub2A4* sub = ((CtrlActPlayerReal*)self->mPlayer)->vf167();
     sub->mField4 = arg->mField0;
+    int kind = 0;
+    CtrlActPlayerReal* p;
     u8 b = arg->mFieldD;
     s16 atkIndex = arg->mField12;
-    int kind = 0;
     if (b == 2 || b == 3 || (u8)(b + 0xac) <= 1) {
         kind = b;
     }
-    int r30 = 1;
-    u32 local14 = *player->mField4->vf30();
-    if (func_80174C98(player, &local14, 9) == 0) {
-        u32 local10 = *player->mField4->vf30();
-        if (func_80174C98(player, &local10, 6) == 0) {
-            u32 localC = *player->mField4->vf30();
-            if (func_80174C98(player, &localC, 0x12) == 0) {
-                return 0;
+    int ok = 1;
+    {
+        p = (CtrlActPlayerReal*)self->mPlayer;
+        u32 local14;
+        if (func_80174C98(p,
+                          (u32*)(local14 = *p->mField4->vf30(), &local14),
+                          9)
+            == 0) {
+            p = (CtrlActPlayerReal*)self->mPlayer;
+            u32 local10;
+            if (func_80174C98(p,
+                              (u32*)(local10 = *p->mField4->vf30(),
+                                     &local10),
+                              6)
+                == 0) {
+                p = (CtrlActPlayerReal*)self->mPlayer;
+                u32 localC;
+                if (func_80174C98(p,
+                                  (u32*)(localC = *p->mField4->vf30(),
+                                         &localC),
+                                  0x12)
+                    == 0) {
+                    return 0;
+                }
             }
         }
     }
-    CtrlActSrc* src =
-        (CtrlActSrc*)func_8016FE34(func_800B708C((int)arg->mField0));
-    if (src == 0) {
+    CtrlActSrcReal* src =
+        (CtrlActSrcReal*)func_8016FE34(func_800B708C((int)arg->mField0));
+    if (src == NULL) {
         return 0;
     }
-    if (src->vtbl->fn_0x2BC(src) != 0) {
+    if (src->vf173() != 0) {
         return 0;
     }
     u32 local8 = *src->mField4->vf30();
     if (func_80174C98(src, &local8, 0x100000) == 0) {
         return 0;
     }
-    if (src == (CtrlActSrc*)self->mPlayer) {
-        self->mPlayer->mSub3E9C.v18(0);
+    if (src == (CtrlActSrcReal*)self->mPlayer) {
+        ((CtrlActPlayerReal*)self->mPlayer)->mSub3E9C.v18(0);
         return 0;
     }
     if (atkIndex >= 0) {
         self->mField4 |= 2;
-        void* base = player->vtbl->fn_0x288(player);
-        CtrlActAtkParam* atk = (CtrlActAtkParam*)getAtkParam(base, atkIndex);
-        CtrlActSub2A4* state = player->vtbl->fn_0x2A4(player);
+        void* base = ((CtrlActPlayerReal*)self->mPlayer)->vf160();
+        CtrlActAtkParam* atk =
+            (CtrlActAtkParam*)getAtkParam(base, atkIndex);
+        CtrlActSub2A4* state = ((CtrlActPlayerReal*)self->mPlayer)->vf167();
         state->mField0 = 0;
+        // Local pin: forces the single lbl_eu_80666CF8 load (fused with the
+        // -1 in r0 as the sda21 base) to sit here like retail.
+        f32 fCon = lbl_eu_80666CF8;
         state->mField4 = 0;
         state->mField48 = 0;
         state->mField4C = -1;
         state->mField50 = 0;
-        state->mField54 = lbl_eu_80666CF8;
-        state->mField58 = lbl_eu_80666CF8;
-        state->mField5C = lbl_eu_80666CF8;
-        state->mField60 = lbl_eu_80666CF8;
-        state->mField64 = lbl_eu_80666CF8;
+        state->mField54 = fCon;
+        state->mField58 = fCon;
+        state->mField5C = fCon;
+        state->mField60 = fCon;
+        state->mField64 = fCon;
         state->mField7C = 0;
         state->mField80 = 0;
         state->mFieldB8 = 0;
-        state->mField68 = lbl_eu_80666CF8;
-        state->mField6C = lbl_eu_80666CF8;
+        state->mField68 = fCon;
+        state->mField6C = fCon;
         state->mField70 = 0;
         state->mField72 = 0;
         memset((u8*)state + 8, 0, 0x40);
@@ -565,16 +924,20 @@ int func_800D2A5C(CtrlActView* self, CtrlActAtkArg* arg) {
         int atkCount = atk->mField76 + 1;
         self->mField18 = atkCount;
         state->mField48 = atkCount;
+        // kind selects extra bits in the 0x78 flag word (0x54 -> 0x02000000,
+        // 0x55 -> 0x01000000).
         state->mField78 |= 0x40002000;
-        if (kind == 0x54) {
+        if (kind != 0x54) {
+            if (kind == 0x55) {
+                state->mField78 |= 0x01000000;
+            }
+        } else {
             state->mField78 |= 0x02000000;
-        } else if (kind == 0x55) {
-            state->mField78 |= 0x01000000;
         }
     } else {
-        r30 = 0;
+        ok = 0;
     }
-    return r30 == 1;
+    return ok == 1;
 }
 
 // Target us-800d384c. Attack-action request: gate on the arts-param record,
@@ -586,10 +949,20 @@ int func_800D2A5C(CtrlActView* self, CtrlActAtkArg* arg) {
 extern "C" int func_800D2D64(CtrlActView* self, CtrlActAtkArg* arg) {
     s16 atkIndex = arg->mField12;
     CtrlActSrc* src = (CtrlActSrc*)func_8016FE34(func_800B708C((int)arg->mField0));
-    void* arts = func_80153CAC(self->mPlayer->vtbl->fn_0x27C(self->mPlayer),
-                               atkIndex);
-    CtrlActAtkParam* atk = (CtrlActAtkParam*)getArtsParamByIdx(
-        self->mPlayer->vtbl->fn_0x27C(self->mPlayer), atkIndex);
+    // Each arts-set lookup reloads self->mPlayer fresh (scoped locals):
+    // retail issues two separate lwz 0x5c(r29) + slot-0x27C dispatches here,
+    // so the player load must not be CSE'd across the two statements.
+    void* arts;
+    {
+        CtrlActPlayerView* p = self->mPlayer;
+        arts = func_80153CAC(p->vtbl->fn_0x27C(p), atkIndex);
+    }
+    CtrlActAtkParam* atk;
+    {
+        CtrlActPlayerView* p2 = self->mPlayer;
+        atk = (CtrlActAtkParam*)getArtsParamByIdx(
+            p2->vtbl->fn_0x27C(p2), atkIndex);
+    }
     if (arts == 0 || src == 0) {
         return 0;
     }
@@ -616,20 +989,23 @@ extern "C" int func_800D2D64(CtrlActView* self, CtrlActAtkArg* arg) {
     } else if ((sub->mField78 & 0x10000000) == 0) {
         // fresh state block
         sub->mField0 = 0;
+        // Local pin: forces the single lbl_eu_80666CF8 load (fused with the
+        // -1 in r0 as the sda21 base) to sit here like retail.
+        f32 fCon = lbl_eu_80666CF8;
         sub->mField4 = 0;
         sub->mField48 = 0;
         sub->mField4C = -1;
         sub->mField50 = 0;
-        sub->mField54 = lbl_eu_80666CF8;
-        sub->mField58 = lbl_eu_80666CF8;
-        sub->mField5C = lbl_eu_80666CF8;
-        sub->mField60 = lbl_eu_80666CF8;
-        sub->mField64 = lbl_eu_80666CF8;
+        sub->mField54 = fCon;
+        sub->mField58 = fCon;
+        sub->mField5C = fCon;
+        sub->mField60 = fCon;
+        sub->mField64 = fCon;
         sub->mField7C = 0;
         sub->mField80 = 0;
         sub->mFieldB8 = 0;
-        sub->mField68 = lbl_eu_80666CF8;
-        sub->mField6C = lbl_eu_80666CF8;
+        sub->mField68 = fCon;
+        sub->mField6C = fCon;
         sub->mField70 = 0;
         sub->mField72 = 0;
         memset((u8*)sub + 8, 0, 0x40);
@@ -656,7 +1032,46 @@ extern "C" int func_800D2D64(CtrlActView* self, CtrlActAtkArg* arg) {
         }
     }
     // Snapshot the block while probing the arts container and battle state.
-    CtrlActSub2A4 snapshot = *sub;
+    // Snapshot: written as explicit member-wise assignments (not a whole-
+    // struct assign) because retail lowers the save/restore per member with
+    // natural typed accesses (lha/lhz/lfs), which MWCC's block-move lowering
+    // would never produce.
+    CtrlActSub2A4 snapshot;
+    snapshot.mFieldB8 = sub->mFieldB8;
+    snapshot.mField80 = sub->mField80;
+    snapshot.mField7C = sub->mField7C;
+    snapshot.mField78 = sub->mField78;
+    snapshot.mField74 = sub->mField74;
+    snapshot.mField72 = sub->mField72;
+    snapshot.mField70 = sub->mField70;
+    snapshot.mField6C = sub->mField6C;
+    snapshot.mField68 = sub->mField68;
+    snapshot.mField64 = sub->mField64;
+    snapshot.mField60 = sub->mField60;
+    snapshot.mField5C = sub->mField5C;
+    snapshot.mField58 = sub->mField58;
+    snapshot.mField54 = sub->mField54;
+    snapshot.mField50 = sub->mField50;
+    snapshot.mField4C = sub->mField4C;
+    snapshot.mField48 = sub->mField48;
+    snapshot.mField44 = sub->mField44;
+    snapshot.mField40 = sub->mField40;
+    snapshot.mField3C = sub->mField3C;
+    snapshot.mField38 = sub->mField38;
+    snapshot.mField34 = sub->mField34;
+    snapshot.mField30 = sub->mField30;
+    snapshot.mField2C = sub->mField2C;
+    snapshot.mField28 = sub->mField28;
+    snapshot.mField24 = sub->mField24;
+    snapshot.mField20 = sub->mField20;
+    snapshot.mField1C = sub->mField1C;
+    snapshot.mField18 = sub->mField18;
+    snapshot.mField14 = sub->mField14;
+    snapshot.mField10 = sub->mField10;
+    snapshot.mFieldC = sub->mFieldC;
+    snapshot.mField8 = sub->mField8;
+    snapshot.mField4 = sub->mField4;
+    snapshot.mField0 = sub->mField0;
     if (func_80148778(&self->mPlayer->mField8, 0xeb) != 0) {
         ((CtrlActArtsVtbl*)self->mPlayer->mField8)
             ->fn_0x20(&self->mPlayer->mField8, 0xeb);
@@ -684,7 +1099,42 @@ extern "C" int func_800D2D64(CtrlActView* self, CtrlActAtkArg* arg) {
                 &self->mPlayer->mField8, self->mPlayer->mField1530);
         }
     }
-    *sub = snapshot;
+    // Restore the snapshotted block (member-wise, mirroring the save).
+    sub->mField0 = snapshot.mField0;
+    sub->mField4 = snapshot.mField4;
+    sub->mField8 = snapshot.mField8;
+    sub->mFieldC = snapshot.mFieldC;
+    sub->mField10 = snapshot.mField10;
+    sub->mField14 = snapshot.mField14;
+    sub->mField18 = snapshot.mField18;
+    sub->mField1C = snapshot.mField1C;
+    sub->mField20 = snapshot.mField20;
+    sub->mField24 = snapshot.mField24;
+    sub->mField28 = snapshot.mField28;
+    sub->mField2C = snapshot.mField2C;
+    sub->mField30 = snapshot.mField30;
+    sub->mField34 = snapshot.mField34;
+    sub->mField38 = snapshot.mField38;
+    sub->mField3C = snapshot.mField3C;
+    sub->mField40 = snapshot.mField40;
+    sub->mField44 = snapshot.mField44;
+    sub->mField48 = snapshot.mField48;
+    sub->mField4C = snapshot.mField4C;
+    sub->mField50 = snapshot.mField50;
+    sub->mField54 = snapshot.mField54;
+    sub->mField58 = snapshot.mField58;
+    sub->mField5C = snapshot.mField5C;
+    sub->mField60 = snapshot.mField60;
+    sub->mField64 = snapshot.mField64;
+    sub->mField68 = snapshot.mField68;
+    sub->mField6C = snapshot.mField6C;
+    sub->mField70 = snapshot.mField70;
+    sub->mField72 = snapshot.mField72;
+    sub->mField74 = snapshot.mField74;
+    sub->mField78 = snapshot.mField78;
+    sub->mField7C = snapshot.mField7C;
+    sub->mField80 = snapshot.mField80;
+    sub->mFieldB8 = snapshot.mFieldB8;
     if (self->vf30() == 0) {
         return 0;
     }
@@ -694,31 +1144,36 @@ extern "C" int func_800D2D64(CtrlActView* self, CtrlActAtkArg* arg) {
 }
 
 extern "C" int func_800D34D4(CtrlActView* self) {
-    if (self->mFlags58.mKind == 0) {
-        return 0;
-    }
+    // Positive-condition wrap (MWCC_CASES §798): retail lays the guard as
+    // beq -> shared tail and the body inline; the early-return form inverts
+    // the first branch.
+    if (self->mFlags58.mKind != 0) {
     cf::CfGameManager::getInstance();
-    if (func_8006EF04(0x400) != 0) {
+    // NOTE: retail materializes this mask with lis -> the real value is
+    // 0x04000000, not 0x400.
+    if (func_8006EF04(0x04000000) != 0) {
         self->mField14 = lbl_eu_80666CF8;
         return 1;
     }
-    if (((CtrlActVoiceOwnerView*)&self->mPlayer->mSub3E9C)->vtbl->fn_0x8C(
-            &self->mPlayer->mSub3E9C) == lbl_eu_80666CF8) {
+    if (((CtrlActVoiceHeightIntf*)&self->mPlayer->mSub3E9C)->getHeight()
+        == lbl_eu_80666CF8) {
         self->mField14 = lbl_eu_80666CF8;
         return 1;
     }
     {
-        u32 local = *self->mPlayer->mField4->vf30();
-        if (func_80174C98(self->mPlayer, &local, 0x1000) != 0) {
+        // Retail colors this gate's player cache into r30 (or r3,r30,r30
+        // move before the call).
+        CtrlActPlayerView* player = self->mPlayer;
+        u32 local = *player->mField4->vf30();
+        if (func_80174C98(player, &local, 0x1000) != 0) {
             return 0;
         }
     }
     if (self->mPlayer->mSub3E9C.v01(4) != 0) {
         return 0;
     }
-    u16 v = self->mField74 & 0xEC3F;
-    self->mField74 = v;
-    if (v & 0x2000) {
+    self->mField74 &= 0xEC3F;
+    if (self->mField74 & 0x2000) {
         self->mField14 = lbl_eu_80666CF8;
         memset(&self->mPos30, 0, 0x2c);
         func_80174C24(self->mPlayer, 0x40);
@@ -787,10 +1242,12 @@ extern "C" int func_800D34D4(CtrlActView* self) {
                         (const nw4r::math::VEC3*)pos,
                         (const nw4r::math::VEC3*)&self->mField3C);
     ml::CVec3 d = diff;
-    f32 mag2 = d.x * d.x + d.y * d.y + d.z * d.z;
+    // Multiply order (x, z, y) is what makes MWCC emit retail's
+    // paired-single ps_mul/ps_madd/ps_sum0 magnitude sequence.
+    f32 mag2 = d.x * d.x + d.z * d.z + d.y * d.y;
     f32 f138;
     if (self->mField28 != 0) {
-        f138 = self->mField28->vtbl->fn_0x138(self->mField28)[0];
+        f138 = self->mField28->getFloats()[0];
     } else {
         f138 = lbl_eu_80666CF8;
     }
@@ -834,19 +1291,204 @@ extern "C" int func_800D34D4(CtrlActView* self) {
             self->mField14 = lbl_eu_80666CF8;
         }
     }
-    return 1;
+    }
+    return 0;
 }
 
 
 extern "C" void func_800D3998(CtrlActView* self) {
-    {
-        u32 local = *self->mPlayer->mField4->vf30();
-        if (func_80174C98(self->mPlayer, &local, 0x807) == 0) {
+    // Saved-register coloring (retail): src->r31, s (param copy) ->r30,
+    // gate player cache ->r29. Every access goes through the local copy so
+    // the raw parameter itself is never colored; clear blocks deliberately
+    // re-read s->mPlayer after memset (retail reloads 0x5c(r30) there).
+    CtrlActSrc* src;
+    CtrlActView* s = self;
+    CtrlActPlayerView* player = s->mPlayer;
+    u32 local = *player->mField4->vf30();
+    if (func_80174C98(player, &local, 0x807) == 0) {
+        memset(&s->mPos30, 0, 0x2c);
+        func_80174C24(s->mPlayer, 0x40);
+        return;
+    }
+    void* t = func_8016FE34(
+        func_800B708C((int)(intptr_t)s->mPlayer->mSub3E9C.v17()));
+    if (t != 0) {
+        src = (CtrlActSrc*)t;
+    } else {
+        src = 0;
+    }
+    if (src == 0) {
+        memset(&s->mPos30, 0, 0x2c);
+        func_80174C24(s->mPlayer, 0x40);
+        return;
+    }
+    switch (s->mFlags58.mPhase) {
+    case 0: {
+        // Random-duration action setup: pick the aim/fx state from the
+        // player's 0x3F00 bit 1, roll a timer in [D60/D44, 2*D60/D44) and a
+        // facing magnitude, then snapshot the source position/facing.
+        u32 flags = s->mPlayer->mField3F00;
+        if (((u32)__cntlzw((u32)__cntlzw(flags & 2) >> 5) >> 5) != 0) {
+            s->mField14 = lbl_eu_80666D0C;
+        } else {
+            s->mField14 = lbl_eu_80666CFC;
+        }
+        F64Conv conv;
+        conv.w[1] = ml::math::mtRand(0x65) ^ 0x80000000;
+        conv.w[0] = 0x43300000;
+        f32 t = (f32)(conv.d - lbl_eu_80666D50) / lbl_eu_80666D4C;
+        f32 f30 = lbl_eu_80666D60 * (lbl_eu_80666CFC + t) / lbl_eu_80666D44;
+        F64Conv conv2;
+        conv2.w[1] = ml::math::mtRand(0x65) ^ 0x80000000;
+        conv2.w[0] = 0x43300000;
+        f32 t2 = (f32)(conv2.d - lbl_eu_80666D50);
+        // Retail order: subtract, multiply by D64, divide by D4C, add D64.
+        f32 f31 =
+            (lbl_eu_80666D64 + lbl_eu_80666D64 * t2 / lbl_eu_80666D4C) * lbl_eu_8066A210;
+        CVoicePos* pos = src->mOwner3E9C.getPosition();
+        s->mPos30 = *(ml::CVec3*)pos;
+        s->mField48 = src->vtbl->fn_0x5B4(src);
+        s->mField54 = f30;
+        s->mField50 = f31;
+        CVoicePos* ppos = s->mPlayer->mSub3E9C.getPosition();
+        ml::CVec3 diff;
+        nw4r::math::VEC3Sub((nw4r::math::VEC3*)&diff,
+                            (const nw4r::math::VEC3*)ppos,
+                            (const nw4r::math::VEC3*)&s->mPos30);
+        ml::CVec3 d = diff;
+        f32 ang = nw4r::math::Atan2FIdx(d.x, d.z);
+        s->mField4C = lbl_eu_80666D40 * ang;
+        func_800D5A2C(s);
+        s->mFlags58.mPhase = s->mFlags58.mPhase + 1;
+        break;
+    }
+    case 1: {
+        // Decay the action timer; while live, re-aim at the source and bail
+        // out when the heading delta exceeds the facing magnitude.
+        f32 dt = func_80496288(lbl_eu_80663E14);
+        s->mField54 -= lbl_eu_80666D58 * dt;
+        if (s->mField54 <= lbl_eu_80666CF8) {
+            s->mField14 = lbl_eu_80666CF8;
+            memset(&s->mPos30, 0, 0x2c);
+            func_80174C24(s->mPlayer, 0x40);
+        } else {
+            func_800D5F98(s, src);
+            CVoicePos* ppos = s->mPlayer->mSub3E9C.getPosition();
+            ml::CVec3 diff;
+            nw4r::math::VEC3Sub((nw4r::math::VEC3*)&diff,
+                                (const nw4r::math::VEC3*)ppos,
+                                (const nw4r::math::VEC3*)&s->mPos30);
+            ml::CVec3 d = diff;
+            f32 ang = nw4r::math::Atan2FIdx(d.x, d.z);
+            f32 delta = lbl_eu_80666D40 * ang - s->mField4C;
+            if (delta < lbl_eu_80666CF8) {
+                delta *= lbl_eu_80666D68;
+            }
+            if (delta > s->mField50) {
+                s->mField14 = lbl_eu_80666CF8;
+                memset(&s->mPos30, 0, 0x2c);
+                func_80174C24(s->mPlayer, 0x40);
+            }
+        }
+        break;
+    }
+    default:
+        break;
+    }
+}
+
+// Target us-800d481c. Action-phase update: gate on the player state, resolve
+// the action source, then run the phase: phase 0 positions the action at the
+// source (voice position snapshot, timer from the attack param, aim at the
+// source, angle-state latch + phase+1); phase 1 decays the action timer and
+// refreshes the facing helper. Timer expiry resets the 0x30 state block.
+extern "C" void func_800D3D34(CtrlActView* self) {
+    // Cached player pointer: MWCC keeps it in a saved register across the
+    // state gate.
+    CtrlActPlayerView* player = self->mPlayer;
+    u32 local = *player->mField4->vf30();
+    if (func_80174C98(player, &local, 0x807) == 0) {
+        memset(&self->mPos30, 0, 0x2c);
+        func_80174C24(self->mPlayer, 0x40);
+        return;
+    }
+    CtrlActSrc* src;
+    void* t = func_8016FE34(
+        func_800B708C((int)(intptr_t)self->mPlayer->mSub3E9C.v17()));
+    if (t != 0) {
+        src = (CtrlActSrc*)t;
+    } else {
+        src = 0;
+    }
+    if (src == 0) {
+        memset(&self->mPos30, 0, 0x2c);
+        func_80174C24(self->mPlayer, 0x40);
+        return;
+    }
+    if (self->mFlags58.mPhase == 0) {
+        u32 flags = self->mPlayer->mField3F00;
+        if (((u32)__cntlzw((u32)__cntlzw(flags & 2) >> 5) >> 5) != 0) {
+            self->mField14 = lbl_eu_80666D6C;
+        } else {
+            self->mField14 = lbl_eu_80666D0C;
+        }
+        f32 f138;
+        if (self->mField28 != 0) {
+            f138 = self->mField28->getFloats()[0];
+        } else {
+            f138 = lbl_eu_80666CF8;
+        }
+        f32 denom = lbl_eu_80666D70 * f138 * self->mField14;
+        // Cached zero spans the voice-owner calls (retail keeps it in an
+        // FP reg across them).
+        const f32 zero8 = lbl_eu_80666CF8;
+        F64Conv conv;
+        conv.w[0] = 0x43300000;
+        conv.w[1] = self->mFlags58.mParam;
+        f32 timer = (f32)(conv.d - lbl_eu_80666D78) / denom;
+        CVoicePos* pos = src->mOwner3E9C.getPosition();
+        self->mPos30 = *(ml::CVec3*)pos;
+        self->mField48 = src->vtbl->fn_0x5B4(src);
+        self->mField54 = timer;
+        self->mField50 = zero8;
+        CVoicePos* ppos = self->mPlayer->mSub3E9C.getPosition();
+        ml::CVec3 diff;
+        nw4r::math::VEC3Sub((nw4r::math::VEC3*)&diff,
+                            (const nw4r::math::VEC3*)ppos,
+                            (const nw4r::math::VEC3*)&self->mPos30);
+        ml::CVec3 d = diff;
+        f32 ang = nw4r::math::Atan2FIdx(d.x, d.z);
+        self->mField4C = lbl_eu_80666D40 * ang;
+        self->mFlags58.mAngleState = 3;
+        self->mFlags58.mPhase = self->mFlags58.mPhase + 1;
+    } else if (self->mFlags58.mPhase == 1) {
+        f32 dt = func_80496288(lbl_eu_80663E14);
+        self->mField54 -= lbl_eu_80666D58 * dt;
+        if (self->mField54 <= lbl_eu_80666CF8) {
+            self->mField14 = lbl_eu_80666CF8;
             memset(&self->mPos30, 0, 0x2c);
             func_80174C24(self->mPlayer, 0x40);
-            return;
+        } else {
+            func_800D5F98(self, src);
         }
     }
+}
+
+// Target us-800d4ae4. Charge-action placement update: gate on the player
+// state, resolve the action source, then phase 0 places the action at a spot
+// offset from the source toward the player by the mParam-scaled direction,
+// rotated by a mtRand-driven angle, and latches the timer/facing; phase 1
+// (only when mParam==0) bails out when the source gets too close to either
+// the player or the stored anchor. The common tail walks the action toward
+// the player while the timer is live and re-aims via vf26 + ground probe.
+extern "C" void func_800D3FFC(CtrlActView* self) {
+    u32 local = *self->mPlayer->mField4->vf30();
+    if (func_80174C98(self->mPlayer, &local, 0x807) == 0) {
+        memset(&self->mPos30, 0, 0x2c);
+        func_80174C24(self->mPlayer, 0x40);
+        return;
+    }
+    // Voice/battle-list resolve of this actor's action source.
     void* t = func_8016FE34(
         func_800B708C((int)(intptr_t)self->mPlayer->mSub3E9C.v17()));
     CtrlActSrc* src;
@@ -862,68 +1504,93 @@ extern "C" void func_800D3998(CtrlActView* self) {
     }
     switch (self->mFlags58.mPhase) {
     case 0: {
-        // Random-duration action setup: pick the aim/fx state from the
-        // player's 0x3F00 bit 1, roll a timer in [D60/D44, 2*D60/D44) and a
-        // facing magnitude, then snapshot the source position/facing.
+        // Placement: walk from the source toward the player, scale by the
+        // action parameter, rotate by a random angle and store as mPos30.
+        CVoicePos* sPos = src->mOwner3E9C.getPosition();
+        CVoicePos* pPos = self->mPlayer->mSub3E9C.getPosition();
+        ml::CVec3 diff = *(ml::CVec3*)pPos - *(ml::CVec3*)sPos;
+        ml::CVec3 dir = diff;
+        if (dir.y * dir.y + dir.x * dir.x + dir.z * dir.z ==
+            lbl_eu_80666CF8) {
+            dir = ml::CVec3::zero;
+        } else {
+            PSVECNormalize((Vec*)&dir, (Vec*)&dir);
+        }
+        F64Conv conv;
+        conv.w[0] = 0x43300000;
+        conv.w[1] = self->mFlags58.mParam;
+        dir *= (f32)(conv.d - lbl_eu_80666D78);
+        F64Conv conv2;
+        conv2.w[0] = 0x43300000;
+        conv2.w[1] = ((int)ml::math::mtRand(0xc9) - 0x64) ^ 0x80000000;
+        f32 rnd = (f32)(conv2.d - lbl_eu_80666D50);
+        f32 ang =
+            lbl_eu_80666D3C * rnd / lbl_eu_80666D4C * lbl_eu_8066A210;
+        f32 fs = nw4r::math::SinFIdx(lbl_eu_80666D80 * ang);
+        f32 fc = nw4r::math::CosFIdx(lbl_eu_80666D80 * ang);
+        CtrlActRotFrame frame;
+        frame.mOffset.x = dir.x * fc + dir.z * fs;
+        frame.mOffset.y = dir.y * lbl_eu_80666CFC;
+        frame.mOffset.z = dir.z * fc - dir.x * fs;
+        frame.mAxisX.x = fc;
+        frame.mAxisX.y = lbl_eu_80666CF8;
+        frame.mAxisX.z = -fs;
+        frame.mAxisY.x = lbl_eu_80666CF8;
+        frame.mAxisY.y = lbl_eu_80666CFC;
+        frame.mAxisY.z = lbl_eu_80666CF8;
+        frame.mAxisZ.x = fs;
+        frame.mAxisZ.y = lbl_eu_80666CF8;
+        frame.mAxisZ.z = fc;
+        CVoicePos* sPos2 = src->mOwner3E9C.getPosition();
+        self->mPos30 = *(ml::CVec3*)sPos2 + frame.mOffset;
+        // Timer from the distance to the player and the sub-28 height.
+        CVoicePos* pPos2 = self->mPlayer->mSub3E9C.getPosition();
+        ml::CVec3 dmag = self->mPos30 - *(ml::CVec3*)pPos2;
+        f32 dist = PSVECMag((const Vec*)&dmag);
         u32 flags = self->mPlayer->mField3F00;
         if (((u32)__cntlzw((u32)__cntlzw(flags & 2) >> 5) >> 5) != 0) {
             self->mField14 = lbl_eu_80666D0C;
         } else {
             self->mField14 = lbl_eu_80666CFC;
         }
-        F64Conv conv;
-        conv.w[1] = ml::math::mtRand(0x65);
-        conv.w[0] = 0x43300000;
-        f32 t = (f32)(conv.d - lbl_eu_80666D50) / lbl_eu_80666D4C;
-        f32 f30 = lbl_eu_80666D60 * (lbl_eu_80666CFC + t) / lbl_eu_80666D44;
-        F64Conv conv2;
-        conv2.w[1] = ml::math::mtRand(0x65);
-        conv2.w[0] = 0x43300000;
-        f32 t2 = (f32)(conv2.d - lbl_eu_80666D50) / lbl_eu_80666D4C;
-        f32 f31 = (lbl_eu_80666D64 + lbl_eu_80666D64 * t2) * lbl_eu_8066A210;
-        CVoicePos* pos = src->mOwner3E9C.getPosition();
-        self->mPos30 = *(ml::CVec3*)pos;
-        self->mField48 = src->vtbl->fn_0x5B4(src);
-        self->mField54 = f30;
-        self->mField50 = f31;
-        CVoicePos* ppos = self->mPlayer->mSub3E9C.getPosition();
-        ml::CVec3 diff;
-        nw4r::math::VEC3Sub((nw4r::math::VEC3*)&diff,
-                            (const nw4r::math::VEC3*)ppos,
-                            (const nw4r::math::VEC3*)&self->mPos30);
-        ml::CVec3 d = diff;
-        f32 ang = nw4r::math::Atan2FIdx(d.x, d.z);
-        self->mField4C = lbl_eu_80666D40 * ang;
-        func_800D5A2C(self);
+        f32 h;
+        if (self->mField28 != 0) {
+            h = self->mField28->getFloats()[0];
+        } else {
+            h = lbl_eu_80666CF8;
+        }
+        f32 denom = lbl_eu_80666D70 * h * self->mField14;
+        self->mField54 = dist / denom;
+        f32 v = lbl_eu_80666D40 * nw4r::math::Atan2FIdx(dmag.x, dmag.z);
         self->mFlags58.mPhase = self->mFlags58.mPhase + 1;
+        self->mFieldC = v;
+        self->mField10 = v;
         break;
     }
     case 1: {
-        // Decay the action timer; while live, re-aim at the source and bail
-        // out when the heading delta exceeds the facing magnitude.
-        f32 dt = func_80496288(lbl_eu_80663E14);
-        self->mField54 -= lbl_eu_80666D58 * dt;
-        if (self->mField54 <= lbl_eu_80666CF8) {
-            self->mField14 = lbl_eu_80666CF8;
-            memset(&self->mPos30, 0, 0x2c);
-            func_80174C24(self->mPlayer, 0x40);
-        } else {
-            func_800D5F98(self, src);
-            CVoicePos* ppos = self->mPlayer->mSub3E9C.getPosition();
-            ml::CVec3 diff;
-            nw4r::math::VEC3Sub((nw4r::math::VEC3*)&diff,
-                                (const nw4r::math::VEC3*)ppos,
-                                (const nw4r::math::VEC3*)&self->mPos30);
-            ml::CVec3 d = diff;
-            f32 ang = nw4r::math::Atan2FIdx(d.x, d.z);
-            f32 delta = lbl_eu_80666D40 * ang - self->mField4C;
-            if (delta < lbl_eu_80666CF8) {
-                delta *= lbl_eu_80666D68;
-            }
-            if (delta > self->mField50) {
-                self->mField14 = lbl_eu_80666CF8;
-                memset(&self->mPos30, 0, 0x2c);
-                func_80174C24(self->mPlayer, 0x40);
+        if (self->mFlags58.mParam == 0) {
+            // Proximity abort: once the source closes on the player or the
+            // stored anchor inside the probe radius, end the action.
+            CVoicePos* sp = src->mOwner3E9C.getPosition();
+            CVoicePos* pp = self->mPlayer->mSub3E9C.getPosition();
+            ml::CVec3 d1 = *(ml::CVec3*)sp - *(ml::CVec3*)pp;
+            ml::CVec3 m1 = d1;
+            f32 dPlayer = PSVECMag((const Vec*)&m1);
+            CVoicePos* sp2 = src->mOwner3E9C.getPosition();
+            ml::CVec3 d2 = *(ml::CVec3*)sp2 - *(ml::CVec3*)&self->mField3C;
+            ml::CVec3 m2 = d2;
+            f32 dSelf = PSVECMag((const Vec*)&m2);
+            if (dPlayer < dSelf) {
+                f32 lim =
+                    lbl_eu_80666D14 *
+                    (self->mPlayer->vtbl->fn_0x1C0(self->mPlayer)[0] +
+                     src->mField44D8);
+                if (dPlayer < lim) {
+                    self->mField14 = lbl_eu_80666CF8;
+                    memset(&self->mPos30, 0, 0x2c);
+                    func_80174C24(self->mPlayer, 0x40);
+                    return;
+                }
             }
         }
         break;
@@ -931,90 +1598,52 @@ extern "C" void func_800D3998(CtrlActView* self) {
     default:
         break;
     }
-}
-
-// Target us-800d481c. Action-phase update: gate on the player state, resolve
-// the action source, then run the phase: phase 0 positions the action at the
-// source (voice position snapshot, timer from the attack param, aim at the
-// source, phase+1); phase 1 decays the action timer and refreshes the facing
-// helper. Timer expiry resets the 0x30 state block.
-extern "C" void func_800D3D34(CtrlActView* self) {
-    // Retail caches the player into a saved register at entry and uses it
-    // only until the action source resolves; afterwards every access goes
-    // through self->mPlayer again.
-    CtrlActPlayerView* player = self->mPlayer;
-    {
-        u32 local = *player->mField4->vf30();
-        if (func_80174C98(player, &local, 0x807) == 0) {
-            memset(&self->mPos30, 0, 0x2c);
-            func_80174C24(player, 0x40);
-            return;
-        }
+    // Common tail: decay the timer; while live steer toward the player via
+    // vf26 and the ground probe, otherwise reset the state block.
+    CVoicePos* pp3 = self->mPlayer->mSub3E9C.getPosition();
+    ml::CVec3 diff3 = self->mPos30 - *(ml::CVec3*)pp3;
+    ml::CVec3 dir3 = diff3;
+    if (dir3.y * dir3.y + dir3.x * dir3.x + dir3.z * dir3.z ==
+        lbl_eu_80666CF8) {
+        dir3 = ml::CVec3::zero;
+    } else {
+        PSVECNormalize((Vec*)&dir3, (Vec*)&dir3);
     }
-    CtrlActSrc* src = (CtrlActSrc*)func_8016FE34(
-        func_800B708C((int)(intptr_t)player->mSub3E9C.v17()));
-    if (src == 0) {
+    f32 dt = func_80496288(lbl_eu_80663E14);
+    self->mField54 -= lbl_eu_80666D58 * dt;
+    if (self->mField54 <= lbl_eu_80666CF8) {
+        self->mField14 = lbl_eu_80666CF8;
         memset(&self->mPos30, 0, 0x2c);
-        func_80174C24(player, 0x40);
+        func_80174C24(self->mPlayer, 0x40);
         return;
     }
-    switch (self->mFlags58.mPhase) {
-    case 0: {
-        u32 flags = self->mPlayer->mField3F00;
-        if (((u32)__cntlzw((u32)__cntlzw(flags & 2) >> 5) >> 5) != 0) {
-            self->mField14 = lbl_eu_80666D6C;
-        } else {
-            self->mField14 = lbl_eu_80666D0C;
+    ml::CVec3 scopy = dir3 * lbl_eu_80666CFC;
+    CVoicePos* pp4 = self->mPlayer->mSub3E9C.getPosition();
+    ml::CVec3 target = *(ml::CVec3*)pp4 + scopy;
+    bool doReset = true;
+    if (self->vf26(&target, 1) == 0) {
+        ml::CVec3 off(lbl_eu_80666CF8, lbl_eu_80666CFC, lbl_eu_80666CF8);
+        ml::CVec3 probePos = target + off;
+        ml::CVec3 probeArg = probePos;
+        if (func_804BE398(&probeArg, 0x4a05, 0, 0, lbl_eu_80666D84,
+                          lbl_eu_80666CF8) != 0) {
+            if (((ml::CVec3*)func_804BE520(0))->y > lbl_eu_80666CF8) {
+                doReset = false;
+            }
         }
-        f32 f138;
-        if (self->mField28 != 0) {
-            f138 = self->mField28->vtbl->fn_0x138(self->mField28)[0];
-        } else {
-            f138 = lbl_eu_80666CF8;
-        }
-        f32 denom = lbl_eu_80666D70 * f138 * self->mField14;
-        F64Conv conv;
-        conv.w[0] = 0x43300000;
-        conv.w[1] = self->mFlags58.mParam;
-        f32 t = (f32)(conv.d - lbl_eu_80666D78) / denom;
-        // Cached zero spans the voice-owner calls (retail keeps it in an
-        // FP reg across them).
-        const f32 cf8 = lbl_eu_80666CF8;
-        CVoicePos* pos = src->mOwner3E9C.getPosition();
-        self->mPos30 = *(ml::CVec3*)pos;
-        self->mField48 = src->vtbl->fn_0x5B4(src);
-        self->mField54 = t;
-        self->mField50 = cf8;
-        CVoicePos* ppos = self->mPlayer->mSub3E9C.getPosition();
-        ml::CVec3 diff;
-        nw4r::math::VEC3Sub((nw4r::math::VEC3*)&diff,
-                            (const nw4r::math::VEC3*)ppos,
-                            (const nw4r::math::VEC3*)&self->mPos30);
-        ml::CVec3 d = diff;
-        f32 ang = nw4r::math::Atan2FIdx(d.x, d.z);
-        self->mField4C = lbl_eu_80666D40 * ang;
-        self->mFlags58.mAngleState = 3;
-        self->mFlags58.mPhase = self->mFlags58.mPhase + 1;
-        break;
+    } else {
+        doReset = false;
     }
-    case 1: {
-        f32 dt = func_80496288(lbl_eu_80663E14);
-        self->mField54 -= lbl_eu_80666D58 * dt;
-        if (self->mField54 <= lbl_eu_80666CF8) {
-            self->mField14 = lbl_eu_80666CF8;
-            memset(&self->mPos30, 0, 0x2c);
-            func_80174C24(self->mPlayer, 0x40);
-        } else {
-            func_800D5F98(self, src);
-        }
-        break;
+    if (doReset) {
+        self->mField14 = lbl_eu_80666CF8;
+        memset(&self->mPos30, 0, 0x2c);
+        func_80174C24(self->mPlayer, 0x40);
+        return;
     }
-    default:
-        break;
-    }
+    f32 v2 = lbl_eu_80666D40 * nw4r::math::Atan2FIdx(dir3.x, dir3.z);
+    self->mFieldC = v2;
+    self->mField10 = v2;
 }
-
-extern "C" void func_800D3FFC(CtrlActView* self) {}
 
 // Target us-800d531c. Battle-facing action update: when the 0x807 control
 // gate passes and a voice source resolves, decay the action timer and, while
@@ -1081,11 +1710,8 @@ int func_800D49EC(void* self) { return 0; }
 // wobble bands (D88 then D8C) - being inside either band ends the action,
 // otherwise the shared facing helper re-aims.
 extern "C" void func_800D49F4(CtrlActView* self) {
-    // Retail colors self->r30 and the cached player->r31; declaring the
-    // player cache at function scope (not inside the gate block) keeps that
-    // allocation.
-    CtrlActPlayerView* player = self->mPlayer;
     {
+        CtrlActPlayerView* player = self->mPlayer;
         u32 local = *player->mField4->vf30();
         if (func_80174C98(player, &local, 0x807) == 0) {
             memset(&self->mPos30, 0, 0x2c);
@@ -1325,11 +1951,14 @@ extern "C" void func_800D4F30(CtrlActView* self) {
     }
 }
 
-extern "C" void func_800D5308(CtrlActView* self) {
+void func_800D5308(CtrlActView* self) {
+    // Declared first so MWCC's saved-register coloring matches retail
+    // (same idiom as func_800D3998/func_800D11B0).
+    CtrlActSrc* src;
+    int blocked;
     {
-        CtrlActPlayerView* player = self->mPlayer;
-        u32 local = *player->mField4->vf30();
-        if (func_80174C98(player, &local, 0x807) == 0) {
+        u32 local = *self->mPlayer->mField4->vf30();
+        if (func_80174C98(self->mPlayer, &local, 0x807) == 0) {
             memset(&self->mPos30, 0, 0x2c);
             func_80174C24(self->mPlayer, 0x40);
             return;
@@ -1337,7 +1966,6 @@ extern "C" void func_800D5308(CtrlActView* self) {
     }
     void* t = func_8016FE34(
         func_800B708C((int)(intptr_t)self->mPlayer->mSub3E9C.v17()));
-    CtrlActSrc* src;
     if (t != 0) {
         src = (CtrlActSrc*)t;
     } else {
@@ -1348,58 +1976,49 @@ extern "C" void func_800D5308(CtrlActView* self) {
         func_80174C24(self->mPlayer, 0x40);
         return;
     }
-    // Rotate the probe offset (0,0,D68) by the source facing into a Y-axis
-    // rotation matrix, then ask the player for the height at that offset and
-    // scale the offset so the probe point tracks the terrain.
-    f32 f31 = src->vtbl->fn_0x5B4(src);
-    f32 sin = nw4r::math::SinFIdx(lbl_eu_80666D80 * f31);
-    f32 cos = nw4r::math::CosFIdx(lbl_eu_80666D80 * f31);
-    ml::CMat34 mat;
-    mat.m[0][0] = cos;
-    mat.m[0][1] = lbl_eu_80666CF8;
-    mat.m[0][2] = sin;
-    mat.m[0][3] = lbl_eu_80666CF8;
-    mat.m[1][0] = lbl_eu_80666CF8;
-    mat.m[1][1] = lbl_eu_80666CFC;
-    mat.m[1][2] = lbl_eu_80666CF8;
-    mat.m[1][3] = lbl_eu_80666CF8;
-    mat.m[2][0] = -sin;
-    mat.m[2][1] = lbl_eu_80666CF8;
-    mat.m[2][2] = cos;
-    mat.m[2][3] = lbl_eu_80666CF8;
+    // Facing angle (retail f31) and sine (retail f30) stay live across every
+    // probe below. The probe offset (0,0,D68) is materialized before the trig
+    // calls, then rotated around Y by the facing and scaled so the ground
+    // probe point tracks the terrain height at the source.
+    f32 angle = src->vtbl->fn_0x5B4(src);
     ml::CVec3 v;
     v.x = lbl_eu_80666CF8;
     v.y = lbl_eu_80666CF8;
     v.z = lbl_eu_80666D68;
-    ml::CVec3 out;
-    out.z = mat.m[2][0] * v.x + mat.m[2][1] * v.y + mat.m[2][2] * v.z;
-    out.y = mat.m[1][0] * v.x + mat.m[1][1] * v.y + mat.m[1][2] * v.z;
-    out.x = mat.m[0][0] * v.x + mat.m[0][1] * v.y + mat.m[0][2] * v.z;
+    f32 sin = nw4r::math::SinFIdx(lbl_eu_80666D80 * angle);
+    f32 cos = nw4r::math::CosFIdx(lbl_eu_80666D80 * angle);
+    // In-place Y-rotation of v: x' = -sin*x + cos*z, z' = cos*x + sin*z.
+    f32 vx = v.x;
+    f32 vz = v.z;
+    v.x = -sin * vx + lbl_eu_80666CF8 * v.y + cos * vz;
+    v.y = lbl_eu_80666CF8 * vx + lbl_eu_80666CFC * v.y + lbl_eu_80666CF8 * vz;
+    v.z = cos * vx + lbl_eu_80666CF8 * v.y + sin * vz;
     float* h = self->mPlayer->vtbl->fn_0x1C0(self->mPlayer);
     f32 scale = lbl_eu_80666D14 * (h[0] + src->mField44D8);
-    v.x = out.x * scale;
-    v.y = out.y * scale;
-    v.z = out.z * scale;
+    v.x = v.x * scale;
+    v.y = v.y * scale;
+    v.z = v.z * scale;
     CVoicePos* pos = src->mOwner3E9C.getPosition();
-    ml::CVec3 sum = *(ml::CVec3*)pos + v;
-    ml::CVec3 sum2 = sum;
+    ml::CVec3 sumA = *(ml::CVec3*)pos + v;
+    ml::CVec3 point = sumA;
     int r0;
-    if (self->vf27(&sum) != 0) {
-        int r29 = 1;
-        ml::CVec3 local2;
-        local2.x = lbl_eu_80666CF8;
-        local2.y = lbl_eu_80666CFC;
-        local2.z = lbl_eu_80666CF8;
-        ml::CVec3 probe = sum2 + local2;
-        if (func_804BE398(&probe, 0x4a05, 0, 0, lbl_eu_80666D84,
+    if (self->vf27(&sumA) != 0) {
+        blocked = 1;
+        ml::CVec3 up;
+        up.x = lbl_eu_80666CF8;
+        up.y = lbl_eu_80666CFC;
+        up.z = lbl_eu_80666CF8;
+        ml::CVec3 probe = point + up;
+        ml::CVec3 probeCopy = probe;
+        if (func_804BE398(&probeCopy, 0x40004a05, 0, 0, lbl_eu_80666D84,
                           lbl_eu_8066AF20) != 0) {
             if (((ml::CVec3*)func_804BE520(0))->y > lbl_eu_80666CF8) {
-                r29 = 0;
+                blocked = 0;
             }
         }
-        if (r29 != 0) {
+        if (blocked != 0) {
             r0 = 1;
-        } else if (self->vf26(&sum2, 1) != 0) {
+        } else if (self->vf26(&point, 1) != 0) {
             r0 = 0;
         } else {
             r0 = 1;
@@ -1413,8 +2032,8 @@ extern "C" void func_800D5308(CtrlActView* self) {
     } else {
         CtrlActVoiceOwnerView* vo =
             (CtrlActVoiceOwnerView*)&self->mPlayer->mSub3E9C;
-        vo->vtbl->fn_0x9C(&self->mPlayer->mSub3E9C, &sum2);
-        vo->vtbl->fn_0xC8(&self->mPlayer->mSub3E9C, f31);
+        vo->vtbl->fn_0x9C(&self->mPlayer->mSub3E9C, &point);
+        vo->vtbl->fn_0xC8(&self->mPlayer->mSub3E9C, angle);
         memset(&self->mPos30, 0, 0x2c);
         func_80174C24(self->mPlayer, 0x40);
     }
@@ -1612,7 +2231,7 @@ extern "C" void func_800D5A2C(CtrlActView* self) {
 // player position vs the 0x30 position block, then pick the facing-state
 // table (kind 6/5) for the 0x48 base angle, wrap both deltas into (-pi, pi]
 // and latch the chosen delta's sign into the 0x58 angle-state bits.
-extern "C" void func_800D5D68(CtrlActView* self) {
+void func_800D5D68(CtrlActView* self) {
     CVoicePos* pos = self->mPlayer->mSub3E9C.getPosition();
     ml::CVec3 diff;
     nw4r::math::VEC3Sub((nw4r::math::VEC3*)&diff,
@@ -1621,7 +2240,7 @@ extern "C" void func_800D5D68(CtrlActView* self) {
     ml::CVec3 d = diff;
     f32 ang = nw4r::math::Atan2FIdx(d.x, d.z);
     u32 kind = self->mFlags58.mKind;
-    f32 f3 = ang * lbl_eu_80666D40;
+    f32 f3 = lbl_eu_80666D40 * ang;
     f32 f4, f2;
     if (kind == 6) {
         f4 = self->mField48 + lbl_eu_80663EF8[0];
@@ -1630,15 +2249,15 @@ extern "C" void func_800D5D68(CtrlActView* self) {
         f4 = self->mField48 + lbl_eu_80573A20[0];
         f2 = self->mField48 + lbl_eu_80573A20[1];
     }
-    while (f4 >= lbl_eu_8066A1F8) f4 -= lbl_eu_8066A1FC;
+    while (lbl_eu_8066A1F8 <= f4) f4 -= lbl_eu_8066A1FC;
     while (f4 < -lbl_eu_8066A1F8) f4 += lbl_eu_8066A1FC;
-    while (f2 >= lbl_eu_8066A1F8) f2 -= lbl_eu_8066A1FC;
+    while (lbl_eu_8066A1F8 <= f2) f2 -= lbl_eu_8066A1FC;
     while (f2 < -lbl_eu_8066A1F8) f2 += lbl_eu_8066A1FC;
     f4 = f3 - f4;
     f2 = f3 - f2;
-    while (f4 >= lbl_eu_8066A1F8) f4 -= lbl_eu_8066A1FC;
+    while (lbl_eu_8066A1F8 <= f4) f4 -= lbl_eu_8066A1FC;
     while (f4 < -lbl_eu_8066A1F8) f4 += lbl_eu_8066A1FC;
-    while (f2 >= lbl_eu_8066A1F8) f2 -= lbl_eu_8066A1FC;
+    while (lbl_eu_8066A1F8 <= f2) f2 -= lbl_eu_8066A1FC;
     while (f2 < -lbl_eu_8066A1F8) f2 += lbl_eu_8066A1FC;
     f32 s1 = f4;
     if (f4 < lbl_eu_80666CF8) {
@@ -1648,13 +2267,14 @@ extern "C" void func_800D5D68(CtrlActView* self) {
     if (f2 < lbl_eu_80666CF8) {
         s2 = f2 * lbl_eu_80666D68;
     }
+    // Pick the delta with the larger wrapped magnitude.
     if (s1 >= s2) {
         f4 = f2;
     }
     if (f4 >= lbl_eu_80666CF8) {
-        self->mFlags58.mAngleState = 0;
-    } else {
         self->mFlags58.mAngleState = 1;
+    } else {
+        self->mFlags58.mAngleState = 0;
     }
 }
 
@@ -1664,19 +2284,21 @@ extern "C" int func_800D5F98(CtrlActView* self, CtrlActSrc* src) {
     // heading-band flags into the 0x04 word, then projects a unit circle
     // along the facing and probes the collision height before deciding
     // whether the action state must be cleared (return 0) or kept (1).
-    f32 f31 = lbl_eu_80573A20[self->mFlags58.mAngleState];
+    // Retail indexes the facing table with flag-word bits 18-19
+    // (rlwinm rX, rX, 10, 28, 29) - the upper half of mParam.
+    f32 f31 = lbl_eu_80573A20[(self->mFlags58.mParam >> 4) & 3];
     CVoicePos* ppos = self->mPlayer->mSub3E9C.getPosition();
     CVoicePos* spos = src->mOwner3E9C.getPosition();
     // Retail spills each difference twice (paired store + component
     // copies), reproduced here with an explicit intermediate.
     ml::CVec3 diff1 = *(ml::CVec3*)spos - *(ml::CVec3*)ppos;
     ml::CVec3 d1 = diff1;
-    f32 ang = nw4r::math::Atan2FIdx(d1.x, d1.z);
+    f32 ang = nw4r::math::Atan2FIdx(diff1.x, diff1.z);
     self->mField10 = lbl_eu_80666D40 * ang;
     CVoicePos* ppos2 = self->mPlayer->mSub3E9C.getPosition();
-    ml::CVec3 diff2 = *(ml::CVec3*)&self->mPos30 - *(ml::CVec3*)ppos2;
+    ml::CVec3 diff2 = self->mPos30 - *(ml::CVec3*)ppos2;
     ml::CVec3 d2 = diff2;
-    f32 ang2 = nw4r::math::Atan2FIdx(d2.x, d2.z);
+    f32 ang2 = nw4r::math::Atan2FIdx(diff2.x, diff2.z);
     f32 f1 = lbl_eu_80666D40 * ang2;
     f32 f3 = f1 + f31;
     while (lbl_eu_8066A1F8 <= f3) f3 -= lbl_eu_8066A1FC;
@@ -1689,8 +2311,8 @@ extern "C" int func_800D5F98(CtrlActView* self, CtrlActSrc* src) {
     self->mFieldC = f3;
     if (f1b > lbl_eu_80666D94 && f1b < lbl_eu_80666D98) r6 = 1;
     if (f1b < lbl_eu_80666D9C && f1b > lbl_eu_80666DA0) r5 = 1;
-    if (f1b >= lbl_eu_80666D9C && f1b <= lbl_eu_80666D94) r4 = 1;
-    if (f1b >= lbl_eu_80666D98 || f1b <= lbl_eu_80666DA0) r3 = 1;
+    if (f1b < lbl_eu_80666D9C && f1b >= lbl_eu_80666D94) r4 = 1;
+    if (f1b < lbl_eu_80666D98 || f1b > lbl_eu_80666DA0) r3 = 1;
     if (r6) {
         self->mField4 |= 0x800;
     } else {
@@ -1725,21 +2347,12 @@ extern "C" int func_800D5F98(CtrlActView* self, CtrlActSrc* src) {
     ml::CVec3 v(lbl_eu_80666CF8, lbl_eu_80666CF8, lbl_eu_80666CFC);
     f32 sin = nw4r::math::SinFIdx(f1c);
     f32 cos = nw4r::math::CosFIdx(lbl_eu_80666D80 * f30);
-    ml::CMat33 mat;
-    mat.m[0][0] = cos;
-    mat.m[0][1] = lbl_eu_80666CF8;
-    mat.m[0][2] = sin;
-    mat.m[1][0] = lbl_eu_80666CF8;
-    mat.m[1][1] = lbl_eu_80666CFC;
-    mat.m[1][2] = lbl_eu_80666CF8;
-    mat.m[2][0] = -sin;
-    mat.m[2][1] = lbl_eu_80666CF8;
-    mat.m[2][2] = cos;
-    ml::CVec3 out;
-    out.x = mat.m[0][0] * v.x + mat.m[0][1] * v.y + mat.m[0][2] * v.z;
-    out.y = mat.m[1][0] * v.x + mat.m[1][1] * v.y + mat.m[1][2] * v.z;
-    out.z = mat.m[2][0] * v.x + mat.m[2][1] * v.y + mat.m[2][2] * v.z;
-    v = out;
+    ml::CMat33 mat(cos, lbl_eu_80666CF8, sin,
+                   lbl_eu_80666CF8, lbl_eu_80666CFC, lbl_eu_80666CF8,
+                   -sin, lbl_eu_80666CF8, cos);
+    v = ml::CVec3(mat.m[0][0] * v.x + mat.m[0][2] * v.z,
+                  mat.m[1][1] * v.y,
+                  mat.m[2][0] * v.x + mat.m[2][2] * v.z);
     ml::CVec3 scaled = v * lbl_eu_80666CFC;
     CVoicePos* ppos3 = self->mPlayer->mSub3E9C.getPosition();
     ml::CVec3 sum = *(ml::CVec3*)ppos3 + scaled;
@@ -1825,61 +2438,59 @@ extern "C" int func_800D64E8(CtrlActView* self) {
 extern "C" int func_800D6720(CtrlActView* self, int flag) {
     self->mField74 &= 0xfff1;
     CtrlActTargetView* target = self->mPlayer->mField3F60;
-    if (target == 0) {
-        return 0;
-    }
-    f32 angle = lbl_eu_80666D80 * self->mFieldC;
-    f32 cos = nw4r::math::CosFIdx(angle);
-    CVoicePos* ppos = self->mPlayer->mSub3E9C.getPosition();
-    f32 z = lbl_eu_80666DAC * cos + ppos->f[2];
-    CVoicePos* opos = self->mPlayer->mSub3E9C.getPosition();
-    f32 y = lbl_eu_80666D04 + opos->f[1];
-    f32 sin = nw4r::math::SinFIdx(angle);
-    CVoicePos* ppos2 = self->mPlayer->mSub3E9C.getPosition();
+    if (target != 0) {
+    f32 cos = nw4r::math::CosFIdx(self->mFieldC * lbl_eu_80666D80);
+    f32 z = self->mPlayer->mSub3E9C.getPosition()->f[2]
+            + lbl_eu_80666DAC * cos;
+    f32 y = self->mPlayer->mSub3E9C.getPosition()->f[1] + lbl_eu_80666D04;
+    f32 sin = nw4r::math::SinFIdx(self->mFieldC * lbl_eu_80666D80);
     ml::CVec3 local;
-    local.x = lbl_eu_80666DAC * sin + ppos2->f[0];
+    local.x = self->mPlayer->mSub3E9C.getPosition()->f[0]
+              + lbl_eu_80666DAC * sin;
     local.y = y;
     local.z = z;
     if (func_804BE398(&local, 0x4a05, 0, 1, lbl_eu_80666DB0,
-                      lbl_eu_8066AF20) == 0) {
-        return 1;
-    }
-    int best = -1;
-    f32 bestY = lbl_eu_80666DA8;
-    // Retail scans with an unsigned counter here.
-    for (u32 i = 0; i < (u32)func_804BE4AC(); i++) {
-        if (bestY < ((ml::CVec3*)func_804BE50C(i))->y) {
-            bestY = ((ml::CVec3*)func_804BE50C(i))->y;
-            best = i;
-        }
-    }
-    if (best >= 0) {
-        if (((ml::CVec3*)func_804BE520(best))->y < lbl_eu_80666CF8) {
-            f32 py = self->mPlayer->mSub3E9C.getPosition()->f[1];
-            if (bestY <= py) {
-                return 1;
+                      lbl_eu_8066AF20) != 0) {
+        f32 bestY = lbl_eu_80666DA8;
+        int best = -1;
+        // Retail scans with an unsigned counter here.
+        for (u32 i = 0; i < (u32)func_804BE4AC(); i++) {
+            if (bestY < ((ml::CVec3*)func_804BE50C(i))->y) {
+                bestY = ((ml::CVec3*)func_804BE50C(i))->y;
+                best = i;
             }
         }
-        self->mField74 |= 2;
-        if (func_804BE5A4(0x40000, best) != 0) {
-            f32 low = bestY - lbl_eu_80666D4C;
-            for (int i = 0; i < func_804BE4AC(); i++) {
-                if (best != i && bestY > ((ml::CVec3*)func_804BE50C(i))->y
-                    && low < ((ml::CVec3*)func_804BE50C(i))->y) {
-                    low = ((ml::CVec3*)func_804BE50C(i))->y;
+        if (best >= 0) {
+            if (((ml::CVec3*)func_804BE520(best))->y < lbl_eu_80666CF8) {
+                f32 py = self->mPlayer->mSub3E9C.getPosition()->f[1];
+                if (bestY <= py) {
+                    return 1;
                 }
             }
-            if (bestY - low > target->mField508) {
-                self->mField74 |= 8;
+            self->mField74 |= 2;
+            if (func_804BE5A4(0x40000, best) != 0) {
+                f32 low = bestY - lbl_eu_80666D4C;
+                for (int i = 0; i < func_804BE4AC(); i++) {
+                    if (best != i && bestY > ((ml::CVec3*)func_804BE50C(i))->y
+                        && low < ((ml::CVec3*)func_804BE50C(i))->y) {
+                        low = ((ml::CVec3*)func_804BE50C(i))->y;
+                    }
+                }
+                if (bestY - low > target->mField508) {
+                    self->mField74 |= 8;
+                    return 1;
+                }
+            }
+        }
+        if (func_804BE5A4(0x20000, best) != 0) {
+            if ((target->mField4EC & 0x100) == 0) {
+                self->mField74 |= 4;
                 return 1;
             }
         }
+    } else {
+        return 1;
     }
-    if (func_804BE5A4(0x20000, best) != 0) {
-        if ((target->mField4EC & 0x100) == 0) {
-            self->mField74 |= 4;
-            return 1;
-        }
     }
     return 0;
 }
@@ -1911,8 +2522,10 @@ extern "C" void func_800D69D8(CtrlActView* self, ml::CVec3* pos,
                     self->mPos60 +
                     ml::CVec3(lbl_eu_80666CF8, lbl_eu_80666D0C,
                               lbl_eu_80666CF8);
-                if (func_804B54D4(lbl_eu_80665958,
-                                  (u8*)self->mPlayer + 0x44A8, &sum, 0,
+                // Pre-compute the range object so the world-pointer load
+                // lands last (right before the call) like retail.
+                u8* rangeObj = (u8*)self->mPlayer + 0x44A8;
+                if (func_804B54D4(lbl_eu_80665958, rangeObj, &sum, 0,
                                   0) != 0) {
                     self->mField7B = 0x78;
                 }
@@ -1967,8 +2580,8 @@ extern "C" void func_800D69D8(CtrlActView* self, ml::CVec3* pos,
                 ml::CVec3 scaled = dirVec * f28;
                 ml::CVec3 sum = pos2 + scaled;
                 ml::CVec3 probe = sum;
-                if (func_804B526C(lbl_eu_80665958,
-                                  (u8*)self->mPlayer + 0x44A8, &pos2,
+                u8* rangeObj = (u8*)self->mPlayer + 0x44A8;
+                if (func_804B526C(lbl_eu_80665958, rangeObj, &pos2,
                                   &probe, 0, 0, 0) == 0) {
                     if (self->vf26(&probe, 1) != 0) {
                         self->mField7B = 0;
@@ -2012,7 +2625,8 @@ extern "C" void func_800D69D8(CtrlActView* self, ml::CVec3* pos,
         ml::CVec3 sum = pos2 + scaled;
         ml::CVec3 probe = sum;
         int hit = 0;
-        if (func_804B526C(lbl_eu_80665958, (u8*)self->mPlayer + 0x44A8,
+        u8* rangeObj = (u8*)self->mPlayer + 0x44A8;
+        if (func_804B526C(lbl_eu_80665958, rangeObj,
                           &pos2, &probe, 0, 0, 0) == 0) {
             f32 scale =
                 (self->mField74 & 0x400) ? lbl_eu_80666DBC
@@ -2021,8 +2635,8 @@ extern "C" void func_800D69D8(CtrlActView* self, ml::CVec3* pos,
             pos2.y = pos2.y + lbl_eu_80666D0C;
             ml::CVec3 sum2 = pos2 + scaled2;
             ml::CVec3 probe2 = sum2;
-            if (func_804B4E10(lbl_eu_80665958,
-                              (u8*)self->mPlayer + 0x44A8, &probe2, 0, 0,
+            u8* rangeObj2 = (u8*)self->mPlayer + 0x44A8;
+            if (func_804B4E10(lbl_eu_80665958, rangeObj2, &probe2, 0, 0,
                               0) != 0) {
                 hit = 1;
             } else {
@@ -2245,17 +2859,14 @@ finish:
 // Static init: fill the facing tables with scaled defaults -
 // lbl_eu_80573A20[0..3] (index 2 untouched) and lbl_eu_80663EF8[0..1].
 void sinit_800D79B4() {
-    f32 a = lbl_eu_80666D88;
-    f32* t = lbl_eu_80573A20;
-    f32 s = lbl_eu_8066A210;
-    f32 b = lbl_eu_80666D8C;
-    f32* u = lbl_eu_80663EF8;
-    f32 c = lbl_eu_80666D90;
-    f32 d = lbl_eu_80666DC8;
-    f32 e = lbl_eu_80666DCC;
-    t[0] = a * s;
-    lbl_eu_80573A20[1] = b * s;
-    t[3] = c * s;
-    u[0] = d * s;
-    lbl_eu_80663EF8[1] = e * s;
+    f32 a = lbl_eu_80666D88 * lbl_eu_8066A210;
+    f32 b = lbl_eu_80666D8C * lbl_eu_8066A210;
+    f32 c = lbl_eu_80666D90 * lbl_eu_8066A210;
+    f32 d = lbl_eu_80666DC8 * lbl_eu_8066A210;
+    f32 e = lbl_eu_80666DCC * lbl_eu_8066A210;
+    lbl_eu_80573A20[0] = a;
+    lbl_eu_80573A20[1] = b;
+    lbl_eu_80573A20[3] = c;
+    lbl_eu_80663EF8[0] = d;
+    lbl_eu_80663EF8[1] = e;
 }

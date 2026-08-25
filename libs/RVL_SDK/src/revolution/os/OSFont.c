@@ -279,7 +279,8 @@ static void Decode(u8* src, u8* dst) {
         // Linked chunk
         else {
             // Read offset from link table
-            linkOfs = src[linkTblOfs] << 8 | src[linkTblOfs + 1];
+            const u8* linkP = src + linkTblOfs;
+            linkOfs = linkP[0] << 8 | linkP[1];
             linkTblOfs += sizeof(u16);
 
             // Apply offset

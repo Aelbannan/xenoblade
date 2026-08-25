@@ -62,7 +62,9 @@ struct MCAggPair {
 };
 
 // Two-halfword pair copy used by the aggregation helpers (this TU).
-void func_80219D10(CMCCrystalBoxParam* dst, const CMCCrystalBoxParam* src);
+// Retail relocs reference the unmangled C name, so the declaration and the
+// definition use C linkage.
+extern "C" void func_80219D10(CMCCrystalBoxParam* dst, const CMCCrystalBoxParam* src);
 
 // Mirror of the CScrollBar layout (0x40 bytes) for the copy-init in
 // func_80213FE4 (func_8011C998); the real CScrollBar.hpp cannot be included
@@ -200,14 +202,15 @@ struct VtblSlot { void* vtbl; };
 // helper views it as a bare box head (8 zeroed words at +0x00, count byte
 // at +0x20, -1-filled bytes at +0x21..0x28, flag bytes at +0x29/+0x6A).
 // The untouched middle bytes (+0x2A..0x49) are the page-slot copy source.
+// All-byte members keep the struct alignment-1 so the stack slot sits at
+// sp+8 like retail (u32 members get 16-aligned and pad the frame +0x10).
 struct CrystalBoxScratch {
-    u32 zeros[8];            // +0x00 (func_80213E8C 8-word clear)
+    u8  zeros[0x20];         // +0x00 (func_80213E8C 8-word clear)
     u8  count;               // +0x20
     s8  fill[8];             // +0x21..0x28 (-1 filled)
     u8  flag29;              // +0x29
     u8  pageSrc[0x6A - 0x2A];// +0x2A..0x69 (uninitialised copy source)
     u8  flag6A;              // +0x6A
-    u8  tail[0x74 - 0x6B];
 };
 
 // novtable: retail's dtor emits NO class-vtable store (the retail vtable is
@@ -273,7 +276,10 @@ public:
     f32 field_14FC;                     // +0x14FC
     u8 unk1500;                         // +0x1500
     u8 unk1501;                         // +0x1501
-    u8 unk1502;                         // +0x1502
+    union {                             // +0x1502 (signed alias view)
+        u8 unk1502;                     // +0x1502
+        s8 unk1502s;                    // +0x1502 (signed)
+    };
     u8 unk1503;                         // +0x1503
     u16 unk1504;                        // +0x1504
     u8 field_1506;                      // +0x1506
@@ -336,6 +342,29 @@ public:
     virtual void vf_58() = 0; virtual void vf_5C() = 0;
     virtual void vf_60() = 0;                 // 0x60
     virtual u8 GetFlag(void* item, u8 idx) = 0;   // slot 0x64
+};
+
+// Aggregation-loop facade (func_80215B78): retail adds the slot-0x64 getter's
+// result to the running count unmasked (raw 32-bit), while the slot-0x4C
+// result is masked/tested at each use (u16). Never instantiated; pure
+// virtuals keep the vtable unemitted.
+class CItemImplFacadeAgg {
+public:
+    virtual u8 GetCount(void* item) = 0;      // slot 0x08
+    virtual void vf_04() = 0;                 // 0x0C
+    virtual void vf_08(void* item) = 0;       // 0x10
+    virtual void vf_0C() = 0; virtual void vf_10() = 0;
+    virtual void vf_14() = 0; virtual void vf_18() = 0;
+    virtual void vf_1C() = 0; virtual void vf_20() = 0;
+    virtual void vf_24() = 0; virtual void vf_28() = 0;
+    virtual void vf_2C() = 0; virtual void vf_30() = 0;
+    virtual void vf_34() = 0; virtual void vf_38() = 0;
+    virtual void vf_3C() = 0; virtual void vf_40() = 0;
+    virtual u16 GetName(void* item, u8 idx) = 0;  // slot 0x4C
+    virtual void vf_50() = 0; virtual void vf_54() = 0;
+    virtual void vf_58() = 0; virtual void vf_5C() = 0;
+    virtual void vf_60() = 0;                 // 0x60
+    virtual u32 GetFlag(void* item, u8 idx) = 0;  // slot 0x64
 };
 
 // Item-implementation vtable view for the crystal-slot refresh callbacks
@@ -442,7 +471,8 @@ public:
 // Retail symbols with C linkage (unmangled names, per retail relocs).
 // Previously declared inline in each TU as pseudo-imports; kept here as real
 // imports. The names ARE the retail symbol names - keep verbatim.
-extern "C" void code80135FDC_setVec3(float*, float, float, float);
+// Returns the destination pointer (retail reuses it as a call argument).
+extern "C" float* code80135FDC_setVec3(float*, float, float, float);
 extern "C" u32 func_80137510(nw4r::lyt::AnimTransform*, float);
 extern "C" void func_801D216C(void*, u8);  // retail symbol is unmangled
 extern "C" u32 func_801D32DC(void*);
@@ -472,7 +502,7 @@ extern "C" __declspec(noinline) int func_80217BDC(void*);
 extern "C" char* func_80138F78(u32);
 extern "C" u16 func_80136254(const void*, const void*, int);
 extern "C" void func_80137E7C(void*, void*, void*);
-extern "C" void copyVEC3(void*, void*);
+extern "C" void copyVEC3(void*, const void*);
 extern "C" char* func_802138B8(CMCCrystalData*, int);
 extern "C" void func_8021A93C(void*);
 extern "C" void func_8021A8F4(void*);
@@ -486,13 +516,21 @@ extern "C" void func_801D3518(void*, void*);
 extern "C" void func_801D353C(void*, u8);
 extern "C" void func_801F35B0(void*, void*);
 extern "C" void func_8022B7C8(void*, void*);
-extern "C" void func_801F3670(void*, void*);
+extern "C" void func_801F3670(void*, const float*);
 extern "C" void func_801F36BC(void*, unsigned long, unsigned long);
 extern "C" void func_801F3850(void*, u16);
 extern "C" void func_801F367C(void*);
 extern "C" void func_8021ADC4(void*);   // crystal-info grid refresh (CMCCrystalInfo.cpp)
 extern "C" void func_8021AA9C(void*, unsigned char, unsigned short, unsigned short, unsigned char); // set crystal slot
+// Item-impl singleton import: CfGameManager.hpp (pulled in via
+// harness_catalog/CTaskGameEff) already declares the no-arg form at global
+// scope, so a second differently-prototyped extern "C" would be an illegal
+// overload. Keep the item-pointer form (same unmangled symbol) in a
+// namespace and shim call sites through it (same shape as CItemBoxInfo.hpp).
+namespace itemimplshim {
 extern "C" void* CItem_initItemImplInstances(void*);
+}
+#define CItem_initItemImplInstances(item) itemimplshim::CItem_initItemImplInstances(item)
 extern "C" u16 func_8015780C(int);
 extern "C" char* func_80136190(const void*, const void*, int);
 extern "C" void func_80136B4C(nw4r::lyt::Layout*, char*, char*, u32);
@@ -638,11 +676,10 @@ extern "C" void func_801D377C(void*);
 extern "C" u8 code80135FDC_getByte_64077();
 extern "C" int func_80213748(void*);   // all-flags-set check (code_80213488.cpp)
 extern "C" void func_802194EC(CMCCrystalBox* self);
-// NOTE: retail's definition computes the result through a 64-bit
-// subtract-with-carry sequence (subfc/subfze) while every call site reads the
-// value as a 32-bit int in r3; a single-TU reconstruction cannot express both
-// prototypes, so the int form seen by all callers is used here.
-extern "C" int func_80219AF0(CMCCrystalBox* self);
+// Retail's epilogue extends the result to 64 bits (subfc/subfze); every
+// call site reads the value truncated to the int in r3, hence the (int)
+// casts at the use sites.
+extern "C" s64 func_80219AF0(CMCCrystalBox* self);
 extern "C" void func_802156C0(CMCCrystalBox* self, int);
 extern "C" __declspec(noinline) void func_80215408(CMCCrystalBox* self);
 extern "C" __declspec(noinline) void func_80215490(CMCCrystalBox* self);

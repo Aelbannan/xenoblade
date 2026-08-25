@@ -572,7 +572,7 @@ extern "C" u32 func_80157CD0(u8);
 extern "C" u32 func_80158068(unsigned int);
 
 // func_801F2880: string/kind-table helpers (C-ABI).
-extern "C" u8 func_8013600C(const char*, const char*, u32);
+extern "C" u8 func_8013600C(const void*, const void*, u32);
 extern "C" void* func_8009EC9C(u32);
 extern "C" u32 func_800A32BC();
 

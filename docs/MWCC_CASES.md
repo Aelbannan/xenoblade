@@ -1396,6 +1396,16 @@ return ret;
 
 (direct `return`/ternary forms flip to the branchless computation; the default-2 + conditional-0 local keeps the `li r3,2; beq L; li r3,0` layout).
 
+## nw4r ut_PackedFont ConstructOpPrepairCopyPackedSheet — address-escaped out-param reloads → materialized register copy (GC/3.0a5.2 `-O4,p`, FULL_MATCH)
+
+`PackedFont::ConstructOpPrepairCopyPackedSheet` went 59.4% (+4 bytes) → **100.0% FULL_MATCH**. The local filled through an out-param pointer — `u32 data; pReader->CopyTo(&data, 4);` — is stack-resident for the whole function (its address escaped), so every later use reloaded `lwz rX, sp+8` after intervening ctx stores; retail loaded it ONCE into r4 and reused the register across both if-arms.
+- Symptom: extra `lwz rX, sp+8` reloads per use-site; retail has one load before the branch and keeps the register live
+- Cause: MWCC will not cache an address-taken local in a register (conservative aliasing against the ctx stores), but a FRESH copy whose address never escapes is register-cached normally
+- Fix: `u32 needed = data;` immediately after the call, then use `needed` at every site
+- Result: FULL_MATCH 100%, exact 0xfc size
+- Confidence: repo_proven
+- Applies to/a.k.a.: any `&out_param` call pattern (CalcCopySize(&count), CopyTo(&data,4), scanf-style writers); pairs with the ut_ArchiveFontBase RequestData branch-form entry above (same TU family)
+
 ## kyoshin CCur — func_801D202C: goto-gate blocks + fake-interface r12 dispatch + switch-for-signed-compare (Wii/1.1 `-O4,p`)
 
 `func_801D202C` (us-801d3a78, 0x84) went 27.3% → **100.0% FULL_MATCH** via three levers:
@@ -10205,3 +10215,56 @@ referenced by real code/data.
 - Fix:       (1) write `rem %= bucketCount;`. (2) keep shared extern "C" declarations type-verbatim (`s32`, not `int`); never promote `getBdatStringColumnValue` into class scope (NOTE in ocBdat.hpp).
 - Result:    FULL_MATCH (us-8003af48, semantic-certified); ocBdat TU builds again.
 - Confidence: repo_proven
+
+## kyoshin/CItemBoxInfo func_801D5C38 / func_801E27D0 — record-copy loop fully unrolled (size overflow) → pragma wrapper + offset-pair idiom
+- Symptom:   decomp .text larger than retail for the function (e.g. 0x16c/0x198, 0x158/0x174); the final fixed-size struct copy to the out-param is emitted as fully unrolled lwz/stw runs while retail keeps a compact `li r0,N; mtspr CTR; lwzu r0,8(r4); stwu r0,8(r5); bdnz` 8-byte-pair loop plus a 4-byte tail.
+- Cause:     (1) the owning function lacked `#pragma optimize_for_size on` (+ `dont_inline on`) — under plain `-O4,p` MWCC unrolls small constant-trip copy loops; optimize_for_size keeps them rolled. (2) The source copy shape matters: nested loops or forward `*d++ = *s++` runs unroll differently than the canonical offset-pair form.
+- Fix:       wrap the function in `#pragma push / #pragma optimize_for_size on / #pragma dont_inline on / ... #pragma pop`, and write the copy as:
+             ```c
+             u32* s = (u32*)&rec - 1;
+             u32* d = (u32*)dst - 1;
+             for (u32 k = 0; k < N; k++) { d[1] = s[1]; d[2] = s[2]; s += 2; d += 2; }
+             d[1] = s[1];   // tail halfword pair
+             ```
+             N = (copyBytes - 4) / 8. Also keep any deliberate `if (p != NULL) q = p; else q = NULL;` split — collapsing it to `q = p` removes a branch retail has and craters the match.
+- Result:    func_801D5C38 54.9% -> 70.3% (structural 30 -> 9, size exact); func_801E27D0 49.5% -> 62.8% (structural 25 -> 9, size exact).
+- Confidence: repo_proven (two independent functions, byte-exact size fit both times)
+- Applies to/a.k.a.: any fixed-size local-record copy to an out pointer (CItemBoxSlotRecord/ItemBoxInfoCopy family); check first when a single function shows decomp-larger size with a fat unrolled store run at the tail.
+
+## CPadManager kpadConnectCallback — struct-size drift from wrong tail-base arithmetic (US, Wii/1.1 -O4,p)
+- Symptom:   single lwz with different displacement into a global table (retail +0x511C vs decomp +0x51DC), plus unit frame/split OVER delta; everything else byte-identical.
+- Cause:     CPadData::mWpadStatuses element type CWpadStatus : KPADStatus had tail sized `0xB00 - 0x88`, but KPADStatus is 0xB0 bytes (ex_status KPADEXStatus ends at 0xB0), so with the float member each entry compiled to 0xB30 — +0x30 × 4 entries = +0xC0 shift for every later field.
+- Fix:       recompute tail from the true base (`0xB00 - 0xB4`). Diagnosis recipe when MWCC offsetof isn't a constant expression: temporarily shrink the suspect array to `[1]`, rebuild, and divide the displacement delta by the removed count to measure the ACTUAL compiled element size; then compare against the retail stride (retail array span / count).
+- Result:    FULL_MATCH, semantic-certified.
+- Confidence: repo_proven
+- Applies to/a.k.a.: any struct whose tail-padding arithmetic assumes an earlier member's size; check derived-class real sizes before trusting `total - firstOffset` tails. Unit split OVER deltas that survive per-function 100% matches point at data-layout drift, not code bloat.
+
+## nw4r g3d ResTev::GXSetTevOrder — dont_inline pragma blocks template-base accessor inlining; protected member load as escape (US, -O4,p)
+- Symptom:   function emits `bl ref__Q34nw4r3g3d6ResTevFv` at every data-access site while retail folds each to a direct `lwz rX, 0(this)`; register allocation shifts one whole color (savegpr_26 vs _27) and the unit split gate overflows.
+- Cause:     `#pragma dont_inline on` around the function's definition blocks ALL inlining INTO it — including trivial template-base accessors (`ResCommon<T>::ref()`, defined inline in a header far outside the pragma region). But removing the pragma entirely lets MWCC's IPA inline the whole big function into its callers (SetNumTevStages ballooned 0xec→0x158 and fell 74.6%→1.2%).
+- Fix:       keep the pragma, and stop calling the accessor: relax the base class member from `private:` to `protected:` (`ResCommon::mpData`) and read it directly inside the pragma region (`mpData->field` is a plain member load — nothing left to inline). Result reproduces retail's three separate base reloads. Do NOT wrap callers in dont_inline to block reverse inlining — that degrades the caller's own body the same way.
+- Result:    GXSetTevOrder 17.3% -> 32.4% (ref relocs gone, _savegpr_27 matches); unit split gate FAIL(+0x18) -> PASS(0x4 spare). Residual: tail or-chain scheduling (32 struc / 16 regsw).
+- Confidence: repo_proven
+- Addendum (flag test): -ipa off tested on this unit - ZERO effect on all four stragglers, and GXSetTevOrder still cross-inlined into SetNumTevStages without the pragma. The reverse-inlining comes from '-inline auto', NOT IPA; the dont_inline pragma is required under any IPA setting. Do not attempt -ipa/-inline flag variants here; the walls are scheduler/regalloc soft-caps.
+- Applies to/a.k.a.: any ResCommon-derived wrapper (ResMat/ResMdl/ResAnm*/lyt resources) whose accessor calls appear where retail has direct loads; check for a dont_inline region around the function first whenever an out-of-line accessor symbol shows up as decomp-side-only reloc drift.
+
+## Session patterns: value-mismatch bug hunt (CBattleManager, 5 runtime bugs)
+
+1. **lis vs li with SAME immediate = wrong constant.** Retail `lis r4,512` (=0x02000000) vs decomp `li r4,512` (=0x200) is a VALUE mismatch, not encoding noise. Caught E9B54's dropped-zeros gate constant. Check any lis/li pair sharing an immediate.
+
+2. **Different lwz displacements inside a compare chain = wrong field read.** D7D24 compared entries against self->field_4 where retail used [arrayBase+4]; also a cached local broke retail's per-iteration re-read shape (MWCC hoists cached locals). Fix comparand AND restore re-read via direct memory expression.
+
+3. **lwz r12,N(r12) slot mismatch = wrong virtual dispatched.** Mirror-struct pad miscount shifts every later vtable anchor. D81A8 dispatched slot 0x280 instead of 0x290 because pads after vf290 were 4 too many / before 4 too few. Anchor rule: declared virtual #k lands at byte offset (k+2)*4 under -RTTI. Verify ALL anchors after any pad change.
+
+4. **Mangled-vs-plain reloc name pair on a cross-TU call = wrong linkage.** D9978 called chkActorList__Q22cf6CChainFv where retail calls plain C wrapper CChain_chkActorList (verify target exists via strings on the defining .o before referencing).
+
+5. **Struct comments do NOT control placement.** DB0FC_MoveTable declared 'pad_80 // +0x80' but auto-placement put it at 0x7C (field_78 ends there), shifting table to 0x80 — every AI-table write ran 4 bytes early (OOB class). Symptom: constant store displacement differs by member-size between sides while base register matches. ALWAYS hand-compute cumulative offsets or install negative-array offsetof typedef guards (MWCC has no static_assert): typedef char ck[(offsetof(S,m)==N)?1:-1];
+
+## CfGameManager func_80081694 — header-defined unity helper inlines retail's out-of-line ctors (US, Wii/1.1 -O4,p -ipa file)
+
+- Symptom:   registry NOTE/"100%" was stale; actual 40.8%, decomp −0x74 vs retail: at the `__ct__800815A4` call site our build emitted inlined field-store runs, and a second ctor block (`__ct__CCharVoice` + lbl_eu_8052A8E8 data init) appeared at the tail that retail doesn't have.
+- Cause:     the helper is DEFINED in `CfGameManagerUnityHelpers.hpp`, so its compilation context (inline/IPA visibility of sibling headers like CCharVoice.hpp) differs from retail's .cpp TU; MWCC folded constructor bodies into the helper.
+- Fix:       wrap ONLY this function in `#pragma dont_inline on` / `#pragma dont_inline reset` (the same pattern already used for func_800817BC in the same header). This restores all internal `bl` calls as out-of-line.
+- Result:    FULL_MATCH, semantic-certified (us-80082018).
+- Confidence: repo_proven
+- Applies to/a.k.a.: any function defined in a shared unity-helpers HEADER whose retail counterpart lives in a .cpp — when hexdiff shows inlined-callee bodies where retail has `bl`, wrap with dont_inline before trying statement surgery. Also: audit stale registry statuses (`NOTE`/`TOOLING_FIX`/`SOUNDNESS_ANALYSIS` at claimed "100%") — one sampled was actually 40.8%.

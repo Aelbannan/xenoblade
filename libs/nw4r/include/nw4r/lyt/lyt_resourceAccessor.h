@@ -7,7 +7,11 @@
 namespace nw4r {
 namespace lyt {
 
-class ResourceAccessor {
+// Retail vtable data lives in the shared nw4r_data blob object
+// (lbl_eu_80569CA0), not in any TU's .data section. novtable stops MWCC from
+// emitting a local __vt__ResourceAccessor copy; the ctor assigns the retail
+// label explicitly (see lyt_resourceAccessor.cpp).
+class __declspec(novtable) ResourceAccessor {
 public:
     ResourceAccessor();
     virtual ~ResourceAccessor(); // at 0x8

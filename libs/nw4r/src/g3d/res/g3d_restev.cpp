@@ -259,9 +259,10 @@ void ResTev::GXSetTevAlphaOp(GXTevStageID stage, GXTevOp op, GXTevBias bias,
 
     u32 cmd;
     if (op <= 1) {
-        cmd = (clamp << 19) | (bias << 16) | ((op & 1) << 18) |
-              ((stage * 2 + GX_BP_REG_TEVALPHACOMBINER0) << GX_BP_OPCODE_SHIFT);
-        cmd = (reg << 22) | (scale << 20) | cmd;
+        cmd = (clamp << 19) | (bias << 16) | ((op & 1) << 18);
+        cmd |= (scale << 20);
+        cmd |= (reg << 22) |
+               ((stage * 2 + GX_BP_REG_TEVALPHACOMBINER0) << GX_BP_OPCODE_SHIFT);
     } else {
         cmd = (clamp << 19) | (3 << 16);
         cmd = (cmd & ~(1 << 18)) | ((op & 1) << 18);
@@ -331,15 +332,15 @@ void ResTev::GXSetTevOrder(GXTevStageID stage, GXTexCoordID coord,
     GXTexMapID map2;
     if (GXGetTevOrder(stage, &coord2, &map2, NULL) && coord2 != 0xFF &&
         map2 != 0xFF) {
-        ref().texCoordToTexMapID[coord2] = 0xFF;
+        mpData->texCoordToTexMapID[coord2] = 0xFF;
     }
 
     if (coord != 0xFF) {
-        ref().texCoordToTexMapID[coord] = static_cast<u8>(map);
+        mpData->texCoordToTexMapID[coord] = static_cast<u8>(map);
     }
 
     u32 n = stage / 2;
-    u8* pCmd = ref().dl.dl.var[n].dl.tevOrder;
+    u8* pCmd = mpData->dl.dl.var[n].dl.tevOrder;
     u32 shift = (stage & 1) ? 12 : 0;
     u32 mask = 0x3FF << shift;
     u32 en = (map != 0xFF && (map & 0x100) == 0) ? 1 : 0;
@@ -352,10 +353,10 @@ void ResTev::GXSetTevOrder(GXTevStageID stage, GXTexCoordID coord,
              << shift),
         mask | (0xFF << GX_BP_OPCODE_SHIFT));
 }
+#pragma dont_inline reset
 
 } // namespace g3d
 } // namespace nw4r
-#pragma dont_inline reset
 
 namespace nw4r {
 namespace g3d {
@@ -399,10 +400,10 @@ void ResTev::SetNumTevStages(u8 num) {
         return;
     }
 
-    int s;
     ResTevData& d = ref();
     if ((u32)d.nStages > num) {
         // Clear texCoord/texMap bindings for all stages past the new count
+        int s;
         for (s = num; (u32)s < d.nStages; s++) {
             GXSetTevOrder(static_cast<GXTevStageID>(s),
                          static_cast<GXTexCoordID>(0xFF),

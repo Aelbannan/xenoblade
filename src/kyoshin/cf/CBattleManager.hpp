@@ -180,6 +180,41 @@ struct BattleSubObjAccessor {
     u16 field_40;       // value at +0x40
 };
 
+// Target/arts object fields probed by func_800E1B5C: u16 type +0x3C,
+// u16 id +0x48, flags word +0x78.
+struct E1B5C_TargetObj {
+    u8 pad_00[0x3c];
+    u16 type_3c;        // +0x3C
+    u8 pad_3e[0x48 - 0x3e];
+    u16 id_48;          // +0x48
+    u8 pad_4a[0x78 - 0x4a];
+    u32 flags_78;       // +0x78
+};
+
+// Battle-actor / action / player view used by func_800E1B5C: status flags
+// (+0x3374), vtable holder (+0x3ED4), flags (+0x3F00), ptr (+0x3F10),
+// u16 type (+0x3F28), gate word (+0x3F60).
+struct E1B5C_ObjView {
+    u8 pad_00[0x3374];
+    u32 field_3374;     // +0x3374
+    u8 pad_3378[0x3ED4 - 0x3378];
+    void* field_3ED4;   // +0x3ED4
+    u8 pad_3ED8[0x3F00 - 0x3ED8];
+    u32 field_3F00;     // +0x3F00
+    u8 pad_3F04[0x3F10 - 0x3F04];
+    void* field_3F10;   // +0x3F10
+    u8 pad_3F14[0x3F28 - 0x3F14];
+    u16 field_3F28;     // +0x3F28
+    u8 pad_3F2A[0x3F60 - 0x3F2A];
+    u32 field_3F60;     // +0x3F60
+};
+
+// Flags-word view onto a move-data block (+0x78 only).
+struct E1B5C_MoveFlags {
+    u8 pad_00[0x78];
+    u32 flags_78;
+};
+
 // Object layout for the removed-target access in FactoryEvent2 / func_800D9CA0
 // +0x3ED4 = ptr to vtable-holder, +0x3F00 = flags
 struct BattleRemoveObjAccessor {
@@ -317,9 +352,21 @@ struct DB0FC_MoveTable {
     u8 pad_54[0x74 - 0x54];
     u32 field_74;               // +0x74
     u32 field_78;               // +0x78
+    u32 field_7C;               // +0x7C (unmodeled retail member)
     u32 pad_80;                 // +0x80 (u16 field_80 + 2 pad bytes)
     u32 table[13];              // +0x84
 };
+#include <stddef.h>
+// Layout checks for DB0FC_MoveTable (+0x50/+0x74/+0x78/+0x84). MWCC rejects
+// offsetof in constant expressions (see CfCam.cpp note), so these are
+// documented rather than enforced at compile time.
+#include <stddef.h>
+typedef char DB0FC_ck50[(offsetof(DB0FC_MoveTable, field_50) == 0x50) ? 1 : -1];
+typedef char DB0FC_ck74[(offsetof(DB0FC_MoveTable, field_74) == 0x74) ? 1 : -1];
+typedef char DB0FC_ck78[(offsetof(DB0FC_MoveTable, field_78) == 0x78) ? 1 : -1];
+typedef char DB0FC_ck7C[(offsetof(DB0FC_MoveTable, field_7C) == 0x7C) ? 1 : -1];
+typedef char DB0FC_ck80[(offsetof(DB0FC_MoveTable, pad_80)   == 0x80) ? 1 : -1];
+typedef char DB0FC_ck84[(offsetof(DB0FC_MoveTable, table)    == 0x84) ? 1 : -1];
 
 // Object layout for func_800D9978's actor param: flags at +0x3374,
 // vtable-holder at +0x3ED4 (BMSub3ED4Vt view), flags at +0x3F00.
@@ -550,9 +597,10 @@ struct BMVtIfD81A8 {
     virtual void v147() = 0; virtual void v148() = 0; virtual void v149() = 0;
     virtual void v150() = 0; virtual void v151() = 0; virtual void v152() = 0;
     virtual void v153() = 0; virtual void v154() = 0; virtual void v155() = 0;
-    virtual void v156() = 0; virtual void v157() = 0;  // pads #75..#157
-    virtual void* vf290() = 0;         // #158 -> 0x290
-    virtual void v159() = 0; virtual void v160() = 0; virtual void v161() = 0;
+    virtual void v156() = 0; virtual void v157() = 0;
+    virtual void v158() = 0; virtual void v159() = 0;
+    virtual void v160() = 0; virtual void v161() = 0;  // pads #75..#161
+    virtual void* vf290() = 0;         // -> 0x290
     virtual void v162() = 0; virtual void v163() = 0; virtual void v164() = 0;
     virtual void v165() = 0; virtual void v166() = 0; virtual void v167() = 0;
     virtual void v168() = 0; virtual void v169() = 0; virtual void v170() = 0;
@@ -620,7 +668,7 @@ struct BMVtIfD81A8 {
     virtual void v354() = 0; virtual void v355() = 0; virtual void v356() = 0;
     virtual void v357() = 0; virtual void v358() = 0; virtual void v359() = 0;
     virtual void v360() = 0; virtual void v361() = 0; virtual void v362() = 0;
-    virtual void v363() = 0; virtual void v364() = 0; virtual void v365() = 0;  // pads #159..#365
+    virtual void v363() = 0; virtual void v364() = 0;  // pads #159..#365 (203 pads)
     virtual void* vf5C0(void* arg) = 0;   // #366 -> 0x5C0
 };
 

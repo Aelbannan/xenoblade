@@ -814,9 +814,9 @@ void cf::CfObjectPc::func_800C0524() {
     PcSub8Fake* sub8 = (PcSub8Fake*)this;
 
     void* st1 = ((PcSub4Fake*)this)->_q030();
-    u32 chk1 = func_80174C98(this, &st1, 0xE);
+    u32 chk1 = func_80174C98(this, (int*)&st1, 0xE);
     void* st2 = ((PcSub4Fake*)this)->_q030();
-    u32 chk2 = func_80174C98(this, &st2, 0x803);
+    u32 chk2 = func_80174C98(this, (int*)&st2, 0x803);
 
     int any = (chk1 | chk2) != 0;
     int dd = func_800C0DD4(this, any);
@@ -854,7 +854,7 @@ void cf::CfObjectPc::func_800C0524() {
     func_801765A4(this, scaled, 1);
 
     void* st3 = ((PcSub4Fake*)this)->_q030();
-    u32 chkFlag = func_80174C98(this, &st3, 1);
+    u32 chkFlag = func_80174C98(this, (int*)&st3, 1);
     if (chkFlag != 0 && f->mPtr3F60 != NULL) {
         f->mPtr3F60->field_0x4EC |= 0x1000;
     }
@@ -983,9 +983,9 @@ void CActorParam_UnkVirtualFunc88__Q22cf10CfObjectPcFv(
         }
         if (!inRange && bm->field_0x20C8 == 0) {
             void* state = ((PcSub4Fake*)self)->_q030();
-            if (func_80174C98(self, &state, 6) ||
+            if (func_80174C98(self, (int*)&state, 6) ||
                 (((state = ((PcSub4Fake*)self)->_q030()),
-                    func_80174C98(self, &state, 9)))) {
+                    func_80174C98(self, (int*)&state, 9)))) {
                 func_800BE12C((u8*)self + 0x3E9C, 0x1B, 0, 6, 1);
             }
         }

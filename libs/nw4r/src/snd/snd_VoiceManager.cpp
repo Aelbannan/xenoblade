@@ -85,25 +85,15 @@ void VoiceManager::Setup(void* pBuffer, u32 size) {
         return;
     }
 
-    u32 voices = size / 0x124;
-    u8* pPtr = static_cast<u8*>(pBuffer);
+    u32 count = size / 0x124;
+    void* pPtr = pBuffer;
 
-    for (u32 i = 0; i < voices; i++) {
-        Voice* pVoice = reinterpret_cast<Voice*>(pPtr);
-        if (pPtr != NULL) {
-            pVoice = new (pPtr) Voice();
-        }
+    for (u32 i = 0; i < count; i++) {
+        // Placement-new each slot; the node lives at offset 0x11C.
+        reinterpret_cast<VoiceLayoutList*>(&mFreeVoiceList)
+            ->PushBack(reinterpret_cast<VoiceLayout*>(new (pPtr) Voice()));
 
-        // Insert at back of free list: node at pVoice + 0x11C.
-        ut::LinkListNode* pNode = reinterpret_cast<ut::LinkListNode*>(
-            reinterpret_cast<u8*>(pVoice) + 0x11C);
-        ut::detail::LinkListImpl::Iterator it(
-            reinterpret_cast<ut::LinkListNode*>(
-                reinterpret_cast<u8*>(&mFreeVoiceList) + 0x4));
-        reinterpret_cast<LinkListImplAccess*>(&mFreeVoiceList)->Insert(
-            it, pNode);
-
-        pPtr += 0x124;
+        pPtr = static_cast<u8*>(pPtr) + 0x124;
     }
 
     mInitialized = true;
@@ -224,12 +214,16 @@ void VoiceManager::UpdateAllVoices() {
     {
         BOOL enabled = OSDisableInterrupts();
 
-        pEnd = reinterpret_cast<ut::LinkListNode*>(pBase + 0x8);
-        pNode = pEnd->GetNext();
+        // Fresh locals so pass 3 gets its own register assignment
+        // (retail keeps the iterators apart from passes 1-2).
+        ut::LinkListNode* pUpdNode =
+            reinterpret_cast<ut::LinkListNode*>(pBase + 0x8)->GetNext();
+        ut::LinkListNode* pUpdEnd =
+            reinterpret_cast<ut::LinkListNode*>(pBase + 0x8);
 
-        while (pNode != pEnd) {
-            ut::LinkListNode* pCurr = pNode;
-            pNode = pNode->GetNext();
+        while (pUpdNode != pUpdEnd) {
+            ut::LinkListNode* pCurr = pUpdNode;
+            pUpdNode = pUpdNode->GetNext();
             reinterpret_cast<Voice*>(
                 reinterpret_cast<u8*>(pCurr) - 0x11C)->Update();
         }

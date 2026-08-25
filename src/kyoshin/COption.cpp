@@ -576,7 +576,7 @@ extern "C" void __declspec(noinline) func_8029D358(COption* self) {
 // If the +0x18 source is live, flag it, sync the singleton config (0x40 bytes)
 // from getInstance() into this TU's global, then run func_8029D420.
 extern "C" void __declspec(noinline) func_8029D3C0(COption* self) {
-    if (self->mpAnimTrans1 == 0) return;
+    if (self->field_18 == 0) return;  // retail checks the word at +0x18, not mpAnimTrans1
     self->field_0x2A = 1;
     self->field_0x28 = 1;
     std::memcpy(&lbl_eu_80577308, Class_80296898::getInstance(), 0x40);

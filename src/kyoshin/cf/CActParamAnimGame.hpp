@@ -409,7 +409,7 @@ extern const float lbl_eu_80666118;   // sdata2: ground-probe constant (func_800
 extern const float lbl_eu_8066611C;   // sdata2: matrix row init (func_8005DCA8)
 extern const float lbl_eu_80666124;   // sdata2: probe arg (func_8005E60C)
 extern const float lbl_eu_8066A208;   // sdata2: near-zero epsilon (func_80060110)
-extern const float lbl_eu_8066AF20;   // sdata2: probe arg (func_8005E60C)
+extern f32 lbl_eu_8066AF20;   // sdata2: probe arg (func_8005E60C); f32 form to match CtrlMoveBase.hpp
 extern u8 lbl_eu_80526458[];  // retail CActParamAnimGame vtable (.data split1)
 
 // C++-mangled retail helper (actor id -> action source), used by

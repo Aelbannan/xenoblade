@@ -276,6 +276,8 @@ struct GlyphGroupsBlock {
 
 class PackedFont : public detail::ArchiveFontBase {
 public:
+    PackedFont();
+
     bool Construct(void* pBuffer, u32 bufferSize, const void* pArchive,
                    const char* pName);
     void Destroy();
@@ -314,6 +316,25 @@ private:
 
 /******************************************************************************
  *
+ * Constructor
+ *
+ ******************************************************************************/
+
+// Retail ctor: base ArchiveFontBase ctor runs first (its own vptr store),
+// then the first member zero lands BEFORE this class's vptr overwrite
+// (lbl_eu_8056B084), then the remaining fields zero.
+PackedFont::PackedFont() {
+    field_0x28 = 0;
+    *(void**)this = (void*)lbl_eu_8056B084;
+    field_0x2A = 0;
+    field_0x2C = 0;
+    field_0x30 = 0;
+    field_0x34 = 0;
+    field_0x38 = 0;
+}
+
+/******************************************************************************
+ *
  * Construct
  *
  ******************************************************************************/
@@ -326,7 +347,7 @@ bool PackedFont::Construct(void* pBuffer, u32 bufferSize, const void* pArchive,
         static_cast<const BinaryFileHeader*>(pArchive)->fileSize;
 
     // Assignment order mirrors the retail store schedule; it also pins
-    // MWCC's temp register allocation (bufferEnd -> r9, zero -> r10).
+    // MWCC's temp register allocation.
     ConstructContext ctx;
     ctx.mReader.Init();
 
@@ -620,19 +641,20 @@ void PackedFont::GetGlyph(Glyph* pGlyph, u16 charCode) const {
 
 u32 PackedFont::CalcCopySize(const FontGlyphGroupsAcs& rGroups,
                              const char* pName, int* pResult) {
+    u32 count = 0;  // included glyph count
     u32 size1 = 0;  // B-group sizes
     u32 size2 = 0;  // C-group sizes
     u32 size3 = 0;  // D-group sizes
-    u32 count = 0;  // included glyph count
+    u32 offSize = 0, offMask = 0;
+    u32 maskB;
 
     // B groups: add the per-glyph size of every sheet that is included.
     {
-        u32 offSize = 0, offMask = 0;
         for (int g = 0;
              g < reinterpret_cast<const GlyphGroupsBlock*>(rGroups.field_0x4)
                      ->groupBCount;
              g += 0x20) {
-            u32 mask = 0;
+            maskB = 0;
             for (int i = 0;
                  i < reinterpret_cast<const GlyphGroupsBlock*>(
                          rGroups.field_0x4)
@@ -643,12 +665,12 @@ u32 PackedFont::CalcCopySize(const FontGlyphGroupsAcs& rGroups,
                     reinterpret_cast<const GlyphGroupsBlock*>(rGroups.field_0x4)
                         ->nameIndices[i]);
                 if (*pName == 0 || IncludeName(pName, pSheet)) {
-                    mask |= *(const u32*)(rGroups.field_0x18 + offMask +
-                                          ((i * rGroups.field_0x24) & ~3));
+                    maskB |= *(const u32*)(rGroups.field_0x18 + offMask +
+                                           ((i * rGroups.field_0x24) & ~3));
                 }
             }
             for (int b = 0; b < 32; b++) {
-                if ((mask << b) & 0x80000000u) {
+                if ((maskB << b) & 0x80000000u) {
                     count++;
                     size1 += *(const u32*)(
                         (const u8*)rGroups.field_0xC + offSize + b * 4);
@@ -975,17 +997,22 @@ int PackedFont::ConstructOpPrepairCopyPackedSheet(
     u32 data;
     pReader->CopyTo(&data, 4);
 
+    // Materialize a register copy: 'data' is stack-resident because its
+    // address escapes to CopyTo, so every direct use would reload from
+    // memory after the ctx stores below.
+    u32 needed = data;
+
     // The next sheet's code-map entry decides how its image data is stored:
     // 0xFFFF means "not copied" (the sheet data stays in the archive).
     if (reinterpret_cast<const u16*>(pCtx->field_0x40)[pCtx->field_0x60] != 0xFFFF) {
-        if (pCtx->field_0x48 - pCtx->field_0x4C < data) {
+        if (pCtx->field_0x48 - pCtx->field_0x4C < needed) {
             return 2;
         }
-        pCtx->field_0x54 = data;
+        pCtx->field_0x54 = needed;
         pCtx->field_0xC = 9;
         pCtx->field_0x50 = 8;
     } else {
-        pCtx->field_0x54 = data;
+        pCtx->field_0x54 = needed;
         pCtx->field_0xC = 10;
         pCtx->field_0x50 = 8;
     }

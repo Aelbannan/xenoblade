@@ -175,8 +175,11 @@ extern "C" void func_80459DEC__16CLibCriMoviePlayFv(unsigned int texMapStage1, u
     GXSetTevSwapMode((GXTevStageID)3, (GXTevSwapSel)0, (GXTevSwapSel)0);
     GXSetTevKColorSel((GXTevStageID)3, (GXTevKColorSel)0xF);
 
-    // Set TEV register color + K colors (direct sdata2 pool word copies;
-    // the TEVREG1 enum value in this header tree is off by one from retail)
+    // Set TEV register color (single pooled-deref temporary reproduces
+    // retail's 2-store shape; the TEVREG1 enum value in this header tree is
+    // off by one from retail). OPEN ITEM: retail's second word reloc points
+    // at lbl_eu_8066A4DC@0 while this form emits lbl_eu_8066A4D8@4 (same
+    // address, different anchor) - the witness reloc-gate rejects it.
     GXSetTevColorS10((GXTevRegID)1, *(const GXColorS10*)&lbl_eu_8066A4D8);
 
     GXSetTevKColor((GXTevKColorID)0, *(const GXColor*)&lbl_eu_8066A4E0);
@@ -223,12 +226,12 @@ MovieEntry* CLibCriMoviePlay::func_8045A1B0() {
 // Starts movie playback with given parameters
 // Returns stream ID on success, -1 on failure
 // ============================================================================
-int CLibCriMoviePlay::startMovie(const char* filename, u32 allocHandle,
+extern "C" int func_8045A260__16CLibCriMoviePlayFv(const char* filename, u32 allocHandle,
                                   u32 allocHandle2, bool waitForStart,
                                   bool useAlternateBuf) {
     if (sInstance == nullptr) return -1;
 
-    MovieEntry* entry = func_8045A1B0();
+    MovieEntry* entry = CLibCriMoviePlay::func_8045A1B0();
     if (entry == nullptr) return -1;
 
     // Initialize entry state
@@ -351,7 +354,7 @@ int CLibCriMoviePlay::startMovie(const char* filename, u32 allocHandle,
 // Renders a movie frame to the screen using GX
 // Returns true on success, false if movie not found
 // ============================================================================
-bool CLibCriMoviePlay::renderMovie(int id) {
+extern "C" bool func_8045A8C8__16CLibCriMoviePlayFv(int id) {
     if (sInstance == nullptr) return false;
 
     MovieEntry* entries = &sInstance->mEntries[0];
@@ -441,8 +444,8 @@ bool CLibCriMoviePlay::renderMovie(int id) {
 // CLibCriMoviePlay::func_8045AE84()
 // Updates texture buffers for all active movie entries
 // ============================================================================
-void CLibCriMoviePlay::updateMovies() {
-    MovieEntry* entry = &mEntries[0];
+extern "C" void func_8045AE84__16CLibCriMoviePlayFv(CLibCriMoviePlay* self) {
+    MovieEntry* entry = &self->mEntries[0];
 
     for (int i = 0; i < 4; i++) {
         if (entry->mPlyHandle == nullptr) goto next;
@@ -780,7 +783,7 @@ bool CLibCriMoviePlay::wkStandbyLogout() {
 // ============================================================================
 void CLibCriMoviePlay::viBeginFrame() {
     // Called every video frame - update movie textures
-    updateMovies();
+    func_8045AE84__16CLibCriMoviePlayFv(this);
 }
 
 // ============================================================================
@@ -792,13 +795,6 @@ extern "C" {
 
     void __ct__CLibCriMoviePlay(const char* name, CWorkThread* parent) {
         new ((void*)0) CLibCriMoviePlay(name, parent);
-    }
-
-    int func_8045A260__16CLibCriMoviePlayFv(CLibCriMoviePlay* self,
-        const char* filename, u32 allocHandle, u32 allocHandle2,
-        bool waitForStart, bool useAlternateBuf) {
-        return self->startMovie(filename, allocHandle, allocHandle2,
-                               waitForStart, useAlternateBuf);
     }
 
 // Finds the movie entry whose player ID matches id (id == -1 matches none).
@@ -929,21 +925,11 @@ extern "C" {
         return false;
     }
 
-    bool func_8045A8C8__16CLibCriMoviePlayFv(CLibCriMoviePlay* self, int id) {
-        return self->renderMovie(id);
-    }
-
-    void wkUpdate__16CLibCriMoviePlayFv(CLibCriMoviePlay* self) {
-        self->wkUpdate();
-    }
-
-    bool wkStandbyLogout__16CLibCriMoviePlayFv(CLibCriMoviePlay* self) {
-        return self->wkStandbyLogout();
-    }
-
-    void func_8045AE84__16CLibCriMoviePlayFv(CLibCriMoviePlay* self) {
-        self->updateMovies();
-    }
+    // (wkUpdate__16 / wkStandbyLogout__16: the member definitions themselves
+    // carry the retail mangled names - duplicate extern "C" wrappers here
+    // would shadow the bodies with 0x10-byte tail calls.)
+    extern "C" void wkUpdate__16CLibCriMoviePlayFv();
+    extern "C" bool wkStandbyLogout__16CLibCriMoviePlayFv();
 
     void func_8045B1DC__16CLibCriMoviePlayFv(CLibCriMoviePlay* self) {
         // Empty
@@ -981,13 +967,9 @@ extern "C" {
 
     void func_8045B3DC__16CLibCriMoviePlayFv(CLibCriMoviePlay* self) {
         // Thunk for CDeviceVICb update
-        ((CLibCriMoviePlay*)((u8*)self - 0x1C4))->updateMovies();
+        func_8045AE84__16CLibCriMoviePlayFv((CLibCriMoviePlay*)((u8*)self - 0x1C4));
     }
 
-    void func_8045B3E4__16CLibCriMoviePlayFv(CLibCriMoviePlay* self) {
-        // Thunk for CDeviceVICb destructor
-        ((CLibCriMoviePlay*)((u8*)self - 0x1C4))->~CLibCriMoviePlay();
-    }
 }
 
 // ===== BISECT D2: + blob def =====

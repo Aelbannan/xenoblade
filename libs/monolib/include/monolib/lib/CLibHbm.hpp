@@ -1,4 +1,6 @@
 #pragma once
+#ifndef MONOLIB_CLIBHBM_HPP
+#define MONOLIB_CLIBHBM_HPP
 
 #include <types.h>
 #include "monolib/monolib_types.hpp"
@@ -108,3 +110,4 @@ private:
     static int sCurWpadChannel;
     static GXTexObj sTplTexObj;
 };
+#endif  // MONOLIB_CLIBHBM_HPP

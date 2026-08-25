@@ -24,26 +24,36 @@ struct CActParamAnimStateView {
     u32 field0C;                // +0x0C: flags
     u8 mChildData10[0x24 - 0x10];   // +0x10..+0x23 (embedded CActParamData base, start)
     f32 field24;                // +0x24 (anim scale, func_8004CC8C)
-    u8 _pad_28[0x30 - 0x28];    // +0x28..+0x2F
+    u8 _pad_28[0x2C - 0x28];
+    s32 field2C;                // +0x2C (copied to field374 in func_8004BDCC)
     s32 field30;                // +0x30 (copied to field374 in func_8004D194)
-    u8 _pad_34[0x270 - 0x34];   // +0x34..+0x26F (rest of embedded CActParamData base)
+    u8 _pad_34[0x26C - 0x34];   // +0x34..+0x26B (rest of embedded CActParamData base)
+    u8* field26C;               // +0x26C: eff request record (NULL = none)
     u32 field270;               // +0x270
-    u8 _pad_274[0x278 - 0x274]; // +0x274..+0x277
+    u32 field274;               // +0x274 (guard flag, func_8004C608)
     u32 field278;               // +0x278
     u32 field27C;               // +0x27C
     u8 _pad_280[0x28C - 0x280]; // +0x280..+0x28B
     u32 field28C;               // +0x28C (anim id used by func_8004E9EC dispatch)
     u8 _pad_290[0x2A4 - 0x290]; // +0x290..+0x2A3
     u32 field2A4;               // +0x2A4
-    u8 _pad_2A8[0x2BC - 0x2A8]; // +0x2A8..+0x2BB
+    u8 _pad_2A8[0x2B4 - 0x2A8];
+    f32 field2B4;               // +0x2B4 (start heading, sel==0)
+    u8 _pad_2B8[0x2BC - 0x2B8];
     u32 field2BC;               // +0x2BC
-    u8 _pad_2C0[0x2FC - 0x2C0]; // +0x2C0..+0x2FB
+    u8 _pad_2C0[0x2EC - 0x2C0];
+    s16 field2EC;               // +0x2EC (start frame half, sel==0)
+    u8 _pad_2EE[0x2FC - 0x2EE];
     u32 field2FC;               // +0x2FC
     u8 _pad_300[0x304 - 0x300]; // +0x300..+0x303
     f32 field304;               // +0x304 (sub-object anim value, func_8004CC8C)
-    u8 _pad_308[0x33C - 0x308]; // +0x308..+0x33B
+    u8 _pad_308[0x334 - 0x308];
+    f32 field334;               // +0x334 (start heading, sel!=0)
+    u8 _pad_338[0x33C - 0x338];
     u32 field33C;               // +0x33C
-    u8 _pad_340[0x370 - 0x340]; // +0x340..+0x36F
+    u8 _pad_340[0x36C - 0x340];
+    s16 field36C;               // +0x36C (start frame half, sel!=0)
+    u8 _pad_36E[0x370 - 0x36E];
     s32 field370;               // +0x370
     s32 field374;               // +0x374: anim counter (setAnimCounter)
     s32 field378;               // +0x378
@@ -82,10 +92,18 @@ struct CActParamAnimStateView {
     f32 field3FC;               // +0x3FC (ground normal x)
     f32 field400;               // +0x400
     f32 field404;               // +0x404
-    u8 _pad_408[0x430 - 0x408]; // +0x408..+0x42F
+    u8 _pad_408[0x414 - 0x408]; // +0x408..+0x413
+    f32 field414;               // +0x414 (rotation quat x)
+    f32 field418;               // +0x418 (rotation quat y)
+    f32 field41C;               // +0x41C (rotation quat z)
+    f32 field420;               // +0x420 (rotation quat w)
+    f32 field424;               // +0x424 (turn axis x)
+    f32 field428;               // +0x428 (turn axis y)
+    f32 field42C;               // +0x42C (turn axis z)
     f32 field430;               // +0x430
     f32 field434;               // +0x434
-    u8 _pad_438[0x440 - 0x438]; // +0x438..+0x43F
+    u8 _pad_438[0x43C - 0x438]; // +0x438..+0x43B
+    f32 field43C;               // +0x43C (turn radius, func_80053198)
     f32 field440;               // +0x440
     f32 field444;               // +0x444
     f32 field448;               // +0x448 (func_8004CC8C: anim blend accumulator)
@@ -93,7 +111,7 @@ struct CActParamAnimStateView {
     f32 field450;               // +0x450
     f32 field454;               // +0x454
     f32 field458;               // +0x458
-    u8 _pad_45C[0x460 - 0x45C]; // +0x45C..+0x45F
+    f32 field45C;               // +0x45C (func_8004BDCC blend reset)
     f32 field460;               // +0x460
     f32 field464;               // +0x464
     f32 field468;               // +0x468
@@ -108,12 +126,16 @@ struct CActParamAnimStateView {
     u8 _pad_48C[0x49C - 0x48C]; // +0x48C..+0x49B
     f32 field49C;               // +0x49C (snap position, func_8004E9EC)
     f32 field4A0;               // +0x4A0
-    u8 _pad_4A4[0x4B0 - 0x4A4]; // +0x4A4..+0x4AF
+    f32 field4A4;               // +0x4A4 (fallback anim ratio)
+    u8 _pad_4A8[0x4B0 - 0x4A8];
     u32 field4B0;               // +0x4B0 (func_8004CF00: cleared each frame)
-    u8 _pad_4B4[0x4BD - 0x4B4]; // +0x4B4..+0x4BC
+    u32 field4B4;               // +0x4B4 (eff timer fallback when no owner)
+    u32 field4B8;               // +0x4B8 (anim id matched in func_8004F5FC)
+    u8 _pad_4BC;                // +0x4BC
     u8 field4BD;                // +0x4BD
     u8 field4BE;                // +0x4BE
-    u8 _pad_4BF[0x4C4 - 0x4BF]; // +0x4BF..+0x4C3
+    u8 field4BF;                // +0x4BF
+    u32 field4C0;               // +0x4C0 (eff object timer, func_8004DAE0)
     u32 field4C4;               // +0x4C4
     s32 field4C8;               // +0x4C8 (anim request/owner id, -1 = none)
     f32 field4CC;               // +0x4CC
@@ -285,12 +307,18 @@ extern "C" u32 func_80054170(u8* data, u32* out, u32 param, u32 byte, u32 flag);
 extern "C" u32 func_80054614(u8* data, u32* out, u32 param, u32 flag, u32 zero);
 extern "C" int func_80054A24(u8* data, u32 param);
 extern "C" void func_80055EE4(void* data);
+// Declared here with C linkage so call-site relocs keep the retail names
+// verbatim (CActParamData.hpp's plain decls mangle).
+extern "C" void func_80055F84(void* self);
+extern "C" void func_80053A90(void* self);
+extern "C" int func_80055EBC(void* self);
 extern "C" void func_80054A3C(void* data);
 extern "C" void func_80055F08(void* data);
 extern "C" void func_8004C608(void* self);
 extern "C" void func_8004CC8C(void* self);
 extern "C" void func_80055AC4(void* data);
 extern "C" f32 func_80496288(void* obj);
+extern "C" void* func_80496264(void* obj, s32 id);
 extern "C" void func_80484E5C(void* self, f32 value);
 extern "C" int func_804BE398(void* vec, u32 a, u32 b, u32 c, f32 d, f32 e);
 extern "C" void func_804BE4B4(void* out, int a);
@@ -376,10 +404,109 @@ struct CActParamAnimOwnerIf {
     virtual int v2();
     virtual int v3();
     u32 field04;    // +0x04 (bit 3 tested in func_8004D7EC)
-    u8 _pad[0x0C];  // +0x08..+0x13
+    u8 _pad08[0x0C - 0x08]; // +0x08..+0x0B
+    f32 field0C;    // +0x0C (heading offset read by func_8004C608)
+    u8 _pad10[0x14 - 0x10]; // +0x10..+0x13
     f32 field14;    // +0x14
-    u8 _pad_18[0x24 - 0x18]; // +0x18..+0x23
+    u32 field18;    // +0x18 (eff timer, read by func_8004DAE0)
+    u32 field1C;    // +0x1C (id compared against val in func_8004F5FC)
+    u8 _pad_20[0x24 - 0x20]; // +0x20..+0x23
     u32 field24;    // +0x24 (func_8004D950 stores it to field4C8)
+};
+
+// Vtable-view for func_8004BDCC's self dispatches at +0x18 (void) and
+// +0xF0 (void): 4 filler user virtuals, the +0x18 target, 53 more fillers,
+// then the +0xF0 target.
+struct CActParamAnimVt18F0 {
+    virtual int f00();
+    virtual int f01();
+    virtual int f02();
+    virtual int f03();
+    virtual void dispatch18();  // +0x18
+    virtual int f05();
+    virtual int f06();
+    virtual int f07();
+    virtual int f08();
+    virtual int f09();
+    virtual int f10();
+    virtual int f11();
+    virtual int f12();
+    virtual int f13();
+    virtual int f14();
+    virtual int f15();
+    virtual int f16();
+    virtual int f17();
+    virtual int f18();
+    virtual int f19();
+    virtual int f20();
+    virtual int f21();
+    virtual int f22();
+    virtual int f23();
+    virtual int f24();
+    virtual int f25();
+    virtual int f26();
+    virtual int f27();
+    virtual int f28();
+    virtual int f29();
+    virtual int f30();
+    virtual int f31();
+    virtual int f32();
+    virtual int f33();
+    virtual int f34();
+    virtual int f35();
+    virtual int f36();
+    virtual int f37();
+    virtual int f38();
+    virtual int f39();
+    virtual int f40();
+    virtual int f41();
+    virtual int f42();
+    virtual int f43();
+    virtual int f44();
+    virtual int f45();
+    virtual int f46();
+    virtual int f47();
+    virtual int f48();
+    virtual int f49();
+    virtual int f50();
+    virtual int f51();
+    virtual int f52();
+    virtual int f53();
+    virtual int f54();
+    virtual int f55();
+    virtual int f56();
+    virtual int f57();
+    virtual void dispatchF0();  // +0xF0
+};
+
+// Vtable-view for the attached sub-object dispatches in func_8004BDCC:
+// +0x64 takes the eff id word, +0x68 returns a handle stored to +0x4E4.
+struct CActParamAnimObjVt6468 {
+    virtual int f00();                      // +0x08
+    virtual int f01();                      // +0x0C
+    virtual int f02();                      // +0x10
+    virtual int f03();                      // +0x14
+    virtual int f04();                      // +0x18
+    virtual int f05();
+    virtual int f06();
+    virtual int f07();
+    virtual int f08();
+    virtual int f09();
+    virtual int f10();
+    virtual int f11();
+    virtual int f12();
+    virtual int f13();
+    virtual int f14();
+    virtual int f15();
+    virtual int f16();
+    virtual int f17();
+    virtual int f18();
+    virtual int f19();
+    virtual int f20();
+    virtual int f21();
+    virtual int f22();                      // +0x60
+    virtual int dispatch64(u32 effId);      // +0x64
+    virtual int dispatch68();               // +0x68
 };
 
 // Vtable-view for the +0x14 dispatch in func_8004FFBC: with two hidden RTTI
@@ -577,12 +704,12 @@ public:
     void func_8004E168();
     void func_8004E334();
     void func_8004E828();
-    void func_8004E9EC();
+    // func_8004E9EC is a forced-name free function (retail mangles it as a
+    // member but the body reads r3-r5 / f1-f2); see CActParamAnim.cpp.
     void func_8004ECF4() const;
     void func_8004F484();
     void func_8004F5FC();
-    void func_8004F884();
-    void func_8004FAB4();
+    int func_8004FAB4(u32 param);
     void func_8004FCE0();
     void func_8004FE58();
     void func_8004FFBC();
@@ -616,6 +743,7 @@ public:
     void* getEffObj();
     void clearEffObj();
     void func_8004C5E8();
+    void func_8004F884();
     void resetVec3Y();
     void setActiveFlag(s32 param);
     void startAnimA();
@@ -654,6 +782,18 @@ extern "C" int func_80053490(CActParamAnim* self, const ml::CVec3* dirParam);
 // C-linkage imports (retail symbol names - keep linkage/signatures verbatim)
 extern "C" void __dl__FPv(void* object);
 extern "C" void* func_8048315C(void* object);
+extern "C" u32 GetResAnmChrNumEntries__Q34nw4r3g3d7ResFileCFv(u8* resFile);
+extern "C" void func_80484E5C(void* self, f32 value);
+extern "C" void func_80484F80(void* obj, f32 value);
+extern "C" void func_80484164(void* obj, u32 resId, u32 animIdx, u16 frame, s16 half);
+extern "C" void func_804839D4(void* obj, u32 resId, u32 animIdx, u16 frame, u32 gateBit, u32 flag,
+                              s16 half);
+extern "C" int func_804978D0(u8* obj);
+extern "C" int func_80497914(u8* obj);
+extern "C" void func_80054D34(void* data);
+extern "C" void* func_80055EA0(void* param);
+extern "C" void func_80055DF0(void* data);
+extern "C" void func_800554DC(void* data, u32 flag);
 extern "C" void func_8004B9D4(CActParamAnim* self, u32, u32, s32, u32);
 extern "C" void func_8004BDCC(CActParamAnim* self, u32 a, u32 b, u32 c, u32 d);
 extern "C" void func_8004CC8C(void* self);
@@ -661,13 +801,15 @@ extern "C" u32 func_804BD94C(void* a, void* b, u32 c, u32 d, u32 e, u32 f,
                               f32 g, f32 h, f32 i, f32 j, f32 k);
 extern "C" {
 extern float lbl_eu_80665ECC;
+extern float lbl_eu_80665ED0; // atan2 scale (func_8004C608)
+extern float lbl_eu_80665ED4; // wrap-diff gate (func_8004C608)
 }
 extern "C" u8 lbl_eu_80663D4C;
 // sdata2 float constants used by the anim start/setup helpers (f32, loaded
 // via lfs in retail).
 extern float lbl_eu_80665EB8;
 extern const float lbl_eu_80665E9C;
-extern double lbl_eu_80665EE8; // 2^52 conversion magic (u32->f32 trick)
+extern const double lbl_eu_80665EE8; // 2^52+2^31 u32->f64 conversion magic (xoris trick)
 extern const float lbl_eu_80665EA0; // const: lets MWCC hoist the sdata2 load like a pool constant (MWCC_REF §SDA hoist)
 extern const float lbl_eu_80665ED8; // fidx scale (func_800526C0 / func_8004CC68)
 extern const float lbl_eu_80665F00; // half-angle (func_800526C0)
@@ -696,6 +838,7 @@ extern const float lbl_eu_80665F48; // (func_800504DC clamp bound)
 extern const float lbl_eu_80665EF8; // (func_800504DC clamp bound / func_8004ECF4 gate)
 extern const float lbl_eu_80665EFC; // (func_800504DC angle threshold / func_8004ECF4 gate)
 extern const float lbl_eu_80665EF0; // 10.0f (anim blend threshold, func_8004FE58/FCE0)
+extern const float lbl_eu_80665EF4; // (func_8004E9EC direction-length gate)
 extern const float lbl_eu_80665F08; // (func_8004ECF4 anim clamp bound)
 extern const float lbl_eu_80665F10; // (func_8004FFBC anim angle bound)
 extern const float lbl_eu_80665F0C; // (func_8004ECF4/FFBC speed limit scale)
@@ -713,15 +856,27 @@ extern const float lbl_eu_80665F5C; // (func_80053490 dot threshold)
 extern float lbl_eu_80665F6C;
 extern float lbl_eu_80665F70;
 extern float lbl_eu_8066A1F8; // pi (angle wrap, func_8004BC28)
+extern float lbl_eu_8066A208; // position-delta epsilon (func_8004C608)
 extern float lbl_eu_8066A1FC; // two*pi (angle wrap, func_8004BC28)
 extern const float lbl_eu_8066A20C; // angle gate scale (func_80050F5C / func_800512A8) - const to match CfObjectModel.hpp's declaration (MWCC rejects const/non-const redeclaration)
 
 // Same-TU helpers called from func_80052934.
 void func_800504DC(CActParamAnim* self);
-void func_80053198(CActParamAnim* self, const ml::CVec3* v);
+void func_80053198(CActParamAnim* self, ml::CVec3* v);
+
+// Imports for func_80053198 (frame time + nw4r debug/math helpers).
+extern "C" f32 getSecPerFrame__9CDeviceVIFv();
+extern "C" f32 FrSqrt__Q24nw4r4mathFf(f32 value);
+extern "C" void Warning__Q24nw4r2dbFPCciPCce(const char* file, int line,
+                                              const char* msg, ...);
+extern const float lbl_eu_80665F74; // (func_80053198 min-move scale)
+
+// Child-data gate helpers called with the embedded CActParamData (+0x10).
+extern "C" int func_80055F24(void* data);
+extern "C" int func_80055F54(void* data);
 
 // C-linkage imports used by func_80051CD4 / func_80052934.
-extern "C" void func_8004B344(CActParamAnim* self);
+extern "C" void* func_8004B344(CActParamAnim* self);
 extern "C" int func_8004CC80();
 extern "C" int func_80052540(CActParamAnim* self);
 extern "C" f32 func_8004B7B8(CActParamAnim* self);
@@ -729,7 +884,7 @@ extern "C" f32 func_8005254C(CActParamAnim* self);
 extern "C" f32 func_8004B61C(CActParamAnim* self);
 extern "C" void* func_8004B51C(CActParamAnim* self);
 extern "C" int func_8004B3D8(u32* flags, u32 mask);
-extern "C" int func_8004B694(u32* flags, u32 mask);
+extern "C" void func_8004B694(u32* flags, u32 mask);
 extern "C" f32 func_80052554(void* obj);
 extern "C" int func_80052568(void* data);
 extern "C" void func_8004B79C(f32* out, const f32* src);

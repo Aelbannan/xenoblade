@@ -17,6 +17,18 @@
 // Retail vtable label (data object, owned by the .data section).
 extern void* lbl_eu_8056AFF0[];
 
+// ResFontBase private helpers, called across the TU boundary by the retail
+// build (UNDEF relocs in the DOL-extracted object).
+extern "C" unsigned short
+GetGlyphIndex__Q44nw4r2ut6detail11ResFontBaseCFUs(const void* self,
+                                                  unsigned short ch);
+extern "C" unsigned short
+FindGlyphIndex__Q44nw4r2ut6detail11ResFontBaseCFUs(const void* self,
+                                                   unsigned short ch);
+extern "C" const void*
+GetCharWidthsFromIndex__Q44nw4r2ut6detail11ResFontBaseCFUs(const void* self,
+                                                           unsigned short index);
+
 namespace nw4r {
 namespace ut {
 namespace detail {
@@ -88,6 +100,9 @@ public:
 
     int RequestData(ConstructContext* pCtx, CachedStreamReader* pReader, u32 size);
 
+    static int ConstructOpCopy(ConstructContext* pCtx,
+                               CachedStreamReader* pReader);
+
     static int ConstructOpSkip(ConstructContext* pCtx,
                                CachedStreamReader* pReader);
 
@@ -111,9 +126,14 @@ private:
  *
  ******************************************************************************/
 
+// dont_inline: retail's PackedFont ctor CALLS this base ctor (bl
+// __ct__ArchiveFontBase) rather than letting -ipa inline+DSE it away when the
+// derived vptr overwrites (CScnBloom.cpp pattern).
+#pragma dont_inline on
 ArchiveFontBase::ArchiveFontBase() : mWidth(NULL) {
     *(void**)this = (void*)lbl_eu_8056AFF0;
 }
+#pragma dont_inline reset
 
 ArchiveFontBase::~ArchiveFontBase() {}
 
@@ -141,14 +161,17 @@ void* ArchiveFontBase::RemoveResourceBuffer() {
  ******************************************************************************/
 
 bool ArchiveFontBase::IsValidResource(const void* pResource, u32 size) {
-    if (!IsValidBinaryFile(static_cast<const BinaryFileHeader*>(pResource),
-                           0x52464E41 /* 'RFNA' */, NW4R_VERSION(1, 4), 2)) {
+    const BinaryFileHeader* pHeader =
+        static_cast<const BinaryFileHeader*>(pResource);
+
+    if (!IsValidBinaryFile(pHeader, 0x52464E41 /* 'RFNA' */,
+                           NW4R_VERSION(1, 4), 2)) {
         return false;
     }
 
     // First block must be the glyph block ('GLGR'); its header lives at +0x10.
-    const BinaryBlockHeader* pBlock = reinterpret_cast<const BinaryBlockHeader*>(
-        reinterpret_cast<const u8*>(pResource) + 0x10);
+    const BinaryBlockHeader* pBlock =
+        reinterpret_cast<const BinaryBlockHeader*>(pHeader + 1);
 
     if (pBlock->kind != 0x474C4752 /* 'GLGR' */) {
         return false;
@@ -415,11 +438,66 @@ int ArchiveFontBase::ConstructOpAnalyzeTGLP(ConstructContext* pCtx,
 } // namespace ut
 } // namespace nw4r
 
-void GetCharWidths__Q44nw4r2ut6detail15ArchiveFontBaseCFUs(){}
+// ArchiveFontBase::GetCharWidths(u16) const - remaps the glyph index through
+// the archive width sheet (same logic as AdjustIndex below), falls back to
+// the alternate char, then forwards to ResFontBase::GetCharWidthsFromIndex.
+extern "C" nw4r::ut::CharWidths
+GetCharWidths__Q44nw4r2ut6detail15ArchiveFontBaseCFUs(const void* self,
+                                                      unsigned short ch) {
+    const unsigned char* pSelf = static_cast<const unsigned char*>(self);
+    unsigned short index = GetGlyphIndex__Q44nw4r2ut6detail11ResFontBaseCFUs(pSelf, ch);
 
-void HasGlyph__Q44nw4r2ut6detail15ArchiveFontBaseCFUs(){}
+    unsigned short charIndex = index;
+    const unsigned char* pInfo;
+    if (index != 0xffff) {
+        pInfo = *(const unsigned char**)(pSelf + 0x14);
+        const unsigned short* pTable = *(const unsigned short**)(pSelf + 0x1c);
+        const unsigned char* pSub = *(const unsigned char**)(pInfo + 8);
 
-extern "C" unsigned short
+        int cellsInASheet =
+            *(const unsigned short*)(pSub + 0xc) *
+            *(const unsigned short*)(pSub + 0xe);
+
+        unsigned short mapped = pTable[index / cellsInASheet];
+        if (mapped != 0xffff) {
+            charIndex = index - mapped;
+        }
+    }
+
+    if (charIndex == 0xffff) {
+        charIndex = *(const unsigned short*)(pInfo + 2);
+    }
+
+    return *(const nw4r::ut::CharWidths*)GetCharWidthsFromIndex__Q44nw4r2ut6detail11ResFontBaseCFUs(
+        pSelf, charIndex);
+}
+// ArchiveFontBase::HasGlyph(u16) const - a glyph exists when its sheet-remapped
+// index is valid.
+extern "C" bool
+HasGlyph__Q44nw4r2ut6detail15ArchiveFontBaseCFUs(const void* self,
+                                                 unsigned short ch) {
+    const unsigned char* pSelf = static_cast<const unsigned char*>(self);
+    unsigned short index = FindGlyphIndex__Q44nw4r2ut6detail11ResFontBaseCFUs(pSelf, ch);
+    if (index == 0xffff) {
+        return false;
+    }
+
+    const unsigned char* pInfo = *(const unsigned char**)(pSelf + 0x14);
+    const unsigned short* pTable = *(const unsigned short**)(pSelf + 0x1c);
+    const unsigned char* pSub = *(const unsigned char**)(pInfo + 8);
+
+    int cellsInASheet =
+        *(const unsigned short*)(pSub + 0xc) *
+        *(const unsigned short*)(pSub + 0xe);
+
+    unsigned short mapped = pTable[index / cellsInASheet];
+    unsigned short adjusted = 0xffff;
+    if (mapped != 0xffff) {
+        adjusted = index - mapped;
+    }
+
+    return adjusted != 0xffff;
+}extern "C" unsigned short
 AdjustIndex__Q44nw4r2ut6detail15ArchiveFontBaseCFUs(const void* self,
                                                        unsigned short index) {
     const unsigned char* p = (const unsigned char*)self;
@@ -541,33 +619,68 @@ ConstructOpAnalyzeCWDH__Q44nw4r2ut6detail15ArchiveFontBaseFPQ54nw4r2ut6detail15A
     return 3;
 }
 
-void ConstructOpCopy__Q44nw4r2ut6detail15ArchiveFontBaseFPQ54nw4r2ut6detail15ArchiveFontBase16ConstructContextPQ54nw4r2ut6detail15ArchiveFontBase18CachedStreamReader(){}
+int nw4r::ut::detail::ArchiveFontBase::ConstructOpCopy(ConstructContext* pCtx,
+                                                       CachedStreamReader* pReader) {
+    // Copy as much as the stream cache holds, bounded by the op's remaining
+    // byte count. The second clamp re-reads the remaining count like retail
+    // (the compiler does not know the first clamp capped it).
+    int result;
+    u32 amount = pReader->mStreamEnd - pReader->mStreamPos;
+    if (amount > pCtx->field_0x54) {
+        amount = pCtx->field_0x54;
+    }
+
+    memcpy((void*)pCtx->field_0x4C, pReader->mStreamPos, amount);
+    pReader->mStreamPos += amount;
+    pCtx->field_0x4C += amount;
+
+    u32 remaining = *reinterpret_cast<volatile u32*>(&pCtx->field_0x54);
+    if (amount > remaining) {
+        amount = remaining;
+    }
+    pCtx->field_0x54 -= amount;
+
+    if (pCtx->field_0x54 == 0) {
+        pCtx->field_0xC = pCtx->field_0x50;
+        result = 3;
+    } else {
+        // Still more to copy: account consumed bytes and pull in more data.
+        pCtx->field_0x18 += (pReader->mStreamPos - pReader->mStreamStart) +
+                            (pReader->mBufferPos - pReader->mBufferStart);
+        if (!pReader->RequestData(pCtx, pCtx->field_0x54)) {
+            result = 2;
+        } else {
+            result = 0;
+        }
+    }
+    return result;
+}
 
 int nw4r::ut::detail::ArchiveFontBase::ConstructOpSkip(ConstructContext* pCtx,
                                      CachedStreamReader* pReader) {
-    // The context aliases the font object being built, so the skip-remaining
-    // counter (+0x54) and next-op pointer (+0x50) live inside the context.
-    u32 remain = (pCtx->field_0x8 - pCtx->field_0x4) +
-                 (pCtx->field_0x14 - pCtx->field_0x10);
+    // Skip as much as the stream cache holds, bounded by the op's remaining
+    // byte count. The second clamp re-reads the remaining count like retail
+    // (the compiler does not know the first clamp capped it).
+    u32 streamAvail = pReader->mStreamEnd - pReader->mStreamPos;
     u32 amount = pCtx->field_0x54;
-    if (amount > remain) {
-        amount = remain;
+    u32 avail = streamAvail + (pReader->mBufferEnd - pReader->mBufferPos);
+    if (amount > avail) {
+        amount = avail;
     }
 
-    // Skip ahead in the stream cache first, then in the stream itself once
-    // the buffered range is exhausted.
-    // Skip ahead in the stream cache first, then in the stream itself once
-    // the buffered range is exhausted.
-    u32 buffered = pCtx->field_0x14 - pCtx->field_0x10;
+    // Consume the buffered range first, then the stream itself once the
+    // buffered range is exhausted.
+    u32 buffered = pReader->mBufferEnd - pReader->mBufferPos;
     if (buffered > amount) {
-        pCtx->field_0x10 += amount;
+        pReader->mBufferPos += amount;
     } else {
-        pCtx->field_0x10 = pCtx->field_0x14;
-        pCtx->field_0x4 += amount - buffered;
+        pReader->mBufferPos = pReader->mBufferEnd;
+        pReader->mStreamPos += amount - buffered;
     }
 
-    if (amount > *reinterpret_cast<volatile u32*>(&pCtx->field_0x54)) {
-        amount = *reinterpret_cast<volatile u32*>(&pCtx->field_0x54);
+    u32 remaining = *reinterpret_cast<volatile u32*>(&pCtx->field_0x54);
+    if (amount > remaining) {
+        amount = remaining;
     }
     pCtx->field_0x54 -= amount;
 
@@ -577,10 +690,9 @@ int nw4r::ut::detail::ArchiveFontBase::ConstructOpSkip(ConstructContext* pCtx,
     }
 
     // Still more to skip: accumulate consumed bytes and pull in more data.
-    pCtx->field_0x18 += (pCtx->field_0x4 - pCtx->field_0x0) +
-                        (pCtx->field_0x10 - pCtx->field_0xC);
-    int result = reinterpret_cast<CachedStreamReader*>(pCtx->field_0x50)
-                     ->RequestData(pCtx, pCtx->field_0x54);
+    pCtx->field_0x18 += (pReader->mStreamPos - pReader->mStreamStart) +
+                        (pReader->mBufferPos - pReader->mBufferStart);
+    int result = pReader->RequestData(pCtx, pCtx->field_0x54);
     if (result == 0) {
         return 2;
     }
@@ -622,13 +734,11 @@ GetRemain__Q54nw4r2ut6detail15ArchiveFontBase18CachedStreamReaderCFv(const void*
            (*(const unsigned int*)((const char*)self + 0x14) - *(const unsigned int*)((const char*)self + 0x10));
 }
 
-extern "C" void
-CopyTo__Q54nw4r2ut6detail15ArchiveFontBase18CachedStreamReaderFPvUl(void* self,
-                                                                 void* pDst,
-                                                                 unsigned int size) {
-    unsigned int* p = (unsigned int*)self;
+void nw4r::ut::detail::ArchiveFontBase::CachedStreamReader::CopyTo(
+    void* pDst, u32 size) {
+    unsigned int* p = (unsigned int*)this;
 
-    unsigned int avail = p[5] - p[4];  // mStreamEnd - mStart
+    unsigned int avail = p[5] - p[4];  // mStreamEnd - mBufferPos
 
     if (avail >= size) {
         memcpy(pDst, (void*)p[4], size);

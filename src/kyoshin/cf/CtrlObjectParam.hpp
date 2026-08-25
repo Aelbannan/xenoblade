@@ -245,7 +245,16 @@ namespace cf {
         u16 field_00[7];        // +0x00..0x0D (field_00[i+1] = slot u16 at +0x02+i*2)
         u16 field_0E[6];        // +0x0E..0x19 (per-slot u16 at +0x0E+i*2)
         u8  pad_1A[2];          // +0x1A..0x1B
-        s16 shortArr[6];        // +0x1C..0x27 (equip slot ids)
+        // Two views of +0x1C..0x27 (same trick as CtrlObjectParamEntry11A4):
+        // reading shortArr[5] for the test and field_26 for the call argument
+        // forces MWCC to emit two lha loads instead of CSE-ing them.
+        union {
+            s16 shortArr[6];       // +0x1C..0x27 (equip slot ids)
+            struct {
+                u8  pad_1C[0x0A];
+                s16 field_26;      // +0x26 (arts item id)
+            };
+        };
         u8  pad_28[0xD4 - 0x28];
         s16 field_D4;           // +0xD4
         s16 field_D6;           // +0xD6
@@ -531,7 +540,8 @@ namespace cf {
         virtual void _v240(); virtual void _v244(); virtual void _v248(); virtual void _v24C();
         virtual void _v250(); virtual void _v254(); virtual void _v258(); virtual void _v25C();
         virtual void _v260(); virtual void _v264(); virtual void _v268(); virtual void _v26C();
-        virtual void _v270(); virtual void _v274(); virtual void _v278(); virtual void _v27C();
+        virtual void _v270(); virtual void _v274(); virtual void _v278();
+        virtual void* _v27C();   // arts-set accessor (used by func_800A145C)
         virtual void _v280();
         virtual u8* _v028C();
     };

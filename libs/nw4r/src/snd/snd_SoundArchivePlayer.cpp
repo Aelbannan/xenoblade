@@ -1,6 +1,11 @@
 #include <nw4r/snd.h>
 #include <nw4r/ut.h>
 
+// Retail nw4r_data.s pool constants (plain linker labels; declared at global
+// scope so the names are not mangled into the nw4r::snd namespace).
+extern const double lbl_eu_8066A050;
+extern const float lbl_eu_8066A048;
+
 // Import from snd_SoundArchive.cpp (retail symbol; not declared in snd_SoundArchive.h)
 extern "C" u32 detail_GetFileCount__Q34nw4r3snd12SoundArchiveCFv(
     const nw4r::snd::SoundArchive* self);
@@ -711,8 +716,6 @@ struct SoundInfoLayout {
 
 // Imports resolved in other TUs (retail symbol names; the shared headers do
 // not declare these shapes).
-extern const double lbl_eu_8066A050;
-extern const float lbl_eu_8066A048;
 extern "C" bool ReadOffsetByLabel__Q44nw4r3snd6detail13SeqFileReaderCFPCcPUl(
     const detail::SeqFileReader* pReader, const char* pLabel, u32* pOffset);
 extern "C" u32 ParseAllocTrack__Q44nw4r3snd6detail9MmlParserFPCvUlPUl(

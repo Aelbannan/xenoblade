@@ -44,7 +44,11 @@ NW4R_UT_LINKLIST_TYPEDEF_DECL(FontRefLink);
  * ArcResourceAccessor
  *
  ******************************************************************************/
-class ArcResourceAccessor : public ResourceAccessor {
+// Retail vtable data lives in the shared nw4r_data blob object
+// (lbl_eu_80569CB8). novtable stops MWCC from emitting a local
+// __vt__ArcResourceAccessor copy; the ctor assigns the retail label
+// explicitly (see lyt_arcResourceAccessor.cpp).
+class __declspec(novtable) ArcResourceAccessor : public ResourceAccessor {
 public:
     static const u32 RES_TYPE_NAME = 0;
     static const u32 RES_TYPE_ANIMATION = FOURCC('a', 'n', 'i', 'm');

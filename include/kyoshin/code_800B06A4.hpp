@@ -666,12 +666,20 @@ public:
     void* mVtbl;                  // 0x00
     CfReslistNode* mStartNodePtr; // 0x04
     CfReslistNode mStartNode;     // 0x08 (0xc bytes)
-    u32 field_0x14;               // 0x14 pool array base
+    CfReslistNode* field_0x14;    // 0x14 pool array base
     u32 field_0x18;               // 0x18 entry count
     u8 field_0x1c;                // 0x1c owns-pool-array flag
     u8 _pad_1d[3];                // 0x1d-0x1f
     // total 0x20
 };
+// Pool element view with a zeroing default ctor (experiment: placement-new
+// construction over the raw array - MWCC refuses to unroll it, 112B simple
+// loop; kept for reference or future use).
+struct ResPoolNode {
+    CfReslistNode* mNext;
+    ResPoolNode() : mNext(0) {}
+};
+
 // Field accessor view over a CfObject payload walked by the reslist search
 // helpers (func_800B4278 / func_800B42E8).
 struct CfObjFieldView {
@@ -939,11 +947,26 @@ struct TboxInfoReslistPoolView {
 };
 
 // Selection-sort entry: 8-byte {pointer, sort-value} pair.
-struct SortEntry {
-    void* mPointer;  // +0x00
+// The value is accessed both as float (comparators/copies) and as a raw word
+// (the sort's swap moves it through GPRs), hence the union.
+union SortEntryValue {
     float mValue;    // +0x04
+    u32 mWord;       // +0x04
+};
+
+struct SortEntry {
+    void* mPointer;       // +0x00
+    SortEntryValue mValue; // +0x04
 };
 typedef int (*SortEntryCompare)(SortEntry*, SortEntry*);
+
+// Float-field view of SortEntry: retail's swap copies route the value word
+// through lfs/stfs (float view), which the union-typed field does not
+// reproduce.
+struct SortEntryF {
+    void* mPointer; // +0x00
+    float mValue;   // +0x04
+};
 
 // --- batch targets: introsort family / ring buffer (us-800b58a8 etc.) ---
 extern "C" void func_800B535C(void** first, void** last, void** cmp);
@@ -992,11 +1015,27 @@ extern "C" bool func_8008585C__Q22cf13CfGameManagerFv(void* gm);
 extern "C" bool func_80085840__Q22cf13CfGameManagerFv(void* gm);
 extern "C" u32 func_80082FE4__Q22cf13CfGameManagerFv(void* gm);
 extern "C" void func_8008360C__Q22cf13CfGameManagerFv(void* gm);
-extern "C" void func_8007F9B4__Q22cf13CfGameManagerFv(void* gm);
+extern "C" void func_8007F9B4__Q22cf13CfGameManagerFv(u32 value);
 extern "C" void func_80084C10__Q22cf13CfGameManagerFv(void* gm);
-extern "C" void func_80083DEC__Q22cf13CfGameManagerFv(void* gm, void* a, s32 b,
-                                                          B47Vec3* c, const B47Vec3* d,
-                                                          u16 e, u16 f, u16 g, u16 h);
+extern "C" void func_80083DEC__Q22cf13CfGameManagerFv(u32 a, u32 b, u32 c, u32 d,
+                                                          u32 e, u32 f, u32 g, u32 h,
+                                                          float value);
+// Imports used by func_800B7AF0.
+extern "C" void func_8008372C__Q22cf13CfGameManagerFv(void* a, void* b, u32 c);
+extern "C" void func_80083560__Q22cf13CfGameManagerFv(u32 a, u32 b);
+extern "C" void func_80083470__Q22cf13CfGameManagerFv(u32 a, u32 b, u32 c);
+extern "C" void func_80083D70__Q22cf13CfGameManagerFv(u32 a, u32 b, u32 c, u32 d,
+                                                          float value);
+extern "C" void func_800ABB9C(void* out, void* item);
+extern "C" void func_8009D018(u32 destination, u32 value);
+extern "C" int func_800AC470(void* item);
+extern "C" void func_800AC460(void* item, int flag);
+extern "C" void func_8013DCAC(u32 a, u32 b);
+extern "C" u32 func_80082694__Q22cf13CfGameManagerFv(u32 id);
+extern "C" void func_8008269C__Q22cf13CfGameManagerFv(u32 id, u32 value);
+extern "C" void func_800826F0__Q22cf13CfGameManagerFv(u32 value);
+extern "C" void func_80062600();
+extern "C" void* func_800B6C7C();
 extern "C" void* func_800B6C58();
 extern "C" int func_800AB580(void* obj, void* arg, int flag, float range);
 extern "C" void* getInstance__Q22cf14CBattleManagerFv();
@@ -1015,13 +1054,17 @@ struct B7AF0Obj {
     u8 _pad00[0x64];
     u32 flags64;                 // +0x64 (bit17 tested)
     u32 flags68;                 // +0x68 (bits 13/15 tested)
-    u8 _pad6C[0x94 - 0x6C];
+    u8 _pad6C[0x74 - 0x6C];
+    u32 field74;                 // +0x74 (word arg to func_8008372C)
+    u8 _pad78[0x94 - 0x78];
     s32 type94;                  // +0x94 type id
     u8 _pad98[0x9C - 0x98];
     u32 field9C;                 // +0x9C (low halfword tested)
-    u8 _padA0[0x148 - 0xA0];
+    u8 _padA0[0x120 - 0xA0];
+    u8 buf120[0x148 - 0x120];    // +0x120 record span (sub-span at +0x134)
     float field148;              // +0x148
-    u8 _pad14C[0x15A - 0x14C];
+    u8 _pad14C[0x158 - 0x14C];
+    u16 h158;                    // +0x158 (bits 8/9/10 tested)
     u16 h15A;                    // +0x15A
     u16 h15C;                    // +0x15C
     u16 h15E;                    // +0x15E
@@ -1145,8 +1188,8 @@ extern "C" void func_800BE978(void* obj, s32 a);
 extern "C" s32 func_800822F4__Q22cf13CfGameManagerFv();
 extern "C" s32 func_80063560(s32 kind, s32 a, s32 b);
 extern "C" s32 func_8006398C(s32 a);
-extern "C" u32 func_80063310(void* a);
-extern "C" s32 func_80063394(void* a);
+extern "C" u32 func_80063310(u32 a);
+extern "C" s32 func_80063394(u32 a);
 extern "C" s32 func_8006846C(void* res, s32 id);
 extern "C" void* func_80062C88(s32 id);
 extern "C" void* func_80062E04(s32 id);
@@ -1156,8 +1199,222 @@ extern "C" void* func_80062D44(s32 id);
 extern "C" void func_80066714(int flag);
 extern void* lbl_eu_8052A3B0[];
 extern void* lbl_eu_805294E0[];
+extern void* lbl_eu_80529128[];
+extern void* lbl_eu_80528600[];
+// Flat constructors/dtor called from the spawner (retail symbol names).
+extern "C" void* __ct__cf_CfObjectObj(void* self);
+extern "C" void* __ct__cf_CfObjectEne(void* self);
+extern "C" void* __ct__Q22cf12CfObjectTboxFv(void* self);
+extern "C" void __ct__Q22cf11CfObjectEffFv(void* self);
+extern "C" void func_800BFAB0(void* obj, u32 w04, u32 w00);
 extern "C" void* func_800B20B4(UnkClass_805764CC* self, u32 mask,
                                 const B20B4Payload* payload, u32 arg);
+
+// Slot 21 (+0x54): failure teardown hook used when a spawned npc/pc cannot
+// be given a resource slot.
+class IB20B4Vt54 {
+public:
+    virtual void t00();
+    virtual void t01();
+    virtual void t02();
+    virtual void t03();
+    virtual void t04();
+    virtual void t05();
+    virtual void t06();
+    virtual void t07();
+    virtual void t08();
+    virtual void t09();
+    virtual void t0A();
+    virtual void t0B();
+    virtual void t0C();
+    virtual void t0D();
+    virtual void t0E();
+    virtual void t0F();
+    virtual void t10();
+    virtual void t11();
+    virtual void t12();
+    virtual void t13();
+    virtual void t14();
+    virtual void fail(u32 arg);   // +0x54
+};
+
+// Slot 81 (+0x144): per-field payload setter on spawned npc/pc objects.
+class IB20B4Set {
+public:
+    virtual void s000();
+    virtual void s001();
+    virtual void s002();
+    virtual void s003();
+    virtual void s004();
+    virtual void s005();
+    virtual void s006();
+    virtual void s007();
+    virtual void s008();
+    virtual void s009();
+    virtual void s00A();
+    virtual void s00B();
+    virtual void s00C();
+    virtual void s00D();
+    virtual void s00E();
+    virtual void s00F();
+    virtual void s010();
+    virtual void s011();
+    virtual void s012();
+    virtual void s013();
+    virtual void s014();
+    virtual void s015();
+    virtual void s016();
+    virtual void s017();
+    virtual void s018();
+    virtual void s019();
+    virtual void s01A();
+    virtual void s01B();
+    virtual void s01C();
+    virtual void s01D();
+    virtual void s01E();
+    virtual void s01F();
+    virtual void s020();
+    virtual void s021();
+    virtual void s022();
+    virtual void s023();
+    virtual void s024();
+    virtual void s025();
+    virtual void s026();
+    virtual void s027();
+    virtual void s028();
+    virtual void s029();
+    virtual void s02A();
+    virtual void s02B();
+    virtual void s02C();
+    virtual void s02D();
+    virtual void s02E();
+    virtual void s02F();
+    virtual void s030();
+    virtual void s031();
+    virtual void s032();
+    virtual void s033();
+    virtual void s034();
+    virtual void s035();
+    virtual void s036();
+    virtual void s037();
+    virtual void s038();
+    virtual void s039();
+    virtual void s03A();
+    virtual void s03B();
+    virtual void s03C();
+    virtual void s03D();
+    virtual void s03E();
+    virtual void s03F();
+    virtual void s040();
+    virtual void s041();
+    virtual void s042();
+    virtual void s043();
+    virtual void s044();
+    virtual void s045();
+    virtual void s046();
+    virtual void s047();
+    virtual void s048();
+    virtual void s049();
+    virtual void s04A();
+    virtual void s04B();
+    virtual void s04C();
+    virtual void s04D();
+    virtual void s04E();
+    virtual void s04F();
+    virtual void s050();
+    virtual void setField(int idx, u32 value);   // +0x144
+};
+
+// Slot 86 (+0x158): post-init start hook of the small point/marker objects.
+class IB20B4Start {
+public:
+    virtual void p000();
+    virtual void p001();
+    virtual void p002();
+    virtual void p003();
+    virtual void p004();
+    virtual void p005();
+    virtual void p006();
+    virtual void p007();
+    virtual void p008();
+    virtual void p009();
+    virtual void p00A();
+    virtual void p00B();
+    virtual void p00C();
+    virtual void p00D();
+    virtual void p00E();
+    virtual void p00F();
+    virtual void p010();
+    virtual void p011();
+    virtual void p012();
+    virtual void p013();
+    virtual void p014();
+    virtual void p015();
+    virtual void p016();
+    virtual void p017();
+    virtual void p018();
+    virtual void p019();
+    virtual void p01A();
+    virtual void p01B();
+    virtual void p01C();
+    virtual void p01D();
+    virtual void p01E();
+    virtual void p01F();
+    virtual void p020();
+    virtual void p021();
+    virtual void p022();
+    virtual void p023();
+    virtual void p024();
+    virtual void p025();
+    virtual void p026();
+    virtual void p027();
+    virtual void p028();
+    virtual void p029();
+    virtual void p02A();
+    virtual void p02B();
+    virtual void p02C();
+    virtual void p02D();
+    virtual void p02E();
+    virtual void p02F();
+    virtual void p030();
+    virtual void p031();
+    virtual void p032();
+    virtual void p033();
+    virtual void p034();
+    virtual void p035();
+    virtual void p036();
+    virtual void p037();
+    virtual void p038();
+    virtual void p039();
+    virtual void p03A();
+    virtual void p03B();
+    virtual void p03C();
+    virtual void p03D();
+    virtual void p03E();
+    virtual void p03F();
+    virtual void p040();
+    virtual void p041();
+    virtual void p042();
+    virtual void p043();
+    virtual void p044();
+    virtual void p045();
+    virtual void p046();
+    virtual void p047();
+    virtual void p048();
+    virtual void p049();
+    virtual void p04A();
+    virtual void p04B();
+    virtual void p04C();
+    virtual void p04D();
+    virtual void p04E();
+    virtual void p04F();
+    virtual void p050();
+    virtual void p051();
+    virtual void p052();
+    virtual void p053();
+    virtual void p054();
+    virtual void start(int flag);   // +0x158
+};
 
 // Imports used by func_800B5994 (retail symbol names).
 extern "C" void func_8004B0B0(void* dst);
@@ -1166,7 +1423,23 @@ extern "C" int testResInfoFlag(unsigned long mask);
 extern "C" void* getUnk80664658();
 extern "C" void* func_800B6494();
 extern "C" int CfRes_getE24Bit22();
-extern const float lbl_eu_80661CD4;
+extern float lbl_eu_80661CD4;
+extern float lbl_eu_80661CC8;
+extern float lbl_eu_80661CCC;
+extern float lbl_eu_80661CD0;
+
+// BDAT table/row globals used by func_800B06C8 (see CfBdat.cpp).
+extern void* lbl_eu_806640A8;
+extern u32 lbl_eu_80664184;
+extern const double lbl_eu_806669D0;
+extern "C" u32 getBdatStringColumnValue(void* bdat, const char* column, s32 row);
+
+// u32 word-pair / f64 view for MWCC's 0x43300000 unsigned->float conversion
+// (CfObjectImplMove.hpp convention).
+union B6C8F64Conv {
+    u32 w[2];
+    f64 d;
+};
 
 // Player object returned by getPlayer__Q22cf13CfGameManagerFi:
 // position getter at slot 43 (+0xAC).
@@ -1321,7 +1594,7 @@ extern "C" void __dla__FPv(void*);
 extern "C" void* func_800B1AC0(void* a, void* b);
 extern "C" void func_800B73E8(void* a, void* b, void* c);
 extern "C" void __dt__8047BDA8(void*);
-extern "C" void func_800B0894(UnkClass_805764CC* self, unsigned long handle, unsigned long count);
+extern "C" void func_800B0894(UnkClass_805764CC* self, unsigned long handle, s32 count);
 extern "C" void func_800B4278(void* object, u32 arg);
 extern "C" void func_800B42E8(void* object, u32 arg);
 extern "C" unsigned long func_800B0FEC(void* self);
@@ -1370,9 +1643,9 @@ extern "C" void func_800B3A60(void* list, void* obj);
 extern "C" int func_8007F91C__Q22cf13CfGameManagerFv();
 extern "C" void* func_8009ECB0();
 extern "C" void* func_8009EC9C(unsigned long index);
-extern "C" int func_80174C98(void* dst, void* src, unsigned long size);
+extern "C" int func_80174C98(void* dst, void* src, int size); // keep 3rd param int - must match the family-canonical decls (CTaskGame.hpp 10197 note)
 extern "C" int func_80148778(void* obj, int arg);
-extern "C" void CfRes_getD80Flag();
+extern "C" int CfRes_getD80Flag();
 extern "C" void func_80496288();
 extern "C" void func_801765A4(void* obj, int arg);
 
@@ -1380,6 +1653,9 @@ extern "C" void func_801765A4(void* obj, int arg);
 extern "C" void func_800B75C4(void* obj, unsigned long mask, int flag);
 extern float lbl_eu_80666A10;
 extern float lbl_eu_80666A08;
+extern float lbl_eu_80663EC8;
+extern float lbl_eu_80663ECC;
+extern float lbl_eu_80663ED4;
 
 // --- func_800B83AC support types ---
 // Embedded vtable-pointer sub-object at char+0x17c (status controller).
@@ -1573,6 +1849,7 @@ extern "C" unsigned short func_800B4F64();
 extern "C" u32 func_800B4FA4(void* obj);
 extern "C" void func_800B4F6C(void* obj);
 extern "C" void func_800B4F90(void* obj);
+extern "C" void func_800B4F80(void* obj, u32 mask);
 extern "C" int func_800B3D4C(void* obj, u32 flag);
 extern "C" int func_80082FCC__Q22cf13CfGameManagerFv(void* obj);
 extern "C" u32 func_eu_800BFC7C(void* obj);
@@ -1822,23 +2099,49 @@ extern const float lbl_eu_80666A0C;
 extern float lbl_eu_80663ED0;
 extern void* lbl_eu_80663E14;
 
-// nw4r imports used by func_800B47A8 (retail C-ABI names).
+// Object behind the global pointer used by func_800B47A8; field +0xB4 holds
+// the listener instance.
+struct B47EvtRoot {
+    u8 _00[0xB4];
+    void* field_B4;
+};
+
+// nw4r imports used by func_800B47A8 (C++-mangled retail symbols).
 namespace nw4r {
 namespace db {
-extern "C" void Warning(const char* file, int line, const char* msg, ...);
+void Warning(const char* file, int line, const char* msg, ...);
 }
 namespace math {
-extern "C" float FrSqrt(float x);
+float FrSqrt(float x);
 }
 }
 extern char lbl_eu_80526300[];
 extern char lbl_eu_80526324[];
 
-// Simple 3-float vector manipulated by func_800B47A8.
+// Simple 3-float vector manipulated by func_800B47A8. Component arithmetic
+// is written as loops so MWCC unrolls and PS-vectorizes into ps_add/ps_sub
+// pairs (matching retail codegen).
 struct B47Vec3 {
-    float x;
-    float y;
-    float z;
+    union {
+        struct {
+            float x;
+            float y;
+            float z;
+        };
+        float v[3];
+    };
+    B47Vec3& operator+=(const B47Vec3& rhs) {
+        for (int i = 0; i < 3; i++) {
+            v[i] += rhs.v[i];
+        }
+        return *this;
+    }
+    B47Vec3& operator-=(const B47Vec3& rhs) {
+        for (int i = 0; i < 3; i++) {
+            v[i] -= rhs.v[i];
+        }
+        return *this;
+    }
 };
 
 // Listener/dispatch object behind *(lbl_eu_80663E14 + 0xB4): slot 5 (+0x14)
@@ -1850,7 +2153,7 @@ public:
     virtual void pad02();
     virtual void pad03();
     virtual void pad04();
-    virtual int unk05(void* a, void* b, void* c, int mode);
+    virtual int unk05(void* a, void* b, int mode);
 };
 
 // Object walked by func_800B68A8: position getter at slot 0x2B (+0xAC),
@@ -2073,19 +2376,20 @@ struct B8524Sub {
 
 // Imports used by the batch targets (retail symbol names).
 extern "C" int func_800B4594(void* obj);
-extern "C" int func_8006EF04(u32 mask);
+// C++ linkage so MWCC emits the retail-mangled func_8006EF04__Fi reloc.
+bool func_8006EF04(int mask);
 extern "C" int func_800B64B8(void* obj, u32 mask);
 extern "C" void func_8004CB80(void* dst, void* a, void* b);
 extern "C" float func_80073F88(void* p);
 extern "C" void func_800B6AF4(void* self);
-extern "C" void func_80496264(int arg);
+extern "C" void func_80496264(int arg, int val);
 extern "C" void* CfRes_getInstanceField();
 extern "C" void func_80067DB4();
 extern "C" void* func_800BBC0C(void* data);
 extern "C" void func_800BC3D8(void* obj, float val);
 extern "C" void func_8004CF00();
 extern "C" void* func_800B77BC();
-extern "C" void func_800B7AF0(UnkClass_805764CC* self, class IB7Arg* arg);
+extern "C" s32 func_800B7AF0(UnkClass_805764CC* self, class IB7Arg* arg);
 extern "C" void func_800B9C14(void* obj);
 extern "C" void func_80068358(void* obj);
 extern "C" IDispB3A88Mgr* func_800821F8__Q22cf13CfGameManagerFv();
@@ -2152,33 +2456,137 @@ public:
     virtual void unk22();
     virtual void unk23();
     virtual void unk24();
-    virtual void unk25();
-    virtual void unk26();
-    // slot 0x9c (index 39): bind a payload record
+    /* Calibrated fake interface for func_800B7410's three dispatches
+     * (retail vtable offsets 0x9c/0xc4/0xdc). MWCC's slot assignment for this
+     * shape does not track declaration order linearly; the filler counts here
+     * are empirical (see hexdiff iterations). */
     virtual void unk39(void* arg);
-    virtual void unk3A();
-    virtual void unk3B();
-    virtual void unk3C();
-    virtual void unk3D();
-    virtual void unk3E();
-    virtual void unk3F();
-    virtual void unk40();
-    virtual void unk41();
-    virtual void unk42();
-    virtual void unk43();
-    virtual void unk44();
-    virtual void unk45();
-    virtual void unk46();
-    virtual void unk47();
-    virtual void unk48();
-    // slot 0xc4 (index 49): set the node float
+    virtual void va00();
+    virtual void va01();
+    virtual void va02();
+    virtual void va03();
+    virtual void va04();
+    virtual void va05();
+    virtual void vf26();
+    virtual void vf27();
+    virtual void vf28();
+    // slot 0xc4: set the node float
     virtual void unk49(float val);
     virtual void unk4A();
     virtual void unk4B();
     virtual void unk4C();
     virtual void unk4D();
     virtual void unk4E();
-    // slot 0xdc (index 55): apply the shared constant
+    // slot 0xdc: apply the shared constant
     virtual void unk55(float val);
 };
+
+// Object walked by func_800B5994 (speed-of-play scaling pass): status probes
+// at slots 29/34, position getter at slot 42 (+0xAC), level getters at slots
+// 91/93, and the fade setter at slot 101 (+0x1A4).
+class B5994Obj {
+public:
+    virtual void q00();
+    virtual void q01();
+    virtual void q02();
+    virtual void q03();
+    virtual void q04();
+    virtual void q05();
+    virtual void q06();
+    virtual void q07();
+    virtual void q08();
+    virtual void q09();
+    virtual void q0A();
+    virtual void q0B();
+    virtual void q0C();
+    virtual void q0D();
+    virtual void q0E();
+    virtual void q0F();
+    virtual void q10();
+    virtual void q11();
+    virtual void q12();
+    virtual void q13();
+    virtual void q14();
+    virtual void q15();
+    virtual void q16();
+    virtual void q17();
+    virtual void q18();
+    virtual void q19();
+    virtual void q1A();
+    virtual void q1B();
+    virtual void q1C();
+    virtual bool q74();            // 29 (+0x74)
+    virtual void q1E();
+    virtual bool q1F();   // 31 (+0x7C)
+    virtual void q20();
+    virtual void q21();
+    virtual void q88();            // 34 (+0x88)
+    virtual void q23();
+    virtual void q24();
+    virtual void q25();
+    virtual void q26();
+    virtual void q27();
+    virtual void q28();
+    virtual B47Vec3* pos2B();      // 42 (+0xAC)
+    virtual void q2B();
+    virtual void q2C();
+    virtual void q2D();
+    virtual void q2E();
+    virtual void q2F();
+    virtual void q30();
+    virtual void q31();
+    virtual void q32();
+    virtual void q33();
+    virtual void q34();
+    virtual void q35();
+    virtual void q36();
+    virtual void q37();
+    virtual void q38();
+    virtual void q39();
+    virtual void q3A();
+    virtual void q3B();
+    virtual void q3C();
+    virtual void q3D();
+    virtual void q3E();
+    virtual void q3F();
+    virtual void q40();
+    virtual void q41();
+    virtual void q42();
+    virtual void q43();
+    virtual void q44();
+    virtual void q45();
+    virtual void q46();
+    virtual void q47();
+    virtual void q48();
+    virtual void q49();
+    virtual void q4A();
+    virtual void q4B();
+    virtual void q4C();
+    virtual void q4D();
+    virtual void q4E();
+    virtual void q4F();
+    virtual void q50();
+    virtual void q51();
+    virtual void q52();
+    virtual void q53();
+    virtual void q54();
+    virtual float lvl16C();        // 91 (+0x16C)
+    virtual void q5C();
+    virtual float lvl174();        // 93 (+0x174)
+    virtual void q5E();
+    virtual void q5F();
+    virtual void q60();
+    virtual void q61();
+    virtual void q62();
+    virtual void q63();
+    virtual void q64();
+    virtual void fade1A4(float val); // 101 (+0x1A4)
+};
+
+// --- imports for func_800B5994 dispatch (retail symbol names) ---
+extern "C" void func_800B6520(const F8C0ListSource* src, void* rec);
+extern "C" float func_8006BAF0();
+extern "C" B5994Obj* func_800B64DC(void* obj);
+extern "C" u32 func_800B64E4(void* ctrl);
+extern "C" int func_800B64EC(void* obj);
 #endif

@@ -575,17 +575,18 @@ u32 SoundArchiveFileReader::ConvertLabelStringToId(
 
 SoundArchiveFile::SoundInfoOffset
 SoundArchiveFileReader::impl_GetSoundInfoOffset(u32 id) const {
-    static SoundArchiveFile::SoundInfoOffset INVALID_DATA_REF;
-
+    // Retail folds this zero-initialized fallback into immediates (no static
+    // storage); value-initializing a temporary keeps the semantics identical
+    // without emitting the TU-local INVALID_DATA_REF copy.
     const SoundArchiveFile::SoundCommonTable* pTable =
         Util::GetDataRefAddress0(mInfo->soundTableRef, mInfo);
 
     if (pTable == NULL) {
-        return INVALID_DATA_REF;
+        return SoundArchiveFile::SoundInfoOffset();
     }
 
     if (id >= pTable->count) {
-        return INVALID_DATA_REF;
+        return SoundArchiveFile::SoundInfoOffset();
     }
 
     if (GetVersion() >= NW4R_VERSION(1, 1)) {
@@ -593,7 +594,7 @@ SoundArchiveFileReader::impl_GetSoundInfoOffset(u32 id) const {
             Util::GetDataRefAddress0(pTable->items[id], mInfo);
 
         if (pInfo == NULL) {
-            return INVALID_DATA_REF;
+            return SoundArchiveFile::SoundInfoOffset();
         }
 
         return pInfo->soundInfoRef;

@@ -336,7 +336,9 @@ def _postprocess_data_copy(project: Project, decomp: Path) -> Path | None:
         from tools.postprocess_reloc_names import UNIT_RULES  # type: ignore[import-not-found]
     except Exception:
         return None
-    if Path(decomp).name not in UNIT_RULES:
+    # Keys may carry a "#<symbol-substring>" scope (same-basename twins across
+    # libs); the plain basename still gates whether any rule exists.
+    if not any(k.partition("#")[0] == Path(decomp).name for k in UNIT_RULES):
         return None
     scratch = project.root / ".scratch"
     scratch.mkdir(parents=True, exist_ok=True)

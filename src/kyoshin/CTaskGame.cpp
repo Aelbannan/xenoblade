@@ -1,7 +1,14 @@
 #include "kyoshin/CTaskGame.hpp"
+// CfGameManager.hpp declares func_8049603C as UnkScnResult*(CScn*), which
+// conflicts with CTaskGame.hpp's CTaskGameCamView*(CScn*). Rename it out for
+// this include (repo convention, see CGame.cpp / CMenuBattleMode.cpp).
+#define func_8049603C taskGameCfGameMgr9603CUnused
+#define func_8049602C taskGameCfGameMgr9602CUnused
 #include "kyoshin/cf/CTaskGameCf.hpp"
 #include "kyoshin/cf/CfObjectEnumList.hpp"
 #include "kyoshin/cf/CfGameManager.hpp"
+#undef func_8049603C
+#undef func_8049602C
 #include "kyoshin/CGame.hpp"
 #include "kyoshin/CLoad.hpp"
 

@@ -52,7 +52,7 @@ void func_80293E24(cf::CChainCombo* self, cf::CfObjectActor* actor) {
 }
 
 void func_80293EEC(cf::CChainCombo* self, cf::CfObjectActor* actor) {
-    if (self->mPending) {
+    if (self->mPending != 0) {
         // Call vtable[0x4c] on the +0x3e9c CfObjectMove sub-object, then chain
         // its id through func_800B708C -> func_8016FE34.
         CChainVObj* vobjRaw = (CChainVObj*)func_8016FE34(func_800B708C(
@@ -75,5 +75,8 @@ void func_80293EEC(cf::CChainCombo* self, cf::CfObjectActor* actor) {
             func_802A07F4(0xbf, vobjRaw);
         }
     }
-    self->mPending = false;
+    // Volatile final store: makes MWCC schedule the epilogue with the LR
+    // restore first (retail order).
+    volatile bool* pending = &self->mPending;
+    *pending = false;
 }

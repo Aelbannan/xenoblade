@@ -9,6 +9,7 @@
 #include "monolib/device/CFileHandle.hpp"
 #include "monolib/lib/CLibLayout.hpp"
 #include "monolib/lib/UnkClass_8045F564.hpp"
+#include "kyoshin/CScrollBar.hpp"
 #include "kyoshin/cf/CfGameManager.hpp"
 
 // Named .sdata2 conversion magics: defining them lets MWCC's constant pool
@@ -46,6 +47,10 @@ extern float lbl_eu_806687B4;
 extern float lbl_eu_806687B8;
 
 typedef void* (*VFuncPtr)(void*, const char*, u32);
+
+// Plain-C prototype so MWCC recognizes memset as an intrinsic (the <cstring>
+// header declaration defeats the inline expansion).
+void* memset(void*, int, unsigned long);
 
 void* func_80248920(void* self, const char* name, f32 x, f32 y, void* arg5, const char* paneName);
 
@@ -138,7 +143,8 @@ void func_80245450(void* self) {
     func_801F3850(cur->field_3134, cur->field_0B);
 }
 
-void func_802455F0(void* self) {
+// Retail keeps this helper's symbol unmangled.
+extern "C" void func_802455F0(void* self) {
     CFloorMapCursor* cur = (CFloorMapCursor*)self;
     CFloorMapFloorEntry* entries = reinterpret_cast<CFloorMapFloorEntry*>(cur->_0C);
     u8 count = *(u8*)((u8*)self + cur->field_09 * 0x30C + 0x318);
@@ -204,10 +210,12 @@ void func_8024577C(void* self, u16 val) {
     u8 i;
     u8 oldA;
     u8 oldB;
+    int off;
     i = 0;
     oldA = cur->field_0A;
     oldB = cur->field_0B;
-    base = (u8*)self + fi * 0x30C;
+    off = fi * 0x30C;
+    base = (u8*)self + off;
     count = base[0x318];
 
     while (i < count) {
@@ -262,36 +270,43 @@ void func_8024577C(void* self, u16 val) {
 // panes' flags for the current map.
 void func_80245950(void* self) {
     CFloorMapCursor* cur = (CFloorMapCursor*)self;
-    u8 count = (u8)func_8003B1EC(lbl_eu_8066479C);
-    cur->field_30D0 = (u8)count;
+    u8 count = func_8003B1EC(lbl_eu_8066479C);
+    cur->field_30D0 = count;
+
+    char buf2[0x20];
+    char buf3[0x20];
+    char buf4[0x20];
 
     // Fill the floor entries from the table in reverse order.
-    s8 fi = (s8)(count - 1);
-    for (u8 i = 1; i <= count; i++) {
-        CFloorMapFloorNameEntry* e =
-            (CFloorMapFloorNameEntry*)((u8*)self + (s8)fi * 0x30C);
-        e->field_10 = i;
-        e->field_12 = (u16)func_80136330(lbl_eu_8066479C, &lbl_eu_8050BEA8[0x15A], i);
-        e->field_14 = (u32)func_8013639C((const void*)lbl_eu_8066479C, (const void*)&lbl_eu_8050BEA8[0x161], (int)i);
-        e->field_318 = 0;
+    // fi is an int walking below -128 for large counts, so the (s8) cast
+    // cannot be folded and MWCC re-emits extsb+mulli every iteration.
+    // Declared e-then-fi-then-i so MWCC colors them onto retail's regs.
+    CFloorMapFloorNameEntry* e;
+    u8 i;
+    int fi;
+    fi = (s8)(count - 1);
+    i = 1;
+    while (i <= count) {
+        e = (CFloorMapFloorNameEntry*)((u8*)self + (u32)((s8)fi * 0x30C));
         fi--;
+        e->field_10 = i;
+        e->field_12 = func_80136330(lbl_eu_8066479C, &lbl_eu_8050BEA8[0x15A], i);
+        e->field_14 = (u32)func_8013639C((const void*)lbl_eu_8066479C, (const void*)&lbl_eu_8050BEA8[0x161], i);
+        e->field_318 = 0;
+        i++;
     }
 
     // Name the floor panes bottom-up; floors present in the current map use
     // the found-color table, the rest the default table.
-    char buf2[0x20];
     for (u8 k = count; k >= 1; k--) {
-        u8 found = 0;
-        u16 idx = 0;
-        u8 floorId = (u8)(count - ((u8)k - 1));
-        do {
-            u16 j = (u16)(idx + 1);
-            if (func_8013AC3C(lbl_eu_80664798, floorId, j)) {
+        int found = 0;
+        u8 floorId = count - (k - 1);
+        for (u32 idx = 0; idx < 0x240; idx++) {
+            if (func_8013AC3C(lbl_eu_80664798, floorId, idx + 1)) {
                 found = 1;
                 break;
             }
-            idx++;
-        } while (idx < 0x240);
+        }
         sprintf(buf2, &lbl_eu_8050BEA8[0x12A], k);
         if (found)
             func_80139A18(cur->mData, buf2, lbl_eu_806647B0, lbl_eu_806647B8);
@@ -301,70 +316,68 @@ void func_80245950(void* self) {
 
     // Show the first `count` row panes; each pane's low flag bit is set when
     // its index is below the floor count.
-    char buf3[0x20];
     for (u8 k = 0; k < 10; k++) {
-        sprintf(buf3, &lbl_eu_8050BEA8[0x12A], (u8)(k + 1));
+        sprintf(buf3, &lbl_eu_8050BEA8[0x12A], k + 1);
         nw4r::lyt::Pane* pane = cur->mData->GetRootPane()->FindPaneByName(buf3, 1);
         CFloorMapPaneFlag* pf = (CFloorMapPaneFlag*)pane;
-        pf->mFlag = (pf->mFlag & 0x7F) | (((u32)k - (u32)count) >> 31 & 1);
+        pf->mFlag = (pf->mFlag & 0x7F) | (k < count);
     }
 
     // Pick the current floor entry: the first entry whose floor id matches
     // the current-floor flag (or id 1 when the flag is unset).
     for (u8 i = 0; i < count; i++) {
+        s8 fl = cur->field_08;
         CFloorMapFloorNameEntry* e =
-            (CFloorMapFloorNameEntry*)((u8*)self + (u8)i * 0x30C);
-        if (cur->field_08 == 0) {
+            (CFloorMapFloorNameEntry*)((u8*)self + i * 0x30C);
+        if (fl == 0) {
             if (e->field_10 == 1) {
-                cur->field_09 = (s8)i;
+                cur->field_09 = i;
                 break;
             }
-        } else if (e->field_10 == cur->field_08) {
-            cur->field_09 = (s8)i;
+        } else if ((s8)e->field_10 == fl) {
+            cur->field_09 = i;
             break;
         }
     }
 
     // Position the map pane under the current floor.
-    char buf4[0x20];
-    sprintf(buf4, &lbl_eu_8050BEA8[0x12A], (s8)cur->field_09 + 1);
+    sprintf(buf4, &lbl_eu_8050BEA8[0x12A], cur->field_09 + 1);
     nw4r::lyt::Pane* pane = cur->mData->GetRootPane()->FindPaneByName(buf4, 1);
     nw4r::math::VEC3 pos;
     func_801375A0(&pos, pane);
     nw4r::lyt::Pane* scalePane =
         cur->mData->GetRootPane()->FindPaneByName(&lbl_eu_8050BEA8[0x136], 1);
-    pos.x *= scalePane->GetScale().x;
-    nw4r::math::_VEC3 dest = pos;
+    pos.x = pos.x * scalePane->GetScale().x;
     if (cur->field_30D8)
-        CFloorMapSetPanePos(cur->field_30D8->GetRootPane(), dest);
+        CFloorMapSetSlotPos((CFloorMapLayoutHolder*)cur->field_30D8, *(nw4r::math::_VEC3*)&pos);
 
-    func_80136B4C(cur->field_30D8, &lbl_eu_8050BEA8[0xF8],
-                  (char*)((u8*)self + (s8)cur->field_09 * 0x30C)[0x14], 0);
-    func_80136B4C(cur->mData, &lbl_eu_8050BEA8[0x145],
-                  func_8013639C((const void*)lbl_eu_806640A8, (const void*)&lbl_eu_8050BEA8[0x1F], (int)lbl_eu_80664798), 0);
+    CFloorMapFloorNameEntry* eSel =
+        (CFloorMapFloorNameEntry*)((u8*)self + cur->field_09 * 0x30C);
+    func_80136B4C(cur->field_30D8, &lbl_eu_8050BEA8[0xF8], *(char**)&eSel->field_14, 0);
+    func_80136B4C((nw4r::lyt::Layout*)lbl_eu_806640A8, &lbl_eu_8050BEA8[0x145],
+                  func_8013639C((const void*)lbl_eu_806640A8, (const void*)&lbl_eu_8050BEA8[0x1F], lbl_eu_80664798), 0);
 
     // Second position target (cursor-position pane) when the current floor
     // flag is set.
     if (cur->field_08 != 0) {
         char buf5[0x20];
-        sprintf(buf5, &lbl_eu_8050BEA8[0x12A], (s8)cur->field_09 + 1);
+        sprintf(buf5, &lbl_eu_8050BEA8[0x12A], cur->field_09 + 1);
         nw4r::lyt::Pane* pane2 = cur->mData->GetRootPane()->FindPaneByName(buf5, 1);
         nw4r::math::VEC3 pos2;
         func_801375A0(&pos2, pane2);
         nw4r::lyt::Pane* scalePane2 =
             cur->mData->GetRootPane()->FindPaneByName(&lbl_eu_8050BEA8[0x136], 1);
-        pos2.x *= scalePane2->GetScale().x;
-        nw4r::math::_VEC3 dest2 = pos2;
+        pos2.x = pos2.x * scalePane2->GetScale().x;
         if (cur->field_30F0)
-            CFloorMapSetPanePos(cur->field_30F0->GetRootPane(), dest2);
+            CFloorMapSetSlotPos((CFloorMapLayoutHolder*)cur->field_30F0, *(nw4r::math::_VEC3*)&pos2);
     }
 
-    if (lbl_eu_80664798 != (s32)lbl_eu_80664184)
+    if (lbl_eu_80664798 != lbl_eu_80664184)
         cur->field_3101 = 0;
 
     // Flag the panes when the current map is one of the special tutorial-map
     // ids (0x13-0x15, 0x17-0x18, 0x1B).
-    u8 flag = 0;
+    int flag = 0;
     if ((u32)(lbl_eu_80664798 - 0x13) <= 2 || (u32)(lbl_eu_80664798 - 0x17) <= 1 ||
         lbl_eu_80664798 == 0x1B)
         flag = 1;
@@ -372,7 +385,7 @@ void func_80245950(void* self) {
     nw4r::lyt::Pane* paneA =
         cur->mData->GetRootPane()->FindPaneByName(&lbl_eu_8050BEA8[0x16B], 1);
     CFloorMapPaneFlag* pfa = (CFloorMapPaneFlag*)paneA;
-    pfa->mFlag = (pfa->mFlag & 0x7F) | ((__cntlzw(flag) & 0x10) != 0);
+    pfa->mFlag = (pfa->mFlag & 0x7F) | !flag;
     nw4r::lyt::Pane* paneB =
         cur->mData->GetRootPane()->FindPaneByName(&lbl_eu_8050BEA8[0x175], 1);
     CFloorMapPaneFlag* pfb = (CFloorMapPaneFlag*)paneB;
@@ -384,51 +397,65 @@ void func_80245950(void* self) {
 // marker into the highest floor whose height is above the marker, and finally
 // refresh the cursor pane position and scrollbar.
 void func_80245DF8(void* self) {
+    // Locals in retail frame-slot order; the s16->f32 conversions below use
+    // plain casts - MWCC materializes its own stack temps and reuses the
+    // TU-defined lbl_eu_80668770 magic for them.
+    f32 vec[3];
+    nw4r::math::VEC3 pos;
+    nw4r::math::_VEC3 dest;
+    char buf[0x20];
+    CFloorMapMarkerEntry entries[32];
+
     func_8003AA34();
 
     u32 fp = (u32)getFP__FPCc(&lbl_eu_8050BEA8[0x17F]);
     u16 count = (u16)func_8003B1EC(fp);
 
-    CFloorMapMarkerEntry entries[32];
     u16 n = 0;
     for (u16 i = 1; i <= count; i++) {
-        if (!func_8009CF8C(0x20C8 + i)) continue;
-        if (func_801361E8(fp, &lbl_eu_8050BEA8[0x18C], i) != lbl_eu_80664798) continue;
-        if (func_801361E8(fp, &lbl_eu_8050BEA8[0x192], i) == 2) continue;
+        if (func_8009CF8C(0x20C8 + i) == 0) continue;
+        if (lbl_eu_80664798 != (u8)func_801361E8(fp, &lbl_eu_8050BEA8[0x18C], i)) continue;
+        if ((u8)func_801361E8(fp, &lbl_eu_8050BEA8[0x192], i) == 2) continue;
 
         CFloorMapMarkerEntry* e = &entries[n];
         e->id = i;
         n++;
         e->type = func_801361E8(fp, &lbl_eu_8050BEA8[0x192], i);
-        e->x = (f32)(s16)func_80136330(fp, &lbl_eu_8050BEA8[0x19B], i);
-        e->y = (f32)(s16)func_80136330(fp, &lbl_eu_8050BEA8[0x1A0], i);
-        e->z = (f32)(s16)func_80136330(fp, &lbl_eu_8050BEA8[0x1F], i);
+        e->x = (f32)func_80136330(fp, &lbl_eu_8050BEA8[0x19B], i);
+        e->y = (f32)func_80136330(fp, &lbl_eu_8050BEA8[0x1A0], i);
+        e->z = (f32)func_80136330(fp, &lbl_eu_8050BEA8[0x1A5], i);
         e->unk = (u32)func_8013639C((const void*)fp, (const void*)&lbl_eu_8050BEA8[0x1F], i);
 
+        // Marker is always shown for entry 0 or when either global gimmick
+        // flag is set; otherwise only while the current scroll position lies
+        // inside the marker's [left,right] range.
+        u8 flag;
         if (i == 0) {
-            e->flag = 1;
+            flag = 1;
         } else if (getUnk80664658()->field_214 & 0x48000) {
-            e->flag = 1;
+            flag = 1;
         } else {
             u16 left = func_80136254((const void*)fp, (const void*)&lbl_eu_8050BEA8[0x1AA], i);
             u16 right = func_80136254((const void*)fp, (const void*)&lbl_eu_8050BEA8[0x1B5], i);
-            u16 pos = (u16)func_8009CF8C(0x20);
-            e->flag = (left <= pos && pos <= right) ? 1 : 0;
+            u16 scrollPos = (u16)func_8009CF8C(0x20);
+            flag = (left > scrollPos || scrollPos > right) ? 0 : 1;
         }
+        e->flag = flag;
     }
 
     // Merge: walk the floors from the top down; the first floor whose height
     // is above the marker's y receives the marker appended to its list.
     CFloorMapCursor* cur = (CFloorMapCursor*)self;
-    for (u8 j = 0; j < (u16)n; j++) {
+    for (u8 j = 0; j < n; j++) {
         CFloorMapMarkerEntry* e = &entries[j];
         f32 y = e->y;
         for (s8 k = (s8)(cur->field_30D0 - 1); k >= 0; k--) {
             CFloorMapMarkerBlock* blk =
                 (CFloorMapMarkerBlock*)((u8*)cur + k * 0x30C + 0x10);
-            if (y >= (f32)blk->height) continue;
+            if (!((f32)blk->height > y)) continue;
 
             CFloorMapMarkerEntry* rec = &blk->records[blk->count];
+            blk->count++;
             rec->id = e->id;
             rec->type = e->type;
             rec->x = e->x;
@@ -436,7 +463,6 @@ void func_80245DF8(void* self) {
             rec->z = e->z;
             rec->unk = e->unk;
             rec->flag = e->flag;
-            blk->count++;
             break;
         }
     }
@@ -445,25 +471,25 @@ void func_80245DF8(void* self) {
 
     // Refresh the cursor position: format the pane name for the current page
     // index, scale its translate by the zoom pane, and move the target pane.
-    char buf[0x20];
     sprintf(buf, &lbl_eu_8050BEA8[0x14D], (s8)cur->field_0A);
 
     nw4r::lyt::Pane* pane = cur->mData->GetRootPane()->FindPaneByName(buf, 1);
-    nw4r::math::VEC3 pos;
     func_801375A0(&pos, pane);
 
     nw4r::lyt::Pane* scalePane =
         cur->mData->GetRootPane()->FindPaneByName(&lbl_eu_8050BEA8[0x136], 1);
     pos.x *= scalePane->GetScale().x;
 
-    nw4r::math::_VEC3 dest = pos;
+    dest = *(nw4r::math::_VEC3*)&pos;
     if (cur->field_3108) {
         CFloorMapCursorTarget* target = (CFloorMapCursorTarget*)cur->field_3108;
         target->pane->SetTranslate(*(nw4r::math::VEC3*)&dest);
     }
 
     if (cur->field_3134) {
-        f32 vec[3] = {lbl_eu_80668768, lbl_eu_8066876C, lbl_eu_80668764};
+        vec[0] = lbl_eu_80668768;
+        vec[1] = lbl_eu_8066876C;
+        vec[2] = lbl_eu_80668764;
         func_801F3670(cur->field_3134, vec);
         CFloorMapFloorEntry* entries2 = (CFloorMapFloorEntry*)cur->_0C;
         func_801F36BC(cur->field_3134, 5,
@@ -505,7 +531,165 @@ void* __dt__802462F0(void* self, int mode) {
     return self;
 }
 
-void func_80246330(void* self){}
+// Rebuild the 20-slot layout block at CFloorMap+0x150: load every floor-row
+// layout, then walk the current map file's marker table. Each accepted marker
+// updates its row pane's text/color (dimmed while outside the scroll range
+// unless the region gimmick flag is set), projects the player position onto
+// that row's map plane, and lights exactly one of the three status panes
+// based on the measured text height.
+void func_80246330(CFloorMapLayoutBlock* self) {
+    char* tbl = lbl_eu_8050BEA8;
+
+    // Stack locals declared in reverse of retail frame-slot order
+    // (convB@0xA8, convA@0xA0, utf16@0x60, buf@0x40, scalars@0x28-0x3C,
+    // pos@0x1C, snap@0x10, out@0x08).
+    CFloorMapF64Conv convB;
+    CFloorMapF64Conv convA;
+    u16 utf16[0x10];
+    char buf[0x20];
+    f32 ry;
+    f32 rx;
+    f32 fvy;
+    f32 fvx;
+    nw4r::math::VEC3 pos;
+    nw4r::math::VEC3 out;
+
+    // s16/u8 -> f32 conversion slots; retail stores both 0x4330 prefix words
+    // before the layout-init loop runs.
+    convA.w[0] = 0x43300000;
+    convB.w[0] = 0x43300000;
+
+    // Dimmed-color base kept in a register across the whole walk (retail
+    // materializes lis r30, 0xC850 once and adds 0x50FF per row).
+    u32 colorHi = 0xC8500000;
+
+    // Dedicated base pointer for the UTF-16 conversion buffer (retail keeps
+    // it in r31 across every call).
+    u16* utf16p = utf16;
+
+    // Load all 20 layouts and bind each row pane's device font.
+    for (u32 i = 0; i < 20; i++) {
+        self->slots[i].layout = NULL;
+        self->slots[i].posY = 0;
+        func_80136E84(&self->slots[i].layout, self->accessor, tbl + 0x1C1);
+        nw4r::lyt::Layout* lay = self->slots[i].layout;
+        CFloorMapFontView* font =
+            (CFloorMapFontView*)func_80452C10__11CDeviceFontFUlPQ34nw4r3lyt6Layout(1, lay);
+        func_8013676C(lay->GetRootPane(), font->getFontHandle());
+    }
+
+    func_8003AA34();
+    u32 fp = (u32)getFP__FPCc(&tbl[0x17F]);
+    u32 count = func_8003B1EC(fp);
+
+    self->count = 0;
+
+    // Constants kept live across the whole marker walk (retail f25-f31).
+    const f64 convBias = lbl_eu_80668770;
+    const f32 zero = lbl_eu_80668764;
+    const f32 regionBase = lbl_eu_80668788;
+    const f32 regionScale = lbl_eu_80668778;
+    const f32 projScale = lbl_eu_8066877C;
+    const f32 thrHi = lbl_eu_80668780;
+    const f32 thrLo = lbl_eu_80668784;
+
+    for (u32 i = 1; i <= count; i++) {
+        if (func_8009CF8C(i + 0x20C8) == 0)
+            continue;
+        if (lbl_eu_80664798 != func_801361E8(fp, tbl + 0x18C, i))
+            continue;
+        if (func_801361E8(fp, tbl + 0x192, i) == 2)
+            continue;
+
+        u8 n = self->count;
+        self->count = n + 1;
+        CFloorMapLayoutSlot* e = &self->slots[n];
+
+        // Row world position: y is truncated into the slot, x/z stay live for
+        // the projection below.
+        nw4r::math::VEC3 pos;
+        func_80141DC4(&pos.x);
+        e->posY = (s32)pos.y;
+
+        char* name = func_8013639C((const void*)fp, tbl + 0x1F, i);
+        func_80136B4C(e->layout, tbl + 0x1D7, name, 0);
+
+        // Dimmed color when the row is not yet visible on the scrollbar but
+        // the region gimmick flag is set.
+        u32 color = 0xFFFFFFFF;
+        int vis;
+        if (i == 0) {
+            vis = 1;
+        } else if (getUnk80664658()->field_214 & 0x12000) {
+            vis = 1;
+        } else {
+            u16 left = func_80136254((const void*)fp, tbl + 0x1AA, i);
+            u16 right = func_80136254((const void*)fp, tbl + 0x1B5, i);
+            u16 scrollPos = (u16)func_8009CF8C(0x20);
+            vis = (left > scrollPos || scrollPos > right) ? 0 : 1;
+        }
+        if (vis || func_8009CF8C(0x3212) != 0)
+            color = colorHi + 0x50FF;
+        func_80137B44(e->layout, tbl + 0x1D7, color);
+
+        // Project this row's scroll range onto the map plane for the current
+        // region.
+        s16 vx = func_80136330(lbl_eu_806640A8, tbl + 0x1E2, lbl_eu_80664798);
+        s16 vy = func_80136330(lbl_eu_806640A8, tbl + 0x1F0, lbl_eu_80664798);
+        convA.w[1] = (u32)(s16)vx ^ 0x80000000;
+        fvx = (f32)(convA.d - convBias);
+        convB.w[1] = (u32)(s16)vy ^ 0x80000000;
+        fvy = (f32)(convB.d - convBias);
+
+        u8 region = func_801361E8(lbl_eu_806640A8, tbl + 0x1FE, lbl_eu_80664798);
+        convA.w[1] = region;
+        f32 denom = ((f32)(convA.d - regionBase)) * regionScale;
+
+        rx = fvx + (pos.x / denom) * projScale;
+        ry = fvy - (pos.z / denom) * projScale;
+
+        // Per-row pixel offsets from the map table nudge the projected point.
+        convB.w[1] = (u32)(s8)func_801362C0((const void*)fp, tbl + 0x20B, i) ^ 0x80000000;
+        ry = ry + (f32)(convB.d - convBias);
+        convA.w[1] = (u32)(s8)func_801362C0((const void*)fp, tbl + 0x213, i) ^ 0x80000000;
+        rx = rx + (f32)(convA.d - convBias);
+
+        nw4r::lyt::Pane* mark = e->layout->GetRootPane()->FindPaneByName(tbl + 0x21B, 1);
+        CFloorMapPaneTransXYZ* mt = (CFloorMapPaneTransXYZ*)mark;
+        mt->trans2C = ry;
+        mt->trans30 = rx;
+        mt->trans34 = zero;
+
+        // Convert the marker name to UTF-16 for the text measurement helper.
+        sprintf(buf, tbl + 0x223, name);
+        func_80136400(buf, utf16p, 0x20);
+
+        u32 len = 0;
+        while (utf16p[len] != 0)
+            len++;
+
+        nw4r::lyt::Pane* textBox = e->layout->GetRootPane()->FindPaneByName(tbl + 0x1D7, 1);
+        func_80125D00((f32*)&out, textBox, utf16p);
+
+        // Clear all three status-pane visible bits, then light the one whose
+        // height band contains the measured text position.
+        nw4r::lyt::Pane* pA = e->layout->GetRootPane()->FindPaneByName(tbl + 0x226, 1);
+        ((CFloorMapPaneFlag*)pA)->mFlag &= 0xFE;
+        nw4r::lyt::Pane* pB = e->layout->GetRootPane()->FindPaneByName(tbl + 0x233, 1);
+        ((CFloorMapPaneFlag*)pB)->mFlag &= 0xFE;
+        nw4r::lyt::Pane* pC = e->layout->GetRootPane()->FindPaneByName(tbl + 0x240, 1);
+        ((CFloorMapPaneFlag*)pC)->mFlag &= 0xFE;
+
+        f32 z = out.x;
+        if (z >= thrHi) {
+            ((CFloorMapPaneFlag*)pA)->mFlag |= 1;
+        } else if (z >= thrLo) {
+            ((CFloorMapPaneFlag*)pB)->mFlag |= 1;
+        } else {
+            ((CFloorMapPaneFlag*)pC)->mFlag |= 1;
+        }
+    }
+}
 
 void* __dt__802468C8(void* self, int mode) {
     extern void* __dl__FPv(void*);
@@ -515,11 +699,292 @@ void* __dt__802468C8(void* self, int mode) {
     return self;
 }
 
-// Retail calls this even though it is empty here; noinline keeps the call a
-// real `bl` instead of letting MWCC elide it.
-__declspec(noinline) void func_80246908(void* self) {}
+// ---------------------------------------------------------------------------
+// func_80246908 - release every marker textbox/picture attached to the map.
+// For each named holder pane under slots->pane (the holder is looked up by
+// name only when the string-table entry is non-NULL), detach and delete the
+// matching marker pane found by child-name under the main layout root;
+// afterwards walk the holder pane's direct children, drop the one extra named
+// pane, and finally release the map layout itself.
+// ---------------------------------------------------------------------------
+#define FLOORMAP_RELEASE_MARKERS(groupPane)                                    \
+    do {                                                                       \
+        CFloorMapHolderChildren* kids;                                         \
+        if ((groupPane) != NULL)                                               \
+            kids = (CFloorMapHolderChildren*)((u8*)(groupPane) + 0x10);        \
+        else                                                                   \
+            kids = (CFloorMapHolderChildren*)((u8*)slots->pane + 0x10);        \
+        CFloorMapChildNode* node = kids->first;                                \
+        CFloorMapChildNode* end = (CFloorMapChildNode*)&kids->first;           \
+        while (node != end) {                                                  \
+            if (node == NULL)                                                  \
+                Panic__Q24nw4r2dbFPCciPCce((const char*)lbl_eu_8052CB40,       \
+                                           0x23D,                              \
+                                           (const char*)lbl_eu_8052CB1C);      \
+            CFloorMapChildNode* next = node->mpNext;                           \
+            nw4r::lyt::Pane* marker =                                          \
+                ((nw4r::lyt::Layout*)slots->layout)                            \
+                    ->GetRootPane()                                            \
+                    ->FindPaneByName(node->name, 1);                           \
+            if (marker != NULL && marker->GetParent() != NULL) {               \
+                marker->GetParent()->RemoveChild(marker);                      \
+                ((CFloorMapLayoutDtorVt*)marker)->destroy(-1);                 \
+                ((CLibLayout*)marker)->deleteTextboxOrPicture();               \
+            }                                                                  \
+            node = next;                                                       \
+        }                                                                      \
+    } while (0)
 
-void func_80247490(void* self, u8 arg2, u32 arg3, f32 arg4){}
+void func_80246908(void* self) {
+    CFloorMapLayoutSlots* slots = (CFloorMapLayoutSlots*)self;
+
+    do {
+        nw4r::lyt::Pane* group = NULL;
+        if (&lbl_eu_8050BEA8[0x26C] != NULL) {
+            group = slots->pane->FindPaneByName(&lbl_eu_8050BEA8[0x26C], true);
+            if (group == NULL)
+                break;
+        }
+        FLOORMAP_RELEASE_MARKERS((group != NULL) ? group : slots->pane);
+    } while (0);
+
+    do {
+        nw4r::lyt::Pane* group = NULL;
+        if (&lbl_eu_8050BEA8[0x275] != NULL) {
+            group = slots->pane->FindPaneByName(&lbl_eu_8050BEA8[0x275], true);
+            if (group == NULL)
+                break;
+        }
+        FLOORMAP_RELEASE_MARKERS((group != NULL) ? group : slots->pane);
+    } while (0);
+
+    do {
+        nw4r::lyt::Pane* group = NULL;
+        if (&lbl_eu_8050BEA8[0x281] != NULL) {
+            group = slots->pane->FindPaneByName(&lbl_eu_8050BEA8[0x281], true);
+            if (group == NULL)
+                break;
+        }
+        FLOORMAP_RELEASE_MARKERS((group != NULL) ? group : slots->pane);
+    } while (0);
+
+    do {
+        nw4r::lyt::Pane* group = NULL;
+        if (&lbl_eu_8050BEA8[0x28A] != NULL) {
+            group = slots->pane->FindPaneByName(&lbl_eu_8050BEA8[0x28A], true);
+            if (group == NULL)
+                break;
+        }
+        FLOORMAP_RELEASE_MARKERS((group != NULL) ? group : slots->pane);
+    } while (0);
+
+    do {
+        nw4r::lyt::Pane* group = NULL;
+        if (&lbl_eu_8050BEA8[0x293] != NULL) {
+            group = slots->pane->FindPaneByName(&lbl_eu_8050BEA8[0x293], true);
+            if (group == NULL)
+                break;
+        }
+        FLOORMAP_RELEASE_MARKERS((group != NULL) ? group : slots->pane);
+    } while (0);
+
+    do {
+        nw4r::lyt::Pane* group = NULL;
+        if (&lbl_eu_8050BEA8[0x2AB] != NULL) {
+            group = slots->pane->FindPaneByName(&lbl_eu_8050BEA8[0x2AB], true);
+            if (group == NULL)
+                break;
+        }
+        FLOORMAP_RELEASE_MARKERS((group != NULL) ? group : slots->pane);
+    } while (0);
+
+    do {
+        nw4r::lyt::Pane* group = NULL;
+        if (&lbl_eu_8050BEA8[0x2B4] != NULL) {
+            group = slots->pane->FindPaneByName(&lbl_eu_8050BEA8[0x2B4], true);
+            if (group == NULL)
+                break;
+        }
+        FLOORMAP_RELEASE_MARKERS((group != NULL) ? group : slots->pane);
+    } while (0);
+
+    do {
+        nw4r::lyt::Pane* group = NULL;
+        if (&lbl_eu_8050BEA8[0x2A0] != NULL) {
+            group = slots->pane->FindPaneByName(&lbl_eu_8050BEA8[0x2A0], true);
+            if (group == NULL)
+                break;
+        }
+        FLOORMAP_RELEASE_MARKERS((group != NULL) ? group : slots->pane);
+    } while (0);
+
+    do {
+        nw4r::lyt::Pane* group = NULL;
+        if (&lbl_eu_8050BEA8[0x2BD] != NULL) {
+            group = slots->pane->FindPaneByName(&lbl_eu_8050BEA8[0x2BD], true);
+            if (group == NULL)
+                break;
+        }
+        FLOORMAP_RELEASE_MARKERS((group != NULL) ? group : slots->pane);
+    } while (0);
+
+    do {
+        nw4r::lyt::Pane* group = NULL;
+        if (&lbl_eu_8050BEA8[0x2C7] != NULL) {
+            group = slots->pane->FindPaneByName(&lbl_eu_8050BEA8[0x2C7], true);
+            if (group == NULL)
+                break;
+        }
+        FLOORMAP_RELEASE_MARKERS((group != NULL) ? group : slots->pane);
+    } while (0);
+
+    do {
+        nw4r::lyt::Pane* group = NULL;
+        if (&lbl_eu_8050BEA8[0x2CF] != NULL) {
+            group = slots->pane->FindPaneByName(&lbl_eu_8050BEA8[0x2CF], true);
+            if (group == NULL)
+                break;
+        }
+        FLOORMAP_RELEASE_MARKERS((group != NULL) ? group : slots->pane);
+    } while (0);
+
+    // Direct walk of the holder pane's own children (row-marker panes; no
+    // holder lookup here).
+    {
+        CFloorMapChildNode* node =
+            *(CFloorMapChildNode**)((u8*)slots->pane + 0x14);
+        CFloorMapChildNode* end =
+            (CFloorMapChildNode*)((u8*)slots->pane + 0x14);
+        while (node != end) {
+            if (node == NULL)
+                Panic__Q24nw4r2dbFPCciPCce((const char*)lbl_eu_8052CB40, 0x23D,
+                                           (const char*)lbl_eu_8052CB1C);
+            CFloorMapChildNode* next = node->mpNext;
+            nw4r::lyt::Pane* marker =
+                ((nw4r::lyt::Layout*)slots->layout)
+                    ->GetRootPane()
+                    ->FindPaneByName(node->name, 1);
+            if (marker != NULL && marker->GetParent() != NULL) {
+                marker->GetParent()->RemoveChild(marker);
+                ((CFloorMapLayoutDtorVt*)marker)->destroy(-1);
+                ((CLibLayout*)marker)->deleteTextboxOrPicture();
+            }
+            node = next;
+        }
+    }
+
+    // One extra named pane outside the holder groups.
+    nw4r::lyt::Pane* extra =
+        ((nw4r::lyt::Layout*)slots->layout)
+            ->GetRootPane()
+            ->FindPaneByName(&lbl_eu_8050BEA8[0x263], 1);
+    if (extra != NULL && extra->GetParent() != NULL) {
+        extra->GetParent()->RemoveChild(extra);
+        ((CFloorMapLayoutDtorVt*)extra)->destroy(-1);
+        ((CLibLayout*)extra)->deleteTextboxOrPicture();
+    }
+
+    // Release the map layout itself (double null check is the retail
+    // deleting-dtor shape).
+    if (slots->layout != 0) {
+        if (slots->layout != 0)
+            ((CFloorMapLayoutDtorVt*)slots->layout)->destroy(1);
+        slots->layout = 0;
+    }
+}
+
+// Per-group marker release (inlined at each call site): resolve the holder
+// pane by name, then detach/delete every marker pane in its child list
+// (link node at pane+0x14).
+#define FLOORMAP_RELEASE_GROUP(slots_, name_, label_)                          \
+    {                                                                          \
+        nw4r::lyt::Pane* group = NULL;                                         \
+        if ((name_) != NULL) {                                                 \
+            group = (slots_)->pane->FindPaneByName((name_), true);             \
+            if (group == NULL)                                                 \
+                goto label_;                                                   \
+        }                                                                      \
+        nw4r::lyt::Pane* holder = (group != NULL) ? group : (slots_)->pane;    \
+        CFloorMapGroupAnchor* anchor =                                         \
+            (CFloorMapGroupAnchor*)((u8*)holder + 0x10);                       \
+        CFloorMapChildNode* node = anchor->kids.mpNext;                        \
+        CFloorMapChildNode* end = (CFloorMapChildNode*)&anchor->kids;                   \
+        while (node != end) {                                                  \
+            if (node == NULL)                                                  \
+                Panic__Q24nw4r2dbFPCciPCce((const char*)lbl_eu_8052CB40,       \
+                                           0x23D,                              \
+                                           (const char*)lbl_eu_8052CB1C);      \
+            CFloorMapChildNode* next = node->mpNext;                           \
+            nw4r::lyt::Pane* marker =                                          \
+                ((nw4r::lyt::Layout*)(slots_)->layout)                         \
+                    ->GetRootPane()                                            \
+                    ->FindPaneByName(node->name, 1);                           \
+            if (marker != NULL && marker->GetParent() != NULL) {               \
+                marker->GetParent()->RemoveChild(marker);                      \
+                ((CFloorMapLayoutDtorVt*)marker)->destroy(-1);                 \
+                ((CLibLayout*)marker)->deleteTextboxOrPicture();               \
+            }                                                                  \
+            node = next;                                                       \
+        }                                                                      \
+    }
+
+// Release the row-marker panes attached to each of the 12 marker-holder
+// groups (tbl offsets below), then rebuild every per-marker pane flag: for
+// idx 1..0x240 the pane named tbl+0x2DE gets its visible bit set when the
+// map-table lookup func_8013AC3C reports a valid (< 0x10000) result, and
+// finally all placement/refresh passes are re-run.
+void func_80247490(void* self, u8 arg2, u32 arg3, f32 arg4) {
+    CFloorMapLayoutSlots* slots = (CFloorMapLayoutSlots*)self;
+    slots->field_0C = arg2;
+    slots->field_0C = arg2;
+
+    FLOORMAP_RELEASE_GROUP(slots, &lbl_eu_8050BEA8[0x26C], next01)
+next01:
+    FLOORMAP_RELEASE_GROUP(slots, &lbl_eu_8050BEA8[0x275], next02)
+next02:
+    FLOORMAP_RELEASE_GROUP(slots, &lbl_eu_8050BEA8[0x281], next03)
+next03:
+    FLOORMAP_RELEASE_GROUP(slots, &lbl_eu_8050BEA8[0x28A], next04)
+next04:
+    FLOORMAP_RELEASE_GROUP(slots, &lbl_eu_8050BEA8[0x293], next05)
+next05:
+    FLOORMAP_RELEASE_GROUP(slots, &lbl_eu_8050BEA8[0x2AB], next06)
+next06:
+    FLOORMAP_RELEASE_GROUP(slots, &lbl_eu_8050BEA8[0x2B4], next07)
+next07:
+    FLOORMAP_RELEASE_GROUP(slots, &lbl_eu_8050BEA8[0x2A0], next08)
+next08:
+    FLOORMAP_RELEASE_GROUP(slots, &lbl_eu_8050BEA8[0x2BD], next09)
+next09:
+    FLOORMAP_RELEASE_GROUP(slots, &lbl_eu_8050BEA8[0x2D6], next10)
+next10:
+    FLOORMAP_RELEASE_GROUP(slots, &lbl_eu_8050BEA8[0x2C7], next11)
+next11:
+    FLOORMAP_RELEASE_GROUP(slots, &lbl_eu_8050BEA8[0x2CF], next12)
+next12:
+
+    // Rebuild each marker pane's visible bit from the map table lookup.
+    // Retail stores bit0 as bit 4 of cntlzw(result), i.e. result < 0x10000.
+    for (u32 idx = 1; idx <= 0x240; idx++) {
+        int found = func_8013AC3C(lbl_eu_80664798, slots->field_0C, (u16)idx);
+        char buf[0x20];
+        sprintf(buf, &lbl_eu_8050BEA8[0x2DE], (u16)idx);
+        nw4r::lyt::Pane* pane =
+            ((nw4r::lyt::Layout*)slots->layout)->GetRootPane()->FindPaneByName(buf, 1);
+        CFloorMapPaneFlag* pf = (CFloorMapPaneFlag*)pane;
+        pf->mFlag = (pf->mFlag & 0xFE) | ((__cntlzw((u32)found) >> 4) & 1);
+    }
+
+    func_8024B234((CFloorMapFull*)self);
+    func_8024AEEC(self);
+    func_8024A748(self);
+    func_8024A448(self);
+    func_80249C1C(slots);
+    func_802497B0(self);
+    func_80249344(slots);
+    func_80248ED8(slots);
+    func_80248A6C(slots);
+}
 
 // Place a map marker for floor row `idx`: after confirming the row belongs
 // to the current map and its unlock flag is set, find the first floor whose
@@ -662,21 +1127,27 @@ done:;
 // radius. The trailing digits of that pane's name are the row id.
 u32 func_80248558(void* self) {
     CFloorMapLayoutSlots* slots = (CFloorMapLayoutSlots*)self;
-    // Cached .rodata base pointers: retail keeps these in r26/r27/r28 across
-    // the whole loop instead of re-materialising them per use.
-    const char* table = lbl_eu_8050BEA8;
-    nw4r::lyt::Pane* pane = slots->pane->FindPaneByName(&table[0x26C], 1);
 
-    CFloorMapChildList* list = (CFloorMapChildList*)((u8*)pane + 0x14);
+    // Declared in retail frame-slot order (buf2@0x48, out@0x3c, rec@0x30,
+    // acc3@0x24, acc2@0x18, acc@0xc, digits@0x8).
+    char buf2[0x40];
+    nw4r::math::VEC3 out;
+    nw4r::math::VEC3 rec;
+    nw4r::math::VEC3 acc3;
+    nw4r::math::VEC3 acc2;
+    nw4r::math::VEC3 acc;
+    char digits[4];
+
+    nw4r::lyt::Pane* pane = slots->pane->FindPaneByName(&lbl_eu_8050BEA8[0x26C], 1);
+
+    CFloorMapChildNode* node = *(CFloorMapChildNode**)((u8*)pane + 0x14);
+    CFloorMapChildNode* end = (CFloorMapChildNode*)((u8*)pane + 0x14);
 
     // Cached float locals: retail keeps these in f31/f30 across every call
     // in the loop (hence the nonvolatile-float prologue).
     f32 zero = lbl_eu_80668764;
     f32 d = lbl_eu_80668790 + lbl_eu_80668790;
     f32 threshold = d * d;
-
-    CFloorMapChildNode* node = list->mpNext;
-    CFloorMapChildNode* end = (CFloorMapChildNode*)list;
 
     while (node != end) {
         if (node == NULL)
@@ -685,54 +1156,60 @@ u32 func_80248558(void* self) {
         nw4r::lyt::Pane* pane2 = slots->pane->FindPaneByName(node->name, 1);
 
         nw4r::lyt::Pane* target = slots->layout->GetRootPane();
-        nw4r::math::VEC3 out;
         out.x = zero;
         out.y = zero;
         out.z = zero;
         if (target != pane2 && pane2 != NULL) {
+            nw4r::lyt::Pane* parent = pane2->GetParent();
             out.x = pane2->GetTranslate().x;
             out.y = pane2->GetTranslate().y;
             out.z = pane2->GetTranslate().z;
-
-            nw4r::lyt::Pane* parent = pane2->GetParent();
-            nw4r::math::VEC3 acc;
             acc.x = zero;
             acc.y = zero;
             acc.z = zero;
-            if (target != parent && parent != NULL) {
-                acc.x = parent->GetTranslate().x;
-                acc.y = parent->GetTranslate().y;
-                acc.z = parent->GetTranslate().z;
-
-                nw4r::lyt::Pane* gp = parent->GetParent();
-                nw4r::math::VEC3 acc2;
-                acc2.x = zero;
-                acc2.y = zero;
-                acc2.z = zero;
-                if (target != gp && gp != NULL) {
-                    acc2.x = gp->GetTranslate().x;
-                    acc2.y = gp->GetTranslate().y;
-                    acc2.z = gp->GetTranslate().z;
-
-                    nw4r::lyt::Pane* ggp = gp->GetParent();
-                    nw4r::math::VEC3 acc3;
-                    acc3.x = zero;
-                    acc3.y = zero;
-                    acc3.z = zero;
-                    if (target != ggp && ggp != NULL) {
-                        acc3.x = ggp->GetTranslate().x;
-                        acc3.y = ggp->GetTranslate().y;
-                        acc3.z = ggp->GetTranslate().z;
-                        nw4r::math::VEC3 rec;
-                        func_8024B4CC(&rec, self, ggp->GetParent());
-                        nw4r::math::VEC3Add(&acc3, &acc3, &rec);
-                    }
-                    nw4r::math::VEC3Add(&acc2, &acc2, &acc3);
-                }
-                nw4r::math::VEC3Add(&acc, &acc, &acc2);
-            }
+            // Shared add tails: when a level's check fails the remaining
+            // additions still run over zeroed accumulators (as in retail).
+            if (target == parent || parent == NULL)
+                goto add_out;
+            nw4r::lyt::Pane* gp = parent->GetParent();
+            acc.x = parent->GetTranslate().x;
+            acc.y = parent->GetTranslate().y;
+            acc.z = parent->GetTranslate().z;
+            acc2.x = zero;
+            acc2.y = zero;
+            acc2.z = zero;
+            if (target == gp || gp == NULL)
+                goto add_acc;
+            nw4r::lyt::Pane* ggp = gp->GetParent();
+            acc2.x = gp->GetTranslate().x;
+            acc2.y = gp->GetTranslate().y;
+            acc2.z = gp->GetTranslate().z;
+            acc3.x = zero;
+            acc3.y = zero;
+            acc3.z = zero;
+            if (target == ggp || ggp == NULL)
+                goto add_acc2;
+            acc3.x = ggp->GetTranslate().x;
+            acc3.y = ggp->GetTranslate().y;
+            acc3.z = ggp->GetTranslate().z;
+            func_8024B4CC(&rec, self, ggp->GetParent());
+            nw4r::math::VEC3Add(&acc3, &acc3, &rec);
+        add_acc2:
+            nw4r::math::VEC3Add(&acc2, &acc2, &acc3);
+        add_acc:
+            nw4r::math::VEC3Add(&acc, &acc, &acc2);
+        add_out:
             nw4r::math::VEC3Add(&out, &out, &acc);
         }
+
+        // Scale the accumulated position into map coordinates using the
+        // zoom pane: x is multiplied by its scale, then the pane's own
+        // translate (including z) is added on top.
+        nw4r::lyt::Pane* scalePane =
+            slots->layout->GetRootPane()->FindPaneByName(&lbl_eu_8050BEA8[0x136], 1);
+        out.x *= scalePane->GetScale().x;
+        nw4r::math::VEC3Add(&out, &out,
+                            (nw4r::math::VEC3*)&scalePane->GetTranslate());
 
         f32 dy = -out.y;
         f32 dx = -out.x;
@@ -741,11 +1218,13 @@ u32 func_80248558(void* self) {
             if (node == NULL)
                 Panic__Q24nw4r2dbFPCciPCce((const char*)lbl_eu_8052CB40, 0x23D, (const char*)lbl_eu_8052CB1C);
 
-            char buf2[0x40];
-            sprintf(buf2, &table[0x223], node->name);
+            sprintf(buf2, &lbl_eu_8050BEA8[0x223], node->name);
 
             // Keep only the digits of the formatted name (max 4) and parse them.
-            char digits[4] = {0};
+            digits[0] = 0;
+            digits[1] = 0;
+            digits[2] = 0;
+            digits[3] = 0;
             u8 outIdx = 0;
             for (u8 in = 0; buf2[in] != 0; in++) {
                 u8 c = (u8)buf2[in];
@@ -797,29 +1276,28 @@ void* func_80248920(void* self, const char* name, f32 x, f32 y, void* arg5, cons
     return pic;
 }
 
-void func_80248A6C(){}
+// Variant of the marker-placement scan (same shape as func_802497B0) for a
+// different map table section: picture panes keyed by tbl+0x382 names are
+// appended under the tbl+0x275 row pane when every eligibility check passes.
+void func_80248A6C(CFloorMapLayoutSlots* slots) {
+    const char* tbl = lbl_eu_8050BEA8;
 
-void func_80248ED8(){}
-
-void func_80249344(){}
-
-// Scan the marker table of the current map file and place one picture pane
-// per eligible marker: each marker is accepted only after its map-id, random
-// x-range, encounter-count, flag and position checks pass and the marker is
-// not already placed; the picture is appended to the map pane whose name is
-// formatted from the marker index.
-void func_802497B0(void* self) {
-    CFloorMapLayoutSlots* slots = (CFloorMapLayoutSlots*)self;
-
-    u32 fp = (u32)getFP__FPCc(&lbl_eu_8050BEA8[0x315]);
-    int count = (int)func_8003B1EC(fp);
-
-    // Two s16/u8 -> f32 conversion slots (retail keeps both 0x4330 prefix
-    // words stored from the prologue and alternates the slots).
+    // Two s16/u8 -> f32 conversion slots; retail stores their 0x4330 prefix
+    // words from the prologue, before opening the map file.
     CFloorMapF64Conv convA;
     CFloorMapF64Conv convB;
     convA.w[0] = 0x43300000;
     convB.w[0] = 0x43300000;
+
+    u32 fp = (u32)getFP__FPCc(&tbl[0x315]);
+    int count = (int)func_8003B1EC(fp);
+
+    // Constants hoisted before the walk so MWCC keeps them in f26-f31.
+    const f64 convBias = lbl_eu_80668770;
+    const f32 zero = lbl_eu_80668764;
+    const f32 regionBase = lbl_eu_80668788;
+    const f32 regionScale = lbl_eu_80668778;
+    const f32 projScale = lbl_eu_8066877C;
 
     for (u16 i = 1; i <= count; i++) {
         if (func_801361E8(fp, &lbl_eu_8050BEA8[0x322], i) != lbl_eu_80664798) continue;
@@ -849,47 +1327,399 @@ void func_802497B0(void* self) {
         s16 z = func_80136330(fp, &lbl_eu_8050BEA8[0x1A5], i);
 
         convA.w[1] = (u32)(s16)x ^ 0x80000000;
-        f32 fx = (f32)(convA.d - lbl_eu_80668770);
+        f32 fx = (f32)(convA.d - convBias);
         convB.w[1] = (u32)(s16)y ^ 0x80000000;
-        f32 fy = (f32)(convB.d - lbl_eu_80668770);
+        f32 fy = (f32)(convB.d - convBias);
         convA.w[1] = (u32)(s16)z ^ 0x80000000;
-        f32 fz = (f32)(convA.d - lbl_eu_80668770);
+        f32 fz = (f32)(convA.d - convBias);
         nw4r::math::_VEC3 pos = { fx, fy, fz };
 
+        // Skip markers whose world y sits below the first map row taller than
+        // it, unless that row is exactly the row currently displayed.
         u8 found = 0;
         u8 count2 = (u8)func_8003B1EC(lbl_eu_8066479C);
         for (u8 j = 1; j <= count2; j++) {
             s16 h = func_80136330(lbl_eu_8066479C, &lbl_eu_8050BEA8[0x15A], j);
             convB.w[1] = (u32)(s16)h ^ 0x80000000;
-            if ((f32)(convB.d - lbl_eu_80668770) > fy) {
+            if ((f32)(convB.d - convBias) > fy) {
                 if (j == slots->field_0C) found = 1;
                 break;
             }
         }
         if (!found) continue;
 
-        if (func_801361E8(fp, &lbl_eu_8050BEA8[0x37D], i) != 6) continue;
+        if (func_801361E8(fp, &lbl_eu_8050BEA8[0x37D], i) != 5) continue;
 
         char buf[0x20];
-        sprintf(buf, &lbl_eu_8050BEA8[0x3A6], i);
+        sprintf(buf, &lbl_eu_8050BEA8[0x382], i);
         if (slots->layout->GetRootPane()->FindPaneByName(buf, 1)) continue;
 
         s16 vx = func_80136330(lbl_eu_806640A8, &lbl_eu_8050BEA8[0x1E2], lbl_eu_80664798);
         s16 vy = func_80136330(lbl_eu_806640A8, &lbl_eu_8050BEA8[0x1F0], lbl_eu_80664798);
 
         convA.w[1] = (u32)(s16)vx ^ 0x80000000;
-        f32 rvx = (f32)(convA.d - lbl_eu_80668770);
+        f32 rvx = (f32)(convA.d - convBias);
         convB.w[1] = (u32)(s16)vy ^ 0x80000000;
-        f32 rvy = (f32)(convB.d - lbl_eu_80668770);
-        f32 coords[3] = { rvx, rvy, lbl_eu_80668764 };
+        f32 rvy = (f32)(convB.d - convBias);
+        f32 coords[3] = { rvx, rvy, zero };
         u8 region = (u8)func_801361E8(lbl_eu_806640A8, &lbl_eu_8050BEA8[0x1FE], lbl_eu_80664798);
 
         convA.w[1] = (u32)region;
-        f32 scale = (f32)(convA.d - lbl_eu_80668788) * lbl_eu_80668778;
+        f32 scale = (f32)(convA.d - regionBase) * regionScale;
         nw4r::math::_VEC3 result = pos;
-        result.y = coords[1] - (result.z / scale) * lbl_eu_8066877C;
-        result.x = coords[0] + (result.x / scale) * lbl_eu_8066877C;
-        result.z = lbl_eu_80668764;
+        result.y = coords[1] - (result.z / scale) * projScale;
+        result.x = coords[0] + (result.x / scale) * projScale;
+        result.z = zero;
+
+        void* picture = func_80248920(slots, (const char*)0x3, result.x, result.y, (void*)-1, buf);
+
+        nw4r::lyt::Pane* pane2 = slots->pane->FindPaneByName(&lbl_eu_8050BEA8[0x275], 1);
+        pane2->AppendChild((nw4r::lyt::Pane*)picture);
+    }
+}
+
+// Variant of the marker-placement scan (same shape as func_80248A6C) for a
+// third map table section: picture panes keyed by tbl+0x390 names are appended
+// under the tbl+0x281 row pane when every eligibility check passes.
+void func_80248ED8(CFloorMapLayoutSlots* slots) {
+    // Stack locals: MWCC assigns frame slots in reverse declaration order,
+    // so declare highest-offset first (conv@0x50/0x58 ... result@0x08).
+    const char* tbl = lbl_eu_8050BEA8;
+
+    // Two s16/u8 -> f32 conversion slots; retail stores their 0x4330 prefix
+    // words from the prologue, before opening the map file.
+    CFloorMapF64Conv convA;
+    CFloorMapF64Conv convB;
+    char buf[0x20];
+    nw4r::math::_VEC3 pos;
+    f32 coords[3];
+    nw4r::math::_VEC3 result;
+    convA.w[0] = 0x43300000;
+    convB.w[0] = 0x43300000;
+
+    u32 fp = (u32)getFP__FPCc(&tbl[0x315]);
+    int count = (int)func_8003B1EC(fp);
+
+    // Constants hoisted before the walk so MWCC keeps them in f26-f31.
+    const f64 convBias = lbl_eu_80668770;
+    const f32 zero = lbl_eu_80668764;
+    const f32 regionBase = lbl_eu_80668788;
+    const f32 regionScale = lbl_eu_80668778;
+    const f32 projScale = lbl_eu_8066877C;
+
+    for (u16 i = 1; i <= count; i++) {
+        if (func_801361E8(fp, &lbl_eu_8050BEA8[0x322], i) != lbl_eu_80664798) continue;
+
+        u16 rnd = (u16)func_8009CF8C(0x20);
+        u16 left = (u16)func_80136254((const void*)fp, &lbl_eu_8050BEA8[0x329], (int)i);
+        if (rnd < left) continue;
+        u16 right = (u16)func_80136254((const void*)fp, &lbl_eu_8050BEA8[0x32F], (int)i);
+        if (right < rnd) continue;
+
+        u8 c1 = (u8)func_801361E8(fp, &lbl_eu_8050BEA8[0x335], i);
+        u8 c2 = (u8)func_801361E8(fp, &lbl_eu_8050BEA8[0x343], i);
+        if (func_8009CF8C((u32)c1 + 0x7FC) < c2) continue;
+
+        u8 c3 = (u8)func_801361E8(fp, &lbl_eu_8050BEA8[0x34D], i);
+        u8 c4 = (u8)func_801361E8(fp, &lbl_eu_8050BEA8[0x35B], i);
+        if (func_8009CF8C((u32)c3 + 0x7FC) < c4) continue;
+
+        u8 v365 = (u8)func_801361E8(fp, &lbl_eu_8050BEA8[0x365], i);
+        if (v365 != 0 && func_8009CF8C((u32)v365 + 0x2578) == 0) continue;
+
+        u16 v373 = (u16)func_80136254((const void*)fp, &lbl_eu_8050BEA8[0x373], (int)i);
+        if (v373 != 0 && func_8009CF8C((u32)v373 + 0x220) != 0xFE) continue;
+
+        s16 x = func_80136330(fp, &lbl_eu_8050BEA8[0x19B], i);
+        s16 y = func_80136330(fp, &lbl_eu_8050BEA8[0x1A0], i);
+        s16 z = func_80136330(fp, &lbl_eu_8050BEA8[0x1A5], i);
+
+        // s16 -> f32 via the shared 0x4330 double-magic idiom.
+        convA.w[1] = (u32)(s16)x ^ 0x80000000;
+        pos.x = (f32)(convA.d - convBias);
+        convB.w[1] = (u32)(s16)y ^ 0x80000000;
+        pos.y = (f32)(convB.d - convBias);
+        convA.w[1] = (u32)(s16)z ^ 0x80000000;
+        pos.z = (f32)(convA.d - convBias);
+        f32 fy = pos.y;
+
+        // Skip markers whose world y sits below the first map row taller than
+        // it, unless that row is exactly the row currently displayed.
+        u8 found = 0;
+        u8 count2 = (u8)func_8003B1EC(lbl_eu_8066479C);
+        for (u8 j = 1; j <= count2; j++) {
+            s16 h = func_80136330(lbl_eu_8066479C, &lbl_eu_8050BEA8[0x15A], j);
+            convB.w[1] = (u32)(s16)h ^ 0x80000000;
+            if ((f32)(convB.d - convBias) > fy) {
+                if (j == slots->field_0C) found = 1;
+                break;
+            }
+        }
+        if (!found) continue;
+
+        if (func_801361E8(fp, &lbl_eu_8050BEA8[0x37D], i) != 3) continue;
+
+        sprintf(buf, &lbl_eu_8050BEA8[0x390], i);
+        if (slots->layout->GetRootPane()->FindPaneByName(buf, 1)) continue;
+
+        s16 vx = func_80136330(lbl_eu_806640A8, &lbl_eu_8050BEA8[0x1E2], lbl_eu_80664798);
+        s16 vy = func_80136330(lbl_eu_806640A8, &lbl_eu_8050BEA8[0x1F0], lbl_eu_80664798);
+
+        coords[2] = zero;
+        convA.w[1] = (u32)(s16)vx ^ 0x80000000;
+        coords[0] = (f32)(convA.d - convBias);
+        convB.w[1] = (u32)(s16)vy ^ 0x80000000;
+        coords[1] = (f32)(convB.d - convBias);
+        u8 region = (u8)func_801361E8(lbl_eu_806640A8, &lbl_eu_8050BEA8[0x1FE], lbl_eu_80664798);
+
+        convA.w[1] = (u32)region;
+        f32 scale = (f32)(convA.d - regionBase) * regionScale;
+        result = pos;
+        result.y = coords[1] - (result.z / scale) * projScale;
+        result.x = coords[0] + (result.x / scale) * projScale;
+        result.z = zero;
+
+        void* picture = func_80248920(slots, (const char*)0x10, result.x, result.y, (void*)-1, buf);
+
+        nw4r::lyt::Pane* pane2 = slots->pane->FindPaneByName(&lbl_eu_8050BEA8[0x281], 1);
+        pane2->AppendChild((nw4r::lyt::Pane*)picture);
+    }
+}
+
+// Variant of the marker-placement scan (same shape as func_80248A6C) for a
+// fourth map table section: picture panes keyed by tbl+0x39B names are
+// appended under the tbl+0x28A row pane when every eligibility check passes.
+void func_80249344(CFloorMapLayoutSlots* slots) {
+    const char* tbl = lbl_eu_8050BEA8;
+
+    // Stack locals declared in reverse of retail frame-slot order
+    // (MWCC assigns first-declared the highest slot).
+    CFloorMapF64Conv convB;
+    CFloorMapF64Conv convA;
+    char buf[0x20];
+    nw4r::math::_VEC3 pos;
+    f32 coords[3];
+    nw4r::math::_VEC3 result;
+    convA.w[0] = 0x43300000;
+    convB.w[0] = 0x43300000;
+
+    u32 fp = (u32)getFP__FPCc(&tbl[0x315]);
+    int count = (int)func_8003B1EC(fp);
+
+    // Constants hoisted before the walk so MWCC keeps them in f26-f31
+    // (declared in reverse of retail's load order).
+    const f32 projScale = lbl_eu_8066877C;
+    const f32 regionScale = lbl_eu_80668778;
+    const f32 regionBase = lbl_eu_80668788;
+    const f32 zero = lbl_eu_80668764;
+    const f64 convBias = lbl_eu_80668770;
+
+    for (u16 i = 1; (s32)i <= count; i++) {
+        if ((u8)func_801361E8(fp, &lbl_eu_8050BEA8[0x322], i) != lbl_eu_80664798) continue;
+
+        u16 rnd = (u16)func_8009CF8C(0x20);
+        u16 left = (u16)func_80136254((const void*)fp, &lbl_eu_8050BEA8[0x329], (int)i);
+        if (rnd < left) continue;
+        u16 right = (u16)func_80136254((const void*)fp, &lbl_eu_8050BEA8[0x32F], (int)i);
+        if (right < rnd) continue;
+
+        u8 c1 = (u8)func_801361E8(fp, &lbl_eu_8050BEA8[0x335], i);
+        u8 c2 = (u8)func_801361E8(fp, &lbl_eu_8050BEA8[0x343], i);
+        if (func_8009CF8C((u32)c1 + 0x7FC) < c2) continue;
+
+        u8 c3 = (u8)func_801361E8(fp, &lbl_eu_8050BEA8[0x34D], i);
+        u8 c4 = (u8)func_801361E8(fp, &lbl_eu_8050BEA8[0x35B], i);
+        if (func_8009CF8C((u32)c3 + 0x7FC) < c4) continue;
+
+        u8 v365 = (u8)func_801361E8(fp, &lbl_eu_8050BEA8[0x365], i);
+        if (v365 != 0 && func_8009CF8C((u32)v365 + 0x2578) == 0) continue;
+
+        u16 v373 = (u16)func_80136254((const void*)fp, &lbl_eu_8050BEA8[0x373], (int)i);
+        if (v373 != 0 && func_8009CF8C((u32)v373 + 0x220) != 0xFE) continue;
+
+        // s16 -> f32 via the shared 0x4330 double-magic idiom; y is cached in
+        // a scalar so MWCC dedicates a callee-saved FPR to it across the row
+        // loop (retail f26).
+        s16 x = func_80136330(fp, &lbl_eu_8050BEA8[0x19B], i);
+        s16 y = func_80136330(fp, &lbl_eu_8050BEA8[0x1A0], i);
+        s16 z = func_80136330(fp, &lbl_eu_8050BEA8[0x1A5], i);
+
+        convA.w[1] = (u32)(s16)x ^ 0x80000000;
+        pos.x = (f32)(convA.d - convBias);
+        convB.w[1] = (u32)(s16)y ^ 0x80000000;
+        f32 fy = (f32)(convB.d - convBias);
+        convA.w[1] = (u32)(s16)z ^ 0x80000000;
+        pos.y = fy;
+        pos.z = (f32)(convA.d - convBias);
+
+        // Skip markers whose world y sits below the first map row taller than
+        // it, unless that row is exactly the row currently displayed.
+        u8 found = 0;
+        u8 count2 = (u8)func_8003B1EC(lbl_eu_8066479C);
+        for (u8 j = 1; j <= count2; j++) {
+            s16 h = func_80136330(lbl_eu_8066479C, &lbl_eu_8050BEA8[0x15A], j);
+            convB.w[1] = (u32)(s16)h ^ 0x80000000;
+            if ((f32)(convB.d - convBias) > fy) {
+                if (j == slots->field_0C) found = 1;
+                break;
+            }
+        }
+        if (!found) continue;
+
+        if ((u8)func_801361E8(fp, &tbl[0x37D], i) != 4) continue;
+
+        sprintf(buf, &tbl[0x39B], i);
+
+        // Duplicate check against the root pane of the map layout reached
+        // through slots+0x00 (pane pointer at layout+0x10).
+        if (((nw4r::lyt::Pane*)*(u32*)((u8*)*(u32**)slots + 0x10))
+                ->FindPaneByName(buf, 1))
+            continue;
+
+        s16 vx = func_80136330(lbl_eu_806640A8, &tbl[0x1E2], lbl_eu_80664798);
+        s16 vy = func_80136330(lbl_eu_806640A8, &tbl[0x1F0], lbl_eu_80664798);
+
+        // Region lookup happens between the coordinate conversions and
+        // reuses the first conversion slot, as in retail.
+        f32 coords[3];
+        convB.w[1] = (u32)(s16)vy ^ 0x80000000;
+        convA.w[1] = (u32)(s16)vx ^ 0x80000000;
+        coords[2] = zero;
+        coords[0] = (f32)(convA.d - convBias);
+        coords[1] = (f32)(convB.d - convBias);
+        u8 region = (u8)func_801361E8(lbl_eu_806640A8, &tbl[0x1FE], lbl_eu_80664798);
+
+        convA.w[1] = region;
+        f32 scale = (f32)(convA.d - regionBase) * regionScale;
+
+        // Word-wise copy of the position into a scratch vector; retail reads
+        // z back before overwriting it with zero mid-computation.
+        nw4r::math::_VEC3 result;
+        ((u32*)&result)[0] = ((u32*)&pos)[0];
+        ((u32*)&result)[1] = ((u32*)&pos)[1];
+        ((u32*)&result)[2] = ((u32*)&pos)[2];
+
+        f32 zTerm = (result.z / scale) * projScale;
+        result.z = zero;
+        result.x = coords[0] + (result.x / scale) * projScale;
+        result.y = coords[1] - zTerm;
+
+        void* picture = func_80248920(slots, (const char*)0xC, result.x, result.y, (void*)-1, buf);
+
+        nw4r::lyt::Pane* pane2 = slots->pane->FindPaneByName(&tbl[0x28A], 1);
+        pane2->AppendChild((nw4r::lyt::Pane*)picture);
+    }
+}
+
+// Scan the marker table of the current map file and place one picture pane
+// per eligible marker: each marker is accepted only after its map-id, random
+// x-range, encounter-count, flag and position checks pass and the marker is
+// not already placed; the picture is appended to the map pane whose name is
+// formatted from the marker index.
+void func_802497B0(void* self) {
+    CFloorMapLayoutSlots* slots = (CFloorMapLayoutSlots*)self;
+
+    // Stack locals declared so MWCC lands each at its retail frame slot
+    // (convA@0x50, convB@0x58, buf@0x30, pos@0x20, coords@0x14, result@0x08).
+    nw4r::math::_VEC3 result;
+    f32 coords[3];
+    nw4r::math::_VEC3 pos;
+    char buf[0x20];
+    CFloorMapF64Conv convB;
+    CFloorMapF64Conv convA;
+    f32 fy; // marker world y, live across the row loop (retail f26)
+
+    // Both 0x4330 prefix words are stored before the map file is opened.
+    convA.w[0] = 0x43300000;
+    convB.w[0] = 0x43300000;
+
+    u32 fp = (u32)getFP__FPCc(&lbl_eu_8050BEA8[0x315]);
+    int count = (int)func_8003B1EC(fp);
+
+    // Constants hoisted before the walk so MWCC keeps them in f26-f31
+    // (declared in reverse of retail's load order).
+    const f32 projScale = lbl_eu_8066877C;
+    const f32 regionScale = lbl_eu_80668778;
+    const f32 regionBase = lbl_eu_80668788;
+    const f32 zero = lbl_eu_80668764;
+    const f64 convBias = lbl_eu_80668770;
+
+    for (u16 i = 1; i <= count; i++) {
+        if ((u8)func_801361E8(fp, &lbl_eu_8050BEA8[0x322], i) != lbl_eu_80664798) continue;
+
+        u16 rnd = (u16)func_8009CF8C(0x20);
+        u16 left = (u16)func_80136254((const void*)fp, &lbl_eu_8050BEA8[0x329], (int)i);
+        if (rnd < left) continue;
+        u16 right = (u16)func_80136254((const void*)fp, &lbl_eu_8050BEA8[0x32F], (int)i);
+        if (right < rnd) continue;
+
+        u8 c1 = (u8)func_801361E8(fp, &lbl_eu_8050BEA8[0x335], i);
+        u8 c2 = (u8)func_801361E8(fp, &lbl_eu_8050BEA8[0x343], i);
+        if (func_8009CF8C((u32)c1 + 0x7FC) < c2) continue;
+
+        u8 c3 = (u8)func_801361E8(fp, &lbl_eu_8050BEA8[0x34D], i);
+        u8 c4 = (u8)func_801361E8(fp, &lbl_eu_8050BEA8[0x35B], i);
+        if (func_8009CF8C((u32)c3 + 0x7FC) < c4) continue;
+
+        u8 v365 = (u8)func_801361E8(fp, &lbl_eu_8050BEA8[0x365], i);
+        if (v365 != 0 && func_8009CF8C((u32)v365 + 0x2578) == 0) continue;
+
+        u16 v373 = (u16)func_80136254((const void*)fp, &lbl_eu_8050BEA8[0x373], (int)i);
+        if (v373 != 0 && func_8009CF8C((u32)v373 + 0x220) != 0xFE) continue;
+
+        s16 x = func_80136330(fp, &lbl_eu_8050BEA8[0x19B], i);
+        s16 y = func_80136330(fp, &lbl_eu_8050BEA8[0x1A0], i);
+        s16 z = func_80136330(fp, &lbl_eu_8050BEA8[0x1A5], i);
+
+        // s16 -> f32 via the shared 0x4330 double-magic idiom; slot A carries
+        // x then z, slot B carries y.
+        convA.w[1] = (u32)(s16)x ^ 0x80000000;
+        pos.x = (f32)(convA.d - convBias);
+        convB.w[1] = (u32)(s16)y ^ 0x80000000;
+        fy = (f32)(convB.d - convBias);
+        pos.y = fy;
+        convA.w[1] = (u32)(s16)z ^ 0x80000000;
+        pos.z = (f32)(convA.d - convBias);
+
+        // Skip markers whose world y sits below the first map row taller than
+        // it, unless that row is exactly the row currently displayed.
+        u8 found = 0;
+        u8 count2 = (u8)func_8003B1EC(lbl_eu_8066479C);
+        for (u8 j = 1; j <= count2; j++) {
+            s16 h = func_80136330(lbl_eu_8066479C, &lbl_eu_8050BEA8[0x15A], j);
+            convB.w[1] = (u32)(s16)h ^ 0x80000000;
+            if ((f32)(convB.d - convBias) > fy) {
+                if (j == slots->field_0C) found = 1;
+                break;
+            }
+        }
+        if (!found) continue;
+
+        if ((u8)func_801361E8(fp, &lbl_eu_8050BEA8[0x37D], i) != 6) continue;
+
+        sprintf(buf, &lbl_eu_8050BEA8[0x3A6], i);
+        if (slots->layout->GetRootPane()->FindPaneByName(buf, 1)) continue;
+
+        s16 vx = func_80136330(lbl_eu_806640A8, &lbl_eu_8050BEA8[0x1E2], lbl_eu_80664798);
+        s16 vy = func_80136330(lbl_eu_806640A8, &lbl_eu_8050BEA8[0x1F0], lbl_eu_80664798);
+
+        // Region lookup happens between the coordinate conversions; slot A is
+        // reused unsigned for the region id afterwards.
+        convA.w[1] = (u32)(s16)vx ^ 0x80000000;
+        convB.w[1] = (u32)(s16)vy ^ 0x80000000;
+        coords[2] = zero;
+        coords[0] = (f32)(convA.d - convBias);
+        coords[1] = (f32)(convB.d - convBias);
+        u8 region = (u8)func_801361E8(lbl_eu_806640A8, &lbl_eu_8050BEA8[0x1FE], lbl_eu_80664798);
+
+        convA.w[1] = region;
+        f32 scale = (f32)(convA.d - regionBase) * regionScale;
+
+        result = pos;
+        f32 zTerm = (result.z / scale) * projScale;
+        result.z = zero;
+        result.x = coords[0] + (result.x / scale) * projScale;
+        result.y = coords[1] - zTerm;
 
         void* picture = func_80248920(self, (const char*)0x18, result.x, result.y, (void*)-1, buf);
 
@@ -898,7 +1728,244 @@ void func_802497B0(void* self) {
     }
 }
 
-void func_80249C1C(){}
+// Walk the current map's marker table and place one picture pane per entry
+// whose display type (tbl+0x37D) is 1-6: each type resolves a world position
+// and marker label differently, then the position is projected onto the map
+// plane for the current region and the picture appended under the tbl+0x2B4
+// row pane. The tbl+0x2BD highlight pane's visible bit is set while placing.
+void func_80249C1C(CFloorMapLayoutSlots* slots) {
+    // Frame-slot order matters: MWCC allocates locals by declaration order,
+    // and retail places the conversion slots at the very top of the local
+    // block (0x70/0x78), i.e. last.
+    char buf[0x20];
+    CFloorMapF64Conv convA;
+    CFloorMapF64Conv convB;
+
+    if ((lbl_eu_80664184 & 0xFF) != lbl_eu_80664798) return;
+    convA.w[0] = 0x43300000;
+    convB.w[0] = 0x43300000;
+
+    const char* tbl = lbl_eu_8050BEA8;
+
+    // Light the map highlight pane while markers are being placed.
+    nw4r::lyt::Pane* hl = slots->pane->FindPaneByName(&tbl[0x2BD], true);
+    ((CFloorMapPaneFlag*)hl)->mFlag |= 1;
+
+    // Current world id, read fresh after the pane lookup and kept live across
+    // the whole marker walk.
+    const u8 world = lbl_eu_80664184;
+    func_8003AA34();
+    u32 fp = (u32)getFP__FPCc(&tbl[0x17F]);
+    u32 count = func_8003B1EC(fp);
+
+    // Constants kept live across the whole walk (retail f27-f31).
+    const f64 convBias = lbl_eu_80668770;
+    const f32 zero = lbl_eu_80668764;
+    const f32 regionBase = lbl_eu_80668788;
+    const f32 regionScale = lbl_eu_80668778;
+    const f32 projScale = lbl_eu_8066877C;
+
+    for (u32 i = 0; i < count; i++) {
+        if (!func_80138574((const char*)fp, i + 1)) continue;
+        u8 type = func_801361E8(fp, &tbl[0x37D], i + 1);
+        if (!type) continue;
+        u16 rowId = func_80136254((const void*)fp, &tbl[0x3E6], i + 1);
+
+        nw4r::math::VEC3 foundPos;
+        foundPos.x = zero;
+        foundPos.y = zero;
+        foundPos.z = zero;
+        u8 placed = 0;
+
+        switch (type) {
+        case 1: {
+            // Gimmick-object list: first object whose map-row id matches.
+            CFloorMapObjList* glist = (CFloorMapObjList*)func_800B6BEC();
+            u8 found = 0;
+            for (CFloorMapObjNode* node = glist->head->next; node != glist->head;
+                 node = node->next) {
+                CFloorMapObj* obj = (CFloorMapObj*)node->object;
+                if (obj->m8C != rowId) continue;
+                foundPos = *(nw4r::math::VEC3*)obj->GetPos();
+                sprintf(buf, &tbl[0x3BC], obj->m74);
+                placed = 1;
+                found = 1;
+                break;
+            }
+            if (found) break;
+
+            // No live object: fall back to the save-point table. The marker
+            // shows only when the save point's own visibility checks pass.
+            u32 fp2 = (u32)getFP__FPCc(&tbl[0x17F]);
+            u16 id2 = func_8013606C(&tbl[0x3C6], &tbl[0x3D2], rowId);
+            if ((u8)func_801361E8(fp2, &tbl[0x18C], id2) != world) break;
+            if (func_8009CF8C(id2 + 0x20C8) == 0) break;
+
+            u8 hide;
+            if (id2 == 0) {
+                hide = 1;
+            } else if (getUnk80664658()->field_214 & 0x48000) {
+                hide = 1;
+            } else {
+                u16 left = func_80136254((const void*)fp2, &tbl[0x1AA], id2);
+                u16 right = func_80136254((const void*)fp2, &tbl[0x1B5], id2);
+                u16 scrollPos = (u16)func_8009CF8C(0x20);
+                hide = (left > scrollPos || scrollPos > right) ? 1 : 0;
+            }
+            if (hide || func_8009CF8C(0x3212) != 0) break;
+
+            f32 tmp[3];
+            func_80141DC4(tmp, id2);
+            foundPos.x = tmp[0];
+            foundPos.y = tmp[1];
+            foundPos.z = tmp[2];
+            sprintf(buf, &tbl[0x3BC], id2);
+            placed = 1;
+            break;
+        }
+        case 2: {
+            // Second gimmick list: only objects flagged 0x4000/0x8000.
+            CFloorMapObjList* glist = (CFloorMapObjList*)func_800B6C58();
+            for (CFloorMapObjNode* node = glist->head->next; node != glist->head;
+                 node = node->next) {
+                CFloorMapObj* obj = (CFloorMapObj*)node->object;
+                if (!((obj->m64 & 0x4000) || (obj->m64 & 0x8000))) continue;
+                if (obj->m8C != rowId) continue;
+                foundPos = *(nw4r::math::VEC3*)obj->GetPos();
+                sprintf(buf, &tbl[0x3ED], obj->m74);
+                placed = 1;
+                break;
+            }
+            break;
+        }
+        case 3: {
+            // Landmark table: scan the 0x4C-byte rows for the row id.
+            CFloorMapCase2Elem* arr = (CFloorMapCase2Elem*)func_80193804();
+            s32 cnt = *(s32*)((u8*)arr + 0x9800);
+            CFloorMapCase2Elem* end = arr + cnt;
+            for (CFloorMapCase2Elem* e = arr; e != end; e++) {
+                if (e->m1C != rowId) continue;
+                foundPos.x = e->x;
+                foundPos.y = e->y;
+                foundPos.z = e->z;
+                sprintf(buf, &tbl[0x3F9]);
+                placed = 1;
+                break;
+            }
+            break;
+        }
+        case 4: {
+            // Current player position.
+            f32 tmp[3];
+            func_80141DC4(tmp, rowId);
+            foundPos.x = tmp[0];
+            foundPos.y = tmp[1];
+            foundPos.z = tmp[2];
+            sprintf(buf, &tbl[0x2EB], i + 1);
+            placed = 1;
+            break;
+        }
+        case 5: {
+            // Map-table coordinates: three s16 columns converted via the
+            // shared double-magic idiom into a scratch vector.
+            u32 fp2 = (u32)getFP__FPCc(&tbl[0x403]);
+            func_80136254((const void*)fp2, &tbl[0x412], rowId);
+            if (func_8009CF8C(rowId + 0x2B9C) != 0) break;
+            s16 a = func_80136330(fp2, &tbl[0x19B], rowId);
+            s16 b = func_80136330(fp2, &tbl[0x1A0], rowId);
+            s16 c = func_80136330(fp2, &tbl[0x1A5], rowId);
+            // Reuse the function-level conversion slots (retail: a,c share
+            // slot A, b uses slot B).
+            nw4r::math::VEC3 work;
+            convA.w[1] = (u32)(s16)a ^ 0x80000000;
+            work.x = (f32)(convA.d - convBias);
+            convB.w[1] = (u32)(s16)b ^ 0x80000000;
+            work.y = (f32)(convB.d - convBias);
+            convA.w[1] = (u32)(s16)c ^ 0x80000000;
+            work.z = (f32)(convA.d - convBias);
+            foundPos.x = work.x;
+            foundPos.y = work.y;
+            foundPos.z = work.z;
+            sprintf(buf, &tbl[0x419], i + 1);
+            placed = 1;
+            break;
+        }
+        case 6: {
+            if (func_8013C038(rowId)) continue;
+            foundPos = *(nw4r::math::VEC3*)func_801F4E68(getUnk80664658(), rowId);
+            sprintf(buf, &tbl[0x423], i + 1);
+            placed = 1;
+            break;
+        }
+        }
+
+        if (!placed) continue;
+
+        // Keep only rows whose floor height sits above the marker y AND that
+        // is exactly the currently displayed map row.
+        f32 foundY = foundPos.y;
+        u8 hit = 0;
+        u8 cntB = (u8)func_8003B1EC(lbl_eu_8066479C);
+        for (u8 k = 1; k <= cntB; k++) {
+            s16 h = func_80136330(lbl_eu_8066479C, &tbl[0x15A], k);
+            convB.w[1] = (u32)(s16)h ^ 0x80000000;
+            if ((f32)(convB.d - convBias) > foundY) {
+                if (k == slots->field_0C) hit = 1;
+                break;
+            }
+        }
+        if (!hit) continue;
+
+        // Skip when a marker pane with this name already exists.
+        if (slots->layout->GetRootPane()->FindPaneByName(buf, true)) continue;
+
+        // Region projection onto the map plane. The converted coordinates
+        // live in a contiguous array so they spill to stack slots across the
+        // region lookup, as in retail.
+        s16 vx = func_80136330(lbl_eu_806640A8, &tbl[0x1E2], lbl_eu_80664798);
+        s16 vy = func_80136330(lbl_eu_806640A8, &tbl[0x1F0], lbl_eu_80664798);
+        f32 fv[3];
+        convA.w[1] = (u32)(s16)vx ^ 0x80000000;
+        fv[0] = (f32)(convA.d - convBias);
+        convB.w[1] = (u32)(s16)vy ^ 0x80000000;
+        fv[1] = (f32)(convB.d - convBias);
+        fv[2] = zero;
+        u8 region = func_801361E8(lbl_eu_806640A8, &tbl[0x1FE], lbl_eu_80664798);
+        convA.w[1] = region;
+        f32 denom = ((f32)(convA.d - regionBase)) * regionScale;
+
+        // Word-wise copy of the found position; retail reads z back before
+        // zeroing it mid-computation.
+        nw4r::math::VEC3 res;
+        res.x = foundPos.x;
+        res.z = foundPos.z;
+        f32 xterm = (res.x / denom) * projScale;
+        f32 zterm = (res.z / denom) * projScale;
+        res.y = foundPos.y;
+        res.z = fv[2];
+        res.x = fv[0] + xterm;
+        res.y = fv[1] - zterm;
+
+        // Pick the picture kind from the selected row's BDAT entry: kind 1
+        // directly, otherwise re-check when the tbl+0x440 column is nonzero.
+        u16 sel = func_80136254((const void*)fp, &tbl[0x42D], i + 1);
+        u32 entry = (u32)lbl_eu_80573D18[func_80138138(sel)];
+        u8 ok = func_801361E8(entry, &tbl[0x436], sel) == 1;
+        if (!ok) {
+            u16 v440 = func_80136254((const void*)fp, &tbl[0x440], i + 1);
+            if (v440 != 0) ok = func_801361E8(entry, &tbl[0x436], sel) == 1;
+        }
+        if (!ok) continue;
+
+        void* pic = func_80248920(slots, (const char*)0x5, res.x, res.y, (void*)-1, buf);
+
+        nw4r::lyt::Pane* rowPane = slots->pane->FindPaneByName(&tbl[0x2B4], true);
+        rowPane->AppendChild((nw4r::lyt::Pane*)pic);
+
+        nw4r::lyt::Pane* hl2 = slots->pane->FindPaneByName(&tbl[0x2BD], true);
+        ((CFloorMapPaneFlag*)hl2)->mFlag &= 0xFE;
+    }
+}
 
 // Walk the special-object list and place one landmark picture per eligible
 // entry: each object must pass the pane/flag/kind checks, its floor row (first
@@ -990,29 +2057,33 @@ void func_8024A448(void* self) {
 // the current map row and append a positioned picture pane to the map layout.
 void func_8024A748(void* self) {
     CFloorMapFull* p = (CFloorMapFull*)self;
+    const char* tbl = lbl_eu_8050BEA8;
 
     // Two s16/u8 -> f32 conversion slots (retail stores the 0x4330 prefix
-    // words in the prologue, before the world-id check).
+    // words around the world-id check, before any call).
     CFloorMapF64Conv convA;
     CFloorMapF64Conv convB;
-    convB.w[0] = 0x43300000;
     convA.w[0] = 0x43300000;
     u32 worldId = lbl_eu_80664184 & 0xFF;
+    convB.w[0] = 0x43300000;
     if (worldId != lbl_eu_80664798) return;
 
     u32 rnd = func_8009CF8C(0x20);
     if ((s32)rnd <= 0) return;
-    if ((u8)func_8013600C(&lbl_eu_8050BEA8[0x44A], &lbl_eu_8050BEA8[0x457], rnd) != worldId) return;
+    if ((func_8013600C(tbl + 0x44A, tbl + 0x457, rnd) & 0xFF) != worldId) return;
 
-    u32 id = func_8013600C(&lbl_eu_8050BEA8[0x44A], &lbl_eu_8050BEA8[0x37D], rnd);
-    u16 type = func_8013606C(&lbl_eu_8050BEA8[0x44A], &lbl_eu_8050BEA8[0x3E6], rnd);
+    u32 id = func_8013600C(tbl + 0x44A, tbl + 0x37D, rnd);
+    u32 type = func_8013606C(tbl + 0x44A, tbl + 0x3E6, rnd);
 
-    nw4r::math::_VEC3 vec = { lbl_eu_80668764, lbl_eu_80668764, lbl_eu_80668764 };
+    nw4r::math::VEC3 vec;
     char buf[0x20];
+    vec.x = lbl_eu_80668764;
+    vec.y = lbl_eu_80668764;
+    vec.z = lbl_eu_80668764;
     buf[0] = 0;
 
-    if (type == 0) {
-        if ((s32)(u8)id == 1) {
+    if ((u16)type == 0) {
+        if ((u8)id == 1) {
             // Player-related landmark: walk the enemy list and use the first
             // entry's position.
             CFloorMapObjList* glist = (CFloorMapObjList*)func_800B6CF8(1);
@@ -1023,22 +2094,23 @@ void func_8024A748(void* self) {
                 vec.x = pos->x;
                 vec.y = pos->y;
                 vec.z = pos->z;
-                sprintf(buf, &lbl_eu_8050BEA8[0x45B], g->m74);
+                sprintf(buf, tbl + 0x45B, g->m74);
                 break;
             }
         }
     } else {
-        switch ((s32)(u8)id) {
+        switch ((u8)id) {
         case 2: {
             // Landmark-table entry: scan the 0x4C-byte rows for the id.
             CFloorMapCase2Elem* arr = (CFloorMapCase2Elem*)func_80193804();
             s32 count = *(s32*)((u8*)arr + 0x9800);
-            for (CFloorMapCase2Elem* el = arr; el < arr + count; el++) {
-                if (el->m1C != type) continue;
+            CFloorMapCase2Elem* end = arr + count;
+            for (CFloorMapCase2Elem* el = arr; el != end; el++) {
+                if (el->m1C != (u16)type) continue;
                 vec.x = el->x;
                 vec.y = el->y;
                 vec.z = el->z;
-                sprintf(buf, &lbl_eu_8050BEA8[0x3F9], el->m1C);
+                sprintf(buf, tbl + 0x3F9, el->m1C);
                 break;
             }
             break;
@@ -1049,13 +2121,13 @@ void func_8024A748(void* self) {
             for (CFloorMapObjNode* node = glist->head->next; node != glist->head;
                  node = node->next) {
                 CFloorMapObj* g = (CFloorMapObj*)node->object;
-                if ((g->m64 & 0x4000) != 0 || (g->m64 & 0x8000) != 0) {
-                    if (g->m8C == type) {
+                if ((g->m64 & 0x8000) != 0 || (g->m64 & 0x10000) != 0) {
+                    if (g->m8C == (u16)type) {
                         CFloorMapVec3* pos = g->GetPos();
                         vec.x = pos->x;
                         vec.y = pos->y;
                         vec.z = pos->z;
-                        sprintf(buf, &lbl_eu_8050BEA8[0x3ED], g->m74);
+                        sprintf(buf, tbl + 0x3ED, g->m74);
                         break;
                     }
                 }
@@ -1063,17 +2135,17 @@ void func_8024A748(void* self) {
             break;
         }
         case 4: {
-            u8 found = 0;
+            u32 found = 0;
             CFloorMapObjList* glist = (CFloorMapObjList*)func_800B6BEC();
             for (CFloorMapObjNode* node = glist->head->next; node != glist->head;
                  node = node->next) {
                 CFloorMapObj* g = (CFloorMapObj*)node->object;
-                if (g->m8C == type) {
+                if (g->m8C == (u16)type) {
                     CFloorMapVec3* pos = g->GetPos();
                     vec.x = pos->x;
                     vec.y = pos->y;
                     vec.z = pos->z;
-                    sprintf(buf, &lbl_eu_8050BEA8[0x3BC], g->m74);
+                    sprintf(buf, tbl + 0x3BC, g->m74);
                     found = 1;
                     break;
                 }
@@ -1081,74 +2153,82 @@ void func_8024A748(void* self) {
             if (!found) {
                 // Fallback: resolve the landmark file entry and check whether
                 // it is flagged for display on the current world.
-                u32 fp = (u32)getFP__FPCc(&lbl_eu_8050BEA8[0x17F]);
-                u16 id2 = func_8013606C(&lbl_eu_8050BEA8[0x3C6], &lbl_eu_8050BEA8[0x3D2], type);
-                if ((u8)func_801361E8(fp, &lbl_eu_8050BEA8[0x18C], id2) != lbl_eu_80664184) break;
-                if (func_8009CF8C((u32)id2 + 0x20C8) == 0) break;
+                u32 fp = (u32)getFP__FPCc(tbl + 0x17F);
+                u32 id2 = func_8013606C(tbl + 0x3C6, tbl + 0x3D2, (u16)type);
+                u32 w = func_801361E8(fp, tbl + 0x18C, (u16)id2);
+                if (w != lbl_eu_80664184) break;
+                if (func_8009CF8C((u16)id2 + 0x20C8) == 0) break;
 
-                u32 ok = 0;
-                if (id2 == 0) {
+                u32 ok;
+                if ((u16)id2 == 0) {
                     ok = 1;
-                } else if (getUnk80664658()->field_214 & 0x48000) {
+                } else if (getUnk80664658()->field_214 & 0x110000) {
                     ok = 1;
                 } else {
-                    u16 left = func_80136254((const void*)fp, &lbl_eu_8050BEA8[0x1AA], id2);
-                    u16 right = func_80136254((const void*)fp, &lbl_eu_8050BEA8[0x1B5], id2);
-                    u16 rnd2 = (u16)func_8009CF8C(0x20);
-                    if (left <= rnd2 && rnd2 <= right) ok = 1;
+                    u32 left = func_80136254((const void*)fp, tbl + 0x1AA, (u16)id2);
+                    u32 right = func_80136254((const void*)fp, tbl + 0x1B5, (u16)id2);
+                    u32 scroll = (u16)func_8009CF8C(0x20);
+                    if (left > scroll || scroll > right)
+                        ok = 0;
+                    else
+                        ok = 1;
                 }
                 if (ok) break;
 
                 f32 tmp[3];
-                func_80141DC4(tmp, id2);
+                func_80141DC4(tmp, (u16)id2);
                 vec.x = tmp[0];
                 vec.y = tmp[1];
                 vec.z = tmp[2];
-                sprintf(buf, &lbl_eu_8050BEA8[0x3BC], type);
+                sprintf(buf, tbl + 0x3BC, (u16)type);
             }
             break;
         }
         case 5: {
-            u8 found = 0;
+            u32 found = 0;
             CFloorMapObjList* glist = (CFloorMapObjList*)func_800B6BEC();
             for (CFloorMapObjNode* node = glist->head->next; node != glist->head;
                  node = node->next) {
                 CFloorMapObj* g = (CFloorMapObj*)node->object;
-                if (g->m8C == type) {
+                if (g->m8C == (u16)type) {
                     CFloorMapVec3* pos = g->GetPos();
                     vec.x = pos->x;
                     vec.y = pos->y;
                     vec.z = pos->z;
-                    sprintf(buf, &lbl_eu_8050BEA8[0x3BC], g->m74);
+                    sprintf(buf, tbl + 0x3BC, g->m74);
                     found = 1;
                     break;
                 }
             }
             if (!found) {
-                u32 fp = (u32)getFP__FPCc(&lbl_eu_8050BEA8[0x17F]);
-                u16 id2 = func_8013606C(&lbl_eu_8050BEA8[0x3C6], &lbl_eu_8050BEA8[0x3D2], type);
-                if ((u8)func_801361E8(fp, &lbl_eu_8050BEA8[0x18C], id2) != lbl_eu_80664184) break;
-                if (func_8009CF8C((u32)id2 + 0x20C8) == 0) break;
+                u32 fp = (u32)getFP__FPCc(tbl + 0x17F);
+                u32 id2 = func_8013606C(tbl + 0x3C6, tbl + 0x3D2, (u16)type);
+                u32 w = func_801361E8(fp, tbl + 0x18C, (u16)id2);
+                if (w != lbl_eu_80664184) break;
+                if (func_8009CF8C((u16)id2 + 0x20C8) == 0) break;
 
-                u32 ok = 0;
-                if (id2 == 0) {
+                u32 ok;
+                if ((u16)id2 == 0) {
                     ok = 1;
-                } else if (getUnk80664658()->field_214 & 0x48000) {
+                } else if (getUnk80664658()->field_214 & 0x110000) {
                     ok = 1;
                 } else {
-                    u16 left = func_80136254((const void*)fp, &lbl_eu_8050BEA8[0x1AA], id2);
-                    u16 right = func_80136254((const void*)fp, &lbl_eu_8050BEA8[0x1B5], id2);
-                    u16 rnd2 = (u16)func_8009CF8C(0x20);
-                    if (left <= rnd2 && rnd2 <= right) ok = 1;
+                    u32 left = func_80136254((const void*)fp, tbl + 0x1AA, (u16)id2);
+                    u32 right = func_80136254((const void*)fp, tbl + 0x1B5, (u16)id2);
+                    u32 scroll = (u16)func_8009CF8C(0x20);
+                    if (left > scroll || scroll > right)
+                        ok = 0;
+                    else
+                        ok = 1;
                 }
                 if (ok) break;
 
                 f32 tmp[3];
-                func_80141DC4(tmp, id2);
+                func_80141DC4(tmp, (u16)id2);
                 vec.x = tmp[0];
                 vec.y = tmp[1];
                 vec.z = tmp[2];
-                sprintf(buf, &lbl_eu_8050BEA8[0x3BC], type);
+                sprintf(buf, tbl + 0x3BC, (u16)type);
             }
             break;
         }
@@ -1158,113 +2238,150 @@ void func_8024A748(void* self) {
     // The marker is only placed when its name was formatted and its floor is
     // the current map row (first floor above the marker's height).
     if (buf[0] != 0) {
+        const f64 bias = lbl_eu_80668770;
         f32 y = vec.y;
         u8 count = (u8)func_8003B1EC(lbl_eu_8066479C);
-        u8 found = 0;
-        for (u8 j = 1; j <= count; j++) {
-            s16 h = func_80136330(lbl_eu_8066479C, &lbl_eu_8050BEA8[0x15A], j);
-            convB.w[0] = 0x43300000;
-            convB.w[1] = (u32)(s16)h ^ 0x80000000;
-            if ((f32)(convB.d - lbl_eu_80668770) > y) {
+        u32 found = 0;
+        for (u32 j = 1; j <= count; j++) {
+            s16 h = func_80136330(lbl_eu_8066479C, tbl + 0x15A, j);
+            convA.w[1] = (u32)(s16)h ^ 0x80000000;
+            if ((f32)(convA.d - bias) > y) {
                 if (j == p->field_0C) found = 1;
                 break;
             }
         }
         if (found) {
             // Map the marker position onto the floor-map pane coordinates.
-            s16 vx = func_80136330(lbl_eu_806640A8, &lbl_eu_8050BEA8[0x1E2], lbl_eu_80664798);
-            s16 vy = func_80136330(lbl_eu_806640A8, &lbl_eu_8050BEA8[0x1F0], lbl_eu_80664798);
-            convA.w[0] = 0x43300000;
-            convA.w[1] = (u32)(s16)vx ^ 0x80000000;
-            convB.w[0] = 0x43300000;
-            convB.w[1] = (u32)(s16)vy ^ 0x80000000;
-            f32 fvx = (f32)(convA.d - lbl_eu_80668770);
-            f32 fvy = (f32)(convB.d - lbl_eu_80668770);
-            u8 region = (u8)func_801361E8(lbl_eu_806640A8, &lbl_eu_8050BEA8[0x1FE], lbl_eu_80664798);
-            convA.w[0] = 0x43300000;
-            convA.w[1] = (u32)region;
-            f32 scale = (f32)(convA.d - lbl_eu_80668788) * lbl_eu_80668778;
-            f32 rx = fvx + (vec.x / scale) * lbl_eu_8066877C;
-            f32 ry = fvy - (vec.z / scale) * lbl_eu_8066877C;
+            // Retail divides work.z (the pre-projection z snapshot) here even
+            // though a projected-z of 0 is also computed afterwards.
+            s16 vx = func_80136330(lbl_eu_806640A8, tbl + 0x1E2, lbl_eu_80664798);
+            s16 vy = func_80136330(lbl_eu_806640A8, tbl + 0x1F0, lbl_eu_80664798);
+            convB.w[1] = (u32)(s16)vx ^ 0x80000000;
+            convA.w[1] = (u32)(s16)vy ^ 0x80000000;
+            nw4r::math::VEC3 pos;
+            pos.z = lbl_eu_80668764;
+            pos.x = (f32)(convB.d - lbl_eu_80668770);
+            pos.y = (f32)(convA.d - lbl_eu_80668770);
+            u32 region = func_801361E8(lbl_eu_806640A8, tbl + 0x1FE, lbl_eu_80664798);
+            convB.w[1] = region;
+            f32 denom = ((f32)(convB.d - lbl_eu_80668788)) * lbl_eu_80668778;
 
-            void* pic = func_80248920(p, (const char*)7, rx, ry, (void*)-1, &lbl_eu_8050BEA8[0x466]);
-            nw4r::lyt::Pane* pane = p->field_08->FindPaneByName(&lbl_eu_8050BEA8[0x2BD], true);
+            // Word-wise copy of the marker position so the projection reads
+            // it back through frame slots like retail.
+            nw4r::math::VEC3 work = *(nw4r::math::VEC3*)&vec;
+            work.x = pos.x + (work.x / denom) * lbl_eu_8066877C;
+            work.y = pos.y - (work.z / denom) * lbl_eu_8066877C;
+            work.z = lbl_eu_80668764;
+
+            void* pic = func_80248920(p, (const char*)7, work.x, work.y, (void*)-1, tbl + 0x466);
+            nw4r::lyt::Pane* pane = p->field_08->FindPaneByName(tbl + 0x2BD, true);
             pane->AppendChild((nw4r::lyt::Pane*)pic);
         }
     }
 }
 
 // Build the current-position marker: find the floor row whose height is
-// above the player's y, project the player position onto the map pane
-// coordinates, then allocate a wrapper pane holding the marker picture and
-// append it to the map root pane.
+// above the player's y (and which is the current map row), project the
+// player position onto the map pane coordinates, then allocate a wrapper
+// pane holding the marker picture and append it to the map root pane.
 void func_8024AEEC(void* self) {
     CFloorMapFull* p = (CFloorMapFull*)self;
+    // Retail seeds both conversion-slot prefix words before the early-outs
+    // and keeps the height-loop bias/count/index in nonvolatile f31/r28/r30.
+    CFloorMapF64Conv convA;
+    CFloorMapF64Conv convB;
+    convA.w[0] = 0x43300000;
+    convB.w[0] = 0x43300000;
+
     if ((u8)lbl_eu_80664184 != lbl_eu_80664798) return;
 
-    void* playerObj = cf::CfGameManager::getPlayer(0);
-    if (playerObj == NULL) return;
-    CFloorMapVec3* pos = ((CFloorMapPlayerObj*)playerObj)->GetPos();
-
-    // Find the first floor whose height is above the player and which matches
-    // the current map row.
-    CFloorMapF64Conv conv;
-    conv.w[0] = 0x43300000;
-    u32 count = func_8003B1EC(lbl_eu_8066479C);
+    CFloorMapPlayerObj* player =
+        (CFloorMapPlayerObj*)cf::CfGameManager::getPlayer(0);
+    if (player == NULL) return;
+    CFloorMapVec3* pos = player->GetPos();
     u8 found = 0;
+    // Word-wise snapshot so the position lives in frame slots (retail
+    // 0x40-0x4B) instead of nonvolatile FPRs across the table walk.
+    nw4r::math::_VEC3 ppos;
+    ppos.y = pos->y;
+    ppos.x = pos->x;
+    ppos.z = pos->z;
+    f32 py = ppos.y;
+
+    const char* tbl = lbl_eu_8050BEA8;
+    u8 count = (u8)func_8003B1EC(lbl_eu_8066479C);
+    const f64 bias = lbl_eu_80668770;
     for (u8 i = 1; i <= count; i++) {
-        s16 h = func_80136330(lbl_eu_8066479C, &lbl_eu_8050BEA8[0x15A], i);
-        conv.w[1] = (u32)(s16)h ^ 0x80000000;
-        if ((f32)(conv.d - lbl_eu_80668770) > pos->y) {
+        s16 h = func_80136330(lbl_eu_8066479C, &tbl[0x15A], (u32)i);
+        convA.w[1] = (u32)(s16)h ^ 0x80000000;
+        if ((f32)(convA.d - bias) > py) {
             if (i == p->field_0C) found = 1;
             break;
         }
     }
     if (!found) return;
 
-    // Project the world position onto the floor-map pane coordinates.
-    s16 vx = func_80136330(lbl_eu_806640A8, &lbl_eu_8050BEA8[0x1E2], lbl_eu_80664798);
-    s16 vy = func_80136330(lbl_eu_806640A8, &lbl_eu_8050BEA8[0x1F0], lbl_eu_80664798);
-    conv.w[1] = (u32)(s16)vx ^ 0x80000000;
-    f32 fvx = (f32)(conv.d - lbl_eu_80668770);
-    conv.w[1] = (u32)(s16)vy ^ 0x80000000;
-    f32 fvy = (f32)(conv.d - lbl_eu_80668770);
-    u8 region = (u8)func_801361E8(lbl_eu_806640A8, &lbl_eu_8050BEA8[0x1FE], lbl_eu_80664798);
-    conv.w[1] = region;
-    f32 denom = (f32)(conv.d - lbl_eu_80668788) * lbl_eu_80668778;
-    f32 rx = fvx - (pos->z / denom) * lbl_eu_8066877C;
-    f32 ry = fvy + (pos->x / denom) * lbl_eu_8066877C;
+    // Project onto the current world's map pane coordinate system.
+    u16 vx = (u16)func_80136330(lbl_eu_806640A8, &tbl[0x1E2], (u32)lbl_eu_80664798);
+    u16 vy = (u16)func_80136330(lbl_eu_806640A8, &tbl[0x1F0], (u32)lbl_eu_80664798);
+    convB.w[1] = (u32)(s16)vx ^ 0x80000000;
+    convA.w[1] = (u32)(s16)vy ^ 0x80000000;
+    // Second vector local so MWCC spills the projected bases to frame
+    // slots (retail 0x34/0x38/0x3c) instead of burning a nonvolatile FPR.
+    nw4r::math::_VEC3 work;
+    work.z = lbl_eu_80668764;
+    work.x = (f32)(convB.d - lbl_eu_80668788);
+    work.y = (f32)(convA.d - lbl_eu_80668788);
+    u8 region = (u8)func_801361E8(lbl_eu_806640A8, &tbl[0x1FE], (u32)lbl_eu_80664798);
+    convB.w[1] = region;
+    f32 denom = (f32)(convB.d - lbl_eu_80668788) * lbl_eu_80668778;
 
-    void* pic = func_80248920(self, (const char*)2, rx, ry, (void*)-1,
-                              &lbl_eu_8050BEA8[0x470]);
+    // Snapshot through a vector local so the pre-projection z feeds the
+    // second term while the stored z is replaced by zero.
+    nw4r::math::_VEC3 result;
+    result.x = ppos.x;
+    result.y = py;
+    result.z = ppos.z;
+    result.x = work.x + (result.x / denom) * lbl_eu_8066877C;
+    result.y = work.y - (result.z / denom) * lbl_eu_8066877C;
+    result.z = lbl_eu_80668764;
+
+    nw4r::lyt::Pane* picPane = (nw4r::lyt::Pane*)func_80248920(
+        self, (const char*)2, lbl_eu_80668764, lbl_eu_80668764, (void*)(-1), &tbl[0x470]);
+
+    // Re-apply the picture translate: x cleared and y scaled by the layout
+    // constant (z left untouched).
+    f32 picH = picPane->GetSize().height;
+    CFloorMapPaneTransXY* picXY = (CFloorMapPaneTransXY*)picPane;
+    picXY->transX = lbl_eu_80668764;
+    picXY->transY = picH * lbl_eu_80668798;
 
     // Wrapper pane that owns the picture and carries the projected position.
     nw4r::lyt::Pane* holder =
         new (getAllocHandle__10CLibLayoutFv()) nw4r::lyt::Pane();
-    holder->SetName(&lbl_eu_8050BEA8[0x2D6]);
+    holder->SetName(&tbl[0x2D6]);
 
     CFloorMapPaneFlag* pf = (CFloorMapPaneFlag*)holder;
     pf->mFlag = (pf->mFlag & 0xFE) | 1;
 
-    *(f32*)((u8*)holder + 0x2C) = ry;
-    *(f32*)((u8*)holder + 0x30) = rx;
-    *(f32*)((u8*)holder + 0x34) = lbl_eu_80668764;
+    holder->SetTranslate(*(nw4r::math::VEC3*)&result);
 
     UnkClass_800821F8* mgr = cf::CfGameManager::getInstance()->func_800821F8();
     if (mgr != NULL) {
-        // Scale the marker by the game's map zoom numerator.
+        // Scale the marker by the game's map zoom numerator; retail stores it
+        // into the wrapper pane's rotate vector.
         f32 scale =
             lbl_eu_8066879C * ((CFloorMapMgrView*)mgr)->getScaleSrc()->scale04 /
             lbl_eu_8066A1F8;
-        *(f32*)((u8*)holder + 0x38) = lbl_eu_80668764;
-        *(f32*)((u8*)holder + 0x3C) = lbl_eu_80668764;
-        *(f32*)((u8*)holder + 0x40) = scale;
+        CFloorMapPaneRotate* rot = (CFloorMapPaneRotate*)holder;
+        rot->rotX = lbl_eu_80668764;
+        rot->rotY = lbl_eu_80668764;
+        rot->rotZ = scale;
     }
 
-    holder->AppendChild((nw4r::lyt::Pane*)pic);
+    holder->AppendChild(picPane);
 
-    nw4r::lyt::Pane* target =
-        p->field_08->FindPaneByName(&lbl_eu_8050BEA8[0x2C7], 1);
+    nw4r::lyt::Pane* target = p->field_08->FindPaneByName(&tbl[0x2C7], true);
     target->AppendChild(holder);
 }
 
@@ -1456,7 +2573,191 @@ void* __dt__8024B894(void* self, int mode) {
     return self;
 }
 
-void __ct__CFloorMap(){}
+// Staging-image ctor (defined below in this TU; retail keeps the plain name).
+extern "C" void* __ct__80244F50(void* self, int a, int b, u8 c);
+
+// Layout-compatible body view of CSysWin (CFloorMap.hpp's fwd decl keeps
+// CSysWin incomplete here; CSysWin.hpp's dtor decl collides with this TU's).
+struct CSysWinBody {
+    void* mVtbl;
+    UnkClass_8045F564 mMemRegion;
+    void* mFileHandle;
+    void* mTagProcessor;
+    void* mArcAccessor;
+    void* mLayout;
+    void* mAnimTrans;
+    u8 field_28;
+    u8 _29[3];
+    u32 field_2C;
+    u32 field_30;
+    u8 field_34;
+    u8 field_35;
+    u8 field_36;
+    u8 field_37;
+    u8 field_38;
+    u8 field_39;
+};
+
+// Complete-object constructor (retail __ct__CFloorMap). Order: vtable, the
+// two UnkClass_8045F564 memory regions, the scalar/POD block, the four
+// embedded widgets (scrollbar / cursor / 2 syswins), the layout-slot block
+// (zeroed twice - a whole-array memset plus an explicit per-entry pass,
+// both present in retail), the cursor staging ctor at +0x1FC, then three
+// stack temps whose bodies are memberwise-copied over the embedded widgets
+// (skipping each temp's vptr) before being destroyed.
+CFloorMap::CFloorMap() {
+    mVtbl = (void*)lbl_eu_80537028;
+    __ct__17UnkClass_8045F564Fv(reinterpret_cast<UnkClass_8045F564*>(&mMemRegion04[0]));
+    __ct__17UnkClass_8045F564Fv(reinterpret_cast<UnkClass_8045F564*>(&mMemRegion14[0]));
+    field_24 = 0;
+    field_28 = 0;
+    field_2C = 0;
+    field_30 = 0;
+    field_34 = 0;
+    field_38 = 0;
+    allocated_buf_3C = 0;
+    field_40 = 0;
+    field_41 = 0;
+    field_42 = 0;
+    field_43 = 1;
+    pos_x_44 = lbl_eu_80668764;
+    pos_y_48 = lbl_eu_80668764;
+    field_4C = lbl_eu_80668764;
+    field_50 = lbl_eu_80668764;
+    field_54 = lbl_eu_80668764;
+    cursor_active_58 = 0;
+    field_5A = 0;
+    cursor_idx_5C = 0;
+    field_5D = 0;
+    __ct__CScrollBar(&mScrollBar[0], 0);
+    __ct__CCur18(&mCursorA0[0], 0);
+    __ct__CSysWin(reinterpret_cast<CSysWin*>(&mSysWinB8[0]), 0);
+    __ct__CSysWin(reinterpret_cast<CSysWin*>(&mSysWinF4[0]), 0);
+    layout_130 = 0;
+    field_134 = 0;
+    layout_138 = 0;
+    field_13C = 0;
+    layout_140 = 0;
+    field_144 = 0;
+    field_148 = 0;
+    field_14C = 0;
+    layouts_150[0].mPtr = 0;
+    layouts_150[0].mUnk = 0;
+    {
+        // Retail expands this zero-fill inline (chunked word-store template);
+        // this compiler never expands memset, so spell the fill out.
+        u32* p = &layouts_150[1].mPtr;
+        u32* end = (u32*)(layouts_150 + 0x14);
+        if ((u32)p < (u32)end) {
+            u32* last = end - 16;
+            u32 chunks = (u32)(((u8*)end - 1 - (u8*)p) >> 6);
+            if (p < last) {
+                do {
+                    p[0] = 0; p[1] = 0; p[2] = 0; p[3] = 0;
+                    p[4] = 0; p[5] = 0; p[6] = 0; p[7] = 0;
+                    p[8] = 0; p[9] = 0; p[10] = 0; p[11] = 0;
+                    p[12] = 0; p[13] = 0; p[14] = 0; p[15] = 0;
+                    p += 16;
+                } while (--chunks);
+            }
+            u32 pairs = (u32)(((u8*)end + 7 - (u8*)p) >> 3);
+            if (p < end) {
+                do {
+                    p[0] = 0;
+                    p[1] = 0;
+                    p += 2;
+                } while (--pairs);
+            }
+        }
+    }
+    layout_count_1F0 = 0;
+    field_1F4 = 0;
+    field_1F8 = 0;
+    for (int i = 0; i < 0x14; i++) {
+        layouts_150[i].mPtr = 0;
+        layouts_150[i].mUnk = 0;
+    }
+    // Build the floor-map cursor staging image in place at +0x1FC.
+    __ct__80244F50(&layout_1FC, 0, 0, 0);
+    field_3330 = 0;
+    layout_3334 = 0;
+    field_3338 = 0;
+    field_333C = 0;
+    field_3340 = NULL;
+    field_3344 = lbl_eu_80668760;
+
+    // Rebuild the embedded scrollbar from a stack temp (direction 3).
+    {
+        u8 sbStorage[0x40];
+        CScrollBar* sb = reinterpret_cast<CScrollBar*>(sbStorage);
+        __ct__CScrollBar(sb, 3);
+        CScrollBar* dst = reinterpret_cast<CScrollBar*>(&mScrollBar[0]);
+        dst->mMemRegion = sb->mMemRegion;
+        dst->mFileHandle = sb->mFileHandle;
+        dst->mAccessor = sb->mAccessor;
+        dst->mLayout = sb->mLayout;
+        dst->mAnimTransform = sb->mAnimTransform;
+        dst->mReady = sb->mReady;
+        dst->mVisible = sb->mVisible;
+        dst->mState = sb->mState;
+        dst->mActive = sb->mActive;
+        dst->mAnimOffset = sb->mAnimOffset;
+        dst->mScrollPosY = sb->mScrollPosY;
+        dst->mScrollRatio = sb->mScrollRatio;
+        dst->mThumbHeight = sb->mThumbHeight;
+        dst->mContentHeight = sb->mContentHeight;
+        dst->mDirection = sb->mDirection;
+        sb->~CScrollBar();
+    }
+
+    // Rebuild the +0xB8 system window from a stack temp (kind 3).
+    {
+        u8 winStorage[0x3C];
+        CSysWinBody* win = reinterpret_cast<CSysWinBody*>(winStorage);
+        __ct__CSysWin(reinterpret_cast<CSysWin*>(win), 3);
+        CSysWinBody* dst = reinterpret_cast<CSysWinBody*>(&mSysWinB8[0]);
+        dst->mMemRegion = win->mMemRegion;
+        dst->mFileHandle = win->mFileHandle;
+        dst->mTagProcessor = win->mTagProcessor;
+        dst->mArcAccessor = win->mArcAccessor;
+        dst->mLayout = win->mLayout;
+        dst->mAnimTrans = win->mAnimTrans;
+        dst->field_28 = win->field_28;
+        dst->field_2C = win->field_2C;
+        dst->field_30 = win->field_30;
+        dst->field_34 = win->field_34;
+        dst->field_35 = win->field_35;
+        dst->field_36 = win->field_36;
+        dst->field_37 = win->field_37;
+        dst->field_38 = win->field_38;
+        dst->field_39 = win->field_39;
+        win->~CSysWinBody();
+    }
+
+    // Rebuild the +0xF4 system window from a stack temp (kind 0).
+    {
+        u8 winStorage[0x3C];
+        CSysWinBody* win = reinterpret_cast<CSysWinBody*>(winStorage);
+        __ct__CSysWin(reinterpret_cast<CSysWin*>(win), 0);
+        CSysWinBody* dst = reinterpret_cast<CSysWinBody*>(&mSysWinF4[0]);
+        dst->mMemRegion = win->mMemRegion;
+        dst->mFileHandle = win->mFileHandle;
+        dst->mTagProcessor = win->mTagProcessor;
+        dst->mArcAccessor = win->mArcAccessor;
+        dst->mLayout = win->mLayout;
+        dst->mAnimTrans = win->mAnimTrans;
+        dst->field_28 = win->field_28;
+        dst->field_2C = win->field_2C;
+        dst->field_30 = win->field_30;
+        dst->field_34 = win->field_34;
+        dst->field_35 = win->field_35;
+        dst->field_36 = win->field_36;
+        dst->field_37 = win->field_37;
+        dst->field_38 = win->field_38;
+        dst->field_39 = win->field_39;
+        win->~CSysWinBody();
+    }
+}
 
 // Complete-object destructor.  Sub-objects are opaque byte arrays, so their
 // retail destructors are invoked explicitly in reverse construction order
@@ -1634,7 +2935,7 @@ void func_8024C1FC(void* self) {
             }
 
             CFloorMapPaneFlag* pf = (CFloorMapPaneFlag*)((CFloorMapLayoutHolder*)p->mLayouts150[i].mPtr)->pane;
-            pf->mFlag = (pf->mFlag & 0x7F) | found;
+            pf->mFlag = (pf->mFlag & 0xFE) | found;
             ((nw4r::lyt::Layout*)p->mLayouts150[i].mPtr)->Animate(0);
         }
     }
@@ -1878,9 +3179,16 @@ u8 func_8024CE1C(void* self) {
 // Move the map cursor to the previous floor: decrement the floor index
 // (wrapping to the last floor), rebuild the floor-name panes, set the
 // scrollbar range, then (re)load the floor's map file.
+// NOTE: the per-floor record address is deliberately recomputed at each use
+// (retail never keeps it in a callee-saved register across the calls).
+#define FM_FLOOR(p_) ((CFloorMapFloorBlock*)((u8*)(p_) + (s8)(p_)->field_205 * 0x30C))
 void func_8024CE68(void* self) {
     extern int sprintf(char*, const char*, ...);
     CFloorMapFull* p = (CFloorMapFull*)self;
+    nw4r::math::VEC3 pos;
+    f32 scl[3];
+    char nameBuf[0x20];
+    char fname[0x20];
     if (!p->field_208) return;
     if (p->field_58) return;
     if (CSysWin_getUnk34(&p->mSysWinB8)) return;
@@ -1894,30 +3202,25 @@ void func_8024CE68(void* self) {
 
     p->field_206 = -1;
     p->field_207 = 0;
-    char buf[0x20];
-    sprintf(buf, &lbl_eu_8050BEA8[0x12A], (s8)p->field_205 + 1);
+    sprintf(nameBuf, &lbl_eu_8050BEA8[0x12A], (s8)p->field_205 + 1);
 
-    nw4r::lyt::Layout* layout = (nw4r::lyt::Layout*)p->mLayout1FC;
-    nw4r::lyt::Pane* pane = layout->GetRootPane()->FindPaneByName(buf, 1);
-    nw4r::math::VEC3 pos;
-    func_801375A0(&pos, pane);
+    func_801375A0(&pos, ((nw4r::lyt::Layout*)p->mLayout1FC)->GetRootPane()->FindPaneByName(nameBuf, 1));
 
-    nw4r::lyt::Pane* scalePane = layout->GetRootPane()->FindPaneByName(&lbl_eu_8050BEA8[0x136], 1);
-    pos.x *= scalePane->GetScale().x;
+    pos.x *= ((nw4r::lyt::Layout*)p->mLayout1FC)->GetRootPane()->FindPaneByName(&lbl_eu_8050BEA8[0x136], 1)->GetScale().x;
     if (p->mLayout32D4) {
         CFloorMapSetPanePos(((nw4r::lyt::Layout*)p->mLayout32D4)->GetRootPane(), pos);
     }
 
-    s8 fi = (s8)p->field_205;
-    CFloorMapFloorBlock* floor = (CFloorMapFloorBlock*)((u8*)p + fi * 0x30C);
-    func_80136B4C((nw4r::lyt::Layout*)p->mLayout32D4, &lbl_eu_8050BEA8[0xF8], floor->name_210, 0);
+    func_80136B4C((nw4r::lyt::Layout*)p->mLayout32D4, &lbl_eu_8050BEA8[0xF8], FM_FLOOR(p)->name_210, 0);
     func_80136B4C((nw4r::lyt::Layout*)p->mLayout1FC, &lbl_eu_8050BEA8[0x145], func_8013639C((const void*)lbl_eu_806640A8, &lbl_eu_8050BEA8[0x1F], lbl_eu_80664798), 0);
     func_80246200(&p->mLayout1FC);
 
     if (p->field_3330) {
-        f32 vec[3] = {lbl_eu_80668768, lbl_eu_8066876C, lbl_eu_80668764};
-        func_801F3670((void*)p->field_3330, vec);
-        func_801F36BC((void*)p->field_3330, 5, floor->field_514);
+        scl[0] = lbl_eu_80668768;
+        scl[1] = lbl_eu_8066876C;
+        scl[2] = lbl_eu_80668764;
+        func_801F3670((void*)p->field_3330, scl);
+        func_801F36BC((void*)p->field_3330, 5, FM_FLOOR(p)->field_514);
         func_801F3850((void*)p->field_3330, 0);
     }
 
@@ -1926,86 +3229,107 @@ void func_8024CE68(void* self) {
     p->field_32E4 = 1;
     func_801390E0__FPP11CFileHandle((CFileHandle**)&p->field_2C);
 
-    u8 v26 = floor->field_20C;
-    if (v26 == 0) v26 = 1;
+    u8 lang = FM_FLOOR(p)->field_20C;
+    if (lang == 0) lang = 1;
 
-    u16 v1 = func_80136254((const void*)lbl_eu_8066479C, &lbl_eu_8050BEA8[0x4AF], v26);
-    u16 v2 = func_80136254((const void*)lbl_eu_8066479C, &lbl_eu_8050BEA8[0x4B5], v26);
-    u8 v3 = func_801361E8(lbl_eu_8066479C, &lbl_eu_8050BEA8[0x4BC], v26);
+    const char* msgTbl = lbl_eu_8050BEA8;
+    u16 rate1 = func_80136254((const void*)lbl_eu_8066479C, msgTbl + 0x4AF, lang);
+    u16 rate2 = func_80136254((const void*)lbl_eu_8066479C, msgTbl + 0x4B5, lang);
+    u8 rate3 = func_801361E8(lbl_eu_8066479C, msgTbl + 0x4BC, lang);
 
     // Pick which map variant to load: weighted by the floor table's three
-    // rates (v1/v2/v3) against two random draws.
+    // rates (rate1/rate2/rate3) against two random draws.
     int mode;
-    if (v1 != 0 && func_8009CF8C(0x20) >= v1) {
-        if (v2 != 0 && func_8009CF8C((u32)v2 + 0x220) >= v3) {
-            mode = 2;
-        } else {
+    if (rate1 != 0 && func_8009CF8C(0x20) >= rate1) {
+        if (rate2 == 0) {
             mode = 1;
+        } else if (func_8009CF8C((u32)rate2 + 0x220) < rate3) {
+            mode = 1;
+        } else {
+            mode = 2;
         }
     } else {
-        if (v2 != 0 && func_8009CF8C((u32)v2 + 0x220) >= v3) {
-            mode = 1;
-        } else {
+        if (rate2 == 0) {
             mode = 0;
+        } else if (func_8009CF8C((u32)rate2 + 0x220) < rate3) {
+            mode = 0;
+        } else {
+            mode = 1;
         }
     }
 
     const char* key = NULL;
     switch (mode) {
-    case 0: key = &lbl_eu_8050BEA8[0x4C1]; break;
-    case 1: key = &lbl_eu_8050BEA8[0x4C8]; break;
-    case 2: key = &lbl_eu_8050BEA8[0x4D0]; break;
+    case 0: key = msgTbl + 0x4C1; break;
+    case 1: key = msgTbl + 0x4C8; break;
+    case 2: key = msgTbl + 0x4D0; break;
     }
 
-    char fname[0x20];
-    sprintf(fname, &lbl_eu_8050BEA8[0x4D8], func_80138F78((u16)func_80136254((const void*)lbl_eu_8066479C, key, v26)));
+    sprintf(fname, msgTbl + 0x4D8, func_80138F78((u16)func_80136254((const void*)lbl_eu_8066479C, key, lang)));
     p->field_2C = (u32)readFile__11CDeviceFileFUlPCcP10IWorkEventii((u32)getHandleMEM2__Q23mtl10MemManagerFv(), fname, p, 0, 0);
-    func_80138078(0xA);
+    func_80138078(0xC);
 }
+#undef FM_FLOOR
 
 // Move the map cursor to the next floor: increment the floor index (wrapping
 // to the first floor), then refresh the floor name panes / scrollbar and
 // (re)load the floor's map file.
 void func_8024D23C(void* self) {
-    extern int sprintf(char*, const char*, ...);
     CFloorMapFull* p = (CFloorMapFull*)self;
     if (!p->field_208) return;
     if (p->field_58) return;
     if (CSysWin_getUnk34(&p->mSysWinB8)) return;
     if (CSysWin_getUnk34(&p->mSysWinF4)) return;
 
+    // Advance the floor index, wrapping back to the first floor.
     u8 nf = (u8)(p->field_205 + 1);
     p->field_205 = nf;
-    if ((s8)nf >= p->field_32CC) {
+    if ((s32)nf >= (s32)p->field_32CC) {
         p->field_205 = 0;
     }
 
     p->field_206 = -1;
     p->field_207 = 0;
+
+    char* tbl = lbl_eu_8050BEA8;
+    p->field_206 = -1;
+    p->field_207 = 0;
     char buf[0x20];
-    sprintf(buf, &lbl_eu_8050BEA8[0x12A], (s8)p->field_205 + 1);
+    sprintf(buf, &tbl[0x12A], (s8)p->field_205 + 1);
 
-    nw4r::lyt::Layout* layout = (nw4r::lyt::Layout*)p->mLayout1FC;
-    nw4r::lyt::Pane* pane = layout->GetRootPane()->FindPaneByName(buf, 1);
-    nw4r::math::VEC3 pos;
-    func_801375A0(&pos, pane);
+    nw4r::lyt::Pane* pane =
+        ((nw4r::lyt::Layout*)p->mLayout1FC)->GetRootPane()->FindPaneByName(buf, 1);
+    nw4r::math::_VEC3 pos;
+    func_801375A0((nw4r::math::VEC3*)&pos, pane);
 
-    nw4r::lyt::Pane* scalePane = layout->GetRootPane()->FindPaneByName(&lbl_eu_8050BEA8[0x136], 1);
-    pos.x *= scalePane->GetScale().x;
+    nw4r::lyt::Pane* scalePane =
+        ((nw4r::lyt::Layout*)p->mLayout1FC)->GetRootPane()->FindPaneByName(&tbl[0x136], 1);
+    // Word-wise move of y/z into the by-value argument slots so MWCC keeps
+    // the retail integer-register copies while x is rescaled.
+    u32 py = ((u32*)&pos)[1];
+    u32 pz = ((u32*)&pos)[2];
+    pos.x = pos.x * scalePane->GetScale().x;
+    nw4r::math::_VEC3 dest;
+    ((u32*)&dest)[1] = py;
     if (p->mLayout32D4) {
-        CFloorMapSetPanePos(((nw4r::lyt::Layout*)p->mLayout32D4)->GetRootPane(), pos);
+        ((u32*)&dest)[0] = ((u32*)&pos)[0];
+        ((u32*)&dest)[2] = pz;
+        CFloorMapSetPanePos(((nw4r::lyt::Layout*)p->mLayout32D4)->GetRootPane(), dest);
     }
 
-    s8 fi = (s8)p->field_205;
-    CFloorMapFloorBlock* floor = (CFloorMapFloorBlock*)((u8*)p + fi * 0x30C);
-    func_80136B4C((nw4r::lyt::Layout*)p->mLayout32D4, &lbl_eu_8050BEA8[0xF8], floor->name_210, 0);
-    func_80136B4C((nw4r::lyt::Layout*)p->mLayout1FC, &lbl_eu_8050BEA8[0x145], func_8013639C((const void*)lbl_eu_806640A8, &lbl_eu_8050BEA8[0x1F], lbl_eu_80664798), 0);
+    // The floor block is never cached; retail recomputes self + fi*0x30C
+    // for each field access while keeping only the field_20C byte live.
+    func_80136B4C((nw4r::lyt::Layout*)p->mLayout32D4, &tbl[0xF8],
+                  ((CFloorMapFloorBlock*)((u8*)p + (s8)p->field_205 * 0x30C))->name_210, 0);
+    func_80136B4C((nw4r::lyt::Layout*)p->mLayout1FC, &tbl[0x145],
+                  func_8013639C((const void*)lbl_eu_806640A8, &tbl[0x1F], lbl_eu_80664798), 0);
     func_80246200(&p->mLayout1FC);
 
     if (p->field_3330) {
         f32 vec[3] = {lbl_eu_80668768, lbl_eu_8066876C, lbl_eu_80668764};
         func_801F3670((void*)p->field_3330, vec);
-        func_801F36BC((void*)p->field_3330, 5, floor->field_514);
+        func_801F36BC((void*)p->field_3330, 5,
+                      ((CFloorMapFloorBlock*)((u8*)p + (s8)p->field_205 * 0x30C))->field_514);
         func_801F3850((void*)p->field_3330, 0);
     }
 
@@ -2014,7 +3338,7 @@ void func_8024D23C(void* self) {
     p->field_32E4 = 1;
     func_801390E0__FPP11CFileHandle((CFileHandle**)&p->field_2C);
 
-    u8 v26 = floor->field_20C;
+    u8 v26 = ((CFloorMapFloorBlock*)((u8*)p + (s8)p->field_205 * 0x30C))->field_20C;
     if (v26 == 0) v26 = 1;
 
     u16 v1 = func_80136254((const void*)lbl_eu_8066479C, &lbl_eu_8050BEA8[0x4AF], v26);
@@ -2036,11 +3360,13 @@ void func_8024D23C(void* self) {
         }
     }
 
-    const char* key = NULL;
-    switch (mode) {
-    case 0: key = &lbl_eu_8050BEA8[0x4C1]; break;
-    case 1: key = &lbl_eu_8050BEA8[0x4C8]; break;
-    case 2: key = &lbl_eu_8050BEA8[0x4D0]; break;
+    char* key;
+    if (mode == 0) {
+        key = &lbl_eu_8050BEA8[0x4C1];
+    } else if (mode == 1) {
+        key = &lbl_eu_8050BEA8[0x4C8];
+    } else {
+        key = &lbl_eu_8050BEA8[0x4D0];
     }
 
     char fname[0x20];
@@ -2055,6 +3381,22 @@ void func_8024D23C(void* self) {
 void func_8024D614(void* self) {
     extern int sprintf(char*, const char*, ...);
     CFloorMapFull* p = (CFloorMapFull*)self;
+    // Stack temps mirroring retail's frame layout; pos is declared first
+    // after self so its address colors into r30 like retail.
+    nw4r::math::VEC3 pos;
+    nw4r::math::VEC3 out;
+    nw4r::math::VEC3 rec;
+    nw4r::math::VEC3 acc3;
+    nw4r::math::VEC3 acc2;
+    nw4r::math::VEC3 acc;
+    char buf[0x20];
+    // Hoisted above every goto target so no jump crosses an initializer.
+    CFloorMapLayoutSlots* slots;
+    nw4r::lyt::Pane* root;
+    nw4r::lyt::Pane* pane;
+    nw4r::lyt::Pane* parent;
+    nw4r::lyt::Pane* gp;
+    nw4r::lyt::Pane* ggp;
     if (p->field_2C) return;
     if (!p->field_208) return;
     if (CSysWin_getUnk34(&p->mSysWinF4)) return;
@@ -2062,13 +3404,14 @@ void func_8024D614(void* self) {
     if (p->field_58) {
         if (!CSysWin_isActive(&p->mSysWinB8)) return;
 
+        // Step down, clamping at 1 (never below).
         u8 nc = (u8)(p->field_5C - 1);
         p->field_5C = nc;
         if ((s8)nc < 0) p->field_5C = 1;
 
-        nw4r::math::VEC3 out;
-        func_8022C1B4(&out, &p->mSysWinB8, p->field_5C);
-        ((CCur18View*)&p->mCursor)->v02(&out);
+        nw4r::math::VEC3 curOut;
+        func_8022C1B4(&curOut, &p->mSysWinB8, p->field_5C);
+        ((CCur18View*)&p->mCursor)->v02(&curOut);
         func_80138078(1);
         return;
     }
@@ -2088,71 +3431,81 @@ void func_8024D614(void* self) {
     }
     if (!rowId) return;
 
-    nw4r::math::VEC3 pos;
     pos.x = lbl_eu_80668764;
     pos.y = lbl_eu_80668764;
     pos.z = lbl_eu_80668764;
-    char buf[0x20];
+    // Retail keeps the layout-slot pointer and &pos in nonvolatiles across
+    // the sprintf call, so slot is assigned before it.
+    slots = (CFloorMapLayoutSlots*)&p->mLayout140;
     sprintf(buf, &lbl_eu_8050BEA8[0x2EB]);
 
-    CFloorMapLayoutSlots* slots = (CFloorMapLayoutSlots*)&p->mLayout140;
-    nw4r::lyt::Pane* pane = slots->layout->GetRootPane()->FindPaneByName(buf, 1);
-    if (pane) {
-        nw4r::lyt::Pane* target = slots->layout->GetRootPane();
-        nw4r::math::VEC3 out;
+    root = slots->layout->GetRootPane();
+    pane = root->FindPaneByName(buf, 1);
+    // Retail tests the FindPaneByName result on cr1 at the call return and
+    // wraps the whole tail (zero-init, walk, pos copy, scale lookup) inside
+    // the non-NULL branch; a NULL pane jumps straight to the divides block.
+    if (pane != NULL) {
         out.x = lbl_eu_80668764;
         out.y = lbl_eu_80668764;
         out.z = lbl_eu_80668764;
-        if (target != pane && pane != NULL) {
+        if (pane != root) {
             out.x = pane->GetTranslate().x;
             out.y = pane->GetTranslate().y;
             out.z = pane->GetTranslate().z;
 
-            nw4r::lyt::Pane* parent = pane->GetParent();
-            nw4r::math::VEC3 acc;
+            parent = pane->GetParent();
             acc.x = lbl_eu_80668764;
             acc.y = lbl_eu_80668764;
             acc.z = lbl_eu_80668764;
-            if (target != parent && parent != NULL) {
+            if (root != parent && parent != NULL) {
                 acc.x = parent->GetTranslate().x;
                 acc.y = parent->GetTranslate().y;
                 acc.z = parent->GetTranslate().z;
 
-                nw4r::lyt::Pane* gp = parent->GetParent();
-                nw4r::math::VEC3 acc2;
+                gp = parent->GetParent();
                 acc2.x = lbl_eu_80668764;
                 acc2.y = lbl_eu_80668764;
                 acc2.z = lbl_eu_80668764;
-                if (target != gp && gp != NULL) {
+                if (root != gp && gp != NULL) {
                     acc2.x = gp->GetTranslate().x;
                     acc2.y = gp->GetTranslate().y;
                     acc2.z = gp->GetTranslate().z;
 
-                    nw4r::lyt::Pane* ggp = gp->GetParent();
-                    nw4r::math::VEC3 acc3;
+                    ggp = gp->GetParent();
                     acc3.x = lbl_eu_80668764;
                     acc3.y = lbl_eu_80668764;
                     acc3.z = lbl_eu_80668764;
-                    if (target != ggp && ggp != NULL) {
+                    if (root != ggp && ggp != NULL) {
                         acc3.x = ggp->GetTranslate().x;
                         acc3.y = ggp->GetTranslate().y;
                         acc3.z = ggp->GetTranslate().z;
-                        nw4r::math::VEC3 rec;
+                        // Deepest level: no null check on the fourth ancestor;
+                        // func_8024B4CC handles it internally.
                         func_8024B4CC(&rec, slots, ggp->GetParent());
                         nw4r::math::VEC3Add(&acc3, &acc3, &rec);
                     }
-                    nw4r::math::VEC3Add(&acc2, &acc2, &acc3);
+                    goto add_acc2;
                 }
-                nw4r::math::VEC3Add(&acc, &acc, &acc2);
+                goto add_acc;
             }
+            goto add_out;
+        add_acc2:
+            nw4r::math::VEC3Add(&acc2, &acc2, &acc3);
+        add_acc:
+            nw4r::math::VEC3Add(&acc, &acc, &acc2);
+        add_out:
             nw4r::math::VEC3Add(&out, &out, &acc);
         }
-        pos = out;
+        pos.x = out.x;
+        pos.y = out.y;
+        pos.z = out.z;
 
-        nw4r::lyt::Pane* scalePane = slots->layout->GetRootPane()->FindPaneByName(&lbl_eu_8050BEA8[0x136], 1);
+        nw4r::lyt::Pane* scalePane =
+            slots->layout->GetRootPane()->FindPaneByName(&lbl_eu_8050BEA8[0x136], 1);
         pos.x *= scalePane->GetScale().x;
         pos += slots->layout->GetRootPane()->GetTranslate();
     }
+divides:
 
     p->field_54 = lbl_eu_806687A0;
     p->field_41 = 2;
@@ -2166,21 +3519,22 @@ void func_8024D614(void* self) {
 // rows and move the map view to the row under the cursor (same position
 // computation as func_8024F7CC).
 void func_8024DA0C(void* self) {
+    extern int sprintf(char*, const char*, ...);
+    CFloorMapFull* p = (CFloorMapFull*)self;
     char buf[0x20];
     nw4r::math::VEC3 pos;
     nw4r::math::VEC3 cursorOut;
-    if (((CFloorMapFull*)self)->field_2C) return;
-    if (!((CFloorMapFull*)self)->field_208) return;
-    if (CSysWin_getUnk34(&((CFloorMapFull*)self)->mSysWinF4)) return;
+    if (p->field_2C) return;
+    if (!p->field_208) return;
+    if (CSysWin_getUnk34(&p->mSysWinF4)) return;
 
-    CFloorMapFull* p = (CFloorMapFull*)self;
     if (p->field_58) {
         if (!CSysWin_isActive(&p->mSysWinB8)) return;
 
-        // Wrap the cursor index 0 -> 1 -> 0 (syswin cursor mode).
-        u8 nc = (u8)(p->field_5C + 1);
-        p->field_5C = nc;
-        if ((s8)nc >= 2) p->field_5C = 0;
+        // Wrap the cursor index 0 -> 1 -> 0 (syswin cursor mode); the wrap
+        // test reads the freshly stored byte back.
+        p->field_5C = p->field_5C + 1;
+        if ((s8)p->field_5C >= 2) p->field_5C = 0;
 
         func_8022C1B4(&cursorOut, &p->mSysWinB8, p->field_5C);
         ((CCur18View*)&p->mCursor)->v02(&cursorOut);
@@ -2188,83 +3542,86 @@ void func_8024DA0C(void* self) {
         return;
     }
 
-    s8 fi = (s8)p->field_205;
-    CFloorMapFloorBlock* floor = (CFloorMapFloorBlock*)((u8*)p + fi * 0x30C);
+    CFloorMapFloorBlock* floor = (CFloorMapFloorBlock*)((u8*)p + (s8)p->field_205 * 0x30C);
     if (!floor->field_514) return;
 
     func_80245450(&p->mLayout1FC);
 
-    u16 rowId;
-    s8 rowIdx = (s8)p->field_206;
-    if (rowIdx >= 0) {
-        rowId = ((CFloorMapFloorBlock*)((u8*)p + (s8)p->field_205 * 0x30C))->rows[(s8)p->field_207 + rowIdx].field_00;
-    } else {
-        rowId = 0;
+    u16 rowId = 0;
+    if ((s8)p->field_206 >= 0) {
+        rowId = ((CFloorMapFloorBlock*)((u8*)p + (s8)p->field_205 * 0x30C))
+                    ->rows[p->field_207 + (s8)p->field_206].field_00;
     }
 
     pos.x = lbl_eu_80668764;
     pos.y = lbl_eu_80668764;
     pos.z = lbl_eu_80668764;
+    // Retail keeps this slot pointer and &pos in nonvolatiles across the
+    // sprintf call below.
     CFloorMapLayoutSlots* slots = (CFloorMapLayoutSlots*)&p->mLayout140;
     sprintf(buf, &lbl_eu_8050BEA8[0x2EB], rowId);
 
-    nw4r::lyt::Pane* pane = slots->layout->GetRootPane()->FindPaneByName(buf, 1);
-    if (pane) {
-        // Accumulate the pane's parent-chain translate (excluding the layout
-        // root); the early exits keep the lower accumulators at {0,0,0}.
-        nw4r::lyt::Pane* target = slots->layout->GetRootPane();
-        nw4r::lyt::Pane* parent;
-        nw4r::lyt::Pane* gp;
-        nw4r::lyt::Pane* ggp;
-        nw4r::math::VEC3 acc;
-        nw4r::math::VEC3 acc2;
-        nw4r::math::VEC3 acc3;
-        nw4r::math::VEC3 rec;
+    // The layout root is read once and kept in a register for the ancestor
+    // comparisons; the layout pointer itself is re-read per call.
+    nw4r::lyt::Pane* root = slots->layout->GetRootPane();
+    nw4r::lyt::Pane* pane = root->FindPaneByName(buf, 1);
+    if (pane != NULL) {
+        // Accumulate the pane's parent-chain translates (excluding the layout
+        // root); each level that terminates early leaves its accumulator at
+        // {0,0,0}.
         nw4r::math::VEC3 out;
         out.x = lbl_eu_80668764;
         out.y = lbl_eu_80668764;
         out.z = lbl_eu_80668764;
-        if (target == pane || pane == NULL) goto set_pos;
-        out.x = pane->GetTranslate().x;
-        out.y = pane->GetTranslate().y;
-        out.z = pane->GetTranslate().z;
+        if (pane != root) {
+            nw4r::lyt::Pane* parent = pane->GetParent();
+            out.x = pane->GetTranslate().x;
+            out.y = pane->GetTranslate().y;
+            out.z = pane->GetTranslate().z;
 
-        parent = pane->GetParent();
-        acc.x = lbl_eu_80668764;
-        acc.y = lbl_eu_80668764;
-        acc.z = lbl_eu_80668764;
-        if (target == parent || parent == NULL) goto add_out;
-        acc.x = parent->GetTranslate().x;
-        acc.y = parent->GetTranslate().y;
-        acc.z = parent->GetTranslate().z;
+            nw4r::math::VEC3 acc;
+            acc.x = lbl_eu_80668764;
+            acc.y = lbl_eu_80668764;
+            acc.z = lbl_eu_80668764;
+            if (parent != root && parent != NULL) {
+                nw4r::lyt::Pane* gp = parent->GetParent();
+                acc.x = parent->GetTranslate().x;
+                acc.y = parent->GetTranslate().y;
+                acc.z = parent->GetTranslate().z;
 
-        gp = parent->GetParent();
-        acc2.x = lbl_eu_80668764;
-        acc2.y = lbl_eu_80668764;
-        acc2.z = lbl_eu_80668764;
-        if (target == gp || gp == NULL) goto add_acc;
-        acc2.x = gp->GetTranslate().x;
-        acc2.y = gp->GetTranslate().y;
-        acc2.z = gp->GetTranslate().z;
+                nw4r::math::VEC3 acc2;
+                acc2.x = lbl_eu_80668764;
+                acc2.y = lbl_eu_80668764;
+                acc2.z = lbl_eu_80668764;
+                if (gp != root && gp != NULL) {
+                    nw4r::lyt::Pane* ggp = gp->GetParent();
+                    acc2.x = gp->GetTranslate().x;
+                    acc2.y = gp->GetTranslate().y;
+                    acc2.z = gp->GetTranslate().z;
 
-        ggp = gp->GetParent();
-        acc3.x = lbl_eu_80668764;
-        acc3.y = lbl_eu_80668764;
-        acc3.z = lbl_eu_80668764;
-        if (target == ggp || ggp == NULL) goto add_acc2;
-        acc3.x = ggp->GetTranslate().x;
-        acc3.y = ggp->GetTranslate().y;
-        acc3.z = ggp->GetTranslate().z;
-        func_8024B4CC(&rec, slots, ggp->GetParent());
-        nw4r::math::VEC3Add(&acc3, &acc3, &rec);
-    add_acc2:
-        nw4r::math::VEC3Add(&acc2, &acc2, &acc3);
-    add_acc:
-        nw4r::math::VEC3Add(&acc, &acc, &acc2);
-    add_out:
-        nw4r::math::VEC3Add(&out, &out, &acc);
-    set_pos:
-        pos = out;
+                    nw4r::math::VEC3 acc3;
+                    acc3.x = lbl_eu_80668764;
+                    acc3.y = lbl_eu_80668764;
+                    acc3.z = lbl_eu_80668764;
+                    if (ggp != root && ggp != NULL) {
+                        nw4r::math::VEC3 rec;
+                        acc3.x = ggp->GetTranslate().x;
+                        acc3.y = ggp->GetTranslate().y;
+                        acc3.z = ggp->GetTranslate().z;
+                        // Deepest level: no null check on the fourth
+                        // ancestor; func_8024B4CC handles it internally.
+                        func_8024B4CC(&rec, slots, ggp->GetParent());
+                        nw4r::math::VEC3Add(&acc3, &acc3, &rec);
+                    }
+                    nw4r::math::VEC3Add(&acc2, &acc2, &acc3);
+                }
+                nw4r::math::VEC3Add(&acc, &acc, &acc2);
+            }
+            nw4r::math::VEC3Add(&out, &out, &acc);
+        }
+        pos.x = out.x;
+        pos.y = out.y;
+        pos.z = out.z;
 
         nw4r::lyt::Pane* scalePane = slots->layout->GetRootPane()->FindPaneByName(&lbl_eu_8050BEA8[0x136], 1);
         pos.x *= scalePane->GetScale().x;
@@ -2282,6 +3639,20 @@ void func_8024DA0C(void* self) {
 // index down by one row (wrapping the page), refresh the cursor pane, move
 // the map view to the row under the cursor, and normalize the new position.
 void func_8024DE08(CFloorMapFull* p) {
+    // Declared in retail frame-slot order (MWCC assigns first-declared the
+    // highest address): buf@0x88, buf2@0x68, vec@0x5C, pos@0x50, dest@0x44,
+    // acc@0x38, acc2@0x2C, acc3@0x20, rec@0x14, out@0x08.
+    char buf[0x20];
+    char buf2[0x20];
+    nw4r::math::VEC3 vec;
+    nw4r::math::_VEC3 pos;
+    nw4r::math::_VEC3 dest;
+    nw4r::math::VEC3 acc;
+    nw4r::math::VEC3 acc2;
+    nw4r::math::VEC3 acc3;
+    nw4r::math::VEC3 rec;
+    nw4r::math::VEC3 out;
+
     if (p->field_2C) return;
     if (!p->field_208) return;
     if (CSysWin_getUnk34(&p->mSysWinF4)) return;
@@ -2310,24 +3681,31 @@ void func_8024DE08(CFloorMapFull* p) {
 
     func_80246200(&p->mLayout1FC);
 
+    const char* tbl = lbl_eu_8050BEA8;
     // Refresh the cursor position: format the pane name for the current page
     // index, scale its translate by the zoom pane, and move the target pane.
-    char buf[0x20];
-    sprintf(buf, &lbl_eu_8050BEA8[0x14D], (s8)p->field_206);
+    sprintf(buf, &tbl[0x14D], (s8)p->field_206);
 
-    nw4r::lyt::Layout* layout = (nw4r::lyt::Layout*)p->mLayout1FC;
-    nw4r::lyt::Pane* pane = layout->GetRootPane()->FindPaneByName(buf, 1);
-    nw4r::math::VEC3 pos;
-    func_801375A0(&pos, pane);
+    nw4r::lyt::Pane* pane =
+        ((nw4r::lyt::Layout*)p->mLayout1FC)->GetRootPane()->FindPaneByName(buf, 1);
+    func_801375A0((nw4r::math::VEC3*)&pos, pane);
     nw4r::lyt::Pane* scalePane =
-        layout->GetRootPane()->FindPaneByName(&lbl_eu_8050BEA8[0x136], 1);
-    pos.x *= scalePane->GetScale().x;
-    nw4r::math::_VEC3 dest = pos;
+        ((nw4r::lyt::Layout*)p->mLayout1FC)->GetRootPane()->FindPaneByName(&tbl[0x136], 1);
+    pos.x = pos.x * scalePane->GetScale().x;
+
+    // Word-wise y/z copy so MWCC keeps the retail integer-register moves;
+    // the scaled x lands in dest last.
+    ((u32*)&dest)[1] = ((u32*)&pos)[1];
+    ((u32*)&dest)[2] = ((u32*)&pos)[2];
+    dest.x = pos.x;
+
     if (p->mLayout3304)
-        CFloorMapSetPanePos(((CFloorMapLayoutHolder*)p->mLayout3304)->pane, dest);
+        ((CFloorMapLayoutHolder*)p->mLayout3304)->pane->SetTranslate(
+            *(nw4r::math::VEC3*)&dest);
 
     func_801F3850((void*)p->field_3330, (u16)(s8)p->field_207);
 
+    // Resolve the map-row id under the cursor (0 when the page index wrapped).
     u16 rowId = 0;
     if ((s8)p->field_206 >= 0) {
         rowId = ((CFloorMapFloorBlock*)((u8*)p + (s8)p->field_205 * 0x30C))
@@ -2337,26 +3715,21 @@ void func_8024DE08(CFloorMapFull* p) {
     // Move the map view to the row under the cursor: accumulate the row
     // pane's parent-chain translate (excluding the layout root), scale by the
     // zoom pane and add the root offset.
-    nw4r::math::VEC3 vec;
     vec.x = lbl_eu_80668764;
     vec.y = lbl_eu_80668764;
     vec.z = lbl_eu_80668764;
     CFloorMapLayoutSlots* slots = (CFloorMapLayoutSlots*)&p->mLayout140;
-    char buf2[0x20];
-    sprintf(buf2, &lbl_eu_8050BEA8[0x2EB]);
+    sprintf(buf2, &tbl[0x2EB], rowId);
 
     nw4r::lyt::Pane* pane2 = slots->layout->GetRootPane()->FindPaneByName(buf2, 1);
-    if (pane2) {
-        nw4r::lyt::Pane* target = slots->layout->GetRootPane();
-        nw4r::lyt::Pane* parent;
-        nw4r::lyt::Pane* gp;
-        nw4r::lyt::Pane* ggp;
-        nw4r::math::VEC3 acc;
-        nw4r::math::VEC3 acc2;
-        nw4r::math::VEC3 acc3;
-        nw4r::math::VEC3 rec;
-        nw4r::math::VEC3 out;
-        out.x = lbl_eu_80668764;
+    nw4r::lyt::Pane* parent;
+    nw4r::lyt::Pane* gp;
+    nw4r::lyt::Pane* ggp;
+    nw4r::lyt::Pane* scalePane2;
+    if (pane2 == NULL) goto tail;
+
+    nw4r::lyt::Pane* target = slots->layout->GetRootPane();
+    out.x = lbl_eu_80668764;
         out.y = lbl_eu_80668764;
         out.z = lbl_eu_80668764;
         if (target == pane2 || pane2 == NULL) goto set_pos;
@@ -2401,12 +3774,12 @@ void func_8024DE08(CFloorMapFull* p) {
     set_pos:
         vec = out;
 
-        nw4r::lyt::Pane* scalePane2 =
+        scalePane2 =
             slots->layout->GetRootPane()->FindPaneByName(&lbl_eu_8050BEA8[0x136], 1);
         vec.x *= scalePane2->GetScale().x;
-        vec += slots->layout->GetRootPane()->GetTranslate();
-    }
-
+        nw4r::math::VEC3Add(&vec, &vec,
+                            (nw4r::math::VEC3*)&slots->layout->GetRootPane()->GetTranslate());
+    tail:
     p->field_54 = lbl_eu_806687A0;
     p->field_41 = 2;
     p->field_4C = vec.x / lbl_eu_806687A0;
@@ -2417,6 +3790,8 @@ void func_8024DE08(CFloorMapFull* p) {
 // Scroll the floor-map cursor view down to the selected row: reset the
 // cursor, resolve the selected row's pane by name, accumulate its parent-chain
 // translate (scaled by the map zoom pane) and store the normalized position.
+// The tail normalization always runs; when the pane is missing, pos simply
+// stays at the zero it was seeded with before the name lookup.
 void func_8024E2BC(void* self) {
     CFloorMapFull* p = (CFloorMapFull*)self;
     if (p->field_2C != 0) return;
@@ -2424,97 +3799,102 @@ void func_8024E2BC(void* self) {
     if (CSysWin_getUnk34(&p->mSysWinF4)) return;
     if (p->field_58 != 0) return;
 
-    s8 fi = (s8)p->field_205;
-    CFloorMapFloorBlock* floorBlk = (CFloorMapFloorBlock*)((u8*)p + fi * 0x30C);
-    if (!floorBlk->field_514) return;
+    if (*(u8*)((u8*)p + (s8)p->field_205 * 0x30C + 0x514) == 0) return;
     func_802455F0(&p->mLayout1FC);
 
-    u16 rowId;
-    s8 rowIdx = (s8)p->field_206;
-    if (rowIdx >= 0) {
-        rowId = floorBlk->rows[(s8)p->field_207 + rowIdx].field_00;
-    } else {
-        rowId = 0;
-    }
-    if (!rowId) return;
-
+    // Locals in retail frame-slot order (buf@0x50, pos@0x44, acc@0x38,
+    // acc2@0x2C, acc3@0x20, rec@0x14, out@0x08).
+    char buf[0x20];
     nw4r::math::VEC3 pos;
+    nw4r::math::VEC3 acc;
+    nw4r::math::VEC3 acc2;
+    nw4r::math::VEC3 acc3;
+    nw4r::math::VEC3 rec;
+    nw4r::math::VEC3 out;
+    // Address locals seeded before the calls: the translate adds consume
+    // these through the ps-pair helpers, and retail keeps the pointers in
+    // callee-saved registers across the lookups.
+    nw4r::math::VEC3* posP = &pos;
+    nw4r::math::VEC3* outP = &out;
+
+    // Row id of the selected marker row; 0 while no row is selected.
+    u16 rowId = 0;
+    if ((s8)p->field_206 >= 0)
+        rowId = *(u16*)(
+            (u8*)p + (s8)p->field_205 * 0x30C +
+            ((s8)p->field_207 + (s8)p->field_206) * 0x18 + 0x214);
+
+    // pos is zeroed before the sprintf: its frame slots back the skipped-path
+    // value consumed by the tail below.
     pos.x = lbl_eu_80668764;
     pos.y = lbl_eu_80668764;
     pos.z = lbl_eu_80668764;
-    char buf[0x20];
     sprintf(buf, &lbl_eu_8050BEA8[0x2EB], rowId);
 
     CFloorMapLayoutSlots* slots = (CFloorMapLayoutSlots*)&p->mLayout140;
     nw4r::lyt::Pane* pane = slots->layout->GetRootPane()->FindPaneByName(buf, 1);
-    if (pane) {
-        // Accumulate the pane's parent-chain translate (excluding the layout
-        // root); the early exits keep the lower accumulators at {0,0,0}.
-        // VEC3 locals stay above the first goto: MWCC rejects jumping past a
-        // declaration with an initializer.
+    if (pane != NULL) {
+        // Accumulate the pane's parent-chain translate (up to the layout
+        // root); each level starts from zero so the early exits keep the sum
+        // correct.
         nw4r::lyt::Pane* target = slots->layout->GetRootPane();
-        nw4r::lyt::Pane* parent;
-        nw4r::lyt::Pane* gp;
-        nw4r::lyt::Pane* ggp;
-        nw4r::math::VEC3 out;
-        nw4r::math::VEC3 acc;
-        nw4r::math::VEC3 acc2;
-        nw4r::math::VEC3 acc3;
-        nw4r::math::VEC3 rec;
         out.x = lbl_eu_80668764;
         out.y = lbl_eu_80668764;
         out.z = lbl_eu_80668764;
-        if (target == pane || pane == NULL) goto set_pos;
-        out.x = pane->GetTranslate().x;
-        out.y = pane->GetTranslate().y;
-        out.z = pane->GetTranslate().z;
+        if (target != pane) {
+            out.x = pane->GetTranslate().x;
+            out.y = pane->GetTranslate().y;
+            out.z = pane->GetTranslate().z;
 
-        parent = pane->GetParent();
-        acc.x = lbl_eu_80668764;
-        acc.y = lbl_eu_80668764;
-        acc.z = lbl_eu_80668764;
-        if (target == parent || parent == NULL) goto add_out;
-        acc.x = parent->GetTranslate().x;
-        acc.y = parent->GetTranslate().y;
-        acc.z = parent->GetTranslate().z;
+            nw4r::lyt::Pane* parent = pane->GetParent();
+            acc.x = lbl_eu_80668764;
+            acc.y = lbl_eu_80668764;
+            acc.z = lbl_eu_80668764;
+            if (target != parent && parent != NULL) {
+                acc.x = parent->GetTranslate().x;
+                acc.y = parent->GetTranslate().y;
+                acc.z = parent->GetTranslate().z;
 
-        gp = parent->GetParent();
-        acc2.x = lbl_eu_80668764;
-        acc2.y = lbl_eu_80668764;
-        acc2.z = lbl_eu_80668764;
-        if (target == gp || gp == NULL) goto add_acc;
-        acc2.x = gp->GetTranslate().x;
-        acc2.y = gp->GetTranslate().y;
-        acc2.z = gp->GetTranslate().z;
+                nw4r::lyt::Pane* gp = parent->GetParent();
+                acc2.x = lbl_eu_80668764;
+                acc2.y = lbl_eu_80668764;
+                acc2.z = lbl_eu_80668764;
+                if (target != gp && gp != NULL) {
+                    acc2.x = gp->GetTranslate().x;
+                    acc2.y = gp->GetTranslate().y;
+                    acc2.z = gp->GetTranslate().z;
 
-        ggp = gp->GetParent();
-        acc3.x = lbl_eu_80668764;
-        acc3.y = lbl_eu_80668764;
-        acc3.z = lbl_eu_80668764;
-        if (target == ggp || ggp == NULL) goto add_acc2;
-        acc3.x = ggp->GetTranslate().x;
-        acc3.y = ggp->GetTranslate().y;
-        acc3.z = ggp->GetTranslate().z;
-        func_8024B4CC(&rec, slots, ggp->GetParent());
-        nw4r::math::VEC3Add(&acc3, &acc3, &rec);
-    add_acc2:
-        nw4r::math::VEC3Add(&acc2, &acc2, &acc3);
-    add_acc:
-        nw4r::math::VEC3Add(&acc, &acc, &acc2);
-    add_out:
-        nw4r::math::VEC3Add(&out, &out, &acc);
-    set_pos:
+                    nw4r::lyt::Pane* ggp = gp->GetParent();
+                    acc3.x = lbl_eu_80668764;
+                    acc3.y = lbl_eu_80668764;
+                    acc3.z = lbl_eu_80668764;
+                    if (target != ggp && ggp != NULL) {
+                        acc3.x = ggp->GetTranslate().x;
+                        acc3.y = ggp->GetTranslate().y;
+                        acc3.z = ggp->GetTranslate().z;
+                        func_8024B4CC(&rec, slots, ggp->GetParent());
+                        nw4r::math::VEC3Add(&acc3, &acc3, &rec);
+                    }
+                    nw4r::math::VEC3Add(&acc2, &acc2, &acc3);
+                }
+                nw4r::math::VEC3Add(&acc, &acc, &acc2);
+            }
+            nw4r::math::VEC3Add(outP, outP, &acc);
+        }
+
         pos = out;
-
-        nw4r::lyt::Pane* scalePane = slots->layout->GetRootPane()->FindPaneByName(&lbl_eu_8050BEA8[0x136], 1);
+        nw4r::lyt::Pane* scalePane =
+            slots->layout->GetRootPane()->FindPaneByName(&lbl_eu_8050BEA8[0x136], 1);
         pos.x *= scalePane->GetScale().x;
-        pos += slots->layout->GetRootPane()->GetTranslate();
+        nw4r::math::VEC3Add(
+            posP, posP,
+            (nw4r::math::VEC3*)&slots->layout->GetRootPane()->GetTranslate());
     }
 
-    p->field_54 = lbl_eu_806687A0;
-    p->field_41 = 2;
-    p->field_4C = pos.x / lbl_eu_806687A0;
-    p->field_50 = pos.y / lbl_eu_806687A0;
+    ((CFloorMapFull*)self)->field_54 = lbl_eu_806687A0;
+    ((CFloorMapFull*)self)->field_41 = 2;
+    ((CFloorMapFull*)self)->field_4C = pos.x / lbl_eu_806687A0;
+    ((CFloorMapFull*)self)->field_50 = pos.y / lbl_eu_806687A0;
     func_80138078(1);
 }
 
@@ -2666,9 +4046,10 @@ void func_8024EC24(CFloorMapFull* fm) {
 // window or the map-cursor window for the selected row.
 void func_8024EE50(void* self) {
     CFloorMapFull* p = (CFloorMapFull*)self;
-    s8 fi = (s8)p->field_205;
-    CFloorMapFloorBlock* floorBlk = (CFloorMapFloorBlock*)((u8*)p + fi * 0x30C);
-    if (!floorBlk->field_514) return;
+    // Retail recomputes the current-floor block address at every access
+    // instead of caching it in a register across the UI calls.
+#define FLOORBLK ((CFloorMapFloorBlock*)((u8*)p + (s8)p->field_205 * 0x30C))
+    if (!FLOORBLK->field_514) return;
     if (!CSysWin_isActive(&p->mSysWinB8)) return;
 
     if (CSysWin_getUnk34(&p->mSysWinF4)) {
@@ -2682,9 +4063,11 @@ void func_8024EE50(void* self) {
         // Cursor window closing animation: refresh the row-id readout only on
         // the first frame (cursor_idx_5C == 0).
         if ((s8)p->field_5C == 0) {
-            u16 rows = 0;
+            u16 rows;
             if ((s8)p->field_206 >= 0) {
-                rows = floorBlk->rows[(s8)p->field_207 + (s8)p->field_206].field_00;
+                rows = FLOORBLK->rows[(s8)p->field_207 + (s8)p->field_206].field_00;
+            } else {
+                rows = 0;
             }
             p->field_5A = rows;
             func_80138078(0x1D);
@@ -2697,26 +4080,37 @@ void func_8024EE50(void* self) {
         return;
     }
 
-    // Resolve the currently selected row id and its visited flag.
-    s8 selIdx = (s8)p->field_206 + (s8)p->field_207;
-    u16 rowId = ((s8)p->field_206 >= 0) ? floorBlk->rows[selIdx].field_00 : 0;
+    // Resolve the currently selected row id and its visited flag. Retail
+    // evaluates the guarded record lookup twice (once for the id, once for
+    // the visited byte), keeping both under the same field_206 sign guard.
+    u16 rowId;
+    if ((s8)p->field_206 >= 0)
+        rowId = FLOORBLK->rows[(s8)p->field_207 + (s8)p->field_206].field_00;
+    else
+        rowId = 0;
     if (!rowId) return;
-    u8 visited = ((s8)p->field_206 >= 0) ? floorBlk->rows[selIdx].field_02 : 0;
+    u8 visited = 0;
+    if ((s8)p->field_206 >= 0)
+        visited = FLOORBLK->rows[(s8)p->field_207 + (s8)p->field_206].field_02;
 
-    u16 nameIdx = 0x16;
     if (visited != 0) {
-        // Visited row: pick the detail-text variant; tutorial maps with a
+        // Visited row: pick the detail-text variant; maps 14/24/25 with a
         // lucky roll and maps with the extra-info flags use the shorter one.
-        u8 cur = lbl_eu_80664798;
-        if (cur == 0xD) {
+        // Maps 24 and 25 are separate clauses so each rolls its own random.
+        u16 nameIdx = 0x16;
+        if (lbl_eu_80664798 == 0xD) {
             u16 rnd = (u16)func_8009CF8C(0x20);
             if (rnd >= 0x171 && rnd <= 0x194) nameIdx = 0x15;
-        } else if (cur == 0x17 || cur == 0x18) {
+        } else if (lbl_eu_80664798 == 0x17) {
+            u16 rnd = (u16)func_8009CF8C(0x20);
+            if (rnd >= 0x15F && rnd <= 0x16A) nameIdx = 0x15;
+        } else if (lbl_eu_80664798 == 0x18) {
             u16 rnd = (u16)func_8009CF8C(0x20);
             if (rnd >= 0x15F && rnd <= 0x16A) nameIdx = 0x15;
         }
         u32 flags = getUnk80664658()->field_214;
         if ((flags & 0x2000) != 0 || (flags & 0x10000) != 0) nameIdx = 0x15;
+
 
         char* name = func_80136190(&lbl_eu_8050BEA8[0x519], &lbl_eu_8050BEA8[0x1F], nameIdx);
         func_8022B9B4(&p->mSysWinF4, name, 0);
@@ -2960,79 +4354,90 @@ void func_8024F7CC(void* self) {
     }
     if (!rowId) return;
 
+    nw4r::lyt::Pane* pane;
+    nw4r::math::VEC3 out;
+    nw4r::math::VEC3 rec;
+    nw4r::math::VEC3 acc3;
+    nw4r::math::VEC3 acc2;
+    nw4r::math::VEC3 acc;
     nw4r::math::VEC3 pos;
+    CFloorMapLayoutSlots* slots;
+    char buf[0x20];
+
     pos.x = lbl_eu_80668764;
     pos.y = lbl_eu_80668764;
     pos.z = lbl_eu_80668764;
-    char buf[0x20];
+    // Retail forms the layout-slot pointer and the pos address before the
+    // sprintf call, keeping both in nonvolatile registers across it.
+    slots = (CFloorMapLayoutSlots*)&p->mLayout140;
     sprintf(buf, &lbl_eu_8050BEA8[0x2EB]);
 
-    CFloorMapLayoutSlots* slots = (CFloorMapLayoutSlots*)&p->mLayout140;
-    nw4r::lyt::Pane* pane = slots->layout->GetRootPane()->FindPaneByName(buf, 1);
-    if (pane) {
-        // Accumulate the pane's parent-chain translate (excluding the layout
-        // root); the early exits keep the lower accumulators at {0,0,0}.
-        // VEC3 locals stay above the first goto: MWCC rejects jumping past a
-        // declaration with an initializer.
-        nw4r::lyt::Pane* target = slots->layout->GetRootPane();
-        nw4r::lyt::Pane* parent;
-        nw4r::lyt::Pane* gp;
-        nw4r::lyt::Pane* ggp;
-        nw4r::math::VEC3 out;
-        nw4r::math::VEC3 acc;
-        nw4r::math::VEC3 acc2;
-        nw4r::math::VEC3 acc3;
-        nw4r::math::VEC3 rec;
+    // Holding the root pane live across the FindPaneByName call mirrors
+    // retail's cross-call register pressure (root + slots + &pos + self).
+    nw4r::lyt::Pane* root = slots->layout->GetRootPane();
+    pane = root->FindPaneByName(buf, 1);
+    // Retail tests the pane pointer in cr1 and branches straight to the final
+    // divide block when it is NULL; the walk itself is guarded by a separate
+    // pane-vs-root compare with shared add tails.
+    if (!pane) goto divides;
+    {
         out.x = lbl_eu_80668764;
         out.y = lbl_eu_80668764;
         out.z = lbl_eu_80668764;
-        if (target == pane || pane == NULL) goto set_pos;
+        if (pane == root) goto do_pos;
+
+        nw4r::lyt::Pane* parent = pane->GetParent();
         out.x = pane->GetTranslate().x;
         out.y = pane->GetTranslate().y;
         out.z = pane->GetTranslate().z;
-
-        parent = pane->GetParent();
         acc.x = lbl_eu_80668764;
         acc.y = lbl_eu_80668764;
         acc.z = lbl_eu_80668764;
-        if (target == parent || parent == NULL) goto add_out;
-        acc.x = parent->GetTranslate().x;
-        acc.y = parent->GetTranslate().y;
-        acc.z = parent->GetTranslate().z;
-
-        gp = parent->GetParent();
-        acc2.x = lbl_eu_80668764;
-        acc2.y = lbl_eu_80668764;
-        acc2.z = lbl_eu_80668764;
-        if (target == gp || gp == NULL) goto add_acc;
-        acc2.x = gp->GetTranslate().x;
-        acc2.y = gp->GetTranslate().y;
-        acc2.z = gp->GetTranslate().z;
-
-        ggp = gp->GetParent();
-        acc3.x = lbl_eu_80668764;
-        acc3.y = lbl_eu_80668764;
-        acc3.z = lbl_eu_80668764;
-        if (target == ggp || ggp == NULL) goto add_acc2;
-        acc3.x = ggp->GetTranslate().x;
-        acc3.y = ggp->GetTranslate().y;
-        acc3.z = ggp->GetTranslate().z;
-        func_8024B4CC(&rec, slots, ggp->GetParent());
-        nw4r::math::VEC3Add(&acc3, &acc3, &rec);
+        if (root != parent && parent != NULL) {
+            nw4r::lyt::Pane* gp = parent->GetParent();
+            acc.x = parent->GetTranslate().x;
+            acc.y = parent->GetTranslate().y;
+            acc.z = parent->GetTranslate().z;
+            acc2.x = lbl_eu_80668764;
+            acc2.y = lbl_eu_80668764;
+            acc2.z = lbl_eu_80668764;
+            if (root != gp && gp != NULL) {
+                nw4r::lyt::Pane* ggp = gp->GetParent();
+                acc2.x = gp->GetTranslate().x;
+                acc2.y = gp->GetTranslate().y;
+                acc2.z = gp->GetTranslate().z;
+                acc3.x = lbl_eu_80668764;
+                acc3.y = lbl_eu_80668764;
+                acc3.z = lbl_eu_80668764;
+                if (root != ggp && ggp != NULL) {
+                    acc3.x = ggp->GetTranslate().x;
+                    acc3.y = ggp->GetTranslate().y;
+                    acc3.z = ggp->GetTranslate().z;
+                    func_8024B4CC(&rec, slots, ggp->GetParent());
+                    nw4r::math::VEC3Add(&acc3, &acc3, &rec);
+                }
+                goto add_acc2;
+            }
+            goto add_acc;
+        }
+        goto add_out;
     add_acc2:
         nw4r::math::VEC3Add(&acc2, &acc2, &acc3);
     add_acc:
         nw4r::math::VEC3Add(&acc, &acc, &acc2);
     add_out:
         nw4r::math::VEC3Add(&out, &out, &acc);
-    set_pos:
-        pos = out;
-
-        nw4r::lyt::Pane* scalePane = slots->layout->GetRootPane()->FindPaneByName(&lbl_eu_8050BEA8[0x136], 1);
+        goto do_pos;
+    do_pos:
+        pos.x = out.x;
+        pos.y = out.y;
+        pos.z = out.z;
+        nw4r::lyt::Pane* scalePane =
+            slots->layout->GetRootPane()->FindPaneByName(&lbl_eu_8050BEA8[0x136], 1);
         pos.x *= scalePane->GetScale().x;
-        pos += slots->layout->GetRootPane()->GetTranslate();
+        nw4r::math::VEC3Add(&pos, &pos, &slots->layout->GetRootPane()->GetTranslate());
     }
-
+divides:
     p->field_54 = lbl_eu_806687BC;
     p->field_41 = 2;
     p->field_4C = pos.x / lbl_eu_806687BC;
@@ -3094,12 +4499,14 @@ u32 func_8024FB78(void*) {
 // buffer and rebuilds the current floor's marker rows, the fourth parses the
 // auxiliary world-map file. Returns 1 when the event was consumed, 0 otherwise.
 u32 CFloorMap::OnFileEvent(CEventFile* event) {
-    CFileHandle* handle = event->mFileHandle;
+    // Note: the file handle is re-read from the event at each dispatch (kept
+    // in a volatile register by MWCC, like retail) - caching it in a local
+    // would force an extra nonvolatile save across every branch body.
 
     // Event for the floor-list file (field_24): open a scratch region, load
     // the two map layouts, build the row-marker pane list and the embedded
     // cursor, then push the cursor position into every map layout.
-    if ((CFileHandle*)this->field_24 == handle) {
+    if ((CFileHandle*)this->field_24 == event->mFileHandle) {
         int mem2 = (int)mtl::MemManager::getHandleMEM2();
         ((UnkClass_8045F564*)&this->mMemRegion04[0])
             ->createRegion(mem2, 0x80000, &lbl_eu_8050BEA8[0x6c4], 0);
@@ -3206,7 +4613,7 @@ u32 CFloorMap::OnFileEvent(CEventFile* event) {
         this->layout_count_1F0 = count;
         this->field_1F4 = acc;
         this->field_1F8 = floorId;
-        func_80246330(&this->layouts_150[0]);
+        func_80246330((CFloorMapLayoutBlock*)&this->layouts_150[0]);
 
         // Bind the 0x3334 layout slot and rebuild the embedded cursor from a
         // stack temp (body copied without the vtable pointer).
@@ -3259,7 +4666,7 @@ u32 CFloorMap::OnFileEvent(CEventFile* event) {
 
     // Event for the current-world file (field_28): load the per-map layout
     // for the current map id into the 0x138 slot.
-    if ((CFileHandle*)this->field_28 == handle) {
+    if ((CFileHandle*)this->field_28 == event->mFileHandle) {
         int mem2 = (int)mtl::MemManager::getHandleMEM2();
         ((UnkClass_8045F564*)&this->mMemRegion14[0])
             ->createRegion(mem2, 0x14000, &lbl_eu_8050BEA8[0x6d5], 0);
@@ -3320,7 +4727,7 @@ u32 CFloorMap::OnFileEvent(CEventFile* event) {
     // Event for the per-floor map file (field_2C): park the old buffer with
     // a one-frame free countdown, swap in the new map buffer and rebuild the
     // current floor's marker rows.
-    if ((CFileHandle*)this->field_2C == handle) {
+    if ((CFileHandle*)this->field_2C == event->mFileHandle) {
         void* oldBuf = (void*)this->allocated_buf_3C;
         this->field_3340 = (u8*)oldBuf;
         this->field_3344 = lbl_eu_80668760;
@@ -3335,19 +4742,21 @@ u32 CFloorMap::OnFileEvent(CEventFile* event) {
         u8 rowCount = ((CFloorMapFloorBlock*)((u8*)this + (s8)this->field_205 * 0x30C))->field_514;
         for (u8 i = 0; i < rowCount; i++) {
             CFloorMapFloorBlock* fl = (CFloorMapFloorBlock*)((u8*)this + (s8)this->field_205 * 0x30C);
-            // The row id is computed but only drives the (retail) flow;
-            // func_8024808C actually receives the row's type byte and body.
+            // The row id comes from the row record at +0x214. When the index
+            // wraps past 0xFF, fall back to row (field_206 + field_207), or
+            // row 0 when field_206 is negative. Retail passes &layout_140
+            // (the layout slot block), not the CFloorMap itself.
             u16 rowId;
-            if (i == 0xFF) {
-                if ((s8)this->field_206 >= 0) {
-                    rowId = fl->rows[(s8)this->field_207 + (s8)this->field_206].field_00;
-                } else {
+            if ((u8)i == 0xFF) {
+                if ((s8)this->field_206 < 0) {
                     rowId = 0;
+                } else {
+                    rowId = fl->rows[(u8)((s8)this->field_207 + (s8)this->field_206)].field_00;
                 }
             } else {
-                rowId = fl->rows[i].field_00;
+                rowId = fl->rows[(u8)i].field_00;
             }
-            func_8024808C((CFloorMapFull*)this, rowId);
+            func_8024808C((CFloorMapFull*)&this->layout_140, rowId);
         }
 
         func_8024577C(&this->layout_1FC, (u16)func_80248558(&this->layout_140));
@@ -3361,10 +4770,11 @@ u32 CFloorMap::OnFileEvent(CEventFile* event) {
 
     // Event for the auxiliary world-map file (field_30): hand the buffer to
     // the BDAT parser and refresh the map positions.
-    if ((CFileHandle*)this->field_30 == handle) {
+    if ((CFileHandle*)this->field_30 == event->mFileHandle) {
         CFileHandle* file = (CFileHandle*)this->field_30;
         u32 zero = 0;
-        CBdat::func_8003AA78(2, file->getData());
+        void* data = file->getData();
+        CBdat::func_8003AA78(2, data);
         this->field_30 = zero;
 
         if (this->field_34 != 0 && this->field_38 != 0 && zero == 0) {

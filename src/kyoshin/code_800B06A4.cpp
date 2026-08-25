@@ -29,7 +29,6 @@ extern void func_800B44A0(UnkClass_805764CC* self, void* arg);
 extern void* func_800B61FFC();
 extern "C" void func_800B137C(void* self, unsigned long handle, unsigned long count);
 extern void func_800B8524(void* singleton, void* self, void* other);
-void* func_800B47A8(void* a, void* b, void* c, void* d, void* e, void* f, void* g);
 
 void func_80081258(void* self);
 void func_80081264(void* self, cf::CfObject* obj);
@@ -53,6 +52,51 @@ extern "C" void func_800B06A4(float a) {
 }
 
 void init_0A90(void){}
+
+// Target 1: us-800b0f94 - func_800B06C8
+// Reads four numeric columns of the current BDAT table/row (string-table
+// offsets 0x00/0x0b/0x19/0x27) into the layout-scale globals. Each value is
+// an unsigned->float conversion, reproduced with MWCC's 0x43300000 double
+// trick: build 0x43300000_<val> as an f64 bit pattern and subtract the named
+// 2^52 constant lbl_eu_806669D0 so the pool reloc matches retail. Afterwards
+// the values are mirrored into the 80663E__ scratch set (first and last also
+// squared) - the same state sinit_800B9A40 seeds.
+void func_800B06C8() {
+    void* tbl = lbl_eu_806640A8;
+    u32 row = lbl_eu_80664184;
+    // Two conversion scratch buffers: retail alternates between stack slots
+    // sp+0x18 / sp+0x20 across the four conversions.
+    B6C8F64Conv convA, convB;
+    convA.w[0] = 0x43300000;
+    convB.w[0] = 0x43300000;
+
+    // Full-word int temps: the raw call result gets its own stack home
+    // (retail spills stw r3,N(sp)) and the union write narrows it with an
+    // lbz from that slot.
+    int n1 = getBdatStringColumnValue(tbl, lbl_eu_804FC4D8, row);
+    const char* base = lbl_eu_804FC4D8;
+    convA.w[1] = (u8)n1;
+    lbl_eu_80661CC8 = (f32)(convA.d - lbl_eu_806669D0);
+
+    int n2 = getBdatStringColumnValue(tbl, base + 0xb, row);
+    convB.w[1] = (u8)n2;
+    lbl_eu_80661CD0 = (f32)(convB.d - lbl_eu_806669D0);
+
+    int n3 = getBdatStringColumnValue(tbl, base + 0x19, row);
+    convA.w[1] = (u8)n3;
+    lbl_eu_80661CD4 = (f32)(convA.d - lbl_eu_806669D0);
+
+    int n4 = getBdatStringColumnValue(tbl, base + 0x27, row);
+    convB.w[1] = (u8)n4;
+    lbl_eu_80661CCC = (f32)(convB.d - lbl_eu_806669D0);
+
+    // Read the globals back directly (no cross-call float locals - retail
+    // reloads each one here instead of keeping it in a callee-saved FPR).
+    lbl_eu_80663EC8 = lbl_eu_80661CC8;
+    lbl_eu_80663ECC = lbl_eu_80661CC8 * lbl_eu_80661CC8;
+    lbl_eu_80663ED0 = lbl_eu_80661CD0;
+    lbl_eu_80663ED4 = lbl_eu_80661CCC * lbl_eu_80661CCC;
+}
 // Target 1: us-800b1118 - func_800B084C
 // Calls func_80061FFC() to get a handle, then passes it along with `count` to func_800B0894.
 #pragma push
@@ -446,12 +490,16 @@ void init_dispatchTarget_6(){}
 void init_1BBC(){}
 // us-800b2488: if the flag bit-6 test is set, null the self arg, then call
 // func_800B1C24(8, self-or-0) (declared in code_800B06A4.hpp).
+// auto_inline off: retail calls this (func_800B8524 must not inline it).
+#pragma push
+#pragma auto_inline off
 extern "C" void func_800B1BBC(void* self) {
     if (func_800B1C00()) {
         self = 0;
     }
     func_800B1C24(8, self);
 }
+#pragma pop
 // func_800B1C00: bit 6 of the global flag word (retail: lwz r0,lbl_eu_80663EE0; extrwi r3,r0,1,25 = (x>>6)&1)
 extern "C" DECOMP_DONT_INLINE u32 func_800B1C00(){ extern u32 lbl_eu_80663EE0; return (lbl_eu_80663EE0 >> 6) & 1; }
 void init_1C0C(){}
@@ -704,63 +752,72 @@ u32 shift_u32_hi8(u32 val){return (val >> 16) & 0xFF;}
 // offset 0x74. Fast-path appends when the new key sorts after the last
 // element; otherwise binary-searches the insertion point and shifts the
 // shorter side (front shift advances the head, back shift does not).
-extern "C" void func_800B3210(UnkClass_800B0AD8* self, UnkClass_805764CC** item_ptr) {
+// Field reads stay spelled out through `self` so retail's per-iteration
+// reloads of afc/af8/b04 (invalidated by the buf stores) are reproduced.
+void func_800B3210(UnkClass_800B0AD8* self, UnkClass_805764CC** item_ptr, void* flagOut) {
+    (void)flagOut;
     u32 count = self->unkB00;
 
-    if (count != 0) {
+    if (count == 0) {
+        // Empty ring: drop the item straight into the head slot.
+        ((UnkClass_805764CC**)self->unkAF8)[self->unkAFC] = *item_ptr;
+        self->unkB00 += 1;
+    } else {
+        // head/item/cap/buf are store-free here, so retail caches them.
+        u32 head = self->unkAFC;
         UnkClass_805764CC* item = *item_ptr;
-        u32 key = ((RingSortKeyView*)item)->sortKey;
+        u32 total = head + count;
+        u32 cap = self->unkB04;
         UnkClass_805764CC** buf = (UnkClass_805764CC**)self->unkAF8;
+        u32 lastIdx = (total - 1) % cap;
 
         // Append fast path: new key >= last element's key.
-        {
-            u32 lastIdx = (self->unkAFC + count - 1) % self->unkB04;
-            if (((RingSortKeyView*)buf[lastIdx])->sortKey >= key) {
-                buf[(self->unkAFC + count) % self->unkB04] = item;
-                self->unkB00 = count + 1;
-                return;
-            }
-        }
-
-        // Binary search: number of existing entries whose key < new key.
-        u32 lo = 0;
-        s32 range = count;
-        while (range > 0) {
-            s32 mid = range / 2;
-            u32 probe = lo + mid;
-            u32 idx = (self->unkAFC + probe) % self->unkB04;
-            if (((RingSortKeyView*)buf[idx])->sortKey < key) {
-                lo = probe + 1;
-                range -= mid + 1;
-            } else {
-                range = mid;
-            }
-        }
-
-        if (lo < count / 2) {
-            // Front-shift [0, lo) down one slot, then retreat the head
-            // (frees the slot just below the insertion point).
-            for (s32 i = lo - 1; i >= 0; i--) {
-                u32 src = (self->unkAFC + i) % self->unkB04;
-                buf[(src - 1) % self->unkB04] = buf[src];
-            }
-            self->unkAFC = (self->unkAFC - 1) % self->unkB04;
+        if (((RingSortKeyView*)buf[lastIdx])->sortKey <= ((RingSortKeyView*)item)->sortKey) {
+            buf[total % cap] = item;
+            self->unkB00 += 1;
         } else {
-            // Back-shift (lo, count-1] up one slot.
-            for (u32 i = count - 1; i > lo; i--) {
-                u32 src = (self->unkAFC + i) % self->unkB04;
-                buf[(src + 1) % self->unkB04] = buf[src];
+            // Binary search: number of existing entries whose key < new key.
+            // The redundant count re-test reuses the entry compare (cr1).
+            u32 lo = 0;
+            if (count != 0) {
+                s32 range = count;
+                while (range > 0) {
+                    s32 mid = range / 2;
+                    u32 probe = lo + mid;
+                    u32 idx = (head + probe) % cap;
+                    if (((RingSortKeyView*)buf[idx])->sortKey <
+                        ((RingSortKeyView*)(*item_ptr))->sortKey) {
+                        lo = probe + 1;
+                        range -= mid + 1;
+                    } else {
+                        range = mid;
+                    }
+                }
             }
+
+            if (lo < count / 2) {
+                // Front-shift [0, lo) down one slot, then retreat the head
+                // (frees the slot just below the insertion point).
+                for (s32 i = 0; i < (s32)lo; i++) {
+                    u32 src = (self->unkAFC + i) % self->unkB04;
+                    UnkClass_805764CC* v = ((UnkClass_805764CC**)self->unkAF8)[src];
+                    ((UnkClass_805764CC**)self->unkAF8)[(src - 1) % self->unkB04] = v;
+                }
+                self->unkAFC = (self->unkAFC - 1) % self->unkB04;
+            } else {
+                // Back-shift (lo, count-1] up one slot.
+                for (s32 i = count - 1; i > (s32)lo; i--) {
+                    u32 src = (self->unkAFC + i) % self->unkB04;
+                    UnkClass_805764CC* v = ((UnkClass_805764CC**)self->unkAF8)[src];
+                    ((UnkClass_805764CC**)self->unkAF8)[(src + 1) % self->unkB04] = v;
+                }
+            }
+
+            u32 pos = self->unkAFC + lo;
+            self->unkB00 += 1;
+            ((UnkClass_805764CC**)self->unkAF8)[pos % self->unkB04] = *item_ptr;
         }
-
-        buf[(self->unkAFC + lo) % self->unkB04] = item;
-        self->unkB00 = count + 1;
-        return;
     }
-
-    // Empty ring: drop the item straight into the head slot.
-    ((UnkClass_805764CC**)self->unkAF8)[self->unkAFC] = *item_ptr;
-    self->unkB00 = count + 1;
 }
 u32 UnkClass_805764CC::get_u32_74(){return *(u32*)((u8*)this + 0x74);}
 void init_39C8(){}
@@ -1339,21 +1396,45 @@ UnkClass_805764CC* func_800B07E8() {
 // auto_inline off: without it the -ipa pass folds this 0x12C body into
 // func_800B084C (its only caller), inflating the wrapper to 316B. Retail's
 // func_800B084C stays a plain wrapper, so the inline must be blocked.
+// Typed view over the list: the pool member is a node pointer in retail
+// (no int->pointer cast in the fill loop).
+struct B0894List {
+    u8 _00[0x14];
+    CfReslistNode* nodes; // 0x14
+    u32 entryCount;       // 0x18
+};
 #pragma push
 #pragma auto_inline off
-extern "C" void func_800B0894(UnkClass_805764CC* self, unsigned long handle, unsigned long count) {
-    u32* arr = (u32*)allocate_array__Q23mtl10MemManagerFUlUl(count * 0xc, handle);
-    self->field_0x14 = (u32)arr;
-    for (int i = 0; i < (int)count; i++) {
-        arr[i * 3] = 0;
+extern "C" void func_800B0894(UnkClass_805764CC* self, unsigned long handle, s32 count) {
+    B0894List* list = (B0894List*)self;
+    list->nodes = (CfReslistNode*)allocate_array__Q23mtl10MemManagerFUlUl(count * 0xc, handle);
+    // Retail re-reads the array base from the member on every store: the
+    // stores may alias the member under MWCC's alias analysis, forcing a
+    // reload per element (and its 8x unroll + remainder-loop shape).
+    for (int i = 0; i < count; i++) {
+        list->nodes[i].mNext = 0;
     }
-    self->field_0x18 = (u32)count;
-    // OPEN ITEM: retail unrolls this loop 8x with per-store reload of self->field_0x14
-    // (aliasing pattern); 3 source shapes tried (local arr, ptr loop, member-cast),
-    // best 23.4%/44 structural/0x134 vs 0x12c. Next: element-struct type or
-    // reslist-method access form.
+    list->entryCount = (u32)count;
 }
 #pragma pop
+// OPEN ITEM (us-800b1160): best shape is structural:0 / 29 pure reg-swaps /
+// exact size match (300B) / no reloc drift. The {base-reload+lis-scratch,
+// fill-value/flag, loop-index} vregs color cyclically shifted vs retail
+// (mine idx=r3/base=r4/fill=r5; retail base=r3/fill=r4/idx=r5); retail also
+// gives limit its own r6 while decomp reuses the fill slot for it.
+// Tried (coloring invariant in all cases): signed vs unsigned index,
+// unsigned long vs s32 count param, named zero/index locals, uninitialized
+// decl + delayed init, local pointer re-read per iter, typed-pointer member
+// view (no cast GEPs), dead pointer temp between call and store (coalesced),
+// placement-new ctor loop (kills the unroll entirely), hand-written guarded
+// gotos mirror (420B, worse selection), size temp local (adds a frame + r29
+// save). Same artifact family as the CUIWindowManager 8x-unroll unlink
+// Chaitin coloring soft-cap; sibling us-800b18c0 (func_800B0FF4) shows the
+// identical shift. Also tried: word-stride u32 indexing i*3 (breaks
+// selection, adds a frame), post-increment subscript i++ (kills the unroll),
+// and an explicit two-loop split (rejected: retail's dead-branch overflow
+// guards blt cr1 / 0x7FFFFFFE are unroller artifacts no source control flow
+// produces).
 #pragma inline
 // Target: us-800b2220 - func_800B1954 (list cleanup)
 extern "C" void func_800B1A8C(void* a, void* b);
@@ -1387,23 +1468,21 @@ extern "C" void func_800B1954(UnkClass_805764CC* self) {
     func_800B0B40(&self->field_0x20);
     self->field_0xD0E = 0;
     self->field_0xD10 = 0;
-    lbl_eu_80663EDC = lbl_eu_806669D8;
     self->field_0xD04 = 0;
+    lbl_eu_80663EDC = lbl_eu_806669D8;
     lbl_eu_80663EE4 = 0;
-    // Scalar iterator slots (retail sp+0x10 / sp+0x8 / sp+0xC); MWCC colors
-    // scalars in reverse declaration order.
-    u32 sbA;
-    u32 sbC;
-    u32 sbB;
-    func_800B1A8C(&sbA, &self->field_0xC48);
+    // Iterator slots as an array (retail sp+0x8 / sp+0xC / sp+0x10): A=iter[2],
+    // B=iter[0], C=iter[1].
+    u32 iter[3];
+    func_800B1A8C(&iter[2], &self->field_0xC48);
     // check-first loop shape: retail tests iterator-end before the body.
     goto check;
 loop:
-    *(u32*)func_800B1A9C(&sbA) = 0;
-    func_800B1AA8(&sbC, &sbA, 0);
+    *(u32*)func_800B1A9C(&iter[2]) = 0;
+    func_800B1AA8(&iter[1], &iter[2], 0);
 check:
-    func_800B1ACC(&sbB, &self->field_0xC48);
-    if (func_800B1AD8(&sbA, &sbB) != 0) {
+    func_800B1ACC(&iter[0], &self->field_0xC48);
+    if (func_800B1AD8(&iter[2], &iter[0]) != 0) {
         goto loop;
     }
 }
@@ -1412,7 +1491,8 @@ check:
 extern "C" void func_800B655C(UnkClass_805764CC* self, const F8C0ListSource* list);
 extern "C" void* func_800B67EC();
 extern "C" void func_800B67F4(void* buf);
-extern "C" void func_800B5994(void* self, void* arg, void* list, void* buf, float f);
+extern "C" void func_800B5994(UnkClass_805764CC* self, IB8FC4Player* anchor,
+                              void* list, const F8C0ListSource* buf, float f);
 extern "C" void func_800B4D84(void* self, void* buf);
 extern "C" int CfRes_getE24Bit22();
 extern "C" float func_80069EA0();
@@ -1442,8 +1522,10 @@ extern "C" void func_800B66BC(UnkClass_805764CC* self, void* arg) {
     if (result == 0) {
         char buf[0x700];
         func_800B67F4(buf);
-        func_800B5994(self, arg, (void*)((u8*)self + 0xb48), buf, lbl_eu_80663EC8);
-        func_800B5994(self, arg, (void*)((u8*)self + 0xb68), buf, lbl_eu_80661CCC);
+        func_800B5994(self, (IB8FC4Player*)arg, (void*)((u8*)self + 0xb48),
+                      (const F8C0ListSource*)buf, lbl_eu_80663EC8);
+        func_800B5994(self, (IB8FC4Player*)arg, (void*)((u8*)self + 0xb68),
+                      (const F8C0ListSource*)buf, lbl_eu_80661CCC);
         func_800B4D84(self, buf);
     }
 }
@@ -1902,10 +1984,10 @@ void func_800B587C(SortEntry* start, SortEntry* end, SortEntryCompare compare) {
             // Swap through explicit temps (retail round-trips the value
             // word through a stack spill).
             void* tempPtr = best->mPointer;
-            float tempVal = best->mValue;
+            float tempVal = best->mValue.mValue;
             *best = *start;
             start->mPointer = tempPtr;
-            start->mValue = tempVal;
+            start->mValue.mValue = tempVal;
         }
         start++;
     }
@@ -2105,12 +2187,14 @@ check:
 
 // Target 3: us-800ba2a8 - func_800B998C
 void* func_800B998C(void* self, void* a1, void* a2, void* a3, void* a4, void* a5) {
-    return func_800B47A8((void*)1, self, a1, a2, a3, a4, a5);
+    return (void*)func_800B47A8(1, *(float*)&self, (const B47Vec3*)a1, (const B47Vec3*)a2,
+                         (int)a3, (int)a4, (float*)a5, (u8*)0);
 }
 
 // Target 4: us-800ba2d8 - func_800B99BC
 void* func_800B99BC(void* self, void* a1, void* a2, void* a3, void* a4, void* a5) {
-    return func_800B47A8((void*)0, self, a1, a2, a3, a4, a5);
+    return (void*)func_800B47A8(0, *(float*)&self, (const B47Vec3*)a1, (const B47Vec3*)a2,
+                         (int)a3, (int)a4, (float*)a5, (u8*)0);
 }
 
 // Target: us-800ba308 - func_800B99EC: walk the sentinel list at +4 and
@@ -2228,6 +2312,59 @@ extern "C" s32 func_800B4A24(CEvtTypeArg* arg) {
     }
     return result;
 }
+
+// Target us-800b5484 - func_800B4B88
+// Same gate chain as func_800B4A24 but dispatched from slot 0x80 (+0x200),
+// wrapped by a global event-flag kill switch (retail rlwinm masks value bit
+// 6) and a func_800B1C40 fallback when the type cascade rejects.
+// Codegen notes: this toolchain emits `& 0x40` as retail's exact rlwinm mask;
+// splitting `accepted` into decl-then-assignment while `result` is initialized
+// at its declaration reproduces retail's li r30/li r31 emission order.
+extern "C" s32 func_800B4B88(CEvtTypeArg* arg) {
+    extern u32 lbl_eu_80663EE0;
+    if (lbl_eu_80663EE0 & 0x40) {
+        return 0;
+    }
+    s32 accepted;
+    s32 result = 0;
+    accepted = 0;
+    if (arg != 0) {
+        if (arg->unk7E() != 0 && (arg->flags & 4) != 0) {  // vtable +0x200
+            // Recover the enclosing object (arg sits at +0x3E9C within it);
+            // retail keeps a redundant null guard on the fixup.
+            UnkClass_805764CC* container = (UnkClass_805764CC*)arg;
+            if (container != 0) {
+                container = (UnkClass_805764CC*)((u8*)container - 0x3E9C);
+            }
+            // Cascade identical to func_800B4A24 (declaration order drives
+            // MWCC coloring: f0->r0, f3->r3, f4->r4, f5->r5, value->r6).
+            int f0 = 1;
+            int f3 = 1;
+            int f4 = 1;
+            int f5 = 1;
+            s32 value = (s32)container->field_0x15F0;
+            if (value != 4 && value != 5) {
+                f5 = 0;
+            }
+            if (f5 == 0 && value != 6) {
+                f4 = 0;
+            }
+            if (f4 == 0 && value != 7) {
+                f3 = 0;
+            }
+            if (f3 == 0 && value != 8) {
+                f0 = 0;
+            }
+            if (f0 != 0) {
+                accepted = 1;
+            }
+        }
+    }
+    if (accepted == 0 && func_800B1C40() != 0) {
+        result = 1;
+    }
+    return result;
+}
 // Target 4: us-800b5868 - clear bit 0 and set bit 1 of the field at +0x6C
 void func_800B4F6C(u8* self) {
     *(u32*)(self + 0x6C) = (*(u32*)(self + 0x6C) & ~1u) | 2u;
@@ -2272,6 +2409,7 @@ void func_800B9404(void* obj) {
 }
 #pragma pop
 
+
 // Target 3: us-800b7978 - func_800B7058
 // Wrapper: fetch the singleton and insert obj into it via func_800B6DD0.
 void func_800B7058(void* obj) {
@@ -2289,19 +2427,35 @@ void func_800B7058(void* obj) {
 // OPEN ITEM: best shape is structural:0 / 29 pure reg-swaps / size match.
 // The {pool-reload, zero-value, loop-index} vregs color cyclically shifted
 // vs retail (mine acc=r3/base=r4/val=r5; retail acc=r5/base=r3/val=r4).
-// Tried: signed vs unsigned index, named fill/node temps, uninitialized decl,
-// delayed init, extra bound var - coloring invariant. Next: element type with
-// user-declared default ctor (new[]-style inline ctor loop) as the source form.
+// Root register: retail's loop-index lands in r5 while ours captures r3
+// (the allocate() return reg); every other color shift follows from that.
+// Tried (coloring invariant in all cases): signed vs unsigned index,
+// named fill/node temps, uninitialized decl, delayed init, extra bound var,
+// typing field_0x14 as CfReslistNode* (kept - cleaner, bytes identical),
+// volatile pool member, named local coalesced with the call result plus an
+// explicit per-iteration member reload, for-init vs while loop forms, and
+// hoisting i=0 above the call (regressed: index forced into spilled r29,
+// 69 structural). An explicit guard + do-while also regresses (436B - it
+// defeats the 8x unroller, stores emitted as raw stw runs).
+// Notable: the REMAINDER loop already realigns in our build (base=r3,
+// fill=r4); only the index color (r3 vs retail r5) poisons the pre-loop and
+// unrolled-loop colors.
+// Retail binds {base,val,idx} to {r3,r4,r5} - exactly the call-result /
+// handle / count registers - suggesting a preference-driven coloring our
+// source form cannot reach; looks like wall-class 11 (uncontrollable CSE /
+// coloring). Next: element type with user-declared default ctor as the
+// source form, or a MWCC version diff of the greedy color order.
+// Also ruled out: placement-new ctor fill (ResPoolNode) - unroller refuses
+// it, 112B simple loop; explicit guard+do-while - 436B, defeats unrolling.
 #pragma push
 #pragma auto_inline off
 extern "C" void func_800B0FF4(void* listv, unsigned long handle, unsigned long count) {
     reslist<cf::IFactoryEvent*>* list = (reslist<cf::IFactoryEvent*>*)listv;
-    int i;
-    list->field_0x14 = (u32)allocate_array__Q23mtl10MemManagerFUlUl(count * 0xc, handle);
-    i = 0;
-    while (i < (int)count) {
-        ((CfReslistNode*)list->field_0x14)[i].mNext = 0;
-        i++;
+    list->field_0x14 = (CfReslistNode*)allocate_array__Q23mtl10MemManagerFUlUl(count * 0xc, handle);
+    // Re-reads the array base through the member each iteration: the stores
+    // may alias the member under MWCC's alias analysis, forcing the reload.
+    for (int i = 0; i < (int)count; i++) {
+        list->field_0x14[i].mNext = 0;
     }
     list->field_0x18 = (u32)count;
 }
@@ -2420,22 +2574,39 @@ extern "C" void* func_800B6EC0(UnkClass_805764CC* self, int id) {
 // the element constructor helper (__construct_new_array), clear every slot's
 // front link (MWCC unrolls the store loop x8 - the loop indexes through the
 // member so the base pointer is reloaded each iteration), then store count.
-// OPEN ITEM: 6 structural + 29 reg-swaps at exact size match. Residuals:
-// (a) retail passes the allocate() r3 straight into __construct_new_array and
-//     commits the mSlots store AFTER the call; member-based source commits it
-//     early (a local slots temp adds a saved-reg spill instead).
-// (b) same cyclic vreg-coloring shift in the unrolled loop as func_800B0FF4.
-extern "C" void __construct_new_array(void* block, void* dtor, unsigned long flag,
-                                     unsigned long elemSize, unsigned long count);
+// OPEN ITEM: best shape structural:0 / 29 pure reg-swaps / exact size match /
+// no reloc drift. Fixed vs banked draft: retail commits the mSlots store from
+// __construct_new_array's RETURN value, so the source assigns the call result
+// (this removed all 6 structural diffs).
+// Residual: the {base-reload+lis-scratch, fill-value, loop-index} vregs color
+// cyclically shifted (mine idx=r3/base=r4/fill=r5; retail base=r3/fill=r4/
+// idx=r5). Same Chaitin coloring soft-cap artifact family as siblings
+// us-800b1160 (func_800B0894) and us-800b18c0 (func_800B0FF4); their
+// ruled-out list applies (signed/unsigned index, named zero/index locals,
+// uninitialized decl, delayed init, while forms - all coloring-invariant;
+// // placement-new/do-while kill the 8x unroll). Also coloring-invariant here:
+// named allocation temp (raw) between the two calls - coalesces to the same
+// bytes. Wall-class 11.
+// Cross-refs: docs/MWCC_PATTERNS.md:710 (CViewRoot::create - same 8x CTR
+// reserve-loop idiom, residual constructor-init Chaitin cycle recorded as
+// unreproducible), docs/MWCC_CASES.md:1781 (five-value Chaitin cycle,
+// "same interference graph produces same coloring regardless of source
+// structure"). Open-item packet: status ACTIVE-softcap, pct 91.2% eq /
+// structural 0, size PASS 0x148, mismatch categories 29 pure reg-swap
+// (3-cycle idx/base/fill), ruled-out list above + named-temp, next ideas:
+// (a) reconstruct the original reslist<T>::init template header verbatim
+// (template context may change IPA/scheduling), (b) unit-level flag split
+// (-O4,s) negotiation per walls #6/#13.
+extern "C" void* __construct_new_array(void* block, void* dtor, unsigned long flag,
+                                       unsigned long elemSize, unsigned long count);
 extern "C" void func_800B0B8C();
 
 #pragma push
 #pragma auto_inline off
 extern "C" void func_800B137C(void* self, unsigned long handle, unsigned long count) {
     TboxInfoReslistPoolView* list = (TboxInfoReslistPoolView*)self;
-    __construct_new_array(
-        list->mSlots = (TboxPoolSlot*)allocate_array__Q23mtl10MemManagerFUlUl(
-            count * 0x24 + 0x10, handle),
+    list->mSlots = (TboxPoolSlot*)__construct_new_array(
+        allocate_array__Q23mtl10MemManagerFUlUl(count * 0x24 + 0x10, handle),
         (void*)func_800B0B8C, 0, 0x24, count);
     for (int i = 0; i < (int)count; i++) {
         list->mSlots[i].mLink0 = 0;
@@ -2719,8 +2890,11 @@ extern "C" void func_800B4120(UnkClass_805764CC* self, cf::CfObject* obj) {
 // Three-entry insertion step of a sort: order (a,b,c) according to the
 // indirect comparator. Both probe results are taken up front; when exactly
 // one reports equality the entries are rotated via compare(b,a).
-// Swaps save through explicit temps so MWCC round-trips the value word
-// through a stack spill like retail (see func_800B587C).
+// Swaps go member-wise with a struct-copy temp: MWCC holds the temp's words
+// in GPRs and round-trips the value word through the temp's home slot.
+// Interleaved member-wise swap, written out at each site: volatile views pin
+// retail's save/overwrite interleave; the temp's value word rides a GPR until
+// the final float store round-trips it through the temp's home slot.
 void func_800B570C(SortEntry* a, SortEntry* b, SortEntry* c, const SortEntryCompare* vt) {
     bool ca = (*vt)(c, a) == 0;
     bool bc = (*vt)(b, c) == 0;
@@ -2731,16 +2905,50 @@ void func_800B570C(SortEntry* a, SortEntry* b, SortEntry* c, const SortEntryComp
 L1:
     if (ca) goto L2;
     if (bc) goto L2;
-    { SortEntry t = *a; *a = *b; *b = t; }
+    {
+        volatile SortEntry& vx = *a;
+        volatile SortEntry& vy = *b;
+        SortEntry t;
+        t.mPointer = vx.mPointer;
+        vx.mPointer = vy.mPointer;
+        t.mValue.mWord = vx.mValue.mWord;
+        vx.mValue.mValue = vy.mValue.mValue;
+        vy.mPointer = t.mPointer;
+        vy.mValue.mValue = t.mValue.mValue;
+    }
     return;
 L2:
     if ((*vt)(b, a) != 0) {
-        SortEntry t = *a; *a = *b; *b = t;
+        volatile SortEntry& vx = *a;
+        volatile SortEntry& vy = *b;
+        SortEntry t;
+        t.mPointer = vx.mPointer;
+        vx.mPointer = vy.mPointer;
+        t.mValue.mWord = vx.mValue.mWord;
+        vx.mValue.mValue = vy.mValue.mValue;
+        vy.mPointer = t.mPointer;
+        vy.mValue.mValue = t.mValue.mValue;
     }
     if (ca) {
-        SortEntry t = *b; *b = *c; *c = t;
+        volatile SortEntry& vx = *b;
+        volatile SortEntry& vy = *c;
+        SortEntry t;
+        t.mPointer = vx.mPointer;
+        vx.mPointer = vy.mPointer;
+        t.mValue.mWord = vx.mValue.mWord;
+        vx.mValue.mValue = vy.mValue.mValue;
+        vy.mPointer = t.mPointer;
+        vy.mValue.mValue = t.mValue.mValue;
     } else {
-        SortEntry t = *a; *a = *c; *c = t;
+        volatile SortEntry& vx = *a;
+        volatile SortEntry& vy = *c;
+        SortEntry t;
+        t.mPointer = vx.mPointer;
+        vx.mPointer = vy.mPointer;
+        t.mValue.mWord = vx.mValue.mWord;
+        vx.mValue.mValue = vy.mValue.mValue;
+        vy.mPointer = t.mPointer;
+        vy.mValue.mValue = t.mValue.mValue;
     }
 }
 
@@ -2749,7 +2957,8 @@ L2:
 // copy the source word into the status controller and either reset it (when
 // the progress value reached the threshold or the lookup failed) or fire the
 // trigger sub-object; finally mark the controller reloaded.
-void func_800B83AC() {
+// extern "C": retail exports this helper under the unmangled name.
+extern "C" void func_800B83AC() {
     if (func_800829B8__Q22cf13CfGameManagerFv() != 0) {
         return;
     }
@@ -3105,8 +3314,6 @@ check2:
 }
 
 // Target 5: us-800b9678 - func_800B8D5C
-extern u32 lbl_eu_80663E24;
-extern u32 lbl_eu_80663E28;
 // Battle-readiness scan over the B28 object list: resolve each node payload
 // to its container, skip blocked ones (flag bits / slot-0x1D status), then
 // depending on the container's 0x15F0 type id either run the not-in-battle
@@ -3126,13 +3333,15 @@ int func_800B8D5C() {
         __register_global_object(lbl_eu_80572CD4, (void*)__dt__17UnkClass_805764CCFv, lbl_eu_80572CC8);
         lbl_eu_80663EE8 = 1;
     }
-    u8* inst = lbl_eu_80572CD4;
+    CfReslistNode* cur;
+    void* list;
+    u8* inst = (u8*)lbl_eu_80572CD4;
     if (*(u32*)(inst + 0xCA0) != 0) {
         func_80195E5C(*(u32*)(inst + 0xCA0), lbl_eu_80663EC8);
     }
-    void* list = func_800B6BC8();
+    list = func_800B6BC8();
+    cur = ((CfReslistNode*)*(u32*)((u8*)list + 4))->mNext;
     const float threshold = lbl_eu_806669D8;
-    CfReslistNode* cur = ((CfReslistNode*)*(u32*)((u8*)list + 4))->mNext;
     // Sentinel re-read from the list header every iteration; the cursor
     // advance sits at the single continue-target (retail label .L_800B988C).
     while (cur != *(CfReslistNode**)((u8*)list + 4)) {
@@ -3146,22 +3355,23 @@ int func_800B8D5C() {
         if (obj->field_3E9C.vf1C() != 0) {
             goto advance;
         }
-        // Retail presets four flags via li and clears each stage.
+        // Type-id gate: stages preset their stage flag to 1 and clear it when
+        // every earlier stage failed and the id doesn't match this stage.
         u32 v = obj->field_15F0;
-        int a = (v == 4 || v == 5) ? 1 : 0;
-        int b = a;
-        if (b == 0 && v != 6) {
-            b = 0;
+        int s6 = 1;
+        int s7 = 1;
+        int s8 = 1;
+        bool s45 = (v == 4 || v == 5);
+        if (s45 == 0 && v != 6) {
+            s6 = 0;
         }
-        int c = b;
-        if (c == 0 && v != 7) {
-            c = 0;
+        if (s6 == 0 && v != 7) {
+            s7 = 0;
         }
-        int d = c;
-        if (d == 0 && v != 8) {
-            d = 0;
+        if (s7 == 0 && v != 8) {
+            s8 = 0;
         }
-        if (d == 0) {
+        if (s8 == 0) {
             // Not in battle: require the flag triple, a clean validator and
             // an empty 3F60 pointer to report success.
             if ((obj->field_3F08 & 0x40000000) != 0) {
@@ -3197,49 +3407,66 @@ int func_800B8D5C() {
     advance:
         cur = cur->mNext;
     }
+    // Retry-counter bump: success (1) when saturated, otherwise bump and fail.
+    int ret = 1;
     u16 cnt = *(u16*)(inst + 0xD0E);
-    if (cnt >= 2) {
-        return 1;
+    if (cnt < 2) {
+        *(u16*)(inst + 0xD0E) = cnt + 1;
+        ret = 0;
     }
-    *(u16*)(inst + 0xD0E) = cnt + 1;
-    return 0;
+    return ret;
 }
 
 // ---------------------------------------------------------------------------
 // Batch targets: us-800b71a4 / us-800b50a4 / us-800b8e40 / us-800b4354 / us-800b379c
 
 // Target: us-800b71a4 - func_800B68A8
-// OPEN ITEM: 121 mismatch / 100 structural. Residuals: (a) float-color shift -
-// retail colors consts D8->f27, DC->f31, EC->f30, A0C->f29, limit->f26; decomp
-// assigns them shifted down by 2 (try reordering the four const declarations
-// so the longest-lived constant is declared last); (b) FP-save block emitted
-// before `addi r11` frame-pointer setup instead of after.
-// Per-object update over a game-manager list. Entries are filtered (busy check
+// OPEN ITEM: best 105 mismatch / 91 structural / 628B (+4), reloc drift 15.
+// Progress this pass (banked was 121/100): (1) float consts now color like
+// retail (limit=f26, zero=f27, rangeK=f29, gainK=f30, one=f31) - consts must
+// stay as raw lbl_eu_* uses at their use sites, NOT pre-loop locals;
+// (2) func_8006EF04 decl switched to C++ linkage in code_800B06A4.hpp so the
+// call reloc mangles to func_8006EF04__Fi; (3) loop MUST be the rotated
+// while-form below - retail enters via `b` to the bottom test block, and only
+// `while (F900(&outer, (u32*)(F8F4(&end,list), &end)))` reproduces it (plain
+// for(;;)+break emits no entry branch and shifts every reloc by +4).
+// Residuals: (a) prologue still spills stfd/psq_st BEFORE addi r11,r1,0x40
+// (retail after); psq_st words differ (GC/3.0a5.2 field layout? hexdiff shows
+// W=1,qr3 vs W=0,qr0); (b) TWO extra instrs between the second unk2B() bctrl
+// and bl func_8004CB80 (drift starts +0x144) - likely stw/lwz spill of the
+// objPos temp because decomp's apply lands in r31 (reg_mapping li*rd 29->31),
+// blocking objPos from r31; hoisting `int apply = 1` above the loop was tried
+// and REGRESSED (li moved to prologue, shifting init block - keep assignment
+// inside the loop); swapping partnerPos/objPos eval order changed NOTHING
+// (byte-identical output, MWCC normalizes); next lever: find source shape that
+// colors apply=r29 while keeping li r29,1 in-loop, or inspect hexdiff --asm; (c) GPR targets:
+// retail r26=partner r27=list r28=flag r29=apply r30=obj r31=objPos. Entries are filtered (busy check
 // via func_800B4594, resource-flag 0x100); with flag==0 the object's slot-0x174
 // level gates a func_800BC3B0 boost; otherwise the partner distance drives a
 // fade toward the shared cap before func_800BE824 commits the result.
 extern "C" void func_800B68A8(UnkClass_805764CC* self, void* partner,
                               const void* listv, int flag, float limit) {
-    const F8C0ListSource* list = (const F8C0ListSource*)listv;
-    const float zero = lbl_eu_806669D8;
-    const float one = lbl_eu_806669DC;
-    const float gainK = lbl_eu_806669EC;
-    const float rangeK = lbl_eu_80666A0C;
     F8C0IteratorNode outer;
     F8C0IteratorNode stepBack;
     F8C0IteratorNode end;
+    int apply;
     u8 distBuf[0x10];
-    func_8007F8C0__Q22cf13CfGameManagerFv(&outer, list);
-    for (;;) {
+    func_8007F8C0__Q22cf13CfGameManagerFv(&outer, (const F8C0ListSource*)listv);
+    // Rotated while-loop: retail enters via a branch straight to the test
+    // block, which recomputes the end iterator then compares.
+    while (func_8007F900__Q22cf13CfGameManagerFv(
+        (const u32*)&outer,
+        (const u32*)(func_8007F8F4__Q22cf13CfGameManagerFv(&end, (const F8C0ListSource*)listv),
+                     &end))) {
         cf::CfObject* obj = (cf::CfObject*)*func_8007F8D0__Q22cf13CfGameManagerFv(&outer);
         func_8007F8DC__Q22cf13CfGameManagerFv(&stepBack, &outer, 0);
         if (func_800B4594(obj) == 0 && func_8006EF04(0x100) != 0) {
-            int apply = 1;
+            apply = 1;
             if (flag == 0) {
                 // Level gate: only boost objects above the zero level.
                 if (func_800B64B8(obj, 0x10) != 0) {
                     float level = ((IB68Obj*)obj)->unk5D();
-                    if (level > zero) {
+                    if (level > lbl_eu_806669D8) {
                         func_800BC3B0(obj, lbl_eu_80666A08);
                     } else {
                         apply = 0;
@@ -3256,82 +3483,95 @@ extern "C" void func_800B68A8(UnkClass_805764CC* self, void* partner,
                     apply = 0;
                     if (func_800B64B8(obj, 0xC00) == 0 && func_800B64B8(obj, 0x10) != 0) {
                         float gap = limit - dist;
-                        if (gap < rangeK) {
+                        if (gap < lbl_eu_80666A0C) {
                             // Inside the range ramp: fade volume down from one.
-                            float fade = gainK * (rangeK - gap);
-                            if (fade < zero) {
-                                fade = zero;
+                            float fade = lbl_eu_806669EC * (lbl_eu_80666A0C - gap);
+                            if (fade < lbl_eu_806669D8) {
+                                fade = lbl_eu_806669D8;
                             }
-                            ((IB68Obj*)obj)->unk5A(one - fade);
-                        } else if (((IB68Obj*)obj)->unk5B() < one) {
-                            ((IB68Obj*)obj)->unk5A(one);
+                            ((IB68Obj*)obj)->unk5A(lbl_eu_806669DC - fade);
+                        } else if (((IB68Obj*)obj)->unk5B() < lbl_eu_806669DC) {
+                            ((IB68Obj*)obj)->unk5A(lbl_eu_806669DC);
                         }
                     }
                 }
             }
             func_800BE824(obj, apply);
         }
-        func_8007F8F4__Q22cf13CfGameManagerFv(&end, list);
-        if (func_8007F900__Q22cf13CfGameManagerFv((const u32*)&outer, (const u32*)&end) == 0) {
-            break;
-        }
     }
 }
 
 // Target: us-800b50a4 - func_800B47A8
-// OPEN ITEM: 154 mismatch / 142 structural. Residuals: (a) retail saves
-// r26+ via _savegpr_26 (6 int params live across calls); decomp keeps a
-// smaller live set -> needs one more persistent value or different param
-// liveness; (b) Warning string args: retail first arg relocs lbl_eu_80526300
-// +1085 addend, mine lbl_eu_80526324 - swap which label is named vs offset;
-// (c) FrSqrt/Warning call ordering vs the distSq compare block.
-// Distance/audibility test between two positions: computes the horizontal
-// delta magnitude (with a degenerate-magnitude warning and FrSqrt), applies
-// the scale factor, early-outs on the absolute Y delta against the tuned
-// limit, optionally feeds shifted positions to the listener callback, then
-// reports whether the distance is under the scaled limit.
-extern "C" u32 func_800B47A8(int modeScale, float scale, const B47Vec3* posA,
-                             const B47Vec3* posB, int modeFade, int modeNear,
+// Distance/audibility test between two positions: copies posB, subtracts
+// posA, computes the horizontal (x/z) magnitude (with a degenerate-magnitude
+// warning and FrSqrt), applies the tuned scale factors, early-outs on the
+// absolute Y delta against the tuned limit, feeds y-shifted endpoints to the
+// listener callback (its hit id switches the limit factor), then reports
+// whether *outDist is under the scaled limit.
+extern "C" u32 func_800B47A8(int modeY, float scale, const B47Vec3* posA,
+                             const B47Vec3* posB, int modeNear, int modeScale,
                              float* outDist, u8* outHit) {
-    const float zero = lbl_eu_806669D8;
-    const float one = lbl_eu_806669DC;
-    B47Vec3 delta;
-    delta.x = posB->x - posA->x;
-    delta.y = posB->y - posA->y;
-    delta.z = posB->z - posA->z;
+    // Struct copy of *posB; component subtracts.
+    // NOTE: retail emits paired-single ops here (psq_l/ps_sub/ps_add). Scalar
+    // source does not trigger MWCC's PS vectorizer, and inline ASM kernels
+    // (CfCam_ps.inl style) regress overall scheduling because MWCC allocates
+    // the kernel temps into callee-saved FPRs. Open item for next pass.
+    B47Vec3 delta = *posB;
+    delta.x -= posA->x;
+    delta.y -= posA->y;
+    delta.z -= posA->z;
     if (modeScale != 0) {
         scale *= lbl_eu_806669E4;
     }
-    // Horizontal magnitude only (x/z); retail warns on a negative square sum.
+    // Horizontal magnitude only (x/z); warns on a negative square sum.
     float distSq = delta.x * delta.x + delta.z * delta.z;
-    if (distSq < zero) {
+    if (distSq < lbl_eu_806669D8) {
         nw4r::db::Warning(lbl_eu_80526324, 0x273, lbl_eu_80526300);
     }
     float dist;
-    if (distSq > zero) {
+    if (distSq > lbl_eu_806669D8) {
         dist = distSq * nw4r::math::FrSqrt(distSq);
     } else {
         dist = distSq;
     }
     *outDist = dist;
-    float absY = delta.y < zero ? -delta.y : delta.y;
+    float absY = (float)__fabs((double)delta.y);
     float yLimit = lbl_eu_80663ED0;
-    if (modeScale != 0) {
+    if (modeY != 0) {
         yLimit *= lbl_eu_806669E8;
     }
-    if (dist > scale || absY >= yLimit) {
+    if (*outDist >= scale) {
         return 0;
     }
-    // Feed the shifted (+0,+1,+1) positions to the listener; its return id is
-    // both stored out and used to switch the limit factor below.
+    if (absY >= yLimit) {
+        return 0;
+    }
+    // Feed the y-shifted endpoints (+0,+1,+0) to the listener; its hit id is
+    // both stored out and switches the limit factor below. The endpoint temps
+    // mix x/y from one shifted point with z from the other.
     u32 hit = 0;
-    void* listener = *(void**)((u8*)lbl_eu_80663E14 + 0xB4);
-    if (listener != 0) {
-        B47Vec3 vB = { posB->x + zero, posB->y + one, posB->z + one };
-        B47Vec3 vA = { posA->x + zero, posA->y + one, posA->z + one };
-        B47Vec3 vB2 = vB;
-        B47Vec3 vA2 = vA;
-        hit = (u32)((IBvt14*)listener)->unk05(&vB, &vB2, &vA2, modeNear != 0 ? 1 : 2);
+    B47EvtRoot* root = (B47EvtRoot*)lbl_eu_80663E14;
+    if (root->field_B4 != 0) {
+        B47Vec3 offA = { lbl_eu_806669D8, lbl_eu_806669DC, lbl_eu_806669D8 };
+        B47Vec3 offB = { lbl_eu_806669D8, lbl_eu_806669DC, lbl_eu_806669D8 };
+        B47Vec3 ptB;
+        ptB.x = posB->x + offA.x;
+        ptB.y = posB->y + offA.y;
+        ptB.z = posB->z + offA.z;
+        B47Vec3 ptA;
+        ptA.x = posA->x + offB.x;
+        ptA.y = posA->y + offB.y;
+        ptA.z = posA->z + offB.z;
+        B47Vec3 end0;
+        end0.x = ptA.x;
+        end0.y = ptB.z;
+        end0.z = ptA.y;
+        B47Vec3 end1;
+        end1.x = ptB.x;
+        end1.y = ptB.y;
+        end1.z = ptA.z;
+        hit = (u32)((IBvt14*)root->field_B4)->unk05(&end0, &end1,
+                                                    modeNear != 0 ? 1 : 2);
         if (outHit != 0) {
             *outHit = (u8)hit;
         }
@@ -3343,61 +3583,61 @@ extern "C" u32 func_800B47A8(int modeScale, float scale, const B47Vec3* posA,
         lim = lbl_eu_806669F0;
     }
     if (hit == 0) {
-        lim = one;
+        lim = lbl_eu_806669DC;
     }
-    lim *= scale;
-    return *outDist < lim;
+    return *outDist < scale * lim;
 }
 
 // Target: us-800b8e40 - func_800B8524
-// OPEN ITEM: 185 mismatch / 166 structural. Residuals: (a) callee order in
-// the prologue run shifted by one slot (B66BC/B6AF4/getD80Flag/80496264/
-// 82900 rotate) - retail emits B1BBC's li r4,0 arg inline between calls;
-// (b) loop register mapping cur=r30/data=r28/next74=r23 in retail vs mine;
-// (c) _restgpr_23 tail means retail lives in r23-r31 - keep ~7 values alive.
 // Per-frame refresh over the object reslist: each payload is gated by flag
 // bits and the game-manager state, driven through its slot-0x60/0x64 callbacks
 // or the BBC0C sub-record volume check, and finally re-filed via the event
 // queue walk plus func_800B3A88 when flagged.
+// Regalloc notes: non-loop callee-saveds are handed out descending from r31
+// in definition order (gmActive=r31, cur=r30, instField=r29), and part A is
+// written inverted ((f68 & 0x40) == 0 first) so MWCC keeps the unk18/rewind
+// path as fallthrough ahead of the 0x4CF00/unk19 branch target.
 extern "C" void func_800B8524(UnkClass_805764CC* self, void* arg, void* other) {
-    const float one = lbl_eu_806669DC;
     func_800B66BC(self, arg);
     func_800B6AF4(self);
-    CfRes_getD80Flag();
-    func_80496264(-1);
-    int gmActive = (int)func_80082900__Q22cf13CfGameManagerFv();
+    func_80496264(CfRes_getD80Flag(), -1);
+    s32 gmActive = func_80082900__Q22cf13CfGameManagerFv();
     func_800B1BBC(0);
-    void* instField = CfRes_getInstanceField();
+    CfReslistNode* cur;
+    void* instField;
+    instField = CfRes_getInstanceField();
     if (instField != 0) {
         func_80067DB4();
     }
 
-    CfReslistNode* cur = ((CfReslistNode*)*(u32*)((u8*)self + 4))->mNext;
+    float one = lbl_eu_806669DC;
+    cur = ((CfReslistNode*)*(u32*)((u8*)self + 4))->mNext;
     while (cur != *(CfReslistNode**)((u8*)self + 4)) {
         CfReslistNode* prev = cur;
         B8524Data* data = (B8524Data*)cur->mItem;
         cur = cur->mNext;
-        CfReslistNode* sentinel = *(CfReslistNode**)((u8*)self + 4);
-        u32 nextKey = 0;
-        if (cur != sentinel) {
-            nextKey = *(u32*)((u8*)cur->mItem + 0x74);
+        u32 key = 0;
+        if (cur != *(CfReslistNode**)((u8*)self + 4)) {
+            key = *(u32*)((u8*)cur->mItem + 0x74);
         }
 
         if ((data->flags64 & 0x200) != 0 || gmActive != 0) {
             u32 f68 = data->flags68;
-            if ((f68 & 0x40) != 0) {
+            if ((f68 & 0x40) == 0) {
+                if ((data->flags64 & 0x4) == 0 || other == 0) {
+                    data->unk18();
+                    // When the next entry's key lookup fails, rewind the
+                    // cursor so the (unchanged) node is visited again.
+                    if (key != 0 && func_800B6EC0(self, (int)key) == 0) {
+                        cur = prev->mNext;
+                    }
+                }
+            } else {
                 if ((f68 & 0x20) != 0 && (data->flags64 & 0x100) != 0 &&
                     data->field_C4 != 0) {
                     func_8004CF00();
                 }
                 data->unk19();
-            } else if ((data->flags64 & 0x4) == 0 || other == 0) {
-                data->unk18();
-                // When the next entry's key lookup fails, rewind the cursor so
-                // the (unchanged) node is visited again.
-                if (nextKey != 0 && func_800B6EC0(self, (int)nextKey) == 0) {
-                    cur = prev->mNext;
-                }
             }
         }
 
@@ -3405,13 +3645,13 @@ extern "C" void func_800B8524(UnkClass_805764CC* self, void* arg, void* other) {
             B8524Sub* sub = (B8524Sub*)func_800BBC0C(data);
             if (sub == 0 || sub->field98 == 0) {
                 // Clear everything except bits 4..6 of the flag word.
-                data->flags68 &= 0x70;
+                data->flags68 = data->flags68 & 0x70;
             } else if ((sub->field68 & 0x800) != 0) {
                 // Leave the flags untouched.
             } else if (((IB68Obj*)sub)->unk5B() < one) {
                 func_800BC3D8(sub, lbl_eu_80666A08);
             } else {
-                data->flags68 &= 0x70;
+                data->flags68 = data->flags68 & 0x70;
             }
         } else if ((data->flags68 & 0x40) != 0) {
             // Notify every queued factory event about this object, then remove it.
@@ -3429,25 +3669,26 @@ extern "C" void func_800B8524(UnkClass_805764CC* self, void* arg, void* other) {
     if (func_800B1C40()) {
         func_800B1BBC((void*)1);
     }
-    IDispB74* bc = (IDispB74*)func_800B77BC();
-    s32 bcStatus = 0;
-    if (bc != 0) {
-        bcStatus = bc->unk1D() ? 1 : 0;
-        if (bcStatus != 0) {
+    void* probe = func_800B77BC();
+    if (probe != 0) {
+        if (((IDispB74*)probe)->unk1D()) {
             func_800B7AF0(self, (IB7Arg*)arg);
         }
     }
     func_800B1CDC(self);
-    if (bcStatus != 0) {
-        func_800B9C14(bc);
+    if (probe != 0) {
+        func_800B9C14(probe);
     }
-    if (instField != 0 && func_800829B8__Q22cf13CfGameManagerFv() == 0 &&
-        (lbl_eu_80663E28 & 0x20) == 0) {
-        func_80068358(instField);
+    if (instField != 0) {
+        if (func_800829B8__Q22cf13CfGameManagerFv() == 0 &&
+            (lbl_eu_80663E28 & 0x20) == 0) {
+            func_80068358(instField);
+        }
     }
+    // Count nodes in the BEC list head (sentinel-terminated circular chain).
     u32 count = 0;
-    CfReslistNode* becHead = *(CfReslistNode**)((u8*)self + 0xBEC);
-    for (CfReslistNode* p = becHead->mNext; p != becHead; p = p->mNext) {
+    u32 becHead = *(u32*)((u8*)self + 0xBEC);
+    for (u32 p = *(u32*)becHead; p != becHead; p = *(u32*)p) {
         count++;
     }
     lbl_eu_80663EE4 = count;
@@ -3533,60 +3774,65 @@ check:
 }
 
 // Target: us-800b379c - func_800B2ED0
-// OPEN ITEM: 161 mismatch / 138 structural. Frame now 64B vs retail 80B
-// (overshot when shrinking tplBuf): retail keeps iterator slots spread over
-// sp+0x10..0x38 with obj@8 and the scratch flag@0xc - restore two extra
-// 4-byte locals (or a 12-byte template buffer) and match the slot order
-// outer=0x30/stepBack=0x2c/end=0x28/main=0x34/other=0x38.
 // File an object into the singleton: route by type into the matching pool
 // list (with the game-manager iterator scan building insertion templates),
-// register the sort key in the ring buffer, then dispatch through the same
-// type cascade as func_800B4120 into the destination reslists.
+// register the sort key in the ring buffer, then dispatch through the type
+// cascade into the destination reslists.
 extern "C" u32 func_800B2ED0(UnkClass_805764CC* self, cf::CfObject* obj) {
+    // Local declaration order fixes the retail frame layout (MWCC allocates
+    // in reverse): itMain@0x38 itOther@0x34 outer@0x30 stepBack@0x2C
+    // endLoop@0x28 endOther@0x24 outOther@0x20 tplOther@0x1C endMain@0x18
+    // outMain@0x14 tplMain@0x10 flag@0x0C (obj spills to @0x08).
+    u32 itMain;
+    u32 itOther;
+    u32 outer;
+    u32 stepBack;
+    u32 endLoop;
+    u32 endOther;
+    u32 outOther;
+    u32 tplOther;
+    u32 endMain;
+    u32 outMain;
+    u32 tplMain;
+    u8 flag;
+
     if (func_800B31B0(obj)) {
         func_800B39C8((FactoryPoolList*)self, &obj);
     } else if (func_8006C1B0(obj)) {
         // Scan the game-manager list once, collecting insertion anchors for
-        // both type families as they appear.
-        F8C0IteratorNode outer;
-        F8C0IteratorNode stepBack;
-        F8C0IteratorNode end;
-        u32 itMain;
-        u32 itOther;
+        // both type families as they appear. A node of neither family ends
+        // the scan immediately (without the advance/compare tail).
         func_800B1818(&itMain, 0);
         func_800B1818(&itOther, 0);
-        func_8007F8C0__Q22cf13CfGameManagerFv(&outer, (const F8C0ListSource*)self);
-        for (;;) {
-            func_8007F8DC__Q22cf13CfGameManagerFv(&stepBack, &outer, 0);
-            cf::CfObject* node = (cf::CfObject*)*func_8007F8D0__Q22cf13CfGameManagerFv(&outer);
+        func_8007F8C0__Q22cf13CfGameManagerFv((F8C0IteratorNode*)&outer, (const F8C0ListSource*)self);
+        // Rotated while loop: advance+compare runs before each body pass
+        // (comma expression keeps both calls in the loop condition).
+        // Rotated while loop: advance+compare runs before each body pass.
+        while ((func_8007F8F4__Q22cf13CfGameManagerFv((F8C0IteratorNode*)&endLoop, (const F8C0ListSource*)self),
+                func_8007F900__Q22cf13CfGameManagerFv(&outer, &endLoop))) {
+            func_8007F8DC__Q22cf13CfGameManagerFv((F8C0IteratorNode*)&stepBack, (F8C0IteratorNode*)&outer, 0);
+            cf::CfObject* node = *(cf::CfObject**)func_8007F8D0__Q22cf13CfGameManagerFv((F8C0IteratorNode*)&outer);
             if (func_800B31B0(node)) {
                 func_800B3A54(&itMain, &outer);
-                break;
-            }
-            if (func_8006C1B0(node)) {
+            } else if (func_8006C1B0(node)) {
                 func_800B3A54(&itOther, &outer);
-            }
-            func_8007F8F4__Q22cf13CfGameManagerFv(&end, (const F8C0ListSource*)self);
-            if (func_8007F900__Q22cf13CfGameManagerFv((const u32*)&outer, (const u32*)&end) == 0) {
+            } else {
+                // A node of neither family ends the scan immediately,
+                // skipping the remaining passes.
                 break;
             }
         }
-        u32 itEndMain;
-        u32* endMain = func_800B1818(&itEndMain, 0);
-        if (func_8007F900__Q22cf13CfGameManagerFv(&itOther, endMain)) {
-            // Narrow scoped locals mirror retail's reused 4-byte stack slots.
-            u32 tplBuf;
-            void* tpl = func_800B1820(&tplBuf, &itOther);
-            void* out;
-            func_800B2E38(&out, self, tpl, &obj);
+        // Insert after the last same-family anchor found by the scan (or
+        // append straight into the flat list when no anchor matched).
+        u32* endOtherEnd = func_800B1818(&endOther, 0);
+        if (func_8007F900__Q22cf13CfGameManagerFv(&itOther, endOtherEnd)) {
+            void* tpl = func_800B1820(&tplOther, &itOther);
+            func_800B2E38((void**)&outOther, self, tpl, &obj);
         } else {
-            u32 itEndOther;
-            u32* endOther = func_800B1818(&itEndOther, 0);
-            if (func_8007F900__Q22cf13CfGameManagerFv(&itMain, endOther)) {
-                u32 tplBuf2;
-                void* tpl2 = func_800B1820(&tplBuf2, &itMain);
-                void* out2;
-                func_800B2E38(&out2, self, tpl2, &obj);
+            u32* endMainEnd = func_800B1818(&endMain, 0);
+            if (func_8007F900__Q22cf13CfGameManagerFv(&itMain, endMainEnd)) {
+                void* tpl2 = func_800B1820(&tplMain, &itMain);
+                func_800B2E38((void**)&outMain, self, tpl2, &obj);
             } else {
                 func_800B2D88(self, obj);
             }
@@ -3596,36 +3842,24 @@ extern "C" u32 func_800B2ED0(UnkClass_805764CC* self, cf::CfObject* obj) {
     }
 
     // Register in the sorted ring buffer, then route into the reslists.
-    func_800B3210((UnkClass_800B0AD8*)((u8*)self + 0x20), (UnkClass_805764CC**)&obj);
+    // Single-exit else-if chain matches retail's shared return tail.
+    flag = 0;
+    func_800B3210((UnkClass_800B0AD8*)((u8*)self + 0x20), (UnkClass_805764CC**)&obj, &flag);
     if (func_8006C1B0(obj)) {
         func_800B2D88(&self->field_0xB28, obj);
-        return 1;
-    }
-    if (func_800B31BC(obj)) {
+    } else if (func_800B31BC(obj)) {
         func_800B2D88(&self->field_0xC08, obj);
-        return 1;
-    }
-    if (func_8006DF9C(obj)) {
+    } else if (func_8006DF9C(obj)) {
         func_800B2D88(&self->field_0xB48, obj);
-        return 1;
-    }
-    if (func_800B31C8(obj)) {
+    } else if (func_800B31C8(obj)) {
         func_800B2D88(&self->field_0xB68, obj);
-        return 1;
-    }
-    if (func_800B31D4((u8*)obj)) {
+    } else if (func_800B31D4((u8*)obj)) {
         func_800B2D88(&self->field_0xB88, obj);
-        return 1;
-    }
-    if (func_800B31E0(obj) || func_800B31EC(obj)) {
+    } else if (func_800B31E0(obj) || func_800B31EC(obj)) {
         func_800B2D88(&self->field_0xBE8, obj);
-        return 1;
-    }
-    if (func_800B31F8(obj) || func_800B3204(obj)) {
+    } else if (func_800B31F8(obj) || func_800B3204(obj)) {
         func_800B2D88(&self->field_0xBC8, obj);
-        return 1;
-    }
-    if (func_800B31B0(obj)) {
+    } else if (func_800B31B0(obj)) {
         func_800B2D88(&self->field_0xBA8, obj);
     }
     return 1;
@@ -3677,25 +3911,29 @@ found:
 // holding the comparison callable (vtable slot 0 for functors). Pivots are
 // dithered by a rotating static so equal-key ranges split irregularly;
 // ranges of <=20 entries fall back to the insertion-sort finisher.
-extern "C" void func_800B535C(void** firstV, void** lastV, void** cmp) {
-    SortEntry* first = (SortEntry*)firstV;
-    SortEntry* last = (SortEntry*)lastV;
+// Retail prologue calls _savegpr_25/_restgpr_25 runtime helpers (MSL-style
+// object compiled without -use_lmw_stmw).
+#pragma push
+#pragma use_lmw_stmw off
+extern "C" void func_800B535C(void** firstV, void** lastV, void** cmpV) {
+    SortEntryF* first = (SortEntryF*)firstV;
+    SortEntryF* last = (SortEntryF*)lastV;
     for (;;) {
         s32 count = last - first;
         if (count <= 1) {
             return;
         }
         if (count <= 20) {
-            func_800B587C((void**)first, (void**)last, cmp);
+            func_800B587C((void**)first, (void**)last, cmpV);
             return;
         }
         int j = lbl_eu_80661CDC;
-        SortEntry* p1 = first + (count / 4 + j % 5);
+        SortEntryF* p1 = first + (count / 4 + j % 5);
         int k = j + 1;
         if (k >= 5) {
             k -= 5;
         }
-        SortEntry* p2 = first + (3 * count / 4 + k % 5);
+        SortEntryF* p2 = first + (3 * count / 4 + k % 5);
         int nextJ = k + 1;
         if (nextJ >= 5) {
             lbl_eu_80661CDC = -4;
@@ -3704,14 +3942,14 @@ extern "C" void func_800B535C(void** firstV, void** lastV, void** cmp) {
         }
         // Median-of-3 anchor: the slot just below `last`, reused as the
         // partition sentinel.
-        SortEntry* end = last - 1;
-        func_800B570C((void**)p1, (void**)p2, (void**)end, cmp);
+        SortEntryF* end = last - 1;
+        func_800B570C((void**)p1, (void**)p2, (void**)end, cmpV);
 
         // Hoare partition with the median element parked at last-1.
-        SortEntry* piv = end;
-        SortEntry* hi = end;
-        SortEntry* lo = first;
-        while (((SortEntryCompare)*cmp)((SortEntry*)lo, (SortEntry*)piv) != 0) {
+        SortEntryF* piv = end;
+        SortEntryF* hi = end;
+        SortEntryF* lo = first;
+        while ((*reinterpret_cast<SortEntryCompare*>(cmpV))((SortEntry*)lo, (SortEntry*)piv) != 0) {
             ++lo;
         }
         do {
@@ -3719,49 +3957,91 @@ extern "C" void func_800B535C(void** firstV, void** lastV, void** cmp) {
             if (lo == hi) {
                 break;
             }
-        } while (((SortEntryCompare)*cmp)((SortEntry*)hi, (SortEntry*)piv) == 0);
-        while (lo < hi) {
-            SortEntry t = *lo;
-            *lo = *hi;
-            *hi = t;
-            do {
-                ++lo;
-            } while (((SortEntryCompare)*cmp)((SortEntry*)lo, (SortEntry*)piv) != 0);
-            do {
-                --hi;
-            } while (((SortEntryCompare)*cmp)((SortEntry*)hi, (SortEntry*)piv) == 0);
+        } while ((*reinterpret_cast<SortEntryCompare*>(cmpV))((SortEntry*)hi, (SortEntry*)piv) == 0);
+        if (lo < hi) {
+            // First partition iteration peeled; the trailing loop shares one
+            // scan-pair copy (matches retail's two swap bodies / two scans).
+            {
+                volatile SortEntry& vx = *reinterpret_cast<SortEntry*>(lo);
+                volatile SortEntry& vy = *reinterpret_cast<SortEntry*>(hi);
+                SortEntry t;
+                t.mPointer = vx.mPointer;
+                vx.mPointer = vy.mPointer;
+                t.mValue.mWord = vx.mValue.mWord;
+                vx.mValue.mValue = vy.mValue.mValue;
+                vy.mPointer = t.mPointer;
+                vy.mValue.mValue = t.mValue.mValue;
+            }
+            for (;;) {
+                do {
+                    ++lo;
+                } while ((*reinterpret_cast<SortEntryCompare*>(cmpV))((SortEntry*)lo, (SortEntry*)piv) != 0);
+                do {
+                    --hi;
+                } while ((*reinterpret_cast<SortEntryCompare*>(cmpV))((SortEntry*)hi, (SortEntry*)piv) == 0);
+                if (lo >= hi) {
+                    break;
+                }
+                volatile SortEntry& vx = *reinterpret_cast<SortEntry*>(lo);
+                volatile SortEntry& vy = *reinterpret_cast<SortEntry*>(hi);
+                SortEntry t2;
+                t2.mPointer = vx.mPointer;
+                vx.mPointer = vy.mPointer;
+                t2.mValue.mWord = vx.mValue.mWord;
+                vx.mValue.mValue = vy.mValue.mValue;
+                vy.mPointer = t2.mPointer;
+                vy.mValue.mValue = t2.mValue.mValue;
+            }
         }
 
         if (lo == first) {
             // Nothing sorted below lo: swap the stuck first element with
             // the pivot slot, then re-scan comparing everything to *first.
-            SortEntry t = *lo;
-            *lo = *piv;
-            *piv = t;
+            volatile SortEntry& vx = *reinterpret_cast<SortEntry*>(lo);
+            volatile SortEntry& vyp = *reinterpret_cast<SortEntry*>(piv);
+            SortEntry t;
+            t.mPointer = vx.mPointer;
+            vx.mPointer = vyp.mPointer;
+            t.mValue.mWord = vx.mValue.mWord;
+            vx.mValue.mValue = vyp.mValue.mValue;
+            vyp.mPointer = t.mPointer;
+            vyp.mValue.mValue = t.mValue.mValue;
             ++lo;
             hi = last - 1;
-            while (lo != last && ((SortEntryCompare)*cmp)((SortEntry*)first, (SortEntry*)lo) == 0) {
+            while (lo != last && (*reinterpret_cast<SortEntryCompare*>(cmpV))((SortEntry*)first, (SortEntry*)lo) == 0) {
                 ++lo;
             }
             if (lo < hi) {
-                SortEntry t2 = *lo;
-                *lo = *hi;
-                *hi = t2;
+                volatile SortEntry& vx = *reinterpret_cast<SortEntry*>(lo);
+                volatile SortEntry& vy = *reinterpret_cast<SortEntry*>(hi);
+                SortEntry t2;
+                t2.mPointer = vx.mPointer;
+                vx.mPointer = vy.mPointer;
+                t2.mValue.mWord = vx.mValue.mWord;
+                vx.mValue.mValue = vy.mValue.mValue;
+                vy.mPointer = t2.mPointer;
+                vy.mValue.mValue = t2.mValue.mValue;
             }
             while (lo < hi) {
-                while (lo != last &&
-                       ((SortEntryCompare)*cmp)((SortEntry*)first, (SortEntry*)lo) == 0) {
+                // Unguarded rescan: retail drops the lo!=last check here.
+                while ((*reinterpret_cast<SortEntryCompare*>(cmpV))((SortEntry*)first, (SortEntry*)lo) == 0) {
                     ++lo;
                 }
                 do {
                     --hi;
-                } while (((SortEntryCompare)*cmp)((SortEntry*)first, (SortEntry*)hi) != 0);
+                } while ((*reinterpret_cast<SortEntryCompare*>(cmpV))((SortEntry*)first, (SortEntry*)hi) != 0);
                 if (lo >= hi) {
                     break;
                 }
-                SortEntry t3 = *lo;
-                *lo = *hi;
-                *hi = t3;
+                volatile SortEntry& vx = *reinterpret_cast<SortEntry*>(lo);
+                volatile SortEntry& vy = *reinterpret_cast<SortEntry*>(hi);
+                SortEntry t3;
+                t3.mPointer = vx.mPointer;
+                vx.mPointer = vy.mPointer;
+                t3.mValue.mWord = vx.mValue.mWord;
+                vx.mValue.mValue = vy.mValue.mValue;
+                vy.mPointer = t3.mPointer;
+                vy.mValue.mValue = t3.mValue.mValue;
                 ++lo;
             }
             first = lo;
@@ -3770,23 +4050,29 @@ extern "C" void func_800B535C(void** firstV, void** lastV, void** cmp) {
             s32 leftCnt = lo - first;
             s32 rightCnt = last - lo;
             if (leftCnt >= rightCnt) {
-                func_800B535C((void**)lo, (void**)last, cmp);
+                func_800B535C((void**)lo, (void**)last, cmpV);
                 last = lo;
             } else {
-                func_800B535C((void**)first, (void**)lo, cmp);
+                func_800B535C((void**)first, (void**)lo, cmpV);
                 first = lo;
             }
         }
     }
 }
+#pragma pop
 
 // ------------------------------------------------------------------
 // Target 2: us-800b58a8 - func_800B4FAC
 // Same driver as func_800B535C but with a plain function-pointer compare;
 // the callee takes its address (a stack slot) instead of the value.
+// Retail prologue calls _savegpr_26/_restgpr_26 runtime helpers (this sort
+// template came from an MSL-style object compiled without -use_lmw_stmw);
+// the TU-level -use_lmw_stmw on would emit inline stmw/lmw instead.
+#pragma push
+#pragma use_lmw_stmw off
 extern "C" void func_800B4FAC(void** firstV, void** lastV, int (*cmp)(const void*, const void*)) {
-    SortEntry* first = (SortEntry*)firstV;
-    SortEntry* last = (SortEntry*)lastV;
+    SortEntryF* first = (SortEntryF*)firstV;
+    SortEntryF* last = (SortEntryF*)lastV;
     for (;;) {
         s32 count = last - first;
         if (count <= 1) {
@@ -3797,25 +4083,26 @@ extern "C" void func_800B4FAC(void** firstV, void** lastV, int (*cmp)(const void
             return;
         }
         int j = lbl_eu_80661CD8;
-        SortEntry* p1 = first + (count / 4 + j % 5);
+        SortEntryF* p1 = first + (count / 4 + j % 5);
         int k = j + 1;
         if (k >= 5) {
             k -= 5;
         }
-        SortEntry* p2 = first + (3 * count / 4 + k % 5);
+        SortEntryF* p2 = first + (3 * count / 4 + k % 5);
         int nextJ = k + 1;
         if (nextJ >= 5) {
             lbl_eu_80661CD8 = -4;
         } else {
             lbl_eu_80661CD8 = nextJ;
         }
-        SortEntry* end = last - 1;
+        // Median-of-3 anchor: the slot just below `last`, reused as both
+        // the partition pivot and the descending cursor.
+        SortEntryF* end = last - 1;
         func_800B570C((void**)p1, (void**)p2, (void**)end, (void**)&cmp);
 
-        SortEntry* piv = end;
-        SortEntry* hi = end;
-        SortEntry* lo = first;
-        while (cmp(lo, piv) != 0) {
+        SortEntryF* hi = end;
+        SortEntryF* lo = first;
+        while (cmp(lo, end) != 0) {
             ++lo;
         }
         do {
@@ -3823,30 +4110,32 @@ extern "C" void func_800B4FAC(void** firstV, void** lastV, int (*cmp)(const void
             if (lo == hi) {
                 break;
             }
-        } while (cmp(hi, piv) == 0);
+        } while (cmp(hi, end) == 0);
         while (lo < hi) {
-            SortEntry t = *lo;
+            SortEntryF t = *lo;
             *lo = *hi;
             *hi = t;
             do {
                 ++lo;
-            } while (cmp(lo, piv) != 0);
+            } while (cmp(lo, end) != 0);
             do {
                 --hi;
-            } while (cmp(hi, piv) == 0);
+            } while (cmp(hi, end) == 0);
         }
 
         if (lo == first) {
-            SortEntry t = *lo;
-            *lo = *piv;
-            *piv = t;
+            // Nothing sorted below lo: swap the stuck first element with
+            // the pivot slot, then re-scan comparing everything to *first.
+            SortEntryF t = *lo;
+            *lo = *end;
+            *end = t;
             ++lo;
             hi = last - 1;
             while (lo != last && cmp(first, lo) == 0) {
                 ++lo;
             }
             if (lo < hi) {
-                SortEntry t2 = *lo;
+                SortEntryF t2 = *lo;
                 *lo = *hi;
                 *hi = t2;
             }
@@ -3860,7 +4149,7 @@ extern "C" void func_800B4FAC(void** firstV, void** lastV, int (*cmp)(const void
                 if (lo >= hi) {
                     break;
                 }
-                SortEntry t3 = *lo;
+                SortEntryF t3 = *lo;
                 *lo = *hi;
                 *hi = t3;
                 ++lo;
@@ -3879,6 +4168,7 @@ extern "C" void func_800B4FAC(void** firstV, void** lastV, int (*cmp)(const void
         }
     }
 }
+#pragma pop
 
 // ------------------------------------------------------------------
 // Target 1: us-800b98e0 - func_800B8FC4
@@ -3898,10 +4188,12 @@ extern "C" s32 func_800B8FC4() {
         lbl_eu_80663EE8 = 1;
     }
     UnkClass_805764CC* self = (UnkClass_805764CC*)lbl_eu_80572CD4;
+    // Bit 25 of the shared event-flag word gates the pause shortcut.
     if ((lbl_eu_80663E28 & 0x40) != 0 && mgr == 0 && (s16)self->field_0xD10 == 0) {
         return 1;
     }
-    float accum = lbl_eu_80663EDC + func_80069EA0();
+    float dt = func_80069EA0();
+    float accum = lbl_eu_80663EDC + dt;
     lbl_eu_80663EDC = accum;
     if (accum > lbl_eu_80666A28) {
         return 1;
@@ -3915,39 +4207,46 @@ extern "C" s32 func_800B8FC4() {
     const float maxY = lbl_eu_80666A30;
     s32 processed = 0;
     CfReslistNode* cur = *(CfReslistNode**)((u8*)list + 4);
+    B47Vec3 delta;
     for (;;) {
         B8D5CObj* obj = (B8D5CObj*)func_800AD860__FPv(cur->mItem);
         if (obj != 0) {
             processed++;
             u32 f4 = obj->field_3F04;
-            if ((f4 & 0x40) == 0 && (f4 & 0x20) == 0 && obj->field_3E9C.vf1C() == 0) {
-                // Type cascade over field_15F0 (values 4..8 pass).
+            // Bits 25/26 of the object status word suppress this scan.
+            if ((f4 & 0x40) == 0 && (f4 & 0x20) == 0 &&
+                obj->field_3E9C.vf1C() == 0) {
+                // Type cascade over field_15F0 (values 4..8 keep the flags
+                // set; anything else clears them stage by stage).
                 u32 v = obj->field_15F0;
-                int r5 = (v == 4 || v == 5) ? 1 : 0;
-                int r4 = r5;
-                if (r4 == 0 && v == 6) {
-                    r4 = 1;
+                int nearOk = 1;
+                int c = 1;
+                int b = 1;
+                int a = 1;
+                if (v != 4 && v != 5) {
+                    a = 0;
                 }
-                int r3 = r4;
-                if (r3 == 0 && v == 7) {
-                    r3 = 1;
+                if (a == 0 && v != 6) {
+                    b = 0;
                 }
-                int r0 = r3;
-                if (r0 == 0 && v == 8) {
-                    r0 = 1;
+                if (b == 0 && v != 7) {
+                    c = 0;
                 }
-                if (r0 != 0) {
-                    // Proximity check against the player's position.
+                if (c == 0 && v != 8) {
+                    nearOk = 0;
+                }
+                if (nearOk != 0) {
+                    // Proximity check against the player's position:
+                    // horizontal (x/z) distance plus an absolute-Y gate.
                     if (player != 0) {
-                        B47Vec3* pa = (B47Vec3*)obj->field_3E9C.unk2B();
-                        B47Vec3* pb = (B47Vec3*)player->unk2B();
-                        float dx = pa->x - pb->x;
-                        float dy = pa->y - pb->y;
-                        float dz = pa->z - pb->z;
-                        if (dx * dx + dy * dy + dz * dz > maxDistSq) {
+                        // Component subtract via loop operator so MWCC
+                        // PS-vectorizes into psq_l/ps_sub like retail.
+                        delta = *((B47Vec3*)obj->field_3E9C.unk2B());
+                        delta -= *((B47Vec3*)player->unk2B());
+                        if (delta.v[0] * delta.v[0] + delta.v[2] * delta.v[2] > maxDistSq) {
                             goto next;
                         }
-                        if (fabsf(dy) > maxY) {
+                        if ((float)__fabs((double)delta.v[1]) > maxY) {
                             goto next;
                         }
                         // Within range of the player: retail returns 0.
@@ -3955,7 +4254,7 @@ extern "C" s32 func_800B8FC4() {
                     }
                 } else if (obj->field_3E9C.vf1D() == 0 &&
                            (obj->field_3F08 & 0x2) == 0 &&
-                           (obj->field_3F04 & 0x100000) != 0 &&
+                           (obj->field_3F04 & 0x00100000) != 0 &&
                            (obj->field_3F08 & 0x1) != 0 &&
                            obj->field_3E9C.vf58() == 0 && obj->field_3F60 == 0 &&
                            processed < 4) {
@@ -3975,44 +4274,220 @@ extern "C" s32 func_800B8FC4() {
 }
 
 // Target: us-800b2980 - func_800B20B4
-// Object spawner: switch on the spawn mask, allocate + construct the matching
-// object type out of the payload record, then register it with the manager
-// (flags at +0x64/+0x70, func_800B2ED0 filing, slot 0x58 init hook) and
-// notify every queued factory event.
-// OPEN ITEM: the interior of the common npc/pc setup (~390 retail lines,
-// cases 0x2/0x3/0x8/0x80/0x100 detail) was not available; the mask switch,
-// allocation shapes, tail registration and event notification are faithful.
+// Object spawner: switch on the low half of the spawn mask, allocate and
+// construct the matching object type out of the payload record, run the
+// npc/pc resource-slot lookup, then register the object with the manager
+// (flags at +0x64/+0x70/+0x74, func_800B2ED0 filing, slot 0x58 init hook)
+// and notify every queued factory event (field_0xC80 list, slot 3).
+
+// Manager counter view: the D08 word sits inside an otherwise-unnamed pad.
+struct B20B4Mgr {
+    u8 _pad[0xD08];
+    u32 d08;
+};
+
+// Common object-head view written by every spawn path + the tail.
 struct B20B4ObjView {
     u8 _pad00[0x64];
-    u32 flags64;   // +0x64
+    u32 flags64;                   // +0x64 final mask
     u8 _pad68[0x70 - 0x68];
-    u32 field70;   // +0x70
+    u32 field70;                   // +0x70 payload w04
+    u32 field74;                   // +0x74 manager counter snapshot
 };
+
+// Npc/pc deep fields filled after construction.
+struct B20B4NpcView {
+    u8 _pad00[0x70C - 0x00];
+    u16 h70C;
+    u16 h70E;
+    u16 h710;
+    u16 h712;
+};
+
+// Eff (kind 0x20) fields: name string copy + id halves.
+struct B20B4EffView {
+    u8 _pad00[0x70 - 0x00];
+    u32 field70;                   // +0x70 payload w04
+    u8 _pad74[0x78 - 0x74];
+    char name78[0x10];             // +0x78 strcpy target
+    u32 nameLen;                   // +0x88 strlen result
+    u16 h8C;                       // +0x8C w00 & 0x3ff
+};
+
+// Point/marker objects (kinds 0x18000 / 0x4000): fully hand-initialized.
+struct B20B4PtView {
+    void* vtbl;                    // 0x00
+    u32 field04;
+    u32 field08;
+    u32 field0C;
+    u8 b10;
+    u8 _pad11[0x30 - 0x11];
+    u32 field30;
+    u32 field34;
+    u32 field38;
+    float f3C;                     // 0x3C..0x5C: nine copies of D8 constant
+    float f40;
+    float f44;
+    float f48;
+    float f4C;
+    float f50;
+    float f54;
+    float f58;
+    float f5C;
+    float f60;                     // DC constant
+    u32 flags68;                   // 0x68
+    u8 pad6C0;
+    u8 pad6D0;
+    u8 pad6E0;
+    u8 pad6F0;
+    u32 field74;
+    u8 b78;                        // 0x78
+    u8 _pad79[0x88 - 0x79];
+    u32 field88;
+    u16 h8C;
+    u16 h8E;
+    u8 b90;                        // 0x90
+    u8 _pad91[0x94 - 0x91];
+    u32 field94;                   // 0x94 (0x18000 only)
+    u32 field98;                   // init 1
+    u32 field9C;
+    u8 _padA0[0x120 - 0xA0];
+    u8 b120;
+    u8 _pad121[0x130 - 0x121];
+    u32 field130;
+    u8 rec134;                     // 0x134 record byte (zeroed via loop)
+    u8 _pad135[0x144 - 0x135];
+    u32 rec144;                    // +0x10 of the record
+    float f148;                    // E0 constant (0x18000 only)
+    u16 h158;
+};
+
+// ObjectModel (kind 0x200): inlined ctor body over the raw 0x2f50 block.
+struct B20B4ModelView {
+    u8 _pad00[0xDC - 0x00];
+    u32 zDC;
+    u32 zE0;
+    u32 zE4;
+    u32 zE8;
+    u32 zEC;
+    u8 _padF0[0x100 - 0xF0];       // +0xF0: __dt__8047BDA8 sub-object
+    u32 z100;
+    u32 z104;
+    u8 _pad108[0x110 - 0x108];
+    u32 z110;
+    u8 _pad114[0x2F28 - 0x114];
+    u32 z2F28;
+    u8 _pad2F2C[0x2F38 - 0x2F2C];
+    u32 z2F38;
+    u32 z2F3C;
+    u8 b2F40;
+    u8 _pad41[0x2F48 - 0x2F41];
+    float f2F48;
+};
+
+// Resource-pool entry probed by the npc/pc lookup loop (+0x34 slot id).
+struct B20B4Entry {
+    u8 _pad00[0x04 - 0x00];
+    u32 field04;
+    u8 _pad08[0x34 - 0x08];
+    s16 h34;
+};
+
+// Factory-event queue node (data pointer at +0x8).
+struct B20B4EvtNode {
+    B20B4EvtNode* mNext;
+    u8 _pad04[0x08 - 0x04];
+    IB20B4Event* evt;
+};
+
+// Npc/pc common field-setup: seven payload setters (+ optional eighth when
+// h1E is set), then the manager counter snapshot and the deep halfword row.
+#define B20B4_SET_FIELDS(obj) \
+    ((IB20B4Set*)(obj))->setField(0, w00); \
+    ((IB20B4Set*)(obj))->setField(1, w04); \
+    ((IB20B4Set*)(obj))->setField(2, payload->w08); \
+    ((IB20B4Set*)(obj))->setField(4, payload->w0C); \
+    ((IB20B4Set*)(obj))->setField(3, payload->w10); \
+    ((IB20B4Set*)(obj))->setField(5, payload->w14); \
+    ((IB20B4Set*)(obj))->setField(6, payload->w18); \
+    if (payload->h1E != 0) { \
+        ((IB20B4Set*)(obj))->setField(7, payload->w18); \
+    }
+
+// Manager counter bump: increments D08 with a wrap guard keeping it non-zero.
+#define B20B4_BUMP(obj) \
+    do { \
+        B20B4ObjView* ov = (B20B4ObjView*)(obj); \
+        B20B4Mgr* mgr = (B20B4Mgr*)self; \
+        ov->field74 = mgr->d08; \
+        u32 c = mgr->d08 + 1; \
+        if ((c & 0x7fffffff) == 0) { \
+            if (c == 0) { \
+                c = 1; \
+            } \
+        } \
+        mgr->d08 = c; \
+    } while (0)
 
 void* func_800B20B4(UnkClass_805764CC* self, u32 mask,
                     const B20B4Payload* payload, u32 arg) {
-    u16 kind = (u16)mask;
-    void* res = CfRes_getInstanceField();
     void* obj = 0;
+    void* res = CfRes_getInstanceField();
+    u32 w00 = 0;
     u32 w04 = 0;
     if (payload != 0) {
+        w00 = payload->w00;
         w04 = payload->w04;
     }
 
-    switch (kind) {
+    switch ((u16)mask) {
     case 0x200: {
+        // ObjectModel: flat ctor then a hand-inlined finisher over the block.
+        void* mem = allocate__Q23mtl10MemManagerFUlUl(0x2f50, (unsigned long)func_80061FE8());
+        if (mem != 0) {
+            __ct__Q22cf13CfObjectModelFv(mem);
+            B20B4ModelView* mv = (B20B4ModelView*)mem;
+            u32 zero = 0;
+            *(void**)mem = (void*)lbl_eu_80529128;
+            mv->zDC = zero;
+            mv->zE0 = zero;
+            mv->zE4 = zero;
+            mv->zE8 = zero;
+            mv->zEC = zero;
+            mv->z100 = zero;
+            mv->z104 = zero;
+            mv->z110 = zero;
+            mv->z2F28 = zero;
+            __dt__8047BDA8((u8*)mem + 0xf0);
+            mv->z2F38 = zero;
+            float fDCm = lbl_eu_806669DC;
+            mv->z2F3C = zero;
+            mv->b2F40 = 0;
+            mv->f2F48 = fDCm;
+        }
+        obj = mem;
+        if (obj == 0) {
+            break;
+        }
+        {
+            B20B4ObjView* ov = (B20B4ObjView*)obj;
+            ov->field70 = w04;
+            B20B4_BUMP(obj);
+        }
+        break;
+    }
+    case 0x02: {
+        // Npc/Pc pair: h24 selects compact npc vs big pc container.
         if (res == 0) {
             break;
         }
-        if (payload != 0 && payload->h24 != 0) {
-            // Npc: compact 0x724-byte object.
+        if (payload->h24 != 0) {
             void* mem = allocate__Q23mtl10MemManagerFUlUl(0x724, (unsigned long)func_80061FE8());
             if (mem != 0) {
                 __ct__Q22cf11CfObjectNpcFv(mem, 1);
             }
             obj = mem;
         } else {
-            // Pc: 0x45c4-byte container; the object sits at +0x3E9C.
             void* mem = allocate__Q23mtl10MemManagerFUlUl(0x45C4, (unsigned long)func_80061FE8());
             if (mem != 0) {
                 __ct__Q22cf10CfObjectPcFv(mem);
@@ -4020,103 +4495,402 @@ void* func_800B20B4(UnkClass_805764CC* self, u32 mask,
             }
             obj = mem;
         }
+        if (obj == 0) {
+            break;
+        }
+        {
+            // Slot family from payload bits 5..11 drives the scenario-gated
+            // skip or the resource-slot allocation.
+            s32 sel = (s32)((w04 >> 5) & 0x7f);
+            s32 slot = -1;
+            int ok = 1;
+            if (sel == 3) {
+                if (func_800822F4__Q22cf13CfGameManagerFv() >= 0x2a) {
+                    ok = 0;
+                }
+            } else if (sel == 8) {
+                if (func_800822F4__Q22cf13CfGameManagerFv() < 0x2a) {
+                    ok = 0;
+                }
+            } else {
+                slot = func_80063560(sel, 1, 0);
+                if (slot < 0) {
+                    func_8006398C(0);
+                }
+            }
+
+            s32 resId = -1;
+            s32 handle = -1;
+            u32 first = 0;
+            if (res != 0 && slot >= 0 && payload->h24 == 0) {
+                first = func_80063310(w00);
+                handle = func_80063394(w00);
+                if (handle >= 0) {
+                    resId = func_8006846C(CfRes_getInstanceField(), slot);
+                }
+                if (handle < 0) {
+                    slot = -1;
+                }
+            }
+
+            if (slot < 0 && ok != 0) {
+                // No slot available and the scenario gate says fail:
+                // tear the fresh object down and return nothing.
+                ((IB20B4Vt54*)obj)->fail(1);
+                return 0;
+            }
+            func_800BE948(obj, (u16)resId);
+            func_800BE960(obj, (s16)slot);
+            func_800BE978(obj, (s16)handle);
+            B20B4_SET_FIELDS(obj)
+            {
+                // Deep fields: counter snapshot then the halfword row.
+                B20B4ObjView* ov = (B20B4ObjView*)obj;
+                B20B4Mgr* mgr = (B20B4Mgr*)self;
+                ov->field74 = mgr->d08;
+                B20B4NpcView* nv = (B20B4NpcView*)obj;
+                nv->h70C = payload->h1C;
+                nv->h70E = payload->h1E;
+                nv->h710 = payload->h20;
+                nv->h712 = payload->h22;
+            }
+            if (slot >= 0 && handle >= 0) {
+                // Claim the slot: stamp our handle into this entry set,
+                // then clear earlier duplicates when it was free.
+                B20B4Entry* e1 = (B20B4Entry*)func_80062C88(slot);
+                B20B4Entry* e2 = (B20B4Entry*)func_80062E04(slot);
+                B20B4Entry* e3 = (B20B4Entry*)func_80062E64(slot);
+                B20B4Entry* e4 = (B20B4Entry*)func_80062CE4(slot);
+                B20B4Entry* e5 = (B20B4Entry*)func_80062D44(slot);
+                e1->h34 = (s16)handle;
+                e2->h34 = (s16)handle;
+                e3->h34 = (s16)handle;
+                e4->h34 = (s16)handle;
+                e5->h34 = (s16)handle;
+                mask = 2;
+                if (first == 0) {
+                    func_80066714(1);
+                    // resId doubles as the shared zero constant here.
+                    resId = 0;
+                    e1->field04 = resId;
+                    e2->field04 = resId;
+                    e3->field04 = resId;
+                    e5->field04 = resId;
+                    e4->field04 = resId;
+                    // Clear stale duplicates across the lower slots.
+                    for (first = 0; first != (u32)slot && first < 7; first++) {
+                        B20B4Entry* f1 = (B20B4Entry*)func_80062C88((s32)first);
+                        if (f1->h34 != (s16)handle) {
+                            break;
+                        }
+                        B20B4Entry* f2 = (B20B4Entry*)func_80062E04((s32)first);
+                        B20B4Entry* f3 = (B20B4Entry*)func_80062E64((s32)first);
+                        B20B4Entry* f4 = (B20B4Entry*)func_80062CE4((s32)first);
+                        B20B4Entry* f5 = (B20B4Entry*)func_80062D44((s32)first);
+                        func_80066714(1);
+                        f1->field04 = resId;
+                        f2->field04 = resId;
+                        f3->field04 = resId;
+                        f4->field04 = resId;
+                        f5->field04 = resId;
+                        f1->h34 = 0;
+                        f2->h34 = 0;
+                        f3->h34 = 0;
+                        f4->h34 = 0;
+                        f5->h34 = 0;
+                    }
+                }
+            } else {
+                mask = 0x80000008;
+            }
+            B20B4_BUMP(obj);
+        }
+        break;
+    }
+    case 0x04:
+    case 0x05:
+    case 0x08: {
+        // Enemy / generic npc spawns (kind 4 uses the big enemy container).
+        if (res == 0) {
+            break;
+        }
+        if ((u16)mask == 0x04) {
+            void* mem = allocate__Q23mtl10MemManagerFUlUl(0x45d0, (unsigned long)func_80061FE8());
+            if (mem != 0) {
+                void* built = __ct__cf_CfObjectEne(mem);
+                obj = (built != 0) ? (u8*)built + 0x3e9c : built;
+            }
+        } else {
+            void* mem = allocate__Q23mtl10MemManagerFUlUl(0x724, (unsigned long)func_80061FE8());
+            obj = mem;
+            if (mem != 0) {
+                __ct__Q22cf11CfObjectNpcFv(mem, 0);
+            }
+        }
+        if (obj == 0) {
+            break;
+        }
+        func_800BE948(obj, 0);
+        func_800BE960(obj, -1);
+        ((IB20B4Set*)obj)->setField(0, w00);
+        ((IB20B4Set*)obj)->setField(1, w04);
+        B20B4_BUMP(obj);
+        break;
+    }
+    case 0x80: {
+        if (res == 0) {
+            break;
+        }
+        void* mem = allocate__Q23mtl10MemManagerFUlUl(0x720, (unsigned long)func_80061FE8());
+        if (mem != 0) {
+            mem = __ct__cf_CfObjectObj(mem);
+        }
+        obj = mem;
+        if (obj == 0) {
+            break;
+        }
+        func_800BFAB0(obj, w04, w00);
+        B20B4_BUMP(obj);
+        break;
+    }
+    case 0x100: {
+        if (res == 0) {
+            break;
+        }
+        void* mem = allocate__Q23mtl10MemManagerFUlUl(0x740, (unsigned long)func_80061FE8());
+        if (mem != 0) {
+            mem = __ct__Q22cf12CfObjectTboxFv(mem);
+        }
+        obj = mem;
+        if (obj == 0) {
+            break;
+        }
+        func_800BFAB0(obj, w04, w00);
+        B20B4_BUMP(obj);
+        break;
+    }
+    case 0x20: {
+        // Effect object: only spawned while the BE8 pool has spare capacity.
+        if (res == 0) {
+            break;
+        }
+        {
+            CfReslistNode* sentinel = (CfReslistNode*)self->field_0xBE8.field_0x04;
+            u32 count = 0;
+            CfReslistNode* n = sentinel->mNext;
+            while (n != sentinel) {
+                n = n->mNext;
+                count++;
+            }
+            if (count < self->field_0xBE8.field_0x18) {
+                void* mem = allocate__Q23mtl10MemManagerFUlUl(0xc0, (unsigned long)func_80061FFC());
+                if (mem != 0) {
+                    __ct__Q22cf11CfObjectEffFv(mem);
+                }
+                obj = mem;
+            }
+        }
+        if (obj == 0) {
+            break;
+        }
+        {
+            const char* name = lbl_eu_804FC4D8 + 0x3d;
+            B20B4EffView* ev = (B20B4EffView*)obj;
+            ev->nameLen = (u32)strlen(name);
+            strcpy(ev->name78, name);
+            ev->h8C = (u16)(w00 & 0x3ff);
+            ev->field70 = w04;
+            B20B4_BUMP(obj);
+        }
+        break;
+    }
+    case 0x18000: {
+        if (res == 0) {
+            break;
+        }
+        // Big marker: same initializer plus the extended tail fields and a
+        // fixed-size record zeroed through MWCC's rounded divide loop.
+        void* mem = allocate__Q23mtl10MemManagerFUlUl(0x164, (unsigned long)func_80061FFC());
+        obj = mem;
+        if (mem != 0) {
+            B20B4PtView* p = (B20B4PtView*)mem;
+            u32 zero = 0;
+            p->field04 = zero;
+            float fD8 = lbl_eu_806669D8;
+            float fDC = lbl_eu_806669DC;
+            p->field08 = zero;
+            p->field0C = zero;
+            p->b10 = 0;
+            p->field30 = zero;
+            p->field34 = zero;
+            p->vtbl = (void*)lbl_eu_805294E0;
+            p->field38 = zero;
+            p->f3C = fD8;
+            p->f40 = fD8;
+            p->f44 = fD8;
+            p->f48 = fD8;
+            p->f4C = fD8;
+            p->f50 = fD8;
+            p->f54 = fD8;
+            p->f58 = fD8;
+            p->f5C = fD8;
+            p->f60 = fDC;
+            p->flags68 = zero;
+            p->pad6C0 = 0;
+            p->pad6D0 = 0;
+            p->pad6E0 = 0;
+            p->pad6F0 = 0;
+            p->field74 = zero;
+            p->b78 = 0;
+            p->field88 = zero;
+            p->h8C = 0;
+            p->h8E = 0;
+            ((void (*)(void*))((void**)lbl_eu_805294E0)[0x5c / 4])(mem);
+            p->b90 = 0;
+            p->flags68 = (p->flags68 | 0x00100000) & 0x00380000;
+            p->field94 = zero;
+            p->field98 = 1;
+            p->field9C = zero;
+            p->b120 = 0;
+            p->field130 = zero;
+            // Zero the single fixed-size record at +0x134.
+            {
+                u8* cur = (u8*)mem + 0x134;
+                u8* end = (u8*)mem + 0x148;
+                if (cur < end) {
+                    u32 cnt = (u32)(end + 0x13 - cur) / 0x14;
+                    while (cnt-- != 0) {
+                        cur[0] = 0;
+                        *(u32*)(cur + 0x10) = 0;
+                        cur += 0x14;
+                    }
+                }
+            }
+            p->vtbl = (void*)lbl_eu_80528600;
+            float fE0 = lbl_eu_806669E0;
+            p->f148 = fE0;
+            p->h158 = 0;
+            B20B4_BUMP(obj);
+            ((IB20B4Start*)obj)->start(1);
+        }
         break;
     }
     case 0x4000: {
         if (res == 0) {
             break;
         }
-        // Point marker: manual layout build (0x94 bytes), then the static
-        // vtable's slot-23 hook runs before the real vtable lands at +0.
-        void* mem = allocate__Q23mtl10MemManagerFUlUl(0x94, (unsigned long)func_80061FE8());
+        // Small marker: hand-rolled initializer over raw memory, finishing
+        // through the bootstrap table hook and the real vtable.
+        void* mem = allocate__Q23mtl10MemManagerFUlUl(0x94, (unsigned long)func_80061FFC());
         obj = mem;
         if (mem != 0) {
-            struct PtObj {
-                void* vtbl;   // 0x00
-                u8 _pad04[0x30 - 0x4];
-                u32 field30;  // 0x30
-                u32 field34;  // 0x34
-                u32 field38;  // 0x38
-                float f3C;    // 0x3C .. 0x60 floats
-                u8 _pad40[0x60 - 0x40];
-                float f60;    // 0x60
-                u8 _pad64[0x68 - 0x64];
-                u32 flags68;  // 0x68
-                u8 _pad6C[0x88 - 0x6C];
-                u32 field88;  // 0x88
-                u16 h8C;      // 0x8C
-                u16 h8E;      // 0x8E
-                u8 b90;       // 0x90
-            };
-            PtObj* p = (PtObj*)mem;
-            u32 i;
-            for (i = 0; i < 0x94 / 4; i++) {
-                ((u32*)mem)[i] = 0;
-            }
-            p->f3C = lbl_eu_806669D8;
-            p->f60 = lbl_eu_806669DC;
+            B20B4PtView* p = (B20B4PtView*)mem;
+            u32 zero = 0;
+            p->field04 = zero;
+            float fD8 = lbl_eu_806669D8;
+            float fDC = lbl_eu_806669DC;
+            p->field08 = zero;
+            p->field0C = zero;
+            p->b10 = 0;
+            p->field30 = zero;
+            p->field34 = zero;
             p->vtbl = (void*)lbl_eu_805294E0;
-            ((void (*)())((void**)lbl_eu_805294E0)[0x5c / 4])();
-            p->b90 = 0;
-            p->flags68 |= 0x10;
-            p->flags68 &= ~(1 << 21);   // keep all but bit 10
+            p->field38 = zero;
+            p->f3C = fD8;
+            p->f40 = fD8;
+            p->f44 = fD8;
+            p->f48 = fD8;
+            p->f4C = fD8;
+            p->f50 = fD8;
+            p->f54 = fD8;
+            p->f58 = fD8;
+            p->f5C = fD8;
+            p->f60 = fDC;
+            p->flags68 = zero;
+            p->pad6C0 = 0;
+            p->pad6D0 = 0;
+            p->pad6E0 = 0;
+            p->pad6F0 = 0;
+            p->field74 = zero;
+            p->b78 = 0;
+            p->field88 = zero;
+            p->h8C = 0;
+            p->h8E = 0;
+            ((void (*)(void*))((void**)lbl_eu_805294E0)[0x5c / 4])(mem);
             p->vtbl = (void*)lbl_eu_8052A3B0;
+            p->b90 = 0;
+            p->flags68 = (p->flags68 | 0x00100000) & 0x00380000;
+            B20B4_BUMP(obj);
+            ((IB20B4Start*)obj)->start(1);
         }
         break;
     }
     default:
-        // OPEN ITEM: masks 0x2/0x3/0x5/0x8/0x20/0x80/0x100/0x18000 construct
-        // further object types here (retail excerpt unavailable).
         break;
     }
 
+    // Tail: optional flag bit from the global gate, registration, init hook,
+    // then notify every queued factory event.
+    if ((lbl_eu_80663E24 & 0x40000) != 0) {
+        mask |= 0x10000;
+    }
     if (obj == 0) {
         return 0;
     }
-    B20B4ObjView* view = (B20B4ObjView*)obj;
-    view->field70 = w04;
+    {
+        B20B4ObjView* ov = (B20B4ObjView*)obj;
+        ov->flags64 = mask;
+        func_800B2ED0(self, (cf::CfObject*)obj);
+        ov->field70 = w04;
+        ((IB20B4Vt58*)obj)->unk22(arg);
 
-    // Reference-count style guard on the manager's D08 counter.
-    *(u32*)((u8*)obj + 0x74) = *(u32*)((u8*)self + 0xD08);
-    u32 nv = *(u32*)((u8*)self + 0xD08) + 1;
-    if (nv == 0) {
-        nv = 1;
+        CfReslistNode* sentinel = (CfReslistNode*)self->field_0xC80.mStartNodePtr;
+        B20B4EvtNode* n = (B20B4EvtNode*)sentinel->mNext;
+        while ((CfReslistNode*)n != sentinel) {
+            n->evt->e03(obj);
+            n = (B20B4EvtNode*)n->mNext;
+        }
     }
-    *(u32*)((u8*)self + 0xD08) = nv;
-
     return obj;
 }
 
 // Target: us-800b6290 - func_800B5994
 // Speed-of-play scaling pass: computes a per-frame speed multiplier from a
 // stack of global mode flags (testResInfoFlag masks 0x10/0x20/0x40, resource
-// flags, battle state), then walks the CfGameManager object iterator and
-// applies the multiplier to each eligible entry.
-// OPEN ITEM: the per-object dispatch inside the iterator loop (~344 retail
-// lines) was not available during reconstruction; the prologue, flag/counter
-// logic, multiplier selection and the iteration shell are faithful.
-extern "C" int func_8007F91C__Q22cf13CfGameManagerFv();
-void func_800B5994(void* selfv, void* anchor, void* listv, void* nameBuf,
-                   float speed) {
-    UnkClass_805764CC* self = (UnkClass_805764CC*)selfv;
+// flags, battle state), maintains the D04/D10 ramp counters, then walks the
+// CfGameManager object iterator and applies the multiplier to each eligible
+// entry (fade setters / BC3B0 boosts / event emission via func_800B6520).
+//
+// Two retail callees are prototyped with fewer parameters than this call
+// site passes (the extra argument registers are ignored by their bodies);
+// route those sites through explicitly-typed function pointers so the
+// second argument is emitted.
+struct SpdRec {          // record handed to func_800B6520 (sp+0x28)
+    u32 id;              // +0x28: object pointer
+    float w;             // +0x2c: weight
+};
+void func_800B5994(UnkClass_805764CC* self, IB8FC4Player* anchor, void* listv,
+                   const F8C0ListSource* listSrc, float speed) {
+    typedef s32 (*Call2Fn)(void*, u32);
+    typedef s32 (*EvtFn)(void*, void*);
+    typedef u32 (*B47Fn)(int, float, const B47Vec3*, const B47Vec3*, int,
+                         void*, void*);
     if (func_800B6508(listv) != 0) {
         return;
     }
 
-    B47Vec3 base;
-    func_8004B0B0(&base);
+    B47Vec3 base30;                 // sp+0x30 anchor position
+    func_8004B0B0(&base30);
     if (anchor != 0) {
-        func_8004B3F0(&base, ((IB8FC4Player*)anchor)->unk2B());
+        func_8004B3F0(&base30, anchor->unk2B());
     }
 
-    float scaled = speed + lbl_eu_80661CD4;
-    float mult = scaled;
+    float f24 = speed + lbl_eu_80661CD4;   // scaled base speed
+    float f23 = f24;                        // current multiplier
     func_8007F91C__Q22cf13CfGameManagerFv();
 
     s32 r20 = func_800B1C0C(0x20);
-    (void)r20;
     int r21 = (func_8006EF04(0x200) != 0);
-    (void)r21;
     int r22 = (testResInfoFlag(0x10) != 0);
     int r23 = (testResInfoFlag(0x40) != 0);
     void* r24 = 0;
@@ -4127,11 +4901,12 @@ void func_800B5994(void* selfv, void* anchor, void* listv, void* nameBuf,
     int r26 = (testResInfoFlag(0x20) != 0);
     int r25 = CfRes_getE24Bit22();
 
-    // Ramp counter: counts up while the speed-up gates hold, then drains.
+    // Ramp counter: counts up while the speed-up gates hold, then drains
+    // driving the reslist speed side effects.
     if ((r22 != 0 && r23 == 0) || r26 != 0) {
         u32 d04 = self->field_0xD04 + 1;
         self->field_0xD04 = d04;
-        if (d04 > 4 && self->field_0xD10 == 0) {
+        if ((s32)d04 > 4 && self->field_0xD10 == 0) {
             self->field_0xD10 = 0xa;
         }
     } else {
@@ -4139,7 +4914,7 @@ void func_800B5994(void* selfv, void* anchor, void* listv, void* nameBuf,
     }
     if (self->field_0xD10 > 0) {
         self->field_0xD10--;
-        if (func_800A8C84() >= 0x5e8000) {
+        if (func_800A8C84() >= 0x5e8000u) {
             self->field_0xD10 = 0;
         } else if (self->field_0xD10 >= 8) {
             int sub = 0;
@@ -4154,81 +4929,323 @@ void func_800B5994(void* selfv, void* anchor, void* listv, void* nameBuf,
 
     // Multiplier selection ladder.
     if (r22 != 0 && r23 != 0) {
-        mult = lbl_eu_806669F4;
+        f23 = lbl_eu_806669F4;
     } else if (r27 != 0) {
-        mult = lbl_eu_806669F8;
+        f23 = lbl_eu_806669F8;
     } else if (r24 != 0) {
-        mult = scaled * lbl_eu_806669EC;
+        f23 = f24 * lbl_eu_806669EC;
     } else if (r22 != 0) {
-        mult = scaled * lbl_eu_806669EC;
+        f23 = f24 * lbl_eu_806669EC;
     } else if (r26 != 0 && r23 != 0) {
-        mult = lbl_eu_806669F8;
+        f23 = lbl_eu_806669F8;
     } else if (r26 != 0) {
-        mult = scaled * lbl_eu_806669EC;
+        f23 = f24 * lbl_eu_806669EC;
     }
-    (void)r25;
-    (void)mult;
 
-    // Iterator walk over the game-manager object lists.
-    F8C0IteratorNode outer;
-    func_8007F8C0__Q22cf13CfGameManagerFv(&outer, (F8C0ListSource*)nameBuf);
+    F8C0IteratorNode it24;                  // sp+0x24 main iterator
+    func_8007F8C0__Q22cf13CfGameManagerFv(&it24, listSrc);
     for (;;) {
-        CfReslistNode** slot = *(CfReslistNode***)(void**)func_8007F8D0__Q22cf13CfGameManagerFv(
-            &outer);
-        CfReslistNode* node = slot ? *slot : 0;
-        F8C0IteratorNode dest;
-        func_8007F8DC__Q22cf13CfGameManagerFv(&dest, &outer, 0);
-        if (!func_800B64AC(node)) {
-            // OPEN ITEM: per-object dispatch (flags/type gates, multiplier
-            // application, removal handling) - retail excerpt unavailable.
+        B5994Obj* obj = *(B5994Obj**)func_8007F8D0__Q22cf13CfGameManagerFv(&it24);
+        F8C0IteratorNode it1c;              // sp+0x1C step-back iterator
+        func_8007F8DC__Q22cf13CfGameManagerFv(&it1c, &it24, 0);
+        if (func_800B64AC(obj) == 0) {
+            float f17 = f23;
+            float f22 = f23;
+            int r18 = 0, r17 = 0, r16 = 0, r24f = 0;
+
+            if (func_800B31C8(obj) != 0) {
+                if (obj->lvl174() == lbl_eu_806669D8) {
+                    r24f = 1;
+                }
+            }
+            if (func_8006DF9C(obj) != 0) {
+                // Name-probe on the embedded controller view (obj-0x3e9c);
+                // bits 4/3/1 of the result select the per-object branches.
+                u8* minus = (obj != 0) ? (u8*)obj - 0x3e9c : 0;
+                u8 b18 = (u8)func_800AF7E4(minus, lbl_eu_804FC4D8 + 0x3e);
+                if (r22 == 0) {
+                    f22 = f17;
+                    if ((b18 & 0x10) != 0) {
+                        f22 = f23 * lbl_eu_806669E4;
+                        r18 = 1;
+                        f17 = f22;
+                    }
+                }
+                if ((b18 & 0x08) != 0) {
+                    r17 = 1;
+                }
+                if ((b18 & 0x02) != 0) {
+                    r16 = 1;
+                }
+            }
+            if (func_800B64B8(obj, 8) != 0 || func_800B4594(obj) != 0) {
+                func_800B4F90(obj);
+                goto next;
+            }
+            if (r21 != 0) {
+                if (func_800B64D0((u8*)obj, 2) != 0) {
+                    goto next;
+                }
+                func_800B4F6C(obj);
+                goto next;
+            }
+            if (anchor == 0) {
+                goto next;
+            }
+            int sel = (r17 != 0 || r16 != 0) ? 1 : 0;
+            float f18v = (r17 != 0 || r16 != 0) ? f24 : f23;
+            s32 df = func_8006DF9C(obj);
+            B47Vec3* pos = obj->pos2B();
+            float tmp20 = 0;               // sp+0x20 out-param of B47A8
+            s32 r15res = ((B47Fn)func_800B47A8)(0, f18v, pos,
+                                                (const B47Vec3*)(unsigned long)df,
+                                                r18, &tmp20, 0);
+            if (r17 != 0) {                r15res = 1;
+            } else if (r16 != 0) {
+                B47Vec3* pos2 = obj->pos2B();
+                volatile float t14 = base30.y - pos2->y;   // sp+0x14
+                (void)t14;
+                if (func_8006BAF0() < lbl_eu_80663ED0) {
+                    r15res = 1;
+                }
+            }
+            if (r24f != 0) {
+                r15res = 0;
+            }
+            if (r15res != 0) {
+                goto big15;
+            }
+            // r15==0 path: controller-view status walk.
+            if (((Call2Fn)func_80082FCC__Q22cf13CfGameManagerFv)(obj, 0x800) != 0) {
+                goto ctrl_tail;
+            }
+            if (func_8006DF9C(obj) == 0 || r15res != 0) {
+                goto ctrl_tail;
+            }
+            {
+                u8* r15d = (obj != 0) ? (u8*)obj - 0x3e9c : 0;
+                int r16b = 0;
+                if (((IDispB4CA0*)r15d)->unkAF() != 0 ||
+                    func_800B3D40(r15d + 0x3e9c) != 0) {
+                    r16b = 1;
+                }
+                if (r16b != 0) {
+                    goto loop_end;
+                }
+                if (r22 != 0 && r23 != 0) {
+                    if (func_800B4B0C((UnkClass_805764CC*)r15d) == 0) {
+                        goto bc8;
+                    }
+                    if (func_800B3D4C(obj, 2) != 0) {
+                        goto loop_end;
+                    }
+                    if (func_800B3D4C(obj, 0x400) != 0) {
+                        func_800B4F90(obj);
+                        goto loop_end;
+                    }
+                    func_800B4F6C(obj);
+                    func_800B4F80(obj, 0x400);
+                    goto loop_end;
+                }
+            bc8:
+                r16b = (int)func_800B4CA0((Func4CA0Obj*)r15d);
+                if (r16b != 0) {
+                    goto loop_end;
+                }
+                if ((u16)func_800B64E4(r15d) != 0) {
+                    u8* obj2 = r15d + 0x3e9c;
+                    if (func_800B64EC(obj2) != 0) {
+                        func_800B3A88(self, obj2);
+                    } else if (func_800B8AFC(obj2) == 0) {
+                        func_800B3A88(self, obj2);
+                    }
+                    goto loop_end;
+                }
+                if (r16b != 0) {
+                    goto loop_end;
+                }
+                if (r25 != 0) {
+                    func_800B3A88(self, r15d + 0x3e9c);
+                } else {
+                    func_800B64F8(obj);
+                }
+                goto loop_end;
+            }
+        big15:
+            // r15!=0 path: emit the {object, weight} event record.
+            if (((Call2Fn)func_80082FCC__Q22cf13CfGameManagerFv)(obj, 0x10) == 0) {
+                if (func_800B64D0((u8*)obj, 2) != 0) {
+                    goto next;
+                }
+                func_800B4F6C(obj);
+                goto next;
+            }
+            {
+                // Retail reuses the dead base-position slot (sp+0x30) as the
+                // B4B88 scratch record.
+                if (((EvtFn)func_800B4B88)(obj, &base30) != 0) {
+                    func_800B4F6C(obj);
+                    goto next;
+                }
+                if (func_800B3D4C(obj, 1) == 0) {
+                    if (r17 != 0 || r16 != 0) {
+                        func_800B4F90(obj);
+                    }
+                }
+                SpdRec rec;
+                rec.id = (u32)obj;
+                if (r17 != 0 || r16 != 0) {
+                    rec.w = lbl_eu_806669FC;
+                } else if (r18 != 0) {
+                    B47Vec3* p = obj->pos2B();
+                    volatile float t10 = p->y - base30.y;      // sp+0x10
+                    (void)t10;
+                    float bv = func_8006BAF0();
+                    rec.w = (tmp20 + bv) / lbl_eu_806669E4;
+                } else {
+                    B47Vec3* p = obj->pos2B();
+                    volatile float t0c = p->y - base30.y;      // sp+0x0C
+                    (void)t0c;
+                    float bv = func_8006BAF0();
+                    rec.w = lbl_eu_80666A00 * bv + tmp20;
+                }
+                void* r15c = func_8016FE34(obj);
+                if (r15c != 0 &&
+                    func_800B4B0C((UnkClass_805764CC*)r15c) != 0) {
+                    rec.w *= lbl_eu_80666A04;
+                    if (func_eu_800BFC7C((u8*)r15c + 0x3e9c) != 0) {
+                        if (func_eu_800BFC7C((u8*)r15c + 0x3e9c) >= 5 &&
+                            func_800B4B74((UnkClass_805764CC*)r15c, 5) != 0) {
+                            rec.w = rec.w / lbl_eu_806669F4;
+                            goto emit;
+                        }
+                        // Raw 64-bit bit-cast of {r27, fc7c-result} minus D0.
+                        B6C8F64Conv conv;
+                        conv.w[0] = (u32)(unsigned long)r27;
+                        conv.w[1] = func_eu_800BFC7C((u8*)r15c + 0x3e9c);
+                        rec.w = rec.w / (float)(conv.d - lbl_eu_806669D0);
+                    }
+                }
+            emit:
+                func_800B6520(listSrc, &rec);
+            }
+            goto next;
+        ctrl_tail:
+            // Controller tail (.L_800B6C7C): slot-0x74 probe selects whether
+            // the removal flag path runs; slot-0x7C gates it otherwise.
+            if (obj->q74() != 0) {
+                if (func_800B64D0((u8*)obj, 2) == 0) {
+                    func_800B4F6C(obj);
+                }
+                goto loop_end;
+            }
+            if (obj->q1F() == 0) {
+                goto loop_end;
+            }
+            if (func_800B64D0((u8*)obj, 2) != 0) {
+                goto loop_end;
+            }
+            func_800B4F6C(obj);
+            goto loop_end;
+        next:
+            // Fade/level application driven by the residual speed delta.
+            if (func_800B64B8(obj, 0xc00) != 0) {
+                goto loop_end;
+            }
+            if (func_800B64B8(obj, 0x10) == 0) {
+                goto loop_end;
+            }
+            if (func_8006EF04(0x980) != 0) {
+                goto loop_end;
+            }
+            {
+                float f17n = f22 - tmp20;
+                if (r20 != 0 && func_8006DF9C(obj) != 0 && obj->q74() != 0) {
+                    func_800BC3B0(obj, lbl_eu_80666A08);
+                    goto loop_end;
+                }
+                if (r17 != 0 || r16 != 0) {
+                    if (func_8006DF9C(obj) != 0 &&
+                        obj->lvl16C() > lbl_eu_806669D8) {
+                        func_800BC3B0(obj, lbl_eu_80666A08);
+                    }
+                    B5994Obj* tgt = func_800B64DC(obj);
+                    if (tgt == 0) {
+                        goto loop_end;
+                    }
+                    tgt->q88();
+                    goto loop_end;
+                }
+                if (f17n > lbl_eu_80666A0C) {
+                    obj->fade1A4(lbl_eu_806669DC);
+                    goto loop_end;
+                }
+                float f0 = lbl_eu_80666A0C - f17n;
+                f0 *= lbl_eu_806669EC;
+                if (f0 < lbl_eu_806669D8) {
+                    f0 = lbl_eu_806669D8;
+                } else if (f0 > lbl_eu_806669DC) {
+                    f0 = lbl_eu_806669DC;
+                }
+                obj->fade1A4(lbl_eu_806669DC - f0);
+            }
+        loop_end:;
         }
-        F8C0IteratorNode inner;
-        func_8007F8F4__Q22cf13CfGameManagerFv(&inner, (F8C0ListSource*)nameBuf);
-        if (func_8007F900__Q22cf13CfGameManagerFv((const u32*)&outer,
-                                                   (const u32*)&inner)) {
+        F8C0IteratorNode it08;                  // sp+0x08 end iterator
+        func_8007F8F4__Q22cf13CfGameManagerFv(&it08, listSrc);
+        if (func_8007F900__Q22cf13CfGameManagerFv((const u32*)&it24,
+                                                   (const u32*)&it08)) {
             continue;
         }
         break;
     }
 }
-// Per-frame scan over the object reslist (func_800B6C58) looking for the
-// closest object matching the caller's acquisition request. Early-outs when
-// the second argument fails its readiness probe, when global flag bit24
-// (mask 0x80) is clear, or when global bits 12/29 (masks 0x80000/0x4) are
-// set.
-// OPEN ITEM: the middle of the type==3 branch (~211 retail lines) was not
-// available during reconstruction; the surrounding control flow, the type
-// 4/5 handling and the tail flag updates are faithful to the retail ASM.
-extern "C" void func_800B7AF0(UnkClass_805764CC* self, IB7Arg* arg) {
-    u32* flagsPtr = &lbl_eu_80663E24;
-    u32 flags = *flagsPtr;
-    u8 b61 = 0, b62 = 0, b63 = 0, b64 = 0;
-    u32 r20 = 0, r19 = 0;
+// Per-frame scan over the object reslist (func_800B6C58): find the closest
+// object matching the caller's acquisition request and drive the global
+// event flags / sequence counters accordingly.
+// extern "C": retail exports this entry under the unmangled name.
+extern "C" s32 func_800B7AF0(UnkClass_805764CC* self, IB7Arg* arg) {
+    u32 flags = lbl_eu_80663E24;
+    u8 b64 = 0, b63 = 0, b62 = 0, b61 = 0;
+    int flagR20 = 0;
+    int flagR19 = 0;
 
-    bool bit6 = (flags & 0x2000000) != 0;
-    bool bit13 = (flags & 0x40000) != 0;
-    bool condA = (flags & 0x400000) != 0 || bit6;      // gates r24
-    bool condB = bit13;                                 // gates nothing else here
-    (void)condB;
-    u8 r24 = condA ? 1 : 0;
+    // Gate-bit ladder over the flag word. Kept as three separate masked
+    // temps (bit6, bit13, bit9-record-test) so MWCC cannot fold them into a
+    // single andis. like retail never does.
+    u32 mA = flags & 0x02000000;
+    u32 mB = flags & 0x00040000;
+    int t9 = (flags & 0x00400000) != 0;
+    u32 gate69 = ((mA | (flags & 0x00400000)) != 0) ? 1 : 0;
+    u32 gate13 = (mB != 0) ? 1 : 0;
+    u8 r24 = 1;
+    {
+        int cond = 1;
+        if (!t9 && gate13 == 0) {
+            cond = 0;
+        }
+        if (cond == 0 && gate69 == 0) {
+            r24 = 0;
+        }
+    }
     u8 b65 = (flags & 0x40) == 0 ? 1 : 0;
-    int gateBits = ((flags & 0x80000) | (flags & 0x4)) != 0;  // bits 12/29
+    int gateBits = ((flags & 0x80000) | (flags & 0x4)) != 0 ? 1 : 0;
 
     void* gm = getInstance__Q22cf13CfGameManagerFv();
     u32 sp68 = func_8008585C__Q22cf13CfGameManagerFv(gm);
     u32 sp6C = func_80085840__Q22cf13CfGameManagerFv(gm);
 
-    if (arg != 0 && !arg->p1D()) {
-        return;
+    if (arg == 0 || !arg->p1D()) {
+        return 0;
     }
-    if ((flags & 0x80) == 0) {
-        return;
+    if ((lbl_eu_80663E24 & 0x80) == 0) {   // retail reloads the flag word here
+        return 0;
     }
     if (gateBits != 0) {
-        return;
+        return 0;
     }
 
-    s32 count = 0;
+    int count = 0;
     void* list = func_800B6C58();
     CfReslistNode* sentinel = *(CfReslistNode**)((u8*)list + 4);
     CfReslistNode* node = sentinel->mNext;
@@ -4247,59 +5264,61 @@ extern "C" void func_800B7AF0(UnkClass_805764CC* self, IB7Arg* arg) {
         b60 = (f >= 1 && f <= 0x18) ? 1 : 0;
     }
 
-    // Optional payload refresh: copy the child record's leading word plus
-    // trailing scratch (retail copies an oversized 0x803-byte span).
+    // Optional payload refresh: copy an oversized 0x803-byte span seeded with
+    // the child record's leading word.
     void* rec = func_8016FE34(arg);
     void* r23 = 0;
     if (rec != 0) {
         IB7ArgChild* child = *(IB7ArgChild**)((u8*)rec + 4);
-        void* payload = child->p0C();
-        u32 word = *(u32*)payload;
+        u32 word = *(u32*)child->p0C();
         r23 = (void*)(unsigned long)func_80174C98(rec, &word, 0x803);
-    } else {
-        r23 = 0;
     }
 
     float minDistSq = lbl_eu_80666A14;
     u32 r28 = func_80082FE4__Q22cf13CfGameManagerFv(gm);
-    B47Vec3* argPos = 0;
     void* bestObj = 0;
     int r17 = 0;
 
-    while (node != sentinel) {
-        B7AF0Obj* item = *(B7AF0Obj**)((u8*)node + 8);
+    while (node != *(CfReslistNode**)((u8*)list + 4)) {
+        B7AF0Obj* item = (B7AF0Obj*)((CfReslistNode*)node->mItem);
         if ((item->flags64 & 0x4000) == 0) {
             IB8FC4Player* obj = (IB8FC4Player*)item;
             B47Vec3 pos = *obj->unk2B();
             int keep = 1;
             s32 t = item->type94;
-            if (t == 4 && r28 == 0) {
-                keep = 0;
+            if (t == 4) {
+                if (r28 == 0) {
+                    keep = 0;
+                }
             } else if (t == 5) {
                 keep = 0;
-                if ((item->field9C & 0xffff) == 1) {
+                if ((u16)item->field9C == 1) {
                     if (func_800AB580(item, arg, 0, lbl_eu_806669D8)) {
                         minDistSq = lbl_eu_806669D8;
                         bestObj = item;
                         r17 = 1;
-                        r19 = 1;
-                    } else if (r23 == 0 &&
-                               func_800AB580(item, arg, 0, lbl_eu_80666A18)) {
-                        B47Vec3* pa = obj->unk2B();
-                        B47Vec3* pb = (B47Vec3*)arg->unk2A();
-                        float dx = pa->x - pb->x;
-                        float dy = pa->y - pb->y;
-                        float dz = pa->z - pb->z;
-                        float d = dx * dx + dy * dy + dz * dz;
-                        if (d < minDistSq) {
-                            minDistSq = d;
-                            bestObj = item;
+                        flagR19 = 1;
+                    } else {
+                        if (r23 == 0 && func_800AB580(item, arg, 0, lbl_eu_80666A18)) {
+                            B47Vec3 pa = *obj->unk2B();
+                            B47Vec3 pb = *arg->unk2A();
+                            float dx = pa.x - pb.x;
+                            float dy = pa.y - pb.y;
+                            float dz = pa.z - pb.z;
+                            // Retail squares z first then folds x in via
+                            // fmadd; y is computed by the paired-single diff
+                            // but never squared.
+                            float d = dz * dz + dx * dx;
+                            (void)dy;
+                            if (d < minDistSq) {
+                                minDistSq = d;
+                                bestObj = item;
+                            }
                         }
-                    }
-                    if (r23 == 0 &&
-                        func_800AB580(item, arg, 0, lbl_eu_806669F4)) {
-                        if (r24 == 0 && sp6C != 0) {
-                            r19 = 1;
+                        if (r23 == 0 && func_800AB580(item, arg, 0, lbl_eu_806669F4)) {
+                            if (r24 == 0 && sp6C != 0) {
+                                flagR19 = 1;
+                            }
                         }
                     }
                 }
@@ -4307,27 +5326,124 @@ extern "C" void func_800B7AF0(UnkClass_805764CC* self, IB7Arg* arg) {
             if (b60 != 0) {
                 keep = 0;
             }
-            if (keep != 0 && func_800AB580(item, arg, 0, lbl_eu_806669D8)) {
+            // Retail issues this probe even when the candidate is rejected.
+            int ab = func_800AB580(item, arg, 0, lbl_eu_806669D8);
+            if (keep != 0 && ab != 0) {
                 b64 = 1;
-                if (item->type94 == 3) {
-                    // OPEN ITEM: retail's extended type-3 handling was not
-                    // recoverable from the provided excerpt.
-                    count++;
-                    accum.x += pos.x;
-                    accum.y += pos.y;
-                    accum.z += pos.z;
-                } else if (item->type94 == 4) {
-                    // Clear flag bit 12 (mask 0x80000).
-                    item->flags68 &= ~(1 << 19);
+                u32 f9c = item->field9C;
+                s32 ty = item->type94;
+                if (ty == 3) {
+                    if (r24 == 0) {
+                        func_8008372C__Q22cf13CfGameManagerFv(
+                            item->buf120, item->buf120 + 0x14, item->field74);
+                    }
+                    b62 = 1;
                 }
-            } else if (item->type94 == 4) {
-                item->flags68 &= ~(1 << 19);
-            }
-            if ((item->flags68 & 0x10000) != 0) {
-                count++;
-                accum.x += pos.x;
-                accum.y += pos.y;
-                accum.z += pos.z;
+                ty = item->type94;
+                if (ty == 4 && r24 == 0 && sp68 == 0 && r28 != 0 && r17 == 0) {
+                    if ((item->flags68 & 0x80000) == 0) {
+                        item->flags68 |= 0x80000;
+                        if ((item->h158 & 0x300) == 0) {
+                            func_8009D018(0x3f, f9c >> 16);
+                        }
+                        if (func_800AC470(item) != 0) {
+                            func_8013DCAC(f9c >> 16, 1);
+                        } else {
+                            func_800AC460(item, 1);
+                            if ((item->h158 & 0x200) != 0) {
+                                // Sequence-counter ladders (ids 0x61/0x66).
+                                u32 n = func_80082694__Q22cf13CfGameManagerFv(0x61) + 1;
+                                func_8008269C__Q22cf13CfGameManagerFv(0x61, n);
+                                if (n == 1) {
+                                    func_800826F0__Q22cf13CfGameManagerFv(0x61);
+                                } else if (n == 0xa) {
+                                    func_800826F0__Q22cf13CfGameManagerFv(0x62);
+                                } else if (n == 0x28) {
+                                    func_800826F0__Q22cf13CfGameManagerFv(0x63);
+                                } else if (n == 0x50) {
+                                    func_800826F0__Q22cf13CfGameManagerFv(0x64);
+                                } else if (n == 0x96) {
+                                    func_800826F0__Q22cf13CfGameManagerFv(0x65);
+                                }
+                                if ((item->h158 & 0x400) != 0) {
+                                    n = func_80082694__Q22cf13CfGameManagerFv(0x66) + 1;
+                                    func_8008269C__Q22cf13CfGameManagerFv(0x66, n);
+                                    if (n == 1) {
+                                        func_800826F0__Q22cf13CfGameManagerFv(0x66);
+                                    } else if (n == 6) {
+                                        func_800826F0__Q22cf13CfGameManagerFv(0x67);
+                                    } else if (n == 0xc) {
+                                        func_800826F0__Q22cf13CfGameManagerFv(0x68);
+                                    }
+                                }
+                            }
+                        }
+                    }
+                    b61 = 1;
+                    func_8007F9B4__Q22cf13CfGameManagerFv(f9c >> 16);
+                } else if (f9c != 0) {
+                    u32 lo = (f9c >> 5) & 0x7f;
+                    u32 hi = (f9c >> 12) & 0x3ff;
+                    if (ty == 2) {
+                        func_80083560__Q22cf13CfGameManagerFv(lo, hi);
+                        flagR20 = 1;
+                    } else if (ty == 0) {
+                        if (gate69 == 0 && gate13 == 0 &&
+                            (lbl_eu_80663E24 & 0x400) == 0 &&
+                            flagR20 == 0 && flagR19 == 0 &&
+                            (lbl_eu_80663E24 & 0x40) == 0) {
+                            func_80062600();
+                            func_80083470__Q22cf13CfGameManagerFv(lo, hi, 0);
+                            b63 = 1;
+                        }
+                    } else if (ty == 1) {
+                        if (gate69 == 0 && gate13 == 0) {
+                            void* out30;
+                            func_800ABB9C(&out30, item);
+                            float fv = item->field148;
+                            func_80083D70__Q22cf13CfGameManagerFv(
+                                lo, hi, (u32)(unsigned long)out30,
+                                (u32)(unsigned long)item->buf120, fv);
+                        }
+                    } else if (ty == 6) {
+                        if (gate69 == 0 && gate13 == 0) {
+                            void* lst = func_800B6C7C();
+                            CfReslistNode* sn = *(CfReslistNode**)((u8*)lst + 4);
+                            int found = 0;
+                            // Quirk: retail passes each node's payload as the
+                            // probe's second argument on this path.
+                            for (CfReslistNode* n2 = sn->mNext; n2 != sn; n2 = n2->mNext) {
+                                if (func_800AB580(item, n2->mItem, 0, lbl_eu_806669D8)) {
+                                    found = 1;
+                                    break;
+                                }
+                            }
+                            if (!found && (lbl_eu_80663E24 & 0x400) == 0) {
+                                void* out24;
+                                func_800ABB9C(&out24, item);
+                                float fv = item->field148;
+                                func_80083DEC__Q22cf13CfGameManagerFv(
+                                    lo, hi, (u32)(unsigned long)out24,
+                                    (u32)(unsigned long)item->buf120,
+                                    item->h15C, item->h15A, item->h160, item->h15E,
+                                    fv);
+                            }
+                        }
+                    }
+                } else {
+                    if ((item->flags68 & 0x10000) != 0) {
+                        count++;
+                        accum.x += pos.x;
+                        accum.y += pos.y;
+                        accum.z += pos.z;
+                    }
+                }
+            } else {
+                // Rejected candidate: type-4 objects get their trigger bits
+                // masked down to 0x700000 (bits 16-18 kept).
+                if (item->type94 == 4 && ab == 0) {
+                    item->flags68 &= 0x700000;
+                }
             }
         }
         node = node->mNext;
@@ -4338,31 +5454,32 @@ extern "C" void func_800B7AF0(UnkClass_805764CC* self, IB7Arg* arg) {
         accum.x *= recip;
         accum.y *= recip;
         accum.z *= recip;
-        arg->unk2A();
+        (void)arg->unk2A();
     }
 
-    s32 fired = 0;
+    int fired = 0;
     if (b63 == 0 && r24 == 0 && sp6C != 0 && bestObj != 0) {
         func_8008360C__Q22cf13CfGameManagerFv(gm);
         fired = 1;
     }
     if (fired == 0) {
-        // Clear global bit 21 (mask 0x400).
-        lbl_eu_80663E28 &= ~0x400;
+        // Retail masks the word down to bits 9-11 rather than clearing one.
+        lbl_eu_80663E28 = lbl_eu_80663E28 & 0xe00;
     }
     if (b61 == 0 && r24 == 0 && sp68 == 0) {
-        func_8007F9B4__Q22cf13CfGameManagerFv(gm);
+        func_8007F9B4__Q22cf13CfGameManagerFv(0);
     }
     if (b63 == 0) {
-        *flagsPtr &= ~0x10;
+        lbl_eu_80663E24 = lbl_eu_80663E24 & 0x38000000;
     }
-    if (r20 == 0) {
-        *flagsPtr &= ~0x20;
+    if (flagR20 == 0) {
+        lbl_eu_80663E24 = lbl_eu_80663E24 & 0x1c000000;
     }
     if (b62 == 0) {
         func_80084C10__Q22cf13CfGameManagerFv(gm);
         if (b65 != 0) {
-            *flagsPtr |= 0x8;
+            lbl_eu_80663E24 |= 8;
         }
     }
+    return b64;
 }

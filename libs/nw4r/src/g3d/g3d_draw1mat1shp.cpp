@@ -241,7 +241,7 @@ void Draw1Mat1ShpDirectly(ResMat mat, ResShp shp, const math::MTX34* pViewPos,
         chan.GXGetChanMatColor(GX_COLOR1, &matColor[1]);
 
         static const GXChannelID sChanIDs[4] = {
-            GX_COLOR0, GX_COLOR1, GX_ALPHA0, GX_ALPHA1,
+            GX_COLOR0, GX_ALPHA0, GX_COLOR1, GX_ALPHA1,
         };
         for (int i = 0; i < 4; i++) {
             GXAttnFn attn;

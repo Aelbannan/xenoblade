@@ -3,6 +3,27 @@
 #include <types.h>
 #include <monolib/math/CVec3.hpp>
 
+// 12-byte per-node reference record (manager +0x08 pool): neighbour run
+// start/count over the waypoint pool, an edge-list index, two spare ids.
+struct ScnNodeRef {
+    u16 edgeStart;   // 0x00 first neighbour pool index
+    u16 edgeCount;   // 0x02 neighbour count
+    u32 field_0x4;   // 0x04 edge-list index
+    u16 field_0x8;   // 0x08
+    u16 field_0xa;   // 0x0a
+};
+
+// 10-byte per-node lookup record (manager +0x0C pool): two alternate ids, a
+// value, and two flag bytes.
+struct ScnNodeMap {
+    u16 field_0x0;   // 0x00
+    u16 field_0x2;   // 0x02
+    u16 field_0x4;   // 0x04
+    u16 field_0x6;   // 0x06
+    u8 field_0x8;    // 0x08
+    u8 field_0x9;    // 0x09
+};
+
 // Walk-graph node pool entry (stride 0x10).
 struct ScnWalkNode {
     union {
@@ -15,6 +36,13 @@ struct ScnWalkNode {
     u8 depth;
     s16 x;
     s16 z;
+};
+
+// Header block referenced by the manager's first word: its +0x10 word sizes
+// the pooled visited bitmap and splits the shared cursor buffer in half.
+struct ScnWalkHeader {
+    u8 pad[0x10];
+    u32 field_0x10;
 };
 
 // Walk graph header stored at the manager base.
@@ -137,16 +165,26 @@ public:
     u32 field_0x3C;
     u32 field_0x40;
     u32 field_0x44;
-    u8 field_0x48[0x48];  // 0x48..0x8F
+    ml::CVec3 boxMin;         // 0x48 walk-box min corner
+    ml::CVec3 boxMax;         // 0x54 walk-box max corner
+    ml::CVec3 dir;            // 0x60 travel direction
+    f32 field_0x6C[3];    // contact pos
+    u8 field_0x78[4];
+    f32 field_0x7C;
+    f32 field_0x80;
+    f32 field_0x84;
+    f32 field_0x88;       // x-portal threshold scale
+    u8 pad_0x8C[4];
     u16 field_0x90;
-    u8 field_0x92[0xA];
+    u8 field_0x92[2];
+    u32 field_0x94;       // waypoint table pointer
+    u32 field_0x98;       // current table cursor
     ScnPtmf callback; // 0x9C null pointer-to-member block
 
     void func_8047E110();
     void func_8047E1B0();
     void func_8047E390();
     void func_8047E62C();
-    void func_8047E6C4();
     void func_8047EAD4();
     void func_8047EEB0();
     void func_8047EFBC();
@@ -198,6 +236,7 @@ struct WalkQueryInfo {
 };
 
 // Foreign data table read by func_8047FE48 (+0x8 = waypoint table pointer).
+// const so loads of its fields hoist across calls.
 struct Fe48Table {
     u32 field_0x0;
     u32 field_0x4;

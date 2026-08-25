@@ -24,13 +24,17 @@ void ResNode::PatchChrAnmResult(ChrAnmResult* pResult) const {
 
             pResult->s.x = pResult->s.y = pResult->s.z = lbl_eu_80669AA0;
         } else {
-            // Propagate/clear the uniform fast-path flag, and invalidate any
-            // cached identity result
-            flags = ((r.flags & ResNodeData::FLAG_SCALE_UNIFORM)
-                         ? (flags | ChrAnmResult::FLAG_SCALE_UNIFORM)
-                         : (flags & ~ChrAnmResult::FLAG_SCALE_UNIFORM)) &
-                    ~(ChrAnmResult::FLAG_ANM_EXISTS |
-                      ChrAnmResult::FLAG_MTX_IDENT);
+            // Propagate/clear the uniform fast-path flag...
+            u32 tmp;
+            if (r.flags & ResNodeData::FLAG_SCALE_UNIFORM) {
+                tmp = flags | ChrAnmResult::FLAG_SCALE_UNIFORM;
+            } else {
+                tmp = flags & ~ChrAnmResult::FLAG_SCALE_UNIFORM;
+            }
+
+            // ...and invalidate any cached identity/uniform result
+            flags = tmp & ~(ChrAnmResult::FLAG_MTX_IDENT |
+                            ChrAnmResult::FLAG_SCALE_ONE);
 
             pResult->s = static_cast<const math::VEC3&>(r.scale);
         }
@@ -38,20 +42,27 @@ void ResNode::PatchChrAnmResult(ChrAnmResult* pResult) const {
 
     if (flags & ChrAnmResult::FLAG_PATCH_ROT) {
         // Rotation overwrites the whole matrix, so preserve the existing
-        // translation column across the rotation write.
-        math::VEC3 t;
-        t.z = pResult->rt._23;
-        t.y = pResult->rt._13;
-        t.x = pResult->rt._03;
+        // translation column across the rotation write. The VEC3 ctor args
+        // evaluate right-to-left (loads land z, y, x).
+        math::VEC3 t(pResult->rt._03, pResult->rt._13, pResult->rt._23);
 
         if (r.flags & ResNodeData::FLAG_ROT_ZERO) {
             PSMTXIdentity(pResult->rt);
             flags |= ChrAnmResult::FLAG_ROT_ZERO;
         } else {
-            math::MTX34RotXYZFIdx(&pResult->rt,
-                                  r.rot.x * lbl_eu_80669AA4,
-                                  r.rot.y * lbl_eu_80669AA4,
-                                  r.rot.z * lbl_eu_80669AA4);
+            // Declared before assignment so their registers are born f0..f3,
+            // but assigned in z, const, y, x order so the loads land in
+            // retail order.
+            f32 deg;
+            f32 fx;
+            f32 fy;
+            f32 fz;
+            fz = r.rot.z;
+            deg = lbl_eu_80669AA4;
+            fy = r.rot.y;
+            fx = r.rot.x;
+
+            math::MTX34RotXYZFIdx(&pResult->rt, deg * fx, deg * fy, deg * fz);
             flags &= ~(ChrAnmResult::FLAG_MTX_IDENT |
                        ChrAnmResult::FLAG_ROT_TRANS_ZERO |
                        ChrAnmResult::FLAG_ROT_ZERO);

@@ -75,6 +75,13 @@ s32 func_8003A668(void*, OcMsgRingHdr* list) {
 // 1-instruction semantic trap), live-count variants keeping count alive past
 // the xor (moves x to r5 but adds an extra xori: +4 bytes over budget),
 // mask = ~count & 0xA (+4 over), and the comparison form (branchy, +12 bytes).
+// Refuted 2026-08 (register-mapping dead-reuse angle, docs/register_mapping.md):
+// binding the difference to a FRESH web born after t - both a named `int u =
+// t - (x & 0x0a)` and an anonymous `(u32)(t - (x & 0xa)) >> 31` in the store -
+// recolors the whole prefix (xori/andi/srawi all swap x into r0) => 4 reg
+// swaps vs the banked draft's 2. The subf destination does land in r0 in both,
+// but only at the cost of the prefix; consistent with the doc's birth-order
+// rule: any non-compound difference form makes x the later-born web.
 // This body is the banked best draft.
 int func_8003A68C(VMThread* pThread, void* target) {
     VMArg args;
@@ -84,6 +91,9 @@ int func_8003A68C(VMThread* pThread, void* target) {
     // it reproduces retail's xori/andi/srawi stream; only the subf destination
     // and final shift source remain swapped (r5 vs retail r0).
     int t = x >> 1;
+    // Shift-initializing temp + compound subtract is the best-known shape:
+    // it reproduces retail's xori/andi/srawi stream; only the subf destination
+    // and final shift source remain swapped (r5 vs retail r0).
     t -= x & 0x0a;
     *(u8*)&args.type = 1 + ((u32)t >> 31);
     vmRetValSet(pThread, &args);

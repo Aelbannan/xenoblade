@@ -36,15 +36,15 @@ extern "C" {
     int func_8015796C(int);
     void func_80157184(int);
     void func_801571A8(int);
-    void func_8015730C(int, int, int);
-    void* func_8015783C(int, int, int);
-    void* func_80157948(int, int);
+    // func_8015730C / func_8015783C / func_80157948 / CItem_initItemImplInstances /
+    // func_80199678: declared by kyoshin/cf/CfGameManager.hpp above - local
+    // re-declarations with different types trip MWCC 10197.
     void func_80159B40(int, int, void*);
     void func_80158118(void*, int, int);
     void func_80155A00(void*);
     void func_8016DF34(int);
     void func_8016DF4C(int);
-    void func_80199678(void*, int);
+
     void func_801F4AD4(int, int);
     void func_801F4B68(int, int);
     void func_801F4BFC(int, int);
@@ -52,14 +52,16 @@ extern "C" {
     void func_eu_8049AB50(int, int);
     int getUnk80664658();
     int isTvFormatPal__9CDeviceVIFv();
-    void* CItem_initItemImplInstances();
+    // CItem_initItemImplInstances: CfGameManager.hpp declares it returning
+    // CItemImplInstances* - local void* form conflicts (10197).
     void* getInstance__14Class_80296898Fv();
     void func_800B70FC(int, int);
     int func_800B8D5C();
     void func_800BE12C(int, int, int, int, int);
     void func_800BE28C(int, bool);
     bool func_8009CF8C(int);
-    void func_8009D018(int, int);
+    // func_8009D018: declared (u32,u32) by CfGameManager.hpp:767 - local
+    // (int,int) form conflicts (10197).
     int* func_8009EC9C(int);
     int* func_8009ECB0();
     void func_8009E0A8(int*, int);
@@ -1297,25 +1299,20 @@ int applyPcPrm(VMThread* vmThread) {
 }
 
 // --- setDispOffArea (us-8004ac34) ---
+// Looks up the map object referenced by the script OC argument and pushes a
+// display-offset area id onto it. The int->float conversion uses MWCC's
+// 0x4330/xoris double-magic idiom pooled at lbl_eu_80665E40.
 int setDispOffArea(VMThread* vmThread) {
-    void* ocObj;
-    int areaId;
-
-    {
-        VMArg* arg = vmArgPtrGet(vmThread, 1);
-        ocObj = vmArgOCGet(2, arg);
-    }
-
-    {
-        VMArg* arg = vmArgPtrGet(vmThread, 2);
-        areaId = vmArgFixedGet(3, arg);
-    }
+    VMArg* arg = vmArgPtrGet(vmThread, 1);
+    void* ocObj = vmArgOCGet(2, arg);
+    arg = vmArgPtrGet(vmThread, 2);
+    int areaId = vmArgFixedGet(3, arg);
 
     void* obj = func_801864DC(func_801862C0(), *(int*)((u8*)ocObj + 4));
 
     if (obj != NULL) {
         void* box = func_800B07E8__Fv();
-        float fAreaId = (float)(s16)areaId;
+        float fAreaId = areaId;
         func_800B6800(fAreaId, obj, 1);
     }
 

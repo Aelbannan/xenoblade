@@ -159,7 +159,7 @@ struct CfObjectEffVtable160If : CfObjectEffIf {
     virtual void _f154();
     virtual void _f158();
     virtual void _f15C();
-    virtual u32 func160();  // slot 0x160
+    virtual bool func160();  // slot 0x160 - returns a 0/1 status flag
 };
 
 // Vtable view used by func_800AD4B0: slot 0x198 receives the caller object
@@ -203,10 +203,9 @@ struct CfObjectEffArg14View {
 };
 
 // Raw u16 view of CfObjectEffChild's flag word at +0x0: func_800AD3A4 reads
-// and writes the whole halfword (bit 14), not individual bitfields. Volatile
-// so MWCC keeps the bit-18 extraction verbatim instead of folding it to 0.
+// and writes the whole halfword (bit 14), not individual bitfields.
 struct CfObjectEffChildFlagsView {
-    volatile u16 field_00;  // 0x00
+    u16 field_00;  // 0x00
 };
 
 // Minimal 3-component float vector used for the position/rotation copies.
@@ -214,6 +213,13 @@ struct CfObjectEffVec3 {
     float x;  // 0x00
     float y;  // 0x04
     float z;  // 0x08
+};
+
+// 2-word view for paired word copies (func_800ACCE4 copies x/y as one
+// 8-byte struct assignment, producing lwz/lwz/stw/stw).
+struct CfObjectEffU32Vec2 {
+    u32 x;  // 0x00
+    u32 y;  // 0x04
 };
 
 // 3-word vector used for raw word copies (func_800ACC94/func_800ACDA0): the
@@ -283,7 +289,9 @@ struct CfObjectEffVec48View {
 };
 
 struct CfObjectEffChild {
-    u16 unk0High : 5;    // bits 15-11
+    u16 unk0HighTop : 1; // bit 15
+    u16 flag4000 : 1;    // bit 14 (0x4000) - synced with slot-0x160 status
+    u16 unk0High : 3;    // bits 13-11
     u16 flag400 : 1;     // bit 10 (0x400) - assigned from a flag in func_800ACBCC
     u16 unk0Low : 10;    // bits 9-0
     u8 _pad02[0x14 - 0x02];

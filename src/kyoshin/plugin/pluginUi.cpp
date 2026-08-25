@@ -173,10 +173,14 @@ void ml::FixStr<64>::format(const char* fmt, ...) {
 // setTrust: adjust a character's trust value (clamped to [0, 5000]) and spawn
 // the appropriate effect on the two player slots from lbl_eu_804FA9F0.
 int setTrust(VMThread* pThread) {
-    int arg1 = vmArgIntGet(2, vmArgPtrGet(pThread, 1));
-    int arg2 = vmArgIntGet(3, vmArgPtrGet(pThread, 2));
-    int arg3 = vmArgIntGet(4, vmArgPtrGet(pThread, 3));
-    int arg4 = vmArgIntGet(5, vmArgPtrGet(pThread, 4));
+    VMArg* p1 = vmArgPtrGet(pThread, 1);
+    int arg1 = vmArgIntGet(2, p1);
+    VMArg* p2 = vmArgPtrGet(pThread, 2);
+    int arg2 = vmArgIntGet(3, p2);
+    VMArg* p3 = vmArgPtrGet(pThread, 3);
+    int arg3 = vmArgIntGet(4, p3);
+    VMArg* p4 = vmArgPtrGet(pThread, 4);
+    int arg4 = vmArgIntGet(5, p4);
 
     // Clamp the new trust value into [0, 5000]; remember the original delta.
     int saved = 0;
@@ -338,13 +342,15 @@ static void mesPTSet(int id, int captionIdx) {
                                 captionIdx),
                   0, 0);
 }
-void mesAddPT(VMThread* pThread) {
+int mesAddPT(VMThread* pThread) {
     VMArg* arg = vmArgPtrGet(pThread, 1);
     mesPTSet(vmArgIntGet(2, arg), 0xb);
+    return 0;
 }
-void mesSubPT(VMThread* pThread) {
+int mesSubPT(VMThread* pThread) {
     VMArg* arg = vmArgPtrGet(pThread, 1);
     mesPTSet(vmArgIntGet(2, arg), 0xc);
+    return 0;
 }
 // Show/hide the vision message: fetch the fixed entry from the message table
 // (entry at offset 13/14) and open a system window with it.
@@ -435,10 +441,11 @@ int gameClear(VMThread* pThread) {
 // at +0x1f) equals the script id and record its 1-based ordinal. A non-
 // positive id clears the record instead.
 int setLastTalkNpc(VMThread* pThread) {
-    int id = vmArgIntGet(2, vmArgPtrGet(pThread, 1));
+    VMArg* arg = vmArgPtrGet(pThread, 1);
+    int id = vmArgIntGet(2, arg);
     if (id <= 0) {
         func_8009ECD0(0);
-        return;
+        return 0;
     }
     char* tbl = lbl_eu_80664098;
     int count = func_8003B1EC(tbl);

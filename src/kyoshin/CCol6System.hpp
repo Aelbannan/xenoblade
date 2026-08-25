@@ -374,7 +374,9 @@ void func_80157184(s32);                                             // CItemBox
 void* func_801587E8(u16);                                            // CItemBoxInfo.cpp
 u32 func_80158068(u16);                                              // CItemBoxInfo.cpp
 void func_80158118(void*, u16, u32);                                 // CItemBoxInfo.cpp
-void* CItem_initItemImplInstances(void*);                            // CItem.cpp
+// CItem_initItemImplInstances is declared extern "C" by
+// include/kyoshin/cf/CfGameManager.hpp (pulled in via harness_catalog); a
+// local redeclaration here would mangle and trip MWCC 10197.
 u32 func_80124B78();                                                  // CHelp_CloseSysMenu.cpp
 CCol6Fade* func_80113E1C();                                           // CMenuFade.cpp
 int func_80113E24(CCol6Fade* fade);                                    // CMenuFade.cpp (byte result, tested unmasked)
@@ -413,7 +415,7 @@ void* getCfPadData__Q22cf13CfGameManagerFv();                        // cf::CfGa
 u8 func_801361E8(const void*, const char*, u8);                      // code_80135FDC.cpp
 void func_80136B4C(nw4r::lyt::Layout*, const char*, const char*, u32); // code_80135FDC.cpp
 u32 func_801355BC();                                                    // CUICfManager.cpp (font value)
-s16 func_80136130(const void*, const void*, u8);                       // code_80135FDC.cpp (s16-keyed lookup)
+s16 func_80136130(const void*, const void*, u32);                     // code_80135FDC.cpp (s16-keyed lookup); u32 matches the definition verbatim
 void func_8013676C(nw4r::lyt::Pane*, u32);                           // code_80135FDC.cpp
 void func_801392E4(u16);                                             // CItemBoxInfo.cpp
 void func_80139358(u16);                                             // CItemBoxInfo.cpp

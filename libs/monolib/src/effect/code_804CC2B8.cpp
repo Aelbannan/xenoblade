@@ -36,6 +36,7 @@ extern "C" void func_804D9274(Mtx mtx);
 extern "C" void func_804D927C(Mtx mtx, const void* obj);
 extern "C" void func_804D928C(Mtx mtx, const u8* obj);
 extern f32 lbl_eu_8066A208;
+extern f32 lbl_eu_8066B0FC;
 extern f32 lbl_eu_8066B12C;
 extern f32 lbl_eu_8066B138;
 extern f32 lbl_eu_8066B120;
@@ -314,6 +315,13 @@ struct CETrailLightParam;
 extern "C" void func_804D8160(CETrailLight* self, void* arg, s32 mode,
                               const CETrailLightParam* p, f32 f1, f32 f2);
 
+// Trail driver imports (defined in CETrail.cpp).
+struct CETrail;
+extern "C" void func_804D73FC(CETrail* t);
+extern "C" void func_804D7434(CETrail* t, s32 mode, const u8* color);
+extern "C" void func_804D77E4(CETrail* t, const Mtx* M, f32 f,
+                              const ml::CVec4* scale, const ml::CVec4* out);
+
 // Target 3: position/transform layout.
 struct EffPos {
     u8 pad_0x00[0xac];
@@ -480,7 +488,8 @@ struct EffectScene {
     f32 field_0x234;         // 0x234
     void* field_0x238;       // light-processor block B
     u8 field_0x23c;
-    u8 pad_0x23d[0x24c - 0x23d];
+    u8 pad_0x23d[0x248 - 0x23d];
+    f32 field_0x248;
     void* field_0x24c;       // light-processor block C
     u8 field_0x250;
     u8 pad_0x251[0x258 - 0x251];
@@ -726,6 +735,10 @@ void func_804CC808(EffectScene* self, const SrcMtx* src) {
     self->field_0x06 = (u16)(self->field_0x06 | 0x800);
 }
 
+// Rotation-matrix builders used by func_804CD0CC's aim-matrix step.
+extern "C" void func_804DD388(Mtx* out, f32 a, f32 b);
+extern "C" void func_804DD5B0(Mtx* out, f32 a);
+
 // Forward decls for the target-3 frame pipeline. The retail functions are
 // unmangled linker names, so they need C linkage (the map names them func_*).
 extern "C" {
@@ -773,7 +786,251 @@ void func_804CCF84(EffectScene* self) {
     if (type == 0x8) func_804CE3E8(self);
 }
 
-extern "C" void __attribute__((never_inline)) func_804CD0CC(EffectScene* self){}
+// Target 4 (func_804CD0CC): per-frame position update. Non-special scenes
+// accumulate a scaled offset from the sub-object direction block into
+// field_0xac; special classes (9/10/11) transform anchor points through the
+// two scene matrices, optionally aim along the transformed delta (blend factor
+// field_0x224), rebuild an aim matrix via the DD388/DD5B0 helpers and write the
+// result back, finally re-expressing field_0xac in the inverse local matrix.
+extern "C" void __attribute__((never_inline)) func_804CD0CC(EffectScene* self) {
+    SceneSubObj* sub = self->field_0x0c;
+    // Switch keeps MWCC's per-case compare chain (a range-folded || is wrong here).
+    s32 special;
+    switch (sub->field_0x00) {
+    case 9:
+    case 10:
+    case 11:
+        special = 1;
+        break;
+    default:
+        special = 0;
+        break;
+    }
+    if (!special) {
+        f32 scale = self->field_0x248 * self->field_0x18;
+        if (scale != lbl_eu_8066B0DC) {
+            MatFlags* mf = (MatFlags*)self->field_0x08;
+            ml::CVec3 v;
+            v.x = self->field_0xd0.x * scale;
+            v.y = self->field_0xd0.y * scale;
+            v.z = self->field_0xd0.z * scale;
+            // retail materializes bit 11 as -bit|bit >> 31 before branching
+            u16 fl = mf->field_0x00;
+            u32 bit = (fl >> 11) & 1;
+            u32 cond = (-bit | bit) >> 31;
+            ml::CVec3 tmp = v;
+            if (cond) {
+                tmp.x *= mf->field_0x34;
+                tmp.y *= mf->field_0x38;
+                tmp.z *= mf->field_0x3c;
+            }
+            self->field_0xac.x += tmp.x;
+            self->field_0xac.y += tmp.y;
+            self->field_0xac.z += tmp.z;
+        }
+        return;
+    }
+
+    Vec tB0;
+    PSMTXMultVec(self->field_0x130, &self->field_0xa0, &tB0);
+    Vec vecA;
+    vecA.x = tB0.x;
+    vecA.y = tB0.y;
+    vecA.z = tB0.z;
+    Vec tBC;
+    PSMTXMultVec(self->field_0x160, &self->field_0xc4, &tBC);
+    Vec vecB;
+    vecB.x = tBC.x;
+    vecB.y = tBC.y;
+    vecB.z = tBC.z;
+
+    f32 blend = self->field_0x21c.z;
+    if (sub->field_0xf8 == NULL) {
+        // No direction object: interpolate toward vecB by field_0x1c over the
+        // table's u16 denominator when active, else snap to vecB.
+        u16* tbl = (u16*)sub->field_0xf4;
+        if (tbl != NULL && lbl_eu_8066B0DC < self->field_0x1c && *tbl != 0) {
+            f32 t = self->field_0x1c / u16ToF_b0e8(*tbl);
+            Vec delta;
+            delta.x = vecB.x - vecA.x;
+            delta.y = vecB.y - vecA.y;
+            delta.z = vecB.z - vecA.z;
+            Vec deltaC;
+            deltaC.x = delta.x;
+            deltaC.y = delta.y;
+            deltaC.z = delta.z;
+            f32 k = lbl_eu_8066B0D8 - t;
+            Vec scaled;
+            scaled.x = deltaC.x * k;
+            scaled.y = deltaC.y * k;
+            scaled.z = deltaC.z * k;
+            Vec scaledC;
+            scaledC.x = scaled.x;
+            scaledC.y = scaled.y;
+            scaledC.z = scaled.z;
+            Vec res;
+            res.x = vecA.x + scaledC.x;
+            res.y = vecA.y + scaledC.y;
+            res.z = vecA.z + scaledC.z;
+            Vec resC;
+            resC.x = res.x;
+            resC.y = res.y;
+            resC.z = res.z;
+            *(IVec3*)&self->field_0xac.x = *(IVec3*)&resC.x;
+        } else {
+            *(IVec3*)&self->field_0xac.x = *(IVec3*)&vecB.x;
+        }
+    } else {
+        Vec diff;
+        diff.x = vecB.x - vecA.x;
+        diff.y = vecB.y - vecA.y;
+        diff.z = vecB.z - vecA.z;
+        Vec diffC; // sp+0x20: reused by the tail yaw/pitch math
+        diffC.x = diff.x;
+        diffC.y = diff.y;
+        diffC.z = diff.z;
+        if (lbl_eu_8066B0DC < blend && blend < lbl_eu_8066B0D8) {
+            Vec dir1; // sp+0x110
+            dir1.x = self->field_0x124.x - vecA.x;
+            dir1.y = self->field_0x124.y - vecA.y;
+            dir1.z = self->field_0x124.z - vecA.z;
+            Vec dir1c; // sp+0x158
+            dir1c.x = dir1.x;
+            dir1c.y = dir1.y;
+            dir1c.z = dir1.z;
+            Vec dir2; // sp+0x104
+            dir2.x = self->field_0x124.x - vecB.x;
+            dir2.y = self->field_0x124.y - vecB.y;
+            dir2.z = self->field_0x124.z - vecB.z;
+            Vec dir2c; // sp+0x14c
+            dir2c.x = dir2.x;
+            dir2c.y = dir2.y;
+            dir2c.z = dir2.z;
+            f32 m1 = PSVECMag((Vec*)&dir1c);
+            f32 m2 = PSVECMag((Vec*)&dir2c);
+            const f32 eps = lbl_eu_8066A208;
+            if (blend * (m1 + m2) < m1) {
+                // Aim toward the vecA-side direction, scaled by the far magnitude.
+                if (!((f32)__fabs(dir1c.x) <= eps && (f32)__fabs(dir1c.y) <= eps &&
+                      (f32)__fabs(dir1c.z) <= eps)) {
+                    f32 d2 = dir1c.z * dir1c.z + (dir1c.x * dir1c.x + dir1c.y * dir1c.y);
+                    if (d2 == lbl_eu_8066B0DC) {
+                        dir1c.x = ml::CVec3::zero.x;
+                        dir1c.y = ml::CVec3::zero.y;
+                        dir1c.z = ml::CVec3::zero.z;
+                    } else {
+                        PSVECNormalize((Vec*)&dir1c, (Vec*)&dir1c);
+                    }
+                    Vec scaled; // sp+0xf8
+                    scaled.x = dir1c.x * m2;
+                    scaled.y = dir1c.y * m2;
+                    scaled.z = dir1c.z * m2;
+                    Vec scaledC; // sp+0x134
+                    scaledC.x = scaled.x;
+                    scaledC.y = scaled.y;
+                    scaledC.z = scaled.z;
+                    Vec pos; // sp+0xec
+                    pos.x = self->field_0x124.x + scaledC.x;
+                    pos.y = self->field_0x124.y + scaledC.y;
+                    pos.z = self->field_0x124.z + scaledC.z;
+                    Vec posC; // sp+0x140
+                    posC.x = pos.x;
+                    posC.y = pos.y;
+                    posC.z = pos.z;
+                    *(IVec3*)&vecB.x = *(IVec3*)&posC.x;
+                }
+            } else {
+                // Aim toward the vecB-side direction, scaled by the near magnitude.
+                if (!((f32)__fabs(dir2c.x) <= eps && (f32)__fabs(dir2c.y) <= eps &&
+                      (f32)__fabs(dir2c.z) <= eps)) {
+                    f32 d2 = dir2c.z * dir2c.z + (dir2c.x * dir2c.x + dir2c.y * dir2c.y);
+                    if (d2 == lbl_eu_8066B0DC) {
+                        dir2c.x = ml::CVec3::zero.x;
+                        dir2c.y = ml::CVec3::zero.y;
+                        dir2c.z = ml::CVec3::zero.z;
+                    } else {
+                        PSVECNormalize((Vec*)&dir2c, (Vec*)&dir2c);
+                    }
+                    Vec scaled; // sp+0xe0
+                    scaled.x = dir2c.x * m1;
+                    scaled.y = dir2c.y * m1;
+                    scaled.z = dir2c.z * m1;
+                    Vec scaledC; // sp+0x11c
+                    scaledC.x = scaled.x;
+                    scaledC.y = scaled.y;
+                    scaledC.z = scaled.z;
+                    Vec pos; // sp+0xd4
+                    pos.x = self->field_0x124.x - scaledC.x;
+                    pos.y = self->field_0x124.y - scaledC.y;
+                    pos.z = self->field_0x124.z - scaledC.z;
+                    Vec posC; // sp+0x128
+                    posC.x = pos.x;
+                    posC.y = pos.y;
+                    posC.z = pos.z;
+                    *(IVec3*)&vecA.x = *(IVec3*)&posC.x;
+                }
+            }
+        }
+        // Common tail: recenter on vecA + vecA*blend, build the aim matrix from
+        // the diff azimuth/elevation and rotate the field_0x21c basis vector.
+        Vec delta; // sp+0x164
+        delta.x = vecB.x - vecA.x;
+        delta.y = vecB.y - vecA.y;
+        delta.z = vecB.z - vecA.z;
+        Vec deltaC; // sp+0x5c
+        deltaC.x = delta.x;
+        deltaC.y = delta.y;
+        deltaC.z = delta.z;
+        blend = self->field_0x21c.z;
+        Vec half; // sp+0x170
+        half.x = vecA.x * blend;
+        half.y = vecA.y * blend;
+        half.z = vecA.z * blend;
+        Vec halfC; // sp+0x50
+        halfC.x = half.x;
+        halfC.y = half.y;
+        halfC.z = half.z;
+        Vec centerNew; // sp+0x17c
+        centerNew.x = vecA.x + halfC.x;
+        centerNew.y = vecA.y + halfC.y;
+        centerNew.z = vecA.z + halfC.z;
+        Vec centerC; // sp+0x44
+        centerC.x = centerNew.x;
+        centerC.y = centerNew.y;
+        centerC.z = centerNew.z;
+        *(IVec3*)&self->field_0x124.x = *(IVec3*)&centerC.x;
+        Vec angIn; // sp+0x2c
+        angIn.x = self->field_0x21c.x * self->field_0x234;
+        angIn.y = self->field_0x21c.y * self->field_0x234;
+        angIn.z = lbl_eu_8066B0DC;
+        f32 negYaw = -(nw4r::math::Atan2FIdx(diffC.x, -diffC.z) * lbl_eu_8066B0FC);
+        f32 sumsq = diffC.z * diffC.z + diffC.x * diffC.x;
+        if (!(sumsq >= lbl_eu_8066B0DC)) {
+            nw4r::db::Warning(lbl_eu_80526324, 0x273, lbl_eu_80526300);
+        }
+        f32 radius =
+            (sumsq > lbl_eu_8066B0DC) ? sumsq * nw4r::math::FrSqrt(sumsq) : lbl_eu_8066B0DC;
+        f32 pitch = nw4r::math::Atan2FIdx(diffC.y, radius) * lbl_eu_8066B0FC;
+        Mtx rotMtx; // sp+0x1e8
+        func_804DD388(&rotMtx, pitch, radius);
+        func_804DD5B0(&rotMtx, negYaw);
+        Vec rotOut; // sp+0x188
+        PSMTXMultVec(rotMtx, &angIn, &rotOut);
+        *(IVec3*)&angIn.x = *(IVec3*)&rotOut.x;
+        self->field_0xac.x = self->field_0x124.x + rotOut.x;
+        self->field_0xac.y = self->field_0x124.y + rotOut.y;
+        self->field_0xac.z = self->field_0x124.z + rotOut.z;
+    }
+
+    // Re-express the result in the inverse of the local matrix.
+    Mtx invMtx; // sp+0x218
+    PSMTXInverse(self->field_0x130, invMtx);
+    Vec invOut; // sp+0x1c4
+    PSMTXMultVec(invMtx, &self->field_0xac, &invOut);
+    self->field_0xac.x = invOut.x;
+    self->field_0xac.y = invOut.y;
+    self->field_0xac.z = invOut.z;
+}
 
 extern "C" void __attribute__((never_inline)) func_804CDE50(EffectScene* self, const Vec* p2, const Vec* p3) {
     SceneSubObj* sub = self->field_0x0c;
@@ -967,26 +1224,32 @@ extern "C" void __attribute__((never_inline)) func_804CE9A4(EffectScene* self, M
     // two output matrices a (local) and b (parent-combined).
     SceneSubObj* sub = self->field_0x0c;
     u32 tp = type;
-    u16 sflags = sub->field_0x1c;
-    if (sflags & 0x0800) {
-        tp = (sflags & 0x0400) ? 8 : 2;
+    // MSB-first bitfield view of the flags halfword gives retail's
+    // rotate-and-test (extrwi-form) reads of bits 11/10.
+    SceneFlagBits fb = *(SceneFlagBits*)&sub->field_0x1c;
+    if (fb.b11) {
+        tp = fb.b10 ? 8 : 2;
     }
     s32 ok = 0;
     Mtx mtx1d0;
-    if (sub->field_0x10c != 0 && sub->field_0x110 != 0) {
-        u8 b = ((u8*)sub->field_0x10c) ? *(u8*)((u8*)sub->field_0x10c - 0x1a) : 0;
-        if (b != 0) {
-            f32 f0 = sub->field_0x110 ? *(f32*)((u8*)sub->field_0x110 - 0x18) : lbl_eu_8066B0D8;
-            if (func_804BE398(p1, 0x4801, 0, 0, -f0, lbl_eu_8066B0DC) != 0) {
-                Vec v8;
-                func_804BE4E0(&v8, 0);
-                Vec ang;
-                ang.y = atan2(v8.x, v8.z);
-                f32 r = sqrt(v8.x * v8.x + v8.z * v8.z);
-                ang.x = lbl_eu_8066B110 - atan2(v8.y, r);
-                ang.z = lbl_eu_8066B0DC;
-                func_804DCA88(&mtx1d0, &ang);
-                ok = 1;
+    if (sub->field_0x10c != 0) {
+        if (sub->field_0x110 != 0) {
+            u8 b = (sub->field_0x10c != 0) ? *(u8*)((u8*)sub->field_0x10c - 0x1a) : 0;
+            if (b != 0) {
+                f32 f0 =
+                    (sub->field_0x110 != 0) ? *(f32*)((u8*)sub->field_0x110 - 0x18) : lbl_eu_8066B0D8;
+                if (func_804BE398(p1, 0x4801, 0, 0, -f0, lbl_eu_8066B0DC) != 0) {
+                    Vec v8;
+                    func_804BE4E0(&v8, 0);
+                    Vec ang;
+                    ang.y = atan2(v8.x, v8.z);
+                    // Angle vector fills as y, z, x (z cleared before the pitch lands).
+                    f32 pitch = atan2(v8.y, sqrt(v8.x * v8.x + v8.z * v8.z));
+                    ang.z = lbl_eu_8066B0DC;
+                    ang.x = lbl_eu_8066B110 - pitch;
+                    func_804DCA88(&mtx1d0, &ang);
+                    ok = 1;
+                }
             }
         }
     }
@@ -1057,37 +1320,38 @@ extern "C" void __attribute__((never_inline)) func_804CE9A4(EffectScene* self, M
         (*a)[1][3] += scale.y;
         (*a)[2][3] += scale.z;
     }
-    const f32 eps = lbl_eu_8066A208;
-    bool spAisId = __fabs((*spA)[0][0] - ml::CMat34::identity.m[0][0]) <= eps &&
-                   __fabs((*spA)[0][1] - ml::CMat34::identity.m[0][1]) <= eps &&
-                   __fabs((*spA)[0][2] - ml::CMat34::identity.m[0][2]) <= eps &&
-                   __fabs((*spA)[0][3] - ml::CMat34::identity.m[0][3]) <= eps &&
-                   __fabs((*spA)[1][0] - ml::CMat34::identity.m[1][0]) <= eps &&
-                   __fabs((*spA)[1][1] - ml::CMat34::identity.m[1][1]) <= eps &&
-                   __fabs((*spA)[1][2] - ml::CMat34::identity.m[1][2]) <= eps &&
-                   __fabs((*spA)[1][3] - ml::CMat34::identity.m[1][3]) <= eps &&
-                   __fabs((*spA)[2][0] - ml::CMat34::identity.m[2][0]) <= eps &&
-                   __fabs((*spA)[2][1] - ml::CMat34::identity.m[2][1]) <= eps &&
-                   __fabs((*spA)[2][2] - ml::CMat34::identity.m[2][2]) <= eps &&
-                   __fabs((*spA)[2][3] - ml::CMat34::identity.m[2][3]) <= eps;
+    // Each term reloads lbl_eu_8066A208 and identity fresh (no cached epsilon
+    // local: retail emits a per-term lfs pair and never spills an FPR here).
+    bool spAisId = __fabs((*spA)[0][0] - ml::CMat34::identity.m[0][0]) <= lbl_eu_8066A208 &&
+                   __fabs((*spA)[0][1] - ml::CMat34::identity.m[0][1]) <= lbl_eu_8066A208 &&
+                   __fabs((*spA)[0][2] - ml::CMat34::identity.m[0][2]) <= lbl_eu_8066A208 &&
+                   __fabs((*spA)[0][3] - ml::CMat34::identity.m[0][3]) <= lbl_eu_8066A208 &&
+                   __fabs((*spA)[1][0] - ml::CMat34::identity.m[1][0]) <= lbl_eu_8066A208 &&
+                   __fabs((*spA)[1][1] - ml::CMat34::identity.m[1][1]) <= lbl_eu_8066A208 &&
+                   __fabs((*spA)[1][2] - ml::CMat34::identity.m[1][2]) <= lbl_eu_8066A208 &&
+                   __fabs((*spA)[1][3] - ml::CMat34::identity.m[1][3]) <= lbl_eu_8066A208 &&
+                   __fabs((*spA)[2][0] - ml::CMat34::identity.m[2][0]) <= lbl_eu_8066A208 &&
+                   __fabs((*spA)[2][1] - ml::CMat34::identity.m[2][1]) <= lbl_eu_8066A208 &&
+                   __fabs((*spA)[2][2] - ml::CMat34::identity.m[2][2]) <= lbl_eu_8066A208 &&
+                   __fabs((*spA)[2][3] - ml::CMat34::identity.m[2][3]) <= lbl_eu_8066A208;
     if (!spAisId) {
         Mtx m170;
         PSMTXConcat(*spA, *a, m170);
         *(MtxCopy*)a = *(MtxCopy*)&m170;
     }
     if (ok) {
-        bool mId = __fabs(mtx1d0[0][0] - ml::CMat34::identity.m[0][0]) <= eps &&
-                   __fabs(mtx1d0[0][1] - ml::CMat34::identity.m[0][1]) <= eps &&
-                   __fabs(mtx1d0[0][2] - ml::CMat34::identity.m[0][2]) <= eps &&
-                   __fabs(mtx1d0[0][3] - ml::CMat34::identity.m[0][3]) <= eps &&
-                   __fabs(mtx1d0[1][0] - ml::CMat34::identity.m[1][0]) <= eps &&
-                   __fabs(mtx1d0[1][1] - ml::CMat34::identity.m[1][1]) <= eps &&
-                   __fabs(mtx1d0[1][2] - ml::CMat34::identity.m[1][2]) <= eps &&
-                   __fabs(mtx1d0[1][3] - ml::CMat34::identity.m[1][3]) <= eps &&
-                   __fabs(mtx1d0[2][0] - ml::CMat34::identity.m[2][0]) <= eps &&
-                   __fabs(mtx1d0[2][1] - ml::CMat34::identity.m[2][1]) <= eps &&
-                   __fabs(mtx1d0[2][2] - ml::CMat34::identity.m[2][2]) <= eps &&
-                   __fabs(mtx1d0[2][3] - ml::CMat34::identity.m[2][3]) <= eps;
+        bool mId = __fabs(mtx1d0[0][0] - ml::CMat34::identity.m[0][0]) <= lbl_eu_8066A208 &&
+                   __fabs(mtx1d0[0][1] - ml::CMat34::identity.m[0][1]) <= lbl_eu_8066A208 &&
+                   __fabs(mtx1d0[0][2] - ml::CMat34::identity.m[0][2]) <= lbl_eu_8066A208 &&
+                   __fabs(mtx1d0[0][3] - ml::CMat34::identity.m[0][3]) <= lbl_eu_8066A208 &&
+                   __fabs(mtx1d0[1][0] - ml::CMat34::identity.m[1][0]) <= lbl_eu_8066A208 &&
+                   __fabs(mtx1d0[1][1] - ml::CMat34::identity.m[1][1]) <= lbl_eu_8066A208 &&
+                   __fabs(mtx1d0[1][2] - ml::CMat34::identity.m[1][2]) <= lbl_eu_8066A208 &&
+                   __fabs(mtx1d0[1][3] - ml::CMat34::identity.m[1][3]) <= lbl_eu_8066A208 &&
+                   __fabs(mtx1d0[2][0] - ml::CMat34::identity.m[2][0]) <= lbl_eu_8066A208 &&
+                   __fabs(mtx1d0[2][1] - ml::CMat34::identity.m[2][1]) <= lbl_eu_8066A208 &&
+                   __fabs(mtx1d0[2][2] - ml::CMat34::identity.m[2][2]) <= lbl_eu_8066A208 &&
+                   __fabs(mtx1d0[2][3] - ml::CMat34::identity.m[2][3]) <= lbl_eu_8066A208;
         if (!mId) {
             Mtx m140;
             PSMTXConcat(mtx1d0, *a, m140);
@@ -1514,26 +1778,55 @@ extern "C" void __attribute__((never_inline)) func_804D0194() {
 // by the 0x258/0x25a texgen indices and emit a 4-vertex quad with byte-scaled
 // UVs.
 extern "C" void __attribute__((never_inline)) func_804D01E0(EffectScene* self, void* res) {
-    // Shared 0x4330 magic slot for all u8/u16 -> float conversions (retail
-    // stores the magic once in the prologue and reuses the slot).
-    union {
-        f64 d;
-        u32 w[2];
-    } cnv;
-    cnv.w[0] = 0x43300000u;
-    s32 ok = (self->field_0x0c->field_0x04 == 5 ||
-              ((self->field_0x06 & 0x8000) && (self->field_0x06 & 0x0400))) &&
-             (self->field_0x06 & 0x0800) &&
-             func_804EEACC(&self->field_0xdc) != 0;
+    // Retail hoists TWO 0x4330 magic-double slots in the prologue and
+    // alternates them for every u8/u16 -> float conversion.
+    FConv convA;
+    FConv convB;
+    convA.w[0] = 0x43300000u;
+    convB.w[0] = 0x43300000u;
+
+    // Gate: class 5 bypasses the flag checks; otherwise bits 15 and 10 of
+    // the scene flag word must be set, then bit 11, then the link check.
+    // Retail keeps one shared tail block and materializes the verdict in
+    // r0 (li r0,0 / bl / li r0,1) before a single compare-and-branch.
+    SceneSubObj* sub = self->field_0x0c;
+    // MSB-first bitfield view: retail tests members at halfword bits
+    // 14 (0x4000), 9 (0x0200) here and bit 11 (0x0800) below.
+    struct GateFlags {
+        u16 : 1;       // bit 15
+        u16 g4000 : 1; // bit 14 -> rlwinm rot17
+        u16 : 2;       // bits 13..12
+        u16 g0800 : 1; // bit 11 -> rlwinm rot20
+        u16 : 1;       // bit 10
+        u16 g0200 : 1; // bit 9  -> rlwinm rot22
+        u16 : 9;
+    };
+    GateFlags* flb = (GateFlags*)&self->field_0x06;
+    s32 ok = 0;
+    if ((s32)sub->field_0x04 == 5) {
+        if (flb->g0800) ok = func_804EEACC(&self->field_0xdc) != 0;
+    } else {
+        if (flb->g4000) {
+            if (flb->g0200) {
+                if (flb->g0800) ok = func_804EEACC(&self->field_0xdc) != 0;
+            }
+        }
+    }
     if (!ok) return;
 
     RenderNode* node = (RenderNode*)func_804E0168(self->field_0x00);
     *(MtxCopy*)&node->mtx = *(MtxCopy*)&self->field_0x19c;
-    f32 scale = lbl_eu_8066B11C;
-    node->b0 = (u8)(s32)(scale * self->field_0x1cc);
-    node->b1 = (u8)(s32)(scale * self->field_0x1d0);
-    node->b2 = (u8)(s32)(scale * self->field_0x1d4);
-    node->b3 = (u8)(s32)(scale * self->field_0x1d8);
+    // Byte-scaled RGBA staged through a 4-byte color struct copy.
+    GXColor col;
+    col.r = (u8)(s32)(lbl_eu_8066B11C * self->field_0x1cc);
+    col.g = (u8)(s32)(lbl_eu_8066B11C * self->field_0x1d0);
+    col.b = (u8)(s32)(lbl_eu_8066B11C * self->field_0x1d4);
+    col.a = (u8)(s32)(lbl_eu_8066B11C * self->field_0x1d8);
+    GXColor col2 = col;
+    node->b0 = col2.r;
+    node->b1 = col2.g;
+    node->b2 = col2.b;
+    node->b3 = col2.a;
 
     switch (self->field_0x0c->field_0x00) {
     case 0:
@@ -1545,38 +1838,42 @@ extern "C" void __attribute__((never_inline)) func_804D01E0(EffectScene* self, v
     case 10:
     case 11:
     case 12: {
-        u16 sflags = self->field_0x0c->field_0x1c;
+        SceneSubObj* sub2 = self->field_0x0c;
+        u16 sflags = sub2->field_0x1c;
+        // Retail materializes each tested bit as (-bit|bit)>>31.
         u32 b11 = (sflags >> 11) & 1;
-        u32 c11 = (u32)(-b11 | b11) >> 31;
+        u32 c11 = (u32)(-(s32)b11 | b11) >> 31;
         u32 b10 = (sflags >> 10) & 1;
-        u32 c10 = (u32)(-b10 | b10) >> 31;
+        u32 c10 = (u32)(-(s32)b10 | b10) >> 31;
         if (c11 || c10) {
-            u32 b11i = (self->field_0x0c->field_0x1c >> 11) & 1;
-            u32 c11i = (u32)(-b11i | b11i) >> 31;
-            if (c11i) {
-                u8* p = (u8*)self->field_0x0c->field_0xe4;
+            if (c11) {
+                u8* p = (u8*)sub2->field_0xe4;
                 u8 bv = p ? *(p - 0x10) : 0;
                 if (bv == 0x10) {
-                    u16 fbw = CDeviceVI::getRenderModeObj()->fbWidth;
-                    cnv.w[1] = fbw;
-                    f32 ratio = (f32)(cnv.d - lbl_eu_8066B0E8) / lbl_eu_8066B128;
+                    convA.w[1] = CDeviceVI::getRenderModeObj()->fbWidth;
+                    f32 ratio =
+                        (f32)((convA.d - lbl_eu_8066B0E8) / lbl_eu_8066B128);
                     node->mtx[0][3] = node->mtx[0][3] * ratio;
                 } else if (bv == 0x11) {
-                    u16 fbw = CDeviceVI::getRenderModeObj()->fbWidth;
-                    cnv.w[1] = fbw;
-                    f32 ratio = (f32)(cnv.d - lbl_eu_8066B0E8) / lbl_eu_8066B128;
-                    Vec svec = {ratio, lbl_eu_8066B0D8, lbl_eu_8066B0D8};
-                    PSMTXScaleApply(node->mtx, node->mtx, svec.x, svec.y, svec.z);
+                    convB.w[1] = CDeviceVI::getRenderModeObj()->fbWidth;
+                    f32 ratio =
+                        (f32)((convB.d - lbl_eu_8066B0E8) / lbl_eu_8066B128);
+                    Vec svec;
+                    svec.y = lbl_eu_8066B0D8;
+                    svec.z = lbl_eu_8066B0D8;
+                    svec.x = ratio;
+                    PSMTXScaleApply(node->mtx, node->mtx, svec.x, svec.y,
+                                    svec.z);
                 }
             }
         } else {
-            Mtx stackMtx;
+            Mtx tmp;
             Mtx mtxA0;
             MatFlags* mat = (MatFlags*)self->field_0x08;
             void* m = func_80496264(mat->field_0x10, -1);
-            PSMTXConcat((const float(*)[4])((u8*)m + 0xcc), node->mtx, stackMtx);
-            *(MtxCopy*)&node->mtx = *(MtxCopy*)&stackMtx;
-            *(MtxCopy*)&mtxA0 = *(MtxCopy*)&stackMtx;
+            PSMTXConcat((const float(*)[4])((u8*)m + 0xcc), node->mtx, tmp);
+            *(MtxCopy*)&node->mtx = *(MtxCopy*)&tmp;
+            *(MtxCopy*)&mtxA0 = *(MtxCopy*)&tmp;
         }
         break;
     }
@@ -1603,7 +1900,7 @@ extern "C" void __attribute__((never_inline)) func_804D01E0(EffectScene* self, v
     if (self->field_0x25a >= 0) {
         func_804DF164(res, self->field_0x25a, 1, self->field_0x0c->field_0x44);
         ml::CMat44 m2 = ml::CMat44::identity;
-        if (self->field_0x260 & 0x10) {
+        if (self->field_0x260 & 0x08) {
             m2.m[0][3] = self->field_0x270;
             m2.m[1][3] = self->field_0x274;
         }
@@ -1612,16 +1909,22 @@ extern "C" void __attribute__((never_inline)) func_804D01E0(EffectScene* self, v
     }
     if (texgens == 0) return;
 
+    // Material tint bytes: retail reloads the sub-object pointer and
+    // null-checks before every byte read, defaulting to 1.
     u8* pb = (u8*)self->field_0x0c->field_0x108;
     if (pb) {
-        cnv.w[1] = pb ? *(pb - 4) : 1;
-        c0 = (f32)(cnv.d - lbl_eu_8066B0E8);
-        cnv.w[1] = pb ? *(pb - 3) : 1;
-        c1 = (f32)(cnv.d - lbl_eu_8066B0E8);
-        cnv.w[1] = pb ? *(pb - 2) : 1;
-        c2 = (f32)(cnv.d - lbl_eu_8066B0E8);
-        cnv.w[1] = pb ? *(pb - 1) : 1;
-        c3 = (f32)(cnv.d - lbl_eu_8066B0E8);
+        u8* q = (u8*)self->field_0x0c->field_0x108;
+        convA.w[1] = q ? q[-4] : 1;
+        c0 = (f32)(convA.d - lbl_eu_8066B0E8);
+        q = (u8*)self->field_0x0c->field_0x108;
+        convB.w[1] = q ? q[-3] : 1;
+        c1 = (f32)(convB.d - lbl_eu_8066B0E8);
+        q = (u8*)self->field_0x0c->field_0x108;
+        convA.w[1] = q ? q[-2] : 1;
+        c2 = (f32)(convA.d - lbl_eu_8066B0E8);
+        q = (u8*)self->field_0x0c->field_0x108;
+        convB.w[1] = q ? q[-1] : 1;
+        c3 = (f32)(convB.d - lbl_eu_8066B0E8);
     }
 
     u8 tg = (u8)texgens;
@@ -1637,17 +1940,15 @@ extern "C" void __attribute__((never_inline)) func_804D01E0(EffectScene* self, v
             GXSetVtxDesc(GX_VA_TEX0, GX_DIRECT);
             GXSetVtxDesc(GX_VA_TEX1, GX_NONE);
             break;
-        case 2:
+        default:
             GXSetVtxDesc(GX_VA_TEX0, GX_DIRECT);
             GXSetVtxDesc(GX_VA_TEX1, GX_DIRECT);
-            break;
-        default:
             break;
         }
         lbl_eu_806659B4 = (s32)tg;
     }
     u32 zbit = (self->field_0x0c->field_0x1c >> 7) & 1;
-    u32 zb = (u32)(-zbit | zbit) >> 31;
+    u32 zb = (u32)(-(s32)zbit | zbit) >> 31;
     if (lbl_eu_806659A8 != (s32)zb) {
         if (zb) {
             GXSetZMode(GX_FALSE, GX_ALWAYS, GX_FALSE);
@@ -1704,26 +2005,34 @@ extern "C" void __attribute__((never_inline)) func_804D01E0(EffectScene* self, v
 // transformed position/direction and byte-scaled color.
 void func_804D3DB0(EffectScene* self, f32* out, s32 i5, s32 i6, s32 i7);
 extern "C" void __attribute__((never_inline)) func_804D0AB4(EffectScene* self, s32 index) {
-    // Shared 0x4330 magic slot for the fbWidth conversions.
-    union {
-        f64 d;
-        u32 w[2];
-    } cnv;
-    cnv.w[0] = 0x43300000u;
-    s32 ok = (self->field_0x0c->field_0x04 == 5 ||
-              ((self->field_0x06 & 0x8000) && (self->field_0x06 & 0x0400))) &&
-             (self->field_0x06 & 0x0800) &&
-             func_804EEACC(&self->field_0xdc) != 0;
+    // Shared 0x4330 magic slot for the fbWidth conversions; retail rebuilds
+    // both words at each use site.
+    FConv cnv;
+
+    // Gate: class 5 bypasses the flag checks; otherwise bits 15 and 10 of
+    // the scene flag word must be set. Every path funnels into one shared
+    // bit-11 test + link check whose verdict is materialized in a single
+    // s32 tail compare.
+    SceneFlagBits* flb = (SceneFlagBits*)&self->field_0x06;
+    s32 ok = 0;
+    if ((s32)self->field_0x0c->field_0x04 == 5 || (flb->b15 && flb->b10)) {
+        if (flb->b11) ok = func_804EEACC(&self->field_0xdc) != 0;
+    }
     if (!ok) return;
 
     RenderNode* node = (RenderNode*)func_804E0168(self->field_0x00);
     *(MtxCopy*)&node->mtx = *(MtxCopy*)&self->field_0x19c;
-    f32 scale = lbl_eu_8066B11C;
-    u8 r = (u8)(s32)(scale * self->field_0x1cc);
-    u8 g = (u8)(s32)(scale * self->field_0x1d0);
-    u8 b = (u8)(s32)(scale * self->field_0x1d4);
-    u8 a = (u8)(s32)(scale * self->field_0x1d8);
-    *(u32*)&node->b0 = (u32)r | ((u32)g << 8) | ((u32)b << 16) | ((u32)a << 24);
+    // Byte-scaled RGBA staged through a 4-byte color struct copy.
+    GXColor col;
+    col.r = (u8)(s32)(lbl_eu_8066B11C * self->field_0x1cc);
+    col.g = (u8)(s32)(lbl_eu_8066B11C * self->field_0x1d0);
+    col.b = (u8)(s32)(lbl_eu_8066B11C * self->field_0x1d4);
+    col.a = (u8)(s32)(lbl_eu_8066B11C * self->field_0x1d8);
+    GXColor col2 = col;
+    node->b0 = col2.r;
+    node->b1 = col2.g;
+    node->b2 = col2.b;
+    node->b3 = col2.a;
 
     switch (self->field_0x0c->field_0x00) {
     case 0:
@@ -1735,28 +2044,28 @@ extern "C" void __attribute__((never_inline)) func_804D0AB4(EffectScene* self, s
     case 10:
     case 11:
     case 12: {
-        u16 sflags = self->field_0x0c->field_0x1c;
+        SceneSubObj* sub2 = self->field_0x0c;
+        u16 sflags = sub2->field_0x1c;
+        // Retail materializes each tested bit as (-bit|bit)>>31.
         u32 b11 = (sflags >> 11) & 1;
-        u32 c11 = (u32)(-b11 | b11) >> 31;
+        u32 c11 = (u32)(-(s32)b11 | b11) >> 31;
         u32 b10 = (sflags >> 10) & 1;
-        u32 c10 = (u32)(-b10 | b10) >> 31;
+        u32 c10 = (u32)(-(s32)b10 | b10) >> 31;
         if (c11 || c10) {
-            u32 b11i = (self->field_0x0c->field_0x1c >> 11) & 1;
-            u32 c11i = (u32)(-b11i | b11i) >> 31;
-            if (c11i) {
-                u8* p = (u8*)self->field_0x0c->field_0xe4;
+            if (c11) {
+                u8* p = (u8*)sub2->field_0xe4;
                 u8 bv = p ? *(p - 0x10) : 0;
                 if (bv == 0x10) {
-                    u16 fbw = CDeviceVI::getRenderModeObj()->fbWidth;
-                    cnv.w[1] = fbw;
-                    f32 ratio = (f32)(cnv.d - lbl_eu_8066B0E8) / lbl_eu_8066B128;
+                    cnv.w[1] = CDeviceVI::getRenderModeObj()->fbWidth;
+                    cnv.w[0] = 0x43300000u;
+                    f32 ratio = (f32)((cnv.d - lbl_eu_8066B0E8) / lbl_eu_8066B128);
                     node->mtx[0][3] = node->mtx[0][3] * ratio;
                 } else if (bv == 0x11) {
-                    u16 fbw = CDeviceVI::getRenderModeObj()->fbWidth;
-                    cnv.w[1] = fbw;
-                    f32 ratio = (f32)(cnv.d - lbl_eu_8066B0E8) / lbl_eu_8066B128;
-                    Vec svec = {ratio, lbl_eu_8066B0D8, lbl_eu_8066B0D8};
-                    PSMTXScaleApply(node->mtx, node->mtx, svec.x, svec.y, svec.z);
+                    cnv.w[1] = CDeviceVI::getRenderModeObj()->fbWidth;
+                    cnv.w[0] = 0x43300000u;
+                    f32 ratio = (f32)((cnv.d - lbl_eu_8066B0E8) / lbl_eu_8066B128);
+                    f32 scl = lbl_eu_8066B0D8;
+                    PSMTXScaleApply(node->mtx, node->mtx, ratio, scl, scl);
                 }
             }
         } else {
@@ -1789,7 +2098,7 @@ extern "C" void __attribute__((never_inline)) func_804D0AB4(EffectScene* self, s
     if (self->field_0x25a >= 0) {
         func_804DF164((void*)(u32)index, self->field_0x25a, 1, self->field_0x0c->field_0x44);
         ml::CMat44 m2 = ml::CMat44::identity;
-        if (self->field_0x260 & 0x10) {
+        if (self->field_0x260 & 0x08) {
             m2.m[0][3] = self->field_0x270;
             m2.m[1][3] = self->field_0x274;
         }
@@ -1836,101 +2145,108 @@ extern "C" void __attribute__((never_inline)) func_804D0AB4(EffectScene* self, s
         lbl_eu_806659AC = 1;
     }
 
-    // Initial vertex state derived from the root node: the {1,0,0} and
-    // {B0E4,0,0} transformed directions plus the matrix translation column.
-    Vec curOut1, curTrans, curOut2;
-    u8 curCol[4];
-    Vec v1 = {lbl_eu_8066B12C, 0.0f, 0.0f};
-    PSMTXMultVec(self->field_0x19c, &v1, &curOut1);
+    // Initial vertex state derived from the root node: the transformed
+    // {B12C,B0DC,B0DC} / {B0E4,B0DC,B0DC} directions plus the matrix
+    // translation column. The direction/scale constants live in explicit
+    // locals so MWCC keeps them in f28-f31 across the whole node walk.
+    f32 cZero = lbl_eu_8066B0DC;
+    f32 cDirX = lbl_eu_8066B12C;
+    f32 cDir2X = lbl_eu_8066B0E4;
+    EffectNode* walk = (EffectNode*)self;
+    s16 count = self->field_0x0c->field_0x2e;
+    Vec dir1 = {cDirX, cZero, cZero};
+    Vec curOut1;
+    PSMTXMultVec(self->field_0x19c, &dir1, &curOut1);
+    Vec curTrans;
     curTrans.x = self->field_0x19c[0][3];
     curTrans.y = self->field_0x19c[1][3];
     curTrans.z = self->field_0x19c[2][3];
-    Vec v2 = {lbl_eu_8066B0E4, 0.0f, 0.0f};
-    PSMTXMultVec(self->field_0x19c, &v2, &curOut2);
-    f32 f28 = lbl_eu_8066B11C;
-    u8 c0 = (u8)(s32)(f28 * self->field_0x1cc);
-    u8 c1 = (u8)(s32)(f28 * self->field_0x1d0);
-    u8 c2 = (u8)(s32)(f28 * self->field_0x1d4);
-    u8 c3 = (u8)(s32)(f28 * self->field_0x1d8);
-    *(u32*)&curCol[0] = (u32)c0 | ((u32)c1 << 8) | ((u32)c2 << 16) | ((u32)c3 << 24);
+    Vec dir2 = {cDir2X, cZero, cZero};
+    Vec curOut2;
+    PSMTXMultVec(self->field_0x19c, &dir2, &curOut2);
+    f32 cscale = lbl_eu_8066B11C;
+    GXColor curCol;
+    curCol.r = (u8)(s32)(cscale * self->field_0x1cc);
+    curCol.g = (u8)(s32)(cscale * self->field_0x1d0);
+    curCol.b = (u8)(s32)(cscale * self->field_0x1d4);
+    curCol.a = (u8)(s32)(cscale * self->field_0x1d8);
 
-    s16 count = self->field_0x0c->field_0x2e;
-    EffectNode* walk = (EffectNode*)self;
     while ((s16)index < count) {
         walk = func_804E0114(walk->field_0x02);
         if (walk == 0) break;
-        EffectScene* node = (EffectScene*)walk;
-        Vec nodeOut1, nodeTrans, nodeOut2;
-        u8 nodeCol[4];
-        Vec nv1 = {lbl_eu_8066B12C, 0.0f, 0.0f};
-        PSMTXMultVec(node->field_0x19c, &nv1, &nodeOut1);
-        nodeTrans.x = node->field_0x19c[0][3];
-        nodeTrans.y = node->field_0x19c[1][3];
-        nodeTrans.z = node->field_0x19c[2][3];
-        Vec nv2 = {lbl_eu_8066B0E4, 0.0f, 0.0f};
-        PSMTXMultVec(node->field_0x19c, &nv2, &nodeOut2);
-        u8 n0 = (u8)(s32)(f28 * node->field_0x1cc);
-        u8 n1 = (u8)(s32)(f28 * node->field_0x1d0);
-        u8 n2 = (u8)(s32)(f28 * node->field_0x1d4);
-        u8 n3 = (u8)(s32)(f28 * node->field_0x1d8);
-        *(u32*)&nodeCol[0] = (u32)n0 | ((u32)n1 << 8) | ((u32)n2 << 16) | ((u32)n3 << 24);
+        EffectScene* nsc = (EffectScene*)walk;
+        Vec ndir1 = {cDirX, cZero, cZero};
+        Vec nodeOut1;
+        PSMTXMultVec(nsc->field_0x19c, &ndir1, &nodeOut1);
+        Vec nodeTrans;
+        nodeTrans.x = nsc->field_0x19c[0][3];
+        nodeTrans.y = nsc->field_0x19c[1][3];
+        nodeTrans.z = nsc->field_0x19c[2][3];
+        Vec ndir2 = {cDir2X, cZero, cZero};
+        Vec nodeOut2;
+        PSMTXMultVec(nsc->field_0x19c, &ndir2, &nodeOut2);
+        GXColor nodeCol;
+        nodeCol.r = (u8)(s32)(cscale * nsc->field_0x1cc);
+        nodeCol.g = (u8)(s32)(cscale * nsc->field_0x1d0);
+        nodeCol.b = (u8)(s32)(cscale * nsc->field_0x1d4);
+        nodeCol.a = (u8)(s32)(cscale * nsc->field_0x1d8);
         if (texgens == 1) {
-            f32 mtx208[18];
-            func_804D3DB0(self, mtx208, (s16)index, count, 0);
+            f32 texA[18];
+            func_804D3DB0(self, texA, (s16)index, count, 0);
             GXBegin(GX_TRIANGLESTRIP, GX_VTXFMT1, 6);
             GXPosition3f32(curOut1.x, curOut1.y, curOut1.z);
-            GXColor4u8(curCol[0], curCol[1], curCol[2], curCol[3]);
-            GXTexCoord2f32(mtx208[0], mtx208[1]);
+            GXColor4u8(curCol.r, curCol.g, curCol.b, curCol.a);
+            GXTexCoord2f32(texA[0], texA[1]);
             GXPosition3f32(nodeOut1.x, nodeOut1.y, nodeOut1.z);
-            GXColor4u8(nodeCol[0], nodeCol[1], nodeCol[2], nodeCol[3]);
-            GXTexCoord2f32(mtx208[9], mtx208[10]);
+            GXColor4u8(nodeCol.r, nodeCol.g, nodeCol.b, nodeCol.a);
+            GXTexCoord2f32(texA[9], texA[10]);
             GXPosition3f32(curTrans.x, curTrans.y, curTrans.z);
-            GXColor4u8(curCol[0], curCol[1], curCol[2], curCol[3]);
-            GXTexCoord2f32(mtx208[3], mtx208[4]);
+            GXColor4u8(curCol.r, curCol.g, curCol.b, curCol.a);
+            GXTexCoord2f32(texA[3], texA[4]);
             GXPosition3f32(nodeTrans.x, nodeTrans.y, nodeTrans.z);
-            GXColor4u8(nodeCol[0], nodeCol[1], nodeCol[2], nodeCol[3]);
-            GXTexCoord2f32(mtx208[12], mtx208[13]);
+            GXColor4u8(nodeCol.r, nodeCol.g, nodeCol.b, nodeCol.a);
+            GXTexCoord2f32(texA[12], texA[13]);
             GXPosition3f32(curOut2.x, curOut2.y, curOut2.z);
-            GXColor4u8(curCol[0], curCol[1], curCol[2], curCol[3]);
-            GXTexCoord2f32(mtx208[6], mtx208[7]);
+            GXColor4u8(curCol.r, curCol.g, curCol.b, curCol.a);
+            GXTexCoord2f32(texA[6], texA[7]);
             GXPosition3f32(nodeOut2.x, nodeOut2.y, nodeOut2.z);
-            GXColor4u8(nodeCol[0], nodeCol[1], nodeCol[2], nodeCol[3]);
-            GXTexCoord2f32(mtx208[15], mtx208[16]);
+            GXColor4u8(nodeCol.r, nodeCol.g, nodeCol.b, nodeCol.a);
+            GXTexCoord2f32(texA[15], texA[16]);
         } else if (texgens == 2) {
-            f32 mtx208[18];
-            f32 mtx1c0[18];
-            func_804D3DB0(self, mtx208, (s16)index, count, 0);
-            func_804D3DB0(self, mtx1c0, (s16)index, count, 1);
+            f32 texA[18];
+            f32 texB[18];
+            func_804D3DB0(self, texA, (s16)index, count, 0);
+            func_804D3DB0(self, texB, (s16)index, count, 1);
             GXBegin(GX_TRIANGLESTRIP, GX_VTXFMT1, 6);
             GXPosition3f32(curOut1.x, curOut1.y, curOut1.z);
-            GXColor4u8(curCol[0], curCol[1], curCol[2], curCol[3]);
-            GXTexCoord2f32(mtx208[0], mtx208[1]);
-            GXTexCoord2f32(mtx1c0[0], mtx1c0[1]);
+            GXColor4u8(curCol.r, curCol.g, curCol.b, curCol.a);
+            GXTexCoord2f32(texA[0], texA[1]);
+            GXTexCoord2f32(texB[0], texB[1]);
             GXPosition3f32(nodeOut1.x, nodeOut1.y, nodeOut1.z);
-            GXColor4u8(nodeCol[0], nodeCol[1], nodeCol[2], nodeCol[3]);
-            GXTexCoord2f32(mtx208[9], mtx208[10]);
-            GXTexCoord2f32(mtx1c0[9], mtx1c0[10]);
+            GXColor4u8(nodeCol.r, nodeCol.g, nodeCol.b, nodeCol.a);
+            GXTexCoord2f32(texA[9], texA[10]);
+            GXTexCoord2f32(texB[9], texB[10]);
             GXPosition3f32(curTrans.x, curTrans.y, curTrans.z);
-            GXColor4u8(curCol[0], curCol[1], curCol[2], curCol[3]);
-            GXTexCoord2f32(mtx208[3], mtx208[4]);
-            GXTexCoord2f32(mtx1c0[3], mtx1c0[4]);
+            GXColor4u8(curCol.r, curCol.g, curCol.b, curCol.a);
+            GXTexCoord2f32(texA[3], texA[4]);
+            GXTexCoord2f32(texB[3], texB[4]);
             GXPosition3f32(nodeTrans.x, nodeTrans.y, nodeTrans.z);
-            GXColor4u8(nodeCol[0], nodeCol[1], nodeCol[2], nodeCol[3]);
-            GXTexCoord2f32(mtx208[12], mtx208[13]);
-            GXTexCoord2f32(mtx1c0[12], mtx1c0[13]);
+            GXColor4u8(nodeCol.r, nodeCol.g, nodeCol.b, nodeCol.a);
+            GXTexCoord2f32(texA[12], texA[13]);
+            GXTexCoord2f32(texB[12], texB[13]);
             GXPosition3f32(curOut2.x, curOut2.y, curOut2.z);
-            GXColor4u8(curCol[0], curCol[1], curCol[2], curCol[3]);
-            GXTexCoord2f32(mtx208[6], mtx208[7]);
-            GXTexCoord2f32(mtx1c0[6], mtx1c0[7]);
+            GXColor4u8(curCol.r, curCol.g, curCol.b, curCol.a);
+            GXTexCoord2f32(texA[6], texA[7]);
+            GXTexCoord2f32(texB[6], texB[7]);
             GXPosition3f32(nodeOut2.x, nodeOut2.y, nodeOut2.z);
-            GXColor4u8(nodeCol[0], nodeCol[1], nodeCol[2], nodeCol[3]);
-            GXTexCoord2f32(mtx208[15], mtx208[16]);
-            GXTexCoord2f32(mtx1c0[15], mtx1c0[16]);
+            GXColor4u8(nodeCol.r, nodeCol.g, nodeCol.b, nodeCol.a);
+            GXTexCoord2f32(texA[15], texA[16]);
+            GXTexCoord2f32(texB[15], texB[16]);
         }
         curOut1 = nodeOut1;
         curTrans = nodeTrans;
         curOut2 = nodeOut2;
-        *(u32*)&curCol[0] = *(u32*)&nodeCol[0];
+        curCol = nodeCol;
         index++;
     }
 }
@@ -2105,7 +2421,204 @@ void func_804CC3A4(EffectScene* out, const EffSrc3* src) {
 // the node chain one step; the render-dispatch (func_804D42B8) calls them with
 // (node, arg). Stub bodies - separate targets (us-804d5a10 / 6260 / 6804 /
 // 6cd4 / 720c / 7790).
-extern "C" void __attribute__((never_inline)) func_804D189C(EffectNode* node, void* arg){}
+// Trail-draw entry: same visibility gate as the other node-walk renderers,
+// then optionally refresh the attached trail (field_0x328) from the scene
+// matrix when the 0x200 flag is set, copy the node matrix/color and apply the
+// material/framebuffer transforms, load texture matrices and sync GX state.
+extern "C" void __attribute__((never_inline)) func_804D189C(EffectNode* nodeRaw, void* arg) {
+    EffectScene* self = (EffectScene*)nodeRaw;
+    void* res = arg;
+    // Shared 0x4330 magic slots for the byte -> float conversions.
+    union { f64 d; u32 w[2]; } cnvA, cnvB;
+    cnvA.w[0] = 0x43300000u;
+    cnvB.w[0] = 0x43300000u;
+
+    // Visibility gate, same shape as func_804D20EC.
+    s32 ok = 1;
+    if ((s32)self->field_0x0c->field_0x04 != 5) {
+        if (!(self->field_0x06 & 0x8000))
+            ok = 0;
+        else if (!(self->field_0x06 & 0x400))
+            ok = 0;
+    }
+    if (ok != 0) {
+        if (!(self->field_0x06 & 0x800))
+            ok = 0;
+        else
+            ok = func_804EEACC(&self->field_0xdc) != 0;
+    }
+    if (ok == 0) return;
+    if (self->field_0x328 == 0) return;
+
+    if (((SceneFlagBits*)&self->field_0x06)->b9) {
+        // Rebuild the trail from four tone bytes hanging before the sample
+        // table (each converted to float minus one).
+        ml::CVec4 v;
+        cnvB.w[1] = (u8*)self->field_0x0c->field_0x108 ? *((u8*)self->field_0x0c->field_0x108 - 4) : 1;
+        v.x = (f32)(cnvB.d - lbl_eu_8066B0E8) - lbl_eu_8066B0D8;
+        cnvA.w[1] = (u8*)self->field_0x0c->field_0x108 ? *((u8*)self->field_0x0c->field_0x108 - 3) : 1;
+        v.y = (f32)(cnvA.d - lbl_eu_8066B0E8) - lbl_eu_8066B0D8;
+        cnvB.w[1] = (u8*)self->field_0x0c->field_0x108 ? *((u8*)self->field_0x0c->field_0x108 - 2) : 1;
+        v.z = (f32)(cnvB.d - lbl_eu_8066B0E8) - lbl_eu_8066B0D8;
+        cnvA.w[1] = (u8*)self->field_0x0c->field_0x108 ? *((u8*)self->field_0x0c->field_0x108 - 1) : 1;
+        v.w = (f32)(cnvA.d - lbl_eu_8066B0E8) - lbl_eu_8066B0D8;
+        func_804D73FC((CETrail*)self->field_0x328);
+        func_804D77E4((CETrail*)self->field_0x328, (const Mtx*)&self->field_0x19c,
+                      *(f32*)&self->field_0x29c,
+                      (const ml::CVec4*)&self->field_0x268, &v);
+        ((SceneFlagBits*)&self->field_0x06)->b9 = 0;
+    }
+
+    RenderNode* node = (RenderNode*)func_804E0168(self->field_0x00);
+    *(MtxCopy*)&node->mtx = *(MtxCopy*)&self->field_0x19c;
+    f32 scale = lbl_eu_8066B11C;
+    // Color bytes staged through two local arrays (retail copies the packed
+    // word between them before storing byte-wise into the render node).
+    u8 colA[4];
+    u8 colB[4];
+    colA[0] = (u8)(s32)(scale * self->field_0x1cc);
+    colA[1] = (u8)(s32)(scale * self->field_0x1d0);
+    colA[2] = (u8)(s32)(scale * self->field_0x1d4);
+    colA[3] = (u8)(s32)(scale * self->field_0x1d8);
+    *(u32*)colB = *(const u32*)colA;
+    node->b0 = colB[0];
+    node->b1 = colB[1];
+    node->b2 = colB[2];
+    node->b3 = colB[3];
+
+    switch (self->field_0x0c->field_0x00) {
+    case 0:
+    case 4:
+    case 5:
+    case 6:
+    case 7:
+    case 9:
+    case 10:
+    case 11:
+    case 12: {
+        u16 sflags = self->field_0x0c->field_0x1c;
+        u32 b11 = (sflags >> 11) & 1;
+        u32 c11 = (u32)(-b11 | b11) >> 31;
+        u32 b10 = (sflags >> 10) & 1;
+        u32 c10 = (u32)(-b10 | b10) >> 31;
+        if (c11 || c10) {
+            u32 b11i = (self->field_0x0c->field_0x1c >> 11) & 1;
+            u32 c11i = (u32)(-b11i | b11i) >> 31;
+            if (c11i) {
+                u8* p = (u8*)self->field_0x0c->field_0xe4;
+                u8 bv = p ? *(p - 0x10) : 0;
+                if (bv == 0x10) {
+                    u16 fbw = CDeviceVI::getRenderModeObj()->fbWidth;
+                    cnvA.w[1] = fbw;
+                    f32 ratio = (f32)(cnvA.d - lbl_eu_8066B0E8) / lbl_eu_8066B128;
+                    node->mtx[0][3] = node->mtx[0][3] * ratio;
+                } else if (bv == 0x11) {
+                    u16 fbw = CDeviceVI::getRenderModeObj()->fbWidth;
+                    cnvB.w[1] = fbw;
+                    f32 ratio = (f32)(cnvB.d - lbl_eu_8066B0E8) / lbl_eu_8066B128;
+                    Vec svec = {ratio, lbl_eu_8066B0D8, lbl_eu_8066B0D8};
+                    PSMTXScaleApply(node->mtx, node->mtx, svec.x, svec.y, svec.z);
+                }
+            }
+        } else {
+            Mtx stackMtx;
+            Mtx mtxA0;
+            MatFlags* mat = (MatFlags*)self->field_0x08;
+            void* m = func_80496264(mat->field_0x10, -1);
+            PSMTXConcat((const float(*)[4])((u8*)m + 0xcc), node->mtx, stackMtx);
+            *(MtxCopy*)&node->mtx = *(MtxCopy*)&stackMtx;
+            *(MtxCopy*)&mtxA0 = *(MtxCopy*)&stackMtx;
+        }
+        break;
+    }
+    default:
+        break;
+    }
+
+    s32 texgens = 0;
+    if (self->field_0x258 >= 0) {
+        func_804DF164(arg, self->field_0x258, 0, self->field_0x0c->field_0x40);
+        ml::CMat44 m = ml::CMat44::identity;
+        if (self->field_0x260 & 0x20) {
+            m.m[0][3] = self->field_0x268;
+            m.m[1][3] = self->field_0x26c;
+        }
+        GXLoadTexMtxImm((const float(*)[4])&m, GX_TEXMTX0, GX_MTX_2x4);
+        texgens = 1;
+    }
+    if (self->field_0x25a >= 0) {
+        func_804DF164(arg, self->field_0x25a, 1, self->field_0x0c->field_0x44);
+        ml::CMat44 m2 = ml::CMat44::identity;
+        if (self->field_0x260 & 0x10) {
+            m2.m[0][3] = self->field_0x270;
+            m2.m[1][3] = self->field_0x274;
+        }
+        GXLoadTexMtxImm((const float(*)[4])&m2, GX_TEXMTX1, GX_MTX_2x4);
+        texgens++;
+    }
+
+    // Z-mode cache: sub-object bit 0x100 disables the depth compare.
+    u32 zbit = (self->field_0x0c->field_0x1c >> 8) & 1;
+    u32 zb = (u32)(-zbit | zbit) >> 31;
+    if (lbl_eu_806659A8 != (s32)zb) {
+        if (zb) {
+            GXSetZMode(GX_FALSE, GX_ALWAYS, GX_FALSE);
+        } else {
+            GXSetZMode(GX_TRUE, GX_LEQUAL, GX_FALSE);
+        }
+        lbl_eu_806659A8 = (s32)zb;
+    }
+
+    switch ((u8)texgens) {
+    case 0:
+        if (lbl_eu_806659AC != 0) {
+            GXSetTevOrder(GX_TEVSTAGE0, GX_TEXCOORD_NULL, GX_TEXMAP_NULL, GX_COLOR0A0);
+            GXSetTevOp(GX_TEVSTAGE0, GX_PASSCLR);
+            lbl_eu_806659AC = 0;
+        }
+        if (lbl_eu_806659B4 != 0) {
+            GXSetNumTexGens(0);
+            GXSetNumTevStages(1);
+            GXSetVtxDesc(GX_VA_TEX0, GX_NONE);
+            GXSetVtxDesc(GX_VA_TEX1, GX_NONE);
+            lbl_eu_806659B4 = 0;
+        }
+        break;
+    case 1:
+        if (lbl_eu_806659AC != 1) {
+            GXSetTevOrder(GX_TEVSTAGE0, GX_TEXCOORD0, GX_TEXMAP0, GX_COLOR0A0);
+            GXSetTevOp(GX_TEVSTAGE0, GX_MODULATE);
+            lbl_eu_806659AC = 1;
+        }
+        if (lbl_eu_806659B4 != 1) {
+            GXSetNumTexGens(1);
+            GXSetNumTevStages(1);
+            GXSetVtxDesc(GX_VA_TEX0, GX_DIRECT);
+            GXSetVtxDesc(GX_VA_TEX1, GX_NONE);
+            lbl_eu_806659B4 = 1;
+        }
+        break;
+    case 2:
+        if (lbl_eu_806659AC != 1) {
+            GXSetTevOrder(GX_TEVSTAGE0, GX_TEXCOORD0, GX_TEXMAP0, GX_COLOR0A0);
+            GXSetTevOp(GX_TEVSTAGE0, GX_MODULATE);
+            lbl_eu_806659AC = 1;
+        }
+        if (lbl_eu_806659B4 != 2) {
+            GXSetNumTexGens(2);
+            GXSetNumTevStages(2);
+            GXSetVtxDesc(GX_VA_TEX0, GX_DIRECT);
+            GXSetVtxDesc(GX_VA_TEX1, GX_DIRECT);
+            lbl_eu_806659B4 = 2;
+        }
+        break;
+    default:
+        break;
+    }
+
+    RenderNode* node2 = (RenderNode*)func_804E0168(self->field_0x00);
+    func_804D7434((CETrail*)self->field_0x328, texgens, &node2->b0);
+}
 extern "C" void __attribute__((never_inline)) func_804D20EC(EffectNode* nodeRaw, void* res) {
     EffectScene* self = (EffectScene*)nodeRaw;
     union {
@@ -3549,14 +4062,21 @@ extern "C" void func_804D5764(RenderObj* self) {
         ml::CCol4 scaled(src.r * factor, src.g * factor, src.b * factor, src.a);
         mult.set(scaled.r * lbl_eu_8066B148, scaled.g * lbl_eu_8066B148,
                  scaled.b * lbl_eu_8066B148, scaled.a);
-        ml::CCol4 c;
-        c = mult;
-        c.clamp(lbl_eu_8066B140, lbl_eu_8066B14C);
-        GXColor col;
-        col.r = (u8)(s32)(lbl_eu_8066B150 * c.r);
-        col.g = (u8)(s32)(lbl_eu_8066B150 * c.g);
-        col.b = (u8)(s32)(lbl_eu_8066B150 * c.b);
-        col.a = (u8)(s32)(lbl_eu_8066B150 * c.a);
+        ml::CCol4 c = mult;
+        if (c.r > lbl_eu_8066B14C) c.r = lbl_eu_8066B14C;
+        else if (c.r < lbl_eu_8066B140) c.r = lbl_eu_8066B140;
+        if (c.g > lbl_eu_8066B14C) c.g = lbl_eu_8066B14C;
+        else if (c.g < lbl_eu_8066B140) c.g = lbl_eu_8066B140;
+        if (c.b > lbl_eu_8066B14C) c.b = lbl_eu_8066B14C;
+        else if (c.b < lbl_eu_8066B140) c.b = lbl_eu_8066B140;
+        if (c.a > lbl_eu_8066B14C) c.a = lbl_eu_8066B14C;
+        else if (c.a < lbl_eu_8066B140) c.a = lbl_eu_8066B140;
+        GXColor col = {
+            (u8)(s32)(lbl_eu_8066B150 * c.r),
+            (u8)(s32)(lbl_eu_8066B150 * c.g),
+            (u8)(s32)(lbl_eu_8066B150 * c.b),
+            (u8)(s32)(lbl_eu_8066B150 * c.a)
+        };
         GXSetChanAmbColor(GX_COLOR0A0, col);
         GXSetChanAmbColor(GX_COLOR1A1, col);
     }
@@ -3605,10 +4125,10 @@ extern "C" void func_804D5764(RenderObj* self) {
     q = self->field_0x14->field_0x114;
     u16 dd0 = q ? *(u16*)((u8*)q - 0x1a) : 0;
     s32 bfl = 0;
-    // extrwi 1,20 = bit 10; extrwi 1,25 = bit 5.
-    if (dd0 == 0 && !((self->field_0x14->field_0x1c >> 10) & 1)) bfl = 1;
+    // extrwi 1,20 -> rlwinm 21 = bit 11 (0x800); extrwi 1,25 -> rlwinm 26 = bit 6 (0x40).
+    if (dd0 == 0 && !((self->field_0x14->field_0x1c >> 11) & 1)) bfl = 1;
     s32 tp = 0;
-    if (bfl && !((self->field_0x14->field_0x1c >> 5) & 1)) tp = 1;
+    if (bfl && !((self->field_0x14->field_0x1c >> 6) & 1)) tp = 1;
     func_804D8AA4(tp, bfl);
     func_804D0194();
 }

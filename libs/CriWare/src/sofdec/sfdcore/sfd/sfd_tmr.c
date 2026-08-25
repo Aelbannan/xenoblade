@@ -53,34 +53,35 @@ typedef struct SfdTmrClock {
 } SfdTmrClock;
 
 /* SFTMR_GetTmrUnit: get timer unit/period as 64-bit */
-u64 SFTMR_GetTmrUnit(void *sfd) {
-    if (*(u64 *)lbl_eu_80619BC8 == 0) {
+u64 SFTMR_GetTmrUnit(SfdTmrClock *sfd) {
+    union {
+        s64 t;
+        s32 w[2];
+    } outs;
+    if ((lbl_eu_80619BC8[1] | lbl_eu_80619BC8[0]) == 0) {
         if (UTY_IsTmrVoid((s32)lbl_eu_80619BC8[1]) == 0) {
             /* use UTY timer directly */
             u64 unit = UTY_GetTmrUnit();
             lbl_eu_80619BC8[1] = (u32)unit;
             lbl_eu_80619BC8[0] = (u32)(unit >> 32);
             UTY_GetTmr();
-        } else if (sfd != NULL && ((SfdTmrClock *)sfd)->clock_status != 0 &&
-                   ((SfdTmrClock *)sfd)->get_clock != NULL) {
+        } else if (sfd != NULL && sfd->clock_status != 0 &&
+                   sfd->get_clock != NULL) {
             /* use the SFD handle's external clock callback */
-            SfdTmrClock *clk = (SfdTmrClock *)sfd;
-            s32 out2, out1;
-            clk->get_clock(clk->get_clock_arg, &out1, &out2);
-            lbl_eu_80619BC8[1] = (u32)out2;
-            lbl_eu_80619BC8[0] = (u32)((s32)out2 >> 31);
+            sfd->get_clock(sfd->get_clock_arg, &outs.w[0], &outs.w[1]);
+            lbl_eu_80619BC8[1] = (u32)outs.w[1];
+            /* high word of the sign-extended pair */
+            lbl_eu_80619BC8[0] = (u32)((s64)outs.w[1] >> 32);
         } else {
-            /* fallback: SFD work-area frame counter (mirrors SFTMR_GetTmr) */
-            u32 frame = lbl_eu_80606E38[0x1A8 / 4];
-            lbl_eu_80619BC8[1] = frame;
-            /* retail reads the work-area rate (0x19C) after the stores even
-             * though the value is unused; volatile keeps MWCC from
-             * dead-load-eliminating it */
+            /* fallback: SFD work-area frame counter (mirrors SFTMR_GetTmr);
+             * retail also issues the (dead) 0x19C rate load here */
+            u32 frame;
+            lbl_eu_80619BC8[1] = frame = lbl_eu_80606E38[0x1A8 / 4];
+            lbl_eu_80619BC8[0] = (u32)((s64)(s32)frame >> 32);
             *(volatile u32 *)&lbl_eu_80606E38[0x19C / 4];
-            lbl_eu_80619BC8[0] = (u32)((s32)frame >> 31);
         }
     }
-    return *(u64 *)lbl_eu_80619BC8;
+    return ((u64)lbl_eu_80619BC8[0] << 32) | lbl_eu_80619BC8[1];
 }
 
 /* SFTMR_InitTsum: initialize a timestamp accumulator struct */

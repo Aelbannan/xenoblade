@@ -179,7 +179,7 @@ extern "C" nw4r::lyt::ArcResourceAccessor* func_801355F4();
 extern "C" char* func_801571FC();
 
 // BDAT string/value lookups (unmangled retail symbols).
-extern "C" u8 func_8013600C(const char*, const char*, u32);
+extern "C" u8 func_8013600C(const void*, const void*, u32);
 
 // Layout text/pane binding helpers (unmangled retail symbols; the canonical
 // code_80135FDC.hpp / CItemBoxGrid.hpp declarations conflict with

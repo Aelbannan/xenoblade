@@ -284,7 +284,7 @@ extern "C" void CActorParam_UnkVirtualFunc54__Q22cf13CfObjectActorFv(cf::CfObjec
     }
     u32* idPtr = reinterpret_cast<cf::CfActorUnk4Vt30*>(reinterpret_cast<cf::CfActorField04*>(self)->field_0x04)->vf30();
     u32 id = *idPtr;
-    if (func_80174C98(self, &id, 0x802) != 0) {
+    if (func_80174C98(self, (int*)&id, 0x802) != 0) {
         cf::CfActorParamVt168* vt = reinterpret_cast<cf::CfActorParamVt168*>(self);
         // MWCC evaluates == right-to-left: retail calls 0x178 first, 0x174 second.
         if (vt->m174() == vt->m178()) {
@@ -348,7 +348,7 @@ extern "C" void CActorParam_UnkVirtualFunc60__Q22cf13CfObjectActorFv(cf::CfObjec
     }
     u32* idPtr = reinterpret_cast<cf::CfActorUnk4Vt30*>(reinterpret_cast<cf::CfActorField04*>(self)->field_0x04)->vf30();
     u32 id = *idPtr;
-    if (func_80174C98(self, &id, 0x802) != 0) {
+    if (func_80174C98(self, (int*)&id, 0x802) != 0) {
         s16 cur2 = f->field_0x1614;
         s16 max2 = f->field_0x1616;
         int sum2 = cur2 + (s16)delta;
@@ -568,7 +568,7 @@ void cf::CfObjectActor::CActorParam_UnkVirtualFunc4() {
     CActorParam::CActorParam_UnkVirtualFunc6();
     u32* idPtr = reinterpret_cast<cf::CfActorUnk4Vt30*>(reinterpret_cast<cf::CfActorField04*>(this)->field_0x04)->vf30();
     u32 id = *idPtr;
-    if (func_80174C98(this, &id, 0x1c) != 0) {
+    if (func_80174C98(this, (int*)&id, 0x1c) != 0) {
         func_800BE12C((u8*)this + 16028, 0x2f, 1, -1, 1);  // +0x3E9C: CfObjectMove subobject
     }
 }

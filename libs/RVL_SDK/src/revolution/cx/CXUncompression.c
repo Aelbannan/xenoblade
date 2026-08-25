@@ -49,6 +49,8 @@ void CXUncompressHuffman(const u8* src, u8* dst) {
         size = CXLoadBE32(src + 4);
     }
 
+    // Walk the Huffman tree: each node's low 6 bits give the child-block
+    // offset, bit 0 marks a leaf whose target holds one output byte.
     tree = treeBase;
     words = data + 2 * (data[0] + 1);
 
@@ -61,6 +63,7 @@ void CXUncompressHuffman(const u8* src, u8* dst) {
             bit = bits >> 31;
             tree = (const u8*)(((u32)tree & ~1) + bit + 2 * ((node & 0x3F) + 1));
             if ((node << bit) & 0x80) {
+                // Leaf reached: emit the byte stored at the leaf offset.
                 u8 out = *tree;
                 bitBuffer = (bitBuffer >> shift) | (out << (32 - shift));
                 tree = (const u8*)treeBase;

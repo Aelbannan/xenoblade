@@ -55,7 +55,8 @@ namespace ml{
     given fixed string. */
     void CPathUtil::getNoPathExtName(FixStr<64>& outStr, const char* pPath){
         FixStr<64> temp;
-        int dummy = 12345;
+        int strLength;
+        int length;
 
         const char* pFilename = getFilePtrFromPath(pPath);
 
@@ -63,18 +64,35 @@ namespace ml{
             outStr = temp;
         }else{
             temp = pFilename;
-            // The local keeps MWCC's eager lis/@l address materialisation in a
-            // saved register (retail hoists the needle load above the length
-            // branch); referencing the extern inline merges the LO into the
-            // first use and shifts the load into the branch.
+            // Inlined FixStr<64>::rfind(".", -1). Written out here (rather than
+            // calling rfind) to reproduce retail's codegen. The pNeedle local
+            // keeps MWCC's eager lis/@l address materialisation in a saved
+            // register hoisted above the length branch; referencing the extern
+            // inline merges the LO into the first use and shifts the load
+            // into the branch.
             const char* pNeedle = lbl_eu_80522458;
-            int length = temp.rfind(pNeedle, -1);
+            int len = temp.mLength;
+            if (len == 0) {
+                length = -1;
+            }else{
+                strLength = std::strlen(pNeedle);
+
+                char* p;
+                for (p = (temp.mString - 1) + len; p != temp.mString - 1; p--) {
+                    if (!std::strncmp(p, pNeedle, strLength)) {
+                        length = p - temp.mString;
+                        goto found;
+                    }
+                }
+                length = -1;
+            }
+found:
 
             if ((u32)length + 1 <= 1) {
                 outStr = temp;
             }else{
                 outStr.clear();
-                if (!temp.empty()) {
+                if (temp.mLength != 0) {
                     if (length == -1) length = temp.size();
                     std::strncpy(outStr.mString, temp.mString, length);
                     outStr.mString[length] = 0;

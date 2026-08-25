@@ -188,7 +188,7 @@ int func_802B8D4C() {
 
                 void* result = ((void* (*)(void*))((void**)gh->field_4)[0x30 / 4])(gh->field_4);
                 u32 val = *(u32*)result;
-                if (func_80174C98(gh, &val, 0x803) != 0) {
+                if (func_80174C98(gh, (int*)&val, 0x803) != 0) {
                     OrderConfigEntry* e = &lbl_eu_8053B840[0];
                     while (e->key != 0) {
                         if (e->key == gh->field_3F28) {

@@ -443,7 +443,7 @@ public:
     bool func_8008585C();
     void func_80085878();
     void func_800858B8();
-    void func_80085978();
+    void func_80085978();  // body lives in the extern "C" Fv-symbol definition below
     void func_80085E58();
     void func_80085FB8();
     void func_800862D0();
@@ -685,8 +685,16 @@ struct UnkScnResult {
     u32 field_0x8;
     float field_0xC;
 };
-extern "C" UnkScnResult* func_8049603C(CScn* scene);
-extern "C" void func_8049602C(CScn* scene, u32 mode, const float* vec);
+// Forward decl: full definition lives in CTaskGame.hpp (identical-layout
+// view). The FUNCTION must return this exact type - divergent return types
+// trip MWCC 10505 when both headers land in one TU.
+struct CTaskGameCamView;
+extern "C" void* func_8049603C(CScn* scene);
+// NOTE: keep this prototype IDENTICAL to the ones in src/kyoshin/CTaskGame.hpp
+// and src/kyoshin/cf/CTaskREvtSequence.hpp (void*, int, void*) - divergent
+// extern "C" type lists for the same symbol make any TU that includes more
+// than one of these headers fail with "illegal function overloading" (10197).
+extern "C" void func_8049602C(void* scene, int mode, void* vec);
 extern const float lbl_eu_80666568;
 
 // --- func_80084F50 imports ---
@@ -761,7 +769,7 @@ namespace ml { class CVec3; }
 // CfObjectMove.hpp declares the same prototype.
 void* func_800AD860(void* object);
 extern "C" void func_8009D018(u32 first, u32 second);
-extern "C" u32 func_801412D0(u32 first);
+extern "C" void* func_801412D0(u32);
 extern "C" void func_8013F244();
 extern "C" void func_8015B11C();
 extern "C" void* func_802A2424();
@@ -786,7 +794,7 @@ extern "C" void func_80068DAC();
 extern "C" void func_800B93AC();
 extern "C" void func_800F3C08(void* battle, u32 value);
 extern "C" void* func_8004B7C0(void* out, const ml::CVec3* src);
-extern "C" void func_80199678();
+extern "C" void func_80199678(void* ctrl, int flag); // 2-arg form per CtrlMovePC.cpp definition - keep in sync with TU-local decls
 // zero vector constant exported by the ml unit. Declared by
 // CfGameManagerUnityHelpers.hpp (ResetVectorWords view) in this TU; a global
 // extern here would clash with that declaration's type.

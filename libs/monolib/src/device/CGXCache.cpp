@@ -887,15 +887,11 @@ update:
         self->unk4.mArrayPtr[slot].unk23 = 0x9;
         u32 idx2 = self->unk4.mFront + i;
         u32 slot2 = idx2 % self->unk4.mCapacity;
-        u32 p1 = payload[1];
-        u32 p0 = payload[0];
         CMsgParamEntry* e = &self->unk4.mArrayPtr[slot2];
-        e->wid = p0;
-        e->unk8 = p1;
-        u32 p3 = payload[3];
-        u32 p2 = payload[2];
-        e->unkC = p2;
-        e->unk10 = p3;
+        u32* dst = &e->wid;
+        for (int j = 0; j < 4; j++) {
+            dst[j] = payload[j];
+        }
         func_8044CE68__8CGXCacheFv(&self->unk4, 0x1);
     }
 end:
@@ -1116,11 +1112,7 @@ void CGXCache::func_8044B03C(int param) {
     unk4.mArrayPtr[slot].unk23 = 0x3;
     u32 slot2 = (unk4.mFront + i) % unk4.mCapacity;
     unk4.mArrayPtr[slot2].wid = lbl_eu_8066364C;
-    {
-        // volatile blocks CSE of (&unk4) out of the call arg window
-        void* volatile vself = this;
-        func_8044CE68__8CGXCacheFv(&static_cast<CGXCache*>(vself)->unk4, 0x9);
-    }
+    func_8044CE68__8CGXCacheFv(&unk4, 0x9);
 }
 
 // Same cache-update as func_8044B03C but for texture slot 0x63650.
@@ -1171,7 +1163,7 @@ void CGXCache::func_8044A94C(int param1, int param2) {
     u32 slot = (unk4.mFront + i) % unk4.mCapacity;
     unk4.mArrayPtr[slot].unk23 = 0x4;
     u32 slot2 = (unk4.mFront + i) % unk4.mCapacity;
-    unk4.mArrayPtr[slot2].wid = val;
+    *(u8*)&unk4.mArrayPtr[slot2].wid = val; // only the low byte is written
     func_8044CE68__8CGXCacheFv(&unk4, 0x6);
 }
 
@@ -1192,6 +1184,18 @@ static inline f32 s32ToF(s32 v) {
     return (f32)(c.d - lbl_eu_8066A388);
 }
 
+// u32 -> f32 through the shared 2^52 magic double (lbl_eu_8066A390). Unsigned
+// variant: no top-bit flip, so the low word is stored unmodified.
+static inline f32 u32ToF(u32 v) {
+    union {
+        double d;
+        u32 w[2];
+    } c;
+    c.w[1] = v;
+    c.w[0] = 0x43300000u;
+    return (f32)(c.d - lbl_eu_8066A390);
+}
+
 // u16 -> f32 through the shared 2^52 magic double (lbl_eu_8066A390). Same
 // reloc-naming rationale as s32ToF.
 static inline f32 u16ToF(u16 v) {
@@ -1202,6 +1206,24 @@ static inline f32 u16ToF(u16 v) {
     c.w[1] = v;
     c.w[0] = 0x43300000u;
     return (f32)(c.d - lbl_eu_8066A390);
+}
+
+// Caller-owned scratch-slot variants: the union lives at the call site so
+// consecutive conversions reuse one stack slot (retail reuses two slots,
+// one per matrix column of conversions).
+typedef union {
+    double d;
+    u32 w[2];
+} F64Cvt;
+
+static inline f32 cvtS32Slot(F64Cvt* c, s32 v) {
+    c->w[1] = (u32)v ^ 0x80000000;
+    return (f32)(c->d - lbl_eu_8066A388);
+}
+
+static inline f32 cvtU32Slot(F64Cvt* c, u32 v) {
+    c->w[1] = v;
+    return (f32)(c->d - lbl_eu_8066A390);
 }
 
 
@@ -1292,10 +1314,12 @@ void CGXCache::func_8044B8CC(f32 fovy, f32 znear, f32 zfar) {
         f32 t = (f32)((s32)mRectTop - (s32)((u32)getRenderModeObj__9CDeviceVIFv()->efbHeight >> 1));
         f32 b = (f32)((s32)mRectBottom - (s32)((u32)getRenderModeObj__9CDeviceVIFv()->efbHeight >> 1));
         mProjMtx[0][2] = (r + l) / (r - l);
-        f32 znearScaled = lbl_eu_8066A39C * znear;
+        // Overwrite znear in place: retail reuses the param's own callee-save
+        // (fmuls f31,f0,f31) rather than giving the scaled copy a new range.
+        znear = lbl_eu_8066A39C * znear;
         mProjMtx[1][2] = (t + b) / (t - b);
-        mProjMtx[0][0] = znearScaled / (znearScaled / mProjMtx[0][0] * ((f32)((s32)mRectRight - (s32)mRectLeft) / (f32)(u32)getRenderModeObj__9CDeviceVIFv()->fbWidth));
-        mProjMtx[1][1] = znearScaled / (znearScaled / mProjMtx[1][1] * ((f32)((s32)mRectBottom - (s32)mRectTop) / (f32)(u32)getRenderModeObj__9CDeviceVIFv()->efbHeight));
+        mProjMtx[0][0] = znear / (znear / mProjMtx[0][0] * ((f32)((s32)mRectRight - (s32)mRectLeft) / (f32)(u32)getRenderModeObj__9CDeviceVIFv()->fbWidth));
+        mProjMtx[1][1] = znear / (znear / mProjMtx[1][1] * ((f32)((s32)mRectBottom - (s32)mRectTop) / (f32)(u32)getRenderModeObj__9CDeviceVIFv()->efbHeight));
     }
     GXSetProjection(mProjMtx, GX_ORTHOGRAPHIC);
 }
@@ -1305,26 +1329,51 @@ void CGXCache::func_8044B8CC(f32 fovy, f32 znear, f32 zfar) {
 // to GX. Retail symbol is Fv-mangled although the body reads
 // (CGXCache*, f32[4][4], f32 fovY, f32 nearZ, f32 farZ) from r3/r4/f1-f3
 // (same pattern as func_8044ABAC / func_8044CE68).
-extern "C" void func_8044BB20__8CGXCacheFv(CGXCache* self, f32 projOut[4][4], f32 fovy, f32 znear, f32 zfar) {
+extern "C" void func_8044BB20__8CGXCacheFv(CGXCache* self, f32 projOut[4][4], f32 fovy, f32 nearZ, f32 farZ) {
+    // Plain float casts reproduce retail's exact schedule; the conversion
+    // magics land in MWCC's anonymous .sdata2 pool (@N) - they need
+    // retarget_relocs/exact_renames onto lbl_eu_8066A388/A390 in the unit's
+    // postprocess rule (same pattern as the existing .text 0x8CC entries).
+    // NOTE: retail passes float param 2 (nearZ) as C_MTXPerspective's near
+    // plane and scales IT by lbl_eu_8066A39C; param 3 is the far plane.
     f32 aspect = lbl_eu_8066A398 * ((f32)self->mScissorDeltaX / (f32)self->mScissorDeltaY);
-    C_MTXPerspective(projOut, fovy, aspect * getWidthScale__9CDeviceVIFv(), znear, zfar);
+    C_MTXPerspective(projOut, fovy, aspect * getWidthScale__9CDeviceVIFv(), nearZ, farZ);
     if (self->mAdjustProj) {
         f32 r = (f32)((s32)self->mRectRight - (s32)((u32)getRenderModeObj__9CDeviceVIFv()->fbWidth >> 1));
         f32 l = (f32)((s32)self->mRectLeft - (s32)((u32)getRenderModeObj__9CDeviceVIFv()->fbWidth >> 1));
         f32 t = (f32)((s32)self->mRectTop - (s32)((u32)getRenderModeObj__9CDeviceVIFv()->efbHeight >> 1));
         f32 b = (f32)((s32)self->mRectBottom - (s32)((u32)getRenderModeObj__9CDeviceVIFv()->efbHeight >> 1));
         projOut[0][2] = (r + l) / (r - l);
-        f32 znearScaled = lbl_eu_8066A39C * znear;
+        // Overwrite the near plane in place: retail reuses the param's own
+        // callee-save (fmuls f31,f0,f31) rather than giving the scaled copy
+        // a new range.
+        nearZ = lbl_eu_8066A39C * nearZ;
         projOut[1][2] = (t + b) / (t - b);
-        projOut[0][0] = znearScaled / (znearScaled / projOut[0][0] * ((f32)((s32)self->mRectRight - (s32)self->mRectLeft) / (f32)(u32)getRenderModeObj__9CDeviceVIFv()->fbWidth));
-        projOut[1][1] = znearScaled / (znearScaled / projOut[1][1] * ((f32)((s32)self->mRectBottom - (s32)self->mRectTop) / (f32)(u32)getRenderModeObj__9CDeviceVIFv()->efbHeight));
+        // Retail evaluates each ratio's getRenderModeObj() call before
+        // touching the matrix diagonal, so hoist the ratios.
+        f32 xr = (f32)((s32)self->mRectRight - (s32)self->mRectLeft) /
+                 (f32)(u32)getRenderModeObj__9CDeviceVIFv()->fbWidth;
+        projOut[0][0] = nearZ / (nearZ / projOut[0][0] * xr);
+        f32 yr = (f32)((s32)self->mRectBottom - (s32)self->mRectTop) /
+                 (f32)(u32)getRenderModeObj__9CDeviceVIFv()->efbHeight;
+        projOut[1][1] = nearZ / (nearZ / projOut[1][1] * yr);
     }
 }
 
 // Ring entry 3's payload word is the scissor width; scale it by z depth:
 // (s16)unk500 * param / wid (int->float math, truncated back to int).
 s32 CGXCache::func_8044BD74(s32 param) {
+    // Retail shape: ring lookup first; the s16 field at 0x500 converts via the
+    // signed 2^52+2^31 magic, the width payload word is loaded only after the
+    // conversion stores, and both param/width convert via the unsigned 2^52
+    // magic before the single-precision mul/div.
     u32 wid = *func_8044CF74__8CGXCacheFv(&unk4, 3);
+    // Plain float casts reproduce retail's exact 156B schedule; the s16 field
+    // converts through the signed magic (lha/xoris/2^52+2^31) and param/wid
+    // through the unsigned 2^52 magic. NOTE: MWCC pools these as anonymous
+    // .sdata2 constants (@N) - they need retarget_relocs/exact_renames onto
+    // lbl_eu_8066A388/A390 in the unit's postprocess rule (same pattern as
+    // the existing .text 0x8CC / 0x1A48 entries).
     f32 f = (f32)unk500 * (f32)(u32)param / (f32)wid;
     return (s32)f;
 }
@@ -1771,23 +1820,42 @@ static u32 msgRingFind(MsgParam32Ring* ring, u32 cmd) {
     return 0xFFFFFFFF;
 }
 
+// Message-target object stored at ring+0x498. Vtable slots 0-1 are the
+// destructor pair; dispatch is word slot 3.
+class __declspec(novtable) CGxMessageTarget {
+public:
+    virtual ~CGxMessageTarget();
+    virtual void dispatch(u32 cmd, void* data);
+};
+
 // Ring command dispatcher: finds the entry with command == cmd and
 // tail-calls the object at ring+0x498 through vtable slot 3 with the payload.
 // noinline: retail emits a bl to the dispatcher from every ring setter; IPA
 // must not inline it into them.
 #pragma push
 #pragma auto_inline off
+// Inlined-helper form: the `return i` inside the loop is what makes MWCC
+// emit the two-branch exit (`bne next; b found`) of the retail search loop.
+static inline u32 gxCacheFindCmd(MsgParam32Ring* ring, u32 cmd) {
+    for (u32 i = 0; i < ring->mSize; i++) {
+        u32 idx = ring->mFront + i;
+        u32 slot = idx % ring->mCapacity;
+        if (ring->mArrayPtr[slot].command == cmd)
+            return i;
+    }
+    return 0xFFFFFFFF;
+}
+
 extern "C" __declspec(noinline) void func_8044CE68__8CGXCacheFv(void* self, u32 cmd) {
     MsgParam32Ring* ring = (MsgParam32Ring*)self;
-    u32 i = msgRingFind(ring, cmd);
-    // Advance self to the message object first (retail `mr r9,r3` keeps the
-    // ring base alive in r9 across this overwrite).
-    self = ring->field7;
+    u32 i = gxCacheFindCmd(ring, cmd);
+    // Statement order reproduces retail's schedule; the virtual-call syntax
+    // pins the target object to r3 and pushes the ring copy into r9.
     u32 idx = ring->mFront + i;
-    u32 slot = idx % ring->mCapacity;
-    MsgParam32Entry* entry = &ring->mArrayPtr[slot];
-    void** vtbl = *(void***)self;
-    ((void (*)(void*, u32, void*))vtbl[3])(self, cmd, &entry->wid);
+    void* obj = ring->field7;
+    u32 slot2 = idx % ring->mCapacity;
+    MsgParam32Entry* entry = &ring->mArrayPtr[slot2];
+    static_cast<CGxMessageTarget*>(obj)->dispatch(cmd, &entry->wid);
 }
 #pragma pop
 
@@ -1847,11 +1915,13 @@ public:
 // ringFindIndex above.
 template <int N>
 static u32 cmsgFindIndex(CMsgParam<N>* self, u32 msg) {
-    u32 count = self->mSize;
-    for (u32 i = 0; i < count; i++) {
+    // Loop bound kept inline so MWCC hoists it into a short-lived temp
+    // register (retail holds the count in r0 for mtctr+cmplwi).
+    for (u32 i = 0; i < self->mSize; i++) {
         u32 idx = self->mFront + i;
         u32 slot = idx % self->mCapacity;
-        if (self->mArrayPtr[slot].command == msg) return i;
+        // Compare order matches retail's reversed cmplw r4(msg), r0(command).
+        if (msg == self->mArrayPtr[slot].command) return i;
     }
     return 0xFFFFFFFF;
 }
@@ -1871,14 +1941,12 @@ template <> void CMsgParam<32>::func_80449B94(unsigned long msg, u32* widSrc) {
     goto stamp;
 append:
     {
-        // Retail reloads mFront/mSize/mArrayPtr here instead of reusing the
-        // search-loop registers, and loads them in that order.
-        u32 front = this->mFront;
-        volatile u32* vsize = &this->mSize;
-        u32 curSize = *vsize;
-        u32 sum = front + curSize;
+        // Retail reloads mFront/mSize/mCapacity/mArrayPtr here instead of
+        // reusing the search-loop registers, in exactly that order.
+        u32 front = *(volatile u32*)&this->mFront;
+        u32 curSize = *(volatile u32*)&this->mSize;
+        int index = (int)(front + curSize) % (int)*(volatile u32*)&this->mCapacity;
         CMsgParamEntry* arr = this->mArrayPtr;
-        int index = (int)sum % (int)mCapacity;
         volatile CMsgParamEntry entry;
         u32 wid = entry.wid;
         u32 value8 = entry.unk8;
@@ -1906,6 +1974,7 @@ append:
     }
 stamp:
     {
+        // Each store recomputes the slot from freshly reloaded members.
         u32 slot = (mFront + field6) % mCapacity;
         mArrayPtr[slot].unk23 = 3;
         u32 slot2 = (mFront + field6) % mCapacity;
@@ -1926,12 +1995,17 @@ template <> void CMsgParam<32>::func_804495C4(unsigned long msg, u32* payload) {
     goto stamp;
 append:
     {
-        // Retail reloads mFront/mSize/mArrayPtr here (in that order) instead
-        // of reusing the search-loop registers.
-        volatile u32* vfront = &this->mFront;
-        volatile u32* vsize = &this->mSize;
-        int index = (int)(*vfront + *vsize) % (int)mCapacity;
-        CMsgParamEntry* volatile arr = this->mArrayPtr;
+        // Retail member-reload order: size, capacity, front (matches its
+        // register coloring r6/r7/r8); quotient signed; array pointer
+        // reloaded before the division.
+        u32 curSize = *(volatile u32*)&this->mSize;
+        u32 cap = this->mCapacity;
+        u32 front = *(volatile u32*)&this->mFront;
+        s32 sum = (s32)(front + curSize);
+        // Pinned here: retail issues the array-pointer reload between the
+        // index sum and the signed division.
+        CMsgParamEntry* arr = (CMsgParamEntry*)*(volatile void**)&this->mArrayPtr;
+        s32 q = sum / (s32)cap;
         volatile CMsgParamEntry entry;
         u32 wid = entry.wid;
         u32 value8 = entry.unk8;
@@ -1942,7 +2016,7 @@ append:
         u32 value1C = entry.unk1C;
         u16 value20 = entry.unk20;
         u8 value22 = entry.unk22;
-        CMsgParamEntry* e = &arr[index];
+        CMsgParamEntry* e = &arr[sum - q * (s32)cap];
         e->command = (u32)msg;
         e->wid = wid;
         e->unk8 = value8;
@@ -1959,11 +2033,20 @@ append:
     }
 stamp:
     {
-        u32 slot = (mFront + field6) % mCapacity;
-        mArrayPtr[slot].unk23 = 0xd;
-        u32 slot2 = (mFront + field6) % mCapacity;
-        mArrayPtr[slot2].wid = payload[0];
-        mArrayPtr[slot2].unk8 = payload[1];
+        // First slot pass stamps unk23 = 0xd; the payload words are read
+        // around the division (p0 before, p1 after). The second pass
+        // recomputes the slot from freshly reloaded members.
+        u32 p0 = payload[0];
+        u32 idx = mFront + field6;
+        u32 q1 = idx / mCapacity;
+        u32 p1 = payload[1];
+        mArrayPtr[idx - q1 * mCapacity].unk23 = 0xd;
+
+        u32 idx2 = mFront + field6;
+        u32 q2 = idx2 / mCapacity;
+        CMsgParamEntry* t = &mArrayPtr[idx2 - q2 * mCapacity];
+        t->wid = p0;
+        t->unk8 = p1;
     }
 }
 
@@ -1976,48 +2059,48 @@ template <> void CMsgParam<32>::func_8044972C(unsigned long msg, u8* payload) {
     goto stamp;
 append:
     {
-        // Retail reloads mFront/mSize/mArrayPtr here (in that order) instead
-        // of reusing the search-loop registers.
-        volatile u32* vfront = &this->mFront;
-        volatile u32* vsize = &this->mSize;
-        int index = (int)(*vfront + *vsize) % (int)mCapacity;
-        CMsgParamEntry* volatile arr = this->mArrayPtr;
+        // Retail reload order: front, size, capacity, sum, array ptr, signed
+        // division.
+        u32 front = *(volatile u32*)&this->mFront;
+        u32 curSize = *(volatile u32*)&this->mSize;
+        s32 cap = *(volatile u32*)&this->mCapacity;
+        s32 sum = (s32)(front + curSize);
+        CMsgParamEntry* arr = (CMsgParamEntry*)*(volatile void**)&this->mArrayPtr;
         volatile CMsgParamEntry entry;
-        u32 wid = entry.wid;
-        u32 value8 = entry.unk8;
-        u32 valueC = entry.unkC;
-        u32 value10 = entry.unk10;
-        u32 value14 = entry.unk14;
-        u32 value18 = entry.unk18;
-        u32 value1C = entry.unk1C;
-        u16 value20 = entry.unk20;
-        u8 value22 = entry.unk22;
-        CMsgParamEntry* e = &arr[index];
+        CMsgParamEntry* e = &arr[sum % cap];
         e->command = (u32)msg;
-        e->wid = wid;
-        e->unk8 = value8;
-        e->unkC = valueC;
-        e->unk10 = value10;
-        e->unk14 = value14;
-        e->unk18 = value18;
-        e->unk1C = value1C;
-        e->unk20 = value20;
-        e->unk22 = value22;
+        e->wid = entry.wid;
+        e->unk8 = entry.unk8;
+        e->unkC = entry.unkC;
+        e->unk10 = entry.unk10;
+        e->unk14 = entry.unk14;
+        e->unk18 = entry.unk18;
+        e->unk1C = entry.unk1C;
+        e->unk20 = entry.unk20;
+        e->unk22 = entry.unk22;
         e->unk23 = 0;
         mSize++;
         field6 = mSize - 1;
     }
 stamp:
     {
-        u32 slot = (mFront + field6) % mCapacity;
-        mArrayPtr[slot].unk23 = 0x5;
-        u32 slot2 = (mFront + field6) % mCapacity;
-        u8* dst = (u8*)&mArrayPtr[slot2].wid;
-        u8* src = (u8*)payload;
-        dst[0] = src[0];
-        dst[1] = src[1];
-        dst[2] = src[2];
-        dst[3] = src[3];
+        // Payload bytes are read around the first division; the second pass
+        // recomputes the slot from freshly reloaded members.
+        u32 idx = mFront + field6;
+        u32 q = idx / mCapacity;
+        u8 b0 = payload[0];
+        u8 b1 = payload[1];
+        u8 b2 = payload[2];
+        u8 b3 = payload[3];
+        mArrayPtr[idx - q * mCapacity].unk23 = 0x5;
+
+        u32 idx2 = mFront + field6;
+        u32 q2 = idx2 / mCapacity;
+        u8* dst = (u8*)&mArrayPtr[idx2 - q2 * mCapacity].wid;
+        dst[0] = b0;
+        dst[1] = b1;
+        dst[2] = b2;
+        dst[3] = b3;
     }
 }
 
@@ -2030,12 +2113,12 @@ template <> void CMsgParam<32>::func_804498A4(unsigned long msg, u32* payload) {
     goto stamp;
 append:
     {
-        // Retail reloads mFront/mSize/mArrayPtr here (in that order) instead
-        // of reusing the search-loop registers.
-        volatile u32* vfront = &this->mFront;
-        volatile u32* vsize = &this->mSize;
-        int index = (int)(*vfront + *vsize) % (int)mCapacity;
-        CMsgParamEntry* volatile arr = this->mArrayPtr;
+        // Retail reloads mFront/mSize/mCapacity/mArrayPtr here (in that
+        // order); append slot uses signed divw.
+        u32 front = *(volatile u32*)&this->mFront;
+        u32 curSize = *(volatile u32*)&this->mSize;
+        u32 cap = *(volatile u32*)&this->mCapacity;
+        CMsgParamEntry* e = &this->mArrayPtr[(int)(front + curSize) % (int)cap];
         volatile CMsgParamEntry entry;
         u32 wid = entry.wid;
         u32 value8 = entry.unk8;
@@ -2046,7 +2129,6 @@ append:
         u32 value1C = entry.unk1C;
         u16 value20 = entry.unk20;
         u8 value22 = entry.unk22;
-        CMsgParamEntry* e = &arr[index];
         e->command = (u32)msg;
         e->wid = wid;
         e->unk8 = value8;
@@ -2063,13 +2145,28 @@ append:
     }
 stamp:
     {
-        u32 slot = (mFront + field6) % mCapacity;
-        mArrayPtr[slot].unk23 = 0xb;
-        u32 slot2 = (mFront + field6) % mCapacity;
-        mArrayPtr[slot2].wid = payload[0];
-        mArrayPtr[slot2].unk8 = payload[1];
-        mArrayPtr[slot2].unkC = payload[2];
-        mArrayPtr[slot2].unk10 = payload[3];
+        // Retail stamps unk23 on the ring slot, then recomputes the same slot
+        // with fully reloaded members to write the four payload words.
+        u32 f = *(volatile u32*)&this->mFront;
+        u32 last = *(volatile u32*)&this->field6;
+        u32 cap = *(volatile u32*)&this->mCapacity;
+        u32 p0 = payload[0];
+        u32 idx = f + last;
+        u32 q = idx / cap;
+        u32 p1 = payload[1];
+        u32 p2 = payload[2];
+        u32 p3 = payload[3];
+        this->mArrayPtr[idx - q * cap].unk23 = 0xb;
+
+        u32 f2 = *(volatile u32*)&this->mFront;
+        u32 last2 = *(volatile u32*)&this->field6;
+        u32 cap2 = *(volatile u32*)&this->mCapacity;
+        u32 idx2 = f2 + last2;
+        CMsgParamEntry* e = &this->mArrayPtr[idx2 - (idx2 / cap2) * cap2];
+        e->wid = p0;
+        e->unk8 = p1;
+        e->unkC = p2;
+        e->unk10 = p3;
     }
 }
 
@@ -2083,25 +2180,28 @@ template <> void CMsgParam<32>::func_80449A1C(unsigned long msg, u32* payload) {
     goto stamp;
 append:
     {
-        // Retail reloads mFront/mSize/mArrayPtr here instead of reusing the
-        // search-loop registers (signed divw in the append path).
-        u32 front = this->mFront;
-        volatile u32* vsize = &this->mSize;
-        u32 curSize = *vsize;
+        // Volatile keeps the uninitialized-entry reads alive and pins their
+        // relative order; arr is volatile-loaded before them so the scheduler
+        // cannot sink it past the modulo chain.
+        u32 front = *(volatile u32*)&this->mFront;
+        u32 curSize = *(volatile u32*)&this->mSize;
+        u32 capV = *(volatile u32*)&this->mCapacity;
+        CMsgParamEntry* arr = *(CMsgParamEntry* volatile*)&this->mArrayPtr;
         u32 sum = front + curSize;
-        CMsgParamEntry* arr = this->mArrayPtr;
-        int index = (int)sum % (int)mCapacity;
+        s32 q = (s32)sum / (s32)capV;
         volatile CMsgParamEntry entry;
         u32 wid = entry.wid;
         u32 value8 = entry.unk8;
         u32 valueC = entry.unkC;
         u32 value10 = entry.unk10;
         u32 value14 = entry.unk14;
+        q *= (s32)capV;
         u32 value18 = entry.unk18;
         u32 value1C = entry.unk1C;
         u16 value20 = entry.unk20;
         u8 value22 = entry.unk22;
-        CMsgParamEntry* e = &arr[index];
+        q = (s32)sum - q;
+        CMsgParamEntry* e = &arr[q];
         e->command = (u32)msg;
         e->wid = wid;
         e->unk8 = value8;
@@ -2118,13 +2218,18 @@ append:
     }
 stamp:
     {
+        // Each store recomputes the slot from freshly reloaded members.
+        u32 w0 = payload[0];
+        u32 w1 = payload[1];
+        u32 w2 = payload[2];
+        u32 w3 = payload[3];
         u32 slot = (mFront + field6) % mCapacity;
         mArrayPtr[slot].unk23 = 0x9;
         u32 slot2 = (mFront + field6) % mCapacity;
-        mArrayPtr[slot2].wid = payload[0];
-        mArrayPtr[slot2].unk8 = payload[1];
-        mArrayPtr[slot2].unkC = payload[2];
-        mArrayPtr[slot2].unk10 = payload[3];
+        mArrayPtr[slot2].wid = w0;
+        mArrayPtr[slot2].unk8 = w1;
+        mArrayPtr[slot2].unkC = w2;
+        mArrayPtr[slot2].unk10 = w3;
     }
 }
 
@@ -2133,6 +2238,8 @@ stamp:
 // until after the multiplies (retail: stwu after the 3rd fmul), then the four
 // u8 conversions, then the byte pack. The byte-array assembly makes MWCC emit
 // the retail stb/lwz pack (a shift-based expression would use rlwinm/or).
+// OPEN ITEM: retail sinks stwu sp,-48 below the 9 lead FPU ops (scheduler
+// fingerprint); every source shape tried so far pins it at entry.
 u32 __declspec(noinline) func_80449550(ml::CCol4& c) {
     const f32 scale = lbl_eu_8066A37C;
     u8 out[4];

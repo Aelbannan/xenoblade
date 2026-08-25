@@ -628,7 +628,6 @@ extern "C" void func_8045F778__17UnkClass_8045F564Fv(void*);
 extern "C" void func_801D3258(void*);
 extern "C" void func_8022B7F4(void*);
 extern "C" u16 func_80139358(u32);
-extern "C" int func_80136254(const void*, const void*, int);
 // Texture-name lookup (retail C-ABI; u16 arg, returns the resource name).
 extern "C" char* func_80138F78(u32);
 // Item-object validity/type check used by func_80288E14's texture pick.

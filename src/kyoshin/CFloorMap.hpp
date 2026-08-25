@@ -9,6 +9,17 @@ class CBaseCur;
 class CSysWin;
 class CFileHandle;
 class CEventFile;
+class UnkClass_8045F564;
+struct CFloorMapLayoutBlock;
+
+// CFloorMap vtable (retail .data, split unit; stored manually by the ctor).
+extern void* lbl_eu_80537028[];
+
+// Sub-object ctor imports (retail emits the short unmangled names at the
+// call sites - the typed member ctors would mangle differently).
+extern "C" void __ct__CScrollBar(void* self, int direction);
+extern "C" void __ct__CSysWin(CSysWin* self, int kind);
+extern "C" UnkClass_8045F564* __ct__17UnkClass_8045F564Fv(UnkClass_8045F564* self);
 
 // 8-byte entry in the layout pointer array at 0x150
 struct UnkLayoutEntry {
@@ -135,7 +146,7 @@ public:
     u8 field_40;                             // 0x40
     u8 field_41;                             // 0x41
     u8 field_42;                             // 0x42
-    u8 _43[0x44 - 0x43];                     // 0x43
+    u8 field_43;                             // 0x43 - ctor sets 1
     f32 pos_x_44;                            // 0x44
     f32 pos_y_48;                            // 0x48
     f32 field_4C;                            // 0x4C
@@ -326,7 +337,7 @@ extern "C" nw4r::lyt::ArcResourceAccessor* func_801355F4();
 struct CFloorMapLayoutData0;
 struct CFloorMapRowList;
 extern "C" void func_80244764(CFloorMapLayoutData0*);
-extern "C" void func_80246330(void*);
+extern "C" void func_80246330(CFloorMapLayoutBlock*);
 extern "C" u32 func_8024FB78(void*);
 extern "C" void func_8024830C(void*, void*);
 extern "C" void func_80247490(void*, u8, u32, f32);
@@ -527,6 +538,49 @@ struct CFloorMapChildList {
     CFloorMapChildNode* mpPrev; // +0x04
 };
 
+// Child-list iterator view anchored at Pane+0x10: the child-list object
+// starts at Pane+0x10 and the first child link sits at +0x14 (doubles as the
+// end sentinel).
+struct CFloorMapHolderChildren {
+    u8 _00[0x10];
+    CFloorMapChildNode* first; // +0x14
+};
+
+// Two-step anchor used by func_80247490 (retail forms base+0x10 first, then
+// reads the child-list node at +0x04): keeps MWCC from folding the address
+// into a single pane+0x14 displacement.
+struct CFloorMapGroupAnchor {
+    u8 _00[4];
+    CFloorMapChildList kids; // +0x04
+};
+
+// One 8-byte slot of the 20-entry layout array at CFloorMap+0x150: the
+// loaded layout plus the truncated world-y of the row marker written by
+// func_80246330.
+struct CFloorMapLayoutSlot {
+    nw4r::lyt::Layout* layout; // +0x00
+    s32 posY;                  // +0x04
+};
+
+// Block addressed by func_80246330 (the address of CFloorMap::mLayouts150):
+// 20 layout slots, the populated-slot count byte, and the shared arc resource
+// accessor used to load them.
+struct CFloorMapLayoutBlock {
+    CFloorMapLayoutSlot slots[20];            // +0x00..0x9F
+    u8 count;                                 // +0xA0
+    u8 _A1[0xA4 - 0xA1];
+    nw4r::lyt::ArcResourceAccessor* accessor; // +0xA4
+};
+
+// Translate view of an nw4r::lyt::Pane used by func_80246330's marker
+// placement (writes +0x2C/+0x30/+0x34 directly).
+struct CFloorMapPaneTransXYZ {
+    u8 _00[0x2C];
+    f32 trans2C; // +0x2C
+    f32 trans30; // +0x30
+    f32 trans34; // +0x34
+};
+
 // View of the layout-slot block passed to func_80248558 (the address of
 // CFloorMap::mLayout140): +0x00 is the map Layout*, +0x08 the pane whose
 // FindPaneByName resolves the row-marker pane names. +0x0C holds the
@@ -717,8 +771,10 @@ struct CFloorMapCase2Elem {
 };
 
 // C-linkage name/table lookups used by the marker placement (retail flat names).
-extern "C" u8 func_8013600C(const char*, const char*, u32);
-extern "C" u16 func_8013606C(const void*, const void*, u32);
+// Retail masks the raw results (rlwinm 24/16) after every call, so these
+// return wider ints; callers apply the (u8)/(u16) truncations explicitly.
+extern "C" u8 func_8013600C(const void*, const void*, u32);
+extern "C" u32 func_8013606C(const void*, const void*, u32);
 extern "C" void* func_800B6CF8(int);
 extern "C" void* func_800B6C58();
 extern "C" void* func_800B6BEC();
@@ -753,6 +809,17 @@ extern "C" u32 func_8009CF8C(u32);
 extern "C" int CSysWin_getUnk34(void*);
 extern "C" int CSysWin_isActive(void*);
 extern "C" u32 func_80248558(void*);
+extern "C" void func_80248A6C(CFloorMapLayoutSlots*);
+extern "C" void func_8024B234(CFloorMapFull*);
+extern "C" void func_8024AEEC(void*);
+extern "C" void func_8024A748(void*);
+extern "C" void func_8024A448(void*);
+extern "C" void func_80249C1C(CFloorMapLayoutSlots*);
+extern "C" void func_802497B0(void*);
+extern "C" void func_80249344(CFloorMapLayoutSlots*);
+extern "C" void func_80248ED8(CFloorMapLayoutSlots*);
+// C linkage so the same-TU definition emits the retail plain name.
+extern "C" void* func_80248920(void*, const char*, f32, f32, void*, const char*);
 extern "C" void func_8024577C(void*, u16);
 extern "C" void func_802452C4(void*);
 extern "C" void func_8024B4CC(nw4r::math::VEC3*, void*, nw4r::lyt::Pane*);
@@ -770,6 +837,12 @@ extern "C" s16 func_80136330(u32, const char*, u32);
 extern "C" u32 func_8003B1EC(u32);
 extern "C" void* getFP__FPCc(const char*);
 extern "C" void* func_8003AA34();
+extern "C" void func_80136400(const char* src, u16* dst, u32 destLen);
+extern "C" void func_80125D00(f32* out, nw4r::lyt::Pane* pane, u16* str);
+extern "C" s32 func_801362C0(const void*, const void*, s32);
+// Height thresholds picking which of the three status panes lights up.
+extern f32 lbl_eu_80668780;
+extern f32 lbl_eu_80668784;
 extern "C" void func_801F367C(void*);
 extern "C" CFloorMapGimmickGlobal* getUnk80664658();
 extern "C" void func_801F3670(void*, const float*);
@@ -831,7 +904,7 @@ struct CFloorMapPaneRotate {
 };
 
 // C-ABI helpers used by func_80245950 (defined in code_80135FDC.cpp).
-extern "C" int func_8013AC3C(u8 max, u8 count, u32 off);
+extern "C" int func_8013AC3C(u8 max, u8 count, u16 off);
 extern "C" void func_80139A18(void*, void*, void*, void*);
 extern u32 lbl_eu_8066479C;
 extern u32 lbl_eu_806640A8;
@@ -888,6 +961,14 @@ public:
 // View into the object returned by CDeviceFont::func_80452C10: vtable+0x24
 // (slot 9, no args) yields the u32 passed to func_8013676C. All-pure so no
 // vtable is emitted.
+// Per-table BDAT entry pointers + flat-name helpers used by func_80249C1C
+// (retail symbols are unmangled).
+extern void* lbl_eu_80573D18[0x1C];
+int func_80138138(int idx);
+extern "C" u32 func_80138574(const char* name, u32 id);
+extern "C" u32 func_8013C038(u16 id);
+extern "C" CFloorMapVec3* func_801F4E68(CFloorMapGimmickGlobal* mgr, u16 id);
+
 class CFloorMapFontView {
 public:
     virtual void v00() = 0;         // 0x08

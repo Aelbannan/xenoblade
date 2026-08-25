@@ -94,29 +94,32 @@ void func_800F449C(ScMain* self) {
     memset(&self->data_94, 0, 0x34);
     self->flags_84 = 0;
     self->field_88 = 0;
+    // Per-slot reset. Stores go through the indexed member so MWCC keeps the
+    // counter live alongside the reduced walkers, matching retail regalloc.
+    ScMain::ScSub* cur = self->subs;
     for (int i = 0; i < 5; i++) {
-        ScMain::ScSub* s = &self->subs[i];
-        s->field_00 = 0;
-        s->field_04 = 0;
-        s->field_48 = 0;
-        s->field_4C = -1;
-        s->field_50 = 0;
-        s->f_54 = lbl_eu_80666E90;
-        s->f_58 = lbl_eu_80666E90;
-        s->f_5C = lbl_eu_80666E90;
-        s->f_60 = lbl_eu_80666E90;
-        s->f_64 = lbl_eu_80666E90;
-        s->field_7C = 0;
-        s->s_80 = 0;
-        s->field_B8 = 0;
-        s->f_68 = lbl_eu_80666E90;
-        s->f_6C = lbl_eu_80666E90;
-        s->s_70 = 0;
-        s->s_72 = 0;
-        memset(&s->data_08, 0, 0x40);
-        memset(&s->data_84, 0, 0x34);
-        s->field_74 = 0;
-        s->field_78 = 0;
+        self->subs[i].field_00 = 0;
+        self->subs[i].field_04 = 0;
+        self->subs[i].field_48 = 0;
+        self->subs[i].field_4C = -1;
+        self->subs[i].field_50 = 0;
+        self->subs[i].f_54 = lbl_eu_80666E90;
+        self->subs[i].f_58 = lbl_eu_80666E90;
+        self->subs[i].f_5C = lbl_eu_80666E90;
+        self->subs[i].f_60 = lbl_eu_80666E90;
+        self->subs[i].f_64 = lbl_eu_80666E90;
+        self->subs[i].field_7C = 0;
+        self->subs[i].s_80 = 0;
+        self->subs[i].field_B8 = 0;
+        self->subs[i].f_68 = lbl_eu_80666E90;
+        self->subs[i].f_6C = lbl_eu_80666E90;
+        self->subs[i].s_70 = 0;
+        self->subs[i].s_72 = 0;
+        memset(cur->data_08, 0, 0x40);
+        memset(cur->data_84, 0, 0x34);
+        self->subs[i].field_74 = 0;
+        self->subs[i].field_78 = 0;
+        cur++;
     }
     self->flags_824 = 0;
 }

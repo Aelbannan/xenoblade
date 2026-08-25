@@ -779,4 +779,4 @@ extern const float lbl_eu_80667A5C;
 extern const float lbl_eu_80667A64;
 extern const float lbl_eu_80667A68;
 extern const float lbl_eu_80666B08;
-extern const float lbl_eu_8066AF20;
+extern f32 lbl_eu_8066AF20; // f32 form: must match CtrlMoveBase.hpp (10197/10505 on mixed spellings)

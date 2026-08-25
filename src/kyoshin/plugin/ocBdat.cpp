@@ -45,7 +45,90 @@ extern "C" u32 getBdatStringColumnValue(void* bdat, const char* col, s32 index) 
     return func_8003B6A0(hdr, dataPtr, elemType);
 }
 
-void* func_eu_8003B720(void* p);
+#pragma dont_inline on
+// func_eu_8003B720: decode obfuscated BDAT entries. Each flagged entry holds
+// two running-XOR key bytes at +0x16 and two [start,end) byte ranges (+0x18/
+// +0x1C relative to the entry, and +0x06/+0x0A u16 ranges); bytes are XORed
+// with alternating key bytes which advance by the original byte value. The
+// second range uses the complemented seeds. Clears the flag when done.
+extern "C" void func_eu_8003B720(void* tblVoid) {
+    char* base = static_cast<char*>(tblVoid);
+    u32 count = *reinterpret_cast<u32*>(base);
+    u32* offsets = reinterpret_cast<u32*>(base + 8);
+    for (u32 i = 0; i < count; i++) {
+        char* entry = base + offsets[i];
+        if ((entry[4] & 2) == 0) {
+            continue;
+        }
+
+        u16 keySeed = *reinterpret_cast<u16*>(entry + 0x16);
+        u8 keyHi = keySeed >> 8;
+        u8 keyLo = keySeed & 0xFF;
+        u8 keyHi2 = ~keyHi;
+        u8 keyLo2 = ~keyLo;
+        s16 start = *reinterpret_cast<u32*>(entry + 0x18);
+        s16 end = *reinterpret_cast<u32*>(entry + 0x1C);
+        int total = start + end;
+
+        s16 pos = start;
+        if (start < total) {
+            if ((end + 1) / 2 > 8) {
+                u32 n = (u32)(end - 1) >> 4;
+                while (n != 0) {
+                    u8 b0 = entry[pos];
+                    entry[pos] = b0 ^ keyHi;
+                    keyHi += b0;
+                    u8 b1 = entry[pos + 1];
+                    entry[pos + 1] = b1 ^ keyLo;
+                    keyLo += b1;
+                    pos += 16;
+                    n--;
+                }
+            }
+            while (pos < total) {
+                u8 b0 = entry[pos];
+                entry[pos] = b0 ^ keyHi;
+                keyHi += b0;
+                u8 b1 = entry[pos + 1];
+                entry[pos + 1] = b1 ^ keyLo;
+                keyLo += b1;
+                pos += 2;
+            }
+        }
+
+        int pos2 = *reinterpret_cast<u16*>(entry + 6);
+        int end2 = *reinterpret_cast<u16*>(entry + 0xA);
+        if (pos2 < end2) {
+            if ((end2 - pos2 + 1) / 2 > 8) {
+                u32 n = (u32)(end2 - pos2 - 1) >> 4;
+                while (n != 0) {
+                    u8 b0 = entry[pos2];
+                    entry[pos2] = b0 ^ keyHi2;
+                    keyHi2 += b0;
+                    u8 b1 = entry[pos2 + 1];
+                    entry[pos2 + 1] = b1 ^ keyLo2;
+                    keyLo2 += b1;
+                    pos2 += 16;
+                    n--;
+                }
+            }
+            while (pos2 < end2) {
+                u8 b0 = entry[pos2];
+                entry[pos2] = b0 ^ keyHi2;
+                keyHi2 += b0;
+                u8 b1 = entry[pos2 + 1];
+                entry[pos2 + 1] = b1 ^ keyLo2;
+                keyLo2 += b1;
+                pos2 += 2;
+            }
+        }
+
+        entry[4] &= static_cast<char>(~2);
+    }
+}
+#pragma dont_inline reset
+
+
 extern "C" void* func_8003AA34() {
     if (!lbl_eu_80663D10) {
         lbl_eu_80663D10 = 1;
@@ -67,7 +150,8 @@ void* CBdat::func_8003AA50() {
 
 void* CBdat::func_8003AA78(u32 idx, void* p) {
     lbl_eu_805705D0[idx] = p;
-    return func_eu_8003B720(p);
+    func_eu_8003B720(p);
+    return p;
 }
 
 void CBdat::func_8003AA8C(u32 idx) {
@@ -113,6 +197,42 @@ void* getFP(const char* pName) {
         tableSlot++;
     }
     return 0;
+}
+#pragma dont_inline reset
+
+#pragma dont_inline on
+// func_8003B6A0: read one BDAT column element of the given type from data,
+// widening to u32. Type 6 is an offset resolved against the BDAT base.
+extern "C" u32 func_8003B6A0(void* bdat, void* data, u32 elemType) {
+    u32 val = 0;
+    switch (elemType) {
+    case 0:
+        *(u8*)&val = *(u8*)data;
+        break;
+    case 1:
+        *(u16*)&val = *(u16*)data;
+        break;
+    case 2:
+        *(u32*)&val = *(u32*)data;
+        break;
+    case 3:
+        *(u8*)&val = *(u8*)data;
+        break;
+    case 4:
+        *(s16*)&val = *(s16*)data;
+        break;
+    case 5:
+        *(u32*)&val = *(u32*)data;
+        break;
+    case 6:
+        *(u32*)&val = reinterpret_cast<uintptr_t>(bdat) + *static_cast<u32*>(data);
+        break;
+    case 7:
+    case 8:
+        *(u32*)&val = *(u32*)data;
+        break;
+    }
+    return val;
 }
 #pragma dont_inline reset
 
@@ -355,9 +475,9 @@ extern "C" u32 func_eu_8003B488(void* bdat, const char* col1, s32 row, const cha
     }
     BdatHeader* hdr = static_cast<BdatHeader*>(bdat);
     char* base = reinterpret_cast<char*>(hdr);
+    rowArg = row;
     col1Arg = col1;
     col2Arg = col2;
-    rowArg = row;
     rowBase = hdr->rowBase;
     maxRow = hdr->maxRow;
     rowIdx = rowArg - rowBase;
@@ -374,16 +494,17 @@ extern "C" u32 func_eu_8003B488(void* bdat, const char* col1, s32 row, const cha
     if (col1Entry == 0) {
         return 0;
     }
+    col2Arg = col2;
     col2Entry = func_8003B4B0(hdr, col2Arg);
     if (col2Entry == 0) {
         return 0;
     }
     u16 col2Rel = static_cast<BdatColEntry*>(col2Entry)->colHdrRel;
     flagHdr = reinterpret_cast<BdatColHdrFlag*>(base + col2Rel);
-    u16 colEntryDiff =
+    if (flagHdr->type != 3 ||
         static_cast<u16>(reinterpret_cast<uintptr_t>(col1Entry) -
-                         reinterpret_cast<uintptr_t>(hdr));
-    if (flagHdr->type != 3 || colEntryDiff != flagHdr->colEntryRel) {
+                         reinterpret_cast<uintptr_t>(hdr)) !=
+            flagHdr->colEntryRel) {
         return 0;
     }
     val = 0;
@@ -401,6 +522,7 @@ extern "C" u32 func_eu_8003B488(void* bdat, const char* col1, s32 row, const cha
     mask = flagHdr->mask;
     shift = flagHdr->shift;
     return (val & mask) >> shift;
+    return 0;
 }
 #pragma dont_inline reset
 

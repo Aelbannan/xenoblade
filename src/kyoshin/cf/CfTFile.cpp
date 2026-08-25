@@ -392,8 +392,8 @@ int func_8006A40C(int mode) {
             colSec = lbl_eu_804FB420 + 0x44;
         }
         if (colMin != 0) {
-            const u8* v1 = getBdatStringColumnValue(bdat, colMin, row);
-            const u8* v2 = getBdatStringColumnValue(bdat, colSec, row);
+            const u8* v1 = (const u8*)getBdatStringColumnValue(bdat, colMin, row);
+            const u8* v2 = (const u8*)getBdatStringColumnValue(bdat, colSec, row);
             return v1[0] * 60 + v2[0];
         }
     }

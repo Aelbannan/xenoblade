@@ -5,6 +5,23 @@
 
 class UnkClass_800821F8;  // fwd decl: only pointer-position use (func_800821F8__Q22cf13CfGameManagerFv result)
 
+// Forward declaration sufficient for CfCamEvent_1.cpp's out-of-line
+// definition of CActorParam's battle-state entry accessor (vtable slot
+// 0x298). The full class lives in kyoshin/cf/object/CActorParam.hpp; it
+// cannot be included here because its CBattleState.hpp dependency declares
+// getBdatStringColumnValue with a conflicting tail type.
+namespace cf {
+struct CActorParam_UnkStruct1;
+class CActorParam {
+public:
+    CActorParam_UnkStruct1* CActorParam_UnkVirtualFunc129();
+};
+}
+
+// Opaque stand-in type for generic cam-event object pointers passed
+// through the event-cam APIs (replaces raw void* in signatures/locals).
+class CfCamEventObj;
+
 // Global singleton object referenced by the CfCamEvent cam logic
 // (address lbl_eu_80663DF0, accessed via sda21 as a pointer).
 struct CfCamEventGlobal {
@@ -14,6 +31,8 @@ struct CfCamEventGlobal {
     s16 field_0x3E;    // 0x3E
     u8  _040[0x46 - 0x40];
     u8  field_0x46;    // 0x46
+    u8  _047[0x4C - 0x47];
+    u32 field_0x4C;    // 0x4C - cam-table flag word
 };
 
 // Sub-object embedded at manager offset 0x1F4.
@@ -161,8 +180,8 @@ struct CfCamEventShakeUnit {
     f32 field_0x174;   // +0x174 (abs 0x368 / 0x4E0)
 };
 
-// Element view used by func_80079D6C: the retail body treats its first
-// argument as an element pointer (x4 at +0x04, previous element one stride
+// Element view used by func_80079D6C: the retail body treats the element
+// pointer argument as an element base (x4 at +0x04, previous element one stride
 // back at -0x10) and also reads an s16 count through the same pointer at
 // +0x4D2 (the caller passes the manager base, so +0x4D2 aliases
 // sub_0x4D0.count).
@@ -195,6 +214,12 @@ struct CfCamEventCopySrc {
     f32 f_140;   // 0x140 -> mgr 0x68
     u8  _144[0x1E0 - 0x144];
     f32 f_1E0;   // 0x1E0 -> mgr 0x78
+};
+
+// Word-wise view of an ml::CVec3 (kept for reference; the ctor uses plain
+// struct assigns which MWCC lowers to the same GPR block copy).
+struct CfCamEventVecWords {
+    u32 w[3];
 };
 
 // Camera event manager - only forward-declared elsewhere; the complete layout
@@ -422,20 +447,22 @@ struct CfCamShakeState {
     f32 end;                      // +0x174 - end value
 };
 
-// Source object used by func_80075934: vtable (fn_0x5B4) aliasing an embedded
-// CinemCamSrc (voice) at +0x00.
+// Outer vtable of a camera-source object: scalar getter at 0x5B4.
 struct CamCamSrcVtbl {
-    void* p00[0xAC / 4];
-    CinemVecOut* (*fn_0xAC)(void* self);       // 0xAC
-    void* rB0[((0x5B4 - 0xB0) / 4)];
-    f32   (*fn_0x5B4)(void* self);             // 0x5B4
+    void* p00[0x5B4 / 4];
+    f32 (*fn_0x5B4)(void* self);   // 0x5B4
 };
 
+// Camera-source object: outer vtable at +0x00, an embedded CinemCamSrc
+// (position source) at +0x3E9C, and three follow-limit floats at +0x44D8.
 struct CamCamSrc {
-    union {
-        CamCamSrcVtbl* vtable;   // +0x00
-        CinemCamSrc voice;       // +0x00 (cast target of func_80075934)
-    };
+    CamCamSrcVtbl* vtable;          // +0x00
+    u8  _004[0x3E9C - 0x004];
+    CinemCamSrc voice;              // +0x3E9C
+    u8  _3EB8[0x44D8 - 0x3EB8];
+    f32 f_44D8;                     // +0x44D8 - follow limit / step
+    f32 f_44DC;                     // +0x44DC
+    f32 f_44E0;                     // +0x44E0
 };
 
 // Minimal WIP scaffolding: dynamic manager returned by func_800821F8
@@ -487,16 +514,16 @@ struct CamEventTableEntry {
 };
 extern CamEventTableEntry lbl_eu_805273C8[12];
 
-extern f32 lbl_eu_80666458;   // sdata2 triplet constants used by the sinit
-extern f32 lbl_eu_80666464;
-extern f32 lbl_eu_80666474;
-extern f32 lbl_eu_80666478;
-extern f32 lbl_eu_8066647C;
-extern f32 lbl_eu_80666480;
-extern f32 lbl_eu_80666484;
-extern f32 lbl_eu_80666488;
-extern f32 lbl_eu_8066648C;
-extern f32 lbl_eu_80666490;
+extern const f32 lbl_eu_80666458;   // sdata2 triplet constants used by the sinit
+extern const f32 lbl_eu_80666464;
+extern const f32 lbl_eu_80666474;
+extern const f32 lbl_eu_80666478;
+extern const f32 lbl_eu_8066647C;
+extern const f32 lbl_eu_80666480;
+extern const f32 lbl_eu_80666484;
+extern const f32 lbl_eu_80666488;
+extern const f32 lbl_eu_8066648C;
+extern const f32 lbl_eu_80666490;
 // 0x28-byte camera-source view read by func_8007990C: two aim vectors at
 // +0x00/+0x0C, a third triplet at +0x18, and a scalar at +0x24. The triplets
 // are CVec3 so whole-vector copies keep the retail lwz/stw schedule.
@@ -520,8 +547,8 @@ extern "C" void func_8007990C(CfCamEventManager* self, u32 a, u32 b,
 extern "C" int func_80074F4C(CfCamShakeState* self, int mode);
 extern "C" void* __dynamic_cast(void* obj, long offset, const void* src_type,
                                 const void* dst_type, void* src2dst);
-extern char lbl_eu_80661B00[];  // RTTI typeinfo pair used by the cam advance cast
-extern char lbl_eu_80661B30[];
+extern const void* lbl_eu_80661B00;  // RTTI typeinfo pair used by the cam advance cast
+extern const void* lbl_eu_80661B30;  // (pointer-object decls so MWCC emits @sda21 li's)
 extern "C" f32 CosFIdx__Q24nw4r4mathFf(f32);
 
 // C-linkage imports (retail symbol names - keep linkage/signatures verbatim)
@@ -536,8 +563,13 @@ extern "C" f32   lbl_eu_8066A1FC;
 extern "C" f32   lbl_eu_8066641C;
 extern "C" f32   lbl_eu_80666418;
 extern "C" f64   lbl_eu_80666420;
+extern "C" f64   lbl_eu_80666438;   // signed-int -> double conversion constant
+extern "C" f32   lbl_eu_80666460;   // cam-table speed divisor
+extern "C" void* lbl_eu_80664168;   // event-cam bdat table pointer
 extern "C" f32   lbl_eu_80666428;
 extern "C" f32   lbl_eu_80666448;
+extern "C" f32   lbl_eu_80666444;
+extern "C" f32   lbl_eu_8066644C;
 extern "C" f32   lbl_eu_80666454;
 extern "C" f32   lbl_eu_8066A208;
 extern const float lbl_eu_8066A210;
@@ -546,7 +578,7 @@ extern "C" u8    lbl_eu_804FB5D0[];
 extern "C" int   func_8003B1EC(void* self);
 extern "C" void* func_8003AA34(void);
 extern "C" u32   func_8003B41C(void* bdat);
-extern "C" u32   getBdatStringColumnValue(void* bdat, const char* column, int index);
+extern "C" u32   getBdatStringColumnValue(void* bdat, const char* column, s32 index); // s32(long) - must match code_801862C0.hpp verbatim
 extern void* lbl_eu_80664164;      // sbss bdat-table pointer (set by func_8003AA34)
 extern char  lbl_eu_80661BB8[6];   // sdata column-name buffer (digit at +4)
 extern char  lbl_eu_80527638[0xA]; // data column-name buffer (digit at +8)
@@ -558,6 +590,11 @@ extern "C" void  func_800756D0(ml::CVec3* out, CinemCamSrc* src);
 extern "C" int func_8007AA4C(CfCamEventManager* self);
 extern "C" int func_80079E04(CfCamEventManager* self);
 extern "C" int func_800755BC(CfCamEventManager* mgr, u32 idx);
+extern "C" int func_80076D8C(int unused, int type_, CamEventSrc* src,
+                             CamEventTargetInfo* other, u32* outRow, u32* outCol);
+extern "C" void func_8007B030(u8* self);
+// Vector-normalize helper (body provided by this TU).
+extern "C" void func_800A3F8C(ml::CVec3* v);
 extern "C" f32 lbl_eu_8066642C;
 extern "C" f32 lbl_eu_80666430;
 extern "C" f32 lbl_eu_80666440;
@@ -567,17 +604,29 @@ extern "C" void Warning__Q24nw4r2dbFPCciPCce(const char* file, int line, const c
 extern char lbl_eu_805262F0[];   // warning file name
 extern char lbl_eu_805262C8[];   // warning format string
 extern "C" f32 lbl_eu_8066646C;   // acos-angle scale
+// Dynamic-cast result view (func_800821F8 -> __dynamic_cast): a single
+// flag byte is stored at +0x294 by the cam-event setup.
+struct CfCamDynObj {
+    u8 _000[0x294];
+    u8 field_0x294;   // +0x294
+};
+
+// CfGameManager cam-event hooks (defined in this TU; retail symbols unmangled).
+extern "C" void func_80082008__Q22cf13CfGameManagerFv(int a, u8 b, int c, int d, int e);
+extern "C" void func_80082088__Q22cf13CfGameManagerFv(int idx, void* vecA, void* vecB, int mode, f32 val);
+extern "C" void func_80082060__Q22cf13CfGameManagerFv(void);
+
 // GameManager helpers used by the cam-event advance.
 extern "C" void func_80085878__Q22cf13CfGameManagerFv();
 extern "C" void func_8016FD84(f32 a, f32 b);
 extern "C" void func_80240AAC(u32 state);
 extern "C" void func_80240B10(u32 state, void* p);
 extern "C" f32 lbl_eu_80666470;
-extern "C" void* func_800784A0(u32 first, void* second,
-                                                      void* third, void* fourth,
-                                                      void* fifth,
+extern "C" CfCamEventObj* func_800784A0(u32 first, CfCamEventObj* second,
+                                                      CfCamEventObj* third, CfCamEventObj* fourth,
+                                                      CfCamEventObj* fifth,
                                                       CfCamDataTable* sixth,
-                                                      void* seventh);
+                                                      CfCamEventObj* seventh);
 extern "C" void  func_8008212C__Q22cf13CfGameManagerFv(u32 mode);
 extern "C" void* func_80074CEC(void* self, void* arg2);
 extern "C" void* __ct__8006B310(void* self, void* arg2);
@@ -588,13 +637,20 @@ extern "C" void  func_8006D450(void* a, void* b, void* c, f32 f,
 extern "C" void func_80077F20(void* out, void* a,
                                                        void* b, u16 c, u16 d,
                                                        void* e);
-extern "C" void* func_800778E4(void* self, u32 a,
-                                                      void* b, void* c);
+extern "C" void* func_800778E4(CfCamEventManager* self, int unk34,
+                                                      void* srcArg, u32 rowOverride);
 extern "C" int func_80078400(int action, int param);
 extern "C" void* func_80496264(void* obj, int index);
 extern "C" void* func_80076F88(CfCamEventManager* self, int unk34,
                                 void* srcArg, CfCamDataTable* cam);
 extern "C" int func_800A4050(void* dst, void* b, void* c);
+// Pose-solver helper called by func_80075934.
+extern "C" void func_80074010(void* out, void* in, f32 f, void* vec);
+extern "C" f32 lbl_eu_80666450;   // sdata2 damping factor
+extern "C" void* func_800FE68C(void);
+extern "C" void* func_804BE398(float*, u32, u32, u32, float, float);
+extern "C" void func_804BE4B4(float*, u32);
+extern "C" int func_804BE348(void* a, void* b, u32 c, u32 d);
 extern "C" void func_80075934(ml::CVec3* out1, ml::CVec3* out2, CamCamSrc* a,
                                CamCamSrc* b, ml::CVec3* v1, ml::CVec3* v2,
                                u16 c1, u16 c2, u8 s0, u8 s1);

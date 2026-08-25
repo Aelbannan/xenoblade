@@ -32,7 +32,10 @@ namespace snd {
 namespace detail {
 
 volatile s16 SeqPlayer::mGlobalVariable[GLOBAL_VARIABLE_NUM];
-bool SeqPlayer::mGobalVariableInitialized = false;
+// NOTE (matching residual): the header declares static bool
+// mGobalVariableInitialized (@typo) but retail never defines or reads it -
+// InitSeqPlayer eagerly fills the global-variable array with -1 before any
+// sound can run, so there is no lazy-init guard byte in the retail data pool.
 
 SeqPlayer::SeqPlayer() {
     mActiveFlag = false;
@@ -303,19 +306,39 @@ void SeqPlayer::SetLocalVariable(int idx, s16 value) {
 }
 
 void SeqPlayer::SetGlobalVariable(int idx, s16 value) {
-    if (!mGobalVariableInitialized) {
-        InitGlobalVariable();
-    }
-
     mGlobalVariable[idx] = value;
 }
 
 void SeqPlayer::SetTrackVolume(u32 trackFlags, f32 volume) {
-    SetTrackParam<f32>(trackFlags, &SeqTrack::SetVolume, volume);
+    // Body of SetTrackParam<f32> inlined with a direct call: taking
+    // &SeqTrack::SetVolume as a PMF argument makes MWCC materialize a static
+    // 12-byte member-pointer table that the retail linker GC'd (these
+    // functions have no retail counterpart).
+    ut::AutoInterruptLock lock;
+
+    for (int i = 0; i < TRACK_NUM && trackFlags != 0; trackFlags >>= 1, i++) {
+        if (trackFlags & 1) {
+            SeqTrack* pTrack = GetPlayerTrack(i);
+
+            if (pTrack != NULL) {
+                pTrack->SetVolume(volume);
+            }
+        }
+    }
 }
 
 void SeqPlayer::SetTrackPitch(u32 trackFlags, f32 pitch) {
-    SetTrackParam<f32>(trackFlags, &SeqTrack::SetPitch, pitch);
+    ut::AutoInterruptLock lock;
+
+    for (int i = 0; i < TRACK_NUM && trackFlags != 0; trackFlags >>= 1, i++) {
+        if (trackFlags & 1) {
+            SeqTrack* pTrack = GetPlayerTrack(i);
+
+            if (pTrack != NULL) {
+                pTrack->SetPitch(pitch);
+            }
+        }
+    }
 }
 
 void SeqPlayer::InvalidateData(const void* pStart, const void* pEnd) {
@@ -596,8 +619,6 @@ void SeqPlayer::InitGlobalVariable() {
     for (int i = 0; i < GLOBAL_VARIABLE_NUM; i++) {
         mGlobalVariable[i] = DEFAULT_VARIABLE_VALUE;
     }
-
-    mGobalVariableInitialized = true;
 }
 
 Channel* SeqPlayer::NoteOn(int bankNo, const NoteOnInfo& rInfo) {

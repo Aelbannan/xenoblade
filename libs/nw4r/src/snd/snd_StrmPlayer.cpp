@@ -725,9 +725,6 @@ void StrmPlayer::InitParam() {
     StrmPlayerRetailLayout* self =
         reinterpret_cast<StrmPlayerRetailLayout*>(this);
 
-    const f32 zero = lbl_eu_8066A060;
-    const f32 one = lbl_eu_8066A078;
-
     self->mStartedFlag = false;
     self->mPreparedFlag = false;
     self->mLoadFinishFlag = false;
@@ -751,8 +748,8 @@ void StrmPlayer::InitParam() {
 
     for (int i = 0; i < 8; i++) {
         self->mTracks[i].activeFlag = false;
-        self->mTracks[i].volume = one;
-        self->mTracks[i].field_0x34 = zero;
+        self->mTracks[i].volume = lbl_eu_8066A078;
+        self->mTracks[i].field_0x34 = lbl_eu_8066A060;
         self->mTracks[i].voice = NULL;
     }
 
@@ -1184,7 +1181,11 @@ void StrmPlayer::UpdatePlayingBlockIndex() {
             }
 
             Voice* pVoice = rTrack.voice;
-            if (pVoice->GetFormat() != AxVoice::FORMAT_ADPCM) {
+            // mFormat holds nw4r::snd::SampleFormat values (retail compares
+            // the raw field against 3 = SAMPLE_FORMAT_DSP_ADPCM; see
+            // AxVoice.cpp IsAdpcm note).
+            if (pVoice->GetFormat() !=
+                static_cast<AxVoice::Format>(SAMPLE_FORMAT_DSP_ADPCM)) {
                 continue;
             }
 
@@ -1198,7 +1199,9 @@ void StrmPlayer::UpdatePlayingBlockIndex() {
                 if (j >= 2) {
                     pChannel = NULL;
                 } else {
-                    u8 channelIndex = rTrack.fileInfo.channelIndex[j];
+                    // Signed local: retail compares channelIndex >= 16 with
+                    // a signed cmpi (see AxVoice.cpp IsAdpcm note).
+                    s32 channelIndex = rTrack.fileInfo.channelIndex[j];
                     if (channelIndex >= 16) {
                         pChannel = NULL;
                     } else {

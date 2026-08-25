@@ -10,6 +10,11 @@ extern char lbl_eu_804FB1A4[];
 extern PluginFuncData lbl_eu_80526560[];
 }
 
+// 0x4330000080000000: MWCC (double)(s32) conversion magic (2^52 + 0x8000),
+// defined under its retail sdata2 pool name so the literal pool relocs to
+// lbl_eu_80666170 instead of a synthesised @N entry.
+__declspec(section ".sdata2") extern const f64 lbl_eu_80666170 = 4503601774854144.0;
+
 // Camera interface (from CfGameManager)
 class UnkCamIntf {
 public:
@@ -98,10 +103,11 @@ extern "C" int restore(VMThread* pThread) {
 
     if (vmArgOmitChk(pThread, 1)) {
         cameraId = 0;
-        nextArg = 2;
-    } else {
-        VMArg* arg = vmArgPtrGet(pThread, 1);
         nextArg++;
+    } else {
+        // Post-increment: MWCC folds the pre-increment value (1) to an
+        // immediate and emits the r30 update just before the call.
+        VMArg* arg = vmArgPtrGet(pThread, nextArg++);
         cameraId = vmArgIntGet(nextArg, arg);
     }
 
@@ -159,8 +165,8 @@ extern "C" int setDir(VMThread* pThread) {
     s32 fixedDist = vmArgFixedGet(3, vmArgPtrGet(pThread, 2));
 
     ml::CVec3 dir;
-    dir.x = s32ToF32(fixedAngle) / lbl_eu_80666168 * lbl_eu_8066A210;
-    dir.y = s32ToF32(fixedDist) / lbl_eu_80666168 * lbl_eu_8066A210;
+    dir.x = (f32)fixedAngle / lbl_eu_80666168 * lbl_eu_8066A210;
+    dir.y = (f32)fixedDist / lbl_eu_80666168 * lbl_eu_8066A210;
     dir.z = lbl_eu_80666178;
 
     UnkCamIntf* cam = func_800821F8__Q22cf13CfGameManagerFv();

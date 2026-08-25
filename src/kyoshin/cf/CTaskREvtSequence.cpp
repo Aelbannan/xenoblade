@@ -1779,19 +1779,18 @@ int func_8016B5A4(u8* data, const char* name, s32* out) {
     // Same ResFile walk as func_8016AF4C, but the matched entry must be a
     // type-2 user-data record and the resolved data pointer (not its first
     // word) is published into `out`. Locals follow func_8016AF4C's register
-    // plan (userData/result r31, numAnmChr r30, counter r29).
-    u8* userData;
+    // plan (numAnmChr/i hoisted, userData/result declared in-loop -> r31).
+    // Decl order drives MWCC's callee-saved coloring: i -> r29, numAnmChr
+    // -> r30, in-loop userData/result -> r31.
     int numAnmChr;
-    int i;
     numAnmChr =
         GetResAnmChrNumEntries__Q34nw4r3g3d7ResFileCFv(data + 0xC);
-    for (i = 0; i < numAnmChr; i++) {
+    for (int i = 0; i < numAnmChr; i++) {
         nw4r::g3d::ResAnmChr anmChr(func_8049E708(data, i));
-        userData = reinterpret_cast<u8*>(anmChr.GetResUserData());
+        u8* userData = reinterpret_cast<u8*>(anmChr.GetResUserData());
         if (userData == 0) {
             continue;
-        }
-        if (userData == 0) {
+        } else if (userData == 0) {
             nw4r::db::Panic(lbl_eu_80530D18, 0x57, lbl_eu_80530CFC,
                             lbl_eu_80530CF0, lbl_eu_806623C4);
         }
@@ -1804,29 +1803,33 @@ int func_8016B5A4(u8* data, const char* name, s32* out) {
         if ((reinterpret_cast<u32>(result) & 3) != 0) {
             nw4r::db::Panic(lbl_eu_80530D54, 0x26, lbl_eu_80530D2C);
         }
-        if (result == 0) {
-            return 0;
+        if (result != 0) {
+            if (result == 0) {
+                nw4r::db::Panic(lbl_eu_80530DC4, 0x26, lbl_eu_80530DA8,
+                                lbl_eu_80530D68, lbl_eu_806623CC);
+            }
+        } else {
+            // Breaks to the shared loop-exit return (retail beq-to-tail).
+            break;
         }
         if (result == 0) {
             nw4r::db::Panic(lbl_eu_80530DC4, 0x26, lbl_eu_80530DA8,
                             lbl_eu_80530D68, lbl_eu_806623CC);
         }
-        if (result == 0) {
-            nw4r::db::Panic(lbl_eu_80530DC4, 0x26, lbl_eu_80530DA8,
-                            lbl_eu_80530D68, lbl_eu_806623CC);
-        }
-        EvtSeqResEntry* entry = reinterpret_cast<EvtSeqResEntry*>(result);
-        if (entry->field_0xC != 2) {
+        // Signed compare: retail emits cmpi (not cmpli) against type 2.
+        if (reinterpret_cast<EvtSeqResEntry*>(result)->field_0xC != 2) {
             nw4r::db::Panic(lbl_eu_80530ECC, 0x44, lbl_eu_80530E88);
         }
         if (result == 0) {
             nw4r::db::Panic(lbl_eu_80530DC4, 0x26, lbl_eu_80530DA8,
                             lbl_eu_80530D68, lbl_eu_806623CC);
         }
-        u32 addr = 0;
-        if (entry->field_0x4 != 0) {
-            addr = reinterpret_cast<u32>(reinterpret_cast<u8*>(result) +
-                                         entry->field_0x4);
+        u32 addr;
+        if (reinterpret_cast<EvtSeqResEntry*>(result)->field_0x4 != 0) {
+            addr = reinterpret_cast<u32>(result) +
+                   reinterpret_cast<EvtSeqResEntry*>(result)->field_0x4;
+        } else {
+            addr = 0;
         }
         *out = static_cast<s32>(addr);
         return 1;
@@ -2014,23 +2017,44 @@ void func_8016BC1C(UnkEvtListEntry* self) {
     // priority and replace it in place, otherwise append at the end. Either
     // way run a bubble-sort pass over the whole list afterwards. The outer
     // walk uses the cached state pointer while the sorts re-read the global.
-    // Declaration order follows retail's register assignment: self r31,
-    // scaled r30, count r29, eName r28, selfName r27, state r26, i r25.
-    u32 scaled;                     // r30 (byte index)
-    s32 count;                      // r29
-    UnkState_80664268* state;       // r26
-    s32 i;                          // r25 (entry counter)
+    //
+    // Register-allocation notes (from hexdiff iterations):
+    // - Retail mapping: self r31, scaled r30, count r29, eName r28,
+    //   selfName r27, state r26, i r25 (stmw r25). Sort-loop temporaries
+    //   are anonymous volatiles (gp/base r4, j r5, swapped r6, scaledJ r7,
+    //   b r8, a r9, addr r10).
+    // - Declaration order below is retail's allocation order
+    //   (first-declared -> highest register), which matches siblings in
+    //   this TU. BUT any variable initialized DIRECTLY from the global
+    //   lbl_eu_80664268 jumps the allocation queue to the top slot: here
+    //   state lands in r30 instead of r26, shifting scaled/count/eName/
+    //   selfName down one. Embedding the load in count's initializer
+    //   (`count = (state = lbl)->f110`, kept below - it fixes i to r25)
+    //   narrows but does not remove the jump (embedding the load in
+    //   count's initializer pins i to r25). Also ruled out: routing the
+    //   global through a dead intermediary pointer - the coalescer merges
+    //   it straight back. Open problem: find a source shape where the
+    //   global-loaded pointer does not claim the top callee-saved register.
+    // - Reloc drift: decomp emits one FEWER lbl_eu_80664268 reference than
+    //   retail - retail reloads the global for the append's array base even
+    //   though the cached state register holds the same value (decomp
+    //   forwards it, including across the strcmp call). Every sort-pass
+    //   reload site then pairs off by a +-4-byte shift.
+    u32 scaled;
+    s32 count;
+    UnkEvtNameData* eName;
+    UnkEvtNameData* selfName;
+    UnkState_80664268* state;
+    s32 i;
     i = 0;
     scaled = 0;
-    state = lbl_eu_80664268;
-    count = state->field_0x110;
+    count = (state = lbl_eu_80664268)->field_0x110;
     while (i < count) {
         // Load order mirrors retail: base, self's name data, then the entry
         // (lwzx), then the entry's name data.
-        UnkEvtNameData* selfName = self->field_0x1C;
-        UnkEvtListEntry* e =
-            *(UnkEvtListEntry**)((u8*)state->field_0x10C + scaled);
-        UnkEvtNameData* eName = e->field_0x1C;
+        selfName = self->field_0x1C;
+        eName = (*(UnkEvtListEntry**) (
+            (u8*)state->field_0x10C + scaled))->field_0x1C;
         if (strcmp(&eName->mName[0], &selfName->mName[0]) == 0) {
             if (eName->field_0x30 > selfName->field_0x30) {
                 state->field_0x10C[i] = self;
@@ -2043,9 +2067,9 @@ void func_8016BC1C(UnkEvtListEntry* self) {
                     j = 0;
                     scaledJ = 0;
                     while (j < (s32)lbl_eu_80664268->field_0x110 - 1) {
-                        UnkEvtListEntry* a = *(UnkEvtListEntry**)(
+                        UnkEvtListEntry* a = *(UnkEvtListEntry**) (
                             (u8*)lbl_eu_80664268->field_0x10C + scaledJ);
-                        UnkEvtListEntry* b = *(UnkEvtListEntry**)(
+                        UnkEvtListEntry* b = *(UnkEvtListEntry**) (
                             (u8*)lbl_eu_80664268->field_0x10C + scaledJ + 4);
                         if (a->field_0x1C->field_0x30 >
                             b->field_0x1C->field_0x30) {
@@ -2198,6 +2222,7 @@ u32 func_8016C118(u32 resId) {
     // func_8007DE94(..., 5) and return the original id if that does not match.
     u32 a0, a1, a2, a3;
     func_800AA318(resId, &a0, &a1, &a2, &a3);
+    u32 b0, b1, b2, b3;
     EvtSeqMgrView* mgr = func_80086B04__Q22cf13CfGameManagerFv();
     UnkNode4594* node = mgr->field_0x4->field_0x0;
     while (node != func_80086B04__Q22cf13CfGameManagerFv()->field_0x4) {
@@ -2207,7 +2232,6 @@ u32 func_8016C118(u32 resId) {
         }
         UnkObj4594* obj = container->field_0x4594;
         if (obj != 0) {
-            u32 b0, b1, b2, b3;
             u32 packed = func_800AA714(obj->vf_0x18());
             func_800AA318(packed, &b0, &b1, &b2, &b3);
             if (b1 / 10 == a1 / 10) {
@@ -2216,7 +2240,6 @@ u32 func_8016C118(u32 resId) {
         }
         obj = container->field_0x4598;
         if (obj != 0) {
-            u32 b0, b1, b2, b3;
             u32 packed = func_800AA714(obj->vf_0x18());
             func_800AA318(packed, &b0, &b1, &b2, &b3);
             if (b1 / 10 == a1 / 10) {
@@ -2225,11 +2248,12 @@ u32 func_8016C118(u32 resId) {
         }
         node = node->field_0x0;
     }
-    u32 c0, c1, c2, c3;
+    // Reuse the b outputs so the frame matches retail (one shared out-buffer
+    // for both post-walk unpacks).
     u32 fallback = func_8007DE94__Q22cf13CfGameManagerFv(a1 / 10, 5);
-    func_800AA318(fallback, &c0, &c1, &c2, &c3);
+    func_800AA318(fallback, &b0, &b1, &b2, &b3);
     u32 result = resId;
-    if (c1 / 10 == a1 / 10) {
+    if (b1 / 10 == a1 / 10) {
         result = fallback;
     }
     return result;
@@ -2260,20 +2284,22 @@ int func_8016C300(UnkEvtListEntry* self) {
     // Event-run gate: if bit 11 of the state flag word is set, run the walk
     // over type-2 entries whose packed token (name object +0x20) unpacks to a
     // 3/8 payload id (return 1), otherwise set bit 0x800 and stop.
-    // Residual (open): retail colors obj/limit/i/st/end into r4-r8; this
-    // build lands obj/limit/st/i in r4-r7 (st<->i swap), 17 pure reg-swaps.
-    UnkStateC4Obj* obj;
-    u32 limit;
-    s32 i;
-    u32 end;
+    // Open (Chaitin residual): retail colors st/i into r7/r6 and
+    // byteoff/base into r4/r5; every shape tried lands the mirrored pair
+    // (st=r6, i=r7, byteoff=r5, base=r4). Ruled out: declaration order
+    // variants, statement orders, obj inlining, check placement. 17 pure
+    // reg-swaps, structure exact.
     UnkState_80664268* st;
-    u32 out0, out1, out2, out3;
+    u32 end;
+    u32 limit;
+    UnkStateC4Obj* obj;
+    u32 i;
     if (lbl_eu_80664268->field_0x5C & 0x800) {
         return 1;
     }
     st = lbl_eu_80664268;
-    obj = reinterpret_cast<UnkStateC4Obj*>(st->field_0xC4);
     limit = st->field_0xA8;
+    obj = reinterpret_cast<UnkStateC4Obj*>(st->field_0xC4);
     i = obj->field_0x28;
     end = i + obj->field_0x20;
     if (end > limit) {
@@ -2283,12 +2309,15 @@ int func_8016C300(UnkEvtListEntry* self) {
         UnkEvtListEntry* entry =
             reinterpret_cast<UnkEvtListEntry*>(st->field_0xA4[i]);
         if (entry->field_0x14 == 2 && entry != self) {
+            u32 out0, out1, out2, out3;
             func_800AA318(
                 reinterpret_cast<UnkEvtName2*>(entry->field_0x1C)->field_0x20,
                 &out0, &out1, &out2, &out3);
             if (out1 == 3 || out1 == 8) {
                 return 1;
             }
+            // Retail reloads the global pointer here (the call may have
+            // changed it), hence the direct lbl access instead of st.
             lbl_eu_80664268->field_0x5C |= 0x800;
             break;
         }

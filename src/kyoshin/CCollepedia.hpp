@@ -86,6 +86,20 @@ struct CLPCurVt {
     virtual void cv2() = 0;
 };
 
+// Cursor vtable views used by func_80256314: slot 3 (vtable+0x10) either
+// takes the new cursor position (CCur07 at +0x54) or refreshes in place
+// (cursor at +0x84).
+struct CLPCurSetPosProxy {
+    virtual void v0();
+    virtual void v1();
+    virtual void setPos(nw4r::math::VEC3* pPos);
+};
+struct CLPCurRefreshProxy {
+    virtual void v0();
+    virtual void v1();
+    virtual void refresh(u8* pWork);
+};
+
 // CCollepedia is a non-virtual class in the decomp (layout is flat, no vtable ptr).
 // Virtual destructor semantics are handled by __dt__<addr> thunks.
 // The vtable pointer is stored at +0x00 as a regular field.
@@ -141,6 +155,20 @@ struct CCollepedia {
 
     ~CCollepedia();
     CCollepedia();
+};
+
+// Proxy for objects freed via `delete` (virtual deleting dtor is the first
+// vtable entry at +0x08 after MWCC's implicit entries).
+class CLPDelProxy {
+public:
+    virtual ~CLPDelProxy();
+};
+
+// Proxy for embedded sub-objects whose second vtable entry (+0x0C) is a
+// parameterless finalizer called during cleanup.
+struct CLPSubProxy {
+    virtual void v0();
+    virtual void finalize();
 };
 
 // Abstract struct for CSysWin vtable dispatch at slot 34 (offset 0x88)
@@ -231,7 +259,6 @@ extern "C" void func_801390E0__FPP11CFileHandle(void*);
 extern "C" void func_8045F778__17UnkClass_8045F564Fv(void*);
 extern "C" void func_8009EC18(u16, u32);
 extern "C" u32 func_801587E8(u16);
-extern "C" void* CItem_initItemImplInstances();
 extern "C" void func_80158118(void*, u16, u32);
 extern "C" void func_8013B428__FUl(u32);
 extern "C" void* getHandleMEM2__Q23mtl10MemManagerFv();

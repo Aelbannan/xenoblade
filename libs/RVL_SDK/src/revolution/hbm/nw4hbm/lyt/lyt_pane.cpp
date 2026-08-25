@@ -17,6 +17,19 @@ namespace {
 using namespace nw4hbm;
 using namespace nw4hbm::lyt;
 
+/* Literal pool mirroring retail lbl_80518A98 exactly (order matters).
+   Functions load through this base so displacements match retail; defining
+   it here also makes section layout deterministic (MWCC's anonymous literal
+   pool ordering varies run to run). */
+extern const f32 sPanePool[6] = {
+    0.0f,                  /* +0x00 */
+    1.0f,                  /* +0x04 */
+    0.5f,                  /* +0x08 */
+    1.0f / 255.0f,         /* +0x0C */
+    NW4R_MATH_PI / 180.0f, /* +0x10 */
+    1.0f / 255.0f,         /* +0x14 dup */
+};
+
 void ReverseYAxis(math::MTX34* pMtx) {
     pMtx->m[0][1] = -pMtx->m[0][1];
     pMtx->m[1][1] = -pMtx->m[1][1];
@@ -202,15 +215,15 @@ void Pane::CalculateMtx(const DrawInfo& rInfo) {
         scale.y *= rInfo.GetLocationAdjustScale().y;
     }
 
-    PSMTXScale(mtx2, scale.x, scale.y, 1.0f);
+    PSMTXScale(mtx2, scale.x, scale.y, sPanePool[1]);
 
-    PSMTXRotRad(rotateMtx, 'x', NW4R_MATH_DEG_TO_RAD(mRotate.x));
+    PSMTXRotRad(rotateMtx, 'x', (mRotate.x * sPanePool[4]));
     PSMTXConcat(rotateMtx, mtx2, mtx1);
 
-    PSMTXRotRad(rotateMtx, 'y', NW4R_MATH_DEG_TO_RAD(mRotate.y));
+    PSMTXRotRad(rotateMtx, 'y', (mRotate.y * sPanePool[4]));
     PSMTXConcat(rotateMtx, mtx1, mtx2);
 
-    PSMTXRotRad(rotateMtx, 'z', NW4R_MATH_DEG_TO_RAD(mRotate.z));
+    PSMTXRotRad(rotateMtx, 'z', (mRotate.z * sPanePool[4]));
     PSMTXConcat(rotateMtx, mtx2, mtx1);
 
     PSMTXTransApply(mtx1, mMtx, mTranslate.x, mTranslate.y, mTranslate.z);
@@ -235,7 +248,7 @@ void Pane::CalculateMtx(const DrawInfo& rInfo) {
 
     if (modifyInfo) {
         DrawInfo& rMtInfo = const_cast<DrawInfo&>(rInfo);
-        rMtInfo.SetGlobalAlpha(glbAlpha * mAlpha * (1.0f / 255.0f));
+        rMtInfo.SetGlobalAlpha(glbAlpha * mAlpha * sPanePool[3]);
         rMtInfo.SetInfluencedAlpha(true);
     }
 
@@ -270,30 +283,30 @@ void Pane::DrawSelf(const DrawInfo& rInfo) {
     // Debug draw: outline the pane bounds with a green line
     ut::Color color(0x00FF00FFu);
 
-    f32 x = 0.0f;
-    f32 y = 0.0f;
+    f32 x = sPanePool[0];
+    f32 y = sPanePool[0];
 
     switch (mBasePosition % HORIZONTALPOSITION_MAX) {
     case HORIZONTALPOSITION_CENTER:
-        x = -mSize.width * 0.5f;
+        x = -mSize.width * sPanePool[2];
         break;
     case HORIZONTALPOSITION_RIGHT:
         x = -mSize.width;
         break;
     default:
-        x = 0.0f;
+        x = sPanePool[0];
         break;
     }
 
     switch (mBasePosition / HORIZONTALPOSITION_MAX) {
     case VERTICALPOSITION_CENTER:
-        y = -mSize.height * 0.5f;
+        y = -mSize.height * sPanePool[2];
         break;
     case VERTICALPOSITION_BOTTOM:
         y = -mSize.height;
         break;
     default:
-        y = 0.0f;
+        y = sPanePool[0];
         break;
     }
 
@@ -434,17 +447,17 @@ void Pane::LoadMtx(const DrawInfo& rInfo) {
 }
 
 math::VEC2 Pane::GetVtxPos() const {
-    math::VEC2 base(0.0f, 0.0f);
+    math::VEC2 base(sPanePool[0], sPanePool[0]);
 
     switch (mBasePosition % HORIZONTALPOSITION_MAX) {
     default:
     case HORIZONTALPOSITION_LEFT: {
-        base.x = 0.0f;
+        base.x = sPanePool[0];
         break;
     }
 
     case HORIZONTALPOSITION_CENTER: {
-        base.x = -mSize.width / 2;
+        base.x = -mSize.width * sPanePool[2];
         break;
     }
 
@@ -457,12 +470,12 @@ math::VEC2 Pane::GetVtxPos() const {
     switch (mBasePosition / HORIZONTALPOSITION_MAX) {
     default:
     case VERTICALPOSITION_TOP: {
-        base.y = 0.0f;
+        base.y = sPanePool[0];
         break;
     }
 
     case VERTICALPOSITION_CENTER: {
-        base.y = -mSize.height / 2;
+        base.y = -mSize.height * sPanePool[2];
         break;
     }
 
@@ -481,3 +494,67 @@ Material* Pane::GetMaterial() const {
 
 } // namespace lyt
 } // namespace nw4hbm
+
+/* Retail keeps Pane's 0x68 vtable in this TU's .data, but -ipa file GCs
+   MWCC's weak emission (no .data in the natural object). Materialize the
+   slot table here with live relocations so MWCC emits .data/.rela.data;
+   postprocess renames it to __vt__Q36nw4hbm3lyt4Pane. Slots +0x00/+0x0C
+   reference symbols owned elsewhere at link (the Pane typeinfo ships from
+   another homebutton TU; GetRuntimeTypeInfo's weak def lives in
+   HBMGUIManager.o - see the drop note above). Slot contents stay zero in
+   the object either way (linker-filled). */
+extern const void* __RTTI__Q36nw4hbm3lyt4Pane;
+extern "C" const void* GetRuntimeTypeInfo__Q36nw4hbm3lyt4PaneCFv();
+extern "C" void __dt__Q36nw4hbm3lyt4PaneFv();
+extern "C" void CalculateMtx__Q36nw4hbm3lyt4PaneFRCQ36nw4hbm3lyt8DrawInfo();
+extern "C" void Draw__Q36nw4hbm3lyt4PaneFRCQ36nw4hbm3lyt8DrawInfo();
+extern "C" void DrawSelf__Q36nw4hbm3lyt4PaneFRCQ36nw4hbm3lyt8DrawInfo();
+extern "C" void Animate__Q36nw4hbm3lyt4PaneFUl();
+extern "C" void AnimateSelf__Q36nw4hbm3lyt4PaneFUl();
+extern "C" void GetVtxColor__Q36nw4hbm3lyt4PaneCFUl();
+extern "C" void SetVtxColor__Q36nw4hbm3lyt4PaneFUlQ36nw4hbm2ut5Color();
+extern "C" void GetColorElement__Q36nw4hbm3lyt4PaneCFUl();
+extern "C" void SetColorElement__Q36nw4hbm3lyt4PaneFUlUc();
+extern "C" void GetVtxColorElement__Q36nw4hbm3lyt4PaneCFUl();
+extern "C" void SetVtxColorElement__Q36nw4hbm3lyt4PaneFUlUc();
+extern "C" void FindPaneByName__Q36nw4hbm3lyt4PaneFPCcb();
+extern "C" void FindMaterialByName__Q36nw4hbm3lyt4PaneFPCcb();
+extern "C" void BindAnimation__Q36nw4hbm3lyt4PaneFPQ36nw4hbm3lyt13AnimTransformb();
+extern "C" void UnbindAnimation__Q36nw4hbm3lyt4PaneFPQ36nw4hbm3lyt13AnimTransformb();
+extern "C" void UnbindAllAnimation__Q36nw4hbm3lyt4PaneFb();
+extern "C" void UnbindAnimationSelf__Q36nw4hbm3lyt4PaneFPQ36nw4hbm3lyt13AnimTransform();
+extern "C" void FindAnimationLink__Q36nw4hbm3lyt4PaneFPQ36nw4hbm3lyt13AnimTransform();
+extern "C" void SetAnimationEnable__Q36nw4hbm3lyt4PaneFPQ36nw4hbm3lyt13AnimTransformbb();
+extern "C" void GetMaterial__Q36nw4hbm3lyt4PaneCFv();
+extern "C" void LoadMtx__Q36nw4hbm3lyt4PaneFRCQ36nw4hbm3lyt8DrawInfo();
+
+/* Non-const: MWCC files const pointer tables into .rodata; retail keeps the
+   vtable in .data. Slot contents stay zero in the object either way. */
+extern const void* sPaneVtableSlots[26] = {
+    (const void*)&__RTTI__Q36nw4hbm3lyt4Pane,
+    0,
+    (const void*)&__dt__Q36nw4hbm3lyt4PaneFv,
+    (const void*)&GetRuntimeTypeInfo__Q36nw4hbm3lyt4PaneCFv,
+    (const void*)&CalculateMtx__Q36nw4hbm3lyt4PaneFRCQ36nw4hbm3lyt8DrawInfo,
+    (const void*)&Draw__Q36nw4hbm3lyt4PaneFRCQ36nw4hbm3lyt8DrawInfo,
+    (const void*)&DrawSelf__Q36nw4hbm3lyt4PaneFRCQ36nw4hbm3lyt8DrawInfo,
+    (const void*)&Animate__Q36nw4hbm3lyt4PaneFUl,
+    (const void*)&AnimateSelf__Q36nw4hbm3lyt4PaneFUl,
+    (const void*)&GetVtxColor__Q36nw4hbm3lyt4PaneCFUl,
+    (const void*)&SetVtxColor__Q36nw4hbm3lyt4PaneFUlQ36nw4hbm2ut5Color,
+    (const void*)&GetColorElement__Q36nw4hbm3lyt4PaneCFUl,
+    (const void*)&SetColorElement__Q36nw4hbm3lyt4PaneFUlUc,
+    (const void*)&GetVtxColorElement__Q36nw4hbm3lyt4PaneCFUl,
+    (const void*)&SetVtxColorElement__Q36nw4hbm3lyt4PaneFUlUc,
+    (const void*)&FindPaneByName__Q36nw4hbm3lyt4PaneFPCcb,
+    (const void*)&FindMaterialByName__Q36nw4hbm3lyt4PaneFPCcb,
+    (const void*)&BindAnimation__Q36nw4hbm3lyt4PaneFPQ36nw4hbm3lyt13AnimTransformb,
+    (const void*)&UnbindAnimation__Q36nw4hbm3lyt4PaneFPQ36nw4hbm3lyt13AnimTransformb,
+    (const void*)&UnbindAllAnimation__Q36nw4hbm3lyt4PaneFb,
+    (const void*)&UnbindAnimationSelf__Q36nw4hbm3lyt4PaneFPQ36nw4hbm3lyt13AnimTransform,
+    (const void*)&FindAnimationLink__Q36nw4hbm3lyt4PaneFPQ36nw4hbm3lyt13AnimTransform,
+    (const void*)&SetAnimationEnable__Q36nw4hbm3lyt4PaneFPQ36nw4hbm3lyt13AnimTransformbb,
+    (const void*)&GetMaterial__Q36nw4hbm3lyt4PaneCFv,
+    (const void*)&LoadMtx__Q36nw4hbm3lyt4PaneFRCQ36nw4hbm3lyt8DrawInfo,
+    0,
+};

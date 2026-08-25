@@ -65,6 +65,39 @@ namespace cf{
         virtual void s30(u32 a);   // declared index 10 -> vtable 0x30
     };
 
+    // Enumeration element dispatched by func_801A7D6C through vtable slot
+    // 0x190 (declared index 98 -> (98+2)*4). Never instantiated -> no
+    // vtable emitted.
+    class CVisionEnumElem {
+    public:
+        virtual void s00();   virtual void s04();   virtual void s08();   virtual void s0C();
+        virtual void s10();   virtual void s14();   virtual void s18();   virtual void s1C();
+        virtual void s20();   virtual void s24();   virtual void s28();   virtual void s2C();
+        virtual void s30();   virtual void s34();   virtual void s38();   virtual void s3C();
+        virtual void s40();   virtual void s44();   virtual void s48();   virtual void s4C();
+        virtual void s50();   virtual void s54();   virtual void s58();   virtual void s5C();
+        virtual void s60();   virtual void s64();   virtual void s68();   virtual void s6C();
+        virtual void s70();   virtual void s74();   virtual void s78();   virtual void s7C();
+        virtual void s80();   virtual void s84();   virtual void s88();   virtual void s8C();
+        virtual void s90();   virtual void s94();   virtual void s98();   virtual void s9C();
+        virtual void sA0();   virtual void sA4();   virtual void sA8();   virtual void sAC();
+        virtual void sB0();   virtual void sB4();   virtual void sB8();   virtual void sBC();
+        virtual void sC0();   virtual void sC4();   virtual void sC8();   virtual void sCC();
+        virtual void sD0();   virtual void sD4();   virtual void sD8();   virtual void sDC();
+        virtual void sE0();   virtual void sE4();   virtual void sE8();   virtual void sEC();
+        virtual void sF0();   virtual void sF4();   virtual void sF8();   virtual void sFC();
+        virtual void s100();  virtual void s104();  virtual void s108();  virtual void s10C();
+        virtual void s110();  virtual void s114();  virtual void s118();  virtual void s11C();
+        virtual void s120();  virtual void s124();  virtual void s128();  virtual void s12C();
+        virtual void s130();  virtual void s134();  virtual void s138();  virtual void s13C();
+        virtual void s140();  virtual void s144();  virtual void s148();  virtual void s14C();
+        virtual void s150();  virtual void s154();  virtual void s158();  virtual void s15C();
+        virtual void s160();  virtual void s164();  virtual void s168();  virtual void s16C();
+        virtual void s170();  virtual void s174();  virtual void s178();  virtual void s17C();
+        virtual void s180();  virtual void s184();
+        virtual void vf190(u32 a);  // declared index 98 -> vtable 0x190
+    };
+
     // Object list created by func_80043D90 / filled by func_800F4A98; the
     // element count lives at +0x620.
     struct CVisionEnumList {
@@ -87,8 +120,17 @@ namespace cf{
     public:
         u8 unk0[0x2C];      // 0x00
         float field_2C;     // 0x2C
-        u8 unk30[0x7C - 0x30];
+        u8 unk30[0x78 - 0x30];
+        u32 field_78;       // 0x78 flag bits (bit 0x8000 tested by func_801A70DC)
         float field_7C;     // 0x7C
+    };
+
+    // CfObjectActor view used by func_801A70DC's enumeration loop (reads the
+    // u16 flag at +0x3388 and clears bit 0x8).
+    class CVisionActor3388 {
+    public:
+        u8 unk0[0x3388];
+        u16 field_3388;     // 0x3388
     };
 
     // 0xBC-byte init block shared by the 10-entry CVisionSub::items array
@@ -113,18 +155,150 @@ namespace cf{
         f32 f_6C;           // 0x6C
         s16 h_70;           // 0x70 (s16: struct-copy emits lha)
         s16 h_72;           // 0x72 (s16: struct-copy emits lha)
-        u32 w_74;           // 0x74
-        u32 w_78;           // 0x78 (cleared by a 1-word loop together with w_7C bound)
+        u32 w_74pair[2];    // 0x74 (array pair: struct-copy merges into one quad)
         u32 w_7C;           // 0x7C
         u16 h_80;           // 0x80
-        u8 unk_82[2];       // 0x82
-        u8 unk_84[0x34];    // 0x84 (memset 0x34)
+        // 0x82-0x83 are implicit padding: retail's struct copy skips them, so
+        // the tail block must be a 4-aligned array (no named member at 0x82).
+        u32 unk_84[0xD];    // 0x84 (memset 0x34)
         u32 w_B8;           // 0xB8
     };
 
     // 5-word argument block passed by value to CVisionBattleObj::vf1E8.
+    // Word 4 doubles as an f32 scale in func_801A8244's player loop.
     struct CVisionArg5 {
-        u32 w[5];
+        union {
+            u32 w[5];
+            f32 f[5];
+        };
+    };
+
+    // Typed view of the actor reference held at battle-object +0x50
+    // (u16 gate flag at 0x3C, flag word at 0x78).
+    class CVisionActor50 {
+    public:
+        u8 unk0[0x3C];
+        u16 field_3C;               // 0x3C
+        u8 unk3E[0x78 - 0x3E];
+        u32 field_78;               // 0x78 flag bits (bit 0x1000)
+    };
+
+    // Typed view of the battle objects handled by func_801A6BCC: vtable slot
+    // 0x2BC (declared index 173) plus the fields that function touches.
+    class CVisionObjV {
+    public:
+        virtual void f000();   virtual void f001();   virtual void f002();   virtual void f003();
+        virtual void f004();   virtual void f005();   virtual void f006();   virtual void f007();
+        virtual void f008();   virtual void f009();   virtual void f010();   virtual void f011();
+        virtual void f012();   virtual void f013();   virtual void f014();   virtual void f015();
+        virtual void f016();   virtual void f017();   virtual void f018();   virtual void f019();
+        virtual void f020();   virtual void f021();   virtual void f022();   virtual void f023();
+        virtual void f024();   virtual void f025();   virtual void f026();   virtual void f027();
+        virtual void f028();   virtual void f029();   virtual void f030();   virtual void f031();
+        virtual void f032();   virtual void f033();   virtual void f034();   virtual void f035();
+        virtual void f036();   virtual void f037();   virtual void f038();   virtual void f039();
+        virtual void f040();   virtual void f041();   virtual void f042();   virtual void f043();
+        virtual void f044();   virtual void f045();   virtual void f046();   virtual void f047();
+        virtual void f048();   virtual void f049();   virtual void f050();   virtual void f051();
+        virtual void f052();   virtual void f053();   virtual void f054();   virtual void f055();
+        virtual void f056();   virtual void f057();   virtual void f058();   virtual void f059();
+        virtual void f060();   virtual void f061();   virtual void f062();   virtual void f063();
+        virtual void f064();   virtual void f065();   virtual void f066();   virtual void f067();
+        virtual void f068();   virtual void f069();   virtual void f070();   virtual void f071();
+        virtual void f072();   virtual void f073();   virtual void f074();   virtual void f075();
+        virtual void f076();   virtual void f077();   virtual void f078();   virtual void f079();
+        virtual void f080();   virtual void f081();   virtual void f082();   virtual void f083();
+        virtual void f084();   virtual void f085();   virtual void f086();   virtual void f087();
+        virtual void f088();   virtual void f089();   virtual void f090();   virtual void f091();
+        virtual void f092();   virtual void f093();   virtual void f094();   virtual void f095();
+        virtual void f096();   virtual void f097();   virtual void f098();   virtual void f099();
+        virtual void f100();   virtual void f101();   virtual void f102();   virtual void f103();
+        virtual void f104();   virtual void f105();   virtual void f106();   virtual void f107();
+        virtual void f108();   virtual void f109();   virtual void f110();   virtual void f111();
+        virtual void f112();   virtual void f113();   virtual void f114();   virtual void f115();
+        virtual void f116();   virtual void f117();   virtual void f118();   virtual void f119();
+        virtual void f120();   virtual void f121();   virtual void f122();   virtual void f123();
+        virtual void f124();   virtual void f125();   virtual void f126();   virtual void f127();
+        virtual void f128();   virtual void f129();   virtual void f130();   virtual void f131();
+        virtual void f132();   virtual void f133();   virtual void f134();   virtual void f135();
+        virtual void f136();   virtual void f137();   virtual void f138();   virtual void f139();
+        virtual void f140();   virtual void f141();   virtual void f142();   virtual void f143();
+        virtual void f144();   virtual void f145();   virtual void f146();   virtual void f147();
+        virtual void f148();   virtual void f149();   virtual void f150();   virtual void f151();
+        virtual void f152();   virtual void f153();   virtual void f154();   virtual void f155();
+        virtual void f156();   virtual void f157();   virtual void f158();   virtual void f159();
+        virtual void f160();   virtual void f161();   virtual void f162();   virtual void f163();
+        virtual void f164();   virtual void f165();   virtual void f166();   virtual void f167();
+        virtual void f168();   virtual void f169();   virtual void f170();   virtual void f171();
+        virtual void f172();
+        virtual s32 vt2BC();        // index 173 -> vtable 0x2BC
+
+        u32 field_04;               // 0x04 (id handed to func_800B708C)
+        u8 unk08[0x50 - 0x08];
+        CVisionActor50* field_50;   // 0x50
+        u8 unk54[0x3F00 - 0x54];
+        u32 field_3F00;             // 0x3F00 flags (bit 29 / bit 30)
+        u8 unk3F04[0x3F10 - 0x3F04];
+        u32 field_3F10;             // 0x3F10 model id
+        u8 unk3F14[0x3F28 - 0x3F14];
+        u16 field_3F28;             // 0x3F28
+    };
+
+    // HP holder pointed to by CVisionFusionV+0x3F60 (float at 0x3E8).
+    class CVisionHpRef {
+    public:
+        u8 unk0[0x3E8];
+        f32 f_3E8;                  // 0x3E8 current HP
+    };
+
+    // Embedded polymorphic sub-object at CVisionFusionV+0x3E9C; slot 0xAC
+    // (declared index 41) returns a pointer whose +4 is an f32.
+    class CVisionEmbAC {
+    public:
+        virtual void f000(); virtual void f004(); virtual void f008(); virtual void f00C();
+        virtual void f010(); virtual void f014(); virtual void f018(); virtual void f01C();
+        virtual void f020(); virtual void f024(); virtual void f028(); virtual void f02C();
+        virtual void f030(); virtual void f034(); virtual void f038(); virtual void f03C();
+        virtual void f040(); virtual void f044(); virtual void f048(); virtual void f04C();
+        virtual void f050(); virtual void f054(); virtual void f058(); virtual void f05C();
+        virtual void f060(); virtual void f064(); virtual void f068(); virtual void f06C();
+        virtual void f070(); virtual void f074(); virtual void f078(); virtual void f07C();
+        virtual void f080(); virtual void f084(); virtual void f088(); virtual void f08C();
+        virtual void f090(); virtual void f094(); virtual void f098();
+        virtual void* vfAC();       // index 41 -> vtable 0xAC
+    };
+
+    // Typed view of the func_8016FE34 fusion object used by func_801A6BCC:
+    // f32-returning HP accessors at vtable 0x128/0x12C (indices 72/73).
+    class CVisionFusionV {
+    public:
+        virtual void f000();   virtual void f001();   virtual void f002();   virtual void f003();
+        virtual void f004();   virtual void f005();   virtual void f006();   virtual void f007();
+        virtual void f008();   virtual void f009();   virtual void f010();   virtual void f011();
+        virtual void f012();   virtual void f013();   virtual void f014();   virtual void f015();
+        virtual void f016();   virtual void f017();   virtual void f018();   virtual void f019();
+        virtual void f020();   virtual void f021();   virtual void f022();   virtual void f023();
+        virtual void f024();   virtual void f025();   virtual void f026();   virtual void f027();
+        virtual void f028();   virtual void f029();   virtual void f030();   virtual void f031();
+        virtual void f032();   virtual void f033();   virtual void f034();   virtual void f035();
+        virtual void f036();   virtual void f037();   virtual void f038();   virtual void f039();
+        virtual void f040();   virtual void f041();   virtual void f042();   virtual void f043();
+        virtual void f044();   virtual void f045();   virtual void f046();   virtual void f047();
+        virtual void f048();   virtual void f049();   virtual void f050();   virtual void f051();
+        virtual void f052();   virtual void f053();   virtual void f054();   virtual void f055();
+        virtual void f056();   virtual void f057();   virtual void f058();   virtual void f059();
+        virtual void f060();   virtual void f061();   virtual void f062();   virtual void f063();
+        virtual void f064();   virtual void f065();   virtual void f066();   virtual void f067();
+        virtual void f068();   virtual void f069();   virtual void f070();   virtual void f071();
+        virtual f32 vt128();        // index 72 -> vtable 0x128
+        virtual f32 vt12C();        // index 73 -> vtable 0x12C
+
+        u8 unk4[0x3E9C - 0x04];
+        CVisionEmbAC emb;           // 0x3E9C
+        u8 unk3EA0[0x3F00 - 0x3EA0];
+        u32 field_3F00;             // 0x3F00 flags (bit 30)
+        u8 unk3F04[0x3F60 - 0x3F04];
+        CVisionHpRef* field_3F60;   // 0x3F60
     };
 
     // Large per-model battle object (func_8016FE34 result). Never
@@ -158,7 +332,9 @@ namespace cf{
         virtual void f089();   virtual void f090();   virtual void f091();   virtual void f092();
         virtual void f093();   virtual void f094();   virtual void f095();   virtual void f096();
         virtual void f097();   virtual void f098();   virtual void f099();   virtual void f100();
-        virtual void f101();   virtual void f102();   virtual void f103();   virtual void f104();
+        virtual void f101();   virtual void f102();
+        virtual int vf1A4(u32 a);   // index 103 -> vtable 0x1a4
+        virtual void f104();
         virtual void f105();   virtual void f106();   virtual void f107();   virtual void f108();
         virtual void f109();   virtual void f110();   virtual void f111();   virtual void f112();
         virtual void f113();   virtual void f114();   virtual void f115();   virtual void f116();
@@ -293,7 +469,7 @@ namespace cf{
         u8 unk15F0[0x78];   // 0x15F0 func_801751DC sub-object
         u8 unk1668[0x78];   // 0x1668 func_801751DC sub-object
         u8 unk16E0[0x1520]; // 0x16E0 (memset 0x1520, ends 0x2C00)
-        u8 unk2C00[0xC0];   // 0x2C00 (8 x 0x18 memset loop, ends 0x2CC0)
+        u8 blocks2C00[0xC0];    // 0x2C00 (8 x 0x18 memset loop, ends 0x2CC0)
         u32 w_2CC0;     // 0x2CC0
         u32 w_2CC4;     // 0x2CC4
         u8 unk2CC8[0x34];   // 0x2CC8 cf::_sArtsSet ctor region (ends 0x2CFC)
@@ -335,7 +511,7 @@ namespace cf{
         virtual ~CVision();
         virtual void IObjectInfo_UnkVirtualFunc1();
         virtual void vt_10();       //0x10
-        virtual void vt_14();       //0x14
+        virtual s32 vt_14(CVisionObjV* obj, CVisionFusionV* target); //0x14
         virtual void vt_18();       //0x18
         virtual void vt_1C();       //0x1C (no-arg state refresh)
         virtual void vt_20(u32 r4); //0x20
@@ -417,6 +593,14 @@ extern "C" int func_800B708C__Fi(int id);
 extern "C" float func_800F42AC(void* obj);
 extern "C" void func_800F449C(void* obj);
 extern "C" int func_80133F48(int id, float f);
+// Character-data lookup + row predicate pair used by CVision.cpp's
+// movie-gate checks (defined in CtrlObjectParam.cpp). Declared here because
+// sibling TUs declare the same retail symbols with different signatures or
+// define empty stubs; the variants in other TU-local headers are never
+// included together with this one.
+extern "C" bool func_8009E344(int* a, u32 b, int* outA, int* outB);
+extern "C" u8 func_800A32C4(void* row);
+extern "C" void* func_8009EC9C(u32 index);
 extern "C" void* getPlayer__Q22cf13CfGameManagerFi(int idx);
 extern "C" void func_801BFE8C(u32 a, u32 b, u32 c);
 extern "C" void func_801BFC38__Q22cf10CfSoundManFUlUlUlUlf(u32 a, u32 b, u32 c, u32 d, f32 e);
@@ -442,6 +626,7 @@ extern "C" const void* lbl_eu_806618F0;
 
 extern "C" void func_8014AC38(void* a, void* b);
 extern "C" int func_8014B8BC(void* a, void* b);
+extern "C" bool func_801AC09C(u32 flags);
 extern "C" int func_800F4730(void);
 extern "C" void* func_800F4648(void* self);
 extern "C" int func_800F46C0(void* a, void* b);
@@ -512,7 +697,7 @@ extern "C" void* __RTTI__Q22cf13CfObjectActor;
 extern "C" void func_8009D018(u32 a, u32 b);
 // Return type must match CfGameManager.hpp's declaration (u32), or MWCC
 // rejects the redeclaration when both headers are included in one TU.
-extern "C" u32 func_801412D0(u32 a);
+extern "C" void* func_801412D0(u32);
 extern "C" void func_8013F244(void);
 extern "C" void func_8016FF14(void* obj, void* dst);
 extern "C" void func_801C01A8(u32 a, u32 b, f32 c);

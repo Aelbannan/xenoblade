@@ -39,6 +39,17 @@ static inline f32 u32ToF_A8F0(u32 v) {
     return (f32)(c.d - lbl_eu_8066A8F0);
 }
 
+// Frame-slot pair for the same trick: the ctor keeps two of these in its
+// stack frame (hi words initialized in the prologue), overwriting only the
+// low word per conversion.
+struct DblCvtSlots {
+    u32 hi;
+    u32 lo;
+};
+static inline f32 cvtToF_A8F0(volatile DblCvtSlots& s) {
+    return (f32)(*(volatile const f64*)&s - lbl_eu_8066A8F0);
+}
+
 
 // Multiple targets map to the same function - single definition
 u32 func_804871A8(u8* self) { return *(u32*)((u8*)self + 0x4ac); }
@@ -210,42 +221,46 @@ extern "C" void*  func_80487EB8(u8* self) {
 }
 
 // Shared tail of func_80487EE0's flag-dispatch (retail inlines it three times):
-// syncs the +0x7A4 camera-hookup/busy bit trio against the +0x7A4
-// bit-27 busy state, then refreshes the hookup via func_8048F7A8 (when the
-// +0x7A4 bit-25 flag is set) or func_8048F630, arming/clearing the bits.
+// syncs the camera-hookup bit trio (+0x7A4 bit-21 / bit-25, +0x7A8 bit-8)
+// against the +0x7A4 bit-25 busy state, arming/clearing the bits, then
+// refreshes the hookup via func_8048F7A8 (when the +0x7A4 bit-25 flag is
+// set) or func_8048F630, gated on the +0x1000 flag.
 static inline void Func80487EE0Tail(CScnItemModelNw4r* self) {
     u32 flags = self->field_0x7A4;
-    u32 flags8 = self->field_0x7A8;
-    u32 comb = ((flags & 0x10000) ? 1 : 0) | ((flags8 & 0x100) ? 1 : 0) |
-               ((flags & 0x04000000) ? 1 : 0);
-    u32 busy = (flags & 0x08000000) ? 1 : 0;
+    u32 comb = ((flags & 0x00200000) ? 1 : 0) |
+               ((flags & 0x04000000) ? 1 : 0) |
+               ((self->field_0x7A8 & 0x100) ? 1 : 0);
+    u32 busy = (flags & 0x04000000) ? 1 : 0;
     if (busy == comb) {
         return;
     }
     if (comb != 0) {
         self->field_0x7A4 |= 0x04000000;
     } else {
-        // Retail clears all three high bits (bits 26..24) at once.
-        self->field_0x7A4 &= ~0x07000000;
+        // Retail clears bits 25 and 24 at once.
+        self->field_0x7A4 &= ~0x06000000;
     }
     flags = self->field_0x7A4;
-    if (flags & 0x02000000) {
+    if (flags & 0x04000000) {
         if (!(flags & 0x1000)) {
-            if (func_8048F7A8(self->field_04->field_0x8C,
-                              (CScnCamLayout*)self) != 0) {
-                self->field_0x7A4 &= ~0x1C00;
-            } else {
-                self->field_0x7A4 |= 0x1000;
-            }
+            return;
+        }
+        if (func_8048F7A8(self->field_04->field_0x8C,
+                          (CScnCamLayout*)self) != 0) {
+            self->field_0x7A4 |= 0x1000;
+        } else {
+            // Retail clears bits 12 and 11 at once.
+            self->field_0x7A4 &= ~0x3000;
         }
     } else {
-        if (!(flags & 0x1000)) {
-            if (func_8048F630(self->field_04->field_0x8C,
-                              (CScnCamLayout*)self) != 0) {
-                self->field_0x7A4 |= 0x1000;
-            } else {
-                self->field_0x7A4 &= ~0x1C00;
-            }
+        if (flags & 0x1000) {
+            return;
+        }
+        if (func_8048F630(self->field_04->field_0x8C,
+                          (CScnCamLayout*)self) != 0) {
+            self->field_0x7A4 |= 0x1000;
+        } else {
+            self->field_0x7A4 &= ~0x3000;
         }
     }
 }
@@ -261,6 +276,9 @@ static inline void Func80487EE0Tail(CScnItemModelNw4r* self) {
 // the bit-4/bit-5 camera-hookup latches are advanced (func_8048F7A8 /
 // func_8048F630 gated by the +0x1000 flag).
 extern "C" void func_80487EE0(CScnItemModelNw4r* self) {
+    // Dead initializer: births oldBit's web before the this-copy so MWCC
+    // colors it r31 (retail order); the store itself folds away.
+    u32 oldBit = 0;
     if (self->field_0x17D0 != 0) {
         // Retail loads the full word and stores the low half.
         ((CScnItemModelNw4rScnObj122*)self->field_0x147C)->field_0x122 =
@@ -279,18 +297,18 @@ extern "C" void func_80487EE0(CScnItemModelNw4r* self) {
         if (self->field_0x1484 != 0) {
             ((CScnItemModelNw4rAnimV24*)self->field_0x1484)->v07(fade);
         }
-        // Fade-latch state machine: when the fade walks while the base is
-        // held, remember it; otherwise fold a remembered latch back in once
-        // and clear it.
-        if (lbl_eu_8066A8E0 == fade || lbl_eu_8066A8E0 != f) {
+        // Fade-latch state machine: when the fade walks (non-zero) while the
+        // base value f is held at zero, remember it; otherwise fold a
+        // remembered latch back in once and clear it.
+        if (lbl_eu_8066A8E0 != fade && lbl_eu_8066A8E0 == f) {
+            self->field_0x16BC = fade;
+        } else {
             if (lbl_eu_8066A8E0 != self->field_0x16BC) {
                 if (lbl_eu_8066A8E0 != f) {
                     fade = self->field_0x16BC;
                 }
                 self->field_0x16BC = lbl_eu_8066A8E0;
             }
-        } else {
-            self->field_0x16BC = fade;
         }
         f = fade * f;
         if (f < lbl_eu_8066A900) {
@@ -324,16 +342,16 @@ extern "C" void func_80487EE0(CScnItemModelNw4r* self) {
             !(func_804844D0(self) != 0 && func_804842B0(self) != 0)) {
             // Re-evaluate the +0x7A4 bit-16 hidden flag from the owner's
             // nodelist distance checks and notify on change.
-            u32 oldBit = (self->field_0x7A4 & 0x10000) ? 1 : 0;
+            oldBit = (self->field_0x7A4 & 0x10000) ? 1 : 0;
             if (self->field_0x7A8 & 0x80) {
-                self->field_0x7A4 &= ~0x1C000;
+                self->field_0x7A4 &= ~0x10000;
             } else {
                 void* obj = func_80496264(self->field_04, -1);
                 if (((CScnItemModelNw4rV20*)obj)
                         ->v06(&self->field_0x2DC[0]) == 0) {
                     self->field_0x7A4 |= 0x10000;
                 } else {
-                    self->field_0x7A4 &= ~0x1C000;
+                    self->field_0x7A4 &= ~0x10000;
                 }
                 u32 flags = self->field_0x7A4;
                 if (!(flags & 0x400000) && !(flags & 0x10000)) {
@@ -344,7 +362,7 @@ extern "C" void func_80487EE0(CScnItemModelNw4r* self) {
                                     self->field_0x2E8) != 0) {
                             self->field_0x7A4 |= 0x10000;
                         } else {
-                            self->field_0x7A4 &= ~0x1C000;
+                            self->field_0x7A4 &= ~0x10000;
                         }
                     }
                 }
@@ -437,35 +455,39 @@ extern "C" void  func_804885FC(CScnItemModelNw4r* self) {
             self->field_0x2DC[0] = self->field_0x14B4.x;
             self->field_0x2DC[1] = self->field_0x14B4.y;
             self->field_0x2DC[2] = self->field_0x14B4.z;
-            ml::CAttrTransform* t = func_8048315C(self);
-            PSMTXMultVec(t->mLocalMat.m, (const Vec*)&self->field_0x2DC[0],
+            PSMTXMultVec(func_8048315C(self)->mLocalMat.m,
+                         (const Vec*)&self->field_0x2DC[0],
                          (Vec*)&self->field_0x2DC[0]);
         } else {
-            self->field_0x2DC[0] =
-                self->field_0x304 * (lbl_eu_8066A904 * (self->field_0x2EC[3] + self->field_0x2EC[0]));
-            self->field_0x2DC[1] =
-                self->field_0x308 * (lbl_eu_8066A904 * (self->field_0x2EC[4] + self->field_0x2EC[1]));
-            self->field_0x2DC[2] =
-                self->field_0x30C * (lbl_eu_8066A904 * (self->field_0x2EC[5] + self->field_0x2EC[2]));
+            // Halve the summed bbox extents, scale by the per-axis scale
+            // triple, then track the max scale for the radius.
+            f32 X = self->field_0x304 *
+                    (lbl_eu_8066A904 * (self->field_0x2EC[3] + self->field_0x2EC[0]));
+            f32 Y = self->field_0x308 *
+                    (lbl_eu_8066A904 * (self->field_0x2EC[4] + self->field_0x2EC[1]));
+            f32 Z = self->field_0x30C *
+                    (lbl_eu_8066A904 * (self->field_0x2EC[5] + self->field_0x2EC[2]));
+            self->field_0x2DC[0] = X;
+            self->field_0x2DC[1] = Y;
+            self->field_0x2DC[2] = Z;
             f32 mx = self->field_0x308 > self->field_0x304 ? self->field_0x308
                                                             : self->field_0x304;
             if (self->field_0x30C > mx) {
                 mx = self->field_0x30C;
             }
             self->field_0x2E8 = self->field_0x7AC * mx;
-            ml::CAttrTransform* t = func_8048315C(self);
-            PSMTXMultVec(t->mLocalMat.m, (const Vec*)&self->field_0x2DC[0],
+            PSMTXMultVec(func_8048315C(self)->mLocalMat.m,
+                         (const Vec*)&self->field_0x2DC[0],
                          (Vec*)&self->field_0x2DC[0]);
         }
     }
+    // Pre-read of the +0x7A4 bit-16 hidden state for the change-notify below.
+    u32 oldBit16 = (self->field_0x7A4 >> 16) & 1;
     if (self->member824.field_4 != 0) {
         if (!(self->field_0x7A8 & 0x400)) {
-            u32 oldBit16 = (self->field_0x7A4 >> 16) & 1;
-            if (self->field_0x7A8 & 0x80) {
-                self->field_0x7A4 &= ~0x10000;
-            } else {
-                void* obj = func_80496264(self->field_04, -1);
-                if (((CScnItemModelNw4rV20*)obj)->v06(&self->field_0x2DC[0]) == 0) {
+            if (!(self->field_0x7A8 & 0x80)) {
+                if (!((CScnItemModelNw4rV20*)func_80496264(self->field_04, -1))
+                          ->v06(&self->field_0x2DC[0])) {
                     self->field_0x7A4 |= 0x10000;
                 } else {
                     self->field_0x7A4 &= ~0x10000;
@@ -475,13 +497,15 @@ extern "C" void  func_804885FC(CScnItemModelNw4r* self) {
                     CScnItemModelNw4rB4V10* b4 =
                         (CScnItemModelNw4rB4V10*)self->field_04->field_0xB4;
                     if (b4 != 0) {
-                        if (b4->v02(&self->field_0x2DC[0], self->field_0x2E8) == 0) {
-                            self->field_0x7A4 &= ~0x10000;
-                        } else {
+                        if (b4->v02(&self->field_0x2DC[0], self->field_0x2E8) != 0) {
                             self->field_0x7A4 |= 0x10000;
+                        } else {
+                            self->field_0x7A4 &= ~0x10000;
                         }
                     }
                 }
+            } else {
+                self->field_0x7A4 &= ~0x10000;
             }
             if (oldBit16 != ((self->field_0x7A4 >> 16) & 1)) {
                 ((CScnItemModel*)self)->vfuncA4(1);
@@ -490,14 +514,17 @@ extern "C" void  func_804885FC(CScnItemModelNw4r* self) {
         }
         self->field_0x7A8 &= ~0x400;
     }
+    // Flag dispatch: bit-26 busy or the all-set combo skips the refresh.
     u32 f4 = self->field_0x7A4;
-    if (!(f4 & 0x04000000) && (f4 & 2) && !(f4 & 0x8000) && !(f4 & 0x10000)) {
-        // all-set: retail jumps straight to the epilogue
-    } else {
-        if ((f4 & 1) && (f4 & 0x01000000) && !(f4 & 0x20)) {
-            if (self->field_854 == 0) {
-                self->field_0x7A0 &= ~2;
-            }
+    int skip = 0;
+    if (!(f4 & 0x04000000)) {
+        if ((f4 & 2) && !(f4 & 0x8000) && !(f4 & 0x10000)) {
+            skip = 1;
+        }
+    }
+    if (skip == 0) {
+        if ((f4 & 1) && (f4 & 0x01000000) && !(f4 & 0x20) && self->field_854 == 0) {
+            self->field_0x7A0 &= ~2;
         }
         if (!(self->field_0x7A8 & 0x1000)) {
             func_804EB798(self->field_0x17A0);
@@ -565,16 +592,28 @@ extern "C" void  func_80488984(CScnItemModelNw4r* self, u32 param) {
     func_804857DC(self, param);
     u32 size = nw4r::g3d::ResMdl(self->field_0x146C).GetResNodeNumEntries() * 8;
     CScnItemModelNw4rAlloc* pool = (CScnItemModelNw4rAlloc*)self;
-    if (size < 0xC00u - pool->used) {
-        u32 used = pool->used;
-        u8* p = pool->data + used;
-        pool->used = used + size;
-        self->field_0x1494 = p;
-        self->field_0x85C |= 4;
-    } else {
-        self->field_0x1494 = mtl::MemManager::allocate_head(
-            func_80496018(self->field_04), size, 4);
-    }
+    // Exact-fit leaves the table NULL but still raises the pool flag; the
+    // counter is re-read inside the carve (retail reloads it).
+    void* p;
+    u32 freeBytes = 0xC00u - pool->used;
+    if (size >= freeBytes)
+        goto alloc_path;
+    if (size < freeBytes)
+        goto carve_path;
+    p = NULL;
+    goto store_path;
+carve_path : {
+    u32 used = pool->used;
+    p = pool->data + used;
+    pool->used = used + size;
+}
+store_path:
+    self->field_0x1494 = p;
+    self->field_0x85C |= 4;
+    return;
+alloc_path:
+    self->field_0x1494 = mtl::MemManager::allocate_head(
+        func_80496018(self->field_04), size, 4);
 }
 
 // func_80488A28: link `other` into this model's reference list
@@ -582,32 +621,46 @@ extern "C" void  func_80488984(CScnItemModelNw4r* self, u32 param) {
 // (Insert at its Size), then forward to func_80488B50. Returns the Insert
 // result; 0 when the link was rejected.
 extern "C" u32  func_80488A28(CScnItemModelNw4r* self, CScnItemModelNw4r* other) {
-    if (func_80485994(self, other) == 0) {
-        return 0;
+    // Retail shape: body inside the taken branch, zero-return falls through
+    // to the epilogue path.
+    if (func_80485994(self, other) != 0) {
+        nw4r::g3d::ScnGroup* group = self->field_0x1478;
+        u32 r = group->Insert(group->Size(), other->field_0x147C);
+        ((void (*)(CScnItemModelNw4r*, u32, CScnItemModelNw4r*))func_80488B50)(
+            self, 0, other);
+        return r;
     }
-    nw4r::g3d::ScnGroup* group = self->field_0x1478;
-    u32 r = group->Insert(group->Size(), other->field_0x147C);
-    ((void (*)(CScnItemModelNw4r*, u32, CScnItemModelNw4r*))func_80488B50)(
-        self, 0, other);
-    return r;
+    return 0;
 }
 
 // func_80488AAC: like func_80488984, but for the +0x1498 node table
-// (func_804857F0 setup, 0x85C bit 3 flag).
+// (func_804857F0 setup, 0x85C bit 3 flag). Three-way size/free compare
+// (retail keeps the unreachable exact-fit NULL case); the +0x860 counter is
+// re-read inside the carve (retail reloads it).
 extern "C" void  func_80488AAC(CScnItemModelNw4r* self, u32 param) {
     func_804857F0(self, param);
     u32 size = nw4r::g3d::ResMdl(self->field_0x146C).GetResNodeNumEntries() * 8;
     CScnItemModelNw4rAlloc* pool = (CScnItemModelNw4rAlloc*)self;
-    if (size < 0xC00u - pool->used) {
-        u32 used = pool->used;
-        u8* p = pool->data + used;
-        pool->used = used + size;
-        self->field_0x1498 = p;
-        self->field_0x85C |= 8;
-    } else {
-        self->field_0x1498 = mtl::MemManager::allocate_head(
-            func_80496018(self->field_04), size, 4);
-    }
+    void* p;
+    u32 freeBytes = 0xC00u - pool->used;
+    if (size >= freeBytes)
+        goto alloc_path;
+    if (size < freeBytes)
+        goto carve_path;
+    p = NULL;
+    goto store_path;
+carve_path : {
+    u32 used = pool->used;
+    p = pool->data + used;
+    pool->used = used + size;
+}
+store_path:
+    self->field_0x1498 = p;
+    self->field_0x85C |= 8;
+    return;
+alloc_path:
+    self->field_0x1498 = mtl::MemManager::allocate_head(
+        func_80496018(self->field_04), size, 4);
 }
 
 // func_8048776C: unlink the +0x7C4 chain model. Notify the material chain
@@ -638,18 +691,7 @@ extern "C" void  func_8048776C(CScnItemModelNw4r* self) {
     }
 }
 
-// func_80487818: teardown of a CScnItemModelNw4r: deregister from the owner's
-// pool, release the +0x824 node-table buffer holder and the +0x17CC frame
-// table (guarded by their 0xFFFFFFFF sentinels), destroy the +0x16C8
-// sub-object, release the +0x1494 node table (unless carved from the static
-// pool, flag bit 2), unlink and release all four +0x7B4 reference slots, then
-// release the g3d scene objects: the +0x1490/+0x1484/+0x1488/+0x148C anim
-// objects (removing the latter two from the ScnMdl first, and the anm scene
-// from the scene root when it is registered), the CMdlLook handle (vtable-0x8
-// dtor), the +0x17A0 CMdlDynamics, the camera hookup (when the flag combo is
-// clear), and the +0x1470 group with its +0x1474/+0x1478/+0x1480 children.
-// Placed before func_80488B50's definition so the call below resolves to the
-// C-linkage alias (line 266) and keeps the unmangled retail reloc.
+// func_80487818: teardown of a CScnItemModelNw4r (see retail flow).
 extern "C" void  func_80487818(CScnItemModelNw4r* self) {
     func_80496D74(&self->field_0xC);
     func_804830AC((CScnItemModel*)self);
@@ -682,13 +724,14 @@ extern "C" void  func_80487818(CScnItemModelNw4r* self) {
     } else {
         self->field_0x1494 = 0;
     }
-    for (u32 i = 0; i < 4; i++) {
-        CScnItemModelNw4r* m = self->slots7B4[i];
-        if (m != 0) {
+    // Retail re-reads each slot from memory for every step of the unlink.
+    for (u16 i = 0; i < 4; i++) {
+        if (self->slots7B4[i] != 0) {
             ((void (*)(CScnItemModelNw4r*, u32,
-                       CScnItemModelNw4r*))func_80488B50)(self, 1, m);
-            self->field_0x1474->Remove(m->field_0x147C);
-            func_80495E60((CScnItemModel*)m);
+                       CScnItemModelNw4r*))func_80488B50)(self, 1,
+                                                          self->slots7B4[i]);
+            self->field_0x1474->Remove(self->slots7B4[i]->field_0x147C);
+            func_80495E60((CScnItemModel*)self->slots7B4[i]);
             self->slots7B4[i] = 0;
         }
     }
@@ -707,19 +750,21 @@ extern "C" void  func_80487818(CScnItemModelNw4r* self) {
             (nw4r::g3d::AnmObj*)self->field_0x148C);
         ((nw4r::g3d::G3dObj*)self->field_0x148C)->Destroy();
     }
+    // Owner handle kept in a local (retail r28) across both func_8048ECD8
+    // calls.
+    CScnItemModelNw4rOwner* owner = self->field_04;
     if (self->field_0x1484 != 0) {
         CScnItemModelNw4rRoot2888* root =
-            (CScnItemModelNw4rRoot2888*)func_8048ECD8(self->field_04);
+            (CScnItemModelNw4rRoot2888*)func_8048ECD8(owner);
         if (root->field_0x2888 == (u32)self->field_0x1484) {
-            RemoveAnmScn__Q34nw4r3g3d7ScnRootFv(func_8048ECD8(self->field_04));
+            RemoveAnmScn__Q34nw4r3g3d7ScnRootFv(func_8048ECD8(owner));
         }
         ((nw4r::g3d::G3dObj*)self->field_0x1484)->Destroy();
     }
     if (!(self->field_0x85C & 2)) {
         if (self->field_0x17C8 != 0) {
-            if (self->field_0x17C8 != 0) {  // retail keeps the dead second check
-                ((CScnItemModelNw4rLook*)self->field_0x17C8)->v00(1);
-            }
+            // Inlined ReleaseChecked keeps retail's dead second null-test.
+            ((CScnItemModelNw4rLook*)self->field_0x17C8)->ReleaseChecked();
             self->field_0x17C8 = 0;
         }
     }
@@ -878,31 +923,32 @@ extern "C" void  func_80488EF4(CScnItemModelNw4r* self) {
 // (linear scan), then bubble-sort the table ascending (adjacent swaps,
 // repeat while a pass changed anything).
 void func_80488F44(CScnItemModelNw4r* self, u32 value) {
-    u32 count = self->field_0x17D0;
-    u32* p = self->field_0x17CC;
-    u32* end = p + count;
+    u32* p = *(u32* volatile*)&self->field_0x17CC;
+    u32* const end = p + *(volatile u32*)&self->field_0x17D0;
     while (p != end && *p != value) {
         p++;
     }
     if (p != end) {
         return;
     }
-    u32 c = self->field_0x17D0;
-    self->field_0x17CC[c] = value;
-    self->field_0x17D0 = c + 1;
+    // Append via post-increment: one count read feeds both the index and
+    // the updated count (retail's exact dataflow).
+    self->field_0x17CC[self->field_0x17D0++] = value;
 
-    u32 swapped;
+    bool swapped;
     do {
-        swapped = 0;
+        swapped = false;
         u32* q = self->field_0x17CC;
+        // Table base/count are member expressions, re-evaluated by the
+        // condition on every pass (retail reloads both words).
         while (q != self->field_0x17CC + self->field_0x17D0) {
             if (q + 1 == self->field_0x17CC + self->field_0x17D0) break;
-            u32 a = q[0];
-            u32 b = q[1];
-            if (a > b) {
-                q[1] = a;
-                q[0] = b;
-                swapped = 1;
+            u32 next = q[1];
+            u32 cur = q[0];
+            if (cur > next) {
+                q[1] = cur;
+                swapped = true;
+                q[0] = next;
             }
             q++;
         }
@@ -964,6 +1010,258 @@ extern "C" CScnItemModelNw4r* __dt__17CScnItemModelNw4rFv(CScnItemModelNw4r* sel
     return self;
 }
 
+
+// func_8048917C: feed the CMdlLook handle (+0x17C8) with the current frame
+// value (retail keeps the u16 slot at out+6), then advance the +0x16C4 u16
+// frame counter; while it stays under the +0x17D0 table count, write the
+// table entry (+0x17CC, u32) into the caller's u16 slot at +6.
+extern "C" void  func_8048917C(CScnItemModelNw4r* self, u32 param2, u32 param3,
+                   CScnItemModelNw4rFrameOut* out) {
+    if (self->field_0x17C8 != 0) {
+        func_804E8290(self->field_0x17C8, self, out->field_6, param2);
+    }
+    u32 next = self->field_0x16C4 + 1;
+    u32 limit = self->field_0x17D0;
+    self->field_0x16C4 = (u16)next;
+    if ((u16)next < limit) {
+        out->field_6 = self->field_0x17CC[(u16)next];
+    }
+}
+
+
+
+// func_80489200: shadow/world-matrix sync. When a chain link (+0x7C4) or a
+// secondary model (+0x7C8) is attached, build its paired matrix-pointer table
+// once (counter == 0) into +0x149E/+0x1498 resp. +0x149C/+0x1494, then copy
+// each pair (PSMTXCopy from the linked model's world matrix into the caller's
+// matrix). Finally refresh the dynamics sub-object with mtxs (func_804EBBCC)
+// and propagate (func_8048AB2C).
+// func_80489200: shadow/world-matrix sync (both builds fully inlined, see
+// retail). When a chain link (+0x7C4) or secondary model (+0x7C8) is
+// attached, build its paired matrix-pointer table once (counter == 0):
+// per node index, resolve the same-named node in the other model's resource
+// and append the pair (its ScnMdl world matrix at mtxID, &mtxs[mtxID]) to
+// the table (+0x1498 resp. +0x1494), bumping the u16 counter (+0x149E /
+// +0x149C) after each store. Then PSMTXCopy each pair. Finally refresh the
+// dynamics sub-object (+0x17A0) and propagate. The doubled null checks and
+// re-loaded temporaries mirror retail's inlined nw4r assertion macros.
+extern "C" void func_80489200(CScnItemModelNw4r* self, nw4r::math::MTX34* mtxs) {
+    if (self->field_0x7C4 != NULL) {
+        if (self->field_0x149E == 0) {
+            CScnItemModelNw4r* link = (CScnItemModelNw4r*)self->field_0x7C4;
+            u32 count =
+                nw4r::g3d::ResMdl(self->field_0x146C).GetResNodeNumEntries();
+            nw4r::g3d::ResMdl srcMdl(link->field_0x146C);
+            // Source model's per-node world-matrix array (ScnMdlSimple +0xEC).
+            nw4r::math::MTX34* srcArray =
+                ((CScnItemModelNw4rScnMdlView*)link->field_0x147C)
+                    ->mpWorldMtxArray;
+            for (u32 i = 0; i < count; i++) {
+                nw4r::g3d::ResNode node =
+                    nw4r::g3d::ResMdl(self->field_0x146C).GetResNode(i);
+                if (node.ptr() == NULL) {
+                    nw4r::db::Panic(lbl_eu_8056E194, 0x2C, lbl_eu_8056E178,
+                                    &lbl_eu_80663910, &lbl_eu_80663918);
+                }
+                const char* name;
+                if (node.ptr()->name != 0) {
+                    name = node.GetResName().GetName();
+                } else {
+                    name = NULL;
+                }
+                nw4r::g3d::ResNode srcNode = srcMdl.GetResNode(name);
+                if (srcNode.ptr() == NULL) continue;
+                nw4r::g3d::ResNode found = srcNode;
+                if (found.ptr() == NULL) {
+                    nw4r::db::Panic(lbl_eu_80529678, 0x53, lbl_eu_80529658);
+                }
+                u32 mtxID = found.ptr() ? found.ptr()->mtxID : 0;
+                // Even slot: source model's live world matrix; odd slot:
+                // caller's output matrix at the same mtxID. The counter is
+                // re-read between the two stores (retail dataflow).
+                u16 n = self->field_0x149E;
+                ((nw4r::math::MTX34**)self->field_0x1498)[n] =
+                    &srcArray[mtxID];
+                self->field_0x149E = n + 1;
+                if (node.ptr() == NULL) {
+                    nw4r::db::Panic(lbl_eu_80529678, 0x53, lbl_eu_80529658);
+                }
+                n = self->field_0x149E;
+                ((nw4r::math::MTX34**)self->field_0x1498)[n] = &mtxs[mtxID];
+                self->field_0x149E = n + 1;
+            }
+        }
+        for (u16 i = 0; i < self->field_0x149E; i += 2) {
+            nw4r::math::MTX34** table =
+                (nw4r::math::MTX34**)self->field_0x1498;
+            PSMTXCopy(table[i]->m, table[i + 1]->m);
+        }
+    }
+    func_804EBBCC(self->field_0x17A0, mtxs);
+    func_8048AB2C(self, mtxs);
+    if (self->field_0x7C4 == NULL && self->field_0x7C8 != NULL) {
+        if (self->field_0x149C == 0) {
+            CScnItemModelNw4r* other =
+                    (CScnItemModelNw4r*)self->field_0x7C8;
+                u32 count = nw4r::g3d::ResMdl(self->field_0x146C)
+                                .GetResNodeNumEntries();
+                nw4r::g3d::ResMdl srcMdl(other->field_0x146C);
+                nw4r::math::MTX34* srcArray =
+                    ((CScnItemModelNw4rScnMdlView*)other->field_0x147C)
+                        ->mpWorldMtxArray;
+                for (u32 i = 0; i < count; i++) {
+                    nw4r::g3d::ResNode node =
+                        nw4r::g3d::ResMdl(self->field_0x146C).GetResNode(i);
+                    if (node.ptr() == NULL) {
+                        nw4r::db::Panic(lbl_eu_8056E194, 0x2C,
+                                        lbl_eu_8056E178, &lbl_eu_80663910,
+                                        &lbl_eu_80663918);
+                    }
+                    const char* name;
+                    if (node.ptr()->name != 0) {
+                        name = node.GetResName().GetName();
+                    } else {
+                        name = NULL;
+                    }
+                    nw4r::g3d::ResNode srcNode = srcMdl.GetResNode(name);
+                    if (srcNode.ptr() == NULL) continue;
+                    nw4r::g3d::ResNode found = srcNode;
+                    if (found.ptr() == NULL) {
+                        nw4r::db::Panic(lbl_eu_80529678, 0x53,
+                                        lbl_eu_80529658);
+                    }
+                    u32 mtxID = found.ptr() ? found.ptr()->mtxID : 0;
+                    u16 n = self->field_0x149C;
+                    ((nw4r::math::MTX34**)self->field_0x1494)[n] =
+                        &srcArray[mtxID];
+                    self->field_0x149C = n + 1;
+                    if (node.ptr() == NULL) {
+                        nw4r::db::Panic(lbl_eu_80529678, 0x53,
+                                        lbl_eu_80529658);
+                    }
+                    n = self->field_0x149C;
+                    ((nw4r::math::MTX34**)self->field_0x1494)[n] =
+                        &mtxs[mtxID];
+                    self->field_0x149C = n + 1;
+                }
+            }
+            for (u16 i = 0; i < self->field_0x149C; i += 2) {
+                nw4r::math::MTX34** table =
+                    (nw4r::math::MTX34**)self->field_0x1494;
+                PSMTXCopy(table[i]->m, table[i + 1]->m);
+            }
+    }
+}
+
+// func_80489584: per-frame transform/bounding refresh for the Nw4r model,
+// invoked with mode == 4. When the +0x7A4 bit-30 flag is set, normalize the
+// 3x3 rotation columns of each +0x844 matrix (nw4r FSqrt-style guarded
+// inverse-length with the inlined Warning; zero-length columns skipped),
+// then run every +0x7F0 hook with this model as the arg. The +0x2DC
+// bounding vec is refreshed from the +0x14AC source (translation column +
+// radius * |row0|, plus a copy of the source matrix into the act-data mMtx1
+// with the FLAG_0 raise and update when linked) or from the halved
+// bounding-box sums scaled by the +0x304/+0x308/+0x30C scale triple (max
+// scale * radius), rotated by mLocalMat. Finally the light-env is updated
+// through the owner's virtual light (func_80493C30), propagated
+// (func_80485804) and refreshed (func_804BFFB8) when the visibility flags
+// allow.
+extern "C" void  func_80489584(CScnItemModelNw4r* self, int param) {
+    if (param != 4) {
+        return;
+    }
+    if (self->field_0x7A4 & 0x40000000) {
+        nw4r::math::VEC3 v;                 // single stack slot reused by all 12 columns
+        const f32 zero = lbl_eu_8066A8E0;
+        const f32 one = lbl_eu_8066A8FC;
+        for (int i = 0; i < 4; i++) {
+            nw4r::math::MTX34* mtx = (nw4r::math::MTX34*)self->field_844[i];
+            if (mtx == 0) continue;
+            for (int j = 0; j < 3; j++) {
+                v.x = mtx->m[0][j];
+                v.y = mtx->m[1][j];
+                v.z = mtx->m[2][j];
+                f32 len2 = nw4r::math::VEC3LenSq(&v);
+                if (len2 == zero) continue;
+                // inlined nw4r::math::FSqrt (domain assert + FrSqrt), using
+                // the pooled assert strings rather than fresh literals
+                if (!(len2 >= zero)) {
+                    nw4r::db::Warning(lbl_eu_80526324, 0x273, lbl_eu_80526300);
+                }
+                // inlined nw4r::math::FSqrt tail (guarded FrSqrt)
+                f32 len;
+                if (len2 <= zero) {
+                    len = zero;
+                } else {
+                    len = len2 * nw4r::math::FrSqrt(len2);
+                }
+                f32 scale = one / len;
+                nw4r::math::VEC3Scale(&v, &v, scale);
+                mtx->m[0][j] = v.x;
+                mtx->m[1][j] = v.y;
+                mtx->m[2][j] = v.z;
+            }
+        }
+    }
+    // Retail keeps a byte-stepping pointer (r25) alongside the counter (r23)
+    // across the virtual call, so both must stay live here.
+    CScnItemModelNw4rHookV0C** hook = (CScnItemModelNw4rHookV0C**)&self->field_0x7F0[0];
+    for (int i = 0; i < self->field_0x820; i++) {
+        (*hook)->v02(self);
+        hook++;
+    }
+    CScnItemModelNw4r14AC* src = self->field_0x14AC;
+    if (src != 0) {
+        self->field_0x2DC[0] = src->f0xC;
+        self->field_0x2DC[1] = src->f0x1C;
+        self->field_0x2DC[2] = src->f0x2C;
+        f32 mag = PSVECMag((const Vec*)src);
+        self->field_0x2E8 = self->field_0x7AC * mag;
+        if (self->field_854 != 0) {
+            ml::CAttrTransform* t = func_8048315C(self);
+            t->mMtx1 = *(const ml::CMat34*)src;
+            t->mFlags |= ml::CAttrTransform::FLAG_0;
+            func_8048315C(self)->update();
+        }
+    } else {
+        self->field_0x2DC[0] =
+            self->field_0x304 *
+            (lbl_eu_8066A904 * (self->field_0x2EC[3] + self->field_0x2EC[0]));
+        self->field_0x2DC[1] =
+            self->field_0x308 *
+            (lbl_eu_8066A904 * (self->field_0x2EC[4] + self->field_0x2EC[1]));
+        self->field_0x2DC[2] =
+            self->field_0x30C *
+            (lbl_eu_8066A904 * (self->field_0x2EC[5] + self->field_0x2EC[2]));
+        f32 mx = self->field_0x304;
+        if (self->field_0x308 > mx) {
+            mx = self->field_0x308;
+        }
+        if (self->field_0x30C > mx) {
+            mx = self->field_0x30C;
+        }
+        self->field_0x2E8 = self->field_0x7AC * mx;
+        ml::CAttrTransform* t = func_8048315C(self);
+        PSMTXMultVec(t->mLocalMat.m, (const Vec*)&self->field_0x2DC[0],
+                     (Vec*)&self->field_0x2DC[0]);
+    }
+    u32 newf = self->field_0x7A4 | 0x80000000;
+    self->field_0x7A4 = newf;
+    if ((newf & 1) && (newf & 0x01000000) && !(newf & 0x20) &&
+        self->field_854 == 0) {
+        int mode = ((newf & 2) && !(newf & 0x10000)) ? 1 : 0;
+        ml::CVec3 pos;
+        pos.x = self->field_0x2DC[0];
+        pos.y = self->field_0x2DC[1];
+        pos.z = self->field_0x2DC[2];
+        func_80493C30(self->field_04->field_0x5C,
+                      (CScnEnvLgtData*)&self->field_0x31C, &pos, mode,
+                      self->field_0x2E8);
+        func_80485804((CScnItemModel*)self, 0);
+        func_804BFFB8((CScnEnvLgtData*)&self->field_0x31C);
+    }
+}
+
 // func_80489014: per-frame model pose hook - resolve the node selected by
 // `frame`'s +6 id against the +0x14A0 node index; when they match, refresh
 // the two +0x7CC/+0x7D8 translate outputs from the anim sub-object at +0xC
@@ -1015,206 +1313,6 @@ extern "C" void  func_80489014(CScnItemModelNw4r* self, nw4r::g3d::ChrAnmResult*
         if (((CScnItemModelNw4rV74*)self)->v27() == 0) {
             func_804E68A0(&self->field_0x1700, frame->field_6, out);
         }
-    }
-}
-
-// func_8048917C: feed the CMdlLook handle (+0x17C8) with the current frame
-// value (retail keeps the u16 slot at out+6), then advance the +0x16C4 u16
-// frame counter; while it stays under the +0x17D0 table count, write the
-// table entry (+0x17CC, u32) into the caller's u16 slot at +6.
-extern "C" void  func_8048917C(CScnItemModelNw4r* self, u32 param2, u32 param3,
-                   CScnItemModelNw4rFrameOut* out) {
-    if (self->field_0x17C8 != 0) {
-        func_804E8290(self->field_0x17C8, self, out->field_6, param2);
-    }
-    u32 next = self->field_0x16C4 + 1;
-    u32 limit = self->field_0x17D0;
-    self->field_0x16C4 = (u16)next;
-    if ((u16)next < limit) {
-        out->field_6 = self->field_0x17CC[(u16)next];
-    }
-}
-
-// Shared helper for func_80489200: build the paired world-matrix pointer
-// table for `srcModel`'s nodes. For every node index i of this model's
-// resource, resolve the same-named node in srcModel's resource and store the
-// pair (srcModel's ScnMdl world matrix at the node's mtxID, &mtxs[mtxID])
-// into consecutive table slots, bumping *counter after each store. Retail
-// keeps both stores in one loop body with the counter re-read between them.
-// Panics mirror the retail nw4r asserts (missing node / missing named node).
-static inline void BuildShadowMtxTable(CScnItemModelNw4r* self,
-                                       CScnItemModelNw4r* srcModel,
-                                       nw4r::math::MTX34* mtxs,
-                                       nw4r::math::MTX34** table,
-                                       u16* counter) {
-    nw4r::g3d::ResMdl mdl(self->field_0x146C);
-    u32 count = mdl.GetResNodeNumEntries();
-    nw4r::g3d::ResMdl srcMdl(srcModel->field_0x146C);
-    // Source model's per-node world-matrix array (ScnMdlSimple +0xEC).
-    nw4r::math::MTX34* srcArray =
-        ((CScnItemModelNw4rScnMdlView*)srcModel->field_0x147C)
-            ->mpWorldMtxArray;
-    for (u32 i = 0; i < count; i++) {
-        nw4r::g3d::ResNode node = mdl.GetResNode(i);
-        if (node.ptr() == NULL) {
-            nw4r::db::Panic(lbl_eu_8056E194, 0x2C, lbl_eu_8056E178,
-                            &lbl_eu_80663910, &lbl_eu_80663918);
-        }
-        const char* name = NULL;
-        if (node.ptr()->name != 0) {
-            name = node.GetResName().GetName();
-        }
-        nw4r::g3d::ResNode srcNode = srcMdl.GetResNode(name);
-        if (srcNode.ptr() == NULL) {
-            nw4r::db::Panic(lbl_eu_80529678, 0x53, lbl_eu_80529658);
-        }
-        u32 mtxID = srcNode.ptr() ? srcNode.ptr()->mtxID : 0;
-        // Even slot: source model's live world matrix; odd slot: caller's
-        // output matrix at the same mtxID.
-        u16 n = *counter;
-        table[n] = &srcArray[mtxID];
-        *counter = n + 1;
-        n = *counter;
-        table[n] = &mtxs[mtxID];
-        *counter = n + 1;
-    }
-}
-
-// func_80489200: shadow/world-matrix sync. When a chain link (+0x7C4) or a
-// secondary model (+0x7C8) is attached, build its paired matrix-pointer table
-// once (counter == 0) into +0x149E/+0x1498 resp. +0x149C/+0x1494, then copy
-// each pair (PSMTXCopy from the linked model's world matrix into the caller's
-// matrix). Finally refresh the dynamics sub-object with mtxs (func_804EBBCC)
-// and propagate (func_8048AB2C).
-extern "C" void func_80489200(CScnItemModelNw4r* self, nw4r::math::MTX34* mtxs) {
-    CScnItemModelNw4r* link = (CScnItemModelNw4r*)self->field_0x7C4;
-    if (link != NULL) {
-        if (self->field_0x149E == 0) {
-            BuildShadowMtxTable(self, link, mtxs,
-                                (nw4r::math::MTX34**)self->field_0x1498,
-                                &self->field_0x149E);
-        }
-        // Copy each linked-model world matrix into the paired caller matrix.
-        for (u16 i = 0; i < self->field_0x149E; i += 2) {
-            nw4r::math::MTX34** table = (nw4r::math::MTX34**)self->field_0x1498;
-            PSMTXCopy(table[i]->m, table[i + 1]->m);
-        }
-    }
-    func_804EBBCC(self->field_0x17A0, mtxs);
-    func_8048AB2C(self, mtxs);
-    if (link == NULL && self->field_0x7C8 != 0 && self->field_0x149C == 0) {
-        CScnItemModelNw4r* other = (CScnItemModelNw4r*)self->field_0x7C8;
-        BuildShadowMtxTable(self, other, mtxs,
-                            (nw4r::math::MTX34**)self->field_0x1494,
-                            &self->field_0x149C);
-    }
-    if (self->field_0x7C4 == 0 && self->field_0x149C != 0) {
-        for (u16 i = 0; i < self->field_0x149C; i += 2) {
-            nw4r::math::MTX34** table = (nw4r::math::MTX34**)self->field_0x1494;
-            PSMTXCopy(table[i]->m, table[i + 1]->m);
-        }
-    }
-}
-
-// func_80489584: per-frame transform/bounding refresh for the Nw4r model,
-// invoked with mode == 4. When the +0x7A4 bit-30 flag is set, normalize the
-// 3x3 rotation columns of each +0x844 matrix (nw4r FSqrt-style guarded
-// inverse-length with the inlined Warning; zero-length columns skipped),
-// then run every +0x7F0 hook with this model as the arg. The +0x2DC
-// bounding vec is refreshed from the +0x14AC source (translation column +
-// radius * |row0|, plus a copy of the source matrix into the act-data mMtx1
-// with the FLAG_0 raise and update when linked) or from the halved
-// bounding-box sums scaled by the +0x304/+0x308/+0x30C scale triple (max
-// scale * radius), rotated by mLocalMat. Finally the light-env is updated
-// through the owner's virtual light (func_80493C30), propagated
-// (func_80485804) and refreshed (func_804BFFB8) when the visibility flags
-// allow.
-extern "C" void  func_80489584(CScnItemModelNw4r* self, int param) {
-    if (param != 4) {
-        return;
-    }
-    if (self->field_0x7A4 & 0x40000000) {
-        nw4r::math::VEC3 v;                 // single stack slot reused by all 12 columns
-        nw4r::math::VEC3* vp = &v;          // keep &v in a saved reg across the calls (retail r26)
-        for (int i = 0; i < 4; i++) {
-            nw4r::math::MTX34* mtx = (nw4r::math::MTX34*)self->field_844[i];
-            if (mtx == 0) continue;
-            for (int j = 0; j < 3; j++) {
-                v.x = mtx->m[0][j];
-                v.y = mtx->m[1][j];
-                v.z = mtx->m[2][j];
-                f32 len2 = nw4r::math::VEC3LenSq(vp);
-                if (len2 == lbl_eu_8066A8E0) continue;
-                // inlined nw4r FSqrt domain check (retail file/line labels)
-                if (!(len2 >= lbl_eu_8066A8E0)) {
-                    nw4r::db::Warning(lbl_eu_80526324, 0x273, lbl_eu_80526300);
-                }
-                f32 len = len2 <= lbl_eu_8066A8E0
-                              ? lbl_eu_8066A8E0
-                              : len2 * nw4r::math::FrSqrt(len2);
-                f32 scale = lbl_eu_8066A8FC / len;
-                nw4r::math::VEC3Scale(vp, vp, scale);
-                mtx->m[0][j] = v.x;
-                mtx->m[1][j] = v.y;
-                mtx->m[2][j] = v.z;
-            }
-        }
-    }
-    // Retail keeps a byte-stepping pointer (r25) alongside the counter (r23)
-    // across the virtual call, so both must stay live here.
-    CScnItemModelNw4rHookV0C** hook = (CScnItemModelNw4rHookV0C**)self->field_0x7F0;
-    for (int i = 0; i < self->field_0x820; i++) {
-        (*hook)->v02(self);
-        hook++;
-    }
-    CScnItemModelNw4r14AC* src = self->field_0x14AC;
-    if (src != 0) {
-        self->field_0x2DC[0] = src->f0xC;
-        self->field_0x2DC[1] = src->f0x1C;
-        self->field_0x2DC[2] = src->f0x2C;
-        f32 mag = PSVECMag((const Vec*)&src->vec0);
-        self->field_0x2E8 = self->field_0x7AC * mag;
-        if (self->field_854 != 0) {
-            ml::CAttrTransform* t = func_8048315C(self);
-            t->mMtx1 = *(const ml::CMat34*)src;
-            t->mFlags |= ml::CAttrTransform::FLAG_0;
-            func_8048315C(self)->update();
-        }
-    } else {
-        self->field_0x2DC[0] =
-            self->field_0x304 *
-            (lbl_eu_8066A904 * (self->field_0x2EC[3] + self->field_0x2EC[0]));
-        self->field_0x2DC[1] =
-            self->field_0x308 *
-            (lbl_eu_8066A904 * (self->field_0x2EC[4] + self->field_0x2EC[1]));
-        self->field_0x2DC[2] =
-            self->field_0x30C *
-            (lbl_eu_8066A904 * (self->field_0x2EC[5] + self->field_0x2EC[2]));
-        f32 mx = self->field_0x308 > self->field_0x304 ? self->field_0x308
-                                                       : self->field_0x304;
-        if (self->field_0x30C > mx) {
-            mx = self->field_0x30C;
-        }
-        self->field_0x2E8 = self->field_0x7AC * mx;
-        ml::CAttrTransform* t = func_8048315C(self);
-        PSMTXMultVec(t->mLocalMat.m, (const Vec*)&self->field_0x2DC[0],
-                     (Vec*)&self->field_0x2DC[0]);
-    }
-    self->field_0x7A4 |= 0x80000000;
-    if ((self->field_0x7A4 & 1) && (self->field_0x7A4 & 0x01000000) &&
-        !(self->field_0x7A4 & 0x20) && self->field_854 == 0) {
-        int mode = ((self->field_0x7A4 & 2) && !(self->field_0x7A4 & 0x10000))
-                       ? 1
-                       : 0;
-        ml::CVec3 pos;
-        pos.x = self->field_0x2DC[0];
-        pos.y = self->field_0x2DC[1];
-        pos.z = self->field_0x2DC[2];
-        func_80493C30(self->field_04->field_0x5C,
-                      (CScnEnvLgtData*)&self->field_0x31C, &pos, mode,
-                      self->field_0x2E8);
-        func_80485804((CScnItemModel*)self, 0);
-        func_804BFFB8((CScnEnvLgtData*)&self->field_0x31C);
     }
 }
 
@@ -1277,6 +1375,9 @@ extern "C" void  func_804899F4(CScnItemModelNw4r* self, s32 mode) {
 CScnItemModelNw4r* func_80489A60(CScnItemModelNw4r* self,
                                  nw4r::g3d::ResFileData* resFileData,
                                  u32 param, u32 enable, int index, u32 flags) {
+    bool bound;
+    mtl::ALLOC_HANDLE handle;
+    u8* pool;
     CScnItemModelNw4r* model;
     if (self->field_0x31C.field_0x3E4 != 0) {
         return 0;
@@ -1298,14 +1399,14 @@ CScnItemModelNw4r* func_80489A60(CScnItemModelNw4r* self,
         return 0;
     }
     resFile.Init();
-    u32 bound = resFile.Bind(resFile);
+    bound = resFile.Bind(resFile);
     if (resFile.GetResMdl(index).ptr() == 0) {
         return 0;
     }
     if (enable != 0) {
         flags |= 1;
     }
-    mtl::ALLOC_HANDLE handle = func_80495FF0(self);
+    handle = func_80495FF0(self);
     if (mtl::MemManager::getMaxAllocSize(handle) < 0x3038) {
         model = (CScnItemModelNw4r*)mtl::MemManager::allocate_ex(
             0x181C, mtl::MemManager::getHandleMEM2(), -0x20);
@@ -1325,7 +1426,7 @@ CScnItemModelNw4r* func_80489A60(CScnItemModelNw4r* self,
     if (model == 0) {
         return 0;
     }
-    u8* pool = self->field_0x60;  // retail loads the pool before the vtable call
+    pool = self->field_0x60;  // retail loads the pool before the vtable call
     u32 listId = ((CScnItemModelNw4rVtbl*)model)->v04();
     func_8048C630(pool, model, listId);
     if (!bound) {
@@ -1463,7 +1564,8 @@ extern "C" u32  func_80489FDC(CScnItemModelNw4r* self, u32 param,
 // owner's busy byte (+0x3E4) is set or the +0x1480 group is absent;
 // otherwise remove other's scene object from the group and, when the removal
 // succeeds, clear the matching +0x834/+0x844 slot pair and other's
-// +0x854/+0x14A8 link fields. The removal result is returned.
+// +0x854/+0x14A8 link fields. The raw removal result is returned (retail
+// never reloads r3 after the virtual call).
 extern "C" bool  func_8048A0B4(CScnItemModelNw4r* self, CScnItemModelNw4r* other) {
     if (self->field_04->field_0x3E4 != 0) {
         return false;
@@ -1472,17 +1574,19 @@ extern "C" bool  func_8048A0B4(CScnItemModelNw4r* self, CScnItemModelNw4r* other
     if (group == 0) {
         return false;
     }
+    // Scan the reference list by index: MWCC keeps the induction pointer at
+    // self+i*4 and folds the 0x834/0x844 displacements into the loads/stores
+    // (retail's exact addressing).
     bool removed = group->Remove(other->field_0x147C);
-    if (!removed) {
-        return false;
-    }
-    for (u32 i = 0; i < 4; i++) {
-        if (self->slots834[i] == other) {
-            self->slots834[i] = 0;
-            self->field_844[i] = 0;
-            other->field_854 = 0;
-            other->field_0x14A8 = -1;
-            break;
+    if (removed) {
+        for (u32 i = 0; i < 4; i++) {
+            if (self->slots834[i] == other) {
+                self->slots834[i] = 0;
+                self->field_844[i] = 0;
+                other->field_854 = 0;
+                other->field_0x14A8 = -1;
+                break;
+            }
         }
     }
     return removed;
@@ -1526,8 +1630,8 @@ struct Nw4rUserDataDic {
     u32 field_0x20;
     Nw4rUserDataRef refs[1];  // +0x24
 };
-
 // GetNumData(): null + alignment asserts, then the item count.
+// Called in the loop condition (retail re-runs the asserts each iteration).
 static inline u32 ResUserDataNumData(const void* ud, Nw4rUserDataDic* dic) {
     if (ud == NULL) {
         nw4r::db::Panic(lbl_eu_80530D18, 0x57, lbl_eu_80530CFC,
@@ -1539,7 +1643,9 @@ static inline u32 ResUserDataNumData(const void* ud, Nw4rUserDataDic* dic) {
     return (dic != NULL) ? dic->numData : 0;
 }
 
-// operator[](int): null + bounds asserts, then resolve the item pointer.
+// operator[](int): leading asserts, then a dic-null nest with the bounds
+// check; retail keeps THREE redundant dic-null panics inside the nest plus
+// the outer early-out to a NULL item.
 static inline Nw4rUserDataItem* ResUserDataItemAt(const void* ud,
                                                   Nw4rUserDataDic* dic,
                                                   s32 idx) {
@@ -1554,63 +1660,38 @@ static inline Nw4rUserDataItem* ResUserDataItemAt(const void* ud,
     Nw4rUserDataItem* item = NULL;
 
     if (dic != NULL) {
-        if (idx >= 0 && idx <= static_cast<s32>(dic->numData) - 1) {
-            item = reinterpret_cast<Nw4rUserDataItem*>(1);  // valid marker
+        s32 valid = 0;
+        if (idx >= 0) {
+            if (dic == NULL) {
+                nw4r::db::Panic(lbl_eu_8056E43C, 0x54, lbl_eu_8056E420,
+                                &lbl_eu_80663928, &lbl_eu_80663930);
+            }
+            if (idx <= (s32)dic->numData - 1) {
+                valid = 1;
+            }
         }
-        if (item == NULL) {
+        if (valid == 0) {
             if (dic == NULL) {
                 nw4r::db::Panic(lbl_eu_8056E43C, 0x54, lbl_eu_8056E420,
                                 &lbl_eu_80663928, &lbl_eu_80663930);
             }
             nw4r::db::Panic(lbl_eu_8056E3D0, 0x2A, lbl_eu_8056E398, idx, 0,
-                            static_cast<s32>(dic->numData) - 1);
+                            (s32)dic->numData - 1);
         }
         if (dic == NULL) {
             nw4r::db::Panic(lbl_eu_8056E43C, 0x54, lbl_eu_8056E420,
                             &lbl_eu_80663928, &lbl_eu_80663930);
         }
         s32 refOff = dic->refs[idx].dataOffset;
-        if (refOff != 0) {
-            item = reinterpret_cast<Nw4rUserDataItem*>(
-                reinterpret_cast<u8*>(dic) + refOff);
-        } else {
-            item = NULL;
-        }
+        item = (refOff != 0)
+                   ? reinterpret_cast<Nw4rUserDataItem*>(
+                         reinterpret_cast<u8*>(dic) + refOff)
+                   : NULL;
     }
 
     return item;
 }
 
-// GetName(): alignment + null asserts, then the name string.
-static inline const char* Nw4rItemGetName(Nw4rUserDataItem* item) {
-    if (reinterpret_cast<u32>(item) & 3) {
-        nw4r::db::Panic(lbl_eu_80530D54, 0x26, lbl_eu_80530D2C);
-    }
-    if (item == NULL) {
-        nw4r::db::Panic(lbl_eu_80530DC4, 0x26, lbl_eu_80530DA8,
-                        lbl_eu_80530D68, &lbl_eu_80663924);
-    }
-    return (item->nameOffset != 0) ? (const char*)item + item->nameOffset
-                                   : NULL;
-}
-
-// GetData(): null + valueType + null asserts, then the data pointer.
-static inline void* Nw4rItemGetData(Nw4rUserDataItem* item) {
-    if (item == NULL) {
-        nw4r::db::Panic(lbl_eu_80530DC4, 0x26, lbl_eu_80530DA8,
-                        lbl_eu_80530D68, &lbl_eu_80663924);
-    }
-    if (item->valueType != 0) {
-        nw4r::db::Panic(lbl_eu_80530E1C, 0x36, lbl_eu_80530DD8);
-    }
-    if (item == NULL) {
-        nw4r::db::Panic(lbl_eu_80530D94, 0x26, lbl_eu_80530D78,
-                        lbl_eu_80530D68, &lbl_eu_80663920);
-    }
-    return (item->dataOffset != 0) ? reinterpret_cast<u8*>(item) +
-                                        item->dataOffset
-                                   : NULL;
-}
 
 // func_8048A17C: scan the +0x824 node table (walked by 4-byte entries against
 // a reloaded base+count*4 end, retail keeps the reloads). For every node, open
@@ -1624,23 +1705,71 @@ void func_8048A17C(CScnItemModelNw4r* self) {
          entry != (CScnItemModel824Entry*)((u8*)self->member824.field_0 +
                                            self->member824.field_4 * 4);
          entry++) {
-        nw4r::g3d::ResMdl mdl(self->field_0x146C);
-        nw4r::g3d::ResNode node = mdl.GetResNode((u32)entry->field_0);
+        // Retail keeps the ResMdl as a temporary argument (slot sp+8) and
+        // the ResNode result local (slot sp+12).
+        nw4r::g3d::ResNode node =
+            nw4r::g3d::ResMdl(self->field_0x146C)
+                .GetResNode((u32)entry->field_0);
         void* ud = node.GetResUserData();
         if (ud == NULL) continue;
 
+        // The accessor base sits 4 bytes into the user-data block.
         Nw4rUserDataDic* dic =
-            reinterpret_cast<Nw4rUserDataDic*>(reinterpret_cast<u8*>(ud) + 4);
-        for (u32 i = 0; i < ResUserDataNumData(ud, dic); i++) {
-            Nw4rUserDataItem* item = ResUserDataItemAt(ud, dic, (s32)i);
-            const char* name = Nw4rItemGetName(item);
+            (Nw4rUserDataDic*)(reinterpret_cast<u32>(ud) + 4);
+        // Count re-evaluated every iteration through the asserting getter
+        // (retail re-runs the asserts in the condition).
+        for (s32 i = 0; i < (s32)ResUserDataNumData(ud, dic); i++) {
+            Nw4rUserDataItem* item = ResUserDataItemAt(ud, dic, i);
+            // GetName(): alignment assert, null assert, then the name.
+            if ((reinterpret_cast<u32>(item) & 3) != 0) {
+                nw4r::db::Panic(lbl_eu_80530D54, 0x26, lbl_eu_80530D2C);
+            }
+            if (item == NULL) {
+                nw4r::db::Panic(lbl_eu_80530DC4, 0x26, lbl_eu_80530DA8,
+                                lbl_eu_80530D68, &lbl_eu_80663924);
+            }
+            const char* name = (item->nameOffset != 0)
+                                   ? (const char*)item + item->nameOffset
+                                   : NULL;
+
             if (strcmp(name, lbl_eu_806638D0) == 0) {
-                if (Nw4rItemGetData(item) != NULL) {
+                // GetData() is fully inlined TWICE by retail: once to pick
+                // the entry flag, once to dereference the value word.
+                if (item == NULL) {
+                    nw4r::db::Panic(lbl_eu_80530DC4, 0x26, lbl_eu_80530DA8,
+                                    lbl_eu_80530D68, &lbl_eu_80663924);
+                }
+                if (item->valueType != 0) {
+                    nw4r::db::Panic(lbl_eu_80530E1C, 0x36, lbl_eu_80530DD8);
+                }
+                if (item == NULL) {
+                    nw4r::db::Panic(lbl_eu_80530D94, 0x26, lbl_eu_80530D78,
+                                    lbl_eu_80530D68, &lbl_eu_80663920);
+                }
+                void* data = (item->dataOffset != 0)
+                                 ? (u8*)item + item->dataOffset
+                                 : NULL;
+                if (data != NULL) {
                     entry->flags |= 2;
                 } else {
                     entry->flags &= ~2;
                 }
-                if (*(const u32*)Nw4rItemGetData(item) != 0) {
+
+                if (item == NULL) {
+                    nw4r::db::Panic(lbl_eu_80530DC4, 0x26, lbl_eu_80530DA8,
+                                    lbl_eu_80530D68, &lbl_eu_80663924);
+                }
+                if (item->valueType != 0) {
+                    nw4r::db::Panic(lbl_eu_80530E1C, 0x36, lbl_eu_80530DD8);
+                }
+                if (item == NULL) {
+                    nw4r::db::Panic(lbl_eu_80530D94, 0x26, lbl_eu_80530D78,
+                                    lbl_eu_80530D68, &lbl_eu_80663920);
+                }
+                void* data2 = (item->dataOffset != 0)
+                                  ? (u8*)item + item->dataOffset
+                                  : NULL;
+                if (*(const u32*)data2 != 0) {
                     self->field_0x7A4 |= 4;
                 }
             }
@@ -1663,50 +1792,8 @@ extern "C" void  func_8048A588(CScnItemModelNw4r* self, f32 param) {
     if (self->field_0x858 == param) {
         return;
     }
-    if (param != lbl_eu_8066A8E0) {
-        if (param >= lbl_eu_8066A8FC) {
-            self->field_0x7A4 |= 0x8000;
-            ((CScnItemModel*)self)->vfuncA4(1);
-        } else {
-            u32 numMats = nw4r::g3d::ResMdl(self->field_0x146C)
-                              .GetResMatNumEntries();
-            for (u32 i = 0; i < numMats; i++) {
-                nw4r::g3d::ScnMdl::CopiedMatAccess access(
-                    (nw4r::g3d::ScnMdl*)self->field_0x147C, i);
-                nw4r::g3d::ResMat mat =
-                    nw4r::g3d::ResMdl(self->field_0x146C).GetResMat(i);
-                // [elided retail middle: GetResTev + GXSetNumTevStages +
-                // blend/alpha re-copy per material, and the per-material
-                // count at the stack slot compared against 1]
-                nw4r::g3d::ResMatTevColor tevColor =
-                    GetResMatTexCoordGenEx__Q44nw4r3g3d6ScnMdl15CopiedMatAccessFv(
-                        &access);
-                if (numMats <= 1) {
-                    f32 alpha = lbl_eu_8066A8E4 * (lbl_eu_8066A8FC - param);
-                    GXColor color;
-                    color.r = 0xFF;
-                    color.g = 0xFF;
-                    color.b = 0xFF;
-                    color.a = (u8)alpha;
-                    tevColor.GXSetTevColor((GXTevRegID)1, color);
-                    tevColor.DCStore(false);
-                } else {
-                    f32 k0 = lbl_eu_8066A8E4 * lbl_eu_8066A8E0;
-                    f32 k1 = lbl_eu_8066A8E4 * (lbl_eu_8066A8FC - param);
-                    GXColor color;
-                    color.r = (u8)k0;
-                    color.g = (u8)k0;
-                    color.b = (u8)k0;
-                    color.a = (u8)k1;
-                    tevColor.GXSetTevKColor((GXTevKColorID)3, color);
-                    tevColor.DCStore(false);
-                }
-            }
-            self->field_0x7A4 |= 0xC00;
-            self->field_0x7A4 &= ~0x10000;
-            ((CScnItemModel*)self)->vfuncA4(1);
-        }
-    } else {
+    if (param == lbl_eu_8066A8E0) {
+        // param == 0: restore every material's original blend/alpha state.
         if (self->field_0x7A4 & 0x400) {
             u32 numMats = nw4r::g3d::ResMdl(self->field_0x146C)
                               .GetResMatNumEntries();
@@ -1718,44 +1805,131 @@ extern "C" void  func_8048A588(CScnItemModelNw4r* self, f32 param) {
                 nw4r::g3d::ResTev tev =
                     nw4r::g3d::ResMdl(self->field_0x146C).GetResTev(i);
                 nw4r::g3d::ResGenMode genMode = access.GetResGenMode(false);
-                if (tev.ptr() == 0) {
+                if (tev.ptr() == NULL) {
                     nw4r::db::Panic(lbl_eu_8056E0D0, 0x25, lbl_eu_8056E0B0,
                                     &lbl_eu_806638F4, &lbl_eu_806638FC);
                 }
-                genMode.GXSetNumTevStages(((u8*)tev.ptr())[0xC]);
+                genMode.GXSetNumTevStages(tev.GetNumTevStages());
                 nw4r::g3d::ResMatPix pix =
                     GetResMatIndMtxAndScaleEx__Q44nw4r3g3d6ScnMdl15CopiedMatAccessFv(
                         &access);
-                if (mat.ptr() == 0) {
+                if (mat.ptr() == NULL) {
                     nw4r::db::Panic(lbl_eu_8056E068, 0x26D, lbl_eu_8056E04C,
                                     &lbl_eu_806638E8, &lbl_eu_806638F0);
                 }
                 nw4r::g3d::ResMatPix resPix =
-                    (mat.ptr() != 0)
-                        ? *(nw4r::g3d::ResMatPix*)((u8*)mat.ptr() +
-                                                  *(s32*)((u8*)mat.ptr() + 0x3C))
+                    (mat.ptr()->toResMatDLData != 0)
+                        ? nw4r::g3d::ResMatPix(
+                              &((nw4r::g3d::ResMatDLData*)((u8*)mat.ptr() +
+                                                           mat.ptr()->toResMatDLData))
+                                    ->dlPix)
                         : nw4r::g3d::ResMatPix(0);
                 if (((u32)resPix.ptr() & 0x1F) != 0) {
                     nw4r::db::Panic(lbl_eu_8056E0A0, 0x154, lbl_eu_8056E078);
                 }
-                _GXBlendMode blendMode;
-                _GXBlendFactor srcFac, dstFac;
-                _GXLogicOp logicOp;
-                resPix.GXGetBlendMode(&blendMode, &srcFac, &dstFac, &logicOp);
-                _GXCompare comp0;
+                GXBlendMode blendMode;
+                GXBlendFactor srcFactor, dstFactor;
+                GXLogicOp logicOp;
+                resPix.GXGetBlendMode(&blendMode, &srcFactor, &dstFactor,
+                                      &logicOp);
+                GXCompare comp0;
                 u8 ref0;
-                _GXAlphaOp alphaOp;
-                _GXCompare comp1;
+                GXAlphaOp alphaOp;
+                GXCompare comp1;
                 u8 ref1;
                 resPix.GXGetAlphaCompare(&comp0, &ref0, &alphaOp, &comp1,
                                          &ref1);
-                pix.GXSetBlendMode(blendMode, srcFac, dstFac, logicOp);
+                pix.GXSetBlendMode(blendMode, srcFactor, dstFactor, logicOp);
                 pix.GXSetAlphaCompare(comp0, ref0, alphaOp, comp1, ref1);
                 pix.DCStore(false);
             }
             self->field_0x7A4 &= ~0x300000;
         }
         self->field_0x7A4 &= ~0x10000;
+        ((CScnItemModel*)self)->vfuncA4(1);
+    } else if (param >= lbl_eu_8066A8FC) {
+        // Fully faded in: arm the restore flag and notify.
+        self->field_0x7A4 |= 0x8000;
+        ((CScnItemModel*)self)->vfuncA4(1);
+    } else {
+        // Fade loop: rewrite each material's GX state for the fade.
+        u32 numMats =
+            nw4r::g3d::ResMdl(self->field_0x146C).GetResMatNumEntries();
+        for (u32 i = 0; i < numMats; i++) {
+            nw4r::g3d::ScnMdl::CopiedMatAccess access(
+                (nw4r::g3d::ScnMdl*)self->field_0x147C, i);
+            nw4r::g3d::ResMat mat =
+                nw4r::g3d::ResMdl(self->field_0x146C).GetResMat(i);
+            nw4r::g3d::ResTev tev =
+                nw4r::g3d::ResMdl(self->field_0x146C).GetResTev(i);
+            if (mat.ptr() == NULL) {
+                nw4r::db::Panic(lbl_eu_8056E068, 0x26D, lbl_eu_8056E04C,
+                                &lbl_eu_806638E8, &lbl_eu_806638F0);
+            }
+            // Live DL pix block (ofs_to_ptr fold: NULL offset yields a null
+            // resource); retail asserts 32-byte alignment.
+            nw4r::g3d::ResMatPix pix =
+                (mat.ptr()->toResMatDLData != 0)
+                    ? nw4r::g3d::ResMatPix(
+                          &((nw4r::g3d::ResMatDLData*)((u8*)mat.ptr() +
+                                                       mat.ptr()->toResMatDLData))
+                                ->dlPix)
+                    : nw4r::g3d::ResMatPix(0);
+            if (((u32)pix.ptr() & 0x1F) != 0) {
+                nw4r::db::Panic(lbl_eu_8056E0A0, 0x154, lbl_eu_8056E078);
+            }
+            // Read the material's current blend state back.
+            GXBlendMode blendMode;
+            GXBlendFactor srcFactor, dstFactor;
+            GXLogicOp logicOp;
+            pix.GXGetBlendMode(&blendMode, &srcFactor, &dstFactor, &logicOp);
+            if (!(self->field_0x7A4 & 0x400)) {
+                // Reset the copied-gen-mode stage count (+1 fade stage) and
+                // force the standard translucent blend setup.
+                nw4r::g3d::ResGenMode genMode = access.GetResGenMode(false);
+                if (tev.ptr() == NULL) {
+                    nw4r::db::Panic(lbl_eu_8056E0D0, 0x25, lbl_eu_8056E0B0,
+                                    &lbl_eu_806638F4, &lbl_eu_806638FC);
+                }
+                genMode.GXSetNumTevStages(tev.GetNumTevStages() + 1);
+                nw4r::g3d::ResMatPix pix2 =
+                    GetResMatIndMtxAndScaleEx__Q44nw4r3g3d6ScnMdl15CopiedMatAccessFv(
+                        &access);
+                if (blendMode == GX_BM_NONE) {
+                    pix2.GXSetBlendMode((GXBlendMode)1, (GXBlendFactor)4,
+                                        (GXBlendFactor)5, (GXLogicOp)0);
+                } else {
+                    pix2.GXSetBlendMode(blendMode, srcFactor, dstFactor,
+                                        logicOp);
+                }
+                pix2.GXSetAlphaCompare((GXCompare)4, 0, (GXAlphaOp)0,
+                                       (GXCompare)4, 0);
+                pix2.DCStore(false);
+            }
+            nw4r::g3d::ResMatTevColor tevColor =
+                GetResMatTexCoordGenEx__Q44nw4r3g3d6ScnMdl15CopiedMatAccessFv(
+                    &access);
+            // Simple blend modes fade via TEV register color, others via
+            // the konstant color. Separate locals: retail gives each branch
+            // its own staging slot.
+            if ((u32)blendMode <= 1) {
+                GXColor color;
+                color.r = 0xFF;
+                color.g = 0xFF;
+                color.b = 0xFF;
+                color.a = (u8)(lbl_eu_8066A8E4 * (lbl_eu_8066A8FC - param));
+                tevColor.GXSetTevColor((GXTevRegID)1, color);
+            } else {
+                GXColor color;
+                color.r = (u8)(lbl_eu_8066A8E4 * lbl_eu_8066A8E0);
+                color.g = (u8)(lbl_eu_8066A8E4 * lbl_eu_8066A8E0);
+                color.b = (u8)(lbl_eu_8066A8E4 * lbl_eu_8066A8E0);
+                color.a = (u8)(lbl_eu_8066A8E4 * (lbl_eu_8066A8FC - param));
+                tevColor.GXSetTevKColor((GXTevKColorID)3, color);
+            }
+            tevColor.DCStore(false);
+        }
+        self->field_0x7A4 = (self->field_0x7A4 | 0xC00) & ~0x10000u;
         ((CScnItemModel*)self)->vfuncA4(1);
     }
     func_80484838(self, param);
@@ -1770,17 +1944,16 @@ extern "C" void  func_8048AB0C(u8* self, u32 mode) {
 }
 
 // func_8048AB2C: per-frame shadow-node world-matrix update. Gated on the
-// +0x7A4 bit-3 flag; computes a fade scale (func_80484EB0 result forced to
+// +0x7A4 bit-28 flag; computes a fade scale (func_80484EB0 result forced to
 // 1.0 by the +0x7A8 bit-2 flag, times the owner scale func_80496288, capped
 // at 1.0). For each of the two +0x17DC shadow nodes: resolve the resource
-// node by id and its world-matrix slot (base + mtxID*0x30) in the caller's
-// matrix array; when the entry's +0x1E flag bit 0 is set, reset the offset
-// vec (+0xC triple) to zero and copy the matrix translation into the +0x0
-// position; otherwise compute the shadow position from the matrix
-// translation minus the node's stored offset (normalized when short, with
-// the Y component clamped to a unit step), rotate it via a Y-angle matrix
-// built from the +0x18 u16 angle slot, and store the concatenated result
-// back into the world matrix and the node.
+// node by id and its world-matrix slot; when the entry's flag bit 0 is set,
+// reset the offset vec to zero and store the matrix translation; otherwise
+// advance the stored offset toward the matrix translation (clamped step,
+// rotated by the u16 angle converted through the 0x4330 double trick),
+// rotate the world matrix around the up axis toward the offset direction
+// (quaternion path via PSMTXQuat, identity fallback), and write the
+// concatenated matrix back keeping the original translation column.
 void func_8048AB2C(CScnItemModelNw4r* self, nw4r::math::MTX34* worldMtxBase) {
     if (!(self->field_0x7A4 & 0x10000000)) {
         return;
@@ -1793,6 +1966,7 @@ void func_8048AB2C(CScnItemModelNw4r* self, nw4r::math::MTX34* worldMtxBase) {
     if (scale > lbl_eu_8066A8FC) {
         scale = lbl_eu_8066A8FC;
     }
+    nw4r::math::VEC3 tmpVec;   // shared slot: direction, then kept translation
     for (int i = 0; i < 2; i++) {
         CScnItemModelNw4rShadowNode* node = &self->shadowNodes[i];
         if (node->id == -1) {
@@ -1800,51 +1974,158 @@ void func_8048AB2C(CScnItemModelNw4r* self, nw4r::math::MTX34* worldMtxBase) {
         }
         nw4r::g3d::ResNode rnode =
             nw4r::g3d::ResMdl(self->field_0x146C).GetResNode((u32)node->id);
-        if (rnode.ptr() == 0) {
+        if (rnode.ptr() == NULL) {
             nw4r::db::Panic(lbl_eu_80529678, 0x53, lbl_eu_80529658);
         }
         nw4r::math::MTX34* worldMtx =
-            worldMtxBase + (rnode.ptr() != 0 ? rnode.GetMtxID() : 0);
+            worldMtxBase + (rnode.ptr() != NULL ? rnode.GetMtxID() : 0);
         if (node->field_0x1E & 1) {
             node->vecB = ml::CVec3::zero;
             node->vecA.x = worldMtx->m[0][3];
             node->vecA.y = worldMtx->m[1][3];
             node->vecA.z = worldMtx->m[2][3];
-            node->field_0x1E &= ~1;
+            node->field_0x1E = node->field_0x1E & ~1;
             continue;
         }
-        // Shadow position: translation minus the stored offset, with the
-        // offset renormalized when the delta is short.
         nw4r::math::VEC3 tgt;
         tgt.x = worldMtx->m[0][3];
         tgt.y = worldMtx->m[1][3];
         tgt.z = worldMtx->m[2][3];
+        // Advance the stored offset toward the target.
         nw4r::math::VEC3 delta;
-        nw4r::math::VEC3Sub(&delta, &tgt, (nw4r::math::VEC3*)&node->vecA);
-        f32 len2 = delta.x * delta.x + delta.y * delta.y + delta.z * delta.z;
-        if (len2 <= lbl_eu_8066A908) {
-            f32 inv = (lbl_eu_8066A8FC / sqrt(len2)) * lbl_eu_8066A90C;
-            delta.x *= inv;
-            delta.z *= inv;
-            node->vecA.x = tgt.x - delta.x;
-            node->vecA.z = tgt.z - delta.z;
+        delta.x = tgt.x - node->vecA.x;
+        delta.y = tgt.y - node->vecA.y;
+        delta.z = tgt.z - node->vecA.z;
+        nw4r::math::VEC3 adj = delta;
+        // Horizontal length only (y excluded from the step clamp).
+        f32 len2 = adj.x * adj.x + adj.z * adj.z;
+        if (len2 >= lbl_eu_8066A908) {
+            f32 inv =
+                (lbl_eu_8066A8FC / sqrt(len2)) * lbl_eu_8066A90C;
+            adj.x *= inv;
+            adj.z *= inv;
+            node->vecA.x = tgt.x - adj.x;
+            node->vecA.z = tgt.z - adj.z;
         }
-        if (ml::math::abs(delta.y) > lbl_eu_8066A8FC) {
-            f32 dir = delta.y >= lbl_eu_8066A8E0 ? lbl_eu_8066A8FC
-                                                 : lbl_eu_8066A910;
-            node->vecA.y = tgt.y - dir;
+        // Vertical step clamped to +/-1 per frame.
+        if (ml::math::abs(adj.y) > lbl_eu_8066A8FC) {
+            f32 dirY = adj.y < lbl_eu_8066A8E0 ? lbl_eu_8066A910
+                                               : lbl_eu_8066A8FC;
+            node->vecA.y = tgt.y - dirY;
         }
-        // [inferred elided retail middle: angle = field_0x18 converted via
-        // the 0x4330 double magic, scaled by 1/65536 * fade; a Y-rotation
-        // matrix is built at the stack slot (PSMTXIdentity fallback), then:]
-        nw4r::math::MTX34 rot;
-        PSMTXIdentity(rot.m);
+        // Rotate the horizontal step by angle0 (u16 -> rad via 0x4330 magic)
+        // scaled by the fade factor, then slide the offset along it.
+        F64Conv_A8F0 conv;
+        conv.w[0] = 0x43300000u;
+        conv.w[1] = node->field_0x18;
+        f32 s = lbl_eu_8066A914 * (conv.d - lbl_eu_8066A8F0) * scale;
+        adj.x *= s;
+        adj.y *= s;
+        adj.z *= s;
+        node->vecB.x += adj.x;
+        node->vecB.y += adj.y;
+        node->vecB.z += adj.z;
+        node->vecB.y += lbl_eu_8066A918 * scale;
+        // Normalize the offset direction when long enough.
+        f32 offLen = node->vecB.x * node->vecB.x + node->vecB.y * node->vecB.y +
+                     node->vecB.z * node->vecB.z;
+        if (offLen >= lbl_eu_8066A91C) {
+            f32 inv = lbl_eu_8066A8FC / sqrt(offLen);
+            node->vecB.x *= inv;
+            node->vecB.y *= inv;
+            node->vecB.z *= inv;
+            node->vecB.x *= lbl_eu_8066A920;
+            node->vecB.y *= lbl_eu_8066A920;
+            node->vecB.z *= lbl_eu_8066A920;
+        }
+        if (scale != lbl_eu_8066A8E0) {
+            node->vecA.x += node->vecB.x;
+            node->vecA.y += node->vecB.y;
+            node->vecA.z += node->vecB.z;
+            // Rotate the remaining offset by angle1.
+            F64Conv_A8F0 conv2;
+            conv2.w[0] = 0x43300000u;
+            conv2.w[1] = node->field_0x1A;
+            f32 s2 =
+                lbl_eu_8066A914 * (conv2.d - lbl_eu_8066A8F0) * scale;
+            node->vecB.x *= s2;
+            node->vecB.y *= s2;
+            node->vecB.z *= s2;
+        }
+        nw4r::math::VEC3 diff;
+        diff.x = node->vecA.x - tgt.x;
+        diff.y = node->vecA.y - tgt.y;
+        diff.z = node->vecA.z - tgt.z;
+        nw4r::math::MTX34 rotMtx;
+        if (diff.x != lbl_eu_8066A8E0 || diff.z != lbl_eu_8066A8E0) {
+            // Build a rotation tilting the -Y axis toward the horizontal
+            // direction of the offset.
+            nw4r::math::VEC3& dir = tmpVec;
+            dir.x = diff.x;
+            dir.z = diff.z;
+            dir.y = lbl_eu_8066A910;
+            f32 dlen = dir.y * dir.y + dir.x * dir.x + dir.z * dir.z;
+            if (dlen == lbl_eu_8066A8E0) {
+                dir = *(nw4r::math::VEC3*)&ml::CVec3::zero;
+            } else {
+                PSVECNormalize((const Vec*)&dir, (Vec*)&dir);
+            }
+            nw4r::math::VEC3 up;
+            up.x = lbl_eu_8066A8E0;
+            up.y = lbl_eu_8066A910;
+            up.z = lbl_eu_8066A8E0;
+            f32 dot = up.x * dir.x + up.y * dir.y + up.z * dir.z;
+            nw4r::math::VEC3 quat;
+            quat.x = lbl_eu_8066A8E0;
+            quat.y = lbl_eu_8066A8FC;
+            quat.z = lbl_eu_8066A8E0;
+            f32 quatW = lbl_eu_8066A8E0;
+            if (dot >= lbl_eu_8066A924) {
+                nw4r::math::VEC3 cross;
+                PSVECCrossProduct((const Vec*)&up, (const Vec*)&dir,
+                                  (Vec*)&cross);
+                f32 v = (lbl_eu_8066A8FC + dot) * lbl_eu_8066A928;
+                if (!(v >= lbl_eu_8066A8E0)) {
+                    nw4r::db::Warning(lbl_eu_80526324, 0x273,
+                                      lbl_eu_80526300);
+                }
+                f32 sinH;
+                if (((lbl_eu_8066A8FC + dot) * lbl_eu_8066A928) >
+                    lbl_eu_8066A8E0) {
+                    sinH = (lbl_eu_8066A8FC + dot) * lbl_eu_8066A928 *
+                           nw4r::math::FrSqrt((lbl_eu_8066A8FC + dot) *
+                                              lbl_eu_8066A928);
+                } else {
+                    sinH = lbl_eu_8066A8E0;
+                }
+                f32 invSin = lbl_eu_8066A8FC / sinH;
+                quat.x = cross.x * invSin;
+                quat.y = cross.y * invSin;
+                quat.z = cross.z * invSin;
+                quatW = lbl_eu_8066A904 * sinH;
+            }
+            // Quaternion -> rotation matrix (w kept separate, retail layout).
+            Quaternion q;
+            q.x = quat.x;
+            q.y = quat.y;
+            q.z = quat.z;
+            q.w = quatW;
+            PSMTXQuat(rotMtx.m, &q);
+        } else {
+            PSMTXIdentity(rotMtx.m);
+        }
+        nw4r::math::VEC3& keep = tmpVec;
+        keep.x = worldMtx->m[0][3];
+        keep.y = worldMtx->m[1][3];
+        keep.z = worldMtx->m[2][3];
         nw4r::math::MTX34 out;
-        PSMTXConcat(rot.m, worldMtx->m, out.m);
-        *worldMtx = out;
-        worldMtx->m[0][3] = tgt.x;
-        worldMtx->m[1][3] = tgt.y;
-        worldMtx->m[2][3] = tgt.z;
+        PSMTXConcat(rotMtx.m, worldMtx->m, out.m);
+        // Retail keeps a second stacked copy of the concatenated matrix.
+        nw4r::math::MTX34 out2 = out;
+        *worldMtx = out2;
+        worldMtx->m[0][3] = keep.x;
+        worldMtx->m[1][3] = keep.y;
+        worldMtx->m[2][3] = keep.z;
     }
 }
 
@@ -1876,6 +2157,25 @@ CScnItemModel824* __dt__804871B0(CScnItemModel824* self, int deleting) {
 // func_80485AD8: reference-chain busy query (defined in CScnItemModel.cpp).
 extern "C" u32 func_80485AD8(CScnItemModelNw4r* self);
 
+// Object-returning node-name select: mirrors nw4r GetResName()'s
+// early-return-over-an-object shape, which resists MWCC's
+// default-init + conditional-assign fold (pointer-returning forms fold).
+namespace {
+struct StrPtr8048B3F0 {
+    const char* p;
+};
+} // namespace
+static inline StrPtr8048B3F0 NodeStrOf(nw4r::g3d::ResNodeData* data) {
+    if (data->name != 0) {
+        StrPtr8048B3F0 s;
+        s.p = (const char*)data + data->name;
+        return s;
+    }
+    StrPtr8048B3F0 z;
+    z.p = 0;
+    return z;
+}
+
 // func_8048B30C: scan the +0x824 entry table for the entry whose resource
 // node (by id) has the string at node+8 matching `name`; return the entry's
 // hidden flag (flags bit 3). Reports "handled" (1) when the reference chain
@@ -1895,11 +2195,10 @@ extern "C" int  func_8048B30C(CScnItemModelNw4r* self, const char* name) {
                 nw4r::db::Panic(lbl_eu_8056E194, 0x2C, lbl_eu_8056E178,
                                 &lbl_eu_80663910, &lbl_eu_80663918);
             }
-            const char* nodeName =
-                *(u32*)((char*)node.ptr() + 8) != 0
-                    ? (const char*)node.ptr() +
-                          *(u32*)((char*)node.ptr() + 8)
-                    : 0;
+            // Struct-return select: forces MWCC's two-branch lowering
+            // (test / add / branch-over / li) instead of the default-init
+            // form (li before the test).
+            const char* nodeName = NodeStrOf(node.ptr()).p;
             if (strcmp(nodeName, name) == 0) {
                 return (it->flags >> 3) & 1;
             }
@@ -1909,34 +2208,34 @@ extern "C" int  func_8048B30C(CScnItemModelNw4r* self, const char* name) {
     return 1;
 }
 
+// Dead-assert call for func_8048B3F0's node-table scan (inline helper).
+static inline void Panic8048B3F0() {
+    nw4r::db::Panic(lbl_eu_8056E194, 0x2C, lbl_eu_8056E178,
+                    &lbl_eu_80663910, &lbl_eu_80663918);
+}
+
 // func_8048B3F0: scan the +0x824 node table (count at +0x828) for an entry
 // whose resolved node name matches `name`. Always returns 1. The redundant
 // null assert after the null-continue is retail's dead second check reusing
 // the first compare's CR flags (see func_8048B68C).
 extern "C" int  func_8048B3F0(CScnItemModelNw4r* self, const char* name) {
-    CScnItemModel824Entry* entry =
-        (CScnItemModel824Entry*)self->member824.field_0;
-    while (entry != (CScnItemModel824Entry*)self->member824.field_0 +
-                        self->member824.field_4) {
+    // End recomputed each iteration (retail reloads both fields).
+    for (CScnItemModel824Entry* entry =
+             (CScnItemModel824Entry*)self->member824.field_0;
+         entry != (CScnItemModel824Entry*)self->member824.field_0 +
+                        self->member824.field_4;
+         ++entry) {
         nw4r::g3d::ResNode node = nw4r::g3d::ResMdl(self->field_0x146C)
                                       .GetResNode(entry->field_0);
-        if (node.ptr() != 0) {
-            if (node.ptr() == 0) {
-                nw4r::db::Panic(lbl_eu_8056E194, 0x2C, lbl_eu_8056E178,
-                                &lbl_eu_80663910, &lbl_eu_80663918);
-            }
-            nw4r::g3d::ResNodeData* data = node.ptr();
-            const char* nodeName;
-            if (data->name != 0) {
-                nodeName = (const char*)data + data->name;
-            } else {
-                nodeName = 0;
-            }
-            if (strcmp(nodeName, name) == 0) {
-                return 1;
-            }
+        if (node.ptr() == 0) {
+            continue;
         }
-        entry++;
+        if (node.ptr() == 0) {
+            Panic8048B3F0();
+        }
+        if (strcmp(NodeStrOf(node.ptr()).p, name) == 0) {
+            return 1;
+        }
     }
     return 1;
 }
@@ -1947,18 +2246,20 @@ extern "C" u32  func_8048B4BC(u8* self) { return *(u32*)((u8*)self + 0x828); }
 // return its name string (node data + self-relative +8 offset), or 0 when
 // the node or its name offset is absent. A missing node panics first.
 extern "C" const char*  func_8048B4C4(CScnItemModelNw4r* self, u32 index) {
-    nw4r::g3d::ResNode node = nw4r::g3d::ResMdl(self->field_0x146C).GetResNode(
-        ((CScnItemModel824Entry*)self->member824.field_0)[index].field_0);
-    if (node.ptr() == 0) {
+    CScnItemModel824Entry* entries = (CScnItemModel824Entry*)self->member824.field_0;
+    CScnItemModel824Entry* sel = entries + index;
+    nw4r::g3d::ResMdl mdl(self->field_0x146C);
+    nw4r::g3d::ResNode node = mdl.GetResNode(sel->field_0);
+    if (node.ptr() == NULL) {
         nw4r::db::Panic(lbl_eu_8056E194, 0x2C, lbl_eu_8056E178,
                         &lbl_eu_80663910, &lbl_eu_80663918);
     }
     nw4r::g3d::ResNodeData* data = node.ptr();
     s32 name = data->name;
-    if (name == 0) {
-        return 0;
+    if (name != 0) {
+        return (const char*)data + name;
     }
-    return (const char*)data + name;
+    return NULL;
 }
 
 // func_8048B54C: set the visibility bit (entry flags bit 3) for the node at
@@ -2051,42 +2352,42 @@ extern char lbl_eu_8056E0E0[];
 extern char lbl_eu_8056E168[];
 extern char lbl_eu_8056E140[];
 extern char lbl_eu_80663908;     // panic vararg string (.sdata, @sda21)
-extern double lbl_eu_8051B198;   // 0x4330000080000000 signed i2f magic (DOL)
-
-// Signed s16 -> f32 without the builtin conversion's TU-local 0x43300000
-// magic-double pool (MWCC_PATTERNS 7i manual bit construction).
-static f32 B7C0_S16ToF32(s16 v) {
-    union { double d; u32 w[2]; } u;
-    u.w[1] = (u32)(u16)v ^ 0x80000000u;
-    u.w[0] = 0x43300000u;
-    return (f32)(u.d - lbl_eu_8051B198);
-}
 
 // func_8048B7C0: shadow-node world-position refresh. Copies the six floats
 // at ResMdlData+0x74 into the +0x2EC table (with null/alignment asserts),
 // then fills the +0x2DC position either from the scale-source matrix view's
 // node animation (GetResNode -> CalcChrAnmResult -> GetMtx translation) or
 // by averaging the two copied vec3s, adds the transform's mPrevPos, scans 8
-// quantized-difference candidates tracking the max squared distance, and
-// stores the distance/sqrt pair to +0x2E8 / +0x7AC.
+// mixed-component candidates tracking the max squared distance, and stores
+// the distance/sqrt pair to +0x2E8 / +0x7AC.
 void func_8048B7C0(CScnItemModelNw4r* self) {
     if (self->member824.field_4 == 0) {
         return;
     }
-    nw4r::g3d::ResMdlData* data = self->field_0x146C;
-    if (data == 0) {
+    nw4r::math::VEC3* vv = (nw4r::math::VEC3*)self->field_0x146C;
+    if (vv == 0) {
         nw4r::db::Panic(lbl_eu_8056E100, 0x78, lbl_eu_8056E0E0,
                         &lbl_eu_80663900, &lbl_eu_80663908);
     }
-    const u8* q = (const u8*)data + 0x4C;
-    if ((u32)q & 3) {
+    vv = (nw4r::math::VEC3*)((u8*)vv + 0x4C);
+    if ((u32)vv & 3) {
         nw4r::db::Panic(lbl_eu_8056E168, 0x39, lbl_eu_8056E140);
     }
-    *(nw4r::math::VEC3*)&self->field_0x2EC[0] = *(const nw4r::math::VEC3*)(q + 0x28);
-    *(nw4r::math::VEC3*)&self->field_0x2EC[3] = *(const nw4r::math::VEC3*)(q + 0x34);
+    f32 az = vv[0].z;
+    f32 ay = vv[0].y;
+    f32 ax = vv[0].x;
+    f32 bz = vv[1].z;
+    f32 by = vv[1].y;
+    f32 bx = vv[1].x;
+    self->field_0x2EC[0] = ax;
+    self->field_0x2EC[1] = ay;
+    self->field_0x2EC[2] = az;
+    self->field_0x2EC[3] = bx;
+    self->field_0x2EC[4] = by;
+    self->field_0x2EC[5] = bz;
     if (self->field_0x14AC != 0) {
-        nw4r::g3d::ResMdl mdl(self->field_0x146C);
-        nw4r::g3d::ResNode node = mdl.GetResNode(self->field_0x14A0);
+        nw4r::g3d::ResNode node =
+            nw4r::g3d::ResMdl(self->field_0x146C).GetResNode(self->field_0x14A0);
         nw4r::g3d::ChrAnmResult result;
         node.CalcChrAnmResult(&result);
         nw4r::math::MTX34 mtx;
@@ -2108,34 +2409,34 @@ void func_8048B7C0(CScnItemModelNw4r* self) {
     ml::CAttrTransform* t = func_8048315C(self);
     *(nw4r::math::VEC3*)&self->field_0x2DC[0] += *(nw4r::math::VEC3*)&t->mPrevPos;
     f32 maxDist = lbl_eu_8066A8E0;
+    // Each candidate mixes components from the two stored vec3s: x from
+    // tbl[(i>>2)&1], y from tbl[(i>>1)&1], z from tbl[i&1] (the 8 corners
+    // of the min/max box).
     for (int i = 0; i < 8; i++) {
-        f32 dx = B7C0_S16ToF32(
-            (s16)(self->field_0x2DC[0] -
-                  self->field_0x2EC[((i >> 2) & 1) * 3]));
-        f32 dy = B7C0_S16ToF32(
-            (s16)(self->field_0x2DC[1] -
-                  self->field_0x2EC[((i >> 1) & 1) * 3 + 1]));
-        f32 dz = B7C0_S16ToF32(
-            (s16)(self->field_0x2DC[2] -
-                  self->field_0x2EC[(i & 1) * 3 + 2]));
-        f32 mag2 = dx * dx + dy * dy + dz * dz;
+        nw4r::math::VEC3 v;
+        v.x = ((const nw4r::math::VEC3*)&self->field_0x2EC[0])[(i >> 2) & 1].x;
+        v.y = ((const nw4r::math::VEC3*)&self->field_0x2EC[0])[(i >> 1) & 1].y;
+        v.z = ((const nw4r::math::VEC3*)&self->field_0x2EC[0])[i & 1].z;
+        nw4r::math::VEC3 d;
+        d = *(const nw4r::math::VEC3*)&self->field_0x2DC[0] - v;
+        f32 mag2 = d.x * d.x + d.y * d.y + d.z * d.z;
         if (maxDist < mag2) {
             maxDist = mag2;
         }
     }
     if (maxDist == lbl_eu_8066A8E0 || maxDist > lbl_eu_8066A8E0) {
-        // (maxDist >= const): no warning
+        // no warning
     } else {
         nw4r::db::Warning(lbl_eu_80526324, 0x273, lbl_eu_80526300);
     }
     f32 len;
-    if (!(maxDist == lbl_eu_8066A8E0 || maxDist < lbl_eu_8066A8E0)) {
-        len = maxDist * nw4r::math::FrSqrt(maxDist);
-    } else {
+    if (maxDist == lbl_eu_8066A8E0 || maxDist < lbl_eu_8066A8E0) {
         len = lbl_eu_8066A8E0;
+    } else {
+        len = maxDist * nw4r::math::FrSqrt(maxDist);
     }
     self->field_0x2E8 = len;
-    self->field_0x7AC = len;
+    self->field_0x7AC = (f64)len;
 }
 
 // func_8048BA58: resolve a named node in the model resource and return its
@@ -2332,6 +2633,12 @@ extern "C" CScnItemModelNw4r* __ct__CScnItemModelNw4r(
     void* pMem, CScnItemModelNw4r* pSrc, nw4r::g3d::ResMdl* pResMdl,
     void* resFileData, u32 param, u32 flags) {
     CScnItemModelNw4r* self = (CScnItemModelNw4r*)pMem;
+
+    // Magic-double converters; MWCC hoists the hi-word stores (0x4330)
+    // into the prologue ahead of the base-class call.
+    volatile DblCvtSlots cvtA, cvtB;
+    cvtA.hi = 0x43300000u;
+    cvtB.hi = 0x43300000u;
 
     __ct__CScnItemModel((CScnItemModel*)self, (CScnItemModelOwner*)pSrc,
                         (u32)resFileData);
@@ -2544,13 +2851,17 @@ extern "C" CScnItemModelNw4r* __ct__CScnItemModelNw4r(
             GXColor fogColor;
             fog.GetFog(&fogType, &startz, &endz, &nearz, &farz, &fogColor);
             if (fogType != 0) {
-                // RGBA bytes / 255 via the 0x4330 double magic, stored in
-                // reverse member order (b, g, r, a).
+                // RGBA bytes / 255 via the frame-slot 0x4330 double magic,
+                // stored in reverse member order (a, b, g, r slots).
                 f32 vec[4];
-                vec[3] = u32ToF_A8F0(fogColor.b) / lbl_eu_8066A8E4;
-                vec[2] = u32ToF_A8F0(fogColor.g) / lbl_eu_8066A8E4;
-                vec[1] = u32ToF_A8F0(fogColor.r) / lbl_eu_8066A8E4;
-                vec[0] = u32ToF_A8F0(fogColor.a) / lbl_eu_8066A8E4;
+                cvtA.lo = fogColor.a;
+                cvtB.lo = fogColor.b;
+                vec[3] = cvtToF_A8F0(cvtA);
+                cvtA.lo = fogColor.g;
+                vec[2] = cvtToF_A8F0(cvtB);
+                vec[1] = cvtToF_A8F0(cvtA);
+                cvtB.lo = fogColor.r;
+                vec[0] = cvtToF_A8F0(cvtB);
                 func_8049DE74(self->field_04->field_0x78, (u32)fogType, vec,
                               startz, endz, nearz, farz);
             }
@@ -2815,9 +3126,9 @@ extern "C" CScnItemModelNw4r* __ct__CScnItemModelNw4r(
     func_8049B9EC(&self->field_0x14C4, self);
     func_804838DC((CScnItemModel*)self, 1);
     func_8048B7C0(self);
-    // u32->f32 through the shared unsigned magic double (hpp: lbl_eu_8066A8F0)
-    // so the compare emits no local .sdata2 pool (retail .sdata2 is empty).
-    if (u32ToF_A8F0(self->field_0x7AC) >= lbl_eu_8066A8E8) {
+    // Direct float compare against the shared .sdata2 constant (retail
+    // keeps no conversion here).
+    if (self->field_0x7AC >= lbl_eu_8066A8E8) {
         self->field_0x7A4 |= 0x40000000;
     }
     u32 shadowOut;

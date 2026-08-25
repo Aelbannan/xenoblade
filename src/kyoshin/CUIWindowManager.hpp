@@ -165,7 +165,7 @@ void func_8013FFF8(void* flagBuf, void* entry, u32 value);
 // (owning TUs: CScn / CCol6System / CQuestWindow / CMenuGetItemMulti /
 // CTalkWindow / code_8003B148 family). C linkage so call relocs bind to the
 // literal retail names.
-mtl::ALLOC_HANDLE func_80496004(CScn* scene);
+mtl::ALLOC_HANDLE func_80496004(void* ptr); // void* param: must match CUIBattleManager.hpp (10197)
 void func_8015D0B8();
 void func_80122460();
 void func_801B29E0();
@@ -175,7 +175,7 @@ u32 func_80158068(u16 value);
 
 // Flag-memory setter (owning TU outside this unit): writes `val` into the
 // flag-memory slot for page id `idx`.
-void func_8009D018(int idx, int val);
+void func_8009D018(u32 idx, u32 val); // (u32,u32) form: must match CfGameManager.hpp:767 (10197)
 
 // Consumable-count absorb helper (owning TU: kyoshin/cf/CItem; retail
 // unmangled symbol).

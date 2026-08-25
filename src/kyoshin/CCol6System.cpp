@@ -14,6 +14,12 @@ class CfGameManager;
 
 #include <string.h>
 
+// CfGameManager.hpp declares CItem_initItemImplInstances as a no-arg extern
+// "C" function, so a 1-arg redeclaration would trip MWCC 10197. Route the
+// call site through a casted function pointer instead (CItemBoxGrid
+// precedent) - same retail symbol/reloc at the call.
+#define CItem_initItemImplInstances(item) ((void* (*)(void*))CItem_initItemImplInstances)(item)
+
 // Resolve ml::FixStr<128>::format calls to the explicit specialization that
 // CfScript.cpp defines (retail symbol format__Q22ml10FixStr<128>FPCce); a
 // plain generic-template call would mangle to ...11FixStr... instead (reloc
@@ -131,7 +137,8 @@ struct CCol6CheckBatCtorShim {
     u8 _00[0x10];
     void* vtable;        // 0x10 - CProcess vtable, overwritten by this factory
     u8 _14[0x28];        // 0x14-0x3B - rest of CProcess
-    u32 callbacks[6];    // 0x3C-0x53 - __ptmf_null callback slots
+    u32 moveCallbacks[3]; // 0x3C-0x47 - __ptmf_null move-callback slots
+    u32 drawCallbacks[3]; // 0x48-0x53 - __ptmf_null draw-callback slots
     u32 field54;         // 0x54
     u32 field58;         // 0x58
     u32 field5C;         // 0x5C
@@ -144,6 +151,9 @@ struct CCol6CheckBatCtorShim {
     u32 field6C;         // 0x6C - lbl_eu_8053021C + 0x24
     u8 flag70;           // 0x70
 };
+
+// Type-distinct view of __ptmf_null for the CheckBat ctor (see usage below).
+struct CCol6CheckBatPtmfView { unsigned long w0, w1, w2; };
 
 // CCol6CheckBat ctor - self-allocating factory (retail symbol
 // __ct__CCol6CheckBat). Returns NULL if the singleton already exists;
@@ -167,21 +177,23 @@ CCol6CheckBat* __ct__CCol6CheckBat(CProcess* parent) {
         obj->vtable = (void*)lbl_eu_8052D238;
 
         // Copy the null member-function pointer into both callback slots.
-        // Retail loads __ptmf_null[1],[0],[2] then stores per slot, so use
-        // intermediate locals to force the retail ordering.
-        const u32* ptmf = __ptmf_null;
-        u32 ptmfWord1 = ptmf[1];
-        u32 ptmfWord0 = ptmf[0];
-        obj->callbacks[0] = ptmfWord0;
-        obj->callbacks[1] = ptmfWord1;
-        u32 ptmfWord2 = ptmf[2];
-        obj->callbacks[2] = ptmfWord2;
-        ptmfWord1 = ptmf[1];
-        ptmfWord0 = ptmf[0];
-        obj->callbacks[3] = ptmfWord0;
-        obj->callbacks[4] = ptmfWord1;
-        ptmfWord2 = ptmf[2];
-        obj->callbacks[5] = ptmfWord2;
+        // Named-member struct view keeps MWCC from emitting duplicate @l
+        // references; retail loads [1],[0],[2] then stores per slot.
+        // Distinct member types (unsigned long vs the u32 callback arrays)
+        // keep MWCC's type-based aliasing from coupling the loads with the
+        // obj stores, matching retail's scheduling.
+        const CCol6CheckBatPtmfView* ptmf =
+            reinterpret_cast<const CCol6CheckBatPtmfView*>(__ptmf_null);
+        u32 ptmfWord1 = ptmf->w1;
+        u32 ptmfWord0 = ptmf->w0;
+        obj->moveCallbacks[0] = ptmfWord0;
+        obj->moveCallbacks[1] = ptmfWord1;
+        obj->moveCallbacks[2] = ptmf->w2;
+        ptmfWord1 = ptmf->w1;
+        ptmfWord0 = ptmf->w0;
+        obj->drawCallbacks[0] = ptmfWord0;
+        obj->drawCallbacks[1] = ptmfWord1;
+        obj->drawCallbacks[2] = ptmf->w2;
 
         obj->field54 = 0;
         obj->field58 = 0;
@@ -298,28 +310,28 @@ extern "C" CCol6Hint* __ct__CCol6Hint(CCol6Hint* self, CProcess* parent) {
     __ct__8CProcessFv((CProcess*)self);
     shim->vtable = (void*)lbl_eu_8052D238;
 
-    // Materialize the composite vtable address + offset values before the
-    // callback copy so MWCC schedules their lis/addi ahead of the __ptmf_null
-    // base (retail interleaves the final-vtable lis between the temp-vtable
-    // store and the ptmf lwzu).
     char* finalVt = lbl_eu_8053011C;
-    u32 vt6c = (u32)(finalVt + 0x24);
-    u32 vt70 = (u32)(finalVt + 0xac);
 
     // Copy the null member-function pointer into both callback slots. Retail
-    // loads __ptmf_null[0],[1],[2] per block and stores the second slot of
-    // each pair first, so use intermediate locals with swapped store order.
-    u32 ptmfWord0 = __ptmf_null[0];
-    u32 ptmfWord1 = __ptmf_null[1];
+    // materializes the __ptmf_null base once via an update-form first load
+    // (*p++ folds the symbol's low half into lwzu), then indexes the remaining
+    // words relative to the advanced pointer; the composite-vtable offset adds
+    // interleave between the reads, and each block stores its second slot
+    // first.
+    u32* ptmf = __ptmf_null;
+    u32 ptmfWord0 = *ptmf++;
+    u32 vt6c = (u32)(finalVt + 0x24);
+    u32 ptmfWord1 = ptmf[0];
     shim->callbacks[1] = ptmfWord1;
+    u32 vt70 = (u32)(finalVt + 0xac);
     shim->callbacks[0] = ptmfWord0;
-    u32 ptmfWord2 = __ptmf_null[2];
+    u32 ptmfWord2 = ptmf[1];
     shim->callbacks[2] = ptmfWord2;
-    ptmfWord0 = __ptmf_null[0];
-    ptmfWord1 = __ptmf_null[1];
+    ptmfWord0 = ptmf[-1];
+    ptmfWord1 = ptmf[0];
     shim->callbacks[4] = ptmfWord1;
     shim->callbacks[3] = ptmfWord0;
-    ptmfWord2 = __ptmf_null[2];
+    ptmfWord2 = ptmf[1];
     shim->callbacks[5] = ptmfWord2;
 
     shim->field54 = 0;
@@ -380,8 +392,13 @@ extern "C" void* __dt__9CCol6HintFv(CCol6Hint* self, int flags) {
 // by constructing a temp (direction 3), memberwise-copying everything except
 // the vptr into the embedded bar, and kicking off the arc read.
 void CCol6Hint::Init() {
-    IWorkEvent* evt =
-        this != 0 ? reinterpret_cast<IWorkEvent*>(&mField6C) : 0;
+    // Null-this guard: MWCC keeps r31 = this and conditionally adds the
+    // subobject offset, so mirror that single-branch shape here.
+    char* selfBytes = reinterpret_cast<char*>(this);
+    if (selfBytes != 0) {
+        selfBytes += offsetof(CCol6Hint, mField6C);
+    }
+    IWorkEvent* evt = reinterpret_cast<IWorkEvent*>(selfBytes);
     mField88 = CDeviceFile::readFile(
         mtl::MemManager::getHandleMEM2(), lbl_eu_80662358, evt, 0, 0);
 
@@ -390,28 +407,33 @@ void CCol6Hint::Init() {
     // __ct__10CScrollBarFb name instead of retail's __ct__CScrollBar). The
     // explicit ~CScrollBar() call emits the 1-arg __dt__10CScrollBarFv form.
     u8 sbStorage[0x40];
-    CScrollBar* sb = reinterpret_cast<CScrollBar*>(sbStorage);
-    __ct__CScrollBar(sb, 3);
+    __ct__CScrollBar(reinterpret_cast<CScrollBar*>(sbStorage), 3);
     // Memberwise copy skipping the vptr (retail copies +0x04..+0x3C).
-    mScrollBar.mMemRegion.unk0 = sb->mMemRegion.unk0;
-    mScrollBar.mMemRegion.unk4 = sb->mMemRegion.unk4;
-    mScrollBar.mMemRegion.unk8 = sb->mMemRegion.unk8;
-    mScrollBar.mMemRegion.unkC = sb->mMemRegion.unkC;
-    mScrollBar.mFileHandle = sb->mFileHandle;
-    mScrollBar.mAccessor = sb->mAccessor;
-    mScrollBar.mLayout = sb->mLayout;
-    mScrollBar.mAnimTransform = sb->mAnimTransform;
-    mScrollBar.mReady = sb->mReady;
-    mScrollBar.mVisible = sb->mVisible;
-    mScrollBar.mState = sb->mState;
-    mScrollBar.mActive = sb->mActive;
-    mScrollBar.mAnimOffset = sb->mAnimOffset;
-    mScrollBar.mScrollPosY = sb->mScrollPosY;
-    mScrollBar.mScrollRatio = sb->mScrollRatio;
-    mScrollBar.mThumbHeight = sb->mThumbHeight;
-    mScrollBar.mContentHeight = sb->mContentHeight;
-    mScrollBar.mDirection = sb->mDirection;
-    sb->~CScrollBar();
+    mScrollBar.mMemRegion.unk0 =
+        reinterpret_cast<CScrollBar*>(sbStorage)->mMemRegion.unk0;
+    mScrollBar.mMemRegion.unk4 =
+        reinterpret_cast<CScrollBar*>(sbStorage)->mMemRegion.unk4;
+    mScrollBar.mMemRegion.unk8 =
+        reinterpret_cast<CScrollBar*>(sbStorage)->mMemRegion.unk8;
+    mScrollBar.mMemRegion.unkC =
+        reinterpret_cast<CScrollBar*>(sbStorage)->mMemRegion.unkC;
+    mScrollBar.mFileHandle = reinterpret_cast<CScrollBar*>(sbStorage)->mFileHandle;
+    mScrollBar.mAccessor = reinterpret_cast<CScrollBar*>(sbStorage)->mAccessor;
+    mScrollBar.mLayout = reinterpret_cast<CScrollBar*>(sbStorage)->mLayout;
+    mScrollBar.mAnimTransform =
+        reinterpret_cast<CScrollBar*>(sbStorage)->mAnimTransform;
+    mScrollBar.mReady = reinterpret_cast<CScrollBar*>(sbStorage)->mReady;
+    mScrollBar.mVisible = reinterpret_cast<CScrollBar*>(sbStorage)->mVisible;
+    mScrollBar.mState = reinterpret_cast<CScrollBar*>(sbStorage)->mState;
+    mScrollBar.mActive = reinterpret_cast<CScrollBar*>(sbStorage)->mActive;
+    mScrollBar.mAnimOffset = reinterpret_cast<CScrollBar*>(sbStorage)->mAnimOffset;
+    mScrollBar.mScrollPosY = reinterpret_cast<CScrollBar*>(sbStorage)->mScrollPosY;
+    mScrollBar.mScrollRatio = reinterpret_cast<CScrollBar*>(sbStorage)->mScrollRatio;
+    mScrollBar.mThumbHeight = reinterpret_cast<CScrollBar*>(sbStorage)->mThumbHeight;
+    mScrollBar.mContentHeight =
+        reinterpret_cast<CScrollBar*>(sbStorage)->mContentHeight;
+    mScrollBar.mDirection = reinterpret_cast<CScrollBar*>(sbStorage)->mDirection;
+    reinterpret_cast<CScrollBar*>(sbStorage)->~CScrollBar();
 
     func_801F34F4(&mScrollBar);
 }
@@ -2961,26 +2983,22 @@ void func_80162C40(CCol6System* self) {
     }
 
     self->mFieldA4 = 0x1c;
+    char* tbl = lbl_eu_80502050;
     // Single expression so MWCC keeps p*5 in a scratch register and folds
     // the count add into the named temp (retail add r28, r0, r3 shape).
     u32 f = func_8009CF8C((u32)((s8)self->mPadA5[0] + 0x7fe));
-    u32 n = (u32)((s8)self->mPadA5[0] * 5) + f;
-    u8 a = (u8)func_8013600C(
-        &lbl_eu_80502050[0x334], &lbl_eu_80502050[0x33f], (u32)n);
-    u8 b = (u8)func_8013600C(
-        &lbl_eu_80502050[0x334], &lbl_eu_80502050[0x346], (u32)n);
+    u32 n = (s8)self->mPadA5[0] * 5 + f;
+    u8 a = (u8)func_8013600C(&tbl[0x334], &tbl[0x33f], n);
+    u8 b = (u8)func_8013600C(&tbl[0x334], &tbl[0x346], n);
 
-    char* str0 = func_80136190(
-        lbl_eu_80502050, &lbl_eu_80502050[0x9], (s8)self->mPadA5[0] + 0x4e);
-    char* str1 = func_80136190(
-        lbl_eu_80502050, &lbl_eu_80502050[0x9],
-        (u32)((s8)self->mPadA5[0] * 5) + f + 0x53);
-    char* str2 = func_80136190(lbl_eu_80502050, &lbl_eu_80502050[0x9], 0x78);
-    char* str3 = func_80136190(lbl_eu_80502050, &lbl_eu_80502050[0x9], 0x79);
+    char* str0 = func_80136190(tbl, &tbl[0x9], (s8)self->mPadA5[0] + 0x4e);
+    char* str1 =
+        func_80136190(tbl, &tbl[0x9], (s8)self->mPadA5[0] * 5 + f + 0x53);
+    char* str2 = func_80136190(tbl, &tbl[0x9], 0x78);
+    char* str3 = func_80136190(tbl, &tbl[0x9], 0x79);
 
     ml::FixStr<256> buf;
-    func_eu_801651A0(
-        buf.mString, &lbl_eu_80502050[0x480], str0, str1, str2, a, str3, b);
+    func_eu_801651A0(buf.mString, &tbl[0x480], str0, str1, str2, a, str3, b);
     func_8022B9B4(&self->mSysWin2, buf.mString, 0);
     func_8022BFC8(&self->mSysWin2, 1);
     func_8022B8B8(&self->mSysWin2);
@@ -3438,25 +3456,26 @@ void func_80163AF4(CCol6System* self) {
 
     u8 result = (u8)func_8009CF8C(0x7fc);
 
-    u8 found = 0;
-    for (u32 i = 0; i < 5; i++) {
+    // Retail keeps the "slot found" latch out of the callee-save pool: single
+    // assignment per path via goto, so MWCC colors it into scratch r0.
+    u32 found;
+    u32 i;
+    for (i = 0; i < 5; i++) {
+        // (u8)index temp blocks MWCC's pointer strength-reduction; retail walks
+        // the table base+index via lbzx.
         u8 idx = (u8)i;
         if (result >= data.bytes[idx] && func_8009CF8C(idx + 0x804) == 0) {
             found = 1;
-            break;
+            goto slotFound;
         }
     }
+    found = 0;
+slotFound:
 
     if (found != 0) {
         // Per-slot tables: pairs of (u32 word, trailing byte) read
-        // left-to-right as five bytes each.
-        union {
-            struct {
-                u32 w;
-                u8 b;
-            };
-            u8 bytes[5];
-        } data2;
+        // left-to-right as five bytes each. (data3 declared first: MWCC
+        // stacks same-size locals so the last-declared lands lowest.)
         union {
             struct {
                 u32 w;
@@ -3464,17 +3483,24 @@ void func_80163AF4(CCol6System* self) {
             };
             u8 bytes[5];
         } data3;
+        union {
+            struct {
+                u32 w;
+                u8 b;
+            };
+            u8 bytes[5];
+        } data2;
         data2.w = lbl_eu_80667548;
         data2.b = lbl_eu_8066754C;
         data3.w = lbl_eu_80667550;
         data3.b = lbl_eu_80667554;
 
         s16 val = (s16)func_8009CF8C(0x7fc);
-        for (u32 i = 0; i < 5; i++) {
-            if (val >= data2.bytes[i] && func_8009CF8C(i + 0x804) == 0) {
-                lbl_eu_8066235C = (s32)i;
-                func_8009D018(i + 0x804, 1);
-                val = (s16)(val + (s8)data3.bytes[i]);
+        for (u32 j = 0; j < 5; j++) {
+            if (val >= data2.bytes[j] && func_8009CF8C(j + 0x804) == 0) {
+                lbl_eu_8066235C = (s32)j;
+                func_8009D018(j + 0x804, 1);
+                val = (s16)(val + (s8)data3.bytes[j]);
                 func_8009D018(0x7fc, val);
             }
         }
@@ -3555,13 +3581,8 @@ void CCol6Invite::Move() {
     t1.w = lbl_eu_80667540;
     t1.b = lbl_eu_80667544;
 
-    int found;
-    u32 i;
-    u32 cnt = (u8)func_8009CF8C(0x7fc);
-
-    // First scan: unsigned loop counter, byte-indexed table access. The
-    // found flag is assigned only at the two exit paths (retail shape).
-    for (i = 0; i < 5; i++) {
+    u8 found;
+    for (u32 cnt = (u8)func_8009CF8C(0x7fc), i = 0; i < 5; i++) {
         if (cnt >= t1.bytes[(u8)i] && func_8009CF8C((u8)i + 0x804) == 0) {
             found = 1;
             goto scanned;
@@ -3576,20 +3597,21 @@ scanned:
         t3.w = lbl_eu_80667550;
         t3.b = lbl_eu_80667554;
 
-        // Second scan: signed loop counter walking incrementing pointers,
-        // running total kept as s16 (re-extended on every read).
+        // Second scan: signed running total kept as s16 (re-extended on
+        // every read); indexed table access (MWCC strength-reduces to
+        // incrementing pointers, matching retail - same shape as
+        // func_8015D3A0).
         s16 total = func_8009CF8C(0x7fc);
-        u8* p2 = t2.bytes;
-        u8* p3 = t3.bytes;
-        for (s32 j = 0; j < 5; j++) {
-            if (total >= *p2 && func_8009CF8C(j + 0x804) == 0) {
+        s32 j;
+        u8* p = t2.bytes;
+        for (j = 0; j < 5; j++) {
+            if (total >= *p && func_8009CF8C(j + 0x804) == 0) {
                 lbl_eu_8066235C = j;
                 func_8009D018(j + 0x804, 1);
-                total += (s8)*p3;
+                total += (s8)t3.bytes[j];
                 func_8009D018(0x7fc, total);
             }
-            p2++;
-            p3++;
+            p++;
         }
         mFlag64 = 1;
     } else {

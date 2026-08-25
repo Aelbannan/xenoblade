@@ -32,6 +32,10 @@ extern u32 lbl_eu_80664760;
 // Small data object (.sbss, addressed via @sda21): arts bdat file pointer.
 extern u32 lbl_eu_806640F4;
 
+// Shared sdata2 int->float correction constants (2^52-family magics) are
+// declared in CArtsInfo.hpp; referenced by name so the conversion lfd's emit
+// retail SDA21 relocs instead of TU-local pool labels.
+
 void func_80137038(nw4r::lyt::Layout*, nw4r::lyt::DrawInfo*, int, int);
 
 // Forward declarations for state machine functions (defined later in this TU).
@@ -77,6 +81,12 @@ static double ConvS32ToF64(s32 x) {
     u.w[0] = 0x43300000;
     return u.d - lbl_eu_80668698;
 }
+
+// Definition (value 0x4330000080000000 = 2^52 + 2^31). NOTE: MWCC does NOT
+// pool plain-cast s32->float literals onto this named symbol (still emits
+// TU-private @N labels) - matching retail's sda21 refs here needs the
+// CArtsInfo.o pool_patterns postprocess rule (see func_80239FC4 note).
+const double lbl_eu_80668698 = 4503601774854144.0;
 
 
 // Virtual method call helpers (offset 0x38 = Animate-like, offset 0x2C = BindAnim-like)
@@ -821,11 +831,9 @@ extern "C" __declspec(noinline) int func_80236E28(CArtsInfo* self) {
 // list entry; if the entry's slots contain the requested item id, the
 // matching slot's value accumulates into the result. Finally the result is
 // capped at the row value from the 0x1d4 table (signed compare).
+// extern "C" + noinline: retail callers emit bl to the unmangled symbol.
 extern "C" __declspec(noinline) int func_80236E6C(CArtsInfo* self, int arg2) {
     CArtsCharData* obj = (CArtsCharData*)func_8009EC9C(self->field_0x54);
-    int result = 0;
-    // Declaration order drives saved-reg allocation (first -> highest):
-    // retail keeps the flags base in r28, ids base in r27 (result in r31).
     CArtsSlotFlags flags;
     s16 ids[6];
     ids[0] = obj->field_0x26;
@@ -836,6 +844,7 @@ extern "C" __declspec(noinline) int func_80236E6C(CArtsInfo* self, int arg2) {
     ids[5] = obj->field_0x24;
     flags.w.field_0x0 = lbl_eu_80668688;
     flags.w.field_0x4 = lbl_eu_8066868C;
+    int result = 0;
 
     for (u8 i = 0; i < 6; i++) {
         if (ids[i] == -1) continue;
@@ -864,8 +873,7 @@ extern "C" __declspec(noinline) int func_80236E6C(CArtsInfo* self, int arg2) {
             }
         }
     }
-    const char* base = lbl_eu_8050B00C;
-    u16 t = (u16)func_80136254((const void*)lbl_eu_806640D8, base + 0x1d4, arg2);
+    u16 t = (u16)func_80136254((const void*)lbl_eu_806640D8, lbl_eu_8050B00C + 0x1d4, arg2);
     if (t < result) result = t;
     return result;
 }
@@ -1152,10 +1160,10 @@ void func_80237A0C(CArtsInfo* self, u32 arg2, int arg3) {
     if (r != 0) {
         d = d * lbl_eu_806686A4;
     }
-    // f = d - scale2 * (d * (float)x) - scale2 * (d * (float)y) via fnmsubs
-    // (retail: fmuls d*(float)x; fnmsubs f30, scale2, f1, f31).
-    float t = d * (float)func_80236E6C(self, 0x2d);
-    float f = d - lbl_eu_80668694 * t;
+    // f = d - scale2 * (d * (float)x) - scale2 * (d * (float)y), each step
+    // folded through fnmsubs (retail: fmuls d*(float)x; fnmsubs f30, scale2,
+    // f1, f31).
+    float f = d - lbl_eu_80668694 * (d * (float)func_80236E6C(self, 0x2d));
     f -= lbl_eu_80668694 * (d * (float)func_80237050(self));
     sprintf(buf1, lbl_eu_8050B00C + 0x232, s1, f, s2);
     func_eu_80136F90(buf1);
@@ -1185,6 +1193,12 @@ void func_80237B88(CArtsInfo* self, u32 arg2, int arg3) {
     func_8013600C(lbl_eu_8050B00C + 0x18b, lbl_eu_8050B00C + 0x24c, self->field_0x55);
     u8 v = func_8013600C(lbl_eu_8050B00C + 0x18b, lbl_eu_8050B00C + 0x250, self->field_0x55);
     u8 w = func_8013600C(lbl_eu_8050B00C + 0x18b, lbl_eu_8050B00C + 0x257, self->field_0x55);
+    // NOTE: retail lfds the 2^52 correction constants from the shared sdata2
+    // labels (lbl_eu_806686A8 unsigned / lbl_eu_80668698 signed); every source
+    // form that references the named doubles rewrites the conversion schedule
+    // (frame/slot allocation diverges), so the plain casts are kept and MWCC
+    // pools value-identical TU-local constants - needs a CArtsInfo.o
+    // pool_patterns postprocess rule (43300000_00000000 / 43300000_80000000).
     // fv/fw stay in saved FPRs across the calls (reused in the level-up
     // branch below); retail keeps them in f31/f30.
     float fv = (float)v;
@@ -1334,6 +1348,9 @@ void func_80238038(CArtsInfo* self, u32 arg2, int arg3, u8 arg4) {
 // (func_80237238/80237394): the two grids are 0.5*stat*(m+stat) products,
 // formatted into buf1 (sprintf 0x282). On level-up the level+1 grids are
 // recomputed for layout 2 and the colour-pair helper always runs.
+// NOTE: the (float)(int) casts intentionally use MWCC's plain-cast form
+// (retail-identical schedule: lis 0x4330 hoisted into the prologue, one
+// stack-slot pair per conversion site).
 void func_80238298(CArtsInfo* self, u32 arg2, int arg3) {
     char buf1[32]; // sprintf at +0x28
     char buf2[32]; // sprintf at +0x8
@@ -1347,9 +1364,9 @@ void func_80238298(CArtsInfo* self, u32 arg2, int arg3) {
     int m2 = func_80237394(self);
     if (m1 > m2) m1 = m2;
     int s = m1 + stat;
-    int v1 = func_801C6158((float)(lbl_eu_80668694 * ConvS32ToF64(g1 * s)));
+    int v1 = func_801C6158(lbl_eu_80668694 * (float)(g1 * s));
     int t = m2 + stat;
-    int v2 = func_801C6158((float)(lbl_eu_80668694 * ConvS32ToF64(g2 * t)));
+    int v2 = func_801C6158(lbl_eu_80668694 * (float)(g2 * t));
     char* str = func_80136190(lbl_eu_8050B00C + 0x32, lbl_eu_8050B00C + 0x3d, 0x52);
     sprintf(buf1, lbl_eu_8050B00C + 0x282, v1, str, v2);
     level = arg3 + 2;
@@ -1358,8 +1375,8 @@ void func_80238298(CArtsInfo* self, u32 arg2, int arg3) {
     if (self->field_0x56 < 0xA) {
         int g1n = func_80237100(self, self->field_0x56 + 1, 0);
         int g2n = func_8023719C(self, self->field_0x56 + 1, 0);
-        int v1n = func_801C6158((float)(lbl_eu_80668694 * ConvS32ToF64(g1n * s)));
-        int v2n = func_801C6158((float)(lbl_eu_80668694 * ConvS32ToF64(g2n * t)));
+        int v1n = func_801C6158(lbl_eu_80668694 * (float)(g1n * s));
+        int v2n = func_801C6158(lbl_eu_80668694 * (float)(g2n * t));
         char* str2 = func_80136190(lbl_eu_8050B00C + 0x32, lbl_eu_8050B00C + 0x3d, 0x52);
         sprintf(buf1, lbl_eu_8050B00C + 0x282, v1n, str2, v2n);
         sprintf(buf2, lbl_eu_8050B00C + 0x23b, level);
@@ -1375,10 +1392,12 @@ void func_80238298(CArtsInfo* self, u32 arg2, int arg3) {
 // (func_8013600C at 0x289) and get the 0x49-keyed arts lookup
 // (func_80236E6C) contribution added: value = v + 0.5*v*func_80236E6C(0x49).
 // Two func_8013606C lookups (0x26d/0x290) are called with results discarded.
+// NOTE: the (float)(int) casts intentionally use MWCC's plain-cast form
+// (same retail schedule as func_80238298: lis 0x4330 hoisted into the
+// prologue, one stack-slot pair per conversion site).
 void func_802384F4(CArtsInfo* self, u32 arg2, int arg3) {
     char buf1[32]; // sprintf at +0x28
     char buf2[32]; // sprintf at +0x8
-    int level;
     func_802374F0(self, arg2);
     func_8023754C(self, arg2);
     int stat = func_80236DB8(self);
@@ -1388,34 +1407,34 @@ void func_802384F4(CArtsInfo* self, u32 arg2, int arg3) {
     int m2 = func_80237394(self);
     if (m1 > m2) m1 = m2;
     int s = m1 + stat;
-    int v1 = func_801C6158((float)(lbl_eu_80668694 * ConvS32ToF64(g1 * s)));
+    int v1 = func_801C6158(lbl_eu_80668694 * (float)(g1 * s));
     int t = m2 + stat;
-    int v2 = func_801C6158((float)(lbl_eu_80668694 * ConvS32ToF64(g2 * t)));
+    int v2 = func_801C6158(lbl_eu_80668694 * (float)(g2 * t));
     u8 v3 = func_8013600C(lbl_eu_8050B00C + 0x18b, lbl_eu_8050B00C + 0x289, self->field_0x55);
     func_8013606C(lbl_eu_8050B00C + 0x18b, lbl_eu_8050B00C + 0x26d, self->field_0x55);
     func_8013606C(lbl_eu_8050B00C + 0x18b, lbl_eu_8050B00C + 0x290, self->field_0x55);
-    v1 = func_801C6158((float)(lbl_eu_80668694 * ConvS32ToF64(v1 * v3)));
+    v1 = func_801C6158(lbl_eu_80668694 * (float)(v1 * v3));
     int a = func_80236E6C(self, 0x49);
-    int value1 = v1 + func_801C6158((float)(lbl_eu_80668694 * ConvS32ToF64(v1 * a)));
-    v2 = func_801C6158((float)(lbl_eu_80668694 * ConvS32ToF64(v2 * v3)));
+    int value1 = v1 + func_801C6158(lbl_eu_80668694 * (float)(v1 * a));
+    v2 = func_801C6158(lbl_eu_80668694 * (float)(v2 * v3));
     a = func_80236E6C(self, 0x49);
-    int value2 = v2 + func_801C6158((float)(lbl_eu_80668694 * ConvS32ToF64(v2 * a)));
+    int value2 = v2 + func_801C6158(lbl_eu_80668694 * (float)(v2 * a));
     char* str = func_80136190(lbl_eu_8050B00C + 0x32, lbl_eu_8050B00C + 0x3d, 0x52);
     sprintf(buf1, lbl_eu_8050B00C + 0x282, value1, str, value2);
-    level = arg3 + 2;
+    int level = arg3 + 2;
     sprintf(buf2, lbl_eu_8050B00C + 0x23b, level);
     func_80136A1C(self->mpLayout1, buf2, buf1, 0);
     if (self->field_0x56 < 0xA) {
         int g1n = func_80237100(self, self->field_0x56 + 1, 0);
         int g2n = func_8023719C(self, self->field_0x56 + 1, 0);
-        int v1n = func_801C6158((float)(lbl_eu_80668694 * ConvS32ToF64(g1n * s)));
-        int v2n = func_801C6158((float)(lbl_eu_80668694 * ConvS32ToF64(g2n * t)));
-        v1n = func_801C6158((float)(lbl_eu_80668694 * ConvS32ToF64(v1n * v3)));
+        int v1n = func_801C6158(lbl_eu_80668694 * (float)(g1n * s));
+        int v2n = func_801C6158(lbl_eu_80668694 * (float)(g2n * t));
+        v1n = func_801C6158(lbl_eu_80668694 * (float)(v1n * v3));
         a = func_80236E6C(self, 0x49);
-        int value1n = v1n + func_801C6158((float)(lbl_eu_80668694 * ConvS32ToF64(v1n * a)));
-        v2n = func_801C6158((float)(lbl_eu_80668694 * ConvS32ToF64(v2n * v3)));
+        int value1n = v1n + func_801C6158(lbl_eu_80668694 * (float)(v1n * a));
+        v2n = func_801C6158(lbl_eu_80668694 * (float)(v2n * v3));
         a = func_80236E6C(self, 0x49);
-        int value2n = v2n + func_801C6158((float)(lbl_eu_80668694 * ConvS32ToF64(v2n * a)));
+        int value2n = v2n + func_801C6158(lbl_eu_80668694 * (float)(v2n * a));
         char* str2 = func_80136190(lbl_eu_8050B00C + 0x32, lbl_eu_8050B00C + 0x3d, 0x52);
         sprintf(buf1, lbl_eu_8050B00C + 0x282, value1n, str2, value2n);
         sprintf(buf2, lbl_eu_8050B00C + 0x23b, level);
@@ -1431,12 +1450,16 @@ void func_802384F4(CArtsInfo* self, u32 arg2, int arg3) {
 // 0x28/0x3c/0x64). A func_8013606C lookup at 0x297 picks the arts lookup
 // key (func_80236E6C) used to add 0.5*v*lookup to each grid: 0x66 -> 0x49,
 // 0x67 -> 0x9, 0x68 -> 0x3a, 0x69 -> 0x5c. On level-up the level+1 grids
-// are recomputed for layout 2 (re-dispatching the 0x297 key switch) and the
-// colour-pair helper always runs.
-void func_80238904(CArtsInfo* self, u32 arg2, int arg3) {
+// are recomputed for layout 2 (re-dispatching the 0x297 key switch; the
+// 0x289 base is kept in a register across the branch) and the colour-pair
+// helper always runs.
+// NOTE: the (float)(int) casts intentionally use MWCC's plain-cast form
+// (same retail schedule as func_802384F4: lis 0x4330 hoisted into the
+// prologue, one stack-slot pair per conversion site).
+// u32 const on arg2: entry param-copy lever (retail copies r4 before r3).
+void func_80238904(CArtsInfo* self, u32 const arg2, int arg3) {
     char buf1[32]; // sprintf at +0x28
     char buf2[32]; // sprintf at +0x8
-    int level;
     func_802374F0(self, arg2);
     func_8023754C(self, arg2);
     int stat = func_80236DF0(self);
@@ -1445,10 +1468,14 @@ void func_80238904(CArtsInfo* self, u32 arg2, int arg3) {
     int m1 = func_80237238(self);
     int m2 = func_80237394(self);
     if (m1 > m2) m1 = m2;
+    // Distinct locals so MWCC keeps the clamped m1 live in its own saved reg
+    // and computes s into a fresh one (retail: min@r29, s@r30).
     int s = m1 + stat;
-    int v1 = func_801C6158((float)(lbl_eu_80668694 * ConvS32ToF64(g1 * s)));
+    // t computed between the two conversions like retail (the (m2+stat) addi
+    // lands between the first and second func_801C6158 calls).
+    int v1 = func_801C6158(lbl_eu_80668694 * (float)(g1 * s));
     int t = m2 + stat;
-    int v2 = func_801C6158((float)(lbl_eu_80668694 * ConvS32ToF64(g2 * t)));
+    int v2 = func_801C6158(lbl_eu_80668694 * (float)(g2 * t));
     int base = func_8013600C(lbl_eu_8050B00C + 0x18b, lbl_eu_8050B00C + 0x289, self->field_0x55);
     switch (self->field_0x55) {
     case 0x68:
@@ -1463,63 +1490,63 @@ void func_80238904(CArtsInfo* self, u32 arg2, int arg3) {
     default:
         break;
     }
-    v1 = func_801C6158((float)(lbl_eu_80668694 * ConvS32ToF64(v1 * base)));
-    v2 = func_801C6158((float)(lbl_eu_80668694 * ConvS32ToF64(v2 * base)));
+    v1 = func_801C6158(lbl_eu_80668694 * (float)(v1 * base));
+    v2 = func_801C6158(lbl_eu_80668694 * (float)(v2 * base));
     u16 k = func_8013606C(lbl_eu_8050B00C + 0x18b, lbl_eu_8050B00C + 0x297, self->field_0x55);
     if (k == 0x66) {
         int a = func_80236E6C(self, 0x49);
-        v1 += func_801C6158((float)(lbl_eu_80668694 * ConvS32ToF64(v1 * a)));
+        v1 += func_801C6158(lbl_eu_80668694 * (float)(v1 * a));
         a = func_80236E6C(self, 0x49);
-        v2 += func_801C6158((float)(lbl_eu_80668694 * ConvS32ToF64(v2 * a)));
+        v2 += func_801C6158(lbl_eu_80668694 * (float)(v2 * a));
     } else if (k == 0x67) {
         int a = func_80236E6C(self, 0x9);
-        v1 += func_801C6158((float)(lbl_eu_80668694 * ConvS32ToF64(v1 * a)));
+        v1 += func_801C6158(lbl_eu_80668694 * (float)(v1 * a));
         a = func_80236E6C(self, 0x9);
-        v2 += func_801C6158((float)(lbl_eu_80668694 * ConvS32ToF64(v2 * a)));
+        v2 += func_801C6158(lbl_eu_80668694 * (float)(v2 * a));
     } else if (k == 0x68) {
         int a = func_80236E6C(self, 0x3a);
-        v1 += func_801C6158((float)(lbl_eu_80668694 * ConvS32ToF64(v1 * a)));
+        v1 += func_801C6158(lbl_eu_80668694 * (float)(v1 * a));
         a = func_80236E6C(self, 0x3a);
-        v2 += func_801C6158((float)(lbl_eu_80668694 * ConvS32ToF64(v2 * a)));
+        v2 += func_801C6158(lbl_eu_80668694 * (float)(v2 * a));
     } else if (k == 0x69) {
         int a = func_80236E6C(self, 0x5c);
-        v1 += func_801C6158((float)(lbl_eu_80668694 * ConvS32ToF64(v1 * a)));
+        v1 += func_801C6158(lbl_eu_80668694 * (float)(v1 * a));
         a = func_80236E6C(self, 0x5c);
-        v2 += func_801C6158((float)(lbl_eu_80668694 * ConvS32ToF64(v2 * a)));
+        v2 += func_801C6158(lbl_eu_80668694 * (float)(v2 * a));
     }
     char* str = func_80136190(lbl_eu_8050B00C + 0x32, lbl_eu_8050B00C + 0x3d, 0x52);
     sprintf(buf1, lbl_eu_8050B00C + 0x282, v1, str, v2);
-    level = arg3 + 2;
+    int level = arg3 + 2;
     sprintf(buf2, lbl_eu_8050B00C + 0x23b, level);
     func_80136A1C(self->mpLayout1, buf2, buf1, 0);
     if (self->field_0x56 < 0xA) {
         int g1n = func_80237100(self, self->field_0x56 + 1, 0);
         int g2n = func_8023719C(self, self->field_0x56 + 1, 0);
-        int v1n = func_801C6158((float)(lbl_eu_80668694 * ConvS32ToF64(g1n * s)));
-        int v2n = func_801C6158((float)(lbl_eu_80668694 * ConvS32ToF64(g2n * t)));
-        v1n = func_801C6158((float)(lbl_eu_80668694 * ConvS32ToF64(v1n * base)));
-        v2n = func_801C6158((float)(lbl_eu_80668694 * ConvS32ToF64(v2n * base)));
+        int v1n = func_801C6158(lbl_eu_80668694 * (float)(g1n * s));
+        int v2n = func_801C6158(lbl_eu_80668694 * (float)(g2n * t));
+        v1n = func_801C6158(lbl_eu_80668694 * (float)(v1n * base));
+        v2n = func_801C6158(lbl_eu_80668694 * (float)(v2n * base));
         u16 k2 = func_8013606C(lbl_eu_8050B00C + 0x18b, lbl_eu_8050B00C + 0x297, self->field_0x55);
         if (k2 == 0x66) {
             int a = func_80236E6C(self, 0x49);
-            v1n += func_801C6158((float)(lbl_eu_80668694 * ConvS32ToF64(v1n * a)));
+            v1n += func_801C6158(lbl_eu_80668694 * (float)(v1n * a));
             a = func_80236E6C(self, 0x49);
-            v2n += func_801C6158((float)(lbl_eu_80668694 * ConvS32ToF64(v2n * a)));
+            v2n += func_801C6158(lbl_eu_80668694 * (float)(v2n * a));
         } else if (k2 == 0x67) {
             int a = func_80236E6C(self, 0x9);
-            v1n += func_801C6158((float)(lbl_eu_80668694 * ConvS32ToF64(v1n * a)));
+            v1n += func_801C6158(lbl_eu_80668694 * (float)(v1n * a));
             a = func_80236E6C(self, 0x9);
-            v2n += func_801C6158((float)(lbl_eu_80668694 * ConvS32ToF64(v2n * a)));
+            v2n += func_801C6158(lbl_eu_80668694 * (float)(v2n * a));
         } else if (k2 == 0x68) {
             int a = func_80236E6C(self, 0x3a);
-            v1n += func_801C6158((float)(lbl_eu_80668694 * ConvS32ToF64(v1n * a)));
+            v1n += func_801C6158(lbl_eu_80668694 * (float)(v1n * a));
             a = func_80236E6C(self, 0x3a);
-            v2n += func_801C6158((float)(lbl_eu_80668694 * ConvS32ToF64(v2n * a)));
+            v2n += func_801C6158(lbl_eu_80668694 * (float)(v2n * a));
         } else if (k2 == 0x69) {
             int a = func_80236E6C(self, 0x5c);
-            v1n += func_801C6158((float)(lbl_eu_80668694 * ConvS32ToF64(v1n * a)));
+            v1n += func_801C6158(lbl_eu_80668694 * (float)(v1n * a));
             a = func_80236E6C(self, 0x5c);
-            v2n += func_801C6158((float)(lbl_eu_80668694 * ConvS32ToF64(v2n * a)));
+            v2n += func_801C6158(lbl_eu_80668694 * (float)(v2n * a));
         }
         char* str2 = func_80136190(lbl_eu_8050B00C + 0x32, lbl_eu_8050B00C + 0x3d, 0x52);
         sprintf(buf1, lbl_eu_8050B00C + 0x282, v1n, str2, v2n);
@@ -1565,9 +1592,22 @@ void func_80239030(CArtsInfo* self, u32 arg2, int arg3) {
 // Entry param-save-order wall: retail copies arg2 (r4) before self (r3);
 // MWCC invariantly emits the param-1 (r3) copy first (same ABI-boundary
 // artifact as CMenuShopSell func_8018B130). Shadows kept for documentation.
+// Int->float conversions: retail lfds the shared sdata2 correction constant
+// lbl_eu_80668698; the plain-cast form reproduces retail's exact schedule
+// but MWCC pools the magic as a TU-local @label - needs a CArtsInfo.o
+// pool_patterns postprocess rule. Ruled out from source: ConvS32ToF64 helper
+// (inlines with per-site temps, +0x20 frame / _savegpr_25 drift), explicit
+// shared union temp (aliasing-based hoist of the mullw/xoris stores,
+// float-reg rotation), volatile union temps (volatile forces both
+// conversions to evaluate eagerly before the calls, +0x10 frame),
+// u32-const arg2 lever (full regalloc shift), shadow declaration order
+// (no effect on ABI param-copy sequence).
 void func_8023916C(CArtsInfo* self_, u32 arg2_, int arg3_) {
-    u32 arg2 = arg2_;
+    // Entry param-copy-order wall: retail copies arg2 (r4) before self (r3);
+    // shadow declaration order does not change MWCC's ABI param-copy
+    // sequence (verified - both orders give r3-first).
     CArtsInfo* self = self_;
+    u32 arg2 = arg2_;
     int arg3 = arg3_;
     char buf1[32]; // sprintf at +0x28
     char buf2[32]; // sprintf at +0x8
@@ -1600,36 +1640,42 @@ void func_8023916C(CArtsInfo* self_, u32 arg2_, int arg3_) {
 }
 
 // func_8023939C - arts info text update. The stat value (func_80236E28) is
-// halved into cur, combined with a grid offset (v1 + v2*(level-1)) and halved
-// again, then formatted into buf1. On level-up (< 0xA) the lookups are
+// scaled by 100 into cur, combined with a grid offset (v1*(level-1)+v2) and
+// scaled again, then formatted into buf1. On level-up (< 0xA) the lookups are
 // re-fetched and the level grid recomputed for layout 2; the colour-pair
 // helper runs when the two formatted values differ.
-void func_8023939C(CArtsInfo* self, u32 arg2, int arg3) {
-    char buf1[32]; // sprintf at +0x28
+// u32 const on arg2: entry param-copy lever - retail copies r4 (arg2)
+// before r3 (self).
+void func_8023939C(CArtsInfo* self, u32 const arg2, int arg3) {
+    // Declaration order = reverse frame-slot order (MWCC allocates
+    // last-declared lowest): cvB@+0x58, cvA@+0x48, buf1@+0x28, buf2@+0x08.
     char buf2[32]; // sprintf at +0x8
+    char buf1[32]; // sprintf at +0x28
     char* s1 = func_802374F0(self, arg2);
     char* s2 = func_8023754C(self, arg2);
     int base = func_80236E28(self);
     u8 v1 = func_8013600C(lbl_eu_8050B00C + 0x18b, lbl_eu_8050B00C + 0x289, self->field_0x55);
     u8 v2 = func_8013600C(lbl_eu_8050B00C + 0x18b, lbl_eu_8050B00C + 0x29f, self->field_0x55);
-    float fbase = (float)(base * 100);
-    int cur = (int)(lbl_eu_80668694 * fbase);
-    u32 grid = v1 + v2 * (self->field_0x56 - 1);
-    float fcur = (float)(cur * grid);
-    int cur2 = (int)(lbl_eu_80668694 * fcur);
-    sprintf(buf1, lbl_eu_8050B00C + 0x266, s1, cur2, s2);
+    int cur = (int)(lbl_eu_80668694 * ConvS32ToF64(base * 100));
+    // Grid offset folded into the conversion expression: retail interleaves
+    // the (level-1) multiply with the conversion store sequence. Note the
+    // operand order: the SECOND lookup (v2) is multiplied by (level-1), the
+    // FIRST (v1) is added.
+    int val1 =
+        (int)(lbl_eu_80668694 * ConvS32ToF64((int)(cur * (v2 * (u32)(self->field_0x56 - 1) + v1))));
+    sprintf(buf1, lbl_eu_8050B00C + 0x266, s1, val1, s2);
     sprintf(buf2, lbl_eu_8050B00C + 0x23b, arg3 + 2);
     func_80136A1C(self->mpLayout1, buf2, buf1, 0);
     if (self->field_0x56 < 0xA) {
         u8 n1 = func_8013600C(lbl_eu_8050B00C + 0x18b, lbl_eu_8050B00C + 0x289, self->field_0x55);
         u8 n2 = func_8013600C(lbl_eu_8050B00C + 0x18b, lbl_eu_8050B00C + 0x29f, self->field_0x55);
-        u8 lvl = self->field_0x56;
-        u32 grid2 = n1 + n2 * lvl;
-        float fnxt = (float)(cur * grid2);
-        int nxt = (int)(lbl_eu_80668694 * fnxt);
-        sprintf(buf1, lbl_eu_8050B00C + 0x266, s1, nxt, s2);
+        // Next-level grid folded into the conversion like retail (second
+        // lookup multiplied by level, first added).
+        int val2 =
+            (int)(lbl_eu_80668694 * ConvS32ToF64((int)(cur * (n2 * (u32)self->field_0x56 + n1))));
+        sprintf(buf1, lbl_eu_8050B00C + 0x266, s1, val2, s2);
         func_80136A1C(self->mpLayout2, buf2, buf1, 0);
-        if (cur2 != nxt) {
+        if (val1 != val2) {
             func_80139A18(self->mpLayout2, buf2, &lbl_eu_80664758, &lbl_eu_80664760);
         }
     }
@@ -1640,18 +1686,33 @@ void func_8023939C(CArtsInfo* self, u32 arg2, int arg3) {
 // are x1*g1 and x1*g2, each halved, formatted into buf1 (sprintf 0x282). On
 // level-up the level+1 grids are recomputed for layout 2 and the colour-pair
 // helper always runs.
-void func_8023959C(CArtsInfo* self, u32 arg2, int arg3) {
+// NOTE: the (float)(int) casts intentionally use MWCC's plain-cast form
+// (retail-identical instruction schedule and compiler-temp slot placement);
+// the cast magic pools as TU-local @8117 instead of lbl_eu_80668698 - see
+// the pool_patterns note at the lbl_eu_80668698 definition.
+// Entry param-save-order wall (same as func_8023916C): retail copies arg2
+// (r4) before self (r3); MWCC invariantly emits the param-1 (r3) copy first.
+void func_8023959C(CArtsInfo* self_, u32 arg2_, int arg3_) {
+    CArtsInfo* self = self_;
+    u32 arg2 = arg2_;
+    int arg3 = arg3_;
     char buf1[32]; // sprintf at +0x28
     char buf2[32]; // sprintf at +0x8
+    // level assigned late (after sprintf1) so the addi lands after the first
+    // sprintf like retail's in-place addi r27, r26, 2.
     int level;
+
+    // Results discarded: retail keeps both calls but never uses the strings.
     func_802374F0(self, arg2);
     func_8023754C(self, arg2);
     int stat = func_80236E28(self);
     int g1 = func_80237100(self, self->field_0x56, 0);
     int g2 = func_8023719C(self, self->field_0x56, 0);
-    int x1 = func_801C6158((float)(lbl_eu_80668694 * ConvS32ToF64(stat * 100)));
-    int x2 = func_801C6158((float)(lbl_eu_80668694 * ConvS32ToF64(x1 * g1)));
-    int x3 = func_801C6158((float)(lbl_eu_80668694 * ConvS32ToF64(x1 * g2)));
+    // (float)(int) casts emit MWCC's 0x4330-magic stack-slot conversion
+    // (lis 0x4330 hoisted into the prologue, xoris'd low word per site).
+    int x1 = func_801C6158(lbl_eu_80668694 * (float)(stat * 100));
+    int x2 = func_801C6158(lbl_eu_80668694 * (float)(x1 * g1));
+    int x3 = func_801C6158(lbl_eu_80668694 * (float)(x1 * g2));
     char* str = func_80136190(lbl_eu_8050B00C + 0x32, lbl_eu_8050B00C + 0x3d, 0x52);
     sprintf(buf1, lbl_eu_8050B00C + 0x282, x2, str, x3);
     level = arg3 + 2;
@@ -1660,10 +1721,12 @@ void func_8023959C(CArtsInfo* self, u32 arg2, int arg3) {
     if (self->field_0x56 < 0xA) {
         int g1n = func_80237100(self, self->field_0x56 + 1, 0);
         int g2n = func_8023719C(self, self->field_0x56 + 1, 0);
-        int x2n = func_801C6158((float)(lbl_eu_80668694 * ConvS32ToF64(x1 * g1n)));
-        int x3n = func_801C6158((float)(lbl_eu_80668694 * ConvS32ToF64(x1 * g2n)));
+        // Dead call kept: retail emits the conversion+call and drops the result.
+        func_801C6158(lbl_eu_80668694 * (float)(x1 * g1n));
+        int x3n = func_801C6158(lbl_eu_80668694 * (float)(x1 * g2n));
         char* str2 = func_80136190(lbl_eu_8050B00C + 0x32, lbl_eu_8050B00C + 0x3d, 0x52);
-        sprintf(buf1, lbl_eu_8050B00C + 0x282, x2n, str2, x3n);
+        // Retail formats x1 (not the dropped first conversion) as the middle value.
+        sprintf(buf1, lbl_eu_8050B00C + 0x282, x1, str2, x3n);
         sprintf(buf2, lbl_eu_8050B00C + 0x23b, level);
         func_80136A1C(self->mpLayout2, buf2, buf1, 0);
         func_80139A18(self->mpLayout2, buf2, &lbl_eu_80664758, &lbl_eu_80664760);
@@ -1789,6 +1852,11 @@ void func_80239BDC(CArtsInfo* self, u32 arg2, int arg3) {
 // fb declared (uninitialized) before fa: MWCC colours equal-lifetime FPRs
 // in reverse declaration order, and retail keeps fb in f31 / fa in f30.
 void func_80239D20(CArtsInfo* self_, u32 arg2_, int arg3_) {
+    // Entry param-save-order wall (see func_8023916C): retail emits the two
+    // entry copies in the opposite order. Levers tried: shadow declaration
+    // order (both ways), const qualifier, no-shadow direct-arg form - all
+    // leave the emission order unchanged (MWCC invariantly copies param 1
+    // first).
     u32 arg2 = arg2_;
     CArtsInfo* self = self_;
     int arg3 = arg3_;
@@ -1799,6 +1867,12 @@ void func_80239D20(CArtsInfo* self_, u32 arg2_, int arg3_) {
     // fb declared (uninitialized) before fa: MWCC colours equal-lifetime FPRs
     // in reverse declaration order, and retail keeps fb in f31 / fa in f30.
     // The conversion statements keep the retail evaluation order.
+    // NOTE: the plain casts reproduce retail's exact conversion schedule
+    // ([0x43300000, v] lfd/fsubs via the shared sdata2 correction constants),
+    // but MWCC pools the magics as TU-local @N labels instead of lfding the
+    // named sdata2 symbols (lbl_eu_806686A8 / lbl_eu_80668698) - every source
+    // form that references the named doubles rewrites the schedule (+frsp,
+    // frame resize).
     float fb;
     u8 v1 = func_8013600C(lbl_eu_8050B00C + 0x18b, lbl_eu_8050B00C + 0x289, self->field_0x55);
     float fa = (float)v1;
@@ -1831,6 +1905,10 @@ void func_80239D20(CArtsInfo* self_, u32 arg2_, int arg3_) {
 // recomputed (level instead of level-1, s32 magic) for layout 2; the
 // colour-pair helper runs when the two values differ.
 // Entry param-save-order wall (see func_8023916C).
+// Int->float conversions: retail lfds the shared sdata2 correction constants
+// (lbl_eu_806686A8 unsigned / lbl_eu_80668698 signed); the plain-cast forms
+// reproduce retail's exact schedule but MWCC pools the magics as TU-local
+// labels - needs a CArtsInfo.o pool_patterns postprocess rule.
 void func_8023AB8C(CArtsInfo* self_, u32 arg2_, int arg3_) {
     u32 arg2 = arg2_;
     CArtsInfo* self = self_;

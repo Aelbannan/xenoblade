@@ -41,13 +41,55 @@ struct CtrlActFlags {
 };
 
 // self->mField28 view: vtable slot 0x138 returns a float vector (first
-// float read as the height/timer value by func_800D3D34).
-struct CtrlActViewSub28Vtbl {
-    void* p00[0x138 / 4];
-    float* (*fn_0x138)(void* self);  // 0x138
+// float read as the height/timer value by func_800D3D34). Typed virtuals so
+// retail's true C++ dispatch shape (lwzu/lwz/mtctr/bctrl) is reproduced.
+class CtrlActViewSub28 {
+public:
+    virtual void vf00();  virtual void vf01();  virtual void vf02();
+    virtual void vf03();  virtual void vf04();  virtual void vf05();
+    virtual void vf06();  virtual void vf07();  virtual void vf08();
+    virtual void vf09();  virtual void vf10();  virtual void vf11();
+    virtual void vf12();  virtual void vf13();  virtual void vf14();
+    virtual void vf15();  virtual void vf16();  virtual void vf17();
+    virtual void vf18();  virtual void vf19();  virtual void vf20();
+    virtual void vf21();  virtual void vf22();  virtual void vf23();
+    virtual void vf24();  virtual void vf25();  virtual void vf26();
+    virtual void vf27();  virtual void vf28();  virtual void vf29();
+    virtual void vf30();  virtual void vf31();  virtual void vf32();
+    virtual void vf33();  virtual void vf34();  virtual void vf35();
+    virtual void vf36();  virtual void vf37();  virtual void vf38();
+    virtual void vf39();  virtual void vf40();  virtual void vf41();
+    virtual void vf42();  virtual void vf43();  virtual void vf44();
+    virtual void vf45();  virtual void vf46();  virtual void vf47();
+    virtual void vf48();  virtual void vf49();  virtual void vf50();
+    virtual void vf51();  virtual void vf52();  virtual void vf53();
+    virtual void vf54();  virtual void vf55();  virtual void vf56();
+    virtual void vf57();  virtual void vf58();  virtual void vf59();
+    virtual void vf60();  virtual void vf61();  virtual void vf62();
+    virtual void vf63();  virtual void vf64();  virtual void vf65();
+    virtual void vf66();  virtual void vf67();  virtual void vf68();
+    virtual void vf69();  virtual void vf70();  virtual void vf71();
+    virtual void vf72();  virtual void vf73();  virtual void vf74();
+    virtual void vf75();
+    virtual float* getFloats();            // 0x138
 };
-struct CtrlActViewSub28 {
-    CtrlActViewSub28Vtbl* vtbl;      // 0x00
+
+// Typed view of the +0x3E9C voice-owner interface for the height probe:
+// slot 0x8C returns the actor height float (func_800D34D4 gate).
+class CtrlActVoiceHeightIntf {
+public:
+    virtual void vf00();  virtual void vf01();  virtual void vf02();
+    virtual void vf03();  virtual void vf04();  virtual void vf05();
+    virtual void vf06();  virtual void vf07();  virtual void vf08();
+    virtual void vf09();  virtual void vf10();  virtual void vf11();
+    virtual void vf12();  virtual void vf13();  virtual void vf14();
+    virtual void vf15();  virtual void vf16();  virtual void vf17();
+    virtual void vf18();  virtual void vf19();  virtual void vf20();
+    virtual void vf21();  virtual void vf22();  virtual void vf23();
+    virtual void vf24();  virtual void vf25();  virtual void vf26();
+    virtual void vf27();  virtual void vf28();  virtual void vf29();
+    virtual void vf30();  virtual void vf31();  virtual void vf32();
+    virtual f32 getHeight();               // 0x8C
 };
 
 // player->mField3F60 (voice/battle target) view for the fields this TU
@@ -68,10 +110,25 @@ struct CtrlActTargetView {
 struct CtrlActSub2A4 {
     u32 mField0;             // 0x00
     u32 mField4;             // 0x04
-    u8 _8[0x48 - 0x8];
+    u32 mField8;             // 0x08
+    u32 mFieldC;             // 0x0C
+    u32 mField10;            // 0x10
+    u32 mField14;            // 0x14
+    u32 mField18;            // 0x18
+    u32 mField1C;            // 0x1C
+    u32 mField20;            // 0x20
+    u32 mField24;            // 0x24
+    u32 mField28;            // 0x28
+    u32 mField2C;            // 0x2C
+    u32 mField30;            // 0x30
+    u32 mField34;            // 0x34
+    u32 mField38;            // 0x38
+    u32 mField3C;            // 0x3C
+    u32 mField40;            // 0x40
+    u32 mField44;            // 0x44 (opaque words 0x08-0x47, copied verbatim)
     u32 mField48;            // 0x48
     u32 mField4C;            // 0x4C
-    u32 mField50;            // 0x50
+    u32 mField50;            // 0x50 (CtrlActAtkParam* in func_800D1F0C)
     f32 mField54;            // 0x54
     f32 mField58;            // 0x58
     f32 mField5C;            // 0x5C
@@ -79,14 +136,386 @@ struct CtrlActSub2A4 {
     f32 mField64;            // 0x64
     f32 mField68;            // 0x68
     f32 mField6C;            // 0x6C
-    u16 mField70;            // 0x70
-    u16 mField72;            // 0x72
+    s16 mField70;            // 0x70
+    s16 mField72;            // 0x72
     u32 mField74;            // 0x74
     u32 mField78;            // 0x78 (flag word: 0x40002000 base + kind bits)
     u32 mField7C;            // 0x7C
     u16 mField80;            // 0x80
-    u8 _82[0xB8 - 0x82];
+    // (0x82-0x83 unnamed alignment padding: skipped by member-wise copies,
+    // matching retail)
+    u8 _84[0x34];           // 0x84..0xB7 (bulk-cleared by func_800D1F0C)
     u32 mFieldB8;            // 0xB8
+};
+
+// Real-virtual dispatch views for func_800D2A5C. Retail lowers these calls as
+// true C++ virtual dispatch (lwz r12,0(r3); lwz r12,N(r12); mtctr; bctrl),
+// which only a typed virtual call produces - manual vtable-cast structs emit a
+// different temp-register shape. Declared index N sits at vtable offset
+// (N+2)*4 (MWCC's two leading RTTI/offset-to-top entries), matching the
+// CtrlPlayerObj convention in CtrlPc.hpp.
+class CtrlActPlayerReal {
+public:
+    virtual void vf00();
+    virtual void vf01();
+    virtual void vf02();
+    virtual void vf03();
+    virtual void vf04();
+    virtual void vf05();
+    virtual void vf06();
+    virtual void vf07();
+    virtual void vf08();
+    virtual void vf09();
+    virtual void vf10();
+    virtual void vf11();
+    virtual void vf12();
+    virtual void vf13();
+    virtual void vf14();
+    virtual void vf15();
+    virtual void vf16();
+    virtual void vf17();
+    virtual void vf18();
+    virtual void vf19();
+    virtual void vf20();
+    virtual void vf21();
+    virtual void vf22();
+    virtual void vf23();
+    virtual void vf24();
+    virtual void vf25();
+    virtual void vf26();
+    virtual void vf27();
+    virtual void vf28();
+    virtual void vf29();
+    virtual void vf30();
+    virtual void vf31();
+    virtual void vf32();
+    virtual void vf33();
+    virtual void vf34();
+    virtual void vf35();
+    virtual void vf36();
+    virtual void vf37();
+    virtual void vf38();
+    virtual void vf39();
+    virtual void vf40();
+    virtual void vf41();
+    virtual void vf42();
+    virtual void vf43();
+    virtual void vf44();
+    virtual void vf45();
+    virtual void vf46();
+    virtual void vf47();
+    virtual void vf48();
+    virtual void vf49();
+    virtual void vf50();
+    virtual void vf51();
+    virtual void vf52();
+    virtual void vf53();
+    virtual void vf54();
+    virtual void vf55();
+    virtual void vf56();
+    virtual void vf57();
+    virtual void vf58();
+    virtual void vf59();
+    virtual void vf60();
+    virtual void vf61();
+    virtual void vf62();
+    virtual void vf63();
+    virtual void vf64();
+    virtual void vf65();
+    virtual void vf66();
+    virtual void vf67();
+    virtual void vf68();
+    virtual void vf69();
+    virtual void vf70();
+    virtual void vf71();
+    virtual void vf72();
+    virtual void vf73();
+    virtual void vf74();
+    virtual void vf75();
+    virtual void vf76();
+    virtual void vf77();
+    virtual void vf78();
+    virtual void vf79();
+    virtual void vf80();
+    virtual void vf81();
+    virtual void vf82();
+    virtual void vf83();
+    virtual void vf84();
+    virtual void vf85();
+    virtual void vf86();
+    virtual void vf87();
+    virtual void vf88();
+    virtual void vf89();
+    virtual void vf90();
+    virtual void vf91();
+    virtual void vf92();
+    virtual void vf93();
+    virtual void vf94();
+    virtual void vf95();
+    virtual void vf96();
+    virtual void vf97();
+    virtual void vf98();
+    virtual void vf99();
+    virtual void vf100();
+    virtual void vf101();
+    virtual void vf102();
+    virtual void vf103();
+    virtual void vf104();
+    virtual void vf105();
+    virtual void vf106();
+    virtual void vf107();
+    virtual void vf108();
+    virtual void vf109();
+    virtual void vf110();
+    virtual void vf111();
+    virtual void vf112();
+    virtual void vf113();
+    virtual void vf114();
+    virtual void vf115();
+    virtual void vf116();
+    virtual void vf117();
+    virtual void vf118();
+    virtual void vf119();
+    virtual void vf120();
+    virtual void vf121();
+    virtual void vf122();
+    virtual void vf123();
+    virtual void vf124();
+    virtual void vf125();
+    virtual void vf126();
+    virtual void vf127();
+    virtual void vf128();
+    virtual void vf129();
+    virtual void vf130();
+    virtual void vf131();
+    virtual void vf132();
+    virtual void vf133();
+    virtual void vf134();
+    virtual void vf135();
+    virtual void vf136();
+    virtual void vf137();
+    virtual void vf138();
+    virtual void vf139();
+    virtual void vf140();
+    virtual void vf141();
+    virtual void vf142();
+    virtual void vf143();
+    virtual void vf144();
+    virtual void vf145();
+    virtual void vf146();
+    virtual void vf147();
+    virtual void vf148();
+    virtual void vf149();
+    virtual void vf150();
+    virtual void vf151();
+    virtual void vf152();
+    virtual void vf153();
+    virtual void vf154();
+    virtual void vf155();
+    virtual void vf156();
+    virtual void vf157();
+    virtual void vf158();
+    virtual void vf159();
+    virtual void* vf160();              // 0x288 (arts-set base for getAtkParam)
+    virtual void vf161();
+    virtual void vf162();
+    virtual void vf163();
+    virtual void vf164();
+    virtual void vf165();
+    virtual void vf166();
+    virtual CtrlActSub2A4* vf167();     // 0x2A4 (action-state block)
+    virtual void vf168();
+    virtual void vf169();
+    virtual void vf170();
+    virtual void vf171();
+    virtual void vf172();
+    virtual int vf173();                // 0x2BC (action usable gate)
+
+    CtrlPlayerSub4* mField4;     // 0x04 (sub-object, vf30 -> u32* word holder)
+    u8 _8[0x3E9C - 0x8];
+    CVoiceOwnerIntfPc mSub3E9C;  // 0x3E9C embedded voice-owner interface
+};
+
+// Action-source view (func_8016FE34 result): only the 0x2BC gate is
+// dispatched through here in func_800D2A5C.
+class CtrlActSrcReal {
+public:
+    virtual void vf00();
+    virtual void vf01();
+    virtual void vf02();
+    virtual void vf03();
+    virtual void vf04();
+    virtual void vf05();
+    virtual void vf06();
+    virtual void vf07();
+    virtual void vf08();
+    virtual void vf09();
+    virtual void vf10();
+    virtual void vf11();
+    virtual void vf12();
+    virtual void vf13();
+    virtual void vf14();
+    virtual void vf15();
+    virtual void vf16();
+    virtual void vf17();
+    virtual void vf18();
+    virtual void vf19();
+    virtual void vf20();
+    virtual void vf21();
+    virtual void vf22();
+    virtual void vf23();
+    virtual void vf24();
+    virtual void vf25();
+    virtual void vf26();
+    virtual void vf27();
+    virtual void vf28();
+    virtual void vf29();
+    virtual void vf30();
+    virtual void vf31();
+    virtual void vf32();
+    virtual void vf33();
+    virtual void vf34();
+    virtual void vf35();
+    virtual void vf36();
+    virtual void vf37();
+    virtual void vf38();
+    virtual void vf39();
+    virtual void vf40();
+    virtual void vf41();
+    virtual void vf42();
+    virtual void vf43();
+    virtual void vf44();
+    virtual void vf45();
+    virtual void vf46();
+    virtual void vf47();
+    virtual void vf48();
+    virtual void vf49();
+    virtual void vf50();
+    virtual void vf51();
+    virtual void vf52();
+    virtual void vf53();
+    virtual void vf54();
+    virtual void vf55();
+    virtual void vf56();
+    virtual void vf57();
+    virtual void vf58();
+    virtual void vf59();
+    virtual void vf60();
+    virtual void vf61();
+    virtual void vf62();
+    virtual void vf63();
+    virtual void vf64();
+    virtual void vf65();
+    virtual void vf66();
+    virtual void vf67();
+    virtual void vf68();
+    virtual void vf69();
+    virtual void vf70();
+    virtual void vf71();
+    virtual void vf72();
+    virtual void vf73();
+    virtual void vf74();
+    virtual void vf75();
+    virtual void vf76();
+    virtual void vf77();
+    virtual void vf78();
+    virtual void vf79();
+    virtual void vf80();
+    virtual void vf81();
+    virtual void vf82();
+    virtual void vf83();
+    virtual void vf84();
+    virtual void vf85();
+    virtual void vf86();
+    virtual void vf87();
+    virtual void vf88();
+    virtual void vf89();
+    virtual void vf90();
+    virtual void vf91();
+    virtual void vf92();
+    virtual void vf93();
+    virtual void vf94();
+    virtual void vf95();
+    virtual void vf96();
+    virtual void vf97();
+    virtual void vf98();
+    virtual void vf99();
+    virtual void vf100();
+    virtual void vf101();
+    virtual void vf102();
+    virtual void vf103();
+    virtual void vf104();
+    virtual void vf105();
+    virtual void vf106();
+    virtual void vf107();
+    virtual void vf108();
+    virtual void vf109();
+    virtual void vf110();
+    virtual void vf111();
+    virtual void vf112();
+    virtual void vf113();
+    virtual void vf114();
+    virtual void vf115();
+    virtual void vf116();
+    virtual void vf117();
+    virtual void vf118();
+    virtual void vf119();
+    virtual void vf120();
+    virtual void vf121();
+    virtual void vf122();
+    virtual void vf123();
+    virtual void vf124();
+    virtual void vf125();
+    virtual void vf126();
+    virtual void vf127();
+    virtual void vf128();
+    virtual void vf129();
+    virtual void vf130();
+    virtual void vf131();
+    virtual void vf132();
+    virtual void vf133();
+    virtual void vf134();
+    virtual void vf135();
+    virtual void vf136();
+    virtual void vf137();
+    virtual void vf138();
+    virtual void vf139();
+    virtual void vf140();
+    virtual void vf141();
+    virtual void vf142();
+    virtual void vf143();
+    virtual void vf144();
+    virtual void vf145();
+    virtual void vf146();
+    virtual void vf147();
+    virtual void vf148();
+    virtual void vf149();
+    virtual void vf150();
+    virtual void vf151();
+    virtual void vf152();
+    virtual void vf153();
+    virtual void vf154();
+    virtual void vf155();
+    virtual void vf156();
+    virtual void vf157();
+    virtual void vf158();
+    virtual void vf159();
+    virtual void vf160();
+    virtual void vf161();
+    virtual void vf162();
+    virtual void vf163();
+    virtual void vf164();
+    virtual void vf165();
+    virtual void vf166();
+    virtual void vf167();
+    virtual void vf168();
+    virtual void vf169();
+    virtual void vf170();
+    virtual void vf171();
+    virtual void vf172();
+    virtual int vf173();                // 0x2BC (action usable gate)
+
+    CtrlPlayerSub4* mField4;     // 0x04 (sub-object, vf30 -> u32* word holder)
 };
 
 // Player actor view (CtrlPc+0x5C) covering the fields/vtable slots this TU
@@ -95,7 +524,9 @@ struct CtrlActSub2A4 {
 struct CtrlActPlayerVtbl {
     void* p00[0x30 / 4];
     u32* (*fn_0x30)(void* self);              // mField4 sub-object slot 0x30
-    void* r34[(0xF0 - 0x34) / 4];
+    void* r34[(0x70 - 0x34) / 4];
+    void (*fn_0x70)(void* self, void* arg);   // 0x70 (func_800D1F0C L_3460)
+    void* r74[(0xF0 - 0x74) / 4];
     f32 (*fn_0xF0)(void* self);               // 0xF0 (returns a height scalar)
     void* rF4[(0x1C0 - 0xF4) / 4];
     float* (*fn_0x1C0)(void* self);           // 0x1C0 (returns float vector, [0] = height)
@@ -113,6 +544,8 @@ struct CtrlActPlayerVtbl {
     int (*fn_0x2BC)(void* self);              // 0x2BC (usable gate, func_800D11B0)
     void* r2C0[(0x5B4 - 0x2C0) / 4];
     f32 (*fn_0x5B4)(void* self);              // 0x5B4 (base facing angle, func_800D69D8)
+    void* r5B8[(0x5C8 - 0x5B8) / 4];
+    void (*fn_0x5C8)(void* self, int flag);   // 0x5C8 (func_800D1F0C)
 };
 
 // 32-byte battle-list entry (player +0x358C array, indexed modulo 0x3598).
@@ -135,7 +568,9 @@ struct CtrlActPlayerView {
     u32 mField1530;              // 0x1530
     u8 _1534[0x3374 - 0x1534];
     u32 mField3374;              // 0x3374 (bit 15 test by func_800D64E8)
-    u8 _3378[0x3388 - 0x3378];
+    u8 _3378[0x3380 - 0x3378];
+    u32 mField3380;              // 0x3380 (status block, func_8014B2EC/B8BC)
+    u8 _3384[0x3388 - 0x3384];
     u16 mField3388;              // 0x3388 (bit 4 test by func_800D11B0)
     u8 _338A[0x358C - 0x338A];
     CtrlActBattleEntry* mField358C;  // 0x358C (battle-list entry array base)
@@ -146,7 +581,9 @@ struct CtrlActPlayerView {
     u16 mField3E6C;              // 0x3E6C (bit 12 test by func_800D2D64)
     u8 _3E6E[0x3E9C - 0x3E6E];
     CVoiceOwnerIntfPc mSub3E9C;  // 0x3E9C embedded voice-owner interface
-    u8 _3EA0[0x3F00 - 0x3EA0];
+    u8 _3EA0[0x3ED4 - 0x3EA0];
+    void* mField3ED4;            // 0x3ED4 (sub-object, slot 0x70 dispatch)
+    u8 _3ED8[0x3F00 - 0x3ED8];
     u32 mField3F00;              // 0x3F00 (bit 1 / bit 2 tests)
     u8 _3F04[0x3F10 - 0x3F04];
     u32 mField3F10;              // 0x3F10 (battle-target actor id, func_800D2D64)
@@ -167,7 +604,9 @@ struct CtrlActSrcVtbl {
 struct CtrlActSrc {
     CtrlActSrcVtbl* vtbl;        // 0x00
     CtrlPlayerSub4* mField4;     // 0x04
-    u8 _08[0x3E9C - 0x08];
+    u8 _08[0x3388 - 0x08];
+    u16 mField3388;              // 0x3388 (bit 3 latch, func_800D1F0C case)
+    u8 _338A[0x3E9C - 0x338A];
     CVoiceOwnerIntfPc mOwner3E9C;  // 0x3E9C embedded voice-owner interface
     u8 _3EA0[0x44D8 - 0x3EA0];
     f32 mField44D8;              // 0x44D8 (probe scale offset, func_800D5308)
@@ -183,6 +622,8 @@ struct CtrlActAtkParam {
     u16 mField48;              // 0x48 (arts id, func_800D2D64)
     u8 _4A[0x76 - 0x4A];
     u8 mField76;               // 0x76 (count; +1 written by func_800D2A5C)
+    u8 _77;
+    u32 mField78;              // 0x78 (flag word read by func_800D1F0C)
 };
 
 // Player +0x08 embedded arts container: vtable slot 0x20 takes an id.
@@ -205,7 +646,8 @@ struct CtrlActBattleSubView {
     u8 mField219C;             // 0x219C (fed to func_801A6A7C)
 };
 
-// func_800D2A5C argument view: actor id + kind byte + attack index.
+// Argument view shared by func_800D2A5C / func_800D2D64: actor id + kind
+// byte + attack index.
 struct CtrlActAtkArg {
     u32 mField0;               // 0x00 actor id
     u8 _4[0xD - 0x4];
@@ -314,7 +756,9 @@ struct CtrlActPosBlock {
     f32 mField2C;            // 0x2C (anchor z)
 };
 struct CtrlActVoiceOwnerVtbl {
-    void* p08[(0x8C - 0x08) / 4];
+    void* p08[(0x4C - 0x08) / 4];
+    int (*fn_0x4C)(void* self);                    // 0x4C (id probe, L_3460)
+    void* p50[(0x8C - 0x50) / 4];
     f32 (*fn_0x8C)(void* self);                    // 0x8C (height float)
     void* r90[(0x9C - 0x90) / 4];
     void (*fn_0x9C)(void* self, ml::CVec3* out);   // 0x9C
@@ -327,9 +771,21 @@ struct CtrlActVoiceOwnerVtbl {
     float* (*fn_0x138)(void* self);                // 0x138 (returns float vector, [0] used)
     void* r13C[(0x140 - 0x13C) / 4];
     f32 (*fn_0x140)(void* self);                   // 0x140 (returns a height scalar)
+    void* r144[(0x1AC - 0x144) / 4];
+    void (*fn_0x1AC)(void* self, void* arg, const char* label);  // 0x1AC
 };
 struct CtrlActVoiceOwnerView {
     CtrlActVoiceOwnerVtbl* vtbl;  // 0x00
+};
+
+// Stack frame block built by func_800D3FFC phase 0: the rotated placement
+// offset followed by a Y-rotation basis (cos/sin columns and the CFC y-scale).
+// Retail writes the whole block but only reads the offset back.
+struct CtrlActRotFrame {
+    ml::CVec3 mOffset;  // 0x00 rotated/scaled direction (fed into mPos30)
+    ml::CVec3 mAxisX;   // 0x0C (cos, 0, -sin)
+    ml::CVec3 mAxisY;   // 0x18 (0, CFC, 0)
+    ml::CVec3 mAxisZ;   // 0x24 (sin, 0, cos)
 };
 
 // View of the action-source object (func_8016FE34 result): the embedded
@@ -337,6 +793,78 @@ struct CtrlActVoiceOwnerView {
 struct CtrlActSweepView {
     u8 _00[0x3E9C];
     u8 mOwner3E9C[0x10];  // 0x3E9C voice-owner region (opaque)
+};
+
+// 0x20-byte action entry pulled by func_8014B8BC (battle-list action record).
+struct CtrlActActionEntry {
+    u32 mField0;             // 0x00 actor id
+    u8 _04[0xD - 0x04];
+    u8 mKind;                // 0x0D kind byte (switch selector)
+    u8 _0E[0x10 - 0x0E];
+    u16 mFlags10;            // 0x10 flags (bit 0x20 phase, bit 0x400 follow)
+    s16 mArtsIdx;            // 0x12 signed arts index
+    u8 _14[0x18 - 0x14];
+    void* mPtr18;            // 0x18 entry object (floats at +0x2C/+0x7C)
+    u32 mState;              // 0x1C state value
+};
+
+// Entry object behind CtrlActActionEntry::mPtr18.
+struct CtrlActEntryObj {
+    u8 _00[0x2C];
+    f32 mField2C;            // 0x2C source value copied to +0x7C
+    u8 _30[0x7C - 0x30];
+    f32 mField7C;            // 0x7C
+};
+
+// Effect-request block built on the stack (0x34 bytes incl. tail) and passed
+// to func_800EC8FC.
+struct CtrlActFxReq {
+    u32 mField0;             // 0x00
+    u32 mField4;             // 0x04
+    u8 _08[0xC - 0x08];
+    u16 mIdC;                // 0x0C effect id (0x111/0x112)
+    u8 _0E[0x20 - 0x0E];
+    f32 mField20;            // 0x20 (lbl_eu_80666D48 seed)
+    u8 _24[0x34 - 0x24];
+};
+
+// Arts-param record whose vptr sits at +0x84; virtual 0x14 writes the float
+// stored back to +0x80 (func_800D1F0C case).
+struct CtrlActArtsParamVtbl {
+    void* p00[0x14 / 4];
+    f32 (*fn14)(void* self);
+};
+struct CtrlActArtsParam {
+    u8 _00[0x80];
+    f32 mField80;                        // 0x80
+    CtrlActArtsParamVtbl* vtbl;          // 0x84
+};
+
+// Battle-manager view for the virtual slot 0x2C dispatch (func_800D1F0C).
+struct CtrlActBm2Vtbl {
+    void* p00[0x2C / 4];
+    void (*fn2C)(void* self, void* player, void* sub);
+};
+struct CtrlActBm2 {
+    CtrlActBm2Vtbl* vtbl;
+};
+
+// Self-object view for the switch-dispatch slots 0x78/0x7C on CtrlActView.
+struct CtrlActSelfDispatchVtbl {
+    void* p00[0x78 / 4];
+    void (*fn_0x78)(void* self, void* entry);  // 0x78
+    void (*fn_0x7C)(void* self, void* entry);  // 0x7C
+};
+struct CtrlActSelfView {
+    CtrlActSelfDispatchVtbl* vtbl;
+};
+
+// Chain-object view for the func_800AD860 path of func_800D1F0C.
+struct CtrlActChainObj {
+    u8 _00[0xA0];
+    u16 mFieldA0;            // 0xA0 (bit 1 latch)
+    u8 _A2[0x45C0 - 0xA2];
+    u16 mField45C0;          // 0x45C0 (probe id fed to func_80193AB0)
 };
 
 // ---------------------------------------------------------------------------
@@ -367,6 +895,21 @@ extern "C" void* getArtsParamByIdx(void* base, int index);
 extern "C" void* func_800EA444(void* bm);
 extern "C" int func_801A6A7C(void* a, void* b);
 extern "C" int func_80145C00(int val);
+// func_800D1F0C imports: status-block timers, battle-entry fetch, effect
+// requests and the chain/battle helpers.
+extern "C" void func_8014B2EC(void* obj, f32 val);
+extern "C" void func_8014B2DC(void* obj);
+extern "C" int func_8014B8BC(void* obj, void* out);
+extern "C" void func_800EC8FC(void* bm, void* player, void* req, int flag);
+extern "C" void func_802A29A4(void* a, void* b);
+extern "C" void func_802A2A0C(void* a, void* b);
+extern "C" void func_802A2ADC(void* a, void* b);
+// func_800AD860 is declared (mangled C++) in CfGameManager.hpp.
+extern "C" void* func_80193670(void* p);
+extern "C" void* func_80193AB0(void* p, u16 arg);
+// func_8027936C is declared in CtrlPc.hpp (C-ABI, (void*, int)).
+// In-TU kind setter used by the func_800D1F0C switch arms.
+void func_800D5874(CtrlActView* self, u32 kind, int param);
 // Collision-query API: func_804BE398 is declared in CtrlMoveBase.hpp
 // (retail C-ABI name; 6-arg probe passing two FP args after the GPR args).
 extern "C" int func_804BE348(void* a, void* b, int c, int d, int e);
@@ -437,6 +980,7 @@ extern const f32 lbl_eu_80666D38;
 extern const f32 lbl_eu_80666D3C;
 extern const f32 lbl_eu_80666D40;
 extern const f32 lbl_eu_80666D44;
+extern const f32 lbl_eu_80666D48;
 extern const f32 lbl_eu_80666D4C;
 extern const f64 lbl_eu_80666D50;   // 2^52 (u32->double conversion magic)
 extern const f32 lbl_eu_80666D58;
@@ -475,6 +1019,7 @@ extern const f32 lbl_eu_8066A1F8;   // pi
 extern const f32 lbl_eu_8066A1FC;   // 2*pi
 extern const f32 lbl_eu_8066A20C;
 extern const f32 lbl_eu_8066A204;   // 0.7853982 (pi/4)
+extern const f32 lbl_eu_8066A210;
 
 // 2-float blocks (base + f2 offset pairs for the facing-state table).
 // Non-const: sinit_800D79B4 writes these at static-init time.

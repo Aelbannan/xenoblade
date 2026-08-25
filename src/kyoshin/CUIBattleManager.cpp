@@ -49,7 +49,12 @@ void CTTask<CUIBattleManager::CTest>::Draw() {
 #define getInstance__Q22cf14CBattleManagerFv cuiBattleBmGetInstanceUnused
 #include "kyoshin/cf/CfGameManager.hpp"
 #undef getInstance__Q22cf14CBattleManagerFv
+// CTaskGame.hpp's func_8049603C (CTaskGameCamView* return) clashes with
+// CfGameManager.hpp's (UnkScnResult*) above; this TU calls neither - shield
+// per the house convention (see CBattleManager.cpp / CfCam.cpp).
+#define func_8049603C cuiBattleMgrCtaskGame9603CUnused
 #include "kyoshin/CTaskGame.hpp"
+#undef func_8049603C
 #include "kyoshin/cf/object/CfObjectPc.hpp"
 #include "monolib/device/CDeviceFile.hpp"
 #include "monolib/device/CDeviceVI.hpp"
@@ -103,7 +108,9 @@ int func_80164410();
 int func_801042A4();
 int func_801042B4();
 int func_800FF738();
-u32 func_80174C98(void* actor, u32* outVal, u32 flags);
+// Family-canonical form - must match CfObjectPc.hpp / CAIAction.hpp /
+// code_802B8A3C.hpp (see the 10197 note in CTaskGame.hpp).
+int func_80174C98(void* actor, int* outVal, int flags);
 bool func_8006EF04__Fi(UNKWORD r3);
 void* func_801355F4();
 }
@@ -178,7 +185,7 @@ void CUIBattleManager::Move() {
     char pathBuf178[0x8C];
     // Grow frame toward retail -0x220 (spare between pending and paths).
     int framePad[8];
-    u32 localVal;
+    int localVal;
     int pendingCount;
     int i;
     int byteOff;

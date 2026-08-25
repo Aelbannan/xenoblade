@@ -526,6 +526,7 @@ extern "C" void func_800EA998(u8* self) { reinterpret_cast<BMIf*>((u8*)self + 0x
 // func_80148778 / func_80149154 / func_8026178C are already declared in
 // object/CAIAction.hpp / CVision.hpp (included via CBattleManager.hpp).
 extern "C" int func_80260264(void*, int, void*);
+extern "C" bool CChain_chkActorList(void*);  // retail C wrapper symbol
 extern "C" void* func_801491F4(void*, u32);
 extern "C" bool func_80145DBC(int);
 extern "C" int func_80145F78(int);
@@ -568,6 +569,7 @@ extern "C" f32 lbl_eu_80666E7C;  // 75.0f
 extern "C" f32 lbl_eu_80666E80;  // 2.5f
 extern "C" f32 lbl_eu_80666E84;  // 0.1f
 extern "C" f32 lbl_eu_80666DE8;  // 0.5f
+extern "C" f32 lbl_eu_80666E30;  // 0.9f
 extern "C" f32 lbl_eu_80666DFC;  // 2.0f
 extern "C" f32 lbl_eu_80666E10;  // 0.024543693f (2*pi/256)
 extern "C" f32 lbl_eu_80666E24;  // 0.15f
@@ -3980,19 +3982,19 @@ s32 func_800D7D24(D7D24_Obj* self) {
         if (r6 != nullptr) {
             // First loop: 2 iterations x 8 fields of a 0x20-byte entry.
             // Target word re-read at the top of every iteration (retail shape).
+            // Comparand is [arrayBase+4], NOT self->field_4 (retail lwz r0,4(r6)).
             u32 found = 0;
-            u32 targetVal = self->field_4;
             s32 idx;
             u8* p = r6;
             for (idx = 0; idx != 14; idx += 7) {
-                if (*(u32*)(p + 0x08) == targetVal) { found = 1; break; }
-                if (*(u32*)(p + 0x0C) == targetVal) { found = 1; break; }
-                if (*(u32*)(p + 0x10) == targetVal) { found = 1; break; }
-                if (*(u32*)(p + 0x14) == targetVal) { found = 1; break; }
-                if (*(u32*)(p + 0x18) == targetVal) { found = 1; break; }
-                if (*(u32*)(p + 0x1C) == targetVal) { found = 1; break; }
-                if (*(u32*)(p + 0x20) == targetVal) { found = 1; break; }
-                if (*(u32*)(p + 0x24) == targetVal) { found = 1; break; }
+                if (*(u32*)(p + 0x08) == *(u32*)(r6 + 4)) { found = 1; break; }
+                if (*(u32*)(p + 0x0C) == *(u32*)(r6 + 4)) { found = 1; break; }
+                if (*(u32*)(p + 0x10) == *(u32*)(r6 + 4)) { found = 1; break; }
+                if (*(u32*)(p + 0x14) == *(u32*)(r6 + 4)) { found = 1; break; }
+                if (*(u32*)(p + 0x18) == *(u32*)(r6 + 4)) { found = 1; break; }
+                if (*(u32*)(p + 0x1C) == *(u32*)(r6 + 4)) { found = 1; break; }
+                if (*(u32*)(p + 0x20) == *(u32*)(r6 + 4)) { found = 1; break; }
+                if (*(u32*)(p + 0x24) == *(u32*)(r6 + 4)) { found = 1; break; }
                 p += 0x20;
             }
 
@@ -4250,7 +4252,9 @@ extern "C" void func_800D9978(cf::CBattleManager* self, cf::CfObjectActor* actor
     } else {
         // Register the actor in the lists.
         self->mActorList1.push_back(actor);
-        self->mChain.chkActorList();
+        {
+            CChain_chkActorList(&self->mChain);
+        }
         if (acc->field_3F00 & 0x2) {
             self->mActorList2.push_back(actor);
         } else {
@@ -4405,22 +4409,87 @@ void func_800D9CA0(cf::CBattleManager* mgr, BattleRemoveObjAccessor* target){
     }
 }
 
-// func_800DA0A4 (retail 0x800DAB8C, 0x1028 bytes): enemy-target selection /
-// damage-table refresh. Registers the actor into the manager's list, resolves
-// the linked sub-object and the 0x4C dispatch target, then computes the hit
-// vector / range and enqueues the appropriate damage splash via the enum-list
-// helpers (r27 = sub-object type 0..7).
+// --- func_800DA0A4 accessors (retail 0x800DAB8C) ---
+// Actor object: flags word +0x3F00, target ptr +0x3F10, id u16 +0x3F28 and the
+// embedded move sub-object at +0x3E9C.
+struct DA0A4_Actor {
+    u8 pad_00[0x08];
+    void* embeddedVt;              // +0x08 (vtable holder, slot 0x20)
+    u8 pad_0C[0x3E9C - 0x0C];
+    u8 moveSub;                    // +0x3E9C
+    u8 pad_3E9D[0x3F00 - 0x3E9D];
+    u32 flags_3F00;                // +0x3F00
+    u8 pad_3F04[0xC];
+    void* target_3F10;             // +0x3F10
+    u8 pad_3F14[0x14];
+    u16 id_3F28;                   // +0x3F28
+};
+
+// Move record returned by the actor's vt 0x2A4 slot.
+struct DA0A4_Sub {
+    u32 field_00;
+    u32 field_04;
+    u32 field_08;
+    u8 pad_0C[0x28 - 0x0C];
+    u16 field_28;
+    u8 pad_2A[0x48 - 0x2A];
+    u32 field_48;
+    void* subObj;                  // +0x50
+    u8 pad_54[0x68 - 0x54];
+    f32 field_68;
+    u8 pad_6C[0x74 - 0x6C];
+    u32 field_74;
+    u32 field_78;
+};
+
+// Payload of DA0A4_Sub (+0x50).
+struct DA0A4_SubObj {
+    u8 pad_00[0x28];
+    u16 field_28;
+    u8 pad_2A[0x2C - 0x2A];
+    f32 field_2C;
+    u8 pad_30[0x34 - 0x30];
+    s16 field_34;
+    u8 pad_36[0x5C - 0x36];
+    u16 field_5C;
+    u16 field_5E;
+    f32 field_60;
+    u16 field_64;
+    u8 pad_66[0x78 - 0x66];
+    u32 field_78;
+    u8 pad_7C[0x80 - 0x7C];
+    f32 field_80;
+    u8 pad_84[4];
+    void* vtbl_84;                 // +0x84 pseudo-vtable (slot 0x14 -> f32)
+};
+
+// 0xBC state block copied around via vt 0x298 / vt 0x2A0 results.
+struct DA0A4_Block {
+    u32 w[21];                     // 0x00..0x53
+    f32 f54[7];                    // 0x54..0x6F
+    s16 s70;
+    s16 s72;
+    u32 w74;
+    u32 w78;
+    u32 w7C;
+    u16 w80;
+    u16 pad82;
+    u32 w84[13];                   // 0x84..0xBB
+};
+
 extern "C" void* func_800BFC68__FPQ22cf12CfObjectMove(void*);
 extern "C" void func_802A1C68(void*);
 extern "C" void func_802773EC(void*, void*);
 extern "C" void func_802A2EEC(void*);
+extern "C" void func_8027F2DC(void*);
+extern "C" void func_802A2F54(void*);
 extern "C" void func_800FB270(void*, void*, f32, f32, f32, s32);
 extern "C" void __ct__800FBA18(void*, f32, f32, f32, s32);
 extern "C" void func_800FB5AC(void*, void*, f32, f32, f32, f32, f32, s32);
 extern "C" void func_800DB0FC(void*, void*, void*, void*);
-extern "C" s32 func_80086DBC__Q22cf13CfGameManagerFv(void);
-extern "C" u32 func_8004C5EC(void*);
 extern "C" f32 FrSqrt__Q24nw4r4mathFf(f32);
+extern "C" void Warning__Q24nw4r2dbFPCciPCce(const char*, int, const char*, ...);
+extern "C" void* func_800F6E98(void*, int);
 extern f64 lbl_eu_80666E08;
 extern f64 lbl_eu_80666DE0;
 extern f32 lbl_eu_80666DF0;
@@ -4428,261 +4497,357 @@ extern f32 lbl_eu_80666DF4;
 extern f32 lbl_eu_80666DF8;
 extern f32 lbl_eu_80666DFC;
 extern f32 lbl_eu_80666E14;
+extern f32 lbl_eu_80666E28;
 extern f32 lbl_eu_80666E18;
 extern f32 lbl_eu_8066A1F8;
+extern "C" s32 func_80086DBC__Q22cf13CfGameManagerFv(void);
+extern "C" u32 func_8004C5EC(void*);
 
-void func_800DA0A4(void* self, void* actor) {
-    // ptmf compare: is the manager's 0x28354 handler the default?
+void func_800DA0A4(void* self_, void* actor_) {
+    cf::CBattleManager* mgr = (cf::CBattleManager*)self_;
+    DA0A4_Actor* actor = (DA0A4_Actor*)actor_;
     extern u32 lbl_eu_8052B110[];
-    u32 cmpData[3];
-    cmpData[0] = lbl_eu_8052B110[0];
-    cmpData[1] = lbl_eu_8052B110[1];
-    cmpData[2] = lbl_eu_8052B110[2];
-    if (__ptmf_cmpr((u8*)self + 0x28354, cmpData) == 0) {
-        // Scan the manager's list for the actor; register if missing.
-        SimpleListNode* sentinel = *(SimpleListNode**)((u8*)self + 0x08);
-        SimpleListNode* cur = sentinel->next;
-        while (cur != sentinel && cur->data != actor) cur = cur->next;
-        if (cur == sentinel) {
-            func_800D9978((cf::CBattleManager*)self, (cf::CfObjectActor*)actor);
+    extern u32 lbl_eu_804FCA48[];
+    // int->double conversion temporaries (0x4330 trick), pre-seeded once.
+    cf::CfActorF64Conv convA;
+    cf::CfActorF64Conv convB;
+    convA.w[0] = 0x43300000;
+    convB.w[0] = 0x43300000;
+
+    // ptmf gate: process only while the manager's 0x28354 event handler is not
+    // the default handler recorded in lbl_eu_8052B110.
+    u32 defaultHandler[3];
+    defaultHandler[0] = lbl_eu_8052B110[0];
+    defaultHandler[1] = lbl_eu_8052B110[1];
+    defaultHandler[2] = lbl_eu_8052B110[2];
+    if (__ptmf_cmpr((u8*)mgr + 0x28354, defaultHandler) == 0) {
+        return;
+    }
+
+    // Register the actor into the manager list when missing.
+    {
+        SimpleListNode* head = *(SimpleListNode**)((u8*)mgr + 0x08);
+        SimpleListNode* cur = head->next;
+        while (cur != head && cur->data != actor) cur = cur->next;
+        if (cur == head) {
+            func_800D9978(mgr, (cf::CfObjectActor*)actor);
         }
     }
 
-    // Linked sub-object + move data from the actor's 0x2A4 block.
-    void* sub = ((void* (*)(void*))(*(void***)actor)[0x2A4 / 4])(actor);  // r30
-    void* subObj = *(void**)((u8*)sub + 0x50);                            // r29
+    // Linked move record (vt 0x2A4) and its payload at +0x50.
+    DA0A4_Sub* sub = (DA0A4_Sub*)vcall_p(actor, 0x2A4);
+    DA0A4_SubObj* subObj = (DA0A4_SubObj*)sub->subObj;
     if (subObj == nullptr) return;
-    if (*(u32*)((u8*)sub + 0x48) == 0) return;
+    if (sub->field_48 == 0) return;
 
-    // Dispatch target: actor's 0x3F00 bit1 selects the 0x4C sub-object path.
-    void* moveRes = nullptr;    // r31
-    void* action = nullptr;     // r28
-    if (*(u32*)((u8*)actor + 0x3F00) & 0x02) {
-        void* mb = actor ? (u8*)actor + 0x3E9C : nullptr;
-        moveRes = func_800BFC68__FPQ22cf12CfObjectMove(mb);
-        if (*(u32*)((u8*)sub + 0x04) != 0) {
-            action = (void*)*(u32*)((u8*)sub + 0x04);
+    // Dispatch target: actor flag bit1 selects the arts-data path.
+    void* action;
+    if (actor->flags_3F00 & 0x02) {
+        DA0A4_Actor* artsOwner = (DA0A4_Actor*)func_800BFC68__FPQ22cf12CfObjectMove(
+            actor ? (void*)&actor->moveSub : (void*)actor);
+        if (sub->field_04 != 0) {
+            action = (void*)sub->field_04;
         } else {
-            void* m = (u8*)moveRes + 0x3E9C;
-            action = ((void* (*)(void*))(*(void***)m)[0x4C / 4])(m);
+            action = vcall_p(artsOwner ? (void*)&artsOwner->moveSub : (void*)artsOwner, 0x4C);
         }
-        if (action != nullptr) {
-            void* p0 = getPlayer__Q22cf13CfGameManagerFi(0);
-            void* adj = moveRes ? (u8*)moveRes + 0x3E9C : nullptr;
-            if (adj == p0) {
-                ((void (*)(void*, u32))(*(void***)self)[0x28 / 4])(self, 1);
-            }
+        if (action == nullptr) return;
+        if ((artsOwner ? (void*)&artsOwner->moveSub : (void*)artsOwner) ==
+            getPlayer__Q22cf13CfGameManagerFi(0)) {
+            vcall_v1(mgr, 0x28, 1);
         }
     } else {
-        void* m = (u8*)actor + 0x3E9C;
-        action = ((void* (*)(void*))(*(void***)m)[0x4C / 4])(m);
+        action = vcall_p(&actor->moveSub, 0x4C);
     }
-    if (action == nullptr) return;
 
-    // The action's stats must be non-trivial.
-    void* actionSt = (void*)(intptr_t)func_800B708C__Fi((int)(intptr_t)action);
-    if (actionSt == nullptr) return;
-    {
-        u32 fl = *(u32*)((u8*)actionSt + 0x64);
-        if (!(fl & 0x04) && !(fl & 0x02)) return;
-    }
-    void* res = func_8016FE34(actionSt);   // r31
+    // The action's stats must carry one of the two active bits.
+    void* stats = func_800B708C((int)(u32)action);
+    if (stats == nullptr) return;
+    u32 statFlags = *(u32*)((u8*)stats + 0x64);
+    if (!(statFlags & 0x04) && !(statFlags & 0x02)) return;
+    void* res = func_8016FE34(stats);
 
-    // Reset the move block when the 0x10000000 flag is clear.
-    if (!(*(u32*)((u8*)sub + 0x78) & 0x10000000)) {
-        *(u32*)((u8*)sub + 0x74) = 0;
-        u32 v = *(u32*)((u8*)sub + 0x78);
-        *(u32*)((u8*)sub + 0x78) = (v & 0xFFFF) | (v & 0x0FF00000);
+    // Reset the move record when the 0x08000000 flag is clear.
+    if (!(sub->field_78 & 0x08000000)) {
+        sub->field_74 = 0;
+        sub->field_78 = (sub->field_78 & 0xFFFF) | (sub->field_78 & 0x00F00000);
         std::memset((u8*)sub + 0x08, 0, 0x40);
-        *(f32*)((u8*)sub + 0x68) = ((f32 (*)(void*))(*(void***)res)[0x128 / 4])(res);
+        *(f32*)((u8*)sub + 0x68) = vcall_f(res, 0x128);
     }
 
     func_802A1C68(actor);
-    func_802773EC((u8*)self + 0x1A8, actor);
-    func_800DB0FC((void*)(intptr_t)lbl_eu_80663F00, actor, res, sub);
+    func_802773EC((u8*)mgr + 0x1A8, actor);
+    func_800DB0FC((void*)lbl_eu_80663F00, actor, res, sub);
 
-    // Copy the 12-word splash table (lbl_eu_804FCA48) into the workspace.
-    extern u32 lbl_eu_804FCA48[];
-    u32 splash[12];
-    for (s32 i = 0; i < 12; i++) splash[i] = lbl_eu_804FCA48[i];
+    // 24-word splash parameter table copied pairwise from .rodata.
+    u32 splash[24];
+    {
+        u32* src = lbl_eu_804FCA48;
+        u32* dst = splash;
+        for (s32 i = 0; i < 12; i++) {
+            dst[0] = src[0];
+            dst[1] = src[1];
+            dst += 2;
+            src += 2;
+        }
+    }
 
     EnumListHolder holder;
     func_80043D90(&holder);
-    void* list = func_80043F18(&holder);
 
-    // (0x800DADE4): splash index + range math (partially decoded).
-    cf::CfActorF64Conv conv;
-    conv.w[0] = 0x43300000;
-    conv.w[1] = (u32)(u16)*(u16*)((u8*)subObj + 0x64) ^ 0x80000000;
-    f32 f30 = (f32)(conv.d - lbl_eu_80666E08);
-    f32 f31 = *(f32*)((u8*)subObj + 0x60);
-    u32 s5C = *(u16*)((u8*)subObj + 0x5C);
-    u32 idx = (u32)(s5C * 8);
-    u32 t = *(u32*)((u8*)splash + 0x40 + idx);
-    u32 s5E = *(u16*)((u8*)subObj + 0x5E);
+    // Range value: scaled target-id (u16 at subObj+0x64).
+    convA.w[1] = (u32)subObj->field_64 ^ 0x80000000;
+    f32 range = (f32)(convA.d - lbl_eu_80666E08) * lbl_eu_8066A210;
+    f32 power = subObj->field_60;
+    u32 tblWord = *(u32*)((u8*)splash + subObj->field_5C * 8 +
+                          ((actor->flags_3F00 & 0x02) ? 0 : 8));
+    u16 alt5E = subObj->field_5E;
 
-    // 0x2A8 gate: the actor's skill modifier table.
-    void* skill = ((void* (*)(void*))(*(void***)actor)[0x290 / 4])(actor);
-    s32 r27 = 0;
+    // Skill modifier 0x77 raises the base power inside its window.
+    void* skill = vcall_p(actor, 0x290);
     if (skill != nullptr) {
-        u32 sv = 0;
+        u32 sv;
         if (func_80260264(skill, 0x77, &sv) != 0) {
-            if (*(u32*)((u8*)subObj + 0x78) & 0x80000000) {
-                if (lbl_eu_80666DF0 >= f31 && f31 >= lbl_eu_80666DF4) {
-                    f31 = f31 + (f32)(s32)sv;
-                    if (f31 > lbl_eu_80666DF8) f31 = lbl_eu_80666DF8;
+            if (subObj->field_78 & 0x40000000) {
+                if (power <= lbl_eu_80666DF0 && power >= lbl_eu_80666DF4) {
+                    convB.w[1] = (u32)(s32)sv ^ 0x80000000;
+                    power = power + (f32)(convB.d - lbl_eu_80666DE0);
+                    if (power > lbl_eu_80666DF8) {
+                        power = lbl_eu_80666DF8;
+                    }
                 }
             }
         }
     }
 
-    // Damage multiplier when the move's 0x80000000 flag + actor bit0 align.
-    if (*(u32*)((u8*)subObj + 0x78) & 0x80000000) {
-        if (*(u32*)((u8*)actor + 0x3F00) & 0x04) {
-            if (*(f32*)((u8*)subObj + 0x2C) != 0.0f) {
-                f31 *= lbl_eu_80666DFC;
-            }
-        }
+    // Doubled power for the flagged actor class.
+    if ((subObj->field_78 & 0x40000000) && (actor->flags_3F00 & 0x04) &&
+        subObj->field_2C != lbl_eu_80666DDC) {
+        power *= lbl_eu_80666DFC;
     }
 
-    // Bearing vector from the actor's move sub-object.
-    f32 f29;
+    // Hit position: vt 0x12C(0x64) sample, else vt 0xAC vector. Ease the y
+    // component halfway toward the sub-record's y, then measure the drop.
+    ml::CVec3 hitPos;
     {
-        void* m = (u8*)actor + 0x3E9C;
-        void* pos = ((void* (*)(void*, u32))(*(void***)m)[0x12C / 4])(m, 0x64);
-        ml::CVec3 v;
-        if (pos != nullptr) {
-            v.x = *(f32*)((u8*)pos + 0x0C);
-            v.y = *(f32*)((u8*)pos + 0x1C);
-            v.z = *(f32*)((u8*)pos + 0x2C);
+        void* sample = vcall_p1(&actor->moveSub, 0x12C, 0x64);
+        if (sample != nullptr) {
+            hitPos.x = *(f32*)((u8*)sample + 0x0C);
+            hitPos.y = *(f32*)((u8*)sample + 0x1C);
+            hitPos.z = *(f32*)((u8*)sample + 0x2C);
         } else {
-            void* p2 = ((void* (*)(void*))(*(void***)m)[0xAC / 4])(m);
-            v = *(ml::CVec3*)p2;
+            hitPos = *(ml::CVec3*)vcall_p(&actor->moveSub, 0xAC);
         }
-        // direction from the sub-object's facing
-        void* q = ((void* (*)(void*))(*(void***)m)[0xAC / 4])(m);
-        v.y = v.y - (*(f32*)((u8*)q + 0x04) - (*(f32*)((u8*)q + 0x04) - v.y) * 0.5f);
-        f32 dy = v.y - *(f32*)((u8*)q + 0x04);
-        f32 f0 = *(f32*)((u8*)q + 0x04);
-        f29 = f0 - dy;  // fnmsubs f0, f1, f0, f2 shape
-        if (f29 != 0.0f) {
-            f32 mag = f31 * f31 + f29 * f29;
-            if (mag <= 0.0f) {
-                f29 = 0.0f;
-            } else {
-                f29 = mag * FrSqrt__Q24nw4r4mathFf(mag);
+        void* q = vcall_p(&actor->moveSub, 0xAC);
+        hitPos.y = hitPos.y - (hitPos.y - *(f32*)((u8*)q + 0x04)) * lbl_eu_80666DE8;
+        void* q2 = vcall_p(&actor->moveSub, 0xAC);
+        f32 dy = hitPos.y - *(f32*)((u8*)q2 + 0x04);
+        if (dy != lbl_eu_80666DDC) {
+            f32 distSq = power * power + dy * dy;
+            if (distSq < lbl_eu_80666DDC) {
+                Warning__Q24nw4r2dbFPCciPCce(lbl_eu_80526324, 0x273,
+                                             lbl_eu_80526300);
             }
+            if (distSq > lbl_eu_80666DDC) {
+                distSq = distSq * FrSqrt__Q24nw4r4mathFf(distSq);
+            }
+            power = distSq;
         }
     }
 
-    // Manager-level chain gauge clamp.
-    f32 f29b = ((f32 (*)(void*))(*(void***)actor)[0x5B8 / 4])(actor);
+    // Chapter-gated chain gauge overrides the hit position with the facing vec.
+    f32 gauge = vcall_f(actor, 0x5B8);
     {
-        u32 b = *(u8*)((u8*)lbl_eu_80663F00 + 0x1AA);
-        if (b >= 1 && b <= 0x18) {
-            void* q = ((void* (*)(void*))(*(void***)((u8*)actor + 0x3E9C))[0xAC / 4])((u8*)actor + 0x3E9C);
-            // copy vec into workspace 0x30
+        u8 chapter = *(u8*)((u8*)lbl_eu_80663F00 + 0x1AA);
+        if (chapter >= 1 && chapter <= 0x18) {
+            hitPos = *(ml::CVec3*)vcall_p(&actor->moveSub, 0xAC);
         }
     }
 
-    // Type-dispatch: r27 = splash kind 0..7.
-    if (*(u32*)((u8*)subObj + 0x78) & 0x80000000) {
-        void* e = func_80149154((u8*)actor + 8, 0x95);
-        if (e != nullptr) {
-            cf::CfActorF64Conv conv2;
-            conv2.w[0] = 0x43300000;
-            conv2.w[1] = (u32)*(s32*)((u8*)e + 0x10) ^ 0x80000000;
-            f30 = (f32)(conv2.d - lbl_eu_80666DE0) * lbl_eu_8066A210;
-            r27 = 1;
+    // Splash-kind selection: entry 0x95 of the actor's status table forces
+    // kind 1 and rescales the range by its entry value.
+    s32 splashKind = 0;
+    if (!(subObj->field_78 & 0x40000000)) {
+        void* entry = func_80149154((u8*)actor + 0x08, 0x95);
+        if (entry != nullptr) {
+            convA.w[1] = (u32)*(s32*)((u8*)entry + 0x10) ^ 0x80000000;
+            range = (f32)(convA.d - lbl_eu_80666DE0) * lbl_eu_8066A210;
+            splashKind = 1;
         }
     }
-    s32 r25 = 8;
-    if (*(u32*)((u8*)actor + 0x3F00) & 0x02) r25 = 0;
-    if (*(u32*)((u8*)actor + 0x3F00) & 0x04) {
-        u16 aid = *(u16*)((u8*)actor + 0x3F28);
-        if (aid == 0x8B3 || aid == 0x8B4 || aid == 0x8A0 || aid == 0x6C5 ||
-            aid == 0x5F2 || aid == 0x607 || aid == 0x60B || aid == 0x11C ||
-            aid == 0x9C5) {
-            r25 = 0;
+    // Damage variant: 8 unless flagged actor / special ids say otherwise.
+    s32 dmgKind = 8;
+    if (actor->flags_3F00 & 0x02) {
+        dmgKind = 0;
+    }
+    if (actor->flags_3F00 & 0x04) {
+        switch (actor->id_3F28) {
+        case 0x8B3:
+        case 0x8B4:
+        case 0x8A0:
+        case 0x6C5:
+        case 0x5F2:
+        case 0x607:
+        case 0x60B:
+        case 0x11C:
+        case 0x9C5:
+            dmgKind = 0;
+            break;
         }
     }
 
-    switch (r27) {
+    switch (splashKind) {
     case 1:
-        func_800F4A98(func_80043F18(&holder), t, 0x1000);
-        func_800FB270(func_80043F18(&holder), &splash[0], f31, f30, f29b, r25);
-        __ct__800FB044(func_80043F18(&holder), f31, &splash[0], 0);
+        func_800F4A98(func_80043F18(&holder), tblWord, 0x1000);
+        func_800FB270(func_80043F18(&holder), &hitPos, power, range, gauge, dmgKind);
+        __ct__800FB044(func_80043F18(&holder), power, &hitPos, 0);
         break;
     case 2:
-        func_800F4A98(func_80043F18(&holder), t, 0x1000);
-        func_800FB270(func_80043F18(&holder), &splash[0], f31, f30, f29b + lbl_eu_8066A1F8, r25);
-        __ct__800FB044(func_80043F18(&holder), f31, &splash[0], 0);
+        func_800F4A98(func_80043F18(&holder), tblWord, 0x1000);
+        func_800FB270(func_80043F18(&holder), &hitPos, power, range,
+                      gauge + lbl_eu_8066A1F8, dmgKind);
+        __ct__800FB044(func_80043F18(&holder), power, &hitPos, 0);
         break;
     case 3:
-        func_800F4A98(func_80043F18(&holder), t, 0x1000);
-        func_800FB5AC(func_80043F18(&holder), &splash[0], f31, f30, f29b + lbl_eu_8066A1F8 * 0.5f,
-                     f30, f29b - lbl_eu_8066A1F8 * 0.5f, r25);
-        __ct__800FB044(func_80043F18(&holder), f31, &splash[0], 0);
+        func_800F4A98(func_80043F18(&holder), tblWord, 0x1000);
+        func_800FB5AC(func_80043F18(&holder), &hitPos, power, range,
+                      gauge + lbl_eu_8066A1F8 * lbl_eu_80666DE8, range,
+                      gauge - lbl_eu_8066A1F8 * lbl_eu_80666DE8, dmgKind);
+        __ct__800FB044(func_80043F18(&holder), power, &hitPos, 0);
         break;
     case 4:
-        func_800F4A98(func_80043F18(&holder), t, 0x1000);
-        __ct__800FB044(func_80043F18(&holder), f31, &splash[0], r25);
+        func_800F4A98(func_80043F18(&holder), tblWord, 0x1000);
+        __ct__800FB044(func_80043F18(&holder), power, &hitPos, dmgKind);
         break;
     case 5: {
-        cf::CfActorF64Conv conv3;
-        conv3.w[0] = 0x43300000;
-        conv3.w[1] = (u32)(u16)*(u16*)((u8*)subObj + 0x64) ^ 0x80000000;
-        f30 = ((f32)(conv3.d - lbl_eu_80666E08)) / lbl_eu_80666E00;
-        func_800F4A98(func_80043F18(&holder), t, 0x1000);
-        __ct__800FBA18(func_80043F18(&holder), f31, f30, f29b, r25);
-        __ct__800FB044(func_80043F18(&holder), f31, &splash[0], 0);
+        convB.w[1] = (u32)subObj->field_64 ^ 0x80000000;
+        range = (f32)(convB.d - lbl_eu_80666E08) / lbl_eu_80666E00;
+        func_800F4A98(func_80043F18(&holder), tblWord, 0x1000);
+        __ct__800FBA18(func_80043F18(&holder), power, range, gauge, dmgKind);
+        __ct__800FB044(func_80043F18(&holder), power, &hitPos, 0);
         break;
     }
     case 6: {
-        cf::CfActorF64Conv conv3;
-        conv3.w[0] = 0x43300000;
-        conv3.w[1] = (u32)(u16)*(u16*)((u8*)subObj + 0x64) ^ 0x80000000;
-        f30 = ((f32)(conv3.d - lbl_eu_80666E08)) / lbl_eu_80666E00;
-        void* pos = ((void* (*)(void*))(*(void***)((u8*)res + 0x3E9C))[0xAC / 4])((u8*)res + 0x3E9C);
-        func_800F4A98(func_80043F18(&holder), t, 0x1000);
-        __ct__800FB044(func_80043F18(&holder), f30, pos, r25);
+        convB.w[1] = (u32)subObj->field_64 ^ 0x80000000;
+        range = (f32)(convB.d - lbl_eu_80666E08) / lbl_eu_80666E00;
+        void* pos = vcall_p((u8*)res + 0x3E9C, 0xAC);
+        func_800F4A98(func_80043F18(&holder), tblWord, 0x1000);
+        __ct__800FB044(func_80043F18(&holder), range, pos, dmgKind);
         break;
     }
     case 7:
-        func_800F4A98(func_80043F18(&holder), t, 0x1000);
+        func_800F4A98(func_80043F18(&holder), tblWord, 0x1000);
         break;
-    default:
+    default: {
         // empty the enum list.
-        void* l = func_80043F18(&holder);
-        *(u32*)((u8*)l + 0x620) = 0;
-        *(u32*)((u8*)l + 0x3030) = 0;
-        if (*(u16*)((u8*)subObj + 0x5C) == 2) {
-            func_800F6D50(func_80043F18(&holder), *(u32*)((u8*)actor + 0x3F10));
+        void* list = func_80043F18(&holder);
+        *(u32*)((u8*)list + 0x620) = 0;
+        *(u32*)((u8*)list + 0x3030) = 0;
+        if (subObj->field_5C == 2) {
+            func_800F6D50(list, (u32)actor->target_3F10);
         }
         break;
     }
-
-    // (middle section 0x800DB3EC..0x800DBA94 not fully decoded)
-    func_802A2EEC(actor);
-    u32 m78 = *(u32*)((u8*)sub + 0x78);
-    if (m78 & 0x02000000) {
-        func_80109784(*(void**)((u8*)actor + 0x3F10), 2, 0x10);
-    } else if (m78 & 0x01000000) {
-        func_80109784(*(void**)((u8*)actor + 0x3F10), 1, 0x10);
     }
-    if (((void* (*)(void*))(*(void***)actor)[0x290 / 4])(actor) != 0) {
-        if (func_800D7D24((D7D24_Obj*)sub) != 0) {
-            void* s2 = ((void* (*)(void*))(*(void***)actor)[0x290 / 4])(actor);
-            if (func_8026178C(s2, 0x3C) != 0) {
-                if (*(u32*)((u8*)sub + 0x78) & 0x00100000) {
-                    if (*(u16*)((u8*)subObj + 0x28) != 1) {
-                        s32 v = ((s32 (*)(void*))(*(void***)actor)[0x308 / 4])(actor);
-                        ((void (*)(void*, s32))(*(void***)actor)[0x304 / 4])(actor, v + 1);
+
+    // Target-type 2: make sure the actor itself ends up on the enum list.
+    if (subObj->field_5C == 2) {
+        bool registered = false;
+        for (u32 i = 0;; i++) {
+            void* list = func_80043F18(&holder);
+            if (i >= *(u32*)((u8*)list + 0x620)) break;
+            if (func_800F6E98(list, i) == actor->target_3F10) {
+                registered = true;
+                break;
+            }
+        }
+        if (!registered) {
+            func_800F6D50(func_80043F18(&holder), (u32)actor->target_3F10);
+        }
+    }
+
+    __dt__80043E88(&holder, -1);
+
+    // Snapshot the 0xBC state block through vt 0x298, then publish it back via
+    // vt 0x2A0 (vt 0x2B4 fires for side effects only when its flag is clear).
+    if (!(sub->field_78 & 0x08000000)) {
+        vcall_p(actor, 0x2B4);
+    }
+    DA0A4_Block* snapshot = (DA0A4_Block*)vcall_p(actor, 0x298);
+    *snapshot = *(DA0A4_Block*)sub;
+    *(DA0A4_Block*)vcall_p(actor, 0x2A0) = *snapshot;
+
+    getInstance__Q22cf13CfGameManagerFv();
+    if (!func_8006EF04__Fi(0x04000000)) {
+        if (!func_80148778((u8*)actor + 0x08, 0x2F)) {
+            *(f32*)((u8*)subObj + 0x80) =
+                ((f32 (*)(void*))(*(void**)((u8*)subObj->vtbl_84 + 0x14)))(subObj);
+        }
+        if (!func_80148778((u8*)actor + 0x08, 0x30)) {
+            vcall_f1(actor, 0x13C, lbl_eu_80666DDC);
+        }
+        if (!func_80148778((u8*)actor + 0x08, 0x31)) {
+            convB.w[1] = (u32)(s32)subObj->field_34 ^ 0x80000000;
+            f32 penalty = (f32)(convB.d - lbl_eu_80666DE0);
+            if (penalty < lbl_eu_80666DDC) {
+                if (func_80148778((u8*)actor + 0x08, 0x12C)) {
+                    void* entry = func_80149154((u8*)actor + 0x08, 0x12C);
+                    if (entry != nullptr) {
+                        convA.w[1] = (u32)*(s32*)((u8*)entry + 0x10) ^ 0x80000000;
+                        penalty *= lbl_eu_80666DD4 -
+                                   (f32)(convA.d - lbl_eu_80666DE0) / lbl_eu_80666E00;
                     }
-                } else if (*(u32*)((u8*)sub + 0x78) & 0x00200000) {
-                    if (*(u32*)((u8*)subObj + 0x78) & 0x00020000) {
-                        s32 v = ((s32 (*)(void*))(*(void***)actor)[0x308 / 4])(actor);
-                        ((void (*)(void*, s32))(*(void***)actor)[0x304 / 4])(actor, v + 1);
+                }
+            }
+            vcall_f1(actor, 0x154, -penalty);
+        }
+    }
+
+    if (actor->id_3F28 == 1 && (actor->flags_3F00 & 0x02) &&
+        (subObj->field_78 & 0x8000)) {
+        *(u16*)vcall_p(actor, 0x27C) = 0;
+        vcall_v1((u8*)actor + 0x08, 0x20, 0xEA);
+    }
+
+    if (subObj->field_78 & 0x40000000) {
+        if (actor->flags_3F00 & 0x02) {
+            if (subObj->field_28 != 1) {
+                func_800451D8(0x7A, (int)(actor ? (void*)&actor->moveSub : (void*)actor));
+                u32 voiceId = 0;
+                if (vcall_i(actor, 0x290) != 0) {
+                    void* skill2 = vcall_p(actor, 0x290);
+                    func_80260264(skill2, 0x3B, &voiceId);
+                }
+                func_800F3970((void*)lbl_eu_80663F00, actor, nullptr, 0x0B, (s32)voiceId);
+            }
+        } else {
+            if (subObj->field_78 & 0x01) {
+                func_800451D8(0x7D, (int)(actor ? (void*)&actor->moveSub : (void*)actor));
+            } else {
+                func_800451D8(0x7C, (int)(actor ? (void*)&actor->moveSub : (void*)actor));
+            }
+        }
+        func_8027F2DC(actor);
+        func_802A2F54(actor);
+    } else {
+        func_802A2EEC(actor);
+        if (sub->field_78 & 0x02000000) {
+            func_80109784(actor->target_3F10, 2, 0x10);
+        } else if (sub->field_78 & 0x01000000) {
+            func_80109784(actor->target_3F10, 1, 0x10);
+        }
+    }
+
+    if (vcall_i(actor, 0x290) != 0) {
+        if (func_800D7D24((D7D24_Obj*)sub) != 0) {
+            void* skill3 = vcall_p(actor, 0x290);
+            if (func_8026178C(skill3, 0x3C) != 0) {
+                if (sub->field_78 & 0x00100000) {
+                    if (subObj->field_28 != 1) {
+                        vcall_v1(actor, 0x304, vcall_i(actor, 0x308) + 1);
+                    }
+                } else if (sub->field_78 & 0x00200000) {
+                    if (subObj->field_78 & 0x8000) {
+                        vcall_v1(actor, 0x304, vcall_i(actor, 0x308) + 1);
                     }
                 }
             }
@@ -4958,260 +5123,289 @@ void func_800DBA2C(void* self, BattleObjAccessor* obj, void* arg1, BattleMoveObj
 }
 // func_800DBACC (retail 0x800DBACC, 0x838 bytes): target-selection / hit-intent
 // gate for the shared move dispatchers. Runs the status + art-type gates on the
-// target, computes hit / critical / drowsy intent from the sub-object stats and
+// target, computes hit / critical intent from the sub-object stats and
 // level/party modifiers, then sets the appropriate field_74 flag (1 = hit,
-// 2 = miss, 3 = ...) or falls through to the damage-splash tail.
+// 2 = miss, 3 = dodge-class) or falls through to the damage-splash tail.
+
+// Target/actor battle-object view for func_800DBACC.
+struct DBACC_Target {
+    u8 pad_00[0x04];
+    void* field_04;                     // status-list provider (vtable slot 0x30)
+    u8 pad_08[0x3374 - 0x08];
+    u32 field_3374;                     // state flags (bit17/bit16 probed)
+    u8 pad_78[0x3F00 - 0x3378];
+    u32 field_3F00;                     // controller flags (bits 31/30/29)
+    u8 pad_F04[0x3F60 - 0x3F04];
+    void* field_3F60;                   // optional extra object
+};
+
 struct DBACC_Sub {
-    u8 pad_00[0x28];
-    u16 field_28;           // +0x28
-    u8 pad_2A[0x36 - 0x2A];
+    u8 pad_00[0x1E];
+    s16 field_1E;           // +0x1E
+    u8 pad_20[0x36 - 0x20];
     s16 field_36;           // +0x36
     u8 pad_38[0x3C - 0x38];
     u16 type_3C;            // +0x3C
-    u8 pad_3E[0x44 - 0x3E];
-    u8 field_44;            // +0x44
-    u8 pad_45[0x48 - 0x45];
-    u16 field_48;           // +0x48
-    u8 pad_4A[0x50 - 0x4A];
-    u8 field_55;            // +0x55
-    u8 pad_56[0x5C - 0x56];
-    u16 field_5C;           // +0x5C
-    u16 field_5E;           // +0x5E
-    f32  field_60;          // +0x60
-    u8 pad_64[0x78 - 0x64];
-    u32 field_78;           // +0x78
+    u8 pad_3E[0x55 - 0x3E];
+    u8 field_55;            // +0x55 base critical threshold
+    u8 pad_56[0x78 - 0x56];
+    u32 field_78;           // +0x78 flags
     u8 pad_7C[0x84 - 0x7C];
-    void** field_84;        // +0x84 (sub-vtable, slot 0x0C)
+    void** field_84;        // +0x84 alternate vtable (called with this = sub)
 };
 
-void func_800DBACC(void* self, BattleObjAccessor* arg1, void* arg2, void* move) {
+// Move block view for func_800DBACC.
+struct DBACC_Move {
+    u8 pad_00[0x50];
+    void* field_50;         // +0x50 sub-object (DBACC_Sub)
+    f32 field_54;
+    f32 field_58;
+    f32 field_5C;
+    u8 pad_60[0x74 - 0x60];
+    u32 field_74;           // tagged flag word
+    u32 field_78;           // flags
+    u8 pad_7C[0x80 - 0x7C];
+    u16 field_80;
+    u8 pad_82[0x88 - 0x82];
+    s32 field_88;           // hit roll
+    s32 field_8C;           // critical roll
+};
+
+// Slot-0xC dispatch on the sub-object's auxiliary vtable (this = sub).
+static __inline s32 dbaccSlotC(DBACC_Sub* sub) {
+    return ((s32 (*)(void*))(*(void**)((u8*)sub->field_84 + 0xC)))(sub);
+}
+
+void func_800DBACC(void* self, BattleObjAccessor* arg1, void* arg2, void* move_) {
+    DBACC_Move* move = (DBACC_Move*)move_;
     if (arg2 == nullptr) return;
 
-    void* prm1 = ((void* (*)(void*))(*(void***)arg1)[0x224 / 4])(arg1);  // r30
-    void* prm2 = ((void* (*)(void*))(*(void***)arg2)[0x224 / 4])(arg2);  // r31
-    DBACC_Sub* sub = (DBACC_Sub*) (*(void**)((u8*)move + 0x50));
+    DBACC_Target* atk = (DBACC_Target*)arg1;
+    DBACC_Target* tgt = (DBACC_Target*)arg2;
 
-    s32 r27 = 0;
-    if (sub != nullptr) {
-        if (sub->field_78 & 0x10) r27 = 2;
-        if (arg1->field_3f00 & 0x4) {
-            if (sub->field_78 & 0x1) r27 = 2;
-        }
-    }
-    if (*(u32*)((u8*)move + 0x78) & 0x20000) r27 = 2;
+    DBACC_Sub* prm1 = (DBACC_Sub*)vcall_p(arg1, 0x224);
+    DBACC_Sub* prm2 = (DBACC_Sub*)vcall_p(arg2, 0x224);
+    DBACC_Sub* sub = (DBACC_Sub*)move->field_50;
 
-    s32 r28 = 0;
-    if (r27 == 0) {
-        bool pass = true;
-        // status gates
-        { void* f4 = *(void**)((u8*)arg2 + 4); u32 sv = *(u32*)(((void* (*)(void*))(*(void***)f4)[0x30 / 4])(f4)); if (func_80174C98(arg2, (int*)&sv, 0x805)) pass = false; }
-        if (pass && func_80148778((u8*)arg2 + 8, 0x9)) pass = false;
-        if (pass && func_80148778((u8*)arg2 + 8, 0xb)) pass = false;
-        if (pass && func_80148778((u8*)arg2 + 8, 0xf)) pass = false;
-        { void* f4 = *(void**)((u8*)arg2 + 4); u32 sv = *(u32*)(((void* (*)(void*))(*(void***)f4)[0x30 / 4])(f4)); if (func_80174C98(arg2, (int*)&sv, 0x4)) pass = false; }
-        { void* f4 = *(void**)((u8*)arg2 + 4); u32 sv = *(u32*)(((void* (*)(void*))(*(void***)f4)[0x30 / 4])(f4)); if (func_80174C98(arg2, (int*)&sv, 0x19)) pass = false; }
-        { void* f4 = *(void**)((u8*)arg2 + 4); u32 sv = *(u32*)(((void* (*)(void*))(*(void***)f4)[0x30 / 4])(f4)); if (func_80174C98(arg2, (int*)&sv, 0x1a)) pass = false; }
-        { void* f4 = *(void**)((u8*)arg2 + 4); u32 sv = *(u32*)(((void* (*)(void*))(*(void***)f4)[0x30 / 4])(f4)); if (func_80174C98(arg2, (int*)&sv, 0x1b)) pass = false; }
-        if (pass && func_80148778((u8*)arg2 + 8, 0x32)) pass = false;
-        if (pass && func_80148778((u8*)arg2 + 8, 0xf8)) pass = false;
-        if (pass && func_80148778((u8*)arg2 + 8, 0xeb)) pass = false;
-        if (pass && func_80148778((u8*)arg2 + 8, 0xf0)) pass = false;
-        if (pass && func_80148778((u8*)arg2 + 8, 0xf1)) pass = false;
-        if (pass && func_80148778((u8*)arg2 + 8, 0xf8)) pass = false;
-        if (pass && func_80148778((u8*)arg2 + 8, 0xf7)) pass = false;
-        if (pass && func_80148778((u8*)arg2 + 8, 0x106)) pass = false;
+    s32 res = 0;
+    if (sub->field_78 & 0x8) res = 2;
+    if ((atk->field_3F00 & 0x4) && (sub->field_78 & 0x1)) res = 2;
+    if (move->field_78 & 0x1000) res = 2;
 
-        if (pass) {
-            if (*(void**)((u8*)arg2 + 0x3f60) != nullptr && func_8004C5EC((void*)0) != 0x31) {
-                f32 f31 = lbl_eu_80666DDC;
-                f32 f30 = 0.0f, f29 = 0.0f;
-                if (sub->type_3C == 1 || sub->type_3C == 5) {
-                    f30 = lbl_eu_80666DDC;
-                    f31 = f30;
-                    f29 = lbl_eu_80666E14;
-                    f32 f28 = lbl_eu_80666DD4; // 1.0
-                    if (((void* (*)(void*))(*(void***)arg1)[0x290 / 4])(arg1)) {
-                        ((void* (*)(void*))(*(void***)arg1)[0x290 / 4])(arg1);
+    s32 hitVal = 0;
+    if (res == 0) {
+        // Status gate chain: any check firing blocks the action outright.
+        int sv;
+        bool blocked;
+        sv = *(s32*)vcall_p(tgt->field_04, 0x30);
+        blocked = func_80174C98(tgt, &sv, 0x805) != 0;
+        if (!blocked) blocked = func_80148778((u8*)arg2 + 8, 0x9) != 0;
+        if (!blocked) blocked = func_80148778((u8*)arg2 + 8, 0xb) != 0;
+        if (!blocked) blocked = func_80148778((u8*)arg2 + 8, 0xf) != 0;
+        if (!blocked) { sv = *(s32*)vcall_p(tgt->field_04, 0x30); blocked = func_80174C98(tgt, &sv, 0x4) != 0; }
+        if (!blocked) { sv = *(s32*)vcall_p(tgt->field_04, 0x30); blocked = func_80174C98(tgt, &sv, 0x19) != 0; }
+        if (!blocked) { sv = *(s32*)vcall_p(tgt->field_04, 0x30); blocked = func_80174C98(tgt, &sv, 0x1a) != 0; }
+        if (!blocked) { sv = *(s32*)vcall_p(tgt->field_04, 0x30); blocked = func_80174C98(tgt, &sv, 0x1b) != 0; }
+        if (!blocked) blocked = func_80148778((u8*)arg2 + 8, 0x32) != 0;
+        if (!blocked) blocked = func_80148778((u8*)arg2 + 8, 0xf8) != 0;
+        if (!blocked) blocked = func_80148778((u8*)arg2 + 8, 0xeb) != 0;
+        if (!blocked) blocked = func_80148778((u8*)arg2 + 8, 0xf0) != 0;
+        if (!blocked) blocked = func_80148778((u8*)arg2 + 8, 0xf1) != 0;
+        if (!blocked) blocked = func_80148778((u8*)arg2 + 8, 0xf8) != 0;
+        if (!blocked) blocked = func_80148778((u8*)arg2 + 8, 0xf7) != 0;
+        if (!blocked) blocked = func_80148778((u8*)arg2 + 8, 0x106) != 0;
+        // Extra-object page gate.
+        if (!blocked && tgt->field_3F60 == nullptr) blocked = true;
+        if (!blocked && func_8004C5EC(tgt->field_3F60) == 0x31) blocked = true;
+
+        if (!blocked) {
+            f32 chance = lbl_eu_80666DDC;
+            if (sub->type_3C == 1 || sub->type_3C == 5) {
+                f32 lo = lbl_eu_80666DDC;   // floor
+                f32 hi = lbl_eu_80666E14;   // cap
+                f32 mod = lbl_eu_80666DD4;  // party modifier
+                chance = lo;
+                if (vcall_i(arg1, 0x290) != 0) {
+                    u32 q1;
+                    if (func_80260264(vcall_p(arg1, 0x290), 0x1D, &q1)) {
+                        mod -= (f32)q1 / lbl_eu_80666E00;
                     }
-                    if (arg1->field_3f00 & 0x2) {
-                        if (((s32 (*)(void*))(*(void***)arg1)[0x308 / 4])(arg1) == 0) r27 = 1;
+                    u32 q2;
+                    if (func_80260264(vcall_p(arg1, 0x290), 0x7E, &q2) && (move->field_74 & 0x40)) {
+                        chance = lo - (f32)q2;
                     }
-                    if (arg1->field_3f00 & 0x2) {
-                        if (((s32 (*)(void*))(*(void***)arg1)[0x308 / 4])(arg1) == 1) {
-                            f31 += f28 * lbl_eu_80666E18;
-                        }
-                    }
-                    if (func_80148778((u8*)arg2 + 8, 0x116)) r27 = 1;
-                    s32 r23 = ((s32 (*)(void*))(*(void***)arg2)[0x108 / 4])(arg2);
-                    s32 diff = r23 - ((s32 (*)(void*))(*(void***)arg1)[0x108 / 4])(arg1);
-                    if (diff < -10) diff = -10;
-                    if (diff > 10) diff = 10;
-                    if ((u32)(diff + 5) > 10) f31 += (f32)(diff * 20);
-                    else if ((u32)(diff + 2) <= 4) f31 += (f32)(diff * 8);
-                    f31 -= (f32)*(s16*)((u8*)prm2 + 0x36);
-                    if (arg1->field_3f00 & 0x2) f31 += lbl_eu_80666E18 * (f32)*(s16*)((u8*)prm1 + 0x36);
-                    if (func_80086DBC__Q22cf13CfGameManagerFv() == 4) {
-                        if (arg1->field_3f00 & 0x2) {
-                            if (func_80148778((u8*)arg1 + 8, 0xa2)) {
-                                void* e = func_80149154((u8*)arg1 + 8, 0xa2);
-                                f31 -= (f32)*(s32*)((u8*)e + 0x10);
-                            }
-                        } else if (((BattleObjAccessor*)arg2)->field_3f00 & 0x2) {
-                            if (func_80148778((u8*)arg2 + 8, 0xa2)) {
-                                void* e = func_80149154((u8*)arg2 + 8, 0xa2);
-                                s32 v = *(s32*)((u8*)e + 0x10);
-                                f31 += (f32)((v + (v >> 31)) >> 1);
-                            }
-                        }
-                    }
-                    if (func_80148778((u8*)arg2 + 8, 0xd1)) f31 += lbl_eu_80666E18;
-                    if (func_80148778((u8*)arg2 + 8, 0xf5)) {
-                        f31 += lbl_eu_80666E18;
-                        if (((f32 (*)(void*))(*(void***)arg2)[0x130 / 4])(arg2) < lbl_eu_80666E18) f31 += 10.0f;
-                    } else if (func_80148778((u8*)arg1 + 8, 0xf5)) {
-                        f31 -= lbl_eu_80666E18;
-                        if (((f32 (*)(void*))(*(void***)arg2)[0x130 / 4])(arg2) < lbl_eu_80666E18) f31 -= 10.0f;
-                    }
-                    if (func_80148778((u8*)arg2 + 8, 0x114)) f31 += lbl_eu_80666E18;
-                    f32 f1 = f31 - (f32)(sub->field_36 * ((s32 (*)(void*))(*(void**)((u8*)sub->field_84 + 0x0C)))(sub));
-                    f1 = f1 + (f32)(*(s16*)((u8*)prm2 + 0x1E) - *(s16*)((u8*)prm1 + 0x1E));
-                    if (f1 < f30) f1 = f30;
-                    if (f1 > f29) f1 = f29;
-                    if (r27 == 0) {
-                        if ((s32)(*(u32*)((u8*)move + 0x88) % 100) < (s32)f1) r27 = 1;
-                    }
-                    r28 = (s32)f1;
-                } else {
-                    f29 = f31;
-                    f30 = lbl_eu_80666E18;
-                    s32 e0 = ((s32 (*)(void*))(*(void***)arg2)[0xE0 / 4])(arg2);
-                    u32 f3374 = *(u32*)((u8*)arg1 + 0x3374);
-                    if (e0 == 2 || (e0 == 0xa && (f3374 & 0x4000) && !(f3374 & 0x8000))) r27 = 3;
-                    if (arg1->field_3f00 & 0x2) {
-                        if (((s32 (*)(void*))(*(void***)arg1)[0x308 / 4])(arg1) == 0) r27 = 3;
-                    }
-                    if (func_80148778((u8*)arg2 + 8, 0x116)) r27 = 3;
-                    if (arg1->field_3f00 & 0x2) {
-                        if (((s32 (*)(void*))(*(void***)arg1)[0x308 / 4])(arg1) == 1) f31 += 10.0f;
-                    }
-                    void* v290 = ((void* (*)(void*))(*(void***)arg1)[0x290 / 4])(arg1);
-                    if (v290 != nullptr) {
-                        if (func_8026178C(((void* (*)(void*))(*(void***)arg1)[0x290 / 4])(arg1), 0x82)) {
-                            f31 -= (f32)(sub->field_36 * ((s32 (*)(void*))(*(void**)((u8*)sub->field_84 + 0x0C)))(sub));
-                        }
-                    }
-                    s32 r23b = ((s32 (*)(void*))(*(void***)arg2)[0x108 / 4])(arg2);
-                    s32 diff = r23b - ((s32 (*)(void*))(*(void***)arg1)[0x108 / 4])(arg1);
-                    if (diff < -10) diff = -10;
-                    if (diff > 10) diff = 10;
-                    if ((u32)(diff + 5) > 10) f31 += (f32)(diff * 11);
-                    else if ((u32)(diff + 2) <= 4) f31 += (f32)(diff * 6);
-                    if (arg1->field_3f00 & 0x2) {
-                        f31 -= (f32)(sub->field_36 * ((s32 (*)(void*))(*(void**)((u8*)sub->field_84 + 0x0C)))(sub));
-                    }
-                    if (f31 < f29) f31 = f29;
-                    if (f31 > f30) f31 = f30;
-                    if (r27 == 0) {
-                        if ((s32)(*(u32*)((u8*)move + 0x88) % 100) < (s32)f31) r27 = 3;
-                    }
-                    r28 = (s32)f31;
                 }
+                if ((atk->field_3F00 & 0x2) && vcall_i(arg1, 0x308) == 0) res = 1;
+                if ((atk->field_3F00 & 0x2) && vcall_i(arg1, 0x308) == 1) chance += lbl_eu_80666E18 * mod;
+                if (func_80148778((u8*)arg2 + 8, 0x116)) res = 1;
+                s32 lv = vcall_i(arg2, 0x108) - vcall_i(arg1, 0x108);
+                if (lv < -10) lv = -10;
+                if (lv > 10) lv = 10;
+                if ((u32)(lv + 5) > 10) chance += (f32)(lv * 20);
+                else if ((u32)(lv + 2) > 4) chance += (f32)(lv * 8);
+                chance -= (f32)prm2->field_36;
+                if (atk->field_3F00 & 0x2) chance += lbl_eu_80666E18 * (f32)prm1->field_36;
+                if (func_80086DBC__Q22cf13CfGameManagerFv() == 4) {
+                    if (atk->field_3F00 & 0x2) {
+                        if (func_80148778((u8*)arg1 + 8, 0xa2)) {
+                            void* e = func_80149154((u8*)arg1 + 8, 0xa2);
+                            chance -= (f32)*(s32*)((u8*)e + 0x10);
+                        }
+                    } else if (tgt->field_3F00 & 0x2) {
+                        if (func_80148778((u8*)arg2 + 8, 0xa2)) {
+                            void* e = func_80149154((u8*)arg2 + 8, 0xa2);
+                            s32 ev = *(s32*)((u8*)e + 0x10);
+                            chance += (f32)(ev / 2);
+                        }
+                    }
+                }
+                if (func_80148778((u8*)arg2 + 8, 0xd1)) chance += lbl_eu_80666E20;
+                if (func_80148778((u8*)arg2 + 8, 0xf5)) {
+                    chance += lbl_eu_80666E18;
+                    if (vcall_f(arg2, 0x130) < lbl_eu_80666E24) chance += lbl_eu_80666DF8;
+                } else if (func_80148778((u8*)arg1 + 8, 0xf5)) {
+                    chance -= lbl_eu_80666E18;
+                    if (vcall_f(arg2, 0x130) < lbl_eu_80666E24) chance -= lbl_eu_80666DF8;
+                }
+                if (func_80148778((u8*)arg2 + 8, 0x114)) chance += lbl_eu_80666E20;
+                f32 f1 = chance - (f32)(sub->field_36 * dbaccSlotC(sub));
+                f1 = f1 + (f32)(prm2->field_1E - prm1->field_1E);
+                if (f1 < lo) f1 = lo;
+                if (f1 > hi) f1 = hi;
+                if (res == 0) {
+                    if (move->field_88 % 100 < (s32)f1) res = 1;
+                }
+                hitVal = (s32)f1;
+            } else {
+                f32 lo = chance;              // floor
+                f32 hi = lbl_eu_80666E28;     // cap
+                s32 e0 = vcall_i(arg2, 0xE0);
+                if (e0 == 2 || e0 == 0xa) {
+                    u32 f3 = atk->field_3374;
+                    if ((f3 & 0x4000) && !(f3 & 0x8000)) res = 3;
+                }
+                if ((atk->field_3F00 & 0x2) && vcall_i(arg1, 0x308) == 0) res = 3;
+                if (func_80148778((u8*)arg2 + 8, 0x116)) res = 3;
+                if ((atk->field_3F00 & 0x2) && vcall_i(arg1, 0x308) == 1) chance += lbl_eu_80666DF8;
+                void* v290 = vcall_p(arg1, 0x290);
+                if (v290 != nullptr) {
+                    if (func_8026178C(vcall_p(arg1, 0x290), 0x82)) {
+                        chance -= (f32)(sub->field_36 * dbaccSlotC(sub));
+                    }
+                }
+                s32 lv = vcall_i(arg2, 0x108) - vcall_i(arg1, 0x108);
+                if (lv < -10) lv = -10;
+                if (lv > 10) lv = 10;
+                if ((u32)(lv + 5) > 10) chance += (f32)(lv * 11);
+                else if ((u32)(lv + 2) > 4) chance += (f32)(lv * 6);
+                if (atk->field_3F00 & 0x2) chance -= (f32)(sub->field_36 * dbaccSlotC(sub));
+                if (chance < lo) chance = lo;
+                if (chance > hi) chance = hi;
+                if (res == 0) {
+                    if (move->field_88 % 100 < (s32)chance) res = 3;
+                }
+                hitVal = (s32)chance;
             }
         }
-        if (!pass) r27 = 2;
     }
-    if (r27 == 0) r27 = 2;
-    if (r27 == 1) *(u32*)((u8*)move + 0x74) |= 0x80000004;
-    else if (r27 == 2) *(u32*)((u8*)move + 0x74) |= 0x80000001;
-    else if (r27 == 3) *(u32*)((u8*)move + 0x74) |= 0x80000008;
+    if (res == 0) res = 2;
+    // Apply the intent flag: 1 = hit, 2 = miss/blocked, 3 = dodge-class.
+    if (res == 1) move->field_74 |= 0x80000004;
+    else if (res == 2) move->field_74 |= 0x80000001;
+    else if (res == 3) move->field_74 |= 0x80000008;
 
-    if (!(*(u32*)((u8*)move + 0x78) & 0x20000) && sub != nullptr) {
-        if ((sub->type_3C == 1 || sub->type_3C == 5) && !(sub->field_78 & 0x10) && (*(u32*)((u8*)move + 0x74) & 1)) {
-            s32 e0 = ((s32 (*)(void*))(*(void***)arg2)[0xE0 / 4])(arg2);
-            u32 f3374 = *(u32*)((u8*)arg1 + 0x3374);
+    if (move->field_78 & 0x1000) return;
+
+    bool splash = false;
+    if (sub->type_3C == 1 || sub->type_3C == 5) {
+        if (!(sub->field_78 & 0x8) && (move->field_74 & 1)) {
+            s32 e0 = vcall_i(arg2, 0xE0);
+            u32 f3374 = atk->field_3374;
             if (e0 == 1) {
-                if (!func_80148778((u8*)arg2 + 8, 0x9) && !func_80148778((u8*)arg2 + 8, 0xf) && !func_80148778((u8*)arg2 + 8, 0x10)) {
-                    if (!func_80148778((u8*)arg1 + 8, 0xea) && !func_80148778((u8*)arg1 + 8, 0xcf) && !func_80148778((u8*)arg1 + 8, 0xd0) && !(f3374 & 0x4000)) {
-                        if (*(u32*)((u8*)move + 0x88) < 100) {
-                            *(f32*)((u8*)move + 0x54) = lbl_eu_80666DD4;
-                            *(u32*)((u8*)move + 0x74) = (*(u32*)((u8*)move + 0x74) & 0xFFFEFFFF) | 0x80000041;
-                            goto splash;
-                        }
+                if (!func_80148778((u8*)arg2 + 8, 0x9) && !func_80148778((u8*)arg2 + 8, 0xf) &&
+                    !func_80148778((u8*)arg2 + 8, 0x10)) {
+                    if (!func_80148778((u8*)arg1 + 8, 0xea) && !func_80148778((u8*)arg1 + 8, 0xcf) &&
+                        !func_80148778((u8*)arg1 + 8, 0xd0) && !(f3374 & 0x4000)) {
+                        if (move->field_88 < 100) splash = true;
                     }
                 }
             } else if (e0 == 2) {
-                if (!func_80148778((u8*)arg2 + 8, 0x9) && !func_80148778((u8*)arg2 + 8, 0xf) && !func_80148778((u8*)arg2 + 8, 0x10)) {
+                if (!func_80148778((u8*)arg2 + 8, 0x9) && !func_80148778((u8*)arg2 + 8, 0xf) &&
+                    !func_80148778((u8*)arg2 + 8, 0x10)) {
                     if (!(f3374 & 0x8000) && !func_80148778((u8*)arg1 + 8, 0xd0)) {
-                        if (*(u32*)((u8*)move + 0x88) < 100) {
-                            *(f32*)((u8*)move + 0x54) = lbl_eu_80666DD4;
-                            *(u32*)((u8*)move + 0x74) = (*(u32*)((u8*)move + 0x74) & 0xFFFEFFFF) | 0x80000041;
-                            goto splash;
-                        }
+                        if (move->field_88 < 100) splash = true;
                     }
                 }
             } else if (e0 == 0xa) {
-                if ((f3374 & 0x4000) && !(f3374 & 0x8000) && *(u32*)((u8*)move + 0x88) < 100) {
-                    *(f32*)((u8*)move + 0x54) = lbl_eu_80666DD4;
-                    *(u32*)((u8*)move + 0x74) = (*(u32*)((u8*)move + 0x74) & 0xFFFEFFFF) | 0x80000041;
-                    goto splash;
-                }
+                if ((f3374 & 0x4000) && !(f3374 & 0x8000) && move->field_88 < 100) splash = true;
             }
         }
-        if ((sub->type_3C == 2 || sub->type_3C == 6) && func_80148778((u8*)arg2 + 8, 0xf7)) {
-            if (((s32 (*)(void*, void*))(*(void***)arg2)[0x5C0 / 4])(arg2, arg1) == 0 && (*(u32*)((u8*)move + 0x74) & 1)) {
-                func_80149154((u8*)arg2 + 8, 0xf7);
-                u32 f78 = *(u32*)((u8*)move + 0x78);
-                if ((f78 & 0x200000) || (!(f78 & 0x400000) && !(f78 & 0x100000))) {
-                    *(u32*)((u8*)move + 0x74) |= 0x80000080;
+    } else if (sub->type_3C == 2 || sub->type_3C == 6) {
+        if (func_80148778((u8*)arg2 + 8, 0xf7)) {
+            if (vcall_p1(arg2, 0x5C0, (u32)arg1) == 0) {
+                if (move->field_74 & 1) {
+                    func_80149154((u8*)arg2 + 8, 0xf7);
+                    u32 f78 = move->field_78;
+                    if ((f78 & 0x200) || (!(f78 & 0x400) && !(f78 & 0x800))) {
+                        move->field_74 |= 0x80000080;
+                    }
                 }
             }
-        }
-        if (*(u32*)((u8*)move + 0x74) & 1) {
-            bool cp = true;
-            { void* f4 = *(void**)((u8*)arg2 + 4); u32 sv = *(u32*)(((void* (*)(void*))(*(void***)f4)[0x30 / 4])(f4)); if (func_80174C98(arg2, (int*)&sv, 0x805)) cp = false; }
-            { void* f4 = *(void**)((u8*)arg2 + 4); u32 sv = *(u32*)(((void* (*)(void*))(*(void***)f4)[0x30 / 4])(f4)); if (cp && func_80174C98(arg2, (int*)&sv, 0x4)) cp = false; }
-            { void* f4 = *(void**)((u8*)arg2 + 4); u32 sv = *(u32*)(((void* (*)(void*))(*(void***)f4)[0x30 / 4])(f4)); if (cp && func_80174C98(arg2, (int*)&sv, 0x19)) cp = false; }
-            { void* f4 = *(void**)((u8*)arg2 + 4); u32 sv = *(u32*)(((void* (*)(void*))(*(void***)f4)[0x30 / 4])(f4)); if (cp && func_80174C98(arg2, (int*)&sv, 0x1a)) cp = false; }
-            { void* f4 = *(void**)((u8*)arg2 + 4); u32 sv = *(u32*)(((void* (*)(void*))(*(void***)f4)[0x30 / 4])(f4)); if (cp && func_80174C98(arg2, (int*)&sv, 0x1b)) cp = false; }
-            if (cp && func_80148778((u8*)arg2 + 8, 0x9)) cp = false;
-            if (cp && func_80148778((u8*)arg2 + 8, 0xb)) cp = false;
-            if (cp && func_80148778((u8*)arg2 + 8, 0xf)) cp = false;
-            if (cp && func_80148778((u8*)arg2 + 8, 0xf0)) cp = false;
-            if (cp && func_80148778((u8*)arg2 + 8, 0xf1)) cp = false;
-            if (cp && func_80148778((u8*)arg2 + 8, 0xf8)) cp = false;
-            s32 r27b = 0;
-            if (!cp) r27b = 1;
-            if (r27b == 0 && sub->type_3C != 1) r27b = 1;
-            if (r27b == 0 && func_80148778((u8*)arg2 + 8, 0xeb) && !(*(u32*)((u8*)move + 0x78) & 0x800)) r27b = 2;
-            if (r27b == 0 && func_80148778((u8*)arg2 + 8, 0x10c) && !(*(u32*)((u8*)move + 0x78) & 0x800)) r27b = 2;
-            if (r27b == 0 && (arg1->field_3f00 & 0x4) && (sub->field_78 & 0x1)) r27b = 1;
-            if (sub->field_78 & 0x10) r27b = 1;
-            if (r27b == 0) {
-                s32 r274;
-                if (((BattleObjAccessor*)arg2)->field_3f00 & 0x2) {
-                    s32 v25 = ((s32 (*)(void*))(*(void***)arg2)[0x108 / 4])(arg2);
-                    s32 v23 = ((s32 (*)(void*))(*(void***)arg1)[0x108 / 4])(arg1);
-                    s32 d = v25 - v23;
-                    if (!((u32)(d + 2) <= 4)) d = d * 5;
-                    r274 = *(u8*)((u8*)sub + 0x55) + d;
-                } else {
-                    r274 = *(u8*)((u8*)sub + 0x55) + r28;
-                }
-                if (r274 < 0) r274 = 0;
-                if (r274 > 0x5f) r274 = 0x5f;
-                if ((s32)(*(u32*)((u8*)move + 0x8C) % 100) < (s32)r274) r27b = 2;
-            }
-            if (r27b == 2) *(u32*)((u8*)move + 0x74) |= 0x80000002;
         }
     }
-    return;
 
-splash:
-    *(f32*)((u8*)move + 0x5C) = *(f32*)((u8*)move + 0x54) * *(f32*)((u8*)move + 0x58);
-    if (func_80148778((u8*)arg2 + 8, 0x1)) *(f32*)((u8*)move + 0x5C) = lbl_eu_80666DDC;
-    *(u32*)((u8*)move + 0x78) |= 0x40000020;
-    *(u16*)((u8*)move + 0x80) = *(u16*)((u8*)self + 0x83D0);
-    (*(u16*)((u8*)self + 0x83D0))++;
+    if (splash) {
+        // Guaranteed-damage tail: set ratio fields, tag the move, bump the
+        // shared dispatch counter.
+        move->field_54 = lbl_eu_80666DD4;
+        move->field_74 = (move->field_74 | 0x80000000) | 0x41;
+        move->field_5C = move->field_54 * move->field_58;
+        if (func_80148778((u8*)arg2 + 8, 0x1)) move->field_5C = lbl_eu_80666DDC;
+        move->field_78 |= 0x40000020;
+        CBattleManagerTail283D4* tail = (CBattleManagerTail283D4*)self;
+        move->field_80 = tail->field_283D0;
+        tail->field_283D0 = (u16)(tail->field_283D0 + 1);
+        return;
+    }
+
+    if (!(move->field_74 & 1)) return;
+
+    // Critical-proc gate chain.
+    s32 res2 = 0;
+    int sv;
+    bool blocked2;
+    sv = *(s32*)vcall_p(tgt->field_04, 0x30);
+    blocked2 = func_80174C98(tgt, &sv, 0x805) != 0;
+    if (!blocked2) { sv = *(s32*)vcall_p(tgt->field_04, 0x30); blocked2 = func_80174C98(tgt, &sv, 0x4) != 0; }
+    if (!blocked2) { sv = *(s32*)vcall_p(tgt->field_04, 0x30); blocked2 = func_80174C98(tgt, &sv, 0x19) != 0; }
+    if (!blocked2) { sv = *(s32*)vcall_p(tgt->field_04, 0x30); blocked2 = func_80174C98(tgt, &sv, 0x1a) != 0; }
+    if (!blocked2) { sv = *(s32*)vcall_p(tgt->field_04, 0x30); blocked2 = func_80174C98(tgt, &sv, 0x1b) != 0; }
+    if (!blocked2) blocked2 = func_80148778((u8*)arg2 + 8, 0x9) != 0;
+    if (!blocked2) blocked2 = func_80148778((u8*)arg2 + 8, 0xb) != 0;
+    if (!blocked2) blocked2 = func_80148778((u8*)arg2 + 8, 0xf) != 0;
+    if (!blocked2) blocked2 = func_80148778((u8*)arg2 + 8, 0xf0) != 0;
+    if (!blocked2) blocked2 = func_80148778((u8*)arg2 + 8, 0xf1) != 0;
+    if (!blocked2) blocked2 = func_80148778((u8*)arg2 + 8, 0xf8) != 0;
+    if (blocked2) res2 = 1;
+    if (res2 == 0 && sub->type_3C != 1) res2 = 1;
+    if (res2 == 0 && func_80148778((u8*)arg2 + 8, 0xeb) && !(move->field_78 & 0x800)) res2 = 2;
+    if (res2 == 0 && func_80148778((u8*)arg2 + 8, 0x10c) && !(move->field_78 & 0x800)) res2 = 2;
+    if (res2 == 0 && (atk->field_3F00 & 0x4) && (sub->field_78 & 0x1)) res2 = 1;
+    if (sub->field_78 & 0x8) res2 = 1;
+    if (res2 == 0) {
+        s32 thr;
+        if (tgt->field_3F00 & 0x2) {
+            s32 d = vcall_i(arg2, 0x108) - vcall_i(arg1, 0x108);
+            if ((u32)(d + 2) > 4) d = d * 5;
+            thr = sub->field_55 + d;
+        } else {
+            thr = sub->field_55 + hitVal;
+        }
+        if (thr < 0) thr = 0;
+        if (thr > 0x5f) thr = 0x5f;
+        if (move->field_8C % 100 < thr) res2 = 2;
+    }
+    if (res2 == 2) move->field_74 |= 0x80000002;
 }
 struct BattleMoveSubData {
     u8 pad_00[0x38];
@@ -5358,11 +5552,11 @@ extern "C" void func_800DCB54(void* self, void* attacker, void* target,
 
     // 0x51C0: tagged word at move+0x74; bit0 clear -> bail; else init ratios
     if (!(move->field_74 & 0x1)) return;            // 0x51CC clrlwi. bit31(LSB)
-    move->field_54 = 1.0f;                          // 0x51D4
-    move->field_58 = 1.0f;                          // 0x51D0
-    move->field_5C = 0.0f;                          // 0x51D8
-    move->field_60 = 0.0f;                          // 0x51DC
-    move->field_64 = 0.0f;                          // 0x51E0
+    move->field_54 = lbl_eu_80666DD4;               // 0x51D4
+    move->field_58 = lbl_eu_80666DD4;               // 0x51D0
+    move->field_5C = lbl_eu_80666DDC;               // 0x51D8
+    move->field_60 = lbl_eu_80666DDC;               // 0x51DC
+    move->field_64 = lbl_eu_80666DDC;               // 0x51E0
 
     // 0x51E8: grab params
     BattleMoveSubData* sub = (BattleMoveSubData*)move->field_50;
@@ -5379,8 +5573,16 @@ extern "C" void func_800DCB54(void* self, void* attacker, void* target,
             // ALT BLOCK (0x800DE8FC): same shape as main, uses +0x62 ranges,
             // r23+0x30 / r22+0x32 hit positions.
             // ============================================================
-            f32 f26 = (f32)(s32)*(s16*)((u8*)res20C + 0x62) / 100.0f;
-            f32 f28 = (f32)(s32)tgtParam->field_62 / 100.0f - f26;
+            f32 f26;
+            f32 f28;
+            {
+                cf::CfActorF64Conv convA;
+                convA.w[0] = 0x43300000;
+                convA.w[1] = (u32)*(s16*)((u8*)res20C + 0x62) ^ 0x80000000;
+                f26 = (f32)(convA.d - lbl_eu_80666DE0) / lbl_eu_80666E00;
+                convA.w[1] = (u32)tgtParam->field_62 ^ 0x80000000;
+                f28 = (f32)(convA.d - lbl_eu_80666DE0) / lbl_eu_80666E00 - f26;
+            }
             s32 r25 = atkParam->field_30;
             s32 r26 = tgtParam->field_32;
 
@@ -5389,20 +5591,20 @@ extern "C" void func_800DCB54(void* self, void* attacker, void* target,
                 u32 tag = move->field_74;
                 if (tag & 0x2000000) {
                     u16 hf = ((VFn328)(*(void***)target)[0x328 / 4])(target);
-                    if (!(hf & 0x4000)) f26 = 0.0f;
+                    if (!(hf & 0x4000)) f26 = lbl_eu_80666DDC;
                 } else if (tag & 0x4000000) {
                     u16 hf = ((VFn328)(*(void***)target)[0x328 / 4])(target);
-                    if (!(hf & 0x2000)) f26 = 0.0f;
+                    if (!(hf & 0x2000)) f26 = lbl_eu_80666DDC;
                 } else if (tag & 0x1000000) {
                     u16 hf = ((VFn328)(*(void***)target)[0x328 / 4])(target);
-                    if (!(hf & 0x1)) f26 = 0.0f;
+                    if (!(hf & 0x1)) f26 = lbl_eu_80666DDC;
                 }
             }
             f28 += f26;                                 // 0x800DE9D0
 
             // --- clamp [-1.0, 0.9] ---
-            if (f28 < -1.0f) f28 = -1.0f;
-            else if (f28 > 0.9f) f28 = 0.9f;
+            if (f28 < lbl_eu_80666E2C) f28 = lbl_eu_80666E2C;
+            else if (f28 > lbl_eu_80666E30) f28 = lbl_eu_80666E30;
 
             // --- zero ratio under data-map flags ---
             if (func_80148778((u8*)target + 8, 0x13)) { // 0x800DE9F8
@@ -5691,8 +5893,16 @@ extern "C" void func_800DCB54(void* self, void* attacker, void* target,
         // ================================================================
         // MAIN BLOCK (types 1/5), 0x800DD730
         // ================================================================
-        f32 f26 = (f32)(s32)*(s16*)((u8*)res20C + 0x60) / 100.0f;
-        f32 f28 = (f32)(s32)tgtParam->field_60 / 100.0f - f26;
+        f32 f26;
+        f32 f28;
+        {
+            cf::CfActorF64Conv convA;
+            convA.w[0] = 0x43300000;
+            convA.w[1] = (u32)*(s16*)((u8*)res20C + 0x60) ^ 0x80000000;
+            f26 = (f32)(convA.d - lbl_eu_80666DE0) / lbl_eu_80666E00;
+            convA.w[1] = (u32)tgtParam->field_60 ^ 0x80000000;
+            f28 = (f32)(convA.d - lbl_eu_80666DE0) / lbl_eu_80666E00 - f26;
+        }
         s32 r25 = atkParam->field_2C;
         s32 r26 = tgtParam->field_2E;
 
@@ -5701,13 +5911,13 @@ extern "C" void func_800DCB54(void* self, void* attacker, void* target,
             u32 tag = move->field_74;
             if (tag & 0x2000000) {
                 u16 hf = ((VFn328)(*(void***)target)[0x328 / 4])(target);
-                if (!(hf & 0x4000)) f26 = 0.0f;
+                if (!(hf & 0x4000)) f26 = lbl_eu_80666DDC;
             } else if (tag & 0x4000000) {
                 u16 hf = ((VFn328)(*(void***)target)[0x328 / 4])(target);
-                if (!(hf & 0x2000)) f26 = 0.0f;
+                if (!(hf & 0x2000)) f26 = lbl_eu_80666DDC;
             } else if (tag & 0x1000000) {
                 u16 hf = ((VFn328)(*(void***)target)[0x328 / 4])(target);
-                if (!(hf & 0x1)) f26 = 0.0f;
+                if (!(hf & 0x1)) f26 = lbl_eu_80666DDC;
             }
         }
         f28 += f26;                                     // 0x800DD804
@@ -5718,8 +5928,8 @@ extern "C" void func_800DCB54(void* self, void* attacker, void* target,
         }
 
         // --- clamp [-1.0, 0.9] ---
-        if (f28 < -1.0f) f28 = -1.0f;
-        else if (f28 > 0.9f) f28 = 0.9f;
+        if (f28 < lbl_eu_80666E2C) f28 = lbl_eu_80666E2C;
+        else if (f28 > lbl_eu_80666E30) f28 = lbl_eu_80666E30;
 
         // --- zero ratio under data-map flags ---
         if (func_80148778((u8*)target + 8, 0x13)) {
@@ -5746,19 +5956,22 @@ extern "C" void func_800DCB54(void* self, void* attacker, void* target,
             if (((BattleObjAccessor*)attacker)->field_3f00 & 0x2) {
                 f32 f2 = atkParam->field_24;
                 f32 f1 = atkParam->field_28 - f2;
-                s32 d = (s32)(1.0f + f1);
+                s32 d = (s32)(lbl_eu_80666DD4 + f1);
                 u32 r4 = move->field_94;
                 r25 = (s32)((f32)(s32)r25 + f2) + (s32)(r4 % (u32)d);
             } else {
                 r5 = (s32)((f32)(s32)r5 *
-                           (f32)(s32)((move->field_94 % 21) + 90) / 100.0f);
+                           (f32)(s32)((move->field_94 % 21) + 90) /
+                           lbl_eu_80666E00);
             }
-            move->field_54 = (f32)(s32)(r25 - r26) * (f32)(s32)r5 / 100.0f;
+            move->field_54 =
+                (f32)(s32)(r25 - r26) * (f32)(s32)r5 / lbl_eu_80666E00;
 
             if (func_80148778((u8*)attacker + 8, 0xC8)) {
-                move->field_54 *= 0.5f;
+                move->field_54 *= lbl_eu_80666DE8;
             }
-            if (move->field_54 < 1.0f) move->field_54 = 1.0f;
+            if (move->field_54 < lbl_eu_80666DD4)
+                move->field_54 = lbl_eu_80666DD4;
             move->field_54 = move->field_54 - move->field_54 * f28;
             goto main_tail;
         }
@@ -5787,12 +6000,13 @@ extern "C" void func_800DCB54(void* self, void* attacker, void* target,
                 (f32)(s32)(r25 - r26) * (f32)(s32)r0 / 100.0f;       // 0x800DDBE4
 
             // 0x800DDBF0: clamp + apply ratio
-            if (move->field_54 < 1.0f) move->field_54 = 1.0f;
+            if (move->field_54 < lbl_eu_80666DD4)
+                move->field_54 = lbl_eu_80666DD4;
             move->field_54 = move->field_54 - move->field_54 * f28;
 
             // 0x800DDC10: 0x93 -> field_58 += 0.5 ; 0xC0 -> += val/10 - 1
             if (func_80148778((u8*)attacker + 8, 0x93)) {
-                move->field_58 += 0.5f;
+                move->field_58 += lbl_eu_80666DE8;
             }
             if (func_80148778((u8*)attacker + 8, 0xC0)) {
                 void* entry = func_80149154((u8*)attacker + 8, 0xC0);
@@ -6532,9 +6746,207 @@ post_dispatch:;
     // 0x800E1388 epilogue: restore + blr (void return)
 }
 
-extern "C" void func_800E08E8(void* self, void* arg1, void* arg2, void* move);
 extern f64 lbl_eu_80666E08;   // 0x4330000000000000 sibling magic
 extern f32 lbl_eu_80666E24;   // 0.15f
+
+// C-linkage route: retail references func_800D7D24 by its unmangled symbol.
+extern "C" s32 func_800D7D24(void*);
+
+// Status-list entry overlay (func_80149154 result): flags word +0x08,
+// payload word +0x10, tick s16 +0x14, aux s16 +0x1A.
+struct E08E8_StatusEntry {
+    u8 pad00[0x08];
+    u32 w08;
+    u32 pad0C;
+    s32 w10;
+    s16 s14;
+    u8 pad16[0x1A - 0x16];
+    s16 s1A;
+};
+
+// Move-state block overlay carried in arg4.
+struct E08E8_Move {
+    u8 pad00[0x50];
+    void* subObj;   // +0x50 arts sub-object
+    f32 f54;
+    f32 f58;
+    f32 f5C;
+    f32 f60;
+    f32 f64;
+    f32 f68;
+    u8 pad6C[0x70 - 0x6C];
+    s16 s70;
+    s16 s72;
+    u32 w74;
+    u32 w78;
+    u8 pad7C[0xA8 - 0x7C];
+    u32 wA8;
+};
+
+// Battle-object overlay (attacker/target views).
+struct E08E8_Actor {
+    u8 pad00[0x08];
+    u8 statusBase;                    // +0x08 status list root
+    u8 pad09[0x3374 - 0x09];
+    u32 w3374;
+    u8 pad78[0x3E9C - 0x3378];
+    u8 moveSub;                       // +0x3E9C embedded move sub-object
+    u8 padA0[0x3F10 - 0x3EA0];
+    void* ptr3F10;
+};
+
+// Arts sub-object overlay (the pointer at move->0x50).
+struct E08E8_SubObj {
+    u8 pad00[0x3C];
+    u16 u3C;
+    u8 pad3E[0x44 - 0x3E];
+    u8 b44;
+    u8 pad45[0x48 - 0x45];
+    u16 u48;
+    s16 s4A;
+    s16 s4C;
+    u8 pad4E[0x50 - 0x4E];
+    f32 f50;
+    f32 f54;
+    u8 pad58[0x66 - 0x58];
+    u8 b66;
+    u8 b67;
+    s16 s68;
+    s16 s6A;
+    u8 pad6C[0x6E - 0x6C];
+    u8 b6E;
+    u8 b6F;
+    u8 pad70[0x78 - 0x70];
+    u32 w78;
+    u8 pad7C[0x84 - 0x7C];
+    void* vt84;
+};
+
+// Actor vtable mirror exposing exactly the slots retail dispatches through
+// (0xE0/0x128/0x12C/0x130/0x224/0x290/0x2A8/0x2BC/0x5C0); the placeholder
+// slots keep MWCC's dispatch routed through r12 like retail.
+struct E08E8_Vt {
+    virtual ~E08E8_Vt() {}
+    virtual void q008(); virtual void q00C(); virtual void q010(); virtual void q014();
+    virtual void q018(); virtual void q01C(); virtual void q020(); virtual void q024();
+    virtual void q028(); virtual void q02C(); virtual void q030(); virtual void q034();
+    virtual void q038(); virtual void q03C(); virtual void q040(); virtual void q044();
+    virtual void q048(); virtual void q04C(); virtual void q050(); virtual void q054();
+    virtual void q058(); virtual void q05C(); virtual void q060(); virtual void q064();
+    virtual void q068(); virtual void q06C(); virtual void q070(); virtual void q074();
+    virtual void q078(); virtual void q07C(); virtual void q080(); virtual void q084();
+    virtual void q088(); virtual void q08C(); virtual void q090(); virtual void q094();
+    virtual void q098(); virtual void q09C(); virtual void q0A0(); virtual void q0A4();
+    virtual void q0A8(); virtual void q0AC(); virtual void q0B0(); virtual void q0B4();
+    virtual void q0B8(); virtual void q0BC(); virtual void q0C0(); virtual void q0C4();
+    virtual void q0C8(); virtual void q0CC(); virtual void q0D0(); virtual void q0D4();
+    virtual void q0D8(); virtual void q0DC();
+    virtual s32 vE0();
+    virtual void q0E4(); virtual void q0E8(); virtual void q0EC(); virtual void q0F0();
+    virtual void q0F4(); virtual void q0F8(); virtual void q0FC(); virtual void q100();
+    virtual void q104(); virtual void q108(); virtual void q10C(); virtual void q110();
+    virtual void q114(); virtual void q118(); virtual void q11C(); virtual void q120();
+    virtual void q124();
+    virtual f32 v128();
+    virtual f32 v12C();
+    virtual f32 v130();
+    virtual void q134(); virtual void q138(); virtual void q13C(); virtual void q140();
+    virtual void q144(); virtual void q148(); virtual void q14C(); virtual void q150();
+    virtual void q154(); virtual void q158(); virtual void q15C(); virtual void q160();
+    virtual void q164(); virtual void q168(); virtual void q16C(); virtual void q170();
+    virtual void q174(); virtual void q178(); virtual void q17C(); virtual void q180();
+    virtual void q184(); virtual void q188(); virtual void q18C(); virtual void q190();
+    virtual void q194(); virtual void q198(); virtual void q19C(); virtual void q1A0();
+    virtual void q1A4(); virtual void q1A8(); virtual void q1AC(); virtual void q1B0();
+    virtual void q1B4(); virtual void q1B8(); virtual void q1BC(); virtual void q1C0();
+    virtual void q1C4(); virtual void q1C8(); virtual void q1CC(); virtual void q1D0();
+    virtual void q1D4(); virtual void q1D8(); virtual void q1DC(); virtual void q1E0();
+    virtual void q1E4(); virtual void q1E8(); virtual void q1EC(); virtual void q1F0();
+    virtual void q1F4(); virtual void q1F8(); virtual void q1FC(); virtual void q200();
+    virtual void q204(); virtual void q208(); virtual void q20C(); virtual void q210();
+    virtual void q214(); virtual void q218(); virtual void q21C(); virtual void q220();
+    virtual void v224();
+    virtual void q228(); virtual void q22C(); virtual void q230(); virtual void q234();
+    virtual void q238(); virtual void q23C(); virtual void q240(); virtual void q244();
+    virtual void q248(); virtual void q24C(); virtual void q250(); virtual void q254();
+    virtual void q258(); virtual void q25C(); virtual void q260(); virtual void q264();
+    virtual void q268(); virtual void q26C(); virtual void q270(); virtual void q274();
+    virtual void q278(); virtual void q27C(); virtual void q280(); virtual void q284();
+    virtual void q288();
+    virtual s32 v290();
+    virtual void q294(); virtual void q298(); virtual void q29C(); virtual void q2A0();
+    virtual void q2A4();
+    virtual s32 v2A8();
+    virtual void q2AC(); virtual void q2B0(); virtual void q2B4(); virtual void q2B8();
+    virtual s32 v2BC();
+    virtual void q2C0(); virtual void q2C4(); virtual void q2C8(); virtual void q2CC();
+    virtual void q2D0(); virtual void q2D4(); virtual void q2D8(); virtual void q2DC();
+    virtual void q2E0(); virtual void q2E4(); virtual void q2E8(); virtual void q2EC();
+    virtual void q2F0(); virtual void q2F4(); virtual void q2F8(); virtual void q2FC();
+    virtual void q300(); virtual void q304(); virtual void q308(); virtual void q30C();
+    virtual void q310(); virtual void q314(); virtual void q318(); virtual void q31C();
+    virtual void q320(); virtual void q324(); virtual void q328(); virtual void q32C();
+    virtual void q330(); virtual void q334(); virtual void q338(); virtual void q33C();
+    virtual void q340(); virtual void q344(); virtual void q348(); virtual void q34C();
+    virtual void q350(); virtual void q354(); virtual void q358(); virtual void q35C();
+    virtual void q360(); virtual void q364(); virtual void q368(); virtual void q36C();
+    virtual void q370(); virtual void q374(); virtual void q378(); virtual void q37C();
+    virtual void q380(); virtual void q384(); virtual void q388(); virtual void q38C();
+    virtual void q390(); virtual void q394(); virtual void q398(); virtual void q39C();
+    virtual void q3A0(); virtual void q3A4(); virtual void q3A8(); virtual void q3AC();
+    virtual void q3B0(); virtual void q3B4(); virtual void q3B8(); virtual void q3BC();
+    virtual void q3C0(); virtual void q3C4(); virtual void q3C8(); virtual void q3CC();
+    virtual void q3D0(); virtual void q3D4(); virtual void q3D8(); virtual void q3DC();
+    virtual void q3E0(); virtual void q3E4(); virtual void q3E8(); virtual void q3EC();
+    virtual void q3F0(); virtual void q3F4(); virtual void q3F8(); virtual void q3FC();
+    virtual void q400(); virtual void q404(); virtual void q408(); virtual void q40C();
+    virtual void q410(); virtual void q414(); virtual void q418(); virtual void q41C();
+    virtual void q420(); virtual void q424(); virtual void q428(); virtual void q42C();
+    virtual void q430(); virtual void q434(); virtual void q438(); virtual void q43C();
+    virtual void q440(); virtual void q444(); virtual void q448(); virtual void q44C();
+    virtual void q450(); virtual void q454(); virtual void q458(); virtual void q45C();
+    virtual void q460(); virtual void q464(); virtual void q468(); virtual void q46C();
+    virtual void q470(); virtual void q474(); virtual void q478(); virtual void q47C();
+    virtual void q480(); virtual void q484(); virtual void q488(); virtual void q48C();
+    virtual void q490(); virtual void q494(); virtual void q498(); virtual void q49C();
+    virtual void q4A0(); virtual void q4A4(); virtual void q4A8(); virtual void q4AC();
+    virtual void q4B0(); virtual void q4B4(); virtual void q4B8(); virtual void q4BC();
+    virtual void q4C0(); virtual void q4C4(); virtual void q4C8(); virtual void q4CC();
+    virtual void q4D0(); virtual void q4D4(); virtual void q4D8(); virtual void q4DC();
+    virtual void q4E0(); virtual void q4E4(); virtual void q4E8(); virtual void q4EC();
+    virtual void q4F0(); virtual void q4F4(); virtual void q4F8(); virtual void q4FC();
+    virtual void q500(); virtual void q504(); virtual void q508(); virtual void q50C();
+    virtual void q510(); virtual void q514(); virtual void q518(); virtual void q51C();
+    virtual void q520(); virtual void q524(); virtual void q528(); virtual void q52C();
+    virtual void q530(); virtual void q534(); virtual void q538(); virtual void q53C();
+    virtual void q540(); virtual void q544(); virtual void q548(); virtual void q54C();
+    virtual void q550(); virtual void q554(); virtual void q558(); virtual void q55C();
+    virtual void q560(); virtual void q564(); virtual void q568(); virtual void q56C();
+    virtual void q570(); virtual void q574(); virtual void q578(); virtual void q57C();
+    virtual void q580(); virtual void q584(); virtual void q588(); virtual void q58C();
+    virtual void q590(); virtual void q594(); virtual void q598(); virtual void q59C();
+    virtual void q5A0(); virtual void q5A4(); virtual void q5A8(); virtual void q5AC();
+    virtual void q5B0(); virtual void q5B4(); virtual void q5B8(); virtual void q5BC();
+    virtual s32 v5C0(void* actor);
+};
+
+// Vtable of the object at *(subObj->vt84): value slot 0xC.
+struct E08E8_SubVtIf {
+    virtual void y000();
+    virtual void y004();
+    virtual void y008();
+    virtual s32 v0C();
+};
+
+// Vtable of the embedded move sub-object at actor+0x3E9C: id slot 0x4C.
+struct E08E8_MoveSubVtIf {
+    virtual void m000(); virtual void m004(); virtual void m008(); virtual void m00C();
+    virtual void m010(); virtual void m014(); virtual void m018(); virtual void m01C();
+    virtual void m020(); virtual void m024(); virtual void m028(); virtual void m02C();
+    virtual void m030(); virtual void m034(); virtual void m038(); virtual void m03C();
+    virtual void m040(); virtual void m044(); virtual void m048();
+    virtual void* v4C();
+};
 
 // func_800E08E8 (retail 0x800E13D0, 0x125C bytes): battle-event emission and
 // move-state update shared by the move-type dispatchers. Resolves the event
@@ -6555,7 +6967,8 @@ struct E08E8_EventData {
     f32  v24;       // +0x24 float
 };
 
-void func_800E08E8(void* self, void* arg1, void* arg2, void* move) {
+// Superseded draft kept as dead code (never called; dropped by the linker).
+static void func_800E08E8_stale(void* self, void* arg1, void* arg2, void* move) {
     if (arg2 == nullptr) return;
 
     // 0xF7 status + 0x5C0 self-target check: when no confirmation is pending
@@ -7073,6 +7486,492 @@ afterCounter:
     }
 }
 
+// func_800E08E8 (retail 0x800E13D0, 0x125C bytes): battle-event emission and
+// move-state update shared by the move-type dispatchers. Resolves the event
+// source via the 0xF7 status / 0x5C0 self-check, runs the arts-type jump
+// table, emits events through func_800EAA2C, then applies counter / dot /
+// proc-rate damage math on the move block.
+void func_800E08E8(void* self_, void* attacker_, void* target_, void* move_) {
+    // Two int->float conversion slots (Gekko 2^52-bias trick). Only the
+    // sign-flipped low words change per conversion; the 0x43300000 high words
+    // are written once up front and both slots stay live for the whole body.
+    cf::CfActorF64Conv cvtA;
+    cvtA.w[0] = 0x43300000;
+
+    void* self = self_;          // r26
+    void* attacker = attacker_;  // r27
+    void* target = target_;      // r28
+
+    cf::CfActorF64Conv cvtB;
+    cvtB.w[0] = 0x43300000;
+
+    E08E8_Move* move = (E08E8_Move*)move_;   // r29
+
+    if (target == nullptr) return;
+
+    if (!(move->w74 & 0x08)) {
+        if (func_80148778(&((E08E8_Actor*)target)->statusBase, 0xF7)) {
+            if (((E08E8_Vt*)target)->v5C0(attacker) == 0) {
+                func_80149154(&((E08E8_Actor*)target)->statusBase, 0xF7);
+                if ((move->w78 & 0x200) ||
+                    ((move->w78 & 0x400) && !(move->w78 & 0x800))) {
+                    move->w74 |= 0x80000080;
+                }
+            }
+        }
+    }
+
+    move->f60 = lbl_eu_80666DDC;
+    E08E8_SubObj* subObj = (E08E8_SubObj*)move->subObj;   // r31
+    move->f64 = lbl_eu_80666DDC;
+    ((E08E8_Vt*)attacker)->v224();
+    ((E08E8_Vt*)target)->v224();
+
+    s32 hit;
+    if (move->w74 & 0x08) {
+        if (!(subObj->w78 & 0x800)) goto lateBlock;
+    }
+    hit = 0;
+    if (subObj->w78 & 0x2000) {
+        if (subObj->b44 != (u8)(((E08E8_Vt*)attacker)->v2A8() + 1)) {
+            goto lateBlock;
+        }
+    }
+
+    // Arts-type jump table (byte +0x66 of the sub-object).
+    switch (subObj->b66) {
+    case 0x00:
+        if (((E08E8_Actor*)attacker)->w3374 & 0x8000) {
+            s32 e0 = ((E08E8_Vt*)target)->vE0();
+            if (e0 == 1 || e0 == 2) hit = 1;
+        } else {
+            if (((E08E8_Vt*)target)->vE0() == 1) hit = 1;
+        }
+        break;
+    case 0x01:
+        if (((E08E8_Vt*)target)->vE0() == 3) hit = 1;
+        break;
+    case 0x02:
+        if (move->w74 & 0x01000000) hit = 1;
+        break;
+    case 0x03:
+        if (move->w74 & 0x04000000) hit = 1;
+        break;
+    case 0x04:
+        if (move->w74 & 0x02000000) hit = 1;
+        break;
+    case 0x05:
+        if (func_80148778(&((E08E8_Actor*)attacker)->statusBase, 0xC1)) hit = 1;
+        break;
+    case 0x06:
+        if (func_80148778(&((E08E8_Actor*)target)->statusBase, 0x10)) hit = 1;
+        break;
+    case 0x07:
+        if (func_80148778(&((E08E8_Actor*)target)->statusBase, 0x0F)) hit = 1;
+        break;
+    case 0x08:
+        if (((E08E8_MoveSubVtIf*)&((E08E8_Actor*)target)->moveSub)->v4C() ==
+            ((E08E8_Actor*)attacker)->ptr3F10) {
+            hit = 1;
+        }
+        break;
+    case 0x09:
+        if (move->f5C >= ((E08E8_Vt*)target)->v128()) hit = 1;
+        break;
+    case 0x0A:
+        if (subObj->b67 != 0) hit = 1;
+        break;
+    case 0x0B:
+        if ((u16)func_8016DF2C() == (u16)(subObj->b66 - 0x0A)) hit = 1;
+        break;
+    case 0x0C:
+        if (move->w74 & 0x04000000) {
+            s32 e0 = ((E08E8_Vt*)target)->vE0();
+            if (e0 == 1 || e0 == 2) hit = 1;
+        }
+        break;
+    case 0x0D:
+        if (((E08E8_Vt*)target)->v130() < lbl_eu_80666E24) hit = 1;
+        break;
+    default:
+        break;
+    }
+
+postSwitch:
+    if (subObj->w78 & 0x800) {
+        if (func_800D7D24((void*)move) == 0) hit = 0;
+    }
+    if (!(move->w74 & 0x10000000)) {
+        move->f5C = move->f54 * move->f58;
+    }
+
+    if (hit == 0) goto lateBlock;
+
+    {
+        // ---- event emission (dispatch on subObj->0x67) ----
+        E08E8_EventData ev;
+        std::memset(&ev, 0, sizeof(ev));
+        switch (subObj->b67) {
+        case 0x03: {
+            // HP adjustment path: no event broadcast, just the move update.
+            if (move->w78 & 0x10) break;
+            cvtA.w[1] = (u32)(subObj->s68 - 1) ^ 0x80000000;
+            move->f58 = move->f58 + (f32)(cvtA.d - lbl_eu_80666DE0);
+            move->f5C = move->f54 * move->f58;
+            if (((E08E8_Vt*)attacker)->v290() != 0) {
+                void* chain = (void*)((E08E8_Vt*)attacker)->v290();
+                if (func_8026178C(chain, 0x9C) != 0) {
+                    if (subObj->b66 == 3) {
+                        move->f58 = move->f58 + lbl_eu_80666DD4;
+                    }
+                }
+            }
+            break;
+        }
+        case 0x07:
+            ev.v00 = (u32)((E08E8_Actor*)attacker)->ptr3F10;
+            ev.v04 = (u32)subObj;
+            ev.v0C = 0x10;
+            ev.v10 = 0;
+            ev.v24 = lbl_eu_80666DDC;
+            cvtB.w[1] = (u32)subObj->s68 ^ 0x80000000;
+            ev.v20 = (f32)(cvtB.d - lbl_eu_80666DE0);
+            if (subObj->w78 & 0x1000) {
+                func_800EAA2C(self, attacker, attacker, &ev, move);
+            } else {
+                func_800EAA2C(self, attacker, target, &ev, move);
+            }
+            break;
+        case 0x08:
+            ev.v00 = (u32)((E08E8_Actor*)attacker)->ptr3F10;
+            ev.v04 = (u32)subObj;
+            ev.v0C = 0x0F;
+            ev.v10 = 0;
+            ev.v24 = lbl_eu_80666DDC;
+            cvtB.w[1] = (u32)subObj->s68 ^ 0x80000000;
+            ev.v20 = (f32)(cvtB.d - lbl_eu_80666DE0);
+            if (subObj->w78 & 0x1000) {
+                func_800EAA2C(self, attacker, attacker, &ev, move);
+            } else {
+                func_800EAA2C(self, attacker, target, &ev, move);
+            }
+            break;
+        case 0x0B: {
+            // Broadcast to every enumerated actor except the target.
+            ev.v00 = (u32)((E08E8_Actor*)attacker)->ptr3F10;
+            ev.v04 = (u32)subObj;
+            ev.v0C = 0x10;
+            ev.v10 = 3;
+            ev.v20 = lbl_eu_80666E68;
+            ev.v24 = lbl_eu_80666DDC;
+            EnumListHolder holder;
+            func_80043D90(&holder);
+            func_800F4A98(func_80043F18(&holder), 0x8000, 0);
+            for (u32 i = 0; i < ((cf::CVisionEnumList*)func_80043F18(&holder))->count; i++) {
+                void* o = func_8016FE34(func_800F6EAC(func_80043F18(&holder), i));
+                if (o != target) {
+                    func_800EAA2C(self, attacker, o, &ev, move);
+                }
+            }
+            __dt__80043E88(&holder, -1);
+            break;
+        }
+        case 0x0D:
+            ev.v00 = (u32)((E08E8_Actor*)attacker)->ptr3F10;
+            ev.v04 = (u32)subObj;
+            ev.v0C = 0x10;
+            ev.v10 = 3;
+            ev.v20 = lbl_eu_80666E68;
+            ev.v24 = lbl_eu_80666DDC;
+            func_800EAA2C(self, attacker, target, &ev, move);
+            break;
+        case 0x06:
+            ev.v00 = (u32)((E08E8_Actor*)attacker)->ptr3F10;
+            ev.v04 = (u32)subObj;
+            ev.v0C = 0xDC;
+            ev.v10 = (u32)subObj->s68;
+            if (subObj->w78 & 0x1000) {
+                func_800EAA2C(self, attacker, attacker, &ev, move);
+            } else {
+                func_800EAA2C(self, attacker, target, &ev, move);
+            }
+            break;
+        case 0x01: {
+            ev.v00 = (u32)((E08E8_Actor*)attacker)->ptr3F10;
+            ev.v04 = (u32)subObj;
+            ev.v0C = (u16)subObj->s68;
+            ev.v10 = (u32)subObj->s6A;
+            s32 sv = ((E08E8_SubVtIf*)subObj->vt84)->v0C() - 1;
+            cvtA.w[1] = (u32)subObj->b6E ^ 0x80000000;
+            f32 t1 = (f32)(cvtA.d - lbl_eu_80666E08);
+            cvtB.w[1] = (u32)sv ^ 0x80000000;
+            f32 t2 = (f32)(cvtB.d - lbl_eu_80666DE0);
+            ev.v20 = subObj->f50 + t1 / lbl_eu_80666E34 * t2;
+            ev.v24 = subObj->f54;
+            if (subObj->w78 & 0x1000) {
+                func_800EAA2C(self, attacker, attacker, &ev, move);
+            } else {
+                func_800EAA2C(self, attacker, target, &ev, move);
+            }
+            break;
+        }
+        default:
+            break;
+        }
+    }
+
+lateBlock:
+    if (!(move->w74 & 0x10000000)) {
+        move->f5C = move->f54 * move->f58;
+    }
+
+    // Second sub-object event block (+0x48 id).
+    if (move->w74 & 0x08) {
+        if (!(subObj->w78 & 0x400)) goto tail2;
+    }
+    if (subObj->w78 & 0x2000) {
+        if (subObj->b44 != (u8)(((E08E8_Vt*)attacker)->v2A8() + 1)) goto tail2;
+    }
+    if (subObj->u48 == 0) goto tail2;
+
+    {
+        E08E8_EventData ev2;
+        std::memset(&ev2, 0, sizeof(ev2));
+        ev2.v00 = (u32)((E08E8_Actor*)attacker)->ptr3F10;
+        ev2.v04 = (u32)subObj;
+        ev2.v0C = subObj->u48;
+        s32 sv2 = ((E08E8_SubVtIf*)subObj->vt84)->v0C() - 1;
+        ev2.v10 = (u32)subObj->s4A + (u32)subObj->b6F * (u32)sv2;
+        ev2.v14 = (u16)subObj->s4C;
+        cvtA.w[1] = (u32)subObj->b6E ^ 0x80000000;
+        f32 u1 = (f32)(cvtA.d - lbl_eu_80666E08);
+        cvtB.w[1] = (u32)sv2 ^ 0x80000000;
+        f32 u2 = (f32)(cvtB.d - lbl_eu_80666DE0);
+        ev2.v20 = subObj->f50 + u1 / lbl_eu_80666E34 * u2;
+        ev2.v24 = subObj->f54;
+        if (subObj->w78 & 0x400) {
+            func_800EAA2C(self, attacker, attacker, &ev2, move);
+        } else {
+            func_800EAA2C(self, attacker, target, &ev2, move);
+        }
+    }
+
+tail2:
+    // Counter damage gate: protect against hitting an already-active enemy.
+    {
+        s32 cnt = 0;
+        f32 csum = move->f5C + move->f60;
+        if (csum >= 0.0f && !(move->w74 & 0x80)) {
+            cnt = (s32)((f64)csum + (csum <= 0.0f ? lbl_eu_80666E60 : lbl_eu_80666E58));
+        }
+        if (cnt > 0) {
+            if (!(move->w74 & 0x10000000)) {
+                if (func_80148778(&((E08E8_Actor*)target)->statusBase, 0xF7)) {
+                    if (((E08E8_Vt*)target)->v5C0(attacker) == 0) {
+                        if ((move->w78 & 0x200) ||
+                            ((move->w78 & 0x400) && !(move->w78 & 0x800))) {
+                            move->w74 |= 0x80000080;
+                        }
+                    }
+                }
+            }
+            if ((move->w74 & 0x8000) || !(move->w78 & 0x8000)) {
+                if (!func_80148778(&((E08E8_Actor*)target)->statusBase, 0x33)) {
+                    goto dotBlock;
+                }
+                E08E8_StatusEntry* entry = (E08E8_StatusEntry*)func_80149154(
+                    &((E08E8_Actor*)target)->statusBase, 0x33);
+                if (entry == nullptr) goto dotBlock;
+
+                if (move->w78 & 0x04000000) {
+                    // per-hit counter bleed tracked in move->s72
+                    s16 steps = entry->s14;
+                    if (steps <= 0) goto dotBlock;
+                    if (move->s72 == -1) goto dotBlock;
+                    if (move->s72 == 0) {
+                        move->s72 = steps;
+                    }
+                    s32 cnt2 = 0;
+                    f32 s2 = move->f5C + move->f60;
+                    if (s2 >= 0.0f && !(move->w74 & 0x80)) {
+                        cnt2 = (s32)((f64)s2 + (s2 <= 0.0f ? lbl_eu_80666E60 : lbl_eu_80666E58));
+                    }
+                    cvtB.w[1] = (u32)cnt2 ^ 0x80000000;
+                    cvtA.w[1] = (u32)(s16)move->s72 ^ 0x80000000;
+                    move->f64 = (f32)(cvtB.d - lbl_eu_80666DE0);
+                    f32 dec = move->f5C - (f32)(cvtA.d - lbl_eu_80666DE0);
+                    f32 news = dec + move->f60;
+                    move->f5C = dec;
+                    move->w74 |= 0x80008000;
+                    s32 cnt3 = 0;
+                    if (news >= 0.0f && !(move->w74 & 0x80)) {
+                        cnt3 = (s32)((f64)news + (news <= 0.0f ? lbl_eu_80666E60 : lbl_eu_80666E58));
+                    }
+                    if (cnt3 > 0) {
+                        move->s72 = -1;
+                        move->w78 |= 0x40008000;
+                    } else {
+                        move->s72 = (s16)(s32)-move->f5C;
+                    }
+                } else {
+                    s16 steps = entry->s14;
+                    if (steps <= 0) goto dotBlock;
+                    s32 cntB = 0;
+                    f32 sB = move->f5C + move->f60;
+                    if (sB >= 0.0f && !(move->w74 & 0x80)) {
+                        cntB = (s32)((f64)sB + (sB <= 0.0f ? lbl_eu_80666E60 : lbl_eu_80666E58));
+                    }
+                    cvtB.w[1] = (u32)cntB ^ 0x80000000;
+                    move->f64 = (f32)(cvtB.d - lbl_eu_80666DE0);
+                    cvtA.w[1] = (u32)steps ^ 0x80000000;
+                    move->w74 |= 0x80008000;
+                    move->f5C = move->f5C - (f32)(cvtA.d - lbl_eu_80666DE0);
+                }
+            }
+        }
+    }
+
+dotBlock:
+    {
+        // Arts-type 3 dot/regeneration block.
+        if (subObj->u3C != 3) return;
+        s32 dv = 0;
+        f32 ds = move->f5C + move->f60;
+        if (ds >= 0.0f && !(move->w74 & 0x80)) {
+            dv = (s32)((f64)ds + (ds <= 0.0f ? lbl_eu_80666E60 : lbl_eu_80666E58));
+        }
+        if (dv <= 0) return;
+
+        if (!(move->w78 & 0x10)) {
+            cvtB.w[1] = (u32)dv ^ 0x80000000;
+            move->f68 = move->f68 - (f32)(cvtB.d - lbl_eu_80666DE0);
+        }
+        if (move->w78 & 0x1000) goto finalClamp;
+        if (((E08E8_Vt*)target)->v2BC() != 0) goto finalClamp;
+
+        // 0x92 proc-rate block.
+        if (func_80148778(&((E08E8_Actor*)target)->statusBase, 0x92)) {
+            s32 bonus = 0;
+            if (func_80148778(&((E08E8_Actor*)target)->statusBase, 0xA1)) {
+                bonus = ((E08E8_StatusEntry*)func_80149154(
+                    &((E08E8_Actor*)target)->statusBase, 0xA1))->w10;
+            }
+            E08E8_StatusEntry* e92 = (E08E8_StatusEntry*)func_80149154(
+                &((E08E8_Actor*)target)->statusBase, 0x92);
+            if (e92 != nullptr && move->f68 <= 0.0f) {
+                s32 need = e92->w10;
+                if (e92->w08 == 0x2000) need += bonus;
+                if ((s32)(move->wA8 % 100) < need) {
+                    move->w74 |= 0xA0000000;
+                    move->f68 = lbl_eu_80666DD4;
+                }
+            }
+        }
+        if (!(move->w78 & 0x2000)) {
+            // 0xFC fixed-rate bleed.
+            if (func_80148778(&((E08E8_Actor*)target)->statusBase, 0xFC)) {
+                E08E8_StatusEntry* eFC = (E08E8_StatusEntry*)func_80149154(
+                    &((E08E8_Actor*)target)->statusBase, 0xFC);
+                if (eFC != nullptr && move->f68 <= 0.0f) {
+                    move->w78 |= 0x40002000;
+                    f32 mult = ((E08E8_Vt*)target)->v12C();
+                    cvtA.w[1] = (u32)eFC->w10 ^ 0x80000000;
+                    move->f68 = move->f68 *
+                        ((f32)(cvtA.d - lbl_eu_80666DE0) * mult);
+                }
+            }
+        }
+        if (!(move->w78 & 0x2000)) {
+            // 0x100 fixed-rate bleed.
+            if (func_80148778(&((E08E8_Actor*)target)->statusBase, 0x100)) {
+                E08E8_StatusEntry* e100 = (E08E8_StatusEntry*)func_80149154(
+                    &((E08E8_Actor*)target)->statusBase, 0x100);
+                if (e100 != nullptr && move->f68 <= 0.0f) {
+                    move->w78 |= 0x40002000;
+                    f32 mult = ((E08E8_Vt*)target)->v12C();
+                    cvtB.w[1] = (u32)e100->w10 ^ 0x80000000;
+                    move->f68 = move->f68 *
+                        ((f32)(cvtB.d - lbl_eu_80666DE0) * mult);
+                }
+            }
+        }
+        if (!(move->w78 & 0x4000)) {
+            // 0x36 growth block.
+            if (func_80148778(&((E08E8_Actor*)target)->statusBase, 0x36)) {
+                E08E8_StatusEntry* e36 = (E08E8_StatusEntry*)func_80149154(
+                    &((E08E8_Actor*)target)->statusBase, 0x36);
+                if (e36 != nullptr && move->f68 > 0.0f) {
+                    s32 v36 = e36->w10;
+                    func_800D81A8(nullptr, target, nullptr);
+                    cvtA.w[1] = (u32)v36 ^ 0x80000000;
+                    f32 fv = (f32)(cvtA.d - lbl_eu_80666DE0);
+                    f32 prod = fv * move->f68;
+                    cvtB.w[1] = (u32)(s32)prod ^ 0x80000000;
+                    move->f68 = move->f68 + (f32)(cvtB.d - lbl_eu_80666DE0);
+                }
+            }
+        }
+        // 0x37 proc-rate block (same shape as 0x92).
+        if (func_80148778(&((E08E8_Actor*)target)->statusBase, 0x37)) {
+            s32 bonus = 0;
+            if (func_80148778(&((E08E8_Actor*)target)->statusBase, 0xA1)) {
+                bonus = ((E08E8_StatusEntry*)func_80149154(
+                    &((E08E8_Actor*)target)->statusBase, 0xA1))->w10;
+            }
+            E08E8_StatusEntry* e37 = (E08E8_StatusEntry*)func_80149154(
+                &((E08E8_Actor*)target)->statusBase, 0x37);
+            if (e37 != nullptr && move->f68 > 0.0f) {
+                s32 need = e37->s1A;
+                if (e37->w08 == 0x2000) need += bonus;
+                if ((s32)(move->wA8 % 100) < need) {
+                    s32 v37 = e37->w10;
+                    func_800D81A8(nullptr, target, nullptr);
+                    cvtA.w[1] = (u32)v37 ^ 0x80000000;
+                    f32 fv = (f32)(cvtA.d - lbl_eu_80666DE0);
+                    f32 prod = fv * move->f68;
+                    cvtB.w[1] = (u32)(s32)prod ^ 0x80000000;
+                    move->f68 = move->f68 + (f32)(cvtB.d - lbl_eu_80666DE0);
+                }
+            }
+        }
+        if (!(move->w78 & 0x4000)) {
+            // 0x11E protection block.
+            if (func_80148778(&((E08E8_Actor*)target)->statusBase, 0x11E)) {
+                E08E8_StatusEntry* e11E = (E08E8_StatusEntry*)func_80149154(
+                    &((E08E8_Actor*)target)->statusBase, 0x11E);
+                if (e11E != nullptr && move->f68 > 0.0f) {
+                    f32 mult = ((E08E8_Vt*)target)->v12C();
+                    cvtA.w[1] = (u32)e11E->s14 ^ 0x80000000;
+                    f32 fsm = (f32)(cvtA.d - lbl_eu_80666DE0);
+                    s32 q1 = (s32)((fsm * mult) / lbl_eu_80666E00);
+                    func_800D81A8(nullptr, target, nullptr);
+                    cvtB.w[1] = (u32)q1 ^ 0x80000000;
+                    f32 prod2 = (f32)(cvtB.d - lbl_eu_80666DE0) * (fsm * mult);
+                    cvtA.w[1] = (u32)(s32)prod2 ^ 0x80000000;
+                    move->f68 = move->f68 + (f32)(cvtA.d - lbl_eu_80666DE0);
+                    if (e11E->w10 > 0) {
+                        if (move->s70 == 0) {
+                            move->s70 = (s16)e11E->w10;
+                        }
+                        s32 tick = move->s70 - 1;
+                        move->s70 = (s16)tick;
+                        if (tick <= 0) {
+                            move->s70 = 0;
+                            move->w78 |= 0x40004000;
+                        }
+                    }
+                }
+            }
+        }
+    }
+
+finalClamp:
+    // Final clamp: move stays active until the accumulated dot drains.
+    if (move->f68 <= 0.0f) {
+        move->w78 |= 0x40001000;
+    }
+}
+
 // Field accessor over the move slot returned by the object's 0x298/0x29C
 // dispatch slots (never instantiated; overlay view only).
 struct E921SlotAcc {
@@ -7161,9 +8060,10 @@ struct BMVtMirror {
     virtual void f50(); virtual void f51(); virtual void f52(); virtual void f53();
     virtual void f54(); virtual void f55(); virtual void f56(); virtual void f57();
     virtual void f58(); virtual void f59(); virtual void f60(); virtual void f61();
-    virtual void f62(); virtual void f63(); virtual void f64();
+    virtual void f62(); virtual void f63(); virtual void v100();
     virtual void* v108();                          // i65 = 0x108
-    virtual void f66(); virtual void f67(); virtual void f68(); virtual void f69();
+    virtual void f66(); virtual void f67(); virtual void f68();
+    virtual void v118(f32 f);                      // i69 = 0x118
     virtual void f70(); virtual void f71(); virtual void f72();
     virtual f32 v128();                            // i73 = 0x128
     virtual void f74(); virtual void f75(); virtual void f76(); virtual void f77();
@@ -7197,14 +8097,15 @@ struct BMVtMirror {
     virtual void f164();
     virtual void* v298();                          // i165 = 0x298
     virtual void* v29C(u32 idx);                   // i166 = 0x29C
-    virtual void f167();
+    virtual void* v2A0();                          // i167 = 0x2A0
     virtual void* v2A4();                          // i168 = 0x2A4
     virtual s32 v2A8();                            // i169 = 0x2A8
     virtual void v2AC();                           // i170 = 0x2AC
     virtual void f171();
     virtual void v2B4();                           // i172 = 0x2B4
     virtual void v2B8();                           // i173 = 0x2B8
-    virtual void f174(); virtual void f175(); virtual void f176(); virtual void f177();
+    virtual s32 v2BC();                            // i174 = 0x2BC
+    virtual void f175(); virtual void f176(); virtual void f177();
     virtual void f178(); virtual void f179(); virtual void f180(); virtual void f181();
     virtual void f182(); virtual void f183(); virtual void f184(); virtual void f185();
     virtual void f186(); virtual void f187(); virtual void f188(); virtual void f189();
@@ -7349,6 +8250,32 @@ void func_800E921C(void* self, void* actor, void* obj, f32* outDamage, s32* outF
     if (*outDamage < 0.0f) *outDamage = 0.0f;
     if (*outFlag > 1) *(f32*)((u8*)actor + 0x6C) = *outDamage;
 }
+// ---------------------------------------------------------------------------
+// AI action slot (0x20 bytes) installed via func_8014AC38. Byte-precise to the
+// retail store sequence (memset + 7 stores).
+// ---------------------------------------------------------------------------
+struct BattleAIActionSlot {
+    u32  unk00;         // 0x00
+    u8   pad04[2];      // 0x04
+    u8   b_06;          // 0x06 = 0x25
+    u8   pad07[6];      // 0x07
+    u8   b_0D;          // 0x0D = 0x54 / 0x55
+    u8   b_0E;          // 0x0E = 0x64
+    u8   pad0F;         // 0x0F
+    u16  h_10;          // 0x10 = 0
+    s16  h_12;          // 0x12 = -1
+    f32  f_14;          // 0x14 = 0.0f
+    u8   pad18[8];      // 0x18
+};
+
+// Snapshot block laid out at sp+0xF4 in retail: the move-data copy, then the
+// target pointer (+0x1B0) and the action (+0x1B4) right behind it.
+struct E1B5C_Snapshot {
+    E921C_MoveData data;
+    void* target;
+    void* action;
+};
+
 // Workspace block handed to func_800DB0FC / func_800E2594 (retail lays it
 // out at sp+0x38). Field pattern: src words at +0x00..0x50, a zeroed float
 // pack at +0x54..0x64, damage/variance at +0x68/+0x6C, s16s at +0x70/+0x72,
@@ -7389,105 +8316,115 @@ extern "C" void func_802A1D04(void*, void*);
 extern "C" void func_800E2594(void*, void*, void*, void*);
 
 void func_800E1B5C(void* mgr, void* actor) {
-    void* src = ((void* (*)(void*))(*(void***)actor)[0x298 / 4])(actor);  // r30
-    void* dst = ((void* (*)(void*))(*(void***)actor)[0x2A0 / 4])(actor);
+    BMVtMirror* act = (BMVtMirror*)actor;
+    E1B5C_ObjView* av = (E1B5C_ObjView*)actor;
+
+    // NOTE: dst declared first - MWCC colors locals in declaration order and
+    // retail allocates it above src.
+    E921C_MoveData* dst;
+    E921C_MoveData* src = (E921C_MoveData*)act->v298();     // r30: move obj A
+    dst = (E921C_MoveData*)act->v2A0();                     // move obj B
 
     // Both move objects must name the same target id / sub-object.
-    if (*(u32*)((u8*)src + 0x48) != *(u32*)((u8*)dst + 0x48)) return;
-    if (*(u32*)((u8*)src + 0x50) != *(u32*)((u8*)dst + 0x50)) return;
-    if (*(u32*)((u8*)actor + 0x3F60) == 0) return;
+    if ((s32)src->w48 != (s32)dst->w48) return;
+    if (src->w50 != dst->w50) return;
+    if (av->field_3F60 == 0) return;
 
-    void* action = func_8016FE34(
-        (void*)(intptr_t)func_800B708C__Fi(*(s32*)((u8*)src + 4)));
+    BMVtMirror* action =
+        (BMVtMirror*)func_8016FE34(
+            (void*)(intptr_t)func_800B708C__Fi((s32)src->w04));
 
-    // Snapshot the full move block (retail: sp+0xF4..0x1AC) with the target
-    // pointer and action in the two words after it (sp+0x1B0/0x1B4).
-    E921C_MoveData copy;
-    *(E921C_MoveData*)&copy = *(const E921C_MoveData*)src;
-    void* targetPtr = *(void**)((u8*)src + 0x50);
-    void* actionSlot = action;
+    // Snapshot the full move block (sp+0xF4..0x1AC); the target pointer
+    // (sp+0x1B0) and the action (sp+0x1B4) sit right behind it.
+    E1B5C_Snapshot snap;
+    snap.target = (void*)src->w50;
+    snap.data = *src;
+    snap.action = action;
+    void* targetPtr = snap.target;
+    E921C_MoveData& copy = snap.data;
 
     if (action == nullptr) goto skipScan;
-    if (*(u32*)((u8*)action + 0x3F60) == 0) goto skipScan;
-
-    {
-        u32 fl = *(u32*)((u8*)action + 0x3F00);
-        if (!(fl & 0x04) && !(fl & 0x02)) return;
+    if (((E1B5C_ObjView*)action)->field_3F60 == 0) goto skipScan;
+    if ((((E1B5C_ObjView*)action)->field_3F00 & 0x4) == 0) {
+        if ((((E1B5C_ObjView*)action)->field_3F00 & 0x2) == 0) return;
     }
     if (targetPtr == nullptr) return;
 
-    // Broadcast path: the action is idle and the target has the 0x8000
-    // move flag set - poke every party member's 0x118 hook.
-    if (((s32 (*)(void*))(*(void***)action)[0x2BC / 4])(action) != 0) goto scan2;
-    getInstance__Q22cf13CfGameManagerFv();
-    if (func_8006EF04__Fi(0x400)) goto scan2;
-    if (!(*(u32*)((u8*)targetPtr + 0x78) & 0x8000)) goto scan2;
-    {
-        EnumListHolder holder;
-        func_80043D90(&holder);
-        func_800F4A98(func_80043F18(&holder), 0x20, 0);
-        for (u32 i = 0; i < *(u32*)((u8*)func_80043F18(&holder) + 0x620); i++) {
-            void* o = func_8016FE34(func_800F6EAC(func_80043F18(&holder), i));
-            ((void (*)(void*, f32))(*(void***)o)[0x118 / 4])(o, lbl_eu_80666DDC);
+    if (((BMVtMirror*)action)->v2BC() == 0) {
+        getInstance__Q22cf13CfGameManagerFv();
+        if (!func_8006EF04__Fi(0x400)) {
+            // Broadcast path: target has the 0x8000 flag - poke every party
+            // member's 0x118 hook with the shared float constant.
+            if (((E1B5C_TargetObj*)targetPtr)->flags_78 & 0x8000) {
+                EnumListHolder holder;
+                func_80043D90(&holder);
+                func_800F4A98(func_80043F18(&holder), 0x20, 0);
+                for (u32 i = 0; i < *(u32*)((u8*)func_80043F18(&holder) + 0x620);
+                     i++) {
+                    BMVtMirror* o = (BMVtMirror*)func_8016FE34(
+                        func_800F6EAC(func_80043F18(&holder), i));
+                    o->v118(lbl_eu_80666DDC);
+                }
+                __dt__80043E88(&holder, -1);
+                return;
+            }
         }
-        __dt__80043E88(&holder, -1);
-        return;
     }
 
 scan2:
     // 2x8 target-slot scan: does any slot reference src->field_04?
     {
-        s32 found = 0;
-        u32 slotId = *(u32*)((u8*)src + 4);
-        for (s32 blk = 0; blk < 2; blk++) {
-            u8* base = (u8*)src + 8 + blk * 0x20;
+        u32 slotId = src->w04;
+        bool found = false;
+        for (s32 blk = 0; blk < 2 && !found; blk++) {
+            u32* base = (u32*)((u8*)src + 8 + blk * 0x20);
             for (s32 j = 0; j < 8; j++) {
-                if (*(u32*)(base + j * 4) == slotId) {
-                    found = 1;
+                if (base[j] == slotId) {
+                    found = true;
                     break;
                 }
             }
-            if (found) break;
         }
 
         if (found) {
-            s32 r14 = 1;
-            if (*(u32*)((u8*)actor + 0x3F00) & 0x02) {
-                if (*(u16*)((u8*)actor + 0x3F28) == 7) {
-                    if (*(u32*)((u8*)src + 0x78) & 0x1000) {
-                        if (((s32 (*)(void*))(*(void***)actor)[0x2A8 / 4])(actor) != 1) r14 = 0;
+            s32 ok = 1;
+            if (av->field_3F00 & 0x2) {
+                if (av->field_3F28 == 7) {
+                    if (((E1B5C_MoveFlags*)src)->flags_78 & 0x1000) {
+                        if (((BMVtMirror*)actor)->v2A8() != 1) ok = 0;
                     }
                 }
             }
-            if (r14) {
+            if (ok) {
                 func_8027750C((u8*)mgr + 0x1A8, actor);
                 func_8027D478((u8*)mgr + 0x20C8, actor);
             }
             func_80274B24((u8*)mgr + 0x2194, actor);
             func_802A1D04(actor, action);
-            func_800E2594(mgr, actor, action, src);
-            if (*(u32*)((u8*)action + 0x3F00) & 0x04) {
-                void* h = *(void**)((u8*)action + 0x3ED4);
+            func_800E2594(mgr, actor, src, action);
+            if (((E1B5C_ObjView*)action)->field_3F00 & 0x4) {
+                void* h = ((E1B5C_ObjView*)action)->field_3ED4;
                 ((void (*)(void*))(*(void***)h)[0x100 / 4])(h);
             }
         }
     }
 
 skipScan:
-    // Per-target fallback: rebuild a workspace from the copy for each of the
-    // 16 party-slot ids and run the shared move dispatchers on it.
     getInstance__Q22cf13CfGameManagerFv();
     if (!func_8006EF04__Fi(0x400)) {
-        E921C_MoveData* copyP = &copy;
-        for (s32 r29 = 0; r29 < 16; r29++) {
-            u32* slotId = (u32*)((u8*)&copy + 8 + r29 * 4);
-            if (*slotId == 0) continue;
-            void* pl = func_8016FE34((void*)(intptr_t)func_800B708C__Fi(*slotId));
-            if (pl == nullptr || ((s32 (*)(void*))(*(void***)pl)[0x2BC / 4])(pl)) {
-                *slotId = 0;
+        // Per-target fallback: rebuild a workspace from the snapshot for each
+        // of the 16 party-slot ids and run the shared move dispatchers on it.
+        E1B5C_Snapshot* snapP = &snap;
+        u32* idp = (u32*)((u8*)&snap + 8);
+        for (s32 i = 0; i < 16; i++, idp++) {
+            if (*idp == 0) continue;
+            void* pl = func_8016FE34((void*)(intptr_t)func_800B708C__Fi((s32)*idp));
+            E1B5C_ObjView* pv = (E1B5C_ObjView*)pl;
+            if (pl == nullptr || ((BMVtMirror*)pl)->v2BC() != 0) {
+                *idp = 0;
                 continue;
             }
-            if (pl == action) continue;
+            if (pl == (void*)action) continue;
 
             E1B5C_Workspace ws;
             ws.v00 = copy.w00;
@@ -7516,12 +8453,12 @@ skipScan:
             ws.v5C = 0.0f;
             ws.v60 = 0.0f;
             ws.v64 = 0.0f;
-            ws.v68 = copy.f5C;
-            ws.v6C = copy.f60;
+            ws.v68 = copy.f68;
+            ws.v6C = copy.f6C;
             ws.v70 = copy.s70;
             ws.v72 = copy.s72;
             ws.v74 = 0;
-            ws.v78 = ((*(u32*)((u8*)&copy + 0x6C)) & ~0xFFu) | 0x40000001;
+            ws.v78 = ((*(u32*)&copy.f6C) & ~0xFFu) | 0x40000001;
             ws.v7C = 0;
             ws.v80 = copy.u80;
             ws.v84 = (u32)copy.q84;
@@ -7537,22 +8474,99 @@ skipScan:
             ws.vAC = (u32)copy.qAC;
             ws.vB0 = (u32)(copy.qAC >> 32);
             ws.vB4 = copy.wB4;
-            ws.vB8 = copyP;                    // +0xB8 = &copy
+            ws.vB8 = snapP;                     // +0xB8 = &snapshot
 
-            ws.v04 = *(u32*)((u8*)pl + 0x3F10); // tag with the actor id
+            ws.v04 = (u32)pv->field_3F10;       // tag with the actor id
 
-            func_800DB0FC((void*)(intptr_t)lbl_eu_80663F00, actor, pl, &ws);
+            func_800DB0FC(mgr, actor, pl, &ws);
             func_800E2594(mgr, actor, pl, &ws);
 
             // Register the target into the actor list if not present already.
-            SimpleListNode* sentinel = *(SimpleListNode**)((u8*)mgr + 0x08);
+            SimpleListNode* sentinel = *(SimpleListNode**)((u8*)mgr + 8);
             SimpleListNode* cur = sentinel->next;
             while (cur != sentinel && cur->data != pl) cur = cur->next;
-            if (cur == sentinel) {
-                if (*(u32*)((u8*)pl + 0x3F00) & 0x04) {
-                    if (!(*(u32*)((u8*)pl + 0x3374) & 0x8000)) {
-                        func_800D9978((cf::CBattleManager*)mgr, (cf::CfObjectActor*)pl);
+            if (cur == sentinel && (pv->field_3F00 & 0x4) &&
+                !(pv->field_3374 & 0x08000000)) {
+                func_800D9978((cf::CBattleManager*)mgr, (cf::CfObjectActor*)pl);
+            }
+        }
+    }
+
+    // Status reset: clear status 0xC0 through the actor's status object when
+    // the target is a type-1/2 object with the 0x400 move flag.
+    if (func_80148778((u8*)actor + 8, 0xC0)) {
+        if (targetPtr != nullptr) {
+            E1B5C_TargetObj* tp = (E1B5C_TargetObj*)targetPtr;
+            if ((u32)(tp->type_3c - 1) <= 1) {
+                if (((E1B5C_MoveFlags*)src)->flags_78 & 0x400) {
+                    ((void (*)(void*, u32))(*(void***)((u8*)actor + 8))[0x20 / 4])(
+                        (u8*)actor + 8, 0xC0);
+                }
+            }
+        }
+    }
+
+    // Player-actor special case: install an AI action slot for player 0.
+    if (av->field_3F28 == 5) {
+        if (av->field_3F00 & 0x2) {
+            void* pcSub = actor != nullptr ? (void*)((u8*)actor + 0x3E9C) : actor;
+            if (pcSub == getPlayer__Q22cf13CfGameManagerFi(0)) {
+                if (targetPtr != nullptr) {
+                    E1B5C_TargetObj* tp = (E1B5C_TargetObj*)targetPtr;
+                    if ((tp->flags_78 & 0x40000000) && tp->id_48 == 9) {
+                        BattleAIActionSlot slot;
+                        std::memset((u8*)&slot + 4, 0, 0xE);
+                        std::memset(&slot, 0, sizeof(slot));
+                        slot.unk00 = (u32)av->field_3F10;
+                        slot.b_06 = 0x25;
+                        slot.b_0D = 1;
+                        slot.b_0E = 0x64;
+                        slot.h_10 = 0;
+                        slot.h_12 = 0;
+                        slot.f_14 = lbl_eu_80666E6C;
+                        func_8014AC38((u8*)actor + 0x3380, &slot);
                     }
+                }
+            }
+        }
+    }
+
+    if (av->field_3F00 & 0x2) {
+        if (((u32 (*)(void*, u32))(*(void***)mgr)[0x28 / 4])(mgr, 1)) {
+            ((void (*)(void*, u32))(*(void***)mgr)[0x20 / 4])(mgr, 1);
+        }
+    }
+
+    // Status-id gate: run func_80174C98 against the actor's live status id.
+    {
+        void* stHolder = *(void**)((u8*)actor + 4);
+        void* stPtr = ((void* (*)(void*))(*(void***)stHolder)[0x30 / 4])(stHolder);
+        u32 stVal = *(u32*)stPtr;
+        if (func_80174C98(actor, (int*)&stVal, 0x800)) {
+            ((void (*)(void*, u32))(*(void***)stHolder)[0x20 / 4])(stHolder, 0x800);
+        }
+    }
+
+    cf::CBattleManager* bm = (cf::CBattleManager*)mgr;
+    void* vision = &((cf::CBattleManager*)mgr)->mVision;
+    if (lbl_eu_80663F00 != 0) {
+        if (func_801A8070(vision) != nullptr) {
+            ((void (*)(void*, void*, void*))(*(void***)vision)[0x28 / 4])(
+                vision, actor, action);
+        }
+    }
+
+    // Re-run the dispatcher when the selected arts level exceeds the actor's.
+    if (src->w04 != 0) {
+        if (copy.w48 == src->w48) {
+            DB4FC_ArtsObj* arts = (DB4FC_ArtsObj*)(void*)src->w50;
+            act->v2B8();    // result discarded in retail
+            if (arts != nullptr) {
+                s32 lv = arts->field_44;
+                s32 cur = act->v2A8();
+                if (lv > cur) {
+                    E921C_MoveData* src2 = (E921C_MoveData*)act->v298();
+                    func_800DB0FC(mgr, actor, action, src2);
                 }
             }
         }
@@ -7624,29 +8638,8 @@ struct BattleEventData {
 };
 
 // ---------------------------------------------------------------------------
-// AI action slot (0x20 bytes) installed via func_8014AC38. Byte-precise to the
-// retail store sequence (memset + 7 stores).
+// vtable dispatch helpers (r23/r24 are CfObjectActor-derived)
 // ---------------------------------------------------------------------------
-struct BattleAIActionSlot {
-    u32  unk00;         // 0x00
-    u8   pad04[2];      // 0x04
-    u8   b_06;          // 0x06 = 0x25
-    u8   pad07[6];      // 0x07
-    u8   b_0D;          // 0x0D = 0x54 / 0x55
-    u8   b_0E;          // 0x0E = 0x64
-    u8   pad0F;         // 0x0F
-    u16  h_10;          // 0x10 = 0
-    s16  h_12;          // 0x12 = -1
-    f32  f_14;          // 0x14 = 0.0f
-    u8   pad18[8];      // 0x18
-};
-
-// ---------------------------------------------------------------------------
-// Opaque imports -- same linkage/style as CBattleManager.cpp
-// ---------------------------------------------------------------------------
-
-
-
 // ---------------------------------------------------------------------------
 // vtable dispatch helpers (r23/r24 are CfObjectActor-derived)
 // ---------------------------------------------------------------------------
@@ -9961,7 +10954,7 @@ extern "C" void func_800E9B54(void* self, void* target, void* attacker, void* mo
 
 e9B54_tail:                                                  // 0x800EAAA0
     func_802A232C(target);
-    func_80174B4C(target, 0x200);
+    func_80174B4C(target, 0x2000000);
 }
 
 // ---- func_800E2594 (0x800E307C) --------------------------------------------
@@ -10456,10 +11449,8 @@ extern "C" void func_800EA484(cf::CBattleManager* self, f32 value, int flags) {
                 void* r29 = __dynamic_cast(o, 0, &lbl_eu_80661970, &lbl_eu_806618F0, 0);
                 // Match the cast object's +0x9C pointer against either vision
                 // actor (or its embedded move sub-object at +0x3E9C).
-                void* a0 = (r26 != nullptr) ? (u8*)r26 + 0x3E9C : r26;
-                void* b0 = (r27 != nullptr) ? (u8*)r27 + 0x3E9C : r27;
-                void* p9C = ((E484_TypeObj*)r29)->field_9C;
-                if (p9C == a0 || p9C == b0)
+                if ((r26 != nullptr && ((E484_TypeObj*)r29)->field_9C == (u8*)r26 + 0x3E9C) ||
+                    (r27 != nullptr && ((E484_TypeObj*)r29)->field_9C == (u8*)r27 + 0x3E9C))
                     reinterpret_cast<E484_Mirror*>(r29)->vt88(value);
                 if (r26 != nullptr) {
                     void* b = ((E484_VisionActor*)r26)->field_45B8;

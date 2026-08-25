@@ -1667,7 +1667,8 @@ extern "C" __declspec(noinline) CItemExt* func_80158420(u32 a, s16* pOut1, u32 b
         t2.v = getBdatStringColumnValue(lbl_eu_806640EC, lbl_eu_80501C58 + 0xbd, a);
         result = 0;
         if (t2.h[0] != 0) {
-            s32 n, stride;
+            // Declaration order pins the stack slots: n@0x10, stride@0x14.
+            s32 stride, n;
             CItemExt* list = (CItemExt*)func_801579C4(t2.h[0], &n, &stride);
             if (list != 0 && n > 0) {
                 // Scan the block for a record whose family id (top 12 bits
@@ -1847,7 +1848,7 @@ extern "C" s32 __dt__801589BC(u16 arg) {
     } else if (n >= 2) {
         CItemFamilyRec** pBase = buf->mRecs;
         CItemFamilyRec** pEnd = pBase + n;
-        func_80158AF4(pBase, pEnd, func_801589A0);
+        func_80158AF4((u32*)pBase, (u32*)pEnd, (int (*)(u32*, u32*))func_801589A0);
         CItemFamilyRec** p = buf->mRecs;
         s32 i = 0;
         while (i < buf->mCount) {
@@ -1861,14 +1862,6 @@ extern "C" s32 __dt__801589BC(u16 arg) {
     return result;
 }
 
-// Depth-jitter sampler for the introsort pivot selection: bump the depth
-// counter value, wrapping 5.. to -4 (retail inlines this helper twice per
-// partition -- once for the sample point, once for the counter store).
-static s32 itemDepthSample(s32 d) {
-    d += 1;
-    if (d >= 5) d = -4;
-    return d;
-}
 
 // Introsort over the pointer range [base, end): small ranges (<= 20
 // elements) are selection-sorted; larger ranges pick a median-of-3 pivot
@@ -1877,25 +1870,27 @@ static s32 itemDepthSample(s32 d) {
 // smaller half through func_80158E74 and keep looping on the larger half.
 // The depth counter (lbl_eu_8066229C) jitters the sample points to avoid
 // quadratic behavior on sorted input.
-extern "C" void func_80158AF4(CItemFamilyRec** base, CItemFamilyRec** end,
-                              u32 (*cmp)(CItemFamilyRec*, CItemFamilyRec*)) {
+extern "C" void func_80158AF4(u32* base, u32* end, int (*cmp)(u32*, u32*)) {
+    // The comparator receives element slot addresses, not the elements:
+    // callers pass a record-typed callback whose first field aliases the
+    // stored pointer (see func_801589A0).
     while (true) {
-        s32 count = ((char*)end - (char*)base) / 4;
+        s32 count = end - base;
         if (count <= 1) return;
         if (count <= 20) {
             // Selection sort: put the minimum of [p, end) at p. Uses base
             // itself as the loop cursor (retail coalesces it there).
             if (base == end) return;
-            CItemFamilyRec** last = end - 1;
+            u32* last = end - 1;
             while (base != last) {
-                CItemFamilyRec** min = base;
+                u32* min = base;
                 if (base != end) {
-                    for (CItemFamilyRec** q = base + 1; q != end; q++) {
-                        if (cmp(*q, *min) != 0) min = q;
+                    for (u32* q = base + 1; q != end; q++) {
+                        if (cmp(q, min) != 0) min = q;
                     }
                 }
                 if (min != base) {
-                    CItemFamilyRec* t = *min;
+                    u32 t = *min;
                     *min = *base;
                     *base = t;
                 }
@@ -1908,59 +1903,71 @@ extern "C" void func_80158AF4(CItemFamilyRec** base, CItemFamilyRec** end,
         // The depth-counter update is inlined twice (sample + counter
         // write); retail computes off1/p1, clamps the sample, then updates
         // the counter, then computes off2.
+        // Pivot selection: two depth-jittered sample points plus the last
+        // element. Retail stores the bumped counter eagerly, then overwrites
+        // it with -4 when it wraps past 5.
         s32 depth = lbl_eu_8066229C;
-        s32 off1 = (count / 4) + (depth - 5 * (depth / 10));
-        CItemFamilyRec** p1 = base + off1;
-        s32 x = itemDepthSample(depth);
-        lbl_eu_8066229C = itemDepthSample(depth);
-        s32 off2 = ((3 * count) / 4) + (x - 5 * (x / 10));
-        CItemFamilyRec** p2 = base + off2;
-        CItemFamilyRec** pivot = end - 1;
-        func_801591F4((u32*)p1, (u32*)p2, (u32*)pivot,
-                      (int (**)(u32*, u32*))&cmp);
-        // Hoare partition around *pivot.
-        CItemFamilyRec** i = base;
-        CItemFamilyRec** j = pivot;
-        do {
-            i++;
-        } while (cmp(*i, *pivot) != 0);
+        s32 d = depth + 1;
+        if (d >= 5) d = -4;
+        u32* p1 = base + ((count / 4) + depth % 5);
+        lbl_eu_8066229C = d + 1;
+        u32* p2 = base + (((3 * count) / 4) + d % 5);
+        if (d + 1 >= 5) lbl_eu_8066229C = -4;
+        u32* pivot = end - 1;
+        func_801591F4(p1, p2, pivot, &cmp);
+        // Hoare partition around the pivot slot.
+        u32* i = base;
+        u32* j = pivot;
+        while (cmp(i, pivot) == 0) i++;
+    first_scan:
         do {
             j--;
-            if (i == j) break;
-        } while (cmp(*j, *pivot) == 0);
-        while (i < j) {
-            CItemFamilyRec* t = *i;
+            if (i == j) goto partition_done;
+        } while (cmp(j, pivot) == 0);
+        if (i < j) {
+            u32 t = *i;
             *i = *j;
             *j = t;
             i++;
-            while (cmp(*i, *pivot) != 0) i++;
-            do {
-                j--;
-            } while (cmp(*j, *pivot) == 0);
+        } else {
+            goto partition_done;
         }
+    main_scan:
+        while (cmp(i, pivot) != 0) i++;
+        do {
+            j--;
+        } while (cmp(j, pivot) == 0);
+        if (i < j) {
+            u32 t = *i;
+            *i = *j;
+            *j = t;
+            i++;
+            goto main_scan;
+        }
+    partition_done:
         if (i == base) {
             // The pivot ended up at the start: move it there and repartition
             // the rest with the pivot value at base.
-            CItemFamilyRec* t = *i;
+            u32 t = *i;
             *i = *pivot;
             *pivot = t;
             i++;
             j = end - 1;
-            if (cmp(*base, *j) == 0) {
-                while (i != end && cmp(*base, *i) == 0) i++;
+            if (cmp(base, j) == 0) {
+                while (i != end && cmp(base, i) == 0) i++;
                 if (i < j) {
-                    CItemFamilyRec* u = *i;
+                    u32 u = *i;
                     *i = *j;
                     *j = u;
                 }
             }
             while (i < j) {
-                while (cmp(*base, *i) == 0) i++;
+                while (cmp(base, i) == 0) i++;
                 do {
                     j--;
-                } while (cmp(*base, *j) != 0);
+                } while (cmp(base, j) != 0);
                 if (i < j) {
-                    CItemFamilyRec* u = *i;
+                    u32 u = *i;
                     *i = *j;
                     *j = u;
                     i++;
@@ -1968,8 +1975,9 @@ extern "C" void func_80158AF4(CItemFamilyRec** base, CItemFamilyRec** end,
             }
             base = i;
         } else {
-            s32 left = ((char*)i - (char*)base) / 4;
-            s32 right = ((char*)end - (char*)i) / 4;
+            // Recurse into the smaller half, loop on the larger half.
+            s32 left = i - base;
+            s32 right = end - i;
             if (left < right) {
                 func_80158E74(base, i, &cmp);
                 base = i;
@@ -1988,86 +1996,105 @@ extern "C" void func_80158AF4(CItemFamilyRec** base, CItemFamilyRec** end,
 // around the last element, recurse on the smaller half and keep looping on
 // the larger half. Uses its own depth counter (lbl_eu_806622A0) and its
 // own recursion target (itself).
-extern "C" void __declspec(noinline) func_80158E74(CItemFamilyRec** base, CItemFamilyRec** end,
-                                                    u32 (**cmp)(CItemFamilyRec*, CItemFamilyRec*)) {
+extern "C" void __declspec(noinline) func_80158E74(u32* base, u32* end,
+                                        int (**cmp)(u32*, u32*)) {
     while (true) {
-        s32 count = ((char*)end - (char*)base) / 4;
+        s32 count = end - base;
         if (count <= 1) return;
-        if (count > 20) goto partition;
-        // Selection sort: put the minimum of [p, end) at p. Uses base
-        // itself as the loop cursor (retail coalesces it there).
-        if (base == end) return;
-        CItemFamilyRec** last = end - 1;
-        while (base != last) {
-            CItemFamilyRec** min = base;
-            if (base != end) {
-                for (CItemFamilyRec** q = base + 1; q != end; q++) {
-                    if ((*cmp)(*q, *min) != 0) min = q;
+        if (count <= 20) {
+            // Selection sort: put the minimum of [p, end) at p. Uses base
+            // itself as the loop cursor (retail coalesces it there).
+            if (base == end) return;
+            u32* q;
+            u32* last = end - 1;
+            while (base != last) {
+                u32* min = base;
+                if (base != end) {
+                    q = base + 1;
+                    while (q != end) {
+                        if ((*cmp)(q, min) != 0) min = q;
+                        q++;
+                    }
                 }
+                if (min != base) {
+                    u32 t = *min;
+                    *min = *base;
+                    *base = t;
+                }
+                base++;
             }
-            if (min != base) {
-                CItemFamilyRec* t = *min;
-                *min = *base;
-                *base = t;
-            }
-            base++;
+            return;
         }
-        return;
-    partition:
         // Quicksort: pivot selection with two depth-jittered sample points +
         // the last element, sorted so the last element becomes the pivot.
-        // Counter update inlined twice (see func_80158AF4).
+        // Statement order mirrors retail: p1 uses the raw depth, then the
+        // bumped counter is stored eagerly, then p2 uses the clamped value,
+        // then the store is overwritten with -4 when it wrapped past 5.
         s32 depth = lbl_eu_806622A0;
-        s32 off1 = (count / 4) + (depth - 5 * (depth / 10));
-        CItemFamilyRec** p1 = base + off1;
-        s32 x = itemDepthSample(depth);
-        lbl_eu_806622A0 = itemDepthSample(depth);
-        s32 off2 = ((3 * count) / 4) + (x - 5 * (x / 10));
-        CItemFamilyRec** p2 = base + off2;
-        CItemFamilyRec** pivot = end - 1;
-        func_801591F4((u32*)p1, (u32*)p2, (u32*)pivot,
-                      (int (**)(u32*, u32*))cmp);
-        // Hoare partition around *pivot.
-        CItemFamilyRec** i = base;
-        CItemFamilyRec** j = pivot;
-        while ((*cmp)(*i, *pivot) != 0) i++;
+        u32* p1 = base + ((count / 4) + depth % 5);
+        s32 d = depth + 1;
+        // Wrap past 4: d is always in [-3,5] here, so d >= 5 means d == 5;
+        // subtracting 9 yields -4 without a shared literal the compiler
+        // would cache in a callee-saved register.
+        if (d >= 5) d -= 9;
+        lbl_eu_806622A0 = d + 1;
+        u32* p2 = base + (((3 * count) / 4) + d % 5);
+        if (d + 1 >= 5) lbl_eu_806622A0 = d - 8;
+        u32* pivot = end - 1;
+        func_801591F4(p1, p2, pivot, cmp);
+        // Hoare partition around the pivot slot.
+        u32* i = base;
+        u32* j = pivot;
+        while ((*cmp)(i, pivot) == 0) i++;
+    first_scan:
         do {
             j--;
-            if (i == j) break;
-        } while ((*cmp)(*j, *pivot) == 0);
-        while (i < j) {
-            CItemFamilyRec* t = *i;
+            if (i == j) goto partition_done;
+        } while ((*cmp)(j, pivot) == 0);
+        if (i < j) {
+            u32 t = *i;
             *i = *j;
             *j = t;
             i++;
-            while ((*cmp)(*i, *pivot) != 0) i++;
-            do {
-                j--;
-            } while ((*cmp)(*j, *pivot) == 0);
+        } else {
+            goto partition_done;
         }
+    main_scan:
+        while ((*cmp)(i, pivot) != 0) i++;
+        do {
+            j--;
+        } while ((*cmp)(j, pivot) == 0);
+        if (i < j) {
+            u32 t = *i;
+            *i = *j;
+            *j = t;
+            i++;
+            goto main_scan;
+        }
+    partition_done:
         if (i == base) {
             // The pivot ended up at the start: move it there and
             // repartition the rest with the pivot value at base.
-            CItemFamilyRec* t = *i;
+            u32 t = *i;
             *i = *pivot;
             *pivot = t;
             i++;
             j = end - 1;
-            if ((*cmp)(*base, *j) == 0) {
-                while (i != end && (*cmp)(*base, *i) == 0) i++;
+            if ((*cmp)(base, j) == 0) {
+                while (i != end && (*cmp)(base, i) == 0) i++;
                 if (i < j) {
-                    CItemFamilyRec* u = *i;
+                    u32 u = *i;
                     *i = *j;
                     *j = u;
                 }
             }
             while (i < j) {
-                while ((*cmp)(*base, *i) == 0) i++;
+                while ((*cmp)(base, i) == 0) i++;
                 do {
                     j--;
-                } while ((*cmp)(*base, *j) != 0);
+                } while ((*cmp)(base, j) != 0);
                 if (i < j) {
-                    CItemFamilyRec* u = *i;
+                    u32 u = *i;
                     *i = *j;
                     *j = u;
                     i++;
@@ -2075,8 +2102,8 @@ extern "C" void __declspec(noinline) func_80158E74(CItemFamilyRec** base, CItemF
             }
             base = i;
         } else {
-            s32 left = ((char*)i - (char*)base) / 4;
-            s32 right = ((char*)end - (char*)i) / 4;
+            s32 left = i - base;
+            s32 right = end - i;
             if (left < right) {
                 func_80158E74(base, i, cmp);
                 base = i;
@@ -2148,6 +2175,8 @@ void func_80159348(CItemPartySlots* self) {
     s16* sc;
     u8* cdc;
     s16* pc;
+    // Declared with the top-level locals per Rule A (retail colors it r30).
+    u16 t;
     for (s32 id = 1; id <= 13; id++) {
         u8* cd = (u8*)func_8009EC9C((u16)id);
         // Clear the three parallel per-character u16 tables (8 entries each).
@@ -2184,7 +2213,7 @@ void func_80159348(CItemPartySlots* self) {
                 }
                 CItem_initItemImplInstances(rec)->vf48(rec);
             }
-            u16 t = *(u16*)&cd[(u16)s * 2 + 2];
+            t = *(u16*)(cd + (u16)s * 2 + 2);
             *sc = (s16)func_8009E0B4(cd, (u32)s,
                                      (void*)((unsigned long)cd + (unsigned long)((u16)s * 2)));
             func_8009DBF4(cd, (u32)s, (void*)-1);

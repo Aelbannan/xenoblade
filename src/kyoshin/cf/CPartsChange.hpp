@@ -414,9 +414,11 @@ struct CfPartsChgSub {
     virtual void _v068(); virtual void _v06C(); virtual void _v070(); virtual void _v074();
     virtual void _v078(); virtual void _v07C(); virtual void _v080(); virtual void _v084();
     virtual void _v088(); virtual void _v08C(); virtual void _v090(); virtual void _v094();
-    virtual void _v098(); virtual void _v09C(); virtual void _v0A0(); virtual void _v0A4();
+    virtual void _v098(); virtual void vf9C(const f32* v);   // 0x9C (position set)
+    virtual void _v0A0(); virtual void _v0A4();
     virtual void vfA8(const ml::CVec3* v);                    // 0xA8
-    virtual void _v0AC(); virtual void _v0B0(); virtual void _v0B4();
+    virtual ml::CVec3* vfAC();                                // 0xAC (position)
+    virtual void _v0B0(); virtual void _v0B4();
     virtual void vfB8(const ml::CVec3* v, f32 f);             // 0xB8
     virtual void _v0BC(); virtual void _v0C0(); virtual void _v0C4();
     virtual void _v0C8(); virtual void _v0CC();
@@ -436,17 +438,23 @@ struct CfPartsChgSub {
 // De-biased target view for func_80194610 (func_80081A40 returns base+0x3E9C;
 // the caller subtracts 0x3E9C): flag words at +0x3F00/+0x3F04 and the u16 ids
 // at +0x456C / +0x45C2 / +0x45CA.
+struct CfObjVt5B4;
 struct CfPartsChgObj3F04 {
-    u8 pad_00[0x3E9C];
+    /* 0x0000 */ CfObjVt5B4* vt;
+    u8 pad_04[0x3E9C - 0x04];
     /* 0x3E9C */ CfPartsChgSub mSub;
     u8 pad_3EA0[0x3F00 - 0x3EA0];
     /* 0x3F00 */ u32 field_3F00;
     /* 0x3F04 */ u32 field_3F04;
-    u8 pad_3F08[0x456C - 0x3F08];
+    u8 pad_3F08[0x44D8 - 0x3F08];
+    /* 0x44D8 */ f32 field_44D8;
+    u8 pad_44DC[0x456C - 0x44DC];
     /* 0x456C */ u16 field_456C;
     u8 pad_456E[0x45C2 - 0x456E];
     /* 0x45C2 */ u16 field_45C2;
-    u8 pad_45C4[0x45CA - 0x45C4];
+    /* 0x45C4 */ u16 field_45C4;
+    /* 0x45C6 */ u16 field_45C6;
+    /* 0x45C8 */ u16 field_45C8;
     /* 0x45CA */ u16 field_45CA;
 };
 
@@ -545,7 +553,8 @@ struct CfElemA4 {
 // in-use flag scanned by func_80193B0C / func_80193810.
 struct CfElemA4Full {
     /* 0x00 */ CfPartsListEntry mEntries[16];
-    u8 pad_80[0x90 - 0x80];
+    u8 pad_80[0x8C - 0x80];
+    /* 0x8C */ f32 field_8C;
     /* 0x90 */ f32 field_90;
     /* 0x94 */ u32 field_94;
     /* 0x98 */ u16 field_98;
@@ -732,6 +741,13 @@ struct CfPartsManager {
     /* 0xB278 */ u16 field_B278;
 };
 
+// Tail view used by func_80196E04: the distance array and its live count
+// (+0xA804, immediately after the last entry) addressed through one base.
+struct CfPartsTailView {
+    /* 0x9804 */ CfPartsDistEntry mDist[0x200];
+    /* 0xA804 */ u32 count;
+};
+
 // Stack-local collection list used by func_80193810: 0x60 collected actor
 // pointers followed by the count word. Kept as a struct so MWCC addresses
 // count through memory (retail lwz/stw @ sp+0x188 per use).
@@ -799,7 +815,9 @@ struct CfPartsMoveSrc {
 // loop (retail lwz-per-iteration).
 struct CfPartsSlots {
     /* 0x00 */ CfPartsListEntry mEntries[16];
-    u8 pad_80[0x14];
+    u8 pad_80[0x8C - 0x80];
+    /* 0x8C */ f32 field_8C;
+    u8 pad_90[0x94 - 0x90];
     /* 0x94 */ u32 field_94;
     /* 0x98 */ u16 field_98;
     /* 0x9A */ u16 field_9A;
@@ -932,6 +950,12 @@ extern "C" void func_80196864(CfPartsSwapEntry* a, CfPartsSwapEntry* b,
 extern "C" CfPartsChgObj3F04* func_80194610(CfPartsManager* mgr, u32 arg2, u32 arg3,
                                              u32 arg4, CfPartsElem4C* src);
 extern "C" void func_80194D5C(CfPartsManager* mgr, const ml::CVec3* pos, f32 f);
+
+// Party-info builder (retail unmangled import): fills a CfPartyInfo-shaped
+// record from the source position triple. The second float argument travels
+// as the raw (unrounded) u32->f64 conversion result, so it is spelled double.
+extern "C" void func_80198710(void* out, const void* src, f32 a, f64 b,
+                               u32 c, u32 d);
 
 // Same-TU party-info helpers with unmangled retail names (func_80195E5C
 // calls; the declarations give the definitions below C linkage).

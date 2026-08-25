@@ -284,20 +284,17 @@ extern "C" bool func_80180CBC(CREvtModelMap* self)
     // Call base-class reset
     func_801726DC(self);
 
-    // Free emote model. `zero` stays live across the two clears so the
-    // allocator parks the 0 constant in r0 (as retail does) and the
-    // mLoadedModelData load lands in r4.
-    u32 zero = 0;
+    // Free emote model.
     if (self->mEmoteModel) {
         func_80495E60(self->mEmoteModel);
-        self->mEmoteModel = (CEmoteModelObj*)zero;
+        self->mEmoteModel = nullptr;
     }
 
     // Free loaded model data
     void* loaded = self->mLoadedModelData;
     if (loaded) {
         func_804C1D7C(*(void**)((u8*)lbl_eu_80663E14 + 0x7C));
-        self->mLoadedModelData = (void*)zero;
+        self->mLoadedModelData = nullptr;
     }
 
     // Free file data buffers.  The nested if (checked against a local) makes

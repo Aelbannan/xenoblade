@@ -36,6 +36,13 @@ struct CItemPriceScaleRow {
     float v[7];
 };
 
+// 7-word per-language slot-name table copied wholesale by func_801C6A44's
+// '$2' tag handler; retail lowers the assignment as a 3x8-byte word-copy
+// loop plus a trailing word (a 28-byte struct assignment).
+struct CItemBoxLangWordTable {
+    u32 w[7];
+};
+
 // Cast-only view of the object returned by the vt+0x2C equipped-state
 // fetch: bit 0 of the +0x04 halfword marks the slot as equipped.
 struct CItemBoxSlotState {
@@ -362,6 +369,46 @@ struct CItemInstVt54 {
     virtual u32 _v54(void* arg);  // vtable+0x54
 };
 
+// Plain 3-float vector passed by value into func_801D24E8 (the caller-side
+// struct copies land in the argument area).
+struct CibgVec3 {
+    float x, y, z;
+};
+
+// Cast-only view of the texture resource entry returned by the sys-win
+// texture lookup: material-list pointer at +0x08.
+struct CibgTexRes {
+    u8 _00[8];
+    void* field_08;
+};
+struct CibgTexMat {
+    void* field_00;
+};
+struct CibgTexData {
+    u16 field_00;
+    u16 field_02;
+};
+
+// Cast-only vtable interface for the CDeviceFont object: method at
+// vtable+0x24 (raw slot 9, no args, returns the font payload).
+struct CibgFontVt24 {
+    virtual void _v08();
+    virtual void _v0C();
+    virtual void _v10();
+    virtual void _v14();
+    virtual void _v18();
+    virtual void _v1C();
+    virtual void _v20();
+    virtual void* _v24();  // vtable+0x24
+};
+
+// Cast-only vtable interface for the system-window object: texture lookup at
+// vtable+0x0C (raw slot 3; fourcc tag, message id, flag -> resource entry).
+struct CibgSysWinVt0C {
+    virtual void _v08();
+    virtual void* _v0C(u32 tag, u32 id, u32 flag);  // vtable+0x0C
+};
+
 // 24-byte category-filter row copied around by value in func_801C56D8
 // (MWCC lowers the struct copies to unrolled lwz/lwzu pairs).
 struct GridFilter24 {
@@ -637,10 +684,10 @@ extern "C" u32 func_8008235C__Q22cf13CfGameManagerFv(u32);
 extern "C" void func_800A18A4(void*, u8);
 extern "C" u32 func_801380A0(u16);
 extern "C" u32 func_80138138(u16);
-extern "C" u32 func_801412D0(u32);
+extern "C" void* func_801412D0(u32);
 extern "C" u32 func_80140854(void*, u32, u32);
 extern "C" void* getHandleMEM2__Q23mtl10MemManagerFv(void);
-extern "C" void* createRegion__17UnkClass_8045F564FiiPCci(void*, int, int, const char*, int);
+extern "C" void* createRegion__17UnkClass_8045F564FiiPCci(void*, void*, int, const char*, int);
 extern "C" void __ct__14Class_8045F858FP17UnkClass_8045F564(void*, void*);
 extern "C" void func_80434A4C__Q23mtl10MemManagerFb(bool);
 extern "C" void* getAllocHandle__10CLibLayoutFv(void);
@@ -697,7 +744,10 @@ extern "C" void __dt__17UnkClass_8045F564Fv(void*, int);
 extern "C" void func_8018B0FC(void*, void*);
 extern "C" void func_8018B130(void*, void*);
 extern "C" void code80135FDC_setVec3(float*, float, float, float);
-extern "C" void func_801D24E8(void*, void*, void*);
+extern "C" void func_801D24E8(void*, CibgVec3, CibgVec3);
+extern "C" void func_8003AA78__5CBdatFUlPv(u32, void*);
+extern "C" void __dt__14Class_8045F858Fv(void*, int);
+extern "C" void func_8045F810__17UnkClass_8045F564Fv(void*);
 extern "C" void func_8022D614(void*, void*);
 extern "C" void func_80207FC8(void*, void*);
 extern "C" CEquipBoxFourShorts func_801397AC(void*, u32);
@@ -729,6 +779,134 @@ struct CItemBoxGridMoveObj {
     u8 _pad00[0x3f28];
     u16 field_3f28;
 };
+// ---- CItemBoxGrid ctor: mirror shapes of the sub-blocks copied by value out
+// of the CSortMenu/CItemBoxInfo/CNumSelect/CExchangeWin stack temporaries and
+// the 801C5514 sub-grid temp. Named scalars lower to individual moves while
+// array members lower to paired lwzu/stwu bdnz loops, matching retail.
+struct CibgSortBlk1 {  // CSortMenu temp +0x04, size 0x28
+    u32 a, b, c, d, e;
+    u8 f, g, h, i;
+};
+struct CibgWords16 {
+    u32 w[16];
+};
+struct CibgWords6 { u32 w[6]; };
+struct CibgWords3 { u32 w[3]; };
+struct CibgBytes64 { u8 b[0x40]; };
+struct CibgBytes32 { u8 b[0x20]; };
+struct CibgSortBlk2 {  // CSortMenu temp +0x30, size 0xAC (tail array loops)
+    u32 a, b, c, dd;
+    u8 e0, e1, e2, e3;
+    float f0, f1, f2, f3, f4;
+    u8 last;
+    CibgWords16 tail;
+};
+struct CibgThreeBytes {
+    u8 a, b, c;
+};
+struct CibgInfoHdr {  // CItemBoxInfo temp +0x24: many named words, no loop
+    u32 w00, w01, w02, w03, w04, w05, w06, w07, w08, w09;
+    u32 w10, w11, w12, w13, w14, w15, w16, w17, w18, w19;
+    u32 w20, w21, w22, w23, w24, w25, w26;
+    u8 b0;
+    u32 w27;
+    u8 b1, b2, b3;
+};
+struct CibgInfoRow {  // CItemBoxInfo temp +0xAC: trailing word array loops
+    u16 a;
+    u8 b, c;
+    CibgWords6 w;
+};
+struct CibgWords18 {
+    u32 w[18];
+};struct CibgInfoFive {
+    u32 a, b, c, d, e;
+};
+struct CibgHeadTail3 {
+    u32 head;
+    CibgWords3 tail;
+};
+struct CibgByteArr64 {
+    u8 b;
+    CibgBytes64 arr;
+};
+struct CibgNumSel {
+    u32 a, b, c, d, e, f;
+    u8 g, h, i, j, k;
+};
+struct CibgExch {
+    u32 a, b, c, d;
+    u8 e, f, g, h;
+};
+struct CibgSubGridCells {
+    u32 w[0x400];
+};
+struct CibgSubGridMeta {  // sub-grid temp +0x800
+    u16 a;
+    u8 b, c, d;
+    CibgBytes32 names;
+};
+struct CibgByteBlock200 {
+    u8 arr[0x200];
+};
+
+// 16-byte memory region whose copy goes through the retail
+// __ct__UnkClass_8011C974 helper (same-TU inline folds the wrapper away,
+// leaving the single bl the retail assignments show).
+class CibgUnk16 {
+public:
+    u8 d[0x10];
+    CibgUnk16& operator=(const CibgUnk16& o) {
+        __ct__UnkClass_8011C974((void*)d, (void*)o.d);
+        return *this;
+    }
+};
+
+// Occupies layout space but emits no copy code: the empty operator= inlines
+// away, so struct assignments skip these bytes exactly like retail.
+struct CibgSkip4 {
+    u32 w;
+    CibgSkip4& operator=(const CibgSkip4&) { return *this; }
+};
+
+// Whole copied members: one struct assignment per temp region reproduces
+// retail's scheduling (copy-ctor bls, early loop-pointer setup, interleaved
+// scalar moves). Explicit pad fields mark the uncopied holes.
+struct CibgSortMember {   // p+0xec..0x1d3 <- CSortMenu temp +4
+    CibgUnk16 unk;
+    u32 a, b, c, dd, e;
+    u8 f, g, h, i;
+    CibgSkip4 pad28;
+    CibgUnk16 unk2;
+    u32 w0, w1, w2, w3;
+    u8 b0, b1, b2, b3;
+    float f0, f1, f2, f3, f4;
+    u8 last;
+    CibgWords16 tail;
+};
+struct CibgInfoMember {   // p+0x1dc.. <- CItemBoxInfo temp +4
+    CibgUnk16 unk1;
+    CibgUnk16 unk2;
+    CibgInfoHdr hdr;
+    CibgSkip4 pad104[4];
+    CibgInfoRow row;
+    CibgWords18 w18;
+    CibgInfoFive five;
+    CibgHeadTail3 ht;
+    CibgSkip4 pad158[3];
+    CibgByteArr64 ba;
+};
+struct CibgNumSelMember { // p+0x3e8.. <- CNumSelect temp +4
+    CibgUnk16 unk;
+    u32 a, b, c, dd, e, f;
+    u8 g, h, i, j, k;
+};
+struct CibgExchMember {   // p+0x444.. <- CExchangeWin temp +4
+    CibgUnk16 unk;
+    u32 a, b, c, d;
+    u8 e, f, g, h;
+};
+
 // Cast-only vtable interface for the CItemImplInstances object: method at
 // vtable+0x44 (raw slot 17) clears the given equipped slot.
 struct CItemInstVt44Clear {

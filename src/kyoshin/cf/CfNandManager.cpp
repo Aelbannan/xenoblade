@@ -1,6 +1,14 @@
 // Auto-scaffolded catalog TU for kyoshin/cf/CfNandManager
 // Replace stubs with high-level C/C++ during decomp.
 
+// CfGameManager.hpp declares the teardown entry __dt__8023E448 as void(), but
+// retail returns func_8023D3D8's result in r3 (mr r3,r30 epilogue). Rename the
+// stale void declaration away while including (the include guard makes the
+// later transitive inclusion a no-op); the properly-typed import is declared
+// below.
+#define __dt__8023E448 dt_8023E448_stale_void_decl
+#include "kyoshin/cf/CfGameManager.hpp"
+#undef __dt__8023E448
 #include "kyoshin/cf/CfNandManager.hpp"
 #include "kyoshin/harness_catalog.hpp"
 // (CSaveLoad.hpp intentionally not included: its void return for
@@ -57,9 +65,8 @@ extern "C" __declspec(noinline) void* __ct__cf_CfNandManager(void* self, CScn* p
     drawFunc[2] = nullPtmf[2];
 
     reinterpret_cast<u32*>(mgr)[4] = reinterpret_cast<u32>(vt);
-    mgr->mIWorkEventVtable = reinterpret_cast<u32>(vt) + 0x24;
-    reinterpret_cast<u32*>(mgr)[0x16] = reinterpret_cast<u32>(vt) + 0xac;
-
+    reinterpret_cast<u32*>(mgr)[0x15] = reinterpret_cast<u32>(vt) + 0x24;  // +0x54
+    reinterpret_cast<u32*>(mgr)[0x16] = reinterpret_cast<u32>(vt) + 0xac;  // +0x58
     mgr->field_0x5C = 0;
 
     // Construct the embedded event ring: slot 0 inline, slots 1..15 through
@@ -72,10 +79,9 @@ extern "C" __declspec(noinline) void* __ct__cf_CfNandManager(void* self, CScn* p
     mgr->mEventQueue.mTail = 0;
     mgr->mEventQueue.mHead = 0;
     mgr->mPending.mCb = 0;
-    mgr->mSaveBlock = 0;
-    mgr->field_17C = 0;
-    mgr->field_17E = 0;
-    mgr->field_17F = 0;
+    mgr->mPending.mPayload = 0;
+    mgr->mPending.mSubtype = 0;
+    mgr->mPending.mFlag = 0;
     mgr->field_180 = 0;
     mgr->field_184 = 0;
     mgr->field_186 = 0;
@@ -101,9 +107,9 @@ extern "C" __declspec(noinline) void* __ct__cf_CfNandManager(void* self, CScn* p
     hook[2] = lbl_eu_80536B20[2];
 
     lbl_eu_80664774 = 0;
-    mgr->field_17C = 0;
-    mgr->mSaveBlock = 0;
-    mgr->field_17F = 0;
+    mgr->mPending.mType = 0;
+    mgr->mPending.mPayload = 0;
+    mgr->mPending.mFlag = 0;
     return mgr;
 }
 
@@ -126,19 +132,19 @@ cf::CfNandManager::~CfNandManager() {
     // the ctor and dtor; MWCC emits no vtable stores for this class). Keep the
     // label pointer live so MWCC emits a single @ha/@l pair for all three.
     u8* vt = lbl_eu_80536BBC;
-    u32 v54 = reinterpret_cast<u32>(vt + 0x24);   // +0x54 IWorkEvent vtable
-    u32 v58 = reinterpret_cast<u32>(vt + 0xac);   // +0x58 IScnRender vtable
-    reinterpret_cast<u32*>(this)[4] = reinterpret_cast<u32>(vt);
-    mIWorkEventVtable = v54;
-    reinterpret_cast<u32*>(this)[0x16] = v58;
+    reinterpret_cast<u32*>(this)[4] = reinterpret_cast<u32>(vt);   // +0x10 CTTask
+    reinterpret_cast<u32*>(this)[0x15] = reinterpret_cast<u32>(vt + 0x24);  // +0x54 IWorkEvent
+    reinterpret_cast<u32*>(this)[0x16] = reinterpret_cast<u32>(vt + 0xac);  // +0x58 IScnRender
 
     // Drop the D80 scene render callback while the singleton is live.
+    // Retail calls removeRenderCB whenever the scene pointer is non-null,
+    // passing a null renderer when the singleton is already gone.
     CScn* scene = reinterpret_cast<CScn*>(CfRes_getD80Flag());
     if (scene != 0) {
-        cf::CfNandManager* mgr = lbl_eu_80664768;
-        if (mgr != 0) {
-            scene->removeRenderCB(static_cast<IScnRender*>(mgr));
-        }
+        // Retail passes the singleton +0x58 when live, else the (null)
+        // pointer itself - one register, conditionally offset.
+        u8* p = reinterpret_cast<u8*>(lbl_eu_80664768);
+        scene->removeRenderCB(reinterpret_cast<IScnRender*>(p != nullptr ? p + 0x58 : p));
     }
     // Release the shared NAND resource buffer.
     if (lbl_eu_8066477C != 0) {
@@ -291,7 +297,7 @@ extern "C" void func_8023C7C4(CfNandSaveSource* src, CfNandSaveBuf* dst, u32 id)
     dst->field03 = (u8)cal.hour;
     dst->field02 = (u8)cal.mday;
     dst->field08 = (u8)cal.month;
-    dst->field67 = (u8)func_8009CF8C();
+    dst->field67 = (u8)func_8009CF8C(0);
     u32 progress = func_8006A80C();
     dst->field0A = (u16)((progress >> 4) & 0xFFFF);
     dst->field0C = (u16)((progress >> 20) & 0x3F);
@@ -396,29 +402,41 @@ int func_8023CD9C(CfNandSaveBlock* block) {
     return result;
 }
 
-void* func_8023D3D8() { return nullptr; }
+// properly-typed import (retail returns the teardown result in r3)
+extern "C" void* __dt__8023E448();
+// opaque callee for the teardown path (real body is target us-8023f51c)
+extern "C" void* func_8023D3D8();
 
 // NAND teardown: guards on the singleton's heap buffer. The `buf ? buf : 0`
 // self-assignment reproduces the retail materialized-bool diamond (the buffer
 // word is re-tested with its own cr0 before the main path). `zero` stays live
-// across the __dl__ call, forcing the retail r31 save/reuse.
-// Retail returns the func_8023D3D8 result in r3, but CfGameManager.hpp
-// declares this as void(); conform to the import declaration.
-void __dt__8023E448() {
-    u8* buf = lbl_eu_80664768->field_0x5C;
-    buf = buf != 0 ? buf : 0;
-    if (buf == 0) {
-        return;
-    }
-    u32 zero = 0;
+// across the __dl__ call, forcing the retail r31 save/reuse, and the
+// func_8023D3D8 result is held in r30 until the final return.
+void* __dt__8023E448() {
+    // The `p ? p : 0` normalizer reproduces the retail materialized-bool
+    // diamond (load; cmpi; beq->li 0; re-test). Every formulation tried lands
+    // the diamond value in r0; retail holds it in r3 - the residual 4-insn
+    // reg-swap is documented in the session notes.
+    void* raw = lbl_eu_80664768->field_0x5C;
+    raw = raw != 0 ? raw : 0;
+    if (raw == 0)
+        return (void*)0;
     lbl_eu_80664772 = 1;
-    func_8023D3D8();
-    lbl_eu_80664772 = zero;
-    cf::CfNandManager* mgr = lbl_eu_80664768;
-    if (mgr->field_0x5C != 0) {
-        __dl__FPv(mgr->field_0x5C);
-        mgr->field_0x5C = (u8*)zero;
+    void* result = func_8023D3D8();
+    lbl_eu_80664772 = 0;
+    if (lbl_eu_80664768->field_0x5C != 0) {
+        __dl__FPv(lbl_eu_80664768->field_0x5C);
+        lbl_eu_80664768->field_0x5C = 0;
     }
+    return result;
+}
+
+// Placeholder for target us-8023f51c (retail body is large). noinline keeps
+// the call site real; the store through a loaded pointer makes the call
+// clobber-unknown, forcing callers to reload globals across it.
+extern "C" __declspec(noinline) void* func_8023D3D8() {
+    *lbl_eu_8066477C = 0;
+    return nullptr;
 }
 
 // OnFileEvent body (retail Fv symbol carries a hidden CEventFile* in r4: the
@@ -449,7 +467,7 @@ void func_8023E544(cf::CfNandManager* self, void* unk, u8* flag, u32* out) {
     if (*flag == 0) {
         return;
     }
-    CfNandSaveBlock* block = self->mSaveBlock;
+    CfNandSaveBlock* block = (CfNandSaveBlock*)self->mPending.mPayload;
     if (block->magic == 0x444D4D59) {   // 'DMMY' dummy slot
         *flag = 0;
         *out = 0;
@@ -475,7 +493,7 @@ void func_8023E544(cf::CfNandManager* self, void* unk, u8* flag, u32* out) {
 }
 
 __declspec(noinline) void __dt__8023E63C(cf::CfNandManager* self) {
-    u16 type = self->field_17C;
+    u16 type = self->mPending.mType;
     if (type == 0) {
         return;
     }
@@ -505,7 +523,7 @@ __declspec(noinline) void __dt__8023E63C(cf::CfNandManager* self) {
         break;
     case 0x12:
         if (canAct != 0) {
-            CfNandSaveBlock* block = self->mSaveBlock;
+            CfNandSaveBlock* block = (CfNandSaveBlock*)self->mPending.mPayload;
             if (block->magic != 0x444D4D59) { // 'DMMY' = empty slot
                 self->field_184++;
             }
@@ -644,16 +662,15 @@ __declspec(noinline) void __dt__8023E63C(cf::CfNandManager* self) {
 }
 
 // Target us-80240c00: event-status dispatch for the NAND manager. Maps the
-// event type to a status word written through *out. The r5 out-param is not
-// used by this function (retail callers pass a byte slot in r5 and the word
-// slot in r6). The field_180 flag bits (bit0/bit29) report 1, else 2. The
-// case set covers 3..0x26 densely so MWCC emits the retail jump table
-// (jumptable_eu_80536B2C).
+// event type to a status word written through *out (the r5 status slot is
+// unused here). field_180 bit0/bit2 report 1, else 2. Types 1/2 report 3,
+// 6/7 report 4, everything else in 3..0x26 falls into the dense switch that
+// MWCC lowers to the retail jump table (jumptable_eu_80536B2C).
 void func_8023EABC(cf::CfNandManager* self, u32 type, u8* status, u32* out) {
-    // Event-status dispatch: leading equality chains, then a dense inner
-    // switch over 3..0x26.
+    // Leading equality chains, then the dense switch over 3..0x26.
     if (type == 0x10 || type == 0x21) {
-        if ((self->field_180 & 1) || (self->field_180 & 0x20000000)) {
+        u32 flags = self->field_180;
+        if ((flags & 1) != 0 || (flags & 4) != 0) {
             *out = 1;
         } else {
             *out = 2;
@@ -662,30 +679,24 @@ void func_8023EABC(cf::CfNandManager* self, u32 type, u8* status, u32* out) {
         *out = 3;
     } else {
         switch (type) {
-        case 0x4:
-        case 0x5:
-        case 0xB:
-        case 0xC:
-        case 0xD:
-        case 0x26: {
-            // Same status computation as above, via a local so MWCC keeps
-            // this body distinct from the first copy.
-            u32 flags = self->field_180;
-            if ((flags & 1) != 0 || (flags & 0x20000000) != 0) {
-                *out = 1;
-            } else {
-                *out = 2;
-            }
-            break;
-        }
+        // Dense case set over 3..0x26 (two groups) so MWCC emits the retail
+        // jump table (jumptable_eu_80536B2C).
         case 0x6:
         case 0x7:
             *out = 4;
             break;
         case 0x3:
+        case 0x4:
+        case 0x5:
         case 0x8:
         case 0x9:
-        case 0xA:
+        case 0xC:
+        case 0xD:
+        // Dead but keeps three switch target groups, which is what makes
+        // MWCC lower this to the retail jump-table form.
+        case 0x10:
+        case 0x21:
+            break;
         case 0xE:
         case 0xF:
         case 0x11:
@@ -708,7 +719,17 @@ void func_8023EABC(cf::CfNandManager* self, u32 type, u8* status, u32* out) {
         case 0x23:
         case 0x24:
         case 0x25:
-            break; // do nothing
+        case 0x26: {
+            // Same status computation as above, kept as a distinct copy so
+            // the jump-table body is emitted separately.
+            u32 flags = self->field_180;
+            if ((flags & 1) != 0 || (flags & 4) != 0) {
+                *out = 1;
+            } else {
+                *out = 2;
+            }
+            break;
+        }
         default:
             break;
         }
@@ -1082,23 +1103,32 @@ u32 func_8023FA64(u8* buf, u8 byte, u32 word) {
     return result;
 }
 
+// Push an event {word, 0x28000, 0, 1, byte, 0} onto the manager's ring and
+// report success through an int result held in a single live-across-body
+// variable (retail li r11,0 / li r11,1 / mr r3,r11 shape).
 // Push an event {word, 0x28000, 0, 1, byte, 0} onto the manager's ring.
-// CSaveLoad.hpp declares this void(int, void*); conform to that import decl.
-void func_8023FB28(int byte, void* word) {
-    CfNandEvent* entry;
+// Written as a returning inline helper so MWCC folds the singleton check into
+// the caller's result variable (retail li r11,0 / li r11,1 / mr r3,r11).
+static int CfNandPushEventRead(int byte, u32 word) {
     cf::CfNandManager* mgr = lbl_eu_80664768;
     if (mgr == 0) {
-        return;
+        return 0;
     }
-    entry = &mgr->mEventQueue.mRingBase[(mgr->mEventQueue.mHead + mgr->mEventQueue.mTail) %
-                                        mgr->mEventQueue.mSize];
-    entry->mWord = (u32)word;
+    CfNandEvent* entry =
+        &mgr->mEventQueue.mRingBase[(mgr->mEventQueue.mHead + mgr->mEventQueue.mTail) %
+                                    mgr->mEventQueue.mSize];
+    entry->mWord = word;
     entry->mTag = 0x28000;
     entry->mField8 = 0;
     entry->mFieldC = 1;
-    entry->mFieldE = byte;
+    entry->mFieldE = (u8)byte;
     entry->mFieldF = 0;
     mgr->mEventQueue.mTail++;
+    return 1;
+}
+
+int func_8023FB28(int byte, u32 word) {
+    return CfNandPushEventRead(byte, word);
 }
 
 // Push an event {word, 0x28000, 0, 0x10, 0, 0} onto the manager's ring.
@@ -1126,43 +1156,43 @@ u32 func_8023FBA0(u32 word) {
 // Target us-80241dc8: push three {word, 0x28000, 0, 8, counter, 0} events
 // onto the manager ring (counter = 1..3), after clearing the u16 event-status
 // word. Returns whether the last push saw a live singleton.
+// Push one {word, 0x28000, 0, 8, counter, 0} event; IPA-inlined so the body is
+// colored in the caller's register-allocation context (retail shape).
+static inline int CfNandPushEventMode8(u32 word, u32 counter) {
+    cf::CfNandManager* mgr = lbl_eu_80664768;
+    if (mgr == 0) {
+        return 0;
+    }
+    CfNandEvent* entry = &mgr->mEventQueue.mRingBase[(mgr->mEventQueue.mHead + mgr->mEventQueue.mTail) %
+                                                     mgr->mEventQueue.mSize];
+    entry->mWord = (u32)word;
+    entry->mTag = 0x28000;
+    entry->mField8 = 0;
+    entry->mFieldC = 8;
+    entry->mFieldE = counter;
+    entry->mFieldF = 0;
+    mgr->mEventQueue.mTail++;
+    return 1;
+}
+
 int func_8023FC18(void (*word)(u32, u32, u32, u32)) {
-    u32 result;
     if (lbl_eu_80664768 == 0) {
         return 0;
     }
     lbl_eu_8066476E = 0;
-    u32 counter = 1;
-    for (; counter <= 3; counter++) {
-        cf::CfNandManager* mgr = lbl_eu_80664768;
-        if (mgr == 0) {
-            result = 0;
-            continue;
-        }
-        CfNandEvent* entry = &mgr->mEventQueue.mRingBase[(mgr->mEventQueue.mHead + mgr->mEventQueue.mTail) %
-                                                         mgr->mEventQueue.mSize];
-        entry->mWord = (u32)word;
-        entry->mTag = 0x28000;
-        entry->mField8 = 0;
-        entry->mFieldC = 8;
-        entry->mFieldE = counter;
-        entry->mFieldF = 0;
-        mgr->mEventQueue.mTail++;
-        result = 1;
+    u32 result;
+    for (u32 counter = 1; counter <= 3; counter++) {
+        result = CfNandPushEventMode8((u32)word, counter);
     }
     return result;
 }
 
 // Push an event {word, 0x10000, 0, 9, 0, 0} onto the manager's ring.
-// Returns 1 on success, 0 when the singleton is not set up.
-int func_8023FCCC(void (*word)(u32, u32, u32, u32)) {
+// Written as an IPA-inlined helper so the body gets colored in the caller's
+// register-allocation context (retail shape).
+static inline int CfNandPushEventMode9(u32 word) {
     u32 result;
-    cf::CfNandManager* mgr;
-    result = 0;
-    mgr = lbl_eu_80664768;
-    if (mgr == 0) {
-        return result;
-    }
+    cf::CfNandManager* mgr = lbl_eu_80664768;
     if (mgr == 0) {
         result = 0;
     } else {
@@ -1179,6 +1209,13 @@ int func_8023FCCC(void (*word)(u32, u32, u32, u32)) {
         result = 1;
     }
     return result;
+}
+
+int func_8023FCCC(void (*word)(u32, u32, u32, u32)) {
+    if (lbl_eu_80664768 == 0) {
+        return 0;
+    }
+    return CfNandPushEventMode9((u32)word);
 }
 
 // Target us-80241efc: push the mode-tagged event {mode, 0x10000, .., 0xA} then
@@ -1293,24 +1330,21 @@ void cf::CfNandManager::cbRenderBefore() {
     // While the counter is armed (1), copy the EFB into the shared texture
     // buffer and flush it, then disarm.
     if (lbl_eu_80664770 == 1) {
-        // §4 regalloc: declaration order maps 1st->r30, 2nd->r30 (reuse), 3rd->r31.
-        u16 efbH2;     // blocks 2+4 -> r30
-        u32 size1;
-        u16 efbH;      // blocks 1-2 -> r31
-        u32 size2;
-        u16 fbW;
+        // Widths are consumed straight from the reload (no local survives the
+        // intervening calls); heights live across calls in preserved regs.
+        u16 efbH = CDeviceVI::getRenderModeObj()->efbHeight;
+        GXSetTexCopySrc(0, 0, CDeviceVI::getRenderModeObj()->fbWidth, efbH);
         efbH = CDeviceVI::getRenderModeObj()->efbHeight;
-        fbW = CDeviceVI::getRenderModeObj()->fbWidth;
-        GXSetTexCopySrc(0, 0, fbW, efbH);
-        efbH2 = CDeviceVI::getRenderModeObj()->efbHeight;
-        GXSetTexCopyDst(CDeviceVI::getRenderModeObj()->fbWidth, efbH2, (GXTexFmt)6, (GXBool)0);
+        GXSetTexCopyDst(CDeviceVI::getRenderModeObj()->fbWidth, efbH, (GXTexFmt)6,
+                        (GXBool)0);
         GXCopyTex(lbl_eu_80664780, (GXBool)0);
         GXPixModeSync();
         GXInvalidateTexAll();
-        size1 = GXGetTexBufferSize(0xa4, 0x74, 4, (GXBool)0, 0);
+        u32 size1 = GXGetTexBufferSize(0xa4, 0x74, 4, (GXBool)0, 0);
         u16 h = CDeviceVI::getRenderModeObj()->efbHeight;
-        u16 w = CDeviceVI::getRenderModeObj()->fbWidth;
-        size2 = GXGetTexBufferSize(w, h, 6, (GXBool)0, 0);
+        u32 size2 =
+            GXGetTexBufferSize(CDeviceVI::getRenderModeObj()->fbWidth, h, (GXTexFmt)6,
+                               (GXBool)0, 0);
         DCFlushRange(lbl_eu_8066477C, size1 + size2);
         lbl_eu_80664770 = 2;
     }

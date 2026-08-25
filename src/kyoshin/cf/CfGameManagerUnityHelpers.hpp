@@ -979,6 +979,10 @@ extern "C" ResourceLookup81694* func_80069C78(Unk817A8Object* object,
 extern "C" u32 func_80061FE8();
 extern "C" void* allocate__Q23mtl10MemManagerFUlUl(u32 size, u32 heap);
 extern "C" Unk815A4Object* __ct__800815A4(Unk815A4Object* self);
+// dont_inline: retail keeps the ctor calls inside this helper as out-of-line
+// bl (see MWCC_CASES CScnFilterMan note); without this MWCC inlines the
+// CCharVoice-style ctor bodies.
+#pragma dont_inline on
 extern "C" Unk80EE4Data* func_80081694__Q22cf13CfGameManagerFv(
     u32 firstKey, u32 secondKey) {
     cf::CfGameManager::getInstance();
@@ -1016,6 +1020,7 @@ extern "C" Unk80EE4Data* func_80081694__Q22cf13CfGameManagerFv(
 done:
     return result;
 }
+#pragma dont_inline reset
 
 extern "C" u32 CfRes_packThreeFields(u32 first, u32 second, u32 third);
 #pragma dont_inline on
@@ -1746,7 +1751,7 @@ extern "C" Unk80338Object* __ct__80080254(Unk80338Object* self) {
     effect->vtable_0x0 = lbl_eu_8052FE68;
     result->field_0x370 = zero;
     result->field_0x374 = zero;
-    effect->field_0x300 = zero;
+    *reinterpret_cast<u32*>(reinterpret_cast<u8*>(result) + 0x368) = zero;
     result->field_0x378 = zero;
     result->field_0x37C = zero;
     result->vtable_0x0 = lbl_eu_8052A558;
@@ -1774,11 +1779,11 @@ extern "C" Unk80338Object* __ct__80080338(Unk80338Object* self) {
     result->vtable_0x10 = &lbl_eu_8052A7E8[0xC4];
     UnkCharEffect304* effect = &result->effect_0x68;
     __ct__CCharEffect(effect);
-    result->field_0x36C = zero;
     effect->vtable_0x0 = lbl_eu_8052FE68;
+    result->field_0x36C = zero;
     result->field_0x370 = zero;
     result->field_0x374 = zero;
-    effect->field_0x300 = zero;
+    *reinterpret_cast<u32*>(reinterpret_cast<u8*>(result) + 0x368) = zero;
     result->field_0x378 = zero;
     result->field_0x37C = zero;
     return result;
@@ -1800,15 +1805,26 @@ static inline Unk815A4Object* initUnk815A4Base(Unk815A4Object* self) {
     __ct__CCharVoice(&self->voice_0x28);
     return self;
 }
+#pragma dont_inline on
 extern "C" Unk815A4Object* __ct__800815A4(Unk815A4Object* self) {
-    Unk815A4Object* result = initUnk815A4Base(self);
+    Unk815A4Object* result = self;
+    Unk815A4Object* base = result;
+    base->field_0x4 = 0;
+    base->field_0x8 = 0;
+    base->vtable_0x0 = lbl_eu_8052AC98;
+    base->vtable_0xC = &lbl_eu_8052AC98[0xB4];
+    base->vtable_0x10 = &lbl_eu_8052AC98[0xC4];
+    base->field_0x14 = 0;
+    base->field_0x18 = 0;
+    base->field_0x1C = 0;
+    __ct__CCharVoice(&base->voice_0x28);
     result->vtable_0x0 = lbl_eu_8052A8E8;
+    UnkCharEffect300* effect = &result->effect_0x68;
     result->vtable_0xC = &lbl_eu_8052A8E8[0xB4];
     result->vtable_0x10 = &lbl_eu_8052A8E8[0xC4];
-    UnkCharEffect300* effect = &result->effect_0x68;
     __ct__CCharEffect(effect);
     effect->vtable_0x0 = lbl_eu_8052FE38;
-    __ct__cf_CPartsChange(&result->parts_0x368);
+    __ct__cf_CPartsChange(reinterpret_cast<void*>(&result->parts_0x368));
     return result;
 }
 #pragma dont_inline reset
@@ -2464,7 +2480,7 @@ extern "C" void func_80083560__Q22cf13CfGameManagerFv(u32 first, u32 second,
 }
 
 struct CfPlayerExtraData {
-    u8 field_0x0[0xA9C];
+    u8 field_0x0[0xA9C + 0x80];
 };
 
 class CfPlayerComposite : public cf::CActorParam,
@@ -2931,11 +2947,8 @@ extern const float lbl_eu_80666558;
 extern "C" void func_80082C48__Q22cf13CfGameManagerFv(
     cf::CfObjectMove* player) {
     cf::CfGameManager* manager = cf::CfGameManager::getInstance();
-    cf::CfObjectMove** slot =
-        func_8007C6B4__Q22cf13CfGameManagerFv(manager->unk94, 0);
-    cf::CfObjectMove* previous = *slot;
-    slot = func_8007C6B4__Q22cf13CfGameManagerFv(manager->unk94, 0);
-    *slot = player;
+    cf::CfObjectMove* previous = *func_8007C6B4__Q22cf13CfGameManagerFv(manager->unk94, 0);
+    *func_8007C6B4__Q22cf13CfGameManagerFv(manager->unk94, 0) = player;
 
     Unk82C48Object* object = static_cast<Unk82C48Object*>(
         func_800BFC68__FPQ22cf12CfObjectMove(player));
@@ -3024,24 +3037,21 @@ extern "C" void sinit_80087470() {
     lbl_eu_80663E28 = 0;
     lbl_eu_80663E2C = 0;
 
-    BdatTextEntry* entry0 = reinterpret_cast<BdatTextEntry*>(base + 0x948);
-    entry0->text[0] = 0;
-    entry0->textLength = 0;
+    *(volatile u8*)(base + 0x948) = 0;
+    *(volatile u32*)(base + 0x968) = 0;
 
-    float* vector = reinterpret_cast<float*>(base + 0x96C);
-    vector[0] = lbl_eu_80666498;
-    vector[1] = lbl_eu_80666498;
-    vector[2] = lbl_eu_80666498;
+    *(volatile float*)(base + 0x96C) = lbl_eu_80666498;
+    *(volatile float*)(base + 0x970) = lbl_eu_80666498;
+    *(volatile float*)(base + 0x974) = lbl_eu_80666498;
 
-    BdatTextEntry* entries = reinterpret_cast<BdatTextEntry*>(base + 0x978);
-    __construct_array(entries, reinterpret_cast<void*>(func_80087588),
+    __construct_array(reinterpret_cast<BdatTextEntry*>(base + 0x978),
+                      reinterpret_cast<void*>(func_80087588),
                       nullptr, sizeof(BdatTextEntry), 2);
 
-    BdatTextEntry* entry1 = reinterpret_cast<BdatTextEntry*>(base + 0xA18);
-    entry1->text[0] = 0;
-    entry1->textLength = 0;
-    entry1->secondaryText[0] = 0;
-    entry1->secondaryTextLength = 0;
-    entry1->value = lbl_eu_80666548;
+    *(volatile u8*)(base + 0xA18) = 0;
+    *(volatile u32*)(base + 0xA38) = 0;
+    *(volatile u8*)(base + 0xA3C) = 0;
+    *(volatile u32*)(base + 0xA5C) = 0;
+    *(volatile float*)(base + 0xA60) = lbl_eu_80666548;
 }
 

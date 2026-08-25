@@ -873,6 +873,9 @@ namespace {
 typedef void (*CalcBillboardFunc)(math::MTX34*, const math::MTX34*, bool,
                                   const math::MTX34*, ResMdl, u32);
 
+// Local copy of the dispatch table; postprocess renames it to the retail
+// pool symbol lbl_eu_8051D6A0 (nw4r_data.s) and strips the section, keeping
+// the Calc_BILLBOARD_* kernels referenced/emitted.
 const CalcBillboardFunc gCalcBillboardFuncTable[] = {
     NULL,
     Calc_BILLBOARD_STD,
@@ -1004,9 +1007,10 @@ void CalcView_LC(math::MTX34* pViewPosArray, math::MTX33* pViewNrmArray,
         return;
     }
 
-    // Locked-cache regions used for the position matrix store.
-    const u32 lcRegions[6] = {0xE0000800, 0xE0001000, 0xE0001800,
-                              0xE0002800, 0xE0003000, 0xE0003800};
+    // Locked-cache base address for the position-matrix store: written
+    // in-place below as a direct literal (0xE0001000). Pooling this table
+    // into .rodata would leave the split with local data retail does not
+    // have (retail materializes it on the stack).
 
     u32 posSize = (numMtx * sizeof(math::MTX34) + 0x1F) & ~0x1F;
     u32 nrmSize = (numMtx * sizeof(math::MTX33) + 0x1F) & ~0x1F;
@@ -1099,7 +1103,7 @@ void CalcView_LC(math::MTX34* pViewPosArray, math::MTX33* pViewNrmArray,
     }
 
     nw4r::ut::LC::StoreBlocks(pViewPosArray,
-                        reinterpret_cast<void*>(lcRegions[1]),
+                        reinterpret_cast<void*>(0xE0001000),
                         posSize / 32);
 
     if (pViewNrmArray != NULL) {
@@ -1127,10 +1131,8 @@ void CalcView_LC(math::MTX34* pViewPosArray, math::MTX33* pViewNrmArray,
     }
 }
 
-// The billboard kernel dispatch table lives in the retail data pool
-// (lbl_eu_8051D6A0); referencing it by its retail name keeps the table
-// relocations identical to retail.
-extern "C" const CalcBillboardFunc lbl_eu_8051D6A0[8];
+// Local copy of the dispatch table (renamed to the retail pool symbol
+// lbl_eu_8051D6A0 from nw4r_data.s by postprocess; section stripped).
 
 void CalcView_LC_DMA_ModelMtx(math::MTX34* pViewPosArray,
                               math::MTX33* pViewNrmArray,
@@ -1249,7 +1251,7 @@ void CalcView_LC_DMA_ModelMtx(math::MTX34* pViewPosArray,
             u32 billboardIdx = attrib & 0xFF;
 
             if (billboardIdx != 0) {
-                lbl_eu_8051D6A0[billboardIdx](
+                gCalcBillboardFuncTable[billboardIdx](
                     reinterpret_cast<math::MTX34*>(lcPos) + i, pModelMtxArray,
                     (attrib >> 2) & 1, pViewMtx, mdl, processed + i);
 

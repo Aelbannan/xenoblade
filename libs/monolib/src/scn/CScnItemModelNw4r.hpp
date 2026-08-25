@@ -332,6 +332,13 @@ struct CScnItemModelNw4rHookV0C {
 // flag by func_80487818.
 struct CScnItemModelNw4rLook {
     virtual void v00(int deleting) = 0;   // vtable 0x8 (dtor)
+    // Inlined release path: the redundant this-null-check survives inlining
+    // (retail keeps the dead second beq).
+    void ReleaseChecked() {
+        if (this != 0) {
+            v00(1);
+        }
+    }
 };
 
 // 0x20-byte shadow-node entry at CScnItemModelNw4r+0x17DC (two entries;
@@ -732,6 +739,12 @@ extern "C" f32 func_80496288(CScnItemModelNw4rOwner* owner);
 extern const float lbl_eu_8066A908;  // short-delta length-squared threshold
  extern const float lbl_eu_8066A90C;  // normalize extra scale
  extern const float lbl_eu_8066A910;  // -1.0f (Y clamp step)
+extern const float lbl_eu_8066A914;  // u16 angle -> radians scale (func_8048AB2C)
+extern const float lbl_eu_8066A918;  // offset Y advance per frame scale
+extern const float lbl_eu_8066A91C;  // offset normalization length-squared min
+extern const float lbl_eu_8066A920;  // normalized offset magnitude cap
+extern const float lbl_eu_8066A924;  // quaternion dot fallback threshold
+extern const float lbl_eu_8066A928;  // half-angle scale for the quaternion w
 
 // func_80489C94 ResFile-alignment panic strings (.data).
 extern char lbl_eu_8052637C[];

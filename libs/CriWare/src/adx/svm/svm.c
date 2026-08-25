@@ -326,11 +326,11 @@ void SVM_SetCbUnlock(void* cb, void* ctx) {
 }
 
 /* Shared server-runner body; retail inlines this into each SVM_ExecSvr*
-   wrapper with the server index folded in at the call sites. */
-static inline u32 svm_ExecSvr(s32 id) {
+   wrapper with the table pointer and server index folded in at the call
+   sites. */
+static inline u32 svm_ExecSvr(SvmSvrEntry* tbl, s32 id) {
     SvmCtrl* ctrl = &lbl_eu_805F26F0;
     u32 result = 0;
-    SvmSvrEntry* tbl = ctrl->svr_tbl[0];
     s32 i;
     u32 one = 1;
     SvmSvrEntry* p = &tbl[6 * id];
@@ -349,35 +349,100 @@ static inline u32 svm_ExecSvr(s32 id) {
 }
 
 u32 SVM_ExecSvrVint(void) {
-    return svm_ExecSvr(0);
+    return svm_ExecSvr(lbl_eu_805F26F0.svr_tbl[0], 0);
 }
 
 u32 SVM_ExecSvrUsrVsync(void) {
-    return svm_ExecSvr(1);
+    return svm_ExecSvr(lbl_eu_805F26F0.svr_tbl[0], 1);
 }
 
 u32 SVM_ExecSvrVsync(void) {
-    return svm_ExecSvr(2);
+    SvmCtrl* ctrl = &lbl_eu_805F26F0;
+    u32 result = 0;
+    SvmSvrEntry* tbl = ctrl->svr_tbl[0];
+    u32 i;
+    u32 one = 1;
+    /* One-time opaque read keeps the flags base in its own register across
+       the server calls (retail hoists it with an 8-byte displacement). */
+    u32* volatile flagsv = ctrl->exec.flags;
+    u32* flags = flagsv;
+    u32 zero = 0;
+    for (i = 0; i < 6; i++) {
+        u32 (*fn)(void*) = tbl[6 * 2 + i].func;
+        void* obj = tbl[6 * 2 + i].object;
+        if (fn != NULL) {
+            flags[2] = one;
+            result |= fn(obj);
+            flags[2] = zero;
+        }
+    }
+    {
+        u32* cnt = ctrl->exec.counts;
+        cnt[2] += 1;
+    }
+    return result;
 }
 
 u32 SVM_ExecSvrUhigh(void) {
-    return svm_ExecSvr(3);
+    SvmCtrl* ctrl = &lbl_eu_805F26F0;
+    u32 result = 0;
+    SvmSvrEntry* tbl = ctrl->svr_tbl[0];
+    u32 i = 0;
+    u32 one = 1;
+    /* Opaque pointer read keeps the flags base in its own register across
+       the server calls instead of folding into a ctrl displacement. */
+    u32* volatile flagsv = ctrl->exec.flags;
+    u32* flags = flagsv;
+    SvmSvrEntry* p = &tbl[18];
+    u32 zero = 0;
+    for (; i < 6; i++, p++) {
+        u32 (*fn)(void*) = p->func;
+        void* obj = p->object;
+        if (fn != NULL) {
+            flags[3] = one;
+            result |= fn(obj);
+            flags[3] = zero;
+        }
+    }
+    ctrl->exec.counts[3] += 1;
+    return result;
 }
 
 u32 SVM_ExecSvrFs(void) {
-    return svm_ExecSvr(4);
+    SvmCtrl* ctrl = &lbl_eu_805F26F0;
+    u32 result = 0;
+    u32 i = 0;
+    u32 one = 1;
+    /* Flat table-base pointer makes MWCC emit the two-step addi chain
+       (ctrl+0x128, then row offset) seen in retail; flags stays in its own
+       callee-saved register across the server calls. */
+    SvmSvrEntry* tbl = &ctrl->svr_tbl[0][0];
+    u32* flags = ctrl->exec.flags;
+    SvmSvrEntry* p = &tbl[24];
+    u32 zero = 0;
+    for (; i < 6; i++, p++) {
+        u32 (*fn)(void*) = p->func;
+        void* obj = p->object;
+        if (fn != NULL) {
+            flags[4] = one;
+            result |= fn(obj);
+            flags[4] = zero;
+        }
+    }
+    ctrl->exec.counts[4] += 1;
+    return result;
 }
 
 u32 SVM_ExecSvrMain(void) {
-    return svm_ExecSvr(5);
+    return svm_ExecSvr(lbl_eu_805F26F0.svr_tbl[0], 5);
 }
 
 u32 SVM_ExecSvrMwIdle(void) {
-    return svm_ExecSvr(6);
+    return svm_ExecSvr(lbl_eu_805F26F0.svr_tbl[0], 6);
 }
 
 u32 SVM_ExecSvrUsrIdle(void) {
-    return svm_ExecSvr(7);
+    return svm_ExecSvr(lbl_eu_805F26F0.svr_tbl[0], 7);
 }
 
 void SVM_Init(void) {

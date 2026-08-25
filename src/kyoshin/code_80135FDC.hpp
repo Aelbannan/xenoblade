@@ -286,7 +286,7 @@ extern "C" int func_8009EBE8(u32 idx);
 extern "C" void func_8009EB94(u32 idx, u32 value);
 extern "C" void func_80157824(u8, u32);
 struct UnkScnResult;
-extern "C" UnkScnResult* func_8049603C(CScn* scene);
+extern "C" void* func_8049603C(CScn* scene);
 extern "C" void func_800826F0__Q22cf13CfGameManagerFv(u32);
 extern "C" void func_80462D04__8CTaskLODFv(s8);
 extern "C" void func_80462D5C__8CTaskLODFv(u8);

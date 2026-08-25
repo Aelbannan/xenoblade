@@ -104,14 +104,19 @@ CNBanner::CNBanner() {
     this->mDesc.clear();
     this->mPath.clear();
     this->mFiles[0].clear();
-    // Pointer-walk clears the remaining 7 slots; MWCC keeps it as an mtctr/
-    // bdnz counted loop with a runtime (end - start + 0x43) / 0x44 trip count.
+    // Pointer-walk clears the remaining 7 slots; MWCC lowers this to a
+    // counted loop with a runtime (end - start + 0x43) / 0x44 trip count.
     for (ml::FixStr<64>* f = &this->mFiles[1]; f < &this->mFiles[8]; f++) {
         f->clear();
     }
     this->mAlloc0 = 0;
     this->field_8 = 0;
     this->field_C = 0;
+    // NOTE: retail keeps this fill as `bl memset(this+0x2fc, 0, 0x20)`.
+    // Under this unit's -O4,p flags MWCC inline-expands every tested source
+    // form (direct memset, char* dest, index-fill loop); retail's retained
+    // call points at an -O4,s compile of this TU (cf. sibling
+    // CNReqtaskSaveBanner.cpp), which configure.py must negotiate.
     memset(this->mFileId, 0, sizeof(this->mFileId));
     this->mCount = 0;
     this->mCountRef = 0;

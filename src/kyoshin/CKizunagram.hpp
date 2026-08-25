@@ -6,6 +6,7 @@
 #include <revolution/gx/GXTypes.h>
 
 struct CFileHandle;  // monolib/device/CFileHandle.hpp
+class CEventFile;    // monolib/work/CEventFile.hpp
 
 class CKizunaRadar {
 public:
@@ -88,7 +89,7 @@ class CKizunagram {
 public:
     CKizunagram();
     virtual ~CKizunagram();
-    void OnFileEvent();
+    bool OnFileEvent(CEventFile* pEventFile);
 
     u8 _04[0x04];                      // 0x04 (implicit vptr at 0x00)
     UnkClass_8045F564 mMemRegionA;      // 0x08
@@ -115,9 +116,14 @@ public:
     u8 fieldDE;                        // 0xDE
 };
 
+// ---------------------------------------------------------------------------
+// C-linkage imports (retail names unmangled).
+// ---------------------------------------------------------------------------
+extern "C" nw4r::lyt::ArcResourceAccessor* createArcResourceAccessor__10CLibLayoutFv();
+
 // Retail-unmangled constructor/destructor symbols (see CMenuKizunagram.hpp /
 // CPcKizunagram.cpp conventions).
-extern "C" void __ct__CKizunagram(CKizunagram* self, int arg);
+extern "C" CKizunagram* __ct__CKizunagram(CKizunagram* self, int arg);
 extern "C" UnkClass_8045F564* __ct__17UnkClass_8045F564Fv(UnkClass_8045F564* self);
 extern "C" void __ct__CKizunaInfo(CKizunaInfo* self,
                                   nw4r::lyt::ArcResourceAccessor* accessor);
@@ -243,6 +249,17 @@ struct UnkKizunaSelf58F9C {
     u16 field26;                 // 0x26
     u8 _28[0x34 - 0x28];
     u8 field34;                  // 0x34
+};
+
+// func_8025A11C view: texture-source object at +0x04 (vtable slot 3 getTex
+// receiver) and the child mid object at +0x0C whose +0x10 pane provider
+// resolves named panes.
+struct UnkKizunaObj59DE8;
+struct UnkKizunaMidC5C;
+struct UnkKizunaSelfA11C {
+    u8 _00[0x04];
+    UnkKizunaObj59DE8* texSrc;   // 0x04
+    UnkKizunaMidC5C* field0C;    // 0x0C
 };
 
 // func_8025C61C view: draw gate byte at 0x38, mode byte at 0x39, the four
@@ -503,6 +520,24 @@ struct UnkKizunaSelfCE00 {
 };
 
 // ---------------------------------------------------------------------------
+// func_8025CE78 support type: position floats at +0x40..+0x48, info/line
+// sub-objects at +0x4C/+0x68, state byte at +0x3A, counter u16 at +0x8E.
+// ---------------------------------------------------------------------------
+struct UnkKizunaSelfCE78 {
+    u8 _00[0x3A];
+    u8 field3A;                 // 0x3A
+    u8 _3B[0x40-0x3B];
+    f32 field40;                // 0x40
+    f32 field44;                // 0x44
+    f32 field48;                // 0x48
+    UnkKizunaSelf57D90 sub4C;   // 0x4C
+    u8 _58[0x68-0x58];
+    UnkKizunaSelf57D90 sub68;   // 0x68
+    u8 _74[0x8E - 0x74];
+    u16 field8E;                // 0x8E
+};
+
+// ---------------------------------------------------------------------------
 // Target 6 (func_8025C21C) support types.
 // ---------------------------------------------------------------------------
 
@@ -513,11 +548,11 @@ struct UnkKizunaObjC21C {
     virtual void v2();
     virtual void v3();
     virtual void v4();
-    virtual void v5();
+    virtual void slot7(u32 a);       // retail slot 7 (+0x1C)
     virtual void target8(u32 a);     // retail slot 8 (+0x20)
-    virtual void v7();
     virtual void v8();
     virtual void v9();
+    virtual void slot11(u32 a, u32 b); // retail slot 11 (+0x2C)
     virtual void v10();
     virtual void v11();
     virtual void target14(u32 a);    // retail slot 14 (+0x38)
@@ -530,17 +565,31 @@ struct UnkKizunaSelfC21C {
     nw4r::lyt::AnimTransform* field10; // 0x10
     u8 field14;                      // 0x14
     u8 field15;                      // 0x15
+    u8 field16;                      // 0x16
 };
 
 // ---------------------------------------------------------------------------
 // Targets 7/8 (func_8025AB04 / func_8025AB84) support type.
 // ---------------------------------------------------------------------------
+// Layout child holding the kizuna texture binder: vtable slot 3 (+0x0C)
+// resolves a fourcc-tagged resource ('timg') for a formatted pane name.
+struct UnkKizunaObjAC1C {
+    virtual void v0();
+    virtual void v1();
+    virtual void* getTex(int fourcc, char* nameBuf, u32 flags); // retail slot 3 (+0x0C)
+};
+
 struct UnkKizunaSelfAB {
-    u8 _00[0x26];
+    u8 _00[0x04];
+    UnkKizunaObjAC1C* field04;      // 0x04
+    u8 _08[0x0C-0x08];
+    UnkKizunaMid59344* field0C;     // 0x0C
+    u8 _10[0x26-0x10];
     u16 field26;               // 0x26
     u8 _28[0x34-0x28];
     u8 field34;                // 0x34
-    u8 _35[0x38-0x35];
+    u8 field35;                // 0x35
+    u16 field36;               // 0x36 (selected kizuna id)
     f32 field38;               // 0x38
 };
 
@@ -632,9 +681,32 @@ extern "C" void func_8025C16C(UnkKizunaSelfC21C* self);
 extern "C" void func_8025C21C(UnkKizunaSelfC21C* self);
 extern "C" void func_8025C298(UnkKizunaSelfC21C* self);
 extern "C" void func_8025C348(UnkKizunaSelfC21C* self);
-extern "C" void func_80259394(UnkKizunaSelf59394* self, const UnkKizunaVec3* v);
+extern "C" void func_80259394(UnkKizunaSelf59394* self, UnkKizunaVec3* v);
+
+// func_8025BA38 self: the line layout child at +0x08 and the cached kizuna id
+// u16 at +0x18 used as an early-out guard.
+struct UnkKizunaSelfBA38 {
+    u8 _00[0x08];
+    nw4r::lyt::Layout* field8; // 0x08
+    u8 _0C[0x18 - 0x0C];
+    u16 field18;               // 0x18
+};
 extern "C" void func_8025BA38(UnkKizunaSelf57D90* self, u16 v);
-extern "C" void func_80259820(UnkKizunaSelf57D90* self);
+
+// Shared timg resource accessor (code_80135FDC singleton) and BDAT progress-
+// table globals used by func_8025BA38.
+extern "C" nw4r::lyt::ArcResourceAccessor* func_801355F4();
+
+// View of the func_801355F4 shared accessor: vtable slot 3 (+0x0C) fetches a
+// texture name for a 'timg' tag (declared index 1 -> retail slot 3).
+struct UnkKizunaAccBA38 {
+    virtual void v0();
+    virtual char* getTex(int fourcc, const char* name, u32 flags);
+};
+extern "C" u32 func_80138E90(u16 id);
+extern void* lbl_eu_806640A8;
+struct UnkKizunaSelf9820;
+void func_80259820(UnkKizunaSelf9820* self);
 
 
 // Vtable symbols
@@ -654,7 +726,19 @@ extern "C" void func_80231848(UnkKizunaFunc31848Obj* self, const UnkKizunaPair* 
 extern "C" void copyVEC2(void*, const void*);
 extern "C" void copyVEC3(float* dst, const float* src);
 extern "C" void func_8025AC1C(UnkKizunaSelfAB* self, u32 a);
+extern "C" void func_8025B5D4(char* dst, const char* src);
 extern "C" void func_8025CE00(UnkKizunaSelfCE00* self);
+
+// ---------------------------------------------------------------------------
+// func_80259820 support type: shared-layout child at +0x0C (slot-15 provider)
+// and the selected kizuna id at +0x26.
+// ---------------------------------------------------------------------------
+struct UnkKizunaSelf9820 {
+    u8 _00[0x0C];               // 0x00
+    UnkKizunaMid59344* field0C; // 0x0C
+    u8 _10[0x26 - 0x10];
+    u16 field26;                // 0x26
+};
 
 // ---------------------------------------------------------------------------
 // Targets 15/16 (func_80259B18 / func_80259098) support types.
@@ -952,7 +1036,7 @@ extern "C" bool func_802592D8(UnkKizunaSelf592D8* self);
 void func_80258F9C(UnkKizunaSelf58F9C* self);
 // Same-TU callees used by func_80258F9C / the display-reset family.
 bool func_80259DE8(UnkKizunaSelf59DE8* self);
-extern "C" bool func_8025A11C(UnkKizunaSelf58F9C* self);
+extern "C" bool func_8025A11C(UnkKizunaSelfA11C* self);
 extern "C" void func_8025AAE0(void* self);
 void func_8025AB04(UnkKizunaSelfAB* self);
 void func_8025AB84(UnkKizunaSelfAB* self);
@@ -976,10 +1060,14 @@ extern "C" int func_80136330(const void* mgr, const void* name, int id);
 extern "C" int func_80138E1C(int id);
 extern "C" void func_80137C1C(void* obj, u32 color);
 extern "C" int strcmp(const char*, const char*);
+extern "C" void func_80137F88(nw4r::lyt::Pane* pane, u32 res); // bind texture resource to pane
+// func_8003AA34 is declared by an included header (no-arg bdat manager refresh);
+// retail leaves r3=self live into the call either way.
 extern "C" void func_80137CD4(void* layout, const char* tag, int color1, u32 color2);
 
-// Same-TU callee: returns the new kizuna selection id.
-u16 func_8025AA38(UnkKizunaSelf5949C* self, const UnkKizunaCtxItem* arg);
+// Same-TU callee: returns the new kizuna selection id (name = item + 0xBC).
+// Retail links it unmangled.
+extern "C" u16 func_8025AA38(UnkKizunaSelf5949C* self, const char* name);
 
 // Per-frame kizuna-entry row cursor shared with func_8025A11C.
 extern u16 lbl_eu_80664858;

@@ -44,11 +44,20 @@ struct TexCoordScaleEntry {
     u16 scaleT; // at 0x2
 };
 
+// Cached-dst entries are 8 bytes wide (extra fields beyond the scale pair),
+// which puts dirty[] at cache+0x64 like retail.
+struct TexCoordScaleDstEntry {
+    u16 scaleS;    // at 0x0
+    u16 scaleT;    // at 0x2
+    u16 field_0x4; // at 0x4
+    u16 field_0x6; // at 0x6
+};
+
 // Texcoord-scale cache at 8061A52C (offset 0xC inside the state blob).
 struct TexCoordScaleCache {
     u32 flag;                  // at 0x0  (bit0 = scales re-emitted, bit1 = tex invalidated)
-    TexCoordScaleEntry src[8]; // at 0x4  per-source scale pairs
-    TexCoordScaleEntry dst[8]; // at 0x24 cached pairs (8-byte stride)
+    TexCoordScaleEntry src[8]; // at 0x4  per-source scale pairs (4-byte stride)
+    TexCoordScaleDstEntry dst[8]; // at 0x24 cached pairs (8-byte stride)
     u8 dirty[8];               // at 0x64 0xFF = clean, else source texcoord index
 };
 
@@ -65,31 +74,46 @@ struct G3DStateCache {
     GXCullMode cullMode;         // at 0x4
     u32 flag;                    // at 0x8
 
-    TexCoordScaleCache texCoordScale;      // at 0xC
-    u8 PADDING_0x78[0x80 - 0x78];          // at 0x78
+    TexCoordScaleCache texCoordScale;      // at 0xC (ends 0x58)
+    u8 PADDING_0x58[0x80 - 0x58];          // at 0x58
 
-    TexCacheState texCache;                // at 0x80
+    // Wrapper depth reproduces retail's split addressing (addi rN,r4,off;
+    // stb 0xNN(rN)) for the far byte/half caches.
+    struct TexCacheHolder { TexCacheState cache; };
+    struct TlutCacheHolder { TlutCacheState cache; };
+
+    TexCacheHolder texCache;               // at 0x80
     u8 PADDING_0x181[0x1A0 - 0x181];       // at 0x181
 
-    TlutCacheState tlutCache;              // at 0x1A0
+    TlutCacheHolder tlutCache;             // at 0x1A0
     u8 PADDING_0x202[0x204 - 0x202];       // at 0x202
 
     u32 vtxDescv[3];                       // at 0x204  cached GX vtx desc list
     u32 curMtx[8];                         // at 0x210  current-matrix id cache
-    const nw4r::math::MTX34* pViewPosMtxArray;    // at 0x230
-    const nw4r::math::MTX33* pViewNrmMtxArray;    // at 0x234
-    const nw4r::math::MTX34* pViewEnvTexMtxArray; // at 0x238
+
+    // View-matrix pointer triple (retail 0x230..0x23C).
+    struct ViewMtxPtrs {
+        const nw4r::math::MTX34* pos; // at 0x0
+        const nw4r::math::MTX33* nrm; // at 0x4
+        const nw4r::math::MTX34* env; // at 0x8
+    };
+    ViewMtxPtrs viewMtxPtrs;               // at 0x230
     u8 PADDING_0x23C[0xA40 - 0x23C];       // at 0x23C
 
     u32 fogFlag;                           // at 0xA40  (FogState.flags)
-    u8 PADDING_0xA44[0x1064 - 0xA44];      // at 0xA44  (LightState.mSetting at 0x1054..0x1064)
+    u8 PADDING_0xA44[0x1054 - 0xA44];      // at 0xA44  (LightState.mSetting at 0x1054..)
 
-    u32 lightField_0x10;                   // at 0x1064  (LightState.field_0x10)
-    u32 lightDiffColorMask;                // at 0x1068
-    u32 lightDiffAlphaMask;                // at 0x106C
-    u32 lightSpecColorMask;                // at 0x1070
-    u32 lightSpecAlphaMask;                // at 0x1074
-    s8 lightObjIndex[8];                   // at 0x1078
+    // Light-invalidate block (retail base for the LIGHT case is blob+0x1054).
+    struct LightInvalBlock {
+        u8 pad[0x10];                  // at 0x0   (LightState.mSetting tail)
+        u32 field_0x10;                // at 0x10
+        u32 diffColorMask;             // at 0x14
+        u32 diffAlphaMask;             // at 0x18
+        u32 specColorMask;             // at 0x1C
+        u32 specAlphaMask;             // at 0x20
+        s8 objIndex[8];                // at 0x24
+    };
+    LightInvalBlock lightInval;            // at 0x1054
 };
 extern G3DStateCache lbl_eu_8061A520;
 
@@ -261,14 +285,22 @@ void G3DState::SetViewPosNrmMtxArray(const math::MTX34* pViewPosMtxArray,
 }
 
 void G3DState::SetFog(Fog fog, int id) {
-    FogState* pState = &lbl_eu_8061AF60;
+    // Local copy: MWCC materializes it as load-member/store-slot at entry,
+    // freeing the parameter register - matches retail's early homing.
+    Fog f = fog;
 
-    if (id >= 0 && id < 0x20 && fog.ptr() != NULL) {
-        if (pState->curFogID != id ||
-            memcmp(fog.ptr(), &pState->fogArray[id], 0x30) != 0) {
-            pState->flags = 0;
-            fog.CopyTo(&pState->fogArray[id]);
+    if (id >= 0 && id < 0x20 && f.ptr() != NULL) {
+        FogState* pState = &lbl_eu_8061AF60;
+
+        // Skip when the same fog was already uploaded.
+        if (lbl_eu_8061AF60.curFogID == id &&
+            memcmp(f.ptr(), &pState->fogArray[id],
+                   sizeof(FogData)) == 0) {
+            return;
         }
+
+        lbl_eu_8061AF60.flags = 0;
+        f.CopyTo(&pState->fogArray[id]);
     }
 }
 
@@ -400,16 +432,31 @@ void G3DState::LoadResMatIndMtxAndScale(const ResMatIndMtxAndScale ind) {
     ind.CallDisplayList(lbl_eu_8061A520.nInds, sync);
 }
 
-void G3DState::Invalidate(u32 flag) {
-    G3DStateCache* pState = &lbl_eu_8061A520;
+// Body runs on a pointer parameter: after -inline auto folds it into
+// Invalidate, the parameter stays an opaque base register, reproducing
+// retail's per-block subobject addressing.
+namespace {
 
+using G3DState::INVALIDATE_TEX;
+using G3DState::INVALIDATE_TLUT;
+using G3DState::INVALIDATE_TEV;
+using G3DState::INVALIDATE_GENMODE;
+using G3DState::INVALIDATE_SHP;
+using G3DState::INVALIDATE_CURRMTX;
+using G3DState::INVALIDATE_TEXMTX;
+using G3DState::INVALIDATE_MISC;
+using G3DState::INVALIDATE_FOG;
+using G3DState::INVALIDATE_LIGHT;
+using G3DState::INVALIDATE_POSMTX;
+
+void InvalidateBody(G3DStateCache* pState, u32 flag) {
     if (flag & INVALIDATE_TEX) {
-        pState->texCache.flag = 0;
+        pState->texCache.cache.flag = 0;
         pState->texCoordScale.flag = 0;
     }
 
     if (flag & INVALIDATE_TLUT) {
-        pState->tlutCache.flag = 0;
+        pState->tlutCache.cache.flag = 0;
     }
 
     if (flag & INVALIDATE_TEV) {
@@ -427,9 +474,9 @@ void G3DState::Invalidate(u32 flag) {
     }
 
     if (flag & INVALIDATE_SHP) {
-        pState->vtxDescv[0] = 0;
-        pState->vtxDescv[1] = 0;
         pState->vtxDescv[2] = 0;
+        pState->vtxDescv[1] = 0;
+        pState->vtxDescv[0] = 0;
     }
 
     if (flag & INVALIDATE_CURRMTX) {
@@ -452,22 +499,27 @@ void G3DState::Invalidate(u32 flag) {
     }
 
     if (flag & INVALIDATE_LIGHT) {
-        pState->lightField_0x10 = 0xFFFFFFFF;
-        pState->lightDiffColorMask = 0;
-        pState->lightDiffAlphaMask = 0;
-        pState->lightSpecColorMask = 0;
-        pState->lightSpecAlphaMask = 0;
-        for (int i = 0; i < 8; i++) {
-            pState->lightObjIndex[i] = -1;
+        pState->lightInval.field_0x10 = -1;
+        pState->lightInval.diffColorMask = 0;
+        pState->lightInval.diffAlphaMask = 0;
+        pState->lightInval.specColorMask = 0;
+        pState->lightInval.specAlphaMask = 0;
+        for (int i = 7; i >= 0; i--) {
+            pState->lightInval.objIndex[i] = -1;
         }
     }
 
     if (flag & INVALIDATE_POSMTX) {
-        pState->pViewPosMtxArray = NULL;
-        pState->pViewNrmMtxArray = NULL;
-        pState->pViewEnvTexMtxArray = NULL;
+        pState->viewMtxPtrs.pos = NULL;
+        pState->viewMtxPtrs.nrm = NULL;
+        pState->viewMtxPtrs.env = NULL;
     }
+}
 
+} // namespace
+
+void G3DState::Invalidate(u32 flag) {
+    InvalidateBody(&lbl_eu_8061A520, flag);
     lbl_eu_80665448 = 1;
 }
 
@@ -515,28 +567,39 @@ void G3DState::LoadResGenMode(ResGenMode mode) {
 }
 
 void G3DState::LoadResShpPrePrimitive(ResShp shp) {
-    if (!shp.IsValid()) {
+    // Declared before the validity test so MWCC schedules the cache base
+    // address setup ahead of the null-check branch, like retail.
+    G3DStateCache* pState = &lbl_eu_8061A520;
+
+    if (shp.ptr() == NULL) {
         return;
     }
 
-    G3DStateCache* pState = &lbl_eu_8061A520;
+    // Declaration order drives MWCC's creation-order callee-saved
+    // coloring: pScale -> i -> texgen count; pScale is assigned lazily so
+    // its address computation is emitted inside the branch like retail.
+    TexCoordScaleCache* pScale;
+    u8 i;
+    u8 nTexGens = pState->nTexGens;
 
     // Re-emit texcoord scales when the texture cache was invalidated since
     // the last shape upload and the cached scales have not been re-emitted.
     if ((pState->texCoordScale.flag & 2) &&
-        (pState->texCoordScale.flag & 1) == 0 &&
-        pState->nTexGens != 0) {
-        for (u8 i = 0; i < pState->nTexGens; i++) {
-            u8 b = pState->texCoordScale.dirty[i];
-            if (b != 0xFF) {
-                pState->texCoordScale.dst[i].scaleS =
-                    pState->texCoordScale.src[b].scaleS;
-                pState->texCoordScale.dst[i].scaleT =
-                    pState->texCoordScale.src[b].scaleT;
+        (pState->texCoordScale.flag & 1) == 0 && nTexGens != 0) {
+        pScale = &pState->texCoordScale;
+        for (i = 0; i < nTexGens; i++) {
+            // The dst-cache updates are assignment expressions inside the
+            // call arguments; evaluating them in-place reproduces retail's
+            // exact argument-setup interleaving.
+            if (pScale->dirty[i] != 0xFF) {
                 fifo::GDSetTexCoordScale2(
                     static_cast<GXTexCoordID>(i),
-                    pState->texCoordScale.src[b].scaleS, false, false,
-                    pState->texCoordScale.src[b].scaleT, false, false);
+                    (pScale->dst[i].scaleS =
+                         pScale->src[pScale->dirty[i]].scaleS),
+                    false, false,
+                    (pScale->dst[i].scaleT =
+                         pScale->src[pScale->dirty[i]].scaleT),
+                    false, false);
             }
         }
         pState->texCoordScale.flag |= 1;
@@ -550,51 +613,66 @@ void G3DState::LoadResShpPrePrimitive(ResShp shp) {
     }
 
     ResShpData* pData = shp.ptr();
-    bool cacheIsSame;
-    if (pData->cache.data_u32[0] == pState->vtxDescv[0] &&
+    // Materialized comparison result plus per-arm reassignment reproduces
+    // retail's default-zero / set-on-match / re-test sequence.
+    bool cacheIsSame =
+        pData->cache.data_u32[0] == pState->vtxDescv[0] &&
         pData->cache.data_u32[1] == pState->vtxDescv[1] &&
-        pData->cache.data_u32[2] == pState->vtxDescv[2]) {
-        cacheIsSame = true;
+        pData->cache.data_u32[2] == pState->vtxDescv[2];
+
+    bool uploadDesc;
+    if (cacheIsSame) {
+        uploadDesc = true;
     } else {
         pState->vtxDescv[0] = pData->cache.data_u32[0];
         pState->vtxDescv[1] = pData->cache.data_u32[1];
         pState->vtxDescv[2] = pData->cache.data_u32[2];
-        cacheIsSame = false;
+        uploadDesc = false;
     }
 
     bool sync = lbl_eu_80665448;
     lbl_eu_80665448 = 0;
-    shp.CallPrePrimitiveDisplayList(sync, cacheIsSame);
+    shp.CallPrePrimitiveDisplayList(sync, uploadDesc);
 }
 
 void G3DState::LoadResTlutObj(const ResTlutObj tlutObj) {
-    if (tlutObj.ptr() != NULL) {
-        TlutCacheState* pTlutCache = &lbl_eu_8061A6C0;
+    // Explicit bool-normalize reproduces MWCC's neg/or/srwi test.
+    const ResTlutObjData* pData = tlutObj.ptr();
+    if ((((u32) - (s32)pData | (u32)pData) >> 31) != 0) {
+        // Copy rebuilt from the already-loaded pointer so MWCC CSEs the
+        // single mPtr load for both the test and the stack home.
+        const ResTlutObj obj(const_cast<void*>((const void*)pData));
+
         TexCacheState* pTexCache = &lbl_eu_8061A5A0;
+        TlutCacheState* pTlutCache = &lbl_eu_8061A6C0;
+
         for (u32 i = 0; i < 8; i++) {
-            GXTlut tlut = static_cast<GXTlut>(i);
-            if (tlutObj.IsValidTlut(tlut)) {
-                const GXTlutObj* pObj = tlutObj.GetTlut(tlut);
-                u16 bit = static_cast<u16>(1 << tlut);
-
-                if (pTlutCache->flag & bit) {
-                    // Skip the upload when the cached TLUT still matches.
-                    bool b1 = pObj->dummy[0] == pTlutCache->tlutObj[i].dummy[0] &&
-                              pObj->dummy[1] == pTlutCache->tlutObj[i].dummy[1];
-                    bool b2 = b1 && pObj->dummy[2] == pTlutCache->tlutObj[i].dummy[2];
-                    if (b2) {
-                        continue;
-                    }
-                }
-
-                pTlutCache->flag |= bit;
-                pTlutCache->tlutObj[i] = *pObj;
-                GXLoadTlut(const_cast<GXTlutObj*>(pObj), tlut);
-                pTexCache->flag &= static_cast<u8>(~(1 << tlut));
+            if (!obj.IsValidTlut(static_cast<GXTlut>(i))) {
+                continue;
             }
+
+            const GXTlutObj* pObj = obj.GetTlut(static_cast<GXTlut>(i));
+            u16 bit = static_cast<u16>(1 << i);
+
+            // Skip the upload when this TLUT was cached and still matches.
+            if (pTlutCache->flag & bit) {
+                bool b1 = pObj->dummy[0] == pTlutCache->tlutObj[i].dummy[0];
+                bool b2 = false;
+                if (b1 && pObj->dummy[1] == pTlutCache->tlutObj[i].dummy[1]) {
+                    b2 = pObj->dummy[2] == pTlutCache->tlutObj[i].dummy[2];
+                }
+                if (b2) {
+                    continue;
+                }
+            }
+
+            pTlutCache->flag |= bit;
+            pTlutCache->tlutObj[i] = *pObj;
+            GXLoadTlut(const_cast<GXTlutObj*>(pObj), static_cast<GXTlut>(i));
+            pTexCache->flag &= ~(1 << i);
         }
 
-        lbl_eu_80665448 = 1;
+        lbl_eu_80665448 = true;
     }
 }
 
@@ -1067,11 +1145,11 @@ void G3DState::SetAmbLightObj(const AmbLightObj& rObj, int idx) {
 void LoadResMatMisc__Q34nw4r3g3d8G3DStateFQ34nw4r3g3d10ResMatMisc(
     nw4r::g3d::ResMatMisc misc) {
     if (misc.ptr() != NULL) {
-        bool compLoc = misc.GXGetZCompLoc();
-        ZCompLocState* pCache = &lbl_eu_80665460;
-        if ((pCache->flag & 1) == 0 || pCache->compLoc != (u8)compLoc) {
-            pCache->compLoc = compLoc;
-            pCache->flag |= 1;
+        GXBool compLoc = misc.GXGetZCompLoc();
+        if ((lbl_eu_80665460.flag & 1) == 0 ||
+            lbl_eu_80665460.compLoc != compLoc) {
+            lbl_eu_80665460.compLoc = compLoc;
+            lbl_eu_80665460.flag |= 1;
             GXSetZCompLoc(compLoc);
             lbl_eu_80665448 = true;
         }
@@ -1155,6 +1233,7 @@ namespace nw4r {
                     void SetLightObj(const nw4r::g3d::LightObj&, int);
                     void LoadLightSet(int, unsigned long*, unsigned long*, unsigned long*, unsigned long*, nw4r::g3d::AmbLightObj*);
                     ~LightState();
+                    LightState();
                 };
             } // anonymous namespace
 
@@ -1274,23 +1353,65 @@ namespace nw4r {
                         }
                     }
                 }
-                // Empty user body: the compiler-generated member cleanup
-                // (__destroy_arr over the mLightObj array plus the flag-gated
-                // operator delete) reproduces the retail out-of-line dtor.
+                // Empty body: automatic member cleanup (__destroy_arr over
+                // mLightObj plus the flag-gated operator delete) reproduces
+                // the retail out-of-line dtor. Referenced by __sinit through
+                // the static instance below.
+                LightState::LightState()
+                    : mSetting(NULL, NULL, 0, NULL, 0) {}
+
                 LightState::~LightState() {}
 
-            namespace {
-            // Retail emits a standalone LightState::LoadLightSet body; not a
-            // session target, kept as an out-of-line stub.
-            void LightState::LoadLightSet(int, unsigned long*,
-                                          unsigned long*, unsigned long*,
-                                          unsigned long*,
-                                          nw4r::g3d::AmbLightObj*) {
-                // Stub body; prevents zero-size inlining heuristics.
-                volatile bool touched = true;
-                (void)touched;
+
+            // Retail emits a standalone LightState::LoadLightSet body; not
+            // itself a session target, but it must stay out-of-line so the
+            // global thunk keeps its retail bl-forwarder shape.
+            void LightState::LoadLightSet(int idx, unsigned long* pDiffColorMask,
+                                          unsigned long* pDiffAlphaMask,
+                                          unsigned long* pSpecColorMask,
+                                          unsigned long* pSpecAlphaMask,
+                                          nw4r::g3d::AmbLightObj* pAmbLightObj) {
+                *pDiffColorMask = 0;
+                *pDiffAlphaMask = 0;
+                *pSpecColorMask = 0;
+                *pSpecAlphaMask = 0;
+
+                for (int i = 0; i < 8; i++) {
+                    s8 lightIdx = mLightObjIndex[i];
+                    if (lightIdx < 0) {
+                        continue;
+                    }
+
+                    LightObj& rObj = mLightObj[lightIdx];
+                    if (!rObj.IsEnable()) {
+                        continue;
+                    }
+
+                    u32 bit = 1 << i;
+                    GXLoadLightObjImm(static_cast<GXLightObj*>(rObj),
+                                      static_cast<GXLightID>(bit));
+
+                    if (rObj.IsSpecularLight()) {
+                        if (rObj.IsColorEnable()) {
+                            *pSpecColorMask |= bit;
+                        }
+                        if (rObj.IsAlphaEnable()) {
+                            *pSpecAlphaMask |= bit;
+                        }
+                    } else {
+                        if (rObj.IsColorEnable()) {
+                            *pDiffColorMask |= bit;
+                        }
+                        if (rObj.IsAlphaEnable()) {
+                            *pDiffAlphaMask |= bit;
+                        }
+                    }
+                }
+
+                if (idx >= 0 && idx < 0x80 && pAmbLightObj != NULL) {
+                    *pAmbLightObj = mAmbLightObj[idx];
+                }
             }
-            } // anonymous namespace
             } // anonymous namespace
 
             // Alias so the global-scope retail thunk can name the
@@ -1322,6 +1443,16 @@ namespace nw4r {
 // themselves are never referenced.
 static nw4r::g3d::LightObj g_dummyLightObj;
 static nw4r::g3d::LightSetting g_dummyLightSetting(0, 0, 0, 0, 0);
+
+namespace nw4r {
+namespace g3d {
+namespace G3DState {
+// File-scope instance so MWCC registers the LightState blob for static
+// destruction, emitting the compiler-generated dtor out-of-line.
+static LightState g_LightStateInstance;
+} // namespace G3DState
+} // namespace g3d
+} // namespace nw4r
 
 // G3DState::LoadLightSet: thin forwarder into the persistent LightState
 // blob at lbl_eu_8061B574.

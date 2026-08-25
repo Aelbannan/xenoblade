@@ -115,8 +115,8 @@ int func_800C1900(char* str, char** out, int maxLen) {
     int count = 0;
     char* s = str;
     char** o = out;
-    int inWord = 0;
     int offset = 0;
+    int inWord = 0;
     while ((u8)s[0] != 0) {
         int type, lenz;
         int ch = func_800C17DC(s, &type, &lenz);

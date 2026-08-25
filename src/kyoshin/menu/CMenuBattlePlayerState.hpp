@@ -159,7 +159,7 @@ public:
 
 // C-linkage imports (retail symbol names - keep linkage/signatures verbatim)
 extern "C" unsigned long long func_80139658(nw4r::lyt::Layout*, const char*, int);
-extern "C" u32 func_8013600C(void*, const char*, u32);
+extern "C" u8 func_8013600C(const void*, const void*, u32);
 extern "C" void cbRenderBefore__22CMenuBattlePlayerStateFv();
 
 // Float/double constant pool labels (retail .sdata2 symbols).

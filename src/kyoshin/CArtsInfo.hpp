@@ -566,8 +566,8 @@ extern "C" u8 func_801361E8(u32, const char*, u32);
 // func_8013606C/8013600C take byte-keyed lookups: retail masks the 3rd arg
 // to 8 bits at the call site, so the param is u8.
 extern "C" u16 func_8013606C(const void*, const void*, u8);
-extern "C" u8 func_8013600C(void*, const char*, u8);
-extern "C" s16 func_80136130(const void*, const void*, u8);
+extern "C" u8 func_8013600C(const void*, const void*, u32);
+extern "C" s16 func_80136130(const void*, const void*, u32); // u32: matches defining TU code_80135FDC.cpp verbatim
 extern "C" void func_801D1F9C(void*, u32);
 extern "C" void func_801C4B60(void*, s16, s16, s16, s16); // colour init
 extern "C" void func_80139A18(void*, void*, void*, void*);
@@ -613,15 +613,13 @@ extern double lbl_eu_806686C0;
 extern double lbl_eu_806686C8;
 
 // Double constant in the small data area (sda21-accessed via lfd): the
-// 2^52 + 2^31 bias (4503601774854144.0) used by MWCC's s32->double
-// conversion trick (func_8023B280 / func_8023A460). The conversion relocs
-// reference a TU-local pool entry (cannot be named in source - see
-// makecrystal/code_80213488.cpp) so they register as un-fixable reloc drift.
-extern double lbl_eu_80668698;
+// 2^52 + 2^31 bias (4503601774854144.0) subtracted in MWCC's s32->float
+// conversion trick.
+extern const double lbl_eu_80668698;
 
 // Double constant 2^52 (4503599627370496.0) in the small data area
 // (sda21-accessed via lfd): the bias subtracted after the 0x4330 magic for
-// MWCC's u32->float conversion (func_80237B88 / func_8023AB8C / func_80239D20).
+// MWCC's u32->float conversion.
 extern double lbl_eu_806686A8;
 
 // Float constant in the small data area (sda21-accessed via lfs) scaling the

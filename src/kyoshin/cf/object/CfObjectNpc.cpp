@@ -111,7 +111,7 @@ void CfObjectNpc::func_800BF8CC() {
     void* fp = getFP__FPCc((const char*)this + 0x78);
     u16 row = unk8C_3;
     // Read the icon_type column value (return value's low byte holds it).
-    const char* v = getBdatStringColumnValue(fp, (const char*)&lbl_eu_804FC580[0x22], row);
+    const char* v = (const char*)getBdatStringColumnValue(fp, (const char*)&lbl_eu_804FC580[0x22], row);
     mIconType = *(const u8*)&v;
 }
 
@@ -122,7 +122,7 @@ s16 CfObjectNpc::func_800BF920() {
         void* fp = getFP__FPCc((const char*)this + 0x78);
         u16 row = unk8C_3;
         // Lazily load the rlt_meet value from the BDAT column on first access.
-        const char* v = getBdatStringColumnValue(fp, (const char*)&lbl_eu_804FC580[0x2C], row);
+        const char* v = (const char*)getBdatStringColumnValue(fp, (const char*)&lbl_eu_804FC580[0x2C], row);
         // Pointer's low halfword holds the rlt_meet id (deref form, not a
         // cast: MWCC emits the retail stw+lha memory round-trip; a (s16)
         // cast folds to a direct sth).

@@ -272,10 +272,8 @@ void func_800A3F8C(ml::CVec3* v) {
 
 bool func_800A4050(const ml::CVec3& a, const ml::CVec3& b, const ml::CVec3& c) {
     // True when the Y component of (b-a) x (c-a) is positive.
-    ml::CVec3 ab;
-    ml::CVec3 ac;
-    ml::CVec3::sub(ab, b, a);
-    ml::CVec3::sub(ac, c, a);
+    ml::CVec3 ab = b - a;
+    ml::CVec3 ac = c - a;
     return ab.z * ac.x - ab.x * ac.z > lbl_eu_806667D8;
 }
 
@@ -283,8 +281,7 @@ void func_800A40E8(ml::CVec3* out, const ml::CVec3& a, const ml::CVec3& b, float
     // Linear interpolation: out = a + (b - a) * t.
     // The nw4r VEC3Sub/Scale/Add PS kernels emit the retail psq_l/ps_sub/
     // ps_muls0/ps_add sequences; each result is copied out via set(), and the
-    // final *out = res is a struct copy (lwz/stw). Declaration order is
-    // reverse-stack (first declared gets the highest slot).
+    // final *out = res is a struct copy (lwz/stw).
     ml::CVec3 res;
     ml::CVec3 scaled;
     ml::CVec3 diff;
@@ -513,8 +510,8 @@ float func_800A4B5C(const ml::CVec3& a, const ml::CVec3& b, const ml::CVec3& c) 
     ab.set(t1);
     nw4r::math::VEC3Sub(t2, c, a);
     ac.set(t2);
-    float len2 = nw4r::math::VEC3Dot(ab, ab);
     float dot = nw4r::math::VEC3Dot(ac, ab);
+    float len2 = nw4r::math::VEC3Dot(ab, ab);
     float t;
     if (len2 < lbl_eu_806667F8) {
         t = lbl_eu_806667D8;
@@ -606,9 +603,11 @@ bool func_800A5038(const nw4r::math::VEC3& a, const nw4r::math::VEC3& b, float r
     nw4r::math::VEC3 dv;
     nw4r::math::VEC3 d;
     nw4r::math::VEC3Sub(&d, &a, &b);
-    dv.x = d.x;
+    // Whole-struct copy keeps every field of d live (retail stores the full
+    // pair + z); the y overwrite then replaces the copied value, leaving
+    // dv = {dx, 0, dz} for the XZ-plane squared-distance check.
+    dv = d;
     dv.y = lbl_eu_806667D8;
-    dv.z = d.z;
     float dist2 = nw4r::math::VEC3LenSq(&dv);
     return dist2 <= (r1 + r2) * (r1 + r2);
 }

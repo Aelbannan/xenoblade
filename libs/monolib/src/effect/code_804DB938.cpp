@@ -56,6 +56,23 @@ static void CERotTrig(Mtx m, f32 rad, char axis) {
                  frac * cosE->delta + cosE->value, axis);
 }
 
+// idx-first variant of CERotTrig: identical body, but declaring the %360
+// result before the (float)n cast flips MWCC's scratch coloring for callers
+// whose register context needs mulhw r3 / xoris r0 (func_804DD0A0).
+static void CERotTrigIdxFirst(Mtx m, f32 rad, char axis) {
+    f32 deg = lbl_eu_8066B260 * rad;
+    int n = (int)deg;
+    int idx = n % 360;
+    f32 frac = deg - (f32)n;
+    if (idx < 0) {
+        idx += 360;
+    }
+    const CESinCosEntry* cosE = &lbl_eu_80660B78[idx];
+    const CESinCosEntry* sinE = &lbl_eu_80660038[idx];
+    PSMTXRotTrig(m, frac * sinE->delta + sinE->value,
+                 frac * cosE->delta + cosE->value, axis);
+}
+
 // ---------------------------------------------------------------------------
 // Cardinal axis rotation builders.
 // ---------------------------------------------------------------------------
@@ -92,6 +109,9 @@ void func_804DD5B0(ml::CMat34* mtx, f32 rad) {
 // ---------------------------------------------------------------------------
 
 int func_804DD0A0(Mtx mtx, const Vec* v) {
+    // NOTE: uses the idx-first trig variant (mulhw r3 / xoris r0 like
+    // retail); shared CERotTrig stays frac-first for the cardinal builders.
+    // func_804DCA88/DCD94 use it too.
     f32 mag = PSVECMag(v);
     bool nearOne = ml::math::abs(mag - lbl_eu_8066B270) <= lbl_eu_8066A208;
     if (nearOne) {
@@ -100,17 +120,17 @@ int func_804DD0A0(Mtx mtx, const Vec* v) {
     }
     if (v->x != lbl_eu_8066B274 && v->y == lbl_eu_8066B274 &&
         v->z == lbl_eu_8066B274) {
-        CERotTrig(mtx, v->x, 'x');
+        CERotTrigIdxFirst(mtx, v->x, 'x');
         return 1;
     }
     if (v->x == lbl_eu_8066B274 && v->y != lbl_eu_8066B274 &&
         v->z == lbl_eu_8066B274) {
-        CERotTrig(mtx, v->y, 'y');
+        CERotTrigIdxFirst(mtx, v->y, 'y');
         return 1;
     }
     if (v->x == lbl_eu_8066B274 && v->y == lbl_eu_8066B274 &&
         v->z != lbl_eu_8066B274) {
-        CERotTrig(mtx, v->z, 'z');
+        CERotTrigIdxFirst(mtx, v->z, 'z');
         return 1;
     }
     return 0;
@@ -123,37 +143,42 @@ int func_804DD0A0(Mtx mtx, const Vec* v) {
 // ---------------------------------------------------------------------------
 
 // Order X, Y, Z.
+// NOTE: idx-first trig variant — this caller's register context needs
+// mulhw r3 / xoris r0 like retail (see func_804DD0A0).
 void func_804DCA88(ml::CMat34* mtx, const Vec* ang) {
+    // All frame locals declared up-front in retail slot order (work > rotY >
+    // work2 > rotZ, first-declared takes the higher slot).
+    ml::CMat34 work;
+    ml::CMat34 rotY;
+    ml::CMat34 work2;
+    ml::CMat34 rotZ;
     if (func_804DD0A0(mtx->mtx, ang) != 0) {
         return;
     }
-    CERotTrig(mtx->mtx, ang->x, 'x');
-    ml::CMat34 rotY;
-    CERotTrig(rotY.mtx, ang->y, 'y');
-    ml::CMat34 work;
+    CERotTrigIdxFirst(mtx->mtx, ang->x, 'x');
+    CERotTrigIdxFirst(rotY.mtx, ang->y, 'y');
     PSMTXConcat(rotY.mtx, mtx->mtx, work.mtx);
     *mtx = work;
-    ml::CMat34 rotZ;
-    CERotTrig(rotZ.mtx, ang->z, 'z');
-    ml::CMat34 work2;
+    CERotTrigIdxFirst(rotZ.mtx, ang->z, 'z');
     PSMTXConcat(rotZ.mtx, mtx->mtx, work2.mtx);
     *mtx = work2;
 }
 
 // Order Z, X, Y.
+// idx-first trig variant, same reason as func_804DCA88.
 void func_804DCD94(ml::CMat34* mtx, const Vec* ang) {
     if (func_804DD0A0(mtx->mtx, ang) != 0) {
         return;
     }
-    CERotTrig(mtx->mtx, ang->z, 'z');
-    ml::CMat34 rotX;
-    CERotTrig(rotX.mtx, ang->x, 'x');
+    CERotTrigIdxFirst(mtx->mtx, ang->z, 'z');
     ml::CMat34 work;
+    ml::CMat34 rotX;
+    CERotTrigIdxFirst(rotX.mtx, ang->x, 'x');
     PSMTXConcat(rotX.mtx, mtx->mtx, work.mtx);
     *mtx = work;
-    ml::CMat34 rotY;
-    CERotTrig(rotY.mtx, ang->y, 'y');
     ml::CMat34 work2;
+    ml::CMat34 rotY;
+    CERotTrigIdxFirst(rotY.mtx, ang->y, 'y');
     PSMTXConcat(rotY.mtx, mtx->mtx, work2.mtx);
     *mtx = work2;
 }

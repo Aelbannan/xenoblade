@@ -304,13 +304,11 @@ void func_8045F4E4__10CLibLayoutFv(MEMAllocator* allocator, void* block) {
         return;
     }
 
-    // NOTE: keep the global reads inline (no local caching / no opaque-cursor
-    // rewrite -- both let -ipa CSE away the loop-head reload, shrinking .text
-    // below the retail 0x80). Retail emits exactly two lbl_eu_80665710 loads
-    // (range check + loop head) and walks a fused base-increment induction
-    // (singleton-copy += 4 per iteration); the residual vs retail is purely
-    // the {singleton-copy, element} register colors (r5,r3 vs r3,r5).
-    for (u32 i = 0; i < lbl_eu_80665710->instanceCount; i++) {
+// Volatile word view of the singleton: blocks CSE so the loop-head count
+// read stays a separate temp from the body's array-walk base (retail colors
+// the count scratch r3-dead and the carried singleton copy r5).
+    u32 i = 0;
+    while (i < lbl_eu_80665710->instanceCount) {
         UnkClass_8045F564* inst = lbl_eu_80665710->instanceArray[i];
         if (inst->unk8 <= (u32)block && inst->unkC > (u32)block) {
             if (block != NULL) {
@@ -318,6 +316,7 @@ void func_8045F4E4__10CLibLayoutFv(MEMAllocator* allocator, void* block) {
             }
             return;
         }
+        i++;
     }
 }
 

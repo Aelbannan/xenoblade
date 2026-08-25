@@ -291,9 +291,16 @@ u32 func_80272414(CUICfUnk144*, u32);
 extern "C" {
 u32 func_80124B78();
 void* func_8029A5DC(void* self, u32 parent, u32 arg2);
+// Local complete type for func_8049603C's result (canonical name per
+// CfGameManager.hpp fwd-decl; layout matches CTaskGame.hpp's view exactly).
+struct CTaskGameCamView {
+    u32 field_0x0;
+    u32 field_0x4;
+    u32 field_0x8;
+    float field_0xC;
+};
 // Matches the global UnkScnResult declared in CfGameManager.hpp (included
 // at the top of this file).
-UnkScnResult* func_8049603C(CScn* scene);
 CUICfGlobalSettings* getUnk80664658();
 void* __ct__8011C1B8(void* ctx, u32 scene);
 extern u8* lbl_eu_80663E14;
@@ -343,7 +350,7 @@ int __declspec(noinline) func_80135D04(CUICfManagerCreateView* singleton) {
     // Best-known shape: 4-insn residual is an F0/F1 rename in this tail
     // (retail colors field_C->f1, const->f0). Every const-first ordering
     // spills f31 (stfd/psq_st prologue) - MWCC coloring cap, not steerable.
-    f32 v = func_8049603C((CScn*)lbl_eu_80663E14)->field_0xC;
+    f32 v = ((float*)func_8049603C((CScn*)lbl_eu_80663E14))[3];
     f32 c = lbl_eu_806672C8;
     return (c - v) < c;
 }
@@ -1371,7 +1378,7 @@ extern "C" void func_8012FFB4(u8* base) {
             }
         }
         {
-            f32 v = func_8049603C((CScn*)lbl_eu_80663E14)->field_0xC;
+            f32 v = ((float*)func_8049603C((CScn*)lbl_eu_80663E14))[3];
             f32 c = lbl_eu_806672C8;
             if ((c - v) < c) {
                 return;

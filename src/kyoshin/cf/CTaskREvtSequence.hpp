@@ -101,8 +101,9 @@ class UnkEvtListEntry;  // full layout below (UnkState_80664268::field_0x10C)
 // func_8016DF4C: reload-count selector (CfResReloadImpl.cpp).
 extern "C" void func_8016DF4C(u32 type);
 // func_8049602C: scene vec4 setter (flat retail name; CTaskGame.hpp declares
-// the same symbol with a CScnNw4r*/func_800407C8_tmp* shape).
-extern "C" void func_8049602C(CScn* scene, int index, EvtSeqVec4* vec);
+// the identical void* prototype - keep the two spellings in sync, see note
+// there; mismatched extern "C" type lists break TUs including both headers).
+extern "C" void func_8049602C(void* scene, int index, void* vec);
 // func_801644B4 / func_80164CFC: event-task getter / teardown gate
 // (CREvtCamera.cpp / CTaskREvent.cpp).
 extern "C" u32 func_801644B4();
@@ -883,7 +884,7 @@ extern "C" void func_8016C450(const char* path, EvtC450Buf* buf, s32 limit);
 // Imports for func_8016B860 (event-sequence update): minimap/event gates
 // (CMiniMap.cpp / CMenuKizunagram.cpp), tag-processor notify (code_8025FB10.cpp)
 // and the menu BGM/voice helpers (code_80187F14.cpp / code_801A929C.cpp).
-extern "C" bool func_8011C2E8();
+extern "C" s32 func_8011C2E8();
 extern "C" void func_8011C400();
 extern "C" void func_80261960(int index);
 extern "C" void func_80189034(const char* name, int flag, float f1, float f2);

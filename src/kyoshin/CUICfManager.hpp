@@ -62,14 +62,16 @@ extern "C" u32 func_800FF6BC(u8* ctx, u32 scene);  // menu factory (CMainMenu.cp
 extern "C" u32 func_80122450();                    // close-quest-menu gate (CMainMenu.hpp)
 extern char lbl_8066DCF8[4];     // .sbss2 font-name blob (address used as pName)
 // C-library delete operators (flat retail symbols; shared runtime helpers).
-extern "C" void* __dl__FPv(void* p);
-extern "C" void* __dla__FPv(void* p);
+// Canonical void-return form - MUST match the ~100 other __dl__FPv decls
+// (mixed void*/void spellings trip MWCC 10505 when headers co-occur).
+extern "C" void __dl__FPv(void* p);
+extern "C" void __dla__FPv(void* p);
 // C-library vararg formatter (flat retail symbol; used by the slot sprintf
 // fills). Matches the per-TU declaration used by CMapSel.hpp etc.
 extern "C" int sprintf(char* str, const char* fmt, ...);
 // Memory-handle getter for the ctor's node-pool allocation (CUIWindowManager.hpp).
 class CScn;
-extern "C" mtl::ALLOC_HANDLE func_80496004(CScn* scene);
+extern "C" mtl::ALLOC_HANDLE func_80496004(void* ptr); // void* param: must match CUIBattleManager.hpp (10197)
 
 // This unit's own slot helpers (flat retail names; bodies live in the .cpp).
 extern "C" int func_801359AC(u8* singleton);

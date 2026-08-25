@@ -44,7 +44,7 @@ public:
     u32 mField24;                   // 0x24
     u32 mField28;                   // 0x28
     u32 mField2C;                   // 0x2C
-    u8 _pad30[0x1D0 - 0x30];
+    u32 mWords30[(0x1D0 - 0x30) / 4];  // 0x30-0x1CF: inline record area
     void* mKeys1D0[8];              // 0x1D0: node keys
     void* mNodes1F0[8];             // 0x1F0: node per key
     u32 mCount210;                  // 0x210: number of pushed entries
@@ -206,14 +206,14 @@ struct ActParamCtx94 {
 struct ActParamObj10 {
     virtual void _v00(); virtual void _v04(); virtual void _v08(); virtual void _v0C();
     virtual void _v10(); virtual void _v14(); virtual void _v18();
-    virtual int invoke1C(u32 val);   // vt+0x1C
+    virtual int invoke1C(int sel, u32 val);   // vt+0x1C (sel: ctx-is-own-block flag)
     virtual void _v20(); virtual void _v24(); virtual void _v28(); virtual void _v2C();
     virtual void _v30(); virtual void _v34(); virtual void _v38(); virtual void _v3C();
     virtual void _v40(); virtual void _v44(); virtual void _v48(); virtual void _v4C();
     virtual void _v50(); virtual void _v54(); virtual void _v58(); virtual void _v5C();
     virtual void _v60(); virtual void _v64(); virtual void _v68(); virtual void _v6C();
-    virtual void _v70(); virtual void _v74(); virtual void _v78(); virtual void _v7C();
-    virtual int check80();           // vt+0x80
+    virtual void _v70(); virtual void _v74();
+    virtual int check80(int sel);    // vt+0x80
     virtual void _v084(); virtual void _v088(); virtual void _v08C();
     virtual void _v090(); virtual void _v094(); virtual void _v098(); virtual void _v09C();
     virtual void _v0A0(); virtual void _v0A4(); virtual void _v0A8(); virtual void _v0AC();
@@ -366,6 +366,38 @@ struct ActParamT19ArgC {
 };
 typedef int (*ActParamTbl19Fn)(u32, u32, u32);
 extern const ActParamTbl19Fn lbl_eu_805705F0[];
+// Handlers referenced by the dispatch tables but not yet decompiled.
+int func_8005609C(u32, u32, u32);
+int func_800567F0(u32, void*, void*, void*);
+int func_800567F8(u32, void*, void*, void*);
+int func_80056800(u32, void*, void*, void*);
+// vtable-thunk handlers referenced by lbl_eu_805705F0 but not yet decompiled.
+void func_80056290(void*, u32);
+void func_800562A4(void*, u32);
+void func_800562B8(void*, u32);
+void func_800562E0(void*, u32);
+void func_800562F4(void*, u32);
+void func_80056308(void*, u32);
+void func_8005631C(void*, u32);
+void func_80056330(void*, u32);
+void func_80056344(void*, u32);
+void func_80056358(void*, u32);
+void func_8005636C(void*, u32);
+void func_80056380(void*, u32);
+void func_80056394(void*, u32);
+void func_800563A8(void*, u32);
+void func_800563D0(void*, u32);
+void func_800563E4(void*, u32);
+void func_800563F8(void*, u32);
+void func_8005640C(void*, u32);
+void func_80056420(void*, u32);
+void func_80056434(void*, u32);
+void func_80056448(void*, u32);
+void func_8005645C(void*, u32);
+void func_80056470(void*, u32);
+void func_80056484(void*, u32);
+void func_80056498(void*, u32);
+void func_800564C0(void*, u32);
 int func_80057BA0(u32 flags, ActParamT19ArgA* a, ActParamT19ArgB* b, ActParamT19ArgC* c);
 
 // ---- func_80053DE8 ----
@@ -401,7 +433,10 @@ struct ActParamCb5 {
     virtual void invoke10(void* obj); // vt+0x10
 };
 struct ActParamVals5 {
-    u8 _pad00[0x14];
+    u32 mField00;                  // 0x00: flag mask updated on fire (func_80057084)
+    u8 _pad04[8];
+    u32 mField0C;                  // 0x0C: forwarded by func_80057490
+    u32 _pad10;
     u32 mField14;                  // 0x14: gate checked by func_80057670
     u8 _pad18[0x50 - 0x18];
     float mFloat50;                // 0x50
@@ -419,6 +454,7 @@ struct ActParamSrc5 {
             u8 mByte0B;
         };
     };
+    u32 mWord0C;                   // 0x0C: mask applied to vals+0x00 on fire
 };
 int func_80056A98(u32 flags, ActParamHost5* host, ActParamVals5* vals, ActParamSrc5* src);
 
@@ -487,7 +523,7 @@ class CScnItemAnim;
 // retail references it under an unmangled symbol.
 extern "C" int func_8049E648(CScnItemAnim* self, const char* name);
 // Register a stream's record chain into the table's slots; returns 0.
-int func_800555EC(CActParamLinkTable* table, CScnItemAnim* anim, ActParamStackNode* node);
+extern "C" __declspec(noinline) int func_800555EC(CActParamLinkTable* table, CScnItemAnim* anim, ActParamStackNode* node);
 extern "C" int func_800557E8(ActParamStack* self, ActParamStrRec* dst, ActParamStrRec* src);
 float func_80055DB8(CActParamData* self);  // mPtr18 entry float getter
 float func_80055DD4(CActParamData* self);
@@ -521,14 +557,115 @@ struct ActParamCb18 {
     virtual void _v0C(); virtual void _v10();
     virtual void invoke18(void* obj, void* src); // vt+0x18
 };
+// Callback interface used by func_80057490: fires the vt+0x28 slot with the
+// data object, the source mask word, two vals words, and the func_80053960
+// tick value.
+struct ActParamCb28 {
+    virtual void _v00(); virtual void _v04(); virtual void _v08();
+    virtual void _v0C(); virtual void _v10(); virtual void _v14();
+    virtual void _v18(); virtual void _v1C(); virtual void _v20();
+    virtual void _v24();
+    virtual void invoke28(ActParamData388* obj, u32 mask, u32 flag14,
+                          u32 flag0C, u32 tick); // vt+0x28
+};
+// Import from kyoshin/action/CActParamAnim (asm-side): per-entry tick getter.
+extern "C" u32 func_80053960(ActParamData388* obj);
+
+// View of the data object extended to the callback pointer at 0x3a0
+// (used by func_8005789C).
+struct ActParamData3A0 {
+    u8 _pad00[0x388];
+    volatile float mFloat388;
+    u8 _pad38C[0x3A0 - 0x38C];
+    void* mCb3A0;                  // 0x3a0: callback object checked/called on fire
+};
+// Callback interface for func_8005789C: fires the vt+0x28 slot with a pointer
+// to the src mask word (src+0x0C) and the normalized src byte flag.
+struct ActParamCb28Time {
+    virtual void _v00(); virtual void _v04(); virtual void _v08();
+    virtual void _v0C(); virtual void _v10(); virtual void _v14();
+    virtual void _v18(); virtual void _v1C(); virtual void _v20();
+    virtual void _v24();
+    virtual void invoke28(u32* wordPtr, u32 flag); // vt+0x28
+};
+
+// func_8005789C: like func_80056EC8 but gated on vals+0x14 and firing invokes
+// the cb object held at obj04+0x3a0 (vt+0x28) with the time word pointer.
+int func_8005789C(u32 flags, ActParamHost5* host, ActParamVals5* vals,
+                  ActParamSrc5* src);
 // func_80056EC8: like func_80056A98 but the range test clears the fire flag
 // instead of setting it, and firing invokes the cb object's vt+0x18.
 int func_80056EC8(u32 flags, ActParamHost5* host, ActParamVals5* vals, ActParamSrc5* src);
 
-int func_80056D00(u32 flags, ActParamHost5* host, ActParamVals5* vals, ActParamSrc5* src);
+// func_80057084: like func_80056EC8 but firing applies src+0x0C as a set/clear
+// mask on vals+0x00 (selected by the byte at src+0x0A) instead of a callback.
+int func_80057084(u32 flags, ActParamHost5* host, ActParamVals5* vals, ActParamSrc5* src);
+
+// func_80056D00: like func_80056A98 but
 int func_80057280(u32 flags, ActParamHost5* host, ActParamVals5* vals, ActParamSrc5* src);
 int func_800568E8(u32 flags, ActParamHost5* host, ActParamVals5* vals, ActParamSrc5* src);
 int func_80057670(u32 flags, ActParamHost5* host, ActParamVals5* vals, ActParamSrc5* src);
+
+// ---- func_80054D3C walker ----
+// Record walked by func_80054D3C.
+struct ActParamD3CRec {
+    u16 mOffset0;                  // stride to the next record
+    u16 mType2;                    // dispatch: 9, 0xF, 0x14
+    u8 _pad04[4];
+    u16 mShort08;                  // converted to double for the threshold tests
+    u8 mByte0A;
+    u8 mByte0B;
+};
+// Stream head referenced by member+0x6C.
+struct ActParamD3CStream {
+    u16 mHeadOff00;                // offset of the first record
+    u8 _pad02[0x0C - 0x02];
+    u32 mField0C;                  // bit 9 enables type-9 handling
+};
+// Time-word view of an ActParamD3CRec used by func_800550E8: the two
+// threshold halfwords at +0x08/+0x0A are read independently.
+struct ActParamD3CTimeRec {
+    u8 _pad00[8];
+    u16 mTime08;                   // +0x08: phase-A time word
+    u16 mTime0A;                   // +0x0A: phase-B time word
+};
+
+// Callback interface at CActParamData+0x24 used by func_800550E8: fires the
+// vt+0x24 slot with the entry object and a selector (0 = phase A, 1 = B).
+struct ActParamCbSel24 {
+    virtual void v08(); virtual void v0C(); virtual void v10();
+    virtual void v14(); virtual void v18(); virtual void v1C();
+    virtual void v20();
+    virtual void invoke24(void* obj, u32 sel); // vt+0x24
+};
+
+// Anim-side state queries used by func_800550E8 (defined in the
+// kyoshin/action/CActParamAnim split).
+extern "C" int func_8004B8F8(void* obj, u32 sel);
+extern "C" int func_8004B990(void* obj, u32 sel);
+
+// Owner block walked by func_80054D3C (a CActParamData sub-object).
+struct ActParamD3CMember {
+    u8 _pad00[0x50];
+    volatile float mFloat50;
+    volatile float mFloat54;
+    volatile s32 mField58;
+    u8 _pad5C[0x6C - 0x5C];
+    ActParamD3CStream* mStream6C;  // record-stream head
+    volatile float mFloat70;
+};
+// Callback interface at CActParamData+0x24 used by func_80054D3C.
+struct ActParamCbD3C {
+    virtual void _v08();
+    virtual void invoke0C(void* obj, u8 a, u8 b); // vt+0x0C
+    virtual void _v10();
+    virtual void _v14();
+    virtual void invoke18(void* obj, void* src);  // vt+0x18
+};
+void func_80054D3C(CActParamData* self, ActParamD3CMember* member);
+__declspec(noinline) int func_800550E8(CActParamData* self,
+                                       ActParamD3CMember* member,
+                                       ActParamD3CTimeRec* rec, int gate);
 
 // ---- func_800547D4 ----
 // Record-chain walker driven through the handler table lbl_eu_80570788.
@@ -605,6 +742,15 @@ struct ActParamT1Host {
     u8 _pad217[0x25C - 0x217];
     u32 mField25C;
 };
-void* func_800547D4(ActParamT1Host* host, ActParamT1Dst* dst, ActParamT1Src* src);
-void func_80055700(CActParamLinkTable* table, int flag, CActParamRecStream* stream);
+extern "C" void* func_800547D4(ActParamT1Host* host, ActParamT1Dst* dst, ActParamT1Src* src);
+__declspec(noinline) void func_80055700(CActParamLinkTable* table, int flag, CActParamRecStream* stream);
 void func_80055AC4(ActParamStack* self, ActParamStackNode* a, ActParamStackNode* b);
+// Retail no-op stubs (blr only)
+extern "C" void func_80054A20();
+extern "C" void func_800550D8();
+extern "C" void func_800550DC();
+extern "C" void func_800550E0();
+extern "C" void func_800550E4();
+extern "C" void func_800554D0();
+extern "C" void func_800554D4();
+extern "C" void func_800554D8();

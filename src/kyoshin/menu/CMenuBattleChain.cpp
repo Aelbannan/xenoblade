@@ -12,9 +12,6 @@
 #include <nw4r/lyt/lyt_pane.h>
 #include <nw4r/lyt/lyt_animation.h>
 
-extern "C" void func_80137250__FPQ34nw4r3lyt8DrawInfo(nw4r::lyt::DrawInfo* di);
-extern "C" void func_80137038__FPQ34nw4r3lyt6LayoutPQ34nw4r3lyt8DrawInfoii(nw4r::lyt::Layout* layout, nw4r::lyt::DrawInfo* di, int a, int b);
-
 // forward declarations for scaffold thunk references
 void __dt__16CMenuBattleChainFv(void*);
 void cbRenderBefore__16CMenuBattleChainFv(void*);
@@ -245,19 +242,31 @@ void CMenuBattleChain::Move() {
 }
 
 void CMenuBattleChain::cbRenderBefore() {
-    if (CTaskGame::getInstance()->func_800426F0()) {
-        return;
+    // Gate: skip when the task game is busy or the global mode bit (0x200000)
+    // is set. The if-&&-goto body / goto end / end: return chain keeps the
+    // body off the fallthrough so MWCC emits retail's branch-over-branch:
+    // `bne end` for the first disjunct, `beq body; b end` for the second
+    // (same scheme as CSysWinSelect::cbRenderBefore).
+    if (CTaskGame::getInstance()->func_800426F0() == 0 &&
+        (lbl_eu_80663E28 & 0x200000) == 0) {
+        goto body;
     }
-    if (lbl_eu_80663E28 & 0x400) { // bit 10 gates cbRenderBefore
-        return;
-    }
+    goto end;
+end:
+    return;
+body:
     if (func_8013BE50() == 0) {
         return;
     }
-    GXSetZMode(GX_DISABLE, GX_NEVER, GX_DISABLE);
-    nw4r::lyt::DrawInfo drawInfo;
-    func_80137250__FPQ34nw4r3lyt8DrawInfo(&drawInfo);
-    func_80137038__FPQ34nw4r3lyt6LayoutPQ34nw4r3lyt8DrawInfoii(mLayout, &drawInfo, 0, 1);
+    GXSetZMode(GX_FALSE, GX_NEVER, GX_FALSE);
+    // Raw-storage DrawInfo built/destroyed via the pre-mangled ct/dt calls;
+    // a C++ local would virtual-dispatch its scope-exit destructor. Cast at
+    // each call site (no named pointer local) to keep retail's regalloc.
+    u8 drawInfoBuf[0x60];
+    __ct__Q34nw4r3lyt8DrawInfoFv(reinterpret_cast<nw4r::lyt::DrawInfo*>(&drawInfoBuf[0]));
+    func_80137250(reinterpret_cast<nw4r::lyt::DrawInfo*>(&drawInfoBuf[0]));
+    func_80137038(mLayout, reinterpret_cast<nw4r::lyt::DrawInfo*>(&drawInfoBuf[0]), 0, 1);
+    __dt__Q34nw4r3lyt8DrawInfoFv(reinterpret_cast<nw4r::lyt::DrawInfo*>(&drawInfoBuf[0]), -1);
 }
 
 /*
@@ -274,10 +283,14 @@ CMenuBattleChain* func_802AA2A0(CProcess* parent, CScn* scene, u8 chainType) {
     u32 heap = getWorkMem__17CWorkThreadSystemFv();
     CMenuBattleChain* obj = (CMenuBattleChain*)allocate__Q23mtl10MemManagerFUlUl(0xa0, heap);
     if (obj != NULL) {
-        __ct__CMenuBattleChain(obj, scene, chainType);
+        // Retail keeps obj live in r3 by chaining the ctor's `this` return
+        // through the null-check, avoiding a fourth callee-saved register.
+        obj = __ct__CMenuBattleChain(obj, scene, chainType);
     }
+    // Retail keeps obj live in r3 across the singleton store so Regist is
+    // called directly on it; the global is re-read only for the return value.
     lbl_eu_80664A60 = obj;
-    ((CProcess*)lbl_eu_80664A60)->Regist(parent, false);
+    ((CProcess*)obj)->Regist(parent, false);
     return lbl_eu_80664A60;
 }
 
@@ -534,18 +547,19 @@ void func_802AB4B8(CBattleChainMenuState* self) {
  * substate 5). A missing state or a -1 substate means "not usable".
  */
 bool func_802AB510(CBattleChainMenuState* self, u8* outFlag) {
+    // Retail keeps the two flag stores in separate branches (no store merge).
     CArtsSelectStateView* sel = CMenuArtsSelect_getSelectState();
     if (sel == NULL)
         return false;
     s8 sub = sel->field_1;
     if (sub == -1)
         return false;
-    u8 ready;
-    if (sel->field_0 == 0 && sub == 5)
-        ready = 1;
+    s8 state = sel->field_0;
+    // Two separate stores - MWCC does not merge them.
+    if (state == 0 && sub == 5)
+        *outFlag = 1;
     else
-        ready = 0;
-    *outFlag = ready;
+        *outFlag = 0;
     return true;
 }
 

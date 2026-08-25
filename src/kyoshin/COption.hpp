@@ -206,7 +206,8 @@ public:
     nw4r::lyt::AnimTransform* mpAnimTrans1;       // 0x10
     u8 mActive;                                    // 0x14
     u8 mVisible;                                   // 0x15
-    u8 _16[0x1C - 0x16];                          // 0x16-0x1B
+    u8 _16[2];                                     // 0x16-0x17
+    void* field_18;                                // 0x18 (null-checked in func_8029D3C0)
     COptionSub* mSubObj;                           // 0x1C
     nw4r::lyt::AnimTransform* mAnimTransform20;   // 0x20
     nw4r::lyt::AnimTransform* mAnimTransform24;   // 0x24

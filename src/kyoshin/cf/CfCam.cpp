@@ -918,6 +918,15 @@ extern "C" __declspec(noinline) void* func_8006B6A8(void* self) { return *reinte
 extern "C" __declspec(noinline) void* func_8006B6B0(void* self) { return static_cast<char*>(self) + 64; }
 extern "C" __declspec(noinline) void* func_8006B6B8(void* self) { return static_cast<char*>(self) + 28; }
 extern "C" __declspec(noinline) void func_8006BEF0(void* self, void* v) { *reinterpret_cast<void**>(reinterpret_cast<char*>(self) + 8) = v; }
+extern "C" __declspec(noinline) void* func_8006BFBC(void* self) { return *reinterpret_cast<void**>(reinterpret_cast<char*>(self) + 8); }
+__declspec(noinline) int func_8006D374(void* self) {
+    return (*reinterpret_cast<unsigned int*>(reinterpret_cast<char*>(self) + 4) >> 1) & 1;
+}
+extern "C" __declspec(noinline) void* func_80071CDC() { return lbl_eu_80665958; }
+extern "C" __declspec(noinline) void* func_80071CE4(void* self) { return static_cast<char*>(self) + 96; }
+extern "C" __declspec(noinline) void* func_80071CEC(void* self) { return static_cast<char*>(self) + 108; }
+extern "C" __declspec(noinline) void func_80071B74() {}
+extern "C" __declspec(noinline) unsigned int func_80074D44() { return 0; }
 // func_8006CA2C: follow-cam position update. When the follow target handle
 // (+0x164) reports 0 from its vtable slot 0x74, re-arm the 0x40 camera flag.
 // func_8006C740 derives a source vector, func_80073C7C transforms it, the

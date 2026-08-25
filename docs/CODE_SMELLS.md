@@ -24,13 +24,13 @@ The three `*shim`/`side-effect` rows are **fakematch-candidate** families: sourc
 | DECOMP_ASM_INSN asm shims (fakematch candidate) | 11 |
 | #pragma schedule once/twice (fakematch candidate) | 6 |
 | assignment inside cast / init-list (fakematch candidate) | 1 |
-| #pragma | 2661 |
+| #pragma | 2676 |
 
 ## Top offenders (by cleanable severity)
 
 | TU | severity |
 |---|---|
-| src/kyoshin/cf/CBattleManager.cpp | 3643 |
+| src/kyoshin/cf/CBattleManager.cpp | 3644 |
 | src/kyoshin/CItemBoxGrid.cpp | 2213 |
 | src/kyoshin/CPassiveSkill.cpp | 1994 |
 | src/kyoshin/CItemBoxInfo.cpp | 1676 |

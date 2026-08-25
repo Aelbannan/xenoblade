@@ -268,6 +268,10 @@ typedef void (*TexSrtMtxFunc)(math::MTX34* pMtx, const TexSrt& rSrt);
 
 } // namespace
 
+// Load-bearing keep-alive: these functions are referenced only through the
+// retail dispatch tables lbl_eu_8051D6F8/lbl_eu_8051D714 (nw4r_data.s), which
+// are invisible to the compiler; without this emitter -ipa file dead-strips
+// all 14 retail-present functions (attempts.jsonl forceactive-cleanup-g3d-xsi).
 DECOMP_FORCEACTIVE(g3d_xsi_cpp,
                    MakeTexSrtMtx_S, MakeTexSrtMtx_R, MakeTexSrtMtx_T,
                    MakeTexSrtMtx_SR, MakeTexSrtMtx_RT, MakeTexSrtMtx_ST,

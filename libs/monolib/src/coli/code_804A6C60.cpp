@@ -1074,10 +1074,10 @@ extern "C" CColiObject* func_804A7D1C(CColiObject* self, const VEC3* a,
     VEC3Sub(&self->field_0x68, &self->field_0x50, &self->field_0x44);
     self->field_0x68.y = lbl_eu_8066AE44;
     self->field_0x5c = f;
-    f32 sq = VEC3Dot(&self->field_0x68, &self->field_0x68);
+    double sq = VEC3Dot(&self->field_0x68, &self->field_0x68);
     self->field_0x308 = sq;
-    if (sq != lbl_eu_8066AE44) {
-        self->field_0x308 = lbl_eu_8066AE3C / sq;
+    if ((f32)sq != lbl_eu_8066AE44) {
+        self->field_0x308 = lbl_eu_8066AE3C / (f32)sq;
     }
     self->field_0x8c = 0;
     return self;
@@ -1099,7 +1099,7 @@ void func_804A7E18(u32 unused, CColiObject* self) {
         CColiObject* p3 = (CColiObject*)((u8*)self + self->field_0x20);
         CColiObject* p4 = (CColiObject*)((u8*)self + self->field_0x18);
         CColiObject* p5 = (CColiObject*)((u8*)self + self->field_0x30_off);
-        CColiObject* p6;
+        CColiObject* p6 = (CColiObject*)((u8*)self + self->field_0x40);
         // Store order matches retail's global-registration sequence.
         lbl_eu_80665910 = p0;
         lbl_eu_80665914 = p1;
@@ -1107,7 +1107,6 @@ void func_804A7E18(u32 unused, CColiObject* self) {
         lbl_eu_80665918 = p3;
         lbl_eu_8066591C = p4;
         lbl_eu_80665928 = p5;
-        p6 = (CColiObject*)((u8*)self + self->field_0x40);
         lbl_eu_8066592C = p6;
     }
     lbl_eu_80665930 = self;

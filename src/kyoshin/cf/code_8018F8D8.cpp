@@ -842,8 +842,8 @@ void func_80192268(SCopy_80192268* dst, const SCopy_80192268* src) {
     dst->b_2e8 = src->b_2e8;
 
     for (int i = 0; i < 16; i++) {
-        dst->arr3[i].lo = src->arr3[i].lo;
-        dst->arr3[i].hi = src->arr3[i].hi;
+        dst->arr3.items[i].lo = src->arr3.items[i].lo;
+        dst->arr3.items[i].hi = src->arr3.items[i].hi;
     }
 
     dst->f_36c = src->f_36c;
@@ -856,8 +856,8 @@ void func_80192268(SCopy_80192268* dst, const SCopy_80192268* src) {
     dst->b_37c = src->b_37c;
 
     for (int i = 0; i < 1024; i++) {
-        dst->arr4[i].lo = src->arr4[i].lo;
-        dst->arr4[i].hi = src->arr4[i].hi;
+        dst->arr4.items[i].lo = src->arr4.items[i].lo;
+        dst->arr4.items[i].hi = src->arr4.items[i].hi;
     }
 
     dst->h_237e = src->h_237e;

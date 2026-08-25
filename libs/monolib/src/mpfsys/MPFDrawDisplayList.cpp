@@ -439,13 +439,12 @@ extern f32 lbl_eu_80665884;                        // billboard probe scale B
 namespace mpfsys {
 
 MPFDrawDisplayList* MPFDrawDisplayList::getInstance() {
-    if (lbl_eu_80665888[0] == 0) {
+    if (!lbl_eu_80665888[0]) {
         // First call: point the instance slot at the prototype instance blob.
-        u32 protoAddr = (u32)&lbl_eu_8056DBA0;
-        lbl_eu_80658488[0] = (MPFDrawDisplayList*)protoAddr;
+        lbl_eu_80658488[0] = (MPFDrawDisplayList*)&lbl_eu_8056DBA0;
         lbl_eu_80665888[0] = 1;
     }
-    return (MPFDrawDisplayList*)lbl_eu_80658488;
+    return (MPFDrawDisplayList*)&lbl_eu_80658488;
 }
 
 void MPFDrawDisplayList::func_8047983C() {}
@@ -1032,8 +1031,9 @@ void func_804782C4__Q26mpfsys18MPFDrawDisplayListFv(mpfsys::MPFDrawDisplayList* 
         arg->field_0x18 = src + prod;
     } else {
         if (arg->field_0x2 & 2) {
-            arg->field_0x18 = (u8*)(s->field_0x2c + arg->field_0x0 * 0x600) + 0x300;
-        } else {
+            // Parenthesised scaled term keeps MWCC's add operand order.
+            u32 base = s->field_0x2c;
+            arg->field_0x18 = (u8*)(base + arg->field_0x0 * 0x600) + 0x300;        } else {
             arg->field_0x18 = (u8*)(s->field_0x2c + arg->field_0x0 * 0x600);
         }
         s32 n = (arg->field_0x4 + 1) * 3;

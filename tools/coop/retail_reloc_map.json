@@ -21868,7 +21868,7 @@
         ]
       }
     },
-    "main/kyoshin/cf/CfHikariItemManager@9461": {
+    "main/kyoshin/cf/CfHikariItemManager@9465": {
       "R_PPC_EMB_SDA21": {
         "addend_delta": 0,
         "alternatives": [],
@@ -26628,8 +26628,8 @@
       }
     }
   },
-  "function_pairs": 12870,
-  "generated": "2026-08-25T23:56:48.666535",
+  "function_pairs": 12869,
+  "generated": "2026-08-25T23:57:43.090299",
   "region": "us",
   "units_scanned": 1148,
   "version": 1

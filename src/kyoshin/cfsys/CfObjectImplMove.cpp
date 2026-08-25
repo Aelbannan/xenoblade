@@ -1022,36 +1022,387 @@ void CfObjectImplMoveData::func_800CD5C0(unsigned int a, unsigned int b) {
     }
 }
 
-// Move-state transition driver (shared entry): gates on the bound id,
-// toggles the 0x1000 state bits on the driver sub-object, then runs the
-// per-kind presentation updates on the bound actor.
-// NOTE: only the gate chain and the kind==2 / small-kind blocks were visible
-// in this pass's reference; the large jump-table bodies (kinds up to 0x31)
-// remain to be reconstructed.
-void func_800CD5DC(void* selfPtr, u32 id, u32 kind, u32 a7, u32 a8, u32 a9) {
-    CfObjectImplMoveObj* self = (CfObjectImplMoveObj*)selfPtr;
-    CfEmbeddedSubObj_3E9C* sub = (CfEmbeddedSubObj_3E9C*)self->mSubObj;
-    if (id != sub->field_C4) {
+// Move-state transition driver (shared entry): gates on the bound move id,
+// toggles the 0x1000 state bits on the driver sub-object, runs the
+// chainId==2 vf29C presentation chain, executes the per-kind body, then
+// forwards the transition to the partner actor linked at sub.field_71C.
+void func_800CD5DC(CfObjectImplMoveObj* self, u32 id, u32 kind, u32,
+                   u32 chainId, u32 extraParam) {
+    if (id != self->mSubObj->mSomeId) {
         return;
     }
-    if (sub->f07(0x1000) != 0 && kind != 3) {
-        sub->f06(0x1000);
-        if (sub->f01(1) != 0) {
-            sub->f02(1);
-            sub->f04(1);
+    if (self->mSubObj->f07(0x1000) != 0 && kind != 3) {
+        self->mSubObj->f06(0x1000);
+        if (self->mSubObj->f01(1) != 0) {
+            self->mSubObj->f02(1);
+            self->mSubObj->f04(1);
         }
     }
     if (kind == 3) {
-        sub->f04(0x1000);
-        sub->f02(4);
+        self->mSubObj->f04(0x1000);
+        self->mSubObj->f02(4);
     }
     CfActorObj* actor = self->field_0x18;
     if (actor == nullptr) {
         return;
     }
-    // TODO(us-800ce04c): kind==2 vf29C-chain block and the per-kind jump
-    // table were elided from this pass's retail reference; reconstructed in
-    // a later pass from the full ASM.
+    if (chainId == 2) {
+        // Presentation chain: walk the actor's vf29C item list; when a chained
+        // item carries a live state halfword, raise it on this object.
+        if (actor->vf29C(0)->field_0x50 != nullptr) {
+            if (((CfMoveVf29CItem*)actor->vf29C(0)->field_0x50)->field_0x48 != 0) {
+                self->vf98(
+                    ((CfMoveVf29CItem*)actor->vf29C(0)->field_0x50)->field_0x48);
+            }
+        }
+        if ((actor->vf29C(0)->field_0x78 & 0x400) != 0) {
+            if (actor->vf2A8() == nullptr) {
+                func_800CB9AC(
+                    self,
+                    (u32)((CfMoveVf29CItem*)actor->vf29C(0)->field_0x50)->field_0x48);
+            }
+        }
+        actor->sub.vfn90(lbl_eu_80666C64);
+        if (kind == 2 || kind == 0x11) {
+            getInstance__Q22cf13CfGameManagerFv();
+            if (!func_8006EF04(0x400)) {
+                actor->vf2AC();
+            }
+        } else {
+            getInstance__Q22cf13CfGameManagerFv();
+            if (!func_8006EF04(0x400)) {
+                if (kind == 0x2d) {
+                    u32 prev = actor->vf2A4()->field_48;
+                    if (actor->vf2A0()->field_48 == prev) {
+                        actor->vf2B0();
+                    }
+                } else {
+                    actor->vf2B0();
+                }
+            }
+        }
+    }
+    if (kind == 0x31) {
+        if (func_800EA444(getInstance__Q22cf14CBattleManagerFv()) == nullptr) {
+            actor->vf2B0();
+        } else if ((((CfMoveBM824*)func_800EA444(getInstance__Q22cf14CBattleManagerFv()))
+                        ->field_824 &
+                       0x800) == 0) {
+            actor->vf2B0();
+        }
+    }
+    switch (kind) {
+    case 3:
+    case 4:
+    case 5:
+    case 6:
+    case 0xc:
+    case 0xf:
+    case 0x11:
+    case 0x17:
+    case 0x1b:
+    case 0x1e:
+    case 0x20:
+    case 0x21:
+    case 0x22:
+    case 0x23:
+    case 0x24:
+    case 0x25:
+    case 0x26:
+    case 0x27:
+    case 0x28:
+    case 0x29:
+    case 0x2a:
+    case 0x2b:
+    case 0x2c:
+    case 0x2d:
+    case 0x2e:
+    case 0x2f:
+    case 0x30: {
+        // Shared interrupt/cancel body: battle-gated vision refresh, then a
+        // sweep over the bound event object's state word.
+        self->field_0x18->sub.vfn204(0, 0, -1, 0, 0);
+        CfActorObj* ac1 = self->field_0x18;
+        if (func_800EA444(getInstance__Q22cf14CBattleManagerFv()) != nullptr &&
+            ((CfMoveBMId*)func_800EA444(getInstance__Q22cf14CBattleManagerFv()))
+                    ->field_0 == ac1->sub.field_74 &&
+            func_80148778(ac1->field_08, 0xf) == 0 &&
+            func_80148778(ac1->field_08, 9) == 0 &&
+            func_80148778(ac1->field_08, 0xc) == 0 &&
+            func_80148778(ac1->field_08, 0xb) == 0 &&
+            (((CfMoveBM824*)func_800EA444(getInstance__Q22cf14CBattleManagerFv()))
+                 ->field_824 &
+                0x800) == 0) {
+            func_800F449C(func_800EA444(getInstance__Q22cf14CBattleManagerFv()));
+        }
+        CfActorObj* ac2 = self->field_0x18;
+        CfMoveC4Obj* evt = (CfMoveC4Obj*)ac2->sub.field_C4;
+        u32 t = (evt != nullptr) ? evt->field_374 : 0;
+        if (t >= 0xb) {
+            t = (evt != nullptr) ? evt->field_374 : 0;
+            if (t <= 0xf) {
+                t = (evt != nullptr) ? evt->field_374 : 0;
+                if (t == 0xf && ac2->sub.field_0x8C >= 0x9c5 &&
+                    ac2->sub.field_0x8C <= 0x9c7) {
+                    func_80174B4C(ac2, 0x10);
+                    goto tail;
+                }
+                if (func_800DA06C(getInstance__Q22cf14CBattleManagerFv(), ac2) == 0) {
+                    CfActorObj* ac3 = self->field_0x18;
+                    if ((ac3->field_3374 & 8) == 0) {
+                        u32 v1d = ac3->field_04->b30()->field_0;
+                        if (func_80174C98(ac3, &v1d, 0x1d) == 0) {
+                            CfActorObj* ac4 = self->field_0x18;
+                            u32 v8 = ac4->field_04->b30()->field_0;
+                            if (func_80174C98(ac4, &v8, 8) == 0) {
+                                CfActorObj* ac5 = self->field_0x18;
+                                ac5->sub.vfn00(0x200);
+                                func_800D9978(getInstance__Q22cf14CBattleManagerFv(),
+                                    self->field_0x18);
+                            }
+                        }
+                    }
+                }
+                self->field_0x18->sub.vfn20C(0x100);
+                func_80174B4C(self->field_0x18, 6);
+                goto tail;
+            }
+        }
+        t = (evt != nullptr) ? evt->field_374 : 0;
+        if (t == 4) {
+            func_80174B4C(self->field_0x18, 0x17);
+            goto tail;
+        }
+        t = (evt != nullptr) ? evt->field_374 : 0;
+        if (t == 5) {
+            func_80174B4C(self->field_0x18, 0x15);
+            goto tail;
+        }
+        t = (evt != nullptr) ? evt->field_374 : 0;
+        if (t == 1) {
+            func_80174B4C(self->field_0x18, 0x11);
+            goto tail;
+        }
+        t = (evt != nullptr) ? evt->field_374 : 0;
+        if (t == 0xa) {
+            func_80174B4C(self->field_0x18, 0x10);
+            goto tail;
+        }
+        {
+            CfActorObj* ac6 = self->field_0x18;
+            u32 v1 = ac6->field_04->b30()->field_0;
+            if (func_80174C98(ac6, &v1, 1) != 0) {
+                goto tail;
+            }
+            CfActorObj* ac7 = self->field_0x18;
+            u32 v2 = ac7->field_04->b30()->field_0;
+            if (func_80174C98(ac7, &v2, 2) != 0) {
+                goto tail;
+            }
+            self->field_0x18->sub.vfn20C(0x200);
+            func_80174B4C(self->field_0x18, 3);
+        }
+        break;
+    }
+    case 7:
+        func_80174B4C(self->field_0x18, 7);
+        self->field_0x18->sub.vfn20C(0x100);
+        self->field_0x18->sub.vfn20C(0x200);
+        self->field_0x18->sub.vfn00(4);
+        func_800D9978(getInstance__Q22cf14CBattleManagerFv(), self->field_0x18);
+        break;
+    case 0x1f:
+        func_80174B4C(self->field_0x18, 0x1f);
+        break;
+    case 8: {
+        // Full teardown: clear counters, reset the move buffer state and hand
+        // the actor back to the battle/voice managers.
+        func_80174B4C(self->field_0x18, 8);
+        self->field_0x18->sub.vfn204(0, 0, -1, 0, 0);
+        self->field_0x18->sub.vfn204(2, 0, -1, 0, 0);
+        self->field_0x18->sub.vfn20C(0x200);
+        self->field_0x18->sub.vfn20C(0x100);
+        CfActorObj* a4 = self->field_0x18;
+        a4->mst.field_214 = 0;
+        a4->mst.field_210 = 0;
+        self->vf70();
+        func_800D9CA0(getInstance__Q22cf14CBattleManagerFv(), self->field_0x18);
+        func_802A2D0C(self->field_0x18);
+        break;
+    }
+    case 0x10:
+        func_80174B4C(self->field_0x18, 0x10);
+        self->field_0x18->sub.vfn204(0, 0, -1, 0, 0);
+        break;
+    case 0x16:
+        self->field_0x18->sub.f03();
+        self->field_0x18->sub.vfn204(0, 0, -1, 0, 0);
+        self->field_0x18->sub.vfn204(2, 0, -1, 0, 0);
+        func_80174B4C(self->field_0x18, 0x16);
+        break;
+    case 0x15:
+        self->field_0x18->sub.f03();
+        func_80174B4C(self->field_0x18, 0x15);
+        break;
+    case 0x18:
+        func_80174B4C(self->field_0x18, 0x18);
+        break;
+    case 0x19: {
+        // Release the presentation handler set unless either flag-word bit 30
+        // pair is live, in which case refresh vision first.
+        self->field_0x18->sub.f03();
+        CfActorObj* a9 = self->field_0x18;
+        CfMoveC4Obj* e9 = (CfMoveC4Obj*)a9->sub.field_C4;
+        if ((a9->sub.field_64 & 2) == 0 || (e9->field_4EC & 2) == 0) {
+            func_8004CEF8(e9, 0xb);
+            func_80174B4C(self->field_0x18, 0x19);
+        }
+        ((CfMoveHandler8*)self->field_0x18->field_08)->h20(0x10);
+        ((CfMoveHandler8*)self->field_0x18->field_08)->h20(0xef);
+        ((CfMoveHandler8*)self->field_0x18->field_08)->h20(0xf0);
+        ((CfMoveHandler8*)self->field_0x18->field_08)->h20(0xf1);
+        break;
+    }
+    case 0x1a: {
+        self->field_0x18->sub.f03();
+        CfActorObj* aa = self->field_0x18;
+        CfMoveC4Obj* ea = (CfMoveC4Obj*)aa->sub.field_C4;
+        if ((aa->sub.field_64 & 2) == 0 || (ea->field_4EC & 2) == 0) {
+            func_8004CEF8(ea, 0xb);
+            func_80174B4C(self->field_0x18, 0x1a);
+        }
+        ((CfMoveHandler8*)self->field_0x18->field_08)->h20(0x10);
+        ((CfMoveHandler8*)self->field_0x18->field_08)->h20(0xf);
+        ((CfMoveHandler8*)self->field_0x18->field_08)->h20(0xef);
+        ((CfMoveHandler8*)self->field_0x18->field_08)->h20(0xf0);
+        ((CfMoveHandler8*)self->field_0x18->field_08)->h20(0xf1);
+        break;
+    }
+    case 0x1c:
+    case 0x31: {
+        // Reset body: clear both request words and the embedded handlers,
+        // then re-arm the move buffer bookkeeping.
+        func_8004CEF8((CfMoveC4Obj*)((CfActorObj*)self->field_0x18)->sub.field_C4,
+            0xb);
+        self->field_0x18->sub.vfn204(0, 0, -1, 0, 0);
+        self->field_0x18->sub.vfn204(1, 0, -1, 0, 0);
+        self->field_0x18->sub.vfn204(2, 0, -1, 0, 0);
+        self->field_0x18->sub.f03();
+        CfActorObj* ab = self->field_0x18;
+        ab->mst.field_214 = 0;
+        ab->mst.field_210 = 0;
+        func_80174B4C(self->field_0x18, 0x1c);
+        self->field_0x18->field_3E98 = 0;
+        self->field_0x18->mst.field_8 &= ~0x10;
+        break;
+    }
+    case 0x1d:
+        self->field_0x18->field_04->b20(0x200000);
+        self->field_0x18->field_04->b20(0x400000);
+        func_80174B4C(self->field_0x18, 0x1d);
+        break;
+    case 9:
+    case 0xa:
+    case 0xb: {
+        // Knockback-strength scaling: the registered probe gates the float
+        // dance driven by the slot-0x218 signed halfword.
+        self->field_0x18->sub.vfn204(0, 0, -1, 0, 0);
+        func_800DA0A4(getInstance__Q22cf14CBattleManagerFv(), self->field_0x18,
+            extraParam);
+        if (self->field_0x18->vf298()->field_48 >= 0x10) {
+            func_80174B4C(self->field_0x18, 0xa);
+        } else if (self->field_0x18->vf298()->field_48 >= 7) {
+            func_80174B4C(self->field_0x18, 0xb);
+        } else {
+            func_80174B4C(self->field_0x18, 9);
+        }
+        CfActorObj* aT = self->field_0x18;
+        u32 v9 = aT->field_04->b30()->field_0;
+        if (func_80174C98(aT, &v9, 9) == 0) {
+            f32 val = ((CfVf218Result*)self->field_0x18->vf218())->field_28;
+            if (val > lbl_eu_80666C60) {
+                self->field_0x18->sub.vfn90(lbl_eu_80666C64 + val / lbl_eu_80666C78);
+            } else {
+                self->field_0x18->sub.vfn90(lbl_eu_80666C64 /
+                    (lbl_eu_80666C64 + (-val / lbl_eu_80666C78)));
+            }
+            if (self->field_0x18->sub.vfn94() == lbl_eu_80666C60) {
+                self->field_0x18->sub.vfn90(lbl_eu_80666C64);
+            }
+        }
+        break;
+    }
+    case 0xd:
+    case 0xe: {
+        CfActorObj* ad = self->field_0x18;
+        u32 v802 = ad->field_04->b30()->field_0;
+        if (func_80174C98(ad, &v802, 0x802) != 0) {
+            func_80174B4C(self->field_0x18, 0xe);
+            self->field_0x18->sub.vfn00(0x100);
+            goto tail;
+        }
+        CfActorObj* ae = self->field_0x18;
+        u32 v805 = ae->field_04->b30()->field_0;
+        if (func_80174C98(ae, &v805, 0x805) != 0) {
+            self->field_0x18->sub.vfn00(0x100);
+        }
+        func_80174B4C(self->field_0x18, 0xd);
+        break;
+    }
+    case 0x12: {
+        CfActorObj* af = self->field_0x18;
+        u32 v802 = af->field_04->b30()->field_0;
+        if (func_80174C98(af, &v802, 0x802) != 0) {
+            self->field_0x18->sub.vfn00(0x100);
+        }
+        func_80174B4C(self->field_0x18, 0x12);
+        break;
+    }
+    case 0x13: {
+        CfActorObj* ag = self->field_0x18;
+        u32 v802 = ag->field_04->b30()->field_0;
+        if (func_80174C98(ag, &v802, 0x802) != 0) {
+            self->field_0x18->sub.vfn00(0x100);
+        }
+        func_80174B4C(self->field_0x18, 0x13);
+        break;
+    }
+    case 0x14: {
+        CfActorObj* ah = self->field_0x18;
+        u32 v802 = ah->field_04->b30()->field_0;
+        if (func_80174C98(ah, &v802, 0x802) != 0) {
+            self->field_0x18->sub.vfn00(0x100);
+        }
+        func_80174B4C(self->field_0x18, 0x14);
+        break;
+    }
+    default:
+        break;
+    }
+tail:
+    // Partner forward: when this actor links a partner (sub.field_71C), swap
+    // the bound move objects through slot 0x110 and replay the transition on
+    // the partner actor; otherwise clear the link.
+    {
+        CfActorObj* aT2 = self->field_0x18;
+        if (aT2->sub.field_71C != 0) {
+            CfActorObj* other =
+                (CfActorObj*)func_8016FE34(func_800B708C((int)aT2->sub.field_71C));
+            if (other != nullptr && other->sub.field_C4 != 0) {
+                void* moved = aT2->sub.vfn110()->field_0x18;
+                other->sub.vfn110()->field_0x18 = moved;
+                void* xfer = aT2->vf5cc();
+                other->vf5c8(xfer);
+                CfMoveC4Obj* oEvt = (CfMoveC4Obj*)other->sub.field_C4;
+                CfMoveC4Obj* sEvt = (CfMoveC4Obj*)aT2->sub.field_C4;
+                func_8004CEF8(oEvt, (sEvt != nullptr) ? sEvt->field_374 : 0);
+                func_800BE12C((u8*)&other->sub, kind, 0, -1, 1);
+                aT2->vf5d0();
+            } else {
+                aT2->sub.field_71C = 0;
+            }
+        }
+    }
 }
 
 // Enum-list effect sweep: wake both field_04 channels, build a filtered enum

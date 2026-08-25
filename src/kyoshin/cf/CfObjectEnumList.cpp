@@ -1158,8 +1158,6 @@ extern "C" int func_800F8890(CfSortableList* self, int lo, int hi, int pivot) {
 // read via value(pivot), then the list is scanned from both ends (value(i) <
 // pivot on the left, value(j) >= pivot on the right) and out-of-place
 // elements are swapped through the get() accessor.  Returns the split index.
-// func_800F89DC(){}
-
 // func_800F9AEC: refresh each entry's sort value via the actor's vtable
 // 0x128 float accessor (reached through func_8016FE34), then quicksort the
 // embedded sortable list at +0x624 over [0, count-1].  Needs at least two
@@ -1208,7 +1206,6 @@ void func_800F6ED0(cf::CfObjEnumList* self, ml::CVec3* spot) {
                   hi);
 }
 
-// Frame-origin shorts of the scene view frame used by __ct__800FA9B4.
 struct EnumViewFrameShorts {
     u8 _pad[0x1C8];
     s16 originX;             // 0x1C8
@@ -1217,6 +1214,111 @@ struct EnumViewFrameShorts {
     s16 sizeX;               // 0x230
     s16 sizeY;               // 0x232
 };
+
+// us-800f94c4 | func_800F89DC: project every entry through the scene view
+// transform (marking processed entries with the 0x1 bit), recompute each sort
+// value as screen-x minus half the frame origin, quicksort, find the largest
+// unflagged |sort value| as a centre, then re-append entries from a stack
+// snapshot round-robin.
+extern "C" void func_800F89DC(cf::CfObjEnumList* self) {
+    if (self->mPtrCount < 2) {
+        return;
+    }
+    EnumViewFrameShorts* vf = reinterpret_cast<EnumViewFrameShorts*>(
+        func_8049627C((void*)self->field_303C, 0));
+    void* pose = func_80496264((void*)self->field_303C, 0);
+
+    // Pass 1: view-space transform of each entry without the bit-0 mark.
+    for (u32 i = 0; i < self->mPtrCount; i++) {
+        cf::CfObjEnumList::sObjInfo* p = self->mPtrArray[i];
+        if ((p->field_18 & 1) != 0) {
+            continue;
+        }
+        CfEnumProjView* obj = reinterpret_cast<CfEnumProjView*>(p->object);
+        CfEnumPosBlock* blk = obj->vX120(lbl_eu_804FCD24);
+        ml::CVec3 tmp;   // transform source copy (retail sp+0x18)
+        if (blk != 0) {
+            // Position floats sit at +0xC/+0x1C/+0x2C of the block.
+            ml::CVec3 t; // retail sp+0xC
+            float tz = blk->z;
+            float ty = blk->y;
+            float tx = blk->x;
+            t.x = tx;
+            t.y = ty;
+            t.z = tz;
+            ml::CVec3* src = &t;
+            tmp.x = src->x;
+            tmp.y = src->y;
+            tmp.z = src->z;
+        } else {
+            ml::CVec3* src = reinterpret_cast<ml::CVec3*>(obj->vAC());
+            tmp.x = src->x;
+            tmp.y = src->y;
+            tmp.z = src->z;
+        }
+        func_8049B59C(&p->field_08, pose, &tmp);
+        p->field_18 |= 1;
+    }
+
+    // Pass 2: sort value = view-space x - frame origin/2.  The halved origin
+    // stays an int; the int->float conversion happens inside the loop.
+    struct SRect16 {
+        s16 x, y, w, h;
+    };
+    SRect16 rc;
+    getFrame2ViewOffset__10CViewFrameFR7CRect16PC10CViewFrame(
+        &rc, (u8*)vf + 0x1DC);
+    int half = vf->originX / 2;
+    for (u32 i = 0; i < self->mPtrCount; i++) {
+        cf::CfObjEnumList::sObjInfo* p = self->mPtrArray[i];
+        p->field_14 = p->field_08 - (float)half;
+    }
+
+    // Pass 3: quicksort the embedded sortable list.
+    int hi = self->mPtrCount - 1;
+    self->field_062C = 0;
+    func_800F7DEC(reinterpret_cast<CfSortableList*>(&self->mSortVtableA), 0,
+                  hi);
+
+    // Pass 4: centre = max |sort value| over unmarked entries, seeded from
+    // entry 0 (which is taken regardless of its mark).
+    int center = (int)__fabsf(self->mPtrArray[0]->field_14);
+    for (u32 i = 0; i < self->mPtrCount; i++) {
+        cf::CfObjEnumList::sObjInfo* p = self->mPtrArray[i];
+        if (p->field_18 & 0x70) {
+            continue;
+        }
+        float c = __fabsf(p->field_14);
+        if (center < c) {
+            center = (int)c;
+        }
+    }
+
+    // Pass 5: snapshot the array, clear the count, then re-append every
+    // snapshot slot (round-robin index modulo the saved count).
+    struct RebuildCtx {
+        u32 pad00;                             // +0x000 (never written)
+        cf::CfObjEnumList::sObjInfo* arr[384]; // +0x004
+        u32 count;                             // +0x604
+        void* descHi;                          // +0x608 (lbl_eu_8052BDA0 + 8)
+        void* descLo;                          // +0x60C (lbl_eu_8052BDA0)
+        u32 sortFlag;                          // +0x610
+    };
+    struct CopyArr {
+        cf::CfObjEnumList::sObjInfo* arr[384];
+    };
+    RebuildCtx ctx;
+    *reinterpret_cast<CopyArr*>(ctx.arr) =
+        *reinterpret_cast<CopyArr*>(self->mPtrArray);
+    ctx.count = self->mPtrCount;
+    ctx.descHi = &lbl_eu_8052BDA0[8];
+    ctx.descLo = &lbl_eu_8052BDA0[0];
+    ctx.sortFlag = self->field_062C;
+    self->mPtrCount = 0;
+    for (u32 i = 0; i < ctx.count; i++) {
+        self->mPtrArray[self->mPtrCount++] = ctx.arr[i % ctx.count];
+    }
+}
 
 // __ct__800FA9B4: rebuild the list by projecting every object position through
 // the scene's view transform: func_80496264/func_8049627C fetch the pose block

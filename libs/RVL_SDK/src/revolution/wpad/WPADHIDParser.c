@@ -1762,21 +1762,27 @@ void __a1_37_data_type(u8 chan, u8* data, WPADStatusEx* status) {
 
     if (cb->wpInfo.attach != 0) {
         if (cb->devType == WPAD_DEV_FREESTYLE) {
+            // Keep data[0x15] in an int local so the high-bit shifts survive
+            // to isel (retail emits extrwi plus an orphaned arithmetic shift)
+            int hi = data[0x15];
+
             pCB = *(WPADCB**)((u8*)__rvl_p_wpadcb + ((u32)chan << 2));
             ((WPADFSStatus*)status)->fsStickX = data[0x10];
             ((WPADFSStatus*)status)->fsStickY = data[0x11];
 
+            // High bits come out of data[0x15] via signed-char shifts
+            // (arithmetic srawi in retail)
             ((WPADFSStatus*)status)->fsAccX =
                 (s16)((s16)((s16)((s16)((s16)((s16)data[0x12]) << 2) & (s16)0xFFFC) |
-                         ((data[0x15] >> 2) & 0x3))) -
+                         ((hi >> 2) & 0x3))) -
                 (s16)pCB->extConfig.u.fs.accX0g;
             ((WPADFSStatus*)status)->fsAccY =
                 (s16)((s16)((s16)((s16)((s16)((s16)data[0x13]) << 2) & (s16)0xFFFC) |
-                         ((data[0x15] >> 4) & 0x3))) -
+                         ((hi >> 4) & 0x3))) -
                 (s16)pCB->extConfig.u.fs.accY0g;
             ((WPADFSStatus*)status)->fsAccZ =
                 (s16)((s16)((s16)((s16)((s16)((s16)data[0x14]) << 2) & (s16)0xFFFC) |
-                         (data[0x15] >> 6))) -
+                         (hi >> 6))) -
                 (s16)pCB->extConfig.u.fs.accZ0g;
 
             ((WPADFSStatus*)status)->button =

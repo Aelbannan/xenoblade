@@ -13,10 +13,6 @@ extern "C" int func_801537E0(void* self);
 // CBattleManager.hpp - keep it out of the header like the trio above.
 // (func_800F3970: single shared decl on kyoshin/cf/CBattleManagerApi.hpp.)
 extern "C" void func_800BE12C(u8* obj, int a, int b, int c, int d);
-// The shared decl used to live on CBattleManagerApi.hpp but was removed
-// there; this TU still needs it for the case-0 dispatch in func_80277B38.
-extern "C" void func_800F3970(void* self, void* obj1, void* obj2, int idx,
-                              int addVal);
 
 struct ChIf {
     virtual void _v0008();
@@ -1374,19 +1370,16 @@ void func_80278F84(cf::CChain* self) {
                 goto resetExt;
             }
         }
-        if (self->mChainTimer1.unk0 > 0) {
-            // Chain still active and the gauge moved: keep extending.
-            func_802B48E4((CErrMesEntry*)&self->unk1F0C[8],
-                          (CErrMesOwner*)actor->unk0);
-        } else {
+        // Timer still running: skip the reset and continue the extension.
+        if (self->mChainTimer1.unk0 <= 0) {
         resetExt:
-        // Timer expired / gauge did not move / actor inactive: reset the
-        // extension state.
-        func_802B4968((CErrMesEntry*)&self->unk1F0C[8],
-                      (CErrMesOwner*)actor->unk0);
-        func_802AB5E4((CBattleChainMenuState*)&self->unk1F0C[0]);
-        self->mChainTimer2.unk0 = 0x2d;
-        self->unk0[6] = 0;
+            // Timer expired / gauge did not move / actor inactive: reset the
+            // extension state.
+            func_802B4968((CErrMesEntry*)&self->unk1F0C[8],
+                          (CErrMesOwner*)actor->unk0);
+            func_802AB5E4((CBattleChainMenuState*)&self->unk1F0C[0]);
+            self->mChainTimer2.unk0 = 0x2d;
+            self->unk0[6] = 0;
         }
     } else {
         // Cancel path: slot-0x24 probe with flag 1; when it reports no active
@@ -1421,12 +1414,10 @@ void func_80278F84(cf::CChain* self) {
     // The result byte is re-read from the stack for each branch (its address
     // was handed to func_802AB510).
     if (local != 0) {
-        int cond;
+        int cond = 0;
         if (((cf::CChainActorVtIf84*)actor)->v020() == 1) {
             u32 flags = ((cf::CChainBattleObj*)actor->unk0)->field_3374;
             cond = (flags & 0x4000) != 0 || (flags & 0x8000) != 0;
-        } else {
-            cond = 0;
         }
         if (cond != 0) {
             func_802B4968((CErrMesEntry*)&self->unk1F0C[8],
@@ -1850,73 +1841,98 @@ void func_80279F6C(cf::CChainActor* self, u32 param) {
         }
     }
 }
-// Chain-start availability probe: the chain can only start when the arts-flag
-// resource (0x3357) is set, the actor's manual vtable slot 0x70 rejects the
-// chain, every battle-object voice sub-id (0x9..0xcb) is free, the optional
-// target's embedded sub-object is within the chain-voice distance threshold
-// (paired-single VEC3 length), and the voice sub-object's +0xc4 target is in
-// the expected state; the final slot-0xc call result decides.
+// Chain-start availability probe. Retail lays the guards out as an else-if
+// chain (each failed guard assigns ret=0 and jumps to the shared epilogue;
+// each passed guard branches forward to the next clause), so the source
+// mirrors that nesting instead of using early returns.
 int func_8027A024(cf::CChainActor* self, int param) {
-    if (func_8009CF8C((u32)0x3357) == 0) return 0;
-    if (((cf::CChainActorVtIf70*)self)->v026() != 0) return 0;
-    cf::CChainBattleObj* battleObj = (cf::CChainBattleObj*)self->unk0;
-    int local = *(int*)battleObj->field_04->f30();
-    if (func_80174C98(battleObj, &local, 0x1a) != 0) return 0;
-    // Retail reloads self->unk0 before every voice sub-id check (the bctrl
-    // may have changed it), so the field is re-read inline, not cached.
-    if (func_80148778(&((cf::CChainBattleObj*)self->unk0)->mSub8, 0x9) != 0)
-        return 0;
-    if (func_80148778(&((cf::CChainBattleObj*)self->unk0)->mSub8, 0xa) != 0)
-        return 0;
-    if (func_80148778(&((cf::CChainBattleObj*)self->unk0)->mSub8, 0xb) != 0)
-        return 0;
-    if (func_80148778(&((cf::CChainBattleObj*)self->unk0)->mSub8, 0xc) != 0)
-        return 0;
-    if (func_80148778(&((cf::CChainBattleObj*)self->unk0)->mSub8, 0xf) != 0)
-        return 0;
-    if (func_80148778(&((cf::CChainBattleObj*)self->unk0)->mSub8, 0x10) != 0)
-        return 0;
-    if (func_80148778(&((cf::CChainBattleObj*)self->unk0)->mSub8, 0xcb) != 0)
-        return 0;
-    int distOk = 0;
-    if (param != 0) {
-        void* src = func_8016FE34(func_800B708C(param));
-        if (src != 0) {
-            nw4r::math::VEC3* targetPos =
-                ((cf::CChainVoiceSub*)((u8*)src + 0x3e9c))->v41();
-            nw4r::math::VEC3* selfPos =
-                ((cf::CChainVoiceSub*)((u8*)self->unk0 + 0x3e9c))->v41();
-            nw4r::math::VEC3 delta;
-            nw4r::math::VEC3 scratch;
-            nw4r::math::VEC3* pDelta = &delta;
-            nw4r::math::VEC3* pScratch = &scratch;
-            nw4r::math::VEC3Sub(pDelta, selfPos, targetPos);
-            // The diff is materialized to a second stack slot (lfs/stfs
-            // round-trip) before the paired-single length-sq.
-            scratch.x = delta.x;
-            scratch.y = delta.y;
-            scratch.z = delta.z;
-            f32 distSq = nw4r::math::VEC3LenSq(pScratch);
-            // Two separate threshold compares (retail duplicates the length-sq
-            // result test per chain-cancel-voice flag path).
-            if ((self->unk6C & 1) == 0) {
-                distOk = (distSq < lbl_eu_80668A50) ? 1 : 0;
+    int ret;
+    // Materialized bool temp reproduces retail's cntlzw/srwi. booleanize.
+    bool gated = !func_8009CF8C((u32)0x3357);
+    if (gated) {
+        ret = 0;
+    } else if (((cf::CChainActorVtIf70*)self)->v026() != 0) {
+        ret = 0;
+    } else {
+        cf::CChainBattleObj* battleObj = (cf::CChainBattleObj*)self->unk0;
+        int local = *(int*)battleObj->field_04->f30();
+        // Retail reloads self->unk0 before every voice sub-id check.
+        if (func_80174C98(battleObj, &local, 0x1a) != 0) {
+            ret = 0;
+        } else if (func_80148778(
+                       &((cf::CChainBattleObj*)self->unk0)->mSub8, 0x9) != 0) {
+            ret = 0;
+        } else if (func_80148778(
+                       &((cf::CChainBattleObj*)self->unk0)->mSub8, 0xa) != 0) {
+            ret = 0;
+        } else if (func_80148778(
+                       &((cf::CChainBattleObj*)self->unk0)->mSub8, 0xb) != 0) {
+            ret = 0;
+        } else if (func_80148778(
+                       &((cf::CChainBattleObj*)self->unk0)->mSub8, 0xc) != 0) {
+            ret = 0;
+        } else if (func_80148778(
+                       &((cf::CChainBattleObj*)self->unk0)->mSub8, 0xf) != 0) {
+            ret = 0;
+        } else if (func_80148778(
+                       &((cf::CChainBattleObj*)self->unk0)->mSub8, 0x10) !=
+                   0) {
+            ret = 0;
+        } else if (func_80148778(
+                       &((cf::CChainBattleObj*)self->unk0)->mSub8, 0xcb) !=
+                   0) {
+            ret = 0;
+        } else {
+            // Optional target: require its embedded voice sub-object to sit
+            // within the chain-voice distance threshold (paired-single
+            // length-sq; the threshold differs by the unk6C bit-0 flag).
+            int distOk = 0;
+            if (param != 0) {
+                void* src = func_8016FE34(func_800B708C(param));
+                if (src != 0) {
+                    nw4r::math::VEC3* targetPos =
+                        ((cf::CChainVoiceSub*)((u8*)src + 0x3e9c))->v41();
+                    nw4r::math::VEC3* selfPos =
+                        ((cf::CChainVoiceSub*)((u8*)self->unk0 + 0x3e9c))
+                            ->v41();
+                    nw4r::math::VEC3 delta;
+                    nw4r::math::VEC3 scratch;
+                    nw4r::math::VEC3Sub(&delta, targetPos, selfPos);
+                    // The diff is materialized to a second stack slot
+                    // (lfs/stfs round-trip) before the paired-single
+                    // length-sq.
+                    scratch.x = delta.x;
+                    scratch.y = delta.y;
+                    scratch.z = delta.z;
+                    f32 distSq = nw4r::math::VEC3LenSq(&scratch);
+                    if ((self->unk6C & 1) == 0) {
+                        distOk = (distSq <= lbl_eu_80668A50) ? 1 : 0;
+                    } else {
+                        distOk = (distSq <= lbl_eu_80668A54) ? 1 : 0;
+                    }
+                }
+            }
+            if (distOk == 0) {
+                ret = 0;
             } else {
-                distOk = (distSq < lbl_eu_80668A54) ? 1 : 0;
+                cf::CChainVoiceSubC* voiceSub =
+                    (cf::CChainVoiceSubC*)((u8*)self->unk0 + 0x3e9c);
+                int flag = 1;
+                if (voiceSub->field_C4 != 0 &&
+                    (((cf::CChainVoiceSubC4EC*)voiceSub->field_C4)
+                         ->field_4EC &
+                     0x10000) != 0) {
+                    flag = 0;
+                }
+                if (flag != 0) {
+                    ret = 0;
+                } else {
+                    ret = voiceSub->v01(0x200) == 0;
+                }
             }
         }
     }
-    if (distOk == 0) return 0;
-    cf::CChainVoiceSubC* voiceSub =
-        (cf::CChainVoiceSubC*)((u8*)self->unk0 + 0x3e9c);
-    int flag = 1;
-    if (voiceSub->field_C4 != 0 &&
-        (((cf::CChainVoiceSubC4EC*)voiceSub->field_C4)->field_4EC & 0x10000) !=
-            0) {
-        flag = 0;
-    }
-    if (flag != 0) return 0;
-    return voiceSub->v01(0x200) == 0;
+    return ret;
 }
 // Arts-select availability probe: for every arts slot (0..8), if the arts
 // select menu flags the slot as usable (or no menu is up) but the slot's

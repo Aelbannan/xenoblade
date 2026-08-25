@@ -695,6 +695,66 @@ When a vtable / data table already references the shortened `…Fv` name (common
 
 **LOD Fv entry-point verification:** `libs/monolib/src/lod/code_804645CC.cpp` confirms that a high-level `extern "C"` definition with explicit ABI parameters can retain a shortened Fv linker name; `func_80465704__Q23LOD17UnkClass_804645CCFv(s32)` reaches 100% static match (0x14 bytes). Do not use `asm("...")` symbol-label syntax with MWCC Wii/1.1 build 151: it fails at compile time with error 33106 (`<string not found>`), including on free functions. Use the explicit `extern "C"` Fv entry-point form instead.
 
+### Fake vtables -> real classes (subagent flow; CHelp is the worked example)
+
+**Goal of every fake-vtable TU:** delete the pad/If/View and recover the real
+class tree with real methods. Do not move pads into a header, do not combine
+them into one shared If, do not leave `_v008()` dummies. End state is
+`this->method(...)` (or `this->Base::method(...)`) on the type that owns the
+slot. CHelp (below) is the proven instance of this flow; replicate it on the
+next pad cluster (`CfObjectEne` / `CActorParam` / `PcSub4*` / `CHelp_Talk`
+sub-object pads / ...), not only on help.
+
+**Flow (do in order, hexdiff `--brief` after each step, revert if the mismatch
+count rises):**
+
+1. **Dump the retail table.** JP `__vt__Q22cf...` / US `lbl_eu_*` in
+   `build/<region>/asm/split1.s`. Words: RTTI at +0x00, 0 at +0x04, then the
+   method list. That list **is** the original virtuals. Note size: a 0x1C table
+   is five virtuals; 0x24 is seven. Compare sibling tables to see which slots
+   a subclass adds.
+2. **Name the owning class from the linker symbol**, not from the TU you are
+   in. `func_802B7CBC__Q22cf11CHelpSwitchFv` is `cf::CHelpSwitch`, even if the
+   call site is `CHelp_ArtsAttack`. JP `__RTTI__` / `*_typestr` / `*_hierarchy`
+   confirm. Hierarchy size: 0xC = one parent, 0x14 = two, 0x1C = three.
+   A missing `__vt__` for an intermediate (Switch) is normal if nothing
+   constructs it as most-derived; leaf tables still hold its slots.
+3. **Put each slot on that class** as a real virtual with the retail signature
+   (recover args from `hexdiff --asm` / `symbols xref`; `_Fv` is not evidence).
+   `__declspec(novtable)` if the TU has no `.data`. Ctor writes the symbols.txt
+   label (`this->vtbl() = &lbl_eu_...`), same as `CToken`. Do not emit a
+   compiler `__vt__`.
+4. **Inherit the real tree.** Switch-family leaves inherit `CHelpSwitch`;
+   direct leaves inherit `CHelp`. A leaf evaluate (`func_802B7D00`) **is** the
+   +0x10 override, not a wrapper around a view. A foreign sub-object
+   (`*(obj+4)`) stays a tiny named iface on the **owning object** (`PcSub4VtIf`),
+   never a pad named after the caller.
+5. **Call `this->method(...)`.** Delete `CHelpXxxIf` / `*VtblView` / `_vNNN`
+   / `reinterpret_cast<Pad*>(this)`. Then hexdiff the TU, every TU that
+   included the header, and one sibling that must **not** have grown a slot
+   (CHelp: Target / Sp / ArtsSet).
+6. **Rename last.** `UnkVirtualFunc*` is a placeholder, not a slot index
+   (`CHelp_UnkVirtualFunc3` is Target's +0x10). `symbols rename-plan` /
+   `rename-all` after the tree is right; prefer same-length names.
+
+**Do not:**
+
+- Declare a differently-named virtual hoping it overrides a base slot (it
+  **appends**). `func_802B7CB0` stays a non-virtual on Switch; retail leaf
+  tables still store it at +0x08, and we do not emit those tables.
+- Put a subclass slot on the base (`bool f1C(u32)` on `CHelp` forced +0x1C
+  onto Target).
+- Inherit a view and redeclare a slot with a new signature (appends +0x20,
+  ~97.4%).
+- `mVtbl->mSlots[N]` as a function pointer (colors `r4` instead of `r12`).
+- Return `bool` from a caller when the virtual returns `u32`: MWCC inserts
+  `neg`/`or`/`srwi` and grows the caller ~0xC. ArtsAttack evaluate is `u32`
+  `func_802B7D00` calling `u32 func_802B7CBC`.
+- Keep a pad "until we know the name". The vtable word **is** the name
+  (`func_802B7CBC__Q22cf11CHelpSwitchFv`).
+
+Worked example follows.
+
 ### cf::CHelp layout (real classes, retail __vt__ from symbols.txt)
 
 Retail `__ct__Q22cf5CHelpFv` stores `owner@0`, `param@4`, `lbl_eu_8053B3A0@8`. JP symbols.txt
@@ -703,11 +763,9 @@ vtable (RTTI, per-derived `__vt__` / `__RTTI__`), not a homemade function-pointe
 The vptr sits at +8 because an 8-byte non-virtual prefix (`CHelpPrefix`) precedes the
 virtuals. `CHelp.cpp` has **no .data** -- do not emit `__vt__` from that TU.
 
-**Kill fake vtables. Do not move them, do not combine them, do not keep a pad class
-in the .cpp or the derived .hpp.** Goal is the original class tree plus
-`this->method(...)` on the real type. `CHelpDispatchIface` / `CHelpTblView` /
-`CHelpTIPS` / `CHelpXxxIf` / `CHelpF1CView` / `CHelpTalkVtblView` are the same bug:
-delete them and put the slots on `CHelp` / `CHelpSwitch` / the leaf.
+`CHelpDispatchIface` / `CHelpTblView` / `CHelpTIPS` / `CHelpXxxIf` / `CHelpF1CView` /
+`CHelpTalkVtblView` were the pads; they are gone. Slots live on `CHelp` /
+`CHelpSwitch` / the leaf.
 
 `CHelpSwitch` is a real class, not a helper. Linker names are
 `func_*__Q22cf11CHelpSwitchFv`. JP still has `cf_CHelpSwitch_typestr`,
@@ -730,12 +788,8 @@ Two families, read from the US split1 objects (JP `__vt__Q22cf16CHelp_ArtsAttack
 | +0x20 | not present | `CHelpSwitch::func_802B7CE4` |
 | +0x24 | not present | Talk / EndEvent extra (null in those tables) |
 
-`this->f1C(flag)` on a Switch leaf matches only because it still hits +0x1C.
-Retail's method there is `CHelpSwitch::func_802B7CBC`, not a `CHelp` virtual.
-Declaring `bool f1C(u32)` on `CHelp` is still a pad: it forces the slot onto
-Target / Sp / ArtsSet, whose tables stop at +0x18. Put CBC / CE4 on
-`CHelpSwitch` as virtuals; Switch-family `CHelp_*` inherit `CHelpSwitch`;
-direct-family inherit `CHelp` only.
+Switch-family leaves inherit `CHelpSwitch` and call `this->func_802B7CBC(...)`
+(slot +0x1C). Direct-family inherit `CHelp` only. Do not put `f1C` on `CHelp`.
 
 The evaluate function **is** the +0x10 virtual, not a regular method that
 casts `this` through a view. `CHelp_ArtsAttack::func_802B7D00` is slot +0x10
@@ -775,8 +829,8 @@ class __declspec(novtable) CHelp : public CHelpPrefix {
     virtual UNKWORD CHelp_UnkVirtualFunc5();        // +0x18, return 0
 };
 class __declspec(novtable) CHelpSwitch : public CHelp {
-    virtual void func_802B7CB0();                   // +0x08 override
-    // f10 / Unk4 / Unk5 inherited
+    // func_802B7CB0 stays non-virtual (a new virtual would append, not override Unk1)
+    void func_802B7CB0();
     virtual u32 func_802B7CBC(u32 flag);            // +0x1C
     virtual u32 func_802B7CE4(u8 flag);             // +0x20
     u8 mFlag; // +0xC
@@ -835,7 +889,15 @@ stay indirect (`lwz r12`). If MWCC de-virtualizes to a direct `bl`, do not bring
 back a pad If -- move the stub out of the TU or call through a `CHelp*` whose
 static type MWCC cannot bind to the defining class. `func_802B7CBC` /
 `func_802B7CE4` keep their shortened `Fv` linker names via `extern "C"` if a
-header signature would re-mangle them.
+header signature would re-mangle them. A `bool` caller of a `u32` virtual
+grows ~0xC (`neg`/`or`/`srwi`); match the virtual's return type at the call
+site (`u32 func_802B7D00` -> `func_802B7CBC`). Talk's +0x20 call is
+`func_802B7CE4`, not a Talk-only `vf20` (that would land at +0x24).
+
+Subagents: copy the **Fake vtables -> real classes** flow above, using this
+CHelp tree as the template. Hexdiff `--brief` per step; do not fleet onto
+`CfObjectEne` / `CActorParam` until that TU's table dump + owning-class
+mangling are in the write-up.
 
 **Actor/move deep vtable slots (r12):**
 
@@ -3814,3 +3876,19 @@ reordering among uninitialized decls alone had no effect (birth follows first us
 - Result:    FULL_MATCH us-8013a65c (func_80139C98) and us-8013c6e8 (func_8013BD24).
 - Confidence: repo_proven
 - Applies to/a.k.a.: all int→float/double conversion magic drifts; completes MWCC_CASES §7i with a maintenance-proof recipe.
+
+## NULL-result guard with shared tail: guard SPELLING is per-function — probe both forms (func_8013902C vs func_801394D4, Wii/1.1 -O4,p)
+- Symptom:   bdat-string getter family (`fp = getFP(...); if (fp) result = getBdat(...); sprintf(tail)`): one spelling mismatches badly, the other matches; which one differs PER FUNCTION even between siblings.
+- Cause:     `T r = NULL; if (cond) {...}` (pre-init single guard) fixed func_8013902C 45.7%→84.4% (MWCC keeps the string-base lis/addi adjacent and emits one `li r3,0` for the NULL path), but the SAME rewrite on sibling func_801394D4 regressed 36.1%→3.1% — retail there uses branch-over-null-assign (`if (x == 0) { v = 0; } else {...}`) per guard.
+- Fix:       when a NULL-guard getter plateaus, try converting every guard to pre-init + single positive `if`; if that regresses, revert — the retail source likely used explicit if/else null branches. Do NOT use ternary-with-comma (45.7%) or redundant-init if/else (50%). In func_8013902C `col` must be declared before `fp`.
+- Result:    func_8013902C 84.4%; func_801394D4 stays on if/else form (36.1%, different residuals).
+- Confidence: repo_proven (negative result documented)
+- Applies to/a.k.a.: getBdatStringColumnValue wrapper getters with shared sprintf/format tails in code_80135FDC.
+
+## pool_patterns cross-section theft: rename_pool_symbols matches ANY @N symbol against .sdata2 bytes at st_value=0 (kyoshin data-dissolve: CQuestWindow / CfGimmickObject / CMCCrystalBox / CMCCrystalList)
+- Symptom:   data gate reports MATCH (strip empties both sides), but the hexdiff-postprocessed build object is semantically wrong: a switch jumptable's lis/addi relocs resolve to a FLOAT blob label (e.g. dispatch site -> lbl_eu_80667160), nm shows one jumptable UNDEF missing and no `U @N` leftover. Invisible to every gate; only reloc-level parsing catches it.
+- Cause:     tools/postprocess_reloc_names.py rename_pool_symbols iterates ALL nm-visible @N symbols regardless of home section and reads match-content from .sdata2 AT THE SYMBOL'S st_value. A .data/.rodata table placed at offset 0 therefore "contains" sdata2[0:8] (e.g. the 2^52 double 43300000_00000000) and binds a float pattern before exact_renames can claim it. Tables at nonzero offsets escape by accident (value >= sdata2 size).
+- Fix:       in units that mix pooled floats with a val-0 .data table, express float mappings section-aware: data_pool_patterns=((".sdata2", struct.pack(">II", 0x43300000, 0x00000000), "lbl_eu_<blob>"),) instead of pool_patterns. Keep one pattern per pool symbol (multi-symbol pools need each mapping listed explicitly - dropping one strands its lfd sites as dangling `U @N`). Table mappings stay content-keyed (bytes(0xNN)) or exact_renames.
+- Result:    CQuestWindow/CfGimmickObject/CMCCrystalBox/CMCCrystalList rebuilt objects verified: every HA/LO site on jumptable/base labels, all SDA21 conversion-double loads on their lbl_eu_8066xxxx slots, zero leftover anonymous UNDEFs; all four units VERDICT: MATCH.
+- Confidence: repo_proven
+- Applies to/a.k.a.: any UNIT_RULES entry combining pool_patterns with file-backed tables whose symbols sit below sdata2 size; audit recipe = parse .rela.text HA/LO targets post-hexdiff and assert no float label receives a table-site reloc.

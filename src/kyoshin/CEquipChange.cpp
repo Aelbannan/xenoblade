@@ -203,6 +203,8 @@ CEquipChange::CEquipChange() {
 // Target us-80203d88: load both bind files (two string records at
 // lbl_eu_80508168) into file handles 0x24/0x28, then init the item-box info
 // layout (0xA4) and the equip item box (0x2B0).
+// Retail frame is the optimize_for_size stmw/lmw pair.
+#pragma optimize_for_size on
 void func_80202090(CEquipChange* self) {
     const char* path = lbl_eu_80508168;
     self->field_24 = (u32)CDeviceFile::readFile(mtl::MemManager::getHandleMEM2(),
@@ -214,6 +216,7 @@ void func_80202090(CEquipChange* self) {
     func_801D4054((CItemBoxInfo*)((u8*)self + 0xA4));
     func_802861A8(&self->mEquipItemBox);
 }
+#pragma optimize_for_size off
 
 // Forward declarations for functions whose definitions live at the end of this
 // TU. Declaring (not defining) them here prevents MWCC from inlining their
@@ -935,17 +938,24 @@ extern "C" void __declspec(noinline) func_80203F84(CEquipChange* self) {
 
 // Target us-80205cc4: when the box sub-page gate is open, refresh the equip
 // info window with the packed selection word and enter state 0xA.
-extern "C" void __declspec(noinline) func_80203FCC(CEquipChange* self) {
+// -O4,s keeps the retail stmw r28 frame; the packed word is built low-to-high
+// ((sub&0xF) | (main&0xF)<<4 | f99<<8) so MWCC merges the ORs into rlwimi.
+#pragma optimize_for_size on
+void __declspec(noinline) func_80203FCC(CEquipChange* self) {
     if (func_802865A8(&self->mEquipItemBox) == 0)
         return;
     self->field_48 = 0xA;
     u8 f99 = self->field_99;
-    u32 r38 = (u32)func_80203138(self);
-    u32 r3a = (u32)func_802031A0(self);
+    u32 lo = (u32)func_80203138(self);
+    u32 hi = (u32)func_802031A0(self);
+    // Retail evaluates the mode argument before the packed-word argument.
+    u32 mode = (u32)func_802052A8(self);
+    u32 packed = (hi & 0xF) | ((lo & 0xF) << 4);
+    packed |= (u32)f99 << 8;
     func_801D47D4((CItemBoxInfo*)((u8*)self + 0xA4),
-                  (u16)(((u32)f99 << 8) | ((r38 & 0xF) << 4) | (r3a & 0xF)),
-                  func_802052A8(self), 1);
+                  (u16)packed, (void*)mode, 1);
 }
+#pragma optimize_for_size off
 
 // Target us-80205d44: when the 0x40 anim finishes, enter state 3 and refresh.
 extern "C" void __declspec(noinline) func_8020404C(CEquipChange* self) {

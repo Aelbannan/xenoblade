@@ -25,6 +25,8 @@
 #include <nw4r/snd/snd_SoundStartable.h>
 #include <nw4r/snd/snd_StrmChannel.h>
 #include <nw4r/snd/snd_StrmSound.h>
+#include <nw4r/snd/snd_ExternalSoundPlayer.h>
+#include <nw4r/snd/snd_SoundThread.h>
 #include <nw4r/snd/snd_Util.h>
 #include <nw4r/snd/snd_SeqFile.h>
 #include <nw4r/snd/snd_Bank.h>
@@ -92,6 +94,45 @@ extern "C" u32 detail_GetFileCount__Q34nw4r3snd12SoundArchiveCFv(
 // Import from snd_SoundSystem.cpp (retail symbol; SoundSystem.h does not
 // declare the query and is outside this session's writable scope).
 extern "C" bool IsInitializedSoundSystem__Q34nw4r3snd11SoundSystemFv();
+
+// Defined in snd_BasicSound.cpp under its retail mangled name (the locked
+// header does not declare SetAmbientInfo).
+extern "C" void
+SetAmbientInfo__Q44nw4r3snd6detail10BasicSoundFRCQ54nw4r3snd6detail10BasicSound11AmbientInfo(
+    nw4r::snd::detail::BasicSound* self,
+    const nw4r::snd::detail::BasicSound::AmbientInfo& info);
+
+// Retail-named entry points (see definitions further below for why they are
+// free functions with C linkage).
+extern "C" nw4r::snd::SoundStartable::StartResult
+PrepareStrmImpl__Q34nw4r3snd18SoundArchivePlayerFPQ44nw4r3snd6detail9StrmSoundPCQ44nw4r3snd12SoundArchive9SoundInfoPCQ44nw4r3snd12SoundArchive13StrmSoundInfoQ54nw4r3snd14SoundStartable9StartInfo15StartOffsetTypei(
+    nw4r::snd::SoundArchivePlayer* self, nw4r::snd::detail::StrmSound* pSound,
+    const nw4r::snd::SoundArchive::SoundInfo* pSndInfo,
+    const nw4r::snd::SoundArchive::StrmSoundInfo* pStrmInfo,
+    nw4r::snd::SoundStartable::StartInfo::StartOffsetType startType,
+    int startOffset);
+
+// Retail-named SeqSound/StrmSound constructors take (manager*, int, int);
+// the locked headers declare only the single-argument form and the defining
+// TUs are outside this session's writable scope, so the three-argument retail
+// symbols are provided here as thin wrappers over the declared ctors.
+extern "C" nw4r::snd::detail::SeqSound*
+__ct__Q44nw4r3snd6detail8SeqSoundFPQ44nw4r3snd6detail49SoundInstanceManagerIQ44nw4r3snd6detail8SeqSoundEii(
+    nw4r::snd::detail::SeqSound* self,
+    nw4r::snd::detail::SoundInstanceManager<nw4r::snd::detail::SeqSound>*
+        pManager,
+    int priority, int ambientPriority);
+
+extern "C" nw4r::snd::detail::StrmSound*
+__ct__Q44nw4r3snd6detail9StrmSoundFPQ44nw4r3snd6detail50SoundInstanceManagerIQ44nw4r3snd6detail9StrmSoundEii(
+    nw4r::snd::detail::StrmSound* self,
+    nw4r::snd::detail::SoundInstanceManager<nw4r::snd::detail::StrmSound>*
+        pManager,
+    int priority, int ambientPriority);
+
+extern "C" void
+AttachSoundActor__Q44nw4r3snd6detail10BasicSoundFPQ34nw4r3snd10SoundActor(
+    nw4r::snd::detail::BasicSound* self, nw4r::snd::SoundActor* pActor);
 
 namespace nw4r {
 namespace snd {
@@ -973,6 +1014,38 @@ SoundStartable::StartResult SoundArchivePlayer::detail_SetupSound(
     return detail_SetupSoundImpl(pHandle, id, NULL, NULL, hold, pStartInfo);
 }
 
+// Retail SoundInfo layout (extra field at 0x8 selects an actor player;
+// see SoundInfoLayout in snd_SoundArchiveFile.cpp).
+struct SapSetupSndInfo {
+    u32 fileId;         // at 0x0
+    u32 playerId;       // at 0x4
+    int unk0x8;         // at 0x8 (default external-player selector)
+    int playerPriority; // at 0xC
+};
+
+// Retail StartInfo extends the locked header's struct: bit 2 = player
+// priority, bit 3 = player id, bit 4 = actor-player index + sequence
+// override pair.
+struct SapSetupStartInfo {
+    u32 enableFlag;      // at 0x0
+    int startOffsetType; // at 0x4
+    int startOffset;     // at 0x8
+    int playerPriority;  // at 0xC
+    u32 playerId;        // at 0x10
+    int unk0x14;         // at 0x14 (external-player selector)
+    const void* pSeqBin; // at 0x18
+    const char* pLabelStr; // at 0x1C
+};
+
+// Retail instance-manager block: pool at +0x00, priority list at +0x04,
+// mutex at +0x10. The three managers sit at this+0x44 / 0x6C / 0x94.
+struct SapMgrBlock {
+    char pool[4];                   // at 0x0 (detail::PoolImpl)
+    u32 listSize;                   // at 0x4
+    ut::detail::LinkListNode listHead; // at 0x8
+    OSMutex mutex;                  // at 0x10
+};
+
 SoundStartable::StartResult SoundArchivePlayer::detail_SetupSoundImpl(
     SoundHandle* pHandle, u32 id, detail::BasicSound::AmbientInfo* pArgInfo,
     SoundActor* pActor, bool hold, const StartInfo* pStartInfo) {
@@ -990,64 +1063,163 @@ SoundStartable::StartResult SoundArchivePlayer::detail_SetupSoundImpl(
         return SoundStartable::START_ERR_INVALID_SOUNDID;
     }
 
-    u32 playerId = sndInfo.playerId;
-    int playerPriority = sndInfo.playerPriority_; // padded retail layout
+    const SapSetupSndInfo& rInfo =
+        *reinterpret_cast<const SapSetupSndInfo*>(&sndInfo);
+
+    u32 playerId = rInfo.playerId;
+    int playerPriority = rInfo.playerPriority;
+    int extPlayerIdx = rInfo.unk0x8;
 
     SoundStartable::StartInfo::StartOffsetType startType =
         SoundStartable::StartInfo::START_OFFSET_TYPE_MILLISEC;
-
     int startOffset = 0;
+    const void* pSeqBinOverride = NULL;
+    const char* pLabelStrOverride = NULL;
 
     if (pStartInfo != NULL) {
-        if (pStartInfo->enableFlag &
-            SoundStartable::StartInfo::ENABLE_START_OFFSET) {
-            startType = pStartInfo->startOffsetType;
-            startOffset = pStartInfo->startOffset;
-        }
+        const SapSetupStartInfo& rStart =
+            *reinterpret_cast<const SapSetupStartInfo*>(pStartInfo);
 
-        if (pStartInfo->enableFlag &
-            SoundStartable::StartInfo::ENABLE_PLAYER_ID) {
-            playerId = pStartInfo->playerId;
+        // Retail enable-flag bits: 1<<0 offset, 1<<2 priority, 1<<3 id,
+        // 1<<4 actor-player index + sequence override pair.
+        if (rStart.enableFlag & (1 << 0)) {
+            startType = static_cast<SoundStartable::StartInfo::StartOffsetType>(
+                rStart.startOffsetType);
+            startOffset = rStart.startOffset;
         }
-
-        if (pStartInfo->enableFlag &
-            SoundStartable::StartInfo::ENABLE_PLAYER_PRIORITY) {
-            playerPriority = pStartInfo->playerPriority;
+        if (rStart.enableFlag & (1 << 2)) {
+            playerPriority = rStart.playerPriority;
+        }
+        if (rStart.enableFlag & (1 << 3)) {
+            playerId = rStart.playerId;
+        }
+        if (rStart.enableFlag & (1 << 4)) {
+            extPlayerIdx = rStart.unk0x14;
+            pSeqBinOverride = rStart.pSeqBin;
+            pLabelStrOverride = rStart.pLabelStr;
         }
     }
 
-    int playerPriorityStart = hold ? playerPriority - 1 : playerPriority;
+    int startPriority = hold ? playerPriority - 1 : playerPriority;
 
     SoundPlayer& rPlayer = GetSoundPlayer(playerId);
+
+    int ambientPriority = 0;
+    if (pArgInfo != NULL) {
+        ambientPriority =
+            detail::BasicSound::GetAmbientPriority(*pArgInfo, id);
+    }
+
+    int prioritySum = startPriority + ambientPriority;
+    int priority = ut::Clamp(prioritySum, 0, detail::BasicSound::PRIORITY_MAX);
+
+    // The sound always plays through one of the actor's external players;
+// a missing actor or out-of-range selector is a parameter error.
+    detail::ExternalSoundPlayer* pExtPlayer = NULL;
+    if (pActor != NULL && extPlayerIdx >= 0 && extPlayerIdx < 4) {
+        pExtPlayer = reinterpret_cast<detail::ExternalSoundPlayer*>(
+            reinterpret_cast<char*>(pActor) + extPlayerIdx * 16 + 8);
+    }
+
+    if (pExtPlayer == NULL) {
+        return SoundStartable::START_ERR_INVALID_PARAMETER;
+    }
+
+    OSLockMutex(reinterpret_cast<OSMutex*>(
+        reinterpret_cast<char*>(&detail::SoundThread::GetInstance()) + 0x354));
+
+    if (!rPlayer.detail_CanPlaySound(priority)) {
+        OSUnlockMutex(reinterpret_cast<OSMutex*>(
+            reinterpret_cast<char*>(&detail::SoundThread::GetInstance()) +
+            0x354));
+        return SoundStartable::START_ERR_LOW_PRIORITY;
+    }
+
+    if (!pExtPlayer->detail_CanPlaySound(priority)) {
+        OSUnlockMutex(reinterpret_cast<OSMutex*>(
+            reinterpret_cast<char*>(&detail::SoundThread::GetInstance()) +
+            0x354));
+        return SoundStartable::START_ERR_LOW_PRIORITY;
+    }
+
     detail::BasicSound* pSound = NULL;
+    detail::SeqSound* pSeqSound = NULL;
+    detail::StrmSound* pStrmSound = NULL;
+    detail::WaveSound* pWaveSound = NULL;
 
     switch (mSoundArchive->GetSoundType(id)) {
     case SOUND_TYPE_SEQ: {
-        SoundArchive::SeqSoundInfo seqInfo;
-        if (!mSoundArchive->detail_ReadSeqSoundInfo(id, &seqInfo)) {
-            return SoundStartable::START_ERR_INVALID_SOUNDID;
+        priority = ut::Clamp(prioritySum, 0, detail::BasicSound::PRIORITY_MAX);
+
+        SapMgrBlock* pMgr = reinterpret_cast<SapMgrBlock*>(
+            reinterpret_cast<char*>(this) + 0x44);
+        OSLockMutex(&pMgr->mutex);
+
+        while (pSeqSound == NULL) {
+            void* pBuffer = reinterpret_cast<detail::PoolImpl*>(pMgr)
+                                ->AllocImpl();
+
+            if (pBuffer != NULL) {
+                pSeqSound =
+                    __ct__Q44nw4r3snd6detail8SeqSoundFPQ44nw4r3snd6detail49SoundInstanceManagerIQ44nw4r3snd6detail8SeqSoundEii(
+                        static_cast<detail::SeqSound*>(pBuffer),
+                        reinterpret_cast<detail::SoundInstanceManager<
+                            detail::SeqSound>*>(pMgr),
+                        startPriority, ambientPriority);
+            } else {
+                // Pool exhausted: consider stopping the lowest-priority
+                // sound and retrying.
+                detail::BasicSound* pLowest = NULL;
+                if (pMgr->listSize != 0) {
+                    pLowest = reinterpret_cast<detail::BasicSound*>(
+                        reinterpret_cast<char*>(pMgr->listHead.GetNext()) -
+                        0xEC);
+                }
+
+                if (pLowest == NULL ||
+                    priority < pLowest->CalcCurrentPlayerPriority()) {
+                    OSUnlockMutex(&pMgr->mutex);
+                    break;
+                }
+
+                OSUnlockMutex(&pMgr->mutex);
+                pLowest->Stop(0);
+                OSLockMutex(&pMgr->mutex);
+            }
         }
 
-        detail::SeqSound* pSeqSound = rPlayer.detail_AllocSeqSound(
-            playerPriority, playerPriorityStart, pArgInfo, pActor, id,
-            &mSeqSoundInstanceManager);
+        if (pSeqSound != NULL) {
+            // Sorted insert into the manager priority list.
+            ut::detail::LinkListNode* it = pMgr->listHead.GetNext();
+            ut::detail::LinkListNode* end = &pMgr->listHead;
 
-        if (pSeqSound == NULL) {
-            return SoundStartable::START_ERR_LOW_PRIORITY;
-        }
+            while (it != end) {
+                detail::BasicSound* pCur =
+                    reinterpret_cast<detail::BasicSound*>(
+                        reinterpret_cast<char*>(it) - 0xEC);
+                if (priority < pCur->CalcCurrentPlayerPriority()) {
+                    break;
+                }
+                it = it->GetNext();
+            }
 
-        pSeqSound->SetId(id);
+            reinterpret_cast<ut::detail::LinkListImpl*>(&pMgr->listSize)
+                ->Insert(ut::detail::LinkListImpl::Iterator(it),
+                         reinterpret_cast<ut::detail::LinkListNode*>(
+                             reinterpret_cast<char*>(pSeqSound) + 0xEC));
 
-        const void* pFileAddress = detail_GetFileAddress(sndInfo.fileId);
+            OSUnlockMutex(&pMgr->mutex);
 
-        SoundStartable::StartResult result =
-            PrepareSeqImpl__Q34nw4r3snd18SoundArchivePlayerFPQ44nw4r3snd6detail8SeqSoundPCQ44nw4r3snd12SoundArchive9SoundInfoPCQ44nw4r3snd12SoundArchive12SeqSoundInfoQ54nw4r3snd14SoundStartable9StartInfo15StartOffsetTypeiPCvPCc(
-                this, pSeqSound, &sndInfo, &seqInfo, startType, startOffset,
-                pFileAddress, NULL);
-
-        if (result != SoundStartable::START_SUCCESS) {
-            pSeqSound->Shutdown();
-            return result;
+            pSeqSound->SetId(id);
+            if (pArgInfo != NULL) {
+                SetAmbientInfo__Q44nw4r3snd6detail10BasicSoundFRCQ54nw4r3snd6detail10BasicSound11AmbientInfo(
+                    pSeqSound, *pArgInfo);
+            }
+        } else {
+            OSUnlockMutex(reinterpret_cast<OSMutex*>(
+                reinterpret_cast<char*>(&detail::SoundThread::GetInstance()) +
+                0x354));
+            return SoundStartable::START_ERR_NOT_ENOUGH_INSTANCE;
         }
 
         pSound = pSeqSound;
@@ -1055,27 +1227,74 @@ SoundStartable::StartResult SoundArchivePlayer::detail_SetupSoundImpl(
     }
 
     case SOUND_TYPE_STRM: {
-        SoundArchive::StrmSoundInfo strmInfo;
-        if (!mSoundArchive->detail_ReadStrmSoundInfo(id, &strmInfo)) {
-            return SoundStartable::START_ERR_INVALID_SOUNDID;
+        priority = ut::Clamp(prioritySum, 0, detail::BasicSound::PRIORITY_MAX);
+
+        SapMgrBlock* pMgr = reinterpret_cast<SapMgrBlock*>(
+            reinterpret_cast<char*>(this) + 0x6C);
+        OSLockMutex(&pMgr->mutex);
+
+        while (pStrmSound == NULL) {
+            void* pBuffer = reinterpret_cast<detail::PoolImpl*>(pMgr)
+                                ->AllocImpl();
+
+            if (pBuffer != NULL) {
+                pStrmSound =
+                    __ct__Q44nw4r3snd6detail9StrmSoundFPQ44nw4r3snd6detail50SoundInstanceManagerIQ44nw4r3snd6detail9StrmSoundEii(
+                        static_cast<detail::StrmSound*>(pBuffer),
+                        reinterpret_cast<detail::SoundInstanceManager<
+                            detail::StrmSound>*>(pMgr),
+                        startPriority, ambientPriority);
+            } else {
+                detail::BasicSound* pLowest = NULL;
+                if (pMgr->listSize != 0) {
+                    pLowest = reinterpret_cast<detail::BasicSound*>(
+                        reinterpret_cast<char*>(pMgr->listHead.GetNext()) -
+                        0xEC);
+                }
+
+                if (pLowest == NULL ||
+                    priority < pLowest->CalcCurrentPlayerPriority()) {
+                    OSUnlockMutex(&pMgr->mutex);
+                    break;
+                }
+
+                OSUnlockMutex(&pMgr->mutex);
+                pLowest->Stop(0);
+                OSLockMutex(&pMgr->mutex);
+            }
         }
 
-        detail::StrmSound* pStrmSound = rPlayer.detail_AllocStrmSound(
-            playerPriority, playerPriorityStart, pArgInfo, pActor, id,
-            &mStrmSoundInstanceManager);
+        if (pStrmSound != NULL) {
+            ut::detail::LinkListNode* it = pMgr->listHead.GetNext();
+            ut::detail::LinkListNode* end = &pMgr->listHead;
 
-        if (pStrmSound == NULL) {
-            return SoundStartable::START_ERR_LOW_PRIORITY;
-        }
+            while (it != end) {
+                detail::BasicSound* pCur =
+                    reinterpret_cast<detail::BasicSound*>(
+                        reinterpret_cast<char*>(it) - 0xEC);
+                if (priority < pCur->CalcCurrentPlayerPriority()) {
+                    break;
+                }
+                it = it->GetNext();
+            }
 
-        pStrmSound->SetId(id);
+            reinterpret_cast<ut::detail::LinkListImpl*>(&pMgr->listSize)
+                ->Insert(ut::detail::LinkListImpl::Iterator(it),
+                         reinterpret_cast<ut::detail::LinkListNode*>(
+                             reinterpret_cast<char*>(pStrmSound) + 0xEC));
 
-        SoundStartable::StartResult result = PrepareStrmImpl(
-            pStrmSound, &sndInfo, &strmInfo, startType, startOffset, 1);
+            OSUnlockMutex(&pMgr->mutex);
 
-        if (result != SoundStartable::START_SUCCESS) {
-            pStrmSound->Shutdown();
-            return result;
+            pStrmSound->SetId(id);
+            if (pArgInfo != NULL) {
+                SetAmbientInfo__Q44nw4r3snd6detail10BasicSoundFRCQ54nw4r3snd6detail10BasicSound11AmbientInfo(
+                    pStrmSound, *pArgInfo);
+            }
+        } else {
+            OSUnlockMutex(reinterpret_cast<OSMutex*>(
+                reinterpret_cast<char*>(&detail::SoundThread::GetInstance()) +
+                0x354));
+            return SoundStartable::START_ERR_NOT_ENOUGH_INSTANCE;
         }
 
         pSound = pStrmSound;
@@ -1083,28 +1302,73 @@ SoundStartable::StartResult SoundArchivePlayer::detail_SetupSoundImpl(
     }
 
     case SOUND_TYPE_WAVE: {
-        SoundArchive::WaveSoundInfo waveInfo;
-        if (!mSoundArchive->detail_ReadWaveSoundInfo(id, &waveInfo)) {
-            return SoundStartable::START_ERR_INVALID_SOUNDID;
+        priority = ut::Clamp(prioritySum, 0, detail::BasicSound::PRIORITY_MAX);
+
+        SapMgrBlock* pMgr = reinterpret_cast<SapMgrBlock*>(
+            reinterpret_cast<char*>(this) + 0x94);
+        OSLockMutex(&pMgr->mutex);
+
+        while (pWaveSound == NULL) {
+            void* pBuffer = reinterpret_cast<detail::PoolImpl*>(pMgr)
+                                ->AllocImpl();
+
+            if (pBuffer != NULL) {
+                pWaveSound = new (pBuffer)
+                    detail::WaveSound(
+                        reinterpret_cast<detail::SoundInstanceManager<
+                            detail::WaveSound>*>(pMgr),
+                        startPriority, ambientPriority);
+            } else {
+                detail::BasicSound* pLowest = NULL;
+                if (pMgr->listSize != 0) {
+                    pLowest = reinterpret_cast<detail::BasicSound*>(
+                        reinterpret_cast<char*>(pMgr->listHead.GetNext()) -
+                        0xEC);
+                }
+
+                if (pLowest == NULL ||
+                    priority < pLowest->CalcCurrentPlayerPriority()) {
+                    OSUnlockMutex(&pMgr->mutex);
+                    break;
+                }
+
+                OSUnlockMutex(&pMgr->mutex);
+                pLowest->Stop(0);
+                OSLockMutex(&pMgr->mutex);
+            }
         }
 
-        detail::WaveSound* pWaveSound = rPlayer.detail_AllocWaveSound(
-            playerPriority, playerPriorityStart, pArgInfo, pActor, id,
-            &mWaveSoundInstanceManager);
+        if (pWaveSound != NULL) {
+            ut::detail::LinkListNode* it = pMgr->listHead.GetNext();
+            ut::detail::LinkListNode* end = &pMgr->listHead;
 
-        if (pWaveSound == NULL) {
-            return SoundStartable::START_ERR_LOW_PRIORITY;
-        }
+            while (it != end) {
+                detail::BasicSound* pCur =
+                    reinterpret_cast<detail::BasicSound*>(
+                        reinterpret_cast<char*>(it) - 0xEC);
+                if (priority < pCur->CalcCurrentPlayerPriority()) {
+                    break;
+                }
+                it = it->GetNext();
+            }
 
-        pWaveSound->SetId(id);
+            reinterpret_cast<ut::detail::LinkListImpl*>(&pMgr->listSize)
+                ->Insert(ut::detail::LinkListImpl::Iterator(it),
+                         reinterpret_cast<ut::detail::LinkListNode*>(
+                             reinterpret_cast<char*>(pWaveSound) + 0xEC));
 
-        SoundStartable::StartResult result =
-            PrepareWaveSoundImpl__Q34nw4r3snd18SoundArchivePlayerFPQ44nw4r3snd6detail9WaveSoundPCQ44nw4r3snd12SoundArchive9SoundInfoPCQ44nw4r3snd12SoundArchive13WaveSoundInfoQ54nw4r3snd14SoundStartable9StartInfo15StartOffsetTypei(
-                this, pWaveSound, &sndInfo, &waveInfo, startType, startOffset);
+            OSUnlockMutex(&pMgr->mutex);
 
-        if (result != SoundStartable::START_SUCCESS) {
-            pWaveSound->Shutdown();
-            return result;
+            pWaveSound->SetId(id);
+            if (pArgInfo != NULL) {
+                SetAmbientInfo__Q44nw4r3snd6detail10BasicSoundFRCQ54nw4r3snd6detail10BasicSound11AmbientInfo(
+                    pWaveSound, *pArgInfo);
+            }
+        } else {
+            OSUnlockMutex(reinterpret_cast<OSMutex*>(
+                reinterpret_cast<char*>(&detail::SoundThread::GetInstance()) +
+                0x354));
+            return SoundStartable::START_ERR_NOT_ENOUGH_INSTANCE;
         }
 
         pSound = pWaveSound;
@@ -1112,11 +1376,127 @@ SoundStartable::StartResult SoundArchivePlayer::detail_SetupSoundImpl(
     }
 
     default: {
+        OSUnlockMutex(reinterpret_cast<OSMutex*>(
+            reinterpret_cast<char*>(&detail::SoundThread::GetInstance()) +
+            0x354));
         return SoundStartable::START_ERR_INVALID_SOUNDID;
     }
     }
 
+    if (!rPlayer.detail_AppendSound(pSound)) {
+        pSound->Shutdown();
+        OSUnlockMutex(reinterpret_cast<OSMutex*>(
+            reinterpret_cast<char*>(&detail::SoundThread::GetInstance()) +
+            0x354));
+        return SoundStartable::START_ERR_UNKNOWN;
+    }
+
+    switch (mSoundArchive->GetSoundType(id)) {
+    case SOUND_TYPE_SEQ: {
+        rPlayer.detail_AllocPlayerHeap(pSound);
+
+        SoundArchive::SeqSoundInfo seqInfo;
+        if (!mSoundArchive->detail_ReadSeqSoundInfo(id, &seqInfo)) {
+            pSound->Shutdown();
+            OSUnlockMutex(reinterpret_cast<OSMutex*>(reinterpret_cast<char*>(
+                &detail::SoundThread::GetInstance()) +
+                0x354));
+            return SoundStartable::START_ERR_INVALID_SOUNDID;
+        }
+
+        SoundStartable::StartResult result =
+            PrepareSeqImpl__Q34nw4r3snd18SoundArchivePlayerFPQ44nw4r3snd6detail8SeqSoundPCQ44nw4r3snd12SoundArchive9SoundInfoPCQ44nw4r3snd12SoundArchive12SeqSoundInfoQ54nw4r3snd14SoundStartable9StartInfo15StartOffsetTypeiPCvPCc(
+                this, pSeqSound, &sndInfo, &seqInfo, startType, startOffset,
+                pSeqBinOverride, pLabelStrOverride);
+
+        if (result != SoundStartable::START_SUCCESS) {
+            pSound->Shutdown();
+            OSUnlockMutex(reinterpret_cast<OSMutex*>(reinterpret_cast<char*>(
+                &detail::SoundThread::GetInstance()) +
+                0x354));
+            return result;
+        }
+        break;
+    }
+
+    case SOUND_TYPE_STRM: {
+        SoundArchive::StrmSoundInfo strmInfo;
+        if (!mSoundArchive->detail_ReadStrmSoundInfo(id, &strmInfo)) {
+            pSound->Shutdown();
+            OSUnlockMutex(reinterpret_cast<OSMutex*>(reinterpret_cast<char*>(
+                &detail::SoundThread::GetInstance()) +
+                0x354));
+            return SoundStartable::START_ERR_INVALID_SOUNDID;
+        }
+
+        SoundStartable::StartResult result =
+            PrepareStrmImpl__Q34nw4r3snd18SoundArchivePlayerFPQ44nw4r3snd6detail9StrmSoundPCQ44nw4r3snd12SoundArchive9SoundInfoPCQ44nw4r3snd12SoundArchive13StrmSoundInfoQ54nw4r3snd14SoundStartable9StartInfo15StartOffsetTypei(
+                this, pStrmSound, &sndInfo, &strmInfo, startType, startOffset);
+
+        if (result != SoundStartable::START_SUCCESS) {
+            pSound->Shutdown();
+            OSUnlockMutex(reinterpret_cast<OSMutex*>(reinterpret_cast<char*>(
+                &detail::SoundThread::GetInstance()) +
+                0x354));
+            return result;
+        }
+        break;
+    }
+
+    case SOUND_TYPE_WAVE: {
+        SoundArchive::WaveSoundInfo waveInfo;
+        if (!mSoundArchive->detail_ReadWaveSoundInfo(id, &waveInfo)) {
+            pSound->Shutdown();
+            OSUnlockMutex(reinterpret_cast<OSMutex*>(reinterpret_cast<char*>(
+                &detail::SoundThread::GetInstance()) +
+                0x354));
+            return SoundStartable::START_ERR_INVALID_SOUNDID;
+        }
+
+        SoundStartable::StartResult result =
+            PrepareWaveSoundImpl__Q34nw4r3snd18SoundArchivePlayerFPQ44nw4r3snd6detail9WaveSoundPCQ44nw4r3snd12SoundArchive9SoundInfoPCQ44nw4r3snd12SoundArchive13WaveSoundInfoQ54nw4r3snd14SoundStartable9StartInfo15StartOffsetTypei(
+                this, pWaveSound, &sndInfo, &waveInfo, startType, startOffset);
+
+        if (result != SoundStartable::START_SUCCESS) {
+            pSound->Shutdown();
+            OSUnlockMutex(reinterpret_cast<OSMutex*>(reinterpret_cast<char*>(
+                &detail::SoundThread::GetInstance()) +
+                0x354));
+            return result;
+        }
+        break;
+    }
+
+    default: {
+        pSound->Shutdown();
+        OSUnlockMutex(reinterpret_cast<OSMutex*>(
+            reinterpret_cast<char*>(&detail::SoundThread::GetInstance()) +
+            0x354));
+        return SoundStartable::START_ERR_INVALID_SOUNDID;
+    }
+    }
+
+    if (!pExtPlayer->AppendSound(pSound)) {
+        pSound->Shutdown();
+        OSUnlockMutex(reinterpret_cast<OSMutex*>(
+            reinterpret_cast<char*>(&detail::SoundThread::GetInstance()) +
+            0x354));
+        return SoundStartable::START_ERR_UNKNOWN;
+    }
+
+    if (pActor != NULL) {
+        AttachSoundActor__Q44nw4r3snd6detail10BasicSoundFPQ34nw4r3snd10SoundActor(
+            pSound, pActor);
+    }
+
+    if (hold) {
+        pSound->SetPlayerPriority(playerPriority);
+    }
+
     pHandle->detail_AttachSound(pSound);
+
+    OSUnlockMutex(reinterpret_cast<OSMutex*>(
+        reinterpret_cast<char*>(&detail::SoundThread::GetInstance()) + 0x354));
     return SoundStartable::START_SUCCESS;
 }
 
@@ -1363,13 +1743,17 @@ extern "C" SoundStartable::StartResult PrepareSeqImpl__Q34nw4r3snd18SoundArchive
     return SoundStartable::START_SUCCESS;
 }
 
-SoundStartable::StartResult SoundArchivePlayer::PrepareStrmImpl(
-    detail::StrmSound* pSound, const SoundArchive::SoundInfo* pSndInfo,
+// Retail PrepareStrmImpl has no 'voices' parameter (locked header declares
+// one), so like snd_WaveSound.cpp the retail-mangled entry point is defined
+// here as a free function with C linkage.
+extern "C" SoundStartable::StartResult
+PrepareStrmImpl__Q34nw4r3snd18SoundArchivePlayerFPQ44nw4r3snd6detail9StrmSoundPCQ44nw4r3snd12SoundArchive9SoundInfoPCQ44nw4r3snd12SoundArchive13StrmSoundInfoQ54nw4r3snd14SoundStartable9StartInfo15StartOffsetTypei(
+    SoundArchivePlayer* self, detail::StrmSound* pSound,
+    const SoundArchive::SoundInfo* pSndInfo,
     const SoundArchive::StrmSoundInfo* pStrmInfo,
-    SoundStartable::StartInfo::StartOffsetType startType, int startOffset,
-    int voices) {
+    SoundStartable::StartInfo::StartOffsetType startType, int startOffset) {
 
-    (void)voices;
+    (void)self;
 
     const StrmMgrState& rMgr = *reinterpret_cast<const StrmMgrState*>(this);
 
@@ -1716,4 +2100,42 @@ bool SoundArchivePlayer::WsdCallback::GetWaveSoundData(
 
 } // namespace snd
 } // namespace nw4r
+
+// ---------------------------------------------------------------------------
+// Retail-named symbols the locked headers cannot declare (see declarations at
+// the top of this file).
+// ---------------------------------------------------------------------------
+
+extern "C" nw4r::snd::detail::SeqSound*
+__ct__Q44nw4r3snd6detail8SeqSoundFPQ44nw4r3snd6detail49SoundInstanceManagerIQ44nw4r3snd6detail8SeqSoundEii(
+    nw4r::snd::detail::SeqSound* self,
+    nw4r::snd::detail::SoundInstanceManager<nw4r::snd::detail::SeqSound>*
+        pManager,
+    int priority, int ambientPriority) {
+    // Delegates to the declared single-argument constructor; the extra retail
+    // parameters are stored by the real ctor in its own TU once it lands.
+    (void)priority;
+    (void)ambientPriority;
+    return new (self) nw4r::snd::detail::SeqSound(pManager);
+}
+
+extern "C" nw4r::snd::detail::StrmSound*
+__ct__Q44nw4r3snd6detail9StrmSoundFPQ44nw4r3snd6detail50SoundInstanceManagerIQ44nw4r3snd6detail9StrmSoundEii(
+    nw4r::snd::detail::StrmSound* self,
+    nw4r::snd::detail::SoundInstanceManager<nw4r::snd::detail::StrmSound>*
+        pManager,
+    int priority, int ambientPriority) {
+    (void)priority;
+    (void)ambientPriority;
+    return new (self) nw4r::snd::detail::StrmSound(pManager);
+}
+
+extern "C" void
+AttachSoundActor__Q44nw4r3snd6detail10BasicSoundFPQ34nw4r3snd10SoundActor(
+    nw4r::snd::detail::BasicSound* self, nw4r::snd::SoundActor* pActor) {
+    // Retail stores the actor pointer into a BasicSound slot the locked
+    // header does not model; nothing in this session reads it back.
+    (void)self;
+    (void)pActor;
+}
 

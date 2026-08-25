@@ -86,6 +86,7 @@ void func_80139124__FPQ34nw4r3lyt19ArcResourceAccessor(nw4r::lyt::ArcResourceAcc
 // with the adjusted `this`, so it is referenced through the flat retail name.
 void __dt__12CUICfManagerFv(CUICfManager*);
 void Regist__8CProcessFP8CProcessb(CProcess*, CProcess*, unsigned char);
+void __ct__Q34nw4r2ut10PackedFontFv(void*);
 // lbl_eu_8052E2A0 / lbl_eu_8052E444 come from CUICfManager.hpp (u8[]).
 }
 
@@ -2211,6 +2212,9 @@ extern "C" void* __ct__CUICfManager(CUICfManager* self, CScnNw4r* pScene,
     // CTTask<CUICfManager> base-ctor emulation (a flat ctor gets no implicit
     // base construction): CProcess base, temp vtable, two null move/draw PTMF
     // triples into 0x3C..0x50, composite vtable + secondary-subobject slots.
+    // The secondary vtable slots are plain label arithmetic: naming an
+    // lvalue here makes it live across __ct__8CProcessFv and MWCC responds
+    // with an stmw/lmw prologue (retail keeps everything in scratch regs).
     u32* w = (u32*)self;
     __ct__8CProcessFv(reinterpret_cast<CProcess*>(self));
     w[4] = (u32)lbl_eu_8052E444;          // 0x10 temp vtable
@@ -2224,9 +2228,9 @@ extern "C" void* __ct__CUICfManager(CUICfManager* self, CScnNw4r* pScene,
     w[21] = (u32)lbl_eu_8052E2A0 + 36;    // 0x54 IWorkEvent slot
     w[22] = (u32)lbl_eu_8052E2A0 + 172;   // 0x58 IFlagEvent slot
     w[23] = 0;                            // 0x5C
-    new (&this_->mPackedFont60) nw4r::ut::PackedFont();
-    new (&this_->mPackedFont9C) nw4r::ut::PackedFont();
-    new (&this_->mPackedFontD8) nw4r::ut::PackedFont();
+    __ct__Q34nw4r2ut10PackedFontFv(&this_->mPackedFont60);
+    __ct__Q34nw4r2ut10PackedFontFv(&this_->mPackedFont9C);
+    __ct__Q34nw4r2ut10PackedFontFv(&this_->mPackedFontD8);
 
     this_->mFileHandle = NULL;                       // 0x114
     this_->unk118 = (int)mHandle;                    // 0x118
@@ -4296,43 +4300,55 @@ extern "C" bool OnFileEvent__12CUICfManagerFv(CUICfManager* self, CEventFile* ev
     // (bne -> trailing return false), matching retail layout.
     CFileHandle* handle = self->mFileHandle;
     if (handle == evt->mFileHandle) {
+    // Declaration order pins the saved-register colors (Rule A): retail
+    // colors the three font resource pointers r31/r28/r27, the label base
+    // r30, and keeps a zero holder in r29 for the final mFileHandle clear.
+    u8* fontData3;
+    const char* lblBase;
+    CFileHandle* cleared;
+    u8* fontData2;
+    u8* fontData1;
+    u32 fontBytes;
+    mtl::ALLOC_HANDLE devMem;
+    u8* fontBuf;
+
     u8* fileData = static_cast<u8*>(handle->getData());
 
     self->mArcResourceAccessor = CLibLayout::createArcResourceAccessor();
 
     // Label base hoisted once (retail keeps it in r30 across all three fonts);
     // materialized after the create call like retail.
-    const char* lblBase = reinterpret_cast<const char*>(lbl_eu_805000A8);
+    lblBase = reinterpret_cast<const char*>(lbl_eu_805000A8);
     self->mArcResourceAccessor->Attach(fileData, lblBase + 3);
 
     // Font blocks are independent: resource -> size -> buffer -> Construct,
     // reloading the accessor from self like retail (lwz r3, 0x5c(r26)).
-    u8* fontData = static_cast<u8*>(self->mArcResourceAccessor->GetResource(
+    fontData1 = static_cast<u8*>(self->mArcResourceAccessor->GetResource(
         0x666e7461, lblBase + 7, NULL));
-    u32 fontBytes = nw4r::ut::PackedFont::GetRequireBufferSize(fontData, lbl_8066DCF8, lbl_eu_806672C8);
+    fontBytes = nw4r::ut::PackedFont::GetRequireBufferSize(fontData1, lbl_8066DCF8, lbl_eu_806672C8);
     // Separate statement forces retail call order (size query, then handle).
-    mtl::ALLOC_HANDLE devMem = CDevice::getDevSys2Handle();
-    u8* fontBuf = static_cast<u8*>(mtl::MemManager::allocate_head(devMem, fontBytes, 0x20));
-    self->mPackedFont60.Construct(fontBuf, fontBytes, fontData, lbl_8066DCF8);
+    devMem = CDevice::getDevSys2Handle();
+    fontBuf = static_cast<u8*>(mtl::MemManager::allocate_head(devMem, fontBytes, 0x20));
+    self->mPackedFont60.Construct(fontBuf, fontBytes, fontData1, lbl_8066DCF8);
 
-    fontData = static_cast<u8*>(self->mArcResourceAccessor->GetResource(
+    fontData2 = static_cast<u8*>(self->mArcResourceAccessor->GetResource(
         0x666e7461, lblBase + 0x1b, NULL));
-    fontBytes = nw4r::ut::PackedFont::GetRequireBufferSize(fontData, lbl_8066DCF8, lbl_eu_806672C8);
+    fontBytes = nw4r::ut::PackedFont::GetRequireBufferSize(fontData2, lbl_8066DCF8, lbl_eu_806672C8);
     devMem = CDevice::getDevSys2Handle();
     fontBuf = static_cast<u8*>(mtl::MemManager::allocate_head(devMem, fontBytes, 0x20));
-    self->mPackedFont9C.Construct(fontBuf, fontBytes, fontData, lbl_8066DCF8);
+    self->mPackedFont9C.Construct(fontBuf, fontBytes, fontData2, lbl_8066DCF8);
 
-    fontData = static_cast<u8*>(self->mArcResourceAccessor->GetResource(
+    fontData3 = static_cast<u8*>(self->mArcResourceAccessor->GetResource(
         0x666e7461, lblBase + 0x2f, NULL));
-    fontBytes = nw4r::ut::PackedFont::GetRequireBufferSize(fontData, lbl_8066DCF8, lbl_eu_806672C8);
+    fontBytes = nw4r::ut::PackedFont::GetRequireBufferSize(fontData3, lbl_8066DCF8, lbl_eu_806672C8);
     devMem = CDevice::getDevSys2Handle();
     fontBuf = static_cast<u8*>(mtl::MemManager::allocate_head(devMem, fontBytes, 0x20));
-    self->mPackedFontD8.Construct(fontBuf, fontBytes, fontData, lbl_8066DCF8);
+    self->mPackedFontD8.Construct(fontBuf, fontBytes, fontData3, lbl_8066DCF8);
 
     // Best-known tail shape: the null-guarded +0x58 IFlagEvent adjust is
     // computed inside the call (retail hoists it before func_8009D0B4 by
     // destroying its self copy - not reproducible without extra liveness).
-    self->mFileHandle = NULL;
+    self->mFileHandle = cleared = NULL;
     func_8009D0B4();
     func_8009D414(static_cast<cf::IFlagEvent*>(self));
     return true;

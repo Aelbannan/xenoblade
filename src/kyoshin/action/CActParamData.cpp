@@ -1,7 +1,12 @@
 // Auto-scaffolded catalog TU for kyoshin/action/CActParamData
 // Replace stubs with high-level C/C++ during decomp.
 
+// CfGameManager.hpp and CBattleManager.hpp disagree on func_800D9354's
+// signature; this TU never calls it, so rename the clashing decl away
+// (same workaround as CtrlMoveBase.cpp).
+#define func_800D9354 cfGameMgr9354DeclUnused
 #include "kyoshin/harness_catalog.hpp"
+#undef func_800D9354
 #include "kyoshin/action/CActParamData.hpp"
 #include "libs/monolib/src/scn/CScnItemAnim.hpp"
 #include "monolib/util/FixStr.hpp"
@@ -2696,7 +2701,6 @@ dispatch:
     return lbl_eu_805705F0[(u16)packed - 0x2A](a->mField10, (u16)packed, packed >> 16) ? 1
                                                                                       : 0;
 }
-
 // ============================================================
 // us-80054440: func_80053DE8
 // Pick sub-object A (sel==0) or B; default to its +0x10 float, fall back

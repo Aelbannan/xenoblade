@@ -122,8 +122,8 @@ bool func_8006EF04(int mask);   // func_8006EF04__Fi (mangled C++)
 extern "C" u32 func_80134538();
 extern "C" void func_8013ACFC();
 extern "C" int func_8013BE58();
-// cf::CfGameManager battle-target probe (pre-mangled static member, C linkage).
-extern "C" void* func_800821F8__Q22cf13CfGameManagerFv();
+// (func_800821F8__Q22cf13CfGameManagerFv: single winning decl on
+// CfGameManagerApi.hpp; this TU uses the CfGameManager.hpp member form.)
 // cf::CfGameManager pad-mode probe with an explicit int arg: the retail symbol
 // is the pre-mangled name, so it must stay C linkage (inside extern "C") or
 // MWCC appends a __Fi suffix (see CQuestWindow.hpp:280 block). The s16 inline

@@ -151,12 +151,13 @@ void func_800C75D4(){}
 
 void func_800C819C(){}
 
-// Battle-actor scan: clears the +0x37C count, recounts actors whose +0x3E9C
-// sub-object's action target (vtable 0x4C) matches the battle object's
-// +0x3F10 id, and when the count grew, cancels/refreshes the actor's actions
-// (vtable 0x210 / 0x208 / 0x204) and plays a sound if nothing was active.
-// Returns 1 when the count grew, else 0.
-int func_800C86E8(cf::CfObjectImplPc* self)
+// Battle-actor scan: raises/clears the battle flags, enumerates actors into a
+// scoped list notifying each via vtable 0x2C4, then syncs the battle object's
+// action target id (vtable 0x4C/0x50 on the +0x3E9C sub-object) against the
+// enumerated list or the player's current target. Early exits skip the tail
+// (func_800C891C + vtable 0x80); retail relies on leftover registers for the
+// "return" value, hence void.
+void func_800C86E8(cf::CfObjectImplPc* self)
 {
     self->field_18->field_04->vf20(0x400000);
     self->field_18->field_04->vf20(0x800000);
@@ -170,25 +171,26 @@ int func_800C86E8(cf::CfObjectImplPc* self)
             func_800F6EAC(func_80043F18(holder), i));
         self->field_18->vf2C4((u8*)obj, lbl_eu_80666BCC, lbl_eu_80666BCC, lbl_eu_80666BCC);
     }
-    u8* listObj = func_800F6E08(func_80043F18(holder));
+    u32 listId = (u32)func_800F6E08(func_80043F18(holder));
     __dt__80043E88(holder, -1);
     if (self->field_18->mSub.sf4C() == 0) {
-        self->field_18->mSub.sf50((u32)listObj);
+        self->field_18->mSub.sf50(listId);
         if (self->field_18->mSub.sf4C() == 0) {
             cf::CfObjectImplPc18* pobj = (cf::CfObjectImplPc18*)func_8016FE34(
                 (u8*)func_800B708C((int)func_800BFC68(cf::CfGameManager::getPlayer(0))->mSub.sf4C()));
-            if (pobj != 0) {
-                u32 id = *pobj->field_04->vf30();
-                if (func_80174C98((u8*)pobj, &id, 0x100000) != 0) {
-                    self->field_18->mSub.sf50(pobj->field_3F10);
-                    self->field_18->vf2C4((u8*)pobj, lbl_eu_80666BCC, lbl_eu_80666BCC, lbl_eu_80666BCC);
-                }
+            if (pobj == 0) {
+                return;
             }
+            u32 id = *pobj->field_04->vf30();
+            if (func_80174C98((u8*)pobj, &id, 0x100000) == 0) {
+                return;
+            }
+            self->field_18->mSub.sf50(pobj->field_3F10);
+            self->field_18->vf2C4((u8*)pobj, lbl_eu_80666BCC, lbl_eu_80666BCC, lbl_eu_80666BCC);
         }
     }
     func_800C891C((u8*)self);
     self->vf78();
-    return 0;
 }
 
 void func_800C891C(u8* self){}
@@ -323,6 +325,7 @@ void func_800CA274(void* self, int value)
 // nothing was active. Returns 1 when the count grew, else 0.
 int func_800CA294(cf::CfObjectImplPc* self)
 {
+    u32 v = 0;
     u32 prev = self->field_37C;
     self->field_37C = 0;
     u8 holder[8];
@@ -336,7 +339,7 @@ int func_800CA294(cf::CfObjectImplPc* self)
         }
     }
     if (self->field_37C > prev) {
-        u32 v = self->field_18->mSub.sf210(0x11);
+        v = self->field_18->mSub.sf210(0x11);
         self->field_18->mSub.sf208(0x11);
         self->field_18->mSub.sf204(0x11, 0, -1, 0, 0);
         if (v == 0) {

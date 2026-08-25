@@ -7,6 +7,7 @@
 #include "monolib/scn/CScnTimeApi.hpp"
 
 #include "kyoshin/cfsys/CfObjectImplWalker.hpp"
+#include "kyoshin/cf/object/CfObjectMoveApi.hpp" // func_800BE12C (owner decl)
 #include <monolib/device/CDeviceVI.hpp>
 #include <string.h>
 #include "kyoshin/cf/CfGameManagerData.hpp"  // H3 label-owner decl (lbl_eu_80663E14; lbl_eu_80663E24)
@@ -823,7 +824,7 @@ L3C68:
                     (cf::CfWalkTalkSrc*)func_800BF324(actor);
                 if (mgr->vf22C() != 0) {
                     u32 v = mgr->vf22C();
-                    func_8009D018((void*)((uintptr_t)v + 0xa20), 1);
+                    func_8009D018((u32)(uintptr_t)v + 0xa20, 1);
                     func_80291A04();
                 }
                 if (!(lbl_eu_80663E24 & 0x100000)) {

@@ -5,10 +5,10 @@
 
 extern void *GKI_getpoolbuf(unsigned char pool_id);
 
-int btsnd_hcic_inquiry(unsigned char *bd_addr, unsigned char inquiry_mode, unsigned char inquiry_length)
+int btsnd_hcic_inquiry(const unsigned char *bd_addr, unsigned char inquiry_mode, unsigned char inquiry_length)
 {
     unsigned char *p = (unsigned char *)GKI_getpoolbuf(2);
-    unsigned char b0, b1, b2;
+    unsigned char b2, b1, b0;
     if (p == NULL)
         return 0;
     *(unsigned short *)(p + 2) = 8;
@@ -947,9 +947,7 @@ int btsnd_hcic_write_link_super_tout(short handle, unsigned short timeout)
 
 void btsnd_hcic_write_cur_iac_lap(unsigned char *p, unsigned char num_laps, unsigned char *lap_array)
 {
-    unsigned short len = (num_laps << 2) - num_laps + 4;
-    u16 len16 = (u16)len;
-    u8 l3 = (u8)(len16 - 3);
+    int len = (num_laps << 2) - num_laps + 4;
     unsigned char *pp = p + 12;
     int i, j;
 
@@ -957,7 +955,7 @@ void btsnd_hcic_write_cur_iac_lap(unsigned char *p, unsigned char num_laps, unsi
     *(unsigned short *)(p + 4) = 0;
     p[8] = 0x3a;
     p[9] = 0x0c;
-    p[10] = l3;
+    p[10] = (unsigned char)((unsigned short)len - 3);
     p[11] = num_laps;
 
     for (i = 0; i < num_laps; i++) {

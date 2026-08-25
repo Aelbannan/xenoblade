@@ -980,8 +980,19 @@ extern "C" __declspec(noinline) CPcKizunaSlotEntry* func_8025F290(CPcKizunaSlotE
 // unlink and clear the entry (keeping byte14 bit 0), drop its persistence
 // bitmap bit when the id no longer appears anywhere in the chart, then
 // repopulate the six runtime columns and re-persist the entry.
+// Retail keeps nine values in nonvolatiles across the BDAT calls (speed-style
+// allocation); disable the unit's size bias for this function.
+#pragma push
+#pragma optimize_for_size off
 extern "C" void func_8025F2E8(CPcKizunaChart* self, int a, int b, int value) {
-    CPcKizunaSlotEntry* entry = &self->searchSlots[a].data00 + b;
+    CPcKizunagramBig* big = (CPcKizunagramBig*)self;
+    // Slot-base pointer (retail r25 = a*0xC4): used repeatedly, so MWCC must
+    // keep the mulli result in a register instead of rematerializing it.
+    CPcKizunaSlot* slot = &big->slots[a];
+    u32 sub = b << 5;
+    // Distinct GVN forms (shift vs multiply) so retail's two uncoalesced
+    // position registers are reproduced.
+    CPcKizunaSlotEntry* entry = (CPcKizunaSlotEntry*)((u8*)slot + sub);
     CPcKizunaSlotEntry* nxt = entry->pField18;
     u16 id = entry->field04;
     CPcKizunaSlotEntry* prv = entry->pField1C;
@@ -990,17 +1001,19 @@ extern "C" void func_8025F2E8(CPcKizunaChart* self, int a, int b, int value) {
 
     // Retail rematerializes the position from the raw indices after the
     // unlink consumes its first base register.
-    CPcKizunaSlotEntry* pos = (CPcKizunaSlotEntry*)((u8*)&self->searchSlots[a] + b * 0x20);
+    CPcKizunaSlotEntry* pos = (CPcKizunaSlotEntry*)(slot + b);
     u8 saved = pos->byte14 & 1;
     memset(pos, 0, 0x20);
+    pos->byte14 = saved;
 
     int found;
     if ((u32)id >= 0x9e) {
         found = 0;
     } else {
-        // Single-cursor walk over all 11 slots (stride 0xC4); the sub-entry
-        // checks share a lagging cursor 0x40 past the slot base.
-        const CPcKizunaSlot* sp = &self->searchSlots[0];
+        // Constant trip count drives the retail mtctr/bdnz loop; the cursor
+        // is a fresh variable seeded from the chart base (retail copies the
+        // base into a volatile walker).
+        const CPcKizunaSlot* sp = &big->slots[0];
         int n = 0xb;
         do {
             const CPcKizunaSlotEntry* e = &sp->sub[1];
@@ -1016,25 +1029,31 @@ extern "C" void func_8025F2E8(CPcKizunaChart* self, int a, int b, int value) {
     }
 searchDone:
     if (!found) {
-        u32* pWord = (u32*)(self->data870 + ((id >> 3) & ~7));
+        u32* pWord = (u32*)(big->data870 + ((id >> 3) & ~7));
         *pWord &= ~(1u << (id & 0x1f));
     }
 
+    // Repopulate the runtime columns from the BDAT table; each column value
+    // funnels through a u8 temporary (retail spills each to the stack).
+    // off/sub are re-derived after the calls (retail keeps them live past
+    // the getBdatStringColumnValue sequence).
     u32 tbl = lbl_eu_80664158;
     char* const cols = lbl_eu_8050DB18;
-    entry->word = value;
-    u32 v1 = getBdatStringColumnValue((void*)tbl, cols + 0x6, value);
-    entry->field04 = (u8)v1;
-    u32 v2 = getBdatStringColumnValue((void*)tbl, cols + 0xc, value);
-    entry->field08 = (u8)v2;
-    u32 v3 = getBdatStringColumnValue((void*)tbl, cols + 0x11, value);
-    entry->field0C = (u8)v3;
-    u32 v4 = getBdatStringColumnValue((void*)tbl, cols + 0x16, value);
-    entry->field10 = (float)(u8)v4;
-    u32 v5 = getBdatStringColumnValue((void*)tbl, cols + 0x1b, value);
-    pos->byte14 |= (u8)v5;
-    func_8025F114((CPcKizunagramBig*)self, entry);
+    CPcKizunaSlotEntry* dst = &slot->data00 + b;
+    dst->word = value;
+    u8 c1 = getBdatStringColumnValue((void*)tbl, cols + 0x6, value);
+    dst->field04 = c1;
+    u8 c2 = getBdatStringColumnValue((void*)tbl, cols + 0xc, value);
+    dst->field08 = c2;
+    u8 c3 = getBdatStringColumnValue((void*)tbl, cols + 0x11, value);
+    dst->field0C = c3;
+    u8 c4 = getBdatStringColumnValue((void*)tbl, cols + 0x16, value);
+    dst->field10 = (float)c4;
+    u8 c5 = getBdatStringColumnValue((void*)tbl, cols + 0x1b, value);
+    pos->byte14 |= c5;
+    func_8025F114(big, &slot->data00 + b);
 }
+#pragma pop
 
 // func_8025F528: same (re)load as func_8025F2E8 on the total chart.
 extern "C" void func_8025F528(CPcKizunaChart* self, int a, int b, int value) {

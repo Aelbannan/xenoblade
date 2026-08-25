@@ -10409,3 +10409,11 @@ us-80115a2c (r6→r7).
 - Result:    TU compiles; Init__14CMenuMapSelectFv and Move__14CMenuMapSelectFv confirmed 100% (us-802436c8, us-80243ff4).
 - Confidence: repo_proven
 - Applies to/a.k.a.: scaffolded catalog TUs that transitively include multiple headers declaring the same extern "C" helper with different signatures.
+## kyoshin code_800B06A4 — mangled-local-helper call reloc drift + cmp operand swap (Wii/1.1→GC/3.0a5.2 `-O4,p`)
+
+- Symptom:   caller hexdiff shows `R_PPC_REL24 name func_XXXX → func_XXXX__FP...` (decomp emits a mangled C++ symbol where retail references the plain linker name), plus 1 pure `cmp` operand-order reg_swap.
+- Cause:     a decompiled helper that IS a real retail function was written as a plain C++ function (mangled name). Its intra-TU callers therefore relocate against the mangled symbol; cross-TU callers referencing the plain name silently keep binding to the stale asm-scaffold copy.
+- Fix:       define the helper as `extern "C"` under the exact retail symbol name (same-length not required — the definition's mangled form disappears entirely). Then re-run `configure.py` so the splitter prunes the scaffold copy of that symbol (otherwise full-link duplicates it). For the cmp swap: write the comparison with operands in retail order (`id == obj->field` instead of `obj->field == id`).
+- Result:    us-800b94b0 / us-800b9594 / us-800b8100 all FULL_MATCH (semantic-certified); caller us-800b379c 98.4%→98.9% with reloc drift 1→0.
+- Confidence: repo_proven
+- Applies to/a.k.a.: any TU with locally-defined helpers named after real retail symbols (func_*/__dt__* free functions); check `hexdiff --relocs` for `name`-class drift before chasing scheduling ghosts. Same family as §SDA globals / reloc_map mine.

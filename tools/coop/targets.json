@@ -28258,7 +28258,15 @@
       "source": "src/kyoshin/plugin/pluginCam.cpp",
       "source_present": true,
       "instruction_match": 99.974,
-      "equivalence_status": "equivalent"
+      "equivalence_status": "equivalent",
+      "claim": {
+        "owner": "midband-04",
+        "claimed_at": "2026-08-25T15:57:52.596644+00:00",
+        "allowed_paths": [
+          "src/kyoshin/plugin/pluginCam.cpp"
+        ],
+        "note": ""
+      }
     },
     {
       "id": "us-80061bb8",
@@ -76158,7 +76166,7 @@
       "size": "0x3C",
       "unit": "kyoshin/code_800B06A4",
       "required_level": "EQUIVALENT_MATCH",
-      "workflow_status": "BACKLOG",
+      "workflow_status": "CLAIMED",
       "status": "NOT_STARTED",
       "origin": "symbols.txt",
       "called_functions": [],
@@ -76169,7 +76177,15 @@
       "abi_helper_calls": [],
       "source": "src/kyoshin/code_800B06A4.cpp",
       "instruction_match": 0.0,
-      "source_present": false
+      "source_present": false,
+      "claim": {
+        "owner": "rematch-kyoshin__code_800B06A4",
+        "claimed_at": "2026-08-25T15:57:48.133034+00:00",
+        "allowed_paths": [
+          "src/kyoshin/code_800B06A4.cpp"
+        ],
+        "note": ""
+      }
     },
     {
       "id": "us-800b13a4",
@@ -76374,7 +76390,7 @@
       "size": "0x3C",
       "unit": "kyoshin/code_800B06A4",
       "required_level": "EQUIVALENT_MATCH",
-      "workflow_status": "BACKLOG",
+      "workflow_status": "CLAIMED",
       "status": "NOT_STARTED",
       "origin": "symbols.txt",
       "called_functions": [],
@@ -76385,7 +76401,15 @@
       "abi_helper_calls": [],
       "source": "src/kyoshin/code_800B06A4.cpp",
       "instruction_match": 0.0,
-      "source_present": true
+      "source_present": true,
+      "claim": {
+        "owner": "rematch-kyoshin__code_800B06A4",
+        "claimed_at": "2026-08-25T15:57:56.578450+00:00",
+        "allowed_paths": [
+          "src/kyoshin/code_800B06A4.cpp"
+        ],
+        "note": ""
+      }
     },
     {
       "id": "us-800b1614",
@@ -116626,7 +116650,7 @@
       "size": "0x20C",
       "unit": "kyoshin/CUICfManager",
       "required_level": "EQUIVALENT_MATCH",
-      "workflow_status": "ACTIVE",
+      "workflow_status": "CLAIMED",
       "status": "HIGH_MATCH",
       "origin": "symbols.txt",
       "source": "src/kyoshin/CUICfManager.cpp",
@@ -116645,7 +116669,15 @@
       "abi_helper_calls": [],
       "source_present": true,
       "instruction_match": 94.458,
-      "equivalence_status": "inconclusive_smt_disabled"
+      "equivalence_status": "inconclusive_smt_disabled",
+      "claim": {
+        "owner": "claude-uicf",
+        "claimed_at": "2026-08-25T15:58:06.653139+00:00",
+        "allowed_paths": [
+          "src/kyoshin/CUICfManager.cpp"
+        ],
+        "note": ""
+      }
     },
     {
       "id": "us-80131854",
@@ -251137,7 +251169,7 @@
       "size": "0x300",
       "unit": "kyoshin/cf/chain/CChain",
       "required_level": "EQUIVALENT_MATCH",
-      "workflow_status": "CLAIMED",
+      "workflow_status": "ACTIVE",
       "status": "COMPILES",
       "origin": "symbols.txt",
       "source": "src/kyoshin/cf/chain/CChain.cpp",

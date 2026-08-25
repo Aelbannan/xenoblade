@@ -973,10 +973,10 @@ f32 MemManager::getPercentAlloc(ALLOC_HANDLE handle) {
     // u32 -> double via the shared 2^52 magic constant (retail pools it as
     // lbl_eu_8066A1C8 in the FloatUtils-owned .sdata2 range; referencing the
     // extern keeps this TU from pooling a local @N copy).
+    U32ToDouble total;
     U32ToDouble used;
     used.w[0] = 0x43300000;
     used.w[1] = region->mSize - region->mFreeBytes;
-    U32ToDouble total;
     total.w[0] = 0x43300000;
     total.w[1] = region->mSize;
 

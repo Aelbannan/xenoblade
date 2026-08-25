@@ -845,45 +845,62 @@ extern "C" void func_8045C8B0__20CLibCriStreamingPlayFv(int id, float volume) {
     }
 }
 
+// Unrolled-by-MWCC 5-slot scan by id; MWCC inlines this at each use site.
+static StreamEntry* findSlotById(u32 id) {
+    StreamEntry* entry = reinterpret_cast<StreamEntry*>(
+        reinterpret_cast<u8*>(lbl_eu_806656E8) + 0x1C8);
+
+    return
+        (u32)entry->id == (u32)id ? entry :
+        (u32)(++entry)->id == (u32)id ? entry :
+        (u32)(++entry)->id == (u32)id ? entry :
+        (u32)(++entry)->id == (u32)id ? entry :
+        (u32)(++entry)->id == (u32)id ? entry :
+        (entry = NULL);
+}
+
 // func_8045CA4C - Start a volume fade.
 // Retail has no `this`: r3 = stream id, r4 = fade-end action, f1 = volume,
 // f2 = fade time (see the CLibCri forwarding trampoline func_80459A88).
 extern "C" void func_8045CA4C__20CLibCriStreamingPlayFv(int id, int action, float volume, float fadeTime) {
     // Immediate volume change when the fade time is <= 0.
     if (fadeTime <= lbl_eu_8066A50C) {
-        StreamEntry* slot = findStreamSlot((u32)id);
-        if (slot != NULL) {
-            slot->field_0x64 = volume;
-            float level = volume;
-            slot->field_0x68 = volume;
-            slot->field_0x6C = level;
-            float zero = lbl_eu_8066A50C;
-            slot->field_0x70 = zero;
-            slot->field_0x74 = zero;
+        StreamEntry* entry = findSlotById((u32)id);
 
-            // Total output volume: level * 0x78 * 0x7C (0 during a flow).
-            float totalVol = level * slot->field_0x78 * slot->field_0x7C;
+        if (entry != NULL) {
+            // Set volume and reset the fade state.
+            entry->field_0x64 = volume;
+            double dv = volume;
+            entry->field_0x68 = volume;
+            float level = (float)dv;
+            entry->field_0x6C = level;
+            entry->field_0x70 = lbl_eu_8066A50C;
+            entry->field_0x74 = lbl_eu_8066A50C;
+
+            // Total output volume: multiplier * (level * mult1), 0 during a flow.
+            float totalVol = entry->field_0x7C * (level * entry->field_0x78);
             if (CWorkControl::hasFlow()) {
                 totalVol = lbl_eu_8066A50C;
             }
             int volDb = (int)(lbl_eu_8066A510 * totalVol);
-            ADXT_SetOutVol(slot->adxt, lookupVolume(volDb));
+            ADXT_SetOutVol(entry->adxt, lookupVolume(volDb));
         }
     }
 
     // Always (re)set the fade parameters on the target entry.
-    StreamEntry* slot = findStreamSlot((u32)id);
-    if (slot != NULL) {
-        slot->field_0x68 = volume;
-        float zero = lbl_eu_8066A50C;
-        slot->field_0x6C = slot->field_0x64;
-        if (volume == zero) {
-            slot->field_0x80 = action;
+    StreamEntry* entry = findSlotById((u32)id);
+
+    if (entry != NULL) {
+        entry->field_0x68 = volume;
+        entry->field_0x6C = entry->field_0x64;
+        // Latch the fade-end action only for a mute-to-zero fade.
+        if (volume == lbl_eu_8066A50C) {
+            entry->field_0x80 = action;
         }
-        slot->field_0x70 = fadeTime;
-        slot->field_0x74 = zero;
-        if (slot->field_0x70 <= zero) {
-            slot->field_0x70 = zero;
+        entry->field_0x70 = fadeTime;
+        entry->field_0x74 = lbl_eu_8066A50C;
+        if (entry->field_0x70 <= lbl_eu_8066A50C) {
+            entry->field_0x70 = lbl_eu_8066A50C;
         }
     }
 }
@@ -893,46 +910,57 @@ extern "C" void func_8045CA4C__20CLibCriStreamingPlayFv(int id, int action, floa
 // f1/f2/f3 = the pan/volume parameters (see func_8049B834).
 extern "C" void func_8045CCFC__20CLibCriStreamingPlayFv(int id, const u8* in2, const u8* in1,
                    float a, float b, float c) {
-    StreamEntry* slot = findStreamSlot((u32)id);
-    if (slot == NULL) return;
+    // Unrolled match chain (same shape as func_8045BE48): reproduces retail's
+    // per-stage "bne next / b done" pairs and chained pointer advance.
+    StreamEntry* slot = reinterpret_cast<StreamEntry*>(
+        reinterpret_cast<u8*>(lbl_eu_806656E8) + 0x1C8);
 
-    // Compute base volume/pan from the two 3D positions.
-    float pan, vol;
-    func_8049B834(a, b, &pan, &vol, in1, in2);
+    slot =
+        (u32)slot->id == (u32)id ? slot :
+        (u32)(++slot)->id == (u32)id ? slot :
+        (u32)(++slot)->id == (u32)id ? slot :
+        (u32)(++slot)->id == (u32)id ? slot :
+        (u32)(++slot)->id == (u32)id ? slot :
+        (slot = NULL);
 
-    // Clamp the volume to the caller's minimum level.
-    if (vol < c) {
-        vol = c;
-    }
-    float level = vol;
-    slot->field_0x78 = level;
+    if (slot != NULL) {
+        // Compute base volume/pan from the two 3D positions.
+        float pan, vol;
+        func_8049B834(a, b, &pan, &vol, in1, in2);
 
-    // Total output volume: current * level * multiplier (0 during a flow).
-    float totalVol = slot->field_0x64 * level * slot->field_0x7C;
-    if (CWorkControl::hasFlow()) {
-        totalVol = lbl_eu_8066A50C;
-    }
-
-    // Convert to ADX output-volume units via the 100.0 percent scale, then
-    // look up (with linear interpolation) the ADX volume from the dB table.
-    int volDb = (int)(lbl_eu_8066A510 * totalVol);
-    int outVol = lookupVolume(volDb);
-    ADXT_SetOutVol(slot->adxt, outVol);
-
-    // Set pan unless the stream is mono (flag 0x40).
-    u32 flags = slot->flags;
-    if (!(flags & 0x40)) {
-        int panVal = (int)(lbl_eu_8066A524 * pan);
-        if (panVal < -15) {
-            panVal = -15;
+        // Clamp the volume to the caller's minimum level.
+        if (vol < c) {
+            vol = c;
         }
-        if (panVal > 15) {
-            panVal = 15;
+        slot->field_0x78 = vol;
+
+        // Total output volume: multiplier * (current * level), 0 during a flow.
+        float totalVol = slot->field_0x64 * vol * slot->field_0x7C;
+        if (CWorkControl::hasFlow()) {
+            totalVol = lbl_eu_8066A50C;
         }
-        if (!(flags & 0x04)) {
-            ADXT_SetOutPan(slot->adxt, 1, panVal);
+
+        // Convert to ADX output-volume units via the 100.0 percent scale, then
+        // look up (with linear interpolation) the ADX volume from the dB table.
+        int volDb = (int)(lbl_eu_8066A510 * totalVol);
+        int outVol = lookupVolume(volDb);
+        ADXT_SetOutVol(slot->adxt, outVol);
+
+        // Set pan unless the stream is mono (flag 0x40).
+        u32 flags = slot->flags;
+        if (!(flags & 0x40)) {
+            int panVal = (int)(lbl_eu_8066A524 * pan);
+            if (panVal < -15) {
+                panVal = -15;
+            }
+            if (panVal > 15) {
+                panVal = 15;
+            }
+            if (!(flags & 0x04)) {
+                ADXT_SetOutPan(slot->adxt, 1, panVal);
+            }
+            ADXT_SetOutPan(slot->adxt, 0, panVal);
         }
-        ADXT_SetOutPan(slot->adxt, 0, panVal);
     }
 }
 

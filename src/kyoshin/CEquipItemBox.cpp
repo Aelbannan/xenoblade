@@ -1783,8 +1783,9 @@ extern "C" __declspec(noinline) void func_802869B4(CEquipItemBox* self) {
             func_801D3454(&tmp, &self->_padSortMenu[0]);
             ((CEquipItemBoxCur18View*)&self->ccur18[0])->vf04(&tmp);
             func_80138078__FUl(1);
+            return;
         }
-        return;
+        // Scroll finished: retail falls through to the name-pane dispatch.
     }
     if (self->unk_375 != 0) {
         // Name pane is up: scan the item list forward for the next column

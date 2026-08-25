@@ -1590,11 +1590,11 @@ extern "C" void func_804814DC__17UnkClass_8047E110Fv(UnkClass_8047E110* self,
     *(ScnVecWords*)&mgr.boxMax = *(const ScnVecWords*)cornerB;
     const CVec3& boxMin = mgr.boxMin;
     const CVec3& boxMax = mgr.boxMax;
-    CVec3 dir = boxMin - boxMax;
+    const CVec3 dir = boxMin - boxMax;
     mgr.field_0x7C = paramF;
     mgr.field_0x80 = lbl_eu_8066A8AC;
     mgr.field_0x84 = lbl_eu_8066A8B4;
-    mgr.dir = dir;
+    *(ScnVecWords*)&mgr.dir = *(const ScnVecWords*)&dir;
     if (mgr.dir.x != lbl_eu_8066A8AC || mgr.dir.z != lbl_eu_8066A8AC) {
         f32 lenSq = mgr.dir.z * mgr.dir.z
             + (mgr.dir.x * mgr.dir.x + mgr.dir.y * mgr.dir.y);

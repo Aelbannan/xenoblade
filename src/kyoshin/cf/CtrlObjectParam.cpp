@@ -2458,13 +2458,13 @@ extern "C" void func_800A3304() {
             reinterpret_cast<u8*>(lbl_eu_80663E88) + (u16)row * 0x3DD4 + 0x41F0);
         for (j = 0; j <= 5; ++j) {
             inst = 0;
-            cf::CtrlObjectParamEquipRowSlots* v =
-                reinterpret_cast<cf::CtrlObjectParamEquipRowSlots*>(r);
-            if (*(const volatile s16*)&v->entries[j] > -1) {
-                // retail re-reads the slot entry for the call argument;
-                // the volatile check-load defeats CSE without a second IV.
-                inst = func_80157C4C((u32)j > 4 ? 2 : j + 4,
-                                     v->entries[j]);
+            if (r->shortArr[j] > -1) {
+                // NOTE (us-800a3bcc): retail emits a second lha of this slot
+                // entry for the call argument; every re-read shape we tried
+                // (pointer cast, &elem deref, distinct-class view, volatile
+                // check-load) either gets CSE'd or spawns a second induction
+                // pointer (stmw/lmw pressure).
+                inst = func_80157C4C((u32)j > 4 ? 2 : j + 4, r->shortArr[j]);
             }
             if (inst != 0) {
                 reinterpret_cast<cf::CtrlObjectParamItemImplIf*>(

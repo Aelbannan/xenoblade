@@ -42,13 +42,13 @@ extern "C" void func_800B06A4(float a) {
     extern float lbl_eu_80661CCC, lbl_eu_80661CD0;
     extern float lbl_eu_80663EC8, lbl_eu_80663ECC, lbl_eu_80663ED0, lbl_eu_80663ED4;
     double d = (double)a;
-    float sq = (float)d;
     float c = lbl_eu_80661CD0;
+    float sq = (float)d;
     lbl_eu_80661CCC = a;
     sq = sq * sq;
     lbl_eu_80663EC8 = a;
-    lbl_eu_80663ECC = sq;
-    lbl_eu_80663ED0 = c;
+    *(volatile float*)&lbl_eu_80663ECC = sq;
+    *(volatile float*)&lbl_eu_80663ED0 = c;
     lbl_eu_80663ED4 = sq;
 }
 
@@ -1083,14 +1083,12 @@ u32 UnkClass_805764CC::get_u32_380(){return *(u32*)((u8*)this + 0x380);}
 extern "C"
 UnkClass_800B0AD8* __dt__800B0AF4(void* selfv, int flags) {
     UnkClass_800B0AD8* self = (UnkClass_800B0AD8*)selfv;
-    if (self == NULL) {
-        return self;
-    }
-    int free_it = flags > 0;
-    self->unkB00 = 0;
-    self->unkAFC = 0;
-    if (free_it) {
-        __dl__FPv(self);
+    if (self != NULL) {
+        self->unkB00 = 0;
+        self->unkAFC = 0;
+        if (flags > 0) {
+            __dl__FPv(self);
+        }
     }
     return self;
     return self;

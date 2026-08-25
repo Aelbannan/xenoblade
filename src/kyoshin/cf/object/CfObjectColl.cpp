@@ -416,7 +416,7 @@ void func_800ABC5C(ml::CVec3* out, cf::CfObjectColl* self) {
 
 // Copy two 12-byte vector blocks into the 0xA0/0xAC region, store the scalar,
 // then stamp the state marker words at 0x94/0x98.
-void func_800ABD44(cf::CfObjectColl* self, cf::CollVec* a, cf::CollVec* b, float val) {
+void func_800ABD44(cf::CfObjectColl* self, cf::CollVec* a, const cf::CollVec* b, float val) {
     reinterpret_cast<CfObjIf*>(self)->vf009C();
     // Retail interleaves each load with the following store instead of
     // batching all six loads up front.
@@ -425,14 +425,11 @@ void func_800ABD44(cf::CfObjectColl* self, cf::CollVec* a, cf::CollVec* b, float
     self->field_0xA4 = v4;
     u32 t0 = b->w0;
     self->field_0xA0 = v0;
-    u32 t4 = b->w4;
-    u32 t8 = b->w8;
     u32 v8 = a->w8;
     self->field_0xA8 = v8;
     self->field_0xAC = t0;
-    self->field_0xB0 = t4;
-    self->field_0xB4 = t8;
-    self->field_0xB8 = val;
+    self->field_0xB0 = b->w4;
+    self->field_0xB4 = b->w8;    self->field_0xB8 = val;
     self->field_0x98 = 4;
     self->field_0x94 = 0;
 }

@@ -3,7 +3,28 @@
   "permissionGate": {
     "autoDenyPatterns": [
       {
-        "pattern": "git"
+        "pattern": "git reset"
+      },
+      {
+        "pattern": "git push"
+      },
+      {
+        "pattern": "git clean"
+      },
+      {
+        "pattern": "git checkout"
+      },
+      {
+        "pattern": "git restore"
+      },
+      {
+        "pattern": "git stash"
+      },
+      {
+        "pattern": "git filter-branch"
+      },
+      {
+        "pattern": "git filter-repo"
       }
     ]
   },

@@ -1692,22 +1692,24 @@ extern "C" void func_800BCD04(cf::CfObjectMove* self) {
             ml::CVec3 delta = *reinterpret_cast<ml::CVec3*>(&self->mPos3C) - targetPos;
             *reinterpret_cast<ml::CVec3*>(&((cf::CfObjectMove54View*)self)->field_54) = delta;
             self->mField4C = tgt->field_444;
-            (void)delta;
         } else {
             func_800BC9EC(self);
             ((bool (*)(void*, void*))func_8004B40C)(self->mTargetC4, &self->mPos3C);
         }
 done_flags:
         // Toggle the C4 target's busy bit 6 from the mFlags68 sign bit /
-        // bit 24 states (the sign-bit path also clears the sign bit; the
-        // stores through the C4 pointer force the flag word reloads).
-        if ((self->mFlags68 & 0x80000000) != 0) {
+        // bit 24 states (the sign-bit path also clears the sign bit).
+        u32 f = self->mFlags68;
+        if ((f & 0x80000000) != 0) {
             ((CfObjectMoveC4Flags*)self->mTargetC4)->flags |= 0x40;
-            self->mFlags68 &= 0x7FFFFFFFu;
-        } else if ((self->mFlags68 & 0x01000000) != 0) {
-            ((CfObjectMoveC4Flags*)self->mTargetC4)->flags |= 0x40;
+            self->mFlags68 = self->mFlags68 & 0x7FFFFFFFu;
         } else {
-            ((CfObjectMoveC4Flags*)self->mTargetC4)->flags &= ~0x02000000u;
+            CfObjectMoveC4Flags* c4f = (CfObjectMoveC4Flags*)self->mTargetC4;
+            if ((f & 0x01000000) != 0) {
+                c4f->flags |= 0x40;
+            } else {
+                c4f->flags &= ~0x40u;
+            }
         }
     } else {
         // No model sub-object: the +0x6C0 target drives the position delta.
@@ -1728,6 +1730,15 @@ done_flags:
     }
 }
 
+// Store the position difference into the +0x54 area. The by-value parameter
+// makes MWCC materialize the subtraction result and copy it word-wise to the
+// destination (retail double-copy shape).
+static inline void cfomPutPosDiff(cf::CfObjectMove* self, ml::CVec3 d) {
+    ((cf::CfObjectMove54View*)self)->field_54 = *(u32*)&d.x;
+    ((cf::CfObjectMove54View*)self)->field_58 = *(u32*)&d.y;
+    ((cf::CfObjectMove54View*)self)->field_5C = *(u32*)&d.z;
+}
+
 extern "C" void func_800BC9EC(cf::CfObjectMove* self) {
     if (self->mTarget6C0 == 0) {
         return;
@@ -1741,33 +1752,32 @@ extern "C" void func_800BC9EC(cf::CfObjectMove* self) {
     cf::CfObjectMove6C0View* tgt = (cf::CfObjectMove6C0View*)self->mTarget6C0;
     tgt->field_14 = lbl_eu_80666A88;
     ((cf::CfObjectSub38If*)tgt)->_f0C();
-    // Declared angle-first so MWCC colours rate into f30 (retail order).
-    f32 angle = tgt->field_C;
     f32 rate = tgt->field_14;
+    f32 angle = tgt->field_C;
     if (getPlayer__Q22cf13CfGameManagerFi(0) == (void*)self && self->CfObject_UnkVirtualFunc9() == 0) {
         rate = lbl_eu_80666A88;
         func_804B0B54(self->_60C_region, &self->mPos3C);
     }
     int force = 0;
     void* enemy = func_800AD860((void*)self);
+    // Nested else-if keeps retail's branch shape (no force retest).
     if (enemy != 0) {
         if (((cf::CfObjectMoveAD86View*)enemy)->field_45CA & 1) {
             force = 1;
         }
-    }
-    if (force == 0 && ((u32)__cntlzw((u32)__cntlzw(self->unk64 & 0x8) >> 5) >> 5) != 0 && self->field_6CE == 3) {
+    } else if (((u32)__cntlzw((u32)__cntlzw(self->unk64 & 0x8) >> 5) >> 5) != 0 && self->field_6CE == 3) {
         force = 1;
     }
     if (ml::math::abs(rate) > lbl_eu_8066A208 || force != 0) {
         // Circular sweep: scale the position X by the rate, sweep the angle
         // through Sin/Cos, then step the +0x60C region toward the swept point.
+        // Retail recomputes ABC*angle for the Cos call instead of CSE-ing it.
         float sx = rate * *(const float*)self->CfObject_UnkVirtualFunc58();
         rate = lbl_eu_80666AB8 * sx;
-        f32 ang = lbl_eu_80666ABC * angle;
         ml::CVec3 step;
-        step.x = rate * SinFIdx__Q24nw4r4mathFf(ang);
+        step.x = rate * SinFIdx__Q24nw4r4mathFf(lbl_eu_80666ABC * angle);
+        step.z = rate * CosFIdx__Q24nw4r4mathFf(lbl_eu_80666ABC * angle);
         step.y = lbl_eu_80666A88;
-        step.z = rate * CosFIdx__Q24nw4r4mathFf(ang);
         const ml::CVec3* base = (const ml::CVec3*)self->CfObject_UnkVirtualFunc23();
         ml::CVec3 tmp;
         func_804B1164(self->_60C_region, &tmp, base, &step);
@@ -1788,11 +1798,7 @@ extern "C" void func_800BC9EC(cf::CfObjectMove* self) {
                       lbl_eu_80666AA8, lbl_eu_80666AA0, f3, lbl_eu_8066AF20, lbl_eu_80666AC4);
     }
     // Store the position difference against the snapshot into the +0x54 area.
-    ml::CVec3 diff;
-    diff.x = self->mPos3C - origPos.x;
-    diff.y = self->mPos40 - origPos.y;
-    diff.z = self->mPos44 - origPos.z;
-    *reinterpret_cast<ml::CVec3*>(&((cf::CfObjectMove54View*)self)->field_54) = diff;
+    cfomPutPosDiff(self, *reinterpret_cast<const ml::CVec3*>(&self->mPos3C) - origPos);
 }
 
 extern "C" void func_800BCFA0(cf::CfObjectMove* self) {

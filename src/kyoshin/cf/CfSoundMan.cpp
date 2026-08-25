@@ -561,14 +561,15 @@ extern "C" s32 func_801C03C8(CfSoundSlot* slot, CfSoundActorPos* out) {
             CfSoundActorPos3* res =
                 (CfSoundActorPos3*)obj->vf73(slot->field_0x2C);
             if (res != 0) {
-                // Retail loads the three floats in reverse (z, y, x) and
-                // stores them to the stack in forward (x, y, z) order.
-                f32 fx = res->field_0x0C;
-                f32 fy = res->field_0x1C;
-                f32 fz = res->field_0x2C;
-                out->field_0x00 = *(u32*)&fx;
-                out->field_0x04 = *(u32*)&fy;
-                out->field_0x08 = *(u32*)&fz;
+                // Struct staging pins the frame slots (x lowest); the
+                // z,y,x assignment order matches the retail lfs sequence.
+                CfSoundPos3f t;
+                t.z = res->field_0x2C;
+                t.y = res->field_0x1C;
+                t.x = res->field_0x0C;
+                out->field_0x00 = *(u32*)&t.x;
+                out->field_0x04 = *(u32*)&t.y;
+                out->field_0x08 = *(u32*)&t.z;
                 return 1;
             }
         }
@@ -582,18 +583,19 @@ extern "C" s32 func_801C03C8(CfSoundSlot* slot, CfSoundActorPos* out) {
         if (obj != 0) {
             if (obj != 0 && obj->field_0x98 != 0) {
                 CfSoundActorSub98* sub = (CfSoundActorSub98*)obj->field_0x98;
-                f32 fx = sub->field_0x2DC;
-                f32 fy = sub->field_0x2E0;
-                f32 fz = sub->field_0x2E4;
-                out->field_0x00 = *(u32*)&fx;
-                out->field_0x04 = *(u32*)&fy;
-                out->field_0x08 = *(u32*)&fz;
+                CfSoundPos3f t;
+                t.x = sub->field_0x2DC;
+                t.y = sub->field_0x2E0;
+                t.z = sub->field_0x2E4;
+                out->field_0x00 = *(u32*)&t.x;
+                out->field_0x04 = *(u32*)&t.y;
+                out->field_0x08 = *(u32*)&t.z;
             } else {
                 CfSoundActorPos* pos = obj->getPosition();
-                u32 v1 = pos->field_0x04;
                 u32 v0 = pos->field_0x00;
-                out->field_0x00 = v0;
+                u32 v1 = pos->field_0x04;
                 out->field_0x04 = v1;
+                out->field_0x00 = v0;
                 out->field_0x08 = pos->field_0x08;
             }
             return 1;
@@ -603,8 +605,12 @@ extern "C" s32 func_801C03C8(CfSoundSlot* slot, CfSoundActorPos* out) {
     }
     slot->field_0x2A |= 8;
 fallback:
-    out->field_0x00 = slot->field_0x08;
-    out->field_0x04 = slot->field_0x0C;
+    // Both slot words are hoisted before the stores (retail loads r4/r0
+    // back-to-back, then writes 4 then 0).
+    u32 lo = slot->field_0x08;
+    u32 hi = slot->field_0x0C;
+    out->field_0x04 = hi;
+    out->field_0x00 = lo;
     out->field_0x08 = slot->field_0x10;
     return result;
 }

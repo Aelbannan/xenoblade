@@ -333,12 +333,18 @@ extern "C" bool ReadStrmTrackInfo__Q44nw4r3snd6detail14StrmFileReaderCFPQ54nw4r3
 // StrmFileLoader::ReadStrmInfo(StrmFileReader::StrmInfo*)
 extern "C" bool ReadStrmInfo__Q44nw4r3snd6detail14StrmFileLoaderCFPQ54nw4r3snd6detail14StrmFileReader8StrmInfo(
     const StrmFileLoader* self, StrmInfoLayout* pStrmInfo) {
-    if (!LoaderReaderAvailable(self)) {
+    // The reader subobject starts at the loader's mReader.mHeader field.
+    const StrmLoaderLayout* pLayout = reinterpret_cast<const StrmLoaderLayout*>(self);
+
+    if (pLayout->readerHeader == NULL) {
         return false;
     }
 
+    const StrmFileReader* pReader =
+        reinterpret_cast<const StrmFileReader*>(&pLayout->readerHeader);
+
     ReadStrmInfo__Q44nw4r3snd6detail14StrmFileReaderCFPQ54nw4r3snd6detail14StrmFileReader8StrmInfo(
-        LoaderReaderPtr(self), pStrmInfo);
+        pReader, pStrmInfo);
     return true;
 }
 

@@ -3,7 +3,19 @@
 #include <types.h>
 #include "monolib/work/IWorkEvent.hpp"
 #include "kyoshin/CEquipItemBox.hpp"
+/* CItemBoxInfo.hpp declares func_801393CC(void*) while CEquipItemBox.hpp
+   (included above) already declares the real u32(u32) - MWCC rejects the
+   overload. This unit never calls it, so rename the stale declaration away
+   for this inclusion only. */
+#define func_801393CC func_801393CC_stale_voidp
+#define func_801392B4 func_801392B4_stale_int_u8
+#define func_80136A1C func_80136A1C_stale_constcharp
+#define func_801397AC func_801397AC_stale_gxcolor
 #include "kyoshin/CItemBoxInfo.hpp"
+#undef func_801393CC
+#undef func_801392B4
+#undef func_80136A1C
+#undef func_801397AC
 
 namespace nw4r {
 namespace lyt {
@@ -199,10 +211,10 @@ extern "C" void __ct__CCur15(void* self, nw4r::lyt::ArcResourceAccessor* arc);
 extern "C" void __ct__CSubCur(void* self, nw4r::lyt::ArcResourceAccessor* arc);
 extern "C" void __ct__CItemBoxInfo(void* self, int a, int b);
 extern "C" void __ct__CEquipItemBox(void* self);
-extern "C" void __ct__UnkClass_8011C974(void* dst, const void* src);
-extern "C" void func_8018BE74(void* dst, const void* src);
-extern "C" void func_8018B0FC(void* dst, const void* src);
-extern "C" void func_8016742C(void* dst, const void* src);
+extern "C" void __ct__UnkClass_8011C974(void* dst, void* src);
+extern "C" void func_8018BE74(void* dst, void* src);
+extern "C" void func_8018B0FC(void* dst, void* src);
+extern "C" void func_8016742C(void* dst, void* src);
 
 // Manual vtable for the ctor store (retail lis/addi lbl_eu_80535688).
 extern char lbl_eu_80535688[];

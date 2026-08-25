@@ -259,9 +259,7 @@ extern "C" void func_8019956C(CCtrlMovePC* self) {
 
     u8 battleState = *(u8*)((char*)getInstance__Q22cf14CBattleManagerFv() + 0x1aa);
     u32 inBattle = 0;
-    if (battleState < 1 || battleState > 0x18) {
-        /* not in battle */
-    } else {
+    if ((u32)battleState >= 1 && (u32)battleState <= 0x18) {
         inBattle = 1;
     }
     if (inBattle != 0) {
@@ -302,7 +300,8 @@ static inline void releaseTask(CCtrlMovePC* s) {
 // ============================================================================
 // func_80199678 - conditional full reset + task release (0x198)
 // ============================================================================
-extern "C" void func_80199678(CCtrlMovePC* self, int flag) {
+extern "C" void func_80199678(void* selfv, int flag) {
+    CCtrlMovePC* self = (CCtrlMovePC*)selfv;
     if (flag != 0) {
         func_80089684(self);
         self->mStateFunc = lbl_eu_80532B78;

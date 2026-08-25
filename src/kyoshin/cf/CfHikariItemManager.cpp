@@ -469,7 +469,7 @@ static inline f32 hikariS32ToF32(Convert64& c, s32 v) {
 // is already active, else perturb the spawn position by scaled random offsets
 // (each component gets its own random draw) and init the entry via func_802B4358.
 extern "C" void func_802B3568(cf::CfHikariItemManager* self, const f32* src,
-                              u16 val, f32 scaleX, f32 scaleY) {
+                              s16 val, f32 scaleX, f32 scaleY) {
     // Signed count so MWCC emits the retail srawi/clrlwi/slwi bit-math run.
     // The slot address is recomputed from memory at the call site (retail
     // reloads field_119C instead of keeping count live).
@@ -574,7 +574,7 @@ extern "C" void func_802B37F4(CfHikariItemRecord* self) {
 }
 
 // (us-802b6280): per-frame update of an active Hikari record.  Clears
-// the upper flag bits (keeping the 0x40 spawn flag test on the original word),
+// the low flag bits (keeping the 0x40/0x80/0x100 tests on the original word),
 // then branches on the 0x40 flag: the spawn path advances the 0x1C/0x14
 // timers (bursting 8 particles when 0x1C hits zero) and returns 1 when 0x1C
 // crosses its 10-frame threshold (caller removes the record); the main path
@@ -584,127 +584,130 @@ extern "C" void func_802B37F4(CfHikariItemRecord* self) {
 // sparkle offsets, then refreshes the 0x38/0x3C colours through the
 // 0x10/0x20 flag pair.  Returns 0 while the record stays alive.
 extern "C" s32 func_802B3810(CfHikariItemRecord* self, f32 delta) {
-    u16 flags = self->field_42;
-    const f32* base = (const f32*)lbl_eu_80577680; // hoisted lis/addi (r29)
-    int r28 = (flags & 0x80) ? 0 : 1; // mirrors the 0x80 flag (0 when set)
-    self->field_42 = flags & 0xFFF0;   // clears the low 4 bits (retail mask 16,27)
-    s32 r25 = 1;
+    u32 flags = self->field_42;
+    const u32* g = lbl_eu_80577680;
+    CfHikariItemRecord* rec = self;
+    s32 ret = 1;
+    rec->field_42 = flags & 0xFFF0;
 
     if (flags & 0x40) {
         // Spawn trail: burst a fan of 8 particles when the 0x1C timer resets.
-        if (self->field_1C == lbl_eu_80668EF8) {
+        if (rec->field_1C == lbl_eu_80668EF8) {
             for (int i = 0; i < 8; i++) {
-                func_802B3568(func_802B262C(), (const f32*)self, (s16)self->field_40,
+                cf::CfHikariItemManager* mgr = func_802B262C();
+                func_802B3568(mgr, (const f32*)rec, rec->field_40,
                               lbl_eu_80668EFC, lbl_eu_80668F00);
             }
         }
-        self->field_1C += delta;
-        if (self->field_1C >= lbl_eu_80668F04) {
-            self->field_1C = lbl_eu_80668F08; // crossed the threshold: expire
+        rec->field_1C += delta;
+        if (rec->field_1C >= lbl_eu_80668F04) {
+            rec->field_1C = lbl_eu_80668F08; // crossed the threshold: expire
         } else {
-            r25 = 0;
-            self->field_14 += delta;
-            if (self->field_14 < lbl_eu_80668F0C) {
-                self->field_14 = lbl_eu_80668EF8;
-                func_802B3568(func_802B262C(), (const f32*)self, (s16)self->field_40,
+            ret = 0;
+            rec->field_14 += delta;
+            if (rec->field_14 < lbl_eu_80668F0C) {
+                rec->field_14 = lbl_eu_80668EF8;
+                cf::CfHikariItemManager* mgr = func_802B262C();
+                func_802B3568(mgr, (const f32*)rec, rec->field_40,
                               lbl_eu_80668EFC, lbl_eu_80668F00);
             }
         }
     } else {
-        r25 = 0;
-        // Squared distance from the record position to the global anchor.
-        f32 d[3];
-        d[0] = base[0] - self->field_00f;
-        d[1] = base[1] - self->field_04f;
-        d[2] = base[2] - self->field_08f;
-        f32 dist2 = d[0] * d[0] + d[1] * d[1] + d[2] * d[2];
+        ret = 0;
+        // Squared distance from the record position to the global anchor
+        // (retail pairs off the component subtracts into ps ops).
+        nw4r::math::VEC3 d;
+        nw4r::math::VEC3Sub(&d, (nw4r::math::VEC3*)&g[0],
+                            (nw4r::math::VEC3*)&rec->field_00);
+        f32 dist2 = d.x * d.x + d.y * d.y + d.z * d.z;
 
-        if (dist2 < lbl_eu_80668F10) {
+        if (dist2 <= lbl_eu_80668F10) {
             // Near the anchor: drift toward it and re-derive both gradient
             // colours from the moving progress values.
-            self->field_0C += delta;
-            self->field_10 += delta;
-            self->field_30 = func_802B41E4(
-                &self->field_0C,
-                &base[4 + (s16)self->field_40 * 8],
+            rec->field_0C += delta;
+            rec->field_10 += delta;
+            rec->field_30 = func_802B41E4(
+                &rec->field_0C,
+                (const f32*)&g[4 + (s16)rec->field_40 * 8],
                 lbl_eu_80513588, 2);
-            self->field_34 = func_802B41E4(
-                &self->field_10,
-                &base[0x14 + (s16)self->field_40 * 8],
+            rec->field_34 = func_802B41E4(
+                &rec->field_10,
+                (const f32*)&g[0x14 + (s16)rec->field_40 * 8],
                 lbl_eu_80513588, 2);
-            self->field_42 |= 0x100;
+            rec->field_42 |= 0x100;
         } else if (!(flags & 0x100)) {
-            self->field_30 = func_802B41E4(
-                &self->field_0C,
-                &base[4 + (s16)self->field_40 * 8],
+            rec->field_30 = func_802B41E4(
+                &rec->field_0C,
+                (const f32*)&g[4 + (s16)rec->field_40 * 8],
                 lbl_eu_80513588, 2);
-            self->field_34 = func_802B41E4(
-                &self->field_10,
-                &base[0x14 + (s16)self->field_40 * 8],
+            rec->field_34 = func_802B41E4(
+                &rec->field_10,
+                (const f32*)&g[0x14 + (s16)rec->field_40 * 8],
                 lbl_eu_80513588, 2);
-            self->field_42 |= 0x100;
+            rec->field_42 |= 0x100;
         }
 
-        if (r28 != 0) {
-            self->field_42 |= 0x3;
+        // The 0x80 test appears twice; retail CSEs both evaluations into
+        // one cntlzw/srwi pair hoisted above the branch.
+        if (!(flags & 0x80)) {
+            rec->field_42 |= 0x3;
             lbl_eu_80664C18++;
             lbl_eu_80664C1C++;
         }
 
         // Accumulator: advance it, wrapping at the gradient table's second
-        // threshold.  The pre-accumulation value stays live for the 20-unit
-        // band check below (retail keeps it in f3 across the store).
-        f32 old18 = self->field_18;
-        self->field_18 = old18 + delta;
-        if (self->field_18 >= lbl_eu_80513598[1]) {
-            self->field_18 = lbl_eu_80668EF8;
+        // threshold.  The post-store value is re-read from memory (retail
+        // keeps the pre-add value in f3 for the band check below).
+        f32 old18 = rec->field_18;
+        rec->field_18 = old18 + delta;
+        if (rec->field_18 >= lbl_eu_80513598[1]) {
+            rec->field_18 = lbl_eu_80668EF8;
         }
 
-        if (dist2 < lbl_eu_80668F14) {
-            if (self->field_18 <= lbl_eu_80668EF8) {
-                self->field_20 = lbl_eu_80668EF8;
-                self->field_42 |= 0x10;
-                self->field_28 = lbl_eu_80668F18 +
-                                 lbl_eu_80668F1C * (f32)ml::math::mtRand(0, 100);
-            } else if (old18 < lbl_eu_80668F20 && self->field_18 >= lbl_eu_80668F28) {
-                self->field_24 = lbl_eu_80668EF8;
-                self->field_42 |= 0x20;
-                self->field_2C = lbl_eu_80668F18 +
-                                 lbl_eu_80668F1C * (f32)ml::math::mtRand(0, 100);
+        if (dist2 <= lbl_eu_80668F14) {
+            f32 new18 = rec->field_18;
+            if (new18 <= lbl_eu_80668EF8) {
+                rec->field_20 = lbl_eu_80668EF8;
+                rec->field_42 |= 0x10;
+                rec->field_28 = lbl_eu_80668F18 +
+                                lbl_eu_80668F1C * (f32)ml::math::mtRand(0, 100);
+            } else if (old18 < lbl_eu_80668F20 && new18 <= lbl_eu_80668F28) {
+                rec->field_24 = lbl_eu_80668EF8;
+                rec->field_42 |= 0x20;
+                rec->field_2C = lbl_eu_80668F18 +
+                                lbl_eu_80668F1C * (f32)ml::math::mtRand(0, 100);
             }
-            if (self->field_40 == 0 && dist2 < lbl_eu_80668F30) {
-                self->field_14 += delta;
-                if (self->field_14 >= lbl_eu_80668F04) {
-                    self->field_14 = lbl_eu_80668EF8;
-                    func_802B3568(func_802B262C(), (const f32*)self,
-                                  (s16)self->field_40, lbl_eu_80668F34,
-                                  lbl_eu_80668F0C);
+            if ((s16)rec->field_40 == 0 && dist2 <= lbl_eu_80668F30) {
+                rec->field_14 += delta;
+                if (rec->field_14 >= lbl_eu_80668F04) {
+                    rec->field_14 = lbl_eu_80668EF8;
+                    cf::CfHikariItemManager* mgr = func_802B262C();
+                    func_802B3568(mgr, (const f32*)rec, rec->field_40,
+                                  lbl_eu_80668F34, lbl_eu_80668F0C);
                 }
             }
         }
     }
 
     // Refresh the 0x38/0x3C sparkle colours for any set 0x10/0x20 flag.
-    f32* fptr = &self->field_20;
+    f32* fp = &rec->field_20;
     for (int i = 0; i < 2; i++) {
-        if (self->field_42 & (0x10 << i)) {
-            r25 = 0;
-            *fptr += delta;
-            self->colors[2 + i] = func_802B41E4(
-                fptr, &base[0x24 + (s16)self->field_40 * 8],
+        if (rec->field_42 & (0x10 << i)) {
+            ret = 0;
+            *fp += delta;
+            rec->colors[2 + i] = func_802B41E4(
+                fp, (const f32*)&g[0x24 + (s16)rec->field_40 * 8],
                 lbl_eu_80513598, 2);
-            if (*fptr != lbl_eu_80668EF8) {
-                if (r28 != 0) {
-                    self->field_42 |= (0x4 << i);
-                    lbl_eu_80664C20++;
-                }
-            } else {
-                self->field_42 &= ~(0x10 << i);
+            if (*fp == lbl_eu_80668EF8) {
+                rec->field_42 &= ~(0x10 << i);
+            } else if (!(flags & 0x80)) {
+                rec->field_42 |= (0x4 << i);
+                lbl_eu_80664C20++;
             }
         }
-        fptr++;
+        fp++;
     }
-    return r25;
+    return ret;
 }
 
 // (us-802b6710): per-frame Hikari record update.  Clears the upper

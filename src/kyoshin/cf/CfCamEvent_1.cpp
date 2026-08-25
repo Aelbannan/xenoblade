@@ -1786,7 +1786,7 @@ void func_8007990C(CfCamEventManager* self, u32 a, u32 b, CamEventVecSrc* c, u32
     if (st == 9) {
         // Scale the +0x18 triplet into a temp, append it (p5 stays the raw
         // source pointer).
-        ml::CVec3 tmp;
+        CamTripletLocals tmp;
         // Compound-scale per component: keeps MWCC's lfs/fmuls/stfs
         // per-component schedule closest to retail.
         tmp.x = c->v2.x;
@@ -1795,12 +1795,12 @@ void func_8007990C(CfCamEventManager* self, u32 a, u32 b, CamEventVecSrc* c, u32
         tmp.x *= lbl_eu_8066A20C;
         tmp.y *= lbl_eu_8066A20C;
         tmp.z *= lbl_eu_8066A20C;
-        func_80078D08(self, a, (ml::CVec3*)c, &tmp, b, 0, c->f_24);
+        func_80078D08(self, a, (ml::CVec3*)c, (ml::CVec3*)&tmp, b, 0, c->f_24);
     } else if (st == 8) {
         // Copy both aim vectors, then (when the follow cam exists) subtract
         // its aim vector from each.
-        ml::CVec3 v1;
-        ml::CVec3 v2;
+        CamTripletLocals v1;
+        CamTripletLocals v2;
         v1.x = c->v0.x;
         v1.y = c->v0.y;
         v1.z = c->v0.z;
@@ -1818,10 +1818,10 @@ void func_8007990C(CfCamEventManager* self, u32 a, u32 b, CamEventVecSrc* c, u32
             nw4r::math::VEC3Sub(pv1, pv1, pd);
             nw4r::math::VEC3Sub(pv2, pv2, pd);
         }
-        func_80078D08(self, a, &v1, &v2, b, 0, c->f_24);
+        func_80078D08(self, a, (ml::CVec3*)&v1, (ml::CVec3*)&v2, b, 0, c->f_24);
     } else if (st == 0xA) {
-        ml::CVec3 v1;
-        ml::CVec3 v2;
+        CamTripletLocals v1;
+        CamTripletLocals v2;
         v1.x = c->v0.x;
         v1.y = c->v0.y;
         v1.z = c->v0.z;
@@ -1829,9 +1829,9 @@ void func_8007990C(CfCamEventManager* self, u32 a, u32 b, CamEventVecSrc* c, u32
         v2.y = c->v1.y;
         v2.z = c->v1.z;
         if (self->field_0x34 != 0) {
-            func_80074230(&v1, &v2);
+            func_80074230((ml::CVec3*)&v1, (ml::CVec3*)&v2);
         }
-        func_80078D08(self, a, &v1, &v2, b, 0, c->f_24);
+        func_80078D08(self, a, (ml::CVec3*)&v1, (ml::CVec3*)&v2, b, 0, c->f_24);
     } else {
         // Default: only append while the global cam state is in its busy
         // frame range.

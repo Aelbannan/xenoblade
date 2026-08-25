@@ -2325,20 +2325,20 @@ void func_804CC3A4(EffectScene* out, const EffSrc3* src) {
     func_804E0E48((CSchedAnimItem*)&out->field_0x20c, (u8*)subA->field_0xf8,
                   (f32*)type);
     func_804E17A4((CSchedAnimItem*)&out->field_0x238,
-                  (u8*)subA->field_0xfc);
+                  (u8*)((SceneSubObj*)out->field_0x0c)->field_0xfc);
     func_804E196C((CSchedAnimItem*)&out->field_0x24c,
-                  (u8*)subA->field_0x104);
+                  (u8*)((SceneSubObj*)out->field_0x0c)->field_0x104);
     func_804E1AA8((CSchedAnimItem*)&out->field_0x25c,
-                  (u8*)subA->field_0x108);
+                  (u8*)((SceneSubObj*)out->field_0x0c)->field_0x108);
     func_804E1D50((CSchedAnimItem*)&out->field_0x278,
-                  (u8*)subA->field_0x110);
+                  (u8*)((SceneSubObj*)out->field_0x0c)->field_0x110);
     func_804E26D8((CSchedAnimItem*)&out->field_0x2e8,
-                  (u8*)subA->field_0x114);
+                  (u8*)((SceneSubObj*)out->field_0x0c)->field_0x114);
     func_804E214C((CSchedAnimItem*)&out->field_0x2a8,
-                  (u8*)subA->field_0x10c,
+                  (u8*)((SceneSubObj*)out->field_0x0c)->field_0x10c,
                   ((((SceneSubObj*)out->field_0x0c)->field_0x1c >> 11) & 1) != 0);
     func_804E2D8C((CSchedAnimItem*)&out->field_0x310,
-                  (u8*)subA->field_0x118);
+                  (u8*)((SceneSubObj*)out->field_0x0c)->field_0x118);
 
     MemManGlob* mg = (MemManGlob*)lbl_eu_8065FC18;
     mtl::ALLOC_HANDLE h = (mtl::ALLOC_HANDLE)mg->field_0x04;

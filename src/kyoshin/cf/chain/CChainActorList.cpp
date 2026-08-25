@@ -343,8 +343,7 @@ void func_8027B164(cf::CChainActorList* self){
     _reslist_node<cf::CChainActor*>* node =
         self->mChainActorList.mStartNodePtr->mNext;
     while (node != self->mChainActorList.mStartNodePtr) {
-        cf::CChainActor* actor = node->mItem;
-        ((CChainActorVtIf*)actor)->v003();
+        ((CChainActorVtIf*)node->mItem)->v003();
         node = node->mNext;
     }
     // Pass 2: detach every node (marking each slot free via mNext = 0).

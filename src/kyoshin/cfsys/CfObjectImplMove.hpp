@@ -27,13 +27,19 @@ struct CfObjectImplMoveData {
 };
 
 class CfMoveFieldE4;
+// Forward views used by the class declarations below.
+struct CfVf218Result;
+struct CfVf2A048Result;
+struct CfBoundObj;
+
 // Vtable-view replacement for the driver sub-object dispatch: genuine virtual
 // calls reproduce retail's r12 dispatch (lwz r12,0(rX); lwz r12,slot(r12)).
 // Slots 0xAC/0x128 return position objects, slot 0x220 takes the move id.
 class CfObjectImplMoveSubObj {
 public:
-    virtual void* f00(); virtual void* f01(); virtual void* f02(); virtual void* f03();
-    virtual void* f04(); virtual void* f05(); virtual void* f06(); virtual void* f07();
+    virtual void* f00(); virtual u32 f01(u32 a); virtual void* f02(u32 a); virtual void* f03();
+    virtual void* f04(u32 a); virtual void* f05(); virtual void* f06(u32 a);
+    virtual void* f07(u32 a);
     virtual void* f08(); virtual void* f09(); virtual void* f10(); virtual void* f11();
     virtual void* f12(); virtual void* f13(); virtual void* f14(); virtual void* f15();
     virtual void* f16(); virtual void* f17(); virtual void* f18(); virtual void* f19();
@@ -198,8 +204,8 @@ struct CfEmbeddedSubObj_3E9C {
     virtual void* f24(); virtual void* f25(); virtual void* f26(); virtual void* f27();
     virtual void* f28(); virtual void* f29(); virtual void* f30(); virtual void* f31();
     virtual void* f32(); virtual void* f33();
-    virtual void vfn90(f32 v);    // index 34 -> vtable 0x90 (presentation float)
-    virtual f32 vfn94();          // index 35 -> vtable 0x94 (float query)
+    virtual void vfn90(float v);  // index 34 -> vtable 0x90 (presentation float)
+    virtual float vfn94();        // index 35 -> vtable 0x94 (float query)
     virtual void* f36(); virtual void* f37(); virtual void* f38(); virtual void* f39();
     virtual void* f40(); virtual void* f41(); virtual void* f42(); virtual void* f43();
     virtual void* f44(); virtual void* f45(); virtual void* f46(); virtual void* f47();
@@ -208,7 +214,7 @@ struct CfEmbeddedSubObj_3E9C {
     virtual void* f56(); virtual void* f57(); virtual void* f58(); virtual void* f59();
     virtual void* f60(); virtual void* f61(); virtual void* f62(); virtual void* f63();
     virtual void* f64(); virtual void* f65();
-    virtual void* vfn110();       // index 66 -> vtable 0x110 (bound-object fetch)
+    virtual CfBoundObj* vfn110(); // index 66 -> vtable 0x110 (bound-object fetch)
     virtual void* f67(); virtual void* f68(); virtual void* f69(); virtual void* f70();
     virtual void* f71();
     virtual void* f72(); virtual void* f73(); virtual void* f74(); virtual void* f75();
@@ -256,7 +262,9 @@ struct CfEmbeddedSubObj_3E9C {
 struct CfMoveVf298Result {
     u8 _00_03[0x4];               // 0x00-0x03
     u32 field_0x4;                // 0x04 (actor id)
-    u8 _08_4F[0x50 - 0x08];       // 0x08-0x4f
+    u8 _08_47[0x48 - 0x08];       // 0x08-0x47
+    u32 field_48;                 // 0x48 (knockback strength, func_800CD5DC)
+    u8 _4C_4F[0x50 - 0x4c];       // 0x4c-0x4f
     void* field_0x50;             // 0x50
 };
 
@@ -622,6 +630,59 @@ public:
     virtual void* f171(); virtual void* f172(); virtual void* f173();
     virtual void f174();
     virtual void vf2C4(void* a, f32 x, f32 y, f32 z);  // index 175 -> vtable 0x2c4
+    // Fillers up to the slots dispatched by func_800CD5DC's partner tail.
+    virtual void* f176(); virtual void* f177(); virtual void* f178(); virtual void* f179();
+    virtual void* f180(); virtual void* f181(); virtual void* f182(); virtual void* f183();
+    virtual void* f184(); virtual void* f185(); virtual void* f186(); virtual void* f187();
+    virtual void* f188(); virtual void* f189(); virtual void* f190(); virtual void* f191();
+    virtual void* f192(); virtual void* f193(); virtual void* f194(); virtual void* f195();
+    virtual void* f196(); virtual void* f197(); virtual void* f198(); virtual void* f199();
+    virtual void* f200(); virtual void* f201(); virtual void* f202(); virtual void* f203();
+    virtual void* f204(); virtual void* f205(); virtual void* f206(); virtual void* f207();
+    virtual void* f208(); virtual void* f209(); virtual void* f210(); virtual void* f211();
+    virtual void* f212(); virtual void* f213(); virtual void* f214(); virtual void* f215();
+    virtual void* f216(); virtual void* f217(); virtual void* f218(); virtual void* f219();
+    virtual void* f220(); virtual void* f221(); virtual void* f222(); virtual void* f223();
+    virtual void* f224(); virtual void* f225(); virtual void* f226(); virtual void* f227();
+    virtual void* f228(); virtual void* f229(); virtual void* f230(); virtual void* f231();
+    virtual void* f232(); virtual void* f233(); virtual void* f234(); virtual void* f235();
+    virtual void* f236(); virtual void* f237(); virtual void* f238(); virtual void* f239();
+    virtual void* f240(); virtual void* f241(); virtual void* f242(); virtual void* f243();
+    virtual void* f244(); virtual void* f245(); virtual void* f246(); virtual void* f247();
+    virtual void* f248(); virtual void* f249(); virtual void* f250(); virtual void* f251();
+    virtual void* f252(); virtual void* f253(); virtual void* f254(); virtual void* f255();
+    virtual void* f256(); virtual void* f257(); virtual void* f258(); virtual void* f259();
+    virtual void* f260(); virtual void* f261(); virtual void* f262(); virtual void* f263();
+    virtual void* f264(); virtual void* f265(); virtual void* f266(); virtual void* f267();
+    virtual void* f268(); virtual void* f269(); virtual void* f270(); virtual void* f271();
+    virtual void* f272(); virtual void* f273(); virtual void* f274(); virtual void* f275();
+    virtual void* f276(); virtual void* f277(); virtual void* f278(); virtual void* f279();
+    virtual void* f280(); virtual void* f281(); virtual void* f282(); virtual void* f283();
+    virtual void* f284(); virtual void* f285(); virtual void* f286(); virtual void* f287();
+    virtual void* f288(); virtual void* f289(); virtual void* f290(); virtual void* f291();
+    virtual void* f292(); virtual void* f293(); virtual void* f294(); virtual void* f295();
+    virtual void* f296(); virtual void* f297(); virtual void* f298(); virtual void* f299();
+    virtual void* f300(); virtual void* f301(); virtual void* f302(); virtual void* f303();
+    virtual void* f304(); virtual void* f305(); virtual void* f306(); virtual void* f307();
+    virtual void* f308(); virtual void* f309(); virtual void* f310(); virtual void* f311();
+    virtual void* f312(); virtual void* f313(); virtual void* f314(); virtual void* f315();
+    virtual void* f316(); virtual void* f317(); virtual void* f318(); virtual void* f319();
+    virtual void* f320(); virtual void* f321(); virtual void* f322(); virtual void* f323();
+    virtual void* f324(); virtual void* f325(); virtual void* f326(); virtual void* f327();
+    virtual void* f328(); virtual void* f329(); virtual void* f330(); virtual void* f331();
+    virtual void* f332(); virtual void* f333(); virtual void* f334(); virtual void* f335();
+    virtual void* f336(); virtual void* f337(); virtual void* f338(); virtual void* f339();
+    virtual void* f340(); virtual void* f341(); virtual void* f342(); virtual void* f343();
+    virtual void* f344(); virtual void* f345(); virtual void* f346(); virtual void* f347();
+    virtual void* f348(); virtual void* f349(); virtual void* f350(); virtual void* f351();
+    virtual void* f352(); virtual void* f353(); virtual void* f354(); virtual void* f355();
+    virtual void* f356(); virtual void* f357(); virtual void* f358(); virtual void* f359();
+    virtual void* f360(); virtual void* f361(); virtual void* f362(); virtual void* f363();
+    virtual void* f364(); virtual void* f365(); virtual void* f366(); virtual void* f367();
+    virtual void* vf5c8(void* a);              // index 368 -> vtable 0x5c8
+    virtual void* vf5cc();                     // index 369 -> vtable 0x5cc
+    virtual void* f370();
+    virtual void* vf5d0();                     // index 371 -> vtable 0x5d0
 
     CfActorObj4* field_04;                 // 0x04
     u8 field_08[8];                        // 0x08 (handler block probed by func_80148778)
@@ -729,6 +790,33 @@ struct CfMoveBMId {
     u32 field_0;                               // 0x00
 };
 
+// CBattleManager::func_800EA444 result view reading the flag word at +0x824
+// (func_800CD5DC probes bit 11).
+struct CfMoveBM824 {
+    u8 _00_823[0x824];                         // 0x00-0x823
+    u32 field_824;                             // 0x824 (flag word; bit 11)
+};
+
+// Result of the embedded sub-object's slot 0x218 (func_800CD5DC knockback
+// scaling): signed halfword at +0x28.
+struct CfVf218Result {
+    u8 _00_27[0x28];                           // 0x00-0x27
+    s16 field_28;                              // 0x28
+};
+
+// Result view shared by CfActorObj::vf2A0 / vf2A4: compared words at +0x48.
+struct CfVf2A048Result {
+    u8 _00_47[0x48];                           // 0x00-0x47
+    u32 field_48;                              // 0x48
+};
+
+// Object returned by the embedded sub-object's slot 0x110: its +0x18 is the
+// bound move-driver object swapped by func_800CD5DC's partner tail.
+struct CfBoundObj {
+    u8 _00_17[0x18];                           // 0x00-0x17
+    void* field_0x18;                          // 0x18 (bound move object)
+};
+
 // Battle-manager gate view for func_800CC964: battle-intro counter halfword
 // at +0x20c8 suppresses the 0x27 request while non-zero.
 struct CBattleManagerCcGate {
@@ -785,6 +873,19 @@ void func_8007B044(void* shake, int flag);    // camera-shake dispatch (func_800
 // Retail symbol is unmangled - keep C linkage.
 extern "C" void func_800CB21C(CfObjectImplMoveObj* self, u32 id);
 
+// Battle-manager helpers dispatched by func_800CD5DC (retail symbols are
+// unmangled; owners: CfObjectImplEne.cpp / CBattleManager.cpp).
+extern "C" int func_800DA06C(void* mgr, void* obj);
+extern "C" void func_800D9978(void* mgr, void* obj);
+extern "C" void func_800D9CA0(void* mgr, void* target);
+extern "C" void func_800DA0A4(void* mgr, void* actor, u32 param);
+// Voice-manager hook fired at the end of func_800CD5DC's case 8 body.
+extern "C" void func_802A2D0C(void* actor);
+// Vision-system refresh (code_800F42AC.cpp), called by func_800CD5DC.
+extern "C" void func_800F449C(void* obj);
+// Battle-status add helper (CActParamAnimGame.cpp), used by func_800CD5DC.
+extern "C" void func_8004CEF8(void* obj, u32 param);
+
 // Event dispatcher defined below in this TU; retail symbol is unmangled, so
 // declare it with C linkage here (the definition below inherits it).
 extern "C" void func_800CB9AC(CfObjectImplMoveObj* self, u32 id);
@@ -833,6 +934,9 @@ extern const f32 lbl_eu_80666C68;   // move-distance base threshold
 // conversion (CfMapEffectManager.hpp convention).
 extern const f64 lbl_eu_80666C90;
 extern const f32 lbl_eu_80666C64;   // func_804E3CDC second argument
+extern const f32 lbl_eu_80666C78;   // func_800CD5DC knockback divisor
+// sdata2 magic paired with the 0x43300000 int->float conversion.
+extern const f64 lbl_eu_80666C80;
 
 extern u32 lbl_eu_80663EF0;
 class CScn;  // monolib scene (canonical decl: cf/object/CfObjectMove.hpp)

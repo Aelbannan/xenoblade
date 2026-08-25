@@ -1011,9 +1011,9 @@ void* cf::CfGameManager::func_8007C8C8() {
         func_801889D0(lbl_eu_80663E60);
     }
     // func_800D9354 takes cf::CBattleManager* (decl on CBattleManagerApi.hpp);
-    // the getter's void* result converts implicitly (no codegen change vs the
-    // old CBattleManagerView* cast).
-    func_800D9354(getInstance__Q22cf14CBattleManagerFv());
+    // explicit cast (the class is incomplete here; MWCC rejects the implicit
+    // void* conversion) - no codegen change vs the old CBattleManagerView* cast.
+    func_800D9354((cf::CBattleManager*)getInstance__Q22cf14CBattleManagerFv());
     if (lbl_eu_80663E24 & 0x80) {
         func_80295A88(lbl_eu_80664A10);
     }

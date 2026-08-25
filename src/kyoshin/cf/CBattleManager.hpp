@@ -7,9 +7,11 @@
 #include "kyoshin/cf/IBattleEvent.hpp"
 #include "kyoshin/cf/chain/CChain.hpp"
 #include "kyoshin/cf/chain/UnkClass_800D8DBC.hpp"
-#define func_800F3970 battleManagerVisionDispatchUnused
+// CSuddenCommu.hpp's C-linkage import signatures are aligned with the chain /
+// CfObjectActor / CfGameManager headers (see CSuddenCommu.hpp), so it can be
+// included directly without rename guards; its func_800F3970 copy is gone
+// (single decl on CBattleManagerApi.hpp, included above).
 #include "kyoshin/cf/CVision.hpp"
-#undef func_800F3970
 // CSuddenCommu.hpp's C-linkage import signatures are aligned with the chain /
 // CfObjectActor / CfGameManager headers (see CSuddenCommu.hpp), so it can be
 // included directly without rename guards.

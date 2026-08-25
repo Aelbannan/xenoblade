@@ -21,7 +21,7 @@ class CException;
 extern "C" { // lbl_* and func_* retail names need unmangled emission
     extern CNReqtaskSaveVtbl* lbl_eu_806659E0;   // installed save-task vtable pointer (sinit target)
     extern u32 lbl_eu_8056FD68[];               // save-task vtable data - array type prevents sda21
-    extern u64 lbl_eu_806659D8;                  // save-task "open" flag (8-byte .sbss block, byte 0 read)
+    extern u8 lbl_eu_806659D8;                   // save-task "open" flag (byte 0 of an 8-byte .sbss block)
     extern const wchar_t* lbl_eu_80663B60;       // NAND error message for -4 / -64
     extern const wchar_t* lbl_eu_80663B64;       // NAND error message for -3 / -2
 
@@ -84,6 +84,8 @@ extern "C" { // lbl_* and func_* retail names need unmangled emission
 // NAND dealloc helper (also referenced by CNReqtaskSaveBanner): while the
 // save-task "open" flag is set, close the pending NAND handle (func_804DA69C).
 // The task arguments are unused here (retail ignores them).
+// Retail only tests byte 0 of the 8-byte .sbss flag (lbz @sda21), so the
+// block-scope declaration narrows the view to a u8 for this read.
 void func_804DA4CC(CNandTask* data, CNandTask* dealloc) {
     if (lbl_eu_806659D8 != 0) {
         func_804DA69C();
@@ -205,6 +207,8 @@ s32 __declspec(noinline) func_804DA69C(void) {
 // result is returned either way (kept in r30 across the dispatcher call).
 // noinline: retail func_804DAD38 emits `bl func_804DA70C`; without it MWCC
 // inlines this wrapper into the state machine.
+#pragma push
+#pragma optimize_for_size on  // -O4,s keeps the retail stmw r30 frame
 __declspec(noinline) s32 func_804DA70C(const char* path, u8 perm, u8 attr) {
     lbl_eu_806659D0 = 1;
     lbl_eu_806659D4 = 0;
@@ -215,10 +219,13 @@ __declspec(noinline) s32 func_804DA70C(const char* path, u8 perm, u8 attr) {
     }
     return ret;
 }
+#pragma pop
 
 // us-804de9ac: func_804DA76C
 // NAND delete (async) wrapper; same shape as func_804DA70C but only the path
 // arrives from the caller (callback/command block go in r4/r5).
+#pragma push
+#pragma optimize_for_size on  // -O4,s keeps the retail stmw r30 frame
 s32 func_804DA76C(const char* path) {
     lbl_eu_806659D0 = 1;
     lbl_eu_806659D4 = 0;
@@ -229,12 +236,15 @@ s32 func_804DA76C(const char* path) {
     }
     return ret;
 }
+#pragma pop
 
 // us-804dea0c: func_804DA7CC
 // NAND move (async) wrapper; same shape as func_804DA70C but the source and
 // destination paths arrive from the caller (callback/command block in r5/r6).
 // noinline: retail func_804DAD38 emits `bl func_804DA7CC`; without it MWCC
 // inlines this wrapper into the state machine.
+#pragma push
+#pragma optimize_for_size on  // -O4,s keeps the retail stmw r30 frame
 __declspec(noinline) s32 func_804DA7CC(const char* from, const char* to) {
     lbl_eu_806659D0 = 1;
     lbl_eu_806659D4 = 0;
@@ -245,6 +255,7 @@ __declspec(noinline) s32 func_804DA7CC(const char* from, const char* to) {
     }
     return ret;
 }
+#pragma pop
 
 void func_804DA82C(){}
 
@@ -254,6 +265,8 @@ void func_804DA82C(){}
 // path in that order, and the wrapper re-orders them into NANDReadDirAsync's
 // (path, nameList, num) call (retail: r3=arg3, r4=arg1, r5=arg2). noinline
 // keeps this wrapper from being folded into same-TU callers.
+#pragma push
+#pragma optimize_for_size on  // -O4,s keeps the retail stmw r30 frame
 __declspec(noinline) s32 func_804DA898(char* nameList, u32* num, const char* path) {
     lbl_eu_806659D0 = 1;
     lbl_eu_806659D4 = 0;
@@ -265,10 +278,13 @@ __declspec(noinline) s32 func_804DA898(char* nameList, u32* num, const char* pat
     }
     return ret;
 }
+#pragma pop
 
 // us-804deb4c: func_eu_804DEB4C
 // NAND create-dir (async) wrapper; same shape as func_804DA70C (callback and
 // command block in r6/r7).
+#pragma push
+#pragma optimize_for_size on  // -O4,s keeps the retail stmw r30 frame
 s32 func_eu_804DEB4C(const char* path, u8 perm, u8 attr) {
     lbl_eu_806659D0 = 1;
     lbl_eu_806659D4 = 0;
@@ -279,10 +295,13 @@ s32 func_eu_804DEB4C(const char* path, u8 perm, u8 attr) {
     }
     return ret;
 }
+#pragma pop
 
 // us-804debac: func_804DA91C
 // NAND change-dir (async) wrapper; same shape as func_804DA76C (callback and
 // command block in r4/r5).
+#pragma push
+#pragma optimize_for_size on  // -O4,s keeps the retail stmw r30 frame
 s32 func_804DA91C(const char* path) {
     lbl_eu_806659D0 = 1;
     lbl_eu_806659D4 = 0;
@@ -293,6 +312,7 @@ s32 func_804DA91C(const char* path) {
     }
     return ret;
 }
+#pragma pop
 
 extern "C" void func_804DA97C(void* param) {
     lbl_eu_806659D0 = 0;
@@ -383,31 +403,44 @@ int func_804DAAF8(CNRequest* self, u8* out) {
 // CNRequest helper: initialises the CNReqtaskLoad sub-task block at +0x04
 // (forwarding the NAND path/buffer/size/flag) and records the returned task
 // vtable at +0x00; returns whether init succeeded.
+// optimize_for_size: retail converts the returned pointer to bool with the
+// int-style addic/subfe pair (-O4,s lowering of "!= 0"); the preceding
+// "off" pragma pairs in this TU otherwise revert this function to the
+// pointer-style neg/or/rlwinm form.
+#pragma push
+#pragma optimize_for_size on
 int func_804DABF8(CNRequest* req, u32 a1, u32 a2, u32 a3, u8 flag) {
     CNReqtaskLoadVtbl** v = func_804DAF70((u8*)req->field_0x4, (const char*)a1, a2, a3, flag);
     req->field_0x0 = (CNandTask*)v;
     return v != 0;
 }
+#pragma pop
 
 // us-804deea8: func_804DAC34
 // CNRequest helper: initialises the CNReqtaskRemove sub-task block at +0x04
 // (forwarding the NAND path and remove flags) and records the returned task
 // vtable at +0x00; returns whether init succeeded.
+#pragma push
+#pragma optimize_for_size on
 int func_804DAC34(CNRequest* req, u32 a1, u8 flag) {
     CNReqtaskRemoveVtbl** v = func_804DB240((u8*)req->field_0x4, (const char*)a1, flag);
     req->field_0x0 = (CNandTask*)v;
     return v != 0;
 }
+#pragma pop
 
 // us-804deee4: func_804DAC70
 // CNRequest helper: initialises the CNReqtaskReaddir sub-task block at +0x04
 // (forwarding the entry buffer, count, directory handle and type filter) and
 // records the returned task vtable at +0x00; returns whether init succeeded.
+#pragma push
+#pragma optimize_for_size on
 int func_804DAC70(CNRequest* req, u32 a1, u32 a2, u32 a3, u8 flag) {
     CNReqtaskReaddirVtbl** v = func_804DB0F0((CNReqtaskReaddirData*)req->field_0x4, (u32*)a1, a2, (u32*)a3, flag);
     req->field_0x0 = (CNandTask*)v;
     return v != 0;
 }
+#pragma pop
 
 // us-804def20: func_eu_804DEF20
 // CNRequest helper: builds the request record at +0x04 via the monolib core
@@ -415,11 +448,14 @@ int func_804DAC70(CNRequest* req, u32 a1, u32 a2, u32 a3, u8 flag) {
 // the returned global string pointer at +0x00; returns whether it succeeded.
 // The two flag params are u8 (not u32) so forwarding them to the u8 callee
 // params emits no rlwinm truncation (retail passes them straight through).
+#pragma push
+#pragma optimize_for_size on
 int func_eu_804DEF20(CNRequest* req, const char* buf, u8 size, u8 a3) {
     char** v = func_eu_804F9E98((MonoRequestState*)req->field_0x4, buf, size, a3);
     req->field_0x0 = (CNandTask*)v;
     return v != 0;
 }
+#pragma pop
 
 // us-804def5c: func_804DACAC
 // CNRequest helper: initialises the CNReqtaskSaveBanner sub-task block at
@@ -427,11 +463,14 @@ int func_eu_804DEF20(CNRequest* req, const char* buf, u8 size, u8 a3) {
 // returned task vtable at +0x00; returns whether init succeeded.
 // a2 is u8 (not u32) so forwarding it to the u8 callee param emits no
 // rlwinm truncation (retail passes it straight through).
+#pragma push
+#pragma optimize_for_size on
 int func_804DACAC(CNRequest* req, u32 a1, u8 a2) {
     CNReqtaskSaveBannerVtbl** v = func_804F4D7C((CNReqtaskSaveBannerData*)req->field_0x4, (CNReqtaskSaveBannerTarget*)a1, a2);
     req->field_0x0 = (CNandTask*)v;
     return v != 0;
 }
+#pragma pop
 
 // Save sub-task config. Retail func_804DACE8 takes 6 arguments
 // (data, path, write args, flags): strcpy(data, path), stores the four
@@ -599,6 +638,10 @@ u8 lbl_eu_80660028[16];
 // retail layout (D0+3pad, D4, D8(8B align8), E0, E4+3pad); align 8 via D8.
 u8 lbl_eu_806659D0;
 s32 lbl_eu_806659D4;
-u64 lbl_eu_806659D8;
+// Retail only reads byte 0 of this flag (lbz @sda21 in func_804DA4CC), so the
+// symbol is declared/defined as u8; the remaining 7 bytes of the retail
+// .sbss block are kept as an explicit pad so lbl_eu_806659E0 stays at +0x10.
+u8 lbl_eu_806659D8;
+u8 lbl_eu_806659D8_pad[7];
 CNReqtaskSaveVtbl* lbl_eu_806659E0;
 u32 lbl_eu_806659E4;   // retail 1B at +0x14; 4B pads section to 0x18

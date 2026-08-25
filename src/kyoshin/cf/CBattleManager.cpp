@@ -12574,11 +12574,14 @@ check:
             mgr->mActorList3.mStartNodePtr->mNext;
         while (cur != mgr->mActorList3.mStartNodePtr) {
             cf::CfObjectActor* actor = cur->mItem;
-            // Retail: store flags first, then branch over the moveBase calc
+            // Retail: store flags first, then branch over the moveBase
+            // adjustment only (adjusted-this pattern: the call still happens
+            // with the raw pointer when actor is null).
             *(u32*)((u8*)actor + 0x3f04) |= 0x40;
 
-            if (actor != nullptr) {
-                void* result = func_800AD860((u8*)actor + 0x3e9c);
+            {
+                void* base = (actor != nullptr) ? (void*)((u8*)actor + 0x3e9c) : (void*)actor;
+                void* result = func_800AD860(base);
                 if (result != nullptr) {
                     *(u32*)((u8*)result + 0x3f08) |= 0x8000000;
                     func_80197BA4(result, 0, 0);

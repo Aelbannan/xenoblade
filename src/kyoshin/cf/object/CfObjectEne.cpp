@@ -14,6 +14,12 @@
 // func_80174B4C / func_80174C98: single unified decls on the owner header.
 #include "kyoshin/cf/CfMapItemManager.hpp"
 #include "kyoshin/cf/CfGameManagerData.hpp"  // H3 label-owner decl (lbl_eu_80663E14; lbl_eu_80663E24)
+#include "kyoshin/cf/object/CfObjectEne.hpp" // cf::CfObjectEne + CfEneVtables/CfEneTailView/CfEneReloadSlot views
+
+// Global gimmick-settings accessor; single typed view lives on CSuddenCommu.hpp
+// (member form) - this TU only null-tests it and forwards to void* helpers, so
+// use the plain extern "C" void* spelling (CtrlMoveEne.hpp convention).
+extern "C" void* getUnk80664658(void);
 
 
 // Copy block: 0x00-0x78 (120 bytes), loaded from r4 then stored to self+0x17E4/0x1650

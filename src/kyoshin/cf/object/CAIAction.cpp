@@ -205,7 +205,91 @@ u32 func_8014AC38(cf::CAIAction* self, const cf::CAIActionSlot* in) {
     slot->unk10 = slot->unk10 | 0x8;
     return 1;
 }
-void func_8014AE00(){}
+// Removes the action slot found at ring offset i whose flag bit 0x10 (at
+// +0x10) is set: clears it out of the ring by compacting from whichever side
+// of the ring is closer (shift entries down and bump the head, or shift
+// entries up), decrementing unk214. The removed slot's float is read into a
+// scratch local first.
+void func_8014AE00(cf::CAIAction* self) {
+    for (u32 i = 0; i < self->unk214; i++) {
+        cf::CAIActionSlot* slot =
+            (cf::CAIActionSlot*)((u8*)self->unk20C +
+                                 (((self->unk210 + i) % self->unk218) << 5));
+        if ((slot->unk10 & 0x8) == 0)
+            continue;
+
+        // Scratch copy of the removed entry's float (kept in retail).
+        volatile f32 removedValue = slot->unk14;
+        (void)removedValue;
+
+        u32 newCount = self->unk214 - 1;
+        self->unk214 = newCount;
+        s32 mid = (s32)newCount / 2;
+
+        if ((s32)i < mid) {
+            // Near the head: move entries [0, i) one slot toward the tail,
+            // then advance the ring head past the vacated front slot.
+            for (s32 j = (s32)i - 1; j >= 0; j--) {
+                s32 cap = (s32)self->unk218;
+                s32 pos = (s32)self->unk210 + j;
+                s32 q = pos / cap;
+                s32 cur = pos - q * cap;
+                s32 nxt = cur + 1;
+                s32 q2 = nxt / cap;
+                cf::CAIActionSlot* src =
+                    (cf::CAIActionSlot*)((u8*)self->unk20C + ((u32)cur << 5));
+                cf::CAIActionSlot* dst = (cf::CAIActionSlot*)(
+                    (u8*)self->unk20C + ((u32)(nxt - q2 * cap) << 5));
+                dst->unk00 = src->unk00;
+                {
+                    u32 t8 = src->unk08;
+                    u32 t4 = src->unk04;
+                    dst->unk04 = t4;
+                    dst->unk08 = t8;
+                }
+                dst->unk0C = src->unk0C;
+                dst->unk10 = src->unk10;
+                dst->unk12 = src->unk12;
+                dst->unk14 = src->unk14;
+                dst->unk18 = src->unk18;
+                dst->unk1C = src->unk1C;
+            }
+            s32 head = (s32)self->unk210 + 1;
+            self->unk210 = (u32)((head % (s32)self->unk218));
+        } else {
+            // Near the tail: pull entries [i+1, count) one slot toward the
+            // front, leaving the head in place.
+            for (u32 j = i; j < self->unk214; j++) {
+                s32 cap = (s32)self->unk218;
+                s32 pos = (s32)self->unk210 + j;
+                s32 q = pos / cap;
+                s32 cur = pos - q * cap;
+                s32 nxt = cur + 1;
+                s32 q2 = nxt / cap;
+                cf::CAIActionSlot* src =
+                    (cf::CAIActionSlot*)((u8*)self->unk20C + ((u32)cur << 5));
+                cf::CAIActionSlot* dst = (cf::CAIActionSlot*)(
+                    (u8*)self->unk20C + ((u32)(nxt - q2 * cap) << 5));
+                dst->unk00 = src->unk00;
+                {
+                    u32 t8 = src->unk08;
+                    u32 t4 = src->unk04;
+                    dst->unk04 = t4;
+                    dst->unk08 = t8;
+                }
+                dst->unk0C = src->unk0C;
+                dst->unk10 = src->unk10;
+                dst->unk12 = src->unk12;
+                dst->unk14 = src->unk14;
+                dst->unk18 = src->unk18;
+                dst->unk1C = src->unk1C;
+            }
+        }
+        // Compensate for the loop increment: the slot at offset i now holds
+        // the next entry, so it must be re-examined.
+        i--;
+    }
+}
 int func_8014B120(cf::CAIAction* self, const cf::CAIActionSlot* in) {
     u32 i;
     for (i = 0; i < self->unk214; i++) {
@@ -2188,22 +2272,24 @@ void func_8015396C(cf::CAIAction* self, u32 sel) {
         else if (flags & 0x4)
             sel = 0x65;
         if (sel != 0) {
+            // Declared index-first: MWCC hands the pointer the lower
+            // callee-saved register this way (retail r25=ptr, r26=idx).
+            u32 i = 0;
             u8* p = self->entries;
-            for (s32 i = 0; i < 0xA0; i++) {
+            while (i < 0xA0) {
                 std::memset(p, 0, 0xE);
                 p += 0xE;
+                i++;
             }
             // Countdown form: MWCC converts the unused-counter loop to
             // mtctr/bdnz with an initial zero guard.
-            for (u32 n = count; n != 0; n--) {
+            u32 k = 0;
+            while (k < count) {
                 const cf::CAIActionTableEntry* e = (const cf::CAIActionTableEntry*)cur;
                 if (e->id == sel &&
                     (u32)(u16)__rlwimi((e->artsId << 8) & 0xFF00, e->artsId, 24, 24, 31) ==
                         (u32)((cf::CAIPartyInfo*)self->unkB14)->artsId) {
                     char name[0x11];
-                    // One zero variable feeds both the name terminator and
-                    // the trailing func_8014B804 arg (retail shares r29).
-                    u32 z = 0;
                     std::memcpy(name, e->name, 0x10);
                     sel = 0;
                     name[0x10] = (u8)sel;
@@ -2221,6 +2307,7 @@ void func_8015396C(cf::CAIAction* self, u32 sel) {
                     return;
                 }
                 cur += 0x16 + e->actionCount * 0xC;
+                i++;
             }
         }
         sel = 0x63;
@@ -2228,15 +2315,16 @@ void func_8015396C(cf::CAIAction* self, u32 sel) {
     }
 
     {
-        // Restart from the first entry (retail re-derives table+2 here).
+        // Derived via the entries member (same address as table+2, but a
+        // distinct expression so MWCC keeps the base pointer live like retail).
         const cf::CAIActionTableEntry* p =
-            (const cf::CAIActionTableEntry*)((const u8*)table + 2);
-        for (u32 n = count; n != 0; n--) {
+            (const cf::CAIActionTableEntry*)table->entries;
+        u32 i = 0;
+        while (i < count) {
             if (p->id == sel &&
                 (u32)(u16)__rlwimi((p->artsId << 8) & 0xFF00, p->artsId, 24, 24, 31) ==
                     (u32)want) {
                 char name[0x11];
-                u32 z = 0;
                 std::memcpy(name, p->name, 0x10);
                 sel = 0;
                 name[0x10] = (u8)sel;
@@ -2254,6 +2342,7 @@ void func_8015396C(cf::CAIAction* self, u32 sel) {
                 return;
             }
             p = (const cf::CAIActionTableEntry*)((const u8*)p + 0x16 + p->actionCount * 0xC);
+            i++;
         }
     }
 }

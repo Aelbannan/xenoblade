@@ -2701,8 +2701,11 @@ UNIT_RULES: dict[str, UnitRules] = {
             ("__vt__11COccCulling", "lbl_eu_80532ED0"),
         ),
         extern_data_sections=(".rodata", ".data", ".sdata", ".sdata2"),
-        # No Chaitin insn_patches (skill forbids). func_801A1188 residual is
-        # r5=&delta / r3=cam vs retail r3/r5 — close in high-level C.
+        # The __sinit_ corner-point table (lbl_eu_805757F0, 0x30) is owned by
+        # the shared retail data slice, not this TU's split: zero the NOBITS
+        # copy and UNDEF the symbol so sinit/setFrustum refs link externally
+        # (same shape as code_80296898 / CCol4).
+        zero_nobits=(".bss",),
     ),
     "code_80187F14.o": UnitRules(
         # Data dissolve: func_80189C88 pools a TU-local 0.0f; retail loads
@@ -6616,13 +6619,14 @@ UNIT_RULES: dict[str, UnitRules] = {
         # Retail splits each white-color byte load onto its own 1-byte blob
         # symbol (nw4r_data.s); our pooled cookie is one symbol, so point the
         # byte-lane relocs at the retail per-byte names as UNDEF refs.
+        # Offsets are absolute .text r_offsets (ctor base 0x528).
         retarget_relocs=(
-            (".text", 0x00AC, "lbl_eu_80669D0D"),
-            (".text", 0x00B0, "lbl_eu_80669D0E"),
-            (".text", 0x00B4, "lbl_eu_80669D0F"),
-            (".text", 0x00BC, "lbl_eu_80669D11"),
-            (".text", 0x00C0, "lbl_eu_80669D12"),
-            (".text", 0x00C4, "lbl_eu_80669D13"),
+            (".text", 0x5D4, "lbl_eu_80669D0D"),
+            (".text", 0x5D8, "lbl_eu_80669D0E"),
+            (".text", 0x5DC, "lbl_eu_80669D0F"),
+            (".text", 0x5E4, "lbl_eu_80669D11"),
+            (".text", 0x5E8, "lbl_eu_80669D12"),
+            (".text", 0x5EC, "lbl_eu_80669D13"),
         ),
         pool_patterns=(
             (struct.pack(">I", 0x00000000), "lbl_eu_80669D00"),
@@ -7151,7 +7155,7 @@ UNIT_RULES: dict[str, UnitRules] = {
         pad_data_section=((".data", 0x268),),
         drop_data_tail=((".data", 0x268),),
     ),
-    "WUD.o_OFF": UnitRules(  # TEMP measurement disable
+    "WUD.o": UnitRules(
         # Retail .data pools rebuilt as named byte arrays in WUD.c; MWCC pads
         # the larger arrays to 4/8 (retail packs at 1/4) — drop the seven
         # zero pads, then trim the compiler's switch table off the tail.
@@ -7164,8 +7168,8 @@ UNIT_RULES: dict[str, UnitRules] = {
             (".data", 0x4F4, 0x4F8),
             (".data", 0x720, 0x724),
             (".data", 0x79C, 0x7A0),
-            (".data", 0x81C, 0x820),
-            (".data", 0x964, 0x968),
+            (".data", 0x818, 0x81C),
+            (".data", 0x958, 0x95C),
         ),
         retarget_relocs=(
             (".text", 0x51EA, "jumptable_80562FA0"),
@@ -7194,6 +7198,8 @@ UNIT_RULES: dict[str, UnitRules] = {
             (".data", 0xD14, 1312),
             (".data", 0xD18, 1328),
         ),
+        # retail names the patch-table ETB pointer "@etb_80010138".
+        exact_renames=(("etb_80010138", "@etb_80010138"),),
         # jumptable_80562FA0[0] = {1} keeps the array out of .bss; re-zero it.
         zero_data_range=((".data", 0xCF4, 0xCF5),),
         drop_data_tail=((".data", 0x11A8),),

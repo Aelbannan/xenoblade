@@ -42,7 +42,7 @@ extern "C" {
     extern void func_804E3CCC(void*);
     extern void func_804E3D0C(void*, void*);
     extern void func_804E3CDC(void*, float, float);
-    extern void* func_804CC1F4(void*, u32, u32, int, int, int);
+    extern "C" void* func_804CC1F4(void*, u32, u32, int, int, int);
     extern void func_804CC1BC(void*);
     extern void func_804CC1D8(void*);
     extern void* func_80495FF0(u32);
@@ -223,7 +223,7 @@ extern "C" void func_80181C90(CREvtModelObj* self, void* r4, void* r5) {
             self->mFileHandle3 == 0 && self->mCount80 != 0) {
             // Open a per-player event file slot (player index = count-1)
             CFileHandle* handle = (CFileHandle*)func_804CC1F4(
-                &lbl_eu_8065FC18, lbl_eu_80663E14, self->mCount80 - 1, 1, 0, 0);
+                &lbl_eu_8065FC18, (u32)lbl_eu_80663E14, self->mCount80 - 1, 1, 0, 0);
             self->mFileHandle3 = handle;
 
             if (handle != 0) {
@@ -813,7 +813,7 @@ extern "C" void func_801832D4(void* self) {
     if (FLD(u32, s, 0x24) == 0) return;
 
     CFileHandle* h = (CFileHandle*)func_804CC1F4(
-        &lbl_eu_8065FC18, (u32)lbl_eu_806642B8, lbl_eu_80663E14,
+        &lbl_eu_8065FC18, (u32)lbl_eu_806642B8, (u32)lbl_eu_80663E14,
         FLD(u32, s, 0x80) - 1, 1, 0);
     FLD(u32, s, 0x7C) = (u32)h;
     if (h == 0) return;

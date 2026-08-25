@@ -242,7 +242,7 @@ int  func_804BE348(void* a, void* b, int c, int d, int e);
 void func_804BE4B4(void* out, int a);
 void func_804BE4E0(void* out, int a);
 int  func_804B526C(void* a, void* b, void* c, void* d, int e, int f, int g);
-void func_8004B7C0(void* a, void* b);
+void* func_8004B7C0(void* out, const ml::CVec3* src); // matches CfGameManager.hpp decl
 void func_800BC3B0(void* a, f32 b);
 void func_80089990(cf::CCtrlMovePC* self);
 void* getPlayer__Q22cf13CfGameManagerFi(int idx);
@@ -319,7 +319,7 @@ extern "C" {
 cf::CCtrlMovePC* __ct__801993C4(cf::CCtrlMovePC* self, void* baseParam, void* obj);
 void func_8019956C(cf::CCtrlMovePC* self);
 void func_80199618(cf::CCtrlMovePC* self);
-void func_80199678(cf::CCtrlMovePC* self, int flag);
+void func_80199678(void* ctrl, int flag); // matches CfGameManager.hpp / CfGimmickObject.hpp
 void func_80199810(cf::CCtrlMovePC* self, const Vec* pos);
 int  func_801999C0(cf::CCtrlMovePC* self);
 void func_8019A9C4(cf::CCtrlMovePC* self);

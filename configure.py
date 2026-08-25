@@ -479,7 +479,7 @@ config.libs = [
             Object(NonMatching, "kyoshin/cf/CfCollCircleImpl.cpp"),
             Object(NonMatching, "kyoshin/cf/CfCollSphereImpl.cpp"),
             Object(NonMatching, "kyoshin/cf/CfCollAABBImpl.cpp"),
-            Object(NonMatching, "kyoshin/cf/CfCollCylinderImpl.cpp"),
+            Object(Matching, "kyoshin/cf/CfCollCylinderImpl.cpp"),
             Object(NonMatching, "kyoshin/cf/CfCollCapsuleImpl.cpp"),
             Object(NonMatching, "kyoshin/cf/object/CfObjectColl.cpp"),
             Object(NonMatching, "kyoshin/cf/object/CfObjectEff.cpp"),
@@ -499,7 +499,7 @@ config.libs = [
             Object(NonMatching, "kyoshin/cfsys/CfObjectImplNpc.cpp"),
             Object(NonMatching, "kyoshin/cfsys/CfObjectImplMove.cpp"),
             Object(NonMatching, "kyoshin/cfsys/CfObjectImplEne.cpp"),
-            Object(NonMatching, "kyoshin/cf/CtrlAct.cpp", mw_version="GC/3.0a5.2"),  # retail store-order scheduling (stfs stays between the stb pairs) only matches under GC/3.0a5.2; Wii/1.1 hoists the stfs to the front
+            Object(NonMatching, "kyoshin/cf/CtrlAct.cpp", mw_version="Wii/1.1"),  # VERIFIED 2026-08: Wii/1.1 emits retail early-stw-before-args for address-taken gate locals (GC/3.0a5.2 sinks them) - net 9->12 FULL_MATCH, func_800D2A5C 98.5%/func_800D4F30 91.5%/func_800D6720 94.8% now pure reg-swap; split PASS 0x2C4 spare
             Object(NonMatching, "kyoshin/cf/CBattleManager.cpp"),  # A/B verified Wii/1.1: GC/3.0a5.2 scores 31/78 vs 46/78 (attempts.jsonl us-800ed400)
             Object(NonMatching, "kyoshin/cf/code_800F42AC.cpp"),
             Object(NonMatching, "kyoshin/cf/CfObjectEnumList.cpp"),
@@ -711,7 +711,7 @@ config.libs = [
             Object(NonMatching, "kyoshin/makecrystal/CMCGetItemBox.cpp", extra_cflags=["-O4,s"]),
             Object(NonMatching, "kyoshin/menu/CMenuTutorial.cpp", extra_cflags=["-O4,s"]),
             Object(NonMatching, "kyoshin/CTutorial.cpp", extra_cflags=["-O4,s"]),
-            Object(NonMatching, "kyoshin/menu/CMenuOption.cpp", extra_cflags=["-O4,s"]),
+            Object(Matching, "kyoshin/menu/CMenuOption.cpp", extra_cflags=["-O4,s", "-func_align 4"]),
             Object(NonMatching, "kyoshin/COption.cpp"),
             Object(NonMatching, "kyoshin/menu/CMenuSkipTimer.cpp", extra_cflags=["-O4,s", "-func_align 4"]),
             Object(NonMatching, "kyoshin/CSkipTimer.cpp"),
@@ -738,7 +738,7 @@ config.libs = [
             Object(Matching, "kyoshin/cf/CfGimmickSaveOff.cpp"),
             Object(NonMatching, "kyoshin/menu/CMenuTutorialList.cpp", extra_cflags=["-O4,s"]),
             Object(NonMatching, "kyoshin/CTutorialList.cpp", extra_cflags=["-O4,s"]),
-            Object(NonMatching, "kyoshin/CLoad.cpp"),
+            Object(Matching, "kyoshin/CLoad.cpp"),
             Object(NonMatching, "kyoshin/CNandData.cpp"),
             Object(NonMatching, "kyoshin/ErrMesData.cpp", shift_jis = False, extra_cflags=["-enc UTF8"]), #JP only
             Object(NonMatching, "kyoshin/CErrMes.cpp"), #EU/US only
@@ -2006,7 +2006,10 @@ config.libs = [
             Object(NonMatching, "monolib/src/core/code_804EE558.cpp"),
             Object(NonMatching, "monolib/src/core/code_804F0258.cpp"),
             Object(Matching, "monolib/src/nand/CNReqtaskSaveBanner.cpp", extra_cflags=["-O4,s", "-func_align 4"]),
-            Object(NonMatching, "monolib/src/nand/CNBanner.cpp", extra_cflags=["-sdata 0"]),  # ALL 9 functions byte-match (code 100%); promotion blocked ONLY by +80B .text overhead from the inline ~IWorkEvent weak copy (see CNBanner.cpp tail note)
+            Object(NonMatching, "monolib/src/nand/CNBanner.cpp", extra_cflags=["-sdata 8"]),  # -sdata 8 (not 0): retail keeps lbl_eu_80665A98 in .sbss; with the default
+    # threshold the 4-byte pointer lands in .bss and the gate fails. Matched
+    # functions never touch small data, so codegen is unaffected (verified:
+     # only the FORCEACTIVE stub words differ).  # ALL 9 functions byte-match (code 100%); promotion blocked ONLY by +80B .text overhead from the inline ~IWorkEvent weak copy (see CNBanner.cpp tail note)
             Object(NonMatching, "monolib/src/core/monolib_eu_804F9E98.cpp", extra_cflags=["-O4,s", "-func_align 4"]), #EU/US only
         ],
     },

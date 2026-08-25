@@ -4,27 +4,32 @@
 #include "monolib/math/CVec3.hpp"
 #include "monolib/math/CCol4.hpp"
 
-// C-linkage imports (retail symbol names - keep linkage/signatures verbatim)
+// C-linkage imports: both carry unmangled verbatim retail symbol names, so
+// they must keep C linkage.
+// - func_800A5B18: cylinder push-out helper (retail symbol is unmangled).
 extern "C" void func_800A5B18(void* a, void* b, void* c, float f1, float f2);
-// Retail exact-symbol import (real renderer is the Fb overload; this call site
-// emits the Fv symbol name verbatim, so it needs C linkage to avoid mangling).
+// - renderCylinder__...Fv: real renderer is the Fb overload; this call site
+//   branches into the Fv-labelled entry point, whose parameter list cannot be
+//   expressed as a C++ declaration.
 extern "C" void renderCylinder__Q22cf18CfDebugDrawManagerFv(void* start, void* end, ml::CCol4* color, float radius);
+
 // Debug color constants for the collision-cylinder render (loaded from .sdata2).
-// const qualifies these as compile-time-invariant so MWCC hoists their sda21
-// loads to the top of each function (retail shape; MWCC_CASES extern-const pattern).
-extern "C" float lbl_eu_80666910; // 0.0
-extern "C" float lbl_eu_80666914; // 1.0
-extern "C" float lbl_eu_80666918; // 0.3
-extern "C" float lbl_eu_8066692C; // 0.1
-extern "C" float lbl_eu_80666930; // 0.5
-extern "C" float lbl_eu_80666934; // 0.15
-extern "C" float lbl_eu_80666938; // 0.7
-extern "C" float lbl_eu_8066693C; // 0.2
-// const qualifies this so MWCC hoists its load to function top, letting the
+// Global-scope variables are not mangled by MWCC, so plain extern declarations
+// emit the retail label names directly.
+extern const float lbl_eu_80666910; // 0.0
+extern const float lbl_eu_80666914; // 1.0
+extern const float lbl_eu_80666918; // 0.3
+extern const float lbl_eu_8066692C; // 0.1
+extern const float lbl_eu_80666930; // 0.5
+extern const float lbl_eu_80666934; // 0.15
+extern const float lbl_eu_80666938; // 0.7
+extern const float lbl_eu_8066693C; // 0.2
+// Threshold below which the whole cylinder is submitted. const qualifies it as
+// compile-time-invariant so MWCC hoists its load to function top, letting the
 // threshold compare emit before the height-diff loads (retail shape).
-extern "C" const float lbl_eu_80666940; // 0.01 threshold
+extern const float lbl_eu_80666940; // 0.01
 // 0.4 truncation factor - NOT const: retail loads this lazily in the else arm.
-extern "C" float lbl_eu_80666944;
+extern float lbl_eu_80666944;
 
 namespace cf {
 

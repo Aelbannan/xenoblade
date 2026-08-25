@@ -71,20 +71,24 @@ void func_800AB010(void* self, cf::CfCollCylinderImpl* impl) {
 }
 
 // Push a cylinder segment (starting at mStart, offset by f1 along its axis) into
-// the debug draw stack. When f1 is near zero the whole cylinder is submitted;
-// otherwise a truncated/shortened segment is drawn.
+// Push a cylinder segment (starting at mStart, offset by f1 along its axis)
+// against the collision object and write the pushed-out point to out. When f1
+// is near zero the whole cylinder is submitted; otherwise a truncated segment
+// starting below mStart is drawn.
 void func_800AB248(void* self, cf::CfCollCylinderImpl* impl, void* a, void* b, float f1) {
+    // Axis height span, used to clamp the probe point along Y.
     float heightDiff = impl->mEnd.y - impl->mStart.y;
 
-    // When f1 is under the threshold the whole cylinder is submitted;
-    // otherwise a truncated/shortened segment starting below mStart is drawn.
     if (f1 < lbl_eu_80666940) {
+        // Whole cylinder: probe straight from mStart with radius grown by f1.
         func_800A5B18(a, &impl->mStart, b, impl->mRadius + f1, heightDiff);
     } else {
+        // Truncated segment: drop the probe origin by 0.4*f1 and extend the
+        // height span by what remains (f1 - 0.4*f1).
         float pos[3];
         pos[0] = impl->mStart.x;
-        float adj = lbl_eu_80666944 * f1;
         pos[1] = impl->mStart.y;
+        float adj = lbl_eu_80666944 * f1;
         pos[2] = impl->mStart.z;
         pos[1] -= adj;
         func_800A5B18(a, pos, b, impl->mRadius + f1, heightDiff + (f1 - adj));

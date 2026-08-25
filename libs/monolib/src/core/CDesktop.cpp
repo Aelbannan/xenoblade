@@ -509,9 +509,3 @@ extern "C" u32 lbl_eu_8056CC68[8] __attribute__((aligned(8))) = {
 extern "C" CDesktopBackGround* lbl_eu_806656B4 = nullptr;
 extern "C" u32 lbl_eu_806656B8 = 0;
 extern "C" u32 gap_20_806656BC_sbss = 0;
-
-DECOMP_FORCEACTIVE(CDesktop_cpp_rodata, lbl_eu_80522EE0, lbl_eu_80522F0C, lbl_eu_80522F38, lbl_eu_80522F44);
-DECOMP_FORCEACTIVE(CDesktop_cpp_sdata, lbl_eu_80663760, lbl_eu_80663768, lbl_eu_80663770, lbl_eu_80663778);
-DECOMP_FORCEACTIVE(CDesktop_cpp_vtable, lbl_eu_8056CA48, lbl_eu_8056CB08, lbl_eu_8056CBC8);
-DECOMP_FORCEACTIVE(CDesktop_cpp_rtti, lbl_eu_8056CAE8, lbl_eu_8056CBA8, lbl_eu_8056CC68);
-DECOMP_FORCEACTIVE(CDesktop_cpp_sbss, &gap_20_806656BC_sbss);

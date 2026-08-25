@@ -141,7 +141,7 @@ bool CDeviceClock::wkStandbyLogout(){
 // ===== Dissolved retail data (CDeviceClock TU) =====
 // Retail bytes/relocs dumped from build/us/asm/monolib/src/device/CDeviceClock.s
 // .rodata 0x80522B48 size 0x58 align 8, .sdata 0x80663690 size 0x18 align 8, .data 0x8056C170 size 0xE0 align 8
-// Emitted as extern "C" u32 arrays with (u32)&extern, rodata align, DECOMP_FORCEACTIVE, novtable.
+// Emitted as extern "C" u32 arrays with (u32)&extern, rodata align, novtable.
 extern "C" {
     extern u32 lbl_eu_8056C210[];
     extern u32 lbl_eu_8056C238[];
@@ -239,7 +239,3 @@ extern "C" u32 lbl_eu_8056C238[3] __attribute__((aligned(4))) = {
 extern "C" u32 lbl_eu_8056C244[3] __attribute__((aligned(4))) = {
     (u32)&lbl_eu_806636A0, 0, (u32)&__dt__35_reslist_base_P17IDeviceClockFrameFv
 };
-DECOMP_FORCEACTIVE(CDeviceClock_cpp_rodata, lbl_eu_80522B48, lbl_eu_80522B58, lbl_eu_80522B78);
-DECOMP_FORCEACTIVE(CDeviceClock_cpp_sdata, lbl_eu_80663690, lbl_eu_80663698, lbl_eu_806636A0);
-DECOMP_FORCEACTIVE(CDeviceClock_cpp_vtable, lbl_eu_8056C170);
-DECOMP_FORCEACTIVE(CDeviceClock_cpp_rtti, lbl_eu_8056C210, lbl_eu_8056C22C, lbl_eu_8056C238, lbl_eu_8056C244);

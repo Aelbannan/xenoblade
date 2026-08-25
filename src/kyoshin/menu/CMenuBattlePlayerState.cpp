@@ -1,11 +1,9 @@
 #include "kyoshin/menu/CMenuBattlePlayerState.hpp"
 
 #include "kyoshin/CTaskGame.hpp"
-// CUICfManager.hpp declares func_801B481C as int (line 54); CVision.hpp (via
-// CBattleManager.hpp) declares it as u32. This TU uses neither copy.
-#define func_801B481C menuBpsUiCfMgr481CUnused
+// (func_801B481C: CUICfManager.hpp now declares the canonical u32 form
+// matching CVision.hpp - no guard needed.)
 #include "kyoshin/CUICfManager.hpp"
-#undef func_801B481C
 // (func_80174B4C / func_80174C98 now have single unified decls on the
 // CfMapItemManager owner header; the old pre-include rename is gone.)
 #include "kyoshin/cf/object/CfObjectActor.hpp"

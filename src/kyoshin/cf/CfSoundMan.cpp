@@ -622,7 +622,7 @@ extern "C" void func_801C055C(CfSoundSlot* slot) {
     // prologue idiom.
     bool inactive = (slot->field_0x2A & 1) == 0;
     if (!inactive) {
-        UnkClass_800821F8Snd* mgr = func_800821F8__Q22cf13CfGameManagerFv();
+        UnkClass_800821F8Snd* mgr = (UnkClass_800821F8Snd*)func_800821F8__Q22cf13CfGameManagerFv();
         if (mgr != 0) {
             // Refresh the slot's stored position in place (out = slot + 8).
             func_801C03C8(slot, (CfSoundActorPos*)&slot->field_0x08);
@@ -1142,42 +1142,51 @@ static inline CfSoundSlot* findSlotById(u32 id) {
 
 #pragma push
 #pragma auto_inline off
-extern "C" u32 func_801C10C0(CfSoundRecord* rec, s32 a, u32 b, float f1, float f2) {
-    int result;
+// Actor-linked variant of func_801C0FCC: resolves the voice source first
+// (func_800B708C, null -> 0xFFFF), resolves the record's sound id by user
+// param (func_801C0D28), starts playback (func_801C0DC4), and on success
+// links the returned id to the matching table slot, filling it from the
+// source's getPosition block plus the caller's gain floats.
+// Declaration order tunes callee-save assignment: rec=r31, param=r30,
+// src=r29, soundId=r28 (retail); gain floats land in f31 (f2) / f30 (f1).
+extern "C" u32 func_801C10C0(CfSoundRecord* rec, s32 param, u32 soundId,
+                             float f1, float f2) {
+    f32 gain2 = f2;
+    f32 gain1 = f1;
+    u32 res;
     CfSoundActorSrc* src;
-    u32 soundId;
-    src = (CfSoundActorSrc*)func_800B708C((int)b);
+    u32 sndId = soundId;
+    src = (CfSoundActorSrc*)func_800B708C((int)sndId);
     if (src == 0) {
         return 0xFFFF;
     }
-    result = func_801C0D28(rec, a);
+    int result = func_801C0D28(rec, param);
     if (result == -1) {
-        soundId = 0xFFFF;
+        res = 0xFFFF;
     } else {
-        soundId = func_801C0DC4(rec, result, lbl_eu_80667EA0, 0, 0);
+        res = func_801C0DC4(rec, result, lbl_eu_80667EA0, 0, 0);
     }
-    u32 sid = soundId & 0xFFFF;
+    u32 sid = res & 0xFFFF;
     if (sid != 0xFFFF) {
-        // The inlined findSlotById scan leaves p as the found slot (or 0
-        // when the id is absent); the found code then runs unconditionally -
-        // latent not-found null deref in retail. The if-wrapped block keeps
-        // the end-pointer materialization as a register addi (no addend reloc).
-        CfSoundSlot* p = findSlotById(sid);
-        p->field_0x2A |= 1;
-        p->mSoundId = b;
+        // The inlined findSlotById scan leaves slot as the found slot (or 0
+        // when absent); the found code runs unconditionally - latent null
+        // deref in retail.
+        CfSoundSlot* slot = findSlotById(sid);
+        slot->field_0x2A |= 1;
+        slot->mSoundId = sndId;
         CfSoundActorPos* pos = src->getPosition();
-        // Load the first two words in the retail order (4 before 0) so MWCC
-        // pairs them ahead of the stores.
+        // Load/store pair: MWCC loads the +4 word into r0 first, then the
+        // +0 word into r4, storing +0 before +4.
         u32 v1 = pos->field_0x04;
         u32 v0 = pos->field_0x00;
-        p->field_0x08 = v0;
-        p->field_0x0C = v1;
-        p->field_0x10 = pos->field_0x08;
-        p->field_0x18 = f2;
-        p->field_0x1C = f1;
-        func_801C055C(p);
+        slot->field_0x08 = v0;
+        slot->field_0x0C = v1;
+        slot->field_0x10 = pos->field_0x08;
+        slot->field_0x18 = gain2;
+        slot->field_0x1C = gain1;
+        func_801C055C(slot);
     }
-    return soundId;
+    return res;
 }
 #pragma pop
 
@@ -1252,7 +1261,59 @@ extern "C" void func_801C1318(CfSoundRecord* rec, u32 soundId, u32 fadeFrames,
     }
 }
 
-extern "C" void func_801C13D8(CfSoundRecord* rec, s32 mode, u32 fadeFrames){}
+// Stop request for every sound playing through the record: resolves the
+// target sound id by user param (func_801C0D28), publishes the request block
+// read back by the sweep below, then walks each player's BasicSound list and
+// stops every playing sound whose id matches the block's target word (or
+// when the target is the "all" sentinel -1) via a temp handle.
+void func_801C13D8(CfSoundRecord* rec, s32 mode, u32 fadeFrames) {
+    int id = func_801C0D28(rec, mode);
+    if (!(rec->mFlag & 1)) {
+        return;
+    }
+    CfSoundListNode* it;
+    CfSoundListNode* end;
+    CfSoundPauseParam* g = &lbl_eu_80576528;
+    g->field_0x00 = id;
+    g->field_0x04 = (u16)fadeFrames;
+    u32 i;
+    for (i = 0; i < rec->mArchive.GetPlayerCount(); i++) {
+        end = &reinterpret_cast<CfSoundPlayerView&>(
+            rec->mArchivePlayer.GetSoundPlayer(i)).mList;
+        it = end->mNext;
+        while (it != end) {
+            CfSoundListNode* curr = it;
+            it = it->mNext;
+            nw4r::snd::SoundHandle handle;
+            if (curr == NULL) {
+                nw4r::db::Panic(lbl_eu_80533C54, 0x23d, lbl_eu_80533C30);
+            }
+            // Container back-pointer: the play-list node sits at +0xF4 inside
+            // detail::BasicSound (same checked-deref assertions as
+            // func_801C1618).
+            nw4r::snd::detail::BasicSound* sound = reinterpret_cast<nw4r::snd::detail::BasicSound*>(
+                reinterpret_cast<u8*>(curr) - 0xF4);
+            if (sound == NULL) {
+                nw4r::db::Panic(lbl_eu_80533C84, 0x193, lbl_eu_80533C60);
+            }
+            handle.detail_AttachSoundAsTempHandle(sound);
+            u32 sid;
+            if (handle.IsAttachedSound()) {
+                sid = handle.detail_GetAttachedSound()->GetId();
+            } else {
+                sid = (u32)-1;
+            }
+            s32 target = g->field_0x00;
+            if (sid == (u32)target || target == -1) {
+                if (handle.IsAttachedSound()) {
+                    handle.detail_GetAttachedSound()->Stop(g->field_0x04);
+                }
+            }
+            // (handle's destructor detaches - retail's single DetachSound call
+            // comes from the scope-exit dtor, not an explicit call)
+        }
+    }
+}
 #pragma pop
 
 #pragma push
@@ -1325,17 +1386,18 @@ extern "C" void func_801C15C0(CfSoundSlot* slot) {
 extern "C" void func_801C1618(CfSoundRecord* rec, s32 targetId, u32 pauseFlag,
                               u32 fadeFrames) {
     int id = func_801C0D28(rec, targetId);
-    if ((rec->mFlag & 1) == 0) {
+    if (!(rec->mFlag & 1)) {
         return;
     }
     lbl_eu_80576528.field_0x00 = id;
     lbl_eu_80576528.field_0x08 = pauseFlag;
     lbl_eu_80576528.field_0x04 = fadeFrames;
-    for (u32 i = 0; i < rec->mArchive.GetPlayerCount(); i++) {
-        CfSoundPlayerView& sp = reinterpret_cast<CfSoundPlayerView&>(
-            rec->mArchivePlayer.GetSoundPlayer(i));
-        CfSoundListNode* it = sp.mList.mNext;
-        while (it != &sp.mList) {
+    u32 i;
+    for (i = 0; i < rec->mArchive.GetPlayerCount(); i++) {
+        CfSoundListNode* end = &reinterpret_cast<CfSoundPlayerView&>(
+            rec->mArchivePlayer.GetSoundPlayer(i)).mList;
+        CfSoundListNode* it = end->mNext;
+        while (it != end) {
             CfSoundListNode* curr = it;
             it = it->mNext;
             nw4r::snd::SoundHandle handle;
@@ -1343,7 +1405,8 @@ extern "C" void func_801C1618(CfSoundRecord* rec, s32 targetId, u32 pauseFlag,
                 nw4r::db::Panic(lbl_eu_80533C54, 0x23d, lbl_eu_80533C30);
             }
             // Container back-pointer: the play-list node sits at +0xF4 inside
-            // detail::BasicSound.
+            // detail::BasicSound. The null checks mirror nw4r ut_list's
+            // checked-deref assertions.
             nw4r::snd::detail::BasicSound* sound = reinterpret_cast<nw4r::snd::detail::BasicSound*>(
                 reinterpret_cast<u8*>(curr) - 0xF4);
             if (sound == NULL) {

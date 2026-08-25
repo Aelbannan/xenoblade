@@ -128,8 +128,8 @@ extern float lbl_eu_80666B38;
 extern double lbl_eu_80666B40;
 extern "C" {
 void* func_8003AA34();                         // bdat manager refresh (void* return - must match CArtsInfo.hpp:679 / the other ~40 decls; divergent extern "C" types = 10197)
-int func_8003B41C(void* mgr);                  // first bdat row index
-int func_8003B1EC(void* mgr);                  // bdat row count
+u32 func_8003B41C(void* mgr);                  // first bdat row index (canonical form per ocBdat.cpp def)
+u32 func_8003B1EC(void* mgr);                  // bdat row count (canonical form per ocBdat.cpp def)
 unsigned long func_801BA2C8(void* obj);        // battle-manager state probe (unified with CChainTimer.hpp)
 }
 // cf::CfSoundMan lives on kyoshin/cf/CfSoundMan.hpp (single definition;

@@ -412,10 +412,6 @@ extern "C" u32 lbl_eu_8056DBB0[4] = {
 };
 extern "C" u32 lbl_eu_80663868[2] = { (u32)&lbl_eu_80523D98, (u32)&lbl_eu_8056DBB0 };
 extern "C" u32 lbl_eu_80663870[2] = { (u32)&lbl_eu_80523DB8, 0x00000000 };
-DECOMP_FORCEACTIVE(MPFDrawDisplayList_cpp, lbl_eu_8056DBA0);
-DECOMP_FORCEACTIVE(MPFDrawDisplayList_cpp, lbl_eu_80523D98);
-DECOMP_FORCEACTIVE(MPFDrawDisplayList_cpp, lbl_eu_80663868);
-DECOMP_FORCEACTIVE(MPFDrawDisplayList_cpp, lbl_eu_80663870);
 
 // Prototype instance body defined by monolibdata2 (.data, 0x10 bytes).
 struct MPFDrawProto {
@@ -444,6 +440,7 @@ namespace mpfsys {
 
 MPFDrawDisplayList* MPFDrawDisplayList::getInstance() {
     if (lbl_eu_80665888[0] == 0) {
+        // First call: point the instance slot at the prototype instance blob.
         u32 protoAddr = (u32)&lbl_eu_8056DBA0;
         lbl_eu_80658488[0] = (MPFDrawDisplayList*)protoAddr;
         lbl_eu_80665888[0] = 1;

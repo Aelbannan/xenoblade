@@ -18,7 +18,6 @@ extern "C" void* func_80193CD0(void* list, void* obj);
 extern "C" void* func_80193AB0(void* list, u32 id);
 extern "C" void* func_800B6BC8(void);
 extern "C" void* func_8016FE34(void* src);
-extern "C" int func_80174C98(void* actor, int* outVal, int flags);
 extern void* func_800AD860(void*);
 extern void* func_800B708C(int);
 

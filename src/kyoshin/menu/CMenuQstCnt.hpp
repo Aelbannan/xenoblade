@@ -116,7 +116,7 @@ extern "C" void Regist__8CProcessFP8CProcessb(void*, void*, bool);
 extern "C" void waitForDrawDone__9CDeviceVIFv();
 extern "C" int func_80293C10();
 extern "C" int func_8029A658();
-extern "C" int func_801B481C();
+extern "C" u32 func_801B481C();   // canonical u32 form (per CMenuGetItemMulti.cpp def / CVision.hpp)
 extern "C" int func_80124B78();
 extern "C" int func_8011CD5C();
 extern "C" char* func_801394D4(u16);

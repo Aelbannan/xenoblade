@@ -3392,7 +3392,7 @@ extern "C" u32 lbl_eu_8056DE80[386] = {
     0x68652064, 0x6F6D6169, 0x6E2E0000, 0x61726974, 0x686D6574, 0x69632E68,
     0x00000000, 0x00000000,
 };
-DECOMP_FORCEACTIVE(CScnItemModelNw4r_cpp, lbl_eu_8056DE80);
+
 
 // [.sbss] 0x806658D8-0x806658E8 (16B): one-shot allocator-switch byte
 // (hpp: extern u8) + 7 pad bytes, then the second 8-byte zero-fill slot.

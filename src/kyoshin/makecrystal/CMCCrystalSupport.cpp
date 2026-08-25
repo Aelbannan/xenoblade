@@ -123,7 +123,7 @@ extern "C" void func_8022EA04(CMCCrystalSupport* self) {
 
 extern "C" void func_8022EA64(CMCCrystalSupport* self) {
     self->mState = 1;
-    *(float*)((u8*)self->mAnimTransform + 0x10) = 0.0f;
+    *(float*)((u8*)self->mAnimTransform + 0x10) = lbl_eu_80668630;
     self->mFinished = 0;
     func_80138078__FUl(0x8e);
 }

@@ -2,6 +2,11 @@
 // Replace stubs with high-level C/C++ during decomp.
 
 #include <string.h>
+#include "kyoshin/CUIWindowManagerApi.hpp"
+
+// NOTE: this import lost its declaring header (concurrent edits); restored
+// TU-locally so the TU keeps compiling.
+extern "C" void func_8013F244();
 
 #include "kyoshin/cf/code_800F42AC.hpp"
 

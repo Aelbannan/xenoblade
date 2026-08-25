@@ -455,47 +455,63 @@ void cf::CfHikariItemManager::cbRenderBefore() {
     }
 }
 
+// s32 -> f32 via MWCC's xoris/0x4330 bit pattern, subtracting the shared
+// sdata2 magic double so the constant reloc names lbl_eu_80668EF0 instead of
+// an anonymous pool constant.
+static inline f32 hikariS32ToF32(Convert64& c, s32 v) {
+    c.lo = (u32)v ^ 0x80000000;
+    c.hi = 0x43300000;
+    return (f32)(c.d - lbl_eu_80668EF0);
+}
+
 // (us-802b5fd8): claim the next slot in the inline 0x80-entry
 // record pool (bitfield at +0x1104, 0x20-byte entries at +0x104), bail if it
 // is already active, else perturb the spawn position by scaled random offsets
 // (each component gets its own random draw) and init the entry via func_802B4358.
 extern "C" void func_802B3568(cf::CfHikariItemManager* self, const f32* src,
                               u16 val, f32 scaleX, f32 scaleY) {
-    u32 count = self->field_119C;
-    u32* words = (u32*)&self->unk1104[0];
-    u32 word = words[count >> 5];
+    // Signed count so MWCC emits the retail srawi/clrlwi/slwi bit-math run.
+    // The slot address is recomputed from memory at the call site (retail
+    // reloads field_119C instead of keeping count live).
+    int count = self->field_119C;
+    u32* wordPtr = (u32*)((char*)self + 0x1104 + ((count >> 5) << 2));
     u32 bit = 1u << (count & 0x1F);
+    u32 word = *wordPtr;
     if (word & bit) {
         return;
     }
-    words[count >> 5] = word | bit;
+    *wordPtr = word | bit;
 
-    // Stack shapes mirror retail: the spawn position is copied to +0x14
-    // before the first mtRand, the three randoms are converted through the
-    // shared sdata2 magic double and scaled (+0x08..+0x10), then folded back
-    // onto the copy.
-    f32 out[3];
+    // Stack shapes mirror retail: rnd at +0x08, out at +0x14, one Convert64
+    // temp per mtRand (+0x20/+0x28/+0x30); each random is converted through
+    // the shared sdata2 magic double and scaled.
     f32 rnd[3];
+    f32 out[3];
+    Convert64 c0;
+    Convert64 c1;
+    Convert64 c2;
     out[0] = src[0];
     out[1] = src[1];
     out[2] = src[2];
 
-    rnd[0] = (f32)ml::math::mtRand(-100, 100) * lbl_eu_80668EEC;
-    rnd[1] = (f32)ml::math::mtRand(-100, 100) * lbl_eu_80668EEC;
-    rnd[2] = (f32)ml::math::mtRand(-100, 100) * lbl_eu_80668EEC;
+    rnd[0] = hikariS32ToF32(c0, ml::math::mtRand(-100, 100)) * lbl_eu_80668EEC;
+    rnd[1] = hikariS32ToF32(c1, ml::math::mtRand(-100, 100)) * lbl_eu_80668EEC;
+    rnd[2] = hikariS32ToF32(c2, ml::math::mtRand(-100, 100)) * lbl_eu_80668EEC;
 
     out[0] += rnd[0] * scaleX;
     out[1] += rnd[1] * scaleX;
     out[2] += rnd[2] * scaleX;
 
-    func_802B4358((CfHikariItemRecord*)&self->unk104[count * 0x20],
+    func_802B4358((CfHikariItemRecord*)&self->unk104[self->field_119C * 0x20],
                   (const u32*)out, val, scaleY);
 
-    count++;
-    if (count >= 0x80) {
-        count = 0;
-    }
+    // Retail reloads and stores the incremented count, then wraps.
+    count = self->field_119C + 1;
     self->field_119C = count;
+    if (count < 0x80) {
+        return;
+    }
+    self->field_119C = 0;
 }
 
 // (us-802b618c): publish the record's first three words into the
@@ -1006,6 +1022,7 @@ extern "C" void func_802B44C8(CfHikariItemRecord* self, const CfHikariQuadCorner
         (const f32*)&lbl_eu_80577750[(s16)self->field_1C_h[1] * 8],
         lbl_eu_805135A8, 2);
 
+    // Gradient-driven size: linear ramp up to table[0], ramp down after.
     f32 progress = self->field_18;
     f32 scale;
     if (progress < lbl_eu_805135A8[0]) {
@@ -1016,9 +1033,7 @@ extern "C" void func_802B44C8(CfHikariItemRecord* self, const CfHikariQuadCorner
     }
 
     // Scaled corner offsets (paired (x,y) first, z second - MWCC vectorises
-    // the pairs into psq_l/ps_muls0, one per corner, like retail).  Access
-    // through a non-const view so MWCC does not hoist the corner loads ahead
-    // of the func_802B41E4 call into a callee-saved FPR.
+    // the pairs into psq_l/ps_muls0, one per corner, like retail).
     CfHikariQuadCorners* c = (CfHikariQuadCorners*)corners;
     f32 sc[4][3];
     sc[0][0] = c->v[0][0] * scale;
@@ -1055,12 +1070,9 @@ extern "C" void func_802B44C8(CfHikariItemRecord* self, const CfHikariQuadCorner
     WGPIPE.uc = 1;
     WGPIPE.uc = 1;
 
-    x = self->field_00f + sc[2][0];
-    y = self->field_04f + sc[2][1];
-    z = self->field_08f + sc[2][2];
-    WGPIPE.f = x;
-    WGPIPE.f = y;
-    WGPIPE.f = z;
+    WGPIPE.f = self->field_00f + sc[2][0];
+    WGPIPE.f = self->field_04f + sc[2][1];
+    WGPIPE.f = self->field_08f + sc[2][2];
     WGPIPE.ui = color;
     WGPIPE.uc = 0;
     WGPIPE.uc = 1;
@@ -1078,78 +1090,84 @@ extern "C" void func_802B44C8(CfHikariItemRecord* self, const CfHikariQuadCorner
 
 // (us-802b7150): static-init the .bss gradient table.  Four
 // 16-float rows at +0x10/+0x50/+0x90/+0xd0 of lbl_eu_80577680 (func_802B3CA0
-// reads the first three rows indexed by field_40).  Access goes through a
-// 16-float-stride row pointer so MWCC materialises one addi row base per row
-// (retail r6/r5/r4/r3) instead of folding everything into block-relative
-// displacements.
+// reads the first three rows indexed by field_40).  Constants are read
+// directly from sdata2 so MWCC CSEs one lfs per value up-front and colours
+// them exactly like retail (f27-f31 for {F70,F74,F78,F7C,F80}, volatiles
+// f13..f0 descending by first use).  Row bases are declared in the retail
+// addi order; element 0 of each row goes through the block base.
 void sinit_802B46E0() {
-    f32 (*rows)[16] = (f32 (*)[16])&lbl_eu_80577680[0x10 / 4];
+    f32* t = (f32*)lbl_eu_80577680;
 
-    rows[0][0] = lbl_eu_80668F70;
-    rows[0][1] = lbl_eu_80668F74;
-    rows[0][2] = lbl_eu_80668F78;
-    rows[0][3] = lbl_eu_80668F7C;
-    rows[0][4] = lbl_eu_80668F70;
-    rows[0][5] = lbl_eu_80668F80;
-    rows[0][6] = lbl_eu_80668F84;
-    rows[0][7] = lbl_eu_80668F7C;
-    rows[0][8] = lbl_eu_80668F88;
-    rows[0][9] = lbl_eu_80668F8C;
-    rows[0][10] = lbl_eu_80668F70;
-    rows[0][11] = lbl_eu_80668F90;
-    rows[0][12] = lbl_eu_80668F94;
-    rows[0][13] = lbl_eu_80668F98;
-    rows[0][14] = lbl_eu_80668F70;
-    rows[0][15] = lbl_eu_80668F90;
+    f32* r5 = t + 0x50 / 4;
+    f32* r3 = t + 0xD0 / 4;
+    f32* r6 = t + 0x10 / 4;
+    f32* r4 = t + 0x90 / 4;
 
-    rows[1][0] = lbl_eu_80668F70;
-    rows[1][1] = lbl_eu_80668F9C;
-    rows[1][2] = lbl_eu_80668F98;
-    rows[1][3] = lbl_eu_80668F70;
-    rows[1][4] = lbl_eu_80668F70;
-    rows[1][5] = lbl_eu_80668FA0;
-    rows[1][6] = lbl_eu_80668FA4;
-    rows[1][7] = lbl_eu_80668F70;
-    rows[1][8] = lbl_eu_80668FA8;
-    rows[1][9] = lbl_eu_80668F70;
-    rows[1][10] = lbl_eu_80668F70;
-    rows[1][11] = lbl_eu_80668F70;
-    rows[1][12] = lbl_eu_80668F98;
-    rows[1][13] = lbl_eu_80668F70;
-    rows[1][14] = lbl_eu_80668F70;
-    rows[1][15] = lbl_eu_80668F70;
+    t[0x10 / 4] = lbl_eu_80668F70;
+    r6[1] = lbl_eu_80668F74;
+    r6[2] = lbl_eu_80668F78;
+    r6[3] = lbl_eu_80668F7C;
+    r6[4] = lbl_eu_80668F70;
+    r6[5] = lbl_eu_80668F80;
+    r6[6] = lbl_eu_80668F84;
+    r6[7] = lbl_eu_80668F7C;
+    r6[8] = lbl_eu_80668F88;
+    r6[9] = lbl_eu_80668F8C;
+    r6[10] = lbl_eu_80668F70;
+    r6[11] = lbl_eu_80668F90;
+    r6[12] = lbl_eu_80668F94;
+    r6[13] = lbl_eu_80668F98;
+    r6[14] = lbl_eu_80668F70;
+    r6[15] = lbl_eu_80668F90;
 
-    rows[2][0] = lbl_eu_80668F70;
-    rows[2][1] = lbl_eu_80668F74;
-    rows[2][2] = lbl_eu_80668F78;
-    rows[2][3] = lbl_eu_80668EF8;
-    rows[2][4] = lbl_eu_80668F70;
-    rows[2][5] = lbl_eu_80668F74;
-    rows[2][6] = lbl_eu_80668F78;
-    rows[2][7] = lbl_eu_80668FAC;
-    rows[2][8] = lbl_eu_80668F88;
-    rows[2][9] = lbl_eu_80668F8C;
-    rows[2][10] = lbl_eu_80668F70;
-    rows[2][11] = lbl_eu_80668EF8;
-    rows[2][12] = lbl_eu_80668F88;
-    rows[2][13] = lbl_eu_80668F8C;
-    rows[2][14] = lbl_eu_80668F70;
-    rows[2][15] = lbl_eu_80668FAC;
+    t[0x50 / 4] = lbl_eu_80668F70;
+    r5[1] = lbl_eu_80668F9C;
+    r5[2] = lbl_eu_80668F98;
+    r5[3] = lbl_eu_80668F70;
+    r5[4] = lbl_eu_80668F70;
+    r5[5] = lbl_eu_80668FA0;
+    r5[6] = lbl_eu_80668FA4;
+    r5[7] = lbl_eu_80668F70;
+    r5[8] = lbl_eu_80668FA8;
+    r5[9] = lbl_eu_80668F70;
+    r5[10] = lbl_eu_80668F70;
+    r5[11] = lbl_eu_80668F70;
+    r5[12] = lbl_eu_80668F98;
+    r5[13] = lbl_eu_80668F70;
+    r5[14] = lbl_eu_80668F70;
+    r5[15] = lbl_eu_80668F70;
 
-    rows[3][0] = lbl_eu_80668F70;
-    rows[3][1] = lbl_eu_80668FB0;
-    rows[3][2] = lbl_eu_80668F90;
-    rows[3][3] = lbl_eu_80668EF8;
-    rows[3][4] = lbl_eu_80668F70;
-    rows[3][5] = lbl_eu_80668FA0;
-    rows[3][6] = lbl_eu_80668FA4;
-    rows[3][7] = lbl_eu_80668F70;
-    rows[3][8] = lbl_eu_80668F88;
-    rows[3][9] = lbl_eu_80668FB4;
-    rows[3][10] = lbl_eu_80668F70;
-    rows[3][11] = lbl_eu_80668EF8;
-    rows[3][12] = lbl_eu_80668F98;
-    rows[3][13] = lbl_eu_80668FAC;
-    rows[3][14] = lbl_eu_80668F70;
-    rows[3][15] = lbl_eu_80668F70;
+    t[0x90 / 4] = lbl_eu_80668F70;
+    r4[1] = lbl_eu_80668F74;
+    r4[2] = lbl_eu_80668F78;
+    r4[3] = lbl_eu_80668EF8;
+    r4[4] = lbl_eu_80668F70;
+    r4[5] = lbl_eu_80668F74;
+    r4[6] = lbl_eu_80668F78;
+    r4[7] = lbl_eu_80668FAC;
+    r4[8] = lbl_eu_80668F88;
+    r4[9] = lbl_eu_80668F8C;
+    r4[10] = lbl_eu_80668F70;
+    r4[11] = lbl_eu_80668EF8;
+    r4[12] = lbl_eu_80668F88;
+    r4[13] = lbl_eu_80668F8C;
+    r4[14] = lbl_eu_80668F70;
+    r4[15] = lbl_eu_80668FAC;
+
+    t[0xD0 / 4] = lbl_eu_80668F70;
+    r3[1] = lbl_eu_80668FB0;
+    r3[2] = lbl_eu_80668F90;
+    r3[3] = lbl_eu_80668EF8;
+    r3[4] = lbl_eu_80668F70;
+    r3[5] = lbl_eu_80668FA0;
+    r3[6] = lbl_eu_80668FA4;
+    r3[7] = lbl_eu_80668F70;
+    r3[8] = lbl_eu_80668F88;
+    r3[9] = lbl_eu_80668FB4;
+    r3[10] = lbl_eu_80668F70;
+    r3[11] = lbl_eu_80668EF8;
+    r3[12] = lbl_eu_80668F98;
+    r3[13] = lbl_eu_80668FAC;
+    r3[14] = lbl_eu_80668F70;
+    r3[15] = lbl_eu_80668F70;
 }

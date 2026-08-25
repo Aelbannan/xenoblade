@@ -203,8 +203,7 @@ struct CfResPcPosTable {
 // words at +0x64/+0x68 and the reload slots at +0x6DC/+0x6E0 are
 // read/written by this unit. Same offsets as CfResReloadParent in
 // CfResReloadImpl.hpp; kept local so this TU does not pull that header's
-// getBdatStringColumnValue(int) declaration (CfBdat.hpp declares the s32
-// variant, and int/s32 are distinct C++ types here).
+// import block.)
 struct CfResPcParent {
     u8 field_00[0x38];             // 0x00..0x37 (incl. the vptr)
     /* 0x38 */ CfResPc38ObjIf* field_38;  // object with vtable slot +0xB0 (dispatched by func_8018E7E4)

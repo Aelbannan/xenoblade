@@ -1010,7 +1010,10 @@ void* cf::CfGameManager::func_8007C8C8() {
     if (lbl_eu_80663E60 != 0) {
         func_801889D0(lbl_eu_80663E60);
     }
-    func_800D9354((CBattleManagerView*)getInstance__Q22cf14CBattleManagerFv());
+    // func_800D9354 takes cf::CBattleManager* (decl on CBattleManagerApi.hpp);
+    // the getter's void* result converts implicitly (no codegen change vs the
+    // old CBattleManagerView* cast).
+    func_800D9354(getInstance__Q22cf14CBattleManagerFv());
     if (lbl_eu_80663E24 & 0x80) {
         func_80295A88(lbl_eu_80664A10);
     }
@@ -1247,6 +1250,88 @@ u8 cf::CfGameManager::func_80080E20() { return lbl_eu_80663E5D; }
 extern u8 lbl_eu_8066476D;
 u8 cf::CfGameManager::func_80080E28() { return lbl_eu_8066476D; }
 void* cf::CfGameManager::func_8007DA00() { return lbl_eu_8065FC18; }
+
+// cf::CfGameManager::func_8007D84C - battle-exit / scene reset. Tears down
+// the mode subsystems, wipes the manager's per-mode state block, clears the
+// presentation globals and the E24/E28 flag masks.
+extern "C" void func_801C028C(u32 first, u32 second);
+extern "C" void func_800B9388();
+extern "C" void func_8016FE2C(float value);
+extern "C" void func_800D9218__Q22cf14CBattleManagerFv(void* battle);
+extern "C" void func_80066788(u32 a, u32 b, u32 c, u32 d);
+extern "C" void func_80063038();
+extern "C" void func_804CC2B0(void* object);
+extern "C" float lbl_eu_80667700;
+#pragma dont_inline on
+void cf::CfGameManager::func_8007D84C() {
+    extern u16 lbl_eu_80663E3A;
+    func_801AAD08();
+    lbl_eu_8066443A = 0;
+    func_801862E0(func_801862C0());
+    func_801C0094(1);
+    func_801C028C(0, 0);
+    func_801C028C(1, 0);
+    func_8012F87C(0);
+    func_80135568(0);
+    if ((lbl_eu_80663EE0 & 0x40) != 0) {
+        lbl_eu_80663EE0 &= ~0x40;
+    }
+    memset(unk94, 0, sizeof(unk94));
+    unk90 = nullptr;
+    float zeroF = lbl_eu_80666498;
+    lbl_eu_80663E50 = 0;
+    field_0x86 = 0;
+    lbl_eu_80663E3A = 0;
+    lbl_eu_80663E3C = 0;
+    lbl_eu_80663E3E = 0;
+    *reinterpret_cast<u32*>(reinterpret_cast<u8*>(this) + 0x80) = 0;
+    lbl_eu_80663E34 = 0;
+    lbl_eu_80663E35 = 0;
+    lbl_eu_80663E68 = zeroF;
+    lbl_eu_80663E00 = 0;
+    lbl_eu_80663E08 = zeroF;
+    if (unkA8 != nullptr) {
+        func_801A9FC0(unkA8);
+    }
+    if (unkA0 != 0) {
+        func_8016EEB0(unkA0);
+    }
+    if (field_0xA4 != nullptr) {
+        func_80186664(field_0xA4);
+    }
+    CfCamEventManager* camManager = unkB4;
+    {
+        ResetVectorWords* zeroVec = &zero__Q22ml5CVec3;
+        *reinterpret_cast<u32*>(reinterpret_cast<u8*>(this) + 0x18) = zeroVec->x;
+        *reinterpret_cast<u32*>(reinterpret_cast<u8*>(this) + 0x1C) = zeroVec->y;
+        *reinterpret_cast<u32*>(reinterpret_cast<u8*>(this) + 0x20) = zeroVec->z;
+    }
+    if (camManager != nullptr) {
+        func_800754C0(camManager);
+    }
+    unkB0 = nullptr;
+    func_8018EFB4(unkAC);
+    func_800B93AC();
+    func_800B9388();
+    void* resetObject = lbl_eu_8065FC18;
+    if (resetObject != 0) {
+        func_804CC2B0(resetObject);
+    }
+    func_80063038();
+    func_80066788(0, 0, 0, 0);
+    func_800FE68C();
+    __dt__800FDEF8();
+    func_800D9218__Q22cf14CBattleManagerFv(
+        getInstance__Q22cf14CBattleManagerFv());
+    func_80068C7C();
+    func_80068D14();
+    func_80068DAC();
+    lbl_eu_80663E24 = lbl_eu_80663E24 & 0x505B0208;
+    lbl_eu_80663E28 = lbl_eu_80663E28 & 0xFBFFF430;
+    func_8019FB40();
+    func_8016FE2C(lbl_eu_80667700);
+}
+#pragma dont_inline reset
 
 #pragma dont_inline on
 extern "C" Unk8187CData* func_80080F40__Q22cf13CfGameManagerFv(u32 first, u32 second, u32 third) {

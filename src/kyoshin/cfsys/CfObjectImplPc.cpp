@@ -93,16 +93,21 @@ void func_800C6EC0(cf::CfObjectImplPc* self, u32 param)
 // battle flag is clear, dispatch the command id (0xEA..0xF2 -> action ids)
 // to the battle object's +0x3E9C sub-object (vtable 0x20C), then forward the
 // original args to func_800CB9AC.
-void func_800C6F30(cf::CfObjectImplPc* self, u32 arg2, u32 arg3, u32 arg4)
+void func_800C6F30(cf::CfObjectImplPc* self, int arg2, int arg3, int arg4)
 {
-    if (arg2 != 0 && arg2 != (u32)self->field_18->field_3F60) {
+    if (arg2 != 0 && (u32)arg2 != (u32)self->field_18->field_3F60) {
         return;
     }
+    cf::CfObjectImplPc18* battleObj = func_800BFC68((cf::CfObjectMove*)(
+        self->field_18 != 0 ? (cf::CfObjectImplPc18*)((u8*)self->field_18 + 0x3E9C)
+                            : (cf::CfObjectImplPc18*)0));
     char* name = 0;
     int flag = 0;
-    cf::CfObjectImplPc18* battleObj = func_800BFC68(
-        self->field_18 != 0 ? (cf::CfObjectMove*)&self->field_18->mSub : 0);
-    if (arg3 == 0) {
+    switch (arg3) {
+    case 0:
+    {
+        // Laid out to match retail's dispatch order: tests, default jump,
+        // slot-0 body, jump, slot-1 body, then the shared name check.
         if (arg4 == 0) {
             flag = 0;
             name = func_800BEDC4((u8*)&battleObj->mSub, 0);
@@ -117,7 +122,10 @@ void func_800C6F30(cf::CfObjectImplPc* self, u32 arg2, u32 arg3, u32 arg4)
             battleObj->mSub.sf104(name, flag);
             battleObj->field_45B0 = 1;
         }
-    } else if (arg3 == 1) {
+        break;
+    }
+    case 1:
+    {
         if (arg4 == 0) {
             flag = 0;
             name = func_800BED80((u8*)&battleObj->mSub, 0);
@@ -132,6 +140,8 @@ void func_800C6F30(cf::CfObjectImplPc* self, u32 arg2, u32 arg3, u32 arg4)
             battleObj->mSub.sf104(name, flag);
             battleObj->field_45B0 = 0;
         }
+        break;
+    }
     }
 }
 
@@ -178,6 +188,7 @@ int func_800C86E8(cf::CfObjectImplPc* self)
     }
     func_800C891C((u8*)self);
     self->vf78();
+    return 0;
 }
 
 void func_800C891C(u8* self){}
@@ -208,12 +219,12 @@ void func_800C9A20(cf::CfObjectImplPc* self, CfObjectImplPcEvt* evt)
     cf::CBattleManager* bm = cf::CBattleManager::getInstance();
     if (func_802799F0(&bm->mChain, self->field_18) == 0) {
         u16 id = evt->field_0C;
+        cf::CfObjectImplPc18* obj = self->field_18;
         if ((u32)(id - 0xF) <= 1 || id == 9 || id == 0xB) {
-            cf::CfObjectImplPc18* obj = self->field_18;
             u32 state = obj->vf308();
             if (state == 4) {
                 obj->vf304(3);
-                CfObjectImplPc2F4* t = obj->vf2F4();
+                cf::CfObjectImplPc2F4* t = obj->vf2F4();
                 // MWCC int->double conversion of a byte selected by t's s16 offset,
                 // scaled and halved toward zero.
                 int half = (s32)(t->field_10 * ((u8*)t)[t->field_02 + 4]) / 2;
@@ -224,6 +235,7 @@ void func_800C9A20(cf::CfObjectImplPc* self, CfObjectImplPcEvt* evt)
                 func_800F3970(cf::CBattleManager::getInstance(), obj, 0, 0x11, 0);
             }
         }
+        s32 gauge;
         if (obj->vf290() != 0 && func_80260264(obj->vf290(), 0x63, &gauge) != 0 &&
             func_80145C00(evt->field_0C)) {
             func_8018C820(&cf::CBattleManager::getInstance()->unk194, gauge);

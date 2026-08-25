@@ -208,7 +208,14 @@ struct CfObjectImplPc27C {
 // 0x2C4 are called by this TU. Never instantiated, so no vtable is emitted.
 // Result of the battle object's vtable slot 0x2F4 (#187): s16 offset at
 // +0x02 (indexes a byte table starting at +0x04) and an f32 scale at +0x10.
-struct CfObjectImplPc2F4;
+// Result of the battle object's vtable slot 0x2F4 (#187): s16 offset at
+// +0x02 (indexes a byte table starting at +0x04) and an f32 scale at +0x10.
+struct CfObjectImplPc2F4 {
+    u8 _pad00[0x02];
+    s16 field_02;
+    u8 _pad04[0x10 - 0x04];
+    f32 field_10;
+};
 
 class CfObjectImplPc18 {
 public:
@@ -374,7 +381,7 @@ public:
     virtual void v284() = 0;         // index 159
     virtual void v288() = 0;         // index 160
     virtual void v28C() = 0;         // index 161
-    virtual void v290() = 0;         // index 162
+    virtual void* vf290() = 0;       // index 162 -> 0x290
     virtual void v294() = 0;         // index 163
     virtual void v298() = 0;         // index 164
     virtual void v29C() = 0;         // index 165
@@ -527,15 +534,6 @@ public:
 
 } // namespace cf
 
-// Result of the battle object's vtable slot 0x2F4 (#187): s16 offset at
-// +0x02 (indexes a byte table starting at +0x04) and an f32 scale at +0x10.
-struct CfObjectImplPc2F4 {
-    u8 _pad00[0x02];
-    s16 field_02;
-    u8 _pad04[0x10 - 0x04];
-    f32 field_10;
-};
-
 // Event record passed as arg2 to func_800C9A20 / func_800CAB30:
 // u16 event id at +0x0C, u16 gate at +0x2E, flag word at +0x30 (bit 30).
 struct CfObjectImplPcEvt {
@@ -574,7 +572,6 @@ void func_800CB9AC(u8* self, u32 param);
 u8* __ct__cf_CPcEffect07(u8* obj, u8* actor);
 int func_80145F78(int id);
 int func_80145C00(int val);
-void func_800F3970(void* mgr, void* obj, s32 a, s32 id, s32 b);
 bool func_802799F0(void* chain, void* obj);
 bool func_80260264(void* obj, s32 idx, s32* out);
 void func_800BF29C(void* sub, u32 a, f32 b, u32 c, f32 d, u32 e);

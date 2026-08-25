@@ -8,12 +8,32 @@
 #include "monolib/vm/yvm2.h"
 #include <cstring>
 
-// Resolve ml::FixStr<128>::format calls to the explicit specialization so
-// they bind to the retail-mangled symbol format__Q22ml10FixStr<128>FPCce
-// (the generic-template call drifts to ...11FixStr...).
-template <> void ml::FixStr<128>::format(const char* fmt, ...);
+// ml::FixStr<128>::format is defined below (inside namespace ml).  NOTE: MWCC
+// mangles the in-TU member call at func_80068ECC to the generic-template name
+// format__Q22ml11FixStr<128>FPCce instead of the retail specialization name
+// (...10FixStr...) regardless of declaration order or scope - open item.
 #include <cstdio>
 #include <cstdarg>
+
+// ml::FixStr<128>::format (retail standalone symbol): vsnprintf into a 0x100
+// stack buffer, then copy into the fixed string.  Defined BEFORE its callers
+// (same shape as CTaskGame's FixStr<32> version) so member calls bind to the
+// specialization instead of instantiating the generic template.
+namespace ml {
+// Defined inside ml so the specialization emits/calls under the retail
+// mangling format__Q22ml10FixStr<128>FPCce.
+template <>
+void FixStr<128>::format(const char* fmt, ...) {
+    char buffer[0x100];
+    va_list args;
+    va_start(args, fmt);
+    vsnprintf(buffer, sizeof(buffer), fmt, args);
+    va_end(args);
+
+    mLength = (int)std::strlen(buffer);
+    std::strcpy(mString, buffer);
+}
+} // namespace ml
 
 namespace cf {
 
@@ -242,84 +262,90 @@ void func_80068E9C(char* dest, const char* src1, const char* src2, const char* s
 
 // func_80068ECC - main script loading function
 extern "C" bool func_80068ECC(CfScript* script, const char* name) {
-    CfScriptNameBuffer extBuffer;   // 0x08 - no ctor (retail does not zero it)
-    char tempBuffer[0x80];          // 0x4C
-    u32 tempLen;                    // 0xCC
-    ml::FixStr<128> pathBuffer;     // 0xD0 (mLength at 0x150)
+    // Ctor-less raw storage laid out by declaration order (sp+0x08/0x4C/0xD0);
+    // retail inlines the FixStr ctors/clear() rather than calling them.
+    CfScriptNameBuffer extBuffer;   // 0x08: FixStr<64>-shaped
+    u8 pathStorage[0x84];                // 0xD0: ctor-less FixStr<128>
+    u8 tempStorage[0x84];           // 0x4C: ctor-less FixStr<128>
+
+    (*(ml::FixStr<128>*)pathStorage).clear();
 
     // Ignore the two reserved "no-op" script names.
     if (name != nullptr) {
-        if (std::strcmp(name, &lbl_eu_804FB3A4[0xA]) == 0) {
-            return false;
-        }
-        if (std::strcmp(name, &lbl_eu_804FB3A4[0x14]) == 0) {
+        if (std::strcmp(name, &lbl_eu_804FB3A4[0xA]) == 0 ||
+            std::strcmp(name, &lbl_eu_804FB3A4[0x14]) == 0) {
             return false;
         }
     }
 
-    pathBuffer.mLength = std::strlen(name);
-    std::strcpy(pathBuffer.mString, name);
+    // operator=(const char*): strlen + strcpy.
+    (*(ml::FixStr<128>*)pathStorage) = name;
 
-    // Search backward for the extension separator (lbl_eu_80661AD0).
-    int extPos;
-    if (pathBuffer.mLength != 0) {
-        u32 sepLen = std::strlen(lbl_eu_80661AD0);
-        char* searchPos = &pathBuffer.mString[pathBuffer.mLength - 1];
-        char* searchEnd = &pathBuffer.mString[-1];
-        extPos = -1;
-        while (searchPos != searchEnd) {
-            if (std::strncmp(searchPos, lbl_eu_80661AD0, sepLen) == 0) {
-                extPos = searchPos - pathBuffer.mString;
+    // Backward search for the extension separator; hand-inlined rfind whose
+    // result register merges with sepLen after its last use.
+    int length = (*(ml::FixStr<128>*)pathStorage).mLength;
+    int index;
+    if (length == 0) {
+        index = -1;
+    } else {
+        int sepLen = std::strlen(lbl_eu_80661AD0);
+        char* p = &(*(ml::FixStr<128>*)pathStorage).mString[-1] + length;
+        char* end = &(*(ml::FixStr<128>*)pathStorage).mString[-1];
+        while (true) {
+            if (p == end) {
+                index = -1;
                 break;
             }
-            searchPos--;
-        }
-    } else {
-        extPos = -1;
-    }
-
-    // Cut the extension off so only the bare filename remains.
-    if ((u32)(extPos + 1) > 1u) {
-        tempBuffer[0] = '\0';
-        tempLen = 0;
-        if (pathBuffer.mLength != 0) {
-            if (extPos == -1) {
-                extPos = pathBuffer.mLength;
+            if (std::strncmp(p, lbl_eu_80661AD0, sepLen) == 0) {
+                index = (int)(p - (*(ml::FixStr<128>*)pathStorage).mString);
+                break;
             }
-            std::strncpy(tempBuffer, pathBuffer.mString, extPos);
-            tempBuffer[extPos] = '\0';
-            tempLen = std::strlen(tempBuffer);
+            p--;
         }
-        pathBuffer.mLength = std::strlen(tempBuffer);
-        std::strcpy(pathBuffer.mString, tempBuffer);
     }
 
-    // Build "dir + noext-name" into pathBuffer (format varargs).
-    ml::CPathUtil::getNoPathExtName(*(ml::FixStr<64>*)&extBuffer, pathBuffer.mString);
-    pathBuffer.format(&lbl_eu_804FB3A4[0x1C], lbl_eu_805708D0, extBuffer.mString);
+    // Strip the extension so only the bare filename remains.
+    if ((u32)(index + 1) > 1u) {
+        ((ml::FixStr<128>*)tempStorage)->mString[0] = '\0';
+        ((ml::FixStr<128>*)tempStorage)->mLength = 0;
+        if (length != 0) {
+            int cut = index;
+            if (cut == -1) {
+                cut = (*(ml::FixStr<128>*)pathStorage).mLength;
+            }
+            std::strncpy(((ml::FixStr<128>*)tempStorage)->mString,
+                         (*(ml::FixStr<128>*)pathStorage).mString, cut);
+            ((ml::FixStr<128>*)tempStorage)->mString[cut] = '\0';
+            ((ml::FixStr<128>*)tempStorage)->mLength =
+                std::strlen(((ml::FixStr<128>*)tempStorage)->mString);
+        }
+        (*(ml::FixStr<128>*)pathStorage) = ((ml::FixStr<128>*)tempStorage)->mString;
+    }
 
-    const char* extStr = &lbl_eu_804FB3A4[0x21];
-    u32 extStrLen = std::strlen(extStr);
-    std::strcat(pathBuffer.mString, extStr);
-    pathBuffer.mLength += extStrLen;
+    // Build "dir + bare-name" into path (format varargs).
+    ml::CPathUtil::getNoPathExtName(*(ml::FixStr<64>*)&extBuffer, (*(ml::FixStr<128>*)pathStorage).mString);
+    ml::FixStr<128>& path = *(ml::FixStr<128>*)pathStorage;
+    path.format(&lbl_eu_804FB3A4[0x1C], lbl_eu_805708D0, extBuffer.mString);
+
+    // Append the archive extension (operator+=).
+    (*(ml::FixStr<128>*)pathStorage) += &lbl_eu_804FB3A4[0x21];
 
     // If the current directory already matches, sanity-check the file exists.
     if (std::strcmp(lbl_eu_805708D0, lbl_eu_80661AC0) == 0) {
-        if (getFileSize__11CDeviceFileFPCc(pathBuffer.mString, 1) < 0) {
-            if (std::strstr(pathBuffer.mString, &lbl_eu_804FB3A4[0x25]) == nullptr) {
-                std::strstr(pathBuffer.mString, &lbl_eu_804FB3A4[0x2B]);
+        if (getFileSize__11CDeviceFileFPCc((*(ml::FixStr<128>*)pathStorage).mString, 1) < 0) {
+            if (std::strstr((*(ml::FixStr<128>*)pathStorage).mString, &lbl_eu_804FB3A4[0x25]) == nullptr) {
+                std::strstr((*(ml::FixStr<128>*)pathStorage).mString, &lbl_eu_804FB3A4[0x2B]);
             }
             return false;
         }
     }
 
-    // If the same script is already loaded, leave it alone.
-    if (extBuffer.mLength > 0) {
-        if (std::strcmp(extBuffer.mString, script->mName) == 0) {
-            if (!(script->mFlags & 0x2)) {
-                if (script->mFlags & 0x1) {
-                    return true;
-                }
+    // If the slot holds a different loaded script, leave it alone.
+    if (extBuffer.mLength != 0) {
+        if (std::strcmp(extBuffer.mString, script->mName) != 0) {
+            u32 flags = script->mFlags;
+            if (!(flags & 0x2) && (flags & 0x1)) {
+                return true;
             }
         }
     }
@@ -338,10 +364,9 @@ extern "C" bool func_80068ECC(CfScript* script, const char* name) {
     script->mWaitCount = 0;
     script->mName[0] = '\0';
     script->mNameLen = 0;
-    // Single load, two mask ANDs, one store (retail: and/and/stw).
     script->mFlags = script->mFlags & ~0x3B & ~0x09;
 
-    void* handle = CfRes_readCommonArchive(script->mVmContext, pathBuffer.mString, script);
+    void* handle = CfRes_readCommonArchive(script->mVmContext, (*(ml::FixStr<128>*)pathStorage).mString, script);
     script->mFileHandle = handle;
     // Bool survives the name-store calls in a saved register (retail:
     // neg/or/srwi. r27, then `beq` on the same bits).
@@ -520,20 +545,6 @@ void CfScriptManager::func_8006953C() {
     s1.mNameLen = 0;
 
     vmInit();
-}
-
-// ml::FixStr<N>::format - vsnprintf into a stack buffer, then copy into the
-// fixed string (mString at 0x00, mLength at 0x80 for FixStr<128>).
-template <>
-void ml::FixStr<128>::format(const char* fmt, ...) {
-    char buffer[0x100];
-    va_list args;
-    va_start(args, fmt);
-    vsnprintf(buffer, sizeof(buffer), fmt, args);
-    va_end(args);
-
-    mLength = (int)std::strlen(buffer);
-    std::strcpy(mString, buffer);
 }
 
 // sinit_800696C8 - static initializer

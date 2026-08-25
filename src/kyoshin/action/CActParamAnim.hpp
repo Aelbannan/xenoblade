@@ -876,7 +876,7 @@ extern "C" int func_80055F54(void* data);
 
 // C-linkage imports used by func_80051CD4 / func_80052934.
 extern "C" void* func_8004B344(CActParamAnim* self);
-extern "C" int func_8004CC80();
+extern "C" int func_8004CC80(CActParamAnim* self);
 extern "C" int func_80052540(CActParamAnim* self);
 extern "C" f32 func_8004B7B8(CActParamAnim* self);
 extern "C" f32 func_8005254C(CActParamAnim* self);

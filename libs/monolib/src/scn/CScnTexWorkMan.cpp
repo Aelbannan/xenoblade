@@ -890,5 +890,6 @@ extern "C" __declspec(align(4)) const char lbl_eu_80524020[0x10] = {
 // slots to reach the 40B block.
 u32 lbl_eu_80665904;
 u32 lbl_eu_80665908[2];
-DECOMP_FORCEACTIVE(CScnTexWorkMan_cpp, lbl_eu_80524010);
-DECOMP_FORCEACTIVE(CScnTexWorkMan_cpp, lbl_eu_80524020);
+// (retired DECOMP_FORCEACTIVE keep-alives: 80524020 is referenced by
+// MemManager::create above; 80524010 is anchored by CScnItemCamera.cpp's
+// sd table — section-defined globals survive linking without text refs.)

@@ -2,6 +2,7 @@
 // Replace stubs with high-level C/C++ during decomp.
 
 #include "kyoshin/cf/CBattleManagerApi.hpp"
+#include "kyoshin/cf/object/CfObjectMoveApi.hpp"
 #include "kyoshin/cf/CfMapItemManager.hpp"
 #include "kyoshin/harness_catalog.hpp"
 
@@ -233,7 +234,7 @@ L_887F4:
     }
     self->field_0x14 = lbl_eu_80666570;
     self->field_0x80->mSub.s0C4(self->field_0x0C);
-    func_800BE12C(&self->field_0x80->mSub, 0x3, 0, -0x1, 0x1);
+    func_800BE12C((u8*)&self->field_0x80->mSub, 0x3, 0, -0x1, 0x1);
     self->field_0x80->mSub.s010(0x4);
 end:
     return;

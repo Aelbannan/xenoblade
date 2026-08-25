@@ -31,6 +31,8 @@ extern const f32 lbl_eu_80667AA8;        // float pool: timer decay multiplier
 // singleton (null if it already existed).
 extern "C" CMenuPTState* __ct__CMenuPTState(CProcess* _this, CProcess* storedParent) {
     CMenuPTState* result;
+    u32 nullW0;
+    int zero = 0;
     if (lbl_eu_80664300 != 0) {
         // Singleton already exists: return null.
         result = 0;
@@ -46,35 +48,37 @@ extern "C" CMenuPTState* __ct__CMenuPTState(CProcess* _this, CProcess* storedPar
             // vtable / terminal-state ptmf slots come from the retail's inlined
             // vtable-store sequence (see shim layout comment).
             shim->vtable = lbl_eu_8052BF70;
-            u32* ptmf = __ptmf_null;
+            const PtmfNullWords* ptmf = reinterpret_cast<const PtmfNullWords*>(__ptmf_null);
+            u32 ptmfWord1 = ptmf->w[1];
+            u32 ptmfWord0 = ptmf->w[0];
             char* vtFinal = lbl_eu_80532A38;
 
-            u32 cbHi = ptmf[1];
-            u8 zero = 0;
-            u32 cbLo = ptmf[0];
-            shim->callbacks[0] = cbLo;
+            shim->callbacks[0] = ptmfWord0;
             char* iscnVtbl = vtFinal + 0x24;
-            CMenuPTState* obj = (CMenuPTState*)shim;
-            shim->callbacks[1] = cbHi;
-            u32 cbMid = ptmf[2];
+            shim->callbacks[1] = ptmfWord1;
+            u32 ptmfWord2 = ptmf->w[2];
 
-            shim->callbacks[2] = cbMid;
+            shim->callbacks[2] = ptmfWord2;
+            ptmfWord1 = ptmf->w[1];
+            ptmfWord0 = ptmf->w[0];
+            shim->callbacks[3] = ptmfWord0;
+            shim->callbacks[4] = ptmfWord1;
+            ptmfWord2 = ptmf->w[2];
+            shim->callbacks[5] = ptmfWord2;
             shim->field54 = zero;
             shim->field55 = zero;
-            shim->callbacks[3] = ptmf[0];
-            shim->callbacks[4] = ptmf[1];
-            shim->callbacks[5] = ptmf[2];
 
-            shim->field54 = 0;
-            shim->field55 = 0;
-
+            // The compiled CMenuPTState layout puts the IScnRender vptr at
+            // 0x3C (MWCC MI ordering), but retail places it at 0x58 -- so all
+            // trailing stores go through the shim's explicit offsets instead
+            // of the typed members.
             shim->vtable = vtFinal;
-            *(u32*)((u8*)obj + 0x58) = (u32)iscnVtbl;
-            obj->mStoredParent = storedParent;
+            shim->iscnVtbl = iscnVtbl;
+            shim->storedParent = storedParent;
 
-            __ct__CBgTex(&obj->mBgTex, 0);
-            __ct__CPartyStateWin(&obj->mPartyStateWin, 0, 0);
-            obj->mField_6C6C = 0;
+            __ct__CBgTex((CBgTex*)shim->bgTex, 0);
+            __ct__CPartyStateWin((CPartyStateWin*)shim->_80, 0, 0);
+            shim->field6C6C = 0;
         }
 
         // Store singleton
@@ -122,6 +126,7 @@ extern "C" void __ct__80192C10(cf::UnkClass_80192BF4* self) {
 }
 
 extern "C" const f32 lbl_eu_80667A98;    // float pool: zero threshold
+extern "C" const f32 lbl_eu_80667A9C;    // float pool: reset value (-1.0f)
 extern "C" const double lbl_eu_80667AA0;  // double pool: 0x4330000080000000 magic
 
 // us-80194348 - func_80192C2C.
@@ -165,38 +170,53 @@ extern "C" void* func_800F6EAC(void* list, u32 idx);
 extern "C" int func_80148778(void* obj, int id);
 
 // us-801943cc - func_80192CB0.
-// If the timer is still running (>0), scan the battle object list for any actor
-// carrying status 0x10 or 0xf. If none is found, decay the timer by the per-frame
-// delta; when it crosses zero reset the whole block.
+// If the timer is still running (>threshold), scan the battle object list for any
+// actor carrying status 0x10 or 0xf. If none is found, decay the timer by the
+// per-frame delta; when it crosses zero reset the whole block.
+// NOTE: the element address is (elem - 0x3e9c) + 8, i.e. the status getter is
+// invoked on a fixed header offset within the battle-actor record.
 extern "C" void func_80192CB0(cf::UnkClass_80192BF4* self) {
-    if (self->field_0x04 <= 0.0f) {
-        return;
-    }
+    // Written as a '>' guard so MWCC tests the GT bit (plain bge-style skip),
+    // matching retail; '<' forms emit an extra cror.
+    if (self->field_0x04 > lbl_eu_80667A98) {
+        CEnumListHolder holder;
+        func_80043D90(&holder);
+        func_800F4A98(func_80043F18(&holder), 0x80000000, 0);
 
-    CEnumListHolder holder;
-    func_80043D90(&holder);
-    func_800F4A98(func_80043F18(&holder), 0x8000, 0);
-
-    CEnumList* list = (CEnumList*)func_80043F18(&holder);
-    int found = 0;
-    for (u32 i = 0; i < list->count; i++) {
-        void* elem = func_800F6EAC(list, i);
-        u8* p = elem ? (u8*)elem - 0x3e9c : 0;
-        if (func_80148778((u8*)p + 8, 0x10) || func_80148778((u8*)p + 8, 0xf)) {
-            found = 1;
-            break;
+        int found;
+        u32 i = 0;
+        // List handle is re-fetched twice per iteration (count check + element
+        // fetch); never cached in a register across calls.
+        while (((CEnumList*)func_80043F18(&holder))->count > i) {
+            // Test-before-copy shape: retail tests r3 straight from the call,
+            // copies it, then subtracts the record offset when non-null.
+            u32 base = (u32)func_800F6EAC(func_80043F18(&holder), i);
+            if (base != 0) {
+                base -= 0x3e9c;
+            }
+            if (func_80148778((u8*)(base + 8), 0x10) != 0 ||
+                func_80148778((u8*)(base + 8), 0xf) != 0) {
+                __dt__80043E88(&holder, -1);
+                found = 1;
+                goto after;
+            }
+            i++;
         }
-    }
-    __dt__80043E88(&holder, -1);
-    if (found) {
-        return;
-    }
-
-    // No matching actor: decay the timer; when it hits zero, reset the block.
-    self->field_0x04 -= lbl_eu_80667AA8 * func_80496288(lbl_eu_80663E14);
-    if (self->field_0x04 <= 0.0f) {
-        self->field_0x00 = 0;
-        self->field_0x04 = 0.0f;
-        self->field_0x08 = -1.0f;
+        __dt__80043E88(&holder, -1);
+        found = 0;
+    after:
+        if (found == 0) {
+            // No matching actor: decay the timer; when it crosses the threshold,
+            // reset the block.
+            // The product is materialized separately -- writing it as one
+            // expression makes MWCC contract to fnmsubs, which retail lacks.
+            f32 decay = lbl_eu_80667AA8 * func_80496288(lbl_eu_80663E14);
+            self->field_0x04 -= decay;
+            if (self->field_0x04 <= lbl_eu_80667A98) {
+                self->field_0x00 = 0;
+                self->field_0x04 = lbl_eu_80667A98;
+                self->field_0x08 = lbl_eu_80667A9C;
+            }
+        }
     }
 }

@@ -2306,7 +2306,7 @@ extern "C" __declspec(noinline) void __ct__IStateCache(void* self) {
 
 // ==== .data dissolved (retail bytes/relocs from build/us/asm/monolib/src/device/CGXCache.s) ====
 // .data 0x8056BF90 0x38 jumptable + 0x8056BFC8 0x10 CGXCache vtable + 0x8056BFD8 0xC + 0x8056BFE4 0xC + 0x8056BFF0 0x10
-// Emitted as extern "C" u32 arrays with (u32)&extern, rodata align, DECOMP_FORCEACTIVE, novtable.
+// Emitted as extern "C" u32 arrays with (u32)&extern, rodata align, novtable.
 // Jumptable addends dumped from data diff retail: 76,100,124,264,404,448,500,552,564,576,1348,1372,1592,420
 // (verified against CGXCache.s .rel lines). Uses (u32)((char*)&extern+offset) for correct R_PPC_ADDR32 addends.
 // func_80449D68__8CGXCacheFv already declared at top with (CGXCache*,u32,void*) signature; reuse it for jumptable addends.
@@ -2326,4 +2326,4 @@ extern "C" u32 lbl_eu_8056BFF0[4] = {
     (u32)&lbl_eu_80663668, 0x00000000,
     (u32)&__dt__11IStateCacheFv, 0x00000000
 };
-DECOMP_FORCEACTIVE(CGXCache_cpp, lbl_eu_8056BFC8, lbl_eu_8056BFD8, lbl_eu_8056BFE4, lbl_eu_8056BFF0, rodata_CGXCache, sdata_CGXCache, sdata2_pool_CGXCache);
+

@@ -343,55 +343,50 @@ extern "C" s32 func_804F53DC(CNBanner* self) {
 
 
 // ===== Dissolved monolibdata2 (blob surgery) data owned by this TU =====
-// The CNBanner vtable blob (lbl_eu_80570378) and its RTTI chain
-// (lbl_eu_80663CE0 / lbl_eu_80570400) are emitted by the compiler now that
-// CNBanner derives from IWorkEvent and overrides OnFileEvent.
+// The CNBanner vtable / RTTI chain is compiler-emitted: the class derives
+// IWorkEvent and overrides OnFileEvent, so MWCC's own __vt__8CNBanner,
+// typeinfo and base list carry the retail bytes. Hand-spelling those slots
+// as extern "C" collides with the member manglings under -ipa file
+// (MWCC 10322; MWCC_CASES "CDeviceGX data gate"). Only the FOREIGN-class
+// blobs of the dissolved monolithdata2 range stay hand-written here.
+//
+// Do NOT spell IWorkEvent slot names (__dt__8CNBannerFv, WorkEventN__...,
+// __RTTI__10IWorkEvent) in this TU - see note above.
 
-extern "C" u32 lbl_eu_80663B70;
+extern "C" u32 lbl_eu_80663B70;  // foreign .sdata typeinfo locator (CNRequest)
 
-// Second vtable in the slice: belongs to another class whose definition is
-// split elsewhere ("CNReqtaskCreatedir" RTTI); kept as hand-written data.
-// Declared as address-typed words so the constants get link-time relocation
-// initializers -- MWCC applies them at link time instead of emitting a
-// dynamic __sinit__ body in .text.
-extern "C" void func_804DA4CC();
+// [.rodata] RTTI name strings.
+extern "C" __declspec(section ".rodata") const char lbl_eu_805248B0[0x10] = "CNBanner";
+extern "C" __declspec(section ".rodata") const char lbl_eu_805248C0[0x13] = "CNReqtaskCreatedir";
+
+// Foreign free functions referenced from the probe-vtable blob.
 extern "C" void func_eu_804F9EE0();
+extern "C" void func_804DA4CC();
+// forward decls for cross-referencing blobs below
+extern "C" u32 lbl_eu_80663CE8[2];
+extern "C" u32 lbl_eu_80570410[4];
+extern "C" u32 lbl_eu_80570420[3];
+extern "C" u32 lbl_eu_80663CE0[2];
+extern "C" u32 lbl_eu_80570400[4];
 
-// forward decls for cross-section refs
-extern u32 lbl_eu_80570410[4];
-extern u32 lbl_eu_80570420[3];
-extern u32 lbl_eu_80663CE8[2];
-extern __declspec(align(4)) const char lbl_eu_805248B0[0x9];
-extern __declspec(align(4)) const char lbl_eu_805248C0[0x13];
+// [.sdata] RTTI name/hierarchy pairs (0x80663CE0-0x80663CF0). The CNBanner
+// pair points at the compiler-emitted base list, renamed onto lbl_eu_80570400
+// by the CNBanner.o UNIT_RULES. __declspec(section) is required: this TU is
+// compiled with -sdata 0, so small aggregates would otherwise fall into .data.
+extern "C" __declspec(section ".sdata") u32 lbl_eu_80663CE0[2] = { (u32)&lbl_eu_805248B0, (u32)&lbl_eu_80570400 };
+extern "C" __declspec(section ".sdata") u32 lbl_eu_80663CE8[2] = { (u32)&lbl_eu_805248C0, (u32)&lbl_eu_80570420 };
 
-// [.data] 0x80570410-0x80570420 (16 bytes)
-// Address-typed words get link-time relocation init from MWCC (no __sinit__);
-// plain non-const u32 aggregates land in .data like the retail blobs, so no
-// section attribute is needed.
-extern "C" u32 lbl_eu_80570410[4] = { (u32)&lbl_eu_80663CE8, 0, (u32)func_eu_804F9EE0, (u32)func_804DA4CC };
-// [.data] 0x80570420-0x8057042C (12 bytes)
-extern "C" u32 lbl_eu_80570420[3] = { (u32)lbl_eu_80663B70, 0, 0 };
+// [.sbss] 0x80665A98: module-global string pointer installed by
+// sinit_eu_804F9FA4 (monolib_eu_804F9E98).
+extern "C" char* lbl_eu_80665A98;
+// Keep-alive: unreferenced tentative defs are GC'd under -ipa file. The
+// anchor lives at the very end of .data and is tail-dropped by UNIT_RULES.
+extern "C" u32 lbl_eu_80665A98_anchor[1] = { (u32)&lbl_eu_80665A98 };
 
-// [.sdata] 0x80663CE0-0x80663CF0 (16 bytes): RTTI name/hierarchy pairs. The
-// CNBanner pair (lbl_eu_80663CE0 -> lbl_eu_80570400) is compiler-generated;
-// only the second pair stays hand-written.
-// [.sdata] 0x80663CE8-0x80663CF0 (8 bytes): second RTTI name/hierarchy pair
-// ("CNReqtaskCreatedir"); small non-const aggregates go to .sdata without a
-// section attribute.
-extern "C" u32 lbl_eu_80663CE8[2] = { (u32)lbl_eu_805248C0, (u32)lbl_eu_80570420 };
+// The probe-vtable + tail blobs are defined at EOF so their .data placement
+// follows the compiler-emitted vtable/base list (retail order), see bottom.
 
-// [.rodata] 0x805248B0-0x805248D3 (35 bytes). The "CNBanner" name string
-// (lbl_eu_805248B0) is compiler-generated as the RTTI type_info name.
-// lbl_eu_805248BC (4 zero bytes, the empty-slot path string) stays UNDEFINED
-// here: only the incomplete-array extern at the top of the file declares it,
-// so MWCC cannot constant-fold the read in func_804F531C and keeps the retail
-// lis+ADDR16-reloc addressing.
-// lbl_eu_805248BC itself stays UNDEFINED: every definable form regresses --
-// const zero-init folds to li r4,0 (.sbss2), non-const lands in .sbss with
-// sda21 addressing. The undefined sized-array reference reproduces the retail
-// lis+ADDR16_HA/LO pair; the symbol ships from the shared monolibdata blob.
-extern "C" const char lbl_eu_805248C0[0x13] = { 0x43,0x4E,0x52,0x65,0x71,0x74,0x61,0x73,0x6B,0x43,0x72,0x65,0x61,0x74,0x65,0x64,0x69,0x72,0x00 };
-
-// [.sbss] 0x80665A98-0x80665A9C (4 bytes) - module-global string pointer
-// (cross-TU global; plan assigns the slot to this TU).
-extern "C" { char* lbl_eu_80665A98; }
+// [.data] probe vtable + tail of the foreign class (defined here so their
+// .data placement follows the compiler-emitted vtable / base list).
+extern "C" u32 lbl_eu_80570410[4] = { (u32)&lbl_eu_80663CE8, 0, (u32)&func_eu_804F9EE0, (u32)&func_804DA4CC };
+extern "C" u32 lbl_eu_80570420[3] = { (u32)&lbl_eu_80663B70, 0, 0 };

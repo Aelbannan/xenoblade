@@ -413,9 +413,12 @@ extern "C" void func_800BA440(cf::CfObjectMap* self) {
 // PTMF dispatch: field_0x8E (u16 index) selects a CfObjectMap method from
 // the 3-entry point-to-member-function table lbl_eu_80529100 (0x28 bytes).
 // MWCC lowers (this->*table[idx])() to mulli/lis/addi + `bl __ptmf_scall`.
+// The table is declared at file scope with C linkage: a block-scope extern
+// inside the member function lands in ns cf and mangles to
+// lbl_eu_80529100__2cf, drifting from retail's plain name.
+typedef void (cf::CfObjectMap::*CfObjectMapDispatchPMF)();
+extern "C" { extern CfObjectMapDispatchPMF lbl_eu_80529100[3]; }
 void cf::CfObjectMap::func_800BA610() {
-    typedef void (cf::CfObjectMap::*MapPMF)();
-    extern MapPMF lbl_eu_80529100[3];
     u16 idx = *(u16*)((u8*)this + 0x8E);
     if (idx < 3) {
         (this->*lbl_eu_80529100[idx])();

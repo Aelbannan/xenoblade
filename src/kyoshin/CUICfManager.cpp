@@ -85,6 +85,8 @@ void func_80139124__FPQ34nw4r3lyt19ArcResourceAccessor(nw4r::lyt::ArcResourceAcc
 // Deleting dtor (C-ABI import): the secondary-subobject thunks tail-call it
 // with the adjusted `this`, so it is referenced through the flat retail name.
 void __dt__12CUICfManagerFv(CUICfManager*);
+void Regist__8CProcessFP8CProcessb(CProcess*, CProcess*, unsigned char);
+// lbl_eu_8052E2A0 / lbl_eu_8052E444 come from CUICfManager.hpp (u8[]).
 }
 
 IWorkEvent* CUICfManager::cfWorkEvent() {
@@ -2200,13 +2202,38 @@ extern "C" void func_80131820(u8* base) {
 // 3-block clear is the retail divwu-counted countdown), allocates the 0xC-node
 // pool, and re-installs the move/draw PTMFs from lbl_eu_8052E288.
 // ---------------------------------------------------------------------------
-CUICfManager::CUICfManager(CScnNw4r* pScene, mtl::ALLOC_HANDLE mHandle) {
-    mFileHandle = NULL;                       // 0x114
-    unk118 = (int)mHandle;                    // 0x118
-    unk11C = (u32)pScene;                     // 0x11C
-    unk120 = 0;                               // 0x120
+// Retail keeps a flat unmangled ctor symbol, so the constructor is written as
+// a global function (CQuestWindow idiom); the creator func_801336E4 calls the
+// literal retail name.
+extern "C" void* __ct__CUICfManager(CUICfManager* self, CScnNw4r* pScene,
+                                    mtl::ALLOC_HANDLE mHandle) {
+    CUICfManager* const this_ = self;
+    // CTTask<CUICfManager> base-ctor emulation (a flat ctor gets no implicit
+    // base construction): CProcess base, temp vtable, two null move/draw PTMF
+    // triples into 0x3C..0x50, composite vtable + secondary-subobject slots.
+    u32* w = (u32*)self;
+    __ct__8CProcessFv(reinterpret_cast<CProcess*>(self));
+    w[4] = (u32)lbl_eu_8052E444;          // 0x10 temp vtable
+    w[15] = __ptmf_null[0];               // 0x3C move ptmf
+    w[16] = __ptmf_null[1];
+    w[17] = __ptmf_null[2];
+    w[18] = __ptmf_null[0];               // 0x48 draw ptmf
+    w[19] = __ptmf_null[1];
+    w[20] = __ptmf_null[2];
+    w[4] = (u32)lbl_eu_8052E2A0;          // 0x10 composite vtable
+    w[21] = (u32)lbl_eu_8052E2A0 + 36;    // 0x54 IWorkEvent slot
+    w[22] = (u32)lbl_eu_8052E2A0 + 172;   // 0x58 IFlagEvent slot
+    w[23] = 0;                            // 0x5C
+    new (&this_->mPackedFont60) nw4r::ut::PackedFont();
+    new (&this_->mPackedFont9C) nw4r::ut::PackedFont();
+    new (&this_->mPackedFontD8) nw4r::ut::PackedFont();
 
-    CUICfEventQueue* q = reinterpret_cast<CUICfEventQueue*>(&unk124);
+    this_->mFileHandle = NULL;                       // 0x114
+    this_->unk118 = (int)mHandle;                    // 0x118
+    this_->unk11C = (u32)pScene;                     // 0x11C
+    this_->unk120 = 0;                               // 0x120
+
+    CUICfEventQueue* q = reinterpret_cast<CUICfEventQueue*>(&this_->unk124);
     q->vtable = lbl_eu_8052E3B0;
     q->nodes = NULL;                          // 0x138
     q->count = 0;                             // 0x13C
@@ -2216,12 +2243,12 @@ CUICfManager::CUICfManager(CScnNw4r* pScene, mtl::ALLOC_HANDLE mHandle) {
     q->startNode.prev = &q->startNode;
     q->vtable = lbl_eu_8052E398;
 
-    unk144 = NULL;                            // 0x144
-    mInitSlots[0].unk00[0] = 0;               // 0x148
-    mInitSlots[0].unk00[1] = 0;               // 0x149
+    this_->unk144 = NULL;                            // 0x144
+    this_->mInitSlots[0].unk00[0] = 0;               // 0x148
+    this_->mInitSlots[0].unk00[1] = 0;               // 0x149
 
     for (u32 i = 0; i < 8; i++) {
-        CUICfInitSlot& s = mInitSlots[i];
+        CUICfInitSlot& s = this_->mInitSlots[i];
         // unk08's word pair, then the unk3C..unkA4 block clear (retail divwu
         // countdown over the 0x34 stride).
         s.unk08.unk04 = 0;
@@ -2244,16 +2271,34 @@ CUICfManager::CUICfManager(CScnNw4r* pScene, mtl::ALLOC_HANDLE mHandle) {
         s.unkD8.unk0E = 0;
     }
 
-    unkC88[0] = 0;                            // 0xC8C
-    mFlags = 0;                               // 0xC90
-    unk138 = (CUICfListNode*)mtl::MemManager::allocate_array(
+    this_->unkC88[0] = 0;                            // 0xC8C
+    this_->mFlags = 0;                               // 0xC90
+    this_->unk138 = (CUICfListNode*)mtl::MemManager::allocate_array(
         0x90, func_80496004((CScn*)pScene));
-    unk13C = 0xc;
+    this_->unk13C = 0xc;
     for (u32 i = 0; i < 0xc; i++) {
-        unk138[i].next = NULL;
+        this_->unk138[i].next = NULL;
     }
+    return self;
+
 }
-void func_801336E4(){}
+// Singleton creator (us-801341b8): fall back to the MEM2 handle when the
+// caller passes -1, allocate the 0xC94-byte instance from the work heap,
+// construct it, cache it in the global singleton slot, register it under
+// pParent, and return the cached slot value.
+extern "C" CUICfManager* func_801336E4(CProcess* pParent, CScnNw4r* pScene,
+                                       mtl::ALLOC_HANDLE mHandle) {
+    if ((u32)mHandle == 0xFFFFFFFF) {
+        mHandle = mtl::MemManager::getHandleMEM2();
+    }
+    void* mem = mtl::MemManager::allocate(0xC94, CWorkThreadSystem::getWorkMem());
+    if (mem != NULL) {
+        mem = __ct__CUICfManager((CUICfManager*)mem, pScene, mHandle);
+    }
+    lbl_eu_80664054 = (CProcess*)mem;
+    Regist__8CProcessFP8CProcessb((CProcess*)mem, pParent, 0);
+    return (CUICfManager*)lbl_eu_80664054;
+}
 // func_80133770 (us-80134244): teardown/create of the base menu for Move's
 // mFlags bit 0x1. Gates on the singleton + resource accessor, probes the
 // busy chain (with the 0x20-resource / state-2 retry sound), then creates
@@ -2913,7 +2958,65 @@ slot_found:
     }
     return savedRet;
 }
-void func_80133F48(){}
+// us-80134a1c: create + queue a menu via func_8017FC88; the function's own
+// u32 param passes straight through as the factory's 3rd arg (kept live in
+// r5 across the singleton loads). Same shape as func_80134460 otherwise.
+extern "C" void* func_8017FC88(u32, u32, u32);
+u32 func_80133F48(u32 param) {
+    CUICfManagerCreateView* inst;
+    volatile u32 savedRet;
+    int i;
+    int byteOff;
+    int capacity;
+    CUICfListNode* startNode;
+    CUICfListNode* temp;
+
+    inst = (CUICfManagerCreateView*)lbl_eu_80664054;
+    if (inst == NULL) {
+        return 0;
+    }
+    {
+        u32 tempRet =
+            (u32)func_8017FC88((u32)inst->field_0x144, inst->field_0x11C, param);
+        savedRet = tempRet;
+        if (tempRet == 0) {
+            return 0;
+        }
+    }
+    inst = (CUICfManagerCreateView*)lbl_eu_80664054;
+    i = 0;
+    byteOff = 0;
+    startNode = (CUICfListNode*)inst->field_0x128;
+    capacity = inst->field_0x13C;
+    goto slot_check;
+slot_body:
+    if (*(u32*)((u8*)inst->field_0x138 + byteOff) == 0) {
+        goto slot_found;
+    }
+    byteOff += 0xc;
+    i++;
+slot_check:
+    if (i < capacity) {
+        goto slot_body;
+    }
+slot_found:
+    {
+        CUICfListNode* temp2 = (CUICfListNode*)((u8*)inst->field_0x138 + i * 0xc);
+        u32* ptr = &temp2->item;
+        if (ptr != 0) {
+            try {
+                *ptr = (u32)savedRet;
+            } catch (...) {
+                throw;
+            }
+        }
+        temp2->next = startNode;
+        temp2->prev = startNode->prev;
+        startNode->prev->next = temp2;
+        startNode->prev = temp2;
+    }
+    return savedRet;
+}
 // us-80134024: create + queue the CMenuShopBuy-style menu. Takes one param
 // passed straight through as the factory's 3rd arg (kept live in r5 across
 // the singleton loads). Same shape as func_80134100 otherwise.
@@ -3150,7 +3253,61 @@ slot_found:
     return savedRet;
 }
 // us-80134e5c: create + queue the CMenuArtsSet-style menu.
-u32 func_80134388() { CF_QUEUE_MENU(__ct__CMenuArtsSet) }
+u32 func_80134388() {
+    CUICfManagerCreateView* inst;
+    volatile u32 savedRet;
+    int i;
+    int byteOff;
+    int capacity;
+    CUICfListNode* startNode;
+    CUICfListNode* temp;
+
+    inst = (CUICfManagerCreateView*)lbl_eu_80664054;
+    if (inst == NULL) {
+        return 0;
+    }
+    {
+        u32 tempRet =
+            (u32)__ct__CMenuArtsSet((u32)inst->field_0x144, inst->field_0x11C);
+        savedRet = tempRet;
+        if (tempRet == 0) {
+            return 0;
+        }
+    }
+    inst = (CUICfManagerCreateView*)lbl_eu_80664054;
+    i = 0;
+    byteOff = 0;
+    startNode = (CUICfListNode*)inst->field_0x128;
+    capacity = inst->field_0x13C;
+    goto slot_check;
+slot_body:
+    if (*(u32*)((u8*)inst->field_0x138 + byteOff) == 0) {
+        goto slot_found;
+    }
+    byteOff += 0xc;
+    i++;
+slot_check:
+    if (i < capacity) {
+        goto slot_body;
+    }
+slot_found:
+    {
+        CUICfListNode* temp2 = (CUICfListNode*)((u8*)inst->field_0x138 + i * 0xc);
+        u32* ptr = &temp2->item;
+        if (ptr != 0) {
+            try {
+                *ptr = (u32)savedRet;
+            } catch (...) {
+                throw;
+            }
+        }
+        temp2->next = startNode;
+        temp2->prev = startNode->prev;
+        startNode->prev->next = temp2;
+        startNode->prev = temp2;
+    }
+    return savedRet;
+}
 // us-80134f34: create + queue the CMenuMapSelect-style menu.
 // Shared body shape with func_80134538/func_80134628 below: null-check the
 // singleton, call the factory with (field_0x144, field_0x11C), bail on 0,
@@ -3916,7 +4073,7 @@ int func_80135708() {
         return 0;
     }
     // Retail holds the slot-array base (inst+0x14C) in r31 across the gates.
-    u8* base = (u8*)inst + 0x14c;
+    u8* volatile base = (u8*)inst + 0x14c;
     int flag;
     if (func_80293C10() != 0) {
         flag = 1;
@@ -4251,7 +4408,7 @@ void* __dt__reslist_IUICf(CUICfEventQueue* q, s32 flags) {
         if (q != NULL) {
             q->vtable = (u8*)lbl_eu_8052E3B0;
             CUICfListNode* cur = q->head->next;
-            while (cur != q->head) {
+            while (q->head != cur) {
                 CUICfListNode* prev = cur;
                 cur = cur->next;
                 prev->next = NULL;

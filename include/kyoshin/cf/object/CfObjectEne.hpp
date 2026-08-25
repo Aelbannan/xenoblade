@@ -1339,16 +1339,16 @@ extern "C" void func_801F4D50(void* obj, void* actor);
 
 // C-ABI imports used by func_800AEC68 / func_800ADBD4 / func_800AF870
 // (retail symbols are unmangled).
-// func_8003B41C / func_8003B1EC: aligned with CfObjectPc.hpp's block
-// (int(void*)) so TUs including both see identical redeclarations.
+// func_8003B41C / func_8003B1EC: canonical form per ocBdat.cpp definitions
+// (u32(void*)); CfObjectPc.hpp's block uses the same spelling.
 extern "C" void* func_8003AA34();
-extern "C" u32 func_8003B41C(void* bdat);   // bdat first row (matches CfBdat.hpp)
-extern "C" int func_8003B1EC(void* bdat);   // bdat row count
+extern "C" u32 func_8003B41C(void* bdat);   // bdat first row (must match CfObjectPc.hpp)
+extern "C" u32 func_8003B1EC(void* bdat);   // bdat row count (must match CfObjectPc.hpp)
 extern "C" void func_8014B7B0(u8* obj);
 extern "C" void func_8015396C(u8* obj, u32 a, u32 b);
 // func_80174C98 / func_80174B4C are owned by kyoshin/cf/CfMapItemManager.hpp.
-extern "C" void func_801765A4(u8* actor, f32 value, u32 arg);
-extern "C" int func_801BA2C8(u8* self);
+extern "C" void func_801765A4(void* actor, f32 value, u32 arg);
+extern "C" unsigned long func_801BA2C8(void* self);
 // func_80148778 and getInstance__Q22cf14CBattleManagerFv are declared in
 // CAIAction.hpp / kyoshin/cf/CBattleManagerApi.hpp (reachable via
 // CfObjectActor.hpp) - keep

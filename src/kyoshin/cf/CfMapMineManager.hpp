@@ -152,3 +152,4 @@ extern const f32 lbl_eu_806682F0;               // rodata: respawn timer scale 2
 extern const f32 lbl_eu_806682F4;               // rodata: message display time
 extern "C" const f64 lbl_eu_806682D8;           // rodata: 0.0 double literal
 extern "C" const f64 lbl_eu_806682C0;               // rodata: 160.0 double literal
+extern "C" const f32 lbl_eu_8066A208;           // monolibdata1 sdata2: 1.0e-6f timer epsilon

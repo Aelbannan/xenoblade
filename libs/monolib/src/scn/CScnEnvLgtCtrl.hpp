@@ -958,6 +958,9 @@ extern const float lbl_eu_8066B004;
 extern const float lbl_eu_8066B008;
 extern const float lbl_eu_8066B07C; // func_804C7B54 weight (loop 4)
 extern const float lbl_eu_8066B080; // degrees -> SinFIdx units scale
+extern const float lbl_eu_8066B034; // fog color blend weight (func_804C4E04)
+extern const float lbl_eu_8066B038; // fog color blend weight (func_804C4E04)
+extern const float lbl_eu_8066B03C; // fog color blend weight (func_804C4E04)
 
 // Member-function pointer tables dispatched by func_804C8054's item loop
 // (12-byte ptmf stride; each entry is called with the work blob as `this`

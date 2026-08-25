@@ -14,7 +14,47 @@ using namespace ml;
 // .rodata 0x80522AA8 (0x28+0x78), .data 0x8056C000 (0xA0+0x18+0xA0+0x18), .sdata 0x80663680 (0x10)
 // .bss 0x806574F8 (0x44+0x44), .sbss 0x80665650 (0x10)
 // Emitted as extern "C" u32 arrays with (u32)&extern, rodata align, DECOMP_FORCEACTIVE, novtable (CDevice is novtable via header).
-#include "monolib/data_vtables.hpp"
+// Local slot decls instead of including monolib/data_vtables.hpp:
+// its file-scope `extern "C" void* __RTTI__10IWorkEvent/__RTTI__11CWorkThread`
+// collide with MWCC's implicit RTTI names in this TU under -ipa file
+// (error 10322 illegal name overloading; see MWCC_CASES CDeviceGX / LODMemMan).
+extern "C" int WorkEvent1__10IWorkEventFPvPCc(void*, const char*);
+extern "C" int OnFileEvent__10IWorkEventFP10CEventFile(void*);
+extern "C" int WorkEvent3__10IWorkEventFPv(void*);
+extern "C" int WorkEvent4__10IWorkEventFv();
+extern "C" void OnPauseTrigger__10IWorkEventFb(int);
+extern "C" int WorkEvent6__10IWorkEventFv();
+extern "C" int WorkEvent7__10IWorkEventFv();
+extern "C" int WorkEvent8__10IWorkEventFv();
+extern "C" int WorkEvent9__10IWorkEventFv();
+extern "C" int WorkEvent10__10IWorkEventFv();
+extern "C" int WorkEvent11__10IWorkEventFv();
+extern "C" int WorkEvent12__10IWorkEventFv();
+extern "C" int WorkEvent13__10IWorkEventFv();
+extern "C" int WorkEvent14__10IWorkEventFv();
+extern "C" int WorkEvent15__10IWorkEventFv();
+extern "C" int WorkEvent16__10IWorkEventFv();
+extern "C" int WorkEvent17__10IWorkEventFv();
+extern "C" int WorkEvent18__10IWorkEventFv();
+extern "C" int WorkEvent19__10IWorkEventFv();
+extern "C" int WorkEvent20__10IWorkEventFv();
+extern "C" int WorkEvent21__10IWorkEventFv();
+extern "C" int WorkEvent22__10IWorkEventFv();
+extern "C" int WorkEvent23__10IWorkEventFv();
+extern "C" int WorkEvent24__10IWorkEventFv();
+extern "C" int WorkEvent25__10IWorkEventFv();
+extern "C" int WorkEvent26__10IWorkEventFv();
+extern "C" int WorkEvent27__10IWorkEventFv();
+extern "C" int WorkEvent28__10IWorkEventFv();
+extern "C" int WorkEvent29__10IWorkEventFv();
+extern "C" int WorkEvent30__10IWorkEventFv();
+extern "C" void WorkEvent31__10IWorkEventFv();
+// CWorkThread work-method vtable slots.
+extern "C" void wkUpdate__11CWorkThreadFv();
+extern "C" void wkRender__11CWorkThreadFv();
+extern "C" void wkRenderAfter__11CWorkThreadFv();
+extern "C" void wkStandbyExceptionRetry__11CWorkThreadFUl(unsigned int);
+
 extern "C" {
     extern const char lbl_eu_80522AA8[];
     extern const char lbl_eu_8066A3A8[];
@@ -22,8 +62,13 @@ extern "C" {
     extern u32 lbl_eu_80663688[];
     extern u32 lbl_eu_8056C158[];
 }
+// Namespace-scoped extern "C" decls (CLibVM.cpp CLibVMBlob pattern): a file-scope
+// declaration of __RTTI__10IWorkEvent collides with MWCC's implicit RTTI name in
+// this TU under -ipa file -> error 10322 illegal name overloading.
+namespace CDeviceBlob {
 extern "C" void* __RTTI__10IWorkEvent;
 extern "C" void* __RTTI__11CWorkThread;
+}
 extern "C" void wkStandbyLogin__11CWorkThreadFv();
 extern "C" void wkStandbyLogin__7CDeviceFv();
 extern "C" void wkStandbyLogout__7CDeviceFv();
@@ -59,7 +104,7 @@ extern "C" u32 lbl_eu_8056C000[40] __attribute__((aligned(8))) = {
     (u32)&wkRenderAfter__11CWorkThreadFv, (u32)&wkStandbyLogin__11CWorkThreadFv,
     0, (u32)&wkStandbyExceptionRetry__11CWorkThreadFUl
 };
-extern "C" __declspec(section ".data") __attribute__((aligned(8))) u32 lbl_eu_8056C0A0[6] = { (u32)&__RTTI__10IWorkEvent, 0x00000000, (u32)&__RTTI__11CWorkThread, 0x00000000, 0x00000000, 0x00000000 };
+extern "C" __declspec(section ".data") __attribute__((aligned(8))) u32 lbl_eu_8056C0A0[6] = { (u32)&CDeviceBlob::__RTTI__10IWorkEvent, 0x00000000, (u32)&CDeviceBlob::__RTTI__11CWorkThread, 0x00000000, 0x00000000, 0x00000000 };
 extern "C" u32 lbl_eu_8056C0B8[40] __attribute__((aligned(8))) = {
     (u32)&lbl_eu_80663688, 0x00000000, (u32)&__dt__7CDeviceFv,
     (u32)&WorkEvent1__10IWorkEventFPvPCc, (u32)&OnFileEvent__10IWorkEventFP10CEventFile,
@@ -82,11 +127,10 @@ extern "C" u32 lbl_eu_8056C0B8[40] __attribute__((aligned(8))) = {
     (u32)&wkRenderAfter__11CWorkThreadFv, (u32)&wkStandbyLogin__7CDeviceFv,
     (u32)&wkStandbyLogout__7CDeviceFv, (u32)&wkStandbyExceptionRetry__11CWorkThreadFUl
 };
-extern "C" __declspec(section ".data") __attribute__((aligned(8))) u32 lbl_eu_8056C158[6] = { (u32)&__RTTI__10IWorkEvent, 0x00000000, (u32)&__RTTI__11CWorkThread, 0x00000000, 0x00000000, 0x00000000 };
+extern "C" __declspec(section ".data") __attribute__((aligned(8))) u32 lbl_eu_8056C158[6] = { (u32)&CDeviceBlob::__RTTI__10IWorkEvent, 0x00000000, (u32)&CDeviceBlob::__RTTI__11CWorkThread, 0x00000000, 0x00000000, 0x00000000 };
 extern "C" u32 lbl_eu_80663680[2] __attribute__((aligned(8))) = { (u32)&lbl_eu_80522AA8, (u32)&lbl_eu_8056C0A0 };
 extern "C" u32 lbl_eu_80663688[2] __attribute__((aligned(8))) = { (u32)&lbl_eu_8066A3A8, (u32)&lbl_eu_8056C158 };
-DECOMP_FORCEACTIVE(CDevice_cpp_rodata_sdata, lbl_eu_80522AA8, lbl_eu_80522AD0, lbl_eu_80663680, lbl_eu_80663688, lbl_eu_8056C000, lbl_eu_8056C0A0, lbl_eu_8056C0B8, lbl_eu_8056C158);
-// Retail name of the spNotRunningDeviceName FixStr (.bss, monolibdata blob).
+
 extern FixStr<64> lbl_eu_806574F8;
 
 // Inline copy of CWorkThread::isRunning() visible only in this TU so the
@@ -115,10 +159,12 @@ inline bool CWorkThread::isRunning() const {
 namespace {
     class CDeviceException;
 }
+// File-scope C-linkage declaration: an anon-namespace declaration of this name
+// makes MWCC emit/reference the @unnamed-mangled symbol instead of the retail
+// lbl_eu_80665654 (reloc-name drift).
+extern "C" CDeviceException* lbl_eu_80665654;
 namespace {
     class CDeviceException;
-    extern CDeviceException* lbl_eu_80665654;
-
     //size: 0x1c8
     class CDeviceException : public CWorkThread {
     public:
@@ -146,24 +192,31 @@ namespace {
         static const int MAX_CHILD = 64;
         // static CDeviceException* spInstance; -> extern "C" lbl_eu_80665654 below
     };
-    CDeviceException* lbl_eu_80665654 = nullptr;
 }
+// Defined at file scope with C linkage (was anon-namespace -> MWCC mangled the
+// symbol as lbl_eu_80665654__21@unnamed@CDevice_cpp@, drifting the reloc name).
+extern "C" CDeviceException* lbl_eu_80665654 = nullptr;
 
 CDevice* CDevice::spInstance;
 // Retail sbss labels for the two TU singletons (MWCC_CASES §1a).
 extern "C" {
 extern CDevice* lbl_eu_80665650;             // CDevice::spInstance
 }
-const char* CDevice::devSys1String = "DeviceSystem1";
-const char* CDevice::devSys2String = "DeviceSystem2";
+// Retail .sdata labels for the region-name pointer pair (the class-static
+// member symbols drift the reloc names; retail owns these four words as one
+// .sdata run at 0x80663670).
+extern "C" const char* lbl_eu_80663670 = "DeviceSystem1";  // CDevice::devSys1String
+extern "C" const char* lbl_eu_80663674 = "DeviceSystem2";  // CDevice::devSys2String
 //Unused strings for region names?
 FixStr<64> CDevice::spNotRunningDeviceName;
 FixStr<64> CDevice::spColdStartNotRunningDeviceName;
 //Handles for the DeviceSystem1/DeviceSystem2 regions, which live in MEM1/MEM2 respectively.
 // Retail stores these as zero-initialized .sbss slots (lbl_eu_80665658, 8B total);
 // createRegions() assigns them before use, so leave them default-initialized.
-mtl::ALLOC_HANDLE CDevice::sDeviceRegion1Handle;
-mtl::ALLOC_HANDLE CDevice::sDeviceRegion2Handle;
+extern "C" mtl::ALLOC_HANDLE lbl_eu_80663678;  // CDevice::sDeviceRegion1Handle
+extern "C" mtl::ALLOC_HANDLE lbl_eu_8066367C;  // CDevice::sDeviceRegion2Handle
+mtl::ALLOC_HANDLE lbl_eu_80663678;
+mtl::ALLOC_HANDLE lbl_eu_8066367C;
 
 CDevice::~CDevice(){
     spInstance = nullptr;
@@ -174,11 +227,11 @@ CDevice* CDevice::getInstance(){
 }
 
 int CDevice::getDevSys1Handle(){
-    return sDeviceRegion1Handle;
+    return lbl_eu_80663678;   // sDeviceRegion1Handle
 }
 
 int CDevice::getDevSys2Handle(){
-    return sDeviceRegion2Handle;
+    return lbl_eu_8066367C;   // sDeviceRegion2Handle
 }
 
 bool CDevice::isAllReady(){
@@ -316,13 +369,13 @@ void CDevice::createRegions(){
         deviceRegion2Size = 0x110000;
     }
     int mem1 = mtl::MemManager::getHandleMEM1();
-    sDeviceRegion1Handle = mtl::MemManager::create(mem1, deviceRegion1Size, devSys1String);
-    sDeviceRegion2Handle = mtl::MemManager::create(mtl::MemManager::getHandleMEM2(), deviceRegion2Size, devSys2String);
+    lbl_eu_80663678 = mtl::MemManager::create(mem1, deviceRegion1Size, lbl_eu_80663670);
+    lbl_eu_8066367C = mtl::MemManager::create(mtl::MemManager::getHandleMEM2(), deviceRegion2Size, lbl_eu_80663674);
 }
 
 void CDevice::deleteRegions(){
-    mtl::MemManager::erase(sDeviceRegion1Handle);
-    mtl::MemManager::erase(sDeviceRegion2Handle);
-    sDeviceRegion1Handle = mtl::INVALID_HANDLE;
-    sDeviceRegion2Handle = mtl::INVALID_HANDLE;
+    mtl::MemManager::erase(lbl_eu_80663678);
+    mtl::MemManager::erase(lbl_eu_8066367C);
+    lbl_eu_80663678 = mtl::INVALID_HANDLE;
+    lbl_eu_8066367C = mtl::INVALID_HANDLE;
 }

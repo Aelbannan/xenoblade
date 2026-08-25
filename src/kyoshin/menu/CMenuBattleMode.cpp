@@ -3,12 +3,9 @@
 #include "kyoshin/CTaskGame.hpp"
 #include "kyoshin/cf/CBattleManager.hpp"
 #include "kyoshin/cf/CfGameManager.hpp"
-// code_800F42AC.hpp declares func_80149154 with an int id arg; CAIAction.hpp
-// (via CBattleManager.hpp -> CfObjectActor.hpp) declares the same name with a
-// u32 arg -> MWCC overload conflict. This TU uses neither copy.
-#define func_80149154 menuBmbCode800F42AC49154Unused
+// (func_80149154: code_800F42AC.hpp / CAIAction.hpp / CtrlEnemy.hpp now all
+// declare the identical void*(void*, u32) form - no guard needed.)
 #include "kyoshin/cf/code_800F42AC.hpp"
-#undef func_80149154
 // code_80135FDC.hpp declares lbl_eu_8066A208 as u32 (line 188);
 // CfObjectMove.hpp (via the CBattleManager.hpp include above) declares it
 // const float. This TU uses neither copy.

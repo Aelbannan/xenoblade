@@ -488,12 +488,12 @@ u8 UnusedStr_pre410[0x48] = {
 // The two tmd strings below are also referenced (via -str reuse) by the matched
 // DVDLowOpenPartitionWithTmdAndTicketView, so they must stay as function-pool
 // literals emitted at this position. This minimal emitter keeps them pooled at
-// their retail offsets; the text it costs is the unit's remaining blocker.
+// their retail offsets (retail-absent .text; dropped via drop_text_symbols).
 DECOMP_FORCEACTIVE(dvd_broadway_c,
                    "(%s) tmd parameter cannot be NULL\n",
                    "(%s) tmd memory is unaligned\n",
                    &coverStatus, &coverRegister);
-// unused in Xenoblade retail: DVDLowOpenPartitionWithTmdAndTicket (eTicket string kept in .data) (retail .data 0x49C..0x4C8)
+
 u8 UnusedStr_post49C[0x2C] = {
     0x28, 0x25, 0x73, 0x29, 0x20, 0x65, 0x54, 0x69, 0x63, 0x6B, 0x65, 0x74, 0x20, 0x70, 0x61, 0x72,
     0x61, 0x6D, 0x65, 0x74, 0x65, 0x72, 0x20, 0x63, 0x61, 0x6E, 0x6E, 0x6F, 0x74, 0x20, 0x62, 0x65,

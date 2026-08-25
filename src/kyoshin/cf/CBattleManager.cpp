@@ -18,29 +18,18 @@ struct BMIf {
 // names below now resolve via their single owner-header decls; only the
 // other agents' guards (lbl_eu_*) remain.)
 #include "kyoshin/cf/object/CfObjectEne.hpp"
-// CfSoundMan.hpp's import of func_800821F8__Q22cf13CfGameManagerFv uses a
-// different UnkClass_800821F8Snd return type than CfGameManager.hpp's decl
-// already visible here; alias it out (this TU calls the CfGameManager form).
-// CfSoundMan.hpp's import of func_800821F8__Q22cf13CfGameManagerFv uses a
-// different UnkClass_800821F8Snd return type than CfGameManager.hpp's decl
-// already visible here; alias it out (this TU calls the CfGameManager form).
-#define func_800821F8__Q22cf13CfGameManagerFv battleManagerSndGameMgrImportUnused
-#define func_80496264 battleManagerSndPoseBlockUnused
+// (func_800821F8__Q22cf13CfGameManagerFv: CfSoundMan.hpp now carries the
+// single winning decl from CfGameManagerApi.hpp - no pre-include rename.)
 #include "kyoshin/cf/CfSoundMan.hpp"
-#undef func_800821F8__Q22cf13CfGameManagerFv
-#undef func_80496264
 // The include/kyoshin/cf/CfGameManager.hpp C-ABI import tail conflicts with
 // the cfsys/chain walker decls already visible in this TU for the few names
 // it shares; guard only those (call sites bind to the global-scope decls,
 // same retail symbol names). (func_80496288 now has a single unified decl.)
-#define func_800D9354 cfgGameMgr9354Unused
-// CfGameManager.hpp's C-ABI 'void func_800AD860(void*)' form conflicts with the
-// C++ 'void*' decl from CfObjectMove.hpp already visible here; guard it (the
-// call sites bind to the global-scope C++ decl, same retail symbol).
-#define func_800AD860 battleManagerGameMgrAd860Unused
+// (func_800D9354: CfGameManager.hpp's copy is gone; single decl on
+// kyoshin/cf/CBattleManagerApi.hpp, included via CBattleManager.hpp above.)
+// (func_800AD860: CfObjectMove.hpp and CfGameManager.hpp now carry the
+// identical void*(void*) C++-linkage form - no guard needed.)
 #include "kyoshin/cf/CfGameManager.hpp"
-#undef func_800D9354
-#undef func_800AD860
 // (func_801412D0 is owned by kyoshin/CUIWindowManager.hpp; single decl.)
 #include "monolib/work.hpp"
 
@@ -549,7 +538,6 @@ extern "C" void func_800E9B54(void*, void*, void*, void*);
 extern "C" void func_800E08E8(void*, void*, void*, void*);
 extern "C" s32 func_800EAA2C(void*, void*, void*, void*, void*);
 extern "C" void func_800D9CA0(cf::CBattleManager*, void*);
-extern "C" void func_800F3970(void*, void*, void*, s32, s32);
 extern "C" f32 func_800D7EA0(u8*, void*);
 struct BattleEvent;
 struct BattleTargetData;
@@ -3872,6 +3860,12 @@ namespace cf {
     CChainCombo::~CChainCombo() {
     }
 
+    CChainMember::~CChainMember() {
+    }
+
+    CChainChance::~CChainChance() {
+    }
+
     CChainEffect::~CChainEffect() {
     }
 
@@ -3879,7 +3873,7 @@ namespace cf {
         // Manual vptr store under the retail symbol (auto store would emit
         // __vt__Q22cf10CChainTime). The vtable pointer sits at +0x14.
         *(void**)((u8*)this + 0x14) = (void*)lbl_eu_8052BD74;
-        func_8027CE30();
+        resetChainTime();
     }
 
     UnkClass_800D8DBC::~UnkClass_800D8DBC() {
@@ -12357,7 +12351,12 @@ void func_800F38E0(void* self, u32 arg2, u16 arg3) {
 // Dispatches battle event calls to actor objects based on the dispatch-table
 // entry at lbl_eu_804FC828[idx]: selector 0 -> obj1, 1 -> obj2, 2 -> both,
 // anything else -> every entry of the manager's second actor list.
-void func_800F3970(cf::CBattleManager* self, BattleObjAccessor* obj1, BattleObjAccessor* obj2, s32 idx, s32 addVal) {
+// Signature matches the single shared decl on CBattleManagerApi.hpp; the
+// typed views are recovered up front (pointer casts emit no code).
+void func_800F3970(void* selfV, void* obj1V, void* obj2V, s32 idx, s32 addVal) {
+    cf::CBattleManager* self = (cf::CBattleManager*)selfV;
+    BattleObjAccessor* obj1 = (BattleObjAccessor*)obj1V;
+    BattleObjAccessor* obj2 = (BattleObjAccessor*)obj2V;
     // Declaration order drives the saved-register colors. Signed selector so
     // the dispatch compares with retail cmpwi (cmpli would come from unsigned).
     const BattleTableEntry* entry = &lbl_eu_804FC828[idx];
@@ -12545,20 +12544,19 @@ void func_800F4034(cf::CBattleManager* mgr) {
     void* list = func_80043F18(&holder);
     func_800F4A98(list, 0x20, 0);
 
-    // Loop with check at bottom, using unsigned comparison to match retail cmplw
+    // Loop with check at bottom, using unsigned comparison to match retail cmplw.
+    // element declared first: retail claims r31 (first-born saved) for it,
+    // r30 for the counter.
+    void* element = nullptr;
     u32 i = 0;
     goto check;
 loop:
     {
-        void* element = func_8016FE34(func_800F6EAC(func_80043F18(&holder), i));
-        // Retail does NOT null-check element before vtable calls
-        void** vtbl = *(void***)element;
-        typedef void (*VFunc)(void*);
-        ((VFunc)vtbl[0xB0 / 4])(element);
-        vtbl = *(void***)element;
-        ((VFunc)vtbl[0xB8 / 4])(element);
-        vtbl = *(void***)element;
-        ((VFunc)vtbl[0x314 / 4])(element);
+        element = func_8016FE34(func_800F6EAC(func_80043F18(&holder), i));
+        // Retail uses canonical r12 virtual dispatch (slots 0xB0/0xB8/0x314).
+        ((CSuddenCommuActorVt*)element)->v42();
+        ((CSuddenCommuActorVt*)element)->v44();
+        ((CSuddenCommuActorVt*)element)->vf314();
         i++;
     }
 check:

@@ -51,7 +51,7 @@ extern u8 lbl_eu_8052E444[];
 extern u32 lbl_eu_80664184;      // scene-mode global (u8-narrowed reads)
 extern const f32 lbl_eu_806672C8; // proximity float constant (.sdata2, r2-sda21)
 extern "C" int func_800FF738();  // matches CTaskGame.hpp
-extern "C" int func_801B481C();  // matches CMenuQstCnt.hpp (int)
+extern "C" u32 func_801B481C();  // canonical u32 form (per CMenuGetItemMulti.cpp def / CVision.hpp)
 extern "C" int func_80293C10();  // matches CMenuQstCnt.hpp (int)
 extern "C" int func_8029A658();  // matches CMainMenu.hpp / CMenuQstCnt.hpp
 void func_80138078(u32);         // mangles to func_80138078__FUl
@@ -352,6 +352,10 @@ struct CUICfIdTable {
 
 class CUICfManager;
 
+// Retail flat (unmangled) ctor symbol; the placement-new shim in the .cpp.
+extern "C" void* __ct__CUICfManager(CUICfManager* self, class CScnNw4r* pScene,
+                                    unsigned long mHandle);
+
 // The body reads r4/r5/r6 as real event-dispatch arguments and never touches
 // `self` (all state comes from the lbl_eu_80664054 singleton); declared
 // extern "C" here (before the class, so the in-class friend declaration
@@ -479,6 +483,9 @@ public:
     }
 
 private:
+    // placement-new ctor shim (retail flat symbol) in the .cpp
+    friend void* __ct__CUICfManager(CUICfManager*, CScnNw4r*,
+                                    mtl::ALLOC_HANDLE);
     // 0x000-0x054 CTTask
     // 0x054-0x058 IWorkEvent
     // 0x058-0x05C cf::IFlagEvent

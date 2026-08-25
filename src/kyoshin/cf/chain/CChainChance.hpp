@@ -15,7 +15,7 @@ namespace cf {
         u8 mPadding0D[3];     //0xD
         //0x10: vtable
 
-        virtual ~CChainChance(){}
+        virtual ~CChainChance();
 
         void func_8027C098() {
             mChainCount = 0;

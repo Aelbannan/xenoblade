@@ -7,7 +7,6 @@
 #include <string.h>
 #include <math.h>
 #include <new>
-#include "kyoshin/cf/CfGameManagerData.hpp"  // H3 label-owner decl (lbl_eu_80663E14; lbl_eu_80663E24)
 
 void UnkClass_800B0AD8::clearCounters() {
     unkB00 = 0;
@@ -455,7 +454,7 @@ public:
 // via the TU-wide extern (see line 59 family).
 extern "C" void func_800B72DC(void* self) {
     reslist<cf::TboxInfo>* obj = (reslist<cf::TboxInfo>*)func_800B6CA0();
-    obj->~reslist();
+    __dt__800B183C(obj);
     func_800B137C(obj, func_80061FFC(), 0x14);
 }
 extern "C" void func_800B4278(void* object, u32 mask);
@@ -754,7 +753,7 @@ u32 shift_u32_hi8(u32 val){return (val >> 16) & 0xFF;}
 // shorter side (front shift advances the head, back shift does not).
 // Field reads stay spelled out through `self` so retail's per-iteration
 // reloads of afc/af8/b04 (invalidated by the buf stores) are reproduced.
-void func_800B3210(UnkClass_800B0AD8* self, UnkClass_805764CC** item_ptr, void* flagOut) {
+extern "C" void func_800B3210(UnkClass_800B0AD8* self, UnkClass_805764CC** item_ptr, void* flagOut) {
     (void)flagOut;
     u32 count = self->unkB00;
 
@@ -1084,13 +1083,16 @@ u32 UnkClass_805764CC::get_u32_380(){return *(u32*)((u8*)this + 0x380);}
 extern "C"
 UnkClass_800B0AD8* __dt__800B0AF4(void* selfv, int flags) {
     UnkClass_800B0AD8* self = (UnkClass_800B0AD8*)selfv;
-    if (self != NULL) {
-        self->unkB00 = 0;
-        self->unkAFC = 0;
-        if (flags > 0) {
-            __dl__FPv(self);
-        }
+    if (self == NULL) {
+        return self;
     }
+    int free_it = flags > 0;
+    self->unkB00 = 0;
+    self->unkAFC = 0;
+    if (free_it) {
+        __dl__FPv(self);
+    }
+    return self;
     return self;
 }
 
@@ -1268,7 +1270,7 @@ void* sub_resetReslist_BA8(void* self){return func_800B6D3C(&UnkClass_805764CC::
 // from func_800B8B94/func_800B8C78; without this the -ipa pass folds them in.
 #pragma push
 #pragma auto_inline off
-cf::CfObject* func_800B77E4(cf::CfObject* obj) {
+extern "C" cf::CfObject* func_800B77E4(cf::CfObject* obj) {
     UnkClass_805764CC* ctx = func_800B07E8();
     cf::CfObject* next = (cf::CfObject*)func_800B6DD0(&ctx->field_0xB28, obj);
     // Retail returns the next entry in r3 (kept from func_800B6DD0).
@@ -1676,7 +1678,7 @@ void* func_800B8B94(s32 id) {
     }
     B8B94Obj* obj = (B8B94Obj*)func_800B76A4();
     while (obj != 0) {
-        if (obj->field_8C == id) {
+        if (id == obj->field_8C) {
             return func_8016FE34(obj);
         }
         if (!lbl_eu_80663EE8) {
@@ -3810,7 +3812,7 @@ extern "C" u32 func_800B2ED0(UnkClass_805764CC* self, cf::CfObject* obj) {
         while ((func_8007F8F4__Q22cf13CfGameManagerFv((F8C0IteratorNode*)&endLoop, (const F8C0ListSource*)self),
                 func_8007F900__Q22cf13CfGameManagerFv(&outer, &endLoop))) {
             func_8007F8DC__Q22cf13CfGameManagerFv((F8C0IteratorNode*)&stepBack, (F8C0IteratorNode*)&outer, 0);
-            cf::CfObject* node = *(cf::CfObject**)func_8007F8D0__Q22cf13CfGameManagerFv((F8C0IteratorNode*)&outer);
+            cf::CfObject* node = *(cf::CfObject**)func_8007F8D0__Q22cf13CfGameManagerFv((F8C0IteratorNode*)&stepBack);
             if (func_800B31B0(node)) {
                 func_800B3A54(&itMain, &outer);
             } else if (func_8006C1B0(node)) {

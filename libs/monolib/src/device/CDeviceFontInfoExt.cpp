@@ -189,9 +189,3 @@ extern "C" const char lbl_eu_80522E18[0x10] = {
 extern "C" u32 lbl_eu_80663718[0x2] = { (u32)&lbl_eu_80522E00[0], (u32)&lbl_eu_8056C77C[0] };
 extern "C" u32 lbl_eu_80663720[0x2] = { (u32)&lbl_eu_80522E18[0], 0x00000000 };
 
-DECOMP_FORCEACTIVE(CDeviceFontInfoExt_cpp, lbl_eu_8056C740);
-DECOMP_FORCEACTIVE(CDeviceFontInfoExt_cpp, lbl_eu_8056C77C);
-DECOMP_FORCEACTIVE(CDeviceFontInfoExt_cpp, lbl_eu_80522E00);
-DECOMP_FORCEACTIVE(CDeviceFontInfoExt_cpp, lbl_eu_80522E18);
-DECOMP_FORCEACTIVE(CDeviceFontInfoExt_cpp, lbl_eu_80663718);
-DECOMP_FORCEACTIVE(CDeviceFontInfoExt_cpp, lbl_eu_80663720);

@@ -515,9 +515,21 @@ bool StrmPlayer::Start() {
     }
 
     if (!self->mStartedFlag) {
+        // Declaration order drives MWCC callee-saved coloring (descending).
+        u32 loopFlag;
+        u32 loopStartSample;
+        u32 loopEndSamples;
+        StrmTrackRetailLayout* pTrack;
+        int i;
+        int ch;
+        StrmChannelRetail* pChannel;
+        u32 level;
+
         if (!AllocVoices__Q44nw4r3snd6detail10StrmPlayerFi(
                 this, self->mVoiceOutCount)) {
-            for (int i = 0; i < self->mChannelCount; i++) {
+            // Indexed access: MWCC strength-reduces to a this-based stride
+            // register with the 0x838 displacement kept inline (retail shape).
+            for (i = 0; i < self->mChannelCount; i++) {
                 if (self->mChannels[i].bufferAddress != NULL) {
                     self->mBufferPool->Free(self->mChannels[i].bufferAddress);
                     self->mChannels[i].bufferAddress = NULL;
@@ -548,41 +560,52 @@ bool StrmPlayer::Start() {
         // Loop-end sample count for the wave data: bytes * samples-per-byte
         // for the stream format (2 = PCM8, 1 = PCM16, 3 = ADPCM).
         u32 bytes = self->mDataBlockSize * self->mPlayingBufferBlockCount;
-        u32 loopEndSamples;
-        if (self->mStrmInfo.format == 2) {
-            loopEndSamples = bytes;
-        } else if (self->mStrmInfo.format >= 3) {
-            loopEndSamples = (bytes >> 3) * 14;
-            u32 rem = bytes & 7;
-            if (rem != 0) {
-                loopEndSamples += (rem - 1) * 2;
-            }
-        } else if (self->mStrmInfo.format == 1) {
+
+        loopEndSamples = 0;
+        // Signed cast: retail switches on an int-typed format (cmpwi tree).
+        switch ((int)self->mStrmInfo.format) {
+        case 1:
             loopEndSamples = bytes >> 1;
-        } else {
-            loopEndSamples = 0;
+            break;
+        case 2:
+            loopEndSamples = bytes;
+            break;
+        case 3:
+            loopEndSamples = (bytes >> 3) * 14;
+            {
+                u32 rem = bytes & 7;
+                if (rem != 0) {
+                    loopEndSamples += (rem - 1) * 2;
+                }
+            }
+            break;
         }
 
-        for (int i = 0; i < self->mTrackCount; i++) {
-            StrmTrackRetailLayout& rTrack = self->mTracks[i];
-            if (!rTrack.activeFlag) {
+        // Hoisted wave-info constants (retail keeps these in callee-saved
+        // registers across the track loop).
+        loopFlag = true;
+        loopStartSample = 0;
+
+        // Walking track pointer (stride 0x38), as in retail.
+        pTrack = self->mTracks;
+        for (i = 0; i < self->mTrackCount; pTrack++, i++) {
+            if (!pTrack->activeFlag) {
                 continue;
             }
 
             WaveInfoRetailLayout waveInfo;
             waveInfo.sampleFormat = self->mStrmInfo.format;
-            waveInfo.loopFlag = true;
-            waveInfo.numChannels = rTrack.fileInfo.channelCount;
+            waveInfo.loopFlag = loopFlag;
+            waveInfo.numChannels = pTrack->fileInfo.channelCount;
             waveInfo.sampleRate = self->mStrmInfo.sampleRate;
-            waveInfo.loopStart = 0;
+            waveInfo.loopStart = loopStartSample;
             waveInfo.loopEnd = loopEndSamples;
 
-            for (int ch = 0; ch < rTrack.fileInfo.channelCount; ch++) {
-                StrmChannelRetail* pChannel;
+            for (ch = 0; ch < pTrack->fileInfo.channelCount; ch++) {
                 if (ch >= 2) {
                     pChannel = NULL;
                 } else {
-                    u8 channelIndex = rTrack.fileInfo.channelIndex[ch];
+                    u8 channelIndex = pTrack->fileInfo.channelIndex[ch];
                     if (channelIndex >= 16) {
                         pChannel = NULL;
                     } else {
@@ -602,12 +625,12 @@ bool StrmPlayer::Start() {
                 }
             }
 
-            u32 level = OSDisableInterrupts();
-            if (rTrack.voice != NULL) {
+            level = OSDisableInterrupts();
+            if (pTrack->voice != NULL) {
                 Setup__Q44nw4r3snd6detail5VoiceFRCQ44nw4r3snd6detail8WaveInfoUl(
-                    rTrack.voice, waveInfo, blockOffset);
-                rTrack.voice->SetVoiceType(AxVoice::VOICE_TYPE_STREAM);
-                rTrack.voice->Start();
+                    pTrack->voice, waveInfo, blockOffset);
+                pTrack->voice->SetVoiceType(AxVoice::VOICE_TYPE_STREAM);
+                pTrack->voice->Start();
             }
             OSRestoreInterrupts(level);
         }
@@ -774,9 +797,16 @@ void StrmPlayer::InitParam() {
 
 bool StrmPlayer::LoadHeader(ut::FileStream* pFileStream,
                             StartOffsetType offsetType, int offset) {
-    // Retail keeps the mutex address in a saved register for the whole
+    // Retail materializes the mutex address first (r31) and captures this
+    // (r29) before locking; both stay in callee-saved registers for the whole
     // function (mr r3, r31 / bl OSUnlockMutex at every exit).
+    // Retail keeps the mutex address in a saved register for the whole
+    // function; declaration order drives callee-saved coloring (Rule A):
+    // retail holds offset in r30 and this in r29.
     OSMutex* pMutex = &lbl_eu_80653E00;
+    s32 startOffset = offset;
+    StrmPlayerRetailLayout* self =
+        reinterpret_cast<StrmPlayerRetailLayout*>(this);
     OSLockMutex(pMutex);
 
     StrmFileLoader loader(*pFileStream);
@@ -785,12 +815,9 @@ bool StrmPlayer::LoadHeader(ut::FileStream* pFileStream,
         return false;
     }
 
-    StrmPlayerRetailLayout* self =
-        reinterpret_cast<StrmPlayerRetailLayout*>(this);
-
     if (!ReadStrmInfo__Q44nw4r3snd6detail14StrmFileLoaderCFPQ54nw4r3snd6detail14StrmFileReader8StrmInfo(
             &loader, &self->mStrmInfo)) {
-        OSUnlockMutex(pMutex);
+        OSUnlockMutex(&lbl_eu_80653E00);
         return false;
     }
 
@@ -805,35 +832,50 @@ bool StrmPlayer::LoadHeader(ut::FileStream* pFileStream,
     }
 
     for (int i = 0; i < self->mTrackCount; i++) {
+        // Address expressed this-relative (this + 0xB80 + i*0x38) so MWCC
+        // strength-reduces into a stride register against this, matching
+        // retail (add r4, this, stride / addi r4, r4, 0xB80).
         if (!ReadStrmTrackInfo__Q44nw4r3snd6detail14StrmFileLoaderCFPQ54nw4r3snd6detail14StrmFileReader13StrmTrackInfoi(
-                &loader, &self->mTracks[i].fileInfo, i)) {
+                &loader,
+                reinterpret_cast<StrmTrackFileInfoRetail*>(
+                    reinterpret_cast<u8*>(self) +
+                    i * sizeof(StrmTrackRetailLayout) + 0xB80),
+                i)) {
             OSUnlockMutex(pMutex);
             return false;
         }
     }
 
     // ADPCM streams carry per-channel adpcm data and a start-offset block.
-    if (self->mStrmInfo.format == 3) {
+    // Signed compare: retail emits the subi/cntlzw/srwi. equality idiom.
+    if (static_cast<s32>(self->mStrmInfo.format) == 3) {
         for (int i = 0; i < self->mChannelCount; i++) {
+            // Channel block addressed this-relative (see track-loop note);
+            // adpcm param at +0x83C, loop param at +0x864.
+            u8* pChannelBlock =
+                reinterpret_cast<u8*>(self) + i * 0x34 + 0x838;
             if (!ReadAdpcmInfo__Q44nw4r3snd6detail14StrmFileLoaderCFPQ44nw4r3snd6detail10AdpcmParamPQ44nw4r3snd6detail14AdpcmLoopParami(
-                    &loader, &self->mChannels[i].adpcm.param,
-                    &self->mChannels[i].adpcm.loopParam, i)) {
+                    &loader, reinterpret_cast<AdpcmParam*>(pChannelBlock + 4),
+                    reinterpret_cast<AdpcmLoopParam*>(pChannelBlock + 0x2C),
+                    i)) {
                 OSUnlockMutex(pMutex);
                 return false;
             }
         }
 
-        if (offset != 0) {
-            int startSample = offset;
-            if (offsetType == START_OFFSET_TYPE_SAMPLE) {
-                // Start at the given sample index.
-            } else if (offsetType == START_OFFSET_TYPE_MILLISEC) {
-                startSample = offset * self->mStrmInfo.sampleRate / 1000;
+        if (startOffset != 0) {
+            // SAMPLE keeps the offset as-is; MILLISEC converts through the
+            // sample rate (MWCC strength-reduces the /1000 to a mulhw).
+            // The offset parameter itself is reassigned, as in retail.
+            if (offsetType == START_OFFSET_TYPE_MILLISEC) {
+                startOffset = startOffset * self->mStrmInfo.sampleRate / 1000;
             }
 
-            s32 block = startSample / self->mStrmInfo.blockSamples;
-            u16 yn1[16];
+            s32 block = startOffset / self->mStrmInfo.blockSamples;
+            // Declared yn2-first: retail places the yn1 array at the higher
+            // stack slot (sp+0x38 above sp+0x18).
             u16 yn2[16];
+            u16 yn1[16];
 
             if (!loader.ReadAdpcBlockData(yn1, yn2, block,
                                           self->mStrmInfo.numChannels)) {
@@ -842,8 +884,11 @@ bool StrmPlayer::LoadHeader(ut::FileStream* pFileStream,
             }
 
             for (int i = 0; i < self->mStrmInfo.numChannels; i++) {
-                self->mChannels[i].adpcm.param.yn1 = yn1[i];
-                self->mChannels[i].adpcm.param.yn2 = yn2[i];
+                // this-relative store addresses (this + 0x34*i + 0x860/0x862)
+                // match retail's stride-walk fan-out.
+                u8* pChannelBlock = reinterpret_cast<u8*>(self) + i * 0x34;
+                *reinterpret_cast<u16*>(pChannelBlock + 0x860) = yn1[i];
+                *reinterpret_cast<u16*>(pChannelBlock + 0x862) = yn2[i];
             }
         }
     }
@@ -884,8 +929,8 @@ bool StrmPlayer::LoadStreamData(ut::FileStream* pFileStream, int offset,
     // Downcast to DvdFileStream by walking the retail runtime type-info chain
     // (lbl_eu_80665550 is the DvdFileStream type-info object). Retail hoists
     // the type-info address into a register before the null-check branch.
-    const ut::detail::RuntimeTypeInfo* pDvdTypeInfo = &lbl_eu_80665550;
     ut::DvdFileStream* pDvdStream;
+    const ut::detail::RuntimeTypeInfo* pDvdTypeInfo = &lbl_eu_80665550;
     if (pFileStream != NULL &&
         TypeInfoIsDerivedFrom(pFileStream->GetRuntimeTypeInfo(),
                               pDvdTypeInfo)) {
@@ -903,16 +948,19 @@ bool StrmPlayer::LoadStreamData(ut::FileStream* pFileStream, int offset,
     // OSUnlockMutex at every exit).
     OSMutex* pMutex = &lbl_eu_80653E00;
     OSLockMutex(pMutex);
+    DCInvalidateRange(lbl_eu_8064FE00, 0x4000);
 
     StrmPlayerRetailLayout* self =
         reinterpret_cast<StrmPlayerRetailLayout*>(this);
 
     s32 streamOffset = offset + self->mStrmInfo.blockHeaderOffset;
-    // Single working pointer into the shared load buffer.
+    // Separate working pointer into the shared load buffer (retail keeps the
+    // extern-array reference for Read and this pointer for the fan-out).
     u8* pLoadBuf = lbl_eu_8064FE00;
     u16 adpcmPredScale[16];
+    u16* pPredScale = adpcmPredScale;
 
-    DCInvalidateRange(pLoadBuf, 0x4000);
+    DCInvalidateRange(lbl_eu_8064FE00, 0x4000);
 
     // Loads arrive in groups of up to 2 channels per stream block; each group
     // is read at streamOffset and fanned out to the channel buffers.
@@ -924,21 +972,20 @@ bool StrmPlayer::LoadStreamData(ut::FileStream* pFileStream, int offset,
 
         u32 readSize = blockSize * blockCount;
         pFileStream->Seek(streamOffset, ut::FileStream::SEEK_ORIGIN_BEG);
-        if (pFileStream->Read(pLoadBuf, readSize) != readSize) {
+        if (pFileStream->Read(lbl_eu_8064FE00, readSize) != readSize) {
             OSUnlockMutex(pMutex);
             return false;
         }
 
         for (int ch = 0; ch < blockCount; ch++) {
             if (needUpdateAdpcmLoop) {
-                adpcmPredScale[block] = pLoadBuf[blockSize * ch];
+                pPredScale[block] = pLoadBuf[blockSize * ch];
             }
 
-            u8* pSrc = pLoadBuf + blockSize * ch;
             u8* pDst = reinterpret_cast<u8*>(
                            self->mChannels[block].bufferAddress) +
                        self->mDataBlockSize * blockIndex;
-            std::memcpy(pDst, pSrc, blockSize);
+            std::memcpy(pDst, pLoadBuf + blockSize * ch, blockSize);
             DCFlushRange(pDst, blockSize);
 
             block++;
@@ -949,7 +996,7 @@ bool StrmPlayer::LoadStreamData(ut::FileStream* pFileStream, int offset,
 
     if (needUpdateAdpcmLoop && self->mStrmInfo.format == 3) {
         for (int i = 0; i < self->mChannelCount && i < 16; i++) {
-            self->mChannels[i].mAdpcmLoopPredScale = adpcmPredScale[i];
+            self->mChannels[i].mAdpcmLoopPredScale = pPredScale[i];
         }
 
         self->mValidAdpcmLoop = true;

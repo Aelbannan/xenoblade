@@ -14,6 +14,11 @@ extern "C" void func_8004302C(int a, int b);
 #include "monolib/scn.hpp"
 #include "monolib/util.hpp"
 #include "monolib/work.hpp"
+// Full HBM class (owner: monolib/lib/CLibHbm.hpp). The former static-only
+// minimal copy here clashed with every TU whose include closure also pulls
+// the full class (e.g. via monolib/lib.hpp); one winning decl lives on the
+// owner header now.
+#include "monolib/lib/CLibHbm.hpp"
 
 // nw4r layout forward decls (DrawInfo raw-storage helpers below).
 namespace nw4r {
@@ -82,20 +87,9 @@ struct UnkClass_8004041C{
     u32 unk18;
 };
 
-// Minimal view of the Hbm class for the two static state setters called by
-// retail func_800411A4 (MWCC mangles CLibHbm::func_8045D470(bool) to the
-// retail verbatim func_8045D470__7CLibHbmFb). The full CLibHbm.hpp pulls in
-// the revolution GX/TPL/HBM headers, so only the used members are declared.
-class CLibHbm {
-public:
-    static void func_8045D470(bool enable);
-    static void func_8045D5C8(bool enable);
-    static int func_8045DE00();
-};
-
 // Minimal CBattery view (members used by cbRenderBefore). The full
-// CBattery.hpp pulls monolib/lib.hpp (revolution GX/HBM), which redefines the
-// minimal CLibHbm above; only the used members are declared here.
+// CBattery.hpp pulls monolib/lib.hpp (revolution GX/HBM); only the used
+// members are declared here.
 class CBattery {
 public:
     CBattery(u8 batteryLevel);
@@ -567,7 +561,9 @@ extern "C" int func_804DE010();
 extern "C" int func_804DDD54(const char* ext, const char* path, u32* v0, u32* v1, u32* v2, u32* v3);
 extern "C" int getFileSize__11CDeviceFileFPCc(const char* path, int arg1);
 extern "C" void func_80189C70();
-extern "C" void func_eu_804520D0(char* str);
+// Canonical C-linkage form, matching CDeviceFileCri.hpp's extern "C" block
+// (int(const char*)); a single spelling so both headers coexist in one TU.
+extern "C" int func_eu_804520D0(const char* str);
 // cf::CTaskGameCf::create defined with the retail flat name (retail call
 // sites pass the parent + 0; the defining TU emits the Fv symbol).
 extern "C" cf::CTaskGameCf* create__Q22cf11CTaskGameCfFv(CProcess* pParent, int arg2);

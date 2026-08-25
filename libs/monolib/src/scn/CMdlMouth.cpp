@@ -261,4 +261,4 @@ extern "C" u32 lbl_eu_805701B0[4] = {
     (u32)&lbl_eu_80663C60, 0x00000000,
     (u32)&__dt__9CMdlMouthFv, 0x00000000,
 };
-DECOMP_FORCEACTIVE(CMdlMouth_cpp, lbl_eu_80663C70);
+

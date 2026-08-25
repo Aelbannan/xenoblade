@@ -379,8 +379,4 @@ extern "C" u32 lbl_eu_8056FF58[34] = {
     (u32)&CPackItemBlob::WorkEvent31__10IWorkEventFv,
 };
 
-DECOMP_FORCEACTIVE(CPackItem_cpp, lbl_eu_8056FF58);
-DECOMP_FORCEACTIVE(CPackItem_cpp, lbl_eu_805246FC);
-DECOMP_FORCEACTIVE(CPackItem_cpp, lbl_eu_80663BF8);
-
 // data: retail sections verified via run.py data diff (no bypass)

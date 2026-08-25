@@ -831,4 +831,3 @@ extern "C" u32 lbl_eu_806636E0[2] = { (u32)&lbl_eu_80522CA8, (u32)&lbl_eu_8056C4
 // [.sbss] 0x80665670-0x80665678 (8B): singleton slot (4B used) + pad.
 CDeviceFileDvd* lbl_eu_80665670;
 u32 lbl_eu_80665670pad;
-DECOMP_FORCEACTIVE(CDeviceFileDvd_cpp, lbl_eu_80665670pad);

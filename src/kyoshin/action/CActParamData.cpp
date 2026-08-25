@@ -5,6 +5,7 @@
 #include "kyoshin/action/CActParamData.hpp"
 #include "libs/monolib/src/scn/CScnItemAnim.hpp"
 #include "monolib/util/FixStr.hpp"
+#include <stdarg.h>
 #include <string.h>
 
 extern "C" {
@@ -359,35 +360,97 @@ extern "C" void func_800560E4(void* self) { ((CActParamDataVTableIf*)self)->_v09
 extern "C" void func_800560F4(void* self) { ((CActParamDataVTableIf*)self)->_v094(); }
 extern "C" void func_80056118(void* self) { ((CActParamDataVTableIf*)self)->_v030(); }
 
-int actParamThunk_3(void* self, int a) { return ((CActParamDataVTableIf*)self)->vf7C(a, 3); }
-int actParamThunk_4(void* self, int a) { return ((CActParamDataVTableIf*)self)->vf7C(a, 4); }
-int actParamThunk_5(void* self, int a) { return ((CActParamDataVTableIf*)self)->vf7C(a, 5); }
+extern "C" int func_80056290(void* self, u32 a) { return ((CActParamDataVTableIf*)self)->vf7C(a, 3); }
+extern "C" int func_800562A4(void* self, u32 a) { return ((CActParamDataVTableIf*)self)->vf7C(a, 4); }
+extern "C" int func_800562B8(void* self, u32 a) { return ((CActParamDataVTableIf*)self)->vf7C(a, 5); }
 extern "C" int func_800562CC(void* self, int a) { return ((CActParamDataVTableIf*)self)->vf7C(a, 6); }
-int actParamThunk_7(void* self, int a) { return ((CActParamDataVTableIf*)self)->vf7C(a, 7); }
-int actParamThunk_8(void* self, int a) { return ((CActParamDataVTableIf*)self)->vf7C(a, 8); }
-int actParamThunk_9(void* self, int a) { return ((CActParamDataVTableIf*)self)->vf7C(a, 9); }
-int actParamThunk_10(void* self, int a) { return ((CActParamDataVTableIf*)self)->vf7C(a, 10); }
-int actParamThunk_11(void* self, int a) { return ((CActParamDataVTableIf*)self)->vf7C(a, 11); }
-int actParamThunk_12(void* self, int a) { return ((CActParamDataVTableIf*)self)->vf7C(a, 12); }
-int actParamThunk_13(void* self, int a) { return ((CActParamDataVTableIf*)self)->vf7C(a, 13); }
-int actParamThunk_14(void* self, int a) { return ((CActParamDataVTableIf*)self)->vf7C(a, 14); }
-int actParamThunk_15(void* self, int a) { return ((CActParamDataVTableIf*)self)->vf7C(a, 15); }
-int actParamThunk_16(void* self, int a) { return ((CActParamDataVTableIf*)self)->vf7C(a, 16); }
-int actParamThunk_17(void* self, int a) { return ((CActParamDataVTableIf*)self)->vf7C(a, 17); }
-int actParamThunk_18(void* self, int a) { return ((CActParamDataVTableIf*)self)->vf7C(a, 18); }
-int actParamThunk_19(void* self, int a) { return ((CActParamDataVTableIf*)self)->vf7C(a, 19); }
-int actParamThunk_20(void* self, int a) { return ((CActParamDataVTableIf*)self)->vf7C(a, 20); }
-int actParamThunk_21(void* self, int a) { return ((CActParamDataVTableIf*)self)->vf7C(a, 21); }
-int actParamThunk_22(void* self, int a) { return ((CActParamDataVTableIf*)self)->vf7C(a, 22); }
-int actParamThunk_23(void* self, int a) { return ((CActParamDataVTableIf*)self)->vf7C(a, 23); }
-int actParamThunk_24(void* self, int a) { return ((CActParamDataVTableIf*)self)->vf7C(a, 24); }
-int actParamThunk_25(void* self, int a) { return ((CActParamDataVTableIf*)self)->vf7C(a, 25); }
-int actParamThunk_26(void* self, int a) { return ((CActParamDataVTableIf*)self)->vf7C(a, 26); }
-int actParamThunk_27(void* self, int a) { return ((CActParamDataVTableIf*)self)->vf7C(a, 27); }
-int actParamThunk_28(void* self, int a) { return ((CActParamDataVTableIf*)self)->vf7C(a, 28); }
-int actParamThunk_29(void* self, int a) { return ((CActParamDataVTableIf*)self)->vf7C(a, 29); }
+extern "C" int func_800562E0(void* self, u32 a) { return ((CActParamDataVTableIf*)self)->vf7C(a, 7); }
+extern "C" int func_800562F4(void* self, u32 a) { return ((CActParamDataVTableIf*)self)->vf7C(a, 8); }
+extern "C" int func_80056308(void* self, u32 a) { return ((CActParamDataVTableIf*)self)->vf7C(a, 9); }
+extern "C" int func_8005631C(void* self, u32 a) { return ((CActParamDataVTableIf*)self)->vf7C(a, 10); }
+extern "C" int func_80056330(void* self, u32 a) { return ((CActParamDataVTableIf*)self)->vf7C(a, 11); }
+extern "C" int func_80056344(void* self, u32 a) { return ((CActParamDataVTableIf*)self)->vf7C(a, 12); }
+extern "C" int func_80056358(void* self, u32 a) { return ((CActParamDataVTableIf*)self)->vf7C(a, 13); }
+extern "C" int func_8005636C(void* self, u32 a) { return ((CActParamDataVTableIf*)self)->vf7C(a, 14); }
+extern "C" int func_80056380(void* self, u32 a) { return ((CActParamDataVTableIf*)self)->vf7C(a, 15); }
+extern "C" int func_80056394(void* self, u32 a) { return ((CActParamDataVTableIf*)self)->vf7C(a, 16); }
+extern "C" int func_800563A8(void* self, u32 a) { return ((CActParamDataVTableIf*)self)->vf7C(a, 17); }
+extern "C" int func_800563D0(void* self, u32 a) { return ((CActParamDataVTableIf*)self)->vf7C(a, 19); }
+extern "C" int func_800563E4(void* self, u32 a) { return ((CActParamDataVTableIf*)self)->vf7C(a, 20); }
+extern "C" int func_800563F8(void* self, u32 a) { return ((CActParamDataVTableIf*)self)->vf7C(a, 21); }
+extern "C" int func_8005640C(void* self, u32 a) { return ((CActParamDataVTableIf*)self)->vf7C(a, 22); }
+extern "C" int func_80056420(void* self, u32 a) { return ((CActParamDataVTableIf*)self)->vf7C(a, 23); }
+extern "C" int func_80056434(void* self, u32 a) { return ((CActParamDataVTableIf*)self)->vf7C(a, 24); }
+extern "C" int func_80056448(void* self, u32 a) { return ((CActParamDataVTableIf*)self)->vf7C(a, 25); }
+extern "C" int func_8005645C(void* self, u32 a) { return ((CActParamDataVTableIf*)self)->vf7C(a, 26); }
+extern "C" int func_80056470(void* self, u32 a) { return ((CActParamDataVTableIf*)self)->vf7C(a, 27); }
+extern "C" int func_80056484(void* self, u32 a) { return ((CActParamDataVTableIf*)self)->vf7C(a, 28); }
+extern "C" int func_80056498(void* self, u32 a) { return ((CActParamDataVTableIf*)self)->vf7C(a, 29); }
 extern "C" int func_800564AC(void* self, int a) { return ((CActParamDataVTableIf*)self)->vf7C(a, 30); }
-int actParamThunk_31(void* self, int a) { return ((CActParamDataVTableIf*)self)->vf7C(a, 31); }
+extern "C" int func_800564C0(void* self, u32 a) { return ((CActParamDataVTableIf*)self)->vf7C(a, 31); }
+
+// func_8005605C: sub-object selector: prefers the A-side pointer when the A
+// gate byte and pointer are both live, otherwise falls back to the B side.
+// func_8005605C: sub-object selector: prefers the A-side pointer when the A
+// gate byte and pointer are both live, otherwise falls back to the B side.
+extern "C" void* func_8005605C(CActParamData* self) {
+    if (self->mField274 != 0) {
+        void* p = self->mPtr2D8;
+        if (p != 0) {
+            return p;
+        }
+    }
+    if (self->mPtr2F4 != 0) {
+        void* p = self->mPtr358;
+        if (p != 0) {
+            return p;
+        }
+    }
+    return 0;
+}
+
+// func_800554DC: flush the pending tag/value pair of sub-object A (sel == 0)
+// or B (sel != 0), then notify the callback object at 0x24 via its vt+0x28
+// slot with the data object, the two vals words, and the func_80053960 tick.
+extern "C" void func_800554DC(CActParamData* self, int sel) {
+    // Word view of the selected 0x80-byte reset block (A at 0x260, B at 0x2E0).
+    u32* blk = sel != 0 ? (u32*)&self->mField2E0 : (u32*)&self->mA260;
+    if ((blk[0] & 0x80000) != 0) {
+        return;
+    }
+    if (sel != 0) {
+        // Rotate the shadowed value words at 0x268/0x26C.
+        if (blk[3] == 0) {
+            blk[3] = self->mA26C;
+            self->mA26C = self->mA268;
+        } else {
+            blk[2] = blk[3];
+            blk[3] = 0;
+        }
+        if (blk[3] == 0) {
+            return;
+        }
+        if (blk[3] == 2 && blk[2] == 2) {
+            blk[2] = 0;
+        }
+    } else {
+        // Adopt the saved tag word at 0x2F0 once.
+        if (self->mField2F0 != 0) {
+            blk[2] = self->mField2F0;
+            self->mField2F0 = 0;
+        }
+    }
+    if (blk[5] == 0) {
+        return;
+    }
+    if (self->mField24 == 0) {
+        return;
+    }
+    u32 tick = func_80053960(static_cast<ActParamData388*>(self->mEntry04));
+    reinterpret_cast<ActParamCb28*>(self->mField24)
+        ->invoke28(static_cast<ActParamData388*>(self->mEntry04), blk[3], blk[5], blk[2],
+                   tick);
+}
 
 void actParamThunk_32(){}
 void actParamThunk_33(){}
@@ -514,7 +577,15 @@ void buildVTable() {}
 // ml::FixStr<N> is defined in monolib/util/FixStr.hpp; emit only the retail
 // specialization owned by this split (format__Q22ml10FixStr<16>FPCce).
 template <>
-void ml::FixStr<16>::format(const char* fmt, ...) {}
+void ml::FixStr<16>::format(const char* fmt, ...) {
+    char buffer[256];
+    va_list va;
+    va_start(va, fmt);
+    vsnprintf(buffer, 256, fmt, va);
+    va_end(va);
+    mLength = std::strlen(buffer);
+    std::strcpy(mString, buffer);
+}
 
 // Reset the 0x218 short table to -1 and clear the flag word at 0x258.
 void func_80053A90(CActParamData* self) {
@@ -752,7 +823,7 @@ int func_80054438(CActParamData* self, void* data, int sel, u32 gate) {
     }
     return 0;
 }
-void func_80054D3C(CActParamData* self, ActParamD3CMember* member);
+extern "C" void func_80054D3C(CActParamData* self, ActParamD3CMember* member);
 // Open-item packet (func_80054614 @ ~92%, size-exact 0x1c0, no reloc drift):
 // - Fixed this session: proper types (CActParamData* / ActParamT1Src* params,
 //   struct field access instead of raw u8* offsets) cut structural 112 -> 2.
@@ -1200,7 +1271,7 @@ extern "C" int func_80054A3C(void* self) {
 //      +0x2dc vs retail +0x338 for the same reason (layout shift).
 // - Next experiments: none known at this opt level; revisit with the
 //   family-level allocator insight or finer-grained diff tooling.
-__declspec(noinline) void func_80054D3C(CActParamData* self,
+extern "C" __declspec(noinline) void func_80054D3C(CActParamData* self,
                                         ActParamD3CMember* member) {
     // Magic high word for every u16->double conversion below; declared first
     // so its live range ranks ahead of the parameter spills.
@@ -3092,8 +3163,8 @@ int func_80057670(u32 flags, ActParamHost5* host, ActParamVals5* vals, ActParamS
     {
         int keep = 0;
         int edge = 0;
+        int hit = 0;
         if (t == vals->mFloat54) {
-            int hit = 0;
             if (t == vals->mFloat50) {
                 if (static_cast<ActParamData388*>(host->mObj04)->mFloat388 >
                     lbl_eu_80665F80) {
@@ -3134,7 +3205,7 @@ static inline ActParamT1Rec* nextT1Rec(ActParamT1Rec* rec) {
 }
 
 
-extern "C" u32 func_80053960(ActParamData388* obj) {
+extern "C" __declspec(noinline) u32 func_80053960(ActParamData388* obj) {
     const u8* p = reinterpret_cast<const u8*>(obj);
     u32 v4C4 = *(const u32*)(p + 0x4C4);
     if (v4C4 != 0) {

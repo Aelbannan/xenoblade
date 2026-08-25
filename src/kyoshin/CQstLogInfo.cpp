@@ -3,7 +3,7 @@
 
 #include "kyoshin/harness_catalog.hpp"
 #include "kyoshin/CQstLogInfo.hpp"
-#include "kyoshin/CUIWindowManager.hpp"
+#include "kyoshin/CUIWindowManagerApi.hpp"
 #include "kyoshin/CTagProcessor.hpp"
 #include "kyoshin/code_80135FDC.hpp"
 #include "monolib/device/CDeviceFile.hpp"
@@ -427,7 +427,7 @@ extern "C" __declspec(noinline) void func_80229CF0(CQstLogInfo* self,
         u32 odd = ((s32)v >= 0xFC ? v - 1 : v) & 1;
         void* r28 = func_801412D0(key);
         u32 notOdd = !odd;
-        if (func_80140854(r28, notOdd, 0) != 0) {
+        if (func_80140854((CItemQuery*)r28, notOdd, 0) != 0) {
             func_80124270(self->mUnk20->GetRootPane()->FindPaneByName(
                               &lbl_eu_8050A0B4[0xf2], true), 1);
         }
@@ -462,7 +462,7 @@ extern "C" __declspec(noinline) void func_80229CF0(CQstLogInfo* self,
                         idx++;
                     }
                 } else {
-                    if (func_80140854(r28, notOdd, i + 1) != 0) {
+                    if (func_80140854((CItemQuery*)r28, notOdd, i + 1) != 0) {
                         sprintf(buf48, &lbl_eu_8050A0B4[0x14b], idx + 1);
                         func_80124270(self->mUnk20->GetRootPane()->FindPaneByName(
                                           buf48, true), 1);

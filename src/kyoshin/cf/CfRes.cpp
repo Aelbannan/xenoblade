@@ -121,6 +121,8 @@ struct CfResRingPair {
     u32 data;
 };
 
+// Pops a header/data pair off the ring; by-value struct return keeps the pair
+// memory-resident in the inlined callers (retail dead-stores it to the frame).
 static CfResRingPair CfRes_popPair(CfResBuffer* buffer) {
     CfResRingPair pr;
     pr.header = ((u32*)buffer->buffer)[buffer->field_400];
@@ -134,23 +136,25 @@ static CfResRingPair CfRes_popPair(CfResBuffer* buffer) {
 
 // func_80061D2C: scan the CfResBuffer ring for records whose header key byte
 // (bits 24-31) matches `mode`; each match marks that record's header word
-// with bit 19 (0x00080000) in place and sets the result. The scan continues
-// over the whole ring (the record's remaining data words are skipped each
-// iteration). Ring indices are saved at entry and restored at exit, so the
-// scan never consumes the ring.
+// with bit 19 (0x00080000) in place and sets the result. Each visited record
+// pops its header+data word pair, then skips its payload words (count nibble
+// at header bits 16-19, extracted with the (h<<12)>>28 rotate so MWCC emits
+// the extrwi-shaped rlwinm.). Ring indices are saved at entry and restored at
+// exit, so the scan never consumes the ring.
 bool func_80061D2C(CfResBuffer* buffer, u32 mode) {
     bool found = false;
     u32 saved400 = buffer->field_400;
     u32 saved404 = buffer->field_404;
     while (buffer->field_404 != 0) {
         u32 oldIdx = buffer->field_400;
-        CfResRingPair pr;
-        pr = CfRes_popPair(buffer);
+        CfResRingPair pr = CfRes_popPair(buffer);
         if ((pr.header >> 24) == mode) {
             ((u32*)buffer->buffer)[oldIdx] |= 0x00080000;
             found = true;
         }
-        u32 count = (pr.header >> 8) & 0xF;
+        // count nibble lives at header bits 16-19; the (h<<12)>>28 form makes
+        // MWCC emit the same extrwi-shaped rlwinm as retail
+        u32 count = (pr.header << 12) >> 28;
         for (u32 i = 0; i < count; i++) {
             buffer->field_400 = (buffer->field_400 + 1) & 0xFF;
             buffer->field_404 = buffer->field_404 - 1;
@@ -173,13 +177,15 @@ bool func_80061E8C(CfResBuffer* buffer, u32 mode) {
     u32 saved400 = buffer->field_400;
     u32 saved404 = buffer->field_404;
     while (buffer->field_404 != 0) {
-        CfResRingPair pr;
-        pr = CfRes_popPair(buffer);
+        CfResRingPair pr = CfRes_popPair(buffer);
         if ((pr.header >> 24) == mode) {
             found = true;
             break;
         }
-        u32 count = (pr.header >> 16) & 0xF;
+        // count nibble lives at header bits 16-19; the (h<<12)>>28 form
+        // makes MWCC emit the same extrwi-shaped rlwinm (rotl 12, mask 28-31)
+        // as retail
+        u32 count = (pr.header << 12) >> 28;
         for (u32 i = 0; i < count; i++) {
             buffer->field_400 = (buffer->field_400 + 1) & 0xFF;
             buffer->field_404 = buffer->field_404 - 1;
@@ -2412,48 +2418,50 @@ void cf::CfResTask::Term() {
 __declspec(noinline) CfResManager* __ct__Q22cf5CfResFv(CProcess* parent, int archiveId) {
     u32 handle = getWorkMem__17CWorkThreadSystemFv();
     CfResManager* mgr = (CfResManager*)allocate__Q23mtl10MemManagerFUlUl(0x1fa4, handle);
-    if (mgr != 0) {
+    if (mgr != NULL) {
         __ct__8CProcessFv((CProcess*)mgr);
-        u32* p = (u32*)mgr;
-        p[4] = (u32)(uintptr_t)lbl_eu_805267EC;   // interim CTTask<CfResTask> vtable
-        const u32* src = __ptmf_null;
-        u32 w1 = *src++;        // retail load order: [1] then [0]
-        u32 w0 = *src++;
-        p[0xF] = w0;        // 0x3C mMoveFunc[0]
-        p[0x10] = w1;       // 0x40 mMoveFunc[1]
-        u32 w2 = *src++;
-        p[0x11] = w2;       // 0x44 mMoveFunc[2]
-        src = __ptmf_null;
-        w1 = *src++;
-        w0 = *src++;
-        p[0x12] = w0;       // 0x48 mDrawFunc[0]
-        p[0x13] = w1;       // 0x4C mDrawFunc[1]
-        w2 = *src++;
-        p[0x14] = w2;       // 0x50 mDrawFunc[2]
-        p[4] = (u32)(uintptr_t)lbl_eu_805267A4;   // CfRes vtable
+        // Hand-built construction: interim CTTask vtable, null PTMF slots for
+        // Move/Draw, then the real CfRes vtable.
         u32* base54 = &mgr->storageVtable;
-        *base54 = (u32)(uintptr_t)lbl_eu_80526830;
-        __ct__80066F9C((u8*)(base54 + 1));
-        mgr->tbl1Header[0] = 0;
-        mgr->tbl1Header[1] = 0;
-        mgr->tbl1Header[2] = 0;
-        for (CfResSlot* s = mgr->tbl1; s < mgr->tbl1 + 2; s++) {
-            s->field_00 = 0;
-            s->field_04 = 0;
-            s->field_08 = 0;
+        mgr->vtable = (u32)lbl_eu_805267EC;
+        // Copy the null member-function pointer into both callback slots
+        // (12-byte PTMF struct assignment reproduces the retail
+        // load-[1]/load-[0] pair then store order).
+        struct PTMF12 { u32 w[3]; };
+        *(PTMF12*)&mgr->mMoveFunc[0] = *(PTMF12*)(uintptr_t)__ptmf_null;
+        *(PTMF12*)&mgr->mDrawFunc[0] = *(PTMF12*)(uintptr_t)__ptmf_null;
+        mgr->vtable = (u32)lbl_eu_805267A4;
+        *base54 = (u32)lbl_eu_80526830;
+        __ct__80066F9C(&mgr->storage[0]);
+        // Entry tables live past the storage blob; deriving their addresses
+        // from the +0x54 pointer keeps the retail r30-relative offsets.
+        u32* tbl1 = base54 + 0x7B6;   // abs 0x1F2C
+        tbl1[0] = 0;
+        tbl1[1] = 0;
+        tbl1[2] = 0;
+        CfResSlot* slot = (CfResSlot*)(tbl1 + 3);
+        int i;
+        for (i = 0; i < 2; i++) {
+            slot[i].field_00 = 0;
+            slot[i].field_04 = 0;
+            slot[i].field_08 = 0;
         }
-        mgr->tbl2Header[0] = 0;
-        mgr->tbl2Header[1] = 0;
-        mgr->tbl2Header[2] = 0;
-        for (CfResSlot* s = mgr->tbl2; s < mgr->tbl2 + 6; s++) {
-            s->field_00 = 0;
-            s->field_04 = 0;
-            s->field_08 = 0;
+        u32* tbl2 = base54 + 0x7FB;   // abs 0x1F50
+        tbl2[0] = 0;
+        tbl2[1] = 0;
+        tbl2[2] = 0;
+        slot = (CfResSlot*)(tbl2 + 3);
+        CfResSlot* slotEnd = slot + 6;
+        while (slot < slotEnd) {
+            slot->field_00 = 0;
+            slot->field_04 = 0;
+            slot->field_08 = 0;
+            slot++;
         }
-        lbl_eu_80663D7C = (u32)(uintptr_t)base54;
-        func_80063120((u8*)base54, archiveId);
+        lbl_eu_80663D7C = (u32)base54;
+        func_80063120((u8*)&base54[1], archiveId);
     }
-    lbl_eu_80663D78 = (u32)(uintptr_t)mgr;
+    lbl_eu_80663D78 = (u32)mgr;
     ((CProcess*)mgr)->Regist(parent, false);
     return mgr;
 }

@@ -217,8 +217,8 @@ void func_80207FC8(CItemBoxGridSubMenu* self, nw4r::lyt::ArcResourceAccessor* ac
         u16 h = *(u16*)(*(u8**)mat + 8 + 0);
 
         nw4r::lyt::Size sz;
-        sz.width = (f32)(s32)w;
-        sz.height = (f32)(s32)h;
+        sz.width = (f32)w;
+        sz.height = (f32)h;
         picPane->SetSize(sz);
     }
 }

@@ -668,8 +668,10 @@ extern "C" void __attribute__((never_inline)) func_804CDB2C(EffectScene* self, V
     nw4r::math::VEC3Sub((nw4r::math::VEC3*)&dir,
                         (const nw4r::math::VEC3*)&diff,
                         (const nw4r::math::VEC3*)p1);
-    nrm = dir;
-    f32 d2 = dir.y * dir.y + dir.x * dir.x + dir.z * dir.z;
+    nrm.x = dir.x;
+    nrm.y = dir.y;
+    nrm.z = dir.z;
+    f32 d2 = dir.z * dir.z + dir.y * dir.y + dir.x * dir.x;
     if (d2 == lbl_eu_8066B0DC) {
         nrm = ml::CVec3::zero;
     } else {
@@ -2323,20 +2325,20 @@ void func_804CC3A4(EffectScene* out, const EffSrc3* src) {
     func_804E0E48((CSchedAnimItem*)&out->field_0x20c, (u8*)subA->field_0xf8,
                   (f32*)type);
     func_804E17A4((CSchedAnimItem*)&out->field_0x238,
-                  (u8*)((SceneSubObj*)out->field_0x0c)->field_0xfc);
+                  (u8*)subA->field_0xfc);
     func_804E196C((CSchedAnimItem*)&out->field_0x24c,
-                  (u8*)((SceneSubObj*)out->field_0x0c)->field_0x104);
+                  (u8*)subA->field_0x104);
     func_804E1AA8((CSchedAnimItem*)&out->field_0x25c,
-                  (u8*)((SceneSubObj*)out->field_0x0c)->field_0x108);
+                  (u8*)subA->field_0x108);
     func_804E1D50((CSchedAnimItem*)&out->field_0x278,
-                  (u8*)((SceneSubObj*)out->field_0x0c)->field_0x110);
+                  (u8*)subA->field_0x110);
     func_804E26D8((CSchedAnimItem*)&out->field_0x2e8,
-                  (u8*)((SceneSubObj*)out->field_0x0c)->field_0x114);
+                  (u8*)subA->field_0x114);
     func_804E214C((CSchedAnimItem*)&out->field_0x2a8,
-                  (u8*)((SceneSubObj*)out->field_0x0c)->field_0x10c,
+                  (u8*)subA->field_0x10c,
                   ((((SceneSubObj*)out->field_0x0c)->field_0x1c >> 11) & 1) != 0);
     func_804E2D8C((CSchedAnimItem*)&out->field_0x310,
-                  (u8*)((SceneSubObj*)out->field_0x0c)->field_0x118);
+                  (u8*)subA->field_0x118);
 
     MemManGlob* mg = (MemManGlob*)lbl_eu_8065FC18;
     mtl::ALLOC_HANDLE h = (mtl::ALLOC_HANDLE)mg->field_0x04;
@@ -4070,14 +4072,14 @@ extern "C" void func_804D5764(RenderObj* self) {
         else if (c.b < lbl_eu_8066B140) c.b = lbl_eu_8066B140;
         if (c.a > lbl_eu_8066B14C) c.a = lbl_eu_8066B14C;
         else if (c.a < lbl_eu_8066B140) c.a = lbl_eu_8066B140;
-        GXColor col = {
-            (u8)(s32)(lbl_eu_8066B150 * c.r),
-            (u8)(s32)(lbl_eu_8066B150 * c.g),
-            (u8)(s32)(lbl_eu_8066B150 * c.b),
-            (u8)(s32)(lbl_eu_8066B150 * c.a)
-        };
+        GXColor col;
+        col.r = (u8)(s32)(lbl_eu_8066B150 * c.r);
+        col.g = (u8)(s32)(lbl_eu_8066B150 * c.g);
+        col.b = (u8)(s32)(lbl_eu_8066B150 * c.b);
+        col.a = (u8)(s32)(lbl_eu_8066B150 * c.a);
+        GXColor col2 = col;
         GXSetChanAmbColor(GX_COLOR0A0, col);
-        GXSetChanAmbColor(GX_COLOR1A1, col);
+        GXSetChanAmbColor(GX_COLOR1A1, col2);
     }
     GXSetTexCoordGen2(GX_TEXCOORD0, GX_TG_MTX2x4, GX_TG_TEX0, 0x1e, GX_FALSE, 0x7d);
     GXSetTexCoordGen2(GX_TEXCOORD1, GX_TG_MTX2x4, GX_TG_TEX1, 0x21, GX_FALSE, 0x7d);
@@ -4122,11 +4124,11 @@ extern "C" void func_804D5764(RenderObj* self) {
         self->field_0x18 = r30;
     }
     q = self->field_0x14->field_0x114;
-    u16 dd0 = q ? *(u16*)((u8*)q - 0x1a) : 0;
+    s32 tp = 0;
     s32 bfl = 0;
+    u16 dd0 = q ? *(u16*)((u8*)q - 0x1a) : 0;
     // extrwi 1,20 -> rlwinm 21 = bit 11 (0x800); extrwi 1,25 -> rlwinm 26 = bit 6 (0x40).
     if (dd0 == 0 && !((self->field_0x14->field_0x1c >> 11) & 1)) bfl = 1;
-    s32 tp = 0;
     if (bfl && !((self->field_0x14->field_0x1c >> 6) & 1)) tp = 1;
     func_804D8AA4(tp, bfl);
     func_804D0194();

@@ -160,9 +160,7 @@ extern "C" u32 lbl_eu_8056BF50[3] = { (u32)&lbl_eu_80663610, 0, 0 };
 // __vt__29 at 0x164 (0xC)
 extern "C" u32 __vt__29_reslist_base_P11CDeviceVICb[3] = { (u32)&lbl_eu_80663610, 0, (u32)&__dt__29_reslist_base_P11CDeviceVICbFv };
 
-DECOMP_FORCEACTIVE(CDeviceVI_cpp, lbl_eu_80522A08, lbl_eu_80522A14, lbl_eu_80522A2C, lbl_eu_80663600, lbl_eu_80663608, lbl_eu_80663610, lbl_eu_8056BF28, lbl_eu_8056BF50, __vt__9CDeviceVI, __vt__23reslist_P11CDeviceVICb, __vt__29_reslist_base_P11CDeviceVICb);
 
-CDeviceVI* CDeviceVI::spInstance;
 
 extern "C" __declspec(section ".rodata") const u32 lbl_eu_80522990[30] = {
     1,2,3,4,5,6,7,8,9,10,11,12,13,14,15,16,17,18,19,20,21,22,23,24,25,26,27,28,29,30

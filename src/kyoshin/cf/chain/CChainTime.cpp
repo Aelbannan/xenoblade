@@ -14,7 +14,7 @@ cf::CChainTime::CChainTime() {
     mPaused = 1;
 }
 
-void cf::CChainTime::func_8027CE30() {
+void cf::CChainTime::resetChainTime() {
     cf::CBattleManager* bm = cf::CBattleManager::getInstance();
     func_800EA484(bm, lbl_eu_80668A88, 0x13);
 

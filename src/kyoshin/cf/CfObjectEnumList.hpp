@@ -286,6 +286,19 @@ extern const float lbl_eu_80666ED8;   // radians -> FIdx scale (SinFIdx/CosFIdx 
 extern const double lbl_eu_80666EE0;  // sdata2 double
 extern const double lbl_eu_80666EE8;  // sdata2 double
 
+// 3x3 rotation matrix helper used by the segment-probe ctor __ct__800FBA18
+// (Y-rotation rows: [c,0,s] / [0,1,0] / [-s,0,c]).
+struct EnumRotMtx33 {
+    float _00, _01, _02;
+    float _10, _11, _12;
+    float _20, _21, _22;
+};
+
+// nw4r db warning strings used by __ct__800FBA18's non-finite distance guard
+// (file string, line 0x273, format string).
+extern const char lbl_eu_80526324[];
+extern const char lbl_eu_80526300[];
+
 // .bss probe-offset table written by func_800FD3FC (12 floats).
 extern float lbl_eu_80573A30[12];
 

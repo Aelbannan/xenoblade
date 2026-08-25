@@ -6,6 +6,18 @@
 
 namespace cf {
 
+    class CCtrlMoveBase; // fwd: referenced by CCtrlMoveBaseIface below
+
+    // Interface dispatched through the secondary vtable pointer at
+    // CCtrlMoveBase+0x48 (retail label lbl_eu_80527808). Only slot 0x08 is
+    // ever called; modeled as raw function pointers so MWCC emits the direct
+    // lwz/lwz/mtctr/bctrl sequence.
+    struct CCtrlMoveBaseIface {
+        void (*vf00)();
+        void (*vf04)();
+        void (*unk08)(CCtrlMoveBase* self);
+    };
+
     // Base class for move-control objects (CCtrlMovePC, CCtrlMoveEne, CCtrlMoveNpc, etc.)
     // Manages position, velocity, and movement state for controllable entities.
     //
@@ -108,12 +120,6 @@ namespace cf {
     // CCtrlMoveBase+0x48 (retail label lbl_eu_80527808). Only slot 0x08 is
     // ever called; modeled as raw function pointers so MWCC emits the direct
     // lwz/lwz/mtctr/bctrl sequence.
-    struct CCtrlMoveBaseIface {
-        void (*vf00)();
-        void (*vf04)();
-        void (*unk08)(CCtrlMoveBase* self);
-    };
-
     // Sub-object at CfGameManager's instance slot +0x2F2C: its first word
     // decides whether the per-object move instance is created lazily.
     struct CCtrlMoveMgr2F2C {
@@ -144,8 +150,8 @@ extern "C" int func_8047DE14__17UnkClass_8047D2ACFv(void* a, void* b,
                                                      f32 c, f32 d);
 
 // Float constants in .sdata2 (values recovered from the retail binary).
-extern f32 lbl_eu_80666598;
-extern f32 lbl_eu_8066659C;
+extern const f32 lbl_eu_80666598;
+extern const f32 lbl_eu_8066659C;
 extern f32 lbl_eu_806665A0;   // 0.0f
 extern f32 lbl_eu_806665A4;   // 1.0f
 extern f32 lbl_eu_806665A8;

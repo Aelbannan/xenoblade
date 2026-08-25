@@ -11,6 +11,7 @@
 #include <nw4r/math/math_triangular.h>
 #include <nw4r/g3d/res/g3d_resmdl.h>
 
+#include <math.h>
 #include <monolib/util/MemManager.hpp>
 #include <monolib/math/CVec3.hpp>
 #include <monolib/core/code_804E36DC.hpp> // func_80496288 frame-delta query (C ABI)
@@ -70,10 +71,43 @@ extern const float lbl_eu_8066B3F4;  // impulse scale (targets 4/5)
 extern const float lbl_eu_8066B3E4;  // contact-point scale (pos sum, kinds 1/2/3)
 extern const float lbl_eu_8066B3F8;  // velocity relax scale (entry physics)
 extern const float lbl_eu_8066B3FC;  // position relax scale (entry physics)
+extern const float lbl_eu_8066B3D8;  // min length-squared epsilon
+extern const float lbl_eu_8066B3DC;  // normalized-direction scale
+extern const float lbl_eu_8066B3E0;  // velocity decay scale
+
+// --- Cross-TU math/scene helpers invoked by func_804EBBCC ---
+extern "C" void func_8004B0B0(nw4r::math::VEC3* p);
+extern "C" void func_8004B0B4(void* p);
+extern "C" void func_8006BEC0(void* p);
+extern "C" void func_8006BEC4(void* p);
+extern "C" s32 func_8004B3D8(u32* self, u32 flags);
+extern "C" void* func_8004B3F0(void* dst, const void* src);
+extern "C" void func_8006D6A8(void* out, const Mtx m, const nw4r::math::VEC3* v);
+extern "C" void func_8004CB80(nw4r::math::VEC3* out, const nw4r::math::VEC3* a,
+                              const nw4r::math::VEC3* b);
+extern "C" nw4r::math::VEC3* func_8004B75C(nw4r::math::VEC3* out,
+                                           const nw4r::math::VEC3* in, f32 s);
+extern "C" void func_8004B738(void* a, const void* b);
+extern "C" void func_8004B79C(void* out, const void* v);
+extern "C" void* func_8004B60C(nw4r::math::VEC3* out, f32 a, f32 b, f32 c);
+extern "C" f32 func_8006BB00(const nw4r::math::VEC3* v);
+extern "C" f32 func_8006BB04(nw4r::math::VEC3* v, f32 s);
+extern "C" f32 func_8006DFC8(const nw4r::math::VEC3* v);
+extern "C" f32 func_8004EC78(f32 x);
+extern "C" void func_8006C6E8(nw4r::math::VEC3* out, const nw4r::math::VEC3* a,
+                              const nw4r::math::VEC3* b);
+extern "C" void func_80052584(void* out, const void* a, const void* b);
+extern "C" void func_8007420C(void* out, const Mtx m);
+extern "C" void func_8006EF1C(void* out, const nw4r::math::MTX34* m);
+extern "C" s32 func_8006BA80(void* self);
+extern "C" void func_8004CBC8(void* self);
+extern "C" void func_8004B694(u32* self, u32 flags);
+extern "C" s32 func_804842B0(void* model);
+extern "C" void func_80484E04(void* model, s32 flag);
 
 // g3d ResMdl node lookup (member call emits this exact retail symbol).
-extern unsigned long GetResNode__Q34nw4r3g3d6ResMdlCFUl(nw4r::g3d::ResMdl* mdl,
-                                                       unsigned long idx);
+extern "C" unsigned long GetResNode__Q34nw4r3g3d6ResMdlCFUl(nw4r::g3d::ResMdl* mdl,
+                                                            unsigned long idx);
 
 // CMdlDynamics retail vtable (3 entries, 0xC bytes) lives in retail .data.
 struct CMdlDynamicsVtbl {
@@ -150,7 +184,7 @@ CMdlDynamics::~CMdlDynamics() {}
 
 // func_804E9FC8 (inline getter at 0x804E9FC8) defined once - all harness stubs
 // mapping to the same symbol reference it rather than redefining.
-u32 func_804E9FC8(u8* self) { return *(u32*)((u8*)self + 0x146c); }
+__declspec(noinline) u32 func_804E9FC8(u8* self) { return *(u32*)((u8*)self + 0x146c); }
 
 // (mapped to func_804E9FC8 above)
 
@@ -168,9 +202,9 @@ u32 func_804E9FC8(u8* self) { return *(u32*)((u8*)self + 0x146c); }
 
 // (mapped to func_804E9FC8 above)
 
-extern "C" void func_804EA0D4(u8* self, const void* src) { *(u32*)self = *(const u32*)src; }
+extern "C" __declspec(noinline) void func_804EA0D4(u8* self, const void* src) { *(u32*)self = *(const u32*)src; }
 
-u32 func_804EA0E0(u8* self) { return *(u32*)((u8*)self + 0x4); }
+__declspec(noinline) u32 func_804EA0E0(u8* self) { return *(u32*)((u8*)self + 0x4); }
 
 // (mapped to func_804E9FC8 above)
 
@@ -215,14 +249,16 @@ void* __dt__804EA1D0(CMdlDynBuffer* self, s32 freeIt) {
     return self;
 }
 
-u32 func_804EA268(u8* self) { return *(u32*)((u8*)self + 0x0); }
+__declspec(noinline) u32 func_804EA268(u8* self) { return *(u32*)((u8*)self + 0x0); }
 
-extern "C" void* func_804EA270(u8* self) { return (char*)*(void**)self + (*(u32*)((u8*)self + 4) << 2); }
+extern "C" __declspec(noinline) void* func_804EA270(u8* self) { return (char*)*(void**)self + (*(u32*)((u8*)self + 4) << 2); }
 
 void func_804EA284(){}
 
 // Thin wrappers over the SDK matrix functions (header-declared via <revolution/MTX.h>).
-extern "C" void func_804EAA10(const Mtx a, Mtx b) {
+// Thin SDK wrapper; noinline keeps the retail `bl func_804EAA10` call sites
+// under -ipa file.
+extern "C" __declspec(noinline) void func_804EAA10(const Mtx a, Mtx b) {
     PSMTXInverse(a, b);
 }
 
@@ -244,14 +280,18 @@ u8* func_804EB1D8(u8* self, u32 arg) {
 
 // 0xB0-byte element of a dynamic-model array (same stride as func_804EB6F8).
 struct CMdlDynElem {
-    u8 field_0x0[0x14];          // 0x0..0x13
+    u32 field_0x0;               // 0x0 res-node id
+    f32 field_0x4;               // 0x4 gravity applied to vel.y
+    f32 field_0x8;               // 0x8 velocity relax scale
+    f32 field_0xC;               // 0xC physics blend weight (0 skips)
+    f32 field_0x10;              // 0x10 position lerp factor
     f32 minX;                    // 0x14 (AABB lower bound, clamp target)
     f32 maxX;                    // 0x18
     f32 minY;                    // 0x1C
     f32 maxY;                    // 0x20
     f32 minZ;                    // 0x24
     f32 maxZ;                    // 0x28
-    u8 field_0x2C[0x30];         // 0x2C..0x5B
+    nw4r::math::MTX34 field_0x2C; // 0x2C local offset matrix
     nw4r::math::VEC3 field_0x5C; // 0x5C..0x67
     nw4r::math::VEC3 field_0x68; // 0x68..0x73
     nw4r::math::VEC3 field_0x74; // 0x74..0x7F accumulated velocity
@@ -469,7 +509,7 @@ u8* func_804EB6E0(u8* self, u32 idx) {
 u32 func_804EB6F0(u8* self) { return *(u32*)((u8*)self + 0x4); }
 
 // Returns a pointer to element idx of a 0xB0-byte-stride array stored at self+0.
-u8* func_804EB6F8(u8* self, u32 idx) {
+__declspec(noinline) u8* func_804EB6F8(u8* self, u32 idx) {
     return *(u8**)self + idx * 0xB0;
 }
 
@@ -712,15 +752,336 @@ void func_804EBAE8(CMdlDynModelRef* self) {
     self->field_0x4->flags7A8 &= ~0x8;
 }
 
-u32 func_804EBBC4(u8* self) { return *(u32*)((u8*)self + 0x7e8); }
+__declspec(noinline) u32 func_804EBBC4(u8* self) { return *(u32*)((u8*)self + 0x7e8); }
 
-void func_804EBBCC(){}
+// --- Types shared by the dynamic-model collision helpers (targets 4/5) ---
 
-extern "C" u32 func_804EC32C(u8* self) { return (*(u32*)((u8*)self + 0x7A4) >> 3) & 1; }
+// Model object whose +0x4 points at the loaded model resource root.
+struct MdlDynObj {
+    u8 field_0x0[0x4]; // 0x0
+    u8* field_0x4;     // 0x4 resource root
+    u8 field_0x8[0x10];
+    u8* elems18;       // 0x18 base of the 0x98-stride element array
+};
 
-extern "C" u32 func_804EC338(u8* self) { return (*(u32*)((u8*)self + 0x7A4) >> 19) & 1; }
+// Model resource root; the ResMdl data word used for node lookups sits at 0x146C.
+struct MdlResRoot {
+    u8 field_0x0[0x146C];
+    u32 field_0x146C;
+};
 
-u32 func_804EC344(const CMdlDynHolder* self) {
+// Raw g3d ResNode fields read by the helpers: entry count at 0x10 (used to
+// index a 0x30-stride matrix array) and bounding-sphere radius at 0x20.
+struct MdlResNodeRaw {
+    u8 field_0x0[0x10];
+    u32 field_0x10;
+    u8 field_0x14[0xC];
+    f32 field_0x20;
+};
+
+// 0x98-stride dynamic-model element driven by func_804ECAC4.
+struct CMdlDynElem98 {
+    u32 field_0x0;                 // 0x0 resource id
+    nw4r::math::MTX34 field_0x4;   // 0x4 local matrix
+    nw4r::math::MTX34 field_0x34;  // 0x34 world matrix
+    nw4r::math::MTX34 field_0x64;  // 0x64 view matrix
+    u8 field_0x94;                 // 0x94 update kind (1/2/3)
+};
+
+// Update target owning the accumulated world position and velocities.
+struct CMdlDynTarget {
+    u8 field_0x0[0x68];
+    nw4r::math::VEC3 pos68;  // 0x68 world position
+    nw4r::math::VEC3 vel74;  // 0x74 accumulated velocity 1
+    nw4r::math::VEC3 vel7C;  // 0x7C accumulated velocity 2
+    u8 field_0x84[0x8];
+    u32* ids90;              // 0x90 element-id array
+    u32 count94;             // 0x94 element count
+};
+
+// Forward declarations (linkage matches each definition below).
+u32 func_804EC344(const CMdlDynHolder* self);
+u8* func_804EA038(CMdlDynHolder* self);
+void func_804EC47C(nw4r::math::MTX34* out, const nw4r::math::MTX34* a,
+                   const nw4r::math::MTX34* b);
+s32 func_804EC514(const Quaternion* q, nw4r::math::VEC3* out);
+nw4r::math::MTX34* func_804EC76C(nw4r::math::MTX34* mtx, const f32* v);
+void func_804EC78C(nw4r::math::MTX34* out, const nw4r::math::MTX34* a,
+                   const nw4r::math::MTX34* b);
+void func_804EC81C(nw4r::math::MTX34* out, const nw4r::math::MTX34* a, f32 f);
+void func_804EC8AC(nw4r::math::MTX34* m);
+void func_804ECA00(CMdlDynSet* owner, nw4r::math::VEC3* vec, CMdlDynElem* self);
+void func_804ECAC4(MdlDynObj* obj, CMdlDynTarget* tgt,
+                   nw4r::math::MTX34* matrices);
+void func_804ED67C(CMdlDynamics* self, nw4r::math::MTX34* matrices);
+extern "C" u32 func_804EC9E4(u8* self);
+extern "C" void* func_804EC9EC(u8* self);
+extern "C" u32 func_804EC32C(u8* self);
+extern "C" u32 func_804EC338(u8* self);
+extern "C" u32 func_804EC3AC(u8* self);
+extern "C" u32 func_804EC3B8(u8* self);
+extern "C" u32 func_804EC3C4(u8* self);
+extern "C" void func_804EC3D0(u8* self, void* out);
+extern "C" void func_804EC3EC(u8* self, float a, float b, float c);
+extern "C" void func_804EC3FC(u8* self, const void* src);
+extern "C" u8* func_804EC418(const CMdlDynHolder* self);
+extern "C" void func_804EC478(Mtx a, const Quaternion* b);
+
+// us-804f0088: main dynamic-model update driver. First inverts every anchor
+// matrix into the model's 0x98-stride elements (kind==1), then walks
+// frame-count x lists x 0xB0-stride elements relaxing positions/velocities
+// toward the anchor nodes and re-blending the anchor world matrices through
+// each element's local offset.
+void func_804EBBCC(CMdlDynamics* self, nw4r::math::MTX34* matrices) {
+    if (self->field_0x4 == 0) {
+        return;
+    }
+    if (!func_804EC32C((u8*)self->field_0x4)) {
+        return;
+    }
+    if (func_804EC338((u8*)self->field_0x4)) {
+        return;
+    }
+
+    // Pass 1: matrices[slot n]^-1 -> element local matrix, for kind-1 elements
+    // of the model's own 0x98-stride array at model+0x18.
+    u8* it98 = (u8*)func_804EC9E4((u8*)self->field_0x4 + 0x18);
+    u8* end98;
+    while (it98 !=
+           (end98 = (u8*)func_804EC9EC((u8*)self->field_0x4 + 0x18))) {
+        if (((CMdlDynElem98*)it98)->field_0x94 == 1) {
+            nw4r::g3d::ResMdl mdl(
+                (void*)(unsigned long)func_804E9FC8((u8*)self->field_0x4));
+            unsigned long node =
+                GetResNode__Q34nw4r3g3d6ResMdlCFUl(&mdl, *(u32*)it98);
+            CMdlDynHolder wrapNode;
+            func_804EA0D4((u8*)&wrapNode, &node);
+            CMdlDynHolder wrapData;
+            wrapData.field_0x0 = (CMdlDynSub*)func_804EA038(&wrapNode);
+            u32 n = func_804EC344(&wrapData);
+            func_804EAA10(matrices[n].mtx, (f32 (*)[4])it98);
+        }
+        it98 += sizeof(CMdlDynElem98);
+    }
+
+    // Anim-hold combination flag (bits 20/7 plus a model-level query).
+    s32 flag = 0;
+    if (func_804EC3AC((u8*)self->field_0x4) != 0 &&
+        func_804EC3B8((u8*)self->field_0x4) != 0 &&
+        func_804842B0((void*)self->field_0x4) != 0) {
+        flag = 1;
+    }
+
+    f32 one = lbl_eu_8066B3D4;
+    u32 frame = 0;
+    f32 zero = lbl_eu_8066B3D0;
+    f32 eps = lbl_eu_8066B3D8;
+    while (frame < (u32)func_804EBBC4((u8*)self->field_0x4)) {
+        CMdlDynList** lstIt = (CMdlDynList**)func_804EA268((u8*)&self->buf08);
+        while (lstIt != (CMdlDynList**)func_804EA270((u8*)&self->buf08)) {
+            CMdlDynList* list = *lstIt;
+            u32 idx = 0;
+            while (idx != func_804EA0E0((u8*)list)) {
+                CMdlDynElem* e = (CMdlDynElem*)func_804EB6F8((u8*)list, idx);
+
+                // Resolve the element's res node (wrapper hop) and its data
+                // (second hop); the two holders yield two matrix indices.
+                nw4r::g3d::ResMdl mdl(
+                    (void*)(unsigned long)func_804E9FC8((u8*)self->field_0x4));
+                unsigned long node =
+                    GetResNode__Q34nw4r3g3d6ResMdlCFUl(&mdl, e->field_0x0);
+                CMdlDynHolder wrapNode; // node wrapper
+                func_804EA0D4((u8*)&wrapNode, &node);
+                CMdlDynHolder wrapData;
+                wrapData.field_0x0 = (CMdlDynSub*)func_804EA038(&wrapNode);
+                u32 nD = func_804EC344(&wrapData);
+                nw4r::math::MTX34* mD = &matrices[nD];
+                u32 nN = func_804EC344(&wrapNode);
+                nw4r::math::MTX34* mN = &matrices[nN];
+
+                // dynOk: forced on when anim-hold, else the element must have
+                // its dynamic bit (0x40) set.
+                s32 dynOk = 1;
+                if (flag == 0) {
+                    if (func_8004B3D8(&e->field_0x8C, 0x40) == 0) {
+                        dynOk = 0;
+                    }
+                }
+
+                if (func_804EC3C4((u8*)self->field_0x4) == 0) {
+                    if (dynOk != 0 && frame == 0) {
+                        // Seed the element pose from the anchor translation.
+                        func_804EC3D0((u8*)mD->mtx, &e->field_0x68);
+                        void* p = func_8004B3F0(&e->field_0x5C, &e->field_0x68);
+                        func_8004B3F0(&e->field_0x80, p);
+                        func_8006BEC4(&e->field_0x74);
+                    }
+                    if (e->field_0xC != zero) {
+                        nw4r::math::VEC3 v130;
+                        func_8004B0B0(&v130);
+                        nw4r::math::VEC3 vC8;
+                        func_804EC3FC((u8*)&vC8,
+                                      func_804EC418((CMdlDynHolder*)&wrapNode));
+                        nw4r::math::VEC3 vD4;
+                        func_8006D6A8(&vD4, mD->mtx, &vC8);
+                        func_8004B3F0(&v130, &vD4);
+                        nw4r::math::VEC3 vB0;
+                        func_8004CB80(&vB0, &v130, &e->field_0x80);
+                        nw4r::math::VEC3 vBC;
+                        func_8004B738(&e->field_0x74,
+                                      func_8004B75C(&vBC, &vB0, e->field_0xC));
+                        nw4r::math::VEC3 v124;
+                        func_8004CB80(&v124, &e->field_0x80, &v130);
+                        nw4r::math::VEC3 v98;
+                        func_8004B60C(&v98, e->field_0xC, mD->m[1][3],
+                                      e->field_0xC);
+                        nw4r::math::VEC3 vA4;
+                        func_8004CB80(&vA4, &v130, &v98);
+                        f32 mag = func_8006BB00(&vA4);
+                        f32 lenSq = func_8006DFC8(&v124);
+                        if (!(mag * mag >= lenSq)) {
+                            if (lenSq != zero) {
+                                func_8006BB04(&v124,
+                                              one / func_8004EC78(lenSq));
+                            } else {
+                                func_804EC3EC((u8*)&v124, zero, zero, one);
+                            }
+                            func_8004B75C(&e->field_0x80, &v124, mag);
+                            nw4r::math::VEC3 v8Ct;
+                            func_8006C6E8(&v8Ct, &e->field_0x80, &v130);
+                            func_8004B3F0(&e->field_0x80, &v8Ct);
+                        }
+                    }
+                    // Common tail: gravity on vel.y, relaxed velocity blend.
+                    if (e->field_0x4 != zero) {
+                        e->field_0x74.y -= e->field_0x4;
+                    }
+                    nw4r::math::VEC3 v68t;
+                    func_8004CB80(&v68t, &e->field_0x68, &e->field_0x5C);
+                    nw4r::math::VEC3 v74t;
+                    func_8004B738(&e->field_0x74,
+                                  func_8004B75C(&v74t, &v68t, e->field_0x8));
+                    func_8004B3F0(&e->field_0x5C, &e->field_0x68);
+                    nw4r::math::VEC3 v118;
+                    func_8004B79C(&v118, &e->field_0x74);
+                    f32 lsq = func_8006DFC8(&v118);
+                    if (lsq < eps) {
+                        func_8006BB04(&v118, one / sqrtf(lsq));
+                        func_8006BB04(&v118, lbl_eu_8066B3DC);
+                    }
+                    func_8004B738(&e->field_0x68, &v118);
+                    func_8004B738(&e->field_0x80, &v118);
+                    func_8006BB04(&e->field_0x74, lbl_eu_8066B3E0);
+                }
+
+                // Pose solve: inverse anchor -> local space, quat blending.
+                nw4r::math::MTX34 v2F0;
+                func_8006BEC0(&v2F0);
+                nw4r::math::VEC3 v10C;
+                func_8004B0B0(&v10C);
+                nw4r::math::VEC3 v100;
+                func_8004B0B0(&v100);
+                func_804EAA10(mD->mtx, v2F0.mtx);
+                nw4r::math::VEC3 v5Ct;
+                func_8006D6A8(&v5Ct, v2F0.mtx, &e->field_0x68);
+                func_8004B3F0(&v100, &v5Ct);
+                if (func_8006BA80(&v100) != 0) {
+                    func_804EC3EC((u8*)&v100, zero, zero, one);
+                }
+                func_8004CBC8(&v100);
+                nw4r::math::VEC3 v50;
+                func_804EC3FC((u8*)&v50,
+                              func_804EC418((CMdlDynHolder*)&wrapNode));
+                func_8004B3F0(&v10C, &v50);
+                func_8004CBC8(&v10C);
+                Quaternion vF0;
+                func_8004B0B4(&vF0);
+                nw4r::math::MTX34 v2C0;
+                func_8006BEC0(&v2C0);
+                nw4r::math::VEC3 vE0;
+                func_8004B0B0(&vE0);
+
+                if (func_804EC3C4((u8*)self->field_0x4) == 0) {
+                    func_80052584(&vF0, &v10C, &v100);
+                    func_804EC478(v2C0.mtx, &vF0);
+                    nw4r::math::MTX34 v260;
+                    func_804EC47C(&v260, mD, &v2C0);
+                    nw4r::math::MTX34 v290;
+                    func_804EC47C(&v290, &v260, &e->field_0x2C);
+                    func_8006EF1C(&v2C0, &v290);
+                    nw4r::math::MTX34 v44;
+                    func_8007420C(&v44, v2C0.mtx);
+                    func_8004B3F0(&e->field_0x68, &v44);
+                    func_804ECAC4((MdlDynObj*)self, (CMdlDynTarget*)e, matrices);
+                }
+
+                nw4r::math::VEC3 v38;
+                func_8006D6A8(&v38, v2F0.mtx, &e->field_0x68);
+                func_8004B3F0(&v100, &v38);
+                if (func_8006BA80(&v100) != 0) {
+                    func_804EC3EC((u8*)&v100, zero, zero, one);
+                }
+                func_8004CBC8(&v100);
+                func_80052584(&vF0, &v10C, &v100);
+                func_804EC514(&vF0, &vE0);
+                func_804ECA00((CMdlDynSet*)self, &vE0, e);
+                func_804EC76C(&v2C0, (const f32*)&vE0);
+
+                if (e->field_0x10 == zero) {
+                    nw4r::math::MTX34 v230;
+                    func_804EC47C(&v230, mD, &v2C0);
+                    func_8006EF1C(mD, &v230);
+                } else {
+                    nw4r::math::MTX34 v200;
+                    func_804EC47C(&v200, mD, &v2C0);
+                    func_8006EF1C(&v2C0, &v200);
+                    nw4r::math::MTX34 v170;
+                    func_804EC81C(&v170, mD, e->field_0x10);
+                    nw4r::math::MTX34 v1A0;
+                    func_804EC81C(&v1A0, &v2C0, one - e->field_0x10);
+                    nw4r::math::MTX34 v1D0;
+                    func_804EC78C(&v1D0, &v1A0, &v170);
+                    func_8006EF1C(mD, &v1D0);
+                    func_804EC8AC(mD);
+                }
+                nw4r::math::MTX34 v140;
+                func_804EC47C(&v140, mD, &e->field_0x2C);
+                func_8006EF1C(mN, &v140);
+
+                if (func_804EC3C4((u8*)self->field_0x4) == 0) {
+                    nw4r::math::MTX34 v2Ct;
+                    func_8007420C(&v2Ct, mN->mtx);
+                    void* q = func_8004B3F0(&e->field_0x68, &v2Ct);
+                    func_8004B3F0(&e->field_0x80, q);
+                    func_8004B694(&e->field_0x8C, 0x40);
+                }
+
+                if (dynOk != 0) {
+                    // On the final frame, drop the accumulated velocity and
+                    // re-seed the previous-position shadow.
+                    if ((u32)(frame - 1) ==
+                        (u32)func_804EBBC4((u8*)self->field_0x4)) {
+                        func_8006BEC4(&e->field_0x74);
+                        func_8004B3F0(&e->field_0x5C, &e->field_0x68);
+                    }
+                }
+                idx++;
+            }
+            lstIt++;
+        }
+        if (func_804EC3C4((u8*)self->field_0x4) == 0) {
+            func_804ED67C(self, matrices);
+        }
+        frame++;
+    }
+    func_80484E04((void*)self->field_0x4, 1);
+}
+
+extern "C" __declspec(noinline) u32 func_804EC32C(u8* self) { return (*(u32*)((u8*)self + 0x7A4) >> 3) & 1; }
+
+extern "C" __declspec(noinline) u32 func_804EC338(u8* self) { return (*(u32*)((u8*)self + 0x7A4) >> 19) & 1; }
+
+__declspec(noinline) u32 func_804EC344(const CMdlDynHolder* self) {
     CMdlDynSub* sub = self->field_0x0;
     if (sub == 0) {
         nw4r::db::Panic(lbl_eu_80529678, 0x53, lbl_eu_80529658);
@@ -728,13 +1089,13 @@ u32 func_804EC344(const CMdlDynHolder* self) {
     return self->field_0x0 != 0 ? self->field_0x0->field_0x10 : 0;
 }
 
-extern "C" u32 func_804EC3AC(u8* self) { return (*(u32*)((u8*)self + 0x7A4) >> 20) & 1; }
+extern "C" __declspec(noinline) u32 func_804EC3AC(u8* self) { return (*(u32*)((u8*)self + 0x7A4) >> 20) & 1; }
 
-extern "C" u32 func_804EC3B8(u8* self) { return (*(u32*)((u8*)self + 0x7A4) >> 7) & 1; }
+extern "C" __declspec(noinline) u32 func_804EC3B8(u8* self) { return (*(u32*)((u8*)self + 0x7A4) >> 7) & 1; }
 
-extern "C" u32 func_804EC3C4(u8* self) { return (*(u32*)((u8*)self + 0x7A4) >> 17) & 1; }
+extern "C" __declspec(noinline) u32 func_804EC3C4(u8* self) { return (*(u32*)((u8*)self + 0x7A4) >> 17) & 1; }
 
-extern "C" void func_804EC3D0(u8* self, void* out) {
+extern "C" __declspec(noinline) void func_804EC3D0(u8* self, void* out) {
     const float c = *(float*)((u8*)self + 0x2C);
     const float b = *(float*)((u8*)self + 0x1C);
     const float a = *(float*)((u8*)self + 0x0C);
@@ -743,19 +1104,19 @@ extern "C" void func_804EC3D0(u8* self, void* out) {
     *(float*)((u8*)out + 8) = c;
 }
 
-extern "C" void func_804EC3EC(u8* self, float a, float b, float c) {
+extern "C" __declspec(noinline) void func_804EC3EC(u8* self, float a, float b, float c) {
     *(float*)((u8*)self + 0) = a;
     *(float*)((u8*)self + 4) = b;
     *(float*)((u8*)self + 8) = c;
 }
 
-extern "C" void func_804EC3FC(u8* self, const void* src) {
+extern "C" __declspec(noinline) void func_804EC3FC(u8* self, const void* src) {
     *(float*)((u8*)self + 0) = *(float*)((u8*)src + 0);
     *(float*)((u8*)self + 4) = *(float*)((u8*)src + 4);
     *(float*)((u8*)self + 8) = *(float*)((u8*)src + 8);
 }
 
-u8* func_804EC418(const CMdlDynHolder* self) {
+__declspec(noinline) u8* func_804EC418(const CMdlDynHolder* self) {
     // Load the pointer before the assert so the check uses the pre-call value;
     // the result re-reads the field like retail.
     CMdlDynSub* sub = self->field_0x0;
@@ -766,13 +1127,13 @@ u8* func_804EC418(const CMdlDynHolder* self) {
     return (u8*)self->field_0x0 + 0x38;
 }
 
-extern "C" void func_804EC478(Mtx a, const Quaternion* b) {
+extern "C" __declspec(noinline) void func_804EC478(Mtx a, const Quaternion* b) {
     PSMTXQuat(a, b);
 }
 
 // us-804f0938: out = a * b. PSMTXConcat writes into a stack temp, then the
 // 48-byte result is copied to *out (retail reads the copy back from r1+8).
-void func_804EC47C(nw4r::math::MTX34* out, const nw4r::math::MTX34* a,
+__declspec(noinline) void func_804EC47C(nw4r::math::MTX34* out, const nw4r::math::MTX34* a,
                    const nw4r::math::MTX34* b) {
     nw4r::math::MTX34 tmp;
     PSMTXConcat(a->mtx, b->mtx, tmp.mtx);
@@ -850,7 +1211,7 @@ s32 func_804EC514(const Quaternion* q, nw4r::math::VEC3* out) {
 // rotation matrix (retail tail-call; 128/pi scale pooled at lbl_eu_8066B3F0,
 // owned by the CGXCache .sdata2 pool). Referenced through the named extern so
 // this TU does not code-pool its own copy into .sdata2 (retail .sdata2 is 0x0).
-nw4r::math::MTX34* func_804EC76C(nw4r::math::MTX34* mtx, const f32* v) {
+__declspec(noinline) nw4r::math::MTX34* func_804EC76C(nw4r::math::MTX34* mtx, const f32* v) {
     extern const f32 lbl_eu_8066B3F0; // 128/pi (retail .sdata2, foreign TU)
     return nw4r::math::MTX34RotXYZFIdx(mtx, v[0] * lbl_eu_8066B3F0,
                                        v[1] * lbl_eu_8066B3F0,
@@ -859,7 +1220,7 @@ nw4r::math::MTX34* func_804EC76C(nw4r::math::MTX34* mtx, const f32* v) {
 
 // us-804f0c48: out = a + b (nw4r MTX34Add into a stack temp, then copy out
 // via the returned pointer - retail reads the copy back from r3).
-void func_804EC78C(nw4r::math::MTX34* out, const nw4r::math::MTX34* a,
+__declspec(noinline) void func_804EC78C(nw4r::math::MTX34* out, const nw4r::math::MTX34* a,
                    const nw4r::math::MTX34* b) {
     nw4r::math::MTX34 tmp;
     *out = *nw4r::math::MTX34Add(&tmp, a, b);
@@ -867,7 +1228,7 @@ void func_804EC78C(nw4r::math::MTX34* out, const nw4r::math::MTX34* a,
 
 // us-804f0cd8: out = a * factor (nw4r MTX34Mult scalar-factor kernel, copy
 // via the returned pointer).
-void func_804EC81C(nw4r::math::MTX34* out, const nw4r::math::MTX34* a, f32 f) {
+__declspec(noinline) void func_804EC81C(nw4r::math::MTX34* out, const nw4r::math::MTX34* a, f32 f) {
     nw4r::math::MTX34 tmp;
     *out = *nw4r::math::MTX34Mult(&tmp, a, f);
 }
@@ -901,9 +1262,9 @@ void func_804EC8AC(nw4r::math::MTX34* m) {
     }
 }
 
-u32 func_804EC9E4(u8* self) { return *(u32*)((u8*)self + 0x0); }
+__declspec(noinline) u32 func_804EC9E4(u8* self) { return *(u32*)((u8*)self + 0x0); }
 
-extern "C" void* func_804EC9EC(u8* self) { return (char*)*(void**)self + *(u32*)((u8*)self + 4) * 0x98; }
+extern "C" __declspec(noinline) void* func_804EC9EC(u8* self) { return (char*)*(void**)self + *(u32*)((u8*)self + 4) * 0x98; }
 
 // Clamps the vector into the element's AABB; each axis is clamped only
 // when its flag bit is set in field_0x8C (bit0=minX, bit1=maxX, bit2=minY,
@@ -930,60 +1291,15 @@ void func_804ECA00(CMdlDynSet* owner, nw4r::math::VEC3* vec, CMdlDynElem* self) 
     }
 }
 
-// --- Types shared by the dynamic-model collision helpers (targets 4/5) ---
-
-// Model object whose +0x4 points at the loaded model resource root.
-struct MdlDynObj {
-    u8 field_0x0[0x4]; // 0x0
-    u8* field_0x4;     // 0x4 resource root
-    u8 field_0x8[0x10];
-    u8* elems18;       // 0x18 base of the 0x98-stride element array
-};
-
-// Model resource root; the ResMdl data word used for node lookups sits at 0x146C.
-struct MdlResRoot {
-    u8 field_0x0[0x146C];
-    u32 field_0x146C;
-};
-
-// Raw g3d ResNode fields read by the helpers: entry count at 0x10 (used to
-// index a 0x30-stride matrix array) and bounding-sphere radius at 0x20.
-struct MdlResNodeRaw {
-    u8 field_0x0[0x10];
-    u32 field_0x10;
-    u8 field_0x14[0xC];
-    f32 field_0x20;
-};
-
-// 0x98-stride dynamic-model element driven by func_804ECAC4.
-struct CMdlDynElem98 {
-    u32 field_0x0;                 // 0x0 resource id
-    nw4r::math::MTX34 field_0x4;   // 0x4 local matrix
-    nw4r::math::MTX34 field_0x34;  // 0x34 world matrix
-    nw4r::math::MTX34 field_0x64;  // 0x64 view matrix
-    u8 field_0x94;                 // 0x94 update kind (1/2/3)
-};
-
-// Update target owning the accumulated world position and velocities.
-struct CMdlDynTarget {
-    u8 field_0x0[0x68];
-    nw4r::math::VEC3 pos68;  // 0x68 world position
-    nw4r::math::VEC3 vel74;  // 0x74 accumulated velocity 1
-    nw4r::math::VEC3 vel7C;  // 0x7C accumulated velocity 2
-    u8 field_0x84[0xC];
-    u32* ids90;              // 0x90 element-id array
-    u32 count94;             // 0x94 element count
-};
-
-s32 func_804ED18C(MdlDynObj* obj, nw4r::math::VEC3* pos, nw4r::math::VEC3* out,
-                  u32* idxPtr, nw4r::math::MTX34* matrices);
+extern "C" s32 func_804ED18C(MdlDynObj* obj, nw4r::math::VEC3* pos, nw4r::math::VEC3* out,
+                  CMdlDynElem98* elem, nw4r::math::MTX34* matrices);
 
 // us-804f1370: sphere push-out against the bounding sphere of res node
 // *idxPtr: projects the position radially onto the node's bounding sphere
 // (direction from the matrix-array anchor to the point), writes the surface
 // point into *pos and the (scaled) penetration vector into *out. Returns 0
 // when the point is outside/on the sphere or degenerate, else 1.
-s32 func_804ECEB4(MdlDynObj* obj, nw4r::math::VEC3* pos, nw4r::math::VEC3* out,
+extern "C" s32 func_804ECEB4(MdlDynObj* obj, nw4r::math::VEC3* pos, nw4r::math::VEC3* out,
                   u32* idxPtr, nw4r::math::MTX34* matrices) {
     u32 idx = *idxPtr;
     MdlResRoot* root = (MdlResRoot*)obj->field_0x4;
@@ -1032,68 +1348,59 @@ s32 func_804ECEB4(MdlDynObj* obj, nw4r::math::VEC3* pos, nw4r::math::VEC3* out,
 // around the +/-Y poles, resolves the element's res node and finally pushes
 // the position back through the world/matrix chain, reporting the penetration
 // vector scaled by lbl_eu_8066B3F4. Returns 0 when the point misses.
-s32 func_804ED18C(MdlDynObj* obj, nw4r::math::VEC3* pos, nw4r::math::VEC3* out,
+extern "C" s32 func_804ED18C(MdlDynObj* obj, nw4r::math::VEC3* pos, nw4r::math::VEC3* out,
                   CMdlDynElem98* elem, nw4r::math::MTX34* matrices) {
-    nw4r::math::VEC3 axis;
-    axis.x = lbl_eu_8066B3D0;
-    axis.y = lbl_eu_8066B3D0;
-    axis.z = lbl_eu_8066B3D0;
+    // Unit-sphere pole anchor, starting at the origin.
+    ml::CVec3 axis(lbl_eu_8066B3D0, lbl_eu_8066B3D0, lbl_eu_8066B3D0);
+    nw4r::math::VEC3 ret1;
+    nw4r::math::VEC3 ret2;
+    nw4r::math::VEC3 ret3;
+    nw4r::math::VEC3 ret4;
+    f32 one = lbl_eu_8066B3D4;
 
     // world = view * (local * pos)
-    nw4r::math::VEC3 localPos;
-    PSMTXMultVec(elem->field_0x4.mtx, (const Vec*)pos, (Vec*)&localPos);
-    nw4r::math::VEC3 world;
-    PSMTXMultVec(elem->field_0x64.mtx, (const Vec*)&localPos, (Vec*)&world);
+    PSMTXMultVec(elem->field_0x4.mtx, (const Vec*)pos, (Vec*)&ret1);
+    ml::CVec3 world;
+    world = ml::CVec3(*(ml::CVec3*)&ret1);
+    PSMTXMultVec(elem->field_0x64.mtx, (const Vec*)(nw4r::math::VEC3*)world, (Vec*)&ret2);
+    world = ml::CVec3(*(ml::CVec3*)&ret2);
 
     // Project onto the unit sphere around both Y poles.
+    f32 radius = lbl_eu_8066B3D4;
+    f32 zero = lbl_eu_8066B3D0;
     for (u32 i = 0; i < 2; i++) {
-        f32 sign;
-        if (i == 0) {
-            sign = lbl_eu_8066B3D4;
-        } else {
-            sign = -lbl_eu_8066B3D4;
-        }
-        axis.y = sign;
+        axis.y = (i == 0) ? one : -one;
 
-        nw4r::math::VEC3 d;
-        d.x = world.x - axis.x;
-        d.y = world.y - axis.y;
-        d.z = world.z - axis.z;
+        ml::CVec3 d = world - axis;
 
-        if (d.x < lbl_eu_8066B3D4) {
-            if (d.y < lbl_eu_8066B3D4) {
-                if (d.z < lbl_eu_8066B3D4) {
-                    f32 lenSq = d.x * d.x + d.y * d.y + d.z * d.z;
-                    if (lenSq < lbl_eu_8066B3D4 * lbl_eu_8066B3D4) {
-                        f32 len = sqrt(lenSq);
-                        if (len != lbl_eu_8066B3D0) {
-                            f32 inv = lbl_eu_8066B3D4 / len;
-                            d.x *= inv;
-                            d.y *= inv;
-                            d.z *= inv;
-                            nw4r::math::VEC3 dir;
-                            dir.x = d.x * lbl_eu_8066B3D4;
-                            dir.y = d.y * lbl_eu_8066B3D4;
-                            dir.z = d.z * lbl_eu_8066B3D4;
-                            world.x = dir.x + axis.x;
-                            world.y = dir.y + axis.y;
-                            world.z = dir.z + axis.z;
-                        }
-                    }
+        if (d.x < one && d.y < one && d.z < one) {
+            f32 lenSq = d.magnitude();
+            if (lenSq < one * one) {
+                f32 len = sqrt(lenSq);
+                if (len != zero) {
+                    f32 inv = radius / len;
+                    d.x *= inv;
+                    d.y *= inv;
+                    d.z *= inv;
+                    // Scale by one; expanded so VEC3Scale writes the return
+                    // object directly (no scale() temp), then copy-constructs
+                    // dir, matching retail's two-slot staging.
+                    ml::CVec3 dirRet;
+                    nw4r::math::VEC3Scale((nw4r::math::VEC3*)&dirRet,
+                                          (const nw4r::math::VEC3*)&d, one);
+                    ml::CVec3 dir(dirRet);
+                    world = ml::CVec3(dir + axis);
                 }
             }
         }
     }
 
     // Final point must sit on the unit circle in XZ and |y| <= 1.
-    if (nw4r::math::FAbs(world.y) >= lbl_eu_8066B3D4) {
+    if (nw4r::math::FAbs(world.y) >= one) {
         return 0;
     }
     f32 radSq = world.x * world.x + world.z * world.z;
-    if (radSq >= lbl_eu_8066B3D4 * lbl_eu_8066B3D4) {
-        return 0;
-    }
-    if (radSq == lbl_eu_8066B3D0) {
+    if (radSq >= one * one || radSq == lbl_eu_8066B3D0) {
         return 0;
     }
 
@@ -1118,7 +1425,7 @@ s32 func_804ED18C(MdlDynObj* obj, nw4r::math::VEC3* pos, nw4r::math::VEC3* out,
     if (raw == 0) {
         nw4r::db::Panic(lbl_eu_80529678, 0x53, lbl_eu_80529658);
     }
-    u32 n = *(u32*)(node + 0x10);
+    u32 n = (node != 0) ? *(u32*)(node + 0x10) : 0;
 
     // Project the XZ point onto the unit circle.
     f32 len = sqrt(radSq);
@@ -1127,18 +1434,14 @@ s32 func_804ED18C(MdlDynObj* obj, nw4r::math::VEC3* pos, nw4r::math::VEC3* out,
     world.z = world.z * inv * lbl_eu_8066B3D4;
 
     // Push the position back out through the matrix chain.
-    nw4r::math::VEC3 orig = *pos;
-    nw4r::math::VEC3 tmp;
-    PSMTXMultVec(matrices[n].mtx, (const Vec*)&world, (Vec*)&tmp);
-    world = tmp;
-    nw4r::math::VEC3 hit;
-    PSMTXMultVec((f32 (*)[4])node, (const Vec*)&world, (Vec*)&hit);
+    ml::CVec3 orig = *(ml::CVec3*)pos;
+    PSMTXMultVec(matrices[n].mtx, (const Vec*)(nw4r::math::VEC3*)world, (Vec*)&ret3);
+    world = ml::CVec3(*(ml::CVec3*)&ret3);
+    PSMTXMultVec((f32 (*)[4])node, (const Vec*)(nw4r::math::VEC3*)world, (Vec*)&ret4);
 
     s32 ret = 1;
-    *pos = hit;
-    out->x = (hit.x - orig.x) * lbl_eu_8066B3F4;
-    out->y = (hit.y - orig.y) * lbl_eu_8066B3F4;
-    out->z = (hit.z - orig.z) * lbl_eu_8066B3F4;
+    *(ml::CVec3*)pos = ml::CVec3(*(ml::CVec3*)&ret4);
+    *(ml::CVec3*)out = (*(ml::CVec3*)pos - orig) * lbl_eu_8066B3F4;
     return ret;
 }
 
@@ -1149,34 +1452,33 @@ s32 func_804ED18C(MdlDynObj* obj, nw4r::math::VEC3* pos, nw4r::math::VEC3* out,
 // the element's local/view/world matrices and accumulates the (negated)
 // delta scaled by lbl_eu_8066B3F4 when view-space y is in front of the camera.
 void func_804ECAC4(MdlDynObj* obj, CMdlDynTarget* tgt, nw4r::math::MTX34* matrices) {
-    // Volatile re-reads stop MWCC from hoisting the id-array base/count;
-    // retail reloads both fields from the target every iteration.
-    volatile CMdlDynTarget* vt = tgt;
-    u32* it = vt->ids90;
-    while (it != vt->ids90 + vt->count94) {
+    u32* it;
+    for (it = tgt->ids90; it != tgt->ids90 + tgt->count94; it++) {
         // Element array base lives at obj+0x18 with a 0x98-byte stride.
         CMdlDynElem98* e = (CMdlDynElem98*)(obj->elems18 + *it * 0x98);
-        it++;
         switch (e->field_0x94) {
         case 1: {
             // Sphere push-out helper; accumulate its output into both velocities.
             ml::CVec3 delta;
-            if (!func_804ECEB4(obj, (nw4r::math::VEC3*)&vt->pos68,
+            if (!func_804ECEB4(obj, (nw4r::math::VEC3*)&tgt->pos68,
                                (nw4r::math::VEC3*)&delta, &e->field_0x0, matrices)) {
                 break;
             }
-            *(ml::CVec3*)&vt->vel74 += delta;
-            *(ml::CVec3*)&vt->vel7C += delta;
+            nw4r::math::VEC3Add(&tgt->vel74, &tgt->vel74, (nw4r::math::VEC3*)&delta);
+            nw4r::math::VEC3Add(&tgt->vel7C, &tgt->vel7C, (nw4r::math::VEC3*)&delta);
             break;
         }
         case 2: {
+            s32 hit = 0;
+            ml::CVec3 delta;
             // world = view * (local * pos); proceed only when the view-space
             // point is on the camera side (y > 0).
-            nw4r::math::VEC3 tmp;
-            PSMTXMultVec(e->field_0x4.mtx, (const Vec*)&vt->pos68, (Vec*)&tmp);
+            ml::CVec3 tmp;
+            PSMTXMultVec(e->field_0x4.mtx, (const Vec*)&tgt->pos68, (Vec*)&tmp);
+            ml::CVec3 world = tmp;
             ml::CVec3 view;
-            PSMTXMultVec(e->field_0x64.mtx, (const Vec*)&tmp, (Vec*)&view);
-            nw4r::math::VEC3 world = *(nw4r::math::VEC3*)&view;
+            PSMTXMultVec(e->field_0x64.mtx, (const Vec*)&world, (Vec*)&view);
+            world = view;
             if (world.y > lbl_eu_8066B3D0) {
                 // Resolve the element's res node (offset at 0x5C, 4-aligned).
                 MdlResRoot* root = (MdlResRoot*)obj->field_0x4;
@@ -1205,28 +1507,31 @@ void func_804ECAC4(MdlDynObj* obj, CMdlDynTarget* tgt, nw4r::math::MTX34* matric
                 // Project onto the anchor plane: flatten view-space y, push
                 // back through the element world matrix then the anchor matrix.
                 world.y = lbl_eu_8066B3D0;
-                nw4r::math::VEC3 p1;
+                ml::CVec3 p1;
                 PSMTXMultVec(e->field_0x34.mtx, (const Vec*)&world, (Vec*)&p1);
-                nw4r::math::VEC3 p2;
+                ml::CVec3 p2;
                 PSMTXMultVec(matrices[n].mtx, (const Vec*)&p1, (Vec*)&p2);
+                hit = 1;
 
-                ml::CVec3 delta =
-                    (*(ml::CVec3*)&vt->pos68 - *(ml::CVec3*)&p2) * lbl_eu_8066B3F4;
-                ((CMdlDynTarget*)vt)->pos68 = p2;
-                *(ml::CVec3*)&vt->vel74 += delta;
-                *(ml::CVec3*)&vt->vel7C += delta;
+                *(ml::CVec3*)&tgt->pos68 = p2;
+                ml::CVec3 diff = *(ml::CVec3*)&tgt->pos68 - p2;
+                delta = diff * lbl_eu_8066B3F4;
+            }
+            if (hit) {
+                nw4r::math::VEC3Add(&tgt->vel74, &tgt->vel74, (nw4r::math::VEC3*)&delta);
+                nw4r::math::VEC3Add(&tgt->vel7C, &tgt->vel7C, (nw4r::math::VEC3*)&delta);
             }
             break;
         }
         case 3: {
             // Capsule projection helper; accumulate its output into both velocities.
             ml::CVec3 delta;
-            if (!func_804ED18C(obj, (nw4r::math::VEC3*)&vt->pos68,
-                               (nw4r::math::VEC3*)&delta, &e->field_0x0, matrices)) {
+            if (!func_804ED18C(obj, (nw4r::math::VEC3*)&tgt->pos68,
+                               (nw4r::math::VEC3*)&delta, e, matrices)) {
                 break;
             }
-            *(ml::CVec3*)&vt->vel74 += delta;
-            *(ml::CVec3*)&vt->vel7C += delta;
+            nw4r::math::VEC3Add(&tgt->vel74, &tgt->vel74, (nw4r::math::VEC3*)&delta);
+            nw4r::math::VEC3Add(&tgt->vel7C, &tgt->vel7C, (nw4r::math::VEC3*)&delta);
             break;
         }
         default:
@@ -1523,7 +1828,7 @@ u32 func_804E9FD0(const CMdlDynHolder* self) {
 }
 // Returns the sub-object's embedded data pointer: reads an offset at 0x5C on
 // the sub-object and resolves it against the base (asserted 4-aligned).
-u8* func_804EA038(CMdlDynHolder* self) {
+__declspec(noinline) u8* func_804EA038(CMdlDynHolder* self) {
     if (self->field_0x0 == 0) {
         nw4r::db::Panic(lbl_eu_8056E850, 0x2c, lbl_eu_8056E834, lbl_eu_80663910,
                         lbl_eu_80663CB8);
@@ -1557,9 +1862,8 @@ extern "C" u32 lbl_eu_805701FC[19] = {
     // "g3d_rescommon_ac.h\0" (19B) + 5B tail pad, as words
     0x6733645F, 0x72657363, 0x6F6D6D6F, 0x6E5F6163, 0x2E680000, 0x00000000,
 };
-DECOMP_FORCEACTIVE(CMdlDynamics_cpp, lbl_eu_805701FC);
 
-// [.rodata] 0x80524830-0x80524894 (100B): RTTI name + anim-param names +
+
 // assert format strings.
 extern "C" __declspec(align(4)) const char lbl_eu_80524830[0x10] = {
     0x43,0x4D,0x64,0x6C,0x44,0x79,0x6E,0x61,0x6D,0x69,0x63,0x73,0x00,0x00,0x00,0x00,
@@ -1576,10 +1880,6 @@ extern "C" __declspec(align(4)) const char lbl_eu_80524870[0x18] = {
 extern "C" __declspec(align(4)) const char lbl_eu_80524888[0xC] = {
     0x62,0x61,0x6E,0x6E,0x65,0x72,0x2E,0x62,0x69,0x6E,0x00,0x00,
 };  // "banner.bin\0" + 1B pad
-DECOMP_FORCEACTIVE(CMdlDynamics_cpp, lbl_eu_80524830);
-DECOMP_FORCEACTIVE(CMdlDynamics_cpp, lbl_eu_80524840);
-DECOMP_FORCEACTIVE(CMdlDynamics_cpp, lbl_eu_80524870);
-DECOMP_FORCEACTIVE(CMdlDynamics_cpp, lbl_eu_80524888);
 
 // [.sdata] 0x80663CB0-0x80663CD0 (32B): RTTI locator + "ref" param strings.
 // The last "ref" slot carries 4 zero pad bytes (retail +0x1C tail); merging
@@ -1591,9 +1891,3 @@ extern char lbl_eu_80663CBC[4] = { 'r','e','f',0 };
 extern char lbl_eu_80663CC0[4] = { 'r','e','f',0 };
 extern char lbl_eu_80663CC4[4] = { 'r','e','f',0 };
 extern char lbl_eu_80663CC8[8] = { 'r','e','f',0, 0,0,0,0 };
-DECOMP_FORCEACTIVE(CMdlDynamics_cpp, lbl_eu_80663CB0);
-DECOMP_FORCEACTIVE(CMdlDynamics_cpp, lbl_eu_80663CB8);
-DECOMP_FORCEACTIVE(CMdlDynamics_cpp, lbl_eu_80663CBC);
-DECOMP_FORCEACTIVE(CMdlDynamics_cpp, lbl_eu_80663CC0);
-DECOMP_FORCEACTIVE(CMdlDynamics_cpp, lbl_eu_80663CC4);
-DECOMP_FORCEACTIVE(CMdlDynamics_cpp, lbl_eu_80663CC8);

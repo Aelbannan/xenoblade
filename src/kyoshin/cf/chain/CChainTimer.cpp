@@ -61,7 +61,7 @@ void func_8027D20C(cf::CChainState* self) {
         func_8027DB74(self, 0);
         if (self->field_0 != 0) {
             lbl_eu_80663DA0 &= 0xFE;
-            self->field_84.func_8027CE30();
+            self->field_84.resetChainTime();
             self->field_10 = 0;
             self->field_14 = 0;
         }

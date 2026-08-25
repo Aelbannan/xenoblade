@@ -983,12 +983,13 @@ extern "C" void func_80206BD4(CfMapMineManager* self) {
 
         if (found != 0) {
             func_802064A8(self, row, &found->mItem, 0);
-            if (found->mItem.mTimer14 < 1.0e-6f) {
+            if (found->mItem.mTimer14 < lbl_eu_8066A208) {
                 func_802066A8(self, &found->mItem);
                 if ((found->mItem.mFlags & 0x00010000) != 0) {
                     u32 g = lbl_eu_80663E24;
-                    f32 a = 160.0f - (f32)((g >> 20) & 1);
-                    func_80462E58__8CTaskLODFv(found->mItem.mPointId1C, 1, a);
+                    func_80462E58__8CTaskLODFv(
+                        found->mItem.mPointId1C, 1,
+                        (f64)(0xA0 - ((g >> 20) & 1)) - lbl_eu_806682C0);
                 } else {
                     if (func_80186BC8(found->mItem.mPointId1C) != 0) {
                         func_800BFBF4(found->mItem.mPointId1C, 1);
@@ -1001,9 +1002,9 @@ extern "C" void func_80206BD4(CfMapMineManager* self) {
                                   found->mItem.mAreaSub1F) != 0) {
                     if ((found->mItem.mFlags & 0x00010000) != 0) {
                         u32 g = lbl_eu_80663E24;
-                        f32 a = 160.0f - (f32)((g >> 20) & 1);
-                        func_80462E58__8CTaskLODFv(found->mItem.mPointId1C, 0,
-                                                   a);
+                        func_80462E58__8CTaskLODFv(
+                            found->mItem.mPointId1C, 0,
+                            (f64)(0xA0 - ((g >> 20) & 1)) - lbl_eu_806682C0);
                     } else {
                         if (func_80186BC8(found->mItem.mPointId1C) != 0) {
                             func_800BFBF4(found->mItem.mPointId1C, 2);
@@ -1189,13 +1190,6 @@ extern "C" int func_802067E4(CfMapMineManager* self, MinePoint* pt,
 // func_802074F0 - top-level update: timers, nearest point, collection input.
 // ---------------------------------------------------------------------------
 extern "C" void func_802074F0(CfMapMineManager* self) {
-    // Local scratch shaped like the ring's message records; retail keeps
-    // both temporaries as real stack objects (text+len+time), not loose vars.
-    struct MsgScratch {
-        char mText[0x40];
-        u32 mLen;
-        f32 mTime;
-    } oldMsg;
     MineNode* nearest;
     CfMapMineManager* mgr = self;
     void* player = cf::CfGameManager::getPlayer(0);
@@ -1340,29 +1334,33 @@ extern "C" void func_802074F0(CfMapMineManager* self) {
     }
 
     // Push a message into the ring buffer (evicting the oldest when full).
+    char msgText[0x40];
+    msgText[0] = 0;
     CItemImplInstances* im = CItem_initItemImplInstances();
     const char* nm = ((CItemInstVt50*)im)->_v20(&drop);
-    MsgScratch msg;
-    msg.mText[0] = 0;
-    msg.mLen = strlen(nm);
-    strcpy(msg.mText, nm);
-    msg.mTime = lbl_eu_806682F4;
+    u32 msgLen = strlen(nm);
+    strcpy(msgText, nm);
+    f32 msgTime = lbl_eu_806682F4;
 
     MineMsgRing* ring = &mgr->mMsgs;
     if (ring->mCount == 16) {
         u32 old = ring->mReadIdx;
         MineMsg* oldest = &ring->mBase[old];
-        oldMsg.mLen = strlen(oldest->mText);
-        strcpy(oldMsg.mText, oldest->mText);
-        oldMsg.mTime = oldest->mTime;
+        u32 oldLen = strlen(oldest->mText);
+        char oldBuf[0x40];
+        strcpy(oldBuf, oldest->mText);
+        f32 oldTime = oldest->mTime;
         ring->mCount -= 1;
         ring->mReadIdx = (old + 1) % ring->mCapacity;
+        (void)oldLen;
+        (void)oldBuf;
+        (void)oldTime;
     }
     u32 widx = (ring->mReadIdx + ring->mCount) % ring->mCapacity;
     MineMsg* slot = &ring->mBase[widx];
-    slot->mLen = msg.mLen;
-    strcpy(slot->mText, msg.mText);
-    slot->mTime = msg.mTime;
+    slot->mLen = strlen(msgText);
+    strcpy(slot->mText, msgText);
+    slot->mTime = msgTime;
     ring->mCount += 1;
 
     u32 cid = func_80082694__Q22cf13CfGameManagerFv(0x70);

@@ -242,11 +242,11 @@ extern "C" CfGimmickJump* __ct__cf_CfGimmickJump(CfGimmickJump* self,
 
     char* columns = lbl_eu_8050873C;
     u32 value = (u32)getBdatStringColumnValue(table, columns, row);
-    self->targetX = lbl_eu_80668400 * ((f32)value - (f32)4503601774854144.0);
+    self->targetX = lbl_eu_80668400 * (f32)value;
     value = (u32)getBdatStringColumnValue(table, columns + 7, row);
-    self->targetY = lbl_eu_80668400 * ((f32)value - (f32)4503601774854144.0);
+    self->targetY = lbl_eu_80668400 * (f32)value;
     value = (u32)getBdatStringColumnValue(table, columns + 0x0E, row);
-    self->targetZ = lbl_eu_80668400 * ((f32)value - (f32)4503601774854144.0);
+    self->targetZ = lbl_eu_80668400 * (f32)value;
 
     value = (u32)getBdatStringColumnValue(table, columns + 0x15, row);
     self->targetAngle = lbl_eu_8066A210 * (f32)(s16)value;
@@ -279,7 +279,7 @@ extern "C" CfGimmickJump* __ct__cf_CfGimmickJump(CfGimmickJump* self,
     value = (u32)getBdatStringColumnValue(table, columns + 0x46, row);
     self->speed = lbl_eu_80668408 * (f32)(u8)value;
     value = (u32)getBdatStringColumnValue(table, columns + 0x4A, row);
-    self->height = (f32)(u16)value - (f32)4503599627370496.0;
+    self->height = (f32)(u16)value;
     value = (u32)getBdatStringColumnValue(table, columns + 0x4A, row);
     self->frameScale = lbl_eu_80668408 * (f32)(u8)value;
     if (self->frameScale != lbl_eu_80668404) {
@@ -527,10 +527,9 @@ extern "C" void func_8020F984(CfGimmickJump* self) {
 }
 
 // Retail converts the frame count via the shared .sdata2 2^52 magic
-// (lbl_eu_80668410 = 0x4330000000000000). Defined here (nobody else defines
-// it) so MWCC's builtin conversion pools against this label. Decimal
-// literal: an integer literal like 0x4330000000000000ll gets value-converted.
-extern const double lbl_eu_80668410 = 4503599627370496.0;
+// (retail pool doubles lbl_eu_80668410 = 0x4330000080000000 and
+// lbl_eu_80668418 = 0x4330000000000000 ship from the split1 shared data
+// object; the int-to-float conversion sequences reference them directly.)
 
 static f32 jumpFrameThreshold(CfGimmickJump* self) {
     return (f32)(self->jumpFrames * 30 + self->waitFrames);

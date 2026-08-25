@@ -20,8 +20,6 @@ public:
 
     CVoiceHandle* field_0x20;   // 0x20: voice handle pointer
     s32 field_0x24;             // 0x24: phase counter / state selector
-
-    int func_802A95FC() { return BUFFER_SIZE; }
 };
 
 

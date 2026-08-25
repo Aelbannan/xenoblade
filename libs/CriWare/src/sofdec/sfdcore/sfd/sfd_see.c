@@ -50,13 +50,13 @@ void SFSEE_ExecServer(void* self) {
 }
 
 void sfsee_ExecHeadAnaly(void* self) {
-    void* avplay = *(void**)((u8*)self + 0x2670);
-    s32 setup3_flag = 0;
-    s32 setup2_flag = 0;
-    s32 ok1 = 0;
-    s32 ok2 = 0;
-    s32 r3, r4;
+    s32 setup3_flag;
+    s32 setup2_flag;
+    s32 ok1;
+    s32 ok2;
     s32 st;
+    void* avplay = *(void**)((u8*)self + 0x2670);
+    s32 r3, r4;
 
     if (*(s32*)avplay != 0) return;
 
@@ -87,27 +87,29 @@ void sfsee_ExecHeadAnaly(void* self) {
     st = SFTRN_IsSetup(self, 1);
     if ((u32)(-st | st) >> 31) {
         *(s32*)((u8*)avplay + 0x8A0) = 1;
-        if (*(s32*)((u8*)avplay + 0x0C) != 0 && *(s32*)((u8*)avplay + 0x18) > 0) {
-            s32 fileSize = *(s32*)((u8*)avplay + 0xDC4);
-            s32 totalSize = *(s32*)((u8*)avplay + 0x40);
-            if (fileSize > 0 && totalSize > 0) {
-                r3 = UTY_MulDiv(fileSize, totalSize, 1000);
-            } else {
-                r3 = *(s32*)((u8*)avplay + 0x18);
-            }
-        } else if (*(s32*)((u8*)avplay + 0x0C) != 0) {
-            s32 muxVer = SFHDS_GetMuxVerNum(self);
-            if (muxVer < 0x6C) {
-                s32 v = *(s32*)((u8*)avplay + 0x8A4);
-                u32 m = (u32)v << 11;
-                s32 hi = __mulhw((s32)0x81E722C3, (s32)m);
-                s32 x = ((s32)hi + (s32)m) >> 10;
-                r3 = (s32)x + ((u32)x >> 31);
+        {
+            if (*(s32*)((u8*)avplay + 0x0C) != 0 && *(s32*)((u8*)avplay + 0x18) > 0) {
+                s32 fileSize = *(s32*)((u8*)avplay + 0xDC4);
+                s32 totalSize = *(s32*)((u8*)avplay + 0x40);
+                if (fileSize > 0 && totalSize > 0) {
+                    r3 = UTY_MulDiv(fileSize, 1000, totalSize);
+                } else {
+                    r3 = *(s32*)((u8*)avplay + 0x18);
+                }
+            } else if (*(s32*)((u8*)avplay + 0x0C) != 0) {
+                s32 muxVer = SFHDS_GetMuxVerNum(self);
+                if (muxVer < 0x6C) {
+                    /* fixed-point conversion via reciprocal multiply */
+                    u32 m = *(u32*)((u8*)avplay + 0x8A4) << 11;
+                    s32 hi = __mulhw((s32)0x81E722C3, (s32)m);
+                    s32 x = (hi + (s32)m) >> 10;
+                    r3 = x + ((u32)x >> 31);
+                } else {
+                    r3 = *(s32*)((u8*)avplay + 0x8A4);
+                }
             } else {
                 r3 = *(s32*)((u8*)avplay + 0x8A4);
             }
-        } else {
-            r3 = *(s32*)((u8*)avplay + 0x8A4);
         }
         r4 = *(s32*)((u8*)avplay + 0x8A8);
     } else if (setup2_flag) {
@@ -186,7 +188,7 @@ s32 SFD_SetSeekPos(void* self, s32 seekPos) {
 // Fin analysis: once decoding is finishing up, accumulate the final playback
 // position/time into the avplay handle from the seek target or stream header.
 
-// View of the SEE work area fields used here.
+// View of the avplay handle fields used here.
 struct SfdAvp;
 struct SfdAvp {
     u8 pad0[0xDAC];
@@ -195,18 +197,6 @@ struct SfdAvp {
     s32 field_0xDB4;
     u8 pad1[0xDD4 - 0xDB8];
     s32 field_0xDD4;
-};
-
-struct SfdSeeWork {
-    u8 pad0[0xE50];
-    s32 field_0xE50;
-    s32 field_0xE54;
-    u8 pad1[0x1FEC - 0xE58];
-    s32 field_0x1FEC;
-    u8 pad2[0x2670 - 0x1FF0];
-    struct SfdAvp* avp;
-    u8 pad3[4]; // 0x2674
-    s32 field_0x2678;
 };
 
 // Channel status entry indexed by field_0x1FEC * 0x74.
@@ -222,9 +212,8 @@ struct SfdSeeChRec {
 };
 
 void sfsee_ExecFinAnaly(void* self) {
-    struct SfdSeeWork* work = (struct SfdSeeWork*)self;
-    u8* selfb = (u8*)self;
-    struct SfdAvp* p = work->avp;
+    u8* sub = (u8*)self + 0x2674;
+    struct SfdAvp* p = *(struct SfdAvp**)(sub - 4);
     s32 flag = 0;
 
     if (SFCON_IsEndcodeSkip(self) != 0)
@@ -233,7 +222,7 @@ void sfsee_ExecFinAnaly(void* self) {
     if (p->field_0xDAC <= 0) {
         s32 v6;
 
-        if (work->field_0x2678 == -3)
+        if (*(s32*)(sub + 4) == -3)
             v6 = 0;
         else
             v6 = p->field_0xDD4;
@@ -241,8 +230,8 @@ void sfsee_ExecFinAnaly(void* self) {
             // Look up the current channel's remaining duration; only apply it
             // when the header carried a valid (non-negative) value.
             s32 r0 = -1;
-            struct SfdSeeChEnt* ent = (struct SfdSeeChEnt*)(selfb + work->field_0x1FEC * 0x74);
-            struct SfdSeeChRec* rec = (struct SfdSeeChRec*)(selfb + 0x1FD8 + ent->field_0x1408 * 0x44);
+            struct SfdSeeChEnt* ent = (struct SfdSeeChEnt*)((u8*)self + *(s32*)((u8*)self + 0x1FEC) * 0x74);
+            struct SfdSeeChRec* rec = (struct SfdSeeChRec*)((u8*)self + 0x1FD8 + ent->field_0x1408 * 0x44);
             s32 v = rec->field_0x20;
             if (v >= 0)
                 r0 = v;
@@ -252,10 +241,10 @@ void sfsee_ExecFinAnaly(void* self) {
             }
         }
     }
-    if (p->field_0xDB0 <= 0 && work->field_0xE50 > 0) {
-        p->field_0xDB0 = work->field_0xE50;
+    if (p->field_0xDB0 <= 0 && *(s32*)((u8*)self + 0xE50) > 0) {
+        p->field_0xDB0 = *(s32*)((u8*)self + 0xE50);
         flag = 1;
-        p->field_0xDB4 = work->field_0xE54;
+        p->field_0xDB4 = *(s32*)((u8*)self + 0xE54);
     }
 
     if (flag)

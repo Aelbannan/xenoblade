@@ -44,7 +44,7 @@ extern "C" u8* func_8016FE34(void* obj);
 extern "C" bool func_800FF8B0();
 extern "C" bool func_80251550();
 extern "C" void* func_801586D4(unsigned short id);
-extern "C" bool func_802B37F4();
+extern "C" bool func_802B37F4(u32 handle);
 extern "C" void* func_801351C4(int idx);
 extern "C" void func_8009D018(unsigned long index, unsigned long value);
 extern "C" int func_80140E00(int arg1, int arg2, int arg3, int arg4);
@@ -562,19 +562,6 @@ extern "C" void func_80173C6C(void* self, void* arg) {
     func_802B2AB8(func_802B262C(), (u32)arg);
 }
 
-// Buffer view beginning at the record's handle word (base+4): the early
-// timer/position section of func_80173CA0 addresses the record this way.
-struct MapItemWork {
-    u32 field_00;              // hikari scene-object handle
-    f32 field_04;              // pos x
-    f32 field_08;              // pos y
-    f32 field_0C;              // pos z
-    f32 field_10;              // scale / respawn timer
-    u16 field_14;              // kind bits
-    s16 field_16;              // respawn countdown
-    u32 field_18;              // state flags
-};
-
 // Cast view of one map-item record including the trailing flags word.
 struct MapItemRec {
     s16 field_00;
@@ -594,29 +581,30 @@ public:
     virtual bool g00C();
 };
 
-// Release helpers shared by func_80173CA0's despawn paths.  Two flavors exist
-// in retail: one routes the scene-object handle through the hikari-item
-// manager singleton, the other calls func_802B37F4 directly.
-static inline void despawnItemHandle(CfMapItemManager* mgr, MapItemRec* rec) {
-    if (rec->field_04 != 0) {
-        func_802B2938(func_802B262C(), rec->field_04);
-        rec->field_04 = 0;
-        if (mgr->field_3806 != 0) mgr->field_3806--;
-    }
-}
-static inline void despawnItemDirect(CfMapItemManager* mgr, MapItemRec* rec) {
-    if (rec->field_04 != 0) {
-        func_802B37F4();
-        rec->field_04 = 0;
-        if (mgr->field_3806 != 0) mgr->field_3806--;
-    }
-}
+// Record view addressed by func_80173CA0 (base + running 0x1C stride).  The
+// state-flags word sits at record offset 0x1C - physically the next slot's
+// first word - so it is reached through a pointer just past the record.
+struct CaRec {
+    s16 f00;                   // 0x00
+    s16 f02;                   // 0x02
+    u32 handle;                // 0x04: hikari scene-object handle
+    ml::CVec3 pos;             // 0x08: world position
+    f32 timer;                 // 0x14: scale / respawn timer
+    u16 kind;                  // 0x18
+    s16 respawn;               // 0x1A: respawn countdown
+};
 
 // func_80173CA0 - per-frame map item update.  Walks every collected item,
 // ticks respawn timers, evaluates bdat gating columns (area / clock / story /
 // season), spawns or releases the associated hikari item, and finally picks
 // the closest eligible item (or an exact proximity hit) as the return index.
 // Retail resolves callers to the unmangled symbol.
+//
+// Every BDAT column value is kept in a union local so MWCC spills it to a
+// stack cell and re-reads its low half/byte, as in retail.  The despawn
+// sequences are written out at each site (retail repeats them inline); each
+// hoists the scene-object handle into a local that stays live across the
+// singleton-getter call, matching retail's callee-saved handle register.
 extern "C" int func_80173CA0(CfMapItemManager* self, ml::CVec3* pos) {
     func_8003AA34();
     CfMapItemManagerIf* iface = reinterpret_cast<CfMapItemManagerIf*>(self);
@@ -624,6 +612,16 @@ extern "C" int func_80173CA0(CfMapItemManager* self, ml::CVec3* pos) {
     u32 clock = func_8016DF2C();
     u16 curArea = func_80086DBC__Q22cf13CfGameManagerFv();
     u16 curMap = func_800822F4__Q22cf13CfGameManagerFv();
+
+    // Declaration order fixes the stack-cell layout (later locals get lower
+    // slots): then the seven column cells downward from sp+0x20.
+    BdatCell cArea;   // col +0x28 -> sp+0x20 (byte)
+    BdatCell cArea2;  // col +0x30 -> sp+0x1c (byte)
+    BdatCell cCond;   // col +0x38 -> sp+0x18 (half)
+    BdatCell cReq;    // col +0x40 -> sp+0x14 (byte)
+    BdatCell cStory;  // col +0x4c -> sp+0x10 (half)
+    BdatCell cSeLo;   // col +0x56 -> sp+0x0c (half)
+    BdatCell cSeHi;   // col +0x60 -> sp+0x08 (half)
 
     const char* cols = lbl_eu_805033C0;
     f32 bestDist = lbl_eu_806677BC;
@@ -635,108 +633,148 @@ extern "C" int func_80173CA0(CfMapItemManager* self, ml::CVec3* pos) {
     f32 kCC = lbl_eu_806677CC;
     f32 kC0 = lbl_eu_806677C0;
     f32 kB8 = lbl_eu_806677B8;
-    int resultIdx = 0;
-    int nearestIdx = 0;
+    s32 resultIdx = 0;
+    s32 nearestIdx = 0;
+    // Held-in-register constants across the loop (retail keeps 3 and 0 in
+    // callee-saved r27/r28 for the respawn seed and the null handle store).
+    const s16 spawnRespawn = 3;
+    const u32 nullHandle = 0;
 
-    for (u32 i = 1; i < self->mCount; i++) {
-        MapItemWork* work = reinterpret_cast<MapItemWork*>(&self->mItems[i].field_04);
-        work->field_18 &= ~0x30000;
-        if (work->field_14 == 0) {
-            // Timer-only slot: decay field_10 back toward the default scale.
-            if ((work->field_18 & 0x8000) == 0) continue;
+    u32 i;
+    u32 off;
+    for (i = 1, off = 0x1C; i < self->mCount; i++, off += 0x1C) {
+        CaRec* rec = reinterpret_cast<CaRec*>(reinterpret_cast<u8*>(self) + off);
+        u32* flagsW = reinterpret_cast<u32*>(reinterpret_cast<u8*>(rec) + 0x1C);
+        *flagsW &= ~0xC000u;
+        if (rec->kind == 0) {
+            // Timer-only slot: decay timer back toward the default scale.
+            if ((*flagsW & 0x10000) == 0) continue;
             CfRes_getD80Flag();
             f32 dec = func_80496288(lbl_eu_80663E14);
-            f32 t = work->field_10;
+            f32 t = rec->timer;
             if (t > k80) {
-                work->field_10 = t - dec;
+                rec->timer = t - dec;
             } else {
-                work->field_10 = k80;
-                if (func_801737D4(self, work->field_18 >> 20,
-                                  reinterpret_cast<CfMapItem*>(work)) == 0) {
-                    work->field_10 = kB8;
+                rec->timer = k80;
+                if (func_801737D4(self, *flagsW >> 20,
+                                  reinterpret_cast<CfMapItem*>(&rec->handle)) == 0) {
+                    rec->timer = kB8;
                 }
             }
             continue;
         }
 
-        u32 row = work->field_18 >> 20;
+        u32 row = *flagsW >> 20;
         if (row == 0) continue;
-        work->field_18 &= ~0x380000;
+        *flagsW &= ~0x1C00u;
 
         // Player-relative offset; xz magnitude gates the far despawn.
         ml::CVec3 diff;
-        diff.x = work->field_04 - pos->x;
-        diff.y = work->field_08 - pos->y;
-        diff.z = work->field_0C - pos->z;
+        diff.x = rec->pos.x - pos->x;
+        diff.y = rec->pos.y - pos->y;
+        diff.z = rec->pos.z - pos->z;
         f32 dyAbs = (f32)__fabs((f64)diff.y);
-        f32 dz2 = diff.z * diff.z;
-        f32 distSq = diff.x * diff.x + dz2;
-        MapItemRec* rec = reinterpret_cast<MapItemRec*>(&self->mItems[i]);
+        f32 distSq = diff.x * diff.x + diff.z * diff.z;
         if (distSq > kC0 || dyAbs > dyLimit) {
-            despawnItemHandle(self, rec);
+            u32 h = rec->handle;
+            if (h != 0) {
+                func_802B2938(func_802B262C(), h);
+                rec->handle = nullHandle;
+                if (self->field_3806 != 0) self->field_3806--;
+            }
             continue;
         }
 
-        u8 areaCol = (u8)getBdatStringColumnValue(table, cols + 0x28, row);
-        u8 areaCol2 = (u8)getBdatStringColumnValue(table, cols + 0x30, row);
-        if (areaCol != 0 && areaCol != curArea) {
-            rec->field_1C |= 0x400;
-            despawnItemDirect(self, rec);
+        cArea.raw = getBdatStringColumnValue(table, cols + 0x28, row);
+        cArea2.raw = getBdatStringColumnValue(table, cols + 0x30, row);
+        if (cArea.b != 0 && cArea.b != curArea) {
+            *flagsW |= 0x400;
+            u32 h = rec->handle;
+            if (h != 0) {
+                func_802B37F4(h);
+                rec->handle = nullHandle;
+                if (self->field_3806 != 0) self->field_3806--;
+            }
             continue;
         }
-        if (areaCol2 != 0 && areaCol2 != (u16)clock) {
-            rec->field_1C |= 0x400;
-            despawnItemDirect(self, rec);
+        if (cArea2.b != 0 && cArea2.b != (u16)clock) {
+            *flagsW |= 0x400;
+            u32 h = rec->handle;
+            if (h != 0) {
+                func_802B37F4(h);
+                rec->handle = nullHandle;
+                if (self->field_3806 != 0) self->field_3806--;
+            }
             continue;
         }
 
-        u16 condCol = (u16)getBdatStringColumnValue(table, cols + 0x38, row);
-        if (condCol != 0) {
-            u8 reqCol = (u8)getBdatStringColumnValue(table, cols + 0x40, row);
-            if (reqCol != func_80082354__Q22cf13CfGameManagerFv(condCol)) {
-                rec->field_1C |= 0x800;
-                despawnItemDirect(self, rec);
+        cCond.raw = getBdatStringColumnValue(table, cols + 0x38, row);
+        if (cCond.s != 0) {
+            cReq.raw = getBdatStringColumnValue(table, cols + 0x40, row);
+            if (cReq.b != func_80082354__Q22cf13CfGameManagerFv(cCond.s)) {
+                *flagsW |= 0x800;
+                u32 h = rec->handle;
+                if (h != 0) {
+                    func_802B37F4(h);
+                    rec->handle = nullHandle;
+                    if (self->field_3806 != 0) self->field_3806--;
+                }
                 continue;
             }
         }
 
         if (!iface->unk00C()) {
             // Story-flag gate: item hidden until the flag engine reports it.
-            u16 storyCol = (u16)getBdatStringColumnValue(table, cols + 0x4c, row);
-            if (storyCol != 0 && func_8020971C(storyCol) == 0) {
-                despawnItemDirect(self, rec);
+            cStory.raw = getBdatStringColumnValue(table, cols + 0x4c, row);
+            if (cStory.s != 0 && func_8020971C(cStory.s) == 0) {
+                u32 h = rec->handle;
+                if (h != 0) {
+                    func_802B37F4(h);
+                    rec->handle = nullHandle;
+                    if (self->field_3806 != 0) self->field_3806--;
+                }
                 continue;
             }
         }
 
-        u16 seasonLo = (u16)getBdatStringColumnValue(table, cols + 0x56, row);
-        u16 seasonHi = (u16)getBdatStringColumnValue(table, cols + 0x60, row);
-        if (curMap < seasonLo || curMap > seasonHi) {
-            rec->field_1C |= 0x1000;
-            despawnItemDirect(self, rec);
+        cSeLo.raw = getBdatStringColumnValue(table, cols + 0x56, row);
+        cSeHi.raw = getBdatStringColumnValue(table, cols + 0x60, row);
+        if (curMap < cSeLo.s || curMap > cSeHi.s) {
+            *flagsW |= 0x1000;
+            u32 h = rec->handle;
+            if (h != 0) {
+                func_802B37F4(h);
+                rec->handle = nullHandle;
+                if (self->field_3806 != 0) self->field_3806--;
+            }
             continue;
         }
 
-        rec->field_1C |= 0x8000;
+        *flagsW |= 0x8000;
         if (dyAbs > kC4 || distSq > kC8) {
-            despawnItemHandle(self, rec);
+            u32 h = rec->handle;
+            if (h != 0) {
+                func_802B2938(func_802B262C(), h);
+                rec->handle = nullHandle;
+                if (self->field_3806 != 0) self->field_3806--;
+            }
             continue;
         }
 
         // Spawn a fresh hikari item, or tick down an armed respawn counter.
-        if (rec->field_04 == 0) {
+        if (rec->handle == 0) {
             bool occupied = iface->unk00C();
-            rec->field_04 = func_802B2894(reinterpret_cast<u8*>(func_802B262C()),
-                                          reinterpret_cast<u32*>(&rec->field_08.x),
-                                          !occupied);
-            rec->field_1A = 3;
-            self->field_3806 = self->field_3806 + 1;
-        } else if (rec->field_1A > 0) {
-            rec->field_1A--;
+            rec->handle = func_802B2894(reinterpret_cast<u8*>(func_802B262C()),
+                                        reinterpret_cast<u32*>(&rec->pos.x),
+                                        !occupied);
+            rec->respawn = spawnRespawn;
+            self->field_3806++;
+        } else if (rec->respawn > 0) {
+            rec->respawn--;
         }
 
-        if (rec->field_1A > 0) continue;
-        rec->field_1C |= 0x4000;
+        if (rec->respawn > 0) continue;
+        *flagsW |= 0x4000;
         if (dyAbs < kCC && distSq < kD0) {
             resultIdx = i;
             continue;
@@ -746,11 +784,19 @@ extern "C" int func_80173CA0(CfMapItemManager* self, ml::CVec3* pos) {
             nearestIdx = i;
         }
     }
+#undef CA_DESPAWN_HANDLE
+#undef CA_DESPAWN_DIRECT
 
     // Too many active items: drop the farthest candidate seen this frame.
     if (self->field_3806 > 0x32 && nearestIdx != 0) {
-        MapItemRec* rec = reinterpret_cast<MapItemRec*>(&self->mItems[nearestIdx]);
-        despawnItemHandle(self, rec);
+        CaRec* recN = reinterpret_cast<CaRec*>(reinterpret_cast<u8*>(self)
+                                               + nearestIdx * 0x1C);
+        u32 h = recN->handle;
+        if (h != 0) {
+            func_802B2938(func_802B262C(), h);
+            recN->handle = nullHandle;
+            if (self->field_3806 != 0) self->field_3806--;
+        }
     }
     return resultIdx;
 }
@@ -857,7 +903,7 @@ void func_801742D4(CfMapItemManager* self) {
         *((u8*)lbl_eu_80664A10 + 0x14) = 1;
     }
     if (rec->field_04 != 0) {
-        func_802B37F4();
+        func_802B37F4(rec->field_04);
         rec->field_04 = 0;
         if (self->field_3806 != 0) self->field_3806--;
     }

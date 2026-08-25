@@ -54,6 +54,7 @@ s16 lbl_eu_8066408C;
 
 void func_8009D0B4();
 void func_8009D514(cf::IFlagEvent*);
+cf::IFlagEvent* func_8009D414(cf::IFlagEvent*);
 
 // C-ABI helpers used by the retail dtor/free-function shapes below.
 extern void __dt__8CProcessFv(void* self, s32 flags);
@@ -108,6 +109,57 @@ typedef _reslist_node<IUIWindow*> WindowNode;
 
 extern "C" void Term__Q216CUIWindowManager5CTestFv(){}
 extern "C" void Move__Q216CUIWindowManager5CTestFv(){}
+
+// Init support: temp CProcess vtables + null PTMF callback slots.
+extern void __ct__8CProcessFv(void* self);
+extern u32 __ptmf_null[3];
+// Init's two temp vtables (retail data, other split). Sized >= 8 bytes so
+// MWCC addresses them via lis/addi like retail.
+extern const u8 lbl_eu_8052E670[0x10];
+extern const u8 lbl_eu_8052E628[0x10];
+
+// Byte-offset view of the CTTask prefix fields Init lays out by hand.
+struct CUIWindowManagerInitShim {
+    u8 unk00[0x10];
+    void* vtable;          //0x10 - CTTask vtable
+    u8 unk14[0x3C - 0x14];
+    u32 callbacks[6];      //0x3C-0x53 - __ptmf_null callback slots
+    u8 unk54[0x9C - 0x54];
+    void* child;           //0x9C - stored into unk9C
+};
+
+void CUIWindowManager::Init() {
+    // Allocate the 0x54-byte CTTask body from work memory; the result is
+    // stored into unk9C even when NULL (retail keeps r31 live past the
+    // guard).
+    CUIWindowManagerInitShim* inst =
+        (CUIWindowManagerInitShim*)mtl::MemManager::allocate(
+            0x54, CWorkThreadSystem::getWorkMem());
+    if (inst != NULL) {
+        __ct__8CProcessFv(inst);
+        // Temp vtable, then the two null PTMF callback slots (retail loads
+        // __ptmf_null[1]/[0]/[2] per slot), then the vtable again.
+        inst->vtable = (void*)&lbl_eu_8052E670;
+        const u32* ptmf = __ptmf_null;
+        u32 w1 = ptmf[1];
+        u32 w0 = ptmf[0];
+        inst->callbacks[0] = w0;
+        inst->callbacks[1] = w1;
+        u32 w2 = ptmf[2];
+        inst->callbacks[2] = w2;
+        w1 = ptmf[1];
+        w0 = ptmf[0];
+        inst->callbacks[3] = w0;
+        inst->callbacks[4] = w1;
+        w2 = ptmf[2];
+        inst->callbacks[5] = w2;
+        inst->vtable = (void*)&lbl_eu_8052E628;
+    }
+    unk9C = (IUIWindow*)inst;
+    Regist__8CProcessFP8CProcessb(this, lbl_eu_80664088, false);
+    func_8009D0B4();
+    func_8009D414(this);
+}
 
 void CUIWindowManager::Term() {
     cf::IFlagEvent* flagEvent = this; // implicit MI conversion -- do not static_cast / ternary / if
@@ -748,8 +800,8 @@ struct ResListNode {
 };
 struct ResListBase {
     void* mVTable;        //0x00
-    ResListNode mSentinel;//0x04 - circular list head
-    u8 unk0C[0x14 - 0x0C];
+    ResListNode* mStart;  //0x04 - start/sentinel node pointer (reloaded)
+    u8 unk08[0x14 - 0x08];
     void* field_0x14;     //0x14 - grown node array (heap)
     u8 unk18[0x1C - 0x18];
     u8 field_0x1C;        //0x1C - nonzero: fixed capacity (no heap buffer)
@@ -758,18 +810,48 @@ extern "C" void* __dt___reslist_base_IUIWindow(void* self, s32 flags) {
     ResListBase* list = (ResListBase*)self;
     if (list != NULL) {
         list->mVTable = (void*)lbl_eu_8052E61C;
-        ResListNode* node = list->mSentinel.mNext;
-        while (node != &list->mSentinel) {
+        ResListNode* node = list->mStart->mNext;
+        while (node != list->mStart) {
             ResListNode* cur = node;
             node = cur->mNext;
             cur->mNext = NULL;
         }
-        list->mSentinel.mNext = &list->mSentinel;
-        list->mSentinel.mPrev = &list->mSentinel;
+        list->mStart->mNext = list->mStart;
+        list->mStart->mPrev = list->mStart;
         if (list->field_0x1C == 0 && list->field_0x14 != NULL) {
             __dla__FPv(list->field_0x14);
             list->field_0x14 = NULL;
         }
+        if (flags > 0) {
+            __dl__FPv(list);
+        }
+    }
+    return self;
+}
+// reslist<IUIWindow*> destructor (retail __dt__reslist_IUIWindow): the derived
+// dtor adds nothing, so retail is the base-dtor body fully inlined inside the
+// derived guard (doubled null guard = inlining artifact).
+extern "C" void* __dt__reslist_IUIWindow(void* self, s32 flags) {
+    ResListBase* list = (ResListBase*)self;
+    if (list != NULL) {
+        if (list != NULL) {
+            // Inlined base-dtor body (retail duplicates it verbatim here).
+            list->mVTable = (void*)lbl_eu_8052E61C;
+            ResListNode* cur;
+            ResListNode* node = list->mStart->mNext;
+            while (node != list->mStart) {
+                cur = node;
+                node = cur->mNext;
+                cur->mNext = NULL;
+            }
+            list->mStart->mNext = list->mStart;
+            list->mStart->mPrev = list->mStart;
+            if (list->field_0x1C == 0 && list->field_0x14 != NULL) {
+                __dla__FPv(list->field_0x14);
+                list->field_0x14 = NULL;
+            }
+        }
+        // Retail's inlined-base-guard path still reaches the delete guard.
         if (flags > 0) {
             __dl__FPv(list);
         }
@@ -873,11 +955,10 @@ void func_8013D1E8(u32 id) {
         return;
     }
 
-    IUIWindow* window;
     WindowIter endIt = inst->mWindowList2.end();
     WindowIter it = inst->mWindowList2.begin();
     for (; it != endIt; ++it) {
-        window = *it;
+        IUIWindow* window = *it;
         if (window->field_0x68 == id) {
             void* cast = __dynamic_cast(window, 0x10, &lbl_eu_80662170,
                                         &lbl_eu_80661EC8, NULL);
@@ -1382,8 +1463,11 @@ extern "C" IUIWindow* func_8013DD94() {
         return NULL;
     }
 
-    lbl_eu_80664088->mWindowList1.push_back(window);
-    return window;
+    // Re-read the singleton: its live range ends at the factory call, so
+    // retail reloads the global for the inlined push_back.
+    IUIWindow** slot = &window;
+    lbl_eu_80664088->mWindowList1.push_back(*slot);
+    return *slot;
 }
 // Retail window creator: create the Col6 hint window and queue it on the
 // primary window list.
@@ -1400,8 +1484,9 @@ extern "C" IUIWindow* func_8013DE6C() {
 
     // Re-read the singleton: its live range ends at the factory call, so
     // retail reloads the global for the inlined push_back.
-    lbl_eu_80664088->mWindowList1.push_back(window);
-    return window;
+    IUIWindow** slot = &window;
+    lbl_eu_80664088->mWindowList1.push_back(*slot);
+    return *slot;
 }
 
 // NOTE: retail inlines reslist<IUIWindow*>::push_back into every window
@@ -1958,8 +2043,9 @@ extern "C" IUIWindow* func_8013E9D8() {
         return NULL;
     }
 
-    lbl_eu_80664088->mWindowList1.push_back(window);
-    return window;
+    IUIWindow** slot = &window;
+    lbl_eu_80664088->mWindowList1.push_back(*slot);
+    return *slot;
 }
 
 // Retail window creator (same body shape as func_8013D7C0).
@@ -2567,7 +2653,10 @@ int func_8013F6C4(CFlagBuffer* self, u32 arg1, u32 arg2, u32 arg3, u32 arg4) {
     }
     return 0;
 }
-extern "C" void func_8013FFF8(void* flagBuf, void* entry, u32 value){}
+// Retail body is unmatched (0x85c); noinline keeps callers emitting the real
+// bl instead of IPA-eliding the empty stub.
+extern "C" __declspec(noinline) void func_8013FFF8(void* flagBuf, void* entry,
+                                                    u32 value){}
 // Item-availability query (retail func_80140854): returns 1 when the item
 // can be used/shown, 0 otherwise. Reads the per-row entry type at
 // rows[arg1].field_0x02[arg2]; types 2 / 3 / 0x104 / 0x105 gate on the sign
@@ -2793,9 +2882,9 @@ extern "C" u8* func_801412D0(u32 target) {
     // index/cursors before the first block copy.
     CFlagOffsets tmp;
     CFlagOffsets work;
-    u32* off;
-    void** table;
     u8* entry;
+    void** table;
+    u32* off;
     int i;
 
     memset(lbl_eu_80573C50, 0, 0xC8);
@@ -2807,10 +2896,8 @@ extern "C" u8* func_801412D0(u32 target) {
     i = 0;
     work = *(const CFlagOffsets*)lbl_804FC1D0;
 
-    for (; i < 28; ++i) {
-        // Advance the table cursor as we read so the entry pointer cannot be
-        // re-derived inside the row loop (retail keeps it in a register).
-        entry = (u8*)*table++;
+    for (; i < 28; ++table, ++off) {
+        entry = (u8*)*table;
         int count = (int)func_8003B1EC(entry);
         for (int j = 0; j < count; ++j) {
             tmp = work;
@@ -2820,7 +2907,7 @@ extern "C" u8* func_801412D0(u32 target) {
                 return lbl_eu_80573C50;
             }
         }
-        ++off;
+        ++i;
     }
     return NULL;
 }

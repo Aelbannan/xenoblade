@@ -106,10 +106,6 @@ u32 lbl_eu_8066575C;     // pad within the 8B span
 LOD::LODRecordFn lbl_eu_80665760;  // active record lookup fn (8B retail span)
 u32 lbl_eu_80665764;     // pad within the 8B span
 __declspec(align(8)) u32 lbl_eu_80665768;  // retail tail global (aligns .sbss 8)
-DECOMP_FORCEACTIVE(CLODCacheManagerS_cpp, lbl_eu_8066575A);
-DECOMP_FORCEACTIVE(CLODCacheManagerS_cpp, lbl_eu_8066575C);
-DECOMP_FORCEACTIVE(CLODCacheManagerS_cpp, lbl_eu_80665764);
-DECOMP_FORCEACTIVE(CLODCacheManagerS_cpp, lbl_eu_80665768);
 extern void (*lbl_eu_8056D700[])(LOD::UnkClass_8046368C*);  // .data dispatch
 
 // sdata2 constants used by the interpolation helpers.
@@ -434,4 +430,3 @@ void (*lbl_eu_8056D700[])(LOD::UnkClass_8046368C*) = {
     (LODDispFn)&func_80468434__Q23LOD17UnkClass_80468434Fv,
     (LODDispFn)&func_80464B84__Q23LOD17UnkClass_804645CCFv,
 };
-DECOMP_FORCEACTIVE(CLODCacheManagerS_cpp, lbl_eu_8056D700);

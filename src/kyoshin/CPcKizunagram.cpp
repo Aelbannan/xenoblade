@@ -588,37 +588,37 @@ extern "C" int func_8025E9E4(CPcKizunagram* self, const void* table, int id) {
 // the window ready for use.
 int CPcKizunagram::OnFileEvent(CEventFile* event) {
     if (mFileHandle == event->mFileHandle) {
-        CPcKizunagram* self = this;
-        u8 regionBuf[8];
-        char* const s = lbl_eu_8050D868;
-        self->mMemRegion.createRegion(mtl::MemManager::getHandleMEM2(), 0x12000, &s[0x26b], 0);
-        __ct__14Class_8045F858FP17UnkClass_8045F564((Class_8045F858*)regionBuf, &self->mMemRegion);
-
-        void* fileData = self->mFileHandle->getData();
+        mMemRegion.createRegion(mtl::MemManager::getHandleMEM2(), 0x12000,
+                                &lbl_eu_8050D868[0x26b], 0);
+        void* fileData;
+        // RAII scratch-region guard; typed local so MWCC scopes the dtor like
+        // retail (CLoad/CTitle idiom).
+        Class_8045F858 regionGuard(&mMemRegion);
+        fileData = mFileHandle->getData();
         mtl::MemManager::func_80434A4C(false);
-        self->mArcRes = createArcResourceAccessor__10CLibLayoutFv();
-        self->mArcRes->Attach(fileData, &s[0x279]);
+        mArcRes = createArcResourceAccessor__10CLibLayoutFv();
+        mArcRes->Attach(fileData, &lbl_eu_8050D868[0x279]);
         func_80136E84__FPPQ34nw4r3lyt6LayoutPQ34nw4r3lyt19ArcResourceAccessorPCc(
-            &self->mLayout, self->mArcRes, &s[0x27d]);
+            &mLayout, mArcRes, &lbl_eu_8050D868[0x27d]);
         func_80136F08__FPQ34nw4r3lyt6LayoutPPQ34nw4r3lyt13AnimTransformPQ34nw4r3lyt19ArcResourceAccessorPc(
-            self->mLayout, &self->mAnimTransform, self->mArcRes, &s[0x293]);
+            mLayout, &mAnimTransform, mArcRes, &lbl_eu_8050D868[0x293]);
 
         // Bind the font handle into the layout's root pane.
-        nw4r::lyt::Pane* rootPane = self->mLayout->GetRootPane();
+        nw4r::lyt::Pane* rootPane = mLayout->GetRootPane();
         CDeviceFontVtblView* font =
-            (CDeviceFontVtblView*)func_80452C10__11CDeviceFontFUlPQ34nw4r3lyt6Layout(1, self->mLayout);
+            (CDeviceFontVtblView*)func_80452C10__11CDeviceFontFUlPQ34nw4r3lyt6Layout(1, mLayout);
         u32 fontResult = font->vf7();
         func_8013676C(rootPane, fontResult);
         func_801355BC();
 
-        self->mLayout->SetAnimationEnable(self->mAnimTransform, true);
-        self->mLayout->Animate(0);
+        mLayout->SetAnimationEnable(mAnimTransform, true);
+        mLayout->Animate(0);
 
         // Build the cursor on the stack, copy its body into the member
         // region (skipping the +0x00 vtable pointer), then initialise it.
         u8 tmpCur[0x18];
-        __ct__CPcKizunaCur((CPcKizunaCur*)tmpCur, self->mArcRes);
-        CPcKizunaCur* curDst = (CPcKizunaCur*)self->mKizunaCur;
+        __ct__CPcKizunaCur((CPcKizunaCur*)tmpCur, mArcRes);
+        CPcKizunaCur* curDst = (CPcKizunaCur*)mKizunaCur;
         CPcKizunaCur* curSrc = (CPcKizunaCur*)tmpCur;
         curDst->mAccessor = curSrc->mAccessor;
         curDst->mpLayout = curSrc->mpLayout;
@@ -629,12 +629,11 @@ int CPcKizunagram::OnFileEvent(CEventFile* event) {
         curDst->mField16 = curSrc->mField16;
         func_8025D4E4(curDst);
 
-        self->mIsHidden = 1;
-        self->mStateByte1 = 1;
-        func_8025DCFC(self);
-        self->mFileHandle = 0;
-        self->mMemRegion.func_8045F810();
-        __dt__14Class_8045F858Fv((Class_8045F858*)regionBuf, -1);
+        mIsHidden = 1;
+        mStateByte1 = 1;
+        func_8025DCFC(this);
+        mFileHandle = 0;
+        mMemRegion.func_8045F810();
         return 1;
     }
     return 0;
@@ -852,28 +851,38 @@ extern "C" void func_8025EE94(CPcKizunagramBig* self) {
 // the persistence bitmap, set its bit and stop. Otherwise, when the entry is
 // flagged for list insertion (byte14 bit 1), link it into the doubly-linked
 // list that shares its id, inserting before the list head.
+//
+// Codegen notes (probe-derived):
+// - Unit default opts are size-biased; retail built this one for speed
+//   (magic-multiply /6, individual saves), so force speed here.
+// - Retail masks the bitmap word index (id>>3) differently per site
+//   (test: & ~3, set: & 0x1FFC), each folding to a single rlwinm.
+#pragma push
+#pragma optimize_for_size off
+
 extern "C" void func_8025F114(CPcKizunagramBig* self, CPcKizunaSlotEntry* entry) {
     u32 id = entry->field04;
-    u32* pWord = (u32*)(self->data870 + ((id >> 3) & ~7));
     u32 bit = 1u << (id & 0x1f);
-    u32 word = *pWord;
-    if ((word & bit) != 0) {
+    u32 word = *(u32*)(self->data870 + ((id >> 3) & ~3u));
+    if ((bit & word) != 0) {
         if ((entry->byte14 & 2) == 0) return;
 
-        // Search the whole chart for another entry with the same id, then
-        // insert this entry before the head of that entry's prev chain.
-        // Retail unrolls the head-walk 10 levels, then hands the remainder
-        // to func_8025F290.
-        for (int e = 0; e < 66; e++) {
-            CPcKizunaSlotEntry* pos = &self->slots[e / 6].data00 + (e % 6);
-            if (id != pos->field04) continue;
-            if (pos == entry) continue;
-            // Walk the prev chain toward the list head: 10 explicit gates
-            // (retail unrolls this many levels), then hand the remainder to
-            // the shared walker func_8025F290.
-            CPcKizunaSlotEntry* head;
-            CPcKizunaSlotEntry* cur = pos;
-            CPcKizunaSlotEntry* nxt = cur->pField1C;
+    // Search the whole chart for another entry with the same id, then
+    // insert this entry before the head of that entry's prev chain.
+    // Retail unrolls the head-walk 10 levels, then hands the remainder
+    // to func_8025F290.
+    for (int e = 0; e < 66; e++) {
+        CPcKizunaSlotEntry* pos = &self->slots[e / 6].data00 + (e % 6);
+        if (id != pos->field04) continue;
+        if (pos == entry) continue;
+        // Walk the prev chain toward the list head; retail unrolls 10 loads,
+        // then hands the remainder to the shared walker func_8025F290.
+        CPcKizunaSlotEntry* head;
+        CPcKizunaSlotEntry* cur = pos;
+        CPcKizunaSlotEntry* nxt = cur->pField1C;
+        if (nxt != 0) {
+            cur = nxt;
+            nxt = cur->pField1C;
             if (nxt != 0) {
                 cur = nxt;
                 nxt = cur->pField1C;
@@ -899,13 +908,7 @@ extern "C" void func_8025F114(CPcKizunagramBig* self, CPcKizunaSlotEntry* entry)
                                             cur = nxt;
                                             nxt = cur->pField1C;
                                             if (nxt != 0) {
-                                                cur = nxt;
-                                                nxt = cur->pField1C;
-                                                if (nxt != 0) {
-                                                    head = func_8025F290(cur);
-                                                } else {
-                                                    head = cur;
-                                                }
+                                                head = func_8025F290(nxt);
                                             } else {
                                                 head = cur;
                                             }
@@ -933,14 +936,19 @@ extern "C" void func_8025F114(CPcKizunagramBig* self, CPcKizunaSlotEntry* entry)
             } else {
                 head = cur;
             }
-            entry->pField1C = head;
-            head->pField18 = entry;
-            break;
+        } else {
+            head = cur;
         }
+        head->pField1C = entry;
+        entry->pField18 = head;
+        break;
+    }
     } else {
-        *pWord |= bit;
+        // Set path: narrower window on the word index.
+        *(u32*)(self->data870 + (((id >> 5) & 0x7FFu) << 2)) |= bit;
     }
 }
+#pragma pop
 
 // Walk the prev-pointer (0x1C) chain toward the list head, returning the node
 // whose prev is null. Retail unrolls 5 levels then tail-calls itself. The
@@ -1164,24 +1172,22 @@ extern "C" void func_8025F9AC(CPcKizunaChart* self, int a, int b) {
     // Retail keeps the total-chart position (self + a*0xC4 + b*0x20) as the
     // base register and reads the working-copy entry at +0x3D4 displacements.
     u32 off = a * 0xC4;
-    u32 sub = b << 5;
+    CPcKizunaWorkEntryPos* wq;
     CPcKizunaSlotEntry* nxt;
     CPcKizunaSlotEntry* prv;
-    u8 saved;
     u16 id;
-    // The unlink block uses the position expression inline (a caller-saved
-    // temp); only the clear block keeps the position in a nonvolatile.
-    nxt = ((CPcKizunaWorkEntryPos*)((u8*)self + off + sub))->entry.pField18;
-    id = ((CPcKizunaWorkEntryPos*)((u8*)self + off + sub))->entry.field04;
-    prv = ((CPcKizunaWorkEntryPos*)((u8*)self + off + sub))->entry.pField1C;
+    u8 saved;
+    // The unlink block shifts; the clear block multiplies - distinct GVN
+    // values so retail's rematerialized base register is reproduced.
+    nxt = ((CPcKizunaWorkEntryPos*)((u8*)self + off + ((u32)b << 5)))->entry.pField18;
+    id = ((CPcKizunaWorkEntryPos*)((u8*)self + off + ((u32)b << 5)))->entry.field04;
+    prv = ((CPcKizunaWorkEntryPos*)((u8*)self + off + ((u32)b << 5)))->entry.pField1C;
     if (nxt != 0) nxt->pField1C = prv;
     if (prv != 0) prv->pField18 = nxt;
 
-    // The retail re-derives the position base after the unlink, so recompute
-    // it here instead of reusing the first pointer.
-    // Operand order flipped vs the unlink expression so GVN keeps two
-    // computations, matching retail's rematerialized base register.
-    CPcKizunaWorkEntryPos* wq = (CPcKizunaWorkEntryPos*)((u8*)self + sub + off);
+    // Recompute the position base after the unlink; mul form keeps this a
+    // distinct GVN value from the unlink's shift form.
+    wq = (CPcKizunaWorkEntryPos*)((u8*)self + off + b * 0x20);
     saved = wq->entry.byte14 & 1;
     memset(&wq->entry, 0, 0x20);
     wq->entry.byte14 = saved;
@@ -1193,12 +1199,12 @@ extern "C" void func_8025F9AC(CPcKizunaChart* self, int a, int b) {
         CPcKizunaSlot* sp = &self->searchSlots[0];
         for (int j = 0; j < 11; j++) {
             const CPcKizunaSlotEntry* e = &sp->sub[1];
-            if (sp->data00.field04 == id) { found = 1; goto searchDone; }
-            if (sp->sub[0].field04 == id) { found = 1; goto searchDone; }
-            if (e->field04 == id) { found = 1; goto searchDone; }
-            if (e[1].field04 == id) { found = 1; goto searchDone; }
-            if (e[2].field04 == id) { found = 1; goto searchDone; }
-            if (e[3].field04 == id) { found = 1; goto searchDone; }
+            if (id == sp->data00.field04) { found = 1; goto searchDone; }
+            if (id == sp->sub[0].field04) { found = 1; goto searchDone; }
+            if (id == e->field04) { found = 1; goto searchDone; }
+            if (id == e[1].field04) { found = 1; goto searchDone; }
+            if (id == e[2].field04) { found = 1; goto searchDone; }
+            if (id == e[3].field04) { found = 1; goto searchDone; }
             sp++;
         }
         found = 0;

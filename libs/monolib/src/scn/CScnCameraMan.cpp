@@ -337,4 +337,3 @@ extern "C" u32 lbl_eu_8056EA40[38] = {
     (u32)&CScnCameraManBlob::__RTTI__10IWorkEvent,
     0x00000000, 0x00000000, 0x00000000,
 };
-DECOMP_FORCEACTIVE(CScnCameraMan_cpp, lbl_eu_8056EA40);

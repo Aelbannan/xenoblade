@@ -1,6 +1,8 @@
 #include <signal.h>
 
-sig_func signal_funcs[7];
+// Retail .bss slice is 0x20 bytes = 8 slots (raise only indexes 0..6; MSL
+// over-allocates one entry).
+sig_func signal_funcs[8];
 
 //not present in the retail binary; kept commented out for reference
 //void signal(){

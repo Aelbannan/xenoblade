@@ -906,20 +906,20 @@ void func_80156F30(u32 unused, CItemData* obj, u32 val) {
 
 // Map an item category (0-15) to the record stride used by func_801579C4's
 // kind table: 2/4-8 -> 52 (0x34), 9 -> 28 (0x1c), 3 -> 16 (0x10), else 8.
-extern "C" int func_80156F54(u16 v) {
+extern "C" int func_80156F54(u32 v) {
     int rank;
-    if (v < 4) goto sw;
-    if (v > 8) goto sw;
+    if ((int)(u16)v < 4) goto sw;
+    if ((int)(u16)v > 8) goto sw;
     rank = 2;
     goto done;
 sw:
-    switch (v) {
-    case 0: rank = 0; break;
-    case 2: rank = 2; break;
-    case 9: rank = 3; break;
-    case 3: rank = 4; break;
-    default: rank = 1; break;
-    }
+    switch ((int)(u16)v) {
+        case 0: rank = 0; break;
+        case 2: rank = 2; break;
+        case 9: rank = 3; break;
+        case 3: rank = 4; break;
+        default: rank = 1; break;
+        }
 done:
     switch (rank) {
     case 1: return 8;
@@ -1427,10 +1427,9 @@ CItemExt* func_80157D6C(u32 arg, s16* pOut, u32 family) {
         if (flag) {
             // Pass 1: prefer a family-matching record with capacity.
             for (s32 i = 0; i < count; i++) {
-                u32 word = *(u32*)((char*)list + i * stride);
                 CItemExt* rec = (CItemExt*)((char*)list + i * stride);
-                if (family == (word >> 20) && rec->field_06 < 0x63) {
-                    if (word == 0) return 0;
+                if (family == (rec->field_00 >> 20) && rec->field_06 < 0x63) {
+                    if (rec->field_00 == 0) return 0;
                     *pOut = (s16)i;
                     return rec;
                 }
@@ -1802,11 +1801,12 @@ int func_80158894(u16 arg, u16* out, s32 capacity) {
     u32 total = stride * count;
     void* buf = mtl::MemManager::allocate_head(mtl::MemManager::getHandleMEM2(), total, 4);
     memset(buf, 0, total);
-    for (s32 i = 0; i < count; i++) out[i] = 0xFFFF;
+    for (s32 i = 0; i < count; i++) out[i] = -1;
     s32 dst = 0;
     for (s32 src = 0; src < count; src++) {
-        if (*(u32*)(list + stride * src) != 0) {
-            memcpy((u8*)buf + stride * dst, list + stride * src, stride);
+        const u8* srcPtr = list + stride * src;
+        if (*(u32*)srcPtr != 0) {
+            memcpy((u8*)buf + stride * dst, srcPtr, stride);
             out[src] = (u16)dst;
             dst++;
         }
@@ -1825,7 +1825,7 @@ extern "C" u32 func_801589A0(CItemFamilyRec* a, CItemFamilyRec* b) {
 // them by family id (func_801589A0) and write each record's new 1-based
 // rank into the u16 at record+4. Returns one past the highest rank (1 when
 // the list is empty, 2 when a single record was found).
-extern "C" s32 __dt__801589BC(u16 arg) {
+extern "C" s32 __dt__801589BC(u32 arg) {
     s32 i;
     CItemFamilyRec* list;   // r31
     s32 result = 1;         // r30
@@ -3217,10 +3217,12 @@ extern "C" void func_8015ACAC(CItemFour* self, u32 item, u32 count) {
 // (field_00 bits 12-15) is 9, or whose field_07 low bits are 2, get the
 // 4-iteration vf4C refresh; others get the count-driven vf2C/vf30 refresh.
 extern "C" void func_8015AE9C(CItemFour* self) {
+    u32 off = 0;
     for (u32 i = 0; i < self->mCount; i++) {
-        CItemExt* rec = &self->mItems[i];
+        u32 word = *(u32*)((char*)self + off);
+        CItemExt* rec = (CItemExt*)((char*)self + off);
         CItemData* item = reinterpret_cast<CItemData*>(rec);
-        u32 kind = (rec->field_00 >> 12) & 0xF;
+        u32 kind = (word >> 12) & 0xF;
         bool first = kind == 9 || (rec->field_07 & 3) == 2;
         if (first) {
             for (u32 j = 0; j < 4; j++) {
@@ -3231,6 +3233,7 @@ extern "C" void func_8015AE9C(CItemFour* self) {
                 CItem_initItemImplInstances(item)->vf2C(item, j);
             }
         }
+        off += 52;
     }
 }
 

@@ -47,7 +47,7 @@ extern "C" u32 lbl_eu_8056EB50[4] = {
     (u32)&lbl_eu_80663A38, 0x00000000,
     (u32)&__dt__11CScnFadeManFv, (u32)&cbRenderBefore__11CScnFadeManFv,
 };
-DECOMP_FORCEACTIVE(CScnFadeMan_cpp, lbl_eu_8056EB50);
+
 
 // Publishes the current fade color pointer (address of mCurrentColor).
 extern "C" void* func_8049C7A8(u8* self) { return (void*)((u8*)self + 0x8); }

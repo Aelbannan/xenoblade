@@ -94,10 +94,6 @@ extern "C" u32 lbl_eu_8056D330[8] = {
     0x00000000, 0x00000000,
 };
 extern "C" u32 lbl_eu_806637D0[2] = { (u32)&lbl_eu_80523190, (u32)&lbl_eu_8056D330 };
-DECOMP_FORCEACTIVE(CLibHbmControl_cpp, lbl_eu_8056D290);
-DECOMP_FORCEACTIVE(CLibHbmControl_cpp, lbl_eu_8056D330);
-DECOMP_FORCEACTIVE(CLibHbmControl_cpp, lbl_eu_80523190);
-DECOMP_FORCEACTIVE(CLibHbmControl_cpp, lbl_eu_806637D0);
 
 // Own-class virtuals as plain free functions (retail names).
 CLibHbmControl::CLibHbmControl(const char* pName, CWorkThread* pParent) : CProc(pName, pParent, MAX_CHILD),

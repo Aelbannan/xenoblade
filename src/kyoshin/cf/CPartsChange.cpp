@@ -2227,10 +2227,10 @@ extern "C" void func_80197538(unsigned long manager, int arg) {
     }
     if (actor->field_3F00 & 0x04000000) {
         bm = getInstance__Q22cf14CBattleManagerFv();
-        if (active == 0) {
-            tbl = 0;
-            u32 id = actor->field_45C0;
-            if (id != 0) {
+            if (active == 0) {
+                tbl = 0;
+                u32 id = actor->field_45C0;
+                if (id != 0) {
                 u32 i = 0;
                 for (; i < 16; i++) {
                     if (id == mgr->mTable[i].field_94) {
@@ -2806,8 +2806,7 @@ void CfPartyInfo::func_80198710(void* r4, float f1, int r5, int r6, float f2, fl
     if (r6 <= 0) {
         field_14 = 1;
     }
-    extern float lbl_eu_80667B28;
-    field_28 = lbl_eu_80667B28;
+    field_28 = ::lbl_eu_80667B28;
     field_2C = 0;
     field_2D = 1;
     field_2E = 0;
@@ -3085,8 +3084,8 @@ extern "C" void func_801990F0(CfPartsMoveSrc* src, CfPartsTri* dst) {
         sz = sz + src->field_1C * nw4r::math::CosFIdx(lbl_eu_80667B50 * angle);
     }
     f32 mag = (f32)(s32)(src->field_14 >> 1) * src->field_1C;
-    sx = sx - mag * nw4r::math::SinFIdx(lbl_eu_80667B50 * src->field_18);
-    sz = sz - mag * nw4r::math::CosFIdx(lbl_eu_80667B50 * src->field_18);
+    sx = sx - mag * nw4r::math::SinFIdx(src->field_18 * lbl_eu_80667B50);
+    sz = sz - mag * nw4r::math::CosFIdx(src->field_18 * lbl_eu_80667B50);
     *(f32*)&dst->field_00 += sx;
     *(f32*)&dst->field_08 += sz;
     func_801987A4((CfPartsTri*)src, dst);

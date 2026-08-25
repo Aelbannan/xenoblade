@@ -2861,14 +2861,11 @@ extern "C" bool func_80086D9C__Q22cf13CfGameManagerFv();
 extern "C" void func_80083878__Q22cf13CfGameManagerFv();
 extern "C" void func_8008372C__Q22cf13CfGameManagerFv(
     void* first, void* second, u32 value) {
-    if (CfRes_checkFlags_2000400()) {
+    // OR-combined guard: reproduces retail's beq-over-b on the second disjunct
+    // (MWCC_CASES CTutorialList/rfc-port pattern; goto-gate form folds to bne).
+    if (CfRes_checkFlags_2000400() || CfRes_getE24Bit18()) {
         return;
     }
-    if (!CfRes_getE24Bit18()) {
-        goto proceed;
-    }
-    goto done;
-proceed:
     {
         if (first == nullptr) {
             return;
@@ -2891,29 +2888,33 @@ proceed:
             }
         } else if (value != lbl_eu_80663E50) {
             func_80084C10__Q22cf13CfGameManagerFv();
-            if (!func_80086D9C__Q22cf13CfGameManagerFv()) {
-                first = second;
+            if (func_80086D9C__Q22cf13CfGameManagerFv() == 0) {
+                goto doAssign1;
             }
+            goto skipAssign1;
+        doAssign1:
+            first = second;
+        skipAssign1:
+            int newState;
             if (func_80086D9C__Q22cf13CfGameManagerFv()) {
-                manager->field_0x86 = 1;
+                newState = 1;
             } else {
-                manager->field_0x86 = 2;
+                newState = 2;
             }
+            manager->field_0x86 = newState;
         } else if (!func_80086D9C__Q22cf13CfGameManagerFv()) {
             first = second;
         }
 
-        if (!func_80086D9C__Q22cf13CfGameManagerFv()) {
+        if (func_8007339C(first) == 0) {
             lbl_eu_80663E50 = value;
-            const char* name = func_8007339C(first);
-            func_80068B24(name, lbl_eu_80663E50);
+            func_80068B24(reinterpret_cast<const char*>(first),
+                          lbl_eu_80663E50);
             func_80068BD0();
             func_8007C188__Q22cf13CfGameManagerFv(8);
-            func_80083878__Q22cf13CfGameManagerFv();
         }
+        func_80083878__Q22cf13CfGameManagerFv();
     }
-done:
-    ;
 }
 
 struct Unk83328Object {

@@ -599,7 +599,8 @@ extern "C" void func_8011E540(CMenuSymbolMark* self, u32 id, Vec* pos, void* arg
     ml::FixStr<32> name;
     name.format(S + 0x86, markerName);
     ArcAccessorView* acc = (ArcAccessorView*)func_801355F4();
-    if (acc->find("timg", (const char*)name.c_str(), 0) != 0) {
+    if (acc->find((const char*)0x74696d67 /* "timg" */,
+                  (const char*)name.c_str(), 0) != 0) {
         func_80137E7C((nw4r::lyt::Layout*)entry->layout, S + 0x8d);
     }
     entry->unk00 = id;

@@ -10,31 +10,24 @@
 #include "kyoshin/makecrystal/CMCEffStart.hpp"
 #include "kyoshin/makecrystal/CMCCylinderGauge.hpp"
 #include "kyoshin/makecrystal/CMCCrystalList.hpp"
-// CModelDispMakeCrystal.hpp declares CItem_initItemImplInstances(void*)
-// (retail passes the item pointer), while CfGameManager.hpp declares a
-// zero-arg form - hide the conflicting decl for this include. RESIDUAL:
-// the symbol genuinely has two call shapes in retail (pointer-arg here,
-// no-arg in CfMapMineManager/pluginCfs); unifying them would change r3
-// setup at the no-arg sites, so both decls stay.
-#define CItem_initItemImplInstances makeCrystalCItemInitItemImplInstancesUnused
-// code_80135FDC.hpp declares func_8049603C as CTaskGameCamView*, while
-// CfGameManager.hpp declares it as UnkScnResult* - rename one away here
-// (this TU never calls it).
-#define func_8049603C makeCrystalCode35FDC9603CUnused
 #include "kyoshin/code_80135FDC.hpp"
-#undef func_8049603C
 // code_80135FDC.hpp:254 declares lbl_eu_8066A208 as extern u32 while
 // monolib/math/FloatUtils.hpp (via CDeviceVI.hpp) declares it const float -
 // MWCC 10563. This TU never references the symbol; rename the later copies.
 #include "monolib/device/CDeviceVI.hpp"
 #include "monolib/core/CPadManager.hpp"
+// CItem_initItemImplInstances is genuinely dual-arity in retail (same class
+// of conflict as func_8049603C): the definition (src/kyoshin/cf/CItem.cpp)
+// takes the item pointer and dispatches on self->field_00, but other TUs
+// (CfMapMineManager, pluginCfs, CfGameManagerUnityHelpers) call it with no
+// visible argument - retail leaves r3 carrying the item from preceding code.
+// A single prototype cannot express both arities, so CfGameManager.hpp keeps
+// its no-arg decl (line ~786) for those call shapes and must stay hidden
+// while included here; this TU uses the pointer-arg winning decl from its
+// own owner header (CModelDispMakeCrystal.hpp). No other included header
+// declares the symbol, so this is the only remaining guard in the TU.
 #define CItem_initItemImplInstances makeCrystalCItemInitItemImplInstancesUnused
-// CfGameManager.hpp:710 re-declares getInstance__Q22cf14CBattleManagerFv
-// with a CBattleManagerView* return while CBattleManagerApi.hpp (included at
-// its top) already carries the shared extern "C" void* copy - MWCC 10505.
-#define getInstance__Q22cf14CBattleManagerFv makeCrystalBmGetInstanceUnused
 #include "kyoshin/cf/CfGameManager.hpp"
-#undef getInstance__Q22cf14CBattleManagerFv
 #undef CItem_initItemImplInstances
 #include "kyoshin/cf/CfPadData.hpp"
 #include "monolib/util/MemManager.hpp"
@@ -960,10 +953,10 @@ void func_8021CB20(CModelDispMakeCrystal* self)
     // keeps the scaled offset in a register (mulli) for both loads.
     const u8* tbl = lbl_eu_80535D90->c;
     int off = ((int)func_801392B4(bbc) - 1) * 3;
-    lbl_eu_80664718[3] = 0;
     u8 c0 = tbl[off];
     u8 c1 = tbl[off + 1];
     u8 c2 = tbl[off + 2];
+    lbl_eu_80664718[3] = 0;
     lbl_eu_80664718[0] = c0;
     lbl_eu_80664718[1] = c1;
     lbl_eu_80664718[2] = c2;
@@ -1159,7 +1152,85 @@ void func_8021D168(CModelDispMakeCrystal* self)
     func_80220954(self, 1, func_801392B4(base[0x5f0]));
 }
 
-void func_8021D200(){}
+// Virtual dispatch at vtable offset +0xA8 (index 0x2a), returns a pointer.
+// MWCC reserves 2 hidden vtable slots (RTTI): declared index 0x28 => +0xA8.
+struct CMCVtA8 {
+    virtual void* m00(); virtual void* m01(); virtual void* m02(); virtual void* m03();
+    virtual void* m04(); virtual void* m05(); virtual void* m06(); virtual void* m07();
+    virtual void* m08(); virtual void* m09(); virtual void* m0A(); virtual void* m0B();
+    virtual void* m0C(); virtual void* m0D(); virtual void* m0E(); virtual void* m0F();
+    virtual void* m10(); virtual void* m11(); virtual void* m12(); virtual void* m13();
+    virtual void* m14(); virtual void* m15(); virtual void* m16(); virtual void* m17();
+    virtual void* m18(); virtual void* m19(); virtual void* m1A(); virtual void* m1B();
+    virtual void* m1C(); virtual void* m1D(); virtual void* m1E(); virtual void* m1F();
+    virtual void* m20(); virtual void* m21(); virtual void* m22(); virtual void* m23();
+    virtual void* m24(); virtual void* m25(); virtual void* m26(); virtual void* m27();
+    virtual void* m28();  // declared index 0x28 => +0xA8
+};
+
+// Retail symbol is the unmangled C-linkage "setCrystalPosEntry"; noinline:
+// retail calls it out-of-line (bl) from func_80220128/func_802211CC.
+extern "C" void __declspec(noinline) setCrystalPosEntry(
+    void* entries, unsigned short index, short a, short b);
+
+// Retail 0x8021F058: crystal-result state ticker.
+// on expiry resets it, refreshes the list (func_80220128), plays the result
+// jingle (0x79/0x7a/0x7b) and either latches "awaiting confirm" (+0x2dd0 = 1)
+// or rolls the RNG gate to start the next round: phase flag from the battle
+// mode check, rand31()%128 vs threshold at +0x2dd3, then swaps in the success
+// arc entry (lbl_eu_8065FC18), stops the old sound object and starts a new
+// one through the file-state machine, releases both slot substructs
+// (0x25 release), plays 0x7c/0x7d and re-enters the state machine at 3.
+void func_8021D200(CModelDispMakeCrystal* self)
+{
+    u8* base = reinterpret_cast<u8*>(self);
+    f32* vel = reinterpret_cast<f32*>(base + 0x2dcc);
+    *vel += lbl_eu_806684A0;
+    if (*vel < lbl_eu_806684DC) return;
+    *vel = lbl_eu_806684A4;
+    func_80220128(self);
+    func_8013B428__FUl(0x79);
+    func_8013B428__FUl(0x7a);
+    func_8013B428__FUl(0x7b);
+    if (base[0x2dd0] == 0 && (func_801392B4(base[0x5f0]) & 0xFF) == 6) {
+        base[0x2dd0] = 1;
+        return;
+    }
+    base[0x2dd0] = 0;
+    u8 chArg = base[0x5f0];
+    base[0xbdd] = 6;
+    u8 phase = 0;
+    if ((func_801392B4(chArg) & 0xFF) == 1) phase = 1;
+    s32 rv = ml::MTRand::getInstance()->rand31();
+    int q = rv / 128;
+    if ((s8)(rv - q * 128) > (int)(phase + base[0x2dd3])) return;
+        base[0xbdd] = 5;
+        func_80138078__FUl(0x96);
+        void* arc = &lbl_eu_8065FC18[0];
+        if (arc != nullptr) {
+            if (*reinterpret_cast<u32*>(base + 0x14) != 0) {
+                func_804E3CCC(*reinterpret_cast<void**>(base + 0x14));
+            }
+            void* e = func_804CC1F4(arc, *reinterpret_cast<void**>(base + 0x1c),
+                                    *reinterpret_cast<void**>(base + 0xc), 1, 1, 1);
+            *reinterpret_cast<void**>(base + 0x14) = e;
+            if (e != nullptr) {
+                func_804E3D0C(e, self ? reinterpret_cast<void*>(base + 0x8) : nullptr);
+                void* r = reinterpret_cast<CMCVtA8*>(*reinterpret_cast<void**>(base + 0x20))->m28();
+                *reinterpret_cast<u32*>(reinterpret_cast<u8*>(*reinterpret_cast<void**>(base + 0x14)) + 0x14) =
+                    reinterpret_cast<u32>(r);
+            }
+        }
+        for (u8 i = 0; i < 2; i++) {
+            u8* s = base + (u32)i * 0x5cc;
+            if (*reinterpret_cast<u32*>(s + 0x44) != 0) {
+                func_8004B9D4(s + 0x4c, 0x25, 0, -1, 0);
+            }
+        }
+        func_8013B428__FUl(0x7c);
+        func_8013B428__FUl(0x7d);
+        func_80220954(self, 3, 0);
+}
 
 // -O4,s frame: retail keeps the plain divw for the %10 (no magic-multiply).
 #pragma optimize_for_size on
@@ -1305,7 +1376,8 @@ extern "C" void func_8021D6B4(void* selfp)
             u8 m = 0;
             do {
                 if ((s8)buf8[m] != -1) {
-                    ((CModelDispMakeCrystal*)entries)->setCrystalPosEntry(
+                    setCrystalPosEntry(
+                        entries,
                         (u16)(s8)buf8[m],
                         (u16)(*(s16*)(buf12 + (m << 1)) +
                               *(u16*)(entries + (((u16)(s8)buf8[m]) << 3) + 4)),
@@ -1328,7 +1400,10 @@ extern "C" void func_8021D6B4(void* selfp)
     base[0xbdd] = 2;
 }
 
-void CModelDispMakeCrystal::setCrystalPosEntry(unsigned short index, short a, short b)
+// noinline: retail calls this out-of-line (bl) from func_80220128/func_802211CC;
+// -ipa file otherwise folds the small body into those callers.
+extern "C" void __declspec(noinline) setCrystalPosEntry(
+    void* entries, unsigned short index, short a, short b)
 {
     struct Entry {
         char _pad0[4];
@@ -1337,7 +1412,7 @@ void CModelDispMakeCrystal::setCrystalPosEntry(unsigned short index, short a, sh
         char _pad8;
         unsigned char flag;
     };
-    Entry* entry = (Entry*)((char*)this + ((unsigned int)index << 3));
+    Entry* entry = (Entry*)((char*)entries + ((unsigned int)index << 3));
     entry->x = a;
     entry->y = b;
     entry->flag = 1;
@@ -2582,7 +2657,7 @@ void func_8021FEDC(CModelDispMakeCrystal* self)
     case 0x01: func_8021CEF0(self); break;
     case 0x02: func_8021CFC0(self); break;
     case 0x03: func_8021D168(self); break;
-    case 0x04: func_8021D200(); break;
+    case 0x04: func_8021D200(self); break;
     case 0x05: func_8021D3E4(self); break;
     case 0x06: func_8021D564(self); break;
     case 0x07: func_8021D6B4(self); break;
@@ -2649,7 +2724,8 @@ void func_80220128(CModelDispMakeCrystal* self)
         ml::MTRand::getInstance();
         s8 slot = (s8)(count != 0 ? rand31__Q22ml6MTRandFv() % count : 0);
         ml::MTRand::getInstance();
-        int d = (s8)(rand31__Q22ml6MTRandFv() % 8) + 3;
+        int rv8 = rand31__Q22ml6MTRandFv();
+        int d = (s8)(rv8 - (rv8 / 8) * 8) + 3;
         u8 c = func_801392B4(self->field_5F0);
         if (c == 2) {
             ml::MTRand::getInstance();
@@ -2657,7 +2733,8 @@ void func_80220128(CModelDispMakeCrystal* self)
         } else if (c == 4) {
             d = (s8)(lbl_eu_80664718[4] + 1);
         }
-        ((CModelDispMakeCrystal*)entries)->setCrystalPosEntry(
+        setCrystalPosEntry(
+            entries,
             (u16)slot,
             (u16)((s8)d + *(u16*)(entries + ((u16)slot << 3) + 4)),
             (u16)(s8)d);
@@ -2686,7 +2763,8 @@ void func_80220128(CModelDispMakeCrystal* self)
             } else if (c == 4) {
                 d = (s8)(lbl_eu_80664718[4] + 1);
             }
-            ((CModelDispMakeCrystal*)entries)->setCrystalPosEntry(
+            setCrystalPosEntry(
+                entries,
                 i,
                 (u16)((s8)d + *(u16*)(entries + ((u8)i << 3) + 4)),
                 (u16)(s8)d);
@@ -3028,20 +3106,6 @@ extern "C" void func_80220954(void* selfp, int sel, u8 chIn)
 
 // Virtual dispatch at vtable offset +0xA8 (index 0x2a), returns a pointer.
 // MWCC reserves 2 hidden vtable slots (RTTI): declared index 0x28 => +0xA8.
-struct CMCVtA8 {
-    virtual void* m00(); virtual void* m01(); virtual void* m02(); virtual void* m03();
-    virtual void* m04(); virtual void* m05(); virtual void* m06(); virtual void* m07();
-    virtual void* m08(); virtual void* m09(); virtual void* m0A(); virtual void* m0B();
-    virtual void* m0C(); virtual void* m0D(); virtual void* m0E(); virtual void* m0F();
-    virtual void* m10(); virtual void* m11(); virtual void* m12(); virtual void* m13();
-    virtual void* m14(); virtual void* m15(); virtual void* m16(); virtual void* m17();
-    virtual void* m18(); virtual void* m19(); virtual void* m1A(); virtual void* m1B();
-    virtual void* m1C(); virtual void* m1D(); virtual void* m1E(); virtual void* m1F();
-    virtual void* m20(); virtual void* m21(); virtual void* m22(); virtual void* m23();
-    virtual void* m24(); virtual void* m25(); virtual void* m26(); virtual void* m27();
-    virtual void* m28();  // declared index 0x28 => +0xA8
-};
-
 void func_80220C34(CModelDispMakeCrystal* self)
 {
     u8* base = reinterpret_cast<u8*>(self);

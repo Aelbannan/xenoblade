@@ -119,14 +119,14 @@ void cf::CfObjectMove::CfObject_UnkVirtualFunc4() {
     this->CfObject_UnkVirtualFunc5();
     if (func_800829B8__Q22cf13CfGameManagerFv() == 0) {
         func_800BCD04(this);
-        // Pointer-induction release walk (retail steps the slot pointer by 4
-        // with a separate counter).
-        void** slot;
+        // Pointer-induction release walk: the base pointer starts at this and
+        // the fixed +0xC8 member offset stays folded into the load (retail
+        // steps the pointer by 4 with a separate counter).
+        void** slot = (void**)this;
         int i = 0;
-        slot = &mTargetC8;
         while (i < 2) {
-            if (*slot != 0) {
-                func_8004CF00(*slot);
+            if (slot[50] != 0) {
+                func_8004CF00(slot[50]);
             }
             i++;
             slot++;
@@ -138,10 +138,6 @@ void cf::CfObjectMove::CfObject_UnkVirtualFunc4() {
             ((cf::CfObjectMoveVt1AC*)this)->m1AC(b4, ((cf::CfObjectMoveB4View*)this)->field_B8);
         }
     }
-    int r30 = 0;
-    int cond = 0;
-    int r28 = 0;
-    int r27 = 0;
     if (mSubObj38 != 0) {
         // Global-mode gate: the two flag reads are kept separate (volatile
         // casts; the extern itself is non-volatile to match CSystemWindow.hpp
@@ -150,7 +146,7 @@ void cf::CfObjectMove::CfObject_UnkVirtualFunc4() {
         // advance gate).
         u32 g0 = *(volatile u32*)&lbl_eu_80663E24;
         u32 g1 = *(volatile u32*)&lbl_eu_80663E24;
-        cond = (g0 & 0x02040000) != 0;
+        int cond = (g0 & 0x02040000) != 0;
         if ((g0 & 0x10000000) != 0) {
             cond = 0;
         }
@@ -160,15 +156,18 @@ void cf::CfObjectMove::CfObject_UnkVirtualFunc4() {
             ((cf::CfObjectSub38If*)mSubObj38)->_fA4();
         }
         if ((this->unk64 & 0x2) != 0 || (this->unk64 & 0x4) != 0) {
+            int r28 = 0;
             if (mSubObj98 != 0) {
                 r28 = (mSubObj98->field_7A4 & 0x04000000) == 0;
             }
             if (((cf::CfObjectSub38VtE4*)mSubObj38)->_fE4() != 0) {
+                int r27 = 0;
                 if (mSubObj98 != 0) {
                     if (((cf::CfObjectMoveSub98Vt4C*)mSubObj98)->m4C() > lbl_eu_80666A8C) {
                         r27 = 1;
                     }
                 }
+                int r30 = 0;
                 if (cond == 0 && ((cf::CfObjectMoveVt160*)this)->m160() != 0 && r28 != 0 && r27 == 0) {
                     r30 = 1;
                 }
@@ -308,7 +307,9 @@ void CfObjectMove_nullsub_4(){}
 
 void CfObjectMove_nullsub_5(){}
 
-f32 lbl_eu_80666A88;
+// (the shared speed constant lbl_eu_80666A88 is only declared in the
+// header as extern const float; retail keeps the single .sdata2 copy in
+// split1.s, so this TU must not define a namespace-cf storage copy)
 
 void cf::CfObjectMove::resetMoveSpeed() {
     u32 flags = mFlags68;
@@ -340,8 +341,13 @@ void cf::CfObjectMove::CfObject_UnkVirtualFunc5() {
         float f = view->field_A4 - lbl_eu_80666AB4 * v;
         view->field_A4 = f;
         if (f <= ::lbl_eu_80666A88) {
+            // Retail order at each clamp: reload the flag word FIRST, then
+            // store the clamp constant, then mask+store the flags.
+            // Volatile cast: blocks MWCC from CSE-ing this load with the
+            // direction-test read above (retail emits a fresh lwz here).
+            u32 cur = *(volatile u32*)&mFlags68;
             view->field_A4 = ::lbl_eu_80666A88;
-            ((cf::CfObjectMoveFlags68View*)this)->flags68 &= ~0x4000;
+            ((cf::CfObjectMoveFlags68View*)this)->flags68 = cur & ~0x4000;
             if (lbl_eu_80665958 != 0) {
                 func_804B4C7C(lbl_eu_80665958, _60C_region);
             }
@@ -351,8 +357,9 @@ void cf::CfObjectMove::CfObject_UnkVirtualFunc5() {
         float f = view->field_A4 + lbl_eu_80666AB4 * v;
         view->field_A4 = f;
         if (f >= lbl_eu_80666A94) {
+            u32 cur = *(volatile u32*)&mFlags68;
             view->field_A4 = lbl_eu_80666A94;
-            ((cf::CfObjectMoveFlags68View*)this)->flags68 &= ~0x2000;
+            ((cf::CfObjectMoveFlags68View*)this)->flags68 = cur & ~0x2000;
             if (lbl_eu_80665958 != 0) {
                 func_804B4BDC(lbl_eu_80665958, _60C_region);
             }
@@ -360,7 +367,8 @@ void cf::CfObjectMove::CfObject_UnkVirtualFunc5() {
     }
     if (mSubObj98 != 0) {
         float spd = mMoveSpeed;
-        if (spd == ::lbl_eu_80666A88) {
+        // Constant-first form: retail emits fcmpu cr0, const, spd.
+        if (::lbl_eu_80666A88 == spd) {
             spd = lbl_eu_80666A94;
         }
         float factor = lbl_eu_80666A94 / spd;
@@ -370,16 +378,18 @@ void cf::CfObjectMove::CfObject_UnkVirtualFunc5() {
             float f = factor * v + field_A0;
             field_A0 = f;
             if (f >= lbl_eu_80666A94) {
+                u32 cur = *(volatile u32*)&mFlags68;
                 field_A0 = lbl_eu_80666A94;
-                mFlags68 &= ~0x800;
+                mFlags68 = cur & ~0x800;
             }
         } else if ((flags2 & 0x400) != 0) {
             // Move the +0xA0 position toward the low clamp.
             float f = field_A0 - factor * v;
             field_A0 = f;
             if (f <= ::lbl_eu_80666A88) {
+                u32 cur = *(volatile u32*)&mFlags68;
                 field_A0 = ::lbl_eu_80666A88;
-                mFlags68 &= ~0x400;
+                mFlags68 = cur & ~0x400;
             }
         }
         func_800BC8D8(this);
@@ -439,6 +449,55 @@ void CfObject_UnkVirtualFunc46__Q22cf12CfObjectMoveFv(cf::CfObjectMove* self, vo
 // CfObject_UnkVirtualFunc46/49). extern "C" so the definition symbol is the
 // exact retail name. Allocates and constructs the movement-target object for
 // the id, then dispatches it through the vtable +0x108 slot.
+
+// Per-kind construct helpers: allocation + conditional constructor. Written
+// as real functions so MWCC's inliner pins the allocation result in r3
+// across the null-check (retail only copies it into the tracked slot at the
+// helper boundary).
+namespace {
+
+inline void* newMoveEnemy(cf::CfObjectMove* self) {
+    void* mem = allocate__Q23mtl10MemManagerFUlUl(0x224, func_80061FFC());
+    if (mem != 0) {
+        __ct__cf_CtrlEnemy(mem, self);
+    }
+    return mem;
+}
+
+inline void* newMoveNpc(cf::CfObjectMove* self) {
+    void* mem = allocate__Q23mtl10MemManagerFUlUl(0x180, func_80061FFC());
+    if (mem != 0) {
+        __ct__CtrlNpc(mem, self);
+    }
+    return mem;
+}
+
+inline void* newMovePc(cf::CfObjectMove* self) {
+    void* mem = allocate__Q23mtl10MemManagerFUlUl(0x1DC, func_80061FE8());
+    if (mem != 0) {
+        __ct__cf_CtrlPc(mem, self, 0);
+    }
+    return mem;
+}
+
+inline void* newMoveRemote(cf::CfObjectMove* self, u32 heap, int arg) {
+    void* mem = allocate__Q23mtl10MemManagerFUlUl(0x264, heap);
+    if (mem != 0) {
+        __ct__CtrlRemote(mem, self, arg);
+    }
+    return mem;
+}
+
+inline void* newMovePad(cf::CfObjectMove* self, u32 heap, int arg) {
+    void* mem = allocate__Q23mtl10MemManagerFUlUl(0x264, heap);
+    if (mem != 0) {
+        __ct__cf_CtrlPad(mem, self, arg);
+    }
+    return mem;
+}
+
+}  // namespace
+
 extern "C" void CfObject_UnkVirtualFunc47__Q22cf12CfObjectMoveFv(cf::CfObjectMove* self, int arg) {
     // Two separate guards (retail emits two beq targets to the epilogue; a
     // single ||-condition adds an extra branch).
@@ -449,39 +508,22 @@ extern "C" void CfObject_UnkVirtualFunc47__Q22cf12CfObjectMoveFv(cf::CfObjectMov
         return;
     }
     self->_6CA = (s16)arg;
-    // obj declared (and zeroed) before the heap query so MWCC colours it
-    // into r31 and the heap handle into r30, as in retail.
+    // Per-kind helpers keep the allocation result in r3 across the
+    // null-check/ctor block; obj only receives it at the helper boundary.
     void* obj = 0;
     u32 heap = func_80061FE8();
     if (arg == 8) {
-        // Single target variable: retail assigns the allocation result
-        // straight into the tracked slot (no intermediate temporary).
-        obj = allocate__Q23mtl10MemManagerFUlUl(0x224, func_80061FFC());
-        if (obj != 0) {
-            __ct__cf_CtrlEnemy(obj, self);
-        }
+        obj = newMoveEnemy(self);
     } else if (arg == 9) {
-        obj = allocate__Q23mtl10MemManagerFUlUl(0x180, func_80061FFC());
-        if (obj != 0) {
-            __ct__CtrlNpc(obj, self);
-        }
+        obj = newMoveNpc(self);
     } else if (arg == 10) {
-        obj = allocate__Q23mtl10MemManagerFUlUl(0x1DC, func_80061FE8());
-        if (obj != 0) {
-            __ct__cf_CtrlPc(obj, self, 0);
-        }
+        obj = newMovePc(self);
     } else {
         float f = self->CfObject_UnkVirtualFunc31();
         if (arg >= 0 && arg <= 3) {
-            obj = allocate__Q23mtl10MemManagerFUlUl(0x264, heap);
-            if (obj != 0) {
-                __ct__CtrlRemote(obj, self, arg);
-            }
+            obj = newMoveRemote(self, heap, arg);
         } else if (arg >= 4 && arg <= 7) {
-            obj = allocate__Q23mtl10MemManagerFUlUl(0x264, heap);
-            if (obj != 0) {
-                __ct__cf_CtrlPad(obj, self, arg);
-            }
+            obj = newMovePad(self, heap, arg);
         }
         if (self->mTarget6C0 != 0) {
             *(float*)((char*)self->mTarget6C0 + 0xC) = f;
@@ -1590,11 +1632,13 @@ extern "C" void func_800BC8D8(cf::CfObjectMove* self) {
         }
     }
     cf::CfObjectMoveA8View* view = (cf::CfObjectMoveA8View*)self;
-    // Sign-flipped difference: negation propagates exactly through the
-    // multiplies (IEEE), keeping the final fnmsubs bit-identical.
-    float d = self->field_A0 - lbl_eu_80666A94;
+    // v = lbl_eu_80666A94 - AC * (A8 * ((lbl_eu_80666A94 - A0) * A4)).
+    // Residual: retail emits the inner fmuls with the difference as frA
+    // (fmuls f3,f4,f3); this MWCC version canonicalizes every tried source
+    // shape (~16 variants incl. named temps, sign-flipped difference,
+    // reordered leaves) to the load-first form (fmuls f3,f3,f4).
     float v = lbl_eu_80666A94 - view->field_AC * (view->field_A8 *
-              (d * view->field_A4));
+              ((lbl_eu_80666A94 - self->field_A0) * view->field_A4));
     if (v > lbl_eu_80666A88) {
         if ((self->mFlags68 & 0x100000) != 0) {
             func_800BB618(self, 1);
@@ -1640,29 +1684,30 @@ extern "C" void func_800BCD04(cf::CfObjectMove* self) {
             // Copy the C4 position into the move position (integer copy) and
             // store the difference against the snapshot into the +0x54 area
             // (PS sub via the nw4r inline helper, then the float->int bridge).
-            c4 = (cf::CfObjectMoveTargetC4*)self->mTargetC4;
+            cf::CfObjectMoveTargetC4* tgt = (cf::CfObjectMoveTargetC4*)self->mTargetC4;
             *reinterpret_cast<ml::CVec3*>(&self->mPos3C) =
-                *reinterpret_cast<const ml::CVec3*>(&c4->field_3A8);
+                *reinterpret_cast<const ml::CVec3*>(&tgt->field_3A8);
             // Struct-returning operator- keeps MWCC's return-slot + copy
             // sequence (retail routes the delta through a second stack copy).
             ml::CVec3 delta = *reinterpret_cast<ml::CVec3*>(&self->mPos3C) - targetPos;
             *reinterpret_cast<ml::CVec3*>(&((cf::CfObjectMove54View*)self)->field_54) = delta;
-            self->mField4C = ((cf::CfObjectMoveTargetC4*)self->mTargetC4)->field_444;
+            self->mField4C = tgt->field_444;
+            (void)delta;
         } else {
             func_800BC9EC(self);
             ((bool (*)(void*, void*))func_8004B40C)(self->mTargetC4, &self->mPos3C);
         }
 done_flags:
-        // Toggle the C4 target's busy bit 6 from the mFlags68 bit 0 / bit 24
-        // states (retail keeps both ops and clears bit 0 on the first path).
-        u32 f = self->mFlags68;
-        if ((f & 0x1) != 0) {
+        // Toggle the C4 target's busy bit 6 from the mFlags68 sign bit /
+        // bit 24 states (the sign-bit path also clears the sign bit; the
+        // stores through the C4 pointer force the flag word reloads).
+        if ((self->mFlags68 & 0x80000000) != 0) {
             ((CfObjectMoveC4Flags*)self->mTargetC4)->flags |= 0x40;
-            self->mFlags68 = f & ~0x1;
-        } else if ((f & 0x01000000) != 0) {
+            self->mFlags68 &= 0x7FFFFFFFu;
+        } else if ((self->mFlags68 & 0x01000000) != 0) {
             ((CfObjectMoveC4Flags*)self->mTargetC4)->flags |= 0x40;
         } else {
-            ((CfObjectMoveC4Flags*)self->mTargetC4)->flags &= ~0x20;
+            ((CfObjectMoveC4Flags*)self->mTargetC4)->flags &= ~0x02000000u;
         }
     } else {
         // No model sub-object: the +0x6C0 target drives the position delta.

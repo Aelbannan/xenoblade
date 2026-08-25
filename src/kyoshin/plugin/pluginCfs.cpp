@@ -8,6 +8,7 @@
 // this TU and declare the retail (int,int,int) shape instead.
 #define func_8015783C func_8015783C_u16hdr
 #include "kyoshin/cf/CBattleManagerApi.hpp"
+#include "kyoshin/cf/object/CfObjectMoveApi.hpp"
 #include "kyoshin/harness_catalog.hpp"
 #include "kyoshin/plugin/pluginCfs.hpp"
 #include "kyoshin/cf/CfGameManager.hpp"

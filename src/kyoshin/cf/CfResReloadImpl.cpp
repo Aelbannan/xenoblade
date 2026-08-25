@@ -2,6 +2,7 @@
 // Replace stubs with high-level C/C++ during decomp.
 
 #include "kyoshin/harness_catalog.hpp"
+#include "kyoshin/cf/object/CfObjectMoveApi.hpp"
 #include "kyoshin/cf/object/CfObjectModel.hpp"
 #include "kyoshin/cf/object/CfObjectMove.hpp"  // func_800BE12C (owner decl)
 #include "kyoshin/cf/CfResReloadImpl.hpp"
@@ -279,25 +280,30 @@ int func_8016D390(cf::CfResReloadImpl* self, int arg2) {
 // the +0x10 vtable slot. A failed lookup can instead seed the 0x40 reload
 // flag and run the effect helper. All parent accesses go through
 // self->field_00 directly (retail reloads it at every site).
+// All parent accesses go through self->field_00 directly (retail reloads it
+// at every call boundary); the post-instance-check parent copy stays live in
+// a register across the flag tests and the lookup-param selection.
 extern "C" void func_8016D3F8(cf::CfResReloadImpl* self) {
-    u8* inst;
-    int v;
-    cf::ResReloadFindEntry* found;
     ((cf::CfResParentVtIf*)self->field_00)->_v17C();
     func_800BBB50((cf::CfObjectModel*)self->field_00);
     ((cf::CfResParentVtIf*)self->field_00)->_v178();
     self->field_00->field_90 = 0;
-    cf::CfResReloadParent* parent = self->field_00;
-    parent->field_94 = 0;
-    if (((cf::CfGameManager*)parent)->func_80082900() == 0) {
+    // Local introduced after the first clear: MWCC reuses this load for both
+    // the field_94 store and the game-manager call (no reload before bl).
+    cf::CfResReloadParent* mgr = self->field_00;
+    mgr->field_94 = 0;
+    if (((cf::CfGameManager*)mgr)->func_80082900() == 0) {
         return;
     }
-    if (!(parent->field_68 & 0x100000)) {
+    if (!(self->field_00->field_68 & 0x00100000)) {
         return;
     }
-    u32 f6c = parent->field_6C;
+    u32 f6c = self->field_00->field_6C;
     if (f6c & 0x2) {
-        parent->field_6C = parent->field_6C & ~0x3;
+        // volatile read: retail reloads field_6C for the store instead of
+        // clearing the cached copy
+        self->field_00->field_6C =
+            *(volatile u32*)&self->field_00->field_6C & ~0x3u;
         return;
     }
     if (!(f6c & 0x1)) {
@@ -307,37 +313,42 @@ extern "C" void func_8016D3F8(cf::CfResReloadImpl* self) {
         self->field_1C--;
         return;
     }
-    v = ((cf::CfResReloadVtIf*)self)->_v034(1);
-    inst = (u8*)CfRes_getInstanceField();
+    int v = ((cf::CfResReloadVtIf*)self)->_v034(1);
+    u8* inst = (u8*)CfRes_getInstanceField();
     if (inst == 0) {
         return;
     }
-    int r5 = (self->field_00->field_64 >> 16) & 1;
+    cf::CfResReloadParent* pB = self->field_00;
+    int r5 = (pB->field_64 >> 16) & 1;
     if (r5 == 0) {
-        // two independent SDA reads, matching retail's rlwinm/rlwimi pair
-        if ((*(volatile u32*)&lbl_eu_80663E24 & 0x02000000) ||
-            (*(volatile u32*)&lbl_eu_80663E24 & 0x400)) {
-            return;
-        }
-        if (lbl_eu_80663E24 & 0x40000) {
+        // Two independent SDA reads, both hoisted above the tests (retail
+        // issues lwz r3/lwz r4 back to back). Empty then-branch keeps
+        // MWCC's beq-next/b-exit pair.
+        u32 chkA = *(volatile u32*)&lbl_eu_80663E24;
+        u32 chkB = *(volatile u32*)&lbl_eu_80663E24;
+        if (!((chkA & 0x02000000) | (chkA & 0x400)) && !(chkB & 0x40000)) {
+            ;
+        } else {
             return;
         }
     }
     int p = 5;
     if (lbl_eu_80663E28 & 0x20) {
         p = 3;
-    } else if (self->field_00->field_68 & 0x04000000) {
+    } else if (pB->field_68 & 0x04000000) {
         p = 3;
     } else if (r5 != 0) {
         p = 4;
     }
     int ret;
     if (r5 != 0) {
-        ret = func_80062B3C(v, p);
+        // retail hardcodes 4 here (li r4,0x4), overriding p
+        ret = func_80062B3C(v, 4);
     } else {
-        ret = func_80062BAC(v);
+        // retail passes p in r4 (no reload before the call)
+        ret = func_80062BAC(v, p);
     }
-    found = 0;
+    cf::ResReloadFindEntry* found = 0;
     if (ret != 0) {
         u32 spC;
         u32 sp8;
@@ -359,7 +370,7 @@ extern "C" void func_8016D3F8(cf::CfResReloadImpl* self) {
         if (cf::CfGameManager::func_800829B8() == 0) {
             if (lbl_eu_80663E28 & 0x40) {
                 if (self->field_00->field_64 & 0x4) {
-                    func_80063A60(v);
+                    func_80063A60((s32)v);
                     lbl_eu_80663E28 |= 0x40;
                 }
             }
@@ -379,7 +390,8 @@ extern "C" void func_8016D3F8(cf::CfResReloadImpl* self) {
 // entry re-install (+0x28) and the object/sound cleanup tail. The `ok` bit
 // (r29) is also reused for the +0x68 flag extracted near the end.
 extern "C" void func_8016D688(cf::CfResReloadImpl* self) {
-    cf::CfResLookupEntry* entry = func_80062EC4(self->field_0A);
+    // retail signs the index (lha) when passing it straight through
+    cf::CfResLookupEntry* entry = func_80062EC4((s16)self->field_0A);
     int ok = 1;
     u32 f6c = self->field_00->field_6C;
     if ((f6c & 0x2) != 0) {
@@ -446,16 +458,16 @@ extern "C" void func_8016D688(cf::CfResReloadImpl* self) {
     if (self->field_00->field_6C & 0x10) {
         if (self->field_00->field_9C == 0) {
             // single object: retail has buf at sp+8 and the dead word at
-            // sp+0x48
+            // sp+0x48; volatile struct keeps the dead store alive and pins
+            // the two stores' relative order (stb before stw)
             struct {
                 u8 buf[0x40];
                 volatile u32 tail;
             } work;
-            work.buf[0] = 0;
-            // retail emits this dead word store (stw r0,0x48(sp)) before
-            // the call; volatile keeps MWCC from eliminating it
+            u8* wp = &work.buf[0];
+            wp[0] = 0;
             work.tail = 0;
-            func_800AA33C(work.buf, entry->field_04, 1, 0);
+            func_800AA33C(wp, entry->field_04, 1, 0);
             u8* slot1C = ((cf::CfResEntryIf2*)entry->field_2C)->_v01C(entry);
             self->field_00->field_94 = slot1C;
             // three-arg call: getD80Flag result lands in r3 like retail
@@ -475,13 +487,16 @@ extern "C" void func_8016D688(cf::CfResReloadImpl* self) {
     func_80434A4C__Q23mtl10MemManagerFb(true);
     int ok2 = (self->field_00->field_68 >> 20) & 1;
     if (ok2 != 0) {
-        func_800BB618(self->field_00, 0);
+        func_800BB618((cf::CfObjectModel*)self->field_00, 0);
         ((cf::CfResParentVtIf*)self->field_00)->_v168(lbl_eu_8066769C);
     }
-    func_800BCFA0(self->field_00);
-    self->field_1E = 0;
-    self->field_1C = 0;
-    if (!(self->field_00->field_64 & 0x08000000)) {
+    func_800BCFA0((cf::CfObjectMove*)self->field_00);
+    // volatile on both stores + the parent read pins retail's order:
+    // stb 1e / lwz parent / sth 1c
+    *(volatile u8*)&self->field_1E = 0;
+    cf::CfResReloadParent* pv = *(cf::CfResReloadParent* volatile*)&self->field_00;
+    *(volatile u16*)&self->field_1C = 0;
+    if (!(pv->field_64 & 0x08000000)) {
         self->field_1E = 1;
     }
     if (lbl_eu_80663E24 & 0x40000) {
@@ -496,7 +511,7 @@ extern "C" void func_8016D688(cf::CfResReloadImpl* self) {
         self->field_00->field_68 |= 0x00100000;
     }
     if (self->field_00->field_64 & 0x8) {
-        func_800BE12C(self->field_00, self->field_00->field_6C4, 0, -1, 1);
+        func_800BE12C((u8*)self->field_00, self->field_00->field_6C4, 0, -1, 1);
     }
     // x & -3 lowers to the retail wrap-mask rlwinm(0,31,29)
     self->field_00->field_6C &= -3;
@@ -515,7 +530,7 @@ extern "C" void func_8016D688(cf::CfResReloadImpl* self) {
             // fresh parent load: retail does not keep the pointer live
             // across the virtual call above
             func_800BC3B0((cf::CfObjectMove*)self->field_00, lbl_eu_806676A0);
-        }
+    }
     }
     ((cf::CfResReloadVtIf*)self)->_v01C();
 }

@@ -91,9 +91,8 @@ const double lbl_eu_80668698 = 4503601774854144.0;
 
 // Virtual method call helpers (offset 0x38 = Animate-like, offset 0x2C = BindAnim-like)
 static inline void callVirt_38_0(nw4r::lyt::Layout* layout) {
-    typedef void (*VirtFn)(nw4r::lyt::Layout*, u32);
-    VirtFn fn = ((VirtFn*)*(u32*)layout)[14]; // 0x38 / 4 = 14
-    fn(layout, 0);
+    // No named temp: retail loads the vptr straight into r12 for the bcctrl.
+    ((void (**)(nw4r::lyt::Layout*, u32))(*(void**)layout))[14](layout, 0);
 }
 
 static inline void callVirt_2C_50(nw4r::lyt::Layout* layout, nw4r::lyt::AnimTransform* arg1, u32 arg2) {
@@ -216,33 +215,34 @@ void func_80235814(CArtsInfo* self) {
 void func_8023587C(CArtsInfo* self) {
     if (self->field_0x40 == 0) return;
 
-    // Retail guards the dispatch with a single unsigned cmplwi against 0xC.
+    // Retail guards the dispatch with a single unsigned cmplwi against 0xC
+    // (emitted by the switch itself; no outer if).
     u32 state = self->field_0x44;
-    if (state <= 0xC) {
-        // Dispatch based on state via jump table
-        switch (state) {
-        case 0: func_80235F6C(self); break;
-        case 1: func_80236020(self); break;
-        case 2: func_8023606C(self); break;
-        case 3: func_80236120(self); break;
-        case 4: func_8023616C(self); break;
-        case 5: func_80236220(self); break;
-        case 6: func_802362D4(self); break;
-        case 7: func_80236334(self); break;
-        case 8: func_80236408(self); break;
-        case 9: func_80236454(self); break;
-        // Cases 0xA-0xC are explicit empty cases so MWCC emits the full
-        // 13-entry jump table under the single unsigned <= 0xC guard.
-        case 0xA:
-        case 0xB:
-        case 0xC:
-        default: break;
-        }
+    switch (state) {
+    case 0: func_80235F6C(self); break;
+    case 1: func_80236020(self); break;
+    case 2: func_8023606C(self); break;
+    case 3: func_80236120(self); break;
+    case 4: func_8023616C(self); break;
+    case 5: func_80236220(self); break;
+    case 6: func_802362D4(self); break;
+    case 7: func_80236334(self); break;
+    case 8: func_80236408(self); break;
+    case 9: func_80236454(self); break;
+    // Cases 0xA-0xC are explicit empty cases; every spelling tried (with/
+    // without default, with/without outer range-if, optimize_for_size)
+    // still folds them so MWCC trims the jump-table bound to 9 vs retail 12.
+    case 0xA:
+    case 0xB:
+    case 0xC:
+        break;
+    default:
+        break;
     }
 
     // Post-dispatch: animate both layouts and update cursor
-    callVirt_38_0(self->mpLayout1);
-    callVirt_38_0(self->mpLayout2);
+    self->mpLayout1->Animate(0);
+    self->mpLayout2->Animate(0);
     func_801D202C(self->mCursor);
 }
 
@@ -834,8 +834,8 @@ extern "C" __declspec(noinline) int func_80236E28(CArtsInfo* self) {
 // extern "C" + noinline: retail callers emit bl to the unmangled symbol.
 extern "C" __declspec(noinline) int func_80236E6C(CArtsInfo* self, int arg2) {
     CArtsCharData* obj = (CArtsCharData*)func_8009EC9C(self->field_0x54);
-    CArtsSlotFlags flags;
     s16 ids[6];
+    CArtsSlotFlags flags;
     ids[0] = obj->field_0x26;
     ids[1] = obj->field_0x1C;
     ids[2] = obj->field_0x1E;
@@ -951,11 +951,11 @@ extern "C" __declspec(noinline) int func_8023719C(CArtsInfo* self, u8 arg2, u8 a
 int func_80237238(CArtsInfo* self) {
     CArtsCharData* obj = (CArtsCharData*)func_8009EC9C(self->field_0x54);
     s16 weapon = obj->field_0x26;
-    if (weapon == -1) return 0;
+    if (weapon == -1) goto fail;
     CArtsInfoListEntry* e = func_80157C4C(2);
-    if (e == 0) return 0;
+    if (e == 0) goto fail;
     u32 v0 = e->field_0x0;
-    if (v0 == 0) return 0;
+    if (v0 == 0) goto fail;
     u16 id = func_80139358(v0 >> 20);
     int hp = (int)func_80136254((const void*)lbl_eu_806640F4, lbl_eu_8050B00C + 0x1f8, id);
     u8 b = (u8)func_801361E8(lbl_eu_806640F4, lbl_eu_8050B00C + 0x200, id);
@@ -968,6 +968,8 @@ int func_80237238(CArtsInfo* self) {
     // Both lookups inline: MWCC evaluates + right-to-left, so func_802370A8
     // (rightmost) runs first and its result survives in r31 like retail.
     return (int)(lbl_eu_80668694 * (float)((hp & 0xffff) * ((int)func_80236E6C(self, 0x52) + (int)func_802370A8(self) + 100))) & 0xffff;
+fail:
+    return 0;
 }
 
 // func_80237394
@@ -1312,16 +1314,16 @@ void func_80238038(CArtsInfo* self, u32 arg2, int arg3, u8 arg4) {
     int level;
     func_802374F0(self, arg2);
     func_8023754C(self, arg2);
-    s16 stat = func_80236DB8(self);
+    int stat = func_80236DB8(self);
     int g1 = func_80237100(self, self->field_0x56, arg4);
     int g2 = func_8023719C(self, self->field_0x56, arg4);
     int m1 = func_80237238(self);
     int m2 = func_80237394(self);
     if (m1 > m2) m1 = m2;
     int s = m1 + stat;
-    int v1 = func_801C6158((float)(lbl_eu_80668694 * ConvS32ToF64(g1 * s)));
+    int v1 = func_801C6158((float)(lbl_eu_80668694 * (float)(g1 * s)));
     int t = m2 + stat;
-    int v2 = func_801C6158((float)(lbl_eu_80668694 * ConvS32ToF64(g2 * t)));
+    int v2 = func_801C6158((float)(lbl_eu_80668694 * (float)(g2 * t)));
     char* str = func_80136190(lbl_eu_8050B00C + 0x32, lbl_eu_8050B00C + 0x3d, 0x52);
     sprintf(buf1, lbl_eu_8050B00C + 0x282, v1, str, v2);
     level = arg3 + 2;
@@ -1330,8 +1332,8 @@ void func_80238038(CArtsInfo* self, u32 arg2, int arg3, u8 arg4) {
     if (self->field_0x56 < 0xA) {
         int g1n = func_80237100(self, self->field_0x56 + 1, arg4);
         int g2n = func_8023719C(self, self->field_0x56 + 1, arg4);
-        int v1n = func_801C6158((float)(lbl_eu_80668694 * ConvS32ToF64(g1n * s)));
-        int v2n = func_801C6158((float)(lbl_eu_80668694 * ConvS32ToF64(g2n * t)));
+        int v1n = func_801C6158((float)(lbl_eu_80668694 * (float)(g1n * s)));
+        int v2n = func_801C6158((float)(lbl_eu_80668694 * (float)(g2n * t)));
         char* str2 = func_80136190(lbl_eu_8050B00C + 0x32, lbl_eu_8050B00C + 0x3d, 0x52);
         sprintf(buf1, lbl_eu_8050B00C + 0x282, v1n, str2, v2n);
         sprintf(buf2, lbl_eu_8050B00C + 0x23b, level);
@@ -2079,14 +2081,11 @@ void func_8023A460(CArtsInfo* self, u32 arg2, int arg3) {
 // names + level) and pushes them onto both layouts (layout 2 only when
 // field_0x56 < 0xA).
 #pragma optimize_for_size on
-#pragma optimize_for_size on
 // Shadowed locals keep the retail register mapping (arg2->r31, self->r28);
 // the residual 2-instruction reg swap is the entry param-save order
-// (retail copies r4->r31 before r3->r28; see func_8023916C).
-void func_8023A55C(CArtsInfo* self_, u32 arg2_, int arg3_) {
-    u32 arg2 = arg2_;
-    int arg3 = arg3_;
-    CArtsInfo* self = self_;
+// (retail copies r4->r31 before r3->r28; see func_8023916C). Witness-blocked
+// (abi-boundary); plain -O4,p without the pragma breaks the stmw merge.
+void func_8023A55C(CArtsInfo* self, u32 arg2, int arg3) {
     char buf1[32]; // sprintf at +0x28
     char buf2[32]; // sprintf at +0x8
     char* s1 = func_802374F0(self, arg2);
@@ -2436,9 +2435,10 @@ __declspec(noinline) void func_eu_8023D490(CArtsInfo* self, u32 arg2, char* str)
     if (r != 0x4f) return;
 
     int len = strlen(str);
+    int c;
     int i = 0;
     while (i < len) {
-        s8 c = *str;
+        c = *str;
         if (c == 0x2e) {
             *str = 0x2c; // '.' -> ','
         } else if (c >= 0x81 && c <= 0x9f) {

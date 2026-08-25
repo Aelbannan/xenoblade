@@ -23,7 +23,7 @@ namespace cf {
         CChainTime();
         virtual ~CChainTime();
         
-        void func_8027CE30();
+        void resetChainTime();
     };
 }
 

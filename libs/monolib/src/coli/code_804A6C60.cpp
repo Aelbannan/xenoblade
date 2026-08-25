@@ -1092,15 +1092,14 @@ extern "C" CColiObject* func_804A7D1C(CColiObject* self, const VEC3* a,
 // The seven pointers are computed into locals first so MWCC hoists all the
 // loads/adds ahead of the stores (retail's schedule).
 void func_804A7E18(u32 unused, CColiObject* self) {
-    u32 off10 = self->field_0x10;
-    if (off10 != 0) {
-        CColiObject* p0 = (CColiObject*)((u8*)self + off10);
+    if (self->field_0x10 != 0) {
+        CColiObject* p0 = (CColiObject*)((u8*)self + self->field_0x10);
         CColiObject* p1 = (CColiObject*)((u8*)self + self->field_0x38);
         CColiObject* p2 = (CColiObject*)((u8*)self + self->field_0x28);
         CColiObject* p3 = (CColiObject*)((u8*)self + self->field_0x20);
         CColiObject* p4 = (CColiObject*)((u8*)self + self->field_0x18);
         CColiObject* p5 = (CColiObject*)((u8*)self + self->field_0x30_off);
-        CColiObject* p6 = (CColiObject*)((u8*)self + self->field_0x40);
+        CColiObject* p6;
         // Store order matches retail's global-registration sequence.
         lbl_eu_80665910 = p0;
         lbl_eu_80665914 = p1;
@@ -1108,6 +1107,7 @@ void func_804A7E18(u32 unused, CColiObject* self) {
         lbl_eu_80665918 = p3;
         lbl_eu_8066591C = p4;
         lbl_eu_80665928 = p5;
+        p6 = (CColiObject*)((u8*)self + self->field_0x40);
         lbl_eu_8066592C = p6;
     }
     lbl_eu_80665930 = self;
@@ -4776,16 +4776,17 @@ void func_804B0CE8(CColiNode804B09C8* self) {
 void func_804B0DF4(CColiNode804B09C8* self) {
     if (!(self->field_0xa8 & 0x2)) return;
     CColiNode804B09C8* oldNext = self->field_0xa0;
+    CColiNode804B09C8* prev;
+    CColiNode804B09C8* ins = 0;
+    CColiNode804B09C8* next = oldNext;
     if (oldNext != 0) {
-        CColiNode804B09C8* next = oldNext;
-        CColiNode804B09C8* ins = 0;
         while (next != 0) {
             if (self->field_0x0c[3] >= next->field_0x0c[3]) break;
             ins = next;
             next = next->field_0xa0;
         }
         if (ins != 0) {
-            CColiNode804B09C8* prev = self->field_0x9c;
+            prev = self->field_0x9c;
             if (prev != 0) {
                 prev->field_0xa0 = oldNext;
             }

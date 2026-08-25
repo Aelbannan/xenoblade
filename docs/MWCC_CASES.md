@@ -9679,7 +9679,14 @@ exactly on retail, since hexdiff/link apply UNIT_RULES unconditionally while
 - Confidence: repo_proven
 - Applies to/a.k.a.: monolib leaf-class TUs with a virtual dtor where retail names the ctor unmangled (__ct__<Class>) but the dtor mangled (__dt__N<Class>Fv); keep DECOMP_FORCEACTIVE minimal when the retail .text budget is exact-fit — every emitter stub is 12-16 bytes of overflow; MWCC 4-aligns string-literal-initialized char arrays in .rodata regardless of natural alignment, so a mid-section pad drop is expected whenever a table precedes the RTTI name.
 
-## main/monolib/src/mpfsys/UnkClass_80471EC8 — data gate: hex-int f32 initializers silently convert + .sdata packs in first-definition order (Wii/1.1, DATA_MATCH)
+### Follow-up (H4 pilot): FORCEACTIVE stub removed from source — external-linkage data needs no text anchor
+- Symptom:   the lone `DECOMP_FORCEACTIVE(CMdlMouth_cpp, lbl_eu_80663C70)` emitter made raw .text 0x6DC vs the 0x6D0 split budget (hexdiff reported FAIL pre-postprocess; only `drop_text_symbols` kept size PASS).
+- Cause:     the stub exists only to keep the otherwise-unreferenced .sdata pool ptr `lbl_eu_80663C70` alive at compile time — but it is an EXTERNAL-LINKAGE file-scope definition, and object-file definitions survive linking with zero references (same fact as CWorkSystemCache's postprocess-side fix, applied at the source instead).
+- Fix:       delete the DECOMP_FORCEACTIVE call; also retire the now-dead `drop_text_symbols=("FORCEACTIVECMdlMouth_cpp263__Fv",)` from UNIT_RULES. No other source change.
+- Result:    7/7 functions 100% unchanged; data gate VERDICT MATCH on the RAW object (postprocess skipped); split PASS 0x6D0/0x6D0 raw with 0 spare.
+- Recipe (general): before writing a DECOMP_FORCEACTIVE for an unreferenced blob, check linkage — a non-static file-scope definition (or `extern "C"`) stays in the .o without any text anchor; FORCEACTIVE is only needed when MWCC would discard a TU-local/static object or when a compile-time reference is required to force emission order/materialization. Try deletion first under -ipa file.
+
+## main/monolib/src/mpfsys/UnkClass_80471EC8 — data gate:
 - Symptom:   data diff FAIL: .sdata 16 byte diffs first at +0x0 (retail 00 vs decomp 4E), .sdata2 retail 0x0 vs decomp 0x20.
 - Cause:     (1) `f32 lbl_eu_80663850 = 0x3B03126F;` int->float CONVERTS the hex int: retail bit pattern 0x3B03126F (0.002f) was stored as 0x4E6C0C4A (990623855.0f); same for 0x3BA3D70A -> 0x4E6E8F5C. (2) MWCC packs .sdata in FIRST-DEFINITION order; the two floats were defined before the lbl_eu_80663848[2] pointer pair, but retail has the pointers at +0x00/+0x04 and the floats at +0x08/+0x0C — so the relocs also sat at +0x8/+0xC instead of +0x0/+0x4. (3) The 0x20 .sdata2 was MWCC anon literals for the (f32)1/(f32)2 casts in func_804724DC plus the int->double conversion magics; retail resolves all of these through the CGXCache shared pool (A744=0.0f, A750=1.0f, A768=signed magic 43300000_80000000, A7C8=unsigned magic 43300000_00000000 — note the cpp's old "2^52/2^32" comments on A768/A7C8 were wrong; A768 is the SIGNED magic).
 - Fix:       reorder definitions (pointer pair first, floats after) and use decimal literals that round to exactly the retail bits: `f32 lbl_eu_80663850 = 0.002f; f32 lbl_eu_80663854 = 0.005f;`. Defensive UNIT_RULES "UnkClass_80471EC8.o" (content-keyed pool_patterns -> A750/A39C/A768/A744/A7C8 + extern_data_sections(".sdata2"), CPlane.o template) in case the anon literals reappear; current rebuild emits no local pool (raw object matched, postprocess skipped).
@@ -10324,3 +10331,81 @@ ranges can pass. In practice this means: residual diffs that rename r4↔r5, r6�
 CANNOT be certified via witness — must be fixed statically in source. Confirmed on
 us-801ffd88 (r30→r31), us-8003aa6c (r5→r0), us-80060cd4 (f2→f3), us-80194348 (r5→r12),
 us-80115a2c (r6→r7).
+
+## CtrlMoveEne func_8008B580 — shared-kill branch reached by bne + early-return body shape → short-circuit || (Wii/1.1, -O4,p → FULL_MATCH)
+- Symptom:   (a) guard-passed body funneled into a shared label instead of exiting; (b) `int hit = f(); if(!hit) hit=g(); if(hit) KILL` emitted an extra redundant `cmpi` so the first `bne` targeted the re-test instead of the kill block.
+- Cause:     retail source exits directly from the guarded body and reaches the single kill block straight from the first compare.
+- Fix:       (a) split into `if (guard) { if (!a) return; if (!b) return; kill; return; } if (c==0) return; rest`; (b) merge the two checks with one short-circuit `if (f() != 0 || (w3 = ..., g()) != 0) { kill }` — bne lands on the shared body, no duplication, no phi reload.
+- Result:    FULL_MATCH (was 98.7% / 1 branch-displacement residual)
+- Confidence: repo_proven
+- Applies to/a.k.a.: any multi-condition guard over one shared side-effect block; else-if chains that duplicate a body under -O4,p
+
+## kyoshin cf func_8008372C — OR-guard head + semantic re-read of tail gates (Wii/1.1 `-O4,p`)
+- Symptom:   23.8% / 55 structural; head guard emitted single `bne exit` vs retail `beq cont; b exit`; tail pipeline gated by wrong condition.
+- Cause:     (a) two sequential early-return guards written as separate ifs + goto-gate chain (folds); (b) source misread the retail tail — `bl func_8007339C` is UNCONDITIONAL after the mode chain and its result (`==0`) guards only `{E50=value; 68B24(first,E50); 68BD0(); 7C188(8)}`; `func_80083878()` runs unconditionally after; there is NO `func_80086D9C` test in the tail.
+- Fix:       head → single OR-combined guard `if (checkFlags() || getE24Bit18()) return;` (CTutorialList/rfc pattern) reproduces `beq cont; b exit`; middle arm uses goto-gate + named-local select for the field store. Tail rewritten to the true semantics above. Result 69.9%, exact size 0x14c/0x14c, 18 structural/7 reg-swap.
+- Result:    STRUCTURAL 69.9% near-miss (cycle attempt: witness-gate rejects folded-branch bc operand slot).
+- Confidence: repo_proven (OR-guard), hypothesis (remaining gates)
+- Applies to/a.k.a.: mid-function branch-over-branch gates still collapse under Wii/1.1 regardless of goto shape (plain/goto/two-goto/ternary all tried); only OR-combined context or exit-block-with-return survives.
+
+## CriWare adx_tlk — `(f64)(u32)(x ^ 0x80000000)` pools a phantom 2^52; union-built bias double + direct extern constant restores retail's lis/stw+lfd shape (Wii/1.1, DATA_MATCH)
+- Symptom:   data gate `.rodata` 0x10 (two doubles) vs retail 0. MWCC pooled BOTH `0x4330000000000000` (@136, 2^52) and `0x4330000080000000` (@523); the @136 sites lived only in unmatched functions (adxt_Create/adxt_GetTime) while matched functions (ADXT_GetTimeReal/ADXT_DiscardSmpl) used only @523.
+- Cause:     `(f64)(u32)(...)` triggers MWCC's own u32→f64 idiom which needs a local 2^52 pool entry; retail's source built the conversion double from explicit halfword stores (`lis rX,0x4330; stw; xoris; stw; lfd`) and subtracted ONE shared hi-magic constant loaded absolutely from lbl_eu_805162D8.
+- Fix:       `static f64 ADXT_BiasDouble(u32 lo){ union {u32 w[2]; f64 d;} t; t.w[0]=0x43300000u; t.w[1]=lo; return t.d; }` + macro `((f32)(ADXT_BiasDouble((u32)(v)^0x80000000u) - lbl_eu_805162D8))`. After this MWCC deduped even the remaining (float)(s32)-cast magic onto the extern symbol: .rodata empty, NO UNIT_RULES entry needed.
+- Result:    VERDICT: MATCH (adx_tlk), 38/45 functions still 100% — zero regressions.
+- Confidence: repo_proven
+- Applies to/a.k.a.: any CriWare/nw4r TU whose int→double trick casts through `(f64)(u32)`; sibling units mwsfdcre/adx_dcd keep a local magic and dissolve via data_pool_patterns instead.
+
+## CriWare ADX/AHX data-dissolve batch — six units green via criware_data.s pool mapping + two source fixes (Wii/1.1)
+- Symptom:   all six units failed `run.py data diff` with "retail size 0x0" on exactly one section each (.bss/.data/.rodata).
+- Cause:     retail keeps every constant/work area in criware_data.o blob labels; decomp TUs emitted local copies (or wrong literals).
+- Fix:       adx_fini/ahx_sbf: source already uses retail names → extern_data_sections strip only. ahx_dcd: lone hi-magic → data_pool_patterns→lbl_eu_80517630 + globalize_symbols + strip. adx_dcd: whole 0x28 float pool equals blob lbl_eu_80517468 from base → exact_renames("...rodata.0"→label)+globalize+strip. adx_stmc: phantom "ADXF: can't open file*" literals replaced by shared error string extern lbl_eu_80516148 (retail passes the SAME string at both cvFsOpen failure sites). Ground truth for every mapping = the unit's split asm `lbl_eu_*@ha/@l` refs cross-checked against parsed blob bytes (`.float/.double/.string` directives need real parsing — `.double` lines can print float PAIRS like {16384.0f,-16384.0f}).
+- Result:    all six VERDICT: MATCH; dup-check NONE; module imports.
+- Confidence: repo_proven
+- Applies to/a.k.a.: renamed stripped symbols must be globalized or mwldeppc cannot bind LOCAL UNDEF against the blob (see mwsfdcre note); reloc r_offset points at the operand FIELD (instruction start = off-2 when off≡2 mod 4).
+
+## func_80282FA0/CEquipItemBox — branchless `-1/0` tail + missing extsb → s8 return type + ternary (Wii/1.1, -O4,p) → FULL_MATCH
+- Symptom:   tail `return -(item->unk3 >= 1);` lowered as subfic/subfe chain, retail used addic r0,x,-1 / subfe / neg / extsb; also a lone trailing extsb on every -1/0 return path
+- Cause:     two stacked issues: (1) MWCC lowers comparison-based boolean negation differently from a ternary select; (2) the trailing extsb on all int-return paths means the real return type is s8, not int
+- Fix:       change return type to `s8` and write tails as ternary `return x ? -1 : 0;` — MWCC emits addic/subfe/neg/extsb exactly like retail. `!= 0`, `> 0`, and `>= 1` forms do NOT produce this shape
+- Result:    FULL_MATCH (100%, cert f2e4809e…)
+- Confidence: repo_proven
+- Applies to/a.k.a.: any function returning small signed status codes with branchless -1/0/-2 sentinels; check for lone extsb before epilogue joins as an s8-return-type telltale
+
+## __dt__Q22cf12CChainMemberFv / __dt__Q22cf12CChainChanceFv (CBattleManager.cpp) — missing decomp symbol → out-of-line empty dtor (Wii/1.1, FULL_MATCH)
+- Symptom:   hexdiff pairs the retail 0x40 virtual dtor with an unrelated decomp function (decomp TU never emits it); retail shape is the MWCC virtual-dtor prologue: null-check this, check flag (r4) < 0, then bl __dl__FPv(this).
+- Cause:     header declared `virtual ~X(){}` inline; with no vtable/key-use in the TU MWCC drops the emission entirely.
+- Fix:       change the header to `virtual ~X();` and add an empty out-of-line definition in the owning .cpp (`X::~X(){}`). MWCC then emits the standard deleting-capable virtual-dtor prologue byte-for-byte (matches siblings like CChainTimer that already matched).
+- Result:    FULL_MATCH ×2 (us-800d9864, us-800d9744)
+- Confidence: repo_proven
+
+## func_804E1C1C / code_804DEDA8 — flag-byte drift (47.5%) → bitfield shapes (+42pts)
+- Symptom:   hexdiff showed pervasive structural diffs around mScaleFlag updates: stores sunk into both branch arms, extra `andi.` mask step, hoisted field load.
+- Cause:     source used direct `|=` / `&=` on the bitfield member plus an unrelated named temp (`zw0`) read between the deviation tests. MWCC lowers 2-bit-bitfield RMW through extract/insert (`rlwinm 27,x,x` + `rlwimi`); mask-clearing a 2-bit field with `& (u8)~2` emits an extra `andi.` because MWCC does not fold the mask against the field width.
+- Fix:       (1) assign a named temp in BOTH if/else arms and store once after the merge (`sf = flag | 1; ... flag = sf;`); (2) read sibling fields (`mField14`) at their use site, not into a temp beforehand; (3) fold `& ~2` to `& 1` manually on a 2-bit field — MWCC emits the single `rlwinm 27,31,31` keep-one-bit form.
+- Result:    47.5% → 70.5% → 89.6% (0 structural, 8 pure reg-swap). Witness cannot certify: function contains `bl` calls and the permutation crosses ABI r3 (register_mapping.md caveat).
+- Confidence: repo_proven
+- Applies to/a.k.a.: any CSchedAnimItem flag-byte update via the MSB-first bitfield view; cf. func_804E2EAC rlwimi note (attempt us-804e7348).
+
+## func_801592EC / __dt__801589BC — extra rlwinm at call site → widen callee param (Wii/1.1, FULL_MATCH)
+- Symptom:   hexdiff showed single diff `or r3,r30,r30` vs `rlwinm r3,r30,0,16,31` before a `bl`; caller source had no cast
+- Cause:     callee was declared with a `u16` param, so every integer argument got truncated to u16 at the call site; retail's callee took the value unmasked (wider param)
+- Fix:       change the callee's parameter type to u32 (safe for unmangled/extern-C symbols whose ABI is not constrained by mangling); keep u16 truncations only where retail compares truncated values in its own body
+- Result:    FULL_MATCH (both caller and callee stayed byte-identical)
+- Confidence: repo_proven
+
+## CWorkRoot runSingle/run — TU-wide IPA over-inlining regression → __declspec(noinline) on retail-out-of-line members (Wii/1.1, FULL_MATCH)
+- Symptom:   rows accepted earlier as byte-identical (runSingle 99.67%, run 99.86%) re-measured at 4.1%/2.1% with decomp bodies 3-7x retail size; hexdiff showed standbyWork/updateWork/renderWork/initialize/create/exit/runSingle/destroy all INLINED into their callers while also still emitted standalone.
+- Cause:     `-ipa file` + `-inline auto` over-inlining regressed TU-wide after the Aug-15 acceptance (source left half-migrated); MWCC inlined even recursive members (`standbyWork(thread,bool)`, `updateWork`) that retail keeps as out-of-line `bl` calls.
+- Fix:       `__declspec(noinline)` on the definitions of initialize, destroy, standbyWork(x2), updateWork, renderWork, runSingle, exit — same mechanism as this TU's existing `find__12CMsgParam` noinline. No other source change; every function body stayed as-is.
+- Result:    runSingle 100.0% (0x78/0x78), run 100.0% (0x90/0x90), renderWork 100% collateral fix; no regression elsewhere in the unit. NOTE: unit split budget still FAILs (+0x6A8) from the not-yet-matched initialize/dtor/isRunning/standbyWork/updateWork bodies — blocks unit promotion only, not these function acceptances.
+- Confidence: repo_proven
+- Applies to/a.k.a.: any monolib/nw4r TU whose accepted rows silently regress to low % with inflated decomp sizes — first hypothesis should be IPA re-inlining, check for missing noinline markers before touching bodies; cf. CScnFilterMan case (noinline helpers) and MWCC_PATTERNS folded-template-ctor entry.
+
+## code_802405F4.cpp — extern "C" decl clashes blocked the whole TU → macro-rename legacy imports (Wii/1.1, unblock)
+- Symptom:   unit failed to compile: (10505) illegal overloading between CFloorMap.hpp's stale `extern "C" u32 func_8013606C(...)` and code_80135FDC.hpp's canonical u16 decl; then CTaskGame.hpp's typed `CTaskGameCamView* func_8049603C(CScn*)` vs the canonical void* decls.
+- Cause:     transitive header pulls of conflicting pseudo-import declarations (the real definitions return u16 / void*).
+- Fix:       same rename-away pattern already used in this TU for lbl_eu_8066A208 and across CGame.cpp/CMiniMap.cpp etc.: `#define func_8013606C menuMapSelMsgLookupU32Unused` before including code_802405F4.hpp (which pulls CFloorMap.hpp), `#undef` before including code_80135FDC.hpp; `#define/#undef func_8049603C` around the CTaskGame.hpp include only. Scope macros to exactly one include or they leak into the canonical declaration.
+- Result:    TU compiles; Init__14CMenuMapSelectFv and Move__14CMenuMapSelectFv confirmed 100% (us-802436c8, us-80243ff4).
+- Confidence: repo_proven
+- Applies to/a.k.a.: scaffolded catalog TUs that transitively include multiple headers declaring the same extern "C" helper with different signatures.

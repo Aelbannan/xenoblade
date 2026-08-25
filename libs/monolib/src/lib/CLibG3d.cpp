@@ -26,13 +26,13 @@ struct CMsgQueueData {
 };
 
 // Forward decls for the data block at the bottom (CLib.cpp pattern).
-extern "C" u32 lbl_eu_8056D0F0[];   // __vt__7CLibG3d
+extern "C" u32 __vt__7CLibG3d[];   // retail vtable symbol (symbols.txt .data:0x8056D0F0)
 extern "C" void __dt__7CLibG3dFv();
 extern "C" void wkStandbyLogin__7CLibG3dFv();
 extern "C" void wkStandbyLogout__7CLibG3dFv();
 
 CLibG3d::CLibG3d(const char* pName, CWorkThread* pParent) : CWorkThread(pName, pParent, 4) {
-    *(void**)this = (void*)lbl_eu_8056D0F0;
+    *(void**)this = (void*)__vt__7CLibG3d;
     lbl_eu_806656F0[0] = this;
     mType = THREAD_CLIBG3D;
 }
@@ -101,9 +101,9 @@ extern "C" u32 lbl_eu_80523128;      // .rodata RTTI name (foreign)
 extern "C" u32 lbl_eu_806637B0[2];   // own .sdata RTTI locator
 extern "C" u32 lbl_eu_8056D190[6];   // own .data base-list
 
-// [.data] 0x8056D0F0-0x8056D1A8 (0xB8): __vt__7CLibG3d (0xA0) + base-list (0x18).
+// [.data] 0x8056D0F0-0x8056D19x (0xA0): __vt__7CLibG3d.
 // Base class CWorkThread is novtable, so CLibG3d's vtable/RTTI are manual.
-extern "C" u32 lbl_eu_8056D0F0[40] = {
+extern "C" u32 __vt__7CLibG3d[40] = {
     (u32)&lbl_eu_806637B0, 0x00000000, (u32)&__dt__7CLibG3dFv,
     (u32)&WorkEvent1__10IWorkEventFPvPCc, (u32)&OnFileEvent__10IWorkEventFP10CEventFile,
     (u32)&WorkEvent3__10IWorkEventFPv, (u32)&WorkEvent4__10IWorkEventFv,
@@ -130,7 +130,6 @@ extern "C" u32 lbl_eu_8056D190[6] = {
     (u32)&__RTTI__10IWorkEvent, 0x00000000, (u32)&__RTTI__11CWorkThread,
     0x00000000, 0x00000000, 0x00000000,
 };
-DECOMP_FORCEACTIVE(CLibG3d_cpp, lbl_eu_8056D0F0);
 
 // [.sdata] 0x806637B0-0x806637C8 (0x18): RTTI locator block.
 extern "C" u32 lbl_eu_806637B0[2] = { (u32)&lbl_eu_8066A528, (u32)&lbl_eu_8056D190 };

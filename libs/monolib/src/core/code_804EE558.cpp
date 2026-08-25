@@ -74,11 +74,6 @@ float lbl_eu_806617F0[4];
 float lbl_eu_80661800[4];
 float lbl_eu_80661810[12];
 float lbl_eu_80661840[4];
-DECOMP_FORCEACTIVE(code_804EE558_cpp, lbl_eu_806617C0);
-DECOMP_FORCEACTIVE(code_804EE558_cpp, lbl_eu_806617F0);
-DECOMP_FORCEACTIVE(code_804EE558_cpp, lbl_eu_80661800);
-DECOMP_FORCEACTIVE(code_804EE558_cpp, lbl_eu_80661810);
-DECOMP_FORCEACTIVE(code_804EE558_cpp, lbl_eu_80661840);
 
 } // extern "C"
 
@@ -862,7 +857,6 @@ extern "C" u32 jumptable_eu_805702B8[28] = {
     (u32)((char*)&func_804EE8FC + 420), (u32)((char*)&func_804EE8FC + 360),
     (u32)((char*)&func_804EE8FC + 392),
 };
-DECOMP_FORCEACTIVE(code_804EE558_cpp, jumptable_eu_805702B8);
 
 // ===== Disslbl_eu_8066B40Clved mlbl_eu_8066B40Cnlbl_eu_8066B40Clibdata2 (bllbl_eu_8066B40Cb surgery) data lbl_eu_8066B40Cwned by tlbl_eu_8066B414is TU =====
 // [.data] 0x805702B8-0x80570328 (0x70 = 112B): func_804EE8FC's switch

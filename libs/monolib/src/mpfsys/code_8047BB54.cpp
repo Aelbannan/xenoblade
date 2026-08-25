@@ -680,16 +680,14 @@ void sinit_8047CA2C() {
 // [.bss] 0x806584E8-0x80658518 (0x30 = 48B): singleton draw-object table
 // (6 pointers) + scratch draw context (0x18).
 MPFDrawSingletonTable lbl_eu_806584E8;
-u8 lbl_eu_80658500[0x18];
-DECOMP_FORCEACTIVE(code_8047BB54_cpp, lbl_eu_80658500);
+u8 lbl_eu_80658500[0x18];  // (FORCEACTIVE retired: returned by func_8047C034)
 
 // [.sdata] 0x806638A0-0x806638A8 (8B): 1/3.0f + zero pad (retail raw words).
 extern "C" f32 lbl_eu_806638A0[2] = { 0.33333334f, 0.0f };
 
 // [.sbss] 0x806658B8-0x806658C0 (8B): singleton slot (4B used) + pad.
 UnkSceneDataObj* lbl_eu_806658B8;
-u32 lbl_eu_806658B8pad;
-DECOMP_FORCEACTIVE(code_8047BB54_cpp, lbl_eu_806658B8pad);
+u32 lbl_eu_806658B8pad;  // (FORCEACTIVE retired: .sbss tail needs no anchor)
 
 // --- Target 1: us-8047fc24 ---------------------------------------------------
 // Gate on two flag bits; when both are set, forward into the embedded

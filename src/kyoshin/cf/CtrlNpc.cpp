@@ -2,6 +2,7 @@
 // Replace stubs with high-level C/C++ during decomp.
 
 #include "kyoshin/harness_catalog.hpp"
+#include "kyoshin/cf/object/CfObjectMoveApi.hpp"
 #include "monolib/scn/CScnTimeApi.hpp"
 
 #include <cstdio>
@@ -85,7 +86,7 @@ void func_8009377C(cf::CtrlNpc* self, u32 param) {
         }
     }
     if (param <= 3) {
-        func_800BE12C(self->field_28, 1, 1, -1, 1);
+        func_800BE12C((u8*)self->field_28, 1, 1, -1, 1);
     }
     self->field_174 = 0;
     self->field_172 = 0;
@@ -184,7 +185,7 @@ void func_80093F28(cf::CtrlNpc* self) {
                     f32 h = lbl_eu_806666AC *
                             nw4r::math::Atan2FIdx(diff.x, diff.z);
                     self->field_28->_vC4(h);
-                    func_800BE12C(self->field_28, 3, 0, -1, 1);
+                    func_800BE12C((u8*)self->field_28, 3, 0, -1, 1);
                 } else {
                     self->field_174 = 0;
                 }
@@ -201,15 +202,15 @@ void func_80093F28(cf::CtrlNpc* self) {
         if (self->field_28->_v0C(1) == 0) {
             if (self->field_28->_v2C(1, 0) != 0 && self->field_174 != 0) {
                 self->field_28->_vC4(self->field_178);
-                func_800BE12C(self->field_28, 3, 0, -1, 1);
+                func_800BE12C((u8*)self->field_28, 3, 0, -1, 1);
                 if (self->field_28->_v24(0x1000) == 0) {
-                    func_800BE12C(self->field_28, self->field_174, 0, -1, 1);
+                    func_800BE12C((u8*)self->field_28, self->field_174, 0, -1, 1);
                     self->field_174 = 0;
                 }
             }
             if (self->field_174 != 0 && self->field_28->_v24(0x1000) == 0 &&
                 self->field_28->_v24(1) == 0) {
-                func_800BE12C(self->field_28, self->field_174, 0, -1, 1);
+                func_800BE12C((u8*)self->field_28, self->field_174, 0, -1, 1);
                 self->field_174 = 0;
             }
         }
@@ -433,7 +434,7 @@ void __declspec(noinline) func_80094A9C(cf::CtrlNpc* self,
     if (self->field_28 != 0) {
         self->field_28->_vC4(heading);
         if (self->field_28->_v74() != 0)
-            func_800BE12C(self->field_28, 3, 0, -1, 1);
+            func_800BE12C((u8*)self->field_28, 3, 0, -1, 1);
     }
 }
 
@@ -559,7 +560,7 @@ float CfObject_UnkVirtualFunc71__Q22cf13CfObjectModelFv(void* self) { return *(f
 void func_80095000(cf::CtrlNpc* self) {
     cf::CCtrlNpcChar* obj = self->field_28;
     if (obj->field_C4 != 0) {
-        func_800BE12C(obj, self->field_16C, 0, -1, 1);
+        func_800BE12C((u8*)obj, self->field_16C, 0, -1, 1);
         self->field_BE += 1;
     }
 }
@@ -571,9 +572,9 @@ void func_8009505C(cf::CtrlNpc* self) {
     cf::CCtrlNpcChar* obj = self->field_28;
     if (obj->field_C4 != 0) {
         if (self->field_16C != 0) {
-            func_800BE12C(obj, self->field_16C, 1, -1, 1);
+            func_800BE12C((u8*)obj, self->field_16C, 1, -1, 1);
         } else {
-            func_800BE12C(obj, self->field_16E, 1, -1, 1);
+            func_800BE12C((u8*)obj, self->field_16E, 1, -1, 1);
             self->field_BE += 1;
         }
         self->field_BE += 1;
@@ -589,7 +590,7 @@ void func_800950E8(cf::CtrlNpc* self) {
     if (flag != 0 && (obj->_v84() != 0 || func_8004C5EC(flag) == 1)) {
         if (self->field_16E != 0) {
             int zero = (self->field_28->_v11C() == 0);
-            func_800BE12C(self->field_28, self->field_16E, zero, -1, 1);
+            func_800BE12C((u8*)self->field_28, self->field_16E, zero, -1, 1);
         }
         self->field_BE += 1;
     }
@@ -652,7 +653,7 @@ void func_80095224(cf::CtrlNpc* self) {
     if (self->field_28 != 0) {
         self->field_28->_vC4(f1);
         if (self->field_28->_v74() != 0)
-            func_800BE12C(self->field_28, 3, 0, -1, 1);
+            func_800BE12C((u8*)self->field_28, 3, 0, -1, 1);
     }
     self->field_BE = 2;
     self->field_B8 = (s16)(ml::math::mtRand(128) + 64);
@@ -793,7 +794,7 @@ int func_800964EC(cf::CtrlNpc* self) {
         if (self->field_28 != 0) {
             self->field_28->_vC4(self->field_0C);
             if (self->field_28->_v74() != 0)
-                func_800BE12C(self->field_28, 3, 0, -1, 1);
+                func_800BE12C((u8*)self->field_28, 3, 0, -1, 1);
         }
     }
     return 0;

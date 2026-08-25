@@ -731,7 +731,7 @@ config.libs = [
             Object(Matching, "kyoshin/cf/voice/cvsys/CVS_THREAD_REVIVE.cpp"),
             Object(Matching, "kyoshin/cf/voice/cvsys/CVS_THREAD_SUDDEN.cpp"),
             Object(NonMatching, "kyoshin/cf/voice/cvsys/CVS_THREAD_TENSION_UP.cpp"),
-            Object(NonMatching, "kyoshin/cf/voice/cvsys/CVS_THREAD_VISION_BREAK.cpp"),
+            Object(Matching, "kyoshin/cf/voice/cvsys/CVS_THREAD_VISION_BREAK.cpp"),
             Object(NonMatching, "kyoshin/cf/voice/cvsys/CVS_THREAD_VISION_TELL.cpp"),
             Object(Matching, "kyoshin/menu/CMenuBattleChain.cpp"),
             Object(NonMatching, "kyoshin/cf/voice/cvsys/CVS_THREAD_BATTLE_END_SP.cpp"),

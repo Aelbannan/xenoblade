@@ -949,4 +949,3 @@ extern "C" void func_8046C580__Q23LOD17UnkClass_8046A530Fv(LOD::UnkClass_8046A53
 f32 lbl_eu_80663818 = 0.005f;
 f32 lbl_eu_8066381C = 0.005f;
 f32 lbl_eu_80663820[2] = { 0.005f, 0.0f };
-DECOMP_FORCEACTIVE(code_8046A530_cpp, lbl_eu_80663818);

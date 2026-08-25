@@ -21,7 +21,9 @@ extern u8 lbl_eu_8052BDD8[];   // selector inner vtable
 extern const f32 lbl_eu_80666EF8;
 extern f32 lbl_eu_80661DB0;
 
-f32 lbl_eu_80663F10;
+// Retail keeps these in split1.s (.sbss 0x80663F10/0x80663F14); declare
+// extern so this TU emits no local storage.
+extern f32 lbl_eu_80663F10;
 extern const f32 lbl_eu_8066A1F8;
 extern const f32 lbl_eu_80666F0C;
 extern const f32 lbl_eu_80666F08;
@@ -232,7 +234,7 @@ void CfObjectSelectorObj::func_800FE950(unsigned int a, unsigned int b, unsigned
 
 }
 
-cf::CfObjectSelectorData* lbl_eu_80663F14;
+extern cf::CfObjectSelectorData* lbl_eu_80663F14;
 
 cf::CfObjectSelectorObj* func_800FE68C() {
     return (cf::CfObjectSelectorObj*)lbl_eu_80663F14;

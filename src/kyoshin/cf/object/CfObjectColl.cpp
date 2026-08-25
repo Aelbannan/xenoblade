@@ -321,15 +321,20 @@ void func_800AB8CC(cf::CfObjectColl* self, const cf::CollVec* a, const cf::CollV
 
 // Copy two 12-byte vector blocks into the object and store the pair of
 // scalars, after refreshing the packed resource through virtual slot 0x9C.
-void func_800AB978(cf::CfObjectColl* self, cf::CollVec* a, cf::CollVec* b, float f1, float f2) {
+void func_800AB978(cf::CfObjectColl* self, cf::CollVec* vecA, cf::CollVec* vecB, float f1, float f2) {
     reinterpret_cast<CfObjIf*>(self)->vf009C();
-    self->field_0xC0 = a->w4;
-    self->field_0xBC = a->w0;
-    self->field_0xC8 = b->w0;
-    self->field_0xC4 = a->w8;
-    self->field_0xCC = b->w4;
-    self->field_0xD0 = b->w8;
+    u32 t = vecA->w0;
+    self->field_0xC0 = vecA->w4;
+    u32 bw0 = vecB->w0;
+    self->field_0xBC = t;
+    u32 bw4 = vecB->w4;
     self->field_0xD4 = f1;
+    u32 aw8 = vecA->w8;
+    u32 bw8 = vecB->w8;
+    self->field_0xC4 = aw8;
+    self->field_0xC8 = bw0;
+    self->field_0xCC = bw4;
+    self->field_0xD0 = bw8;
     self->field_0x148 = f2;
 }
 
@@ -413,12 +418,20 @@ void func_800ABC5C(ml::CVec3* out, cf::CfObjectColl* self) {
 // then stamp the state marker words at 0x94/0x98.
 void func_800ABD44(cf::CfObjectColl* self, cf::CollVec* a, cf::CollVec* b, float val) {
     reinterpret_cast<CfObjIf*>(self)->vf009C();
-    self->field_0xA4 = a->w4;
-    self->field_0xA0 = a->w0;
-    self->field_0xAC = b->w0;
-    self->field_0xB0 = b->w4;
-    self->field_0xA8 = a->w8;
-    self->field_0xB4 = b->w8;
+    // Retail interleaves each load with the following store instead of
+    // batching all six loads up front.
+    u32 v0 = a->w0;
+    u32 v4 = a->w4;
+    self->field_0xA4 = v4;
+    u32 t0 = b->w0;
+    self->field_0xA0 = v0;
+    u32 t4 = b->w4;
+    u32 t8 = b->w8;
+    u32 v8 = a->w8;
+    self->field_0xA8 = v8;
+    self->field_0xAC = t0;
+    self->field_0xB0 = t4;
+    self->field_0xB4 = t8;
     self->field_0xB8 = val;
     self->field_0x98 = 4;
     self->field_0x94 = 0;
@@ -590,11 +603,16 @@ void func_800AC30C(cf::CfObjectColl* self, u32 a, u32 b) {
 // Set or clear the indexed FixStr<16> entry in the name array that starts at
 // offset 0x120 (each entry is 0x14 bytes: 16-char buffer + length word).
 void func_800AC378(cf::CfObjectColl* self, const char* name, int index) {
-    ml::FixStr<16>* entry = &self->fieldName120 + index;
-    if (name != NULL)
-        *entry = name;
-    else
-        entry->clear();
+    // Indexed name-table entry (each slot is 0x14 bytes); the 0x120 field
+    // offset is left in the store displacements rather than folded into the
+    // entry pointer.
+    if (name != NULL) {
+        (&self->fieldName120)[index].mLength = strlen(name);
+        strcpy((&self->fieldName120)[index].mString, name);
+    } else {
+        (&self->fieldName120)[index].mString[0] = '\0';
+        (&self->fieldName120)[index].mLength = 0;
+    }
 }
 
 // Resolve the resource id for the given path, then format its display name

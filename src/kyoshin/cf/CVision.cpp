@@ -399,21 +399,25 @@ cf::CVision::CVision() {
 
     // unk261C4 head (u32/f32/u32 triplet) plus seven more at 0xC stride.
     // The entry-testing for-loop matches the retail cmplw/bge + mtctr/bdnz.
+    CVisionU32F32U32* upEnd = (CVisionU32F32U32*)((u8*)this + 0x26224);
     f32 zero261 = lbl_eu_80667CD4;
     unk261C4.w0 = 0;
     unk261C4.f4 = zero261;
     unk261C4.w8 = 0;
-    CVisionU32F32U32* upEnd = (CVisionU32F32U32*)&unk261C4.w60;
-    for (CVisionU32F32U32* up = unk261C4.arr; up < upEnd; up++) {
+    for (CVisionU32F32U32* up = unk261C4.arr; up != upEnd; up++) {
         up->a = 0;
         up->b = zero261;
         up->c = 0;
     }
+    // NOTE (repo-proven): a `<` pointer-walk over this member array makes
+    // MWCC emit its unknown-count memset template WITH an 8x-unroll fast path
+    // (+0xF8 bytes, retail has none); an `!=` walk emits the plain loop that
+    // matches retail's shape much more closely (26% vs 19.8%).
 
     // unk261C4 tail (self pointer / count) then the vision field resets.
     f32 zeroFields = lbl_eu_80667CD4;
     unk261C4.w6C = 8;
-    unk261C4.w60 = (u32)&unk261C4;
+    *(u32*)upEnd = (u32)&unk261C4; // w60: retail reuses the loop-end pointer
     unk261C4.field_68 = 0;
     unk261C4.field_64 = 0;
     field_26194 = zeroFields;
@@ -490,7 +494,7 @@ extern "C" void* __ct__801A33AC(CVisionSlot* self) {
         q += 0x20;
     } while (q < qEnd);
     self->field_3F98 = 0x10;
-    self->field_3F8C = (u32)self->unk3D8C;
+    *(u32*)qEnd = (u32)self->unk3D8C; // qEnd == &field_3F8C; retail reuses the loop-end reg
     self->field_3F94 = zero;
     self->field_3F90 = zero;
     memset(self->unk3FA0, 0, 0xe);
@@ -2683,9 +2687,8 @@ void func_801A7704(CVision* self) {
             return;
         }
         CVisionActorRef* act = (CVisionActorRef*)obj;
-        if (((CVisionBattleObj*)obj)->vf1A4(2) != 0) {
-            if ((act->field_8C < 0xa1 || act->field_8C > 0xa4) &&
-                (act->field_8C < 0xb8 || act->field_8C > 0xb8)) {
+        if (((CVisionBattleObj*)obj)->vf1A4(2) != 0 && act->field_8C != 0xb8) {
+            if (act->field_8C < 0xa1 || act->field_8C > 0xa4) {
                 act->field_68 |= 0x40;
             }
         }

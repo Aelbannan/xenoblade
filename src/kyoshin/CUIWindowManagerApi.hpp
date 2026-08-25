@@ -9,3 +9,8 @@
 
 // Flag-buffer builder (retail func_801412D0).
 extern "C" u8* func_801412D0(u32 target);
+
+// Item-availability query (retail func_80140854); same signature as the
+// owner copy in CUIWindowManager.hpp.
+class CItemQuery;
+extern "C" int func_80140854(CItemQuery* self, u32 arg1, u32 arg2);

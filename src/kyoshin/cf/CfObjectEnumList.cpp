@@ -7,6 +7,8 @@
 #include "monolib/math.hpp"      // ml::CVec3
 #include "monolib/util/MemManager.hpp"  // mtl::MemManager (allocate_array)
 #include <nw4r/math.h>            // VEC3Sub (paired-single) + PSVECMag
+#include <nw4r/math/math_arithmetic.h>  // FrSqrt
+#include <nw4r/db/db_assert.h>    // nw4r::db::Warning
 #include <revolution/mtx/vec.h>   // PSVECAdd
 
 // Forward decl (was pulled in via CfCam.hpp, which now conflicts with this
@@ -1087,8 +1089,26 @@ void* func_800F6E08(cf::CfObjEnumList* self) {
 // is equal to value(lo).  Retail symbols are unmangled globals.
 extern "C" int func_800F8794(CfSortableList* self, int lo, int hi);
 
-// func_800F8890: Hoare partition (defined later in this TU).
+// func_800F8890: Hoare partition (defined below).
 extern "C" int func_800F8890(CfSortableList* self, int lo, int hi, int pivot);
+
+// func_800F7DEC: quicksort recursion over the sortable list.  With the unit's
+// -inline auto, MWCC expands func_800F8794/func_800F8890 at every call site,
+// producing the retail multi-stage inline blob.
+extern "C" void func_800F7DEC(CfSortableList* self, int lo, int hi) {
+    if (lo != hi) {
+        int p = func_800F8794(self, lo, hi);
+        if (p != -1) {
+            int m = func_800F8890(self, lo, hi, p);
+            if (lo != m - 1) {
+                func_800F7DEC(self, lo, m - 1);
+            }
+            if (m != hi) {
+                func_800F7DEC(self, m, hi);
+            }
+        }
+    }
+}
 
 extern "C" int func_800F8794(CfSortableList* self, int lo, int hi) {
     int p = lo + 1;
@@ -1104,25 +1124,7 @@ extern "C" int func_800F8794(CfSortableList* self, int lo, int hi) {
     return p;
 }
 
-// func_800F7DEC: quicksort recursion over the sortable list.  With the unit's
-// -inline auto, MWCC expands func_800F8794/func_800F8890 at every call site,
-// producing the retail multi-stage inline blob.
-extern "C" void func_800F7DEC(CfSortableList* self, int lo, int hi) {
-    if (lo == hi) {
-        return;
-    }
-    int p = func_800F8794(self, lo, hi);
-    if (p == -1) {
-        return;
-    }
-    int m = func_800F8890(self, lo, hi, p);
-    if (lo != m - 1) {
-        func_800F7DEC(self, lo, m - 1);
-    }
-    if (m != hi) {
-        func_800F7DEC(self, m, hi);
-    }
-}
+// (func_800F7DEC is defined above, before its callees.)
 
 // func_800F8890: Hoare partition of the sortable list.  The pivot value is
 // read via value(pivot), then the list is scanned from both ends (value(i) <
@@ -1152,55 +1154,16 @@ extern "C" int func_800F8890(CfSortableList* self, int lo, int hi, int pivot) {
     return i;
 }
 
-void func_800F89DC(){}
-
-// Shared sort tail of the two list-refresh entry points (func_800F9AEC /
-// func_800F800F6ED0 family): after the per-entry value refresh, run the
-// quicksort over the embedded sortable list at +0x624.  Retail expands the
-// first partition stages inline; the structure here mirrors the observed
-// nesting (pivot find -> partition -> nested pivot/partition on each half,
-// deeper levels recurse into func_800F7DEC).
-static void enumRefreshSort(cf::CfObjEnumList* self, u32 sortFlag) {
-    self->field_062C = sortFlag;
-    int hi = self->mPtrCount - 1;
-    if (hi == 0) {
-        return;
-    }
-    CfSortableList* sl = reinterpret_cast<CfSortableList*>(&self->mSortVtableA);
-    int pivot = func_800F8794(sl, 0, hi);
-    if (pivot == -1) {
-        return;
-    }
-    int m = func_800F8890(sl, 0, hi, pivot);
-    if (0 != m - 1) {
-        int p2 = func_800F8794(sl, 0, m - 1);
-        if (p2 != -1) {
-            int m2 = func_800F8890(sl, 0, m - 1, p2);
-            if (0 != m2 - 1) {
-                func_800F7DEC(sl, 0, m2 - 1);
-            }
-            if (m2 != m - 1) {
-                func_800F7DEC(sl, m2, m - 1);
-            }
-        }
-    }
-    if (m != hi) {
-        int p3 = func_800F8794(sl, m, hi);
-        if (p3 != -1) {
-            int m3 = func_800F8890(sl, m, hi, p3);
-            if (m != m3 - 1) {
-                func_800F7DEC(sl, m, m3 - 1);
-            }
-            if (m3 != hi) {
-                func_800F7DEC(sl, m3, hi);
-            }
-        }
-    }
-}
+// func_800F8890: Hoare partition of the sortable list.  The pivot value is
+// read via value(pivot), then the list is scanned from both ends (value(i) <
+// pivot on the left, value(j) >= pivot on the right) and out-of-place
+// elements are swapped through the get() accessor.  Returns the split index.
+// func_800F89DC(){}
 
 // func_800F9AEC: refresh each entry's sort value via the actor's vtable
-// 0x128 float accessor (reached through func_8016FE34), then sort the list.
-// Needs at least two entries to do anything.
+// 0x128 float accessor (reached through func_8016FE34), then quicksort the
+// embedded sortable list at +0x624 over [0, count-1].  Needs at least two
+// entries to do anything.
 void func_800F9AEC(cf::CfObjEnumList* self) {
     if (self->mPtrCount < 2) {
         return;
@@ -1212,11 +1175,16 @@ void func_800F9AEC(cf::CfObjEnumList* self) {
             p->field_14 = reinterpret_cast<CfEnumActorValueView*>(actor)->value128();
         }
     }
-    enumRefreshSort(self, 1);
+    int hi = self->mPtrCount - 1;
+    self->field_062C = 1;
+    func_800F7DEC(reinterpret_cast<CfSortableList*>(&self->mSortVtableA), 0,
+                  hi);
 }
 
 // func_800F6ED0: recompute each entry's distance from spot (vtable 0xAC
-// position vector minus spot, PSVECMag), clear field_062C, then sort.
+// position vector minus spot, PSVECMag), clear field_062C, then sort over
+// [0, count-1] via the recursive quicksort (MWCC auto-inlines the cascade
+// here, as in retail).
 void func_800F6ED0(cf::CfObjEnumList* self, ml::CVec3* spot) {
     if (self->mPtrCount < 2) {
         return;
@@ -1234,7 +1202,10 @@ void func_800F6ED0(cf::CfObjEnumList* self, ml::CVec3* spot) {
         d.z = delta.z;
         p->field_14 = PSVECMag((const Vec*)&d);
     }
-    enumRefreshSort(self, 0);
+    int hi = self->mPtrCount - 1;
+    self->field_062C = 0;
+    func_800F7DEC(reinterpret_cast<CfSortableList*>(&self->mSortVtableA), 0,
+                  hi);
 }
 
 // Frame-origin shorts of the scene view frame used by __ct__800FA9B4.
@@ -1760,92 +1731,172 @@ void func_800FB5AC(cf::CfObjEnumList* self, ml::CVec3* spot, u32 flags,
     }
 }
 
-// __ct__800FBA18: rebuild the list against an oriented range/cone test built
-// from spot + three floats (range, cone seed, angle).  The prelude builds two
-// rotated direction bases via SinFIdx/CosFIdx (angle scaled by the FIdx
-// conversion constant); each entry is gated by the battle-state block, the
-// aux cone probe func_804B1BDC on aux+0x60C, and the func_800FD3FC fallback
-// (options bit 3).  Accepted entries get the 0x70 mark; all are re-appended.
-void __ct__800FBA18(cf::CfObjEnumList* list, ml::CVec3* spot, float a,
-                    float b, float angle, u32 options) {
-    if (list->mPtrCount == 0) {
+// __ct__800FBA18: rebuild the list against a segment probe.  Two points are
+// built ahead of spot along heading `angle`: PA at distance `threshold` and PB
+// at distance `range` (both via a Y-rotation matrix applied to (0,0,d)).
+// Each entry's actor position is projected onto the PA-PB segment (t clamped
+// to [0,1] via double literals), the point-segment distance is computed
+// (with the retail quirk that pos.y is compared against the closest point's
+// Z), guarded by an nw4r::db::Warning non-finite check, reduced by the aux
+// radius, and compared against `threshold`.  The func_804B1BDC cone probe on
+// aux+0x60C rescues coarse rejections when flags64 bit 4 is set; the
+// func_800FD3FC fallback (options bit 3) double-checks them.  Options bit 1
+// inverts; rejected entries get the 0x70 mark and are only re-appended when
+// options bit 0 is set.
+void __ct__800FBA18(cf::CfObjEnumList* list, ml::CVec3* spot, float range,
+                    float threshold, float angle, u32 options) {
+    u32 count = list->mPtrCount;
+    if (count == 0) {
         return;
     }
+    // Snapshot context: array copy plus descriptor {count, hi, lo, field}.
     struct RebuildCtx {
-        u32 ownsCopy;                          // +0x000 (<- list+0x1C)
+        u32 pad00;                             // +0x000 (never written)
         cf::CfObjEnumList::sObjInfo* arr[384]; // +0x004
         u32 count;                             // +0x604
-        u8* b_;                                // +0x608
-        u8* a_;                                // +0x60C
+        void* hi;                              // +0x608 (lbl_eu_8052BDA0 + 8)
+        void* lo;                              // +0x60C (lbl_eu_8052BDA0)
         u32 field;                             // +0x610
     };
-    RebuildCtx ctx;
-    ctx.ownsCopy = list->mOwnsList;
-    ctx.count = list->mPtrCount;
-    ctx.a_ = lbl_eu_8052BDA0;
-    ctx.b_ = lbl_eu_8052BDA0 + 8;
-    ctx.field = list->field_062C;
     struct CopyArr {
         cf::CfObjEnumList::sObjInfo* arr[384];
     };
+    RebuildCtx ctx;
     *reinterpret_cast<CopyArr*>(ctx.arr) =
         *reinterpret_cast<CopyArr*>(list->mPtrArray);
+    ctx.count = list->mPtrCount;
+    ctx.lo = &lbl_eu_8052BDA0[0];
+    ctx.hi = &lbl_eu_8052BDA0[8];
+    ctx.field = list->field_062C;
     list->mPtrCount = 0;
-    const float fidxScale = lbl_eu_80666ED8; // radians -> FIdx for SinFIdx
-    const float zero = lbl_eu_80666EB8;
-    const float one = lbl_eu_80666EBC;
-    // First basis: rotate the seed direction (0, b, 0) by 'angle' around Y and
-    // tilt by 'a'; second basis repeats with the roles swapped.  Retail keeps
-    // the full 3x3 products in stack temps.
-    float s1 = nw4r::math::SinFIdx(fidxScale * angle);
-    float c1 = nw4r::math::CosFIdx(fidxScale * angle);
+
+    ml::CVec3 vb;
+    vb.x = lbl_eu_80666EB8;
+    vb.y = lbl_eu_80666EB8;
+    vb.z = threshold;
+    float s1 = nw4r::math::SinFIdx(lbl_eu_80666ED8 * angle);
+    float c1 = nw4r::math::CosFIdx(lbl_eu_80666ED8 * angle);
+    EnumRotMtx33 rot1;
+    rot1._00 = c1;
+    rot1._01 = lbl_eu_80666EB8;
+    rot1._02 = s1;
+    rot1._10 = lbl_eu_80666EB8;
+    rot1._11 = lbl_eu_80666EBC;
+    rot1._12 = lbl_eu_80666EB8;
+    rot1._20 = -s1;
+    rot1._21 = lbl_eu_80666EB8;
+    rot1._22 = c1;
     ml::CVec3 dirA;
-    dirA.x = b * s1;
-    dirA.y = b * c1 * one - b * zero;
-    dirA.z = b * c1 * one + b * s1 - b * s1;
-    float s2 = nw4r::math::SinFIdx(fidxScale * a);
-    float c2 = nw4r::math::CosFIdx(fidxScale * a);
+    dirA.x = rot1._00 * vb.x + rot1._01 * vb.y + rot1._02 * vb.z;
+    dirA.y = rot1._10 * vb.x + rot1._11 * vb.y + rot1._12 * vb.z;
+    dirA.z = rot1._20 * vb.x + rot1._21 * vb.y + rot1._22 * vb.z;
+    nw4r::math::VEC3 paTmp;
+    nw4r::math::VEC3Add(&paTmp, reinterpret_cast<const nw4r::math::VEC3*>(&dirA),
+                        reinterpret_cast<const nw4r::math::VEC3*>(spot));
+    ml::CVec3 pa;
+    pa.x = paTmp.x;
+    pa.y = paTmp.y;
+    pa.z = paTmp.z;
+
+    ml::CVec3 va;
+    va.x = lbl_eu_80666EB8;
+    va.y = lbl_eu_80666EB8;
+    va.z = range;
+    float s2 = nw4r::math::SinFIdx(lbl_eu_80666ED8 * angle);
+    float c2 = nw4r::math::CosFIdx(lbl_eu_80666ED8 * angle);
+    const double tMin = lbl_eu_80666EE0;
+    const double tMax = lbl_eu_80666EE8;
+    EnumRotMtx33 rot2;
+    rot2._00 = c2;
+    rot2._01 = lbl_eu_80666EB8;
+    rot2._02 = s2;
+    rot2._10 = lbl_eu_80666EB8;
+    rot2._11 = lbl_eu_80666EBC;
+    rot2._12 = lbl_eu_80666EB8;
+    rot2._20 = -s2;
+    rot2._21 = lbl_eu_80666EB8;
+    rot2._22 = c2;
     ml::CVec3 dirB;
-    dirB.x = s2;
-    dirB.y = c2;
-    dirB.z = -s2 * one + zero;
-    ml::CVec3 probe1;   // retail sp+0x68
-    ml::CVec3 probe2;   // retail sp+0x74
-    probe1.x = spot->x + dirA.x;
-    probe1.y = spot->y + dirA.y;
-    probe1.z = spot->z + dirA.z;
-    probe2.x = spot->x + dirB.x;
-    probe2.y = spot->y + dirB.y;
-    probe2.z = spot->z + dirB.z;
+    dirB.x = rot2._00 * va.x + rot2._01 * va.y + rot2._02 * va.z;
+    dirB.y = rot2._10 * va.x + rot2._11 * va.y + rot2._12 * va.z;
+    dirB.z = rot2._20 * va.x + rot2._21 * va.y + rot2._22 * va.z;
+    nw4r::math::VEC3 pbTmp;
+    nw4r::math::VEC3Add(&pbTmp, reinterpret_cast<const nw4r::math::VEC3*>(&dirB),
+                        reinterpret_cast<const nw4r::math::VEC3*>(spot));
+    ml::CVec3 pb;
+    pb.x = pbTmp.x;
+    pb.y = pbTmp.y;
+    pb.z = pbTmp.z;
+
+    // Hoisted loop invariants: retail pins options bit 1 and both warning
+    // string addresses in registers across the whole scan loop.
     u32 invert = options & 2;
-    u32 useFallback = options & 8;
+    const char* warnFile = lbl_eu_80526324;
+    const char* warnMsg = lbl_eu_80526300;
     for (u32 i = 0; i < ctx.count; i++) {
         cf::CfObjEnumList::sObjInfo* p = ctx.arr[i];
-        CfEnumActorView* aux = reinterpret_cast<CfEnumActorView*>(
-            func_800BBC0C(reinterpret_cast<CfEnumObject*>(p->object)));
-        bool ok = false;
-        // Battle-state gate: state words 2/3/6 accept directly.
-        CfEnumVf298* v298 = aux->vf298();
-        if (v298 != NULL && v298->field_0x50 != NULL) {
-            u16 state = v298->field_0x50->field_0x3C;
-            if (state == 2 || state == 3 || state == 6) {
-                ok = true;
+        CfEnumObject* obj = reinterpret_cast<CfEnumObject*>(p->object);
+        CfEnumActor* aux = func_800BBC0C(obj);
+        nw4r::math::VEC3* pos = reinterpret_cast<nw4r::math::VEC3*>(
+            reinterpret_cast<CfEnumObjPosView*>(obj)->vAC());
+        // Segment direction and projection parameter of pos onto PA-PB.
+        nw4r::math::VEC3 dv;
+        nw4r::math::VEC3Sub(&dv, reinterpret_cast<nw4r::math::VEC3*>(&pb),
+                            reinterpret_cast<const nw4r::math::VEC3*>(&pa));
+        float dzp = pos->z - pa.z;
+        float dxp = pos->x - pa.x;
+        float denom = dv.x * dv.x + dv.z * dv.z;
+        float numer = dv.x * dxp + dv.z * dzp;
+        float t = numer / denom;
+        if (t < tMin) {
+            t = lbl_eu_80666EB8;
+        }
+        if (t > tMax) {
+            t = lbl_eu_80666EBC;
+        }
+        float qz = dv.z * t + pa.z;
+        float qx = dv.x * t + pa.x;
+        float dyq = pos->y - qz; // retail quirk: y compared against z coord
+        float dxq = pos->x - qx;
+        float d2 = dxq * dxq + dyq * dyq;
+        if (d2 > lbl_eu_80666EB8 || d2 == lbl_eu_80666EB8) {
+            // finite
+        } else {
+            nw4r::db::Warning(warnFile, 0x273, warnMsg);
+        }
+        float dist;
+        if (d2 < lbl_eu_80666EB8 || d2 == lbl_eu_80666EB8) {
+            dist = lbl_eu_80666EB8;
+        } else {
+            dist = d2 * nw4r::math::FrSqrt(d2);
+        }
+        if (aux != NULL) {
+            dist -= reinterpret_cast<CfEnumActorView*>(aux)->field_63C;
+        }
+        bool rejected =
+            dist > threshold || dist == threshold;
+        if ((obj->field68 & 4) && rejected) {
+            CfEnumActor* aux2 = func_800BBC0C(obj);
+            if (aux2 != NULL) {
+                rejected = func_804B1BDC(
+                    &reinterpret_cast<CfEnumActorView*>(aux2)->field_60C, &pa,
+                    &pb) == 0;
             }
         }
-        if (!ok && aux != NULL) {
-            ok = func_804B1BDC(&aux->field_60C, &probe2, &probe1) != 0;
-        }
-        if (!ok && useFallback) {
-            ok = func_800FD3FC(list, reinterpret_cast<CfEnumActor*>(aux),
-                               spot) != 0;
+        if (rejected && (options & 8)) {
+            rejected = func_800FD3FC(list, aux, spot) == 0;
         }
         if (invert) {
-            ok = !ok;
+            rejected = !rejected;
         }
-        if (ok) {
+        if (!rejected) {
+            list->mPtrArray[list->mPtrCount++] = p;
+        } else {
             p->field_18 |= 0x70;
+            if (options & 1) {
+                list->mPtrArray[list->mPtrCount++] = p;
+            }
         }
-        list->mPtrArray[list->mPtrCount++] = p;
     }
 }
 

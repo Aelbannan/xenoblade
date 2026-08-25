@@ -141,10 +141,3 @@ extern "C" {
     CNReqtaskRemoveVtbl* lbl_eu_806659F8;  // definition (zero-init, sbss word 0)
     u32 lbl_eu_806659F8_pad;               // 2nd sbss word
 }
-
-DECOMP_FORCEACTIVE(CNReqtaskRemove_cpp, lbl_eu_806659F8);
-DECOMP_FORCEACTIVE(CNReqtaskRemove_cpp, lbl_eu_806659F8_pad);
-DECOMP_FORCEACTIVE(CNReqtaskRemove_cpp, lbl_eu_8056FDC8);
-DECOMP_FORCEACTIVE(CNReqtaskRemove_cpp, lbl_eu_8056FDD8);
-DECOMP_FORCEACTIVE(CNReqtaskRemove_cpp, lbl_eu_80663BA0);
-DECOMP_FORCEACTIVE(CNReqtaskRemove_cpp, lbl_eu_80524638);

@@ -9,6 +9,6 @@ namespace cf {
         u8 unk0[0xE8];
         //0xE8: vtable
 
-        virtual ~CChainMember(){}
+        virtual ~CChainMember();
     };
 }

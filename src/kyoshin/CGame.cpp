@@ -2,35 +2,7 @@
 #include "kyoshin/cf/CTaskREvent.hpp"
 #include "kyoshin/cf/CBattleManager.hpp"
 #include "kyoshin/cf/CfGameManager.hpp"
-// CTaskGame.hpp declares a minimal CLibHbm (static-only view); monolib/lib.hpp
-// later pulls in the full CLibHbm.hpp class (CTaskGame.hpp:87 documents the
-// clash). CGame.cpp uses the full class, so rename the minimal copy away.
-#define CLibHbm cgameCtaskGameLibHbmUnused
-// CTaskGame.hpp declares func_eu_804520D0 as void(char*); CDeviceFileCri.hpp
-// (pulled via monolib/device.hpp later) declares it int(const char*). This TU
-// uses neither copy, so rename the CTaskGame.hpp one out of the way.
-#define func_eu_804520D0 cgameCtaskGameEu520D0Unused
 #include "kyoshin/CTaskGame.hpp"
-#undef func_eu_804520D0
-#undef CLibHbm
-// code_80135FDC.hpp
-// headers already pulled in above (via CBattleManager.hpp / CTaskREvent.hpp):
-// getCurrentView__5CViewFv as void* (CTaskREvent.hpp:245 declares CView*),
-// lbl_eu_8066A208 as u32 (CfObjectMove.hpp:99 declares const float).
-// C-linkage names cannot be overloaded in MWCC, so rename the code_80135FDC.hpp copies
-// out of the way (same scheme as CMenuArtsSelect.cpp). This TU only uses
-// func_80137038 / func_80137250 from that header.
-#define getCurrentView__5CViewFv cgameGetCurrentViewUnused
-// CTaskLOD helper param widths differ from CTaskREvent.hpp (s16): s8/u8 here.
-#define func_80462D04__8CTaskLODFv cgameLod62D04Unused
-#define func_80462D5C__8CTaskLODFv cgameLod62D5CUnused
-// Return type differs from CTaskREvent.hpp's Class_80296898*.
-#define getInstance__14Class_80296898Fv cgameGetInst298898Unused
-#include "kyoshin/code_80135FDC.hpp"
-#undef getInstance__14Class_80296898Fv
-#undef func_80462D5C__8CTaskLODFv
-#undef func_80462D04__8CTaskLODFv
-#undef getCurrentView__5CViewFv
 #include "monolib/lib.hpp"
 #include "monolib/core.hpp"
 #include "monolib/device.hpp"
@@ -50,6 +22,13 @@ extern float func_801C0014();
 extern void func_801BFFAC(float f1, float f2);
 extern void func_801644BC(u32 value);
 extern void func_80044FBC(u32 value);
+// Layout draw helpers. Owner decls live in kyoshin/code_80135FDC.hpp, but that
+// header's C-linkage import block (getCurrentView/getInstance/func_80462D04/
+// func_80462D5C) conflicts with cf/CTaskREvent.hpp's caller-shape copies, so
+// this TU takes only these three signatures verbatim.
+void func_80136E84(nw4r::lyt::Layout**, nw4r::lyt::ArcResourceAccessor*, const char*);
+void func_80137038(nw4r::lyt::Layout*, nw4r::lyt::DrawInfo*, int, int);
+void func_80137250(nw4r::lyt::DrawInfo* pDrawInfo);
 
 // Non-vararg sink avoids crclr (varargs float ABI) so five pool strings fit in
 // 0x1C. Postprocess drops this FORCEACTIVE from .text (CGame.o drop_text_symbols)

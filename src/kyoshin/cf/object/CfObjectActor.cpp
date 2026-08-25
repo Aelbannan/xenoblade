@@ -44,7 +44,7 @@ float CfObjectActor::CfObjectActor_UnkVirtualFunc6() {
 
 // Forward declarations for thunks (extern "C" so MWCC emits the retail
 // unmangled symbol names exactly as written - no extra __FPv suffix).
-void __dt__Q22cf13CfObjectActorFv(void* self);
+extern "C" void __dt__Q22cf13CfObjectActorFv(void* self);
 extern "C" void CObjectParam_UnkVirtualFunc2__Q22cf12CfObjectMoveFv(void* self);
 
 // Retail symbol is Fv; the real ABI passes (self, f1, r4). Delegates to the

@@ -372,32 +372,32 @@ int func_800567F0(u32, void*, void*, void*);
 int func_800567F8(u32, void*, void*, void*);
 int func_80056800(u32, void*, void*, void*);
 // vtable-thunk handlers referenced by lbl_eu_805705F0 but not yet decompiled.
-void func_80056290(void*, u32);
-void func_800562A4(void*, u32);
-void func_800562B8(void*, u32);
-void func_800562E0(void*, u32);
-void func_800562F4(void*, u32);
-void func_80056308(void*, u32);
-void func_8005631C(void*, u32);
-void func_80056330(void*, u32);
-void func_80056344(void*, u32);
-void func_80056358(void*, u32);
-void func_8005636C(void*, u32);
-void func_80056380(void*, u32);
-void func_80056394(void*, u32);
-void func_800563A8(void*, u32);
-void func_800563D0(void*, u32);
-void func_800563E4(void*, u32);
-void func_800563F8(void*, u32);
-void func_8005640C(void*, u32);
-void func_80056420(void*, u32);
-void func_80056434(void*, u32);
-void func_80056448(void*, u32);
-void func_8005645C(void*, u32);
-void func_80056470(void*, u32);
-void func_80056484(void*, u32);
-void func_80056498(void*, u32);
-void func_800564C0(void*, u32);
+extern "C" int func_80056290(void*, u32);
+extern "C" int func_800562A4(void*, u32);
+extern "C" int func_800562B8(void*, u32);
+extern "C" int func_800562E0(void*, u32);
+extern "C" int func_800562F4(void*, u32);
+extern "C" int func_80056308(void*, u32);
+extern "C" int func_8005631C(void*, u32);
+extern "C" int func_80056330(void*, u32);
+extern "C" int func_80056344(void*, u32);
+extern "C" int func_80056358(void*, u32);
+extern "C" int func_8005636C(void*, u32);
+extern "C" int func_80056380(void*, u32);
+extern "C" int func_80056394(void*, u32);
+extern "C" int func_800563A8(void*, u32);
+extern "C" int func_800563D0(void*, u32);
+extern "C" int func_800563E4(void*, u32);
+extern "C" int func_800563F8(void*, u32);
+extern "C" int func_8005640C(void*, u32);
+extern "C" int func_80056420(void*, u32);
+extern "C" int func_80056434(void*, u32);
+extern "C" int func_80056448(void*, u32);
+extern "C" int func_8005645C(void*, u32);
+extern "C" int func_80056470(void*, u32);
+extern "C" int func_80056484(void*, u32);
+extern "C" int func_80056498(void*, u32);
+extern "C" int func_800564C0(void*, u32);
 int func_80057BA0(u32 flags, ActParamT19ArgA* a, ActParamT19ArgB* b, ActParamT19ArgC* c);
 
 // ---- func_80053DE8 ----
@@ -563,8 +563,7 @@ struct ActParamCb18 {
 struct ActParamCb28 {
     virtual void _v00(); virtual void _v04(); virtual void _v08();
     virtual void _v0C(); virtual void _v10(); virtual void _v14();
-    virtual void _v18(); virtual void _v1C(); virtual void _v20();
-    virtual void _v24();
+    virtual void _v18(); virtual void _v1C();
     virtual void invoke28(ActParamData388* obj, u32 mask, u32 flag14,
                           u32 flag0C, u32 tick); // vt+0x28
 };
@@ -662,7 +661,7 @@ struct ActParamCbD3C {
     virtual void _v14();
     virtual void invoke18(void* obj, void* src);  // vt+0x18
 };
-void func_80054D3C(CActParamData* self, ActParamD3CMember* member);
+extern "C" void func_80054D3C(CActParamData* self, ActParamD3CMember* member);
 __declspec(noinline) int func_800550E8(CActParamData* self,
                                        ActParamD3CMember* member,
                                        ActParamD3CTimeRec* rec, int gate);

@@ -89,14 +89,17 @@ void* __dt___unnamed_CTagProcessor_cpp_CTagCodeLine(void* self, int deleting) {
 // Deleting destructor for the anonymous-namespace tag code classes.
 // MWCC emits the `if (this && deletingFlag) operator delete(this)` idiom
 // for an empty destructor; retail symbol is the annotation name below.
-void* __dt___unnamed_CTagProcessor_cpp_CTagCodeSelect(void* self, int deleting) {
+// extern "C" keeps the flat symbols.txt label (MWCC would otherwise append a
+// `__FPvi` param suffix, and the substring resolver then confuses this stub
+// with its ...Select2 twin below).
+extern "C" void* __dt___unnamed_CTagProcessor_cpp_CTagCodeSelect(void* self, int deleting) {
     if (self && deleting > 0) {
         ::operator delete(self);
     }
     return self;
 }
 
-void* __dt___unnamed_CTagProcessor_cpp_CTagCodeSelect2(void* self, int deleting) {
+extern "C" void* __dt___unnamed_CTagProcessor_cpp_CTagCodeSelect2(void* self, int deleting) {
     if (self && deleting > 0) {
         ::operator delete(self);
     }
@@ -588,11 +591,7 @@ __declspec(noinline) int func_8012615C(nw4r::lyt::AnimTransform* tag,
     // cases share the 0x280 output buffer.
     wchar_t namebuf[0x400];
     u16 outbuf[0x100];
-    wchar_t rows[0x60];
-    // Icon-tag locals (flag/color handler).
-    TagFlagTable flagTbl;
-    u32 vals[3];
-    s16 hdr[3];
+    wchar_t rows[0x30];
     // Context-walk locals: six ctx slots for the find/highlight walk pairs,
     // then the per-walk pair arrays and the highlight color temps - declared
     // at the top in the retail's frame order (first declared = highest
@@ -677,6 +676,9 @@ __declspec(noinline) int func_8012615C(nw4r::lyt::AnimTransform* tag,
                 // driven auto-advance, otherwise v is the skip counter.
                 s16 v = (s16)msg->buf[msg->field_810 + 3];
                 if (v == -1) {
+                    // int->float via the retail 0x43300000 magic (named
+                    // sdata2 constant): seed hi once, store (v ^ 0x8000)
+                    // into lo, then subtract the magic double.
                     f32 speed = msg->field_824;
                     if (speed < lbl_eu_80667208) {
                         msg->field_824 += lbl_eu_806671F4;
@@ -696,8 +698,14 @@ __declspec(noinline) int func_8012615C(nw4r::lyt::AnimTransform* tag,
                     }
                     return 2;
                 }
+                // Retail int->float lowering: a two-word temp on the stack
+                // (hi = raw value, lo = (v << 16) ^ 0x80000000) minus the
+                // named magic double lbl_eu_80667200.
+                TagConvTemp conv;
+                conv.w.hi = (u32)(s32)v;
+                conv.w.lo = (((u32)v) << 16) ^ 0x80000000;
                 f32 speed = msg->field_824;
-                if (speed < (f32)v) {
+                if (speed < (f32)(conv.d - lbl_eu_80667200)) {
                     if (speed < lbl_eu_806671F4 && member != 0)
                         member->v58(0, 0);
                     msg->field_824 += lbl_eu_806671F4;
@@ -1230,6 +1238,10 @@ __declspec(noinline) int func_8012615C(nw4r::lyt::AnimTransform* tag,
                 // <8 ...> icon tag: map the three header bytes through the
                 // 0x1B-entry flag table into icon ids (func_8004B9D4 call or
                 // pending field_848/field_850 stores), then advance 3.
+                // Scoped here: only this case touches the 0xD8-byte table.
+                TagFlagTable flagTbl;
+                u32 vals[3];
+                s16 hdr[3];
                 flagTbl = lbl_eu_804FF608;
                 hdr[0] = (s16)((msg->buf[msg->field_810 + 3] >> 8) & 0xff);
                 hdr[1] = (s16)(msg->buf[msg->field_810 + 3] & 0xff);
@@ -1723,8 +1735,9 @@ __declspec(noinline) int func_80127FB4(nw4r::lyt::AnimTransform* tag,
         member = tsrc->field_98;
 
     outbuf[0] = 0;
-    const u16* p = &msg->mBuf[msg->field_810];
-    u16 tagcode = *p;
+    u16 idx = msg->field_810;
+    u16 tagcode = msg->mBuf[idx];
+    const u16* p = &msg->mBuf[idx];
     switch (tagcode) {
     case 1: {
         // <1 hi|lo data...> raw text-range tag: copy hi+lo chars to the
@@ -1734,7 +1747,7 @@ __declspec(noinline) int func_80127FB4(nw4r::lyt::AnimTransform* tag,
         outbuf[0] = tagcode;
         outbuf[1] = h;
         for (u32 j = 0; j < count; j++)
-            outbuf[2 + j] = msg->mBuf[msg->field_810 + 4 + j];
+            outbuf[2 + j] = msg->mBuf[idx + 4 + j];
         outbuf[count + 2] = 0;
         u16 adv = count + 2;
         msg->field_810 += adv;
@@ -1751,7 +1764,7 @@ __declspec(noinline) int func_80127FB4(nw4r::lyt::AnimTransform* tag,
         outbuf[1] = d0;
         outbuf[2] = d1;
         outbuf[3] = 0;
-        msg->field_810 += 3;
+        msg->field_810 = idx + 3;
         pane->v7C(outbuf, msg->field_820);
         msg->field_820 += 3;
         goto finish;
@@ -1763,7 +1776,7 @@ __declspec(noinline) int func_80127FB4(nw4r::lyt::AnimTransform* tag,
     case 4: {
         // <4 v> wait-for-click tag: v == -1 holds the page.
         s16 v = (s16)p[3];
-        msg->field_810 += 2;
+        msg->field_810 = idx + 2;
         msg->field_820 = 0;
         return v == -1;
     }
@@ -1840,7 +1853,8 @@ __declspec(noinline) int func_80127FB4(nw4r::lyt::AnimTransform* tag,
         // 0x1B-entry flag table into icon ids (func_8004B9D4 call or
         // pending field_828/830/838 stores), then advance 3.
         u16 h0 = p[3];
-        u16 h1 = p[4];        hdr[0] = h0 >> 8;
+        u16 h1 = p[4];
+        hdr[0] = h0 >> 8;
         hdr[1] = h0 & 0xff;
         hdr[2] = h1 >> 8;
         if (msg->field_804 != 0 && tsrc != 0) {
@@ -1848,7 +1862,7 @@ __declspec(noinline) int func_80127FB4(nw4r::lyt::AnimTransform* tag,
             vals[0] = 0;
             vals[1] = 0;
             vals[2] = 0;
-            for (u32 k = 0; k < 3; k++) {
+            for (int k = 0; k < 3; k++) {
                 s16 id = hdr[k];
                 if (id == 0xff)
                     break;
@@ -1871,7 +1885,7 @@ __declspec(noinline) int func_80127FB4(nw4r::lyt::AnimTransform* tag,
                 }
             }
         }
-        msg->field_810 += 3;
+        msg->field_810 = idx + 3;
         goto finish;
     }
 
@@ -1885,7 +1899,7 @@ __declspec(noinline) int func_80127FB4(nw4r::lyt::AnimTransform* tag,
             else if (v == -1)
                 member->v58(0, 0);
         }
-        msg->field_810 += 2;
+        msg->field_810 = idx + 2;
         goto finish;
     }
 
@@ -1893,7 +1907,7 @@ __declspec(noinline) int func_80127FB4(nw4r::lyt::AnimTransform* tag,
         // Unknown code: push <code, 0> verbatim and advance both counters.
         outbuf[0] = tagcode;
         outbuf[1] = 0;
-        msg->field_810 += 1;
+        msg->field_810 = idx + 1;
         pane->v7C(outbuf, msg->field_820);
         msg->field_820 += 1;
         goto finish;

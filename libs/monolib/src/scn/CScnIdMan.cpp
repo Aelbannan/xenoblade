@@ -75,6 +75,6 @@ extern "C" u32 lbl_eu_8056EC80[0x4] = {
 extern "C" const char lbl_eu_80524338[0x10] = {
     0x43,0x53,0x63,0x6e,0x49,0x64,0x4d,0x61,0x6e,0x00,0x00,0x00,0x00,0x00,0x00,0x00 };
 
-DECOMP_FORCEACTIVE(CScnIdMan_cpp, lbl_eu_8056EC80);
-DECOMP_FORCEACTIVE(CScnIdMan_cpp, lbl_eu_80524338);
+// (retired DECOMP_FORCEACTIVE keep-alives: the vtable is referenced by the
+// ctor/dtor above; the RTTI name string is a section-defined global.)
 

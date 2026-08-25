@@ -64,6 +64,14 @@ struct ResListIUIBattle {
     u8 mOwnsList;                         // 0x1C
 };
 
+// Retail texture lookup helpers (unmangled symbols; defined in
+// CUIBattleManager.cpp, which accesses private members via friend decls
+// inside the class) - declared BEFORE the class with C linkage so the
+// friend declarations refer to these same C-linkage functions.
+extern "C" void* func_8012FD04(const char* name);
+extern "C" void* func_8012FD60(const char* name);
+extern "C" void* func_8012FC74(const char* name);
+
 class CUIBattleManager : public CTTask<CUIBattleManager>, public IWorkEvent {
 public:
     static CUIBattleManager* create(CProcess* pParent, CScnNw4r* pScene, mtl::ALLOC_HANDLE mHandle);
@@ -109,7 +117,9 @@ private:
     mtl::ALLOC_HANDLE mHeap;               // 0xEC
 
     // Retail free functions func_8012FD04 / func_8012FD60 / func_8012FC74
-    // (texture lookup helpers over the private arc-accessor fields).
+    // (texture lookup helpers over the private arc-accessor fields) are
+    // declared with C linkage at global scope above; these friends grant
+    // them member access.
     friend void* func_8012FD04(const char* name);
     friend void* func_8012FD60(const char* name);
     friend void* func_8012FC74(const char* name);

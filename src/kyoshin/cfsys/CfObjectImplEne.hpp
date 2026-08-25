@@ -3,6 +3,9 @@
 #include <types.h>
 #include "monolib/util/FixStr.hpp"
 #include "kyoshin/cf/CBattleManager.hpp"
+// (func_800821F8__Q22cf13CfGameManagerFv: CfSoundMan.hpp now carries the
+// single winning decl from CfGameManagerApi.hpp - no pre-include rename;
+// this TU only needs cf::CfSoundMan::func_801BFC38 from it.)
 #include "kyoshin/cf/CfSoundMan.hpp"
 #include "monolib/math/FloatUtils.hpp"  // H3 label-owner decl (lbl_eu_8066A208)
 

@@ -926,9 +926,9 @@ extern "C" void func_804E3D88(CScheduleItem* item);
 // record base/count, then run the item initializer over each 0x58-byte item.
 void* func_804DFA08(u32 size, s32 count) {
     s32 i;
+    lbl_eu_80661718.count = count;
     u32 aligned = (size + 0x1f) & ~0x1f;
     lbl_eu_80661718.base = (CScheduleItem*)aligned;
-    lbl_eu_80661718.count = count;
     lbl_eu_80661718.freeCount = 0;
     lbl_eu_80661718.lastHandle = 0;
     i = 0;
@@ -1015,9 +1015,9 @@ extern "C" void func_804C8718(CEffectObj* obj);
 // object.
 void* func_804DFC48(u32 size, s32 count) {
     s32 i;
+    lbl_eu_80661728.mCount = count;
     u32 aligned = (size + 0x1f) & ~0x1f;
     lbl_eu_80661728.mBase = (CEffectObject*)aligned;
-    lbl_eu_80661728.mCount = count;
     lbl_eu_80661728.mActiveCount = 0;
     lbl_eu_80661728.mLastHandle = 0;
     i = 0;
@@ -1117,8 +1117,8 @@ extern "C" void func_804CC2B8(CEffectNode* node);
 // follow-on table (returning its end pointer).
 extern "C" void* func_804DFF00(u32 size, u32 count) {
     u32 a = (size + 0x1f) & ~0x1f;
-    lbl_eu_80661738.mCount = count;
     u32 base = (a + 0x1f) & ~0x1f;
+    lbl_eu_80661738.mCount = count;
     lbl_eu_80661738.mBase = (CEffectNode*)base;
     lbl_eu_80661738.mField08 = 0;
     lbl_eu_80661738.mLastHandle = 0;
@@ -1557,7 +1557,8 @@ void func_804E0CF0(CSchedAnimItem* item, u8* base) {
         return;
     }
     CEntryU16PairElem* ret = (CEntryU16PairElem*)(base + item->mField05 * 8);
-    f32 rnd = (f32)ml::math::mtRand() / lbl_eu_8066B2AC - lbl_eu_8066B2B0;
+    s32 rdraw = ml::math::mtRand();
+    f32 rnd = (f32)rdraw / lbl_eu_8066B2AC - lbl_eu_8066B2B0;
     f32 scale;
     if (base != NULL) {
         scale = *(f32*)(base - 8);
@@ -1831,8 +1832,10 @@ extern "C" void func_804E196C(CSchedAnimItem* item, u8* base) {
         if (w != 0x4000) {
             item->field_0x04 |= 0x80;
         } else {
-            // 32-bit intermediate (cast the whole AND, not the mask) so MWCC
-            // emits rlwinm instead of andi. (docs/MWCC_CASES.md btm_sec)
+            // NOTE(open-item us-804e5e08): single-expression, split-statement,
+            // named-temp and u32-temp shapes all emit rlwinm 25,31; retail has
+            // 25,23 (clear-only-bit24 without subreg narrowing). Residual is
+            // this one mask plus arg-color reg swaps.
             item->field_0x04 = (u8)((item->field_0x04 | 0x8) & ~0x80);
         }
     }
@@ -1978,22 +1981,25 @@ void func_804E1C1C(CSchedAnimItem* item, CEntryElem* entries, u8* arg3, f32 f1) 
     if (item->mField0C != lbl_eu_8066B290 || item->mField10 != lbl_eu_8066B290) {
         devXY = 1;
     }
-    f32 zw0 = item->mField14;
+    u8 sf2;
+    u8 sf;
     if (devXY != 0) {
-        item->mScaleFlag |= 1;
+        sf = item->mScaleFlag | 1;
     } else {
-        item->mScaleFlag &= (u8)~1;
+        sf = item->mScaleFlag & (u8)~1;
     }
+    item->mScaleFlag = sf;
     // deviate bit 6: z/w
     u8 devZW = 0;
-    if (zw0 != lbl_eu_8066B290 || item->mField18 != lbl_eu_8066B290) {
+    if (item->mField14 != lbl_eu_8066B290 || item->mField18 != lbl_eu_8066B290) {
         devZW = 1;
     }
     if (devZW != 0) {
-        item->mScaleFlag |= 2;
+        sf2 = item->mScaleFlag | 2;
     } else {
-        item->mScaleFlag &= (u8)~2;
+        sf2 = item->mScaleFlag & 1;
     }
+    item->mScaleFlag = sf2;
 }
 
 // Re-initialize a schedule item from a 0x10-stride entry blob with three

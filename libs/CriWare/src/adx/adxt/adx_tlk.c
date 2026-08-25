@@ -125,11 +125,26 @@ typedef struct ADXT_CST_ {
     f32 limitLo;     /* 0x1C */
 } ADXT_CST_;
 
+/* Materialize the 0x43300000_<lo> bias double from explicit halfwords;
+ * MWCC lowers this to the retail lis/stw + lfd stack-double shape instead of
+ * pooling a local 2^52 constant. */
+static f64 ADXT_BiasDouble(u32 lo) {
+    union {
+        u32 w[2];
+        f64 d;
+    } t;
+    t.w[0] = 0x43300000u;
+    t.w[1] = lo;
+    return t.d;
+}
+
 /* Signed int -> float via the 0x4330-bias double trick: flip the sign bit,
- * add the 2^52 bias implicitly through the exponent, then subtract the
- * named 2^52 rodata constant to recover the signed value. */
+ * build 2^52 + flipped bits as a raw double, then subtract the shared
+ * hi-magic constant at lbl_eu_805162D8 (== cst->conv) to recover the value.
+ * (cst is kept for call-site compatibility; the constant is read through its
+ * retail symbol so MWCC uses absolute lis/addi addressing like retail.) */
 #define ADXT_S2F(cst, v) \
-    ((f32)((f64)(u32)((u32)(v) ^ 0x80000000u) - (cst)->conv))
+    ((f32)(ADXT_BiasDouble((u32)(v) ^ 0x80000000u) - lbl_eu_805162D8))
 
 /* Full adxt handle (0xC4 bytes, table at lbl_eu_805E26E8) */
 typedef struct ADXT_OBJ_ {
@@ -278,8 +293,8 @@ void* adxt_Create(s32 numChan, void* work, s32 workEnd) {
     h->svrFreq = lbl_eu_805E4F18;
     h->numSector = (s16)((s32)h->workSize / 0x800);
     h->sectorSize = (s16)(lbl_eu_805162D0 *
-                          (f32)((f64)(u32)((u32)(s32)h->numSector ^
-                                           0x80000000u) -
+                          (f32)(ADXT_BiasDouble((u32)(s32)h->numSector ^
+                                                0x80000000u) -
                                 lbl_eu_805162D8));
     h->f40 = 0;
     for (i = 0; i < numChan; i++) {

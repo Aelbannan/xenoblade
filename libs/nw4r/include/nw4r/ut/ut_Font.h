@@ -46,8 +46,11 @@ struct Glyph {
 // local vtable; the inline ctor assigns the retail vtable label explicitly
 // and copies the default reader from the shared pool (MWCC_CASES
 // "Retail-owned vtable data").
+// lbl_eu_8056AE60 is a content-equal second copy of that pool entry;
+// retail RomFont's ctor reads its default reader from this one.
 extern "C" void* __vt__Q34nw4r2ut4Font[];
 extern "C" CharStrmReader::ReadFunc lbl_eu_8056AF28;
+extern "C" CharStrmReader::ReadFunc lbl_eu_8056AE60;
 
 class __declspec(novtable) Font {
 public:
@@ -57,6 +60,12 @@ public:
     Font() {
         *(void**)this = (void*)__vt__Q34nw4r2ut4Font;
         mReadFunc = lbl_eu_8056AF28;
+    }
+    // RomFont's retail ctor copies its default reader from the second
+    // content-equal pool copy (lbl_eu_8056AE60); pass that pool by address.
+    explicit Font(CharStrmReader::ReadFunc* pReadFunc) {
+        *(void**)this = (void*)__vt__Q34nw4r2ut4Font;
+        mReadFunc = *pReadFunc;
     }
     virtual ~Font() {} // at 0x8
 

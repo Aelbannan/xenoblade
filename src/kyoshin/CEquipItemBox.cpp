@@ -176,7 +176,7 @@ void CEquipItemBox::func_80282E24() {
 #pragma push
 #pragma auto_inline off
 #pragma optimize_for_size on
-extern "C" __declspec(noinline) int func_80282FA0(CEquipItemGrid* grid, u16 param) {
+extern "C" __declspec(noinline) s8 func_80282FA0(CEquipItemGrid* grid, u16 param) {
     u16 offset = (u16)((s8)grid->idx * 0x1e + param);
     if ((u32)offset < (u32)grid->count) {
         CEquipItemData* item = &grid->data[offset];
@@ -202,10 +202,10 @@ extern "C" __declspec(noinline) int func_80282FA0(CEquipItemGrid* grid, u16 para
                     }
                     return -2;
                 }
-                return -(item->unk3 >= 1);
+                return item->unk3 ? -1 : 0;
             }
             case 3:
-                return -(item->unk3 >= 1);
+                return item->unk3 ? -1 : 0;
             }
         }
     }
@@ -559,12 +559,14 @@ extern "C" __declspec(noinline) void func_80283E64(CEquipItemGrid* grid, u32 cat
                 u16 keyA = (u16)((CEquipItemBoxItemImplView*)implB)->vf54(objB);
                 u16 keyB = (u16)((CEquipItemBoxItemImplView*)implA)->vf54(objA);
                 if (keyA < keyB) {
-                    CEquipItemData tC;
-                    CEquipItemData tB;
                     CEquipItemData tA;
+                    CEquipItemData tB;
+                    CEquipItemData tC;
                     func_80283B24(&tA, a);
-                    func_80282594(a, func_80283B24(&tB, b));
-                    func_80282594(b, func_80283B24(&tC, &tA));
+                    func_80283B24(&tB, b);
+                    func_80282594(a, &tB);
+                    func_80283B24(&tC, &tA);
+                    func_80282594(b, &tC);
                     swapped = 1;
                 }
             } else if (cat == 9) {
@@ -587,12 +589,14 @@ extern "C" __declspec(noinline) void func_80283E64(CEquipItemGrid* grid, u32 cat
                     doSwap = (objA->unk7 & 0x3F) > (objB->unk7 & 0x3F);
                 }
                 if (doSwap) {
-                    CEquipItemData tC;
-                    CEquipItemData tB;
                     CEquipItemData tA;
+                    CEquipItemData tB;
+                    CEquipItemData tC;
                     func_80283B24(&tA, a);
-                    func_80282594(a, func_80283B24(&tB, b));
-                    func_80282594(b, func_80283B24(&tC, &tA));
+                    func_80283B24(&tB, b);
+                    func_80282594(a, &tB);
+                    func_80283B24(&tC, &tA);
+                    func_80282594(b, &tC);
                     swapped = 1;
                 }
             } else {
@@ -600,12 +604,14 @@ extern "C" __declspec(noinline) void func_80283E64(CEquipItemGrid* grid, u32 cat
                 u16 kindA = func_80139358(objA->word >> 20);
                 u16 kindB = func_80139358(objB->word >> 20);
                 if (kindA > kindB) {
-                    CEquipItemData tC;
-                    CEquipItemData tB;
                     CEquipItemData tA;
+                    CEquipItemData tB;
+                    CEquipItemData tC;
                     func_80283B24(&tA, a);
-                    func_80282594(a, func_80283B24(&tB, b));
-                    func_80282594(b, func_80283B24(&tC, &tA));
+                    func_80283B24(&tB, b);
+                    func_80282594(a, &tB);
+                    func_80283B24(&tC, &tA);
+                    func_80282594(b, &tC);
                     swapped = 1;
                 }
             }
@@ -918,8 +924,10 @@ extern "C" __declspec(noinline) void func_80284C30(CEquipItemGrid* grid, u32 mod
                     CEquipItemData tB;
                     CEquipItemData tC;
                     func_80283B24(&tA, a);
-                    func_80282594(a, func_80283B24(&tB, b));
-                    func_80282594(b, func_80283B24(&tC, &tA));
+                    func_80283B24(&tB, b);
+                    func_80282594(a, &tB);
+                    func_80283B24(&tC, &tA);
+                    func_80282594(b, &tC);
                     swapped = 1;
                 }
             } else {
@@ -928,8 +936,10 @@ extern "C" __declspec(noinline) void func_80284C30(CEquipItemGrid* grid, u32 mod
                     CEquipItemData tB;
                     CEquipItemData tC;
                     func_80283B24(&tA, a);
-                    func_80282594(a, func_80283B24(&tB, b));
-                    func_80282594(b, func_80283B24(&tC, &tA));
+                    func_80283B24(&tB, b);
+                    func_80282594(a, &tB);
+                    func_80283B24(&tC, &tA);
+                    func_80282594(b, &tC);
                     swapped = 1;
                 }
             }
@@ -1719,25 +1729,31 @@ extern "C" void func_802867E0(CEquipItemBox* self) {
         // Sort menu idle: retail dispatches on unk_375 FIRST -- no sel==-1
         // gate here; that check happens in the caller/dispatch above.
         if (self->unk_375 != 0) {
-            // Scan backward for next non-empty page
+            // Scan backward for next non-empty page. On a hit retail stores
+            // pg back into unk_377 INSIDE the loop, and the cursor lookup
+            // below uses the combined index unk_376*4 + unk_377.
             const u16* arr = (const u16*)(self->unk_20c + 0xb0);
             s8 pg = (s8)(self->unk_377 - 1);
             while (pg != (s8)self->unk_377) {
                 if (pg < 0) pg = 3;
-                if (ArrayGet12(arr, (u8)((s8)self->unk_376 * 4 + pg)) != 0) break;
+                if (ArrayGet12(arr, (u8)((s8)self->unk_376 * 4 + pg)) != 0) {
+                    self->unk_377 = pg;
+                    break;
+                }
                 pg--;
             }
-            self->unk_376 = (u8)((s8)self->unk_376 * 4 + pg);
             nw4r::math::VEC3 tmp;
-            func_801CB9D8(&tmp, arr, (u32)((u8)pg));
+            func_801CB9D8(&tmp, arr,
+                          (u32)((u8)((s8)self->unk_376 * 4 + self->unk_377)));
             ((CEquipItemBoxCur18View*)&self->ccur18[0])->vf04(&tmp);
         } else {
             // Decrement unk_1f5 with wrap
-            u8 val = self->unk_1f5 - 1;
+            u8 cur = self->unk_1f5;
+            CEquipItemGrid* wrapGrid = (CEquipItemGrid*)((u8*)self + 0x37e);
+            u8 val = cur - 1;
             self->unk_1f5 = val;
             if ((s8)(u8)val < -1)
-                val = ::func_802832B4((CEquipItemBox*)((u8*)self + 0x37e)) - 1;
-            self->unk_1f5 = val;
+                self->unk_1f5 = ::func_802832B4((CEquipItemBox*)wrapGrid) - 1;
             func_80289CC0(self);
             func_80289AA4(self);
         }
@@ -2417,13 +2433,12 @@ extern "C" __declspec(noinline) int func_8028876C(CEquipItemBox* self) {
 // Returns 1 when the lookup byte of the grid cell selected by (unk_1f5) equals
 // func_801392B4's category byte; an unk_1f5 of -1 always returns 0.
 extern "C" int func_80288948(CEquipItemBox* self) {
-    u8 sel = self->unk_1f5;
-    if ((s8)sel == -1) return 0;
+    if ((s8)self->unk_1f5 == -1) return 0;
     u32 b;
-    u32 a;
     int idx;
     u8 cat;
-    idx = sel * 5 + self->unk_1f4;
+    u32 a;
+    idx = self->unk_1f4 + self->unk_1f5 * 5;
     cat = (u8)((self->unk_1fc >> 8) & 0xff);
     a = func_802832D8((CEquipItemGrid*)((u8*)self + 0x37E), (u8)idx);
     b = func_801392B4(cat);
@@ -2467,9 +2482,12 @@ void CEquipItemBox::func_80288A6C() {
 // emit a `bl` to the unmangled retail name.
 extern "C" __declspec(noinline) void func_80288AC0(CEquipItemBox* self) {
     if (self->field_38 == 0) return;
-    if (self->field_34 == 0) return;
-    func_80139198(self);
-    self->unk_42 = 1;
+    if (self->field_34 == 0)
+        return;
+    else {
+        func_80139198(0);
+        self->unk_42 = 1;
+    }
 }
 
 // Per-cell texture bind: kind-3 items resolve an id-keyed icon first, then
@@ -3115,7 +3133,7 @@ extern "C" void func_8028A5D8(CEquipItemBox* self, int a) {
         char name1[0x20];
         char name2[0x20];
         b = buf[i];
-        u8 p = b + 1;
+        s8 p = b + 1;
         sprintf(name1, &lbl_eu_8050EFDC[0x2df], p);
         sprintf(name2, &lbl_eu_8050EFDC[0x2ee], p);
         flagA = 0;

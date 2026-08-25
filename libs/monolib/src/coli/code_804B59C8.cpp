@@ -5,6 +5,7 @@
 #include <math.h>
 #include <cstring>
 #include <revolution/os/OSFastCast.h>
+#include <decomp.h>
 #include <revolution/mtx/mtxvec.h>
 #include <revolution/mtx/mtx.h>
 #include <revolution/mtx/vec.h>
@@ -462,7 +463,7 @@ extern "C" void func_804B6D30(CColiRegObj* self, const Vec* in1, const Vec* in2)
 extern "C" void func_804B6F58(CColiRegObj* self, ml::CVec3* vecs, const Vec* in);
 extern "C" u32 func_804B7044(u8* self, float f);
 extern "C" u32 func_804B7074(u8* self, float f);
-extern "C" void func_804B7944(CColiRegObj* self, const u16* list, int count);
+extern "C" void func_804B7944(CColiRegObj* self, u16* list, int count);
 extern "C" void func_804B7A00(CColiRegObj* self, u16* list, int count);
 extern "C" void func_804B7AC8(void);
 
@@ -737,6 +738,20 @@ extern "C" void func_804B61FC(CColiObj* self, CColiQuery* query) {
     if (query->field_0x00 != 0) return;
     CColiEntry* entry = &self->field_0x40[query->field_0x02];
     u32 flags = entry->field_0x02;
+    if (w->b.bitTable[(flags >> 5) & 0x7F] & (1u << (flags & 0x1F))) return;
+    if (!func_804BAE1C((const Vec3*)&entry->field_0x64, (const Vec3*)&entry->field_0x70)) return;
+    u16* countPtr = &w->l.listMgr.count;
+    u16* entries = w->l.listMgr.list;
+    if (*countPtr >= 0x10) return;
+    entries[*countPtr] = query->field_0x02;
+    *countPtr = *countPtr + 1;
+}
+
+extern "C" void func_804B62B0(CColiObj* self, CColiQuery* query) {
+    CColiWork* w = &lbl_eu_8065D1A0;
+    if (query->field_0x00 != 0) return;
+    CColiEntry* entry = &self->field_0x40[query->field_0x02];
+    u32 flags = entry->field_0x02;
     u32* bits = (u32*)((u8*)w + 0x2000);
     if (bits[(flags >> 3) & 0x7F] & (1u << (flags & 0x1F))) return;
     if (!func_804BAE1C((const Vec3*)&entry->field_0x64, (const Vec3*)&entry->field_0x70)) return;
@@ -747,32 +762,19 @@ extern "C" void func_804B61FC(CColiObj* self, CColiQuery* query) {
     *count = *count + 1;
 }
 
-extern "C" void func_804B62B0(CColiObj* self, CColiQuery* query) {
-    CColiWork* w = &lbl_eu_8065D1A0;
-    if (query->field_0x00 != 0) return;
-    CColiEntry* entry = &self->field_0x40[query->field_0x02];
-    u32 flags = entry->field_0x02;
-    u32* bits = w->b.bitTable;
-    if (bits[(flags >> 3) & 0x7F] & (1u << (flags & 0x1F))) return;
-    if (!func_804BAE1C((const Vec3*)&entry->field_0x64, (const Vec3*)&entry->field_0x70)) return;
-    CColiListMgr* lm = &w->l.listMgr;
-    if (lm->count >= 0x10) return;
-    lm->list[lm->count] = query->field_0x02;
-    lm->count = lm->count + 1;
-}
-
 extern "C" void func_804B6364(CColiObj* self, CColiQuery* query) {
     CColiWork* w = &lbl_eu_8065D1A0;
     if (query->field_0x00 != 0) return;
     CColiEntry* entry = &self->field_0x40[query->field_0x02];
     u32 flags = entry->field_0x02;
-    u32* bits = w->b.bitTable;
+    u32* bits = (u32*)((u8*)w + 0x2000);
     if (bits[(flags >> 3) & 0x7F] & (1u << (flags & 0x1F))) return;
     if (!func_804BAF34((const Vec3*)&entry->field_0x64, (const Vec3*)&entry->field_0x70)) return;
-    CColiListMgr* lm = &w->l.listMgr;
-    if (lm->count >= 0x10) return;
-    lm->list[lm->count] = query->field_0x02;
-    lm->count = lm->count + 1;
+    u16* count = (u16*)((u8*)w + 0x215E);
+    u16* list = (u16*)((u8*)w + 0x2160);
+    if (*count >= 0x10) return;
+    list[*count] = query->field_0x02;
+    *count = *count + 1;
 }
 
 
@@ -784,13 +786,14 @@ extern "C" void func_804B6418(CColiObj* self, CColiQuery* query) {
     if (query->field_0x00 != 0) return;
     CColiEntry* entry = &self->field_0x40[query->field_0x02];
     u32 flags = entry->field_0x02;
-    u32* bits = w->b.bitTable;
+    u32* bits = (u32*)((u8*)w + 0x2000);
     if (bits[(flags >> 5) & 0x7F] & (1u << (flags & 0x1F))) return;
     if (!func_804BB0C8((const f32*)&entry->field_0x64, (const f32*)&entry->field_0x70)) return;
-    CColiListMgr* lm = &w->l.listMgr;
-    if (lm->count >= 0x10) return;
-    lm->list[lm->count] = query->field_0x02;
-    lm->count = lm->count + 1;
+    u16* count = (u16*)((u8*)w + 0x215E);
+    u16* list = (u16*)((u8*)w + 0x2160);
+    if (*count >= 0x10) return;
+    list[*count] = query->field_0x02;
+    *count = *count + 1;
 }
 
 void func_804B64CC(CColiObj* self, CColiQuery* query) {
@@ -1330,18 +1333,16 @@ void func_804B791C(CColiRegObj* self, u16* entry, u16 value) {
 // in the shared bit-table (base held in lbl_eu_80663AC8) and, when the
 // entry's category passes the manager's filter flags, invoke the register
 // callback (member-function pointer at +0x7C).
-void func_804B7944(CColiRegObj* self, const u16* list, int count) {
-    for (int i = 0; i < count; i++) {
-        u16 idx = list[i];
+void func_804B7944(CColiRegObj* self, u16* list, int count) {
+    for (int i = 0; i < count; i++, list++) {
         u32 base = lbl_eu_80663AC8;
-        u32 wordIdx = idx >> 5;
-        u32 bitIdx = idx & 0x1F;
+        u32 wordIdx = *list >> 5;
+        u32 bitIdx = *list & 0x1F;
         u32 w = ((u32*)base)[wordIdx];
         u32 mask = 1u << bitIdx;
         if (w & mask) continue;
         ((u32*)base)[wordIdx] = w | mask;
-        CColiEntry2* e = &self->field_0x30[idx];
-        u32 v = self->field_0x28[e->field_0x12];
+        u32 v = self->field_0x28[self->field_0x30[*list].field_0x12];
         if (lbl_eu_8065F1C8.field_0x128 & v) continue;
         (self->*self->field_0x7C)();
     }
@@ -1394,9 +1395,9 @@ public:
 // is the entry index plus the object's bit-array offset; lbl_eu_80663AC8
 // holds the base pointer of the shared bit array) and invoke the dispatch
 // callback for each newly reserved entry.
-void func_804B7ACC(CColiBitObj* self, const u16* list, int count) {
+void func_804B7ACC(CColiBitObj* self, u16* list, int count) {
     for (int i = 0; i < count; i++) {
-        int n = list[i] + self->field_0x6C;
+        int n = self->field_0x6C + list[i];
         u32* bits = (u32*)lbl_eu_80663AC8;
         // Word fetched before the mask so the scheduler matches retail.
         u32 word = bits[n >> 5];
@@ -1408,9 +1409,7 @@ void func_804B7ACC(CColiBitObj* self, const u16* list, int count) {
     }
 }
 
-void func_804B7ACC(){}
-
-// 16-byte raycast entry indexed from CColiObj2::field_0x5C.
+// 16-byte raycast entry
 struct CColiEntry16 {
     f32 field_0x00;  // 0x00 - plane offset
     u16 field_0x04;  // 0x04
@@ -1605,7 +1604,7 @@ void func_804B8078(CColiMoverState* self, int idx) {
         return;
     }
     CColiOutEntry* e = &reinterpret_cast<CColiOutEntry*>(self->field_0x60)[idx];
-    e->field_0x00 &= ~3u;
+    e->field_0x00 = DECOMP_PPC_RLWINM(e->field_0x00, 0, 31, 29);
     e->field_0x04 = lbl_eu_8066AED0;
 }
 

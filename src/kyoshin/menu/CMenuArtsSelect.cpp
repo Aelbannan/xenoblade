@@ -21,15 +21,9 @@
 #include "monolib/work/CTTask.hpp"
 #include "monolib/work/CWorkThreadSystem.hpp"
 
-// CUIBattleManager.hpp declares func_8012FD60/func_8012FC74 as C++-linkage
-// friends (mangled), but the retail symbols at these call sites are unmangled
-// (texture lookup helpers); rename the friend decls out of the way and declare
-// C-linkage copies in the extern "C" block below.
-#define func_8012FD60 artsSelectUiBmFD60Unused
-#define func_8012FC74 artsSelectUiBmFC74Unused
+// (func_8012FD60/func_8012FC74: single extern "C" decls now live on
+// CUIBattleManager.hpp - no guard needed.)
 #include "kyoshin/CUIBattleManager.hpp"
-#undef func_8012FC74
-#undef func_8012FD60
 #include <nw4r/math.h>
 
 // CVision.hpp's lbl_eu_80663E24 copy is volatile, which clashes with
@@ -46,16 +40,17 @@
 #define func_8017FD44 artsSelectSuddenCommuFd44Unused
 #include "kyoshin/cf/CSuddenCommu.hpp"
 #undef func_8017FD44
-// CChain.hpp:737 declares func_80107C54 with (void*, int), conflicting with
-// this TU's (CMenuArtsSelect*, s32) extern "C" import used by the matched
-// func_80104454; rename the CChain.hpp copy out of the way. Its volatile
-// lbl_eu_80663E24 also clashes with CfObjectMove.hpp's non-volatile extern.
-#define func_80107C54 artsSelectChainSlotProbeUnused
+// CChain.hpp's lbl_eu_80663E24 copy is volatile and clashes with
+// CfObjectMove.hpp's non-volatile extern (excluded symbol, other agent).
+// (func_80107C54: the TU-local decl now matches CChain.hpp's (void*, s32)
+// form - no guard needed.)
 // CChainActorList.hpp (via CChain.hpp) declares func_8017FD44(void*);
 // this TU uses the C-linkage no-arg version.
+// RESIDUAL: two load-bearing caller conventions exist for func_8017FD44
+// (no-arg here/CfCam/CtrlPc vs void*-arg in CSuddenCommu/CMenuKeyAssign);
+// converting the arg-taking sites would change their r3 setup codegen.
 #define func_8017FD44 artsSelectChainFd44Unused
 #include "kyoshin/cf/chain/CChain.hpp"
-#undef func_80107C54
 #undef func_8017FD44
 #include "kyoshin/cf/CBattleManager.hpp"
 #include "kyoshin/cf/CfGameManager.hpp"
@@ -316,7 +311,7 @@ extern "C" void func_80104454(CMenuArtsSelect* self);
 extern "C" void func_80107580(CMenuArtsSelect*);
 extern "C" void func_801072E0(CMenuArtsSelect*);
 extern "C" int func_80107970(CMenuArtsSelect*, s32);
-extern "C" int func_80107C54(CMenuArtsSelect*, s32);
+extern "C" int func_80107C54(void*, int);   // aligned with CChain.hpp's form
 // Move calls these helpers through their UNMANGLED retail symbols (retail
 // reloc targets are the C-linkage names, not the mangled member names).
 extern "C" void func_80105A34(CMenuArtsSelect* self);
@@ -354,9 +349,10 @@ extern "C" void func_801398A4(nw4r::lyt::Layout*, const char*, s16*, int);
 extern "C" int CChain_isValidChain(u8* a1, u8* a2, int a3);
 extern "C" int func_8027DF38(u8* self, u8* actor, int flag, int index);
 extern "C" int func_802795D4(u8* self, int param);
-extern "C" u8* func_8012FD60(const char* name);
-extern "C" u8* func_8012FC74(const char* name);
-extern "C" void func_80137F88(nw4r::lyt::Pane* pane, u8* tex);
+// (func_8012FD60/func_8012FC74: declared on CUIBattleManager.hpp, void*
+// return - the old local u8* copies are gone; call sites cast.)
+extern "C" void func_80137F88(void* pane, void* tex);   // pane texture setter
+
 extern s16 lbl_eu_804FD11C[];  // rodata selTab (s16[5]) - same table as lbl_eu_804FD0D0+0x4c
 extern "C" int func_800DA06C(void*, void*);
 extern "C" void func_8010EDDC(void*, u8);
@@ -3573,12 +3569,12 @@ void CMenuArtsSelect::func_801080F8() {
                 unk308 = (unk308 | mask) | 0x20;
             }
             char* tex = func_80138F78(param->mCheckFlag);
-            u8* res = func_8012FD60(tex);
+            u8* res = static_cast<u8*>(func_8012FD60(tex));
             if (res != NULL) {
                 func_80137F88(reinterpret_cast<nw4r::lyt::Pane*>(unk200[i]), res);
             }
             tex = func_80138F78(param->mField72);
-            res = func_8012FC74(tex);
+            res = static_cast<u8*>(func_8012FC74(tex));
             if (res != NULL) {
                 func_80137F88(reinterpret_cast<nw4r::lyt::Pane*>(unk224[i]), res);
             }

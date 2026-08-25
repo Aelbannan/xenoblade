@@ -45,8 +45,8 @@ extern "C" __declspec(align(8)) char lbl_eu_8056EBE0[0x90] = {
     0x72, 0x74, 0x69, 0x6F, 0x6E, 0x20, 0x49, 0x73, 0x56, 0x61, 0x6C, 0x69, 0x64, 0x28, 0x29, 0x00,
     0x67, 0x33, 0x64, 0x5F, 0x66, 0x6F, 0x67, 0x2E, 0x68, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,
 };
-DECOMP_FORCEACTIVE(CScnFogMan_cpp, lbl_eu_8056EBE0);
-DECOMP_FORCEACTIVE(CScnFogMan_cpp, lbl_eu_80524218);
+// (retired DECOMP_FORCEACTIVE keep-alives: assert-blob and RTTI name are
+// section-defined globals that survive linking without text refs.)
 
 // Constructor is a C-ABI free function named __ct__CScnFogMan (retail has no
 // mangled arg suffix), so it must be given extern "C" linkage to keep the name.

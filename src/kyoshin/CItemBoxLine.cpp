@@ -3,7 +3,13 @@
 
 #include "kyoshin/harness_catalog.hpp"
 #include "kyoshin/CBaseCur.hpp"
+#define func_801361E8 ciblOwnerE8Unused
 #include "kyoshin/CItemBoxLine.hpp"
+#undef func_801361E8
+// Retail passes func_801361E8's return through untruncated at the
+// func_801F1E64 site, so this TU needs the full-width view. All other sites
+// assign through u8 locals, keeping their conversions identical.
+extern "C" u32 func_801361E8(u32, const char*, unsigned int);
 #include <nw4r/lyt/lyt_layout.h>
 #include <nw4r/lyt/lyt_pane.h>
 #include "monolib/work/CEventFile.hpp"
@@ -24,6 +30,7 @@ int func_801F2880(u32 unused, u32 key);
 void func_80137038(nw4r::lyt::Layout*, nw4r::lyt::DrawInfo*, int, int);
 int sprintf(char*, const char*, ...);
 extern "C" void func_80136910__FPQ34nw4r3lyt6LayoutPcUc(nw4r::lyt::Layout*, char*, u32);
+extern "C" void func_801375A0(nw4r::math::VEC3* output, nw4r::lyt::Pane* pane);
 
 // ============================================================================
 // func_801ED774: busy-guard chain - only read the selector byte when every
@@ -475,7 +482,45 @@ ret0:
     return 0;
 }
 
-void func_801EC9E0(){}
+// ============================================================================
+// func_801EC9E0: per-item display-count key (same shape as the equip item
+// box's func_80283B60). Category band selects the computation - cat 3 scales
+// the bdat count by a per-item float record, cats 2-8 accumulate a per-count
+// increment from two sdata2 floats, everything else passes the raw count
+// through. Result is returned *10.
+// ============================================================================
+extern "C" u32 __cvt_fp2unsigned(double);
+extern "C" const f32 lbl_eu_80668108[];
+extern "C" const f32 lbl_eu_80668114;
+extern "C" const f32 lbl_eu_80668118;
+#pragma push
+#pragma optimize_for_size on
+extern "C" u32 func_801EC9E0(void* self, unsigned int itemData) {
+    u32 itemId = func_801393CC(itemData);
+    u32 kind = func_801392E4(itemData);
+    u16 cat = func_80139358(itemData);
+    char* pool = lbl_eu_805071B0;
+    u32 result = 0;
+    if ((u16)kind == 3) {
+        u32 v = func_801361E8((u32)lbl_eu_806640EC, pool + 0x5a, itemData);
+        u16 count = func_80136254(itemId, pool + 0x11b, cat);
+        f32 rate = lbl_eu_80668108[(u8)v];
+        result = __cvt_fp2unsigned(((double)(u32)count - (double)rate) * (double)rate);
+    } else if ((u16)kind == 9 || (u16)kind < 2 || (u16)kind > 8) {
+        u16 count = func_80136254(itemId, pool + 0x11b, cat);
+        result = count;
+    } else {
+        u16 count = func_80136254(itemId, pool + 0x11b, cat);
+        u8 n = (u8)func_801361E8(itemId, pool + 0x106, cat);
+        float inc = lbl_eu_80668114;
+        for (u8 i = 0; i < n; i++) {
+            inc += lbl_eu_80668118;
+        }
+        result = __cvt_fp2unsigned((double)(u32)count * (double)inc);
+    }
+    return result * 10;
+}
+#pragma pop
 
 // ============================================================================
 // func_801ECC10: build the item-box line layout - load the layout arc, bind
@@ -703,7 +748,7 @@ void CItemBoxLine::func_801EDA4C(unsigned char val) {
     if (n >= 9) {
         return;
     }
-    reinterpret_cast<unsigned char*>(this)[0x5a + n] = val;
+    *((unsigned char*)this + n + 0x5a) = val;
     reinterpret_cast<unsigned char*>(this)[0x63] = n + 1;
 }
 
@@ -1779,6 +1824,46 @@ void func_801F061C(CItemBoxLine* self) {
 }
 
 // ============================================================================
+// func_801F071C: move the active cursor onto its pane. When no tab entry is
+// selected (unk38C == -1) the tab cursor (mCurA0) tracks the pane named from
+// the current tab position and the line cursor (mCur70) is hidden; otherwise
+// the line cursor tracks the slot pane and the tab cursor is hidden. The
+// cursor Move virtual receives the pane's accumulated translate with x scaled
+// by the fixed reference pane's +0x44 scale.
+// ============================================================================
+extern "C" void func_801F071C(void* selfPtr) {
+    CItemBoxLine* self = (CItemBoxLine*)selfPtr;
+    s16 sel = self->unk38C;
+    if (sel == -1) {
+        char name[0x20];
+        sprintf(name, &lbl_eu_805071B0[0x351], (s8)self->field6D + 1);
+        nw4r::lyt::Pane* pane =
+            self->field40->GetRootPane()->FindPaneByName(name, true);
+        nw4r::math::VEC3 pos;
+        func_801375A0(&pos, pane);
+        void* refPane =
+            self->field40->GetRootPane()->FindPaneByName(&lbl_eu_805071B0[0x3cc], true);
+        pos.x *= *(f32*)((u8*)refPane + 68);
+        reinterpret_cast<CIBLCur70View*>(&self->mCurA0)->vf02(&pos);
+        func_801D216C(&self->mCurA0, 1);
+        func_801D216C(&self->mCur70, 0);
+    } else {
+        char name[0x20];
+        sprintf(name, &lbl_eu_805071B0[0x3db], sel + 1);
+        nw4r::lyt::Pane* pane =
+            self->field40->GetRootPane()->FindPaneByName(name, true);
+        nw4r::math::VEC3 pos;
+        func_801375A0(&pos, pane);
+        void* refPane =
+            self->field40->GetRootPane()->FindPaneByName(&lbl_eu_805071B0[0x3cc], true);
+        pos.x *= *(f32*)((u8*)refPane + 68);
+        reinterpret_cast<CIBLCur70View*>(&self->mCur70)->vf02(&pos);
+        func_801D216C(&self->mCur70, 1);
+        func_801D216C(&self->mCurA0, 0);
+    }
+}
+
+// ============================================================================
 // func_801F0A58: reset the page word/vector tables and hide every line pane.
 // ============================================================================
 #pragma push
@@ -2109,12 +2194,100 @@ void func_801F20F0(CItemBoxLine* self, u32 itemData) {
 }
 #pragma pop
 
-void func_801F1E64(CItemBoxLine* self, u32 itemData){}
+// ============================================================================
+// func_801F1E64: kind-3 item slot. Shows the five slot panes, resolves the
+// kind-3 display name via the EC owner table (index 30-(v-1)), looks up the
+// gem id (func_80136254) and per-gem strings: id==1 pins the fixed "none"
+// string, otherwise the two D8-owner lookups fill the gem name / +21-indexed
+// level name. Finally stores the category halfword + state 9 and copies the
+// pane-anchor position into the +0x558 vec.
+// ============================================================================
+#pragma push
+#pragma optimize_for_size on
+void func_801F1E64(CItemBoxLine* self, u32 itemData) {
+    char* pool = lbl_eu_805071B0;
+    func_80124270(self->field40->GetRootPane()->FindPaneByName(pool + 0x41f, true), 1);
+    func_80124270(self->field40->GetRootPane()->FindPaneByName(pool + 0x533, true), 1);
+    func_80124270(self->field40->GetRootPane()->FindPaneByName(pool + 0x53e, true), 1);
+    func_80124270(self->field40->GetRootPane()->FindPaneByName(pool + 0x549, true), 1);
+    func_80124270(self->field40->GetRootPane()->FindPaneByName(pool + 0x555, true), 1);
+    func_801392E4(itemData);
+    u16 cat = func_80139358(itemData);
+    u32 vEC = func_801361E8((u32)lbl_eu_806640EC, pool + 0x5a, itemData);
+    char* name = func_80136190(pool + 0x248, pool + 0x6c, 30 - ((u8)vEC - 1));
+    func_80136B4C(self->field40, pool + 0x549, name, 0);
+    u16 id = func_80136254((u32)lbl_eu_806640D8, pool + 0x5e9, cat);
+    char* txt = func_80136190(pool + 0x63, pool + 0x6c, 15);
+    if (id == 1) {
+        txt = pool + 0x254;
+        func_80136B4C(self->field40, pool + 0x555, txt, 0);
+    }
+    char* pool2 = lbl_eu_805071B0;
+    char* gemName = func_8013639C((void*)lbl_eu_806640D8, pool2 + 0x6c);
+    func_80136B4C(self->field40, pool2 + 0x53e, gemName, 0);
+    char* lvlName = func_80136190(
+        pool2 + 0x248, pool2 + 0x6c,
+        (u8)func_801361E8((u32)lbl_eu_806640D8, pool2 + 0x5ed, cat) + 21);
+    func_80136B4C(self->field40, pool2 + 0x5f4, lvlName, 0);
+    nw4r::lyt::Pane* anchor =
+        self->field40->GetRootPane()->FindPaneByName(pool2 + 0x53e, true);
+    nw4r::lyt::Pane* ref =
+        self->field40->GetRootPane()->FindPaneByName(pool2 + 0x3cc, true);
+    nw4r::math::VEC3 pos;
+    func_80137924(&pos, anchor, ref, self->field40->GetRootPane());
+    *(s16*)((u8*)self + 0x4f0) = cat;
+    *((u8*)self + 0x590) = 9;
+    nw4r::math::VEC3 pos2 = pos;
+    copyVEC3((nw4r::math::VEC3*)((u8*)self + 0x558), &pos2);
+}
+#pragma pop
 
-void func_801F2298(CItemBoxLine* self, u32 itemData){}
 
 // ============================================================================
-// func_801F2434: build the item-box page data. For each of the 3 slots, name
+// func_801F2298: kind-0xD item slot name. Shows the slot pane, resolves the
+// gem/ferron entry via the owner tables (entry = table + 73*kindIndex +
+// 2*nameIndex) and picks the display string: kind 1 requires byte +0xE8 set,
+// kinds 2/3 require bit 6 / bit 5 of byte +0xE9, each falling back to the
+// kind-agnostic default (index 44 vs 43), then binds it to the text pane.
+// ============================================================================
+#pragma push
+#pragma optimize_for_size on
+void func_801F2298(CItemBoxLine* self, u32 itemData) {
+    func_80124270(self->field40->GetRootPane()->FindPaneByName(&lbl_eu_805071B0[0x437], true), 1);
+    u32 owner = (u32)lbl_eu_80664110;
+    func_801392E4(itemData);
+    u16 cat = func_80139358(itemData);
+    u8 vA = func_801361E8(owner, &lbl_eu_805071B0[0x616], cat);
+    u8 vB = func_801361E8(owner, &lbl_eu_805071B0[0xe], cat);
+    u8 vC = func_801361E8(owner, &lbl_eu_805071B0[0x622], cat);
+    u8 defName = func_8013600C(&lbl_eu_805071B0[0x5e1], &lbl_eu_805071B0[0x62b], vC);
+    void* tbl = func_8009EC9C(vB);
+    u8 idx = (u8)func_800A32BC();
+    const u8* entry = (const u8*)tbl + idx * 73 + (defName << 1);
+    char* str = func_80136190(&lbl_eu_805071B0[0x248], &lbl_eu_805071B0[0x6c], 44);
+    switch (vA) {
+    case 1:
+        if (entry[232] != 0) {
+            str = func_80136190(&lbl_eu_805071B0[0x248], &lbl_eu_805071B0[0x6c], 43);
+        }
+        break;
+    case 2:
+        if ((entry[233] >> 7) & 1) {
+            str = func_80136190(&lbl_eu_805071B0[0x248], &lbl_eu_805071B0[0x6c], 43);
+        }
+        break;
+    case 3:
+        if ((entry[233] >> 6) & 1) {
+            str = func_80136190(&lbl_eu_805071B0[0x248], &lbl_eu_805071B0[0x6c], 43);
+        }
+        break;
+    }
+    func_80136B4C(self->field40, &lbl_eu_805071B0[0x62f], str, 0);
+}
+#pragma pop
+
+// ============================================================================
+// func_801F2434: build the item-box page data.
 // the pane, resolve the slot entry (itemId+kind via the owner tables) and bind
 // a texture/name; then push the slot's kind/counters/position into the page
 // arrays at index i+8 (guarded to 12) and refresh the pane hierarchy.

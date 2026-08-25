@@ -47,11 +47,13 @@ extern "C" void sinit_80450B2C() {
 }
 
 void CDeviceFileCri::func_80450AB8(unsigned long) {
-    if (sInstance != nullptr && sInstance->mADXFHandle != nullptr) {
-        ADXF_Stop(sInstance->mADXFHandle);
-        ADXF_GetNumReqSct(sInstance->mADXFHandle);
-        ADXF_Close(sInstance->mADXFHandle);
-        sInstance->mADXFHandle = nullptr;
+    // retail names the singleton pointer lbl_eu_80665668 here (same storage as
+    // the static member); reference the C-linkage label to avoid name drift.
+    if (lbl_eu_80665668 != nullptr && lbl_eu_80665668->mADXFHandle != nullptr) {
+        ADXF_Stop(lbl_eu_80665668->mADXFHandle);
+        ADXF_GetNumReqSct(lbl_eu_80665668->mADXFHandle);
+        ADXF_Close(lbl_eu_80665668->mADXFHandle);
+        lbl_eu_80665668->mADXFHandle = nullptr;
     }
 }
 
@@ -194,12 +196,14 @@ bool CDeviceFileCri::func_8044F744() {
 }
 
 void CDeviceFileCri::func_8044F964() {
-    if (sInstance == nullptr) return;
-    if (sInstance->mADXFHandle == nullptr) return;
+    // retail names the singleton pointer lbl_eu_80665668 here (same storage as
+    // the static member); reference the C-linkage label to avoid name drift.
+    if (lbl_eu_80665668 == nullptr) return;
+    if (lbl_eu_80665668->mADXFHandle == nullptr) return;
     
-    ADXF_Stop(sInstance->mADXFHandle);
-    ADXF_Close(sInstance->mADXFHandle);
-    sInstance->mADXFHandle = nullptr;
+    ADXF_Stop(lbl_eu_80665668->mADXFHandle);
+    ADXF_Close(lbl_eu_80665668->mADXFHandle);
+    lbl_eu_80665668->mADXFHandle = nullptr;
 }
 
 int CDeviceFileCri::getFileSize(const char* pPath, int arg1) {
@@ -1023,4 +1027,3 @@ u32 lbl_eu_8066566C;
 // form isn't reproduced yet); every other blob symbol is anchored by real
 // code/data relocs (ctor/dtor vptr stores, vtable/typeinfo chains,
 // func_80450B14/B1C/B24) and must NOT get a stub (split budget).
-DECOMP_FORCEACTIVE(CDeviceFileCri_cpp, jumptable_eu_8056C330);

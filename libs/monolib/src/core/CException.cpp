@@ -760,7 +760,6 @@ extern "C" const char lbl_eu_80522F88[0x50] = {
     0x82,0xB5,0x82,0xDC,0x82,0xB5,0x82,0xBD,0x00,  // \u30e1\u30e2\u30ea\u304c\u2026\u306a\u304f\u3057\u307e\u3057\u305f
     0x43,0x4C,0x69,0x62,0x00,0x00,  // "CLib\0" + 1B pad
 };
-DECOMP_FORCEACTIVE(CException_cpp, lbl_eu_80522F88);
 
 // [.bss] 0x80657B50-0x80657FD8 (0x488, align 8): exception array + work buffer.
 extern "C" {

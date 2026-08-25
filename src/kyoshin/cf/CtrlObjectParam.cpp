@@ -457,12 +457,14 @@ void func_8009E0C4(cf::CtrlObjectParamU16RowTable* table, u16 index, u16 value) 
 extern "C" u32 func_8009E120(cf::CtrlObjectParamRowView* p, u32 value) {
     // Arts/row lookup: read the u16 table at +0x02 at index (u16)value; a
     // 0xFFFF table entry means "empty" and is folded to 0 before dispatch.
+    // NOTE (us-8009eaf8): retail emits clrlwi r4,r5,16 before the
+    // func_80142074 tail-call even though the phi {lhz, li 0} is provably
+    // 16-bit; MWCC elides every high-level narrowing we tried (u32 temp,
+    // casts, ternary shapes). §17.6 DECOMP_PPC_RLWINM escape used here.
     u16 v = p->field_02[(u16)value];
     if (v == 0xFFFF) v = 0;
-    if (v != 0) {
-        u32 w = v;
-        return func_80142074(p->field_00, w, 0);
-    }
+    if (v != 0)
+        return func_80142074(p->field_00, DECOMP_PPC_RLWINM(v, 0, 16, 31), 0);
     return func_80141E90(p->field_00, (s16)v, (u16)(value + 1), 0);
 }
 
@@ -502,17 +504,12 @@ extern "C" int func_8009E20C(cf::CtrlObjectParamSwap* self, int firstType, int f
 // Membership test: 1 if value matches any of the 9 slot words (arr1[3] +
 // arr2[6]) starting at +4, 0 otherwise. The tail reads go through a +8 base
 // like the retail (p = &arr[2]; p[4..7]).
-int func_8009E284(const int* arr, int value) {
+extern "C" int func_8009E284(const int* arr, int value) {
     const int* p = arr + 2;
-    if (value == arr[1]) return 1;
-    if (value == arr[2]) return 1;
-    if (value == arr[3]) return 1;
-    if (value == arr[4]) return 1;
-    if (value == arr[5]) return 1;
-    if (value == p[4]) return 1;
-    if (value == p[5]) return 1;
-    if (value == p[6]) return 1;
-    if (value == p[7]) return 1;
+    for (int i = 1; i <= 5; ++i)
+        if (arr[i] == value) return 1;
+    for (int i = 4; i <= 7; ++i)
+        if (p[i] == value) return 1;
     return 0;
 }
 
@@ -1974,10 +1971,9 @@ extern "C" void func_800A1E3C(cf::CtrlObjectParamTypeView* self, int* v1, int* v
 // parameter) and switches the base values from 100/100 to 125/125.
 extern "C" void func_800A1B08(u32 rowIndex, int* outA, int* outB,
                               int unkArg4, int unkArg5, int flag) {
-    u32 work = lbl_eu_80663E88;
     u32 rowOff = (u16)rowIndex * 0x3DD4;
-    u32 baseAddr = work + rowOff;
-    void* lookup = reinterpret_cast<void*>(baseAddr + 0x7724);
+    u32 work = lbl_eu_80663E88;
+    void* lookup = reinterpret_cast<void*>(work + rowOff + 0x7724);
     *outB = 100;
     *outA = 100;
     if (flag != 0) {
@@ -2462,8 +2458,13 @@ extern "C" void func_800A3304() {
             reinterpret_cast<u8*>(lbl_eu_80663E88) + (u16)row * 0x3DD4 + 0x41F0);
         for (j = 0; j <= 5; ++j) {
             inst = 0;
-            if (r->shortArr[j] > -1) {
-                inst = func_80157C4C((u32)j > 4 ? 2 : j + 4, r->shortArr[j]);
+            cf::CtrlObjectParamEquipRowSlots* v =
+                reinterpret_cast<cf::CtrlObjectParamEquipRowSlots*>(r);
+            if (*(const volatile s16*)&v->entries[j] > -1) {
+                // retail re-reads the slot entry for the call argument;
+                // the volatile check-load defeats CSE without a second IV.
+                inst = func_80157C4C((u32)j > 4 ? 2 : j + 4,
+                                     v->entries[j]);
             }
             if (inst != 0) {
                 reinterpret_cast<cf::CtrlObjectParamItemImplIf*>(

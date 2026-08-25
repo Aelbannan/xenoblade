@@ -695,13 +695,149 @@ When a vtable / data table already references the shortened `…Fv` name (common
 
 **LOD Fv entry-point verification:** `libs/monolib/src/lod/code_804645CC.cpp` confirms that a high-level `extern "C"` definition with explicit ABI parameters can retain a shortened Fv linker name; `func_80465704__Q23LOD17UnkClass_804645CCFv(s32)` reaches 100% static match (0x14 bytes). Do not use `asm("...")` symbol-label syntax with MWCC Wii/1.1 build 151: it fails at compile time with error 33106 (`<string not found>`), including on free functions. Use the explicit `extern "C"` Fv entry-point form instead.
 
-### cf::CHelp layout (manual iface at +0x8)
+### cf::CHelp layout (real classes, retail __vt__ from symbols.txt)
 
-Retail `__ct__Q22cf5CHelpFv` stores `owner@0`, `param@4`, `lbl_eu_8053B3A0@8` — **not** a C++ vptr at +0. Derived helps add fields from `+0xC` (`s32` thresholds need `s32`/`cmpw`, not `u32`/`cmplw`). Calls through `this+0x8` are a manual interface table; MWCC function-pointer codegen often uses `r4` where retail virtual-style loads use `r12` (~99.3–99.6% near-miss).
+Retail `__ct__Q22cf5CHelpFv` stores `owner@0`, `param@4`, `lbl_eu_8053B3A0@8`. JP symbols.txt
+names that 0x20 object `__vt__Q22cf5CHelp` (US/EU still `lbl_eu_8053B3A0`). It is a C++
+vtable (RTTI, per-derived `__vt__` / `__RTTI__`), not a homemade function-pointer table.
+The vptr sits at +8 because an 8-byte non-virtual prefix (`CHelpPrefix`) precedes the
+virtuals. `CHelp.cpp` has **no .data** -- do not emit `__vt__` from that TU.
 
-High-level source should use `mVtbl->mSlots[N]` (or equivalent `this+0x8` reload between calls). Near-misses that are only vtbl temp register coloring (retail `r12` vs MWCC `r4`) need further high-level C reshaping — do **not** post-process `.text` instruction words and do **not** use inline asm.
+**Kill fake vtables. Do not move them, do not combine them, do not keep a pad class
+in the .cpp or the derived .hpp.** Goal is the original class tree plus
+`this->method(...)` on the real type. `CHelpDispatchIface` / `CHelpTblView` /
+`CHelpTIPS` / `CHelpXxxIf` / `CHelpF1CView` / `CHelpTalkVtblView` are the same bug:
+delete them and put the slots on `CHelp` / `CHelpSwitch` / the leaf.
 
-**Actor/move deep vtable slots (r12):** function-pointer `vslot` loads color the vptr as `r4`. Cast the object to a fake single-inheritance interface with `virtual` methods at the retail byte offsets and call through that — MWCC emits `lwz r12,0(obj)` / `lwz r12,off(r12)` / `bcctrl`. With kyoshin `-RTTI on`, omit the first **two** pad virtuals so slot `0xN` lands at offset `0xN` (hidden typeinfo slots). See `MenuBpsActorIf` / `MenuBpsMoveIf` in `CMenuBattlePlayerState.cpp` (`menu-bps-move` ~99.8%).
+`CHelpSwitch` is a real class, not a helper. Linker names are
+`func_*__Q22cf11CHelpSwitchFv`. JP still has `cf_CHelpSwitch_typestr`,
+`cf_CHelpSwitch_hierarchy`, and `__RTTI__Q22cf11CHelpSwitch`. There is no
+`__vt__Q22cf11CHelpSwitch` because nothing constructs a most-derived Switch;
+leaf tables reuse its slots. Do not fold `mFlag` / `func_802B7CB0` / `CBC` / `CE4`
+into `CHelp` (that re-mangles the symbols to `__Q22cf5CHelp` and grows every
+direct `CHelp` child).
+
+Two families, read from the US split1 objects (JP `__vt__Q22cf16CHelp_ArtsAttack`
+= `lbl_eu_8053B3C0`, size 0x24):
+
+| Slot | Direct `CHelp` child (Target, Sp, ArtsSet, size 0x1C) | `CHelpSwitch` child (ArtsAttack, Close*, CkKizuna, EndEvent, Talk) |
+|---|---|---|
+| +0x08 | `CHelp_UnkVirtualFunc1` (or leaf override) | `CHelpSwitch::func_802B7CB0` (Talk overrides with `func_802B86BC`) |
+| +0x0C | `CHelp_UnkVirtualFunc2` | same |
+| +0x10 | leaf **evaluate** (`CHelp_Target::CHelp_UnkVirtualFunc3`, `func_802B8654`, ...) | leaf **evaluate** (`func_802B7D00`, `func_802B8534`, `func_802B86F0`, ...) |
+| +0x14 / +0x18 | `CHelp_UnkVirtualFunc4` / `5` (`return 0`) | same |
+| +0x1C | not present | `CHelpSwitch::func_802B7CBC` |
+| +0x20 | not present | `CHelpSwitch::func_802B7CE4` |
+| +0x24 | not present | Talk / EndEvent extra (null in those tables) |
+
+`this->f1C(flag)` on a Switch leaf matches only because it still hits +0x1C.
+Retail's method there is `CHelpSwitch::func_802B7CBC`, not a `CHelp` virtual.
+Declaring `bool f1C(u32)` on `CHelp` is still a pad: it forces the slot onto
+Target / Sp / ArtsSet, whose tables stop at +0x18. Put CBC / CE4 on
+`CHelpSwitch` as virtuals; Switch-family `CHelp_*` inherit `CHelpSwitch`;
+direct-family inherit `CHelp` only.
+
+The evaluate function **is** the +0x10 virtual, not a regular method that
+casts `this` through a view. `CHelp_ArtsAttack::func_802B7D00` is slot +0x10
+on `__vt__Q22cf16CHelp_ArtsAttack`; its body then calls Switch +0x1C. Same
+for ClosePartyMenu `func_802B8534`, Talk `func_802B86F0`, Target
+`CHelp_UnkVirtualFunc3`. Talk `func_802B86BC` is the +0x08 override (it
+already calls `CHelpSwitch::func_802B7CB0()`). Talk's extra slot is +0x24,
+not +0x20 -- +0x20 is already `func_802B7CE4`.
+
+**UnkVirtualFunc\* names are decomp placeholders**, already in symbols.txt.
+They are not original identifiers and not slot indices (`UnkVirtualFunc3` is
+Target's +0x10 evaluate). Retail has RTTI class strings, not method names.
+Recover a better name from the vtable + body, then `symbols rename-plan` /
+`rename-all` (prefer same-length). Recipe:
+
+1. Dump the leaf `__vt__` (JP) / `lbl_eu_*` (US) in `build/<region>/asm/split1.s`.
+   That list **is** the method list (RTTI at +0x00, 0 at +0x04, virtuals at +0x08).
+2. `python3 tools/coop/run.py symbols xref <addr>` and
+   `python3 tools/coop/hexdiff.py <unit> --symbol <mangled> --asm` -- recover
+   the signature from how r4 / f1 are used (`_Fv` is not evidence).
+3. Read overrides: a `blr` base + a leaf that clearly checks X is the evaluate
+   slot; Switch `func_802B7CB0` (`mFlag = 1`) is the enable/reset override of
+   Unk1; Unk2 calls Unk5 then Unk4, then `func_80134D18` / `func_8009D018`.
+4. Rename only after the class tree is right. Do not invent a pad named after
+   the leaf to "hold" an unrecovered slot.
+
+End-state shape (novtable, ctor writes the symbols.txt label, no compiler
+`__vt__` in help .cpp TUs):
+
+```cpp
+struct CHelpPrefix { void* mOwner; u32 mParam; }; // vptr at +8
+class __declspec(novtable) CHelp : public CHelpPrefix {
+    virtual void CHelp_UnkVirtualFunc1();           // +0x08, blr
+    virtual void CHelp_UnkVirtualFunc2();           // +0x0C, notify
+    virtual UNKWORD f10();                          // +0x10, null in base
+    virtual UNKWORD CHelp_UnkVirtualFunc4();        // +0x14, return 0
+    virtual UNKWORD CHelp_UnkVirtualFunc5();        // +0x18, return 0
+};
+class __declspec(novtable) CHelpSwitch : public CHelp {
+    virtual void func_802B7CB0();                   // +0x08 override
+    // f10 / Unk4 / Unk5 inherited
+    virtual u32 func_802B7CBC(u32 flag);            // +0x1C
+    virtual u32 func_802B7CE4(u8 flag);             // +0x20
+    u8 mFlag; // +0xC
+};
+class __declspec(novtable) CHelp_ArtsAttack : public CHelpSwitch {
+    virtual UNKWORD f10(); // = func_802B7D00; body calls func_802B7CBC
+};
+class __declspec(novtable) CHelp_Target : public CHelp {
+    virtual UNKWORD f10(); // = CHelp_UnkVirtualFunc3
+};
+```
+
+Ctor still assigns the retail label (`this->vtbl() = &lbl_eu_8053B3A0` or
+`__vt__Q22cf5CHelp` after a three-region rename + re-split), same as `CToken`.
+Never construct a view type so MWCC emits a compiler vtable.
+
+Recipe:
+
+1. `__declspec(novtable)` on `CHelp`, `CHelpSwitch`, every `CHelp_*`, and the
+   static-table shapes (`CHelpWordC` / `CHelpFloatC` / ...).
+2. Virtuals on the class that owns the slot (above). Extra slots on the leaf
+   (`CHelp_Talk` +0x24), never a sibling view type.
+3. Switch-family leaves inherit `CHelpSwitch`. Direct-family inherit `CHelp`.
+   Hierarchy size in JP symbols.txt is the check: 0xC = one parent (`CHelp`),
+   0x14 = two (`Switch` then `CHelp`), TIPS 0x1C = three.
+4. Call sites: `this->f10()` / `this->func_802B7CBC(flag)`, not
+   `reinterpret_cast<CHelpXxxIf*>(this)->_v01C(...)`. Manager lists and
+   `lbl_eu_80576D08` entries are `CHelp*`: `item->f10()`,
+   `item->CHelp_UnkVirtualFunc1()`, `tbl->mHelp1.CHelp_UnkVirtualFunc2()`.
+5. Foreign sub-objects that are not `this` (e.g. `*(obj+4)`) stay a tiny named
+   iface on the owning object (`PcSub4VtIf`, `CHelp_EnemyEnableSub` at +0x3E9C),
+   never a pad named after the help class.
+
+Ruled out:
+
+- `bool f1C(u32)` on `CHelp` (forces +0x1C onto Target / Sp / ArtsSet).
+- Inheriting a view and redeclaring `f1C` with a new signature (appends slot
+  0x20, ~97.4%).
+- A TU-local `CHelpArtsAttackIf` / `CHelpF1CView` / `CHelpDispatchIface` /
+  `CHelpTblView` / `CHelpTIPS` / 150-slot dummy list.
+- Making `CHelp_X` inherit a view instead of `CHelp` / `CHelpSwitch`.
+- `mVtbl->mSlots[N]` function-pointer calls (colors `r4` instead of `r12`).
+- Folding pads into one shared If/View type (that is moving the fake, not
+  killing it).
+- Treating `func_802B7D00` / `func_802B86F0` as non-virtual wrappers around a
+  pad call; they are the +0x10 overrides.
+
+**Sub-object pads:** grep the owning object header before declaring a pad.
+`CfObjectPc`+4 slot 0x30 is `PcSub4VtIf` (vptr at +0) for a loaded pointer; do
+not use `PcSub4Fake`.
+
+**Gotcha:** ASCII comments only (sjiswrap). Derived help TUs must stay novtable
+so they do not grow a `.data` vtable (retail help .cpp splits are .text-only).
+`CHelp_UnkVirtualFunc1` is defined in `CHelpManager.cpp`; calls in that TU must
+stay indirect (`lwz r12`). If MWCC de-virtualizes to a direct `bl`, do not bring
+back a pad If -- move the stub out of the TU or call through a `CHelp*` whose
+static type MWCC cannot bind to the defining class. `func_802B7CBC` /
+`func_802B7CE4` keep their shortened `Fv` linker names via `extern "C"` if a
+header signature would re-mangle them.
+
+**Actor/move deep vtable slots (r12):**
 
 **reslist::size() regalloc:** retail often wants `length` in r4 / `cur` in r3. Declaring `length` first in a *local* inlined helper can match without changing shared `reslist::size()` (that reorder regressed `menu-enemy-cbrender`).
 
@@ -3047,6 +3183,22 @@ Defining an empty override `void CTaskLOD::Draw() {}` whose vtable slot targets 
 - Confidence: repo_proven
 - Applies to/a.k.a.: any `__declspec(novtable)` class whose ctor has non-trivial member initialization + manual vptr install; pairs with "user .data emits before compiler-generated vtables" (declaration order IS .data emission order for novtable TUs — declare vtable, base-list, jumptable in retail offset order).
 
+## novtable vptr store with non-trivial members: comma-expression side effect pins it into the member-init phase (ArcResourceAccessor fix, Wii/1.1 -O4,p)
+- Symptom:   ctor byte-identical except the vptr store schedules LAST (after all member stores) while retail has it mid-group (standard ABI order: base call -> vptr -> member ctors). Body-assignment move is impossible when a member has a non-trivial implicit ctor (e.g. `ut::LinkList` zeroing + self-looping its root node) — its stores always emit before any body statement.
+- Cause:     program order drives MWCC's store scheduling window; a body-statement vptr store can only be scheduled within/after the member-store group, never before it.
+- Fix:       attach the vptr install to a member initializer as a comma-expression side effect: `ArcResourceAccessor::ArcResourceAccessor() : mArcBuf((InitVptr(this), (void*)NULL)) {}` with `inline void InitVptr(void* obj) { *(void**)obj = (void*)lbl_eu_...; }`. The store now competes for schedule position inside the member-init phase and lands exactly where retail puts it.
+- Result:    FULL_MATCH (5 displaced-store reg-swaps -> 0 mismatches, 0x5C/0x5C); whole unit 7/7 functions 100%.
+- Confidence: repo_proven
+- Applies to/a.k.a.: complement to the CLibHbm body-assignment recipe above — use body-assignment when members are POD, comma-expression init when a member's implicit ctor must stay put.
+
+## Folded template default-ctor never emits a standalone body: early explicit instantiation + exact_renames pairing (CScnItemPool fix, Wii/1.1 -O4,p -ipa file)
+- Symptom:   retail symbol (`__ct__reslist_CScnItem`, 0x3C bytes) has NO counterpart in the decomp object — hexdiff pairs an unrelated function positionally; cycle reports "ambiguous decomp symbol ... (0 candidates)".
+- Cause:     `-inline auto` folds the trivial template default-ctor into every call site and never emits a global body, even under `template class reslist<T>;` explicit instantiation.
+- Fix:       (1) BEFORE any use of the type, force emission: `#pragma push / #pragma auto_inline off / template reslist<CScnItem*>::reslist(); / #pragma pop` (CWorkRoot precedent); (2) pair the name for objdiff via UNIT_RULES exact_renames: `("__ct__19reslist<P8CScnItem>Fv", "__ct__reslist_CScnItem")` — the emitted mangled template name differs from the retail label.
+- Result:    FULL_MATCH (58% artifact row -> 100.0%, certificate issued); unit split PASS.
+- Confidence: repo_proven
+- Applies to/a.k.a.: monolib reslist family and any retail-labeled template instantiation; watch function EMISSION ORDER — the forced instantiation emits where written, so place it to match the retail object's function order or positional pairing shifts.
+
 ## Variant-proof jumptable addends: addend_sets pins absolute retail values (code_804BC9EC fix, Wii/1.1 -O4,p)
 - Symptom:   unit `.data` carries a switch jumptable whose case-label addends differ from retail even though raw bytes match; worse, the decomp-side values CHANGE across rebuilds with no source edit (observed first-word variants 544 / 388 / 440 on code_804BC9EC func_804BC9F4).
 - Cause:     ambient `-ipa file` scheduling flips the residual function's dispatch block layout per build, so case-label offsets are non-deterministic; any relative `addend_patches` delta set is valid for exactly one build.
@@ -3102,6 +3254,14 @@ Defining an empty override `void CTaskLOD::Draw() {}` whose vtable slot targets 
 - Result:    CLibLayout .sbss stayed 0x10 with the stub deleted; split budget went OVER(0x18) → exact PASS.
 - Confidence: repo_proven
 - Applies to/a.k.a.: any dissolve TU flirting with its split budget; check before trimming elsewhere.
+
+## FORCEACTIVE is LOAD-BEARING for zero-ref file-scope STATIC objects — only external-linkage defs survive deletion (code_804BC9EC fix, Wii/1.1 -O4,p -ipa file)
+- Symptom:   deleting a dissolved-TU's FORCEACTIVE stubs shrank `.bss` below retail (0xEC → 0xA4, exactly −0x48 = the two guarded pads); data gate FAIL because following tail objects shifted up.
+- Cause:     MWCC eliminates unreferenced `static` file-scope objects even under `-ipa file`; only definitions with EXTERNAL linkage are assumed reachable from other TUs and always emitted. The CLibLayout rule above holds for globals only.
+- Fix:       per-symbol triage: grep linkage first — delete stubs for `extern "C"`/non-static defs, KEEP stubs for `static` defs (or promote static→extern if retail has no such symbol and the symbol table doesn't matter). Always re-verify with `run.py data diff` + hexdiff; revert kept-stub decisions individually, not whole-file.
+- Result:    code_804BC9EC: 5/7 stubs deleted (split spare 0x28→0x6C), 2 static-pad stubs kept, data MATCH restored; CScnItemLight: 9/9 deleted flipped split FAIL(+0x90) → exact PASS.
+- Confidence: repo_proven
+- Applies to/a.k.a.: complement to the CLibLayout rule above and the CLODCacheManagerS pad recipe; also explains why blob-surgery pad arrays (`*_bss_pad_*`) are declared `static u8[]` + FORCEACTIVE as a pair.
 
 ### Comments must be pure ASCII under `-enc SJIS` (sjiswrap gate)
 The build preprocesses every source through `tools/sjiswrap.exe`; non-ASCII comment characters trip it:
@@ -3404,3 +3564,253 @@ diverge from what matched codegen naturally pools.
              declaration reorder alone — MWCC emits named globals in source
              order; only folded literals need the permutation)
 - Confidence: repo_proven
+
+## DECOMP_FORCEACTIVE on a data symbol is redundant when real code already references it (CLibG3d, Wii -ipa file)
+- Symptom:   TU had `DECOMP_FORCEACTIVE(CLibG3d_cpp, lbl_eu_8056D0F0)` guarding the
+             manual vtable array; split-size FAILed by exactly the stub's size
+             (decomp .text 0x214 vs retail 0x204).
+- Cause:     FORCEACTIVE exists to keep **unused** globals alive against dead-stripping.
+             When the symbol is referenced from matched code in the same TU (here the
+             ctor does `*(void**)this = (void*)lbl_eu_8056D0F0;`), the stub is pure
+             .text overhead and its removal changes nothing else.
+- Fix:       Delete the `DECOMP_FORCEACTIVE(...)` call. Recipe: (1) grep the TU for a
+             genuine code/data reference to every symbol listed in the macro — if all
+             are referenced, just delete it; (2) rebuild via hexdiff, confirm per-function
+             FULL_MATCH unchanged, data diff MATCH, and split-size improves by ~0x10/stub.
+             Only zero-init tails with NO other reference still need the macro (or a
+             natural keep-alive: own the definition / real reference).
+- Result:    6/6 FULL_MATCH preserved, data gate MATCH, split-size PASS 0x204/0x204.
+             Corroborated (H4 pilot): UnkClass_80460308.cpp `lbl_eu_805231F8` string pool
+             referenced only via `lbl + 0x00/0x1E/0x34` msg-pointer arithmetic in three
+             `strm->msg =` stores — offset addends still emit live HA/LO relocs, stub
+             deleted, functions unchanged, split improved by the stub's 0x10.
+- Confidence: repo_proven
+- Applies to/a.k.a.: DECOMP_FORCEACTIVE / DECOMP_FORCEACTIVE_DTOR / DECOMP_FORCELITERAL;
+             monolibdata2-dissolve units (CScnBloom/CScnFrame/... pattern); any TU where
+             the guarded symbol has an in-TU code reference. Batch-applied 2026-08:
+             CScnTexWorkMan (80524010 externally anchored by CScnItemCamera sd table,
+             80524020 live MemManager::create arg), CScnIdMan (vtable ctor/dtor refs;
+             RTTI name defined-in-TU), CScnFogMan (assert blob + RTTI name defined-in-TU),
+             CScnEnvLgtCtrl (both blob-dispatch tables live-ref'd), code_8047BB54
+             (80658500 returned by func_8047C034; 806658B8pad .sbss tail per CLibLayout).
+             All FULL_MATCH counts preserved, splits PASS (CScnIdMan exactly 0x184/0x184).
+             Batch-applied 2026-08 (round 3): CWorkSystemCache (all 6 stubs live-ref'd:
+             RTTI names via .sdata locator inits, locators via vtable init, vtable via
+             manual ctor store, FD10 via 3B40 init, FD3C via ctor+dtor; retired the
+             whole drop_text_symbols FORCEACTIVE rule from UNIT_RULES, split now
+             exactly 0x4E4/0x4E4 raw), CNReqtaskRemove (5 live-ref'd via sinit/helper/
+             initializer chain; 806659F8pad zero-ref .sbss tail kept alive by its own
+             definition alone per CLibLayout, data gate MATCH incl .sbss 0x8;
+             split exactly 0x114/0x114). Batch-applied 2026-08 (round 4):
+             CLODCacheManagerS (8056D700 live call ref; 4 zero-ref .sbss pads
+             8066575A/5C/64/68 survive via own definitions, .sbss span 0x34
+             exact), CDesktop (all rodata/sdata/vtable/rtti symbols live-ref'd
+             by code or in-TU data initializers; gap_20 sbss tail survives own
+             definition; split PASS 0xAC spare), CDeviceFontInfoExt (6 data-only
+             symbols chained by initializer refs, split PASS 0x1EC spare),
+             code_804EE558 (5 zero-ref .bss arrays + jumptable_eu_805702B8 whose
+             ADDR32 relocs come from its own initializer; all present in fresh
+             .o symtab). No drop_text_symbols rules existed for these units.
+             Note: hexdiff --all 'decomp .text' includes non-function @etb/@eti
+             locals, so listed function sizes can sum exactly to budget while
+             the split line still FAILs — compare against pre-edit state before
+             blaming a stub removal.
+             Batch-applied 2026-08 (round 5): CVirtualLightAmb (vtable live-ref'd
+             by manual ctor store; 2 .rodata RTTI name strings survive as
+             external-linkage definitions referenced by foreign-TU typeinfo —
+             split FAIL 0x30 over -> PASS exact), UnkClass_80466348 (3 data
+             arrays with zero TU refs survive via own definitions; split
+             overflow reclaimed exactly the stub bytes, match count unchanged).
+             COUNTER-RESULT (dvd_broadway.c, both stubs KEPT): a FORCEACTIVE can be
+             a positional anchor, not just keep-alive. (a) The dvdContexts stub's
+             early text reference fixes MWCC .bss first-reference ORDER — deleting
+             it shifted sda-offset selection (addi r9,0 vs retail +64) and
+             regressed DVDLowOpenPartition/TicketView even though the array has
+             live refs everywhere. (b) The tmd-strings stub pools shared string
+             literals at their retail .data offsets — deleting it re-pooled ~19
+             functions' literals (addi pool-offset drift + anon-local relocs
+             becoming section-symbol relocs). Recipe addition: after deleting a
+             'redundant' stub, diff the WHOLE unit (hexdiff --all), not just the
+            owning function; if unrelated functions regress, revert — the stub is
+             load-bearing for literal pooling or small-data ordering.
+             Batch-applied 2026-08 (round 5, FORCELITERAL / FORCEACTIVE_DTOR
+             variants): nw4r math_geometry DECOMP_FORCELITERAL(math_geometry_cpp,
+             0.5f, 0.0f) deleted — its fake function was a bare 4-byte blr stub;
+             the TU's shared-pool constants are extern lbl_eu_* decls and
+             FRUSTUM::Set references 0.5f/0.0f naturally, and UnitRules
+             pool_patterns remaps local .sdata2 values by pattern (not order),
+             so pool order needs no text anchor. 8/8 FULL_MATCH preserved,
+             .text −0x4. nw4r snd_AnimSound.cpp (DECOMP_FORCEACTIVE_DTOR keep-
+             alive for SoundHandle's dtor) was a DEAD TU — not in configure.py,
+             never compiled, zero effect on any gate — file deleted instead of
+             wiring it into the build just to host the macro. Recipe for both:
+             delete → hexdiff --all (per-function FULL_MATCH + split delta =
+             stub size) → retire any drop_text_symbols rule naming the stub.
+             Batch-applied 2026-08 (round 6): CMdlDynamics (all 11 stubs:
+             vtable lbl_eu_805701FC live-ref'd via ctor `vtbl =` store; RTTI
+             name/anim-param/assert strings 80524830/40/70/88 — 40/70/88 have
+             ZERO refs of any kind yet survive -ipa file as external-linkage
+             const arrays, confirmed in fresh .o symtab + data gate MATCH;
+             sdata locator/ref strings CB0–CC8 live via Panic args + locator
+             init), CMdlLook (all 10 stubs: pool lbl_eu_805701E0 live-ref'd by
+             ctor `field_00 = &`; 8052481C rodata + CA8/CAC sdata zero-ref
+             externals survive own definitions; B3B8/C0/C8 anchored by
+             805701F0's initializer). Function counts unchanged (48/66,
+             5/8), both data gates MATCH byte-exact, splits PASS with large
+             spare (.text −0x90 / −0x28 of stub waste). No drop_text_symbols
+             rules existed for either unit.
+             Batch-applied 2026-08 (round 7, 14 single-stub monolib device/core/
+             scn/mpfsys/lod TUs): CGXCache (4 vtable lbls live via ctor/
+             IStateCache/CMsgParam stores; rodata/sdata/sdata2_pool survive as
+             externals; split overflow reclaimed 0x50→0x20), CDeviceVI (11 syms
+             all live: vtbl/RTTI arrays + ctor/dtor stores), CDeviceFont (4 sbss
+             labels heavily live), CDeviceFileDvd (80665670pad zero-ref external
+             pad kept — it anchors .sbss span; only stub deleted), CDeviceFileCri
+             (jumptable def-only external survived; blob-dispatch unit green),
+             CDevice (def-only 8056C0B8/80522AD0 survived; initDevices unchanged),
+             code_804F0258 (f32 labels live stores; 6 pad bytes external defs),
+             CException (80522F88 rodata blob def-only survived), CScnItemModelNw4r
+             (vtable live loads ×2), CScnFilterMan (blob def-only survived),
+             CScnFadeMan (vtable live ctor+dtor; pre-existing split FAIL −0x60 not
+             attributable to stub removal), CScnCameraMan (vtable live store),
+             UnkClass_80471EC8 (RTTI locator def-only survived), code_8046A530
+             (0.005f label live reads). No regressions anywhere; no
+             drop_text_symbols rules existed for any of the 14 units.
+             Batch-applied 2026-08 (round 8, 10 monolib core/scn/mpfsys/lib/
+             lod/device TUs, 34 stubs): CView (80522630 live via line-1475
+             msg-store; 225E0/225F0/22608 internal-linkage const arrays with
+             ZERO refs survive file-scope emission — confirmed present in the
+             fresh .o bytes, UNIT_RULES retargets intact), CPackItem (FF58
+             vtable def-only external survived; 246FC/BF8 chained by locator
+             initializers), CArcItem (FFE0 def-only external survived;
+             24708/C00 initializer-chained), LODMemMan (3 multi-sym blocks:
+             23D80 def-only rodata external survived; rest initializer/live
+             chained; sbss gap tails survive own definitions per CLibLayout),
+             CScnRootNw4r (E768 23-word blob + E7C4 def-only externals
+             survived; 23FD0/23FE0 name strings def-only survived),
+             UnkClass_8047E110 (DC74 live at line 1632; DC68 live at 1612;
+             DC90/DCB8 def-only externals survived), MPFDrawDisplayList
+             (DBA0 live protoAddr store; D98/68/70 initializer-chained),
+             CLibHbmControl (all 4 def-only/initializer-chained externals
+             survived), CDeviceFontLayer + CDeviceClock (rodata/sdata/data/
+             rtti/vtable symbols all cross-chained by their own initializer
+             graph; sbss labels heavily live). Function match counts
+             unchanged everywhere; splits: all PASS except pre-existing FAILs
+             at CPackItem and CDeviceClock that shrank strictly (A/B measured:
+             −0x30 and −0x60 of stub waste respectively). No drop_text_symbols
+             rules existed for any of these units. NOTE: a concurrent agent's
+             write restored UnkClass_8047E110.cpp mid-campaign — re-deleted
+             file-end FA lines only and re-verified (split spare grew
+             0x36C→0x3D8) per the conflict protocol.
+
+### 4b. Uninitialized function-scope decl births the vreg at the declaration point
+
+Case-local `char* pFmt2 = pMsg + 0x428;` (`__wudDeleteHandler`, FULL_MATCH) was colored into the
+lowest saved reg (r28) because its vreg was born at the late assignment. Hoisting an **uninitialized**
+declaration to the FIRST line of the function and assigning inside the case births the vreg early;
+the allocator then recycles the same high register retail uses (r31) once the early constant dies.
+Use when a case-local pointer shows a pure reg_swap against a register that is dead on that path.
+Note: this only moved colors when the hoisted decl was placed *before all initialized decls* —
+reordering among uninitialized decls alone had no effect (birth follows first use for those).
+- Result:    FULL_MATCH (98.6% → 100%)
+- Confidence: repo_proven
+
+## Pointer-walk loop: `<` vs `!=` decides unroll template (Wii/1.1, -O4,p)
+
+- Symptom:   decomp of a zero-fill pointer loop over a struct-member array emits MWCC's unknown-count memset expansion WITH an 8x-unroll fast path (`subi rX,end,96`, `/96` blocking, magic signed division) — retail has only the plain compare/back-branch loop; +0xF8 size bloat.
+- Cause:     a `for (p = first; p < end; p++)` walk is lowered through the count-computing memset-style template (with unroll); an `!=` walk lowers to a plain do-while compare loop.
+- Fix:       write the walk as `for (p = first; p != end; p++)`. Verified both directions on __ct__Q22cf7CVisionFv: `<` = 19.8% (unrolled), `!=` = 26.0% (plain loop, decomp 0x2c4 vs retail 0x2d4).
+- Result:    26.0% near-miss (loop-shape residual fixed; remaining diff is scheduling/regcolor)
+- Confidence: repo_proven
+- Applies to/a.k.a.: member-array init loops, "unroll fast path", divwu/mulhw count templates
+
+## FORCEACTIVE is LOAD-BEARING for anon-namespace FUNCTIONS referenced only via extern retail dispatch tables (g3d dcc, Wii GC/3.0a5.2 -O4,p)
+
+- Symptom:   TU keeps `DECOMP_FORCEACTIVE(unit_cpp, FnA, FnB, ...)` listing anonymous-namespace helper functions whose only "refs" are `extern "C" const FnPtr tbl[]` dispatch tables defined as raw retail data (lbls), so the compiler sees zero in-TU references. Deleting the stub compiles fine but hexdiff collapses: every listed function DCE'd (unit .text 0xD00→0x26C; matched 3/16→1/16).
+- Cause:     dead-stripping works on functions too. The §3129 rule (static *objects*) and the §3439 rule (redundant when live refs exist) both concern data; internal-linkage function definitions with no visible call-site refs vanish just the same, even though retail calls them through pointer tables.
+- Fix:       keep the DECOMP_FORCEACTIVE line. If a split gate overflows by roughly the emitter's size (vararg pointer-args grow it ~4-8 bytes/symbol), the clean escape is a zero-.text anchor (e.g. define the dispatch tables in-TU so real relocs keep the fns alive) — NOT deleting the guard. Verified empirically on g3d_xsi (delete→DCE→revert restored exact baseline); applied by identity to g3d_maya / g3d_3dsmax.
+- Result:    kept with green per-function states (no regression vs baseline)
+- Confidence: repo_proven
+- Applies to/a.k.a.: DECOMP_FORCEACTIVE on function-name lists; complement to MWCC_PATTERNS §"unnecessary for zero-init .sbss/.bss tail globals" and §"redundant when real code already references it"; also seen anchoring split-space string literals mid-dissolve (WUD.c WUD_c/WUD_c_1/WUD_c_2 — deletion displaced downstream symbol↔retail-address mapping).
+
+## Renaming a mangled C++ member method (`func_XXXXXX__Q22cfNClassFv` → real name): recipe (cf::CChainTime::func_8027CE30 → resetChainTime, Wii/1.1 -O4,p)
+- Symptom:   accepted FULL_MATCH function still carries a placeholder member name; call sites read `obj.func_8027CE30()`.
+- Cause:     name recovered late; the mangled symbol appears in source decl/def/call sites, region symbol maps, and the registry.
+- Fix:       (1) grep repo-wide for the address (e.g. `8027CE30`) — there are almost always MORE call sites than the task lists (here: a dtor in CBattleManager.cpp); `.ctx.c` files are generated reference copies, skip them. (2) Rename decl/def + all call sites (method name only; signature untouched so bytes can't change). (3) Update the mangled LHS in **all three** regions' `config/{us,jp,eu}/symbols.txt` (`<new>__Q22...Fv`, same address/comment). (4) `run.py targets sync-symbols` updates the registry's function/symbol fields. (5) Verify with `hexdiff <unit> --all --brief` (100% expected — bl encoding is address-based, only reloc names change), then `cycle`. Same-length names are cosmetic; any rename remangles anyway.
+- Result:    FULL_MATCH preserved, new semantic certificate issued, zero byte drift.
+- Confidence: repo_proven
+- Applies to/a.k.a.: member-method renames only — type renames should still use `symbols rename-all`; do NOT confuse with `extern "C"` retail-symbol aliases.
+
+## Float multiply commutation is NOT source-order steerable via operand swap (negative result)
+- Symptom:   retail `fmuls f1, f0, f1` (const * arg) vs decomp `fmuls f1, f1, f0` (arg * const) with identical load order; seen in CosFIdx/SinFIdx angle math (cf::CtrlAct func_800D6720 / func_800D64E8).
+- Cause:     MWCC's scheduler/peephole picks the multiply operand order independently of the C source order; swapping `a*b` to `b*a` in source only permutes the sda21 const-load placement (reloc-site drift), never the emitted multiply order.
+- Fix:       none found at source level. Do not chase fmuls/fmadd operand-order diffs by swapping operands — it made both targets worse (reg_swap 12→15, 13→17).
+- Result:    negative_result (func_800D6720 89.1%→87.4%, func_800D64E8 23.2%→20.4%; both reverted)
+- Confidence: negative_result
+- Applies to/a.k.a.: paired-single math helpers (CosFIdx/SinFIdx/Atan2FIdx callers), fp_contract on, -O4,p
+
+## Narrowed virtual-call result compared `> 0` — declare the receiver `int` (<compiler flags>, FULL_MATCH-grade idiom)
+- Symptom:   retail emits `rlwinm. rX,r3,0,16,31` (record-form u16 narrow) followed by `bng`-family branch; decomp emits either `rlwinm.` + `beq` (receiver declared `u16`) or `extsh` + bng (`s16` receiver).
+- Cause:     MWCC canonicalizes an unsigned-typed comparison value (`u16 n ... if (n > 0)`) to an eq-test, and sign-extends an `s16` receiver; the retail source held the zero-extended value in a *signed* (int-width) local, so the narrowing stays fusable into the record form and the branch tests GT.
+- Fix:       declare the receiving local `int` (or `s32`): `int n = obj->Vfn(...); if (n > 0)` — u16 return narrows via fused `rlwinm.` and the signed compare branches on GT.
+- Result:    func_801E27D0 +0xb0/+0xb4 byte-exact (was 2 structural per site).
+- Confidence: repo_proven
+- Applies to/a.k.a.: any vtable/C-call returning u16/u8 compared `> 0`; record-form rlwinm.; beq/bng branch-condition mismatch category.
+
+## Signed `%` by power-of-two constant: MWCC emits an alternate algorithm; reconstruct manually
+
+## signed % 2^k — retail srawi/addze/slwi/subf unreachable via `%` operator → manual div/reconstruct (Wii/1.1 + GC/3.0a5.2, -O4,p)
+- Symptom:   retail emits `srawi rQ,x,k; addze rQ,rQ; slwi rQ,k; subf m = x - q*2^k` for signed `%`; decomp `%` always lowers to the rlwinm-pair floor-mod (`rlwinm rotl(32-k-1); rlwinm sign-bit; subf; rlwinm; add; subf`) regardless of operand signedness
+- Cause:     MWCC's `%` operator has one lowering path (the rlwinm-pair); the srawi/addze sequence only appears when the source performs the division and remainder reconstruction as separate statements
+- Fix:       write `int q = x / 128; ... (s8)(x - q * 128) ...` instead of `x % 128`. Verified in .scratch probes on Wii/1.1 AND GC/3.0a5.2: opaque param / call result / named local / volatile reload all give the rlwinm-pair via `%`; the manual form reproduces srawi+addze+slwi+subf exactly
+- Result:    func_8021D200 (CModelDispMakeCrystal) RNG gate went from permanent mismatch to byte-region match (43% -> 56.2% overall, % block fully green)
+- Confidence: repo_proven
+- Applies to/a.k.a.: any signed `%`/`/` by 2^k constant where retail shows srawi/addze; also explains "unsigned magic" mismatches near rand31()%N call sites (u32 return of MTRand::rand31 is NOT the cause — cast/local signedness does not change the selection)
+
+## Ellipsis (`...`) prototype on a shared extern "C" import: MWCC emits `crxor cr1` before every call (negative result, func_8049603C, Wii/1.1 -O4,p)
+- Symptom:   after retyping a shared import as `extern "C" void* f(...)`, every caller gains an extra `crxor 6,6,6` (cr1 clear) immediately before the `bl`, shifting all later offsets (+4 bytes/call site); a previously FULL_MATCH no-arg caller dropped to 25%.
+- Cause:     for variadic-prototyped calls MWCC clears CR1 at the call site per the SysV varargs contract — even when zero arguments are passed and none are float. A fixed-arity prototype emits a plain `bl`.
+- Fix:       never use an ellipsis prototype to unify mixed-arity retail call sites. Give the shared owner header one fixed-arity declaration, and give genuine stale-r3 (no-source-arg) retail call sites a documented TU-local fixed-arity declaration instead (they must not include the owner header).
+- Result:    func_8049603C callers verified back at 100% (CMenuUpdate func_801443E4, CfCam func_80070FB8, CfSoundMan func_801BFC38, CMenuQstCnt Move/cbRenderBefore, CfGimmick func_80208CC0).
+- Confidence: repo_proven
+- Applies to/a.k.a.: single-winning-declaration (H3) cleanups; "too few arguments" vs stale-register call sites; any symbol called both with and without source-level arguments.
+
+## fcmpu symmetric-operand swap on float equality vs extern const — named-local birth-order fix
+- Symptom:   single-instruction residual `fcmpu cr0, fB, fA` (decomp) vs `fcmpu cr0, fA, fB` (retail); loads/div identical. Typical on `x != CONST` where x comes from a call and CONST is an extern const f32 (e.g. 0.0f).
+- Cause:     with an *anonymous* compare operand, MWCC Wii/1.1 normalizes the fcmpu operand order to a canonical (persistent, scratch)-style order that does not match retail — expression shape cannot change it (see prior note in attempts: attempt:us-8017e6b8). That invariant only holds for anonymous temps.
+- Fix:       hoist the compared value into a **named local declared before any other float local** (`f32 scale = ...; f32 result; if (scale != CONST) {...}`), keeping natural comparison order. Birth-order scratch coloring then assigns the value f0 / const f1 AND emits the compare in source order = retail's `(value, const)`.
+- Result:    FULL_MATCH ×8 in kyoshin/cf/CtrlMoveEne (us-8009369c/750/804/8b8/9bc/9a98/b74/c50)
+- Confidence: repo_proven (8 independent certifications)
+- Applies to/a.k.a.: supersedes "operand order invariant to expression shape" for the named-local case; also fixed the 0xDC mtRand-gated variants; do NOT hoist the const itself into a local (it becomes call-persistent → f31 + early load, regresses).
+
+## Witness ABI-gate: register-renaming permutations touching r22 and below are rejected (<tooling boundary>)
+- Symptom:   cycle witness FAIL with `witness-gate: abi-boundary | rho perm maps gpr r22 -> r24; ABI registers must be fixed` on an otherwise role-clean pure-reg-swap residual.
+- Cause:     the register-renaming witness treats r22 (and below) as fixed ABI registers and refuses any rho permutation that remaps them; saved-register rotations whose diff set includes r21/r22 can never certify at EQUIVALENT_MATCH.
+- Fix:       no source-level workaround — such targets must reach FULL_MATCH (exact colors) or stay recorded near-misses. Check the diff's register-mapping table for r22-or-lower entries BEFORE running cycle on a reg-swap-only residual.
+- Result:    func_801DF610 97.3% CODE_MATCH rejected despite 100% role-clean swaps.
+- Confidence: repo_proven
+- Applies to/a.k.a.: saved-reg rotation wall family (func_801D8318/D8C0C/D8930/E9190/E9224/DF4E0/DF578); witness-gate; EQUIVALENT_MATCH eligibility pre-check.
+
+## Derived dtor must chain through a base whose retail dtor is a forced-name free function: declare the base dtor undefined + exact_renames the UNDEF (CfObjectTbox fix, Wii/1.1 -O4,p)
+- Symptom:   derived `~Derived()` hexdiff shows an extra `cmpi this,0 / beq` guard around a direct `bl __dt__<GrandBase>Fv` call; retail instead calls an intermediate base's dtor unconditionally via a flat retail name (`__dt__800BFA14`), size +8.
+- Cause:     retail's C++ source had a user-defined virtual dtor on the intermediate base; the fork models that dtor as a forced-name free function (retail emits no mangled member symbol). With NO declared base dtor, MWCC skips the intermediate and synthesizes a guarded grandbase call — different shape AND different callee.
+- Fix:       declare `~IntermediateBase();` in the header WITHOUT defining it anywhere; MWCC then synthesizes the standard unguarded `bl __dt__Q2..IntermediateBaseFv(this, 0)` in every derived dtor. Add `exact_renames=(("__dt__Q2..Fv", "__dt__<flat>"),)` to the DERIVED object's UnitRules so the UNDEF resolves to the existing retail-named definition at link. Do not restructure the TU that owns the free function.
+- Result:    FULL_MATCH us-801faa18 (__dt__Q22cf12CfObjectTboxFv) 0x74/0x74.
+- Confidence: repo_proven
+- Applies to/a.k.a.: CfObjectObj/__dt__800BFA14 chain (CfObjectTbox); any hierarchy where retail merges ctor/dtor pairs under flat cf_ names.
+
+## `obj->~T()` in a helper: compiler dtor-call emits `li r4,-1` flags arg + local mangled reloc; call the extern "C" retail __dt__ name directly (func_800B72DC fix, Wii/1.1 -O4,p)
+- Symptom:   decomp has extra `li r4,-1` before the dtor call and the reloc targets the TU-local `__dt__23reslist<Q...>Fv` instead of retail's `__dt__800B183C`; size +4.
+- Cause:     spelling the destructor through C++ (`obj->~reslist()`) makes MWCC generate its own flags-arg calling convention and bind to its local out-of-line instance; retail's source called the (retail-flat-named) destructor directly with no flags setup.
+- Fix:       declare/lookup the retail linker name (`extern "C" void __dt__800B183C(void*);` — often already in the TU header) and call it as a normal function: `__dt__800B183C(obj);`.
+- Result:    FULL_MATCH us-800b7bfc 0x44/0x44.
+- Confidence: repo_proven
+- Applies to/a.k.a.: reslist/container teardown helpers; same family as the forced-name dtor pattern above but for plain calls inside function bodies.
+
+## @N exact_renames indices flicker across TU edits: prefer CONTENT-keyed pool_patterns for conversion-magic doubles (code_80135FDC u32->f32 fixes, Wii/1.1 -O4,p)
+- Symptom:   a working `("@11349", "lbl_eu_806672F8")` rename stops matching after unrelated edits to the same TU; hexdiff reports a NEW index (`@11677`, then `@12644`) needing the same blob.
+- Cause:     MWCC anon pool labels are ordinal (@N depends on total pool count), so ANY source change in the TU renumbers them — exact_renames keyed on @N rot silently.
+- Fix:       key on bytes instead: `pool_patterns=((struct.pack(">II", 0x43300000, 0x00000000), "lbl_eu_<unsigned-blob>"), ((struct.pack(">II", 0x43300000, 0x80000000), "lbl_eu_<signed-blob>"),))`. Verify blob contents in split1.s first (0x43300000_00000000 = unsigned 2^52; ..._80000000 = signed correction). Keep old @N entries only if other sites still use them.
+- Result:    FULL_MATCH us-8013a65c (func_80139C98) and us-8013c6e8 (func_8013BD24).
+- Confidence: repo_proven
+- Applies to/a.k.a.: all int→float/double conversion magic drifts; completes MWCC_CASES §7i with a maintenance-proof recipe.

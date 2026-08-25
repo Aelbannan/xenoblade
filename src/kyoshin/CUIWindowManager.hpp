@@ -186,8 +186,9 @@ void Regist__8CProcessFP8CProcessb(CProcess* self, CProcess* parent,
 void __dla__FPv(void* p);
 }
 
-// reslist_base vtable (retail data, other split).
-extern const u8 lbl_eu_8052E61C[1];
+// reslist_base vtable (retail data, other split). Sized >= 8 bytes so MWCC
+// addresses it via lis/addi (retail form), not small-data SDA21.
+extern const u8 lbl_eu_8052E61C[0x10];
 
 // Presentation/event bitfield (.sbss, other splits) - talk-event bit gates
 // the 0x608 window path of func_8013CBB4.

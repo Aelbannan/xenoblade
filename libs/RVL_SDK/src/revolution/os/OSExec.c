@@ -9,8 +9,9 @@
 #define MENU_TITLE_ID 0x0000000100000002
 #define TICKET_VIEW_SIZE 0xD8
 
+/* retail .sbss object is 8 bytes; only the low word is accessed */
+volatile struct { int value; int _pad; } Prepared;
 BOOL __OSInReboot;
-volatile int Prepared;
 
 void Run(void (*func)(void)) {
     ICFlashInvalidate();
@@ -235,6 +236,7 @@ extern BOOL DVDLowOpenPartition(const u32 offset, const ESTicket *ticket,
                                 ESTitleMeta *tmd, DVDLowCallback callback);
 /* Retail defines these in OSExec.o (.sbss/.bss). */
 volatile u32 DVDLowIntType;
+extern void callback(u32 type);
 void* __OSNextPartitionType;
 DVDDiskID id ALIGN(32);
 
@@ -597,12 +599,12 @@ void __OSBootDolSimple(s32 param1, u32 param2, u32 regionStart, u32 regionEnd,
     DVDInit();
     DVDSetAutoInvalidation(TRUE);
     DVDResume();
-    Prepared = 0;
+    Prepared.value = 0;
     __DVDPrepareResetAsync((DVDCommandCallback)Callback);
     __OSMaskInterrupts(-0x10);
     __OSUnmaskInterrupts(0x10);
     OSEnableInterrupts();
-    while (Prepared != 1) {
+    while (Prepared.value != 1) {
         ;
     }
     __OSLaunchNextFirmware();
@@ -739,7 +741,7 @@ void __OSBootDol(u32 doloffset, u32 restartCode, u32* argv) {
 
 
 void Callback() {
-    Prepared = 1;
+    Prepared.value = 1;
 }
 extern volatile unsigned long DVDLowIntType;
 void callback(unsigned long type) {

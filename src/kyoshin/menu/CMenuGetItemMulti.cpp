@@ -157,6 +157,8 @@ CBaseCur* __ct__CCur18(CBaseCur*, nw4r::lyt::ArcResourceAccessor*);
 void* __dt__6CCur18Fv(CBaseCur*, int);
 CSysWin* __ct__CSysWin(CSysWin*, int);
 CSysWin* __dt__7CSysWinFv(CSysWin*, int);
+void __ct__14Class_8045F858FP17UnkClass_8045F564(Class_8045F858*, UnkClass_8045F564*);
+void __dt__14Class_8045F858Fv(Class_8045F858*, int);
 void func_801B59F4(CMenuGetItemMulti*);
 void func_801B5860(CMenuGetItemMulti*, int, CMenuGetItemMultiEntry*);
 void func_801B6184(CMenuGetItemMulti*, int, CMenuGetItemMultiEntry*);
@@ -349,7 +351,12 @@ void CMenuGetItemMulti::Init() {
     int memHandle = (int)mtl::MemManager::getHandleMEM2();
     reinterpret_cast<UnkClass_8045F564*>(&mRegion[0])->createRegion(
         memHandle, 0x10000, lbl_eu_80504A3C, 0);
-    Class_8045F858 regionHost(
+    // Raw-storage construction: keeping the object as a compiler-managed
+    // local extends its address liveness to the destructor and steals one
+    // callee-saved register from the arc-base pointer (retail r25 vs r26).
+    u32 regionHostStorage[sizeof(Class_8045F858) / sizeof(u32)];
+    __ct__14Class_8045F858FP17UnkClass_8045F564(
+        reinterpret_cast<Class_8045F858*>(&regionHostStorage[0]),
         reinterpret_cast<UnkClass_8045F564*>(&mRegion[0]));
 
     char setupPaneName[32];
@@ -845,6 +852,8 @@ void CMenuGetItemMulti::Init() {
     }
     mScn->addRenderCB(render, 13, 0);
     reinterpret_cast<UnkClass_8045F564*>(&mRegion[0])->func_8045F810();
+    __dt__14Class_8045F858Fv(
+        reinterpret_cast<Class_8045F858*>(&regionHostStorage[0]), -1);
 }
 
 void CMenuGetItemMulti::Term() {
@@ -1209,6 +1218,8 @@ void func_801B4830(CMenuGetItemMulti* self) {
                 continue;
             }
             char itemPaneName[32];
+            char texPaneName[32]; // retail keeps a second buffer for the
+                                  // texture-pane sprintf (sp+0xD0 vs sp+0xF0)
             sprintf(itemPaneName, &lbl_eu_80504A3C[0x192], i + 1);
             char* itemName;
             if (((entry->packed >> 12) & 0xF) == 3) {
@@ -1259,14 +1270,14 @@ void func_801B4830(CMenuGetItemMulti* self) {
             int special2 = 0;
             if (cat2 != 3 && cat2 != 9) {
                 special2 = func_801361E8(lbl_eu_806640EC, &lbl_eu_80504A3C[0x394],
-                                         (u16)(raw >> 20)) != 0;
+                                         raw >> 20) != 0;
             }
             if (cat2 == 12 || special2 != 0) {
                 self->mHasSpecialItem = 1;
             }
 
-            sprintf(itemPaneName, &lbl_eu_80504A3C[0x25e], i + 1);
-            nw4r::lyt::Pane* pane = self->mLayout->GetRootPane()->FindPaneByName(itemPaneName, true);
+            sprintf(texPaneName, &lbl_eu_80504A3C[0x25e], i + 1);
+            nw4r::lyt::Pane* pane = self->mLayout->GetRootPane()->FindPaneByName(texPaneName, true);
             if (pane != 0) {
                 reinterpret_cast<CMenuGetItemPaneView*>(pane)->flags =
                     (reinterpret_cast<CMenuGetItemPaneView*>(pane)->flags & 0xfe) |
@@ -1296,17 +1307,17 @@ void func_801B4830(CMenuGetItemMulti* self) {
             case 12: textureName = &lbl_eu_80504A3C[0x36a]; break;
             case 13: textureName = &lbl_eu_80504A3C[0x37f]; break;
             }
-            nw4r::lyt::ArcResourceAccessor* accessor = func_801355F4();
-            void* itemTexture = accessor->GetResource(
+            // Retail consumes func_801355F4() immediately (no cached accessor
+            // live across the virtual GetResource call).
+            void* itemTexture = func_801355F4()->GetResource(
                 nw4r::lyt::ArcResourceAccessor::RES_TYPE_TEXTURE, textureName, NULL);
             if (itemTexture == NULL) {
-                accessor = func_801355F4();
-                itemTexture = accessor->GetResource(
+                itemTexture = func_801355F4()->GetResource(
                     nw4r::lyt::ArcResourceAccessor::RES_TYPE_TEXTURE,
                     &lbl_eu_80504A3C[0x26b], NULL);
             }
             if (itemTexture != NULL) {
-                func_80137E7C(self->mLayout, itemPaneName, itemTexture);
+                func_80137E7C(self->mLayout, texPaneName, itemTexture);
             }
 
             sprintf(itemPaneName, &lbl_eu_80504A3C[0x1a0], i + 1);
@@ -1388,7 +1399,8 @@ void func_801B4830(CMenuGetItemMulti* self) {
                     special = 1;
                 }
             }
-            self->mPaneVisible[i] = (special == 0) ? 1 : 0;
+            // Retail derives the visibility byte with a cntlzw NOT-shape.
+            self->mPaneVisible[i] = (special == 0);
 
             int special2 = 0;
             if (category != 3 && category != 9) {
@@ -1431,12 +1443,10 @@ void func_801B4830(CMenuGetItemMulti* self) {
             case 12: textureName = &lbl_eu_80504A3C[0x36a]; break;
             case 13: textureName = &lbl_eu_80504A3C[0x37f]; break;
             }
-            nw4r::lyt::ArcResourceAccessor* accessor = func_801355F4();
-            void* itemTexture = accessor->GetResource(
+            void* itemTexture = func_801355F4()->GetResource(
                 nw4r::lyt::ArcResourceAccessor::RES_TYPE_TEXTURE, textureName, NULL);
             if (itemTexture == NULL) {
-                accessor = func_801355F4();
-                itemTexture = accessor->GetResource(
+                itemTexture = func_801355F4()->GetResource(
                     nw4r::lyt::ArcResourceAccessor::RES_TYPE_TEXTURE,
                     &lbl_eu_80504A3C[0x26b], NULL);
             }
@@ -1497,13 +1507,15 @@ void func_801B4830(CMenuGetItemMulti* self) {
     self->mMaxVisibleItems = 0;
     {
         char buf[32];
-        s8 m = (s8)self->mMaxVisibleItems;
+        // Retail keeps the compare against the just-stored value and passes a
+        // literal 1 (the m+1 of the always-zero selector).
+        s8& m = reinterpret_cast<s8&>(self->mMaxVisibleItems);
         if (m == 5) {
             sprintf(buf, &lbl_eu_80504A3C[0x16b]);
         } else if (m == 4) {
-            sprintf(buf, &lbl_eu_80504A3C[0x192], m + 1);
+            sprintf(buf, &lbl_eu_80504A3C[0x192], 1);
         } else {
-            sprintf(buf, &lbl_eu_80504A3C[0x3c9], m + 1);
+            sprintf(buf, &lbl_eu_80504A3C[0x3c9], 1);
         }
         nw4r::lyt::Pane* pane = self->mLayout->GetRootPane()->FindPaneByName(buf, true);
         nw4r::lyt::Pane* refPane = self->mLayout->GetRootPane()->FindPaneByName(
@@ -2518,18 +2530,18 @@ __declspec(noinline) void func_801B82E8(CMenuGetItemMulti* self) {
 
     u32 up, down, curHeld, maskHeld, aPressed;
     if (func_80086F9C__Q22cf13CfGameManagerFv(-1) != 0) {
+        curHeld = (pad->mTurboPressButtonFlags & 0x10000) |
+                  (pad->mTurboPressButtonFlags & 0x8);
         maskHeld = pad->mTurboPressButtonFlags & 0x8004;
-        curHeld = pad->mTurboPressButtonFlags & 0x10000;
-        curHeld |= pad->mTurboPressButtonFlags & 0x8;
         up = (pad->mPad.mPressedButtonFlags >> 21) & 1;
         down = (pad->mPad.mPressedButtonFlags >> 22) & 1;
         aPressed = (pad->mPad.mPressedButtonFlags >> 9) & 1;
         maskHeld = maskHeld != 0;
         curHeld = curHeld != 0;
     } else {
+        curHeld = (pad->mTurboPressButtonFlags & 0x10000) |
+                  (pad->mTurboPressButtonFlags & 0x8);
         maskHeld = pad->mTurboPressButtonFlags & 0x8004;
-        curHeld = pad->mTurboPressButtonFlags & 0x10000;
-        curHeld |= pad->mTurboPressButtonFlags & 0x8;
         up = (pad->mPad.mPressedButtonFlags >> 4) & 1;
         down = (pad->mPad.mPressedButtonFlags >> 5) & 1;
         aPressed = (pad->mPad.mPressedButtonFlags >> 9) & 1;
@@ -2552,29 +2564,29 @@ __declspec(noinline) void func_801B82E8(CMenuGetItemMulti* self) {
         if (self->field_20C != 0) {
             return;
         }
-        if (self->mMaxVisibleItems != 5) {
-            self->field_1F8 = 4;
-            func_80138078__FUl(3);
+        if ((s8)self->mMaxVisibleItems == 5) {
+            if (self->mHasSpecialItem != 0) {
+                func_80138078__FUl(5);
+                return;
+            }
+            // Retail materializes the string-pool base once (r30) and offsets
+            // all six label arguments from it.
+            char* base = lbl_eu_80504A3C;
+            self->field_1F8 = 8;
+            char* n1 = func_80136190(base + 0x177, base + 0x182, 0x1c);
+            char* n2 = func_80136190(base + 0x177, base + 0x182, 0x1d);
+            char* n3 = func_80136190(base + 0x177, base + 0x182, 0x1e);
+            func_8022B90C(reinterpret_cast<CSysWin*>(&self->mSystemWindow[0]), 2);
+            func_8022B9B4(&self->mSystemWindow[0], n1, 0);
+            func_8022BF6C(&self->mSystemWindow[0], n2, n3);
+            func_8022BFC8(reinterpret_cast<CSysWin*>(&self->mSystemWindow[0]), 0);
+            func_8022B8B8(&self->mSystemWindow[0]);
+            func_801D216C(&self->mCursor, 0);
+            self->field_1F4 = 1;
             return;
         }
-        if (self->mHasSpecialItem != 0) {
-            func_80138078__FUl(5);
-            return;
-        }
-        self->field_1F8 = 8;
-        char* n1 = func_80136190(&lbl_eu_80504A3C[0x177],
-                                 &lbl_eu_80504A3C[0x182], 0x1c);
-        char* n2 = func_80136190(&lbl_eu_80504A3C[0x177],
-                                 &lbl_eu_80504A3C[0x182], 0x1d);
-        char* n3 = func_80136190(&lbl_eu_80504A3C[0x177],
-                                 &lbl_eu_80504A3C[0x182], 0x1e);
-        func_8022B90C(reinterpret_cast<CSysWin*>(&self->mSystemWindow[0]), 2);
-        func_8022B9B4(&self->mSystemWindow[0], n1, 0);
-        func_8022BF6C(&self->mSystemWindow[0], n2, n3);
-        func_8022BFC8(reinterpret_cast<CSysWin*>(&self->mSystemWindow[0]), 0);
-        func_8022B8B8(&self->mSystemWindow[0]);
-        func_801D216C(&self->mCursor, 0);
-        self->field_1F4 = 1;
+        self->field_1F8 = 4;
+        func_80138078__FUl(3);
         return;
     }
 
@@ -2646,7 +2658,7 @@ __declspec(noinline) void func_801B82E8(CMenuGetItemMulti* self) {
             return;
         }
 
-        if (self->mMaxVisibleItems == 4) {
+        if ((s8)self->mMaxVisibleItems == 4) {
             self->mMaxVisibleItems = (u8)(self->mVisibleItemCount - 1);
         } else {
             self->mMaxVisibleItems = self->mMaxVisibleItems - 1;
@@ -2720,7 +2732,7 @@ __declspec(noinline) void func_801B82E8(CMenuGetItemMulti* self) {
             return;
         }
 
-        if (self->mMaxVisibleItems == 5) {
+        if ((s8)self->mMaxVisibleItems == 5) {
             self->mMaxVisibleItems = 0;
         } else {
             self->mMaxVisibleItems = self->mMaxVisibleItems + 1;

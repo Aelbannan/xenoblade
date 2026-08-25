@@ -280,12 +280,13 @@ extern "C" void cfCam_setField1E0AndGlobal(cf::CfCamFollow* ptr, float f) {
     lbl_eu_80661B50 = f;
     ptr->unk1E0 = f;
 }
+// Retail func_8006BBF4: set/clear the shared flag word at +4.
 extern "C" void cfCam_setOrClearUnk1D4Bits(cf::CfCamFollow* obj, unsigned int bits, int set_flag) {
     cf::CfCamFollow* self = static_cast<cf::CfCamFollow*>(obj);
     if (set_flag != 0)
-        self->unk1D4 |= bits;
+        *reinterpret_cast<unsigned int*>(reinterpret_cast<char*>(self) + 4) |= bits;
     else
-        self->unk1D4 &= ~bits;
+        *reinterpret_cast<unsigned int*>(reinterpret_cast<char*>(self) + 4) &= ~bits;
 }
 extern "C" int cfCam_getUnkC4(void* self) { return *(int*)((char*)self + 0xc4); }
 extern "C" int cfCam_getBit0_0x530(void* p) {
@@ -441,16 +442,16 @@ extern "C" __declspec(noinline) void func_80071694(ml::CMat33* out, const ml::CQ
 
     out->m[0][0] = one - (YY + ZZ);
 
-    float XZ = x * twoZ;
-    float YW = w * twoY;
-
     out->m[1][1] = one - (XX + ZZ);
     out->m[2][2] = one - (XX + YY);
 
+    float XZ = x * twoZ;
+    float YW = w * twoY;
+
     out->m[0][1] = XY - ZW;
     out->m[1][0] = XY + ZW;
-    out->m[0][2] = XZ - YW;
-    out->m[2][0] = XZ + YW;
+    out->m[0][2] = XZ + YW;
+    out->m[2][0] = XZ - YW;
 
     float YZ = y * twoZ;
     float XW = w * twoX;
@@ -810,9 +811,9 @@ void func_8006B980(int arg1, int arg2) {
 // runs at all).
 float func_8006BB20(void* arg, float angle) {
     // Offset the FIdx angle, then fold it into [0,1] as a sine-table phase
-    f32 x = angle - lbl_eu_806662D8;
     f32 s = lbl_eu_806662DC; // 0.0f - sin-input accumulator (retail f2)
     f32 v = lbl_eu_806662D0; // 1.0f - return value / clamp cap (retail f31)
+    f32 x = angle - lbl_eu_806662D8;
     if (x > s) {
         f32 t = v - x / lbl_eu_806662E0;
         if (t >= s) {
@@ -903,6 +904,20 @@ void func_8006C16C(cf::CfCamFollow* self, void* arg) {
     }
 }
 __declspec(noinline) void func_8006C1C8(cf::CfCamFollow* self) {}
+// func_8006BC1C: clear the flag word at +4 (retail: lwz/andc/stw +0x4(r3)).
+__declspec(noinline) void func_8006BC1C(void* self, int mask) {
+    *reinterpret_cast<unsigned int*>(reinterpret_cast<char*>(self) + 4) &= ~static_cast<unsigned int>(mask);
+}
+// Retail func_8006C1B0: return bit 1 of the word at +100.
+__declspec(noinline) int func_8006C1B0(void* self) {
+    return (*reinterpret_cast<unsigned int*>(reinterpret_cast<char*>(self) + 100) >> 1) & 1;
+}
+// Tiny accessors (retail thunks).
+extern "C" __declspec(noinline) void* func_8006B6A0(void* self) { return static_cast<char*>(self) + 16; }
+extern "C" __declspec(noinline) void* func_8006B6A8(void* self) { return *reinterpret_cast<void**>(reinterpret_cast<char*>(self) + 356); }
+extern "C" __declspec(noinline) void* func_8006B6B0(void* self) { return static_cast<char*>(self) + 64; }
+extern "C" __declspec(noinline) void* func_8006B6B8(void* self) { return static_cast<char*>(self) + 28; }
+extern "C" __declspec(noinline) void func_8006BEF0(void* self, void* v) { *reinterpret_cast<void**>(reinterpret_cast<char*>(self) + 8) = v; }
 // func_8006CA2C: follow-cam position update. When the follow target handle
 // (+0x164) reports 0 from its vtable slot 0x74, re-arm the 0x40 camera flag.
 // func_8006C740 derives a source vector, func_80073C7C transforms it, the
@@ -2943,8 +2958,7 @@ void func_80071754(cf::CfCamFollow* self, ml::CVec3* arg2) {
         }
     }
     if (func_8006BFC4(reinterpret_cast<int>(self), 0x400) != 0) {
-        f32 invT = lbl_eu_806662D0 - self->unk200;
-        self->unk23C = invT * self->unk218 + self->unk20C;
+        self->unk23C = self->unk218 * (lbl_eu_806662D0 - self->unk200) + self->unk20C;
         if (self->unk200 >= lbl_eu_806662D0) {
             func_8006BC1C(self, 0x400);
             self->unk23C = self->unk20C;
@@ -3140,8 +3154,8 @@ extern "C" int func_80071F14(cf::CfCamFollow* self) {
 // b arrives as a double (retail passes it in f2 after promoting); frsp at the
 // multiply confirms the widened parameter.
 void func_80071F74(f32* out, double a, f32 b, f32 c) {
-    f32 t;
     f32 ratio;
+    f32 t;
     if (c > lbl_eu_80666308) {
         c = lbl_eu_80666308;
     }

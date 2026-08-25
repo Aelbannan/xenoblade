@@ -727,12 +727,12 @@ void func_8008B580(cf::CfObjectMove* self) {
     }
     f60 = obj->field_3F60;
     if (obj->_v2BC() != 0 && obj->_v128() <= lbl_eu_806665C0) {
-        if (f60 != 0 && (self->field_0x180 & 0x8u) != 0) {
-            self->field_0x17C &= ~0x10000u;
-            func_8004B8B0(f60, 0, 1, lbl_eu_806665C0);
-            ((cf::CFunc8008B580Sub150*)&obj->mSub2)->_v150(0);
-            return;
-        }
+        if (f60 == 0) return;
+        if ((self->field_0x180 & 0x8u) == 0) return;
+        self->field_0x17C &= ~0x10000u;
+        func_8004B8B0(f60, 0, 1, lbl_eu_806665C0);
+        ((cf::CFunc8008B580Sub150*)&obj->mSub2)->_v150(0);
+        return;
     }
     if (f60 == 0) return;
     func_8008BEEC(self, obj, 1, 0);
@@ -749,12 +749,10 @@ void func_8008B580(cf::CfObjectMove* self) {
                 ((cf::CFunc8008B580Sub150*)&obj->mSub2)->_v150(0);
             } else {
                 u32 w2 = obj->field_04->_v30()->field_0;
-                int hit = func_80174C98(obj, &w2, 0x805);
-                if (hit == 0) {
-                    u32 w3 = obj->field_04->_v30()->field_0;
-                    hit = func_80174C98(obj, &w3, 0x18);
-                }
-                if (hit != 0) {
+                u32 w3;
+                if (func_80174C98(obj, &w2, 0x805) != 0 ||
+                    (w3 = obj->field_04->_v30()->field_0,
+                     func_80174C98(obj, &w3, 0x18)) != 0) {
                     func_8004B8B0(f60, 0, 1, lbl_eu_806665C0);
                     ((cf::CFunc8008B580Sub150*)&obj->mSub2)->_v150(0);
                 }
@@ -1452,11 +1450,11 @@ void func_8008E06C(cf::CfObjectMove* self) {
 // the +0x78 move-list entries, then installs the +0x148 hook or dispatches the
 // state record and commits the entry count / scaled timer.
 void func_8008E2D4(cf::CfObjectMove* self) {
-    const CfMoveHookPtmfsE2D4* hooks =
-        (const CfMoveHookPtmfsE2D4*)&lbl_eu_80527830;
     cf::CfObjectMoveInitView* view = (cf::CfObjectMoveInitView*)self;
     cf::CNpcMoveSubView* subView = self->field_0x34->field_0x28;
     cf::CFunc8008D444Obj* obj = (cf::CFunc8008D444Obj*)subView;
+    const CfMoveHookPtmfsE2D4* hooks =
+        (const CfMoveHookPtmfsE2D4*)&lbl_eu_80527830;
     if (subView != 0) {
         obj = (cf::CFunc8008D444Obj*)((u8*)subView - 0x3E9C);
     }
@@ -3017,8 +3015,9 @@ void func_80092CB0(void* a, void* b, void* c) {
 // receives 0.
 void func_80092CC4(cf::CfObjectMove* self, u32* out1, f32* out2) {
     *out1 = 0;
+    f32 scale = *self->field_0x34->field_0x28->_v138();
     f32 result;
-    if (*self->field_0x34->field_0x28->_v138() != lbl_eu_806665C0) {
+    if (scale != lbl_eu_806665C0) {
         cf::CNpcMoveSubView* sub = self->field_0x34->field_0x28;
         f32 denom = *sub->_v138();
         result = *sub->_v1D8() / denom;
@@ -3030,8 +3029,9 @@ void func_80092CC4(cf::CfObjectMove* self, u32* out1, f32* out2) {
 
 void func_80092D78(cf::CfObjectMove* self, u32* out1, f32* out2) {
     *out1 = 0x12C;
+    f32 scale = *self->field_0x34->field_0x28->_v138();
     f32 result;
-    if (*self->field_0x34->field_0x28->_v138() != lbl_eu_806665C0) {
+    if (scale != lbl_eu_806665C0) {
         cf::CNpcMoveSubView* sub = self->field_0x34->field_0x28;
         f32 denom = *sub->_v138();
         result = *sub->_v1D8() / denom;
@@ -3043,8 +3043,9 @@ void func_80092D78(cf::CfObjectMove* self, u32* out1, f32* out2) {
 
 void func_80092E2C(cf::CfObjectMove* self, u32* out1, f32* out2) {
     *out1 = 0x258;
+    f32 scale = *self->field_0x34->field_0x28->_v138();
     f32 result;
-    if (*self->field_0x34->field_0x28->_v138() != lbl_eu_806665C0) {
+    if (scale != lbl_eu_806665C0) {
         cf::CNpcMoveSubView* sub = self->field_0x34->field_0x28;
         f32 denom = *sub->_v138();
         result = *sub->_v1D8() / denom;
@@ -3056,8 +3057,9 @@ void func_80092E2C(cf::CfObjectMove* self, u32* out1, f32* out2) {
 
 void func_80092EE0(cf::CfObjectMove* self, u32* out1, f32* out2) {
     *out1 = 0x384;
+    f32 scale = *self->field_0x34->field_0x28->_v138();
     f32 result;
-    if (*self->field_0x34->field_0x28->_v138() != lbl_eu_806665C0) {
+    if (scale != lbl_eu_806665C0) {
         cf::CNpcMoveSubView* sub = self->field_0x34->field_0x28;
         f32 denom = *sub->_v138();
         result = *sub->_v1D8() / denom;
@@ -3095,8 +3097,9 @@ void func_80092FE4(cf::CfObjectMove* self, u32* out1, f32* out2) {
     if (ml::math::mtRand(100) >= 0x50) {
         *out2 = lbl_eu_806665E4;
     } else {
+        f32 scale = *self->field_0x34->field_0x28->_v138();
         f32 result;
-        if (*self->field_0x34->field_0x28->_v138() != lbl_eu_806665C0) {
+        if (scale != lbl_eu_806665C0) {
             cf::CNpcMoveSubView* sub = self->field_0x34->field_0x28;
             f32 denom = *sub->_v138();
             result = *sub->_v1D8() / denom;
@@ -3113,8 +3116,9 @@ void func_800930C0(cf::CfObjectMove* self, u32* out1, f32* out2) {
     if (ml::math::mtRand(100) >= 0x46) {
         *out2 = lbl_eu_806665E4;
     } else {
+        f32 scale = *self->field_0x34->field_0x28->_v138();
         f32 result;
-        if (*self->field_0x34->field_0x28->_v138() != lbl_eu_806665C0) {
+        if (scale != lbl_eu_806665C0) {
             cf::CNpcMoveSubView* sub = self->field_0x34->field_0x28;
             f32 denom = *sub->_v138();
             result = *sub->_v1D8() / denom;
@@ -3131,8 +3135,9 @@ void func_8009319C(cf::CfObjectMove* self, u32* out1, f32* out2) {
     if (ml::math::mtRand(100) >= 0x3C) {
         *out2 = lbl_eu_806665E4;
     } else {
+        f32 scale = *self->field_0x34->field_0x28->_v138();
         f32 result;
-        if (*self->field_0x34->field_0x28->_v138() != lbl_eu_806665C0) {
+        if (scale != lbl_eu_806665C0) {
             cf::CNpcMoveSubView* sub = self->field_0x34->field_0x28;
             f32 denom = *sub->_v138();
             result = *sub->_v1D8() / denom;
@@ -3149,8 +3154,9 @@ void func_80093278(cf::CfObjectMove* self, u32* out1, f32* out2) {
     if (ml::math::mtRand(100) >= 0x32) {
         *out2 = lbl_eu_806665E4;
     } else {
+        f32 scale = *self->field_0x34->field_0x28->_v138();
         f32 result;
-        if (*self->field_0x34->field_0x28->_v138() != lbl_eu_806665C0) {
+        if (scale != lbl_eu_806665C0) {
             cf::CNpcMoveSubView* sub = self->field_0x34->field_0x28;
             f32 denom = *sub->_v138();
             result = *sub->_v1D8() / denom;

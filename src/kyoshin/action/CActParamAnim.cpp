@@ -47,7 +47,113 @@ extern "C" __declspec(noinline) void func_8004B0B4(void*) {}
 
 CActParamAnim::~CActParamAnim() {}
 
-void CActParamAnim::func_8004B114() {}
+void CActParamAnim::func_8004B114() {
+    CActParamAnimInitView* view = reinterpret_cast<CActParamAnimInitView*>(this);
+    view->field04 = 0;
+    view->field08 = 0;
+    view->field0C = 0;
+    func_80053B24(reinterpret_cast<CActParamData*>(reinterpret_cast<u8*>(this) + 0x10),
+                  0, 0, 0, 0);
+    view->field370 = -1;
+    view->field374 = 0;
+    view->field378 = 0;
+    view->field37C = -1;
+    view->field380 = lbl_eu_80665E98;
+    view->field384 = lbl_eu_80665E9C;
+    view->field388 = lbl_eu_80665E9C;
+    view->field38C = lbl_eu_80665E9C;
+    view->field390 = lbl_eu_80665E9C;
+    view->field394 = lbl_eu_80665E9C;
+    view->field398 = lbl_eu_80665E9C;
+    view->field39C = lbl_eu_80665EA0;
+    view->object3A0 = 0;
+    view->state3A4 = 0;
+    view->field3A8 = lbl_eu_80665EA0;
+    view->field3AC = lbl_eu_80665EA0;
+    view->field3B0 = lbl_eu_80665EA0;
+    view->field3B4 = lbl_eu_80665EA0;
+    view->field3B8 = lbl_eu_80665EA0;
+    view->field3BC = lbl_eu_80665EA0;
+    view->field3C0 = lbl_eu_80665EA0;
+    view->field3C4 = lbl_eu_80665EA0;
+    view->field3C8 = lbl_eu_80665EA0;
+    view->field3CC = lbl_eu_80665EA0;
+    view->field3D0 = lbl_eu_80665EA0;
+    view->field3D4 = lbl_eu_80665EA0;
+    view->field3D8 = lbl_eu_80665EA0;
+    view->field3DC = lbl_eu_80665E9C;
+    view->field3E0 = lbl_eu_80665EA0;
+    view->field3E4 = lbl_eu_80665EA0;
+    view->field3E8 = lbl_eu_80665EA0;
+    view->field3EC = lbl_eu_80665EA0;
+    view->field3F0 = lbl_eu_80665EA0;
+    view->field3F4 = lbl_eu_80665EA0;
+    view->field3F8 = lbl_eu_80665EA0;
+    view->field3FC = lbl_eu_80665EA0;
+    view->field400 = lbl_eu_80665EA0;
+    view->field404 = lbl_eu_80665EA0;
+    view->field408 = lbl_eu_80665EA0;
+    view->field40C = lbl_eu_80665E9C;
+    view->field410 = lbl_eu_80665EA0;
+    view->field414 = lbl_eu_80665EA0;
+    view->field418 = lbl_eu_80665EA0;
+    view->field41C = lbl_eu_80665EA0;
+    view->field420 = lbl_eu_80665E9C;
+    view->field424 = ml::CVec3::unitZ.x;
+    view->field428 = ml::CVec3::unitZ.y;
+    view->field42C = ml::CVec3::unitZ.z;
+    view->field430 = lbl_eu_80665EA4;
+    view->field434 = lbl_eu_80665EA8;
+    view->field438 = lbl_eu_80665E9C;
+    view->field43C = lbl_eu_80665EA4;
+    view->field440 = lbl_eu_80665EA0;
+    view->field444 = lbl_eu_80665EA0;
+    view->field448 = lbl_eu_80665EA0;
+    view->field44C = lbl_eu_80665EA0;
+    view->field450 = lbl_eu_80665EA0;
+    view->field454 = lbl_eu_80665EA0;
+    view->field458 = lbl_eu_80665EA0;
+    view->field45C = lbl_eu_80665EA0;
+    view->field460 = lbl_eu_80665E9C;
+    view->field464 = lbl_eu_80665EA0;
+    view->field468 = lbl_eu_80665EAC;
+    view->field46C = lbl_eu_80665EA0;
+    view->field470 = lbl_eu_80665EB0;
+    view->field474 = lbl_eu_80665EB0;
+    view->field478 = lbl_eu_80665EA0;
+    view->field47C = lbl_eu_80665EA0;
+    view->field480 = lbl_eu_80665EA0;
+    view->field484 = lbl_eu_80665EA0;
+    view->field488 = lbl_eu_80665EA0;
+    view->field48C = lbl_eu_80665EA0;
+    view->field490 = lbl_eu_80665EB4;
+    view->field494 = lbl_eu_80665EB8;
+    view->field498 = 0;
+    view->field49C = lbl_eu_80665EA0;
+    f32 kScale = lbl_eu_80665EBC * lbl_eu_8066A210;
+    view->field4A0 = kScale;
+    view->field4A4 = kScale;
+    view->field4A8 = 0x00040000;
+    view->field4AC = 0;
+    view->field4B0 = 0;
+    view->field4B4 = 0;
+    view->field4B8 = 2;
+    view->field4BC = 0;
+    view->field4BD = 0;
+    view->field4BE = 0;
+    view->field4BF = 0;
+    view->field4C0 = 0;
+    view->field4C8 = -1;
+    view->field4CC = lbl_eu_80665EA0;
+    view->field4D0 = lbl_eu_80665EA0;
+    view->field4D4 = 0;
+    view->field4D6 = 0;
+    view->field4D8 = 0;
+    view->field4DA = 0;
+    view->field4DC = 0;
+    view->field4E4 = 0;
+    view->field4C4 = 0;
+}
 
 void* CActParamAnim::getChild() { return &reinterpret_cast<CActParamAnimFull*>(this)->mChildData; }
 
@@ -896,7 +1002,7 @@ extern "C" f32 func_8004CC74(f32 angle) {
     return CosFIdx__Q24nw4r4mathFf(lbl_eu_80665ED8 * angle);
 }
 
-int CActParamAnim::checkRenderFlag() { return ((*(unsigned int*)((unsigned char*)this + 0x260) >> 5) & 1); }
+extern "C" int func_8004CC80(CActParamAnim* self) { return ((*(unsigned int*)((unsigned char*)self + 0x260) >> 5) & 1); }
 
 void func_8004CC8C(CActParamAnim* self) {
     CActParamAnimStateView* view = reinterpret_cast<CActParamAnimStateView*>(self);
@@ -3354,7 +3460,7 @@ extern "C" void func_80051CD4(CActParamAnim* self) {
     CActParamAnimInitView* iv = reinterpret_cast<CActParamAnimInitView*>(self);
 
     func_8004B344(self);
-    if (func_8004CC80() != 0) return;
+    if (func_8004CC80(self) != 0) return;
     func_8004B344(self);
 
     f32 f31 = lbl_eu_80665EA0;
@@ -3615,10 +3721,10 @@ extern "C" __declspec(noinline) Quaternion* func_8005274C(Quaternion* self, cons
 extern "C" __declspec(noinline) void func_80052780(void* self, void* src){
     int f = *(int*)((char*)self + 224);
     volatile int* vs = (volatile int*)src;
-    int a = vs[0];
-    int b = vs[1];
-    int c = vs[2];
-    int d = vs[3];
+    int a = *vs++;
+    int b = *vs++;
+    int c = *vs++;
+    int d = *vs;
     *(int*)((char*)self + 168) = a;
     *(int*)((char*)self + 172) = b;
     *(int*)((char*)self + 176) = c;
@@ -3671,9 +3777,8 @@ void func_800527E8(CActParamAnim* self) {
 
 
 extern "C" void func_80051B84(CActParamAnim* self) {
-    u32 flags = *(u32*)(reinterpret_cast<u8*>(self) + 12);
     *(u32*)(reinterpret_cast<u8*>(self) + 0x4A8) = 0x00044A05;
-    *(u32*)(reinterpret_cast<u8*>(self) + 0x0C) = flags | 0x00800000;
+    *(u32*)(reinterpret_cast<u8*>(self) + 0x0C) |= 0x00800000;
 }
 
 extern "C" int func_80052540(CActParamAnim* self) {
@@ -3691,7 +3796,7 @@ extern "C" f32 func_80052554(void* obj) {
 
 extern "C" int func_80052568(void* data) {
     u8* base = reinterpret_cast<u8*>(data);
-    int result = (*(u32*)(base + 0x260) >> 18) & 1;
+    int result = (*(volatile u32*)(base + 0x260) >> 18) & 1;
     *(u32*)(base + 0x260) &= ~0x40000;
     return result;
 }

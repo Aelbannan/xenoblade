@@ -175,7 +175,3 @@ extern "C" __declspec(align(4)) const char lbl_eu_80524708[0x28] = {
 
 // [.sdata] 0x80663C00-0x80663C08 (8B)
 extern "C" u32 lbl_eu_80663C00[2] = { (u32)&lbl_eu_80524708, 0x00000000 };
-
-DECOMP_FORCEACTIVE(CArcItem_cpp, lbl_eu_8056FFE0);
-DECOMP_FORCEACTIVE(CArcItem_cpp, lbl_eu_80524708);
-DECOMP_FORCEACTIVE(CArcItem_cpp, lbl_eu_80663C00);

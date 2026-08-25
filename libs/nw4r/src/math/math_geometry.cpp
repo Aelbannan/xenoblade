@@ -12,8 +12,6 @@ extern const f32 lbl_eu_80669E5C; // 0.0f
 extern const f32 lbl_eu_80669E68; // 1.0f
 extern const f64 lbl_eu_80669E70; // 0.0
 
-DECOMP_FORCELITERAL(math_geometry_cpp, 0.5f, 0.0f);
-
 void PLANE::Set(const VEC3* p0, const VEC3* p1, const VEC3* p2) {
     VEC3 v0, v1, v2;
 

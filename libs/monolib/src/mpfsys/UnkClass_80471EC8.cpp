@@ -1557,5 +1557,3 @@ u32 lbl_eu_80665878;
 u32 lbl_eu_8066587C;
 f32 lbl_eu_80665880;
 u32 lbl_eu_80665884;
-
-DECOMP_FORCEACTIVE(UnkClass_80471EC8_cpp, lbl_eu_80663848);

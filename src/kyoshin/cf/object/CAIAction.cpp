@@ -1,4 +1,6 @@
+#include <types.h>
 #include "kyoshin/cf/CBattleManagerApi.hpp"
+#include "kyoshin/cf/object/CfObjectMoveApi.hpp"
 #include "kyoshin/cf/CfMapItemManager.hpp"
 #include "kyoshin/cf/object/CAIAction.hpp"
 
@@ -205,31 +207,32 @@ u32 func_8014AC38(cf::CAIAction* self, const cf::CAIActionSlot* in) {
 }
 void func_8014AE00(){}
 int func_8014B120(cf::CAIAction* self, const cf::CAIActionSlot* in) {
-    u32 count = self->unk214;
-    for (u32 i = 0; i < count; i++) {
-        u32 ringIdx = (self->unk210 + i) % self->unk218;
-        const u8* sb = (const u8*)self->unk20C + (ringIdx << 5);
-        const u8* ib = (const u8*)in;
+    u32 i;
+    for (i = 0; i < self->unk214; i++) {
+        u32 cap = self->unk218;
+        u32 pos = self->unk210 + i;
+        const u8* sb = (const u8*)self->unk20C + ((pos % cap) << 5);
+        // Byte-wise duplicate test over [0x5..0xD].
         u32 dup;
-        if (sb[0x5] != ib[0x5]) dup = 0;
-        else if (sb[0x6] != ib[0x6]) dup = 0;
-        else if (sb[0x7] != ib[0x7]) dup = 0;
-        else if (sb[0x8] != ib[0x8]) dup = 0;
-        else if (sb[0x9] != ib[0x9]) dup = 0;
-        else if (sb[0xA] != ib[0xA]) dup = 0;
-        else if (sb[0xB] != ib[0xB]) dup = 0;
-        else if (sb[0xC] != ib[0xC]) dup = 0;
-        else dup = (u32)(sb[0xD] == ib[0xD]);
+        if (sb[5] != ((const u8*)in)[5]) dup = 0;
+        else if (sb[6] != ((const u8*)in)[6]) dup = 0;
+        else if (sb[7] != ((const u8*)in)[7]) dup = 0;
+        else if (sb[8] != ((const u8*)in)[8]) dup = 0;
+        else if (sb[9] != ((const u8*)in)[9]) dup = 0;
+        else if (sb[10] != ((const u8*)in)[10]) dup = 0;
+        else if (sb[11] != ((const u8*)in)[11]) dup = 0;
+        else if (sb[12] != ((const u8*)in)[12]) dup = 0;
+        else dup = (u32)(sb[13] == ((const u8*)in)[13]);
         if (dup)
             return 0;
     }
     // Append at the tail of the ring; retail computes the index with signed
     // modulo here (divw) unlike the unsigned loop above.
-    s32 idx = (s32)(self->unk210 + self->unk214);
-    s32 cap = (s32)self->unk218;
-    s32 quot = idx / cap;
+    s32 abs = (s32)(self->unk210 + self->unk214);
+    s32 capS = (s32)self->unk218;
+    s32 quot = abs / capS;
     cf::CAIActionSlot* dst =
-        (cf::CAIActionSlot*)((u8*)self->unk20C + ((idx - quot * cap) << 5));
+        (cf::CAIActionSlot*)((u8*)self->unk20C + ((abs - quot * capS) << 5));
     *dst = *in;
     self->unk214 = self->unk214 + 1;
     return 1;
@@ -263,7 +266,9 @@ void func_8014B2EC(void* self, float delta) {
     }
 }
 void func_8014B344(){}
-void func_8014B804(unsigned char* self, int index, int a2, int a3, int a4, int a5, int a6, int a7, int a8, int a9, int a10, int a11, int a12, int a13) { unsigned char* base = self + index * 14; base[0x21c] = a2; base[0x21d] = a3; base[0x21e] = a4; base[0x21f] = a5; base[0x220] = a6; base[0x221] = a7; base[0x222] = a8; base[0x223] = a9; base[0x224] = a10; base[0x225] = a11; base[0x226] = a12; *(unsigned short*)(base + 0x228) = a13; if (a7 == 11 || a9 == 11) *(unsigned short*)(base + 0x228) |= 1; if (a7 == 10 || a9 == 10) *(unsigned short*)(base + 0x228) |= 1; if (a7 == 7 || a9 == 7) *(unsigned short*)(base + 0x228) |= 2; }
+// extern "C" per the CfObjectPc.hpp declaration (retail symbol is unmangled;
+// CfObjectPc.cpp imports it under that exact name).
+extern "C" void func_8014B804(unsigned char* self, int index, int a2, int a3, int a4, int a5, int a6, int a7, int a8, int a9, int a10, int a11, int a12, int a13) { unsigned char* base = self + index * 14; base[0x21c] = a2; base[0x21d] = a3; base[0x21e] = a4; base[0x21f] = a5; base[0x220] = a6; base[0x221] = a7; base[0x222] = a8; base[0x223] = a9; base[0x224] = a10; base[0x225] = a11; base[0x226] = a12; *(unsigned short*)(base + 0x228) = a13; if (a7 == 11 || a9 == 11) *(unsigned short*)(base + 0x228) |= 1; if (a7 == 10 || a9 == 10) *(unsigned short*)(base + 0x228) |= 1; if (a7 == 7 || a9 == 7) *(unsigned short*)(base + 0x228) |= 2; }
 void func_801537E0(void* self) {
     *(u16*)((u8*)self + 8) &= ~0x0006;
 }
@@ -299,20 +304,24 @@ void func_8014E164(){}
 // Returns the result of dispatching the query through the party's move
 // vtable (or the cached battle handle at 0x3F10), with bit 0x400 in the
 // query's flags set in two pre-dispatch paths.
+typedef void* (*CAIMoveSlot4C)(CAIPartyMoveObj*);
+
 void* func_80150618(cf::CAIAction* self, CAIActionQuery* in) {
     CAIActionEnumHolder holder;
-    void* result = 0;
+    void* result;
 
     func_80043D90(&holder);
 
     CAIQueryTarget* tgt = in->unk18;
-    if (tgt == 0 || tgt->unk3C == 3 || tgt->unk3C == 4) {
+    if (tgt != 0 && tgt->unk3C != 3 && tgt->unk3C != 4) {
+        in->unk10 = in->unk10 | 0x400;
+    } else {
+        // Action-class filter: bytes 0xCB..0xCD or the 0x3B sentinel also
+        // request the 0x400 flag.
         u8 byteD = in->unk0D;
-        u8 sum = (u8)(byteD + 0xCB);
+        u8 sum = byteD + 0xCB;
         if (sum <= 2 || byteD == 0x3B)
             in->unk10 = in->unk10 | 0x400;
-    } else {
-        in->unk10 = in->unk10 | 0x400;
     }
 
     if (in->unk06 == 0x25) {
@@ -325,10 +334,9 @@ void* func_80150618(cf::CAIAction* self, CAIActionQuery* in) {
     // sub-cases (1/2/3 by target unk5C) refines it.
     result = func_80150828(self, in);
 
-    CAIPartyObj* party = (CAIPartyObj*)self->unkB14;
-    CAIPartyMoveObj* move = &party->move;
-    if (in->unk18 != 0) {
-        u16 which = in->unk18->unk5C;
+    tgt = in->unk18;
+    if (tgt != 0) {
+        s16 which = tgt->unk5C;
         if (which == 1) {
             if (result != 0) {
                 void* obj = func_8016FE34(func_800B708C((int)(uintptr_t)result));
@@ -336,17 +344,19 @@ void* func_80150618(cf::CAIAction* self, CAIActionQuery* in) {
                     __dt__80043E88(&holder, -1);
                     return 0;
                 }
-                // Mutual exclusion: party flag bit 1 pairs with obj bit 2 and
-                // vice versa; when neither pair matches, dispatch on the move
-                // object's vtable slot 0x4C.
+                // Cross-pair exclusion: party bit 2 (0x2) blocks when the
+                // candidate has bit 4 (0x4), and vice versa; otherwise take
+                // the move object's own vtable slot 0x4C result.
+                CAIPartyObj* party = (CAIPartyObj*)self->unkB14;
+                CAIPartyMoveObj* move = &party->move;
                 u32 mf = move->moveFlags;
                 u32 of = ((CAIPartyObj*)obj)->move.moveFlags;
                 if (!((mf & 2) && (of & 4)) && !((mf & 4) && (of & 2))) {
-                    result =
-                        ((void* (*)(CAIPartyMoveObj*))move->vtable->slot[17])(move);
+                    result = ((CAIMoveSlot4C*)move->vtable)[0x13](move);
                 }
             }
         } else if (which == 2) {
+            CAIPartyObj* party = (CAIPartyObj*)self->unkB14;
             void* v = (void*)party->unk3F10;
             if (result != v)
                 result = v;
@@ -357,7 +367,9 @@ void* func_80150618(cf::CAIAction* self, CAIActionQuery* in) {
                     __dt__80043E88(&holder, -1);
                     return 0;
                 }
-                u32 mf = move->moveFlags;
+                // Same-pair exclusion: matching bits suppress the fallback.
+                CAIPartyObj* party = (CAIPartyObj*)self->unkB14;
+                u32 mf = party->move.moveFlags;
                 u32 of = ((CAIPartyObj*)obj)->move.moveFlags;
                 if (!((mf & 2) && (of & 2)) && !((mf & 4) && (of & 4))) {
                     result = (void*)party->unk3F10;
@@ -618,8 +630,8 @@ extern "C" void* func_801522C4(cf::CAIAction* self, const void* cmd) {
     CAIActionEnumHolder holder;
     const void* c = cmd;
 
-    s32 op = (s32)((const u8*)c)[7];  // dispatch key A — the "command"
-    s32 sel = (s32)((const u8*)c)[8]; // dispatch key B — the "selector"
+    s32 op = (s32)((const u8*)c)[7];  // dispatch key A -- the "command"
+    s32 sel = (s32)((const u8*)c)[8]; // dispatch key B -- the "selector"
     u32 countBefore;
     void* result = 0;
 
@@ -2026,7 +2038,7 @@ extern "C" void* func_80150828(cf::CAIAction* self, CAIActionQuery* q) {
 
 
 // ---------------------------------------------------------------------------
-// func_801522C4 — AI-action dispatcher (retail 0x80152D08, 0x151C bytes).
+// func_801522C4 -- AI-action dispatcher (retail 0x80152D08, 0x151C bytes).
 // Given a 0x20-byte action-query struct, builds a CfObjEnumList of event
 // entries (switch on byte 8 = sel), filters it (switch on byte 7 = op),
 // and returns the selected entry payload (func_800F6E08) or 0.
@@ -2037,37 +2049,119 @@ extern "C" void* func_80150828(cf::CAIAction* self, CAIActionQuery* q) {
 // CfObjEnumList fields accessed by this function.
 
 
+// Move-subobject interface view used by func_801537F0: slot 0x4C returns
+// the battle handle, slot 0x50 sets/clears it.
+class CAIMoveSubVt {
+public:
+    virtual void v00();
+    virtual void v01();
+    virtual void v02();
+    virtual void v03();
+    virtual void v04();
+    virtual void v05();
+    virtual void v06();
+    virtual void v07();
+    virtual void v08();
+    virtual void v09();
+    virtual void v0A();
+    virtual void v0B();
+    virtual void v0C();
+    virtual void v0D();
+    virtual void v0E();
+    virtual void v0F();
+    virtual void v10();
+    virtual void* v11();      // 0x4C
+    virtual void v12(void*); // 0x50
+};
+
+// Party-object view extended past CAIVtObj (204 slots) to the 0x5C0 probe.
+struct CAIPartyObjVt : CAIVtObj {
+    virtual void v0CC(); virtual void v0CD(); virtual void v0CE(); virtual void v0CF();
+    virtual void v0D0(); virtual void v0D1(); virtual void v0D2(); virtual void v0D3();
+    virtual void v0D4(); virtual void v0D5(); virtual void v0D6(); virtual void v0D7();
+    virtual void v0D8(); virtual void v0D9(); virtual void v0DA(); virtual void v0DB();
+    virtual void v0DC(); virtual void v0DD(); virtual void v0DE(); virtual void v0DF();
+    virtual void v0E0(); virtual void v0E1(); virtual void v0E2(); virtual void v0E3();
+    virtual void v0E4(); virtual void v0E5(); virtual void v0E6(); virtual void v0E7();
+    virtual void v0E8(); virtual void v0E9(); virtual void v0EA(); virtual void v0EB();
+    virtual void v0EC(); virtual void v0ED(); virtual void v0EE(); virtual void v0EF();
+    virtual void v0F0(); virtual void v0F1(); virtual void v0F2(); virtual void v0F3();
+    virtual void v0F4(); virtual void v0F5(); virtual void v0F6(); virtual void v0F7();
+    virtual void v0F8(); virtual void v0F9(); virtual void v0FA(); virtual void v0FB();
+    virtual void v0FC(); virtual void v0FD(); virtual void v0FE(); virtual void v0FF();
+    virtual void v100(); virtual void v101(); virtual void v102(); virtual void v103();
+    virtual void v104(); virtual void v105(); virtual void v106(); virtual void v107();
+    virtual void v108(); virtual void v109(); virtual void v10A(); virtual void v10B();
+    virtual void v10C(); virtual void v10D(); virtual void v10E(); virtual void v10F();
+    virtual void v110(); virtual void v111(); virtual void v112(); virtual void v113();
+    virtual void v114(); virtual void v115(); virtual void v116(); virtual void v117();
+    virtual void v118(); virtual void v119(); virtual void v11A(); virtual void v11B();
+    virtual void v11C(); virtual void v11D(); virtual void v11E(); virtual void v11F();
+    virtual void v120(); virtual void v121(); virtual void v122(); virtual void v123();
+    virtual void v124(); virtual void v125(); virtual void v126(); virtual void v127();
+    virtual void v128(); virtual void v129(); virtual void v12A(); virtual void v12B();
+    virtual void v12C(); virtual void v12D(); virtual void v12E(); virtual void v12F();
+    virtual void v130(); virtual void v131(); virtual void v132(); virtual void v133();
+    virtual void v134(); virtual void v135(); virtual void v136(); virtual void v137();
+    virtual void v138(); virtual void v139(); virtual void v13A(); virtual void v13B();
+    virtual void v13C(); virtual void v13D(); virtual void v13E(); virtual void v13F();
+    virtual void v140(); virtual void v141(); virtual void v142(); virtual void v143();
+    virtual void v144(); virtual void v145(); virtual void v146(); virtual void v147();
+    virtual void v148(); virtual void v149(); virtual void v14A(); virtual void v14B();
+    virtual void v14C(); virtual void v14D(); virtual void v14E(); virtual void v14F();
+    virtual void v150(); virtual void v151(); virtual void v152(); virtual void v153();
+    virtual void v154(); virtual void v155(); virtual void v156(); virtual void v157();
+    virtual void v158(); virtual void v159(); virtual void v15A(); virtual void v15B();
+    virtual void v15C(); virtual void v15D(); virtual void v15E(); virtual void v15F();
+    virtual void v160(); virtual void v161(); virtual void v162(); virtual void v163();
+    virtual void v164(); virtual void v165(); virtual void v166(); virtual void v167();
+    virtual void v168(); virtual void v169(); virtual void v16A(); virtual void v16B();
+    virtual void v16C(); virtual void v16D();
+    virtual s32 vf5C0(void* arg); // #366 -> 0x5C0
+};
+
 // Resets the action ring (count/start/trailer), then queries the party's
 // current state via three tagged probes (3 / 0x1c / 0x805); if none hits,
 // queues action 0x31 and refreshes the battle-object handle.
 void func_801537F0(cf::CAIAction* self) {
-    self->unk214 = 0;
+    // Reset the ring; retail computes unk8|4 between clearing unk214/unk210.
     self->unk8 = self->unk8 | 4;
+    self->unk214 = 0;
     self->unk210 = 0;
     std::memset(self->trailer, 0, 0x20);
 
-    CAIPartyObj* party = (CAIPartyObj*)self->unkB14;
-
-    u32 tag;
-    tag = *(u32*)((u32 (*)(CAIVtable*))party->unk04->slot[10])(party->unk04);
-    if (func_80174C98(party, &tag, 3) == 0) {
-        tag = *(u32*)((u32 (*)(CAIVtable*))party->unk04->slot[10])(party->unk04);
-        if (func_80174C98(party, &tag, 0x1c) == 0) {
-            tag = *(u32*)((u32 (*)(CAIVtable*))party->unk04->slot[10])(party->unk04);
-            if (func_80174C98(party, &tag, 0x805) == 0) {
-                func_800BE12C(&party->move, 0x31, 0, -1, 1);
+    // Three tagged probes on the party's state sub-object (vt slot 0x30).
+    // Retail re-reads self->unkB14 before every probe and caches the party
+    // pointer in a callee-saved reg only within each probe block.
+    u32 tagA;
+    u32 tagB;
+    u32 tagC;
+    {
+        CAIPartyObj* pr1 = (CAIPartyObj*)self->unkB14;
+        tagA = *pr1->unk04->vf30();
+        if (func_80174C98(pr1, &tagA, 3) == 0) {
+            CAIPartyObj* pr2 = (CAIPartyObj*)self->unkB14;
+            tagB = *pr2->unk04->vf30();
+            if (func_80174C98(pr2, &tagB, 0x1c) == 0) {
+                CAIPartyObj* pr3 = (CAIPartyObj*)self->unkB14;
+                tagC = *pr3->unk04->vf30();
+                if (func_80174C98(pr3, &tagC, 0x805) == 0) {
+                    func_800BE12C(
+                        (u8*)(CAIPartyObj*)self->unkB14 + 0x3E9C, 0x31, 0, -1, 1);
+                }
             }
         }
     }
 
-    CAIPartyMoveObj* move = &party->move;
-    void* obj = func_8016FE34(func_800B708C(
-        (int)((void* (*)(CAIPartyMoveObj*))move->vtable->slot[17])(move)));
-    if (obj != (void*)party) {
-        // Only refresh when the party reports an active battle object.
-        if (((s32 (*)(CAIPartyObj*))party->vtable->slot[366])(party) != 0) {
-            ((void (*)(CAIPartyMoveObj*, u32))move->vtable->slot[18])(move, 0);
-        }
+    // Resolve the battle object from the move sub-object's vt slot 0x4C;
+    // clear its action when it matches this party (or the party reports an
+    // active battle via vt slot 0x5C0, probed with the resolved object).
+    CAIPartyObj* cur = (CAIPartyObj*)self->unkB14;
+    void* src = ((CAIMoveSubVt*)&cur->move)->v11();
+    void* obj = func_8016FE34(func_800B708C((int)(intptr_t)src));
+    cur = (CAIPartyObj*)self->unkB14;
+    if (obj == (void*)cur || ((CAIPartyObjVt*)cur)->vf5C0(obj) != 0) {
+        ((CAIMoveSubVt*)&((CAIPartyObj*)self->unkB14)->move)->v12(0);
     }
 }
 // Walks the AI config table (*lbl_eu_806641B0): finds the entry whose id
@@ -2078,35 +2172,41 @@ void func_801537F0(cf::CAIAction* self) {
 // retail rlwinm+rlwimi swap pair). On a hit the action ring is cleared,
 // the art name is recorded (strlen -> unkB10, strcpy -> unkB00), and the
 // entry's 0xC-byte action sub-entries are installed via func_8014B804.
+// sel doubles as the lookup id throughout: retail keeps it in one
+// callee-saved register, re-derived to 0x70/0x65/0x63 as the walk proceeds.
 void func_8015396C(cf::CAIAction* self, u32 sel) {
     cf::CAIActionTable* table = lbl_eu_806641B0;
-    u32 target = sel;
     u32 want;
     u32 raw = table->count;
     u16 count = (u16)__rlwimi((raw << 8) & 0xFF00, raw, 24, 24, 31);
-    const u8* ep = (const u8*)table + 2;
+    const u8* cur = (const u8*)table + 2;
 
     if (sel == 0) {
         u32 flags = ((cf::CAIPartyInfo*)self->unkB14)->flags;
         if (flags & 0x2)
-            target = 0x70;
+            sel = 0x70;
         else if (flags & 0x4)
-            target = 0x65;
-        if (target != 0) {
+            sel = 0x65;
+        if (sel != 0) {
             u8* p = self->entries;
             for (s32 i = 0; i < 0xA0; i++) {
                 std::memset(p, 0, 0xE);
                 p += 0xE;
             }
-            u32 i = 0;
-            while (i < count) {
-                const cf::CAIActionTableEntry* e = (const cf::CAIActionTableEntry*)ep;
-                if (e->id == target &&
+            // Countdown form: MWCC converts the unused-counter loop to
+            // mtctr/bdnz with an initial zero guard.
+            for (u32 n = count; n != 0; n--) {
+                const cf::CAIActionTableEntry* e = (const cf::CAIActionTableEntry*)cur;
+                if (e->id == sel &&
                     (u32)(u16)__rlwimi((e->artsId << 8) & 0xFF00, e->artsId, 24, 24, 31) ==
                         (u32)((cf::CAIPartyInfo*)self->unkB14)->artsId) {
                     char name[0x11];
+                    // One zero variable feeds both the name terminator and
+                    // the trailing func_8014B804 arg (retail shares r29).
+                    u32 z = 0;
                     std::memcpy(name, e->name, 0x10);
-                    name[0x10] = 0;
+                    sel = 0;
+                    name[0x10] = (u8)sel;
                     self->unkB10 = (u32)std::strlen(name);
                     std::strcpy((char*)&self->unkB00, name);
                     {
@@ -2114,30 +2214,32 @@ void func_8015396C(cf::CAIAction* self, u32 sel) {
                         for (s32 j = 0; j < e->actionCount; j++) {
                             func_8014B804((unsigned char*)self, j, s->b0, s->b2, s->b3,
                                           s->b5, s->b4, s->b6, s->b7, s->b8, s->b9,
-                                          s->b10, s->b11, 0);
+                                          s->b10, s->b11, (int)sel);
                             s++;
                         }
                     }
                     return;
                 }
-                ep += 0x16 + e->actionCount * 0xC;
-                i++;
+                cur += 0x16 + e->actionCount * 0xC;
             }
         }
-        target = 0x63;
+        sel = 0x63;
         want = 0;
     }
 
     {
-        const cf::CAIActionTableEntry* p = table->entries;
-        u32 i = 0;
-        while (i < count) {
-            if (p->id == target &&
+        // Restart from the first entry (retail re-derives table+2 here).
+        const cf::CAIActionTableEntry* p =
+            (const cf::CAIActionTableEntry*)((const u8*)table + 2);
+        for (u32 n = count; n != 0; n--) {
+            if (p->id == sel &&
                 (u32)(u16)__rlwimi((p->artsId << 8) & 0xFF00, p->artsId, 24, 24, 31) ==
                     (u32)want) {
                 char name[0x11];
+                u32 z = 0;
                 std::memcpy(name, p->name, 0x10);
-                name[0x10] = 0;
+                sel = 0;
+                name[0x10] = (u8)sel;
                 self->unkB10 = (u32)std::strlen(name);
                 std::strcpy((char*)&self->unkB00, name);
                 {
@@ -2145,14 +2247,13 @@ void func_8015396C(cf::CAIAction* self, u32 sel) {
                     for (s32 j = 0; j < p->actionCount; j++) {
                         func_8014B804((unsigned char*)self, j, s->b0, s->b2, s->b3,
                                       s->b5, s->b4, s->b6, s->b7, s->b8, s->b9,
-                                      s->b10, s->b11, 0);
+                                      s->b10, s->b11, (int)sel);
                         s++;
                     }
                 }
                 return;
             }
             p = (const cf::CAIActionTableEntry*)((const u8*)p + 0x16 + p->actionCount * 0xC);
-            i++;
         }
     }
 }

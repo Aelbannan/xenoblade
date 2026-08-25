@@ -21,13 +21,11 @@ static inline u8 getCol8(void* table, const char* col, int row) {
 
 // Outlined helpers defined further down in this TU are declared in
 // CfCamEvent_1.hpp; declaring them before any use keeps MWCC from inlining
-// their bodies into func_800784A0 - retail calls them with real bl relocs.// Word view of a camera-vector triplet: retail copies the slot accessor
+// Word view of a camera-vector triplet: retail copies the slot accessor
 // results as raw GPR words (load pair high+low, store low/high, then the
 // single), so the snapshot block goes through this POD view instead of
 // ml::CVec3::operator= (which would emit an out-of-line __as__ call).
-struct CamEventVecWords {
-    u32 w[3];
-};
+// CamEventVecWords itself is defined in CfCamEvent_1.hpp.
 
 // Memory-resident triplet locals (POD: ml::CVec3 would emit default ctor
 // calls). Used by func_800778E4's column reads and func_800784A0's out
@@ -462,13 +460,20 @@ CfCamEventManager::CfCamEventManager() {
     }
     lbl_eu_80663DF0 = (CfCamEventGlobal*)this;
     memset(this, 0, 0xc);
-    // Load the 0x78 float up front so MWCC hoists the lfs next to the
-    // CVec3::zero address computation (matches retail's schedule).
-    const f32 f78 = lbl_eu_80666440;
-    field_0x54 = ml::CVec3::zero;
-    field_0x60 = ml::CVec3::zero;
-    field_0x6C = ml::CVec3::zero;
-    field_0x78 = f78;
+    // Word-view copies: ml::CVec3 assignment emits an out-of-line __as__ call
+    // and member-wise float copies emit lfs/stfs chains; retail inlines these
+    // as raw GPR word copies from the zero global.
+    // OPEN ITEM (us-80075c34, 37.6%): retail inline-expands the three 12-byte
+    // zero-vector copies as lwzu/lwz GPR loads + stw stores; every source shape
+    // tried (CVec3 operator= [outlined __as__], member-wise floats [lfs/stfs
+    // chain], POD word-struct assign [outlined __as__], memcpy [bl memcpy call])
+    // fails to inline. Header operator= on ml::CVec3 also stayed out-of-line.
+    // Next angles: hand-rolled u32* copy loop, per-field u32 reads from an
+    // extern "C" zero view, or checking how other matched TUs fill CVec3 fields.
+    memcpy(&field_0x54, &ml::CVec3::zero, 0xC);
+    memcpy(&field_0x60, &ml::CVec3::zero, 0xC);
+    memcpy(&field_0x6C, &ml::CVec3::zero, 0xC);
+    field_0x78 = lbl_eu_80666440;
     field_0x42 = 0;
     field_0x44 = 0;
     field_0x46 = 0;
@@ -560,13 +565,14 @@ void* func_800755B0(void* self, unsigned long idx) {
 // Retail calls these outlined from func_800784A0; dont_inline keeps IPA from
 // folding their bodies into the caller (repo convention, cf. CfGameManager).
 #pragma dont_inline on
-int func_800755BC(CfCamEventManager* /*unused*/, u32 idx) {
-    int result = 0;
-    if (idx >= 0x10 && idx <= 0x2b) result = 1;
-    else if (idx >= 0x8 && idx <= 0xa) result = 2;
-    else if (idx <= 1) result = 0;
-    else if ((s32)idx == 0xb) result = 2;
-    return result;
+int func_800755BC(CfCamEventManager* /*unused*/, int idx) {
+    // Retail lowers these as subi/cmpli unsigned range checks that jump to
+    // end-of-function result blocks (jump-on-true).
+    if ((u32)(idx - 0x10) <= 27) return 1;
+    if ((u32)(idx - 8) <= 2) return 2;
+    if ((u32)idx <= 1) return 0;
+    if (idx == 11) return 2;
+    return 0;
 }
 #pragma dont_inline reset
 
@@ -610,21 +616,32 @@ int func_80075640() {
 // schedule (load pair, store high first, then the single).
 void func_80075674(CfCamEventManager* dst, CfCamEventCopySrc* src) {
     if (src == 0) return;
-    f32 a = src->f_10C;
-    f32 b = src->f_110;
-    dst->field_0x54.y = b;
-    dst->field_0x54.x = a;
-    dst->field_0x54.z = src->f_114;
-    f32 c = src->f_138;
-    f32 d = src->f_13C;
-    dst->field_0x60.y = d;
-    dst->field_0x60.x = c;
-    dst->field_0x60.z = src->f_140;
-    f32 e = src->f_118;
-    f32 g = src->f_11C;
-    dst->field_0x6C.y = g;
-    dst->field_0x6C.x = e;
-    dst->field_0x6C.z = src->f_120;
+    // Retail copies the triplets as raw GPR words (lwz/stw pairs), not
+    // per-float lfs/stfs - use u32 word views on both sides.
+    // Paired word temps reproduce retail's lwz-pair/stw-pair GPR copy shape.
+    // OPEN ITEM (us-80076010, 91.3%): retail loads lo THEN hi (lo->r5,
+    // hi->r0); every declaration order tried gives either lo-first-load with
+    // swapped colors or hi-first-load with matching colors - the load order
+    // is bound to the color assignment in MWCC. Witness rejected the reorder
+    // (slot-2 bits differ), so this needs the true source idiom: likely a
+    // struct copy of a 3-word view that MWCC inline-expands.
+    // Named-member word reads with hi born first (retail colors hi->r0);
+    // MWCC then schedules the loads by ascending source address.
+    u32 hi = src->w_110;
+    u32 lo = src->w_10C;
+    dst->field_0x54.w[1] = hi;
+    dst->field_0x54.w[0] = lo;
+    dst->field_0x54.w[2] = src->w_114;
+    lo = src->w_138;
+    hi = src->w_13C;
+    dst->field_0x60.w[1] = hi;
+    dst->field_0x60.w[0] = lo;
+    dst->field_0x60.w[2] = src->w_140;
+    lo = src->w_118;
+    hi = src->w_11C;
+    dst->field_0x6C.w[1] = hi;
+    dst->field_0x6C.w[0] = lo;
+    dst->field_0x6C.w[2] = src->w_120;
     dst->field_0x78 = src->f_1E0;
 }
 
@@ -641,34 +658,42 @@ void func_800756D0(ml::CVec3* out, CinemCamSrc* src) {
     if (src == nullptr)
         goto zero_init;
 
-    body = src->vtable->fn_0x12C(src, 100);
-    anchor = src->vtable->fn_0x128(src);
+    body = ((CinemCamSrcI*)src)->getBody(100);
+    anchor = ((CinemCamSrcI*)src)->getAnchor();
 
     // Two independent ifs (no shared diamond join): keeps retail's
     // duplicated follow-snap block from being tail-merged.
     if (body != nullptr) {
         // Named float temps pin the register allocation to retail's
-        // right-to-left schedule (z -> f0, y -> f1, x -> f2).
-        ml::CVec3 pos;
+        // right-to-left schedule (z -> f0, y -> f1, x -> f2). All vector
+        // staging is member-wise on POD views: ml::CVec3 methods emit
+        // out-of-line __ct__/set/__as__ calls that retail inlined.
+        CamTripletLocals pos;
         f32 pz = body->z;
         f32 py = body->y;
         f32 px = body->x;
-        pos.set(px, py, pz);
-        *out = pos;
+        pos.x = px;
+        pos.y = py;
+        pos.z = pz;
+        ((u32*)out)[0] = ((u32*)&pos)[0];
+        ((u32*)out)[1] = ((u32*)&pos)[1];
+        ((u32*)out)[2] = ((u32*)&pos)[2];
 
         if (anchor != nullptr && (src->field_0x64 & 4) &&
             src->field_0x70 == func_800AA300(5, 4, 1)) {
-            ml::CVec3 av;
+            CamTripletLocals av;
             f32 az = anchor->z;
             f32 ay = anchor->y;
             f32 ax = anchor->x;
-            av.set(ax, ay, az);
-            f32 d = av.y - src->vtable->fn_0xAC(src)->v.y;
+            av.x = ax;
+            av.y = ay;
+            av.z = az;
+            f32 d = av.y - ((CinemCamSrcI*)src)->getVecOut()->v.y;
             if (d > lbl_eu_8066641C)
                 out->y += d;
         }
 
-        CinemVecOut* vo = src->vtable->fn_0xAC(src);
+        CinemVecOut* vo = ((CinemCamSrcI*)src)->getVecOut();
         if (out->y > vo->v.y) {
             if (src->field_0x64 & 2) {
                 out->y -= lbl_eu_80666444;
@@ -681,19 +706,26 @@ void func_800756D0(ml::CVec3* out, CinemCamSrc* src) {
             }
         } else {
             // Below the follow line: snap to it plus the follow offset.
-            *out = vo->v;
+            ((u32*)out)[0] = ((u32*)&vo->v)[0];
+            ((u32*)out)[1] = ((u32*)&vo->v)[1];
+            ((u32*)out)[2] = ((u32*)&vo->v)[2];
             out->y += lbl_eu_80666448;
         }
     } else {
         // No body: snap straight to the voice vector plus follow offset.
-        CinemVecOut* vo = src->vtable->fn_0xAC(src);
-        *out = vo->v;
+        CinemVecOut* vo = ((CinemCamSrcI*)src)->getVecOut();
+        ((u32*)out)[0] = ((u32*)&vo->v)[0];
+        ((u32*)out)[1] = ((u32*)&vo->v)[1];
+        ((u32*)out)[2] = ((u32*)&vo->v)[2];
         out->y += lbl_eu_80666448;
     }
     return;
 
 zero_init:
-    *out = ml::CVec3::zero;
+    // Retail inline-expands this as lwzu/lwz GPR copies from the zero global.
+    ((u32*)out)[0] = ((u32*)&ml::CVec3::zero)[0];
+    ((u32*)out)[1] = ((u32*)&ml::CVec3::zero)[1];
+    ((u32*)out)[2] = ((u32*)&ml::CVec3::zero)[2];
 }
 
 // Camera depth/pose solver for the event cam. Computes a blended aim point
@@ -3054,8 +3086,9 @@ void func_8007BAFC(CfCamEventManager* self) {
 // triplets at a time. Members are assigned x,y,z directly (not via set())
 // so MWCC allocates the pool constants in retail's first-use order.
 void sinit_8007BE74() {
-    // Discarded prototype vectors, declared front-to-back.
-    ml::CVec3 local[24];
+    // Discarded prototype vectors, declared front-to-back. POD view: an
+    // ml::CVec3 array would emit a default-ctor loop retail doesn't have.
+    CamPrototypeVec local[24];
     local[23].x = lbl_eu_80666458;
     local[23].y = lbl_eu_80666458;
     local[23].z = lbl_eu_8066641C;

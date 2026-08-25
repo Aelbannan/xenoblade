@@ -8,6 +8,10 @@ extern volatile s32 lbl_eu_805E3EA0;
 extern volatile s32 lbl_eu_805E3EA4;
 extern volatile s32 lbl_eu_805E4EE8;
 
+/* Retail error-string pool (lbl_eu_80516148): both cvFsOpen failure paths
+ * pass the same "E02110501 adxstmf_stat_exec: can't open " message. */
+extern char lbl_eu_80516148[];
+
 typedef struct {
     /* 0x00 */ u8 active;
     /* 0x01 */ s8 stat;
@@ -732,7 +736,7 @@ void ADXSTMF_ExecHndl(ADXSTMHndl* h) {
             void* fh = cvFsOpen(h->fileName, h->fileSizeParam, 0);
             h->fileHandle = fh;
             if (fh == NULL) {
-                ADXERR_CallErrFunc2_("ADXF: can't open file", h->fileName);
+                ADXERR_CallErrFunc2_(lbl_eu_80516148, h->fileName);
                 h->stat = 4;
                 h->opened = 0;
                 h->openReq = 0;
@@ -798,7 +802,7 @@ void ADXSTMF_ExecHndl(ADXSTMHndl* h) {
     h->openReq = 0;
 
     if (cvFsGetStat(h->fileHandle) == 3) {
-        ADXERR_CallErrFunc2_("ADXF: can't open file (stat err)", h->fileName);
+        ADXERR_CallErrFunc2_(lbl_eu_80516148, h->fileName);
         if (h->fileHandle) {
             void* fh = h->fileHandle;
             h->fileHandle = NULL;

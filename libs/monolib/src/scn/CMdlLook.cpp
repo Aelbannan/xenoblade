@@ -364,14 +364,4 @@ extern "C" u32 lbl_eu_80663CA0[0x2] = { (u32)&lbl_eu_80524810, 0x00000000 };
 extern "C" u32 lbl_eu_80663CA8[0x1] = { 0x72656600 };
 extern "C" u32 lbl_eu_80663CAC[0x1] = { 0x72656600 };
 
-// DECOMP_FORCEACTIVE keeps the blob symbols alive under -ipa file.
-DECOMP_FORCEACTIVE(CMdlLook_cpp, lbl_eu_80524810);
-DECOMP_FORCEACTIVE(CMdlLook_cpp, lbl_eu_8066B3C8);
-DECOMP_FORCEACTIVE(CMdlLook_cpp, lbl_eu_8066B3C0);
-DECOMP_FORCEACTIVE(CMdlLook_cpp, lbl_eu_8066B3B8);
-DECOMP_FORCEACTIVE(CMdlLook_cpp, lbl_eu_80663CA0);
-DECOMP_FORCEACTIVE(CMdlLook_cpp, lbl_eu_805701E0);
-DECOMP_FORCEACTIVE(CMdlLook_cpp, lbl_eu_805701F0);
-DECOMP_FORCEACTIVE(CMdlLook_cpp, lbl_eu_8052481C);
-DECOMP_FORCEACTIVE(CMdlLook_cpp, lbl_eu_80663CA8);
-DECOMP_FORCEACTIVE(CMdlLook_cpp, lbl_eu_80663CAC);
+

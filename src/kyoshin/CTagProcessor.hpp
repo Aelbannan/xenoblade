@@ -673,7 +673,7 @@ struct TagPadDataView {
  * the nw4r tag processor, but marked __declspec(novtable): the retail vtable
  * data lives in the retail .data (annotated lbl_eu_8052DA68 / lbl_eu_8052DA38
  * / lbl_eu_8052DA08), so MWCC must not emit its own __vt__* table or
- * auto-store it — the ctor stores the retail vtable pointer explicitly. The
+ * auto-store it -- the ctor stores the retail vtable pointer explicitly. The
  * ctor entry points are the short C-ABI names (__ct__CTagProcessorBase /
  * __ct__CTagProcessor / __ct__CTagProcessorSE); the base ctor is referenced
  * by its C-ABI name from the derived ctor functions, while the dtors are
@@ -821,7 +821,7 @@ void func_80127E74(nw4r::lyt::AnimTransform* tag, nw4r::lyt::Pane* a,
                    nw4r::lyt::Pane* b, nw4r::lyt::Pane* c);
 
 // Tag-proc ctors: retail symbols are the short C-ABI names (no class-length
-// mangling). __ct__CTagProcessorBase is referenced (not defined) here — its
+// mangling). __ct__CTagProcessorBase is referenced (not defined) here -- its
 // bytes come from the member ctor CTagProcessorBase::CTagProcessorBase() in
 // the .cpp, which needs the compiler-generated base-ctor call (placement new
 // would add a null beq the retail does not have). The derived ctors store the

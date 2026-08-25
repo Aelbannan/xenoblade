@@ -26,9 +26,9 @@ extern u32 lbl_eu_8050BDF8[];
 extern s16 func_80136330(u32, const char*, u32);
 extern u8 lbl_eu_80664798;
 
-extern void func_80137C1C(void*, void*);
-extern void* createPicture__10CLibLayoutFv();
-extern void SetName__Q34nw4r3lyt4PaneFPCc(void*, const char*);
+extern "C" void func_80137C1C(void*, void*);
+extern "C" void* createPicture__10CLibLayoutFv();
+extern "C" void SetName__Q34nw4r3lyt4PaneFPCc(void*, const char*);
 
 // Draw helpers used by CFloorMap::Draw and related functions
 void func_80137038(nw4r::lyt::Layout*, nw4r::lyt::DrawInfo*, int, int);
@@ -221,7 +221,7 @@ void func_8024577C(void* self, u16 val) {
 
     while (i < count) {
         roff = i * 0x18;
-        if (*(const u16*)((int)base + roff + 0x18) == val) {
+        if (*(const u16*)(base + i * 0x18 + 0x18) == val) {
             if (i >= 5) {
                 cur->field_0A = 4;
                 cur->field_0B = i - 4;
@@ -508,9 +508,12 @@ void func_80245DF8(void* self) {
 // resolves to the retail address via config/<region>/symbols.txt at link
 // time (same mechanism as the func_80136E84 family).
 
+// operator delete(void*) (retail unmangled C symbol); declared at file scope
+// because MWCC rejects function-local extern "C" declarations.
+extern "C" void* __dl__FPv(void*);
+
 // Deleting dtors (retail names): free self when mode > 0, return self.
 extern "C" void* __dt__80244724(void* self, int mode) {
-    extern void* __dl__FPv(void*);
     if (self && mode > 0) {
         __dl__FPv(self);
     }
@@ -518,7 +521,6 @@ extern "C" void* __dt__80244724(void* self, int mode) {
 }
 
 extern "C" void* __dt__8024503C(void* self, int mode) {
-    extern void* __dl__FPv(void*);
     if (self && mode > 0) {
         __dl__FPv(self);
     }
@@ -526,7 +528,6 @@ extern "C" void* __dt__8024503C(void* self, int mode) {
 }
 
 void* __dt__802462F0(void* self, int mode) {
-    extern void* __dl__FPv(void*);
     if (self && mode > 0) {
         __dl__FPv(self);
     }
@@ -694,7 +695,6 @@ void func_80246330(CFloorMapLayoutBlock* self) {
 }
 
 void* __dt__802468C8(void* self, int mode) {
-    extern void* __dl__FPv(void*);
     if (self && mode > 0) {
         __dl__FPv(self);
     }
@@ -1251,10 +1251,8 @@ void* func_80248920(void* self, const char* name, f32 x, f32 y, void* arg5, cons
     char buf[20];
     sprintf(buf, &lbl_eu_8050BEA8[0x30e], result);
 
-    void* accessor = func_801355F4();
-    typedef void* (*VFuncPtr4)(void*, u32, void*, u32);
-    VFuncPtr4* vt = *(VFuncPtr4**)accessor;
-    void* picture = vt[3](accessor, 0x74696d67, buf, 0);
+    nw4r::lyt::ArcResourceAccessor* accessor = (nw4r::lyt::ArcResourceAccessor*)func_801355F4();
+    void* picture = accessor->GetResource(0x74696d67, buf, NULL);
 
     if (!picture) return NULL;
 
@@ -2524,7 +2522,6 @@ void func_8024B4CC(nw4r::math::VEC3* output, void* data, nw4r::lyt::Pane* node) 
 }
 
 void* __dt__8024B6B8(void* self, int mode) {
-    extern void* __dl__FPv(void*);
     if (self && mode > 0) {
         __dl__FPv(self);
     }
@@ -2568,7 +2565,6 @@ void func_8024B6F8(CFloorMapRowList* self, void* arg2, u32 arg3, u32 arg4, u32 a
 }
 
 void* __dt__8024B894(void* self, int mode) {
-    extern void* __dl__FPv(void*);
     if (self && mode > 0) {
         __dl__FPv(self);
     }
@@ -3051,8 +3047,9 @@ void func_8024C8F8(void* self, void* drawInfo) {
             if (!p->mLayout32D4) {
                 cond = 0;
             } else {
-                void** vtable = *(void***)(*(void**)((u8*)p->mLayout32D4 + 0x10));
-                void* result = ((void*(*)(void*, const char*, u32))vtable[15])((void*)p->mLayout32D4, &lbl_eu_8050BEA8[0xEE], 1);
+                nw4r::lyt::Pane* result =
+                    ((nw4r::lyt::Pane*)*(void**)((u8*)p->mLayout32D4 + 0x10))
+                        ->FindPaneByName(&lbl_eu_8050BEA8[0xEE], 1);
                 cond = (*(u8*)((u8*)result + 0xBB)) & 1;
             }
             if (!cond) {
@@ -3067,13 +3064,13 @@ void func_8024C8F8(void* self, void* drawInfo) {
             func_80137038(reinterpret_cast<nw4r::lyt::Layout*>(p->mLayout331C), reinterpret_cast<nw4r::lyt::DrawInfo*>(drawInfo), 0, 1);
     }
     if (p->field_208)
-        func_801F35B0((void*)p->mScrollBar, drawInfo);
+        func_801F35B0((void*)&p->mScrollBar, drawInfo);
     if (p->field_333C && p->mLayout3334)
         func_80137038(reinterpret_cast<nw4r::lyt::Layout*>(p->mLayout3334), reinterpret_cast<nw4r::lyt::DrawInfo*>(drawInfo), 0, 1);
-    func_8022B7C8((void*)p->mSysWinB8, drawInfo);
-    func_8022B7C8((void*)p->mSysWinF4, drawInfo);
+    func_8022B7C8((void*)&p->mSysWinB8, drawInfo);
+    func_8022B7C8((void*)&p->mSysWinF4, drawInfo);
     if ((s8)p->field_5C >= 0)
-        func_801D20B0((void*)p->mCursor, drawInfo);
+        func_801D20B0((void*)&p->mCursor, drawInfo);
 }
 
 // Teardown of the floor-map screen (paired with the ctor-time resource
@@ -4253,8 +4250,10 @@ void func_8024C104(void* self) {
         u32 n;
         s = (u32*)lbl_eu_8050BDF8 - 1;
         for (n = 14; n != 0; n--) {
-            *(d + 1) = *(s + 1);
-            *(d + 2) = *(s + 2);
+            u32 a = *(s + 1);
+            u32 b = *(s + 2);
+            *(d + 1) = a;
+            *(d + 2) = b;
             s += 2;
             d += 2;
         }
@@ -4274,9 +4273,11 @@ void func_8024F5C4(void* self, u32 arg2) {
     void* ptr = *(void**)((u8*)self + 0x32D4);
     if (!ptr) return;
     void* obj = *(void**)((u8*)ptr + 0x10);
-    VFuncPtr* vt = *(VFuncPtr**)obj;
-    void* result = vt[15](obj, (char*)&lbl_eu_8050BEA8 + 0xEE, 1);
-    *(u8*)((u8*)result + 0xBB) = (*(u8*)((u8*)result + 0xBB) & 0x7F) | (u8)arg2;
+    nw4r::lyt::Pane* result = ((nw4r::lyt::Pane*)obj)->FindPaneByName(
+        (char*)&lbl_eu_8050BEA8 + 0xEE, 1);
+    {
+        *(u8*)((u8*)result + 0xBB) = (*(u8*)((u8*)result + 0xBB) & 0xFE) | (u8)arg2;
+    }
 }
 
 extern "C" unsigned char func_8024F630(void) {
@@ -4289,8 +4290,7 @@ void func_8024F658(void* self) {
     if (CSysWin_getUnk34(p + 0xB8)) return;
     if (CSysWin_getUnk34(p + 0xF4)) return;
     u8 val = p[0x208];
-    u32 result = __cntlzw(val);
-    p[0x208] = __cntlzw(val) >> 5;
+    p[0x208] = (u32)__cntlzw(p[0x208]) >> 5;
 }
 
 u8 func_8024F6BC(void* self) {

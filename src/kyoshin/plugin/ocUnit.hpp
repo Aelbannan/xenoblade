@@ -147,9 +147,9 @@ struct TalkSubIf {
 };
 
 // Script/OC instance helpers (defined in code_801862C0.cpp). Declared here
-// instead of including code_801862C0.hpp because that header declares
-// getBdatStringColumnValue with `s32` (long), conflicting with the `int`
-// declaration CBattleState.hpp pulls in via CActorParam.hpp.
+// instead of including code_801862C0.hpp to keep this header light;
+// getBdatStringColumnValue has a single canonical declaration on
+// kyoshin/plugin/ocBdat.hpp.
 extern "C" void* func_801862C0(void);
 extern "C" void* func_801862E0(void* p);
 extern "C" void* func_801863F4(void* p, void* obj);

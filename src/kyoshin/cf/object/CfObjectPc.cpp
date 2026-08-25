@@ -4,6 +4,9 @@
 #include "kyoshin/cf/CBattleManagerApi.hpp"
 #include "kyoshin/cf/CfMapItemManager.hpp"
 #include "kyoshin/cf/object/CfObjectPc.hpp"
+// (func_800821F8__Q22cf13CfGameManagerFv: CfSoundMan.hpp now carries the
+// single winning decl from CfGameManagerApi.hpp; only func_801BFC38 is
+// needed from it.)
 #include "kyoshin/cf/CfSoundMan.hpp"   // cf::CfSoundMan::func_801BFC38 (single decl on owner header)
 #include "monolib/scn/CScnTimeApi.hpp"
 #include "kyoshin/cf/object/CActorParam.hpp"

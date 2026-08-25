@@ -535,7 +535,10 @@ void TextBox::AllocStringBuffer(u16 len) {
 void TextBox::FreeStringBuffer() {
     if (mTextBuf != NULL) {
         if (mTextBuf != NULL) {  // retail keeps the redundant re-check
-            Layout::FreeMemory(mTextBuf);
+            // Layout::FreeMemory spelled out so the allocator is referenced by
+            // its retail label (lbl_eu_80665478) instead of the mangled
+            // static-member name (mspAllocator -> lbl_eu_80665488 postprocess).
+            MEMFreeToAllocator(lbl_eu_80665478, mTextBuf);
         }
         mTextBuf = NULL;
         mTextBufBytes = 0;

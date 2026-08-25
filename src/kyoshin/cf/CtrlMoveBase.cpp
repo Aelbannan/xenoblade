@@ -7,9 +7,16 @@
 // per-object runtime instance at +0x30 is lazily created through the game
 // manager's sub-object at +0x2F2C.
 
+// CfGameManager.hpp declares func_800D9354(CBattleManagerView*) while
+// CBattleManagerApi.hpp (pulled in by that same header) declares
+// func_800D9354(cf::CBattleManager*); MWCC rejects the mismatched extern "C"
+// pair (10197). This TU never calls it, so rename the declaration out of the
+// way for the duration of the includes (same shield as CBattleManager.cpp).
+#define func_800D9354 cfgGameMgr9354Unused
 #include "kyoshin/harness_catalog.hpp"
 #include "kyoshin/cf/CtrlMoveBase.hpp"
 #include "kyoshin/cf/CfGameManager.hpp"
+#undef func_800D9354
 #include "monolib/math/Random.hpp"
 #include <nw4r/math.h>
 
@@ -54,12 +61,14 @@ static inline void lerpVel(CCtrlMoveBase* self, ml::CVec3* dir) {
 // without a compiler-generated vtable), zeroes state, copies ml::CVec3::zero
 // into position/velocity, and sets the default move parameters.
 CCtrlMoveBase::CCtrlMoveBase(void* dataPtr) {
-    mSecondaryVtable = lbl_eu_80527808;
+    mSecondaryVtable = (cf::CCtrlMoveBaseIface*)lbl_eu_80527808;
+    // Interleaving matters: retail loads param1 before the mpSomePtr store
+    // and param2 after it.
+    f32 param2;
+    f32 param1;
+    param1 = lbl_eu_80666598;
     mpSomePtr = 0;
-    // Read each constant into a local; MWCC sinks the member float stores
-    // to the end of the block.
-    f32 param2 = lbl_eu_8066659C;
-    f32 param1 = lbl_eu_80666598;
+    param2 = lbl_eu_8066659C;
     mpDataPtr = dataPtr;
     mFlagsU16_1 = 0;
     mPosition = ml::CVec3::zero;
@@ -268,11 +277,26 @@ void func_80089398(CCtrlMoveBase* self, ml::CVec3* dst, const ml::CVec3* src,
     }
 }
 
+// Destination for the lazy position sync.
+// The wrapper spans offset 0x48, so MWCC cannot prove the copy stores are
+// disjoint from the secondary-vtable slot and keeps the iface load below
+// them (retail scheduling).
+struct SyncBlob {
+    ml::CVec3 head;
+    u8 tail[0x48];
+};
+
+static inline ml::CVec3* getSyncDst(CCtrlMoveBase* self) {
+    return &((SyncBlob*)self)->head;
+}
+
 // Lazily sync velocity from the entity position (once, guarded by flag bit 0),
 // then notify through the +0x48 interface.
+// (volatile member keeps the dispatch load below the copy stores)
 void func_800895A8(CCtrlMoveBase* self) {
-    if ((self->mFlagsU16_1 & 1) == 0) {
-        self->mFlagsU16_1 |= 1;
+    u16 flags = self->mFlagsU16_1;
+    if ((flags & 1) == 0) {
+        self->mFlagsU16_1 = flags | 1;
         self->field_0x00 = *getPos(self);
         ((cf::CCtrlMoveBaseIface*)self->mSecondaryVtable)->unk08(self);
     }
@@ -301,13 +325,13 @@ void func_80089684(void* self) {
     *(unsigned short*)((char*)self + 0x40) &= 1;
 }
 
-// Cache facing angle (atan2 of x/z scaled) and raw x into the move data block.
-// mpDataPtr is re-read per store, matching the two retail loads at +0x34.
-void func_80089694(CCtrlMoveBase* self, ml::CVec3* vec) {
-    f32 x = vec->x;
+// Cache facing angle (atan2 of x/z scaled) and the passed-in scalar into the
+// move data block. mpDataPtr is re-read per store, matching the two retail
+// loads at +0x34.
+void func_80089694(CCtrlMoveBase* self, const ml::CVec3* vec, f32 speed) {
     ((cf::CCtrlMoveData*)self->mpDataPtr)->field_0x0C =
-        nw4r::math::Atan2FIdx(x, vec->z) * lbl_eu_806665AC;
-    ((cf::CCtrlMoveData*)self->mpDataPtr)->field_0x14 = x;
+        nw4r::math::Atan2FIdx(vec->x, vec->z) * lbl_eu_806665AC;
+    ((cf::CCtrlMoveData*)self->mpDataPtr)->field_0x14 = speed;
 }
 
 // Move toward src: direction = normalized(src - entityPos), then lerp the
@@ -322,14 +346,26 @@ void func_800896F4(CCtrlMoveBase* self, ml::CVec3* dst, const ml::CVec3* src) {
     normalizeOrZero(dst);
 }
 
-// Lerp the horizontal velocity toward dir, copy the velocity back into dir,
-// then renormalize (same tail as func_800896F4).
+// Lerp the horizontal velocity toward dir, copy the velocity back into dir
+// (struct copy -> retail's integer bit-move stores), then normalize.
+// Zero-constant checks reference lbl_eu_806665A0 directly (retail reloads it
+// through sda21 at each site rather than caching it in a register).
 void func_800898D4(CCtrlMoveBase* self, ml::CVec3* dir) {
-    f32 zero = lbl_eu_806665A0;
-    self->mVelocity.x = self->mFloatParam2 * (dir->x - self->mVelocity.x) + self->mVelocity.x;
-    self->mVelocity.z = self->mFloatParam2 * (dir->z - self->mVelocity.z) + self->mVelocity.z;
+    self->mVelocity.x += self->mFloatParam2 * (dir->x - self->mVelocity.x);
+    self->mVelocity.z += self->mFloatParam2 * (dir->z - self->mVelocity.z);
     *dir = self->mVelocity;
-    normalizeOrZeroZ(dir, zero);
+// (volatile reads: retail reloads the copied fields from memory for the
+// comparisons instead of forwarding the registers held by the struct copy)
+    ml::CVec3* chk = (ml::CVec3*)dir;
+    if (*(volatile f32*)&chk->x == 0.0f && *(volatile f32*)&chk->y == 0.0f
+            && *(volatile f32*)&chk->z == 0.0f) {
+        return;
+    }
+    if (lbl_eu_806665A0 == dir->x * dir->x + dir->y * dir->y + dir->z * dir->z) {
+        *dir = ml::CVec3::zero;
+    } else {
+        PSVECNormalize(*dir, *dir);
+    }
 }
 
 struct func_80089990_child { char pad[0x10]; unsigned short flags; };
@@ -503,49 +539,79 @@ int func_80089E88(CCtrlMoveBase* self, const ml::CVec3* src, int flag) {
 }
 
 int func_80089F68(CCtrlMoveBase* self) {
-    // Lazy-init +0x30. Single "proceed" assignment site mirrors the retail
-    // flag diamond.
+    // Lazy-init +0x30, written as an explicit branch lattice so MWCC keeps
+    // one shared "ok = 1" site and two separate "ok = 0" blocks (retail
+    // layout). Only the two hard failures clear ok.
+    int ok;
     UnkClass_80083298* gm;
     cf::CCtrlMoveMgr2F2C* p;
-    int ok;
-    if (self->mpSomePtr != 0 || (gm = cf::CfGameManager::func_80083298()) == 0
-            || (p = (cf::CCtrlMoveMgr2F2C*)((char*)gm + 0x2F2C)) == 0)
-        ok = 1;
-    else if (p->field_0x00 == 0)
+
+    if (self->mpSomePtr != 0)
+        goto okTrue;
+    gm = cf::CfGameManager::func_80083298();
+    if (gm == 0)
+        goto okTrue;
+    p = (cf::CCtrlMoveMgr2F2C*)((char*)gm + 0x2F2C);
+    if (p == 0)
+        goto okTrue;
+    if (p->field_0x00 == 0) {
         ok = 0;
-    else {
+        goto haveOk;
+    }
+    {
         void* inst = func_8047CE7C__17UnkClass_8047CD0CFv();
         self->mpSomePtr = inst;
-        ok = (inst != 0);
+        if (inst != 0)
+            goto okTrue;
     }
-    if (ok == 0) {
-        return 0;
+    ok = 0;
+    goto haveOk;
+okTrue:
+    ok = 1;
+haveOk:
+    if (ok != 0) {
+        ml::CVec3* pos = getPos(self);
+        return func_8047DE14__17UnkClass_8047D2ACFv(self->mpSomePtr, pos,
+                                                     lbl_eu_806665A0, lbl_eu_806665A0);
     }
-    ml::CVec3* pos = getPos(self);
-    return func_8047DE14__17UnkClass_8047D2ACFv(self->mpSomePtr, pos,
-                                                 lbl_eu_806665A0, lbl_eu_806665A0);
+    return 0;
 }
 
 int func_8008A01C(CCtrlMoveBase* self, ml::CVec3* out) {
-    // Lazy-init +0x30 (same single-assignment pattern as func_80089F68).
+    // Lazy-init +0x30, written as an explicit branch lattice so MWCC keeps
+    // one shared "ok = 1" site and two separate "ok = 0" blocks (retail
+    // layout). Only the two hard failures clear ok.
+    int ok;
     UnkClass_80083298* gm;
     cf::CCtrlMoveMgr2F2C* p;
-    int ok;
-    if (self->mpSomePtr != 0 || (gm = cf::CfGameManager::func_80083298()) == 0
-            || (p = (cf::CCtrlMoveMgr2F2C*)((char*)gm + 0x2F2C)) == 0)
-        ok = 1;
-    else if (p->field_0x00 == 0)
+    void* inst;
+
+    if (self->mpSomePtr != 0)
+        goto okTrue;
+    gm = cf::CfGameManager::func_80083298();
+    if (gm == 0)
+        goto okTrue;
+    p = (cf::CCtrlMoveMgr2F2C*)((char*)gm + 0x2F2C);
+    if (p == 0)
+        goto okTrue;
+    if (p->field_0x00 == 0) {
         ok = 0;
-    else {
-        void* inst = func_8047CE7C__17UnkClass_8047CD0CFv();
-        self->mpSomePtr = inst;
-        ok = (inst != 0);
+        goto haveOk;
     }
-    if (ok == 0) {
-        return 0;
+    inst = func_8047CE7C__17UnkClass_8047CD0CFv();
+    self->mpSomePtr = inst;
+    if (inst != 0)
+        goto okTrue;
+    ok = 0;
+    goto haveOk;
+okTrue:
+    ok = 1;
+haveOk:
+    if (ok != 0) {
+        return func_8047DE3C__17UnkClass_8047D2ACFv(self->mpSomePtr, out,
+                                                     lbl_eu_806665A0, lbl_eu_806665A0);
     }
-    return func_8047DE3C__17UnkClass_8047D2ACFv(self->mpSomePtr, out,
-                                                 lbl_eu_806665A0, lbl_eu_806665A0);
+    return 0;
 }
 
 // FULL_MATCH: no-op virtual stub (CCtrlMoveBase::func_8008A0C4)

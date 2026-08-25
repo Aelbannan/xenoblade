@@ -3,7 +3,7 @@
 
 #include "kyoshin/harness_catalog.hpp"
 #include "kyoshin/CItemBoxGrid.hpp"
-#include "kyoshin/CUIWindowManager.hpp"
+#include "kyoshin/CUIWindowManagerApi.hpp"
 #include "kyoshin/CExchangeWin.hpp"
 #include <stdio.h>
 #include <string.h>
@@ -178,12 +178,13 @@ extern "C" __declspec(noinline) void* __ct__801C5514(void* self) {
         SetEntry9Bytes(cur, -1, 0, 0, 0, 0, 0, 0, 0);
         cur += 10;
     } while (cur < end);
-    *(u16*)((u8*)self + 0x2800) = 0;
-    ((u8*)self)[0x2802] = 0;
-    ((u8*)self)[0x2803] = 0;
-    ((u8*)self)[0x2804] = 0;
+    u16 z = 0;   // separate vreg: retail reuses end's r31 for the post-loop zeros
+    *(u16*)((u8*)self + 0x2800) = z;
+    ((u8*)self)[0x2802] = (u8)z;
+    ((u8*)self)[0x2803] = (u8)z;
+    ((u8*)self)[0x2804] = (u8)z;
     *(u32*)((u8*)self + 0x2CA8) = (u32)&lbl_eu_80534818;
-    *(u16*)((u8*)self + 0x34AC) = 0;
+    *(u16*)((u8*)self + 0x34AC) = z;
     __ct__CVisionItem((u8*)self + 0x34B0);
     __ct__CArtsBookItem((u8*)self + 0x3CB8);
     lbl_eu_80664514 = (u32)self;
@@ -2662,7 +2663,7 @@ void func_801CABC8(void* self, int r4) {
     if (!state) return;
 
     // Bare switch: MWCC emits the single cmplwi 0x1a/bgt range check plus
-    // the computed-jump table (gaps fall to the common tail) — an explicit
+    // the computed-jump table (gaps fall to the common tail) -- an explicit
     // `if (state <= 0x1a)` wrapper would add a second range branch.
     switch (state) {
         case 1:
@@ -2891,11 +2892,11 @@ u32 func_801CB1E4(void* self) {
 // Initialize item display state. `item` (func_801C631C result) is declared
 // first so MWCC colors it to r31 (first-declared -> highest saved reg).
 void func_801CB28C(void* self) {
+    u32 item;   // func_801C631C result
     u8* p = (u8*)self;
     if (*(u32*)(p + 0x58)) return;
     *(u32*)(p + 0x58) = 1;
     p[0x61] = 0;
-    u32 item;   // func_801C631C result; decl position drives r31/r30 split
     func_801CFD2C(self);
     func_801D0BD8(self);
     func_801D421C(p + 0x1D8);
@@ -4872,7 +4873,7 @@ void func_801CF900(void* self, u32 r4, void* r5, void* r6, u32 r7) {
 // the exit (cases 0 and 1 skip the label lookup buffer), slots 2..13 map to
 // the twelve label formats 0x40b..0x4f2.
 #pragma optimize_for_size on
-void func_801CFA58(void* self, int r4, int r5) {
+extern "C" void func_801CFA58(void* self, int r4, int r5) {
     u8* p = (u8*)self;
     char buf[32];
     char tmp[32];
@@ -4969,7 +4970,7 @@ extern "C" void func_801CFD2C(void* self) {
         func_801C56D8(subGrid, p[0x62], 0, *(u16*)(p + 0x52e), *(u16*)(p + 0x52a));
         u16 count1 = subGrid->field_2800;
         func_801C56D8(subGrid, p[0x63], 0, *(u16*)(p + 0x52e), *(u16*)(p + 0x52a));
-        if (!count1 && !subGrid->field_2800) {
+        if (!(count1 | subGrid->field_2800)) {
             p[0x542] = 1;
         }
     }
@@ -5590,16 +5591,16 @@ void func_801C4BB4(void* self) {
             } else {
                 // Fallback: no base name and no teach key - check ability slots
                 u32 obj = (u32)func_801412D0((u16)id);
-                if (!func_80140854((void*)obj, 0, 0)) {
+                if (!func_80140854((CItemQuery*)obj, 0, 0)) {
                     if ((u8)func_801361E8((u32)tbl, &XB_K[0xd], (u16)id) == 2) XB_PUSH(tbl, 0x1a);
                 }
-                if (!func_80140854((void*)obj, 0, 1)) {
+                if (!func_80140854((CItemQuery*)obj, 0, 1)) {
                     if ((u8)func_801361E8((u32)tbl, &XB_K[0x32], (u16)id) == 2) XB_PUSH(tbl, 0x3f);
                 }
-                if (!func_80140854((void*)obj, 0, 2)) {
+                if (!func_80140854((CItemQuery*)obj, 0, 2)) {
                     if ((u8)func_801361E8((u32)tbl, &XB_K[0x4b], (u16)id) == 2) XB_PUSH(tbl, 0x58);
                 }
-                if (!func_80140854((void*)obj, 0, 3)) {
+                if (!func_80140854((CItemQuery*)obj, 0, 3)) {
                     if ((u8)func_801361E8((u32)tbl, &XB_K[0x64], (u16)id) == 2) XB_PUSH(tbl, 0x71);
                 }
             }

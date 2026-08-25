@@ -134,13 +134,13 @@ CVS_THREAD_VISION_BREAK* __ct__802A92D8(CVoiceHandle* handle, int param) {
         }
     }
 
-    // Copy the init-state triple (lbl_eu_80539D70). Scratch temporaries
-    // claim low->high by birth, so reading word 1 first colours its load
-    // into r0 and the word-0 load into r4 (retail's pairing).
-    u32* p0 = lbl_eu_80539D70;
-    u32 v1 = p0[1];
-    u32 v0 = p0[0];
-    ((CVS_THREAD_VISION_BREAK_raw*)obj)->state0 = (u32*)v0;
+    // Copy the init-state triple (lbl_eu_80539D70). Word 1 is read first per
+    // retail load order; the single pointer keeps the label materialized
+    // once via lis+addi (retail r5).
+    u32 v1;
+    u32* p0;
+    v1 = (p0 = lbl_eu_80539D70)[1];
+    ((CVS_THREAD_VISION_BREAK_raw*)obj)->state0 = (u32*)p0[0];
     ((CVS_THREAD_VISION_BREAK_raw*)obj)->state1 = v1;
     ((CVS_THREAD_VISION_BREAK_raw*)obj)->state2 = p0[2];
 
@@ -190,13 +190,16 @@ void func_802A93FC(CVS_THREAD_VISION_BREAK* self) {
     }
 
     // Select a voice ID from the appropriate phase table based on field_0x24.
+    // h declared once ahead of the branch so its web claims a fresh saved
+    // register (retail r31) rather than reusing the dead iterator register.
+    CVoiceHandle* h;
     CCharVoice* voicePtr;
     int voiceId;
     if (self->field_0x24 >= 3) {
         // Late phase: handle + voice IDs from lbl_eu_80662D40.
-        CVoiceHandle* h = self->field_0x20;
+        h = self->field_0x20;
         voicePtr = (CCharVoice*)h;
-        if (h != NULL) {
+        if (self->field_0x20 != NULL) {
             voicePtr = &h->voice;
         }
         voiceId = lbl_eu_80662D40[ml::math::mtRand(3)];
@@ -207,9 +210,9 @@ void func_802A93FC(CVS_THREAD_VISION_BREAK* self) {
         }
     } else {
         // Early phase: handle + voice IDs from lbl_eu_80662D48.
-        CVoiceHandle* h = self->field_0x20;
+        h = self->field_0x20;
         voicePtr = (CCharVoice*)h;
-        if (h != NULL) {
+        if (self->field_0x20 != NULL) {
             voicePtr = &h->voice;
         }
         voiceId = lbl_eu_80662D48[ml::math::mtRand(3)];
@@ -220,5 +223,6 @@ void func_802A93FC(CVS_THREAD_VISION_BREAK* self) {
         }
     }
 }
-// retail: li r3,0xF; blr
-extern "C" u32 func_802A95FC(void* self) { return 0xF; }
+// Buffer-size getter recorded under the flat retail map name func_802A95FC:
+// returns 0xF (the thread's buffer size). Retail body: li r3,0xF; blr.
+u32 func_802A95FC(CVS_THREAD_VISION_BREAK* self) { return 0xF; }

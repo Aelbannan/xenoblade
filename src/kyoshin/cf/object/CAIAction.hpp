@@ -137,9 +137,20 @@ struct CAIPartyMoveObj {
 
 // Party/battle object stored in CAIAction::unkB14 (used by func_801537F0 /
 // func_80150618).
+// State sub-object at party+4: real object whose vptr sits at its own +0.
+// Slot +0x30 returns a u32* whose first word is the probed tag.
+class CAIPartyStateVt {
+public:
+    virtual void _d008(); virtual void _d00C(); virtual void _d010();
+    virtual void _d014(); virtual void _d018(); virtual void _d01C();
+    virtual void _d020(); virtual void _d024(); virtual void _d028();
+    virtual void _d02C();
+    virtual u32* vf30(); // vtable +0x30
+};
+
 struct CAIPartyObj {
     CAIVtable* vtable;        // 0x00 (slot 0x5C0 used)
-    CAIVtable* unk04;         // 0x04 sub-object (slot 0x30 used)
+    CAIPartyStateVt* unk04;   // 0x04 state sub-object (slot 0x30 used)
     u8 pad08[0x3E9C - 0x8];
     CAIPartyMoveObj move;     // 0x3E9C
     u32 unk3F10;              // 0x3F10 battle handle

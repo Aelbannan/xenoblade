@@ -12,6 +12,11 @@ extern const float lbl_eu_80669DE4; //  2.0f
 extern const float lbl_eu_80669DE8; //  3.0f
 extern const float lbl_eu_80669DEC; // -2.0f
 
+// Retail label of Layout::mspAllocator (lyt_group.cpp / lyt_textBox.cpp pattern):
+// referencing the static member directly makes MWCC emit the mangled
+// lbl_eu_80665488 name instead of the retail sbss label.
+extern "C" MEMAllocator* lbl_eu_80665478;
+
 /******************************************************************************
  *
  * Private structures
@@ -351,11 +356,11 @@ AnimTransformBasic::AnimTransformBasic()
 
 AnimTransformBasic::~AnimTransformBasic() {
     if (mAnimLinkAry != NULL) {
-        Layout::FreeMemory(mAnimLinkAry);
+        MEMFreeToAllocator(lbl_eu_80665478, mAnimLinkAry);
     }
 
     if (mpFileResAry != NULL) {
-        Layout::FreeMemory(mpFileResAry);
+        MEMFreeToAllocator(lbl_eu_80665478, mpFileResAry);
     }
 }
 

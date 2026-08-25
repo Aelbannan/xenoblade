@@ -2,6 +2,7 @@
 // Replace stubs with high-level C/C++ during decomp.
 
 #include "kyoshin/cf/CBattleManagerApi.hpp"
+#include "kyoshin/cf/object/CfObjectMoveApi.hpp"
 #include "kyoshin/cf/CfMapItemManager.hpp"
 #include "kyoshin/harness_catalog.hpp"
 #include "monolib/scn/CScnTimeApi.hpp"
@@ -489,7 +490,7 @@ void func_800D1CFC(CtrlActView* self) {
                 ml::CVec3 d = diff;
                 f32 ang = nw4r::math::Atan2FIdx(d.x, d.z);
                 self->mPlayer->mSub3E9C.v47(lbl_eu_80666D40 * ang);
-                func_800BE12C(&self->mPlayer->mSub3E9C, 3, 0, -1, 1);
+                func_800BE12C((u8*)&self->mPlayer->mSub3E9C, 3, 0, -1, 1);
             }
         }
     }
@@ -600,7 +601,7 @@ void func_800D1F0C(CtrlActView* self) {
             // L_3370: cancel the action.
             self->mPlayer->mField3E6C &= ~0x20;
             ((CtrlActEntryObj*)entry.mPtr18)->mField7C = lbl_eu_80666CF8;
-            func_800BE12C(&self->mPlayer->mSub3E9C, 0x31, 0, -1, 1);
+            func_800BE12C((u8*)&self->mPlayer->mSub3E9C, 0x31, 0, -1, 1);
             func_8014B2DC(&self->mPlayer->mField3380);
         } else if (st == 2) {
             // L_33B8: restart via command gates 0x806/0x10/0x18.
@@ -609,7 +610,7 @@ void func_800D1F0C(CtrlActView* self) {
                 func_80148778(&self->mPlayer->mField8, 0x10) == 0) {
                 u32 c2 = *self->mPlayer->mField4->vf30();
                 if (func_80174C98(self->mPlayer, &c2, 0x18) == 0) {
-                    func_800BE12C(&self->mPlayer->mSub3E9C, 0x11, 0, -1, 1);
+                    func_800BE12C((u8*)&self->mPlayer->mSub3E9C, 0x11, 0, -1, 1);
                 }
             }
         }
@@ -672,7 +673,7 @@ void func_800D1F0C(CtrlActView* self) {
         }
         u32 g806 = *self->mPlayer->mField4->vf30();
         if (func_80174C98(self->mPlayer, &g806, 0x806) == 0) {
-            func_800BE12C(&self->mPlayer->mSub3E9C, 0x11, 0, -1, 1);
+            func_800BE12C((u8*)&self->mPlayer->mSub3E9C, 0x11, 0, -1, 1);
             CtrlActEntryObj* eo = (CtrlActEntryObj*)entry.mPtr18;
             eo->mField7C = eo->mField2C;
             void* bm = getInstance__Q22cf14CBattleManagerFv();
@@ -697,23 +698,23 @@ void func_800D1F0C(CtrlActView* self) {
         break;
     case 4:
         func_8016FE34(func_800B708C((int)entry.mField0));
-        func_800BE12C(&self->mPlayer->mSub3E9C, 0x1b, 0, 4, 1);
+        func_800BE12C((u8*)&self->mPlayer->mSub3E9C, 0x1b, 0, 4, 1);
         break;
     case 5: {
         void* src = func_8016FE34(func_800B708C((int)entry.mField0));
-        func_800BE12C(&self->mPlayer->mSub3E9C, 0x1b, 0, 1, 1);
+        func_800BE12C((u8*)&self->mPlayer->mSub3E9C, 0x1b, 0, 1, 1);
         func_802A29A4(self->mPlayer, src);
         break;
     }
     case 6: {
         void* src = func_8016FE34(func_800B708C((int)entry.mField0));
-        func_800BE12C(&self->mPlayer->mSub3E9C, 0x1b, 0, 0, 1);
+        func_800BE12C((u8*)&self->mPlayer->mSub3E9C, 0x1b, 0, 0, 1);
         func_802A2A0C(self->mPlayer, src);
         break;
     }
     case 7: {
         void* src = func_8016FE34(func_800B708C((int)entry.mField0));
-        func_800BE12C(&self->mPlayer->mSub3E9C, 0x1b, 0, 2, 1);
+        func_800BE12C((u8*)&self->mPlayer->mSub3E9C, 0x1b, 0, 2, 1);
         func_802A2ADC(self->mPlayer, src);
         break;
     }
@@ -829,7 +830,8 @@ void func_800D1F0C(CtrlActView* self) {
 // (lis 0x4330 / xoris / lfd / fsubs); lbl_eu_80666D50 is that magic constant.
 float cf::CAttackParam::CAttackParam_UnkVirtualFunc4() {
     int prod = unk70 * (getMax() - 1);
-    return unk30 * (lbl_eu_80666CFC - ((float)prod / lbl_eu_80666D4C));
+    float fprod = (float)prod;
+    return unk30 * (lbl_eu_80666CFC - (fprod / lbl_eu_80666D4C));
 }
 
 // Target us-800d3544. Attack-action setup: gate on the player and source
@@ -931,12 +933,10 @@ int func_800D2A5C(CtrlActView* self, CtrlActAtkArg* arg) {
         // kind selects extra bits in the 0x78 flag word (0x54 -> 0x02000000,
         // 0x55 -> 0x01000000).
         state->mField78 |= 0x40002000;
-        if (kind != 0x54) {
-            if (kind == 0x55) {
-                state->mField78 |= 0x01000000;
-            }
-        } else {
+        if (kind == 0x54) {
             state->mField78 |= 0x02000000;
+        } else if (kind == 0x55) {
+            state->mField78 |= 0x01000000;
         }
     } else {
         ok = 0;
@@ -1040,6 +1040,9 @@ extern "C" int func_800D2D64(CtrlActView* self, CtrlActAtkArg* arg) {
     // struct assign) because retail lowers the save/restore per member with
     // natural typed accesses (lha/lhz/lfs), which MWCC's block-move lowering
     // would never produce.
+    // Snapshot the block while probing the arts container and battle state.
+    // Snapshot: written as explicit member-wise assignments because MWCC's
+    // whole-struct block-move lowering diverges from retail's spill shape.
     CtrlActSub2A4 snapshot;
     snapshot.mFieldB8 = sub->mFieldB8;
     snapshot.mField80 = sub->mField80;
@@ -1103,7 +1106,6 @@ extern "C" int func_800D2D64(CtrlActView* self, CtrlActAtkArg* arg) {
                 &self->mPlayer->mField8, self->mPlayer->mField1530);
         }
     }
-    // Restore the snapshotted block (member-wise, mirroring the save).
     sub->mField0 = snapshot.mField0;
     sub->mField4 = snapshot.mField4;
     sub->mField8 = snapshot.mField8;
@@ -1654,6 +1656,7 @@ extern "C" void func_800D3FFC(CtrlActView* self) {
 // it is live, aim at the resolved source's position through the vf24/vf23
 // slots and store the facing angle. Falling out of the timer or failing the
 // vf24 probe resets the 0x30 state block.
+
 extern "C" void func_800D4834(CtrlActView* self) {
     ml::CVec3 vec1c;
     ml::CVec3 vec10;
@@ -1701,6 +1704,8 @@ extern "C" void func_800D4834(CtrlActView* self) {
     memset(&self->mPos30, 0, 0x2c);
     func_80174C24(self->mPlayer, 0x40);
 }
+
+
 
 int func_800D49E4(void* self) { return 0; }
 
@@ -2056,9 +2061,9 @@ extern "C" void func_800D56F0(CtrlActView* self) {
         memset(&self->mPos30, 0, 0x2c);
         func_80174C24(self->mPlayer, 0x40);
     } else {
-        f32 dt = func_80496288(lbl_eu_80663E14);
-        self->mField54 -= lbl_eu_80666D58 * dt;
-        if (self->mField54 > lbl_eu_80666CF8) {
+        f32 next = self->mField54 - lbl_eu_80666D58 * func_80496288(lbl_eu_80663E14);
+        self->mField54 = next;
+        if (next > lbl_eu_80666CF8) {
             ml::CVec3 vec;
             if (self->vf25(&vec) != 0) {
                 f32 az = vec.z;
@@ -2103,24 +2108,28 @@ void func_800D5874(CtrlActView* self, u32 kindParam, int param2) {
     self->mField3C = self->mPlayer->mSub3E9C.getPosition()->f[0];
     self->mField40 = self->mPlayer->mSub3E9C.getPosition()->f[1] - lbl_eu_80666D00;
     self->mField44 = self->mPlayer->mSub3E9C.getPosition()->f[2];
-    switch (self->mFlags58.mKind) {
-    case 3:
+    // Kind dispatch: retail lowers this as two equality-cascade switches
+    // over cached register subjects (kind, then param2).
+    u32 kind = self->mFlags58.mKind;
+    if (kind == 3) {
         self->mFlags58.mParam = param2;
-        break;
-    case 4:
-    case 0xa:
+    } else if (kind == 4 || kind == 0xa) {
         self->mField54 = lbl_eu_80666D04;
-        break;
-    case 2:
-        switch (param2) {
-        case 0x28: self->mFlags58.mParam = 5;  break;
-        case 0x29: self->mFlags58.mParam = 0xa; break;
-        case 0x2a: self->mFlags58.mParam = 0xf; break;
-        case 0x2b: self->mFlags58.mParam = 0x14; break;
-        case 0x2c: self->mFlags58.mParam = 0x19; break;
-        default:   self->mFlags58.mParam = 5;  break;
+    } else if (kind == 2) {
+        // Param ladder, ascending compare cascade like retail.
+        if (param2 == 0x28) {
+            self->mFlags58.mParam = 5;
+        } else if (param2 == 0x29) {
+            self->mFlags58.mParam = 0xa;
+        } else if (param2 == 0x2a) {
+            self->mFlags58.mParam = 0xf;
+        } else if (param2 == 0x2b) {
+            self->mFlags58.mParam = 0x14;
+        } else if (param2 == 0x2c) {
+            self->mFlags58.mParam = 0x19;
+        } else {
+            self->mFlags58.mParam = 5;
         }
-        break;
     }
 }
 
@@ -2393,8 +2402,8 @@ extern "C" int func_800D64E8(CtrlActView* self) {
     if ((self->mPlayer->mField3374 & 0x10000) != 0) {
         CtrlActTargetView* target = self->mPlayer->mField3F60;
         if (target != 0 && target->mField4F8 > lbl_eu_80666CF8) {
-            f32 cos = nw4r::math::CosFIdx(lbl_eu_80666D80 * self->mFieldC);
-            f32 sin = nw4r::math::SinFIdx(lbl_eu_80666D80 * self->mFieldC);
+            f32 cos = nw4r::math::CosFIdx(self->mFieldC * lbl_eu_80666D80);
+            f32 sin = nw4r::math::SinFIdx(self->mFieldC * lbl_eu_80666D80);
             ml::CVec3 local(sin, lbl_eu_80666CF8, cos);
             ml::CVec3 pos =
                 *(ml::CVec3*)self->mPlayer->mSub3E9C.getPosition();
@@ -2796,12 +2805,12 @@ probe_done:
     }
     self->mField74 |= 0x20;
     if (r31 == 0) {
-        f32 cos = nw4r::math::CosFIdx(lbl_eu_80666D80 * self->mFieldC);
+        f32 cos = nw4r::math::CosFIdx(self->mFieldC * lbl_eu_80666D80);
         CVoicePos* ppos = self->mPlayer->mSub3E9C.getPosition();
         f32 f29 = lbl_eu_80666D0C * cos + ppos->f[2];
         CVoicePos* ppos2 = self->mPlayer->mSub3E9C.getPosition();
         f32 f30 = lbl_eu_80666D04 + ppos2->f[1];
-        f32 sin = nw4r::math::SinFIdx(lbl_eu_80666D80 * self->mFieldC);
+        f32 sin = nw4r::math::SinFIdx(self->mFieldC * lbl_eu_80666D80);
         CVoicePos* ppos3 = self->mPlayer->mSub3E9C.getPosition();
         f32 fx = lbl_eu_80666D0C * sin + ppos3->f[0];
         ml::CVec3 local2;

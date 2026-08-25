@@ -300,7 +300,7 @@ namespace cf { class CfObjectMove; }
 // C-ABI imports used by func_8016D3F8 (defined in CfRes.cpp / IResInfo.cpp /
 // code_800B06A4.cpp / object/CfObjectModel.cpp).
 extern "C" int func_80062B3C(u32 handle, u32 state);
-extern "C" int func_80062BAC(int handle);
+extern "C" int func_80062BAC(int handle, int state);
 extern "C" cf::ResReloadFindEntry* findResEntry(u8* self, u32 id, u32* outIndex, u32* outValue);
 extern "C" cf::ResReloadFindEntry* func_80068564(u8* self, u32 id, u32* outIndex, u32* outValue);
 extern "C" int func_800B4A24(cf::CfResReloadParent* parent);
@@ -315,8 +315,8 @@ extern "C" int func_800AA33C(u8* buf, u8* packed, int prefixFlag, int suffixFlag
 extern "C" u8* func_800584B8(u32 global, u32 id, const char* name);
 extern "C" int CfRes_getD80Flag();
 extern "C" void CfRes_stub_63990();
-extern "C" void func_800BB618(cf::CfResReloadParent* parent, int arg);
-extern "C" void func_800BCFA0(cf::CfResReloadParent* parent);
+// func_800BB618/func_800BCFA0 are owned by kyoshin/cf/object/CfObjectMove.hpp
+// (single extern "C" decl; overloading C-ABI functions is illegal).
 extern "C" void func_800BE824(cf::CfResReloadParent* parent, int flag);
 extern "C" void func_804B0A6C(u8* subObj, u8* handle);
 // func_800BE12C is owned by kyoshin/cf/object/CfObjectMove.hpp.

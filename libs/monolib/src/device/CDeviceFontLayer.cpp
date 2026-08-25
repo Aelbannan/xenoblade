@@ -26,7 +26,7 @@
 // Retail bytes/relocs dumped from build/us/asm/monolib/src/device/CDeviceFontLayer.s
 // .rodata 0x80522E40 size 0x78 align 8, .data 0x8056C7D0 size 0xD8 align 8,
 // .sdata 0x80663730 size 0x18 align 8, .sbss 0x80665690 size 0x8 align 8
-// Emitted as extern "C" u32 arrays with (u32)&extern, rodata align, DECOMP_FORCEACTIVE, novtable.
+// Emitted as extern "C" u32 arrays with (u32)&extern, rodata align, novtable.
 // ---------------------------------------------------------------------------
 extern "C" {
     extern const char lbl_eu_80522E40[];
@@ -945,9 +945,4 @@ extern "C" u32 lbl_eu_8056C89C[3] __attribute__((aligned(4))) = {
 void* lbl_eu_80665690;
 u32 lbl_eu_80665694;
 
-DECOMP_FORCEACTIVE(CDeviceFontLayer_rodata, lbl_eu_80522E40, lbl_eu_80522E54, lbl_eu_80522E84);
-DECOMP_FORCEACTIVE(CDeviceFontLayer_sdata, lbl_eu_80663730, lbl_eu_80663738, lbl_eu_80663740);
-DECOMP_FORCEACTIVE(CDeviceFontLayer_data, lbl_eu_8056C7D0, lbl_eu_8056C870, lbl_eu_8056C884, lbl_eu_8056C890, lbl_eu_8056C89C);
-DECOMP_FORCEACTIVE(CDeviceFontLayer_sbss, lbl_eu_80665690, lbl_eu_80665694);
-// data: retail sections verified via run.py data diff (no bypass)
 

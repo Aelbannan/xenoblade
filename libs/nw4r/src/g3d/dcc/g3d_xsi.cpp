@@ -275,7 +275,8 @@ DECOMP_FORCEACTIVE(g3d_xsi_cpp,
                    ProductTexSrtMtx_T, ProductTexSrtMtx_SR, ProductTexSrtMtx_RT,
                    ProductTexSrtMtx_ST, ProductTexSrtMtx_SRT);
 
-bool CalcTexMtx_Xsi(math::MTX34* pMtx, bool bSet, const TexSrt& rSrt, TexSrt::Flag flag) {
+bool CalcTexMtx_Xsi(math::MTX34* pMtx, bool bSet, const TexSrt& rSrt,
+                    TexSrt::Flag flag) {
     u32 idx = DECOMP_PPC_RLWINM(flag, 31, 29, 31);
 
     if (idx == 0x7) {

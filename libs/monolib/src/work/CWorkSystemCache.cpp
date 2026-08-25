@@ -310,8 +310,6 @@ extern "C" const char lbl_eu_80524594[28] = {
     0x5F,0x72,0x65,0x73,0x6C,0x69,0x73,0x74,0x5F,0x62,0x61,0x73,0x65,0x3C,0x43,0x43,
     0x61,0x63,0x68,0x65,0x49,0x74,0x65,0x6D,0x20,0x2A,0x3E,0x00,
 };  // "_reslist_base<CCacheItem *>\0"
-DECOMP_FORCEACTIVE(CWorkSystemCache_cpp, lbl_eu_80524568);
-DECOMP_FORCEACTIVE(CWorkSystemCache_cpp, lbl_eu_80524594);
 
 // Foreign .sdata strings referenced by the locators below.
 extern const char lbl_eu_8066B218[];
@@ -335,7 +333,6 @@ extern "C" void* lbl_eu_80663B60 = (void*)lbl_eu_8066B220;
 extern "C" void* lbl_eu_80663B64 = (void*)lbl_eu_8066B220;
 extern "C" void* lbl_eu_80663B68[2] = { (void*)lbl_eu_8066B220, 0 };
 extern "C" void* lbl_eu_80663B70[2] = { (void*)lbl_eu_805245C8, 0 };
-DECOMP_FORCEACTIVE(CWorkSystemCache_cpp, lbl_eu_80663B40);
 
 // [.data] 0x8056FC70-0x8056FD48 (216B): CWorkSystemCache vtable + reslist
 // RTTI base-list + reslist<CCacheItem*>/_reslist_base vtables.
@@ -409,9 +406,6 @@ extern "C" u32 lbl_eu_8056FD10[5] = {
 extern "C" u32 lbl_eu_8056FD24[3] = { (u32)&lbl_eu_80663B48, 0x00000000, (u32)&__dt__reslist_CCacheItem };
 extern "C" u32 lbl_eu_8056FD30[3] = { (u32)&lbl_eu_80663B50, 0x00000000, 0x00000000 };
 extern "C" u32 lbl_eu_8056FD3C[3] = { (u32)&lbl_eu_80663B50, 0x00000000, (u32)&__dt___reslist_base_CCacheItem };
-DECOMP_FORCEACTIVE(CWorkSystemCache_cpp, lbl_eu_8056FC70);
-DECOMP_FORCEACTIVE(CWorkSystemCache_cpp, lbl_eu_8056FD10);
-DECOMP_FORCEACTIVE(CWorkSystemCache_cpp, lbl_eu_8056FD3C);
 
 // [.sbss] 0x806659C8-0x806659D0 (8B): singleton cache pointer + pad word.
 CWorkSystemCache* lbl_eu_806659C8;

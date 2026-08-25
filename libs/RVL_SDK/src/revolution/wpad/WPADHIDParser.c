@@ -1231,6 +1231,8 @@ void __a1_20_status_report(u8 chan, u8* data, WPADStatusEx* status) {
     cb->wpInfo.dpd = (data[3] & 0x8) >> 3;
     cb->wpInfo.speaker = (data[3] & 0x4) >> 2;
 
+    // Battery level: WBC reports its own gauge, others are voltage buckets
+    // Battery level: WBC reports its own gauge, others are voltage buckets
     if (cb->devType == 3) {
         cb->wpInfo.battery = cb->UNK_0x98F;
     } else if (data[6] >= 0x55) {
@@ -1310,8 +1312,8 @@ void __a1_21_user_data(u8 chan, u8* data, WPADStatusEx* status) {
     const char* pDbg = (const char*)__a1_input_reports_array;
     WPADCB* cb = __rvl_p_wpadcb[chan];
     BOOL enable;
-    u16 dataAddr;
     u32 addrHi;
+    u16 dataAddr;
     u16 addr;
     u8 length;
     s16 offset;
@@ -1332,9 +1334,9 @@ void __a1_21_user_data(u8 chan, u8* data, WPADStatusEx* status) {
     }
 
     addr = (u16)cb->wmReadAddress;
-    dataAddr = (u16)((data[4] << 8) | data[5]);
-    addrHi = cb->wmReadAddress >> 16;
     length = (u8)((data[3] >> 4) + 1);
+    addrHi = cb->wmReadAddress >> 16;
+    dataAddr = (u16)((data[4] << 8) | data[5]);
     offset = (s16)(dataAddr - addr);
 
     if (dataAddr >= addr && (s32)dataAddr <= (s32)(addr + cb->wmReadLength)) {
@@ -1391,8 +1393,8 @@ void __a1_21_user_data(u8 chan, u8* data, WPADStatusEx* status) {
            RX_BUFFER_SIZE);
 
     status->button =
-        (u16)(((u16)((data[2] << 8) & 0xFF00) | (u16)(data[1] & 0xFF)) & HID_WPAD_BUTTON_MASK) |
-        (u16)(status->button & 0x6000);
+        (u16)(((u16)((data[2] << 8) | data[1]) & HID_WPAD_BUTTON_MASK) |
+              (u16)(status->button & 0x6000));
 
     if (status->dev != cb->devType) {
         status->dev = cb->devType;
@@ -1450,6 +1452,7 @@ void __a1_3d_data_type(u8 chan, u8* data, WPADStatusEx* status) {
 }
 
 void __a1_32_data_type(u8 chan, u8* data, WPADStatusEx* status) {
+    WPADStatusEx* st = status;
     WPADCB* cb = __rvl_p_wpadcb[chan];
 
     status->button = (u16)((data[2] << 8) | data[1]) & HID_WPAD_BUTTON_MASK;
@@ -1467,65 +1470,67 @@ void __a1_32_data_type(u8 chan, u8* data, WPADStatusEx* status) {
     WPADiDecode(chan, data + 3, 8, 0);
 
     if (cb->wpInfo.attach) {
-        WPADCB* extCb = __rvl_p_wpadcb[chan];
-
         if (cb->devType == WPAD_DEV_FREESTYLE) {
-            ((WPADFSStatus*)status)->fsStickX = data[3];
-            ((WPADFSStatus*)status)->fsStickY = data[4];
+            // Fresh control-block read after the memcpy/WPADiDecode calls;
+            // pointer-arithmetic form defeats CSE with the prologue load.
+            WPADCB* pCB = *(WPADCB**)((u8*)__rvl_p_wpadcb + ((u32)chan << 2));
 
-            ((WPADFSStatus*)status)->fsAccX =
+            ((WPADFSStatus*)st)->fsStickX = data[3];
+            ((WPADFSStatus*)st)->fsStickY = data[4];
+
+            ((WPADFSStatus*)st)->fsAccX =
                 (s16)((s16)((s16)((s16)((s16)((s16)data[5]) << 2) & (s16)0xFFFC) |
-                         ((data[8] >> 2) & 3))) -
-                (s16)extCb->extConfig.u.fs.accX0g;
-            ((WPADFSStatus*)status)->fsAccY =
+                         (s16)((s16)((s16)data[8] >> 2) & 3))) -
+                (s16)pCB->extConfig.u.fs.accX0g;
+            ((WPADFSStatus*)st)->fsAccY =
                 (s16)((s16)((s16)((s16)((s16)((s16)data[6]) << 2) & (s16)0xFFFC) |
-                         ((data[8] >> 4) & 3))) -
-                (s16)extCb->extConfig.u.fs.accY0g;
-            ((WPADFSStatus*)status)->fsAccZ =
+                         (s16)((s16)((s16)data[8] >> 4) & 3))) -
+                (s16)pCB->extConfig.u.fs.accY0g;
+            ((WPADFSStatus*)st)->fsAccZ =
                 (s16)((s16)((s16)((s16)((s16)((s16)data[7]) << 2) & (s16)0xFFFC) |
-                         (data[8] >> 6))) -
-                (s16)extCb->extConfig.u.fs.accZ0g;
+                         (s16)((s16)data[8] >> 6))) -
+                (s16)pCB->extConfig.u.fs.accZ0g;
 
-            ((WPADFSStatus*)status)->button =
-                (u16)((u16)((WPADFSStatus*)status)->button |
+            ((WPADFSStatus*)st)->button =
+                (u16)((u16)((WPADFSStatus*)st)->button |
                       (u16)(((~data[8] & 0x3) << 13)));
 
-            if (extCb->calibrated == 0) {
-                extCb->calibrated = 1;
-                extCb->extConfig.u.fs.stickXCenter =
-                    ((WPADFSStatus*)status)->fsStickX;
-                extCb->extConfig.u.fs.stickYCenter =
-                    ((WPADFSStatus*)status)->fsStickY;
+            if (pCB->calibrated == 0) {
+                pCB->calibrated = 1;
+                pCB->extConfig.u.fs.stickXCenter =
+                    ((WPADFSStatus*)st)->fsStickX;
+                pCB->extConfig.u.fs.stickYCenter =
+                    ((WPADFSStatus*)st)->fsStickY;
             }
 
             {
-                s16 v = (s16)((u8)((WPADFSStatus*)status)->fsStickX -
-                               (u8)extCb->extConfig.u.fs.stickXCenter);
+                s16 v = (s16)((u8)((WPADFSStatus*)st)->fsStickX -
+                               (u8)pCB->extConfig.u.fs.stickXCenter);
                 if (v < -0x80) {
                     v = -0x80;
                 }
                 if (v > 0x7F) {
                     v = 0x7F;
                 }
-                ((WPADFSStatus*)status)->fsStickX = (s8)v;
+                ((WPADFSStatus*)st)->fsStickX = (s8)v;
             }
             {
-                s16 v = (s16)((u8)((WPADFSStatus*)status)->fsStickY -
-                               (u8)extCb->extConfig.u.fs.stickYCenter);
+                s16 v = (s16)((u8)((WPADFSStatus*)st)->fsStickY -
+                               (u8)pCB->extConfig.u.fs.stickYCenter);
                 if (v < -0x80) {
                     v = -0x80;
                 }
                 if (v > 0x7F) {
                     v = 0x7F;
                 }
-                ((WPADFSStatus*)status)->fsStickY = (s8)v;
+                ((WPADFSStatus*)st)->fsStickY = (s8)v;
             }
         } else if (cb->devType == WPAD_DEV_CLASSIC) {
-            __parse_cl_data(chan, &status, cb->devMode, data + 3, 8);
+            __parse_cl_data(chan, &st, cb->devMode, data + 3, 8);
         } else if (cb->devType == 0x10) {
-            ((WPADTRStatus*)status)->brake = data[5];
-            ((WPADTRStatus*)status)->mascon = data[6];
-            ((WPADTRStatus*)status)->trButton =
+            ((WPADTRStatus*)st)->brake = data[5];
+            ((WPADTRStatus*)st)->mascon = data[6];
+            ((WPADTRStatus*)st)->trButton =
                 (u16)(0xFFFF ^ (u16)((data[9] << 8) | data[10]));
         }
 
@@ -1621,15 +1626,19 @@ void __a1_34_data_type(u8 chan, u8* data, WPADStatusEx* status) {
 }
 
 void __a1_35_data_type(u8 chan, u8* data, WPADStatusEx* status) {
-    WPADCB* cb = __rvl_p_wpadcb[chan];
+    WPADCB* cb;
     WPADCB* pCB;
     WPADStatusEx* st = status;
 
-    status->button = (u16)((data[2] << 8) | data[1]) & HID_WPAD_BUTTON_MASK;
+    cb = __rvl_p_wpadcb[chan];
 
+    status->button = (u16)((u16)data[1] | (u16)(data[2] << 8)) & HID_WPAD_BUTTON_MASK;
+
+    // Valid formats: 0-1, 3-4, 6-7, 13 (MWCC folds the range tests into
+    // unsigned subi/cmplwi pairs)
     if (cb->dataFormat <= WPAD_FMT_CORE_BTN_ACC ||
-        (cb->dataFormat >= WPAD_FMT_FS_BTN && cb->dataFormat <= WPAD_FMT_FS_BTN_ACC) ||
-        (cb->dataFormat >= WPAD_FMT_CLASSIC_BTN && cb->dataFormat <= WPAD_FMT_CLASSIC_BTN_ACC) ||
+        (u32)(cb->dataFormat - WPAD_FMT_FS_BTN) <= 1 ||
+        (u32)(cb->dataFormat - WPAD_FMT_CLASSIC_BTN) <= 1 ||
         cb->dataFormat == 0xD) {
         status->err = WPAD_ERR_OK;
     } else {
@@ -1639,52 +1648,54 @@ void __a1_35_data_type(u8 chan, u8* data, WPADStatusEx* status) {
 
     cb->wpInfo.nearempty = (data[1] >> 7) & 1;
 
+    // Fresh channel-block reload for the accelerometer calibration values
+    pCB = *(WPADCB**)((u8*)__rvl_p_wpadcb + ((u32)chan << 2));
     status->accX = (s16)((s16)((s16)((s16)((s16)((s16)data[3]) << 2) & (s16)0xFFFC) |
                              (s16)((s16)((u16)(data[1] >> 5)) & (s16)0x0003))) -
-                   (s16)__rvl_p_wpadcb[chan]->devConfig.accX0g;
+                   (s16)pCB->devConfig.accX0g;
     status->accY = (s16)((s16)((s16)((s16)((s16)((s16)data[4]) << 2) & (s16)0xFFFC) |
                              (s16)((s16)((u16)(data[2] >> 4)) & (s16)0x0002))) -
-                   (s16)__rvl_p_wpadcb[chan]->devConfig.accY0g;
+                   (s16)pCB->devConfig.accY0g;
     status->accZ = (s16)((s16)((s16)((s16)((s16)((s16)data[5]) << 2) & (s16)0xFFFC) |
                              (s16)((s16)((u16)(data[2] >> 5)) & (s16)0x0002))) -
-                   (s16)__rvl_p_wpadcb[chan]->devConfig.accZ0g;
+                   (s16)pCB->devConfig.accZ0g;
 
     memcpy(_wpadExtRawData, data + 6, 0x10);
     WPADiDecode(chan, data + 6, 0x10, 0);
 
     if (cb->wpInfo.attach != 0) {
         if (cb->devType == WPAD_DEV_FREESTYLE) {
-            pCB = __rvl_p_wpadcb[chan];
-            ((WPADFSStatus*)status)->fsStickX = data[6];
-            ((WPADFSStatus*)status)->fsStickY = data[7];
+            pCB = *(WPADCB**)((u8*)__rvl_p_wpadcb + ((u32)chan << 2));
+            ((WPADFSStatus*)st)->fsStickX = data[6];
+            ((WPADFSStatus*)st)->fsStickY = data[7];
 
-            ((WPADFSStatus*)status)->fsAccX =
+            ((WPADFSStatus*)st)->fsAccX =
                 (s16)((s16)((s16)((s16)((s16)((s16)data[8]) << 2) & (s16)0xFFFC) |
                          (s16)((s16)((u16)(data[0xB] >> 2)) & (s16)0x0003))) -
                 (s16)pCB->extConfig.u.fs.accX0g;
-            ((WPADFSStatus*)status)->fsAccY =
+            ((WPADFSStatus*)st)->fsAccY =
                 (s16)((s16)((s16)((s16)((s16)((s16)data[9]) << 2) & (s16)0xFFFC) |
                          (s16)((s16)((u16)(data[0xB] >> 4)) & (s16)0x0003))) -
                 (s16)pCB->extConfig.u.fs.accY0g;
-            ((WPADFSStatus*)status)->fsAccZ =
+            ((WPADFSStatus*)st)->fsAccZ =
                 (s16)((s16)((s16)((s16)((s16)((s16)data[0xA]) << 2) & (s16)0xFFFC) |
-                         (s16)((s16)((s8)data[0xB] >> 6) & (s16)0x0003))) -
+                         (s16)((s16)((u16)((s8)data[0xB] >> 6)) & (s16)0x0003))) -
                 (s16)pCB->extConfig.u.fs.accZ0g;
 
-            ((WPADFSStatus*)status)->button =
-                (u16)((u16)((WPADFSStatus*)status)->button |
-                      (u16)((u16)((u16)(~(u16)data[0xB]) & (u16)0x3) << 13));
+            ((WPADFSStatus*)st)->button =
+                (u16)(((~data[0xB] & 0x3) << 13) |
+                      (u16)((WPADFSStatus*)st)->button);
 
             if (pCB->calibrated == 0) {
                 pCB->calibrated = 1;
                 pCB->extConfig.u.fs.stickXCenter =
-                    (s8)((WPADFSStatus*)status)->fsStickX;
+                    ((WPADFSStatus*)st)->fsStickX;
                 pCB->extConfig.u.fs.stickYCenter =
-                    (s8)((WPADFSStatus*)status)->fsStickY;
+                    ((WPADFSStatus*)st)->fsStickY;
             }
 
             {
-                s16 v = (s16)((u8)((WPADFSStatus*)status)->fsStickX -
+                s16 v = (s16)((u8)((WPADFSStatus*)st)->fsStickX -
                                (u8)pCB->extConfig.u.fs.stickXCenter);
                 if (v < -0x80) {
                     v = -0x80;
@@ -1692,10 +1703,10 @@ void __a1_35_data_type(u8 chan, u8* data, WPADStatusEx* status) {
                 if (v > 0x7F) {
                     v = 0x7F;
                 }
-                ((WPADFSStatus*)status)->fsStickX = (s8)v;
+                ((WPADFSStatus*)st)->fsStickX = (s8)v;
             }
             {
-                s16 v = (s16)((u8)((WPADFSStatus*)status)->fsStickY -
+                s16 v = (s16)((u8)((WPADFSStatus*)st)->fsStickY -
                                (u8)pCB->extConfig.u.fs.stickYCenter);
                 if (v < -0x80) {
                     v = -0x80;
@@ -1703,12 +1714,12 @@ void __a1_35_data_type(u8 chan, u8* data, WPADStatusEx* status) {
                 if (v > 0x7F) {
                     v = 0x7F;
                 }
-                ((WPADFSStatus*)status)->fsStickY = (s8)v;
+                ((WPADFSStatus*)st)->fsStickY = (s8)v;
             }
         } else if (cb->devType == WPAD_DEV_CLASSIC) {
-            __parse_cl_data(chan, &status, cb->devMode, data + 6, 0x10);
+            __parse_cl_data(chan, &st, cb->devMode, data + 6, 0x10);
         } else if (cb->devType == 4) {
-            __parse_vs_data(chan, &status, (u8)cb->dataFormat, data + 6, 0x10);
+            __parse_vs_data(chan, &st, (u8)cb->dataFormat, data + 6, 0x10);
         }
 
         if (memcmp(_wpadExtRawData, _cExtInvalidData, 0x10) == 0 && st->err == 0) {

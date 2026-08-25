@@ -3,7 +3,12 @@
 
 #include <types.h>
 
+// func_801F941C's shared header declares it with (self, u32, u32), but the
+// CMenuPTState::Move call site leaves r4/r5 unset in retail; shadow the
+// 3-arg declaration during include and re-declare the 1-arg form below.
+#define func_801F941C func_801F941C_3arg_unused
 #include "kyoshin/cf/code_8018F8D8.hpp"
+#undef func_801F941C
 
 #include "kyoshin/CTaskGame.hpp"
 // CfGameManager.hpp (via code_8018F8D8.hpp) internally mixes a void* and a
@@ -71,6 +76,9 @@ extern "C" {
 namespace cf {}
 using namespace cf;
 
+// 1-arg view of func_801F941C for Move's call site (r4/r5 unset in retail).
+extern "C" void func_801F941C(CPartyStateWin* self);
+
 int func_8018F8D8(u32 p0, u32 p1, u32 p2, u32 p3, u32 p4) {
     if (lbl_eu_80663E24 & 0x8000) {
         func_80061A80(p0, 0x23, p1, p2, p3, p4);
@@ -112,32 +120,51 @@ struct FuncHostMgrView {
 // Party-rebuild event: reposition/notify all players from the shared offset
 // table, refresh the nine party slots, then raise the rebuild task events.
 int func_8018FA2C(CFuncHost* self, u32 p1, u32 p2, u32 p3, u32 p4) {
-    FuncHostMgrView* mgr = reinterpret_cast<FuncHostMgrView*>(self->manager);
-    cf::CfObjectMove* found = 0;
-    u16 selectId = 0;
+    // Selector byte defaults to 0 and is only loaded when bit20 is set.
+    u32 selectId = 0;
     if (lbl_eu_80663E24 & 0x100000) {
         selectId = lbl_eu_8066476D;
     }
-    found = func_8007FF6C__Q22cf13CfGameManagerFv(lbl_eu_80663E40, mgr->field_0xC,
-                                                  mgr->field_0x24);
+    FuncHostMgrView* mgr = reinterpret_cast<FuncHostMgrView*>(self->manager);
+    cf::CfObjectMove* found = func_8007FF6C__Q22cf13CfGameManagerFv(
+        lbl_eu_80663E40, mgr->field_0xC, selectId, mgr->field_0x24);
     if (lbl_eu_80663E24 & 0x100000) {
         // Fixed setup: force players into/out of "command" mode (bit 4 at
         // +0x68), then move each by an offset vector before the notify calls.
-        u8 tag = lbl_eu_8066476D;
         float* base = reinterpret_cast<float*>(func_8023C1B4());
+        u8 tag = lbl_eu_8066476D;
         float ox = lbl_eu_80667A70;
         float oy = lbl_eu_80667A74;
+        // Scratch buffers: component-wise sum of the fixed offset vector
+        // {ox, oy, ox} and the per-player base entry (MWCC vectorizes the
+        // summation with paired singles). Declared pos-first to match
+        // retail's stack slot assignment (pos@8, offset@0x14, sum@0x20).
+        float pos[3];
+        float offset[3];
+        float sum[3];
+        const float* pOff = offset;
+        float* pSum = sum;
+        float* pPos = pos;
         for (int i = 0; i < 3; i++) {
             cf::CfObjectMove* player = cf::CfGameManager::getPlayer(i);
-            if (player == 0) continue;
-            CPlayerFlags* pf = reinterpret_cast<CPlayerFlags*>(player);
-            if (tag != 0) pf->flags |= 0x10;
-            else pf->flags &= ~0x10;
-            float v[3] = { ox + base[i * 4 + 0], oy + base[i * 4 + 1],
-                           ox + base[i * 4 + 2] };
-            (*reinterpret_cast<CPlayerVtbl**>(player))->fw_a8(player, v);
-            (*reinterpret_cast<CPlayerVtbl**>(player))
-                ->fw_d4(player, &base[i * 4], base[i * 4 + 3]);
+            if (player != 0) {
+                CPlayerFlags* pf = reinterpret_cast<CPlayerFlags*>(player);
+                if (tag != 0) pf->flags |= 0x10;
+                else pf->flags &= ~0x10;
+                float* src = &base[i * 4];
+                offset[0] = ox;
+                offset[1] = oy;
+                offset[2] = ox;
+                for (int j = 0; j < 3; j++) {
+                    pSum[j] = pOff[j] + src[j];
+                }
+                pPos[0] = pSum[0];
+                pPos[1] = pSum[1];
+                pPos[2] = pSum[2];
+                (*reinterpret_cast<CPlayerVtbl**>(player))->fw_a8(player, pPos);
+                (*reinterpret_cast<CPlayerVtbl**>(player))
+                    ->fw_d4(player, src, src[3]);
+            }
         }
     }
 
@@ -185,20 +212,45 @@ int func_8018FCA8(CFuncHost* self, u32 a, u32 b, u32 c, u32 d) {
         if (lbl_eu_80663E24 & 0x100000) {
             // Fixed setup: force players 0..2 into-or-out-of "command" mode
             // (bit 4 at +0x68) and move them by an offset vector before the
-            // per-player notify calls.
-            u8 tag = lbl_eu_8066476D;
+            // per-player notify calls. Declaration order mirrors retail's
+            // stack window: pos@0x8, offset@0x14, sum@0x20.
             float* base = reinterpret_cast<float*>(func_8023C1B4());
+            u8 tag = lbl_eu_8066476D;
             float ox = lbl_eu_80667A70;
             float oy = lbl_eu_80667A74;
+            float pos[3];
+            float offset[3];
+            float sum[3];
+            // Loop-invariant scratch pointers: these compile to retail's
+            // pre-loop addi rD,sp,imm materialization (pos@0x8, offset@0x14,
+            // sum@0x20).
+            float* pPos = pos;
+            float* pOff = offset;
+            float* pSum = sum;
+            int byteOfs = 0;
             for (int i = 0; i < 3; i++) {
                 cf::CfObjectMove* p = cf::CfGameManager::getPlayer(i);
-                if (p == 0) continue;
-                CPlayerFlags* pf = reinterpret_cast<CPlayerFlags*>(p);
-                if (tag != 0) pf->flags |= 0x10;
-                else pf->flags &= ~0x10;
-                float v[3] = { ox + base[i*4 + 0], oy + base[i*4 + 1], ox + base[i*4 + 2] };
-                (*reinterpret_cast<CPlayerVtbl**>(p))->fw_a8(p, v);
-                (*reinterpret_cast<CPlayerVtbl**>(p))->fw_d4(p, &base[i*4], base[i*4 + 3]);
+                if (p != 0) {
+                    CPlayerFlags* pf = reinterpret_cast<CPlayerFlags*>(p);
+                    if (tag != 0) pf->flags |= 0x10;
+                    else pf->flags &= ~0x10;
+                    const float* src = &base[i * 4];
+                    offset[0] = ox;
+                    offset[1] = oy;
+                    offset[2] = ox;
+                    // Component-wise sum of the fixed offset vector and the
+                    // per-player base row (retail vectorizes with paired singles).
+                    pSum[0] = pOff[0] + src[0];
+                    pSum[1] = pOff[1] + src[1];
+                    pSum[2] = pOff[2] + src[2];
+                    pPos[0] = pSum[0];
+                    pPos[1] = pSum[1];
+                    pPos[2] = pSum[2];
+                    (*reinterpret_cast<CPlayerVtbl**>(p))->fw_a8(p, pPos);
+                    (*reinterpret_cast<CPlayerVtbl**>(p))->fw_d4(
+                        p, const_cast<float*>(src), src[3]);
+                }
+                byteOfs += 0x10;
             }
         } else {
             // Alternate path: only players 1..2, gated on the busy flag.
@@ -206,12 +258,14 @@ int func_8018FCA8(CFuncHost* self, u32 a, u32 b, u32 c, u32 d) {
             float stk[4];
             for (int i = 1; i < 3; i++) {
                 cf::CfObjectMove* p = self->manager->unk94[i];
-                if (p == 0) continue;
-                func_8008064C__Q22cf13CfGameManagerFv(self->manager->unk94[0], i, stk);
-                if (lbl_eu_80663E28 & 0x100) continue;
-                (*reinterpret_cast<CPlayerVtbl**>(p))->fw_a8(p, stk);
-                (*reinterpret_cast<CPlayerVtbl**>(self->manager->unk94[0]))->fw_cc(self->manager->unk94[0]);
-                (*reinterpret_cast<CPlayerVtbl**>(p))->fw_c8(p);
+                if (p != 0) {
+                    func_8008064C__Q22cf13CfGameManagerFv(self->manager->unk94[0], i, stk);
+                    if (!(lbl_eu_80663E28 & 0x100)) {
+                        (*reinterpret_cast<CPlayerVtbl**>(p))->fw_a8(p, stk);
+                        (*reinterpret_cast<CPlayerVtbl**>(self->manager->unk94[0]))->fw_cc(self->manager->unk94[0]);
+                        (*reinterpret_cast<CPlayerVtbl**>(p))->fw_c8(p);
+                    }
+                }
             }
         }
     }
@@ -227,7 +281,8 @@ int func_8018FCA8(CFuncHost* self, u32 a, u32 b, u32 c, u32 d) {
         lbl_eu_80663E24 = (lbl_eu_80663E24 & ~0x200) | 0x8;
     }
     if (lbl_eu_80663E24 & 0x400000) {
-        lbl_eu_80663E24 &= ~0x2000;
+        // rlwinm 19,17 clears BOTH bits 0x2000 and 0x1000.
+        lbl_eu_80663E24 &= ~0x3000;
     } else {
         if (b == 0) func_80061870((u32)self, 0x25, 0, 0, 0, 0);
     }
@@ -403,23 +458,11 @@ int func_801904D0(void* self) {
 // Party-menu event dispatcher: cmd 0 resets every player's tint flag and
 // closes the party gauges; cmd 0x19 re-triggers the first-player colour flash
 // via func_8008402C; any other cmd forwards (cmd-1) to the task queue.
+// Retail keeps the (redundant-looking) per-player cmd==0 re-test inside the
+// loop, so it is written out explicitly here.
 int func_80190568(u32 self, u32 cmd, u32 a2, u32 a3, u32 a4) {
     int result = 0;
-    if (cmd == 0) {
-        for (int i = 0; i < 3; i++) {
-            cf::CfObjectMove* player = cf::CfGameManager::getPlayer(i);
-            if (player == 0) continue;
-            // Clear the tint-request bit (bit 3 from MSB) then run the
-            // +0x168 virtual tint setter and the gauge reset helper.
-            CPlayerFlags* pf = reinterpret_cast<CPlayerFlags*>(player);
-            pf->flags &= ~0x10000000;
-            (*reinterpret_cast<CPlayerVtbl**>(player))->fw_168(player,
-                                                               lbl_eu_80667A8C);
-            func_800BC3B0(player, lbl_eu_80667A88);
-        }
-        func_80061870(self, 6, 0x1e, 0, 0, 0);
-        func_80061870(self, 0x1d, 0, 0, 0, 0);
-    } else {
+    if (cmd != 0) {
         if (cmd == 0x19) {
             func_8008402C__Q22cf13CfGameManagerFv(lbl_eu_80663E48[1],
                                                   lbl_eu_80663E4C[1],
@@ -427,6 +470,20 @@ int func_80190568(u32 self, u32 cmd, u32 a2, u32 a3, u32 a4) {
         }
         func_80061A80(self, 0x1c, (u16)(cmd - 1), a2, a3, a4);
         result = 1;
+    } else {
+        for (int i = 0; i < 3; i++) {
+            cf::CfObjectMove* player = cf::CfGameManager::getPlayer(i);
+            if (player != 0 && cmd == 0) {
+                // Clear the tint-request bit (bit 3 from MSB) then run the
+                // +0x168 virtual tint setter and the gauge reset helper.
+                CPlayerFlags* pf = reinterpret_cast<CPlayerFlags*>(player);
+                pf->flags &= ~0x10000000;
+                player->CfObject_UnkVirtualFunc70(lbl_eu_80667A8C);
+                func_800BC3B0(player, lbl_eu_80667A88);
+            }
+        }
+        func_80061870(self, 6, 0x1e, 0, 0, 0);
+        func_80061870(self, 0x1d, 0, 0, 0, 0);
     }
     return result;
 }
@@ -503,27 +560,32 @@ int func_eu_80191F08(u32 p0, u32 p1, u32 p2, u32 p3, u32 p4) {
     return r;
 }
 
-// Menu-command pump: pop header/data records off the CfResBuffer ring and
-// dispatch each through the member-function-pointer handler table indexed by
-// the header's top byte. A record with bit 12 (0x80000) set stops the pump;
-// a handler returning nonzero publishes the command byte and ends it too.
+// Menu-command pump: pop an 8-byte record off the CfResBuffer ring and
+// dispatch it through the member-function-pointer handler table indexed by
+// the cmd word's top byte; bits 20-23 hold the popped data-word count and
+// bit 19 suppresses dispatch for that record. A handler returning nonzero
+// publishes the command byte and ends the pump.
 int func_80190840(MenuCmdRingView* buf, u32* outFlag) {
     *outFlag = 0;
     if (!(lbl_eu_80663E28 & 0x10000) && cf::CfGameManager::func_800829B8()) {
-        int result = 1;
-        while (buf->field_404 != 0) {
-            u32 hdr;
-            u32 data[8];
-            func_80061C5C(buf, &hdr, data);
-            if (hdr & 0x80000) break;
+        return buf->field_404 == 0;
+    }
+    MenuCmdHost* host = reinterpret_cast<MenuCmdHost*>(buf);
+    u32 rec[2];
+    u32 data[0x20];
+    while (buf->field_404 != 0) {
+        int result;
+        func_80061C5C(buf, &rec[0], data);
+        u32 cmd = rec[0];
+        if (!((cmd >> 19) & 1)) {
             result = 1;
-            u32 idx = hdr >> 24;
+            u32 idx = cmd >> 24;
             if (idx < 0x29) {
-                result = (reinterpret_cast<MenuCmdHost*>(buf)
-                              ->*lbl_eu_80532838[idx])((u16)hdr, data);
+                result = (host->*lbl_eu_80532838[idx])((u16)cmd, rec[1], data,
+                                                       (cmd >> 20) & 0xF);
             }
             if (result != 0) {
-                *outFlag = hdr >> 24;
+                *outFlag = rec[0] >> 24;
                 break;
             }
         }
@@ -837,23 +899,22 @@ struct MenuPTPadView {
 // edge while the window is settling, then advance the 4-state phase byte.
 void CMenuPTState::Move() {
     CTaskGame::getInstance();
-    if (CTaskGame::func_800426F0()) {
+    // OR-combined guard: retail emits bne-exit for the first disjunct and a
+    // beq-body / b-exit pair for the second (same shape as cbRenderBefore).
+    if (CTaskGame::func_800426F0() != 0 || (lbl_eu_80663E28 & 0x200000) != 0) {
         return;
     }
-    if (lbl_eu_80663E28 & 0x200000) {
-        return;
-    }
-    if (lbl_eu_80663E28 & 0x200000) {
-    } else {
-        if ((u8)(field_0x6C6C - 1) <= 1) {
+    {
+        if ((u8)(field_0x6C6C + 0xff) <= 1) {
             if (func_801FA524(&field_0x80) == 0) {
                 MenuPTPadView* pad = reinterpret_cast<MenuPTPadView*>(
                     cf::CfGameManager::getCurrentPad());
                 int accept;
+                // Retail extracts single bits via rotate-left forms.
                 if (func_80086F9C__Q22cf13CfGameManagerFv(-1) != 0) {
-                    accept = pad->buttons & 0x400000;
+                    accept = (pad->buttons >> 23) & 1;
                 } else {
-                    accept = pad->buttons & 0x400;
+                    accept = (pad->buttons >> 10) & 1;
                 }
                 if (accept != 0) {
                     func_801FA4F4(&field_0x80);
@@ -870,9 +931,7 @@ void CMenuPTState::Move() {
             // Background layout finished loading -> start the window open-in.
             if (func_801C3E34(&field_0x60) != 0) {
                 // Retail leaves arg2/arg3 (r4/r5) unset at this call site.
-                int uninit1;
-                int uninit2;
-                func_801F941C(&field_0x80, uninit1, uninit2);
+                func_801F941C(&field_0x80);
                 field_0x6C6C = 1;
             }
             break;

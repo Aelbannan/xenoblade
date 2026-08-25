@@ -557,28 +557,16 @@ void sinit_804BD8A0() {
 }
 
 // ===== Dissolved monolibdata2 (blob surgery) data owned by this TU =====
-// [.bss] 0x8065F32C-0x8065F418 (0xEC): the scene-resource data block and its
-// two tail objects (retail spans 0xC4 / 0xC / 0x1C; section align 4).
+// [.bss] 0x8065F32C-0x8065F418 (0xEC, align 4): the scene-resource data
+// block and its two tail objects (retail spans 0xC4 / 0xC / 0x1C). The 0xC4
+// block (incl. its anonymous tail) is modeled entirely by ScnResData.
 ScnResData lbl_eu_8065F32C;
-// Retail lbl_eu_8065F32C spans 0xC4; ScnResData models only the fields the
-// code touches (0x7C). Pad the block tail so the following tail objects keep
-// their retail offsets (+0xC4 / +0xD0). Two fillers: MWCC 8-aligns bss
-// arrays whose size is a multiple of 8, which would shift the tail objects.
-static u8 lbl_eu_8065F3A8_bss_pad_a[0x24];
-static u8 lbl_eu_8065F3ACC_bss_pad_b[0x24];
 u8 lbl_eu_8065F3F0[0xC];
 u8 lbl_eu_8065F3FC[0x1C];
-DECOMP_FORCEACTIVE(code_804BC9EC_cpp, lbl_eu_8065F3A8_bss_pad_a);
-DECOMP_FORCEACTIVE(code_804BC9EC_cpp, lbl_eu_8065F3ACC_bss_pad_b);
-DECOMP_FORCEACTIVE(code_804BC9EC_cpp, lbl_eu_8065F3F0);
-DECOMP_FORCEACTIVE(code_804BC9EC_cpp, lbl_eu_8065F3FC);
 
 // [.sbss] 0x80665968-0x8066597C (0x14, align 8).
 __declspec(align(8)) u32 lbl_eu_80665968[2];
 extern "C" { u32 lbl_eu_80665970; u32 lbl_eu_80665974; u32 lbl_eu_80665978; }
-DECOMP_FORCEACTIVE(code_804BC9EC_cpp, lbl_eu_80665970);
-DECOMP_FORCEACTIVE(code_804BC9EC_cpp, lbl_eu_80665974);
-DECOMP_FORCEACTIVE(code_804BC9EC_cpp, lbl_eu_80665978);
 
 // [.data] 0x8056F940-0x8056F9B2: dissolved monolibdata2 tail objects.
 f32 lbl_eu_8056F940[4] = { 0.6f, 0.2f, 0.3f, 0.1f };

@@ -26,6 +26,18 @@ struct CMenuPTStateCtorShim {
     u32 callbacks[6];      // 0x3C-0x53 -- PTMF callback slots (__ptmf_null copies)
     u8 field54;            // 0x54
     u8 field55;            // 0x55
+    char* iscnVtbl;        // 0x58 -- IScnRender secondary-base vtable
+    CProcess* storedParent; // 0x5C
+    u8 bgTex[0x20];        // 0x60-0x7F -- CBgTex subobject (built in place)
+    u8 _80[0x6bec];        // 0x80-0x6C6B -- CPartyStateWin subobject (built in place)
+    u8 field6C6C;          // 0x6C6C
+};
+
+// Struct view of __ptmf_null: named members keep MWCC on a single
+// materialised base register instead of folding offset 0 into `lwz @l(rBase)`
+// (which would add relocs retail lacks).
+struct PtmfNullWords {
+    u32 w[3];
 };
 
 // CProcess header + PTMF imports for the retail singleton factory (see .cpp).

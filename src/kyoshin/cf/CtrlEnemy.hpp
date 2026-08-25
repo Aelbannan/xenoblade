@@ -478,7 +478,7 @@ void* __ct__800FC4FC(cf::CtrlEnemyEnumList* list, f32 f, int a);
 void func_800FB270(cf::CtrlEnemyEnumList* list, void* obj, f32 a, f32 b,
                    f32 c, int d);
 int func_80148778(void* obj, int id);
-void* func_80149154(void* obj, int id);
+void* func_80149154(void* obj, u32 id);   // aligned with CAIAction.hpp (u32 param, per CBattleState.cpp def)
 void func_800D9CA0(void* mgr, void* target);
 void func_8008B580(void* sub);
 void func_8008A23C(void* sub);

@@ -202,16 +202,16 @@ struct CfCamEventShakeElem {
 // the triplet members are f32 to keep the lwz/stw copy schedule).
 struct CfCamEventCopySrc {
     u8  _000[0x10C - 0x000];
-    f32 f_10C;   // 0x10C -> mgr 0x54
-    f32 f_110;   // 0x110 -> mgr 0x58
-    f32 f_114;   // 0x114 -> mgr 0x5C
-    f32 f_118;   // 0x118 -> mgr 0x6C
-    f32 f_11C;   // 0x11C -> mgr 0x70
-    f32 f_120;   // 0x120 -> mgr 0x74
+    union { f32 f_10C; u32 w_10C; };   // 0x10C -> mgr 0x54
+    union { f32 f_110; u32 w_110; };   // 0x110
+    union { f32 f_114; u32 w_114; };   // 0x114
+    union { f32 f_118; u32 w_118; };   // 0x118 -> mgr 0x6C
+    union { f32 f_11C; u32 w_11C; };   // 0x11C
+    union { f32 f_120; u32 w_120; };   // 0x120
     u8  _124[0x138 - 0x124];
-    f32 f_138;   // 0x138 -> mgr 0x60
-    f32 f_13C;   // 0x13C -> mgr 0x64
-    f32 f_140;   // 0x140 -> mgr 0x68
+    union { f32 f_138; u32 w_138; };   // 0x138 -> mgr 0x60
+    union { f32 f_13C; u32 w_13C; };   // 0x13C
+    union { f32 f_140; u32 w_140; };   // 0x140
     u8  _144[0x1E0 - 0x144];
     f32 f_1E0;   // 0x1E0 -> mgr 0x78
 };
@@ -222,9 +222,26 @@ struct CfCamEventVecWords {
     u32 w[3];
 };
 
+// Plain POD triplet for dead prototype locals (no union: keeps the array
+// contiguous so sinit stores run through a compact stack block).
+struct CamPrototypeVec {
+    f32 x, y, z;
+};
+
 // Camera event manager - only forward-declared elsewhere; the complete layout
 // is reconstructed here from the cam-event accessors.
-// Shake table 0 at manager offset 0x7C (16-entry cap).
+// Word view of a camera-vector triplet: retail copies/fills these triplets as
+// raw GPR words; ml::CVec3 would emit default-ctor/__as__ calls.
+struct CamEventVecWords {
+    union {
+        u32 w[3];
+        // Anonymous nesting makes MWCC emit lwz/stw for struct copies.
+        struct {
+            f32 x, y, z;
+        };
+    };
+};
+
 class CfCamEventManager {
 public:
     CfCamEventManager();
@@ -249,9 +266,11 @@ public:
     u32 field_0x48;     // 0x48 - flag/state word
     u32 field_0x4C;     // 0x4C
     u32 field_0x50;     // 0x50 - flags word
-    ml::CVec3 field_0x54;       // 0x54
-    ml::CVec3 field_0x60;       // 0x60
-    ml::CVec3 field_0x6C;       // 0x6C
+    // POD word views (ml::CVec3 has a non-trivial default ctor; the manager
+    // ctor in retail never calls it - these are filled with raw GPR stores).
+    CamEventVecWords field_0x54;       // 0x54
+    CamEventVecWords field_0x60;       // 0x60
+    CamEventVecWords field_0x6C;       // 0x6C
     f32 field_0x78;     // 0x78
     CfCamEventShakeTable tab0;  // 0x7C - full 0x178 shake state (table payload
                                 // + tail flags/counts). The state tail doubles
@@ -287,6 +306,87 @@ struct CinemSrcVtbl {
 };
 
 // Camera position source: vtable plus a couple of flag/compare words.
+// CinemCamSrcI is the polymorphic view: retail's vptr loads go to r12
+// (MWCC's reserved register for true virtual dispatch), which only happens
+// when the calls are real virtual member calls - not vtable-struct reads.
+struct CinemCamSrcI {
+    virtual void* s00() = 0;
+    virtual void* s01() = 0;
+    virtual void* s02() = 0;
+    virtual void* s03() = 0;
+    virtual void* s04() = 0;
+    virtual void* s05() = 0;
+    virtual void* s06() = 0;
+    virtual void* s07() = 0;
+    virtual void* s08() = 0;
+    virtual void* s09() = 0;
+    virtual void* s10() = 0;
+    virtual void* s11() = 0;
+    virtual void* s12() = 0;
+    virtual void* s13() = 0;
+    virtual void* s14() = 0;
+    virtual void* s15() = 0;
+    virtual void* s16() = 0;
+    virtual void* s17() = 0;
+    virtual void* s18() = 0;
+    virtual void* s19() = 0;
+    virtual void* s20() = 0;
+    virtual void* s21() = 0;
+    virtual void* s22() = 0;
+    virtual void* s23() = 0;
+    virtual void* s24() = 0;
+    virtual void* s25() = 0;
+    virtual void* s26() = 0;
+    virtual void* s27() = 0;
+    virtual void* s28() = 0;
+    virtual void* s29() = 0;
+    virtual void* s30() = 0;
+    virtual void* s31() = 0;
+    virtual void* s32() = 0;
+    virtual void* s33() = 0;
+    virtual void* s34() = 0;
+    virtual void* s35() = 0;
+    virtual void* s36() = 0;
+    virtual void* s37() = 0;
+    virtual void* s38() = 0;
+    virtual void* s39() = 0;
+    virtual void* s40() = 0;
+    virtual CinemVecOut* getVecOut() = 0;      // 0xAC
+    virtual void* m00() = 0;
+    virtual void* m01() = 0;
+    virtual void* m02() = 0;
+    virtual void* m03() = 0;
+    virtual void* m04() = 0;
+    virtual void* m05() = 0;
+    virtual void* m06() = 0;
+    virtual void* m07() = 0;
+    virtual void* m08() = 0;
+    virtual void* m09() = 0;
+    virtual void* m10() = 0;
+    virtual void* m11() = 0;
+    virtual void* m12() = 0;
+    virtual void* m13() = 0;
+    virtual void* m14() = 0;
+    virtual void* m15() = 0;
+    virtual void* m16() = 0;
+    virtual void* m17() = 0;
+    virtual void* m18() = 0;
+    virtual void* m19() = 0;
+    virtual void* m20() = 0;
+    virtual void* m21() = 0;
+    virtual void* m22() = 0;
+    virtual void* m23() = 0;
+    virtual void* m24() = 0;
+    virtual void* m25() = 0;
+    virtual void* m26() = 0;
+    virtual void* m27() = 0;
+    virtual void* m28() = 0;
+    virtual void* m29() = 0;
+    virtual CinemAimBody* getAnchor() = 0;     // 0x128
+    virtual CinemAimBody* getBody(int a) = 0;  // 0x12C
+};
+
+
 struct CinemCamSrc {
     CinemSrcVtbl* vtable;  // 0x00
     u8   _04[0x64 - 0x04];

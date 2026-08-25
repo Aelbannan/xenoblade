@@ -77,6 +77,7 @@ struct CPlayerVtbl {
     void (*fw_cc)(void* self);        // 0x0CC
     void* padD0[(0xd4 - 0xd0) / 4];   // 0x0D0
     void (*fw_d4)(void* self, float* pos, float extra); // 0x0D4
+    void* padD8[(0xdc - 0xd8) / 4];   // 0x0D8
     int (*fw_74)(void* self);         // 0xDC
     void* padE0[(0x168 - 0xe0) / 4];  // 0x0E0 - 0x164
     void (*fw_168)(void* self, float value); // 0x168
@@ -206,8 +207,10 @@ extern const float lbl_eu_80667A88;
 extern const float lbl_eu_80667A8C;
 
 // u16 pair tables read at element [1] by func_80190568's cmd-0x19 path.
-extern u16 lbl_eu_80663E48[];
-extern u16 lbl_eu_80663E4C[];
+// Sized [2]: MWCC only assumes .sbss small-data addressing (sda21 reloc)
+// for extern arrays whose bounds are visible.
+extern u16 lbl_eu_80663E48[2];
+extern u16 lbl_eu_80663E4C[2];
 
 // Object id looked up by func_8018FA2C through func_8007FF6C (.sdata halfword).
 extern const u16 lbl_eu_80663E40;
@@ -238,6 +241,7 @@ void func_80138078(u32 id); // UI sound (C++-mangled retail name)
 extern "C" void func_80081D8C__Q22cf13CfGameManagerFv(u32 value);
 extern "C" cf::CfObjectMove* func_8007FF6C__Q22cf13CfGameManagerFv(u16 objectId,
                                                                     void* obj,
+                                                                    u32 selector,
                                                                     float amount);
 extern "C" int func_80086F9C__Q22cf13CfGameManagerFv(int selector);
 extern "C" void func_800BC3B0(cf::CfObjectMove* player, float value);
@@ -266,7 +270,7 @@ struct PartySlotList {
 // Opaque receiver type for the menu-command handler table dispatched by
 // func_80190840 through member-function pointers.
 class MenuCmdHost;
-typedef int (MenuCmdHost::*MenuCmdHandler)(u16, u32*);
+typedef int (MenuCmdHost::*MenuCmdHandler)(u16, u32, u32*, u32);
 
 // 0x29-entry handler table indexed by the popped command byte (lbl_eu_80532838).
 extern MenuCmdHandler lbl_eu_80532838[];

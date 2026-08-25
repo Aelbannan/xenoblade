@@ -249,7 +249,7 @@ extern "C" s32 func_8047E1B0__17UnkClass_8047E110Fv(UnkClass_8047E110* self,
         // internal cell: the list word is the stride-8 child index
         if (e == 0)
             return -1;
-        node = (const ScnKdNode*)((const u8*)nodePool + ((e << 3) & 0xFFFF));
+        node = (const ScnKdNode*)((const u8*)nodePool + (e << 3));
     }
                 }
     return -1;
@@ -606,17 +606,17 @@ extern "C" bool func_8047EEB0__17UnkClass_8047E110Fv(UnkClass_8047E110* self,
                     // byte-granular threshold slot selected by leading zeros
                     f32 thr = *(const f32*)((const u8*)self + 0x24
                         + ((u32)__cntlzw(slotSel) >> 3));
-                    if (thr >= dn - dv)
-                        return true;
-                    return false;
+                    if (!(thr >= dn - dv))
+                        goto fail;
+                    return true;
                 } else {
                     if (dv == dn)
                         return true;
                     // stride-4 threshold slot indexed by the selector
                     f32 thr = ((const f32*)((const u8*)self + 0x24))[slotSel];
-                    if (thr >= dv - dn)
-                        return true;
-                    return false;
+                    if (!(thr >= dv - dn))
+                        goto fail;
+                    return true;
                 }
             }
             return false;
@@ -630,6 +630,8 @@ extern "C" bool func_8047EEB0__17UnkClass_8047E110Fv(UnkClass_8047E110* self,
     if (flags & 2)
         return true;
     return (f8 & 4) == 0;
+fail:
+    return false;
 }
 
 // func_8047EFBC -- expand a walk path from `seed` in `dir` directions: each
@@ -697,7 +699,7 @@ extern "C" s32 func_8047EFBC__17UnkClass_8047E110Fv(UnkClass_8047E110* self,
                             (((u32)(cc - nc)) | ((u32)(nc - cc))) >> 31;
                         // must share the threshold group and be visited
                         if (rn->grp[differ] == g
-                            && ((1u << (nEnt & 31)) & bitmap[nEnt >> 6])) {
+                        && ((1u << (nEnt & 31)) & bitmap[nEnt >> 5])) {
                             u32 tv = tbl[nEnt];
                             if ((tv & flagBit)) {
                                 u32 tval = tv & 0x3FFF;
@@ -837,10 +839,10 @@ extern "C" s32 func_8047F658__17UnkClass_8047E110Fv(UnkClass_8047E110* self, Scn
             // waypoint table layout (f32 triples):
             //   block 0: {A8AC, A8AC, A8B4}  block 1: {A8AC, A8AC, A890}
             //   block 2: {A8B4, A8AC, A8AC}  block 3: {A890, A8AC, A8AC}
+            const f32 vDepth = lbl_eu_8066A8B4;
             const f32 vFlat = lbl_eu_8066A8AC;
             ((f32*)lbl_eu_80658608)[0] = vFlat;
             f32* wp = (f32*)lbl_eu_80658608;
-            const f32 vDepth = lbl_eu_8066A8B4;
             const f32 vHalf = lbl_eu_8066A890;
             wp[1] = vFlat;
             wp[2] = vDepth;
@@ -1867,7 +1869,6 @@ extern "C" u32 lbl_eu_8056DC68[3] = {
 // NOTE: declared AFTER lbl_eu_8056DC68 so MWCC emits the .data symbols in
 // retail offset order (definition order = section order for .data).
 ScnPtmf lbl_eu_8056DC74 = { 0x00000000, 0xFFFFFFFF, (u32)&func_804812D8__17UnkClass_8047E110Fv };
-DECOMP_FORCEACTIVE(UnkClass_8047E110_cpp, lbl_eu_8056DC74);
 extern "C" u32 lbl_eu_8056DC80[4] = {
     0x00000000, 0xFFFFFFFF, (u32)&func_804813E8__17UnkClass_8047E110Fv,
     0x00000000,
@@ -1884,6 +1885,3 @@ extern "C" u32 lbl_eu_8056DCB8[5] = {
     0x00000000,
 };
 extern "C" u32 lbl_eu_8056DCCC[3] = { (u32)&lbl_eu_806624D8, 0x00000000, 0x00000000 };
-DECOMP_FORCEACTIVE(UnkClass_8047E110_cpp, lbl_eu_8056DC68);
-DECOMP_FORCEACTIVE(UnkClass_8047E110_cpp, lbl_eu_8056DC90);
-DECOMP_FORCEACTIVE(UnkClass_8047E110_cpp, lbl_eu_8056DCB8);

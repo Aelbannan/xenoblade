@@ -30,7 +30,6 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <ctype.h>
-#include "monolib/math/FloatUtils.hpp"  // H3 label-owner decl (lbl_eu_8066A208)
 
 extern "C" void func_800826F0__Q22cf13CfGameManagerFv(u32 value);
 
@@ -48,11 +47,17 @@ extern void code80135FDC_setVec3(float* self, float a, float b, float c);
 extern void func_80137738(nw4r::math::VEC3* output, const nw4r::math::VEC3* value);
 }
 
-// getBdatStringColumnValue: canonical extern "C" declaration
-// u32(void*, const char*, s32) comes from kyoshin/plugin/ocBdat.hpp (via
-// code_80135FDC.hpp). Historical pointer-style row arguments at the call
-// sites below are converted with explicit (int)(intptr_t)(...) casts, which
-// are register no-ops identical to the former inline-wrapper route.
+// getBdatStringColumnValue's canonical extern "C" declaration is
+// u32(void*, const char*, int) (shared with CfBdat.hpp / CfGimmick.hpp /
+// code_801862C0.hpp); extern "C" names cannot be overloaded, so this TU's
+// historical pointer-style call sites route through a no-op inline wrapper.
+// The casts are register no-ops, so emitted code is unchanged.
+static inline void* getBdatStringColumnValue_str(void* bdat, const char* col,
+                                                 const void* row) {
+    return (void*)getBdatStringColumnValue(bdat, col, (int)(intptr_t)row);
+}
+#define getBdatStringColumnValue(bdat, col, row) \
+    getBdatStringColumnValue_str(bdat, col, row)
 
 // ---------- globals ----------
 extern "C" {
@@ -262,32 +267,32 @@ u8 func_801392B4(u32 idx) {
 u8 func_8013600C(const void* tableName, const void* column, u32 key) {
     func_8003AA34((const char*)tableName);
     void* fp = getFP__FPCc((const char*)tableName);
-    void* result = (void*)getBdatStringColumnValue(fp, (const char*)column, (int)(intptr_t)((const void*)(uintptr_t)key)
-);
+    void* result = getBdatStringColumnValue(fp, (const char*)column,
+                                            (const void*)(uintptr_t)key);
     return *(u8*)&result;
 }
 
 u16 func_8013606C(const void* tableName, const void* column, u32 key) {
     func_8003AA34((const char*)tableName);
     void* fp = getFP__FPCc((const char*)tableName);
-    void* result = (void*)getBdatStringColumnValue(fp, (const char*)column, (int)(intptr_t)((const void*)(uintptr_t)key)
-);
+    void* result = getBdatStringColumnValue(fp, (const char*)column,
+                                            (const void*)(uintptr_t)key);
     return *(u16*)&result;
 }
 
 s16 func_80136130(const void* tableName, const void* column, u32 key) {
     func_8003AA34((const char*)tableName);
     void* fp = getFP__FPCc((const char*)tableName);
-    void* result = (void*)getBdatStringColumnValue(fp, (const char*)column, (int)(intptr_t)((const void*)(uintptr_t)key)
-);
+    void* result = getBdatStringColumnValue(fp, (const char*)column,
+                                            (const void*)(uintptr_t)key);
     return *(s16*)&result;
 }
 
 s8 func_801360CC(const void* tableName, const void* column, u32 key) {
     func_8003AA34((const char*)tableName);
     void* fp = getFP__FPCc((const char*)tableName);
-    void* result = (void*)getBdatStringColumnValue(fp, (const char*)column, (int)(intptr_t)((const void*)(uintptr_t)key)
-);
+    void* result = getBdatStringColumnValue(fp, (const char*)column,
+                                            (const void*)(uintptr_t)key);
     // Retail spills the cell value to the stack and re-reads it sign-extended.
     s32 byte = *(s8*)&result;
     return (s8)byte;
@@ -296,47 +301,41 @@ s8 func_801360CC(const void* tableName, const void* column, u32 key) {
 void func_80136190(const char* a, const char* b, const char* c) {
     func_8003AA34(a);
     void* fp = getFP__FPCc(a);
-    getBdatStringColumnValue(fp, b, (int)(intptr_t)(c)
-);
+    getBdatStringColumnValue(fp, b, c);
 }
 
 u8 func_801361E8(const char* a, const char* b, const char* c) {
     if (a == 0) return 0;
     func_8003AA34(a);
-    void* result = (void*)getBdatStringColumnValue((void*)a, b, (int)(intptr_t)(c)
-);
+    void* result = getBdatStringColumnValue((void*)a, b, c);
     return *(u8*)&result;
 }
 
 extern "C" u16 func_80136254(const char* a, const char* b, const char* c) {
     if (a == 0) return 0;
     func_8003AA34(a);
-    void* result = (void*)getBdatStringColumnValue((void*)a, b, (int)(intptr_t)(c)
-);
+    void* result = getBdatStringColumnValue((void*)a, b, c);
     return *(u16*)&result;
 }
 
 extern "C" int func_801362C0(const char* a, const char* b, const char* c) {
     if (a == 0) return 0;
     func_8003AA34(a);
-    void* result = (void*)getBdatStringColumnValue((void*)a, b, (int)(intptr_t)(c)
-);
+    void* result = getBdatStringColumnValue((void*)a, b, c);
     return (s8)(*(u8*)&result);
 }
 
 extern "C" s16 func_80136330(const char* a, const char* b, const char* c) {
     if (a == 0) return 0;
     func_8003AA34(a);
-    void* result = (void*)getBdatStringColumnValue((void*)a, b, (int)(intptr_t)(c)
-);
+    void* result = getBdatStringColumnValue((void*)a, b, c);
     return *(s16*)&result;
 }
 
 extern "C" void* func_8013639C(const char* a, const char* b, const char* c) {
     if (a == 0) return 0;
     func_8003AA34(a);
-    return (void*)getBdatStringColumnValue((void*)a, b, (int)(intptr_t)(c)
-);
+    return getBdatStringColumnValue((void*)a, b, c);
 }
 
 extern "C" u32 func_80136400(const char* src, u16* dst, u32 destLen) {
@@ -781,19 +780,18 @@ extern "C" int func_8013732C(const char* name) {
         rowIdx = 0;
     } else {
         func_8003AA34(name);
-        void* result = (void*)getBdatStringColumnValue(
+        void* result = getBdatStringColumnValue(
             reinterpret_cast<void*>(lbl_eu_80664098),
-            col0x22, (int)(intptr_t)(name)
-);
+            col0x22, name);
         rowIdx = *reinterpret_cast<u16*>(&result);
     }
 
     // retail validates the raw base name here, then opens base+0x15
     func_8003AA34(lbl_eu_80500664);
     void* fp = getFP__FPCc(&lbl_eu_80500664[0x15]);
-    void* result2 = (void*)getBdatStringColumnValue(
-        fp, &lbl_eu_80500664[0x0F], (int)(intptr_t)(reinterpret_cast<const void*>(static_cast<u32>(rowIdx)))
-);
+    void* result2 = getBdatStringColumnValue(
+        fp, &lbl_eu_80500664[0x0F],
+        reinterpret_cast<const void*>(static_cast<u32>(rowIdx)));
     u8 val = *reinterpret_cast<u8*>(&result2);
 
     // Range lookup via shared result labels so each value emits exactly one
@@ -1218,8 +1216,7 @@ extern "C" u32 func_80138234(const char* name, u32 id) {
         v1 = 0;
     } else {
         func_8003AA34(lbl_eu_80500664);
-        void* result = (void*)getBdatStringColumnValue((void*)name, col, (int)(intptr_t)((const char*)id)
-);
+        void* result = getBdatStringColumnValue((void*)name, col, (const char*)id);
         v1 = *(u16*)&result;
     }
     col = &lbl_eu_80500664[0x30];
@@ -1227,8 +1224,7 @@ extern "C" u32 func_80138234(const char* name, u32 id) {
         v2 = 0;
     } else {
         func_8003AA34(lbl_eu_80500664);
-        void* result = (void*)getBdatStringColumnValue((void*)name, col, (int)(intptr_t)((const char*)id)
-);
+        void* result = getBdatStringColumnValue((void*)name, col, (const char*)id);
         v2 = *(u16*)&result;
     }
     col = &lbl_eu_80500664[0x3C];
@@ -1236,8 +1232,7 @@ extern "C" u32 func_80138234(const char* name, u32 id) {
         v3 = 0;
     } else {
         func_8003AA34(lbl_eu_80500664);
-        void* result = (void*)getBdatStringColumnValue((void*)name, col, (int)(intptr_t)((const char*)id)
-);
+        void* result = getBdatStringColumnValue((void*)name, col, (const char*)id);
         v3 = *(u8*)&result;
     }
     col = &lbl_eu_80500664[0x47];
@@ -1245,8 +1240,7 @@ extern "C" u32 func_80138234(const char* name, u32 id) {
         v4 = 0;
     } else {
         func_8003AA34(lbl_eu_80500664);
-        void* result = (void*)getBdatStringColumnValue((void*)name, col, (int)(intptr_t)((const char*)id)
-);
+        void* result = getBdatStringColumnValue((void*)name, col, (const char*)id);
         v4 = *(u16*)&result;
     }
     col = &lbl_eu_80500664[0x52];
@@ -1254,8 +1248,7 @@ extern "C" u32 func_80138234(const char* name, u32 id) {
         v5 = 0;
     } else {
         func_8003AA34(lbl_eu_80500664);
-        void* result = (void*)getBdatStringColumnValue((void*)name, col, (int)(intptr_t)((const char*)id)
-);
+        void* result = getBdatStringColumnValue((void*)name, col, (const char*)id);
         v5 = *(u16*)&result;
     }
     col = &lbl_eu_80500664[0x5D];
@@ -1263,8 +1256,7 @@ extern "C" u32 func_80138234(const char* name, u32 id) {
         v6 = 0;
     } else {
         func_8003AA34(lbl_eu_80500664);
-        void* result = (void*)getBdatStringColumnValue((void*)name, col, (int)(intptr_t)((const char*)id)
-);
+        void* result = getBdatStringColumnValue((void*)name, col, (const char*)id);
         v6 = *(u16*)&result;
     }
     col = &lbl_eu_80500664[0x68];
@@ -1272,8 +1264,7 @@ extern "C" u32 func_80138234(const char* name, u32 id) {
         v7 = 0;
     } else {
         func_8003AA34(lbl_eu_80500664);
-        void* result = (void*)getBdatStringColumnValue((void*)name, col, (int)(intptr_t)((const char*)id)
-);
+        void* result = getBdatStringColumnValue((void*)name, col, (const char*)id);
         v7 = *(u16*)&result;
     }
     col = &lbl_eu_80500664[0x73];
@@ -1281,8 +1272,7 @@ extern "C" u32 func_80138234(const char* name, u32 id) {
         v8 = 0;
     } else {
         func_8003AA34(lbl_eu_80500664);
-        void* result = (void*)getBdatStringColumnValue((void*)name, col, (int)(intptr_t)((const char*)id)
-);
+        void* result = getBdatStringColumnValue((void*)name, col, (const char*)id);
         v8 = *(u8*)&result;
     }
 
@@ -1296,8 +1286,7 @@ extern "C" u32 func_80138234(const char* name, u32 id) {
 
     flag = 0;
     if (v5 != 0) {
-        void* result = (void*)getBdatStringColumnValue((void*)lbl_eu_80664098, &lbl_eu_80500664[0x7E], (int)(intptr_t)((const char*)v5)
-);
+        void* result = getBdatStringColumnValue((void*)lbl_eu_80664098, &lbl_eu_80500664[0x7E], (const char*)v5);
         u16 val = *(u16*)&result;
         if (func_8009CF8C(val + 0xA20) == 0) {
             flag = 1;
@@ -1307,8 +1296,7 @@ extern "C" u32 func_80138234(const char* name, u32 id) {
 
     flag = 0;
     if (v6 != 0) {
-        void* result = (void*)getBdatStringColumnValue((void*)lbl_eu_80664098, &lbl_eu_80500664[0x7E], (int)(intptr_t)((const char*)v6)
-);
+        void* result = getBdatStringColumnValue((void*)lbl_eu_80664098, &lbl_eu_80500664[0x7E], (const char*)v6);
         u16 val = *(u16*)&result;
         if (func_8009CF8C(val + 0xA20) == 0) {
             flag = 1;
@@ -1327,8 +1315,7 @@ extern "C" u32 func_80138574(const char* name, u32 id) {
     u8 v1 = 0;
     if (name != NULL) {
         func_8003AA34(&lbl_eu_80500664[0]);
-        void* result = (void*)getBdatStringColumnValue((void*)name, &lbl_eu_80500664[0x87], (int)(intptr_t)((const char*)id)
-);
+        void* result = getBdatStringColumnValue((void*)name, &lbl_eu_80500664[0x87], (const char*)id);
         v1 = *(u8*)&result;
     }
     if (v1 != 0 && v1 != *(u16*)((u8*)player + 0x8C)) return 0;
@@ -1336,15 +1323,13 @@ extern "C" u32 func_80138574(const char* name, u32 id) {
     u16 v2 = 0;
     if (name != NULL) {
         func_8003AA34(&lbl_eu_80500664[0]);
-        void* result = (void*)getBdatStringColumnValue((void*)name, &lbl_eu_80500664[0x8F], (int)(intptr_t)((const char*)id)
-);
+        void* result = getBdatStringColumnValue((void*)name, &lbl_eu_80500664[0x8F], (const char*)id);
         v2 = *(u16*)&result;
     }
     u16 v3 = 0;
     if (name != NULL) {
         func_8003AA34(&lbl_eu_80500664[0]);
-        void* result = (void*)getBdatStringColumnValue((void*)name, &lbl_eu_80500664[0x9A], (int)(intptr_t)((const char*)id)
-);
+        void* result = getBdatStringColumnValue((void*)name, &lbl_eu_80500664[0x9A], (const char*)id);
         v3 = *(u16*)&result;
     }
 
@@ -1354,8 +1339,7 @@ extern "C" u32 func_80138574(const char* name, u32 id) {
     u8 v4 = 0;
     if (name != NULL) {
         func_8003AA34(&lbl_eu_80500664[0]);
-        void* result = (void*)getBdatStringColumnValue((void*)name, &lbl_eu_80500664[0xA5], (int)(intptr_t)((const char*)id)
-);
+        void* result = getBdatStringColumnValue((void*)name, &lbl_eu_80500664[0xA5], (const char*)id);
         v4 = *(u8*)&result;
     }
     if (v4 == 5) {
@@ -1363,15 +1347,13 @@ extern "C" u32 func_80138574(const char* name, u32 id) {
         u16 key = 0;
         if (name != NULL) {
             func_8003AA34(&lbl_eu_80500664[0]);
-            void* result = (void*)getBdatStringColumnValue((void*)name, &lbl_eu_80500664[0xB9], (int)(intptr_t)((const char*)id)
-);
+            void* result = getBdatStringColumnValue((void*)name, &lbl_eu_80500664[0xB9], (const char*)id);
             key = *(u16*)&result;
         }
         u8 v5 = 0;
         if (fp != NULL) {
             func_8003AA34(&lbl_eu_80500664[0]);
-            void* result = (void*)getBdatStringColumnValue(fp, &lbl_eu_80500664[0xC0], (int)(intptr_t)((const char*)key)
-);
+            void* result = getBdatStringColumnValue(fp, &lbl_eu_80500664[0xC0], (const char*)key);
             v5 = *(u8*)&result;
         }
         if (v5 != 0 && v5 != func_8006A6D0()) return 0;
@@ -1379,8 +1361,7 @@ extern "C" u32 func_80138574(const char* name, u32 id) {
         u8 v6 = 0;
         if (fp != NULL) {
             func_8003AA34(&lbl_eu_80500664[0]);
-            void* result = (void*)getBdatStringColumnValue(fp, &lbl_eu_80500664[0xC8], (int)(intptr_t)((const char*)key)
-);
+            void* result = getBdatStringColumnValue(fp, &lbl_eu_80500664[0xC8], (const char*)key);
             v6 = *(u8*)&result;
         }
         if (v6 != 0 && v6 != (u16)func_8016DF2C()) return 0;
@@ -1395,8 +1376,7 @@ extern "C" u32 func_80138574(const char* name, u32 id) {
             u8 v = 0;
             if (name != NULL) {
                 func_8003AA34(&lbl_eu_80500664[0]);
-                void* result = (void*)getBdatStringColumnValue((void*)name, &lbl_eu_80500664[0x113], (int)(intptr_t)((const char*)id)
-);
+                void* result = getBdatStringColumnValue((void*)name, &lbl_eu_80500664[0x113], (const char*)id);
                 v = *(u8*)&result;
             }
             if (v == 0) return 0;
@@ -1408,8 +1388,7 @@ extern "C" u32 func_80138574(const char* name, u32 id) {
             u8 v = 0;
             if (name != NULL) {
                 func_8003AA34(&lbl_eu_80500664[0]);
-                void* result = (void*)getBdatStringColumnValue((void*)name, &lbl_eu_80500664[0x10A], (int)(intptr_t)((const char*)id)
-);
+                void* result = getBdatStringColumnValue((void*)name, &lbl_eu_80500664[0x10A], (const char*)id);
                 v = *(u8*)&result;
             }
             if (v == 0) return 0;
@@ -1421,8 +1400,7 @@ extern "C" u32 func_80138574(const char* name, u32 id) {
             u8 v = 0;
             if (name != NULL) {
                 func_8003AA34(&lbl_eu_80500664[0]);
-                void* result = (void*)getBdatStringColumnValue((void*)name, &lbl_eu_80500664[0x101], (int)(intptr_t)((const char*)id)
-);
+                void* result = getBdatStringColumnValue((void*)name, &lbl_eu_80500664[0x101], (const char*)id);
                 v = *(u8*)&result;
             }
             if (v == 0) return 0;
@@ -1434,8 +1412,7 @@ extern "C" u32 func_80138574(const char* name, u32 id) {
             u8 v = 0;
             if (name != NULL) {
                 func_8003AA34(&lbl_eu_80500664[0]);
-                void* result = (void*)getBdatStringColumnValue((void*)name, &lbl_eu_80500664[0xF8], (int)(intptr_t)((const char*)id)
-);
+                void* result = getBdatStringColumnValue((void*)name, &lbl_eu_80500664[0xF8], (const char*)id);
                 v = *(u8*)&result;
             }
             if (v == 0) return 0;
@@ -1447,8 +1424,7 @@ extern "C" u32 func_80138574(const char* name, u32 id) {
             u8 v = 0;
             if (name != NULL) {
                 func_8003AA34(&lbl_eu_80500664[0]);
-                void* result = (void*)getBdatStringColumnValue((void*)name, &lbl_eu_80500664[0xEE], (int)(intptr_t)((const char*)id)
-);
+                void* result = getBdatStringColumnValue((void*)name, &lbl_eu_80500664[0xEE], (const char*)id);
                 v = *(u8*)&result;
             }
             if (v == 0) return 0;
@@ -1460,8 +1436,7 @@ extern "C" u32 func_80138574(const char* name, u32 id) {
             u8 v = 0;
             if (name != NULL) {
                 func_8003AA34(&lbl_eu_80500664[0]);
-                void* result = (void*)getBdatStringColumnValue((void*)name, &lbl_eu_80500664[0xE4], (int)(intptr_t)((const char*)id)
-);
+                void* result = getBdatStringColumnValue((void*)name, &lbl_eu_80500664[0xE4], (const char*)id);
                 v = *(u8*)&result;
             }
             if (v == 0) return 0;
@@ -1473,8 +1448,7 @@ extern "C" u32 func_80138574(const char* name, u32 id) {
             u8 v = 0;
             if (name != NULL) {
                 func_8003AA34(&lbl_eu_80500664[0]);
-                void* result = (void*)getBdatStringColumnValue((void*)name, &lbl_eu_80500664[0xDA], (int)(intptr_t)((const char*)id)
-);
+                void* result = getBdatStringColumnValue((void*)name, &lbl_eu_80500664[0xDA], (const char*)id);
                 v = *(u8*)&result;
             }
             if (v == 0) return 0;
@@ -1484,8 +1458,7 @@ extern "C" u32 func_80138574(const char* name, u32 id) {
             u8 v = 0;
             if (name != NULL) {
                 func_8003AA34(&lbl_eu_80500664[0]);
-                void* result = (void*)getBdatStringColumnValue((void*)name, &lbl_eu_80500664[0xD0], (int)(intptr_t)((const char*)id)
-);
+                void* result = getBdatStringColumnValue((void*)name, &lbl_eu_80500664[0xD0], (const char*)id);
                 v = *(u8*)&result;
             }
             if (v == 0) return 0;
@@ -1497,16 +1470,14 @@ extern "C" u32 func_80138574(const char* name, u32 id) {
     u16 v7 = 0;
     if (name != NULL) {
         func_8003AA34(&lbl_eu_80500664[0]);
-        void* result = (void*)getBdatStringColumnValue((void*)name, &lbl_eu_80500664[0x11C], (int)(intptr_t)((const char*)id)
-);
+        void* result = getBdatStringColumnValue((void*)name, &lbl_eu_80500664[0x11C], (const char*)id);
         v7 = *(u16*)&result;
     }
     if (v7 != 0) {
         u8 v8 = 0;
         if (name != NULL) {
             func_8003AA34(&lbl_eu_80500664[0]);
-            void* result = (void*)getBdatStringColumnValue((void*)name, &lbl_eu_80500664[0x125], (int)(intptr_t)((const char*)id)
-);
+            void* result = getBdatStringColumnValue((void*)name, &lbl_eu_80500664[0x125], (const char*)id);
             v8 = *(u8*)&result;
         }
         if ((func_8009CF8C(v7 + 0x220) & 0xFF) != v8) return 0;
@@ -1514,16 +1485,14 @@ extern "C" u32 func_80138574(const char* name, u32 id) {
     u8 v9 = 0;
     if (name != NULL) {
         func_8003AA34(&lbl_eu_80500664[0]);
-        void* result = (void*)getBdatStringColumnValue((void*)name, &lbl_eu_80500664[0x12B], (int)(intptr_t)((const char*)id)
-);
+        void* result = getBdatStringColumnValue((void*)name, &lbl_eu_80500664[0x12B], (const char*)id);
         v9 = *(u8*)&result;
     }
     if (v9 != 0) {
         u8 v10 = 0;
         if (name != NULL) {
             func_8003AA34(&lbl_eu_80500664[0]);
-            void* result = (void*)getBdatStringColumnValue((void*)name, &lbl_eu_80500664[0x135], (int)(intptr_t)((const char*)id)
-);
+            void* result = getBdatStringColumnValue((void*)name, &lbl_eu_80500664[0x135], (const char*)id);
             v10 = *(u8*)&result;
         }
         if ((func_8009CF8C(v9 + 0x798) & 0xFF) != v10) return 0;
@@ -1531,16 +1500,14 @@ extern "C" u32 func_80138574(const char* name, u32 id) {
     u8 v11 = 0;
     if (name != NULL) {
         func_8003AA34(&lbl_eu_80500664[0]);
-        void* result = (void*)getBdatStringColumnValue((void*)name, &lbl_eu_80500664[0x13C], (int)(intptr_t)((const char*)id)
-);
+        void* result = getBdatStringColumnValue((void*)name, &lbl_eu_80500664[0x13C], (const char*)id);
         v11 = *(u8*)&result;
     }
     if (v11 != 0) {
         u16 v12 = 0;
         if (name != NULL) {
             func_8003AA34(&lbl_eu_80500664[0]);
-            void* result = (void*)getBdatStringColumnValue((void*)name, &lbl_eu_80500664[0x147], (int)(intptr_t)((const char*)id)
-);
+            void* result = getBdatStringColumnValue((void*)name, &lbl_eu_80500664[0x147], (const char*)id);
             v12 = *(u16*)&result;
         }
         if ((u16)func_8009CF8C(v11 + 0x21) < v12) return 0;
@@ -1548,8 +1515,7 @@ extern "C" u32 func_80138574(const char* name, u32 id) {
     u16 v13 = 0;
     if (name != NULL) {
         func_8003AA34(&lbl_eu_80500664[0]);
-        void* result = (void*)getBdatStringColumnValue((void*)name, &lbl_eu_80500664[0x14F], (int)(intptr_t)((const char*)id)
-);
+        void* result = getBdatStringColumnValue((void*)name, &lbl_eu_80500664[0x14F], (const char*)id);
         v13 = *(u16*)&result;
     }
     if (v13 != 0) {
@@ -1558,16 +1524,14 @@ extern "C" u32 func_80138574(const char* name, u32 id) {
     u8 v14 = 0;
     if (name != NULL) {
         func_8003AA34(&lbl_eu_80500664[0]);
-        void* result = (void*)getBdatStringColumnValue((void*)name, &lbl_eu_80500664[0x15A], (int)(intptr_t)((const char*)id)
-);
+        void* result = getBdatStringColumnValue((void*)name, &lbl_eu_80500664[0x15A], (const char*)id);
         v14 = *(u8*)&result;
     }
     if (v14 != 0) {
         u16 v15 = 0;
         if (name != NULL) {
             func_8003AA34(&lbl_eu_80500664[0]);
-            void* result = (void*)getBdatStringColumnValue((void*)name, &lbl_eu_80500664[0x164], (int)(intptr_t)((const char*)id)
-);
+            void* result = getBdatStringColumnValue((void*)name, &lbl_eu_80500664[0x164], (const char*)id);
             v15 = *(u16*)&result;
         }
         if ((u16)func_8009CF8C(v14 + 0x7FC) < v15) return 0;
@@ -1575,15 +1539,13 @@ extern "C" u32 func_80138574(const char* name, u32 id) {
     u8 v16 = 0;
     if (name != NULL) {
         func_8003AA34(&lbl_eu_80500664[0]);
-        void* result = (void*)getBdatStringColumnValue((void*)name, &lbl_eu_80500664[0x16B], (int)(intptr_t)((const char*)id)
-);
+        void* result = getBdatStringColumnValue((void*)name, &lbl_eu_80500664[0x16B], (const char*)id);
         v16 = *(u8*)&result;
     }
     if (v16 != 0) {
         if (name != NULL) {
             func_8003AA34(&lbl_eu_80500664[0]);
-            getBdatStringColumnValue((void*)name, &lbl_eu_80500664[0x175], (int)(intptr_t)((const char*)id)
-);
+            getBdatStringColumnValue((void*)name, &lbl_eu_80500664[0x175], (const char*)id);
         }
         if (func_8009CF8C(v16 + 0x2578) == 0) return 0;
     }
@@ -1608,8 +1570,7 @@ extern "C" u8 func_80138E1C(const char* key) {
         return 0;
     }
     func_8003AA34(key);
-    void* result = (void*)getBdatStringColumnValue((void*)src, col, (int)(intptr_t)(key)
-);
+    void* result = getBdatStringColumnValue((void*)src, col, key);
     return *(u8*)&result;
 }
 
@@ -1617,8 +1578,7 @@ extern "C" u32 func_80138E90(const char* key) {
     u8 v = 0;
     if (lbl_eu_80664098 != 0) {
         func_8003AA34(key);
-        void* result = (void*)getBdatStringColumnValue((void*)lbl_eu_80664098, &lbl_eu_80500664[0x18A], (int)(intptr_t)(key)
-);
+        void* result = getBdatStringColumnValue((void*)lbl_eu_80664098, &lbl_eu_80500664[0x18A], key);
         v = *(u8*)&result;
     }
     u32 result = 0;
@@ -1666,8 +1626,7 @@ extern "C" char* func_80138F78(const char* key) {
         // retail: bl func_8003AA34 with no arg move - r3 already holds
         // &lbl_eu_80500664[0] from the shared base computation with col
         func_8003AA34(&lbl_eu_80500664[0]);
-        result = (void*)getBdatStringColumnValue(fp, col, (int)(intptr_t)(key)
-);
+        result = getBdatStringColumnValue(fp, col, key);
     }
     sprintf(&lbl_eu_80573B30[0], &lbl_eu_80500664[0x1A8], result);
     return &lbl_eu_80573B30[0];
@@ -1680,15 +1639,12 @@ extern "C" char* func_8013902C(const char* key) {
         func_8003AA34(key);
         lbl_eu_8066406C = (u32)getFP__FPCc(&lbl_eu_80500664[0x1AF]);
     }
+    char* result = NULL;
     const char* col = &lbl_eu_80500664[0x1C7];
     void* fp = (void*)lbl_eu_8066406C;
-    char* result;
     if (fp != NULL) {
         func_8003AA34(key);
-        result = (char*)getBdatStringColumnValue(fp, col, (int)(intptr_t)(key)
-);
-    } else {
-        result = NULL;
+        result = (char*)getBdatStringColumnValue(fp, col, key);
     }
     sprintf(&lbl_eu_80573BB0[0], &lbl_eu_80500664[0x1A8], result);
     return &lbl_eu_80573BB0[0];
@@ -1804,8 +1760,7 @@ extern "C" u16 func_801392E4(const char* name) {
         return 0;
     }
     func_8003AA34(name);
-    void* result = (void*)getBdatStringColumnValue((void*)src, col, (int)(intptr_t)(name)
-);
+    void* result = getBdatStringColumnValue((void*)src, col, name);
     return *(u16*)&result;
 }
 
@@ -1816,8 +1771,7 @@ extern "C" u16 func_80139358(const char* name) {
         return 0;
     }
     func_8003AA34(name);
-    void* result = (void*)getBdatStringColumnValue((void*)src, col, (int)(intptr_t)(name)
-);
+    void* result = getBdatStringColumnValue((void*)src, col, name);
     return *(u16*)&result;
 }
 
@@ -1825,8 +1779,7 @@ extern "C" u32 func_801393CC(const char* name) {
     u32 v = 0;
     if (lbl_eu_806640EC != 0) {
         func_8003AA34(name);
-        void* result = (void*)getBdatStringColumnValue((void*)lbl_eu_806640EC, &lbl_eu_80500664[0x1D2], (int)(intptr_t)(name)
-);
+        void* result = getBdatStringColumnValue((void*)lbl_eu_806640EC, &lbl_eu_80500664[0x1D2], name);
         v = *(u16*)&result;
     }
     switch (v) {
@@ -1857,8 +1810,7 @@ extern "C" char* func_801394D4(const char* name) {
         b = 0;
     } else {
         func_8003AA34((const char*)a);
-        void* r = (void*)getBdatStringColumnValue((void*)lbl_eu_806640EC, col1DB, (int)(intptr_t)(name)
-);
+        void* r = getBdatStringColumnValue((void*)lbl_eu_806640EC, col1DB, name);
         b = *(u16*)&r;
     }
     u16 c;
@@ -1867,8 +1819,7 @@ extern "C" char* func_801394D4(const char* name) {
         c = 0;
     } else {
         func_8003AA34(&lbl_eu_80500664[0]);
-        void* r = (void*)getBdatStringColumnValue((void*)lbl_eu_806640EC, col1D2, (int)(intptr_t)(name)
-);
+        void* r = getBdatStringColumnValue((void*)lbl_eu_806640EC, col1D2, name);
         c = *(u16*)&r;
     }
     void* d0 = 0;
@@ -1877,8 +1828,7 @@ extern "C" char* func_801394D4(const char* name) {
         d0 = 0;
     } else {
         func_8003AA34(&lbl_eu_80500664[0]);
-        d0 = (void*)getBdatStringColumnValue((void*)a, col17C, (int)(intptr_t)((const char*)(u32)b)
-);
+        d0 = getBdatStringColumnValue((void*)a, col17C, (const char*)(u32)b);
     }
     sprintf(&lbl_eu_80573C30[0], &lbl_eu_80500664[0], d0);
     if (c == 3) {
@@ -1888,14 +1838,13 @@ extern "C" char* func_801394D4(const char* name) {
             d = 0;
         } else {
             func_8003AA34(&lbl_eu_80500664[0]);
-            rv = (void*)getBdatStringColumnValue((void*)lbl_eu_806640EC, &lbl_eu_80500664[0x1E2], (int)(intptr_t)(name)
-);
+            rv = getBdatStringColumnValue((void*)lbl_eu_806640EC, &lbl_eu_80500664[0x1E2], name);
             d = *(u8*)&rv;
         }
         func_8003AA34((const char*)rv);
         void* fp = getFP__FPCc(&lbl_eu_80500664[0x1EB]);
-        void* r2 = (void*)getBdatStringColumnValue(fp, col17C, (int)(intptr_t)((const char*)(0x1E - (d - 1)))
-);
+        void* r2 = getBdatStringColumnValue(fp, col17C,
+                                           (const char*)(0x1E - (d - 1)));
         sprintf(&lbl_eu_80573C30[0], &lbl_eu_80500664[0x1F4], &lbl_eu_80573C30[0], r2);
     }
     return &lbl_eu_80573C30[0];
@@ -2408,8 +2357,7 @@ extern "C" u16 func_8013A7D0(u16 arg1, u16 arg2) {
     const char* fpName = &lbl_eu_80500664[0x20B];
     func_8003AA34((const char*)arg1);
     void* fp = getFP__FPCc(fpName);
-    void* r = (void*)getBdatStringColumnValue(fp, col204, (int)(intptr_t)((const char*)5)
-);
+    void* r = getBdatStringColumnValue(fp, col204, (const char*)5);
     u16 row0 = *(u16*)&r;
     if (func_8009CF8C(0x20) >= row0) flag = 1;
 
@@ -2423,15 +2371,13 @@ extern "C" u16 func_8013A7D0(u16 arg1, u16 arg2) {
         u16 v1 = 0;
         if (fp2 != 0) {
             func_8003AA34((const char*)fp2);
-            void* r1 = (void*)getBdatStringColumnValue(fp2, (const char*)colA, (int)(intptr_t)((const char*)(u32)i)
-);
+            void* r1 = getBdatStringColumnValue(fp2, (const char*)colA, (const char*)(u32)i);
             v1 = *(u16*)&r1;
         }
         u16 v2 = 0;
         if (fp2 != 0) {
             func_8003AA34((const char*)fp2);
-            void* r2 = (void*)getBdatStringColumnValue(fp2, (const char*)colB, (int)(intptr_t)((const char*)(u32)i)
-);
+            void* r2 = getBdatStringColumnValue(fp2, (const char*)colB, (const char*)(u32)i);
             v2 = *(u16*)&r2;
         }
         u16 a = (u16)(v1 + 0xFF91);
@@ -2451,8 +2397,7 @@ extern "C" void func_8013A95C(u16 arg1, u16 arg2, s8 delta) {
     const char* fpName = &lbl_eu_80500664[0x20B];
     func_8003AA34((const char*)arg1);
     void* fp = getFP__FPCc(fpName);
-    void* r = (void*)getBdatStringColumnValue(fp, col204, (int)(intptr_t)((const char*)5)
-);
+    void* r = getBdatStringColumnValue(fp, col204, (const char*)5);
     u16 row0 = *(u16*)&r;
     if (func_8009CF8C(0x20) >= row0) flag = 1;
 
@@ -2465,15 +2410,13 @@ extern "C" void func_8013A95C(u16 arg1, u16 arg2, s8 delta) {
         u16 v1 = 0;
         if (fp2 != 0) {
             func_8003AA34((const char*)fp2);
-            void* r1 = (void*)getBdatStringColumnValue(fp2, (const char*)colA, (int)(intptr_t)((const char*)(u32)i)
-);
+            void* r1 = getBdatStringColumnValue(fp2, (const char*)colA, (const char*)(u32)i);
             v1 = *(u16*)&r1;
         }
         u16 v2 = 0;
         if (fp2 != 0) {
             func_8003AA34((const char*)fp2);
-            void* r2 = (void*)getBdatStringColumnValue(fp2, (const char*)colB, (int)(intptr_t)((const char*)(u32)i)
-);
+            void* r2 = getBdatStringColumnValue(fp2, (const char*)colB, (const char*)(u32)i);
             v2 = *(u16*)&r2;
         }
         u16 a = (u16)(v1 + 0xFF91);
@@ -2499,8 +2442,8 @@ extern "C" void func_8013AB0C(u8* out1, u8* out2, int idx) {
     u32 row = idx - 0x28;
     func_8003AA34((const char*)out1);
     void* fp = getFP__FPCc(&lbl_eu_80500664[0x20B]);
-    void* r = (void*)getBdatStringColumnValue(fp, &lbl_eu_80500664[0x204], (int)(intptr_t)((const char*)5)
-);
+    void* r = getBdatStringColumnValue(fp, &lbl_eu_80500664[0x204],
+                                       (const char*)5);
     u16 row0 = *(u16*)&r;
     if (func_8009CF8C(0x20) >= row0) flag = 1;
 
@@ -2516,16 +2459,16 @@ extern "C" void func_8013AB0C(u8* out1, u8* out2, int idx) {
     u16 v1 = 0;
     if (fp2 != 0) {
         func_8003AA34((const char*)fp2);
-        void* r1 = (void*)getBdatStringColumnValue(fp2, (const char*)colA, (int)(intptr_t)((const char*)row)
-);
+        void* r1 = getBdatStringColumnValue(fp2, (const char*)colA,
+                                            (const char*)row);
         v1 = *(u16*)&r1;
     }
     u32 colB = arrB[flag];
     u16 v2 = 0;
     if (fp2 != 0) {
         func_8003AA34((const char*)fp2);
-        void* r2 = (void*)getBdatStringColumnValue(fp2, (const char*)colB, (int)(intptr_t)((const char*)row)
-);
+        void* r2 = getBdatStringColumnValue(fp2, (const char*)colB,
+                                            (const char*)row);
         v2 = *(u16*)&r2;
     }
     *out1 = v1 + 0x91;
@@ -2573,8 +2516,8 @@ extern "C" void func_8013ACFC() {
     u16 row = 0;
     if (bdat != NULL) {
         func_8003AA34((const char*)(tbl + 0x22B));
-        void* r = (void*)getBdatStringColumnValue(bdat, (const char*)(tbl + 0x22B), (int)(intptr_t)((const char*)(u32)flag)
-);
+        void* r = getBdatStringColumnValue(bdat, (const char*)(tbl + 0x22B),
+                                           (const char*)(u32)flag);
         row = *(u16*)&r;
     }
     if (row == 0) return;
@@ -2583,8 +2526,8 @@ extern "C" void func_8013ACFC() {
     u8 col2 = 0;
     if (bdat != NULL) {
         func_8003AA34((const char*)(tbl + 0x23A));
-        void* r = (void*)getBdatStringColumnValue(bdat, (const char*)(tbl + 0x23A), (int)(intptr_t)((const char*)(u32)flag)
-);
+        void* r = getBdatStringColumnValue(bdat, (const char*)(tbl + 0x23A),
+                                           (const char*)(u32)flag);
         col2 = *(u8*)&r;
     }
     f64 dcol2 = (f64)col2;
@@ -2611,8 +2554,8 @@ extern "C" void func_8013ACFC() {
         s16 v = 0;
         if (fp != NULL) {
             func_8003AA34((const char*)fp);
-            void* r = (void*)getBdatStringColumnValue(fp, colName, (int)(intptr_t)((const char*)(u32)i)
-);
+            void* r = getBdatStringColumnValue(fp, colName,
+                                               (const char*)(u32)i);
             v = *(s16*)&r;
         }
         f64 dv = (f64)v;
@@ -2810,8 +2753,8 @@ extern "C" void func_8013B88C(u8 v) {
             u8 c = 0;
             if (fp != 0) {
                 func_8003AA34((const char*)fp);
-                void* r = (void*)getBdatStringColumnValue(fp, &lbl_eu_80500664[0x0F], (int)(intptr_t)((const char*)(u32)i)
-);
+                void* r = getBdatStringColumnValue(fp, &lbl_eu_80500664[0x0F],
+                                                   (const char*)(u32)i);
                 c = *(u8*)&r;
             }
             if (c == v) {

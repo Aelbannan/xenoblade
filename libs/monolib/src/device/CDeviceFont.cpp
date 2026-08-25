@@ -122,7 +122,6 @@ CDeviceFont* lbl_eu_80665678 = 0;
 u32 lbl_eu_8066567C = 0;
 u32 lbl_eu_80665680 = 0;
 u32 lbl_eu_80665684 = 0;
-DECOMP_FORCEACTIVE(cdffont, lbl_eu_80665678, lbl_eu_8066567C, lbl_eu_80665680, lbl_eu_80665684);
 
 // ---- CDeviceFont constructor (0x80454FB0) ----
 CDeviceFont::CDeviceFont(const char* pName, CWorkThread* pParent)

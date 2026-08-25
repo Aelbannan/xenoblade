@@ -253,9 +253,7 @@ const char lbl_eu_80522608[28] = {0x5F,0x72,0x65,0x73,0x6C,0x69,0x73,0x74,0x5F,0
 const char lbl_eu_80522624[11] = {0x43,0x46,0x6F,0x6E,0x74,0x4C,0x61,0x79,0x65,0x72,0x00};  /* "CFontLayer" (10+NUL; retail 0xB) */
 // "\u30e1\u30e2\u30ea\u304c\u2026\u306a\u304f\u3057\u307e\u3057\u305f" check-timeout
 // message (retail .rodata 0x80522630;
-// 0x20 includes the splitter-absorbed 5-byte alignment pad). The retail
-// wkStandbyLogout timeout path that references it is not yet decompiled, so
-// DECOMP_FORCEACTIVE below keeps the symbol alive.
+// 0x20 includes the splitter-absorbed 5-byte alignment pad).
 const char lbl_eu_80522630[0x20] =
     "\x83\x8d\x83\x4f\x83\x41\x83\x45\x83\x67\x82\xc9\x8e\xb8\x94\x73\x82\xb5\x82\xdc\x82\xb5\x82\xbd";
 
@@ -480,10 +478,6 @@ struct CViewSbssSingleton {
 } lbl_eu_806655C8;
 
 // Keep the not-yet-decompiled wkStandbyLogout check-timeout message alive.
-DECOMP_FORCEACTIVE(CView_cpp, lbl_eu_80522630);
-DECOMP_FORCEACTIVE(CView_cpp, lbl_eu_805225E0);
-DECOMP_FORCEACTIVE(CView_cpp, lbl_eu_805225F0);
-DECOMP_FORCEACTIVE(CView_cpp, lbl_eu_80522608);
 
 ml::CCol4 lbl_8065A0C8;
 

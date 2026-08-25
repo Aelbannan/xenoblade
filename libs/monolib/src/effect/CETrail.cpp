@@ -940,15 +940,11 @@ extern "C" void func_804D83D0(void) {
 // ===== Dissolved monolibdata2 (blob surgery) data owned by this TU =====
 // [.bss] 0x8065FD00-0x8065FE30 (304B): unknown zero-fill object.
 __declspec(align(8)) u8 lbl_eu_8065FD00[0x130];
-DECOMP_FORCEACTIVE(CETrail_cpp, lbl_eu_8065FD00);
 
 // [.sbss] 0x806659BC-0x806659C8 (12B): retail tail global (8B span).
 extern "C" __declspec(align(4)) s32 lbl_eu_806659BC = 0;
 extern "C" __declspec(align(4)) u32 lbl_eu_806659C0 = 0;
 extern "C" __declspec(align(4)) u32 lbl_eu_806659C4 = 0;
-DECOMP_FORCEACTIVE(CETrail_cpp, lbl_eu_806659BC);
-DECOMP_FORCEACTIVE(CETrail_cpp, lbl_eu_806659C0);
-DECOMP_FORCEACTIVE(CETrail_cpp, lbl_eu_806659C4);
 
 // [.sdata] 0x80663B20-0x80663B40 (32B): typeinfo pairs + counters.
 extern "C" u32 lbl_eu_8066B190;
@@ -960,17 +956,10 @@ extern "C" u32 lbl_eu_80663B28[2] = { (u32)&lbl_eu_80524530, (u32)&lbl_eu_8056FC
 extern "C" u32 lbl_eu_80663B30[2] = { (u32)&lbl_eu_80524548, 0x00000000 };
 extern "C" { s32 lbl_eu_80663B38 = -1; u8 lbl_eu_80663B3C[4] = { 1, 0, 0, 0 }; }  // 3B zero tail shares the initialized word (PROGBITS .sdata)
 // 3B zero tail at +0x1D (kept PROGBITS .sdata via explicit section decl)
-DECOMP_FORCEACTIVE(CETrail_cpp, lbl_eu_80663B20);
-DECOMP_FORCEACTIVE(CETrail_cpp, lbl_eu_80663B28);
-DECOMP_FORCEACTIVE(CETrail_cpp, lbl_eu_80663B30);
-DECOMP_FORCEACTIVE(CETrail_cpp, lbl_eu_80663B38);
-DECOMP_FORCEACTIVE(CETrail_cpp, lbl_eu_80663B3C);
 
 // [.rodata] 0x80524530-0x80524568 (56B): template typeinfo names.
 extern "C" __declspec(align(8)) const char lbl_eu_80524530[0x18] = { 0x72,0x65,0x73,0x6C,0x69,0x73,0x74,0x3C,0x43,0x45,0x54,0x72,0x61,0x69,0x6C,0x3A,0x3A,0x50,0x4F,0x49,0x4E,0x54,0x3E,0x00 };
 extern "C" __declspec(align(8)) const char lbl_eu_80524548[0x20] = { 0x5F,0x72,0x65,0x73,0x6C,0x69,0x73,0x74,0x5F,0x62,0x61,0x73,0x65,0x3C,0x43,0x45,0x54,0x72,0x61,0x69,0x6C,0x3A,0x3A,0x50,0x4F,0x49,0x4E,0x54,0x3E,0x00,0x00,0x00 };  // +2B tail pad
-DECOMP_FORCEACTIVE(CETrail_cpp, lbl_eu_80524530);
-DECOMP_FORCEACTIVE(CETrail_cpp, lbl_eu_80524548);
 
 // [.data] 0x8056FC40-0x8056FC70 (48B): four 12B vtables. The reslist dtors
 // are splitter-shortened template names (foreign weak definitions).
@@ -978,7 +967,3 @@ extern "C" u32 lbl_eu_8056FC40[3] = { (u32)&lbl_eu_80663B20, 0x00000000, (u32)&_
 extern "C" u32 lbl_eu_8056FC4C[3] = { (u32)&lbl_eu_80663B28, 0x00000000, (u32)&__dt__reslist_CETrail_POINT };
 extern "C" u32 lbl_eu_8056FC58[3] = { (u32)&lbl_eu_80663B30, 0x00000000, 0x00000000 };
 extern "C" u32 lbl_eu_8056FC64[3] = { (u32)&lbl_eu_80663B30, 0x00000000, (u32)&__dt___reslist_base_CETrail_POINT };
-DECOMP_FORCEACTIVE(CETrail_cpp, lbl_eu_8056FC40);
-DECOMP_FORCEACTIVE(CETrail_cpp, lbl_eu_8056FC4C);
-DECOMP_FORCEACTIVE(CETrail_cpp, lbl_eu_8056FC58);
-DECOMP_FORCEACTIVE(CETrail_cpp, lbl_eu_8056FC64);

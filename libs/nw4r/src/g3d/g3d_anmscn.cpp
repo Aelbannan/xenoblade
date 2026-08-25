@@ -371,10 +371,15 @@ float GetFrame__Q34nw4r3g3d9AnmScnResCFv(const nw4r::g3d::AnmScnRes* this_ptr) {
 namespace nw4r {
 namespace g3d {
 
+// Retail .sdata2 float-pool slots: 1.0f constant and FrameCtrl's static
+// smBaseUpdateRate, shipped in retail as named .sdata2 objects (MWCC_CASES
+// §7: name the retail pool labels so the sda21 relocs match).
+extern "C" const f32 lbl_eu_80669BA0;
+
 void AnmScnRes::SetUpdateRate(f32 rate) {
     SetRate(rate);
 
-    if (rate == 1.0f && (mUpdateCacheFlag & 1)) {
+    if (lbl_eu_80669BA0 == rate && (mUpdateCacheFlag & 1)) {
         UpdateCache();
     }
 }
@@ -384,11 +389,15 @@ void AnmScnRes::SetUpdateRate(f32 rate) {
 
 
 float GetUpdateRate__Q34nw4r3g3d9AnmScnResCFv(const nw4r::g3d::AnmScnRes* this_) { return *(const float*)((const char*)this_ + 0x10); }
+// FrameCtrl::smBaseUpdateRate (1.0f), shipped in retail .sdata2 as this named
+// object (file scope so the symbol stays unmangled).
+extern const f32 lbl_eu_80663460;
+
 namespace nw4r {
 namespace g3d {
 
 void AnmScnRes::UpdateFrame() {
-    if (GetRate() != 1.0f) {
+    if (GetRate() != lbl_eu_80669BA0) {
         UpdateFrm();
 
         if (mUpdateCacheFlag & 1) {

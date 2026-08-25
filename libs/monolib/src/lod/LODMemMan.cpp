@@ -103,9 +103,6 @@ extern "C" __declspec(section ".data") u32 lbl_eu_8056DB08[34] = {
 extern "C" __declspec(section ".data") u32 lbl_eu_8056DB90[4] = {
     (u32)&lodmm_vt_werti, 0x00000000, 0x00000000, 0x00000000
 };
-DECOMP_FORCEACTIVE(LODMemMan_cpp_data_rodata,
-                   lbl_eu_80523D80, lbl_eu_80523D90, lbl_eu_8056DAF8,
-                   lbl_eu_8056DB08, lbl_eu_8056DB90);
 
 // .sdata: sentinel pair {0xFFFF, 0}, 90.0f divisor, three "ref" strings,
 // flag word and trailing pad.
@@ -116,7 +113,6 @@ extern "C" __declspec(section ".sdata") const char lbl_eu_80663838[4] = {'r', 'e
 extern "C" __declspec(section ".sdata") const char lbl_eu_8066383C[4] = {'r', 'e', 'f', '\0'};
 extern "C" __declspec(section ".sdata") const char lbl_eu_80663840[4] = {'r', 'e', 'f', '\0'};
 extern "C" __declspec(section ".sdata") const u32 gap_09_80663844_sdata = 0;
-DECOMP_FORCEACTIVE(LODMemMan_cpp_sdata, gap_09_80663844_sdata);
 
 // .sbss: cached scale / flag byte / shared persistent buffer handle and the
 // unreferenced LOD distance cache slots.
@@ -141,12 +137,6 @@ u16 lbl_eu_8066585A;
 u16 lbl_eu_8066585C;
 u16 gap_10_8066585E_sbss;
 }
-DECOMP_FORCEACTIVE(LODMemMan_cpp_sbss,
-                   gap_10_8066582D_sbss, gap_10_8066582E_sbss, gap_10_8066582F_sbss,
-                   lbl_eu_80665834, lbl_eu_80665838,
-                   lbl_eu_8066583C, lbl_eu_80665840, lbl_eu_80665844, lbl_eu_80665848,
-                   lbl_eu_8066584C, lbl_eu_80665850, lbl_eu_80665854, lbl_eu_80665858,
-                   lbl_eu_8066585A, lbl_eu_8066585C, gap_10_8066585E_sbss);
 
 
 

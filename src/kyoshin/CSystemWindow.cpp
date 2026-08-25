@@ -3,6 +3,7 @@
 // Matching session for unit kyoshin/CSystemWindow.
 
 #include "kyoshin/CSystemWindow.hpp"
+#include "kyoshin/CSysWinBuff.hpp"
 #include "kyoshin/cf/CfGameManager.hpp"
 #include "monolib/core/CPadManager.hpp"
 #include "monolib/device/CDeviceVI.hpp"
@@ -25,14 +26,30 @@ extern "C" CSystemWindow* __ct__CSystemWindow(CSystemWindow* self, CScn* scene,
                                               const char* str2) {
     __ct__8CProcessFv((CProcess*)self);
 
-    *(u32*)((u8*)self + 0x10) = (u32)lbl_eu_8052D238;
-    u32* ptmf = __ptmf_null;
-    self->ptmf0[0] = ptmf[0];
-    self->ptmf0[1] = ptmf[1];
-    self->ptmf0[2] = ptmf[2];
-    self->ptmf1[0] = ptmf[0];
-    self->ptmf1[1] = ptmf[1];
-    self->ptmf1[2] = ptmf[2];
+    self->mVptr = (u32)lbl_eu_8052D238;
+
+    // Composite vtable base and null-ptmf source. Post-increment derefs of a
+    // local pointer fold the first access into lwzu; reusing one const src
+    // pointer across both callback slots matches retail's reload schedule
+    // (same shape as the matched __ct__CTalkWindow).
+    char* vt = lbl_eu_8052D378;
+    const u32* src = __ptmf_null;
+    u32 w0 = *src++;
+    u32 workEvt = (u32)(vt + 0x24);
+    u32 w1 = *src++;
+    self->ptmf0[1] = w1;
+    u32 scnRender = (u32)(vt + 0xac);
+    self->ptmf0[0] = w0;
+    u32 w2 = *src++;
+    self->ptmf0[2] = w2;
+
+    src = __ptmf_null;
+    w1 = *src++;
+    w0 = *src++;
+    self->ptmf1[1] = w0;
+    self->ptmf1[0] = w1;
+    w2 = *src++;
+    self->ptmf1[2] = w2;
 
     self->field_54 = 0;
     self->field_58 = 0;
@@ -44,9 +61,9 @@ extern "C" CSystemWindow* __ct__CSystemWindow(CSystemWindow* self, CScn* scene,
     self->field_67 = 1;
     self->field_68 = 0;
 
-    *(u32*)((u8*)self + 0x10) = (u32)lbl_eu_8052D378;
-    self->mWorkEvent = (u32)lbl_eu_8052D378 + 0x24;
-    self->mScnRender = (u32)lbl_eu_8052D378 + 0xac;
+    self->mVptr = (u32)vt;
+    self->mWorkEvent = workEvt;
+    self->mScnRender = scnRender;
     self->mScene = scene;
 
     __ct__CSysWin(&self->mSysWin[0], 0);
@@ -82,7 +99,7 @@ CSystemWindow::~CSystemWindow() {
 
 void CSystemWindow::Init() {
     u32 w = lbl_eu_80663E24;
-    mFlag2B6 = (w >> 1) & 1;
+    mFlag2B6 = (w >> 30) & 1;
     if (mFlag2B6 == 0)
         func_8008294C__Q22cf13CfGameManagerFv(true);
 
@@ -90,16 +107,36 @@ void CSystemWindow::Init() {
     if (this) render = reinterpret_cast<IScnRender*>(&mScnRender);
     mScene->addRenderCB(render, 0xd, 0);
 
-    // Rebuild the embedded CSysWin storage: construct a temp, copy the body
-    // (member vtable at +0 is already set and is intentionally not copied),
-    // then destroy the temp. Finally call CSysWin virtual slot 0x88.
+    // Rebuild the embedded CSysWin storage: construct a stack temp, memberwise
+    // copy every body field except the vtable word (+0) and the 0x29-0x2B pad
+    // (the embedded vtable set by the ctor is retained), destroy the temp, then
+    // dispatch the layout-build virtual at vtable+0x88.
     u8 temp[0x3A];
     __ct__CSysWin(temp, field_B5);
-    // (body copy elided placeholder -- see rematch)
+    CSysWinDataBuff* sw = reinterpret_cast<CSysWinDataBuff*>(&mSysWin[0]);
+    CSysWinDataBuff* tw = reinterpret_cast<CSysWinDataBuff*>(temp);
+    sw->f_04 = tw->f_04;
+    sw->f_08 = tw->f_08;
+    sw->f_0c = tw->f_0c;
+    sw->f_10 = tw->f_10;
+    sw->f_14 = tw->f_14;
+    sw->f_18 = tw->f_18;
+    sw->f_1c = tw->f_1c;
+    sw->f_20 = tw->f_20;
+    sw->f_24 = tw->f_24;
+    sw->f_28 = tw->f_28;
+    sw->f_2c = tw->f_2c;
+    sw->f_30 = tw->f_30;
+    sw->f_34 = tw->f_34;
+    sw->f_35 = tw->f_35;
+    sw->f_36 = tw->f_36;
+    sw->f_37 = tw->f_37;
+    sw->f_38 = tw->f_38;
+    sw->f_39 = tw->f_39;
     __dt__7CSysWinFv(temp, -1);
 
-    u32 vt = *(u32*)&mSysWin[0];
-    ((void (*)(void*))*(u32*)(vt + 0x88))(&mSysWin[0]);
+    // Dispatch the layout-build virtual at vtable+0x88 on the rebuilt CSysWin.
+    reinterpret_cast<CSysWinView*>(&mSysWin[0])->v20();
 }
 
 void CSystemWindow::Term() {
@@ -152,7 +189,7 @@ void CSystemWindow::Move() {
         if (confirmBtn != 0) {
             mState = 3;
             func_8022B8E4(&mSysWin[0]);
-            func_80138078__FUl(3);
+            func_80138078(3);
         }
         break;
     }

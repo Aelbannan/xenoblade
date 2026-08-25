@@ -19,7 +19,7 @@
  *         ctor/dtor via C-linkage __ct__CSysWin / __dt__7CSysWinFv), so it is a
  *         bare byte buffer here to avoid duplicate destruction in ~CSystemWindow.
  *   0xB5  byte passed as the arg to __ct__CSysWin during Init
- *   0x2B6 flag = (lbl_eu_80663E24 >> 1) & 1 (drives cf load-flag management)
+ *   0x2B6 flag = (lbl_eu_80663E24 >> 30) & 1 (drives cf load-flag management)
  *   sizeof = 0x2B7
  *
  * CSystemWindow is deliberately NON-polymorphic (a plain struct, like the repo's
@@ -29,7 +29,9 @@
  * subobject destruction that the retail dtor does not have.
  */
 struct CSystemWindow {
-    u8    mProcess[0x3C];    // 0x00 CProcess storage (vtable at +0x10)
+    u8    mProcess[0x10];    // 0x00 CProcess storage head
+    u32   mVptr;             // 0x10 CProcess vtable pointer
+    u8    _14[0x3C - 0x14];  // 0x14
     // 0x3C IUIWindow/Move region (0x30 bytes). Two null ptmfs then control words.
     u32   ptmf0[3];          // 0x3C null pointer-to-member-function
     u32   ptmf1[3];          // 0x48 null pointer-to-member-function
@@ -85,7 +87,8 @@ public:
 extern "C" {
 void func_8022B7F4(void* syswin);
 void func_8022B7C8(void* syswin, nw4r::lyt::DrawInfo* drawInfo);
-int func_8013BE50();void func_8008294C__Q22cf13CfGameManagerFv(bool enable);
+int func_8013BE50();
+void func_8008294C__Q22cf13CfGameManagerFv(bool enable);
 void __ct__CSysWin(void* syswin, int arg);
 void __dt__7CSysWinFv(void* syswin, int flags);
 void __ct__8CProcessFv(CProcess* self);
@@ -99,14 +102,17 @@ void func_8022BFC8(void* syswin, int kind);
 void func_8022B8B8(void* syswin);
 void func_8022B8E4(void* syswin);
 void func_8022B748(void* syswin);
+// Verbatim-mangled retail import: a C++ member declaration on cf::CfGameManager
+// would change call-site codegen (see MWCC_CASES); keep C linkage.
 int func_80086F9C__Q22cf13CfGameManagerFv(int arg);
-void func_80138078__FUl(u32 op);
 void __ct__Q34nw4r3lyt8DrawInfoFv(void* drawInfo);
 void __dt__Q34nw4r3lyt8DrawInfoFv(void* drawInfo, int flags);
 }
 
-// C++-linkage helper - retail emits the mangled form func_80137250__FPQ34nw4r3lyt8DrawInfo.
+// C++-linkage helpers - MWCC mangles these to the retail symbols
+// func_80137250__FPQ34nw4r3lyt8DrawInfo / func_80138078__FUl.
 void func_80137250(nw4r::lyt::DrawInfo* drawInfo);
+void func_80138078(u32 op);
 
 // Global data imports (MWCC does not mangle global-scope data names).
 extern CSystemWindow* lbl_eu_80663FD8;   // singleton instance pointer (.sbss)

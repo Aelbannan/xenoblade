@@ -517,7 +517,7 @@ config.libs = [
             Object(NonMatching, "kyoshin/menu/CMenuQuestLog.cpp", extra_cflags=["-O4,s"]),
             Object(NonMatching, "kyoshin/menu/CMenuSymbolMark.cpp"),
             Object(NonMatching, "kyoshin/CQuestWindow.cpp", extra_cflags=["-O4,s"]),
-            Object(NonMatching, "kyoshin/CSystemWindow.cpp"),
+            Object(Matching, "kyoshin/CSystemWindow.cpp"),
             Object(Matching, "kyoshin/CSysWinSelect.cpp"),
             Object(NonMatching, "kyoshin/CTagProcessor.cpp"),
             Object(NonMatching, "kyoshin/CTalkWindow.cpp"),

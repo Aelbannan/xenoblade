@@ -7,6 +7,7 @@
 #include "kyoshin/cf/CfGameManager.hpp"
 #include "kyoshin/code_80135FDC.hpp"
 #include "monolib/util/MemManager.hpp"
+#include "monolib/work/CWorkThreadSystem.hpp"
 #include <nw4r/lyt/lyt_layout.h>
 #include <monolib/work/CProcess.hpp>
 #include <nw4r/lyt/lyt_pane.h>
@@ -21,7 +22,6 @@ namespace CDeviceVI {
 void waitForDrawDone();
 }
 extern "C" void func_8045F778(void* self);
-extern "C" CMenuBattleChain* lbl_eu_80664A60;
 
 /*
  * Battle-chain menu constructor (retail unmangled name __ct__CMenuBattleChain,
@@ -92,6 +92,14 @@ extern "C" void __dt__17UnkClass_8045F564Fv(void* self, int flags);
 extern "C" void __dt__8CProcessFv(void* self, int flags);
 extern "C" void __dl__FPv(void* p);
 
+/*
+ * Complete-object destructor (retail __dt__16CMenuBattleChainFv). Written as
+ * the explicit flags-taking ABI body: the redundant `if (self != 0)`
+ * re-checks reproduce the retail's dead double-beq, and the flags>0 tail is
+ * the deleting path MWCC would otherwise generate for a member dtor (a plain
+ * member ~CMenuBattleChain() reorders the base/region destruction and does
+ * not match; see KB sibling attempts).
+ */
 extern "C" void* __dt__16CMenuBattleChainFv(void* self, int flags) {
     if (self == 0)
         goto end;
@@ -280,8 +288,8 @@ CMenuBattleChain* func_802AA2A0(CProcess* parent, CScn* scene, u8 chainType) {
         func_802AA3D0(lbl_eu_80664A60, chainType);
         return NULL;
     }
-    u32 heap = getWorkMem__17CWorkThreadSystemFv();
-    CMenuBattleChain* obj = (CMenuBattleChain*)allocate__Q23mtl10MemManagerFUlUl(0xa0, heap);
+    u32 heap = CWorkThreadSystem::getWorkMem();
+    CMenuBattleChain* obj = (CMenuBattleChain*)mtl::MemManager::allocate(0xa0, heap);
     if (obj != NULL) {
         // Retail keeps obj live in r3 by chaining the ctor's `this` return
         // through the null-check, avoiding a fourth callee-saved register.

@@ -219,6 +219,4 @@ int CMenuArtsSelect_isNotReady();
 void func_8010433C();
 void func_801043BC();
 CArtsSelectStateView* CMenuArtsSelect_getSelectState();
-u32 getWorkMem__17CWorkThreadSystemFv();
-void* allocate__Q23mtl10MemManagerFUlUl(u32 size, u32 handle);
 }

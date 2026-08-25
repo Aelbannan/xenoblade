@@ -733,7 +733,7 @@ config.libs = [
             Object(NonMatching, "kyoshin/cf/voice/cvsys/CVS_THREAD_TENSION_UP.cpp"),
             Object(NonMatching, "kyoshin/cf/voice/cvsys/CVS_THREAD_VISION_BREAK.cpp"),
             Object(NonMatching, "kyoshin/cf/voice/cvsys/CVS_THREAD_VISION_TELL.cpp"),
-            Object(NonMatching, "kyoshin/menu/CMenuBattleChain.cpp"),
+            Object(Matching, "kyoshin/menu/CMenuBattleChain.cpp"),
             Object(NonMatching, "kyoshin/cf/voice/cvsys/CVS_THREAD_BATTLE_END_SP.cpp"),
             Object(Matching, "kyoshin/cf/CfGimmickSaveOff.cpp"),
             Object(NonMatching, "kyoshin/menu/CMenuTutorialList.cpp", extra_cflags=["-O4,s"]),

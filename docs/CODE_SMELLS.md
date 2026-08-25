@@ -12,19 +12,19 @@ The three `*shim`/`side-effect` rows are **fakematch-candidate** families: sourc
 | metric | count |
 |---|---|
 | extern "C" (total lines) | 14407 |
-| extern "C" declarations (non-lbl_*, imports) | 6020 |
+| extern "C" declarations (non-lbl_*, imports) | 6021 |
 | extern "C" definitions (forced names) | 4152 |
-| `self`/register-style params | 13407 |
-| `void*` (params + locals) | 7824 |
-| raw pointer offset arithmetic | 7249 |
+| `self`/register-style params | 13408 |
+| `void*` (params + locals) | 7828 |
+| raw pointer offset arithmetic | 7266 |
 | deref-through-cast arithmetic | 2731 |
 | inline asm / `register` | 118 |
 | rN-named params | 509 |
-| goto | 3339 |
+| goto | 3341 |
 | DECOMP_ASM_INSN asm shims (fakematch candidate) | 11 |
 | #pragma schedule once/twice (fakematch candidate) | 6 |
 | assignment inside cast / init-list (fakematch candidate) | 1 |
-| #pragma | 2596 |
+| #pragma | 2602 |
 
 ## Top offenders (by cleanable severity)
 
@@ -39,7 +39,7 @@ The three `*shim`/`side-effect` rows are **fakematch-candidate** families: sourc
 | src/kyoshin/cf/object/CActorParam.cpp | 1501 |
 | src/kyoshin/cf/CfCam.cpp | 1498 |
 | libs/monolib/src/scn/CScnEnvLgtCtrl.cpp | 1412 |
-| src/kyoshin/makecrystal/CMCCrystalBox.cpp | 1326 |
+| src/kyoshin/makecrystal/CMCCrystalBox.cpp | 1325 |
 
 ## Per-TU metrics
 
@@ -262,7 +262,7 @@ The three `*shim`/`side-effect` rows are **fakematch-candidate** families: sourc
 | libs/nw4r/src/snd/snd_RemoteSpeaker.cpp | 0 | 0 | 0 | 1 | 0 | 0 | 0 | 0 | 0 | 0 | 0 | 0 |
 | libs/nw4r/src/snd/snd_SeqFile.cpp | 0 | 0 | 0 | 4 | 0 | 0 | 0 | 0 | 0 | 0 | 0 | 0 |
 | libs/nw4r/src/snd/snd_SeqPlayer.cpp | 0 | 1 | 0 | 6 | 4 | 3 | 0 | 0 | 0 | 0 | 0 | 0 |
-| libs/nw4r/src/snd/snd_SeqSound.cpp | 0 | 3 | 6 | 11 | 3 | 0 | 0 | 0 | 0 | 0 | 0 | 1 |
+| libs/nw4r/src/snd/snd_SeqSound.cpp | 0 | 3 | 6 | 13 | 3 | 0 | 0 | 0 | 0 | 0 | 0 | 1 |
 | libs/nw4r/src/snd/snd_SeqTrack.cpp | 0 | 1 | 1 | 1 | 99 | 4 | 0 | 0 | 0 | 0 | 0 | 0 |
 | libs/nw4r/src/snd/snd_Sound3DActor.cpp | 0 | 0 | 0 | 1 | 0 | 0 | 0 | 0 | 0 | 0 | 0 | 0 |
 | libs/nw4r/src/snd/snd_Sound3DManager.cpp | 0 | 0 | 0 | 5 | 0 | 0 | 0 | 0 | 0 | 0 | 0 | 0 |
@@ -318,7 +318,7 @@ The three `*shim`/`side-effect` rows are **fakematch-candidate** families: sourc
 | src/kyoshin/CLoad.cpp | 3 | 6 | 17 | 0 | 0 | 0 | 0 | 0 | 0 | 0 | 0 | 0 |
 | src/kyoshin/CMainMenu.cpp | 0 | 17 | 23 | 10 | 6 | 0 | 0 | 0 | 15 | 0 | 0 | 0 |
 | src/kyoshin/CMapSel.cpp | 14 | 20 | 43 | 9 | 13 | 9 | 0 | 0 | 0 | 0 | 0 | 0 |
-| src/kyoshin/CMiniMap.cpp | 49 | 12 | 32 | 104 | 92 | 61 | 0 | 0 | 6 | 0 | 0 | 0 |
+| src/kyoshin/CMiniMap.cpp | 50 | 12 | 33 | 111 | 102 | 61 | 0 | 0 | 6 | 0 | 0 | 0 |
 | src/kyoshin/CModelDisp.cpp | 7 | 12 | 33 | 11 | 15 | 4 | 0 | 0 | 0 | 0 | 0 | 0 |
 | src/kyoshin/CNumSelect.cpp | 4 | 12 | 24 | 2 | 0 | 0 | 0 | 2 | 0 | 0 | 0 | 0 |
 | src/kyoshin/COccCulling.cpp | 0 | 0 | 3 | 0 | 0 | 0 | 0 | 3 | 0 | 0 | 0 | 0 |
@@ -505,12 +505,12 @@ The three `*shim`/`side-effect` rows are **fakematch-candidate** families: sourc
 | src/kyoshin/help/CHelp_Talk.cpp | 0 | 0 | 0 | 1 | 0 | 0 | 0 | 0 | 3 | 0 | 0 | 0 |
 | src/kyoshin/help/CHelp_Target.cpp | 0 | 0 | 1 | 1 | 0 | 0 | 0 | 1 | 0 | 0 | 0 | 0 |
 | src/kyoshin/main.cpp | 0 | 0 | 1 | 6 | 0 | 0 | 1 | 1 | 0 | 1 | 0 | 0 |
-| src/kyoshin/makecrystal/CMCCrystalBox.cpp | 0 | 3 | 225 | 36 | 194 | 7 | 0 | 0 | 4 | 0 | 0 | 0 |
+| src/kyoshin/makecrystal/CMCCrystalBox.cpp | 0 | 3 | 225 | 35 | 194 | 7 | 0 | 0 | 4 | 0 | 0 | 0 |
 | src/kyoshin/makecrystal/CMCCrystalInfo.cpp | 11 | 1 | 51 | 5 | 3 | 0 | 0 | 1 | 0 | 0 | 0 | 0 |
 | src/kyoshin/makecrystal/CMCCrystalList.cpp | 42 | 5 | 72 | 13 | 2 | 0 | 0 | 0 | 0 | 0 | 0 | 0 |
 | src/kyoshin/makecrystal/CMCCrystalSupport.cpp | 9 | 6 | 9 | 4 | 1 | 1 | 0 | 0 | 0 | 0 | 0 | 0 |
 | src/kyoshin/makecrystal/CMCEffStart.cpp | 1 | 0 | 1 | 2 | 3 | 1 | 0 | 0 | 0 | 0 | 0 | 0 |
-| src/kyoshin/makecrystal/CMCGetItemBox.cpp | 30 | 18 | 64 | 33 | 12 | 1 | 0 | 3 | 2 | 0 | 0 | 0 |
+| src/kyoshin/makecrystal/CMCGetItemBox.cpp | 30 | 18 | 64 | 29 | 19 | 1 | 0 | 3 | 2 | 0 | 0 | 0 |
 | src/kyoshin/makecrystal/CMakeCrystalWin.cpp | 0 | 2 | 17 | 4 | 1 | 1 | 0 | 0 | 0 | 0 | 0 | 0 |
 | src/kyoshin/makecrystal/CMenuMakeCrystal.cpp | 39 | 5 | 18 | 30 | 10 | 1 | 0 | 0 | 0 | 0 | 0 | 0 |
 | src/kyoshin/makecrystal/CModelDispMakeCrystal.cpp | 195 | 0 | 235 | 97 | 105 | 1 | 0 | 6 | 0 | 0 | 0 | 0 |
@@ -562,7 +562,7 @@ The three `*shim`/`side-effect` rows are **fakematch-candidate** families: sourc
 | src/kyoshin/menu/CMenuUpdate.cpp | 4 | 40 | 69 | 45 | 56 | 22 | 0 | 13 | 0 | 0 | 0 | 0 |
 | src/kyoshin/menu/CMenuVision.cpp | 16 | 7 | 9 | 30 | 21 | 9 | 0 | 0 | 6 | 0 | 0 | 0 |
 | src/kyoshin/menu/CMenuZeal.cpp | 1 | 0 | 7 | 8 | 0 | 0 | 0 | 0 | 5 | 0 | 0 | 0 |
-| src/kyoshin/menu/code_80187F14.cpp | 15 | 7 | 0 | 1 | 5 | 0 | 0 | 0 | 5 | 0 | 0 | 0 |
+| src/kyoshin/menu/code_80187F14.cpp | 15 | 7 | 0 | 1 | 5 | 0 | 0 | 0 | 7 | 0 | 0 | 0 |
 | src/kyoshin/menu/code_8018C5FC.cpp | 7 | 0 | 0 | 0 | 0 | 0 | 0 | 0 | 0 | 0 | 0 | 0 |
 | src/kyoshin/menu/parts/CModelDispEquip.cpp | 12 | 42 | 83 | 16 | 4 | 1 | 0 | 0 | 1 | 0 | 0 | 0 |
 | src/kyoshin/plugin/ocBdat.cpp | 0 | 23 | 0 | 38 | 1 | 0 | 0 | 0 | 4 | 0 | 0 | 0 |
@@ -2912,7 +2912,7 @@ TUs with any of the three fakematch-candidate families above. Each row is a cand
   "ptr_arith": 3,
   "schedule_pragma": 0,
   "self_params": 6,
-  "void_ptr": 11
+  "void_ptr": 13
  },
  "libs/nw4r/src/snd/snd_SeqSoundHandle.cpp": {
   "asm_insn_shim": 0,
@@ -3477,14 +3477,14 @@ TUs with any of the three fakematch-candidate families above. Each row is a cand
  "src/kyoshin/CMiniMap.cpp": {
   "asm_insn_shim": 0,
   "deref_arith": 61,
-  "extern_c_nonlbl_decl": 49,
+  "extern_c_nonlbl_decl": 50,
   "extern_c_nonlbl_def": 12,
   "goto_count": 6,
   "init_side_effect": 0,
-  "ptr_arith": 92,
+  "ptr_arith": 102,
   "schedule_pragma": 0,
-  "self_params": 32,
-  "void_ptr": 104
+  "self_params": 33,
+  "void_ptr": 111
  },
  "src/kyoshin/CModelDisp.cpp": {
   "asm_insn_shim": 0,
@@ -5449,7 +5449,7 @@ TUs with any of the three fakematch-candidate families above. Each row is a cand
   "ptr_arith": 194,
   "schedule_pragma": 0,
   "self_params": 225,
-  "void_ptr": 36
+  "void_ptr": 35
  },
  "src/kyoshin/makecrystal/CMCCrystalInfo.cpp": {
   "asm_insn_shim": 0,
@@ -5505,11 +5505,11 @@ TUs with any of the three fakematch-candidate families above. Each row is a cand
   "extern_c_nonlbl_def": 18,
   "goto_count": 2,
   "init_side_effect": 0,
-  "ptr_arith": 12,
+  "ptr_arith": 19,
   "rn_params": 3,
   "schedule_pragma": 0,
   "self_params": 64,
-  "void_ptr": 33
+  "void_ptr": 29
  },
  "src/kyoshin/makecrystal/CMakeCrystalWin.cpp": {
   "asm_insn_shim": 0,
@@ -6062,7 +6062,7 @@ TUs with any of the three fakematch-candidate families above. Each row is a cand
   "asm_insn_shim": 0,
   "extern_c_nonlbl_decl": 15,
   "extern_c_nonlbl_def": 7,
-  "goto_count": 5,
+  "goto_count": 7,
   "init_side_effect": 0,
   "ptr_arith": 5,
   "schedule_pragma": 0,

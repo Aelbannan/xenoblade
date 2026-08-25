@@ -7,11 +7,14 @@
 #include <nw4r/g3d.h>
 #undef GXGetIndTexMtx
 
-// Retail .sdata2 pool constants used by GXGetIndTexMtx (see port/data_defs.cpp)
+// Retail .sdata2 pool constants used by GXGetIndTexMtx (see port/data_defs.cpp).
+// Per MWCC_PATTERNS.md section 1b: declare as scalars and reference verbatim
+// at each site so MWCC emits lfs/lfd lbl@sda21(r0) pool loads.
 extern "C" const f32 lbl_eu_80669A68; // 0.0f
 extern "C" const f32 lbl_eu_80669A6C; // 1.0f
 extern "C" const f32 lbl_eu_80669A88; // 1/1024.0f
-extern "C" const f64 lbl_eu_80669A90; // 2^52 + 2^31 (s32 -> f64 conversion bias)
+extern "C" const f64 lbl_eu_80669A90; // 2^52 + 2^31 (MWCC s32 -> f64 conversion magic)
+extern "C" const f64 lbl_eu_80669A70; // 0.6 (ResMatFur::GetLyrRate pow exponent)
 
 namespace nw4r {
 namespace g3d {
@@ -471,8 +474,7 @@ ResMatMisc ResMatMisc::CopyTo(void* pDst) const {
     ResMatMiscData* pData = static_cast<ResMatMiscData*>(pDst);
     const ResMatMiscData& r = ref();
 
-    // @bug Only copies the first field???
-    pData->zCompLoc = r.zCompLoc;
+    *pData = r;
     return ResMatMisc(pData);
 }
 
@@ -917,11 +919,8 @@ bool ResMatIndMtxAndScale::GXGetIndTexMtx(GXIndTexMtxID id,
     return true;
 }
 
-// Convert a sign-extended value to f32 via MWCC's native i2d (the 2^52
-// exponent trick with the (2^52 + 2^31) bias in the constant pool).
-static inline f32 ResMatIndValueToF32(s32 v, f64 bias) {
-    return static_cast<f32>(static_cast<f64>(v));
-}
+// MWCC lowers s32 -> f64 via the classic 2^52 exponent trick; the (2^52 +
+// 2^31) bias constant lives in the retail sdata2 pool (lbl_eu_80669A90).
 
 bool ResMatIndMtxAndScale::GXGetIndTexMtx(GXIndTexMtxID id, math::MTX34* pMtx,
                                           s8* pScaleExp) const {
@@ -953,60 +952,46 @@ bool ResMatIndMtxAndScale::GXGetIndTexMtx(GXIndTexMtxID id, math::MTX34* pMtx,
         return false;
     }
 
-    // Raw GX BP register values (see GXHardwareBP.h INDMTXA/B/C): M00 at bits
-    // 21-31, M10 at bits 10-20, EXP at bits 8-9.
-    u32 regA = detail::ResRead_u32(&pCmd[GX_BP_CMD_SZ * 0 + 1]);
-    u32 regB = detail::ResRead_u32(&pCmd[GX_BP_CMD_SZ * 1 + 1]);
-    u32 regC = detail::ResRead_u32(&pCmd[GX_BP_CMD_SZ * 2 + 1]);
+    // Raw GX BP command words (see GXHardwareBP.h INDMTXA/B/C).
+    u32 regA;
+    detail::ResReadBPCmd(&pCmd[GX_BP_CMD_SZ * 0], &regA);
 
-    // 6-bit scale exponent (2 bits per register), stored biased by 17.
-    s8 scaleExp = static_cast<s8>(((regA >> 8) & 3) << 6 | ((regB >> 8) & 3) << 4 |
-                                  ((regC >> 8) & 3) << 2) -
-                  17;
+    u32 regB;
+    detail::ResReadBPCmd(&pCmd[GX_BP_CMD_SZ * 1], &regB);
 
+    u32 regC;
+    detail::ResReadBPCmd(&pCmd[GX_BP_CMD_SZ * 2], &regC);
+
+    // 2-bit scale exponent field per register, packed low-first.
+    u32 scaleExpReg =
+        (regA >> GX_BP_INDMTXA_EXP_SHIFT & GX_BP_INDMTXA_EXP_LMASK) << 0 |
+        (regB >> GX_BP_INDMTXB_EXP_SHIFT & GX_BP_INDMTXB_EXP_LMASK) << 2 |
+        (regC >> GX_BP_INDMTXC_EXP_SHIFT & GX_BP_INDMTXC_EXP_LMASK) << 4;
+
+    // Hardware stores the exponent biased by -17.
     if (pScaleExp != NULL) {
-        *pScaleExp = scaleExp;
+        *pScaleExp = static_cast<s8>(scaleExpReg - 17);
     }
 
     if (pMtx != NULL) {
-        u32 m00A = (regA >> 21) & 0x7FF;
+        // Mantissa fields: row 0 occupies bits 10-0, row 1 bits 21-31 (both
+        // sign-extended); the 1/1024 fixed-point scale comes from the pool.
+        pMtx->_00 = lbl_eu_80669A88 * (f32)((s32)(regA << 21) >> 21);
+        pMtx->_01 = lbl_eu_80669A88 * (f32)((s32)(regB << 21) >> 21);
+        pMtx->_02 = lbl_eu_80669A88 * (f32)((s32)(regC << 21) >> 21);
+        pMtx->_03 = lbl_eu_80669A68;
 
-        // The constants are read as byte-indexed pool entries (well-formed
-        // data has index 0).
-        f32 fZero = *reinterpret_cast<const f32*>(
-            reinterpret_cast<const u8*>(&lbl_eu_80669A68) + m00A);
-        f32 fOne = *reinterpret_cast<const f32*>(
-            reinterpret_cast<const u8*>(&lbl_eu_80669A6C) + m00A);
-        s32 m00As = static_cast<s32>(m00A << 21) >> 21;
+        // Row-1 fields sit in bits 21-31: retail extracts them left-justified
+        // via rlwinm rotl(10) & top-mask before the sign-extending srawi.
+        pMtx->_10 = lbl_eu_80669A88 * (f32)((s32)__rlwinm(regA, 10, 0, 10) >> 21);
+        pMtx->_11 = lbl_eu_80669A88 * (f32)((s32)__rlwinm(regB, 10, 0, 10) >> 21);
+        pMtx->_12 = lbl_eu_80669A88 * (f32)((s32)__rlwinm(regC, 10, 0, 10) >> 21);
+        pMtx->_13 = lbl_eu_80669A68;
 
-        u32 m00B = (regB >> 21) & 0x7FF;
-        f64 fBias = *reinterpret_cast<const f64*>(
-            reinterpret_cast<const u8*>(&lbl_eu_80669A90) + m00B);
-        s32 m00Bs = static_cast<s32>(m00B << 21) >> 21;
-
-        u32 m00C = (regC >> 21) & 0x7FF;
-        f32 fInv = *reinterpret_cast<const f32*>(
-            reinterpret_cast<const u8*>(&lbl_eu_80669A88) + m00C);
-        s32 m00Cs = static_cast<s32>(m00C << 21) >> 21;
-
-        pMtx->_00 = fInv * ResMatIndValueToF32(m00As, fBias);
-        pMtx->_01 = fInv * ResMatIndValueToF32(m00Bs, fBias);
-        pMtx->_02 = fInv * ResMatIndValueToF32(m00Cs, fBias);
-        pMtx->_03 = fZero;
-
-        u32 m10A = (regA >> 10) & 0x7FF;
-        u32 m10B = (regB >> 10) & 0x7FF;
-        u32 m10C = (regC >> 10) & 0x7FF;
-
-        pMtx->_10 = fInv * ResMatIndValueToF32(static_cast<s32>(m10A << 21) >> 21, fBias);
-        pMtx->_11 = fInv * ResMatIndValueToF32(static_cast<s32>(m10B << 21) >> 21, fBias);
-        pMtx->_12 = fInv * ResMatIndValueToF32(static_cast<s32>(m10C << 21) >> 21, fBias);
-        pMtx->_13 = fZero;
-
-        pMtx->_20 = fZero;
-        pMtx->_21 = fZero;
-        pMtx->_22 = fOne;
-        pMtx->_23 = fZero;
+        pMtx->_20 = lbl_eu_80669A68;
+        pMtx->_21 = lbl_eu_80669A68;
+        pMtx->_22 = lbl_eu_80669A6C;
+        pMtx->_23 = lbl_eu_80669A68;
     }
 
     return true;
@@ -1700,12 +1685,11 @@ inline void ResTexPlttInfo::Release(ResTexObj texObj, ResTlutObj tlutObj) {
     tlutObj.Invalidate(static_cast<GXTlut>(r.mapID));
 }
 
-} // namespace g3d
-} // namespace nw4r
-
-namespace nw4r {
-namespace g3d {
-
+/******************************************************************************
+ *
+ * ResMatFur
+ *
+ ******************************************************************************/
 f32 ResMatFur::GetLyrRate(u32 layer) const {
     if (IsValid()) {
         u32 value = ref().value;
@@ -1714,7 +1698,7 @@ f32 ResMatFur::GetLyrRate(u32 layer) const {
         case 0:
             return (f32)(layer + 1) / (f32)value;
         case 1:
-            return (f32)pow((f32)(layer + 1) / (f32)value, 0.6);
+            return (f32)pow((f32)(layer + 1) / (f32)value, lbl_eu_80669A70);
         default:
             return 0.0f;
         }
@@ -1723,12 +1707,11 @@ f32 ResMatFur::GetLyrRate(u32 layer) const {
     return 0.0f;
 }
 
-} // namespace g3d
-} // namespace nw4r
-
-namespace nw4r {
-namespace g3d {
-
+/******************************************************************************
+ *
+ * ResMat (fur / user data accessors)
+ *
+ ******************************************************************************/
 ResMatFur ResMat::GetResMatFur() {
     return ResMatFur(ofs_to_ptr<ResMatFurData>(ref().toResMatFurData));
 }

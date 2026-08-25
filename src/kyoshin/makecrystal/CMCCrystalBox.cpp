@@ -1945,7 +1945,7 @@ reload:;
 // message id; otherwise the crystal id is looked up through the BDAT table.
 // stmw r27 frame is the -O4,s shape (pragma).
 #pragma optimize_for_size on
-void func_80217098(CMCCrystalBox* self, u16 id, unsigned int* item, u8 i) {
+__declspec(noinline) void func_80217098(CMCCrystalBox* self, u16 id, unsigned int* item, u8 i) {
     // Retail materialises the null-checked item into a saved register via a
     // conditional move (cmpwi on the param reg + mr/li pair) before the gate.
     unsigned int* it = item != 0 ? item : 0;
@@ -2122,7 +2122,7 @@ __declspec(noinline) int func_80217BDC(void* self) {
 // sub-count drives the capacity label. stmw r26 frame is the -O4,s shape
 // (pragma).
 #pragma optimize_for_size on
-void func_802177D0(CMCCrystalBox* self, u16 id, unsigned int* item, u8 i) {
+__declspec(noinline) void func_802177D0(CMCCrystalBox* self, u16 id, unsigned int* item, u8 i) {
     unsigned int* it = item != 0 ? item : 0;
     const char* msg = 0;
     if (it != 0) {
@@ -2306,36 +2306,53 @@ void func_80217C0C(CMCCrystalBox* self, u16 id, unsigned int* item, u8 i) {
 // _savegpr_22 frame is the -O4,s shape (pragma).
 #pragma optimize_for_size on
 void func_802180B4(CMCCrystalBox* self) {
-    u8 active = self->data.limit;
-    if (active == 0) active = 1;
     CMCCrystalData* d = &self->data;
-    char buf1[0x20];
+    // Single masked materialization of the row count (retail keeps one
+    // clrlwi'd copy in a callee-saved register).
+    u8 active = (d->limit != 0) ? d->limit : 1;
+    // Declared topmost so MWCC's reverse-declaration stack allocation
+    // reproduces retail: vec@0x8, buf2@0x18, buf@0x38, cvts@0x58/0x60.
+    union {
+        double d;
+        u32 w[2];
+    } selCvt, freeCvt;
+    char buf[0x20];
     char buf2[0x20];
     float vec[3];
     if (active > 1) {
-        func_80124270((*(CLytVf3C**)((u8*)self->subObjPtrs[5] + 0x10))
-                          ->vf_3C(lbl_eu_8050888C + 0x137, 1),
+        // Row-count header pane plus the ten per-row number panes.
+        func_80124270(((CrystalBoxSubObj5*)self->subObjPtrs[5])->layout->vf_3C(
+                          lbl_eu_8050888C + 0x137, 1),
                       1);
         for (u8 n = 0; n < 10; n++) {
-            sprintf(buf1, lbl_eu_8050888C + 0x13e, n + 1);
-            func_80124270((*(CLytVf3C**)((u8*)self->subObjPtrs[5] + 0x10))
-                              ->vf_3C(buf1, 1),
+            sprintf(buf, lbl_eu_8050888C + 0x13e, n + 1);
+            func_80124270(((CrystalBoxSubObj5*)self->subObjPtrs[5])->layout->vf_3C(
+                              buf, 1),
                           n < active);
         }
         func_80136910((nw4r::lyt::Layout*)self->subObjPtrs[5],
                       lbl_eu_8050888C + 0x14d, (u8)(d->current + 1));
         nw4r::lyt::Pane* pane =
-            (*(CLytVf3C**)((u8*)self->subObjPtrs[5] + 0x10))
-                ->vf_3C(lbl_eu_8050888C + 0x156, 1);
+            ((CrystalBoxSubObj5*)self->subObjPtrs[5])->layout->vf_3C(
+                lbl_eu_8050888C + 0x156, 1);
         vec[0] = self->field_14F4;
         vec[1] = self->field_14F8;
         vec[2] = self->field_14FC;
-        vec[0] += lbl_eu_8066847C * (double)((u8)(d->current + 1) - 1)
-                + lbl_eu_8066847C * (double)(u8)(10 - active);
+        // Slide the highlight one row step per selected crystal and up one
+        // step per unused row. The int -> double conversions go through the
+        // retail sdata2 magic constants (signed path 2^52+2^31 for the
+        // current row, unsigned path 2^52 for the free-row count).
+        selCvt.w[0] = 0x43300000u;
+        selCvt.w[1] = (u32)((u8)(d->current + 1) - 1) ^ 0x80000000u;
+        freeCvt.w[0] = 0x43300000u;
+        freeCvt.w[1] = (u32)(u8)(10 - active);
+        double selStep = (selCvt.d - lbl_eu_80668468) * lbl_eu_8066847C;
+        double freeStep = (freeCvt.d - lbl_eu_80668460) * lbl_eu_8066847C;
+        vec[0] = vec[0] + (selStep + freeStep);
         copyVEC3(&((PaneTranslateMirror*)pane)->mX, vec);
     } else {
-        func_80124270((*(CLytVf3C**)((u8*)self->subObjPtrs[5] + 0x10))
-                          ->vf_3C(lbl_eu_8050888C + 0x137, 1),
+        func_80124270(((CrystalBoxSubObj5*)self->subObjPtrs[5])->layout->vf_3C(
+                          lbl_eu_8050888C + 0x137, 1),
                       0);
     }
     for (u8 i = 0; i < 0x1E; i++) {
@@ -2344,17 +2361,24 @@ void func_802180B4(CMCCrystalBox* self) {
             reinterpret_cast<unsigned int*>(func_8021384C(d, i));
         func_80217098(self, v, obj, i);
         func_802177D0(self, v, obj, i);
-        int i1 = i + 1;
+        u8 i1 = i + 1;
         sprintf(buf2, lbl_eu_8050888C + 0x164, i1);
-        int f1 = func_80213710(d, i);
-        func_80124270((*(CLytVf3C**)((u8*)self->subObjPtrs[5] + 0x10))
-                          ->vf_3C(buf2, 1),
-                      f1);
+        // Unsigned counts: retail compares the slot state with cmplw.
+        // Inline slot-state call keeps the result out of a callee-saved
+        // register (retail passes it straight through).
+        func_80124270(((CrystalBoxSubObj5*)self->subObjPtrs[5])->layout->vf_3C(
+                          buf2, 1),
+                      func_80213710(d, i));
+        // Grey out slots whose crystal is not among the currently held page
+        // slots (field_14AA); the second state call returning 0 means the
+        // slot is empty this page.
         u8 found = 0;
-        if (func_80213710(d, i) == 0) {
+        int cnt2 = func_80213710(d, i);
+        if (cnt2 == 0) {
             u8 k = 0;
             while (k < self->field_14EA) {
-                u16 id2 = (k < self->field_14EA) ? self->field_14AA[k] : 0;
+                u16 id2 =
+                    (k < self->field_14EA) ? self->field_14AA[k] : 0;
                 if (obj != 0) {
                     u8 j = 0;
                     do {
@@ -2372,12 +2396,12 @@ void func_802180B4(CMCCrystalBox* self) {
             }
         }
         sprintf(buf2, lbl_eu_8050888C + 0x170, i1);
-        func_80124270((*(CLytVf3C**)((u8*)self->subObjPtrs[5] + 0x10))
-                          ->vf_3C(buf2, 1),
+        func_80124270(((CrystalBoxSubObj5*)self->subObjPtrs[5])->layout->vf_3C(
+                          buf2, 1),
                       found);
         sprintf(buf2, lbl_eu_8050888C + 0x17f, i1);
-        func_80124270((*(CLytVf3C**)((u8*)self->subObjPtrs[5] + 0x10))
-                          ->vf_3C(buf2, 1),
+        func_80124270(((CrystalBoxSubObj5*)self->subObjPtrs[5])->layout->vf_3C(
+                          buf2, 1),
                       found);
     }
 }
@@ -2534,9 +2558,6 @@ void func_8021852C(CMCCrystalBox* self) {
 #pragma optimize_for_size off
 
 struct CMCCrystalRec5 { unsigned short m0; unsigned short m2; unsigned char m4; };
-void copyCrystalRec5_80218FD4(CMCCrystalRec5* dst, const CMCCrystalRec5* src) {
-    *dst = *src;
-}
 
 struct CMCCrystalRec5Ex {
     unsigned short a;
@@ -2544,7 +2565,13 @@ struct CMCCrystalRec5Ex {
     unsigned char c;
 };
 
-void copyCrystalRec5Ex_80218FF0(CMCCrystalRec5Ex* dst, CMCCrystalRec5Ex* src) {
+// Retail keeps these tiny record copies out-of-line (every merge/sort step is
+// a bl); C linkage carries the unmangled retail symbol names.
+extern "C" __declspec(noinline) void func_80218FD4(CMCCrystalRec5* dst, const CMCCrystalRec5* src) {
+    *dst = *src;
+}
+
+extern "C" __declspec(noinline) void func_80218FF0(CMCCrystalRec5Ex* dst, CMCCrystalRec5Ex* src) {
     unsigned short a = src->a;
     unsigned short b = src->b;
     unsigned char c = src->c;
@@ -2552,6 +2579,7 @@ void copyCrystalRec5Ex_80218FF0(CMCCrystalRec5Ex* dst, CMCCrystalRec5Ex* src) {
     dst->b = b;
     dst->c = c;
 }
+
 
 // Retail 0x80218B10: rebuild the 8x8 crystal-grid aggregation table. Clears a
 // 32-slot transient table of {id, qty, flag} records, merges every item found
@@ -2561,55 +2589,65 @@ void copyCrystalRec5Ex_80218FF0(CMCCrystalRec5Ex* dst, CMCCrystalRec5Ex* src) {
 // unk1502, highlighting the cursor row unk1501) into the crystal-info pane.
 #pragma optimize_for_size on
 void func_80218B10(CMCCrystalBox* self) {
-    // Declaration order steers MWCC's saved-register assignment toward the
-    // retail map {flag:r31, count:r30, self:r29, i/base:r28, j:r27,
-    // obj/pa:r26, k/d:r25, id:r24}.
-    u32 flag;          // r31: 0 while filling page slots, 1 for the selected crystal
-    u8 count = 0;      // r30: number of merged records
+    // Declaration order fixes the stack-slot layout (MWCC allocates locals in
+    // reverse declaration order): sort2 temps C/B/A at +0x08/+0x10/+0x40,
+    // sort1 temps C/B/A at +0x18/+0x20/+0x48, append temps at +0x28/+0x30,
+    // fill tmp at +0x38, table at +0x50.
+    CMCCrystalRec5 table[32];
+    CMCCrystalRec5Ex sort1A;
+    CMCCrystalRec5Ex sort2A;
+    CMCCrystalRec5 tmp;
+    CMCCrystalRec5 pageTmp;
+    CMCCrystalRec5 selTmp;
+    CMCCrystalRec5Ex sort1B;
+    CMCCrystalRec5Ex sort1C;
+    CMCCrystalRec5Ex sort2B;
+    CMCCrystalRec5Ex sort2C;
+    u8 count = 0;
+    u32 flag = 0;
+    // Shared loop state: retail reuses one register per role across every
+    // phase (walk/fill index, page+sort j, merge k, obj, id/qty), so declare
+    // them once here to mirror the liveness pattern.
+    CMCCrystalRec5* z;
+    CMCCrystalRec5* e;
+    unsigned long* slots;
     u8 i;
     u8 j;
-    void* obj;
     u8 k;
+    void* obj;
+    CItemImplFacadeGrid* inst;
     u16 id;
     int qty;
     int found;
-    // Stack-slot order (ascending) mirrors retail: sort2 temps C/B/A at
-    // +0x08/+0x10/+0x40, sort1 temps C/B/A at +0x18/+0x20/+0x48, tmp at +0x38.
-    CMCCrystalRec5Ex sortTmpC2;
-    CMCCrystalRec5Ex sortTmpB2;
-    CMCCrystalRec5Ex sortTmpC1;
-    CMCCrystalRec5Ex sortTmpB1;
-    CMCCrystalRec5 tmp;
-    CMCCrystalRec5Ex sortTmpA2;
-    CMCCrystalRec5Ex sortTmpA1;
-    CMCCrystalRec5 table[32];
 
-    flag = 0;
-    // Retail emits an element-wise zero walk over the whole array first.
-    for (i = 0; i < 32; i++) {
-        table[i].m0 = 0;
-        table[i].m2 = 0;
-        table[i].m4 = 0;
-    }
+    // Rolling-pointer zero walk over the whole array (retail shape).
+    z = table;
+    do {
+        z->m0 = 0;
+        z->m2 = 0;
+        z->m4 = 0;
+        ++z;
+    } while (z < table + 32);
     for (i = 0; i < 32; i++) {
         tmp.m0 = 0;
         tmp.m2 = 0;
-        tmp.m4 = 0;
-        copyCrystalRec5_80218FD4(&table[i], &tmp);
+        tmp.m4 = flag;
+        func_80218FD4(&table[i], &tmp);
     }
 
     // Merge items from all 8 page slots (self+0x1480 sub-table).
+    slots = (unsigned long*)((u8*)self + 0x1480);
     for (j = 0; j < 8; j++) {
-        obj = (void*)func_802165CC((unsigned long*)((u8*)self + 0x1480), j);
+        obj = (void*)func_802165CC(slots, j);
         if (obj == 0 || *(void**)obj == 0) {
             continue;
         }
         for (k = 0; k < 4; k++) {
-            void* inst = CItem_initItemImplInstances(obj);
-            id = ((CItemImplFacadeGrid*)inst)->GetName(obj, k);
+            inst = (CItemImplFacadeGrid*)CItem_initItemImplInstances(obj);
+            id = inst->GetName(obj, k);
             if (id != 0) {
-                inst = CItem_initItemImplInstances(obj);
-                qty = ((CItemImplFacadeGrid*)inst)->GetQuantity(obj, k);
+                inst = (CItemImplFacadeGrid*)CItem_initItemImplInstances(obj);
+                qty = inst->GetQuantity(obj, k);
                 // Merge into an existing record with the same id, else append.
                 found = 0;
                 for (u8 m = 0; m < count; m++) {
@@ -2620,10 +2658,10 @@ void func_80218B10(CMCCrystalBox* self) {
                     }
                 }
                 if (found == 0) {
-                    tmp.m0 = id;
-                    tmp.m2 = qty;
-                    tmp.m4 = flag;
-                    copyCrystalRec5_80218FD4(&table[count], &tmp);
+                    pageTmp.m2 = qty;
+                    pageTmp.m0 = id;
+                    pageTmp.m4 = flag;
+                    func_80218FD4(&table[count], &pageTmp);
                     count++;
                 }
             }
@@ -2640,25 +2678,25 @@ void func_80218B10(CMCCrystalBox* self) {
             if (obj != 0 && *(void**)obj != 0) {
                 flag = 1;
                 for (k = 0; k < 4; k++) {
-                    void* inst = CItem_initItemImplInstances(obj);
-                    id = ((CItemImplFacadeGrid*)inst)->GetName(obj, k);
+                    inst = (CItemImplFacadeGrid*)CItem_initItemImplInstances(obj);
+                    id = inst->GetName(obj, k);
                     if (id != 0) {
-                        inst = CItem_initItemImplInstances(obj);
-                        qty = ((CItemImplFacadeGrid*)inst)->GetQuantity(obj, k);
+                        inst = (CItemImplFacadeGrid*)CItem_initItemImplInstances(obj);
+                        qty = inst->GetQuantity(obj, k);
                         found = 0;
                         for (u8 m = 0; m < count; m++) {
                             if (table[m].m0 == id) {
                                 table[m].m2 += qty;
-                                table[m].m4 = 1;
+                                table[m].m4 = flag;
                                 found = 1;
                                 break;
                             }
                         }
                         if (found == 0) {
-                            tmp.m0 = id;
-                            tmp.m2 = qty;
-                            tmp.m4 = 1;
-                            copyCrystalRec5_80218FD4(&table[count], &tmp);
+                            selTmp.m2 = qty;
+                            selTmp.m0 = id;
+                            selTmp.m4 = flag;
+                            func_80218FD4(&table[count], &selTmp);
                             count++;
                         }
                     }
@@ -2674,11 +2712,11 @@ void func_80218B10(CMCCrystalBox* self) {
             CMCCrystalRec5Ex* pa = (CMCCrystalRec5Ex*)&table[j];
             CMCCrystalRec5Ex* pb = (CMCCrystalRec5Ex*)&table[j + 1];
             if (pa->b < pb->b) {
-                copyCrystalRec5Ex_80218FF0(&sortTmpA1, pa);
-                copyCrystalRec5Ex_80218FF0(&sortTmpB1, pb);
-                copyCrystalRec5_80218FD4((CMCCrystalRec5*)pa, (CMCCrystalRec5*)&sortTmpB1);
-                copyCrystalRec5Ex_80218FF0(&sortTmpC1, &sortTmpA1);
-                copyCrystalRec5_80218FD4((CMCCrystalRec5*)pb, (CMCCrystalRec5*)&sortTmpC1);
+                func_80218FF0(&sort1A, pa);
+                func_80218FF0(&sort1B, pb);
+                func_80218FD4((CMCCrystalRec5*)pa, (CMCCrystalRec5*)&sort1B);
+                func_80218FF0(&sort1C, &sort1A);
+                func_80218FD4((CMCCrystalRec5*)pb, (CMCCrystalRec5*)&sort1C);
             }
         }
     }
@@ -2687,11 +2725,11 @@ void func_80218B10(CMCCrystalBox* self) {
             CMCCrystalRec5Ex* pa = (CMCCrystalRec5Ex*)&table[j];
             CMCCrystalRec5Ex* pb = (CMCCrystalRec5Ex*)&table[j + 1];
             if (pa->c < pb->c) {
-                copyCrystalRec5Ex_80218FF0(&sortTmpA2, pa);
-                copyCrystalRec5Ex_80218FF0(&sortTmpB2, pb);
-                copyCrystalRec5_80218FD4((CMCCrystalRec5*)pa, (CMCCrystalRec5*)&sortTmpB2);
-                copyCrystalRec5Ex_80218FF0(&sortTmpC2, &sortTmpA2);
-                copyCrystalRec5_80218FD4((CMCCrystalRec5*)pb, (CMCCrystalRec5*)&sortTmpC2);
+                func_80218FF0(&sort2A, pa);
+                func_80218FF0(&sort2B, pb);
+                func_80218FD4((CMCCrystalRec5*)pa, (CMCCrystalRec5*)&sort2B);
+                func_80218FF0(&sort2C, &sort2A);
+                func_80218FD4((CMCCrystalRec5*)pb, (CMCCrystalRec5*)&sort2C);
             }
         }
     }
@@ -2705,7 +2743,7 @@ void func_80218B10(CMCCrystalBox* self) {
         if (idx >= (int)count) {
             break;
         }
-        CMCCrystalRec5* e = &table[idx];
+        e = &table[idx];
         if ((int)i == (int)(s8)self->unk1501) {
             self->unk1504 = e->m0;
         }
@@ -2835,7 +2873,9 @@ __declspec(noinline) void func_802194EC(CMCCrystalBox* self) {
         u8 d4 = (u8)func_801392B4(self->unk2D4);
         u8 d5 = (u8)func_801392B4(self->unk2D5);
         u16 id = func_8013A7D0(d4, d5);
-        func_80136910((nw4r::lyt::Layout*)self->subObjPtrs[5], lbl_eu_8050888C + 0x257, id);
+        // u16-param view: retail emits clrlwi 16 on the id argument here.
+        func_80136910__FPQ34nw4r3lyt6LayoutPcUc((nw4r::lyt::Layout*)self->subObjPtrs[5],
+                                                lbl_eu_8050888C + 0x257, id);
         // Rank message thresholds (1000/2000/3000/5000/10001).
         const char* s = 0;
         if (id < 0xBB8) {
@@ -2885,25 +2925,26 @@ __declspec(noinline) void func_802194EC(CMCCrystalBox* self) {
             func_80137E7C((nw4r::lyt::Layout*)self->subObjPtrs[5], lbl_eu_8050888C + 0x351, res3);
         }
         // Countdown pane: scale id into a screen coordinate, then format
-        // id/30 and id/20 into the +0x365 label. The func_80136190 number is
-        // materialised before the divisions (retail call order).
-        // Manual uint->double conversion (the 0x43300000 / 2^52 trick) so the
-        // 2^52 constant stays the named import lbl_eu_80668460.
+        // id/30 and id/20 into the +0x365 label. Manual uint->double
+        // conversion (the 0x43300000 / 2^52 trick) keeps lbl_eu_80668460 a
+        // named import; the struct-wrapped buffer sorts before the cvt temp
+        // so their stack slots match retail (sp+0x08 / sp+0x28). Divisions
+        // stay after the func_80136190 call (retail order).
+        struct { u8 b[0x20]; } buf;
         struct {
             u32 hi;
             u32 lo;
         } cvt;
-        cvt.hi = 0x43300000;
         cvt.lo = id;
-        double dx = *(double*)&cvt - lbl_eu_80668460;
-        u16 val = (u16)(lbl_eu_80668480 + lbl_eu_80668484 * dx);
-        char buf[0x20];
-        u8 v30 = (u8)(val / 30);
+        cvt.hi = 0x43300000;
+        u16 val = (u16)(lbl_eu_80668484 * (*(double*)&cvt - lbl_eu_80668460)
+                        + lbl_eu_80668480);
         char* num = func_80136190(lbl_eu_8050888C + 0x1d5, lbl_eu_8050888C + 0x1e1,
                                   0x30);
-        u8 v20 = (u8)(val / 20);
-        sprintf(buf, lbl_eu_8050888C + 0x35e, v30, num, v20);
-        func_80136A1C((nw4r::lyt::Layout*)self->subObjPtrs[5], lbl_eu_8050888C + 0x365, buf, 0);
+        sprintf((char*)buf.b, lbl_eu_8050888C + 0x35e, (u8)(val / 30), num,
+                (u8)(val / 20));
+        func_80136A1C((nw4r::lyt::Layout*)self->subObjPtrs[5], lbl_eu_8050888C + 0x365,
+                      (char*)buf.b, 0);
     }
 }
 #pragma optimize_for_size off
@@ -3149,14 +3190,13 @@ bool CMCCrystalBox::OnFileEvent(CEventFile* event) {
             if (pane != 0) {
                 f32 fx;
                 f32 fy;
-                // Dead local pair (8-aligned so MWCC places it at +0x10, the
-                // first 8-aligned slot above the two 4-byte RAII hosts); retail
-                // interleaves the two stores between the pane writes.
+                // Dead local pair (store-only, so MWCC keeps the two stfs to
+                // +0x10/+0x14 like retail instead of eliminating them).
                 u64 pos;
                 ((PanePosMirror*)pane)->m4C = fx = (f32)w2;
                 ((f32*)&pos)[0] = fx;
-                ((f32*)&pos)[1] = fy = (f32)w0;
-                ((PanePosMirror*)pane)->m50 = fy;
+                ((PanePosMirror*)pane)->m50 = fy = (f32)w0;
+                ((f32*)&pos)[1] = fy;
             }
         }
 
@@ -3217,22 +3257,19 @@ bool CMCCrystalBox::OnFileEvent(CEventFile* event) {
         __dt__6CCur09Fv(tmpA8, -1);
         ((CCurVf0C*)((u8*)this + 0x84))->vf_00();
 
-        // Two direction vectors for the +0x84 cursor's quad.
-        float v1[3];
-        code80135FDC_setVec3(v1, lbl_eu_80668488, lbl_eu_8066848C,
+        // Two direction vectors for the +0x84 cursor's quad: build each with
+        // setVec3 into a temp, then copy to the passed-by-address destination.
+        nw4r::math::VEC3 s1;
+        nw4r::math::VEC3 v1;
+        nw4r::math::VEC3 s2;
+        nw4r::math::VEC3 v2;
+        code80135FDC_setVec3((float*)&s1, lbl_eu_80668488, lbl_eu_8066848C,
                              lbl_eu_8066845C);
-        u32 t1[3];
-        t1[0] = *(u32*)&v1[0];
-        t1[1] = *(u32*)&v1[1];
-        t1[2] = *(u32*)&v1[2];
-        float v2[3];
-        code80135FDC_setVec3(v2, lbl_eu_80668490, lbl_eu_8066848C,
+        v1 = s1;
+        code80135FDC_setVec3((float*)&s2, lbl_eu_80668490, lbl_eu_8066848C,
                              lbl_eu_8066845C);
-        u32 t2[3];
-        t2[0] = *(u32*)&v2[0];
-        t2[1] = *(u32*)&v2[1];
-        t2[2] = *(u32*)&v2[2];
-        func_801D24E8((u8*)this + 0x84, t2, t1);
+        v2 = s2;
+        func_801D24E8((u8*)this + 0x84, &v2, &v1);
 
         u8 tmp90[0x18];
         __ct__CCur18(tmp90, func_801355F4());

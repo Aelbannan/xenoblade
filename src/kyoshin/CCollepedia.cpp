@@ -3,6 +3,7 @@
 
 #include "kyoshin/harness_catalog.hpp"
 #include "kyoshin/CCollepedia.hpp"
+#include <revolution/tpl/TPL.h>
 #include "nw4r/lyt.h"
 // func_8049603C is declared with conflicting return types by CTaskGame.hpp
 // (CTaskGameCamView*, via harness_catalog) and code_80135FDC.hpp (void*).
@@ -166,7 +167,81 @@ extern "C" void* __dt__802534B0(void* self, int dealloc_flag) {
     return result;
 }
 
-void func_802534F0(){}
+// Target us-8025572c
+// Finish second-page (detail view) setup after func_8025348C: load the detail
+// layout, bind its animation, install the device font, fill the fixed text
+// panes, then resolve the sample texture and size its pane.
+// Shape mirrors the FULL_MATCHed CExchangeWin layout-init function.
+// optimize_for_size: retail uses the _savegpr_29/_restgpr_29 frame.
+//
+// OPEN ITEM (single reloc-name drift): the u16->f32 pane-size casts pool the
+// 2^52 conversion magic as TU-local @N in .sdata2; retail references the
+// named lbl_eu_80668808. Source cannot name it (MWCC will not pool plain
+// casts onto a declared symbol - see the CArtsInfo ConvS32ToF64 note), so
+// this needs the standard pool_patterns rule in tools/postprocess_reloc_names.py:
+//   "CCollepedia.o": UnitRules(
+//       pool_patterns=((struct.pack(">II", MAGIC_HI, 0), "lbl_eu_80668808"),),
+//       trim_sdata2_size=0,
+//   ),
+// With that rule the function is byte-identical (mismatch: 0).
+#pragma push
+#pragma optimize_for_size on
+void func_802534F0(CLPPageSetup* pg) {
+    func_80136E84(&pg->mpLayout, pg->mpAccessor, &lbl_eu_8050C6E8[0x4d]);
+    func_80136F08(pg->mpLayout, &pg->mpAnimTrans, pg->mpAccessor, &lbl_eu_8050C6E8[0x66]);
+
+    // Bind the device font: root pane first (retail loads it before the
+    // CDeviceFont call), then fetch the font handle from vtable slot 9.
+    nw4r::lyt::Pane* rootPane = pg->mpLayout->GetRootPane();
+    void* fontObj = func_80452C10__11CDeviceFontFUlPQ34nw4r3lyt6Layout(1, pg->mpLayout);
+    u32 fontHandle = static_cast<CLPFontView*>(fontObj)->sf9();
+    func_8013676C(rootPane, fontHandle);
+
+    char* tagStr = (char*)func_801355BC();
+    func_801368C0(pg->mpLayout, &lbl_eu_8050C6E8[0x82], (u32)tagStr);
+    func_801368C0(pg->mpLayout, &lbl_eu_8050C6E8[0x92], (u32)tagStr);
+
+    pg->mpLayout->SetAnimationEnable(pg->mpAnimTrans, true);
+    pg->mpLayout->Animate(0);
+
+    // Fixed description/label panes: five category labels plus the header.
+    func_80136B4C(pg->mpLayout, &lbl_eu_8050C6E8[0xb3], func_80136190(&lbl_eu_8050C6E8[0xa2], &lbl_eu_8050C6E8[0xae], 12), 0);
+    func_80136B4C(pg->mpLayout, &lbl_eu_8050C6E8[0xc0], func_80136190(&lbl_eu_8050C6E8[0xa2], &lbl_eu_8050C6E8[0xae], 15), 0);
+    func_80136B4C(pg->mpLayout, &lbl_eu_8050C6E8[0xcd], func_80136190(&lbl_eu_8050C6E8[0xa2], &lbl_eu_8050C6E8[0xae], 16), 0);
+    func_80136B4C(pg->mpLayout, &lbl_eu_8050C6E8[0xda], func_80136190(&lbl_eu_8050C6E8[0xa2], &lbl_eu_8050C6E8[0xae], 13), 0);
+    func_80136B4C(pg->mpLayout, &lbl_eu_8050C6E8[0xe5], func_80136190(&lbl_eu_8050C6E8[0xa2], &lbl_eu_8050C6E8[0xae], 14), 0);
+    func_80136B4C(pg->mpLayout, &lbl_eu_8050C6E8[0x103], func_80136190(&lbl_eu_8050C6E8[0xf0], &lbl_eu_8050C6E8[0xfe], 0x2b), 0);
+
+    // Sample-texture msg id: lookup table picked by controller type; result is
+    // arg2 of the id lookup (retail keeps it in r4 across the branch merge).
+    const char* texTable = func_80086F9C__Q22cf13CfGameManagerFv(-1) != 0
+        ? &lbl_eu_8050C6E8[0x10f] : &lbl_eu_8050C6E8[0x118];
+
+    u16 id = func_8013606C(&lbl_eu_8050C6E8[0xf0], texTable, 0x2b);
+    char* texName = func_80138F78(id);
+
+    nw4r::lyt::ArcResourceAccessor* resAcc = func_801355F4();
+    TPLPalette* resource = (TPLPalette*)resAcc->GetResource(0x74696D67, texName, NULL);
+
+    if (resource != NULL) {
+        func_80137E7C(pg->mpLayout, &lbl_eu_8050C6E8[0x121], resource);
+
+        // TPL dims captured before the pane lookup (retail keeps them in
+        // callee-saved regs across FindPaneByName).
+        TPLHeader* header = resource->descriptorArray->textureHeader;
+        u16 w = header->width;
+        u16 h = header->height;
+
+        nw4r::lyt::Pane* pane = pg->mpLayout->GetRootPane()->FindPaneByName(&lbl_eu_8050C6E8[0x121], true);
+        if (pane != NULL) {
+            CLPSize size;
+            size.width = (f32)(u32)w;
+            size.height = (f32)(u32)h;
+            pane->SetSize(*reinterpret_cast<nw4r::lyt::Size*>(&size));
+        }
+    }
+}
+#pragma pop
 
 // Target 4: Delete the layout at field_4 if present, then clear the pointer
 extern "C" __declspec(noinline) void func_80253794(CCollepedia* this_) {
@@ -701,24 +776,31 @@ extern "C" __declspec(noinline) void func_802545C0(u8* self) {
     // Ratio of collected (state 3) columns over columns reached before hitting
     // an empty slot, seeded with the constant below.
     float one = lbl_eu_80668800;
-    for (i = 0; i < self[0]; i++) {
-        group = self + i * 0x140;
-        if (group[6] != 0) {
-            *(float*)(group + 8) = one;
-        } else {
+    {
+        u8* row2;
+        u8* grp;
+        u8 ii;
+        for (ii = 0; ii < self[0]; ii++) {
+            grp = self + ii * 0x140;
+            if (grp[6] != 0) {
+                *(float*)(grp + 8) = one;
+            } else {
             float denom = lbl_eu_806687F8;
             float num = denom;
-            rowCount = group[5];
-            for (r = 0; r < rowCount; r++) {
-                u8* row = group + r * 0x34;
-                for (c = 0; c < 5; c++) {
-                    u8 state = row[c * 0xA + 0x16];
+            u8 cnt = grp[5];
+            u8 rr;
+            u8 cc;
+            for (rr = 0; rr < cnt; rr++) {
+                row2 = grp + rr * 0x34;
+                for (cc = 0; cc < 5; cc++) {
+                    u8 state = row2[cc * 0xA + 0x16];
                     if (state == 0) break;
                     if (state == 3) num += one;
                     denom += one;
                 }
             }
-            *(float*)(group + 8) = num / denom;
+            *(float*)(grp + 8) = num / denom;
+            }
         }
     }
 }
@@ -1202,23 +1284,28 @@ void func_802552B4(CCollepedia* this_) {
 
 // Target 4: us-802575e8
 // Per-frame advance for the collepedia selection flow.
+// Early-return states are tested as a signed compare chain (cmpwi/beq).
+#pragma push
+#pragma optimize_for_size on
 void func_802553AC(CCollepedia* this_) {
-    switch (this_->field_49) {
-    case 9:
-    case 0xB:
-    case 0xC:
-    case 0xD:
-    case 0xF:
-    case 0x10:
-        return;
-    }
+    u32 state = this_->field_49;
+    if (state == 9) return;
+    if (state == 0xB) return;
+    if (state == 0xC) return;
+    if (state == 0xD) return;
+    if (state == 0xF) return;
+    if (state == 0x10) return;
 
     if (CSysWin_getUnk34(&this_->field_9C)) {
-        if (!CSysWin_isActive(&this_->field_9C)) return;
-        if (this_->field_49 == 0xA) {
+        if (CSysWin_isActive(&this_->field_9C) == 0) return;
+        // Two-case switch: MWCC branches forward to the grouped case bodies
+        switch (this_->field_49) {
+        case 0xA:
             this_->field_49 = 0xB;
-        } else if (this_->field_49 == 0xE) {
+            break;
+        case 0xE:
             this_->field_49 = 0xF;
+            break;
         }
         func_8022B8E4(&this_->field_9C);
         return;
@@ -1234,18 +1321,18 @@ void func_802553AC(CCollepedia* this_) {
             func_80255F98(this_);
             func_8025629C(this_);
 
-            u8 cat = func_8025418C(&this_->field_E8, this_->field_D9);
-            if (cat <= 8) {
-                switch (cat) {
-                case 0: func_80138078__FUl(0x4B); break;
-                case 1: func_80138078__FUl(0x4C); break;
-                case 2: func_80138078__FUl(0x4D); break;
-                case 3: func_80138078__FUl(0x4E); break;
-                case 4: func_80138078__FUl(0x4F); break;
-                case 5: func_80138078__FUl(0x50); break;
-                case 6: func_80138078__FUl(0x51); break;
-                case 7: func_80138078__FUl(0x52); break;
-                }
+            u32 cat = func_8025418C(&this_->field_E8, this_->field_D9);
+            // Switch range-check covers 0..8; case 8 is empty (fanfare only)
+            switch (cat) {
+            case 0: func_80138078__FUl(0x4B); break;
+            case 1: func_80138078__FUl(0x4C); break;
+            case 2: func_80138078__FUl(0x4D); break;
+            case 3: func_80138078__FUl(0x4E); break;
+            case 4: func_80138078__FUl(0x4F); break;
+            case 5: func_80138078__FUl(0x50); break;
+            case 6: func_80138078__FUl(0x51); break;
+            case 7:
+            case 8: func_80138078__FUl(0x52); break;
             }
             func_8013B428__FUl(0x84);
         } else {
@@ -1269,10 +1356,10 @@ void func_802553AC(CCollepedia* this_) {
     func_802538B0(reinterpret_cast<CCollepedia*>(&this_->field_28EC[0]),
         func_8025440C(&this_->field_E8, this_->field_D9, this_->field_D8));
 
-    char* name1 = func_80138F78(func_8025424C(&this_->field_E8, this_->field_D9, this_->field_D8));
+    char* name1 = func_80138F78((u16)func_8025424C(&this_->field_E8, this_->field_D9, this_->field_D8));
     void* tex1 = this_->field_30->GetResource(0x74696D67, name1, NULL);
 
-    char* name2 = func_80138F78(func_80254204(&this_->field_E8, this_->field_D9, this_->field_D8));
+    char* name2 = func_80138F78((u16)func_80254204(&this_->field_E8, this_->field_D9, this_->field_D8));
     void* tex2 = this_->field_34->GetResource(0x74696D67, name2, NULL);
 
     func_80253904(reinterpret_cast<CCollepedia*>(&this_->field_28EC[0]), (char*)tex1, (char*)tex2);
@@ -1284,6 +1371,7 @@ void func_802553AC(CCollepedia* this_) {
     this_->field_51 = 0;
     func_80138078__FUl(3);
 }
+#pragma pop
 
 void func_80255688(CCollepediaFull* self) {
     func_80253EE8((u8*)self + 0xE8, self->field_D9, self->field_D8);
@@ -1469,6 +1557,7 @@ void func_80255CC0(CCollepedia* this_) {
 // optimize_for_size gives the retail stmw/lmw block-save frame.
 #pragma push
 #pragma optimize_for_size on
+// noinline: retail callers (func_80255F98) invoke this out-of-line.
 __declspec(noinline) void func_80255D3C(CCollepedia* this_, const char* name, int mode) {
     void* res = NULL;
     // Mode 3 intentionally shares mode 2's resource and falls through without break.
@@ -1499,7 +1588,8 @@ __declspec(noinline) void func_80255D3C(CCollepedia* this_, const char* name, in
 // optimize_for_size gives the retail stmw/lmw block-save frame (three call sites total).
 #pragma push
 #pragma optimize_for_size on
-void func_80255E90(CCollepedia* this_, const char* name, u32 mode, int id) {
+// noinline: retail caller func_80255F98 invokes this out-of-line.
+__declspec(noinline) void func_80255E90(CCollepedia* this_, const char* name, u32 mode, int id) {
     void* tex;
     if (mode == 3) {
         if (id != 0)
@@ -1548,58 +1638,78 @@ extern "C" __declspec(noinline) u8 func_802540DC(u8* self) {
     return *(u8*)(self + idx * 0x140 + 4);
 }
 extern "C" __declspec(noinline) u32 func_80254144(u8*){ return 0; }
+// Manual signed-int -> double conversion (docs/MWCC_PATTERNS.md 7i idiom,
+// see CArtsInfo ConvS32ToF64): build the 0x4330000080000000 bit pattern and
+// subtract the shared sdata2 magic so the lfd references lbl_eu_80668818
+// instead of a TU-local pool label.
+static double clpConvS32ToF64(s32 x) {
+    union {
+        double d;
+        u32 w[2];
+    } u;
+    // xoris word first, then 0x43300000, or MWCC hoists the lis out of order.
+    u.w[1] = (u32)x ^ 0x80000000;
+    u.w[0] = 0x43300000;
+    return u.d - lbl_eu_80668818;
+}
+
 // Target 5: us-802581d4
 // Refresh the detail page: show/hide panes, move the cursor, description
 // text, collected-count label, per-entry rows and texture slots.
+// Retail frame is 0x70 with _savegpr_25: only r25-r31 stay live across calls.
 extern "C" __declspec(noinline) void func_80255F98(CCollepedia* this_) {
-    u8 idx = (u8)((s8)this_->_E9[0] + 1);
+    char buf[0x18];
+    u8 idx = (u8)(this_->_E9[0] + 1); // retail reads the index byte unsigned
     func_80136910(this_->field_38, &lbl_eu_8050C6E8[0x284], idx);
 
     // Move the cursor pane right by one slot width from the saved position.
+    // The int->double step references the shared 2^52 pool entry explicitly.
     nw4r::lyt::Pane* cursorPane =
         this_->field_38->GetRootPane()->FindPaneByName(&lbl_eu_8050C6E8[0x28d], true);
-    int off = (int)idx - 1;
     nw4r::math::VEC3 pos = *(nw4r::math::VEC3*)&this_->field_DC[0];
-    pos.x = lbl_eu_80668810 * (float)off + pos.x;
+    pos.x = lbl_eu_80668810 * clpConvS32ToF64((s32)idx - 1) + pos.x;
     copyVEC3((float*)((u8*)cursorPane + 0x2C), &pos);
 
-    char* desc = func_80254094(&this_->field_E8);
-    func_80136B4C(this_->field_38, &lbl_eu_8050C6E8[0x29b], desc, 0);
+    func_80136B4C(this_->field_38, &lbl_eu_8050C6E8[0x29b],
+        func_80254094(&this_->field_E8), 0);
 
     // "collected / total" label: scale the completion ratio to slot count.
-    float scaled = func_802542B8(&this_->field_E8) * lbl_eu_80668814;
-    int slot = (int)scaled; // fctiwz truncation
+    // Call first, constant load second - matches retail schedule.
+    float ratio = func_802542B8(&this_->field_E8);
+    u8 slot = (u8)(lbl_eu_80668814 * ratio); // fctiwz truncation
     char* label = func_80136190(&lbl_eu_8050C6E8[0xA2], &lbl_eu_8050C6E8[0xAE], 0xB);
-    char buf[0x18];
     sprintf(buf, &lbl_eu_8050C6E8[0x2a3], slot, label);
     func_80136A1C(this_->field_38, &lbl_eu_8050C6E8[0x2a8], buf, 0);
 
-    u32 count32 = func_80254144(&this_->field_E8);
-    u8 count = (u8)count32;
-    for (u8 i = 0; i < count; i++) {
-        sprintf(buf, &lbl_eu_8050C6E8[0x2b0], i + 1);
+    u32 count = func_80254144(&this_->field_E8);
+    // Exactly six rows exist per page; visibility still follows the count.
+    for (u8 i = 0; i < 6; i++) {
+        // Retail computes i+1 once per iteration into a callee-saved reg.
+        u8 num = (u8)(i + 1);
+        sprintf(buf, &lbl_eu_8050C6E8[0x2b0], num);
         func_80136B4C(this_->field_38, buf, func_802540F4(&this_->field_E8, i), 0);
 
-        sprintf(buf, &lbl_eu_8050C6E8[0x2bb], i + 1);
+        sprintf(buf, &lbl_eu_8050C6E8[0x2bb], num);
         nw4r::lyt::Pane* namePane =
             this_->field_38->GetRootPane()->FindPaneByName(buf, true);
-        func_80124270(namePane, i < count);
+        func_80124270(namePane, (int)i < (int)(u8)count);
 
-        sprintf(buf, &lbl_eu_8050C6E8[0x2c8], i + 1);
+        sprintf(buf, &lbl_eu_8050C6E8[0x2c8], num);
         nw4r::lyt::Pane* numPane =
             this_->field_38->GetRootPane()->FindPaneByName(buf, true);
         func_80124270(numPane, func_8025415C(&this_->field_E8, i));
     }
 
     // Fill the 6x5 grid: texture slots and item icons per visible entry.
-    for (u8 row = 0; row < count; row++) {
+    for (u8 row = 0; row < (u32)(u8)count; row++) {
+        u32 base = row * 5;
         for (u8 col = 0; col < 5; col++) {
-            u32 mode = col + row * 5;
-            const char* texName = (const char*)func_802541BC(&this_->field_E8, row, col);
-            func_80255D3C(this_, texName, mode);
-            u32 id = func_80254204(&this_->field_E8, row, col);
-            const char* iconName = (const char*)func_802541BC(&this_->field_E8, row, col);
-            func_80255E90(this_, iconName, mode, id);
+            u32 mode = col + base;
+            func_80255D3C(this_, (const char*)func_802541BC(&this_->field_E8, row, col),
+                (u8)mode);
+            u16 id = func_80254204(&this_->field_E8, row, col);
+            func_80255E90(this_, (const char*)func_802541BC(&this_->field_E8, row, col),
+                (u8)mode, id);
         }
     }
 
@@ -1741,7 +1851,7 @@ bool CCollepedia::OnFileEvent(CEventFile* pEventFile) {
         pageDst->field_0D = pageInfo.field_0D;
         pageDst->field_0E = pageInfo.field_0E;
 
-        func_802534F0();
+        func_802534F0(reinterpret_cast<CLPPageSetup*>(&field_28EC[0]));
 
         // +0x84 cursor (CCur18): stack-build, copy, refresh.
         u8 tmpCur18[0x18];

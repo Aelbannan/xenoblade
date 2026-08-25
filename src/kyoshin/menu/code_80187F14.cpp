@@ -18,7 +18,7 @@ extern "C" {
     extern u16 lbl_eu_806642E0;
     extern float lbl_eu_806642E4;
     extern s32* lbl_eu_80663E60;
-    extern u32 lbl_eu_80663E24;
+    extern volatile u32 lbl_eu_80663E24;
     extern float lbl_eu_80667A08;
     extern float lbl_eu_80667A0C;
     extern float lbl_eu_80667A10;
@@ -104,7 +104,6 @@ struct SoundPlayParams {
 // emit the same reloc name as retail.
 extern "C" void func_801882AC(SoundSlot*, float, u32);
 extern "C" void func_80188488(SoundSlot*, u32, float, float, float);
-extern "C" s32 func_801887C8(u32, s32, s32);
 extern "C" s32 func_80188B80(s32, s32, float, float, s32);
 void func_801889D0(SoundSlot* base);
 void func_8018986C(const char* name, float vol);
@@ -252,45 +251,81 @@ extern "C" void func_80188488(SoundSlot* slot, u32 type, float f1, float f2, flo
     slot->x = f1;
     slot->y = f2;
     if (type == 2) {
-        // Local z keeps the zero-global load at block top (retail position).
+        // Local z lets the lfs schedule at block top; the volatile-qualified
+        // store pins the stfs at its program position (last), matching
+        // retail's emission order.
         float z = lbl_eu_80667A08;
         slot->handle = -1;
         slot->field_0x54 = 0;
         slot->field_0x56 = 0;
         slot->status = 0;
-        slot->field_0x48 = z;
+        *(volatile float*)&slot->field_0x48 = z;
     }
 }
 
 void func_801896A8(s32 index, float f1, float f2) {
     lbl_eu_80662494 = f1;
     if (index != 0) return;
-    for (s32 i = 0; i <= 1; i++) {
-        float vol;
-        if (i >= 0 && i <= 1) vol = lbl_eu_80662490 * lbl_eu_80662494;
-        else vol = lbl_eu_80662498;
+    // Offset cursor declared before the counter -> off gets r31, i gets r30.
+    s32 off = 0;
+    s32 i = 0;
+    while (i <= 1) {
         SoundSlot* s = sptr(i);
-        if (s != nullptr && isValid(s->handle)) func_80188488(s, 0, 0.0f, vol, f2);
+        if (s != nullptr && (u32)s->handle != 0xFFFFFFFF) {
+            float x = s->x;
+            // Swapped-operand range guards keep two signed cmpi compares.
+            s32 inRange = 0;
+            if (0 <= i) {
+                if (1 < i)
+                    ;
+                else
+                    inRange = 1;
+            }
+            float vol;
+            if (inRange) vol = lbl_eu_80662490 * lbl_eu_80662494;
+            else vol = lbl_eu_80662498;
+            // Fresh base read: recompute the slot pointer before the call.
+            SoundSlot* s2 = sptr(i);
+            if (s2 != nullptr) func_80188488(s2, 0, x, vol, f2);
+        }
+        i++;
+        off += 0xB8;
     }
 }
 
 void func_80189510(float f1) {
     lbl_eu_80662490 = f1;
-    for (s32 i = 0; i <= 1; i++) {
-        SoundSlot* s = sptr(i);
+    // Offset cursor declared before the counter -> off gets r31, i gets r30
+    // (retail allocation, 0x10 frame - no other callee-saved saves).
+    s32 off = 0;
+    s32 i = 0;
+    while (i <= 1) {
+        s32* b = lbl_eu_80663E60;
+        SoundSlot* s;
+        if (b != nullptr) s = (SoundSlot*)((u8*)b + off);
+        else s = nullptr;
         if (s != nullptr && (u32)s->handle != 0xFFFFFFFF) {
+            float x = s->x;
             float vol;
-            volatile s32 inRange = 0;
-            if (i >= 0 && i <= 1) {
-                inRange = 1;
+            s32 inRange = 0;
+            // Swapped-operand guards keep two signed cmpi compares.
+            if (0 <= i) {
+                if (1 < i)
+                    ;
+                else
+                    inRange = 1;
             }
             if (inRange) vol = lbl_eu_80662490 * lbl_eu_80662494;
             else vol = lbl_eu_80662498;
-            SoundSlot* s2 = sptr(i);
-            if (s2 != nullptr) {
-                func_80188488(s2, 0, s->x, vol, lbl_eu_80667A08);
-            }
+            // Fresh base read: recompute the slot pointer before the call.
+            b = lbl_eu_80663E60;
+            SoundSlot* s2;
+            if (b != nullptr) s2 = (SoundSlot*)((u8*)b + off);
+            else s2 = nullptr;
+            if (s2 != nullptr) func_80188488(s2, 0, x, vol, lbl_eu_80667A08);
         }
+        i++;
+        off += 0xB8;
     }
 }
 
@@ -519,39 +554,49 @@ void* __dt__801886EC(SoundSlot* _this, int flags) {
 // Per-frame cleanup: drop finished sounds from all 5 slots (handles whose
 // CRI voice finished playing), then ramp the master volume toward its
 // target and push the new volume to the two BGM slots (0 and 1).
+// Register mapping (retail): f31=zero const, r29=slot cursor,
+// r28=temp handle, r27=loop counter, r30=-1 / r31=0 constants.
 void func_801889D0(SoundSlot* base) {
-    float zero = lbl_eu_80667A08;
+    const float zero = lbl_eu_80667A08;
+    s32 h;
     SoundSlot* s = base;
     u32 i = 0;
+    const s32 m1 = -1;
+    const s32 z = 0;
     do {
+        // Ternary-as-condition reproduces retail's direct-skip branch and
+        // dead constant materialization on the shared handle comparison.
         // Clear the backup handle once its voice has finished playing.
-        if ((s->backupHandle == -1)
+        h = s->backupHandle;
+        if (((u32)h == 0xFFFFFFFF)
                 ? 0
-                : (getInstance__7CLibCriFv(), !func_80459A78__7CLibCriFv(s->backupHandle))) {
-            s->backupHandle = -1;
-            s->backupU16_1 = 0;
-            s->backupU16_2 = 0;
-            s->backupU16_3 = 0;
+                : (getInstance__7CLibCriFv(), !func_80459A78__7CLibCriFv(h))) {
+            s->backupHandle = m1;
+            s->backupU16_1 = z;
+            s->backupU16_2 = z;
+            s->backupU16_3 = z;
             s->backupF1 = zero;
         }
         // Clear the main handle once its voice has finished playing.
-        if ((s->handle == -1)
+        h = s->handle;
+        if (((u32)h == 0xFFFFFFFF)
                 ? 0
-                : (getInstance__7CLibCriFv(), !func_80459A78__7CLibCriFv(s->handle))) {
-            s->handle = -1;
-            s->field_0x54 = 0;
-            s->field_0x56 = 0;
-            s->status = 0;
+                : (getInstance__7CLibCriFv(), !func_80459A78__7CLibCriFv(h))) {
+            s->handle = m1;
+            s->field_0x54 = z;
+            s->field_0x56 = z;
+            s->status = z;
             s->field_0x48 = zero;
         }
         i++;
         s++;
-    } while (i < 5);
+    } while (i < 5u);
 
     // Ramp the master volume by the per-frame delta, clamped to the
-    // target (lbl_eu_806624A0) and to 1.0.
+    // target (lbl_eu_806624A0) and to 1.0; push the result to slot 1 with
+    // the freshly computed value and to slot 0 with the stored one.
     float cur = lbl_eu_806642E4;
-    if (cur != zero) {
+    if (zero != cur) {
         float max = lbl_eu_806624A0;
         float v = lbl_eu_8066249C + cur;
         lbl_eu_8066249C = v;
@@ -559,21 +604,28 @@ void func_801889D0(SoundSlot* base) {
             v = max;
             lbl_eu_8066249C = max;
             lbl_eu_806642E4 = zero;
-        } else if (v >= lbl_eu_80667A0C) {
+        } else if (lbl_eu_80667A0C <= v) {
             v = lbl_eu_80667A0C;
             lbl_eu_8066249C = lbl_eu_80667A0C;
             lbl_eu_806642E4 = zero;
         }
         SoundSlot* s1 = sptr(1);
-        if (s1 != nullptr && (u32)s1->handle != 0xFFFFFFFF) {
-            if ((u32)s1->handle != 0xFFFFFFFF) {
-                func_80459A94__7CLibCriFv(s1->handle, v);
+        if (s1 != nullptr) {
+            h = s1->handle;
+            // Call nested in the ternary arm mirrors retail's paired
+            // branches around the volume push.
+            if (((u32)h == 0xFFFFFFFF)
+                    ? 0
+                    : (func_80459A94__7CLibCriFv(h, (float)(double)v), 0)) {
             }
         }
         SoundSlot* s0 = sptr(0);
-        if (s0 != nullptr && (u32)s0->handle != 0xFFFFFFFF) {
-            if ((u32)s0->handle != 0xFFFFFFFF) {
-                func_80459A94__7CLibCriFv(s0->handle, lbl_eu_8066249C);
+        if (s0 != nullptr) {
+            float cv = lbl_eu_8066249C;
+            h = s0->handle;
+            if (((u32)h == 0xFFFFFFFF)
+                    ? 0
+                    : (func_80459A94__7CLibCriFv(h, cv), 0)) {
             }
         }
     }
@@ -939,23 +991,28 @@ void func_8018986C(const char* name, float vol) {
         }
     }
 }
+// C linkage: retail's call-site reloc uses the unmangled name.
 extern "C" s32 func_801887C8(u32 wantId, s32 startIdx, s32 endIdx) {
-    s32* b = lbl_eu_80663E60;
-    if (b != nullptr) {
+    // Declaration order fixes retail's allocation: pass-1 cursor -> r7,
+    // pass-2 cursor -> r8, cached base -> r9.
+    SoundSlot* p;
+    SoundSlot* q;
+    SoundSlot* base = (SoundSlot*)lbl_eu_80663E60;
+    if (base != nullptr) {
         // One shared init expression -> single mulli/add, copied into two
         // running pointers (one per pass). Pass 1 returns the first slot in
         // [startIdx..endIdx] whose handle is free (== -1); pass 2 returns
         // the first slot whose priority (field_0x54) is below wantId,
-        // stopping its sound first (call arg re-indexed from the base).
-        SoundSlot* q = (SoundSlot*)((u8*)lbl_eu_80663E60 + startIdx * 0xB8);
-        SoundSlot* p = q;
+        // stopping its sound first.
+        q = base + startIdx;
+        p = q;
         s32 i;
         for (i = startIdx; i <= endIdx; p++, i++) {
             if ((u32)p->handle == 0xFFFFFFFF) return i;
         }
         for (i = startIdx; i <= endIdx; q++, i++) {
             if (wantId > q->field_0x54) {
-                func_801882AC((SoundSlot*)((u8*)lbl_eu_80663E60 + i * 0xB8), lbl_eu_80667A08, 2);
+                func_801882AC(base + i, lbl_eu_80667A08, 2);
                 return i;
             }
         }
@@ -986,10 +1043,11 @@ void func_8018896C(s32 index, u32 type, float f1, float f2) {
 
 extern "C" s32 func_801897A0(s32 wantId, s32 type, float f1) {
     if (func_8008585C__Q22cf13CfGameManagerFv()) return 0;
-    // Two separate reads of the flags word (retail emits two lwz).
+    // Two explicit volatile loads (retail emits both up front).
     // Bit 22 (0x400000) set and bit 18 (0x40000) clear -> refuse.
-    if ((lbl_eu_80663E24 & 0x400000) != 0
-            && (*(volatile u32*)&lbl_eu_80663E24 & 0x40000) == 0) return 0;
+    u32 flagsA = lbl_eu_80663E24;
+    u32 flagsB = lbl_eu_80663E24;
+    if ((flagsA & 0x400000) != 0 && (flagsB & 0x40000) == 0) return 0;
     if (func_80189A04(wantId) == 0) return 0;
     s32 slot = func_801887C8(type, 2, 4);
     if (func_80188B80(slot, wantId, f1, lbl_eu_80667A0C, 0) != 0) return slot;
@@ -1016,14 +1074,16 @@ extern "C" s32 func_80189450() {
     // buffers (slot 0 / slot 1) lacks the substring at 80503AB0+0x1A while
     // its slot still holds a live handle; otherwise clear the flag and allow.
     if ((lbl_eu_806642E0 & 1) != 0) {
-        // Base pointer is read once before the loop and kept live across it
-        // (retail holds it in r26 alongside the counter/offset pair).
+        // Declaration order fixes retail's callee-saved allocation:
+        // s->r28, off->r27, base->r26, i->r25; the string-table and name
+        // buffer addresses are hoisted straight into r31/r30/r29 by MWCC.
         SoundSlot* s;
+        s32 off;
+        char* base = (char*)lbl_eu_80663E60;
         s32 i = 0;
-        s32* b = lbl_eu_80663E60;
-        s32 off = 0;
+        off = 0;
         while (i <= 1) {
-            if (b != nullptr) s = (SoundSlot*)((u8*)b + off);
+            if (base != nullptr) s = (SoundSlot*)(base + off);
             else s = nullptr;
             if (s != nullptr) {
                 // Default-then-override form matches retail's branch layout.

@@ -253,10 +253,9 @@ struct CActParamAnimGameView {
     ml::CVec3 pos3A8;                // 0x3A8 position
     u8 _3B4[0x3C0 - 0x3B4];
     ml::CVec3 vel3C0;                // 0x3C0 velocity
-    f32 f3C4;                        // 0x3C4
     ml::CVec3 face3CC;               // 0x3CC facing dir
     ml::CVec3 vec3D4;                // 0x3D4 accel dir
-    u8 _3E0[0x3F0 - 0x3E0];
+    u8 _3E4[0x3F0 - 0x3E4];
     ml::CVec3 move3F0;               // 0x3F0 move vec
     u8 _3FC[0x444 - 0x3FC];
     f32 f444;                        // 0x444 facing fidx
@@ -408,7 +407,7 @@ extern const float lbl_eu_80666114;   // sdata2: ground-probe constant (func_800
 extern const float lbl_eu_80666118;   // sdata2: ground-probe constant (func_8005D2C4)
 extern const float lbl_eu_8066611C;   // sdata2: matrix row init (func_8005DCA8)
 extern const float lbl_eu_80666124;   // sdata2: probe arg (func_8005E60C)
-extern const float lbl_eu_8066A208;   // sdata2: near-zero epsilon (func_80060110)
+extern float lbl_eu_8066A208;   // sdata2: near-zero epsilon (func_80060110)
 extern f32 lbl_eu_8066AF20;   // sdata2: probe arg (func_8005E60C); f32 form to match CtrlMoveBase.hpp
 extern u8 lbl_eu_80526458[];  // retail CActParamAnimGame vtable (.data split1)
 

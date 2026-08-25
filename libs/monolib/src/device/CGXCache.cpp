@@ -481,7 +481,7 @@ void* __dt__804494D8(void* self, int deleting) {
 // -inline auto cannot inline them into the ctor (retail emits bl to each).
 extern "C" u32 lbl_eu_8056BFE4[];
 extern "C" void __ct__CMsgParam_32(void* self, u32 param);
-extern "C" void __ct__80449534(void* self, s16 a, s16 b, s16 c, s16 d);
+extern "C" void* __ct__80449534(void* self, s16 a, s16 b, s16 c, s16 d);
 extern "C" void func_8044954C(void* self);
 extern "C" void __ct__80449548(void* self);
 extern "C" u32 lbl_eu_8056BFF0[];
@@ -517,11 +517,6 @@ static inline s32 minS32(s32 a, s32 b) { return a < b ? a : b; }
 static inline s32 maxS32(s32 a, s32 b) { return a > b ? a : b; }
 static inline GXColor scaleColor255(f32 scale, const ml::CCol4& c);
 
-// Copy-clear with the color scaled to 0-255 through the inlined helper. The
-// extra inline boundary reproduces retail's early arg-temp address setup.
-static inline void setCopyClearScaled(f32 scale, const ml::CCol4& c, u32 z) {
-    GXSetCopyClear(scaleColor255(scale, c), z);
-}
 
 extern "C" void func_80449D68__8CGXCacheFv(CGXCache* self, u32 sel, void* data) {
     GXRenderModeObj* rmo;
@@ -546,17 +541,17 @@ extern "C" void func_80449D68__8CGXCacheFv(CGXCache* self, u32 sel, void* data) 
         // depth from ring command 3. Ring lookup runs first so the 255
         // scale is loaded after it into a volatile FPR (retail shape).
         void* pz = func_8044CEF8__8CGXCacheFv(&self->unk4, 3);
-        u32 z = *(u32*)pz;
-        scale = lbl_eu_8066A37C;
-        setCopyClearScaled(scale, *(const ml::CCol4*)data, z);
+        // Single nested expression: MWCC reserves the outgoing color-temp
+        // address first, evaluates the scaled color, then loads z.
+        GXSetCopyClear(scaleColor255(lbl_eu_8066A37C, *(ml::CCol4*)data),
+                       *(u32*)pz);
         break;
     }
     case 3: {
         // Copy-clear: color from ring command 2, z depth from the data word.
-        const ml::CCol4* pcol = (const ml::CCol4*)func_8044CEF8__8CGXCacheFv(&self->unk4, 2);
-        u32 z = vu[0];
-        scale = lbl_eu_8066A37C;
-        setCopyClearScaled(scale, *pcol, z);
+        // Mirror case 2's shape exactly: untyped void* local, cast at use.
+        void* pz = func_8044CEF8__8CGXCacheFv(&self->unk4, 2);
+        GXSetCopyClear(scaleColor255(lbl_eu_8066A37C, *(ml::CCol4*)pz), vu[0]);
         break;
     }
     case 4:
@@ -982,7 +977,10 @@ void func_8044B294__8CGXCacheFUl(void) {}
 extern "C" void func_8044CE68__8CGXCacheFv(void* self, u32 cmd);
 struct C1FCMsgEntry {
     u32 command;
-    u32 wid;
+    union {
+        u32 wid;   // command-0xB/0xC payloads write the full word
+        u8 wid8;   // commands 0x5-0x8 write only the low byte
+    };
     u32 unk8;
     u32 unkC;
     u32 unk10;
@@ -1484,22 +1482,31 @@ extern "C" void func_8044C034__8CGXCacheFv(void* self);
 extern "C" void func_8044CE68__8CGXCacheFv(void* self, u32 cmd);
 extern "C" void* func_8044CEF8__8CGXCacheFv(void* self, u32 cmd);
 
-#pragma dont_inline on
+// Inline ring-entry search: the mid-loop return yields retail's two-branch
+// exit and the runtime member bound compiles to mtctr/bdnz. Defined before
+// the dont_inline region so -inline auto can fold it into every caller.
+template <u32 CMD>
+static inline u32 c1fcFindEntry(C1FCCacheLayout* cache) {
+    for (u32 i = 0; i < cache->mSize; i++) {
+        u32 idx = cache->mFront + i;
+        if (cache->mArrayPtr[idx % cache->mCapacity].command == CMD)
+            return i;
+    }
+    return 0xFFFFFFFF;
+}
+
 void CGXCache::func_8044C1FC() {
     C1FCCacheLayout* cache = (C1FCCacheLayout*)this;
-    void* msgSelf = &unk4;
     GXColor gxCol;
     GXRenderModeObj* rmo;
-    f32 yScale;
-    u16 halfVi;
+    s32 yScale;
+    u32 halfVi;
     u32 fieldMode;
     ml::CCol4* pCol;
     u32 zTex;
-    s16 d0;
-    s16 d1;
-    s16 stack4A8[4];
+    s16 stack4A8[4];   // full-screen rect copy (frame 0x40)
+    s16 deltaPair[4];  // scissor delta payload words (frame 0x48)
     s16* stackScissor;
-    f32 scale;
 
     GXSetCoPlanar(GX_DISABLE);
     GXSetCullMode(GX_CULL_BACK);
@@ -1509,42 +1516,49 @@ void CGXCache::func_8044C1FC() {
     GXInvalidateTexAll();
     GXClearVtxDesc();
 
-    GXLoadPosMtxImm(*ml::CMat34::identity, GX_PNMTX0);
-    GXLoadNrmMtxImm(*ml::CMat34::identity, GX_PNMTX0);
+    // .mtx decays to Mtx directly (retail takes identity's address with a
+    // plain lis/addi; no user-defined conversion operators involved).
+    GXLoadPosMtxImm(ml::CMat34::identity.mtx, GX_PNMTX0);
+    GXLoadNrmMtxImm(ml::CMat34::identity.mtx, GX_PNMTX0);
     GXSetCurrentMtx(GX_PNMTX0);
-    GXLoadTexMtxImm(*ml::CMat34::identity, 0x3C, GX_MTX_3x4);
-    GXLoadTexMtxImm(*ml::CMat34::identity, 0x7D, GX_MTX_3x4);
+    GXLoadTexMtxImm(ml::CMat34::identity.mtx, 0x3C, GX_MTX_3x4);
+    GXLoadTexMtxImm(ml::CMat34::identity.mtx, 0x7D, GX_MTX_3x4);
 
-    scale = lbl_eu_8066A37C;
-    gxCol.r = (u8)(s32)(scale * ml::CCol4::red.r);
-    gxCol.g = (u8)(s32)(scale * ml::CCol4::red.g);
-    gxCol.b = (u8)(s32)(scale * ml::CCol4::red.b);
-    gxCol.a = (u8)(s32)(scale * ml::CCol4::red.a);
-    GXSetFog(GX_FOG_NONE, gxCol, lbl_eu_8066A3A0, lbl_eu_8066A3A4, lbl_eu_8066A37C, lbl_eu_8066A3A4);
+    // Fog near-plane value is held in a local (retail loads it early and
+    // duplicates it with fmr for both near args); far is read inline.
+    f32 fogNear = lbl_eu_8066A3A0;
+
+    // Each color block reloads the 255 scale from .sdata2 (retail keeps no
+    // float live across the GX calls).
+    gxCol.r = (u8)(lbl_eu_8066A37C * ml::CCol4::red.r);
+    gxCol.g = (u8)(lbl_eu_8066A37C * ml::CCol4::red.g);
+    gxCol.b = (u8)(lbl_eu_8066A37C * ml::CCol4::red.b);
+    gxCol.a = (u8)(lbl_eu_8066A37C * ml::CCol4::red.a);
+    GXSetFog(GX_FOG_NONE, gxCol, fogNear, lbl_eu_8066A3A4, fogNear, lbl_eu_8066A3A4);
 
     GXSetNumChans(0);
-    GXSetChanCtrl(GX_COLOR0A0, GX_DISABLE, GX_SRC_REG, GX_SRC_REG, GX_LIGHT0, GX_DF_NONE, GX_AF_NONE);
-    GXSetChanCtrl(GX_COLOR1A1, GX_DISABLE, GX_SRC_REG, GX_SRC_REG, GX_LIGHT0, GX_DF_NONE, GX_AF_NONE);
+    GXSetChanCtrl(GX_COLOR0A0, GX_DISABLE, GX_SRC_REG, GX_SRC_VTX, GX_LIGHT_NULL, GX_DF_CLAMP, GX_AF_SPEC);
+    GXSetChanCtrl(GX_COLOR1A1, GX_DISABLE, GX_SRC_REG, GX_SRC_VTX, GX_LIGHT_NULL, GX_DF_CLAMP, GX_AF_SPEC);
 
-    gxCol.r = (u8)(s32)(scale * ml::CCol4::black.r);
-    gxCol.g = (u8)(s32)(scale * ml::CCol4::black.g);
-    gxCol.b = (u8)(s32)(scale * ml::CCol4::black.b);
-    gxCol.a = (u8)(s32)(scale * ml::CCol4::black.a);
+    gxCol.r = (u8)(lbl_eu_8066A37C * ml::CCol4::black.r);
+    gxCol.g = (u8)(lbl_eu_8066A37C * ml::CCol4::black.g);
+    gxCol.b = (u8)(lbl_eu_8066A37C * ml::CCol4::black.b);
+    gxCol.a = (u8)(lbl_eu_8066A37C * ml::CCol4::black.a);
     GXSetChanAmbColor(GX_COLOR0A0, gxCol);
-    gxCol.r = (u8)(s32)(scale * ml::CCol4::white.r);
-    gxCol.g = (u8)(s32)(scale * ml::CCol4::white.g);
-    gxCol.b = (u8)(s32)(scale * ml::CCol4::white.b);
-    gxCol.a = (u8)(s32)(scale * ml::CCol4::white.a);
+    gxCol.r = (u8)(lbl_eu_8066A37C * ml::CCol4::white.r);
+    gxCol.g = (u8)(lbl_eu_8066A37C * ml::CCol4::white.g);
+    gxCol.b = (u8)(lbl_eu_8066A37C * ml::CCol4::white.b);
+    gxCol.a = (u8)(lbl_eu_8066A37C * ml::CCol4::white.a);
     GXSetChanMatColor(GX_COLOR0A0, gxCol);
-    gxCol.r = (u8)(s32)(scale * ml::CCol4::black.r);
-    gxCol.g = (u8)(s32)(scale * ml::CCol4::black.g);
-    gxCol.b = (u8)(s32)(scale * ml::CCol4::black.b);
-    gxCol.a = (u8)(s32)(scale * ml::CCol4::black.a);
+    gxCol.r = (u8)(lbl_eu_8066A37C * ml::CCol4::black.r);
+    gxCol.g = (u8)(lbl_eu_8066A37C * ml::CCol4::black.g);
+    gxCol.b = (u8)(lbl_eu_8066A37C * ml::CCol4::black.b);
+    gxCol.a = (u8)(lbl_eu_8066A37C * ml::CCol4::black.a);
     GXSetChanAmbColor(GX_COLOR1A1, gxCol);
-    gxCol.r = (u8)(s32)(scale * ml::CCol4::white.r);
-    gxCol.g = (u8)(s32)(scale * ml::CCol4::white.g);
-    gxCol.b = (u8)(s32)(scale * ml::CCol4::white.b);
-    gxCol.a = (u8)(s32)(scale * ml::CCol4::white.a);
+    gxCol.r = (u8)(lbl_eu_8066A37C * ml::CCol4::white.r);
+    gxCol.g = (u8)(lbl_eu_8066A37C * ml::CCol4::white.g);
+    gxCol.b = (u8)(lbl_eu_8066A37C * ml::CCol4::white.b);
+    gxCol.a = (u8)(lbl_eu_8066A37C * ml::CCol4::white.a);
     GXSetChanMatColor(GX_COLOR1A1, gxCol);
 
     GXSetAlphaCompare(GX_ALWAYS, 0, GX_AOP_AND, GX_ALWAYS, 0);
@@ -1558,241 +1572,126 @@ void CGXCache::func_8044C1FC() {
     GXSetIndTexCoordScale(GX_INDTEXSTAGE2, GX_ITS_1, GX_ITS_1);
     GXSetIndTexCoordScale(GX_INDTEXSTAGE3, GX_ITS_1, GX_ITS_1);
 
-    rmo = getRenderModeObj__9CDeviceVIFv();
-    yScale = GXGetYScaleFactor(rmo->efbHeight, rmo->xfbHeight);
-    GXSetDispCopyYScale(yScale);
-    halfVi = (u16)(rmo->xfbHeight << 1);
-    fieldMode = rmo->viHeight - halfVi;
-    fieldMode = fieldMode ? 1 : 0;
+    // Render-target setup; each field access re-fetches the render mode
+    // object (nested calls) so nothing is held across the bls.
+    yScale =
+        (u16)GXSetDispCopyYScale(GXGetYScaleFactor(getRenderModeObj__9CDeviceVIFv()->efbHeight,
+                                                   getRenderModeObj__9CDeviceVIFv()->xfbHeight));
+    halfVi = getRenderModeObj__9CDeviceVIFv()->xfbHeight << 1;
+    fieldMode = getRenderModeObj__9CDeviceVIFv()->viHeight == halfVi;
     rmo = getRenderModeObj__9CDeviceVIFv();
     GXSetFieldMode(rmo->field_rendering, fieldMode);
+    GXSetDispCopySrc(0, 0,
+                     getRenderModeObj__9CDeviceVIFv()->fbWidth,
+                     getRenderModeObj__9CDeviceVIFv()->efbHeight);
     rmo = getRenderModeObj__9CDeviceVIFv();
-    GXSetDispCopySrc(0, 0, rmo->fbWidth, rmo->efbHeight);
-    rmo = getRenderModeObj__9CDeviceVIFv();
-    GXSetDispCopyDst(rmo->fbWidth, (u16)yScale);
+    GXSetDispCopyDst(rmo->fbWidth, yScale);
     GXSetDispCopyGamma(cache->unk50C);
 
-    pCol = (ml::CCol4*)func_8044CEF8__8CGXCacheFv(msgSelf, 3);
-    zTex = *(u32*)func_8044CEF8__8CGXCacheFv(msgSelf, 2);
-    gxCol.r = (u8)(s32)(scale * pCol->r);
-    gxCol.g = (u8)(s32)(scale * pCol->g);
-    gxCol.b = (u8)(s32)(scale * pCol->b);
-    gxCol.a = (u8)(s32)(scale * pCol->a);
+    // cmd 3 payload word is the clear z value; cmd 2 payload is the color.
+    zTex = *(u32*)func_8044CEF8__8CGXCacheFv(&unk4, 3);
+    pCol = (ml::CCol4*)func_8044CEF8__8CGXCacheFv(&unk4, 2);
+    gxCol.r = (u8)(lbl_eu_8066A37C * pCol->r);
+    gxCol.g = (u8)(lbl_eu_8066A37C * pCol->g);
+    gxCol.b = (u8)(lbl_eu_8066A37C * pCol->b);
+    gxCol.a = (u8)(lbl_eu_8066A37C * pCol->a);
     GXSetCopyClear(gxCol, zTex);
 
-    rmo = getRenderModeObj__9CDeviceVIFv();
+    // Full-screen rect copy: both render-mode fields are loaded before any
+    // store (retail keeps them in r27/r0 across the second call).
+    s16 fullH = (s16)getRenderModeObj__9CDeviceVIFv()->efbHeight;
+    s16 fullW = (s16)getRenderModeObj__9CDeviceVIFv()->fbWidth;
     stack4A8[0] = 0;
     stack4A8[1] = 0;
-    stack4A8[2] = (s16)rmo->fbWidth;
-    stack4A8[3] = (s16)rmo->efbHeight;
+    stack4A8[2] = fullW;
+    stack4A8[3] = fullH;
     *(u32*)&cache->rect4A8[0] = *(u32*)&stack4A8[0];
     *(u32*)&cache->rect4A8[2] = *(u32*)&stack4A8[2];
     *(u32*)&cache->rect4B0[0] = *(u32*)&stack4A8[0];
     *(u32*)&cache->rect4B0[2] = *(u32*)&stack4A8[2];
-    stackScissor = stack4A8;
-    d0 = cache->rect4A8[0] - cache->rect4B0[0];
-    d1 = cache->rect4A8[1] - cache->rect4B0[1];
-    cache->rect4B0[2] = stack4A8[2];
-    cache->rect4B0[3] = stack4A8[3];
-    {
-        s32 found_B = -1;
-        u32 i_B;
-        for (i_B = 0; i_B < cache->mSize; i_B++) {
-            u32 idx_B = cache->mFront + i_B;
-            u32 slot_B = idx_B - (idx_B / cache->mCapacity) * cache->mCapacity;
-            if (cache->mArrayPtr[slot_B].command == 0x0D) {
-                found_B = (s32)i_B;
-                break;
-            }
-        }
-        if (found_B != -1) {
-            
-            u32 idx2_B = cache->mFront + (u32)found_B;
-            u32 slot2_B = idx2_B - (idx2_B / cache->mCapacity) * cache->mCapacity;
-            C1FCMsgEntry* e_B = &cache->mArrayPtr[slot2_B];
-            e_B->unk23 = 0x0D;
-            e_B->unk8 = (u32)d0;
-            e_B->unk10 = (u32)d1;
-        }
-        func_8044CE68__8CGXCacheFv(msgSelf, 0xB);
-    }
-    {
-        s32 found_C = -1;
-        u32 i_C;
-        for (i_C = 0; i_C < cache->mSize; i_C++) {
-            u32 idx_C = cache->mFront + i_C;
-            u32 slot_C = idx_C - (idx_C / cache->mCapacity) * cache->mCapacity;
-            if (cache->mArrayPtr[slot_C].command == 0x0D) {
-                found_C = (s32)i_C;
-                break;
-            }
-        }
-        if (found_C != -1) {
-            
-            u32 idx2_C = cache->mFront + (u32)found_C;
-            u32 slot2_C = idx2_C - (idx2_C / cache->mCapacity) * cache->mCapacity;
-            C1FCMsgEntry* e_C = &cache->mArrayPtr[slot2_C];
-            e_C->unk23 = 0x0D;
-            e_C->unk8 = *(u32*)&stackScissor[0];
-            e_C->unk10 = *(u32*)&stackScissor[2];
-        }
-        func_8044CE68__8CGXCacheFv(msgSelf, 0xC);
-    }
-    {
-        s32 found_4 = -1;
-        u32 i_4;
-        for (i_4 = 0; i_4 < cache->mSize; i_4++) {
-            u32 idx_4 = cache->mFront + i_4;
-            u32 slot_4 = idx_4 - (idx_4 / cache->mCapacity) * cache->mCapacity;
-            if (cache->mArrayPtr[slot_4].command == 0x03) {
-                found_4 = (s32)i_4;
-                break;
-            }
-        }
-        if (found_4 != -1) {
-            
-            u32 idx2_4 = cache->mFront + (u32)found_4;
-            u32 slot2_4 = idx2_4 - (idx2_4 / cache->mCapacity) * cache->mCapacity;
-            C1FCMsgEntry* e_4 = &cache->mArrayPtr[slot2_4];
-            e_4->unk23 = 0x03;
-            e_4->unk8 = 1;
-        }
-        func_8044CE68__8CGXCacheFv(msgSelf, 0x4);
-    }
-    {
-        s32 found_5 = -1;
-        u32 i_5;
-        for (i_5 = 0; i_5 < cache->mSize; i_5++) {
-            u32 idx_5 = cache->mFront + i_5;
-            u32 slot_5 = idx_5 - (idx_5 / cache->mCapacity) * cache->mCapacity;
-            if (cache->mArrayPtr[slot_5].command == 0x04) {
-                found_5 = (s32)i_5;
-                break;
-            }
-        }
-        if (found_5 != -1) {
-            
-            u32 idx2_5 = cache->mFront + (u32)found_5;
-            u32 slot2_5 = idx2_5 - (idx2_5 / cache->mCapacity) * cache->mCapacity;
-            C1FCMsgEntry* e_5 = &cache->mArrayPtr[slot2_5];
-            e_5->unk23 = 0x04;
-            e_5->unk8 = 1;
-        }
-        func_8044CE68__8CGXCacheFv(msgSelf, 0x5);
-    }
-    {
-        s32 found_6 = -1;
-        u32 i_6;
-        for (i_6 = 0; i_6 < cache->mSize; i_6++) {
-            u32 idx_6 = cache->mFront + i_6;
-            u32 slot_6 = idx_6 - (idx_6 / cache->mCapacity) * cache->mCapacity;
-            if (cache->mArrayPtr[slot_6].command == 0x04) {
-                found_6 = (s32)i_6;
-                break;
-            }
-        }
-        if (found_6 != -1) {
-            
-            u32 idx2_6 = cache->mFront + (u32)found_6;
-            u32 slot2_6 = idx2_6 - (idx2_6 / cache->mCapacity) * cache->mCapacity;
-            C1FCMsgEntry* e_6 = &cache->mArrayPtr[slot2_6];
-            e_6->unk23 = 0x04;
-            e_6->unk8 = 1;
-        }
-        func_8044CE68__8CGXCacheFv(msgSelf, 0x6);
-    }
-    {
-        s32 found_7 = -1;
-        u32 i_7;
-        for (i_7 = 0; i_7 < cache->mSize; i_7++) {
-            u32 idx_7 = cache->mFront + i_7;
-            u32 slot_7 = idx_7 - (idx_7 / cache->mCapacity) * cache->mCapacity;
-            if (cache->mArrayPtr[slot_7].command == 0x04) {
-                found_7 = (s32)i_7;
-                break;
-            }
-        }
-        if (found_7 != -1) {
-            
-            u32 idx2_7 = cache->mFront + (u32)found_7;
-            u32 slot2_7 = idx2_7 - (idx2_7 / cache->mCapacity) * cache->mCapacity;
-            C1FCMsgEntry* e_7 = &cache->mArrayPtr[slot2_7];
-            e_7->unk23 = 0x04;
-            e_7->unk8 = 1;
-        }
-        func_8044CE68__8CGXCacheFv(msgSelf, 0x7);
-    }
-    {
-        s32 found_8 = -1;
-        u32 i_8;
-        for (i_8 = 0; i_8 < cache->mSize; i_8++) {
-            u32 idx_8 = cache->mFront + i_8;
-            u32 slot_8 = idx_8 - (idx_8 / cache->mCapacity) * cache->mCapacity;
-            if (cache->mArrayPtr[slot_8].command == 0x04) {
-                found_8 = (s32)i_8;
-                break;
-            }
-        }
-        if (found_8 != -1) {
-            
-            u32 idx2_8 = cache->mFront + (u32)found_8;
-            u32 slot2_8 = idx2_8 - (idx2_8 / cache->mCapacity) * cache->mCapacity;
-            C1FCMsgEntry* e_8 = &cache->mArrayPtr[slot2_8];
-            e_8->unk23 = 0x04;
-            e_8->unk8 = 1;
-        }
-        func_8044CE68__8CGXCacheFv(msgSelf, 0x8);
-    }
-    {
-        s32 found_0 = -1;
-        u32 i_0;
-        for (i_0 = 0; i_0 < cache->mSize; i_0++) {
-            u32 idx_0 = cache->mFront + i_0;
-            u32 slot_0 = idx_0 - (idx_0 / cache->mCapacity) * cache->mCapacity;
-            if (cache->mArrayPtr[slot_0].command == 0x03) {
-                found_0 = (s32)i_0;
-                break;
-            }
-        }
-        if (found_0 != -1) {
-            
-            u32 idx2_0 = cache->mFront + (u32)found_0;
-            u32 slot2_0 = idx2_0 - (idx2_0 / cache->mCapacity) * cache->mCapacity;
-            C1FCMsgEntry* e_0 = &cache->mArrayPtr[slot2_0];
-            e_0->unk23 = 0x03;
-            e_0->unk8 = 1;
-        }
-        func_8044CE68__8CGXCacheFv(msgSelf, 0x0);
-    }
-    {
-        s32 found_9 = -1;
-        u32 i_9;
-        for (i_9 = 0; i_9 < cache->mSize; i_9++) {
-            u32 idx_9 = cache->mFront + i_9;
-            u32 slot_9 = idx_9 - (idx_9 / cache->mCapacity) * cache->mCapacity;
-            if (cache->mArrayPtr[slot_9].command == 0x03) {
-                found_9 = (s32)i_9;
-                break;
-            }
-        }
-        if (found_9 != -1) {
-            
-            u32 idx2_9 = cache->mFront + (u32)found_9;
-            u32 slot2_9 = idx2_9 - (idx2_9 / cache->mCapacity) * cache->mCapacity;
-            C1FCMsgEntry* e_9 = &cache->mArrayPtr[slot2_9];
-            e_9->unk23 = 0x03;
-            e_9->unk8 = lbl_eu_80663644;
-        }
-        func_8044CE68__8CGXCacheFv(msgSelf, 0x9);
-    }
+    // Ternary between identical forms of the same address reproduces
+    // retail's addic./bne/addi artifact.
+    stackScissor = stack4A8 ? (s16*)&stack4A8[0] : stack4A8;
 
-    gxCol.r = (u8)(s32)(scale * ml::CCol4::white.r);
-    gxCol.g = (u8)(s32)(scale * ml::CCol4::white.g);
-    gxCol.b = (u8)(s32)(scale * ml::CCol4::white.b);
-    gxCol.a = (u8)(s32)(scale * ml::CCol4::white.a);
+    deltaPair[0] = cache->rect4A8[0] - cache->rect4B0[0];
+    deltaPair[1] = cache->rect4A8[1] - cache->rect4B0[1];
+    deltaPair[2] = cache->rect4A8[2];
+    deltaPair[3] = cache->rect4A8[3];
+    cache->mScissorDeltaX = cache->rect4A8[2];
+    cache->mScissorDeltaY = cache->rect4A8[3];
+
+    // Ring cache refresh: find the live entry for each tag, restamp its state
+    // byte, write the new payload, then dispatch the command. The stamp and
+    // payload writes each recompute the ring slot from reloaded members.
+#define C1FC_STAMP(cmdTag)                                                     \
+    u32 idx1 = cache->mFront + i;                                              \
+    cache->mArrayPtr[idx1 % cache->mCapacity].unk23 = (cmdTag);                \
+    u32 idx2 = cache->mFront + i;                                              \
+    C1FCMsgEntry* e = &cache->mArrayPtr[idx2 % cache->mCapacity];
+    {
+        u32 i = c1fcFindEntry<0xD>(cache);
+        C1FC_STAMP(0xD)
+        e->wid = *(u32*)&deltaPair[0];
+        e->unk8 = *(u32*)&deltaPair[2];
+        func_8044CE68__8CGXCacheFv(&unk4, 0xB);
+    }
+    {
+        u32 i = c1fcFindEntry<0xD>(cache);
+        C1FC_STAMP(0xD)
+        e->wid = *(u32*)&stackScissor[0];
+        e->unk8 = *(u32*)&stackScissor[2];
+        func_8044CE68__8CGXCacheFv(&unk4, 0xC);
+    }
+    {
+        u32 i = c1fcFindEntry<3>(cache);
+        C1FC_STAMP(3)
+        e->wid = 1;
+        func_8044CE68__8CGXCacheFv(&unk4, 0x4);
+    }
+    {
+        u32 i = c1fcFindEntry<4>(cache);
+        C1FC_STAMP(4)
+        e->wid8 = 1;
+        func_8044CE68__8CGXCacheFv(&unk4, 0x5);
+    }
+    {
+        u32 i = c1fcFindEntry<4>(cache);
+        C1FC_STAMP(4)
+        e->wid8 = 1;
+        func_8044CE68__8CGXCacheFv(&unk4, 0x6);
+    }
+    {
+        u32 i = c1fcFindEntry<4>(cache);
+        C1FC_STAMP(4)
+        e->wid8 = 1;
+        func_8044CE68__8CGXCacheFv(&unk4, 0x7);
+    }
+    {
+        u32 i = c1fcFindEntry<4>(cache);
+        C1FC_STAMP(4)
+        e->wid8 = 1;
+        func_8044CE68__8CGXCacheFv(&unk4, 0x8);
+    }
+    {
+        u32 i = c1fcFindEntry<3>(cache);
+        C1FC_STAMP(3)
+        e->wid = 1;
+        func_8044CE68__8CGXCacheFv(&unk4, 0x0);
+    }
+    {
+        u32 i = c1fcFindEntry<9>(cache);
+        C1FC_STAMP(3)
+        e->wid = lbl_eu_80663644;
+        func_8044CE68__8CGXCacheFv(&unk4, 0x9);
+    }
+#undef C1FC_STAMP
+
+    gxCol.r = (u8)(lbl_eu_8066A37C * ml::CCol4::white.r);
+    gxCol.g = (u8)(lbl_eu_8066A37C * ml::CCol4::white.g);
+    gxCol.b = (u8)(lbl_eu_8066A37C * ml::CCol4::white.b);
+    gxCol.a = (u8)(lbl_eu_8066A37C * ml::CCol4::white.a);
     GXSetTevColor(GX_TEVREG1, gxCol);
 }
-#pragma dont_inline reset
 
 struct MsgParam32Entry {
     u32 command;
@@ -2284,9 +2183,9 @@ extern u32 lbl_eu_80663640;
 static inline s16 getEFBHeight(void) {
     return *(s16*)&getRenderModeObj__9CDeviceVIFv()->efbHeight;   // retail lha
 }
-static inline void initFullRect(void* dst, s16 h) {
+static inline void* initFullRect(void* dst, s16 h) {
     s16 w = *(s16*)&getRenderModeObj__9CDeviceVIFv()->fbWidth;     // retail lha
-    __ct__80449534(dst, 0, 0, w, h);
+    return __ct__80449534(dst, 0, 0, w, h);
 }
 
 // Retail __ct__8CGXCacheFv: base ctor (vtable rebind), CMsgParam<32> ring +
@@ -2297,8 +2196,8 @@ CGXCache::CGXCache() {
     func_800407C8_tmp v4;
     u32 col;
     s16 rect[4];
-    s16 fullH;   // heights for the four full-screen rects (retail r30)
-    s16 subH;    // heights for the sub-rect + stack rect temps (retail r31)
+    s32 subH;    // heights for the sub-rect + stack rect temps (retail r31)
+    s32 fullH;   // heights for the four full-screen rects (retail r30)
 
     // Base ctor stores the IStateCache vtable; rebind to the CGXCache vtable.
     __ct__IStateCache(this);
@@ -2308,14 +2207,14 @@ CGXCache::CGXCache() {
     __ct__CMsgParam_32(&unk4, (u32)this);
 
     // Five full-screen rects (0x4A0, 0x4A8, 0x4B0, 0x4B8) + identity mtx.
-    subH = getEFBHeight();
-    initFullRect(&rect4A0, subH);
-    subH = getEFBHeight();
-    initFullRect(&rect4A8, subH);
-    subH = getEFBHeight();
-    initFullRect(&rect4B0, subH);
-    subH = getEFBHeight();
-    initFullRect(&unk4B8, subH);
+    fullH = getEFBHeight();
+    initFullRect(&rect4A0, fullH);
+    fullH = getEFBHeight();
+    initFullRect(&rect4A8, fullH);
+    fullH = getEFBHeight();
+    initFullRect(&rect4B0, fullH);
+    fullH = getEFBHeight();
+    initFullRect(&unk4B8, fullH);
     __ct__80449548(&mProjMtx);
 
     unk500 = 0x7fff;
@@ -2324,8 +2223,8 @@ CGXCache::CGXCache() {
     unk508 = 0;
     unk50C = 0;
 
-    fullH = getEFBHeight();
-    initFullRect(&mRectLeft, fullH);   // 0x510 sub-rect
+    subH = getEFBHeight();
+    initFullRect(&mRectLeft, subH);   // 0x510 sub-rect
     mAdjustProj = 0;
 
     // Ring command cache entries: cmds 0, 3..9, 0xd carry a wid pointer; 1
@@ -2340,8 +2239,10 @@ CGXCache::CGXCache() {
     payload[3] = 0;
     ((CMsgParam<32>*)&unk4)->func_80449A1C(1, payload);
 
-    func_800407C8(&v4, lbl_eu_8066A378, lbl_eu_8066A378, lbl_eu_8066A378, lbl_eu_8066A378);
-    ((CMsgParam<32>*)&unk4)->func_804498A4(2, (u32*)&v4);
+    // Retail nests the vec4 setter into the ring call: the callee's r3 return
+    // is moved to r5 (mr), not recomputed as a fresh stack-temp address.
+    ((CMsgParam<32>*)&unk4)->func_804498A4(2,
+        (u32*)func_800407C8(&v4, lbl_eu_8066A378, lbl_eu_8066A378, lbl_eu_8066A378, lbl_eu_8066A378));
 
     ((CMsgParam<32>*)&unk4)->func_80449B94(3, &lbl_eu_80663624);
     ((CMsgParam<32>*)&unk4)->func_80449B94(4, &lbl_eu_80663628);
@@ -2354,13 +2255,13 @@ CGXCache::CGXCache() {
     col = func_80449550(ml::CCol4::white);
     ((CMsgParam<32>*)&unk4)->func_8044972C(0xa, (u8*)&col);
 
-    fullH = getEFBHeight();
-    initFullRect(rect, fullH);
-    ((CMsgParam<32>*)&unk4)->func_804495C4(0xb, (u32*)rect);
+    // Retail nests the rect filler: bl __ct__80449534 then mr r5,r3 into the
+    // ring call (no fresh stack-temp address).
+    subH = getEFBHeight();
+    ((CMsgParam<32>*)&unk4)->func_804495C4(0xb, (u32*)initFullRect(rect, subH));
 
-    fullH = getEFBHeight();
-    initFullRect(rect, fullH);
-    ((CMsgParam<32>*)&unk4)->func_804495C4(0xc, (u32*)rect);
+    subH = getEFBHeight();
+    ((CMsgParam<32>*)&unk4)->func_804495C4(0xc, (u32*)initFullRect(rect, subH));
 
     ((CMsgParam<32>*)&unk4)->func_80449B94(0xd, &lbl_eu_80663640);
 }
@@ -2381,12 +2282,13 @@ extern "C" __declspec(noinline) void __ct__CMsgParam_32(void* self, u32 param) {
     *(u32*)(s + 0x498) = param;
 }
 
-extern "C" __declspec(noinline) void __ct__80449534(void* self, s16 a, s16 b, s16 c, s16 d) {
+extern "C" __declspec(noinline) void* __ct__80449534(void* self, s16 a, s16 b, s16 c, s16 d) {
     u8* s = (u8*)self;
     *(u16*)(s + 0) = a;
     *(u16*)(s + 2) = b;
     *(u16*)(s + 4) = c;
     *(u16*)(s + 6) = d;
+    return self;
 }
 
 // No-op helpers called with an address in r3 (retail `addi r3,..; bl`).

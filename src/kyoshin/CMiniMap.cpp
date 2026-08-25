@@ -16,7 +16,12 @@
 #include "monolib/scn/IScnRender.hpp"
 #include "monolib/util/MemManager.hpp"
 #include "monolib/work/CWorkThreadSystem.hpp"
+#include "monolib/util/FixStr.hpp"
 #include <nw4r/lyt.h>
+
+// Resolve ml::FixStr<128>::format to the explicit specialization defined in
+// CfScript.cpp (retail symbol format__Q22ml10FixStr<128>FPCce).
+template <> void ml::FixStr<128>::format(const char* fmt, ...);
 #include <revolution/gx/GXPixel.h>
 
 // Pre-mangled global-view declarations so the offset-adjusted dispatch thunks
@@ -35,14 +40,12 @@ extern "C" void __dl__FPv(void* p);
 // subi r3,r3,0x58 / b __dt__13CMenuMiniMap2Fv).
 void func_8011C434(void* self) { ((void(*)(void*))__dt__13CMenuMiniMap2Fv)((char*)self - 0x58); }
 
-void func_80117734(){}
+// (func_80117734 defined below, after the MiniMapObj view declaration)
 
-// Named .sdata2 conversion magics: defining them lets MWCC's constant pool
-// reuse the retail symbols for the (f32) casts in Move() instead of emitting
-// TU-local @N labels (CfResReloadImpl / CSuddenCommu idiom). 80667098 is the
-// signed int->float magic (2^52 + 2^31), 806670A8 the unsigned one (2^52).
-extern const double lbl_eu_80667098 = 0x4330000080000000ll;
-extern const double lbl_eu_806670A8 = 0x4330000000000000ll;
+// Named .sdata2 conversion magics (defined in another TU; see CMiniMap.hpp).
+// Declared extern only: a local const definition lets MWCC const-fold reads
+// into anonymous @N pool labels instead of emitting retail-symbol relocs.
+// 80667098 = signed int->float magic (2^52 + 2^31), 806670A8 unsigned (2^52).
 
 CMMTex::~CMMTex() {}
 
@@ -113,22 +116,6 @@ extern "C" void __declspec(noinline) func_80117C30(CMiniMap* self) {
     func_8003AA34();
 }
 
-// func_80118058 - stub (not a matching target). __declspec(noinline) plus an
-// extern call keep it out of Term's body: an empty body lets MWCC's scheduler
-// sink Term's `lbl_eu_80663FB0 = 0` store below this call (retail keeps the
-// store AFTER the call), while an inlineable body gets merged into Term and
-// drops the bl entirely. extern "C" so the call reloc matches retail
-// (func_80118058, not func_80118058__FP8CMiniMap).
-extern "C" void __declspec(noinline) func_80118058(CMiniMap* self) {
-    (void)self;
-    func_8003AA34();
-}
-
-// ============================================================================
-// func_80118854 - CMiniMap marker/map-icon update (retail symbol unmangled).
-// Reconstructed from retail ASM; high-level C++ only.
-// ============================================================================
-
 #include <nw4r/lyt.h>
 #include "monolib/math/CVec3.hpp"
 #include "kyoshin/cf/CfGameManager.hpp"
@@ -194,9 +181,15 @@ void Warning__Q24nw4r2dbFPCciPCce(const char*, int, const char*, ...);
 void Panic__Q24nw4r2dbFPCciPCce(const char*, int, const char*, ...);
 f32 FrSqrt__Q24nw4r4mathFf(f32);
 int sprintf(char*, const char*, ...);
+void func_80117734(CMMMapImg* self);
 }
 // C++-mangled retail helper: actor id -> action source object.
 void* func_800B708C(int id);
+
+// ============================================================================
+// func_80118854 - CMiniMap marker/map-icon update (retail symbol unmangled).
+// Reconstructed from retail ASM; high-level C++ only.
+// ============================================================================
 
 // CMiniMap "constructor" (retail unmangled factory-style __ct__CMiniMap).
 // Zeroes the load-state block, builds the +0x2C loader subobject, resolves the
@@ -206,7 +199,7 @@ void* func_800B708C(int id);
 extern "C" void __ct__CMiniMap(CMiniMap* self) {
     // Shared string-pool base (retail keeps it in a callee-saved register).
     char* strings = lbl_eu_804FE1FC;
-    CMMSub* sub = &self->mSub;
+    CMMSubHead* sub = &self->mSub;
     self->mVtable = (void*)lbl_eu_8052C958;
     self->mFileHandle = 0;
     self->mAccessor = 0;
@@ -227,9 +220,9 @@ extern "C" void __ct__CMiniMap(CMiniMap* self) {
     sub->mVtable = (void*)lbl_eu_8052C9F0;
     sub->mPtr04 = 0;
     sub->mPtr08 = 0;
-    sub->mFlag0C = 0;
-    sub->mFlag0D = 0;
-    sub->mFlag0E = 0;
+    self->mField3C.mFlag38 = 0;
+    self->mField3C.mFlag39 = 0;
+    self->mField3C.mFlag3A = 0;
 
     // Resolve the localized minimap layout name for the current BDAT row into
     // the global table cache.
@@ -238,8 +231,8 @@ extern "C" void __ct__CMiniMap(CMiniMap* self) {
     sprintf(buf, strings + 0x147, lbl_eu_8052C740[lbl_eu_80664184 - 1]);
     lbl_eu_80663FB8 = getFP__FPCc(buf);
 
-    func_80115FD0((MiniMapTable*)self->mField3C);
-    func_801165EC((CMiniMapGimmickView*)self->mField17C);
+    func_80115FD0((MiniMapTable*)self->mField3C.mW);
+    func_801165EC((CMiniMapGimmickView*)self->mField17C.mW);
     new (&self->m824) UnkClass_8045F564();
     new (&self->m834) UnkClass_8045F564();
 
@@ -358,8 +351,8 @@ bool CMiniMap::OnFileEvent(CEventFile* pEventFile) {
             &lbl_eu_804FE1FC[0x281], true);
         parent->AppendChild(pic);
 
-        func_801160A8(mField3C, lbl_eu_80663FB8, mLayout0C, mField20);
-        func_80116670((CMiniMapGimmickView*)mField17C, mField28, mLayout0C, mField20);
+        func_801160A8(mField3C.mW, lbl_eu_80663FB8, mLayout0C, mField20);
+        func_80116670((CMiniMapGimmickView*)mField17C.mW, mField28, mLayout0C, mField20);
         mReady = 1;
         ((UnkClass_8045F564*)m824)->func_8045F810();
     }
@@ -460,6 +453,15 @@ struct MiniMapObj {
     u8 pad92[0xBB - 0x92];
     u8 mBB;                          // 0xBB flag
 };
+
+// ============================================================================
+// func_80117734 - map-image loader request (retail symbol unmangled).
+// Cancels any pending load and frees the previous buffer, selects the BDAT row
+// whose floor height is above the player's y, resolves the unlock-gated
+// resource variant, then requests the formatted image path into MEM2.
+// (Body defined below, after the MiniMapSubObj view declaration.)
+// ============================================================================
+
 struct MiniMapDtorIf {
     virtual void v008(int);          // vtable+0x8 deleting dtor
 };
@@ -497,6 +499,137 @@ struct MiniMapCase2Elem {
     u16 m1C;                         // 0x1C id
     u8 pad1E[0x4C - 0x1E];           // stride 76
 };
+
+// Typed reset views over the marker-table (+0x3C) / gimmick-view (+0x178)
+// regions used only by the teardown below (integer/float split matches the
+// retail store widths).
+struct MiniMapTermTable {
+    void* mBdat;     // 0x3C
+    u32 mPad40;
+    u32 mLive;       // 0x44
+    f32 mScale;      // 0x48
+};
+struct MiniMapTermView {
+    void* mBdat;                     // 0x178
+    u32 mField04;                    // 0x17C
+    u32 mField08;                    // 0x180
+    f32 mField0C;                    // 0x184
+    u8 mPad188[0x10];
+    u32 mField10;                    // 0x188
+    u32 mField14;                    // 0x18C
+    u32 mField18;                    // 0x190
+    u8 mPad194[0x594 - 0x194];
+    u32 mField594;                   // 0x70C
+};
+
+// Per-row marker-pane teardown (runs when the minimap layout is torn down).
+// Clears every registered marker/clock pane, drops the fixed clock labels,
+// resets the marker/gimmick tables, releases the layout + accessor + UnkClass
+// scratch regions, and frees the cached 'timg' resource.
+extern "C" void __declspec(noinline) func_80118058(CMiniMap* self) {
+    self->mReady = 0;
+    func_801390E0(&self->mFileHandle);
+    if (self->mLayout0C != 0) {
+        // Registered marker lists (per-row pane-name table).
+        for (u8 i = 0; lbl_eu_8052C7B8[i] != 0; i++) {
+            MiniMapCleanupList* clist = (MiniMapCleanupList*)(
+                (MiniMapLayout*)self->mLayout0C)->mgr->v03C((const char*)lbl_eu_8052C7B8[i], 1);
+            MiniMapCleanupNode* node = clist->first;
+            MiniMapCleanupNode* end = (MiniMapCleanupNode*)&clist->first;
+            MiniMapLayout* lay = (MiniMapLayout*)self->mLayout0C;
+            while (node != end) {
+                if (!node) {
+                    Panic__Q24nw4r2dbFPCciPCce((const char*)lbl_eu_8052CB40, 573,
+                                               (const char*)lbl_eu_8052CB1C);
+                }
+                MiniMapCleanupNode* next = node->next;
+                void* pane = lay->mgr->v03C(node->name, 1);
+                if (pane && *(void**)((u8*)pane + 0x0C)) {
+                    RemoveChild__Q34nw4r3lyt4PaneFPQ34nw4r3lyt4Pane(
+                        *(void**)((u8*)pane + 0x0C), pane);
+                    ((MiniMapDtorIf*)pane)->v008(-1);
+                    deleteTextboxOrPicture__10CLibLayoutFv(pane);
+                }
+                node = next;
+            }
+        }
+        // Fixed clock-label textboxes created by OnFileEvent.
+        void* pane202 = ((MiniMapLayout*)self->mLayout0C)->mgr->v03C(&lbl_eu_804FE1FC[0x202], 1);
+        if (pane202 && *(void**)((u8*)pane202 + 0x0C)) {
+            RemoveChild__Q34nw4r3lyt4PaneFPQ34nw4r3lyt4Pane(
+                *(void**)((u8*)pane202 + 0x0C), pane202);
+            ((MiniMapDtorIf*)pane202)->v008(-1);
+            deleteTextboxOrPicture__10CLibLayoutFv(pane202);
+        }
+        void* pane20A = ((MiniMapLayout*)self->mLayout0C)->mgr->v03C(&lbl_eu_804FE1FC[0x20A], 1);
+        if (pane20A && *(void**)((u8*)pane20A + 0x0C)) {
+            RemoveChild__Q34nw4r3lyt4PaneFPQ34nw4r3lyt4Pane(
+                *(void**)((u8*)pane20A + 0x0C), pane20A);
+            ((MiniMapDtorIf*)pane20A)->v008(-1);
+            deleteTextboxOrPicture__10CLibLayoutFv(pane20A);
+        }
+        void* pane212 = ((MiniMapLayout*)self->mLayout0C)->mgr->v03C(&lbl_eu_804FE1FC[0x212], 1);
+        if (pane212 && *(void**)((u8*)pane212 + 0x0C)) {
+            RemoveChild__Q34nw4r3lyt4PaneFPQ34nw4r3lyt4Pane(
+                *(void**)((u8*)pane212 + 0x0C), pane212);
+            ((MiniMapDtorIf*)pane212)->v008(-1);
+            deleteTextboxOrPicture__10CLibLayoutFv(pane212);
+        }
+        // 'panemapmark' holder list (layout pointer hoisted like retail).
+        MiniMapCleanupList* clist2 = (MiniMapCleanupList*)(
+            (MiniMapLayout*)self->mLayout0C)->mgr->v03C(&lbl_eu_804FE1FC[0x1FA], 1);
+        MiniMapCleanupNode* node2 = clist2->first;
+        MiniMapCleanupNode* end2 = (MiniMapCleanupNode*)&clist2->first;
+        MiniMapLayout* markLayout = (MiniMapLayout*)self->mLayout0C;
+        while (node2 != end2) {
+            if (!node2) {
+                Panic__Q24nw4r2dbFPCciPCce((const char*)lbl_eu_8052CB40, 573,
+                                           (const char*)lbl_eu_8052CB1C);
+            }
+            MiniMapCleanupNode* next2 = node2->next;
+            void* pane = markLayout->mgr->v03C(node2->name, 1);
+            if (pane && *(void**)((u8*)pane + 0x0C)) {
+                RemoveChild__Q34nw4r3lyt4PaneFPQ34nw4r3lyt4Pane(
+                    *(void**)((u8*)pane + 0x0C), pane);
+                ((MiniMapDtorIf*)pane)->v008(-1);
+                deleteTextboxOrPicture__10CLibLayoutFv(pane);
+            }
+            node2 = next2;
+        }
+
+        // Reset marker-table and gimmick-view working state.
+        MiniMapTermTable* table = (MiniMapTermTable*)self->mField3C.mW;
+        MiniMapTermView* view = (MiniMapTermView*)self->mField17C.mW;
+        table->mBdat = 0;
+        view->mBdat = 0;
+        table->mLive = 0;
+        table->mScale = lbl_eu_80667090;
+        view->mField04 = 0;
+        view->mField08 = 0;
+        view->mField0C = lbl_eu_80667090;
+        view->mField18 = 0;
+        view->mField10 = 0;
+        view->mField14 = 0;
+        view->mField594 = 0;
+        self->mPad820 = 0;
+
+        // Release the layout (dead double null-check mirrors ~CMiniMap).
+        if (self->mLayout0C != 0) {
+            if (self->mLayout0C != 0) {
+                ((MiniMapDtorIf*)self->mLayout0C)->v008(1);
+            }
+            self->mLayout0C = 0;
+        }
+    }
+    func_80139124(self->mAccessor);
+    ((UnkClass_8045F564*)&self->m824)->func_8045F778();
+    ((UnkClass_8045F564*)&self->m834)->func_8045F778();
+    func_801390E0((CFileHandle**)&self->mSub.mPtr04);
+    if (self->mSub.mPtr08 != NULL) {
+        deallocate__Q23mtl10MemManagerFPv(self->mSub.mPtr08);
+        self->mSub.mPtr08 = NULL;
+    }
+}
 
 // Shared marker-placement tail (inlined twice by retail with distinct locals).
 // copy #1: diff1 @ sp+636, name1 @ sp+872, pane parent "panemapmark".
@@ -1631,7 +1764,124 @@ extern "C" void func_8011B05C(MiniMapSelf* self) {
 }
 
 
-void CMenuMiniMap2::Init() {}
+// Init: register the IScnRender subobject as a scene render callback, build
+// fresh CMMClock/CMiniMap temps on the stack and copy them over the process
+// members (retail assigns whole objects - MWCC elides the vtable words), then
+// request the clock arc / minimap arc files into MEM2 and re-seed the loader
+// subobject before asking it for the map image.
+void CMenuMiniMap2::Init() {
+    // Buffers/subobject temps declared up front; filled at their use sites.
+    char nameBuf[0x40];
+    char rowBuf[0x20];
+    CMMSub sub;
+
+    // The `if (this)` is the MWCC idiom that splits mr r4 / beq / addi +0x5c
+    // for the IScnRender subobject passed to addRenderCB.
+    IScnRender* render = reinterpret_cast<IScnRender*>(this);
+    if (this != 0) {
+        render = reinterpret_cast<IScnRender*>(&mScnRender);
+    }
+    mScn->addRenderCB(render, 0xA, 0);
+
+    // Hand-built CMMClock temp: vtable + zeroed fields + gate bytes, embedded
+    // UnkClass constructed explicitly so its bl lands after the field stores.
+    CMMClockInit clockInit;
+    clockInit.mVtable = (void*)lbl_eu_8052CA88;
+    clockInit.mFileHandle = NULL;
+    clockInit.mAccessor = NULL;
+    clockInit.mLayout = NULL;
+    clockInit.mAnimTrans0 = NULL;
+    clockInit.mAnimTrans1 = NULL;
+    clockInit.field_0x18 = 0;
+    clockInit.field_0x19 = 1;
+    clockInit.mReady = 0;
+    UnkClass_8045F564* pClockUnk = new (&clockInit.mUnk1C) UnkClass_8045F564();
+
+    // Whole-object member copy into mClock (vtable word skipped).
+    mClock.mFileHandle = clockInit.mFileHandle;
+    mClock.mAccessor = clockInit.mAccessor;
+    mClock.mLayout = clockInit.mLayout;
+    mClock.mAnimTrans0 = clockInit.mAnimTrans0;
+    mClock.mAnimTrans1 = clockInit.mAnimTrans1;
+    mClock.field_0x18 = clockInit.field_0x18;
+    mClock.field_0x19 = clockInit.field_0x19;
+    mClock.mReady = clockInit.mReady;
+    mClock.mUnk1C = *pClockUnk;
+    __dt__17UnkClass_8045F564Fv(pClockUnk, -1);
+
+    if (mClock.mReady == 0) {
+        mClock.mFileHandle = CDeviceFile::readFile(
+            mtl::MemManager::getHandleMEM2(), &lbl_eu_804FE1FC[0xCC],
+            (IWorkEvent*)&mClock, 0, 0);
+    }
+
+    // Fresh CMiniMap temp; the scope-exit dtor emits the two UnkClass D1 calls.
+    {
+        CMiniMap map;
+        __ct__CMiniMap(&map);
+
+        // Whole-object member copy into mMiniMap (both vtable words skipped).
+        mMiniMap.mFileHandle = map.mFileHandle;
+        mMiniMap.mAccessor = map.mAccessor;
+        mMiniMap.mLayout0C = map.mLayout0C;
+        mMiniMap.mAnimTrans0 = map.mAnimTrans0;
+        mMiniMap.mAnimTrans1 = map.mAnimTrans1;
+        mMiniMap.field_0x18 = map.field_0x18;
+        mMiniMap.field_0x19 = map.field_0x19;
+        mMiniMap.mReady = map.mReady;
+        mMiniMap.mFlag1B = map.mFlag1B;
+        mMiniMap.field_0x1C = map.field_0x1C;
+        mMiniMap.field_0x1E = map.field_0x1E;
+        mMiniMap.mField20 = map.mField20;
+        mMiniMap.mField24 = map.mField24;
+        mMiniMap.mField28 = map.mField28;
+        mMiniMap.mSub.mPtr04 = map.mSub.mPtr04;
+        mMiniMap.mSub.mPtr08 = map.mSub.mPtr08;
+        mMiniMap.mField3C = map.mField3C;
+        mMiniMap.mField17C = map.mField17C;
+        mMiniMap.m824[0] = map.m824[0];
+        mMiniMap.m824[1] = map.m824[1];
+        mMiniMap.m824[2] = map.m824[2];
+        mMiniMap.m824[3] = map.m824[3];
+        mMiniMap.m834[0] = map.m834[0];
+        mMiniMap.m834[1] = map.m834[1];
+        mMiniMap.m834[2] = map.m834[2];
+        mMiniMap.m834[3] = map.m834[3];
+    }
+
+    if (mMiniMap.mReady == 0) {
+        mtl::ALLOC_HANDLE handle = mtl::MemManager::getHandleMEM2();
+        // Retail issues a second, unused MEM2 probe before the regions.
+        mtl::MemManager::getHandleMEM2();
+        ((UnkClass_8045F564*)&mMiniMap.m824)->createRegion(
+            handle, 0x4000, &lbl_eu_804FE1FC[0x1BD], 0);
+        ((UnkClass_8045F564*)&mMiniMap.m834)->createRegion(
+            handle, -0x8000, &lbl_eu_804FE1FC[0x1C6], 0);
+
+        sprintf(nameBuf, &lbl_eu_804FE1FC[0x1D4], lbl_eu_8052C740[lbl_eu_80664184 - 1]);
+        mMiniMap.mFileHandle = CDeviceFile::readFile(
+            mtl::MemManager::getHandleMEM2(), nameBuf,
+            (IWorkEvent*)&mMiniMap, 0, 0);
+
+        // Re-seed the loader subobject from scratch, refresh the global BDAT
+        // pane-name cache for the current row, then request the map image.
+        sub.mVtable = (void*)lbl_eu_8052C9F0;
+        sub.mPtr04 = NULL;
+        sub.mPtr08 = NULL;
+        sub.mFlag0C = 0;
+        sub.mFlag0D = 0;
+        sub.mFlag0E = 0;
+        lbl_eu_80663FB8 = NULL;
+        sprintf(rowBuf, &lbl_eu_804FE1FC[0x147], lbl_eu_8052C740[lbl_eu_80664184 - 1]);
+        lbl_eu_80663FB8 = getFP__FPCc(rowBuf);
+        mMiniMap.mSub.mPtr04 = sub.mPtr04;
+        mMiniMap.mSub.mPtr08 = sub.mPtr08;
+        mMiniMap.mField3C.mFlag38 = sub.mFlag0C;
+        mMiniMap.mField3C.mFlag39 = sub.mFlag0D;
+        mMiniMap.mField3C.mFlag3A = sub.mFlag0E;
+        func_80117734((CMMMapImg*)&mMiniMap.mSub);
+    }
+}
 
 // Term: detach the render callback, wait for the VI draw to finish, cancel the
 // clock's file request, free the clock layout/accessor/scratch region and the
@@ -1693,7 +1943,7 @@ void CMenuMiniMap2::Move() {
         // clock-show flag (mField38) plus minimap ready bit both set.
         if (lbl_eu_80663E24 & 0xBFE40000) break;
         if (mClock.mReady == 0) break;
-        if ((mMiniMap.mSub.mFlag0C != 0 ? mMiniMap.mReady : 0) == 0) break;
+        if ((mMiniMap.mField3C.mFlag38 != 0 ? mMiniMap.mReady : 0) == 0) break;
         // Load the cached resource first (retail hoists lwz r5,0xc4 above the
         // store sequence); the fresh GetResource result merges into it.
         u8* res = mMiniMap.mSub.mPtr08;
@@ -1741,7 +1991,7 @@ void CMenuMiniMap2::Move() {
     case 3:
         // Fade-out done -> back to idle.
         if (mClock.mReady != 0) {
-            if ((mMiniMap.mSub.mFlag0C != 0 ? mMiniMap.mReady : 0) != 0) {
+            if ((mMiniMap.mField3C.mFlag38 != 0 ? mMiniMap.mReady : 0) != 0) {
                 mField8D4 = 0;
             }
         }
@@ -2136,7 +2386,103 @@ extern "C" void func_80116670(CMiniMapGimmickView* self, u32 table, void* layout
 // set are radius-clamped (Warning/FrSqrt idiom shared with the Move sections);
 // rows without it just drop out of range (clear the entry's enable bit).
 // Both paths then store integer-truncated grid coords into the pane record.
+struct MiniMapSubObj {
+    virtual void v000(); virtual void v004(); virtual void v008();
+    virtual void v00C(); virtual void v010(); virtual void v014(); virtual void v018();
+    virtual void v01C(); virtual void v020(); virtual void v024(); virtual void v028();
+    virtual void v02C(); virtual void v030(); virtual void v034(); virtual void v038();
+    virtual void v03C(); virtual void v040(); virtual void v044(); virtual void v048();
+    virtual void v04C(); virtual void v050(); virtual void v054(); virtual void v058();
+    virtual void v05C(); virtual void v060(); virtual void v064(); virtual void v068();
+    virtual void v06C(); virtual void v070(); virtual void v074(); virtual void v078();
+    virtual void v07C(); virtual void v080(); virtual void v084(); virtual void v088();
+    virtual void v08C(); virtual void v090(); virtual void v094(); virtual void v098();
+    virtual void v09C(); virtual void v0A0();
+    virtual ml::CVec3* GetPos();     // vtable+0xAC
+};
+
 // ============================================================================
+// func_80117734 - map-image loader request (retail symbol unmangled).
+// Cancels any pending load and frees the previous buffer, selects the BDAT row
+// whose floor height is above the player's y, resolves the unlock-gated
+// resource variant, then requests the formatted image path into MEM2.
+// ============================================================================
+extern "C" void func_80117734(CMMMapImg* self) {
+    func_801390E0(&self->mFileHandle);
+    if (self->mData != NULL) {
+        deallocate__Q23mtl10MemManagerFPv(self->mData);
+        self->mData = NULL;
+    }
+
+    u8 best = 0;
+    MiniMapSubObj* player = (MiniMapSubObj*)cf::CfGameManager::getPlayer(0);
+    if (player == NULL) {
+        best = 0;
+    } else {
+        ml::CVec3 ppos = *player->GetPos();
+        u8 count = (u8)func_8003B1EC(lbl_eu_80663FB8);
+        f32 py = ppos.y;
+        for (u8 i = 1; i <= count; i++) {
+            s16 v = func_80136330(lbl_eu_80663FB8, &lbl_eu_804FE1FC[0x30], i);
+            // Signed int->double cast: MWCC emits the retail 0x4330/extsh/
+            // xoris store pair plus fsubs against lbl_eu_80667098.
+            if ((f64)v > py) {
+                best = i;
+                break;
+            }
+        }
+    }
+    self->mRow = best;
+    if (best == 0) {
+        self->mRow = 1;
+    }
+
+    char* strings = lbl_eu_804FE1FC;
+    u8 row = self->mRow;
+    u16 va = func_80136254(lbl_eu_80663FB8, strings + 0x157, row);
+    u16 vb = func_80136254(lbl_eu_80663FB8, strings + 0x15d, row);
+    u32 vc = func_801361E8((u32)lbl_eu_80663FB8, strings + 0x164, row);
+
+    // Unlock-gated resource variant: 2 needs both progress caps met,
+    // 1 only the second, 0 neither.
+    s32 mode;
+    if (va != 0 && func_8009CF8C(0x20) >= va) {
+        if (vb == 0 || func_8009CF8C(vb + 0x220) < vc) {
+            mode = 1;
+        } else {
+            mode = 2;
+        }
+    } else {
+        if (vb != 0 && func_8009CF8C(vb + 0x220) >= vc) {
+            mode = 1;
+        } else {
+            mode = 0;
+        }
+    }
+
+    const char* variant;
+    switch (mode) {
+    case 1:
+        variant = strings + 0x170;
+        break;
+    case 2:
+        variant = strings + 0x178;
+        break;
+    default:
+        variant = strings + 0x169;
+        break;
+    }
+
+    u16 nameId = func_80136254(lbl_eu_80663FB8, variant, self->mRow);
+    ml::FixStr<128> path;
+    path.format(strings + 0x180, func_80138F78(nameId));
+
+    self->mFileHandle = CDeviceFile::readFile(
+        mtl::MemManager::getHandleMEM2(), path.mString,
+        reinterpret_cast<IWorkEvent*>(self), 0, 0);
+    self->mReady = 0;
+}
+
 void __declspec(noinline) func_801168A0(CMiniMapGimmickView* self) {
     // The position source is the +0x3E9C member of the player object; retail
     // null-tests the container-of pointer before dereferencing.
@@ -2148,18 +2494,18 @@ void __declspec(noinline) func_801168A0(CMiniMapGimmickView* self) {
         return;
     }
 
-    // Retail hoists the scale-derived constants ahead of the position copy.
-    f32 gridStep = lbl_eu_80667094 * self->field_0x08;   // one grid cell (world units)
-    f32 radius = lbl_eu_806670A0 * self->field_0x08;     // clamp radius (flagged rows)
+    ml::CVec3* pposPtr = ((MiniMapSubObj*)((u8*)player + 0x3E9C))->GetPos();
 
-    ml::CVec3* pposPtr = ((MiniMapObj*)((u8*)player + 0x3E9C))->GetPos();
+    // Retail computes the scale-derived constants between the position fetch
+    // and the copy into locals.
+    f32 gridStep = self->field_0x08 * lbl_eu_80667094;   // one grid cell (world units)
+
+    f32 radius = self->field_0x08 * lbl_eu_806670A0;     // clamp radius (flagged rows)
+
     ml::CVec3 ppos;
     ppos.x = pposPtr->x;
     ppos.y = pposPtr->y;
     ppos.z = pposPtr->z;
-
-    f32 gridStepSq = gridStep * gridStep;                // in-range threshold (others)
-    f32 zero = lbl_eu_80667090;
 
     for (u32 i = 0; i < self->field_0x6A4; i++) {
         ml::CVec3 diff = ppos - self->field_0x5D4[i];
@@ -2168,18 +2514,20 @@ void __declspec(noinline) func_801168A0(CMiniMapGimmickView* self) {
             f32 mag = PSVECMag((const Vec*)&diff);
             if (mag > radius) {
                 f32 len2 = nw4r::math::VEC3LenSq(diff);
-                if (len2 < zero) {
+                // Negated form compiles to the cror/beq branch shape.
+                if (!(len2 < lbl_eu_80667090)) {
                     Warning__Q24nw4r2dbFPCciPCce(
                         (const char*)lbl_eu_80526324, 0x273,
                         (const char*)lbl_eu_80526300);
                 }
-                f32 len =
-                    (len2 <= zero) ? zero : len2 * FrSqrt__Q24nw4r4mathFf(len2);
+                f32 len = (len2 <= lbl_eu_80667090)
+                              ? lbl_eu_80667090
+                              : len2 * FrSqrt__Q24nw4r4mathFf(len2);
                 f32 k = radius / len;
                 diff.x *= k;
                 diff.z *= k;
             }
-        } else if (nw4r::math::VEC3LenSq(diff) > gridStepSq) {
+        } else if (nw4r::math::VEC3LenSq(diff) > gridStep * gridStep) {
             // Row fell off the visible grid: hide its pane record and skip.
             self->field_0x594_entries[i]->field_BB &= 0xFE;
             continue;
@@ -2190,6 +2538,7 @@ void __declspec(noinline) func_801168A0(CMiniMapGimmickView* self) {
         s32 gz = (s32)(diff.z / self->field_0x08);
         f32 fgx = (f32)gx;
         f32 fgz = (f32)gz;
+        f32 zero = lbl_eu_80667090;
         entry->field_2C = fgx;
         entry->field_30 = fgz;
         entry->field_34 = zero;

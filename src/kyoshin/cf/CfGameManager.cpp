@@ -1468,9 +1468,11 @@ u32 cf::CfGameManager::func_8008310C() {
 }
 #pragma dont_inline reset
 
+#pragma dont_inline on
 extern "C" u32 func_80083284__Q22cf13CfGameManagerFv(const u8* data) {
     return (*reinterpret_cast<const u32*>(data + 0x4EC) >> 20) & 1;
 }
+#pragma dont_inline reset
 
 extern "C" void CObjectParam_UnkVirtualFunc4__Q22cf12CObjectParamFv(u8* data) {
     *reinterpret_cast<u32*>(data + 0x34) = 0;

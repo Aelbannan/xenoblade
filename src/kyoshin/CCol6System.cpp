@@ -473,14 +473,13 @@ void CCol6Hint::Term() {
 // Every state falls through to the common tail (anim-host update, cursor
 // update, scroll-bar update).
 void CCol6Hint::Move() {
-    if (func_8013BE50() == 0) {
+    // Three-term short-circuit gate: retail emits beq/beq for the first two
+    // conditions and an inverted bne-body / b-over-exit pair for the last.
+    if (func_8013BE50() == 0 || mFlag98 == 0 ||
+        CScrollBar_isVisible(&mScrollBar) == 0) {
         return;
     }
-    if (mFlag98 == 0) {
-        return;
-    }
-    if (CScrollBar_isVisible(&mScrollBar) != 0) {
-        switch (mState) {
+    switch (mState) {
         case 0:
             mState = 1;
             func_80138078(0x6d);
@@ -493,8 +492,10 @@ void CCol6Hint::Move() {
             mAnimHost->setAnim(mField90, 0);
             mAnimHost->setAnim(mField94, 1);
             mState = 2;
-            ml::CVec3 vec3(lbl_eu_8066755C, lbl_eu_80667560, lbl_eu_80667564);
-            func_801F3670(&mScrollBar, &vec3);
+            {
+                ml::CVec3 vec3(lbl_eu_8066755C, lbl_eu_80667560, lbl_eu_80667564);
+                func_801F3670(&mScrollBar, &vec3);
+            }
             func_801F36BC(&mScrollBar, 5, (u16)mField11C);
             func_801F367C(&mScrollBar);
             func_801F367C(&mScrollBar);
@@ -560,7 +561,6 @@ void CCol6Hint::Move() {
         mAnimHost->update(0);
         func_801D202C(&mCur18);
         func_801F3540(&mScrollBar);
-    }
 }
 
 // func_8015DB08 - CCol6Hint file-load completion handler: create the scratch
@@ -771,13 +771,13 @@ extern "C" void func_8015DD4C(CCol6Hint* self) {
     // For each of the 7 count buckets, find the largest value whose owned
     // count fits the bucket, storing it into the entry table.
     for (u32 i = 0; i < 7; i++) {
-        u32 val1 = ((u8*)&tbl1)[(u8)i];
+        u8 val1 = ((u8*)&tbl1)[(u8)i];
         u32 rid = (u8)i + 0x7fc;
-        u32 val2 = ((u8*)&tbl2)[(u8)i];
+        u8 val2 = ((u8*)&tbl2)[(u8)i];
         while (val1 >= val2) {
-            u32 c = (u8)func_801361E8(fp, &lbl_eu_80502050[0x9e], val1);
-            if (c <= func_8009CF8C(rid)) {
-                self->mUnk9C[self->mField11C] = (u8)val1;
+            s32 c = func_801361E8(fp, &lbl_eu_80502050[0x9e], val1);
+            if ((c & 0xff) <= (s32)func_8009CF8C(rid)) {
+                self->mUnk9C[self->mField11C] = val1;
                 self->mField11C++;
                 break;
             }
@@ -788,7 +788,7 @@ extern "C" void func_8015DD4C(CCol6Hint* self) {
     // Reserved-slot entries (0x804 count == 1).
     for (u32 i = 0; i < 5; i++) {
         if (func_8009CF8C((u8)i + 0x804) == 1) {
-            self->mUnk9C[self->mField11C] = (u8)i + 0x2e;
+            self->mUnk9C[self->mField11C] = i + 0x2e;
             self->mField11C++;
         }
     }
@@ -823,19 +823,19 @@ extern "C" void func_8015E0BC(CCol6Hint* self) {
     CCol6PadData* pad = (CCol6PadData*)getCfPadData__Q22cf13CfGameManagerFv();
     int sels, confirm, up2, down2, up, down;
     if (func_80086F9C__Q22cf13CfGameManagerFv(-1) != 0) {
-        up      = (pad->mField04 >> 21) & 1;
-        down    = (pad->mField04 >> 22) & 1;
+        up      = (pad->mField04 >> 10) & 1;
+        down    = (pad->mField04 >> 9) & 1;
         sels    = (pad->mField104 & 0x8004) != 0;
         confirm = (pad->mField104 & 0x2001) != 0;
         up2     = (pad->mField104 & 0x4002) != 0;
-        down2   = (pad->mField104 & 0x10000) != 0 || (pad->mField104 & 0x8) != 0;
+        down2   = ((pad->mField104 & 0x8000) | (pad->mField104 & 0x10000000)) != 0;
     } else {
-        up      = (pad->mField04 >> 4) & 1;
-        down    = (pad->mField04 >> 5) & 1;
+        up      = (pad->mField04 >> 27) & 1;
+        down    = (pad->mField04 >> 26) & 1;
         sels    = (pad->mField104 & 0x8004) != 0;
         confirm = (pad->mField104 & 0x2001) != 0;
         up2     = (pad->mField104 & 0x4002) != 0;
-        down2   = (pad->mField104 & 0x10000) != 0 || (pad->mField104 & 0x8) != 0;
+        down2   = ((pad->mField104 & 0x8000) | (pad->mField104 & 0x10000000)) != 0;
     }
 
     if (up) {
@@ -872,32 +872,40 @@ extern "C" void func_8015E0BC(CCol6Hint* self) {
                 }
             }
         }
-        // Label the six slots and reposition the cursor.
+        // Label the six slots and reposition the cursor. Retail materializes
+        // the string-pool base once per handler (r30, freed from pad).
+        char* pool = lbl_eu_80502050;
         for (s32 i = 0; i < 6; i++) {
             char buf[0x20];
-            sprintf(buf, &lbl_eu_80502050[0xe], i + 1);
+            sprintf(buf, &pool[0xe], i + 1);
             char* str = 0;
             s32 idx = i + (s8)self->mField121;
             s32 entry = (s32)self->mUnk9C[idx];
-            if (entry != 0) {
-                str = func_80136190(&lbl_eu_80502050[0x26],
-                                    &lbl_eu_80502050[0xa3], entry);
-            } else if (self->mUnk9C[idx - 1] != 0) {
-                str = func_80136190(lbl_eu_80502050, &lbl_eu_80502050[0x9], 5);
+            // Nested form: retail tests entry==0 on the fall-through path.
+            if (entry == 0) {
+                if (self->mUnk9C[idx - 1] != 0) {
+                    str = func_80136190(pool, &pool[0x9], 5);
+                }
+            } else {
+                str = func_80136190(&pool[0x26], &pool[0xa3], entry);
             }
             func_80136B4C(reinterpret_cast<nw4r::lyt::Layout*>(self->mAnimHost),
                           buf, str, 0);
         }
         char buf2[0x20];
         sprintf(buf2, &lbl_eu_80502050[0xe], (s8)self->mField120 + 1);
-        nw4r::lyt::Pane* rootPane = reinterpret_cast<CCol6LayoutView*>(
-            self->mAnimHost)->mpRootPane;
-        nw4r::lyt::Pane* pane1 =
-            reinterpret_cast<CCol6PaneView*>(rootPane)->setText(buf2, 1);
-        nw4r::lyt::Pane* pane2 = reinterpret_cast<CCol6PaneView*>(rootPane)
+        // Root pane re-derived for every use - keeping it in a named local
+        // across the virtual calls costs an extra callee-saved register.
+        nw4r::lyt::Pane* pane1 = reinterpret_cast<CCol6PaneView*>(
+            reinterpret_cast<CCol6LayoutView*>(self->mAnimHost)->mpRootPane)
+            ->setText(buf2, 1);
+        nw4r::lyt::Pane* pane2 = reinterpret_cast<CCol6PaneView*>(
+            reinterpret_cast<CCol6LayoutView*>(self->mAnimHost)->mpRootPane)
             ->setText(&lbl_eu_80502050[0x17], 1);
         nw4r::math::VEC3 vec;
-        func_80137924(&vec, pane1, pane2, rootPane);
+        func_80137924(&vec, pane1, pane2,
+                      reinterpret_cast<CCol6LayoutView*>(self->mAnimHost)
+                          ->mpRootPane);
         reinterpret_cast<CCol6Cur18View*>(self->mCur18)->vf04(&vec);
         func_801F3850(&self->mScrollBar, (u16)(s8)self->mField121);
         func_80138078(1);
@@ -920,31 +928,35 @@ extern "C" void func_8015E0BC(CCol6Hint* self) {
                 self->mField120 = 0;
             }
         }
+        char* pool = lbl_eu_80502050;
         for (s32 i = 0; i < 6; i++) {
             char buf[0x20];
-            sprintf(buf, &lbl_eu_80502050[0xe], i + 1);
+            sprintf(buf, &pool[0xe], i + 1);
             char* str = 0;
             s32 idx = i + (s8)self->mField121;
             s32 entry = (s32)self->mUnk9C[idx];
-            if (entry != 0) {
-                str = func_80136190(&lbl_eu_80502050[0x26],
-                                    &lbl_eu_80502050[0xa3], entry);
-            } else if (self->mUnk9C[idx - 1] != 0) {
-                str = func_80136190(lbl_eu_80502050, &lbl_eu_80502050[0x9], 5);
+            if (entry == 0) {
+                if (self->mUnk9C[idx - 1] != 0) {
+                    str = func_80136190(pool, &pool[0x9], 5);
+                }
+            } else {
+                str = func_80136190(&pool[0x26], &pool[0xa3], entry);
             }
             func_80136B4C(reinterpret_cast<nw4r::lyt::Layout*>(self->mAnimHost),
                           buf, str, 0);
         }
         char buf2[0x20];
         sprintf(buf2, &lbl_eu_80502050[0xe], (s8)self->mField120 + 1);
-        nw4r::lyt::Pane* rootPane = reinterpret_cast<CCol6LayoutView*>(
-            self->mAnimHost)->mpRootPane;
-        nw4r::lyt::Pane* pane1 =
-            reinterpret_cast<CCol6PaneView*>(rootPane)->setText(buf2, 1);
-        nw4r::lyt::Pane* pane2 = reinterpret_cast<CCol6PaneView*>(rootPane)
+        nw4r::lyt::Pane* pane1 = reinterpret_cast<CCol6PaneView*>(
+            reinterpret_cast<CCol6LayoutView*>(self->mAnimHost)->mpRootPane)
+            ->setText(buf2, 1);
+        nw4r::lyt::Pane* pane2 = reinterpret_cast<CCol6PaneView*>(
+            reinterpret_cast<CCol6LayoutView*>(self->mAnimHost)->mpRootPane)
             ->setText(&lbl_eu_80502050[0x17], 1);
         nw4r::math::VEC3 vec;
-        func_80137924(&vec, pane1, pane2, rootPane);
+        func_80137924(&vec, pane1, pane2,
+                      reinterpret_cast<CCol6LayoutView*>(self->mAnimHost)
+                          ->mpRootPane);
         reinterpret_cast<CCol6Cur18View*>(self->mCur18)->vf04(&vec);
         func_801F3850(&self->mScrollBar, (u16)(s8)self->mField121);
         func_80138078(1);
@@ -963,31 +975,35 @@ extern "C" void func_8015E0BC(CCol6Hint* self) {
             self->mField120 = 0;
             self->mField121 = 0;
         }
+        char* pool = lbl_eu_80502050;
         for (s32 i = 0; i < 6; i++) {
             char buf[0x20];
-            sprintf(buf, &lbl_eu_80502050[0xe], i + 1);
+            sprintf(buf, &pool[0xe], i + 1);
             char* str = 0;
             s32 idx = i + (s8)self->mField121;
             s32 entry = (s32)self->mUnk9C[idx];
-            if (entry != 0) {
-                str = func_80136190(&lbl_eu_80502050[0x26],
-                                    &lbl_eu_80502050[0xa3], entry);
-            } else if (self->mUnk9C[idx - 1] != 0) {
-                str = func_80136190(lbl_eu_80502050, &lbl_eu_80502050[0x9], 5);
+            if (entry == 0) {
+                if (self->mUnk9C[idx - 1] != 0) {
+                    str = func_80136190(pool, &pool[0x9], 5);
+                }
+            } else {
+                str = func_80136190(&pool[0x26], &pool[0xa3], entry);
             }
             func_80136B4C(reinterpret_cast<nw4r::lyt::Layout*>(self->mAnimHost),
                           buf, str, 0);
         }
         char buf2[0x20];
         sprintf(buf2, &lbl_eu_80502050[0xe], (s8)self->mField120 + 1);
-        nw4r::lyt::Pane* rootPane = reinterpret_cast<CCol6LayoutView*>(
-            self->mAnimHost)->mpRootPane;
-        nw4r::lyt::Pane* pane1 =
-            reinterpret_cast<CCol6PaneView*>(rootPane)->setText(buf2, 1);
-        nw4r::lyt::Pane* pane2 = reinterpret_cast<CCol6PaneView*>(rootPane)
+        nw4r::lyt::Pane* pane1 = reinterpret_cast<CCol6PaneView*>(
+            reinterpret_cast<CCol6LayoutView*>(self->mAnimHost)->mpRootPane)
+            ->setText(buf2, 1);
+        nw4r::lyt::Pane* pane2 = reinterpret_cast<CCol6PaneView*>(
+            reinterpret_cast<CCol6LayoutView*>(self->mAnimHost)->mpRootPane)
             ->setText(&lbl_eu_80502050[0x17], 1);
         nw4r::math::VEC3 vec;
-        func_80137924(&vec, pane1, pane2, rootPane);
+        func_80137924(&vec, pane1, pane2,
+                      reinterpret_cast<CCol6LayoutView*>(self->mAnimHost)
+                          ->mpRootPane);
         reinterpret_cast<CCol6Cur18View*>(self->mCur18)->vf04(&vec);
         func_801F3850(&self->mScrollBar, (u16)(s8)self->mField121);
         func_80138078(1);
@@ -1010,31 +1026,35 @@ extern "C" void func_8015E0BC(CCol6Hint* self) {
                 self->mField120 = 0;
             }
         }
+        char* pool = lbl_eu_80502050;
         for (s32 i = 0; i < 6; i++) {
             char buf[0x20];
-            sprintf(buf, &lbl_eu_80502050[0xe], i + 1);
+            sprintf(buf, &pool[0xe], i + 1);
             char* str = 0;
             s32 idx = i + (s8)self->mField121;
             s32 entry = (s32)self->mUnk9C[idx];
-            if (entry != 0) {
-                str = func_80136190(&lbl_eu_80502050[0x26],
-                                    &lbl_eu_80502050[0xa3], entry);
-            } else if (self->mUnk9C[idx - 1] != 0) {
-                str = func_80136190(lbl_eu_80502050, &lbl_eu_80502050[0x9], 5);
+            if (entry == 0) {
+                if (self->mUnk9C[idx - 1] != 0) {
+                    str = func_80136190(pool, &pool[0x9], 5);
+                }
+            } else {
+                str = func_80136190(&pool[0x26], &pool[0xa3], entry);
             }
             func_80136B4C(reinterpret_cast<nw4r::lyt::Layout*>(self->mAnimHost),
                           buf, str, 0);
         }
         char buf2[0x20];
         sprintf(buf2, &lbl_eu_80502050[0xe], (s8)self->mField120 + 1);
-        nw4r::lyt::Pane* rootPane = reinterpret_cast<CCol6LayoutView*>(
-            self->mAnimHost)->mpRootPane;
-        nw4r::lyt::Pane* pane1 =
-            reinterpret_cast<CCol6PaneView*>(rootPane)->setText(buf2, 1);
-        nw4r::lyt::Pane* pane2 = reinterpret_cast<CCol6PaneView*>(rootPane)
+        nw4r::lyt::Pane* pane1 = reinterpret_cast<CCol6PaneView*>(
+            reinterpret_cast<CCol6LayoutView*>(self->mAnimHost)->mpRootPane)
+            ->setText(buf2, 1);
+        nw4r::lyt::Pane* pane2 = reinterpret_cast<CCol6PaneView*>(
+            reinterpret_cast<CCol6LayoutView*>(self->mAnimHost)->mpRootPane)
             ->setText(&lbl_eu_80502050[0x17], 1);
         nw4r::math::VEC3 vec;
-        func_80137924(&vec, pane1, pane2, rootPane);
+        func_80137924(&vec, pane1, pane2,
+                      reinterpret_cast<CCol6LayoutView*>(self->mAnimHost)
+                          ->mpRootPane);
         reinterpret_cast<CCol6Cur18View*>(self->mCur18)->vf04(&vec);
         func_801F3850(&self->mScrollBar, (u16)(s8)self->mField121);
         func_80138078(1);
@@ -1139,27 +1159,26 @@ extern "C" CCol6System* __ct__CCol6System(CCol6System* self, CProcess* parent) {
     // lfs/stfs-to-stack + lwz/stw), while the trailing float/byte pairs are
     // stored directly.
     f32 f = lbl_eu_80667564;
-    // Declared in this (reverse) order: MWCC lays consecutive CVec3 locals
-    // out at descending stack slots, and this order reproduces retail's
-    // sp+0x08..0x5c assignment.
-    ml::CVec3 vec194V(f, f, f);
-    ml::CVec3 vec188V(f, f, f);
-    ml::CVec3 vec1ACV(f, f, f);
-    ml::CVec3 vec1A0V(f, f, f);
-    ml::CVec3 lookAtV(f, f, f);
-    ml::CVec3 camPosV(f, f, f);
-    ml::CVec3 vec174(f, f, f);
-    ml::CVec3 vec168(f, f, f);
-    self->mCamPos = camPosV;
-    self->mCamLookAt = lookAtV;
-    self->mVec168 = vec168;
-    self->mVec174 = vec174;
+    // Camera/vector block: every CVec3 is built from a stack temp
+    // CVec3(f,f,f) and copied memberwise (MWCC routes the bits through GPRs,
+    // lfs/stfs-to-stack + lwz/stw), while the trailing float/byte pairs are
+    // stored directly.
+    // NOTE (open item): retail assigns the eight anon-temp slots non-
+    // monotonically (sp+20,2c,08,14 then +50,5c,38,44 - two passes of
+    // [e2,e3,e0,e1] over one contiguous 0x60 block); every source form tried
+    // (statement reorder, named locals both decl orders, local CVec3[8],
+    // placement-new element ctors, record-pointer loop) yields descending
+    // slots or extra out-of-line/round-trip code instead.
+    self->mCamPos = ml::CVec3(f, f, f);
+    self->mCamLookAt = ml::CVec3(f, f, f);
+    self->mVec168 = ml::CVec3(f, f, f);
+    self->mVec174 = ml::CVec3(f, f, f);
     self->mField180 = f;
     self->mField184 = 0;
-    self->mVec188 = vec188V;
-    self->mVec194 = vec194V;
-    self->mVec1A0 = vec1A0V;
-    self->mVec1AC = vec1ACV;
+    self->mVec188 = ml::CVec3(f, f, f);
+    self->mVec194 = ml::CVec3(f, f, f);
+    self->mVec1A0 = ml::CVec3(f, f, f);
+    self->mVec1AC = ml::CVec3(f, f, f);
     self->mField1B8 = f;
     self->mField1BC = 0;
     return self;

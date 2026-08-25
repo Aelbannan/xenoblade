@@ -110,19 +110,35 @@ extern "C" void* __dt__18CSysWinScenarioLogFv(CSysWinScenarioLog* _this, int fla
 // +0x10, the two __ptmf_null callback slots, control words), then the composite
 // vtable + work-event/render slots, the embedded UnkClass_8045F564 region, and
 // the window fields; finally bumps the open-window bookkeeping counters.
+// NOTE: the parameters are used directly (no local copies) - MWCC colors the
+// two spilled params in declaration order (this=r29, scene=r30) only when
+// neither is aliased into a local.
 // ---------------------------------------------------------------------------
-extern "C" void* __ct__CSysWinScenarioLog(void* _this, void* param) {
-    CSysWinScenarioLog* s = (CSysWinScenarioLog*)_this;
+extern "C" CSysWinScenarioLog* __ct__CSysWinScenarioLog(CSysWinScenarioLog* s,
+                                                        void* param) {
     __ct__8CProcessFv((CProcess*)s);
 
     ((CSysWinProcessVtable*)s)->mpVtable = (u32)lbl_eu_8052D238;
-    u32* ptmf = __ptmf_null;
-    s->ptmf0[0] = ptmf[0];
-    s->ptmf0[1] = ptmf[1];
-    s->ptmf0[2] = ptmf[2];
-    s->ptmf1[0] = ptmf[0];
-    s->ptmf1[1] = ptmf[1];
-    s->ptmf1[2] = ptmf[2];
+    // ptmf-triplet copies: walking-pointer reads with the store order [1],[0],[2]
+    // reproduce retail's lwzu-fused load schedule (CREvtModelMap func_80180E60
+    // pattern).
+    u32 w1, w2, w0;
+    u32 n1, n2, n0;
+    u32* src = __ptmf_null;
+    w0 = *src++;
+    w1 = *src++;
+    s->ptmf0[1] = w1;
+    s->ptmf0[0] = w0;
+    w2 = *src++;
+    s->ptmf0[2] = w2;
+
+    u32* src2 = __ptmf_null;
+    n0 = *src2++;
+    n1 = *src2++;
+    s->ptmf1[1] = n1;
+    s->ptmf1[0] = n0;
+    n2 = *src2++;
+    s->ptmf1[2] = n2;
 
     s->field_54 = 0;
     s->field_58 = 0;
@@ -966,19 +982,23 @@ void func_802808AC(s32 self) {
         return;
     }
     u32 seq = func_80082694__Q22cf13CfGameManagerFv(0x2C);
-    // Explicit gotos reproduce retail's `beq bump; b after` pair.
-    if (lbl_eu_80664772 == 0) {
-        goto bump;
+    // Early-return bump (same shape as scenarioBump/func_8027EE88): keeps
+    // MWCC's `mr r31, r3` ahead of the pause-flag compare.
+    {
+        u16 pauseFlag = lbl_eu_80664772;
+        u32 n;
+        if (pauseFlag != 0) {
+            n = seq;
+            goto keep;
+        }
+        n = seq + 1;
+        if (n >= 0xFFFF) {
+            n = 0xFFFF;
+        }
+        func_8008269C__Q22cf13CfGameManagerFv(0x2C, n);
+    keep:
+        seq = n;
     }
-    goto after;
-bump:
-    seq = seq + 1;
-    if (seq >= 0xFFFF) {
-        seq = 0xFFFF;
-    }
-    func_8008269C__Q22cf13CfGameManagerFv(0x2C, seq);
-after:
-    ;
     if (seq >= 0x1) {
         bool booting = func_800822F4__Q22cf13CfGameManagerFv() <= 3;
         if (!booting && isSceneActive()) {
@@ -1006,32 +1026,36 @@ after:
 // when the scene is not booting and no subwindow is freezing the game.
 // ---------------------------------------------------------------------------
 void func_802809C8() {
-    u32 seq = func_80082694__Q22cf13CfGameManagerFv(0x23);
-    // Single-case switch reproduces retail's `beq bump; b after` pair.
-    switch (lbl_eu_80664772) {
-    case 0:
-        seq = seq + 1;
-        if (seq >= 0xFFFF) {
-            seq = 0xFFFF;
+    u32 n;
+    u32 cur = func_80082694__Q22cf13CfGameManagerFv(0x23);
+    // Two-arm if/else assigning n on both sides reproduces retail's
+    // `beq bump; b after` guard pair (same shape as func_80280804); the
+    // keep-arm copy is the phi resolution.
+    if (lbl_eu_80664772 != 0) {
+        // Scene frozen by a subwindow: keep the un-bumped value.
+        n = cur;
+    } else {
+        n = cur + 1;
+        if (n >= 0xFFFF) {
+            n = 0xFFFF;
         }
-        func_8008269C__Q22cf13CfGameManagerFv(0x23, seq);
-        break;
+        func_8008269C__Q22cf13CfGameManagerFv(0x23, n);
     }
 after:
     ;
-    if (seq >= 0xA) {
+    if (n >= 0xA) {
         bool booting = func_800822F4__Q22cf13CfGameManagerFv() <= 3;
         if (!booting && isSceneActive()) {
             func_800826F0__Q22cf13CfGameManagerFv(0x23);
         }
     }
-    if (seq >= 0x64) {
+    if (n >= 0x64) {
         bool booting = func_800822F4__Q22cf13CfGameManagerFv() <= 3;
         if (!booting && isSceneActive()) {
             func_800826F0__Q22cf13CfGameManagerFv(0x24);
         }
     }
-    if (seq >= 0x1F4) {
+    if (n >= 0x1F4) {
         bool booting = func_800822F4__Q22cf13CfGameManagerFv() <= 3;
         if (!booting && isSceneActive()) {
             func_800826F0__Q22cf13CfGameManagerFv(0x25);
@@ -1041,26 +1065,31 @@ after:
 
 void func_80280ADC() {
     u32 seq = func_80082694__Q22cf13CfGameManagerFv(0x29);
-    // Void-arm ternary (bump as false-arm): MWCC keeps the two-branch pair
-    // (`beq bump; b gates`) without spilling a second register.
-    lbl_eu_80664772 != 0 ? (void)0
-                         : (void)(seq = seq + 1 < 0x10000 ? seq + 1 : 0xFFFF,
-                                  func_8008269C__Q22cf13CfGameManagerFv(0x29, seq));
-gates:
-    ;
-    if (seq >= 0x1) {
+    u32 n;
+    // Two-arm if/else assigning n on both sides reproduces retail's
+    // `beq bump; b after` pair (same shape as func_80280BF0).
+    if (lbl_eu_80664772 == 0) {
+        n = seq + 1;
+        if (n >= 0xFFFF) {
+            n = 0xFFFF;
+        }
+        func_8008269C__Q22cf13CfGameManagerFv(0x29, n);
+    } else {
+        n = seq;
+    }
+    if (n >= 0x1) {
         bool booting = func_800822F4__Q22cf13CfGameManagerFv() <= 3;
         if (!booting && isSceneActive()) {
             func_800826F0__Q22cf13CfGameManagerFv(0x29);
         }
     }
-    if (seq >= 0x64) {
+    if (n >= 0x64) {
         bool booting = func_800822F4__Q22cf13CfGameManagerFv() <= 3;
         if (!booting && isSceneActive()) {
             func_800826F0__Q22cf13CfGameManagerFv(0x2A);
         }
     }
-    if (seq >= 0x3E8) {
+    if (n >= 0x3E8) {
         bool booting = func_800822F4__Q22cf13CfGameManagerFv() <= 3;
         if (!booting && isSceneActive()) {
             func_800826F0__Q22cf13CfGameManagerFv(0x2B);
@@ -1068,19 +1097,23 @@ gates:
     }
 }
 
+// Bump sequence counter 0x5A once while the scene is active, then fire
+// one-shot closes at the 1 / 300 / 2000 thresholds. All three gates read the
+// post-bump value (retail keeps it live in r31 across every gate).
 void func_80280BF0() {
-    u32 seq = func_80082694__Q22cf13CfGameManagerFv(0x5A);
     u32 n;
-    // If/else with both arms assigning: retail hoists the common value then
-    // emits `beq bump; b after` around the two arms.
-    if (lbl_eu_80664772 == 0) {
-        n = seq + 1;
+    u32 cur = func_80082694__Q22cf13CfGameManagerFv(0x5A);
+    // Two-arm if/else assigning n on both sides reproduces retail's
+    // `beq bump; b after` guard pair (same shape as func_802809C8).
+    if (lbl_eu_80664772 != 0) {
+        // Scene frozen by a subwindow: keep the un-bumped value.
+        n = cur;
+    } else {
+        n = cur + 1;
         if (n >= 0xFFFF) {
             n = 0xFFFF;
         }
         func_8008269C__Q22cf13CfGameManagerFv(0x5A, n);
-    } else {
-        n = seq;
     }
     if (n >= 0x1) {
         bool booting = func_800822F4__Q22cf13CfGameManagerFv() <= 3;
@@ -1088,7 +1121,7 @@ void func_80280BF0() {
             func_800826F0__Q22cf13CfGameManagerFv(0x5A);
         }
     }
-    if (seq >= 0x12C) {
+    if (n >= 0x12C) {
         bool booting = func_800822F4__Q22cf13CfGameManagerFv() <= 3;
         if (!booting && isSceneActive()) {
             func_800826F0__Q22cf13CfGameManagerFv(0x5B);
@@ -1398,28 +1431,34 @@ extern "C" void func_802811FC(u8* self){
 // set.
 // ---------------------------------------------------------------------------
 void* func_8028120C(CSysWinSlotTable* self, CScenarioLogOwner* arg0) {
+    void* result;
     u32 flags = arg0->field_0x3F00;
-    if (flags & 0x2) {
+    if ((flags & 0x2) != 0) {
         int idx = 0;
         while (self->mEntriesA[self->mIdxA].mUsed != 0) {
-            if (++self->mIdxA >= 3) {
+            self->mIdxA += 1;
+            if (self->mIdxA >= 3) {
                 self->mIdxA = idx;
             }
         }
         csysWinSlotCall3(&self->mEntriesA[self->mIdxA]);
-        return &self->mEntriesA[self->mIdxA];
+        result = &self->mEntriesA[self->mIdxA];
+        return result;
     }
-    if (flags & 0x4) {
+    if ((flags & 0x4) != 0) {
         int idx = 0;
         while (self->mEntriesB[self->mIdxB].mUsed != 0) {
-            if (++self->mIdxB >= 0x38) {
+            self->mIdxB += 1;
+            if (self->mIdxB >= 0x38) {
                 self->mIdxB = idx;
             }
         }
         csysWinSlotCall3(&self->mEntriesB[self->mIdxB]);
-        return &self->mEntriesB[self->mIdxB];
+        result = &self->mEntriesB[self->mIdxB];
+        return result;
     }
-    return 0;
+    result = 0;
+    return result;
 }
 
 // ---------------------------------------------------------------------------
@@ -1506,17 +1545,29 @@ extern "C" int func_8027EC80(CSysWinScenarioLog* self, CFileHandle* fh) {
 // string pool).
 // ---------------------------------------------------------------------------
 void CSysWinScenarioLog::Init() {
-    IScnRender* render = reinterpret_cast<IScnRender*>(this); // null-this -> null cb
-    if (this) render = reinterpret_cast<IScnRender*>(&mScnRender);
+    // Null-this tolerant sub-object selection: seed with the raw pointer,
+    // then overwrite with the embedded interface offset when this is live.
+    // A fresh selection per call site matches retail, which re-materializes
+    // the +0x6c IWorkEvent offset before each file request.
+    IScnRender* render = reinterpret_cast<IScnRender*>(this);
+    if (this != nullptr) {
+        render = reinterpret_cast<IScnRender*>(&mScnRender);
+    }
     mScene->addRenderCB(render, 0xD, 0);
 
-    IWorkEvent* ev = reinterpret_cast<IWorkEvent*>(this); // default keeps null-this
-    if (this) ev = reinterpret_cast<IWorkEvent*>(&mWorkEvent);
-
+    IWorkEvent* ev74 = reinterpret_cast<IWorkEvent*>(this);
+    if (this != nullptr) {
+        ev74 = reinterpret_cast<IWorkEvent*>(&mWorkEvent);
+    }
     mFileHandle74 = CDeviceFile::readFile(
-        mtl::MemManager::getHandleMEM2(), lbl_eu_8050EE24, ev, 0, 0);
+        mtl::MemManager::getHandleMEM2(), lbl_eu_8050EE24, ev74, 0, 0);
+
+    IWorkEvent* ev78 = reinterpret_cast<IWorkEvent*>(this);
+    if (this != nullptr) {
+        ev78 = reinterpret_cast<IWorkEvent*>(&mWorkEvent);
+    }
     mFileHandle78 = CDeviceFile::readCommonArchiveFile(
-        func_800A9D90(), &lbl_eu_8050EE24[0x18], ev, 0, 0);
+        func_800A9D90(), &lbl_eu_8050EE24[0x18], ev78, 0, 0);
 }
 
 // ---------------------------------------------------------------------------

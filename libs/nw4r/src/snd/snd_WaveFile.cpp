@@ -20,6 +20,12 @@ struct WaveInfoBlock {
 };
 } // namespace WaveFile
 
+// Retail types GetSampleByDspAddress's format argument as nw4r::snd::Sample,
+// Format (see the retail mangled name); alias that exact import here.
+extern "C" u32
+    GetSampleByDspAddress__Q44nw4r3snd6detail7AxVoiceFPCvUlQ34nw4r3snd12SampleFormat(
+        const void* pBase, u32 addr, u32 fmt);
+
 // Runtime wave-info layout that ReadWaveInfo fills. This is distinct from the
 // on-disk detail::WaveInfo header that dwells in the file.
 struct RuntimeChannelParam { // 0x34
@@ -53,10 +59,9 @@ WaveFileReader::WaveFileReader(const WaveFile::FileHeader* pFileHeader)
 bool WaveFileReader::ReadWaveInfo(WaveInfo* pWaveInfo,
                                    const void* pWaveAddr) const {
     const WaveInfo* pHeader = mWaveInfo;
-    RuntimeWaveInfo* pInfo = reinterpret_cast<RuntimeWaveInfo*>(pWaveInfo);
 
     // Convert the on-disk sample format into a runtime sample format.
-    int format;
+    u32 format;
     switch (pHeader->format) {
     case WaveFile::FORMAT_PCM16:
         format = SAMPLE_FORMAT_PCM_S16;
@@ -65,85 +70,92 @@ bool WaveFileReader::ReadWaveInfo(WaveInfo* pWaveInfo,
         format = SAMPLE_FORMAT_PCM_S8;
         break;
     case WaveFile::FORMAT_ADPCM:
-        format = SAMPLE_FORMAT_DSP_ADPCM;
-        break;
     default:
         format = SAMPLE_FORMAT_DSP_ADPCM;
         break;
     }
 
+    RuntimeWaveInfo* pInfo = reinterpret_cast<RuntimeWaveInfo*>(pWaveInfo);
+
     pInfo->format = format;
     pInfo->numChannels = pHeader->numChannels;
-    pInfo->sampleRate = (pHeader->sampleRate24 << 16) + pHeader->sampleRate;
+    pInfo->sampleRate =
+        (pHeader->sampleRate24 << 16) + pHeader->sampleRate;
     pInfo->loopFlag = (pHeader->loopFlag != 0);
 
-    pInfo->loopStart = AxVoice::GetSampleByDspAddress(
-        NULL, pHeader->loopStart, static_cast<AxVoice::Format>(format));
-    pInfo->loopEnd = AxVoice::GetSampleByDspAddress(
-        NULL, pHeader->loopEnd, static_cast<AxVoice::Format>(format)) +
-                     1;
-
-    const u32* pInfoOffsetTable = reinterpret_cast<const u32*>(
-        reinterpret_cast<const u8*>(pHeader) +
-        pHeader->channelInfoTableOffset);
+    pInfo->loopStart =
+        GetSampleByDspAddress__Q44nw4r3snd6detail7AxVoiceFPCvUlQ34nw4r3snd12SampleFormat(
+            NULL, pHeader->loopStart, format);
+    pInfo->loopEnd =
+        GetSampleByDspAddress__Q44nw4r3snd6detail7AxVoiceFPCvUlQ34nw4r3snd12SampleFormat(
+            NULL, pHeader->loopEnd, format) +
+        1;
 
     // Fill one channel (2 max) from the channel info table until all channels
     // in the header are accounted for.
+
     for (u32 i = 0; i < pHeader->numChannels; i++) {
         if (i < CHANNEL_MAX) {
+            const u32* pInfoOffsetTable = reinterpret_cast<const u32*>(
+                reinterpret_cast<const u8*>(pHeader) +
+                pHeader->channelInfoTableOffset);
+
             const WaveFile::WaveChannelInfo* pChannelInfo =
                 reinterpret_cast<const WaveFile::WaveChannelInfo*>(
                     reinterpret_cast<const u8*>(pHeader) +
                     pInfoOffsetTable[i]);
 
             if (pChannelInfo->adpcmOffset != 0) {
-                const AdpcmInfo* pAdpcm = reinterpret_cast<const AdpcmInfo*>(
-                    reinterpret_cast<const u8*>(pHeader) +
-                    pChannelInfo->adpcmOffset);
-
-                pInfo->channel[i].adpcmInfo.param.coef[0] =
-                    pAdpcm->param.coef[0];
-                pInfo->channel[i].adpcmInfo.param.coef[1] =
-                    pAdpcm->param.coef[1];
-                pInfo->channel[i].adpcmInfo.param.coef[2] =
-                    pAdpcm->param.coef[2];
-                pInfo->channel[i].adpcmInfo.param.coef[3] =
-                    pAdpcm->param.coef[3];
-                pInfo->channel[i].adpcmInfo.param.coef[4] =
-                    pAdpcm->param.coef[4];
-                pInfo->channel[i].adpcmInfo.param.coef[5] =
-                    pAdpcm->param.coef[5];
-                pInfo->channel[i].adpcmInfo.param.coef[6] =
-                    pAdpcm->param.coef[6];
-                pInfo->channel[i].adpcmInfo.param.coef[7] =
-                    pAdpcm->param.coef[7];
-                pInfo->channel[i].adpcmInfo.param.coef[8] =
-                    pAdpcm->param.coef[8];
-                pInfo->channel[i].adpcmInfo.param.coef[9] =
-                    pAdpcm->param.coef[9];
-                pInfo->channel[i].adpcmInfo.param.coef[10] =
-                    pAdpcm->param.coef[10];
-                pInfo->channel[i].adpcmInfo.param.coef[11] =
-                    pAdpcm->param.coef[11];
-                pInfo->channel[i].adpcmInfo.param.coef[12] =
-                    pAdpcm->param.coef[12];
-                pInfo->channel[i].adpcmInfo.param.coef[13] =
-                    pAdpcm->param.coef[13];
-                pInfo->channel[i].adpcmInfo.param.coef[14] =
-                    pAdpcm->param.coef[14];
-                pInfo->channel[i].adpcmInfo.param.coef[15] =
-                    pAdpcm->param.coef[15];
-                pInfo->channel[i].adpcmInfo.param.gain = pAdpcm->param.gain;
-                pInfo->channel[i].adpcmInfo.param.pred_scale =
-                    pAdpcm->param.pred_scale;
-                pInfo->channel[i].adpcmInfo.param.yn1 = pAdpcm->param.yn1;
-                pInfo->channel[i].adpcmInfo.param.yn2 = pAdpcm->param.yn2;
-                pInfo->channel[i].adpcmInfo.loopParam.loop_pred_scale =
-                    pAdpcm->loopParam.loop_pred_scale;
-                pInfo->channel[i].adpcmInfo.loopParam.loop_yn1 =
-                    pAdpcm->loopParam.loop_yn1;
-                pInfo->channel[i].adpcmInfo.loopParam.loop_yn2 =
-                    pAdpcm->loopParam.loop_yn2;
+                // Retail quirk: only halfword 0 is read through the adpcm
+                // offset (lhzux); the remaining 22 stream from pHeader+2.
+                reinterpret_cast<u16*>(&pInfo->channel[i].adpcmInfo)[0] =
+                    *reinterpret_cast<const u16*>(
+                        reinterpret_cast<const u8*>(mWaveInfo) +
+                        pChannelInfo->adpcmOffset);
+                reinterpret_cast<u16*>(&pInfo->channel[i].adpcmInfo)[1] =
+                    reinterpret_cast<const u16*>(mWaveInfo)[1];
+                reinterpret_cast<u16*>(&pInfo->channel[i].adpcmInfo)[2] =
+                    reinterpret_cast<const u16*>(mWaveInfo)[2];
+                reinterpret_cast<u16*>(&pInfo->channel[i].adpcmInfo)[3] =
+                    reinterpret_cast<const u16*>(mWaveInfo)[3];
+                reinterpret_cast<u16*>(&pInfo->channel[i].adpcmInfo)[4] =
+                    reinterpret_cast<const u16*>(mWaveInfo)[4];
+                reinterpret_cast<u16*>(&pInfo->channel[i].adpcmInfo)[5] =
+                    reinterpret_cast<const u16*>(mWaveInfo)[5];
+                reinterpret_cast<u16*>(&pInfo->channel[i].adpcmInfo)[6] =
+                    reinterpret_cast<const u16*>(mWaveInfo)[6];
+                reinterpret_cast<u16*>(&pInfo->channel[i].adpcmInfo)[7] =
+                    reinterpret_cast<const u16*>(mWaveInfo)[7];
+                reinterpret_cast<u16*>(&pInfo->channel[i].adpcmInfo)[8] =
+                    reinterpret_cast<const u16*>(mWaveInfo)[8];
+                reinterpret_cast<u16*>(&pInfo->channel[i].adpcmInfo)[9] =
+                    reinterpret_cast<const u16*>(mWaveInfo)[9];
+                reinterpret_cast<u16*>(&pInfo->channel[i].adpcmInfo)[10] =
+                    reinterpret_cast<const u16*>(mWaveInfo)[10];
+                reinterpret_cast<u16*>(&pInfo->channel[i].adpcmInfo)[11] =
+                    reinterpret_cast<const u16*>(mWaveInfo)[11];
+                reinterpret_cast<u16*>(&pInfo->channel[i].adpcmInfo)[12] =
+                    reinterpret_cast<const u16*>(mWaveInfo)[12];
+                reinterpret_cast<u16*>(&pInfo->channel[i].adpcmInfo)[13] =
+                    reinterpret_cast<const u16*>(mWaveInfo)[13];
+                reinterpret_cast<u16*>(&pInfo->channel[i].adpcmInfo)[14] =
+                    reinterpret_cast<const u16*>(mWaveInfo)[14];
+                reinterpret_cast<u16*>(&pInfo->channel[i].adpcmInfo)[15] =
+                    reinterpret_cast<const u16*>(mWaveInfo)[15];
+                reinterpret_cast<u16*>(&pInfo->channel[i].adpcmInfo)[16] =
+                    reinterpret_cast<const u16*>(mWaveInfo)[16];
+                reinterpret_cast<u16*>(&pInfo->channel[i].adpcmInfo)[17] =
+                    reinterpret_cast<const u16*>(mWaveInfo)[17];
+                reinterpret_cast<u16*>(&pInfo->channel[i].adpcmInfo)[18] =
+                    reinterpret_cast<const u16*>(mWaveInfo)[18];
+                reinterpret_cast<u16*>(&pInfo->channel[i].adpcmInfo)[19] =
+                    reinterpret_cast<const u16*>(mWaveInfo)[19];
+                reinterpret_cast<u16*>(&pInfo->channel[i].adpcmInfo)[20] =
+                    reinterpret_cast<const u16*>(mWaveInfo)[20];
+                reinterpret_cast<u16*>(&pInfo->channel[i].adpcmInfo)[21] =
+                    reinterpret_cast<const u16*>(mWaveInfo)[21];
+                reinterpret_cast<u16*>(&pInfo->channel[i].adpcmInfo)[22] =
+                    reinterpret_cast<const u16*>(mWaveInfo)[22];
             }
 
             pInfo->channel[i].dataAddr =

@@ -56,3 +56,4 @@ tools/coop/targets.json.lock
 tools/pi_harness/node_modules/
 .envrc
 tools/coop/.targets.json.*.tmp
+*.tmp

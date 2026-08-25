@@ -441,6 +441,16 @@ public:
     virtual void vf_28() = 0; virtual void vf_2C() = 0;
     virtual void vf_30(int) = 0;   // slot 0x38
 };
+struct CrystalBoxSubObj5;
+class CLytVf3C;
+// Sub-object reached through CMCCrystalBox::subObjPtrs[5] (+0x38): its +0x10
+// field is the layout whose pane-lookup virtual (slot 0x3C) the crystal-box
+// refresh (func_802180B4) dispatches through. Real member call keeps MWCC's
+// lwz/lwz/lwz/mtctr/bctrl sequence (cast-calls add a scratch load).
+struct CrystalBoxSubObj5 {
+    u8 pad_00[0x10];    // +0x00
+    CLytVf3C* layout;   // +0x10
+};
 class CLytVf3C {   // virtual at vtable slot 0x3C (user slot 13)
 public:
     virtual void vf_00() = 0; virtual void vf_04() = 0;
@@ -654,6 +664,11 @@ extern "C" void func_801375A0(char*, nw4r::lyt::Pane*);
 extern "C" void func_801D2670(void*, unsigned char);
 extern "C" int func_801392B4(unsigned char);
 extern "C" unsigned short func_8013A7D0(unsigned char, unsigned char);
+// Wide-param view of the pane-number setter used by the window-kind refresh:
+// retail masks the u16 crystal id into the argument register (clrlwi 16), so
+// this TU saw a u16 parameter. Literal mangled identifier links to the same
+// symbol as func_80136910.
+extern "C" void func_80136910__FPQ34nw4r3lyt6LayoutPcUc(nw4r::lyt::Layout*, char*, u16);
 extern "C" void func_80136A1C(nw4r::lyt::Layout*, char*, char*, u32);
 extern void* lbl_eu_80664090;   // BDAT table pointer (sda21; CfGameManager.hpp type)
 extern float lbl_eu_80668480;

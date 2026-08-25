@@ -1055,6 +1055,24 @@ static inline int getOpcodeParam(VMThread* pThread, u8 code){
     return (int)vmDataGetCached(pThread, pc + 1, lbl_eu_8056ECE8[code].paramSize);
 }
 
+//ld_arg-specific reader: takes the codeData pointer and param size as
+//pre-materialized caller locals; internal declaration order (index, result, i)
+//mirrors the shared vmDataGetCached so counter/accumulator color as retail r8/r9.
+//Loop body re-reads pThread->codeData so the per-iteration reload stays.
+static inline int getOpcodeParamArg(VMThread* pThread, u8* data, int startIndex, int length){
+    int index = startIndex;
+    u32 result = data[index];
+    int i = 1;
+
+    while(i < length){
+        result <<= 8;
+        result |= pThread->codeData[++index];
+        i++;
+    }
+
+    return (int)result;
+}
+
 static inline void incrementPc(VMThread* pThread, u8 code){
     //Increment PC by the number of bytes for the parameter plus 1 for the opcode byte
     pThread->reg.pc += lbl_eu_8056ECE8[code].paramSize + 1;
@@ -1127,10 +1145,18 @@ int vmc_pool_fixed(VMThread* pThread, u8 code){
 }
 
 int vmc_pool_string(VMThread* pThread, u8 code){
-    int no = getOpcodeParam(pThread, code);
-    const char* val = vmStringPoolGet((SBHeader*)pThread->scriptData, no);
+    //Declaration/statement order mirrors retail regalloc: codeData materialized
+    //before the decode (kept live across the loop as the indexed lbzx base),
+    //paramSize passed as the last helper argument so it colors below the
+    //accumulator.
+    int pc = pThread->reg.pc;
+    u8* data = pThread->codeData;
+    int no = getOpcodeParamArg(pThread, data, pc + 1, lbl_eu_8056ECE8[code].paramSize);
 
-    VMArg* arg = vmStackNextGet(pThread);
+    VMArg* arg;
+    const char* val = vmStringPoolGet((SBHeader*)pThread->scriptData, no);
+    arg = vmStackNextGet(pThread);
+
     arg->type = VM_TYPE_STRING;
     arg->unk2 = strlen(val);
     arg->value.pointerVal = (void*)val;
@@ -1162,10 +1188,17 @@ int vmc_st(VMThread* pThread, u8 code){
 }
 
 int vmc_ld_arg(VMThread* pThread, u8 code){
-    int val = getOpcodeParam(pThread, code);
+    //Declaration order is load-bearing: scratch coloring here runs REVERSE to
+    //declaration order among competing named locals, so paramSize must be
+    //declared before data to land at r7 with data at r6.
+    int pc = pThread->reg.pc;
+    int paramSize = lbl_eu_8056ECE8[code].paramSize;
+    u8* data = pThread->codeData;
+    int val = getOpcodeParamArg(pThread, data, pc + 1, paramSize);
+
     vmPush(pThread, &pThread->stack[pThread->reg.unk8 - (val + 4)]);
 
-    incrementPc(pThread, code);
+    pThread->reg.pc += lbl_eu_8056ECE8[code].paramSize + 1;
     return VMC_RESULT_0;
 }
 
@@ -1395,14 +1428,18 @@ int vmc_ld_plugin(VMThread* pThread, u8 code){
     SBHeader* header = (SBHeader*)pThread->scriptData;
     SBSectionHeader* pluginImports = header->pluginImportsOfs;
     //Retail computes the import entry base BEFORE the decode loop so it is kept
-    //live across the loop (r6), shifting the loop's temp-byte regs to r7/r0.
+    //live across the loop (r6); the pushed arg reads through it with indexed
+    //loads (no materialized entry pointer).
     PluginImportEntry* entryBase = (PluginImportEntry*)poolEntryOfsGet(pluginImports, 0);
-    int val = getOpcodeParam(pThread, code);
+    //Same declaration/call skeleton as vmc_ld_arg: paramSize before data, with
+    //the arg-reader helper taking a materialized codeData pointer.
+    int pc = pThread->reg.pc;
+    u8* data = pThread->codeData;
+    int val = getOpcodeParamArg(pThread, data, pc + 1, lbl_eu_8056ECE8[code].paramSize);
     VMArg* puVar3 = vmStackNextGet(pThread);
     puVar3->type = VM_TYPE_PLUGIN;
-    PluginImportEntry* entry = &entryBase[val];
-    puVar3->unk2 = entry->unk0;
-    puVar3->value.intVal = entry->unk2;
+    puVar3->unk2 = entryBase[val].unk0;
+    puVar3->value.intVal = entryBase[val].unk2;
 
     incrementPc(pThread, code);
     return VMC_RESULT_0;
@@ -1965,16 +2002,20 @@ static inline int pluginSubTail(VMThread* pThread, u32 argCnt, int result, VMCOp
 }
 
 int vmc_call_ind(VMThread* pThread, u8 code){
+    //Pop the callee off the stack
     VMArg* arg = vmStackPrevGet(pThread);
 
-    if(arg->type == VM_TYPE_FUNCTION){
+    //Signed int local so MWCC emits signed cmpi like retail; switch so the
+    //dispatch compiles to retail's beq/beq/fallthrough-to-default chain
+    switch((int)arg->type){
+    case VM_TYPE_FUNCTION: {
         s16 curPkg = pThread->unk2C;
         if(curPkg != arg->unk2){
             //Far call: switch the thread over to the target package first
-            u32 target = arg->value.intVal;
+            int target = arg->value.intVal;
             int retPc = pThread->reg.pc + 1;
-            pThread->unk2C = arg->unk2;
             SBHeader* scriptData = vmState.packages[arg->unk2].scriptDataPtr;
+            pThread->unk2C = arg->unk2;
             pThread->scriptData = scriptData;
             pThread->codeData = getSectionEntriesPtr(scriptData->codeOfs);
             pThread->staticVarsEntries = getSectionEntriesPtr(scriptData->staticVarsOfs);
@@ -1983,17 +2024,52 @@ int vmc_call_ind(VMThread* pThread, u8 code){
         return vmc_call_entry(pThread, arg->value.intVal, curPkg, pThread->reg.pc + 1);
     }
 
-    if(arg->type == VM_TYPE_PLUGIN){
-        u32 argCnt = vmArgCntGet(pThread);
-        pThread->waitMode = FALSE;
+    case VM_TYPE_PLUGIN: {
+        //Full packed count word from the slot below the popped arg:
+        //bits 16-23 = declared count, bits 0-7 = actual count
+        //(NOTE: different packing than pluginSubTail, which uses bit 8).
+        //Read directly through the arg pointer so MWCC emits retail's single
+        //"lwz r29, -4(arg)" instead of re-deriving it from reg.sp
         PluginFunc func = vmState.plugins[arg->unk2].unk4[arg->value.uintVal].func;
+        u32 argCnt = (arg - 1)->value.uintVal;
+        pThread->waitMode = FALSE;
         int result = func(pThread);
-        return pluginSubTail(pThread, argCnt, result, &lbl_eu_8056ECE8[code]);
+
+        //Plugin-call tail (retail inlines it here)
+        if(pThread->reg.exception != 0){
+            return VMC_RESULT_0;
+        }
+        if(pThread->waitMode != FALSE){
+            return VMC_RESULT_1;
+        }
+
+        int declaredCnt = (argCnt >> 16) & 0xFF;
+        if(result > 1 || declaredCnt > result){
+            vmExceptionThrow(pThread, VM_EXCEPTION_8);
+            return VMC_RESULT_0;
+        }
+
+        int actualCnt = argCnt & 0xFF;
+        int sp = pThread->reg.sp;
+        int newSp = sp - (result + actualCnt + 1);
+        pThread->reg.sp = newSp;
+
+        //If the callee declares a return value, carry the top-of-stack arg to the new frame
+        if(declaredCnt != 0){
+            VMArg* src = &pThread->stack[sp - 1];
+            pThread->reg.sp = newSp + 1;
+            copyArg(&pThread->stack[newSp], src);
+        }
+
+        pThread->reg.pc += lbl_eu_8056ECE8[code].paramSize + 1;
+        return VMC_RESULT_0;
     }
 
+    default:
     saveArg(pThread, arg, 0);
     vmExceptionThrow(pThread, VM_EXCEPTION_CALLIND_INVALID_ARG);
     return VMC_RESULT_0;
+    }
 }
 
 int vmc_ret(VMThread* pThread, u8 code){

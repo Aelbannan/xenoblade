@@ -188,9 +188,18 @@ struct CItemBoxQuadColor {
     CItemBoxQuadColor(s16 _r, s16 _g, s16 _b, s16 _a) : r(_r), g(_g), b(_b), a(_a) {}
 };
 
-// 4 selection/vertex colors (0x20 bytes) built per-slot in func_801E2928.
+// 4 selection/vertex colours (0x20 bytes) built per-slot in func_801E2928.
 struct CItemBoxQuad {
     CItemBoxQuadColor col[4];
+};
+
+// POD views without ctors: func_801D6394 builds its colour pair member-wise
+// at the use site (retail shows bare sth/stw sequences, no ctor calls).
+struct CItemBoxColorPOD {
+    s16 r, g, b, a;
+};
+struct CItemBoxQuadPOD {
+    CItemBoxColorPOD col[4];
 };
 
 // 6-byte slot table: a u32 (bytes 0..3) + u16 (bytes 4..5), read from two
@@ -384,7 +393,7 @@ extern "C" char* func_80136190(char*, char*, u32);
 extern "C" void func_80139A18(nw4r::lyt::Layout*, char*, void*, void*);
 extern "C" void func_80137E7C(nw4r::lyt::Layout*, const char*, u32);
 extern "C" u32 func_801392C0();
-extern "C" u8 func_801392B4(u32);
+extern "C" int func_801392B4(u8);
 extern "C" f32 func_80139C98(u32 a, u32 b, u32 c, f32 d);
 extern "C" void func_801E40E8(CItemBoxInfo2*);
 extern "C" void func_801E43BC(CItemBoxInfo2*, u16, void*, u16, u32);
@@ -550,11 +559,19 @@ extern "C" void* func_80452C10__11CDeviceFontFUlPQ34nw4r3lyt6Layout(u32, nw4r::l
 extern "C" void func_8013676C(nw4r::lyt::Pane*, void*);
 extern "C" char* func_801355BC(void);
 extern "C" char* func_80138DA4(const char* msg);
-extern "C" u32 func_80138E90(u16);
-extern u32 lbl_eu_80664098;
 void func_80136E84(nw4r::lyt::Layout**, nw4r::lyt::ArcResourceAccessor*, const char*);
 void func_80136F08(nw4r::lyt::Layout*, nw4r::lyt::AnimTransform**, nw4r::lyt::ArcResourceAccessor*, char*);
 void func_801368C0(nw4r::lyt::Layout*, char*, u32);
+
+extern "C" u32 func_80138E90(u16);
+extern u32 lbl_eu_80664098;
+
+// 8-byte GXColorS10 returned by value in r3:r4 from func_801397AC.
+struct CItemBoxGXColor {
+    s16 r, g, b, a;
+};
+// Pane/material vertex-colour getter (flat retail symbol; returns in r3:r4).
+extern "C" CItemBoxGXColor func_801397AC(void* obj, int index);
 
 // Vtable view of the font-info object from CDeviceFont::func_80452C10:
 // virtual index 7 (vtable+0x24) returns the pane data bound via func_8013676C.

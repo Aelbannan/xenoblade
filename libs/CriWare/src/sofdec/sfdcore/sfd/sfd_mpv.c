@@ -118,7 +118,7 @@ void sfmpv_DoReformTc(void* self, void* frm, s64 pts, s32 rep);
 void sfmpv_Pts2Tc(s64 a, s32 v, s32 t, s32 u, u32* out);
 void sfmpv_NextTc(void* in, void* out);
 s32 sfmpv_FirstPicAtr(void* self, void* mpv, void* frm, void* pic);
-void sfmpv_SetMpvHd(void* self, s32 bitrate, void* pic);
+void sfmpv_SetMpvHd(void* self, s32 bitrate, u32* pic);
 s32 sfmpv_ChkBufSiz(void* self, void* para);
 s32 sfmpv_IsSkip(void* self, void* bpic);
 s32 sfmpv_IsEmptyBpic(void* self, s32 type, void* bpic);
@@ -129,7 +129,7 @@ s32 sfmpv_DecodeFrm(void* self, void* sj);
 s32 sfmpv_SetFrmPara(void* self, void* frm, void* para, void** out);
 void fn_803C9948(void* a, void* b, s32* out1, s32* out2);
 void fn_803C99C8(void* self);
-s32 sfmpv_GoDdelim(u8* self, s32 mask);
+s32 sfmpv_GoDdelim(u8* self, u32 unused, u32 mask);
 s32 sfmpv_InitInf(u8* self, u8* shc);
 void sfmpv_InitFrmObj(void* frm, const u32* src, s32 count);
 s32 sfmpv_ReprocessShc(void* self, void* shc, s32* out);
@@ -850,7 +850,7 @@ s32 sfmpv_DecodeOneUnit(void* self, s32 ch, s32 pat, s32 dlm, s32* out) {
         goto done;
     }
     if (pat != 0x80) {
-        if (sfmpv_GoDdelim(self, 0xcc) > 0) {
+        if (sfmpv_GoDdelim(self, 0, 0xcc) > 0) {
             *out = 1;
         }
     }
@@ -862,8 +862,9 @@ done:
 // sfmpv_ConcatSub
 // ---------------------------------------------------------------------------
 s32 sfmpv_ConcatSub(u8* self) {
-    u8* shc = *(u8**)(self + 0x2068);
+    u8* shc;
     s32 dlm;
+    shc = *(u8**)(self + 0x2068);
     if (SFSET_GetCond(self, 6) == 0) {
         u8* e00 = self + 0xe00;
         u8* ttu = self + 0xdd4;
@@ -879,9 +880,10 @@ s32 sfmpv_ConcatSub(u8* self) {
             dlm = t1 - *(s32*)(ttu + 0x24);
         }
     } else {
-        u8* p = *(u8**)(self + 0x00);
+        u32 p = *(u32*)self;
         s32 lastSmpl;
         s32 val;
+        /* sample-rate mismatch: synthesize a 44100-based conversion rate */
         if (*(u32*)(p + 0xc) != (u32)&lbl_eu_8051C4E0) {
             lastSmpl = 0;
             val = 0x10000 - 0x53bc;
@@ -890,8 +892,7 @@ s32 sfmpv_ConcatSub(u8* self) {
             goto check;
         }
         *(s32*)(self + 0xf8c) += lastSmpl;
-        dlm = UTY_MulDiv(*(s32*)(self + 0xf8c), *(s32*)(self + 0xdfc), val) - *(s32*)(self + 0xefc);
-        if (dlm < 0) {
+        if ((dlm = UTY_MulDiv(*(s32*)(self + 0xf8c), *(s32*)(self + 0xdfc), val) - *(s32*)(self + 0xefc)) < 0) {
             dlm = 0;
         }
     check:
@@ -1447,19 +1448,19 @@ void sfmpv_NextTc(void* in, void* out) {
     s32 t5 = *(s32*)((u8*)in + 0x14);
     s32 t6 = *(s32*)((u8*)in + 0x18);
     s32 rate = lbl_eu_8051C97C[t0];
-    s32 s = sum % 2;
     s32 a = t5 + t6 + 1 + sum / 2;
+    s32 s = sum % 2;
     s32 t1 = *(s32*)((u8*)in + 0x04);
     s32 d = a / rate;
     s32 e = *(s32*)((u8*)in + 0x10) + d;
-    s32 q1 = e / 60;
-    s32 f = *(s32*)((u8*)in + 0x0c) + q1;
+    s32 f = *(s32*)((u8*)in + 0x0c) + e / 60;
     s32 q2 = f / 60;
     s32 t2 = *(s32*)((u8*)in + 0x08);
     s32 t3rem = a - d * rate;
     s32 frem = f % 60;
     s32 erem = e % 60;
-    if (t1 == 0 && erem == 0 && frem % 10 == 0 && (u32)t3rem <= 1) {
+    /* drop-frame guard: branch chain skips the +2 when any carry term hits */
+    if (t1 != 0 && erem != 0 && frem % 10 != 0 && (u32)t3rem <= 1) {
         t3rem = 2;
     }
     *(s32*)((u8*)out + 0x00) = t0;
@@ -1522,12 +1523,26 @@ s32 sfmpv_FirstPicAtr(void* self, void* mpv, void* frm, void* pic) {
 // ---------------------------------------------------------------------------
 // sfmpv_SetMpvHd
 // ---------------------------------------------------------------------------
-void sfmpv_SetMpvHd(void* self, s32 bitrate, void* pic) {
-    void* shc = *(void**)((u8*)self + 0x2068);
+// OPEN ITEM (fixed-codegen stall, 33 mismatch / 26 structural / 7 reg_swap,
+// size exact, reloc drift 0): MWCC if-converts the header-slot diamond -
+// decomp emits `addi r31,r6,0xad0` speculatively ABOVE the shc+0x10 compare
+// (ble joins past the `li r31,0` override), while retail keeps the addi in a
+// forward branch-target block after `li r31,0; b`. Invariant across 6 source
+// shapes: else-if chain, inverted-polarity nested if, ternary (flat and inner
+// select), p=NULL-init nested if (300B variant), goto form, u32* pic typing,
+// decl-order permutations - all byte-identical output. Downstream clamp
+// coloring (pic[4] -> r3 vs retail r4) and MEM_Copy arg setup follow the same
+// shift. Not retried here: unit-level flag changes (-O4,s etc.) - other fns
+// in this TU match under Wii/1.1 defaults.
+void sfmpv_SetMpvHd(void* self, s32 bitrate, u32* pic) {
     void* p;
+    void* shc;
     s32 v;
     s32 n;
     v = *(s32*)((u8*)self + 0x2670);
+    shc = *(void**)((u8*)self + 0x2068);
+    /* header slot: usable only when a decode session exists and frame count is
+     * still 0 (retail branches: v==0 -> NULL, cnt>0 -> NULL, else v+0xad0) */
     if (v == 0) {
         p = NULL;
     } else if (*(s32*)((u8*)shc + 0x10) > 0) {
@@ -1538,12 +1553,15 @@ void sfmpv_SetMpvHd(void* self, s32 bitrate, void* pic) {
     if (p == NULL || *(u32*)p != 0) {
         return;
     }
-    n = *(s32*)((u8*)pic + 4);
-    if (n > 0x200) {
+    {
+        s32 sz = (s32)pic[1];
         n = 0x200;
+        if (sz < 0x200) {
+            n = sz;
+        }
     }
     *(u32*)((u8*)p + 0x238) = n;
-    MEM_Copy((u8*)p + 0x38, *(void**)pic, n);
+    MEM_Copy((u8*)p + 0x38, (void*)pic[0], n);
     if ((u32)(bitrate - 0x30000) == 0xffff) {
         *(s32*)((u8*)p + 4) = 0;
         *(s32*)((u8*)p + 8) = 0;
@@ -2271,22 +2289,30 @@ done:
 // ---------------------------------------------------------------------------
 // sfmpv_GoDdelim
 // ---------------------------------------------------------------------------
-s32 sfmpv_GoDdelim(u8* self, s32 mask) {
+// NOTE: residual 24-instruction reg swap vs retail: retail homes param3 (mask)
+// into r31 and param1 (self) into r30; this MWCC always homes param1 first.
+// Declaration-order/copy/coalescing levers all exhausted (see session notes).
+s32 sfmpv_GoDdelim(u8* self, u32 unused, u32 mask) {
     s32 n;
+    u32 m;
+    u8* obj;
+    u8* seg0;
+    u32 siz0;
+    u8* seg1;
+    s32 found;
+    s32 i;
     u32 info[7];
-    s32 ch;
     u32 r;
     u32 type;
-    s32 i;
-    s32 found;
-    ch = *(s32*)(self + 0x2070);
-    if (SFBUF_RingGetRead(self, ch, info) != 0) {
+    m = mask;
+    obj = self;
+    if (SFBUF_RingGetRead(obj, *(s32*)(obj + 0x2070), info) != 0) {
         return 0;
     }
     if (info[1] == 0) {
         return 0;
     }
-    r = sfmpv_SearchDelim(info, mask, &type);
+    r = sfmpv_SearchDelim(info, m, &type);
     if (r == 0) {
         n = (s32)(info[1] + info[3] - 3);
         n = (n > 0) ? n : 0;
@@ -2299,30 +2325,30 @@ s32 sfmpv_GoDdelim(u8* self, s32 mask) {
             n = 0;
         }
     }
-    SFBUF_RingAddRead(self, *(s32*)(self + 0x2070), n);
+    SFBUF_RingAddRead(obj, *(s32*)(obj + 0x2070), n);
     /* scan up to min(n,3) bytes of the (possibly two-segment) ring for a
      * non-zero byte; a nonzero byte means the skipped chunk carries data */
-    {
-        u8* p = (u8*)info[0];
-        found = 0;
-        for (i = 0; i < (n < 3 ? n : 3); i++) {
-            u8* p2;
-            if (i < (s32)info[1]) {
-                p2 = p;
-            } else {
-                p2 = (u8*)info[2] + (i - (s32)info[1]);
-            }
-            if (*(s8*)p2 != 0) {
-                found = 1;
-                break;
-            }
-            p++;
+    seg0 = (u8*)info[0];
+    siz0 = info[1];
+    seg1 = (u8*)info[2];
+    found = 0;
+    for (i = 0; i < (n < 3 ? n : 3); i++) {
+        u8* p2;
+        if (i < (s32)siz0) {
+            p2 = seg0;
+        } else {
+            p2 = seg1 + (i - (s32)siz0);
         }
+        if (*(s8*)p2 != 0) {
+            found = 1;
+            break;
+        }
+        seg0++;
     }
     if (found != 0) {
-        *(s64*)(self + 0x9c0) += n;
+        *(s64*)(obj + 0x9c0) += n;
     }
-    *(s64*)(self + 0x9b8) += n;
+    *(s64*)(obj + 0x9b8) += n;
     return n;
 }
 
@@ -2586,19 +2612,26 @@ int fn_803CA368(void) { return 0x0; }
 // sfmpv_ReprocessShc
 // ---------------------------------------------------------------------------
 s32 sfmpv_ReprocessShc(void* self, void* shc, s32* out) {
+    s32 v;
     u8* p;
     void* hd;
     void* mpv;
-    u32 pic[2];
     u32 out2;
+    u32 pic[2];
 
-    {
-        s32 v = *(s32*)((u8*)self + 0x2670);
-        hd = *(void**)((u8*)self + 0x2068);
-        /* nested ?: reproduces retail's fall-through-NULL / branch-to-addr layout */
-        p = (v == 0) ? NULL : (*(s32*)((u8*)hd + 0x10) > 0 ? NULL : (u8*)v + 0xad0);
-    }
     *out = 0;
+    v = *(s32*)((u8*)self + 0x2670);
+    hd = *(void**)((u8*)self + 0x2068);
+    if (v != 0) {
+        if (*(s32*)((u8*)hd + 0x10) <= 0) {
+            p = (u8*)v + 0xad0;
+            goto join_p;
+        }
+        p = NULL;
+        goto join_p;
+    }
+    p = NULL;
+join_p:
     if (p == NULL) {
         return 0;
     }
@@ -2606,7 +2639,6 @@ s32 sfmpv_ReprocessShc(void* self, void* shc, s32* out) {
         return 0;
     }
     mpv = *(void**)shc;
-    pic[0] = (u32)((u8*)p + 0x38);
     *(u32*)((u8*)self + 0xdd4) = *(u32*)((u8*)p + 0xc);
     *(u32*)((u8*)self + 0xdd8) = *(u32*)((u8*)p + 0x10);
     *(u32*)((u8*)self + 0xddc) = *(u32*)((u8*)p + 0x14);
@@ -2618,6 +2650,7 @@ s32 sfmpv_ReprocessShc(void* self, void* shc, s32* out) {
     *(u32*)((u8*)self + 0xdf4) = *(u32*)((u8*)p + 0x2c);
     *(u32*)((u8*)self + 0xdf8) = *(u32*)((u8*)p + 0x30);
     *(u32*)((u8*)self + 0xdfc) = *(u32*)((u8*)p + 0x34);
+    pic[0] = (u32)((u8*)p + 0x38);
     pic[1] = *(u32*)((u8*)p + 0x238);
     if (MPV_DecodePicAtr(mpv, pic, &out2) != 0) {
         return SFLIB_SetErr(self, 0xff000f1b);

@@ -2,7 +2,13 @@
 // Replace stubs with high-level C/C++ during decomp.
 
 #include "kyoshin/harness_catalog.hpp"
+// CfGimmick.hpp declares getBdatStringColumnValue with `int`, but
+// code_801862C0.hpp (pulled in by harness_catalog.hpp) already declared it
+// with `s32` -- hide the conflicting declaration while including (CGame.cpp
+// pattern). This TU never calls the function.
+#define getBdatStringColumnValue cfGimmickObjBdatColumnDeclUnused
 #include "kyoshin/cf/CfGimmickObject.hpp"
+#undef getBdatStringColumnValue
 
 using namespace cf;
 
@@ -86,7 +92,9 @@ void func_801F61B0(cf::CfGimmickObject* self, int mode) {
     if (self->field_68 != 0) {
         ::CfGimmickObject* obj = (::CfGimmickObject*)func_80186BC8(self->field_68);
         if (obj != 0) {
-            ((void (*)(::CfGimmickObject*, int))obj->vtable[0x158 >> 2])(obj, mode);
+            // Slot 0x158 through the abstract vtable view so MWCC emits the
+            // canonical virtual-call register chain.
+            ((ICfGimmickObjectVt*)obj)->setMode(mode);
             func_804B1DC0((char*)obj + 0x60c, mode);
         }
     }
@@ -730,11 +738,8 @@ int func_801F75CC(cf::CfGimmickObject* self) {
         func_8020A010();
         u32 flags = self->field_74;
         if ((flags & 0x4000) != 0) {
-            f32 delta = func_80496288(lbl_eu_80663E14);
-            f32 cur = self->field_170 - delta;
-            f32 limit = lbl_eu_806681A0;
-            self->field_170 = cur;
-            if (cur > limit)
+            self->field_170 -= func_80496288(lbl_eu_80663E14);
+            if (self->field_170 > lbl_eu_806681A0)
                 return 1;
             self->field_74 &= ~0x4000;
         } else {

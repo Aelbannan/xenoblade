@@ -110,6 +110,39 @@ extern "C" void* __RTTI__10IWorkEvent;
 extern "C" void* __RTTI__11CWorkThread;
 }
 
+// Context-ring entry template used by CView's message fan-out (TU-local).
+// Mirrors CMsgParamEntry but groups the payload (offset 0x4..0x22) so the
+// retail unconditional prologue payload copies reproduce as assignments.
+struct CViewMsgTemplate {
+    u32 command;  // 0x00
+    struct {
+        u32 wid;         // 0x04
+        u32 field_0x8;
+        u32 field_0xc;
+        u32 field_0x10;
+        u32 field_0x14;
+        u32 field_0x18;
+        u32 field_0x1c;
+        u16 field_0x20;
+        u8 field_0x22;
+    } payload;
+    u8 flag;      // 0x23
+};
+
+// Payload-only view (0x20) of a context message -- the fan-out template
+// array type (retail dest homes are 0x20-stride).
+struct CViewMsgPayload {
+    u32 wid;         // 0x00
+    u32 field_0x4;
+    u32 field_0x8;
+    u32 field_0xc;
+    u32 field_0x10;
+    u32 field_0x14;
+    u32 field_0x18;
+    u16 field_0x1c;
+    u8 field_0x1e;
+};
+
 // Retail <10> deleting-dtor shape: no vtable store; the entry clears are
 // guarded by a null-test of the entry-array address (r3+4, not foldable).
 // NOTE: our build (-RTTI on) additionally emits a vptr store here (+0xC) that
@@ -552,89 +585,90 @@ setRect_tail:
 }
 
 bool CView::attachRenderWork(CWorkThread* pThread) {
-    // Dual context-ring enqueue: tag0+WorkID then tag1+thread*.
-    // Raw ring manipulation (not CMsgParam<10>) to match retail's
-    // stmw r21 / -0x80 frame / stwux slot / retroactive flag+wid.
-    volatile struct {
-        u32 w0, w1, w2, w3, w4, w5, w6;
-        s16 half;
-        u8 byte;
-        u8 pad;
-    } snapFan0;
-    volatile struct {
-        u32 w0, w1, w2, w3, w4, w5, w6;
-        s16 half;
-        u8 byte;
-        u8 pad;
-    } snapTag1;
+    // Dual context-ring enqueue (tag 0 = attach the thread's WORK_ID,
+    // tag 1 = attach the thread pointer). Each message is built field-wise
+    // in a scalar-replaced local (payload seeded from an uninitialized
+    // template), then stored to the ring slot -- reproducing retail's
+    // register-resident payload fan and signed-first-modulo.
+    volatile CMsgParamEntry msgWork;   // tag-0 payload source
+    volatile CMsgParamEntry msgThread; // tag-1 payload source
+    s32 sumSigned;
+    s32 capSigned;
+    s32 slotIndex;
+    u32 byteOff;
     u32 sum;
     u32 slot;
     u8* slotPtr;
-    u32 prevIdx;
-    u32 writeIdx;
+    u32 workId;
+    u32 newIdx;
 
-    // Enqueue tag 0: attach work ID to unk238
-    sum = unk3F0 + mContextRingWriteIndex;
+    workId = pThread->mWorkID;
+
+    // Enqueue tag 0: attach work ID to unk238.
+    capSigned = (s32)mContextRingCapacity;
+    sumSigned = (s32)unk3F0 + (s32)mContextRingWriteIndex;
+    slotIndex = sumSigned % capSigned;
+    byteOff = (u32)slotIndex * 0x24u;
+    u8* entry = mContextRingBase;
+    entry += byteOff;
+    *(u32*)entry = 0; // tag 0
+    *(u32*)(entry + 0x4) = (u32)msgWork.wid;
+    *(u32*)(entry + 0x8) = msgWork.unk8;
+    *(u32*)(entry + 0xC) = msgWork.unkC;
+    *(u32*)(entry + 0x10) = msgWork.unk10;
+    *(u32*)(entry + 0x14) = msgWork.unk14;
+    *(u32*)(entry + 0x18) = msgWork.unk18;
+    *(u32*)(entry + 0x1C) = msgWork.unk1C;
+    *(u16*)(entry + 0x20) = msgWork.unk20;
+    entry[0x22] = msgWork.unk22;
+    entry[0x23] = 0;
+
+    newIdx = mContextRingWriteIndex + 1;
+    mContextRingWriteIndex = newIdx;
+    unk3FC = newIdx - 1;
+
+    sum = unk3F0 + unk3FC;
     slot = sum % mContextRingCapacity;
-    slotPtr = (u8*)mContextRingBase + slot * 0x24;
-    *(u32*)slotPtr = 0; // tag 0
-    *(u32*)(slotPtr + 0x4) = snapFan0.w0;
-    *(u32*)(slotPtr + 0x8) = snapFan0.w1;
-    *(u32*)(slotPtr + 0xC) = snapFan0.w2;
-    *(u32*)(slotPtr + 0x10) = snapFan0.w3;
-    *(u32*)(slotPtr + 0x14) = snapFan0.w4;
-    *(u32*)(slotPtr + 0x18) = snapFan0.w5;
-    *(u32*)(slotPtr + 0x1C) = snapFan0.w6;
-    *(s16*)(slotPtr + 0x20) = snapFan0.half;
-    slotPtr[0x22] = snapFan0.byte;
-    slotPtr[0x23] = 0;
-
-    prevIdx = mContextRingWriteIndex;
-    writeIdx = mContextRingWriteIndex + 1;
-    mContextRingWriteIndex = writeIdx;
-    unk3FC = prevIdx;
-
-    sum = unk3F0 + prevIdx;
-    slot = sum % mContextRingCapacity;
-    slotPtr = (u8*)mContextRingBase + slot * 0x24;
+    slotPtr = mContextRingBase + slot * 0x24;
     slotPtr[0x23] = 3;
 
     sum = unk3F0 + unk3FC;
     slot = sum % mContextRingCapacity;
-    slotPtr = (u8*)mContextRingBase + slot * 0x24;
-    *(u32*)(slotPtr + 0x4) = pThread->mWorkID;
+    slotPtr = mContextRingBase + slot * 0x24;
+    *(u32*)(slotPtr + 0x4) = workId;
 
+    // Enqueue tag 1: attach the thread pointer to unk258.
+    capSigned = (s32)mContextRingCapacity;
+    sumSigned = (s32)unk3F0 + (s32)mContextRingWriteIndex;
+    slotIndex = sumSigned % capSigned;
+    byteOff = (u32)slotIndex * 0x24u;
+    entry = mContextRingBase;
+    entry += byteOff;
+    *(u32*)entry = 1; // tag 1
+    *(u32*)(entry + 0x4) = (u32)msgThread.wid;
+    *(u32*)(entry + 0x8) = msgThread.unk8;
+    *(u32*)(entry + 0xC) = msgThread.unkC;
+    *(u32*)(entry + 0x10) = msgThread.unk10;
+    *(u32*)(entry + 0x14) = msgThread.unk14;
+    *(u32*)(entry + 0x18) = msgThread.unk18;
+    *(u32*)(entry + 0x1C) = msgThread.unk1C;
+    *(u16*)(entry + 0x20) = msgThread.unk20;
+    entry[0x22] = msgThread.unk22;
+    entry[0x23] = 0;
 
-    // Enqueue tag 1: attach IWorkEvent* to unk258
-    sum = unk3F0 + mContextRingWriteIndex;
+    newIdx = mContextRingWriteIndex + 1;
+    mContextRingWriteIndex = newIdx;
+    unk3FC = newIdx - 1;
+
+    sum = unk3F0 + unk3FC;
     slot = sum % mContextRingCapacity;
-    slotPtr = (u8*)mContextRingBase + slot * 0x24;
-    *(u32*)slotPtr = 1; // tag 1
-    *(u32*)(slotPtr + 0x4) = snapTag1.w0;
-    *(u32*)(slotPtr + 0x8) = snapTag1.w1;
-    *(u32*)(slotPtr + 0xC) = snapTag1.w2;
-    *(u32*)(slotPtr + 0x10) = snapTag1.w3;
-    *(u32*)(slotPtr + 0x14) = snapTag1.w4;
-    *(u32*)(slotPtr + 0x18) = snapTag1.w5;
-    *(u32*)(slotPtr + 0x1C) = snapTag1.w6;
-    *(s16*)(slotPtr + 0x20) = snapTag1.half;
-    slotPtr[0x22] = snapTag1.byte;
-    slotPtr[0x23] = 0;
-
-    prevIdx = mContextRingWriteIndex;
-    writeIdx = mContextRingWriteIndex + 1;
-    mContextRingWriteIndex = writeIdx;
-    unk3FC = prevIdx;
-
-    sum = unk3F0 + prevIdx;
-    slot = sum % mContextRingCapacity;
-    slotPtr = (u8*)mContextRingBase + slot * 0x24;
+    slotPtr = mContextRingBase + slot * 0x24;
     slotPtr[0x23] = 3;
 
     sum = unk3F0 + unk3FC;
     slot = sum % mContextRingCapacity;
-    slotPtr = (u8*)mContextRingBase + slot * 0x24;
-    *(u32*)(slotPtr + 0x4) = (u32)(WORK_ID)pThread;
+    slotPtr = mContextRingBase + slot * 0x24;
+    *(u32*)(slotPtr + 0x4) = (u32)pThread;
 
     return true;
 }
@@ -863,25 +897,49 @@ void func_8043E010__5CViewFv(CView* view) {
 // Drain the context ring: classify each pending message and apply side effects.
 #if 1
 void CView::updateMsg() {
-#if 1
-    struct CtxSnap {
-        u32 w0;
-        u32 w1;
-        u32 w2;
-        u32 w3;
-        u32 w4;
-        u32 w5;
-        u32 w6;
-        s16 half;
-        u8 byte;
-        u8 pad;
-    };
-    // Three uninit 0x24 snaps (retail -0x150 homes @ 0x48 / 0x28 / 0x08).
-    // Keep only these - dual fan-copy volatiles force -0x140 / stmw r17.
-    volatile CtxSnap snapFan0;
-    volatile CtxSnap snapFan1;
-    volatile CtxSnap snapTag1;
-#endif
+    // Three context-message templates fanned out to child views. Retail
+    // seeds each template's payload from a dead uninitialized local in the
+    // prologue (six 0x24 homes: templates @ 0x48/0x28/0x08, sources @
+    // 0xC0/0xE4/0x9C); keep the copies unconditional so the homes survive.
+    // volatile keeps the six templates in stack homes without scalar
+    // replacement (retail -0x150 frame); field-wise copies avoid MWCC's
+    // illegal volatile struct-assignment operand.
+    volatile CViewMsgTemplate msgWork;   // tag-0 fan-out payload source
+    volatile CViewMsgTemplate msgEvent;  // tag-1 fan-out payload source
+    volatile CViewMsgTemplate msgDetach; // case-1 fan-out payload source
+    volatile CViewMsgTemplate srcEvent;
+    volatile CViewMsgTemplate srcWork;
+    volatile CViewMsgTemplate srcDetach;
+
+    // Field-wise payload seeds.
+    msgWork.payload.wid = srcWork.payload.wid;
+    msgWork.payload.field_0x8 = srcWork.payload.field_0x8;
+    msgWork.payload.field_0xc = srcWork.payload.field_0xc;
+    msgWork.payload.field_0x10 = srcWork.payload.field_0x10;
+    msgWork.payload.field_0x14 = srcWork.payload.field_0x14;
+    msgWork.payload.field_0x18 = srcWork.payload.field_0x18;
+    msgWork.payload.field_0x1c = srcWork.payload.field_0x1c;
+    msgWork.payload.field_0x20 = srcWork.payload.field_0x20;
+    msgWork.payload.field_0x22 = srcWork.payload.field_0x22;
+    msgEvent.payload.wid = srcEvent.payload.wid;
+    msgEvent.payload.field_0x8 = srcEvent.payload.field_0x8;
+    msgEvent.payload.field_0xc = srcEvent.payload.field_0xc;
+    msgEvent.payload.field_0x10 = srcEvent.payload.field_0x10;
+    msgEvent.payload.field_0x14 = srcEvent.payload.field_0x14;
+    msgEvent.payload.field_0x18 = srcEvent.payload.field_0x18;
+    msgEvent.payload.field_0x1c = srcEvent.payload.field_0x1c;
+    msgEvent.payload.field_0x20 = srcEvent.payload.field_0x20;
+    msgEvent.payload.field_0x22 = srcEvent.payload.field_0x22;
+    msgDetach.payload.wid = srcDetach.payload.wid;
+    msgDetach.payload.field_0x8 = srcDetach.payload.field_0x8;
+    msgDetach.payload.field_0xc = srcDetach.payload.field_0xc;
+    msgDetach.payload.field_0x10 = srcDetach.payload.field_0x10;
+    msgDetach.payload.field_0x14 = srcDetach.payload.field_0x14;
+    msgDetach.payload.field_0x18 = srcDetach.payload.field_0x18;
+    msgDetach.payload.field_0x1c = srcDetach.payload.field_0x1c;
+    msgDetach.payload.field_0x20 = srcDetach.payload.field_0x20;
+    msgDetach.payload.field_0x22 = srcDetach.payload.field_0x22;
+
     u32 tag0;
     u32 tag1;
     u32 flag;
@@ -909,6 +967,9 @@ void CView::updateMsg() {
     u8* childRing;
     u8* childSlot;
     u32 workId;
+    s32 nextRead;
+    s32 capS;
+    volatile CViewMsgTemplate* slotMsg;
 
     goto updateMsg_check;
 
@@ -966,14 +1027,86 @@ updateMsg_loop:
                 childView = CView::convertToView(childThread);
                 if (childView != nullptr) {
 #if 1
-                    CMsgParam<10>& childMessages =
-                        *reinterpret_cast<CMsgParam<10>*>(&childView->mContextMsgVtable);
-                    childMessages.enqueue(0);
-                    childMessages.last().unk23 = 3;
-                    childMessages.last().wid = workThread->mWorkID;
-                    childMessages.enqueue(1);
-                    childMessages.last().unk23 = 3;
-                    childMessages.last().wid = (WORK_ID)workThread;
+                    // Fan-out tag 0 (attach the child-facing work ID) then
+                    // tag 1 (attach the thread pointer), seeding each ring
+                    // slot's payload from the prologue templates.
+                    tag0 = 0;
+                    flag = 3;
+                    tag1 = 1;
+                    workId = workThread->mWorkID;
+
+                    sumSigned = (s32)childView->unk3F0 + (s32)childView->mContextRingWriteIndex;
+                    capSigned = (s32)childView->mContextRingCapacity;
+                    slotIndex = sumSigned / capSigned;
+                    byteOff = (u32)(sumSigned - slotIndex * capSigned) * 0x24u;
+                    childSlot = childView->mContextRingBase;
+                    childSlot += byteOff;
+                    *(u32*)childSlot = tag0;
+                    slotMsg = (CViewMsgTemplate*)childSlot;
+                    slotMsg->payload.wid = msgWork.payload.wid;
+                    slotMsg->payload.field_0x8 = msgWork.payload.field_0x8;
+                    slotMsg->payload.field_0xc = msgWork.payload.field_0xc;
+                    slotMsg->payload.field_0x10 = msgWork.payload.field_0x10;
+                    slotMsg->payload.field_0x14 = msgWork.payload.field_0x14;
+                    slotMsg->payload.field_0x18 = msgWork.payload.field_0x18;
+                    slotMsg->payload.field_0x1c = msgWork.payload.field_0x1c;
+                    slotMsg->payload.field_0x20 = msgWork.payload.field_0x20;
+                    slotMsg->payload.field_0x22 = msgWork.payload.field_0x22;
+                    slotMsg->flag = (u8)tag0;
+
+                    writeIdx = childView->mContextRingWriteIndex + 1;
+                    prevIdx = writeIdx - 1;
+                    childView->mContextRingWriteIndex = writeIdx;
+                    childView->unk3FC = prevIdx;
+
+                    sumU = childView->unk3F0 + prevIdx;
+                    slotU = sumU / childView->mContextRingCapacity;
+                    childSlot = childView->mContextRingBase +
+                        (sumU - slotU * childView->mContextRingCapacity) * 0x24u;
+                    childSlot[0x23] = (u8)flag;
+
+                    sumU = childView->unk3F0 + childView->unk3FC;
+                    slotU = sumU / childView->mContextRingCapacity;
+                    childSlot = childView->mContextRingBase +
+                        (sumU - slotU * childView->mContextRingCapacity) * 0x24u;
+                    *(u32*)(childSlot + 0x4) = workId;
+
+                    sumSigned = (s32)childView->unk3F0 + (s32)childView->mContextRingWriteIndex;
+                    capSigned = (s32)childView->mContextRingCapacity;
+                    slotIndex = sumSigned / capSigned;
+                    byteOff = (u32)(sumSigned - slotIndex * capSigned) * 0x24u;
+                    childSlot = childView->mContextRingBase;
+                    childSlot += byteOff;
+                    *(u32*)childSlot = tag1;
+                    slotMsg = (CViewMsgTemplate*)childSlot;
+                    slotMsg->payload.wid = msgEvent.payload.wid;
+                    slotMsg->payload.field_0x8 = msgEvent.payload.field_0x8;
+                    slotMsg->payload.field_0xc = msgEvent.payload.field_0xc;
+                    slotMsg->payload.field_0x10 = msgEvent.payload.field_0x10;
+                    slotMsg->payload.field_0x14 = msgEvent.payload.field_0x14;
+                    slotMsg->payload.field_0x18 = msgEvent.payload.field_0x18;
+                    slotMsg->payload.field_0x1c = msgEvent.payload.field_0x1c;
+                    slotMsg->payload.field_0x20 = msgEvent.payload.field_0x20;
+                    slotMsg->payload.field_0x22 = msgEvent.payload.field_0x22;
+                    slotMsg->flag = (u8)tag0;
+                    ((CViewMsgTemplate*)childSlot)->flag = (u8)tag0;
+
+                    writeIdx = childView->mContextRingWriteIndex + 1;
+                    childView->mContextRingWriteIndex = writeIdx;
+                    prevIdx = writeIdx - 1;
+                    childView->unk3FC = prevIdx;
+
+                    sumU = childView->unk3F0 + prevIdx;
+                    slotU = sumU / childView->mContextRingCapacity;
+                    childSlot = childView->mContextRingBase +
+                        (sumU - slotU * childView->mContextRingCapacity) * 0x24u;
+                    childSlot[0x23] = (u8)flag;
+
+                    sumU = childView->unk3F0 + childView->unk3FC;
+                    slotU = sumU / childView->mContextRingCapacity;
+                    childSlot = childView->mContextRingBase +
+                        (sumU - slotU * childView->mContextRingCapacity) * 0x24u;
+                    *(u32*)(childSlot + 0x4) = (u32)workThread;
 #else
                     tag0 = 0;
                     flag = 3;
@@ -1100,11 +1233,48 @@ updateMsg_loop:
                 childView = CView::convertToView(childThread);
                 if (childView != nullptr) {
 #if 1
-                    CMsgParam<10>& childMessages =
-                        *reinterpret_cast<CMsgParam<10>*>(&childView->mContextMsgVtable);
-                    childMessages.enqueue(1);
-                    childMessages.last().unk23 = 3;
-                    childMessages.last().wid = msgItem;
+                    // Fan-out tag 1 (attach the event pointer) with the
+                    // case-1 template payload.
+                    tag1 = 1;
+                    flag = 3;
+                    tag0 = 0;
+
+                    sumSigned = (s32)childView->unk3F0 + (s32)childView->mContextRingWriteIndex;
+                    capSigned = (s32)childView->mContextRingCapacity;
+                    slotIndex = sumSigned / capSigned;
+                    byteOff = (u32)(sumSigned - slotIndex * capSigned) * 0x24u;
+                    childSlot = childView->mContextRingBase;
+                    childSlot += byteOff;
+                    *(u32*)childSlot = tag1;
+                    slotMsg = (CViewMsgTemplate*)childSlot;
+                    slotMsg->payload.wid = msgDetach.payload.wid;
+                    slotMsg->payload.field_0x8 = msgDetach.payload.field_0x8;
+                    slotMsg->payload.field_0xc = msgDetach.payload.field_0xc;
+                    slotMsg->payload.field_0x10 = msgDetach.payload.field_0x10;
+                    slotMsg->payload.field_0x14 = msgDetach.payload.field_0x14;
+                    slotMsg->payload.field_0x18 = msgDetach.payload.field_0x18;
+                    slotMsg->payload.field_0x1c = msgDetach.payload.field_0x1c;
+                    slotMsg->payload.field_0x20 = msgDetach.payload.field_0x20;
+                    slotMsg->payload.field_0x22 = msgDetach.payload.field_0x22;
+                    slotMsg->flag = (u8)tag0;
+                    ((CViewMsgTemplate*)childSlot)->flag = (u8)tag0;
+
+                    writeIdx = childView->mContextRingWriteIndex + 1;
+                    prevIdx = writeIdx - 1;
+                    childView->mContextRingWriteIndex = writeIdx;
+                    childView->unk3FC = prevIdx;
+
+                    sumU = childView->unk3F0 + prevIdx;
+                    slotU = sumU / childView->mContextRingCapacity;
+                    childSlot = childView->mContextRingBase +
+                        (sumU - slotU * childView->mContextRingCapacity) * 0x24u;
+                    childSlot[0x23] = (u8)flag;
+
+                    sumU = childView->unk3F0 + childView->unk3FC;
+                    slotU = sumU / childView->mContextRingCapacity;
+                    childSlot = childView->mContextRingBase +
+                        (sumU - slotU * childView->mContextRingCapacity) * 0x24u;
+                    *(u32*)(childSlot + 0x4) = msgItem;
 #else
                     tag1 = 1;
                     flag = 3;
@@ -1191,10 +1361,11 @@ updateMsg_loop:
         }
 
     updateMsg_advance:
-        readIdx = unk3F0;
-        cap = mContextRingCapacity;
         mContextRingWriteIndex -= 1;
-        unk3F0 = (readIdx + 1) - ((readIdx + 1) / cap) * cap;
+        // Signed division: retail emits divw for the ring advance modulo.
+        nextRead = (s32)unk3F0 + 1;
+        capS = (s32)mContextRingCapacity;
+        unk3F0 = (u32)(nextRead - (nextRead / capS) * capS);
 
     updateMsg_check:
         if (mContextRingWriteIndex != 0) {

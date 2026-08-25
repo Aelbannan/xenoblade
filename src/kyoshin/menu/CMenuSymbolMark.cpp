@@ -12,7 +12,7 @@
 
 // Retail helper imports (unmangled retail symbol names).
 extern "C" u32 func_801380A0(u16);
-extern "C" u32 func_8009CF8C(u32);
+extern "C" u8 func_8009CF8C(u32);
 extern "C" u32 func_80138138(u16);
 extern "C" u32 func_801361E8(u32, const char*, u32);
 extern "C" int func_80138574(void*, u32);
@@ -62,6 +62,10 @@ extern u8 lbl_eu_8052CDF8[];
 // for an entry whose kind byte is a real unlockable kind and whose table
 // lookup returns 1.
 extern "C" int func_8011D338() {
+    // Both table bases are hoisted into nonvolatile address registers by MWCC.
+    // Both table bases are hoisted into nonvolatile address registers by MWCC.
+    const char* str = (const char*)&lbl_eu_804FE720[0];
+    u32* tbl = lbl_eu_80573D18;
     for (u32 rank = 1; rank < 0x1b; rank++) {
         u32 start = func_801380A0((u16)rank);
         if ((u16)start == 0) {
@@ -71,15 +75,12 @@ extern "C" int func_8011D338() {
         for (u32 id = start; (u16)id < end; id++) {
             u32 kind = (u8)func_8009CF8C((u16)id + 0x220);
             u32 check = 0;
-            if (kind != 0) {
-                if (kind != 0xc8 && kind != 0xfe && kind != 0xff) {
-                    check = 1;
-                }
+            if (kind != 0 && kind != 0xc8 && kind != 0xfe && kind != 0xff) {
+                check = 1;
             }
             if (check != 0 &&
-                (u8)func_801361E8(lbl_eu_80573D18[func_80138138((u16)id)],
-                                  (const char*)(&lbl_eu_804FE720[0]) + 0x2f,
-                                  (u16)id) == 1) {
+                (u8)func_801361E8(tbl[func_80138138((u16)id)],
+                                  str + 0x2f, (u16)id) == 1) {
                 return 1;
             }
         }
@@ -109,9 +110,9 @@ extern "C" void __dt__Q34nw4r3lyt6LayoutFv(void* self, int flags);
 
 // Retail singletons used by the menu create helpers.
 extern u32 lbl_eu_80663FC8;                    // installed CMenuSymbolMark pointer
-extern f32 lbl_eu_806670D4;                    // timer reset value
-extern f32 lbl_eu_806670E0;                    // timer threshold
-extern f32 lbl_eu_806670E8;                    // timer tick delta
+extern const f32 lbl_eu_806670D4;              // timer reset value
+extern const f32 lbl_eu_806670E0;              // timer threshold
+extern const f32 lbl_eu_806670E8;              // timer tick delta
 extern "C" void* getWorkMem__17CWorkThreadSystemFv();
 extern "C" CMenuSymbolMark* __ct__CMenuSymbolMark(CMenuSymbolMark* self, CProcess* parent);
 
@@ -201,17 +202,17 @@ void CMenuSymbolMark::Init() {
     if (mArchiveFP == 0) {
         return;
     }
-    const char* S = (const char*)&lbl_eu_804FE720[0];
     mUnkClass.createRegion((int)getHandleMEM2__Q23mtl10MemManagerFv(), 0x5400,
-                           S + 0x53, 0);
-    Class_8045F858 region(&mUnkClass);
-    for (int i = 0; i < 16; i++) {
-        SymbolMarkEntry& entry = mEntries[i];
-        nw4r::lyt::ArcResourceAccessor* acc = func_801355F4();
-        func_80136E84((nw4r::lyt::Layout**)&entry.layout, acc, S + 0x63);
-        nw4r::lyt::Layout* lay = (nw4r::lyt::Layout*)entry.layout;
-        lay->Animate();
-        func_8013676C(lay->GetRootPane(), (u32)func_801355A0());
+                           (const char*)&lbl_eu_804FE720[0x53], 0);
+    Class_8045F858 regionGuard(&mUnkClass);
+    for (u32 i = 0; i < 16; i++) {
+        func_80136E84((nw4r::lyt::Layout**)&mEntries[i].layout, func_801355F4(),
+                      (const char*)&lbl_eu_804FE720[0x63]);
+        // Re-read the layout pointer at every use so nothing spans the virtual
+        // calls (retail reloads the slot from the entry base each time).
+        ((nw4r::lyt::Layout*)mEntries[i].layout)->Animate();
+        func_8013676C(((nw4r::lyt::Layout*)mEntries[i].layout)->GetRootPane(),
+                      (u32)func_801355A0());
     }
     mField_274 = 1;
     // The `if (this)` idiom splits the IScnRender subobject address
@@ -226,23 +227,35 @@ void CMenuSymbolMark::Init() {
         0x7c, (u32)getWorkMem__17CWorkThreadSystemFv());
     if (item != 0) {
         // Construct the CProcess base over the raw allocation, then patch the
-        // interface vtables and clear the move/draw ptmf triples.
+        // interface vtables and clear the move/draw ptmf triples. Statement
+        // order mirrors the retail load/store interleave.
         __ct__8CProcessFv(item);
-        item->vt10 = &lbl_eu_8052CDB4;
-        item->ptmfMove[0] = __ptmf_null[0];
-        item->ptmfMove[1] = __ptmf_null[1];
-        item->ptmfMove[2] = __ptmf_null[2];
-        item->ptmfDraw[0] = __ptmf_null[0];
-        item->ptmfDraw[1] = __ptmf_null[1];
-        item->ptmfDraw[2] = __ptmf_null[2];
-        item->vt54 = &lbl_eu_8052CD50[9]; // +0x24
+        item->vt10 = (void*)&lbl_eu_8052CDB4[0];
+        u32* ptmf = (u32*)__ptmf_null;
+        u32 ptmf1 = ptmf[1];
+        u32 ptmf0 = ptmf[0];
+        u32 ptmf2;
+        item->ptmfMove[0] = ptmf0;
+        item->ptmfMove[1] = ptmf1;
+        ptmf2 = ptmf[2];
+        item->ptmfMove[2] = ptmf2;
+        ptmf1 = ptmf[1];
+        ptmf0 = ptmf[0];
+        item->ptmfDraw[0] = ptmf0;
+        item->ptmfDraw[1] = ptmf1;
+        ptmf2 = ptmf[2];
+        item->ptmfDraw[2] = ptmf2;
+        // Retail stores the CD50 vtable over BOTH interface slots (+0x24 for
+        // the second interface); the earlier vt10 store survives as a dead
+        // store in the retail bytes.
+        item->vt10 = (void*)&lbl_eu_8052CD50[0];
+        item->vt54 = (void*)&lbl_eu_8052CD50[0x24];
         item->state70 = 0;
         item->field78 = 0;
     }
     mRenderItem = item;
     reinterpret_cast<CProcess*>(item)->Regist(
-        *reinterpret_cast<CProcess**>(reinterpret_cast<char*>(this) + 0x14),
-        false);
+        reinterpret_cast<CProcess*>(GetParent()), false);
 }
 
 // ---------- CMenuSymbolMark::Term ----------
@@ -398,13 +411,17 @@ void CMenuSymbolMark::Move() {
 // (0xAFA4 mask), entry count, then render all visible entries through a
 // DrawInfo.
 void CMenuSymbolMark::cbRenderBefore() {
-    if (func_800426F0__9CTaskGameFv(getInstance__9CTaskGameFv()) != 0) return;
-    if (lbl_eu_80663E28 & 0x200000) goto cont;
+    // Nested guard reproduces retail's beq-body/b-exit branch pair.
+    if (func_800426F0__9CTaskGameFv(getInstance__9CTaskGameFv()) == 0) {
+        if (!(lbl_eu_80663E28 & 0x200000)) {
+            goto cont;
+        }
+    }
     return;
 cont:
     if (mArchiveFP == 0) return;
     if (func_8013BE50() == 0) return;
-    if (!(getUnk80664658()->field_214 & 0x100000)) return;
+    if (getUnk80664658()->field_214 & 0x100000) return;
     if (lbl_eu_80663E24 & 0xAFA40000) return;
     if (mEntryCount == 0) return;
     GXSetZMode(GX_FALSE, GX_NEVER, GX_FALSE);
@@ -413,7 +430,7 @@ cont:
     u8 drawInfo[0x54];
     __ct__Q34nw4r3lyt8DrawInfoFv((nw4r::lyt::DrawInfo*)&drawInfo[0]);
     func_80137250((nw4r::lyt::DrawInfo*)&drawInfo[0]);
-    for (int i = 0; i < 16; i++) {
+    for (u32 i = 0; i < 16; i++) {
         if ((u8)i >= mEntryCount) {
             break;
         }
@@ -589,28 +606,29 @@ extern "C" __declspec(noinline) void func_8011E778(
 // actors are polled (vtable 0x160 gate for ids 9-10) and their measured
 // values (vtable 0x12C / 0xAC) are forwarded to func_8011E778.
 extern "C" void func_8011EA98(CMenuSymbolMark* self) {
-    const u32 zero = 0;
-    for (u32 i = 0; i < (u32)self->mEntryCount; i++) {
-        SymbolMarkEntry& entry = self->mEntries[i];
-        if (entry.flag1 == 0) {
-            func_8011E778(self, &entry, &entry.worldX,
-                          (void*)entry.unk1C, zero);
-            continue;
-        }
-        CfActorView* actor = (CfActorView*)func_800B708C(entry.unk04);
-        if (actor == 0) {
-            entry.flag0 = 0;
-            continue;
-        }
-        if ((entry.unk00 - 9) <= 1) { // unk00 == 9 or 10
-            if (actor->_v160() == 0) {
-                entry.flag0 = 0;
+    void* value12c;
+    u32 zero = 0;
+    u8 i;
+    for (i = 0; i < self->mEntryCount; i++) {
+        SymbolMarkEntry* entry = &self->mEntries[i];
+        if (entry->flag1 != 0) {
+            CfActorView* actor = (CfActorView*)func_800B708C(entry->unk04);
+            if (actor == 0) {
+                entry->flag0 = zero;
                 continue;
             }
+            // unk00 == 9 or 10: gate on the actor's live flag (vtable 0x160).
+            if ((entry->unk00 - 9) <= 1 && actor->_v160() == 0) {
+                entry->flag0 = zero;
+                continue;
+            }
+            value12c = actor->_v12C(100);
+            Vec* valueAC = (Vec*)actor->_v0AC();
+            func_8011E778(self, entry, valueAC, value12c, zero);
+        } else {
+            func_8011E778(self, entry, &entry->worldX,
+                          (void*)entry->unk1C, zero);
         }
-        void* value12c = actor->_v12C(100);
-        void* valueAC = actor->_v0AC();
-        func_8011E778(self, &entry, valueAC, value12c, zero);
     }
 }
 
@@ -618,29 +636,29 @@ extern "C" void func_8011EA98(CMenuSymbolMark* self) {
 // Timer tick: accumulates into mField_49C until it passes the threshold,
 // then resets and rebuilds the unlocked-id list in mBuffer from the archive.
 extern "C" void func_8011EBA8(CMenuSymbolMark* self) {
-    f32 t = self->mField_49C + lbl_eu_806670E8;
-    self->mField_49C = t;
-    if (t < lbl_eu_806670E0) {
+    // Increment applied first; body runs only past the threshold.
+    self->mField_49C = self->mField_49C + lbl_eu_806670E8;
+    if (self->mField_49C < lbl_eu_806670E0) {
         return;
     }
     self->mField_49C = lbl_eu_806670D4;
     self->mField_498 = 0;
     memset(self->mBuffer, 0, 0x200);
+    // Archive pointer and string base are hoisted into nonvolatile regs.
+    const char* names = (const char*)&lbl_eu_804FE720[0];
+    void* archive = self->mArchiveFP;
     for (u32 id = 1; id <= self->mSomeValue2; id++) {
-        if (func_80138574(self->mArchiveFP, id) == 0) {
+        if (func_80138574(archive, id) == 0) {
             continue;
         }
-        if ((u8)func_801361E8((u32)self->mArchiveFP,
-                              (const char*)&lbl_eu_804FE720[0] + 0x96,
-                              id)
-            == 0) {
+        if ((u8)func_801361E8((u32)archive, names + 0x96, id) == 0) {
             continue;
         }
         u32 n = self->mField_498;
         self->mBuffer[n] = id;
-        n++;
-        self->mField_498 = n;
-        if (n >= 0x80) {
+        u32 next = n + 1;
+        self->mField_498 = next;
+        if (next >= 0x80) {
             return;
         }
     }
@@ -652,19 +670,21 @@ extern "C" void func_8011EBA8(CMenuSymbolMark* self) {
 // func_800B6BEC.
 extern "C" void func_8011EC94(CMenuSymbolMark* self) {
     // Global loaded before the object field to match MWCC's operand order.
-    f32 t = lbl_eu_806670E8 + self->mField_6A4;
+    f32 t = self->mField_6A4 + lbl_eu_806670E8;
     self->mField_6A4 = t;
     if (t < lbl_eu_806670E0) {
         return;
     }
     self->mField_6A4 = lbl_eu_806670D4;
     self->mField_6A0 = 0;
-    // Retail expands this clear as a 4-iteration countdown of 32 stores.
+    // Retail expands the inner 32-element clear fully and keeps the 4-iteration
+    // outer loop as a countdown on an advancing row pointer (+0x80 per pass).
+    u32* row = &self->mArray4A0[0];
     for (u32 i = 0; i < 4; i++) {
-        u32* row = &self->mArray4A0[i * 0x20];
         for (u32 j = 0; j < 0x20; j++) {
             row[j] = 0;
         }
+        row += 0x20;
     }
     if (cf::CfGameManager::getPlayer(0) == 0) {
         return;
@@ -699,13 +719,15 @@ extern "C" void func_8011EDDC(CMenuSymbolMark* self) {
     }
     self->mField_8AC = lbl_eu_806670D4;
     self->mField_8A8 = 0;
-    memset(self->mArray6A8, 0, 0x200);
+    // Retail's ctr=4 / 32-stw run is MWCC's x32 unroll of a flat zero loop.
+    for (u32 i = 0; i < 0x80; i++) {
+        self->mArray6A8[i] = 0;
+    }
     if (cf::CfGameManager::getPlayer(0) == 0) {
         return;
     }
     CfObjList* list = (CfObjList*)func_800B6C58();
-    ScnObjPositions* scn =
-        (ScnObjPositions*)func_80496264(self->mScn, -1);
+    Vec* pos;
     for (CfObjListNode* node = list->sentinel->next; node != list->sentinel;
          node = node->next) {
         CfMarkerFields* obj = (CfMarkerFields*)node->object;
@@ -713,18 +735,21 @@ extern "C" void func_8011EDDC(CMenuSymbolMark* self) {
             continue;
         }
         u32 flags = obj->flags64;
-        if (!(flags & 0x20000)) {
-            if (!(flags & 0x10000)) {
+        if (!(flags & 0x4000)) {
+            if (!(flags & 0x8000)) {
                 continue;
             }
         }
-        // Anchor position of the object (vtable slot 0xAC).
-        Vec* pos = (Vec*)((CfActorView*)obj)->_v0AC();
+        // Anchor position of the object (vtable slot 0xAC); the scene bounds
+        // query runs inside the loop, after the position is captured.
+        pos = (Vec*)((CfActorView*)obj)->_v0AC();
+        ScnObjPositions* scn =
+            (ScnObjPositions*)func_80496264(self->mScn, -1);
+        Vec extent;
         Vec anchor;
         anchor.x = scn->posX;
         anchor.y = scn->posY;
         anchor.z = scn->posZ;
-        Vec extent;
         extent.x = scn->extX;
         extent.y = scn->extY;
         extent.z = scn->extZ;
@@ -733,9 +758,8 @@ extern "C" void func_8011EDDC(CMenuSymbolMark* self) {
         }
         u32 n = self->mField_8A8;
         self->mArray6A8[n] = obj->name74;
-        n++;
-        self->mField_8A8 = n;
-        if (n >= 0x80) {
+        self->mField_8A8 = n + 1;
+        if (n + 1 >= 0x80) {
             return;
         }
     }

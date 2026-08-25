@@ -69,12 +69,13 @@ __declspec(noinline) cf::CTaskREvtSequence* __ct__cf_CTaskREvtSequence(
     self->field_0x3C = w0;
     u32 w2 = *src++;
     self->field_0x44 = w2;
-    src = __ptmf_null;
-    w0 = *src++;
-    w1 = *src++;
+    // Second copy reuses the advanced pointer with relative indices (retail
+    // reloads +0/+4/+8 through the same base register).
+    w0 = src[-3];
+    w1 = src[-2];
     self->field_0x4C = w1;
     self->field_0x48 = w0;
-    w2 = *src++;
+    w2 = src[-1];
     self->field_0x50 = w2;
     // Final vtable block: primary at +0x10, secondary sub-vtables at +0x24
     // and +0xAC into the retail vtable block.
@@ -123,7 +124,9 @@ __declspec(noinline) cf::CTaskREvtSequence* __ct__cf_CTaskREvtSequence(
     self->field_0x120 = 0;
     self->field_0x124 = 0;
     self->field_0x128 = 0;
-    self->field_0x12C = f0;
+    // volatile-qualified store pins the stfs at its field-slot position
+    // (MWCC otherwise hoists it up next to the lfs); addressing stays folded.
+    *(volatile f32*)&self->field_0x12C = f0;
     self->field_0x130 = 1;
     self->field_0x134 = 0;
     self->field_0x138 = 0;
@@ -811,6 +814,8 @@ void func_80169050(cf::CTaskREvtSequence* self) {
     // the 0x8 flag path already re-armed the move callback) arm the 0x20000
     // bit and, when the 0x200 gate is clear, walk the field_0xE8 table
     // arming the 0x1 bit of the event-window halfword for type-6 entries.
+    u32 flag1;
+    u32 flag2;
     if ((self->field_0x5C & 0x4) == 0) {
         return;
     }
@@ -821,17 +826,15 @@ void func_80169050(cf::CTaskREvtSequence* self) {
             s32 n = CXReadUncompLH(
                 reinterpret_cast<CXUncompContextLH*>(self->mCxBuffer),
                 reinterpret_cast<const void*>(self->field_0x124), 0x2000);
-            if (n > 0) {
-                self->field_0x124 += 0x2000;
-                continue;
+            if (n <= 0) {
+                self->field_0x5C &= ~0x40;
+                self->field_0x120 =
+                    reinterpret_cast<UnkSeq120*>(self->field_0x11C);
+                break;
             }
-            self->field_0x5C &= ~0x40;
-            self->field_0x120 =
-                reinterpret_cast<UnkSeq120*>(self->field_0x11C);
-            break;
+            self->field_0x124 += 0x2000;
         }
     }
-    u32 flag1;
     if (self->field_0x5C & 0x8) {
         // Color the scene window by the buffer's type halfword, then install
         // the +0x3C move-callback table (0x80530A88).
@@ -844,10 +847,11 @@ void func_80169050(cf::CTaskREvtSequence* self) {
             func_8049602C(lbl_eu_80663E14, 0,
                           reinterpret_cast<EvtSeqVec4*>(&ml::CCol4::black));
         }
-        const u32* src = lbl_eu_80530A88;
-        self->field_0x40 = src[1];
-        self->field_0x3C = src[0];
-        self->field_0x44 = src[2];
+        u32* pool = reinterpret_cast<u32*>(lbl_eu_80530A88);
+        u32 v0 = pool[0];
+        self->field_0x40 = pool[1];
+        self->field_0x3C = v0;
+        self->field_0x44 = pool[2];
         flag1 = 1;
     } else {
         flag1 = 0;
@@ -859,32 +863,38 @@ void func_80169050(cf::CTaskREvtSequence* self) {
     if (self->field_0x5C & 0x200) {
         return;
     }
-    u32 flag2 = 0;
-    const u32* src94 = lbl_eu_80530A94;
-    self->field_0x40 = src94[1];
-    self->field_0x3C = src94[0];
-    self->field_0x44 = src94[2];
-    if (self->field_0xE8 != 0) {
-        u16 h = lbl_eu_806642E0;
-        UnkE8Table* table = self->field_0xE8;
-        EvtSeqC4Buf* c4 = reinterpret_cast<EvtSeqC4Buf*>(self->field_0xC4);
-        for (u32 j = 0; j < c4->field_0x38; j++) {
+    u32* pool94 = reinterpret_cast<u32*>(lbl_eu_80530A94);
+    UnkE8Table* e8 = self->field_0xE8;
+    u32 v94 = pool94[0];
+    self->field_0x40 = pool94[1];
+    self->field_0x3C = v94;
+    self->field_0x44 = pool94[2];
+    flag1 = 0;
+    flag2 = 0;
+    if (e8 != 0) {
+        // Zero-extended halfword kept as int so the type-6 store matches
+        // retail's clrlwi/ori/sth sequence.
+        int h = lbl_eu_806642E0;
+        for (u32 j = 0;
+             j < reinterpret_cast<EvtSeqC4Buf*>(self->field_0xC4)->field_0x38;
+             j++) {
+            // Retail reloads the table base through the field each iteration.
             UnkE8Table* entry = reinterpret_cast<UnkE8Table*>(
-                reinterpret_cast<u8*>(table) + table->field_0x4 * j);
+                reinterpret_cast<u8*>(self->field_0xE8) +
+                self->field_0xE8->field_0x4 * j);
             if (entry->field_0xA == 3) {
                 if (entry->field_0x8 == 0) {
                     flag2 = 1;
                 }
                 flag1 = 1;
             } else if (entry->field_0xA == 6) {
-                lbl_eu_806642E0 = h | 1;
+                lbl_eu_806642E0 = static_cast<u16>((h & 0xffff) | 1);
             }
         }
     }
-    // Fade the BGM back in unless both walk flags were raised while the event
-    // manager was already ready; then arm the presentation flag and rebuild
-    // the voice/UI system once the manager is up.
-    if (!(flag1 != 0 && flag2 != 0 && func_80164910() == 0)) {
+    // Fade the BGM back in unless both walk flags were raised while the
+    // event manager was already ready.
+    if (flag1 == 0 || flag2 == 0 || func_80164910() != 0) {
         func_80189318(0, lbl_eu_8066765C);
         func_80189424(lbl_eu_8066765C);
         func_8007C0F8__Q22cf13CfGameManagerFv();
@@ -916,7 +926,7 @@ void func_80169A38(cf::CTaskREvtSequence* self) {
     if (cf::CfGameManager::func_800829B8() != 0) {
         return;
     }
-    u32 flag1;
+    bool flag1;
     if (self->field_0x5C & 0x8) {
         EvtSeqC4Buf* buf = reinterpret_cast<EvtSeqC4Buf*>(self->field_0xC4);
         s16 t = buf->field_0x44;
@@ -928,16 +938,16 @@ void func_80169A38(cf::CTaskREvtSequence* self) {
                           reinterpret_cast<EvtSeqVec4*>(&ml::CCol4::black));
         }
         u32 w0, w1, w2;
-        const u32* src = &lbl_eu_80530ADC[0];
+        const u32* src = lbl_eu_80530ADC;
         w0 = *src++;
-        flag1 = 1;
+        flag1 = true;
         w1 = *src++;
         self->field_0x40 = w1;
         self->field_0x3C = w0;
         w2 = *src++;
         self->field_0x44 = w2;
     } else {
-        flag1 = 0;
+        flag1 = false;
     }
     if (flag1 != 0) {
         return;
@@ -952,15 +962,20 @@ void func_80169A38(cf::CTaskREvtSequence* self) {
     // cond (retail r31): unsigned field_0x100 >= entry->field_0xC, kept in a
     // callee-saved register across the walks and re-tested before BB38.
     u32 cond;
+    u32 n;
     UnkStateTable_D0* entry;
+    u32 scaled;
     if (flag2 != 0) {
         func_80496294(lbl_eu_80663E14, lbl_eu_80667668);
         cond = 0;
     } else {
         func_80496294(lbl_eu_80663E14, lbl_eu_8066766C);
-        UnkStateTable_D0* d0 = self->field_0xD0;
+        // Single multi-def web: born at the field_0xD0 load, then advanced
+        // to the selected entry (keeps entry's live range long enough that
+        // the allocator colors it ahead of the walk counter, like retail).
+        entry = self->field_0xD0;
         entry = reinterpret_cast<UnkStateTable_D0*>(
-            reinterpret_cast<u8*>(d0) + d0->field_0x4 * self->field_0xF8);
+            reinterpret_cast<u8*>(entry) + entry->field_0x4 * self->field_0xF8);
         if (func_80496288(lbl_eu_80663E14) > lbl_eu_80667658) {
             self->field_0x104 += 1;
             self->field_0x100 += 1;
@@ -969,7 +984,7 @@ void func_80169A38(cf::CTaskREvtSequence* self) {
     }
     if (cond != 0) {
         u32 w1, w0, w2;
-        const u32* src = &lbl_eu_80530AE8[0];
+        const u32* src = lbl_eu_80530AE8;
         w0 = *src++;
         w1 = *src++;
         self->field_0x40 = w1;
@@ -979,8 +994,8 @@ void func_80169A38(cf::CTaskREvtSequence* self) {
     } else {
         if ((s32)self->field_0x100 >= 1) {
             if ((self->field_0x5C & 0x400000) == 0) {
-                u32 scaled = 0;
-                u32 n = 0;
+                n = 0;
+                scaled = 0;
                 while (n < self->field_0xA8) {
                     UnkEvtListEntry* e = *(UnkEvtListEntry**)(
                         (u8*)self->field_0xA4 + scaled);
@@ -992,16 +1007,14 @@ void func_80169A38(cf::CTaskREvtSequence* self) {
             }
         }
     }
-    {
-        u32 scaled = 0;
-        u32 n = 0;
-        while (n < self->field_0xA8) {
-            UnkEvtListEntry* e = *(UnkEvtListEntry**)(
-                (u8*)self->field_0xA4 + scaled);
-            e->vf_0x24();
-            n++;
-            scaled += 4;
-        }
+    n = 0;
+    scaled = 0;
+    while (n < self->field_0xA8) {
+        UnkEvtListEntry* e = *(UnkEvtListEntry**)(
+            (u8*)self->field_0xA4 + scaled);
+        e->vf_0x24();
+        n++;
+        scaled += 4;
     }
     // Final fade-out check recomputes the table entry locally (retail does
     // not reuse the flag2-branch pointer here).
@@ -1704,19 +1717,16 @@ int func_8016B164(u8* data, const char* name, s32* out, s32* out2) {
 int func_8016B384(u8* data, const char* name, f32* out) {
     // Same ResFile walk as func_8016B5A4, but the matched entry must be a
     // type-1 user-data record and the resolved data's first float is
-    // published into `out`.
-    u8* userData;
+    // published into `out`. Locals follow func_8016B5A4's register plan.
     int numAnmChr;
-    int i;
     numAnmChr =
         GetResAnmChrNumEntries__Q34nw4r3g3d7ResFileCFv(data + 0xC);
-    for (i = 0; i < numAnmChr; i++) {
+    for (int i = 0; i < numAnmChr; i++) {
         nw4r::g3d::ResAnmChr anmChr(func_8049E708(data, i));
-        userData = reinterpret_cast<u8*>(anmChr.GetResUserData());
+        u8* userData = reinterpret_cast<u8*>(anmChr.GetResUserData());
         if (userData == 0) {
             continue;
-        }
-        if (userData == 0) {
+        } else if (userData == 0) {
             nw4r::db::Panic(lbl_eu_80530D18, 0x57, lbl_eu_80530CFC,
                             lbl_eu_80530CF0, lbl_eu_806623C4);
         }
@@ -1729,8 +1739,14 @@ int func_8016B384(u8* data, const char* name, f32* out) {
         if ((reinterpret_cast<u32>(result) & 3) != 0) {
             nw4r::db::Panic(lbl_eu_80530D54, 0x26, lbl_eu_80530D2C);
         }
-        if (result == 0) {
-            return 0;
+        if (result != 0) {
+            if (result == 0) {
+                nw4r::db::Panic(lbl_eu_80530DC4, 0x26, lbl_eu_80530DA8,
+                                lbl_eu_80530D68, lbl_eu_806623CC);
+            }
+        } else {
+            // Breaks to the shared loop-exit return (retail beq-to-tail).
+            break;
         }
         if (result == 0) {
             nw4r::db::Panic(lbl_eu_80530DC4, 0x26, lbl_eu_80530DA8,
@@ -1740,22 +1756,22 @@ int func_8016B384(u8* data, const char* name, f32* out) {
             nw4r::db::Panic(lbl_eu_80530DC4, 0x26, lbl_eu_80530DA8,
                             lbl_eu_80530D68, lbl_eu_806623CC);
         }
-        if (result == 0) {
-            nw4r::db::Panic(lbl_eu_80530DC4, 0x26, lbl_eu_80530DA8,
-                            lbl_eu_80530D68, lbl_eu_806623CC);
-        }
-        EvtSeqResEntry* entry = reinterpret_cast<EvtSeqResEntry*>(result);
-        if (entry->field_0xC != 1) {
+        // Signed compare: retail emits cmpi (not cmpli) against type 1.
+        if (static_cast<s32>(
+                reinterpret_cast<EvtSeqResEntry*>(result)->field_0xC) != 1) {
             nw4r::db::Panic(lbl_eu_80530E74, 0x3D, lbl_eu_80530E30);
         }
         if (result == 0) {
             nw4r::db::Panic(lbl_eu_80530D94, 0x26, lbl_eu_80530D78,
                             lbl_eu_80530D68, lbl_eu_806623C8);
         }
-        u32 addr = 0;
-        if (entry->field_0x4 != 0) {
-            addr = reinterpret_cast<u32>(reinterpret_cast<u8*>(result) +
-                                         entry->field_0x4);
+        // Float payload: field_0x4 is a self-relative offset.
+        u32 addr;
+        if (reinterpret_cast<EvtSeqResEntry*>(result)->field_0x4 != 0) {
+            addr = reinterpret_cast<u32>(result) +
+                   reinterpret_cast<EvtSeqResEntry*>(result)->field_0x4;
+        } else {
+            addr = 0;
         }
         *out = *reinterpret_cast<f32*>(addr);
         return 1;

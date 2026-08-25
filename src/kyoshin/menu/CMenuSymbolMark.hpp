@@ -16,21 +16,22 @@ public:
     void removeRenderCB(IScnRender* cb);
 };
 
-// Global float constant pool (SDA-relative float loads).
-extern f32 lbl_eu_806670D4;
-extern f32 lbl_eu_806670D8;
-extern f32 lbl_eu_806670DC;
-extern f32 lbl_eu_806670E0;
-extern f32 lbl_eu_806670E4;
-extern f32 lbl_eu_806670E8;
-extern f32 lbl_eu_806670EC;
-extern f32 lbl_eu_806670F0;
-extern f32 lbl_eu_806670F4;
-extern f32 lbl_eu_806670F8;
-extern f32 lbl_eu_806670FC;
-extern f32 lbl_eu_80667100;
-extern f32 lbl_eu_80667104;
-extern f32 lbl_eu_80667108;
+// Global float constant pool (SDA-relative float loads). Declared const so
+// MWCC treats the loads as constants and hoists them above the frame stores.
+extern const f32 lbl_eu_806670D4;
+extern const f32 lbl_eu_806670D8;
+extern const f32 lbl_eu_806670DC;
+extern const f32 lbl_eu_806670E0;
+extern const f32 lbl_eu_806670E4;
+extern const f32 lbl_eu_806670E8;
+extern const f32 lbl_eu_806670EC;
+extern const f32 lbl_eu_806670F0;
+extern const f32 lbl_eu_806670F4;
+extern const f32 lbl_eu_806670F8;
+extern const f32 lbl_eu_806670FC;
+extern const f32 lbl_eu_80667100;
+extern const f32 lbl_eu_80667104;
+extern const f32 lbl_eu_80667108;
 extern f32 lbl_eu_8066710C;
 extern f32 lbl_eu_8066A1F8;
 
@@ -203,8 +204,9 @@ public:
 // no vtable is emitted).
 class CfActorView {
 public:
-    virtual void _v000();
-    virtual void _v004();
+    // MWCC prepends two implicit slots (destructor pair) to this view's
+    // layout, so the leading two placeholder slots are omitted to keep the
+    // remaining _vNNN names aligned with real retail vtable offsets.
     virtual void _v008();
     virtual void _v00C();
     virtual void _v010();

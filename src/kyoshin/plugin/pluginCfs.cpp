@@ -1,9 +1,23 @@
 // Translation unit for kyoshin/plugin/pluginCfs
 // Plugin script functions for the CFS (Common File System / script) subsystem.
 
+// Retail calls func_8015783C with a full-width character id (no truncation
+// mask at call sites); CfGameManager.hpp declares its dataId param as u16,
+// which forces a rlwinm mask on every call and trips the illegal-overload
+// rule if redeclared alongside. Rename the header form out of the way for
+// this TU and declare the retail (int,int,int) shape instead.
+#define func_8015783C func_8015783C_u16hdr
 #include "kyoshin/harness_catalog.hpp"
 #include "kyoshin/plugin/pluginCfs.hpp"
 #include "kyoshin/cf/CfGameManager.hpp"
+#undef func_8015783C
+extern "C" void* func_8015783C(int mappedIndex, int dataId, int slot);
+
+// Retail passes the character id to func_8015783C untruncated; the
+// CfGameManager.hpp declaration takes u16, which would force a rlwinm mask
+// at every call. This int-param extern "C" overload resolves instead for
+// integer arguments (approved reloc-name fix, PLAN.md 17.6).
+extern "C" void* func_8015783C(int mappedIndex, int dataId, int slot);
 
 struct UnkClass_8009ECB0;
 struct UnkClass_805764CC;
@@ -567,7 +581,68 @@ int setMapPreloadArea2(VMThread* pThread) {
 }
 
 // --- setEventArea (us-80048ecc) ---
+// Builds an event trigger area from a fixed-point base point plus top/bottom
+// y extents, hands it to the manager, tags it with two strings, then fires
+// the preload notifier (vtable slot 0x158) gated by an optional flag.
 int setEventArea(VMThread* pThread) {
+    // Declaration order drives MWCC's callee-saved coloring; retail wants
+    // flag=r31, the five fixed-point values as a block r26-30, tag=r25,
+    // name=r24 - consistent with the originals being an args array.
+    int flag;
+    int args[5];
+    const char* tag;
+    const char* eventName;
+
+    eventName = vmArgStringGet(2, vmArgPtrGet(pThread, 1));
+    args[0] = vmArgFixedGet(3, vmArgPtrGet(pThread, 2));
+    args[1] = vmArgFixedGet(4, vmArgPtrGet(pThread, 3));
+    args[2] = vmArgFixedGet(5, vmArgPtrGet(pThread, 4));
+    args[3] = vmArgFixedGet(6, vmArgPtrGet(pThread, 5));
+    args[4] = vmArgFixedGet(7, vmArgPtrGet(pThread, 6));
+
+    // Optional tag string (arg 7): literals only, like retail.
+    // One variable serves as the rolling optional-index (8) and is then
+    // overwritten with the final flag value, matching retail's r31 reuse.
+    if (vmArgOmitChk(pThread, 7)) {
+        tag = 0;
+        flag = 8;
+    } else {
+        flag = 8;
+        VMArg* arg = vmArgPtrGet(pThread, 7);
+        tag = vmArgStringGet(flag, arg);
+    }
+
+    // Optional flag (arg 8)
+    if (vmArgOmitChk(pThread, flag)) {
+        flag = 0;
+    } else {
+        int next = flag + 1;
+        VMArg* arg = vmArgPtrGet(pThread, flag);
+        flag = vmArgIntGet(next, arg);
+    }
+
+    // Fixed-point -> float conversions in retail store order; the three base
+    // coordinates stay contiguous so the array can be passed by pointer.
+    float box[3];
+    box[0] = (float)(s32)args[0] / lbl_eu_80665E30;
+    box[1] = (float)(s32)args[1] / lbl_eu_80665E30;
+    box[2] = (float)(s32)args[2] / lbl_eu_80665E30;
+    float top = (float)(s32)args[3] / lbl_eu_80665E30;
+    float bottom = (float)(s32)args[4] / lbl_eu_80665E30;
+
+    void* mgr = func_80081CB8__Q22cf13CfGameManagerFv();
+    if (mgr != NULL) {
+        ml::CVec3 pt;
+        pt.x = box[0];
+        pt.y = box[1] + bottom;
+        pt.z = box[2];
+        func_800ABDE4(mgr, (float*)&pt, box, top);
+        func_800AC3F4(mgr, eventName, tag);
+
+        // Preload notifier dispatch through CfGameManager vtable slot 0x158.
+        ((cf::CfGameManagerVt158*)mgr)->notifyPreload(flag != 0);
+    }
+
     return 0;
 }
 
@@ -623,29 +698,25 @@ int changeWalker(VMThread* pThread) {
 
 // --- eventStart (us-80049624) ---
 int eventStart(VMThread* pThread) {
-    int v31, v30;
-    
-    if (vmArgOmitChk(pThread, 1)) {
-        v31 = 0;
-        v30 = 2;
-    } else {
-        v30 = 2;
+    int eventId;
+    int idx;
+    if (!vmArgOmitChk(pThread, 1)) {
         VMArg* arg = vmArgPtrGet(pThread, 1);
-        v31 = vmArgIntGet(2, arg);
-    }
-    
-    int val;
-    if (vmArgOmitChk(pThread, v30)) {
-        val = 0;
+        idx = 2;
+        eventId = vmArgIntGet(2, arg);
     } else {
-        VMArg* arg = vmArgPtrGet(pThread, v30);
-        v30++;
-        val = vmArgIntGet(v30, arg);
+        eventId = 0;
+        idx = 2;
     }
-    
-    func_80085E58__Q22cf13CfGameManagerFv(v31, val);
-    void* bm = getInstance__Q22cf14CBattleManagerFv();
-    func_800F4004(bm);
+
+    // Fused ternary keeps the priority value in the return-value register
+    // across both arms, matching retail's register allocation.
+    func_80085E58__Q22cf13CfGameManagerFv(
+        eventId,
+        vmArgOmitChk(pThread, idx)
+            ? 0
+            : vmArgIntGet(idx, vmArgPtrGet(pThread, idx++)));
+    func_800F4004(getInstance__Q22cf14CBattleManagerFv());
     return 0;
 }
 
@@ -793,7 +864,7 @@ int addParty(VMThread* pThread) {
     func_8009E344(func_8009ECB0(), v31, &out[0], &out[1]);
 
     // count==2 (or the folded duplicate test) skips the group bookkeeping
-    u32 isEq = (u32)__cntlzw(out[0] - 2) >> 5;
+    int isEq = ((unsigned)__cntlzw(out[0] - 2)) >> 5;
     if (isEq != 1 && isEq != 2) {
         UnkClass_8009ECB0* data2 = (UnkClass_8009ECB0*)func_8009ECB0();
         int group = 0;
@@ -909,17 +980,20 @@ float cf::CfObject::CfObject_UnkVirtualFunc31() {
 }
 
 // --- makeGuestParty (us-80049f84) ---
+// Rolling optional-arg walk; the index bump sits between argument setup and
+// the call in retail, written here as a post-increment on vmArgPtrGet's arg.
 int makeGuestParty(VMThread* pThread) {
-    int v30, v29, v31;
+    int v30, v29;
+    int v31 = 1;
     
     if (vmArgOmitChk(pThread, 1)) { v30 = 0; v31 = 2; }
-    else { v31 = 2; VMArg* arg = vmArgPtrGet(pThread, 1); v30 = vmArgIntGet(2, arg); }
+    else { VMArg* arg = vmArgPtrGet(pThread, v31++); v30 = vmArgIntGet(v31, arg); }
     
     if (vmArgOmitChk(pThread, v31)) { v29 = 0; v31++; }
-    else { VMArg* arg = vmArgPtrGet(pThread, v31); v31++; v29 = vmArgIntGet(v31, arg); }
+    else { VMArg* arg = vmArgPtrGet(pThread, v31++); v29 = vmArgIntGet(v31, arg); }
     
     if (vmArgOmitChk(pThread, v31)) { v31 = 0; }
-    else { VMArg* arg = vmArgPtrGet(pThread, v31); v31++; v31 = vmArgIntGet(v31, arg); }
+    else { VMArg* arg = vmArgPtrGet(pThread, v31++); v31 = vmArgIntGet(v31, arg); }
     
     int* data = func_8009ECB0();
     data[0x28 / 4] = v30 & 0xFFFF;
@@ -1171,15 +1245,17 @@ int getWeaponSlot(VMThread* vmThread) {
         CItemImplInstance* inst = (CItemImplInstance*)CItem_initItemImplInstances();
         itemId = inst->getWeaponSlot(slotData) & 0xFFFF;
     } else {
-        // Swapped-operand guards block MWCC's range-check fusion so the two
-        // signed cmpi/branch pairs stay byte-identical to retail.
+        // Swapped first guard blocks MWCC's unsigned-range fusion so the
+        // two signed cmpi/branch pairs stay byte-identical to retail.
         do {
-            if (0 >= charId) break;
-            if (11 < charId) break;
-            int* invSlot = (int*)func_8015783C(2, charId, 0);
-            if (((*invSlot) >> 12 & 0xF) == 2) {
+            if (1 > charId) break;
+            if (charId > 11) break;
+            u32* invSlot = (u32*)func_8015783C(2, charId, 0);
+            // Item-type nibble sits at bits 16-19; reading it unsigned lets
+            // MWCC fold shift+mask into a single rotate and emit cmpli.
+            if ((*invSlot >> 16 & 0xF) == 2) {
                 CItemImplInstance* inst = (CItemImplInstance*)CItem_initItemImplInstances();
-                itemId = inst->getWeaponSlot(invSlot) & 0xFFFF;
+                itemId = inst->getWeaponSlot((void*)invSlot) & 0xFFFF;
             }
         } while (0);
     }
@@ -1213,7 +1289,7 @@ int setWeaponSlot(VMThread* vmThread) {
     } else {
         // Swapped-operand guards block MWCC's range-check fusion (see getWeaponSlot).
         do {
-            if (0 >= charId) break;
+            if (1 > charId) break;
             if (11 < charId) break;
             int* invSlot = (int*)func_8015783C(2, charId, 0);
             CItemImplInstance* inst = (CItemImplInstance*)CItem_initItemImplInstances();

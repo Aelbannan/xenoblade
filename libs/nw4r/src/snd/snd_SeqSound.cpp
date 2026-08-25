@@ -37,7 +37,8 @@ SeqPlayer::SetupResult SeqSound::Setup(SeqTrackAllocator* pAllocator,
                                        u32 allocTrackFlags, int voices,
                                        NoteOnCallback* pCallback) {
     InitParam();
-    return mSeqPlayer.Setup(pAllocator, allocTrackFlags, voices, pCallback);
+    return mSeqPlayer.Setup(pAllocator, allocTrackFlags, GetVoiceOutCount(),
+                            pCallback);
 }
 
 void SeqSound::Prepare(const void* pBase, s32 seqOffset,
@@ -50,12 +51,73 @@ void SeqSound::Prepare(const void* pBase, s32 seqOffset,
 
 void SeqSound::Prepare(ut::FileStream* pStream, s32 seqOffset,
                        SeqPlayer::OffsetType startType, int startOffset) {
-    mFileStream = pStream;
-    mSeqOffset = seqOffset;
-    mStartOffsetType = startType;
-    mStartOffset = startOffset;
+    // The shared header places the tail members 8 bytes above their retail
+    // offsets, so access them through a retail-layout overlay (same pattern
+    // as the MoveBlocksRetail overlay in snd_StrmSound.cpp).
+    // Retail also inlines LoadData() here; keep its check ordering.
+    struct SeqSoundRetail {
+        u8 _pad[0x298];
+        s32 mSeqOffset;                          // at 0x298
+        SeqPlayer::OffsetType mStartOffsetType;  // at 0x29C
+        int mStartOffset;                        // at 0x2A0
+        bool mLoadingFlag;                       // at 0x2A4
+        ut::FileStream* mFileStream;             // at 0x2A8
+        u8 _pad2[0x4B0 - 0x2B0];
+        struct { // mirrors SeqLoadTask tail (fileStream at task+0x10)
+            u8 _task[0x10];
+            ut::FileStream* fileStream;
+            void* buffer;
+            int bufferSize;
+            void (*callback)(bool, const void*, void*);
+            SeqSound* callbackData;
+        } mSeqLoadTask;                          // at 0x4AC
+    };
 
-    if (!LoadData(NotifyLoadAsyncEndSeqData, this)) {
+    SeqSoundRetail* p = reinterpret_cast<SeqSoundRetail*>(this);
+
+    // Retail PlayerHeap::Alloc is virtual (stale shared header declares it
+    // non-virtual), so call it through a vtable-shape mirror.
+    struct PlayerHeapMirror {
+        virtual void* slot0();
+        virtual void* Alloc(u32 size);
+    };
+
+    p->mFileStream = pStream;
+    p->mSeqOffset = seqOffset;
+    p->mStartOffsetType = startType;
+    p->mStartOffset = startOffset;
+    p->mLoadingFlag = true;
+
+    // Mirrors LoadData()'s early-return structure after inlining.
+    bool ok;
+    PlayerHeap* pHeapRaw = GetPlayerHeap();
+    if (pHeapRaw == NULL) {
+        ok = false;
+        goto check;
+    }
+
+    {
+        s32 size = p->mFileStream->GetSize();
+        void* pData = reinterpret_cast<PlayerHeapMirror*>(pHeapRaw)->Alloc(size);
+
+        if (pData == NULL) {
+            ok = false;
+            goto check;
+        }
+
+        p->mSeqLoadTask.fileStream = p->mFileStream;
+        p->mSeqLoadTask.buffer = pData;
+        p->mSeqLoadTask.bufferSize = size;
+        p->mSeqLoadTask.callback = NotifyLoadAsyncEndSeqData;
+        p->mSeqLoadTask.callbackData = this;
+
+        TaskManager::GetInstance().AppendTask(
+            reinterpret_cast<Task*>(&p->mSeqLoadTask));
+        ok = true;
+    }
+
+check:
+    if (!ok) {
         Shutdown();
     }
 }

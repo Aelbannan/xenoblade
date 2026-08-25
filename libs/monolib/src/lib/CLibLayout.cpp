@@ -170,13 +170,20 @@ nw4r::lyt::Picture* CLibLayout::createPicture(void) {
     nw4r::lyt::Picture* picture = static_cast<nw4r::lyt::Picture*>(MEMAllocFromAllocator(
         &lbl_eu_80665710->mAllocator, 0xF0));
 
-    nw4r::lyt::TexMap texmap(reinterpret_cast<TPLPalette*>(this), 0);
-
     if (picture != NULL) {
+        // Raw storage view of a TexMap: retail never runs a TexMap ctor here,
+        // it builds the map in place with Set() (which fills every field).
+        u8 texmapStorage[sizeof(nw4r::lyt::TexMap)];
         try {
+            // Set(palette, id) resets bias-clamp and anisotropy to defaults.
+            reinterpret_cast<nw4r::lyt::TexMap*>(texmapStorage)
+                ->Set(reinterpret_cast<TPLPalette*>(this), 0);
+            reinterpret_cast<nw4r::lyt::TexMap*>(texmapStorage)->SetBiasClampEnable(false);
+            reinterpret_cast<nw4r::lyt::TexMap*>(texmapStorage)->SetAnisotropy(GX_ANISO_1);
             // Direct ctor call on the raw buffer: placement-new would add a
             // NULL guard the retail function does not have.
-            __ct__Q34nw4r3lyt7PictureFRCQ34nw4r3lyt6TexMap(picture, texmap);
+            __ct__Q34nw4r3lyt7PictureFRCQ34nw4r3lyt6TexMap(
+                picture, *reinterpret_cast<const nw4r::lyt::TexMap*>(texmapStorage));
         } catch (...) {
             // Re-throw; the explicit call + noreturn decl keeps the retail
             // catch-all handler shape (no __end__catch epilogue).
@@ -259,32 +266,34 @@ bool CLibLayout::wkStandbyLogout() {
 // registered frame heap or from the default accelerator-allocator handle.
 // extern "C" (see header) reproduces the retail synthetic "Fv" symbol.
 void* func_8045F438__10CLibLayoutFv(MEMAllocator* allocator, u32 size) {
-    // Retail loads hashCount TWICE (branch test + body) and preloads
-    // mAllocHandle before the branch, merging both paths on one handle
-    // register. Word offsets: table@136(+544), accum@137(+548),
-    // handle@119(+476), count@138(+552), div@139(+556).
-    const volatile u32* w = static_cast<const volatile u32*>(
-        static_cast<const volatile void*>(lbl_eu_80665710));
+    // Every access is spelled through the global singleton so MWCC CSEs all
+    // the global loads into one anonymous scratch temp (retail keeps the
+    // singleton in a scratch reg, not a named local). The volatile views stop
+    // dominator-CSE from merging hashCount's two loads (branch test + body).
+    // Retail keeps ONE register live across three different values -- the
+    // preloaded mAllocHandle, the hash index, and the element's fallback
+    // handle -- so all three share a single local.
     void* buf;
-    int test = static_cast<int>(w[138]);
-    u32 handle = w[119];
-    if (test != 0) {
-        u32 slot = static_cast<u32>((static_cast<int>(w[138])
-            + static_cast<int>(w[137]) - 1) % static_cast<int>(w[139]));
-        CLibLayoutHashElem* elem = reinterpret_cast<CLibLayoutHashElem*>(
-            reinterpret_cast<const u32*>(w[136])[slot]);
+    CLibLayout* inst = lbl_eu_80665710;
+    u32 val = inst->mAllocHandle;
+    if (static_cast<const volatile CLibLayout*>(inst)->hashCount != 0) {
+        s32 idx = static_cast<const volatile CLibLayout*>(inst)->hashAccum;
+        idx += static_cast<const volatile CLibLayout*>(inst)->hashCount;
+        // Signed % : retail emits subi/divw/mullw/subf (divw is signed).
+        idx = (idx - 1) % inst->hashDivisor;
+        CLibLayoutHashElem* elem = inst->hashTable[idx];
         // Registering with a frame heap takes priority: allocate there and
         // query the frame heap's free size, returning the allocated buffer.
         if (elem->field_4 != NULL) {
-            buf = MEMAllocFromFrmHeapEx(elem->field_4, size, 4);
+            void* pBuf = MEMAllocFromFrmHeapEx(elem->field_4, size, 4);
             MEMGetAllocatableSizeForFrmHeapEx(elem->field_4, 4);
-            return buf;
+            return pBuf;
         }
         // No frame heap registered: fall through using the element's handle.
-        handle = elem->field_0;
+        val = elem->field_0;
     }
     // Align parameter lives in the allocator's heapParam1 field.
-    return mtl::MemManager::allocate_head(handle, size, allocator->heapParam1);
+    return mtl::MemManager::allocate_head(val, size, allocator->heapParam1);
 }
 #undef CLIBLAYOUT_WORD
 

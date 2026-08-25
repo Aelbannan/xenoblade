@@ -1,5 +1,5 @@
 {
-  "count": 1959,
+  "count": 1965,
   "entries": {
     "DefaultBlackColor": {
       "R_PPC_EMB_SDA21": {
@@ -2400,6 +2400,30 @@
         ]
       }
     },
+    "lbl_eu_804FE720": {
+      "R_PPC_ADDR16_HA": {
+        "addend_delta": -32,
+        "alternatives": [],
+        "count": 1,
+        "kind": "data",
+        "retail_addend": 16320,
+        "retail_symbol": "lbl_eu_80573D18",
+        "units": [
+          "main/kyoshin/menu/CMenuSymbolMark"
+        ]
+      },
+      "R_PPC_ADDR16_LO": {
+        "addend_delta": -33,
+        "alternatives": [],
+        "count": 1,
+        "kind": "data",
+        "retail_addend": 15326,
+        "retail_symbol": "lbl_eu_80573D18",
+        "units": [
+          "main/kyoshin/menu/CMenuSymbolMark"
+        ]
+      }
+    },
     "lbl_eu_80500664": {
       "R_PPC_ADDR16_LO": {
         "addend_delta": 35,
@@ -2619,6 +2643,30 @@
         "retail_symbol": "__vt__7CLibG3d",
         "units": [
           "main/monolib/src/lib/CLibG3d"
+        ]
+      }
+    },
+    "lbl_eu_80573D18": {
+      "R_PPC_ADDR16_HA": {
+        "addend_delta": 0,
+        "alternatives": [],
+        "count": 1,
+        "kind": "data",
+        "retail_addend": 15232,
+        "retail_symbol": "lbl_eu_804FE720",
+        "units": [
+          "main/kyoshin/menu/CMenuSymbolMark"
+        ]
+      },
+      "R_PPC_ADDR16_LO": {
+        "addend_delta": 0,
+        "alternatives": [],
+        "count": 1,
+        "kind": "data",
+        "retail_addend": 22403,
+        "retail_symbol": "lbl_eu_804FE720",
+        "units": [
+          "main/kyoshin/menu/CMenuSymbolMark"
         ]
       }
     },
@@ -2934,6 +2982,32 @@
         "retail_symbol": "lbl_eu_80666D6C",
         "units": [
           "main/kyoshin/cf/CtrlAct"
+        ]
+      }
+    },
+    "lbl_eu_806677E0": {
+      "R_PPC_EMB_SDA21": {
+        "addend_delta": 0,
+        "alternatives": [],
+        "count": 1,
+        "kind": "data",
+        "retail_addend": 0,
+        "retail_symbol": "lbl_eu_806677E4",
+        "units": [
+          "main/kyoshin/cf/object/CActorParam"
+        ]
+      }
+    },
+    "lbl_eu_806677E4": {
+      "R_PPC_EMB_SDA21": {
+        "addend_delta": 0,
+        "alternatives": [],
+        "count": 1,
+        "kind": "data",
+        "retail_addend": 0,
+        "retail_symbol": "lbl_eu_806677E0",
+        "units": [
+          "main/kyoshin/cf/object/CActorParam"
         ]
       }
     },
@@ -20833,7 +20907,7 @@
         ]
       }
     },
-    "main/kyoshin/CCollepedia@8832": {
+    "main/kyoshin/CCollepedia@8947": {
       "R_PPC_ADDR16_HA": {
         "addend_delta": 0,
         "alternatives": [],
@@ -20981,7 +21055,7 @@
         ]
       }
     },
-    "main/kyoshin/CItemBoxInfo@14855": {
+    "main/kyoshin/CItemBoxInfo@15120": {
       "R_PPC_EMB_SDA21": {
         "addend_delta": 0,
         "alternatives": [],
@@ -20995,7 +21069,7 @@
         ]
       }
     },
-    "main/kyoshin/CItemBoxInfo@14896": {
+    "main/kyoshin/CItemBoxInfo@15161": {
       "R_PPC_EMB_SDA21": {
         "addend_delta": 0,
         "alternatives": [],
@@ -21037,7 +21111,7 @@
         ]
       }
     },
-    "main/kyoshin/CMiniMap@12357": {
+    "main/kyoshin/CMiniMap@12617": {
       "R_PPC_EMB_SDA21": {
         "addend_delta": 0,
         "alternatives": [],
@@ -21051,7 +21125,7 @@
         ]
       }
     },
-    "main/kyoshin/CMiniMap@12398": {
+    "main/kyoshin/CMiniMap@12658": {
       "R_PPC_EMB_SDA21": {
         "addend_delta": 0,
         "alternatives": [],
@@ -21345,7 +21419,7 @@
         ]
       }
     },
-    "main/kyoshin/CTagProcessor@7189": {
+    "main/kyoshin/CTagProcessor@7188": {
       "R_PPC_EMB_SDA21": {
         "addend_delta": 0,
         "alternatives": [],
@@ -21359,7 +21433,7 @@
         ]
       }
     },
-    "main/kyoshin/CTagProcessor@8211": {
+    "main/kyoshin/CTagProcessor@8210": {
       "R_PPC_ADDR16_HA": {
         "addend_delta": 0,
         "alternatives": [],
@@ -21385,7 +21459,7 @@
         ]
       }
     },
-    "main/kyoshin/CTaskGame@15076": {
+    "main/kyoshin/CTaskGame@15075": {
       "R_PPC_EMB_SDA21": {
         "addend_delta": 0,
         "alternatives": [],
@@ -22029,7 +22103,7 @@
         ]
       }
     },
-    "main/kyoshin/cf/CfGimmickObject@3836": {
+    "main/kyoshin/cf/CfGimmickObject@3883": {
       "R_PPC_EMB_SDA21": {
         "addend_delta": 0,
         "alternatives": [],
@@ -22549,7 +22623,7 @@
         ]
       }
     },
-    "main/kyoshin/makecrystal/CMCGetItemBox@7793": {
+    "main/kyoshin/makecrystal/CMCGetItemBox@7871": {
       "R_PPC_EMB_SDA21": {
         "addend_delta": 0,
         "alternatives": [],
@@ -22563,7 +22637,7 @@
         ]
       }
     },
-    "main/kyoshin/makecrystal/CMCGetItemBox@7796": {
+    "main/kyoshin/makecrystal/CMCGetItemBox@7874": {
       "R_PPC_EMB_SDA21": {
         "addend_delta": 0,
         "alternatives": [],
@@ -22629,7 +22703,7 @@
         ]
       }
     },
-    "main/kyoshin/menu/CMenuBattleChain@7271": {
+    "main/kyoshin/menu/CMenuBattleChain@7268": {
       "R_PPC_ADDR16_HA": {
         "addend_delta": 0,
         "alternatives": [],
@@ -22655,7 +22729,7 @@
         ]
       }
     },
-    "main/kyoshin/menu/CMenuBattleChain@7324": {
+    "main/kyoshin/menu/CMenuBattleChain@7321": {
       "R_PPC_ADDR16_HA": {
         "addend_delta": 0,
         "alternatives": [],
@@ -23195,7 +23269,7 @@
         ]
       }
     },
-    "main/monolib/src/device/CGXCache@4446": {
+    "main/monolib/src/device/CGXCache@4393": {
       "R_PPC_EMB_SDA21": {
         "addend_delta": 0,
         "alternatives": [],
@@ -23209,7 +23283,7 @@
         ]
       }
     },
-    "main/monolib/src/device/CGXCache@4657": {
+    "main/monolib/src/device/CGXCache@4604": {
       "R_PPC_EMB_SDA21": {
         "addend_delta": 0,
         "alternatives": [],
@@ -23361,7 +23435,7 @@
         ]
       }
     },
-    "main/monolib/src/vm/yvm2@5263": {
+    "main/monolib/src/vm/yvm2@5287": {
       "R_PPC_ADDR16_HA": {
         "addend_delta": 0,
         "alternatives": [],
@@ -25975,8 +26049,8 @@
       }
     }
   },
-  "function_pairs": 12644,
-  "generated": "2026-08-25T09:02:00.365458",
+  "function_pairs": 12672,
+  "generated": "2026-08-25T11:49:42.446409",
   "region": "us",
   "units_scanned": 1147,
   "version": 1

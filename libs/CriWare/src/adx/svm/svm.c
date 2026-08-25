@@ -42,8 +42,7 @@ typedef struct SvmCtrl {
     volatile u32 lock_count;   /* 0x004 */
     volatile s32 lock_flag;    /* 0x008 */
     u32 field_0x0C;            /* 0x00C */
-    SvmCbPair lock_cb;         /* 0x010 */
-    SvmCbPair unlock_cb;       /* 0x018 */
+    SvmCbArea cb_area;         /* 0x010 */
     char err_msg[0x100];       /* 0x020 */
     SvmErrCb err_cb;           /* 0x120 */
     SvmSvrEntry svr_tbl[8][6]; /* 0x128 */
@@ -73,9 +72,9 @@ void SVM_CallErr(const char* fmt, ...);
 #define SVM_LOCK()                                                            \
     do {                                                                      \
         SvmCtrl* _c = &lbl_eu_805F26F0;                                       \
-        if (_c->lock_cb.func != NULL) {                                       \
-            void (*_fn)(void*) = _c->lock_cb.func;                            \
-            void* _obj = _c->lock_cb.object;                                  \
+        if (_c->cb_area.lock.func != NULL) {                                       \
+            void (*_fn)(void*) = _c->cb_area.lock.func;                            \
+            void* _obj = _c->cb_area.lock.object;                                  \
             _fn(_obj);                                                        \
             if (_c->lock_count == 0)                                          \
                 _c->lock_flag = 1;                                            \
@@ -87,7 +86,7 @@ void SVM_CallErr(const char* fmt, ...);
 #define SVM_UNLOCK()                                                          \
     do {                                                                      \
         SvmCtrl* _c = &lbl_eu_805F26F0;                                       \
-        if (_c->unlock_cb.func != NULL) {                                     \
+        if (_c->cb_area.unlock.func != NULL) {                                     \
             _c->lock_count = _c->lock_count - 1;                              \
             if (_c->lock_count == 0) {                                        \
                 if (_c->lock_flag != 1)                                       \
@@ -95,8 +94,8 @@ void SVM_CallErr(const char* fmt, ...);
                 _c->lock_flag = 0;                                            \
             }                                                                 \
             {                                                                 \
-                void (*_fn)(void*) = _c->unlock_cb.func; \
-                void* _obj = _c->unlock_cb.object; \
+                void (*_fn)(void*) = _c->cb_area.unlock.func; \
+                void* _obj = _c->cb_area.unlock.object; \
                 _fn(_obj);                                                    \
             }                                                                 \
         }                                                                     \
@@ -104,9 +103,10 @@ void SVM_CallErr(const char* fmt, ...);
 
 void SVM_Lock(void) {
     SvmCtrl* ctrl = &lbl_eu_805F26F0;
-    if (ctrl->lock_cb.func != NULL) {
-        SvmCbPair* cb = &ctrl->lock_cb;
-        cb->func(cb->object);
+    if (ctrl->cb_area.lock.func != NULL) {
+        /* Object fetched through the global directly; MWCC keeps the
+           intermediate pair address (addi+lwz) instead of folding. */
+        ctrl->cb_area.lock.func(lbl_eu_805F26F0.cb_area.lock.object);
         if (ctrl->lock_count == 0)
             ctrl->lock_flag = 1;
         ctrl->lock_count++;
@@ -115,17 +115,17 @@ void SVM_Lock(void) {
 
 void SVM_Unlock(void) {
     SvmCtrl* ctrl = &lbl_eu_805F26F0;
-    if (ctrl->unlock_cb.func != NULL) {
+    /* Pair pointer live across SVM_CallErr forces MWCC to rematerialize
+       the address at the use instead of folding the displacement. */
+    SvmCbPair* cb = &ctrl->cb_area.unlock;
+    if (ctrl->cb_area.unlock.func != NULL) {
         ctrl->lock_count--;
         if (ctrl->lock_count == 0) {
             if (ctrl->lock_flag != 1)
                 SVM_CallErr(lbl_eu_80518F50, ctrl->lock_flag, 1);
             ctrl->lock_flag = 0;
         }
-        {
-            SvmCbPair* cb = &ctrl->unlock_cb;
-            cb->func(cb->object);
-        }
+        cb->func(cb->object);
     }
 }
 
@@ -408,52 +408,120 @@ u32 SVM_ExecSvrUhigh(void) {
     return result;
 }
 
-/* Row-pointer form; MWCC inlines this per wrapper, materializing the
-   arguments as pseudos (two-step table chain, dedicated flags register). */
-static inline u32 svm_ExecSvrRow(SvmSvrEntry (*tbl)[6], s32 id) {
+u32 SVM_ExecSvrFs(void) {
     SvmCtrl* ctrl = &lbl_eu_805F26F0;
     u32 result = 0;
-    s32 i;
+    u32 i = 0;
     u32 one = 1;
+    /* Opaque read keeps the flags base in its own register across the
+       server calls instead of folding into a ctrl displacement. */
+    u32* volatile flagsv = ctrl->exec.flags;
+    u32* flags = flagsv;
+    SvmSvrEntry* p = &ctrl->svr_tbl[4][0];
     u32 zero = 0;
-    u32* flags = ctrl->exec.flags;
-    u32* cnts = ctrl->exec.counts;
-    SvmSvrEntry* p = tbl[id];
-    for (i = 0; i < 6; i++, p++) {
+    for (; i < 6; i++, p++) {
         u32 (*fn)(void*) = p->func;
         void* obj = p->object;
         if (fn != NULL) {
-            flags[id] = one;
+            flags[4] = one;
             result |= fn(obj);
-            flags[id] = zero;
+            flags[4] = zero;
         }
     }
-    cnts[id] += 1;
+    ctrl->exec.counts[4] += 1;
     return result;
 }
 
-u32 SVM_ExecSvrFs(void) {
-    return svm_ExecSvrRow(lbl_eu_805F26F0.svr_tbl, 4);
+u32 SVM_ExecSvrMain(void) {
+    /* Retail inlines the server-runner with row 5 baked in; the volatile
+       local keeps the flags base address materialized across the calls. */
+    SvmCtrl* ctrl = &lbl_eu_805F26F0;
+    u32 result = 0;
+    u32 i = 0;
+    u32 one = 1;
+    u32* volatile flagsv = ctrl->exec.flags;
+    u32* flags = flagsv;
+    SvmSvrEntry* p = &ctrl->svr_tbl[5][0];
+    u32 zero = 0;
+    for (; i < 6; i++, p++) {
+        u32 (*fn)(void*) = p->func;
+        void* obj = p->object;
+        if (fn != NULL) {
+            flags[5] = one;
+            result |= fn(obj);
+            flags[5] = zero;
+        }
+    }
+    ctrl->exec.counts[5] += 1;
+    return result;
 }
 
-u32 SVM_ExecSvrMain(void) {
-    return svm_ExecSvr(lbl_eu_805F26F0.svr_tbl[0], 5);
+/* Single-call-site copy of the server runner for SVM_ExecSvrMwIdle.
+   The p/end pointer pair keeps both entry addresses derived from the
+   table row (closer to retail's two-step address computation). */
+static inline u32 svm_ExecSvrMwIdleSub(SvmSvrEntry (*tbl)[6]) {
+    SvmCtrl* ctrl = &lbl_eu_805F26F0;
+    u32 result = 0;
+    u32 one = 1;
+    u32* flags = ctrl->exec.flags;
+    SvmSvrEntry* p = &tbl[6][0];
+    SvmSvrEntry* end = &tbl[7][0];
+    u32 zero = 0;
+    for (; p < end;) {
+        u32 (*fn)(void*) = p->func;
+        void* obj = p->object;
+        if (fn != NULL) {
+            flags[6] = one;
+            result |= fn(obj);
+            flags[6] = zero;
+        }
+        p++;
+    }
+    {
+        u32* cnt = ctrl->exec.counts;
+        cnt[6] += 1;
+    }
+    return result;
 }
 
 u32 SVM_ExecSvrMwIdle(void) {
-    return svm_ExecSvr(lbl_eu_805F26F0.svr_tbl[0], 6);
+    return svm_ExecSvrMwIdleSub(lbl_eu_805F26F0.svr_tbl);
 }
 
 u32 SVM_ExecSvrUsrIdle(void) {
-    return svm_ExecSvr(lbl_eu_805F26F0.svr_tbl[0], 7);
+    /* Dedicated copy: declaration order drives MWCC's register assignment
+       (ctrl, result, table base, loop index, flag-one, flags base, cursor,
+       flag-zero) to reproduce the retail allocation. */
+    SvmCtrl* ctrl = &lbl_eu_805F26F0;
+    u32 result = 0;
+    SvmSvrEntry* tbl = ctrl->svr_tbl[0];
+    s32 i = 0;
+    u32 one = 1;
+    /* Opaque read keeps the flags base in its own register across calls. */
+    u32* volatile flagsv = ctrl->exec.flags;
+    u32* flags = flagsv;
+    SvmSvrEntry* p = &tbl[7 * 6];
+    u32 zero = 0;
+    for (; i < 6; i++) {
+        u32 (*fn)(void*) = p->func;
+        void* obj = p->object;
+        if (fn != NULL) {
+            flags[7] = one;
+            result |= fn(obj);
+            flags[7] = zero;
+        }
+        p++;
+    }
+    ctrl->exec.counts[7] += 1;
+    return result;
 }
 
 void SVM_Init(void) {
     SvmCtrl* ctrl = &lbl_eu_805F26F0;
     if (ctrl->init_count == 0) {
         memset(&ctrl->exec.flags[0], 0, 0x20);
-        memset(&ctrl->lock_cb, 0, 8);
-        memset(&ctrl->unlock_cb, 0, 8);
+        memset(&ctrl->cb_area.lock, 0, 8);
+        memset(&ctrl->cb_area.unlock, 0, 8);
         memset(&ctrl->field_0x3E8, 0, 8);
         memset(&ctrl->field_0x3F0, 0, 8);
         {
@@ -471,23 +539,24 @@ void SVM_Init(void) {
 }
 
 void SVM_Finish(void) {
-    register SvmCtrl* ctrl = &lbl_eu_805F26F0;
+    SvmCtrl* ctrl = &lbl_eu_805F26F0;
     ctrl->init_count--;
     if (ctrl->init_count != 0)
         return;
     memset(ctrl->exec.flags, 0, 0x20);
-    memset(&ctrl->lock_cb, 0, 8);
-    memset(&ctrl->unlock_cb, 0, 8);
+    memset(&ctrl->cb_area.lock, 0, 8);
+    memset(&ctrl->cb_area.unlock, 0, 8);
     memset(&ctrl->field_0x3E8, 0, 8);
     memset(&ctrl->field_0x3F0, 0, 8);
     {
         u32* cnt = ctrl->exec.counts;
-        cnt[0] = 0;
-        cnt[1] = 0;
-        cnt[2] = 0;
-        cnt[3] = 0;
-        cnt[4] = 0;
-        cnt[5] = 0;
+        u32 zero = 0;
+        cnt[0] = zero;
+        cnt[1] = zero;
+        cnt[2] = zero;
+        cnt[3] = zero;
+        cnt[4] = zero;
+        cnt[5] = zero;
     }
     ctrl->testandset_fn = NULL;
     memset(&ctrl->err_cb, 0, 8);

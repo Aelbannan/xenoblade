@@ -9,6 +9,7 @@
 class CFileHandle;
 struct CItemBoxInfo;
 
+namespace nw4r { namespace math { struct VEC3; } }
 namespace nw4r { namespace lyt {
 class AnimTransform;
 class ArcResourceAccessor;
@@ -27,6 +28,15 @@ struct CMCItemBoxEntry {
    (func_801D216C). 0x18 bytes; stores a vtable pointer at +0x00. */
 struct CMCItemBoxSubObj {
     u8 bytes[0x18];
+};
+
+/* Typed view of the embedded cursor widgets (CCur07/CCur09/CCur16/CCur18):
+   vtable slot 2 (vtable offset 0x10) sets the widget position from the
+   func_80137924 result. Dispatch-only - never constructed, no vtable emitted. */
+struct CMCCursorWidget {
+    virtual void vf_00() = 0;
+    virtual void vf_04() = 0;
+    virtual void setPos(nw4r::math::VEC3* pos) = 0;   // vtable offset 0x10
 };
 
 /* Echo/placeholder for the CSysWin sub-object range. */
@@ -55,9 +65,7 @@ struct CMCItemBoxSub {
     u8  limit;                      // 0x103
     u8  counter;                    // 0x104
     u8  pad_105[0x108 - 0x105];     // 0x105-0x107
-    u8  field_108;                  // 0x108 (FixStr<64> byte 0)
-    u8  pad_109[0x148 - 0x109];     // 0x109-0x147 (FixStr<64> body)
-    u32 field_148;                  // 0x148 (FixStr<64> mLength)
+    ml::FixStr<64> shortName;       // 0x108-0x14B: short item-name buffer (mLength at 0x148)
     ml::FixStr<128> name;           // 0x14C-0x1CF: item-text buffer (mLength at 0x1CC)
     CMCItemBoxEntry* listBase;      // 0x1D0: 52-byte Entry array base
     u8  field_1D4;                  // 0x1D4
@@ -168,6 +176,7 @@ extern "C" void func_80136B4C(nw4r::lyt::Layout*, char*, char*, u32);
 extern "C" char* func_80296FC0(CMCItemBoxSub*, u16);
 extern "C" char* func_80296E98(CMCItemBoxSub*, u16);
 extern "C" __declspec(noinline) u32 func_80296D54(CMCItemBoxSub*, u32);
+extern "C" __declspec(noinline) s8 func_80296E00(CMCItemBoxSub*, u32);
 extern "C" void func_8022B7F4(void*);
 extern "C" void* func_801D3C74(void*, u32);
 extern "C" u32 func_80137510(nw4r::lyt::AnimTransform*, float);
@@ -192,6 +201,8 @@ extern const float lbl_eu_80668BD4;
 extern const float lbl_eu_80668BEC;
 // lbl_eu_80668BD8 (double) is MWCC's unsigned 2^52 conversion magic.
 extern const double lbl_eu_80668BD8;
+// lbl_eu_80668BE0 (double) is MWCC's signed int->f64 2^52 conversion magic.
+extern const double lbl_eu_80668BE0;
 extern const float lbl_eu_80668BF4;
 extern "C" void func_802999B0(CMCGetItemBox*);
 extern "C" void func_80299530(CMCGetItemBox*, u16, void*, u8);

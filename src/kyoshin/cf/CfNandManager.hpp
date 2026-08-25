@@ -5,7 +5,7 @@
 #include "monolib/work/IWorkEvent.hpp"
 #include "monolib/scn/IScnRender.hpp"
 
-// C-linkage runtime imports (retail symbol names - keep linkage/signatures verbatim).
+// C-linkage runtime imports (retail symbol names - keep linkage/signature verbatim).
 extern "C" long __ptmf_test(void* ptmf);
 extern "C" void __dl__FPv(void*);
 
@@ -34,7 +34,16 @@ struct CfNandEvent {
     // Retail ring initialization leaves mTag untouched (offset 4 is never
     // stored by the ctor or the array-construction loop).
     CfNandEvent() : mWord(0), mField8(0), mFieldC(0), mFieldE(0), mFieldF(0) {}
+
+    // Full-field ctor: lets a call argument materialize directly into the
+    // by-value parameter's invisible-reference slot.
+    CfNandEvent(u32 w, u32 tag, u32 f8, u16 fc, u8 fe, u8 ff)
+        : mWord(w), mTag(tag), mField8(f8), mFieldC(fc), mFieldE(fe),
+          mFieldF(ff) {}
 };
+
+// TU-local helper removed: ring slots are constructed natively via the
+// CfNandEventQueue member's default initialization inside the real ctor.
 
 // Event queue embedded in CfNandManager at +0x60. Its destructor is the retail
 // __dt__8023BFCC, which zeroes the head/tail counters (0x104/0x108 relative to
@@ -181,6 +190,7 @@ namespace cf{
         /* 0x188 */ void (CfNandManager::*mMoveHook)(); // 12-byte ptmf hook (dispatched by Move)
 
         virtual ~CfNandManager();
+        CfNandManager();
         void Term();
         void Move();
         void cbRenderBefore();
@@ -242,18 +252,23 @@ extern "C" int func_eu_804DE660(CNandQueue* self, u32 a1, u32 a2);
 extern u32 lbl_eu_8057164C[3];
 extern f32 lbl_eu_80663E54;
 
-// 0x10-byte party snapshot entry {3 words + float} filled by func_8023C1F0.
-struct CfNandPartyEntry {
+// First 8 bytes shared by the snapshot entry and the player info struct;
+// func_8023C1F0 copies it as one unit.
+struct CfNandPair {
     u32 field_00;
     u32 field_04;
+};
+
+// 0x10-byte party snapshot entry {3 words + float} filled by func_8023C1F0.
+struct CfNandPartyEntry {
+    CfNandPair mPair; // 0x00
     u32 field_08;
     f32 field_0C;
 };
 
 // 12-byte info struct returned by the player vtable slot +0xAC.
 struct CfNandPartyInfo {
-    u32 field_00;
-    u32 field_04;
+    CfNandPair mPair; // 0x00
     u32 field_08;
 };
 

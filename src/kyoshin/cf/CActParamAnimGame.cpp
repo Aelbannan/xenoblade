@@ -39,8 +39,10 @@ extern "C" void func_8004BC94(void*);
 
 // Forward decls for the state-gate probes defined below (kept noinline so
 // the call sites in func_8005D76C/D99C/DA44 keep retail's bl + cmpwi shape).
-bool func_8005E60C(cf::CActParamAnimGame* self);
-bool func_8005E7C4(cf::CActParamAnimGame* self);
+// Retail symbols are unmangled C-ABI globals; extern "C" keeps the call-site
+// relocs on the retail names (same precedent as func_8005A5B0 below).
+extern "C" bool func_8005E60C(cf::CActParamAnimGame* self);
+extern "C" bool func_8005E7C4(cf::CActParamAnimGame* self);
 bool func_8005DE68(cf::CActParamAnimGame* self);
 bool func_8005E28C(cf::CActParamAnimGame* self);
 bool func_8005E990(cf::CActParamAnimGame* self);
@@ -1297,15 +1299,22 @@ bool cf::CActParamAnimGame::func_8005D84C(u32 type, u32 state) {
 // (func_8005E7C4), state 0 the waiting probe (func_8005E60C); on success the
 // matching 0x20/0x10 bit goes up and the 0x100 bit comes down.
 bool cf::CActParamAnimGame::func_8005D99C(u32 type, u32 state) {
+    CActParamAnimGameViewBC14* view = reinterpret_cast<CActParamAnimGameViewBC14*>(this);
     if (state == 1) {
         if (func_8005E7C4(this)) {
-            field_530 = (field_530 | 0x20) & ~0x100;
+            u16 flags = view->flags530;
+            flags |= 0x20;
+            flags &= ~0x100;
+            view->flags530 = flags;
             ((void (*)(void*, u32))func_8004BC94)(this, type);
             return true;
         }
     } else if (state == 0) {
         if (func_8005E60C(this)) {
-            field_530 = (field_530 | 0x10) & ~0x100;
+            u16 flags = view->flags530;
+            flags |= 0x10;
+            flags &= ~0x100;
+            view->flags530 = flags;
             ((void (*)(void*, u32))func_8004BC94)(this, type);
             return true;
         }
@@ -1395,23 +1404,28 @@ bool cf::CActParamAnimGame::func_8005DC30(u32 type) {
 // Retail symbol lacks Fv suffix; preserves exact mangling for FULL_MATCH
 bool func_8005DCA0__Q22cf17CActParamAnimGame() { return false; }
 
-// Rotation-matrix facing update (state 2 only): builds a 4x3 matrix from the
-// yaw (sin/cos of 40.743663f * field_444), rotates its first row by the yaw
-// basis, re-probes the ground along the new direction, then sets the +0x4EC
-// 0x40000 flag and clears the +0x0C 0x80 flag.
-// (rebuild marker)
+// Rotation-matrix facing update (state 2 only): builds a 3x4 matrix from the
+// cached yaw (sin/cos of 40.743663f * field_444), rotates the yaw basis
+// through its first row, then walks the actor back along the new facing by
+// 104 units and sets the +0x4EC 0x40000 flag / clears the +0x0C 0x80 flag.
+// The position call is retail's 4-arg func_8004B354(self, out, pos, delta).
+// The yaw is snapshotted into a local for the first sin/cos pair (keeps two
+// callee-saved FPRs live like retail); the second pair reads field_444
+// directly so MWCC reloads it fresh each time.
 void cf::CActParamAnimGame::func_8005DCA8() {
     CActParamAnimGameView* v = (CActParamAnimGameView*)this;
     if (v->state374 != 2) {
         func_8004FFBC();
         return;
     }
+    f32 ang = v->f444;
     f32 m[3][4];
+    ml::CVec3 d;
     m[0][0] = lbl_eu_80666040;
     m[0][1] = lbl_eu_80666040;
     m[0][2] = lbl_eu_8066611C;
-    f32 sinv = nw4r::math::SinFIdx(lbl_eu_806660CC * v->f444);
-    f32 cosv = nw4r::math::CosFIdx(lbl_eu_806660CC * v->f444);
+    f32 sinv = nw4r::math::SinFIdx(lbl_eu_806660CC * ang);
+    f32 cosv = nw4r::math::CosFIdx(lbl_eu_806660CC * ang);
     m[0][3] = cosv;
     m[1][0] = lbl_eu_80666040;
     m[1][1] = sinv;
@@ -1421,20 +1435,29 @@ void cf::CActParamAnimGame::func_8005DCA8() {
     m[2][1] = -sinv;
     m[2][2] = lbl_eu_80666040;
     m[2][3] = cosv;
-    ml::CVec3 rot;
-    rot.x = m[0][2] * sinv + m[0][0] * cosv + m[0][1] * lbl_eu_80666040;
-    rot.y = m[0][0] * lbl_eu_80666040 + m[0][1] * lbl_eu_80666044 + m[0][2] * lbl_eu_80666040;
-    rot.z = m[0][2] * cosv + m[0][0] * (-sinv) + m[0][1] * lbl_eu_80666040;
+    // Retail feeds the rotation math through double round-trips (three frsp:
+    // cos, sin, then negated sin) while the matrix keeps raw float copies;
+    // the ctor arg order (y, x, z) reproduces MWCC's right-to-left argument
+    // evaluation and thus its temp allocation.
+    ml::CVec3 rot(m[0][0] * lbl_eu_80666040 + m[0][1] * lbl_eu_80666044 + m[0][2] * lbl_eu_80666040,
+                  m[0][0] * (f32)-(double)sinv + m[0][1] * lbl_eu_80666040 + m[0][2] * (f32)(double)cosv,
+                  m[0][0] * (f32)(double)cosv + m[0][1] * lbl_eu_80666040 + m[0][2] * (f32)(double)sinv);
     func_8004B7C0(this, &rot);
     func_8004CEF8(this, 0);
-    ml::CVec3 w;
-    w.x = lbl_eu_80666104 * nw4r::math::SinFIdx(lbl_eu_806660CC * field_444);
-    w.y = lbl_eu_80666040;
-    w.z = lbl_eu_80666104 * nw4r::math::CosFIdx(lbl_eu_806660CC * field_444);
-    ml::CVec3 d(v->pos3A8.x - w.x, v->pos3A8.y - w.y, v->pos3A8.z - w.z);
-    func_8004B354(this, &d);
-    v->flags4EC |= 0x40000;
-    v->flags0C &= ~0x80;
+    d.x = nw4r::math::SinFIdx(v->f444 * lbl_eu_806660CC) * lbl_eu_80666104;
+    d.y = lbl_eu_80666040;
+    d.z = nw4r::math::CosFIdx(v->f444 * lbl_eu_806660CC) * lbl_eu_80666104;
+    ml::CVec3 delta(v->pos3A8.x - d.x, v->pos3A8.y - d.y, v->pos3A8.z - d.z);
+    ml::CVec3 target;
+    target.x = delta.x;
+    target.y = delta.y;
+    target.z = delta.z;
+    ((bool (*)(void*, ml::CVec3*, const ml::CVec3*, const ml::CVec3*))func_8004B354)(this, &target, &delta, &d);
+    // Interleaved RMW pair: load both words before either store (retail shape).
+    u32 flags4ec = v->flags4EC;
+    u32 flags0c = v->flags0C;
+    v->flags4EC = flags4ec | 0x40000;
+    v->flags0C = flags0c & ~0x80;
 }
 
 // Ground-hit record written by func_804BE4E0/func_804BE4B4: contact x/z plus
@@ -1639,7 +1662,7 @@ bool __declspec(noinline) func_8005E28C(cf::CActParamAnimGame* selfV) {
 // the position by lbl_806660BC, casts a probe along the facing dir (scaled/
 // offset), and when a ground hit is found within lbl_80666050 of the current
 // height, snaps the actor to it and records the ground point.
-bool func_8005E60C(cf::CActParamAnimGame* selfV) {
+extern "C" bool func_8005E60C(cf::CActParamAnimGame* selfV) {
     cf::CActParamAnimGameView* self = (cf::CActParamAnimGameView*)selfV;
     if (self->state52C == 1 || (u32)(self->state52C - 3) <= 1) {
         ml::CVec3 vec(self->pos3A8.x, self->pos3A8.y, self->pos3A8.z);
@@ -1677,7 +1700,7 @@ bool func_8005E60C(cf::CActParamAnimGame* selfV) {
 // Ground-probe variant for states 2-4: offsets the position along the facing
 // direction, probes down, and when a ground hit is found, records the ground
 // point, re-probes, and snaps the actor to it.
-bool func_8005E7C4(cf::CActParamAnimGame* selfV) {
+extern "C" bool func_8005E7C4(cf::CActParamAnimGame* selfV) {
     cf::CActParamAnimGameView* self = (cf::CActParamAnimGameView*)selfV;
     if ((u32)(self->state52C - 2) > 2) return false;
     ml::CVec3 vec(self->pos3A8.x, self->pos3A8.y, self->pos3A8.z);

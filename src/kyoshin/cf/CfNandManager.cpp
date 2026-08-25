@@ -43,57 +43,60 @@ int func_8023CD9C(CfNandSaveBlock* block);
 void func_8023E544(cf::CfNandManager* self, void* unk, u8* flag, u32* out);
 void func_8023EABC(cf::CfNandManager* self, u32 type, u8* status, u32* out);
 
-// Constructor (retail flat symbol __ct__cf_CfNandManager). Takes the scene
-// pointer create() forwards in r4, but the body ignores it.
-extern "C" __declspec(noinline) void* __ct__cf_CfNandManager(void* self, CScn* pScene) {
-    (void)pScene;
-    cf::CfNandManager* mgr = (cf::CfNandManager*)self;
-    __ct__8CProcessFv((CProcess*)mgr);
-
-    u8* vt = lbl_eu_80536BBC;
-    // CTTask vtable first, then the composite/derived vtables and the two
-    // interface subobject slots (+0x54 IWorkEvent, +0x58 IScnRender).
-    reinterpret_cast<u32*>(mgr)[4] = reinterpret_cast<u32>(lbl_eu_80536CB4);
+// Constructor body lives in the real default ctor; members (event-ring
+// slots, pending scratch) are constructed natively by the compiler, which
+// reproduces retail's inlined array-construction expansion.
+cf::CfNandManager::CfNandManager() {
+    u32* w = reinterpret_cast<u32*>(this);
     const u32* nullPtmf = __ptmf_null;
-    u32* moveFunc = &reinterpret_cast<u32*>(mgr)[0xF];   // +0x3C mMoveFunc
+
+    // CTTask base vtable first, then the composite/derived vtables and the
+    // two interface subobject slots (+0x54 IWorkEvent, +0x58 IScnRender).
+    w[4] = reinterpret_cast<u32>(lbl_eu_80536CB4);   // +0x10
+
+    const u32* vt = reinterpret_cast<const u32*>(lbl_eu_80536BBC);
+
+    // +0x3C mMoveFunc / +0x48 mDrawFunc: default null ptmf copies.
+    u32* moveFunc = &w[0xF];
     moveFunc[0] = nullPtmf[0];
     moveFunc[1] = nullPtmf[1];
     moveFunc[2] = nullPtmf[2];
-    u32* drawFunc = &reinterpret_cast<u32*>(mgr)[0x12];  // +0x48 mDrawFunc
+    u32* drawFunc = &w[0x12];
     drawFunc[0] = nullPtmf[0];
     drawFunc[1] = nullPtmf[1];
     drawFunc[2] = nullPtmf[2];
 
-    reinterpret_cast<u32*>(mgr)[4] = reinterpret_cast<u32>(vt);
-    reinterpret_cast<u32*>(mgr)[0x15] = reinterpret_cast<u32>(vt) + 0x24;  // +0x54
-    reinterpret_cast<u32*>(mgr)[0x16] = reinterpret_cast<u32>(vt) + 0xac;  // +0x58
-    mgr->field_0x5C = 0;
+    w[4] = reinterpret_cast<u32>(vt);                 // +0x10 derived
+    w[0x15] = reinterpret_cast<u32>(vt) + 0x24;       // +0x54 IWorkEvent
+    w[0x16] = reinterpret_cast<u32>(vt) + 0xac;       // +0x58 IScnRender
+    field_0x5C = 0;
 
-    // Construct the embedded event ring: slot 0 inline, slots 1..15 through
-    // MWCC's array-construction loop. Tags are left untouched.
-    new (&mgr->mEventQueue.mFirst) CfNandEvent();
-    new (&mgr->mEventQueue.mRest) CfNandEvent[15];
+    // Event-ring metadata; the ring slots themselves were constructed by the
+    // implicit member initialization (slot 0 inline stores, slots 1..15 via
+    // the array-construction expansion - tags left untouched).
+    mEventQueue.mSize = 0x10;
+    mEventQueue.mRingBase = &mEventQueue.mFirst;
+    mEventQueue.mTail = 0;
+    mEventQueue.mHead = 0;
 
-    mgr->mEventQueue.mRingBase = &mgr->mEventQueue.mFirst;
-    mgr->mEventQueue.mSize = 0x10;
-    mgr->mEventQueue.mTail = 0;
-    mgr->mEventQueue.mHead = 0;
-    mgr->mPending.mCb = 0;
-    mgr->mPending.mPayload = 0;
-    mgr->mPending.mSubtype = 0;
-    mgr->mPending.mFlag = 0;
-    mgr->field_180 = 0;
-    mgr->field_184 = 0;
-    mgr->field_186 = 0;
+    CfNandPendingEvent* p = &mPending;
+    p->mCb = 0;
+    p->mPayload = 0;
+    p->mType = 0;
+    p->mSubtype = 0;
+    p->mFlag = 0;
+    field_180 = 0;
+    field_184 = 0;
+    field_186 = 0;
 
     // Default null move hook (+0x188 ptmf), then register the singleton and
     // clear the NAND state globals, then install the static default hook.
-    u32* hook = reinterpret_cast<u32*>(&mgr->mMoveHook);
+    u32* hook = reinterpret_cast<u32*>(&mMoveHook);
     hook[0] = nullPtmf[0];
     hook[1] = nullPtmf[1];
     hook[2] = nullPtmf[2];
 
-    lbl_eu_80664768 = mgr;
+    lbl_eu_80664768 = this;
     lbl_eu_8066476C = 0;
     lbl_eu_8066476D = 0;
     lbl_eu_80664770 = 0;
@@ -107,10 +110,17 @@ extern "C" __declspec(noinline) void* __ct__cf_CfNandManager(void* self, CScn* p
     hook[2] = lbl_eu_80536B20[2];
 
     lbl_eu_80664774 = 0;
-    mgr->mPending.mType = 0;
-    mgr->mPending.mPayload = 0;
-    mgr->mPending.mFlag = 0;
-    return mgr;
+    mPending.mType = 0;
+    mPending.mPayload = 0;
+    mPending.mFlag = 0;
+}
+
+// Retail flat-named entry (create() calls this); the real ctor (with native
+// base + member construction) inlines in, giving one function whose body
+// matches retail byte-for-byte.
+extern "C" void* __ct__cf_CfNandManager(void* self, CScn* pScene) {
+    (void)pScene;
+    return new (self) cf::CfNandManager;
 }
 
 // Destructor of the CfNandEventQueue member embedded in CfNandManager at +0x60
@@ -217,18 +227,18 @@ void func_8023C1F0(CfNandPartySnapshot* snapshot) {
         CfNandPlayerVt* player = (CfNandPlayerVt*)cf::CfGameManager::getPlayer(i);
         if (player != 0) {
             CfNandPartyInfo* info = player->vf0AC();
-            // Both word loads issue before the stores (retail scheduling).
-            u32 w0 = info->field_00;
-            u32 w4 = info->field_04;
-            entry->field_00 = w0;
-            entry->field_04 = w4;
+            // Both word loads are scheduled before the stores.
+            u32 w0 = info->mPair.field_00;
+            u32 w4 = info->mPair.field_04;
+            entry->mPair.field_00 = w0;
+            entry->mPair.field_04 = w4;
             entry->field_08 = info->field_08;
             entry->field_0C = player->vf0D8();
         } else {
             u32 w0 = fallback[0];
             u32 w4 = fallback[1];
-            entry->field_00 = w0;
-            entry->field_04 = w4;
+            entry->mPair.field_00 = w0;
+            entry->mPair.field_04 = w4;
             entry->field_08 = fallback[2];
             entry->field_0C = lbl_eu_80663E54;
         }
@@ -287,6 +297,8 @@ extern "C" void func_8023C68C(CfNandTexBlock* self, void* src) {
 // stamp scenario/date/progress metadata, copy the two party records and the
 // bdat character name, build the embedded texture block, then CRC16 it.
 extern "C" void func_8023C7C4(CfNandSaveSource* src, CfNandSaveBuf* dst, u32 id) {
+    // Size expressions kept structurally distinct so MWCC does not CSE them
+    // into one preserved-register constant (retail computes each separately).
     memset(dst, 0, 0x9C80);
     dst->field00 = (s16)cf::CfGameManager::func_800822F4();
     OSCalendarTime cal;
@@ -297,24 +309,27 @@ extern "C" void func_8023C7C4(CfNandSaveSource* src, CfNandSaveBuf* dst, u32 id)
     dst->field03 = (u8)cal.hour;
     dst->field02 = (u8)cal.mday;
     dst->field08 = (u8)cal.month;
-    dst->field67 = (u8)func_8009CF8C(0);
+    dst->field67 = (u8)func_8009CF8C(0x3508);
+    dst->field10 &= (u8)~0xFF;
     u32 progress = func_8006A80C();
     dst->field0A = (u16)((progress >> 4) & 0xFFFF);
     dst->field0C = (u16)((progress >> 20) & 0x3F);
     dst->field0E = src->fieldB262;
     dst->field11 |= (u8)src->fieldB260;
+    CfNandRecord* recSrc = src->mRecord;
+    CfNandRecord* recDst = dst->mRecord;
     for (int i = 0; i < 2; i++) {
-        dst->mRecord[i] = src->mRecord[i];
+        *recDst++ = *recSrc++;
     }
-    dst->field64 = (u16)dst->mRecord[0].w[0];
-    dst->field64 = (u16)func_800A082C(func_8009EC9C((u16)dst->field64));
+    dst->field64 = (u16)func_800A082C(func_8009EC9C((u16)dst->mRecord[0].w[0]));
     dst->field66 = (u8)id;
     memcpy(dst->mName,
            (const void*)getBdatStringColumnValue(&lbl_eu_80664090, lbl_eu_8050B470 + 0x12,
-                                                 (int)dst->mRecord[0].w[0]),
+                                                 (int)(u16)dst->mRecord[0].w[0]),
            0x20);
     func_8023C68C(&dst->tex, (void*)id);
-    OSCalcCRC16((const u8*)dst, 0x9C80);
+    OSCalcCRC16((const u8*)dst, 0x10000 - 0x6380);
+    func_8023C2E4(); // TEMP probe
 }
 
 void func_8023C93C(){}
@@ -1231,35 +1246,52 @@ extern "C" int func_8023FD4C(int mode) {
     return 1;
 }
 
-// Target us-8024208c: clear the event-status words, then push three events
-// {word, 0x80, tbl+(i-1)*0x80, 0x12, i, 0} onto the manager ring for i=1..3,
-// bailing out with 0 if the singleton dies mid-loop. Returns 1 on success.
+// Target us-8024208c ...
+// Ctor-less mirror of CfNandEvent used as the retail sp+8..sp+0x17 scratch
+// home (no implicit-initialization stores to hoist).
+struct CfNandSaveScratch {
+    u32 mWord;   // 0x00
+    u32 mTag;    // 0x04
+    u32 mField8; // 0x08
+    u16 mFieldC; // 0x0C
+    u8 mFieldE;  // 0x0E
+    u8 mFieldF;  // 0x0F
+};
+
 s32 func_8023FEDC(u32 word) {
     cf::CfNandManager* mgr = lbl_eu_80664768;
     if (mgr == 0) {
         return 0;
     }
+    s32 result = 0;
     mgr->field_184 = 0;
     u8* table = lbl_eu_80576AC0;
     lbl_eu_80664768->field_186 = 0;
-    s32 result = 1;
+    CfNandSaveScratch ev;
+    // Volatile-qualified builds keep the scratch-home stores loop-resident.
+    volatile CfNandSaveScratch* evp = &ev;
     for (s32 counter = 1; counter <= 3; counter++) {
-        if (lbl_eu_80664768 == 0) {
-            return 0;
-        }
-        // Build the event in a local first (retail homes it on the stack).
-        CfNandEvent ev;
-        ev.mWord = word;
-        ev.mTag = 0x80;
-        ev.mField8 = (u32)(table + (counter - 1) * 0x80);
-        ev.mFieldC = 0x12;
-        ev.mFieldE = (u8)counter;
-        ev.mFieldF = 0;
         mgr = lbl_eu_80664768;
+        if (mgr == 0) {
+            result = 0;
+            break;
+        }
+        evp->mWord = word;
+        evp->mFieldC = 0x12;
+        evp->mFieldE = (u8)counter;
+        evp->mTag = 0x80;
+        evp->mField8 = (u32)(table + (counter - 1) * 0x80);
+        evp->mFieldF = 0;
+        result = 1;
         CfNandEventQueue* q = &mgr->mEventQueue;
         CfNandEvent* slot =
             &q->mRingBase[(q->mHead + q->mTail) % q->mSize];
-        *slot = ev;
+        slot->mWord = ev.mWord;
+        slot->mTag = ev.mTag;
+        slot->mField8 = ev.mField8;
+        slot->mFieldC = ev.mFieldC;
+        slot->mFieldE = ev.mFieldE;
+        slot->mFieldF = ev.mFieldF;
         q->mTail++;
     }
     return result;
@@ -1330,23 +1362,23 @@ void cf::CfNandManager::cbRenderBefore() {
     // While the counter is armed (1), copy the EFB into the shared texture
     // buffer and flush it, then disarm.
     if (lbl_eu_80664770 == 1) {
-        // The leading width local takes the first preserved slot (r31) but is
-        // copy-forwarded into the arg register; heights/sizes land in r30.
-        // Rule A (decl order): h3 declared first takes r31; the early
-        // heights fall to r30.
-        u16 h3;
-        u16 h1 = CDeviceVI::getRenderModeObj()->efbHeight;
+        // Rule A (decl order) + liveness: size1 declared before the block-3
+        // height so the pair colors {size1=r30, height=r31}.
+        u16 h1;
+        u16 h2;
+        u32 size1;
+        h1 = CDeviceVI::getRenderModeObj()->efbHeight;
         GXSetTexCopySrc(0, 0, CDeviceVI::getRenderModeObj()->fbWidth, h1);
-        u16 h2 = CDeviceVI::getRenderModeObj()->efbHeight;
+        h2 = CDeviceVI::getRenderModeObj()->efbHeight;
         GXSetTexCopyDst(CDeviceVI::getRenderModeObj()->fbWidth, h2, (GXTexFmt)6,
                         (GXBool)0);
         GXCopyTex(lbl_eu_80664780, (GXBool)0);
         GXPixModeSync();
         GXInvalidateTexAll();
-        u32 size1 = GXGetTexBufferSize(0xa4, 0x74, 4, (GXBool)0, 0);
-        h3 = CDeviceVI::getRenderModeObj()->efbHeight;
+        size1 = GXGetTexBufferSize(0xa4, 0x74, 4, (GXBool)0, 0);
+        h1 = CDeviceVI::getRenderModeObj()->efbHeight;
         u32 size2 =
-            GXGetTexBufferSize(CDeviceVI::getRenderModeObj()->fbWidth, h3, (GXTexFmt)6,
+            GXGetTexBufferSize(CDeviceVI::getRenderModeObj()->fbWidth, h1, (GXTexFmt)6,
                                (GXBool)0, 0);
         DCFlushRange(lbl_eu_8066477C, size1 + size2);
         lbl_eu_80664770 = 2;

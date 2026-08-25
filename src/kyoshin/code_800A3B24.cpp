@@ -431,60 +431,107 @@ extern "C" void func_800A44CC(ml::CMat34* out, const ml::CVec3* src, const ml::C
     out->m[2][3] = trans->z;
 }
 
-extern "C" float func_800A47C8(const ml::CVec3& a, const ml::CVec3& b, const ml::CVec3& c,
-                                float* outT, ml::CVec3* out) {
+float func_800A47C8(const ml::CVec3& a, const ml::CVec3& b, const ml::CVec3& c,
+                    float* outT, ml::CVec3* out) {
     // Closest-point-on-segment helper: returns the squared distance from c to
     // the segment ab, writing the closest point and its parameter value.
-    // NOTE: retail prologue hoists the segment loads before the frame setup.
-    ml::CVec3 ab, ac, cb;
-    ml::CVec3 sum, scaled;
-    ml::CVec3 t1, t2, t3, t4, t5;
-    nw4r::math::VEC3Sub(t1, b, a);
-    ab.set(t1);
-    nw4r::math::VEC3Sub(t2, c, a);
-    ac.set(t2);
-    nw4r::math::VEC3Sub(t3, c, b);
-    cb.set(t3);
-    float dot = nw4r::math::VEC3Dot(ac, ab);
+    // Retail keeps every PS kernel inlined; each sub/scale/add result is
+    // copied out component-wise (cf. func_800A49E4).
+    ml::CVec3 ab;
+    ml::CVec3 ac;
+    ml::CVec3 cb;
+    ml::CVec3 sum;
+    ml::CVec3 scaled;
+    ml::CVec3 tAb;
+    ml::CVec3 tAc;
+    ml::CVec3 tCb;
+    ml::CVec3 tScaled;
+    ml::CVec3 tSum;
+    nw4r::math::VEC3Sub((nw4r::math::VEC3*)&tAb, (const nw4r::math::VEC3*)&b,
+                        (const nw4r::math::VEC3*)&a);
+    nw4r::math::VEC3Sub((nw4r::math::VEC3*)&tAc, (const nw4r::math::VEC3*)&c,
+                        (const nw4r::math::VEC3*)&a);
+    nw4r::math::VEC3Sub((nw4r::math::VEC3*)&tCb, (const nw4r::math::VEC3*)&c,
+                        (const nw4r::math::VEC3*)&b);
+    ab.x = tAb.x;
+    ab.y = tAb.y;
+    ab.z = tAb.z;
+    ac.x = tAc.x;
+    ac.y = tAc.y;
+    ac.z = tAc.z;
+    cb.x = tCb.x;
+    cb.y = tCb.y;
+    cb.z = tCb.z;
+    float dot = nw4r::math::VEC3Dot((const nw4r::math::VEC3*)&ac,
+                                    (const nw4r::math::VEC3*)&ab);
     if (dot <= lbl_eu_806667D8) {
         *out = a;
         *outT = lbl_eu_806667D8;
-        return nw4r::math::VEC3Dot(ac, ac);
+        return nw4r::math::VEC3Dot((const nw4r::math::VEC3*)&ac,
+                                   (const nw4r::math::VEC3*)&ac);
     }
-    float lenAbSq = nw4r::math::VEC3Dot(ab, ab);
+    float lenAbSq = nw4r::math::VEC3Dot((const nw4r::math::VEC3*)&ab,
+                                        (const nw4r::math::VEC3*)&ab);
     if (dot >= lenAbSq) {
         *out = b;
         *outT = lbl_eu_806667E8;
-        return nw4r::math::VEC3Dot(cb, cb);
+        return nw4r::math::VEC3Dot((const nw4r::math::VEC3*)&cb,
+                                   (const nw4r::math::VEC3*)&cb);
     }
     float t = dot / lenAbSq;
     *outT = t;
-    nw4r::math::VEC3Scale(t4, ab, t);
-    scaled.set(t4);
-    nw4r::math::VEC3Add(t5, a, scaled);
-    sum.set(t5);
+    nw4r::math::VEC3Scale((nw4r::math::VEC3*)&tScaled,
+                          (const nw4r::math::VEC3*)&ab, t);
+    scaled.x = tScaled.x;
+    scaled.y = tScaled.y;
+    scaled.z = tScaled.z;
+    nw4r::math::VEC3Add((nw4r::math::VEC3*)&tSum, (const nw4r::math::VEC3*)&a,
+                        (const nw4r::math::VEC3*)&scaled);
+    sum.x = tSum.x;
+    sum.y = tSum.y;
+    sum.z = tSum.z;
     *out = sum;
-    return nw4r::math::VEC3Dot(ac, ac) - dot * *outT;
+    return nw4r::math::VEC3Dot((const nw4r::math::VEC3*)&ac,
+                               (const nw4r::math::VEC3*)&ac) -
+           dot * t;
 }
 
 bool func_800A49E4(const nw4r::math::VEC3& a, const nw4r::math::VEC3& b,
                   const nw4r::math::VEC3& c, float r2) {
+    float dot, len2, t;
     // Project c onto the XZ line through a-b and test whether the closest
     // point lies within the squared radius r2 (all vectors flattened to y=0).
-    ml::CVec3 av, bv, cv;
-    av.set(a.x, lbl_eu_806667D8, a.z);
-    bv.set(b.x, lbl_eu_806667D8, b.z);
-    cv.set(c.x, lbl_eu_806667D8, c.z);
-    ml::CVec3 ab, ac, cb;
-    ml::CVec3::sub(ab, bv, av);
-    ml::CVec3::sub(ac, cv, av);
-    ml::CVec3::sub(cb, cv, bv);
-    float dot = ml::CVec3::dot(ac, ab);
+    // flat[0]/[1]/[2] hold the y-flattened copies of a/b/c.
+    nw4r::math::VEC3 flat[3];
+    flat[0].x = a.x;
+    flat[0].y = lbl_eu_806667D8;
+    flat[0].z = a.z;
+    flat[1].x = b.x;
+    flat[1].y = lbl_eu_806667D8;
+    flat[1].z = b.z;
+    flat[2].x = c.x;
+    flat[2].y = lbl_eu_806667D8;
+    flat[2].z = c.z;
+    nw4r::math::VEC3 ab, ac, cb;
+    nw4r::math::VEC3 t1, t2, t3;
+    nw4r::math::VEC3Sub(&t1, &flat[1], &flat[0]);
+    ab.x = t1.x;
+    ab.y = t1.y;
+    ab.z = t1.z;
+    nw4r::math::VEC3Sub(&t2, &flat[2], &flat[0]);
+    ac.x = t2.x;
+    ac.y = t2.y;
+    ac.z = t2.z;
+    nw4r::math::VEC3Sub(&t3, &flat[2], &flat[1]);
+    cb.x = t3.x;
+    cb.y = t3.y;
+    cb.z = t3.z;
+    dot = nw4r::math::VEC3Dot(&ac, &ab);
     if (dot < lbl_eu_806667D8) return false;
-    float len2 = ml::CVec3::dot(ab, ab);
+    len2 = nw4r::math::VEC3Dot(&ab, &ab);
     if (dot > len2) return false;
-    float t = dot / len2;
-    return ml::CVec3::dot(ac, ac) - dot * t <= r2;
+    t = dot / len2;
+    return nw4r::math::VEC3Dot(&ac, &ac) - dot * t <= r2;
 }
 
 float func_800A4B5C(const ml::CVec3& a, const ml::CVec3& b, const ml::CVec3& c) {
@@ -680,24 +727,17 @@ bool func_800A5488(const ml::CVec3& a, const ml::CVec3& b, ml::CVec3* out, float
     // overlap; when they do and out is non-null, out = a pushed to the far
     // side of b along the (normalised) centre-to-centre direction.
     if (out != 0) *out = a;
-    ml::CVec3 dir;     // centre-to-centre direction (a - b)
     ml::CVec3 dTmp;    // d = b - a sub temp
     ml::CVec3 d;       // b - a
+    ml::CVec3 dir;     // centre-to-centre direction (a - b)
     ml::CVec3 dirTmp;
-    nw4r::math::VEC3Sub((nw4r::math::VEC3*)&dTmp,
-                        (const nw4r::math::VEC3*)&b,
-                        (const nw4r::math::VEC3*)&a);
+    nw4r::math::VEC3Sub(dTmp, b, a);
     d.set(dTmp);
     float len2 = ml::CVec3::dot(d, d);
     bool overlap = len2 <= (r2 + r1) * (r2 + r1);
     if (overlap) {
         if (out != 0) {
-            nw4r::math::VEC3Sub((nw4r::math::VEC3*)&dirTmp,
-                                (const nw4r::math::VEC3*)&a,
-                                (const nw4r::math::VEC3*)&b);
-            dir.x = dirTmp.x;
-            dir.y = dirTmp.y;
-            dir.z = dirTmp.z;
+            ml::CVec3::sub(dir, a, b);
             // isZero() inlined (reads the retail epsilon label):
             bool zero = false;
             bool zeroTmp = false;

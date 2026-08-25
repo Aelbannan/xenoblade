@@ -463,11 +463,12 @@ void* func_80452C10__11CDeviceFontFUlPQ34nw4r3lyt6Layout(
 
 // C++-linkage (mangled retail symbols) anim/layout helpers - MUST stay
 // outside the extern "C" block so MWCC mangles them (retail reloc names
-// func_80137444__FPQ34nw4r3lyt13AnimTransformf / func_80137510__F... /
-// func_80138078__FUl).
+// func_80137444__FPQ34nw4r3lyt13AnimTransformf / func_80138078__FUl).
+// NOTE: func_80137510 is NOT in this group - retail keeps the bare unmangled
+// symbol, so it is declared extern "C" below.
 void func_801368C0(nw4r::lyt::Layout* layout, char* paneName, u32 value); // code_80135FDC.cpp (mangled __FPQ34nw4r3lyt6LayoutPcUl)
 int func_80137444(nw4r::lyt::AnimTransform* anim, float frame);
-int func_80137510(nw4r::lyt::AnimTransform* anim, float frame);
+extern "C" int func_80137510(nw4r::lyt::AnimTransform* anim, float frame);
 void func_80138078(u32 soundId);
 
 // Split1 .rodata string pool (arc paths / layout region names / format strings).

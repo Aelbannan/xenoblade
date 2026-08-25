@@ -133,8 +133,8 @@ void func_80296B44(CMCItemBoxSub* x) {
     x->pad_102 = 0;
     x->limit = 0;
     x->counter = 0;
-    x->field_108 = 0;
-    x->field_148 = 0;
+    x->shortName.mString[0] = 0;
+    x->shortName.mLength = 0;
     x->name.mString[0] = 0;
     x->name.mLength = 0;
     x->listBase = (CMCItemBoxEntry*)0;
@@ -199,7 +199,7 @@ extern "C" __declspec(noinline) void func_80296D2C(CMCItemBoxSub* x) {
 
 // Look up the entry at `index` in the offset table and return the derived
 // index-table word >> 20, or 0 when out of range.
-u32 func_80296D54(CMCItemBoxSub* x, u32 index) {
+__declspec(noinline) u32 func_80296D54(CMCItemBoxSub* x, u32 index) {
     CMCItemBoxEntry* base = x->listBase;
     if (base == 0) return 0;
     u16 idx = (u16)(index + (s8)x->counter * 30);
@@ -213,7 +213,10 @@ u32 func_80296D54(CMCItemBoxSub* x, u32 index) {
     return 0;
 }
 
-s8 func_80296E00(CMCItemBoxSub* x, u32 index) {
+// auto_inline off: retail keeps the single-call-site bl from func_8029967C
+// (MWCC otherwise folds this small helper in despite noinline).
+#pragma auto_inline off
+__declspec(noinline) s8 func_80296E00(CMCItemBoxSub* x, u32 index) {
     CMCItemBoxEntry* base = x->listBase;
     if (base == 0) return 0;
     u16 idx = (u16)(index + (s8)x->counter * 30);
@@ -227,6 +230,7 @@ s8 func_80296E00(CMCItemBoxSub* x, u32 index) {
     }
     return 0;
 }
+#pragma auto_inline on
 
 // Format the selected entry's item-name into the FixStr<64> at sub+0x108
 // (object offset 0x41C). Returns that FixStr, or null when out of range.
@@ -234,30 +238,34 @@ s8 func_80296E00(CMCItemBoxSub* x, u32 index) {
 #pragma push
 #pragma optimize_for_size on
 __declspec(noinline) char* func_80296E98(CMCItemBoxSub* sub, u16 index) {
-    CMCItemBoxEntry* base = sub->listBase;
+    // Declared in this order so MWCC colors callee-saved regs like retail
+    // (sub-copy -> r31, string-table base -> r30, entry ptr -> r29).
+    CMCItemBoxSub* x = sub;
+    const char* strTbl = &lbl_eu_8050FF8C[0];
+    CMCItemBoxEntry* base = x->listBase;
     if (base == 0) return 0;
-    u16 idx = (u16)(index + (s8)sub->counter * 30);
-    // Merged range/entry guard: both exits share the retail ret-0 tail.
-    CMCItemBoxEntry* p;
-    if (idx >= sub->count || (p = base + sub->table[idx]) == 0) return 0;
+    u16 idx = (u16)(index + (s8)x->counter * 30);
+    if (idx >= x->count) return 0;
+    // The s16 table offset sign-extends before the *52 scale (retail lhax/mulli).
+    CMCItemBoxEntry* p = base + x->table[idx];
+    if (p == 0) return 0;
     CMCItemImplShim* inst = (CMCItemImplShim*)CItem_initItemImplInstances(p);
-    // Base cached only after the first vcall so the lis/addi pair lands
-    // between the vcall and the format call, as in retail.
-    char* b = &lbl_eu_8050FF8C[0];
-    ((ml::FixStr<64>*)((u8*)sub + 0x108))->format(&b[0],
-                                                  (char*)inst->getName(p));
-    if (sub->pad_102 == 3) {
-        ml::FixStr<64>* fs = (ml::FixStr<64>*)((u8*)sub + 0x108);
+    // Keep only x/p/strTbl live across calls: recompute &x->shortName
+    // at every use so MWCC holds just three callee-saved regs (retail r29-r31).
+    x->shortName.format(strTbl, inst->getName(p));
+    if (x->pad_102 == 3) {
+        // Gem slot: rebuild the name as "<kind suffix><saved name>".
         CMCItemImplShim* inst2 = (CMCItemImplShim*)CItem_initItemImplInstances(p);
-        u8 v = (u8)inst2->getKind(p);
-        char* itemName = func_80136190(&lbl_eu_8050FF8C[3], &lbl_eu_8050FF8C[0xc],
-                                       0x1e - (v - 1));
+        u32 kind = (u8)inst2->getKind(p);
+        char* itemName = func_80136190(&strTbl[3], &strTbl[0xc],
+                                       0x1e - (kind - 1));
+        // Refresh the cached length, then splice: format("%s%s", saved, suffix).
+        x->shortName.mLength = strlen(x->shortName.c_str());
         char copy[64];
-        u32 len = strlen(fs->c_str());
-        strcpy(copy, fs->c_str());
-        fs->format(&lbl_eu_8050FF8C[0x11], copy, itemName);
+        strcpy(copy, x->shortName.c_str());
+        x->shortName.format(&strTbl[0x11], copy, itemName);
     }
-    return (char*)((u8*)sub + 0x108);
+    return (char*)&x->shortName;
 }
 #pragma pop
 
@@ -272,7 +280,7 @@ __declspec(noinline) char* func_80296E98(CMCItemBoxSub* sub, u16 index) {
 // -O4,s keeps the retail stmw r18 frame.
 #pragma push
 #pragma optimize_for_size on
-char* func_80296FC0(CMCItemBoxSub* sub, u16 index) {
+__declspec(noinline) char* func_80296FC0(CMCItemBoxSub* sub, u16 index) {
     CMCItemBoxEntry* base = sub->listBase;
     if (base == 0) return 0;
     u16 idx = (u16)(index + (s8)sub->counter * 30);
@@ -522,9 +530,14 @@ extern "C" void func_80297D2C(CMCGetItemBox* self, u16 arg, void* unk, u8 byte) 
     func_801D421C((CItemBoxInfo*)self->itemBox);
     func_80299530(self, arg, unk, byte);
     func_801D4260((CItemBoxInfo*)self->itemBox, arg);
-    CMCItemBoxSub* sub = &self->sub_314;
-    u8 idx = (u8)(self->field_301 * 10 + self->field_300);
-    CMCItemBoxEntry* entry = func_80296DB0(sub, idx);
+    // Declared in this order so MWCC colors the callee-saved regs like retail
+    // (entry->r31, idx->r30, sub->r29).
+    CMCItemBoxEntry* entry;
+    u8 idx;
+    CMCItemBoxSub* sub;
+    idx = (u8)(self->field_301 * 10 + self->field_300);
+    sub = &self->sub_314;
+    entry = func_80296DB0(sub, idx);
     u32 iconId = func_80296D54(sub, idx);   // held in a reg temp in retail
     func_801D47D4((CItemBoxInfo*)self->itemBox, (u16)iconId, (u32)entry, 1);
     func_801D4AE0((CItemBoxInfo*)self->itemBox, 1, func_80296E98(sub, idx));
@@ -635,7 +648,7 @@ void func_802980DC(CMCGetItemBox* self) {
         u8 tmp[12];
         func_801CB9D8((u32*)tmp, arr,
                       (u8)((s8)self->field_304 * 4 + self->field_305));
-        (*(void(**)(void*, void*))((void**)&self->subObj_A0)[4])(&self->subObj_A0, (void*)tmp);
+        ((CMCItemBoxSubObjCall*)&self->subObj_A0)->call((void*)tmp);
     } else {
         // Retail reuses the loaded field_300 for the decrement (subi r3-based).
         u8 s = self->field_300;
@@ -676,10 +689,11 @@ void func_80298228(CMCGetItemBox* self) {
         u8 tmp[12];
         func_801CB9D8((u32*)tmp, arr,
                       (u8)((s8)self->field_304 * 4 + self->field_305));
-        (*(void(**)(void*, void*))((void**)&self->subObj_A0)[4])(&self->subObj_A0, (void*)tmp);
+        ((CMCItemBoxSubObjCall*)&self->subObj_A0)->call((void*)tmp);
     } else {
+        // Retail reuses the loaded field_300 for the decrement (subi r3-based).
         u8 s = self->field_300;
-        if (s == 9) {
+        if ((s8)s == 9) {
             self->field_300 = 0;
             self->field_301 = 0;
             func_80298378(self);
@@ -705,9 +719,12 @@ extern "C" __declspec(noinline) void func_80298378(CMCGetItemBox* self) {
     func_80296D00(x);
     func_8029967C(self);
     func_802998C8(self);
-    // Retail: li r0,1 default, conditionally overwritten with the limit (select form);
-    // u32 promotion keeps the redundant clrlwi/cmpli pair.
-    u32 lim = x->limit != 0 ? x->limit : 1;
+    // Retail: li r0,1 default, conditionally overwritten with the limit (branchy
+    // select); splitting the select across blocks makes MWCC forget the byte
+    // load was zero-extended, keeping the redundant clrlwi/cmpli pair.
+    // u8-local select: assigning the ternary to a u8 makes MWCC materialize
+    // the zero-extension (clrlwi) at the join before the compare (retail).
+    u8 lim = x->limit != 0 ? x->limit : 1;
     if (lim != 1) func_80138078(0xa);
 }
 #pragma pop
@@ -721,9 +738,10 @@ extern "C" __declspec(noinline) void func_802983E4(CMCGetItemBox* self) {
     func_80296D2C(x);
     func_8029967C(self);
     func_802998C8(self);
-    // Retail: li r0,1 default, conditionally overwritten with the limit (select form);
-    // u32 promotion keeps the redundant clrlwi/cmpli pair.
-    u32 lim = x->limit != 0 ? x->limit : 1;
+    // Retail: li r0,1 default, conditionally overwritten with the limit (branchy
+    // select); the u8-local select makes MWCC forget the byte load was
+    // zero-extended, keeping the redundant clrlwi/cmpli pair at the join.
+    u8 lim = x->limit != 0 ? x->limit : 1;
     if (lim != 1) func_80138078(0xa);
 }
 #pragma pop
@@ -757,15 +775,21 @@ void func_802984E4(CMCGetItemBox* self) {
 // Unless the widget is busy and the sort field is -1, report the selected
 // item-box entry's place relative to its full range: 2 when the cursor index
 // is inside the entry count, 1 otherwise.
+// optimize_for_size: -O4,s lowers the >= into the retail subfc carry chain.
+#pragma push
+#pragma optimize_for_size on
 u32 func_80298540(CMCGetItemBox* self) {
     if (self->field_4D == 0) return 0;
     if ((s8)self->field_301 == -1) {
+        // Retail lowers the place calc to a subfc/carry/subf chain.
         u32 v = (u16)func_80157CD0(self->sub_314.pad_102);
         u32 count = self->sub_314.count;
-        return 2 - (v < count);
+        if (v >= count) return 1;
+        return 2;
     }
     return 0;
 }
+#pragma pop
 
 // Visit every item-box entry and hand it to the C-linkage cleanup helper.
 #pragma optimize_for_size on  // -O4,s keeps the retail stmw frame + head-jump loop
@@ -948,7 +972,8 @@ struct CDeviceFontVt9 {
 // icon database (func_801361E8) and the 0x144-0x149 icon-name chain for both
 // the gem (type 3) and item (type 9) paths, plus a %d pane-name format at
 // &lbl[0x14e].
-extern "C" void func_80298AC8(CMCGetItemBox* self, u32 idx, CMCItemBoxEntry* entry, u8 n) {
+// noinline: retail keeps the bl to this symbol from func_8029967C.
+extern "C" __declspec(noinline) void func_80298AC8(CMCGetItemBox* self, u32 idx, CMCItemBoxEntry* entry, u8 n) {
     CMCItemBoxEntry* e = entry != 0 ? entry : 0;
     void* h = 0;
     if (e != 0) {
@@ -1119,7 +1144,8 @@ after:
 #pragma pop
 #pragma push
 #pragma optimize_for_size on
-void func_80299490(CMCGetItemBox* self, int r4, u32 r5) {
+// noinline: called out-of-line from func_8029967C in retail.
+__declspec(noinline) void func_80299490(CMCGetItemBox* self, int r4, u32 r5) {
     char buf1[0x20];   // sp+0x28
     char buf2[0x20];   // sp+0x08
     sprintf(buf1, &lbl_eu_8050FF8C[0x16e], r5 + 1);
@@ -1136,22 +1162,34 @@ void func_80299490(CMCGetItemBox* self, int r4, u32 r5) {
 
 // Refresh layout text after index/sort change. Extra params are passed through
 // by func_80297D2C but ignored here (retail never reads r5/r6).
+// -O4,s keeps the retail stmw r29 frame (self/arg/sub live across calls).
+#pragma push
+#pragma optimize_for_size on
 void func_80299530(CMCGetItemBox* self, u16 arg, void* unk, u8 byte) {
     CMCItemBoxSub* sub = &self->sub_314;
     // Retail calls func_80296BF0 with only r3 set (r4/r5/r6 carry garbage),
     // so invoke it through a 1-arg prototype to avoid li r4/r5/r6 setup.
     ((void (*)(CMCItemBoxSub*))func_80296BF0)(sub);
-    u8 count = sub->limit;
-    if (count == 0) count = 1;
-    func_80136910((nw4r::lyt::Layout*)self->layout40, &lbl_eu_8050FF8C[0x17b], count);
+    // Scoped string-table base: the first use dies at the call (retail computes
+    // it straight into the arg reg), while each branch's base lives across the
+    // two FindPaneByName calls (retail parks it in a callee-saved reg).
+    // Int-temp branchy select + u8 conversion at the call site reproduces the
+    // retail li r0,1 / mr / clrlwi chain.
+    {
+        char* tbl = lbl_eu_8050FF8C;
+        int count = sub->limit == 0 ? 1 : sub->limit;
+        func_80136910((nw4r::lyt::Layout*)self->layout40, &tbl[0x17b], (u8)count);
+    }
     // Retail reloads the layout/root pane before every FindPaneByName call
     // (no root local), keeping pressure at 3 callee-saved registers.
     if (arg == 9) {
-        func_80124270((*(nw4r::lyt::Pane**)((u8*)self->layout40 + 0x10))->FindPaneByName(&lbl_eu_8050FF8C[0x184], true), 0);
-        func_80124270((*(nw4r::lyt::Pane**)((u8*)self->layout40 + 0x10))->FindPaneByName(&lbl_eu_8050FF8C[0x18f], true), 1);
+        char* tbl = lbl_eu_8050FF8C;
+        func_80124270((*(nw4r::lyt::Pane**)((u8*)self->layout40 + 0x10))->FindPaneByName(&tbl[0x184], true), 0);
+        func_80124270((*(nw4r::lyt::Pane**)((u8*)self->layout40 + 0x10))->FindPaneByName(&tbl[0x18f], true), 1);
     } else {
-        func_80124270((*(nw4r::lyt::Pane**)((u8*)self->layout40 + 0x10))->FindPaneByName(&lbl_eu_8050FF8C[0x184], true), 1);
-        func_80124270((*(nw4r::lyt::Pane**)((u8*)self->layout40 + 0x10))->FindPaneByName(&lbl_eu_8050FF8C[0x18f], true), 0);
+        char* tbl = lbl_eu_8050FF8C;
+        func_80124270((*(nw4r::lyt::Pane**)((u8*)self->layout40 + 0x10))->FindPaneByName(&tbl[0x184], true), 1);
+        func_80124270((*(nw4r::lyt::Pane**)((u8*)self->layout40 + 0x10))->FindPaneByName(&tbl[0x18f], true), 0);
     }
     func_8029967C(self);
     func_802998C8(self);
@@ -1159,30 +1197,59 @@ void func_80299530(CMCGetItemBox* self, u16 arg, void* unk, u8 byte) {
         func_801D4260((void*)self->itemBox, arg);
     }
 }
+#pragma pop
 
+// Refresh the item-box grid for the current page. When more than one page
+// exists, show the page tabs, stamp each tab's enabled state from the page
+// counter, reformat the page label and slide the page-cursor pane to the slot
+// matching the counter; then restamp all 30 grid cells.
+// -O4,s keeps the retail _savegpr_27 frame.
+#pragma push
+#pragma optimize_for_size on
 extern "C" __declspec(noinline) void func_8029967C(CMCGetItemBox* self) {
     CMCItemBoxSub* sub = &self->sub_314;
-    u8 count = sub->limit;
-    if (count == 0) count = 1;
-    if (count <= 1) return;
-    nw4r::lyt::Layout* layout = self->layout40;
-    nw4r::lyt::Pane* root = *(nw4r::lyt::Pane**)((u8*)layout + 0x10);
-    func_80124270(root->FindPaneByName(&lbl_eu_8050FF8C[0x19a], true), 1);
-    for (u8 i = 0; i < 3; i++) {
-        char buf[0x20];
-        sprintf(buf, &lbl_eu_8050FF8C[0x1a1], (u8)(i + 1));
-        nw4r::lyt::Pane* pane = root->FindPaneByName(buf, true);
-        func_80124270(pane, ((u8)(i - count)) >> 31);
+    // Branchy select: retail defaults r0 to 1 and overwrites with the limit.
+    u8 count = sub->limit != 0 ? sub->limit : 1;
+    if (count > 1) {
+        // String-table base lives only inside this branch (retail parks it
+        // in a callee-saved reg here and reuses the reg for loop results).
+        char* tbl = lbl_eu_8050FF8C;
+        // NOTE: retail reloads layout40 before every root-pane access (no
+        // cached layout pointer), keeping only 5 callee-saved regs live.
+        func_80124270((*(nw4r::lyt::Pane**)((u8*)self->layout40 + 0x10))->FindPaneByName(&tbl[0x19a], true), 1);
+        for (u8 i = 0; i < 3; i++) {
+            char buf[0x20];
+            sprintf(buf, &tbl[0x1a1], (int)(u8)(i + 1));
+            // Sign bit of (i - count): 1 while the tab is within the page range.
+            func_80124270((*(nw4r::lyt::Pane**)((u8*)self->layout40 + 0x10))->FindPaneByName(buf, true),
+                          (u32)(((int)i - (int)count) >> 31));
+        }
+        func_80136910(self->layout40, &tbl[0x1b0], (u8)(sub->counter + 1));
+        // Slide the page cursor pane: base x plus the scaled counter term.
+        // MWCC lowers both int->float conversions through the 2^52 double
+        // trick; the y/z words are reinterpreted float bits (lfs), like retail.
+        // Pane lookup stays nested in the copyVEC3 args: retail holds the
+        // result only in a volatile reg across the float computation.
+        nw4r::math::VEC3 pos;
+        pos.y = (float&)self->field_30C;
+        pos.x = (float&)self->field_308;
+        pos.z = (float&)self->field_310;
+        pos.x += lbl_eu_80668BF4 * (float)(int)sub->counter +
+                 lbl_eu_80668BF4 * (float)(int)(3 - count);
+        copyVEC3((u8*)(*(nw4r::lyt::Pane**)((u8*)self->layout40 + 0x10))->FindPaneByName(&tbl[0x1b9], true) + 0x2C,
+                 (float*)&pos);
+    } else {
+        func_80124270((*(nw4r::lyt::Pane**)((u8*)self->layout40 + 0x10))->FindPaneByName(&lbl_eu_8050FF8C[0x19a], true), 0);
     }
-    func_80136910((nw4r::lyt::Layout*)layout, &lbl_eu_8050FF8C[0x1b0], (u8)(sub->counter + 1));
-    root = *(nw4r::lyt::Pane**)((u8*)layout + 0x10);
-    func_80124270(root->FindPaneByName(&lbl_eu_8050FF8C[0x1b9], true), 0);
     for (u8 i = 0; i < 0x1e; i++) {
-        func_80298AC8(self, func_80296D54(sub, i) & 0xffff, func_80296DB0(sub, i), i);
-        func_80298FB4(self, func_80296D54(sub, i) & 0xffff, func_80296DB0(sub, i), i);
-        func_80299490(self, (s8)func_80296E00(sub, i), i);
+        u16 icon = (u16)func_80296D54(sub, i);
+        CMCItemBoxEntry* entry = func_80296DB0(sub, i);
+        func_80298AC8(self, icon, entry, i);
+        func_80298FB4(self, icon, entry, i);
+        func_80299490(self, (int)(s8)func_80296E00(sub, i), i);
     }
 }
+#pragma pop
 
 // Refresh the item-name texts in the layout panes and, when the item box is
 // open, re-sync the selected entry's name/icon widgets.
@@ -1190,42 +1257,53 @@ extern "C" __declspec(noinline) void func_8029967C(CMCGetItemBox* self) {
 #pragma push
 #pragma optimize_for_size on
 extern "C" __declspec(noinline) void func_802998C8(CMCGetItemBox* self) {
-    CMCItemBoxSub* sub = &self->sub_314;
+    CMCGetItemBox* self_ = self;
     s8 idx = (s8)(self->field_301 * 10 + self->field_300);
+    CMCItemBoxSub* sub = &self_->sub_314;
     func_80136B4C(self->layout40, &lbl_eu_8050FF8C[0x1c7], func_80296E98(sub, (u16)idx), 0);
     func_80136B4C(self->layout40, &lbl_eu_8050FF8C[0x1d0], func_80296FC0(sub, (u16)idx), (u32)self->objAt50);
     if (getItemBoxState((CItemBoxInfo*)self->itemBox) != 0) {
         CMCItemBoxEntry* entry = func_80296DB0(sub, (u16)idx);
-        func_801D47D4((CItemBoxInfo*)self->itemBox, (u16)func_80296D54(sub, (u16)idx), (u32)entry, 1);
-        func_801D4AE0((CItemBoxInfo*)self->itemBox, 1, func_80296E98(sub, (u16)idx));
+        u32 iconId = func_80296D54(sub, (u16)idx);   // held in a reg temp in retail
+        func_801D47D4((CItemBoxInfo*)self_->itemBox, (u16)iconId, (u32)entry, 1);
+        func_801D4AE0((CItemBoxInfo*)self_->itemBox, 1, func_80296E98(sub, (u16)idx));
     }
 }
 #pragma pop
 
 // Refresh the cursor widgets / page label.
+// -O4,s keeps the retail stmw r29 frame; the page-label buffer and the two
+// branch-local positions get disjoint stack slots (no overlay across branches).
+#pragma push
+#pragma optimize_for_size on
 extern "C" void func_802999B0(CMCGetItemBox* self) {
-    if ((s8)self->field_301 == -1) {
-        nw4r::lyt::Pane* root = *(nw4r::lyt::Pane**)((u8*)self->layout40 + 0x10);
-        void* p1 = root->FindPaneByName(&lbl_eu_8050FF8C[0x1dc], true);
-        void* p2 = root->FindPaneByName(&lbl_eu_8050FF8C[0x1e9], true);
-        u8 tmp[0x20];
-        func_80137924(tmp, p1, p2, root);
-        (*(void(**)(void*, void*))((void**)&self->subObj_88)[4])(&self->subObj_88, tmp);
+    char nameBuf[0x20];
+    nw4r::math::VEC3 posIf;
+    nw4r::math::VEC3 posElse;
+    char* tbl;
+    nw4r::lyt::Pane* p1;
+    nw4r::lyt::Pane* p2;
+    s8 page = (s8)self->field_301;
+    if (page == -1) {
+        tbl = lbl_eu_8050FF8C;
+        p1 = (*(nw4r::lyt::Pane**)((u8*)self->layout40 + 0x10))->FindPaneByName(&tbl[0x1dc], true);
+        p2 = (*(nw4r::lyt::Pane**)((u8*)self->layout40 + 0x10))->FindPaneByName(&tbl[0x1e9], true);
+        func_80137924(&posIf, p1, p2, *(nw4r::lyt::Pane**)((u8*)self->layout40 + 0x10));
+        ((CMCCursorWidget*)&self->subObj_88)->setPos(&posIf);
         func_801D216C(&self->subObj_88, 1);
         func_801D216C(&self->subObj_58, 0);
     } else {
-        char buf[0x20];
-        sprintf(buf, &lbl_eu_8050FF8C[0x161], (s8)self->field_300 + (s8)self->field_301 * 10 + 1);
-        nw4r::lyt::Pane* root = *(nw4r::lyt::Pane**)((u8*)self->layout40 + 0x10);
-        void* p1 = root->FindPaneByName(buf, true);
-        void* p2 = root->FindPaneByName(&lbl_eu_8050FF8C[0x1e9], true);
-        u8 tmp[0x20];
-        func_80137924(tmp, p1, p2, root);
-        (*(void(**)(void*, void*))((void**)&self->subObj_58)[4])(&self->subObj_58, tmp);
+        tbl = lbl_eu_8050FF8C;
+        sprintf(nameBuf, &tbl[0x161], (int)(s8)self->field_300 + (int)page * 10 + 1);
+        p1 = (*(nw4r::lyt::Pane**)((u8*)self->layout40 + 0x10))->FindPaneByName(nameBuf, true);
+        p2 = (*(nw4r::lyt::Pane**)((u8*)self->layout40 + 0x10))->FindPaneByName(&tbl[0x1e9], true);
+        func_80137924(&posElse, p1, p2, *(nw4r::lyt::Pane**)((u8*)self->layout40 + 0x10));
+        ((CMCCursorWidget*)&self->subObj_58)->setPos(&posElse);
         func_801D216C(&self->subObj_88, 0);
         func_801D216C(&self->subObj_58, 1);
     }
 }
+#pragma pop
 
 // Retail 0x8029C200: async file-load callback. Four files can load
 // asynchronously: the main item-box layout archive (fileHandle1), a second

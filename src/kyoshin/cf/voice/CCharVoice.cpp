@@ -1,7 +1,7 @@
 #include "kyoshin/cf/voice/CCharVoice.hpp"
 #include <string.h>
 
-extern CVoiceName lbl_eu_805106D4;    // empty default name (""), rodata blob
+extern const char lbl_eu_805106D4[];  // empty default name ("")
 
 extern "C" {
     extern char* lbl_eu_80662C98;       // pointer to default voice path string
@@ -35,22 +35,22 @@ extern "C" {
 }
 
 // __ct__CCharVoice (0x802A3230)
-// Hoisting the empty-name base pointer and the two init constants into locals
-// makes MWCC keep them live in r30/r31/r0 across all the member stores,
-// matching the retail allocation.
+// NOTE (wall): retail fuses the name-pointer materialization into a single
+// callee-saved reg (`lis r30,@ha; addi r30,r30,@l` + two mr's) while every
+// available MWCC hoists a bare `lis @ha` above the spills and emits per-use
+// `addi rX,@l`. Tried: CVoiceName struct-ptr local + field access, char* local,
+// register local, const/non-const array, cast forms, decl-order swaps - all
+// produce byte-identical output (MWCC_CASES "adx_fsvr lis/addi coalescing
+// ceiling"). Kept at the best-known shape.
 extern "C" CCharVoice* __ct__CCharVoice(CCharVoice* self)
 {
-    CVoiceName* emptyName = &lbl_eu_805106D4;
-    void* zero = 0;
-    s32   negOne = -1;
-
     self->mVtable         = lbl_eu_805398B0;
-    self->mOwner          = zero;
-    self->mVoiceId        = negOne + 1;
-    self->mPriorityCheck  = negOne;
-    self->mSoundHandle    = negOne;
-    self->mFileNameLen    = strlen((char*)emptyName);
-    strcpy(self->mFileName, (char*)emptyName);
+    self->mOwner          = 0;
+    self->mVoiceId        = -1;
+    self->mPriorityCheck  = -1;
+    self->mSoundHandle    = -1;
+    self->mFileNameLen    = strlen(lbl_eu_805106D4);
+    strcpy(self->mFileName, lbl_eu_805106D4);
     self->mField34        = 0;
     self->mBattleSndHandle = 0xFFFF;
     return self;
@@ -318,9 +318,9 @@ extern "C" bool func_802A0CB8(char* buffer, int index, int value)
 
     // index digit pair (written at two pc slots), then value 4-wide.
     int idxTens = index / 10;
-    int idxOnes = index % 10;
     buffer[0x0A] = '0' + idxTens;
     buffer[0x0F] = '0' + idxTens;
+    int idxOnes = index % 10;
     buffer[0x0B] = '0' + idxOnes;
     buffer[0x10] = '0' + idxOnes;
 

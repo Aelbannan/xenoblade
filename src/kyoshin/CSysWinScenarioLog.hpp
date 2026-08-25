@@ -21,6 +21,10 @@ namespace nw4r { namespace lyt {
 // pulled in by CTaskGame.hpp at the cpp use site) - only a forward decl is
 // needed here for the mScene pointer member.
 
+// Null pointer-to-member-function constant (12 bytes; copied word-by-word into
+// the two callback slots).
+extern u32 __ptmf_null[3];
+
 class CSysWinScenarioLog : public CProcess {
 public:
     CSysWinScenarioLog();
@@ -277,10 +281,11 @@ struct CSysWinSlotTable {
 
 // func_8028120C helper: call the found slot entry's virtual at vtable offset
 // 0xc (slot 3). Raw dispatch - retail has no null guard at this call site.
+// Written as a single expression so MWCC chains both loads through r12 like
+// retail (a named vtable local spills it to a second register).
 inline void csysWinSlotCall3(CSysWinSlotEntry* entry) {
     typedef void (*Fn)(CSysWinSlotEntry*);
-    void** vt = (void**)entry->mpVtable;
-    ((Fn)vt[3])(entry);
+    ((Fn)((u32*)entry->mpVtable)[3])(entry);
 }
 
 
@@ -734,7 +739,7 @@ extern "C" void __dt__17UnkClass_8045F564Fv(void*, int);
 extern "C" void __ct__17UnkClass_8045F564Fv(UnkClass_8045F564* self);
 extern "C" void __dt__8CProcessFv(void*, int);
 extern "C" void __ct__8CProcessFv(CProcess* self);
-extern "C" void* __ct__CSysWinScenarioLog(void* _this, void* param); // returns this
+extern "C" CSysWinScenarioLog* __ct__CSysWinScenarioLog(CSysWinScenarioLog* _this, void* param); // returns this
 
 // Term / ctor imports (retail C-ABI names; the CfGameManager helper is Fv-mangled
 // but takes a vestigial bool arg - same convention as func_80086F9C above).

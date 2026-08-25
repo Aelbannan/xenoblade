@@ -68,6 +68,45 @@ struct CLPCurBody {
     u8 mVisible;  // +0x15
 };
 
+// Second-page setup record (built by func_8025348C, finished by
+// func_802534F0): accessor, loaded layout, bound animation transform.
+struct CLPPageSetup {
+    nw4r::lyt::ArcResourceAccessor* mpAccessor;   // +0x00
+    nw4r::lyt::Layout* mpLayout;                  // +0x04
+    nw4r::lyt::AnimTransform* mpAnimTrans;        // +0x08
+};
+
+// Texture size header reachable from a lyt texture resource's +0x08 pointer.
+struct CLPTexSize {
+    u16 field_00;
+    u16 field_02;
+};
+
+// Shared .sdata2 u32->f64 conversion magic (2^52); defined in port/data_defs.cpp.
+extern double lbl_eu_80668808;
+
+// POD mirror of nw4r::lyt::Size (two f32): using the real type would emit
+// the default-constructor zeroing, which retail does not have.
+struct CLPSize {
+    f32 width;
+    f32 height;
+};
+
+// Mirror of the font object returned by CDeviceFont::func_80452C10: its
+// vtable slot 9 (+0x24) yields the u32 font handle bound into the layout.
+// Never instantiated, so no vtable is emitted; a genuine virtual call makes
+// MWCC emit the retail r12 dispatch sequence.
+struct CLPFontView {
+    virtual void sf2() = 0;
+    virtual void sf3() = 0;
+    virtual void sf4() = 0;
+    virtual void sf5() = 0;
+    virtual void sf6() = 0;
+    virtual void sf7() = 0;
+    virtual void sf8() = 0;
+    virtual u32 sf9() = 0; // vtable offset 0x24
+};
+
 // Page-info record produced by func_8025348C and stored at +0x28EC.
 struct CLPPageInfo {
     u32 field_00;                // +0x28EC
@@ -291,6 +330,9 @@ extern "C" void* func_80452C10__11CDeviceFontFUlPQ34nw4r3lyt6Layout(u32,
 // import must keep C++ linkage (MWCC appends __Fv).
 void* func_801355A0();
 extern "C" nw4r::lyt::ArcResourceAccessor* func_801355F4(); // CLibLayout accessor
+extern "C" void* func_801355BC();                           // shared tag string
+// Verbatim-mangled import: the real retail CfGameManager controller-type check
+extern "C" int func_80086F9C__Q22cf13CfGameManagerFv(int arg);
 extern "C" void func_8018B0FC(void* dst, void* src);     // cursor body copy
 
 // Mirror of CSysWin +0x04..end (everything after the vtable pointer), used to

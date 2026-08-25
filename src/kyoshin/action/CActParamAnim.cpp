@@ -39,9 +39,9 @@ extern "C" CActParamAnim* __dt__8004B070(CActParamAnim* self, s32 deleteFlag) {
     return self;
 }
 
-extern "C" void func_8004B0B0(void*) {}
+extern "C" __declspec(noinline) void func_8004B0B0(void*) {}
 
-extern "C" void func_8004B0B4(void*) {}
+extern "C" __declspec(noinline) void func_8004B0B4(void*) {}
 
 CActParamAnim::~CActParamAnim() {}
 
@@ -95,7 +95,7 @@ void CActParamAnim_copyTranslation(void* dst, const void* src) {
     *(int*)((char*)dst + 8) = *(int*)((char*)src + 8);
 }
 
-extern "C" void func_8004B3F0(f32* dst, const f32* src) {
+extern "C" __declspec(noinline) void func_8004B3F0(f32* dst, const f32* src) {
     u32 a = *(u32*)((char*)src + 0);
     *(u32*)((char*)dst + 0) = a;
     u32 b = *(u32*)((char*)src + 4);
@@ -218,12 +218,12 @@ extern "C" void func_8004B6BC(CActParamAnim* self, void* object) {
 
 void CActParamAnim::setOwner(int val) { *(int*)((char*)this + 8) = val; }
 
-extern "C" void func_8004B738(float* destination, const float* source) {
+extern "C" __declspec(noinline) void func_8004B738(float* destination, const float* source) {
     *reinterpret_cast<nw4r::math::VEC3*>(destination) +=
         *reinterpret_cast<const nw4r::math::VEC3*>(source);
 }
 
-extern "C" void func_8004B75C(float* destination, const float* source, float scale) {
+extern "C" __declspec(noinline) void func_8004B75C(float* destination, const float* source, float scale) {
     nw4r::math::VEC3 scaled =
         *reinterpret_cast<const nw4r::math::VEC3*>(source) * scale;
     destination[0] = scaled.x;
@@ -857,7 +857,7 @@ void func_8004C608(CActParamAnim* self) {
     view->field440 = view->field444;
 }
 
-extern "C" void func_8004CB80(f32* out, const f32* a, const f32* b){
+extern "C" __declspec(noinline) void func_8004CB80(f32* out, const f32* a, const f32* b){
     nw4r::math::VEC3 result =
         *reinterpret_cast<const nw4r::math::VEC3*>(a) -
         *reinterpret_cast<const nw4r::math::VEC3*>(b);
@@ -866,7 +866,8 @@ extern "C" void func_8004CB80(f32* out, const f32* a, const f32* b){
     out[2] = result.z;
 }
 
-ml::CVec3* func_8004CBC8(ml::CVec3* vec) {
+// extern "C": retail symbol is the unmangled func_8004CBC8.
+extern "C" __declspec(noinline) ml::CVec3* func_8004CBC8(ml::CVec3* vec) {
     // Normalize; degenerate (zero-length) vectors are replaced by the zero
     // vector instead (matches the retail lenSq == 0 branch).
     if (vec->x * vec->x + vec->y * vec->y + vec->z * vec->z == lbl_eu_80665EA0) {
@@ -1901,7 +1902,10 @@ void func_8004E9EC__13CActParamAnimFv(CActParamAnim* self) {
     // TODO: reconstruct body (retail 0x26c bytes)
 }
 
-f32 func_8004EC78(f32 value) {
+// noinline: retail calls this from func_80051CD4; inlined copies would
+// duplicate the FSqrt warning block into the caller.
+// extern "C": retail symbol is the unmangled func_8004EC78.
+extern "C" __declspec(noinline) f32 func_8004EC78(f32 value) {
     // nw4r FSqrt semantics: warn on negative input, then x<=0 ? 0 : x*FrSqrt(x).
     if (!(value >= lbl_eu_80665EA0)) {
         nw4r::db::Warning((const char*)lbl_eu_80526324, 0x273,
@@ -2485,7 +2489,7 @@ void func_8004FFBC__13CActParamAnimFv(CActParamAnim* self) {
                                lbl_eu_80665EC8));
 }
 
-extern "C" f32 func_800504BC(const f32* a, const f32* b){
+extern "C" __declspec(noinline) f32 func_800504BC(const f32* a, const f32* b){
     return nw4r::math::VEC3Dot(
         reinterpret_cast<const nw4r::math::VEC3*>(a),
         reinterpret_cast<const nw4r::math::VEC3*>(b));
@@ -3293,6 +3297,27 @@ void CActParamAnim::stopAnim() {
 // its target, then rotates the move direction (+0x408) toward the desired
 // heading (turn / strafe / counter-turn modes) and commits the resulting
 // rotation quaternion to the attached sub-object.
+// Open-item packet (best 689 mismatch / 645 structural / 44 reg-swap,
+// decomp 2796B vs retail 2156B, frame 0x1B0 vs retail 0x1A0):
+// - All same-TU helper inlining is now eliminated via __declspec(noinline)
+//   on func_8004CBC8/CC68/CC74/EC78/504BC/B3F0/CB80/B75C/B738/B0B0/B0B4/
+//   52584/526C0/5274C/52780/527B0; those definitions also needed extern "C"
+//   (unmangled retail symbols). Do NOT revert these - reverting regresses
+//   size by ~1000B and reintroduces mangled reloc names.
+// - Retail call structure reproduced: BC28 wraps on all three clamp
+//   else-branches, dead func_8004B61C tail calls, wrapper trig (func_8004CC74/
+//   CC68), signed s16 counter (lha/subi/sth).
+// - Ruled out: removing the flagp local (neutral, MWCC CSEs &s->field0C);
+//   direct nw4r::math trig calls (wrong relocs); macro with setCounter param
+//   (retail sets field4DC=0xF only in the turn branch).
+// - Remaining residual: ~640B excess concentrated in the three COMMIT_QUAT
+//   expansions and two n-normalization blocks (MWCC emits larger shapes than
+//   retail's tail-merged ones) plus prologue coloring (retail: stw r31/r30
+//   spills then `or r30,r3,r3`; ours parks self in r31 first).
+// - Next experiments: (1) shrink COMMIT locals (unitYCopy may cost the extra
+//   0x10 frame slot); (2) hoist the shared n-normalization into a noinline
+//   helper to force one copy; (3) reduce live locals across the early section
+//   so self colors into r30 post-spill like retail.
 // Commit helper: normalize-or-replace the move direction (+0x408), build the
 // shortest-arc quaternion toward it, pre-multiply by the angle rotation, and
 // push the result to the attached sub-object.
@@ -3325,7 +3350,6 @@ void CActParamAnim::stopAnim() {
 extern "C" void func_80051CD4(CActParamAnim* self) {
     CActParamAnimStateView* s = reinterpret_cast<CActParamAnimStateView*>(self);
     CActParamAnimInitView* iv = reinterpret_cast<CActParamAnimInitView*>(self);
-    u32* flagp = &s->field0C;
 
     func_8004B344(self);
     if (func_8004CC80() != 0) return;
@@ -3343,7 +3367,7 @@ extern "C" void func_80051CD4(CActParamAnim* self) {
             // clamp the anim angle toward the stored heading (+0x440).
             bool chase = false;
             if (reinterpret_cast<CActParamAnimObjVt14*>(obj)->f14() == 0 &&
-                func_8004B3D8(flagp, 0x100) == 0) {
+                func_8004B3D8((u32*)&s->field0C, 0x100) == 0) {
                 chase = true;
             }
             if (chase) {
@@ -3356,7 +3380,7 @@ extern "C" void func_80051CD4(CActParamAnim* self) {
                         s->field444 = func_8004BC28(func_8004B61C(self) - f31);
                     } else {
                         s->field444 = func_8004BC28(func_80052554(func_8004B51C(self)));
-                        func_8004B694(flagp, 0x100);
+                        func_8004B694((u32*)&s->field0C, 0x100);
                     }
                     s->field440 = func_8004B61C(self);
                 }
@@ -3368,7 +3392,7 @@ extern "C" void func_80051CD4(CActParamAnim* self) {
                     s->field444 = func_8004BC28(func_8004B61C(self) - f31);
                 } else {
                     s->field444 = func_8004BC28(iv->field440);
-                    func_8004B694(flagp, 0x100);
+                    func_8004B694((u32*)&s->field0C, 0x100);
                 }
                 func_8004B61C(self);
             }
@@ -3380,7 +3404,7 @@ extern "C" void func_80051CD4(CActParamAnim* self) {
                 s->field444 = func_8004BC28(func_8004B61C(self) - f31);
             } else {
                 s->field444 = func_8004BC28(iv->field440);
-                func_8004B694(flagp, 0x100);
+                func_8004B694((u32*)&s->field0C, 0x100);
             }
             func_8004B61C(self);
         }
@@ -3389,96 +3413,11 @@ extern "C" void func_80051CD4(CActParamAnim* self) {
     // Current anim angle.
     f31 = func_8004B61C(self);
 
-    // Commit helper: normalize/replace the move direction, build the
-    // shortest-arc quaternion toward it, pre-multiply by the angle rotation,
-    // and push the result to the attached sub-object. `setCounter` mirrors
-    // retail's field4DC update (only the turn mode writes 0xF).
-    #define COMMIT_QUAT(setCounter)                                              \
-    do {                                                                          \
-        if (iv->field408 == lbl_eu_80665EA0 && iv->field40C == lbl_eu_80665EA0 && \
-            iv->field410 == lbl_eu_80665EA0) {                                     \
-            func_8004B3F0(&iv->field408,                                           \
-                          reinterpret_cast<const f32*>(&ml::CVec3::unitY));        \
-        } else {                                                                  \
-            func_8004CBC8(reinterpret_cast<ml::CVec3*>(&iv->field408));            \
-        }                                                                         \
-        nw4r::math::VEC3 unitYCopy;                                               \
-        func_8004B79C(&unitYCopy.x,                                               \
-                      reinterpret_cast<const f32*>(&ml::CVec3::unitY));            \
-        Quaternion qa;                                                            \
-        Quaternion qb;                                                            \
-        func_8004B0B4(&qa);                                                       \
-        func_8004B0B4(&qb);                                                       \
-        func_80052584(&qa, reinterpret_cast<const Vec*>(&ml::CVec3::unitY),       \
-                      reinterpret_cast<const Vec*>(&iv->field408));                \
-        func_800526C0(&qb, reinterpret_cast<const Vec*>(&ml::CVec3::unitY),       \
-                      f31);                                                        \
-        func_8005274C(&qa, &qb);                                                  \
-        if (s->object3A0 != 0) {                                                  \
-            func_80052780(func_8048315C(s->object3A0), &qa);                       \
-        }                                                                         \
-        if (setCounter) {                                                         \
-            s->field4DC = 0xF;                                                    \
-        }                                                                         \
-    } while (0)
-
-    bool turnMode = func_8004B3D8(flagp, 0x2000) != 0;
-    if (!turnMode && func_8005255C(reinterpret_cast<u8*>(self) + 0x10) != 0) {
+    bool turnMode = func_8004B3D8((u32*)&s->field0C, 0x2000) != 0;
+    if (!turnMode && func_8005255C(self) != 0) {
         turnMode = true; // child probe true falls through to the turn section
     }
     if (turnMode) {
-        // Turn mode: converge the move direction onto the desired heading.
-        if (func_8004B848(self) != 0) {
-            nw4r::math::VEC3 n;
-            func_8004B79C(&n.x, &iv->field3D8);
-            if (iv->field3DC < lbl_eu_8066AF20) {
-                f32 root = func_8004EC78(iv->field3E0 * iv->field3E0 +
-                                         iv->field3D8 * iv->field3D8);
-                if (root != lbl_eu_80665EA0) {
-                    f32 k = lbl_eu_80665E9C / root;
-                    f32 t = func_8004EC78(lbl_eu_80665E9C -
-                                          lbl_eu_8066AF20 * lbl_eu_8066AF20);
-                    n.x = iv->field3D8 * k * t;
-                    n.y = lbl_eu_8066AF20;
-                    n.z = iv->field3E0 * k * t;
-                }
-            }
-            f32 mag = n.y;
-            if (mag == lbl_eu_80665EA0) {
-                mag = lbl_eu_80665E9C;
-            }
-            nw4r::math::VEC3 radial;
-            func_8004B60C(&radial, func_8004CC74(f31), lbl_eu_80665EA0,
-                          func_8004CC68(f31));
-            // Remove the component along n so the radial stays on the plane.
-            radial.y -= func_800504BC(&radial.x, &n.x) / mag;
-            func_8004CBC8(reinterpret_cast<ml::CVec3*>(&radial));
-            f32 ang2 = lbl_eu_8066A200 + func_8004CC40(radial.x, radial.z);
-            nw4r::math::VEC3 dir;
-            func_8004B60C(&dir, func_8004CC74(ang2), lbl_eu_80665EA0,
-                          func_8004CC68(ang2));
-            nw4r::math::VEC3 axis;
-            func_8004B0B0(&axis);
-            func_800527B0(&radial, &axis, &dir);
-            nw4r::math::VEC3 d;
-            func_8004CB80(&d.x, &axis.x, &iv->field408);
-            nw4r::math::VEC3 d2;
-            func_8004B75C(&d2.x, &d.x, lbl_eu_80665ECC);
-            func_8004B738(&iv->field408, &d2.x);
-        } else {
-            nw4r::math::VEC3 fwd;
-            func_8004B60C(&fwd, lbl_eu_80665EA0, lbl_eu_80665E9C,
-                          lbl_eu_80665EA0);
-            nw4r::math::VEC3 d;
-            func_8004CB80(&d.x, &fwd.x, &iv->field408);
-            nw4r::math::VEC3 d2;
-            func_8004B75C(&d2.x, &d.x, lbl_eu_80665ECC);
-            func_8004B738(&iv->field408, &d2.x);
-        }
-        COMMIT_QUAT(false);
-        done = true;
-    }
-    if (!done && turnMode) {
         // Turn mode: converge the move direction onto the desired heading.
         if (func_8004B848(self) != 0) {
             nw4r::math::VEC3 n;
@@ -3516,7 +3455,7 @@ extern "C" void func_80051CD4(CActParamAnim* self) {
         }
         COMMIT_QUAT();
         s->field4DC = 0xF;
-    } else if (func_8004B3D8(flagp, 0x4000) != 0) {
+    } else if (func_8004B3D8((u32*)&s->field0C, 0x4000) != 0) {
         // Strafe/dash mode: orbit the heading around the radial direction.
         if (func_8004B848(self) != 0) {
             nw4r::math::VEC3 n;
@@ -3623,7 +3562,9 @@ u32 CActParamAnim::testAndClearFlag18() {
 // Shortest-arc rotation quaternion taking vector a to vector b. The dot is
 // computed with the nw4r paired-single helper; vectors within the antiparallel
 // threshold fall back to a fixed 180-degree Y rotation.
-void func_80052584(Quaternion* out, const Vec* a, const Vec* b) {
+// noinline + extern "C": retail calls this (unmangled func_80052584) from
+// func_80051CD4; without it MWCC absorbs the body (Warning/FrSqrt block).
+extern "C" __declspec(noinline) void func_80052584(Quaternion* out, const Vec* a, const Vec* b) {
     f32 dot = nw4r::math::VEC3Dot(reinterpret_cast<const nw4r::math::VEC3*>(a),
                                   reinterpret_cast<const nw4r::math::VEC3*>(b));
     if (dot < lbl_eu_80665F5C) {
@@ -3654,7 +3595,7 @@ void func_80052584(Quaternion* out, const Vec* a, const Vec* b) {
     out->w = lbl_eu_80665F00 * root;
 }
 
-void func_800526C0(Quaternion* out, const Vec* axis, f32 angle) {
+extern "C" __declspec(noinline) void func_800526C0(Quaternion* out, const Vec* axis, f32 angle) {
     // Rotation quaternion from an axis + angle: (axis * sin(half), cos(half)).
     f32 t = lbl_eu_80665F00 * angle;
     f32 s = nw4r::math::SinFIdx(lbl_eu_80665ED8 * t);
@@ -3664,12 +3605,12 @@ void func_800526C0(Quaternion* out, const Vec* axis, f32 angle) {
     out->w = nw4r::math::CosFIdx(lbl_eu_80665ED8 * t);
 }
 
-extern "C" Quaternion* func_8005274C(Quaternion* self, const Quaternion* param) {
+extern "C" __declspec(noinline) Quaternion* func_8005274C(Quaternion* self, const Quaternion* param) {
     PSQUATMultiply(self, param, self);
     return self;
 }
 
-extern "C" void func_80052780(void* self, void* src){
+extern "C" __declspec(noinline) void func_80052780(void* self, void* src){
     int f = *(int*)((char*)self + 224);
     volatile int* vs = (volatile int*)src;
     int a = vs[0];
@@ -3683,7 +3624,7 @@ extern "C" void func_80052780(void* self, void* src){
     *(int*)((char*)self + 224) = f | 4;
 }
 
-extern "C" void* func_800527B0(void* self, const void* a, const void* b) {
+extern "C" __declspec(noinline) void* func_800527B0(void* self, const void* a, const void* b) {
     extern void PSVECCrossProduct(const void*, const void*, void*);
     PSVECCrossProduct(self, b, (void*)a);
     return (void*)a;

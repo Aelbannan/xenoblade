@@ -74,6 +74,103 @@ struct CfGimmickSoundSlot {
     f32 field_1C;   // +0x1C
 };
 
+// Abstract view of the retail CfGimmickObject vtable: calling slot 0x158
+// through a real polymorphic type makes MWCC emit its canonical virtual-call
+// sequence (lwz r12,0(r3); lwz r12,off(r12); mtctr r12) instead of the
+// generic function-pointer chain. Pure virtuals only -- no vtable is emitted
+// for this class.
+class ICfGimmickObjectVt {
+public:
+    virtual void vt00() = 0;
+    virtual void vt01() = 0;
+    virtual void vt02() = 0;
+    virtual void vt03() = 0;
+    virtual void vt04() = 0;
+    virtual void vt05() = 0;
+    virtual void vt06() = 0;
+    virtual void vt07() = 0;
+    virtual void vt08() = 0;
+    virtual void vt09() = 0;
+    virtual void vt0A() = 0;
+    virtual void vt0B() = 0;
+    virtual void vt0C() = 0;
+    virtual void vt0D() = 0;
+    virtual void vt0E() = 0;
+    virtual void vt0F() = 0;
+    virtual void vt10() = 0;
+    virtual void vt11() = 0;
+    virtual void vt12() = 0;
+    virtual void vt13() = 0;
+    virtual void vt14() = 0;
+    virtual void vt15() = 0;
+    virtual void vt16() = 0;
+    virtual void vt17() = 0;
+    virtual void vt18() = 0;
+    virtual void vt19() = 0;
+    virtual void vt1A() = 0;
+    virtual void vt1B() = 0;
+    virtual void vt1C() = 0;
+    virtual void vt1D() = 0;
+    virtual void vt1E() = 0;
+    virtual void vt1F() = 0;
+    virtual void vt20() = 0;
+    virtual void vt21() = 0;
+    virtual void vt22() = 0;
+    virtual void vt23() = 0;
+    virtual void vt24() = 0;
+    virtual void vt25() = 0;
+    virtual void vt26() = 0;
+    virtual void vt27() = 0;
+    virtual void vt28() = 0;
+    virtual void vt29() = 0;
+    virtual void vt2A() = 0;
+    virtual void vt2B() = 0;
+    virtual void vt2C() = 0;
+    virtual void vt2D() = 0;
+    virtual void vt2E() = 0;
+    virtual void vt2F() = 0;
+    virtual void vt30() = 0;
+    virtual void vt31() = 0;
+    virtual void vt32() = 0;
+    virtual void vt33() = 0;
+    virtual void vt34() = 0;
+    virtual void vt35() = 0;
+    virtual void vt36() = 0;
+    virtual void vt37() = 0;
+    virtual void vt38() = 0;
+    virtual void vt39() = 0;
+    virtual void vt3A() = 0;
+    virtual void vt3B() = 0;
+    virtual void vt3C() = 0;
+    virtual void vt3D() = 0;
+    virtual void vt3E() = 0;
+    virtual void vt3F() = 0;
+    virtual void vt40() = 0;
+    virtual void vt41() = 0;
+    virtual void vt42() = 0;
+    virtual void vt43() = 0;
+    virtual void vt44() = 0;
+    virtual void vt45() = 0;
+    virtual void vt46() = 0;
+    virtual void vt47() = 0;
+    virtual void vt48() = 0;
+    virtual void vt49() = 0;
+    virtual void vt4A() = 0;
+    virtual void vt4B() = 0;
+    virtual void vt4C() = 0;
+    virtual void vt4D() = 0;
+    virtual void vt4E() = 0;
+    virtual void vt4F() = 0;
+    virtual void vt50() = 0;
+    virtual void vt51() = 0;
+    virtual void vt52() = 0;
+    virtual void vt53() = 0;
+    // NOTE: MWCC reserves two extra vtable slots for the class's implicit
+    // destructor pair before the first declared virtual below.
+    // slot 0x158 / 4 = 86: set-mode entry used by func_801F61B0.
+    virtual void setMode(int mode) = 0;
+};
+
 namespace cf {
 
 class CfGimmickObject {

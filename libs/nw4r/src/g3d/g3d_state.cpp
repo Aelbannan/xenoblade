@@ -30,11 +30,11 @@ struct TlutCacheState {
 };
 extern TlutCacheState lbl_eu_8061A6C0;
 
-// Tex cache (retail .bss at 8061A5A0): the byte at 0x100 tracks which TLUTs
-// must be re-uploaded after a texture edit.
+// Tex cache (retail .bss at 8061A5A0): one cached GXTexObj per texmap ID;
+// the byte at 0x100 tracks which must be re-uploaded after an edit.
 struct TexCacheState {
-    u8 data[0x100]; // at 0x0
-    u8 flag;        // at 0x100
+    GXTexObj texObj[8]; // at 0x0 (8 x 0x20-byte objects)
+    u8 flag;            // at 0x100
 };
 extern TexCacheState lbl_eu_8061A5A0;
 
@@ -54,6 +54,8 @@ struct TexCoordScaleDstEntry {
 };
 
 // Texcoord-scale cache at 8061A52C (offset 0xC inside the state blob).
+// Retail also emits this address as its own .bss symbol, so the source
+// keeps a standalone extern for it.
 struct TexCoordScaleCache {
     u32 flag;                  // at 0x0  (bit0 = scales re-emitted, bit1 = tex invalidated)
     TexCoordScaleEntry src[8]; // at 0x4  per-source scale pairs (4-byte stride)
@@ -116,6 +118,7 @@ struct G3DStateCache {
     LightInvalBlock lightInval;            // at 0x1054
 };
 extern G3DStateCache lbl_eu_8061A520;
+extern TexCoordScaleCache lbl_eu_8061A52C;
 
 // "sync" flag: cleared before every display-list upload.
 extern bool lbl_eu_80665448;
@@ -132,8 +135,11 @@ struct ZCompLocState {
 };
 extern ZCompLocState lbl_eu_80665460;
 
-// Float constants in g3d_state.o's retail .sdata2 (IndMtxOpStd::SetNrmMapMtx).
+// Float constants in g3d_state.o's retail .sdata2 (IndMtxOpStd::SetNrmMapMtx
+// and ScnDependentMtxFunc::EnvironmentMapping).
 extern const float lbl_eu_80669BEC;  // 0.0f
+extern const float lbl_eu_80669BF0; // 1.0f (environment-mapping up vector)
+extern const float lbl_eu_80669BF4; // epsilon (environment-mapping dir test)
 extern const float lbl_eu_80669BF8;  // 1.0f
 extern const float lbl_eu_80669BFC;  // 0.5f (ind normal-map scale)
 extern const float lbl_eu_80669C00;  // 1.0f/255.0f (channel-color scale)
@@ -680,7 +686,9 @@ void G3DState::LoadResTlutObj(const ResTlutObj tlutObj) {
 } // namespace nw4r
 
 
-void EnvironmentMapping__Q44nw4r3g3d6detail19ScnDependentMtxFuncFPQ34nw4r4math5MTX34ScSc(){}
+// Static projection/texmtx blob folded into environment matrices by
+// ScnDependentMtxFunc::EnvironmentMapping (retail .data at 8051D660).
+extern const unsigned char lbl_eu_8051D660[];
 
 void EnvironmentSpecularMapping__Q44nw4r3g3d6detail19ScnDependentMtxFuncFPQ34nw4r4math5MTX34ScSc(){}
 
@@ -753,8 +761,88 @@ void FifoSend__Q44nw4r3g3d8G3DState13IndTexMtxInfoCFv(
 }
 
 
-void LoadResTexObj__Q34nw4r3g3d8G3DStateFQ34nw4r3g3d9ResTexObj(){}
 
+
+namespace nw4r {
+namespace g3d {
+namespace G3DState {
+
+// LoadResTexObj: per-texmap upload with an 8-word cache compare.
+void LoadResTexObj(const ResTexObj texObj) {
+    // Local copy + explicit bool-normalize reproduces MWCC's neg/or/srwi
+    // null test and stack home of the resource handle.
+    const ResTexObjData* pData = texObj.ptr();
+    if ((((u32) - (s32)pData | (u32)pData) >> 31) != 0) {
+        const ResTexObj obj(const_cast<void*>((const void*)pData));
+
+        TexCacheState* pTexCache = &lbl_eu_8061A5A0;
+
+        for (u32 i = 0; i < 8; i++) {
+            if (!obj.IsValidTexObj(static_cast<GXTexMapID>(i))) {
+                continue;
+            }
+
+            const GXTexObj* pObj = obj.GetTexObj(static_cast<GXTexMapID>(i));
+            u32 bit = 1 << i;
+
+            // Skip the upload when this texmap was cached and all 8 words of
+            // the cached GXTexObj still match the resource's copy.
+            if (pTexCache->flag & bit) {
+                // Grouped materialized-bool chain: each stage is guarded by
+                // the previous stage's bool and assigns a fresh one.
+                bool b01 = false;
+                if (pObj->dummy[0] == pTexCache->texObj[i].dummy[0] &&
+                    pObj->dummy[1] == pTexCache->texObj[i].dummy[1]) {
+                    b01 = true;
+                }
+                bool b012 = false;
+                if (b01 && pObj->dummy[2] == pTexCache->texObj[i].dummy[2]) {
+                    b012 = true;
+                }
+                bool b0123 = false;
+                if (b012 && pObj->dummy[3] == pTexCache->texObj[i].dummy[3]) {
+                    b0123 = true;
+                }
+                bool b01234 = false;
+                if (b0123 && pObj->dummy[4] == pTexCache->texObj[i].dummy[4]) {
+                    b01234 = true;
+                }
+                bool b012345 = false;
+                if (b01234 && pObj->dummy[5] == pTexCache->texObj[i].dummy[5]) {
+                    b012345 = true;
+                }
+                bool b0123456 = false;
+                if (b012345 && pObj->dummy[6] == pTexCache->texObj[i].dummy[6]) {
+                    b0123456 = true;
+                }
+                bool bAll = false;
+                if (b0123456 && pObj->dummy[7] == pTexCache->texObj[i].dummy[7]) {
+                    bAll = true;
+                }
+                if (bAll) {
+                    continue;
+                }
+            }
+
+            pTexCache->flag |= static_cast<u8>(bit);
+            pTexCache->texObj[i] = *pObj;
+            GXLoadTexObj(pObj, static_cast<GXTexMapID>(i));
+
+            // Remember the uploaded texture dimensions in the scale cache.
+            u16 height = GXGetTexObjHeight(pObj);
+            lbl_eu_8061A52C.src[i].scaleS = GXGetTexObjWidth(pObj);
+            lbl_eu_8061A52C.src[i].scaleT = height;
+
+            lbl_eu_8061A52C.flag = (lbl_eu_8061A52C.flag | 2) & ~1u;
+        }
+
+        lbl_eu_80665448 = true;
+    }
+}
+
+} // namespace G3DState
+} // namespace g3d
+} // namespace nw4r
 
 
 namespace nw4r {
@@ -970,9 +1058,9 @@ void G3DState::LoadResMatChan(const ResMatChan chan, u32 maskDiffColor,
 }
 
 void G3DState::LoadResTev(ResTev tev) {
-    // Local copy: MWCC homes the by-value resource handle into a
-    // callee-saved register at entry, before any other spills - matches
-    // retail's early mr-to-r31 homing.
+    // Local copy of the by-value resource handle (best-known shape).
+    // NOTE: the true retail body continues past the scale loop with
+    // additional tev-dependent work not present here; see open-item notes.
     ResTev res = tev;
 
     if (res.ptr() == NULL) {
@@ -1017,14 +1105,20 @@ void G3DState::LoadResTev(ResTev tev) {
         res.CallDisplayList(sync);
     }
 
-    // Re-emit texcoord scales when the texture cache was invalidated since
-    // the last upload and the cached scales have not been re-emitted yet.
-    TexCoordScaleCache* pScale = &lbl_eu_8061A520.texCoordScale;
-    u32 scaleFlag = pScale->flag;
+    // Declaration order drives MWCC's callee-saved coloring: the scale-flag
+    // word and the texgen count are read ahead of the branch, while
+    // pScale/i are assigned lazily inside it.
+    // Declared ahead of the branch so MWCC retains the high half of the
+    // cache address across it; the pointer itself is only materialized at
+    // its first use inside the loop (retail addi-from-shared-base shape).
+    TexCoordScaleCache* pScale = &lbl_eu_8061A52C;
+    u8 i;
     u8 nTexGens = lbl_eu_8061A520.nTexGens;
 
-    if ((scaleFlag & 2) && (scaleFlag & 1) == 0 && nTexGens != 0) {
-        for (u8 i = 0; i < nTexGens; i++) {
+    // Re-emit texcoord scales when the texture cache was invalidated since
+    // the last upload and the cached scales have not been re-emitted yet.
+    if ((pScale->flag & 2) && (pScale->flag & 1) == 0 && nTexGens != 0) {
+        for (i = 0; i < nTexGens; i++) {
             // The dst-cache updates are assignment expressions inside the
             // call arguments; evaluating them in-place reproduces retail's
             // exact argument-setup interleaving.
@@ -1039,7 +1133,7 @@ void G3DState::LoadResTev(ResTev tev) {
                     false, false);
             }
         }
-        pScale->flag |= 1;
+        lbl_eu_8061A52C.flag |= 1;
     }
 }
 
@@ -1171,7 +1265,143 @@ void LoadResTexSrt(const ResTexSrt srt) {
 } // namespace g3d
 } // namespace nw4r
 
-void LoadResShpPrimitive__Q34nw4r3g3d8G3DStateFQ34nw4r3g3d6ResShpPCQ34nw4r4math5MTX34PCQ34nw4r4math5MTX34(){}
+namespace nw4r {
+namespace g3d {
+
+void G3DState::LoadResShpPrimitive(const ResShp shp, const math::MTX34* pViewPos,
+                                   const math::MTX34* pViewNrm) {
+    G3DStateCache* pState = &lbl_eu_8061A520;
+    const ResShpData* pData = shp.ptr();
+
+    if (pData == NULL) {
+        return;
+    }
+
+    // Re-emit texcoord scales when the texture cache was invalidated since
+    // the last upload and the cached scales have not been re-emitted yet.
+    TexCoordScaleCache* pScale;
+    u8 i;
+    u8 nTexGens = pState->nTexGens;
+    if ((pState->texCoordScale.flag & 2) &&
+        (pState->texCoordScale.flag & 1) == 0 && nTexGens != 0) {
+        pScale = &pState->texCoordScale;
+        for (i = 0; i < nTexGens; i++) {
+            if (pScale->dirty[i] != 0xFF) {
+                fifo::GDSetTexCoordScale2(
+                    static_cast<GXTexCoordID>(i),
+                    (pScale->dst[i].scaleS =
+                         pScale->src[pScale->dirty[i]].scaleS),
+                    false, false,
+                    (pScale->dst[i].scaleT =
+                         pScale->src[pScale->dirty[i]].scaleT),
+                    false, false);
+            }
+        }
+        pState->texCoordScale.flag |= 1;
+    }
+
+    s32 curMtxIdx = static_cast<s32>(pData->curMtxIdx);
+    bool envelope = curMtxIdx < 0;
+
+    if (!envelope) {
+        if (pViewPos != NULL) {
+            GXLoadPosMtxImm(*pViewPos, 0);
+            if (pData->vcdBitmap & 0x400) {
+                // Shapes without a dedicated normal matrix reuse the view
+                // position matrix.
+                if (pViewNrm != NULL) {
+                    GXLoadNrmMtxImm(*pViewNrm, 0);
+                } else {
+                    GXLoadNrmMtxImm(*pViewPos, 0);
+                }
+            }
+        } else {
+            u32 mtxIdx = static_cast<u32>(curMtxIdx) & 0xFFFF;
+            GXLoadPosMtxIndx(mtxIdx, 0);
+            if (pData->vcdBitmap & 0x400) {
+                GXLoadNrmMtxIndx3x3(mtxIdx, 0);
+            }
+        }
+    }
+
+    // TexMtx upload: per-texcoord cached matrix state decides whether to
+    // recompute the view normal matrix (1), upload identity (2), or leave
+    // the default light-channel matrix (default case).
+    if (curMtxIdx >= 0) {
+        bool bResetCurrentMtx = true;
+        u32 mtxIds[8];
+        u32 mtxId = 0x1E;
+
+        for (u32 i = 0; i < 8; i++) {
+            u32 cache = pState->curMtx[i];
+
+            if (cache == 1) {
+                mtxIds[i] = mtxId;
+                const math::MTX33* pNrmArray =
+                    pState->viewMtxPtrs.nrm;
+
+                if (pNrmArray != NULL) {
+                    fifo::GDLoadTexMtxImm3x3(pNrmArray[curMtxIdx], mtxIds[i]);
+                } else {
+                    if (!lbl_eu_80665458[0]) {
+                        lbl_eu_80665458[0] = 1;
+                    }
+                    detail::CalcViewNrmMtx(
+                        reinterpret_cast<math::MTX33*>(lbl_eu_8061FAB8),
+                        pState->viewMtxPtrs.pos != NULL
+                            ? &pState->viewMtxPtrs.pos[curMtxIdx]
+                            : NULL);
+                    fifo::GDLoadTexMtxImm3x3(
+                        *reinterpret_cast<const math::MTX33*>(
+                            lbl_eu_8061FAB8),
+                        mtxIds[i]);
+                }
+                bResetCurrentMtx = false;
+            } else if (cache == 2) {
+                mtxIds[i] = 0;
+                bResetCurrentMtx = false;
+            } else {
+                mtxIds[i] = 0x3C;
+            }
+
+            mtxId += 3;
+        }
+
+        if (bResetCurrentMtx) {
+            // No texcoord matrix was touched: only reset the XF current
+            // matrices once after an invalidation.
+            if (!lbl_eu_8066544C) {
+                fifo::GDResetCurrentMtx();
+                lbl_eu_8066544C = 1;
+            }
+        } else {
+            fifo::GDSetCurrentMtx(mtxIds);
+            lbl_eu_8066544C = 0;
+        }
+    } else if (!lbl_eu_8066544C) {
+        fifo::GDResetCurrentMtx();
+        lbl_eu_8066544C = 1;
+    }
+
+    // Re-emit the genMode BP word when the pix/tev caches dirtied it.
+    u32 flag = pState->flag;
+    if ((flag & 0x4) && (flag & 3) != 3) {
+        fifo::GDSetGenMode2(pState->nTexGens, pState->nChans, pState->nTevs,
+                            pState->nInds, pState->cullMode);
+        pState->flag |= 3;
+    }
+
+    bool sync = lbl_eu_80665448;
+    lbl_eu_80665448 = 0;
+    shp.CallPrimitiveDisplayList(sync);
+
+    if (envelope) {
+        lbl_eu_8066544C = 0;
+    }
+}
+
+} // namespace g3d
+} // namespace nw4r
 
 void SetViewPosNrmMtxArray__Q34nw4r3g3d8G3DStateFPCQ34nw4r4math5MTX34PCQ34nw4r4math5MTX33PCQ34nw4r4math5MTX34(){}
 
@@ -1537,3 +1767,139 @@ void LoadLightSet__Q34nw4r3g3d8G3DStateFiPUlPUlPUlPUlPQ34nw4r3g3d11AmbLightObj(
         ->LoadLightSet(id, pDiffColorMask, pDiffAlphaMask, pSpecColorMask,
                        pSpecAlphaMask, pAmbLightObj);
 }
+
+namespace nw4r {
+namespace g3d {
+namespace detail {
+namespace ScnDependentMtxFunc {
+
+// Builds an environment-reflection texgen matrix. Two sources: the camera
+// view matrix (ref_camera path) or a scene light orientation (ref_light
+// path); when neither reference is usable, copies the current environment
+// matrix.
+void EnvironmentMapping(math::MTX34* pMtx, s8 camRef, s8 lightRef) {
+    if (pMtx != NULL) {
+        if (camRef >= 0 && camRef < 0x20) {
+            if (camRef >= 0 && camRef < 0x20) {
+                // Lazily refresh the cached inverse of the current view
+                // matrix.
+                if (!(lbl_eu_8061DFA0.mFlag & 1)) {
+                    PSMTXInverse(
+                        lbl_eu_8061DFA0
+                            .mViewMtxArray[lbl_eu_8061DFA0.mCurCameraID],
+                        lbl_eu_8061DFA0.mViewMtx);
+                    lbl_eu_8061DFA0.mFlag |= 1;
+                }
+
+                PSMTXConcat(lbl_eu_8061DFA0.mViewMtxArray[camRef],
+                            lbl_eu_8061DFA0.mViewMtx, *pMtx);
+
+                f32 zero = lbl_eu_80669BEC;
+                pMtx->m[0][3] = pMtx->m[1][3] = pMtx->m[2][3] = zero;
+
+                PSMTXConcat(
+                    lbl_eu_8061DFA0.mEnvMtxArray[lbl_eu_8061DFA0.mCurCameraID],
+                    *pMtx, *pMtx);
+                return;
+            }
+        } else if (lightRef >= 0 && lightRef < 0x80 &&
+                   reinterpret_cast<LightObj*>(
+                       GetLightObj__Q34nw4r3g3d8G3DStateFi(lightRef))
+                       ->IsEnable()) {
+            LightObj* pLight = reinterpret_cast<LightObj*>(
+                GetLightObj__Q34nw4r3g3d8G3DStateFi(lightRef));
+
+            math::VEC3 dir;
+            pLight->GetLightDir(&dir);
+
+            // Lazily refresh the cached inverse of the current view matrix.
+            if (!(lbl_eu_8061DFA0.mFlag & 1)) {
+                PSMTXInverse(
+                    lbl_eu_8061DFA0.mViewMtxArray[lbl_eu_8061DFA0.mCurCameraID],
+                    lbl_eu_8061DFA0.mViewMtx);
+                lbl_eu_8061DFA0.mFlag |= 1;
+            }
+
+                // Diffuse lights drive the matrix from their position;
+                // spot/specular lights from their direction (falling back to
+                // the position when the direction is degenerate).
+                bool bUsePos = !pLight->IsSpotLight() &&
+                               !pLight->IsSpecularLight();
+
+                if (bUsePos || (dir.x == lbl_eu_80669BEC &&
+                                dir.z == lbl_eu_80669BEC &&
+                                dir.y == lbl_eu_80669BEC)) {
+                    pLight->GetLightPos(&dir);
+                    VEC3TransformNormal(&dir, &lbl_eu_8061DFA0.mViewMtx,
+                                        &dir);
+                    dir.x = -dir.x;
+                    dir.y = -dir.y;
+                    dir.z = -dir.z;
+
+                    if (dir.x != lbl_eu_80669BEC ||
+                        dir.z != lbl_eu_80669BEC ||
+                        dir.y != lbl_eu_80669BEC) {
+                        // Retail quirk: the already-transformed direction is
+                        // transformed a second time on this path.
+                        VEC3TransformNormal(&dir, &lbl_eu_8061DFA0.mViewMtx,
+                                            &dir);
+                    } else {
+                        dir.y = lbl_eu_80669BF0;
+                    }
+                } else {
+                    VEC3TransformNormal(&dir, &lbl_eu_8061DFA0.mViewMtx,
+                                        &dir);
+                }
+
+            // Orthonormal basis: pick an up vector not parallel to the
+            // direction and cross out sideways/vertical axes.
+            math::VEC3 up;
+            if (__fabs(dir.x) >= lbl_eu_80669BF4 ||
+                __fabs(dir.z) >= lbl_eu_80669BF4) {
+                up.z = lbl_eu_80669BEC;
+                up.x = lbl_eu_80669BEC;
+                up.y = lbl_eu_80669BF8;
+            } else {
+                up.x = lbl_eu_80669BEC;
+                up.y = lbl_eu_80669BEC;
+                up.z =
+                    (dir.y <= lbl_eu_80669BEC) ? lbl_eu_80669BF0 : lbl_eu_80669BF8;
+            }
+
+            math::VEC3 side;
+            PSVECCrossProduct(dir, up, side);
+            PSVECNormalize(side, side);
+            math::VEC3 axis;
+            PSVECCrossProduct(side, dir, axis);
+
+            math::MTX34& rMtx = *pMtx;
+            rMtx.m[0][0] = side.x;
+            rMtx.m[0][1] = side.y;
+            rMtx.m[0][2] = side.z;
+            rMtx.m[1][0] = axis.x;
+            rMtx.m[1][1] = axis.y;
+            rMtx.m[1][2] = axis.z;
+            rMtx.m[2][0] = -dir.x;
+            rMtx.m[2][1] = -dir.y;
+            rMtx.m[2][2] = -dir.z;
+
+            PSMTXConcat(*pMtx, lbl_eu_8061DFA0.mViewMtx, *pMtx);
+
+            f32 zero = lbl_eu_80669BEC;
+            rMtx.m[0][3] = rMtx.m[1][3] = rMtx.m[2][3] = zero;
+
+            PSMTXConcat(
+                *reinterpret_cast<const math::MTX34*>(lbl_eu_8051D660),
+                *pMtx, *pMtx);
+            return;
+        }
+    }
+
+    PSMTXCopy(
+        lbl_eu_8061DFA0.mEnvMtxArray[lbl_eu_8061DFA0.mCurCameraID], *pMtx);
+}
+
+} // namespace ScnDependentMtxFunc
+} // namespace detail
+} // namespace g3d
+} // namespace nw4r

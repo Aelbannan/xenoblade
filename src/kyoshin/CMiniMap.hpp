@@ -165,6 +165,58 @@ struct CMMSub {
     u8 mFlag0E;      // 0x3A
 };
 
+// Loader-subobject head stored at CMiniMap+0x2C. The three flag bytes live at
+// the head of CMMTableBlock (+0x38) so Init's whole-region copies line up with
+// retail's block-copy loop bounds.
+struct CMMSubHead {
+    void* mVtable;   // 0x00 (lbl_eu_8052C9F0)
+    void* mPtr04;    // 0x30 abs
+    u8* mPtr08;      // 0x34 abs - cached 'timg' resource (Move)
+};
+
+// Marker-table region 0x38..0x178. The leading bytes alias the loader flags.
+struct CMMTableBlock {
+    u8 mFlag38;      // 0x38 - clock-show flag (Move)
+    u8 mFlag39;      // 0x39
+    u8 mFlag3A;      // 0x3A
+    u8 mPad3B;
+    u32 mW[0x4C];    // 0x3C..0x178 (func_801160A8 marker table)
+};
+
+// Gimmick-view region 0x178..0x820.
+struct CMMViewBlock {
+    u32 mW[0x1AA];   // func_80116670 gimmick view
+};
+
+// Stack mirror of CMMClock used by CMenuMiniMap2::Init: retail hand-builds the
+// temp (vtable + zeroed fields + gate bytes), member-copies it into mClock,
+// then runs the embedded UnkClass dtor, so the UnkClass storage stays raw here
+// and is placement-new'd by Init.
+struct CMMClockInit {
+    void* mVtable;                              // lbl_eu_8052CA88
+    CFileHandle* mFileHandle;
+    nw4r::lyt::ArcResourceAccessor* mAccessor;
+    nw4r::lyt::Layout* mLayout;
+    nw4r::lyt::AnimTransform* mAnimTrans0;
+    nw4r::lyt::AnimTransform* mAnimTrans1;
+    u8 field_0x18;
+    u8 field_0x19;
+    u8 mReady;
+    u8 pad_0x1B;
+    u8 mUnk1C[0x10];
+};
+
+// Minimap map-image loader object (func_80117734): requests the current map's
+// image arc into MEM2 and records the selected BDAT row / resource variant.
+struct CMMMapImg {
+    void* mVtable;              // 0x00 (untouched here)
+    CFileHandle* mFileHandle;   // 0x04 - requested file handle
+    u8* mData;                  // 0x08 - loaded buffer (freed on re-request)
+    u8 mReady;                  // 0x0C - load-complete flag
+    u8 mRow;                    // 0x0D - selected BDAT row (forced min 1)
+    u8 mMode;                   // 0x0E - selected unlock-gated resource variant
+};
+
 class CMiniMap {
 public:
     ~CMiniMap();
@@ -185,14 +237,15 @@ public:
     f32 mField20;                          // 0x20 - marker grid scale
     char* mField24;                        // 0x24 - getFP-resolved pane name
     u32 mField28;                          // 0x28 - getFP-resolved layout name
-    CMMSub mSub;                           // 0x2C..0x3C
-    u8 mField3C[0x17C - 0x3C];             // 0x3C..0x17C (marker-table region, func_801160A8)
-    u8 mField17C[0x824 - 0x17C];           // 0x17C..0x824 (gimmick-view region, func_80116670)
+    CMMSubHead mSub;                       // 0x2C..0x38 (flags in mField3C head)
+    CMMTableBlock mField3C;                // 0x38..0x178 (marker-table region, func_801160A8)
+    CMMViewBlock mField17C;                // 0x178..0x820 (gimmick-view region, func_80116670)
+    u32 mPad820;                           // 0x820..0x824
     // Raw UnkClass_8045F564 storage: retail constructs these mid-ctor body
     // (after the table init calls), so they are placement-new'd there instead
     // of being auto-constructed at ctor entry.
-    u8 m824[0x10];                         // 0x824..0x834 (destroyed last)
-    u8 m834[0x10];                         // 0x834..0x844 (destroyed first)
+    u32 m824[4];                           // 0x824..0x834 (destroyed last)
+    u32 m834[4];                           // 0x834..0x844 (destroyed first)
 };
 
 class CMenuMiniMap2 : public CProcess {

@@ -244,8 +244,8 @@ void CActorParam_UnkVirtualFunc141__Q22cf11CActorParamFv(cf::CActorParam* self, 
 }
 void cf::CActorParam::CActorParam_UnkVirtualFunc142() {
     cf::CActorParamUnk1928View* view = reinterpret_cast<cf::CActorParamUnk1928View*>(this);
-    float v0 = lbl_eu_806677E0;
     float v = lbl_eu_806677E4;
+    float v0 = lbl_eu_806677E0;
     cf::CActorParam_UnkStruct5* e = view->entries;
     e[0].unk4 = v; e[0].unk0 = v; e[0].unkC = v; e[0].unk8 = v;
     e[0].unk10 = v0;
@@ -387,6 +387,10 @@ void cf::CActorParam::CActorParam_UnkVirtualFunc160() {
     cf::CActorParamStatusView* v = reinterpret_cast<cf::CActorParamStatusView*>(this);
     *(volatile s16*)((u8*)this + 0x335A) = 2;
     float max = *(volatile float*)((u8*)this + 0x3368);
+    // u8 gauge byte -> float via the u32->double stack-magic conversion
+    // (retail references lbl_eu_806677F0); the (float) cast keeps the
+    // conversion inline with single-precision fsubs/fmuls (no frsp).
+    // Volatiles pin the retail load order (lfs 0x3368 before lbz 0x335E).
     v->field_0x3358 = (u16)((int)(max * (float)(u32)*(volatile u8*)((u8*)this + 0x335E)) / 2);
 }
 float CActorParam_UnkVirtualFunc23__Q22cf11CActorParamFv(void* self) { return *(float*)((u8*)self + 0x15e8); }

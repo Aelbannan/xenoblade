@@ -11,33 +11,33 @@ The three `*shim`/`side-effect` rows are **fakematch-candidate** families: sourc
 
 | metric | count |
 |---|---|
-| extern "C" (total lines) | 14407 |
-| extern "C" declarations (non-lbl_*, imports) | 6021 |
-| extern "C" definitions (forced names) | 4152 |
-| `self`/register-style params | 13408 |
-| `void*` (params + locals) | 7830 |
-| raw pointer offset arithmetic | 7265 |
-| deref-through-cast arithmetic | 2731 |
+| extern "C" (total lines) | 14364 |
+| extern "C" declarations (non-lbl_*, imports) | 6002 |
+| extern "C" definitions (forced names) | 4157 |
+| `self`/register-style params | 13405 |
+| `void*` (params + locals) | 7821 |
+| raw pointer offset arithmetic | 7293 |
+| deref-through-cast arithmetic | 2752 |
 | inline asm / `register` | 118 |
-| rN-named params | 509 |
-| goto | 3339 |
+| rN-named params | 492 |
+| goto | 3332 |
 | DECOMP_ASM_INSN asm shims (fakematch candidate) | 11 |
 | #pragma schedule once/twice (fakematch candidate) | 6 |
 | assignment inside cast / init-list (fakematch candidate) | 1 |
-| #pragma | 2604 |
+| #pragma | 2607 |
 
 ## Top offenders (by cleanable severity)
 
 | TU | severity |
 |---|---|
-| src/kyoshin/cf/CBattleManager.cpp | 3651 |
+| src/kyoshin/cf/CBattleManager.cpp | 3650 |
 | src/kyoshin/CItemBoxGrid.cpp | 2215 |
 | src/kyoshin/CPassiveSkill.cpp | 1995 |
 | src/kyoshin/CItemBoxInfo.cpp | 1676 |
 | src/kyoshin/menu/CMenuArtsSet.cpp | 1647 |
 | libs/monolib/src/coli/code_804A6C60.cpp | 1555 |
-| src/kyoshin/cf/object/CActorParam.cpp | 1501 |
 | src/kyoshin/cf/CfCam.cpp | 1498 |
+| src/kyoshin/cf/object/CActorParam.cpp | 1496 |
 | libs/monolib/src/scn/CScnEnvLgtCtrl.cpp | 1412 |
 | src/kyoshin/makecrystal/CMCCrystalBox.cpp | 1325 |
 
@@ -101,7 +101,7 @@ The three `*shim`/`side-effect` rows are **fakematch-candidate** families: sourc
 | libs/monolib/src/effect/code_804D9274.cpp | 1 | 1 | 0 | 1 | 0 | 0 | 0 | 0 | 0 | 0 | 0 | 0 |
 | libs/monolib/src/effect/code_804DB938.cpp | 1 | 1 | 0 | 0 | 0 | 0 | 0 | 0 | 0 | 0 | 0 | 0 |
 | libs/monolib/src/lib/CLib.cpp | 3 | 0 | 0 | 5 | 0 | 0 | 0 | 0 | 0 | 0 | 0 | 0 |
-| libs/monolib/src/lib/CLibCri.cpp | 79 | 13 | 28 | 15 | 5 | 0 | 0 | 0 | 3 | 0 | 0 | 0 |
+| libs/monolib/src/lib/CLibCri.cpp | 80 | 12 | 25 | 21 | 2 | 0 | 0 | 0 | 3 | 0 | 0 | 0 |
 | libs/monolib/src/lib/CLibCriMoviePlay.cpp | 50 | 4 | 4 | 10 | 1 | 1 | 1 | 0 | 4 | 0 | 0 | 0 |
 | libs/monolib/src/lib/CLibCriStreamingPlay.cpp | 65 | 12 | 5 | 19 | 39 | 0 | 0 | 0 | 0 | 0 | 0 | 0 |
 | libs/monolib/src/lib/CLibG3d.cpp | 6 | 0 | 0 | 0 | 0 | 0 | 0 | 0 | 1 | 0 | 0 | 0 |
@@ -128,7 +128,7 @@ The three `*shim`/`side-effect` rows are **fakematch-candidate** families: sourc
 | libs/monolib/src/mpfsys/UnkClass_80471EC8.cpp | 8 | 3 | 11 | 22 | 7 | 2 | 0 | 0 | 1 | 0 | 0 | 0 |
 | libs/monolib/src/mpfsys/code_8047BB54.cpp | 26 | 7 | 24 | 38 | 8 | 4 | 0 | 0 | 0 | 0 | 0 | 0 |
 | libs/monolib/src/mpfsys/code_8047CA88.cpp | 2 | 0 | 5 | 2 | 3 | 1 | 0 | 0 | 0 | 0 | 0 | 0 |
-| libs/monolib/src/nand/CNBanner.cpp | 37 | 1 | 4 | 3 | 0 | 0 | 0 | 0 | 0 | 0 | 0 | 0 |
+| libs/monolib/src/nand/CNBanner.cpp | 4 | 1 | 3 | 2 | 0 | 0 | 0 | 0 | 0 | 0 | 0 | 0 |
 | libs/monolib/src/nand/CNReqtaskCheck.cpp | 2 | 4 | 0 | 1 | 0 | 0 | 0 | 0 | 2 | 0 | 0 | 0 |
 | libs/monolib/src/nand/CNReqtaskLoad.cpp | 6 | 4 | 0 | 2 | 0 | 0 | 0 | 0 | 4 | 0 | 0 | 0 |
 | libs/monolib/src/nand/CNReqtaskReaddir.cpp | 4 | 4 | 0 | 1 | 0 | 0 | 0 | 0 | 3 | 0 | 0 | 0 |
@@ -216,7 +216,7 @@ The three `*shim`/`side-effect` rows are **fakematch-candidate** families: sourc
 | libs/nw4r/src/g3d/platform/g3d_cpu.cpp | 12 | 1 | 0 | 3 | 0 | 0 | 7 | 0 | 0 | 0 | 0 | 0 |
 | libs/nw4r/src/g3d/platform/g3d_gpu.cpp | 0 | 0 | 0 | 0 | 0 | 0 | 2 | 0 | 0 | 0 | 0 | 0 |
 | libs/nw4r/src/g3d/res/g3d_resanmchr.cpp | 0 | 0 | 0 | 1 | 0 | 0 | 0 | 0 | 0 | 0 | 0 | 0 |
-| libs/nw4r/src/g3d/res/g3d_resanmscn.cpp | 0 | 0 | 0 | 12 | 0 | 0 | 0 | 0 | 0 | 0 | 0 | 0 |
+| libs/nw4r/src/g3d/res/g3d_resanmscn.cpp | 0 | 0 | 0 | 13 | 0 | 0 | 0 | 0 | 0 | 0 | 0 | 0 |
 | libs/nw4r/src/g3d/res/g3d_resdict.cpp | 0 | 0 | 0 | 2 | 0 | 0 | 0 | 0 | 0 | 0 | 0 | 0 |
 | libs/nw4r/src/g3d/res/g3d_resfile.cpp | 0 | 0 | 0 | 24 | 0 | 0 | 0 | 0 | 0 | 0 | 0 | 0 |
 | libs/nw4r/src/g3d/res/g3d_resmat.cpp | 0 | 0 | 0 | 12 | 0 | 0 | 0 | 0 | 0 | 0 | 0 | 0 |
@@ -276,7 +276,7 @@ The three `*shim`/`side-effect` rows are **fakematch-candidate** families: sourc
 | libs/nw4r/src/snd/snd_SoundThread.cpp | 0 | 0 | 0 | 2 | 0 | 0 | 0 | 0 | 0 | 0 | 0 | 0 |
 | libs/nw4r/src/snd/snd_StrmChannel.cpp | 0 | 0 | 0 | 3 | 0 | 0 | 0 | 0 | 0 | 0 | 0 | 0 |
 | libs/nw4r/src/snd/snd_StrmFile.cpp | 6 | 0 | 19 | 3 | 0 | 0 | 0 | 0 | 0 | 0 | 0 | 0 |
-| libs/nw4r/src/snd/snd_StrmPlayer.cpp | 11 | 5 | 4 | 9 | 0 | 0 | 1 | 0 | 0 | 0 | 0 | 0 |
+| libs/nw4r/src/snd/snd_StrmPlayer.cpp | 13 | 5 | 5 | 7 | 0 | 0 | 1 | 0 | 0 | 0 | 0 | 0 |
 | libs/nw4r/src/snd/snd_TaskThread.cpp | 0 | 0 | 0 | 2 | 0 | 0 | 0 | 0 | 0 | 0 | 0 | 0 |
 | libs/nw4r/src/snd/snd_Util.cpp | 0 | 0 | 0 | 2 | 0 | 0 | 0 | 0 | 0 | 0 | 0 | 0 |
 | libs/nw4r/src/snd/snd_Voice.cpp | 0 | 2 | 5 | 10 | 0 | 0 | 0 | 0 | 0 | 0 | 0 | 0 |
@@ -300,7 +300,7 @@ The three `*shim`/`side-effect` rows are **fakematch-candidate** families: sourc
 | src/kyoshin/CBattery.cpp | 0 | 0 | 0 | 2 | 0 | 0 | 0 | 0 | 0 | 0 | 0 | 0 |
 | src/kyoshin/CBgTex.cpp | 0 | 0 | 0 | 1 | 0 | 0 | 0 | 0 | 0 | 0 | 0 | 0 |
 | src/kyoshin/CCol6Invite.cpp | 1 | 1 | 6 | 1 | 1 | 0 | 0 | 0 | 0 | 0 | 0 | 0 |
-| src/kyoshin/CCol6System.cpp | 18 | 17 | 63 | 13 | 0 | 0 | 0 | 0 | 12 | 0 | 0 | 0 |
+| src/kyoshin/CCol6System.cpp | 18 | 17 | 63 | 13 | 0 | 0 | 0 | 0 | 13 | 0 | 0 | 0 |
 | src/kyoshin/CCollepedia.cpp | 23 | 53 | 25 | 22 | 37 | 1 | 1 | 0 | 0 | 0 | 0 | 0 |
 | src/kyoshin/CCur.cpp | 0 | 45 | 0 | 11 | 0 | 0 | 0 | 0 | 4 | 0 | 0 | 0 |
 | src/kyoshin/CEquipChange.cpp | 5 | 15 | 131 | 26 | 50 | 2 | 0 | 5 | 3 | 0 | 0 | 0 |
@@ -318,7 +318,7 @@ The three `*shim`/`side-effect` rows are **fakematch-candidate** families: sourc
 | src/kyoshin/CLoad.cpp | 3 | 6 | 17 | 0 | 0 | 0 | 0 | 0 | 0 | 0 | 0 | 0 |
 | src/kyoshin/CMainMenu.cpp | 0 | 17 | 23 | 10 | 6 | 0 | 0 | 0 | 15 | 0 | 0 | 0 |
 | src/kyoshin/CMapSel.cpp | 14 | 20 | 43 | 9 | 13 | 9 | 0 | 0 | 0 | 0 | 0 | 0 |
-| src/kyoshin/CMiniMap.cpp | 50 | 12 | 33 | 111 | 102 | 61 | 0 | 0 | 6 | 0 | 0 | 0 |
+| src/kyoshin/CMiniMap.cpp | 51 | 13 | 35 | 113 | 126 | 83 | 0 | 0 | 6 | 0 | 0 | 0 |
 | src/kyoshin/CModelDisp.cpp | 7 | 12 | 33 | 11 | 15 | 4 | 0 | 0 | 0 | 0 | 0 | 0 |
 | src/kyoshin/CNumSelect.cpp | 4 | 12 | 24 | 2 | 0 | 0 | 0 | 2 | 0 | 0 | 0 | 0 |
 | src/kyoshin/COccCulling.cpp | 0 | 0 | 3 | 0 | 0 | 0 | 0 | 3 | 0 | 0 | 0 | 0 |
@@ -340,7 +340,7 @@ The three `*shim`/`side-effect` rows are **fakematch-candidate** families: sourc
 | src/kyoshin/CSysWin.cpp | 1 | 21 | 25 | 8 | 3 | 3 | 0 | 0 | 14 | 0 | 0 | 0 |
 | src/kyoshin/CSysWinBuff.cpp | 3 | 6 | 8 | 8 | 0 | 0 | 0 | 0 | 0 | 0 | 0 | 0 |
 | src/kyoshin/CSysWinSave.cpp | 1 | 7 | 9 | 5 | 0 | 0 | 0 | 0 | 2 | 0 | 0 | 0 |
-| src/kyoshin/CSysWinScenarioLog.cpp | 2 | 7 | 38 | 18 | 8 | 0 | 0 | 0 | 16 | 0 | 0 | 0 |
+| src/kyoshin/CSysWinScenarioLog.cpp | 2 | 7 | 38 | 18 | 8 | 0 | 0 | 0 | 7 | 0 | 0 | 0 |
 | src/kyoshin/CSysWinSelect.cpp | 2 | 1 | 13 | 12 | 4 | 0 | 0 | 0 | 2 | 0 | 0 | 0 |
 | src/kyoshin/CSystemWindow.cpp | 1 | 0 | 2 | 2 | 3 | 2 | 0 | 0 | 0 | 0 | 0 | 0 |
 | src/kyoshin/CTagProcessor.cpp | 1 | 24 | 87 | 88 | 19 | 1 | 0 | 5 | 8 | 0 | 0 | 0 |
@@ -360,10 +360,10 @@ The three `*shim`/`side-effect` rows are **fakematch-candidate** families: sourc
 | src/kyoshin/CUIWindowManager.cpp | 12 | 40 | 25 | 23 | 0 | 22 | 0 | 0 | 83 | 0 | 0 | 0 |
 | src/kyoshin/action/CActParamAnim.cpp | 2 | 60 | 272 | 39 | 118 | 66 | 0 | 0 | 15 | 0 | 0 | 0 |
 | src/kyoshin/action/CActParamData.cpp | 5 | 77 | 170 | 84 | 14 | 8 | 0 | 0 | 46 | 0 | 0 | 0 |
-| src/kyoshin/cf/CActParamAnimGame.cpp | 64 | 5 | 56 | 21 | 11 | 8 | 0 | 1 | 21 | 0 | 0 | 0 |
+| src/kyoshin/cf/CActParamAnimGame.cpp | 64 | 6 | 55 | 21 | 11 | 8 | 0 | 1 | 21 | 0 | 0 | 0 |
 | src/kyoshin/cf/CArtsParam.cpp | 9 | 4 | 26 | 43 | 29 | 13 | 0 | 18 | 0 | 0 | 0 | 0 |
 | src/kyoshin/cf/CArtsSet.cpp | 0 | 4 | 12 | 7 | 4 | 0 | 0 | 0 | 0 | 0 | 0 | 0 |
-| src/kyoshin/cf/CBattleManager.cpp | 145 | 17 | 328 | 610 | 1169 | 552 | 1 | 89 | 141 | 0 | 5 | 0 |
+| src/kyoshin/cf/CBattleManager.cpp | 145 | 17 | 328 | 609 | 1169 | 552 | 1 | 89 | 141 | 0 | 5 | 0 |
 | src/kyoshin/cf/CCharEffect.cpp | 0 | 0 | 14 | 2 | 0 | 0 | 0 | 0 | 0 | 0 | 0 | 0 |
 | src/kyoshin/cf/CCharEffectEne.cpp | 0 | 6 | 7 | 15 | 5 | 0 | 0 | 0 | 0 | 0 | 0 | 0 |
 | src/kyoshin/cf/CHelpManager.cpp | 1 | 4 | 16 | 5 | 0 | 0 | 0 | 0 | 1 | 0 | 0 | 0 |
@@ -377,7 +377,7 @@ The three `*shim`/`side-effect` rows are **fakematch-candidate** families: sourc
 | src/kyoshin/cf/CTaskEnvironment.cpp | 9 | 22 | 21 | 12 | 10 | 9 | 0 | 0 | 8 | 0 | 0 | 0 |
 | src/kyoshin/cf/CTaskGameCf.cpp | 0 | 2 | 0 | 0 | 6 | 4 | 0 | 0 | 1 | 0 | 0 | 0 |
 | src/kyoshin/cf/CTaskREvent.cpp | 2 | 4 | 26 | 6 | 5 | 1 | 0 | 0 | 0 | 0 | 0 | 0 |
-| src/kyoshin/cf/CTaskREvtSequence.cpp | 2 | 12 | 44 | 9 | 3 | 8 | 0 | 0 | 1 | 0 | 0 | 0 |
+| src/kyoshin/cf/CTaskREvtSequence.cpp | 2 | 12 | 51 | 9 | 5 | 8 | 0 | 0 | 2 | 0 | 0 | 0 |
 | src/kyoshin/cf/CVision.cpp | 14 | 3 | 50 | 45 | 45 | 11 | 0 | 17 | 0 | 0 | 0 | 0 |
 | src/kyoshin/cf/CfBdat.cpp | 0 | 0 | 0 | 80 | 0 | 0 | 0 | 0 | 2 | 0 | 0 | 0 |
 | src/kyoshin/cf/CfCam.cpp | 15 | 101 | 358 | 90 | 18 | 11 | 0 | 4 | 0 | 0 | 0 | 0 |
@@ -398,14 +398,14 @@ The three `*shim`/`side-effect` rows are **fakematch-candidate** families: sourc
 | src/kyoshin/cf/CfGimmickItem.cpp | 1 | 1 | 12 | 3 | 0 | 0 | 1 | 0 | 6 | 0 | 0 | 0 |
 | src/kyoshin/cf/CfGimmickJump.cpp | 30 | 7 | 28 | 44 | 1 | 0 | 0 | 0 | 0 | 0 | 0 | 0 |
 | src/kyoshin/cf/CfGimmickLock.cpp | 0 | 5 | 21 | 8 | 4 | 1 | 0 | 0 | 1 | 0 | 0 | 0 |
-| src/kyoshin/cf/CfGimmickObject.cpp | 0 | 2 | 63 | 5 | 6 | 0 | 0 | 0 | 12 | 0 | 0 | 0 |
+| src/kyoshin/cf/CfGimmickObject.cpp | 0 | 2 | 65 | 4 | 6 | 0 | 0 | 0 | 13 | 0 | 0 | 0 |
 | src/kyoshin/cf/CfGimmickSaveOff.cpp | 0 | 2 | 6 | 8 | 8 | 0 | 0 | 0 | 0 | 0 | 0 | 0 |
 | src/kyoshin/cf/CfGimmickWarp.cpp | 35 | 15 | 42 | 8 | 2 | 0 | 0 | 0 | 0 | 0 | 0 | 0 |
 | src/kyoshin/cf/CfHikariItemManager.cpp | 3 | 12 | 24 | 3 | 1 | 0 | 0 | 0 | 0 | 0 | 0 | 0 |
 | src/kyoshin/cf/CfMapEffectManager.cpp | 1 | 5 | 7 | 3 | 1 | 1 | 0 | 1 | 0 | 0 | 0 | 0 |
-| src/kyoshin/cf/CfMapItemManager.cpp | 29 | 5 | 48 | 25 | 3 | 0 | 0 | 0 | 0 | 0 | 0 | 0 |
-| src/kyoshin/cf/CfMapMineManager.cpp | 3 | 15 | 26 | 28 | 28 | 18 | 0 | 0 | 0 | 0 | 0 | 0 |
-| src/kyoshin/cf/CfNandManager.cpp | 2 | 11 | 38 | 17 | 1 | 0 | 0 | 16 | 0 | 0 | 0 | 0 |
+| src/kyoshin/cf/CfMapItemManager.cpp | 29 | 5 | 48 | 24 | 3 | 0 | 0 | 0 | 0 | 0 | 0 | 0 |
+| src/kyoshin/cf/CfMapMineManager.cpp | 3 | 15 | 28 | 28 | 28 | 18 | 0 | 0 | 0 | 0 | 0 | 0 |
+| src/kyoshin/cf/CfNandManager.cpp | 6 | 15 | 22 | 15 | 2 | 0 | 0 | 0 | 0 | 0 | 0 | 0 |
 | src/kyoshin/cf/CfObjectEnumList.cpp | 42 | 6 | 40 | 41 | 2 | 0 | 0 | 0 | 0 | 0 | 0 | 0 |
 | src/kyoshin/cf/CfObjectSelectorObj.cpp | 6 | 2 | 1 | 2 | 0 | 0 | 0 | 0 | 0 | 0 | 0 | 0 |
 | src/kyoshin/cf/CfPadTask.cpp | 6 | 0 | 1 | 0 | 0 | 0 | 0 | 1 | 0 | 0 | 0 | 0 |
@@ -445,7 +445,7 @@ The three `*shim`/`side-effect` rows are **fakematch-candidate** families: sourc
 | src/kyoshin/cf/code_8018F8D8.cpp | 40 | 1 | 23 | 16 | 0 | 0 | 0 | 0 | 0 | 0 | 0 | 0 |
 | src/kyoshin/cf/code_801C2C14.cpp | 2 | 2 | 4 | 3 | 0 | 0 | 0 | 0 | 0 | 0 | 0 | 0 |
 | src/kyoshin/cf/object/CAIAction.cpp | 0 | 3 | 17 | 292 | 104 | 36 | 0 | 0 | 20 | 0 | 0 | 0 |
-| src/kyoshin/cf/object/CActorParam.cpp | 43 | 11 | 379 | 114 | 300 | 197 | 0 | 10 | 9 | 0 | 0 | 0 |
+| src/kyoshin/cf/object/CActorParam.cpp | 43 | 11 | 379 | 112 | 300 | 195 | 0 | 10 | 9 | 0 | 0 | 0 |
 | src/kyoshin/cf/object/CBattleState.cpp | 4 | 22 | 23 | 9 | 36 | 13 | 0 | 0 | 916 | 0 | 0 | 0 |
 | src/kyoshin/cf/object/CfObjectActor.cpp | 2 | 16 | 79 | 15 | 33 | 1 | 0 | 0 | 0 | 0 | 0 | 0 |
 | src/kyoshin/cf/object/CfObjectColl.cpp | 3 | 35 | 65 | 12 | 15 | 9 | 0 | 0 | 0 | 0 | 0 | 0 |
@@ -459,7 +459,7 @@ The three `*shim`/`side-effect` rows are **fakematch-candidate** families: sourc
 | src/kyoshin/cf/object/CfObjectPc.cpp | 0 | 4 | 78 | 14 | 19 | 0 | 0 | 2 | 0 | 0 | 0 | 0 |
 | src/kyoshin/cf/object/CfObjectPoint.cpp | 3 | 1 | 5 | 0 | 0 | 0 | 0 | 0 | 2 | 0 | 0 | 0 |
 | src/kyoshin/cf/object/CfObjectTbox.cpp | 0 | 1 | 1 | 2 | 1 | 0 | 0 | 0 | 0 | 0 | 0 | 0 |
-| src/kyoshin/cf/voice/CCharVoice.cpp | 14 | 0 | 1 | 9 | 11 | 7 | 0 | 0 | 0 | 0 | 0 | 0 |
+| src/kyoshin/cf/voice/CCharVoice.cpp | 14 | 0 | 1 | 0 | 11 | 7 | 0 | 0 | 0 | 0 | 0 | 0 |
 | src/kyoshin/cf/voice/CCharVoiceMan.cpp | 2 | 1 | 26 | 24 | 5 | 0 | 0 | 0 | 4 | 0 | 0 | 0 |
 | src/kyoshin/cf/voice/cvsys/CVS_THREAD.cpp | 4 | 1 | 6 | 1 | 2 | 1 | 0 | 0 | 13 | 0 | 0 | 0 |
 | src/kyoshin/cf/voice/cvsys/CVS_THREAD_BATTLE_BEGIN.cpp | 0 | 0 | 7 | 0 | 0 | 0 | 0 | 0 | 0 | 0 | 0 | 0 |
@@ -485,7 +485,7 @@ The three `*shim`/`side-effect` rows are **fakematch-candidate** families: sourc
 | src/kyoshin/cfsys/CfObjectImplObj.cpp | 3 | 3 | 13 | 7 | 2 | 0 | 0 | 0 | 0 | 0 | 0 | 0 |
 | src/kyoshin/cfsys/CfObjectImplPc.cpp | 2 | 0 | 25 | 3 | 2 | 0 | 0 | 0 | 0 | 0 | 0 | 0 |
 | src/kyoshin/cfsys/CfObjectImplWalker.cpp | 1 | 0 | 35 | 40 | 11 | 1 | 0 | 1 | 61 | 0 | 0 | 0 |
-| src/kyoshin/code_800A3B24.cpp | 6 | 4 | 10 | 7 | 0 | 0 | 0 | 0 | 0 | 0 | 0 | 0 |
+| src/kyoshin/code_800A3B24.cpp | 8 | 4 | 10 | 7 | 0 | 0 | 0 | 0 | 0 | 0 | 0 | 0 |
 | src/kyoshin/code_800A75FC.cpp | 0 | 2 | 1 | 10 | 9 | 0 | 0 | 0 | 0 | 0 | 0 | 0 |
 | src/kyoshin/code_800AA008.cpp | 0 | 1 | 0 | 1 | 0 | 0 | 0 | 0 | 1 | 0 | 0 | 0 |
 | src/kyoshin/code_800B06A4.cpp | 93 | 76 | 181 | 257 | 136 | 42 | 0 | 1 | 79 | 0 | 0 | 0 |
@@ -510,12 +510,12 @@ The three `*shim`/`side-effect` rows are **fakematch-candidate** families: sourc
 | src/kyoshin/makecrystal/CMCCrystalList.cpp | 42 | 5 | 72 | 13 | 2 | 0 | 0 | 0 | 0 | 0 | 0 | 0 |
 | src/kyoshin/makecrystal/CMCCrystalSupport.cpp | 9 | 6 | 9 | 4 | 1 | 1 | 0 | 0 | 0 | 0 | 0 | 0 |
 | src/kyoshin/makecrystal/CMCEffStart.cpp | 1 | 0 | 1 | 2 | 3 | 1 | 0 | 0 | 0 | 0 | 0 | 0 |
-| src/kyoshin/makecrystal/CMCGetItemBox.cpp | 30 | 18 | 64 | 29 | 18 | 1 | 0 | 3 | 2 | 0 | 0 | 0 |
+| src/kyoshin/makecrystal/CMCGetItemBox.cpp | 30 | 17 | 64 | 25 | 17 | 1 | 0 | 2 | 0 | 0 | 0 | 0 |
 | src/kyoshin/makecrystal/CMakeCrystalWin.cpp | 0 | 2 | 17 | 4 | 1 | 1 | 0 | 0 | 0 | 0 | 0 | 0 |
 | src/kyoshin/makecrystal/CMenuMakeCrystal.cpp | 39 | 5 | 18 | 30 | 10 | 1 | 0 | 0 | 0 | 0 | 0 | 0 |
 | src/kyoshin/makecrystal/CModelDispMakeCrystal.cpp | 195 | 0 | 235 | 97 | 105 | 1 | 0 | 6 | 0 | 0 | 0 | 0 |
 | src/kyoshin/makecrystal/code_80213488.cpp | 2 | 0 | 2 | 6 | 0 | 0 | 0 | 0 | 0 | 0 | 0 | 0 |
-| src/kyoshin/menu/CMenuArtsSelect.cpp | 127 | 17 | 33 | 83 | 20 | 8 | 3 | 0 | 40 | 3 | 0 | 0 |
+| src/kyoshin/menu/CMenuArtsSelect.cpp | 127 | 17 | 33 | 85 | 20 | 8 | 3 | 0 | 40 | 3 | 0 | 0 |
 | src/kyoshin/menu/CMenuArtsSet.cpp | 16 | 64 | 231 | 24 | 47 | 1 | 0 | 0 | 27 | 0 | 0 | 0 |
 | src/kyoshin/menu/CMenuBattleChain.cpp | 6 | 7 | 22 | 11 | 4 | 2 | 3 | 1 | 3 | 0 | 0 | 0 |
 | src/kyoshin/menu/CMenuBattleCommu.cpp | 2 | 1 | 7 | 3 | 0 | 0 | 0 | 0 | 0 | 0 | 0 | 0 |
@@ -530,7 +530,7 @@ The three `*shim`/`side-effect` rows are **fakematch-candidate** families: sourc
 | src/kyoshin/menu/CMenuGCItem.cpp | 3 | 5 | 6 | 2 | 3 | 3 | 2 | 2 | 0 | 0 | 0 | 0 |
 | src/kyoshin/menu/CMenuGameClear.cpp | 0 | 5 | 4 | 2 | 0 | 0 | 0 | 0 | 2 | 0 | 0 | 0 |
 | src/kyoshin/menu/CMenuGetItem.cpp | 8 | 3 | 9 | 4 | 0 | 0 | 1 | 0 | 0 | 0 | 0 | 0 |
-| src/kyoshin/menu/CMenuGetItemMulti.cpp | 41 | 0 | 43 | 11 | 0 | 0 | 0 | 0 | 29 | 0 | 0 | 0 |
+| src/kyoshin/menu/CMenuGetItemMulti.cpp | 43 | 0 | 43 | 13 | 0 | 0 | 0 | 0 | 29 | 0 | 0 | 0 |
 | src/kyoshin/menu/CMenuItem.cpp | 1 | 0 | 2 | 2 | 0 | 0 | 0 | 0 | 0 | 0 | 0 | 0 |
 | src/kyoshin/menu/CMenuItemExchange.cpp | 9 | 7 | 24 | 2 | 4 | 0 | 1 | 0 | 5 | 0 | 0 | 0 |
 | src/kyoshin/menu/CMenuKeyAssign.cpp | 7 | 6 | 92 | 12 | 6 | 0 | 0 | 0 | 50 | 0 | 0 | 0 |
@@ -555,14 +555,14 @@ The three `*shim`/`side-effect` rows are **fakematch-candidate** families: sourc
 | src/kyoshin/menu/CMenuShopBuy.cpp | 2 | 10 | 8 | 2 | 3 | 3 | 0 | 0 | 0 | 0 | 0 | 0 |
 | src/kyoshin/menu/CMenuShopSell.cpp | 2 | 9 | 8 | 4 | 3 | 3 | 1 | 0 | 0 | 0 | 0 | 0 |
 | src/kyoshin/menu/CMenuSkipTimer.cpp | 4 | 8 | 17 | 0 | 58 | 51 | 0 | 1 | 0 | 0 | 0 | 0 |
-| src/kyoshin/menu/CMenuSymbolMark.cpp | 44 | 17 | 44 | 37 | 3 | 0 | 0 | 0 | 3 | 0 | 0 | 0 |
+| src/kyoshin/menu/CMenuSymbolMark.cpp | 44 | 17 | 48 | 41 | 7 | 0 | 0 | 0 | 3 | 0 | 0 | 0 |
 | src/kyoshin/menu/CMenuTitle.cpp | 1 | 5 | 13 | 4 | 1 | 1 | 0 | 0 | 0 | 0 | 0 | 0 |
 | src/kyoshin/menu/CMenuTutorial.cpp | 2 | 0 | 11 | 0 | 17 | 2 | 1 | 2 | 2 | 0 | 0 | 0 |
 | src/kyoshin/menu/CMenuTutorialList.cpp | 1 | 2 | 12 | 0 | 3 | 3 | 1 | 0 | 7 | 0 | 0 | 0 |
 | src/kyoshin/menu/CMenuUpdate.cpp | 4 | 40 | 69 | 45 | 56 | 22 | 0 | 13 | 0 | 0 | 0 | 0 |
 | src/kyoshin/menu/CMenuVision.cpp | 16 | 7 | 9 | 30 | 21 | 9 | 0 | 0 | 6 | 0 | 0 | 0 |
 | src/kyoshin/menu/CMenuZeal.cpp | 1 | 0 | 7 | 8 | 0 | 0 | 0 | 0 | 5 | 0 | 0 | 0 |
-| src/kyoshin/menu/code_80187F14.cpp | 15 | 7 | 0 | 1 | 5 | 0 | 0 | 0 | 5 | 0 | 0 | 0 |
+| src/kyoshin/menu/code_80187F14.cpp | 15 | 7 | 0 | 1 | 5 | 0 | 0 | 0 | 8 | 0 | 0 | 0 |
 | src/kyoshin/menu/code_8018C5FC.cpp | 7 | 0 | 0 | 0 | 0 | 0 | 0 | 0 | 0 | 0 | 0 | 0 |
 | src/kyoshin/menu/parts/CModelDispEquip.cpp | 12 | 42 | 83 | 16 | 4 | 1 | 0 | 0 | 1 | 0 | 0 | 0 |
 | src/kyoshin/plugin/ocBdat.cpp | 0 | 23 | 0 | 38 | 1 | 0 | 0 | 0 | 4 | 0 | 0 | 0 |
@@ -573,8 +573,8 @@ The three `*shim`/`side-effect` rows are **fakematch-candidate** families: sourc
 | src/kyoshin/plugin/ocUnit.cpp | 29 | 77 | 36 | 147 | 70 | 41 | 0 | 4 | 9 | 0 | 0 | 0 |
 | src/kyoshin/plugin/pluginBtl.cpp | 36 | 1 | 5 | 53 | 16 | 7 | 0 | 1 | 0 | 0 | 0 | 0 |
 | src/kyoshin/plugin/pluginCam.cpp | 11 | 20 | 0 | 10 | 0 | 0 | 0 | 0 | 0 | 0 | 0 | 0 |
-| src/kyoshin/plugin/pluginCfs.cpp | 77 | 1 | 2 | 28 | 24 | 13 | 0 | 0 | 2 | 0 | 0 | 0 |
-| src/kyoshin/plugin/pluginEve.cpp | 16 | 1 | 0 | 2 | 0 | 0 | 0 | 0 | 0 | 0 | 0 | 0 |
+| src/kyoshin/plugin/pluginCfs.cpp | 79 | 1 | 2 | 25 | 25 | 14 | 0 | 0 | 0 | 0 | 0 | 0 |
+| src/kyoshin/plugin/pluginEve.cpp | 16 | 2 | 0 | 2 | 0 | 0 | 0 | 0 | 0 | 0 | 0 | 0 |
 | src/kyoshin/plugin/pluginHelp.cpp | 6 | 1 | 0 | 0 | 0 | 0 | 0 | 0 | 0 | 0 | 0 | 0 |
 | src/kyoshin/plugin/pluginSnd.cpp | 13 | 2 | 1 | 0 | 1 | 0 | 0 | 1 | 0 | 0 | 0 | 0 |
 | src/kyoshin/plugin/pluginUi.cpp | 1 | 2 | 0 | 4 | 1 | 0 | 0 | 0 | 0 | 0 | 0 | 0 |
@@ -1158,14 +1158,14 @@ TUs with any of the three fakematch-candidate families above. Each row is a cand
  },
  "libs/monolib/src/lib/CLibCri.cpp": {
   "asm_insn_shim": 0,
-  "extern_c_nonlbl_decl": 79,
-  "extern_c_nonlbl_def": 13,
+  "extern_c_nonlbl_decl": 80,
+  "extern_c_nonlbl_def": 12,
   "goto_count": 3,
   "init_side_effect": 0,
-  "ptr_arith": 5,
+  "ptr_arith": 2,
   "schedule_pragma": 0,
-  "self_params": 28,
-  "void_ptr": 15
+  "self_params": 25,
+  "void_ptr": 21
  },
  "libs/monolib/src/lib/CLibCriMoviePlay.cpp": {
   "asm_code": 1,
@@ -1510,12 +1510,12 @@ TUs with any of the three fakematch-candidate families above. Each row is a cand
  },
  "libs/monolib/src/nand/CNBanner.cpp": {
   "asm_insn_shim": 0,
-  "extern_c_nonlbl_decl": 37,
+  "extern_c_nonlbl_decl": 4,
   "extern_c_nonlbl_def": 1,
   "init_side_effect": 0,
   "schedule_pragma": 0,
-  "self_params": 4,
-  "void_ptr": 3
+  "self_params": 3,
+  "void_ptr": 2
  },
  "libs/monolib/src/nand/CNReqtaskCheck.cpp": {
   "asm_insn_shim": 0,
@@ -2478,7 +2478,7 @@ TUs with any of the three fakematch-candidate families above. Each row is a cand
   "asm_insn_shim": 0,
   "init_side_effect": 0,
   "schedule_pragma": 0,
-  "void_ptr": 12
+  "void_ptr": 13
  },
  "libs/nw4r/src/g3d/res/g3d_resanmshp.cpp": {
   "asm_insn_shim": 0,
@@ -3039,12 +3039,12 @@ TUs with any of the three fakematch-candidate families above. Each row is a cand
  "libs/nw4r/src/snd/snd_StrmPlayer.cpp": {
   "asm_code": 1,
   "asm_insn_shim": 0,
-  "extern_c_nonlbl_decl": 11,
+  "extern_c_nonlbl_decl": 13,
   "extern_c_nonlbl_def": 5,
   "init_side_effect": 0,
   "schedule_pragma": 0,
-  "self_params": 4,
-  "void_ptr": 9
+  "self_params": 5,
+  "void_ptr": 7
  },
  "libs/nw4r/src/snd/snd_StrmSound.cpp": {
   "asm_insn_shim": 0,
@@ -3282,7 +3282,7 @@ TUs with any of the three fakematch-candidate families above. Each row is a cand
   "asm_insn_shim": 0,
   "extern_c_nonlbl_decl": 18,
   "extern_c_nonlbl_def": 17,
-  "goto_count": 12,
+  "goto_count": 13,
   "init_side_effect": 0,
   "schedule_pragma": 0,
   "self_params": 63,
@@ -3477,15 +3477,15 @@ TUs with any of the three fakematch-candidate families above. Each row is a cand
  },
  "src/kyoshin/CMiniMap.cpp": {
   "asm_insn_shim": 0,
-  "deref_arith": 61,
-  "extern_c_nonlbl_decl": 50,
-  "extern_c_nonlbl_def": 12,
+  "deref_arith": 83,
+  "extern_c_nonlbl_decl": 51,
+  "extern_c_nonlbl_def": 13,
   "goto_count": 6,
   "init_side_effect": 0,
-  "ptr_arith": 102,
+  "ptr_arith": 126,
   "schedule_pragma": 0,
-  "self_params": 33,
-  "void_ptr": 111
+  "self_params": 35,
+  "void_ptr": 113
  },
  "src/kyoshin/CModelDisp.cpp": {
   "asm_insn_shim": 0,
@@ -3712,7 +3712,7 @@ TUs with any of the three fakematch-candidate families above. Each row is a cand
   "asm_insn_shim": 0,
   "extern_c_nonlbl_decl": 2,
   "extern_c_nonlbl_def": 7,
-  "goto_count": 16,
+  "goto_count": 7,
   "init_side_effect": 0,
   "ptr_arith": 8,
   "schedule_pragma": 0,
@@ -3934,13 +3934,13 @@ TUs with any of the three fakematch-candidate families above. Each row is a cand
   "asm_insn_shim": 0,
   "deref_arith": 8,
   "extern_c_nonlbl_decl": 64,
-  "extern_c_nonlbl_def": 5,
+  "extern_c_nonlbl_def": 6,
   "goto_count": 21,
   "init_side_effect": 0,
   "ptr_arith": 11,
   "rn_params": 1,
   "schedule_pragma": 0,
-  "self_params": 56,
+  "self_params": 55,
   "void_ptr": 21
  },
  "src/kyoshin/cf/CArtsParam.cpp": {
@@ -3976,7 +3976,7 @@ TUs with any of the three fakematch-candidate families above. Each row is a cand
   "rn_params": 89,
   "schedule_pragma": 5,
   "self_params": 328,
-  "void_ptr": 610
+  "void_ptr": 609
  },
  "src/kyoshin/cf/CCharEffect.cpp": {
   "asm_insn_shim": 0,
@@ -4121,11 +4121,11 @@ TUs with any of the three fakematch-candidate families above. Each row is a cand
   "deref_arith": 8,
   "extern_c_nonlbl_decl": 2,
   "extern_c_nonlbl_def": 12,
-  "goto_count": 1,
+  "goto_count": 2,
   "init_side_effect": 0,
-  "ptr_arith": 3,
+  "ptr_arith": 5,
   "schedule_pragma": 0,
-  "self_params": 44,
+  "self_params": 51,
   "void_ptr": 9
  },
  "src/kyoshin/cf/CVision.cpp": {
@@ -4312,12 +4312,12 @@ TUs with any of the three fakematch-candidate families above. Each row is a cand
  "src/kyoshin/cf/CfGimmickObject.cpp": {
   "asm_insn_shim": 0,
   "extern_c_nonlbl_def": 2,
-  "goto_count": 12,
+  "goto_count": 13,
   "init_side_effect": 0,
   "ptr_arith": 6,
   "schedule_pragma": 0,
-  "self_params": 63,
-  "void_ptr": 5
+  "self_params": 65,
+  "void_ptr": 4
  },
  "src/kyoshin/cf/CfGimmickSaveOff.cpp": {
   "asm_insn_shim": 0,
@@ -4368,7 +4368,7 @@ TUs with any of the three fakematch-candidate families above. Each row is a cand
   "ptr_arith": 3,
   "schedule_pragma": 0,
   "self_params": 48,
-  "void_ptr": 25
+  "void_ptr": 24
  },
  "src/kyoshin/cf/CfMapMineManager.cpp": {
   "asm_insn_shim": 0,
@@ -4378,19 +4378,18 @@ TUs with any of the three fakematch-candidate families above. Each row is a cand
   "init_side_effect": 0,
   "ptr_arith": 28,
   "schedule_pragma": 0,
-  "self_params": 26,
+  "self_params": 28,
   "void_ptr": 28
  },
  "src/kyoshin/cf/CfNandManager.cpp": {
   "asm_insn_shim": 0,
-  "extern_c_nonlbl_decl": 2,
-  "extern_c_nonlbl_def": 11,
+  "extern_c_nonlbl_decl": 6,
+  "extern_c_nonlbl_def": 15,
   "init_side_effect": 0,
-  "ptr_arith": 1,
-  "rn_params": 16,
+  "ptr_arith": 2,
   "schedule_pragma": 0,
-  "self_params": 38,
-  "void_ptr": 17
+  "self_params": 22,
+  "void_ptr": 15
  },
  "src/kyoshin/cf/CfObjectEnumList.cpp": {
   "asm_insn_shim": 0,
@@ -4797,7 +4796,7 @@ TUs with any of the three fakematch-candidate families above. Each row is a cand
  },
  "src/kyoshin/cf/object/CActorParam.cpp": {
   "asm_insn_shim": 0,
-  "deref_arith": 197,
+  "deref_arith": 195,
   "extern_c_nonlbl_decl": 43,
   "extern_c_nonlbl_def": 11,
   "goto_count": 9,
@@ -4806,7 +4805,7 @@ TUs with any of the three fakematch-candidate families above. Each row is a cand
   "rn_params": 10,
   "schedule_pragma": 0,
   "self_params": 379,
-  "void_ptr": 114
+  "void_ptr": 112
  },
  "src/kyoshin/cf/object/CBattleState.cpp": {
   "asm_insn_shim": 0,
@@ -4950,8 +4949,7 @@ TUs with any of the three fakematch-candidate families above. Each row is a cand
   "init_side_effect": 0,
   "ptr_arith": 11,
   "schedule_pragma": 0,
-  "self_params": 1,
-  "void_ptr": 9
+  "self_params": 1
  },
  "src/kyoshin/cf/voice/CCharVoiceMan.cpp": {
   "asm_insn_shim": 0,
@@ -5157,7 +5155,7 @@ TUs with any of the three fakematch-candidate families above. Each row is a cand
  },
  "src/kyoshin/code_800A3B24.cpp": {
   "asm_insn_shim": 0,
-  "extern_c_nonlbl_decl": 6,
+  "extern_c_nonlbl_decl": 8,
   "extern_c_nonlbl_def": 4,
   "init_side_effect": 0,
   "schedule_pragma": 0,
@@ -5503,14 +5501,13 @@ TUs with any of the three fakematch-candidate families above. Each row is a cand
   "asm_insn_shim": 0,
   "deref_arith": 1,
   "extern_c_nonlbl_decl": 30,
-  "extern_c_nonlbl_def": 18,
-  "goto_count": 2,
+  "extern_c_nonlbl_def": 17,
   "init_side_effect": 0,
-  "ptr_arith": 18,
-  "rn_params": 3,
+  "ptr_arith": 17,
+  "rn_params": 2,
   "schedule_pragma": 0,
   "self_params": 64,
-  "void_ptr": 29
+  "void_ptr": 25
  },
  "src/kyoshin/makecrystal/CMakeCrystalWin.cpp": {
   "asm_insn_shim": 0,
@@ -5563,7 +5560,7 @@ TUs with any of the three fakematch-candidate families above. Each row is a cand
   "ptr_arith": 20,
   "schedule_pragma": 0,
   "self_params": 33,
-  "void_ptr": 83
+  "void_ptr": 85
  },
  "src/kyoshin/menu/CMenuArtsSet.cpp": {
   "asm_insn_shim": 0,
@@ -5716,12 +5713,12 @@ TUs with any of the three fakematch-candidate families above. Each row is a cand
  },
  "src/kyoshin/menu/CMenuGetItemMulti.cpp": {
   "asm_insn_shim": 0,
-  "extern_c_nonlbl_decl": 41,
+  "extern_c_nonlbl_decl": 43,
   "goto_count": 29,
   "init_side_effect": 0,
   "schedule_pragma": 0,
   "self_params": 43,
-  "void_ptr": 11
+  "void_ptr": 13
  },
  "src/kyoshin/menu/CMenuItem.cpp": {
   "asm_insn_shim": 0,
@@ -5986,10 +5983,10 @@ TUs with any of the three fakematch-candidate families above. Each row is a cand
   "extern_c_nonlbl_def": 17,
   "goto_count": 3,
   "init_side_effect": 0,
-  "ptr_arith": 3,
+  "ptr_arith": 7,
   "schedule_pragma": 0,
-  "self_params": 44,
-  "void_ptr": 37
+  "self_params": 48,
+  "void_ptr": 41
  },
  "src/kyoshin/menu/CMenuTitle.cpp": {
   "asm_insn_shim": 0,
@@ -6063,7 +6060,7 @@ TUs with any of the three fakematch-candidate families above. Each row is a cand
   "asm_insn_shim": 0,
   "extern_c_nonlbl_decl": 15,
   "extern_c_nonlbl_def": 7,
-  "goto_count": 5,
+  "goto_count": 8,
   "init_side_effect": 0,
   "ptr_arith": 5,
   "schedule_pragma": 0,
@@ -6166,15 +6163,14 @@ TUs with any of the three fakematch-candidate families above. Each row is a cand
  },
  "src/kyoshin/plugin/pluginCfs.cpp": {
   "asm_insn_shim": 0,
-  "deref_arith": 13,
-  "extern_c_nonlbl_decl": 77,
+  "deref_arith": 14,
+  "extern_c_nonlbl_decl": 79,
   "extern_c_nonlbl_def": 1,
-  "goto_count": 2,
   "init_side_effect": 0,
-  "ptr_arith": 24,
+  "ptr_arith": 25,
   "schedule_pragma": 0,
   "self_params": 2,
-  "void_ptr": 28
+  "void_ptr": 25
  },
  "src/kyoshin/plugin/pluginDeb.cpp": {
   "asm_insn_shim": 0,
@@ -6184,7 +6180,7 @@ TUs with any of the three fakematch-candidate families above. Each row is a cand
  "src/kyoshin/plugin/pluginEve.cpp": {
   "asm_insn_shim": 0,
   "extern_c_nonlbl_decl": 16,
-  "extern_c_nonlbl_def": 1,
+  "extern_c_nonlbl_def": 2,
   "init_side_effect": 0,
   "schedule_pragma": 0,
   "void_ptr": 2

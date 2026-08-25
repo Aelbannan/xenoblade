@@ -1,41 +1,46 @@
 #include "kyoshin/cf/voice/CCharVoice.hpp"
 #include <string.h>
 
-extern const char lbl_eu_805106D4[];  // empty default name ("")
+// ---------------------------------------------------------------------
+// Imported linker symbols (data).  At global scope MWCC does not mangle
+// variable names, so plain extern declarations emit the retail symbol.
+// ---------------------------------------------------------------------
+extern const char lbl_eu_805106D4[];   // empty default voice name ("")
+extern char*       lbl_eu_80662C98;    // default voice path template string
+extern CVoiceSndMgr* lbl_eu_80663E14;   // sound-manager singleton (scene lookup)
+extern char        lbl_eu_805398B0[];  // vtable for CCharVoice
 
+// Volume/coefficient floats used by the archive-voice sound system.
+extern float lbl_eu_80668C58;
+extern float lbl_eu_80668C5C;
+extern float lbl_eu_80668C60;
+extern float lbl_eu_80668C64;
+
+// ---------------------------------------------------------------
+// Imported functions from other TUs.  The retail symbol names are
+// unrecovered placeholders without C++ mangling, so these keep C
+// linkage to resolve against the existing objects.
+// ---------------------------------------------------------------
 extern "C" {
-    extern char* lbl_eu_80662C98;       // pointer to default voice path string
-    extern void* lbl_eu_80663E14;       // manager singleton for character lookup
+    void  func_800AA318(u32, float*, u32*, float*, float*);  // packed-token decode
+    s32   func_80189A04(const char*);                        // archive-voice busy check
+    CVoicePoseBlock* func_80496264(CVoiceSndMgr*, s32);      // scene pose/xform block lookup
+    s32   func_801897A0(const char*, float, s32);            // start archive voice
+    void  func_8018986C(const char*, float);                 // stop archive voice
+    void  func_80189C40(s32, CVoicePos*, CVoicePoseBlock*, float, float, float); // update archive voice
+    CVoiceBattleSndMgr* func_800BF2CC(CVoiceOwnerIntf*);     // battle sound manager from owner
+    s32   func_801BFAE4(u16);                                // battle sound busy check
+    void  func_801BFAE8(u16, CVoicePos*);                    // update battle sound position
+    void  func_801BFED0(CVoiceBattleSndMgr*, u16, s32);      // stop battle sound
 
-    extern float lbl_eu_80668C58;
-    extern float lbl_eu_80668C5C;
-    extern float lbl_eu_80668C60;
-    extern float lbl_eu_80668C64;
-
-    void func_800AA318(u32, float*, u32*, float*, float*);
-    s32  func_80189A04(const char*);
-    void* func_80496264(void*, s32);
-    s32  func_801897A0(const char*, float, s32);
-    void func_8018986C(const char*, float);
-    void func_80189C40(s32, void*, void*, float, float, float);
-    void* func_800BF2CC(void*);
-    s32  func_801BFAE4(u16);
-    void func_801BFAE8(u16, void*);
-    void func_801BFED0(void*, u16, s32);
-
+    // cf::CfSoundMan::func_801BFC38(unsigned long, unsigned long,
+    //                               unsigned long, unsigned long, float)
     u16 func_801BFC38__Q22cf10CfSoundManFUlUlUlUlf(
-        void*, u32, u32, u32, float);
-}
-
-struct VoiceVec3 { float x, y, z; };
-
-// __ct__CCharVoice (0x802A3230)
-extern "C" {
-    extern char lbl_eu_805398B0[];   // vtable for CCharVoice
+        CVoiceBattleSndMgr*, u32, u32, u32, float);
 }
 
 // __ct__CCharVoice (0x802A3230)
-// NOTE (wall): retail fuses the name-pointer materialization into a single
+// NOTE (known ceiling): retail fuses the name-pointer materialization into a single
 // callee-saved reg (`lis r30,@ha; addi r30,r30,@l` + two mr's) while every
 // available MWCC hoists a bare `lis @ha` above the spills and emits per-use
 // `addi rX,@l`. Tried: CVoiceName struct-ptr local + field access, char* local,
@@ -57,7 +62,7 @@ extern "C" CCharVoice* __ct__CCharVoice(CCharVoice* self)
 }
 
 // func_802A0B8C (0x802A32C0)
-void CCharVoice::func_802A0B8C(void* owner)
+void CCharVoice::func_802A0B8C(CVoiceOwnerIntf* owner)
 {
     if (owner == nullptr) return;
 
@@ -110,13 +115,13 @@ void CCharVoice::func_802A0E08()
             return;
         }
 
-        void* ch = func_80496264(lbl_eu_80663E14, -1);
+        CVoicePoseBlock* ch = func_80496264(lbl_eu_80663E14, -1);
 
         // Model position fetch: getModelPos is called twice by retail
         // (once for the null test, once in the body) -- mirror that.
         CVoicePos pos;
-        if (((CVoiceOwnerIntf*)mOwner)->getModelPos() != nullptr) {
-            CVoiceModelPos* mp = ((CVoiceOwnerIntf*)mOwner)->getModelPos();
+        if (mOwner->getModelPos() != nullptr) {
+            CVoiceModelPos* mp = mOwner->getModelPos();
             float x, y, z;   // decl order fixes FPR homes (x=f0, y=f1, z=f2)
             z = mp->z;       // retail loads z, y, x but stores x, y, z
             y = mp->y;
@@ -125,7 +130,7 @@ void CCharVoice::func_802A0E08()
             pos.f[1] = y;
             pos.f[2] = z;
         } else {
-            pos = *((CVoiceOwnerIntf*)mOwner)->getPosition();
+            pos = *mOwner->getPosition();
         }
 
         func_80189C40(mSoundHandle, &pos, ch,
@@ -141,8 +146,8 @@ void CCharVoice::func_802A0E08()
         }
 
         CVoicePos pos;
-        if (((CVoiceOwnerIntf*)mOwner)->getModelPos() != nullptr) {
-            CVoiceModelPos* mp = ((CVoiceOwnerIntf*)mOwner)->getModelPos();
+        if (mOwner->getModelPos() != nullptr) {
+            CVoiceModelPos* mp = mOwner->getModelPos();
             float x, y, z;   // decl order fixes FPR homes (x=f0, y=f1, z=f2)
             z = mp->z;       // retail loads z, y, x but stores x, y, z
             y = mp->y;
@@ -151,7 +156,7 @@ void CCharVoice::func_802A0E08()
             pos.f[1] = y;
             pos.f[2] = z;
         } else {
-            pos = *((CVoiceOwnerIntf*)mOwner)->getPosition();
+            pos = *mOwner->getPosition();
         }
 
         func_801BFAE8(mBattleSndHandle, &pos);
@@ -174,7 +179,7 @@ void CCharVoice::func_802A0FE8()
     } else if (flags & 4) {
         u16 bh = mBattleSndHandle;
         if (bh != 0xFFFF) {
-            void* obj = func_800BF2CC(mOwner);
+            CVoiceBattleSndMgr* obj = func_800BF2CC(mOwner);
             func_801BFED0(obj, bh, 0);
             mVoiceId          = -1;
             mBattleSndHandle  = 0xFFFF;
@@ -209,7 +214,7 @@ bool CCharVoice::func_802A109C(float volume,
         } else if (flags & 4) {
             u16 bh = mBattleSndHandle;
             if (bh != 0xFFFF) {
-                void* obj = func_800BF2CC(mOwner);
+                CVoiceBattleSndMgr* obj = func_800BF2CC(mOwner);
                 func_801BFED0(obj, bh, 0);
                 mVoiceId          = -1;
                 mBattleSndHandle  = 0xFFFF;
@@ -253,7 +258,7 @@ bool CCharVoice::func_802A109C(float volume,
         return false;
     }
     else if (flags2 & 4) {
-        void* man = func_800BF2CC(mOwner);
+        CVoiceBattleSndMgr* man = func_800BF2CC(mOwner);
         if ((s32)man < 0) return false;
 
         u16 h = func_801BFC38__Q22cf10CfSoundManFUlUlUlUlf(
@@ -287,7 +292,7 @@ void CCharVoice::func_802A1304()
     } else if (flags & 4) {
         u16 bh = mBattleSndHandle;
         if (bh != 0xFFFF) {
-            void* obj = func_800BF2CC(mOwner);
+            CVoiceBattleSndMgr* obj = func_800BF2CC(mOwner);
             func_801BFED0(obj, bh, 0);
             mVoiceId          = -1;
             mBattleSndHandle  = 0xFFFF;

@@ -708,7 +708,7 @@ config.libs = [
             Object(NonMatching, "kyoshin/CTaskGameEvt.cpp"),
             Object(NonMatching, "kyoshin/cf/CHelpManager.cpp"),
             Object(NonMatching, "kyoshin/code_80296898.cpp"),
-            Object(NonMatching, "kyoshin/makecrystal/CMCGetItemBox.cpp"),
+            Object(NonMatching, "kyoshin/makecrystal/CMCGetItemBox.cpp", extra_cflags=["-O4,s"]),
             Object(NonMatching, "kyoshin/menu/CMenuTutorial.cpp", extra_cflags=["-O4,s"]),
             Object(NonMatching, "kyoshin/CTutorial.cpp", extra_cflags=["-O4,s"]),
             Object(NonMatching, "kyoshin/menu/CMenuOption.cpp", extra_cflags=["-O4,s"]),
@@ -716,7 +716,7 @@ config.libs = [
             Object(NonMatching, "kyoshin/menu/CMenuSkipTimer.cpp", extra_cflags=["-O4,s", "-func_align 4"]),
             Object(NonMatching, "kyoshin/CSkipTimer.cpp"),
             Object(NonMatching, "kyoshin/cf/chain/CChainEffect.cpp"),
-            Object(NonMatching, "kyoshin/cf/voice/CCharVoice.cpp"),
+            Object(Matching, "kyoshin/cf/voice/CCharVoice.cpp"),
             Object(NonMatching, "kyoshin/cf/voice/CCharVoiceMan.cpp"),
             Object(NonMatching, "kyoshin/cf/voice/cvsys/CVS_THREAD.cpp"),
             Object(Matching, "kyoshin/cf/voice/cvsys/CVS_THREAD_BATTLE_END.cpp"),
@@ -2006,7 +2006,7 @@ config.libs = [
             Object(NonMatching, "monolib/src/core/code_804EE558.cpp"),
             Object(NonMatching, "monolib/src/core/code_804F0258.cpp"),
             Object(Matching, "monolib/src/nand/CNReqtaskSaveBanner.cpp", extra_cflags=["-O4,s", "-func_align 4"]),
-            Object(NonMatching, "monolib/src/nand/CNBanner.cpp"),
+            Object(NonMatching, "monolib/src/nand/CNBanner.cpp", extra_cflags=["-sdata 0"]),  # ALL 9 functions byte-match (code 100%); promotion blocked ONLY by +80B .text overhead from the inline ~IWorkEvent weak copy (see CNBanner.cpp tail note)
             Object(NonMatching, "monolib/src/core/monolib_eu_804F9E98.cpp", extra_cflags=["-O4,s", "-func_align 4"]), #EU/US only
         ],
     },

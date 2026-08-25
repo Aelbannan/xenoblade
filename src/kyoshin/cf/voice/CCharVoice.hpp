@@ -2,6 +2,11 @@
 
 #include <types.h>
 
+// Opaque sound-system / scene types referenced through pointers only.
+struct CVoiceSndMgr;        // sound-manager singleton (lbl_eu_80663E14)
+struct CVoicePoseBlock;     // scene pose/xform block (func_80496264 result)
+struct CVoiceBattleSndMgr;  // battle sound manager (func_800BF2CC result)
+
 /**
  * CCharVoice -- single character voice playback instance.
  *
@@ -16,7 +21,7 @@
  * namespace mangling).
  *
  * Field layout (total size 0x40 = 64 bytes):
- *   0x00  mOwner            parent/owner object
+ *   0x00  mOwner            parent/owner object (CVoiceOwnerIntf)
  *   0x04  mVoiceId          current voice ID
  *   0x08  mPriorityCheck    priority value for play-through gate
  *   0x0C  mSoundHandle      handle from archive-voice sound system
@@ -27,7 +32,7 @@
  *   0x3C  mVtable           pointer to lbl_eu_805398B0 (vtable)
  */
 struct CCharVoice {
-    void* mOwner;            // 0x00
+    class CVoiceOwnerIntf* mOwner;  // 0x00
     s32   mVoiceId;          // 0x04
     s32   mPriorityCheck;    // 0x08
     s32   mSoundHandle;      // 0x0C
@@ -38,7 +43,7 @@ struct CCharVoice {
     // 2 bytes padding to 0x3C
     void* mVtable;           // 0x3C -- vtable pointer
 
-    void func_802A0B8C(void* owner);
+    void func_802A0B8C(CVoiceOwnerIntf* owner);
     void func_802A0E08();
     void func_802A0FE8();
     bool func_802A109C(float volume, int voiceId, int priority);

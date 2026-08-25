@@ -168,6 +168,11 @@ extern u8 lbl_eu_80535204[];
 extern float lbl_eu_806681D0;
 extern float lbl_eu_806681D4;
 
+// Flag-byte setter used by the battle plugin (retail 0x801F92B0; defined in
+// CfResTboxImpl.cpp as a plain C++ function - the symbol map carries the
+// unmangled retail name).
+void func_801F92B0(u8* base, int idx1, int idx2, int idx3);
+
 // C-ABI imports (retail unmangled names - keep linkage/signatures verbatim).
 extern "C" bool func_8008585C__Q22cf13CfGameManagerFv();
 extern "C" char* func_80063080();

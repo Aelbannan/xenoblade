@@ -34,15 +34,17 @@ int func_801F8E78(CfResTboxImpl* self) {
 // dispatches the +0x168 anim setter and finally runs the +0x38/+0x98
 // sub-objects.
 void func_801F8EB0(CfResTboxImpl* self) {
-    u32 out8;          // sp+0x8 (func_80062114 out arg, block 2)
     u32 outC;          // sp+0xC (func_80062114 out arg, block 1)
+    u32 out8;          // sp+0x8 (func_80062114 out arg, block 2)
     u8 buf64[0x44];    // sp+0x10 (FixStr<64> name buffer, block 2)
 
     ((CfResTboxParentVtIf*)self->field_00)->_v17C();
     ((CfResTboxParentVtIf*)self->field_00)->_v178();
     self->field_00->field_90 = 0;
-    self->field_00->field_94 = 0;
-    if (((cf::CfGameManager*)self->field_00)->func_80082900() == 0) return;
+    CfResTboxParent* parent = self->field_00;
+    parent->field_94 = 0;
+    // parent stays live in r3 across the member call (retail emits no reload)
+    if (((cf::CfGameManager*)parent)->func_80082900() == 0) return;
     if (lbl_eu_80663E24 & 0x100000) return;
     if (func_8008585C__Q22cf13CfGameManagerFv() != 0) return;
     ResInfoEntry* entry = (ResInfoEntry*)func_80063080();
@@ -62,24 +64,30 @@ void func_801F8EB0(CfResTboxImpl* self) {
         ((CfResTboxParentVtIf*)self->field_00)->_v0DC(anim);
     }
     if (self->field_00->field_6C & 0x10) {
-        ml::FixStr<64>& name = *(ml::FixStr<64>*)buf64;
-        name.mString[0] = 0;   // retail stb/stw init (the FixStr ctor would emit a bl)
-        name.mLength = 0;
+        // Direct derefs: no named reference local, so MWCC recomputes
+        // `addi rx, sp, 0x10` per use (retail keeps no saved &buf register).
+        ((ml::FixStr<64>*)buf64)->mString[0] = 0;   // retail stb/stw init (no bl ctor)
+        ((ml::FixStr<64>*)buf64)->mLength = 0;
         if (self->field_00->field_9C == 0) {
             u32 handle0 = ((CfResTboxVtIf*)self)->_v034(0);
-            func_800AA33C(name, handle0, 0, 0);
+            func_800AA33C(*(ml::FixStr<64>*)buf64, handle0, 0, 0);
             u32 handle1 = ((CfResTboxVtIf*)self)->_v034(1);
             self->field_00->field_94 = func_80066E7C(entry, handle1);
             self->field_00->field_94 =
                 (u8*)func_80062114((char*)self->field_00->field_94, 1, (void**)&out8);
             self->field_00->field_9C = (u8*)func_800584B8(
-                (u32)CfRes_getD80Flag(), (u32)self->field_00->field_94, (const char*)&name);
+                (u32)CfRes_getD80Flag(), (u32)self->field_00->field_94, (const char*)buf64);
         }
     }
     mtl::MemManager::func_80434A4C(true);
     if (self->field_00->field_6C & 0x20000000) {
-        self->field_00->field_6C &= ~0x20000004;
-        ((CfResTboxParentVtIf*)self->field_00)->_v168(lbl_eu_806681D0);
+        // Volatile re-read defeats CSE with the test load (retail emits a
+        // fresh lwz before the rlwinm mask); single rlwinm clears bit only.
+        // The anim arg is loaded first so the lfs schedules before the stw.
+        f32 anim = lbl_eu_806681D0;
+        self->field_00->field_6C =
+            *(volatile u32*)&self->field_00->field_6C & ~0x20000000;
+        ((CfResTboxParentVtIf*)self->field_00)->_v168(anim);
         func_800BC3B0((cf::CfObjectMove*)self->field_00, lbl_eu_806681D4);
     }
     func_800BCFA0((cf::CfObjectMove*)self->field_00);
@@ -94,10 +102,17 @@ void func_801F8EB0(CfResTboxImpl* self) {
 void func_801F91B0(void) {}
 
 // us-801fae70 - one-time install of the null PMTF into lbl_eu_805351E0, then
-// dispatch through the counter-selected entry (when < 3).
+// dispatch through the counter-selected entry (when < 3). Retail materializes
+// both symbol bases via an update-form first access (*p++ folds the symbol's
+// @l half into lwzu/stwu); the remaining words index off the advanced
+// pointers.
 void func_801F91B4(CfResTboxImpl* self) {
     if (lbl_eu_80664660 == 0) {
-        *(CfPmf3*)lbl_eu_805351E0 = *(CfPmf3*)__ptmf_null;
+        u32* src = __ptmf_null;
+        u32* dst = (u32*)lbl_eu_805351E0;
+        *dst++ = *src++;
+        dst[0] = src[0];
+        dst[1] = src[1];
         lbl_eu_80664660 = 1;
     }
     u16 idx = self->field_08;
@@ -118,7 +133,9 @@ void func_801F9288(unsigned char* base, int idx1, int idx2, int idx3) {
     p[1] |= 0x80;
 }
 
-extern "C" void func_801F92B0(unsigned char* base, int idx1, int idx2, int idx3) {
-    int offset = idx1 * 73 + idx2 * 16 + idx3 * 2;
-    base[offset + 1] |= 0x40;
+// us-801f92b0 - set the confirm bit (0x40) on the slot's flag byte. Plain
+// C++ function; the symbol map carries the unmangled retail name.
+void func_801F92B0(unsigned char* base, int idx1, int idx2, int idx3) {
+    unsigned char* p = base + idx1 * 73 + idx2 * 16 + idx3 * 2;
+    p[1] |= 0x40;
 }

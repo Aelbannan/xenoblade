@@ -629,7 +629,7 @@ config.libs = [
             Object(NonMatching, "kyoshin/code_801F3BE0.cpp"),
             Object(NonMatching, "kyoshin/cf/CfGimmickObject.cpp"),
             Object(NonMatching, "kyoshin/cf/object/CfObjectTbox.cpp"),
-            Object(NonMatching, "kyoshin/cf/CfResTboxImpl.cpp"),
+            Object(Matching, "kyoshin/cf/CfResTboxImpl.cpp"),
             Object(NonMatching, "kyoshin/CPartyStateWin.cpp"),
             Object(NonMatching, "kyoshin/CModelDisp.cpp"),
             Object(NonMatching, "kyoshin/CPartyState.cpp", extra_cflags=["-O4,s"]),
@@ -691,7 +691,7 @@ config.libs = [
             Object(NonMatching, "kyoshin/code_8027513C.cpp"),
             Object(NonMatching, "kyoshin/menu/CMenuLvUp.cpp"),
             Object(NonMatching, "kyoshin/cf/chain/CChain.cpp"),
-            Object(NonMatching, "kyoshin/cf/chain/CChainActorList.cpp"),
+            Object(Matching, "kyoshin/cf/chain/CChainActorList.cpp"),
             Object(NonMatching, "kyoshin/cf/chain/CChainTime.cpp"),
             Object(NonMatching, "kyoshin/cf/chain/CChainTimer.cpp"),
             Object(NonMatching, "kyoshin/CSysWinScenarioLog.cpp"),
@@ -703,7 +703,13 @@ config.libs = [
             Object(NonMatching, "kyoshin/menu/CMenuPTChangeNotice.cpp", extra_cflags=["-O4,s"]),
             Object(NonMatching, "kyoshin/cf/chain/CChainCombo.cpp"),
             Object(NonMatching, "kyoshin/CSysWinSave.cpp"),
-            Object(NonMatching, "kyoshin/realtimeevt/CREvtMovie.cpp"),
+            # TU-final: 7/7 FULL_MATCH (hexdiff --all), split 0x440 exact fit.
+            # objdiff's section metric shows data 0.0% from the retail
+            # compiler-generated dtor .extab/@etb blobs; the authoritative
+            # data gate (run.py data diff DATA_SECTIONS) excludes .extab and
+            # the TU defines no data sections (same residual as promoted
+            # kyoshin/realtimeevt/CREvtLight).
+            Object(Matching, "kyoshin/realtimeevt/CREvtMovie.cpp"),
             Object(NonMatching, "kyoshin/CTaskGamePic.cpp"),
             Object(NonMatching, "kyoshin/CTaskGameEvt.cpp"),
             Object(NonMatching, "kyoshin/cf/CHelpManager.cpp"),

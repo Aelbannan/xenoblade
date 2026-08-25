@@ -43,13 +43,33 @@ extern "C" void* __dt__801A36D0(cf::UnkClass_801A36D0* self, int deleting);
 // (int id) declaration.
 #include "kyoshin/cf/CSuddenCommu.hpp"
 #define func_8016FE34 visionCppChainActorLookup
+// CAIAction.hpp recently switched func_8009EC9C to (u16); CVision.hpp's
+// (u32) import is what this TU uses (identical call-site codegen). Rename
+// the CAIAction form out of the way (MWCC 10197).
+#define func_8009EC9C visionCppAiActionEc9cUnused
+// CAIAction.hpp also gained a 2-param void* getBdatStringColumnValue; the
+// canonical 3-param u32 decl comes from plugin/ocBdat.hpp (via
+// harness_catalog.hpp). Rename theirs out of the way too.
+#define getBdatStringColumnValue visionCppAiActionBdatColUnused
+// ...and a third: u16 getArtsSlotRC(void*,int,int) vs CChainActorList.hpp's
+// int(const void*,short,short). Unused here; rename past the include.
+#define getArtsSlotRC visionCppAiActionArtsSlotRcUnused
+// ...and getArtsParamRC2 (const void* vs void* first param - illegal
+// overloading under C linkage).
+#define getArtsParamRC2 visionCppAiActionArtsParamRc2Unused
 // CAIAction.hpp declares func_80174C98 as void(const void*,void*,int), which
 // conflicts with CSuddenCommu.hpp's int(void*,int*,int) form (MWCC 10197).
 // This TU uses the CSuddenCommu form; rename the other out of the way.
 #include "kyoshin/cf/object/CAIAction.hpp"
+#undef func_8009EC9C
+#undef getBdatStringColumnValue
+#undef getArtsSlotRC
+#undef getArtsParamRC2
 #undef func_8016FE34
 #define func_8016FE34 visionCppChainTimerActorLookup
+#define func_8025FB10 visionCppChainTimer25fb10Unused
 #include "kyoshin/cf/chain/CChainTimer.hpp"
+#undef func_8025FB10
 #undef func_8016FE34
 #include "kyoshin/cf/CBattleManager.hpp"
 
@@ -980,10 +1000,8 @@ void func_801A4578(CVision* self) {
 }
 
 void func_801A47D0(CVision* self) {
-    // Declaration order drives saved-register colors (p1->r31, p2->r30,
-    // self->r29, sub->r28 in retail).
-    CVisionFusion* p1 = 0;
     CVisionFusion* p2 = 0;
+    CVisionFusion* p1 = 0;
     CVisionSub* sub;
     if (self->sub.field_00 == 0) {
         sub = 0;

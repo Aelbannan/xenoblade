@@ -396,8 +396,6 @@ extern "C" int func_800564C0(void* self, u32 a) { return ((CActParamDataVTableIf
 
 // func_8005605C: sub-object selector: prefers the A-side pointer when the A
 // gate byte and pointer are both live, otherwise falls back to the B side.
-// func_8005605C: sub-object selector: prefers the A-side pointer when the A
-// gate byte and pointer are both live, otherwise falls back to the B side.
 extern "C" void* func_8005605C(CActParamData* self) {
     if (self->mField274 != 0) {
         void* p = self->mPtr2D8;
@@ -2666,40 +2664,148 @@ convert:
 // ============================================================
 // us-80058208: func_80057BA0
 // Range test against the packed halfword pair at c+0x28/0x2A, then
-// dispatch through a function table indexed by (lo halfword - 0x2A).
+// dispatch through lbl_eu_805705F0[(u16)lo - 0x2A] with
+// (a->mField10, c->mField24, hi). Semantics verified against retail asm;
+// byte-match of the conversion blocks still open (see attempts.jsonl).
 // ============================================================
-    // Fall-through chain mirroring retail: lo==0 path first, then hi==0, then
-    // both-bounds; every pass path converges on the table dispatch.
 int func_80057BA0(u32 flags, ActParamT19ArgA* a, ActParamT19ArgB* b, ActParamT19ArgC* c) {
+    union {
+        u32 w[2];
+        double d;
+    } cx, cy;
+    cx.w[0] = 0x43300000u;
+    cy.w[0] = 0x43300000u;
     if ((flags & 2) == 0) {
         return 0;
     }
     u16 x = c->mShort28;
-    u32 packed;
+    if (x == 0 && c->mShort2A == 0) {
+        goto dispatch;
+    }
+    if (x != 0) {
+        goto lower;
+    }
+    // x == 0: only an upper bound is set.
+    if (c->mShort2A == 0) {
+        goto lower;
+    }
+    cy.w[1] = c->mShort2A;
+    if (!(b->mFloat54 < cy.d - lbl_eu_80665F90)) {
+        goto dispatch;
+    }
+lower:
+    // y == 0: only a lower bound is set.
+    if (c->mShort2A != 0) {
+        goto window;
+    }
     if (x == 0) {
-        if (c->mShort2A == 0) {
-            goto dispatch;
-        }
-        // Only an upper bound: pass when t < y.
-        if (b->mFloat54 < c->mShort2A) {
-            goto dispatch;
-        }
+        goto window;
+    }
+    cx.w[1] = x;
+    if (b->mFloat54 <= cx.d - lbl_eu_80665F90) {
+        goto dispatch;
+    }
+window:
+    // Both bounds set: pass only when t is at most the lower bound and
+    // exactly equals the upper bound value.
+    if (x == 0) {
         return 0;
     }
     if (c->mShort2A == 0) {
-        // Only a lower bound: pass when t >= x.
-        if (b->mFloat54 >= x) {
-            goto dispatch;
-        }
         return 0;
     }
-    if (!(b->mFloat54 < x) || !(b->mFloat54 < c->mShort2A)) {
+    cx.w[1] = x;
+    double xv = cx.d - lbl_eu_80665F90;
+    if (b->mFloat54 > xv) {
+        return 0;
+    }
+    cy.w[1] = c->mShort2A;
+    double yv = cy.d - lbl_eu_80665F90;
+    if (b->mFloat54 != yv) {
         return 0;
     }
 dispatch:
-    packed = c->mField08;
-    return lbl_eu_805705F0[(u16)packed - 0x2A](a->mField10, (u16)packed, packed >> 16) ? 1
-                                                                                      : 0;
+    u32 packed = c->mField08;
+    return lbl_eu_805705F0[(u16)packed - 0x2A](a->mField10, c->mField24,
+                                               packed >> 16)
+               ? 1
+               : 0;
+}
+
+// us-80057d24: func_80057A64
+// Window variant of func_80057BA0: bounds are the halfword pair at c+0x10 /
+// c+0x12, flag bit 0 gates, and the dispatch passes (vals->mField10,
+// c->mField0C, hi) into lbl_eu_805705F0[(u16)lo - 0x2A].
+struct ActParamT19ArgD {
+    u8 _pad00[8];
+    u32 mWord08;
+    u32 mField0C;
+    u16 mShort10;
+    u16 mShort12;
+};
+int func_80057A64(u32 flags, ActParamT19ArgA* a, ActParamT19ArgB* b,
+                  ActParamT19ArgD* c) {
+    union {
+        u32 w[2];
+        double d;
+    } cx, cy;
+    cx.w[0] = 0x43300000u;
+    cy.w[0] = 0x43300000u;
+    if ((flags & 1) == 0) {
+        return 0;
+    }
+    u16 x = c->mShort10;
+    if (x == 0 && c->mShort12 == 0) {
+        goto dispatch;
+    }
+    if (x != 0) {
+        goto lower;
+    }
+    // x == 0: only an upper bound is set.
+    if (c->mShort12 == 0) {
+        goto lower;
+    }
+    cy.w[1] = c->mShort12;
+    if (!(b->mFloat54 < cy.d - lbl_eu_80665F90)) {
+        goto dispatch;
+    }
+lower:
+    // y == 0: only a lower bound is set.
+    if (c->mShort12 != 0) {
+        goto window;
+    }
+    if (x == 0) {
+        goto window;
+    }
+    cx.w[1] = x;
+    if (b->mFloat54 <= cx.d - lbl_eu_80665F90) {
+        goto dispatch;
+    }
+window:
+    // Both bounds set: pass only when t is at most the lower bound and
+    // exactly equals the upper bound value.
+    if (x == 0) {
+        return 0;
+    }
+    if (c->mShort12 == 0) {
+        return 0;
+    }
+    cx.w[1] = x;
+    double xv = cx.d - lbl_eu_80665F90;
+    if (b->mFloat54 > xv) {
+        return 0;
+    }
+    cy.w[1] = c->mShort12;
+    double yv = cy.d - lbl_eu_80665F90;
+    if (b->mFloat54 != yv) {
+        return 0;
+    }
+dispatch:
+    u32 packed = c->mWord08;
+    return lbl_eu_805705F0[(u16)packed - 0x2A](a->mField10, c->mField0C,
+                                               packed >> 16)
+               ? 1
+               : 0;
 }
 // ============================================================
 // us-80054440: func_80053DE8

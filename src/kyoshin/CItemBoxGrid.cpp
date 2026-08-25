@@ -3071,7 +3071,7 @@ void func_801CB5F0(void* self) {
         if ((s8)p[0x525] < -2) {
             p[0x525] = (u8)(LookupIndexedByte((char*)self) - 1);
         } else if ((s8)p[0x525] < 0) {
-            p[0x525] = (u8)-2;
+            *(s8*)&p[0x525] = -2;
         }
         func_801D0950(self);
         func_801D0328(self);
@@ -3205,7 +3205,7 @@ void func_801CBA04(void* self) {
                 func_801EB314(p + 0x3e4);
                 func_801EB04C(p + 0x3e4, p[0x529]);
                 func_801EB064(p + 0x3e4,
-                              (s8)p[0x529] * func_801C5FC0((CItemBoxGridFull*)sub, (u16)entry));
+                              func_801C5FC0((CItemBoxGridFull*)sub, (u16)entry) * (s8)p[0x529]);
                 goto sound_and_return2;
             } else if (p[0x527] == 2) {
                 if (!((CExchangeWin*)(p + 0x440))->getField27()) return;
@@ -3227,7 +3227,7 @@ void func_801CBA04(void* self) {
                 p[0x525] = 0;
             } else {
                 u8 max = (u8)LookupIndexedByte((char*)(p + 0x54c));
-                if ((s8)p[0x525] >= max) p[0x525] = (u8)-2;
+                if ((s8)p[0x525] >= max) *(s8*)&p[0x525] = -2;
             }
             func_801D0950(self);
             func_801D0328(self);
@@ -3236,7 +3236,7 @@ void func_801CBA04(void* self) {
         {
             p[0x525] = p[0x525] + 1;
             u8 max = (u8)LookupIndexedByte((char*)(p + 0x54c));
-            if ((s8)p[0x525] >= max) p[0x525] = (u8)-1;
+            if ((s8)p[0x525] >= max) *(s8*)&p[0x525] = -1;
             func_801D0950(self);
             func_801D0328(self);
         }
@@ -3254,8 +3254,9 @@ void func_801CBDE8(void* self) {
     // them into the stmw-saved r29/r30; buf/tmp mirror retail's stack slots.
     u32 entry;
     u8* sub;
-    u32 buf[3];
-    u32 tmp[4];
+    // One contiguous 24-byte region: retail uses sp+0x08 (buf) and sp+0x14 (tmp),
+    // i.e. two adjacent 12-byte slots of a single stack block.
+    u32 sbuf[6];
     u8* p = (u8*)self;
     if (p[0x542]) return;
     if (CSysWin_getUnk34(p + 0x4ac)) return;
@@ -3292,8 +3293,8 @@ void func_801CBDE8(void* self) {
     if (func_801D3320(p + 0xe8)) {
         if (!func_801D3328(p + 0xe8)) return;
         func_801D3724(p + 0xe8);
-        func_801D3454(tmp, p + 0xe8);
-        ((CItemBoxObjA0Vt*)(p + 0xa0))->_v10(tmp);
+        func_801D3454(sbuf + 3, p + 0xe8);
+        ((CItemBoxObjA0Vt*)(p + 0xa0))->_v10(sbuf + 3);
         func_80138078__FUl(1);
         return;
     }
@@ -3308,8 +3309,8 @@ void func_801CBDE8(void* self) {
                 break;
             }
         }
-        func_801CB9D8(buf, sub, (u8)(p[0x546] + (s8)p[0x545] * 4));
-        ((CItemBoxObjA0Vt*)(p + 0xa0))->_v10(buf);
+        func_801CB9D8(sbuf, sub, (u8)(p[0x546] + (s8)p[0x545] * 4));
+        ((CItemBoxObjA0Vt*)(p + 0xa0))->_v10(sbuf);
         func_80138078__FUl(1);
         return;
     }

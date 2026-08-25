@@ -708,7 +708,6 @@ public:
     // member but the body reads r3-r5 / f1-f2); see CActParamAnim.cpp.
     void func_8004ECF4() const;
     void func_8004F484();
-    void func_8004F5FC();
     int func_8004FAB4(u32 param);
     void func_8004FCE0();
     void func_8004FE58();

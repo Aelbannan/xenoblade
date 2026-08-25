@@ -64,7 +64,9 @@ extern "C" void __ct__8009ED08(void* destination, u32 itemId);   // CtrlObjectPa
 extern "C" unsigned long func_80061FFC();   // bdat heap handle getter
 // NOTE: retail keeps the virtual-call result in r3 across the second arg's
 // address computation, so the value is the FIRST declared parameter.
-extern "C" void func_80175A50(u32 value, u8* obj);       // CActorParam.cpp
+// NOTE: the real definition is func_80175A50(CActorParam* dst, CActorParam*
+// src) - the write target comes FIRST.
+extern "C" void func_80175A50(u8* obj, u32 value);       // CActorParam.cpp
 extern "C" void func_8014B804(u8* self, int index, int a2, int a3, int a4,
     int a5, int a6, int a7, int a8, int a9, int a10, int a11, int a12, int a13);
 // getInstance__Q22cf14CBattleManagerFv is declared by kyoshin/cf/CBattleManagerApi.hpp
@@ -274,10 +276,10 @@ namespace cf {
     class __declspec(novtable) CfObjectPc : public CfObjectActor {
     public:
         virtual ~CfObjectPc();
-        virtual int func_800BFF20(); //0x5D4
+        __attribute__((never_inline)) virtual int func_800BFF20(); //0x5D4
         virtual void func_800C0080(); //0x5D8
         virtual void func_800C0524(); //0x5DC
-        virtual void func_800BFFEC(); //0x5E0
+        __attribute__((never_inline)) virtual void func_800BFFEC(); //0x5E0
         virtual void func_800C00C0(); //0x5E4
         virtual void func_800C0174(); //0x5E8
         virtual void func_800C02C4(); //0x5EC

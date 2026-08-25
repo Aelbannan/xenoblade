@@ -25,13 +25,21 @@ void SFADXT_GetOutVol(void* self) {
     ADXT_GetOutVol(*(void**)(*(void**)((u8*)self + 0x20ac)));
 }
 
-/* pitch/speed conversion constants live in the f32/f64 literal pool */
+/* pitch/speed conversion constants live in the f32/f64 literal pool:
+ *   +0x50: log(ratio) scale, +0x54: semitone scale, +0x58: cent scale,
+ *   +0x60: hi-magic double used by the int->float conversions */
 extern u8 lbl_eu_8051C4E0[];
 extern double log(double x);
 extern void ADXT_SetTranspose(void *self, s32 transpose, s32 cent);
 
+/* Convert playback speed ratio to an ADX transpose (semitones) plus a cent
+ * fine-adjustment. Constants come from the read-only literal pool:
+ *   +0x50: 12/log(2) style scaling, +0x54: semitone scale,
+ *   +0x58: cent scale, +0x60: int->float conversion magic (0x4330000080000000). */
 void SFADXT_SetSpeed(void *handle, s32 speed, s32 base) {
-    void *w = *(void **)((u8 *)handle + 0x20ac);
+    /* literal-pool base kept in a callee-saved register across the log() call */
+    float *tbl = (float *)lbl_eu_8051C4E0;
+    void **w = *(void ***)((u8 *)handle + 0x20ac);
     void *adxt = *(void **)w;
     int transpose;
     int cent;
@@ -47,19 +55,19 @@ void SFADXT_SetSpeed(void *handle, s32 speed, s32 base) {
         transpose = 0;
         cent = 0;
     } else {
-        /* semitone shift from the frequency ratio, then round the
-         * cent remainder down to a whole cent multiple of 100 */
-        float x = *(float *)(lbl_eu_8051C4E0 + 0x50) *
-                  (float)log((double)speed / (double)base);
-        transpose = (int)(*(float *)(lbl_eu_8051C4E0 + 0x54) * x);
+        float x = tbl[0x14] *
+                  (float)log((float)speed / (float)base);
+        transpose = tbl[0x15] * x;
         cent = transpose * 100;
         {
-            double rem = (double)x - (double)cent;
-            int m = (int)(*(float *)(lbl_eu_8051C4E0 + 0x58) + (float)rem);
-            if ((double)(*(float *)(lbl_eu_8051C4E0 + 0x58) + (float)rem) > (double)m) {
-                m = m - 1;
+            /* floor-style cent rounding: nudge down by one cent when the
+             * scaled remainder overshoots its truncated value */
+            int m = tbl[0x16] + (x - cent);
+            if ((double)m > tbl[0x16] + (x - cent)) {
+                cent = tbl[0x16] + (x - m) - 1;
+            } else {
+                cent = tbl[0x16] + (x - m);
             }
-            cent = m;
         }
     }
     ADXT_SetTranspose(adxt, transpose, cent);
@@ -113,6 +121,7 @@ extern s64 SFBUF_UpdateFlowCnt(s32 hi, s32 lo, s32 val);
 extern s32 SFBUF_GetPrepFlg(void* self, s32 idx);
 extern void SFBUF_SetPrepFlg(void* self, s32 idx, s32 flg);
 extern void ADXT_SetSvrFreq(void* adxt, s32 freq);
+extern int ADXT_GetStat(void* self);
 
 void sfadxt_ChkTermFlg(void* self, s32 flag_idx);
 void sfadxt_SetAdxtHd(void* handle);
@@ -120,19 +129,17 @@ void sfadxt_SetAdxtHd(void* handle);
 /* SFADXT_ExecServer - per-frame audio server callback: feeds stream data,
  * updates flow counters and propagates prepare/terminate flags. */
 s32 SFADXT_ExecServer(void* handle) {
-    s32 ret;
+    s32 ret = 0;
+    s32 prep_a;
     void* w;
-    void* adxt;
-    s32 rd_a;
-    s32 rd_b;
     s32 copied;
-    s32 feed_out;
-    void* sj;
+    /* NOTE: slot layout targets retail frame (sj@0x08 .. rd_b@0x1c) */
+    s32 sj;
     s32 fc_a;
     s32 fc_b;
-    s32 prep_a;
-    s32 prep_b;
-    s32 sfreq;
+    s32 feed_out;
+    s32 rd_a;
+    s32 rd_b;
 
     /* notify the external server hook (if registered) that a tick started */
     if (lbl_eu_80606E34 != NULL) {
@@ -157,46 +164,52 @@ s32 SFADXT_ExecServer(void* handle) {
         copied = rd_b;
         feed = *(void (**)(void*, s32, s32, s32*))((u8*)w + 0x3c);
         feed(handle, rd_a, rd_b, &feed_out);
-        ret = SFBUF_RingAddRead(handle, *(s32*)((u8*)handle + 0x20b4), copied);
+        ret = SFBUF_RingAddRead(handle, *(s32*)((u8*)handle + 0x20b4), feed_out);
     }
     if (ret == 0) {
         s64 upd;
-        /* update the running flow counters for both buffer halves */
-        SFBUF_RingGetSj(handle, *(s32*)((u8*)handle + 0x20b4), &sj);
-        SFBUF_GetFlowCnt(sj, &fc_a, &fc_b);
+        /* advance the running flow counters for both ring halves */
+        SFBUF_RingGetSj(handle, *(s32*)((u8*)handle + 0x20b4), (void**)&sj);
+        SFBUF_GetFlowCnt((void*)sj, &fc_a, &fc_b);
         upd = SFBUF_UpdateFlowCnt(*(s32*)((u8*)handle + 0x9c8), *(s32*)((u8*)handle + 0x9cc), fc_a);
-        *(s32*)((u8*)handle + 0x9c8) = (s32)(upd >> 32);
         *(s32*)((u8*)handle + 0x9cc) = (s32)upd;
+        *(s32*)((u8*)handle + 0x9c8) = (s32)(upd >> 32);
         upd = SFBUF_UpdateFlowCnt(*(s32*)((u8*)handle + 0x9d0), *(s32*)((u8*)handle + 0x9d4), fc_b);
-        *(s32*)((u8*)handle + 0x9d0) = (s32)(upd >> 32);
         *(s32*)((u8*)handle + 0x9d4) = (s32)upd;
+        *(s32*)((u8*)handle + 0x9d0) = (s32)(upd >> 32);
         SFBUF_GetFlowCnt(*(void**)((u8*)w + 4), &fc_a, &fc_b);
         upd = SFBUF_UpdateFlowCnt(*(s32*)((u8*)handle + 0x9e0), *(s32*)((u8*)handle + 0x9e4), fc_a);
-        *(s32*)((u8*)handle + 0x9e0) = (s32)(upd >> 32);
         *(s32*)((u8*)handle + 0x9e4) = (s32)upd;
+        *(s32*)((u8*)handle + 0x9e0) = (s32)(upd >> 32);
         upd = SFBUF_UpdateFlowCnt(*(s32*)((u8*)handle + 0x9e8), *(s32*)((u8*)handle + 0x9ec), fc_b);
-        *(s32*)((u8*)handle + 0x9e8) = (s32)(upd >> 32);
         *(s32*)((u8*)handle + 0x9ec) = (s32)upd;
+        *(s32*)((u8*)handle + 0x9e8) = (s32)(upd >> 32);
     }
 
     prep_a = *(s32*)((u8*)handle + 0x20b8);
-    prep_b = *(s32*)((u8*)handle + 0x20b4);
-    if (SFBUF_GetPrepFlg(handle, prep_a) != 1 && SFBUF_GetPrepFlg(handle, prep_b) == 1 &&
+    {
+        /* read-side index held across the first GetPrepFlg call */
+        s32 idx_read = *(s32*)((u8*)handle + 0x20b4);
+        if (SFBUF_GetPrepFlg(handle, prep_a) != 1 &&
+            SFBUF_GetPrepFlg(handle, idx_read) == 1 &&
         ADXT_GetStat(*(void**)*(void**)((u8*)handle + 0x20ac)) != 3) {
         /* decoder ready on the read side but not yet flagged: mark prepared */
         SFBUF_SetPrepFlg(handle, prep_a, 1);
+        }
     }
 
     sfadxt_ChkTermFlg(handle, copied);
     sfadxt_SetAdxtHd(handle);
 
     w = *(void**)((u8*)handle + 0x20ac);
-    adxt = *(void**)w;
-    sfreq = SFSET_GetCond(handle, 0x1b);
-    if (*(s32*)((u8*)w + 0x44) != sfreq) {
-        /* sample rate changed since last frame: push it to the decoder */
-        *(s32*)((u8*)w + 0x44) = sfreq;
-        ADXT_SetSvrFreq(adxt, sfreq);
+    {
+        s32 sfreq = SFSET_GetCond(handle, 0x1b);
+        void* adxt = *(void**)w;
+        if (*(s32*)((u8*)w + 0x44) != sfreq) {
+            /* sample rate changed since last frame: push it to the decoder */
+            *(s32*)((u8*)w + 0x44) = sfreq;
+            ADXT_SetSvrFreq(adxt, sfreq);
+        }
     }
 
     /* report the flow-counter pairs to the external server hook */
@@ -256,28 +269,32 @@ void sfadxt_CopyData(void *handle, void *buf, int size, int *out_size) {
     *out_size = len;
 }
 
-s32 sfadxt_AdjustSync(void* handle, void* a2, s32 a3, s32* a4);
-
 extern int ADXT_IsHeader(void *buf, int size, int *out);
 extern int SFHDS_GetMuxVerNum(void *handle);
 extern void *sfadxt_SearchAlign(void *handle, void *buf, int size);
 
+void sfadxt_AdjustSync(void *handle, void *buf, s32 size, s32 *out_size);
+
 void sfadxt_ExcludeHdr(void *handle, void *buf, int size, int *out_size) {
     void *w;
-    int exclude = 0;
+    s32 exclude = 0;
+    int hdr;
 
     *out_size = 0;
     w = *(void **)((u8 *)handle + 0x20ac);
-    if (size >= 288) {
-        int hdr;
+    if (size >= 0x120) {
         if (ADXT_IsHeader(buf, size, &hdr)) {
             exclude = hdr;
-        } else if (SFHDS_GetMuxVerNum(handle) < 108) {
-            exclude = (int)sfadxt_SearchAlign(handle, buf, size) - (int)buf;
+        } else {
+            /* old mux versions require scanning for the frame start */
+            exclude = SFHDS_GetMuxVerNum(handle) >= 0x6c
+                          ? 0
+                          : (s32)((u8 *)sfadxt_SearchAlign(handle, buf, size) - (u8 *)buf);
         }
         *(void **)((u8 *)w + 0x3c) = (void *)sfadxt_AdjustSync;
         *out_size = exclude;
-        *(u64 *)((u8 *)handle + 0x9D8) += (u64)(s64)(s32)exclude;
+        /* extend the running total by the sign-extended excluded count */
+        *(s64 *)((u8 *)handle + 0x9d8) += (s64)exclude;
     }
 }
 
@@ -337,39 +354,49 @@ extern int memcmp(const void *s1, const void *s2, u32 size);
 extern u8 lbl_eu_8051C51C[];
 
 void sfadxt_ExcludeSilence(void *handle, u8 *buf, int size, int *out_size) {
-    void *w;
     void *p2670;
     void *conv;
+    void *wp;
     int skip;
     u8 *p;
+    void *w;
 
-    skip = 0;
     *out_size = 0;
     w = *(void **)((u8 *)handle + 0x20ac);
     if (SFHDS_GetMuxVerNum(handle) >= 108) {
         *(void **)((u8 *)w + 0x3c) = (void *)sfadxt_ExcludeHdr;
     } else {
         p = buf;
-        while (skip < size - 0x12) {
+        for (skip = 0; skip < size - 0x12; skip += 0x12) {
             if (memcmp(p, lbl_eu_8051C51C, 0x12) != 0) {
                 *(void **)((u8 *)w + 0x3c) = (void *)sfadxt_ExcludeHdr;
                 break;
             }
             p += 0x12;
-            skip += 0x12;
         }
         *out_size = skip;
-        *(u64 *)((u8 *)handle + 0x9D8) += (u64)(s64)(s32)skip;
-        /* conv info block lives at +0xd0c past the header struct */
+        *out_size = skip;
+        /* work pointer re-read from the handle (matches retail reload) */
+        wp = *(void **)((u8 *)handle + 0x20ac);
+        /* 64-bit byte-position accumulator, updated with sign-extended skip */
+        *(s64 *)((u8 *)handle + 0x9D8) += skip;
         p2670 = *(void **)((u8 *)handle + 0x2670);
-        conv = NULL;
-        if (p2670 != NULL && *(s32 *)((u8 *)w + 0x40) <= 0) {
-            conv = (u8 *)p2670 + 0xd0c;
+        /* conv info block lives at +0xd0c past the header struct */
+        if (p2670 == NULL) {
+            conv = NULL;
+        } else {
+            if (*(s32 *)((u8 *)wp + 0x40) > 0) {
+                conv = NULL;
+            } else {
+                conv = (u8 *)p2670 + 0xd0c;
+            }
         }
         {
-            s32 ok = -1;
+            s32 ok;
             s32 n;
-            if (conv != NULL) {
+            if (conv == NULL) {
+                ok = -1;
+            } else {
                 n = *(s32 *)((u8 *)conv + 0xc);
                 ok = 0;
             }
@@ -389,33 +416,47 @@ extern s32 lbl_eu_80606E04;
 extern void ADXT_TermSupply(void *self);
 
 void sfadxt_ChkTermFlg(void* self, s32 flag_idx) {
-    void* tim = (u8*)self + 0x1098;
-    void* w = *(void**)((u8*)self + 0x20ac);
-    void* adxt = *(void**)((u8*)w);
-    s32 stat = ADXT_GetStat(adxt);
-    s32 err = ADXT_GetErrCode(adxt);
+    s32 stat;
+    void* w;
+    void* adxt;
+    s32 err;
+    void* tim;
 
+    tim = (u8*)self + 0x1098;
+    w = *(void**)((u8*)self + 0x20ac);
+    adxt = *(void**)w;
+    stat = ADXT_GetStat(adxt);
+    err = ADXT_GetErrCode(adxt);
+
+    /* publish the raw decoder error code for the EU-side error hook */
     if (err != 0)
         lbl_eu_80606E04 = err;
 
+    /* condition 26 gates whether decoder errors are surfaced at all */
     if (SFSET_GetCond(self, 26) == 0)
         err = 0;
 
     if (err != 0) {
-        if (err == -1) {
+        switch (err) {
+        case -1:
             SFLIB_SetErr(self, 0xFF000C08);
-        } else if (err == -2) {
+            break;
+        case -2:
             SFLIB_SetErr(self, 0xFF000C09);
-        } else {
+            break;
+        default:
             SFLIB_SetErr(self, 0xFF000C07);
+            break;
         }
     }
 
+    /* stats 4/5 mean the decoder is stopping or stopped: cancel sync adjust */
     if ((u32)(stat - 4) <= 1)
         SFTST_SetAdjFlg(tim, 0);
 
     if (stat == 5 || err != 0)
         SFBUF_SetTermFlg(self, *(s32*)((u8*)self + 0x20B8), 1);
+    /* last feed finished and nothing is buffered: terminate supply */
     if (SFBUF_GetTermFlg(self, *(s32*)((u8*)self + 0x20B4)) == 1 && flag_idx == 0) {
         ADXT_TermSupply(adxt);
         if (*(s32*)((u8*)w + 0x48) == 0)
@@ -472,36 +513,47 @@ extern void ADXT_Pause(void *self, s32 flg);
 extern void SFTST_Pause(void *self, u32 val);
 extern void SFTIM_SetTimeFn(void *self, void *fn, u32 idx);
 extern void *SJRBF_Create(void *pool_mem, u32 buf_size, u32 xtr_size);
-extern void *SJRBF_Create(void *pool_mem, u32 buf_size, u32 xtr_size);
 
 s32 sfadxt_InitInf(void *handle, u32 *inf) {
-    u8 *tim = (u8 *)handle + 0x1098;
+    u32 *prm = lbl_eu_80606DE8;
+    u8 *tim;
+    u32 v0;
+    u32 v1;
+    u32 copyfn;
     s64 tol[2];
     s64 exc[2];
     s64 adj[2];
     s64 poff[2];
 
-    if (lbl_eu_80606DE8[2] == 0 || lbl_eu_80606DE8[6] == 0) {
-        SFLIB_SetErr(NULL, 0xFF000C06);
-        return 0;
+    /* both buffer sizes must be configured before init can proceed */
+    if (prm[2] == 0 || prm[6] == 0) {
+        return SFLIB_SetErr(NULL, 0xFF000C06);
     }
 
+    v0 = prm[0];
+    copyfn = (u32)sfadxt_CopyData;
+    v1 = prm[1];
+    inf[3] = v1;
+    inf[2] = v0;
+    v0 = prm[2];
+    v1 = prm[3];
+    inf[5] = v1;
+    inf[4] = v0;
+    v0 = prm[4];
+    v1 = prm[5];
+    inf[7] = v1;
+    inf[6] = v0;
+    inf[8] = prm[6];
+    tim = (u8 *)handle + 0x1098;
     inf[0] = 0;
     inf[1] = 0;
-    inf[2] = lbl_eu_80606DE8[0];
-    inf[3] = lbl_eu_80606DE8[1];
-    inf[4] = lbl_eu_80606DE8[2];
-    inf[5] = lbl_eu_80606DE8[3];
-    inf[6] = lbl_eu_80606DE8[4];
-    inf[7] = lbl_eu_80606DE8[5];
-    inf[8] = lbl_eu_80606DE8[6];
     inf[9] = (u32)-1;
     inf[10] = 1;
     inf[11] = 0;
     inf[12] = 0;
     inf[13] = 0;
     inf[14] = 0;
-    inf[15] = (u32)sfadxt_CopyData;
+    inf[15] = copyfn;
     inf[16] = 0;
     inf[17] = (u32)-1;
     inf[18] = 0;
@@ -534,48 +586,61 @@ extern void ADXT_EntryFltFunc(void *self, void *fltfn, void *handle);
 extern void ADXT_StartSj(void *self);
 extern void *ADXT_Create(void *a, void *b, s32 c);
 
+s32 sfadxt_InitInf(void *handle, u32 *inf);
+
 s32 SFADXT_Create(void *handle) {
+    void *sj;
+    s32 ret;
     u32 *inf;
     void *adxt;
-    void *sj;
 
     if (SFSET_GetCond(handle, 6) == 0) {
         return 0;
     }
     inf = (u32 *)((u8 *)handle + 0x25c0);
-    *(void **)((u8 *)handle + 0x20ac) = inf;
-    sfadxt_InitInf(handle, inf);
+    *(u32 **)((u8 *)handle + 0x20ac) = inf;
+    /* init failure aborts creation; the init result is propagated */
+    ret = sfadxt_InitInf(handle, inf);
+    if (ret != 0) {
+        return ret;
+    }
 
-    if (SFPLY_GetResetFlg() == 1) {
-        adxt = (void *)lbl_eu_80606E38[0x7d];
-    } else {
+    /* note: branch layout matches retail - create on the non-reset path */
+    if (SFPLY_GetResetFlg() != 1) {
         adxt = ADXT_Create((void *)inf[5], (void *)inf[8], (s32)inf[7]);
+    } else {
+        /* soft-reset path: reuse the parked decoder handle */
+        adxt = (void *)lbl_eu_80606E38[0x7d];
     }
     if (adxt != NULL) {
-        criware_eu_803878BC(adxt, NULL);
-        ADXT_SetAutoRcvr(adxt, 0);
+        goto setup;
     }
+    adxt = NULL;
+    goto chk;
+setup:
+    criware_eu_803878BC(adxt, NULL);
+    ADXT_SetAutoRcvr(adxt, 0);
+chk:
     if (adxt == NULL) {
-        SFLIB_SetErr(NULL, 0xFF000C04);
-        return 0;
+        return SFLIB_SetErr(NULL, 0xFF000C04);
     }
     ADXT_EntryFltFunc(adxt, criware_803BD518, handle);
 
-    sj = SJRBF_Create((void *)inf[4], inf[2], inf[3]);
+    /* store happens unconditionally; MWCC sinks it below the branch */
+    /* store happens unconditionally; MWCC sinks it below the branch */
+    inf[1] = (u32)(sj = SJRBF_Create((void *)inf[4], inf[2], inf[3]));
     if (sj == NULL) {
-        SFLIB_SetErr(NULL, 0xFF000C05);
-        return 0;
+        return SFLIB_SetErr(NULL, 0xFF000C05);
     }
-    inf[1] = (u32)sj;
     inf[0] = (u32)adxt;
 
     *(u32 *)((u8 *)handle + 0x21bc) = (u32)((u8 *)handle + 0x261c);
-    *(u32 *)((u8 *)handle + 0x261c) = *(u32 *)((u8 *)adxt + 0xc);
     *(void **)((u8 *)handle + 0x2620) = (void *)SFADXT_SetOutPan;
     *(void **)((u8 *)handle + 0x2624) = (void *)SFADXT_GetOutPan;
     *(void **)((u8 *)handle + 0x2628) = (void *)SFADXT_SetOutVol;
     *(void **)((u8 *)handle + 0x262c) = (void *)SFADXT_GetOutVol;
     *(void **)((u8 *)handle + 0x2630) = (void *)SFADXT_SetSpeed;
+    *(u32 *)((u8 *)handle + 0x261c) = *(u32 *)((u8 *)adxt + 0xc);
 
     ADXT_StartSj(adxt);
 
@@ -629,39 +694,54 @@ s32 sfadxt_GetTime(void *handle, int *out1, int *out2) {
 extern void ADXT_Destroy(void *);
 extern void ADXT_Stop(void *);
 extern void UTY_FinishTmr(void);
+/* parameter block / stream-work views used by Destroy: three word pairs plus
+ * one trailing word are saved back to the global parameter block */
+typedef struct {
+    u32 lo;
+    u32 hi;
+} SFADXT_PAIR;
+
+typedef struct {
+    SFADXT_PAIR p[3];
+    u32 d;
+} SFADXT_PARA;
+
+typedef struct {
+    void *adxt;
+    void *sjrbf;
+    SFADXT_PAIR p[3];
+    u32 d;
+} SFADXT_WORK;
+
 int SFADXT_Destroy(void *handle) {
     int ret;
     void *adxt;
     void *chunk;
+    SFADXT_PARA *para;
+    SFADXT_WORK *w = *(SFADXT_WORK **)((u8 *)handle + 0x20ac);
 
-    {
-        void *w = *(void **)((u8 *)handle + 0x20ac);
-        adxt = *(void **)w;
-        chunk = ((void **)w)[1];
-
-        if (adxt == NULL) {
-            return 0;
-        }
-        lbl_eu_80606DE8[0] = ((u32 *)w)[2];
-        lbl_eu_80606DE8[1] = ((u32 *)w)[3];
-        lbl_eu_80606DE8[2] = ((u32 *)w)[4];
-        lbl_eu_80606DE8[3] = ((u32 *)w)[5];
-        lbl_eu_80606DE8[4] = ((u32 *)w)[6];
-        lbl_eu_80606DE8[5] = ((u32 *)w)[7];
-        lbl_eu_80606DE8[6] = ((u32 *)w)[8];
-        if (SFPLY_GetResetFlg() == 1) {
-            /* reloads the adxt pointer through the work area on the reset path */
-            ADXT_Stop(*(void **)*(void **)((u8 *)handle + 0x20ac));
-            lbl_eu_80606E38[0x7d] = (u32)adxt;
-        } else {
-            ADXT_Destroy(adxt);
-        }
+    adxt = w->adxt;
+    chunk = w->sjrbf;
+    if (adxt == NULL) {
+        return 0;
+    }
+    /* stash the stream configuration back into the global parameter block */
+    para = (SFADXT_PARA *)lbl_eu_80606DE8;
+    para->p[0] = w->p[0];
+    para->p[1] = w->p[1];
+    para->p[2] = w->p[2];
+    para->d = w->d;
+    if (SFPLY_GetResetFlg() != 1) {
+        ADXT_Destroy(adxt);
+        ret = 0;
+    } else {
+        /* reset path: only stop the decoder and park it for reuse after the
+         * reload; the work area is re-read through the handle here */
+        ADXT_Stop(*(void **)*(SFADXT_WORK **)((u8 *)handle + 0x20ac));
+        lbl_eu_80606E38[0x7d] = (u32)adxt;
         ret = 0;
     }
-    {
-        void **vt = *(void ***)chunk;
-        ((void (*)(void *))vt[3])(chunk);
-    }
+    ((void (*)(void *))(*(void ***)chunk)[3])(chunk);
     UTY_FinishTmr();
     return ret;
 }
@@ -689,40 +769,50 @@ u32 SFADXT_Stop(void* self) {
     return 0;
 }
 
-extern void SFTIM_GetTimeOneFrmVideo(void *, int *, int *);
-extern int ADXT_DiscardSmpl(void *, u32);
-extern int UTY_MulDiv(int, int, int);
 extern void SFTST_GoNextFrame(void *, s32 *);
 
+/* pause/unpause handler. mode 2 (partial resume while playing) advances the
+ * decoder past the samples that elapsed during the pause window so the
+ * stream timer stays in sync with video. */
 s32 SFADXT_Pause(void *handle, s32 *pause) {
-    void *w = *(void **)((u8 *)handle + 0x20ac);
-    void *adxt = *(void **)((u8 *)w);
+    void *adxt = *(void **)*(void **)((u8 *)handle + 0x20ac);
+    u8 *tim;
 
     switch (*pause) {
-    case 0:
+    case 0: {
+        /* full unpause: reset the pending-sample count unless the stream
+         * timer is already flagged as running */
+        void *w = *(void **)((u8 *)handle + 0x20ac);
         *(s32 *)((u8 *)w + 0x30) = 0;
-        if (*(s32 *)((u8 *)w + 0x2c) != 1) {
-            ADXT_Pause(adxt, 0);
-            SFTST_Pause((u8 *)handle + 0x1098, 0);
+        tim = (u8 *)handle + 0x1098;
+        if (*(s32 *)((u8 *)*(void **)((u8 *)handle + 0x20ac) + 0x2c) != 1) {
+            ADXT_Pause(*(void **)((u8 *)handle + 0x20ac), 0);
+            SFTST_Pause(tim, 0);
         }
         break;
+ }
     case 1:
         ADXT_Pause(adxt, 1);
         SFTST_Pause((u8 *)handle + 0x1098, 1);
         break;
     case 2:
+        /* decoder mid-stream: drop the samples covered by one video frame */
         if ((u32)ADXT_GetStat(adxt) > 1) {
+            void *w = *(void **)((u8 *)handle + 0x20ac);
             s32 sfreq = ADXT_GetSfreq(adxt);
-            int frm1, frm2;
-            s64 m1, m2;
+            int frm2;
+            int frm1;
             s32 total;
+            s32 mul;
+            s64 go[2];
 
             SFTIM_GetTimeOneFrmVideo(handle, &frm1, &frm2);
-            m1 = (s64)UTY_MulDiv(sfreq, frm1, frm2);
-            m2 = (s64)sfreq;
-            total = *(s32 *)((u8 *)w + 0x30) + (s32)m1;
-            *(s32 *)((u8 *)w + 0x30) = total - ADXT_DiscardSmpl(adxt, total);
-            SFTST_GoNextFrame((u8 *)handle + 0x1098, (s32 *)&m1);
+            mul = UTY_MulDiv(sfreq, frm1, frm2);
+            total = mul + *(s32 *)((u8 *)w + 0x30);
+            /* keep whatever the decoder could not discard */
+            *(s32 *)((u8 *)w + 0x30) = total - ADXT_DiscardSmpl(adxt, total);            go[0] = (s64)mul;
+            go[1] = (s64)sfreq;
+            SFTST_GoNextFrame((u8 *)handle + 0x1098, (s32 *)go);
         }
         break;
     }
@@ -794,40 +884,36 @@ extern int ADXT_IsEndcode(void* self, int idx, int* out);
 extern s32 ADXT_InsertSilence(void* adxt, s32 nchan, s32 nsmpl);
 
 /* sfadxt_AdjustSync - adjust sync timing (0x280 bytes in retail). */
-s32 sfadxt_AdjustSync(void* handle, void* a2, s32 a3, s32* a4) {
+void sfadxt_AdjustSync(void* handle, void* a2, s32 a3, s32* a4) {
     u8* tim = (u8*)handle + 0xD98;
     void* w;
-    void* conv;
-    s32 err = 0;
-    s32 chans;
     s32 freq;
-    s32 audio;
+    s32 chans;
     s32 video;
+    s32 audio;
     s32 diff;
     s32 vstart;
     int ec;
     int ec2;
-    s32 enc;
-    s32 rem;
     s32 total;
+    s32 enc;
     void* hdr;
+    void* conv;
+    s32 err;
 
     *a4 = 0;
     hdr = *(void**)((u8*)handle + 0x2670);
     w = *(void**)((u8*)handle + 0x20ac);
-    if (hdr == NULL) {
-        conv = NULL;
-    } else if (*(s32*)((u8*)w + 0x40) > 0) {
-        /* converter still busy: no info block available */
-        conv = NULL;
-    } else {
-        /* conv info block lives at +0xd0c past the converter header */
-        conv = (u8*)hdr + 0xd0c;
-    }
+    /* conv info block lives at +0xd0c past the converter header */
+    conv = hdr != NULL
+               ? (*(s32*)((u8*)w + 0x40) <= 0 ? (u8*)hdr + 0xd0c : NULL)
+               : NULL;
     if (conv != NULL) {
         chans = *(s32*)((u8*)conv + 0xc);
         err = 0;
         freq = *(s32*)((u8*)conv + 0x10);
+    } else {
+        err = -1;
     }
     if (err != 0) {
         *(void**)((u8*)w + 0x3c) = (void*)sfadxt_CopyData;
@@ -847,33 +933,35 @@ s32 sfadxt_AdjustSync(void* handle, void* a2, s32 a3, s32* a4) {
         return;
     SFTIM_SetStartTime(tim, video, freq);
     /* lead/lag of audio vs video, minus already-applied correction */
-    diff = video - audio - *(s32*)((u8*)w + 0x38);
     total = 0;
+    diff = video - audio - *(s32*)((u8*)w + 0x38);
     if (diff >= 0) {
         /* fast-forward: drop whole frames (one frame = chans * 18 blocks,
-         * 32 samples per block pair) */
-        s32 mul = chans * 18;
-        s32 n = (diff / 32) * mul;
+         * 32 samples per block pair). video/freq/audio are reused
+         * as frame-size / drop-count(+remainder) / cap. */
+        video = chans * 18;
+        freq = (diff / 32) * video;
         enc = 0;
-        if (n > 0) {
-            void* p = a2;
-            s32 max = n;
-            s32 lim = (a3 / mul) * mul;
-            if (lim < n)
-                max = lim;
+        if (freq > 0) {
+            s32 lim = (a3 / video) * video;
+            audio = freq;
+            if (lim < audio)
+                audio = lim;
+            tim = (u8*)a2;
+            enc = 0;
             total = 0;
-            while (total < max) {
-                if (ADXT_IsEndcode(p, 18, &ec) != 0) {
+            while (total < audio) {
+                if (ADXT_IsEndcode(tim, 18, &ec) != 0) {
                     enc = 1;
                     break;
                 }
-                p = (u8*)p + 18;
+                tim += 18;
                 total += 18;
             }
-            *(s32*)((u8*)w + 0x38) += (total / mul) << 5;
-            rem = n - max;
+            *(s32*)((u8*)w + 0x38) += (total / video) << 5;
+            freq = freq - audio;
         }
-        if (rem <= 0 && vstart != 0) {
+        if (freq <= 0 && vstart != 0) {
             *(void**)((u8*)w + 0x3c) = (void*)sfadxt_CopyData;
             enc = ADXT_IsEndcode(a2, a3, &ec2);
         }
@@ -882,7 +970,9 @@ s32 sfadxt_AdjustSync(void* handle, void* a2, s32 a3, s32* a4) {
         if (vstart != 0) {
             s32 neg = ((-diff) / 32) << 5;
             if (neg > 0) {
-                s32 ins = ADXT_InsertSilence(*(void**)((u8*)handle + 0x20ac), chans, neg);
+                /* work pointer deliberately re-read through the handle */
+                void* adxt = **(void***)((u8*)handle + 0x20ac);
+                s32 ins = ADXT_InsertSilence(adxt, chans, neg);
                 neg -= ins;
                 *(s32*)((u8*)w + 0x38) -= ins;
             }
@@ -893,5 +983,6 @@ s32 sfadxt_AdjustSync(void* handle, void* a2, s32 a3, s32* a4) {
     if (enc != 0)
         SFSET_SetCond(handle, 6, 0);
     *a4 = total;
-    *(u64*)((u8*)handle + 0x9D8) += (u64)(s64)total;
+    /* extend the running byte total by the sign-extended sample count */
+    *(s64*)((u8*)handle + 0x9D8) += (s64)total;
 }

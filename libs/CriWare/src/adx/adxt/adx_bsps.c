@@ -56,37 +56,51 @@ struct AdxBsp {
     s16 field_0x9C;    // 0x9C - outX2
 };
 
-int ADX_DecodeInfoSpsd(const u8 *data, int size, u16 *outBps, s8 *outCodec,
+// ADX SPSD info block layout (subset consumed by ADX_DecodeInfoSpsd).
+struct AdxsInfo {
+    char field_0x0[7]; // 0x00
+    u8 field_0x7;      // 0x07 - block size low bits
+    u8 field_0x8;      // 0x08 - codec/version selector
+    u8 field_0x9;      // 0x09 - channel flags
+    char field_0xA[2]; // 0x0A
+    s32 field_0xC;     // 0x0C - total sample count
+    char field_0x10[0x1A];
+    u16 field_0x2A;    // 0x2A
+};
+
+int ADX_DecodeInfoSpsd(struct AdxsInfo *hdr, int size, u16 *outBps, s8 *outCodec,
     u8 *outVer, s8 *outCh, s8 *outX, u32 *outNum, u32 *outSmp,
     u32 *outBlk, s16 *outX2)
 {
-    *outBps = data[7] << 4;
-    *outX = (data[9] & 3) + 1;
-    *outNum = *(u16 *)&data[0x2A];
+    *outBps = hdr->field_0x7 << 4;
+    *outX = (hdr->field_0x9 & 3) + 1;
+    *outNum = hdr->field_0x2A;
 
-    if (data[8] == 0) {
-        *outVer = 0x10;
-        *outCh = *outX << 1;
-        *outBlk = 1;
-        *outSmp = *(s32 *)&data[0x0C] / 2;
-        *outX2 = 0x10;
-    } else if (data[8] == 1) {
-        *outVer = 8;
-        *outCh = *outX;
-        *outBlk = 1;
-        *outSmp = *(s32 *)&data[0x0C];
-        *outX2 = 1;
-    } else if ((u32)(data[8] - 2) <= 1) {
+    // Selector: 4-bit-per-sample family (values 2-3), else 16-bit / 8-bit.
+    if ((u32)(hdr->field_0x8 - 2) <= 1u) {
         *outVer = 4;
         *outCh = *outX;
         *outBlk = 2;
-        *outSmp = *(s32 *)&data[0x0C] * 2;
+        *outSmp = hdr->field_0xC * 2;
         *outX2 = 2;
+    } else if (hdr->field_0x8 == 0) {
+        *outVer = 0x10;
+        *outCh = *outX << 1;
+        *outBlk = 1;
+        *outSmp = hdr->field_0xC / 2;
+        *outX2 = 0;
+    } else if (hdr->field_0x8 == 1) {
+        *outVer = 8;
+        *outCh = *outX;
+        *outBlk = 1;
+        *outSmp = hdr->field_0xC;
+        *outX2 = 1;
     }
 
+    // SPSD output is always fixed stereo/16-bit regardless of the source codec.
     *outCh = 2;
     *outBlk = 1;
-    *outSmp = *(s32 *)&data[0x0C] / 2;
+    *outSmp = hdr->field_0xC / 2;
     *outVer = 0x10;
     *outCodec = -1;
     return 0;
@@ -97,7 +111,7 @@ s16 ADXB_DecodeHeaderSpsd(struct AdxBsp* self, const u8* data, s32 size)
     u16 outBps;
 
     self->field_0x2 = 1;
-    if (ADX_DecodeInfoSpsd(data, size, &outBps, &self->field_0xC,
+    if (ADX_DecodeInfoSpsd((struct AdxsInfo*)data, size, &outBps, &self->field_0xC,
             &self->field_0xD, &self->field_0xF, &self->field_0xE,
             &self->field_0x14, &self->field_0x18, &self->field_0x10,
             &self->field_0x9C) < 0) {

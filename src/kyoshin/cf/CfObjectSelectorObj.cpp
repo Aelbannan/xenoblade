@@ -245,14 +245,16 @@ cf::CfObjectSelectorObj* func_800FE68C() {
 // handle, flag 0x9108 as pending, run the list walk, report result arrival.
 bool func_800FE6A4(cf::CfObjectSelectorObj* obj, unsigned int a, unsigned int b, unsigned int c) {
     cf::CfObjectSelectorData* self = reinterpret_cast<cf::CfObjectSelectorData*>(obj);
+    u32 sel = self->fieldC180 & 0xFFFFFF00;
     u32 handle = self->fieldC17C;
     self->fieldC178 = (u8*)&self->mInner1;
-    self->fieldC180 = (self->fieldC180 & 0xFFFFFF00) | 2;
+    self->fieldC180 = sel | 2;
     // 0xC17C holds a rebased handle; adjust it back into the real address space.
     if (handle != 0) {
         handle = handle + 0x3E9C;
     }
     self->field90F4 = handle;
+    // Keep low bits with bit0 set (retail folds this into a single rlwinm).
     self->field9108 = (self->field9108 | 1) & 0xFFFFFFF3;
     self->field90E4 = c;
     self->field90E8 = a;
@@ -264,40 +266,38 @@ bool func_800FE6A4(cf::CfObjectSelectorObj* obj, unsigned int a, unsigned int b,
 // Re-issues the current filter values (0x608C/0x6094/0x6098) as a request.
 bool func_800FE738(cf::CfObjectSelectorObj* obj, unsigned int) {
     cf::CfObjectSelectorData* self = reinterpret_cast<cf::CfObjectSelectorData*>(obj);
-    u32 sel = self->fieldC180;
-    u32 handle = self->fieldC17C;
+    u32 sel = self->fieldC180 & 0xFFFFFF00;
     self->fieldC178 = (u8*)&self->mInner1;
-    self->fieldC180 = (sel & 0xFFFFFF00) | 2;
-    u32 val6098 = self->field6098;
-    u32 val6094 = self->field6094;
-    u32 val608C = self->field608C;
+    self->fieldC180 = sel | 2;
+    // Keep low bits with bit0 set (retail folds this into a single rlwinm).
+    // 0xC17C holds a rebased handle; adjust it back into the real address space.
+    u32 handle = self->fieldC17C;
     if (handle != 0) {
         handle = handle + 0x3E9C;
     }
     self->field90F4 = handle;
     self->field9108 = (self->field9108 | 1) & 0xFFFFFFF3;
-    self->field90E4 = val6098;
-    self->field90E8 = val608C;
-    self->field90EC = val6094;
+    self->field90E4 = self->field6098;
+    self->field90E8 = self->field608C;
+    self->field90EC = self->field6094;
     func_800FD774(&self->mInner1);
     return self->field90E4 != 0;
 }
 
 u32 func_800FE7D8(cf::CfObjectSelectorObj* obj) {
     cf::CfSelectorLayout* self = reinterpret_cast<cf::CfSelectorLayout*>(obj);
-    if (self->field_0x90E4 == 0) return 0;
+    u32 zero = 0;
+    if (self->field_0x90E4 == 0) return zero;
 
-    u32 flags = self->field_0xC174;
-    self->field_0xC178 = NULL;
-    // Retail keeps only the top byte of 0xC180, sets bit0, then clears bits
-    // 8-11 (two statements: MWCC forwards the second store into the first).
-    self->field_0xC180 = (self->field_0xC180 & 0xFFFFFF00) | 1;
-    self->field_0xC180 &= ~0xF00;
-    if (flags & 1) {
-        self->field_0xC174 = 0;
-        self->field_0xC150 = 0;
-        self->field_0x9730 = 0;
-        self->field_0xC140 = 0;
+    u32 sel = self->field_0xC180;
+    // Keep only the low byte of 0xC180, set bit0, then clear bits 8-11.
+    self->field_0xC180 = ((sel & 0xFFFFFF00) | 1) & ~0xF00;
+    self->field_0xC178 = reinterpret_cast<cf::CfSelectorLayout::CfSelectorTarget*>(zero);
+    if ((self->field_0xC174 & 1) != 0) {
+        self->field_0xC174 = zero;
+        self->field_0xC150 = zero;
+        self->field_0x9730 = zero;
+        self->field_0xC140 = zero;
     }
 
     u32 result;

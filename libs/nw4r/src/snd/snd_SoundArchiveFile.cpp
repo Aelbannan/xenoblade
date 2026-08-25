@@ -195,6 +195,14 @@ bool SoundArchiveFileReader::ReadSoundInfo(
 bool SoundArchiveFileReader::ReadSeqSoundInfo(
     u32 id, SoundArchive::SeqSoundInfo* pInfo) const {
 
+    // NOTE(pi-batch): retail locates the seq info through the out-parameter
+    // form of impl_GetSoundInfoOffset preceded by a GetSoundType check; the
+    // shared header only declares the by-value form, so the sequence is
+    // reproduced through impl_GetSeqSoundInfo instead.
+    if (GetSoundType(id) != SOUND_TYPE_SEQ) {
+        return false;
+    }
+
     const SoundArchiveFile::SeqSoundInfo* pSrc = impl_GetSeqSoundInfo(id);
 
     if (pSrc == NULL) {
@@ -291,7 +299,19 @@ bool SoundArchiveFileReader::ReadStrmSoundInfo(
 bool SoundArchiveFileReader::ReadWaveSoundInfo(
     u32 id, SoundArchive::WaveSoundInfo* pInfo) const {
 
-    const SoundArchiveFile::WaveSoundInfo* pSrc = impl_GetWaveSoundInfo(id);
+    if (GetSoundType(id) != SOUND_TYPE_WAVE) {
+        return false;
+    }
+
+    // NOTE(pi-batch): retail fetches the offset through the out-parameter
+    // form of impl_GetSoundInfoOffset (bool return, SoundInfoOffset* result).
+    // Emitting that exact symbol requires redeclaring the header's by-value
+    // overload; until the header changes, the by-value helper is called
+    // directly here to keep the two-call shape.
+    SoundArchiveFile::SoundInfoOffset offset = impl_GetSoundInfoOffset(id);
+
+    const SoundArchiveFile::WaveSoundInfo* pSrc =
+        Util::GetDataRefAddress3(offset, mInfo);
 
     if (pSrc == NULL) {
         return false;
@@ -301,7 +321,7 @@ bool SoundArchiveFileReader::ReadWaveSoundInfo(
     pInfo->channelPriority = pSrc->channelPriority;
 
     if (GetVersion() >= NW4R_VERSION(1, 3)) {
-        pInfo->releasePriorityFixFlag = pSrc->releasePriorityFix;
+        pInfo->releasePriorityFixFlag = pSrc->releasePriorityFix != 0;
     } else {
         pInfo->releasePriorityFixFlag = false;
     }
@@ -573,11 +593,10 @@ u32 SoundArchiveFileReader::ConvertLabelStringToId(
     return SoundArchive::INVALID_ID;
 }
 
+// By-value form (shared header declaration); MWCC uses a hidden sret
+// pointer for the 12-byte SoundInfoOffset result.
 SoundArchiveFile::SoundInfoOffset
 SoundArchiveFileReader::impl_GetSoundInfoOffset(u32 id) const {
-    // Retail folds this zero-initialized fallback into immediates (no static
-    // storage); value-initializing a temporary keeps the semantics identical
-    // without emitting the TU-local INVALID_DATA_REF copy.
     const SoundArchiveFile::SoundCommonTable* pTable =
         Util::GetDataRefAddress0(mInfo->soundTableRef, mInfo);
 

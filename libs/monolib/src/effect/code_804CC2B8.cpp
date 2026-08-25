@@ -97,6 +97,7 @@ extern "C" void func_804E1A44(void* blk, void* src, void* mat, f32 v);
 extern "C" void func_804E1C1C(void* blk, void* src, void* mat, f32 v);
 extern "C" void func_804E2EAC(void* blk, void* src, void* mat, f32 v);
 extern "C" void func_804E2088(void* blk, void* src, void* mat, f32 v);
+extern "C" void func_804E24A8(void* blk, void* src, void* mat, f32 v);
 extern "C" void func_804E2A5C(void* blk, void* src, void* mat, f32 v);
 extern f32 lbl_eu_8066B0F8;
 
@@ -418,7 +419,26 @@ struct SceneSubObj {
     u32 field_0x1b8;
     u32 field_0x1bc;
     u32 field_0x1c0;
-    u8 pad_0x1c4[0x204 - 0x1c4];
+    f32 field_0x1c4;             // tone copy block 2 source float
+    u8 field_0x1c8;
+    u8 field_0x1c9;
+    u8 field_0x1ca;
+    u8 field_0x1cb;
+    u8 pad_0x1cc[0x1d0 - 0x1cc];
+    u8 field_0x1d0;
+    u8 pad_0x1d1[0x1d4 - 0x1d1];
+    u32 field_0x1d4;
+    u32 field_0x1d8;
+    u32 field_0x1dc;
+    u32 field_0x1e0;
+    u32 field_0x1e4;
+    u32 field_0x1e8;
+    u32 field_0x1ec;
+    u32 field_0x1f0;
+    u32 field_0x1f4;
+    u32 field_0x1f8;
+    u32 field_0x1fc;
+    u32 field_0x200;
     f32 field_0x204;             // second copy block source float
     u8 field_0x208;
     u8 field_0x209;
@@ -518,19 +538,24 @@ struct EffectScene {
     u32 field_0x2a0;
     u32 field_0x2a4;
     void* field_0x2a8;           // 0x2a8 anim block (func_804E214C target)
-    u8 pad_0x2ac[0x2b0 - 0x2ac];
+    u8 field_0x2ac;              // 0x2ac gate byte (func_804E24A8 block)
+    u8 field_0x2ad;
+    u8 field_0x2ae;
+    u8 field_0x2af;
     f32 field_0x2b0;
     f32 field_0x2b4;
-    f32 field_0x2b8;
-    f32 field_0x2bc;
-    f32 field_0x2c0;
-    f32 field_0x2c4;
-    f32 field_0x2c8;
-    f32 field_0x2cc;
-    f32 field_0x2d0;
-    f32 field_0x2d4;
-    f32 field_0x2d8;
-    u8 pad_0x2dc[0x2e8 - 0x2dc];
+    u32 field_0x2b8;
+    u32 field_0x2bc;
+    u32 field_0x2c0;
+    u32 field_0x2c4;
+    u32 field_0x2c8;
+    u32 field_0x2cc;
+    u32 field_0x2d0;
+    u32 field_0x2d4;
+    u32 field_0x2d8;
+    u32 field_0x2dc;
+    u32 field_0x2e0;
+    u32 field_0x2e4;
     u32 field_0x2e8;             // 0x2e8 tone-copy dest 2 / processor input
     u8 field_0x2ec;
     u8 pad_0x2ed[0x2f4 - 0x2ed];
@@ -3447,7 +3472,7 @@ extern "C" void __attribute__((never_inline)) func_804CCA64(void* nodeptr, f32 f
             func_804E2088(&node->field_0x278, (void*)sub->field_0x110, mat, val);
         }
     } else {
-        node->field_0x278 = NULL;
+        *(f32*)&node->field_0x278 = sub->field_0x194;
         node->field_0x27c = sub->field_0x198;
         node->field_0x27d = sub->field_0x199;
         node->field_0x27e = sub->field_0x19a;
@@ -3469,6 +3494,43 @@ extern "C" void __attribute__((never_inline)) func_804CCA64(void* nodeptr, f32 f
         node->field_0x2a4 = sub->field_0x1c0;
     }
 
+    // Second tone block (node+0x2a8..0x2e7), gated by the 0x10c resource.
+    u8* p10c = (u8*)sub->field_0x10c;
+    u8 tbM = p10c ? *(p10c - 0x19) : 0;
+    if (tbM == 0) {
+        if (!clamped && (node->field_0x2ac & 0x80)) {
+            func_804E24A8(&node->field_0x2a8, (void*)sub->field_0x10c, mat, val);
+        }
+    } else {
+        *(f32*)&node->field_0x2a8 = sub->field_0x1c4;
+        node->field_0x2ac = sub->field_0x1c8;
+        node->field_0x2ad = sub->field_0x1c9;
+        node->field_0x2ae = sub->field_0x1ca;
+        node->field_0x2af = sub->field_0x1cb;
+        *(u8*)&node->field_0x2b4 = sub->field_0x1d0;
+
+        u32 w = sub->field_0x1d4;
+        u32 v = sub->field_0x1d8;
+        node->field_0x2bc = v;
+        node->field_0x2b8 = w;
+        node->field_0x2c0 = sub->field_0x1dc;
+        w = sub->field_0x1e0;
+        v = sub->field_0x1e4;
+        node->field_0x2c8 = v;
+        node->field_0x2c4 = w;
+        node->field_0x2cc = sub->field_0x1e8;
+        w = sub->field_0x1ec;
+        v = sub->field_0x1f0;
+        node->field_0x2d4 = v;
+        node->field_0x2d0 = w;
+        node->field_0x2d8 = sub->field_0x1f4;
+        w = sub->field_0x1f8;
+        v = sub->field_0x1fc;
+        node->field_0x2e0 = v;
+        node->field_0x2dc = w;
+        node->field_0x2e4 = sub->field_0x200;
+    }
+
     // Second tone block (same shape, node+0x2e8..0x30f).
     u8* p114 = (u8*)sub->field_0x114;
     u8 tb2 = p114 ? *(p114 - 0x18) : 0;
@@ -3477,7 +3539,7 @@ extern "C" void __attribute__((never_inline)) func_804CCA64(void* nodeptr, f32 f
             func_804E2A5C(&node->field_0x2e8, (void*)sub->field_0x114, mat, val);
         }
     } else {
-        node->field_0x2e8 = 0;
+        *(f32*)&node->field_0x2e8 = sub->field_0x204;
         node->field_0x2ec = sub->field_0x208;
         u32 w = sub->field_0x210;
         u32 v = sub->field_0x214;

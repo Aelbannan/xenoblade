@@ -1233,7 +1233,6 @@ void WUDiRegisterDevice(BD_ADDR addr) {
     char* pMsg = _wudWiiRemoteDescriptor;
     WUDCB* p = &_wcb;
     WUDDevInfo* pInfo;
-    tBTA_HH_DEV_DESCR desc;
     tBTA_STATUS status;
     BOOL enabled;
 
@@ -1246,6 +1245,7 @@ void WUDiRegisterDevice(BD_ADDR addr) {
     if (memcmp(pInfo->conf.devName, pMsg + 0x268, sizeof(LINK_KEY)) == 0 ||
         (memcmp(pInfo->conf.devName, pMsg + 0x27C, sizeof(LINK_KEY)) == 0 &&
          _linkedWBC)) {
+        tBTA_HH_DEV_DESCR desc;
         desc.dl_len = sizeof(descriptor);
         desc.dsc_list = (u8*)pMsg;
 

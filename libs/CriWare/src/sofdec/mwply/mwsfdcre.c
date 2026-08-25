@@ -42,7 +42,7 @@ typedef struct HnObj {
 /* User create-parameter block copied into the player at offset 4 (the copy is
  * what MWCC splits into 8-byte chunks). */
 typedef struct PlyCfg {
-    u8 data[0x4C];
+    u32 data;
 } PlyCfg;
 
 /* MWSFDPLY movie-player handle (one slot per 0x690 bytes). Partial layout
@@ -140,7 +140,8 @@ typedef struct MWSFDPLY {
 
 /* SFD creation parameter block shared by the frame-buffer allocators. */
 typedef struct MWSFCRE_Para {
-    u8 pad_0x00[0x08];
+    s32 fmt;                /* 0x00 stream format code (2/3/6/7/8/0xa...) */
+    u8 pad_0x04[0x04];
     s32 width;              /* 0x08 */
     s32 height;             /* 0x0c */
     s32 frameCount;         /* 0x10 */
@@ -274,12 +275,14 @@ extern s32 SFD_Destroy(void* sfd);
 extern s32 SFD_SetSupplySj(void* sfd, MWSFCRE_SjArg* arg);
 extern void SFD_SetPicUsrBuf(void* sfd, void* buf, s32 height, s32 count);
 extern void SFD_SetCond(void* sfd, u32 cond, u32 val);
+extern void SFD_SetMpvCond(void* sfd, u32 cond, u32 val);
 
 extern s32 criware_803C0D94(void* handle, void (*errFn)(u32, u32), u32 errArg);
 extern void criware_803A3A48(void* pool);
 extern void* criware_803A3AE4(void* pool, u32 size);
 extern s32 fn_803A537C(void* self);
 extern s32 fn_803A7320(void* self);
+extern s32 fn_803A7328(void);
 extern s32 mwSfdStopDec(void* self);
 
 extern s32 MWSFSFX_CalcHnWorkSiz(u32 a, u32 b);
@@ -364,29 +367,28 @@ s32 mwsfcre_IsOuterFrmPoolUsed(MWSFDPLY* self) {
 void MWSFCRE_SetSupplySj(MWSFDPLY* self) {
     u32 sj = self->sj;
     void* sfd = self->sfd;
+    MWSFCRE_SjArg arg;
     if (sj != 0) {
-        MWSFCRE_SjArg arg;
         if (sj == (u32)self->uni) {
             arg.a = 2;
             arg.b = sj;
-            arg.c = 0;
-            arg.d = 0;
-            arg.e = 0;
-            arg.f = 0;
-        } else if (sj == (u32)self->rbf) {
-            arg.b = sj;
-            arg.a = 0;
-            arg.c = self->field_0x508;
-            arg.d = self->field_0x50c;
-            arg.e = self->field_0x510;
+            arg.c = arg.d = arg.e = 0;
             arg.f = 0;
         } else {
-            arg.a = self->field_0x514;
-            arg.b = sj;
-            arg.c = self->field_0x518;
-            arg.d = self->field_0x51c;
-            arg.e = self->field_0x520;
-            arg.f = 0;
+            if (sj == (u32)self->rbf) {
+                arg.a = 0;
+                arg.b = sj;
+                arg.c = self->field_0x508;
+                arg.d = self->field_0x50c;
+                arg.e = self->field_0x510;
+                arg.f = 0;
+            } else {
+                arg.a = self->field_0x514, arg.b = sj;
+                arg.c = self->field_0x518;
+                arg.d = self->field_0x51c;
+                arg.e = self->field_0x520;
+                arg.f = 0;
+            }
         }
         if (self->sj == (u32)self->uni) {
             SFD_SetCond(self->sfd, 0x55, 1);
@@ -403,34 +405,36 @@ void MWSFCRE_SetSupplySj(MWSFDPLY* self) {
 }
 
 s32 mwsfcre_MallocRfb(void* pool, MWSFCRE_Para* para, void** out) {
-    s32 rc = 0;
-    s32 w = para->width;
-    s32 h = para->height;
     s32 outer = para->outer;
-    s32 w16 = (w + 15) / 16;
-    s32 h16 = (h + 15) / 16;
+    /* Round width/height up to macroblock multiples and size one RGB565 +
+     * double-pitch-chroma frame (+0x20 header). */
+    s32 w16 = (para->width + 15) / 16;
+    s32 h16 = (para->height + 15) / 16;
     s32 W = w16 * 16;
     s32 H = h16 * 16;
     s32 luma = ((w16 >> 27) & 1) + W;
     s32 chroma = ((h16 >> 27) & 1) + H;
     s32 frameSize = ((chroma >> 1) * (((luma >> 1) + 0x1f) / 32 * 32)) * 2 +
                     H * (((W + 0x1f) / 32) * 32) + 0x20;
+    s32 rc = 0;
     if (outer != 0) {
         if (outer < 2)
             goto fail;
         if (para->poolSize < frameSize)
             goto fail;
-        else
+        /* Negated second test (not `else goto`) emits retail's blt/bge pair. */
+        if (para->poolSize >= frameSize)
             goto good;
 
     fail:
         out[0] = NULL;
-        out[1] = NULL;
         rc = -1;
+        out[1] = NULL;
         goto join;
     good:
-        out[0] = (void*)((u32*)para->pool)[0];
-        out[1] = (void*)((u32*)para->pool)[1];
+        out[0] = ((void**)para->pool)[0];
+        out[1] = ((void**)para->pool)[1];
+        goto join;
     } else {
         out[0] = criware_803A3AE4(pool, frameSize);
         out[1] = criware_803A3AE4(pool, frameSize);
@@ -465,11 +469,7 @@ s32 mwsfcre_MallocTab(void* pool, MWSFCRE_Para* para, void** out) {
             rc = -1;
         } else {
             for (i = 0; i < frames; i++) {
-                void* p = ((void**)para->pool)[i + 2];
-                out[i] = p;
-                if (p)
-                    ;
-                else
+                if ((out[i] = ((void**)para->pool)[i + 2]) == NULL)
                     rc = -1;
             }
         }
@@ -525,11 +525,11 @@ s32 MWSFCRE_ResetSfdHn(MWSFDPLY* self) {
 void* criware_8039FF34(MWSFDPLY* self) {
     if (lbl_eu_805FF3A0 != NULL) {
         char buf[0x200];
-        const char* fmt = &lbl_eu_8051A3CC[0x383];
-        sprintf(buf, fmt, self->enable, *(u32*)self->cfg.data,
-                self->width, self->height, self->frameCount, self->field_0x14,
-                self->field_0x18, self->field_0x1c, self->field_0x20,
-                self->field_0x24, self->poolCount, self->poolSize, self->pool);
+        sprintf(buf, &lbl_eu_8051A3CC[0x383], self->enable,
+                self->cfg.data, self->width, self->height,
+                self->frameCount, self->field_0x14, self->field_0x18,
+                self->field_0x1c, self->field_0x20, self->field_0x24,
+                self->poolCount, self->poolSize, self->pool);
         TraceCb* cb = lbl_eu_805FF3A0;
         if (cb != NULL) {
             lbl_eu_805661AC.self = (u32)buf;
@@ -633,6 +633,7 @@ void mwply_Destroy(MWSFDPLY* self) {
 /* ---- Non-target stubs preserved from the scaffold ---- */
 
 extern const f64 lbl_eu_8051A3C0;  /* 0x4330000080000000 (int->float conversion bias) */
+extern const f32 lbl_eu_8051A3C8;
 
 void mwsfcre_CalcWorkStmBuf(void* stm, u32* outA, u32* outB, u32* outC,
     u32* outD, u32* outE, u32* outF) {
@@ -640,51 +641,127 @@ void mwsfcre_CalcWorkStmBuf(void* stm, u32* outA, u32* outB, u32* outC,
     s32 fmt = *(s32*)(s + 0x00);
     s32 size = *(s32*)(s + 0x04);
     s32 n = *(s32*)(s + 0x14);
-    s32 size2 = size;
 
     if (n <= 0)
         n = 1;
 
     if (*(u32*)(s + 0x38) != 0) {
         if (size != 0) {
-            s32 lim = (s32)(*(float*)(s + 0x3C) * (float)size);
-            size2 = 0x8000;
+            /* Int->float conversion plus sample-rate scale; clamped to the
+             * 0x8000 minimum stream-buffer size. */
+            s32 lim = (s32)(*(f32*)(s + 0x3C) * (f32)size);
+            size = 0x8000;
             if (lim > 0x8000)
-                size2 = lim;
+                size = lim;
         }
         n = 1;
     }
 
     if (fmt == 2 || fmt == 6 || fmt == 8 || fmt == 0xA) {
-        s32 d = size2 / 8 / 2048;
-        *outA = (u32)(n * (d << 11));
+        *outA = (u32)(n * ((size / 8 / 2048) << 11));
         *outB = 0;
         *outC = 0;
         *outD = 0;
         *outE = 0;
         *outF = 0;
     } else if (fmt == 3 || fmt == 7) {
-        s32 d = size2 / 8 / 2048;
+        s32 d = size / 8 / 2048;
         s32 base = d << 11;
         *outA = (u32)(n * base);
         *outB = 0;
-        *outC = (u32)(((base + ((base >> 31) & 1)) >> 1) + 0x800);
+        *outC = (u32)(base / 2) + 0x800;
         *outD = 0;
         *outE = 0;
         *outF = 0;
     } else {
-        s32 d = size2 / 8 / 2048;
+        s32 d = size / 8 / 2048;
         s32 base = d << 11;
         *outA = (u32)(n * base);
         *outB = 0;
-        *outC = (u32)(((base + ((base >> 31) & 1)) >> 1) + 0x800);
+        *outC = (u32)(base / 2) + 0x800;
         *outD = 0x5DCC;
         *outE = 0x5F0C;
         *outF = 0x10000 - 0x3E40;
     }
 }
 
-void mwPlyCalcWorkCprmSfd() {}
+/* Computes the total work-buffer size needed for one SFD player slot:
+ * stream buffers + frame buffers (+ SFX handler block + optional AINF SJ
+ * block of 0x20000 bytes). */
+s32 mwPlyCalcWorkCprmSfd(MWSFDPLY* self) {
+    u32 frames;
+    s32 siz[2];
+    u32 out[6];
+    s32 sfxSize;
+    s32 result;
+    s32 total;
+    s32 half;
+
+    if (self == NULL) {
+        MWSFSVM_Error(lbl_eu_8051A3CC + 0x25);
+        return 0;
+    }
+    s32 mode = self->enable;
+    if (mode == 7 || mode == 6 || mode == 0xa) {
+        MWSFSVM_Error(lbl_eu_8051A3CC + 0x52);
+        return 0;
+    }
+    if (mode == 9 || mode == 8 || mode == 0xb) {
+        /* EU-only modes require the extra server probe to pass. */
+        if (fn_803A7328() == 0) {
+            MWSFSVM_Error(lbl_eu_8051A3CC + 0x85);
+            return 0;
+        }
+    }
+
+    mwsfcre_CalcWorkStmBuf(self, &out[0], &out[1], &out[2], &out[3], &out[4], &out[5]);
+
+    if (mwsfcre_IsOuterFrmPoolUsed(self) == 1) {
+        /* Frames come from the caller-supplied pool: no library allocation. */
+        siz[1] = 0;
+        siz[0] = 0;
+    } else {
+        /* Width/frame-count cache lives in callee-saved regs in retail:
+         * the loads sit before the mode check, so they stay live across the
+         * MWSFSVM_Error call below. */
+        s32 h;
+        s32 w;
+        frames = self->frameCount;
+        w = self->width;
+        h = self->height;
+        if (self->field_0x24 > 3) {
+            MWSFSVM_Error(lbl_eu_8051A3CC);
+        }
+        s32 w16 = (w + 15) / 16;
+        s32 h16 = (h + 15) / 16;
+        s32 W = w16 << 4;
+        s32 H = h16 << 4;
+        s32 luma = ((w16 >> 27) & 1) + W;
+        s32 chroma = ((h16 >> 27) & 1) + H;
+        /* One Y frame + double-pitch chroma frame; the +0x20 header lands in
+         * a separate variable so it gets its own register (retail shape). */
+        s32 blkW = (((W + 0x1f) / 32) * 32);
+        s32 frameSize = ((chroma >> 1) * ((((luma >> 1) + 0x1f) / 32) * 32)) * 2 +
+                        H * blkW;
+        s32 unit = frameSize + 0x20;
+        siz[0] = frames * unit;
+        siz[1] = unit * 2;
+    }
+
+    /* Retail shape: accumulator over (out0..szFrames,out4), a separate
+     * (out1+out2+out3) subtree, then out5 and the 0x5060 header constant. */
+    total = out[0] + siz[1] + siz[0] + out[4];
+    half = out[1] + out[2] + out[3];
+    total = half + total;
+    total = out[5] + total;
+    result = total + 0x5060;
+
+    sfxSize = MWSFSFX_CalcHnWorkSiz(self->width, self->height);
+    if (MWSFTAG_IsUseAinfSj(self) == 1) {
+        sfxSize += 0x20000;
+    }
+    return result + sfxSize;
+}
 
 void criware_eu_803A29E0(s32 mode, u32 unused, SfdCondTbl* dest, MWSFDPLY* self) {
     /* Sparse mode dispatch: equality chain, case bodies appended after. */
@@ -705,8 +782,9 @@ case1:
 case2:
     *dest = lbl_eu_805671B8;
     self->field_0x508 = lbl_eu_805FF2E4;
-    self->field_0x50c = lbl_eu_805FF2E8 - 0x800;
-    self->field_0x510 = 0x800;
+    /* Volatile forces MWCC to keep the retail store order (50c before 510). */
+    *(volatile u32*)&self->field_0x50c = lbl_eu_805FF2E8 - 0x800;
+    *(volatile u32*)&self->field_0x510 = 0x800;
     return;
 case3:
     *dest = lbl_eu_80567208;
@@ -736,11 +814,11 @@ void* mwsfcre_CreateSfd(MWSFDPLY* ply, MWSFCRE_Para* para) {
     u32 frames = para->frameCount;
     s32 width = para->width;
     s32 height = para->height;
-    s32 spec;
     s32 rbfRc;
     s32 tabRc;
     void *ex0, *ex1;
-    void *stmBuf, *adxtBuf, *buf800, *buf4000, *buf100, *buf4e0, *buf100b, *buf120;
+    void *stmBuf, *adxtBuf, *buf800, *buf4000, *buf4e0, *buf100b, *buf120;
+    u32* buf100;
     void* sfd;
 
     /* Stream-buffer sizing; results land in the shared scratch block. */
@@ -748,19 +826,24 @@ void* mwsfcre_CreateSfd(MWSFDPLY* ply, MWSFCRE_Para* para) {
         &w->outC, &w->outD, &w->outE, &w->outF);
 
     if (mwsfcre_IsOuterFrmPoolUsed((MWSFDPLY*)para) == 1) {
-        s32 w16 = (width + 15) >> 4;
-        s32 h16 = (height + 15) >> 4;
-        s32 W = w16 << 4;
-        s32 H = h16 << 4;
-        s32 luma = ((w16 >> 4) & 1) + W;
-        s32 chroma = ((h16 >> 4) & 1) + H;
-        s32 frameSize = ((chroma >> 1) * (((luma >> 1) + 0x1f) >> 5 << 5)) * 2 +
-                        H * ((W + 0x1f) >> 5 << 5) + 0x20;
-        if ((u32)para->mode > 3) {
+        s32 mode = para->mode;
+        u32 cnt = para->frameCount;
+        s32 pw = para->width;
+        s32 ph = para->height;
+        if ((u32)mode > 3) {
             MWSFSVM_Error(lbl_eu_8051A3CC);
         }
-        w->size0 = frameSize * 2;
-        w->size1 = frameSize * frames;
+        /* Round up to macroblocks; one frame slot carries a 0x20 header. */
+        s32 w16 = (pw + 15) / 16;
+        s32 h16 = (ph + 15) / 16;
+        s32 W = w16 << 4;
+        s32 H = h16 << 4;
+        s32 lh = (((w16 >> 4) & 1) + W) >> 1;
+        s32 ch = (((h16 >> 4) & 1) + H) >> 1;
+        s32 unit = H * (((W + 0x1f) / 32) * 32) +
+                   ch * (((lh + 0x1f) / 32) * 32) * 2 + 0x20;
+        w->size0 = unit * 2;
+        w->size1 = cnt * unit;
     } else {
         w->size0 = 0;
         w->size1 = 0;
@@ -772,23 +855,19 @@ void* mwsfcre_CreateSfd(MWSFDPLY* ply, MWSFCRE_Para* para) {
     rbfRc = mwsfcre_MallocRfb(ply, para, rbfOut);
     tabRc = mwsfcre_MallocTab(ply, para, tabOut);
 
-    /* Modes 2/3/6/7/8/10 use the outer frame pool instead of the two extra
-     * work buffers. */
-    spec = 1;
-    if ((u32)(para->mode - 6) <= 2 || (u32)(para->mode - 2) <= 1 || para->mode == 10) {
-        spec = 0;
-    }
-    if (spec) {
-        ex0 = criware_803A3AE4(ply, w->outE);
-        ex1 = criware_803A3AE4(ply, w->outF);
-    } else {
+    /* Formats 2/3/6/7/8/0xa pull frames from the caller's outer pool, so the
+     * two extra work buffers are skipped. */
+    if ((u32)(para->fmt - 6) <= 2 || (u32)(para->fmt - 2) <= 1 || para->fmt == 10) {
         ex0 = NULL;
         ex1 = NULL;
+    } else {
+        ex0 = criware_803A3AE4(ply, w->outE);
+        ex1 = criware_803A3AE4(ply, w->outF);
     }
 
     buf800 = criware_803A3AE4(ply, 0x800);
     buf4000 = criware_803A3AE4(ply, 0x4000);
-    buf100 = criware_803A3AE4(ply, 0x100);
+    buf100 = (u32*)criware_803A3AE4(ply, 0x100);
     buf4e0 = criware_803A3AE4(ply, 0x4e0);
     buf100b = criware_803A3AE4(ply, 0x100);
     ply->field_0x52c = 0x120;
@@ -802,7 +881,8 @@ void* mwsfcre_CreateSfd(MWSFDPLY* ply, MWSFCRE_Para* para) {
         criware_803A3A48(ply);
         return NULL;
     }
-    if (spec && (ex0 == NULL || ex1 == NULL)) {
+    if (!((u32)(para->fmt - 6) <= 2 || (u32)(para->fmt - 2) <= 1 || para->fmt == 10) &&
+        (ex0 == NULL || ex1 == NULL)) {
         MWSFSVM_Error(lbl_eu_8051A3CC + 0x1cb);
         criware_803A3A48(ply);
         return NULL;
@@ -810,23 +890,27 @@ void* mwsfcre_CreateSfd(MWSFDPLY* ply, MWSFCRE_Para* para) {
 
     /* Publish the geometry the MPV decoder works from. */
     w->field_0x04 = ((u32)adxtBuf + 0x3f) & ~0x3fu;
-    lbl_eu_80567258.height = para->height;
-    lbl_eu_80567258.width = para->width;
-    lbl_eu_80567258.field_0x10 = 0;
-    lbl_eu_80567258.yStride = (para->width / 2 + 0x1f) >> 5 << 5;
-    lbl_eu_80567258.chromaHeight = para->height / 2;
-    lbl_eu_80567258.width2 = para->width;
-    lbl_eu_80567258.height2 = para->height;
-    lbl_eu_80567258.frameCount = frames;
-    lbl_eu_80567258.field_0x20 = 0;
+    {
+        s32 vw = para->width;
+        s32 vh = para->height;
+        lbl_eu_80567258.height = vh;
+        lbl_eu_80567258.width = vw;
+        lbl_eu_80567258.field_0x10 = 0;
+        lbl_eu_80567258.yStride = ((vw / 2 + 0x1f) / 32) * 32;
+        lbl_eu_80567258.chromaHeight = vh / 2;
+        lbl_eu_80567258.width2 = vw;
+        lbl_eu_80567258.height2 = vh;
+        lbl_eu_80567258.frameCount = frames;
+        lbl_eu_80567258.field_0x20 = 0;
+    }
     lbl_eu_8056727C.field_0x08 = (u32)ex0;
     lbl_eu_8056727C.field_0x18 = (u32)ex1;
-    criware_eu_803A29E0(para->mode, (u32)para->field_0x40,
+    criware_eu_803A29E0(para->fmt, (u32)para->field_0x40,
         (SfdCondTbl*)&cfg, ply);
 
     cfg.field_0x2c = lbl_eu_805660D0;
     if (w->outB != 0) {
-        w->outB -= 2 * (w->outB % lbl_eu_805660D0);
+        w->outB = w->outB - w->outB % lbl_eu_805660D0;
     }
 
     switch (para->mode) {
@@ -853,14 +937,14 @@ void* mwsfcre_CreateSfd(MWSFDPLY* ply, MWSFCRE_Para* para) {
     cfg.field_0x28 = w->outA;
     cfg.field_0x30 = frames;
     cfg.field_0x34 = para->field_0x34;
-    cfg.width = para->width;
-    cfg.height = para->height;
+    cfg.width = width;
+    cfg.height = height;
     cfg.field_0x44 = (u32)buf4000;
     cfg.field_0x48 = 0x4000;
     cfg.field_0x4c = 0;
 
     SFD_SetMpvParaTbl((u32*)&lbl_eu_80567258, (u32*)rbfOut, (u32*)tabOut);
-    if (para->mode == 1 || para->mode == 9) {
+    if (para->fmt == 1 || para->fmt == 9) {
         SFD_SetAdxtPara(&lbl_eu_8056727C);
     }
 
@@ -886,7 +970,7 @@ void* mwsfcre_CreateSfd(MWSFDPLY* ply, MWSFCRE_Para* para) {
         return NULL;
     }
 
-    ply->field_0x4e8 = buf120;
+    ply->field_0x4e8 = buf100b;
     ply->field_0x4ec = 0x100;
     ply->field_0x4a4 = (u32)buf800;
     ply->field_0x4a8 = 0x800;
@@ -899,7 +983,33 @@ void* mwsfcre_CreateSfd(MWSFDPLY* ply, MWSFCRE_Para* para) {
     return sfd;
 }
 
-void MWSFCRE_SetCondSfd(MWSFDPLY* ply, MWSFDPLY* user, u32 a, u32 b) {}
+void MWSFCRE_SetCondSfd(MWSFDPLY* ply, MWSFDPLY* user, u32 a, u32 b) {
+    void* sfd = ply->sfd;
+    SFD_SetCond(sfd, 8, 0);
+    SFD_SetCond(sfd, 1, 1);
+    SFD_SetCond(sfd, 0, 0);
+
+    /* Single-precision compare: if the float addition rounded up past the
+     * true integer value, walk the truncation back down by 1. The expression
+     * is intentionally re-written at each use (no temp var): MWCC must not
+     * CSE the four conversions. */
+    s32 ms = a * b * 1000;
+    s32 n;
+    if ((f32)(s32)(lbl_eu_8051A3C8 + ms) > lbl_eu_8051A3C8 + ms) {
+        n = (s32)(lbl_eu_8051A3C8 + ms) - 1;
+    } else {
+        n = (s32)(lbl_eu_8051A3C8 + ms);
+    }
+
+    SFD_SetCond(sfd, 0x2d, n);
+    SFD_SetCond(sfd, 0x2c, n);
+    SFD_SetCond(sfd, 0x2a, n);
+    SFD_SetCond(sfd, 0xf, 2);
+    SFD_SetCond(sfd, 0x33, 0);
+    SFD_SetCond(sfd, 0xe, 0);
+    SFD_SetCond(sfd, 0x1c, 0);
+    SFD_SetMpvCond(sfd, 5, 0);
+}
 
 #pragma push
 #pragma auto_inline off
@@ -982,7 +1092,7 @@ void* mwPlyCreateSofdec(MWSFDPLY* self) {
         ply->poolCount = ply->poolCount - 2;
     }
 
-    sfd = mwsfcre_CreateSfd(ply, (MWSFCRE_Para*)&ply->cfg.data[4]);
+    sfd = mwsfcre_CreateSfd(ply, (MWSFCRE_Para*)&ply->width);
     ply->sfd = sfd;
     if (sfd == NULL) {
         MWSFSVM_Error(lbl_eu_8051A3CC + 0x4c1);

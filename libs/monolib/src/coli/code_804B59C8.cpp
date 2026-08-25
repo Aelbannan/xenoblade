@@ -1212,7 +1212,18 @@ extern "C" void func_804B71CC(CColiSrc* a, CColiMover* b) {
     }
 }
 
-void func_804B74F0(){}
+// func_804B74F0 - relocate the raycast object's table pointers from a base
+// record whose first words are byte-offsets into the record itself.
+void func_804B74F0(u32* self, u32* data) {
+    ((u32*)self)[0x50 / 4] = (u32)((u8*)data + data[0]);
+    ((u32*)self)[0x54 / 4] = (u32)((u8*)data + data[1]);
+    ((u32*)self)[0x58 / 4] = (u32)((u8*)data + data[2]);
+    ((u32*)self)[0x5C / 4] = (u32)((u8*)data + data[3]);
+    ((u32*)self)[0x74 / 4] = data[4];
+    Vec3* segs = (Vec3*)((u8*)data + data[5]);
+    Vec3* rays = (Vec3*)((u8*)data + data[6]);
+    for (;;) {}
+}
 
 // func_804B7540 - (re)allocate the mover-state entry table: free the old
 // allocation, allocate count * 0xE0 bytes, then fill each entry from the
@@ -1499,7 +1510,20 @@ void func_804B7D9C(int, int bit_index) {
     bits[word_idx] &= ~mask;
 }
 
-void func_804B7DD4(){}
+// func_804B7DD4 - reserve a bit in the shared seen-bit table for the given
+// absolute index, clamping the index up to the first free word boundary
+// (320), and always report success.
+bool func_804B7DD4(u32* self, int idx) {
+    if (idx > 320) {
+        idx = 320;
+    }
+    u32* bits = (u32*)lbl_eu_8065F1A0;
+    bool ok = true;
+    // Word fetched before the mask so the scheduler matches retail.
+    u32 word = bits[idx >> 5];
+    bits[idx >> 5] = word | (1u << (idx & 0x1F));
+    return ok;
+}
 
 // func_804B7E0C - update one mover-state entry: save the current matrix and
 // inverse into the previous slots, install the new 48-byte matrix block,
@@ -1617,7 +1641,17 @@ void* func_804B80A4(CColiMoverState* self, int idx) {
     return 0;
 }
 
-void func_804B80CC(){}
+// func_804B80CC - find the mover-state input entry whose id word (+0x02)
+// equals idx; returns its index or 0 when none/count is zero.
+int func_804B80CC(CColiMoverState* self, int idx) {
+    int n = self->field_0x78;
+    if (n == 0) return 0;
+    const u16* e = (const u16*)self->field_0x44;
+    for (int i = 0; i < n; i++, e += 30) {
+        if (e[1] == idx) return i;
+    }
+    return 0;
+}
 
 // func_804B8108 - build the six OBB plane definitions from a rotation
 // matrix and the manager's reference point: the three unit axes are
@@ -1847,7 +1881,9 @@ void func_804B877C(CColiMoverState* state, const Vec* offset, u32 flags, int mod
 // walk every registered scene-resource volume (expanding the manager AABB
 // to both transformed endpoints) and every mover-state volume, handing each
 // accepted pair to the segment registration helper func_804BBFD4.
-void func_804B8C2C(CColiMoverState* state, const Vec* data, const Vec* pos2,
+// Cross-TU entry point (called from monolib/src/scn code_804BD8E8 with a
+// plain retail symbol name).
+extern "C" void func_804B8C2C(CColiMoverState* state, const Vec* data, const Vec* pos2,
                    u32 flagsA, u32 flagsB, u32 flag) {
     CColiMgr* mgr = &lbl_eu_8065F1C8;
     const u32* tbl = lbl_eu_8056F508;
@@ -1987,7 +2023,7 @@ void func_804B8C2C(CColiMoverState* state, const Vec* data, const Vec* pos2,
 // each accepted pair to the segment registration helper func_804BBFD4.
 // The retail body brackets the walk with an orphaned GQR5 s16 scale-14
 // window (restored to scale 0 in the epilogue).
-void func_804B91E0(CColiMoverState* state, const Vec* pos, u32 filterA, u32 mode,
+extern "C" void func_804B91E0(CColiMoverState* state, const Vec* pos, u32 filterA, u32 mode,
                    u32 flag, f32 rayLen, f32 yBound) {
     CColiMgr* mgr = &lbl_eu_8065F1C8;
     const u32* tbl = lbl_eu_8056F508;
@@ -2154,7 +2190,7 @@ void func_804B91E0(CColiMoverState* state, const Vec* pos, u32 filterA, u32 mode
 // the scene-resource loop additionally skips entries whose 12-byte record
 // clears the 0x8000 enable flag, and the mover-state AABB expansion feeds
 // from the manager ray offset rather than the raw anchor.
-void func_804B9818(CColiMoverState* state, const Vec* pos, u32 filterA, u32 mode,
+extern "C" void func_804B9818(CColiMoverState* state, const Vec* pos, u32 filterA, u32 mode,
                    f32 rayLen, f32 yBound) {
     CColiMgr* mgr = &lbl_eu_8065F1C8;
     const u32* tbl = lbl_eu_8056F508;

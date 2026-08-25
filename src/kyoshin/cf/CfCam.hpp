@@ -19,7 +19,7 @@ class CfObject;     // active camera-state object (func_8006E5A4 return)
 
 extern "C" bool func_800755B0(void*, int);
 extern "C" bool func_8049EB60(void* obj);
-extern "C" u32 func_8006BFBC();                          // CfCam sibling gate
+extern "C" u32 func_8006BFBC(void* self);                          // CfCam sibling gate
 extern "C" int func_8006BFC4(int controllerId, int unk); // CfCam sibling pad check
 // Copies a 12-byte vector (dst, src); returns dst (retail: func_8004B3F0 leaves
 // its first arg in r3). C linkage so call relocs keep the unmangled retail
@@ -754,7 +754,7 @@ __declspec(noinline) int func_8006DF9C(void* obj);
 __declspec(noinline) int func_8006DCA0(void* obj); // in-TU def (follow-cam arts gate)
 int testResInfoFlag(unsigned int mask);
 int func_800FE68C();
-int func_8006DFA8();
+int func_8006DFA8(int obj);
 int func_800B708C__Fi(int arg);
 int CActorParam_UnkVirtualFunc22__Q22cf11CActorParamFv(void* actor);
 int func_8006DFBC(void* obj);

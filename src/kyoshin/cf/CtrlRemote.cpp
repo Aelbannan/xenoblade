@@ -3,7 +3,9 @@
 
 #include "kyoshin/cf/CBattleManagerApi.hpp"
 #include "kyoshin/cf/CfMapItemManager.hpp"
-#include "kyoshin/harness_catalog.hpp"
+// harness_catalog.hpp removed: it pulls CTaskGameEff.hpp ->
+// CfObjectImplMove.hpp, whose func_804BE398 decl clashes with
+// CtrlMoveBase.hpp (via CtrlPc.hpp). Nothing in this TU needs it.
 
 #include "kyoshin/cf/CtrlRemote.hpp"
 // CtrlPc.hpp scaffolds __ct__CtrlRemote as `void`; this TU declares the real
@@ -40,7 +42,68 @@ cf::CtrlRemote* __ct__CtrlRemote(cf::CtrlRemote* obj, void* posObj, int arg5)
 // pointer stays in a saved register across the vf30 call, matching retail.
 static int probePlayerCtrl(cf::CtrlPc* self, u32* out, int gate);
 
-void func_80098CB8(){}
+// Target us-80099690. Per-frame remote-control update: when neither the
+// 0x20 nor the 0x400000 global gate is set, reset the +0x04 flag word and
+// the low byte of +0x2C, run the state virtual sweep, refresh the voice-
+// owner 4-gate and mirror it into the 0x800 flag range, then (outside menu
+// mode) re-aim via vf37 and push one sample into the 32-float ring buffer.
+void func_80098CB8(CtrlPcVf44* self)
+{
+    if (((lbl_eu_80663E24 & 0x02000000) | (lbl_eu_80663E24 & 0x400)) != 0) {
+        return;
+    }
+
+    // clear +0x04, keep only the low byte of +0x2C
+    self->mField4 = 0;
+    self->mField2C &= 0xFF;
+
+    // State-refresh virtual sweep.
+    self->vf41();
+    self->vf33();
+    self->vf35();
+    self->vf36();
+    self->vf39();
+    self->vf42();
+    self->vf43();
+    self->vf44();
+    self->vf20();
+    self->vf34();
+    self->vf21();
+    self->vf40();
+
+    // Gate 4 on the embedded voice-owner interface: arm the 0x800 range.
+    if (self->mField5C->mSub3E9C.v01(4) != 0) {
+        self->mField5C->mSub3ED4->vf10(0x800, 1);
+    }
+
+    cf::CfGameManager::getInstance();
+    if (func_8006EF04(0x4000000)) {
+        return;
+    }
+
+    u32 mask = func_80086F9C__Q22cf13CfGameManagerFv(-1)
+                   ? lbl_eu_80527F10[21]
+                   : lbl_eu_80527E98[21];
+    CtrlPcSub37Ae80* sub = self->vf37();
+    if ((sub->mField4 & mask) != 0) {
+        func_80133770();
+    }
+
+    // Push one sample into the float ring: the constant while the cutscene
+    // bit is clear, else the current target angle; wrap at 32 entries.
+    if ((self->mField4 & 0x200) == 0) {
+        u32 i = self->mField25C;
+        self->mField25C = i + 1;
+        self->mFloats1DC[i] = lbl_eu_80666748;
+    } else {
+        u32 i = self->mField25C;
+        self->mField25C = i + 1;
+        self->mFloats1DC[i] = self->mFieldC;
+    }
+    if ((s32)self->mField25C >= 0x20) {
+        self->mField25C = 0;
+    }
+}
 
 // Target us-800998d0. Player-aim update: probe the player's control gates
 // and battle-manager state, then derive the aim fields (mField8/mFieldC /
@@ -50,7 +113,7 @@ void func_80098CB8(){}
 void func_80098EF8(CtrlPcVf38* self)
 {
     cf::CfGameManager::getInstance();
-    UnkClass_800821F8View* gm8 = func_800821F8__Q22cf13CfGameManagerFv();
+    UnkClass_800821F8View* gm8 = (UnkClass_800821F8View*)func_800821F8__Q22cf13CfGameManagerFv();
     CtrlVoiceHandle* actionSrc =
         (CtrlVoiceHandle*)func_800B708C(func_800FE68C()->mField90E4);
 
@@ -182,6 +245,9 @@ void func_80098EF8(CtrlPcVf38* self)
         return;
     }
 
+    // Skipped via goto when the battle/aim-timer path exits; scoped so no
+    // declaration between here and the a89c label is jumped over (MWCC 10211).
+    {
     // DD0: voice-owner chain gate - when the 0x800 aim range is set and the
     // battle chain is idle, clear the range flags.
     if (vf14res != 0 && self->mField5C->mSub3E9C.v01(4) == 0 &&
@@ -376,6 +442,7 @@ void func_80098EF8(CtrlPcVf38* self)
     }
 
     self->mField14 *= ((CtrlPlayerVf23C*)self->mField5C)->vf141();
+    }
 
 a89c:
     if (probePlayerCtrl((cf::CtrlPc*)self, &v3b, 3) == 0 &&
@@ -510,7 +577,7 @@ void func_8009A1DC(cf::CtrlPc* self)
 void func_8009A4AC(CtrlPcVf38* self)
 {
     cf::CfGameManager::getInstance();
-    UnkClass_800821F8View* gm8 = func_800821F8__Q22cf13CfGameManagerFv();
+    UnkClass_800821F8View* gm8 = (UnkClass_800821F8View*)func_800821F8__Q22cf13CfGameManagerFv();
     CtrlVoiceHandle* actionSrc =
         (CtrlVoiceHandle*)func_800B708C(func_800FE68C()->mField90E4);
 
@@ -941,10 +1008,130 @@ void func_8009AE80(CtrlPcVf37State* self)
     }
 }
 
-void func_8009B788(){}
+// Target us-8009c160. Remote-control command dispatch: after the 0x400
+// global gate and the basic arts gates pass, branch on the 0x800 sub-object
+// flag and the embedded voice-owner 0x100/0x200 flags to either trigger the
+// camera enum-list sweep (0x20 mask), request voice-owner state changes, or
+// mirror the menu-word bits into self->mField4 (0x4 camera / 0x8 sudden-commu).
+void func_8009B788(CtrlPcVf38* self)
+{
+    cf::CfGameManager::getInstance();
+    func_800821F8__Q22cf13CfGameManagerFv();
+    void* handle = func_800B708C(func_800FE68C()->mField90E4);
+    cf::CfGameManager::getInstance();
+    if (func_8006EF04(0x4000000)) {
+        return;
+    }
+
+    // Gates 1 and 2 share the loaded player pointer.
+    CtrlPlayerObj* player = self->mField5C;
+    u32 v1 = *player->mField4->vf30();
+    if (func_80174C98(player, &v1, 1) != 0) {
+        return;
+    }
+    u32 v2 = *player->mField4->vf30();
+    if (func_80174C98(player, &v2, 2) != 0) {
+        return;
+    }
+
+    if (func_800FEDF8() != 0) {
+        return;
+    }
+    if (self->mField5C->mSub3ED4->vf14(0x800) != 0) {
+        if (self->mField5C->mSub3E9C.v01(0x200) != 0) {
+            self->mField4 |= 0x8;
+        }
+        return;
+    }
+
+    if (((CtrlVoiceOwnerC4View*)&self->mField5C->mSub3E9C)->mFieldC4 == NULL) {
+        return;
+    }
+
+    if (self->mField5C->mSub3E9C.v01(0x100) != 0) {
+        u32 v803;
+        u32 v1f;
+        if (probePlayerCtrl((cf::CtrlPc*)self, &v803, 0x803) == 0 ||
+            probePlayerCtrl((cf::CtrlPc*)self, &v1f, 0x1f) == 0) {
+            // Camera-sweep path: only when the voice/battle target exists,
+            // its cutscene bit is clear, and the handle resolves.
+            CtrlPlayerSub3F60* sub3f60 = self->mField5C->mField3F60;
+            if (sub3f60 != NULL && (sub3f60->mField4EC & 0x2) == 0) {
+                if (func_8016FE34(handle) != 0) {
+                    CfEnumListHolder holder;
+                    func_80043D90(&holder);
+                    func_800F4A98(func_80043F18(&holder), 0x20, 1);
+                    self->mField4 |= 0x4;
+                    __dt__80043E88(&holder, -1);
+                }
+                return;
+            }
+        }
+        self->mField5C->mSub3E9C.v02(0x100);
+        return;
+    }
+
+    u32 v3;
+    u32 ve;
+    u32 v8;
+    u32 v1fb;
+    if (probePlayerCtrl((cf::CtrlPc*)self, &v3, 3) == 0 &&
+        probePlayerCtrl((cf::CtrlPc*)self, &ve, 0xe) == 0 &&
+        probePlayerCtrl((cf::CtrlPc*)self, &v8, 8) == 0 &&
+        probePlayerCtrl((cf::CtrlPc*)self, &v1fb, 0x1f) == 0) {
+        if (self->mField5C->mSub3E9C.v01(0x200) != 0) {
+            self->mField4 |= 0x8;
+            return;
+        }
+        u32 v6;
+        u32 v9;
+        u32 v12;
+        u32 v13;
+        u32 v14;
+        if (probePlayerCtrl((cf::CtrlPc*)self, &v6, 6) == 0 &&
+            probePlayerCtrl((cf::CtrlPc*)self, &v9, 9) == 0 &&
+            probePlayerCtrl((cf::CtrlPc*)self, &v12, 0x12) == 0 &&
+            probePlayerCtrl((cf::CtrlPc*)self, &v13, 0x13) == 0 &&
+            probePlayerCtrl((cf::CtrlPc*)self, &v14, 0x14) == 0) {
+            return;
+        }
+        ArtsSelStateViewPc* sel = CMenuArtsSelect_getSelectState();
+        if (sel == NULL || sel->byte0 != 0 || sel->byte1 != 0) {
+            return;
+        }
+        self->mField4 |= 0x8;
+        func_802A2CF0();
+        return;
+    }
+
+    if (self->mField5C->mSub3ED4->vf14(0x400) != 0) {
+        return;
+    }
+    CtrlPlayerSub3F60* sub3f60 = self->mField5C->mField3F60;
+    if (sub3f60 == NULL || (sub3f60->mField4EC & 0x2) != 0) {
+        return;
+    }
+    if (self->mField5C->mSub3ED4->vf14(0x4000) != 0) {
+        return;
+    }
+    ArtsSelStateViewPc* sel = CMenuArtsSelect_getSelectState();
+    if (sel == NULL || sel->byte0 != 0 || sel->byte1 != 0) {
+        return;
+    }
+    if (self->mField5C->mSub3ED4->vf14(0x400) != 0) {
+        return;
+    }
+    if (func_8016FE34(handle) == 0) {
+        return;
+    }
+    self->mField5C->mSub3E9C.v00(0x100);
+}
 
 void func_8009BD14(CtrlPcVf38* self)
 {
+    // Declared at function scope: MWCC creates the pseudo early, which pins
+    // the counter's register ahead of the list-walk temps (retail r4).
+    s32 count;
     void* handle = func_800B708C(func_800FE68C()->mField90E4);
     if (handle == 0) {
         return;
@@ -954,10 +1141,13 @@ void func_8009BD14(CtrlPcVf38* self)
     if (func_80174C98(player, &v, 0x803) == 0) {
         return;
     }
-    u8 bs = ((CBattleManagerViewPc*)getInstance__Q22cf14CBattleManagerFv())
+    u32 bs = ((CBattleManagerViewPc*)getInstance__Q22cf14CBattleManagerFv())
         ->mField1AA;
-    bool inBattle = bs >= 1 && bs <= 0x18;
-    if (inBattle) {
+    // Second comparison commuted: two same-operand unsigned compares with
+    // the same branch target get fused by MWCC into a subi/cmpli range
+    // check; commuting keeps retail's two cmplwi branches.
+    int inBattle = bs >= 1u && 0x18u >= bs;
+    if (inBattle != 0) {
         return;
     }
     if (((CBattleManagerViewPc*)getInstance__Q22cf14CBattleManagerFv())
@@ -975,11 +1165,14 @@ void func_8009BD14(CtrlPcVf38* self)
     if ((mf0 & mask) != 0) {
         // Count the battle-manager's circular actor list (+0x28 head); a solo
         // (or empty) party cannot trigger the menu-state sweeps below.
-        CtrlSweepNode* head = reinterpret_cast<CtrlBmSweepView*>(
-            getInstance__Q22cf14CBattleManagerFv())->mField28;
-        s32 count = 0;
-        CtrlSweepNode* node = head->mNext;
-        while (node != head) {
+        // Head addressed via bm in both init and condition so the manager
+        // stays in r3 across the head load (retail regalloc).
+        CBattleManagerViewPc* bm =
+            (CBattleManagerViewPc*)getInstance__Q22cf14CBattleManagerFv();
+        count = 0;
+        CtrlSweepNode* node =
+            reinterpret_cast<CtrlBmSweepView*>(bm)->mField28->mNext;
+        while (reinterpret_cast<CtrlBmSweepView*>(bm)->mField28 != node) {
             node = node->mNext;
             count++;
         }
@@ -1016,7 +1209,7 @@ void func_8009BD14(CtrlPcVf38* self)
                          ->count;
                  i++) {
                 CtrlAccSweepView* acc = reinterpret_cast<CtrlAccSweepView*>(
-                    func_8016FE34(func_800F6EAC(func_80043F18(&holder1), i)));
+                    func_8016FE34(func_800F6EAC((CfMoveEnumList*)func_80043F18(&holder1), i)));
                 if (acc->mField3E98 != 0 || (acc->mField3388 & 0x10) != 0) {
                     flag = true;
                 }
@@ -1043,14 +1236,16 @@ void func_8009BD14(CtrlPcVf38* self)
                 list2->count = 0;
                 list2->mField3030 = 0;
                 func_800F4A98(func_80043F18(&holder2), 0x20, 0);
-                u32 hv = reinterpret_cast<CtrlVoiceSweepView*>(handle)->mField74;
                 for (s32 i = 0;
                      i < reinterpret_cast<CtrlEnumListSweep*>(
                              func_80043F18(&holder2))
                              ->count;
                      i++) {
                     CtrlAccSweepView* acc = reinterpret_cast<CtrlAccSweepView*>(
-                        func_8016FE34(func_800F6EAC(func_80043F18(&holder2), i)));
+                        func_8016FE34(func_800F6EAC((CfMoveEnumList*)func_80043F18(&holder2), i)));
+                    // Retail reloads the voice handle id from the handle each
+                    // iteration (lwz r4, 0x74(r31) inside the loop body).
+                    u32 hv = reinterpret_cast<CtrlVoiceSweepView*>(handle)->mField74;
                     if (acc->mField3E98 != hv || (acc->mField3388 & 0x10) != 0) {
                         flag2 = true;
                     }
@@ -1059,10 +1254,13 @@ void func_8009BD14(CtrlPcVf38* self)
                 }
                 if (flag2) {
                     func_802A2B44();
-                    CtrlAccSweepView* acc2 =
-                        reinterpret_cast<CtrlAccSweepView*>(func_8016FE34(handle));
-                    func_800451D8(0xBC,
-                                  acc2 != 0 ? &acc2->mOwner3E9C : 0);
+                    // Conditional addi on the same register (null stays null),
+                    // matching retail's cmpwi/beq/addi/mr sequence.
+                    u8* arg = reinterpret_cast<u8*>(func_8016FE34(handle));
+                    if (arg != NULL) {
+                        arg = reinterpret_cast<CtrlAccSweepView*>(arg)->mOwner3E9C;
+                    }
+                    func_800451D8(0xBC, arg);
                 }
                 __dt__80043E88(&holder2, -1);
             } else {
@@ -1087,17 +1285,19 @@ void func_8009BD14(CtrlPcVf38* self)
                                  ->count;
                          i++) {
                         CtrlAccSweepView* acc = reinterpret_cast<CtrlAccSweepView*>(
-                            func_8016FE34(func_800F6EAC(func_80043F18(&holder3), i)));
+                            func_8016FE34(func_800F6EAC((CfMoveEnumList*)func_80043F18(&holder3), i)));
                         acc->mField3E98 = 0;
                         flag3 = true;
                         acc->mField3388 |= 0x10;
                     }
                     if (flag3) {
                         func_802A2C1C();
-                        CtrlPlayerSweepView* pl =
-                            reinterpret_cast<CtrlPlayerSweepView*>(self->mField5C);
-                        func_800451D8(0xBC,
-                                      pl != 0 ? &pl->mOwner3E9C : 0);
+                        u8* arg = reinterpret_cast<u8*>(self->mField5C);
+                        if (arg != NULL) {
+                            arg = reinterpret_cast<CtrlPlayerSweepView*>(arg)
+                                      ->mOwner3E9C;
+                        }
+                        func_800451D8(0xBC, arg);
                     }
                     __dt__80043E88(&holder3, -1);
                 }
@@ -1106,13 +1306,243 @@ void func_8009BD14(CtrlPcVf38* self)
     }
 }
 
-void func_8009C1BC(){}
+// Target us-8009cb94. Remote-control event pump: run the party-menu target
+// search over the player's sub3ED4 state, bail on sudden-commu activity and
+// on the menu-state word gate, apply the arts-select window-state actions,
+// then (once the 0xA state gate passes) dispatch one of six voice/battle
+// commands built from the player's +0x3F10 word; case 4 arms the chain
+// timer instead.
+void func_8009C1BC(CtrlPcVf38State* self)
+{
+    // Declaration order drives MWCC's saved-GPR assignment
+    // (fd=r26, sub=r27, bmFlag=r28, mode=r29 in retail).
+    Fd44State* fd;
+    CtrlSub3ED4Remote* sub;
+    u32 bmFlag;
+    int mode;
+    u32 mask;
+    CtrlRemoteEaView* ea;
+    s32 page;
+    u32 gateVal;
+    CtrlRemoteSub374View* obj374;
+    CtrlRemoteCmd20 prm;
+
+    sub = reinterpret_cast<CtrlSub3ED4Remote*>(self->mField5C->mSub3ED4);
+    mode = func_80190940(&sub->mResult368, sub->mActor18, 0, 0);
+    bmFlag = sub->mField370;
+
+    if (func_801BA2C8((u8*)getInstance__Q22cf14CBattleManagerFv() + 0x216c) !=
+        0) {
+        return;
+    }
+
+    mask = func_80086F9C__Q22cf13CfGameManagerFv(-1)
+                   ? lbl_eu_80527F10[22]
+                   : lbl_eu_80527E98[22];
+    u32 menuState = self->vf38()->mField4;
+    if ((menuState & mask) == 0) {
+        return;
+    }
+
+    fd = func_8017FD44();
+    if (fd != NULL) {
+        // Arts-select window-state dispatch: window value 1 drives the
+        // select-state machine (slot 0xF4 closed / slots 0xF0 with the new
+        // page plus a UI refresh pair); value 5 flags the enum-list object
+        // once the select state sits in pages 1/2.
+        u32 sel = fd->mFieldB8;
+        if (sel == 1) {
+            switch (func_8017FD4C(fd)) {
+            case 0:
+                sub->vf59();
+                return;
+            case 1:
+                sub->vf58(0);
+                func_80280ADC();
+                func_8017FEF0(fd, 0);
+                return;
+            case 2:
+                sub->vf58(1);
+                func_80280ADC();
+                func_8017FEF0(fd, 1);
+                return;
+            default:
+                return;
+            }
+        }
+        if (sel == 5) {
+            ea =
+                (CtrlRemoteEaView*)func_800EA444(getInstance__Q22cf14CBattleManagerFv());
+            if (ea != NULL) {
+                page = func_8017FD4C(fd);
+                if ((u32)(page - 1) <= 1) {
+                    ea->mField824 |= 0x00080000;
+                }
+            }
+        }
+    }
+
+    gateVal = *self->mField5C->mField4->vf30();
+    if (func_80174C98(self->mField5C, &gateVal, 0xA) != 0) {
+        return;
+    }
+
+    obj374 = sub->mField374;
+    memset(prm._04, 0, 0xE);
+    memset(&prm, 0, sizeof(prm));
+
+    switch (mode) {
+    case 1:
+        prm.w00 = obj374->mField3F10;
+        prm.b0D = 0x35;
+        prm.b0E = 100;
+        prm.h12 = 0;
+        prm.f14 = lbl_eu_80666730;
+        prm.h10 = 0;
+        prm.b06 = 0x25;
+        if (self->mField5C->mField3F60 != NULL) {
+            func_8004C5EC(self->mField5C->mField3F60);
+            func_800BE12C(&self->mField5C->mSub3E9C, 1, 0, -1, 1);
+        }
+        break;
+    case 2:
+        prm.w00 = obj374->mField3F10;
+        prm.b0D = 0x36;
+        prm.b0E = 100;
+        prm.h12 = 0;
+        prm.f14 = lbl_eu_80666730;
+        prm.h10 = 0;
+        prm.b06 = 0x25;
+        if (self->mField5C->mField3F60 != NULL) {
+            func_8004C5EC(self->mField5C->mField3F60);
+            func_800BE12C(&self->mField5C->mSub3E9C, 1, 0, -1, 1);
+        }
+        break;
+    case 3:
+        prm.w00 = obj374->mField3F10;
+        prm.b0D = 0x37;
+        prm.b0E = 100;
+        prm.h12 = 0;
+        prm.f14 = lbl_eu_80666730;
+        prm.h10 = 0;
+        prm.b06 = 0x25;
+        if (self->mField5C->mField3F60 != NULL) {
+            func_8004C5EC(self->mField5C->mField3F60);
+            func_800BE12C(&self->mField5C->mSub3E9C, 1, 0, -1, 1);
+        }
+        break;
+    case 7:
+        prm.w00 = obj374->mField3F10;
+        prm.b0D = 0x3B;
+        prm.b0E = 100;
+        prm.h12 = 0;
+        prm.f14 = lbl_eu_80666730;
+        prm.h10 = 0;
+        prm.b06 = 0x25;
+        if (self->mField5C->mField3F60 != NULL) {
+            func_8004C5EC(self->mField5C->mField3F60);
+            func_800BE12C(&self->mField5C->mSub3E9C, 1, 0, -1, 1);
+        }
+        break;
+    case 8:
+        prm.w00 = obj374->mField3F10;
+        prm.b0D = 0x3C;
+        prm.b0E = 100;
+        prm.h12 = 0;
+        prm.f14 = lbl_eu_80666730;
+        prm.h10 = 0;
+        prm.b06 = 0x25;
+        if (self->mField5C->mField3F60 != NULL) {
+            func_8004C5EC(self->mField5C->mField3F60);
+            func_800BE12C(&self->mField5C->mSub3E9C, 1, 0, -1, 1);
+        }
+        break;
+    case 4:
+        if (bmFlag != 1) {
+            return;
+        }
+        {
+            u8* gaugeBase =
+                (u8*)getInstance__Q22cf14CBattleManagerFv() + 0x219c;
+            u32 chainId = *(u32*)func_800EA444(
+                getInstance__Q22cf14CBattleManagerFv());
+            cf::CChainState* chain =
+                (cf::CChainState*)((u8*)getInstance__Q22cf14CBattleManagerFv() +
+                                   0x20c8);
+            if (func_8027DE44(chain,
+                              (cf::CChainBattleObj*)self->mField5C,
+                              (cf::CChainBattleObj*)obj374,
+                              chainId) != 0) {
+                func_802A201C(self->mField5C, obj374);
+                gaugeBase[0x261a4] = 1;
+                func_8018C820(
+                    (u8*)getInstance__Q22cf14CBattleManagerFv() + 0x194,
+                    -100);
+            }
+        }
+        break;
+    default:
+        return;
+    }
+
+    // Common tail: re-arm the 0x800 flag range, install the command block
+    // when a voice id was selected, then notify the voice owner.
+    ((CtrlPlayerSub3ED4*)self->mField5C->mSub3ED4)->vf10(0x800, 1);
+    if (prm.b0D != 0) {
+        func_8014AC38(&self->mField5C->mField3380, &prm);
+    }
+    self->mField5C->mSub3E9C.v00(0x800);
+    func_801B0E88();
+}
 
 void func_8009C6B4() {}
 
 void func_8009C6B8() {}
 
-void func_8009C6BC(){}
+// Target us-8009d094. Menu/voice state gate: when the global demo flag and
+// the 0x04000000 game-manager flag are clear, mirror three probe results into
+// the high bits of self->mField2C: voice-owner busy (bit 0x20000000), and two
+// menu-state words read through vf37() gated by the 0x40000 actor-flag range
+// (bits 0xA0000000 / 0x40000000).
+void func_8009C6BC(CtrlPcVf38State* self)
+{
+    cf::CfGameManager::getInstance();
+    if (func_8006EF04(0x4000000) != 0) {
+        return;
+    }
+    if (func_800FEDF8() != 0) {
+        return;
+    }
+    u32 mask = func_80086F9C__Q22cf13CfGameManagerFv(-1)
+                   ? lbl_eu_80527F10[16]
+                   : lbl_eu_80527E98[16];
+    CtrlRemoteSubA0* sub = (CtrlRemoteSubA0*)self->vf38();
+    if ((sub->mField0 & mask) != 0) {
+        return;
+    }
+    if (self->mField5C->mSub3E9C.v01(1) != 0) {
+        self->mField2C |= 0x200000;
+        return;
+    }
+    if (self->mField5C->mSub3ED4->vf14(0x40000) == 0) {
+        return;
+    }
+    u32 mask2 = func_80086F9C__Q22cf13CfGameManagerFv(-1)
+                    ? lbl_eu_80527F10[4]
+                    : lbl_eu_80527E98[4];
+    u32 mf4 = self->vf37()->mField4;
+    if ((mf4 & mask2) != 0) {
+        self->mField2C |= 0xA00000;
+        return;
+    }
+    u32 mask3 = func_80086F9C__Q22cf13CfGameManagerFv(-1)
+                    ? lbl_eu_80527F10[23]
+                    : lbl_eu_80527E98[23];
+    u32 mf4b = self->vf37()->mField4;
+    if ((mf4b & mask3) != 0) {
+        self->mField2C |= 0x400000;
+    }
+}
 
 // Tail-call wrapper: report whether the [0x800,0x1000) flag range is set on
 // the player actor's +0x3ED4 flag object (virtual slot 0x40).
@@ -1162,6 +1592,49 @@ void func_8009C980(cf::CtrlRemote* self, u8* ptr)
     }
 }
 
+// Type-1 control-data parser: LZ-style decoder over the payload bytes.
+// Flag bits are consumed LSB-first, one byte at a time (refilled every 8
+// iterations): bit=1 copies one literal byte, bit=0 reads a two-byte LZSS
+// token - 12-bit back-distance ((b1 & 0xF0) << 8 | b0), 0 terminates the
+// stream - and a run length of (b1 & 0xF) + 3 bytes copied from out-dist.
+// Returns the total number of bytes written.
+u32 func_8009C9B8(cf::CtrlRemote* self, CtrlRemoteBuf* buf, u32 arg)
+{
+    u8* out = (u8*)self;
+    u8* in = buf->mData;
+    u32 flags = 0;
+    u32 total = 0;
+    s32 bits = 1;
+    while (true) {
+        bits--;
+        flags >>= 1;
+        if (bits <= 0) {
+            flags = *in++;
+            bits = 8;
+        }
+        if ((flags & 1) != 0) {
+            *out++ = *in++;
+            total++;
+        } else {
+            // LZSS-style token: 12-bit back-distance (low byte | high nibble
+            // of second byte << 8), 0 terminates; run length is the second
+            // byte's low nibble + 3.
+            u32 dist = in[0] | ((in[1] & 0xF0) << 4);
+            if (dist == 0) {
+                break;
+            }
+            u8* src = out - dist;
+            u32 count = (in[1] & 0xF) + 3;
+            total += count;
+            in += 2;
+            for (; count != 0; count--) {
+                *out++ = *src++;
+            }
+        }
+    }
+    return total;
+}
+
 // Type-2 control-data parser: build a 0x38-byte UnkClass_80460C34Ctx around
 // the payload, initialize it via the retail stream ctor, then validate the
 // stream state (v==0/1 accepted) before returning the payload size.
@@ -1190,6 +1663,96 @@ u32 func_8009CAAC(cf::CtrlRemote* self, CtrlRemoteBuf* buf, u32 arg)
         return 0;
     }
     return size;
+}
+
+// Type-3 control-data parser: dictionary decoder over the payload.
+//
+// The payload is a sequence of blocks. Each block starts with a table-
+// description section: bytes >0x7f accumulate extra index (idx += b - 0x7f),
+// then (b + 1) pairs of bytes fill tblMain/tblSub side by side starting at
+// idx (even-position bytes go to tblMain, odd-position bytes to tblSub);
+// filling stops early for a position when its tblMain byte equals the
+// position itself, or when idx reaches 0x100. The rest of the block is a
+// 16-bit big-endian count of codes; each code byte is either a literal
+// (byte == tblMain[byte]) written to the output, or expanded by pushing
+// tblSub[byte] and tblMain[byte] onto a small LIFO queue that is drained
+// before further input is consumed.
+// Returns the number of output bytes produced.
+u32 func_8009CB80(cf::CtrlRemote* self, CtrlRemoteBuf* buf, u32 arg)
+{
+    // Declared so MWCC's stack layout matches retail:
+    // initTbl@0x228, tblMain@0x128, tblSub@0x28, queue@0x08.
+    u8 initTbl[0x100]; // scratch identity table, copied over tblMain per block
+    u8 tblMain[0x100]; // primary dictionary (literal/replacement map)
+    u8 tblSub[0x100];  // secondary dictionary (expansion prefixes)
+    u8 queue[0x20];    // pending expansion output (LIFO)
+    u8* out = (u8*)self;
+    u8* in = buf->mData;
+    u32 size = buf->mSize;
+    u32 pos = 0;
+    u32 total = 0;
+    u8* d1;
+    u8* d2;
+    s32 n;
+    for (s32 i = 0; i < 0x100; i++) {
+        initTbl[i] = i;
+    }
+    while (pos < size) {
+        s32 b = in[pos++];
+        memcpy(tblMain, initTbl, 0x100);
+        s32 idx = 0;
+        while (true) {
+            if (b > 0x7f) {
+                idx += b - 0x7f;
+                b = 0;
+            }
+            if (idx == 0x100) {
+                break;
+            }
+            // Runs b + 1 times; MWCC emits this as an mtctr countdown.
+            d1 = &tblMain[idx];
+            d2 = &tblSub[idx];
+            n = b + 1;
+            while (--n >= 0) {
+                u8 c = in[pos++];
+                *d1++ = c;
+                if (idx != c) {
+                    *d2++ = in[pos++];
+                }
+                idx++;
+            }
+            if (idx == 0x100) {
+                break;
+            }
+            b = in[pos++];
+        }
+        u32 code = (in[pos] << 8) | in[pos + 1];
+        pos += 2;
+        const u8* p = &in[pos];
+        s32 sp = 0;
+        while (true) {
+            u8 c;
+            if (sp != 0) {
+                c = queue[--sp];
+            } else {
+                if (code == 0) {
+                    break;
+                }
+                code--;
+                c = *p++;
+                pos++;
+            }
+            u8 rep = tblMain[c];
+            if (c == rep) {
+                *out++ = c;
+                total++;
+            } else {
+                queue[sp++] = tblSub[c];
+                queue[sp++] = rep;
+            }
+        }
+    }
+    return total;
 }
 
 // Parse a serialized control buffer into this: type 1/2/3 dispatch to the
@@ -1285,39 +1848,101 @@ u32* func_8009D0B4()
 // retail does.
 u32* func_8009D12C(u32* buffer, s32 index, s32* typeOut, s32* idxOut)
 {
+	s32 v;
+
 	if ((u32)index <= 0x1F) {
 		*idxOut = 0;
 		*typeOut = 4;
-		return buffer + index;
+		return &buffer[index];
 	}
 
-	s32 v = index - 0x20;
+	v = index - 0x20;
 	if ((u32)v <= 0x1FF) {
-		s32 q = v / 2;
 		*idxOut = v;
 		*typeOut = 3;
-		return (u32*)((u32)buffer + (q + 0x20) * 4);
+		return &buffer[v / 2 + 0x20];
 	}
 
 	v = index - 0x220;
 	if ((u32)v <= 0x7FF) {
-		s32 q = v / 4;
 		*idxOut = v;
 		*typeOut = 2;
-		return (u32*)((u32)buffer + (q + 0x120) * 4);
+		return &buffer[v / 4 + 0x120];
 	}
 
 	v = index - 0xA20;
 	if ((u32)v <= 0x2CAF) {
-		s32 q = v / 32;
 		*idxOut = v;
 		*typeOut = 1;
-		return (u32*)((u32)buffer + (q + 0x320) * 4);
+		return &buffer[v / 32 + 0x320];
 	}
 
 	*idxOut = 0;
 	*typeOut = 0;
 	return NULL;
+}
+
+// Set a control-data field: map `index` to a (word, mask, shift), splice
+// `value` into that word's bit range, then notify every registered callback
+// object with (index, clamped value, extracted old bits). The switch has no
+// default: on an out-of-range type the mask/shift keep their entry values and
+// the word write still happens (matching retail).
+void func_8009D2C8(u32* buffer, u32 index, u32 value)
+{
+    s32 type;
+    s32 idx;
+    s32 shift = 0;
+    u32 mask;
+    u32* ptr;
+    u32 word;
+    u32 bits;
+    s32 i;
+    u32 newBits;
+
+    ptr = func_8009D12C(buffer, index, &type, &idx);
+    if (ptr != NULL) {
+        switch (type) {
+        case 4:
+            mask = 0xFFFFFFFF;
+            shift = 0;
+            break;
+        case 3:
+            if (value > 0xFFFF) {
+                value = 0xFFFF;
+            }
+            mask = lbl_eu_80661C70[idx & 1];
+            shift = (idx & 1) << 4;
+            break;
+        case 2:
+            if (value > 0xFF) {
+                value = 0xFF;
+            }
+            mask = lbl_eu_80528048[idx & 3];
+            shift = (idx & 3) << 3;
+            break;
+        case 1:
+            if (value > 1) {
+                value = 1;
+            }
+            mask = lbl_eu_80528058[idx & 0x1F];
+            shift = idx & 0x1F;
+            break;
+        }
+
+        // Splice the (masked, shifted) value into the target word.
+        word = *ptr;
+        newBits = value << shift;
+        newBits &= mask;
+        *ptr = (word & ~mask) | newBits;
+        bits = (word & mask) >> shift;
+
+        for (i = 0; i < 8; i++) {
+            CtrlDataSlotObj* obj = (CtrlDataSlotObj*)buffer[0x1234 / 4 + i];
+            if (obj != NULL) {
+                obj->vf03(index, value, bits);
+            }
+        }
+    }
 }
 
 extern "C" u32 func_8009D1F8(u32* buffer, s32 index)

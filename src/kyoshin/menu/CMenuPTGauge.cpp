@@ -4,13 +4,43 @@
 #include "kyoshin/CTaskGame.hpp"
 #include "kyoshin/menu/CMenuPTGauge.hpp"
 
+// getArtsSlotRC: CAIAction.hpp and CChainActorList.hpp declare conflicting
+// signatures (u16 vs int return); this TU calls neither. Pre-include
+// CAIAction.hpp with the rename (same recipe as CBattleManager.cpp) so its
+// include guard latches the renamed decls, then include CBattleManager.hpp
+// (which pulls CChainActorList.hpp) with the canonical names.
+#define getArtsSlotRC ptgauge_artsSlotRcUnused
+#define getArtsParamRC2 ptgauge_artsParamRc2Unused
+#define func_8009EC9C ptgauge_func8009EC9CUnused
+#define func_8016DF2C ptgauge_func8016DF2CUnused
+#include "kyoshin/cf/object/CAIAction.hpp"
+#undef getArtsSlotRC
+#undef getArtsParamRC2
+#undef func_8009EC9C
+#undef func_8016DF2C
+// func_8025FB10: u32 form (CChainActorList.hpp) is canonical; CChainTimer.hpp's
+// int form conflicts. Pre-include CChainActorList.hpp unguarded so its
+// include guards latch the canonical decls, then rename for CBattleManager.hpp
+// (same recipe as CBattleManager.cpp).
+#include "kyoshin/cf/chain/CChainActorList.hpp"
+// func_800F3970 is declared by both CBattleManagerApi.hpp and CChain.hpp;
+// this TU calls neither copy - rename both out of the way.
+#define func_800F3970 ptgauge_func800F3970Unused
+#define func_8025FB10 ptgauge_8025FB10Unused
 #include "kyoshin/cf/CBattleManager.hpp"
+#undef func_800F3970
+#undef func_8025FB10
 // code_80135FDC.hpp declares lbl_eu_8066A208 as u32 (line 188), conflicting
 // with the const float epsilon copies elsewhere; rename it out of the way.
 // This TU uses none of them.
 #include "kyoshin/code_80135FDC.hpp"
 #include "monolib/device/CDeviceFont.hpp"
+#include "monolib/device/CDeviceVI.hpp"
 #include "monolib/util/MemManager.hpp"
+#include "monolib/work/CWorkThreadSystem.hpp"
+
+// Compile-only placeholder removed: __ct__CMenuPTGauge is an import - the
+// real retail ctor body lives outside this TU and must not be redefined here.
 
 #include "decomp.h"
 #include <revolution/GX.h>
@@ -27,6 +57,13 @@ extern const f32 lbl_eu_806679E0; // 0.0f
 extern const f32 lbl_eu_806679E4; // 300.0f
 extern const f32 lbl_eu_806679E8; // 128.0f
 extern const f32 lbl_eu_806679EC; // 1.0f
+// Ctor imports: base/subobject ctors and the shared vtable/PTMF labels
+// (retail unmangled names; storage lives elsewhere).
+void __ct__8CProcessFv(CProcess*);
+void __ct__17UnkClass_8045F564Fv(UnkClass_8045F564*);
+extern char lbl_eu_8052C1C0[]; // interim CProcess-region vtable
+extern char lbl_eu_80532450[]; // final composite vtable set
+extern u32 __ptmf_null[3];     // runtime ptmf.o null member-fn descriptor
 // Unmangled retail names (distinct from C++-mangled decls in code_80135FDC.hpp).
 // Layout/anim helpers: declared extern "C" where the retail symbol is unmangled.
 int func_8013BE50(); // Returns nonzero when battle is active (gate for all menu HUD widgets)
@@ -94,7 +131,7 @@ void CMenuPTGauge::Init() {
     IScnRender* cb = reinterpret_cast<IScnRender*>(this);
     if (this != NULL) {
         // Access IScnRender subobject at unk00[0x5c] via member offset
-        cb = reinterpret_cast<IScnRender*>(&this->unk00[0x5c]);
+        cb = reinterpret_cast<IScnRender*>(&this->unk54[0x8]);
     }
     mScn->addRenderCB(cb, 0xa, 0); // priority 0xa = HUD render layer
 
@@ -327,10 +364,32 @@ done:
 }
 
 extern "C" int func_80187710() {
-    return lbl_eu_806642D8;
+    return (int)lbl_eu_806642D8;
 }
-extern "C" void __dt__12CMenuPTGaugeFv(void*); // real member dtor (retail unmangled symbol)
-// IWorkEvent dtor this-adjusting thunk (retail: subi r3,-0x58; b __dt__12CMenuPTGaugeFv)
+// Complete-object destructor (retail __dt__12CMenuPTGaugeFv). Written as the
+// real member dtor so MWCC supplies the this-null guard, the embedded-member
+// -1 flag, and the flags>0 operator-delete tail from the dtor shape itself.
+// The base CProcess dtor is called explicitly (no recovered C++ base chain);
+// the doubled null re-check reproduces retail's dead doubled beq.
+// Complete-object destructor: body empty; MWCC supplies the this-null guard,
+// the member destruction, the base __dt__8CProcessFv call and the delete tail.
+extern "C" void __dt__12CMenuPTGaugeFv(void*);
+extern "C" void __dt__8CProcessFv(void* self, int flags); // CProcess base destructor
+// Empty-body mid-base dtor: the doubled self-check + explicit CProcess base
+// call reproduce retail's dead doubled beq; MWCC inlines this into the
+// derived dtor (no implicit CProcess chain exists on PTGaugeTaskMid).
+PTGaugeTaskMid::~PTGaugeTaskMid() {
+    if (reinterpret_cast<void*>(this) != NULL) {
+        __dt__8CProcessFv(reinterpret_cast<void*>(this), 0);
+    }
+}
+CMenuPTGauge::~CMenuPTGauge() {
+    // mLayoutMem is destroyed implicitly (MWCC passes the -1 embedded-member
+    // flag), then the CProcess base dtor is emitted automatically from the
+    // real CProcess base; MWCC appends the flags>0 operator-delete tail.
+}
+// IWorkEvent dtor this-adjusting thunk (retail: subi r3,-0x58; b __dt__12CMenuPTGaugeFv;
+// resolves to the member dtor's mangled symbol above)
 extern "C" void func_80187EFC(void* self){
     __dt__12CMenuPTGaugeFv((char*)self - 0x58);
 }
@@ -338,17 +397,158 @@ extern "C" void func_80187F04(void* self) {
     extern void cbRenderBefore__12CMenuPTGaugeFv(void*);
     cbRenderBefore__12CMenuPTGaugeFv((char*)self - 0x5c);
 }
-extern "C" void __dt__12CMenuPTGaugeFv(void*); void func_80187F0C(void* p) {
+void func_80187F0C(void* p) {
     // Adjust from IScnRender subobject (+0x5c) back to CMenuPTGauge
     __dt__12CMenuPTGaugeFv(static_cast<char*>(p) - 0x5c);
 }
 
-void __ct__CMenuPTGauge(){}
-void func_80187694(){}
-void func_80187718(){}
-void func_80187778(){}
-extern double lbl_eu_806679F0;
+/**
+ * Teardown: wait for VI draw done, unregister the render callback, free the
+ * layout (polymorphic delete -> vtable+0x8 deleting-dtor dispatch with flag
+ * 1), release the layout memory region, and clear the global instance.
+ */
+void CMenuPTGauge::Term() {
+    CDeviceVI::waitForDrawDone();
+    // Null-this-safe IScnRender subobject at +0x5c, same idiom as Init.
+    IScnRender* render = reinterpret_cast<IScnRender*>(this);
+    if (this != NULL) {
+        render = reinterpret_cast<IScnRender*>(&this->unk54[0x8]);
+    }
+    mScn->removeRenderCB(render);
+
+    if (mLayout != NULL) {
+        // Retail re-checks the pointer before the deleting-dtor dispatch
+        // (dead doubled beq from D2-inlined-into-D1 shape).
+        delete mLayout;
+        mLayout = NULL;
+    }
+
+    mLayoutMem.func_8045F778();
+    lbl_eu_806642D8 = NULL;
+}
+
+
+// Byte-window over CMenuPTGauge covering everything the retail ctor touches:
+// base vtable (+0x10), two null PTMF blocks (+0x3c/+0x48), interface flags
+// bytes (+0x54/+0x55), MI subobject vtables (+0x58/+0x5c), scene ptr (+0x60).
+struct CMenuPTGaugeCtorShim {
+    u8 unk00[0x10];
+    u32 unk10;       // CProcess-region / final composite vtable
+    u8 unk14[0x28];
+    u32 ptmfMove[3]; // +0x3c
+    u32 ptmfDraw[3]; // +0x48
+    u8 flag54;
+    u8 flag55;
+    u8 unk56[2];
+    u32 vt58;        // +0x58 (final vtable + 0x24)
+    u32 vt5c;        // +0x5c (final vtable + 0xac)
+    u32 scene;       // +0x60
+};
+
+// Retail constructs the gauge via the unmangled symbol __ct__CMenuPTGauge
+// (not a MWCC-mangled member ctor); extern "C" keeps the exact retail name
+// and avoids MWCC's auto-vtable/RTTI emission (CMdlAnmEye.cpp recipe).
+extern "C" void __ct__CMenuPTGauge(CMenuPTGauge* self, CProcess* arg) {
+    // Byte-window alias over the object for the CProcess-region fields the
+    // retail ctor fills by hand.
+    CMenuPTGaugeCtorShim* p = reinterpret_cast<CMenuPTGaugeCtorShim*>(self);
+    __ct__8CProcessFv(reinterpret_cast<CProcess*>(p));
+
+    p->unk10 = (u32)lbl_eu_8052C1C0;
+
+    // Post-increment pointer form: MWCC folds the base @l into a single
+    // `lwzu` for the first load and keeps the base register for the rest;
+    // the second triple re-reads through folded negative offsets (retail
+    // re-loads ptmf[0..2] after the first stores). q-locals declared first
+    // so MWCC colors q0 into r7 and the ptmf base into r8 (CMenuBattleCommu
+    // ctor recipe).
+    u32 q0, q1, q2;
+    const u32* ptmf = __ptmf_null;
+    u32 p0, p1, p2;
+    p0 = *ptmf++;
+    p1 = *ptmf++;
+    p->ptmfMove[1] = p1;
+    p->ptmfMove[0] = p0;
+    p2 = *ptmf++;
+    p->ptmfMove[2] = p2;
+    q0 = ptmf[-3];
+    q1 = ptmf[-2];
+    p->ptmfDraw[1] = q1;
+    p->ptmfDraw[0] = q0;
+    q2 = ptmf[-1];
+    p->ptmfDraw[2] = q2;
+
+    p->flag54 = 0;
+    p->flag55 = 0;
+
+    // Retail re-stores +0x10 with the composite vtable after the temp
+    // (CProcess) vtable; +0x24/+0xac are the IWorkEvent / IScnRender
+    // dispatch slots inside that cluster.
+    p->vt58 = (u32)lbl_eu_80532450 + 0x24;
+    p->vt5c = (u32)lbl_eu_80532450 + 0xac;
+    p->unk10 = (u32)lbl_eu_80532450;
+    p->scene = (u32)arg;
+
+    __ct__17UnkClass_8045F564Fv(&self->mLayoutMem);
+
+    self->mLayout = NULL;
+    self->mAnimDefault = NULL;
+    self->mAnimOpen = NULL;
+    self->mAnimClose = NULL;
+    self->mAnimIdle = NULL;
+    self->mAnimSpecial = NULL;
+    self->mPhase = 0;
+    self->mActionIdx = 0;
+    self->mGaugeBase = 0;
+    self->mGaugePrev = 0;
+    self->unk9C = 0;
+    self->mGaugeInit = -1;
+}
+
+typedef CMenuPTGauge* (*PTGaugeCtorFn)(CMenuPTGauge*, CProcess*);
+
+// Singleton factory: creates the PT Gauge on the work-thread heap (0xA4 = full
+// object size), registers it as a child of `parent`, and caches it in the
+// global pointer. Returns NULL when the gauge already exists.
+CMenuPTGauge* func_80187694(CProcess* parent, CProcess* ctorArg) {
+    if (lbl_eu_806642D8 != NULL) {
+        return NULL;
+    }
+    mtl::ALLOC_HANDLE mem = CWorkThreadSystem::getWorkMem();
+    // Retail chains the allocation result through the ctor call (r3 -> r3),
+    // so the ctor is invoked through a pointer-typed cast returning the
+    // object; this also stops MWCC eliding the empty stub.
+    CMenuPTGauge* gauge = static_cast<CMenuPTGauge*>(mtl::MemManager::allocate(0xA4, mem));
+    if (gauge != NULL) {
+        gauge = ((PTGaugeCtorFn)__ct__CMenuPTGauge)(gauge, ctorArg);
+    }
+    lbl_eu_806642D8 = gauge;
+    // PTGaugeTaskMid deliberately does not inherit CProcess; retail still
+    // dispatches CProcess::Regist with the gauge as this.
+    reinterpret_cast<CProcess*>(gauge)->Regist(parent, false);
+    return lbl_eu_806642D8;
+}
+void func_80187718() {
+    // When the gauge is active (phase 2) on the default action and the party
+    // value hits 300, switch to the special action with a 300-frame counter.
+    CMenuPTGauge* self = lbl_eu_806642D8;
+    if (self->mPhase == 2) {
+        if (self->mActionIdx < 1) {
+            cf::CBattleManager* bm = cf::CBattleManager::getInstance();
+            if (*reinterpret_cast<s32*>(&bm->unk194) == 0x12c) {
+                self->mActionIdx = 1;
+                self->unk9C = 0x12c;
+            }
+        }
+    }
+}
+// Named .sdata2 conversion magic definition (CFloorMap/CPassiveSkill idiom):
+// pins the bias blob into this TU's constant pool so the manual s32->double
+// conversion schedules with a single named fsubs. Exact bits 0x4330000080000000
+// (2^52 + 2^31).
+extern const double lbl_eu_806679F0 = 4503601774854144.0;
 extern float lbl_eu_806679F8;
+extern const float lbl_eu_806679FC;
 struct PTGaugeIf { virtual void _v008(); virtual void _v00C(); virtual void _v010(); virtual void _v014(); virtual void _v018(); virtual void _v01C(); virtual void _v020(); virtual void _v024(); virtual void _v028(); virtual void _v02C(); virtual void _v030(); virtual void _v034(); virtual void _v038(); virtual u8* vf3C(char* a, u32 b); };
 
 extern "C" void func_80187858(u8* self) {
@@ -464,6 +664,69 @@ void func_80187C90(CMenuPTGauge* self, s32 partyVal) {
         }
     }
 }
-void func_80187A88(){}
+// Close-action dispatch entry: once the party value reaches lbl_eu_806679FC,
+// reset the gauge base state to 1 and re-bind the open animation from frame 0
+// with SE 0x65.
+void func_80187A88(CMenuPTGauge* self, s32 partyVal) {
+    // Manual signed-int -> double conversion (MWCC_PATTERNS 7i): build the
+    // 0x4330000080000000 bit pattern and subtract the shared .sdata2 magic
+    // lbl_eu_806679F0 so the fsubs names the retail blob.
+    union {
+        double d;
+        u32 w[2];
+    } cv;
+    // xoris word first, then 0x43300000, or MWCC hoists the lis out of order.
+    cv.w[1] = (u32)partyVal ^ 0x80000000;
+    cv.w[0] = 0x43300000;
+    if (cv.d - lbl_eu_806679F0 >= lbl_eu_806679FC) {
+        self->mGaugeBase = 1;
+        self->mLayout->Animate(0);
+        self->mLayout->UnbindAllAnimation();
+        self->mLayout->BindAnimation(self->mAnimOpen);
+        self->mLayout->SetAnimationEnable(self->mAnimOpen, true);
+        self->mAnimOpen->SetFrame(lbl_eu_806679E0);
+        self->mLayout->Animate(0);
+        func_80138078(0x65); // SE
+    }
+}
 void func_80187B70(){}
-void func_80187E28(){}
+// PTMF type shared by both dispatch tables (lbl_eu_805323F8/lbl_eu_80532420).
+extern CMenuPTGaugePtmf lbl_eu_80532420[]; // Dispatch table indexed by mGaugeBase
+
+// Gauge refresh + action dispatch: when the displayed value changed, resize
+// the gauge pane proportionally to the party value, then always dispatch the
+// per-state handler selected by mGaugeBase.
+void func_80187778(CMenuPTGauge* self, s32 partyVal) {
+    if (self->mLayout != NULL && self->mGaugeInit != partyVal) {
+        self->mGaugeInit = partyVal;
+        nw4r::lyt::Pane* pane =
+            self->mLayout->GetRootPane()->FindPaneByName(lbl_eu_805039C8 + 0xd8, true); // +0xd8 = gauge pane name
+        if (pane != NULL) {
+            nw4r::lyt::Size size;
+            // 128.0f scaled by partyVal / 300.0f. The int->float cast expands
+            // to MWCC's 0x43300000/xoris magic; its pooled constant must
+            // resolve to retail's lbl_eu_806679F0 blob (see MWCC_PATTERNS 7i).
+            size.width = lbl_eu_806679E8 * ((float)partyVal / lbl_eu_806679E4);
+            size.height = pane->GetSize().height;
+            pane->SetSize(size);
+        }
+    }
+    (self->*lbl_eu_80532420[self->mGaugeBase])(partyVal);
+}
+// PTMF dispatch entry: advance the idle animation, then when the party value
+// drops below 300 switch the gauge base state to 2 and re-bind the close
+// animation from frame 0.
+void func_80187E28(CMenuPTGauge* self, s32 partyVal) {
+    // Advance the idle animation one frame (result unused).
+    func_80137444(self->mAnimIdle, lbl_eu_806679EC);
+
+    if (partyVal < 300) {
+        self->mGaugeBase = 2;
+        self->mLayout->Animate(0);
+        self->mLayout->UnbindAllAnimation();
+        self->mLayout->BindAnimation(self->mAnimClose);
+        self->mLayout->SetAnimationEnable(self->mAnimClose, true);
+        self->mAnimClose->SetFrame(lbl_eu_806679E0);
+        self->mLayout->Animate(0);
+    }
+}

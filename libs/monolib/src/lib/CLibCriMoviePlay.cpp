@@ -9,6 +9,7 @@
 #include "monolib/device/CDeviceGX.hpp"
 #include "monolib/device/CDeviceVI.hpp"
 #include "monolib/core/CDrawGX.hpp"
+#include "monolib/math/CRect16.hpp"
 #include "monolib/core/CViewRoot.hpp"
 #include <revolution/GX.h>
 #include <cstring>
@@ -43,7 +44,7 @@ extern "C" {
     extern float lbl_eu_8066A4F4; // 1.0f
     extern float lbl_eu_8066A4F8; // PAL frame rate / scale
     extern float lbl_eu_8066A4FC; // NTSC frame rate / scale
-    extern u32 identity__Q22ml6CMat34; // identity matrix
+    extern f32 identity__Q22ml6CMat34[12]; // ml::CMat34::identity matrix
 }
 
 // External function declarations
@@ -62,12 +63,64 @@ extern "C" {
 
     // CRT
     void __dl__FPv(void* ptr);
+
 }
+
 
 // ============================================================================
 // Constructor (us-8045dcb0)
 // CLibCriMoviePlay::CLibCriMoviePlay(const char*, CWorkThread*)
+// Both bases are __declspec(novtable), so the hand-spelled retail vtable
+// (lbl_eu_8056CF48) is installed explicitly into both base slots.
 // ============================================================================
+CLibCriMoviePlay::CLibCriMoviePlay(const char* pName, CWorkThread* pParent)
+    : CWorkThread(pName, pParent, 0), CDeviceVICb() {
+    // Mark entries 1..3 inactive before the bulk clear below (retail keeps
+    // these stores even though memset overwrites them).
+    // Install the vtables into the CWorkThread slot (offset 0) and the
+    // CDeviceVICb sub-vtable (base + 0xA0, at object offset 0x1C4).
+    *(void**)this = (void*)&lbl_eu_8056CF48;
+    *(void**)((char*)this + 0x1C4) = (char*)&lbl_eu_8056CF48 + 0xA0;
+
+    // Clear the active flag / filename length of all four entries (retail
+    // keeps these stores even though memset below overwrites them).
+    // Install the vtables into the CWorkThread slot (offset 0) and the
+    // CDeviceVICb sub-vtable (base + 0xA0, at object offset 0x1C4).
+    *(void**)this = (void*)&lbl_eu_8056CF48;
+    *(void**)((char*)this + 0x1C4) = (char*)&lbl_eu_8056CF48 + 0xA0;
+
+    // Entry 0 explicitly, then walk entries 1..3 (retail keeps these stores
+    // even though memset below overwrites them).
+    mEntries[0].mActive = false;
+    mEntries[0].mFilenameLen = 0;
+
+    MovieEntry* entry = &mEntries[1];
+    while (entry < &mEntries[4]) {
+        entry->mActive = false;
+        entry->mFilenameLen = 0;
+        entry++;
+    }
+
+    mStreamIdCounter = 0;
+    mPlaybackState = false;
+    mPauseCounter = 0;
+
+    // Register singleton
+    sInstance = this;
+
+    // Thread type: THREAD_CLIBCRIMOVIEPLAY
+    mType = (CWorkThread::ThreadType)0x10;
+
+    // Clear all movie entries
+    memset(&mEntries[0], 0, 0x490); // 4 * sizeof(MovieEntry)
+
+    // Initialize entry flags
+    mEntries[0].mFlags = 0;
+    mEntries[1].mFlags = 1;
+    mEntries[2].mFlags = 2;
+    mEntries[3].mFlags = 3;
+}
+
 // ============================================================================
 // Destructor (us-8045dd94)
 // CLibCriMoviePlay::~CLibCriMoviePlay()
@@ -135,12 +188,24 @@ extern "C" void func_80459DEC__16CLibCriMoviePlayFv(unsigned int texMapStage1, u
     GXSetTevSwapMode((GXTevStageID)3, (GXTevSwapSel)0, (GXTevSwapSel)0);
     GXSetTevKColorSel((GXTevStageID)3, (GXTevKColorSel)0xF);
 
-    // Set TEV register color (single pooled-deref temporary reproduces
-    // retail's 2-store shape; the TEVREG1 enum value in this header tree is
-    // off by one from retail). OPEN ITEM: retail's second word reloc points
-    // at lbl_eu_8066A4DC@0 while this form emits lbl_eu_8066A4D8@4 (same
-    // address, different anchor) - the witness reloc-gate rejects it.
-    GXSetTevColorS10((GXTevRegID)1, *(const GXColorS10*)&lbl_eu_8066A4D8);
+    // Set TEV register color: retail loads the two pooled words separately
+    // (lbl_eu_8066A4D8 into r5 first, then lbl_eu_8066A4DC into r0) before
+    // storing them to the outgoing struct slot, so the loads are spelled
+    // individually to reproduce that register assignment.
+    // NOTE: the TEVREG1 enum value in this header tree is off by one from
+    // retail.
+    {
+        // Retail loads the two pooled words separately (first anchored at
+        // lbl_eu_8066A4D8, second at lbl_eu_8066A4DC) straight into the
+        // outgoing argument slot, so the words are read into a temporary
+        // that MWCC sinks into the arg area.
+        // NOTE: the TEVREG1 enum value in this header tree is off by one
+        // from retail.
+        u32 tevWords[2];
+        tevWords[0] = lbl_eu_8066A4D8;
+        tevWords[1] = lbl_eu_8066A4DC;
+        GXSetTevColorS10((GXTevRegID)1, *(const GXColorS10*)tevWords);
+    }
 
     GXSetTevKColor((GXTevKColorID)0, *(const GXColor*)&lbl_eu_8066A4E0);
     GXSetTevKColor((GXTevKColorID)1, *(const GXColor*)&lbl_eu_8066A4E4);
@@ -187,58 +252,55 @@ MovieEntry* CLibCriMoviePlay::func_8045A1B0() {
 // Returns stream ID on success, -1 on failure
 // ============================================================================
 extern "C" int func_8045A260__16CLibCriMoviePlayFv(const char* filename, u32 allocHandle,
-                                  u32 allocHandle2, bool waitForStart,
-                                  bool useAlternateBuf) {
+                                  u32 allocHandle2, bool globalPause,
+                                  bool waitFinish) {
     if (sInstance == nullptr) return -1;
 
     MovieEntry* entry = CLibCriMoviePlay::func_8045A1B0();
     if (entry == nullptr) return -1;
 
-    // Initialize entry state
-    entry->mPlayerId = 0;
-    entry->mFlags = 1;
+    // Fill the inline cprm block (retail zeroes the tail word first, then
+    // writes cprm[0..5] in order). zero/one stay live as shared constants.
+    u32 zero = 0;
+    u32 one = 1;
+    entry->field_0x28 = zero;
+    entry->mCprmMode = one;
+    entry->mCprmFormat = 0x5B8D80;
+    entry->mCprmWidth = 0x280;
+    entry->mCprmHeight = 0x1C8;
+    entry->mCprmType = 2;
+    entry->mCprmFlags = one;
 
-    // Set up CRI cprm structure for SFD playback
-    u32* cprm = (u32*)entry->mCprmData;
-    cprm[0] = 0x55B80;  // format/mode
-    cprm[1] = 0x280;    // width 640
-    cprm[2] = 0x1C8;    // height 456
-    cprm[3] = 2;        // type
-
-    entry->mFlags = 1;
-
-    // Calculate required work buffer size
-    u32 workSize = mwPlyCalcWorkCprmSfd(cprm);
+    // Calculate the CRI work area size and allocate it (16-aligned)
+    u32 workSize = mwPlyCalcWorkCprmSfd(&entry->mCprmMode);
     entry->mWorkSize = workSize;
 
-    // Allocate work buffer
     void* workBuf = MemManager::allocate_tail(allocHandle, workSize, 0x20);
     entry->mWorkBuf = workBuf;
 
     if (workBuf == nullptr) {
-        func_8045A54C__16CLibCriMoviePlayFv(nullptr, 0);
+        func_8045A54C__16CLibCriMoviePlayFv(entry, 0);
         return -1;
     }
 
-    // Create CRI movie player
-    entry->mPlyHandle = criware_8039FF34(cprm);
+    // Create the CRI player and register the movie name
+    entry->mPlyHandle = criware_8039FF34(&entry->mCprmMode);
 
-    // Copy filename
-    size_t nameLen = strlen(filename);
-    entry->mFilenameLen = nameLen;
+    entry->mFilenameLen = strlen(filename);
     strcpy(entry->mFilename, filename);
 
-    // Store allocation handles
-    entry->mAllocHandle = (void*)allocHandle;
+    entry->mAllocHandle = allocHandle;
+    entry->mGlobalPause = globalPause;
     entry->mAllocHandle2 = allocHandle2;
 
-    // Generate unique stream ID
-    u32 rawId = *(u32*)entry->mCprmData;
+    // Stream id: low byte of the entry flags plus the global counter shifted
+    // up by one byte (24-bit insert).
     u32 counter = sInstance->mStreamIdCounter;
-    entry->mStreamId = (rawId & 0xFF) | ((counter & 0xFF) << 8);
+    entry->mPlayerId = entry->mFlags & 0xFF;
+    entry->mPlayerId |= (counter & 0x00FFFFFF) << 8;
     sInstance->mStreamIdCounter = counter + 1;
 
-    // Initialize playback state
+    // Reset per-entry playback state
     entry->mActive = true;
     entry->mTexBufY = nullptr;
     entry->mTexBufCbCr = nullptr;
@@ -248,52 +310,43 @@ extern "C" int func_8045A260__16CLibCriMoviePlayFv(const char* filename, u32 all
     entry->mColor[3] = lbl_eu_8066A4F0;
     entry->mAction = 3;
     entry->mField100 = 0;
-    entry->mGlobalPause = useAlternateBuf;
     entry->mPauseOverride = false;
 
-    // Start playback
+    // Kick off playback
     mwPlyStartFname(entry->mPlyHandle, filename);
 
-    // Handle pause synchronization with other entries
+    // Propagate the new entry's pause state to every active entry sharing
+    // its stream id (id -1 matches all).
     if (sInstance != nullptr) {
-        u32 entryId = entry->mStreamId;
-        bool pauseState = entry->mPauseOverride;
-
         MovieEntry* other = &sInstance->mEntries[0];
         for (int i = 0; i < 4; i++) {
-            if (other->mPlyHandle != nullptr) {
-                bool shouldPause = false;
-                if (other->mStreamId == entryId ||
-                    ((other->mStreamId + 0x10000) & 0xFFFF) == (entryId & 0xFFFF)) {
-                    other->mPauseOverride = pauseState;
-                    shouldPause = pauseState;
-                    if (!shouldPause) {
-                        if (!other->mGlobalPause) {
-                            if (sInstance->mPauseCounter != 0) {
-                                shouldPause = true;
-                            }
-                        } else {
-                            shouldPause = true;
-                        }
-                    }
-                    mwPlyPause(other->mPlyHandle, shouldPause ? 1 : 0);
+            if (other->mPlyHandle != nullptr &&
+                (other->mPlayerId == entry->mPlayerId ||
+                 entry->mPlayerId == 0xFFFFFFFF)) {
+                other->mPauseOverride = entry->mPauseOverride;
+                int pa = 0;
+                if (!entry->mPauseOverride && !other->mGlobalPause &&
+                    sInstance->mPauseCounter == 0) {
+                    // not paused
+                } else {
+                    pa = 1;
                 }
+                mwPlyPause(other->mPlyHandle, pa);
             }
             other++;
         }
     }
 
-    // Wait for playback to start if requested
-    if (waitForStart) {
+    // Optionally block until playback leaves the "starting" state
+    if (waitFinish) {
         while (mwPlyGetStat(entry->mPlyHandle) == 1) {
             ADXM_ExecMain();
             VIWaitForRetrace();
         }
     }
 
-    // Update playback state
-    sInstance->mPlaybackState = !waitForStart;
-    return entry->mStreamId;
+    sInstance->mPlaybackState = !waitFinish;
+    return entry->mPlayerId;
 }
 
 // ============================================================================
@@ -314,84 +367,75 @@ extern "C" int func_8045A260__16CLibCriMoviePlayFv(const char* filename, u32 all
 // Renders a movie frame to the screen using GX
 // Returns true on success, false if movie not found
 // ============================================================================
-extern "C" bool func_8045A8C8__16CLibCriMoviePlayFv(int id) {
+// Renders the movie frame matching id as a textured quad spanning rect.
+// Retail ABI passes id in r3 and the destination rectangle in r4 despite the
+// Fv mangling.
+extern "C" bool func_8045A8C8__16CLibCriMoviePlayFv(int id, const ml::CRect16& rect) {
     if (sInstance == nullptr) return false;
 
-    MovieEntry* entries = &sInstance->mEntries[0];
+    MovieEntry* entry = sInstance->mEntries;
 
-    for (int i = 0; i < 4; i++) {
-        MovieEntry* cur = &entries[i];
-        if (cur->mPlyHandle == nullptr) continue;
-        if (cur->mStreamId != (u32)id) continue;
-        if (cur->mTexBufY == nullptr) continue;
+    for (int i = 0; i < 4; i++, entry++) {
+        if (entry->mPlyHandle == nullptr) continue;
+        if (entry->mPlayerId != (u32)id) continue;
+        if (entry->mTexBufCbCr == nullptr) continue;
 
-        // Flush GX cache
+        // Flush GX cache and bind both movie textures
         func_8044B5C0__8CGXCacheFv(cacheInstance__9CDeviceGX);
 
-        // Load textures
-        GXLoadTexObj(&cur->mTexObjY, GX_TEXMAP0);
-        GXLoadTexObj(&cur->mTexObjCbCr, GX_TEXMAP1);
+        GXLoadTexObj(&entry->mTexObjY, GX_TEXMAP0);
+        GXLoadTexObj(&entry->mTexObjCbCr, GX_TEXMAP1);
 
-        // Setup GX state for movie rendering (stage-1 map = Y, stage-0/2 = CbCr)
+        // YUV->RGB TEV setup (stage-1 map = Y, stage-0/2 map = CbCr)
         func_80459DEC__16CLibCriMoviePlayFv(GX_TEXMAP0, GX_TEXMAP1);
 
-        // Configure GX cache
         func_8044A6C8__8CGXCacheFii(cacheInstance__9CDeviceGX, 0, 0);
-        GXSetZMode(false, GX_ALWAYS, false);
+        GXSetZMode(GX_FALSE, GX_LEQUAL, GX_FALSE);
 
-        // Load identity texture matrix
-        GXLoadTexMtxImm((const float(*)[4])&identity__Q22ml6CMat34, GX_TEXMTX0, GX_MTX_3x4);
+        // Identity matrices for texture and position transforms
+        GXLoadTexMtxImm((const f32(*)[4])identity__Q22ml6CMat34, GX_TEXMTX0, (GXMtxType)1);
 
-        // Setup vertex descriptors
         GXClearVtxDesc();
         GXSetVtxDesc(GX_VA_POS, GX_DIRECT);
         GXSetVtxDesc(GX_VA_TEX0, GX_DIRECT);
-        GXLoadPosMtxImm((const float(*)[4])&identity__Q22ml6CMat34, GX_PNMTX0);
+        GXLoadPosMtxImm((const f32(*)[4])identity__Q22ml6CMat34, GX_PNMTX0);
         GXSetCurrentMtx(GX_PNMTX0);
 
-        // Setup vertex format
-        GXSetVtxAttrFmt(GX_VTXFMT0, GX_VA_POS, GX_POS_XY, GX_S16, 0);
-        GXSetVtxAttrFmt(GX_VTXFMT0, GX_VA_TEX0, GX_TEX_ST, GX_F32, 0);
+        GXSetVtxAttrFmt(GX_VTXFMT0, GX_VA_POS, (GXCompCnt)1, (GXCompType)3, 0);
+        GXSetVtxAttrFmt(GX_VTXFMT0, GX_VA_TEX0, (GXCompCnt)1, (GXCompType)4, 0);
 
-        // Draw textured quad (GX_QUADS = 0x98)
-        GXBegin(GX_QUADS, GX_VTXFMT0, 4);
+        // Retail GX_QUADS is 0x98 (vendored enum differs)
+        GXBegin((GXPrimitive)0x98, GX_VTXFMT0, 4);
 
-        s16 x = (s16)cur->mTexWidth;
-        s16 y = (s16)cur->mTexHeight;
-        s16 x2 = (s16)cur->mTexWidth;
-        s16 y2 = (s16)cur->mTexHeight;
+        GXPosition3s16(rect.mPos.x, rect.mPos.y, 0);
+        GXTexCoord1f32(lbl_eu_8066A4F0);
+        GXTexCoord1f32(lbl_eu_8066A4F0);
 
-        // Vertex 0: (0, 0)
-        GXPosition2s16(0, 0);
-        GXTexCoord2f32(lbl_eu_8066A4F0, lbl_eu_8066A4F0);
+        GXPosition3s16(rect.mPos.x + rect.mSize.x, rect.mPos.y, 0);
+        GXTexCoord1f32(lbl_eu_8066A4F4);
+        GXTexCoord1f32(lbl_eu_8066A4F0);
 
-        // Vertex 1: (width, 0)
-        GXPosition2s16(x2, 0);
-        GXTexCoord2f32(lbl_eu_8066A4F4, lbl_eu_8066A4F0);
+        GXPosition3s16(rect.mPos.x, rect.mPos.y + rect.mSize.y, 0);
+        GXTexCoord1f32(lbl_eu_8066A4F0);
+        GXTexCoord1f32(lbl_eu_8066A4F4);
 
-        // Vertex 2: (width, height)
-        GXPosition2s16(x2, y2);
-        GXTexCoord2f32(lbl_eu_8066A4F4, lbl_eu_8066A4F4);
+        GXPosition3s16(rect.mPos.x + rect.mSize.x, rect.mPos.y + rect.mSize.y, 0);
+        GXTexCoord1f32(lbl_eu_8066A4F4);
+        GXTexCoord1f32(lbl_eu_8066A4F4);
 
-        // Vertex 3: (0, height)
-        GXPosition2s16(0, y2);
-        GXTexCoord2f32(lbl_eu_8066A4F0, lbl_eu_8066A4F4);
-
-        // Flush and render
+        // Flush the quad, then draw the tint overlay on top
         func_8044BE38__8CGXCacheFv(cacheInstance__9CDeviceGX);
         func_80442DA8__9CViewRootFv();
 
-        // Draw overlay rectangle with color
         CDrawGX drawGx;
         drawGx.func_80456570(0);
         drawGx.func_8045657C(0);
-        drawGx.setCol((const CCol4&)cur->mColor[0]);
-        drawGx.renderRect((const CRect16&)cur->mTexWidth);
+        drawGx.setCol((const CCol4&)entry->mColor[0]);
+        drawGx.renderRect(rect);
 
-        // Finalize
         func_8044BE38__8CGXCacheFv(cacheInstance__9CDeviceGX);
         func_80442DA8__9CViewRootFv();
-        drawGx.~CDrawGX();
+        // (destructor runs automatically at scope exit)
 
         return true;
     }
@@ -404,127 +448,131 @@ extern "C" bool func_8045A8C8__16CLibCriMoviePlayFv(int id) {
 // CLibCriMoviePlay::func_8045AE84()
 // Updates texture buffers for all active movie entries
 // ============================================================================
-extern "C" void func_8045AE84__16CLibCriMoviePlayFv(CLibCriMoviePlay* self) {
-    MovieEntry* entry = &self->mEntries[0];
+void CLibCriMoviePlay::func_8045AE84() {
+    MovieEntry* entry = mEntries;
 
-    for (int i = 0; i < 4; i++) {
-        if (entry->mPlyHandle == nullptr) goto next;
-        if (!entry->mActive) goto next;
+    for (u32 i = 0; i < 4; i++) {
+        if (entry->mPlyHandle != nullptr) {
+            if (entry->mActive) {
+                // Current frame info block from CRI ([0] = frame tag)
+                u32 frameData[0x28];
+                mwPlyGetCurFrm(entry->mPlyHandle, frameData);
 
-        // Get current frame data
-        u32 frameData[8];
-        mwPlyGetCurFrm(entry->mPlyHandle, frameData);
+                if (frameData[0] != 0) {
+                    // Texture setup needed while either plane buffer is missing
+                    if (entry->mTexBufCbCr == nullptr || entry->mTexBufY == nullptr) {
+                        // Derive texture dimensions: half-resolution planes,
+                        // each dimension rounded up to a multiple of 32.
+                        s32 wRaw = frameData[3];
+                        s32 wRem = (wRaw / 2) & 0x1F;
+                        s32 wHalf = wRaw / 2;
+                        if (wRem != 0) {
+                            wHalf = wHalf + 0x20 - wRem;
+                        }
+                        u32 tRem = (wHalf * 2) & 0x1F;
+                        u32 texW = (wHalf * 2) & 0x1FFFF;
+                        u32 cw = wHalf & 0xFFFF;
+                        u32 ch = ((s32)frameData[4] / 2) & 0xFFFF;
+                        if (tRem != 0) {
+                            texW = texW + 0x20 - tRem;
+                        }
 
-        if (frameData[0] == 0) goto next;
+                        entry->mTexWidth = texW;
+                        entry->mTexHeight = frameData[4];
 
-        // Check if textures need setup
-        if (entry->mTexBufY != nullptr && entry->mTexBufCbCr != nullptr) {
-            goto skipAlloc;
-        }
+                        if (entry->mTexBufY == nullptr) {
+                            entry->mTexBufYSize = GXGetTexBufferSize(
+                                entry->mTexWidth, entry->mTexHeight,
+                                (u32)1, GX_FALSE, (u8)0);
 
-        // Calculate texture dimensions from frame data
-        int width_raw = (int)frameData[3];
-        int width_half = (width_raw + (width_raw >> 31)) >> 1;
-        int width_field = (width_half << 1);
-        if ((width_field & 0x1F) != 0) {
-            width_field = (width_field + 0x20) - (width_field & 0x1F);
-        }
-        u16 texWidth = (u16)(width_half & 0xFFFF);
-        u16 texWidthScaled = (u16)(width_field & 0xFFFF);
+                            if (entry->mAction == 0) {
+                                entry->mTexBufY = MemManager::allocate_tail(
+                                    (u32)entry->mAllocHandle, entry->mTexBufYSize, 0x20);
+                            } else if (entry->mAction == 3) {
+                                MemManager::setOptimalAlloc(true);
+                                entry->mTexBufY = MemManager::allocate_head(
+                                    entry->mAllocHandle2, entry->mTexBufYSize, 0x20);
+                                if (entry->mTexBufY == nullptr) {
+                                    entry->mTexBufY = MemManager::allocate_head(
+                                        MemManager::getHandleMEM2(), entry->mTexBufYSize, 0x20);
+                                }
+                                MemManager::setOptimalAlloc(false);
+                            } else {
+                                // Fixed address mode: park the Y plane at the
+                                // pre-set address, aligned up to 32 bytes.
+                                u32 addr = entry->mField100;
+                                if (addr != 0) {
+                                    u32 rem = addr & 0x1F;
+                                    if (rem != 0) {
+                                        addr = addr + 0x20 - rem;
+                                    }
+                                    entry->mTexBufY = (void*)addr;
+                                }
+                            }
 
-        int height_raw = (int)frameData[4];
-        int height_half = (height_raw + (height_raw >> 31)) >> 1;
-        int height_field = (height_half << 1);
-        if ((height_field & 0x1F) != 0) {
-            height_field = (height_field + 0x20) - (height_field & 0x1F);
-        }
-        u16 texHeight = (u16)(height_half & 0xFFFF);
-        u16 texHeightScaled = (u16)(height_field & 0xFFFF);
+                            // Initialize Y texture object
+                            GXInitTexObj(&entry->mTexObjY, entry->mTexBufY,
+                                         entry->mTexWidth, entry->mTexHeight,
+                                         (GXTexFmt)1, (GXTexWrapMode)0, (GXTexWrapMode)0, GX_FALSE);
+                            float lodZ = lbl_eu_8066A4F0;
+                            GXInitTexObjLOD(&entry->mTexObjY, (GXTexFilter)0, (GXTexFilter)0,
+                                            lodZ, lodZ, lodZ, (GXBool)0, (GXBool)0, (GXAnisotropy)0);
+                        }
 
-        entry->mTexWidth = texWidthScaled;
-        entry->mTexHeight = height_raw;
+                        if (entry->mTexBufCbCr == nullptr) {
+                            entry->mTexBufCbCrSize = GXGetTexBufferSize(
+                                cw, ch, (u32)3, GX_FALSE, (u8)0);
 
-        if (entry->mTexBufY == nullptr) {
-            // Allocate Y texture buffer
-            u32 yBufSize = GXGetTexBufferSize(texWidthScaled, height_raw,
-                                               GX_TF_RGBA8, GX_FALSE, (u8)0);
-            entry->mTexBufYSize = yBufSize;
+                            if (entry->mAction == 0) {
+                                entry->mTexBufCbCr = MemManager::allocate_tail(
+                                    (u32)entry->mAllocHandle, entry->mTexBufCbCrSize, 0x20);
+                            } else if (entry->mAction == 3) {
+                                MemManager::setOptimalAlloc(true);
+                                entry->mTexBufCbCr = MemManager::allocate_head(
+                                    entry->mAllocHandle2, entry->mTexBufCbCrSize, 0x20);
+                                if (entry->mTexBufCbCr == nullptr) {
+                                    entry->mTexBufCbCr = MemManager::allocate_head(
+                                        MemManager::getHandleMEM2(), entry->mTexBufCbCrSize, 0x20);
+                                }
+                                MemManager::setOptimalAlloc(false);
+                            } else {
+                                // CbCr plane follows the Y plane, aligned up to 32.
+                                if (entry->mTexBufY != nullptr) {
+                                    u32 addr = (u32)entry->mTexBufY + entry->mTexBufYSize;
+                                    u32 rem = addr & 0x1F;
+                                    if (rem != 0) {
+                                        addr = addr + 0x20 - rem;
+                                    }
+                                    entry->mTexBufCbCr = (void*)addr;
+                                }
+                            }
 
-            if (entry->mAction == 0) {
-                void* buf = MemManager::allocate_tail(
-                    (u32)entry->mAllocHandle, yBufSize, 0x20);
-                entry->mTexBufY = buf;
-            } else if (entry->mAction == 3) {
-                func_80434A4C__Q23mtl10MemManagerFb(true);
-                void* buf = MemManager::allocate_head(
-                    entry->mAllocHandle2, yBufSize, 0x20);
-                if (buf == nullptr) {
-                    mtl::ALLOC_HANDLE mem2 = MemManager::getHandleMEM2();
-                    buf = MemManager::allocate_head(mem2, yBufSize, 0x20);
-                }
-                entry->mTexBufY = buf;
-                func_80434A4C__Q23mtl10MemManagerFb(false);
-            } else {
-                if (entry->mField100 != 0) {
-                    u32 aligned = entry->mField100;
-                    if ((aligned & 0x1F) != 0) {
-                        aligned = (aligned + 0x20) - (aligned & 0x1F);
+                            // Initialize CbCr texture object
+                            GXInitTexObj(&entry->mTexObjCbCr, entry->mTexBufCbCr,
+                                         cw, ch, (GXTexFmt)3,
+                                         (GXTexWrapMode)0, (GXTexWrapMode)0, GX_FALSE);
+                            float lodZ = lbl_eu_8066A4F0;
+                            GXInitTexObjLOD(&entry->mTexObjCbCr, (GXTexFilter)0, (GXTexFilter)0,
+                                            lodZ, lodZ, lodZ, (GXBool)0, (GXBool)0, (GXAnisotropy)0);
+                        }
                     }
-                    entry->mTexBufY = (void*)aligned;
+
+                    // Convert and upload the frame into both planes
+                    if (entry->mTexBufCbCr != nullptr) {
+                        if (entry->mTexBufY != nullptr) {
+                            mwPlyFxSetOutBufPitchHeight(entry->mPlyHandle,
+                                                        entry->mTexWidth, entry->mTexHeight);
+                            mwPlyFxCnvFrmY84C44(entry->mPlyHandle, frameData,
+                                                entry->mTexBufY, entry->mTexBufCbCr);
+                            DCFlushRangeNoSync(entry->mTexBufY, entry->mTexBufYSize);
+                            DCFlushRangeNoSync(entry->mTexBufCbCr, entry->mTexBufCbCrSize);
+                            mwPlyRelCurFrm(entry->mPlyHandle);
+                        }
+                    }
                 }
             }
-
-            // Initialize Y texture object
-            GXInitTexObj(&entry->mTexObjY, entry->mTexBufY, texWidthScaled, height_raw, GX_TF_RGBA8, GX_CLAMP, GX_CLAMP, GX_FALSE);
-            GXInitTexObjLOD(&entry->mTexObjY, GX_LINEAR, GX_LINEAR, lbl_eu_8066A4F0, lbl_eu_8066A4F0, lbl_eu_8066A4F0, (GXBool)0, (GXBool)0, (GXAnisotropy)0);
         }
 
-skipAlloc:
-        if (entry->mTexBufY != nullptr) {
-            // Allocate CbCr texture buffer
-            u32 cbcrBufSize = GXGetTexBufferSize(texWidth, texHeight,
-                                                  (GXTexFmt)10 /* GX_TF_YUV422 (not in vendored GXTypes.h) */, GX_FALSE, (u8)0);
-            entry->mTexBufCbCrSize = cbcrBufSize;
-
-            if (entry->mAction == 0) {
-                void* buf = MemManager::allocate_tail(
-                    (u32)entry->mAllocHandle, cbcrBufSize, 0x20);
-                entry->mTexBufCbCr = buf;
-            } else if (entry->mAction == 3) {
-                func_80434A4C__Q23mtl10MemManagerFb(true);
-                void* buf = MemManager::allocate_head(entry->mAllocHandle2, cbcrBufSize, 0x20);
-                if (buf == nullptr) {
-                    mtl::ALLOC_HANDLE mem2 = MemManager::getHandleMEM2();
-                    buf = MemManager::allocate_head(mem2, cbcrBufSize, 0x20);
-                }
-                entry->mTexBufCbCr = buf;
-                func_80434A4C__Q23mtl10MemManagerFb(false);
-            } else {
-                // Use Y buffer end, aligned
-                u32 addr = (u32)entry->mTexBufY + entry->mTexBufYSize;
-                if ((addr & 0x1F) != 0) {
-                    addr = (addr + 0x20) - (addr & 0x1F);
-                }
-                entry->mTexBufCbCr = (void*)addr;
-            }
-
-            // Initialize CbCr texture object
-            GXInitTexObj(&entry->mTexObjCbCr, entry->mTexBufCbCr, texWidth, texHeight, (GXTexFmt)10 /* GX_TF_YUV422 (not in vendored GXTypes.h) */, GX_CLAMP, GX_CLAMP, GX_FALSE);
-            GXInitTexObjLOD(&entry->mTexObjCbCr, GX_LINEAR, GX_LINEAR, lbl_eu_8066A4F0, lbl_eu_8066A4F0, lbl_eu_8066A4F0, (GXBool)0, (GXBool)0, (GXAnisotropy)0);
-        }
-
-        // Convert and upload frame data
-        if (entry->mTexBufCbCr != nullptr && entry->mTexBufY != nullptr) {
-            mwPlyFxSetOutBufPitchHeight(entry->mPlyHandle,
-                                        entry->mTexWidth, entry->mTexHeight);
-            mwPlyFxCnvFrmY84C44(entry->mPlyHandle, frameData,
-                                entry->mTexBufY, entry->mTexBufCbCr);
-            DCFlushRangeNoSync(entry->mTexBufY, entry->mTexBufYSize);
-            DCFlushRangeNoSync(entry->mTexBufCbCr, entry->mTexBufCbCrSize);
-            mwPlyRelCurFrm(entry->mPlyHandle);
-        }
-
-next:
         entry++;
     }
 }
@@ -599,12 +647,18 @@ void CLibCriMoviePlay::OnPauseTrigger(bool pause) {
 // Main update loop - processes movie playback state
 // ============================================================================
 void CLibCriMoviePlay::wkUpdate() {
+    const char* str;
+    const char* table = lbl_eu_8052301C;
     bool hasActive = false;
     MovieEntry* entry = &mEntries[0];
+    u32 i;
+    volatile u32 statusLen;
+    char statusBuf[0x40];
 
-    for (int i = 0; i < 4; i++) {
+    for (i = 0; i < 4; i++) {
         if (entry->mPlyHandle == nullptr) {
-            // Clean up freed entry
+            // Entry not in use - free its saved texture buffers under the
+            // memory-manager lock.
             func_80434A4C__Q23mtl10MemManagerFb(false);
             if (entry->mSavedTexBufY != nullptr) {
                 MemManager::deallocate(entry->mSavedTexBufY);
@@ -628,42 +682,45 @@ void CLibCriMoviePlay::wkUpdate() {
             continue;
         }
 
-        // Active playback - update volume
+        // Active playback - poll output volume
         int volume = mwPlyGetOutVol(entry->mPlyHandle);
 
         // Build status string for debug
-        char statusBuf[0x40];
-        volatile s32 statusLen = 0;
+        statusLen = 0;
         statusBuf[0] = '\0';
 
         switch (entry->mPlaybackState) {
         case 0:
-            statusLen = strlen(lbl_eu_8052301C);
-            strcpy(statusBuf, lbl_eu_8052301C);
+            str = table;
+            statusLen = strlen(str);
+            strcpy(statusBuf, str);
             break;
         case 1:
-            statusLen = strlen(lbl_eu_8052301C + 7);
-            strcpy(statusBuf, lbl_eu_8052301C + 7);
+            str = table + 7;
+            statusLen = strlen(str);
+            strcpy(statusBuf, str);
             hasActive = true;
             break;
         case 2:
-            statusLen = strlen(lbl_eu_8052301C + 0x12);
-            strcpy(statusBuf, lbl_eu_8052301C + 0x12);
+            str = table + 0x12;
+            statusLen = strlen(str);
+            strcpy(statusBuf, str);
             break;
         case 3:
-            statusLen = strlen(lbl_eu_8052301C + 0x19);
-            strcpy(statusBuf, lbl_eu_8052301C + 0x19);
+            str = table + 0x19;
+            statusLen = strlen(str);
+            strcpy(statusBuf, str);
             break;
         case 4:
-            statusLen = strlen(lbl_eu_8052301C + 0x22);
-            strcpy(statusBuf, lbl_eu_8052301C + 0x22);
+            str = table + 0x22;
+            statusLen = strlen(str);
+            strcpy(statusBuf, str);
             break;
         }
 
-        // Apply volume based on flow control
+        // Mute while a flow event is active (-960 selected via mask)
         bool flowActive = hasFlow__12CWorkControlFv();
-        int volAdjust = flowActive ? -960 : 0;
-        mwPlySetOutVol(entry->mPlyHandle, volAdjust);
+        mwPlySetOutVol(entry->mPlyHandle, flowActive ? -960 : 0);
     }
 
     mPlaybackState = hasActive;
@@ -694,36 +751,43 @@ bool CLibCriMoviePlay::wkStandbyLogin() {
 // CLibCriMoviePlay::wkStandbyLogout()
 // ============================================================================
 bool CLibCriMoviePlay::wkStandbyLogout() {
-    // Check if any entries are still active
-    CWorkThread* child = mChildren.front();
-    if (child->mChildren.front() == child) {
-        // Check all entries for active handles
-        bool anyActive = false;
-        MovieEntry* entry = &sInstance->mEntries[0];
-        for (int i = 0; i < 4; i++) {
+    // Refuse to log out unless this thread has no children left
+    if (mChildren.begin() == mChildren.end()) {
+        // A movie is still active if any entry of the singleton holds a
+        // player handle (no singleton means nothing is active).
+        bool anyActive;
+        if (sInstance == nullptr) {
+            anyActive = false;
+        } else {
+            MovieEntry* entry = sInstance->mEntries;
             if (entry->mPlyHandle != nullptr) {
                 anyActive = true;
-                break;
+            } else if (entry[1].mPlyHandle != nullptr) {
+                anyActive = true;
+            } else if (entry[2].mPlyHandle != nullptr) {
+                anyActive = true;
+            } else {
+                anyActive = false;
             }
-            entry++;
         }
 
         if (!anyActive) {
-            // Clean up all entries
+            // Release saved texture buffers of all four local entries under
+            // the memory-manager lock.
             MovieEntry* cur = &mEntries[0];
-            for (int i = 0; i < 4; i++) {
-                func_80434A4C__Q23mtl10MemManagerFb(false);
-                if (cur->mSavedTexBufY != nullptr) {
-                    MemManager::deallocate(cur->mSavedTexBufY);
-                    cur->mSavedTexBufY = nullptr;
-                }
-                if (cur->mSavedTexBufCbCr != nullptr) {
-                    MemManager::deallocate(cur->mSavedTexBufCbCr);
-                    cur->mSavedTexBufCbCr = nullptr;
-                }
-                func_80434A4C__Q23mtl10MemManagerFb(true);
-                cur++;
+        for (int i = 0; i < 4; i++) {
+            func_80434A4C__Q23mtl10MemManagerFb(false);
+            if (cur->mSavedTexBufY != nullptr) {
+                MemManager::deallocate(cur->mSavedTexBufY);
+                cur->mSavedTexBufY = nullptr;
             }
+            if (cur->mSavedTexBufCbCr != nullptr) {
+                MemManager::deallocate(cur->mSavedTexBufCbCr);
+                cur->mSavedTexBufCbCr = nullptr;
+            }
+            func_80434A4C__Q23mtl10MemManagerFb(true);
+            cur++;
+        }
 
             return CWorkThread::wkStandbyLogout();
         }
@@ -738,7 +802,7 @@ bool CLibCriMoviePlay::wkStandbyLogout() {
 // ============================================================================
 void CLibCriMoviePlay::viBeginFrame() {
     // Called every video frame - update movie textures
-    func_8045AE84__16CLibCriMoviePlayFv(this);
+    func_8045AE84();
 }
 
 // ============================================================================
@@ -748,73 +812,44 @@ extern "C" {
     // Forward declarations (definitions below, in retail order)
     void func_8045A54C__16CLibCriMoviePlayFv(MovieEntry* entry, int flags);
 
-    extern "C" void __ct__11CWorkThreadFPCcP11CWorkThreadi(
-        CWorkThread*, const char*, CWorkThread*, int);
-    extern "C" void __ct__11CDeviceVICbFv(void*);
-
-    void* __ct__CLibCriMoviePlay(void* self, const char* pName,
-                                 CWorkThread* pParent) {
-        CLibCriMoviePlay* const this_ = static_cast<CLibCriMoviePlay*>(self);
-
-        // Base constructors
-        __ct__11CWorkThreadFPCcP11CWorkThreadi(this_, pName, pParent, 0);
-        __ct__11CDeviceVICbFv((char*)this_ + 0x1C4);
-
-        // Set vtables
-        *(u32*)this_ = (u32)&lbl_eu_8056CF48;         // main vtable
-        *(u32*)((u8*)this_ + 0x1C4) = (u32)&lbl_eu_8056CF48 + 0xA0; // CDeviceVICb vtable
-
-        // Initialize entry fields
-        this_->mEntries[0].mActive = false;
-        this_->mEntries[0].mFilenameLen = 0;
-
-        MovieEntry* entry = &this_->mEntries[1];
-        for (int i = 1; i < 4; i++) {
-            entry->mActive = false;
-            entry->mFilenameLen = 0;
-            entry++;
-        }
-
-        // Initialize fields
-        this_->mStreamIdCounter = 0;
-        this_->mPlaybackState = false;
-        this_->mPauseCounter = 0;
-
-        // Store singleton
-        sInstance = this_;
-
-        // Set thread type
-        this_->mType = (CWorkThread::ThreadType)0x10; // THREAD_CLIBCRIMOVIEPLAY
-
-        // Clear entries and movie state
-        memset(&this_->mEntries[0], 0, 0x490); // 4 * 0x124
-
-        // Initialize entry flags
-        this_->mEntries[0].mFlags = 0;
-        this_->mEntries[1].mFlags = 1;
-        this_->mEntries[2].mFlags = 2;
-        this_->mEntries[3].mFlags = 3;
-
-        return this_;
-    }
 
 // Finds the movie entry whose player ID matches id (id == -1 matches none).
+// The singleton pointer is tested twice (duplicated guard) so MWCC emits the
+// retail cmp + beq/bne pair with the null-assignment block in between.
+
+// Finds the movie entry whose player ID matches id (id == -1 matches none).
+// The search peeks entry[1] then advances, matching the retail load schedule
+// (constant 0x220 offset per stage with the stride addi hoisted above cmpl).
 
     void func_8045A48C__16CLibCriMoviePlayFv(int id) {
-        MovieEntry* entry = nullptr;
-        if (sInstance != nullptr && (u32)id + 0x10000 != 0xFFFF) {
-            entry = &sInstance->mEntries[0];
-            if (entry->mPlayerId != (u32)id) {
-                if ((++entry)->mPlayerId != (u32)id) {
-                    if ((++entry)->mPlayerId != (u32)id) {
-                        if ((++entry)->mPlayerId != (u32)id) {
-                            entry = nullptr;
-                        }
-                    }
-                }
-            }
+        MovieEntry* entry;
+
+        if (sInstance == nullptr) {
+            return;
         }
 
+        if ((u32)id + 0x10000 == 0xFFFF) {
+            entry = nullptr;
+        } else {
+            entry = &sInstance->mEntries[0];
+            if (entry->mPlayerId == (u32)id) goto stop;
+            if (entry[1].mPlayerId == (u32)id) {
+                entry++;
+                goto stop;
+            }
+            entry++;
+            if (entry[1].mPlayerId == (u32)id) {
+                entry++;
+                goto stop;
+            }
+            entry++;
+            if (entry[1].mPlayerId == (u32)id) {
+                entry++;
+                goto stop;
+            }
+            entry = nullptr;
+        }
+stop:
         if (entry != nullptr) {
             mwPlyStop(entry->mPlyHandle);
             func_8045A54C__16CLibCriMoviePlayFv(entry, 0);
@@ -861,54 +896,66 @@ extern "C" {
     }
 
     // Returns true if any active movie matches id (id == -1 matches any).
-    bool func_8045A644__16CLibCriMoviePlayFv(int id) {
+    bool func_8045A644__16CLibCriMoviePlayFv(u32 id) {
         if (sInstance == nullptr) return false;
 
+        MovieEntry* cur = &sInstance->mEntries[0];
         for (int i = 0; i < 4; i++) {
-            const MovieEntry& entry = sInstance->mEntries[i];
-            const void* handle = entry.mPlyHandle;
-            if (handle != nullptr &&
-                (entry.mPlayerId == (u32)id || (u32)id + 0x10000 == 0xFFFF)) {
+            if (cur->mPlyHandle != nullptr &&
+                (cur->mPlayerId == id || id + 0x10000 == 0xFFFF)) {
                 return true;
             }
+            cur++;
         }
 
         return false;
     }
 
+    // Clears the global-pause flag on the movie matching id, then propagates
+    // the resulting pause state to every active entry (the matched entry's
+    // pause-override flag is fanned out to all entries before evaluating the
+    // per-entry pause conditions).
     void func_8045A708__16CLibCriMoviePlayFv(int id) {
-        if (sInstance == nullptr) return;
+        MovieEntry* entry;
 
-        // Clear the global pause flag on the movie matching id.
-        MovieEntry* entry = &sInstance->mEntries[0];
-        for (int i = 0; i < 4; i++) {
-            if (entry->mPlyHandle != nullptr && entry->mPlayerId == (u32)id) {
-                if (!entry->mGlobalPause) return;
+        if (sInstance == nullptr) {
+            return;
+        }
 
+        entry = &sInstance->mEntries[0];
+        for (int i = 0; i < 4; i++, entry++) {
+            if (entry->mPlyHandle != nullptr && entry->mPlayerId == (u32)id &&
+                entry->mGlobalPause) {
                 entry->mGlobalPause = false;
                 bool overrideState = entry->mPauseOverride;
 
+                if (sInstance == nullptr) {
+                    return;
+                }
+
+                u32 j;
                 MovieEntry* other = &sInstance->mEntries[0];
-                for (int j = 0; j < 4; j++) {
-                    if (other->mPlyHandle != nullptr) {
-                        other->mPauseOverride = overrideState;
-                        int pa = 0;
-                        if (overrideState) {
-                            pa = 1;
-                        }
-                        if (other->mGlobalPause) {
-                            pa = 1;
-                        }
-                        if (sInstance->mPauseCounter != 0) {
-                            pa = 1;
-                        }
-                        mwPlyPause(other->mPlyHandle, pa);
+                for (j = 0; j < 4; j++) {
+                    if (other->mPlyHandle == nullptr) {
+                        goto nextOther;
                     }
+                    other->mPauseOverride = overrideState;
+                    // Reloaded ahead of the pause tests so the call argument
+                    // sits in r3 before the flag branches.
+                    void* ply = other->mPlyHandle;
+                    int pa = 0;
+                    if (!overrideState && !other->mGlobalPause &&
+                        sInstance->mPauseCounter == 0) {
+                        // no pause requested
+                    } else {
+                        pa = 1;
+                    }
+                    mwPlyPause(ply, pa);
+                nextOther:
                     other++;
                 }
                 return;
             }
-            entry++;
         }
     }
 
@@ -933,47 +980,49 @@ extern "C" {
     extern "C" void wkUpdate__16CLibCriMoviePlayFv();
     extern "C" bool wkStandbyLogout__16CLibCriMoviePlayFv();
 
-    void func_8045B1DC__16CLibCriMoviePlayFv(CLibCriMoviePlay* self) {
-        // Empty
-    }
+    void func_8045B1DC__16CLibCriMoviePlayFv(CLibCriMoviePlay* self);
 
-    // Sets the pause override flag on the movie matching id.
+    // Sets the pause override flag on the movie matching id (id == -1
+    // matches none). The player handle is loaded before evaluating the pause
+    // conditions so the call argument is ready ahead of the branches.
+    // Sets the pause override flag on the movie matching id (id == -1
+    // matches none).
     void func_8045B310__16CLibCriMoviePlayFv(bool pause, u32 id) {
         if (sInstance == nullptr) return;
 
-        MovieEntry* entry = &sInstance->mEntries[0];
         u32 i;
+        MovieEntry* entry = &sInstance->mEntries[0];
         for (i = 0; i < 4; i++) {
-            if (entry->mPlyHandle != nullptr) {
-                if (entry->mPlayerId == id || (u32)id + 0x10000 == 0xFFFF) {
-                    entry->mPauseOverride = pause;
-                    int pa = 0;
-                    const int ovr = pause;
-                    if (ovr != 0) {
-                        pa = 1;
-                    }
-                    if (entry->mGlobalPause) {
-                        pa = 1;
-                    }
-                    if (sInstance->mPauseCounter != 0) {
-                        pa = 1;
-                    }
-                    mwPlyPause(entry->mPlyHandle, pa);
+            if (entry->mPlyHandle != nullptr &&
+                (entry->mPlayerId == id || (u32)id + 0x10000 == 0xFFFF)) {
+                entry->mPauseOverride = pause;
+                int pa = 0;
+                if (!pause && !entry->mGlobalPause &&
+                    sInstance->mPauseCounter == 0) {
+                    // nothing to pause
+                } else {
+                    pa = 1;
                 }
+                mwPlyPause(entry->mPlyHandle, pa);
             }
             entry++;
         }
     }
 
-    // Virtual thunks (adjust this pointer by -0x1C4)
-    void func_8045B3D4__16CLibCriMoviePlayFv(CLibCriMoviePlay* self) {
-        // Thunk for CDeviceVICb::viBeginFrame
-        ((CLibCriMoviePlay*)((u8*)self - 0x1C4))->func_8045B1DC();
-    }
+    // Virtual thunks: func_8045B3D4 (viBeginFrame) is the subi+b thunk
+    // defined near the bottom of this file (thunk_452_dt/thunk_456 pattern);
+    // a C++ body gets erased because a tail call to the empty
+    // func_8045B1DC is indistinguishable from a plain return.
 
     void func_8045B3DC__16CLibCriMoviePlayFv(CLibCriMoviePlay* self) {
         // Thunk for CDeviceVICb update
-        func_8045AE84__16CLibCriMoviePlayFv((CLibCriMoviePlay*)((u8*)self - 0x1C4));
+        ((CLibCriMoviePlay*)((u8*)self - 0x1C4))->func_8045AE84();
+    }
+
+    // Defined below its callers so the inliner cannot fold the empty body
+    // into the func_8045B3D4 thunk.
+    void func_8045B1DC__16CLibCriMoviePlayFv(CLibCriMoviePlay* self) {
+        // Empty
     }
 
 }
@@ -1000,6 +1049,17 @@ extern "C" void __dt__16CLibCriMoviePlayFv();
 asm void thunk_452_dt(void) {
     nofralloc
     b __dt__16CLibCriMoviePlayFv
+}
+
+// CDeviceVICb viBeginFrame thunk (retail .text @0x8045F400): adjust this by
+// -0x1C4 and tail-branch to func_8045B1DC. Written as an asm thunk (same
+// isolated-tail exception as thunk_452_dt / CDeviceVI thunk_456): any C++
+// body is optimized away since tail-calling the empty func_8045B1DC equals
+// returning. Named literally so the symbol carries the retail mangled name.
+asm void func_8045B3D4__16CLibCriMoviePlayFv(void) {
+    nofralloc
+    subi r3, r3, 0x1C4
+    b func_8045B1DC__16CLibCriMoviePlayFv
 }
 
 // ===== Vtable + RTTI + locator (dissolved monolibdata2) =====
@@ -1042,6 +1102,7 @@ extern "C" int WorkEvent31__10IWorkEventFv();
 extern "C" void wkRender__11CWorkThreadFv();
 extern "C" void wkRenderAfter__11CWorkThreadFv();
 extern "C" bool wkStandbyLogin__16CLibCriMoviePlayFv();
+extern "C" void func_8045AE84__16CLibCriMoviePlayFv();
 extern "C" void wkStandbyExceptionRetry__11CWorkThreadFUl(unsigned int);
 extern "C" void viBeginFrame__11CDeviceVICbFv();
 extern "C" u32 lbl_eu_80663618[];   // type_info vtable (foreign)

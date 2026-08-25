@@ -66,7 +66,6 @@ extern "C" {
     s32 func_800B1C40();
     u32 func_80061FFC(void);
     bool func_800865E8__Q22cf13CfGameManagerFv(void);
-    void func_801BFE8C(int, int, int);
     void cancel__11CDeviceFileFP11CFileHandle(void*);
     void waitForDrawDone__9CDeviceVIFv(void);
     void* allocate_array__Q23mtl10MemManagerFUlUl(u32, u32);
@@ -691,19 +690,27 @@ extern "C" bool func_800686E4(ResInfoContainer* self, bool param) {
 // func_80068928 (0x68) - search id in [start, end)
 // ============================================================
 void* func_80068928(u8* self, u32 id, int start, int end) {
-    ResEntry* entries = (ResEntry*)((u8*)self + start * 0x3C);
-    int i = start;
-    while (i < end) {
-        if (id == entries->id) goto found;
-        i++;
-        entries++;
+    ResEntry* entry = (ResEntry*)((u8*)self + start * 0x3C);
+    int i;
+    // Counted for-loop with live-out index: MWCC emits subf/mtctr guard +
+    // bdnz (retail). Pointer IV advances first in the header.
+    for (i = start; i < end; entry++, i++) {
+        if (id == entry->id) {
+            goto found;
+        }
     }
     i = -1;
 found:
     // -1 (not found) fails the unsigned <= 0x81 test; a found index must be
-    // within the 0x59..0x81 grid to be addressable.
-    bool ok = (u32)i <= 0x81;
-    return ok ? (u8*)self + i * 0x3C + 4 : 0;
+    // within the grid to be addressable.
+    int flag = 0;
+    if ((u32)i <= 0x81) {
+        flag = 1;
+    }
+    if (flag != 0) {
+        return (u8*)self + i * 0x3C + 4;
+    }
+    return 0;
 }
 
 // ============================================================
@@ -814,14 +821,15 @@ extern "C" void func_80067FE0(u8* self) {
 // Walks the 0x14DC grid (indices 0x59..0x80); entries whose resolved base is
 // a loaded MCA are force-reloaded.
 extern "C" void func_80068078(u8* self) {
+    // Walks the 0x14DC grid (indices 0x59..0x80); entries whose resolved
+    // base is a loaded MCA are force-reloaded.
     ResGridEntry* target = (ResGridEntry*)(self + 0x14E0);
     ResGridEntry* base = (ResGridEntry*)(self + 0x14DC);
-    int i = 0x59;
-    while (i < 0x81) {
+    for (int i = 0x59; i < 0x81; i++) {
         void* r = base->lookup->getResourceBase(target, 0);
         if (r != 0) {
             if (func_800A8BD8(r)) {
-                func_80066788(target, true, true, false);
+                func_80066788(target, 1, 1, 0);
             }
         }
         target++;
@@ -929,51 +937,36 @@ extern "C" void __ct__80066F9C(u8* self) {
 void* __dt___reslist_base_unsigned_short(ResListUS* self, int mode) {
     if (self != NULL) {
         self->vtable = lbl_eu_80526938;
-        {
-            ResListUSNode* cur = self->mHead->next;
-            while (cur != self->mHead) {
-                ResListUSNode* prev = cur;
-                cur = cur->next;
-                prev->next = NULL;
-            }
-            self->mHead->next = self->mHead;
-            self->mHead->prev = self->mHead;
+        // Walk the node chain nulling each next pointer (nodes are
+        // pool-allocated, not freed here), then reset the sentinel.
+        ResListUSNode* node = self->mHead->next;
+        while (node != self->mHead) {
+            ResListUSNode* cur = node;
+            node = cur->next;
+            cur->next = NULL;
         }
+        self->mHead->next = self->mHead;
+        self->mHead->prev = self->mHead;
         if (self->mOwnsList == 0 && self->mList != NULL) {
-            delete[] self->mList;
+            __dla__FPv(self->mList);
             self->mList = NULL;
         }
-    }
-    if (mode > 0) {
-        delete self;
+        if (mode > 0) {
+            __dl__FPv(self);
+        }
     }
     return self;
 }
 
 // reslist<unsigned short> deleting destructor (retail __dt__reslist_unsigned_short).
+// Retail shape = outer null guard around an inlined _reslist_base dtor call
+// (its own null check survives as the dead second beq) plus the delete tail.
 void* __dt__reslist_unsigned_short(ResListUS* self, int mode) {
-    // Doubled null check mirrors retail: MWCC keeps the dead second beq.
     if (self != NULL) {
-        if (self != NULL) {
-            self->vtable = lbl_eu_80526938;
-            {
-                ResListUSNode* cur = self->mHead->next;
-                while (cur != self->mHead) {
-                    ResListUSNode* prev = cur;
-                    cur = cur->next;
-                    prev->next = NULL;
-                }
-                self->mHead->next = self->mHead;
-                self->mHead->prev = self->mHead;
-            }
-            if (self->mOwnsList == 0 && self->mList != NULL) {
-                delete[] self->mList;
-                self->mList = NULL;
-            }
+        __dt___reslist_base_unsigned_short(self, 0);
+        if (mode > 0) {
+            __dl__FPv(self);
         }
-    }
-    if (mode > 0) {
-        delete self;
     }
     return self;
 }

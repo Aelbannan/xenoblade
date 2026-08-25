@@ -346,10 +346,13 @@ u16 func_8006A234(u16* outA, u16* outB) {
 // 60 Hz second (u16 wrap-around range check on the frame counter).
 int func_8006A2E0() {
     int frame = (int)(float)fmod(lbl_eu_80663D94 / lbl_eu_8066623C, lbl_eu_80666240);
-    if ((u16)(frame - 6) <= 11) {
-        return 1;
+    int result = 0;
+    // +0x10000 before -6 keeps MWCC from folding the offset into one addi
+    // (0x10000 does not fit addi), matching retail's addis+subi pair.
+    if ((u16)(frame + 0x10000 - 6) <= 11) {
+        result = 1;
     }
-    return 0;
+    return result;
 }
 
 // Play-time -> frame conversions: fmod the shared second counter against a

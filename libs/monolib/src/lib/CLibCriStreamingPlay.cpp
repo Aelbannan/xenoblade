@@ -281,13 +281,24 @@ extern "C" CLibCriStreamingPlay* __dt__20CLibCriStreamingPlayFv(CLibCriStreaming
 // Retail has no `this`: r3 = filename, r4 = alloc handle, r5 = loop flag,
 // r6 = AFS file id, r7 = AFS subfile id, r8 = force-AHX flag.
 // Returns the stream id, or -1 on failure.
+// The shadow locals are declared in retail's colouring order (first-declared
+// gets the highest callee-saved register): slot=r31 .. forceAhx=r24.
 extern "C" int func_8045B5AC__20CLibCriStreamingPlayFv(const char* filename, int param2, bool loopFlag,
                   int afsId, int afsSubId, bool forceAhx) {
-    if (getFileSize__11CDeviceFileFPCc(filename, 0) < 0) {
+    StreamEntry* slot;
+    int subId = afsSubId;
+    int fileId = afsId;
+    int loop = loopFlag;
+    int handle = param2;
+    const char* file = filename;
+    int found;
+    bool ahx = forceAhx;
+
+    if (getFileSize__11CDeviceFileFPCc(file, 0) < 0) {
         return -1;
     }
 
-    StreamEntry* slot = findFreeSlot();
+    slot = findFreeSlot();
     if (slot == NULL) {
         return -1;
     }
@@ -299,16 +310,20 @@ extern "C" int func_8045B5AC__20CLibCriStreamingPlayFv(const char* filename, int
         slot->flags &= ~0x40;
     }
 
-    strncpy(slot->name, filename, 0x40);
+    strncpy(slot->name, file, 0x40);
 
     // .ahx extension or forced AHX mode selects the AHX decoder.
-    if (strstr(filename, lbl_eu_806637A4) != NULL || forceAhx) {
+    found = 0;
+    if (strstr(file, lbl_eu_806637A4) != NULL || ahx) {
+        found = 1;
+    }
+    if (found != 0) {
         slot->flags |= 0x04;
     } else {
         slot->flags &= ~0x04;
     }
 
-    slot->field_0x0C = (u32)param2;
+    slot->field_0x0C = (u32)handle;
 
     // Streaming buffer size (ch = 2 for stereo, 1 for mono-AHX):
     //   (rate/10000 >> 6) * ch*25000 * 0xBA2F8BA3 >> 32 >> 5 * 6,
@@ -325,7 +340,7 @@ extern "C" int func_8045B5AC__20CLibCriStreamingPlayFv(const char* filename, int
     slot->bufSize = ((d + 0x800) & ~0x7FF) + (u32)((signb + 2) * 24768) + 100;
 
     slot->buffer = reinterpret_cast<u8*>(allocate_tail__Q23mtl10MemManagerFUlUli(
-        (u32)param2, slot->bufSize, 0x20));
+        (u32)handle, slot->bufSize, 0x20));
     if (slot->buffer == NULL) {
         if (slot->adxt != NULL) {
             if (slot->flags & 0x04) {
@@ -363,14 +378,14 @@ extern "C" int func_8045B5AC__20CLibCriStreamingPlayFv(const char* filename, int
     slot->field_0x84 = 0;
     slot->field_0x78 = lbl_eu_8066A508;
 
-    if (loopFlag) {
+    if (loop) {
         slot->flags |= 0x20;
     } else {
         slot->flags &= ~0x20;
     }
 
-    slot->field_0x88 = (u32)afsId;
-    slot->field_0x8C = (u32)afsSubId;
+    slot->field_0x88 = (u32)fileId;
+    slot->field_0x8C = (u32)subId;
 
     // Create the ADX decoder unless this is a preload-only request (0x10).
     if (!(slot->flags & 0x10)) {
@@ -383,10 +398,10 @@ extern "C" int func_8045B5AC__20CLibCriStreamingPlayFv(const char* filename, int
             ADXT_SetSvrFreq(slot->adxt, 0x1e);
         }
 
-        if (afsId >= 0) {
-            ADXT_StartAfs(slot->adxt, afsId, afsSubId);
+        if (fileId >= 0) {
+            ADXT_StartAfs(slot->adxt, fileId, subId);
         } else {
-            ADXT_StartFnameRange(slot->adxt, filename);
+            ADXT_StartFnameRange(slot->adxt, file);
         }
 
         // Mono streams get a centered pan.
@@ -396,7 +411,7 @@ extern "C" int func_8045B5AC__20CLibCriStreamingPlayFv(const char* filename, int
         }
 
         // Block until playback actually starts when requested.
-        if (loopFlag) {
+        if (loop) {
             int waitCount = 100;
             while (true) {
                 if (ADXT_GetStat(slot->adxt) == 3) {
@@ -542,11 +557,23 @@ extern "C" int func_8045BE48__20CLibCriStreamingPlayFv(int id) {
     return entry != NULL ? (int)entry->field_0x84 : 0;
 }
 
-// Compute the ADXT_Pause argument: global pause counter | stream pause bits | flow.
-static int streamPauseArg(u32 flags) {
-    s32 pauseCount = *(s32*)(reinterpret_cast<u8*>(lbl_eu_806656E8) + 0x4B0);
-    return (int)(((u32)(pauseCount != 0) | (flags & 1) | ((flags >> 1) & 1) |
-                  (u32)CWorkControl::hasFlow()));
+// Volume lookup helper used by wkUpdate: retail performs the interpolation
+// with double arithmetic (dbl(hi-lo) * dbl(volDb-lo) / dbl(tbl1-tbl3)).
+static int lookupVolumeDb(int volDb) {
+    const int* table = reinterpret_cast<const int*>(lbl_eu_80523050);
+    int hi;
+    while ((hi = table[0]) >= 0) {
+        if (volDb < hi) {
+            return table[1];
+        }
+        int lo = table[2];
+        if (volDb > lo) {
+            return table[3] + (int)((double)(hi - lo) * (double)(volDb - lo) /
+                                    (double)(table[1] - table[3]));
+        }
+        table += 2;
+    }
+    return -960;
 }
 
 // Release one stream slot: destroy the ADXT handle, free the buffer, mark unused.
@@ -567,38 +594,38 @@ static void releaseSlot(StreamEntry* entry) {
 
 // wkUpdate - Main update loop for all streams
 void CLibCriStreamingPlay::wkUpdate() {
-    const char* statusBase = reinterpret_cast<const char*>(lbl_eu_805230B8);
     const float fadeStep = lbl_eu_8066A520;
-    const float oneVol = lbl_eu_8066A50C;
     const float volPct = lbl_eu_8066A510;
-
     StreamEntry* entry = reinterpret_cast<StreamEntry*>(
         reinterpret_cast<u8*>(this) + 0x1C8);
+    const char* statusBase = reinterpret_cast<const char*>(lbl_eu_805230B8);
 
     for (u32 i = 0; i < 5; i++, entry++) {
         if (entry->adxt == nullptr) continue;
 
-        float fadeTarget = entry->field_0x70;
-        s32 pauseCount = *(s32*)(reinterpret_cast<u8*>(this) + 0x4B0);
-
-        // Fade processing runs only while a fade is pending and nothing is paused.
-        if (fadeTarget != oneVol) {
-            if (pauseCount == 0) {
-                if (!(entry->flags & 1)) {
+        // Fade processing runs only while a fade is pending, nothing is globally
+        // paused, and the stream is not individually paused.
+        if (!(entry->field_0x70 == lbl_eu_8066A50C ||
+              *(s32*)((u8*)this + 0x4B0) != 0 || (entry->flags & 1))) {
             float timer = entry->field_0x74 + fadeStep;
             entry->field_0x74 = timer;
-            float target = entry->field_0x70;
 
-            if (timer >= target) {
-                // Fade finished: latch the target volume and reset the fade time.
+            if (timer >= entry->field_0x70) {
+                // Fade finished: latch the end volume and reset the fade time.
                 entry->field_0x64 = entry->field_0x68;
-                entry->field_0x70 = oneVol;
-                if (entry->field_0x68 == oneVol) {
+                entry->field_0x70 = lbl_eu_8066A50C;
+                if (entry->field_0x68 == lbl_eu_8066A50C) {
+                    // Faded back to neutral: apply the fade-end action.
                     u32 action = entry->field_0x80;
                     if (action == 1) {
                         // Pause in place at fade end.
-                        entry->flags |= 2;
-                        ADXT_Pause(entry->adxt, streamPauseArg(entry->flags));
+                        u32 newFlags = entry->flags | 2;
+                        entry->flags = newFlags;
+                        int pauseArg = CWorkControl::hasFlow();
+                        pauseArg |= (*(s32*)((u8*)lbl_eu_806656E8 + 0x4B0) != 0);
+                        pauseArg |= (int)(newFlags & 1);
+                        pauseArg |= (int)((newFlags >> 1) & 1);
+                        ADXT_Pause(entry->adxt, pauseArg);
                     } else if (action == 2) {
                         // Stop and release the stream.
                         if (entry != nullptr) {
@@ -606,30 +633,41 @@ void CLibCriStreamingPlay::wkUpdate() {
                         }
                         continue;
                     }
+                } else if (entry->flags & 2) {
+                    // Resume a stream parked by a previous fade-end pause.
+                    u32 newFlags = entry->flags & ~2;
+                    entry->flags = newFlags;
+                    int pauseArg = CWorkControl::hasFlow();
+                    pauseArg |= (*(s32*)((u8*)lbl_eu_806656E8 + 0x4B0) != 0);
+                    pauseArg |= (int)(newFlags & 1);
+                    pauseArg |= (int)((newFlags >> 1) & 1);
+                    ADXT_Pause(entry->adxt, pauseArg);
                 }
             } else {
                 // Interpolate the current volume toward the fade target.
-                float t = timer / target;
+                float t = timer / entry->field_0x70;
                 entry->field_0x64 =
                     (entry->field_0x68 - entry->field_0x6C) * t + entry->field_0x6C;
 
-                // Un-pause a stream waiting at the fade end once its volume moved off 1.0.
+                // Un-pause a fading-in stream once its volume moved off the mute point.
                 if (entry->field_0x80 == 1 && (entry->flags & 2) &&
-                    entry->field_0x64 != oneVol) {
-                    entry->flags &= ~2;
-                    ADXT_Pause(entry->adxt, streamPauseArg(entry->flags));
+                    entry->field_0x64 != lbl_eu_8066A50C) {
+                    u32 newFlags = entry->flags & ~2;
+                    entry->flags = newFlags;
+                    int pauseArg = CWorkControl::hasFlow();
+                    pauseArg |= (*(s32*)((u8*)lbl_eu_806656E8 + 0x4B0) != 0);
+                    pauseArg |= (int)(newFlags & 1);
+                    pauseArg |= (int)((newFlags >> 1) & 1);
+                    ADXT_Pause(entry->adxt, pauseArg);
                 }
             }
-                }
-            }
-        }
-
+        }    volumeSection:
         // Output volume = level * mult1 * mult2, forced to 1.0 while a flow is active.
         float vol = entry->field_0x7C * (entry->field_0x64 * entry->field_0x78);
         if (CWorkControl::hasFlow()) {
-            vol = oneVol;
+            vol = lbl_eu_8066A50C;
         }
-        ADXT_SetOutVol(entry->adxt, lookupVolume((int)(volPct * vol)));
+        ADXT_SetOutVol(entry->adxt, lookupVolumeDb((int)(volPct * vol)));
 
         // Playback status handling.
         int stat = ADXT_GetStat(entry->adxt);
@@ -641,40 +679,43 @@ void CLibCriStreamingPlay::wkUpdate() {
             continue;
         }
 
-        if (stat != 0) {
-            // Status-name scratch buffer (result unused; retail discards it too).
-            char statusName[0x40];
-            u32 statusLen;
-            statusName[0] = '\0';
-            statusLen = 0;
+        {
+            // Status-name scratch (result unused; retail discards it too).
+            struct StatusName {
+                char name[0x40];
+                u32 len;
+            } sn;
+            sn.name[0] = '\0';
+            sn.len = 0;
+
             if (stat == 0) {
                 const char* msg = statusBase;
-                statusLen = strlen(msg);
-                strcpy(statusName, msg);
+                sn.len = strlen(msg);
+                strcpy(sn.name, msg);
             } else if (stat == 1) {
                 const char* msg = statusBase + 7;
-                statusLen = strlen(msg);
-                strcpy(statusName, msg);
+                sn.len = strlen(msg);
+                strcpy(sn.name, msg);
             } else if (stat == 2) {
                 const char* msg = statusBase + 30;
-                statusLen = strlen(msg);
-                strcpy(statusName, msg);
+                sn.len = strlen(msg);
+                strcpy(sn.name, msg);
             } else if (stat == 3) {
                 const char* msg = statusBase + 41;
-                statusLen = strlen(msg);
-                strcpy(statusName, msg);
+                sn.len = strlen(msg);
+                strcpy(sn.name, msg);
             } else if (stat == 4) {
                 const char* msg = statusBase + 58;
-                statusLen = strlen(msg);
-                strcpy(statusName, msg);
+                sn.len = strlen(msg);
+                strcpy(sn.name, msg);
             } else if (stat == 5) {
                 const char* msg = statusBase + 71;
-                statusLen = strlen(msg);
-                strcpy(statusName, msg);
+                sn.len = strlen(msg);
+                strcpy(sn.name, msg);
             } else if (stat == 6) {
                 const char* msg = statusBase + 80;
-                statusLen = strlen(msg);
-                strcpy(statusName, msg);
+                sn.len = strlen(msg);
+                strcpy(sn.name, msg);
             }
 
             // Track playback position from the decoded time (ms -> position units).

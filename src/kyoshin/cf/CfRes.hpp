@@ -61,7 +61,7 @@ extern "C" void func_800A8C1C(void* buf, int mode, u32 packed);
 extern "C" int func_800A9024(void* buf);
 extern "C" void func_800A92F8(void* buf, int mode, u32 packed);
 extern "C" int func_80062998(u32* outC, u32 packed, int kind);
-extern "C" void func_800649F4(void* self);
+extern "C" int func_800649F4(void* self);
 extern "C" int CfRes_checkMask_64A08(u8* res, u32 mask);
 
 // Resource-load dispatcher: resolves a packed resource token to a resident
@@ -207,6 +207,16 @@ struct CfResStrTableRec {
     u32 field_10;   // 0x10 - relative offset
     u8 _14[4];      // 0x14 - 0x17
     char str[4];    // 0x18 - name string
+};
+
+// 0x18-stride record of the entry table walked by func_800621F4: field_08 is
+// a path offset relative to the table base, +0xC/+0x10 are output words.
+struct CfResExtRec {
+    u8 _00[8];
+    u32 field_08;
+    u32 field_0C;
+    u32 field_10;
+    u32 field_14;
 };
 
 // Name-key string pointer (in .sdata; points at "DAP1" etc.).

@@ -47,23 +47,32 @@ typedef struct SFXLibState {
 } SFXLibState;
 
 extern SFXLibState lbl_eu_80619C10;
-extern s32 lbl_eu_80619C00[4];   /* root: [0]=init_count, [1]=field_0x04, [2]=default err fn, [3]=field_0x0C */
 extern u32 lbl_eu_8051D178;
 extern u32 lbl_eu_80619C04;
 
+/* Root block at lbl_eu_80619C00: 0x10-byte header followed by the 0x528-byte
+ * library state. SFX_Init zeroes/reinits the library part. */
+typedef struct SFXRoot {
+    s32 init_count;                      /* 0x00 */
+    s32 field_0x04;                      /* 0x04 */
+    void (*default_error_fn)(u32, const char*); /* 0x08 */
+    u32 field_0x0C;                      /* 0x0C */
+    SFXLibState lib;                     /* 0x10 */
+} SFXRoot;
+extern SFXRoot lbl_eu_80619C00;
+
 void SFX_Init(void) {
-    s32* s = lbl_eu_80619C00;
-    if (s[0] < 1) {
-        s[2] = (s32)&lbl_eu_8051D178;
-        memset((u8*)s + 0x10, 0, 0x528);
-        *(u32*)((u8*)s + 0x10 + 4) = 8;
-        *(u32*)((u8*)s + 0x10 + 0x14) = 1;
+    if (lbl_eu_80619C00.init_count < 1) {
+        lbl_eu_80619C00.default_error_fn = (void (*)(u32, const char*))&lbl_eu_8051D178;
+        memset(&lbl_eu_80619C00.lib, 0, sizeof(SFXLibState));
+        lbl_eu_80619C00.lib.max_handles = 8;
+        lbl_eu_80619C00.lib.ccirFx = 1;
         CFT_Init();
         SFXSUD_Init();
         SFXZ_Init();
         SFXA_Init();
-        s[1] = 0;
-        s[0]++;
+        lbl_eu_80619C00.field_0x04 = 0;
+        lbl_eu_80619C00.init_count++;
     }
 }
 
@@ -102,7 +111,52 @@ SFXHandleState* SFX_Create(u32 width, s32 height) {
     }
 
     /* The work buffer size must be at least 0x301F bytes. */
-    if ((s64)height < 12319) {
+    if ((unsigned long long)(long long)height >= 12319ULL) {
+        sfx_InitHn((SFXHandleState*)hn, width, height);
+
+    zmv = SFXZ_Create();
+        if (zmv == NULL) {
+            lbl_eu_80619C10.error_count++;
+            if (lbl_eu_80619C10.error_fn) {
+                lbl_eu_80619C10.error_fn(lbl_eu_80619C10.error_arg,
+                                         (const char*)&lbl_eu_8051D1AC[0x29]);
+            }
+            if (hn != NULL) {
+                void* z = hn->zmv;
+                u32 a = hn->field_0x30;
+                hn->active = 0;
+                SFXZ_Destroy(z);
+                SFXA_Destroy((void*)a);
+                lbl_eu_80619C10.init_count--;
+            }
+            return NULL;
+        } else {
+        hn->zmv = zmv;
+
+        alp = SFXA_Create();
+        if (alp != NULL) {
+            hn->field_0x30 = (u32)alp;
+
+            lbl_eu_80619C10.init_count++;
+            return (SFXHandleState*)hn;
+        } else {
+            lbl_eu_80619C10.error_count++;
+            if (lbl_eu_80619C10.error_fn) {
+                lbl_eu_80619C10.error_fn(lbl_eu_80619C10.error_arg,
+                                         (const char*)&lbl_eu_8051D1AC[0x48]);
+            }
+            if (hn != NULL) {
+                void* z = hn->zmv;
+                u32 a = hn->field_0x30;
+                hn->active = 0;
+                SFXZ_Destroy(z);
+                SFXA_Destroy((void*)a);
+                lbl_eu_80619C10.init_count--;
+            }
+            return NULL;
+        }
+        }
+    } else {
         lbl_eu_80619C10.error_count++;
         if (lbl_eu_80619C10.error_fn) {
             lbl_eu_80619C10.error_fn(lbl_eu_80619C10.error_arg,
@@ -110,71 +164,24 @@ SFXHandleState* SFX_Create(u32 width, s32 height) {
         }
         return NULL;
     }
-
-    sfx_InitHn((SFXHandleState*)hn, width, height);
-
-    zmv = SFXZ_Create();
-    if (zmv == NULL) {
-        lbl_eu_80619C10.error_count++;
-        if (lbl_eu_80619C10.error_fn) {
-            lbl_eu_80619C10.error_fn(lbl_eu_80619C10.error_arg,
-                                     (const char*)&lbl_eu_8051D1AC[0x29]);
-        }
-        if (hn != NULL) {
-            void* z = hn->zmv;
-            u32 a = hn->field_0x30;
-            hn->active = 0;
-            SFXZ_Destroy(z);
-            SFXA_Destroy((void*)a);
-            lbl_eu_80619C10.init_count--;
-        }
-        return NULL;
-    }
-    hn->zmv = zmv;
-
-    alp = SFXA_Create();
-    if (alp == NULL) {
-        lbl_eu_80619C10.error_count++;
-        if (lbl_eu_80619C10.error_fn) {
-            lbl_eu_80619C10.error_fn(lbl_eu_80619C10.error_arg,
-                                     (const char*)&lbl_eu_8051D1AC[0x48]);
-        }
-        if (hn != NULL) {
-            void* z = hn->zmv;
-            u32 a = hn->field_0x30;
-            hn->active = 0;
-            SFXZ_Destroy(z);
-            SFXA_Destroy((void*)a);
-            lbl_eu_80619C10.init_count--;
-        }
-        return NULL;
-    }
-    hn->field_0x30 = (u32)alp;
-
-    lbl_eu_80619C10.init_count++;
-    return (SFXHandleState*)hn;
 }
 
 void sfx_InitHn(SFXHandleState* hn, u32 width, u32 height) {
     u32 alignW;
-    u32 bufA, bufB, bufC;
 
     memset(hn, 0, 0xA0);
-    alignW = (width + 0x1F) & ~0x1F;
-    bufA = alignW + 0x400;
-    bufB = bufA + 0x400;
-    bufC = bufB + 0x400;
 
+    /* Nested assignments: innermost add (bufA) allocates first, outermost
+     * result lands in r3, matching the retail chain r5/r4/r3. */
     hn->field_0x04 = 0;
     hn->field_0x08 = 0;
     hn->field_0x0C = 0;
     hn->field_0x28 = 1;
     hn->field_0x2C = 0;
     hn->field_0x34 = 0;
+    alignW = (width + 0x1F) & ~0x1F;
     hn->alignW = alignW;
-    hn->bufASize = bufA;
-    hn->bufBSize = bufB;
-    hn->bufCSize = bufC;
+    hn->bufCSize = (hn->bufBSize = (hn->bufASize = alignW + 0x400) + 0x400) + 0x400;
     hn->width = width;
     hn->height = height;
     hn->field_0x58 = (u32)-1;

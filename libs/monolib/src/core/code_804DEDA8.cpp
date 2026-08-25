@@ -1400,25 +1400,25 @@ void func_804E0580(CSchedAnimItem* item, u8* base) {
     item->mField05 = 0;
     item->mField07 = 1;
     item->mField06 = 1;
-    if (base == NULL) {
+    if (base != NULL) {
+        CEntryWideElem* ret = (CEntryWideElem*)func_804E0188(base, 0x28, 0,
+                                                             &item->mField05,
+                                                             &item->mField07);
+        item->mVecScale = ret->mV0;
+        item->mVecPos = ret->mV1;
+        item->mVecColor = ret->mV2;
+        u8 idx = item->mField05 + item->mField07;
+        u16 w = *(u16*)(base + idx * 0x28);
+        if (w != 0x4000) {
+            item->field_0x04 |= 0x80;
+        } else {
+            // 32-bit intermediate so MWCC emits rlwinm instead of andi.
+            item->field_0x04 = (u8)((item->field_0x04 | 0x8) & ~0x80);
+        }
+    } else {
         item->mVecColor = schedZero;
         item->mVecPos = schedZero;
         item->mVecScale = schedZero;
-        return;
-    }
-    CEntryWideElem* ret = (CEntryWideElem*)func_804E0188(base, 0x28, 0,
-                                                         &item->mField05,
-                                                         &item->mField07);
-    item->mVecScale = ret->mV0;
-    item->mVecPos = ret->mV1;
-    item->mVecColor = ret->mV2;
-    u8 idx = item->mField05 + item->mField07;
-    u16 w = *(u16*)(base + idx * 0x28);
-    if (w != 0x4000) {
-        item->field_0x04 |= 0x80;
-    } else {
-        // 32-bit intermediate so MWCC emits rlwinm instead of andi.
-        item->field_0x04 = (u8)((item->field_0x04 | 0x8) & ~0x80);
     }
 }
 
@@ -1448,25 +1448,25 @@ void func_804E0788(CSchedAnimItem* item, u8* base) {
     item->mField05 = 0;
     item->mField07 = 1;
     item->mField06 = 1;
-    if (base == NULL) {
+    if (base != NULL) {
+        CEntryWideElem* ret = (CEntryWideElem*)func_804E0188(base, 0x28, 0,
+                                                             &item->mField05,
+                                                             &item->mField07);
+        item->mVecScale = ret->mV0;
+        item->mVecPos = ret->mV1;
+        item->mVecColor = ret->mV2;
+        u8 idx = item->mField05 + item->mField07;
+        u16 w = *(u16*)(base + idx * 0x28);
+        if (w != 0x4000) {
+            item->field_0x04 |= 0x80;
+        } else {
+            // 32-bit intermediate so MWCC emits rlwinm instead of andi.
+            item->field_0x04 = (u8)((item->field_0x04 | 0x8) & ~0x80);
+        }
+    } else {
         item->mVecColor = schedZero;
         item->mVecPos = schedZero;
         item->mVecScale = schedZero;
-        return;
-    }
-    CEntryWideElem* ret = (CEntryWideElem*)func_804E0188(base, 0x28, 0,
-                                                         &item->mField05,
-                                                         &item->mField07);
-    item->mVecScale = ret->mV0;
-    item->mVecPos = ret->mV1;
-    item->mVecColor = ret->mV2;
-    u8 idx = item->mField05 + item->mField07;
-    u16 w = *(u16*)(base + idx * 0x28);
-    if (w != 0x4000) {
-        item->field_0x04 |= 0x80;
-    } else {
-        // 32-bit intermediate so MWCC emits rlwinm instead of andi.
-        item->field_0x04 = (u8)((item->field_0x04 | 0x8) & ~0x80);
     }
 }
 
@@ -1684,7 +1684,88 @@ void func_804E0E48(CSchedAnimItem* item, u8* base, f32* ref) {
     }
 }
 
-void func_804E1044(){}
+// Spline evaluator (defined below; retail symbol func_804E1294).
+void func_804E1294(CScheduleItem* unused, AnimVec3* outPos, f32* outVal,
+                   s32 mode, void** args, f32 t);
+
+// Spline-mode anim updater (0x14-stride entry blob). Two modes selected by
+// the raw word at item+0x00: modes 9-11 feed a four-point window around the
+// resolved element to the spline evaluator func_804E1294; other values run
+// the vector-advance path (lerp the +4 vector toward the frame-offset
+// element, accumulate the +0x10/+0x14/+0x18 channels, and advance the
+// +0x28 scalar channel with clamping against the element value).
+void func_804E1044(CSchedAnimItem* item, CEntryElem* entries, u8* arg3,
+                   f32 f1) {
+    CEntryElem* ret = func_804E0248((CScheduleItem*)item, entries, 0x14,
+                                    arg3, f1);
+    u32 modeBits = *(u32*)(void*)&item->mField00;
+    if (modeBits - 9 > 2) {
+        // standard advance path
+        if (ret != NULL) {
+            f32 rate = func_804E04D4(item, entries, 0x14);
+            if (!(rate < lbl_eu_8066B290)) {
+                u8* b = (u8*)ret +
+                        ((item->mField06 - item->mField05) & 0xFF) * 0x14;
+                func_804DD89C(&item->mField10, (u8*)ret + 4, b + 4, rate);
+                item->mField10 += item->mField1C;
+                item->mField14 += item->mField20;
+                item->mField18 += item->mField24;
+                if (((item->field_0x04 >> 1) & 3) == 0) {
+                    f32 startF = *(f32*)((u8*)ret + 0x10);
+                    f32 endF = *(f32*)((u8*)ret +
+                                       (item->mField06 - item->mField05) *
+                                           0x14 +
+                                       0x10);
+                    item->mField28 = rate * (endF - startF) + startF;
+                }
+            }
+        }
+        if (((item->field_0x04 >> 1) & 3) != 0) {
+            u8* p = (u8*)ret;
+            if (p == NULL) {
+                p = (u8*)entries + item->mField05 * 0x14;
+            }
+            u16 w = *(u16*)(p + (item->mField06 - item->mField05) * 0x14);
+            if (w < 0x4000) {
+                f32 rate = func_804E04D4(item, entries, 0x14);
+                if (!(rate < lbl_eu_8066B290)) {
+                    f32 startF = *(f32*)(p + 0x10);
+                    f32 endF = *(f32*)(p + (item->mField06 - item->mField05) *
+                                               0x14 +
+                                           0x10);
+                    f32 v =
+                        item->mField28 + (rate * (endF - startF) + startF);
+                    item->mField28 = v;
+                    if (v > endF) {
+                        item->mField28 = endF;
+                    }
+                }
+            } else {
+                item->mField28 = item->mField28 + *(f32*)(p + 0x10);
+            }
+        }
+        return;
+    }
+    // spline path (modes 9-11)
+    if (ret == NULL) {
+        return;
+    }
+    f32 rate = func_804E04D4(item, entries, 0x14);
+    u8* pts[4] = {(u8*)ret - 0x14, (u8*)ret, (u8*)ret + 0x14,
+                  (u8*)ret + 0x28};
+    if (item->mField05 == 0) {
+        pts[0] = (u8*)ret;
+    }
+    if (*(u16*)pts[1] == 0x4000) {
+        pts[1] -= 0x14;
+        pts[2] -= 0x14;
+    }
+    if (*(u16*)pts[2] == 0x4000) {
+        pts[2] -= 0x14;
+    }
+    func_804E1294((CScheduleItem*)item, (AnimVec3*)&item->mField10,
+                  &item->mField28, (s32)modeBits, (void**)pts, rate);
+}
 
 // Point record consumed by the spline evaluator func_804E1294: ml::CVec3
 // position at +0x04, scalar channel at +0x10.

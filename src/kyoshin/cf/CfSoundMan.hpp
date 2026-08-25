@@ -323,9 +323,7 @@ struct CfSoundPos3 {
 // position floats the per-slot update reads are declared).
 struct CfSndCamObj {
     u8 field_0x00[0x10C];
-    f32 field_0x10C; // +0x10C camera x
-    f32 field_0x110; // +0x110 camera y
-    f32 field_0x114; // +0x114 camera z
+    nw4r::math::VEC3 mPos; // +0x10C camera position
 };
 
 // Scene camera-view word returned by func_8049603C (float at +0xC is the
@@ -360,9 +358,10 @@ extern "C" u32 func_80252538();
 extern "C" int CfRes_getD80Flag();
 
 // Computes a distance-based pan/volume pair from the actor position against
-// the pose block; maxDist comes in as the float argument.
+// the pose block; the two trailing floats are the near/far distance pair
+// (near constant and near + slot range).
 extern "C" void func_8049B834(f32* outPan, f32* outVol, CfSndPoseBlock* pose,
-                              CfSoundPos3* pos, f32 maxDist);
+                              CfSoundPos3* pos, f32 nearDist, f32 farDist);
 
 // nw4r math/db helpers and assert strings (retail symbols).
 extern "C" f32 FrSqrt__Q24nw4r4mathFf(f32);

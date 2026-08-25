@@ -7,6 +7,7 @@
 extern "C" {
     extern u32 lbl_eu_80539910[];   // vtable for CVS_THREAD
     extern void func_800BE924(void* voice);
+    extern int func_800BE8B4(u32 handle);
     extern u8* lbl_eu_80664A58;     // voice manager global pointer
     extern int func_802A77E8(CVoiceHandle* handle);
     extern int func_802A7850(int iter);
@@ -74,7 +75,22 @@ void func_802A3E28(CVS_THREAD* thread) {
     thread->unk14 = -1;
 }
 
-void func_802A3E88(){}
+// Stops the active voice if its playback finished: queries the sound
+// system via func_800BE8B4 and clears the +0x10/+0x14 pair once the voice
+// is no longer playing.
+int CVS_THREAD::func_802A3E88() {
+    // Voice still referenced: ask the sound system if it finished.
+    if (unk10 != 0 && (s32)unk14 >= 0) {
+        u32 handle = unk10;
+        int ret = func_800BE8B4(handle);
+        if (ret == 0) {
+            unk10 = 0;
+            unk14 = -1;
+        }
+        return ret;
+    }
+    return 0;
+}
 void func_802A3EF0(){}
 void func_802A3FD4(){}
 void func_802A4120(){}

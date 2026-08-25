@@ -198,6 +198,17 @@ void func_802B2AB8(CfHikariItemRecord* self, u32 enable) {
 // C24 with func_802B44C8), each building its quad corners from the two
 // normalized axes scaled by the pass-specific constants.
 void cf::CfHikariItemManager::cbRenderBefore() {
+    // Declaration order drives the stack slots (first declared = highest
+    // address, matching retail: invMtx 0x98, rotMtx 0x68, corners 0x28,
+    // vec1 0x1c, vec2 0x10, matColor 0xc, ambColor 0x8).
+    CfMtxCopy invMtx;
+    CfMtxCopy rotMtx;
+    CfHikariQuadCorners corners;
+    ml::CVec3 vec1;
+    ml::CVec3 vec2;
+    GXColor matColor;
+    GXColor ambColor;
+
     if (cf::CfGameManager::getPlayer(0) == 0) {
         return;
     }
@@ -214,27 +225,25 @@ void cf::CfHikariItemManager::cbRenderBefore() {
     GXSetCurrentMtx(0);
 
     // Inverse of the view matrix as the position matrix for the quads.
-    CfMtxCopy invMtx = viewFrame->mtx;
+    invMtx = viewFrame->mtx;
     PSMTXInverse(invMtx.m, invMtx.m);
     GXSetCurrentMtx(0);
     GXLoadPosMtxImm(invMtx.m, 0);
 
     // Second copy with the translation column zeroed: the two camera axes
     // (x/y rows of the rotation part) are transformed by it, then normalized.
-    CfMtxCopy mtx2 = viewFrame->mtx;
-    mtx2.m[0][3] = lbl_eu_80668EC8;
-    mtx2.m[1][3] = lbl_eu_80668EC8;
-    mtx2.m[2][3] = lbl_eu_80668EC8;
-    ml::CVec3 vec1;
-    ml::CVec3 vec2;
+    rotMtx = viewFrame->mtx;
+    rotMtx.m[0][3] = lbl_eu_80668EC8;
+    rotMtx.m[1][3] = lbl_eu_80668EC8;
+    rotMtx.m[2][3] = lbl_eu_80668EC8;
     vec1.x = lbl_eu_80668ED0;
     vec1.y = lbl_eu_80668EC8;
     vec1.z = lbl_eu_80668EC8;
     vec2.x = lbl_eu_80668EC8;
     vec2.y = lbl_eu_80668ED0;
     vec2.z = lbl_eu_80668EC8;
-    PSMTXMultVec(mtx2.m, vec1, vec1);
-    PSMTXMultVec(mtx2.m, vec2, vec2);
+    PSMTXMultVec(rotMtx.m, vec1, vec1);
+    PSMTXMultVec(rotMtx.m, vec2, vec2);
 
     f32 len1 = vec1.x * vec1.x + vec1.y * vec1.y + vec1.z * vec1.z;
     if (len1 == lbl_eu_80668EC8) {
@@ -270,8 +279,6 @@ void cf::CfHikariItemManager::cbRenderBefore() {
                     GX_CA_ZERO);
     GXSetTevAlphaOp(GX_TEVSTAGE0, GX_TEV_ADD, GX_TB_ZERO, GX_CS_SCALE_1,
                     GX_TRUE, GX_TEVPREV);
-    GXColor matColor;
-    GXColor ambColor;
     u32 colorWord = lbl_eu_80668ECC;
     *(u32*)&matColor = colorWord;
     *(u32*)&ambColor = colorWord;
@@ -365,12 +372,9 @@ void cf::CfHikariItemManager::cbRenderBefore() {
         }
     }
 
-    // ------------------------------------------------------------------
-    // Draw passes.  Each quad corner is a combination of the two normalized
-    // camera axes scaled by the pass-specific constants (retail vectorises
-    // the x/y pairs into ps_muls0/ps_add runs).
-    // ------------------------------------------------------------------
-    CfHikariQuadCorners corners;
+    // Draw passes: each quad corner combines the two normalized camera axes
+    // scaled by the pass-specific constants (retail vectorises the x/y pairs
+    // into ps_muls0/ps_add runs).
     if (lbl_eu_80664C18 != 0) {
         corners.v[0][0] = vec1.x * lbl_eu_80668ED4 + vec2.x * lbl_eu_80668EDC;
         corners.v[0][1] = vec1.y * lbl_eu_80668ED4 + vec2.y * lbl_eu_80668EDC;
@@ -585,9 +589,10 @@ extern "C" void func_802B37F4(CfHikariItemRecord* self) {
 // 0x10/0x20 flag pair.  Returns 0 while the record stays alive.
 extern "C" s32 func_802B3810(CfHikariItemRecord* self, f32 delta) {
     u32 flags = self->field_42;
-    const u32* g = lbl_eu_80577680;
     CfHikariItemRecord* rec = self;
     s32 ret = 1;
+    bool countersOn = !(flags & 0x80); // gates the sbss counters
+    const u32* g = lbl_eu_80577680;
     rec->field_42 = flags & 0xFFF0;
 
     if (flags & 0x40) {
@@ -647,9 +652,7 @@ extern "C" s32 func_802B3810(CfHikariItemRecord* self, f32 delta) {
             rec->field_42 |= 0x100;
         }
 
-        // The 0x80 test appears twice; retail CSEs both evaluations into
-        // one cntlzw/srwi pair hoisted above the branch.
-        if (!(flags & 0x80)) {
+        if (countersOn) {
             rec->field_42 |= 0x3;
             lbl_eu_80664C18++;
             lbl_eu_80664C1C++;
@@ -700,7 +703,7 @@ extern "C" s32 func_802B3810(CfHikariItemRecord* self, f32 delta) {
                 lbl_eu_80513598, 2);
             if (*fp == lbl_eu_80668EF8) {
                 rec->field_42 &= ~(0x10 << i);
-            } else if (!(flags & 0x80)) {
+            } else if (countersOn) {
                 rec->field_42 |= (0x4 << i);
                 lbl_eu_80664C20++;
             }

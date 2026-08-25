@@ -3,13 +3,7 @@
 
 #include "kyoshin/harness_catalog.hpp"
 #include "kyoshin/CBaseCur.hpp"
-#define func_801361E8 ciblOwnerE8Unused
 #include "kyoshin/CItemBoxLine.hpp"
-#undef func_801361E8
-// Retail passes func_801361E8's return through untruncated at the
-// func_801F1E64 site, so this TU needs the full-width view. All other sites
-// assign through u8 locals, keeping their conversions identical.
-extern "C" u32 func_801361E8(u32, const char*, unsigned int);
 #include <nw4r/lyt/lyt_layout.h>
 #include <nw4r/lyt/lyt_pane.h>
 #include "monolib/work/CEventFile.hpp"
@@ -490,9 +484,16 @@ ret0:
 // through. Result is returned *10.
 // ============================================================================
 extern "C" u32 __cvt_fp2unsigned(double);
-extern "C" const f32 lbl_eu_80668108[];
-extern "C" const f32 lbl_eu_80668114;
-extern "C" const f32 lbl_eu_80668118;
+extern "C" void func_801EB218(void*);
+extern const float lbl_eu_80668118;
+/* 24-byte float record copied off lbl_eu_8050715C by func_801EC9E0 and read
+   back indexed by the owner lookup byte (mask allows past the end on
+   purpose, same as the equip item box's F32Record idiom). */
+union CIBLF32Rec {
+    u32 w[6];
+    float f[6];
+};
+extern const CIBLF32Rec lbl_eu_8050715C;
 #pragma push
 #pragma optimize_for_size on
 extern "C" u32 func_801EC9E0(void* self, unsigned int itemData) {
@@ -504,19 +505,20 @@ extern "C" u32 func_801EC9E0(void* self, unsigned int itemData) {
     if ((u16)kind == 3) {
         u32 v = func_801361E8((u32)lbl_eu_806640EC, pool + 0x5a, itemData);
         u16 count = func_80136254(itemId, pool + 0x11b, cat);
-        f32 rate = lbl_eu_80668108[(u8)v];
-        result = __cvt_fp2unsigned(((double)(u32)count - (double)rate) * (double)rate);
+        CIBLF32Rec rec = lbl_eu_8050715C;
+        result = __cvt_fp2unsigned((double)((float)count * rec.f[v & 0xFF]));
     } else if ((u16)kind == 9 || (u16)kind < 2 || (u16)kind > 8) {
         u16 count = func_80136254(itemId, pool + 0x11b, cat);
         result = count;
     } else {
         u16 count = func_80136254(itemId, pool + 0x11b, cat);
-        u8 n = (u8)func_801361E8(itemId, pool + 0x106, cat);
+        u32 n = func_801361E8(itemId, pool + 0x106, cat);
         float inc = lbl_eu_80668114;
-        for (u8 i = 0; i < n; i++) {
-            inc += lbl_eu_80668118;
-        }
-        result = __cvt_fp2unsigned((double)(u32)count * (double)inc);
+        float step = lbl_eu_80668118;
+        do {
+            inc += step;
+        } while ((u8)n-- != 0);
+        result = __cvt_fp2unsigned((double)((float)count * inc));
     }
     return result * 10;
 }
@@ -810,7 +812,90 @@ void func_801EDB80(CItemBoxLine* self) {
     func_801F36BC(&self->mScrollBar310[0], 7, self->unk3A4.count);
 }
 
-void func_801EDC94(){}
+// ============================================================================
+// func_801EDC94: tab page-up / cursor-back interaction - the mirror of
+// func_801EDF40. Syswin overlay open (and nav state 9, active): step the
+// overlay selection byte down (wrapping 0 -> 1) and push the syswin selection
+// buffer through the line cursor's vtable[2]; tab cursor active: scan the
+// page list backward for the previous occupied slot (wrap at 4) and push its
+// VEC3 through mCur88; num-select busy: advance field392 (resetting to 1 past
+// the entry's capacity) and repush value*step; otherwise page the tab line up
+// by one row (wrapping through the tab count) and refresh the line.
+// ============================================================================
+#pragma push
+#pragma optimize_for_size on
+void func_801EDC94(CItemBoxLine* self) {
+    if (CSysWin_getUnk34(&self->mSysWin) != 0) {
+        if (self->field50 != 9) {
+            if (CSysWin_isActive(&self->mSysWin) != 0) {
+                u8 v = self->field3A3 - 1;
+                self->field3A3 = v;
+                if ((s8)v < 0) {
+                    self->field3A3 = 1;
+                }
+                u8 tmp[12];
+                func_8022C1B4(tmp, &self->mSysWin, self->field3A3);
+                reinterpret_cast<CIBLCur70View*>(&self->mCur70)->vf02(tmp);
+                func_80138078__FUl(1);
+            }
+        }
+        return;
+    }
+    if (self->field3A0 != 0) {
+        CIBLPageData* page = reinterpret_cast<CIBLPageData*>(&self->mInfo2D0[0xB0]);
+        s8 a = (s8)(self->field3A2 - 1);
+        while (a != (s8)self->field3A2) {
+            if (a < 0) a = 3;
+            if (ArrayGet12(page->pageWords180, (u8)((s8)self->field3A1 * 4 + a)) != 0) {
+                self->field3A2 = (u8)a;
+                break;
+            }
+            a--;
+        }
+        CIBLVec3 vec;
+        func_801CB9D8(&vec, page->pageWords180, (u8)((s8)self->field3A1 * 4 + self->field3A2));
+        reinterpret_cast<CIBLCur70View*>(&self->mCur88)->vf02(&vec);
+    } else if (func_801EB020(&self->mNumSel) != 0) {
+        if (func_801EB028(&self->mNumSel) == 0) return;
+        u8 idx = (u8)(self->unk38C + self->unk38E);
+        CIBLTab* tabs = &self->unk3A4;
+        u16 lim = func_801EC284((void*)tabs, idx);
+        self->field392 += 1;
+        if ((u16)self->field392 > lim) self->field392 = 1;
+        func_801EB218(&self->mNumSel);
+        func_801EB04C(&self->mNumSel, (u8)self->field392);
+        func_801EB064(&self->mNumSel, self->field392 * func_801EC260((void*)tabs, idx));
+    } else {
+        if (self->unk38C == 0 && self->unk38E == 0) {
+            self->unk38C = -1;
+        } else {
+            self->unk38C--;
+            if ((s16)self->unk38C < 0) {
+                self->unk38C = 0;
+                self->unk38E--;
+                if ((s16)self->unk38E < 0) {
+                    u16 count = self->unk3A4.count;
+                    if (count >= 7) {
+                        self->unk38C = 6;
+                        self->unk38E = count - 7;
+                    } else {
+                        self->unk38C = count - 1;
+                        self->unk38E = 0;
+                        if ((s16)self->unk38C < 0) {
+                            self->unk38C = 0;
+                        }
+                    }
+                }
+            }
+        }
+        func_801F071C(self);
+        func_801F0030(self);
+        func_801F0488(self);
+        func_801F3850(&self->mScrollBar310[0], (u16)self->unk38E);
+    }
+    func_80138078__FUl(1);
+}
+#pragma pop
 
 // ============================================================================
 // func_801EDF40: tab page-down / tab-cursor interaction. When the syswin

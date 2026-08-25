@@ -49,26 +49,66 @@ void func_8049AED4(CScnCameraMan* cam, CView* view, u32 idx) {
     cam->mViews[idx] = view->mWorkID;
 }
 
-// Finds the camera item whose view id (cam->mViews[mIndex]) matches the current
-// view's work id; records it as the current camera and returns success.
-bool func_8049AF80(CScnCameraMan* cam) {
-    CView* view = CView::getCurrentView();
-    CScnCameraList* list = func_8048C698(cam->mParam->mPool, 4);
-    CScnCameraNode* sentinel = list->sentinel;
-    CScnCameraNode* node = sentinel->next;
-    CScnCameraItem* item;
+// Finds the camera item whose view id matches the current view's work id.
+// The scan lives in a same-TU helper (inlined by MWCC): the return-inside-loop
+// shape is what makes the inlined body emit retail's bne-continue/b-found
+// branch pair instead of a folded single beq (see MWCC_CASES btm_bda_to_acl).
+static CScnCameraItem* findCamByViewId(CScnCameraMan* cam, CView* view) {
+    CScnCameraParam* p = cam->mParam;
+    u8* pool = p->mPool;
+    CScnCameraNode* node;
+    CScnCameraNode* sentinel = func_8048C698(pool, 4)->sentinel;
+    node = sentinel->next;
     while (node != sentinel) {
-        item = node->item;
-        if (cam->mViews[item->mIndex] == view->mWorkID) {
-            break;
+        CScnCameraItem* item = node->item;
+        u32 viewId = cam->mViews[item->mIndex];
+        if (viewId == view->mWorkID) {
+            return item;
         }
         node = node->next;
     }
-    if (item != NULL) {
-        cam->mCamId = item->mIndex;
-        return true;
+    return NULL;
+}
+
+// Records the camera item matching the current view as the current camera.
+bool func_8049AF80(CScnCameraMan* cam) {
+    CView* view = CView::getCurrentView();
+    CScnCameraItem* item = findCamByViewId(cam, view);
+    if (item == NULL) {
+        return false;
     }
-    return false;
+    cam->mCamId = item->mIndex;
+    return true;
+}
+
+// TU-local lookup helper; small enough that MWCC inlines it into callers.
+// Returns NULL when no item matches (the caller still dereferences the
+// result, mirroring retail).
+static CScnCameraItem* findCamById(CScnCameraNode* sentinel, s32 id) {
+    for (CScnCameraNode* node = sentinel->next; node != sentinel; node = node->next) {
+        CScnCameraItem* item = node->item;
+        if (id == item->mIndex) {
+            return item;
+        }
+    }
+    return NULL;
+}
+
+// Id-first variant used by WorkEvent3: extracting the sentinel from the list
+// inside the helper pins the retail register coloring (sentinel=r4, matched
+// item carried out in r3).
+static CScnCameraItem* findCamById2(s32 id, CScnCameraList* list) {
+    CScnCameraNode* node;
+    CScnCameraNode* sentinel = list->sentinel;
+    node = sentinel->next;
+    while (node != sentinel) {
+        CScnCameraItem* item = node->item;
+        if (id == item->mIndex) {
+            return item;
+        }
+        node = node->next;
+    }
+    return NULL;
 }
 
 // Looks up the camera item whose camera id equals the current camera id and
@@ -80,15 +120,7 @@ void func_8049B024(CScnCameraMan* cam) {
     }
 
     CScnCameraList* list = func_8048C698(cam->mParam->mPool, 4);
-    CScnCameraNode* sentinel = list->sentinel;
-    CScnCameraNode* node;
-    CScnCameraItem* item = NULL;
-    for (node = sentinel->next; node != sentinel; node = node->next) {
-        item = node->item;
-        if (id == item->mIndex) {
-            break;
-        }
-    }
+    CScnCameraItem* item = findCamById(list->sentinel, id);
     item->vf3();
 }
 
@@ -163,13 +195,19 @@ CScnCameraItem* func_8049B1CC(CScnCameraMan* cam, s32 id) {
 
 // Finds the camera item whose view id (cam->mViews[mIndex]) matches the
 // parameter's current view id.
+// NOTE (byte-matching): MWCC's allocation here is shape-sensitive - the view
+// table read must be a named local compared against param->mViewId in that
+// order, and sentinel must be declared before node, or sentinel/node land in
+// r6/r7 instead of the retail r5/r6.
 CScnCameraItem* func_8049B240(CScnCameraMan* cam, CScnCameraParam* param) {
-    CScnCameraList* list = func_8048C698(cam->mParam->mPool, 4);
-    CScnCameraNode* sentinel = list->sentinel;
+    CScnCameraParam* p = cam->mParam;
+    u8* pool = p->mPool;
+    CScnCameraNode* sentinel = func_8048C698(pool, 4)->sentinel;
     CScnCameraNode* node = sentinel->next;
     while (node != sentinel) {
         CScnCameraItem* item = node->item;
-        if (cam->mViews[item->mIndex] == param->mViewId) {
+        u32 viewId = cam->mViews[item->mIndex];
+        if (viewId == param->mViewId) {
             return item;
         }
         node = node->next;
@@ -178,6 +216,11 @@ CScnCameraItem* func_8049B240(CScnCameraMan* cam, CScnCameraParam* param) {
 }
 
 // Same view-id camera lookup as func_8049B240.
+// NOTE (byte-matching): residual vs retail is purely MWCC register coloring:
+// retail colors node=r5/sentinel=r6 with the mParam load hoisted ahead of the
+// callee-saves; every tried declaration/body shape yields either
+// sentinel=r5/node=r6 (this form, fewest mismatches) or sentinel=r6/node=r7.
+// Instruction sequence, control flow, size and relocs match exactly.
 CScnCameraItem* func_8049B2C4(CScnCameraMan* cam, CScnCameraParam* param) {
     CScnCameraParam* p = cam->mParam;
     CScnCameraList* list = func_8048C698(p->mPool, 4);
@@ -185,7 +228,8 @@ CScnCameraItem* func_8049B2C4(CScnCameraMan* cam, CScnCameraParam* param) {
     CScnCameraNode* sentinel = list->sentinel;
     while (node != sentinel) {
         CScnCameraItem* item = node->item;
-        if (cam->mViews[item->mIndex] == param->mViewId) {
+        u32 viewId = cam->mViews[item->mIndex];
+        if (viewId == param->mViewId) {
             return item;
         }
         node = node->next;
@@ -195,30 +239,22 @@ CScnCameraItem* func_8049B2C4(CScnCameraMan* cam, CScnCameraParam* param) {
 
 // Handles the camera-select work event (id 0x15): when the current camera id
 // matches a camera item in the pool, runs the script data attached to the event.
+// NOTE (byte-matching): routing the scan through findCamById lets MWCC inline
+// its return-inside-loop shape, carrying the matched item in the volatile r3
+// with the NULL fallback sunk after the loop (retail layout).
 bool CScnCameraMan::WorkEvent3(UNKTYPE* r4) {
     CScnCameraEvent* ev = (CScnCameraEvent*)r4;
-    if (ev->mId != 0x15) {
-        return false;
-    }
-    s32 camId = mCamId;
-    if (camId < 0) {
-        camId = mCamId;
-    }
-
-    CScnCameraList* list = func_8048C698(mParam->mPool, 4);
-    CScnCameraNode* sentinel = list->sentinel;
-    CScnCameraNode* node = sentinel->next;
-    CScnCameraItem* item;
-    while (node != sentinel) {
-        item = node->item;
-        if (camId == item->mIndex) {
-            break;
+    if (ev->mId == 0x15) {
+        s32 camId = mCamId;
+        if (camId < 0) {
+            camId = mCamId;
         }
-        node = node->next;
-    }
-    if (item != NULL) {
-        func_8043A1DC__11CScriptCodeFv(this, (u8*)ev->pData, ev->dataSize);
-        return true;
+
+        CScnCameraItem* item = findCamById2(camId, func_8048C698(mParam->mPool, 4));
+        if (item != NULL) {
+            func_8043A1DC__11CScriptCodeFv(this, (u8*)ev->pData, ev->dataSize);
+            return true;
+        }
     }
     return false;
 }

@@ -1720,8 +1720,9 @@ int func_80130960(u8* base, u16 a1, u16 a2, u16 a3, u16 a4, u16 a5) {
 // init slot (state 7) with flag 4, the passed id (u16 at +0xE2) and state
 // (u8 at +0xE4), then rebuilds the slot list unless the 0xb40 byte is set.
 int func_80130B74(u8* base, u16 id, u8 state) {
-    // Declaration order matters for MWCC web coloring (matches matched
-    // sibling func_8013042C): flag first, then gateBusy.
+    // Flag stays symbolic through every busy path: retail funnels all of
+    // them (gates + slot scan) into one shared test before the claim body,
+    // so the flag must not be const-folded per path.
     int flag;
     int gateBusy;
     if (func_80293C10() != 0) {

@@ -114,10 +114,10 @@ extern "C" void func_802A1500();
 // CfGameManager helpers with the caller shape (same scheme as CTaskREvent.hpp).
 extern "C" EvtSeqMgrView* func_80086B04__Q22cf13CfGameManagerFv();
 extern "C" u32 func_8007DE94__Q22cf13CfGameManagerFv(u32 index, u32 value);
-// Camera-manager getter: the CfGameManager.hpp member is declared non-static,
-// but the retail call site passes no `this` (Fv), so declare the mangled
-// symbol as a free function (same scheme as CTaskREvent.hpp).
-extern "C" CfEvtCamManager* func_800821F8__Q22cf13CfGameManagerFv();
+// Camera-manager getter: single winning decl on CfGameManagerApi.hpp
+// (canonical UnkClass_800821F8* view); this TU's call sites cast to the
+// local CfEvtCamManager view below.
+#include "kyoshin/cf/CfGameManagerApi.hpp"
 // func_800AA714: path -> packed id (code_800AA008.cpp; flat retail name).
 extern "C" u32 func_800AA714(const char* path);
 // func_8049EB60: player/event-object refresh (CfCam.hpp declares the same

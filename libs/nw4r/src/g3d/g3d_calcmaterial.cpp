@@ -10,33 +10,48 @@ void CalcMaterialDirectly(ResMdl mdl, AnmObjTexPat* pAnmTexPat,
     for (u32 i = 0; i < numMat; i++) {
         ResMat mat = mdl.GetResMat(i);
 
-        if (pAnmTexPat != NULL) {
-            if (pAnmTexPat->TestExistence(i)) {
-                TexPatAnmResult patResult = {};
+        // Texture pattern animation.
+        if (pAnmTexPat != NULL && pAnmTexPat->TestExistence(i)) {
+            // Clear only the tex/pltt index arrays; the existence flags are
+            // written unconditionally by GetResult.
+            TexPatAnmResult patResult;
+            for (int j = 0; j < TexPatAnmResult::NUM_OF_ANMS; j++) {
+                patResult.tex[j] = ResTex(NULL);
+            }
+            for (int j = 0; j < TexPatAnmResult::NUM_OF_ANMS; j++) {
+                patResult.pltt[j] = ResPltt(NULL);
+            }
+
+            const TexPatAnmResult* pResult =
                 pAnmTexPat->GetResult(&patResult, i);
-                ApplyTexPatAnmResult(mat.GetResTexObj(), mat.GetResTlutObj(),
-                                     &patResult);
-            }
+            ApplyTexPatAnmResult(mat.GetResTexObj(), mat.GetResTlutObj(),
+                                 pResult);
         }
 
-        if (pAnmTexSrt != NULL) {
-            if (pAnmTexSrt->TestExistence(i)) {
-                TexSrtAnmResult srtResult = {};
+        // Texture SRT animation.
+        if (pAnmTexSrt != NULL && pAnmTexSrt->TestExistence(i)) {
+            ResMatIndMtxAndScale indMtx = mat.GetResMatIndMtxAndScale();
+            ResTexSrt texSrt = mat.GetResTexSrt();
+
+            TexSrtAnmResult srtResult;
+            const TexSrtAnmResult* pResult =
                 pAnmTexSrt->GetResult(&srtResult, i);
-                ApplyTexSrtAnmResult(mat.GetResTexSrt(),
-                                     mat.GetResMatIndMtxAndScale(), &srtResult);
-                mat.GetResMatIndMtxAndScale().DCStore(false);
-            }
+
+            ApplyTexSrtAnmResult(texSrt, indMtx, pResult);
+            indMtx.DCStore(false);
         }
 
-        if (pAnmMatClr != NULL) {
-            if (pAnmMatClr->TestExistence(i)) {
-                ClrAnmResult clrResult = {};
+        // Material color animation.
+        if (pAnmMatClr != NULL && pAnmMatClr->TestExistence(i)) {
+            ResMatTevColor tevColor = mat.GetResMatTevColor();
+            ResMatChan chan = mat.GetResMatChan();
+
+            ClrAnmResult clrResult;
+            const ClrAnmResult* pResult =
                 pAnmMatClr->GetResult(&clrResult, i);
-                ApplyClrAnmResult(mat.GetResMatChan(), mat.GetResMatTevColor(),
-                                  &clrResult);
-                mat.GetResMatTevColor().DCStore(false);
-            }
+
+            ApplyClrAnmResult(chan, tevColor, pResult);
+            tevColor.DCStore(false);
         }
     }
 }

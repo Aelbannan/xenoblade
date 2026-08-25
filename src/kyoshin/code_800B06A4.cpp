@@ -42,8 +42,8 @@ extern "C" void func_800B06A4(float a) {
     extern float lbl_eu_80661CCC, lbl_eu_80661CD0;
     extern float lbl_eu_80663EC8, lbl_eu_80663ECC, lbl_eu_80663ED0, lbl_eu_80663ED4;
     double d = (double)a;
-    float c = lbl_eu_80661CD0;
     float sq = (float)d;
+    float c = lbl_eu_80661CD0;
     lbl_eu_80661CCC = a;
     sq = sq * sq;
     lbl_eu_80663EC8 = a;
@@ -2185,15 +2185,16 @@ check:
 #pragma pop
 
 // us-800ba2a8 - func_800B998C
+// Retail is a pure GPR-rotation tail call into func_800B47A8 with an all-GPR
+// argument view (r3=flag, r4=self, r5..r8=a1..a4; a5 is dropped).
+typedef void* (*B99ShimFn)(long, void*, void*, void*, void*, void*, void*);
 void* func_800B998C(void* self, void* a1, void* a2, void* a3, void* a4, void* a5) {
-    return (void*)func_800B47A8(1, *(float*)&self, (const B47Vec3*)a1, (const B47Vec3*)a2,
-                         (int)a3, (int)a4, (float*)a5, (u8*)0);
+    return ((B99ShimFn)func_800B47A8)(1, self, a1, a2, a3, a4, a5);
 }
 
 // us-800ba2d8 - func_800B99BC
 void* func_800B99BC(void* self, void* a1, void* a2, void* a3, void* a4, void* a5) {
-    return (void*)func_800B47A8(0, *(float*)&self, (const B47Vec3*)a1, (const B47Vec3*)a2,
-                         (int)a3, (int)a4, (float*)a5, (u8*)0);
+    return ((B99ShimFn)func_800B47A8)(0, self, a1, a2, a3, a4, a5);
 }
 
 // us-800ba308 - func_800B99EC: walk the sentinel list at +4 and
@@ -3707,7 +3708,7 @@ extern "C" void func_800B3A88(UnkClass_805764CC* self, void* objv) {
     if (obj == 0) {
         return;
     }
-    IDispB3A88Mgr* mgr = func_800821F8__Q22cf13CfGameManagerFv();
+    IDispB3A88Mgr* mgr = (IDispB3A88Mgr*)func_800821F8__Q22cf13CfGameManagerFv();
     if (mgr != 0 && mgr->unk18() == obj) {
         mgr->unk17(0);
     }

@@ -22,6 +22,10 @@ void SFXCNV_MakeCcirFromY(u8* table) {
     for (i = 0; i < 16; i++) {
         table[i] = 0;
     }
+    /* Y-to-RGB luma ramp: 1.164*(y-16)+0.5 rounded to nearest. The int->
+     * float conversion bias and the two scale constants are read from the
+     * shared literal pool (lbl_eu_8051CF38/3C/40) by the postprocess
+     * pool_patterns mapping. */
     for (i = 16; i < 0xEC; i++) {
         table[i] = (u8)(s32)(1.164f * (i - 16) + 0.5f);
     }
@@ -99,33 +103,24 @@ void sfxcnv_MakeTable(SFXConvertState* self, SFXStmInf* stmInf, s32 tableType) {
 
     self->compoMode = tableType;
 
-    switch (tableType) {
-    case 0x0B:
-    case 0x0D:
+    /* Retail dispatches with a compare chain (no address jumptable). */
+    if (tableType == 0x0B || tableType == 0x0D) {
         SFXZ_MakeCnvZTbl((void*)self->_24, stmInf->_4C, self->_38);
-        break;
-    case 0x02:
+    } else if (tableType == 0x02) {
         SFXA_MakeAlpLumiTbl(self->alphaState, stmInf->_4C, self->_38);
-        break;
-    case 0x04:
+    } else if (tableType == 0x04) {
         SFXA_MakeAlp3110Tbl(self->alphaState, stmInf->_4C, self->_38);
-        break;
-    case 0x05:
+    } else if (tableType == 0x05) {
         SFXA_MakeAlp3211Tbl(self->alphaState, stmInf->_4C, self->_38);
-        break;
-    case 0x15: {
+    } else if (tableType == 0x15) {
         void (*cb)(u32) = (void (*)(u32))self->makeColorAdjustCallback;
         if (cb != NULL) {
             cb(self->_38);
         }
-        break;
-    }
-    case 0x01:
+    } else if (tableType == 0x01) {
         SFXCNV_MakeCcirFromY((u8*)self->_38);
-        break;
-    default:
+    } else {
         SFXLIB_Error(self, stmInf, (const char*)&lbl_eu_8051CF48[0x30]);
-        break;
     }
 }
 
@@ -213,7 +208,7 @@ void sfxcnv_ExecCnvFrmByCbFunc(SFXConvertState* self, SFXStmInf* stmInf,
     }
 
     if (self->_0C == 0) {
-        SFXLIB_Error(self, stmInf, "sfxcnv_ExecCnvFrmByCbFunc: no buffer");
+        SFXLIB_Error(self, stmInf, (const char*)&lbl_eu_8051CF48[0xfa]);
     }
 
     mergeFlag = (SFX_IsMergeField(self, stmInf) == TRUE) ? 1 : 0;
@@ -271,7 +266,7 @@ case3:
         srcBuf->_30 = stmInf->_28;
         goto done;
 caseDefault:
-        SFXLIB_Error(self, stmInf, "sfxcnv_MakeCftSrcBuf: unknown source type");
+        SFXLIB_Error(self, stmInf, (const char*)&lbl_eu_8051CF48[0x138]);
 done:
         ;
     }

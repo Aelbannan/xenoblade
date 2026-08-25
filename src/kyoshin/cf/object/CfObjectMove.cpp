@@ -1752,8 +1752,9 @@ extern "C" void func_800BC9EC(cf::CfObjectMove* self) {
     cf::CfObjectMove6C0View* tgt = (cf::CfObjectMove6C0View*)self->mTarget6C0;
     tgt->field_14 = lbl_eu_80666A88;
     ((cf::CfObjectSub38If*)tgt)->_f0C();
-    f32 rate = tgt->field_14;
+    // Declared angle-first so MWCC colours rate into f30 (retail order).
     f32 angle = tgt->field_C;
+    f32 rate = tgt->field_14;
     if (getPlayer__Q22cf13CfGameManagerFi(0) == (void*)self && self->CfObject_UnkVirtualFunc9() == 0) {
         rate = lbl_eu_80666A88;
         func_804B0B54(self->_60C_region, &self->mPos3C);
@@ -1787,10 +1788,12 @@ extern "C" void func_800BC9EC(cf::CfObjectMove* self) {
         if (((u32)__cntlzw((u32)__cntlzw(self->unk64 & 0x08000000) >> 5) >> 5) == 0) {
             step.y -= lbl_eu_80666AA4;
         }
+        // Retail keeps the flags word in one register across both id checks.
+        u32 flags = self->unk64;
         u32 id = 0x44A09;
-        if (((u32)__cntlzw((u32)__cntlzw(self->unk64 & 0x2) >> 5) >> 5) != 0) {
+        if (((u32)__cntlzw((u32)__cntlzw(flags & 0x2) >> 5) >> 5) != 0) {
             id = 0x44A05;
-        } else if (((u32)__cntlzw((u32)__cntlzw(self->unk64 & 0x4) >> 5) >> 5) != 0) {
+        } else if (((u32)__cntlzw((u32)__cntlzw(flags & 0x4) >> 5) >> 5) != 0) {
             id = 0x44A11;
         }
         float f3 = ((u32)__cntlzw((u32)__cntlzw(self->unk64 & 0x08000000) >> 5) >> 5) != 0 ? lbl_eu_80666A88 : lbl_eu_80666AC0;
@@ -1800,6 +1803,14 @@ extern "C" void func_800BC9EC(cf::CfObjectMove* self) {
     // Store the position difference against the snapshot into the +0x54 area.
     cfomPutPosDiff(self, *reinterpret_cast<const ml::CVec3*>(&self->mPos3C) - origPos);
 }
+
+// View for the mFlags68 RMW: a distinct class type so MWCC's TBAA refuses
+// to forward the cached test load and rematerializes the flag word
+// (retail lwz r5,0x68(r30) before the and).
+struct CfObjectMoveFlags68View {
+    char pad[0x68];
+    u32 flags68;  // 0x68
+};
 
 extern "C" void func_800BCFA0(cf::CfObjectMove* self) {
     if (self->mSubObj98 == 0) {
@@ -1814,17 +1825,17 @@ extern "C" void func_800BCFA0(cf::CfObjectMove* self) {
         ((cf::CfObjectMoveD0View*)self->mTargetC4)->field_4E8 = self;
         u32 flags = self->unk64;
         if ((flags & 0x2) != 0) {
-            void* c4 = self->mTargetC4;
+            // No cached C4 local here: retail reloads self->mTargetC4 around
+            // every call (the calls may alias the target slot).
             if (getPlayer__Q22cf13CfGameManagerFi(0) == (void*)self) {
-                func_80051B84(c4);
+                func_80051B84(self->mTargetC4);
                 ((cf::CfObjectMoveD0View*)self->mTargetC4)->field_530 |= 0x400;
             } else {
-                func_80051BA0(c4);
+                func_80051BA0(self->mTargetC4);
             }
             ((cf::CfObjectMoveD0View*)self->mTargetC4)->field_4EC |= 0x4000;
-            void* c4b = self->mTargetC4;
-            ((cf::CfObjectMoveD0View*)c4b)->field_4EC =
-                (((cf::CfObjectMoveD0View*)c4b)->field_4EC & 0xFFF5FFFF) | 0x00040000;
+            ((cf::CfObjectMoveD0View*)self->mTargetC4)->field_4EC =
+                (((cf::CfObjectMoveD0View*)self->mTargetC4)->field_4EC & 0xFFF5FFFF) | 0x00040000;
         } else if ((flags & 0x4) != 0) {
             func_80051BDC(self->mTargetC4);
         } else if ((flags & 0x8) != 0 || (flags & 0x1) != 0) {
@@ -1850,13 +1861,16 @@ extern "C" void func_800BCFA0(cf::CfObjectMove* self) {
     }
     u32 f68 = self->mFlags68;
     if ((f68 & 0x10) != 0) {
-        self->mFlags68 &= ~0x111;
+        // ~0x110 folds to li r0,-0x111 (retail); bits 4+8, not 0+4+8.
+        ((CfObjectMoveFlags68View*)self)->flags68 &= ~0x110u;
         ((cf::CfObjectMoveVtA8*)self)->mA8((const ml::CVec3*)&self->mPos3C);
     } else if ((f68 & 0x00800000) != 0) {
         u32 flags2 = self->unk64;
-        self->mFlags68 &= ~0x00800000u;
-        f32 rate2 = (flags2 & 0x2) != 0 ? lbl_eu_80666AC8 : lbl_eu_80666ACC;
-        self->CfObject_UnkVirtualFunc26((u32)(&self->mPos3C), rate2);
+        ((CfObjectMoveFlags68View*)self)->flags68 &= ~0x00800000u;
+        // Ternary lives in the call argument so the constant selects are
+        // emitted after the flag-clear store (retail order).
+        self->CfObject_UnkVirtualFunc26((u32)(&self->mPos3C),
+            (flags2 & 0x2) != 0 ? lbl_eu_80666AC8 : lbl_eu_80666ACC);
     } else {
         ((cf::CfObjectMoveVtA8*)self)->mA8((const ml::CVec3*)&self->mPos3C);
     }

@@ -416,7 +416,7 @@ extern "C" float lbl_eu_80666DD4;
 extern "C" float lbl_eu_80666DD0;   // 0.6f (attack-sound volume)
 extern "C" f64 lbl_eu_80666DE0;
 extern "C" float lbl_eu_80666DEC;   // time/frame-delta scale (func_800D9354)
-extern "C" float lbl_eu_8066A1FC;   // 2*pi (angle-wrap step)
+extern "C" const float lbl_eu_8066A1FC;   // 2*pi (angle-wrap step)
 extern "C" BattleTableEntry lbl_eu_804FC828[];
 extern u32 lbl_eu_804FCA08[];       // attack sound-id table (retail .rodata)
 

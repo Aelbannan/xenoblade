@@ -3,6 +3,7 @@
 #include <types.h>
 #include "monolib/work/IWorkEvent.hpp"
 #include "kyoshin/CEquipItemBox.hpp"
+#include "kyoshin/plugin/ocBdat.hpp"  // getBdatStringColumnValue
 /* CItemBoxInfo.hpp declares func_801393CC(void*) while CEquipItemBox.hpp
    (included above) already declares the real u32(u32) - MWCC rejects the
    overload. This unit never calls it, so rename the stale declaration away
@@ -49,7 +50,8 @@ struct CEquipChangeVtblBase {
    0x2B0: CEquipItemBox */
 class CEquipChange : public CEquipChangeVtblBase {
 public:
-    CEquipChange();
+    CEquipChange();   // not defined here - retail's "ctor" is the unmangled
+                      // free function __ct__CEquipChange below
     ~CEquipChange();
     bool OnFileEvent(CEventFile*);
     u8 func_802023C0();
@@ -169,6 +171,26 @@ struct CLayoutSubVtbl13 {
     virtual nw4r::lyt::Pane* v13(u32 arg, int mode);   // +0x3C
 };
 
+// Cursor-entry record accumulated by func_802042C0 ({u16 id, u32 item} pairs,
+// copied into the cursor sub-objects through func_80205294).
+struct CEqChCursorRec {
+    u16 field_00;
+    u32 field_04;
+};
+
+// Per-slot bdat message-table handles read indexed by func_802042C0
+// (lbl_eu_806640D8 is an array of handles; the scalar extern comes from
+// CEquipItemBox.hpp).
+#define lbl_eu_806640D8_arr ((void**)(void*)&lbl_eu_806640D8)
+
+// Cast-only view of the resource-loading object at field_2C/field_30:
+// vtable slot +0x0C loads a texture/resource (args: magic 0x74696D67, name,
+// flag) returning the resource pointer.
+typedef void* (*CEqChTexFn)(u32 obj, u32 magic, const char* name, u32 flag);
+struct CEqChTexVtbl {
+    CEqChTexFn fn[16];
+};
+
 // Character-data table returned by func_8009EC9C; +0x176C holds a state word
 // that is 1 when the character is busy (same object as CPartyCharData). The
 // +0x1C..+0x26 s16 slots hold the per-category equipped item ids (weapon/
@@ -222,6 +244,7 @@ extern char lbl_eu_80535688[];
 // Local copy of the CEquipChangeCopyView layout from CPartyStateWin.hpp
 // (that header is not includable here - conflicting decls).
 struct CEqChStateView {
+    u8 _00[4];             // 0x00 vtable word
     u8 f04[0x10];
     u8 f14[0x10];
     u32 f24[8];
@@ -236,9 +259,7 @@ struct CEqChStateView {
     u8 f80[0x18];
     u8 f98;
     u8 f99;
-    u32 f9a;
-    u32 f9e;
-    u8 _pada2[6];
+    u8 _pad9a[0xE];        // 0x9A..0xA7 (keeps fa8 at 0xA8)
     u8 fa8[0x10];
     u8 fb8[0x10];
     u32 fc8[27];
@@ -293,7 +314,7 @@ struct CEqChStateView {
     u8 f4c0[0x15c];
     u32 f61c;
     u16 f620;
-    u8 f622[0xe];
+    u8 f622[0xc];          // 0x622..0x62D
     u8 f62e[0x2000];
     u16 f262e;
     u8 f2630[4];
@@ -330,6 +351,7 @@ struct CEqChBoxTemp {
 };
 
 struct CEqChEquipTemp {
+    u32 _00;               // 0x00 (vtable-slot word never copied; f04 sits at +4)
     u8 f04[0x10];          // 0x04 (__ct__UnkClass_8011C974)
     u8 f14[0x10];          // 0x14 (__ct__UnkClass_8011C974)
     u32 f24[7];            // 0x24..0x40
@@ -347,7 +369,7 @@ struct CEqChEquipTemp {
     f32 f390[5];           // 0xe0..0xf4
     u8 f3a4;               // 0xf4 (counted-pair loop base)
     u8 _pad3a5[3];
-    u8 pairs16[0x78];      // 0xf8..0x170 (16 records)
+    u8 pairs16[0x80];      // 0xf8..0x177 (16 x 8-byte records)
     u8 f428[3];            // 0x178..0x17b
     u8 _pad42b;
     u8 f42c[0x3c];         // 0x17c (func_8016742C)
@@ -370,11 +392,10 @@ struct CEqChEquipTemp {
     u8 _pad380[0x1ffe];    // 0x380..0x237e
     u16 f262e;             // 0x237e
     u8 f2630[4];           // 0x2380 (loop base for f2634)
-    u8 f2634[0x1c];        // 0x2384..0x23a0 (4 records)
+    u8 f2634[0x1c];        // 0x2384..0x239f (4 records)
     u8 f2650[4];           // 0x23a0 (loop base for f2654)
-    u8 f2654[0x3f8];       // 0x23a4..0x279c (0x80 records)
-    u32 f27a4;             // 0x27a4
-    u8 _padTail[0x10];     // frame pad - retail reserves 0x27b8 for this temp
+    u8 f2654[0x400];       // 0x23a4..0x27a3 (0x80 records)
+    u32 f27a4;             // 0x27a4 (temp ends here - retail boxTmp starts at sp+0x27b0)
 };
 
 // Color/sound palette entries initialised by sinit_802059E8 (sdata2).
@@ -406,23 +427,65 @@ extern u8 lbl_eu_806682A4[8];
 // func_802052A8; v15 at +0x44 is the equip/unequip hook used by
 // func_80203210 (args item, mode, -1).
 struct CItemImplVtblView {
-    virtual void v0();                    // +0x08
-    virtual void v1();                    // +0x0C
-    virtual void v2();                    // +0x10
-    virtual void v3();                    // +0x14
-    virtual void v4();                    // +0x18
-    virtual void v5();                    // +0x1C
-    virtual void v6();                    // +0x20
-    virtual void v7();                    // +0x24
-    virtual void v8();                    // +0x28
+    virtual u8 v0(void* item);               // +0x08 category byte
+    virtual void v1();                       // +0x0C
+    virtual void v2();                       // +0x10
+    virtual void v3();                       // +0x14
+    virtual void v4();                       // +0x18
+    virtual void v5();                       // +0x1C
+    virtual char* v6(void* item);            // +0x20 display-name string
+    virtual void v7();                       // +0x24
+    virtual void v8();                       // +0x28
     virtual void* v9(void* item, u32 flag);  // +0x2C
     virtual u8 v10(void* item);              // +0x30 equipped count
     virtual void v11();                      // +0x34
     virtual void v12();                      // +0x38
     virtual void v13();                      // +0x3C
-    virtual void v14();                      // +0x40
+    virtual u32 v14(void* item, u8 flag);    // +0x40
     virtual void v15(void* item, u8 flag, int arg);  // +0x44
+    virtual void v16();                      // +0x48
+    virtual void v17();                      // +0x4C
+    virtual void v18();                      // +0x50
+    virtual u32 v19(void* item);             // +0x54 bdat icon row
+    virtual void v20();
+    virtual void v21();
+    virtual void v22();
+    virtual void v23();
+    virtual void v24();
+    virtual void v25();
+    virtual void v26();
+    virtual void v27();
+    virtual void v28();
+    virtual void v29();
+    virtual void v30();
+    virtual void v31();
+    virtual void v32();
+    virtual void v33();
+    virtual void* v34(void* item);                   // +0x90 equip record
+    virtual void v35(void* item, s16 value);  // +0x94
 };
+
+// Result of the item-impl fetch hook (CItemImplVtblView::v9) read by
+// func_802052A8: packed word at +0 and a halfword at +4 whose low bit picks
+// between the direct-equip and bdat-rebuild paths.
+struct CEquipV9Result {
+    u32 field_00;
+    u16 field_04;
+};
+
+// Scratch CItem record rebuilt from bdat by func_802052A8's fallback path
+// (cleared once, guarded by lbl_eu_8066469C).
+struct CEquipWorkItem {
+    u32 field_00;
+    u16 field_04;
+    u8 _pad06[0xF8];
+};
+extern CEquipWorkItem lbl_eu_80576568;
+extern s8 lbl_eu_8066469C;
+
+// bdat helpers used by func_802052A8's rebuild path.
+extern "C" u32 func_8003B1EC(void* file);
+extern "C" void func_80159F6C(void* self, u32 family, u32 row, u16 kind);
 
 
 // C-linkage imports (retail symbol names - keep linkage/signatures verbatim)
@@ -442,6 +505,8 @@ extern "C" void func_801D4174(CItemBoxInfo* info);
 void advanceItemBoxState(CItemBoxInfo* info);
 
 extern "C" void func_80286264(CEquipItemBox* box);
+// 2-arg subcur visibility setter (retail unmangled symbol; see CCur.cpp).
+extern "C" void func_801D2E4C(void*, u32);
 extern "C" void func_80286454(CEquipItemBox* box);
 extern "C" void func_802867E0(CEquipItemBox* box);
 extern "C" int func_801D2ED8(CBaseCur*);
@@ -462,6 +527,8 @@ extern "C" void func_801D4054(void* info);
 extern "C" void func_802861A8(CEquipItemBox* box);
 extern "C" u8 code80135FDC_getByte_64077();
 extern "C" void func_802042C0(CEquipChange* self);
+extern "C" void func_800A13C4(void* charObj, u32 flag);
+extern "C" void func_8009D7E4(void* rows, u32 count);
 extern "C" void* func_8009EC9C(u32);
 extern "C" void* func_80157C4C(u32 index, s16 value);
 extern "C" void func_80287EFC(CEquipItemBox* box, u32 val);

@@ -1,0 +1,3 @@
+{"target_id":"tu-handoff","function":"(unit kyoshin/action/CActParamData)","status":"HANDOFF","instruction_match":154/178,"hypothesis":"concurrent agent active in this TU (func_80053DE8 body removed on their side; earlier transient symbols.txt breakage); pausing edits to avoid write conflicts","next_change":"next worker: see prior packets - conversion-block wall family (57BA0/57A64 @34.5%, semantics verified; next experiments listed in us-80058208 packet), split oversizers 550E8(+0x64)/53DE8(rewrite needed)/57CDC(+0x30), unwritten 57A64 sibling done, param-save pair. NOTE: verify func_80053DE8 body gets restored or rewritten - it was dropped from the TU"}
+test-write
+echo ok

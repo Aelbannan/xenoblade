@@ -13,6 +13,14 @@ typedef struct MPVBDEC_CTX {
     u32 vlc_param[12];        /* 0x1200 six (table ptr, size) pairs */
 } MPVBDEC_CTX;
 
+/* Sofdec work area laid out at lbl_eu_80602A10. */
+typedef struct MPVBDEC_WORK {
+    u8 field_0x00[0x48];
+    u32 p_block_tbl;          /* 0x48 -> ctx->block_tbl */
+    u8 field_0x4C[0xC];
+    u32 p_self;               /* 0x54 -> work area itself */
+} MPVBDEC_WORK;
+
 extern int UTY_MemcpyDword(u32 *, const u32 *, int);
 extern void MPVABDEC_Init(void);
 
@@ -37,37 +45,43 @@ extern u32 lbl_eu_80604648[];
    reference tables and decoder parameters. */
 void MPVBDEC_Init(MPVBDEC_CTX *ctx) {
     u8 table[0x40];
-    int i, j;
-    u8 *work = (u8 *)lbl_eu_80602A10;    /* +0x00 */
-    u32 *work2 = (u32 *)work + 0x10;     /* +0x40 */
-    u32 *work3 = (u32 *)work + 0x13;     /* +0x4C */
     u8 *tbl = (u8 *)lbl_eu_8051BFC0;     /* reference tables (live across calls) */
+    MPVBDEC_WORK *work = (MPVBDEC_WORK *)lbl_eu_80602A10;
+    int i, j;
+    int k;   /* identity-fill cursor; dead after the fill loop */
+    u8 *pp;
+    u8 *vv;
+    u8 *tt;
 
-    /* Identity table used by the permutation loop below. */
-    for (i = 0; i < 0x40; i++)
-        table[i] = (u8)i;
+    /* Identity table consumed by the permutation loop below. */
+    for (k = 0; k < 0x40; k++)
+        table[k] = (u8)k;
 
     /* Permute: block_tbl[k] = table[perm[k]]; work[table[k]] = val[k].
        Table indices are signed bytes (retail sign-extends before lbzx/stbx). */
-    {
-        u8 *pp = tbl + 0x20;
-        u8 *vv = tbl + 0x60;
-        u8 *tt = table;
+    pp = tbl + 0x20;
+    vv = tbl + 0x60;
+    tt = &table[0];
 
-        for (j = 0; j < 8; j++) {
-            for (i = 0; i < 8; i++) {
-                ctx->block_tbl[j * 8 + i] = tt[(s8)pp[i]];
-                work[(s8)tt[i]] = vv[i];
-            }
-            pp += 8;
-            vv += 8;
-            tt += 8;
+    for (j = 0; j < 8; j++) {
+        for (i = 0; i < 8; i++) {
+            /* Lookup uses the FIXED table base with the raw perm byte;
+               tt only walks the table to read its own entries. */
+            ctx->block_tbl[j * 8 + i] = table[(s8)pp[i]];
+            work->field_0x00[(s8)tt[i]] = vv[i];
         }
+        pp += 8;
+        vv += 8;
+        tt += 8;
     }
 
-    /* Publish work-area pointers: (work+0x40)[2] = &block_tbl, (work+0x4C)[2] = work */
-    work2[2] = (u32)&ctx->block_tbl[0];
-    work3[2] = (u32)work;
+    /* Publish work-area back-pointers: (work+0x40)[2] = &block_tbl, (work+0x4C)[2] = work */
+    {
+        u32 *work2 = (u32 *)work + 0x10;     /* +0x40 */
+        u32 *work3 = (u32 *)work + 0x13;     /* +0x4C */
+        work2[2] = (u32)&ctx->block_tbl[0];
+        work3[2] = (u32)work;
+    }
 
     /* Copy static reference tables into the context. */
     UTY_MemcpyDword(ctx->dct_table, (u32 *)tbl, 8);
@@ -86,8 +100,6 @@ void MPVBDEC_Init(MPVBDEC_CTX *ctx) {
     ctx->vlc_param[9] = 0x10;
     ctx->vlc_param[10] = lbl_eu_8060464C[0] - 0x20;
     ctx->vlc_param[11] = 0x0f;
-
-    /* CACHEPROBE */
 }
 
 /* Start decoding a frame */

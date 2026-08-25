@@ -3,6 +3,10 @@
 #include <revolution/BASE.h>
 #include <revolution/GX.h>
 
+// Retail-owned data (nw4r_data.s): GX channel ID -> RAS channel ID conversion
+// table used by ResTev::GXSetTevOrder.
+extern const u8 lbl_eu_805690C0[];
+
 namespace nw4r {
 namespace g3d {
 
@@ -257,21 +261,29 @@ void ResTev::GXSetTevAlphaOp(GXTevStageID stage, GXTevOp op, GXTevBias bias,
                    .dl.dl.var[stage / TEV_STAGES_PER_DL]
                    .dl.alphaCalcAndSwap[stage % TEV_STAGES_PER_DL];
 
-    u32 cmd;
+    // Retail duplicates the BP register computation and the write in both arms
     if (op <= 1) {
-        cmd = (clamp << 19) | (bias << 16) | ((op & 1) << 18);
-        cmd |= (scale << 20);
-        cmd |= (reg << 22) |
-               ((stage * 2 + GX_BP_REG_TEVALPHACOMBINER0) << GX_BP_OPCODE_SHIFT);
-    } else {
-        cmd = (clamp << 19) | (3 << 16);
-        cmd = (cmd & ~(1 << 18)) | ((op & 1) << 18);
-        cmd = (cmd & ~(3 << 20)) | (((op >> 1) & 3) << 20);
-        cmd = (cmd & ~(0x3FF << 22)) | (reg << 22);
-    }
-    cmd |= (stage * 2 + GX_BP_REG_TEVALPHACOMBINER0) << GX_BP_OPCODE_SHIFT;
+        u32 cmd = (clamp << 19) | (bias << 16) | ((op & 1) << 18);
+        u32 t = (reg << 22) | (scale << 20);
 
-    detail::ResWriteBPCmd(pCmd, cmd, 0xFFFF0000);
+        detail::ResWriteBPCmd(pCmd,
+            t | cmd |
+                ((stage * 2 + GX_BP_REG_TEVALPHACOMBINER0)
+                    << GX_BP_OPCODE_SHIFT),
+            0xFFFF0000);
+    } else {
+        u32 cmd = (clamp << 19) | (3 << 16);
+        cmd = (cmd & ~(1 << 18)) | ((op & 1) << 18);
+
+        u32 t = ((op >> 1) & 3) << 20;
+        t = (t & ~(0x3FF << 22)) | (reg << 22);
+
+        detail::ResWriteBPCmd(pCmd,
+            t | cmd |
+                ((stage * 2 + GX_BP_REG_TEVALPHACOMBINER0)
+                    << GX_BP_OPCODE_SHIFT),
+            0xFFFF0000);
+    }
 }
 
 } // namespace g3d
@@ -319,17 +331,10 @@ namespace g3d {
 #pragma dont_inline on
 void ResTev::GXSetTevOrder(GXTevStageID stage, GXTexCoordID coord,
                            GXTexMapID map, GXChannelID channel) {
-    // Convert GX channel ID to GXRasChannelID (indexed by channel & 0xF)
-    static const u8 r2c[16] = {
-        GX_RAS_COLOR0A0,    GX_RAS_COLOR1A1,    GX_RAS_COLOR0A0,
-        GX_RAS_COLOR1A1,    GX_RAS_COLOR0A0,    GX_RAS_COLOR1A1,
-        GX_RAS_COLOR_ZERO,  GX_RAS_ALPHA_BUMP,  GX_RAS_ALPHA_BUMPN,
-        GX_RAS_COLOR0A0,    GX_RAS_COLOR0A0,    GX_RAS_COLOR0A0,
-        GX_RAS_COLOR0A0,    GX_RAS_COLOR0A0,    GX_RAS_COLOR0A0,
-        GX_RAS_COLOR_ZERO};
-
     GXTexCoordID coord2;
     GXTexMapID map2;
+
+    // Clear any stale texCoord -> texMap binding recorded for this stage
     if (GXGetTevOrder(stage, &coord2, &map2, NULL) && coord2 != 0xFF &&
         map2 != 0xFF) {
         mpData->texCoordToTexMapID[coord2] = 0xFF;
@@ -339,19 +344,18 @@ void ResTev::GXSetTevOrder(GXTevStageID stage, GXTexCoordID coord,
         mpData->texCoordToTexMapID[coord] = static_cast<u8>(map);
     }
 
-    u32 n = stage / 2;
+    // Convert GX channel ID to RAS channel ID (table indexed by channel & 0xF)
+    int n = stage / 2;
+    u32 shift = -(stage & 1) & 0xC;
     u8* pCmd = mpData->dl.dl.var[n].dl.tevOrder;
-    u32 shift = (stage & 1) ? 12 : 0;
-    u32 mask = 0x3FF << shift;
-    u32 en = (map != 0xFF && (map & 0x100) == 0) ? 1 : 0;
 
-    detail::ResWriteBPCmd(
-        pCmd,
-        ((n + 0x28) << GX_BP_OPCODE_SHIFT) |
-            ((((((coord & 7) << 3) | (map & 7)) | (en << 6)) |
-              (r2c[channel & 0xF] << 7))
-             << shift),
-        mask | (0xFF << GX_BP_OPCODE_SHIFT));
+    detail::ResWriteBPCmd(pCmd,
+        ((((coord & 7) << 3 | (map & 7) |
+              (((map != 0xFF && (map & 0x100) == 0) ? 1 : 0) << 6)) |
+            (lbl_eu_805690C0[channel & 0xF] << 7))
+           << shift) |
+            ((n + 0x28) << GX_BP_OPCODE_SHIFT),
+        (0x3FF << shift) | (0xFF << GX_BP_OPCODE_SHIFT));
 }
 #pragma dont_inline reset
 
@@ -365,23 +369,27 @@ void ResTev::GXSetTevColorOp(GXTevStageID stage, GXTevOp op, GXTevBias bias,
                              GXTevScale scale, u8 clamp, GXTevRegID reg) {
     u8* pCmd = ref().dl.dl.var[stage / 2].dl.tevColorCalc[stage % 2];
 
-    u32 cmd;
     if (op <= GX_TEV_SUB) {
-        cmd = (clamp << 19) | (bias << 16);
-        cmd |= (op & 1) << 18;
-        cmd |= (reg << 22) | (scale << 20);
-        cmd |= (GX_BP_REG_TEVCOLORCOMBINER0 + (stage << 1))
-               << GX_BP_OPCODE_SHIFT;
-        detail::ResWriteBPCmd(pCmd, cmd, 0xFFFF0000);
+        u32 cmd = (bias << 16) | (clamp << 19);
+        u32 t = (reg << 22) | (scale << 20);
+
+        detail::ResWriteBPCmd(pCmd,
+            t | (cmd | ((op & 1) << 18)) |
+                ((stage * 2 + GX_BP_REG_TEVCOLORCOMBINER0)
+                    << GX_BP_OPCODE_SHIFT),
+            0xFFFF0000);
     } else {
-        cmd = (clamp << 19) | (3 << 16);
+        u32 cmd = (clamp << 19) | (3 << 16);
         cmd = (cmd & ~(1 << 18)) | ((op & 1) << 18);
+
         u32 t = ((op >> 1) & 3) << 20;
         t = (t & ~(0x3FF << 22)) | (reg << 22);
-        cmd = t | cmd;
-        cmd |= (GX_BP_REG_TEVCOLORCOMBINER0 + (stage << 1))
-               << GX_BP_OPCODE_SHIFT;
-        detail::ResWriteBPCmd(pCmd, cmd, 0xFFFF0000);
+
+        detail::ResWriteBPCmd(pCmd,
+            t | cmd |
+                ((stage * 2 + GX_BP_REG_TEVCOLORCOMBINER0)
+                    << GX_BP_OPCODE_SHIFT),
+            0xFFFF0000);
     }
 }
 
@@ -402,8 +410,10 @@ void ResTev::SetNumTevStages(u8 num) {
 
     ResTevData& d = ref();
     if ((u32)d.nStages > num) {
-        // Clear texCoord/texMap bindings for all stages past the new count
+        u8* p;
+        int j;
         int s;
+        // Clear texCoord/texMap bindings for all stages past the new count
         for (s = num; (u32)s < d.nStages; s++) {
             GXSetTevOrder(static_cast<GXTevStageID>(s),
                          static_cast<GXTexCoordID>(0xFF),
@@ -411,10 +421,10 @@ void ResTev::SetNumTevStages(u8 num) {
                          static_cast<GXChannelID>(0xFF));
         }
 
-        s = (num + 1) / 2;
-        u8* p = reinterpret_cast<u8*>(&d.dl.dl.var[s]);
         // Zero whole variable DLs covering stage pairs beyond the new count
-        for (; (u32)s < ((d.nStages + 1u) >> 1); s++) {
+        j = (num + 1) / 2;
+        p = reinterpret_cast<u8*>(&d.dl.dl.var[j]);
+        for (; (u32)j < ((d.nStages + 1u) >> 1); j++) {
             detail::ZeroMemory16ByteBlocks(p, 0x30);
             DC::StoreRangeNoSync(p, 0x30);
             p += 0x30;

@@ -2558,15 +2558,17 @@ extern "C" __declspec(noinline) void func_802891B8(CEquipItemBox* self, s8 v,
                                                    CItemInstance* item, u8 i) {
     char bufName[0x20];
     char bufText[0x20];
-    // Retail evaluates the null check before any buffer setup.
-    u32 kind = (item != 0) ? ((item->word >> 12) & 0xF) : 0;
+    // Retail evaluates the null check before any buffer setup, but defers
+    // the item->word load until after the name sprintf.
+    CItemInstance* p = (item != 0) ? item : 0;
     sprintf(bufName, &lbl_eu_8050EFDC[0x219], i + 1);
+    u32 kind = (p != 0) ? ((p->word >> 16) & 0xF) : 0;
     if (kind == 3 || kind == 9) {
         CItemInstance* obj = (CItemInstance*)CItem_initItemImplInstances(item);
         u32 n = ((CEquipItemBoxItemImplView*)obj)->vf08(obj);
         char* str = func_80136190(&lbl_eu_8050EFDC[0x2d], &lbl_eu_8050EFDC[0x36],
                                   0x1e - ((u8)n - 1));
-        sprintf(bufText, &lbl_eu_8050EFDC[0x2a], bufName, str);
+        sprintf(bufText, &lbl_eu_8050EFDC[0x2a], str);
         func_80139A18(self->field_38, bufName, lbl_eu_806649B0, lbl_eu_806649B8);
     } else if (v > 0) {
         sprintf(bufText, &lbl_eu_8050EFDC[0x225]);

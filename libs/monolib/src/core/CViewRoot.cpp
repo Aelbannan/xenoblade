@@ -12,7 +12,57 @@
 #include "monolib/work/CMsgParam.hpp"
 #include "monolib/util/MemManager.hpp"
 #include "decomp.h"
-#include "monolib/data_vtables.hpp"
+
+// NOTE: this TU cannot include monolib/data_vtables.hpp -- its 0-arg
+// `extern "C" void __dt__9CViewRootFv();` declaration collides under C
+// linkage with the freestanding destructor definition below (MWCC 10197,
+// same class of conflict as the __dt__11CWorkThreadFv note in that header).
+// The symbols this TU needs are therefore declared here directly.
+extern "C" {
+extern void* __RTTI__10IWorkEvent;
+extern void* __RTTI__11CWorkThread;
+extern int WorkEvent1__10IWorkEventFPvPCc(void*, const char*);
+extern int OnFileEvent__10IWorkEventFP10CEventFile(void*);
+extern int WorkEvent3__10IWorkEventFPv(void*);
+extern int WorkEvent4__10IWorkEventFv();
+extern void OnPauseTrigger__10IWorkEventFb(int);
+extern int WorkEvent6__10IWorkEventFv();
+extern int WorkEvent7__10IWorkEventFv();
+extern int WorkEvent8__10IWorkEventFv();
+extern int WorkEvent9__10IWorkEventFv();
+extern int WorkEvent10__10IWorkEventFv();
+extern int WorkEvent11__10IWorkEventFv();
+extern int WorkEvent12__10IWorkEventFv();
+extern int WorkEvent13__10IWorkEventFv();
+extern int WorkEvent14__10IWorkEventFv();
+extern int WorkEvent15__10IWorkEventFv();
+extern int WorkEvent16__10IWorkEventFv();
+extern int WorkEvent17__10IWorkEventFv();
+extern int WorkEvent18__10IWorkEventFv();
+extern int WorkEvent19__10IWorkEventFv();
+extern int WorkEvent20__10IWorkEventFv();
+extern int WorkEvent21__10IWorkEventFv();
+extern int WorkEvent22__10IWorkEventFv();
+extern int WorkEvent23__10IWorkEventFv();
+extern int WorkEvent24__10IWorkEventFv();
+extern int WorkEvent25__10IWorkEventFv();
+extern int WorkEvent26__10IWorkEventFv();
+extern int WorkEvent27__10IWorkEventFv();
+extern int WorkEvent28__10IWorkEventFv();
+extern int WorkEvent29__10IWorkEventFv();
+extern int WorkEvent30__10IWorkEventFv();
+extern void WorkEvent31__10IWorkEventFv();
+extern void wkUpdate__11CWorkThreadFv();
+extern void wkRender__11CWorkThreadFv();
+extern void wkRenderAfter__11CWorkThreadFv();
+extern void wkStandbyExceptionRetry__11CWorkThreadFUl(unsigned int);
+extern void wkStandbyLogin__9CViewRootFv();
+extern void wkStandbyLogout__9CViewRootFv();
+extern void __dt__11CWorkThreadFv(void*, int);
+extern void* __dt__9CViewRootFv(void*, int);
+extern void __dl__FPv(void*);
+extern void __dla__FPv(void*);
+}
 
 // === Blob monolibdata1/1d dissolve: CViewRoot.cpp owns .rodata 0x80522660-
 // 0x80522678, .sdata 0x806635A8-0x806635B0, .data 0x8056B710-0x8056B7C8,
@@ -71,42 +121,62 @@ u8 lbl_eu_806655D7;
 // __ct__9CViewRoot symbol (create() constructs the object manually and the
 // member-init list never runs the reslist<WORK_ID> default ctor, which would
 // pull the reslist<_reslist_base<Ul>> vtables/RTTI into this TU's data
-// sections; the retail linker GC'd those weak emissions). The destructor
-// below inlines the _reslist_base<WORK_ID> dtor (vptr store + clear + free)
-// exactly like the retail; its vptr-store reloc names the TU-local
-// __vt__17_reslist_base<Ul> weak (UNIT_RULES["CViewRoot.o"] must retarget it
-// to the extern lbl_eu_8056B298 and drop the local reslist data).
-CViewRoot::~CViewRoot() {
-    lbl_eu_806655D0 = nullptr;
+// sections; the retail linker GC'd those weak emissions).
+//
+// The destructor follows the freestanding-D1 recipe (MWCC_CASES:
+// CMenuBattleDamage / CDeviceFontLoader): writing it as a C++ member dtor
+// makes MWCC append the implicit reslist<WORK_ID> member destruction AFTER
+// the user body (duplicate block + wrong order vs retail's member-first
+// layout). The freestanding form emits each sub-object cleanup exactly once,
+// in retail order: history reslist, then pools pool2/pool1/pool0, then the
+// CWorkThread base dtor.
+extern "C" void* __dt__9CViewRootFv(void* selfPtr, int flag) {
+    CViewRoot* self = (CViewRoot*)selfPtr;
+    if (self != nullptr) {
+        lbl_eu_806655D0 = nullptr;
 
-    // Inlined _reslist_base<WORK_ID> dtor: retag the vtable, unlink every
-    // node (clearing its mNext), close the sentinel ring, free the array.
-    *reinterpret_cast<void**>(&mViewHistory) = lbl_eu_8056B298;
-    _reslist_node<WORK_ID>* sentinel = mViewHistory.mStartNodePtr;
-    _reslist_node<WORK_ID>* node = sentinel->mNext;
-    while (node != sentinel) {
-        _reslist_node<WORK_ID>* cur = node;
-        node = node->mNext;
-        cur->mNext = nullptr;
-    }
-    sentinel->mNext = sentinel;
-    sentinel->mPrev = sentinel;
-    if (mViewHistory.unk1C == false) {
-        if (mViewHistory.mList != nullptr) {
-            delete[] mViewHistory.mList;
-            mViewHistory.mList = nullptr;
+        // Inlined _reslist_base<WORK_ID> dtor: retag the vtable, unlink every
+        // node (clearing its mNext), close the sentinel ring, free the array.
+        // Nested null-guards reproduce retail's double-beq D2-into-D1 shape.
+        reslist<WORK_ID>* hist = &self->mViewHistory;
+        if (hist != nullptr) {
+            if (hist != nullptr) {
+                *reinterpret_cast<void**>(hist) = lbl_eu_8056B298;
+                _reslist_node<WORK_ID>* sentinel = hist->mStartNodePtr;
+                _reslist_node<WORK_ID>* node = sentinel->mNext;
+                while (node != hist->mStartNodePtr) {
+                    _reslist_node<WORK_ID>* cur = node;
+                    node = node->mNext;
+                    cur->mNext = nullptr;
+                }
+                hist->mStartNodePtr->mNext = hist->mStartNodePtr;
+                hist->mStartNodePtr->mPrev = hist->mStartNodePtr;
+                if (hist->unk1C == false) {
+                    DELETE_ARRAY(hist->mList);
+                }
+            }
+        }
+
+        // Reset the three render pools (retail order: pool2, pool1, pool0).
+        if (&self->mPool2 != nullptr) {
+            self->mPool2.mUsed = 0;
+            self->mPool2.mList = nullptr;
+        }
+        if (&self->mPool1 != nullptr) {
+            self->mPool1.mUsed = 0;
+            self->mPool1.mList = nullptr;
+        }
+        if (&self->mPool0 != nullptr) {
+            self->mPool0.mUsed = 0;
+            self->mPool0.mList = nullptr;
+        }
+
+        __dt__11CWorkThreadFv(self, 0);
+        if (flag > 0) {
+            ::operator delete(self);
         }
     }
-
-    // Reset the three render pools (retail order: pool2, pool1, pool0).
-    mPool2.mUsed = 0;
-    mPool2.mList = (_reslist_node<CWorkThread*>*)nullptr;
-    mPool1.mUsed = 0;
-    mPool1.mList = (_reslist_node<CWorkThread*>*)nullptr;
-    mPool0.mUsed = 0;
-    mPool0.mList = (_reslist_node<CWorkThread*>*)nullptr;
-
-    // Base CWorkThread dtor runs implicitly (flag 0); delete handled by caller.
+    return self;
 }
 
 // Retail emits the CViewRootPool destructor at the head of this TU's split
@@ -278,116 +348,118 @@ CView* CViewRoot::getView(WORK_ID id) {
 }
 
 bool CViewRoot::isInitialized() {
-    CViewRoot* root = lbl_eu_806655D0;
-    if (root == nullptr) {
-        return false;
-    }
-
-    // Mirror of the CWorkThread tail ring (entry stride 0x24) scanned below;
-    // these offsets live inside CMsgParam<8> so no real members exist.
+    // Mirror of the CWorkThread message ring (CMsgParam<8> at 0x80:
+    // mArrayPtr/mFront/mSize/mCapacity land at 0x1A4/0x1A8/0x1AC/0x1B0,
+    // entry stride 0x24).
     struct StatusEntry {
         u32 field_0x00;
         u8 pad[0x24 - 4];
     };
     struct StatusRing {
-        StatusEntry* mEntries; //0x1A4
-        u32 mHead;             //0x1A8
-        u32 mCount;            //0x1AC
-        u32 mCapacity;         //0x1B0
+        u8 pad[0x1A4];
+        StatusEntry* mEntries;
+        u32 mHead;
+        u32 mCount;
+        u32 mCapacity;
     };
 
-    int found;
-    if ((root->mFlags & THREAD_FLAG_EXCEPTION) != 0) {
-        found = 1;
+    int i;
+    int foundIndex;
+    const StatusRing* ring;
+
+    ring = reinterpret_cast<const StatusRing*>(lbl_eu_806655D0);
+    if (ring == nullptr) {
+        return false;
+    }
+
+    // Inlined CMsgParam<8>::find(EVT_EXCEPTION) scan (same idiom as the
+    // matched CLibHbm/CDeviceSC copies).
+    bool exceptionOrFound;
+    if ((((const CViewRoot*)ring)->mFlags & THREAD_FLAG_EXCEPTION) != 0) {
+        exceptionOrFound = true;
     } else {
-        StatusRing* ring = reinterpret_cast<StatusRing*>(reinterpret_cast<char*>(root) + 0x1A4);
-        int hit = -1;
-        for (u32 i = 0; i < ring->mCount; i++) {
-            u32 slot = (ring->mHead + i) % ring->mCapacity;
-            if (ring->mEntries[slot].field_0x00 == 2) {
-                hit = i;
-                break;
+        for (i = 0; i < ring->mCount; i++) {
+            if (ring->mEntries[(ring->mHead + i) % ring->mCapacity].field_0x00 == EVT_EXCEPTION) {
+                foundIndex = i;
+                goto done;
             }
         }
-        found = (hit >= 0);
+        foundIndex = -1;
+    done:
+        exceptionOrFound = foundIndex >= 0;
     }
 
-    if (found) {
-        return false;
-    }
-
-    ThreadState state = root->mState;
-    if (state == THREAD_STATE_LOGIN || state == THREAD_STATE_RUN) {
-        return false;
-    }
-    return true;
+    return !exceptionOrFound
+        && (((const CViewRoot*)ring)->mState == THREAD_STATE_LOGIN
+            || ((const CViewRoot*)ring)->mState == THREAD_STATE_RUN);
 }
 
 struct PoolPair { u32 w0; u32 w1; };
 
-// Retail symbol is FPvPv but call sites pass three rect pointers (r3/r4/r5).
-// Inline three ring pushes (divw/mullw/subf shape) with instance reloads.
-void CViewRoot::func_80442B54(void* a, void* b, void* c) {
+// Retail symbol is FPvPv but call sites pass three rect pointers (r3/r4/r5);
+// defined under its retail mangled name so parameters land in r3/r4/r5.
+// Three inline signed ring pushes (divw/mullw/subf shape); fields are always
+// re-read through the freshly loaded instance so each used++ reads the
+// reloaded instance, matching retail.
+void func_80442B54__9CViewRootFPvPv(void* a, void* b, void* c) {
     CViewRoot* root;
-    u32 index;
-    u32 used;
-    u32 cap;
-    u32 sum;
-    u32 slot;
+    s32 sum;
+    s32 q;
     u32* base;
-    u32* p;
-    u32 w0;
-    u32 w1;
-    void* savedB;
+    u32* dst;
 
     root = lbl_eu_806655D0;
     if (root == nullptr) {
         return;
     }
 
-    savedB = b;
-    w0 = ((PoolPair*)a)->w0;
-    w1 = ((PoolPair*)a)->w1;
-    index = *(u32*)&root->mPool0.mList;
-    used = root->mPool0.mUsed;
-    cap = (u32)root->mPool0.mCapacity;
+    // Per-push uniquely-named word pairs keep each live range short.
     {
-        PoolPair* pairBase = reinterpret_cast<PoolPair*>(root->mPool0.mStartNodePtr);
-        u32 pairSlot = (index + used) % cap;
-        pairBase[pairSlot].w0 = w0;
-        pairBase[pairSlot].w1 = w1;
+        u32 w00;
+        u32 w01;
+        sum = *(s32*)&root->mPool0.mList + root->mPool0.mUsed;
+        q = sum / root->mPool0.mCapacity;
+        base = reinterpret_cast<u32*>(root->mPool0.mStartNodePtr);
+        dst = base + (sum - q * root->mPool0.mCapacity) * 2;
+        w01 = static_cast<PoolPair*>(a)->w1;
+        w00 = static_cast<PoolPair*>(a)->w0;
+        dst[0] = w00;
+        dst[1] = w01;
     }
-    root->mPool0.mUsed = used + 1;
+    root->mPool0.mUsed = root->mPool0.mUsed + 1;
 
     root = lbl_eu_806655D0;
-    w0 = ((PoolPair*)savedB)->w0;
-    w1 = ((PoolPair*)savedB)->w1;
-    index = *(u32*)&root->mPool1.mList;
-    used = root->mPool1.mUsed;
-    cap = (u32)root->mPool1.mCapacity;
     {
-        PoolPair* pairBase = reinterpret_cast<PoolPair*>(root->mPool1.mStartNodePtr);
-        u32 pairSlot = (index + used) % cap;
-        pairBase[pairSlot].w0 = w0;
-        pairBase[pairSlot].w1 = w1;
+        u32 w10;
+        u32 w11;
+        sum = *(s32*)&root->mPool1.mList + root->mPool1.mUsed;
+        q = sum / root->mPool1.mCapacity;
+        base = reinterpret_cast<u32*>(root->mPool1.mStartNodePtr);
+        dst = base + (sum - q * root->mPool1.mCapacity) * 2;
+        w11 = static_cast<PoolPair*>(b)->w1;
+        w10 = static_cast<PoolPair*>(b)->w0;
+        dst[0] = w10;
+        dst[1] = w11;
     }
-    root->mPool1.mUsed = used + 1;
+    root->mPool1.mUsed = root->mPool1.mUsed + 1;
 
     root = lbl_eu_806655D0;
-    w0 = ((PoolPair*)c)->w0;
-    w1 = ((PoolPair*)c)->w1;
-    index = *(u32*)&root->mPool2.mList;
-    used = root->mPool2.mUsed;
-    cap = (u32)root->mPool2.mCapacity;
+    root = lbl_eu_806655D0;
     {
-        PoolPair* pairBase = reinterpret_cast<PoolPair*>(root->mPool2.mStartNodePtr);
-        u32 pairSlot = (index + used) % cap;
-        pairBase[pairSlot].w0 = w0;
-        pairBase[pairSlot].w1 = w1;
+        u32 w20;
+        u32 w21;
+        sum = *(s32*)&root->mPool2.mList + root->mPool2.mUsed;
+        q = sum / root->mPool2.mCapacity;
+        base = reinterpret_cast<u32*>(root->mPool2.mStartNodePtr);
+        dst = base + (sum - q * root->mPool2.mCapacity) * 2;
+        w21 = static_cast<PoolPair*>(c)->w1;
+        w20 = static_cast<PoolPair*>(c)->w0;
+        dst[0] = w20;
+        dst[1] = w21;
     }
-    root->mPool2.mUsed = used + 1;
+    root->mPool2.mUsed = root->mPool2.mUsed + 1;
 
-    func_8044B298__8CGXCacheFv(CDeviceGX::getCacheInstance(), 0, 0, 0);
+    func_8044B298__8CGXCacheFv(CDeviceGX::getCacheInstance(), a, b, c);
 }
 
 static PoolPair* poolPairAt(CViewRootPool* pool, u32 logicalIndex) {
@@ -433,19 +505,36 @@ void CViewRoot::func_80442C68() {
 }
 
 void CViewRoot::func_80442DA8() {
-    CViewRoot* root = lbl_eu_806655D0;
+    s32 sum0;
+    s32 slot0;
+    s32 sum1;
+    s32 slot1;
+    s32 sum2;
+    s32 slot2;
+    CViewRoot* root;
+
+    root = lbl_eu_806655D0;
     if (root == nullptr) {
         return;
     }
-    if (root->mPool0.mUsed == 0) {
+    if (*(volatile u32*)&root->mPool0.mUsed == 0) {
         return;
     }
 
+    // Ring-slot addresses: (list + used - 1) % capacity * sizeof(Pair)
+    // past each pool's node array start.
+    sum0 = *(u32*)&root->mPool0.mList + root->mPool0.mUsed;
+    slot0 = (sum0 - 1) % (s32)root->mPool0.mCapacity;
+    sum1 = *(u32*)&root->mPool1.mList + root->mPool1.mUsed;
+    slot1 = (sum1 - 1) % (s32)root->mPool1.mCapacity;
+    sum2 = *(u32*)&root->mPool2.mList + root->mPool2.mUsed;
+    slot2 = (sum2 - 1) % (s32)root->mPool2.mCapacity;
+
     func_8044B298__8CGXCacheFv(
         CDeviceGX::getCacheInstance(),
-        poolPairAt(&root->mPool0, root->mPool0.mUsed - 1),
-        poolPairAt(&root->mPool1, root->mPool1.mUsed - 1),
-        poolPairAt(&root->mPool2, root->mPool2.mUsed - 1));
+        &reinterpret_cast<PoolPair*>(root->mPool0.mStartNodePtr)[slot0],
+        &reinterpret_cast<PoolPair*>(root->mPool1.mStartNodePtr)[slot1],
+        &reinterpret_cast<PoolPair*>(root->mPool2.mStartNodePtr)[slot2]);
 }
 
 void CViewRoot::setCurrent(CView* view) {

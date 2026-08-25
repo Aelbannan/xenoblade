@@ -110,11 +110,22 @@ extern "C" void func_80484E04(void* model, s32 flag);
 extern "C" unsigned long GetResNode__Q34nw4r3g3d6ResMdlCFUl(nw4r::g3d::ResMdl* mdl,
                                                             unsigned long idx);
 
+// --- Cross-TU imports used by func_804EAA18 ---
+extern "C" float scaleByGlobal(float val);
+extern "C" void func_800B0A90(void* self);   // zero the u32 at self
+extern "C" void func_8049D8D4(u32* self, u32 flags); // OR flag bits
+// "DCbal"/"DCpla"/"DCcyl" tag-pointer table (defined in CMdlLook.cpp)
+extern "C" u32 lbl_eu_805701F0[3];
+extern const char lbl_eu_80524840[]; // "Dwet\0Ddmp\0Dsta\0Dbld\0Dlrx..." tags
+
 extern const char lbl_eu_80570230[]; // panic file name (shape payload checks)
 extern const char lbl_eu_80570208[]; // panic message (shape payload checks)
 
 // Element-array allocator used by func_804EA284.
 extern "C" void* func_80488954(void* heap, u32 size);
+extern "C" s32 func_80488938(void* heap, u32 size); // heap space query
+extern "C" u32 func_80496018(void* scene); // scene -> mtl::ALLOC_HANDLE
+extern "C" void func_80482DF4(CScnItemModel* self, u32 param);
 
 // CMdlDynamics retail vtable (3 entries, 0xC bytes) lives in retail .data.
 struct CMdlDynamicsVtbl {
@@ -283,6 +294,8 @@ struct CMdlDynHolder {
     CMdlDynSub* field_0x0; // 0x0
 };
 
+extern "C" s32 func_804EB2FC(void* self); // dict entry presence query
+
 // 0x98-stride dynamic-model element driven by func_804ECAC4.
 struct CMdlDynElem98 {
     u32 field_0x0;                 // 0x0 resource id
@@ -312,11 +325,11 @@ struct DynShapeData {
 // pass 2 allocates a 0x98-stride element array and fills each element with
 // the node pointer, the node's animated matrix and its inverse, and the
 // shape kind byte (ball shapes skip the animation solve).
-u32 func_804E9FD0(const CMdlDynHolder* self);
-void func_804EA284(CMdlDynamics* self) {
+extern "C" u32 func_804E9FD0(const CMdlDynHolder* self);
+// Retail symbol is the unmangled C name.
+extern "C" void func_804EA284(CMdlDynamics* self) {
     u32 ids[16];
     u32 count = 0;
-    u32* idOut = ids;
 
     // Pass 1: collect shape-node ids.
     for (u32 i = 0;
@@ -448,8 +461,7 @@ void func_804EA284(CMdlDynamics* self) {
         if (shape != 0) {
             CMdlDynHolder wrap;
             wrap.field_0x0 = (CMdlDynSub*)node;
-            *idOut = func_804E9FD0(&wrap);
-            idOut++;
+            ids[count] = func_804E9FD0(&wrap);
             count++;
         }
     }
@@ -468,10 +480,9 @@ void func_804EA284(CMdlDynamics* self) {
                 (void*)(unsigned long)((MdlResRoot*)(unsigned long)
                                            self->field_0x4)
                     ->field_0x146C);
-            nw4r::g3d::ResNode resNode = mdl.GetResNode(*idIt);
+            nw4r::g3d::ResNode resNode = mdl.GetResNode(idIt[k]);
             DynShapeNode* node = (DynShapeNode*)&resNode.ref();
             u32 nodeVal = (u32)node;
-            idIt++;
             if (node == NULL) {
                 nw4r::db::Panic(lbl_eu_8056E194, 0x2c, lbl_eu_8056E178,
                                 lbl_eu_80663910, lbl_eu_80663CBC);
@@ -585,15 +596,14 @@ extern "C" __declspec(noinline) void func_804EAA10(const Mtx a, Mtx b) {
     PSMTXInverse(a, b);
 }
 
-void func_804EAA14(void) {}
+extern "C" __declspec(noinline) void func_804EAA14(void*) {}
 
-void func_804EAA18(){}
 
-extern "C" u32 func_804EB1C4(u8* self) { return *(u32*)self != 0; }
+extern "C" __declspec(noinline) u32 func_804EB1C4(u8* self) { return *(u32*)self != 0; }
 
 // Stores a value at self+0 and asserts it is 4-byte aligned (retail panics
 // with the same file/line/message as the nw4r ResDic alignment checks).
-u8* func_804EB1D8(u8* self, u32 arg) {
+extern "C" __declspec(noinline) u8* func_804EB1D8(u8* self, u32 arg) {
     *(u32*)self = arg;
     if ((arg & 3) != 0) {
         nw4r::db::Panic(lbl_eu_80530D54, 0x26, lbl_eu_80530D2C);
@@ -627,7 +637,7 @@ struct CMdlDynElem {
 // us-804ee5a4: deleting destructor of the 0xB0 dynamic-model element.
 // Destroys the entry buffer (0xA0) then the id buffer (0x90) - reverse
 // declaration order - and frees the element when the delete flag is set.
-void* __dt__804EA0E8(CMdlDynElem* self, s32 freeIt) {
+__declspec(noinline) void* __dt__804EA0E8(CMdlDynElem* self, s32 freeIt) {
     if (self != 0) {
         self->bufA0.~CMdlDynBuffer();
         self->buf90.~CMdlDynBuffer();
@@ -657,7 +667,7 @@ struct CMdlDynSet {
 
 // Looks up a named entry in the sub-object's embedded resource dictionary
 // (ResDic at sub+4) and returns the resolved data pointer (4-aligned).
-u8* func_804EB22C(const CMdlDynHolder* self, const char* name) {
+extern "C" __declspec(noinline) u8* func_804EB22C(const CMdlDynHolder* self, const char* name) {
     if (!self->field_0x0) {
         nw4r::db::Panic(lbl_eu_80530D18, 0x57, lbl_eu_80530CFC, lbl_eu_80530CF0,
                         lbl_eu_80663CC0);
@@ -678,7 +688,7 @@ u8* func_804EB22C(const CMdlDynHolder* self, const char* name) {
 // present (two checks) and that its kind is not zero, then resolves the
 // offset at field_0x4 (same shape as func_804EB310 but the kind check is
 // `!= 0` with a different file/line/message).
-u8* func_804EB3E8(CMdlDynHolder* self) {
+extern "C" __declspec(noinline) u8* func_804EB3E8(CMdlDynHolder* self) {
     if (self->field_0x0 == 0) {
         nw4r::db::Panic(lbl_eu_80530DC4, 0x26, lbl_eu_80530DA8, lbl_eu_80530D68,
                         lbl_eu_80663CC8);
@@ -700,7 +710,7 @@ u8* func_804EB3E8(CMdlDynHolder* self) {
 
 // Returns the sub-object's embedded data pointer: asserts the dictionary
 // kind (field_0xC == 1) and resolves the offset at field_0x4.
-u8* func_804EB310(CMdlDynHolder* self) {
+extern "C" __declspec(noinline) u8* func_804EB310(CMdlDynHolder* self) {
     if (self->field_0x0 == 0) {
         nw4r::db::Panic(lbl_eu_80530DC4, 0x26, lbl_eu_80530DA8, lbl_eu_80530D68,
                         lbl_eu_80663CC8);
@@ -721,7 +731,7 @@ u8* func_804EB310(CMdlDynHolder* self) {
     return 0;
 }
 
-u32 func_804EB4C0(const CMdlDynHolder* self) {
+extern "C" __declspec(noinline) u32 func_804EB4C0(const CMdlDynHolder* self) {
     CMdlDynSub* sub = self->field_0x0;
     if (sub == 0) {
         nw4r::db::Panic(lbl_eu_80530DC4, 0x26, lbl_eu_80530DA8, lbl_eu_80530D68,
@@ -730,9 +740,9 @@ u32 func_804EB4C0(const CMdlDynHolder* self) {
     return self->field_0x0->field_0x8;
 }
 
-extern "C" void func_804EB524(u8* self, const void* src) { *(u32*)self = *(const u32*)src; }
+extern "C" __declspec(noinline) void func_804EB524(u8* self, const void* src) { *(u32*)self = *(const u32*)src; }
 
-extern "C" void func_804EB530(u8* self) {
+extern "C" __declspec(noinline) void func_804EB530(u8* self) {
     u8* s = (u8*)self;
     *(u32*)(s + 0x8C) = 0;
     *(u32*)(s + 0x90) = 0;
@@ -743,7 +753,7 @@ extern "C" void func_804EB530(u8* self) {
     *(u32*)(s + 0xAC) = -1;
 }
 
-extern "C" void func_804EB558(u8* self, const void* src) { *(u32*)self = *(const u32*)src; }
+extern "C" __declspec(noinline) void func_804EB558(u8* self, const void* src) { *(u32*)self = *(const u32*)src; }
 
 // Raw 0xB0-byte element view used by the append-copy func_804EB564 (retail
 // copies the head word + four floats, then the remaining 39 words raw).
@@ -757,7 +767,7 @@ struct CMdlDynElemRaw {
 // bumps the element count. Field copies are written explicitly (rather than
 // a struct assignment, which MWCC would copy word-by-word) so the head
 // floats use lfs/stfs like retail.
-void func_804EB564(CMdlDynList* self, const CMdlDynElemRaw* src) {
+extern "C" __declspec(noinline) void func_804EB564(CMdlDynList* self, const CMdlDynElemRaw* src) {
     u32 idx = self->field_0x4;
     u32 base = (u32)self->field_0x0;
     u32 off = idx * 0xB0;
@@ -810,40 +820,40 @@ void func_804EB564(CMdlDynList* self, const CMdlDynElemRaw* src) {
 }
 
 // Returns a pointer to element idx of a 0x98-byte-stride array stored at self+0.
-u8* func_804EB6E0(u8* self, u32 idx) {
+extern "C" __declspec(noinline) u8* func_804EB6E0(u8* self, u32 idx) {
     return *(u8**)self + idx * 0x98;
 }
 
-u32 func_804EB6F0(u8* self) { return *(u32*)((u8*)self + 0x4); }
+extern "C" __declspec(noinline) u32 func_804EB6F0(u8* self) { return *(u32*)((u8*)self + 0x4); }
 
 // Returns a pointer to element idx of a 0xB0-byte-stride array stored at self+0.
 extern "C" __declspec(noinline) u8* func_804EB6F8(u8* self, u32 idx) {
     return *(u8**)self + idx * 0xB0;
 }
 
-extern "C" u32 func_804EB708(u8* self, u32 a, u32 b) {
+extern "C" __declspec(noinline) u32 func_804EB708(u8* self, u32 a, u32 b) {
     *(u32*)((u8*)self + 0) = a;
     *(u32*)((u8*)self + 4) = 0;
     *(u32*)((u8*)self + 8) = b;
     return b << 2;
 }
 
-extern "C" void func_804EB720(u8* self, const void* src) {
+extern "C" __declspec(noinline) void func_804EB720(u8* self, const void* src) {
     u32 idx = *(u32*)((u8*)self + 4);
     *(u32*)(*(u8**)self + idx * 4) = *(u32*)src;
     *(u32*)((u8*)self + 4) = idx + 1;
 }
 
-extern "C" u32 func_804EB740(u8* self, u32 a, u32 b) {
+extern "C" __declspec(noinline) u32 func_804EB740(u8* self, u32 a, u32 b) {
     *(u32*)((u8*)self + 0) = a;
     *(u32*)((u8*)self + 4) = 0;
     *(u32*)((u8*)self + 8) = b;
     return b * 12;
 }
 
-extern "C" void func_804EB758(u8* self, const void* src) { *(u32*)self = *(const u32*)src; }
+extern "C" __declspec(noinline) void func_804EB758(u8* self, const void* src) { *(u32*)self = *(const u32*)src; }
 
-void func_804EB764(void *r3, void *r4) {
+__declspec(noinline) void func_804EB764(void *r3, void *r4) {
     int *p = (int *)r3;
     int *src = (int *)r4;
     int idx = p[1];
@@ -1070,7 +1080,267 @@ struct MdlDynObj {
     u8* field_0x4;     // 0x4 resource root
     u8 field_0x8[0x10];
     u8* elems18;       // 0x18 base of the 0x98-stride element array
+    u32 elems18Count;  // 0x1C element count
 };
+
+// Resolved dictionary-entry scratch wrapper used while reading the shape
+// user-data dictionaries (entry pointer + typed accessors below).
+u8* func_804EA038(CMdlDynHolder* self);
+
+// us-804eeed4: builds one 0xB0 dynamic-model element from the shape node's
+// user-data dictionaries and appends it to the list.
+// - dictA (node user data) carries scalar tags Dwet/Ddmp/Dsta/Dbld plus the
+//   DCbal/DCpla/DCcyl anchor-node tag lists and Dlink/Dllen link tables.
+// - dictB (sub-node user data) carries axis tags Dlrx/Dlry/Dlrz, each a
+//   4-float record whose first two entries are enable flags (bits accumulated
+//   in elem.field_0x8C) and whose last two are bounds kept ordered x <= y.
+void func_804EAA18(MdlDynObj* model, CMdlDynList* list, u32 index) {
+    nw4r::g3d::ResMdl mdl(
+        (void*)(unsigned long)func_804E9FC8((u8*)model->field_0x4));
+    unsigned long nodeIdx =
+        GetResNode__Q34nw4r3g3d6ResMdlCFUl(&mdl, index);
+    nw4r::g3d::ResNode resNode;
+    func_804EA0D4((u8*)&resNode, &nodeIdx);
+
+    CMdlDynHolder holderNode;
+    func_804EA0D4((u8*)&holderNode, &resNode);
+    u8* subData = func_804EA038(&holderNode);
+    nw4r::g3d::ResNode subNode;
+    func_804EA0D4((u8*)&subNode, &subData);
+
+    void* udA = resNode.GetResUserData();
+    CMdlDynHolder dictA;
+    func_804EB524((u8*)&dictA, &udA);
+    void* udB = subNode.GetResUserData();
+    CMdlDynHolder dictB;
+    func_804EB524((u8*)&dictB, &udB);
+
+    if (!func_804EB1C4((u8*)&dictA)) {
+        return;
+    }
+
+    CMdlDynElem elem;
+    func_804EB530((u8*)&elem); // zero both embedded buffers
+    CMdlDynHolder entry;
+    func_804EB1D8((u8*)&entry, 0);
+    func_800B0A90(&elem.field_0x8C);
+    elem.field_0x0 = func_804E9FD0(&holderNode);
+
+    // Scalar tags from the node dictionary; absent entries read 0.
+    u8* found = func_804EB22C(&dictA, lbl_eu_80524840 + 0); // "Dwet"
+    func_804EB558((u8*)&entry, &found);
+    f32 val;
+    if (func_804EB2FC(&entry)) {
+        val = *func_804EB310(&entry);
+    } else {
+        val = lbl_eu_8066B3D0;
+    }
+    elem.field_0x4 = val;
+
+    found = func_804EB22C(&dictA, lbl_eu_80524840 + 5); // "Ddmp"
+    func_804EB558((u8*)&entry, &found);
+    if (func_804EB2FC(&entry)) {
+        val = *func_804EB310(&entry);
+    } else {
+        val = lbl_eu_8066B3D0;
+    }
+    elem.field_0x8 = val;
+
+    found = func_804EB22C(&dictA, lbl_eu_80524840 + 0xa); // "Dsta"
+    func_804EB558((u8*)&entry, &found);
+    if (func_804EB2FC(&entry)) {
+        val = *func_804EB310(&entry);
+    } else {
+        val = lbl_eu_8066B3D0;
+    }
+    elem.field_0xC = val;
+
+    found = func_804EB22C(&dictA, lbl_eu_80524840 + 0xf); // "Dbld"
+    func_804EB558((u8*)&entry, &found);
+    if (func_804EB2FC(&entry)) {
+        val = *func_804EB310(&entry);
+    } else {
+        val = lbl_eu_8066B3D0;
+    }
+    elem.field_0x10 = val;
+    // Blend weight saturates at 1.
+    if (elem.field_0x10 > lbl_eu_8066B3D4) {
+        elem.field_0x10 = lbl_eu_8066B3D4;
+    }
+
+    // Axis records from the sub-node dictionary (Dlrx/Dlry/Dlrz): each is a
+    // 4-float record {flagX, flagY, boundX, boundY}. Non-zero flags set bits
+    // in the element's flag word; when both flags of an axis are set the two
+    // bounds are swapped so the smaller one comes first.
+    if (func_804EB1C4((u8*)&dictB)) {
+        f32* d;
+        f32 sx;
+        f32 sy;
+
+        found = func_804EB22C(&dictB, lbl_eu_80524840 + 0x14); // "Dlrx"
+        func_804EB558((u8*)&entry, &found);
+        if (func_804EB2FC(&entry)) {
+            d = (f32*)func_804EB310(&entry);
+            if (d[0] != lbl_eu_8066B3D0) {
+                func_8049D8D4(&elem.field_0x8C, 0x1);
+            }
+            d = (f32*)func_804EB310(&entry);
+            if (d[1] != lbl_eu_8066B3D0) {
+                func_8049D8D4(&elem.field_0x8C, 0x2);
+            }
+            sx = scaleByGlobal(((f32*)func_804EB310(&entry))[2]);
+            sy = scaleByGlobal(((f32*)func_804EB310(&entry))[3]);
+            elem.minX = sx;
+            elem.maxX = sy;
+            if (func_8004B3D8(&elem.field_0x8C, 0x1) != 0 &&
+                func_8004B3D8(&elem.field_0x8C, 0x2) != 0 && sx > sy) {
+                elem.minX = sy;
+                elem.maxX = sx;
+            }
+        }
+
+        found = func_804EB22C(&dictB, lbl_eu_80524840 + 0x19); // "Dlry"
+        func_804EB558((u8*)&entry, &found);
+        if (func_804EB2FC(&entry)) {
+            d = (f32*)func_804EB310(&entry);
+            if (d[0] != lbl_eu_8066B3D0) {
+                func_8049D8D4(&elem.field_0x8C, 0x4);
+            }
+            d = (f32*)func_804EB310(&entry);
+            if (d[1] != lbl_eu_8066B3D0) {
+                func_8049D8D4(&elem.field_0x8C, 0x8);
+            }
+            sx = scaleByGlobal(((f32*)func_804EB310(&entry))[2]);
+            sy = scaleByGlobal(((f32*)func_804EB310(&entry))[3]);
+            elem.minY = sx;
+            elem.maxY = sy;
+            if (func_8004B3D8(&elem.field_0x8C, 0x4) != 0 &&
+                func_8004B3D8(&elem.field_0x8C, 0x8) != 0 && sx > sy) {
+                elem.minY = sy;
+                elem.maxY = sx;
+            }
+        }
+
+        found = func_804EB22C(&dictB, lbl_eu_80524840 + 0x1e); // "Dlrz"
+        func_804EB558((u8*)&entry, &found);
+        if (func_804EB2FC(&entry)) {
+            d = (f32*)func_804EB310(&entry);
+            if (d[0] != lbl_eu_8066B3D0) {
+                func_8049D8D4(&elem.field_0x8C, 0x10);
+            }
+            d = (f32*)func_804EB310(&entry);
+            if (d[1] != lbl_eu_8066B3D0) {
+                func_8049D8D4(&elem.field_0x8C, 0x20);
+            }
+            sx = scaleByGlobal(((f32*)func_804EB310(&entry))[2]);
+            sy = scaleByGlobal(((f32*)func_804EB310(&entry))[3]);
+            elem.minZ = sx;
+            elem.maxZ = sy;
+            if (func_8004B3D8(&elem.field_0x8C, 0x10) != 0 &&
+                func_8004B3D8(&elem.field_0x8C, 0x20) != 0 && sx > sy) {
+                elem.minZ = sy;
+                elem.maxZ = sx;
+            }
+        }
+    }
+
+    // Animate the shape node and stash its matrix into the element copy.
+    nw4r::g3d::ChrAnmResult chrRes;
+    func_804EAA14(&chrRes);
+    resNode.CalcChrAnmResult(&chrRes);
+    nw4r::math::MTX34 mtx;
+    chrRes.GetMtx(&mtx);
+    nw4r::math::VEC3 v164;
+    func_8006BEC4(&v164);
+    nw4r::math::VEC3 v170;
+    func_8006BEC4(&v170);
+    nw4r::math::VEC3 v188;
+    func_8006BEC4(&v188);
+    nw4r::math::VEC3 v17c;
+    func_8006BEC4(&v17c);
+    func_804EB564(list, (CMdlDynElemRaw*)&elem);
+
+    // Anchor-tag scan: for each of "DCbal"/"DCpla"/"DCcyl" present in the
+    // dictionary, match every listed id against the model's 0x98-stride
+    // elements and collect the matched element indices.
+    u32 ids[36];
+    u32 matchCount = 0;
+    for (u32 j = 0; j < 3; j++) {
+        const char* tagName = (const char*)lbl_eu_805701F0[j];
+        found = func_804EB22C(&dictA, tagName);
+        func_804EB558((u8*)&entry, &found);
+        if (!func_804EB2FC(&entry)) {
+            continue;
+        }
+        u32 a = 0;
+        u32 off = 0;
+        while (a < func_804EB4C0(&entry)) {
+            for (u32 i = 0;
+                 i < func_804EB6F0((u8*)&model->elems18); i++) {
+                u8* e98 = func_804EB6E0((u8*)&model->elems18, i);
+                u32 elemId = *(u32*)e98;
+                u8* data = func_804EB3E8(&entry);
+                if (*(u32*)(data + off) == elemId) {
+                    ids[matchCount++] = i;
+                }
+            }
+            off += 4;
+            a++;
+        }
+    }
+
+    if (matchCount != 0) {
+        // Append every matched anchor node id to the newest list element's
+        // id buffer (buf90).
+        u32 lastIdx = func_804EA0E0((u8*)list);
+        CMdlDynElem* last =
+            (CMdlDynElem*)func_804EB6F8((u8*)list, lastIdx - 1);
+        u32 mem = (u32)func_80488954((void*)model->field_0x4,
+                                     matchCount << 2);
+        func_804EB708((u8*)&last->buf90, mem, matchCount);
+        for (u32 k = 0; k < matchCount; k++) {
+            nw4r::g3d::ResMdl mdl2(
+                (void*)(unsigned long)func_804E9FC8((u8*)model->field_0x4));
+            u8* e98 = func_804EB6E0((u8*)&model->elems18, ids[k]);
+            unsigned long nid =
+                GetResNode__Q34nw4r3g3d6ResMdlCFUl(&mdl2, *(u32*)e98);
+            nw4r::g3d::ResNode nres;
+            func_804EA0D4((u8*)&nres, &nid);
+            func_804EB720((u8*)&last->buf90, &nres);
+        }
+    }
+
+    // Link table ("Dlink" + "Dllen"): append {id, weight} pairs from the
+    // dictionary to the newest element's link buffer (bufA0), recording the
+    // destination buffer header for the append helper.
+    found = func_804EB22C(&dictA, lbl_eu_80524840 + 0x23); // "Dlink"
+    func_804EB558((u8*)&entry, &found);
+    if (func_804EB2FC(&entry) && func_804EB4C0(&entry) != 0) {
+        u32 lastIdx = func_804EA0E0((u8*)list);
+        CMdlDynElem* last =
+            (CMdlDynElem*)func_804EB6F8((u8*)list, lastIdx - 1);
+        u32 cnt = func_804EB4C0(&entry);
+        u32 mem =
+            (u32)func_80488954((void*)model->field_0x4,
+                               func_804EB4C0(&entry) * 12);
+        func_804EB740((u8*)&last->bufA0, mem, cnt);
+
+        found = func_804EB22C(&dictA, lbl_eu_80524840 + 0x29); // "Dllen"
+        CMdlDynHolder lens;
+        func_804EB758((u8*)&lens, &found);
+        u32 recIdx = 0; // third record word stays zero across the loop
+        u32 rec[3];
+        for (u32 i = 0; i < func_804EB4C0(&entry); i++) {
+            rec[0] = *(u32*)(func_804EB3E8(&entry) + i * 4);
+            rec[1] =
+                (u32)(unsigned long)*(f32*)((u8*)func_804EB310(&lens) + i * 4);
+            rec[2] = recIdx;
+            func_804EB764((u8*)&last->bufA0, (void*)rec);
+        }
+    }
+
+    __dt__804EA0E8(&elem, -1);
+}
 
 
 // Raw g3d ResNode fields read by the helpers: entry count at 0x10 (used to
@@ -1836,149 +2106,158 @@ struct CMdlDynEntry {
     u32 unk08; // 0x8 flag; 0 resets the accumulator position
 };
 
+// Aligned index record reached through a shape node's 0x5C relative offset;
+// its 0x10 word indexes the anchor-matrix array. Alignment checked at runtime.
+struct DynIdxNode {
+    u8 pad[0x5C];
+    u32 off5C; // 0x5C
+};
+
+struct DynAlignRec {
+    u8 pad[0x10];
+    u32 field_0x10; // 0x10 matrix index
+};
+
+// Scratch view with the CMdlDynBuffer layout, released manually per element.
+struct BufViewRec {
+    u8* data;
+    u32 field_0x4;
+    u32 field_0x8;
+    u32 sentinel;
+};
+
 // us-804f1b38: dynamics driver. Walks every list/element owned by self,
 // relaxes each element's position/velocity toward the anchor matrix columns
 // referenced by its entry array, then dispatches the per-element update kinds
-// (same helpers as func_804ECAC4) accumulating into both the element and a
-// stack-local accumulator element whose buffers are released every iteration.
+// accumulating into both the element and a stack-local accumulator element.
 extern "C" void func_804ED67C(CMdlDynamics* self, nw4r::math::MTX34* matrices) {
-    CMdlDynElem acc; // scratch accumulator; fields initialized per element
-    CMdlDynElem* pAcc = &acc;
+    // Shared scratch vectors; MWCC pins their addresses to the non-volatile
+    // registers across the nested loops (retail r14-r25/r30/r31).
+    ml::CVec3 vSum;  // kind-1 position sum
+    ml::CVec3 dOut1; // kind-1 helper delta out
+    ml::CVec3 vFlat; // kind-2 flattened view vector
+    ml::CVec3 diffC; // kind-2 diff copy
+    ml::CVec3 diffV; // kind-2 difference vector
+    ml::CVec3 dOut2; // kind-2 scaled delta
+    ml::CVec3 push;  // kind-2 final push vector
+    ml::CVec3 pc;    // blend point passed to the helpers
+    ml::CVec3 dOut3; // kind-3 helper delta out
+
+    // Scratch accumulator plus cached pointers/scales held live across the
+    // nested loops.
+    CMdlDynElem elem;
+    CMdlDynElem* pAcc = &elem;
+    ml::CVec3* zeroVec = &ml::CVec3::zero;
     CMdlDynList** it = (CMdlDynList**)self->buf08.field_0x0;
-    CMdlDynList** end = it + self->buf08.field_0x4;
-    while (it != end) {
-        // Byte-offset walk; an index counter here makes MWCC unroll the body
-        // via mtctr, which retail does not do.
-        u32 off;
-        for (off = 0; off != (*it)->field_0x4 * sizeof(CMdlDynElem);
-             off += sizeof(CMdlDynElem)) {
-            CMdlDynElem* tgt = (CMdlDynElem*)((u8*)(*it)->field_0x0 + off);
+    const f32 blendK = lbl_eu_8066B3E4;   // contact-point scale
+    const f32 clipY = lbl_eu_8066B3D0;    // view-space y threshold
+    const f32 penScale = lbl_eu_8066B3F4; // penetration scale
+    const f32 relaxScale = lbl_eu_8066B3F8;
+    const f32 relaxPos = lbl_eu_8066B3FC;
 
-            acc.field_0x8C = 0;
-            acc.buf90.field_0x0 = 0;
-            acc.buf90.field_0x4 = 0;
-            acc.buf90.field_0xC = 0xFFFFFFFFu;
-            acc.bufA0.field_0x0 = 0;
-            acc.bufA0.field_0x4 = 0;
-            acc.bufA0.field_0xC = 0xFFFFFFFFu;
+    while (it != (CMdlDynList**)self->buf08.field_0x0 +
+                      self->buf08.field_0x4) {
+        u32 idx = 0;
+        u32 off = 0;
+        while (idx != ((CMdlDynList*)*it)->field_0x4) {
+            CMdlDynElem* tgt =
+                (CMdlDynElem*)((u8*)((CMdlDynList*)*it)->field_0x0 + off);
 
-            // Entry-driven relaxation pass.
+            u32 unk264 = 0;
+            // Empty buffer views constructed (and torn down) per element.
+            BufViewRec viewA0;
+            viewA0.data = 0;
+            viewA0.field_0x4 = 0;
+            viewA0.sentinel = 0xFFFFFFFFu;
+            BufViewRec view90;
+            view90.data = 0;
+            view90.field_0x4 = 0;
+            view90.sentinel = 0xFFFFFFFFu;
+
+            // Entry-driven relaxation pass over the element's bufA0 records.
             CMdlDynEntry* ent = (CMdlDynEntry*)tgt->bufA0.field_0x0;
-            CMdlDynEntry* entEnd = ent + tgt->bufA0.field_0x4;
-            while (ent != entEnd) {
+            while (ent != (CMdlDynEntry*)(tgt->bufA0.field_0x0 +
+                                          tgt->bufA0.field_0x4 *
+                                              sizeof(CMdlDynEntry))) {
                 MdlResRoot* root = (MdlResRoot*)self->field_0x4;
                 nw4r::g3d::ResMdl mdl((void*)root->field_0x146C);
                 unsigned long raw = GetResNode__Q34nw4r3g3d6ResMdlCFUl(&mdl, ent->id);
                 if (raw == 0) {
                     nw4r::db::Panic(lbl_eu_80529678, 0x53, lbl_eu_80529658);
                 }
-                MdlResNodeRaw* node = (MdlResNodeRaw*)raw;
-                u32 n = (node != 0) ? node->field_0x10 : 0;
+                u32 n = (raw != 0) ? ((MdlResNodeRaw*)raw)->field_0x10 : 0;
+                nw4r::math::MTX34* anchorMtx = matrices + n;
 
                 // Translation column of the anchor matrix.
-                nw4r::math::VEC3 center;
-                center.x = matrices[n].m[0][3];
-                center.y = matrices[n].m[1][3];
-                center.z = matrices[n].m[2][3];
-
-                nw4r::math::VEC3 d;
-                d.x = center.x - tgt->field_0x68.x;
-                d.y = center.y - tgt->field_0x68.y;
-                d.z = center.z - tgt->field_0x68.z;
-                nw4r::math::VEC3 dArg = d;
+                ml::CVec3 anchor(anchorMtx->m[0][3], anchorMtx->m[1][3],
+                                 anchorMtx->m[2][3]);
+                ml::CVec3 dArg =
+                    anchor - *(ml::CVec3*)&tgt->field_0x68;
                 f32 mag = PSVECMag((const Vec*)&dArg);
 
-                f32 k = lbl_eu_8066B3F8 * (ent->unk04 - mag);
+                f32 k = relaxScale * (ent->unk04 - mag);
 
-                // velocity relaxation step: s = d * k
-                nw4r::math::VEC3 s;
-                s.x = d.x * k;
-                s.y = d.y * k;
-                s.z = d.z * k;
-                nw4r::math::VEC3 sc = s;
-                tgt->field_0x74.x -= sc.x;
-                tgt->field_0x74.y -= sc.y;
-                tgt->field_0x74.z -= sc.z;
+                // Velocity relaxation step: vel -= d * k.
+                ml::CVec3 vc = dArg * k;
+                *(ml::CVec3*)&tgt->field_0x74 -= vc;
 
-                // position relaxation step: w = (d * k) * B3FC
-                nw4r::math::VEC3 s2;
-                s2.x = d.x * k;
-                s2.y = d.y * k;
-                s2.z = d.z * k;
-                nw4r::math::VEC3 s2c = s2;
-                nw4r::math::VEC3 w;
-                w.x = s2c.x * lbl_eu_8066B3FC;
-                w.y = s2c.y * lbl_eu_8066B3FC;
-                w.z = s2c.z * lbl_eu_8066B3FC;
-                nw4r::math::VEC3 wc = w;
-                tgt->field_0x68.x -= wc.x;
-                tgt->field_0x68.y -= wc.y;
-                tgt->field_0x68.z -= wc.z;
+                // Position relaxation step: pos -= (d * k) * B3FC.
+                *(ml::CVec3*)&tgt->field_0x68 -= dArg * k * relaxPos;
 
                 if (ent->unk08 == 0) {
-                    pAcc->field_0x68.x = ml::CVec3::zero.x;
-                    pAcc->field_0x68.y = ml::CVec3::zero.y;
-                    pAcc->field_0x68.z = ml::CVec3::zero.z;
+                    nw4r::math::VEC3 col(anchorMtx->m[0][3], anchorMtx->m[1][3],
+                                         anchorMtx->m[2][3]);
+                    pAcc->field_0x68 = col;
+                    pAcc->field_0x74.x = zeroVec->x;
+                    pAcc->field_0x74.y = zeroVec->y;
+                    pAcc->field_0x74.z = zeroVec->z;
                 }
                 ent++;
             }
 
             // Kind dispatch over the element's update-id array.
             u32* kindIt = (u32*)tgt->buf90.field_0x0;
-            u32* kindEnd = kindIt + tgt->buf90.field_0x4;
-            while (kindIt != kindEnd) {
+            while (kindIt != (u32*)(tgt->buf90.field_0x0 +
+                                    tgt->buf90.field_0x4 * sizeof(u32))) {
                 CMdlDynElem98* e =
                     (CMdlDynElem98*)((u8*)self->buf18.field_0x0 + *kindIt * 0x98);
-                kindIt++;
                 switch (e->field_0x94) {
                 case 1: {
-                    nw4r::math::VEC3 sum;
-                    sum.x = pAcc->field_0x68.x + tgt->field_0x68.x;
-                    sum.y = pAcc->field_0x68.y + tgt->field_0x68.y;
-                    sum.z = pAcc->field_0x68.z + tgt->field_0x68.z;
-                    nw4r::math::VEC3 sumc = sum;
-                    nw4r::math::VEC3 p;
-                    p.x = sumc.x * lbl_eu_8066B3E4;
-                    p.y = sumc.y * lbl_eu_8066B3E4;
-                    p.z = sumc.z * lbl_eu_8066B3E4;
-                    nw4r::math::VEC3 pc = p;
-                    nw4r::math::VEC3 delta;
-                    if (!func_804ECEB4((MdlDynObj*)self, &pc, &delta,
-                                       &e->field_0x0, matrices)) {
-                        continue;
+                    vSum = *(ml::CVec3*)&pAcc->field_0x68 +
+                           *(ml::CVec3*)&tgt->field_0x68;
+                    pc = vSum * blendK;
+                    if (func_804ECEB4((MdlDynObj*)self,
+                                      (nw4r::math::VEC3*)&pc,
+                                      (nw4r::math::VEC3*)&dOut1,
+                                      &e->field_0x0, matrices)) {
+                        tgt->field_0x68.x += dOut1.x;
+                    tgt->field_0x68.y += dOut1.y;
+                    tgt->field_0x68.z += dOut1.z;
+                    tgt->field_0x74.x += dOut1.x;
+                    tgt->field_0x74.y += dOut1.y;
+                    tgt->field_0x74.z += dOut1.z;
+                    elem.field_0x68.x += dOut1.x;
+                    elem.field_0x68.y += dOut1.y;
+                    elem.field_0x68.z += dOut1.z;
+                    elem.field_0x74.x += dOut1.x;
+                    elem.field_0x74.y += dOut1.y;
+                    elem.field_0x74.z += dOut1.z;
                     }
-                    tgt->field_0x68.x += delta.x;
-                    tgt->field_0x68.y += delta.y;
-                    tgt->field_0x68.z += delta.z;
-                    tgt->field_0x74.x += delta.x;
-                    tgt->field_0x74.y += delta.y;
-                    tgt->field_0x74.z += delta.z;
-                    acc.field_0x68.x += delta.x;
-                    acc.field_0x68.y += delta.y;
-                    acc.field_0x68.z += delta.z;
-                    acc.field_0x74.x += delta.x;
-                    acc.field_0x74.y += delta.y;
-                    acc.field_0x74.z += delta.z;
                     break;
                 }
                 case 2: {
                     s32 hit = 0;
-                    nw4r::math::VEC3 sum;
-                    sum.x = pAcc->field_0x68.x + tgt->field_0x68.x;
-                    sum.y = pAcc->field_0x68.y + tgt->field_0x68.y;
-                    sum.z = pAcc->field_0x68.z + tgt->field_0x68.z;
-                    nw4r::math::VEC3 sumc = sum;
-                    nw4r::math::VEC3 p;
-                    p.x = sumc.x * lbl_eu_8066B3E4;
-                    p.y = sumc.y * lbl_eu_8066B3E4;
-                    p.z = sumc.z * lbl_eu_8066B3E4;
-                    nw4r::math::VEC3 pc = p;
+                    ml::CVec3 sum =
+                        *(ml::CVec3*)&pAcc->field_0x68 +
+                        *(ml::CVec3*)&tgt->field_0x68;
+                    ml::CVec3 p = sum * blendK;
+                    pc = p;
                     nw4r::math::VEC3 world;
                     PSMTXMultVec(e->field_0x4.mtx, (const Vec*)&pc, (Vec*)&world);
                     nw4r::math::VEC3 view;
                     PSMTXMultVec(e->field_0x64.mtx, (const Vec*)&world, (Vec*)&view);
-                    nw4r::math::VEC3 delta;
-                    if (view.z > lbl_eu_8066B3D0) {
+                    vFlat = *(ml::CVec3*)&view;
+                    if (vFlat.y > clipY) {
                         MdlResRoot* root = (MdlResRoot*)self->field_0x4;
                         nw4r::g3d::ResMdl mdl((void*)root->field_0x146C);
                         unsigned long raw =
@@ -1987,127 +2266,425 @@ extern "C" void func_804ED67C(CMdlDynamics* self, nw4r::math::MTX34* matrices) {
                             nw4r::db::Panic(lbl_eu_8056E850, 0x2c, lbl_eu_8056E834,
                                             lbl_eu_80663910, lbl_eu_80663CB8);
                         }
-                        u8* node = (u8*)raw;
-                        u32 resOff = *(u32*)(node + 0x5C);
-                        if (resOff != 0) {
-                            node += resOff;
-                            if ((((u32)node) & 3) != 0) {
+                        DynIdxNode* node = (DynIdxNode*)raw;
+                        DynAlignRec* rec = 0;
+                        if (node->off5C != 0) {
+                            rec = (DynAlignRec*)((u8*)node + node->off5C);
+                            if ((((u32)rec) & 3) != 0) {
                                 nw4r::db::Panic(lbl_eu_8056E820, 0x2c,
                                                 lbl_eu_8056E7F8);
                             }
-                        } else {
-                            raw = 0;
                         }
-                        if (raw == 0) {
+                        if (rec == 0) {
                             nw4r::db::Panic(lbl_eu_80529678, 0x53,
                                             lbl_eu_80529658);
                         }
-                        u32 n = *(u32*)(node + 0x10);
+                        u32 n = rec->field_0x10;
 
                         // Flatten view-space y, push through the world matrix
-                        // and the anchor matrix; the penetration vector is the
-                        // difference of the two stages scaled by B3F4.
-                        view.y = lbl_eu_8066B3D0;
+                        // and the anchor matrix; the penetration vector is
+                        // (pc - flattened view) scaled by B3F4.
+                        vFlat.y = clipY;
                         nw4r::math::VEC3 t1;
-                        PSMTXMultVec(e->field_0x34.mtx, (const Vec*)&view,
+                        PSMTXMultVec(e->field_0x34.mtx, (const Vec*)&vFlat,
                                      (Vec*)&t1);
-                        view = t1;
+                        nw4r::math::VEC3 t1c = t1;
+                        nw4r::math::MTX34* mtxN = matrices + n;
                         nw4r::math::VEC3 t2;
-                        PSMTXMultVec(matrices[n].mtx, (const Vec*)&view,
+                        PSMTXMultVec(mtxN->mtx, (const Vec*)&vFlat,
                                      (Vec*)&t2);
+                        nw4r::math::VEC3 t2c = t2;
                         hit = 1;
-                        nw4r::math::VEC3 diff;
-                        diff.x = t2.x - view.x;
-                        diff.y = t2.y - view.y;
-                        diff.z = t2.z - view.z;
-                        nw4r::math::VEC3 diffc = diff;
-                        delta.x = diffc.x * lbl_eu_8066B3F4;
-                        delta.y = diffc.y * lbl_eu_8066B3F4;
-                        delta.z = diffc.z * lbl_eu_8066B3F4;
+                        diffV.x = pc.x - vFlat.x;
+                        diffV.y = pc.y - vFlat.y;
+                        diffV.z = pc.z - vFlat.z;
+                        diffC = diffV;
+                        dOut2.x = diffC.x * penScale;
+                        dOut2.y = diffC.y * penScale;
+                        dOut2.z = diffC.z * penScale;
+                        push = dOut2;
+                        // Kept store even though unread: pc's address escaped
+                        // into the transform calls above.
+                        pc = *(ml::CVec3*)&t2c;
                     }
                     if (hit) {
-                        tgt->field_0x68.x += delta.x;
-                        tgt->field_0x68.y += delta.y;
-                        tgt->field_0x68.z += delta.z;
-                        tgt->field_0x74.x += delta.x;
-                        tgt->field_0x74.y += delta.y;
-                        tgt->field_0x74.z += delta.z;
-                        acc.field_0x68.x += delta.x;
-                        acc.field_0x68.y += delta.y;
-                        acc.field_0x68.z += delta.z;
-                        acc.field_0x74.x += delta.x;
-                        acc.field_0x74.y += delta.y;
-                        acc.field_0x74.z += delta.z;
+                        tgt->field_0x68.x += push.x;
+                        tgt->field_0x68.y += push.y;
+                        tgt->field_0x68.z += push.z;
+                        tgt->field_0x74.x += push.x;
+                        tgt->field_0x74.y += push.y;
+                        tgt->field_0x74.z += push.z;
+                        elem.field_0x68.x += push.x;
+                        elem.field_0x68.y += push.y;
+                        elem.field_0x68.z += push.z;
+                        elem.field_0x74.x += push.x;
+                        elem.field_0x74.y += push.y;
+                        elem.field_0x74.z += push.z;
                     }
                     break;
                 }
                 case 3: {
-                    nw4r::math::VEC3 sum;
-                    sum.x = pAcc->field_0x68.x + tgt->field_0x68.x;
-                    sum.y = pAcc->field_0x68.y + tgt->field_0x68.y;
-                    sum.z = pAcc->field_0x68.z + tgt->field_0x68.z;
-                    nw4r::math::VEC3 sumc = sum;
-                    nw4r::math::VEC3 p;
-                    p.x = sumc.x * lbl_eu_8066B3E4;
-                    p.y = sumc.y * lbl_eu_8066B3E4;
-                    p.z = sumc.z * lbl_eu_8066B3E4;
-                    nw4r::math::VEC3 pc = p;
-                    nw4r::math::VEC3 delta;
-                    if (!func_804ED18C((MdlDynObj*)self, &pc, &delta, e,
-                                       matrices)) {
-                        continue;
+                    ml::CVec3 sum =
+                        *(ml::CVec3*)&pAcc->field_0x68 +
+                        *(ml::CVec3*)&tgt->field_0x68;
+                    ml::CVec3 p = sum * blendK;
+                    pc = p;
+                    if (func_804ED18C((MdlDynObj*)self,
+                                      (nw4r::math::VEC3*)&pc,
+                                      (nw4r::math::VEC3*)&dOut3, e,
+                                      matrices)) {
+                        tgt->field_0x68.x += dOut3.x;
+                    tgt->field_0x68.y += dOut3.y;
+                    tgt->field_0x68.z += dOut3.z;
+                    tgt->field_0x74.x += dOut3.x;
+                    tgt->field_0x74.y += dOut3.y;
+                    tgt->field_0x74.z += dOut3.z;
+                    elem.field_0x68.x += dOut3.x;
+                    elem.field_0x68.y += dOut3.y;
+                    elem.field_0x68.z += dOut3.z;
+                    elem.field_0x74.x += dOut3.x;
+                    elem.field_0x74.y += dOut3.y;
+                    elem.field_0x74.z += dOut3.z;
                     }
-                    tgt->field_0x68.x += delta.x;
-                    tgt->field_0x68.y += delta.y;
-                    tgt->field_0x68.z += delta.z;
-                    tgt->field_0x74.x += delta.x;
-                    tgt->field_0x74.y += delta.y;
-                    tgt->field_0x74.z += delta.z;
-                    acc.field_0x68.x += delta.x;
-                    acc.field_0x68.y += delta.y;
-                    acc.field_0x68.z += delta.z;
-                    acc.field_0x74.x += delta.x;
-                    acc.field_0x74.y += delta.y;
-                    acc.field_0x74.z += delta.z;
                     break;
                 }
                 default:
                     break;
                 }
+                kindIt++;
             }
 
-            // Release the accumulator's scratch buffers for this element.
-            if (&pAcc->bufA0 != 0) {
-                pAcc->bufA0.field_0x4 = 0;
-                if (pAcc->bufA0.field_0xC != 0xFFFFFFFFu) {
-                    if (pAcc->bufA0.field_0x0 != 0) {
-                        mtl::MemManager::deallocate(pAcc->bufA0.field_0x0);
-                        pAcc->bufA0.field_0x0 = 0;
-                    }
-                }
-                pAcc->bufA0.field_0x0 = 0;
-                pAcc->bufA0.field_0x8 = 0;
-                pAcc->bufA0.field_0xC = 0xFFFFFFFFu;
-            }
+            // Tear down the per-element buffer views (reverse construction
+            // order); mirrors CMdlDynBuffer::~CMdlDynBuffer.
             if (&pAcc->buf90 != 0) {
-                pAcc->buf90.field_0x4 = 0;
-                if (pAcc->buf90.field_0xC != 0xFFFFFFFFu) {
-                    if (pAcc->buf90.field_0x0 != 0) {
-                        mtl::MemManager::deallocate(pAcc->buf90.field_0x0);
-                        pAcc->buf90.field_0x0 = 0;
+                view90.field_0x4 = 0;
+                if (view90.sentinel != 0xFFFFFFFFu) {
+                    if (view90.data != 0) {
+                        mtl::MemManager::deallocate(view90.data);
+                        view90.data = 0;
                     }
                 }
-                pAcc->buf90.field_0x0 = 0;
-                pAcc->buf90.field_0x8 = 0;
-                pAcc->buf90.field_0xC = 0xFFFFFFFFu;
+                view90.data = 0;
+                view90.field_0x8 = 0;
+                view90.sentinel = 0xFFFFFFFFu;
             }
+            if (&pAcc->bufA0 != 0) {
+                viewA0.field_0x4 = 0;
+                if (viewA0.sentinel != 0xFFFFFFFFu) {
+                    if (viewA0.data != 0) {
+                        mtl::MemManager::deallocate(viewA0.data);
+                        viewA0.data = 0;
+                    }
+                }
+                viewA0.data = 0;
+                viewA0.field_0x8 = 0;
+                viewA0.sentinel = 0xFFFFFFFFu;
+            }
+            idx++;
+            off += sizeof(CMdlDynElem);
         }
         it++;
     }
 }
 
-extern "C" void func_804E95E0() {}
-u32 func_804E9FD0(const CMdlDynHolder* self) {
+// Typed view of the model resource root used by func_804E95E0: scene/
+// allocator-provider pointer at +0x4, update flag word at 0x7A4, and the
+// ResMdl data word at 0x146C.
+struct DynModelRoot {
+    u8 pad[0x4];
+    void* field_0x4;  // 0x04 scene object (func_80496018 arg)
+    u8 pad2[0x79C];   // 0x08..0x7A4
+    u32 flags7A4;     // 0x7A4
+    u8 pad3[0xCC4];   // 0x7A8..0x146C
+    u32 field_0x146C; // ResMdl data word
+};
+
+// 12-byte record inside an element's bufA0: target element pointer plus
+// payload words (resolved by the link-clearing pass below).
+struct CMdlDynLink {
+    u32 field_0x0;
+    u32 field_0x4;
+    u32 field_0x8;
+};
+
+// us-804eda9c: builds the per-model dynamic collision lists.
+// Scans the model's res nodes for "DJ"-tagged dynamics payloads; each match
+// opens a new list whose elements are collected from the following run of
+// matching sub-nodes. Kept lists are registered in the owner's list array,
+// cross-links are resolved, and a final pass flags every live element.
+extern "C" __declspec(noinline) void func_804E95E0(CMdlDynamics* self,
+                                                   DynModelRoot* root) {
+    self->field_0x4 = (u32)root;
+    func_804EA284(self);
+
+    CMdlDynList* kept[16];
+    u32 ids[16];
+    u32 keptCount = 0;
+
+    u32 i = 0;
+    while (i < nw4r::g3d::ResMdl((void*)(unsigned long)root->field_0x146C)
+                      .GetResNodeNumEntries()) {
+        nw4r::g3d::ResMdl mdl((void*)(unsigned long)root->field_0x146C);
+        DynShapeNode* node = (DynShapeNode*)&mdl.GetResNode(i).ref();
+        if (node == NULL) {
+            nw4r::db::Panic(lbl_eu_8056E194, 0x2c, lbl_eu_8056E178,
+                            lbl_eu_80663910, lbl_eu_80663CBC);
+        }
+        DynShapeData* d;
+        if (node->dataOff != 0) {
+            d = (DynShapeData*)((u8*)node + node->dataOff - 4);
+        } else {
+            d = NULL;
+        }
+        if (d == NULL) {
+            nw4r::db::Panic(lbl_eu_80570230, 0x8f, lbl_eu_80570208);
+        }
+
+        // "DJ" dynamics-tag check (each tag byte re-validated through the
+        // checked accessor, like retail).
+        int shape = 0;
+        if (d->kind >= 2u) {
+            if (d == NULL) {
+                nw4r::db::Panic(lbl_eu_80570230, 0x8f, lbl_eu_80570208);
+            }
+            if (d->sig[0] == 'D') {
+                if (d == NULL) {
+                    nw4r::db::Panic(lbl_eu_80570230, 0x8f, lbl_eu_80570208);
+                }
+                if (d->sig[1] == 'J') {
+                    shape = 1;
+                }
+            }
+        }
+
+        if (shape != 0) {
+            CMdlDynList* list = (CMdlDynList*)func_80488954(root, 0x10);
+            if (list != NULL) {
+                list->field_0x0 = NULL;
+                list->field_0x4 = 0;
+                list->field_0xC = 0xFFFFFFFFu;
+            }
+
+            // Collect ids of the consecutive run of matching sub-nodes that
+            // follows this node; the run ends at the first non-matching one.
+            u32 cnt = 0;
+            u32 j = i + 1;
+            while (j <
+                   nw4r::g3d::ResMdl((void*)(unsigned long)root->field_0x146C)
+                       .GetResNodeNumEntries()) {
+                nw4r::g3d::ResMdl mdl2(
+                    (void*)(unsigned long)root->field_0x146C);
+                DynShapeNode* nd = (DynShapeNode*)&mdl2.GetResNode(j).ref();
+                if (nd == NULL) {
+                    nw4r::db::Panic(lbl_eu_8056E194, 0x2c, lbl_eu_8056E178,
+                                    lbl_eu_80663910, lbl_eu_80663CBC);
+                }
+                DynShapeData* dd;
+                if (nd->dataOff != 0) {
+                    dd = (DynShapeData*)((u8*)nd + nd->dataOff - 4);
+                } else {
+                    dd = NULL;
+                }
+                if (dd == NULL) {
+                    nw4r::db::Panic(lbl_eu_80570230, 0x8f, lbl_eu_80570208);
+                }
+
+                int m = 0;
+                if (dd->kind >= 2u) {
+                    if (dd == NULL) {
+                        nw4r::db::Panic(lbl_eu_80570230, 0x8f,
+                                        lbl_eu_80570208);
+                    }
+                    if (dd->sig[0] == 'D') {
+                        if (dd == NULL) {
+                            nw4r::db::Panic(lbl_eu_80570230, 0x8f,
+                                            lbl_eu_80570208);
+                        }
+                        if (dd->sig[1] == 'J') {
+                            m = 1;
+                        }
+                    }
+                }
+                if (m == 0) {
+                    break;
+                }
+
+                // Resolve the sub-node's embedded data pointer through the
+                // asserted offset accessor (inlined func_804EA038 shape).
+                if (nd == NULL) {
+                    nw4r::db::Panic(lbl_eu_8056E850, 0x2c, lbl_eu_8056E834,
+                                    lbl_eu_80663910, lbl_eu_80663CB8);
+                }
+                u8* q;
+                {
+                    u32 off = ((CMdlDynSub*)nd)->field_0x5C;
+                    if (off != 0) {
+                        q = (u8*)nd + off;
+                        if (((u32)q & 3) != 0) {
+                            nw4r::db::Panic(lbl_eu_8056E820, 0x2c,
+                                            lbl_eu_8056E7F8);
+                        }
+                    } else {
+                        q = NULL;
+                    }
+                }
+                if (q == NULL) {
+                    nw4r::db::Panic(lbl_eu_8056E194, 0x2c, lbl_eu_8056E178,
+                                    lbl_eu_80663910, lbl_eu_80663CBC);
+                }
+
+                DynShapeData* d2;
+                {
+                    u32 off = *(u32*)(q + 8);
+                    if (off != 0) {
+                        d2 = (DynShapeData*)(q + off - 4);
+                    } else {
+                        d2 = NULL;
+                    }
+                }
+                if (d2 == NULL) {
+                    nw4r::db::Panic(lbl_eu_80570230, 0x8f, lbl_eu_80570208);
+                }
+
+                int m2 = 0;
+                if (d2->kind >= 2u) {
+                    if (d2 == NULL) {
+                        nw4r::db::Panic(lbl_eu_80570230, 0x8f,
+                                        lbl_eu_80570208);
+                    }
+                    if (d2->sig[0] == 'D') {
+                        if (d2 == NULL) {
+                            nw4r::db::Panic(lbl_eu_80570230, 0x8f,
+                                            lbl_eu_80570208);
+                        }
+                        if (d2->sig[1] == 'J') {
+                            m2 = 1;
+                        }
+                    }
+                }
+                if (m2 == 0) {
+                    break;
+                }
+
+                ids[cnt] = (nd != NULL) ? ((DynShapeNode*)nd)->id : 0;
+                cnt++;
+                j++;
+            }
+
+            // Allocate the element array for this list.
+            u32 bytes = cnt * sizeof(CMdlDynElem);
+            if (func_80488938(root, bytes)) {
+                list->field_0x0 = (CMdlDynElem*)func_80488954(root, bytes);
+                list->field_0x4 = 0;
+                list->field_0x8 = cnt;
+            } else {
+                list->field_0xC = func_80496018(root->field_0x4);
+                list->field_0x0 = (CMdlDynElem*)mtl::MemManager::allocate_head(
+                    list->field_0xC, bytes, 4);
+                list->field_0x4 = 0;
+                list->field_0x8 = cnt;
+            }
+            for (u32 k = 0; k < cnt; k++) {
+                func_804EAA18((MdlDynObj*)self, list, ids[k]);
+            }
+
+            if (list->field_0x4 != 0) {
+                kept[keptCount] = list;
+                keptCount++;
+            } else {
+                // Empty list: destroy the (unused) elements and release the
+                // element array.
+                for (u32 e = 0; e < list->field_0x4; e++) {
+                    CMdlDynElem* el = &list->field_0x0[e];
+                    el->bufA0.~CMdlDynBuffer();
+                    el->buf90.~CMdlDynBuffer();
+                }
+                list->field_0x4 = 0;
+                if (list->field_0xC != 0xFFFFFFFFu) {
+                    if (list->field_0x0 != NULL) {
+                        mtl::MemManager::deallocate(list->field_0x0);
+                        list->field_0x0 = NULL;
+                    }
+                }
+                list->field_0x0 = NULL;
+                list->field_0x8 = 0;
+                list->field_0xC = 0xFFFFFFFFu;
+            }
+            // The whole consumed run counts as one step.
+            i += cnt;
+        }
+        i++;
+    }
+
+    if (keptCount != 0) {
+        self->buf08.field_0xC = func_80496018(root->field_0x4);
+        self->buf08.field_0x0 = (u8*)mtl::MemManager::allocate_head(
+            self->buf08.field_0xC, keptCount * 4, 4);
+        self->buf08.field_0x4 = 0;
+        self->buf08.field_0x8 = keptCount;
+
+        if (keptCount != 0) {
+            // Append through memory-resident counters (matches retail's
+            // unrolled copy shape).
+            for (u32 k = 0; k < keptCount; k++) {
+                ((CMdlDynList**)self->buf08.field_0x0)[self->buf08.field_0x4] =
+                    kept[k];
+                self->buf08.field_0x4 = self->buf08.field_0x4 + 1;
+            }
+        }
+    }
+
+    if (self->buf08.field_0x4 != 0) {
+        root->flags7A4 |= 0x8;
+        for (CMdlDynList** it = (CMdlDynList**)self->buf08.field_0x0;
+             it != (CMdlDynList**)self->buf08.field_0x0 +
+                               self->buf08.field_0x4;
+             it++) {
+            for (CMdlDynElem* e = (*it)->field_0x0;
+                 e != (*it)->field_0x0 + (*it)->field_0x4; e++) {
+                CMdlDynLink* rec = (CMdlDynLink*)e->bufA0.field_0x0;
+                for (; rec != (CMdlDynLink*)e->bufA0.field_0x0 +
+                                   e->bufA0.field_0x4;
+                     rec++) {
+                    // Resolve each record's target against every known
+                    // element; retail stores the raw target into each
+                    // scanned element's id slot while scanning.
+                    CMdlDynElem* found = NULL;
+                    for (CMdlDynList** it2 =
+                             (CMdlDynList**)self->buf08.field_0x0;
+                         it2 != (CMdlDynList**)self->buf08.field_0x0 +
+                                    self->buf08.field_0x4;
+                         it2++) {
+                        CMdlDynElem* e2 = (*it2)->field_0x0;
+                        CMdlDynElem* end2 = e2 + (*it2)->field_0x4;
+                        while (e2 != end2) {
+                            e2->field_0x0 = rec->field_0x0;
+                            if (rec->field_0x0 != 0) {
+                                found = e2;
+                                goto done;
+                            }
+                            e2++;
+                        }
+                    }
+                done:
+                    rec->field_0x8 = (u32)found;
+                }
+            }
+        }
+    }
+
+    func_80482DF4((CScnItemModel*)self->field_0x4, 0);
+    for (CMdlDynList** it = (CMdlDynList**)self->buf08.field_0x0;
+         it != (CMdlDynList**)self->buf08.field_0x0 +
+                           self->buf08.field_0x4;
+         it++) {
+        CMdlDynList* L = *it;
+        for (u32 e = 0; e < L->field_0x4; e++) {
+            L->field_0x0[e].field_0x8C |= 0x40;
+        }
+    }
+}
+extern "C" __declspec(noinline) u32 func_804E9FD0(const CMdlDynHolder* self) {
     CMdlDynSub* sub = self->field_0x0;
     if (sub == NULL) {
         nw4r::db::Panic(lbl_eu_8056E1C8, 0x38, lbl_eu_8056E1A8);

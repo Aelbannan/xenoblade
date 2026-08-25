@@ -2,28 +2,28 @@
 // Replace stubs with high-level C/C++ during decomp.
 
 #include <harness_catalog.h>
+#include "revolution/BTE/stack/include/bt_types.h"
 
 extern void *GKI_getpoolbuf(unsigned char pool_id);
 
 int btsnd_hcic_inquiry(const unsigned char *bd_addr, unsigned char inquiry_mode, unsigned char inquiry_length)
 {
-    unsigned char *p = (unsigned char *)GKI_getpoolbuf(2);
-    unsigned char b2, b1, b0;
+    BT_HDR *p = (BT_HDR *)GKI_getpoolbuf(2);
+    unsigned char *pp;
     if (p == NULL)
         return 0;
-    *(unsigned short *)(p + 2) = 8;
-    *(unsigned short *)(p + 4) = 0;
-    b2 = bd_addr[2];
-    p[8] = 1;
-    b1 = bd_addr[1];
-    p[9] = 4;
-    b0 = bd_addr[0];
-    p[10] = 5;
-    p[11] = b2;
-    p[12] = b1;
-    p[13] = b0;
-    p[14] = inquiry_mode;
-    p[15] = inquiry_length;
+    p->len = 8;
+    p->offset = 0;
+    /* command data begins right after the 8-byte BT_HDR header */
+    pp = (unsigned char *)(p + 1);
+    pp[0] = 1;
+    pp[1] = 4;
+    pp[2] = 5;
+    pp[3] = bd_addr[2];
+    pp[4] = bd_addr[1];
+    pp[5] = bd_addr[0];
+    pp[6] = inquiry_mode;
+    pp[7] = inquiry_length;
     btu_hcif_send_cmd(p);
     return 1;
 }
@@ -44,7 +44,7 @@ int btsnd_hcic_inq_cancel(void)
 
 int btsnd_hcic_per_inq_mode(short max_delay, unsigned short min_delay, unsigned char *bd_addr, unsigned char inquiry_mode, unsigned char inquiry_length)
 {
-    unsigned char *p = (unsigned char *)GKI_getpoolbuf(2);
+    unsigned char *p = GKI_getpoolbuf(2);
     unsigned char b0, b1, b2;
     if (p == NULL)
         return 0;

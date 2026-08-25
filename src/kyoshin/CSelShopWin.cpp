@@ -34,6 +34,58 @@ struct UnkMsgObj {
     UnkMsgObjChain* chain;  // 0x8
 };
 
+/* Read-only views over opaque retail objects. Declaring the slots as real
+   virtuals makes MWCC emit the canonical virtual-call sequence (lwz r12,0(r3);
+   lwz r12,off(r12); bctrl) instead of an indirect call through a caller-saved
+   register copy. Never constructed, so no vtables are emitted here. */
+struct ShopFontView {
+    virtual void vfn_04();
+    virtual void vfn_08();
+    virtual void vfn_0C();
+    virtual void vfn_10();
+    virtual void vfn_14();
+    virtual void vfn_18();
+    virtual void vfn_1C();
+    virtual u32 getSpacing();  // +0x24
+};
+struct ShopPlayerView {
+    virtual void vfn_04();
+    virtual void vfn_08();
+    virtual void vfn_0C();
+    virtual void vfn_10();
+    virtual void vfn_14();
+    virtual void vfn_18();
+    virtual void vfn_1C();
+    virtual void vfn_20();
+    virtual void vfn_24();
+    virtual void vfn_28();
+    virtual void vfn_2C();
+    virtual void vfn_30();
+    virtual void vfn_34();
+    virtual void vfn_38();
+    virtual void vfn_3C();
+    virtual void vfn_40();
+    virtual void vfn_44();
+    virtual void* getMenuSource();  // +0x4c
+};
+struct ShopActorView {
+    virtual void vfn_04();
+    virtual void vfn_08();
+    virtual void vfn_0C();
+    virtual void vfn_10();
+    virtual void vfn_14();
+    virtual void vfn_18();
+    virtual void vfn_1C();
+    virtual void vfn_20();
+    virtual void vfn_24();
+    virtual void vfn_28();
+    virtual void vfn_2C();
+    virtual void vfn_30();
+    virtual void vfn_34();
+    virtual void vfn_38();
+    virtual const char* getName();  // +0x40
+};
+
 CSelShopWin::CSelShopWin() : CSelShopWinVtblBase(), mMemRegion() {
     mFileHandle = nullptr;
     mAccessor = nullptr;
@@ -180,32 +232,27 @@ bool CSelShopWin::OnFileEvent(CEventFile* pEventFile) {
         func_80136F08(mLayout, &mAnimTransform, mAccessor, &lbl_eu_8050A62C[0x58]);
 
         nw4r::lyt::Pane* rootPane = mLayout->GetRootPane();
-        u8* fontObj = (u8*)func_80452C10__11CDeviceFontFUlPQ34nw4r3lyt6Layout(1, mLayout);
-        typedef u32 (*FontVFn)(void*);
-        u32 fontResult = (*reinterpret_cast<FontVFn**>(fontObj))[0x24 / 4](fontObj);
+        ShopFontView* fontObj =
+            (ShopFontView*)func_80452C10__11CDeviceFontFUlPQ34nw4r3lyt6Layout(1, mLayout);
+        u32 fontResult = fontObj->getSpacing();
         func_8013676C(rootPane, fontResult);
 
         mLayout->SetAnimationEnable(mAnimTransform, 1);
         mLayout->Animate(0);
 
-        // Clear bit 7 of the info pane's byte at +0xBB.
+        // Clear bit 0 of the info pane's byte at +0xBB.
         ShopPaneInfo* info = reinterpret_cast<ShopPaneInfo*>(
             mLayout->GetRootPane()->FindPaneByName(&lbl_eu_8050A62C[0x74], true));
-        info->field_BB &= 0x7F;
+        info->field_BB &= 0xfe;
 
-        // Default-0 text; set to the player's current screen name when the
-        // player exists and a menu/actor source can be resolved.
         char* text = NULL;
-        void* player = getPlayer__Q22cf13CfGameManagerFi(0);
+        ShopPlayerView* player = (ShopPlayerView*)getPlayer__Q22cf13CfGameManagerFi(0);
         if (player != NULL) {
-            typedef void* (*VFnN)(void*);
-            void* sub = (*reinterpret_cast<VFnN**>(player))[0x4c / 4](player);
+            void* sub = player->getMenuSource();
             if (sub != NULL) {
-                void* srcActor = func_800B708C(reinterpret_cast<int>(sub));
+                ShopActorView* srcActor = (ShopActorView*)func_800B708C(reinterpret_cast<int>(sub));
                 if (srcActor != NULL) {
-                    typedef void* (*VFnM)(void*);
-                    void* face = (*reinterpret_cast<VFnM**>(srcActor))[0x40 / 4](srcActor);
-                    text = static_cast<char*>(func_80138DA4(static_cast<const char*>(face)));
+                    text = static_cast<char*>(func_80138DA4(srcActor->getName()));
                 }
             }
         }
@@ -227,18 +274,18 @@ bool CSelShopWin::OnFileEvent(CEventFile* pEventFile) {
         func_80136B4C(mLayout, &lbl_eu_8050A62C[0xc1], t2b, 0);
         func_80136B4C(mLayout, &lbl_eu_8050A62C[0xcd], t2b, 0);
 
-        const char* fmtWin = &lbl_eu_8050A62C[0xe2];
-        if (func_80086F9C__Q22cf13CfGameManagerFv(-1) != 0) {
-            fmtWin = &lbl_eu_8050A62C[0xd9];
-        }
-        u16 val = static_cast<u16>(func_8013606C(&lbl_eu_8050A62C[0xae], fmtWin, 0x2b));
+        // Ternary keeps both format strings as immediate addi offsets
+        // (retail preloads 0xe2 then overwrites with 0xd9 when nonzero).
+        u16 val = static_cast<u16>(func_8013606C(
+            &lbl_eu_8050A62C[0xae],
+            func_80086F9C__Q22cf13CfGameManagerFv(-1) != 0 ? &lbl_eu_8050A62C[0xd9]
+                                                           : &lbl_eu_8050A62C[0xe2],
+            0x2b));
         char* mssg = func_80138F78(val);
 
-        // Look up the persistent shop message object by its 4CC key.
-        void* mgr = func_801355F4();
-        typedef void* (*MgrFn)(void*, u32, void*, u32);
-        UnkMsgObj* obj = static_cast<UnkMsgObj*>(
-            (*reinterpret_cast<MgrFn**>(mgr))[0xc / 4](mgr, 0x74696d67U, mssg, 0));
+        // Look up the persistent shop message object by its 'timg' key.
+        nw4r::lyt::ArcResourceAccessor* mgr = func_801355F4();
+        UnkMsgObj* obj = static_cast<UnkMsgObj*>(mgr->GetResource(0x74696d67U, mssg, 0));
         if (obj != NULL) {
             func_80137E7C(mLayout, &lbl_eu_8050A62C[0xeb], obj);
             func_80137E7C(mLayout, &lbl_eu_8050A62C[0xf5], obj);
@@ -247,20 +294,26 @@ bool CSelShopWin::OnFileEvent(CEventFile* pEventFile) {
             // panes; u32->float via the named 2^52+2^31 magic double keeps
             // the sdata2 reloc on lbl_eu_80668608.
             UnkCoords* coords = obj->chain->pCoords;
-            u32 row = coords->c2;
-            u32 col = coords->c0;
+            u16 row = coords->c2;
+            u16 col = coords->c0;
             nw4r::lyt::Pane* p1 = mLayout->GetRootPane()->FindPaneByName(&lbl_eu_8050A62C[0xeb], true);
             if (p1 != NULL) {
+                // Materialize both int->double conversions up front so MWCC
+                // shares one 2^52-magic lfd across the two subtractions.
+                double dRow = row;
+                double dCol = col;
                 float src[2];
-                src[0] = static_cast<float>(static_cast<double>(row) - lbl_eu_80668608);
-                src[1] = static_cast<float>(static_cast<double>(col) - lbl_eu_80668608);
+                src[0] = dRow - lbl_eu_80668608;
+                src[1] = dCol - lbl_eu_80668608;
                 func_80124288(p1, src);
             }
             nw4r::lyt::Pane* p2 = mLayout->GetRootPane()->FindPaneByName(&lbl_eu_8050A62C[0xf5], true);
             if (p2 != NULL) {
+                double dRow = row;
+                double dCol = col;
                 float src[2];
-                src[0] = static_cast<float>(static_cast<double>(row) - lbl_eu_80668608);
-                src[1] = static_cast<float>(static_cast<double>(col) - lbl_eu_80668608);
+                src[0] = dRow - lbl_eu_80668608;
+                src[1] = dCol - lbl_eu_80668608;
                 func_80124288(p2, src);
             }
         }

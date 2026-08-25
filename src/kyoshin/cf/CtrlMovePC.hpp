@@ -25,7 +25,11 @@ namespace cf {
 class CCtrlMovePC {
 public:
     // --- base class (CCtrlMoveBase) region 0x00..0x4B ---
-    char mBase00[0x30];        // 0x00 primary vtable + base fields
+    char mBase00[0x18];        // 0x00 primary vtable + base fields
+    f32 mField18;              // 0x18 wall-slide lerp anchor x/z
+    f32 mField1C;              // 0x1C
+    f32 mField20;              // 0x20
+    char mBase24[0xC];         // 0x24..0x2F
     void* mBase30;             // 0x30 (NULL-init)
     void* mBaseData;           // 0x34 ctor param (data ptr)
     f32 mBase38;               // 0x38
@@ -53,7 +57,7 @@ public:
     ml::CVec3 mVecCC;          // 0xCC
     ml::CVec3 mVecD8;          // 0xD8
     ml::CVec3 mVecE4;          // 0xE4 (recovered from func_8019CDA0)
-    char mPadF0[0xC];          // 0xF0..0xFB
+    ml::CVec3 mVecF0;          // 0xF0 follow-mode candidate spot
     f32 mDistFC;               // 0xFC
     f32 mFloat100;             // 0x100
     char mPad104[0x4];         // 0x104..0x107
@@ -220,6 +224,8 @@ public:
 // C-linkage imports used by this TU (retail names, defined in CtrlMoveBase).
 extern "C" {
 int  func_804BE398(void* vec, int a, int b, int c, f32 d, f32 e);
+void PSVECNormalize(const Vec* a, Vec* b);
+int  func_80088974(void* self, ml::CVec3* out, ml::CVec3* pos, int a, int b);
 void func_800896F4(cf::CCtrlMovePC* self, ml::CVec3* a, const ml::CVec3* b);
 void func_800898D4(cf::CCtrlMovePC* self, ml::CVec3* v);
 int  func_804BE5A4(int a, int b);
@@ -230,6 +236,7 @@ cf::CfGlobalSettings* getUnk80664658();
 int  func_801F4ED8(void* a, void* b);
 void func_800D59FC(void* a);
 void func_80089990(cf::CCtrlMovePC* self);
+int  func_80089E88(cf::CCtrlMovePC* self, ml::CVec3* out, int flag);
 void Warning__Q24nw4r2dbFPCciPCce(const char* file, int line, const char* fmt, ...);
 f32  FrSqrt__Q24nw4r4mathFf(f32 x);
 }
@@ -241,7 +248,9 @@ int  func_8019876C(void* a, void* b);
 int  func_804BE348(void* a, void* b, int c, int d, int e);
 void func_804BE4B4(void* out, int a);
 void func_804BE4E0(void* out, int a);
-int  func_804B526C(void* a, void* b, void* c, void* d, int e, int f, int g);
+int  func_804B526C(void* a, void* b, void* c, void* d, int e, int f, void* g);
+int  func_804B54D4(void* a, void* b, void* c, int d, int e);
+void* func_800B708C__Fi(int id);
 void* func_8004B7C0(void* out, const ml::CVec3* src); // matches CfGameManager.hpp decl
 void func_800BC3B0(void* a, f32 b);
 void func_80089990(cf::CCtrlMovePC* self);
@@ -275,13 +284,28 @@ extern const f32 lbl_eu_80667C14;   // 0.333f
 extern const f32 lbl_eu_80667C18;   // 1.2f
 extern const f32 lbl_eu_80667C1C;   // 10.889999f
 extern const f32 lbl_eu_80667C20;   // 5.29f
+extern const f32 lbl_eu_80667C24;
+extern const f32 lbl_eu_80667BAC;   // goal-proximity squared threshold
+extern const f32 lbl_eu_80667BD4;   // probe height offset
+extern const f32 lbl_eu_80667BCC;   // arrival radius squared (nudge path)
+extern const f32 lbl_eu_80667BE0;   // slope gate
+extern const f32 lbl_eu_8066A1F8;   // pi
+extern const f64 lbl_eu_80667BE8;   // probe angle bias (double)
+extern const f32 lbl_eu_80667C44;   // arrival radius squared
+extern const f32 lbl_eu_80667C48;   // raycast param
+extern const f32 lbl_eu_80667C4C;   // raycast param
+extern const f32 lbl_eu_80667C50;   // max follow distance
 extern const f32 lbl_eu_8066A200;   // 1.5707964f (pi/2)
 
 extern const u32 lbl_eu_80663E28;    // .sbss global flag word
 
+// Wall-steer helper shared with CtrlMoveEne (retail name).
+extern u8 lbl_eu_80571810[0x38];
+
 // ptmf constants for state transitions (12-byte ptr-to-member triples).
 extern int (cf::CCtrlMovePC::*const lbl_eu_80532CA4)();
 extern int (cf::CCtrlMovePC::*const lbl_eu_80532CB0)();
+extern int (cf::CCtrlMovePC::*const lbl_eu_80532CBC)();
 
 // nw4r assert strings.
 extern const char lbl_eu_80526324[];
@@ -289,6 +313,14 @@ extern const char lbl_eu_80526300[];
 
 // C++-linkage global (mangles to func_8006EF04__Fi).
 int func_8006EF04(int r3);
+
+// Node-pool manager shared with the scene path classes
+// (libs/monolib/src/scn/UnkClass_8047CD0C.cpp). Only the task-allocating
+// accessor is needed here; the definition lives in its own TU.
+class UnkClass_8047CD0C {
+public:
+    void* func_8047CE7C();
+};
 
 // Result block filled by func_8019876C (CfPartyInfo at stack +0x128): the
 // goal position is the leading x/y/z triple (y doubles as mGoalY).
@@ -310,8 +342,12 @@ struct CfPartyInfoOut {
 
 // Input block for func_80198710 (party-info builder).
 struct CfPartyInfoIn {
-    u8 pad_00[0x2E];
-    u8 mField2E;         // 0x2E
+    u8 pad_00[0x24];
+    f32 mField24;        // 0x24 candidate height
+    u8 pad_28[2];
+    u8 mField2C;         // 0x2C valid-height flag
+    u8 mField2D;
+    u8 mField2E;         // 0x2E mode byte
 };
 
 // The 20 retail functions (placeholder symbols). Implemented in CtrlMovePC.cpp.
@@ -328,8 +364,8 @@ int  func_8019C0D4(cf::CCtrlMovePC* self);
 int  func_8019C304(cf::CCtrlMovePC* self);
 int  func_8019CCDC(cf::CCtrlMovePC* self);
 int  func_8019CDA0(cf::CCtrlMovePC* self);
-void func_8019D9E0(cf::CCtrlMovePC* self);
-void func_8019DD54(cf::CCtrlMovePC* self);
+int  func_8019D9E0(cf::CCtrlMovePC* self);
+int  func_8019DD54(cf::CCtrlMovePC* self);
 void func_8019E710(cf::CCtrlMovePC* self);
 int  func_8019EDAC(cf::CCtrlMovePC* self);
 int  func_8019EE08(cf::CCtrlMovePC* self);

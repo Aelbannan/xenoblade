@@ -26,6 +26,30 @@ struct CScnItemAnim {
 // Default value returned by the accessor helpers when the target object
 // chain is missing (sda2 constant).
 extern "C" { extern const float lbl_eu_8066AAC0; }
+
+// 0x4330000000000000 magic double used for unsigned -> float conversion.
+extern const f64 lbl_eu_8066AAC8;
+// 0x4330000080000000 magic double used for signed -> float conversion.
+extern const f64 lbl_eu_8066AAD0;
+
+// Caller-owned punning slot for int -> float conversions (see
+// code_804CC2B8.cpp fconvS32).
+typedef union {
+    f64 d;
+    u32 w[2];
+} FConv;
+
+// u32 -> float through the shared 0x4330000000000000 magic double. Keeping
+// the subtrahend in a parameter pins the sdata2 reloc to the retail
+// constant name (a plain (f32) cast would emit the TU's own pool entry).
+// Integer -> float through the shared 0x4330 magic doubles. Keeping the
+// integer as a parameter pins the whole sequence to one expression (retail
+// schedules it as a unit); returning f64 lets the stfs do the narrowing.
+static inline f64 fconvS(u32 val, FConv& c, f64 sub) {
+    c.w[0] = 0x43300000u;
+    c.w[1] = val;
+    return c.d - sub;
+}
 extern "C" { extern const float lbl_eu_8066AAC4; }
 extern "C" { extern const float lbl_eu_8066AAD8; }
 extern "C" { extern const float lbl_eu_8066AADC; }
@@ -73,12 +97,20 @@ extern "C" u32 lbl_eu_8056E984[9] = {
     0x80663990, 0x00000000, 0x80499DD8, 0x804490CC, 0x00000000, 0x00000000,
     0x8049AB58, 0x8049ABA0, 0x800444BC,
 };
-// ASCII panic-string tail (must live in .data; non-const so it is not pooled
-// into .rodata). Sizes include the retail inter-string zero padding so the
-// section totals exactly 0x130.
-char lbl_eu_8056E9A8[12] = "ResAnmChr";
-char lbl_eu_8056E9B4[28] = "%s::%s: Object not valid.";
-char lbl_eu_8056E9D0[24] = "g3d_resanmchr_ac.h";
+// ASCII panic-string tail. Retail codegen references these as ordinary
+// named symbols; defining them in this TU makes MWCC treat their addresses
+// as compile-time-known constants (hoisted lis/addi pairs, section-relative
+// relocs), which breaks matching -- so they are only declared here.
+extern char lbl_eu_8056E9A8[];
+extern char lbl_eu_8056E9B4[];
+extern char lbl_eu_8056E9D0[];
+
+// Default-constructible stand-in with nw4r::g3d::ResCommon's exact layout
+// (single data pointer). Used so a ResDic home can be declared without an
+// initializer store while still occupying the first frame slot.
+struct ResDicSlot {
+    void* mpData;
+};
 
 // Virtual dispatch target: v_i at vtable offset 8+4*i (MWCC RTTI header).
 struct CScnModel80496B0C;
@@ -328,8 +360,7 @@ u32 func_80497914(CScn80496B0C* self) {
     if ((na = a->field_0x84[0]) == 0 || (nb = b->field_0x84[0]) == 0) return 0;
     if (a->field_0x84[1] != 0 || b->field_0x84[1] != 0) return 0;
     if (nb->field_0x18 != na->field_0x18) return 0;
-    // Equality compiled by MWCC as subf/cntlzw/srwi. Operand direction is
-    // equality-neutral; retail schedules the r5 load first (open item).
+    // Equality compiled by MWCC as subf/cntlzw/srwi.
     return !(nb->field_0x14 - na->field_0x14);
 }
 
@@ -341,7 +372,11 @@ extern "C" u32 func_8049798C(u8* self) { return *(u32*)(*(u32*)((u8*)self + 0xC)
 // the child is released instead and the outputs are left untouched.
 void func_804979A4(CScn80496B0C* self, ml::CVec3* outA, ml::CVec3* outB,
                    ml::CVec3* outC, u32 nodeIdx) {
-    if (self->field_0x8->field_0x84[0] == 0) {
+    // Volatile view of field_0x8: forces the second read (below the calls)
+    // to be a fresh load, matching retail.
+    CScnChild80496B0C* volatile& childRef =
+        (CScnChild80496B0C* volatile&)self->field_0x8;
+    if (childRef->field_0x84[0] == 0) {
         nw4r::g3d::ResNode node = self->field_0x1D0.GetResNode(nodeIdx);
         if (node.IsValid()) {
             // The inner check mirrors the retail DB_ASSERT on the same validity
@@ -352,11 +387,10 @@ void func_804979A4(CScn80496B0C* self, ml::CVec3* outA, ml::CVec3* outB,
                                 lbl_eu_80663910, lbl_eu_806639E0);
             }
             const nw4r::math::VEC3& gv = node.GetTranslate();
-            ml::CVec3 t;
-            t.x = gv.x;
-            t.y = gv.y;
-            t.z = gv.z;
-            *(nw4r::math::VEC3*)outC = *(nw4r::math::VEC3*)&t;
+            // Direct CVec3 view of the resource vector: MWCC buffers the
+            // float source through a single stack temp and word-copies it
+            // to the destination (retail's exact shape).
+            *outC = *(ml::CVec3*)&gv;
         } else {
             outC->set(lbl_eu_8066AAC0, lbl_eu_8066AAC0, lbl_eu_8066AAC0);
         }
@@ -364,7 +398,8 @@ void func_804979A4(CScn80496B0C* self, ml::CVec3* outA, ml::CVec3* outB,
         outB->set(lbl_eu_8066AAC0, lbl_eu_8066AAC0, lbl_eu_8066AAC0);
         return;
     }
-    func_80498A5C(self->field_0x8, outA, outB, outC, nodeIdx);
+    // Retail re-reads field_0x8 here instead of reusing the earlier load.
+    func_80498A5C(childRef, outA, outB, outC, nodeIdx);
 }
 
 // Per-frame cross-fade update: advances both children's animations toward the
@@ -563,9 +598,9 @@ CScnChild80496B0C* __dt__80497FEC(CScnChild80496B0C* self, int flags) {
 
 // Removes the binding whose item-anim tag matches (or, when tag is 0, the
 // first bound slot) from the child's slot stack: releases its animation
-// object, then shifts the remaining slots down and zeroes the tail. The
-// walk visits the three slots via the +4 overlapping-object idiom shared by
-// the other slot walkers in this TU.
+// object, then shifts the remaining slots down and zeroes the tail. On a
+// match the cursor does NOT advance -- the shift pulls the next binding into
+// the current slot, so it is re-examined on the next pass.
 extern "C" __declspec(noinline) void func_804980E4(CScnChild80496B0C* child, u32 tag) {
     CScnChild80496B0C* walk;
     CScnNode80496B0C* node;
@@ -588,16 +623,17 @@ extern "C" __declspec(noinline) void func_804980E4(CScnChild80496B0C* child, u32
                 node->field_0x10 = 0;
             }
             node->field_0x18 = 0;
-            if (i < 2) {
-                for (u32 k = i; k < 2; k++) {
-                    child->field_0x84[k] = child->field_0x84[k + 1];
-                    child->field_0x84[k + 1] = 0;
-                }
+            // Shift the remaining bindings down; empty when i == 2.
+            for (u32 k = i; k < 2; k++) {
+                child->field_0x84[k] = child->field_0x84[k + 1];
+                child->field_0x84[k + 1] = 0;
             }
+        } else {
+            // Not our binding: advance to the next overlapping slot view.
+            walk = (CScnChild80496B0C*)((u8*)walk + 4);
+            i++;
+            off += 4;
         }
-        i++;
-        off += 4;
-        walk = (CScnChild80496B0C*)((u8*)walk + 4);
     }
 }
 
@@ -607,10 +643,13 @@ extern "C" __declspec(noinline) void func_804980E4(CScnChild80496B0C* child, u32
 // slot-stack and notifies the model listeners.
 u16 func_80498288(CScnChild80496B0C* self, s32* pFrame, VTarget* pAnmObj,
                   CScnItemAnim* tag, u32 value, u32 flag) {
-    if (value != 0) {
-        // Release every current binding of this child.
-        for (u32 i = 0; i < 3; i++) {
-            CScnNode80496B0C* node = self->field_0x84[i];
+    if (value == 0) {
+        // Release every current binding of this child. The slot view is a
+        // walking pointer advanced by one word per iteration (retail shape).
+        u32 i;
+        CScnChild80496B0C* walk;
+        for (i = 0, walk = self; i < 3; i++, walk = (CScnChild80496B0C*)((u8*)walk + 4)) {
+            CScnNode80496B0C* node = walk->field_0x84[0];
             if (node == NULL) {
                 continue;
             }
@@ -622,30 +661,31 @@ u16 func_80498288(CScnChild80496B0C* self, s32* pFrame, VTarget* pAnmObj,
                 node->field_0x10 = NULL;
             }
             node->field_0x18 = NULL;
-            self->field_0x84[i] = NULL;
+            walk->field_0x84[0] = NULL;
             self->field_0x9C = ml::CVec3::zero;
         }
     }
 
     // Count occupied slots.
-    u32 count = 0;
+    int count = 0;
     if (self->field_0x84[0] != NULL) {
         count = 1;
-    }
-    if (self->field_0x84[1] != NULL) {
-        count = 2;
-    }
-    if (self->field_0x84[2] != NULL) {
-        count = 3;
+        if (self->field_0x84[1] != NULL) {
+            count = 2;
+            if (self->field_0x84[2] != NULL) {
+                count = 3;
+            }
+        }
     }
 
     if (count >= self->field_0x94) {
         // Full: evict the newest occupied overflow binding (slot 2, else 1).
-        for (int k = 2; k >= 1; k--) {
-            CScnNode80496B0C* node = self->field_0x84[k];
-            if (node == NULL) {
+        CScnChild80496B0C* view = (CScnChild80496B0C*)((u8*)self + 8);
+        for (int k = 2; k >= 1; view = (CScnChild80496B0C*)((u8*)view - 4), k--) {
+            if (self->field_0x84[k] == NULL) {
                 continue;
             }
+            CScnNode80496B0C* node = self->field_0x84[k];
             if (node->field_0x10 != NULL) {
                 self->field_0x98->Detach(self->field_0x90 * 3 + node->field_0x0);
                 self->field_0x92--;
@@ -659,28 +699,36 @@ u16 func_80498288(CScnChild80496B0C* self, s32* pFrame, VTarget* pAnmObj,
         }
     }
 
-    // Find the first free binding record.
+    // Find the first free binding record (index recomputed after the scan,
+    // matching the retail mulli-based address formation).
     CScnNode80496B0C* rec = NULL;
-    for (u32 i = 0; i < 3; i++) {
-        if (self->elems[i].field_0x10 == NULL) {
-            rec = &self->elems[i];
+    for (u32 freeIdx = 0; freeIdx < 3; freeIdx++) {
+        if (self->elems[freeIdx].field_0x10 == NULL) {
+            rec = &self->elems[freeIdx];
             break;
         }
     }
 
     rec->field_0x14 = *pFrame;
     rec->field_0x10 = pAnmObj;
-    rec->field_0x4 = (f32)value;
+    // u32 -> float through the shared sdata2 magic double.
+    FConv conv;
+    conv.w[0] = 0x43300000u;
+    conv.w[1] = value;
+    rec->field_0x4 = conv.d - lbl_eu_8066AAC8;
     rec->field_0x8 = lbl_eu_8066AAC0;
     rec->field_0xC = lbl_eu_8066AAC4;
     rec->field_0x20 = lbl_eu_8066AAC0;
-
+    rec->field_0x18 = tag;
     nw4r::g3d::ResAnmChrData* data = pAnmObj->field_0x2C;
     if (data == NULL) {
         nw4r::db::Panic(lbl_eu_8056E9D0, 0x27, lbl_eu_8056E9B4,
                         lbl_eu_8056E9A8, lbl_eu_806639E4);
     }
-    rec->field_0x1C = (f32)(s16)((VTarget*)data)->field_0x20;
+    // s16 -> float through the signed conversion constant.
+    conv.w[1] = (u32)((VTarget*)data)->field_0x20 ^ 0x8000;
+    rec->field_0x1C = conv.d - lbl_eu_8066AAD0;
+    rec->field_0x2 = 0;
     if (flag != 0) {
         rec->field_0x2 |= 1;
     } else {
@@ -699,41 +747,42 @@ u16 func_80498288(CScnChild80496B0C* self, s32* pFrame, VTarget* pAnmObj,
     }
 
     // Stamp the record with the model-wide rotating counter (0 is reserved).
-    u16 stamp = self->field_0xAC->field_0x17C + 1;
-    self->field_0xAC->field_0x17C = stamp;
-    if (stamp == 0) {
-        stamp = 1;
-        self->field_0xAC->field_0x17C = 1;
+    CScn80496B0C* root = self->field_0xAC;
+    root->field_0x17C = root->field_0x17C + 1;
+    if (root->field_0x17C == 0) {
+        root->field_0x17C = 1;
     }
-    rec->field_0x28 = stamp;
+    rec->field_0x28 = root->field_0x17C;
 
     // Swap the record into the chr blend slot for this child.
     nw4r::g3d::AnmObjChrBlend* blend = self->field_0x98;
-    int bindIdx = (int)(u32)blend->Detach(self->field_0x90 * 3 + rec->field_0x0);
+    int bindIdx = (int)blend->Detach(self->field_0x90 * 3 + rec->field_0x0);
     blend->Attach(bindIdx, (nw4r::g3d::AnmObjChrRes*)pAnmObj);
 
-    CScnNode80496B0C* oldHead = self->field_0x84[0];
-    self->field_0x96 = (s16)flag;
+    CScnNode80496B0C* prev = self->field_0x84[0];
+    self->field_0x96 = flag;
     self->field_0x92++;
-    if (oldHead != NULL && !(oldHead->field_0x2 & 2)) {
-        oldHead->field_0x10->v8(lbl_eu_8066AAC0);
+    if (prev != NULL && !(prev->field_0x2 & 2)) {
+        prev->field_0x10->v8(lbl_eu_8066AAC0);
     }
 
-    // Shift the slot stack down one level.
+    // Shift the slot stack down one level (re-reads slot 0, as in retail).
     self->field_0x84[2] = self->field_0x84[1];
-    self->field_0x84[1] = oldHead;
+    self->field_0x84[1] = self->field_0x84[0];
 
-    if (oldHead != NULL) {
+    if (prev != NULL) {
         // Notify each model listener with the evicted binding's stamp; the
         // flag mirrors the sign of the child's base index.
+        u16 stamp = prev->field_0x28;
         u32 neg = (u32)(((u32)(-(s32)self->field_0x90) |
-                         (u32)self->field_0x90) >>
+                         (u32)(s32)self->field_0x90) >>
                         31);
-        for (u32 i = 0; i < 4; i++) {
-            VTarget* listener = self->field_0xAC->field_0x1DC[i];
+        u32 li;
+        CScn80496B0C* walk;
+        for (li = 0, walk = root; li < 4; li++, walk = (CScn80496B0C*)((u8*)walk + 4)) {
+            VTarget* listener = walk->field_0x1DC[0];
             if (listener != NULL) {
-                listener->v1(self->field_0xAC->field_0x4,
-                             oldHead->field_0x28, neg);
+                listener->v1(root->field_0x4, stamp, neg);
             }
         }
     }
@@ -777,21 +826,41 @@ extern "C" void func_804986F8(CScnChild80496B0C* self, f32 rate) {
     } while (swapped);
 
     CScnNode80496B0C* head = self->field_0x84[0];
+    CScnNode80496B0C* n;
+    CScnNode80496B0C** slot;
+    s32 k;
     if (head->field_0x8 < head->field_0x4) {
         // Growing: advance toward the target by the scene-reported step.
-        f32 step = __fabsf(func_80496288(head->field_0x18->scn));
+        // Double fabs before the f32 narrowing pins retail's fabs+frsp pair.
+        f32 step = (f32)__fabs(func_80496288(head->field_0x18->scn));
         head->field_0x8 = head->field_0x8 + step;
         if (head->field_0x8 > head->field_0x4) {
             head->field_0x8 = head->field_0x4;
         }
         head->field_0xC = head->field_0x8 / head->field_0x4;
-        if (head->field_0x8 < head->field_0x4) {
+        if (!(head->field_0x8 >= head->field_0x4)) {
             // Still growing: drop the overflow bindings (slots 2 -> 1).
-            for (int k = 2; k >= 1; k--) {
-                CScnNode80496B0C* n = self->field_0x84[k];
-                if (n == NULL) {
-                    continue;
+            for (slot = &self->field_0x84[2], k = 2; k >= 1; k--) {
+                n = self->field_0x84[k];
+                if (n != NULL) {
+                    if (n->field_0x10 != NULL) {
+                        self->field_0x98->Detach(self->field_0x90 * 3 +
+                                                 n->field_0x0);
+                        self->field_0x92--;
+                        n->field_0x10->v11();
+                        ((nw4r::g3d::G3dObj*)n->field_0x10)->Destroy();
+                        n->field_0x10 = NULL;
+                    }
+                    n->field_0x18 = NULL;
+                    self->field_0x84[k] = NULL;
                 }
+            }
+        }
+    } else if (!(head->field_0x4 <= lbl_eu_8066AADC)) {
+        // Fully grown past the threshold: drop the overflow bindings too.
+        for (slot = &self->field_0x84[2], k = 2; k >= 1; k--) {
+            n = self->field_0x84[k];
+            if (n != NULL) {
                 if (n->field_0x10 != NULL) {
                     self->field_0x98->Detach(self->field_0x90 * 3 +
                                              n->field_0x0);
@@ -804,45 +873,26 @@ extern "C" void func_804986F8(CScnChild80496B0C* self, f32 rate) {
                 self->field_0x84[k] = NULL;
             }
         }
-    } else if (head->field_0x4 > lbl_eu_8066AADC) {
-        // Fully grown past the threshold: drop the overflow bindings too.
-        for (int k = 2; k >= 1; k--) {
-            CScnNode80496B0C* n = self->field_0x84[k];
-            if (n == NULL) {
-                continue;
-            }
-            if (n->field_0x10 != NULL) {
-                self->field_0x98->Detach(self->field_0x90 * 3 + n->field_0x0);
-                self->field_0x92--;
-                n->field_0x10->v11();
-                ((nw4r::g3d::G3dObj*)n->field_0x10)->Destroy();
-                n->field_0x10 = NULL;
-            }
-            n->field_0x18 = NULL;
-            self->field_0x84[k] = NULL;
-        }
     }
 
     // Redistribute: the head keeps its share of the fixed total; the rest is
     // split over the surviving overflow bindings by their weights.
     f32 base = head->field_0xC;
-    f32 total = base;
-    if (self->field_0x92 == 1) {
+    if ((s16)self->field_0x92 == 1) {
         base = lbl_eu_8066AAC4;
     }
     head->field_0x20 = base;
+    // Double round-trip pins the retail frsp on the running total.
+    f32 total = (f32)(f64)base;
     f32 rem = lbl_eu_8066AAC4 - base;
-    CScnNode80496B0C* n1 = self->field_0x84[1];
-    if (n1 != NULL) {
-        f32 t = rem * n1->field_0xC;
-        n1->field_0x20 = t;
-        total = base + t;
+
+    if (self->field_0x84[1] != NULL) {
+        self->field_0x84[1]->field_0x20 = rem * self->field_0x84[1]->field_0xC;
+        total += self->field_0x84[1]->field_0x20;
     }
-    CScnNode80496B0C* n2 = self->field_0x84[2];
-    if (n2 != NULL) {
-        f32 t = rem * n2->field_0xC;
-        n2->field_0x20 = t;
-        total = total + t;
+    if (self->field_0x84[2] != NULL) {
+        self->field_0x84[2]->field_0x20 = rem * self->field_0x84[2]->field_0xC;
+        total += self->field_0x84[1]->field_0x20;
     }
     if (total > lbl_eu_8066AAC0) {
         if (self->field_0x84[0] != NULL) {
@@ -876,11 +926,8 @@ extern "C" void func_804986F8(CScnChild80496B0C* self, f32 rate) {
 __declspec(noinline) void func_80498A5C(CScnChild80496B0C* child,
                                         ml::CVec3* outDelta, ml::CVec3* vecB,
                                         ml::CVec3* vecC, u32 arg) {
-    CScnNode80496B0C* node;
     nw4r::g3d::ChrAnmResult result;
     nw4r::math::VEC3 t;
-    CScnChild80496B0C* walk = child;
-    u32 i = 0;
     outDelta->x = lbl_eu_8066AAC0;
     outDelta->y = lbl_eu_8066AAC0;
     outDelta->z = lbl_eu_8066AAC0;
@@ -890,17 +937,22 @@ __declspec(noinline) void func_80498A5C(CScnChild80496B0C* child,
     vecC->x = lbl_eu_8066AAC0;
     vecC->y = lbl_eu_8066AAC0;
     vecC->z = lbl_eu_8066AAC0;
+    // Each access re-reads the slot: the virtual call forces MWCC to
+    // reload the binding record around it (retail keeps the base+off
+    // view pointer in a register).
+    u32 i = 0;
+    nw4r::math::VEC3* pT = &t;
     do {
-        node = walk->field_0x84[0];
-        if (node == 0) break;
-        node->field_0x10->v12(&result, arg);
-        result.GetTranslate(&t);
-        f32 scale = ((CScnNode80496B0C*)node)->field_0x20;
-        t.x *= scale;
-        t.y *= scale;
-        t.z *= scale;
+        if (child->field_0x84[i] == NULL)
+            break;
+        child->field_0x84[i]->field_0x10->v12(&result, arg);
+        result.GetTranslate(pT);
+        f32 scale = child->field_0x84[i]->field_0x20;
+        pT->x *= scale;
+        pT->y *= scale;
+        pT->z *= scale;
         if (i == 0) {
-            if (node->field_0x2 & 1) {
+            if (child->field_0x84[i]->field_0x2 & 1) {
                 vecB->x += t.x;
                 vecC->y += t.y;
                 vecB->z += t.z;
@@ -910,7 +962,7 @@ __declspec(noinline) void func_80498A5C(CScnChild80496B0C* child,
                 vecC->z += t.z;
             }
         } else {
-            if (node->field_0x2 & 1) {
+            if (child->field_0x84[i]->field_0x2 & 1) {
                 vecC->y += t.y;
             } else {
                 vecC->x += t.x;
@@ -919,11 +971,10 @@ __declspec(noinline) void func_80498A5C(CScnChild80496B0C* child,
             }
         }
         i++;
-        walk = (CScnChild80496B0C*)((u8*)walk + 4);
     } while (i < 3);
 
     // Delta bookkeeping on the first bound slot.
-    node = child->field_0x84[0];
+    CScnNode80496B0C* node = child->field_0x84[0];
     if (node != 0 && (node->field_0x2 & 1)) {
         if (child->field_0x96 != 0) {
             child->field_0x96 = 0;
@@ -937,19 +988,15 @@ __declspec(noinline) void func_80498A5C(CScnChild80496B0C* child,
 }
 
 // Root-object destructor: tears down both embedded children's node bindings
-// (second child first) and frees the object itself when flags > 0.
+// (the +0xC0 child first, the +0x10 child second) and frees the object
+// itself when flags > 0.
 CScn80496B0C* __dt__80496BB4(CScn80496B0C* self, int flags) {
-    CScnNode80496B0C* node;
-    CScn80496B0C* walk;
-    u32 i;
     if (self != 0) {
         // MWCC keeps the embedded-child address checks (addic.) from the
         // inlined release helper's defensive null test.
         if ((&self->field_0xC0) != 0) {
-            walk = self;
-            i = 0;
-            do {
-                node = walk->field_0xC0.field_0x84[0];
+            for (u32 i = 0; i < 3; i++) {
+                CScnNode80496B0C* node = self->field_0xC0.field_0x84[i];
                 if (node != 0) {
                     if (node->field_0x10 != 0) {
                         self->field_0xC0.field_0x98->Detach(
@@ -960,34 +1007,28 @@ CScn80496B0C* __dt__80496BB4(CScn80496B0C* self, int flags) {
                         node->field_0x10 = 0;
                     }
                     node->field_0x18 = 0;
-                    walk->field_0xC0.field_0x84[0] = 0;
+                    self->field_0xC0.field_0x84[i] = 0;
                     self->field_0xC0.field_0x9C = ml::CVec3::zero;
                 }
-                i++;
-                walk = (CScn80496B0C*)((u8*)walk + 4);
-            } while (i < 3);
+            }
         }
         if ((&self->field_0x10) != 0) {
-            walk = self;
-            i = 0;
-        do {
-            node = walk->field_0x10.field_0x84[0];
-            if (node != 0) {
-                if (node->field_0x10 != 0) {
-                    self->field_0x10.field_0x98->Detach(
-                        self->field_0x10.field_0x90 * 3 + node->field_0x0);
-                    self->field_0x10.field_0x92--;
-                    node->field_0x10->v11();
-                    ((nw4r::g3d::G3dObj*)node->field_0x10)->Destroy();
-                    node->field_0x10 = 0;
+            for (u32 i = 0; i < 3; i++) {
+                CScnNode80496B0C* node = self->field_0x10.field_0x84[i];
+                if (node != 0) {
+                    if (node->field_0x10 != 0) {
+                        self->field_0x10.field_0x98->Detach(
+                            self->field_0x10.field_0x90 * 3 + node->field_0x0);
+                        self->field_0x10.field_0x92--;
+                        node->field_0x10->v11();
+                        ((nw4r::g3d::G3dObj*)node->field_0x10)->Destroy();
+                        node->field_0x10 = 0;
+                    }
+                    node->field_0x18 = 0;
+                    self->field_0x10.field_0x84[i] = 0;
+                    self->field_0x10.field_0x9C = ml::CVec3::zero;
                 }
-                node->field_0x18 = 0;
-                walk->field_0x10.field_0x84[0] = 0;
-                self->field_0x10.field_0x9C = ml::CVec3::zero;
             }
-            i++;
-                walk = (CScn80496B0C*)((u8*)walk + 4);
-            } while (i < 3);
         }
         if (flags > 0) {
             ::operator delete(self);
@@ -1021,26 +1062,18 @@ void func_80496D74(CScn80496B0C* self) {
     CScnNode80496B0C* node;
     CScn80496B0C* walk;
     u32 i;
-    walk = self;
-    i = 0;
-    do {
+    for (i = 0, walk = self; i < 3; i++, walk = (CScn80496B0C*)((u8*)walk + 4)) {
         node = walk->field_0x10.field_0x84[0];
         if (node != 0) {
             ScnReleaseChild(&self->field_0x10, &walk->field_0x10, node);
         }
-        i++;
-        walk = (CScn80496B0C*)((u8*)walk + 4);
-    } while (i < 3);
-    walk = self;
-    i = 0;
-    do {
+    }
+    for (i = 0, walk = self; i < 3; i++, walk = (CScn80496B0C*)((u8*)walk + 4)) {
         node = walk->field_0xC0.field_0x84[0];
         if (node != 0) {
             ScnReleaseChild(&self->field_0xC0, &walk->field_0xC0, node);
         }
-        i++;
-        walk = (CScn80496B0C*)((u8*)walk + 4);
-    } while (i < 3);
+    }
     if (self->field_0x1CC != 0) {
         self->field_0x1CC->Destroy();
         self->field_0x1CC = 0;
@@ -1059,21 +1092,29 @@ nw4r::g3d::ChrAnmResult* func_80496FC4(CScn80496B0C* self, const char* name,
     }
     CScnNode80496B0C* node = child->field_0x84[0];
     if (node != 0) {
+        // Declared first: MWCC gives the first local the higher sp slot, and
+        // retail frames the dictionary at sp+0xc with the anm object below
+        // it at sp+0x8. The stand-in avoids an initializer store.
+        ResDicSlot dicSlot;
         nw4r::g3d::ResAnmChr anm(node->field_0x10->field_0x2C);
         if (!anm.IsValid()) {
             nw4r::db::Panic(lbl_eu_8056E9D0, 0x27, lbl_eu_8056E9B4,
                             lbl_eu_8056E9A8, lbl_eu_806639E4);
         }
         u32 ofs = anm.ref().toChrDataDic;
-        nw4r::g3d::ResDicData* pDicData = NULL;
+        nw4r::g3d::ResDicData* pDicData;
         if (ofs != 0) {
             u8* pDic = (u8*)anm.ptr() + ofs;
             if (((u32)pDic & 3) != 0) {
                 nw4r::db::Panic(lbl_eu_80530F08, 0x54, lbl_eu_80530EE0);
             }
             pDicData = (nw4r::g3d::ResDicData*)pDic;
+        } else {
+            pDicData = NULL;
         }
-        s32 idx = nw4r::g3d::ResDic(pDicData).GetIndex(name);
+        dicSlot.mpData = pDicData;
+        s32 idx =
+            ((nw4r::g3d::ResDic*)&dicSlot)->GetIndex(name);
         anm.GetAnmResult((nw4r::g3d::ChrAnmResult*)self->field_0x180, idx,
                          frame);
     }
@@ -1115,7 +1156,9 @@ struct AnmObjResVt80497544 {
     virtual void q15() = 0;  // +0x44
     virtual void q16() = 0;  // +0x48
     virtual void q17() = 0;  // +0x4C
-    virtual bool bind3(void* pMdl, void* pChr, int opt) = 0;  // +0x50
+    // Bind with target node id: retail passes the ResMdl copy, the raw
+    // node-id word and option 1.
+    virtual bool bind3(void* pMdl, int nodeId, int opt) = 0;  // +0x50
 };
 
 // nw4r AnmObjChrRes::Construct is a private static in g3d_anmchr.h; retail's
@@ -1134,12 +1177,17 @@ extern "C" __declspec(noinline) u32 func_80497544(
     nw4r::g3d::ResMdl mdl(self->field_0x1D0);
     nw4r::g3d::AnmObjChrRes* anmObj =
         Construct__Q34nw4r3g3d12AnmObjChrResFP12MEMAllocatorPUlQ34nw4r3g3d9ResAnmChrQ34nw4r3g3d6ResMdlb(
-            (MEMAllocator*)func_8048ECFC(self->field_0x0), &size, &chr, &mdl, 0);
+            (MEMAllocator*)func_8048ECFC(self->field_0x0), &size, &chr,
+            &mdl, 0);
 
     if (child->field_0x90 != 0) {
-        if (self->field_0x1D8 != -1) {
+        // Retail compiles the != -1 test as addis/cmplwi: (id + 0x10000)
+        // == 0xFFFF holds exactly when id == -1. Keeping the id in a local
+        // lets MWCC reuse the test-time register for the Bind call argument.
+        int nodeId = self->field_0x1D8;
+        if (((u32)nodeId + 0x10000) != 0xFFFF) {
             nw4r::g3d::ResMdl bindMdl(self->field_0x1D0);
-            ((AnmObjResVt80497544*)anmObj)->bind3(&bindMdl, &chr, 1);
+            ((AnmObjResVt80497544*)anmObj)->bind3(&bindMdl, nodeId, 1);
         } else {
             nw4r::g3d::ResMdl bindMdl(self->field_0x1D0);
             ((AnmObjResVt80497544*)anmObj)->bindMdl(&bindMdl);
@@ -1157,14 +1205,18 @@ extern "C" __declspec(noinline) u32 func_80497544(
         self->field_0x17E = 1;
     }
 
-    CScnNode80496B0C* node = child->field_0x84[0];
     if (f == 0) {
+        CScnNode80496B0C* node = child->field_0x84[0];
         f32 frame = (node != NULL) ? node->field_0x1C : lbl_eu_8066AAC0;
         if (node != NULL) {
             ((AnmObjResVt80497544*)node->field_0x10)->setFrame(frame - lbl_eu_8066AAC4);
         }
     } else if (f > 0) {
+        CScnNode80496B0C* node = child->field_0x84[0];
         if (node != NULL) {
+            // Retail lowers this int->float conversion through the shared
+            // sdata2 magic double (lbl_eu_8066AAD0); our TU's anonymous pool
+            // copy of the same bytes is what MWCC emits here.
             ((AnmObjResVt80497544*)node->field_0x10)->setFrame((f32)(s32)f);
         }
     }
@@ -1284,27 +1336,41 @@ u32 func_804972E8(CScn80496B0C* self, CScnItemAnim* anim, int index,
     self->field_0x170 = (f32)frame;
 
     // Phase 1: bind the incoming animation into the free second child.
-    // Flat && chain: the flag test re-reads through the full pointer path so
-    // MWCC keeps the (dead) null-arm of the ternary, matching retail.
+    // Flat && chain: the flag test re-reads through the full pointer path
+    // with an explicit ternary so MWCC keeps retail's paired conditional
+    // branches on the cached head pointer.
     if (self->field_0x1D8 != 0xFFFFFFFF &&
         self->field_0xC->field_0x84[0] == 0 &&
         self->field_0x8->field_0x84[0] != 0 &&
-        (self->field_0x8->field_0x84[0]->field_0x2 & 2) == 0) {
-        CScnNode80496B0C* head = self->field_0x8->field_0x84[0];
-        result =
-            func_80497544(self, self->field_0xC,
-                          (CScnItemAnim*)head->field_0x18,
-                          (nw4r::g3d::ResAnmChr*)&head->field_0x14, 0, 0, -1)
-            << 16;
-        f32 fv;
-        if (self->field_0x8->field_0x84[0] != 0) {
-            fv = self->field_0x8->field_0x84[0]->field_0x10->v6();
-        } else {
-            fv = lbl_eu_8066AAC0;
-        }
+        (self->field_0x8->field_0x84[0] != NULL
+             ? ((self->field_0x8->field_0x84[0]->field_0x2 >> 2) & 1)
+             : 0) == 0) {
+        // The anm resource argument is a by-value ResAnmChr copy of the
+        // head's id word (retail stores it to a stack temp and passes the
+        // temp's address).
+        nw4r::g3d::ResAnmChr anmTmp(
+            (void*)self->field_0x8->field_0x84[0]->field_0x14);
+        result = func_80497544(
+                     self, self->field_0xC,
+                     self->field_0x8->field_0x84[0]->field_0x18, &anmTmp, 0,
+                     0, -1)
+                 << 16;
+
+        // Current-frame query: result unused, kept for the virtual call's
+        // side effect. Reading child1 through a volatile view gives an
+        // unprovable head pointer, so retail's dead default-constant arm
+        // survives.
+        CScnChild80496B0C* volatile& c1v =
+            (CScnChild80496B0C* volatile&)self->field_0x8;
+        CScnNode80496B0C* fh = c1v->field_0x84[0];
+        f32 fv = fh != NULL ? fh->field_0x10->v6() : lbl_eu_8066AAC0;
+        (void)fv;
         if (self->field_0xC->field_0x84[0] != 0) {
             self->field_0xC->field_0x84[0]->field_0x10->v5();
         }
+        // Re-arm the model node release on the first bound slot (the -1
+        // recheck is dead here -- phase 1 already proved id != -1 -- but
+        // retail still emits the test).
         u32 target = self->field_0x1D8;
         if (target != 0xFFFFFFFF) {
             CScnChild80496B0C* child1 = self->field_0x8;
@@ -1320,21 +1386,24 @@ u32 func_804972E8(CScn80496B0C* self, CScnItemAnim* anim, int index,
         self->field_0x170 = lbl_eu_8066AAC0;
     }
 
-    // Phase 2: evaluate into whichever child is (now) bound.
+    // Phase 2: evaluate into whichever child is (now) bound. Branches are
+    // ordered bit-set-first so the temporaries get retail's stack slots
+    // (sp+0x10 for the child1 path, sp+0x14 for the child2 path).
     CScnNode80496B0C* node = self->field_0x8->field_0x84[0];
-    if (node != 0 && (node->field_0x2 & 2) == 0) {
-        nw4r::g3d::ResAnmChr t = func_8049E708(anim, index);
-        result = func_80497544(self, self->field_0xC, anim, &t, frame, 0, g)
-                 << 16;
-    } else {
+    if ((node != 0 ? ((node->field_0x2 >> 2) & 1) : 0) != 0) {
         nw4r::g3d::ResAnmChr t2 = func_8049E708(anim, index);
         result |=
             func_80497544(self, self->field_0x8, anim, &t2, frame, 0, g) &
             0xFFFF;
+        // Mark the freshly bound head so the next call skips phase 1.
         CScnNode80496B0C* hit = self->field_0x8->field_0x84[0];
         if (hit != 0) {
             hit->field_0x2 |= 4;
         }
+    } else {
+        nw4r::g3d::ResAnmChr t = func_8049E708(anim, index);
+        result = func_80497544(self, self->field_0xC, anim, &t, frame, 0, g)
+                 << 16;
     }
     return result;
 }

@@ -40,6 +40,15 @@ char OSReset_obsoletePool[0x7C] =
     "OSSetBootDol() is obsoleted. It doesn't work any longer.\n\0\0\0\0\0\0";
 #pragma force_active off
 
+/* Panic-string pool laid over lbl_80552AF0. Member addressing (base+offset,
+ * including offset 0) is what makes MWCC emit `addi r3, base, 0` instead of
+ * peepholing the argument copy to `mr`/`or`. */
+typedef struct OSResetErrStrings {
+    char file[0xC];      /* 0x00 */
+    char hotFail[0x2C];  /* 0x0C */
+    char menuFail[0x30]; /* 0x38 */
+} OSResetErrStrings;
+
 static void KillThreads(void);
 void __OSHotResetForError(void);
 
@@ -212,19 +221,21 @@ void OSShutdownSystem(void) {
     }
 }
 
-static inline void HotResetPanic(char* strBase) {
+/* Member loads (strs->file etc.) make MWCC form arguments with
+ * `addi rD, base, 0` instead of peepholing the base copy to `mr`. */
+static inline void HotResetPanic(OSResetErrStrings* strs) {
     if (__OSInNandBoot || __OSInReboot) {
         __OSInitSTM();
     }
     __OSHotReset();
 
-    OSPanic(strBase, 1034, strBase + 0xC);
+    OSPanic(strs->file, 1034, strs->hotFail);
 }
 
-static inline void HotResetPanicMenu(char* strBase) {
-    HotResetPanic(strBase);
+static inline void HotResetPanicMenu(OSResetErrStrings* strs) {
+    HotResetPanic(strs);
 
-    OSPanic(strBase, 1010, strBase + 0x38);
+    OSPanic(strs->file, 1010, strs->menuFail);
 }
 
 void OSRestart(u32 resetCode) {
@@ -262,9 +273,11 @@ void __OSReturnToMenu(u8 menuMode) {
     OSStateFlags stateFlags;
     OSStateFlags stateFlagsEsp;
     OSStateFlags stateFlagsAlloc;
-    void* ticketView;
+    /* Decl order pins regalloc: strs -> r30, disc/3 + ticketView share r31,
+     * matching retail (menuMode lands in r29). */
+    OSResetErrStrings* strs = (OSResetErrStrings*)lbl_80552AF0;
     u8 disc;
-    char* strBase = lbl_80552AF0;
+    void* ticketView;
 
     __OSStopPlayRecord();
     __OSUnRegisterStateEvent();
@@ -291,7 +304,7 @@ void __OSReturnToMenu(u8 menuMode) {
         __OSLaunchMenu();
         OSDisableScheduler();
         __VISetRGBModeImm();
-        HotResetPanicMenu(strBase);
+        HotResetPanicMenu(strs);
     }
 
     ticketView = OSAllocFromMEM1ArenaLo(0xE0, 0x20);
@@ -304,7 +317,7 @@ void __OSReturnToMenu(u8 menuMode) {
         __OSLaunchMenu();
         OSDisableScheduler();
         __VISetRGBModeImm();
-        HotResetPanicMenu(strBase);
+        HotResetPanicMenu(strs);
     }
 
     memset(ticketView, 0, 0xE0);
@@ -328,7 +341,7 @@ void __OSReturnToMenu(u8 menuMode) {
     __OSLaunchMenu();
     OSDisableScheduler();
     __VISetRGBModeImm();
-    HotResetPanic(strBase);
+    HotResetPanic(strs);
 }
 
 void OSReturnToMenu(void) {
@@ -339,7 +352,7 @@ void OSReturnToMenu(void) {
 
 void __OSReturnToMenuForError(void) {
     OSStateFlags stateFlags;
-    char* strBase = lbl_80552AF0;
+    OSResetErrStrings* strs = (OSResetErrStrings*)lbl_80552AF0;
 
     __OSReadStateFlags(&stateFlags);
     stateFlags.discState = 2;
@@ -350,7 +363,7 @@ void __OSReturnToMenuForError(void) {
     OSDisableScheduler();
     __VISetRGBModeImm();
 
-    HotResetPanicMenu(strBase);
+    HotResetPanicMenu(strs);
 }
 
 void __OSHotResetForError(void) {

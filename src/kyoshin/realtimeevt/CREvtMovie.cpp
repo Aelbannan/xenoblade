@@ -6,51 +6,16 @@
 #include <types.h>
 #include <cstring>
 #include "kyoshin/realtimeevt/CREvtMovie.hpp"
-#include "kyoshin/realtimeevt/CREvtObj.hpp"
-
-extern "C" {
-// Base constructor/destructor
-void __ct__cf_CREvtObj(cf::CREvtObj* self, int arg);
-void __dt__Q22cf8CREvtObjFv(cf::CREvtObj* self, int dealloc_flag);
-void __dt__80185754(void* ptr);
-
-// Movie playback functions
-void func_80164F6C(void);
-int func_80164FE8(void);
-int func_80164FB4(void);
-void func_80165014(void);
-void func_80164ED0(const char* path, int flag, void* handle);
-void* func_8016C3DC(void);
-
-// Counter/timing functions
-// func_8016A3C4 is an unsigned tick counter; 8016A378/8016A35C return
-// signed timestamps (compared with a signed `cmpi` in retail).
-u32 func_8016A3C4(void);
-int func_8016A378(void);
-int func_8016A35C(void);
-
-// Memory functions
-void* func_80459AD0__7CLibCriFv(void);
-void* getHandleMEM2__Q23mtl10MemManagerFv(void);
-u32 getMaxAllocSize__Q23mtl10MemManagerFUl(void* handle);
-
-// String functions
-using std::strlen;
-using std::strcpy;
-using std::strcat;
-}
-
-// Vtable for CREvtMovie lives in kyoshin/realtimeevt/CREvtMovie.hpp
-// (C-linkage imports section).
+#include "monolib/util/MemManager.hpp"
 
 // ============================================================================
 // Constructor: __ct__CREvtMovie
 // r3 = this, r4 = arg
 // Calls CREvtObj(this, 4), sets own vtable, initializes fields
 // ============================================================================
-extern "C" CREvtMovie* __ct__CREvtMovie(CREvtMovie* self, CREvtMovieScript* scriptData) {
-    __ct__cf_CREvtObj((cf::CREvtObj*)self, 4);
-    self->vtable = (void*)lbl_eu_80538AA0;
+CREvtMovie* __ct__CREvtMovie(CREvtMovie* self, CREvtMovieScript* scriptData) {
+    __ct__cf_CREvtObj(self, 4);
+    self->vtable = &lbl_eu_80538AA0[0];
     self->mScriptData = scriptData;
     self->mFlag18 = 0;
     self->mFlag19 = 0;
@@ -58,14 +23,21 @@ extern "C" CREvtMovie* __ct__CREvtMovie(CREvtMovie* self, CREvtMovieScript* scri
 }
 
 // ============================================================================
-// __ct__802948D0: Constructor with cleanup (called during destruction)
-// r3 = this, r4 = dealloc_flag
+// __ct__802948D0: Destructor (vtable slot 0)
+// NOTE (open item): retail compiles this as a REAL destructor of a class whose
+// base cf::CREvtObj has a declared dtor, so its .extab entry carries a 0x1C
+// DESTROYBASE action relocating __dt__Q22cf8CREvtObjFv. The C-linkage form
+// below is byte-identical in .text but emits a plain 8-byte etb entry (no
+// .relaextab), leaving objdiff's section metric at 0% (extab 0x30 vs retail
+// 0x44). Proper fix needs ~CREvtObj() declared in CREvtObj.hpp + CREvtMovie
+// inheriting cf::CREvtObj + a real ~CREvtMovie()/operator delete pair -- see
+// session notes.
 // ============================================================================
-extern "C" CREvtMovie* __ct__802948D0(CREvtMovie* self, int dealloc_flag) {
+CREvtMovie* __ct__802948D0(CREvtMovie* self, int dealloc_flag) {
     if (self != 0) {
-        self->vtable = (void*)lbl_eu_80538AA0;
+        self->vtable = &lbl_eu_80538AA0[0];
         func_80164F6C();
-        __dt__Q22cf8CREvtObjFv((cf::CREvtObj*)self, 0);
+        __dt__Q22cf8CREvtObjFv(self, 0);
 
         if (dealloc_flag > 0) {
             __dt__80185754(self);
@@ -78,7 +50,7 @@ extern "C" CREvtMovie* __ct__802948D0(CREvtMovie* self, int dealloc_flag) {
 // func_8029493C: Check counter and cleanup if matches
 // If scriptData->counter == currentTick + 1, calls func_80164F6C()
 // ============================================================================
-extern "C" void func_8029493C(CREvtMovie* self) {
+void func_8029493C(CREvtMovie* self) {
     if (self->mScriptData->mCounter == func_8016A3C4() + 1) {
         func_80164F6C();
     }
@@ -88,38 +60,50 @@ extern "C" void func_8029493C(CREvtMovie* self) {
 // func_80294980: Build SFD path and start playback
 // If scriptData->counter == currentTick and not already playing,
 // builds "/ev/realtime/" + scriptName + ".sfd" and starts playback
+// opt_propagation off keeps `dir` as an opaque held base pointer (retail
+// materializes it once into a callee-saved reg; ext = runtime dir + 14).
 // ============================================================================
-extern "C" void func_80294980(CREvtMovie* self) {
+#pragma push
+#pragma opt_propagation off
+void func_80294980(CREvtMovie* self) {
     if (self->mScriptData->mCounter != func_8016A3C4()) return;
 
     // Check if already playing or finished
     if (func_80164FE8() != 0) return;
 
     // Build file path on stack: "/ev/realtime/" + scriptName + ".sfd"
+    // Suffix local assigned up front keeps the base pointer in a
+    // callee-saved register across the strlen/strcpy/strcat calls.
+    char* name;
     char* dir = lbl_eu_8050FD98;
     CREvtMoviePathBuf buf;
-    buf.mLength = strlen(dir);
-    strcpy(buf.mPath, dir);
+    buf.mLength = std::strlen(dir);
+    std::strcpy(buf.mPath, dir);
 
-    char* name = self->mScriptData->mScriptName;
-    u32 sLen = strlen(name);
-    strcat(buf.mPath, name);
+    name = self->mScriptData->mScriptName;
+    u32 sLen = std::strlen(name);
+    std::strcat(buf.mPath, name);
     buf.mLength += sLen;
 
-    char* ext = dir + 14;
-    u32 eLen = strlen(ext);
-    strcat(buf.mPath, ext);
+    name = dir + 14;  // extension string; reuses the (dead) name register
+    u32 eLen = std::strlen(name);
+    std::strcat(buf.mPath, name);
     buf.mLength += eLen;
 
     func_80164ED0(buf.mPath, 1, func_8016C3DC());
     self->mFlag19 = 0;
 }
+#pragma pop
 
 // ============================================================================
 // func_80294A70: Build SFD path and start playback (with timing checks)
 // Checks counter (currentTick + 1), timing, and memory availability
+// Same held-base pattern as func_80294980: opt_propagation off keeps `dir`
+// materialized once in a callee-saved register; ext reuses the dead name reg.
 // ============================================================================
-extern "C" void func_80294A70(CREvtMovie* self) {
+#pragma push
+#pragma opt_propagation off
+void func_80294A70(CREvtMovie* self) {
     if (self->mScriptData->mCounter != func_8016A3C4() + 1) return;
 
     // Check if already playing or finished
@@ -130,37 +114,43 @@ extern "C" void func_80294A70(CREvtMovie* self) {
 
     // Check memory availability
     u32 criSize = (u32)func_80459AD0__7CLibCriFv();
-    if (getMaxAllocSize__Q23mtl10MemManagerFUl(getHandleMEM2__Q23mtl10MemManagerFv()) + 0x200 <= criSize)
+    if (mtl::MemManager::getMaxAllocSize(mtl::MemManager::getHandleMEM2()) + 0x200 <= criSize)
         return;
 
     // Double-check not playing
     if (func_80164FE8() != 0) return;
 
-    // Build file path
-    const char* dir = lbl_eu_8050FD98;           // "/ev/realtime/"
+    // Build file path on stack: "/ev/realtime/" + scriptName + ".sfd"
+    char* name;
+    char* dir = lbl_eu_8050FD98;
     CREvtMoviePathBuf buf;
-    buf.mLength = strlen(dir);
-    strcpy(buf.mPath, dir);
+    buf.mLength = std::strlen(dir);
+    std::strcpy(buf.mPath, dir);
 
-    const char* name = self->mScriptData->mScriptName;
-    u32 sLen = strlen(name);
-    strcat(buf.mPath, name);
+    name = self->mScriptData->mScriptName;
+    u32 sLen = std::strlen(name);
+    std::strcat(buf.mPath, name);
     buf.mLength += sLen;
 
-    const char* ext = dir + 14;                     // ".sfd"
-    u32 eLen = strlen(ext);
-    strcat(buf.mPath, ext);
+    name = dir + 14;  // ".sfd"; reuses the (dead) name register
+    u32 eLen = std::strlen(name);
+    std::strcat(buf.mPath, name);
     buf.mLength += eLen;
 
     func_80164ED0(buf.mPath, 1, func_8016C3DC());
     self->mFlag19 = 0;
 }
+#pragma pop
 
 // ============================================================================
 // func_80294BA4: Build SFD path and start/stop playback
 // If playing, stops. Otherwise, starts with flag 0.
+// Same held-base pattern as func_80294980: opt_propagation off keeps `dir`
+// materialized once in a callee-saved register; ext is runtime dir + 14.
 // ============================================================================
-extern "C" void func_80294BA4(CREvtMovie* self) {
+#pragma push
+#pragma opt_propagation off
+void func_80294BA4(CREvtMovie* self) {
     if (self->mScriptData->mCounter != func_8016A3C4()) return;
 
     // If currently playing, stop
@@ -170,19 +160,20 @@ extern "C" void func_80294BA4(CREvtMovie* self) {
     // Otherwise if not finished, start playback
     else if (func_80164FE8() == 0) {
         // Build file path on stack: "/ev/realtime/" + scriptName + ".sfd"
-        const char* dir = lbl_eu_8050FD98;       // "/ev/realtime/"
+        char* name;
+        char* dir = lbl_eu_8050FD98;
         CREvtMoviePathBuf buf;
-        buf.mLength = strlen(dir);
-        strcpy(buf.mPath, dir);
+        buf.mLength = std::strlen(dir);
+        std::strcpy(buf.mPath, dir);
 
-        const char* name = self->mScriptData->mScriptName;
-        u32 sLen = strlen(name);
-        strcat(buf.mPath, name);
+        name = self->mScriptData->mScriptName;
+        u32 sLen = std::strlen(name);
+        std::strcat(buf.mPath, name);
         buf.mLength += sLen;
 
-        const char* ext = dir + 14;                 // ".sfd"
-        u32 eLen = strlen(ext);
-        strcat(buf.mPath, ext);
+        name = dir + 14;  // ".sfd"; reuses the (dead) name register
+        u32 eLen = std::strlen(name);
+        std::strcat(buf.mPath, name);
         buf.mLength += eLen;
 
         func_80164ED0(buf.mPath, 0, func_8016C3DC());
@@ -190,8 +181,9 @@ extern "C" void func_80294BA4(CREvtMovie* self) {
     }
     self->mFlag19 = 1;
 }
+#pragma pop
 
 // ============================================================================
 // func_80294CB0: Empty virtual function override (blr)
 // ============================================================================
-extern "C" void func_80294CB0(void) {}
+void func_80294CB0(void) {}

@@ -10,14 +10,14 @@
 
 #include "kyoshin/cf/CfGimmickItem.hpp"
 
-// Bdat column readers (same inline-helper shape as the CfGimmickElv ctor; the
-// (u16)/(u8) truncation round-trips through a stack slot in the retail frame).
-static inline u16 getCol16(void* table, const char* col, int row) {
-    return (u16)getBdatStringColumnValue(table, col, row);
-}
-static inline u8 getCol8(void* table, const char* col, int row) {
-    return (u8)getBdatStringColumnValue(table, col, row);
-}
+// BDAT column result: retail spills each raw call result to a word frame
+// slot and narrows on use (lbz/lhz); a volatile word union reproduces that.
+union BdatCol {
+    u32 w;
+    u8 b;
+    u16 h;
+};
+
 
 // ---------------------------------------------------------------------------
 // Constructor / Destructor
@@ -45,49 +45,89 @@ extern "C" cf::CfGimmickItem* __ct__cf_CfGimmickItem(cf::CfGimmickItem* self,
     self->field_82 = 6;
 
     void* mgr = func_8003AA34();
-    u32 stackVar = lbl_eu_8066413C;
+    // Retail keeps the bdat table handle in a dedicated frame slot and
+    // reloads it for every column read (its address escapes below).
+    u32 bdat = lbl_eu_8066413C;
     self->field_64 = rowId;
 
     // Init the three sub-objects (placement vec, pad10, vobj).
-    func_80208F34(self, &self->vvec04, mgr, &stackVar);
-    func_80209020(self, &self->vobj, mgr, &stackVar);
-    func_80209288(self, &self->pad10, mgr, &stackVar);
+    func_80208F34(self, &self->vvec04, mgr, (void*)&bdat);
+    func_80209020(self, &self->vobj, mgr, (void*)&bdat);
+    func_80209288(self, &self->pad10, mgr, (void*)&bdat);
 
     // Column name buffers "A_Item"/"A_Lost" get the slot letter written in
     // (the table pointer holds them at lbl_eu_806627B8[0]/[1]).
-    self->field_66 = getCol8((void*)stackVar, lbl_eu_805087AC, rowId);
+    volatile BdatCol c66;
+    c66.w = getBdatStringColumnValue((void*)bdat, lbl_eu_805087AC, rowId);
+    self->field_66 = c66.b;
     for (int i = 0; i < 3; ++i) {
         char c = (char)('A' + i);
         lbl_eu_806627B8[1][0] = c;
         lbl_eu_806627B8[0][0] = c;
-        self->field_84[i] = getCol16((void*)stackVar, lbl_eu_806627B8[0], rowId);
-        if (getCol8((void*)stackVar, lbl_eu_806627B8[1], rowId) != 0) {
+        volatile BdatCol cid;
+        cid.w = getBdatStringColumnValue((void*)bdat, lbl_eu_806627B8[0], rowId);
+        self->field_84[i] = cid.h;
+        volatile BdatCol clost;
+        clost.w = getBdatStringColumnValue((void*)bdat, lbl_eu_806627B8[1], rowId);
+        if (clost.b != 0) {
             self->field_74 |= (1u << i);
         }
     }
 
-    const char* colBase = lbl_eu_805087AC;
-    self->field_8A = getCol16((void*)stackVar, colBase + 0x08, rowId);
-    self->field_6A = getCol16((void*)stackVar, colBase + 0x0F, rowId);
-    self->field_8C = getCol16((void*)stackVar, colBase + 0x14, rowId);
-    self->field_98 = getCol8((void*)stackVar, colBase + 0x19, rowId);
-    self->field_70 = getCol8((void*)stackVar, colBase + 0x1E, rowId);
-    self->field_99 = getCol8((void*)stackVar, colBase + 0x25, rowId);
-    self->field_9A = getCol8((void*)stackVar, colBase + 0x2C, rowId);
-    self->field_9B = getCol8((void*)stackVar, colBase + 0x34, rowId);
-    self->field_92 = getCol16((void*)stackVar, colBase + 0x38, rowId);
-    self->field_8E = getCol16((void*)stackVar, colBase + 0x3E, rowId);
-    self->field_90 = getCol16((void*)stackVar, colBase + 0x44, rowId);
-    self->field_9C = getCol8((void*)stackVar, colBase + 0x4A, rowId);
-    self->field_6C = getCol16((void*)stackVar, ((char**)lbl_eu_805357E8)[13], rowId);
-    self->field_6E = getCol16((void*)stackVar, ((char**)lbl_eu_805357E8)[14], rowId);
-    self->field_94 = getCol16((void*)stackVar, ((char**)lbl_eu_805357E8)[15], rowId);
-    self->field_96 = getCol8((void*)stackVar, colBase + 0x4D, rowId);
-    self->field_97 = getCol8((void*)stackVar, colBase + 0x57, rowId);
+    volatile BdatCol c8A;
+    c8A.w = getBdatStringColumnValue((void*)bdat, lbl_eu_805087AC + 0x08, rowId);
+    self->field_8A = c8A.h;
+    volatile BdatCol c6A;
+    c6A.w = getBdatStringColumnValue((void*)bdat, lbl_eu_805087AC + 0x0F, rowId);
+    self->field_6A = c6A.h;
+    volatile BdatCol c8C;
+    c8C.w = getBdatStringColumnValue((void*)bdat, lbl_eu_805087AC + 0x14, rowId);
+    self->field_8C = c8C.h;
+    volatile BdatCol c98;
+    c98.w = getBdatStringColumnValue((void*)bdat, lbl_eu_805087AC + 0x19, rowId);
+    self->field_98 = c98.b;
+    volatile BdatCol c70;
+    c70.w = getBdatStringColumnValue((void*)bdat, lbl_eu_805087AC + 0x1E, rowId);
+    self->field_70 = c70.b;
+    volatile BdatCol c99;
+    c99.w = getBdatStringColumnValue((void*)bdat, lbl_eu_805087AC + 0x25, rowId);
+    self->field_99 = c99.b;
+    volatile BdatCol c9A;
+    c9A.w = getBdatStringColumnValue((void*)bdat, lbl_eu_805087AC + 0x2C, rowId);
+    self->field_9A = c9A.b;
+    volatile BdatCol c9B;
+    c9B.w = getBdatStringColumnValue((void*)bdat, lbl_eu_805087AC + 0x34, rowId);
+    self->field_9B = c9B.b;
+    volatile BdatCol c92;
+    c92.w = getBdatStringColumnValue((void*)bdat, lbl_eu_805087AC + 0x38, rowId);
+    self->field_92 = c92.h;
+    volatile BdatCol c8E;
+    c8E.w = getBdatStringColumnValue((void*)bdat, lbl_eu_805087AC + 0x3E, rowId);
+    self->field_8E = c8E.h;
+    volatile BdatCol c90;
+    c90.w = getBdatStringColumnValue((void*)bdat, lbl_eu_805087AC + 0x44, rowId);
+    self->field_90 = c90.h;
+    volatile BdatCol c9C;
+    c9C.w = getBdatStringColumnValue((void*)bdat, lbl_eu_805087AC + 0x4A, rowId);
+    self->field_9C = c9C.b;
+    volatile BdatCol c6C;
+    c6C.w = getBdatStringColumnValue((void*)bdat, ((char**)lbl_eu_805357E8)[13], rowId);
+    self->field_6C = c6C.h;
+    volatile BdatCol c6E;
+    c6E.w = getBdatStringColumnValue((void*)bdat, ((char**)lbl_eu_805357E8)[14], rowId);
+    self->field_6E = c6E.h;
+    volatile BdatCol c94;
+    c94.w = getBdatStringColumnValue((void*)bdat, ((char**)lbl_eu_805357E8)[15], rowId);
+    self->field_94 = c94.h;
+    volatile BdatCol c96;
+    c96.w = getBdatStringColumnValue((void*)bdat, lbl_eu_805087AC + 0x4D, rowId);
+    self->field_96 = c96.b;
+    volatile BdatCol c97;
+    c97.w = getBdatStringColumnValue((void*)bdat, lbl_eu_805087AC + 0x57, rowId);
+    self->field_97 = c97.b;
 
     // vtable slot 0x20 virtual call.
-    void (**vfunc)(cf::CfGimmickItem*) = (void (**)(cf::CfGimmickItem*))self->vtable;
-    vfunc[8](self);
+    ((void (***)(cf::CfGimmickItem*))self)[0][8](self);
 
     self->field_9E = 0;
     self->field_A0 = 0;

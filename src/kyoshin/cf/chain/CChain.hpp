@@ -215,7 +215,7 @@ namespace cf {
         virtual void v017() = 0;
         virtual void v018() = 0;
         virtual void v019() = 0;
-        virtual void v020() = 0;
+        virtual int v020() = 0;             // slot 22 / +0x58 (actor value query)
         virtual int v021() = 0;             // slot 23 / +0x5c (chainable check)
         virtual void v022() = 0;
         virtual void v023() = 0;
@@ -807,6 +807,15 @@ extern u8 lbl_eu_80663DA0;
 // pool load at retail's position, cf. MWCC_CASES SDA-pool hoist).
 extern const f32 lbl_eu_80668A60;
 
+// Chain facing-gate constants used by func_8027A58C (.sdata2 floats): the
+// Atan2FIdx scale, the +/- normalization window around the gauge angle, and
+// the two factors of the facing tolerance product.
+extern const f32 lbl_eu_80668A58;
+extern const f32 lbl_eu_80668A5C;
+extern const f32 lbl_eu_8066A1F8;
+extern const f32 lbl_eu_8066A1FC;
+extern const f32 lbl_eu_8066A210;
+
 // Chain-voice global state (retail .sdata lbl_eu_80662A20): -1 is the
 // "not loaded" sentinel. The func_80276C*/func_8027715* helpers probe it with
 // the unsigned (value + 0x10000) == 0xffff sentinel test (MWCC addis/cmplwi
@@ -893,6 +902,10 @@ extern "C" {
     // call site, so declared here with C linkage rather than through the
     // class member (which mangles to func_80107C54__15CMenuArtsSelectFl).
     int func_80107C54(void* menu, int index);
+    // Arts-menu-up query (CtrlPc.cpp family) used by func_8027A58C.
+    int func_801B202C();
+    // Battle-event dispatcher (defined in CBattleManager.cpp).
+    void func_800F3970(void* bm, void* obj1, void* obj2, int idx, int addVal);
     // Voice-act / chain arts-combo helpers. func_801537F0 lives in
     // CVision.hpp (same signature, no clash); func_8014AE00 and
     // func_80293E24 have no header declaration, so they are declared here.

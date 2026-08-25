@@ -7,7 +7,8 @@
 // CfGameManagerUnityHelpers.hpp, which isn't self-contained here; local
 // caller-shape copy with the owner's exact signature until that header is
 // includable (owner: kyoshin/code_80135FDC).
-extern "C" u8 code80135FDC_getByte_64059();
+// int return: retail tests the result with a bare cmpwi (no rlwinm mask).
+extern "C" int code80135FDC_getByte_64059();
 // func_8049603C: retail branches here WITHOUT setting up r3 (stale-register
 // call), so this TU keeps a private no-arg declaration and must not include
 // libs/monolib/src/scn/CScn_8049603C.hpp (owner: monolib CScn).
@@ -32,7 +33,7 @@ extern u32 lbl_eu_8052E7B0[];
 extern u32 lbl_eu_805013C8[];
 extern u32 lbl_eu_80664198;
 extern u32 lbl_eu_806640E0;
-extern f32 lbl_eu_806673A0;
+extern const f32 lbl_eu_806673A0;
 extern u32 lbl_eu_806673A8[];
 extern u32 lbl_eu_806673AC[];
 extern u32 lbl_eu_806673B0[];
@@ -41,6 +42,13 @@ extern f64 lbl_eu_806673B8;
 extern f32 lbl_eu_806673C0;
 extern f32 lbl_eu_806673C4;
 extern u32 __ptmf_null[];
+
+// Null pointers-to-member-function triple copied into CTTask slots.
+struct NullPtmfTriple {
+    u32 func; // +0
+    u32 self; // +4
+    u32 delta; // +8
+};
 
 // Out-of-line accessor helpers (defined further down; retail calls them via bl)
 extern "C" u32 getField10(u8* self);
@@ -67,23 +75,22 @@ extern "C" __declspec(noinline) CMenuUpdate_8014274C* __ct__8014274C(CMenuUpdate
 }
 
 // CTTask_IUIWindow ctor: base CProcess ctor imported; stores second-base
-// vtable and two null pointers-to-member-function (each 12 bytes)
-// kept out-of-line: retail emits this as a standalone callee of IUIWindow's ctor
-// (retail label is the C-linkage name __ct__CTTask_IUIWindow)
-extern "C" __declspec(noinline) void __ct__CTTask_IUIWindow(void* self) {
+// vtable, then fills the two null pointers-to-member-function slots (0x3C,
+// 0x48) by copying the 12-byte null ptmf triple twice. Returns 'this'.
+extern "C" __declspec(noinline) void* __ct__CTTask_IUIWindow(void* self) {
+    u8* p = (u8*)self;
     __ct__8CProcessFv(self);
-    *(u32*)((u8*)self + 0x10) = (u32)lbl_eu_8052D238;
-    u32* ptmf = __ptmf_null;
-    *(u32*)((u8*)self + 0x40) = ptmf[1];
-    *(u32*)((u8*)self + 0x3C) = ptmf[0];
-    *(u32*)((u8*)self + 0x44) = ptmf[2];
-    *(u32*)((u8*)self + 0x4C) = ptmf[1];
-    *(u32*)((u8*)self + 0x48) = ptmf[0];
-    *(u32*)((u8*)self + 0x50) = ptmf[2];
+    *(u32*)(p + 0x10) = (u32)lbl_eu_8052D238;
+    // Null ptmf slots: MWCC zero-initializes pointer-to-member-function
+    // objects by copying the 12-byte __ptmf_null template.
+    ((CTTask_IUIWindow*)p)->mFunc1 = 0;
+    ((CTTask_IUIWindow*)p)->mFunc2 = 0;
+    return self;
 }
 
-// IUIWindow ctor: retail keeps the CTTask init as a separate callee
-extern "C" __declspec(noinline) void __ct__IUIWindow(void* self) {
+// IUIWindow ctor: retail keeps the CTTask init as a separate callee; like all
+// MWCC ctors it returns 'this' in r3, materialized right after the vtable store.
+extern "C" __declspec(noinline) void* __ct__IUIWindow(IUIWindow* self) {
     __ct__CTTask_IUIWindow(self);
     *(u32*)((u8*)self + 0x10) = (u32)lbl_eu_8052D1F0;
     *(u32*)((u8*)self + 0x54) = 0;
@@ -95,12 +102,13 @@ extern "C" __declspec(noinline) void __ct__IUIWindow(void* self) {
     *(u8*)((u8*)self + 0x66) = 0;
     *(u8*)((u8*)self + 0x67) = 1;
     *(u32*)((u8*)self + 0x68) = 0;
+    return self;
 }
 
-// CMenuUpdate ctor
-extern "C" void __ct__CMenuUpdate(void* self, u32 r4, u32 r5, u32 r6, u32 r7, u32 r8) {
+// CMenuUpdate ctor - MWCC ctors return 'this' in r3
+extern "C" void* __ct__CMenuUpdate(void* self, u32 r4, u32 r5, u32 r6, u32 r7, u32 r8) {
     CMenuUpdate* obj = (CMenuUpdate*)self;
-    __ct__IUIWindow(self);
+    __ct__IUIWindow((IUIWindow*)self);
     __ct__IWorkEvent((u8*)self + 0x6C);
     __ct__IScnRender((u8*)self + 0x70);
 
@@ -116,13 +124,14 @@ extern "C" void __ct__CMenuUpdate(void* self, u32 r4, u32 r5, u32 r6, u32 r7, u3
     obj->mActiveAnim = NULL;
 
     // 8 entry slots plus one more header-sized slot over the state block
-    CMenuUpdate_8014274C* entryEnd = (CMenuUpdate_8014274C*)&obj->mState;
+    CMenuUpdate_8014274C* entryEnd;
     CMenuUpdate_8014274C* entry = &obj->mEntries[0];
+    entryEnd = (CMenuUpdate_8014274C*)&obj->mState;
     do {
         __ct__8014274C(entry);
         entry++;
     } while (entry < entryEnd);
-    __ct__8014274C((CMenuUpdate_8014274C*)&obj->mState);
+    __ct__8014274C(entryEnd);
 
     obj->mMode = 2;
     f32 zero = lbl_eu_806673A0;
@@ -132,10 +141,12 @@ extern "C" void __ct__CMenuUpdate(void* self, u32 r4, u32 r5, u32 r6, u32 r7, u3
     memset(&obj->mEntries[8], 0, 0x10);
 
     func_80143ADC(obj, r5, r6, r7, r8);
+    return obj;
 }
 
 // CMenuUpdate dtor
-extern "C" void __dt__11CMenuUpdateFv(void* self, int flags) {
+// Destructors return 'this' in MWCC
+extern "C" void* __dt__11CMenuUpdateFv(void* self, int flags) {
     if (self) {
         __dt__17UnkClass_8045F564Fv((u8*)self + 0x78, -1);
         __dt__10IScnRenderFv((u8*)self + 0x70, 0);
@@ -143,6 +154,7 @@ extern "C" void __dt__11CMenuUpdateFv(void* self, int flags) {
         __dt__9IUIWindowFv(self, 0);
         if (flags > 0) __dl__FPv(self);
     }
+    return self;
 }
 
 // Init
@@ -162,38 +174,47 @@ extern "C" void Init__11CMenuUpdateFv(void* self) {
     accessor = func_801355F4();
     func_80136F08__FPQ34nw4r3lyt6LayoutPPQ34nw4r3lyt13AnimTransformPQ34nw4r3lyt19ArcResourceAccessorPc((void*)obj->mLayout, (void**)&obj->mAnim2, accessor, (char*)((u32)lbl_eu_805013C8 + 0x41));
 
-    // Retail passes &mAnim2 here - the address was just materialized for the
-    // preceding func_80136F08 call, so MWCC CSEs away the recompute.
-    u8* font = (u8*)func_80452C10__11CDeviceFontFUlPQ34nw4r3lyt6Layout(1, (nw4r::lyt::Layout*)&obj->mAnim2);
-    void* fontVtab = *(void**)font;
-    void* result2 = ((void* (*)(void*))((void**)fontVtab)[0x24 / 4])(font);
-    func_8013676C((void*)getField10((u8*)obj), result2);
+    // One-arg call: retail carries &mAnim2 into r4 from the preceding
+    // func_80136F08 argument setup instead of recomputing it here.
+    u8* font = (u8*)func_80452C10__11CDeviceFontFUlPQ34nw4r3lyt6Layout(1);
+    u32 result2 = ((CMenuUpdateFontView*)font)->getHandle();
+    func_8013676C((void*)getField10((u8*)obj->mLayout), (void*)result2);
 
-    obj->mActiveAnim = obj->mAnim2;
-    void* layoutVtab = *(void**)obj->mLayout;
-    ((void (*)(void*, void*, bool))((void**)layoutVtab)[0x2C / 4])(obj->mLayout, obj->mActiveAnim, 0);
-    obj->mActiveAnim = obj->mAnim1;
-    ((void (*)(void*, void*, bool))((void**)layoutVtab)[0x2C / 4])(obj->mLayout, obj->mActiveAnim, 1);
-    ((void (*)(void*, bool))((void**)layoutVtab)[0x38 / 4])(obj->mLayout, 0);
+    // Disable the alt animation, enable the main one, then tick the layout.
+    obj->mLayout->SetAnimationEnable(obj->mAnim2, false);
+    obj->mLayout->SetAnimationEnable(obj->mAnim1, true);
+    obj->mLayout->Animate(0);
 
     ::setField67((u8*)obj, 0);
-    addRenderCB__4CScnFP10IScnRenderUlUl(obj->mScene, (u8*)self + 0x70, 7, 0);
+    // Render callback sits at the IScnRender subobject (+0x70); keep the
+    // init-then-adjust form so the null test runs on the raw this pointer.
+    u8* renderPtr = (u8*)obj;
+    if (renderPtr != NULL) {
+        renderPtr += 0x70;
+    }
+    addRenderCB__4CScnFP10IScnRenderUlUl(obj->mScene, renderPtr, 7, 0);
     obj->mMemRegion.func_8045F810();
     // stackObj destructor called automatically
 }
 
 // Term
-extern "C" void Term__11CMenuUpdateFv(void* self) {
-    CMenuUpdate* obj = (CMenuUpdate*)self;
+void CMenuUpdate::Term() {
     waitForDrawDone__9CDeviceVIFv();
-    u8* renderPtr = self ? (u8*)self + 0x70 : 0;
-    removeRenderCB__4CScnFP10IScnRender(obj->mScene, renderPtr);
-    if (obj->mLayout) {
-        void* vtab = *(void**)obj->mLayout;
-        ((void (*)(void*, bool))((void**)vtab)[0x08 / 4])(obj->mLayout, 1);
-        obj->mLayout = 0;
+    // Render callback sits at the IScnRender subobject (+0x70); keep the
+    // init-then-adjust form so the null test runs on the raw this pointer.
+    u8* renderPtr = (u8*)this;
+    if (renderPtr != NULL) {
+        renderPtr += 0x70;
     }
-    obj->mMemRegion.func_8045F778();
+    removeRenderCB__4CScnFP10IScnRender(mScene, (IScnRender*)renderPtr);
+    // Polymorphic delete: dispatches the virtual dtor at vtable+0x8 with the
+    // deleting flag 1; the delete expansion's own null-check is the dead
+    // second beq in retail.
+    if (mLayout != NULL) {
+        delete mLayout;
+        mLayout = NULL;
+    }
+    mMemRegion.func_8045F778();
     lbl_eu_80664198 = 0;
 }
 
@@ -268,25 +289,35 @@ extern "C" __declspec(noinline) void func_80143F54(u32* dest, const u32* src) {
     d[0] = s[0]; d[1] = s[1]; d[2] = s[2]; d[3] = s[3];
 }
 
-// func_80142B4C - factory
+// func_80142B4C - process factory. Mode 2 flags a global; mode 6 checks a
+// save-flag resource and marks it dirty. Reuses the existing process if one is
+// registered, otherwise allocates a CMenuUpdate (0x130 bytes from work mem).
+// The ctor result redefines obj so the pointer stays in r3 across the call.
 extern "C" void* func_80142B4C(void* self, u32 r4, int r5, int r6, int r7, int r8) {
     if (r5 == 2) { func_80142C64(getGlobalA10()); }
     if (r5 == 6) {
         int val = getGlobal0E0();
         u16 result = func_80136254((void*)val, (const char*)((u32)lbl_eu_805013C8 + 0x64), r6);
         if (!result) return 0;
-        if (!func_8009CF8C(r6 + 0x3214)) func_8009D018(r6 + 0x3214, 1);
-        else if (!func_8013BFA8()) return 0;
+        if (func_8009CF8C(r6 + 0x3214)) {
+            if (func_8013BFA8()) {
+                return 0;
+            }
+        } else {
+            func_8009D018(r6 + 0x3214, 1);
+        }
     }
-    if (lbl_eu_80664198) {
+    if (lbl_eu_80664198 != 0) {
         func_80143ADC((void*)(u32)lbl_eu_80664198, r5, r6, r7, r8);
         return 0;
     }
     void* workMem = getWorkMem__17CWorkThreadSystemFv();
     void* obj = allocate__Q23mtl10MemManagerFUlUl(0x130, (u32)workMem);
-    if (obj) __ct__CMenuUpdate(obj, r4, r5, r6, r7, r8);
+    if (obj != 0) {
+        obj = __ct__CMenuUpdate(obj, r4, r5, r6, r7, r8);
+    }
     lbl_eu_80664198 = (u32)obj;
-    Regist__8CProcessFP8CProcessb(obj, self, 0);
+    Regist__8CProcessFP8CProcessb((void*)(u32)lbl_eu_80664198, self, 0);
     return (void*)(u32)lbl_eu_80664198;
 }
 
@@ -706,9 +737,13 @@ extern "C" int func_80143F78(void* self) {
     if (!func_80085840__Q22cf13CfGameManagerFv()) return 1;
     if (func_801BCF38()) return 1;
     if (func_8029EE58()) return 1;
-    f32 zero = lbl_eu_806673A0;
-    obj->mFloat12C -= lbl_eu_806673C4;
-    if (obj->mFloat12C < zero) obj->mFloat12C = zero;
+    // Clamp: subtract the fade step into the field, then clamp.
+    // lbl_eu_806673A0 is const-qualified so the load may hoist above the
+    // member store, reproducing retail's sub/store/cmp/store order.
+    obj->mFloat12C = obj->mFloat12C - lbl_eu_806673C4;
+    if (obj->mFloat12C < lbl_eu_806673A0) {
+        obj->mFloat12C = lbl_eu_806673A0;
+    }
     return 0;
 }
 
@@ -772,15 +807,17 @@ extern "C" __declspec(noinline) void func_801440A8(void* self) {
                           (u32*)__ct__8014274C(&clr));
         }
 
-        u8 j, w;
+        u8 w, j;
         w = 0;
         for (j = 0; j < nAct; j++) {
             func_80143F54((u32*)&obj->mEntries[w++].field_0, (u32*)&act[j].field_0);
         }
         // Re-file the saved header block right after the active entries.
         func_80143F54((u32*)&obj->mEntries[w++].field_0, (u32*)&obj->mState);
-        for (j = 0; j < nRest; j++) {
+        j = 0;
+        while (j < nRest) {
             func_80143F54((u32*)&obj->mEntries[w++].field_0, (u32*)&rest[j].field_0);
+            j++;
         }
 
         CMenuUpdate_8014274C clrState;
@@ -795,9 +832,11 @@ extern "C" __declspec(noinline) void func_801440A8(void* self) {
             } else {
                 CfRes_getE14();
                 f32 v = func_801443E4();
-                // Gate on the fade timers before dispatching the state action.
-                if (v < lbl_eu_806673C4)
-                    if (obj->mFloat12C <= lbl_eu_806673A0) {
+                // Retail tests each failure condition with a cror merge
+                // ((v >= C4), (mFloat12C <= 0)) and exits to the common tail
+                // when either negated test holds.
+                if (!(v >= lbl_eu_806673C4) || !(obj->mFloat12C <= lbl_eu_806673A0)) {
+                } else {
                     switch (obj->mState) {
                     case 1: func_80133A08(obj->mSubState & 0xFFFF); break;
                     case 2: func_801347EC(0); break;

@@ -3,6 +3,7 @@
 #include <types.h>
 #include <monolib/work/CProcess.hpp>
 #include <monolib/scn/IScnRender.hpp>
+#include <revolution/GX.h>
 
 #include "kyoshin/CBgTex.hpp"
 #include "kyoshin/CTitleAHelp.hpp"
@@ -92,6 +93,19 @@ void func_8024CB94(class CFloorMap* self);
 int func_8024CE60(class CFloorMap* self);
 void func_8024C1FC(class CFloorMap* self);
 u16 func_8024F54C(class CFloorMap* self);
+void func_80243560(class CMapSel* self, class nw4r::lyt::DrawInfo* drawInfo);
+void func_8024C8F8(class CFloorMap* self, class nw4r::lyt::DrawInfo* drawInfo);
+// Retail keeps these draw helpers as unmangled free symbols taking sub-object pointers.
+void func_801C3D7C(class CBgTex* self, class nw4r::lyt::DrawInfo* drawInfo);
+void func_801C4080(class CTitleAHelp* self, class nw4r::lyt::DrawInfo* drawInfo);
+void func_80244460(class CFade* self, class nw4r::lyt::DrawInfo* drawInfo);
+// Retail emits direct bl to the DrawInfo ctor/dtor symbols.
+void __ct__Q34nw4r3lyt8DrawInfoFv(class nw4r::lyt::DrawInfo* self);
+void __dt__Q34nw4r3lyt8DrawInfoFv(class nw4r::lyt::DrawInfo* self, int flags);
+int func_8013BE50();
+// Camera/transform position setters (retail keeps unmangled symbols)
+void func_8049F168(void* obj, ml::CVec3* pos);
+void func_8049F204(void* obj, ml::CVec3* pos);
 }
 
 // sdata2 float constants used by the FX easing helpers
@@ -164,6 +178,81 @@ struct CFloorMapCopyPair {
     u32 b;
 };
 
+/* Retail lowers the 0xB4..0x207 and 0x208..0x32CB stretches as single
+   struct assignments. Skipped gaps are unnamed storage (anonymous byte
+   bitfields), so only named members expand to copies; the pair arrays
+   become ctr loops whose walkers start at the substruct base - 4
+   (displacement folds the array offset). */
+struct CFloorMapCopyBlock1 {
+    u8 fB4 : 8;
+    u8 fB5 : 8;
+    u8 : 8;
+    u8 : 8;
+    u8 : 8;
+    u8 : 8;                 // +0xB6..0xBB skipped
+    u32 fBC[9];             // +0xBC..0xDC
+    u8 fE0 : 8;
+    u8 : 8;
+    u8 : 8;
+    u8 : 8;
+    u32 fE4[2];             // +0xE4..0xE8
+    u8 fEC0 : 8;            // +0xEC..0xF1
+    u8 fEC1 : 8;
+    u8 fEC2 : 8;
+    u8 fEC3 : 8;
+    u8 fEC4 : 8;
+    u8 fEC5 : 8;
+    u8 : 8;
+    u8 : 8;
+    u8 : 8;
+    u8 : 8;
+    u8 : 8;
+    u8 : 8;                 // +0xF2..0xF7 skipped
+    u32 fF8[9];             // +0xF8..0x118
+    u8 f11C : 8;
+    u8 : 8;
+    u8 : 8;
+    u8 : 8;
+    u32 f120[2];            // +0x120..0x124
+    u8 f128_0 : 8;          // +0x128..0x12D
+    u8 f128_1 : 8;
+    u8 f128_2 : 8;
+    u8 f128_3 : 8;
+    u8 f128_4 : 8;
+    u8 f128_5 : 8;
+    u8 : 8;
+    u8 : 8;
+    u32 f130[7];            // +0x130..0x148
+    u8 f14C : 8;
+    u8 : 8;
+    u8 : 8;
+    u8 : 8;
+    CFloorMapCopyPair loop1[20]; // +0x150..0x1EF
+    u8 f1F0 : 8;
+    u8 : 8;
+    u8 : 8;
+    u8 : 8;
+    u32 f1F4;               // +0x1F4
+    u8 f1F8 : 8;
+    u8 : 8;
+    u8 : 8;
+    u8 : 8;
+    u32 f1FC;               // +0x1FC
+    u32 f200;               // +0x200
+    u8 f204 : 8;
+    u8 f205 : 8;
+    u8 f206 : 8;
+    u8 f207 : 8;
+};
+
+struct CFloorMapCopyBlock2 {
+    u8 f208 : 8;            // +0x208
+    u8 : 8;
+    u8 : 8;
+    u8 : 8;
+    CFloorMapCopyPair loop2[0x618]; // +0x20C..0x32CB
+};
+
 struct CFloorMapCopyView {
     u8 _00[4];              // +0x00 vptr (skipped)
     u32 f04[15];            // +0x04..0x3C
@@ -181,35 +270,9 @@ struct CFloorMapCopyView {
     u8 _9D[3];
     u8 _A0[4];              // +0xA0..0xA3 (skipped)
     u32 fA4[3];             // +0xA4..0xAC
-    u32 fB0;
-    u8 fB4, fB5;
-    u8 _B6[6];              // +0xB6..0xBB (skipped)
-    u32 fBC[9];             // +0xBC..0xDC
-    u8 fE0;
-    u8 _E1[3];
-    u32 fE4[2];             // +0xE4..0xE8
-    u8 fEC[6];              // +0xEC..0xF1
-    u8 _F2[6];              // +0xF2..0xF7 (skipped)
-    u32 fF8[9];             // +0xF8..0x118
-    u8 f11C;
-    u8 _11D[3];
-    u32 f120[2];            // +0x120..0x124
-    u8 f128[6];             // +0x128..0x12D
-    u8 _12E[2];
-    u32 f130[7];            // +0x130..0x148
-    u8 f14C;                // +0x14C flag byte
-    u8 _14D[3];             // +0x14D..0x14F (skipped)
-    CFloorMapCopyPair loop1[20]; // +0x150..0x1EF
-    u8 f1F0;
-    u8 _1F1[3];
-    u32 f1F4;
-    u8 f1F8;
-    u8 _1F9[3];
-    u32 f1FC;
-    u32 f200;
-    u8 f204, f205, f206, f207, f208;
-    u8 _209[3];             // +0x209..0x20B (skipped)
-    CFloorMapCopyPair loop2[0x618]; // +0x20C..0x32CB
+    u32 fB0;                // +0xB0
+    CFloorMapCopyBlock1 block1;
+    CFloorMapCopyBlock2 block2;
     u8 f32CC;
     u8 _32CD[3];
     u32 f32D4[4];           // +0x32D4..0x32E0
@@ -231,6 +294,38 @@ struct CFloorMapCopyView {
     u32 f3344;
 };
 
+/* Tail of the CMapSel copy region starting at the unaligned offset +0x8E.
+   Retail copies these fields with unaligned word loads/stores (lwz/stw at
+   0x8E, 0x92, ... 0xAA), reproduced here via the packed attribute. */
+struct __attribute__((packed)) CMapSelCopyTail {
+    u32 w[7];   // +0x8E..0xA8
+    u32 aa;     // +0xAA..0xAD
+    u8 ae, af;  // +0xAE..0xAF
+    float b0;   // +0xB0
+};
+
+/* Whole-array word blocks: assigning these by value lets MWCC expand them
+   as a single unrolled ascending copy group. */
+struct CMapSelCopyW11 { u32 v[11]; };
+struct CMapSelCopyW8 { u32 v[8]; };
+
+/* Source-side view (distinct type from CMapSelCopyView so strict aliasing
+   lets MWCC hoist loads above stores, as in retail). */
+struct __attribute__((packed)) CMapSelCopyViewSrc {
+    u8 _00[4];                          // +0x00 vptr (skipped)
+    CMapSelCopyW11 f04;                 // +0x04..0x2C
+    u8 f30, f31, f32, f33;              // +0x30..0x33
+    u8 _34[4];                          // +0x34..0x37 (skipped)
+    CMapSelCopyW8 f38;                  // +0x38..0x54
+    u8 f58, f59, f5A, f5B;              // +0x58..0x5B
+    float f5C, f60, f64, f68, f6C;      // +0x5C..0x6C
+    u8 f70;                             // +0x70 (byte)
+    u8 _71[7];
+    u32 f78[4];                         // +0x78..0x84
+    u8 f88, f89, _8A[2], f8C, f8D;      // +0x88..0x8D
+    CMapSelCopyTail tail;               // +0x8E..0xB1 (packed, unaligned)
+};
+
 /* Field-exact view of CMapSel for the retail memberwise copy helper
    func_80240614-style (func_80241640). Widths follow the retail copy:
    words for 0x04-0x2C / 0x38-0x54 / 0x70-0xAD, bytes for the flag fields,
@@ -238,20 +333,45 @@ struct CFloorMapCopyView {
    are not copied by retail. */
 struct CMapSelCopyView {
     u8 _00[4];                          // +0x00 vptr (skipped)
-    u32 f04[11];                        // +0x04..0x2C
+    CMapSelCopyW11 f04;                 // +0x04..0x2C
     u8 f30, f31, f32, f33;              // +0x30..0x33
     u8 _34[4];                          // +0x34..0x37 (skipped)
-    u32 f38[8];                         // +0x38..0x54
+    CMapSelCopyW8 f38;                  // +0x38..0x54
     u8 f58, f59, f5A, f5B;              // +0x58..0x5B
     float f5C, f60, f64, f68, f6C;      // +0x5C..0x6C
     u8 f70;                             // +0x70 (byte)
     u8 _71[7];
     u32 f78[4];                         // +0x78..0x84
     u8 f88, f89, _8A[2], f8C, f8D;      // +0x88..0x8D
-    u32 f8E[7];                         // +0x8E..0xA8
-    u32 fAA;                            // +0xAA..0xAD
-    u8 fAE, fAF;                        // +0xAE..0xAF
-    float fB0;                          // +0xB0
+    CMapSelCopyTail tail;               // +0x8E..0xB1 (packed, unaligned)
+};
+
+/* Field-exact view of CFade for the retail memberwise copy helper
+   func_8024189C: everything from mMemRegion (+0x04) through the four flag
+   bytes (+0x24..0x27). The vtable word (+0x00) is not copied. Two
+   structurally identical but distinct types are used for the source and
+   destination views so strict aliasing lets MWCC hoist every load above
+   every store, matching the retail copy sequence. */
+struct CFadeCopyView {
+    UnkClass_8045F564 mMemRegion;               // +0x04..0x13
+    CFileHandle* mFileHandle;                   // +0x14
+    nw4r::lyt::ArcResourceAccessor* mArcResAcc; // +0x18
+    nw4r::lyt::Layout* mLayout;                 // +0x1C
+    nw4r::lyt::AnimTransform* mAnimTrans;       // +0x20
+    u8 mIsLoaded, mFadeState, mReady, mVisible; // +0x24..0x27
+};
+
+// Distinct-type mirror of CFadeCopyView for the copy source.
+struct CFadeMemRegionSrc {
+    u32 unk0, unk4, unk8, unkC;
+};
+struct CFadeCopyViewSrc {
+    CFadeMemRegionSrc mMemRegion;
+    CFileHandle* mFileHandle;
+    nw4r::lyt::ArcResourceAccessor* mArcResAcc;
+    nw4r::lyt::Layout* mLayout;
+    nw4r::lyt::AnimTransform* mAnimTrans;
+    u8 mIsLoaded, mFadeState, mReady, mVisible;
 };
 
 class CMenuMapSelect : public CProcess, public IScnRender {

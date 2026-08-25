@@ -1803,8 +1803,8 @@ extern "C" u32 func_801393CC(const char* name) {
 }
 
 extern "C" char* func_801394D4(const char* name) {
-    const char* col1DB = &lbl_eu_80500664[0x1DB];
     u32 a = func_801393CC(name);
+    const char* col1DB = &lbl_eu_80500664[0x1DB];
     u16 b;
     if (lbl_eu_806640EC == 0) {
         b = 0;
@@ -1894,19 +1894,28 @@ extern "C" FourShorts func_801397AC(CAnimOwnerIf* owner, u32 idx) {
 
 extern "C" void func_801398A4(void* obj, void* arg2, void* src, u32 idx) {
     CAnimOwnerIf* owner = *(CAnimOwnerIf**)((u8*)obj + 0x10);
-    if (owner->_v03C((u32)arg2, 1) == 0) return;
-    u8* data = (u8*)owner->_v068();
+    CAnimOwnerIf* res = owner->_v03C((u32)arg2, 1);
+    if (res == 0) return;
+    if (res == 0) return;
+    u8* data = (u8*)res->_v068();
     if (data == NULL) return;
     if (idx >= 3) {
         Panic__Q24nw4r2dbFPCciPCce((const char*)lbl_eu_8052E590, 0x8F,
                                    (const char*)lbl_eu_8052E568);
     }
+    // clrlslwi r0, idx, 24, 3 => the multiply runs on an 8-bit-masked index
+    // ((idx & 0xFF) * 8), same as func_8013996C.
+    u8 i8 = (u8)idx;
     s16* s = (s16*)src;
-    s16* d = (s16*)(data + idx * 8 + 0x10);
-    d[0] = s[0];
-    d[1] = s[1];
-    d[2] = s[2];
-    d[3] = s[3];
+    s16* d = (s16*)(data + i8 * 8 + 0x10);
+    s16 tb = s[1];
+    s16 ta = s[0];
+    d[0] = ta;
+    ta = s[2];
+    d[1] = tb;
+    tb = s[3];
+    d[2] = ta;
+    d[3] = tb;
 }
 
 extern "C" void func_8013996C(CAnimOwnerIf* owner, void* src, u32 idx) {

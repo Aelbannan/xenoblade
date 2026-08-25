@@ -1467,12 +1467,12 @@ extern "C" void __declspec(noinline) func_800A0E64(u8* selfV, u16 valueArg) {
     other->field_58 = param->field_58;
     other->field_5C = param->field_5C;
     // Paired word copies: load both, then store both (retail schedule).
-    u32 t64 = param->field_64;
     u32 t60 = param->field_60;
+    u32 t64 = param->field_64;
     other->field_60 = t60;
     other->field_64 = t64;
-    u32 t6C = param->field_6C;
     u32 t68 = param->field_68;
+    u32 t6C = param->field_6C;
     other->field_68 = t68;
     other->field_6C = t6C;
     other->field_70 = param->field_70;
@@ -2102,6 +2102,8 @@ extern "C" void func_800A26A4(cf::CtrlObjectParamTypeView* self, int arg4, int a
             reinterpret_cast<cf::CtrlObjectParamSlotTable*>(lbl_eu_80663E88);
         // Party-membership probe over work+0x1F9C (retail unrolls this loop);
         // no initializer so the found flag stays an uninit register like retail.
+        // NOTE: naming the slots pointer (int* slots = tbl->slots) defeats the
+        // unroll entirely - keep the member-access form.
         int found;
         if (self->field_00 == tbl->slots[0]) {
             found = 1;
@@ -2450,26 +2452,29 @@ extern "C" u8 func_800A32C4(cf::CtrlObjectParamBdatRow* self) {
 extern "C" void func_800A3304() {
     // Refresh every item instance in the equip rows for character rows
     // 1..13: resolve each valid slot entry and run the impl's 0x48 hook.
-    int j;
+    // Recipe variant: advance a row-typed cursor manually; both volatile
+    // reads share the address computation (single IV at the row base)
+    // while keeping retail's +0x1C load displacement.
     void* inst;
-    cf::CtrlObjectParamEquipRow* r;
+    int j;
+    cf::CtrlObjectParamEquipRow* vp;
     for (u32 row = 1; row <= 13; ++row) {
-        r = reinterpret_cast<cf::CtrlObjectParamEquipRow*>(
-            reinterpret_cast<u8*>(lbl_eu_80663E88) + (u16)row * 0x3DD4 + 0x41F0);
+        u32 base32 = lbl_eu_80663E88 + (u16)row * 0x3DD4;
+        vp = reinterpret_cast<cf::CtrlObjectParamEquipRow*>(
+            reinterpret_cast<u8*>(base32) + 0x41F0);
         for (j = 0; j <= 5; ++j) {
             inst = 0;
-            if (r->shortArr[j] > -1) {
-                // NOTE (us-800a3bcc): retail emits a second lha of this slot
-                // entry for the call argument; every re-read shape we tried
-                // (pointer cast, &elem deref, distinct-class view, volatile
-                // check-load) either gets CSE'd or spawns a second induction
-                // pointer (stmw/lmw pressure).
-                inst = func_80157C4C((u32)j > 4 ? 2 : j + 4, r->shortArr[j]);
+            if (*(volatile s16*)(reinterpret_cast<char*>(vp) + 0x1C) > -1) {
+                inst = func_80157C4C(
+                    (u32)j > 4 ? 2 : j + 4,
+                    *(volatile s16*)(reinterpret_cast<char*>(vp) + 0x1C));
             }
             if (inst != 0) {
                 reinterpret_cast<cf::CtrlObjectParamItemImplIf*>(
                     CItem_initItemImplInstances(inst))->_v48(inst);
             }
+            vp = reinterpret_cast<cf::CtrlObjectParamEquipRow*>(
+                reinterpret_cast<char*>(vp) + 2);
         }
     }
 }

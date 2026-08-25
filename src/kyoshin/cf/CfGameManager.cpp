@@ -391,6 +391,7 @@ extern "C" void func_80082544__Q22cf13CfGameManagerFv(s32 minimum, s32* value,
 // unity-helpers header (the full class lives in another TU; only the
 // vtable+0xCC call is made here).
 namespace cf {
+class CBattleManager; // cast target only (func_800D9354); defined in CBattleManager.hpp
 class CfCamPosSource {
 public:
     virtual float fn0xCC();
@@ -1273,8 +1274,11 @@ void cf::CfGameManager::func_8007D84C() {
     func_801C028C(1, 0);
     func_8012F87C(0);
     func_80135568(0);
-    if ((lbl_eu_80663EE0 & 0x40) != 0) {
-        lbl_eu_80663EE0 &= ~0x40;
+    {
+        volatile u32* ee0 = &lbl_eu_80663EE0;
+        if ((*ee0 & 0x40) != 0) {
+            *ee0 &= ~0x40;
+        }
     }
     memset(unk94, 0, sizeof(unk94));
     unk90 = nullptr;

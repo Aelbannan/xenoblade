@@ -8,6 +8,8 @@
 #include <revolution/WPAD/WPADInternal.h>
 #include <revolution/OS.h>
 
+extern WPADCB* __rvl_p_wpadcb[WPAD_MAX_CONTROLLERS];
+
 #include <math.h>
 #include <string.h>
 
@@ -22,7 +24,6 @@ void WPADiCreateKey(s32 chan);
 void WPADiCreateKeyFor3rd(s32 chan);
 void WPADiDecode(s32 chan, u8* buf, u32 len, s32 offset);
 
-extern WPADCB* __rvl_p_wpadcb[WPAD_MAX_CONTROLLERS];
 
 #define PI 3.141592f
 
@@ -177,8 +178,39 @@ static char lbl_80560E7C[0x124] = {
 // Debug message accessors (strings are stored after the report array)
 #define WPAD_DBG_MSG(off) ((const char*)__a1_input_reports_array + (off))
 
-// Sensor bar / DPD calibration data, per channel
-static f32 _wpadCalibrationX[5][WPAD_MAX_CONTROLLERS];
+// Sensor bar / DPD calibration data, per channel (defined in port/data_defs.cpp)
+extern f32 _wpadCalibrationX[5][WPAD_MAX_CONTROLLERS];
+
+// Shared MWCC literal-pool constants (retail .sdata2 symbols)
+extern f64 double_8066C258;  // 0x4330000000000000: unsigned int->double magic
+extern f64 double_8066C248;  // 0x4330000080000000: signed s16->double magic
+extern f32 float_8066C250;   // 3.14159274f
+extern f32 float_8066C238;   // -1.0f
+
+// __wpadGetDevConfig literal pools (default DPD object positions and
+// sensor-bar calibration constants; MWCC folds these expressions into
+// named .sdata2 objects)
+extern u32 lbl_8066C200;     // dummyObjX[0..1] = { 0x007F, 0x0380 }
+extern u32 lbl_8066C204;     // dummyObjX[2..3] = { 0x0380, 0x007F }
+extern u32 lbl_8066C208;     // dummyObjY[0..1] = { 0x005D, 0x005D }
+extern u32 lbl_8066C20C;     // dummyObjY[2..3] = { 0x02A2, 0x02A2 }
+extern f32 float_8066C210;   // 0.0f
+extern f32 float_8066C214;   // 0.25f
+extern f32 float_8066C218;   // 126.5f
+extern f32 float_8066C21C;   // 1332.5f
+extern f64 double_8066C220;  // atan(126.5f / 1332.5f), folded by MWCC
+extern f32 float_8066C228;   // 93.0f
+extern f32 float_8066C22C;   // 1337.4000244140625f
+extern f64 double_8066C230;  // atan(93.0f / 1337.4000244140625f), folded
+extern f32 float_8066C23C;   // 383.5f
+extern f32 float_8066C240;   // 511.5f
+
+// f64 bit-buffer used for the 0x43300000 integer->double conversion trick
+// (w[0] = high word holds 0x43300000, w[1] = low word holds the integer)
+typedef union WPADDblConv {
+    f64 d;
+    u32 w[2];
+} WPADDblConv;
 
 // Per-channel extension bookkeeping (sbss)
 static u8 _wpadDevType[WPAD_MAX_CONTROLLERS];
@@ -245,12 +277,20 @@ void __parse_vs_data(s32 chan, WPADStatusEx** status, s32 dataFormat, u8* data, 
 
 void __parse_dpd_data(s32 chan, WPADStatusEx** status, u8 fmt, u8* data, s32 size) {
     WPADCB* cb = __rvl_p_wpadcb[chan];
+    WPADDblConv cx;
+    WPADDblConv cy;
     u8 i;
     u8 x;
     u8 y;
     u8 xy;
-    f32 dx;
-    f32 dy;
+    f64 dx;
+    f64 dy;
+    f64 m;
+
+    // Pre-set the 0x43300000 high words of the conversion scratch doubles
+    m = double_8066C248;
+    cx.w[0] = 0x43300000;
+    cy.w[0] = 0x43300000;
 
     if (cb->dpdBusy) {
         (*status)->err = WPAD_ERR_INVALID;
@@ -269,8 +309,10 @@ void __parse_dpd_data(s32 chan, WPADStatusEx** status, u8 fmt, u8* data, s32 siz
                 (*status)->obj[i].y = (s16)((s16)(WPAD_DPD_IMG_RESO_WY - 1) -
                                             (s16)((s16)((u16)y & 0xFF) | (u16)(((u16)xy & 0xC0) << 2)));
                 (*status)->obj[i].size = (u8)((xy & 0xF) & 0xFF);
+                cx.w[1] = (*status)->obj[i].size;
+                cy.w[1] = (*status)->obj[i].size;
                 (*status)->obj[i].size =
-                    (u8)((f32)(*status)->obj[i].size * (f32)(*status)->obj[i].size * PI);
+                    (u8)((cx.d - double_8066C258) * (cy.d - double_8066C258) * float_8066C250);
                 if ((*status)->obj[i].size == 0 || (*status)->obj[i].x == (s16)(WPAD_DPD_IMG_RESO_WX - 1) ||
                     (*status)->obj[i].y == (s16)(WPAD_DPD_IMG_RESO_WY - 1)) {
                     (*status)->obj[i].x = (s16)0;
@@ -320,13 +362,17 @@ void __parse_dpd_data(s32 chan, WPADStatusEx** status, u8 fmt, u8* data, s32 siz
             continue;
         }
 
-        dx = (f32)(*status)->obj[i].x + _wpadCalibrationX[0][chan] - _wpadCalibrationX[2][chan];
-        dy = (f32)(*status)->obj[i].y + _wpadCalibrationX[1][chan] - _wpadCalibrationX[3][chan];
+        cx.w[1] = ((u32)(*status)->obj[i].x) ^ 0x8000;
+        cy.w[1] = ((u32)(*status)->obj[i].y) ^ 0x8000;
+        dx = cx.d - m + _wpadCalibrationX[0][chan] - _wpadCalibrationX[2][chan];
+        dy = cy.d - m + _wpadCalibrationX[1][chan] - _wpadCalibrationX[3][chan];
 
-        (*status)->obj[i].x = (s16)(s32)(_wpadCalibrationX[2][chan] +
-            (dx * (f32)cos(-1.0f * _wpadCalibrationX[4][chan]) - dy * (f32)sin(-1.0f * _wpadCalibrationX[4][chan])));
-        (*status)->obj[i].y = (s16)(s32)(_wpadCalibrationX[3][chan] +
-            (dx * (f32)sin(-1.0f * _wpadCalibrationX[4][chan]) + dy * (f32)cos(-1.0f * _wpadCalibrationX[4][chan])));
+        (*status)->obj[i].x = (s16)(_wpadCalibrationX[2][chan] +
+            (dx * (f32)cos(float_8066C238 * _wpadCalibrationX[4][chan]) -
+             dy * (f32)sin(float_8066C238 * _wpadCalibrationX[4][chan])));
+        (*status)->obj[i].y = (s16)(_wpadCalibrationX[3][chan] +
+            (dx * (f32)sin(float_8066C238 * _wpadCalibrationX[4][chan]) +
+             dy * (f32)cos(float_8066C238 * _wpadCalibrationX[4][chan])));
     }
 }
 
@@ -372,66 +418,81 @@ void __parse_cl_data(s32 chan, WPADStatusEx** status, s32 devMode, u8* data, s32
 
     switch (devMode) {
     case 2:
-        // Reduced mode: 10-bit sticks + 12 buttons
-        ((WPADCLStatus*)(*status))->clLStickX =
-            (s16)((s16)((s16)((s16)data[0] << 2) & (s16)0xFFFC) | (s16)((u16)data[4] & 0x3));
-        ((WPADCLStatus*)(*status))->clRStickX =
-            (s16)((s16)((s16)((s16)data[1] << 2) & (s16)0xFFFC) | ((data[4] & 0xC) >> 2));
-        ((WPADCLStatus*)(*status))->clLStickY =
-            (s16)((s16)((s16)((s16)data[2] << 2) & (s16)0xFFFC) | ((data[4] & 0x30) >> 4));
-        ((WPADCLStatus*)(*status))->clRStickY =
-            (s16)((s16)((s16)((s16)data[3] << 2) & (s16)0xFFFC) | (s16)((s16)data[4] >> 6));
-        ((WPADCLStatus*)(*status))->clTriggerL = data[5];
-        ((WPADCLStatus*)(*status))->clTriggerR = ((u32)size < 9) ? 0 : data[6];
-        ((WPADCLStatus*)(*status))->clButton =
-            ((u32)size < 9) ? 0 : (u16)((u16)((data[7] << 8) | data[8]) ^ 0xFFFF);
+    {
+        // Reduced mode: 10-bit sticks (high 8 bits << 2 + 2 low bits) + 12 buttons
+        s16 stick;
+        stick = data[0] << 2;
+        stick &= 0xFFFC;
+        ((WPADCLStatus*)*status)->clLStickX = stick | (data[4] & 3);
+        stick = data[1] << 2;
+        stick &= 0xFFFC;
+        ((WPADCLStatus*)*status)->clRStickX = stick | ((data[4] & 0xC) >> 2);
+        stick = data[2] << 2;
+        stick &= 0xFFFC;
+        ((WPADCLStatus*)*status)->clLStickY = stick | ((data[4] & 0x30) >> 4);
+        stick = data[3] << 2;
+        stick &= 0xFFFC;
+        ((WPADCLStatus*)*status)->clRStickY = stick | ((s8)data[4] >> 6);
+        ((WPADCLStatus*)*status)->clTriggerL = data[5];
+        ((WPADCLStatus*)*status)->clTriggerR = ((u32)size < 9) ? 0 : data[6];
+        ((WPADCLStatus*)*status)->clButton =
+            ((u32)size < 9) ? 0 : (u16)(((data[7] << 8) | data[8]) ^ 0xFFFF);
         break;
+    }
 
     case 3:
         // Extended mode: 8-bit sticks + 12 buttons
-        ((WPADCLStatus*)(*status))->clLStickX = (s16)((s16)data[0] << 2);
-        ((WPADCLStatus*)(*status))->clRStickX = (s16)((s16)data[1] << 2);
-        ((WPADCLStatus*)(*status))->clLStickY = (s16)((s16)data[2] << 2);
-        ((WPADCLStatus*)(*status))->clRStickY = (s16)((s16)data[3] << 2);
-        ((WPADCLStatus*)(*status))->clTriggerL = data[4];
-        ((WPADCLStatus*)(*status))->clTriggerR = data[5];
-        ((WPADCLStatus*)(*status))->clButton =
-            ((u32)size < 8) ? 0 : (u16)((u16)((data[6] << 8) | data[7]) ^ 0xFFFF);
+        ((WPADCLStatus*)*status)->clLStickX = (s16)data[0] << 2;
+        ((WPADCLStatus*)*status)->clRStickX = (s16)data[1] << 2;
+        ((WPADCLStatus*)*status)->clLStickY = (s16)data[2] << 2;
+        ((WPADCLStatus*)*status)->clRStickY = (s16)data[3] << 2;
+        ((WPADCLStatus*)*status)->clTriggerL = data[4];
+        ((WPADCLStatus*)*status)->clTriggerR = data[5];
+        ((WPADCLStatus*)*status)->clButton =
+            ((u32)size < 8) ? 0 : (u16)(((data[6] << 8) | data[7]) ^ 0xFFFF);
         break;
 
     default:
-        // Standard mode: 6-bit sticks, reconstructed to 10-bit + extras
-        ((WPADCLStatus*)(*status))->clLStickX = (s16)((u16)(data[0] & 0x3F) << 4);
-        ((WPADCLStatus*)(*status))->clLStickY = (s16)((u16)(data[1] & 0x3F) << 4);
-        ((WPADCLStatus*)(*status))->clRStickX = (s16)((s16)((s16)((s16)((s32)(s8)data[2] >> 7) & 0x1) |
-                                                            (s16)(((u16)(data[1] >> 6) & 0x3) << 1) |
-                                                            (s16)(((u16)(data[0] >> 6) & 0x3) << 3)) << 5);
-        ((WPADCLStatus*)(*status))->clRStickY = (s16)((u16)(data[2] & 0x1F) << 5);
-        ((WPADCLStatus*)(*status))->clTriggerL = (u8)((s8)((data[2] >> 2) & 0x7) << 5 | ((s8)data[3] >> 5) & 0x7);
-        ((WPADCLStatus*)(*status))->clTriggerR = (u8)(data[3] & 0x1F) << 3;
-        ((WPADCLStatus*)(*status))->clButton = (u16)~(u16)((data[4] << 8) | data[5]);
+    {
+        // Standard mode: 6-bit sticks reconstructed to wider ranges
+        s16 stick;
+        ((WPADCLStatus*)*status)->clLStickX = (s16)((data[0] & 0x3F) << 4);
+        ((WPADCLStatus*)*status)->clLStickY = (s16)((data[1] & 0x3F) << 4);
+        // Right-stick X: 1 + 2 + 2 bits spliced from three bytes, then scaled
+        stick = (s16)(((data[2] >> 7) & 1) | ((data[1] >> 5) & 6) | ((data[0] >> 3) & 0x18));
+        ((WPADCLStatus*)*status)->clRStickX = stick << 5;
+        ((WPADCLStatus*)*status)->clRStickY = (s16)((data[2] & 0x1F) << 5);
+        // Left trigger: 5 bits at byte bits 3..7, spliced from data[2]/data[3]
+        stick = (s16)((data[3] >> 5) | ((data[2] >> 2) & 3) << 3);
+        ((WPADCLStatus*)*status)->clTriggerL = (u8)(stick << 3);
+        ((WPADCLStatus*)*status)->clTriggerR = (u8)((data[3] & 0x1F) << 3);
+        ((WPADCLStatus*)*status)->clButton = (u16)(((data[4] << 8) | data[5]) ^ 0xFFFF);
         break;
     }
-
-    if (cb->devType == WPAD_DEV_CLASSIC) {
-        ((WPADCLStatus*)(*status))->clLStickX -= 0x200;
-        ((WPADCLStatus*)(*status))->clLStickY -= 0x200;
-        ((WPADCLStatus*)(*status))->clRStickX -= 0x200;
-        ((WPADCLStatus*)(*status))->clRStickY -= 0x200;
-    } else {
-        ((WPADCLStatus*)(*status))->clLStickX -= 0x200;
-        ((WPADCLStatus*)(*status))->clLStickY -= 0x200;
     }
 
+    // Center the sticks: Classic Controller has 4 centered axes,
+    // other extensions (FS in CL slot) only 2
+    if (cb->devType == WPAD_DEV_CLASSIC) {
+        ((WPADCLStatus*)*status)->clLStickX -= 0x200;
+        ((WPADCLStatus*)*status)->clLStickY -= 0x200;
+        ((WPADCLStatus*)*status)->clRStickX -= 0x200;
+        ((WPADCLStatus*)*status)->clRStickY -= 0x200;
+    } else {
+        ((WPADCLStatus*)*status)->clLStickX -= 0x200;
+        ((WPADCLStatus*)*status)->clLStickY -= 0x200;
+    }
+
+    // First sample defines the calibration centers
     if (cb->calibrated == 0) {
         cb->calibrated = 1;
-        cb->extConfig.u.cl.lStickXCenter = ((WPADCLStatus*)(*status))->clLStickX;
-        cb->extConfig.u.cl.lStickYCenter = ((WPADCLStatus*)(*status))->clLStickY;
+        cb->extConfig.u.cl.lStickXCenter = ((WPADCLStatus*)*status)->clLStickX;
+        cb->extConfig.u.cl.lStickYCenter = ((WPADCLStatus*)*status)->clLStickY;
         if (cb->devType == WPAD_DEV_CLASSIC) {
-            cb->extConfig.u.cl.rStickXCenter = ((WPADCLStatus*)(*status))->clRStickX;
-            cb->extConfig.u.cl.rStickYCenter = ((WPADCLStatus*)(*status))->clRStickY;
-            cb->extConfig.u.cl.triggerLZero = ((WPADCLStatus*)(*status))->clTriggerL;
-            cb->extConfig.u.cl.triggerRZero = ((WPADCLStatus*)(*status))->clTriggerR;
+            cb->extConfig.u.cl.rStickXCenter = ((WPADCLStatus*)*status)->clRStickX;
+            cb->extConfig.u.cl.rStickYCenter = ((WPADCLStatus*)*status)->clRStickY;
+            cb->extConfig.u.cl.triggerLZero = ((WPADCLStatus*)*status)->clTriggerL;
+            cb->extConfig.u.cl.triggerRZero = ((WPADCLStatus*)*status)->clTriggerR;
         } else {
             cb->extConfig.u.cl.rStickXCenter = 0;
             cb->extConfig.u.cl.rStickYCenter = 0;
@@ -440,73 +501,75 @@ void __parse_cl_data(s32 chan, WPADStatusEx** status, s32 devMode, u8* data, s32
         }
     }
 
-    // Clamp stick/trigger deltas to +/-0x200 relative to the stored centers
+    // Clamp each axis delta against its stored center (+/-0x200 sticks, 0..255 triggers)
     {
         s16 v;
-        v = (s16)(((WPADCLStatus*)(*status))->clLStickX - cb->extConfig.u.cl.lStickXCenter);
+        v = ((WPADCLStatus*)*status)->clLStickX - cb->extConfig.u.cl.lStickXCenter;
         if (v < -0x200) {
             v = -0x200;
         }
         if (v > 0x1FF) {
             v = 0x1FF;
         }
-        ((WPADCLStatus*)(*status))->clLStickX = v;
+        ((WPADCLStatus*)*status)->clLStickX = v;
 
-        v = (s16)(((WPADCLStatus*)(*status))->clLStickY - cb->extConfig.u.cl.lStickYCenter);
+        v = ((WPADCLStatus*)*status)->clLStickY - cb->extConfig.u.cl.lStickYCenter;
         if (v < -0x200) {
             v = -0x200;
         }
         if (v > 0x1FF) {
             v = 0x1FF;
         }
-        ((WPADCLStatus*)(*status))->clLStickY = v;
+        ((WPADCLStatus*)*status)->clLStickY = v;
     }
 
     if (cb->devType == WPAD_DEV_CLASSIC) {
         s16 v;
-        v = (s16)(((WPADCLStatus*)(*status))->clRStickX - cb->extConfig.u.cl.rStickXCenter);
+        v = ((WPADCLStatus*)*status)->clRStickX - cb->extConfig.u.cl.rStickXCenter;
         if (v < -0x200) {
             v = -0x200;
         }
         if (v > 0x1FF) {
             v = 0x1FF;
         }
-        ((WPADCLStatus*)(*status))->clRStickX = v;
+        ((WPADCLStatus*)*status)->clRStickX = v;
 
-        v = (s16)(((WPADCLStatus*)(*status))->clRStickY - cb->extConfig.u.cl.rStickYCenter);
+        v = ((WPADCLStatus*)*status)->clRStickY - cb->extConfig.u.cl.rStickYCenter;
         if (v < -0x200) {
             v = -0x200;
         }
         if (v > 0x1FF) {
             v = 0x1FF;
         }
-        ((WPADCLStatus*)(*status))->clRStickY = v;
+        ((WPADCLStatus*)*status)->clRStickY = v;
 
-        v = (s16)(((WPADCLStatus*)(*status))->clTriggerL - cb->extConfig.u.cl.triggerLZero);
+        v = ((WPADCLStatus*)*status)->clTriggerL - cb->extConfig.u.cl.triggerLZero;
         if (v < 0) {
             v = 0;
         }
         if (v > 0xFF) {
             v = 0xFF;
         }
-        ((WPADCLStatus*)(*status))->clTriggerL = (u8)v;
+        ((WPADCLStatus*)*status)->clTriggerL = (u8)v;
 
-        v = (s16)(((WPADCLStatus*)(*status))->clTriggerR - cb->extConfig.u.cl.triggerRZero);
+        v = ((WPADCLStatus*)*status)->clTriggerR - cb->extConfig.u.cl.triggerRZero;
         if (v < 0) {
             v = 0;
         }
         if (v > 0xFF) {
             v = 0xFF;
         }
-        ((WPADCLStatus*)(*status))->clTriggerR = (u8)v;
+        ((WPADCLStatus*)*status)->clTriggerR = (u8)v;
     }
 
-    if (_wpadCLCompt[chan] != 0) {
-        ((WPADCLStatus*)(*status))->clRStickX = 0;
-        ((WPADCLStatus*)(*status))->clRStickY = 0;
-        ((WPADCLStatus*)(*status))->clTriggerL = 0;
-        ((WPADCLStatus*)(*status))->clTriggerR = 0;
+    // Compatibility mode zeroes the right-side axes
+    if (_wpadCLCompt[chan] == 0) {
+        return;
     }
+    ((WPADCLStatus*)*status)->clRStickX = 0;
+    ((WPADCLStatus*)*status)->clRStickY = 0;
+    ((WPADCLStatus*)*status)->clTriggerL = 0;
+    ((WPADCLStatus*)*status)->clTriggerR = 0;
 }
 
 //
@@ -769,8 +832,8 @@ void __wpadGetDevConfig(s32 chan, s32 err) {
     // Sensor bar rotation angle ("rolag")
     cal[4][chan] = 0.0f;
     for (i = 0; i < WPAD_MAX_DPD_OBJECTS; i++) {
-        angle[i] = (f32)atan((centY[i] - cal[2][chan]) /
-                             (centX[i] - cal[3][chan]));
+        angle[i] = (f32)atan((centY[i] - cal[3][chan]) /
+                             (centX[i] - cal[2][chan]));
         b[i] = (f32)atan(((f32)dummyObjY[i] - 383.5f) / ((f32)dummyObjX[i] - 511.5f));
         cal[4][chan] += angle[i] - b[i];
     }
@@ -816,9 +879,9 @@ void __wpadGetDevConfig(s32 chan, s32 err) {
 }
 
 void __wpadGetExtConfig(s32 chan, s32 err) {
+    const char* base = (const char*)__a1_input_reports_array;
+    u8* buf = __rvl_p_wpadcb[chan]->wmReadDataPtr;
     WPADCB* cb = __rvl_p_wpadcb[chan];
-    u8* buf = cb->wmReadDataPtr;
-    const char* dbg = (const char*)__a1_input_reports_array;
     s32 i;
     s32 j;
     s32 sum;
@@ -858,7 +921,7 @@ void __wpadGetExtConfig(s32 chan, s32 err) {
         switch (cb->devType) {
         case WPAD_DEV_FREESTYLE:
             if (index < 0) {
-                DEBUGPrint(dbg + 0x25C);
+                DEBUGPrint(base + 0x25C);
                 cb->extConfig.u.fs.accX0g = 512;
                 cb->extConfig.u.fs.accY0g = 512;
                 cb->extConfig.u.fs.accZ0g = 512;
@@ -887,13 +950,13 @@ void __wpadGetExtConfig(s32 chan, s32 err) {
                     cb->extConfig.u.fs.stickYCenter = (s8)buf[index + 13];
                 }
 
-                DEBUGPrint(dbg + 0x270, cb->extConfig.u.fs.accX0g, cb->extConfig.u.fs.accY0g,
+                DEBUGPrint(base + 0x270, cb->extConfig.u.fs.accX0g, cb->extConfig.u.fs.accY0g,
                            cb->extConfig.u.fs.accZ0g);
-                DEBUGPrint(dbg + 0x2A0, cb->extConfig.u.fs.accX1g, cb->extConfig.u.fs.accY1g,
+                DEBUGPrint(base + 0x2A0, cb->extConfig.u.fs.accX1g, cb->extConfig.u.fs.accY1g,
                            cb->extConfig.u.fs.accZ1g);
-                DEBUGPrint(dbg + 0x2D0, cb->extConfig.u.fs.stickXCenter, cb->extConfig.u.fs.at_0x04,
+                DEBUGPrint(base + 0x2D0, cb->extConfig.u.fs.stickXCenter, cb->extConfig.u.fs.at_0x04,
                            cb->extConfig.u.fs.at_0x02);
-                DEBUGPrint(dbg + 0x2F8, cb->extConfig.u.fs.stickYCenter, cb->extConfig.u.fs.at_0x0a,
+                DEBUGPrint(base + 0x2F8, cb->extConfig.u.fs.stickYCenter, cb->extConfig.u.fs.at_0x0a,
                            cb->extConfig.u.fs.at_0x08);
             }
             break;
@@ -916,15 +979,15 @@ void __wpadGetExtConfig(s32 chan, s32 err) {
                 cb->extConfig.u.cl.triggerRZero = buf[index + 13];
             }
 
-            DEBUGPrint(dbg + 0x320, cb->extConfig.u.cl.lStickXCenter, cb->extConfig.u.cl.at_0x04,
+            DEBUGPrint(base + 0x320, cb->extConfig.u.cl.lStickXCenter, cb->extConfig.u.cl.at_0x04,
                        cb->extConfig.u.cl.at_0x02);
-            DEBUGPrint(dbg + 0x348, cb->extConfig.u.cl.lStickYCenter, cb->extConfig.u.cl.at_0x0a,
+            DEBUGPrint(base + 0x348, cb->extConfig.u.cl.lStickYCenter, cb->extConfig.u.cl.at_0x0a,
                        cb->extConfig.u.cl.at_0x08);
-            DEBUGPrint(dbg + 0x370, cb->extConfig.u.cl.rStickXCenter, cb->extConfig.u.cl.at_0x10,
+            DEBUGPrint(base + 0x370, cb->extConfig.u.cl.rStickXCenter, cb->extConfig.u.cl.at_0x10,
                        cb->extConfig.u.cl.at_0x0e);
-            DEBUGPrint(dbg + 0x398, cb->extConfig.u.cl.rStickYCenter, cb->extConfig.u.cl.at_0x16,
+            DEBUGPrint(base + 0x398, cb->extConfig.u.cl.rStickYCenter, cb->extConfig.u.cl.at_0x16,
                        cb->extConfig.u.cl.at_0x14);
-            DEBUGPrint(dbg + 0x3C0, cb->extConfig.u.cl.triggerLZero, cb->extConfig.u.cl.triggerRZero);
+            DEBUGPrint(base + 0x3C0, cb->extConfig.u.cl.triggerLZero, cb->extConfig.u.cl.triggerRZero);
             break;
         }
     }

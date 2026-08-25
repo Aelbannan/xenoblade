@@ -930,13 +930,13 @@ int func_800D2A5C(CtrlActView* self, CtrlActAtkArg* arg) {
         int atkCount = atk->mField76 + 1;
         self->mField18 = atkCount;
         state->mField48 = atkCount;
-        // kind selects extra bits in the 0x78 flag word (0x54 -> 0x02000000,
-        // 0x55 -> 0x01000000).
-        state->mField78 |= 0x40002000;
+        // kind selects extra bits in the 0x78 flag word: base 0x40000200,
+        // 0x54 -> |0x42000000, 0x55 -> |0x41000000 (retail constants).
+        state->mField78 |= 0x40000200;
         if (kind == 0x54) {
-            state->mField78 |= 0x02000000;
+            state->mField78 |= 0x42000000;
         } else if (kind == 0x55) {
-            state->mField78 |= 0x01000000;
+            state->mField78 |= 0x41000000;
         }
     } else {
         ok = 0;
@@ -2453,9 +2453,11 @@ extern "C" int func_800D6720(CtrlActView* self, int flag) {
     CtrlActTargetView* target = self->mPlayer->mField3F60;
     if (target != 0) {
     f32 cos = nw4r::math::CosFIdx(self->mFieldC * lbl_eu_80666D80);
-    f32 z = self->mPlayer->mSub3E9C.getPosition()->f[2]
-            + lbl_eu_80666DAC * cos;
-    f32 y = self->mPlayer->mSub3E9C.getPosition()->f[1] + lbl_eu_80666D04;
+    f32 y;
+    f32 z;
+    z = self->mPlayer->mSub3E9C.getPosition()->f[2]
+        + lbl_eu_80666DAC * cos;
+    y = self->mPlayer->mSub3E9C.getPosition()->f[1] + lbl_eu_80666D04;
     f32 sin = nw4r::math::SinFIdx(self->mFieldC * lbl_eu_80666D80);
     ml::CVec3 local;
     local.x = self->mPlayer->mSub3E9C.getPosition()->f[0]

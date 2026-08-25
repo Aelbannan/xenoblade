@@ -8,7 +8,9 @@ extern "C" u32 func_80061FE8();
 
 // Player-object state/event probe (retail unmangled C-ABI name; arg1 is the
 // actor object + 0x8 state region, arg2 a probe id).
-extern "C" int func_80148778(u8* obj, int id);
+// NOTE: declared with void* to match CfObjectImplMove.hpp (both headers are
+// included together in some TUs; extern "C" funcs cannot be overloaded).
+extern "C" int func_80148778(void* obj, int id);
 
 // Global flag-bit probe on the game-manager state word. Retail symbol is the
 // C++-mangled func_8006EF04__Fi, so this is a plain global C++ declaration
@@ -61,8 +63,20 @@ extern "C" u32 func_8009CB80(cf::CtrlRemote* self, CtrlRemoteBuf* buf, u32 arg);
 extern "C" void* func_8009C8F4(cf::CtrlRemote* self, u32 a, u32 b);
 extern "C" void func_8009C980(cf::CtrlRemote* self, u8* ptr);
 
-// Retail bit-setter over the control-data buffer; stub body lives in this TU.
-extern "C" void func_8009D2C8(u32* buffer, u32 index, u32 value);
+// Object stored in the shared control-data slots (buf + 0x1234 + 4*i);
+// vtable slot 3 (offset 0x0C) receives (index, clamped value, extracted bits)
+// when func_8009D2C8 writes a control-data field.
+class CtrlDataSlotObj {
+public:
+    virtual void vf00();
+    virtual void vf03(u32 index, u32 value, u32 bits);
+};
+
+// Retail bit-setter over the control-data buffer; defined in this TU.
+void func_8009D2C8(u32* buffer, u32 index, u32 value);
+
+// Retail bit-setter over the control-data buffer; defined in this TU.
+void func_8009D2C8(u32* buffer, u32 index, u32 value);
 
 // Control-index -> (word pointer, type, sub-index) mapper; defined in this TU.
 extern "C" u32* func_8009D12C(u32* buffer, s32 index, s32* typeOut, s32* idxOut);
@@ -116,12 +130,14 @@ extern const f32 lbl_eu_80666730;
 // Forward decls (full layouts live in CtrlPc.hpp, included after this header).
 class CtrlPcSub37;
 class CtrlPlayerObj;
+struct CfMoveEnumList;
 
 // C++-mangled retail helper func_800B708C__Fi (actor id -> action source).
 void* func_800B708C(int id);
 
 // Voice/battle-list sweep helpers (retail unmangled C-ABI names).
-extern "C" void* func_800F6EAC(void* list, u32 idx);
+// Signature matches CfObjectImplMove.hpp (both headers appear together).
+extern "C" void* func_800F6EAC(CfMoveEnumList* list, u32 idx);
 extern "C" void* func_8016FE34(void* r3);
 class Fd44State;
 // Retail call site passes no argument (r3 left over from the previous call);
@@ -134,6 +150,7 @@ extern "C" void* func_800451D8(u32 cls, void* param);
 // Voice-manager sweep helpers and the sudden-commu active check. Retail
 // relocs are the unmangled C names, so these are extern "C" imports.
 extern "C" void func_802A2BB0();
+extern "C" void func_802A2CF0();
 extern "C" void func_802A2B44();
 extern "C" void func_802A2C1C();
 extern "C" int func_801B0F8C();
@@ -315,8 +332,8 @@ extern "C" u32 func_8029EE58();
 
 // Debug-assert strings pooled by the Warning call in func_80098EF8 (retail
 // .data at 0x80526324 / 0x80526300).
-extern char lbl_eu_80526324[];
-extern char lbl_eu_80526300[];
+extern const char lbl_eu_80526324[];
+extern const char lbl_eu_80526300[];
 
 // sdata2 float constants used by func_80098EF8. const declarations so MWCC
 // references the retail pool slots directly (see CtrlPc.hpp notes).
@@ -335,6 +352,7 @@ extern const f32 lbl_eu_8066676C;
 extern const f32 lbl_eu_8066A1F8;   // pi
 extern const f32 lbl_eu_8066A1FC;   // 2*pi
 extern const f32 lbl_eu_8066A20C;
+extern const f32 lbl_eu_80666748;
 
 // ---------------------------------------------------------------------------
 // Imports / views used by func_8009AE80.
@@ -396,8 +414,89 @@ public:
     CtrlPlayerObj* mField5C;         // 0x5C
 };
 
+// CtrlPc-compatible view exposing both vf37/vf38 (slots 0x9C/0xA0) and the
+// +0x2C state word for func_8009C6BC.
+class CtrlPcVf38State {
+public:
+    virtual ~CtrlPcVf38State();  // vtable slot 0x08
+    virtual void vf01();  virtual void vf02();  virtual void vf03();
+    virtual void vf04();  virtual void vf05();  virtual void vf06();
+    virtual void vf07();  virtual void vf08();  virtual void vf09();
+    virtual void vf10();  virtual void vf11();  virtual void vf12();
+    virtual void vf13();  virtual void vf14();  virtual void vf15();
+    virtual void vf16();  virtual void vf17();  virtual void vf18();
+    virtual void vf19();
+    virtual void vf20();  virtual void vf21();  virtual void vf22();
+    virtual void vf23();  virtual void vf24();  virtual void vf25();
+    virtual void vf26();  virtual void vf27();  virtual void vf28();
+    virtual void vf29();  virtual void vf30();  virtual void vf31();
+    virtual void vf32();  virtual void vf33();  virtual void vf34();
+    virtual void vf35();  virtual void vf36();
+    virtual CtrlPcSub37* vf37();  // 0x9C
+    virtual CtrlPcSub37* vf38();  // 0xA0
+
+    u32 mField4;                     // 0x04
+    f32 mField8;                     // 0x08
+    f32 mFieldC;                     // 0x0C
+    f32 mField10;                    // 0x10
+    f32 mField14;                    // 0x14
+    char _pad_18[0x2C - 0x18];       // 0x18-0x2B
+    u32 mField2C;                    // 0x2C (aim/menu mirror word)
+    char _pad_30[0x5C - 0x30];       // 0x30-0x5B
+    CtrlPlayerObj* mField5C;         // 0x5C
+};
+
 // Second global flag word probed by func_80098EF8 (retail sda21 access).
 extern u32 lbl_eu_80663E28;
+
+// CtrlPc-compatible view exposing the virtuals func_80098CB8 pokes (up to
+// slot 0xB8), the +0x2C state word, the 32-float ring buffer at 0x1DC, and
+// the ring index at 0x25C.
+class CtrlPcVf44 {
+public:
+    virtual ~CtrlPcVf44();      // vtable slot 0x08
+    virtual void vf01();  virtual void vf02();  virtual void vf03();
+    virtual void vf04();  virtual void vf05();  virtual void vf06();
+    virtual void vf07();  virtual void vf08();  virtual void vf09();
+    virtual void vf10();  virtual void vf11();  virtual void vf12();
+    virtual void vf13();  virtual void vf14();  virtual void vf15();
+    virtual void vf16();  virtual void vf17();  virtual void vf18();
+    virtual void vf19();
+    virtual void vf20();  virtual void vf21();  virtual void vf22();
+    virtual void vf23();  virtual void vf24();  virtual void vf25();
+    virtual void vf26();  virtual void vf27();  virtual void vf28();
+    virtual void vf29();  virtual void vf30();  virtual void vf31();
+    virtual void vf32();  virtual void vf33();  virtual void vf34();
+    virtual void vf35();  virtual void vf36();
+    virtual CtrlPcSub37Ae80* vf37();  // 0x9C
+    virtual void vf38();
+    virtual void vf39();  // 0xA4
+    virtual void vf40();  // 0xA8
+    virtual void vf41();  // 0xAC
+    virtual void vf42();  // 0xB0
+    virtual void vf43();  // 0xB4
+    virtual void vf44();  // 0xB8
+
+    u32 mField4;                     // 0x04
+    f32 mField8;                     // 0x08
+    f32 mFieldC;                     // 0x0C
+    f32 mField10;                    // 0x10
+    f32 mField14;                    // 0x14
+    char _pad_18[0x2C - 0x18];       // 0x18-0x2B
+    u32 mField2C;                    // 0x2C
+    char _pad_30[0x5C - 0x30];       // 0x30-0x5B
+    CtrlPlayerObj* mField5C;         // 0x5C
+    char _pad_60[0x1DC - 0x60];      // 0x60-0x1DB
+    f32 mFloats1DC[32];              // 0x1DC ring buffer
+    u32 mField25C;                   // 0x25C ring index
+};
+
+// Per-frame remote-control update (target us-80099690).
+void func_80098CB8(CtrlPcVf44* self);
+
+// Menu base teardown/recreate (menu/CMenuArtsSelect.cpp; retail exports the
+// unmangled C-ABI name).
+extern "C" void func_80133770();
 
 // Circular list node used by the +0x28 head (next at +0x00).
 struct CtrlSweepNode {
@@ -439,4 +538,133 @@ struct CtrlEnumListSweep {
     u32 count;                  // 0x620
     u8 _624[0x3030 - 0x624];
     u32 mField3030;             // 0x3030
+};
+
+// ---------------------------------------------------------------------------
+// Imports / views used by func_8009C1BC.
+// ---------------------------------------------------------------------------
+
+extern "C" int func_80190940(void* res, void* actor, int mode, void* filter);
+extern "C" unsigned long func_801BA2C8(void* self);
+extern "C" void func_80280ADC();
+extern "C" void func_8017FEF0(void* obj, int arg);
+extern "C" void* func_800EA444(void* bm);
+extern "C" u32 func_8004C5EC(void* obj);
+extern "C" void func_800BE12C(void* obj, int a, int b, int c, int d);
+extern "C" void func_802A201C(void* a, void* b);
+extern "C" void func_801B0E88();
+extern "C" void func_8018C820(void* obj, int value);
+
+namespace cf {
+class CChainState;
+class CChainBattleObj;
+}  // namespace cf
+
+// Chain start (chain/CChainTimer.cpp; C++ linkage - keep the mangling).
+int func_8027DE44(cf::CChainState* self, cf::CChainBattleObj* p1,
+                  cf::CChainBattleObj* p2, u32 p3);
+
+// Object pointed to by sub3ED4+0x374 in func_8009C1BC; its +0x3F10 word
+// seeds the command block.
+struct CtrlRemoteSub374View {
+    u8 _00[0x3F10];
+    u32 mField3F10;               // 0x3F10
+};
+
+// Extended player->mSub3ED4 view for func_8009C1BC: slots 0xF0 (vf58) /
+// 0xF4 (vf59) plus the fields it reads (+0x18 actor ref, +0x368 result
+// record, +0x370/+0x374 words).
+class CtrlSub3ED4Remote {
+public:
+    virtual ~CtrlSub3ED4Remote();  // vtable slot 0x08
+    virtual void vf01();
+    virtual void vf02();
+    virtual void vf03();
+    virtual void vf04();
+    virtual void vf05();
+    virtual void vf06();
+    virtual void vf07();
+    virtual void vf08();
+    virtual void vf09();
+    virtual void vf10();
+    virtual void vf11();
+    virtual void vf12();
+    virtual void vf13();
+    virtual void vf14();
+    virtual void vf15();
+    virtual void vf16();
+    virtual void vf17();
+    virtual void vf18();
+    virtual void vf19();
+    virtual void vf20();
+    virtual void vf21();
+    virtual void vf22();
+    virtual void vf23();
+    virtual void vf24();
+    virtual void vf25();
+    virtual void vf26();
+    virtual void vf27();
+    virtual void vf28();
+    virtual void vf29();
+    virtual void vf30();
+    virtual void vf31();
+    virtual void vf32();
+    virtual void vf33();
+    virtual void vf34();
+    virtual void vf35();
+    virtual void vf36();
+    virtual void vf37();
+    virtual void vf38();
+    virtual void vf39();
+    virtual void vf40();
+    virtual void vf41();
+    virtual void vf42();
+    virtual void vf43();
+    virtual void vf44();
+    virtual void vf45();
+    virtual void vf46();
+    virtual void vf47();
+    virtual void vf48();
+    virtual void vf49();
+    virtual void vf50();
+    virtual void vf51();
+    virtual void vf52();
+    virtual void vf53();
+    virtual void vf54();
+    virtual void vf55();
+    virtual void vf56();
+    virtual void vf57();
+    virtual void vf58(int arg);   // vtable slot 0xF0
+    virtual void vf59();          // vtable slot 0xF4
+
+    u8 _04[0x14];
+    void* mActor18;               // 0x18 actor ref handed to func_80190940
+    u8 _1C[0x368 - 0x1C];
+    u32 mResult368;               // 0x368 func_80190940 result record base
+    u32 mField36C;                // 0x36C
+    u32 mField370;                // 0x370
+    CtrlRemoteSub374View* mField374;  // 0x374
+};
+
+// Object reached through func_800EA444 whose +0x824 flag word gains bit
+// 0x00080000 in func_8009C1BC.
+struct CtrlRemoteEaView {
+    u8 _00[0x824];
+    u32 mField824;                // 0x824
+};
+
+// 0x20-byte voice/battle command block filled by func_8009C1BC and passed
+// to func_8014AC38 (same layout as CVisionFxParam).
+struct CtrlRemoteCmd20 {
+    u32 w00;                      // 0x00
+    u8 _04[2];                    // 0x04
+    u8 b06;                       // 0x06
+    u8 _07[0x0D - 0x07];
+    u8 b0D;                       // 0x0D
+    u8 b0E;                       // 0x0E
+    u8 _0F;                       // 0x0F
+    u16 h10;                      // 0x10
+    u16 h12;                      // 0x12
+    f32 f14;                      // 0x14
+    u8 _18[0x20 - 0x18];
 };

@@ -136,6 +136,25 @@ struct CArtsColorPair {
     u32 hi;
 };
 
+// Mirror view of nw4r::lyt::ArcResourceAccessor exposing the resource
+// lookup used by OnFileEvent (vtable slot 3, offset 0x0C):
+// GetResource(type-tag "timg", id, 0).
+class CArtsArcView {
+public:
+    virtual void a0() = 0;
+    virtual void a1() = 0;
+    virtual void a2() = 0;
+    virtual void* getResource(const char* typeTag, u32 id, u32 flags) = 0; // +0x0C
+};
+
+// Mirror view of the embedded CCur18 cursor vtable: slot 2 (offset 0x08)
+// binds the cursor after the temp-construction copy.
+class CArtsCurVt {
+public:
+    virtual void c0() = 0;
+    virtual void bind() = 0; // +0x08
+};
+
 // Abstract view into the embedded CCur18 cursor vtable used by this unit
 // (func_80236CF4). MWCC prefixes the vtable with offset-to-top + RTTI
 // (2 entries), so user virtual index 2 sits at vtable +0x10 - the

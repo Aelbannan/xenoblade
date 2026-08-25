@@ -44,151 +44,144 @@ int SFD_Standby(void *handle) {
 
 /* Pause the player.
  * pause_flag=0: resume, pause_flag!=0: pause
- * Returns 0 on success, error code on failure */
-int SFD_Pause(SfdPlayer *p, int pause_flag) {
-    int ret;
+ * Returns 0 on success, transition error code on failure.
+ *
+ * The transition kind depends on both the requested state and the previous
+ * one: pausing while already paused only forces (2), pausing from unpaused
+ * nests (1), resuming unwinds the nesting count (0). Resuming with no pause
+ * outstanding does nothing. Each transition runs only in sub-state 3 or 4. */
+int SFD_Pause(SfdPlayer *player, int pause_flag) {
     s32 action;
+    s32 ret;
 
-    if (SFLIB_CheckHn(p))
+    if (SFLIB_CheckHn(player))
         return SFLIB_SetErr(NULL, 0xFF000142);
 
-    /* Decide which transition to run based on old/new pause state. */
     if (pause_flag == 0) {
-        if (p->pause == 0)
+        if (player->pause != 0)
+            action = 0;
+        else
             return 0;
-        action = 0;
     } else {
         action = 2;
-        if (p->pause == 0)
+        if (player->pause == 0)
             action = 1;
     }
 
-    p->pause = pause_flag;
-    ret = 0;
+    player->pause = pause_flag;
 
-    switch (action) {
-    case 2:
-        if (p->state != 4)
-            break;
-        if (p->substate == 3 || p->substate == 4) {
-            SFTIM_Pause(p, 2);
-            {
+    if (action == 2) {
+        ret = 0;
+        if (player->state == 4) {
+            if (player->substate == 3 || player->substate == 4) {
                 int data = 2;
-                int result = SFTRN_CallTrtTrif(p, 7, 8, &data, 0);
-                if (result != 0)
-                    ret = result;
+                int trt;
+                SFTIM_Pause(player, 2);
+                trt = SFTRN_CallTrtTrif(player, 7, 8, &data, 0);
+                ret = 0;
+                if (trt != 0)
+                    ret = trt;
+            } else {
+                ret = 0;
             }
-        } else {
-            ret = 0;
         }
-        break;
-
-    case 1:
+    } else if (action == 1) {
         /* Only enter pause on the first nested pause request. */
-        {
-            s32 ct = p->pausect++;
-            if (ct != 0)
-                break;
-            if (p->substate == 3 || p->substate == 4) {
-                SFTIM_Pause(p, 1);
-                {
-                    int data = 1;
-                    int result = SFTRN_CallTrtTrif(p, 7, 8, &data, 0);
-                    if (result != 0)
-                        ret = result;
-                }
+        ret = 0;
+        if (player->pausect++ == 0) {
+            if (player->substate == 3 || player->substate == 4) {
+                int data = 1;
+                int trt;
+                SFTIM_Pause(player, 1);
+                trt = SFTRN_CallTrtTrif(player, 7, 8, &data, 0);
+                ret = 0;
+                if (trt != 0)
+                    ret = trt;
             } else {
                 ret = 0;
             }
         }
-        break;
-
-    case 0:
+    } else if (action == 0) {
         /* Only resume when the last nested pause is released. */
-        {
-            s32 ct = --p->pausect;
-            if (ct != 0)
-                break;
-            if (p->substate == 3 || p->substate == 4) {
-                SFTIM_Pause(p, 0);
-                {
-                    int data = 0;
-                    int result = SFTRN_CallTrtTrif(p, 7, 8, &data, 0);
-                    if (result != 0)
-                        ret = result;
-                }
+        ret = 0;
+        if (--player->pausect == 0) {
+            if (player->substate == 3 || player->substate == 4) {
+                int data = 0;
+                int trt;
+                SFTIM_Pause(player, 0);
+                trt = SFTRN_CallTrtTrif(player, 7, 8, &data, 0);
+                ret = 0;
+                if (trt != 0)
+                    ret = trt;
             } else {
                 ret = 0;
             }
         }
-        break;
     }
 
-    p->flag = 1;
+    player->flag = 1;
     return ret;
 }
 
+/* Pause/resume dispatch. op: 2=pause force, 1=pause (nested-count guarded),
+ * 0=resume (nested-count guarded). Returns 0 or a transition error code. */
+/* Run one pause/resume transition; returns 0 or the transition error code. */
 int SFPL2_Pause(SfdPlayer *p, int op) {
     int ret = 0;
 
     switch (op) {
     case 2:
         if (p->state != 4)
-            return 0;
-        if (p->substate == 3 || p->substate == 4) {
-            SFTIM_Pause(p, 2);
-            {
-                int data = 2;
-                int result = SFTRN_CallTrtTrif(p, 7, 8, &data, 0);
-                if (result != 0)
-                    ret = result;
-            }
-        } else {
+            goto done;
+        if (p->substate != 3 && p->substate != 4) {
             ret = 0;
+            goto done;
+        }
+        SFTIM_Pause(p, 2);
+        {
+            int data = 2;
+            int result = SFTRN_CallTrtTrif(p, 7, 8, &data, 0);
+            if (result != 0)
+                ret = result;
         }
         break;
 
     case 1:
         /* Only enter pause on the first nested pause request. */
+        if (p->pausect++ != 0)
+            goto done;
+        if (p->substate != 3 && p->substate != 4) {
+            ret = 0;
+            goto done;
+        }
+        SFTIM_Pause(p, 1);
         {
-            s32 ct = p->pausect++;
-            if (ct != 0)
-                break;
-            if (p->substate == 3 || p->substate == 4) {
-                SFTIM_Pause(p, 1);
-                {
-                    int data = 1;
-                    int result = SFTRN_CallTrtTrif(p, 7, 8, &data, 0);
-                    if (result != 0)
-                        ret = result;
-                }
-            } else {
-                ret = 0;
-            }
+            int data = 1;
+            int result = SFTRN_CallTrtTrif(p, 7, 8, &data, 0);
+            if (result != 0)
+                ret = result;
         }
         break;
 
     case 0:
         /* Only resume when the last nested pause is released. */
+        if (--p->pausect != 0)
+            goto done;
+        if (p->substate != 3 && p->substate != 4) {
+            ret = 0;
+            goto done;
+        }
+        SFTIM_Pause(p, 0);
         {
-            s32 ct = --p->pausect;
-            if (ct != 0)
-                break;
-            if (p->substate == 3 || p->substate == 4) {
-                SFTIM_Pause(p, 0);
-                {
-                    int data = 0;
-                    int result = SFTRN_CallTrtTrif(p, 7, 8, &data, 0);
-                    if (result != 0)
-                        ret = result;
-                }
-            } else {
-                ret = 0;
-            }
+            int data = 0;
+            int result = SFTRN_CallTrtTrif(p, 7, 8, &data, 0);
+            if (result != 0)
+                ret = result;
         }
         break;
     }
 
+done:
     return ret;
 }
 

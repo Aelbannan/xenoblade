@@ -103,7 +103,7 @@ u32 func_8003B1EC(void* fp);
 
 // Quest-entry index lookup (owning TU: CUICfManager). Full-width arg/result
 // (retail passes/returns the register unmasked).
-u32 func_80138138(u16 idx);
+u32 func_80138138(u32 idx);                 // quest id -> name-table index
 
 // Multi-item entry guard (owning TU: CUICfManager): 5 u16 args, nonzero
 // blocks the window creation.

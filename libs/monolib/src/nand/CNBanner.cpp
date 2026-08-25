@@ -26,6 +26,7 @@
 // variant of IWorkEvent.hpp) and is out of scope for this TU's writable files.
 
 #include <string.h>
+#include <decomp.h>
 // Inline-empty base dtor: retail's derived dtor does not emit a
 // __dt__10IWorkEventFv call (see IWorkEvent.hpp note).
 #define IWORK_EVENT_INLINE_DTOR 1
@@ -378,10 +379,10 @@ extern "C" __declspec(section ".sdata") u32 lbl_eu_80663CE8[2] = { (u32)&lbl_eu_
 
 // [.sbss] 0x80665A98: module-global string pointer installed by
 // sinit_eu_804F9FA4 (monolib_eu_804F9E98).
-extern "C" char* lbl_eu_80665A98;
-// Keep-alive: unreferenced tentative defs are GC'd under -ipa file. The
-// anchor lives at the very end of .data and is tail-dropped by UNIT_RULES.
-extern "C" u32 lbl_eu_80665A98_anchor[1] = { (u32)&lbl_eu_80665A98 };
+char* lbl_eu_80665A98;
+// Keep-alive: an unreferenced tentative def is GC'd under -ipa file, so
+// anchor it with a FORCEACTIVE stub (dropped from .text by UNIT_RULES).
+DECOMP_FORCEACTIVE(CNBanner_cpp, lbl_eu_80665A98)
 
 // The probe-vtable + tail blobs are defined at EOF so their .data placement
 // follows the compiler-emitted vtable/base list (retail order), see bottom.

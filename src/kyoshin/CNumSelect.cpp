@@ -101,10 +101,10 @@ extern "C" void func_801EB49C(CNumSelect* self) {
     }
 }
 
-// When the +0x20 sub-object animation has finished (func_80137510 with the
-// 1.0 constant), reset the selection state bytes (m2C/m2E/m2F) for a fresh pass.
-extern "C" void func_801EB530(CNumSelect* self) {
-    if (func_80137510(self->field_24, lbl_eu_80668088)) {
+// When the +0x20 animation has finished (func_80137510 with the 1.0 constant),
+// reset the selection state bytes (m2C/m2E/m2F) for a fresh pass.
+void func_801EB530(CNumSelect* self) {
+    if (func_80137510(self->field_20, lbl_eu_80668088)) {
         self->field_2F = 0;
         self->field_2E = 1;
         self->field_2C = 0;
@@ -177,13 +177,16 @@ bool CNumSelect::OnFileEvent(CEventFile* evt) {
         mpLayout->GetRootPane()->FindPaneByName(&lbl_eu_80506C14[0xf7], true), 0);
 
     // Digit-count depends on the region flag at +0x30 (11 vs 12 entries).
+    // Materialize the format-string addresses before the region check so
+    // MWCC schedules them ahead of the count select (retail order).
+    char* fmtStr = &lbl_eu_80506C14[0x102];
+    char* idxStr = &lbl_eu_80506C14[0x33];
     u32 numCount = 11;
     if (field_30 == 1) {
         numCount = 12;
     }
     func_80136B4C(mpLayout, &lbl_eu_80506C14[0x10b],
-                  func_80136190(&lbl_eu_80506C14[0x102], &lbl_eu_80506C14[0x33],
-                                numCount),
+                  func_80136190(fmtStr, idxStr, numCount),
                   0);
     func_80136B4C(mpLayout, &lbl_eu_80506C14[0x115],
                   func_80136190(&lbl_eu_80506C14[0x102], &lbl_eu_80506C14[0x33], 13),
@@ -198,12 +201,11 @@ bool CNumSelect::OnFileEvent(CEventFile* evt) {
 
     // Resolve the 'timg' texture named by the language-dependent message and
     // size both highlight panes to its dimensions.
-    const char* msgKey;
-    if (func_80086F9C__Q22cf13CfGameManagerFv(-1) != 0) {
-        msgKey = &lbl_eu_80506C14[0x15d];
-    } else {
-        msgKey = &lbl_eu_80506C14[0x154];
-    }
+    // Ternary form reproduces retail's select: default 0x15d, bt-eq skips
+    // the 0x154 overwrite.
+    const char* msgKey = (func_80086F9C__Q22cf13CfGameManagerFv(-1) != 0)
+                             ? &lbl_eu_80506C14[0x154]
+                             : &lbl_eu_80506C14[0x15d];
     u16 msgId = func_8013606C(&lbl_eu_80506C14[0x129], msgKey, 0x2b);
     char* timgName = func_80138F78(msgId);
     CNumSelectTimg* timg = func_801355F4()->vf01(0x74696d67, timgName, 0);
@@ -349,10 +351,10 @@ extern "C" void func_801EB0D4(CNumSelect* self) {
 }
 
 // Retail ctor stores the vtable label explicitly before constructing the
-// memory-region member, then zeroes all state fields.
+// memory-region member, then zeroes all state fields. Kept inside the
+// -O4,s region: retail's stmw r30 frame requires it.
 CNumSelect::CNumSelect(u8 arg)
     : mMemRegion(), field_14(0), field_18(0), mpLayout(0), field_20(0),
       field_24(0), field_28(0), field_2C(0), field_2D(0), field_2E(1),
       field_2F(0), field_30(arg) {}
-
 #pragma pop

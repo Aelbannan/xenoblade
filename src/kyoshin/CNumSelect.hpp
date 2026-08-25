@@ -103,7 +103,8 @@ void func_80136910(nw4r::lyt::Layout*, char*, u8);
 void func_801390E0(CFileHandle**);
 void func_80139124(nw4r::lyt::ArcResourceAccessor*);
 u32 func_80137444(nw4r::lyt::AnimTransform*, float);
-u32 func_80137510(nw4r::lyt::AnimTransform*, float);
+// Retail symbol is unmangled (plain func_80137510), so keep C linkage.
+extern "C" u32 func_80137510(nw4r::lyt::AnimTransform*, float);
 // Retail symbol is unmangled (plain func_80124270), so keep C linkage.
 extern "C" void func_80124270(nw4r::lyt::Pane*, u32);
 void func_80138078(u32);

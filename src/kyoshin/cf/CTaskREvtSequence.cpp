@@ -1456,12 +1456,12 @@ void func_80169CD0(cf::CTaskREvtSequence* self) {
     func_80164CFC();
     // The retail re-fetches the camera manager between each gate; keep the
     // calls separate so MWCC emits the four real bl's.
-    CfEvtCamManager* mgr = func_800821F8__Q22cf13CfGameManagerFv();
+    CfEvtCamManager* mgr = (CfEvtCamManager*)func_800821F8__Q22cf13CfGameManagerFv();
     if (mgr != 0) {
-        CfEvtCamManager* mgr2 = func_800821F8__Q22cf13CfGameManagerFv();
+        CfEvtCamManager* mgr2 = (CfEvtCamManager*)func_800821F8__Q22cf13CfGameManagerFv();
         if (mgr2->field_0xC != 0) {
             func_800821F8__Q22cf13CfGameManagerFv()->vf_0x3C(lbl_eu_80667674);
-            CfEvtCamManager* mgr4 = func_800821F8__Q22cf13CfGameManagerFv();
+            CfEvtCamManager* mgr4 = (CfEvtCamManager*)func_800821F8__Q22cf13CfGameManagerFv();
             // Local keeps the player object in one register (retail reuses r3
             // across the two float stores and the func_8049EB60 call).
             UnkEvtPlayer* player = mgr4->field_0xC;

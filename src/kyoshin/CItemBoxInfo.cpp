@@ -7487,7 +7487,9 @@ s32 func_801E9224(void* a, void* b, s32 arg2, void* d) {
 u32 func_801E9310(void* a, void* b, u32 c, void* d) {
     void* lookup = func_8009EC9C((u32)b);
     u32 nameObj = (u32)((char* (*)(void*))func_801393CC)(d);
-    u32 nameId = func_80139358((u32)d);
+    // u16 local: MWCC saves the raw callee return and re-extracts per
+    // argument site (see func_801E98E4 note).
+    u16 nameId = func_80139358((u32)d);
     u8 equipSlot = (u8)func_801392E4((u32)d);
     char* base = lbl_eu_805063BC;
     s16 slotIds[6];
@@ -7512,7 +7514,7 @@ u32 func_801E9310(void* a, void* b, u32 c, void* d) {
                 u8 count = (u8)func_801361E8(nameObj, base + 0x432, (u16)nameId);
                 for (u8 j = 0; (u8)j < count; j++) {
                     sprintf(buf, base + 0x43b, (u8)j + 1);
-                    u32 v = func_80136254((char*)nameObj, buf, (u16)nameId);
+                    u32 v = func_80136254((char*)nameObj, buf, nameId);
                     if ((u16)v != 0) {
                         u16 cat = (u16)func_80139358(v);
                         if (c == cat) {
@@ -7556,7 +7558,7 @@ u32 func_801E9310(void* a, void* b, u32 c, void* d) {
                 u8 count = (u8)func_801361E8(nameObj, base + 0x432, (u16)nameId);
                 for (u8 j = 0; (u8)j < count; j++) {
                     sprintf(buf, base + 0x43b, (u8)j + 1);
-                    u32 v = func_80136254((char*)nameObj, buf, (u16)nameId);
+                    u32 v = func_80136254((char*)nameObj, buf, nameId);
                     if ((u16)v != 0) {
                         u16 cat = (u16)func_80139358(v);
                         if (c == cat) {

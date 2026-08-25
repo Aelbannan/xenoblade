@@ -1076,8 +1076,9 @@ extern "C" CColiObject* func_804A7D1C(CColiObject* self, const VEC3* a,
     self->field_0x5c = f;
     double sq = VEC3Dot(&self->field_0x68, &self->field_0x68);
     self->field_0x308 = sq;
-    if ((f32)sq != lbl_eu_8066AE44) {
-        self->field_0x308 = lbl_eu_8066AE3C / (f32)sq;
+    f32 fsq = (f32)sq;
+    if (fsq != lbl_eu_8066AE44) {
+        self->field_0x308 = lbl_eu_8066AE3C / fsq;
     }
     self->field_0x8c = 0;
     return self;

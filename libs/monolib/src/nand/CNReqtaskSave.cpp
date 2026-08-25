@@ -21,7 +21,7 @@ class CException;
 extern "C" { // lbl_* and func_* retail names need unmangled emission
     extern CNReqtaskSaveVtbl* lbl_eu_806659E0;   // installed save-task vtable pointer (sinit target)
     extern u32 lbl_eu_8056FD68[];               // save-task vtable data - array type prevents sda21
-    extern u8 lbl_eu_806659D8;                   // save-task "open" flag (byte 0 of an 8-byte .sbss block)
+    extern u8 lbl_eu_806659D8[8];                // save-task "open" flag block (byte 0 read)
     extern const wchar_t* lbl_eu_80663B60;       // NAND error message for -4 / -64
     extern const wchar_t* lbl_eu_80663B64;       // NAND error message for -3 / -2
 
@@ -87,7 +87,7 @@ extern "C" { // lbl_* and func_* retail names need unmangled emission
 // Retail only tests byte 0 of the 8-byte .sbss flag (lbz @sda21), so the
 // block-scope declaration narrows the view to a u8 for this read.
 void func_804DA4CC(CNandTask* data, CNandTask* dealloc) {
-    if (lbl_eu_806659D8 != 0) {
+    if (lbl_eu_806659D8[0] != 0) {
         func_804DA69C();
     }
 }
@@ -641,7 +641,9 @@ s32 lbl_eu_806659D4;
 // Retail only reads byte 0 of this flag (lbz @sda21 in func_804DA4CC), so the
 // symbol is declared/defined as u8; the remaining 7 bytes of the retail
 // .sbss block are kept as an explicit pad so lbl_eu_806659E0 stays at +0x10.
-u8 lbl_eu_806659D8;
-u8 lbl_eu_806659D8_pad[7];
+// One 8-byte symbol: retail sizes lbl_eu_806659D8 as 0x8, and a separate
+// pad[7] gets 4-aligned by MWCC (pushing lbl_eu_806659E0 to +0x14 -> .sbss
+// 0x1C). Only byte 0 is ever read (lbz @sda21).
+u8 lbl_eu_806659D8[8];
 CNReqtaskSaveVtbl* lbl_eu_806659E0;
 u32 lbl_eu_806659E4;   // retail 1B at +0x14; 4B pads section to 0x18

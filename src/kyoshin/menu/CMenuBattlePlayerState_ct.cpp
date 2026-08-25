@@ -18,7 +18,9 @@ extern "C" {
 char lbl_eu_8052C1C0[];
 char lbl_eu_8052C330[];
 char lbl_eu_8052C42C[];
-u32 __ptmf_null[3];
+// Retail storage is the PowerPC_EABI_Support runtime's ptmf.o global;
+// this TU must not emit its own .bss copy.
+extern u32 __ptmf_null[3];
 void __ct__8CProcessFv(CProcess*);
 void __ct__17UnkClass_8045F564Fv(UnkClass_8045F564*);
 void func_8010B324(CMenuBattlePlayerStateSlot*);

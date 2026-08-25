@@ -643,7 +643,7 @@ config.libs = [
             Object(NonMatching, "kyoshin/cf/CfGimmickLock.cpp"),
             Object(NonMatching, "kyoshin/cf/CfGimmickWarp.cpp"),
             Object(NonMatching, "kyoshin/cf/CfGimmickJump.cpp"),
-            Object(NonMatching, "kyoshin/cf/CfGimmickItem.cpp"),
+            Object(Matching, "kyoshin/cf/CfGimmickItem.cpp"),
             Object(NonMatching, "kyoshin/makecrystal/CMenuMakeCrystal.cpp", extra_cflags=["-O4,s"]),
             Object(NonMatching, "kyoshin/makecrystal/CMakeCrystalWin.cpp"),
             Object(Matching, "kyoshin/makecrystal/code_80213488.cpp", extra_cflags=["-O4,s", "-func_align 4"]),  # retail func_80213488 keeps the stmw/rolled-loop size form (was pragma optimize_for_size); -func_align 4 kills inter-function padding

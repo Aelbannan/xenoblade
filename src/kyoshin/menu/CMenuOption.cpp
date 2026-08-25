@@ -9,24 +9,17 @@
 #include "monolib/util/MemManager.hpp"
 #include "monolib/work/CWorkThreadSystem.hpp"
 
-// Global-view declarations so the catalog thunks below can address the member
-// methods by their retail symbol names (the definitions below emit those
-// symbols). extern "C" keeps the literal retail name (C++ would mangle the
-// global declaration to <name>__FPv).
-extern "C" void cbRenderBefore__11CMenuOptionFv(void* self);
-extern "C" CMenuOption* __dt__11CMenuOptionFv(CMenuOption* _this, int flags);
-
-/* Retail constructor symbol (unmangled global). Mirrors the matched
+/* Retail constructor symbol (unmangled member form). Mirrors the matched
  * CMenuKizunaTalkList / CCol6Invite ctor pattern: base CProcess ctor, temp
  * vtable store, null PMF data copy (two 3-word slots at 0x3C/0x48), then the
  * composite vtable + IScnRender sub-vtable at +0x58, then each embedded
  * widget's ctor and the final state bytes. */
-extern "C" CMenuOption* __ct__CMenuOption(CMenuOption* self, CProcess* parent, u32 arg) {
-    __ct__8CProcessFv((CProcess*)self);
+CMenuOption* __ct__CMenuOption(CMenuOption* _this, CProcess* parent, u32 arg) {
+    __ct__8CProcessFv((CProcess*)_this);
 
     // vtable fixups: temp (CProcess) vtable first, then the composite vtable
     // and the IScnRender sub-vtable at +0x58.
-    *(u32*)((u8*)self + 0x10) = (u32)lbl_eu_8052BF70;
+    reinterpret_cast<CMenuOptionVtblView*>(_this)->mProcVtable = lbl_eu_8052BF70;
     // Post-increment walk forces MWCC's lwzu fold for the base (btm_sco_init
     // pattern). The second group restarts from the array base so its loads
     // stay at disp 0/4/8.
@@ -39,30 +32,31 @@ extern "C" CMenuOption* __ct__CMenuOption(CMenuOption* self, CProcess* parent, u
     u32* src = __ptmf_null;
     pmfV0 = *src++;
     pmfV1 = *src++;
-    self->mPtmfCallbacks[1] = pmfV1;
-    self->mPtmfCallbacks[0] = pmfV0;
+    _this->mPtmfCallbacks[1] = pmfV1;
+    _this->mPtmfCallbacks[0] = pmfV0;
     pmfV2 = *src++;
-    self->mPtmfCallbacks[2] = pmfV2;
+    _this->mPtmfCallbacks[2] = pmfV2;
     src = __ptmf_null;
     pmfU0 = *src++;
     pmfU1 = *src++;
-    self->mPtmfCallbacks[4] = pmfU1;
-    self->mPtmfCallbacks[3] = pmfU0;
+    _this->mPtmfCallbacks[4] = pmfU1;
+    _this->mPtmfCallbacks[3] = pmfU0;
     pmfU2 = *src++;
-    self->mPtmfCallbacks[5] = pmfU2;
-    self->mField54 = 0;
-    self->mField55 = 0;
+    _this->mPtmfCallbacks[5] = pmfU2;
+    _this->mField54 = 0;
+    _this->mField55 = 0;
 
-    *(u32*)((u8*)self + 0x10) = (u32)lbl_eu_805392C8;
-    *(u32*)((u8*)self + 0x58) = (u32)lbl_eu_805392C8 + 0x24;
-    self->mParentRef = parent;
+    CMenuOptionVtblView* vtSlots = reinterpret_cast<CMenuOptionVtblView*>(_this);
+    vtSlots->mProcVtable = lbl_eu_805392C8;
+    vtSlots->mScnRenderVt = (void*)((u32)lbl_eu_805392C8 + 0x24);
+    _this->mParentRef = parent;
 
-    __ct__CBgTex(&self->mBgTex, 0);
-    __ct__CTitleAHelp(&self->mTitleAHelp, 0, 0);
-    __ct__COption(&self->mOption, 0);
-    self->mState = 0;
-    self->mArg = arg;
-    return self;
+    __ct__CBgTex((CBgTex*)_this->mBgTex, 0);
+    __ct__CTitleAHelp((CTitleAHelp*)_this->mTitleAHelp, 0, 0);
+    __ct__COption((COption*)_this->mOption, 0);
+    _this->mState = 0;
+    _this->mArg = arg;
+    return _this;
 }
 
 // ---------------------------------------------------------------------------
@@ -77,9 +71,9 @@ extern "C" CMenuOption* __ct__CMenuOption(CMenuOption* self, CProcess* parent, u
 // ---------------------------------------------------------------------------
 CMenuOption* __dt__11CMenuOptionFv(CMenuOption* _this, int flags) {
     if (_this != 0) {
-        __dt__7COptionFv(&_this->mOption, -1);
-        __dt__11CTitleAHelpFv(&_this->mTitleAHelp, -1);
-        __dt__6CBgTexFv(&_this->mBgTex, -1);
+        __dt__7COptionFv((COption*)_this->mOption, -1);
+        __dt__11CTitleAHelpFv((CTitleAHelp*)_this->mTitleAHelp, -1);
+        __dt__6CBgTexFv((CBgTex*)_this->mBgTex, -1);
         __dt__800FED0C(_this, 0);
         if (flags > 0) {
             operator delete(_this);
@@ -109,7 +103,7 @@ void CMenuOption::Init() {
     *(u8*)((u8*)this + 0x7e) = *(u8*)(tempBgTex + 0x1e);
     __dt__6CBgTexFv(reinterpret_cast<CBgTex*>(tempBgTex), -1);
 
-    func_801C3C14(&mBgTex);
+    func_801C3C14((CBgTex*)mBgTex);
 
     // --- Re-initialise the embedded CTitleAHelp via a temporary ---
     char* name = func_80136190(lbl_eu_805103C4, lbl_eu_805103C4 + 9, 0x3b);
@@ -132,7 +126,7 @@ void CMenuOption::Init() {
     *(u8*)((u8*)this + 0xb7) = *(u8*)(tempTitle + 0x37);
     __dt__11CTitleAHelpFv(reinterpret_cast<CTitleAHelp*>(tempTitle), -1);
 
-    CTitleAHelp_load(&mTitleAHelp);
+    CTitleAHelp_load((CTitleAHelp*)mTitleAHelp);
 
     // --- Re-initialise the embedded COption via a temporary ---
     u8 tempOption[0x104];
@@ -198,12 +192,12 @@ void CMenuOption::Init() {
     *(u32*)((u8*)this + 0x1b8) = *(u32*)(tempOption + 0x100);
     __dt__7COptionFv(reinterpret_cast<COption*>(tempOption), -1);
 
-    func_8029C35C(&mOption);
+    func_8029C35C((COption*)mOption);
 
     // Register the widget as an IScnRender render callback on its parent scene.
     IScnRender* renderCB = reinterpret_cast<IScnRender*>(this);
     if (this != NULL) {
-        renderCB = &mIScnRender;
+        renderCB = reinterpret_cast<IScnRender*>(mIScnRender);
     }
     reinterpret_cast<CScn*>(mParentRef)->addRenderCB(renderCB, 0xd, 0);
 }
@@ -214,13 +208,13 @@ void CMenuOption::Term() {
     // The `if (this)` is the MWCC idiom that splits mr r4,r31 / beq / addi r4,+0x58.
     IScnRender* renderCB = reinterpret_cast<IScnRender*>(this);
     if (this != NULL) {
-        renderCB = &mIScnRender;
+        renderCB = reinterpret_cast<IScnRender*>(mIScnRender);
     }
     reinterpret_cast<CScn*>(mParentRef)->removeRenderCB(renderCB);
 
-    func_801C3D9C(&mBgTex);
-    func_801C40A0(&mTitleAHelp);
-    func_8029C66C(&mOption);
+    func_801C3D9C((CBgTex*)mBgTex);
+    func_801C40A0((CTitleAHelp*)mTitleAHelp);
+    func_8029C66C((COption*)mOption);
 
     lbl_eu_80664A38 = 0;
     func_8008294C__Q22cf13CfGameManagerFv(0);
@@ -237,9 +231,9 @@ void CMenuOption::Move() {
     case 3: func_8029BE7C(this); break;
     }
 
-    func_801C3D54(&mBgTex);
-    func_801C3FF0(&mTitleAHelp);
-    func_8029C4F4(&mOption);
+    func_801C3D54((CBgTex*)mBgTex);
+    func_801C3FF0((CTitleAHelp*)mTitleAHelp);
+    func_8029C4F4((COption*)mOption);
 }
 
 void CMenuOption::cbRenderBefore() {
@@ -255,16 +249,16 @@ void CMenuOption::cbRenderBefore() {
     u8 drawInfo[0x54];
     __ct__Q34nw4r3lyt8DrawInfoFv((nw4r::lyt::DrawInfo*)&drawInfo[0]);
     func_80137250((nw4r::lyt::DrawInfo*)&drawInfo[0]);
-    func_801C3D7C(&mBgTex, (nw4r::lyt::DrawInfo*)&drawInfo[0]);
-    func_8029C5C8(&mOption, (nw4r::lyt::DrawInfo*)&drawInfo[0]);
-    func_801C4080(&mTitleAHelp, (nw4r::lyt::DrawInfo*)&drawInfo[0]);
+    func_801C3D7C((CBgTex*)mBgTex, (nw4r::lyt::DrawInfo*)&drawInfo[0]);
+    func_8029C5C8((COption*)mOption, (nw4r::lyt::DrawInfo*)&drawInfo[0]);
+    func_801C4080((CTitleAHelp*)mTitleAHelp, (nw4r::lyt::DrawInfo*)&drawInfo[0]);
     __dt__Q34nw4r3lyt8DrawInfoFv((nw4r::lyt::DrawInfo*)&drawInfo[0], -1);
 }
 
 /* Singleton factory (retail unmangled symbol). Returns 0 if an instance is
  * already live; otherwise allocates the 0x1C0-byte screen, constructs it,
  * stores it in the shared flag and registers it under `registParent`. */
-extern "C" CMenuOption* func_8029BB24(CProcess* registParent, CProcess* parent, u32 arg) {
+CMenuOption* func_8029BB24(CProcess* registParent, CProcess* parent, u32 arg) {
     if (lbl_eu_80664A38 != 0) {
         return NULL;
     }
@@ -282,10 +276,10 @@ extern "C" CMenuOption* func_8029BB24(CProcess* registParent, CProcess* parent, 
  * and option panel are all ready, then start the panel intro animations and
  * play the confirm sound effect (writes the state byte at 0x1BC). */
 void func_8029BBB0(CMenuOption* self) {
-    if (func_801C3E34(&self->mBgTex) != 0 && func_801C4114(&self->mTitleAHelp) != 0 &&
-        func_8029C734(&self->mOption) != 0) {
-        func_801C412C(&self->mTitleAHelp);
-        func_8029CB9C(&self->mOption);
+    if (func_801C3E34((CBgTex*)self->mBgTex) != 0 && func_801C4114((CTitleAHelp*)self->mTitleAHelp) != 0 &&
+        func_8029C734((COption*)self->mOption) != 0) {
+        func_801C412C((CTitleAHelp*)self->mTitleAHelp);
+        func_8029CB9C((COption*)self->mOption);
         self->mState = 1;
         func_80138078__FUl(0x6d);
     }
@@ -294,7 +288,7 @@ void func_8029BBB0(CMenuOption* self) {
 /* Advance the option menu to phase 2 once the title bar is idle and the
  * option panel has finished its intro (writes the state byte at 0x1BC). */
 void func_8029BC28(CMenuOption* self) {
-    if (isIdle__11CTitleAHelpFv(&self->mTitleAHelp) != 0 && func_8029C790(&self->mOption) != 0) {
+    if (isIdle__11CTitleAHelpFv((CTitleAHelp*)self->mTitleAHelp) != 0 && func_8029C790((COption*)self->mOption) != 0) {
         self->mState = 2;
     }
 }
@@ -305,7 +299,7 @@ void func_8029BC28(CMenuOption* self) {
  * title/help bar with the option's current index and advances the phase state
  * machine (mState / mField54). */
 void func_8029BC78(CMenuOption* self) {
-    if (func_8029C734(&self->mOption) == 0) {
+    if (func_8029C734((COption*)self->mOption) == 0) {
         return;
     }
 
@@ -347,35 +341,35 @@ void func_8029BC78(CMenuOption* self) {
     }
 
     if (left) {
-        func_8029CC9C(&self->mOption);
+        func_8029CC9C((COption*)self->mOption);
     } else if (right) {
-        func_8029CDB0(&self->mOption, 0);
+        func_8029CDB0((COption*)self->mOption, 0);
     } else if (up) {
-        func_8029C7A8(&self->mOption);
+        func_8029C7A8((COption*)self->mOption);
     } else if (down) {
-        func_8029C8C4(&self->mOption);
+        func_8029C8C4((COption*)self->mOption);
     } else if (pageUp) {
-        func_8029C9E8(&self->mOption);
+        func_8029C9E8((COption*)self->mOption);
     } else if (pageDown) {
-        func_8029CABC(&self->mOption);
+        func_8029CABC((COption*)self->mOption);
     } else if (pageLeft) {
-        func_8029CF7C(&self->mOption);
+        func_8029CF7C((COption*)self->mOption);
     } else if (pageRight) {
-        func_8029CDB0(&self->mOption, 1);
+        func_8029CDB0((COption*)self->mOption, 1);
     }
 
-    func_801C41E8(&self->mTitleAHelp, (u8)func_8029D054(&self->mOption));
+    func_801C41E8((CTitleAHelp*)self->mTitleAHelp, (u8)func_8029D054((COption*)self->mOption));
 
-    if (func_8029C798(&self->mOption) != 0) {
-        if (func_8029C7A0(&self->mOption) != 0) {
+    if (func_8029C798((COption*)self->mOption) != 0) {
+        if (func_8029C7A0((COption*)self->mOption) != 0) {
             if (func_800FEDF8() != 0) {
                 func_800FF914();
             }
             self->mState = 4;
             self->mField54 = 1;
         } else {
-            func_801C414C(&self->mTitleAHelp);
-            func_8029CC30(&self->mOption);
+            func_801C414C((CTitleAHelp*)self->mTitleAHelp);
+            func_8029CC30((COption*)self->mOption);
             self->mState = 3;
         }
     }
@@ -384,7 +378,7 @@ void func_8029BC78(CMenuOption* self) {
 /* Same idle+advance check as func_8029BC28, but advances the option menu to
  * phase 1 (writes the state byte at offset 0x54). */
 void func_8029BE7C(CMenuOption* self) {
-    if (isIdle__11CTitleAHelpFv(&self->mTitleAHelp) != 0 && func_8029C790(&self->mOption) != 0) {
+    if (isIdle__11CTitleAHelpFv((CTitleAHelp*)self->mTitleAHelp) != 0 && func_8029C790((COption*)self->mOption) != 0) {
         self->mField54 = 1;
     }
 }
@@ -399,7 +393,7 @@ void func_8029BE7C(CMenuOption* self) {
  * Retail: subi r3, r3, 0x58; b cbRenderBefore__11CMenuOptionFv
  */
 void func_8029BECC(void* self) {
-    ((void(*)(void*))cbRenderBefore__11CMenuOptionFv)((char*)self - 0x58);
+    reinterpret_cast<CMenuOption*>(static_cast<char*>(self) - 0x58)->cbRenderBefore();
 }
 
 /**
@@ -414,4 +408,4 @@ void func_8029BED4(void* self) {
     ((void(*)(void*))__dt__11CMenuOptionFv)((char*)self - 0x58);
 }
 
-extern "C" unsigned long func_8029BBA0(void) { return lbl_eu_80664A38 != 0; }
+unsigned long func_8029BBA0(void) { return lbl_eu_80664A38 != 0; }

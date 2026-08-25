@@ -6,7 +6,7 @@
 #include "monolib/device/CDeviceFile.hpp"
 #include "monolib/util/MemManager.hpp"
 
-// Forward declarations of intra-TU callees (free unmangled functions).
+// Forward declarations of intra-TU callees.
 void func_8025E0D8(CPcKizunagram* self);
 void func_8025D688(CPcKizunaCur* self);
 extern "C" CPcKizunaSlotEntry* func_8025F290(CPcKizunaSlotEntry* p);
@@ -262,8 +262,8 @@ extern "C" void __declspec(noinline) func_8025DCB0(CPcKizunagram* self) {
 // extern "C" keeps the unmangled retail symbol names.
 // func_8025DCFC: refresh all 6 affinity rows for the current character.
 extern "C" __declspec(noinline) void func_8025DCFC(CPcKizunagram* self) {
-    const void* table = getFP__FPCc(lbl_eu_8050D868 + 0x7f);
-    u8 count = (u8)func_8003B1EC((void*)table);
+    void* table = getFP__FPCc(lbl_eu_8050D868 + 0x7f);
+    u8 count = (u8)func_8003B1EC(table);
     func_8009CF8C(0x20);
 
     for (u8 n = 1; n <= count; n++) {
@@ -273,7 +273,9 @@ extern "C" __declspec(noinline) void func_8025DCFC(CPcKizunagram* self) {
             // --- selected row ---
             if (pane != 0) func_80124270(pane, 1);
             if (func_8025E9E4(self, table, (u8)n) != 0) {
-                func_80137C1C(pane, 0x7777ffff);
+                // 64-bit intermediates force MWCC's lis(hi)+addi(lo) synthesis instead
+    // of rematerializing the full literal at each use.
+    func_80137C1C(pane, (u32)((0x7777ull << 16) + 0x77ff));
             }
             for (u32 k = 1; k <= 6; k++) {
                 char buf[0x20];
@@ -281,7 +283,10 @@ extern "C" __declspec(noinline) void func_8025DCFC(CPcKizunagram* self) {
                 u32 e8 = func_801361E8((u32)table, buf, (u8)n);
                 int rnd = (e8 & 0xff) + 0x29;
                 func_8009CF8C(rnd);
-                u8 lb8 = 0, lb9 = 0;
+                u8 lb9;
+                u8 lb8;
+                lb9 = 0;
+                lb8 = 0;
                 func_8013AB0C(&lb9, &lb8, rnd);
                 int r21 = 0;
                 if (func_8025E904(self, table, lb9) != 0 && func_8025E904(self, table, lb8) != 0) {
@@ -292,7 +297,8 @@ extern "C" __declspec(noinline) void func_8025DCFC(CPcKizunagram* self) {
                 nw4r::lyt::Pane* p = self->mLayout->GetRootPane()->FindPaneByName(str, true);
                 if (p != 0) func_80124270(p, r21);
                 if (r21 != 0) {
-                    u32 tex = (u32)self->mArcRes->GetResource(0x74696d67, lbl_eu_8050D868 + 0xb5, 0);
+                    u32 tex = (u32)self->mArcRes->GetResource(
+                        (u32)((0x7469ull << 16) + 0x6d67), lbl_eu_8050D868 + 0xb5, 0);
                     if (tex != 0) func_80137F88(p, tex);
                 }
                 char* str2 = (char*)func_80136190(lbl_eu_8050D868 + 0xa0, lbl_eu_8050D868 + 0xca, id);
@@ -330,22 +336,32 @@ extern "C" __declspec(noinline) void func_8025DCFC(CPcKizunagram* self) {
     func_8025E0D8(self);
 }
 
+// Speed-style allocation: retail keeps nine values in nonvolatiles across
+// the BDAT calls (i=r30, count/e8=r29, base=r28, table=r27, k=r26).
 void func_8025E0D8(CPcKizunagram* self) {
-    const void* table = getFP__FPCc(lbl_eu_8050D868 + 0x7f);
+    // Declaration order drives MWCC's descending nonvolatile coloring
+    // (retail: i=r30, count=r29, base=r28, table=r27).
+    u8 i;
+    u8 count;
+    u32 k;
+    void* table = getFP__FPCc(lbl_eu_8050D868 + 0x7f);
     // First pass: build the character-row lookup table (BDAT indexed by row).
     // u8 counter/count drive the retail clrlwi + cmplw (unsigned) loop.
-    u8 count = (u8)func_8003B1EC((void*)table);
-    for (u8 i = 0; i < count; i++) {
+    count = (u8)func_8003B1EC(table);
+    for (i = 0; i < count; i++) {
         func_8013639C(table, lbl_eu_8050D868 + 0x90, (u8)i + 1);
     }
 
     // Second pass: refresh the 6 affinity rows (u32 counter -> cmplwi/ble).
-    for (u32 k = 1; k <= 6; k++) {
+    for (k = 1; k <= 6; k++) {
         char buf[0x20];
         sprintf(buf, lbl_eu_8050D868 + 0x96, (u8)k);
         u32 e8 = func_801361E8((u32)table, buf, (s8)self->mField28 + 1);
-        int id = (e8 & 0xff) + 1;
+        // Two distinct mask forms stop MWCC from CSE-ing a single masked
+        // temp; retail recomputes the byte after the rand call from a raw
+        // copy held in a nonvolatile.
         u16 val = (u16)func_8009CF8C((e8 & 0xff) + 0x29);
+        int id = (u8)e8 + 1;
 
         char* str1 = (char*)func_80136190(lbl_eu_8050D868 + 0xa0, lbl_eu_8050D868 + 0xaf, id);
         nw4r::lyt::Pane* pane = self->mLayout->GetRootPane()->FindPaneByName(str1, true);
@@ -459,12 +475,14 @@ void __declspec(noinline) func_8025E4A4(CPcKizunagram* self) {
     nw4r::lyt::Pane* pane2 =
         self->mLayout->GetRootPane()->FindPaneByName(lbl_eu_8050D868 + 0x1c5, true);
     CPcKizunaVec3 pos;
-    CPcKizunaVec3 tmp;
+    // Word-wise temp copy: retail moves the 12 bytes as integers (lwz/stw),
+    // not through the FP registers.
+    u32 tmp[3];
     func_80137924(&pos, pane1, pane2, self->mLayout->GetRootPane());
-    tmp.x = pos.x;
-    tmp.y = pos.y;
-    tmp.z = pos.z;
-    func_8025D6E0((CPcKizunaTreeRoot*)self->mKizunaCur, &tmp);
+    tmp[0] = *(u32*)&pos.x;
+    tmp[1] = *(u32*)&pos.y;
+    tmp[2] = *(u32*)&pos.z;
+    func_8025D6E0((CPcKizunaTreeRoot*)self->mKizunaCur, (CPcKizunaVec3*)tmp);
 }
 
 extern "C" void __declspec(noinline) func_8025E56C(CPcKizunagram* self) {
@@ -486,18 +504,28 @@ extern "C" void __declspec(noinline) func_8025E5A8(CPcKizunagram* self) {
 }
 
 extern "C" void func_8025E5E4(CPcKizunagram* self, u32 value) {
-    const void* table = getFP__FPCc(lbl_eu_8050D868 + 0x7f);
-    u8 count = (u8)func_8003B1EC((void*)table);
-    for (u8 i = 0; i < count; i++) {
+    // Declaration order nudges MWCC's nonvolatile coloring toward retail
+    // (base, count, i, k, table ascending); id-before-val flips their pair.
+    u8 count;
+    u8 i;
+    u32 k;
+    int id;
+    u16 val;
+    const void* table;
+    table = getFP__FPCc(lbl_eu_8050D868 + 0x7f);
+    count = (u8)func_8003B1EC((void*)table);
+    for (i = 0; i < count; i++) {
         func_8013639C(table, lbl_eu_8050D868 + 0x90, (u8)i + 1);
     }
 
-    for (u32 k = 1; k <= 6; k++) {
+    for (k = 1; k <= 6; k++) {
         char buf1[0x20];
         sprintf(buf1, lbl_eu_8050D868 + 0x96, (u8)k);
         u32 e8 = func_801361E8((u32)table, buf1, (s8)self->mField28 + 1);
-        int id = (e8 & 0xff) + 1;
+        // Retail evaluates the rand column first (keeping raw e8 live across
+        // the call), then derives id from the masked byte.
         u16 val = (u16)func_8009CF8C((e8 & 0xff) + 0x29);
+        int id = (u8)e8 + 1;
 
         char* str1 = (char*)func_80136190(lbl_eu_8050D868 + 0xa0, lbl_eu_8050D868 + 0xaf, id);
         nw4r::lyt::Pane* pane = self->mLayout->GetRootPane()->FindPaneByName(str1, true);
@@ -505,12 +533,20 @@ extern "C" void func_8025E5E4(CPcKizunagram* self, u32 value) {
         if (func_801C4648() == 0) continue;
 
         // Select a fixed resource-name for the mood texture by affinity value.
-        const char* s1;
+        // Default-zero init lets MWCC hoist the li r5,0 above the branch chain
+        const char* s1 = 0;
         if (val < 0xbb8) {
-            s1 = (val < 0x7d0) ? (val < 0x3e8) ? lbl_eu_8050D868 + 0xe4 : lbl_eu_8050D868 + 0xf9
-                                : lbl_eu_8050D868 + 0x10e;
+            if (val < 0x7d0)
+                s1 = (val < 0x3e8) ? lbl_eu_8050D868 + 0xe4 : lbl_eu_8050D868 + 0xf9;
+            else
+                s1 = lbl_eu_8050D868 + 0x10e;
         } else {
-            s1 = (val >= 0x2711) ? 0 : (val >= 0x1388) ? lbl_eu_8050D868 + 0x138 : lbl_eu_8050D868 + 0x123;
+            if (val < 0x2711) {
+                if (val < 0x1388)
+                    s1 = lbl_eu_8050D868 + 0x123;
+                else
+                    s1 = lbl_eu_8050D868 + 0x138;
+            }
         }
         u32 tex1 = (u32)self->mArcRes->GetResource(0x74696d67, s1, 0);
         if (tex1 != 0) func_80137F88(pane, tex1);
@@ -543,7 +579,7 @@ extern "C" void func_8025E5E4(CPcKizunagram* self, u32 value) {
         }
 
         char* str3 = (char*)func_80136190(lbl_eu_8050D868 + 0xa0, lbl_eu_8050D868 + 0xd4, id);
-        func_80136910__FPQ34nw4r3lyt6LayoutPcUc(self->mLayout, str3, (u8)val);
+        func_80136910__FPQ34nw4r3lyt6LayoutPcUc(self->mLayout, str3, val);
         nw4r::lyt::Pane* pane3 = self->mLayout->GetRootPane()->FindPaneByName(str3, true);
         if (pane3 != 0) func_80124270(pane3, 1);
     }
@@ -754,19 +790,28 @@ void func_8025EE7C(CPcKizunagramBig* self, int r4) {
 }
 
 extern "C" void func_8025EE94(CPcKizunagramBig* self) {
+    // Hoisted before the outer pass: both stay live across the memset call,
+    // forcing them into nonvolatile registers like retail (r28/r27).
+    int count = 0xb;
+    u32 one = 1;
+    int i = 0;
+    CPcKizunaSlot* slot = &self->slots[0];
+    int saved;
+    u32 id;
+    CPcKizunaSlotEntry* prv;
+    CPcKizunaSlotEntry* nxt;
     // Outer pass: for each of the first 5 slots, unlink its data00 entry from
     // the doubly-linked list, re-zero it (keeping only the low bit of byte14)
     // and clear the id bit from the persistence bitmap when the id isn't
     // duplicated elsewhere in the chart.
-    for (int i = 0; i < 5; i++) {
-        CPcKizunaSlot* slot = &self->slots[i];
+    while (i < 5) {
         CPcKizunaSlotEntry* entry = &slot->data00;
-        CPcKizunaSlotEntry* nxt = entry->pField18;
-        u16 id = entry->field04;
-        CPcKizunaSlotEntry* prv = entry->pField1C;
+        nxt = entry->pField18;
+        id = entry->field04;
+        prv = entry->pField1C;
         if (nxt != 0) nxt->pField1C = prv;
         if (prv != 0) prv->pField18 = nxt;
-        u8 saved = entry->byte14 & 1;
+        saved = entry->byte14 & 1;
         memset(entry, 0, 0x20);
         entry->byte14 = saved;
 
@@ -775,47 +820,53 @@ extern "C" void func_8025EE94(CPcKizunagramBig* self) {
             found = 0;
         } else {
             // Search all 11 slots' 6 entries for a duplicate id. Constant trip
-            // count drives the retail mtctr/bdnz loop (count hoisted before the
-            // outer loop); found=0 after the loop emits the fallthrough li.
+            // count drives the retail mtctr/bdnz loop; found=0 after the loop
+            // emits the fallthrough li.
             CPcKizunaSlot* sp = &self->slots[0];
-            for (int j = 0; j < 11; j++) {
-                if (sp->data00.field04 == id) { found = 1; goto searchDone; }
-                if (sp->sub[0].field04 == id) { found = 1; goto searchDone; }
-                if (sp->sub[1].field04 == id) { found = 1; goto searchDone; }
-                if (sp->sub[2].field04 == id) { found = 1; goto searchDone; }
-                if (sp->sub[3].field04 == id) { found = 1; goto searchDone; }
-                if (sp->sub[4].field04 == id) { found = 1; goto searchDone; }
+            int j = 0;
+            while (j < count) {
+                if (id == sp->data00.field04) { found = 1; goto searchDone; }
+                if (id == sp->sub[0].field04) { found = 1; goto searchDone; }
+                if (id == sp->sub[1].field04) { found = 1; goto searchDone; }
+                if (id == sp->sub[2].field04) { found = 1; goto searchDone; }
+                if (id == sp->sub[3].field04) { found = 1; goto searchDone; }
+                if (id == sp->sub[4].field04) { found = 1; goto searchDone; }
                 sp++;
+                j++;
             }
             found = 0;
         }
     searchDone:
         if (!found) {
             // Clear bit (id & 0x1f) of the 32-bit word at data870 + ((id>>3)&~7).
-            u32 bit = 1u << (id & 0x1f);
-            u32* p = (u32*)(self->data870 + ((id >> 3) & ~7));
+            // Constant written out so MWCC folds the mask to rlwinm ...,3,29.
+            u32 bit = one << (id & 0x1f);
+            u32* p = (u32*)(self->data870 + ((id >> 3) & 0x1FFFFFF8));
             *p &= ~bit;
         }
+        i++;
+        slot++;
     }
 
     // --- Second half: populate the current slot indicated by field_0x89C.
+    // Retail reuses the first-half id/saved registers for tbl/total here.
     int f89C = self->field_0x89C;
     int f86C = self->field_0x86C;
-    u32 tbl = lbl_eu_8066415C;
-    int total = f89C + (f86C - 1) * 5 + 1;
-    CPcKizunaSlot* cur = &self->slots[f89C];
+    id = lbl_eu_8066415C;
+    saved = f89C + (f86C - 1) * 5 + 1;
+    slot = &self->slots[f89C];
 
     // Find the first free sub-slot (word == 0) in the current slot.
     int idx;
-    if (cur->sub[0].word == 0) {
+    if (slot->sub[0].word == 0) {
         idx = 0;
-    } else if (cur->sub[1].word == 0) {
+    } else if (slot->sub[1].word == 0) {
         idx = 1;
-    } else if (cur->sub[2].word == 0) {
+    } else if (slot->sub[2].word == 0) {
         idx = 2;
-    } else if (cur->sub[3].word == 0) {
+    } else if (slot->sub[3].word == 0) {
         idx = 3;
-    } else if (cur->sub[4].word == 0) {
+    } else if (slot->sub[4].word == 0) {
         idx = 4;
     } else {
         idx = -1;
@@ -834,17 +885,17 @@ extern "C" void func_8025EE94(CPcKizunagramBig* self) {
     // Look up both column values first (retail keeps both on the stack across
     // the second call), then store them into the entry.
     const char* cols = lbl_eu_8050DB18;
-    u32 v1 = getBdatStringColumnValue((void*)tbl, cols + 0x6, total);
-    u32 v2 = getBdatStringColumnValue((void*)tbl, fmt, total);
-    cur->data00.field04 = (u8)v1;
-    cur->data00.field08 = (u8)v2;
-    cur->data00.byte14 |= 2;
+    u32 v1 = getBdatStringColumnValue((char*)id, &cols[0x6], saved);
+    slot->data00.field04 = (u8)v1;
+    u32 v2 = getBdatStringColumnValue((char*)id, fmt, saved);
+    slot->data00.field08 = (u8)v2;
+    slot->data00.byte14 |= 2;
 
     // Set the new id's bit in the persistence bitmap.
-    u16 newid = cur->data00.field04;
-    u32* p2 = (u32*)(self->data870 + ((newid >> 3) & ~7));
+    u16 newid = slot->data00.field04;
+    u32* p2 = (u32*)(self->data870 + ((newid >> 3) & 0x1FFFFFF8));
     *p2 |= (1u << (newid & 0x1f));
-    func_8025F114(self, &cur->data00);
+    func_8025F114(self, &slot->data00);
 }
 
 // Persist an affinity entry (func_8025F114). If the entry's id is not yet in
@@ -877,7 +928,7 @@ extern "C" void func_8025F114(CPcKizunagramBig* self, CPcKizunaSlotEntry* entry)
         if (pos == entry) continue;
         // Walk the prev chain toward the list head; retail unrolls 10 loads,
         // then hands the remainder to the shared walker func_8025F290.
-        CPcKizunaSlotEntry* head;
+        CPcKizunaSlotEntry* head = pos;
         CPcKizunaSlotEntry* cur = pos;
         CPcKizunaSlotEntry* nxt = cur->pField1C;
         if (nxt != 0) {
@@ -985,14 +1036,12 @@ extern "C" __declspec(noinline) CPcKizunaSlotEntry* func_8025F290(CPcKizunaSlotE
 #pragma push
 #pragma optimize_for_size off
 extern "C" void func_8025F2E8(CPcKizunaChart* self, int a, int b, int value) {
-    CPcKizunagramBig* big = (CPcKizunagramBig*)self;
-    // Slot-base pointer (retail r25 = a*0xC4): used repeatedly, so MWCC must
-    // keep the mulli result in a register instead of rematerializing it.
-    CPcKizunaSlot* slot = &big->slots[a];
+    u32 off = a * 0xC4;
     u32 sub = b << 5;
+    CPcKizunagramBig* big = (CPcKizunagramBig*)self;
     // Distinct GVN forms (shift vs multiply) so retail's two uncoalesced
     // position registers are reproduced.
-    CPcKizunaSlotEntry* entry = (CPcKizunaSlotEntry*)((u8*)slot + sub);
+    CPcKizunaSlotEntry* entry = (CPcKizunaSlotEntry*)((u8*)self + off + sub);
     CPcKizunaSlotEntry* nxt = entry->pField18;
     u16 id = entry->field04;
     CPcKizunaSlotEntry* prv = entry->pField1C;
@@ -1001,7 +1050,7 @@ extern "C" void func_8025F2E8(CPcKizunaChart* self, int a, int b, int value) {
 
     // Retail rematerializes the position from the raw indices after the
     // unlink consumes its first base register.
-    CPcKizunaSlotEntry* pos = (CPcKizunaSlotEntry*)(slot + b);
+    CPcKizunaSlotEntry* pos = (CPcKizunaSlotEntry*)((u8*)big + off + b * 0x20);
     u8 saved = pos->byte14 & 1;
     memset(pos, 0, 0x20);
     pos->byte14 = saved;
@@ -1039,7 +1088,7 @@ searchDone:
     // the getBdatStringColumnValue sequence).
     u32 tbl = lbl_eu_80664158;
     char* const cols = lbl_eu_8050DB18;
-    CPcKizunaSlotEntry* dst = &slot->data00 + b;
+    CPcKizunaSlotEntry* dst = (CPcKizunaSlotEntry*)((u8*)big + off + sub);
     dst->word = value;
     u8 c1 = getBdatStringColumnValue((void*)tbl, cols + 0x6, value);
     dst->field04 = c1;
@@ -1051,7 +1100,7 @@ searchDone:
     dst->field10 = (float)c4;
     u8 c5 = getBdatStringColumnValue((void*)tbl, cols + 0x1b, value);
     pos->byte14 |= c5;
-    func_8025F114(big, &slot->data00 + b);
+    func_8025F114(big, (CPcKizunaSlotEntry*)((u8*)big + off + b * 0x20));
 }
 #pragma pop
 
@@ -1114,13 +1163,14 @@ searchDone:
 
 // func_8025F768: same (re)load as func_8025F2E8, but on the per-character
 // working copy, which sits 0x3D4 bytes past the matching total-chart position
-// (union view). Retail holds the slot/sub offsets as scalars and re-derives
-// the position pointer at each access, so every statement recomputes it.
-#define KIZ_WORK_POS(chart, o, s) ((CPcKizunaWorkEntryPos*)((u8*)(chart) + (o) + (s)))
-
+// (union view). Retail keeps nine values in nonvolatiles across the BDAT
+// calls (speed-style allocation); disable the unit's size bias here too.
+#pragma push
+#pragma optimize_for_size off
 extern "C" void func_8025F768(CPcKizunaChart* self, int a, int b, int value) {
     u32 off = a * 0xC4;
     u32 sub = b << 5;
+    CPcKizunagramBig* big = (CPcKizunagramBig*)self;
 
     // Unlink the working-copy entry from its id's doubly-linked list.
     CPcKizunaWorkEntryPos* wp = (CPcKizunaWorkEntryPos*)((u8*)self + off + sub);
@@ -1130,8 +1180,9 @@ extern "C" void func_8025F768(CPcKizunaChart* self, int a, int b, int value) {
     if (nxt != 0) nxt->pField1C = prv;
     if (prv != 0) prv->pField18 = nxt;
 
-    // Zero the entry, keeping only bit 0 of byte14.
-    CPcKizunaWorkEntryPos* wq = (CPcKizunaWorkEntryPos*)((u8*)self + sub + off);
+    // Zero the entry (retail rematerializes the position from the raw indices
+    // after the unlink), keeping only bit 0 of byte14.
+    CPcKizunaWorkEntryPos* wq = (CPcKizunaWorkEntryPos*)((u8*)big + off + sub);
     u8 saved = wq->entry.byte14 & 1;
     memset(&wq->entry, 0, 0x20);
     wq->entry.byte14 = saved;
@@ -1143,44 +1194,49 @@ extern "C" void func_8025F768(CPcKizunaChart* self, int a, int b, int value) {
     } else {
         // Constant trip count drives the retail mtctr/bdnz loop; the sub-entry
         // checks share a lagging cursor 0x40 past the slot base.
-        const CPcKizunaSlot* sp = &self->searchSlots[0];
+        const CPcKizunaSlot* sp = &big->slots[0];
         int n = 0xb;
         do {
             const CPcKizunaSlotEntry* e = &sp->sub[1];
-            if (id == sp->data00.field04) { found = 1; goto searchDone; }
-            if (id == sp->sub[0].field04) { found = 1; goto searchDone; }
-            if (id == e->field04) { found = 1; goto searchDone; }
-            if (id == e[1].field04) { found = 1; goto searchDone; }
-            if (id == e[2].field04) { found = 1; goto searchDone; }
-            if (id == e[3].field04) { found = 1; goto searchDone; }
+            if (sp->data00.field04 == id) { found = 1; goto searchDone; }
+            if (sp->sub[0].field04 == id) { found = 1; goto searchDone; }
+            if (e->field04 == id) { found = 1; goto searchDone; }
+            if (e[1].field04 == id) { found = 1; goto searchDone; }
+            if (e[2].field04 == id) { found = 1; goto searchDone; }
+            if (e[3].field04 == id) { found = 1; goto searchDone; }
             sp++;
         } while (--n != 0);
         found = 0;
     }
 searchDone:
     if (!found) {
-        u32* pWord = (u32*)(self->data870 + ((id >> 3) & ~7));
+        u32* pWord = (u32*)(big->data870 + ((id >> 3) & ~7));
         *pWord &= ~(1u << (id & 0x1f));
     }
 
-    // Repopulate the runtime columns from the BDAT table.
+    // Repopulate the runtime columns from the BDAT table. Each result is
+    // kept in a u32 local and re-read as a byte (deref-of-storage), which
+    // reproduces retail's stw/lbz stack round-trip per column.
     u32 tbl = lbl_eu_80664158;
-    CPcKizunaSlotEntry* entry =
-        (CPcKizunaSlotEntry*)((u8*)self + off + sub + 0x3D4);
-    entry->word = value;
     char* const cols = lbl_eu_8050DB18;
+    ((CPcKizunaSlotEntry*)((u8*)big + off + sub + 0x3D4))->word = value;
     u32 v1 = getBdatStringColumnValue((void*)tbl, cols + 0x6, value);
-    wp->entry.field04 = (u8)v1;
+    wp->entry.field04 = *(u8*)&v1;
+    wp->entry.field04 = *(u8*)&v1;
+    // Each store site re-derives the position with a distinct GVN form (mul
+    // vs the shift form used above) so MWCC rematerializes the base register
+    // at each site like retail instead of reusing wp/wq.
     u32 v2 = getBdatStringColumnValue((void*)tbl, cols + 0xc, value);
-    ((CPcKizunaSlotEntry*)((u8*)self + sub + off + 0x3D4))->field08 = (u8)v2;
+    ((CPcKizunaWorkEntryPos*)((u8*)big + off + b * 0x20))->entry.field08 = *(u8*)&v2;
     u32 v3 = getBdatStringColumnValue((void*)tbl, cols + 0x11, value);
-    ((CPcKizunaSlotEntry*)((u8*)self + sub + off + 0x3D4))->field0C = (u8)v3;
+    ((CPcKizunaWorkEntryPos*)((u8*)big + off + b * 0x20))->entry.field0C = *(u8*)&v3;
     u32 v4 = getBdatStringColumnValue((void*)tbl, cols + 0x16, value);
-    ((CPcKizunaSlotEntry*)((u8*)self + sub + off + 0x3D4))->field10 = (float)(u8)v4;
+    ((CPcKizunaWorkEntryPos*)((u8*)big + off + b * 0x20))->entry.field10 = (float)*(u8*)&v4;
     u32 v5 = getBdatStringColumnValue((void*)tbl, cols + 0x1b, value);
-    wq->entry.byte14 |= (u8)v5;
-    func_8025F114((CPcKizunagramBig*)self, entry);
+    wq->entry.byte14 |= *(u8*)&v5;
+    func_8025F114(big, (CPcKizunaSlotEntry*)((u8*)big + off + sub + 0x3D4));
 }
+#pragma pop
 
 #pragma push
 // Retail saves r28-r31 with individual stw's (speed-style frame), unlike the

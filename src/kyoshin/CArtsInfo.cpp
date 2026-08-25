@@ -2482,7 +2482,180 @@ void CArtsInfo::initialize() {
     }
 }
 
-int CArtsInfo::OnFileEvent(CEventFile* event) { return 0; }
+// Retail OnFileEvent: layout-archive loader + state-2 message handler.
+//
+// Branch 1 (event handle == field_0x14, i.e. the arts arc finished loading):
+// creates the MEM2 region, attaches the arc to a fresh resource accessor,
+// builds layout1 (+4 anims) and layout2 (+2 anims), binds the device font
+// into both root panes, seeds panes from the language string, sets message
+// texts, positions the message pane from the 'timg' resource coords,
+// snapshots the two colour pairs into the sbss globals, builds the embedded
+// cursor from a temp CCur18, runs the layout setup pass, then frees the
+// region and returns 1.
+//
+// Branch 2 (event handle == field_0x18, the message bdat file): routes the
+// loaded data into CBdat, resolves the two FP table entries named by the
+// string table, calls the split1 reset stub, clears field_0x18, returns 1.
+int CArtsInfo::OnFileEvent(CEventFile* event) {
+    if ((u32)field_0x14 == (u32)event->field_04) {
+        mMemRegion.createRegion((int)getHandleMEM2__Q23mtl10MemManagerFv(),
+                                0x1FFF8000, &lbl_eu_8050B00C[0x2CC], 0);
+        Class_8045F858 host(&mMemRegion);
+        CFileHandle* fh = (CFileHandle*)field_0x14;
+        void* arcData = fh->getData();
+        func_80434A4C__Q23mtl10MemManagerFb(false);
+        nw4r::lyt::ArcResourceAccessor* acc = createArcResourceAccessor__10CLibLayoutFv();
+        field_0x1C = (int)acc;
+        acc->Attach(arcData, &lbl_eu_8050B00C[0x2D6]);
+
+        func_80136E84(&mpLayout1, acc, &lbl_eu_8050B00C[0x2DA]);
+        func_80136F08(mpLayout1, &mpAnimTrans1, acc, &lbl_eu_8050B00C[0x2F4]);
+        func_80136F08(mpLayout1, &mpAnimTrans2, acc, &lbl_eu_8050B00C[0x311]);
+        func_80136F08(mpLayout1, &mpAnimTrans3, acc, &lbl_eu_8050B00C[0x333]);
+        func_80136F08(mpLayout1, &mpAnimTrans4, acc, &lbl_eu_8050B00C[0x356]);
+
+        nw4r::lyt::Pane* root1 = *(nw4r::lyt::Pane**)((u8*)mpLayout1 + 0x10);
+        void* fontObj1 = func_80452C10__11CDeviceFontFUlPQ34nw4r3lyt6Layout(1, mpLayout1);
+        func_8013676C(root1, reinterpret_cast<CArtsFontView*>(fontObj1)->sf9());
+
+        char* lang = func_801355BC();
+        if (lang != 0) {
+            func_801368C0(mpLayout1, &lbl_eu_8050B00C[71], (u32)lang);
+            func_801368C0(mpLayout1, &lbl_eu_8050B00C[388], (u32)lang);
+            func_801368C0(mpLayout1, &lbl_eu_8050B00C[238], (u32)lang);
+            func_801368C0(mpLayout1, &lbl_eu_8050B00C[253], (u32)lang);
+            func_801368C0(mpLayout1, &lbl_eu_8050B00C[268], (u32)lang);
+            func_801368C0(mpLayout1, &lbl_eu_8050B00C[283], (u32)lang);
+            func_801368C0(mpLayout1, &lbl_eu_8050B00C[298], (u32)lang);
+            func_801368C0(mpLayout1, &lbl_eu_8050B00C[313], (u32)lang);
+            func_801368C0(mpLayout1, &lbl_eu_8050B00C[328], (u32)lang);
+            func_801368C0(mpLayout1, &lbl_eu_8050B00C[343], (u32)lang);
+            func_801368C0(mpLayout1, &lbl_eu_8050B00C[358], (u32)lang);
+        }
+        mpLayout1->SetAnimationEnable(mpAnimTrans2, false);
+        mpLayout1->SetAnimationEnable(mpAnimTrans3, false);
+        mpLayout1->SetAnimationEnable(mpAnimTrans4, false);
+        mpLayout1->SetAnimationEnable(mpAnimTrans1, true);
+        mpLayout1->Animate(0);
+
+        // Fixed caption textboxes (message panes keyed by arts type).
+        func_80136B4C(mpLayout1, &lbl_eu_8050B00C[0x378],
+                      func_80136190(&lbl_eu_8050B00C[0x32], &lbl_eu_8050B00C[0x3D], 47), 0);
+        func_80136B4C(mpLayout1, &lbl_eu_8050B00C[0x382],
+                      func_80136190(&lbl_eu_8050B00C[0x32], &lbl_eu_8050B00C[0x3D], 23), 0);
+        func_80136B4C(mpLayout1, &lbl_eu_8050B00C[0x38C],
+                      func_80136190(&lbl_eu_8050B00C[0x32], &lbl_eu_8050B00C[0x3D], 49), 0);
+        func_80136B4C(mpLayout1, &lbl_eu_8050B00C[0x397],
+                      func_80136190(&lbl_eu_8050B00C[0x32], &lbl_eu_8050B00C[0x3D], 50), 0);
+        func_80136B4C(mpLayout1, &lbl_eu_8050B00C[0x3B5],
+                      func_80136190(&lbl_eu_8050B00C[0x3A2], &lbl_eu_8050B00C[0x3B0], 43), 0);
+
+        // Message-detail textbox: pane name depends on the CFGameManager
+        // query result.
+        const char* detailPane = (func_80086F9C__Q22cf13CfGameManagerFv(-1) == 0)
+                                     ? &lbl_eu_8050B00C[970]
+                                     : &lbl_eu_8050B00C[961];
+        // Retail masks the formatted-string result to its low half and
+        // feeds it through func_80138F78 to get the message resource name.
+        char* resName = func_80138F78(
+            (u32)(func_80136190(&lbl_eu_8050B00C[0x3A2], detailPane, 43)) & 0xffff);
+        void* timg = reinterpret_cast<CArtsArcView*>(acc)->getResource("timg", (u32)resName, 0);
+        if (timg != 0) {
+            func_80136B4C(mpLayout1, &lbl_eu_8050B00C[0x3D3], (char*)timg, 0);
+            nw4r::lyt::Pane* msgPane1 =
+                root1->FindPaneByName(&lbl_eu_8050B00C[0x3D3], true);
+            if (msgPane1 != 0) {
+                CArtsMsgObj* msg = (CArtsMsgObj*)timg;
+                u16 row = msg->chain->pCoords->row;
+                u16 col = msg->chain->pCoords->col;
+                CArtsPaneSize* ps = (CArtsPaneSize*)msgPane1;
+                float fw = (float)(int)row;
+                float fh2 = (float)(int)col;
+                ps->width.f = fw;
+                ps->height.f = fh2;
+            }
+        }
+
+        func_80136E84(&mpLayout2, acc, &lbl_eu_8050B00C[0x2DA]);
+        func_80136F08(mpLayout2, &mpAnimTrans5, acc, &lbl_eu_8050B00C[0x356]);
+        func_80136F08(mpLayout2, &mpAnimTrans6, acc, &lbl_eu_8050B00C[0x3DD]);
+
+        nw4r::lyt::Pane* root2 = *(nw4r::lyt::Pane**)((u8*)mpLayout2 + 0x10);
+        void* fontObj2 = func_80452C10__11CDeviceFontFUlPQ34nw4r3lyt6Layout(1, mpLayout2);
+        func_8013676C(root2, reinterpret_cast<CArtsFontView*>(fontObj2)->sf9());
+
+        if (lang != 0) {
+            func_801368C0(mpLayout2, &lbl_eu_8050B00C[238], (u32)lang);
+            func_801368C0(mpLayout2, &lbl_eu_8050B00C[253], (u32)lang);
+            func_801368C0(mpLayout2, &lbl_eu_8050B00C[268], (u32)lang);
+            func_801368C0(mpLayout2, &lbl_eu_8050B00C[283], (u32)lang);
+            func_801368C0(mpLayout2, &lbl_eu_8050B00C[298], (u32)lang);
+            func_801368C0(mpLayout2, &lbl_eu_8050B00C[313], (u32)lang);
+            func_801368C0(mpLayout2, &lbl_eu_8050B00C[328], (u32)lang);
+            func_801368C0(mpLayout2, &lbl_eu_8050B00C[343], (u32)lang);
+            func_801368C0(mpLayout2, &lbl_eu_8050B00C[358], (u32)lang);
+            func_801368C0(mpLayout2, &lbl_eu_8050B00C[373], (u32)lang);
+        }
+        mpLayout2->SetAnimationEnable(mpAnimTrans6, false);
+        mpLayout2->SetAnimationEnable(mpAnimTrans5, true);
+        mpLayout2->Animate(0);
+
+        // Detail panes on layout2: find each, hide/show, rotate the anchor
+        // position triple on the message pane, then hide the extras.
+        nw4r::lyt::Pane* pn1020 = root2->FindPaneByName(&lbl_eu_8050B00C[0x3FC], true);
+        func_80124270(pn1020, 0);
+        nw4r::lyt::Pane* pn1028 = root2->FindPaneByName(&lbl_eu_8050B00C[0x404], true);
+        if (pn1028 != 0) {
+            CArtsPanePos* pos = (CArtsPanePos*)((char*)pn1028 + 0x2C);
+            CArtsFpu x = pos->x, y = pos->y, z = pos->z;
+            pos->x.f = z.f;
+            pos->y.f = x.f;
+            pos->z.f = y.f;
+        }
+        func_80124270(root2->FindPaneByName(&lbl_eu_8050B00C[0x40B], true), 0);
+        func_80124270(root2->FindPaneByName(&lbl_eu_8050B00C[0x378], true), 0);
+        func_80124270(root2->FindPaneByName(&lbl_eu_8050B00C[0x184], true), 0);
+        func_80124270(root2->FindPaneByName(&lbl_eu_8050B00C[0x413], true), 0);
+        nw4r::lyt::Pane* pn238 = root2->FindPaneByName(&lbl_eu_8050B00C[0xEE], true);
+        func_80124270(pn238, 0);
+
+        // Snapshot the message pane's two vertex-colour pairs into the sbss
+        // colour globals.
+        CArtsColorPair col1 = func_801397AC(pn238, 0);
+        CopyVec4s(reinterpret_cast<CArtsQuadColor*>(&lbl_eu_80664748), &col1);
+        CArtsColorPair col2 = func_801397AC(pn238, 1);
+        CopyVec4s(reinterpret_cast<CArtsQuadColor*>(&lbl_eu_80664750), &col2);
+
+        // Build a temporary cursor against the shared accessor and copy its
+        // body over the embedded one (vptr at +0 preserved).
+        u8 tmpCursor[0x18];
+        __ct__CCur18(tmpCursor, func_801355F4());
+        for (int ci = 4; ci < 0x16; ci++) {
+            mCursor[ci] = tmpCursor[ci];
+        }
+        reinterpret_cast<CArtsCurVt*>(mCursor)->bind();
+        func_80236508(this);
+        func_8023B430(this);
+        field_0x14 = 0;
+        mMemRegion.func_8045F810();
+        return 1;
+    }
+
+    if ((u32)field_0x18 != (u32)event->field_04) return 0;
+    {
+        CFileHandle* fh2 = (CFileHandle*)field_0x18;
+        void* data = fh2->getData();
+        func_8003AA78__5CBdatFUlPv(2, data);
+        func_8003AA34();
+        field_0x4C = (int)getFP__FPCc(&lbl_eu_8050B00C[1054]);
+        func_8003AA34();
+        field_0x50 = (int)getFP__FPCc(&lbl_eu_8050B00C[1063]);
+        // TODO(residual): split1 reset stub call with `this` (unresolved bl
+        // at +0x678c, no reloc name) — behaviourally a refresh notification.
+        field_0x18 = 0;
+        return 1;
+    }
+}
 
 
 

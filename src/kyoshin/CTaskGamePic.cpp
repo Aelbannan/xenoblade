@@ -104,26 +104,19 @@ extern "C" __declspec(noinline) CTaskGamePic* __ct__CTaskGamePic(CTaskGamePic* p
 
 // ---------------------------------------------------------------------------
 // Move - animates the colour fade between the "from" (0xA0) and "to"
-// (0xB0) RGBA vectors into the current colour (0x90). param_C0 is a 16-bit
-// countdown (index<<8), param_C4 the fixed total. Each call steps 0x100 and
+// (0xB0) RGBA vectors into the current colour (0x90). param_C0 is an 8.8
+// fixed-point countdown, param_C4 the fixed total. Each call steps 0x100 and
 // lerps current by t = param_C0/param_C4; when the countdown ends the target
-// colour is snapped in and the counter cleared.
-//
-// Retail computes the ratio in 8.8 fixed point: each counter is split into a
-// rounded high byte (srawi+addze) and the residual low byte, converted to f32
-// through MWCC's 2^52 magic-double slot trick (lfd/fsubs against the shared
-// lbl_eu_80668BC0), then combined as hi + lo*0.00390625 before the division.
+// colour is snapped in and the counter cleared. The counters are split into
+// high/low bytes (/256 and %256) before the int->f32 casts so the ratio is
+// computed from exact byte values.
 // ---------------------------------------------------------------------------
+// Size-opt: retail keeps both /256 computations per counter (no CSE) and
+// interleaves the sdata2 float loads, matching the -Os scheduler.
+#pragma optimize_for_size on
 void CTaskGamePic::Move() {
-    // Two 0x43300000 conversion slots (low-byte slot first so it lands at the
-    // lower stack address, matching retail sp+0x8 / sp+0x10). Both high words
-    // are stored before the countdown branch.
-    union { f64 d; u32 w[2]; } slotLo, slotHi;
-    slotLo.w[0] = 0x43300000;
-    slotHi.w[0] = 0x43300000;
-    s32 c0 = (s32)param_C0;
-    if (c0 == 0) return;
-    s32 c1 = c0 - 0x100;
+    if (param_C0 == 0) return;
+    s32 c1 = (s32)param_C0 - 0x100;
     param_C0 = (u32)c1;
     if (c1 <= 0) {
         // Countdown finished: snap the target colour in and clear the counter.
@@ -132,33 +125,28 @@ void CTaskGamePic::Move() {
         param_98 = param_B8;
         param_9C = param_BC;
         param_C0 = 0;
-    } else {
-        // 8.8 fixed point ratio: each counter splits into high/low bytes, each
-        // byte converted to f32 through the magic-double slot trick. Retail
-        // spells hi as v/256 and lo as v%256, so MWCC divides twice per value.
-        slotHi.w[1] = (u32)(c1 / 256) ^ 0x80000000;
-        slotLo.w[1] = (u32)(c1 % 256) ^ 0x80000000;
-        f32 numHi = (f32)(slotHi.d - lbl_eu_80668BC0);
-        f32 numLo = (f32)(slotLo.d - lbl_eu_80668BC0);
-        s32 hi7 = ((s32)param_C4) / 256;
-        slotLo.w[1] = (u32)((s32)param_C4 % 256) ^ 0x80000000;
-        slotHi.w[1] = (u32)hi7 ^ 0x80000000;
-        f32 denHi = (f32)(slotHi.d - lbl_eu_80668BC0);
-        f32 denLo = (f32)(slotLo.d - lbl_eu_80668BC0);
-        f32 num = numLo * lbl_eu_80668BB4 + numHi;
-        f32 den = denLo * lbl_eu_80668BB4 + denHi;
-        f32 t = num / den;
-        f32 inv = lbl_eu_80668BB8 - t;
-        f32* cur = reinterpret_cast<f32*>(&param_90);
-        const f32* from = reinterpret_cast<const f32*>(&param_A0);
-        const f32* to = reinterpret_cast<const f32*>(&param_B0);
-        cur[0] = from[0] * t + to[0] * inv;
-        cur[1] = from[1] * t + to[1] * inv;
-        cur[2] = from[2] * t + to[2] * inv;
-        cur[3] = from[3] * t + to[3] * inv;
+        return;
     }
+    s32 c4 = (s32)param_C4;
+    // Size-opt (-O4,s) lowers signed % to the div-based srawi/addze/slwi/subf
+    // form seen in retail (the -O4,p default gives an rlwinm pair instead).
+    // Spelled as one expression so MWCC interleaves the numerator/denominator
+    // slot stores like retail. NOTE: the int->f32 casts emit MWCC's internal
+    // magic-double pool item where retail references the shared .sdata2
+    // symbol lbl_eu_80668BC0; hand-spelling the slots to name that symbol
+    // perturbs the schedule (+16B), so the cast shape is kept.
+    f32 t = ((f32)(c1 % 256) * lbl_eu_80668BB4 + (f32)(c1 / 256)) /
+            ((f32)(c4 % 256) * lbl_eu_80668BB4 + (f32)(c4 / 256));
+    f32 inv = lbl_eu_80668BB8 - t;
+    f32* cur = reinterpret_cast<f32*>(&param_90);
+    const f32* from = reinterpret_cast<const f32*>(&param_A0);
+    const f32* to = reinterpret_cast<const f32*>(&param_B0);
+    cur[0] = from[0] * t + to[0] * inv;
+    cur[1] = from[1] * t + to[1] * inv;
+    cur[2] = from[2] * t + to[2] * inv;
+    cur[3] = from[3] * t + to[3] * inv;
 }
-
+#pragma optimize_for_size off
 // ---------------------------------------------------------------------------
 // Init - registers the render callback subobject with the scene,
 // using priority 0xb (HUD layer).
@@ -268,10 +256,10 @@ void func_80295554(void* self) { ((void (*)(void*))cbRenderBefore__12CTaskGamePi
 
 void func_8029555C(void* self) { ((void (*)(void*))__dt__12CTaskGamePicFv)((char*)self - 0x58); }
 
+// Returns int (not s16) so callers re-sign-extend the result like retail.
 extern "C" s16 func_80295388(u8* self) {
     return (s16)(*(s16*)(self + 2) + *(s16*)(self + 6));
 }
-
 // ---------------------------------------------------------------------------
 // create - factory. Retail symbol keeps the C-linkage Fv name although
 // the source takes a parent and a scene arg (cf. CTaskGameCf). Size-opt frame:
@@ -302,22 +290,25 @@ extern "C" CTaskGamePic* create__12CTaskGamePicFv(CProcess* pParent, int arg) {
 // ---------------------------------------------------------------------------
 #pragma optimize_for_size on
 void CTaskGamePic::cbRenderBefore() {
+    const CTaskGamePicTexData* tex;
     if (field_8C == 0) return;
     CView* view = CView::getCurrentView();
     if (field_68 == 0) return;
     CDeviceGX::getCacheInstance()->func_8044BE38();
-    const CTaskGamePicTexData* tex =
-        static_cast<const CTaskGamePicTexData*>(field_68);
+    tex = static_cast<const CTaskGamePicTexData*>(field_68);
 
     // View-sized rect: narrow it to 3/4 width (centred) on 16:9.
+    // (s16) casts on the u16 render-mode fields fold the sign extension
+    // into lha loads, matching retail.
     ml::CRect rectA;
     func_8043EA88__5CViewFRQ22ml5CRectP5CView(rectA, view);
     if (CDeviceVI::isWideAspectRatio()) {
-        rectA.mPos.x = (s16)((rectA.mSize.x - (s32)tex->mWidth * 75 / 100 + 1) >> 1);
-        rectA.mSize.x = (s16)((s32)tex->mWidth * 75 / 100);
+        // Signed /2 (round toward zero): MWCC lowers to srawi+addze.
+        rectA.mPos.x = (rectA.mSize.x - (s32)(tex->mWidth * 75 / 100)) / 2;
+        rectA.mSize.x = tex->mWidth * 75 / 100;
     } else {
-        s16 h = (s16)CDeviceVI::getEfbHeight();
-        s16 w = (s16)CDeviceVI::getFbWidth();
+        s16 h = (s16)CDeviceVI::getRenderModeObj()->efbHeight;
+        s16 w = (s16)CDeviceVI::getRenderModeObj()->fbWidth;
         rectA.mSize.x = w;
         rectA.mPos.x = 0;
         rectA.mPos.y = 0;
@@ -325,48 +316,54 @@ void CTaskGamePic::cbRenderBefore() {
     }
 
     // Texture quad: white, texture-cache flag cleared, view-rect based.
-    CDrawGX dgx0;
-    dgx0.func_80456570(0);
-    dgx0.func_8045657C(0);
-    ml::CCol3 col;
-    col.r = lbl_eu_80668BB8;
-    col.g = lbl_eu_80668BB8;
-    col.b = lbl_eu_80668BB8;
-    dgx0.setCol(col);
-    reinterpret_cast<CDrawGXFlagWord*>(&dgx0)->mFlags &= ~0x08000000u;
-    ml::CRect16 rectB;
-    func_8043EA88__5CViewFRQ22ml5CRectP5CView(*(ml::CRect*)&rectB, view);
-    dgx0.renderRect(rectB);
-    dgx0.setTex(&mTexObj, tex->mWidth, tex->mHeight);
-    dgx0.begin(6, 4);
-    dgx0.add(rectA.mPos.x, rectA.mPos.y, 0, 0);
-    dgx0.add((s16)(rectA.mPos.x + rectA.mSize.x), rectA.mPos.y,
-             tex->mWidth, 0);
-    dgx0.add(rectA.mPos.x,
-             func_80295388(reinterpret_cast<u8*>(&rectA)), 0, tex->mHeight);
-    dgx0.add((s16)(rectA.mPos.x + rectA.mSize.x),
-             func_80295388(reinterpret_cast<u8*>(&rectA)),
-             tex->mWidth, tex->mHeight);
-    dgx0.end();
-    dgx0.~CDrawGX();
+    // Inner scope so the automatic destructor fires where retail's does.
+    {
+        CDrawGX dgx0;
+        dgx0.func_80456570(0);
+        dgx0.func_8045657C(0);
+        ml::CCol3 col;
+        col.r = lbl_eu_80668BB8;
+        col.g = lbl_eu_80668BB8;
+        col.b = lbl_eu_80668BB8;
+        dgx0.setCol(col);
+        reinterpret_cast<CDrawGXFlagWord*>(&dgx0)->mFlags &= ~0x10u;
+        ml::CRect16 rectB;
+        func_8043EA88__5CViewFRQ22ml5CRectP5CView(*(ml::CRect*)&rectB, view);
+        dgx0.renderRect(rectB);
+        dgx0.setTex(&mTexObj, tex->mWidth, tex->mHeight);
+        dgx0.begin(6, 4);
+        dgx0.add(rectA.mPos.x, rectA.mPos.y, 0, 0);
+        dgx0.add((s16)(rectA.mPos.x + rectA.mSize.x), rectA.mPos.y,
+                 tex->mWidth, 0);
+        // x computed into a local first so MWCC stages it in a callee-saved
+        // register across the nested helper call (retail shape).
+        s16 vx3 = rectA.mPos.x;
+        dgx0.add(vx3, func_80295388(reinterpret_cast<u8*>(&rectA)), 0,
+                 tex->mHeight);
+        s16 vx4 = rectA.mPos.x + rectA.mSize.x;
+        dgx0.add(vx4, func_80295388(reinterpret_cast<u8*>(&rectA)),
+                 tex->mWidth, tex->mHeight);
+        dgx0.end();
+    }
 
     // Full-screen colour wash from the animated 0x90 RGBA block.
     CDeviceGX::getCacheInstance()->func_8044BE38();
-    CDrawGX dgx1;
-    dgx1.func_80456570(0);
-    dgx1.func_8045657C(0);
-    dgx1.setCol(*(ml::CCol4*)&param_90);
-    dgx1.begin(9, 1);
-    ml::CRect16 rectC;
-    s16 h = (s16)CDeviceVI::getEfbHeight();
-    s16 w = (s16)CDeviceVI::getFbWidth();
-    rectC.mSize.x = w;
-    rectC.mPos.x = 0;
-    rectC.mPos.y = 0;
-    rectC.mSize.y = h;
-    dgx1.add(rectC);
-    dgx1.end();
-    dgx1.~CDrawGX();
+    {
+        CDrawGX dgx1;
+        dgx1.func_80456570(0);
+        dgx1.func_8045657C(0);
+        dgx1.setCol(*(ml::CCol4*)&param_90);
+        dgx1.begin(9, 1);
+        ml::CRect rectC;
+        s16 h = (s16)CDeviceVI::getRenderModeObj()->efbHeight;
+        s16 w = (s16)CDeviceVI::getRenderModeObj()->fbWidth;
+        rectC.mSize.x = w;
+        rectC.mPos.x = 0;
+        rectC.mPos.y = 0;
+        rectC.mSize.y = h;
+        dgx1.add(*(ml::CRect16*)&rectC);
+        dgx1.end();
+    }
     CDeviceGX::getCacheInstance()->func_8044BE38();
     CViewRoot::func_80442DA8();
 }

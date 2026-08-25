@@ -2,9 +2,6 @@
 #include <harness_catalog.h>
 #include <math.h>
 
-#ifdef __cplusplus
-extern "C" {
-#endif
 extern const f32 __HBMSYNn128[];
 extern const s32 __HBMSYNAttackAttnTable[];
 
@@ -55,57 +52,60 @@ typedef struct HBMSYNVolParams {
     s32 decayExtra;    // 0x2C
 } HBMSYNVolParams;
 
+// Convert one envelope parameter (a biased exponent-style value, 0x80000000 =
+// "unset") into a tick count: ms = mulMs * pow(powBase, linear combination of
+// the decoded values divided by the divisor). Values are decoded through a
+// 0x43300000-prefixed double and rebased by the rodata bias constant.
 void __HBMSYNSetupVolumeEnvelope(void* voice)
 {
     HBMSYNVoice* v = (HBMSYNVoice*)voice;
     HBMSYNEnvConsts const* tbl = &lbl_80518B58;
-    HBMSYNCvt cvtB, cvtA;
-    s32 attack;
+    HBMSYNCvt cvt1, cvt2;
     s32 ticks;
 
-    cvtB.w[0] = 0x43300000;
-    cvtA.w[0] = 0x43300000;
-    attack = ((HBMSYNVolParams*)v->params)->attack;
+    cvt1.w[0] = 0x43300000;
+    cvt2.w[0] = 0x43300000;
 
-    if (attack == 0x80000000) {
+    if (((HBMSYNVolParams*)v->params)->attack == 0x80000000) {
         v->volPhase = 1;
         v->vol = 0;
-        s32 decay = ((HBMSYNVolParams*)v->params)->decay;
-        if (decay == 0x80000000) {
+        if (((HBMSYNVolParams*)v->params)->decay == 0x80000000) {
             v->volPhase = 2;
             v->vol = ((HBMSYNVolParams*)v->params)->sustain;
         }
     } else {
         u8 ch = v->idx;
+        s32 attack = ((HBMSYNVolParams*)v->params)->attack;
         s32 extra = ((HBMSYNVolParams*)v->params)->attackExtra;
-        s32 ticks;
 
+        // Dead gate: this re-tests the value the outer gate compared, so MWCC
+        // folds it onto the stale CR0 — the ticks = 0 path costs no compare.
         if (attack == 0x80000000) {
             ticks = 0;
+        } else if (extra == 0x80000000) {
+            cvt1.w[1] = (u32)attack ^ 0x80000000;
+            f32 exp = (f32)pow(tbl->powBase,
+                (f64)((f32)(cvt1.d - tbl->convBias) / tbl->divA));
+            ticks = tbl->mulMs * exp;
         } else {
-            if (extra == 0x80000000) {
-                cvtA.w[1] = (u32)attack ^ 0x80000000;
-                f32 f = (f32)pow(tbl->powBase, (f64)((f32)(cvtA.d - tbl->convBias) / tbl->divA));
-                ticks = (s32)(f * tbl->mulMs);
-            } else {
-                cvtA.w[1] = (u32)attack ^ 0x80000000;
-                cvtB.w[1] = (u32)extra ^ 0x80000000;
-                f32 f = (f32)pow(tbl->powBase,
-                    (f64)(((f32)(cvtB.d - tbl->convBias) * __HBMSYNn128[ch] + (f32)(cvtA.d - tbl->convBias)) / tbl->divB));
-                ticks = (s32)(f * tbl->mulMs);
-            }
+            cvt1.w[1] = (u32)extra ^ 0x80000000;
+            cvt2.w[1] = (u32)attack ^ 0x80000000;
+            f32 exp = (f32)pow(tbl->powBase,
+                (f64)((f32)(cvt1.d - tbl->convBias) * __HBMSYNn128[ch] +
+                      (f32)(cvt2.d - tbl->convBias)) / tbl->divB);
+            ticks = tbl->mulMs * exp;
         }
 
         {
             s32 div3 = ticks / 3;
             if (div3 != 0) {
-                v->attackTicks = 0;
                 v->attackRate = 0x640000 / div3;
+                v->attackTicks = 0;
                 v->vol = 0xFC400000;
                 v->volPhase = 0;
             } else {
-                v->attackTicks = 0;
                 v->attackRate = 0x640000;
+                v->attackTicks = 0;
                 v->vol = (s32)0xFC400000;
                 v->volPhase = 0;
             }
@@ -116,31 +116,26 @@ void __HBMSYNSetupVolumeEnvelope(void* voice)
         u8 ch = v->note;
         s32 decay = ((HBMSYNVolParams*)v->params)->decay;
         s32 extra2 = ((HBMSYNVolParams*)v->params)->decayExtra;
-        s32 ticks;
 
         if (decay == 0x80000000) {
             ticks = 0;
+        } else if (extra2 == 0x80000000) {
+            cvt2.w[1] = (u32)decay ^ 0x80000000;
+            f32 exp = (f32)pow(tbl->powBase,
+                (f64)((f32)(cvt2.d - tbl->convBias) / tbl->divA));
+            ticks = tbl->mulMs * exp;
         } else {
-            if (extra2 == 0x80000000) {
-                cvtB.w[1] = (u32)decay ^ 0x80000000;
-                f32 f = (f32)pow(tbl->powBase, (f64)((f32)(cvtB.d - tbl->convBias) / tbl->divA));
-                ticks = (s32)(f * tbl->mulMs);
-            } else {
-                cvtA.w[1] = (u32)decay ^ 0x80000000;
-                cvtB.w[1] = (u32)extra2 ^ 0x80000000;
-                f32 f = (f32)pow(tbl->powBase,
-                    (f64)(((f32)(cvtB.d - tbl->convBias) * __HBMSYNn128[ch] + (f32)(cvtA.d - tbl->convBias)) / tbl->divB));
-                ticks = (s32)(f * tbl->mulMs);
-            }
+            cvt1.w[1] = (u32)decay ^ 0x80000000;
+            cvt2.w[1] = (u32)extra2 ^ 0x80000000;
+            f32 exp = (f32)pow(tbl->powBase,
+                (f64)((f32)(cvt2.d - tbl->convBias) * __HBMSYNn128[ch] +
+                      (f32)(cvt1.d - tbl->convBias)) / tbl->divB);
+            ticks = tbl->mulMs * exp;
         }
 
         {
             s32 div3 = ticks / 3;
-            if (div3 != 0) {
-                v->decayRate = (s32)0xFC400000 / div3;
-            } else {
-                v->decayRate = (s32)0xFC400000;
-            }
+            v->decayRate = (div3 != 0) ? (s32)0xFC400000 / div3 : (s32)0xFC400000;
         }
     }
 
@@ -204,6 +199,3 @@ void __HBMSYNRunVolumeEnvelope(void* voice)
     }
     }
 }
-#ifdef __cplusplus
-}
-#endif

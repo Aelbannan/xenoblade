@@ -1,6 +1,9 @@
 #include <nw4hbm/lyt.h>
 #include <nw4hbm/ut.h>
 
+// Retail .rodata float pool entry referenced by the Layout constructor.
+extern const float lbl_80518A60;
+
 /******************************************************************************
  *
  * Utility functions
@@ -36,10 +39,10 @@ MEMAllocator* Layout::mspAllocator = NULL;
 
 Layout::Layout()
     : mAnimTransList(),
-      mOriginType(ORIGINTYPE_TOPLEFT),
-      mLayoutSize(0.0f, 0.0f),
+      mpRootPane(NULL),
       mpGroupContainer(NULL),
-      mpRootPane(NULL) {}
+      mLayoutSize(lbl_80518A60, lbl_80518A60),
+      mOriginType(ORIGINTYPE_TOPLEFT) {}
 
 Layout::~Layout() {
     if (mpGroupContainer != NULL) {

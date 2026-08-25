@@ -16,16 +16,41 @@ extern "C" {
 
 void* func_801862C0(void);
 void* func_801862E0(void* p);
-void* func_801863F4(void* p);
+
+// CArtsSelectSlot: one (arts id, source ptr) entry.
+struct CArtsSelectSlot {
+    u32 unk00;  // +0x00: arts id (0 = free slot)
+    u32 unk04;  // +0x04: source pointer value
+};
+
+// One hash bucket: 46 entries x 8 bytes = 0x170 stride.
+class CArtsSelectBucket {
+public:
+    CArtsSelectSlot slots[46];
+};
+
+// Arts-select container: 16 hash buckets of 46 (id, ptr) slots plus a
+// fast-path cache pair at 0x1700/0x1704.
+class CArtsSelectContainer {
+public:
+    CArtsSelectBucket buckets[16]; // 0x000..0x16FF
+    u32 field_1700;                // cached id
+    u32 field_1704;                // cached source pointer
+};
+void* func_801863F4(void* self, void* src);
 void* func_80186460(void* dst, void* src);
-void* func_80186474(void* p);
+void* func_80186474(void* self, void* src);
 void* func_801864DC(void* pObj, int slot);
 void func_80186664(u8* self);
 void func_801866F0(struct MapObjVt** objects, int row);
 void* func_80186A70(void* p);
 void* func_80186BC8(int p);
-void* func_80186C7C(void* p);
+void func_80186C7C(void* p);
 void* func_80186D20(void* p);
+
+// cf::CfGameManager sequence/resource counters (retail mangled symbols).
+u32 func_800822F4__Q22cf13CfGameManagerFv(void);
+u32 func_80082354__Q22cf13CfGameManagerFv(u32 resourceId);
 
 #ifdef __cplusplus
 }
@@ -154,6 +179,55 @@ extern const f64 lbl_eu_806679D0;  // signed int-to-double magic
 extern const f64 lbl_eu_806679D8;  // unsigned int-to-double magic
 extern const f32 lbl_eu_8066A210;  // degrees-to-radians
 
+// Object invoked by func_80186C7C through its vtable slot 0x88 (first
+// declared virtual sits at +0x08 due to the RTTI header).
+class ArtsNotifyVt {
+public:
+    virtual void _v008();
+    virtual void _v00C();
+    virtual void _v010();
+    virtual void _v014();
+    virtual void _v018();
+    virtual void _v01C();
+    virtual void _v020();
+    virtual void _v024();
+    virtual void _v028();
+    virtual void _v02C();
+    virtual void _v030();
+    virtual void _v034();
+    virtual void _v038();
+    virtual void _v03C();
+    virtual void _v040();
+    virtual void _v044();
+    virtual void _v048();
+    virtual void _v04C();
+    virtual void _v050();
+    virtual void _v054();
+    virtual void _v058();
+    virtual void _v05C();
+    virtual void _v060();
+    virtual void _v064();
+    virtual void _v068();
+    virtual void _v06C();
+    virtual void _v070();
+    virtual void _v074();
+    virtual void _v078();
+    virtual void _v07C();
+    virtual void _v080();
+    virtual void _v084();
+    virtual void notify(int armed); // 0x88
+};
+
+// One arts-select container slot: a widget with a state flag word and a
+// notifier sub-object.
+class ArtsWidget {
+public:
+    u8 pad_00[0x6C];
+    u32 field_6C;      // state flags (bit 0x10000000 = armed)
+    u8 pad_70[0x28];   // 0x70..0x97
+    ArtsNotifyVt* field_98; // notifier (virtual dispatch target)
+};
+
 // cf::CfGameManager resource-pair lookup: spawns the map object for
 // (modelId, motionId) and returns it (retail mangled symbol).
 class Unk80EE4Data;
@@ -167,3 +241,11 @@ extern "C" Unk80EE4Data* func_80081694__Q22cf13CfGameManagerFv(u32 modelId, u32 
 // Matches the CfGimmick.hpp declaration verbatim so TUs including both see
 // one consistent signature.
 extern "C" void* func_8003AA34();
+
+// BDAT row base / row count helpers (retail unmangled C symbols; canonical
+// definitions live in plugin/ocBdat.cpp).
+extern "C" u32 func_8003B41C(void* bdat);
+extern "C" u32 func_8003B1EC(void* bdat);
+
+// C++-linkage import: retail symbol is the mangled func_800B708C__Fi.
+void* func_800B708C(int id);

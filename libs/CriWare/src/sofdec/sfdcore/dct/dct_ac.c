@@ -10,20 +10,22 @@ extern double lbl_eu_806046C0[];  /* BSS: IDCT coefficient table */
 /* Initialize DCT coefficient tables.
  * For each (i,j): val = scale * cos(pi/8 * i * (j + 0.5)).
  * Written to the row-major table (row, stride 8) and the transposed
- * table (col, stride 8, byte offset transCol).
- * int->double conversions use the itof bit-reform (bias read from c[3]). */
+ * table (col, stride 8, byte offset 0x208).
+ * int->double conversion uses the 0x4330 exponent bit-reform with the
+ * bias constant read from c[3]. */
 void DCT_AcInit(void) {
-    const double *c = (const double *)lbl_eu_8051C388;
     double *t = (double *)lbl_eu_806046B8;
+    const double *c = (const double *)lbl_eu_8051C388;
     double *rowBase;
     double *row;
     double *col;
-    double bias;
-    double pi8;
-    double half;
+    double dj;
+    double di;
     double scale;
+    double half;
+    double pi8;
+    double bias;
     int i, j;
-    union { double d; unsigned int w[2]; } ui, uj;
 
     *((u32 *)t) = (u32)DCT_GetVerStr();
 
@@ -33,23 +35,26 @@ void DCT_AcInit(void) {
     pi8 = c[2];    /* pi/8 */
     half = c[1];   /* 0.5 */
 
+
     for (i = 0; i < 8; i++) {
         scale = (i == 0) ? c[0] : c[1];
-        row = rowBase;
         col = (double *)((char *)t + i * 8);
-        unsigned int iv = (unsigned int)i ^ 0x80000000;
+        row = rowBase;
 
         for (j = 0; j < 8; j++) {
-            /* itof: int -> double via 0x4330 magic sweep, bias pulled from c[3].
-             * Low word written first (MWCC 7i manual-bit pattern). */
-            ui.w[1] = iv;
-            uj.w[1] = (unsigned int)j ^ 0x80000000;
-            ui.w[0] = 0x43300000;
-            double id = ui.d - bias;
-            id *= pi8;                                  /* pi8*id in place */
-            uj.w[0] = 0x43300000;
-            double jd = uj.d - bias;
-            double v = scale * cos(id * (half + jd));
+            double id;
+            double jd;
+            double v;
+            /* itof: build the 0x4330-exponent double by hand, then subtract bias */
+            ((u32 *)&di)[1] = (u32)i ^ 0x80000000;
+            ((u32 *)&dj)[1] = (u32)j ^ 0x80000000;
+            *(u32 *)&di = 0x43300000;
+            id = di - bias;
+            id = pi8 * id;
+            *(u32 *)&dj = 0x43300000;
+            jd = dj - bias;
+            /* 0.5 comes from the const table; MWCC hoists the reload out of the loops */
+            v = scale * cos(id * (half + jd));
             *row = v;
             row += 8;
             *col = v;

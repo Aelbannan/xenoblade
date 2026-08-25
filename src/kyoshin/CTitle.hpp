@@ -86,6 +86,17 @@ public:
     /* 0x2C */ CTitleLogo mLogo;
     /* 0x48 */ CTitleMenu mMenu;
     /* 0x70 */ u8 mCur[0x18]; // CCur18 cursor (opaque)
+
+    // Body view of the embedded CCur18 (past its vptr), used by OnFileEvent
+    // to copy a freshly-constructed stack cursor into mCur.
+    struct {
+        nw4r::lyt::ArcResourceAccessor* mArcResAcc; // +0x04
+        nw4r::lyt::Layout* mpLayout;                // +0x08
+        nw4r::lyt::AnimTransform* mpAnimTrans0;     // +0x0C
+        nw4r::lyt::AnimTransform* mpAnimTrans1;     // +0x10
+        u8 mActive;                                 // +0x14
+        u8 mVisible;                                // +0x15
+    } mCurBody;
 };
 
 // Abstract view into the embedded CCur18 cursor vtable. MWCC inserts an
@@ -95,7 +106,7 @@ public:
 class CCur18View {
 public:
     virtual void vf02() = 0;                        // index 0 -> +0x08
-    virtual void vf03(const u8*) = 0;               // index 1 -> +0x0C
+    virtual void vf03() = 0;                        // index 1 -> +0x0C (retail passes no arg - r4 carries a stale flag)
     virtual void vf04(const nw4r::math::VEC3*) = 0; // index 2 -> +0x10 - Move
 };
 
@@ -132,9 +143,9 @@ extern char lbl_eu_80513628[];
 // Secondary mode bitfield (.sbss) - bit 30 gates the menu color pass.
 extern u32 lbl_eu_80663E28;
 // RGB color builder (defined in CTitleAHelp.cpp; returns the dest pointer so
-// callers can thread it into func_80139A18). C++ linkage matches the retail
-// TU's declaration, so calls bind to the same mangled symbol.
-GXColorS10* func_801C4B60(GXColorS10* color, s16 r, s16 g, s16 b, s16 a);
+// callers can thread it into func_80139A18). Retail keeps the unmangled short
+// name, so declare it with C linkage.
+extern "C" GXColorS10* func_801C4B60(GXColorS10* color, s16 r, s16 g, s16 b, s16 a);
 // .sdata2 constants used by the logo/menu animation helpers (US/EU names).
 extern const float lbl_eu_80668FE0;
 extern double lbl_eu_80668FE8; // 0x4330000000000000 (2^52) - u32->f32 conversion magic
@@ -182,8 +193,8 @@ public:
     int func_802B7A90();
 
     u8 pad00[0x0C];  // 0x00-0x0B
-    s8 field_0xC;    // 0x0C - cached A-button state
-    s8 field_0xD;    // 0x0D - cached Z-button state
+    u8 field_0xC;    // 0x0C - cached A-button state
+    u8 field_0xD;    // 0x0D - cached Z-button state
 };
 
 } // namespace cf

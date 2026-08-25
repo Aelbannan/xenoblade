@@ -9,20 +9,15 @@
 #define KYOSHIN_SKIP_CMAPSEL_LEGACY_LAYOUT_IMPORTS
 // code_80135FDC.hpp declares lbl_eu_8066A208 as u32; we need the float
 // (.sdata2 epsilon) view, so rename that declaration away.
-// CFloorMap.hpp carries a legacy u32-returning pseudo-import for
-// func_8013606C; code_80135FDC.hpp declares the canonical u16 one
-// (matching the definition in code_80135FDC.cpp). Rename the legacy
-// decl away so the two extern "C" declarations don't clash (10197).
-// Only active while code_802405F4.hpp (which pulls in CFloorMap.hpp)
-// is included; #undef'd before the canonical declaration.
-#define func_8013606C menuMapSelMsgLookupU32Unused
+// (func_8013606C: CFloorMap.hpp's legacy u32-returning copy moved TU-local
+// into CFloorMap.cpp; the canonical u16 decl on code_80135FDC.hpp is now the
+// only shared one - no rename guard needed here.)
 #include <types.h>
 #include "monolib/scn/CScnTimeApi.hpp"
 #include <monolib/math/CVec3.hpp>
 #include <monolib/math/MTRand.hpp>
 
 #include "kyoshin/code_802405F4.hpp"
-#undef func_8013606C
 #include "kyoshin/code_80135FDC.hpp"
 #include "kyoshin/CTaskGame.hpp"
 #include "kyoshin/cf/CfGameManager.hpp"
@@ -49,10 +44,6 @@ void func_80241920(CFloorMap* dest, CFloorMap* src);
 extern void func_8024343C(CMapSel* mapSel);
 extern void func_8024439C(CFade* fade);
 
-// Camera/transform position setters
-extern void func_8049F168(void* obj, ml::CVec3* pos);
-extern void func_8049F204(void* obj, ml::CVec3* pos);
-
 // String table base for MNU_item / MNU_kyeassign lookups
 extern "C" {
 extern char lbl_eu_8050B498[];
@@ -74,39 +65,38 @@ extern u32 lbl_eu_80664790;
 // One 0x3C status/value slot per landmark; value is a live counter cleared
 // when it drops back to the epsilon floor.
 struct MapPointSlot {
-    u8 flag;            // +0x00 - enabled byte
-    u8 _01[0x13];
-    float value;        // +0x14
-    u8 _18[0x24];
+    u8 _00[0x18];       // +0x00 - lead padding (array starts at entry +0x08)
+    u8 flag;            // +0x18 - enabled byte
+    u8 _19[0x13];
+    float value;        // +0x2C
+    u8 _30[0x0C];
 };
 
 struct MapPointEntry {
     u8 flag;            // +0x000 - active flag (non-zero = enabled)
     u8 _01[3];
     u32 id;             // +0x004 - entry id
-    u8 _08[0x18];       // +0x008..0x01F
-    MapPointSlot slots[6]; // +0x020..0x16F
+    MapPointSlot slots[6]; // +0x008..0x16F (stride 0x3C, flag/value live at slot+0x18/+0x2C)
     ml::CVec3 pos;      // +0x170 - primary position
     ml::CVec3 pos2;     // +0x17C - secondary position
 };
 
+// Retail keeps this helper as an unmangled symbol.
 /* Per-landmark pulse channel step. Advances the playback time and computes
    the vertical offset (field_10) from a damped sine wobble with lead-in /
    tail-out fading. Returns whether the channel is still alive. */
-bool func_80240614(MapFxChannel* fx, float delta) {
-    const float eps = lbl_eu_8066A208;
-    if (fx->field_2c <= eps) return false;
-    if (delta <= eps) return true;
+extern "C" bool func_80240614(MapFxChannel* fx, float delta) {
+    if (fx->field_2c <= lbl_eu_8066A208) return false;
+    if (delta <= lbl_eu_8066A208) return true;
 
-    float dur = fx->field_2c;
     float t = fx->field_00 + delta;
-    if (fx->field_18 == 0 || t < dur - fx->field_34) {
+    if (fx->field_18 == 0 || t < fx->field_2c - fx->field_34) {
         fx->field_00 = t;
     }
-    t = fx->field_00;
 
-    if (t < dur) {
-        // Channel was cancelled mid-flight: clear and report inactive
+    float dur = fx->field_2c;
+    if (fx->field_00 >= dur) {
+        // Playback reached the duration: reset the whole channel.
         const float z = lbl_eu_80668708;
         fx->field_00 = z;
         fx->field_2c = z;
@@ -118,7 +108,7 @@ bool func_80240614(MapFxChannel* fx, float delta) {
         fx->field_18 = 0;
         return false;
     }
-    if (t < fx->field_28) return true;
+    if (fx->field_00 < fx->field_28) return true;
 
     // Wobble phase: accumulate time; when the accumulator wraps past its
     // limit, pick a fresh random amplitude/period pair.
@@ -140,7 +130,7 @@ bool func_80240614(MapFxChannel* fx, float delta) {
     }
 
     float ph;
-    if (fx->field_1c > eps) {
+    if (fx->field_1c > lbl_eu_8066A208) {
         ph = fx->field_04 / fx->field_1c;
     } else {
         ph = lbl_eu_80668718;
@@ -150,22 +140,26 @@ bool func_80240614(MapFxChannel* fx, float delta) {
     float y = (fx->field_08 - fx->field_0c) * s + fx->field_0c;
     fx->field_10 = y;
 
-    if (t < dur) {
+    dur = fx->field_2c;
+    if (fx->field_00 >= dur) {
+        // Finished during this frame: flatten the output offset.
         fx->field_10 = lbl_eu_80668708;
         return true;
     }
-    if (fx->field_30 > eps) {
+    if (fx->field_30 > lbl_eu_8066A208) {
         float lim = fx->field_28 + fx->field_30;
-        if (t < lim) {
-            fx->field_10 = y * (lbl_eu_80668718 - (lim - t) / fx->field_30);
+        if (fx->field_00 < lim) {
+            fx->field_10 = y * (lbl_eu_80668718 -
+                (lim - fx->field_00) / fx->field_30);
             return true;
         }
     }
-    if (fx->field_34 > eps) {
-        float lim = dur - fx->field_34;
-        if (t > lim) {
+    if (fx->field_34 > lbl_eu_8066A208) {
+        float lim = fx->field_2c - fx->field_34;
+        if (fx->field_00 > lim) {
             fx->field_10 = y * (lbl_eu_80668718 -
-                (fx->field_34 - (dur - t)) / fx->field_34);
+                (fx->field_34 - (fx->field_2c - fx->field_00)) /
+                fx->field_34);
         }
     }
     return true;
@@ -173,33 +167,47 @@ bool func_80240614(MapFxChannel* fx, float delta) {
 
 void func_80240878(){}
 
+// Retail keeps these helpers as unmangled symbols.
+
 // Steps the menu landmark FX channels and folds their offsets into the
 // object's two output positions. If nothing is alive, clears everything.
-void func_802408D4(MenuFxObj* obj) {
-    CfRes_getD80Flag();
-    float delta = func_80496288(lbl_eu_80663E14);
+// The scene-delta fetch consumes CfRes_getD80Flag()'s r3 return as its own
+// argument (retail chains the two bl calls with no intervening arg setup).
+// Indexed position writes keep the store anchored at +0x170 off the
+// object base (retail strength-reduces them to a +4 byte walker); the
+// !(x <= eps) form reproduces retail's cror eq,lt,eq branch fusion.
+extern "C" void func_802408D4(MenuFxObj* obj) {
+    float delta = func_80496288((void*)CfRes_getD80Flag());
 
     obj->pos = ml::CVec3::zero;
     obj->pos2 = ml::CVec3::zero;
 
+    // Channels are contiguous (fx[3] == fx2[0]); retail walks indices 0-2
+    // into pos and 3-5 into pos2 via one shared counter. The destination is
+    // a float view of the object indexed 0x5C+i, which keeps the +0x170 in
+    // the store displacement while the walker starts at obj+4i.
+    float* posOut = reinterpret_cast<float*>(obj);
     bool mainHit = false;
-    float* dst = &obj->pos.x;
-    for (int i = 0; i < 2; i++) {
+    bool done;
+    for (int i = 0; i <= 2; i++) {
         MapFxChannel* fx = &obj->fx[i];
-        if (fx->field_2c > lbl_eu_8066A208) {
+        // Materializing the le-test (CfGimmick.cpp pattern) yields retail's
+        // fcmpo + cror eq,lt,eq + mfcr/extrwi sequence.
+        done = fx->field_2c <= lbl_eu_8066A208;
+        if (!done) {
             func_80240614(fx, delta);
-            *dst++ = fx->field_10;
+            posOut[0x5C + i] = fx->field_10;
             mainHit = true;
         }
     }
 
     bool subHit = false;
-    dst = &obj->pos2.x;
-    for (int i = 0; i < 2; i++) {
-        MapFxChannel* fx = &obj->fx2[i];
-        if (fx->field_2c > lbl_eu_8066A208) {
+    for (int j = 3; j <= 5; j++) {
+        MapFxChannel* fx = &obj->fx[j];
+        done = fx->field_2c <= lbl_eu_8066A208;
+        if (!done) {
             func_80240614(fx, delta);
-            *dst++ = fx->field_10;
+            posOut[0x5C + j] = fx->field_10;
             subHit = true;
         }
     }
@@ -231,39 +239,68 @@ void func_80240A64(u8* base) {
     *(int *)(base + 0xabc) = 0;
 }
 
-void func_80240AAC(){}
+// Advances the landmark FX for every active map point entry.
+extern "C" void func_80240AAC(MenuFxObj* entries) {
+    u32 base = (u32)entries;
+    u32 off = 0;
+    for (u32 i = 0; i < 8; i++) {
+        if (*(u8*)(base + off) != 0)
+            func_802408D4((MenuFxObj*)(base + off));
+        off += sizeof(MenuFxObj);
+    }
+}
 
 // Accumulates positions from active map point entries and applies them
 // to a camera or transform object via func_8049F168 / func_8049F204.
+// Retail keeps four zero-assigned locals (two are dead after optimization)
+// and walks the 8 entries as an unrolled pair inside a 4-iteration ctr loop;
+// the sums are in-place nw4r VEC3Add paired-single operations.
 void func_80240B10(MapPointEntry* entries, void* target) {
-    if (cf::CfGameManager::func_800829B8()) {
+    if (cf::CfGameManager::func_800829B8() != 0) {
         return;
     }
 
-    ml::CVec3 accumPos = ml::CVec3::zero;
-    ml::CVec3 accumPos2 = ml::CVec3::zero;
+    // Retail retains all four slots; the array keeps the unused elements'
+    // initialization stores alive (MWCC DCEs standalone dead locals).
+    ml::CVec3 acc[4];
+    acc[0] = ml::CVec3::zero;
+    acc[1] = ml::CVec3::zero;
+    acc[2] = ml::CVec3::zero;
+    acc[3] = ml::CVec3::zero;
+
     bool anyActive = false;
 
-    // 8 entries, processed as 4 pairs
+    // Walk by byte offset so MWCC strength-reduces to a base+offset counter
+    // (lbzx/add r4 form) instead of a dedicated cursor register.
+    u32 off = 0;
     for (int i = 0; i < 4; i++) {
-        MapPointEntry* entryA = &entries[i * 2];
-        MapPointEntry* entryB = &entries[i * 2 + 1];
-
-        if (entryA->flag != 0) {
-            accumPos += entryA->pos;
-            accumPos2 += entryA->pos2;
+        MapPointEntry* e = reinterpret_cast<MapPointEntry*>(reinterpret_cast<u8*>(entries) + off);
+        if (e->flag != 0) {
+            nw4r::math::VEC3Add(reinterpret_cast<nw4r::math::VEC3*>(&acc[0]),
+                                reinterpret_cast<const nw4r::math::VEC3*>(&acc[0]),
+                                reinterpret_cast<const nw4r::math::VEC3*>(&e->pos));
+            nw4r::math::VEC3Add(reinterpret_cast<nw4r::math::VEC3*>(&acc[1]),
+                                reinterpret_cast<const nw4r::math::VEC3*>(&acc[1]),
+                                reinterpret_cast<const nw4r::math::VEC3*>(&e->pos2));
             anyActive = true;
         }
-        if (entryB->flag != 0) {
-            accumPos += entryB->pos;
-            accumPos2 += entryB->pos2;
+        off += sizeof(MapPointEntry);
+        e = reinterpret_cast<MapPointEntry*>(reinterpret_cast<u8*>(entries) + off);
+        if (e->flag != 0) {
+            nw4r::math::VEC3Add(reinterpret_cast<nw4r::math::VEC3*>(&acc[0]),
+                                reinterpret_cast<const nw4r::math::VEC3*>(&acc[0]),
+                                reinterpret_cast<const nw4r::math::VEC3*>(&e->pos));
+            nw4r::math::VEC3Add(reinterpret_cast<nw4r::math::VEC3*>(&acc[1]),
+                                reinterpret_cast<const nw4r::math::VEC3*>(&acc[1]),
+                                reinterpret_cast<const nw4r::math::VEC3*>(&e->pos2));
             anyActive = true;
         }
+        off += sizeof(MapPointEntry);
     }
 
     if (anyActive) {
-        func_8049F168(target, &accumPos);
-        func_8049F204(target, &accumPos2);
+        func_8049F168(target, &acc[0]);
+        func_8049F204(target, &acc[1]);
     }
 }
 
@@ -314,16 +351,21 @@ s32 func_80240C98(MenuFxObj* entries, FxParams* params, u8 flagVal) {
     MenuFxObj* obj = entries;
     for (int i = 0; i < 8; i++, obj++) {
         if (obj->field_00 != 0) continue;
+        // NOTE: retail returns immediately after initializing the first
+        // inactive entry (returns the new counter value); 0 only when all
+        // 8 entries were already active.
 
         InitFxChannel(&obj->fx[0], params, params->field_04, params->field_2c);
         InitFxChannel(&obj->fx[1], params, params->field_08, params->field_2c);
         InitFxChannel(&obj->fx[2], params, params->field_0c, params->field_2c);
 
         // Channels 3-5 take pi/2-scaled widths from the reserved param block.
+        // volatile pins the pi/2-scaled widths to stack slots across the
+        // intervening randFloat1 calls (retail keeps no f14+ live ranges).
         float pi2 = lbl_eu_8066A210;
-        float w3 = params->field_14 * pi2;
-        float w4 = params->field_10 * pi2;
-        float w5 = params->field_18 * pi2;
+        volatile float w3 = params->field_10 * pi2;
+        volatile float w4 = params->field_14 * pi2;
+        volatile float w5 = params->field_18 * pi2;
         InitFxChannel(&obj->fx2[0], params, w3, params->field_30);
         InitFxChannel(&obj->fx2[1], params, w4, params->field_30);
         InitFxChannel(&obj->fx2[2], params, w5, params->field_30);
@@ -346,11 +388,26 @@ s32 func_80240C98(MenuFxObj* entries, FxParams* params, u8 flagVal) {
             lbl_eu_80664788 = count;
         }
         obj->field_04 = count;
+        return count;
     }
     return 0;
 }
 
-void func_8024125C(){}
+// Clears each landmark slot flag whose live counter has risen above the
+// epsilon floor, for active entries matching id (or all when id == 0).
+void func_8024125C(MapPointEntry* entries, u32 id) {
+    MapPointEntry* e = entries;
+    for (int i = 0; i < 8; i++, e++) {
+        if (e->flag == 0) continue;
+        if (!(id == e->id || id == 0)) continue;
+        MapPointSlot* s = e->slots;
+        for (int j = 6; j != 0; j--) {
+            u8 stop = s->value <= lbl_eu_8066A208;
+            if (!stop) s->flag = 0;
+            s++;
+        }
+    }
+}
 
 // Resets active landmark entries matching id (or all when id == 0):
 // clears each live slot counter and zeroes the stored positions.
@@ -446,121 +503,94 @@ void CMenuMapSelect::Init() {
 // for their definitions).
 #pragma push
 #pragma auto_inline off
-void func_80241640(CMapSel* dest, CMapSel* src) {
-    // Memberwise copy matching retail's per-field widths
+void func_80241640(CMapSel* dest, CMapSel* __restrict src) {
+    // Memberwise copy matching retail's per-field widths. Tail fields from
+    // +0x8E on are copied with unaligned word accesses (packed view).
     CMapSelCopyView& d = *reinterpret_cast<CMapSelCopyView*>(dest);
-    const CMapSelCopyView& s = *reinterpret_cast<const CMapSelCopyView*>(src);
+    // Volatile pins every source load at its statement position, reproducing
+    // retail's exact load order; destination stores remain schedulable.
+    const volatile CMapSelCopyViewSrc& s = *reinterpret_cast<const volatile CMapSelCopyViewSrc*>(src);
 
-    // Read every field into locals first (retail hoists all loads above the
-    // stores, spilling to the stack under register pressure).
-    const u8 b5B = s.f5B;
-    const u8 b70 = s.f70;
-    const u8 b59 = s.f59;
-    const u32 w780 = s.f78[0];
-    const u32 w781 = s.f78[1];
-    const u32 w782 = s.f78[2];
-    const u32 w783 = s.f78[3];
-    const u8 b88 = s.f88;
-    const u8 b89 = s.f89;
-    const u8 b8C = s.f8C;
-    const u8 b8D = s.f8D;
-    const u32 w8E0 = s.f8E[0];
-    const u32 w8E1 = s.f8E[1];
-    const u32 w8E2 = s.f8E[2];
-    const u32 w8E3 = s.f8E[3];
-    const u32 w8E4 = s.f8E[4];
-    const u32 w8E5 = s.f8E[5];
-    const u32 wAA = s.fAA;
-    const u8 bAE = s.fAE;
-    const u8 bAF = s.fAF;
-    const f32 fB0v = s.fB0;
+    d.f5B = s.f5B;
+    d.f70 = s.f70;
+    d.f59 = s.f59;
+    d.f78[0] = s.f78[0];
+    d.f78[1] = s.f78[1];
+    d.f78[2] = s.f78[2];
+    d.f78[3] = s.f78[3];
+    d.f88 = s.f88;
+    d.f89 = s.f89;
+    d.f8C = s.f8C;
+    d.f8D = s.f8D;
+    d.tail.w[0] = s.tail.w[0];
+    d.tail.w[1] = s.tail.w[1];
+    d.tail.w[2] = s.tail.w[2];
+    d.tail.w[3] = s.tail.w[3];
+    d.tail.w[4] = s.tail.w[4];
+    d.tail.w[5] = s.tail.w[5];
+    d.tail.w[6] = s.tail.w[6];
 
-    const u32 w04_0 = s.f04[0];
-    const u32 w04_1 = s.f04[1];
-    const u32 w04_2 = s.f04[2];
-    const u32 w04_3 = s.f04[3];
-    const u32 w04_4 = s.f04[4];
-    const u32 w04_5 = s.f04[5];
-    const u32 w04_6 = s.f04[6];
-    const u32 w04_7 = s.f04[7];
-    const u32 w04_8 = s.f04[8];
-    const u32 w04_9 = s.f04[9];
-    const u32 w04_10 = s.f04[10];
-    const u8 b30 = s.f30;
-    const u8 b31 = s.f31;
-    const u8 b32 = s.f32;
-    const u8 b33 = s.f33;
-    const u32 w380 = s.f38[0];
-    const u32 w381 = s.f38[1];
-    const u32 w382 = s.f38[2];
-    const u32 w383 = s.f38[3];
-    const u32 w384 = s.f38[4];
-    const u32 w385 = s.f38[5];
-    const u32 w386 = s.f38[6];
-    const u32 w387 = s.f38[7];
-    const u8 b58 = s.f58;
-    const u8 b5A = s.f5A;
-    const f32 f5Cv = s.f5C;
-    const f32 f60v = s.f60;
-    const f32 f64v = s.f64;
-    const f32 f68v = s.f68;
-    const f32 f6Cv = s.f6C;
+    // Retail loads +0xAA here but stores it only after the float block.
+    volatile u32 aav = s.tail.aa;
 
-    d.f5B = b5B;
-    d.f70 = b70;
-    d.f59 = b59;
-    d.f78[0] = w780;
-    d.f78[1] = w781;
-    d.f78[2] = w782;
-    d.f78[3] = w783;
-    d.f88 = b88;
-    d.f89 = b89;
-    d.f8C = b8C;
-    d.f8D = b8D;
-    d.f8E[0] = w8E0;
-    d.f8E[1] = w8E1;
-    d.f8E[2] = w8E2;
-    d.f8E[3] = w8E3;
-    d.f8E[4] = w8E4;
-    d.f8E[5] = w8E5;
-    d.fAA = wAA;
-    d.fAE = bAE;
-    d.fAF = bAF;
-    d.fB0 = fB0v;
-
-    d.f04[0] = w04_0;
-    d.f04[1] = w04_1;
-    d.f04[2] = w04_2;
-    d.f04[3] = w04_3;
-    d.f04[4] = w04_4;
-    d.f04[5] = w04_5;
-    d.f04[6] = w04_6;
-    d.f04[7] = w04_7;
-    d.f04[8] = w04_8;
-    d.f04[9] = w04_9;
-    d.f04[10] = w04_10;
-    d.f30 = b30;
-    d.f31 = b31;
-    d.f32 = b32;
-    d.f33 = b33;
-    d.f38[0] = w380;
-    d.f38[1] = w381;
-    d.f38[2] = w382;
-    d.f38[3] = w383;
-    d.f38[4] = w384;
-    d.f38[5] = w385;
-    d.f38[6] = w386;
-    d.f38[7] = w387;
-    d.f58 = b58;
-    d.f5A = b5A;
-    d.f5C = f5Cv;
-    d.f60 = f60v;
-    d.f64 = f64v;
-    d.f68 = f68v;
-    d.f6C = f6Cv;
+    d.f04.v[0] = s.f04.v[0];
+    d.f04.v[1] = s.f04.v[1];
+    d.f04.v[2] = s.f04.v[2];
+    d.f04.v[3] = s.f04.v[3];
+    d.f04.v[4] = s.f04.v[4];
+    d.f04.v[5] = s.f04.v[5];
+    d.f04.v[6] = s.f04.v[6];
+    d.f04.v[7] = s.f04.v[7];
+    d.f04.v[8] = s.f04.v[8];
+    d.f04.v[9] = s.f04.v[9];
+    d.f04.v[10] = s.f04.v[10];
+    d.f30 = s.f30;
+    d.f31 = s.f31;
+    d.f32 = s.f32;
+    d.f33 = s.f33;
+    d.f38.v[0] = s.f38.v[0];
+    d.f38.v[1] = s.f38.v[1];
+    d.f38.v[2] = s.f38.v[2];
+    d.f38.v[3] = s.f38.v[3];
+    d.f38.v[4] = s.f38.v[4];
+    d.f38.v[5] = s.f38.v[5];
+    d.f38.v[6] = s.f38.v[6];
+    d.f38.v[7] = s.f38.v[7];
+    d.f58 = s.f58;
+    d.f5A = s.f5A;
+    d.f5C = s.f5C;
+    d.f60 = s.f60;
+    d.f64 = s.f64;
+    d.f68 = s.f68;
+    d.f6C = s.f6C;
+    d.tail.aa = aav;
+    d.tail.ae = s.tail.ae;
+    d.tail.af = s.tail.af;
+    d.tail.b0 = s.tail.b0;
 }
 
-void func_8024189C(CFade* dest, CFade* src){}
+// Memberwise CFade copy helper (copies everything after the vptr).
+// __restrict lets MWCC prove dest/src don't alias so it hoists all loads
+// above the stores; the four mMemRegion words are assigned ascending to
+// match retail's reversed scheduling within the word block.
+void func_8024189C(CFade* dest, CFade* __restrict src) {
+    CFadeCopyView& d = *reinterpret_cast<CFadeCopyView*>(&dest->mMemRegion);
+    const CFadeCopyViewSrc& s = *reinterpret_cast<const CFadeCopyViewSrc*>(&src->mMemRegion);
+
+    // The distinct source view type plus __restrict let MWCC hoist all
+    d.mMemRegion.unk0 = s.mMemRegion.unk0;
+    d.mMemRegion.unk4 = s.mMemRegion.unk4;
+    d.mMemRegion.unk8 = s.mMemRegion.unk8;
+    d.mMemRegion.unkC = s.mMemRegion.unkC;
+    d.mFileHandle = s.mFileHandle;
+    d.mArcResAcc = s.mArcResAcc;
+    d.mLayout = s.mLayout;
+    d.mAnimTrans = s.mAnimTrans;
+    d.mIsLoaded = s.mIsLoaded;
+    d.mFadeState = s.mFadeState;
+    d.mReady = s.mReady;
+    d.mVisible = s.mVisible;
+}
 
 // Memberwise copy of a fully constructed CFloorMap into the process member
 // (retail copy helper used by Init). Field widths follow the retail copy; the
@@ -619,87 +649,14 @@ void func_80241920(CFloorMap* dest, CFloorMap* src) {
     d.fA4[0] = s.fA4[0];
     d.fA4[1] = s.fA4[1];
     d.fA4[2] = s.fA4[2];
-    u32 b0v = s.fB0;
-    int n1 = 20;   // lands between the +0xB0 load and store, as in retail
-    d.fB0 = b0v;
-    d.fB4 = s.fB4;
-    d.fB5 = s.fB5;
-    d.fBC[0] = s.fBC[0];
-    d.fBC[1] = s.fBC[1];
-    d.fBC[2] = s.fBC[2];
-    d.fBC[3] = s.fBC[3];
-    d.fBC[4] = s.fBC[4];
-    d.fBC[5] = s.fBC[5];
-    d.fBC[6] = s.fBC[6];
-    d.fBC[7] = s.fBC[7];
-    d.fBC[8] = s.fBC[8];
-    d.fE0 = s.fE0;
-    d.fE4[0] = s.fE4[0];
-    d.fE4[1] = s.fE4[1];
-    d.fEC[0] = s.fEC[0];
-    d.fEC[1] = s.fEC[1];
-    d.fEC[2] = s.fEC[2];
-    d.fEC[3] = s.fEC[3];
-    d.fEC[4] = s.fEC[4];
-    d.fEC[5] = s.fEC[5];
-    d.fF8[0] = s.fF8[0];
-    d.fF8[1] = s.fF8[1];
-    d.fF8[2] = s.fF8[2];
-    d.fF8[3] = s.fF8[3];
-    d.fF8[4] = s.fF8[4];
-    d.fF8[5] = s.fF8[5];
-    d.fF8[6] = s.fF8[6];
-    d.fF8[7] = s.fF8[7];
-    d.fF8[8] = s.fF8[8];
-    d.f11C = s.f11C;
-    d.f120[0] = s.f120[0];
-    d.f120[1] = s.f120[1];
-    d.f128[0] = s.f128[0];
-    d.f128[1] = s.f128[1];
-    d.f128[2] = s.f128[2];
-    d.f128[3] = s.f128[3];
-    d.f128[4] = s.f128[4];
-    d.f128[5] = s.f128[5];
-    d.f130[0] = s.f130[0];
-    d.f130[1] = s.f130[1];
-    d.f130[2] = s.f130[2];
-    d.f130[3] = s.f130[3];
-    d.f130[4] = s.f130[4];
-    d.f130[5] = s.f130[5];
-    d.f130[6] = s.f130[6];
-    d.f14C = s.f14C;
+    d.fB0 = s.fB0;
 
-    // Retail keeps these as ctr loops over 8-byte records; the countdown
-    // do-while form avoids MWCC's unroller.
-    const CFloorMapCopyPair* sp = s.loop1;
-    CFloorMapCopyPair* dp = d.loop1;
-    do {
-        dp->a = sp->a;
-        dp->b = sp->b;
-        dp++;
-        sp++;
-    } while (--n1);
-
-    d.f1F0 = s.f1F0;
-    d.f1F4 = s.f1F4;
-    d.f1F8 = s.f1F8;
-    d.f1FC = s.f1FC;
-    d.f200 = s.f200;
-    d.f204 = s.f204;
-    d.f205 = s.f205;
-    d.f206 = s.f206;
-    d.f207 = s.f207;
-    d.f208 = s.f208;
-
-    const CFloorMapCopyPair* sp2 = s.loop2;
-    CFloorMapCopyPair* dp2 = d.loop2;
-    int n2 = 0x618;
-    do {
-        dp2->a = sp2->a;
-        dp2->b = sp2->b;
-        dp2++;
-        sp2++;
-    } while (--n2);
+    // Retail lowers these stretches as single struct assignments: named
+    // members expand to per-field copies, unnamed storage is skipped, and
+    // the pair arrays become ctr loops whose walkers start at the substruct
+    // base (first displacement carries the array offset).
+    d.block1 = s.block1;
+    d.block2 = s.block2;
 
     d.f32CC = s.f32CC;
     d.f32D4[0] = s.f32D4[0];
@@ -866,4 +823,26 @@ void CMenuMapSelect::Move() {
     func_8024C1FC(&mFloorMap);
 }
 
-void CMenuMapSelect::cbRenderBefore() {}
+// CMenuMapSelect::cbRenderBefore - scene render callback. Skips drawing while
+// the game task is busy or the global bit-21 busy flag is set, then draws bg,
+// map selector, floor map, title help and fade through a stack DrawInfo.
+void CMenuMapSelect::cbRenderBefore() {
+    if (CTaskGame::getInstance()->func_800426F0() != 0 || (lbl_eu_80663E28 & 0x200000)) return;
+    if (func_8013BE50() == 0) return;
+    if (mState >= 0xb) return;
+
+    GXSetZMode(GX_FALSE, GX_NEVER, GX_FALSE);
+    // Raw 0x60-byte buffer: a typed local would make MWCC emit its own
+    // construction; retail calls the ctor/dtor symbols directly (flag -1).
+    u8 drawInfo[0x60];
+    __ct__Q34nw4r3lyt8DrawInfoFv(reinterpret_cast<nw4r::lyt::DrawInfo*>(drawInfo));
+    func_80137250(reinterpret_cast<nw4r::lyt::DrawInfo*>(drawInfo));
+    if (func_8024CE60(&mFloorMap) == 0) {
+        func_801C3D7C(&mBgTex, reinterpret_cast<nw4r::lyt::DrawInfo*>(drawInfo));
+        func_80243560(&mMapSel, reinterpret_cast<nw4r::lyt::DrawInfo*>(drawInfo));
+    }
+    func_8024C8F8(&mFloorMap, reinterpret_cast<nw4r::lyt::DrawInfo*>(drawInfo));
+    func_801C4080(&mTitleHelp, reinterpret_cast<nw4r::lyt::DrawInfo*>(drawInfo));
+    func_80244460(&mFade, reinterpret_cast<nw4r::lyt::DrawInfo*>(drawInfo));
+    __dt__Q34nw4r3lyt8DrawInfoFv(reinterpret_cast<nw4r::lyt::DrawInfo*>(drawInfo), -1);
+}

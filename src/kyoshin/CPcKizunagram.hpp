@@ -264,7 +264,9 @@ extern "C" void __dt__14Class_8045F858Fv(Class_8045F858* self, int dealloc);
 extern "C" u16 func_80136254(const void*, const void*, int);
 extern "C" char* func_80136190(const void*, const void*, int);
 extern "C" char* func_8013639C(const void*, const void*, int);
-extern "C" u8 func_801361E8(u32, const char*, u32);
+// u32-return view: retail masks the column byte at the call sites (clrlwi 24),
+// so this TU saw an int/unsigned return, not u8.
+extern "C" u32 func_801361E8(u32, const char*, u32);
 extern "C" int func_801C4648(void);
 extern "C" u16 func_8013606C(const void*, const void*, u32);
 extern "C" u32 func_8009CF8C(u32);
@@ -277,7 +279,10 @@ extern "C" const u32 lbl_eu_80668898;  // const: MWCC hoists the loads above the
 extern "C" const u32 lbl_eu_8066889C;
 extern "C" const u32 lbl_eu_806688A0;
 extern "C" const u32 lbl_eu_806688A4;
-extern "C" void func_80136910__FPQ34nw4r3lyt6LayoutPcUc(nw4r::lyt::Layout*, char*, u8);
+// u16-param view: retail passes the affinity value with only a clrlwi 16
+// (no low-byte mask at the call site), so this TU saw a u16 parameter.
+// Literal mangled identifier links to the same symbol as func_80136910.
+extern "C" void func_80136910__FPQ34nw4r3lyt6LayoutPcUc(nw4r::lyt::Layout*, char*, u16);
 extern "C" void func_80137924(void*, void*, void*, void*);
 extern "C" void func_80124270(void*, u32);
 

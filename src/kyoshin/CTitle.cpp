@@ -51,7 +51,9 @@ CTitleLogo::~CTitleLogo() {}
 // Build the logo layout from the freshly-attached arc: init the layout and
 // its three animation transforms, then unbind all (they get rebound by
 // func_802B6724 when the logo becomes active).
-void func_802B63A4(CTitleLogo* self, nw4r::lyt::ArcResourceAccessor* arcResAcc) {
+#pragma optimize_for_size on // -O4,s forces the retail stmw r30 block frame
+// noinline: retail keeps bl from OnFileEvent, so the call must survive;
+extern "C" __declspec(noinline) void func_802B63A4(CTitleLogo* self, nw4r::lyt::ArcResourceAccessor* arcResAcc) {
     self->mAccessor = arcResAcc;
     func_80136E84(&self->mLayout, self->mAccessor, &lbl_eu_80513628[0]);
     func_80136F08(self->mLayout, &self->mAnimTrans0, self->mAccessor, &lbl_eu_80513628[0x13]);
@@ -59,12 +61,15 @@ void func_802B63A4(CTitleLogo* self, nw4r::lyt::ArcResourceAccessor* arcResAcc) 
     func_80136F08(self->mLayout, &self->mAnimTrans2, self->mAccessor, &lbl_eu_80513628[0x41]);
     self->mLayout->UnbindAllAnimation();
 }
+#pragma optimize_for_size off
 
 // CTitleLogo per-frame update: run the state-machine entry selected by
 // field_0x1A, then advance the layout animation. The exit-before-body label
 // shape reproduces the retail branch-over-branch gate (MWCC_CASES
 // sjrbf_PutChunk pattern).
-void func_802B6434(CTitleLogo* self) {
+// extern "C": retail keeps these callsites as unmangled R_PPC_REL24 relocs
+// from func_802B744C.
+extern "C" void __declspec(noinline) func_802B6434(CTitleLogo* self) {
     if (self->mLayout != 0 && self->field_0x18 != 0) {
         goto body;
     }
@@ -90,25 +95,12 @@ call:
         logo->mLayout, drawInfo, 0, 1);
 }
 
-// us-802b8d9c - CTitleLogo ctor: implicit vptr (retail
-// lbl_eu_8053B368), nulled pointers, phase flag 1.
-CTitleLogo::CTitleLogo() {
-    mAccessor = nullptr;
-    mLayout = nullptr;
-    mAnimTrans0 = nullptr;
-    mAnimTrans1 = nullptr;
-    mAnimTrans2 = nullptr;
-    field_0x18 = 0;
-    field_0x19 = 1;
-    field_0x1A = 0;
-}
-
-// Release the logo layout: virtual-dtor the +0x08 member, then clear it.
-// MWCC inserts its own null-check before a virtual dtor call, giving the
-// retail branch-over-branch gate.
-extern "C" void func_802B64DC(CTitleLogo* self) {
+// Release the logo layout: delete the +0x08 member, then clear it.
+// delete emits the deleting-dtor vcall (flag 1) and MWCC inserts its own
+// null-check before it, giving the retail branch-over-branch gate.
+extern "C" __declspec(noinline) void func_802B64DC(CTitleLogo* self) {
     if (self->mLayout != NULL) {
-        self->mLayout->~Layout();
+        delete self->mLayout;
         self->mLayout = NULL;
     }
 }
@@ -228,22 +220,24 @@ CTitleMenu::~CTitleMenu() {}
 // grey colors (opaque + transparent).
 // -O4,s forces the retail [stmw]/lmw r29-r31 block frame.
 #pragma optimize_for_size on
-void __declspec(noinline) func_802B6970(CTitleMenu* self, nw4r::lyt::ArcResourceAccessor* arcResAcc) {
+extern "C" __declspec(noinline) void func_802B6970(CTitleMenu* self, nw4r::lyt::ArcResourceAccessor* arcResAcc) {
     GXColorS10 colorB;
     GXColorS10 colorA;
+    char* strs = lbl_eu_80513628;
     self->mAccessor = arcResAcc;
-    func_80136E84(&self->mLayout, self->mAccessor, &lbl_eu_80513628[0x58]);
-    func_80136F08(self->mLayout, &self->mAnimTrans0, self->mAccessor, &lbl_eu_80513628[0x6b]);
-    func_80136F08(self->mLayout, &self->mAnimTrans1, self->mAccessor, &lbl_eu_80513628[0x88]);
-    func_80136F08(self->mLayout, &self->mAnimTrans2, self->mAccessor, &lbl_eu_80513628[0xa7]);
-    func_80136F08(self->mLayout, &self->mAnimTrans3, self->mAccessor, &lbl_eu_80513628[0xc4]);
-    func_80136F08(self->mLayout, &self->mAnimTrans4, self->mAccessor, &lbl_eu_80513628[0xda]);
-    func_80136F08(self->mLayout, &self->mAnimTrans5, self->mAccessor, &lbl_eu_80513628[0xf2]);
+    func_80136E84(&self->mLayout, self->mAccessor, &strs[0x58]);
+    func_80136F08(self->mLayout, &self->mAnimTrans0, self->mAccessor, &strs[0x6b]);
+    func_80136F08(self->mLayout, &self->mAnimTrans1, self->mAccessor, &strs[0x88]);
+    func_80136F08(self->mLayout, &self->mAnimTrans2, self->mAccessor, &strs[0xa7]);
+    func_80136F08(self->mLayout, &self->mAnimTrans3, self->mAccessor, &strs[0xc4]);
+    func_80136F08(self->mLayout, &self->mAnimTrans4, self->mAccessor, &strs[0xda]);
+    func_80136F08(self->mLayout, &self->mAnimTrans5, self->mAccessor, &strs[0xf2]);
     self->mLayout->UnbindAllAnimation();
     if ((lbl_eu_80663E28 & 0x40000000) != 0) {
-        GXColorS10* pColorA = func_801C4B60(&colorA, 0x80, 0x80, 0x80, 0xff);
-        GXColorS10* pColorB = func_801C4B60(&colorB, 0x80, 0x80, 0x80, 0x00);
-        func_80139A18(self->mLayout, &lbl_eu_80513628[0x109], pColorB, pColorA);
+        // MWCC evaluates args right-to-left: colorA is built first.
+        func_80139A18(self->mLayout, &strs[0x109],
+                      func_801C4B60(&colorB, 0x80, 0x80, 0x80, 0x00),
+                      func_801C4B60(&colorA, 0x80, 0x80, 0x80, 0xff));
     }
 }
 #pragma optimize_for_size off
@@ -251,7 +245,7 @@ void __declspec(noinline) func_802B6970(CTitleMenu* self, nw4r::lyt::ArcResource
 // CTitleMenu per-frame update: run the state-machine entry selected by
 // field_0x26, then advance the layout animation (same gate shape as
 // func_802B6434).
-void func_802B6A90(CTitleMenu* self) {
+extern "C" void __declspec(noinline) func_802B6A90(CTitleMenu* self) {
     if (self->mLayout != 0 && self->field_0x24 != 0) {
         goto body;
     }
@@ -274,12 +268,26 @@ call:
         menu->mLayout, drawInfo, 0, 1);
 }
 
-// Menu-side sibling of func_802B64DC.
-extern "C" void func_802B6B38(CTitleMenu* self) {
-    if (self->mLayout != NULL) {
-        self->mLayout->~Layout();
-        self->mLayout = NULL;
+// Menu-side sibling of func_802B64DC. Retail calls vtable slot +0x08 with an
+// int flag of 1 (not a dtor call, which would pass -1), so go through a view
+// class with a plain virtual taking the flags argument.
+class CTitleLayoutView {
+public:
+    virtual void vf00(int flags);
+};
+
+// Two sequential null-tests mirror the retail's doubled `beq` (the second
+// branch is dead - MWCC CSEs the compare but keeps both branches).
+// Retail calls this via bl from the teardown path, so keep it out of line;
+// C linkage binds to the retail unmangled name.
+extern "C" __declspec(noinline) void func_802B6B38(CTitleMenu* self) {
+    if (self->mLayout == NULL) {
+        return;
     }
+    if (self->mLayout != NULL) {
+        ((CTitleLayoutView*)self->mLayout)->vf00(1);
+    }
+    self->mLayout = NULL;
 }
 
 #pragma optimize_for_size on  // -O4,s forces the retail stmw r30 block frame
@@ -414,11 +422,35 @@ void func_802B6FFC(CTitleMenu* self) {
     self->mLayout->Animate(0);
 }
 
-void __declspec(noinline) func_802B7094(CTitleMenu* self){}
+// Menu phase 3: unbind the intro animation, bind animation 2, reset it to
+// frame 0, and advance the layout.
+void __declspec(noinline) func_802B7094(CTitleMenu* self) {
+    self->mLayout->UnbindAnimation(self->mAnimTrans1);
+    self->mLayout->BindAnimation(self->mAnimTrans2);
+    self->mLayout->SetAnimationEnable(self->mAnimTrans2, true);
+    self->mAnimTrans2->SetFrame(lbl_eu_80668FF0);
+    self->mLayout->Animate();
+}
 
-void func_802B712C(){}
+// Menu phase 4: unbind animation 2, bind animation 3, enable it, park it on
+// its start frame, and advance the layout once.
+void func_802B712C(CTitleMenu* self) {
+    self->mLayout->UnbindAnimation(self->mAnimTrans2);
+    self->mLayout->BindAnimation(self->mAnimTrans3);
+    self->mLayout->SetAnimationEnable(self->mAnimTrans3, true);
+    self->mAnimTrans3->SetFrame(lbl_eu_80668FF0);
+    self->mLayout->Animate();
+}
 
-void __declspec(noinline) func_802B71C4(CTitleMenu* self) {}
+// Menu phase 5: unbind animation 3, bind animation 4, enable it, park it on
+// its start frame, and advance the layout once.
+void __declspec(noinline) func_802B71C4(CTitleMenu* self) {
+    self->mLayout->UnbindAnimation(self->mAnimTrans3);
+    self->mLayout->BindAnimation(self->mAnimTrans4);
+    self->mLayout->SetAnimationEnable(self->mAnimTrans4, true);
+    self->mAnimTrans4->SetFrame(lbl_eu_80668FF0);
+    self->mLayout->Animate(0);
+}
 
 // Menu outro: unbind animation 4, bind animation 5, enable it, park it on
 // its start frame, and advance the layout once.
@@ -500,7 +532,22 @@ extern "C" void func_802B74A8(void* self, void* drawInfo) {
 }
 #pragma optimize_for_size off
 
-void func_802B74F4(){}
+// Teardown: release the async file handle, tear down the logo and menu sub-
+// objects, hide the cursor via its +0x0C virtual, release the arc accessor,
+// free the scratch mem region, and clear the file-event singleton.
+// -O4,s forces the retail stmw r30/r31 block frame.
+#pragma optimize_for_size on
+extern "C" void func_802B74F4(CTitle* self) {
+    func_801390E0(&self->mFileHandle);
+    func_802B64DC(&self->mLogo);
+    func_802B6B38(&self->mMenu);
+    reinterpret_cast<CCur18View*>(&self->mCur[0])->vf03();
+    func_80139124(self->mAccessor);
+    self->mAccessor = 0;
+    self->mMemRegion.func_8045F778();
+    lbl_eu_80664C38 = 0;
+}
+#pragma optimize_for_size off
 
 extern "C" int func_802B7564(CTitle* self) {
     int r = 0;
@@ -651,36 +698,41 @@ extern "C" void func_802B7948(void* a, unsigned int b, unsigned char v) {
 // region (RAII Class_8045F858 guard), detach the file buffer, attach it to a
 // fresh ArcResourceAccessor, and build the logo + menu layouts plus the
 // embedded CCur18 cursor (construct on stack, copy the body, destroy).
+// -O4,s forces the retail [stmw]/lmw r28-r31 block frame.
+#pragma optimize_for_size on
 bool CTitle::OnFileEvent(CEventFile* pEventFile) {
-    if (mFileHandle != pEventFile->mFileHandle) {
-        return false;
+    if (mFileHandle == pEventFile->mFileHandle) {
+        mMemRegion.createRegion(mtl::MemManager::getHandleMEM2(), 0x10000,
+                                &lbl_eu_80513628[0x145], 1);
+        Class_8045F858 regionGuard(&mMemRegion);
+        void* fileData = mFileHandle->getData();
+        mtl::MemManager::func_80434A4C(false);
+        mAccessor = CLibLayout::createArcResourceAccessor();
+        mAccessor->Attach(fileData, &lbl_eu_80513628[0x14c]);
+        func_802B63A4(&mLogo, mAccessor);
+        func_802B6970(&mMenu, mAccessor);
+        u8 cur18Temp[0x18];
+        __ct__CCur18(reinterpret_cast<CBaseCur*>(cur18Temp), mAccessor);
+        // Copy the constructed cursor body (everything past the vptr) into
+        // the embedded member.
+        CBaseCur* curDst = reinterpret_cast<CBaseCur*>(&mCur[0]);
+        CBaseCur* curSrc = reinterpret_cast<CBaseCur*>(cur18Temp);
+        curDst->mArcResAcc = curSrc->mArcResAcc;
+        curDst->mpLayout = curSrc->mpLayout;
+        curDst->mpAnimTrans0 = curSrc->mpAnimTrans0;
+        curDst->mpAnimTrans1 = curSrc->mpAnimTrans1;
+        curDst->mActive = curSrc->mActive;
+        curDst->mVisible = curSrc->mVisible;
+        __dt__6CCur18Fv(curSrc, -1);
+        reinterpret_cast<CCur18View*>(&mCur[0])->vf02();
+        field_0x1C = 1;
+        mFileHandle = 0;
+        mMemRegion.func_8045F810();
+        return true;
     }
-    mMemRegion.createRegion(mtl::MemManager::getHandleMEM2(), 0x10000,
-                            &lbl_eu_80513628[0x145], 1);
-    Class_8045F858 regionGuard(&mMemRegion);
-    void* fileData = mFileHandle->getData();
-    mtl::MemManager::func_80434A4C(false);
-    mAccessor = CLibLayout::createArcResourceAccessor();
-    mAccessor->Attach(fileData, &lbl_eu_80513628[0x14c]);
-    func_802B63A4(&mLogo, mAccessor);
-    func_802B6970(&mMenu, mAccessor);
-    u8 cur18Temp[0x18];
-    __ct__CCur18(reinterpret_cast<CBaseCur*>(cur18Temp), mAccessor);
-    CBaseCur* curDst = reinterpret_cast<CBaseCur*>(&mCur[0]);
-    CBaseCur* curSrc = reinterpret_cast<CBaseCur*>(cur18Temp);
-    curDst->mArcResAcc = curSrc->mArcResAcc;
-    curDst->mpLayout = curSrc->mpLayout;
-    curDst->mpAnimTrans0 = curSrc->mpAnimTrans0;
-    curDst->mpAnimTrans1 = curSrc->mpAnimTrans1;
-    curDst->mActive = curSrc->mActive;
-    curDst->mVisible = curSrc->mVisible;
-    __dt__6CCur18Fv(curSrc, -1);
-    reinterpret_cast<CCur18View*>(&mCur[0])->vf02();
-    field_0x1C = 1;
-    mFileHandle = 0;
-    mMemRegion.func_8045F810();
-    return true;
+    return false;
 }
+#pragma optimize_for_size off
 
 // Refresh the "to attack" button caches: resolve the current player's battle
 // object, and if either cached button state says "held" while the live query
@@ -689,28 +741,31 @@ bool CTitle::OnFileEvent(CEventFile* pEventFile) {
 int cf::CHelp_ToAttack::func_802B7A90() {
     cf::CfObjectMove* player = cf::CfGameManager::getPlayer(0);
     cf::CHelpBattleObj* battleObj = func_800BFC68(player);
-    if (battleObj == 0) {
-        return 0;
-    }
     u32 valA;
     u32 valB;
     u32 valC;
     u32 valD;
-    if (field_0xC != 0) {
-        valA = *battleObj->field_0x4->vf30();
-        if (func_80174C98(battleObj, &valA, 0x7) == 0) {
-            return 1;
+    if (battleObj != 0) {
+        if (field_0xC != 0) {
+            valA = *battleObj->field_0x4->vf30();
+            if (func_80174C98(battleObj, &valA, 0x7) == 0) {
+                return 1;
+            }
         }
-    }
-    if (field_0xD != 0) {
-        valB = *battleObj->field_0x4->vf30();
-        if (func_80174C98(battleObj, &valB, 0x800) == 0) {
-            return 1;
+        if (field_0xD != 0) {
+            valB = *battleObj->field_0x4->vf30();
+            if (func_80174C98(battleObj, &valB, 0x08000000) == 0) {
+                return 1;
+            }
         }
+        int rc;
+        valC = *battleObj->field_0x4->vf30();
+        rc = func_80174C98(battleObj, &valC, 0x7);
+        field_0xC = rc;
+        valD = *battleObj->field_0x4->vf30();
+        rc = func_80174C98(battleObj, &valD, 0x08000000);
+        field_0xD = rc;
+        return 0;
     }
-    valC = *battleObj->field_0x4->vf30();
-    field_0xC = func_80174C98(battleObj, &valC, 0x7);
-    valD = *battleObj->field_0x4->vf30();
-    field_0xD = func_80174C98(battleObj, &valD, 0x800);
     return 0;
 }

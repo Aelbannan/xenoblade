@@ -6,7 +6,9 @@
 #include "kyoshin/CBaseCur.hpp"
 #include "kyoshin/CItemBoxInfo.hpp"
 #include "monolib/device/CDeviceFile.hpp"
+#include "monolib/device/CFileHandle.hpp"
 #include "monolib/util/MemManager.hpp"
+#include <stdio.h>
 
 // const routes the symbol into the readonly sdata2 pool; MWCC then hoists the
 // lfs ABOVE the frame stores (retail shape) - see MWCC_CASES §CExchangeWin.
@@ -47,34 +49,37 @@ extern "C" void* __dt__12CEquipChangeFv(CEquipChange* self, int flags) {
 // fresh stack temporaries (CItemBoxInfo(4,0) and default CEquipItemBox) whose
 // config regions are copied field-by-field through the same helpers as
 // func_801F9CB4 (UnkClass_8011C974 mem regions, scalars load-store
-// interleaved, counted 8-byte pair loops). Retail keeps the individual
-// r30/r31 saves (plain -O4,p prologue).
+// interleaved, counted 8-byte pair loops).
 #pragma optimize_for_size on
-CEquipChange::CEquipChange() {
-    mVtbl = reinterpret_cast<void*>(lbl_eu_80535688);
-    __ct__17UnkClass_8045F564Fv(&_pad04[0]);
-    __ct__17UnkClass_8045F564Fv(&_pad14[0]);
-    field_24 = 0;
-    field_28 = 0;
-    field_2C = 0;
-    field_30 = 0;
-    field_34 = 0;
-    field_38 = 0;
-    field_3C = 0;
-    field_40 = 0;
-    field_44 = 0;
-    field_48 = 0;
-    field_4C = 0;
-    field_4D = 1;
-    __ct__CCur14((u8*)this + 0x50, (nw4r::lyt::ArcResourceAccessor*)0);
-    __ct__CCur15((u8*)this + 0x68, (nw4r::lyt::ArcResourceAccessor*)0);
-    __ct__CSubCur((u8*)this + 0x80, (nw4r::lyt::ArcResourceAccessor*)0);
-    field_98 = 0;
-    field_99 = 0;
-    __ct__CItemBoxInfo(reinterpret_cast<CItemBoxInfo*>(&_padA4[0]), 0, 0);
-    __ct__CEquipItemBox(&mEquipItemBox);
+/* Retail's symbol is the unmangled free function __ct__CEquipChange (not a
+   mangled member ctor), so it is written with C linkage - no implicit
+   member construction is injected and __ct__CEquipItemBox is called
+   manually mid-body, exactly as retail does. */
+extern "C" CEquipChange* __ct__CEquipChange(CEquipChange* self) {
+    self->mVtbl = reinterpret_cast<void*>(lbl_eu_80535688);
+    __ct__17UnkClass_8045F564Fv(&self->_pad04[0]);
+    __ct__17UnkClass_8045F564Fv(&self->_pad14[0]);
+    self->field_24 = 0;
+    self->field_28 = 0;
+    self->field_2C = 0;
+    self->field_30 = 0;
+    self->field_34 = 0;
+    self->field_38 = 0;
+    self->field_3C = 0;
+    self->field_40 = 0;
+    self->field_44 = 0;
+    self->field_48 = 0;
+    self->field_4C = 0;
+    self->field_4D = 1;
+    __ct__CCur14((u8*)self + 0x50, (nw4r::lyt::ArcResourceAccessor*)0);
+    __ct__CCur15((u8*)self + 0x68, (nw4r::lyt::ArcResourceAccessor*)0);
+    __ct__CSubCur((u8*)self + 0x80, (nw4r::lyt::ArcResourceAccessor*)0);
+    self->field_98 = 0;
+    self->field_99 = 0;
+    __ct__CItemBoxInfo(reinterpret_cast<CItemBoxInfo*>(&self->_padA4[0]), 0, 0);
+    __ct__CEquipItemBox(&self->mEquipItemBox);
 
-    CEqChStateView* v = reinterpret_cast<CEqChStateView*>(this);
+    CEqChStateView* v = reinterpret_cast<CEqChStateView*>(self);
 
     CEqChBoxTemp boxTmp;
 
@@ -82,20 +87,44 @@ CEquipChange::CEquipChange() {
     __ct__CItemBoxInfo(reinterpret_cast<CItemBoxInfo*>(&boxTmp), 4, 0);
     __ct__UnkClass_8011C974(&v->fa8[0], &boxTmp.f04[0]);
     __ct__UnkClass_8011C974(&v->fb8[0], &boxTmp.f14[0]);
-    for (int i = 0; i < 27; i++) {
-        v->fc8[i] = boxTmp.f24[i];
-    }
+    v->fc8[0] = boxTmp.f24[0];
+    v->fc8[1] = boxTmp.f24[1];
+    v->fc8[2] = boxTmp.f24[2];
+    v->fc8[3] = boxTmp.f24[3];
+    v->fc8[4] = boxTmp.f24[4];
+    v->fc8[5] = boxTmp.f24[5];
+    v->fc8[6] = boxTmp.f24[6];
+    v->fc8[7] = boxTmp.f24[7];
+    v->fc8[8] = boxTmp.f24[8];
+    v->fc8[9] = boxTmp.f24[9];
+    v->fc8[10] = boxTmp.f24[10];
+    v->fc8[11] = boxTmp.f24[11];
+    v->fc8[12] = boxTmp.f24[12];
+    v->fc8[13] = boxTmp.f24[13];
+    v->fc8[14] = boxTmp.f24[14];
+    v->fc8[15] = boxTmp.f24[15];
+    v->fc8[16] = boxTmp.f24[16];
+    v->fc8[17] = boxTmp.f24[17];
+    v->fc8[18] = boxTmp.f24[18];
+    v->fc8[19] = boxTmp.f24[19];
+    v->fc8[20] = boxTmp.f24[20];
+    v->fc8[21] = boxTmp.f24[21];
+    v->fc8[22] = boxTmp.f24[22];
+    v->fc8[23] = boxTmp.f24[23];
+    v->fc8[24] = boxTmp.f24[24];
+    v->fc8[25] = boxTmp.f24[25];
+    v->fc8[26] = boxTmp.f24[26];
     v->f134 = boxTmp.f134;
     v->f138 = boxTmp.f138;
     v->f13c = boxTmp.f13c;
     v->f13d = boxTmp.f13d;
     v->f13e = boxTmp.f13e;
-    u32 vLo = boxTmp.f140;
     u32 vHi = boxTmp.f144;
+    u32 vLo = boxTmp.f140;
     v->f144 = vHi;
     v->f140 = vLo;
-    vLo = boxTmp.f148;
     vHi = boxTmp.f14c;
+    vLo = boxTmp.f148;
     v->f14c = vHi;
     v->f148 = vLo;
     v->f150 = boxTmp.f150;
@@ -108,95 +137,109 @@ CEquipChange::CEquipChange() {
     __ct__CEquipItemBox(&eqTmp);
     __ct__UnkClass_8011C974(&v->f2b4[0], &eqTmp.f04[0]);
     __ct__UnkClass_8011C974(&v->f2c4[0], &eqTmp.f14[0]);
-    for (int i = 0; i < 7; i++) {
-        v->f2d4[i] = eqTmp.f24[i];
-    }
-    for (int i = 0; i < 4; i++) {
-        v->f2f0[i] = eqTmp.f2f0[i];
-    }
+    v->f2d4[0] = eqTmp.f24[0];
+    v->f2d4[1] = eqTmp.f24[1];
+    v->f2d4[2] = eqTmp.f24[2];
+    v->f2d4[3] = eqTmp.f24[3];
+    v->f2d4[4] = eqTmp.f24[4];
+    v->f2d4[5] = eqTmp.f24[5];
+    v->f2d4[6] = eqTmp.f24[6];
+    v->f2f0[0] = eqTmp.f2f0[0];
+    v->f2f0[1] = eqTmp.f2f0[1];
+    v->f2f0[2] = eqTmp.f2f0[2];
+    v->f2f0[3] = eqTmp.f2f0[3];
     func_801FA220(&v->f2f4[0], &eqTmp.f2f4[0]);
     func_801FA220(&v->f30c[0], &eqTmp.f30c[0]);
     func_8018B0FC(&v->f324[0], &eqTmp.f324[0]);
     __ct__UnkClass_8011C974(&v->f340[0], &eqTmp.f340[0]);
-    for (int i = 0; i < 5; i++) {
-        v->f350[i] = eqTmp.f350[i];
-    }
-    for (int i = 0; i < 4; i++) {
-        v->f364[i] = eqTmp.f364[i];
-    }
+    v->f350[0] = eqTmp.f350[0];
+    v->f350[1] = eqTmp.f350[1];
+    v->f350[2] = eqTmp.f350[2];
+    v->f350[3] = eqTmp.f350[3];
+    v->f350[4] = eqTmp.f350[4];
+    v->f364[0] = eqTmp.f364[0];
+    v->f364[1] = eqTmp.f364[1];
+    v->f364[2] = eqTmp.f364[2];
+    v->f364[3] = eqTmp.f364[3];
     __ct__UnkClass_8011C974(&v->f36c[0], &eqTmp.f36c[0]);
     v->f37c[0] = eqTmp.f37c[0];
     v->f37c[1] = eqTmp.f37c[1];
     v->f37c[2] = eqTmp.f37c[2];
     v->f37c[3] = eqTmp.f37c[3];
-    for (int i = 0; i < 4; i++) {
-        v->f38c[i] = eqTmp.f38c[i];
-    }
-    for (int i = 0; i < 5; i++) {
-        v->f390[i] = eqTmp.f390[i];
-    }
+    v->f38c[0] = eqTmp.f38c[0];
+    v->f38c[1] = eqTmp.f38c[1];
+    v->f38c[2] = eqTmp.f38c[2];
+    v->f38c[3] = eqTmp.f38c[3];
+    v->f390[0] = eqTmp.f390[0];
+    v->f390[1] = eqTmp.f390[1];
+    v->f390[2] = eqTmp.f390[2];
+    v->f390[3] = eqTmp.f390[3];
+    v->f390[4] = eqTmp.f390[4];
     v->f3a4 = eqTmp.f3a4;
+    const u32* ws = reinterpret_cast<const u32*>(&eqTmp.f3a4);
     u32* wd = reinterpret_cast<u32*>(&v->f3a4);
-    u32* ws = reinterpret_cast<u32*>(&eqTmp.f3a4);
-    for (int i = 0; i < 16; i++) {
+    for (int i = 0; i < 16; i++, ws += 2, wd += 2) {
         wd[1] = ws[1];
         wd[2] = ws[2];
-        wd += 2;
-        ws += 2;
     }
-    for (int i = 0; i < 3; i++) {
-        v->f428[i] = eqTmp.f428[i];
-    }
+    v->f428[0] = eqTmp.f428[0];
+    v->f428[1] = eqTmp.f428[1];
+    v->f428[2] = eqTmp.f428[2];
     func_8016742C(&v->f42c[0], &eqTmp.f42c[0]);
     func_8016742C(&v->f468[0], &eqTmp.f468[0]);
-    for (int i = 0; i < 3; i++) {
-        v->f4a4[i] = eqTmp.f4a4[i];
-    }
+    v->f4a4[0] = eqTmp.f4a4[0];
+    v->f4a4[1] = eqTmp.f4a4[1];
+    v->f4a4[2] = eqTmp.f4a4[2];
     v->f4a8 = eqTmp.f4a8;
     v->f4aa = eqTmp.f4aa;
     v->f4ac = eqTmp.f4ac;
     v->f4ae = eqTmp.f4ae;
-    vLo = eqTmp.f4b0;
-    vHi = eqTmp.f4b4;
-    v->f4b4 = vHi;
-    v->f4b0 = vLo;
+    u32 vHi2 = eqTmp.f4b4;
+    u32 vLo2 = eqTmp.f4b0;
+    v->f4b4 = vHi2;
+    v->f4b0 = vLo2;
     v->f4b8 = eqTmp.f4b8;
     v->f4bc = eqTmp.f4bc;
     func_8018BE74(&v->f4c0[0], &eqTmp.f4c0[0]);
     v->f61c = eqTmp.f61c;
     v->f620 = eqTmp.f620;
-    for (int i = 0; i < 11; i++) {
-        v->f622[i] = eqTmp.f622[i];
-    }
+    v->f622[0] = eqTmp.f622[0];
+    v->f622[1] = eqTmp.f622[1];
+    v->f622[2] = eqTmp.f622[2];
+    v->f622[3] = eqTmp.f622[3];
+    v->f622[4] = eqTmp.f622[4];
+    v->f622[5] = eqTmp.f622[5];
+    v->f622[6] = eqTmp.f622[6];
+    v->f622[7] = eqTmp.f622[7];
+    v->f622[8] = eqTmp.f622[8];
+    v->f622[9] = eqTmp.f622[9];
+    v->f622[10] = eqTmp.f622[10];
+    ws = reinterpret_cast<const u32*>(&eqTmp.f622[8]);
     wd = reinterpret_cast<u32*>(&v->f622[8]);   // base 0x62a
-    ws = reinterpret_cast<u32*>(&eqTmp.f622[8]);
-    for (int i = 0; i < 0x400; i++) {
+    for (int i = 0; i < 0x400; i++, ws += 2, wd += 2) {
         wd[1] = ws[1];
         wd[2] = ws[2];
-        wd += 2;
-        ws += 2;
     }
     v->f262e = eqTmp.f262e;
-    for (int i = 0; i < 4; i++) {
-        v->f2630[i] = eqTmp.f2630[i];
-    }
+    v->f2630[0] = eqTmp.f2630[0];
+    v->f2630[1] = eqTmp.f2630[1];
+    v->f2630[2] = eqTmp.f2630[2];
+    v->f2630[3] = eqTmp.f2630[3];
+    ws = reinterpret_cast<const u32*>(&eqTmp.f2630[0]);
     wd = reinterpret_cast<u32*>(&v->f2630[0]);  // base 0x2630
-    ws = reinterpret_cast<u32*>(&eqTmp.f2630[0]);
-    for (int i = 0; i < 4; i++) {
+    for (int i = 0; i < 4; i++, ws += 2, wd += 2) {
         wd[1] = ws[1];
         wd[2] = ws[2];
-        wd += 2;
-        ws += 2;
     }
+    ws = reinterpret_cast<const u32*>(&eqTmp.f2650[0]);
     wd = reinterpret_cast<u32*>(&v->f2650[0]);  // base 0x2650
-    ws = reinterpret_cast<u32*>(&eqTmp.f2650[0]);
-    for (int i = 0; i < 0x80; i++) {
+    for (int i = 0; i < 0x80; i++, ws += 2, wd += 2) {
         wd[1] = ws[1];
         wd[2] = ws[2];
-        wd += 2;
-        ws += 2;
     }
     v->f2a54 = eqTmp.f27a4;
+    __dt__13CEquipItemBoxFv(reinterpret_cast<CEquipItemBox*>(&eqTmp), -1);
+    return self;
 }
 #pragma optimize_for_size off
 
@@ -262,7 +305,8 @@ int func_80202484(CEquipChange* self) {
 
 // Target us-802041c4: initialise the equip-change screen. When idle (0x48),
 // set state 1, init the item-info window, repack the selection word and play
-// the 0x6D sound. Retail frame saves 4 regs via stmw (opt-space prologue).
+// the 0x6D sound. Retail recomputes self+0xA4 per call site (no CSE) and
+// packs the nibbles low-to-high starting from the func_802031A0 result.
 #pragma optimize_for_size on
 void func_802024CC(CEquipChange* self) {
     if (self->field_48 == 0) {
@@ -271,15 +315,14 @@ void func_802024CC(CEquipChange* self) {
         func_801D421C((CItemBoxInfo*)((u8*)self + 0xA4));
         func_801D4260((CItemBoxInfo*)((u8*)self + 0xA4), (u8)func_80203138(self));
         u8 f99 = self->field_99;
-        u32 r38 = (u32)func_80203138(self);
-        u32 r3a = (u32)func_802031A0(self);
+        u32 cur38 = (u32)func_80203138(self);
+        u32 cur3a = (u32)func_802031A0(self);
         func_801D47D4((CItemBoxInfo*)self->_padA4,
-                      (u16)(((u32)f99 << 8) | ((r38 & 0xF) << 4) | (r3a & 0xF)),
+                      (u16)(((u32)f99 << 8) | ((cur38 & 0xF) << 4) | (cur3a & 0xF)),
                       func_802052A8(self), 1);
         func_80138078__FUl(0x6d);
     }
 }
-#pragma optimize_for_size off
 
 // Target us-80204270: close the equip-change screen. From state 3, enter
 // state 4, close the three cursors, advance the item-info window, reset the
@@ -308,30 +351,42 @@ void func_80202644(CEquipChange* self) {
     if (func_802865A0(&self->mEquipItemBox) != 0) {
         if (func_802865A8(&self->mEquipItemBox) != 0)
             func_802867E0(&self->mEquipItemBox);
-    } else {
+        return;
+    }
+    // Mirrors the fully-matched forward sibling func_80202790: temp-based
+    // pre-wrap, one probe outside the rotated loop guarding entry, and a
+    // plain decrement at the loop tail.
+    u8 v = (u8)(self->field_98 - 1);
+    self->field_98 = (s8)v;
+    if ((s8)v < 0)
+        self->field_98 = 13;
+    u8 idx = (u8)func_802031A0(self);
+    if (idx != 0 && ((u8*)self)[0x99 + idx] == 0) {
         self->field_98 = (s8)(self->field_98 - 1);
-        if (self->field_98 < 0)
-            self->field_98 = 0xd;
         while (true) {
             if (self->field_98 < 0)
-                self->field_98 = 0xd;
-            u8 idx = (u8)func_802031A0(self);
+                self->field_98 = 13;
+            idx = (u8)func_802031A0(self);
             if (idx == 0)
                 break;
             if (((u8*)self)[0x99 + idx] != 0)
                 break;
             self->field_98 = (s8)(self->field_98 - 1);
         }
-        func_802040FC(self);
-        u8 f99 = self->field_99;
-        int cur38 = func_80203138(self);
-        int cur3a = func_802031A0(self);
-        func_801D47D4((CItemBoxInfo*)((u8*)self + 0xA4),
-                      (u16)(((u32)f99 << 8) | ((cur38 & 0xF) << 4) | (cur3a & 0xF)),
-                      func_802052A8(self), 1);
-        func_801D4260((CItemBoxInfo*)((u8*)self + 0xA4), (u8)func_80203138(self));
-        func_80138078__FUl(1);
     }
+    func_802040FC(self);
+    u8 f99 = self->field_99;
+    u32 cur38 = (u32)func_80203138(self);
+    u32 cur3a = (u32)func_802031A0(self);
+    void* a8 = func_802052A8(self);
+    // Two-step pack (same shape as matched func_80202790): the shifted term
+    // first makes MWCC fold the unshifted cur3a into the clrlwi base.
+    u16 packed = (u16)(((cur38 & 0xF) << 4) | (cur3a & 0xF));
+    packed = (u16)(packed | ((u32)f99 << 8));
+    func_801D47D4((CItemBoxInfo*)((u8*)self + 0xA4), packed, a8, 1);
+    int v38 = func_80203138(self);
+    func_801D4260((CItemBoxInfo*)self->_padA4, (u8)v38);
+    func_80138078__FUl(1);
 }
 #pragma optimize_for_size off
 
@@ -582,7 +637,8 @@ int func_80203210(CEquipChange* self) {
         if (item != NULL && *(u32*)item != 0) {
             u32 word = *(u32*)item;
             u8 v = (u8)func_801361E8(lbl_eu_806640EC, &lbl_eu_80508168[0x34], word >> 20);
-            u32 isOne = (v - 1) == 0;
+            u32 isOne = v - 1;
+            isOne = (isOne == 0) ? 1u : 0u;
             if (isOne && func_8009CF8C(0x3508) == 0)
                 return 0;
         }
@@ -597,7 +653,8 @@ int func_80203210(CEquipChange* self) {
         if (item != NULL && *(u32*)item != 0) {
             u32 word = *(u32*)item;
             u8 v = (u8)func_801361E8(lbl_eu_806640EC, &lbl_eu_80508168[0x34], word >> 20);
-            u32 isOne = (v - 1) == 0;
+            u32 isOne = v - 1;
+            isOne = (isOne == 0) ? 1u : 0u;
             if (isOne && func_8009CF8C(0x3508) == 0)
                 return 0;
         }
@@ -612,7 +669,8 @@ int func_80203210(CEquipChange* self) {
         if (item != NULL && *(u32*)item != 0) {
             u32 word = *(u32*)item;
             u8 v = (u8)func_801361E8(lbl_eu_806640EC, &lbl_eu_80508168[0x34], word >> 20);
-            u32 isOne = (v - 1) == 0;
+            u32 isOne = v - 1;
+            isOne = (isOne == 0) ? 1u : 0u;
             if (isOne && func_8009CF8C(0x3508) == 0)
                 return 0;
         }
@@ -627,7 +685,8 @@ int func_80203210(CEquipChange* self) {
         if (item != NULL && *(u32*)item != 0) {
             u32 word = *(u32*)item;
             u8 v = (u8)func_801361E8(lbl_eu_806640EC, &lbl_eu_80508168[0x34], word >> 20);
-            u32 isOne = (v - 1) == 0;
+            u32 isOne = v - 1;
+            isOne = (isOne == 0) ? 1u : 0u;
             if (isOne && func_8009CF8C(0x3508) == 0)
                 return 0;
         }
@@ -642,7 +701,8 @@ int func_80203210(CEquipChange* self) {
         if (item != NULL && *(u32*)item != 0) {
             u32 word = *(u32*)item;
             u8 v = (u8)func_801361E8(lbl_eu_806640EC, &lbl_eu_80508168[0x34], word >> 20);
-            u32 isOne = (v - 1) == 0;
+            u32 isOne = v - 1;
+            isOne = (isOne == 0) ? 1u : 0u;
             if (isOne && func_8009CF8C(0x3508) == 0)
                 return 0;
         }
@@ -657,7 +717,8 @@ int func_80203210(CEquipChange* self) {
         if (item != NULL && *(u32*)item != 0) {
             u32 word = *(u32*)item;
             u8 v = (u8)func_801361E8(lbl_eu_806640EC, &lbl_eu_80508168[0x34], word >> 20);
-            u32 isOne = (v - 1) == 0;
+            u32 isOne = v - 1;
+            isOne = (isOne == 0) ? 1u : 0u;
             if (isOne && func_8009CF8C(0x3508) == 0)
                 return 0;
         }
@@ -721,7 +782,7 @@ int func_80203210(CEquipChange* self) {
     if ((u8)v == 2)
         v = 1;
     else
-        v = (u32)((u8)v - 3) < 1;
+        v = ((int)(u8)v - 3 > 0) ? 2 : 0;
     s16 id = -1;
     switch (r29) {
     case 2: id = obj->field_26; break;
@@ -739,12 +800,13 @@ int func_80203210(CEquipChange* self) {
     }
     func_802042C0(self);
     func_801D4260((CItemBoxInfo*)((u8*)self + 0xA4), (u8)func_80203138(self));
+    // Lifetimes mirror retail: f99 (r28) and cur38 (r29) feed rlwimi inserts
+    // into the packed word based on the fresh func_802031A0 low nibble.
     u8 f99 = self->field_99;
     int cur38 = func_80203138(self);
-    int cur3a = func_802031A0(self);
-    u32 packed = (u32)(cur3a & 0xF);
-    packed = (packed & 0xF) | ((u32)(cur38 & 0xF) << 4);
-    packed = (packed & 0xFF) | ((u32)f99 << 8);
+    u32 packed = (u32)func_802031A0(self) & 0xF;
+    packed |= ((u32)(cur38 & 0xF) << 4);
+    packed |= ((u32)f99 << 8);
     func_801D47D4((CItemBoxInfo*)((u8*)self + 0xA4), (u16)packed, func_802052A8(self), 1);
     if (func_802865A0(&self->mEquipItemBox) != 0)
         func_80287DB4(&self->mEquipItemBox, (u16)packed, 0, 1);
@@ -941,20 +1003,18 @@ extern "C" void __declspec(noinline) func_80203F84(CEquipChange* self) {
 // -O4,s keeps the retail stmw r28 frame; the packed word is built low-to-high
 // ((sub&0xF) | (main&0xF)<<4 | f99<<8) so MWCC merges the ORs into rlwimi.
 #pragma optimize_for_size on
-void __declspec(noinline) func_80203FCC(CEquipChange* self) {
+extern "C" void __declspec(noinline) func_80203FCC(CEquipChange* self) {
     if (func_802865A8(&self->mEquipItemBox) == 0)
         return;
     self->field_48 = 0xA;
     u8 f99 = self->field_99;
-    u32 lo = (u32)func_80203138(self);
-    u32 hi = (u32)func_802031A0(self);
-    // Retail evaluates the mode argument before the packed-word argument.
-    u32 mode = (u32)func_802052A8(self);
-    u32 packed = (hi & 0xF) | ((lo & 0xF) << 4);
-    packed |= (u32)f99 << 8;
+    int lo = func_80203138(self);
+    int hi = func_802031A0(self);
+    int packed = (hi & 0xF) | ((lo & 0xF) << 4);
+    int m = (int)func_802052A8(self);
     func_801D47D4((CItemBoxInfo*)((u8*)self + 0xA4),
-                  (u16)packed, (void*)mode, 1);
-}
+                  (u16)(packed | ((u32)f99 << 8)),
+                  (void*)m, 1);}
 #pragma optimize_for_size off
 
 // Target us-80205d44: when the 0x40 anim finishes, enter state 3 and refresh.
@@ -968,7 +1028,9 @@ extern "C" void __declspec(noinline) func_8020404C(CEquipChange* self) {
 
 // Target us-80205d98: when both file handles (0x34, 0x30) are set, load the
 // retail bind data and clear the cursor-run flag 0x98.
-void func_802040A0(CEquipChange* self) {
+// noinline keeps -ipa from folding this into OnFileEvent's two branches
+// (retail emits external bl calls).
+extern "C" __declspec(noinline) void func_802040A0(CEquipChange* self) {
     if (self->field_34 == 0)
         goto end;
     if (self->field_30 != 0)
@@ -1034,10 +1096,385 @@ extern "C" __declspec(noinline) void func_802040FC(CEquipChange* self) {
 #pragma optimize_for_size off
 
 
-// func_802042C0 is a large retail function (0x80205FB8, 0x10BC bytes) not
-// recreated in this TU; reference the external retail symbol rather than
-// redefining it (a stub definition would inline away the call in
-// func_802040A0/func_8020404C).
+// Target us-80205fb8: full refresh of the equip-change screen. Reads the
+// current character's equipped rows out of the bdat character data, resolves
+// each category row to an item through func_80157C4C, then walks the layout
+// panes: the three weapon-slot panes (loop 1) show either the directly
+// equipped item (impl v14 slot lookup), a bdat-rebuilt entry (impl v9 packed
+// record), or an empty label; the five armour-category panes (loop 2) mirror
+// the same three-way split using the category items cached up front. Every
+// processed entry is appended to the cursor record array handed to
+// func_80205294 so the cursors land on real entries only.
+#pragma optimize_for_size on
+void func_80205294(void* dst, void* src);
+extern "C" void func_802042C0(CEquipChange* self) {
+    CEqChCursorRec recs[8];
+    // retail zeroes these with straight-line stores, not a loop
+    recs[0].field_00 = 0;
+    recs[1].field_00 = 0;
+    recs[2].field_00 = 0;
+    recs[3].field_00 = 0;
+    recs[4].field_00 = 0;
+    recs[5].field_00 = 0;
+    recs[6].field_00 = 0;
+    recs[7].field_00 = 0;
+    recs[0].field_04 = 0;
+    recs[1].field_04 = 0;
+    recs[2].field_04 = 0;
+    recs[3].field_04 = 0;
+    recs[4].field_04 = 0;
+    recs[5].field_04 = 0;
+    recs[6].field_04 = 0;
+    recs[7].field_04 = 0;
+    CEqChCursorRec tmp;
+    char textBuf1[0x20];    // sp+0x128
+    char iconName1[0x20];   // sp+0x1a8
+    char labelName1[0x20];  // sp+0x188
+    char imageName1[0x20];  // sp+0x168
+    char paneName1[0x20];   // sp+0x148
+    char textBuf2[0x20];    // sp+0x48
+    char iconName2[0x20];   // sp+0x108
+    char labelName2[0x20];  // sp+0xe8
+    char paneName2[0x20];   // sp+0xc8
+    char labelName3[0x20];  // sp+0xa8
+    char imageName2[0x20];  // sp+0x88
+    char paneName3[0x20];   // sp+0x68
+    char rebuildName[0x20]; // sp+0x28
+    u8* marks = self->_pad9A;
+    int count = 0;
+    int nRecs = 0;
+
+    CBdatCharData* cd = (CBdatCharData*)func_8009EC9C(func_801392B4(self->field_99));
+    func_800A13C4(cd, 1);
+    // stats sub-object at +0x17C: refresh call through its vtable word 0x89.
+    void** statsVt = *(void***)((u8*)cd + 0x17C);
+    ((void (*)(void*))statsVt[0x89])((u8*)cd + 0x17C);
+    func_8009D7E4(&cd->field_1C, 5);
+
+    s16 w4 = cd->field_1C;
+    s16 w5 = cd->field_1E;
+    s16 w6 = cd->field_20;
+    s16 w7 = cd->field_22;
+    s16 w8 = cd->field_24;
+
+    void* weaponItem = func_80157C4C(2, cd->field_26);
+    void* catItems[5];
+    catItems[0] = func_80157C4C(4, w4);
+    catItems[1] = func_80157C4C(5, w5);
+    catItems[2] = func_80157C4C(6, w6);
+    catItems[3] = func_80157C4C(7, w7);
+    catItems[4] = func_80157C4C(8, w8);
+
+    char* base = lbl_eu_80508168;
+    nw4r::lyt::Layout* layout = (nw4r::lyt::Layout*)self->field_34;
+    func_80136B4C(layout, &base[0x55], &base[0x5f], 0);
+    func_80136B4C(layout, &base[0x60], &base[0x5f], 0);
+    func_80136B4C(layout, &base[0x6a], &base[0x5f], 0);
+    func_80136B4C(layout, &base[0x74], &base[0x5f], 0);
+    func_80136B4C(layout, &base[0x7e], &base[0x5f], 0);
+    func_80136B4C(layout, &base[0x88], &base[0x5f], 0);
+
+    if (weaponItem != NULL) {
+        func_80136B4C(layout, &base[0x92],
+                      ((CItemImplVtblView*)CItem_initItemImplInstances(weaponItem))->v6(weaponItem), 0);
+        func_80136B4C(layout, &base[0x9f],
+                      ((CItemImplVtblView*)CItem_initItemImplInstances(weaponItem))->v6(weaponItem), 0);
+        u8 equipped = ((CItemImplVtblView*)CItem_initItemImplInstances(weaponItem))->v10(weaponItem);
+        if (equipped != 0) {
+            func_80136B4C(layout, &base[0x55], func_eu_802B148C(), 0);
+            func_80139A18(layout, &base[0x55], &lbl_eu_80664678, &lbl_eu_80664680);
+        }
+
+        for (int i = 0; i < 3; i++) {
+            void* texRes;
+            sprintf(iconName1, &base[0xae], i);
+            sprintf(labelName1, &base[0xbf], i);
+            sprintf(imageName1, &base[0xd2], i);
+            sprintf(paneName1, &base[0xdf], i);
+            nw4r::lyt::Pane* pane =
+                ((CLayoutSubVtbl13*)((CLayoutView*)self->field_34)->field_10)->v13((u32)paneName1, 1);
+            func_80124270(pane, 1);
+            texRes = ((CEqChTexVtbl*)*(void**)self->field_2C)->fn[3](
+                (u32)self->field_2C, 0x74696D67, &base[0xec], 0);
+            if ((u8)i < equipped) {
+                int slot = (s16)((CItemImplVtblView*)CItem_initItemImplInstances(weaponItem))
+                               ->v14(weaponItem, (u8)i);
+                if (slot == -1) {
+                    // bdat-rebuild path: packed equip record from impl v9
+                    CEquipV9Result* res =
+                        (CEquipV9Result*)((CItemImplVtblView*)CItem_initItemImplInstances(weaponItem))
+                            ->v9(weaponItem, 0);
+                    if (res != NULL && (res->field_04 & 1)) {
+                        u32 packed = res->field_00;
+                        marks[count++] = 2;
+                        tmp.field_00 = (u16)((res->field_04 >> 16) & 0xFFF);
+                        tmp.field_04 = (u32)(s16)((packed >> 11) & 0x7FF);
+                        void** arrPtr = &lbl_eu_806640D8_arr[count - 1];
+                        void* tbl = *arrPtr;
+                        func_80205294(&recs[nRecs++], &tmp);
+                        char* lbl = func_80136190(
+                            &base[0xff], &base[0x108], 0x1E - (((packed >> 22) & 7) - 1));
+                        char* nm = func_8013639C(tbl, &base[0x108], tmp.field_00);
+                        sprintf(textBuf1, &base[0x10d], nm, lbl);
+                        u32 code = func_801361E8((u32)tbl, &base[0x112], tmp.field_00);
+                        switch (code) {
+                        case 0:
+                            texRes = ((CEqChTexVtbl*)*(void**)self->field_30)->fn[3](
+                                self->field_30, 0x74696D67, &base[0x11b], 0);
+                            break;
+                        case 4:
+                            texRes = ((CEqChTexVtbl*)*(void**)self->field_30)->fn[3](
+                                self->field_30, 0x74696D67, &base[0x131], 0);
+                            break;
+                        case 5:
+                            texRes = ((CEqChTexVtbl*)*(void**)self->field_30)->fn[3](
+                                self->field_30, 0x74696D67, &base[0x147], 0);
+                            break;
+                        case 6:
+                            texRes = ((CEqChTexVtbl*)*(void**)self->field_30)->fn[3](
+                                self->field_30, 0x74696D67, &base[0x15d], 0);
+                            break;
+                        case 7:
+                            texRes = ((CEqChTexVtbl*)*(void**)self->field_30)->fn[3](
+                                self->field_30, 0x74696D67, &base[0x173], 0);
+                            break;
+                        case 8:
+                            texRes = ((CEqChTexVtbl*)*(void**)self->field_30)->fn[3](
+                                self->field_30, 0x74696D67, &base[0x189], 0);
+                            break;
+                        case 9:
+                            texRes = ((CEqChTexVtbl*)*(void**)self->field_30)->fn[3](
+                                self->field_30, 0x74696D67, &base[0x19f], 0);
+                            break;
+                        default:
+                            break;
+                        }
+                        func_80136B4C(layout, &base[0x55], func_eu_802B1474(), 0);
+                        func_80139A18(layout, &base[0x55], &lbl_eu_80664688, &lbl_eu_80664690);
+                    } else {
+                        marks[count++] = 1;
+                        char* lbl = func_80136190(&base[0xff], &base[0x108], 0x2a);
+                        sprintf(textBuf1, &base[0x1b5], lbl);
+                    }
+                } else {
+                    void* item = func_80157C4C(3, (s16)slot);
+                    if (item != NULL) {
+                        marks[count++] = 3;
+                        tmp.field_04 = (u32)((CItemImplVtblView*)CItem_initItemImplInstances(item))->v34(item);
+                        tmp.field_00 = func_80139358(*(u32*)item >> 20);
+                        func_80205294(&recs[nRecs++], &tmp);
+                        u8 cat = ((CItemImplVtblView*)CItem_initItemImplInstances(item))->v0(item);
+                        char* lbl = func_80136190(&base[0xff], &base[0x108], 0x1E - (cat - 1));
+                        sprintf(textBuf1, &base[0x10d],
+                                ((CItemImplVtblView*)CItem_initItemImplInstances(item))->v6(item), lbl);
+                        u32 iconRow =
+                            ((CItemImplVtblView*)CItem_initItemImplInstances(item))->v19(item);
+                        void* tbl = lbl_eu_806640D8_arr[cat - 1];
+                        u32 code =
+                            func_801361E8((u32)tbl, &base[0x112], func_80139358(iconRow & 0xFFFF));
+                        switch (code) {
+                        case 0:
+                            texRes = ((CEqChTexVtbl*)*(void**)self->field_30)->fn[3](
+                                self->field_30, 0x74696D67, &base[0x11b], 0);
+                            break;
+                        case 4:
+                            texRes = ((CEqChTexVtbl*)*(void**)self->field_30)->fn[3](
+                                self->field_30, 0x74696D67, &base[0x131], 0);
+                            break;
+                        case 5:
+                            texRes = ((CEqChTexVtbl*)*(void**)self->field_30)->fn[3](
+                                self->field_30, 0x74696D67, &base[0x147], 0);
+                            break;
+                        case 6:
+                            texRes = ((CEqChTexVtbl*)*(void**)self->field_30)->fn[3](
+                                self->field_30, 0x74696D67, &base[0x15d], 0);
+                            break;
+                        case 7:
+                            texRes = ((CEqChTexVtbl*)*(void**)self->field_30)->fn[3](
+                                self->field_30, 0x74696D67, &base[0x173], 0);
+                            break;
+                        case 8:
+                            texRes = ((CEqChTexVtbl*)*(void**)self->field_30)->fn[3](
+                                self->field_30, 0x74696D67, &base[0x189], 0);
+                            break;
+                        case 9:
+                            texRes = ((CEqChTexVtbl*)*(void**)self->field_30)->fn[3](
+                                self->field_30, 0x74696D67, &base[0x19f], 0);
+                            break;
+                        default:
+                            break;
+                        }
+                    }
+                }
+            } else {
+                marks[count++] = 0;
+                char* lbl = func_80136190(&base[0xff], &base[0x108], 0x6d);
+                sprintf(textBuf1, &base[0x1b5], lbl);
+                func_80124270(pane, 0);
+            }
+            func_80136A1C(layout, iconName1, textBuf1, 0);
+            func_80136A1C(layout, labelName1, textBuf1, 0);
+            if (texRes != NULL)
+                func_80137E7C(layout, imageName1, (u32)texRes);
+        }
+    }
+
+    // armour categories: five panes, same three-way entry split
+    for (int i = 0; i < 5; i++) {
+        void* texRes;
+        sprintf(iconName2, &base[0x1b8], i + 1);
+        sprintf(labelName2, &base[0x1c7], i + 1);
+        sprintf(paneName2, &base[0xae], i + 3);
+        sprintf(labelName3, &base[0xbf], i + 3);
+        sprintf(imageName2, &base[0xd2], i + 3);
+        sprintf(paneName3, &base[0xdf], i + 3);
+        nw4r::lyt::Pane* pane =
+            ((CLayoutSubVtbl13*)((CLayoutView*)self->field_34)->field_10)->v13((u32)paneName3, 1);
+        func_80124270(pane, 1);
+        texRes = ((CEqChTexVtbl*)*(void**)self->field_2C)->fn[3](
+            (u32)self->field_2C, 0x74696D67, &base[0xec], 0);
+        void* item = catItems[i];
+        if (item == NULL) {
+            char* lbl = func_80136190(&base[0xff], &base[0x108], 0x6d);
+            func_80136B4C(layout, iconName2, lbl, 0);
+            func_80136B4C(layout, labelName2, lbl, 0);
+            marks[count++] = 0;
+            sprintf(textBuf2, &base[0x1b5], lbl);
+            func_80124270(pane, 0);
+        } else {
+            func_80136B4C(layout, iconName2,
+                          ((CItemImplVtblView*)CItem_initItemImplInstances(item))->v6(item), 0);
+            func_80136B4C(layout, labelName2,
+                          ((CItemImplVtblView*)CItem_initItemImplInstances(item))->v6(item), 0);
+            if (((CItemImplVtblView*)CItem_initItemImplInstances(item))->v10(item) != 0) {
+                sprintf(rebuildName, &base[0x1d8], i + 1);
+                func_80136B4C(layout, rebuildName, func_eu_802B148C(), 0);
+                func_80139A18(layout, rebuildName, &lbl_eu_80664678, &lbl_eu_80664680);
+                int slot =
+                    (s16)((CItemImplVtblView*)CItem_initItemImplInstances(item))->v14(item, 0);
+                if (slot == -1) {
+                    CEquipV9Result* res =
+                        (CEquipV9Result*)((CItemImplVtblView*)CItem_initItemImplInstances(item))
+                            ->v9(item, 0);
+                    if (res != NULL && (res->field_04 & 1)) {
+                        u32 packed = res->field_00;
+                        marks[count++] = 2;
+                        tmp.field_00 = (u16)((res->field_04 >> 16) & 0xFFF);
+                        tmp.field_04 = (u32)(s16)((packed >> 11) & 0x7FF);
+                        void* tbl = lbl_eu_806640D8_arr[count - 1];
+                        func_80205294(&recs[nRecs++], &tmp);
+                        char* lbl = func_80136190(
+                            &base[0xff], &base[0x108], 0x1E - (((packed >> 22) & 7) - 1));
+                        char* nm = func_8013639C(tbl, &base[0x108], tmp.field_00);
+                        sprintf(textBuf2, &base[0x10d], nm, lbl);
+                        u32 code = func_801361E8((u32)tbl, &base[0x112], tmp.field_00);
+                        switch (code) {
+                        case 0:
+                            texRes = ((CEqChTexVtbl*)*(void**)self->field_30)->fn[3](
+                                self->field_30, 0x74696D67, &base[0x11b], 0);
+                            break;
+                        case 4:
+                            texRes = ((CEqChTexVtbl*)*(void**)self->field_30)->fn[3](
+                                self->field_30, 0x74696D67, &base[0x131], 0);
+                            break;
+                        case 5:
+                            texRes = ((CEqChTexVtbl*)*(void**)self->field_30)->fn[3](
+                                self->field_30, 0x74696D67, &base[0x147], 0);
+                            break;
+                        case 6:
+                            texRes = ((CEqChTexVtbl*)*(void**)self->field_30)->fn[3](
+                                self->field_30, 0x74696D67, &base[0x15d], 0);
+                            break;
+                        case 7:
+                            texRes = ((CEqChTexVtbl*)*(void**)self->field_30)->fn[3](
+                                self->field_30, 0x74696D67, &base[0x173], 0);
+                            break;
+                        case 8:
+                            texRes = ((CEqChTexVtbl*)*(void**)self->field_30)->fn[3](
+                                self->field_30, 0x74696D67, &base[0x189], 0);
+                            break;
+                        case 9:
+                            texRes = ((CEqChTexVtbl*)*(void**)self->field_30)->fn[3](
+                                self->field_30, 0x74696D67, &base[0x19f], 0);
+                            break;
+                        default:
+                            break;
+                        }
+                        func_80136B4C(layout, rebuildName, func_eu_802B1474(), 0);
+                        func_80139A18(layout, rebuildName, &lbl_eu_80664688, &lbl_eu_80664690);
+                    } else {
+                        marks[count++] = 1;
+                        char* lbl = func_80136190(&base[0xff], &base[0x108], 0x2a);
+                        sprintf(textBuf2, &base[0x1b5], lbl);
+                    }
+                } else {
+                    void* item2 = func_80157C4C(3, (s16)slot);
+                    if (item2 != NULL) {
+                        marks[count++] = 3;
+                        tmp.field_04 =
+                            (u32)((CItemImplVtblView*)CItem_initItemImplInstances(item2))->v34(item2);
+                        tmp.field_00 = func_80139358(*(u32*)item2 >> 20);
+                        func_80205294(&recs[nRecs++], &tmp);
+                        u8 cat = ((CItemImplVtblView*)CItem_initItemImplInstances(item2))->v0(item2);
+                        char* lbl = func_80136190(&base[0xff], &base[0x108], 0x1E - (cat - 1));
+                        sprintf(textBuf2, &base[0x10d],
+                                ((CItemImplVtblView*)CItem_initItemImplInstances(item2))->v6(item2),
+                                lbl);
+                        u32 iconRow =
+                            ((CItemImplVtblView*)CItem_initItemImplInstances(item2))->v19(item2);
+                        void* tbl = lbl_eu_806640D8_arr[cat - 1];
+                        u32 code =
+                            func_801361E8((u32)tbl, &base[0x112], func_80139358(iconRow & 0xFFFF));
+                        switch (code) {
+                        case 0:
+                            texRes = ((CEqChTexVtbl*)*(void**)self->field_30)->fn[3](
+                                self->field_30, 0x74696D67, &base[0x11b], 0);
+                            break;
+                        case 4:
+                            texRes = ((CEqChTexVtbl*)*(void**)self->field_30)->fn[3](
+                                self->field_30, 0x74696D67, &base[0x131], 0);
+                            break;
+                        case 5:
+                            texRes = ((CEqChTexVtbl*)*(void**)self->field_30)->fn[3](
+                                self->field_30, 0x74696D67, &base[0x147], 0);
+                            break;
+                        case 6:
+                            texRes = ((CEqChTexVtbl*)*(void**)self->field_30)->fn[3](
+                                self->field_30, 0x74696D67, &base[0x15d], 0);
+                            break;
+                        case 7:
+                            texRes = ((CEqChTexVtbl*)*(void**)self->field_30)->fn[3](
+                                self->field_30, 0x74696D67, &base[0x173], 0);
+                            break;
+                        case 8:
+                            texRes = ((CEqChTexVtbl*)*(void**)self->field_30)->fn[3](
+                                self->field_30, 0x74696D67, &base[0x189], 0);
+                            break;
+                        case 9:
+                            texRes = ((CEqChTexVtbl*)*(void**)self->field_30)->fn[3](
+                                self->field_30, 0x74696D67, &base[0x19f], 0);
+                            break;
+                        default:
+                            break;
+                        }
+                        func_80136B4C(layout, rebuildName, func_eu_802B1474(), 0);
+                        func_80139A18(layout, rebuildName, &lbl_eu_80664688, &lbl_eu_80664690);
+                    }
+                }
+            } else {
+                marks[count++] = 0;
+                char* lbl = func_80136190(&base[0xff], &base[0x108], 0x6d);
+                sprintf(textBuf2, &base[0x1b5], lbl);
+                func_80124270(pane, 0);
+            }
+        }
+        func_80136A1C(layout, paneName2, textBuf2, 0);
+        func_80136A1C(layout, labelName3, textBuf2, 0);
+        if (texRes != NULL)
+            func_80137E7C(layout, imageName2, (u32)texRes);
+    }
+}
+#pragma optimize_for_size off
 
 void func_80205294(void* dst, void* src) {
     u16 a = *(u16*)src;
@@ -1046,7 +1483,136 @@ void func_80205294(void* dst, void* src) {
     *(u32*)((u8*)dst + 4) = b;
 }
 
-bool CEquipChange::OnFileEvent(CEventFile* file) { return true; }
+// Target us-802073c8: file-load event handler for the two bind files loaded
+// by func_80202090. Handle-1 branch builds the whole equip-change screen:
+// 0xE000 scratch region, arc accessor, main layout + three anim transforms,
+// shared text object seeding six labels, animation enables, cursor palette
+// colours copied into the sdata2 tables, and the three cursors built from
+// stack temporaries. Handle-2 branch only attaches the second accessor and
+// caches it in the global page flag.
+#pragma optimize_for_size on
+bool CEquipChange::OnFileEvent(CEventFile* file) {
+    // Declared up-front; `scratch` holds the colour-source pane in branch 1
+    // and the second file's data pointer in branch 2 (retail shares one
+    // callee-saved register between both).
+    void* scratch;
+    char* base;
+    void* data;
+    if (field_24 == (u32)file->mFileHandle) {
+        int memHandle = (int)mtl::MemManager::getHandleMEM2();
+        base = lbl_eu_80508168;
+        createRegion__17UnkClass_8045F564FiiPCci(&_pad04[0], memHandle,
+                                                 0xE000, &base[0x1ED], 1);
+        u32 host[2];
+        __ct__14Class_8045F858FP17UnkClass_8045F564(host, &_pad04[0]);
+        CFileHandle* handle = (CFileHandle*)field_24;
+        data = handle->getData();
+        func_80434A4C__Q23mtl10MemManagerFb(false);
+        field_2C = createArcResourceAccessor__10CLibLayoutFv();
+        field_2C->Attach(data, &base[0x1FA]);
+        func_80136E84((nw4r::lyt::Layout**)&field_34, field_2C, &base[0x1FE]);
+        func_80136F08((nw4r::lyt::Layout*)field_34, &field_38, field_2C, &base[0x20E]);
+        func_80136F08((nw4r::lyt::Layout*)field_34, &field_3C, field_2C, &base[0x221]);
+        func_80136F08((nw4r::lyt::Layout*)field_34, &field_40, field_2C, &base[0x239]);
+        nw4r::lyt::Pane* root = (nw4r::lyt::Pane*)((CLayoutView*)(u32)field_34)->field_10;
+        void* fontObj = func_80452C10__11CDeviceFontFUlPQ34nw4r3lyt6Layout(
+            1, (nw4r::lyt::Layout*)field_34);
+        func_8013676C(root, reinterpret_cast<CItemBoxFontInfoVt*>(fontObj)->fontData());
+
+        // Seed the label textboxes with the shared text object.
+        char* text = func_801355BC();
+        if (text != NULL) {
+            func_801368C0((nw4r::lyt::Layout*)field_34, &base[0x55], (u32)text);
+            func_801368C0((nw4r::lyt::Layout*)field_34, &base[0x60], (u32)text);
+            func_801368C0((nw4r::lyt::Layout*)field_34, &base[0x6A], (u32)text);
+            func_801368C0((nw4r::lyt::Layout*)field_34, &base[0x74], (u32)text);
+            func_801368C0((nw4r::lyt::Layout*)field_34, &base[0x7E], (u32)text);
+            func_801368C0((nw4r::lyt::Layout*)field_34, &base[0x88], (u32)text);
+        }
+
+        ((CLayoutVtbl11*)(u32)field_34)->v9(field_3C, 0);
+        ((CLayoutVtbl11*)(u32)field_34)->v9(field_40, 0);
+        ((CLayoutVtbl11*)(u32)field_34)->v9(field_38, 1);
+        ((CLayoutVtbl11*)(u32)field_34)->v12(0);
+
+        // Cursor colour palette: read both highlight pairs off the pane and
+        // copy them into the sdata2 colour tables, propagating the alpha
+        // halves to the paired entries.
+        // Retail materializes the full symbol address here (fresh lis/addi),
+        // not the cached base pointer.
+        scratch = ((CLayoutSubVtbl13*)((CLayoutView*)(u32)field_34)->field_10)
+                      ->v13((u32)(lbl_eu_80508168 + 0x60), 1);
+        CEquipItemBoxFourShorts color = func_801397AC((nw4r::lyt::Pane*)scratch, (u32)0);
+        CopyVec4s(&lbl_eu_80664668, &color);
+        color = func_801397AC((nw4r::lyt::Pane*)scratch, (u32)1);
+        CopyVec4s(&lbl_eu_80664670, &color);
+        // Alpha halves propagate to the paired colour entries; retail keeps
+        // each table address in its own register (pointer locals).
+        char* colA = (char*)&lbl_eu_80664668;
+        char* colB = (char*)&lbl_eu_80664670;
+        s16 alpha0 = *(s16*)(colA + 6);
+        char* dstA = (char*)&lbl_eu_80664678;
+        char* dstC = (char*)&lbl_eu_80664688;
+        s16 alpha1 = *(s16*)(colB + 6);
+        char* dstB = (char*)&lbl_eu_80664680;
+        char* dstD = (char*)&lbl_eu_80664690;
+        *(s16*)(dstA + 6) = alpha0;
+        *(s16*)(dstB + 6) = alpha1;
+        *(s16*)(dstC + 6) = alpha0;
+        *(s16*)(dstD + 6) = alpha1;
+
+        // Build each cursor from a stack temporary, copy it into place, run
+        // its reset hook, then advance to the next one. Retail reloads the
+        // accessor from field_2C at every use (never cached in a register).
+        u8 tmp14[0x18];
+        u8 tmp15[0x18];
+        u8 tmpSub[0x24];
+        __ct__CCur14(tmp14, field_2C);
+        func_8018B0FC(_pad50, tmp14);
+        __dt__6CCur14Fv((CBaseCur*)tmp14, -1);
+        ((CCurVtblView*)_pad50)->v0();
+
+        __ct__CCur15(tmp15, field_2C);
+        func_8018B0FC(_pad68, tmp15);
+        __dt__6CCur15Fv((CBaseCur*)tmp15, -1);
+        ((CCurVtblView*)_pad68)->v0();
+
+        __ct__CSubCur(tmpSub, field_2C);
+        func_8018B0FC(field_80, tmpSub);
+        __dt__7CSubCurFv((CBaseCur*)tmpSub, -1);
+        ((CCurVtblView*)field_80)->v0();
+
+        func_801D2E4C(field_80, 0);
+        func_802040A0(this);
+        field_24 = 0;
+        func_8045F810__17UnkClass_8045F564Fv(&_pad04[0]);
+        __dt__14Class_8045F858Fv(host, -1);
+        return true;
+    }
+    if (field_28 == (u32)file->mFileHandle) {
+        int memHandle = (int)mtl::MemManager::getHandleMEM2();
+        base = lbl_eu_80508168;
+        createRegion__17UnkClass_8045F564FiiPCci(&_pad14[0], memHandle,
+                                                 0x100, &base[0x250], 1);
+        u32 host[2];
+        __ct__14Class_8045F858FP17UnkClass_8045F564(host, &_pad14[0]);
+        CFileHandle* handle = (CFileHandle*)field_28;
+        scratch = handle->getData();
+        func_80434A4C__Q23mtl10MemManagerFb(false);
+        nw4r::lyt::ArcResourceAccessor* acc = createArcResourceAccessor__10CLibLayoutFv();
+        field_30 = (u32)acc;
+        acc->Attach(scratch, &base[0x1FA]);
+        // Cache the second accessor in the global equip-page flag slot.
+        lbl_eu_80664698 = (u32)field_30;
+        func_802040A0(this);
+        field_28 = 0;
+        func_8045F810__17UnkClass_8045F564Fv(&_pad14[0]);
+        __dt__14Class_8045F858Fv(host, -1);
+        return true;
+    }
+    return false;
+}
+#pragma optimize_for_size off
 
 // --- hard-symbol stubs (scaffold_hard_symbols) ---
 // Target us-802077c8: static init - build the six equip-change colour/state
@@ -1073,8 +1639,12 @@ void sinit_802059E8() {
 #pragma optimize_for_size on
 void __declspec(noinline) func_80202EB4(CEquipChange* self, u8 cat) {
     self->field_99 = cat;
-    u8 cats[5];          // 0x08 - category byte block {word, byte}
-    s16 buf[0x10];       // 0x10 - item-box info pack
+    // Local block mirrors the retail frame: {word,byte} pair at 0x8/0xC,
+    // item-box info pack at 0x10, per-category id row at 0x1C.
+    u32 catWord;
+    u8 catByte;
+    char buf[0x10];
+    s16 ids[5];
     func_801D4B3C(buf, (CItemBoxInfo*)((u8*)self + 0xA4), cat);
     ((CSubCurVtblView*)self->field_80)->v2(buf);
     func_801D2174((CBaseCur*)self->field_80);
@@ -1092,36 +1662,30 @@ void __declspec(noinline) func_80202EB4(CEquipChange* self, u8 cat) {
                 self->field_98 = 0;
             } else {
                 void* item = func_80157C4C(2, id);
-                if (item != NULL && *(u32*)item != 0) {
+                if (item == NULL || *(u32*)item == 0) {
+                    self->field_98 = 0;
+                } else {
                     void* inst = CItem_initItemImplInstances(item);
                     u8 equipped = ((CItemImplVtblView*)inst)->v10(item);
                     if (equipped < (u8)cur3a)
                         self->field_98 = (s8)equipped;
                     else
                         flag = 1;
-                } else {
-                    self->field_98 = 0;
                 }
             }
         } else {
             int idx = (u8)cur3a - 4;
-            s16 v1 = *(s16*)(obj + 0x1c);
-            s16 v2 = *(s16*)(obj + 0x1e);
-            s16 v3 = *(s16*)(obj + 0x20);
-            s16 v4 = *(s16*)(obj + 0x22);
-            s16 v5 = *(s16*)(obj + 0x24);
-            u32 word = *(u32*)&lbl_eu_806682A0[2 * idx];
-            u8 byte = lbl_eu_806682A4[2 * idx];
-            buf[6] = v1;
-            buf[7] = v2;
-            buf[8] = v3;
-            buf[9] = v4;
-            buf[10] = v5;
-            s16 id = buf[6 + idx];
-            *(u32*)&cats[0] = word;
-            cats[4] = byte;
+            ids[0] = *(s16*)(obj + 0x1c);
+            ids[1] = *(s16*)(obj + 0x1e);
+            ids[2] = *(s16*)(obj + 0x20);
+            ids[3] = *(s16*)(obj + 0x22);
+            ids[4] = *(s16*)(obj + 0x24);
+            catWord = *(u32*)&lbl_eu_806682A0[2 * idx];
+            catByte = lbl_eu_806682A4[2 * idx];
+            s16 id = ids[idx];
             if (id != -1) {
-                void* item = func_80157C4C(cats[idx], id);
+                // category byte is read indexed out of the {word,byte} block
+                void* item = func_80157C4C(((u8*)&catWord)[idx], id);
                 if (item != NULL && *(u32*)item != 0) {
                     void* inst = CItem_initItemImplInstances(item);
                     if (((CItemImplVtblView*)inst)->v10(item) != 0)
@@ -1129,7 +1693,7 @@ void __declspec(noinline) func_80202EB4(CEquipChange* self, u8 cat) {
                 }
             }
             if (flag == 0)
-                self->field_98 = (s8)(2 * idx + 4);
+                self->field_98 = (s8)(idx * 2 + 4);
         }
         if (flag == 0) {
             func_802042C0(self);
@@ -1148,8 +1712,108 @@ void __declspec(noinline) func_80202EB4(CEquipChange* self, u8 cat) {
 }
 #pragma optimize_for_size off
 
-// placeholder body for func_802052A8 (target us-80207088); real body below
-extern "C" __declspec(noinline) void* func_802052A8(CEquipChange* self) { return (void*)self->field_30; }
+// Target us-80207088: resolve the item record under the current equip-change
+// selection. Non-weapon categories look the per-category equipped id up in
+// the bdat row and return func_80157C4C(cat, id). The weapon-row path (cat 3)
+// maps the sub-cursor index to a category, fetches the item, then either
+// equips it through the item-impl vtable hooks or rebuilds the scratch item
+// lbl_eu_80576568 from bdat (guarded by lbl_eu_8066469C) and returns it.
+// bdat-rebuild fallback shape needs the opt-space stmw r28 frame.
+#pragma optimize_for_size on
+extern "C" __declspec(noinline) void* func_802052A8(CEquipChange* self) {
+    // cat declared first - its home web (shared with mapped) gets priority.
+    int cat;
+    CBdatCharData* obj = (CBdatCharData*)func_8009EC9C((u8)func_801392B4(self->field_99));
+    cat = func_80203138(self);
+    if ((u8)cat != 3) {
+        s16 id = -1;
+        switch ((u8)cat) {
+        case 2: id = obj->field_26; break;
+        case 4: id = obj->field_1C; break;
+        case 5: id = obj->field_1E; break;
+        case 6: id = obj->field_20; break;
+        case 7: id = obj->field_22; break;
+        case 8: id = obj->field_24; break;
+        }
+        return func_80157C4C((u8)cat, id);
+    } else {
+    // Weapon-row path: map the sub-cursor index to a category. Indices 1..3
+    // collapse to category 2; 4..8 pass through; anything else stays 3.
+    int idx = func_802031A0(self);
+    u8 slot = self->_pad9A[(u8)idx - 1];
+    if (slot == 0)
+        return 0;
+    if (slot == 1)
+        return 0;
+    // mapped starts as a plain int copy of cat so both share one register
+    // web (retail keeps it unclamped in the callee-saved home).
+    int mapped = cat;
+    if ((u8)idx <= 3) {
+        mapped = 2;
+    } else {
+        switch ((u8)idx) {
+        case 4: mapped = 4; break;
+        case 5: mapped = 5; break;
+        case 6: mapped = 6; break;
+        case 7: mapped = 7; break;
+        case 8: mapped = 8; break;
+        }
+    }
+    // Flag keyed on the raw sub-cursor index (2 or 3), not the mapped value.
+    int flag;
+    if ((u8)idx == 2)
+        flag = 1;
+    else
+        flag = (int)((u32)((u8)idx - 3) < 1);
+    s16 wid = -1;
+    switch ((u8)mapped) {
+    case 2: wid = obj->field_26; break;
+    case 4: wid = obj->field_1C; break;
+    case 5: wid = obj->field_1E; break;
+    case 6: wid = obj->field_20; break;
+    case 7: wid = obj->field_22; break;
+    case 8: wid = obj->field_24; break;
+    }
+    void* item = func_80157C4C((u8)mapped, wid);
+    if (item == NULL)
+        return 0;
+    if (*(u32*)item == 0)
+        return 0;
+    void* impl = CItem_initItemImplInstances(item);
+    CEquipV9Result* res =
+        (CEquipV9Result*)((CItemImplVtblView*)impl)->v9(item, (u32)flag);
+    if (res != NULL && (res->field_04 & 1) == 0) {
+        // Direct-equip path: second hook returns the crystal id to equip.
+        u32 r = ((CItemImplVtblView*)impl)->v14(item, (u8)flag);
+        return func_80157C4C(3, (s16)r);
+    }
+    if (res == NULL)
+        return 0;
+    // bdat-rebuild fallback: clear the scratch item once, find the last bdat
+    // row whose string column reads 3, rebuild lbl_eu_80576568 from it.
+    if (lbl_eu_8066469C == 0) {
+        lbl_eu_80576568.field_04 = 0;
+        lbl_eu_80576568.field_00 = 0;
+        lbl_eu_8066469C = 1;
+    }
+    void* table = (void*)lbl_eu_806640EC;
+    u32 cnt = func_8003B1EC(table);
+    u16 row = (u16)(cnt - 1);
+    while (row != 0) {
+        u32 val = getBdatStringColumnValue(table, &lbl_eu_80508168[0x1E4], (s32)row);
+        if ((u16)val == 3)
+            break;
+        row--;
+    }
+    u32 w = res->field_00;
+    u16 h = res->field_04;
+    func_80159F6C(&lbl_eu_80576568, row, ((u32)h >> 16) & 0xFFF, (w >> 22) & 7);
+    void* impl2 = CItem_initItemImplInstances(&lbl_eu_80576568);
+    ((CItemImplVtblView*)impl2)->v35(&lbl_eu_80576568, (s16)((w >> 11) & 0x7FF));
+    return &lbl_eu_80576568;
+    }
+}
+#pragma optimize_for_size off
 
 // Target us-80204e30: field_98 (s8) maps 0/4/6/8/10/12 -> 2/4/5/6/7/8,
 // anything else -> 3. Free function (retail symbol is unmangled, hence C
@@ -1200,21 +1864,22 @@ extern "C" __declspec(noinline) int func_802031A0(CEquipChange* self) {
 void func_80202110(CEquipChange* self) {
     if (self->field_44 == 0)
         return;
+    // Retail jumptable_eu_805355B0 routing: states 0/3/8 (and >10) are
+    // idle; the eight anim-waiter handlers sit on 1,2,4,5,6,7,9,10. The
+    // interleaved no-op rows keep the dense table bound at 10.
     switch (self->field_48) {
-    case 0: func_80203CE0(self); break;
-    case 1: func_80203D78(self); break;
-    case 2: func_80203E00(self); break;
-    case 3: func_80203E98(self); break;
-    case 4: func_80203EE4(self); break;
-    case 5: func_80203F84(self); break;
-    case 6: func_80203FCC(self); break;
-    case 7: func_8020404C(self); break;
+    case 1: func_80203CE0(self); break;
+    case 2: func_80203D78(self); break;
+    case 4: func_80203E00(self); break;
+    case 5: func_80203E98(self); break;
+    case 6: func_80203EE4(self); break;
+    case 7: func_80203F84(self); break;
+    case 9: func_80203FCC(self); break;
+    case 10: func_8020404C(self); break;
     default:
-    case 8:
-    case 9:
-    case 10:
-        break;
+        goto tail;
     }
+tail:
     ((CLayoutVtbl11*)(u32)self->field_34)->v12(0);
     func_801D202C((void*)((u8*)self + 0x50));
     func_801D202C((void*)((u8*)self + 0x68));

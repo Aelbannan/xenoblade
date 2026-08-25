@@ -5,6 +5,7 @@
 #include "kyoshin/cf/CfGameManager.hpp"
 #include "kyoshin/cf/CfSoundMan.hpp"
 #include "kyoshin/menu/CMenuArtsSelect.hpp"
+#include "kyoshin/cf/CArtsSet.hpp" // cf::CAttackParam (arts param +0x5e probe)
 #include "monolib/math/Random.hpp"
 extern "C" CChainGimmickList* func_800B6BC8();
 extern "C" int func_801537E0(void* self);
@@ -381,6 +382,8 @@ int func_80276D30(int mode, u8* p1, u8* p2) {
         else if (v2 == 0xc) t2 = 0xb;
         else if (v2 == 0xd) t2 = 0xc;
         else t2 = v2;
+        // flag precedes result so MWCC pins flag->r31, result->r30.
+        int flag;
         int result = -1;
         if (m1 == 8 || m1 == 0xa) cont = 1;
         switch (t2) {
@@ -396,7 +399,7 @@ int func_80276D30(int mode, u8* p1, u8* p2) {
         default: break;
         }
         if (result == 0x7d8) {
-            int flag = 0;
+            flag = 0;
             if (m1 == 2 && t2 == 6 &&
                 (u32)cf::CfGameManager::func_800822F4() < 0x91) {
                 flag = 1;
@@ -406,8 +409,8 @@ int func_80276D30(int mode, u8* p1, u8* p2) {
         return result;
     }
     case 2: {
-        int v = ((CChainTypeView*)p1)->field_3F28;
         int m;
+        int v = ((CChainTypeView*)p1)->field_3F28;
         if (v == 8) m = 3;
         else if (v == 9) m = 8;
         else if (v == 0xa) m = 9;
@@ -420,8 +423,8 @@ int func_80276D30(int mode, u8* p1, u8* p2) {
         return lbl_eu_805381C8[ml::math::mtRand(3)];
     }
     case 3: {
-        int v = ((CChainTypeView*)p1)->field_3F28;
         int m;
+        int v = ((CChainTypeView*)p1)->field_3F28;
         if (v == 8) m = 3;
         else if (v == 9) m = 8;
         else if (v == 0xa) m = 9;
@@ -552,12 +555,10 @@ void func_802773EC(cf::CChain* chain, cf::CChainBattleObj2A4* target) {
     do { \
         float sum = (g)->field_5C + (g)->field_60; \
         int amt; \
-        if (sum >= lbl_eu_80668A1C) { \
-            if (!((g)->field_74 & 1)) { \
-                amt = (int)(sum + ((lbl_eu_80668A1C < sum) ? lbl_eu_80668A20 : lbl_eu_80668A28)); \
-            } else { \
-                amt = 0; \
-            } \
+        /* Single short-circuit condition keeps the zero paths joined; */\
+        /* ternary selects the truncation addend.                       */\
+        if (sum >= lbl_eu_80668A1C && !((g)->field_74 & 0x1000000)) { \
+            amt = (int)(sum + ((sum <= lbl_eu_80668A1C) ? lbl_eu_80668A28 : lbl_eu_80668A20)); \
         } else { \
             amt = 0; \
         } \
@@ -602,7 +603,9 @@ void func_8027750C(cf::CChain* self, cf::CChainBattleObj750* target) {
     if (h->field_8 != 0) {
         cf::CChainGaugeSub* g = target->v164();
         float mul;
-        if (g->field_9 != 0) {
+        // Retail gates on the chain head's +9 state byte, not the gauge
+        // sub-object.
+        if (h->field_9 != 0) {
             CHAIN_GAUGE_ROUND(g, target, 0x4a);
             if (func_8027CA0C((cf::CChainList*)&self->mChainMember, 1) != 0) {
                 CHAIN_GAUGE_ROUND(g, target, 0x4b);
@@ -637,17 +640,20 @@ void func_8027750C(cf::CChain* self, cf::CChainBattleObj750* target) {
 // records, then jump to state 0x1a) or dispatches the current state byte
 // through the jump table (chain types 0..0x1a).
 __declspec(noinline) void func_80277B38(cf::CChain* self) {
-    cf::CChainHeadView* h = (cf::CChainHeadView*)self;
-    cf::CChainMemberListMirror* v = (cf::CChainMemberListMirror*)self;
+    // Head / member-list views stay inline (no named cast locals): a named
+    // mirror local gets enregistered into a callee-saved register and shifts
+    // the whole allocation away from retail.
     int flag;
     if ((lbl_eu_80663E24 & 0x400000) != 0) {
         flag = 1;
     } else {
-        u8 rawIdx = (u8)h->field_0;
-        int count = (int)v->mChainMember.mCount;
+        u8 rawIdx = (u8)((cf::CChainHeadView*)self)->field_0;
+        int count =
+            (int)((cf::CChainMemberListMirror*)self)->mChainMember.mCount;
         cf::CChainActor* actor;
         if ((int)(s8)rawIdx < count) {
-            actor = v->mChainMember.mActors[(s8)rawIdx];
+            actor = ((cf::CChainMemberListMirror*)self)
+                        ->mChainMember.mActors[(s8)rawIdx];
         } else {
             actor = 0;
         }
@@ -655,14 +661,15 @@ __declspec(noinline) void func_80277B38(cf::CChain* self) {
             flag = 1;
         } else {
             if ((int)(s8)rawIdx < count) {
-                actor = v->mChainMember.mActors[(s8)rawIdx];
+                actor = ((cf::CChainMemberListMirror*)self)
+                            ->mChainMember.mActors[(s8)rawIdx];
             } else {
                 actor = 0;
             }
             if (((cf::CChainActorVtIfB38*)actor)->v024() == 0) {
                 flag = 1;
             } else {
-                flag = v->mChainMember.mFlag;
+                flag = ((cf::CChainMemberListMirror*)self)->mChainMember.mFlag;
             }
         }
     }
@@ -670,7 +677,9 @@ __declspec(noinline) void func_80277B38(cf::CChain* self) {
         // Chain start: reset the chain voice while the chain type is still in
         // the early range, then re-arm the member list, chain time, actor
         // reslist and the menu / err-mes / combo records before state 0x1a.
-        if (h->field_2 < 3 && h->field_8 != 0) func_802818F8();
+        if (((cf::CChainHeadView*)self)->field_2 < 3 &&
+            ((cf::CChainHeadView*)self)->field_8 != 0)
+            func_802818F8();
         func_8027C6B4((cf::CChainList*)&self->mChainMember, 0, -1);
         self->mChainTime.mTimer = lbl_eu_80668A18;
         self->mChainTime.mEnabled = 0;
@@ -686,31 +695,31 @@ __declspec(noinline) void func_80277B38(cf::CChain* self) {
         self->mChainActorList.unk1DA8[0] = 0;
         func_80082B38__Q22cf13CfGameManagerFv();
         func_802B4B84((CErrMesEntry*)&self->unk1F0C[8]);
-        if (h->field_8 != 0) {
+        if (((cf::CChainHeadView*)self)->field_8 != 0) {
             func_8027CBE8((cf::CChainCounter*)&self->mChainChance.unk14[0]);
         }
         self->mChainCombo.func1();
         func_802AB4B8((CBattleChainMenuState*)&self->unk1F0C[0]);
-        h->field_2 = 0x1a;
+        ((cf::CChainHeadView*)self)->field_2 = 0x1a;
     }
-    u8 actionOut;
-    int localC;
-    int local10;
-    int local14;
-    switch (h->field_2) {
+    switch (((cf::CChainHeadView*)self)->field_2) {
     case 0: {
         // Chain-link start: re-run the actor's run key across every member,
         // register the chain-voice source on the actor list, set the
         // chain-voice flag, arm the chain time and reset the chain records.
         cf::CChainActor* actor0;
         cf::CChainActor* actor;
-        if ((int)(s8)h->field_0 < (int)v->mChainMember.mCount) {
-            actor0 = v->mChainMember.mActors[(s8)h->field_0];
+        if ((int)(s8)((cf::CChainHeadView*)self)->field_0 <
+            (int)((cf::CChainMemberListMirror*)self)->mChainMember.mCount) {
+            actor0 = ((cf::CChainMemberListMirror*)self)
+                         ->mChainMember.mActors[(s8)((cf::CChainHeadView*)self)->field_0];
         } else {
             actor0 = 0;
         }
-        if ((int)(s8)h->field_0 < (int)v->mChainMember.mCount) {
-            actor = v->mChainMember.mActors[(s8)h->field_0];
+        if ((int)(s8)((cf::CChainHeadView*)self)->field_0 <
+            (int)((cf::CChainMemberListMirror*)self)->mChainMember.mCount) {
+            actor = ((cf::CChainMemberListMirror*)self)
+                        ->mChainMember.mActors[(s8)((cf::CChainHeadView*)self)->field_0];
         } else {
             actor = 0;
         }
@@ -719,26 +728,35 @@ __declspec(noinline) void func_80277B38(cf::CChain* self) {
         if (src != 0) {
             func_8027B770(&self->mChainActorList, (u32)src);
         }
-        if ((int)(s8)h->field_0 < (int)v->mChainMember.mCount) {
-            actor = v->mChainMember.mActors[(s8)h->field_0];
+        if ((int)(s8)((cf::CChainHeadView*)self)->field_0 <
+            (int)((cf::CChainMemberListMirror*)self)->mChainMember.mCount) {
+            actor = ((cf::CChainMemberListMirror*)self)
+                        ->mChainMember.mActors[(s8)((cf::CChainHeadView*)self)->field_0];
         } else {
             actor = 0;
         }
         int runKey2 = ((cf::CChainActorVtIfB38*)actor)->v024();
-        for (int i = 0; i < (int)v->mChainMember.mCount; i++) {
-            ((cf::CChainActorVtIfB38*)v->mChainMember.mActors[i])->v025(runKey2);
+        for (int i = 0; i < (int)((cf::CChainMemberListMirror*)self)->mChainMember.mCount;
+             i++) {
+            ((cf::CChainActorVtIfB38*)((cf::CChainMemberListMirror*)self)
+                                           ->mChainMember.mActors[i])
+                ->v025(runKey2);
         }
         lbl_eu_80663DA0 |= 1;
         func_802AB590((CBattleChainMenuState*)&self->unk1F0C[0]);
-        if ((int)(s8)h->field_0 < (int)v->mChainMember.mCount) {
-            actor = v->mChainMember.mActors[(s8)h->field_0];
+        if ((int)(s8)((cf::CChainHeadView*)self)->field_0 <
+            (int)((cf::CChainMemberListMirror*)self)->mChainMember.mCount) {
+            actor = ((cf::CChainMemberListMirror*)self)
+                        ->mChainMember.mActors[(s8)((cf::CChainHeadView*)self)->field_0];
         } else {
             actor = 0;
         }
         func_800BE12C((u8*)((cf::CChainBattleObj*)actor->unk0) + 0x3e9c, 0x1b, 0,
                       3, 1);
-        if ((int)(s8)h->field_0 < (int)v->mChainMember.mCount) {
-            actor = v->mChainMember.mActors[(s8)h->field_0];
+        if ((int)(s8)((cf::CChainHeadView*)self)->field_0 <
+            (int)((cf::CChainMemberListMirror*)self)->mChainMember.mCount) {
+            actor = ((cf::CChainMemberListMirror*)self)
+                        ->mChainMember.mActors[(s8)((cf::CChainHeadView*)self)->field_0];
         } else {
             actor = 0;
         }
@@ -748,9 +766,9 @@ __declspec(noinline) void func_80277B38(cf::CChain* self) {
         func_80276C30();
         ((cf::CChainActorVtIfB38*)actor0)->v012(0, 0);
         cf::CfSoundMan::func_801BFC38(0, 0x69, 0, 0, lbl_eu_80668A40);
-        h->field_7 = 1;
-        h->field_5 = 0;
-        h->field_2++;
+        ((cf::CChainHeadView*)self)->field_7 = 1;
+        ((cf::CChainHeadView*)self)->field_5 = 0;
+        ((cf::CChainHeadView*)self)->field_2++;
         break;
     }
     case 1: {
@@ -758,9 +776,11 @@ __declspec(noinline) void func_80277B38(cf::CChain* self) {
         // not report an active chain; then the member / actor-list gates and
         // a voice sweep over every member move to state 3.
         cf::CChainActor* actor;
-        s8 idx = h->field_0;
-        if ((int)idx < (int)v->mChainMember.mCount) {
-            actor = v->mChainMember.mActors[idx];
+        s8 idx = (s8)((cf::CChainHeadView*)self)->field_0;
+        if ((int)idx <
+            (int)((cf::CChainMemberListMirror*)self)->mChainMember.mCount) {
+            actor = ((cf::CChainMemberListMirror*)self)
+                        ->mChainMember.mActors[idx];
         } else {
             actor = 0;
         }
@@ -769,20 +789,22 @@ __declspec(noinline) void func_80277B38(cf::CChain* self) {
         if (func_8027CAE0((cf::CChainList*)&self->mChainMember, 6, 1) == 0) break;
         if (func_8027CAE0((cf::CChainList*)&self->mChainMember, 0x1f, 0) != 0) break;
         if (func_8027BE84(&self->mChainActorList) != 0) break;
-        for (int i = 0; i < (int)v->mChainMember.mCount; i++) {
-            cf::CChainActor* actor2 = v->mChainMember.mActors[i];
+        for (int i = 0; i < (int)((cf::CChainMemberListMirror*)self)->mChainMember.mCount;
+             i++) {
+            cf::CChainActor* actor2 =
+                ((cf::CChainMemberListMirror*)self)->mChainMember.mActors[i];
             if (func_80148778(&((cf::CChainBattleObj*)actor2->unk0)->mSub8, 0x11) != 0) {
                 ((cf::CChainBattleObj*)actor2->unk0)->mSub8.s06(0x11);
             }
         }
-        h->field_2 = 3;
+        ((cf::CChainHeadView*)self)->field_2 = 3;
         break;
     }
     case 2: {
-        if (h->field_8 != 0) {
-            h->field_2 = 4;
+        if (((cf::CChainHeadView*)self)->field_8 != 0) {
+            ((cf::CChainHeadView*)self)->field_2 = 4;
         } else {
-            h->field_2 = 6;
+            ((cf::CChainHeadView*)self)->field_2 = 6;
         }
         break;
     }
@@ -796,18 +818,23 @@ __declspec(noinline) void func_80277B38(cf::CChain* self) {
         // Chain-extend: clear the per-chain state bytes, re-run the actor's
         // run key, arm the chain-voice scratch records and the chain timer.
         cf::CChainActor* actor;
-        s8 idx = h->field_0;
-        if ((int)idx < (int)v->mChainMember.mCount) {
-            actor = v->mChainMember.mActors[idx];
+        s8 idx = (s8)((cf::CChainHeadView*)self)->field_0;
+        if ((int)idx <
+            (int)((cf::CChainMemberListMirror*)self)->mChainMember.mCount) {
+            actor = ((cf::CChainMemberListMirror*)self)
+                        ->mChainMember.mActors[idx];
         } else {
             actor = 0;
         }
-        h->field_3 = 0;
-        h->field_4 = 0;
-        h->field_6 = 1;
+        ((cf::CChainHeadView*)self)->field_3 = 0;
+        ((cf::CChainHeadView*)self)->field_4 = 0;
+        ((cf::CChainHeadView*)self)->field_6 = 1;
         int runKey = ((cf::CChainActorVtIfB38*)actor)->v024();
-        for (int i = 0; i < (int)v->mChainMember.mCount; i++) {
-            ((cf::CChainActorVtIfB38*)v->mChainMember.mActors[i])->v025(runKey);
+        for (int i = 0; i < (int)((cf::CChainMemberListMirror*)self)->mChainMember.mCount;
+             i++) {
+            ((cf::CChainActorVtIfB38*)((cf::CChainMemberListMirror*)self)
+                                           ->mChainMember.mActors[i])
+                ->v025(runKey);
         }
         cf::CChainScratch20 scratchB;
         memset(&scratchB.mScratch, 0, 0xe);
@@ -822,7 +849,7 @@ __declspec(noinline) void func_80277B38(cf::CChain* self) {
         self->mChainTime.mEnabled = 0;
         self->mChainTime.mPaused = 1;
         self->mChainTimer1.unk0 = 0x3c;
-        h->field_2++;
+        ((cf::CChainHeadView*)self)->field_2++;
         break;
     }
     case 6: {
@@ -830,27 +857,29 @@ __declspec(noinline) void func_80277B38(cf::CChain* self) {
         // whether the link is accepted (err-mes register + timer re-arm) or
         // rejected (move-flag cleanup, then state 0xd once the timer runs out).
         cf::CChainActor* actor;
-        s8 idx = h->field_0;
-        if ((int)idx < (int)v->mChainMember.mCount) {
-            actor = v->mChainMember.mActors[idx];
+        s8 idx = (s8)((cf::CChainHeadView*)self)->field_0;
+        if ((int)idx <
+            (int)((cf::CChainMemberListMirror*)self)->mChainMember.mCount) {
+            actor = ((cf::CChainMemberListMirror*)self)
+                        ->mChainMember.mActors[idx];
         } else {
             actor = 0;
         }
         cf::CChainBattleObj214* battleObj = (cf::CChainBattleObj214*)actor->unk0;
-        local14 = *(int*)battleObj->field_04->f30();
+        int local14 = *(int*)battleObj->field_04->f30();
         if (func_80174C98(battleObj, &local14, 0xa) == 0) {
-            if (h->field_6 != 0) {
+            if (((cf::CChainHeadView*)self)->field_6 != 0) {
                 func_802B48E4((CErrMesEntry*)&self->unk1F0C[8], (CErrMesOwner*)battleObj);
-                h->field_6 = 0;
+                ((cf::CChainHeadView*)self)->field_6 = 0;
             }
             if (self->mChainTimer1.unk0 > 0) break;
             battleObj->field_3594 = 0;
             battleObj->field_3590 = 0;
-            h->field_2 = 0xd;
+            ((cf::CChainHeadView*)self)->field_2 = 0xd;
         } else {
             func_802B4A68((CErrMesEntry*)&self->unk1F0C[8], (CErrMesOwner*)battleObj);
             self->mChainTimer1.unk0 = 5;
-            h->field_2++;
+            ((cf::CChainHeadView*)self)->field_2++;
         }
         break;
     }
@@ -860,7 +889,7 @@ __declspec(noinline) void func_80277B38(cf::CChain* self) {
         self->mChainTime.mEnabled = 1;
         self->mChainTime.mPaused = 1;
         self->mChainTimer1.unk0 = 0xa;
-        h->field_2++;
+        ((cf::CChainHeadView*)self)->field_2++;
         break;
     }
     case 8: {
@@ -868,13 +897,13 @@ __declspec(noinline) void func_80277B38(cf::CChain* self) {
         self->mChainTime.mTimer = lbl_eu_80668A18;
         self->mChainTime.mEnabled = 0;
         self->mChainTime.mPaused = 1;
-        h->field_2 = 0xa;
+        ((cf::CChainHeadView*)self)->field_2 = 0xa;
         break;
     }
     case 9: {
         self->mChainTimer1.unk0 = 0x1e;
         self->mChainTimer2.unk0 = 0x96;
-        h->field_2++;
+        ((cf::CChainHeadView*)self)->field_2++;
         break;
     }
     case 0xa:
@@ -883,198 +912,243 @@ __declspec(noinline) void func_80277B38(cf::CChain* self) {
     case 0xb: {
         if (self->mChainTimer1.unk0 > 0) break;
         cf::CChainActor* actor;
-        s8 idx = h->field_0;
-        if ((int)idx < (int)v->mChainMember.mCount) {
-            actor = v->mChainMember.mActors[idx];
+        s8 idx = (s8)((cf::CChainHeadView*)self)->field_0;
+        if ((int)idx <
+            (int)((cf::CChainMemberListMirror*)self)->mChainMember.mCount) {
+            actor = ((cf::CChainMemberListMirror*)self)
+                        ->mChainMember.mActors[idx];
         } else {
             actor = 0;
         }
         if (((cf::CChainActorVtIfB38*)actor)->v013() != 0) break;
-        h->field_2 = 0xd;
+        ((cf::CChainHeadView*)self)->field_2 = 0xd;
         break;
     }
     case 0xc: {
         // Member advance: re-register the last member on the list, then move
         // the current index (direction from field_5) and gate on the new
         // actor's chainable probe / the chain-voice flags.
-        if ((s8)h->field_1 != -1) {
-            func_8027C6B4((cf::CChainList*)&self->mChainMember, 0, (s8)h->field_1);
+        if ((s8)((cf::CChainHeadView*)self)->field_1 != -1) {
+            func_8027C6B4((cf::CChainList*)&self->mChainMember, 0,
+                          (s8)((cf::CChainHeadView*)self)->field_1);
         }
-        h->field_1 = h->field_0;
-        if (h->field_7 != 0) {
-            h->field_2 = 0xe;
+        ((cf::CChainHeadView*)self)->field_1 =
+            ((cf::CChainHeadView*)self)->field_0;
+        if (((cf::CChainHeadView*)self)->field_7 != 0) {
+            ((cf::CChainHeadView*)self)->field_2 = 0xe;
             break;
         }
-        s8 idx = h->field_0;
+        s8 idx = (s8)((cf::CChainHeadView*)self)->field_0;
         s8 newIdx;
-        if (h->field_5 == 0) {
+        if (((cf::CChainHeadView*)self)->field_5 == 0) {
             newIdx = (s8)(idx + 1);
-            if (!((s16)v->mChainMember.mCount > (int)newIdx)) newIdx = 0;
+            if (!((s16)((cf::CChainMemberListMirror*)self)->mChainMember.mCount >
+                  (int)newIdx))
+                newIdx = 0;
         } else {
             newIdx = (s8)(idx - 1);
-            if ((int)newIdx < 0) newIdx = (s8)((s16)v->mChainMember.mCount - 1);
+            if ((int)newIdx < 0)
+                newIdx = (s8)((s16)((cf::CChainMemberListMirror*)self)
+                                      ->mChainMember.mCount -
+                              1);
         }
         cf::CChainActor* newActor;
-        if ((int)(s8)newIdx < (int)v->mChainMember.mCount) {
-            newActor = v->mChainMember.mActors[(s8)newIdx];
+        if ((int)(s8)newIdx <
+            (int)((cf::CChainMemberListMirror*)self)->mChainMember.mCount) {
+            newActor = ((cf::CChainMemberListMirror*)self)
+                           ->mChainMember.mActors[(s8)newIdx];
         } else {
             newActor = 0;
         }
         if (((cf::CChainActorVtIfB38*)newActor)->v007(0) == 0) {
-            h->field_2 = 0x16;
+            ((cf::CChainHeadView*)self)->field_2 = 0x16;
             break;
         }
-        if (h->field_A == 0 && h->field_8 != 0) {
-            h->field_2 = 0x10;
+        if (((cf::CChainHeadView*)self)->field_A == 0 &&
+            ((cf::CChainHeadView*)self)->field_8 != 0) {
+            ((cf::CChainHeadView*)self)->field_2 = 0x10;
             break;
         }
-        h->field_2 = 0x16;
+        ((cf::CChainHeadView*)self)->field_2 = 0x16;
         break;
     }
     case 0xd: {
         // Member advance + chain re-link: re-register the current member,
         // arm the chain time, then fan the advance out through the actor's
         // manual vtable (1/3 flag pair, second actor as the move target).
-        s8 idx = h->field_0;
+        s8 idx = (s8)((cf::CChainHeadView*)self)->field_0;
         cf::CChainActor* actor;
-        if ((int)idx < (int)v->mChainMember.mCount) {
-            actor = v->mChainMember.mActors[idx];
+        if ((int)idx <
+            (int)((cf::CChainMemberListMirror*)self)->mChainMember.mCount) {
+            actor = ((cf::CChainMemberListMirror*)self)
+                        ->mChainMember.mActors[idx];
         } else {
             actor = 0;
         }
         s8 newIdx;
-        if (h->field_5 == 0) {
+        if (((cf::CChainHeadView*)self)->field_5 == 0) {
             newIdx = (s8)(idx + 1);
-            if (!((s16)v->mChainMember.mCount > (int)newIdx)) newIdx = 0;
+            if (!((s16)((cf::CChainMemberListMirror*)self)->mChainMember.mCount >
+                  (int)newIdx))
+                newIdx = 0;
         } else {
             newIdx = (s8)(idx - 1);
-            if ((int)newIdx < 0) newIdx = (s8)((s16)v->mChainMember.mCount - 1);
+            if ((int)newIdx < 0)
+                newIdx = (s8)((s16)((cf::CChainMemberListMirror*)self)
+                                      ->mChainMember.mCount -
+                              1);
         }
         cf::CChainActor* nextActor;
-        if ((int)(s8)newIdx < (int)v->mChainMember.mCount) {
-            nextActor = v->mChainMember.mActors[(s8)newIdx];
+        if ((int)(s8)newIdx <
+            (int)((cf::CChainMemberListMirror*)self)->mChainMember.mCount) {
+            nextActor = ((cf::CChainMemberListMirror*)self)
+                            ->mChainMember.mActors[(s8)newIdx];
         } else {
             nextActor = 0;
         }
         self->mChainTime.mTimer = lbl_eu_80668A48;
         self->mChainTime.mEnabled = 0;
         self->mChainTime.mPaused = 1;
-        func_8027C6B4((cf::CChainList*)&self->mChainMember, 1, (s8)h->field_0);
-        if (h->field_7 != 0) {
+        func_8027C6B4((cf::CChainList*)&self->mChainMember, 1,
+                      (s8)((cf::CChainHeadView*)self)->field_0);
+        if (((cf::CChainHeadView*)self)->field_7 != 0) {
             ((cf::CChainActorVtIfB38*)actor)->v012(1, (int)nextActor);
         } else {
             ((cf::CChainActorVtIfB38*)actor)->v012(3, 0);
         }
-        h->field_2++;
+        ((cf::CChainHeadView*)self)->field_2++;
         break;
     }
     case 0xe: {
         cf::CChainActor* actor;
-        s8 idx = h->field_0;
-        if ((int)idx < (int)v->mChainMember.mCount) {
-            actor = v->mChainMember.mActors[idx];
+        s8 idx = (s8)((cf::CChainHeadView*)self)->field_0;
+        if ((int)idx <
+            (int)((cf::CChainMemberListMirror*)self)->mChainMember.mCount) {
+            actor = ((cf::CChainMemberListMirror*)self)
+                        ->mChainMember.mActors[idx];
         } else {
             actor = 0;
         }
         if (((cf::CChainActorVtIfB38*)actor)->v013() != 0) break;
         s8 newIdx;
-        if (h->field_5 == 0) {
+        if (((cf::CChainHeadView*)self)->field_5 == 0) {
             newIdx = (s8)(idx + 1);
-            if (!((s16)v->mChainMember.mCount > (int)newIdx)) newIdx = 0;
+            if (!((s16)((cf::CChainMemberListMirror*)self)->mChainMember.mCount >
+                  (int)newIdx))
+                newIdx = 0;
         } else {
             newIdx = (s8)(idx - 1);
-            if ((int)newIdx < 0) newIdx = (s8)((s16)v->mChainMember.mCount - 1);
+            if ((int)newIdx < 0)
+                newIdx = (s8)((s16)((cf::CChainMemberListMirror*)self)
+                                      ->mChainMember.mCount -
+                              1);
         }
-        h->field_0 = newIdx;
-        if ((s8)h->field_0 >= (int)v->mChainMember.mCount - 1) {
-            h->field_7 = 0;
+        ((cf::CChainHeadView*)self)->field_0 = newIdx;
+        if ((s8)((cf::CChainHeadView*)self)->field_0 >=
+            (int)((cf::CChainMemberListMirror*)self)->mChainMember.mCount - 1) {
+            ((cf::CChainHeadView*)self)->field_7 = 0;
         }
-        h->field_2 = 3;
+        ((cf::CChainHeadView*)self)->field_2 = 3;
         break;
     }
     case 0xf: {
         // Chain-message gate: the chance check (current + next battle object)
         // decides whether the link continues or drops to state 0x16.
-        s8 idx = h->field_0;
+        s8 idx = (s8)((cf::CChainHeadView*)self)->field_0;
         s8 newIdx;
-        if (h->field_5 == 0) {
+        if (((cf::CChainHeadView*)self)->field_5 == 0) {
             newIdx = (s8)(idx + 1);
-            if (!((s16)v->mChainMember.mCount > (int)newIdx)) newIdx = 0;
+            if (!((s16)((cf::CChainMemberListMirror*)self)->mChainMember.mCount >
+                  (int)newIdx))
+                newIdx = 0;
         } else {
             newIdx = (s8)(idx - 1);
-            if ((int)newIdx < 0) newIdx = (s8)((s16)v->mChainMember.mCount - 1);
+            if ((int)newIdx < 0)
+                newIdx = (s8)((s16)((cf::CChainMemberListMirror*)self)
+                                      ->mChainMember.mCount -
+                              1);
         }
         cf::CChainActor* actor;
         cf::CChainActor* nextActor;
-        if ((int)idx < (int)v->mChainMember.mCount) {
-            actor = v->mChainMember.mActors[idx];
+        if ((int)idx <
+            (int)((cf::CChainMemberListMirror*)self)->mChainMember.mCount) {
+            actor = ((cf::CChainMemberListMirror*)self)
+                        ->mChainMember.mActors[idx];
         } else {
             actor = 0;
         }
-        if ((int)(s8)newIdx < (int)v->mChainMember.mCount) {
-            nextActor = v->mChainMember.mActors[(s8)newIdx];
+        if ((int)(s8)newIdx <
+            (int)((cf::CChainMemberListMirror*)self)->mChainMember.mCount) {
+            nextActor = ((cf::CChainMemberListMirror*)self)
+                            ->mChainMember.mActors[(s8)newIdx];
         } else {
             nextActor = 0;
         }
         if (func_8027C154((cf::CChainChance*)&self->mChainChance, (cf::CChainBattleObj*)actor->unk0,
                           (cf::CChainBattleObj*)nextActor->unk0) != 0) {
-            u8 newState = (u8)(h->field_2 + 1);
+            u8 newState = (u8)(((cf::CChainHeadView*)self)->field_2 + 1);
             self->mChainTime.mTimer = lbl_eu_80668A48;
             self->mChainTime.mEnabled = 0;
             self->mChainTime.mPaused = 1;
-            h->field_2 = newState;
+            ((cf::CChainHeadView*)self)->field_2 = newState;
         } else {
-            h->field_2 = 0x16;
+            ((cf::CChainHeadView*)self)->field_2 = 0x16;
         }
         break;
     }
     case 0x10: {
         // Chain action select: the pad-action helper writes the chosen action;
         // 0xe when a real action came back, 0x16 otherwise.
+        u8 actionOut;
         if (func_8027C33C((cf::CChainAction*)&self->mChainChance, &actionOut) != 0) {
             if (actionOut != 0) {
-                h->field_2 = 0xe;
+                ((cf::CChainHeadView*)self)->field_2 = 0xe;
             } else {
-                h->field_2 = 0x16;
+                ((cf::CChainHeadView*)self)->field_2 = 0x16;
             }
         }
         break;
     }
     case 0x11: {
         self->mChainTimer1.unk0 = 0x1e;
-        h->field_10 = 1;
-        h->field_2++;
+        ((cf::CChainHeadView*)self)->field_10 = 1;
+        ((cf::CChainHeadView*)self)->field_2++;
         break;
     }
     case 0x12: {
         if (self->mChainTimer1.unk0 > 0) break;
         cf::CChainActor* actor;
-        s8 idx = h->field_0;
-        if ((int)idx < (int)v->mChainMember.mCount) {
-            actor = v->mChainMember.mActors[idx];
+        s8 idx = (s8)((cf::CChainHeadView*)self)->field_0;
+        if ((int)idx <
+            (int)((cf::CChainMemberListMirror*)self)->mChainMember.mCount) {
+            actor = ((cf::CChainMemberListMirror*)self)
+                        ->mChainMember.mActors[idx];
         } else {
             actor = 0;
         }
         cf::CChainBattleObj214* battleObj = (cf::CChainBattleObj214*)actor->unk0;
-        local10 = *(int*)battleObj->field_04->f30();
+        int local10 = *(int*)battleObj->field_04->f30();
         if (func_80174C98(battleObj, &local10, 6) != 0) {
-            h->field_2 = 5;
+            ((cf::CChainHeadView*)self)->field_2 = 5;
         }
         break;
     }
     case 0x13: {
         self->mChainTimer1.unk0 = 0x1e;
         cf::CChainActor* actor;
-        s8 idx = h->field_0;
-        if ((int)idx < (int)v->mChainMember.mCount) {
-            actor = v->mChainMember.mActors[idx];
+        s8 idx = (s8)((cf::CChainHeadView*)self)->field_0;
+        if ((int)idx <
+            (int)((cf::CChainMemberListMirror*)self)->mChainMember.mCount) {
+            actor = ((cf::CChainMemberListMirror*)self)
+                        ->mChainMember.mActors[idx];
         } else {
             actor = 0;
         }
         cf::CChainBattleObjB38* battleObj =
             (actor != 0) ? (cf::CChainBattleObjB38*)actor->unk0 : 0;
-        h->field_C = ((cf::CChainBattleObjB38*)battleObj)->mSub.v17();
-        h->field_2++;
+        ((cf::CChainHeadView*)self)->field_C =
+            ((cf::CChainBattleObjB38*)battleObj)->mSub.v17();
+        ((cf::CChainHeadView*)self)->field_2++;
         break;
     }
     case 0x14: {
@@ -1083,26 +1157,33 @@ __declspec(noinline) void func_80277B38(cf::CChain* self) {
         // id; otherwise refresh the voice-act marker. Both paths drop to
         // state 0xd (shared store in the retail).
         cf::CChainActor* actor;
-        if ((int)(s8)h->field_0 < (int)v->mChainMember.mCount) {
-            actor = v->mChainMember.mActors[(s8)h->field_0];
+        if ((int)(s8)((cf::CChainHeadView*)self)->field_0 <
+            (int)((cf::CChainMemberListMirror*)self)->mChainMember.mCount) {
+            actor = ((cf::CChainMemberListMirror*)self)
+                        ->mChainMember.mActors[(s8)((cf::CChainHeadView*)self)->field_0];
         } else {
             actor = 0;
         }
         cf::CChainBattleObjB38* battleObj =
             (actor != 0) ? (cf::CChainBattleObjB38*)actor->unk0 : 0;
-        if (h->field_C == ((cf::CChainBattleObjB38*)battleObj)->mSub.v17()) {
+        if (((cf::CChainHeadView*)self)->field_C ==
+            ((cf::CChainBattleObjB38*)battleObj)->mSub.v17()) {
             if (self->mChainTimer1.unk0 > 0) break;
-            if ((int)(s8)h->field_0 < (int)v->mChainMember.mCount) {
-                actor = v->mChainMember.mActors[(s8)h->field_0];
+            if ((int)(s8)((cf::CChainHeadView*)self)->field_0 <
+                (int)((cf::CChainMemberListMirror*)self)->mChainMember.mCount) {
+                actor = ((cf::CChainMemberListMirror*)self)
+                            ->mChainMember.mActors[(s8)((cf::CChainHeadView*)self)->field_0];
             } else {
                 actor = 0;
             }
             cf::CChainBattleObj214* b214 = (cf::CChainBattleObj214*)actor->unk0;
-            localC = *(int*)b214->field_04->f30();
+            int localC = *(int*)b214->field_04->f30();
             if (func_80174C98(b214, &localC, 6) == 0) break;
         } else {
-            if ((int)(s8)h->field_0 < (int)v->mChainMember.mCount) {
-                actor = v->mChainMember.mActors[(s8)h->field_0];
+            if ((int)(s8)((cf::CChainHeadView*)self)->field_0 <
+                (int)((cf::CChainMemberListMirror*)self)->mChainMember.mCount) {
+                actor = ((cf::CChainMemberListMirror*)self)
+                            ->mChainMember.mActors[(s8)((cf::CChainHeadView*)self)->field_0];
             } else {
                 actor = 0;
             }
@@ -1110,18 +1191,18 @@ __declspec(noinline) void func_80277B38(cf::CChain* self) {
                 (actor != 0) ? (cf::CChainBattleObj*)actor->unk0 : 0;
             func_801537F0(&b2->mField3380);
         }
-        h->field_2 = 0xd;
+        ((cf::CChainHeadView*)self)->field_2 = 0xd;
         break;
     }
     case 0x15: {
-        if (h->field_8 != 0) {
+        if (((cf::CChainHeadView*)self)->field_8 != 0) {
             func_8027CBE8((cf::CChainCounter*)&self->mChainChance.unk14[0]);
         }
-        u8 newState = (u8)(h->field_2 + 1);
+        u8 newState = (u8)(((cf::CChainHeadView*)self)->field_2 + 1);
         self->mChainTime.mTimer = lbl_eu_80668A18;
         self->mChainTime.mEnabled = 0;
         self->mChainTime.mPaused = 1;
-        h->field_2 = newState;
+        ((cf::CChainHeadView*)self)->field_2 = newState;
         break;
     }
     case 0x16: {
@@ -1130,37 +1211,48 @@ __declspec(noinline) void func_80277B38(cf::CChain* self) {
         // chain state (member list, time, actor reslist, records) and drop to
         // state 0x1a.
         if (func_8027CAE0((cf::CChainList*)&self->mChainMember, 6, 1) == 0) break;
-        if (h->field_8 != 0) {
+        if (((cf::CChainHeadView*)self)->field_8 != 0) {
             s8 j;
-            for (j = 0; (s8)j < (s16)v->mChainMember.mCount; j++) {
+            for (j = 0; (s8)j < (s16)((cf::CChainMemberListMirror*)self)->mChainMember.mCount;
+                 j++) {
                 cf::CChainActor* actor;
-                if ((int)(s8)j < (int)v->mChainMember.mCount) {
-                    actor = v->mChainMember.mActors[(s8)j];
+                if ((int)(s8)j <
+                    (int)((cf::CChainMemberListMirror*)self)->mChainMember.mCount) {
+                    actor = ((cf::CChainMemberListMirror*)self)
+                                ->mChainMember.mActors[(s8)j];
                 } else {
                     actor = 0;
                 }
                 u32 battleObj = (actor != 0) ? actor->unk0 : 0;
                 func_800BE12C((u8*)battleObj + 0x3e9c, 0x1b, 0, 5, 1);
             }
-            h->field_5 = (u8)(ml::math::mtRand(2) != 0);
+            ((cf::CChainHeadView*)self)->field_5 =
+                (u8)(ml::math::mtRand(2) != 0);
             cf::CChainActor* actor;
-            if ((int)(s8)h->field_0 < (int)v->mChainMember.mCount) {
-                actor = v->mChainMember.mActors[(s8)h->field_0];
+            if ((int)(s8)((cf::CChainHeadView*)self)->field_0 <
+                (int)((cf::CChainMemberListMirror*)self)->mChainMember.mCount) {
+                actor = ((cf::CChainMemberListMirror*)self)
+                            ->mChainMember.mActors[(s8)((cf::CChainHeadView*)self)->field_0];
             } else {
                 actor = 0;
             }
             ((cf::CChainActorVtIfB38*)actor)->v012(4, 0);
-            s8 idx2 = (s8)h->field_0;
+            s8 idx2 = (s8)((cf::CChainHeadView*)self)->field_0;
             s8 newIdx;
-            if (h->field_5 == 0) {
+            if (((cf::CChainHeadView*)self)->field_5 == 0) {
                 newIdx = (s8)(idx2 + 1);
-                if (!((s16)v->mChainMember.mCount > (int)newIdx)) newIdx = 0;
+                if (!((s16)((cf::CChainMemberListMirror*)self)
+                          ->mChainMember.mCount > (int)newIdx))
+                    newIdx = 0;
             } else {
                 newIdx = (s8)(idx2 - 1);
-                if ((int)newIdx < 0) newIdx = (s8)((s16)v->mChainMember.mCount - 1);
+                if ((int)newIdx < 0)
+                    newIdx = (s8)((s16)((cf::CChainMemberListMirror*)self)
+                                          ->mChainMember.mCount -
+                                  1);
             }
-            h->field_0 = newIdx;
-            h->field_2++;
+            ((cf::CChainHeadView*)self)->field_0 = newIdx;
+            ((cf::CChainHeadView*)self)->field_2++;
         } else {
             func_8027C6B4((cf::CChainList*)&self->mChainMember, 0, -1);
             self->mChainTime.mTimer = lbl_eu_80668A18;
@@ -1177,42 +1269,52 @@ __declspec(noinline) void func_80277B38(cf::CChain* self) {
             self->mChainActorList.unk1DA8[0] = 0;
             func_80082B38__Q22cf13CfGameManagerFv();
             func_802B4B84((CErrMesEntry*)&self->unk1F0C[8]);
-            if (h->field_8 != 0) {
+            if (((cf::CChainHeadView*)self)->field_8 != 0) {
                 func_8027CBE8((cf::CChainCounter*)&self->mChainChance.unk14[0]);
             }
             self->mChainCombo.func1();
             func_802AB4B8((CBattleChainMenuState*)&self->unk1F0C[0]);
-            h->field_2 = 0x1a;
+            ((cf::CChainHeadView*)self)->field_2 = 0x1a;
         }
         break;
     }
     case 0x17: {
         // Chain re-link while the member changed: re-register the old member,
         // then run the shared chain-reset block and bump the state.
-        if (h->field_0 != h->field_1) {
+        if (((cf::CChainHeadView*)self)->field_0 !=
+            ((cf::CChainHeadView*)self)->field_1) {
             cf::CChainActor* actor;
-            if ((int)(s8)h->field_0 < (int)v->mChainMember.mCount) {
-                actor = v->mChainMember.mActors[(s8)h->field_0];
+            if ((int)(s8)((cf::CChainHeadView*)self)->field_0 <
+                (int)((cf::CChainMemberListMirror*)self)->mChainMember.mCount) {
+                actor = ((cf::CChainMemberListMirror*)self)
+                            ->mChainMember.mActors[(s8)((cf::CChainHeadView*)self)->field_0];
             } else {
                 actor = 0;
             }
             if (((cf::CChainActorVtIfB38*)actor)->v013() == 0) {
-                if ((int)(s8)h->field_0 < (int)v->mChainMember.mCount) {
-                    actor = v->mChainMember.mActors[(s8)h->field_0];
+                if ((int)(s8)((cf::CChainHeadView*)self)->field_0 <
+                    (int)((cf::CChainMemberListMirror*)self)->mChainMember.mCount) {
+                    actor = ((cf::CChainMemberListMirror*)self)
+                                ->mChainMember.mActors[(s8)((cf::CChainHeadView*)self)->field_0];
                 } else {
                     actor = 0;
                 }
                 ((cf::CChainActorVtIfB38*)actor)->v012(5, 0);
-                s8 idx = (s8)h->field_0;
+                s8 idx = (s8)((cf::CChainHeadView*)self)->field_0;
                 s8 newIdx;
-                if (h->field_5 == 0) {
+                if (((cf::CChainHeadView*)self)->field_5 == 0) {
                     newIdx = (s8)(idx + 1);
-                    if (!((s16)v->mChainMember.mCount > (int)newIdx)) newIdx = 0;
+                    if (!((s16)((cf::CChainMemberListMirror*)self)
+                              ->mChainMember.mCount > (int)newIdx))
+                        newIdx = 0;
                 } else {
                     newIdx = (s8)(idx - 1);
-                    if ((int)newIdx < 0) newIdx = (s8)((s16)v->mChainMember.mCount - 1);
+                    if ((int)newIdx < 0)
+                        newIdx = (s8)((s16)((cf::CChainMemberListMirror*)self)
+                                              ->mChainMember.mCount -
+                                      1);
                 }
-                h->field_0 = newIdx;
+                ((cf::CChainHeadView*)self)->field_0 = newIdx;
             }
         }
         if (func_8027CAE0((cf::CChainList*)&self->mChainMember, 6, 1) == 0) break;
@@ -1231,61 +1333,73 @@ __declspec(noinline) void func_80277B38(cf::CChain* self) {
         self->mChainActorList.unk1DA8[0] = 0;
         func_80082B38__Q22cf13CfGameManagerFv();
         func_802B4B84((CErrMesEntry*)&self->unk1F0C[8]);
-        if (h->field_8 != 0) {
+        if (((cf::CChainHeadView*)self)->field_8 != 0) {
             func_8027CBE8((cf::CChainCounter*)&self->mChainChance.unk14[0]);
         }
         self->mChainCombo.func1();
         func_802AB4B8((CBattleChainMenuState*)&self->unk1F0C[0]);
-        h->field_2++;
+        ((cf::CChainHeadView*)self)->field_2++;
         break;
     }
     case 0x18: {
         // Chain re-link (member changed): same advance as 0x17, then re-check
         // the actor's chain-state query before ending the chain (0x1a).
-        if (h->field_0 != h->field_1) {
+        if (((cf::CChainHeadView*)self)->field_0 !=
+            ((cf::CChainHeadView*)self)->field_1) {
             cf::CChainActor* actor;
-            if ((int)(s8)h->field_0 < (int)v->mChainMember.mCount) {
-                actor = v->mChainMember.mActors[(s8)h->field_0];
+            if ((int)(s8)((cf::CChainHeadView*)self)->field_0 <
+                (int)((cf::CChainMemberListMirror*)self)->mChainMember.mCount) {
+                actor = ((cf::CChainMemberListMirror*)self)
+                            ->mChainMember.mActors[(s8)((cf::CChainHeadView*)self)->field_0];
             } else {
                 actor = 0;
             }
             if (((cf::CChainActorVtIfB38*)actor)->v013() == 0) {
-                if ((int)(s8)h->field_0 < (int)v->mChainMember.mCount) {
-                    actor = v->mChainMember.mActors[(s8)h->field_0];
+                if ((int)(s8)((cf::CChainHeadView*)self)->field_0 <
+                    (int)((cf::CChainMemberListMirror*)self)->mChainMember.mCount) {
+                    actor = ((cf::CChainMemberListMirror*)self)
+                                ->mChainMember.mActors[(s8)((cf::CChainHeadView*)self)->field_0];
                 } else {
                     actor = 0;
                 }
                 ((cf::CChainActorVtIfB38*)actor)->v012(5, 0);
-                s8 idx = (s8)h->field_0;
+                s8 idx = (s8)((cf::CChainHeadView*)self)->field_0;
                 s8 newIdx;
-                if (h->field_5 == 0) {
+                if (((cf::CChainHeadView*)self)->field_5 == 0) {
                     newIdx = (s8)(idx + 1);
-                    if (!((s16)v->mChainMember.mCount > (int)newIdx)) newIdx = 0;
+                    if (!((s16)((cf::CChainMemberListMirror*)self)
+                              ->mChainMember.mCount > (int)newIdx))
+                        newIdx = 0;
                 } else {
                     newIdx = (s8)(idx - 1);
-                    if ((int)newIdx < 0) newIdx = (s8)((s16)v->mChainMember.mCount - 1);
+                    if ((int)newIdx < 0)
+                        newIdx = (s8)((s16)((cf::CChainMemberListMirror*)self)
+                                              ->mChainMember.mCount -
+                                      1);
                 }
-                h->field_0 = newIdx;
+                ((cf::CChainHeadView*)self)->field_0 = newIdx;
             }
         }
         cf::CChainActor* actor;
-        if ((int)(s8)h->field_0 < (int)v->mChainMember.mCount) {
-            actor = v->mChainMember.mActors[(s8)h->field_0];
+        if ((int)(s8)((cf::CChainHeadView*)self)->field_0 <
+            (int)((cf::CChainMemberListMirror*)self)->mChainMember.mCount) {
+            actor = ((cf::CChainMemberListMirror*)self)
+                        ->mChainMember.mActors[(s8)((cf::CChainHeadView*)self)->field_0];
         } else {
             actor = 0;
         }
         if (((cf::CChainActorVtIfB38*)actor)->v013() != 0) break;
-        h->field_2 = 0x1a;
-        break;
+        ((cf::CChainHeadView*)self)->field_2 = 0x1a;
+        return;
     }
     case 0x19: {
         // Chain teardown: clear the member indices, rebuild the actor list
         // from the member list, reset the chain voice and the state byte.
-        h->field_0 = 0;
-        h->field_1 = -1;
+        ((cf::CChainHeadView*)self)->field_0 = 0;
+        ((cf::CChainHeadView*)self)->field_1 = -1;
         func_8027BB4C(&self->mChainActorList, (cf::CChainList*)&self->mChainMember);
         func_8027711C(self);
-        h->field_2 = 0;
+        ((cf::CChainHeadView*)self)->field_2 = 0;
         break;
     }
     case 0x1a:
@@ -1467,11 +1581,16 @@ void func_80279214(cf::CChain* self) {
     // Special entry / cleared gate: the arts-select actor-id checks gate the
     // timer re-arm (both masks must match for the plain re-arm path).
     {
-        int local1 = *(int*)battleObj->field_04->f30();
-        int res1 = func_80174C98(battleObj, &local1, 0xA);
+        // Hoisted decls: MWCC rejects a jump past a declaration/initializer.
+        int local1;
+        int local2;
+        int res1;
+        int res2;
+        local1 = *(int*)battleObj->field_04->f30();
+        res1 = func_80174C98(battleObj, &local1, 0xA);
         if (res1 != 0) goto merge;
-        int local2 = *(int*)battleObj->field_04->f30();
-        int res2 = func_80174C98(battleObj, &local2, 0xB);
+        local2 = *(int*)battleObj->field_04->f30();
+        res2 = func_80174C98(battleObj, &local2, 0xB);
         if (res2 != 0) {
         merge:
             if (self->mChainTimer1.unk0 > 0) return;
@@ -1897,18 +2016,22 @@ int func_8027A024(cf::CChainActor* self, int param) {
                             ->v41();
                     nw4r::math::VEC3 delta;
                     nw4r::math::VEC3 scratch;
-                    nw4r::math::VEC3Sub(&delta, targetPos, selfPos);
+                    nw4r::math::VEC3Sub(&delta, selfPos, targetPos);
                     // The diff is materialized to a second stack slot
-                    // (lfs/stfs round-trip) before the paired-single
-                    // length-sq.
+                    // (lfs/stfs round-trip); retail recomputes the paired-
+                    // single length-sq inside each threshold branch.
                     scratch.x = delta.x;
                     scratch.y = delta.y;
                     scratch.z = delta.z;
-                    f32 distSq = nw4r::math::VEC3LenSq(&scratch);
+                    int distOk;
+                    // Retail duplicates the whole paired-single length-sq
+                    // computation inside each threshold branch.
                     if ((self->unk6C & 1) == 0) {
-                        distOk = (distSq <= lbl_eu_80668A50) ? 1 : 0;
+                        distOk =
+                            (nw4r::math::VEC3LenSq(&scratch) <= lbl_eu_80668A50);
                     } else {
-                        distOk = (distSq <= lbl_eu_80668A54) ? 1 : 0;
+                        distOk =
+                            (nw4r::math::VEC3LenSq(&scratch) <= lbl_eu_80668A54);
                     }
                 }
             }
@@ -2001,7 +2124,83 @@ int func_8027A338(cf::CChainActor* self, int param) {
     }
     return 0;
 }
-void func_8027A58C(){}
+// Chain-arts usability probe: resolve the run-key source object, gate on its
+// gauge angle facing the actor (Atan2FIdx of the position delta, normalized
+// into a +/- window around the gauge and compared against a tolerance
+// product), then walk the 9 arts slots (0..8): each usable slot must fail
+// both usage checks (func_80154280 flags -2 and -0x21), else the chain is
+// unavailable. Slot 8 uses the RC arts param and an extra menu-up check.
+int func_8027A58C(cf::CChainActor* self) {
+    int runKey = ((cf::CChainActorVtIf2*)self)->v024();
+    void* src = func_8016FE34(func_800B708C(runKey));
+    if (src != 0) {
+        f32 gauge = ((cf::CChainBattleObj5B4*)self->unk0)->v363();
+        nw4r::math::VEC3* minePos =
+            ((cf::CChainVoiceSub*)((u8*)self->unk0 + 0x3e9c))->v41();
+        nw4r::math::VEC3* srcPos =
+            ((cf::CChainVoiceSub*)((u8*)src + 0x3e9c))->v41();
+        // Componentwise paired-single delta (source - self), then the FIdx
+        // angle of it scaled into chain-angle units.
+        nw4r::math::VEC3 delta;
+        delta.x = srcPos->x - minePos->x;
+        delta.y = srcPos->y - minePos->y;
+        delta.z = srcPos->z - minePos->z;
+        f32 ang = lbl_eu_80668A58 * nw4r::math::Atan2FIdx(delta.x, delta.z);
+        f32 lim = gauge - lbl_eu_8066A1F8;
+        while (ang < lim) ang += lbl_eu_8066A1FC;
+        lim = gauge + lbl_eu_8066A1F8;
+        while (lim < ang) ang -= lbl_eu_8066A1FC;
+        if (!(lbl_eu_80668A5C * lbl_eu_8066A210 >= fabsf(gauge - ang)))
+            return 0;
+    }
+    for (int i = 0; i <= 8; i++) {
+        // A slot is skipped when it passes the first usage check with arts
+        // param kind 2 (u16 at +0x5e).
+        int skip = 0;
+        if (i >= 0 && i < 8) {
+            cf::CChainBattleObj* battleObj = (cf::CChainBattleObj*)self->unk0;
+            void* arts = getArtsParamAtCnt(battleObj->v157(), i);
+            if (func_80154280(arts, battleObj, -2) == 0)
+                skip = (((cf::CAttackParam*)arts)->unk5E == 2);
+        }
+        if (skip == 0) {
+            int cond = 0;
+            if (((cf::CChainActorVtIf2*)self)->v021() != 0) {
+                if (((cf::CChainActorVtIf2*)self)->v020() == 7) {
+                    if (i == 8) cond = (func_801B202C() == 0);
+                }
+            }
+            if (cond != 0) continue;
+            int res;
+            if (i < 8) {
+                cf::CChainBattleObj* battleObj =
+                    (cf::CChainBattleObj*)self->unk0;
+                res = func_80154280(getArtsParamAtCnt(battleObj->v157(), i),
+                                    battleObj, -2);
+            } else {
+                res = func_80154280(
+                    getArtsParamRC(
+                        ((cf::CChainBattleObj*)self->unk0)->v157(), 2, 0),
+                    (cf::CChainBattleObj*)self->unk0, -2);
+            }
+            if (res != 0) continue;
+            int res2;
+            if (i < 8) {
+                cf::CChainBattleObj* battleObj =
+                    (cf::CChainBattleObj*)self->unk0;
+                res2 = func_80154280(getArtsParamAtCnt(battleObj->v157(), i),
+                                     battleObj, -0x21);
+            } else {
+                res2 = func_80154280(
+                    getArtsParamRC(
+                        ((cf::CChainBattleObj*)self->unk0)->v157(), 2, 0),
+                    (cf::CChainBattleObj*)self->unk0, -0x21);
+            }
+            if (res2 != 0) return 0;
+        }
+    }
+    return 1;
+}
 // Chain-voice usability check: probes the embedded voice sub-object's timing
 // (vtable slot 0x110) against the lbl_eu_80668A60 threshold, then validates
 // the battle object's actor ids (func_80174C98 with 0x1000 / 0x6 masks) and

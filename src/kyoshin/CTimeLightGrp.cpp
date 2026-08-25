@@ -86,71 +86,79 @@ extern "C" void* __dt__8005A03C(void* obj, int mode) {
 }
 
 // ================== __dt___reslist_base_CVirtualLightObj ==================
-extern "C" void __dt___reslist_base_CVirtualLightObj(void* self, int mode) {
+// Complete object destructor for the _reslist_base<CVirtualLightObj> base of
+// CTimeLightGrp (+0x08 subobject). Reinstalls the base vtable, unlinks every
+// chained node (nulling each node's next as walked), re-links the sentinel to
+// itself, frees the pool array when the ownership flag (0x1c) is clear, and
+// applies the deleting-dtor tail (operator delete) when mode > 0. Returns this.
+extern "C" void* __dt___reslist_base_CVirtualLightObj(void* self, int mode) {
     _reslist_base<CVirtualLightObjPtr>* base = (_reslist_base<CVirtualLightObjPtr>*)self;
+    if (base != nullptr) {
+        // Reinstall the base vtable (restored during destruction).
+        *(void**)base = lbl_eu_80526448;
 
-    if (base == nullptr) return;
-
-    // Set base vtable
-    *(void**)base = lbl_eu_80526448;
-
-    // Clear list: null each node's mNext, re-link head to itself
-    {
-        _reslist_node<CVirtualLightObjPtr>* cur;
-        _reslist_node<CVirtualLightObjPtr>* head;
-
-        head = base->mStartNodePtr;
-        cur = head->mNext;
-        while (cur != head) {
-            _reslist_node<CVirtualLightObjPtr>* prev = cur;
-            cur = cur->mNext;
-            prev->mNext = nullptr;
+        // Unlink every chained node; the sentinel pointer is re-read each
+        // iteration (the node store may alias it).
+        _reslist_node<CVirtualLightObjPtr>* node = base->mStartNodePtr->mNext;
+        while (node != base->mStartNodePtr) {
+            _reslist_node<CVirtualLightObjPtr>* cur = node;
+            node = cur->mNext;
+            cur->mNext = nullptr;
         }
-        head->mNext = head;
-        head->mPrev = head;
-    }
+        base->mStartNodePtr->mNext = base->mStartNodePtr;
+        base->mStartNodePtr->mPrev = base->mStartNodePtr;
 
-    // Free backing array if flag is clear and pointer is non-null
-    if (!base->unk1C && base->mList != nullptr) {
-        __dla__FPv(base->mList);
-        base->mList = nullptr;
-    }
+        // Free backing array if the ownership flag is clear and pointer is non-null
+        if (base->unk1C == false && base->mList != nullptr) {
+            __dla__FPv(base->mList);
+            base->mList = nullptr;
+        }
 
-    // Free self if mode > 0
-    if (mode > 0) __dl__FPv(base);
+        // Deleting-dtor tail: free self if mode > 0
+        if (mode > 0) {
+            __dl__FPv(base);
+        }
+    }
+    return self;
 }
 
-// ================== __dt__reslist_CVirtualLightObj ==================
-extern "C" void __dt__reslist_CVirtualLightObj(void* self, int mode) {
+// Complete-object destructor of the standalone reslist<CVirtualLightObj>
+// (same teardown as the embedded _reslist_base copy inside CTimeLightGrp,
+// with all fields 8 bytes lower since there is no secondary-base offset).
+extern "C" void* __dt__reslist_CVirtualLightObj(void* self, int mode) {
     _reslist_base<CVirtualLightObjPtr>* base = (_reslist_base<CVirtualLightObjPtr>*)self;
+    if (base != nullptr) {
+        // Doubly-nested guard: MWCC CSEs the duplicated test into one
+        // cmpwi + two beq's with different targets (retail shows the dead
+        // second branch).
+        if (base != nullptr) {
+            _reslist_node<CVirtualLightObjPtr>* cur;
+            // Reinstall the base vtable (restored during destruction).
+            *(void**)base = lbl_eu_80526448;
 
-    if (base == nullptr) return;
+            // Inlined _reslist_base::clearList(): unlink every chained node.
+            // The sentinel pointer is re-read from the object each iteration.
+            _reslist_node<CVirtualLightObjPtr>* node = base->mStartNodePtr->mNext;
+            while (base->mStartNodePtr != node) {
+                _reslist_node<CVirtualLightObjPtr>* cur = node;
+                node = cur->mNext;
+                // func_8049CB70(cur) inlined: clear the forward link.
+                cur->mNext = nullptr;
+            }
+            base->mStartNodePtr->mNext = base->mStartNodePtr;
+            base->mStartNodePtr->mPrev = base->mStartNodePtr;
 
-    // (redundant beq in retail MWCC output)
-
-    *(void**)base = lbl_eu_80526448;
-
-    {
-        _reslist_node<CVirtualLightObjPtr>* cur;
-        _reslist_node<CVirtualLightObjPtr>* head;
-
-        head = base->mStartNodePtr;
-        cur = head->mNext;
-        while (cur != head) {
-            _reslist_node<CVirtualLightObjPtr>* prev = cur;
-            cur = cur->mNext;
-            prev->mNext = nullptr;
+            // Free the backing array when this list owns it.
+            if (base->unk1C == false && base->mList != nullptr) {
+                __dla__FPv(base->mList);
+                base->mList = nullptr;
+            }
         }
-        head->mNext = head;
-        head->mPrev = head;
-    }
 
-    if (!base->unk1C && base->mList != nullptr) {
-        __dla__FPv(base->mList);
-        base->mList = nullptr;
+        // Deleting-dtor tail.
+        if (mode > 0) __dl__FPv(base);
     }
-
-    if (mode > 0) __dl__FPv(base);
+    return self;
 }
 
 // ================== __dt__13CTimeLightGrpFv ==================

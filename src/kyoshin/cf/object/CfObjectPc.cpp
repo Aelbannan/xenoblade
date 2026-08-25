@@ -10,7 +10,8 @@
 #include "kyoshin/cf/CfSoundMan.hpp"   // cf::CfSoundMan::func_801BFC38 (single decl on owner header)
 #include "monolib/scn/CScnTimeApi.hpp"
 #include "kyoshin/cf/object/CActorParam.hpp"
-#include "kyoshin/CArtsInfo.hpp"   // declares extern "C" func_8009EC9C(u32)
+// (func_8009EC9C is declared by kyoshin/cf/object/CAIAction.hpp - u16 form;
+// including CArtsInfo.hpp's u32 extern "C" here would be illegal overloading)
 #include "kyoshin/cf/CfGameManagerData.hpp"  // H3 label-owner decl (lbl_eu_80663E14; lbl_eu_80663E24)
 
 struct PCIf {
@@ -651,6 +652,11 @@ int cf::CfObjectPc::func_800BFF20() {
     return 1;
 }
 
+// Adjuster thunk: retarget to the +0x3E9C subobject and tail-call into
+// func_800BFFEC (qualified call suppresses virtual dispatch; defined before
+// func_800BFFEC so MWCC emits a tail-branch rather than inlining it).
+void cf::CfObjectPc::CfObject_UnkVirtualFunc6() { ((cf::CfObjectPc*)((char*)this - 0x3e9c))->cf::CfObjectPc::func_800BFFEC(); }
+
 void cf::CfObjectPc::func_800BFFEC() {
     reinterpret_cast<PCIf*>(this)->_v00B0();
     reinterpret_cast<PCIf*>(this)->_v00B8();
@@ -659,8 +665,8 @@ void cf::CfObjectPc::func_800BFFEC() {
     // per-entry value at +0x17C from the CActorParam virtual 0x28C result.
     CfObjectPcArtsData* artsData = (CfObjectPcArtsData*)func_8009EC9C(
         ((CfObjectPcSubFields*)this)->field_0x3F28);
-    func_80175A50(reinterpret_cast<PCIf*>(this)->_v028C(),
-        &artsData->field_0x17C);
+    func_80175A50(&artsData->field_0x17C,
+        reinterpret_cast<PCIf*>(this)->_v028C());
 }
 
 // NOTE: func_800C0080 is defined as the extern "C" wrapper below (not as a
@@ -674,19 +680,22 @@ extern "C" void func_800C0080__Q22cf10CfObjectPcFv(cf::CfObjectPc* self) {
 
 // vf0x5E4: refresh the arts data for this PC's row and reset the sub-object
 // pointer word at +0x15E0.
-void cf::CfObjectPc::func_800C00C0() {
+// NOTE: defined as the extern "C" wrapper (not as a member): the adjuster
+// thunks reference the global identifier, and the wrapper also satisfies the
+// vtable slot for the virtual member (same pattern as func_800C0080).
+extern "C" void func_800C00C0__Q22cf10CfObjectPcFv(cf::CfObjectPc* self) {
     CfObjectPcArtsData* data = (CfObjectPcArtsData*)func_8009EC9C(
-        ((CfObjectPcSubFields*)this)->field_0x3F28);
+        ((CfObjectPcSubFields*)self)->field_0x3F28);
     // Recomputed lookup: retail keeps both results live (the first feeds
     // func_8009EF9C across the call, the second forms the +0x3534 pointer).
     CfObjectPcArtsData* data2 = (CfObjectPcArtsData*)func_8009EC9C(
-        ((CfObjectPcSubFields*)this)->field_0x3F28);
-    ((CfObjectPcSubFields*)this)->field_0x15E0 = (u32)data2 + 0x3534;
+        ((CfObjectPcSubFields*)self)->field_0x3F28);
+    ((CfObjectPcSubFields*)self)->field_0x15E0 = (u32)data2 + 0x3534;
     func_8009EF9C(data, 0);
-    reinterpret_cast<PCIf*>(this)->vf05F4();
-    ((PcSubFake*)this)->m134(lbl_eu_80666B18);
-    ((PcSubFake*)this)->m13C(lbl_eu_80666B1C);
-    ((PcSubFake*)this)->m1D4(lbl_eu_80666B20);
+    reinterpret_cast<PCIf*>(self)->vf05F4();
+    ((PcSubFake*)self)->m134(lbl_eu_80666B18);
+    ((PcSubFake*)self)->m13C(lbl_eu_80666B1C);
+    ((PcSubFake*)self)->m1D4(lbl_eu_80666B20);
 }
 
 
@@ -734,8 +743,8 @@ void func_800C01D4(cf::CfObjectPc* self, void* dest, s32 itemId) {
         CfObjectPcArtsData* data =
             (CfObjectPcArtsData*)func_8009EC9C(itemId & 0xFFFF);
         reinterpret_cast<PCIf*>(self)->_v021C(((ArtsEntryFake*)data)->fill());
-        func_80175A50(reinterpret_cast<PCIf*>(self)->_v028C(),
-            &data->field_0x17C);
+        func_80175A50(&data->field_0x17C,
+            reinterpret_cast<PCIf*>(self)->_v028C());
     }
 }
 
@@ -1121,16 +1130,17 @@ int func_800C0DD4(cf::CfObjectPc* self, int flag) {
     return 0;
 }
 
-void CObjectParam_UnkVirtualFunc4__Q22cf10CfObjectPcFv(void* self) { ((cf::CfObjectPc*)((char*)self - 0x3e9c))->cf::CfObjectPc::func_800C00C0(); }
+// this-adjust thunk: retarget to the +0x3E9C subobject and tail-branch into
+// func_800C00C0.
+void CObjectParam_UnkVirtualFunc4__Q22cf10CfObjectPcFv(void* self) { ((void(*)(void*))func_800C00C0__Q22cf10CfObjectPcFv)((char*)self - 0x3e9c); }
 
 void CfObject_UnkVirtualFunc3__Q22cf10CfObjectPcFv(void* self) { ((void(*)(void*))func_800C0080__Q22cf10CfObjectPcFv)((char*)self - 0x3e9c); }
 
-void CfObject_UnkVirtualFunc2__Q22cf10CfObjectPcFv(void* self) { ((cf::CfObjectPc*)((char*)self - 0x3e9c))->cf::CfObjectPc::func_800BFF20(); }
+// Tail-calls into func_800BFF20 on the -0x3E9C adjusted this.
+void cf::CfObjectPc::CfObject_UnkVirtualFunc2() { ((cf::CfObjectPc*)((char*)this - 0x3e9c))->cf::CfObjectPc::func_800BFF20(); }
 
 void CfObjectMove_UnkVirtualFunc16__Q22cf10CfObjectPcFv(void* self) { ((void(*)(void*))func_800C11CC__Q22cf10CfObjectPcFv)((char*)self - 0x3e9c); }
 
-// Global-scope adjuster thunk for func_800BFFEC.
-void CfObject_UnkVirtualFunc6__Q22cf10CfObjectPcFv(void* self) { ((cf::CfObjectPc*)((char*)self - 0x3e9c))->cf::CfObjectPc::func_800BFFEC(); }
 
 void CfObject_UnkVirtualFunc4__Q22cf10CfObjectPcFv(void* self) { ((void(*)(void*))func_800C0524__Q22cf10CfObjectPcFv)((char*)self - 0x3e9c); }
 

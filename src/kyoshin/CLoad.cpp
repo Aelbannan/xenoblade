@@ -1,5 +1,7 @@
-// Auto-scaffolded catalog TU for kyoshin/CLoad
-// Replace stubs with high-level C/C++ during decomp.
+// Loading-screen layout controller (kyoshin/CLoad).
+// Owns the lyt layout shown while a file request completes; the file-load
+// callback builds the layout from the loaded archive and drives a small
+// animation state machine per frame.
 
 #include "kyoshin/harness_catalog.hpp"
 #include "kyoshin/CLoad.hpp"
@@ -14,28 +16,22 @@ extern const float lbl_eu_80668DF0;
 extern const float lbl_eu_80668DF4;
 extern char lbl_eu_80510CC8[];
 
-// nw4r layout animation helpers (retail mangled names); global C++ decls emit
-// the matching mangled symbols.
+// nw4r layout animation helpers (retail names; resolved by symbol tooling).
 void func_80137038(nw4r::lyt::Layout*, nw4r::lyt::DrawInfo*, int, int);
 u32 func_80137444(nw4r::lyt::AnimTransform*, float);
-extern "C" u32 func_80137510(nw4r::lyt::AnimTransform*, float);
+u32 func_80137510(nw4r::lyt::AnimTransform*, float);
 void func_801390E0(CFileHandle**);
 void func_80139124(nw4r::lyt::ArcResourceAccessor*);
 void func_80136E84(nw4r::lyt::Layout**, nw4r::lyt::ArcResourceAccessor*, const char*);
 void func_80136F08(nw4r::lyt::Layout*, nw4r::lyt::AnimTransform**, nw4r::lyt::ArcResourceAccessor*, char*);
 
-extern "C" void func_802AE7EC(CLoad* self);
-extern "C" void func_802AE894(CLoad* self);
+u8 func_802AE6AC(CLoad* self) { return self->field_2B; }
 
-extern "C" u8 func_802AE6AC(CLoadFull* self) { return self->field_2B; }
+u8 func_802AE6B4(CLoad* self) { return self->mIsLoaded; }
 
+u8 func_802AE6BC(CLoad* self) { return self->field_2C; }
 
-extern "C" u8 func_802AE6B4(CLoadFull* self) { return self->field_28; }
-
-extern "C" u8 func_802AE6BC(CLoadFull* self) { return self->field_2C; }
-
-
-extern "C" void func_802AE8E0(CLoadFull* self) {
+__attribute__((noinline)) void func_802AE8E0(CLoadFull* self) {
     if (self->field_1C != 0) {
         self->field_2B = 1;
         self->field_28 = 1;
@@ -43,11 +39,10 @@ extern "C" void func_802AE8E0(CLoadFull* self) {
 }
 
 // File-load completion callback: builds the loading-screen layout from the
-// freshly loaded archive and starts its animations.
-// optimize_for_size reproduces the retail [stmw r29]/lmw frame.
+// freshly loaded archive and starts its animations. Retail builds this with
+// the size pipeline ([stmw r29]/lmw frame).
 #pragma push
 #pragma optimize_for_size on
-#pragma dont_inline on
 bool CLoad::OnFileEvent(CEventFile* pEventFile) {
     if (mFileHandle == pEventFile->mFileHandle) {
         mMemRegion.createRegion(mtl::MemManager::getHandleMEM2(), 0x1400,
@@ -84,22 +79,25 @@ bool CLoad::OnFileEvent(CEventFile* pEventFile) {
     }
     return false;
 }
-// keep the func_802AE8E0 helper call outlined (retail does not inline it)
 #pragma pop
 
+// retail frame: stmw/lmw size form
+#pragma push
+#pragma optimize_for_size on
 CLoad::CLoad(u8 arg) {
     mFileHandle = nullptr;
     mAccessor = nullptr;
     mLayout = nullptr;
     mAnimTrans0 = nullptr;
     mAnimTrans1 = nullptr;
-    field_28 = 0;
+    mIsLoaded = 0;
     field_29 = 1;
-    field_2A = 0;
+    mAnimStep = 0;
     field_2B = 0;
     field_2C = 1;
     field_2D = arg;
 }
+#pragma pop
 
 #pragma push
 #pragma optimize_for_size on
@@ -108,7 +106,7 @@ CLoad::~CLoad() {
 }
 #pragma pop
 
-// Begin file load request (target us-802b0c40)
+// Begin the file load request.
 void func_802AE508(CLoad* self) {
     mtl::ALLOC_HANDLE handle = mtl::MemManager::getHandleMEM2();
     self->mFileHandle = CDeviceFile::readFile(
@@ -117,41 +115,39 @@ void func_802AE508(CLoad* self) {
     CDeviceFile::setHandleFlag2(self->mFileHandle);
 }
 
-// per-frame state-driven layout update (target us-802b0c98)
-void func_802AE560(CLoad* self) {
-    if (self->field_28 != 0) {
-        if (self->field_2A != 0) {
-            switch (self->field_2A) {
-            case 1:
-                func_802AE7EC(self);
-                break;
-            case 2:
-                func_80137444(self->mAnimTrans1, lbl_eu_80668DF0);
-                break;
-            case 3:
-                func_802AE894(self);
-                break;
-            }
-            self->mLayout->Animate(0);
+// Per-frame state-driven layout update: advances the animation state
+// machine, then ticks the layout once.
+__attribute__((noinline)) void func_802AE560(CLoad* self) {
+    if (self->mIsLoaded != 0 && self->mAnimStep != 0) {
+        switch (self->mAnimStep) {
+        case 1:
+            func_802AE7EC(self);
+            break;
+        case 2:
+            func_80137444(self->mAnimTrans1, lbl_eu_80668DF0);
+            break;
+        case 3:
+            func_802AE894(self);
+            break;
         }
+        self->mLayout->Animate(0);
     }
 }
 
-// draw the layout when enabled (target us-802b0d28); r4 drawInfo passed through
+// Draw the loading layout when loaded and visible.
 void func_802AE5F0(CLoad* self, nw4r::lyt::DrawInfo* drawInfo) {
-    if (self->field_28 == 0)
+    // short-circuit || lowers as test-return + branch-over-return (retail shape)
+    if (self->mIsLoaded == 0 || self->field_29 == 0)
         return;
-    if (self->field_29 == 0)
-        return;
-    if (self->field_2A != 0)
+    if (self->mAnimStep != 0)
         func_80137038(self->mLayout, drawInfo, 0, 1);
 }
 
-// tear down the loaded layout, accessor and mem region (target us-802b0d64)
+// Tear down the loaded layout, accessor and mem region.
 void func_802AE62C(CLoad* self) {
     CDeviceVI::waitForDrawDone();
     func_801390E0(&self->mFileHandle);
-    self->field_28 = 0;
+    self->mIsLoaded = 0;
     // Redundant inner null check: MWCC CSEs the delete's repeated test into
     // one cmpi and re-tests it, reproducing the retail's second (dead) beq.
     if (self->mLayout != nullptr) {
@@ -163,10 +159,10 @@ void func_802AE62C(CLoad* self) {
     self->mMemRegion.func_8045F778();
 }
 
-// begin animation (target us-802b0dfc)
+// Begin the fade-in animation (step 1).
 void func_802AE6C4(CLoad* self) {
-    if (self->field_2A == 0) {
-        self->field_2A = 1;
+    if (self->mAnimStep == 0) {
+        self->mAnimStep = 1;
         self->mLayout->SetAnimationEnable(self->mAnimTrans1, 0);
         self->mLayout->SetAnimationEnable(self->mAnimTrans0, 1);
         self->mLayout->Animate(0);
@@ -174,10 +170,10 @@ void func_802AE6C4(CLoad* self) {
     }
 }
 
-// advance the retry animation state (target us-802b0e90)
+// Restart as the retry animation (step 3).
 void func_802AE758(CLoad* self) {
-    if (self->field_2A == 2) {
-        self->field_2A = 3;
+    if (self->mAnimStep == 2) {
+        self->mAnimStep = 3;
         self->mLayout->SetAnimationEnable(self->mAnimTrans1, 0);
         self->mLayout->SetAnimationEnable(self->mAnimTrans0, 1);
         self->mLayout->Animate(0);
@@ -185,12 +181,12 @@ void func_802AE758(CLoad* self) {
     }
 }
 
-// finish animation frame / final fade (target us-802b0f24)
-extern "C" void func_802AE7EC(CLoad* self) {
+// Step 1 -> 2: fade-in finished; swap to mAnimTrans1 held on its last frame.
+void func_802AE7EC(CLoad* self) {
     if (func_80137444(self->mAnimTrans0, lbl_eu_80668DF0) == 0) {
         return;
     }
-    self->field_2A = 2;
+    self->mAnimStep = 2;
     self->mLayout->SetAnimationEnable(self->mAnimTrans0, 0);
     self->mLayout->SetAnimationEnable(self->mAnimTrans1, 1);
     self->mAnimTrans1->SetFrame(lbl_eu_80668DF4);
@@ -198,12 +194,10 @@ extern "C" void func_802AE7EC(CLoad* self) {
     self->field_2C = 1;
 }
 
-// finish retry / return to idle (target us-802b0fcc)
-#pragma dont_inline on
-extern "C" void func_802AE894(CLoad* self) {
+// Step 3 -> idle: retry animation finished.
+__attribute__((noinline)) void func_802AE894(CLoad* self) {
     if (func_80137510(self->mAnimTrans0, lbl_eu_80668DF0) != 0) {
-        self->field_2A = 0;
+        self->mAnimStep = 0;
         self->field_2C = 1;
     }
 }
-#pragma dont_inline off

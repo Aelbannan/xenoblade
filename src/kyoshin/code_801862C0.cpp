@@ -2,20 +2,14 @@
 // Replace stubs with high-level C/C++ during decomp.
 
 #include "kyoshin/code_801862C0.hpp"
+#include "kyoshin/cf/CfMapMineManager.hpp" // func_800B8920 / func_800B9404
 
-// CArtsSelectSlot: per-slot entry in the arts selection array (stride 0x170)
-struct CArtsSelectSlot {
-    u32 unk00;  // +0x00: opaque pointer value
-    u32 unk04;  // +0x04: source pointer value (cleared on match)
-};
+// CArtsSelectSlot / CArtsSelectBucket are defined in code_801862C0.hpp.
 
-// CArtsSelectContainer: holds 46 slots of arts data (size includes 0x1700/0x1704 fields)
-struct CArtsSelectContainer {
-    u8 _pad00[0x100];            // +0x00..0xFF: cleared in ctor
-    u8 _pad100[0x70];           // +0x100..0x16F: cleared in ctor (0x80 bytes total here)
-    u32 unk1700;                // +0x1700: arts id from src->unk74
-    u32 unk1704;                // +0x1704: src pointer value
-    CArtsSelectSlot slots[46];   // 46 slots at appropriate offsets
+// Source object whose field_0x74 holds the arts id.
+struct CArtsSelectSrc {
+    u8 pad[0x74];
+    u32 id;
 };
 
 // Returned singleton object backing func_801862C0's accessor.
@@ -31,37 +25,55 @@ void* func_801862C0(void) {
     return &lbl_eu_80574090;
 }
 
-void* func_801862E0(void* p){ return 0; }
+/* Clears the whole arts-select container: all 16 hash buckets (46 slots of
+   (id, ptr) each) and the fast-path cache pair at 0x1700/0x1704. Returns p.
+   Note: tbl/bucket declared before i/j pins register colors (bucket=r6,
+   counter=r7). */
+void* func_801862E0(void* p) {
+    CArtsSelectContainer* tbl = (CArtsSelectContainer*)p;
+    CArtsSelectBucket* bucket = tbl->buckets;
+    int i;
+    int j;
+    for (i = 0; i < 16; i++, bucket++) {
+        for (j = 0; j < 46; j++) {
+            bucket->slots[j].unk00 = 0;
+            bucket->slots[j].unk04 = 0;
+        }
+    }
+    tbl->field_1700 = 0;
+    tbl->field_1704 = 0;
+    return p;
+}
 
-void* func_801863F4(CArtsSelectContainer* self, void* src) {
-    // Find a free slot (val == 0) in the hash bucket and fill it.
-    u32 srcId = *reinterpret_cast<const u32*>((const u8*)src + 0x74);
+void* func_801863F4(void* self, void* src) {
+    // Insert (srcId, src) into the first free slot of the id's hash bucket.
+    u32 srcId = *reinterpret_cast<const u32*>(static_cast<const u8*>(src) + 0x74);
 
-    // Same bucket index computation as func_80186474.
-    u32 idx = __rlwinm(srcId, 28, 0, 3);
-    u32 sign = __rlwinm(srcId, 1, 31, 31);
-    idx = __rlwinm(idx - sign, 4, 0, 31);
-    idx += sign;
+    // Bucket index: t = rotl((id << 28) - bit31(id), 4) + bit31(id).
+    u32 t = srcId << 28;
+    u32 sign = srcId >> 31;
+    t -= sign;
+    t = (t << 4) | (t >> 28);
+    t += sign;
 
-    // Bucket search: find a free slot (val == 0) and fill it. Retail keeps
-    // the bucket base in a callee-saved register and tracks i separately for
-    // the indexed fill-write (stwx base+i*8), then recomputes base + i*8 for
-    // the +4 store. MWCC CSEs the base recompute from high-level C, leaving
-    // the function one instruction short (0x68 vs 0x6c) -- open item.
-    CArtsSelectSlot* slot =
-        reinterpret_cast<CArtsSelectSlot*>((u8*)self + idx * 0x170);
-    for (int i = 0; i < 46; i++) {
-        if (slot[i].unk00 == 0) {
-            slot[i].unk00 = srcId;
-            slot[i].unk04 = reinterpret_cast<u32>(src);
+    u32 off = t * 0x170;
+    CArtsSelectBucket* bucket = &static_cast<CArtsSelectBucket*>(self)[t];
+    CArtsSelectSlot* slot = bucket->slots;
+    int i;
+    for (i = 0; i < 46; i++) {
+        if (slot->unk00 == 0) {
+            bucket->slots[i].unk00 = srcId;
+            CArtsSelectSlot* hit = reinterpret_cast<CArtsSelectSlot*>(
+                static_cast<u8*>(self) + (i * 8 + off));
+            hit->unk04 = reinterpret_cast<u32>(src);
             return reinterpret_cast<void*>(srcId);
         }
+        slot++;
     }
     return reinterpret_cast<void*>(srcId);
 }
 
 extern "C" void* func_80186460(void* dst, void* src) {
-    CArtsSelectContainer* container = static_cast<CArtsSelectContainer*>(dst);
     const u8* srcBytes = static_cast<const u8*>(src);
     u32 id = *reinterpret_cast<const u32*>(srcBytes + 0x74);
     *(u32*)((u8*)dst + 0x1700) = id;
@@ -69,35 +81,42 @@ extern "C" void* func_80186460(void* dst, void* src) {
     return reinterpret_cast<void*>(id);
 }
 
+// Remove an arts entry matching src->field_74 from its hash bucket.
+// Bucket index = rotl((id<<28) - bit31(id), 4) + bit31(id); each of the 46
+// slots holds an (id, ptr) pair. On hit both words are cleared and the slot
+// address is returned; a miss returns the container itself.
 void* func_80186474(void* self, void* src){
-    // Search through slots at (self + idx*0x170) for src->unk74 match
-    // On match: clear slot[i].unk00 and slot[i].unk04, return srcId
-    // On no match: return srcId
+    CArtsSelectSlot* slot;
+    CArtsSelectSlot* slots;
     u32 srcId = *reinterpret_cast<const u32*>(static_cast<const u8*>(src) + 0x74);
-    
-    // Match retail idx calculation: rlwinm r4, r6, 28, 0, 3; rlwinm r5, r6, 1, 31, 31
-    //                          subf r4, r5, r4; rlwinm r4, 4; add r4, r4, r5
-    u32 idx = __rlwinm(srcId, 28, 0, 3);
-    u32 sign = __rlwinm(srcId, 1, 31, 31);
-    idx = __rlwinm(idx - sign, 4, 0, 31);
-    idx += sign;
-    
-    u32 slotPtr = reinterpret_cast<u32>(self) + idx * 0x170;
-    
-    for (int i = 0; i < 46; i++) {
-        u32 val = *reinterpret_cast<u32*>(slotPtr);
-        if (val == srcId) {
-            *reinterpret_cast<u32*>(slotPtr) = 0;
-            *reinterpret_cast<u32*>(slotPtr + 4) = 0;
-            return reinterpret_cast<void*>(srcId);
+    u32 sign;
+    u32 t;
+    u32 off;
+    int i;
+
+    t = srcId << 28;
+    sign = srcId >> 31;
+    t -= sign;
+    t = (t << 4) | (t >> 28);
+    t += sign;
+    off = t * 0x170;
+    slots = reinterpret_cast<CArtsSelectSlot*>(static_cast<u8*>(self) + off);
+    slot = slots;
+    for (i = 0; i < 46; i++) {
+        if (slot->unk00 == srcId) {
+            CArtsSelectSlot* hit = reinterpret_cast<CArtsSelectSlot*>(
+                static_cast<u8*>(self) + off + i * 8);
+            slots[i].unk00 = 0;
+            hit->unk04 = 0;
+            return hit;
         }
-        slotPtr += 8;
+        slot++;
     }
-    return reinterpret_cast<void*>(srcId);
+    return self;
 }
 
 // Constructor: clears structure and stores this pointer to singleton
-extern "C" void* __ct__80186578(CArtsSelectContainer* self){
+extern "C" void* __ct__80186578(void* self){
     lbl_eu_806642D0 = reinterpret_cast<u32>(self);
     memset(self, 0, 0x100);
     memset(reinterpret_cast<u8*>(self) + 0x100, 0, 0x80);
@@ -108,24 +127,28 @@ extern "C" void* __ct__80186578(CArtsSelectContainer* self){
 // field_1704. Otherwise a hash-indexed table search: index =
 // ((((id>>4)&0xF) - sign) << 4) + sign (sign = bit 31), stride 0x170, 46
 // entries of 8 bytes; miss falls back to func_800B708C(id).
-extern "C" void* func_800B708C(int id);
 void* func_801864DC(void* pObj, int slot) {
     u8* self = (u8*)pObj;
     u32 id = (u32)slot;
+    u32 t;
+    u32 sign;
+    u32 off;
     if (*(u32*)(self + 0x1700) == id) {
         return *(void**)(self + 0x1704);
     }
-    u32 sign = (id >> 31) & 1;
-    // Retail hash: t = rotl((id << 28) - sign, 4) + sign.
-    u32 t = (id << 28) - sign;
+    // Retail hash: t = rotl((id << 28) - bit31(id), 4) + bit31(id).
+    sign = (id >> 31) & 1;
+    t = (id << 28) - sign;
     t = (t << 4) | (t >> 28);
     t += sign;
-    u32 off = t * 0x170;
+    off = t * 0x170;
     u8* base = self + off;
-    int i;
-    for (i = 0; i < 46; i++) {
-        if (id == *(u32*)(base + i * 8)) {
-            return *(void**)(((u8*)self + off) + i * 8 + 4);
+    int j;
+    for (j = 0; j < 46; j++) {
+        if (id == *(u32*)(base + j * 8)) {
+            // Recompute the entry address from the base (retail add chain).
+            u8* hit = (u8*)self + off;
+            return *(void**)(hit + (j << 3) + 4);
         }
     }
     void* r = func_800B708C(slot);
@@ -135,21 +158,51 @@ void* func_801864DC(void* pObj, int slot) {
     return 0;
 }
 
-void __dt__801865C4(){}
+// Destructor for the arts-select container: same teardown walk as
+// func_80186664 (free armed slots, clear pointer + halfword flag at
+// +0x100), then clear the singleton pointer and delete the object when the
+// scalar-deleting flag is set (> 0). Body guarded by a null-this check.
+extern "C" void* __dt__801865C4(void* self, int flags) {
+    s32 i;
+    void** p;
+    u16* f;
+    if (self != NULL) {
+        p = (void**)self;
+        f = (u16*)self;
+        for (i = 0; i < 64; i++) {
+            void* ptr = *p;
+            if (ptr != 0) {
+                if (func_800B8920(ptr) != 0) {
+                    // Reload the slot pointer for the free call (retail
+                    // re-reads through the slot address each time).
+                    func_800B9404(*p);
+                    *p = (void*)0;
+                }
+                *p = (void*)0;
+                *(f + 0x80) = (u16)0;
+            }
+            p++;
+            f++;
+        }
+        lbl_eu_806642D0 = 0;
+        if (flags > 0) {
+            __dl__FPv(self);
+        }
+    }
+    return self;
+}
 
-extern "C" int func_800B8920(void*);
-extern "C" void func_800B9404(void*);
 // func_80186664 (recovered): teardown loop over 64 widget slots.  For each
-// slot: if the slot pointer is armed, run the check helper (func_800B8920)
-// and, when it passes, the free helper (func_800B9404); the slot pointer is
-// cleared on both paths (the retail keeps two ptr=0 stores on the success
-// path — an unreduced duplicate of the shared tail store) and the slot's
-// halfword flag at +0x100 is cleared unconditionally.
-extern "C" void func_80186664(u8* self) {
-    u32 zero = 0;
+// armed slot: run the check helper (func_800B8920) and, when it passes, the
+// free helper (func_800B9404); both the slot pointer and the slot's halfword
+// flag at +0x100 are cleared on the armed path only.
+void func_80186664(u8* self) {
     void** p = (void**)self;
-    u16* h = (u16*)self;
-    for (s32 i = 0; i < 64; i++) {
+    u16* f = (u16*)self;
+    s32 i;
+    // Retail clears the flag only when the slot was armed (the ptr==0 branch
+    // skips both stores).
+    for (i = 0; i < 64; i++) {
         void* ptr = *p;
         if (ptr != 0) {
             if (func_800B8920(ptr) != 0) {
@@ -159,10 +212,10 @@ extern "C" void func_80186664(u8* self) {
                 *p = (void*)0;
             }
             *p = (void*)0;
+            *(f + 0x80) = (u16)0;
         }
-        *(h + 0x80) = (u16)0;
-        h++;
         p++;
+        f++;
     }
 }
 
@@ -236,10 +289,107 @@ void func_801866F0(MapObjVt** objects, int row) {
     }
 }
 
-void* func_80186A70(void* p){ return 0; }
+/* func_80186A70: arts-availability check for row `row` of the current bdat
+   table. Reads seven columns (c1..c7): if c1 is non-zero it must fall inside
+   the [c2,c3] window around the cf game manager resource counter
+   (func_80082354); otherwise a second counter (func_800822F4) must fall in
+   either the [c4,c5] or [c6,c7] window (a zero upper bound disables a
+   window). Returns 1 when any applicable window contains the counter. */
+int func_80186A70(void* p, s32 row, const char* c1, const char* c2,
+                  const char* c3, const char* c4, const char* c5,
+                  const char* c6, const char* c7) {
+    void* bdat;
+    u32 v1;
+    u32 v2;
+    u32 v3;
+    u32 v4;
+    u32 v5;
+    u32 v6;
+    u32 v7;
+    u16 cur;
+    bdat = lbl_eu_806640B0;
+    v1 = getBdatStringColumnValue(bdat, c1, row);
+    if ((u16)v1 != 0) {
+        // Resource id gate: must sit inside the closed [lo,hi] byte window
+        // around the cf game manager resource counter.
+        cur = func_80082354__Q22cf13CfGameManagerFv((u16)v1);
+        v2 = getBdatStringColumnValue(bdat, c2, row);
+        v3 = getBdatStringColumnValue(bdat, c3, row);
+        if (cur < (u8)v2 || cur > (u8)v3) {
+            return 0;
+        }
+    }
+    cur = func_800822F4__Q22cf13CfGameManagerFv();
+    v4 = getBdatStringColumnValue(bdat, c4, row);
+    v5 = getBdatStringColumnValue(bdat, c5, row);
+    v6 = getBdatStringColumnValue(bdat, c6, row);
+    v7 = getBdatStringColumnValue(bdat, c7, row);
+    // Sequence counter must land in either halfword window; a zero upper
+    // bound disables its window.
+    if ((cur >= (u16)v4 && cur <= (u16)v5 && (u16)v5 != 0) ||
+        (cur >= (u16)v6 && cur <= (u16)v7 && (u16)v7 != 0)) {
+        return 1;
+    }
+    return 0;
+}
 
-void* func_80186BC8(void* p){ return 0; }
+// func_80186BC8: look up entry `p` in the arts-select container's entry
+// array, restricted to the bdat table's valid row range
+// [rowBase, rowBase + rowCount). Returns NULL when the container singleton,
+// the requested index, or the slot itself is absent.
+void* func_80186BC8(int p) {
+    void* bdat;
+    void** entries;
+    int rowBase;
+    int rowCount;
+    int i;
+    if (lbl_eu_806642D0 != 0 && p != 0) {
+        bdat = lbl_eu_806640B0;
+        rowBase = (int)func_8003B41C(bdat);
+        rowCount = (int)func_8003B1EC(bdat) + rowBase;
+        entries = (void**)lbl_eu_806642D0;
+        for (i = rowBase; i < rowCount; i++) {
+            if (entries[i] != NULL && i == p) {
+                return entries[i];
+            }
+        }
+    }
+    return 0;
+}
 
-void* func_80186C7C(void* p){ return 0; }
+// func_80186C7C: notify every armed widget in the arts-select container.
+// For each of the 64 slots: if the slot holds a widget with a notifier, call
+// the notifier's vtable+0x88 entry with 1 when the widget's 0x6C flag bit
+// 0x10000000 is set AND the argument is non-zero, else 0. The container
+// pointer is re-read from the singleton each iteration (retail reloads it;
+// the virtual call may mutate it).
+void func_80186C7C(void* p) {
+    if (lbl_eu_806642D0 != 0) {
+        s32 i;
+        for (i = 0; i < 64; i++) {
+            ArtsWidget** entries = reinterpret_cast<ArtsWidget**>(lbl_eu_806642D0);
+            ArtsWidget* widget = entries[i];
+            if (widget == NULL) {
+                continue;
+            }
+            ArtsNotifyVt* notifier = widget->field_98;
+            if (notifier == NULL) {
+                continue;
+            }
+            int armed = 0;
+            if ((widget->field_6C & 0x10000000) != 0 && p != NULL) {
+                armed = 1;
+            }
+            notifier->notify(armed);
+        }
+    }
+}
+
+// func_80186C7C: notify every armed widget in the arts-select container.
+// For each of the 64 slots: if the slot holds a widget with a notifier, call
+// the notifier's vtable+0x88 entry with 1 when the widget's 0x6C flag bit
+// 0x10000000 is set AND the argument is non-zero, else 0. The container
+// (retail leaves r3 untouched on return)
+
 
 void* func_80186D20(void* p){ return 0; }

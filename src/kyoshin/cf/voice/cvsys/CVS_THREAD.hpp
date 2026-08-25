@@ -71,6 +71,7 @@ public:
     virtual void func_802A3740();
     virtual int blank2();
     int func_802A5ECC() { return 240; }
+    int func_802A3E88();
 };
 
 extern "C" unsigned int func_802A35A0(unsigned int value);

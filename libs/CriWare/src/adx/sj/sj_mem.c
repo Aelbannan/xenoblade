@@ -84,41 +84,47 @@ void *SJMEM_Create(void *pool_mem, u32 flags) {
 #pragma push
 #pragma opt_propagation off
 void *sjmem_Create(void *pool_mem, u32 flags) {
+    const char *suffix;
+    SJMEM *self;
+    char buf_invalid[64];
+    char buf_null[64];
     SJMEM *p = (SJMEM *)lbl_eu_805ECE50;
-    char buf2[64];
-    char buf1[64];
     int i;
 
+    /* scan the fixed table of 0x20 slots for a free (valid == 0) entry */
     for (i = 0; i < 0x20; i++) {
         if (p->valid == 0) break;
         p++;
     }
     if (i == 0x20) return NULL;
 
-    SJMEM *self = &((SJMEM *)lbl_eu_805ECE50)[i];
-    self->valid = 1;
-    self->vtable = lbl_eu_80565C00;
-    self->pool_mem = (u8 *)pool_mem;
-    self->buf_size = flags;
-    self->uuid = lbl_eu_80518A58;
-    self->err_func = (void (*)(void *, int))SJMEM_Error;
-    self->err_arg = self;
+    {
+        self = &((SJMEM *)lbl_eu_805ECE50)[i];
+        self->valid = 1;
+        self->vtable = lbl_eu_80565C00;
+        self->pool_mem = (u8 *)pool_mem;
+        self->buf_size = flags;
+        self->uuid = lbl_eu_80518A58;
+        self->err_func = (void (*)(void *, int))SJMEM_Error;
+        self->err_arg = self;
 
-    if (i == 0x20) {
-        const char *suffix = lbl_eu_80518A68 + 0x0C;
-        CRICRW_Strcpy(buf1, 0x40, lbl_eu_80518A68 + 0x27);
-        CRICRW_Strcat(buf1, 0x40, suffix);
-        SJERR_CallErr(buf1);
-    } else if (self->valid == 0) {
-        const char *suffix = lbl_eu_80518A68 + 0x33;
-        CRICRW_Strcpy(buf2, 0x40, lbl_eu_80518A68 + 0x53);
-        CRICRW_Strcat(buf2, 0x40, suffix);
-        SJERR_CallErr(buf2);
-    } else {
-        self->avail = self->buf_size;
-        self->offset = 0;
+        /* defensive NULL/validity re-checks with formatted error messages */
+        if (self == NULL) {
+            suffix = lbl_eu_80518A68 + 0x0C;
+            CRICRW_Strcpy(buf_null, 0x40, lbl_eu_80518A68 + 0x27);
+            CRICRW_Strcat(buf_null, 0x40, suffix);
+            SJERR_CallErr(buf_null);
+        } else if (self->valid == 0) {
+            suffix = lbl_eu_80518A68 + 0x33;
+            CRICRW_Strcpy(buf_invalid, 0x40, lbl_eu_80518A68 + 0x53);
+            CRICRW_Strcat(buf_invalid, 0x40, suffix);
+            SJERR_CallErr(buf_invalid);
+        } else {
+            self->avail = self->buf_size;
+            self->offset = 0;
+        }
+        return self;
     }
-    return self;
 }
 #pragma pop
 
@@ -362,22 +368,23 @@ int SJMEM_UngetChunk(void *self, int mode, SJ_CHUNK *chunk) {
 #pragma push
 #pragma opt_propagation off
 void sjmem_UngetChunk(SJMEM *self, int mode, SJ_CHUNK *chunk) {
+    char buf_null[64];
+    char buf_valid[64];
     if (self == NULL) {
-        char buf[64];
         const char *suffix = lbl_eu_80518A68 + 0x0C;
-        CRICRW_Strcpy(buf, 0x40, lbl_eu_80518A68 + 0xEF);
-        CRICRW_Strcat(buf, 0x40, suffix);
-        SJERR_CallErr(buf);
+        CRICRW_Strcpy(buf_null, 0x40, lbl_eu_80518A68 + 0xEF);
+        CRICRW_Strcat(buf_null, 0x40, suffix);
+        SJERR_CallErr(buf_null);
         goto end;
     }
     if (self->valid == 0) {
-        char buf[64];
         const char *suffix = lbl_eu_80518A68 + 0x33;
-        CRICRW_Strcpy(buf, 0x40, lbl_eu_80518A68 + 0xFB);
-        CRICRW_Strcat(buf, 0x40, suffix);
-        SJERR_CallErr(buf);
+        CRICRW_Strcpy(buf_valid, 0x40, lbl_eu_80518A68 + 0xFB);
+        CRICRW_Strcat(buf_valid, 0x40, suffix);
+        SJERR_CallErr(buf_valid);
         goto end;
     }
+    /* unget only applies to a live chunk */
     if (chunk->size > 0 && chunk->ptr != NULL) goto body;
     goto exit;
 exit:
@@ -388,14 +395,16 @@ body:
         return;
     }
     if (mode == 1) {
-        int new_offset = (int)self->offset - chunk->size;
-        self->offset = (new_offset > 0) ? new_offset : 0;
-        {
-            int new_avail = self->avail + chunk->size;
-            if (new_avail > (int)self->buf_size) new_avail = self->buf_size;
-            self->avail = new_avail;
-        }
-        if (new_offset != (int)(chunk->ptr - self->pool_mem)) {
+        /* rewind offset by chunk size (clamped at 0), return the
+         * consumed bytes to avail (clamped at buf_size) */
+        int new_offset = (int)(self->offset - chunk->size);
+        int new_avail;
+        int clamped = (new_offset > 0) ? new_offset : 0;
+        self->offset = clamped;
+        new_avail = self->avail + chunk->size;
+        if ((int)self->buf_size < new_avail) new_avail = self->buf_size;
+        self->avail = new_avail;
+        if (clamped != (int)(chunk->ptr - self->pool_mem)) {
             if (self->err_func) self->err_func(self->err_arg, -3);
         }
         return;

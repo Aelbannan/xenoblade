@@ -291,10 +291,10 @@ void func_801644D8(cf::CTaskREvent* self, int type, int upper, int lower) {
 }
 
 // Initializes the 32-slot event data table: each slot's u16 id is set to
-// 0xC00, its u8 flag cleared, its two 0x10-byte word sub-slots zeroed, and
-// its two 0x14-byte byte sub-slots filled with 1.
-// NOTE: the inner walk is written as pointer-inequality loops so MWCC keeps
-// the retail mtctr/bdnz counted-loop shape instead of unrolling.
+// 0xC00, its u8 flag cleared, and each of its two sub-slot pairs filled
+// (words zeroed, bytes set to 1), interleaved in retail store order.
+// NOTE: the inner walk stays a pointer-inequality loop so MWCC keeps the
+// two-iteration walk rolled instead of unrolling it.
 void func_8016455C(CEventDataTable* self) {
     for (int i = 0; i < 0x20; i++) {
         self->mIds920[i] = 0xC00;
@@ -303,24 +303,24 @@ void func_8016455C(CEventDataTable* self) {
         CEventDataTable::ByteSlot* b = &self->mBytes[i][0];
         while (b != &self->mBytes[i + 1][0]) {
             w->data[0] = 0;
-            w->data[1] = 0;
-            w->data[2] = 0;
-            w->data[3] = 0;
             b->data[0] = 1;
             b->data[1] = 1;
             b->data[2] = 1;
             b->data[3] = 1;
             b->data[4] = 1;
+            w->data[1] = 0;
             b->data[5] = 1;
             b->data[6] = 1;
             b->data[7] = 1;
             b->data[8] = 1;
             b->data[9] = 1;
+            w->data[2] = 0;
             b->data[10] = 1;
             b->data[11] = 1;
             b->data[12] = 1;
             b->data[13] = 1;
             b->data[14] = 1;
+            w->data[3] = 0;
             b->data[15] = 1;
             b->data[16] = 1;
             b->data[17] = 1;
@@ -385,12 +385,14 @@ u32 func_80164724(const char* key, int type, u32 slot) {
 int func_80164838(const char* key, int slot) {
     CTaskREventNameBuf sb;
     const char* base = lbl_eu_80503008;
+    const char* entry;
+    const char* const* pSuf = lbl_eu_80530710;
     int idx = -1;
-    for (u32 i = 0; i < 0x20; i++) {
+    for (u32 i = 0; i < 0x20; i++, pSuf++) {
         sb.len = strlen(base);
         strcpy(sb.buf, base);
-        int len2 = strlen(lbl_eu_80530710[i]);
-        strcat(sb.buf, lbl_eu_80530710[i]);
+        int len2 = strlen(entry = *pSuf);
+        strcat(sb.buf, entry);
         sb.len += len2;
         if (strcmp(sb.buf, key) == 0) {
             idx = (int)i;

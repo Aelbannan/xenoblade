@@ -510,6 +510,13 @@ void CActParamAnim::setBlendFlag(int param) {
 //   forcing a post-clear byte reload, and hoisting param into a dedicated
 //   local (animId) all compile to the identical banked body (MWCC CSEs the
 //   reload and canonicalizes the param copy); any full reorder regresses size.
+// - Confirmed 2026-XX (this fork): declaring the data temp AFTER the flag
+//   chain (retail birth order model->b->clear->flag->data) regresses to
+//   21.8%, size 0x134<0x138 - the r31-park disappears and the whole small
+//   path reshuffles. Statement-order angle now fully exhausted.
+// - Declaration order fully enumerated (this fork): data-first 64.1% >
+//   model-first/data-second 61.5% > data-last 21.8% > no-data/inline worse.
+//   Wall confirmed source-exhausted.
 // - Also ruled out: inlining BOTH arg1 (mChildData10) and arg4 (field4BD) at
 //   the call site to force late data materialization (332B, 58 structural —
 //   worse; MWCC drops the r31 spill and reshuffles the whole small path).
@@ -2302,8 +2309,99 @@ int func_8004F484__13CActParamAnimFv(CActParamAnim* self, u32 param, s32 val) {
     return 0;
 }
 
-void CActParamAnim::func_8004F5FC() {}
+// Retail symbol claims Fv but the body reads r4/r5 (forced-name member):
+// (self, animId, id). Guards the anim start behind an id match against the
+// owner interface (or the cached +0x4B8 state word when unowned), then runs
+// the same small/big anim-start split as func_8004BC94. Returns 1 when the
+// request was consumed (including the 0x40000/0x12 guard skip), 0 when the
+// id did not match.
+extern "C" int func_8004F5FC__13CActParamAnimFv(CActParamAnim* self,
+                                                u32 animId, u32 id) {
+    CActParamAnimStateView* view = reinterpret_cast<CActParamAnimStateView*>(self);
+    if (view->owner08 == NULL) {
+        if ((s32)view->field4B8 != (s32)id) {
+            goto fail;
+        }
+        if (animId == 0) {
+            return 1;
+        }
+        if (animId < 0x68) {
+            if (!((view->field0C & 0x40000) != 0 && animId == 0x12)) {
+                if (view->field4BD == 0) {
+                    view->field4BD = 0;
+                }
+                u8* data = view->mChildData10;
+                u32 model = view->field2FC;
+                u8 b = view->field4BD;
+                view->field0C &= ~0x200;
+                u32 flag = 0;
+                if (model == 0) model = view->field27C;
+                if (model == 1) {
+                    model = view->field270;
+                    if ((model & 0x10) == 0 && (model & 0x8) == 0) flag = 1;
+                }
+                u32 local;
+                u32 ret = func_80054170(data, &local, animId, b, flag);
+                func_8004BDCC(self, local, ret, view->field2A4, 0);
+                view->field0C &= ~0x200;
+            }
+        } else {
+            u32 sel = view->field278;
+            u32 flag = 0;
+            if (sel == 1) {
+                u32 m = view->field270;
+                if ((m & 0x10) == 0 && (m & 0x8) == 0) flag = 1;
+            }
+            u32 local;
+            u32 ret = func_80054614(view->mChildData10, &local, animId, flag, 0);
+            func_8004BDCC(self, local, ret, view->field2A4,
+                          (view->field0C >> 9) & 1);
+        }
+        return 1;
+    }
+    if ((s32)view->owner08->field1C != (s32)id) {
+        goto fail;
+    }
+    if (animId == 0) {
+        return 1;
+    }
+    if (animId < 0x68) {
+        if (!((view->field0C & 0x40000) != 0 && animId == 0x12)) {
+            if (view->field4BD == 0) {
+                view->field4BD = 0;
+            }
+            u8* data = view->mChildData10;
+            u32 model = view->field2FC;
+            u8 b = view->field4BD;
+            view->field0C &= ~0x200;
+            u32 flag = 0;
+            if (model == 0) model = view->field27C;
+            if (model == 1) {
+                model = view->field270;
+                if ((model & 0x10) == 0 && (model & 0x8) == 0) flag = 1;
+            }
+            u32 local;
+            u32 ret = func_80054170(data, &local, animId, b, flag);
+            func_8004BDCC(self, local, ret, view->field2A4, 0);
+            view->field0C &= ~0x200;
+        }
+    } else {
+        u32 sel = view->field278;
+        u32 flag = 0;
+        if (sel == 1) {
+            u32 m = view->field270;
+            if ((m & 0x10) == 0 && (m & 0x8) == 0) flag = 1;
+        }
+        u32 local;
+        u32 ret = func_80054614(view->mChildData10, &local, animId, flag, 0);
+        func_8004BDCC(self, local, ret, view->field2A4,
+                      (view->field0C >> 9) & 1);
+    }
+        return 1;
 
+fail:
+    return 0;
+}
 void CActParamAnim::func_8004F884() {}
 
 // Retail symbol is Fv but the body reads r4 (one extra param) — forced-name

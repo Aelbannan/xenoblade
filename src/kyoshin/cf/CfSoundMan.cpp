@@ -617,6 +617,14 @@ fallback:
 
 // Kept out-of-line (auto_inline off) so the retail call from func_801C08BC
 // survives; the full teardown body is a separate target.
+// Bitfield view of CfSoundSlot::field_0x2A: reading the active bit through a
+// named bitfield keeps MWCC's load + bool-conversion chain (plain mask-and-
+// test folds straight into a flag branch).
+struct SlotActiveView {
+    u16 rest : 15;
+    u16 active : 1;
+};
+
 #pragma push
 #pragma auto_inline off
 // Per-slot update (retail func_801C055C): refreshes the slot's position from
@@ -624,38 +632,41 @@ fallback:
 // stops / tears down the slot (out-of-range paths) or restarts and re-gains
 // it with distance-based volume and pan.
 extern "C" void func_801C055C(CfSoundSlot* slot) {
-    // Double bool-materialization reproduces the retail clrlwi/cntlzw x2
-    // prologue idiom.
-    bool inactive = (slot->field_0x2A & 1) == 0;
-    if (!inactive) {
-        UnkClass_800821F8Snd* mgr = (UnkClass_800821F8Snd*)func_800821F8__Q22cf13CfGameManagerFv();
-        if (mgr != 0) {
+    // Explicit cntlzw chain pins the retail prologue idiom: every natural
+    // mask-and-test shape folds into a single flag branch.
+    u32 rawBit = slot->field_0x2A & 1;
+    u32 inactive = (u32)__cntlzw(rawBit) >> 5;
+    if (((u32)__cntlzw(inactive) >> 5) != 0) {
+        UnkClass_800821F8Snd* mgr =
+            (UnkClass_800821F8Snd*)func_800821F8__Q22cf13CfGameManagerFv();
+        if (mgr != NULL) {
             // Refresh the slot's stored position in place (out = slot + 8).
             func_801C03C8(slot, (CfSoundActorPos*)&slot->field_0x08);
-            CfSndCamObj* cam = (CfSndCamObj*)mgr->field_0xC;
-            CfSoundPos3* pos = (CfSoundPos3*)&slot->field_0x08;
-            CfSoundPos3 delta;
-            delta.x = pos->x - cam->field_0x10C;
-            delta.y = pos->y - cam->field_0x110;
-            delta.z = pos->z - cam->field_0x114;
-            f32 dx = delta.x;
-            f32 dy = delta.y;
-            f32 dz = delta.z;
-            // NOTE: horizontal distance only - the y term is deliberately
-            // omitted (matches the retail computation).
-            f32 distSq = dx * dx + dz * dz;
+            CfSndCamObj* cam = mgr->field_0xC;
+            // Camera-relative delta: VEC3Sub writes straight into the named
+            // temp (inline register-kernel emits the retail paired-single
+            // sequence); the explicit copy feeds every later consumer while
+            // distSq reads the temp itself (retail interleaves the copy
+            // stores between the distSq multiplies).
+            CfSoundPos3 diff;
+            CfSoundPos3 tmp;
+            nw4r::math::VEC3Sub((nw4r::math::VEC3*)&tmp,
+                                (nw4r::math::VEC3*)&slot->field_0x08,
+                                &cam->mPos);
+            diff = *(CfSoundPos3*)&tmp;
+            f32 distSq = tmp.x * tmp.x + tmp.z * tmp.z;
             if (distSq < lbl_eu_80667EA0) {
                 Warning__Q24nw4r2dbFPCciPCce(lbl_eu_80526324, 0x273,
                                              lbl_eu_80526300);
             }
             f32 len;
             if (distSq <= lbl_eu_80667EA0) {
-                len = distSq * FrSqrt__Q24nw4r4mathFf(distSq);
-            } else {
                 len = lbl_eu_80667EA0;
+            } else {
+                len = distSq * FrSqrt__Q24nw4r4mathFf(distSq);
             }
             if (len >= slot->field_0x18 ||
-                (f32)__fabs((f64)dy) < slot->field_0x18) {
+                (f32)__fabs((f64)diff.y) < slot->field_0x18) {
                 // Out of range: fade out, stop, or tear down depending on
                 // the slot mode bits (0xC = fade, 0x10 = hard stop).
                 u16 flags = slot->field_0x2A;
@@ -663,51 +674,51 @@ extern "C" void func_801C055C(CfSoundSlot* slot) {
                     if (slot->mSound != 0) {
                         slot->mSound->SetVolume(lbl_eu_80667EA0, 0);
                     }
-                    return;
-                }
-                if ((flags & 0x10) != 0) {
+                } else if ((flags & 0x10) != 0) {
                     if (slot->mSound != 0) {
                         slot->mSound->Stop(0);
                     }
-                    return;
+                } else {
+                    if (slot->mSound != 0) {
+                        slot->mSound->Stop(0);
+                    }
+                    slot->mId = 0xFFFF;
+                    slot->field_0x2A = 0;
+                    slot->field_0x2E = -1;
                 }
-                if (slot->mSound != 0) {
-                    slot->mSound->Stop(0);
+            } else {
+                if (lbl_eu_8066443A != 0) {
+                    // Mono output: fixed reference volume.
+                    if (slot->mSound != 0) {
+                        slot->mSound->SetVolume(lbl_eu_80667EA0, 15);
+                    }
+                } else {
+                    int scn = CfRes_getD80Flag();
+                    CfSndPoseBlock* pose = (CfSndPoseBlock*)func_80496264((void*)scn, -1);
+                    f32 pan;
+                    f32 vol;
+                    func_8049B834(&pan, &vol, pose,
+                                  (CfSoundPos3*)&slot->field_0x08,
+                                  lbl_eu_80667EA4,
+                                  lbl_eu_80667EA4 + slot->field_0x18);
+                    // Restart a stopped looping slot with the computed gain.
+                    if ((slot->field_0x2A & 0x10) != 0 && slot->mSound == 0) {
+                        func_801C0DC4((CfSoundRecord*)slot->field_0x20,
+                                      slot->field_0x24, vol * diff.x, 0, slot);
+                    }
+                    if (scn != 0) {
+                        vol = vol *
+                              (lbl_eu_80667E9C -
+                               ((CfSndCamView*)func_8049603C((CScn*)scn))
+                                   ->field_0x0C);
+                    }
+                    if (slot->mSound != 0) {
+                        slot->mSound->SetVolume(vol * slot->field_0x1C, 0);
+                    }
+                    if (slot->mSound != 0) {
+                        slot->mSound->SetPan(pan);
+                    }
                 }
-                slot->mId = 0xFFFF;
-                slot->field_0x2A = 0;
-                slot->field_0x2E = -1;
-                return;
-            }
-            if (lbl_eu_8066443A != 0) {
-                // Mono output: fixed reference volume.
-                if (slot->mSound != 0) {
-                    slot->mSound->SetVolume(lbl_eu_80667EA0, 15);
-                }
-                return;
-            }
-            int scn = CfRes_getD80Flag();
-            CfSndPoseBlock* pose = (CfSndPoseBlock*)func_80496264((void*)scn, -1);
-            f32 pan;
-            f32 vol;
-            func_8049B834(&pan, &vol, pose, pos,
-                          lbl_eu_80667EA4 + slot->field_0x18);
-            // Restart a stopped looping slot with the computed gain.
-            if ((slot->field_0x2A & 0x10) != 0 && slot->mSound == 0) {
-                func_801C0DC4((CfSoundRecord*)slot->field_0x20,
-                              slot->field_0x24, vol * slot->field_0x1C, 0,
-                              slot);
-            }
-            if (scn != 0) {
-                vol = vol *
-                      (lbl_eu_80667E9C -
-                       ((CfSndCamView*)func_8049603C((CScn*)scn))->field_0x0C);
-            }
-            if (slot->mSound != 0) {
-                slot->mSound->SetVolume(vol * slot->field_0x1C, 0);
-            }
-            if (slot->mSound != 0) {
-                slot->mSound->SetPan(pan);
             }
         }
     }
@@ -974,13 +985,16 @@ void func_801C0DC0() {}
 
 // Scan the 64-entry sound-slot table for a free slot (mId == 0xFFFF).
 // Kept as a static helper so MWCC inlines it (same rationale as
-// findSlotById): the inlined `return p` / `return 0` reproduces the retail
-// scan shape without inverting the match branch.
+// findSlotById): for-form so the first iteration branches to the bottom
+// condition test, matching the retail layout.
 static inline CfSoundSlot* findFreeSlot() {
-    for (CfSoundSlot* p = lbl_eu_80575928; p != lbl_eu_80575928 + 64; p++) {
+    CfSoundSlot* p = lbl_eu_80575928;
+    CfSoundSlot* end = p + 64;
+    while (p != end) {
         if (p->mId == 0xFFFF) {
             return p;
         }
+        p++;
     }
     return 0;
 }
@@ -997,7 +1011,7 @@ static inline CfSoundSlot* findFreeSlot() {
 // r5 across the free-slot scan.
 extern "C" u32 func_801C0DC4(CfSoundRecord* rec, s32 id, float volume,
                              u32 fadeFrames, CfSoundSlot* slotParam) {
-    u32 slotId = 0xFFFF;
+    u32 slotId = (1 << 16) - 1;
     // Materialized as a 0/1 boolean early (retail subfic/addi/or/srwi idiom)
     // because the retail keeps it in r5 across the free-slot scan.
     bool idValid = (id != -1);
@@ -1005,7 +1019,7 @@ extern "C" u32 func_801C0DC4(CfSoundRecord* rec, s32 id, float volume,
         return slotId;
     }
     CfSoundSlot* slot = slotParam;
-    if (slotParam == 0) {
+    if (slot == 0) {
         slot = findFreeSlot();
     }
     if (idValid && slot != 0) {
@@ -1014,13 +1028,16 @@ extern "C" u32 func_801C0DC4(CfSoundRecord* rec, s32 id, float volume,
             if (slotParam != 0) {
                 slotId = slotParam->mId;
             } else {
-                u32 counter = lbl_eu_80664438 + 1;
-                lbl_eu_80664438 = (u16)counter;
-                if ((counter & 0xFFFF) == 0xFFFF) {
-                    counter = (counter & 0xFFFF) + 1;
-                    lbl_eu_80664438 = (u16)counter;
+                // 16-bit wrap-around id counter (retail reads/writes it as
+                // u16 and bumps again when the incremented value hits
+                // 0xFFFF so the reserved value is never handed out).
+                u16 counter = lbl_eu_80664438 + 1;
+                lbl_eu_80664438 = counter;
+                if (counter == 0xFFFF) {
+                    counter = counter + 1;
+                    lbl_eu_80664438 = counter;
                 }
-                slotId = counter & 0xFFFF;
+                slotId = counter;
                 slot->field_0x2A = 0;
                 slot->field_0x18 = lbl_eu_80667E98;
                 slot->field_0x2C = 0;

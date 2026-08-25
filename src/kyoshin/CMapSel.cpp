@@ -37,26 +37,27 @@ extern "C" void __declspec(noinline) func_80244020(CMapSel*);
    scrollbar (retail skips the +0x00 vtable). Afterwards build the map grid:
    collect the valid maps (ids 2..28, types 10/20/22/26/28 excluded), bubble-
    sort the grid by BDAT sort key, and place the selection on the current map. */
+// Constructor: set the IWorkEvent vtable, construct sub-objects, then build
+// the sorted map grid (see comment above the old free-function form).
 extern "C" void __ct__17UnkClass_8045F564Fv(void* self);
-#pragma push
-#pragma optimize_for_size on
-extern "C" CMapSel* __ct__CMapSel(CMapSel* self) {
+CMapSel::CMapSel() {
+    CMapSel* self = this;
     // IWorkEvent vtable + UnkClass_8045F564 mem region.
     *(void**)self = lbl_eu_80536E10;
     __ct__17UnkClass_8045F564Fv(
-        reinterpret_cast<UnkClass_8045F564*>(&self->mMemRegion[0]));
+        reinterpret_cast<UnkClass_8045F564*>(&mMemRegion[0]));
 
-    self->mFileHandle = 0;
-    self->mFileHandle2 = 0;
-    self->mArcAccessor = 0;
-    self->mAllocatedMem = 0;
-    self->mLayout = 0;
-    self->mAnimTransform1 = 0;
-    self->mAnimTransform2 = 0;
-    self->field_0x30 = 0;
-    self->mState = 0;
-    self->field_0x32 = 0;
-    self->mFlag33 = 1;
+    mFileHandle = 0;
+    mFileHandle2 = 0;
+    mArcAccessor = 0;
+    mAllocatedMem = 0;
+    mLayout = 0;
+    mAnimTransform1 = 0;
+    mAnimTransform2 = 0;
+    field_0x30 = 0;
+    mState = 0;
+    field_0x32 = 0;
+    mFlag33 = 1;
 
     // Embedded sub-objects.
     __ct__CScrollBar(&self->mScrollBar[0], 0);
@@ -73,23 +74,25 @@ extern "C" CMapSel* __ct__CMapSel(CMapSel* self) {
     // (the +0x00 vtable was already set by the first ctor above).
     u8 tempBuf[0x40];
     __ct__CScrollBar(tempBuf, 1);
-    CScrollBar* dst = reinterpret_cast<CScrollBar*>(&self->mScrollBar[0]);
-    CScrollBar* temp = reinterpret_cast<CScrollBar*>(tempBuf);
-    dst->mMemRegion = temp->mMemRegion;
-    dst->mFileHandle = temp->mFileHandle;
-    dst->mAccessor = temp->mAccessor;
-    dst->mLayout = temp->mLayout;
-    dst->mAnimTransform = temp->mAnimTransform;
-    dst->mReady = temp->mReady;
-    dst->mVisible = temp->mVisible;
-    dst->mState = temp->mState;
-    dst->mActive = temp->mActive;
-    dst->mAnimOffset = temp->mAnimOffset;
-    dst->mScrollPosY = temp->mScrollPosY;
-    dst->mScrollRatio = temp->mScrollRatio;
-    dst->mThumbHeight = temp->mThumbHeight;
-    dst->mContentHeight = temp->mContentHeight;
-    dst->mDirection = temp->mDirection;
+    // Copy the flag-1 scrollbar body over the embedded one, field by field
+    // through inline casts so no pointer locals stay live across the block.
+    CScrollBar& dst = *reinterpret_cast<CScrollBar*>(&self->mScrollBar[0]);
+    CScrollBar& temp = *reinterpret_cast<CScrollBar*>(tempBuf);
+    dst.mMemRegion = temp.mMemRegion;
+    dst.mFileHandle = temp.mFileHandle;
+    dst.mAccessor = temp.mAccessor;
+    dst.mLayout = temp.mLayout;
+    dst.mAnimTransform = temp.mAnimTransform;
+    dst.mReady = temp.mReady;
+    dst.mVisible = temp.mVisible;
+    dst.mState = temp.mState;
+    dst.mActive = temp.mActive;
+    dst.mAnimOffset = temp.mAnimOffset;
+    dst.mScrollPosY = temp.mScrollPosY;
+    dst.mScrollRatio = temp.mScrollRatio;
+    dst.mThumbHeight = temp.mThumbHeight;
+    dst.mContentHeight = temp.mContentHeight;
+    dst.mDirection = temp.mDirection;
     __dt__10CScrollBarFv(tempBuf, -1);
 
     // --- Build the map grid ---------------------------------------------
@@ -99,14 +102,17 @@ extern "C" CMapSel* __ct__CMapSel(CMapSel* self) {
     u8 curMap = (u8)lbl_eu_80664184;     // current map id -> initial selection
 
     // For each map id 2..28 (types 10/20/22/26/28 excluded), append the map
-    // to the grid when it is a valid map of that type.
+    // to the grid when it is a valid map of that type. mapId stays an s32
+    // counter (retail truncates per use); the switch operand is the u8 view,
+    // which selects the retail jump-table dispatch.
     for (s32 mapId = 2; mapId <= 0x1c; mapId++) {
-        switch (mapId) {
+        char* base = lbl_eu_8050B4A8;        // pane-name / BDAT format string
+        switch ((u8)mapId) {
         case 0: case 1: case 2: case 3: case 4: case 5: case 6: case 7:
         case 8: case 9: case 11: case 12: case 13: case 14: case 15: case 16:
         case 17: case 18: case 19: case 21: case 23: case 24: case 25: case 27:
             for (s32 j = 1; j <= mapCount; j++) {
-                if (func_801361E8((u32)mapTable, lbl_eu_8050B4A8, (u32)j) == mapId) {
+                if (func_801361E8((u32)mapTable, base, (u32)j) == mapId) {
                     if (func_8009CF8C((u32)(j + 0x20c8)) != 0) {
                         u8 idx = self->mGridData[0x20];
                         self->mGridData[idx] = mapId;
@@ -121,15 +127,20 @@ extern "C" CMapSel* __ct__CMapSel(CMapSel* self) {
         }
     }
 
-    // Bubble-sort the grid by BDAT sort key, descending (early exit when a
-    // pass makes no swap).
+    // Bubble-sort the grid by BDAT sort key (early exit when a pass makes
+    // no swap). Count is re-read from memory each check, matching retail;
+    // both keys land in u8 temps so lookups truncate via clrlwi.
     for (u8 pass = 0; pass < self->mGridData[0x20]; pass++) {
+        char* keys = lbl_eu_8050B4A8;        // BDAT sort-key field name (+6)
         int swapped = 0;
         for (u8 k = 0; k < self->mGridData[0x20] - 1 - pass; k++) {
+            // Retail hoists grid[k+1] into a callee-saved temp before the
+            // first lookup, but passes grid[k] inline as its third argument.
             u8 b = self->mGridData[k + 1];
-            u8 a = self->mGridData[k];
-            u8 keyA = func_801361E8((u32)orderTable, lbl_eu_8050B4A8 + 6, (u32)a);
-            if (keyA > func_801361E8((u32)orderTable, lbl_eu_8050B4A8 + 6, (u32)b)) {
+            u8 keyA = func_801361E8((u32)orderTable, keys + 6,
+                                    self->mGridData[k]);
+            u8 keyB = func_801361E8((u32)orderTable, keys + 6, b);
+            if (keyA > keyB) {
                 self->mGridData[k] ^= self->mGridData[k + 1];
                 self->mGridData[k + 1] ^= self->mGridData[k];
                 self->mGridData[k] ^= self->mGridData[k + 1];
@@ -140,23 +151,22 @@ extern "C" CMapSel* __ct__CMapSel(CMapSel* self) {
     }
 
     // Place the selection on the current map: grid index -> (y, x) cell.
-    u8 count = self->mGridData[0x20];
-    for (u8 i = 0; i < count; i++) {
+    for (u8 i = 0; i < self->mGridData[0x20]; i++) {
         if (self->mGridData[i] == curMap) {
-            s8 v = (s8)(i + 1);
-            self->mSelY = v;
-            if (v >= 10) {
-                self->mSelX = (s8)(v - 10);
+            int v = i + 1;
+            self->mSelY = (s8)v;
+            // Retail re-uses the u8-truncated v (clrlwi) and sign-extends it
+            // for the >= 10 test; the branches subtract from the truncated form.
+            if ((s8)(u8)v >= 10) {
+                self->mSelX = (s8)((u8)v - 10);
                 self->mSelY = 9;
             } else {
-                self->mSelY = (s8)(v - 1);
+                self->mSelY = (s8)((u8)v - 1);
             }
             break;
         }
     }
-    return self;
 }
-#pragma pop
 
 /* Complete-object destructor.  Sub-objects are opaque byte arrays, so their
    retail destructors are invoked explicitly (reverse of construction order);
@@ -179,7 +189,17 @@ extern "C" void* __dt__7CMapSelFv(CMapSel* self, int flags) {
 }
 #pragma pop
 
-void func_8024343C(){}
+/* func_8024343C - Start the map-select UI: request the layout archive from
+   MEM2 and mark the pending-map flag so func_80243ED8 begins the countdown,
+   then read the scrollbar's layout arc. */
+void func_8024343C(CMapSel* self) {
+    self->mFileHandle = CDeviceFile::readFile(
+        mtl::MemManager::getHandleMEM2(), &lbl_eu_8050B4A8[0xc],
+        reinterpret_cast<IWorkEvent*>(self), 0, 0);
+    self->mGridData[0x21] = 1;
+    func_80243ED8(self);
+    func_801F34F4(&self->mScrollBar[0]);
+}
 
 /* func_802434A0 - Per-frame update: drive the state machine, then animate the
    layout, scrollbar, and cursor. Guards on field_0x30 (widget active) and
@@ -215,6 +235,10 @@ extern "C" void __declspec(noinline) func_802434A0(CMapSel* self) {
    Guards on field_0x30 (widget active) and mState (not uninitialized). */
 void func_80137038(nw4r::lyt::Layout*, nw4r::lyt::DrawInfo*, int, int);
 
+/* Retail uses an stmw/lmw r30 frame; the scoped size-optimization pragma is
+   what selects that shape under -O4,p (also fixes the param copy order). */
+#pragma push
+#pragma optimize_for_size on
 void func_80243560(CMapSel* self, nw4r::lyt::DrawInfo* drawInfo) {
     if (self->field_0x30 != 0 && self->mState != 0) {
         func_80137038(self->mLayout, drawInfo, 0, 1);
@@ -222,6 +246,7 @@ void func_80243560(CMapSel* self, nw4r::lyt::DrawInfo* drawInfo) {
         func_801D20B0(self->mCursor, drawInfo);
     }
 }
+#pragma pop
 
 /* func_802435CC - Tear down the map-select widget: release both file
    handles, deactivate, then (after vblank sync) delete the layout, free the
@@ -302,10 +327,13 @@ extern "C" void __declspec(noinline) func_80243768(CMapSel* self) {
     u8 y = self->mSelY - 1;
     self->mSelY = y;
     if ((s8)y < 0) {
+        // Read through an unsigned cast so the load isn't sign-extended,
+        // then hold the decrement as a raw int (retail keeps it untruncated
+        // in place and materializes the (s8) test in a temp).
         self->mSelY = 0;
-        u8 x = self->mSelX - 1;
+        int x = (u8)self->mSelX - 1;
         self->mSelX = x;
-        if ((s8)x < 0) {
+        if ((s8)(u8)x < 0) {
             u8 count = self->mGridData[0x20];
             if (count >= 10) {
                 self->mSelY = 9;
@@ -320,7 +348,8 @@ extern "C" void __declspec(noinline) func_80243768(CMapSel* self) {
     }
     func_80243CFC(self);
     func_80244020(self);
-    func_801F3850(self->mScrollBar, (u16)(s8)self->mSelX);
+    s8 cur = self->mSelX;
+    func_801F3850(self->mScrollBar, (u16)cur);
     func_80243FC4(self);
     func_80138078__FUl(1);
 }
@@ -357,7 +386,29 @@ extern "C" void __declspec(noinline) func_80243838(CMapSel* self) {
     func_80138078__FUl(1);
 }
 
-void func_8024391C(){}
+/* func_8024391C - Move the selection left/up by one column of 10 (mirror of
+   func_802439CC). Wraps from the top row of a column back into the previous
+   column near its bottom row; below zero clamps to the first entry.
+   mGridData[0x20] is the map count (grid has 10 rows). */
+extern "C" void __declspec(noinline) func_8024391C(CMapSel* self) {
+    u8 count = self->mGridData[0x20];
+    if (count >= 10) {
+        self->mSelX -= 10;
+        if ((s8)self->mSelX < 0) {
+            self->mSelY = self->mSelX + 9;
+            self->mSelX = 0;
+            if ((s8)self->mSelY < 0) self->mSelY = 0;
+        }
+    } else {
+        self->mSelY = 0;
+        self->mSelX = 0;
+    }
+    func_80243CFC(self);
+    func_80244020(self);
+    func_801F3850(self->mScrollBar, self->mSelX);
+    func_80243FC4(self);
+    func_80138078__FUl(1);
+}
 
 /* func_802439CC - Move the selection down one row (grid has 10 columns;
    mGridData[0x20] is the map count). Wraps past the last row to the next
@@ -370,20 +421,20 @@ extern "C" void __declspec(noinline) func_802439CC(CMapSel* self) {
         u8 nx = self->mSelX + 10;
         self->mSelX = nx;
         if ((s8)nx > count - 10) {
-            u8 ny = nx - (count - 10);
-            self->mSelY = ny;
+            self->mSelY = nx - (count - 10);
             self->mSelX = count - 10;
-            if ((s8)ny >= 10) self->mSelY = 9;
+            if ((s8)(u8)(nx - (count - 10)) >= 10) self->mSelY = 9;
         }
     } else {
-        u8 ny = count - 1;
-        self->mSelY = ny;
+        // Store the raw (unclipped) difference; recompute the u8-truncated
+        // form only for the sign test.
+        self->mSelY = count - 1;
         self->mSelX = 0;
-        if ((s8)ny < 0) self->mSelY = 0;
+        if ((s8)(u8)(count - 1) < 0) self->mSelY = 0;
     }
     func_80243CFC(self);
     func_80244020(self);
-    func_801F3850(self->mScrollBar, (u16)(s8)self->mSelX);
+    func_801F3850(self->mScrollBar, self->mSelX);
     func_80243FC4(self);
     func_80138078__FUl(1);
 }
@@ -404,18 +455,28 @@ extern "C" void __declspec(noinline) func_80243ABC(CMapSel* self) {
         self->mState = 2;
         float vec[3];
         vec[0] = lbl_eu_80668740;
-        u8* sb = &self->mScrollBar[0];
         vec[1] = lbl_eu_80668744;
-        float* vecPtr = &vec[0];
+        u8* sb = &self->mScrollBar[0];
         vec[2] = lbl_eu_80668738;
-        func_801F3670(sb, vecPtr);
+        func_801F3670(sb, vec);
         func_801F36BC(self->mScrollBar, 10, self->mGridData[0x20]);
-        func_801F3850(self->mScrollBar, (u16)(s8)self->mSelX);
+        s8 selX = self->mSelX;
+        func_801F3850(self->mScrollBar, (u16)selX);
         func_801F367C(self->mScrollBar);
     }
 }
 
-extern "C" void __declspec(noinline) func_80243B88(CMapSel* self){}
+/* func_80243B88 - State 2 handler: once the map-open-in animation on
+   mAnimTransform2 finishes, move to state 3 (transitioning out), flag +0x33,
+   reset the cursor and refresh its grid position. */
+extern "C" void __declspec(noinline) func_80243B88(CMapSel* self) {
+    if (func_80137444(self->mAnimTransform2, lbl_eu_8066873C) != 0) {
+        self->mState = 3;
+        self->mFlag33 = 1;
+        func_801D216C(&self->mCursor[0], 1);
+        func_80244020(self);
+    }
+}
 
 /* func_80243BE8 - Poll animation completion on mAnimTransform2, then enable both
    animations, set state to 5 (post-close cleanup), and notify the scrollbar. */
@@ -461,9 +522,10 @@ extern "C" void __declspec(noinline) func_80243CFC(CMapSel* self) {
 }
 
 /* func_80243E08 - Show/hide the map-selection images. When no file is in
-   flight and a map-data buffer is present and the load flag is clear, display
-   the layout text pane for the current map; otherwise re-request the map
-   texture from the arc and display its text pane. */
+   flight, the map-data buffer is loaded and the pending flag is clear, set the
+   current-map text pane's texture directly from the buffer and show it;
+   otherwise re-fetch the "timg" resource from the arc and (when present) use
+   it for the same pane. */
 #pragma push
 #pragma optimize_for_size on
 extern "C" void __declspec(noinline) func_80243E08(CMapSel* self) {
@@ -474,12 +536,12 @@ extern "C" void __declspec(noinline) func_80243E08(CMapSel* self) {
         const void* res = self->mArcAccessor->GetResource(
             nw4r::lyt::ArcResourceAccessor::RES_TYPE_TEXTURE, base + 0x53, 0);
         if (res != 0) {
-            func_80137E7C(self->mLayout, base + 0x66);
+            func_80137E7C(self->mLayout, base + 0x66, res);
         }
         return;
     }
     base = lbl_eu_8050B4A8;
-    func_80137E7C(self->mLayout, base + 0x66);
+    func_80137E7C(self->mLayout, base + 0x66, self->mAllocatedMem);
     nw4r::lyt::Pane* pane =
         self->mLayout->GetRootPane()->FindPaneByName(base + 0x66, true);
     func_80124270(pane, 1);
@@ -517,19 +579,24 @@ extern "C" void __declspec(noinline) func_80243FC4(CMapSel* self){}
 
 /* func_80244020 - Refresh the cursor position on the map grid: format the
    current row's pane name from the selection Y, look up the two panes that
-   bracket the selection, and move the cursor to the computed point. */
+   bracket the selection, and move the cursor to the computed point.
+   Retail uses an stmw/lmw r29 frame; the scoped size pragma selects it. */
+#pragma push
+#pragma optimize_for_size on
 extern "C" void __declspec(noinline) func_80244020(CMapSel* self) {
+    /* Strings live at buf+4 (retail sp+0x18) */
     char buf[0x2C];
-    nw4r::math::VEC3 out;
     char* base = lbl_eu_8050B4A8;
-    sprintf(buf, base + 0x1f, self->mSelY + 1);
+    sprintf(buf + 4, base + 0x1f, self->mSelY + 1);
     nw4r::lyt::Pane* pane1 =
-        self->mLayout->GetRootPane()->FindPaneByName(buf, true);
+        self->mLayout->GetRootPane()->FindPaneByName(buf + 4, true);
     nw4r::lyt::Pane* pane2 = self->mLayout->GetRootPane()->FindPaneByName(
         base + 0x88, true);
-    func_80137924(&out, pane1, pane2, self->mLayout->GetRootPane());
-    reinterpret_cast<CCur18View*>(&self->mCursor[0])->vf04(&out);
+    nw4r::math::VEC3 pos;
+    func_80137924(&pos, pane1, pane2, self->mLayout->GetRootPane());
+    reinterpret_cast<CCur18View*>(&self->mCursor[0])->vf04(&pos);
 }
+#pragma pop
 
 /* CMapSel::OnFileEvent - Build the map-select layout when the main file
    finishes loading: create the scratch mem region + host, detach the file

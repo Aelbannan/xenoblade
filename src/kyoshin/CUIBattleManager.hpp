@@ -38,8 +38,32 @@ public:
     u8 unk55; // 0x55 - pending update-mark
 };
 
+// Opaque battle-side object returned by func_8016FE34 (touched by Move).
+struct CUIBattleActor {
+    u8 unk00[0x4];
+    void* field_04;                   // 0x04 - queried sub-object (vtable slot 0x30)
+    u8 unk08[0x3E9C - 0x8];
+    u8 field_3E9C[0x3F60 - 0x3E9C];   // 0x3E9C - move sub-object (vtable slot 0x4C)
+    void* field_3F60;                 // 0x3F60 - flag object
+};
+
+// Flag object hanging off CUIBattleActor::field_3F60.
+struct CUIBattleFlagObj {
+    u8 unk00[0x530];
+    u16 field_530;                    // bit0 checked by Move
+};
+
+// Action-source object returned by func_800B708C.
+struct CUIBattleAction {
+    u8 unk00[0x64];
+    u32 field_64;                     // bit2 checked by Move
+};
+
 // Battle-UI helpers. Retail binds these by their plain (unmangled) names.
+extern "C" bool CMenuArtsSelect_isFinished();
 extern "C" void func_8012E630(CUIBattleManager* self);
+extern "C" CUIBattleManager* __ct__CUIBattleManager(
+    CUIBattleManager* self, CScnNw4r* pScene, mtl::ALLOC_HANDLE handle);
 extern "C" CUIBattleChild* func_8012F5F8();
 extern "C" CUIBattleChild* func_8012F750(u32 arg);
 extern "C" void func_8012FAA8();
@@ -133,6 +157,11 @@ private:
     friend CUIBattleChild* func_8012F750(u32 arg);
     friend void func_8012FAA8();
     friend void func_8012F87C(u32 arg);
+    // Flat retail ctor symbol (CQuestWindow idiom): global free function with
+    // C linkage, friended for member access during construction.
+    friend CUIBattleManager* __ct__CUIBattleManager(CUIBattleManager* self,
+                                                    CScnNw4r* pScene,
+                                                    mtl::ALLOC_HANDLE handle);
     CUIBattleManager();
     virtual ~CUIBattleManager();
     void OnFileEvent();
@@ -142,6 +171,12 @@ private:
 // func_8012F29C copies this pmf ({0, -1, func_8012F2BC}) into mMoveFunc.
 extern CUIBattleManager::MoveFunc lbl_eu_8052E0B4;
 
+// Array-delete / delete helpers (C-ABI imports).
+extern "C" void __dla__FPv(void* p);
+extern "C" void __dl__FPv(void* p);
+
 // _reslist_base<IUIBattle> vtable (split1 .data). The reslist deleting
 // destructors store this into the object header (retail lbl_eu_8052E1B4).
-extern void* lbl_eu_8052E1B4;
+// Sized array decl so MWCC addresses it via lis/addi (retail form), not
+// small-data SDA21.
+extern const u8 lbl_eu_8052E1B4[0x10];

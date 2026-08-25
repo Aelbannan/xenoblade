@@ -2,6 +2,46 @@
 
 namespace {
 
+// Opaque word-fill of the color state (mapping + vertex + text, 0x20 bytes):
+// runs as part of member initialization so the white fill is emitted before
+// the remaining member stores, matching retail's ordering.
+void FillColorsWhite(GXColor* colors) {
+    u32* words = reinterpret_cast<u32*>(colors);
+    for (int i = 0; i < 8; i++) {
+        words[i] = 0xFFFFFFFF;
+    }
+}
+
+} // namespace
+
+namespace nw4hbm {
+namespace ut {
+
+/* Defined inline here so MWCC inlines away all ~Color calls in this TU
+ * (retail CharWriter emits no dtor calls; the strong ~Color symbol lives
+ * in lyt_bounding.cpp). */
+inline Color::~Color() {}
+
+CharWriter::LoadingTexture CharWriter::mLoadingTexture;
+
+CharWriter::CharWriter()
+    : mAlpha((FillColorsWhite(reinterpret_cast<GXColor*>(&mColorMapping)),
+              255)),
+      mIsWidthFixed(false), mFixedWidth(0.0f), mFont(NULL) {
+
+    mLoadingTexture.Reset();
+    ResetColorMapping();
+    SetGradationMode(GRADMODE_NONE);
+    SetTextColor(Color::WHITE);
+    SetScale(1.0f, 1.0f);
+    SetCursor(0.0f, 0.0f, 0.0f);
+    EnableLinearFilter(true, true);
+}
+
+CharWriter::~CharWriter() {}
+
+namespace {
+
 // Mirror of ut::Color without the non-trivial destructor: the guarded static
 // below must be initialized with a plain store and no destruction
 // registration to match the retail inlined copies.
@@ -32,30 +72,6 @@ static void SetupGXCommon() {
 }
 
 } // namespace
-
-namespace nw4hbm {
-namespace ut {
-
-/* Defined inline here so MWCC inlines away all ~Color calls in this TU
- * (retail CharWriter emits no dtor calls; the strong ~Color symbol lives
- * in lyt_bounding.cpp). */
-inline Color::~Color() {}
-
-CharWriter::LoadingTexture CharWriter::mLoadingTexture;
-
-CharWriter::CharWriter()
-    : mAlpha(255), mIsWidthFixed(false), mFixedWidth(0.0f), mFont(NULL) {
-
-    mLoadingTexture.Reset();
-    ResetColorMapping();
-    SetGradationMode(GRADMODE_NONE);
-    SetTextColor(Color::WHITE);
-    SetScale(1.0f, 1.0f);
-    SetCursor(0.0f, 0.0f, 0.0f);
-    EnableLinearFilter(true, true);
-}
-
-CharWriter::~CharWriter() {}
 
 void CharWriter::SetFont(const Font& rFont) {
         mFont = &rFont;
@@ -280,9 +296,9 @@ void CharWriter::LoadTexture(const Glyph& rGlyph, GXTexMapID slot) {
 void CharWriter::UpdateVertexColor() {
     // clang-format off
     mVertexColor.lu = mTextColor.start;
-    mVertexColor.ru = mTextColor.gradationMode != GRADMODE_H    ? mTextColor.start : mTextColor.end;
-    mVertexColor.ld = mTextColor.gradationMode != GRADMODE_V    ? mTextColor.start : mTextColor.end;
-    mVertexColor.rd = mTextColor.gradationMode == GRADMODE_NONE ? mTextColor.start : mTextColor.end;
+    mVertexColor.ru = mTextColor.gradationMode == GRADMODE_H    ? mTextColor.end   : mTextColor.start;
+    mVertexColor.ld = mTextColor.gradationMode == GRADMODE_V    ? mTextColor.end   : mTextColor.start;
+    mVertexColor.rd = mTextColor.gradationMode != GRADMODE_NONE ? mTextColor.end   : mTextColor.start;
     // clang-format on
 
     mVertexColor.lu.a = (mVertexColor.lu.a * mAlpha) / 255,

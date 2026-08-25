@@ -250,7 +250,7 @@ __declspec(noinline) cf::CfCam::~CfCam() {}
 // the global active-camera pointer; base dtor + delete machinery follows.
 cf::CfCamFollow::~CfCamFollow() {
     vtable = lbl_eu_80527260;
-    if (func_8006BFBC() == 1 && func_8006BFC4(reinterpret_cast<int>(this), 0x4000) != 0) {
+    if (func_8006BFBC(this) == 1 && func_8006BFC4(reinterpret_cast<int>(this), 0x4000) != 0) {
         lbl_eu_80570A38[0] = unk1F8;
     }
     lbl_eu_80663DEC = 0;
@@ -918,15 +918,101 @@ extern "C" __declspec(noinline) void* func_8006B6A8(void* self) { return *reinte
 extern "C" __declspec(noinline) void* func_8006B6B0(void* self) { return static_cast<char*>(self) + 64; }
 extern "C" __declspec(noinline) void* func_8006B6B8(void* self) { return static_cast<char*>(self) + 28; }
 extern "C" __declspec(noinline) void func_8006BEF0(void* self, void* v) { *reinterpret_cast<void**>(reinterpret_cast<char*>(self) + 8) = v; }
-extern "C" __declspec(noinline) void* func_8006BFBC(void* self) { return *reinterpret_cast<void**>(reinterpret_cast<char*>(self) + 8); }
+__declspec(noinline) u32 func_8006BFBC(void* self) { return *reinterpret_cast<u32*>(reinterpret_cast<char*>(self) + 8); }
 __declspec(noinline) int func_8006D374(void* self) {
-    return (*reinterpret_cast<unsigned int*>(reinterpret_cast<char*>(self) + 4) >> 1) & 1;
+    return (*reinterpret_cast<unsigned int*>(reinterpret_cast<char*>(self) + 4) >> 31) & 1;
 }
-extern "C" __declspec(noinline) void* func_80071CDC() { return lbl_eu_80665958; }
-extern "C" __declspec(noinline) void* func_80071CE4(void* self) { return static_cast<char*>(self) + 96; }
-extern "C" __declspec(noinline) void* func_80071CEC(void* self) { return static_cast<char*>(self) + 108; }
+__declspec(noinline) cf::CfCamFollow* func_80071CDC() { extern int lbl_eu_80665958; return (cf::CfCamFollow*)lbl_eu_80665958; }
+__declspec(noinline) ml::CVec3* func_80071CE4(cf::CfCamFollow* self) { return reinterpret_cast<ml::CVec3*>(reinterpret_cast<char*>(self) + 96); }
 extern "C" __declspec(noinline) void func_80071B74() {}
 extern "C" __declspec(noinline) unsigned int func_80074D44() { return 0; }
+// More tiny accessors (retail thunks).
+extern "C" __declspec(noinline) void* func_8006D400(void* self) { return *reinterpret_cast<void**>(reinterpret_cast<char*>(self) + 4); }
+extern "C" __declspec(noinline) f32 func_8006D408(void* self) { return *reinterpret_cast<f32*>(reinterpret_cast<char*>(self) + 480); }
+extern "C" __declspec(noinline) f32 func_80074D58(void* self) { return *reinterpret_cast<f32*>(reinterpret_cast<char*>(self) + 480); }
+extern "C" __declspec(noinline) void* func_8006D6F8(void* self) { return static_cast<char*>(self) + 156; }
+extern "C" __declspec(noinline) void* func_80074D4C(void* self) {
+    return reinterpret_cast<char*>(*reinterpret_cast<void**>(reinterpret_cast<char*>(self) + 12)) + 280;
+}
+extern "C" __declspec(noinline) void func_80074D60(void* self, const void* src) {
+    const u32* s = static_cast<const u32*>(src);
+    u32* d = reinterpret_cast<u32*>(reinterpret_cast<char*>(self) + 40);
+    d[0] = s[0];
+    d[1] = s[1];
+    d[2] = s[2];
+}
+extern "C" __declspec(noinline) void func_80073C74(void* dst, const void* src) {
+    func_8004B3F0(static_cast<char*>(dst) + 16, const_cast<void*>(src));
+}
+extern "C" __declspec(noinline) int func_80073390(void* self) {
+    return (*reinterpret_cast<u32*>(reinterpret_cast<char*>(self) + 12) >> 19) & 1;
+}
+extern "C" __declspec(noinline) int func_8007339C() {
+    return (lbl_eu_80663E24 >> 6) & 1;
+}
+extern "C" __declspec(noinline) f32 func_800733B0(void* self) { return *reinterpret_cast<f32*>(reinterpret_cast<char*>(self) + 20); }
+// func_8006DC* probe series: flag bits of the word at +0x4EC / floats at +0x4F8..+0x508.
+extern "C" __declspec(noinline) int func_8006DC34(void* self) { return (*reinterpret_cast<u32*>(reinterpret_cast<char*>(self) + 1260) >> 26) & 1; }
+extern "C" __declspec(noinline) int func_8006DC40(void* self) { return (*reinterpret_cast<u32*>(reinterpret_cast<char*>(self) + 1260) >> 24) & 1; }
+extern "C" __declspec(noinline) int func_8006DC64(void* self) { return (*reinterpret_cast<u32*>(reinterpret_cast<char*>(self) + 1260) >> 25) & 1; }
+extern "C" __declspec(noinline) int func_8006DC70(void* self) { return (*reinterpret_cast<u32*>(reinterpret_cast<char*>(self) + 1260) >> 23) & 1; }
+extern "C" __declspec(noinline) int func_8006DC94(void* self) { return (*reinterpret_cast<u32*>(reinterpret_cast<char*>(self) + 1260) >> 13) & 1; }
+extern "C" __declspec(noinline) f32 func_8006DC7C(void* self) { return *reinterpret_cast<f32*>(reinterpret_cast<char*>(self) + 1276); }
+extern "C" __declspec(noinline) f32 func_8006DC84(void* self) { return *reinterpret_cast<f32*>(reinterpret_cast<char*>(self) + 1272); }
+extern "C" __declspec(noinline) f32 func_8006DC8C(void* self) { return *reinterpret_cast<f32*>(reinterpret_cast<char*>(self) + 1288); }
+// More tiny accessors (retail thunks, second batch).
+extern "C" __declspec(noinline) CfCamEventManager* func_8006E59C() { return reinterpret_cast<CfCamEventManager*>(lbl_eu_80663DF0); }
+__declspec(noinline) int func_8006EEE4() { return (lbl_eu_80663E28 >> 24) & 1; }
+extern "C" __declspec(noinline) void* func_8006EEF0(void* self) { return static_cast<char*>(self) + 984; }
+extern "C" __declspec(noinline) int func_8006EEF8(void* self) { return (*reinterpret_cast<u32*>(reinterpret_cast<char*>(self) + 4) >> 9) & 1; }
+__declspec(noinline) int func_8006DFA8(int self) { return *reinterpret_cast<int*>(self + 0x90E4); }
+// Retail func_8006C640: set/clear the 0x1D4 flag word by flag argument.
+__declspec(noinline) void func_8006C640(cf::CfCamFollow* self, u32 mask, int flag) {
+    u32* word = reinterpret_cast<u32*>(reinterpret_cast<char*>(self) + 0x1D4);
+    if (flag != 0)
+        *word |= mask;
+    else
+        *word &= ~mask;
+}
+extern "C" __declspec(noinline) void* func_8006C670(void* self) { return *reinterpret_cast<void**>(reinterpret_cast<char*>(self) + 196); }
+extern "C" __declspec(noinline) int func_8006C678(void* self) { return *reinterpret_cast<unsigned short*>(reinterpret_cast<char*>(self) + 1328) & 1; }
+extern "C" __declspec(noinline) int func_8006C684(void* self) {
+    unsigned short v = *reinterpret_cast<unsigned short*>(reinterpret_cast<char*>(self) + 1328);
+    return ((v >> 12) & 3) != 0 ? 1 : 0;
+}
+extern "C" __declspec(noinline) int func_8006C69C(void* self) {
+    unsigned short v = *reinterpret_cast<unsigned short*>(reinterpret_cast<char*>(self) + 1328);
+    return (v & 0x60) != 0 ? 1 : 0;
+}
+// Retail func_8006C6B4: test the 0x1D4 flag word against a mask.
+extern "C" __declspec(noinline) int func_8006C6B4(int self, int mask) {
+    return (*reinterpret_cast<u32*>(self) & static_cast<u32>(mask)) != 0 ? 1 : 0;
+}
+// Retail func_8006C730: clear bits of the 0x1D4 flag word.
+extern "C" __declspec(noinline) void func_8006C730(void* self, u32 mask) {
+    *reinterpret_cast<u32*>(reinterpret_cast<char*>(self) + 0x1D4) &= ~mask;
+}
+// Retail func_80071A90: flag bit of the +4 word.
+extern "C" __declspec(noinline) int func_80071A90(void* self) {
+    return (*reinterpret_cast<u32*>(reinterpret_cast<char*>(self) + 4) >> 12) & 1;
+}
+// Retail func_80071A9C: clear the 0x1200-bit pair in the +4 word.
+extern "C" __declspec(noinline) void func_80071A9C(void* self) {
+    *reinterpret_cast<u32*>(reinterpret_cast<char*>(self) + 4) &= 0xFFFFEDFFu;
+}
+// Retail func_80071730: copy 16 bytes.
+extern "C" __declspec(noinline) void func_80071730(void* dst, const void* src) {
+    const u32* s = static_cast<const u32*>(src);
+    u32* d = static_cast<u32*>(dst);
+    d[0] = s[0];
+    d[1] = s[1];
+    d[2] = s[2];
+    d[3] = s[3];
+}
+__declspec(noinline) int func_8006DFBC(void* self) { return (*reinterpret_cast<u32*>(reinterpret_cast<char*>(self) + 100) >> 27) & 1; }
+__declspec(noinline) void func_8006E5AC(void* dst, void* src) { *static_cast<u32*>(dst) = *static_cast<u32*>(src); }
+__declspec(noinline) void func_8006E5C0(void* dst, void* src) { *static_cast<u32*>(dst) = *static_cast<u32*>(src); }
+__declspec(noinline) void func_8006E5CC(void* dst, void* src) { *static_cast<unsigned short*>(dst) = *static_cast<unsigned short*>(src); }
 // func_8006CA2C: follow-cam position update. When the follow target handle
 // (+0x164) reports 0 from its vtable slot 0x74, re-arm the 0x40 camera flag.
 // func_8006C740 derives a source vector, func_80073C7C transforms it, the
@@ -1529,7 +1615,7 @@ __declspec(noinline) void func_8006DD58(cf::CfCamFollow* self, void* arg) {
             func_8006BFC4(reinterpret_cast<int>(self), 0x20000) == 0 &&
             func_800FE68C() != 0) {
             func_800FE68C();
-            int sel = func_800B708C__Fi(func_8006DFA8());
+            int sel = func_800B708C__Fi(func_8006DFA8(func_800FE68C()));
             // angle lands in tmp2c.y (retail stores it at tmp+4)
             ml::CVec3 tmp2c;
             if (sel != 0) {

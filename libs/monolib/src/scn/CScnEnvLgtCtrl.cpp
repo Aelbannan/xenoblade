@@ -2002,9 +2002,10 @@ void* __dt__reslist_IScnEnvCtl(CScnEnvLgtCtrlIScnResBase* self, int deleting) {
     if (self != 0) {
         if (self != 0) {
             self->mVtable = (void*)lbl_eu_8056F978;
+            CScnEnvLgtCtrlIScnResNode* cur;
             CScnEnvLgtCtrlIScnResNode* node = self->mStartNodePtr->mNext;
             while (self->mStartNodePtr != node) {
-                CScnEnvLgtCtrlIScnResNode* cur = node;
+                cur = node;
                 node = node->mNext;
                 cur->mNext = 0;
             }
@@ -2123,18 +2124,15 @@ extern "C" bool func_804C5198(CScnEnvLgtCtrlLgtView* self, CScnEnvLgtCtrlLgtData
         // Decl order fixes the register colors; assignment order keeps the
         // retail load sequence.
         const u32* s = &src->field_0x00;
-        u32 v8;
-        u32 v4;
-        u32 v0;
-        u32 vC;
-        vC = s[3];
-        v8 = s[2];
-        v4 = s[1];
-        v0 = s[0];
-        out->field_0x00 = v0;
-        out->field_0x04 = v4;
-        out->field_0x08 = v8;
-        out->field_0x0C = vC;
+        u32 tmp[4];
+        tmp[0] = s[0];
+        tmp[1] = s[1];
+        tmp[2] = s[2];
+        tmp[3] = s[3];
+        out->field_0x00 = tmp[0];
+        out->field_0x04 = tmp[1];
+        out->field_0x08 = tmp[2];
+        out->field_0x0C = tmp[3];
         return true;
     }
     return false;
@@ -3163,7 +3161,7 @@ extern "C" __declspec(noinline) int func_804C6D64(u8* entry,
     v2 = dst[2];
     v1 = dst[1];
     v0 = dst[0];
-    union { f32 f; u32 u; } cu3, cu2, cu1, cu0;
+    union { f32 f; u32 u; } cu0, cu1, cu2, cu3;
     cu0.f = v0;
     cu1.f = v1;
     cu2.f = v2;

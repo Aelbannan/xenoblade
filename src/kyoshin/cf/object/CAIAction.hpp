@@ -151,10 +151,81 @@ public:
 struct CAIPartyObj {
     CAIVtable* vtable;        // 0x00 (slot 0x5C0 used)
     CAIPartyStateVt* unk04;   // 0x04 state sub-object (slot 0x30 used)
-    u8 pad08[0x3E9C - 0x8];
+    u8 pad08[0x3388 - 0x8];
+    u16 unk3388;              // 0x3388 status flag bits (0x8 / 0x10 tested)
+    u8 pad338A[0x3E98 - 0x338A];
+    u32 unk3E98;              // 0x3E98
     CAIPartyMoveObj move;     // 0x3E9C
     u32 unk3F10;              // 0x3F10 battle handle
+    u8 pad3F14[0x3F28 - 0x3F14];
+    u16 unk3F28;              // 0x3F28 current arts id
 };
+
+// Iterator object handed out by the func_80043F18 family; limit word at +0x620.
+struct CAIEnumIter {
+    u8 pad[0x620];
+    u32 field620;             // 0x620 entry count / limit
+};
+
+// Arts-parameter record probed by the action gates.
+struct CAIArtsParamView {
+    u8 pad00[0x34];
+    s16 field34;              // 0x34 (cost/level field, sign-extended)
+    u8 pad36[0x48 - 0x36];
+    u16 field48;              // 0x48 arts id
+    u8 pad4A[0x77 - 0x4A];
+    u8 field77;               // 0x77 category byte
+    u32 field78;              // 0x78 flag word (bit 0x8000)
+    u8 pad7C[0x80 - 0x7C];
+    f32 field80;              // 0x80 power value
+};
+
+// Element row (func_80193AB0 result): s16 gate value at +0xA2.
+struct CAIElemA4View {
+    u8 pad00[0xA2];
+    s16 fieldA2;
+};
+
+// Character-data object (func_800AD860 result): u16 id at +0x45C0.
+struct CAIChDataView {
+    u8 pad00[0x45C0];
+    u16 field45C0;
+};
+
+// Battle manager singleton fields probed by func_8014CE78.
+struct CBattleMgrAIView {
+    u8 pad00[0x194];
+    s32 field194;             // 0x194 turn/frame counter
+    u8 pad198[0x824 - 0x198];
+    u32 field824;             // 0x824 flag bits (bit 0x20000)
+};
+
+// Imports used by func_8014CE78 (unmangled retail symbols).
+extern "C" long func_80174C98(void* p, void* out, u32 arg);
+extern "C" int func_801541B0(void* party, u32 arg);
+extern "C" int func_80153DCC(void* artsSet, int idx);
+extern "C" int func_801B1FFC(int idx);
+extern "C" u16 func_8016DF2C(void);   // canonical u16 form (chapter/episode getter)
+extern "C" void* func_8009EC9C(u16 idx);
+extern "C" u32 func_800A32BC(void* obj);
+extern "C" u32 func_8009CF8C(u32 id);
+extern "C" int func_80158018(u32 v);
+extern "C" u32 getBdatStringColumnValue(void* table, const char* col, s32 index = 0); // canonical ocBdat.hpp form; default keeps 2-arg call sites compiling
+extern "C" void* func_80193AB0(void* table, u32 id);
+void* func_800AD860(void* obj);   // C++ linkage -> func_800AD860__FPv
+extern "C" void* func_80193670(void);
+extern "C" int func_80260264(void* self, int id, void* out);
+extern "C" int func_80145C00(int id);   // canonical int param (CBattleState.cpp definition)
+extern "C" int func_801554DC(void* param, void* actor, u32 flags);
+extern "C" void* getArtsParamByIdx(void* artsSet, int idx);
+extern "C" u16 func_80153CAC(const void* artsSet, int idx);
+extern "C" u16 getArtsSlotAtCnt(void* artsSet, u32 idx);
+extern "C" u16 getArtsSlotRC(void* artsSet, int a, int b);
+extern "C" void* getArtsParamRC2(void* artsSet, int a, int b);
+extern "C" void* getAtkParam(void* artsSet, int idx);
+// BDAT select table + global bdat root (data imports).
+extern u32 lbl_eu_806640F8;
+extern u8 lbl_eu_80501968[];
 
 // Sub-object referenced by CAIActionQuery::unk18.
 struct CAIQueryTarget {
@@ -212,7 +283,7 @@ extern "C" void* func_80150618(cf::CAIAction*, CAIActionQuery*);
 extern "C" int func_8014B8BC(void* a, void* b);
 extern "C" void* func_801522C4(cf::CAIAction*, const void*);
 extern "C" int func_8014CE78(cf::CAIAction*, const u8*, cf::CAIActionSlot*);
-extern "C" int func_8014B344(cf::CAIAction*, u32);
+void func_8014B344(cf::CAIAction*, u32);
 
 // CfObjEnumList helper family (retail names unmangled -> extern "C").
 extern "C" void* func_80043F18(void*);

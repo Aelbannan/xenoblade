@@ -120,8 +120,9 @@ public:
     virtual void vfUpdate() = 0; // slot 3 (0x0C)
 };
 
-// Scrollbar destroy helper (unmangled retail symbol).
+// Scrollbar destroy / layout-read helpers (unmangled retail symbols).
 extern "C" void func_801F35DC(void* scrollbar);
+extern "C" void func_801F34F4(void* scrollbar);
 
 // C-linkage imports (retail symbol names - keep linkage/signatures verbatim)
 extern "C" void __dt__6CCur18Fv(void*, int);
@@ -144,13 +145,13 @@ extern "C" void func_801F3850(u8*, u16);                // scrollbar thumb posit
 extern "C" void func_801F367C(u8*);                    // scrollbar show
 // Layout/text C-ABI helpers normally declared by code_80135FDC.hpp. CMapSel.cpp
 // defines CODE_80135FDC_CPP before including that header, so those exports are
-// skipped there and the declarations below apply (func_80137E7C needs the true
-// 2-arg form: retail calls pass only (layout, name)). Same guard as the legacy
+// skipped there and the declarations below apply (retail CMapSel callers pass
+// the texture resource as func_80137E7C's third argument). Same guard as the legacy
 // func_80137510 pseudo-import so code_802405F4.cpp's define stays a no-op.
 #ifndef KYOSHIN_SKIP_CMAPSEL_LEGACY_LAYOUT_IMPORTS
 extern "C" char* func_8013639C(const void*, const void*, int);
 extern "C" void func_8013676C(void*, u32);
-extern "C" void func_80137E7C(void*, const char*);
+extern "C" void func_80137E7C(void*, const char*, const void*);
 extern "C" char* func_80138F78(u32);
 #endif
 // Cursor position helper: fill output with the point derived from two panes.

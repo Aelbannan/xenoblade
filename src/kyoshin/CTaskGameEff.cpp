@@ -15,40 +15,58 @@ extern u32 __ptmf_null[3];
 __declspec(noinline) CTaskGameEff* __ct__CTaskGameEff(CTaskGameEff* pThis, CScn* scene) {
     __ct__8CProcessFv(pThis);
 
+    char* vtbl = reinterpret_cast<char*>(const_cast<u8*>(lbl_eu_80525BFC)); // final CTaskGameEff vtable
     u32* p = reinterpret_cast<u32*>(pThis);
 
-    // Interim CTTask<CTaskGameEff> vtable (overwritten later).
+    // Interim CTTask<CTaskGameEff> vtable (overwritten by the final vptr).
     p[4] = reinterpret_cast<u32>(lbl_eu_80525CAC);
 
-    // NULL PTMF -> mMoveFunc (0x3C) / mDrawFunc (0x48). Retail keeps the PTMF
-    // base in a non-volatile register (r28) and uses additive loads, so access
-    // __ptmf_null by index (not by incrementing a pointer) to reproduce that.
-    p[0x10] = __ptmf_null[1];        // 0x40 mMoveFunc[1]
-    p[0xF] = __ptmf_null[0];         // 0x3C mMoveFunc[0]
-    p[0x11] = __ptmf_null[2];        // 0x44 mMoveFunc[2]
-    p[0x13] = __ptmf_null[1];        // 0x4C mDrawFunc[1]
-    p[0x12] = __ptmf_null[0];        // 0x48 mDrawFunc[0]
-    p[0x14] = __ptmf_null[2];        // 0x50 mDrawFunc[2]
+    // NULL PTMF -> mMoveFunc (0x3C): word-wise copy in the retail load/store
+    // order, with the callback/list sub-vtable computations interleaved so
+    // their lis/addi pairs schedule like retail.
+    const u32* src = __ptmf_null;
+    u32 w0 = *src++;
+    u32 v70 = (u32)lbl_eu_80525C90;    // CEffRenderHighPrio vtable
+    u32 v74i = (u32)lbl_eu_80525C84;   // scene-list interim vtable
+    u32 v74f = (u32)lbl_eu_80525C6C;   // scene-list final vtable
+    u32 w1 = *src++;
+    u32 v54 = (u32)(vtbl + 0x24);      // 0x54 render-callback sub-vtable
+    p[0x10] = w1;
+    u32 v58 = (u32)(vtbl + 0x34);      // 0x58 render-callback sub-vtable
+    f32 time = lbl_eu_80665D90;
+    p[0xF] = w0;
+    u32 w2 = *src++;
+    p[0x11] = w2;
 
-    // Final vtable base kept live in a register; sub-vtable offsets folded into
-    // the 0x54/0x58 stores (retail adds 0x24/0x34 off the held base).
-    p[4] = (u32)lbl_eu_80525BFC;
-    p[0x15] = (u32)(lbl_eu_80525BFC + 0x24);   // 0x54 field_0x54
-    p[0x16] = (u32)(lbl_eu_80525BFC + 0x34);   // 0x58 field_0x58
+    // NULL PTMF -> mDrawFunc (0x48): fresh loads (the move-hook stores may
+    // alias the pool).
+    src = __ptmf_null;
+    u32 d0 = *src++;
+    u32 d1 = *src++;
+    p[0x13] = d1;
+    p[0x12] = d0;
+    p[0x14] = *src++;
+
+    // Final vtable + member fields.
+    p[4] = (u32)vtbl;
+    p[0x15] = v54;
+    p[0x16] = v58;
     p[0x17] = (u32)scene;           // 0x5C mScene
-    p[0x18] = 0;                    // 0x60
-    pThis->mActive = 1;             // 0x64
+    p[0x18] = 0;                    // 0x60 mMemAlloc
+    reinterpret_cast<u8*>(pThis)[0x64] = 1;  // mActive
     p[0x1A] = 0;                    // 0x68
-    pThis->field_0x6C = 0.0f;       // 0x6C
-    p[0x1C] = (u32)lbl_eu_80525C90; // 0x70
-    p[0x1D] = (u32)lbl_eu_80525C84; // 0x74 (interim)
+    pThis->field_0x6C = time;       // 0x6C default effect time
+    p[0x1C] = v70;                  // 0x70
+    p[0x1D] = v74i;                 // 0x74 (interim)
     p[0x22] = 0;                    // 0x88 mSceneList.mList
     p[0x23] = 0;                    // 0x8C mSceneList.mCapacity
-    pThis->mSceneList.unk1C = false; // 0x90
-    p[0x1E] = (u32)&pThis->mSceneList.mStartNode;               // 0x78 mStartNodePtr
-    pThis->mSceneList.mStartNode.mNext = &pThis->mSceneList.mStartNode;  // 0x7C
-    pThis->mSceneList.mStartNode.mPrev = &pThis->mSceneList.mStartNode;  // 0x80
-    p[0x1D] = (u32)lbl_eu_80525C6C; // 0x74 (final)
+    reinterpret_cast<u8*>(pThis)[0x90] = 0;  // mSceneList.unk1C
+    // Self-linked sentinel header node.
+    EffResListNode* node = &pThis->mSceneList.mStartNode;
+    pThis->mSceneList.mHead = node;   // 0x78
+    node->mNext = node;               // 0x7C
+    node->mPrev = node;               // 0x80
+    p[0x1D] = v74f;                 // 0x74 (final)
 
     return pThis;
 }
@@ -67,21 +85,52 @@ CTaskGameEff::CEffRenderHighPrio::~CEffRenderHighPrio() {}
 
 // reslist<CScn> destructor - standard MWCC virtual dtor pattern (retail
 // __dt__reslist_CScn; complete-object flavor). The base-list dtor
-// __dt___reslist_base_CScn is emitted by the template instantiation of
-// _reslist_base<CScn>::~_reslist_base() triggered by CTaskGameEff's dtor.
+// __dt___reslist_base_CScn is defined below (flat template mangling).
 #pragma optimize_for_size on
+
+// _reslist_base<CScn> deleting destructor (retail __dt___reslist_base_CScn).
+// Old flat template mangling -> plain global function over the ResListCScn
+// layout mirror (same shape as the matched CUIBattleManager reslist dtors).
+// The C-linkage forward declaration makes the definition adopt the flat
+// retail name instead of MWCC's parameterized mangling.
+extern "C" void* __dt___reslist_base_CScn(ResListCScn* self, int mode);
+__declspec(noinline) void* __dt___reslist_base_CScn(ResListCScn* self, int mode) {
+    if (self != NULL) {
+        self->mVtable = (void*)lbl_eu_80525C84;
+        // Walk the node chain nulling each next pointer (nodes are
+        // pool-allocated, not freed here), then reset the sentinel.
+        EffResListNode* node = self->mHead->mNext;
+        while (node != self->mHead) {
+            EffResListNode* cur = node;
+            node = cur->mNext;
+            cur->mNext = NULL;
+        }
+        self->mHead->mNext = self->mHead;
+        self->mHead->mPrev = self->mHead;
+        if (self->unk1C == false && self->mList != NULL) {
+            delete[] self->mList;
+            self->mList = NULL;
+        }
+        if (mode > 0) {
+            __dl__FPv(self);
+        }
+    }
+    return self;
+}
+
 void* __dt__reslist_CScn(void* _this, int flags) {
-    if (_this) {
-        static_cast<_reslist_base<CScn>*>(_this)->~_reslist_base<CScn>();
+    if (_this != NULL) {
+        // Retail bl's straight to the out-of-line _reslist_base<CScn> dtor
+        // (no vtable dispatch), then conditionally deletes the object.
+        __dt___reslist_base_CScn((ResListCScn*)_this, 0);
         if (flags > 0) {
-            operator delete(_this);
+            __dl__FPv(_this);
         }
     }
     return _this;
 }
 #pragma optimize_for_size off
 
-extern "C" void __dt___reslist_base_CScn(void* self, int flags);
 extern "C" void __dt__Q212CTaskGameEff18CEffRenderHighPrioFv(void* self,
                                                             int flags);
 extern "C" void __dt__8CProcessFv(void* self, int flags);
@@ -94,7 +143,7 @@ extern "C" void __dt__8CProcessFv(void* self, int flags);
 extern "C" __declspec(noinline) void* __dt__12CTaskGameEffFv(void* self, int flags) {
     if (self != 0) {
         if ((u8*)self + 0x74 != 0) {
-            __dt___reslist_base_CScn((u8*)self + 0x74, 0);
+            __dt___reslist_base_CScn((ResListCScn*)((u8*)self + 0x74), 0);
         }
         __dt__Q212CTaskGameEff18CEffRenderHighPrioFv((u8*)self + 0x70, -1);
         if (self != 0) {
@@ -134,7 +183,7 @@ void CTaskGameEff::Init() {
     mScene->addRenderCB(&field_0x70, 0xe, 0);
 
     mtl::ALLOC_HANDLE mem2 = mtl::MemManager::getHandleMEM2();
-    mSceneList.mList = (_reslist_node<CScn>*)mtl::MemManager::allocate_array(0x30, mem2);
+    mSceneList.mList = (EffResListNode*)mtl::MemManager::allocate_array(0x30, mem2);
 
     // Zero the first word of each of the 4 effect-list slots (stride 0xC).
     // Access mSceneList.mList directly inside the loop so MWCC reloads it each pass.
@@ -231,7 +280,32 @@ extern "C" __declspec(noinline) void func_80045044(CTaskGameEff* self, void* par
 
 void func_800450C8() {}
 
-void func_8004513C(){}
+// func_8004513C: resolve an effect object by id and attach it to the battle
+// host's +0x3E9C container. mode selects the resolver: 1 = the host
+// container's vtable slot 0x220, 2 = func_800817BC, otherwise func_8008187C.
+// The attach target is the caller's +0x3E9C container (or null itself).
+#pragma optimize_for_size on
+void* func_8004513C(EffHostObj* target, EffHostObj* host, u32 id, u32 mode) {
+    void* obj;
+    if (mode == 1) {
+        obj = host->field_0x3E9C.vfn220(id);
+    } else if (mode == 2) {
+        obj = func_800817BC__Q22cf13CfGameManagerFv(id, 0);
+    } else {
+        obj = func_8008187C__Q22cf13CfGameManagerFv(id);
+    }
+    if (obj != nullptr) {
+        // Retail folds the +0x3E9C container offset into the target variable
+        // itself (null stays null), then attaches the resolved effect.
+        u8* dst = (u8*)target;
+        if (dst != nullptr) {
+            dst += 0x3E9C;
+        }
+        func_800ACF78(obj, dst, 0);
+    }
+    return obj;
+}
+#pragma optimize_for_size off
 
 // func_800451D8: resolve an effect by table index off the game-manager instance,
 // dynamic-cast it to the base effect type, attach it to `manager`, and copy the
@@ -281,7 +355,7 @@ void func_80045284(void* unused, void* param) {
 void func_800452EC(CScn* scene) {
     CTaskGameEff* gTask = lbl_eu_80663D40;
     if (gTask != nullptr && scene != nullptr) {
-        gTask->mSceneList.push_back(*scene);
+        gTask->mSceneList.push_back(scene);
 
         // Retail re-reads the singleton and null-guards each callback thunk.
         CTaskGameEff* gt = lbl_eu_80663D40;
@@ -300,15 +374,16 @@ void func_800452EC(CScn* scene) {
 }
 
 // func_800453EC: unregister the render callbacks for `scene` and unlink it
-// from the effect-task's scene list. Finds the list node whose scene matches.
+// from the effect-task's scene list. Finds the list node whose scene matches,
+// detaches the task's callbacks, then unlinks the node.
 void func_800453EC(CScn* scene) {
     CTaskGameEff* gTask = lbl_eu_80663D40;
     if (gTask == nullptr) return;
     if (scene == nullptr) return;
 
-    _reslist_node<CScn>* header = &gTask->mSceneList.mStartNode;
-    _reslist_node<CScn>* node = header->mNext;
-    while (node != header && &node->mItem != scene) {
+    EffResListNode* header = gTask->mSceneList.mHead;
+    EffResListNode* node = header->mNext;
+    while (node != header && node->mItem != scene) {
         node = node->mNext;
     }
     if (node == header) return;
@@ -317,18 +392,18 @@ void func_800453EC(CScn* scene) {
     CTaskGameEff* gt = lbl_eu_80663D40;
     IScnRender* cb = reinterpret_cast<IScnRender*>(gt);
     if (gt != nullptr) cb = &gt->field_0x58;
-    node->mItem.removeRenderCB(cb);
+    node->mItem->removeRenderCB(cb);
 
     gt = lbl_eu_80663D40;
     cb = reinterpret_cast<IScnRender*>(gt);
     if (gt != nullptr) cb = &gt->field_0x54;
-    func_80495FDC(&node->mItem, cb, 8);
+    func_80495FDC(node->mItem, cb, 8);
 
     gt = lbl_eu_80663D40;
-    node->mItem.removeRenderCB(&gt->field_0x70);
+    node->mItem->removeRenderCB(&gt->field_0x70);
 
-    _reslist_node<CScn>* p = node->mPrev;
-    _reslist_node<CScn>* n = node->mNext;
+    EffResListNode* p = node->mPrev;
+    EffResListNode* n = node->mNext;
     p->mNext = n;
     n->mPrev = p;
     node->mNext = nullptr;

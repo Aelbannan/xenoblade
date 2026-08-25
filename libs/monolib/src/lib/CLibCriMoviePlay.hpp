@@ -40,16 +40,23 @@ extern "C" {
 struct MovieEntry {
     u32 mFlags;              // 0x00
     void* mPlyHandle;        // 0x04 - CRI movie player handle (opaque)
-    u8 mCprmData[0x18];      // 0x08 - CRI cprm structure inline data
+    // CRI cprm block (passed to mwPlyCalcWorkCprmSfd at 0x08); the work
+    // buffer pointer/size slots at 0x20/0x24 overlap the cprm tail.
+    u32 mCprmMode;           // 0x08 - cprm[0] = 1
+    u32 mCprmFormat;         // 0x0C - cprm[1] = 0x5B8D80
+    u32 mCprmWidth;          // 0x10 - cprm[2] = 0x280 (640)
+    u32 mCprmHeight;         // 0x14 - cprm[3] = 0x1C8 (456)
+    u32 mCprmType;           // 0x18 - cprm[4] = 2
+    u32 mCprmFlags;          // 0x1C - cprm[5] = 1
     void* mWorkBuf;          // 0x20 - CRI work buffer (allocated in startMovie)
     u32 mWorkSize;           // 0x24 - calculated work buffer size (inside cprm)
-    u8 mCprmData2[0x2C];     // 0x28 - remaining cprm fields
-    void* mAllocHandle;      // 0x54 - CRI alloc handle stored in a pointer slot
+    u32 field_0x28;          // 0x28 - zeroed before playback starts
+    u8 field_0x2C[0x28];     // 0x2C - unused cprm tail
+    u32 mAllocHandle;        // 0x54 - CRI alloc handle
     u32 mAllocHandle2;       // 0x58 - secondary allocation handle
-    bool mActive;            // 0x5C - entry active/has-filename flag
-    char mFilename[0x3F];    // 0x5D - filename buffer
+    char mFilename[0x40];    // 0x5C - filename buffer
     u32 mFilenameLen;        // 0x9C - strlen of mFilename
-    u32 mStreamId;           // 0xA0 - stream ID
+    bool mActive;            // 0xA0 - entry active flag
     void* mTexBufY;          // 0xA4 - Y texture buffer pointer (written from void* allocate)
     u32 mTexBufYSize;        // 0xA8 - Y texture buffer size
     void* mTexBufCbCr;       // 0xAC - CbCr texture buffer pointer
@@ -90,9 +97,12 @@ public:
     // functions defined in CLibCriMoviePlay.cpp; their retail ABIs pass the
     // object/text-map selectors in registers that do not match member mangling.)
     static MovieEntry* func_8045A1B0();               // func_8045A1B0
+    // (func_8045A260: retail-named free function defined in the .cpp; its
+    // retail ABI passes five arguments that do not match the () mangling.)
     void func_8045B1DC() {}                            // func_8045B1DC (empty)
     int func_8045B1E0();                               // func_8045B1E0
     void OnPauseTrigger(bool pause);                   // OnPauseTrigger
+    void func_8045AE84();                              // per-frame texture update
 
     static CLibCriMoviePlay* getInstance() { return lbl_eu_806656E0; }
 

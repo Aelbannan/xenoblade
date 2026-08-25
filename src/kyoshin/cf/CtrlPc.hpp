@@ -260,7 +260,10 @@ extern "C" int func_800DA06C(void* bm, void* obj);
 extern "C" void func_8006BC1C(void* obj, u32 mask);
 extern "C" void func_8006BBF4(void* obj, u32 mask, int flag);
 extern "C" CfObj90E4* func_800FE68C(void);
-extern "C" UnkClass_800821F8View* func_800821F8__Q22cf13CfGameManagerFv(void);
+// (func_800821F8__Q22cf13CfGameManagerFv: single winning decl on
+// CfGameManagerApi.hpp - canonical UnkClass_800821F8* view; call sites cast
+// to the UnkClass_800821F8View vtable proxy defined below.)
+#include "kyoshin/cf/CfGameManagerApi.hpp"
 extern "C" const void* lbl_eu_80661C60;   // __dynamic_cast src typeinfo
 extern "C" const void* lbl_eu_80661BE8;   // __dynamic_cast dst typeinfo
 // In-TU function, C-linkage so the call reloc is the retail name.

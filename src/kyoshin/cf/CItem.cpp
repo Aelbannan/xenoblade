@@ -1134,7 +1134,7 @@ extern "C" u32 func_801575B0(u32 v, u32 kind) {
     // single shared exit (retail shape); per-arm casts keep the
     // lbl_eu_806641B8 load inside each arm.
     if (v < 1) goto end;
-    if (v > 0xb) goto end;
+    if (0xb < v) goto end;
     u32 bit = 1u << v;
     if (kind == 2) {
         return flagTest(((CItemBlockCounters*)lbl_eu_806641B8)->mCount0C & bit);
@@ -2420,13 +2420,12 @@ s32 func_80159B40(u32 charId, u32 sub, s16* pOut) {
     if (charId > 0xb) return 0;
     // Pointer into the shared per-character u16 slot table at block+0x12038
     // (inlined func_80157948-style addressing).
-    CItemBlockCounters* blk = (CItemBlockCounters*)((char*)lbl_eu_806641B8 + 0x10000);
-    u8* slot = (u8*)blk->mSlots12038 + ((sub + (charId - 1) * 8) << 1);
+    u8* slot = (u8*)lbl_eu_806641B8 + 0x10000 + ((sub + (charId - 1) * 8) << 1);
     CItemData* rec = (CItemData*)func_8015783C(3, charId, sub);
     s32 added = 0;
     if (*(u32*)rec != 0) {
-        slot[0] = 0;
-        slot[1] = 0;
+        slot[0x2038] = 0;
+        slot[0x2039] = 0;
         added = (s32)func_801599D4((CItemData*)rec, 0);
     }
     CItem_initItemImplInstances(rec)->vf10(rec);

@@ -1,4 +1,4 @@
-#include "monolib/core/CSplitFrame.hpp"
+#include "libs/monolib/src/core/CSplitFrame.hpp"
 #include "monolib/core/CViewRoot.hpp"
 #include "monolib/core/CView.hpp"
 #include "monolib/core/CViewFrame.hpp"
@@ -68,178 +68,166 @@ extern "C" bool isActive__11CSplitFrameFv(CSplitFrame* self) {
     return view1 != nullptr || view2 != nullptr;
 }
 
-void getScissorRect1(ml::CRect16* out, const CSplitFrame* self) {
-    // MWCC: first local = higher addr. Retail wants split@sp+0x10, offset@sp+0x8.
-    volatile ml::CRect16 split;
-    volatile ml::CRect16 offset;
+// static member: CSplitFrame::getScissorRect1(ml::CRect16&, const CSplitFrame*)
+void CSplitFrame::getScissorRect1(ml::CRect16& out, const CSplitFrame* self) {
+    ml::CRect16 split;
+    ml::CRect16 offset;
     CView* view = self->mParent;
-    getFrame2ViewOffset__10CViewFrameFR7CRect16PC10CViewFrame(
-        (ml::CRect16*)&offset, &view->mFrame);
+    getFrame2ViewOffset__10CViewFrameFR7CRect16PC10CViewFrame(&offset, &view->mFrame);
 
-    // Retail post-bl schedule: lbz/li, lha size@1cc/1ce, cmp, sth zeros,
-    // lha bound@1c8/1ca interleaved with sth size.
-    s16 zero = 0;
-    u8 vert = self->mVertical;
-    s16 sizeX = view->mRectData.mBoundsSize.x;
-    s16 sizeY = view->mRectData.mBoundsSize.y;
-    s16 boundW;
-    s16 boundH;
-    if ((vert != 0, split.mPos.x = zero, boundW = view->mRectData.mViewSize.x,
-         split.mPos.y = zero, boundH = view->mRectData.mViewSize.y,
-         split.mSize.x = sizeX, split.mSize.y = sizeY, vert != 0)) {
-        split.mSize.y = self->mSplitY;
+    // Split rect built directly first; the local reference below makes MWCC
+    // keep the rect memory-resident for the check/clamp math like retail.
+    // Split rect built directly first; the local reference below makes MWCC
+    // keep the rect memory-resident for the check/clamp math like retail.
+    split.mPos.x = 0;
+    split.mPos.y = 0;
+    s16 boundW = view->mRectData.mViewSize.x;
+    s16 boundH = view->mRectData.mViewSize.y;
+    split.mSize.x = view->mRectData.mBoundsSize.x;
+    split.mSize.y = view->mRectData.mBoundsSize.y;
+    ml::CRect16& r = split;
+    if (self->mVertical != 0) {
+        r.mSize.y = self->mSplitY;
     } else {
-        split.mSize.x = self->mSplitX;
+        r.mSize.x = self->mSplitX;
     }
 
-    s16 sx = split.mPos.x;
-    s16 sy = split.mPos.y;
-    s16 sw = split.mSize.x;
-    s16 sh = split.mSize.y;
-
-    // Retail max(boundW, sx+sw) / max(0,sx) then signed-overlap via xor/srawi.
-    s16 edge = (s16)(sx + sw);
+    // Per-axis validity check. On each axis: span = max(sx+w, bound) -
+    // min(sx, 0), sum = bound + w, t = sum ^ span; the axis is valid when
+    // (t >> 1) - (t & sum) is negative. X is checked first; only if it passes
+    // is Y checked. Either failing yields a zeroed rect.
+    s16 edge = (s16)(r.mPos.x + r.mSize.x);
     if (boundW > edge) {
         edge = boundW;
     }
-    s32 mask = ((-(s32)sx) & ~(s32)sx) >> 31;
-    s16 lo = (s16)((s32)sx & ~mask);
+    s32 mask = ((-(s32)r.mPos.x) & ~(s32)r.mPos.x) >> 31;
+    s16 lo = (s16)((s32)r.mPos.x & ~mask);
+    s32 sum = (s32)boundW + (s32)r.mSize.x;
     s16 span = (s16)(edge - lo);
-    s16 sum = (s16)(boundW + sw);
-    s32 t = (s32)sum ^ (s32)span;
-    s32 u = (t >> 1) - (t & (s32)sum);
-    s16 flag = (s16)((u32)u >> 31);
+    s32 t = sum ^ (s32)span;
+    s16 flag = (s16)((u32)((t >> 1) - (t & sum)) >> 31);
 
     if (flag) {
-        edge = (s16)(sy + sh);
+        edge = (s16)(r.mPos.y + r.mSize.y);
         if (boundH > edge) {
             edge = boundH;
         }
-        mask = ((-(s32)sy) & ~(s32)sy) >> 31;
-        lo = (s16)((s32)sy & ~mask);
+        mask = ((-(s32)r.mPos.y) & ~(s32)r.mPos.y) >> 31;
+        lo = (s16)((s32)r.mPos.y & ~mask);
+        sum = (s32)boundH + (s32)r.mSize.y;
         span = (s16)(edge - lo);
-        sum = (s16)(boundH + sh);
-        t = (s32)sum ^ (s32)span;
-        u = (t >> 1) - (t & (s32)sum);
-        flag = (s16)((u32)u >> 31);
+        t = sum ^ (s32)span;
+        flag = (s16)((u32)((t >> 1) - (t & sum)) >> 31);
     }
 
-    if (flag) {
-        out->mPos.x = 0;
-        out->mPos.y = 0;
-        out->mSize.x = 0;
-        out->mSize.y = 0;
+    if (!flag) {
+        out.mPos.x = 0;
+        out.mPos.y = 0;
+        out.mSize.x = 0;
+        out.mSize.y = 0;
         return;
     }
 
-    s16 x0 = sx;
-    mask = (s32)sx >> 31;
-    x0 = (s16)((s32)sx & ~mask);
-    s16 y0 = sy;
-    mask = (s32)sy >> 31;
-    y0 = (s16)((s32)sy & ~mask);
-
-    s16 x1 = (s16)(sx + sw);
+    // Clamp: origin at max(s, 0), end at min(s+w, bound).
+    s16 x0 = (s16)((s32)r.mPos.x & ~((s32)r.mPos.x >> 31));
+    s16 y0 = (s16)((s32)r.mPos.y & ~((s32)r.mPos.y >> 31));
+    s16 x1 = (s16)(r.mPos.x + r.mSize.x);
     if (x1 > boundW) {
         x1 = boundW;
     }
-    s16 y1 = (s16)(sy + sh);
+    s16 y1 = (s16)(r.mPos.y + r.mSize.y);
     if (y1 > boundH) {
         y1 = boundH;
     }
 
-    out->mPos.x = x0;
-    out->mPos.y = y0;
-    out->mSize.x = (s16)(x1 - x0);
-    out->mSize.y = (s16)(y1 - y0);
+    out.mPos.x = x0;
+    out.mPos.y = y0;
+    out.mSize.x = (s16)(x1 - x0);
+    out.mSize.y = (s16)(y1 - y0);
 }
 
-void getScissorRect2(ml::CRect16* out, const CSplitFrame* self) {
-    volatile ml::CRect16 split;
-    volatile ml::CRect16 offset;
+// static member: CSplitFrame::getScissorRect2(ml::CRect16&, const CSplitFrame*)
+// Same validity/clamp idiom as getScissorRect1, but the split rect is offset
+// by the frame-to-view offset and shifted past the border along the split
+// axis before the check.
+void CSplitFrame::getScissorRect2(ml::CRect16& out, const CSplitFrame* self) {
+    ml::CRect16 split;
+    ml::CRect16 offset;
     CView* view = self->mParent;
-    getFrame2ViewOffset__10CViewFrameFR7CRect16PC10CViewFrame(
-        (ml::CRect16*)&offset, &view->mFrame);
+    getFrame2ViewOffset__10CViewFrameFR7CRect16PC10CViewFrame(&offset, &view->mFrame);
 
-    s16 zero = 0;
-    u8 vert = self->mVertical;
-    s16 sizeX = view->mRectData.mBoundsSize.x;
-    s16 sizeY = view->mRectData.mBoundsSize.y;
-    s16 boundW;
-    s16 boundH;
-    s16 border;
-    if ((vert != 0, split.mPos.x = zero, boundW = view->mRectData.mViewSize.x,
-         split.mPos.y = zero, boundH = view->mRectData.mViewSize.y,
-         split.mSize.x = sizeX, split.mSize.y = sizeY,
-         border = view->mFrame.mBorder, vert != 0)) {
-        s16 y = (s16)(self->mSplitY + border);
+    s16 boundsX = view->mRectData.mBoundsSize.x;
+    CView* v = self->mParent; // rebirth of the parent web (retail r8 copy)
+    s16 boundsY = view->mRectData.mBoundsSize.y;
+    s16 viewW = view->mRectData.mViewSize.x;
+    s16 viewH = view->mRectData.mViewSize.y;
+    split.mPos.x = 0;
+    split.mPos.y = 0;
+    split.mSize.x = boundsX;
+    split.mSize.y = boundsY;
+    if (self->mVertical != 0) {
+        s16 y = (s16)(self->mSplitY + v->mFrame.mBorder);
         split.mPos.y = y;
-        split.mSize.y = (s16)(split.mSize.y - y);
+        split.mSize.y = (s16)(boundsY - y);
     } else {
-        s16 x = (s16)(self->mSplitX + border);
+        s16 x = (s16)(self->mSplitX + v->mFrame.mBorder);
         split.mPos.x = x;
-        split.mSize.x = (s16)(split.mSize.x - x);
+        split.mSize.x = (s16)(boundsX - x);
     }
 
-    s16 sx = split.mPos.x;
-    s16 sy = split.mPos.y;
-    s16 sw = split.mSize.x;
-    s16 sh = split.mSize.y;
-
-    s16 edge = (s16)(sx + sw);
-    if (edge > boundW) {
-        edge = boundW;
+    // Per-axis validity check, identical idiom to getScissorRect1: the axis is
+    // valid when (t >> 1) - (t & sum) has its sign bit set, where span is the
+    // clamped extent and sum = bound + size.
+    ml::CRect16& r = split;
+    s16 edge = (s16)(r.mPos.x + r.mSize.x);
+    if (viewW > edge) {
+        edge = viewW;
     }
-    s32 mask = ((-(s32)sx) & ~(s32)sx) >> 31;
-    s16 lo = (s16)((s32)sx & ~mask);
+    s32 mask = ((-(s32)r.mPos.x) & ~(s32)r.mPos.x) >> 31;
+    s16 lo = (s16)((s32)r.mPos.x & ~mask);
+    s32 sum = (s32)viewW + (s32)r.mSize.x;
     s16 span = (s16)(edge - lo);
-    s16 sum = (s16)(boundW + sw);
-    s32 t = (s32)sum ^ (s32)span;
-    s32 u = (t >> 1) - (t & (s32)sum);
-    s16 flag = (s16)((u32)u >> 31);
+    s32 t = sum ^ (s32)span;
+    s16 flag = (s16)((u32)((t >> 1) - (t & sum)) >> 31);
 
     if (flag) {
-        edge = (s16)(sy + sh);
-        if (edge > boundH) {
-            edge = boundH;
+        edge = (s16)(r.mPos.y + r.mSize.y);
+        if (viewH > edge) {
+            edge = viewH;
         }
-        mask = ((-(s32)sy) & ~(s32)sy) >> 31;
-        lo = (s16)((s32)sy & ~mask);
+        mask = ((-(s32)r.mPos.y) & ~(s32)r.mPos.y) >> 31;
+        lo = (s16)((s32)r.mPos.y & ~mask);
+        sum = (s32)viewH + (s32)r.mSize.y;
         span = (s16)(edge - lo);
-        sum = (s16)(boundH + sh);
-        t = (s32)sum ^ (s32)span;
-        u = (t >> 1) - (t & (s32)sum);
-        flag = (s16)((u32)u >> 31);
+        t = sum ^ (s32)span;
+        flag = (s16)((u32)((t >> 1) - (t & sum)) >> 31);
     }
 
-    if (flag) {
-        out->mPos.x = 0;
-        out->mPos.y = 0;
-        out->mSize.x = 0;
-        out->mSize.y = 0;
+    if (!flag) {
+        out.mPos.x = 0;
+        out.mPos.y = 0;
+        out.mSize.x = 0;
+        out.mSize.y = 0;
         return;
     }
 
-    s16 x0 = sx;
-    mask = (s32)sx >> 31;
-    x0 = (s16)((s32)sx & ~mask);
-    s16 y0 = sy;
-    mask = (s32)sy >> 31;
-    y0 = (s16)((s32)sy & ~mask);
-
-    s16 x1 = (s16)(sx + sw);
-    if (x1 > boundW) {
-        x1 = boundW;
+    // Clamp: end at min(s+w, bound), origin at max(s, 0). x1 is formed first
+    // so its size operand reuses the validity check's reload like retail.
+    s16 x1 = (s16)(r.mPos.x + r.mSize.x);
+    if (x1 > viewW) {
+        x1 = viewW;
     }
-    s16 y1 = (s16)(sy + sh);
-    if (y1 > boundH) {
-        y1 = boundH;
+    s16 x0 = (s16)((s32)r.mPos.x & ~((s32)r.mPos.x >> 31));
+    s16 y0 = (s16)((s32)r.mPos.y & ~((s32)r.mPos.y >> 31));
+    s16 y1 = (s16)(r.mPos.y + r.mSize.y);
+    if (y1 > viewH) {
+        y1 = viewH;
     }
 
-    out->mPos.x = x0;
-    out->mPos.y = y0;
-    out->mSize.x = (s16)(x1 - x0);
-    out->mSize.y = (s16)(y1 - y0);
+    out.mPos.x = x0;
+    out.mPos.y = y0;
+    out.mSize.x = (s16)(x1 - x0);
+    out.mSize.y = (s16)(y1 - y0);
 }
 
 extern "C" s16 getSplitLine__11CSplitFrameFv(u8* self) {

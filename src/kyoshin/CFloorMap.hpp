@@ -773,8 +773,10 @@ struct CFloorMapCase2Elem {
 // C-linkage name/table lookups used by the marker placement (retail flat names).
 // Retail masks the raw results (rlwinm 24/16) after every call, so these
 // return wider ints; callers apply the (u8)/(u16) truncations explicitly.
+// (func_8013606C: only CFloorMap.cpp needs the wider view, so its u32 copy
+// lives TU-local there; the shared decl is the canonical u16 one on
+// code_80135FDC.hpp.)
 extern "C" u8 func_8013600C(const void*, const void*, u32);
-extern "C" u32 func_8013606C(const void*, const void*, u32);
 extern "C" void* func_800B6CF8(int);
 extern "C" void* func_800B6C58();
 extern "C" void* func_800B6BEC();

@@ -1,3 +1,6 @@
+// Retail's ~CfBdat elides the empty base-dtor call; the inline-empty
+// IWorkEvent dtor shape reproduces that (retail ~CfBdat is 0x40, not 0x58).
+#define IWORK_EVENT_INLINE_DTOR
 #include "kyoshin/cf/CfBdat.hpp"
 #include "kyoshin/plugin/ocBdat.hpp"
 #include "kyoshin/cf/CfMapMineManager.hpp"
@@ -280,14 +283,19 @@ void CfBdat::resetMapBdatFileDataPointers(){
     }
 
     u32 CfBdat::func_801422A8(u32 param1){
+        // Weapon-id translator: ids with top-5-bit tag 5 pass through; other
+        // nonzero ids index the ITM_wpnlist table via its name column.
         if(param1 != 0){
-            if((param1 >> 27) == 5) return param1;
+            void* data;
+            if((param1 >> 27) == 5){
+                return param1;
+            }
             u32 result = 0;
-            if((param1 & 0xFFFF) != 0){
-                void* data = lbl_eu_806640F4;
-                u32 total = func_8003B41C(data) + func_8003B1EC(data);
-                if((s32)(param1 & 0xFFFF) < (s32)total){
-                    result = func_800AA714((const char*)getBdatStringColumnValue(data, &lbl_eu_80500FA4[0x34f], param1 & 0xFFFF));
+            if(param1 & 0xFFFF){
+                data = lbl_eu_806640F4;
+                int total = (int)(func_8003B1EC(data) + func_8003B41C(data));
+                if((u16)param1 < total){
+                    result = func_800AA714((const char*)getBdatStringColumnValue(data, &lbl_eu_80500FA4[0x34f], (u16)param1));
                 }
             }
             return result;
@@ -349,13 +357,12 @@ u32 func_80141FE0(int index){
 u32 func_80141BA0(u32 c0, u32 c1){
     // Pack the two name chars into a token, format it into a string, then
     // return the field-map table row whose name column matches (else 0).
-    void* fp = lbl_eu_806640A8;
     FixStr<64> nameBuf;
+    void* fp = lbl_eu_806640A8;
     func_800AA33C(nameBuf, func_800AA2BC(c0, c1), 0, 0);
     if(fp != nullptr){
         int row = (int)func_8003B41C(fp);
-        int rowCount = (int)func_8003B1EC(fp);
-        for(int rowIndex = row; rowIndex < row + rowCount; rowIndex++){
+        for(int end = row + (int)func_8003B1EC(fp), rowIndex = row; rowIndex < end; rowIndex++){
             if(strcmp(nameBuf.c_str(), (const char*)getBdatStringColumnValue(fp, &lbl_eu_80500FA4[0x34f], rowIndex)) == 0){
                 return (u32)rowIndex;
             }
@@ -390,21 +397,42 @@ reset:
 store:
     lbl_eu_80664184 = (u32)i;
 }
-void func_80141D48(){}
+u32 func_80141D48(u16* outA, u16* outB, int index){
+    // Fld-map row lookup: resolve the row's name column into an id, then split
+    // the id into two packed u16 fields and a validity flag.
+    func_8003AA34();
+    u32 id = func_800AA714((const char*)getBdatStringColumnValue(lbl_eu_806640A8, &lbl_eu_80500FA4[0x34f], index));
+    // id layout: bits 13-19 -> outA, bits 0-9 -> outB (retail uses rotl masks)
+    *outA = ((id << 12) | (id >> 20)) & 0x7F;
+    *outB = ((id << 22) | (id >> 10)) & 0x3FF;
+    return ((0 - id) | id) >> 31;
+}
+// Signed variant of CfGimmickItem's BdatCol spill union: retail stores the
+// raw column word to its own frame slot, then reloads the low half sign-
+// extended (stw + lha round-trip).
+union BdatColS {
+    u32 w;
+    s16 h;
+};
+
 void func_80141DC4(float* out, int index){
     // Landmark bdat table: read three s16 landmark columns (0x358/0x35d/0x362)
     // and expose them as the landmark scale floats (s16->f32 via GQR5 fast cast).
     func_8003AA34();
     void* fp = lbl_eu_806640A0;
-    void* p0 = (void*)getBdatStringColumnValue(fp, &lbl_eu_80500FA4[0x358], index);
-    void* p1 = (void*)getBdatStringColumnValue(fp, &lbl_eu_80500FA4[0x35d], index);
-    void* p2 = (void*)getBdatStringColumnValue(fp, &lbl_eu_80500FA4[0x362], index);
-    s16 s0 = *(s16*)p0;
-    s16 s1 = *(s16*)p1;
-    s16 s2 = *(s16*)p2;
-    out[0] = __OSs16tof32(&s0);
-    out[1] = __OSs16tof32(&s1);
-    out[2] = __OSs16tof32(&s2);
+    s16 x, y, z;
+    volatile BdatColS c0;
+    c0.w = getBdatStringColumnValue(fp, &lbl_eu_80500FA4[0x358], index);
+    x = c0.h;
+    volatile BdatColS c1;
+    c1.w = getBdatStringColumnValue(fp, &lbl_eu_80500FA4[0x35d], index);
+    y = c1.h;
+    volatile BdatColS c2;
+    c2.w = getBdatStringColumnValue(fp, &lbl_eu_80500FA4[0x362], index);
+    z = c2.h;
+    out[0] = __OSs16tof32(&x);
+    out[1] = __OSs16tof32(&y);
+    out[2] = __OSs16tof32(&z);
 }
 u32 func_80141E90(u32 param1, u32 param2, u32 param3, u32 param4){
     // Skill/arts helper: grind an arts id into an item id, or translate an
@@ -459,7 +487,21 @@ u32 func_80142074(void* arg1, u16 arg2, u32 arg3){
     else if(a == 8) t = 5;
     return func_80141E90((u32)arg1, (u32)b, (u32)t, arg3);
 }
-void func_80142154(){}
+// Reads a single byte column from the current game-manager bdat table:
+// mode != 0 selects the +0x372 column, mode == 0 the +0x37c one.
+u32 func_80142154(u32 param1, u32 mode){
+    u32 result = 0;
+    if(param1 != 0){
+        func_8003AA34();
+        void* fp = (void*)func_80086B3C__Q22cf13CfGameManagerFv();
+        const char* col = &lbl_eu_80500FA4[0x37c];
+        if(mode != 0) col = &lbl_eu_80500FA4[0x372];
+        // Retail spills the call result to the stack and lbz's it back.
+        u32 val = getBdatStringColumnValue(fp, col, (s32)param1);
+        result = *(const u8*)&val;
+    }
+    return result;
+}
 
 u32 func_8014235C(u32 param1, const char* column, u32 param3){
     u32 result = 0;
@@ -481,4 +523,15 @@ u32 func_8014235C(u32 param1, const char* column, u32 param3){
     }
     return result;
 }
-void func_80142428(){}
+// Returns the 1-based index of the first entry in the lbl_eu_8052E6F0 name
+// table (entries 1..8) that matches name, or 0 if name is null / not found.
+u32 func_80142428(const char* name){
+    if(name != nullptr){
+        for(u32 i = 1; i < 9; i++){
+            if(strcmp(name, lbl_eu_8052E6F0[i]) == 0){
+                return i;
+            }
+        }
+    }
+    return 0;
+}

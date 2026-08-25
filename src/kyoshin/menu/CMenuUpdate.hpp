@@ -20,6 +20,22 @@ struct Unk_8049603C {
     f32 field_C;
 };
 
+// View of the object returned by CDeviceFont::func_80452C10: vtable slot 9
+// (offset 0x24) yields the handle bound via func_8013676C. Never instantiated,
+// so no vtable is emitted; the genuine virtual call makes MWCC emit the retail
+// r12 dispatch chain.
+class CMenuUpdateFontView {
+public:
+    virtual void vf0() = 0;
+    virtual void vf1() = 0;
+    virtual void vf2() = 0;
+    virtual void vf3() = 0;
+    virtual void vf4() = 0;
+    virtual void vf5() = 0;
+    virtual void vf6() = 0;
+    virtual u32 getHandle() = 0; // +0x24
+};
+
 // "timg" texture object returned by the resource accessor; the pixel
 // dimensions are reached through a two-level chain (obj+8 -> dims).
 struct CMenuUpdateTexDims {
@@ -71,12 +87,9 @@ public:
     u8 _00[0x10];
     u32 _10; // vtable
     u8 _14[0x3C - 0x14];
-    u32 _3C; // ptmf func
-    u32 _40; // ptmf this
-    u32 _44; // ptmf delta
-    u32 _48; // ptmf func
-    u32 _4C; // ptmf this
-    u32 _50; // ptmf delta
+    void (CTTask_IUIWindow::*mFunc1)(); // 0x3C ptmf (func/self/delta)
+    void (CTTask_IUIWindow::*mFunc2)(); // 0x48 ptmf (func/self/delta)
+    u8 _4C[0x54 - 0x4C];
 };
 
 class IUIWindow {
@@ -149,6 +162,10 @@ public:
 // ---------------------------------------------------------------------------
 extern "C" void __dt__10IScnRenderFv(void*, int);
 extern "C" void __dt__10IWorkEventFv(void*, int);
+// One-arg form: retail emits 'li r3,1; bl' with no r4 setup - the second
+// (Layout*) argument arrives as the &mAnim2 pointer the preceding
+// func_80136F08 call left in r4.
+extern "C" void* func_80452C10__11CDeviceFontFUlPQ34nw4r3lyt6Layout(u32);
 extern "C" void __dt__9IUIWindowFv(void*, int);
 extern "C" void __ct__8CProcessFv(void*);
 extern "C" void __dl__FPv(void*);
@@ -162,7 +179,10 @@ extern "C" void* getInstance__9CTaskGameFv();
 extern "C" bool func_800426F0__9CTaskGameFv(void*);
 extern "C" void addRenderCB__4CScnFP10IScnRenderUlUl(void*, void*, u32, u32);
 extern "C" void removeRenderCB__4CScnFP10IScnRender(void*, void*);
-extern "C" void* func_80452C10__11CDeviceFontFUlPQ34nw4r3lyt6Layout(u32, void*);
+// One-arg form: retail emits 'li r3,1; bl' with no r4 setup - the second
+// (Layout*) argument arrives as the &mAnim2 pointer the preceding
+// func_80136F08 call left in r4.
+extern "C" void* func_80452C10__11CDeviceFontFUlPQ34nw4r3lyt6Layout(u32);
 extern "C" void waitForDrawDone__9CDeviceVIFv();
 extern "C" void* getHandleMEM2__Q23mtl10MemManagerFv();
 extern "C" void* allocate__Q23mtl10MemManagerFUlUl(u32, u32);

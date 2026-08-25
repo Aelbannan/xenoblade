@@ -2393,7 +2393,10 @@ extern "C" void* func_800B77BC();
 extern "C" s32 func_800B7AF0(UnkClass_805764CC* self, class IB7Arg* arg);
 extern "C" void func_800B9C14(void* obj);
 extern "C" void func_80068358(void* obj);
-extern "C" IDispB3A88Mgr* func_800821F8__Q22cf13CfGameManagerFv();
+// (func_800821F8__Q22cf13CfGameManagerFv: single winning decl on
+// CfGameManagerApi.hpp - canonical UnkClass_800821F8* view; this TU's use
+// site casts to the local IDispB3A88Mgr vtable proxy.)
+#include "kyoshin/cf/CfGameManagerApi.hpp"
 extern "C" void* func_8006E59C();
 extern "C" void* func_800755B0(void* mgr, int index);
 extern "C" s32 func_800BE96C(void* obj);

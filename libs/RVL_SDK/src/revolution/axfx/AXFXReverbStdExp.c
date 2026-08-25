@@ -16,15 +16,18 @@ static void __FreeDelayLine(AXFX_REVERBSTD_EXP* reverb);
 static void __BzeroDelayLines(AXFX_REVERBSTD_EXP* reverb);
 static BOOL __InitParams(AXFX_REVERBSTD_EXP* reverb);
 
-#pragma peephole off
+// Shared .sdata2 pool constants (port/data_defs.cpp).
+extern f32 float_8066BE50;
+extern f32 float_8066BE58;  // 1.0f
+extern f32 float_8066BE5C;  // 0.6f
+
 u32 AXFXReverbStdExpGetMemSize(const AXFX_REVERBSTD_EXP* reverb) {
     // Interleaved declaration order drives the -O4,p scheduler: retail hoists
-    // both table bases (lis Early, lis Filter), loads the 32000.0f const, then
-    // the param, then Filter[6][0] before the fmuls, with fctiwz between the
-    // [6][2]/[6][3] loads.
-    u32 e7 = __EarlySizeTable[7];
+    // both table bases, loads the 32000.0f const, then the param, then
+    // Filter[6][0] before the fmuls, with fctiwz between [6][2]/[6][3].
+    u32 ival = (u32)(s32)(float_8066BE50 * reverb->preDelayTimeMax);
     u32 f0 = __FilterSizeTable[6][0];
-    u32 ival = (u32)(s32)(reverb->preDelayTimeMax * 32000.0f);
+    u32 e7 = __EarlySizeTable[7];
     u32 f1 = __FilterSizeTable[6][1];
     u32 f2 = __FilterSizeTable[6][2];
     u32 f3 = __FilterSizeTable[6][3];
@@ -36,7 +39,6 @@ u32 AXFXReverbStdExpGetMemSize(const AXFX_REVERBSTD_EXP* reverb) {
     tot += f3;
     return tot * 12;
 }
-#pragma peephole on
 
 BOOL AXFXReverbStdExpInit(AXFX_REVERBSTD_EXP* reverb) {
     u32 i;
@@ -186,10 +188,10 @@ void AXFXReverbStdExpCallback(AXFX_BUFFERUPDATE* bufferUpdate, AXFX_REVERBSTD_EX
         outBusData[2] = reverb->busOut->surround;
     }
 
-    lpfCoef1 = 1.0f - reverb->lpfCoef;
+    lpfCoef1 = float_8066BE58 - reverb->lpfCoef;
     lpfCoef2 = reverb->lpfCoef;
-    earlyGain = reverb->earlyGain * 0.6f;
-    fusedGain = reverb->fusedGain * 0.6f;
+    earlyGain = float_8066BE5C * reverb->earlyGain;
+    fusedGain = float_8066BE5C * reverb->fusedGain;
     earlyCoef = reverb->earlyCoef;
     combCoef0 = reverb->combCoef[0];
     combCoef1 = reverb->combCoef[1];

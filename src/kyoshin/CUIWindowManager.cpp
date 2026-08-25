@@ -59,10 +59,6 @@ extern const u8 lbl_eu_8052E628[0x10];
 CUIWindowManager* lbl_eu_80664088;
 s16 lbl_eu_8066408C;
 
-void func_8009D0B4();
-void func_8009D514(cf::IFlagEvent*);
-cf::IFlagEvent* func_8009D414(cf::IFlagEvent*);
-
 // C-ABI helpers used by the retail dtor/free-function shapes below.
 extern void __dt__8CProcessFv(void* self, s32 flags);
 extern void* __dl__FPv(void* p);
@@ -107,7 +103,7 @@ public:
     bool unk64;              //0x64 - pending removal flag
     bool field_0x65;         //0x65 - pending update-mark flag
     bool field_0x66;         //0x66 - removal-mark (func_8013D26C)
-    u8 pad67[0x68 - 0x67];   //0x67
+    u8 unk67;                //0x67 - pending flag (queried by func_8013EB90)
     u32 field_0x68;          //0x68 - window id (matched by func_8013D07C)
 };
 
@@ -760,8 +756,8 @@ extern "C" void func_8013CBB4(u32 arg0, int id, int arg2, int arg3) {
 // the creator's call through this shim so the call reloc binds to the literal
 // retail name. The recursive null path is unreachable from the creator (the
 // allocation is null-checked first) and exists only to keep the shim outlined.
-extern "C" void* __ct__CUIWindowManager(CUIWindowManager* self, CScn* pScene,
-                                        mtl::ALLOC_HANDLE mHandle) {
+extern "C" __declspec(noinline) void* __ct__CUIWindowManager(
+    CUIWindowManager* self, CScn* pScene, mtl::ALLOC_HANDLE mHandle) {
     if (self == NULL) {
         return __ct__CUIWindowManager(self, pScene, mHandle);
     }
@@ -780,14 +776,16 @@ extern "C" CUIWindowManager* func_8013CFDC(CProcess* pParent, CScn* pScene,
     if ((u32)mHandle == 0xFFFFFFFF) {
         mHandle = mtl::MemManager::getHandleMEM2();
     }
-    void* mem = mtl::MemManager::allocate(0xA4, CWorkThreadSystem::getWorkMem());
-    CUIWindowManager* inst = NULL;
-    if (mem != NULL) {
-        inst = (CUIWindowManager*)__ct__CUIWindowManager(
-            (CUIWindowManager*)mem, pScene, mHandle);
+    // Allocate result flows straight into the ctor and then into the global:
+    // retail has no separate null-initialized local.
+    CUIWindowManager* inst =
+        (CUIWindowManager*)mtl::MemManager::allocate(
+            0xA4, CWorkThreadSystem::getWorkMem());
+    if (inst != NULL) {
+        inst = (CUIWindowManager*)__ct__CUIWindowManager(inst, pScene, mHandle);
     }
     lbl_eu_80664088 = inst;
-    Regist__8CProcessFP8CProcessb(pParent, inst, false);
+    Regist__8CProcessFP8CProcessb(inst, pParent, false);
     return lbl_eu_80664088;
 }
 
@@ -835,12 +833,13 @@ extern "C" void* __dt___reslist_base_IUIWindow(void* self, s32 flags) {
 // derived guard (doubled null guard = inlining artifact).
 extern "C" void* __dt__reslist_IUIWindow(void* self, s32 flags) {
     ResListBase* list = (ResListBase*)self;
+    ResListNode* node;
+    ResListNode* cur;
     if (list != NULL) {
         if (list != NULL) {
             // Inlined base-dtor body (retail duplicates it verbatim here).
             list->mVTable = (void*)lbl_eu_8052E61C;
-            ResListNode* cur;
-            ResListNode* node = list->mStart->mNext;
+            node = list->mStart->mNext;
             while (node != list->mStart) {
                 cur = node;
                 node = cur->mNext;
@@ -1218,7 +1217,24 @@ queue_found:
     return (IUIWindow*)savedRet;
 }
 
-void func_8013D8A0(){}
+// Window creator (void): create through func_8027E9E8 and queue on the
+// primary window list. Retail spills the result to the frame across the
+// inlined push_back scan.
+extern "C" IUIWindow* func_8027E9E8(CProcess* pProc, CScn* pScene);
+int func_8013D8A0() {
+    CUIWindowManager* inst = lbl_eu_80664088;
+    if (inst == NULL) {
+        return 0;
+    }
+
+    IUIWindow* window = func_8027E9E8((CProcess*)inst->unk9C, inst->unk58);
+    if (window == NULL) {
+        return 0;
+    }
+
+    IUIWindow** slot = &window;
+    lbl_eu_80664088->mWindowList1.push_back(*slot);
+}
 // Retail window creator (same body shape as func_8013D7C0).
 extern "C" IUIWindow* func_8013D978(u32 a1, u32 a2, u32 a3) {
     volatile u32 savedRet;
@@ -1342,9 +1358,9 @@ extern "C" IUIWindow* func_8013DB6C(int first, u32 second, s32 third,
         return NULL;
     }
     if (first == 1) {
-        int idx = func_80138138((int)second);
-        if (func_801361E8((u32)lbl_eu_80573D18[idx], lbl_eu_8050097C,
-                          second) == 2) {
+        int idx = (int)func_80138138(second);
+        if ((u8)func_801361E8((u32)lbl_eu_80573D18[idx], lbl_eu_8050097C,
+                              second) == 2) {
             return NULL;
         }
     }
@@ -1552,7 +1568,60 @@ queue_found:
     startNode->mPrev = temp;
     return (IUIWindow*)savedRet;
 }
-void func_8013E030(){}
+// Window creator (int): construct a CCol6CheckBat subobject on the flagged
+// child (unk9C) and queue the result on the primary window list.
+extern "C" void* __ct__CCol6CheckBat(void* self);
+int func_8013E030() {
+    volatile u32 savedRet;
+    CUIWindowManager* inst = lbl_eu_80664088;
+    if (inst == NULL) {
+        return 0;
+    }
+    {
+        u32 tempRet = (u32)__ct__CCol6CheckBat(inst->unk9C);
+        savedRet = tempRet;
+        if (tempRet == 0) {
+            return 0;
+        }
+    }
+    CUIWindowManager* inst2 = lbl_eu_80664088;
+    int i = 0;
+    int byteOff = 0;
+    WindowNode* temp;
+    int capacity;
+    WindowNode* startNode;
+    startNode = inst2->mWindowList1.mStartNodePtr;
+    capacity = inst2->mWindowList1.mCapacity;
+    goto queue_check;
+queue_body:
+    if (*(u32*)((u8*)inst2->mWindowList1.mList + byteOff) == 0) {
+        goto queue_found;
+    }
+    byteOff += 0xc;
+    i++;
+queue_check:
+    if (i < capacity) {
+        goto queue_body;
+    }
+queue_found:
+    temp = (WindowNode*)((u8*)inst2->mWindowList1.mList + i * 0xc);
+    {
+        // Expanded node::setItem: reading the volatile savedRet inside the
+        // guard keeps the reload after the addic./beq, as in retail.
+        u32* ptr = (u32*)&temp->mItem;
+        if (ptr != 0) {
+            try {
+                *ptr = savedRet;
+            } catch (...) {
+                throw;
+            }
+        }
+    }
+    temp->mNext = startNode;
+    temp->mPrev = startNode->mPrev;
+    startNode->mPrev->mNext = temp;
+    startNode->mPrev = temp;
+}
 // Retail window creator: create the shop-select window and queue it on the
 // primary list (expanded inlined reslist::push_back). A quest-menu open guard
 // can veto the creation.
@@ -1623,8 +1692,11 @@ extern "C" IUIWindow* func_8013E204(u32 id) {
         return NULL;
     }
 
-    lbl_eu_80664088->mWindowList1.push_back(window);
-    return window;
+    // Address-taken local: retail spills the window across the inlined
+    // push_back scan.
+    IUIWindow** slot = &window;
+    lbl_eu_80664088->mWindowList1.push_back(*slot);
+    return *slot;
 }
 
 // Window factory: create an item-multi window on the primary queue. The
@@ -2102,7 +2174,40 @@ queue_found:
     startNode->mPrev = temp;
     return (IUIWindow*)savedRet;
 }
-void func_8013EB90(){}
+// Pending-update query: returns 1 when any window on either queue has its
+// 0x67 pending flag set, or when one of the external activity guards reports
+// nonzero.
+extern "C" int func_80113E1C();
+extern "C" int func_80113E24();
+extern "C" int func_801BEE5C();
+int func_8013EB90() {
+    WindowNode* node;
+    CUIWindowManager* inst = lbl_eu_80664088;
+    if (inst == NULL) {
+        return 0;
+    }
+    for (node = inst->mWindowList1.mStartNodePtr->mNext;
+         node != inst->mWindowList1.mStartNodePtr; node = node->mNext) {
+        if (node->mItem->unk67 != 0) {
+            return 1;
+        }
+    }
+    for (node = inst->mWindowList2.mStartNodePtr->mNext;
+         node != inst->mWindowList2.mStartNodePtr; node = node->mNext) {
+        if (node->mItem->unk67 != 0) {
+            return 1;
+        }
+    }
+    if (func_80113E1C() != 0) {
+        if (func_80113E24() != 0) {
+            return 1;
+        }
+    }
+    if (func_801BEE5C() != 0) {
+        return 1;
+    }
+    return 0;
+}
 // Retail dtor of the CTest view (complete-object flavor): run the CProcess
 // base dtor behind a null guard (the dead second beq mirrors retail), then
 // free the object when the delete flag is positive.
@@ -2793,8 +2898,9 @@ u8* func_80140AFC(u32 target) {
         for (int j = 0; j < count; ++j) {
             tmp = work;
             int v = j + (int)*off;
-            if ((u16)getBdatStringColumnValue(entry, &lbl_eu_80500A50[0x32],
-                                              v) == target) {
+            u16 col = getBdatStringColumnValue(entry, &lbl_eu_80500A50[0x32],
+                                               v);
+            if (col == target) {
                 func_8013FFF8(lbl_eu_80573C50, entry, (u32)v);
                 if (((CFlagBuffer*)lbl_eu_80573C50)->field_0x09 == 0) {
                     int id = -1;
@@ -2807,7 +2913,16 @@ u8* func_80140AFC(u32 target) {
                     }
                     u32 res = func_8009CF8C((u32)id);
                     ((CFlagBuffer*)lbl_eu_80573C50)->field_0x04 = res;
-                    if (res == 1 || res == 2 || res == 0xFC || res == 0xFD) {
+                    if (res == 1) {
+                        return (u8*)lbl_eu_80573C50;
+                    }
+                    if (res == 2) {
+                        return (u8*)lbl_eu_80573C50;
+                    }
+                    if (res == 0xFC) {
+                        return (u8*)lbl_eu_80573C50;
+                    }
+                    if (res == 0xFD) {
                         return (u8*)lbl_eu_80573C50;
                     }
                 }

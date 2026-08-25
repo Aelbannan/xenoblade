@@ -34,6 +34,47 @@ public:
     virtual void vf2(int) = 0;  // slot 2 (0x08) - release-style virtual
 };
 
+// View of the embedded CSysWin blob's vtable for the load-complete hook at
+// offset 0x88. With -RTTI the first declared virtual sits at vtable offset
+// 0x8 (see CPresentLayoutSlot2View), so 33 virtuals put the hook exactly on
+// 0x88. Pure virtuals only so MWCC emits no vtable of its own.
+class SysWinSlot88View {
+public:
+    virtual void vf00(void*) = 0;
+    virtual void vf01(void*) = 0;
+    virtual void vf02(void*) = 0;
+    virtual void vf03(void*) = 0;
+    virtual void vf04(void*) = 0;
+    virtual void vf05(void*) = 0;
+    virtual void vf06(void*) = 0;
+    virtual void vf07(void*) = 0;
+    virtual void vf08(void*) = 0;
+    virtual void vf09(void*) = 0;
+    virtual void vf0A(void*) = 0;
+    virtual void vf0B(void*) = 0;
+    virtual void vf0C(void*) = 0;
+    virtual void vf0D(void*) = 0;
+    virtual void vf0E(void*) = 0;
+    virtual void vf0F(void*) = 0;
+    virtual void vf10(void*) = 0;
+    virtual void vf11(void*) = 0;
+    virtual void vf12(void*) = 0;
+    virtual void vf13(void*) = 0;
+    virtual void vf14(void*) = 0;
+    virtual void vf15(void*) = 0;
+    virtual void vf16(void*) = 0;
+    virtual void vf17(void*) = 0;
+    virtual void vf18(void*) = 0;
+    virtual void vf19(void*) = 0;
+    virtual void vf1A(void*) = 0;
+    virtual void vf1B(void*) = 0;
+    virtual void vf1C(void*) = 0;
+    virtual void vf1D(void*) = 0;
+    virtual void vf1E(void*) = 0;
+    virtual void vf1F(void*) = 0;
+    virtual void onLayoutLoaded() = 0;  // vtable offset 0x88
+};
+
 class CSkipTimer2 {
 public:
     ~CSkipTimer2();
@@ -55,7 +96,7 @@ public:
 
 class CSkipTimer {
 public:
-    CSkipTimer();
+    // (ctor is extern "C" __ct__CSkipTimer below - retail short-form name)
     ~CSkipTimer();
 
     bool OnFileEvent(CEventFile* pEventFile);
@@ -97,11 +138,13 @@ extern "C" char lbl_eu_80510568[];
 // CSkipTimer2 ctor: retail symbol is the short form (no length/sig suffix),
 // so it must be a C-linkage function carrying the exact retail name
 // (MWCC_CASES sec. 3824); the dtor keeps the mangled member form.
-extern "C" void __ct__CSkipTimer2(CSkipTimer2* self, void* parent);
+extern "C" CSkipTimer2* __ct__CSkipTimer2(CSkipTimer2* self, void* parent);
+// CSkipTimer ctor: same retail short-form treatment; returns the object.
+extern "C" CSkipTimer* __ct__CSkipTimer(CSkipTimer* self);
 
 // External callees.
 extern "C" void __dt__7CSysWinFv(void*, int);
-extern "C" void __ct__CSysWin(void*);
+extern "C" void __ct__CSysWin(void* self, int arg);
 extern "C" UnkClass_8045F564* __ct__17UnkClass_8045F564Fv(UnkClass_8045F564* self);
 // Mem-region copy initializer used by the temp-copy widget-rebuild pattern
 // (CMenuSave / CMenuCollepedia convention; retail symbol is unmangled).
@@ -125,15 +168,26 @@ extern "C" void func_8022B8E4(void*);
 extern "C" u32 func_800FEDF8();
 extern "C" void func_800FF914();
 
+// Shared-arc font/text value feeding func_801368C0 (unmangled retail symbol).
+extern "C" u32 func_801355D8();
+// Sub-controller layout rebind helper (unmangled retail symbol).
+extern "C" void func_8029F7A4(CSkipTimer2* self);
+// Post-build flag setter on the sub-controller (unmangled retail symbol).
+extern "C" void func_8029F788(u8* self);
+
 // Unmatched same-unit siblings referenced as extern (linker resolves to retail
 // address) so in-unit callers emit a direct `bl` instead of inlining a stub.
 // Retail strips mangling for these func_ names in US, hence extern "C".
 extern "C" void func_8029F82C(CSkipTimer2* self, u8 arg);
 extern "C" void func_8029F6EC(CSkipTimer2* self);
 extern "C" void func_8029F73C(CSkipTimer2* self);
+// func_8029FBE0: System.arc load kickoff (retail strips mangling on US func_
+// names), so the definition binds to the literal retail symbol.
+extern "C" void func_8029FBE0(CSkipTimer* self);
 // func_8029F168: post-build hook on the sub-controller (body lives in retail).
 extern "C" void func_8029F168(CSkipTimer2* self);
 extern "C" int func_802A04F0(CSkipTimer* self);
+extern "C" void func_8029F364(CSkipTimer2* self, u8 arg);
 // func_8029F2FC: reset the sub-controller (body lives in retail).
 extern "C" void func_8029F2FC(CSkipTimer2* self);
 
@@ -150,6 +204,14 @@ extern "C" void func_802A05E4(CSkipTimer* self);
 extern "C" void func_802A055C(CSkipTimer* self);
 extern "C" void func_802A03AC(CSkipTimer* self);
 
+class CSysWin;
+// CSysWin per-frame update (retail symbol is unmangled; defined extern "C" in CSysWin.cpp).
+extern "C" void func_8022B748(CSysWin* sysWin);
+
 // cf::CfGameManager static (retail symbol keeps the Fv suffix from the
 // decompiler guess; the real signature is 3 u32s, see CREvtCamera.cpp).
 extern "C" void func_80086B5C__Q22cf13CfGameManagerFv(u32, u32, u32);
+
+// Window content setters from CSysWin.cpp (retail-unmangled names).
+extern "C" void func_8022B9B4(void* syswin, void* str1, void* str2);
+extern "C" void func_8022B8B8(void* syswin);

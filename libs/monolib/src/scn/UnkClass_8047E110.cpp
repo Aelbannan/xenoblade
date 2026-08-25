@@ -262,16 +262,13 @@ extern "C" s32 func_8047E1B0__17UnkClass_8047E110Fv(UnkClass_8047E110* self,
 extern "C" s32 func_8047E390__17UnkClass_8047E110Fv(UnkClass_8047E110* self,
     const ml::CVec3* pos, s32 index, f32 clearance) {
     ScnManagerLayout& m = *(ScnManagerLayout*)self;
-    f32 posX = pos->x;
-    const u16* rec = (const u16*)(m.field_0x8 + index * 12);
-    f32 posZ = pos->z;
-    f32 pxLo = posX - clearance; // f6
-    f32 pzLo = posZ - clearance; // f7
-    f32 pxHi = posX + clearance; // f8
-    f32 pzHi = posZ + clearance; // f9
+    f32 pxLo = pos->x - clearance; // f6
+    f32 pzLo = pos->z - clearance; // f7
+    f32 pxHi = pos->x + clearance; // f8
+    f32 pzHi = pos->z + clearance; // f9
     const ScnWalkNode* node = m.nodes;
-    s32 count1 = rec[0];
-    s32 count2 = rec[1];
+    s32 count1 = ((const u16*)(m.field_0x8 + index * 12))[0];
+    s32 count2 = ((const u16*)(m.field_0x8 + index * 12))[1];
     node += count1;
     s32 best = -1;                  // r7
     f32 bestDist = lbl_eu_8066A894; // f5
@@ -1590,11 +1587,11 @@ extern "C" void func_804814DC__17UnkClass_8047E110Fv(UnkClass_8047E110* self,
     *(ScnVecWords*)&mgr.boxMax = *(const ScnVecWords*)cornerB;
     const CVec3& boxMin = mgr.boxMin;
     const CVec3& boxMax = mgr.boxMax;
-    const CVec3 dir = boxMin - boxMax;
+    CVec3 dir = boxMin - boxMax;
     mgr.field_0x7C = paramF;
     mgr.field_0x80 = lbl_eu_8066A8AC;
     mgr.field_0x84 = lbl_eu_8066A8B4;
-    *(ScnVecWords*)&mgr.dir = *(const ScnVecWords*)&dir;
+    mgr.dir = dir;
     if (mgr.dir.x != lbl_eu_8066A8AC || mgr.dir.z != lbl_eu_8066A8AC) {
         f32 lenSq = mgr.dir.z * mgr.dir.z
             + (mgr.dir.x * mgr.dir.x + mgr.dir.y * mgr.dir.y);

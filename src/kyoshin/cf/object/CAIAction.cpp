@@ -107,6 +107,13 @@ void CAIAction_UnkVirtualFunc1__Q22cf9CAIActionFv(cf::CAIAction* self,
 // Batch 2026-07-14g: aiaction-vfunc2 owns CAIAction_UnkVirtualFunc2 (Fv)
 // Inverse of UnkVirtualFunc1: imports trailer from inA, then drains ring
 // entries from inB into this->unk20C.
+//
+// Codegen note: retail keeps the leading word as `stwx r0, base, off` and
+// materializes the slot pointer afterwards (`add`). A plain C pointer lets
+// MWCC fold the store into `stwux`; routing base+offset through a
+// volatile-qualified pointer blocks that fold and reproduces retail's
+// stwx+add at the exact size (structural 23 -> 5). Residual is register
+// allocation only.
 void CAIAction_UnkVirtualFunc2__Q22cf9CAIActionFv(cf::CAIAction* self,
                                                               cf::CAIActionSlot* inA,
                                                               cf::CAIActionExport* inB) {
@@ -132,14 +139,15 @@ void CAIAction_UnkVirtualFunc2__Q22cf9CAIActionFv(cf::CAIAction* self,
     trailer->unk1C = inA->unk1C;
 
     while (i < inB->unk208) {
+        s32 dstIdx = (s32)(self->unk210 + self->unk214) % (s32)self->unk218;
         u32 srcIdx = (inB->unk204 + i) % inB->unk20C;
-        int dstIdx = (int)(self->unk210 + self->unk214) % (int)self->unk218;
         cf::CAIActionSlot* src =
             (cf::CAIActionSlot*)((u8*)inB->buffer + (srcIdx << 5));
-        cf::CAIActionSlot* dst =
-            (cf::CAIActionSlot*)((u8*)self->unk20C + (dstIdx << 5));
-
-        dst->unk00 = src->unk00;
+        // See function comment: volatile access path prevents the stwux fold.
+        volatile u8* dstBase = (volatile u8*)self->unk20C;
+        u32 dstOff = (u32)dstIdx << 5;
+        cf::CAIActionSlot* dst = (cf::CAIActionSlot*)((u8*)dstBase + dstOff);
+        *(volatile u32*)(dstBase + dstOff) = src->unk00;
         {
             u32 t8 = src->unk08;
             u32 t4 = src->unk04;
@@ -205,84 +213,75 @@ u32 func_8014AC38(cf::CAIAction* self, const cf::CAIActionSlot* in) {
     slot->unk10 = slot->unk10 | 0x8;
     return 1;
 }
-// Removes the action slot found at ring offset i whose flag bit 0x10 (at
+// Ring slot accessors: the scan uses unsigned modulo; the removal/compaction
+// paths use signed division (divw) like retail.
+static inline cf::CAIActionSlot* CAIRingGetU(cf::CAIAction* self, u32 i) {
+    return (cf::CAIActionSlot*)((u8*)self->unk20C +
+                                (((self->unk210 + i) % self->unk218) << 5));
+}
+static inline cf::CAIActionSlot* CAIRingGetS(cf::CAIAction* self, s32 pos) {
+    return (cf::CAIActionSlot*)(
+        (u8*)self->unk20C + ((u32)(pos % (s32)self->unk218) << 5));
+}
+
+// Copies all fields from src to dst in retail's load/store order.
+static inline void CAIRingCopyTail(cf::CAIActionSlot* dst,
+                                   const cf::CAIActionSlot* src) {
+    dst->unk00 = src->unk00;
+    {
+        u32 t8 = src->unk08;
+        u32 t4 = src->unk04;
+        dst->unk04 = t4;
+        dst->unk08 = t8;
+    }
+    dst->unk0C = src->unk0C;
+    dst->unk10 = src->unk10;
+    dst->unk12 = src->unk12;
+    dst->unk14 = src->unk14;
+    dst->unk18 = src->unk18;
+    dst->unk1C = src->unk1C;
+}
+
+// Removes the action slot found at ring offset i whose flag bit 0x8 (at
 // +0x10) is set: clears it out of the ring by compacting from whichever side
 // of the ring is closer (shift entries down and bump the head, or shift
 // entries up), decrementing unk214. The removed slot's float is read into a
 // scratch local first.
 void func_8014AE00(cf::CAIAction* self) {
     for (u32 i = 0; i < self->unk214; i++) {
-        cf::CAIActionSlot* slot =
-            (cf::CAIActionSlot*)((u8*)self->unk20C +
-                                 (((self->unk210 + i) % self->unk218) << 5));
+        cf::CAIActionSlot* slot = CAIRingGetU(self, i);
         if ((slot->unk10 & 0x8) == 0)
             continue;
 
-        // Scratch copy of the removed entry's float (kept in retail).
-        volatile f32 removedValue = slot->unk14;
-        (void)removedValue;
-
+        // Volatile view defeats CSE of the ring fields here (retail reloads
+        // them after the flag test).
+        volatile cf::CAIAction* vs = self;
+        s32 pos = (s32)vs->unk210 + (s32)i;
         u32 newCount = self->unk214 - 1;
-        self->unk214 = newCount;
         s32 mid = (s32)newCount / 2;
+        cf::CAIActionSlot* cur = (cf::CAIActionSlot*)(
+            (u8*)vs->unk20C +
+            ((u32)(pos % (s32)vs->unk218) << 5));
+        // Scratch copy of the removed entry's float (kept in retail).
+        volatile f32 removedValue = cur->unk14;
+        self->unk214 = newCount;
 
-        if ((s32)i < mid) {
+        if ((s32)i >= mid) {
             // Near the head: move entries [0, i) one slot toward the tail,
             // then advance the ring head past the vacated front slot.
             for (s32 j = (s32)i - 1; j >= 0; j--) {
-                s32 cap = (s32)self->unk218;
-                s32 pos = (s32)self->unk210 + j;
-                s32 q = pos / cap;
-                s32 cur = pos - q * cap;
-                s32 nxt = cur + 1;
-                s32 q2 = nxt / cap;
-                cf::CAIActionSlot* src =
-                    (cf::CAIActionSlot*)((u8*)self->unk20C + ((u32)cur << 5));
-                cf::CAIActionSlot* dst = (cf::CAIActionSlot*)(
-                    (u8*)self->unk20C + ((u32)(nxt - q2 * cap) << 5));
-                dst->unk00 = src->unk00;
-                {
-                    u32 t8 = src->unk08;
-                    u32 t4 = src->unk04;
-                    dst->unk04 = t4;
-                    dst->unk08 = t8;
-                }
-                dst->unk0C = src->unk0C;
-                dst->unk10 = src->unk10;
-                dst->unk12 = src->unk12;
-                dst->unk14 = src->unk14;
-                dst->unk18 = src->unk18;
-                dst->unk1C = src->unk1C;
+                s32 base = (s32)self->unk210 + j;
+                CAIRingCopyTail(CAIRingGetS(self, base + 1),
+                                CAIRingGetS(self, base));
             }
-            s32 head = (s32)self->unk210 + 1;
-            self->unk210 = (u32)((head % (s32)self->unk218));
+            self->unk210 = (u32)((((s32)self->unk210 + 1) % (s32)self->unk218));
         } else {
             // Near the tail: pull entries [i+1, count) one slot toward the
             // front, leaving the head in place.
             for (u32 j = i; j < self->unk214; j++) {
-                s32 cap = (s32)self->unk218;
-                s32 pos = (s32)self->unk210 + j;
-                s32 q = pos / cap;
-                s32 cur = pos - q * cap;
-                s32 nxt = cur + 1;
-                s32 q2 = nxt / cap;
-                cf::CAIActionSlot* src =
-                    (cf::CAIActionSlot*)((u8*)self->unk20C + ((u32)cur << 5));
-                cf::CAIActionSlot* dst = (cf::CAIActionSlot*)(
-                    (u8*)self->unk20C + ((u32)(nxt - q2 * cap) << 5));
-                dst->unk00 = src->unk00;
-                {
-                    u32 t8 = src->unk08;
-                    u32 t4 = src->unk04;
-                    dst->unk04 = t4;
-                    dst->unk08 = t8;
-                }
-                dst->unk0C = src->unk0C;
-                dst->unk10 = src->unk10;
-                dst->unk12 = src->unk12;
-                dst->unk14 = src->unk14;
-                dst->unk18 = src->unk18;
-                dst->unk1C = src->unk1C;
+                s32 base = (s32)self->unk210 + (s32)j;
+                CAIRingCopyTail(CAIRingGetS(self, base),
+                                CAIRingGetS(self, base + 1));
             }
         }
         // Compensate for the loop increment: the slot at offset i now holds
@@ -349,7 +348,179 @@ void func_8014B2EC(void* self, float delta) {
         ++i;
     }
 }
-void func_8014B344(){}
+// Scratch image of the ring entry being removed. The retail stack image is
+// sparse (fields at stride 0x21/0x22), so the layout is reproduced with
+// explicit padding; volatile keeps the otherwise-dead stores in the output.
+namespace {
+struct CAIRemovedScratch {
+    u8 pad00[0x0C];
+    u8 at0C;         // 0x0C  <- slot byte 0x04
+    u8 pad0D[0x20];
+    u8 at2D;         // 0x2D  <- slot byte 0x05
+    u8 pad2E[0x20];
+    u8 at4E;
+    u8 pad4F[0x20];
+    u8 at6F;
+    u8 pad70[0x20];
+    u8 at90;
+    u8 pad91[0x20];
+    u8 atB1;
+    u8 padB2[0x20];
+    u8 atD2;
+    u8 padD3[0x20];
+    u8 atF3;
+    u8 padF4[0x20];
+    u8 at114;
+    u8 pad115[0x20];
+    u8 at135;
+    u8 pad136[0x20];
+    u8 at156;
+    u8 pad157[0x21];
+    u16 at178;       // 0x178 <- slot u16 0x10
+    u8 pad17A[0x20];
+    s16 at19A;       // 0x19A <- slot s16 0x12
+    u8 pad19C[0x20];
+    f32 at1BC;       // 0x1BC <- slot f32 0x14
+    u8 pad1C0[0x08];
+    u32 at1C8;       // 0x1C8 <- slot word 0x00
+};
+} // namespace
+
+// Consumes the AI action queued at ring offset `index`: a terminal id byte
+// (0x3F..0x48) latches `id-0x3E` into unk4/trailer and flushes the ring;
+// otherwise the entry is copied to the trailer and compacted out of the ring.
+void func_8014B344(cf::CAIAction* self, u32 index) {
+    // Ring entry at offset `index`; retail recomputes the modulo expression
+    // (unsigned) at each use and reloads the ring fields from `self`.
+    cf::CAIActionSlot* slot = (cf::CAIActionSlot*)(
+        (u8*)self->unk20C +
+        (((self->unk210 + index) % self->unk218) << 5));
+
+    u8 tag = ((const u8*)slot)[0xD];
+    if (tag >= 0x3F) {
+        if (tag <= 0x48) {
+        u32 v = tag - 0x3E;
+        self->unk4 = v;
+        self->unk8 = self->unk8 | 1;
+        self->unkAFC = v;
+        self->unk214 = 0;
+        self->unk210 = 0;
+        return;
+    }
+    }
+
+    u16 flags = slot->unk10;
+    if (flags & 2)
+        slot->unk10 = flags & 0xfffd;
+
+    cf::CAIActionSlot* trailer = (cf::CAIActionSlot*)self->trailer;
+    cf::CAIActionSlot* cur = (cf::CAIActionSlot*)(
+        (u8*)self->unk20C +
+        (((self->unk210 + index) % self->unk218) << 5));
+
+    trailer->unk00 = cur->unk00;
+    {
+        u32 t4 = cur->unk04;
+        u32 t8 = cur->unk08;
+        trailer->unk08 = t8;
+        trailer->unk04 = t4;
+    }
+    trailer->unk0C = cur->unk0C;
+    trailer->unk10 = cur->unk10;
+    trailer->unk12 = cur->unk12;
+    trailer->unk14 = cur->unk14;
+    trailer->unk18 = cur->unk18;
+    trailer->unk1C = cur->unk1C;
+
+    // If bit0 of unk8 was pending and the entry's payload byte matches the
+    // cached unkAFC value, drop the pending flag.
+    if ((self->unk8 & 1) &&
+        self->unkAFC == (u32)((const u8*)trailer)[4])
+        self->unk8 = self->unk8 & 0x7FFF0000;
+
+    // Retail keeps `pos` live across the midpoint computation.
+    s32 spos = (s32)(self->unk210 + index);
+    u32 newCount = self->unk214 - 1;
+    s32 mid = (s32)(newCount - 1) / 2;
+    bool tailSide = (s32)index >= mid;
+
+    // Removal pass resolves the entry with a *signed* modulo (divw), unlike
+    // the unsigned computations above.
+    cur = (cf::CAIActionSlot*)(
+        (u8*)self->unk20C +
+        (((u32)(spos % (s32)self->unk218)) << 5));
+
+    // Scratch copy of the removed entry before the compaction overwrites it.
+    // Retail batches every load ahead of the writes.
+    const cf::CAIActionSlot* vc = cur;
+    u32 s00 = vc->unk00;
+    u8 s04 = ((const u8*)vc)[0x04];
+    u8 s05 = ((const u8*)vc)[0x05];
+    u8 s06 = ((const u8*)vc)[0x06];
+    u8 s07 = ((const u8*)vc)[0x07];
+    u8 s08 = ((const u8*)vc)[0x08];
+    u8 s09 = ((const u8*)vc)[0x09];
+    u8 s0A = ((const u8*)vc)[0x0A];
+    u8 s0B = ((const u8*)vc)[0x0B];
+    u8 s0C = ((const u8*)vc)[0x0C];
+    u8 s0D = ((const u8*)vc)[0x0D];
+    u8 s0E = ((const u8*)vc)[0x0E];
+    u16 s10 = vc->unk10;
+    s16 s12 = vc->unk12;
+    f32 s14 = vc->unk14;
+
+    CAIRemovedScratch tmp;
+    tmp.at1C8 = s00;
+    tmp.at0C = s04;
+    tmp.at2D = s05;
+    tmp.at4E = s06;
+    tmp.at6F = s07;
+    tmp.at90 = s08;
+    tmp.atB1 = s09;
+    tmp.atD2 = s0A;
+    tmp.atF3 = s0B;
+    tmp.at114 = s0C;
+    tmp.at135 = s0D;
+    tmp.at156 = s0E;
+    tmp.at178 = s10;
+    tmp.at19A = s12;
+    tmp.at1BC = s14;
+
+    self->unk214 = newCount;
+
+    if (tailSide) {
+        // Near the tail: pull later entries one slot toward the front.
+        for (u32 j = index; j < self->unk214; j++) {
+            s32 b = (s32)self->unk210 + (s32)j;
+            CAIRingCopyTail(CAIRingGetS(self, b), CAIRingGetS(self, b + 1));
+        }
+    } else {
+        // Near the head: push earlier entries one slot toward the tail,
+        // then advance the head past the vacated front slot.
+        for (s32 j = (s32)index - 1; j >= 0; j--) {
+            s32 b = (s32)self->unk210 + j;
+            CAIRingCopyTail(CAIRingGetS(self, b + 1), CAIRingGetS(self, b));
+        }
+        self->unk210 = (u32)(((s32)self->unk210 + 1) % (s32)self->unk218);
+    }
+
+    // Sink reads keep the (retail-dead) scratch stores alive.
+    { volatile u8 k0 = tmp.at0C; (void)k0; }
+    { volatile u8 k1 = tmp.at2D; (void)k1; }
+    { volatile u8 k2 = tmp.at4E; (void)k2; }
+    { volatile u8 k3 = tmp.at6F; (void)k3; }
+    { volatile u8 k4 = tmp.at90; (void)k4; }
+    { volatile u8 k5 = tmp.atB1; (void)k5; }
+    { volatile u8 k6 = tmp.atD2; (void)k6; }
+    { volatile u8 k7 = tmp.atF3; (void)k7; }
+    { volatile u8 k8 = tmp.at114; (void)k8; }
+    { volatile u8 k9 = tmp.at135; (void)k9; }
+    { volatile u8 kA = tmp.at156; (void)kA; }
+    { volatile u16 kB = tmp.at178; (void)kB; }
+    { volatile s16 kC = tmp.at19A; (void)kC; }
+    { volatile f32 kD = tmp.at1BC; (void)kD; }
+    { volatile u32 kE = tmp.at1C8; (void)kE; }
+}
 // extern "C" per the CfObjectPc.hpp declaration (retail symbol is unmangled;
 // CfObjectPc.cpp imports it under that exact name).
 extern "C" void func_8014B804(unsigned char* self, int index, int a2, int a3, int a4, int a5, int a6, int a7, int a8, int a9, int a10, int a11, int a12, int a13) { unsigned char* base = self + index * 14; base[0x21c] = a2; base[0x21d] = a3; base[0x21e] = a4; base[0x21f] = a5; base[0x220] = a6; base[0x221] = a7; base[0x222] = a8; base[0x223] = a9; base[0x224] = a10; base[0x225] = a11; base[0x226] = a12; *(unsigned short*)(base + 0x228) = a13; if (a7 == 11 || a9 == 11) *(unsigned short*)(base + 0x228) |= 1; if (a7 == 10 || a9 == 10) *(unsigned short*)(base + 0x228) |= 1; if (a7 == 7 || a9 == 7) *(unsigned short*)(base + 0x228) |= 2; }
@@ -383,7 +554,482 @@ extern "C" void func_8014B7B0(void* self) {
     }
 }
 void func_8014B8BC(){}
-void func_8014CE78(){}
+// Virtual-call shims for the party object's raw vtable (slot offsets in bytes).
+typedef f32 (*CAIVtF32)(void*);
+typedef void* (*CAIVtPtr)(void*);
+typedef s32 (*CAIVtS32)(void*);
+#define AI_VT_F32(obj, off) ((CAIVtF32)(obj)->vtable->slot[(off) / 4])(obj)
+#define AI_VT_PTR(obj, off) ((CAIVtPtr)(obj)->vtable->slot[(off) / 4])(obj)
+#define AI_VT_S32(obj, off) ((CAIVtS32)(obj)->vtable->slot[(off) / 4])(obj)
+
+
+
+// func_8014CE78 - evaluate one AI action entry for a party member and fill
+// the 0x20-byte result slot. Returns 1 when the action is usable.
+extern "C" int func_8014CE78(cf::CAIAction* self, const u8* e, cf::CAIActionSlot* out) {
+    using namespace cf;
+    u8* ob = (u8*)out;
+    // Retail reloads self->unkB14 lazily in each branch (no prologue cache),
+    // so the party pointer is expressed as an accessor, not a local.
+#define party ((CAIPartyObj*)self->unkB14)
+
+    // Gate 1: weight bytes must be non-zero, then a rand()%100 roll vs weight.
+    if (e[9] == 0 || e[10] == 0)
+        return 0;
+    if (rand() % 100 >= e[10])
+        return 0;
+
+    // Result power (out+0x14): virtual probe when either key is 14,
+    // value/10 or raw value otherwise.
+    if (e[5] == 0xE || e[7] == 0xE) {
+        out->unk14 = AI_VT_F32(party, 0x1B4);
+    } else if (e[5] == 0xB || e[5] == 0xD) {
+        out->unk14 = (f32)((f64)(u32)e[6] / 10.0);
+    } else if (e[5] == 0xA || e[5] == 0xC) {
+        out->unk14 = (f32)(u32)e[6];
+    } else if (e[7] == 0xB || e[7] == 0xD) {
+        out->unk14 = (f32)((f64)(u32)e[8] / 10.0);
+    } else if (e[7] == 0xA || e[7] == 0xC) {
+        out->unk14 = (f32)(u32)e[8];
+    }
+
+    // Copy the entry into the result slot (bytes 4..15 + halfword at 0x10).
+    ob[4] = e[0]; ob[5] = e[1]; ob[6] = e[2]; ob[7] = e[3];
+    ob[8] = e[4]; ob[9] = e[5]; ob[10] = e[6]; ob[11] = e[7];
+    ob[12] = e[8]; ob[13] = e[9]; ob[14] = e[10];
+    *(u16*)(ob + 0x10) = *(const u16*)(e + 0xC);
+
+    // Two gate pairs: (a0,b0)=(e5,e6), (a1,b1)=(e7,e8); dispatch on a[i].
+    u32 a[2];
+    u32 b[2];
+    a[0] = e[5]; b[0] = e[6];
+    a[1] = e[7]; b[1] = e[8];
+
+    for (int i = 0; i < 2; i++) {
+        int k = (int)a[i];
+        if (k < 0 || k > 0x4F)
+            continue;
+        switch (k) {
+        case 7: {
+            // State-tag probe must be accepted by the handler.
+            u32 v;
+            u32* p = party->unk04->vf30();
+            v = *p;
+            if (func_80174C98(p, &v, 0x800) == 0)
+                return 0;
+            break;
+        }
+        case 9:
+            if ((self->unk8 & 1) == 0)
+                return 0;
+            break;
+        case 4: case 5: case 6: {
+            // Enumerator limit gate (selector 0x20 normally / 0x8000 on flag).
+            CAIActionEnumHolder h;
+            func_80043D90(&h);
+            u32 sel = (party->move.moveFlags & 4) ? 0x8000 : 0x20;
+            func_800F4A98(func_80043F18(&h), sel, 0x800);
+            CAIEnumIter* it = (CAIEnumIter*)func_80043F18(&h);
+            bool fail;
+            if (k == 4)
+                fail = (b[i] != it->field620);
+            else if (k == 5)
+                fail = (it->field620 < b[i]);
+            else
+                fail = (it->field620 > b[i]);
+            __dt__80043E88(&h, -1);
+            if (fail)
+                return 0;
+            break;
+        }
+        case 1: case 2: case 3: {
+            // Same gate with inverted selector and keys 1..3.
+            CAIActionEnumHolder h;
+            func_80043D90(&h);
+            u32 sel = (party->move.moveFlags & 4) ? 0x20 : 0x8000;
+            func_800F4A98(func_80043F18(&h), sel, 0x800);
+            CAIEnumIter* it = (CAIEnumIter*)func_80043F18(&h);
+            bool fail;
+            if (k == 1)
+                fail = (b[i] != it->field620);
+            else if (k == 2)
+                fail = (it->field620 < b[i]);
+            else
+                fail = (it->field620 > b[i]);
+            __dt__80043E88(&h, -1);
+            if (fail)
+                return 0;
+            break;
+        }
+        case 0xF:
+            if ((party->unk3388 & 0x8) == 0)
+                return 0;
+            break;
+        case 0x10:
+            if ((party->unk3388 & 0x8) != 0)
+                return 0;
+            break;
+        case 0x1C: case 0x19 + 4: { // 0x1C..0x27
+            if (k > 0x27)
+                break;
+            void* artsSet = AI_VT_PTR(party, 0x27C);
+            func_80153DCC(artsSet, k - 0x1C);
+            if (func_801541B0(party, 0) == 0)
+                return 0;
+            break;
+        }
+        case 0x28: case 0x29: case 0x2A: {
+            // Count active sub-gates and compare against the pair value.
+            int cnt = 0;
+            if (func_801B1FFC(0))
+                cnt++;
+            if (func_801B1FFC(1))
+                cnt++;
+            if (func_801B1FFC(2))
+                cnt++;
+            bool fail;
+            if (k == 0x28)
+                fail = (cnt != (int)b[i]);
+            else if (k == 0x29)
+                fail = (cnt < (int)b[i]);
+            else
+                fail = (cnt > (int)b[i]);
+            if (fail)
+                return 0;
+            break;
+        }
+        case 0x2B: case 44: case 45: case 46: case 47: case 48: case 49:
+        case 50: case 51: case 52: case 53: case 54: case 55:
+            // World-state id must equal key-46.
+            if ((u16)func_8016DF2C() != (u32)(k - 0x2E))
+                return 0;
+            break;
+        case 58: {
+            // Character category must match.
+            void* ch = func_8009EC9C(party->unk3F28);
+            if (func_800A32BC(ch) != b[i])
+                return 0;
+            break;
+        }
+        case 59: {
+            // BDAT column byte-3 comparison via the select table.
+            void* ch = func_8009EC9C(party->unk3F28);
+            u16 v = *(u16*)((u8*)ch + 0xA);
+            if (func_80158018(v)) {
+                u32 col = getBdatStringColumnValue((void*)lbl_eu_806640F8,
+                                                    (const char*)&lbl_eu_80501968[1]);
+                if ((u32)(u8)col - 3 != b[i])
+                    return 0;
+            }
+            break;
+        }
+        case 60: case 61: {
+            // Turn-counter window; inner dispatch keyed on 0x40/0x41 only.
+            if (k == 0x40) {
+                if (((CBattleMgrAIView*)getInstance__Q22cf14CBattleManagerFv())->field194
+                    < (s32)b[i] * 10)
+                    return 0;
+            } else if (k == 0x41) {
+                if (((CBattleMgrAIView*)getInstance__Q22cf14CBattleManagerFv())->field194
+                    > (s32)b[i] * 10)
+                    return 0;
+            }
+            break;
+        }
+        case 62:
+            if (party->unk3E98 != 0)
+                return 0;
+            if ((party->unk3388 & 0x10) != 0)
+                return 0;
+            break;
+        case 63:
+            if (party->unk3E98 != 0)
+                return 0;
+            break;
+        case 64:
+            if ((party->unk3388 & 0x10) != 0)
+                return 0;
+            break;
+        case 65: case 66: case 67: {
+            // Element-row gate; inner dispatch keyed on 0x45/46/47 only.
+            if (!(party->move.moveFlags & 4))
+                return 0;
+            void* obj = func_800AD860(&party->move);
+            void* elem = func_80193AB0(func_80193670(),
+                                       ((CAIChDataView*)obj)->field45C0);
+            if (elem == 0)
+                return 0;
+            s16 ev = ((CAIElemA4View*)elem)->fieldA2;
+            if (k == 0x45) {
+                if (ev != (s16)b[i])
+                    return 0;
+            } else if (k == 0x46) {
+                if (ev < (s16)b[i])
+                    return 0;
+            } else if (k == 0x47) {
+                if (ev > (s16)b[i])
+                    return 0;
+            }
+            break;
+        }
+        case 74: case 75: {
+            // Attack-slot accumulator window; inner keys 0x4E/0x4F only.
+            u32 acc = 0;
+            if (func_80148778((u8*)party + 8, 0x8D))
+                acc = *(u32*)func_80149154((u8*)party + 8, 0x8D);
+            s32 probe = AI_VT_S32(party, 0x290);
+            if (probe != 0) {
+                s32 val;
+                if (func_80260264((void*)AI_VT_S32(party, 0x290), 0x57, &val))
+                    acc += (u32)val;
+            }
+            if (k == 0x4E) {
+                if (acc >= b[i])
+                    return 0;
+            } else if (k == 0x4F) {
+                if (acc <= b[i])
+                    return 0;
+            }
+            break;
+        }
+        default:
+            break;
+        }
+    }
+
+    // Post-loop: optional target selection, then an extra filter.
+    if (ob[6] != 0) {
+        u32 r = (u32)(uintptr_t)func_80150618(self, (CAIActionQuery*)out);
+        out->unk00 = r;
+        if (r == 0)
+            return 0;
+    }
+    if (e[3] != 0 && e[4] != 0) {
+        if (func_801522C4(self, out) == 0)
+            return 0;
+    }
+
+    // Final dispatch on the action class byte (result byte 0xD).
+    u8 d = ob[13];
+    if (d == 1)
+        return 1;
+    if ((d >= 6 && d <= 0x10) || (d >= 0x21 && d <= 0x26) || (d >= 0x36 && d <= 0x39)
+        || d == 0 || d >= 0x59)
+        return 0;
+
+    if (d == 4) {
+        // Vision exclusion sweep + arts-slot lottery with power gates.
+        CBattleMgrAIView* bm = (CBattleMgrAIView*)getInstance__Q22cf14CBattleManagerFv();
+        void* vision = func_800EA444(bm);
+        if (vision != 0 && !(*(u32*)((u8*)party + 0x3F00) & 2)
+            && *(u32*)vision != party->unk3F10 && !(bm->field824 & 0x20000))
+            return 0;
+
+        // Sweep the enumerator: every tagged member must pass the move probe.
+        if (!(*(u32*)((u8*)party + 0x3F00) & 2)) {
+            CAIActionEnumHolder h;
+            func_80043D90(&h);
+            func_800F4A98(func_80043F18(&h), 0x20, 0x800);
+            for (u32 i = 0; i < ((CAIEnumIter*)func_80043F18(&h))->field620; i++) {
+                void* obj = func_8016FE34(func_800F6EAC(func_80043F18(&h), i));
+                if (obj == 0)
+                    continue;
+                u32 v;
+                u32* p = ((CAIPartyObj*)obj)->unk04->vf30();
+                v = *p;
+                if (func_80174C98(p, &v, 0x1F) != 0) {
+                    __dt__80043E88(&h, -1);
+                    return 0;
+                }
+                void* mo = (u8*)obj + 0x3E9C;
+                s32 mv = ((s32(*)(void*, u32)) *(void**)((u8*)mo + 0xC)) (mo, 0x800);
+                if (mv != 0) {
+                    __dt__80043E88(&h, -1);
+                    return 0;
+                }
+            }
+            __dt__80043E88(&h, -1);
+        }
+
+        if (func_80148778((u8*)party + 8, 0xC) != 0)
+            return 0;
+        if (func_80148778((u8*)party + 8, 0xCB) != 0)
+            return 0;
+
+        // Collect usable arts slot indices.
+        u32 buf[8];
+        u32 count = 0;
+        for (u32 j = 0; j < 8; j++) {
+            void* set = AI_VT_PTR(party, 0x27C);
+            if (getArtsSlotAtCnt(set, j)) {
+                buf[count] = j;
+                count++;
+            }
+        }
+        if (count == 0)
+            return 0;
+
+        // Weighted random pick over count*100 tickets.
+        int idx = (int)(rand() % (count * 100) / 100);
+        out->unk12 = (s16)buf[idx];
+        if (out->unk18 == 0) {
+            void* set = AI_VT_PTR(party, 0x27C);
+            if (getArtsSlotAtCnt(set, idx)) {
+                out->unk18 = (u32)(uintptr_t)getArtsParamByIdx(AI_VT_PTR(party, 0x27C), idx);
+            }
+        }
+
+        CAIArtsParamView* param = (CAIArtsParamView*)(uintptr_t)out->unk18;
+        if (param == 0)
+            return 0;
+        if (func_80148778((u8*)party + 8, 0x117) != 0 && func_80145C00(param->field48) != 0)
+            return 0;
+        if (func_80148778((u8*)party + 8, 0x2F) == 0 && param->field80 - out->unk14 > 0.0f)
+            return 0;
+        if (func_80148778((u8*)party + 8, 0x30) == 0 && !(AI_VT_F32(party, 0x140) >= 0.0f))
+            return 0;
+        if (func_80148778((u8*)party + 8, 0x31) == 0
+            && !((f64)param->field34 <= (f64)AI_VT_F32(party, 0x158)))
+            return 0;
+        return 1;
+    }
+
+    if (d == 5) {
+        // State probe + arts-slot-2 parameter fetch.
+        u32 v;
+        u32* p = party->unk04->vf30();
+        v = *p;
+        if (func_80174C98(p, &v, 6) == 0)
+            return 0;
+        if (func_80148778((u8*)party + 8, 0xCC) != 0)
+            return 0;
+        int idx = d - 5; // always 0 here
+        void* set = AI_VT_PTR(party, 0x27C);
+        if (getArtsSlotRC(set, 2, idx) == 0)
+            return 0;
+        getArtsParamRC2(AI_VT_PTR(party, 0x27C), idx, 2);
+        return 1;
+    }
+
+    if (d == 2 || d == 3 || d == 0x54 || d == 0x55) {
+        // 0xCA list check + result slot reset.
+        if (func_80148778((u8*)party + 8, 0xCA) != 0)
+            return 0;
+        out->unk12 = -1;
+        return 1;
+    }
+
+    if (d >= 0x11 && d <= 0x20) {
+        // Scan arts list for a category match, then full gate chain.
+        if (func_80148778((u8*)party + 8, 0xC) != 0)
+            return 0;
+        if (func_80148778((u8*)party + 8, 0xCB) != 0)
+            return 0;
+        out->unk12 = -1;
+        int want = d - 0x11;
+        int sel = -1;
+        for (int j = 0; j < 0x10; j++) {
+            void* set = AI_VT_PTR(party, 0x27C);
+            if (func_80153CAC(set, j)) {
+                CAIArtsParamView* p = (CAIArtsParamView*)getArtsParamByIdx(AI_VT_PTR(party, 0x27C), j);
+                if (p->field77 == want) {
+                    out->unk12 = (s16)j;
+                    sel = j;
+                    break;
+                }
+            }
+        }
+        if (out->unk12 == -1)
+            return 0;
+
+        if (!func_80153CAC(AI_VT_PTR(party, 0x27C), sel))
+            return 0;
+        CAIArtsParamView* param = (CAIArtsParamView*)getArtsParamByIdx(AI_VT_PTR(party, 0x27C), sel);
+        if (func_80148778((u8*)party + 8, 0x117) != 0 && func_80145C00(param->field48) != 0)
+            return 0;
+        if (func_801554DC(param, party, 0x200) == 0)
+            return 0;
+        if (func_80148778((u8*)party + 8, 0x2F) == 0) {
+            if (!(param->field48 == 0xEB && func_80148778((u8*)party + 8, 0xEB) != 0)
+                && param->field80 - out->unk14 > 0.0f)
+                return 0;
+        }
+        if (func_80148778((u8*)party + 8, 0x30) == 0 && !(AI_VT_F32(party, 0x140) >= 0.0f))
+            return 0;
+        if (func_80148778((u8*)party + 8, 0x31) == 0
+            && !((f64)param->field34 <= (f64)AI_VT_F32(party, 0x158)))
+            return 0;
+
+        // Vision exclusion, relaxed when either flag bit is set.
+        CBattleMgrAIView* bm = (CBattleMgrAIView*)getInstance__Q22cf14CBattleManagerFv();
+        void* vision = func_800EA444(bm);
+        if (vision != 0 && !(*(u32*)((u8*)party + 0x3F00) & 2)
+            && !(param->field78 & 0x8000)
+            && *(u32*)vision != party->unk3F10 && !(bm->field824 & 0x20000))
+            return 0;
+        return 1;
+    }
+
+    if ((d >= 0x27 && d <= 0x34) || d == 0x53)
+        return func_80148778((u8*)party + 8, 6) == 0;
+
+    if (d == 0x35) {
+        // Pair-flag + unlock + turn-count gate chain.
+        void* obj = func_8016FE34(func_800B708C((int)out->unk00));
+        if (obj != 0 && !(*(u32*)((u8*)obj + 0x3F00) & 2))
+            return 0;
+        if (!(*(u32*)((u8*)party + 0x3F00) & 2))
+            return 0;
+        if (((CBattleMgrAIView*)getInstance__Q22cf14CBattleManagerFv())->field194 < 0x64)
+            return 0;
+        return func_8009CF8C(0x335f) != 0;
+    }
+
+    if (d >= 0x3A && d <= 0x3C) {
+        // Pair flag gate; key 0x3B adds a target-tag probe and requires the
+        // 0x335f unlock to be CLEAR.
+        if (!(*(u32*)((u8*)party + 0x3F00) & 2))
+            return 0;
+        if (d != 0x3B)
+            return 1;
+        void* obj = func_8016FE34(func_800B708C((int)out->unk00));
+        if (obj != 0) {
+            u32 v;
+            u32* p = ((CAIPartyObj*)obj)->unk04->vf30();
+            v = *p;
+            if (func_80174C98(p, &v, 0x1A) != 0)
+                return 0;
+        }
+        return func_8009CF8C(0x335f) == 0;
+    }
+
+    if (d == 0x3D || d == 0x3E) {
+        // Chained list checks (0x111 only on 0x3D, 0x112 only on 0x3E).
+        if (!(*(u32*)((u8*)party + 0x3F00) & 2))
+            return 0;
+        if (d == 0x3D && func_80148778((u8*)party + 8, 0x111) != 0)
+            return 0;
+        if (d == 0x3E && func_80148778((u8*)party + 8, 0x112) != 0)
+            return 0;
+        return func_80148778((u8*)party + 8, 0x117) == 0;
+    }
+
+    if (d >= 0x56 && d <= 0x58) {
+        // Attack-slot pick with parameter fetch.
+        if (func_80148778((u8*)party + 8, 0xCA) == 0)
+            return 0;
+        int idx = d - 0x56;
+        void* set = AI_VT_PTR(party, 0x288);
+        if (*(u16*)((u8*)set + idx * 2) == 0)
+            return 0;
+        out->unk18 = (u32)(uintptr_t)getAtkParam(AI_VT_PTR(party, 0x288), idx);
+        out->unk12 = (s16)idx;
+        return 1;
+    }
+
+    return 1; // 0x3F..0x52
+#undef party
+}
 void func_8014E164(){}
 // Returns the result of dispatching the query through the party's move
 // vtable (or the cached battle handle at 0x3F10), with bit 0x400 in the

@@ -26,6 +26,11 @@ extern u32 lbl_eu_8050BDF8[];
 extern s16 func_80136330(u32, const char*, u32);
 extern u8 lbl_eu_80664798;
 
+// Wider-view import for the marker-placement lookups: retail masks the raw
+// results (rlwinm 16) at these call sites, which requires the untruncated
+// u32 return view (the canonical header decl is u16 and would drop the mask).
+extern "C" u32 func_8013606C(const void*, const void*, u32);
+
 extern "C" void func_80137C1C(void*, void*);
 extern "C" void* createPicture__10CLibLayoutFv();
 extern "C" void SetName__Q34nw4r3lyt4PaneFPCc(void*, const char*);
@@ -161,7 +166,7 @@ extern "C" void func_802455F0(void* self) {
                 cur->field_0A = 4;
         }
     } else {
-        u8 c1 = (u8)(count - 1);
+        u8 c1 = count - 1;
         cur->field_0A = c1;
         cur->field_0B = 0;
         if ((s8)c1 < 0)
@@ -183,16 +188,20 @@ extern "C" void func_802455F0(void* self) {
         cur->mData->GetRootPane()->FindPaneByName(&lbl_eu_8050BEA8[0x136], 1);
     pos.x = pos.x * scalePane->GetScale().x;
 
-    dest = pos;
+    // Word-wise copy so MWCC keeps the retail integer-register copy instead
+    // of forwarding pos into the inlined SetTranslate (func_8024577C idiom).
+    ((u32*)&dest)[0] = ((u32*)&pos)[0];
+    ((u32*)&dest)[1] = ((u32*)&pos)[1];
+    ((u32*)&dest)[2] = ((u32*)&pos)[2];
     if (cur->field_3108) {
         CFloorMapCursorTarget* target = (CFloorMapCursorTarget*)cur->field_3108;
         target->pane->SetTranslate(dest);
     }
 
-    func_801F3850(cur->field_3134, (u16)(s8)cur->field_0B);
+    func_801F3850(cur->field_3134, (u16)cur->field_0B);
 }
 
-// Select the floor-map row whose map-row id matches val: move the cursor to
+// Select the floor-map row whose map-row id matches val
 // that row (clamped to a page of 5), reposition the target pane, and notify
 // the UI when the cursor actually moved.
 void func_8024577C(void* self, u16 val) {

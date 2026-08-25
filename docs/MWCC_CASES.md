@@ -10209,6 +10209,14 @@ referenced by real code/data.
 - Confidence: repo_proven
 - Applies to/a.k.a.: every TU that received a monolibdata/blob dissolve after its functions were certified; audit candidates = any unit whose data gate went green later than its last cycle log.
 
+## CERand create(int) tail-schedule residual (2026-08, Wii/1.1 -O4,p -ipa file)
+- Symptom:   create__18CERandomizerSimpleFi 84.6% — only the last two instructions swap: retail interleaves [reload seed1][load age-pool][store seed2][store age]; decomp does [reload seed1][store seed2][load age-pool][store age]. Everything else byte-identical.
+- Cause:     one-slot list-schedule difference on the `seed2 = seed1; age = lbl_eu_8066B230;` pair. NOT reproducible from source order: a two-temp form (u16 s=seed1; float f=pool; ...) floats the FP load ABOVE the GPR reload; the direct form keeps it below. Both wrong by exactly one slot.
+- Fix:       open. Levers left: read the pool through a struct/array base so the lfs lands in a different dependency class, or accept as a paired residual with __ct__ (same swap at 22%) and randVec (36%, 17 structural + regswap).
+- Result:    data gate unaffected — VERDICT MATCH restored 2026-08-26 via hand-built vtable/RTTI block + MWCC auto-emission dedupe (see stale-acceptance entry above); .text exact 0x548; 12/16 functions match.
+- Confidence: negative_result (two source shapes probed)
+
+
 ## ✅ SOLVED — isInitialized inlined-find family: 100.0% FULL_MATCH (CLibStaticData, Wii/1.1 -O4,p -ipa file)
 - Symptom:   started 0% (out-of-line bl to find); evolved through 12 shapes; intermediate walls:
              color-swap (inst/i r6/r7) + tail guard/block layout.
@@ -10417,3 +10425,110 @@ us-80115a2c (r6→r7).
 - Result:    us-800b94b0 / us-800b9594 / us-800b8100 all FULL_MATCH (semantic-certified); caller us-800b379c 98.4%→98.9% with reloc drift 1→0.
 - Confidence: repo_proven
 - Applies to/a.k.a.: any TU with locally-defined helpers named after real retail symbols (func_*/__dt__* free functions); check `hexdiff --relocs` for `name`-class drift before chasing scheduling ghosts. Same family as §SDA globals / reloc_map mine.
+
+## func_80159B40 — sthx vs two stb + displacement folding → split wide store, keep member offset in accesses (Wii/1.1, FULL_MATCH)
+- Symptom:   decomp emitted `sthx r0,r30,r31`; retail emitted `stb r0,8248(r31); stb r0,8249(r31)` — same address, different store width AND different base/displacement split
+- Cause:     retail source wrote the u16 slot as two byte stores through a pointer that did NOT include the struct member offset; MWCC folded member offset 0x2038 into the stb displacements. A single `(u16*)` store lowers to sthx instead
+- Fix:       declare the pointer as u8* without the member offset (`base+0x10000+idx*2`) and perform `slot[0x2038]=0; slot[0x2039]=0`. Do NOT introduce an intermediate typed-struct local for the base — an extra addis perturbs scheduling (dropped match to 32%)
+- Result:    FULL_MATCH
+- Confidence: repo_proven
+
+## func_800F4034 (CBattleManager.cpp) — r4 vtable loads / loop-var colors / null-check shape → three source shapes (Wii/1.1, FULL_MATCH)
+- Symptom:   manual `vtbl = *(void***)obj; ((fn)vtbl[k])(obj)` dispatch compiles to `lwz r4` not retail's canonical `lwz r12`; loop counter got r31 instead of retail's r30; `if (p != nullptr) f(p+off)` skips the whole call where retail only branches over the `addi` (adjusted-this).
+- Cause:     MWCC emits canonical r12 virtual dispatch only for real virtual calls through a class type; saved-reg colors follow declaration birth order even for values assigned inside loops; the ternary `(cond) ? p+off : p` reproduces the branch-over-addi-only adjusted-this pattern.
+- Fix:       cast to an existing abstract slot proxy (`CSuddenCommuActorVt`, slots 0xB0/0xB8/0x314 = declared indices 42/44/195 via (slot/4-2)) and call real virtuals; declare the element pointer before the counter; use a conditional-expression pointer argument.
+- Result:    FULL_MATCH (us-800f4b1c), 71.4% → 100%
+- Confidence: repo_proven
+- Applies to: any TU with manual vtable-call helpers; proxy classes must never be constructed.
+
+## monolib/coli code_804A6C60 func_804A7D1C — missing [frsp], size -4 → declare dot-product result as `double` (Wii/1.1, -O4,p → 81.0%, was 55.6%)
+- Symptom:   decomp 4 bytes short; retail tail had stfs f1,776 + extra [frsp] f1,f1 before the compare that decomp lacked
+- Cause:     retail's `sq` was DOUBLE: `self->field_0x308 = sq` folds the double high-word into [stfs]; the rounded single for compare/divide comes from a separate [frsp]. With `f32 sq` MWCC emits only the stfs.
+- Fix:       `double sq = VEC3Dot(...); self->field_0x308 = sq; if ((f32)sq != lbl) { field_0x308 = lbl / (f32)sq; }` — division must stay single-domain via the cast
+- Result:    81.0% near-miss (2 structural: frsp/store order flip; 10 reg_swap GPR rotation on word copies)
+- Confidence: repo_proven (same idiom already proven in func_804A7ACC of the same TU)
+- Applies to/a.k.a.: any VEC3Dot/PSVECMag-style result stored into an f32 field then re-used — check for a missing [frsp] whenever decomp is exactly 4 bytes smaller than retail
+
+## kyoshin/CtrlObjectParam equip-slot reload idiom (us-800a3bcc func_800A3304) — volatile element pointer reproduces the double `lha`, but the 0x1C displacement lands in the IV (OPEN at 98.9%)
+
+- Symptom:   retail inner loop emits TWO `lha r,28(r29)` (check + call arg) off one advancing row cursor; plain source CSEs them into one load.
+- Cause:     identical expressions get CSE'd; every syntactically-distinct re-read spawns a second induction variable instead.
+- Fix:       `volatile s16* q = &r->shortArr[j];` with both reads via `*q` (MWCC_CASES func_8009D790 recipe) reproduces the double load AND keeps one IV — but MWCC folds the `+0x1C` array offset into the IV start (`addi r31,r3,16908; lha r0,0(r31)`), while retail keeps it as displacement (`addi r29,r3,16880; lha r0,28(r29)`).
+- Result:    0 structural, size exact, objdiff 98.9% — witness-gate FAIL "slot 13: non-register bits differ" because the displacement field differs. Volatile-row-member and distinct-class-view variants give the same outcome.
+- Confidence: repo_proven (negative_result for the displacement half)
+## kyoshin code_800B06A4 — independent global-store reorder + FPR interference elimination via reload-at-store (GC/3.0a5.2 `-O4,p`)
+
+- Symptom:   tiny float-seeder function: two same-section global stores emitted in SWAPPED order vs retail (reloc `name` drift pair on SDA21 floats) plus a pure 2-value FPR color swap on {derived product, loaded constant} (fmuls/frsp result f2↔f0).
+- Cause:     MWCC freely reorders independent global stores; and two non-interfering-until-the-tail FPR values get colored opposite to retail when both stay live to the final stores.
+- Fix:       (1) pin the store order with `*(volatile float*)&global = v;` on just the misordered pair; (2) kill the named local for the short constant and reload it directly at its store (`g = lbl_src;` instead of `float c = lbl_src; ... g = c;`) — removing the second live web flips the remaining product into the retail color.
+- Result:    func_800B06A4 55.6% → 100.0% FULL_MATCH (semantic-certified). Ruled out: declaration-order swaps of the two floats (no effect — allocation is pop-order driven here, not birth-order).
+- Confidence: repo_proven
+- Applies to/a.k.a.: any small float-seed/sinit function with independent global writes; pairs with sinit-style {value, square} seeders. Same family as §const-self hoist family / volatile word-view entries.
+
+## CriWare sofdec data-dissolve batch — six units green; retarget+addend for mid-pool constants, jumptable/strings need source fixes (Wii/1.1)
+- Symptom:   dct_isr/.rodata 0x10, sfd_adxt 0x8, sfd_tim 0x30, sfh_ver1/.data 0x24, sfx_cnv/.data 0xAA+.rodata 0x10, sfx_zmv/.rodata 0x28 — all "retail size 0x0".
+- Cause/Fix: (a) constants living INSIDE a bigger blob object (dct_isr {zero-dbl,magic} at C3B0+0x78/+0x68; sfd_tim magic at CC20+0x30): `retarget_relocs` + `addend_sets` per reloc field — no offset-form labels exist because retail reaches them via base+disp. (b) sfx_zmv: both anchors sit at local 0 = the magic → rename BOTH (@N via data_pool_patterns AND ...rodata.0 via exact_renames) to lbl_eu_8051D220. (c) sfh_ver1: all-zero .data was criware_803D2C98's 9-word switch table = blob jumptable_eu_80568F10 → bytes(0x24) pattern + globalize. (d) sfd_adxt: SetSpeed's `(double)speed/(double)base` pools a magic retail doesn't have (it uses *(f64*)(C4E0+0x60)) → dissolved onto equivalent-value lbl_eu_8051CF40. (e) sfx_cnv SOURCE fixes: switch→if/else chain (retail compare-dispatches), invented error literals → &lbl_eu_8051CF48[0xfa]/[0x138] (MakeCftSrcBuf → 100%), float pool dissolved 1:1 onto CF38/3C/40.
+- Result:    all six VERDICT: MATCH; MakeCftSrcBuf FULL_MATCH bonus; zero regressions.
+- Confidence: repo_proven
+- Applies to/a.k.a.: WARNING — a static/static-inline union BiasDouble helper did NOT inline in sfx_cnv (+0xd4 text, called out-of-line per iteration), unlike adx_tlk; when a TU resists inlining, keep the natural expression and dissolve the pooled constants via UNIT_RULES content matches instead. Also: ppcdis never emits offset-form labels here (`lbl+0xN@ha`) — mid-pool accesses are always base+displacement, so sub-label targets REQUIRE addends. All-zero .data regions are usually RELOC'd jumptables (raw bytes read 0 pre-link); check .rela.data before assuming empty tables.
+
+## func_801575B0 — unsigned range-check fusion vs retail's two cmpli → commute second comparison (Wii/1.1, FULL_MATCH)
+- Symptom:   decomp fused `v<1 && v>11` gotos into `subi r0,r3,1; cmpli r0,10`; retail keeps `cmpli r3,1; bt->exit; cmpli r3,11; bt->exit`. Every later instruction shifted one slot, so all six SDA21 reloc sites drifted +-4
+- Cause:     two unsigned comparisons of the same operand with goto to the same label get canonicalized into an unsigned range check by MWCC
+- Fix:       commute the second comparison (`if (v < 1) goto end; if (0xb < v) goto end;`) — same semantics, blocks the fusion pattern while keeping unsigned cmpli. Note `(int)` casts give signed cmpi which is WRONG here (overcorrection gives 97% with cmpi/cmpli mismatches)
+- Result:    FULL_MATCH (100%, witness-certified)
+- Confidence: repo_proven
+- Applies to/a.k.a.: any u32 bounds-guard pair branching to a shared exit; complements the func_80156F54 signed-cmpi variant
+
+## UPDATE — us-800a3bcc func_800A3304 solved to 99.8% (0 structural, size exact): full working recipe
+
+Combination that works (all prior shapes failed):
+1. `volatile s16*`-style paired reads over a MANUALLY advanced row-typed cursor
+   (`vp = (EquipRow*)((char*)vp + 2)` as a statement at the bottom of the inner
+   loop, NOT a compiler-managed induction variable). Both reads are identical
+   volatile expressions `*(volatile s16*)((char*)vp + 0x1C)` — volatile pairs
+   are never CSE-merged, and because the cursor is source-advanced the member
+   displacement +0x1C STAYS on the loads (the earlier element-pointer variant
+   let MWCC fold it into the IV start, which the witness rejects as non-register
+   bits).
+2. Declaration order `int j; EquipRow* r; void* inst; EquipRow* vp;` puts j=r30,
+   cursor=r29, acc=inst=r31 — matching retail.
+Residual: single `add` for work+rowOff targets r29 (coalesced into r) instead of
+retail's r3 scratch; witness `rho | no consistent bijection in region [12,13)`
+because r3 doubles as call-arg register. Named-intermediate and u32-typed
+intermediate forms do not break the coalescing.
+
+## kyoshin/cf/CtrlAct (us-800d3544 family) — store-sinking + stfs/fmr + int2flt residuals → mw_version GC/3.0a5.2 → Wii/1.1
+- Symptom:   three recurring residuals under a5.2: (1) address-taken gate-local `stw` sunk below `addi r4,sp/N; li r5` call-arg setup; (2) `fmr f0,f1` emitted before the preceding `stfs`; (3) 2^52 int→float conversion setup (`lis r0,0x4330/stw`) sunk below `subi/mullw`.
+- Cause:     all three are Wii/1.1-vs-GC/3.0a5.2 final-schedule differences, not source shape. Probes (.scratch/ctrlact_stwsink_probe.c, 6 shapes × c/c++) show a5.2 always sinks; Wii/1.1 hoists — byte-identical to retail.
+- Fix:       flip the unit to mw_version="Wii/1.1" in configure.py. Net effect strongly positive for this TU.
+- Result:    func_800D56F0 / func_800D4834 / CAttackParam_UnkVirtualFunc4 100% immediately; func_800D2A5C reached 100% after also correcting scaffolded flag constants (retail: base |=0x40000200, kind 0x54 → |0x42000000, kind 0x55 → |0x41000000 — the scaffold's 0x40002000/0x02000000/0x01000000 were Ghidra guesses). All four cycle-certified FULL_MATCH.
+- Confidence: repo_proven
+- Applies to/a.k.a.: gate idioms (`u32 local = *vf30(); func_80174C98(p,&local,N)`), mField54 timer decay pattern, int2flt magic-constant lowering; check net unit --all before keeping a version flip (GC-only schedules elsewhere may regress).
+## kyoshin code_800B06A4 — tail-call shims: recount the ABI args before redrafting (GC/3.0a5.2 `-O4,p`)
+
+- Symptom:   tiny 6-param wrapper functions at 0.0% with equal size; retail body is a pure `or`-rotation + `li r3,C; b callee` tail call.
+- Cause:     shim reconstructed with the WRONG callee arity/signature (float bit-casts, extra stack args). Retail's dead-looking `or r9,r8` was actually the SEVENTH GPR argument — PPC EABI passes args in r3..r10 (not r3..r8), so a 7-arg all-GPR call needs no stack.
+- Fix:       cast the callee through an all-GPR typedef with the true arity and call it directly: `typedef void* (*Fn)(long,void*,void*,void*,void*,void*,void*); return ((Fn)callee)(1,self,a1,a2,a3,a4,a5);` — MWCC emits the exact rotate+li+sibcall `b`. The `(Fn)symbol` cast still emits a direct bl/b with the symbol reloc (same pattern as existing B47Fn usage).
+- Result:    func_800B998C / func_800B99BC 0.0% → 100.0% FULL_MATCH (semantic-certified).
+- Confidence: repo_proven
+- Applies to/a.k.a.: any thunk/forwarder shim; whenever retail rotates r4-r8 and touches r9/r10, suspect a higher-arity call, not register noise. Pairs with the extern-C helper-name entry above.
+
+## kyoshin data-dissolve batch (28 main/kyoshin units) — phantom data → split1.s pools (Wii/1.1 & GC/3.0a5.2, data gate 100%)
+- Symptom:   `run.py data diff` FAIL "retail size 0x0 != decomp N" on .data/.rodata/.sdata/.sdata2/.sbss; or reloc-name drift where bytes match.
+- Cause:     retail DOL slices for these TUs carry NO data sections — all constants/vtables/jumptables/RTTI live in the shared blob `build/us/asm/split1.s`. MWCC necessarily re-emits them TU-locally under drifting @N names.
+- Fix:       UNIT_RULES in tools/postprocess_reloc_names.py: pool_patterns (content-keyed, @N-drift-proof) for float/double magics verified against each unit's retail asm sda21/lis+addi sites; exact_renames for jumptables (mapped by owning function + slot-count/equality-shape, since case offsets drift with WIP elided bodies) and vtables (ctor positional order); extern_data_sections strips everything else. Unreferenced orphans strip without renames. Tools used: .scratch/ky_probe.py (decomp sections + split1.s pool + unit asm refs), .scratch/ky_pool.py (blob dump), .scratch/ky_xref.py (text-ref sites).
+- Result:    all 28 units VERDICT: MATCH.
+- Confidence: repo_proven
+- Applies to/a.k.a.: any main/kyoshin unit whose splits.txt entry has no data ranges. Three traps worth remembering:
+  1. **GC/3.0a5.2 borrowed pool names** (CtrlAct): MWCC names a LOCAL .data switch table AND a LOCAL .sdata2 double after an unrelated global constant (lbl_eu_80666D50) that the same TU also UNDEF-references. objcopy --redefine-sym renames ALL same-named symbols — use retarget_relocs ((section, offset, new_name)) which renames only the one reloc-target symbol in place, plus globalize_symbols before extern_data_sections so the stripped copy resolves externally. Two locals can also map onto ONE merged retail object (CfObjectNpc {0,0x8c,0}+vtable = lbl_eu_805298B8): rename one via data_pool_patterns (unique content prefix) and the other via exact_renames — separate objcopy passes, since one pass rejects two --redefine-sym to the same target.
+  2. **Tentative definitions of shared constants are phantoms** (CfObjectMove `f32 lbl_eu_80666A88;`, CfObjectSelectorObj, CMenuBattlePlayerState_ct `u32 __ptmf_null[3]`): retail keeps ONE copy (split1.s / Runtime ptmf.o); delete the def or make it extern — bonus: fixes r13-vs-r2 SDA base mismatch vs retail.
+  3. **WIP-invented statics with no retail storage** (ImplMove cmds[], CBattleManager sBitShift[7]) can never match — rewrite as immediates/branch selects at source. Also: shared template vtables (CTask<IUICf>) have PER-SPLIT retail copies (lbl_eu_8052BF70 vs 8052C1C0...) — map per unit asm refs, not by name similarity. @N-keyed exact_renames regress when concurrent agents rebuild a TU; content-keyed pool_patterns survive.
+
+## CriWare adx_tlk addendum — lib-flag flips change pool emission; content-keyed rules absorb them (2026-08-26)
+- Symptom:   hours after the batch went green, adx_tlk's .rodata reappeared (0x8, @589 hi-magic pooled by GetTimeReal/adxt_Pause/DiscardSmpl) with ZERO source changes; ADXT_BiasDouble also dropped out-of-line and r26 saves appeared.
+- Cause:     concurrent configure.py edit (lib-level defaults) shifted codegen unit-wide; explicit per-object mw_version overrides pin the compiler but not every behavioral flag.
+- Fix:       re-added the content-keyed data_pool_patterns rule for @589→lbl_eu_805162D8 (+globalize+strip). Content matching makes the rule immune to @N drift AND to which expression pools the constant.
+- Result:    VERDICT: MATCH restored; full 149-unit CriWare sweep re-run clean under new flags.
+- Confidence: repo_proven
+- Applies to/a.k.a.: A/B methodology that settled it — original cast macro scored BETTER on adxt_GetTime text (21.2% vs 2.9%) but pools an unresolvable phantom 2^52 (no blob label base holds it → gate unfixable by rules); BiasDouble+absolute-label variant passes the gate at 2.9%; BiasDouble+(cst)->conv variant fails BOTH ways (pool persists + helper de-inlines). Data gates are binary pass/fail for promotion while text % is incremental — when they conflict, take the gate, log the text residual.

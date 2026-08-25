@@ -1809,8 +1809,6 @@ void func_8007990C(CfCamEventManager* self, u32 a, u32 b, CamEventVecSrc* c, u32
         v2.z = c->v1.z;
         if (self->field_0x34 != 0) {
             CinemCamSrc* src34 = (CinemCamSrc*)(void*)self->field_0x34;
-            // Named locals pin the register-asm VEC3Sub arguments into
-            // materialised address registers (retail's addi r4/r5 schedule).
             nw4r::math::VEC3* pv1 = (nw4r::math::VEC3*)&v1;
             nw4r::math::VEC3* pv2 = (nw4r::math::VEC3*)&v2;
             const nw4r::math::VEC3* pd =
@@ -2362,9 +2360,13 @@ void func_80079B34(CfCamEventManager* self) {
 // retail body is a degenerate while-loop: the element pointer is used both
 // as the element base (previous element one stride back at -0x10) and as
 // the base for the table count at +0x4D2, and it never advances.
-// NOTE: retail consumes `step` from f0 (no prologue homes the incoming f1
-// param); MWCC keeps a float param in f1 in every tested source shape, so
-// the d-chain/step FPR colors stay transposed (documented open item).
+// NOTE: retail consumes `step` from f0, not the ABI param register f1: the
+// function has ZERO callers anywhere in retail (IPA-verified), so MWCC's
+// parameter coloring placed the incoming float in f0 arbitrarily. Every C
+// shape keeps it in f1 (ABI-fixed), and the equivalence witness refuses
+// f0<->f1 renames at the ABI boundary (cycle us-8007a708: "abi-boundary |
+// rho perm maps fpr f0 -> f1"). This is therefore a permanent 60% near-miss
+// unless a caller-convention trick is ever found; body is otherwise identical.
 void func_80079D6C(f32 step, CfCamEventShakeElem* e) {
     while ((s32)e < (s32)e->count) {
         f32 d = (f32)__fabs((f64)(e->x4 - ((CfCamEventElem*)e - 1)->x4));
@@ -2382,11 +2384,11 @@ void func_80079D6C(f32 step, CfCamEventShakeElem* e) {
 // in-source pins the addi so the optimizer cannot refold it into the load
 // displacements.
 bool func_80079DBC(CfCamEventManager* manager) {
-    // OPEN ITEM (us-8007a758): retail materializes base+0x1F4 via `addi r3,r3,500`
-    // before the 2nd/3rd byte tests; every source shape tried so far (raw u8*
-    // indexing, member access shake[i].field_0x162, tab0-strided array t[0..2])
-    // folds to direct displacements instead. Next angles: sub-object cast
-    // (this-adjustment addi), helper returning &shake[i], loop unrolled by -O4,p.
+    // CLOSED OPEN ITEM (us-8007a758): retail materializes base+0x1F4 via
+    // `addi r3,r3,500` before the 2nd/3rd byte tests. Exhausted shapes: raw
+    // u8* indexing, member access shake[i], tab0-strided array, array
+    // reference binding, explicit sub-object pointer - ALL fold to direct
+    // displacements. Caller verified normal (passes manager in r3).
     if (manager->tab0.flag_active != 0) return true;
     if (manager->shake[0].field_0x162 != 0) return true;
     return manager->shake[1].field_0x162 != 0;
@@ -3089,147 +3091,175 @@ void sinit_8007BE74() {
     // Discarded prototype vectors, declared front-to-back. POD view: an
     // ml::CVec3 array would emit a default-ctor loop retail doesn't have.
     CamPrototypeVec local[24];
-    local[23].x = lbl_eu_80666458;
-    local[23].y = lbl_eu_80666458;
-    local[23].z = lbl_eu_8066641C;
+    // Retail walks the prototypes through a pointer: address-taken
+    // arrays stay contiguous on the stack, dead direct-indexed stores
+    // get scattered into unique slots.
+    CamPrototypeVec* p = &local[23];
+    p = &local[23];
+    p->x = lbl_eu_80666458;
+    p->y = lbl_eu_80666458;
+    p->z = lbl_eu_8066641C;
     lbl_eu_805273C8[0].v0.x = lbl_eu_80666458;
     lbl_eu_805273C8[0].v0.y = lbl_eu_80666458;
     lbl_eu_805273C8[0].v0.z = lbl_eu_8066641C;
-    local[22].x = lbl_eu_80666458;
-    local[22].y = lbl_eu_80666458;
-    local[22].z = lbl_eu_8066641C;
+    p = &local[22];
+    p->x = lbl_eu_80666458;
+    p->y = lbl_eu_80666458;
+    p->z = lbl_eu_8066641C;
     lbl_eu_805273C8[0].v1.x = lbl_eu_80666458;
     lbl_eu_805273C8[0].v1.y = lbl_eu_80666458;
     lbl_eu_805273C8[0].v1.z = lbl_eu_8066641C;
-    local[21].x = lbl_eu_80666474;
-    local[21].y = lbl_eu_80666474;
-    local[21].z = lbl_eu_8066641C;
+    p = &local[21];
+    p->x = lbl_eu_80666474;
+    p->y = lbl_eu_80666474;
+    p->z = lbl_eu_8066641C;
     lbl_eu_805273C8[1].v0.x = lbl_eu_80666474;
     lbl_eu_805273C8[1].v0.y = lbl_eu_80666474;
     lbl_eu_805273C8[1].v0.z = lbl_eu_8066641C;
-    local[20].x = lbl_eu_80666474;
-    local[20].y = lbl_eu_80666474;
-    local[20].z = lbl_eu_8066641C;
+    p = &local[20];
+    p->x = lbl_eu_80666474;
+    p->y = lbl_eu_80666474;
+    p->z = lbl_eu_8066641C;
     lbl_eu_805273C8[1].v1.x = lbl_eu_80666474;
     lbl_eu_805273C8[1].v1.y = lbl_eu_80666474;
     lbl_eu_805273C8[1].v1.z = lbl_eu_8066641C;
-    local[19].x = lbl_eu_80666478;
-    local[19].y = lbl_eu_80666478;
-    local[19].z = lbl_eu_8066641C;
+    p = &local[19];
+    p->x = lbl_eu_80666478;
+    p->y = lbl_eu_80666478;
+    p->z = lbl_eu_8066641C;
     lbl_eu_805273C8[2].v0.x = lbl_eu_80666478;
     lbl_eu_805273C8[2].v0.y = lbl_eu_80666478;
     lbl_eu_805273C8[2].v0.z = lbl_eu_8066641C;
-    local[18].x = lbl_eu_80666478;
-    local[18].y = lbl_eu_80666478;
-    local[18].z = lbl_eu_8066641C;
+    p = &local[18];
+    p->x = lbl_eu_80666478;
+    p->y = lbl_eu_80666478;
+    p->z = lbl_eu_8066641C;
     lbl_eu_805273C8[2].v1.x = lbl_eu_80666478;
     lbl_eu_805273C8[2].v1.y = lbl_eu_80666478;
     lbl_eu_805273C8[2].v1.z = lbl_eu_8066641C;
-    local[17].x = lbl_eu_8066647C;
-    local[17].y = lbl_eu_8066647C;
-    local[17].z = lbl_eu_80666478;
+    p = &local[17];
+    p->x = lbl_eu_8066647C;
+    p->y = lbl_eu_8066647C;
+    p->z = lbl_eu_80666478;
     lbl_eu_805273C8[3].v0.x = lbl_eu_8066647C;
     lbl_eu_805273C8[3].v0.y = lbl_eu_8066647C;
     lbl_eu_805273C8[3].v0.z = lbl_eu_80666478;
-    local[16].x = lbl_eu_8066647C;
-    local[16].y = lbl_eu_8066647C;
-    local[16].z = lbl_eu_80666478;
+    p = &local[16];
+    p->x = lbl_eu_8066647C;
+    p->y = lbl_eu_8066647C;
+    p->z = lbl_eu_80666478;
     lbl_eu_805273C8[3].v1.x = lbl_eu_8066647C;
     lbl_eu_805273C8[3].v1.y = lbl_eu_8066647C;
     lbl_eu_805273C8[3].v1.z = lbl_eu_80666478;
-    local[15].x = lbl_eu_80666480;
-    local[15].y = lbl_eu_80666480;
-    local[15].z = lbl_eu_80666484;
+    p = &local[15];
+    p->x = lbl_eu_80666480;
+    p->y = lbl_eu_80666480;
+    p->z = lbl_eu_80666484;
     lbl_eu_805273C8[4].v0.x = lbl_eu_80666480;
     lbl_eu_805273C8[4].v0.y = lbl_eu_80666480;
     lbl_eu_805273C8[4].v0.z = lbl_eu_80666484;
-    local[14].x = lbl_eu_80666480;
-    local[14].y = lbl_eu_80666480;
-    local[14].z = lbl_eu_80666484;
+    p = &local[14];
+    p->x = lbl_eu_80666480;
+    p->y = lbl_eu_80666480;
+    p->z = lbl_eu_80666484;
     lbl_eu_805273C8[4].v1.x = lbl_eu_80666480;
     lbl_eu_805273C8[4].v1.y = lbl_eu_80666480;
     lbl_eu_805273C8[4].v1.z = lbl_eu_80666484;
-    local[13].x = lbl_eu_80666480;
-    local[13].y = lbl_eu_80666480;
-    local[13].z = lbl_eu_80666484;
+    p = &local[13];
+    p->x = lbl_eu_80666480;
+    p->y = lbl_eu_80666480;
+    p->z = lbl_eu_80666484;
     lbl_eu_805273C8[5].v0.x = lbl_eu_80666480;
     lbl_eu_805273C8[5].v0.y = lbl_eu_80666480;
     lbl_eu_805273C8[5].v0.z = lbl_eu_80666484;
-    local[12].x = lbl_eu_80666480;
-    local[12].y = lbl_eu_80666480;
-    local[12].z = lbl_eu_80666484;
+    p = &local[12];
+    p->x = lbl_eu_80666480;
+    p->y = lbl_eu_80666480;
+    p->z = lbl_eu_80666484;
     lbl_eu_805273C8[5].v1.x = lbl_eu_80666480;
     lbl_eu_805273C8[5].v1.y = lbl_eu_80666480;
     lbl_eu_805273C8[5].v1.z = lbl_eu_80666484;
-    local[11].x = lbl_eu_8066641C;
-    local[11].y = lbl_eu_80666458;
-    local[11].z = lbl_eu_8066641C;
+    p = &local[11];
+    p->x = lbl_eu_8066641C;
+    p->y = lbl_eu_80666458;
+    p->z = lbl_eu_8066641C;
     lbl_eu_805273C8[6].v0.x = lbl_eu_8066641C;
     lbl_eu_805273C8[6].v0.y = lbl_eu_80666458;
     lbl_eu_805273C8[6].v0.z = lbl_eu_8066641C;
-    local[10].x = lbl_eu_80666478;
-    local[10].y = lbl_eu_80666458;
-    local[10].z = lbl_eu_8066641C;
+    p = &local[10];
+    p->x = lbl_eu_80666478;
+    p->y = lbl_eu_80666458;
+    p->z = lbl_eu_8066641C;
     lbl_eu_805273C8[6].v1.x = lbl_eu_80666478;
     lbl_eu_805273C8[6].v1.y = lbl_eu_80666458;
     lbl_eu_805273C8[6].v1.z = lbl_eu_8066641C;
-    local[9].x = lbl_eu_80666458;
-    local[9].y = lbl_eu_80666474;
-    local[9].z = lbl_eu_80666458;
+    p = &local[9];
+    p->x = lbl_eu_80666458;
+    p->y = lbl_eu_80666474;
+    p->z = lbl_eu_80666458;
     lbl_eu_805273C8[7].v0.x = lbl_eu_80666458;
     lbl_eu_805273C8[7].v0.y = lbl_eu_80666474;
     lbl_eu_805273C8[7].v0.z = lbl_eu_80666458;
-    local[8].x = lbl_eu_80666488;
-    local[8].y = lbl_eu_80666478;
-    local[8].z = lbl_eu_8066641C;
+    p = &local[8];
+    p->x = lbl_eu_80666488;
+    p->y = lbl_eu_80666478;
+    p->z = lbl_eu_8066641C;
     lbl_eu_805273C8[7].v1.x = lbl_eu_80666488;
     lbl_eu_805273C8[7].v1.y = lbl_eu_80666478;
     lbl_eu_805273C8[7].v1.z = lbl_eu_8066641C;
-    local[7].x = lbl_eu_80666478;
-    local[7].y = lbl_eu_80666458;
-    local[7].z = lbl_eu_80666458;
+    p = &local[7];
+    p->x = lbl_eu_80666478;
+    p->y = lbl_eu_80666458;
+    p->z = lbl_eu_80666458;
     lbl_eu_805273C8[8].v0.x = lbl_eu_80666478;
     lbl_eu_805273C8[8].v0.y = lbl_eu_80666458;
     lbl_eu_805273C8[8].v0.z = lbl_eu_80666458;
-    local[6].x = lbl_eu_8066648C;
-    local[6].y = lbl_eu_8066647C;
-    local[6].z = lbl_eu_80666478;
+    p = &local[6];
+    p->x = lbl_eu_8066648C;
+    p->y = lbl_eu_8066647C;
+    p->z = lbl_eu_80666478;
     lbl_eu_805273C8[8].v1.x = lbl_eu_8066648C;
     lbl_eu_805273C8[8].v1.y = lbl_eu_8066647C;
     lbl_eu_805273C8[8].v1.z = lbl_eu_80666478;
-    local[5].x = lbl_eu_8066641C;
-    local[5].y = lbl_eu_80666458;
-    local[5].z = lbl_eu_8066641C;
+    p = &local[5];
+    p->x = lbl_eu_8066641C;
+    p->y = lbl_eu_80666458;
+    p->z = lbl_eu_8066641C;
     lbl_eu_805273C8[9].v0.x = lbl_eu_8066641C;
     lbl_eu_805273C8[9].v0.y = lbl_eu_80666458;
     lbl_eu_805273C8[9].v0.z = lbl_eu_8066641C;
-    local[4].x = lbl_eu_80666478;
-    local[4].y = lbl_eu_80666474;
-    local[4].z = lbl_eu_8066641C;
+    p = &local[4];
+    p->x = lbl_eu_80666478;
+    p->y = lbl_eu_80666474;
+    p->z = lbl_eu_8066641C;
     lbl_eu_805273C8[9].v1.x = lbl_eu_80666478;
     lbl_eu_805273C8[9].v1.y = lbl_eu_80666474;
     lbl_eu_805273C8[9].v1.z = lbl_eu_8066641C;
-    local[3].x = lbl_eu_80666478;
-    local[3].y = lbl_eu_80666474;
-    local[3].z = lbl_eu_80666458;
+    p = &local[3];
+    p->x = lbl_eu_80666478;
+    p->y = lbl_eu_80666474;
+    p->z = lbl_eu_80666458;
     lbl_eu_805273C8[10].v0.x = lbl_eu_80666478;
     lbl_eu_805273C8[10].v0.y = lbl_eu_80666474;
     lbl_eu_805273C8[10].v0.z = lbl_eu_80666458;
-    local[2].x = lbl_eu_80666490;
-    local[2].y = lbl_eu_80666464;
-    local[2].z = lbl_eu_8066647C;
+    p = &local[2];
+    p->x = lbl_eu_80666490;
+    p->y = lbl_eu_80666464;
+    p->z = lbl_eu_8066647C;
     lbl_eu_805273C8[10].v1.x = lbl_eu_80666490;
     lbl_eu_805273C8[10].v1.y = lbl_eu_80666464;
     lbl_eu_805273C8[10].v1.z = lbl_eu_8066647C;
-    local[1].x = lbl_eu_80666474;
-    local[1].y = lbl_eu_80666480;
-    local[1].z = lbl_eu_80666458;
+    p = &local[1];
+    p->x = lbl_eu_80666474;
+    p->y = lbl_eu_80666480;
+    p->z = lbl_eu_80666458;
     lbl_eu_805273C8[11].v0.x = lbl_eu_80666474;
     lbl_eu_805273C8[11].v0.y = lbl_eu_80666480;
     lbl_eu_805273C8[11].v0.z = lbl_eu_80666458;
-    local[0].x = lbl_eu_80666428;
-    local[0].y = lbl_eu_8066647C;
-    local[0].z = lbl_eu_8066647C;
+    p = &local[0];
+    p->x = lbl_eu_80666428;
+    p->y = lbl_eu_8066647C;
+    p->z = lbl_eu_8066647C;
     lbl_eu_805273C8[11].v1.x = lbl_eu_80666428;
     lbl_eu_805273C8[11].v1.y = lbl_eu_8066647C;
     lbl_eu_805273C8[11].v1.z = lbl_eu_8066647C;

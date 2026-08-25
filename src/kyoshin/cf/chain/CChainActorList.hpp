@@ -132,9 +132,31 @@ extern "C" u32 func_8013C54C();
 extern "C" void func_8013E800(int);
 extern "C" int lbl_eu_80662A80;
 extern "C" float lbl_eu_8050EDE0[4];
+// Retail .sdata2 object (8 bytes); defined in another TU.
+extern float lbl_eu_80668A80;
+
+// Tuning-pool constants used by func_8027C1A8 plus its u16 id table.
+extern unsigned short lbl_eu_8050EDD0[0x40];
+extern const float lbl_eu_80668A68;
+extern const float lbl_eu_80668A6C;
+extern const float lbl_eu_80668A70;
+extern const double lbl_eu_80668A78;
 extern "C" int func_800B8920(void* addr);
 extern "C" int func_80148778(void*, int);
 extern "C" void func_80082568__Q22cf13CfGameManagerFv(int, int, int);
+// Read-only view of a chain actor's +0x0 target key (the battle object
+// whose identity chain lookups compare against).
+class CChainActorKeyView {
+public:
+    u32 mTargetObj; //0x0 battle-object pointer/key
+};
+
+// CfGameManager pair-value query (retail Fv-form symbol; call sites pass
+// two ids even though the suffix does not reflect them) and the tuning-value
+// accessor (owner: code_8025FB10.cpp).
+class CChainActorObjId;
+int func_800824FC__Q22cf13CfGameManagerFv(int firstId, int secondId);
+u32 func_8025FB10(CChainActorObjId* data, u32 flag);
 extern "C" int func_8017FD44(void*);
 extern "C" int func_8017FD4C(int);
 extern "C" int func_80086F9C__Q22cf13CfGameManagerFv(int arg);
@@ -142,6 +164,12 @@ extern "C" int getArtsSlotRC(const void* arts, short index, short subindex);
 extern "C" void* getArtsParamRC2(const void* arts, int index, int subindex);
 extern "C" void func_8027EEF4(int);
 extern "C" u32 func_8027EE88(int, int);
+// Chain-activation dice roll (defined in this TU). Retail callers emit a
+// real bl to the unmangled label func_8027C1A8 (MWCC_CASES func_800F41A0
+// record), so it keeps C linkage here like the other imports above; the
+// definition in the .cpp inherits it from this declaration.
+extern "C" int func_8027C1A8(cf::CChainChanceS* self,
+                             CChainActorObjId* objA, CChainActorObjId* objB);
 extern "C" __declspec(noinline) void func_802811FC(cf::CChainActorList* self);
 extern "C" cf::CChainActor* func_8028120C(cf::CChainActorList* self);
 extern "C" void func_8027B8C8(cf::CChainActorList* self, cf::CChainActor* actor);
@@ -221,6 +249,10 @@ extern CChainVtblActor lbl_eu_80538290;
 extern CChainVtblActor lbl_eu_805384E0;
 extern CChainVtblActor lbl_eu_80538458;
 extern CChainVtblSub lbl_eu_80538338;
+
+// _reslist_base<CChainActor*> base vtable (retail .data), restored into the
+// mChainActorList member's vptr slot by its inlined base destructor.
+extern u8 lbl_eu_8053832C[];
 
 // Explicit call target for the CChainEffect ctor: retail calls it at the END
 // of the CChainActorPc/Ene ctor bodies, and MWCC rejects explicit ctor-call

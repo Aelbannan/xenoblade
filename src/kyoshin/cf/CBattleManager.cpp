@@ -1,6 +1,33 @@
 // (func_800BE12C now has a single unified decl on CfObjectMove.hpp; only one
 // form exists, so no pre-include rename is needed here.)
+// getArtsSlotRC: CAIAction.hpp and CChainActorList.hpp declare conflicting
+// C-linkage signatures; this TU calls neither, so rename it out of the way
+// for the duration of the include block.
+// getArtsSlotRC: CAIAction.hpp and CChainActorList.hpp declare conflicting
+// C-linkage signatures; this TU calls neither, so rename CAIAction.hpp's
+// variant out of the way for just that include.
+#define getArtsSlotRC cbmgr_artsSlotRcUnused
+#define getArtsParamRC2 cbmgr_artsParamRc2Unused
+#define func_8009EC9C cbmgr_func8009EC9CUnused
 #include "kyoshin/cf/object/CAIAction.hpp"
+#undef getArtsSlotRC
+#undef getArtsParamRC2
+#undef func_8009EC9C
+// func_8025FB10: u32 form (CChainActorList.hpp) is canonical; CChainTimer.hpp's
+// int form conflicts. Same pre-include + rename recipe as CMenuBattleMode.cpp.
+// func_800824FC: renames CChainActorList's int form (this TU uses the s32
+// spelling shared with CfGameManagerUnityHelpers.hpp).
+#define func_800824FC__Q22cf13CfGameManagerFv cbmgr_800824FCUnused
+#include "kyoshin/cf/chain/CChainActorList.hpp"
+#undef func_800824FC__Q22cf13CfGameManagerFv
+#define func_8025FB10 cbmgr_8025FB10Unused
+// lbl_eu_8066A1F8: CChain.hpp declares a const f32 variant that conflicts
+// with this TU's plain-float decls (CfObjectEne.hpp / local). Rename it for
+// the duration of this aggregate include.
+#define lbl_eu_8066A1F8 cbmgr_pi8066A1F8Unused
+#include "kyoshin/cf/CBattleManager.hpp"
+#undef lbl_eu_8066A1F8
+#undef func_8025FB10
 #include "kyoshin/cf/CfMapItemManager.hpp"
 #include "monolib/scn/CScnTimeApi.hpp"
 #include "kyoshin/cf/CBattleManager.hpp"
@@ -485,7 +512,8 @@ extern "C" f32 lbl_eu_80666E68;  // 3.0f
 extern "C" f32 lbl_eu_80666E6C;  // 5.0f
 extern "C" f32 lbl_eu_80666E70;  // 0.35f
 extern "C" f32 lbl_eu_80666E74;  // 0.01f (squared-distance epsilon)
-extern "C" f32 lbl_eu_8066A1F8;  // pi
+// (lbl_eu_8066A1F8 comes from CfObjectEne.hpp; an extra extern "C" copy here
+// breaks the C++-linkage declaration when the header is included twice.)
 extern "C" s16 lbl_eu_804FCA3C[];
 // --- shared battle-helper externs used by the func_800E2A9C / func_800E64CC ports ---
 extern "C" void func_8018C820(void*, int);                   // party-gauge add
@@ -11359,8 +11387,13 @@ extern "C" void func_800EA484(cf::CBattleManager* self, f32 value, int flags) {
                 void* r29 = __dynamic_cast(func_800F6EAC(func_80043F18(&h2), i), 0, &lbl_eu_80661970, &lbl_eu_806618F0, 0);
                 // Match the cast object's +0x9C pointer against either vision
                 // actor (or its embedded move sub-object at +0x3E9C).
-                if ((r26 != nullptr && ((E484_TypeObj*)r29)->field_9C == (u8*)r26 + 0x3E9C) ||
-                    (r27 != nullptr && ((E484_TypeObj*)r29)->field_9C == (u8*)r27 + 0x3E9C))
+                // Re-read the pair fields through vision each iteration:
+                // retail recomputes the +0x3E9C adjustment per pass (the
+                // vt88 virtual call bars hoisting the memory load).
+                if ((func_8016FE34(func_800B708C((s32)vp->field_00)) != nullptr &&
+                     ((E484_TypeObj*)r29)->field_9C == (u8*)func_8016FE34(func_800B708C((s32)vp->field_00)) + 0x3E9C) ||
+                    (func_8016FE34(func_800B708C((s32)vp->field_04)) != nullptr &&
+                     ((E484_TypeObj*)r29)->field_9C == (u8*)func_8016FE34(func_800B708C((s32)vp->field_04)) + 0x3E9C))
                     reinterpret_cast<E484_Mirror*>(r29)->vt88(value);
                 if (r26 != nullptr) {
                     void* b = ((E484_VisionActor*)r26)->field_45B8;
@@ -11551,21 +11584,27 @@ static s32 SubObjVfuncC(void* sub) {
 // for the u8 field; kept faithfully).
 // ---------------------------------------------------------------------------
 static u32 BattleStateCheck(u32 sel, void* obj, u32 byteOff, s32 thresh) {
-    static const u8 sBitShift[7] = { 6, 31, 0, 1, 2, 3, 4 };
+    // Bit table for sel 0..6 is {6, 31, 0, 1, 2, 3, 4}; retail pools no such
+    // storage, so keep it as branch selects (a static array here would emit
+    // a phantom .sdata2 object with no retail counterpart).
     u8* p = (u8*)obj;
+#define KY_BITSHIFT(sel) \
+    ((u8)((sel) == 0 ? 6 : (sel) == 1 ? 31 : (sel) == 2 ? 0 : (sel) == 3 ? 1 : \
+                        (sel) == 4 ? 2 : (sel) == 5 ? 3 : 4))
 
     if (sel <= 3) {
-        return (p[byteOff] >> sBitShift[sel]) & 1;
+        return (p[byteOff] >> KY_BITSHIFT(sel)) & 1;
     }
     if (sel <= 9) {
         s16 v = *(s16*)(p + 0x64 + (sel - 4) * 2);   // +100..+110
         if (v < thresh) {
-            if (sel <= 6) return (p[byteOff] >> sBitShift[sel]) & 1;
+            if (sel <= 6) return (p[byteOff] >> KY_BITSHIFT(sel)) & 1;
             return 0;
         }
         return 1;
     }
     return 0;
+#undef KY_BITSHIFT
 }
 
 // ---------------------------------------------------------------------------

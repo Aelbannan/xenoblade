@@ -115,13 +115,13 @@ CVS_THREAD_HAGE* __ct__802A6E84(CVoiceHandle* owner1, CVoiceHandle* owner2) {
 
     // Copy the init-state triple into the first 3 u32s (outside try). The
     // integer cast keeps the label materialized once via lis+addi.
-    register u32 v0;
-    u32 v1;
     const u32* base = (const u32*)(u32)lbl_eu_80539BA8;
+    register u32* p0;
+    u32 v1;
     v1 = base[1];
-    v0 = base[0];
+    p0 = (u32*)base[0];
+    ((CVS_THREAD_HAGE_raw*)self)->state0 = p0;
     ((CVS_THREAD_HAGE_raw*)self)->state1 = v1;
-    ((CVS_THREAD_HAGE_raw*)self)->state0 = (u32*)v0;
     ((CVS_THREAD_HAGE_raw*)self)->state2 = base[2];
 
     return self;
@@ -134,21 +134,26 @@ CVS_THREAD_HAGE* __ct__802A6E84(CVoiceHandle* owner1, CVoiceHandle* owner2) {
 // (iter + 0xC1C) if the iterator check and slot conflict check both pass.
 // Retries until a voice ID is selected, then plays via func_802A3C44.
 void func_802A6F8C(CVS_THREAD_HAGE* self) {
-    // Copy init data using pointer increment to force lwzu pattern
+    // Copy init data; slot-1 handle is read mid-copy (between word 0 and
+    // word 1 loads) as in retail, so keep the reads interleaved.
+    // v0 declared before p so the lwzu result claims the lower scratch
+    // register (retail: r4) and the label base takes r5.
+    u32 v0;
     const u32* p = lbl_eu_80539BB4;
-    u32 v0 = *p++;
+    CVoiceHandle* handle;
+    v0 = *p++;
+    handle = self->field_0x20;
     self->unk4 = *p++;
     self->unk0 = (u32*)v0;
     self->unk8 = *p;
 
-    // Both slots must be populated
-    if (self->field_0x20 == NULL) return;
+    // Both slots must be populated (slot 2 is re-read from memory here)
+    if (handle == NULL) return;
     if (self->field_0x24 == NULL) return;
 
-    // Check if slot 1 voice is still active
-    typedef int (*CheckFunc)(CVoiceHandle*);
-    CheckFunc checkFunc = (CheckFunc)self->field_0x20->vtable[0x2BC / 4];
-    if (checkFunc(self->field_0x20) != 0) return;
+    // Voice idle check via phantom-vtable slot 173 (byte offset 0x2BC);
+    // emitted as a true r12-chained virtual dispatch.
+    if (((CVoiceHandleVt*)handle)->isVoiceActive() != 0) return;
 
     // Get voice iterator from slot 2 handle
     int iter = func_802A77E8(self->field_0x24);
@@ -156,8 +161,12 @@ void func_802A6F8C(CVS_THREAD_HAGE* self) {
 
     // Loop until a voice ID is selected
     while (voiceId == -1) {
-        switch (ml::math::mtRand(4)) {
-        default: // 0 -- dynamic voice selection
+        int roll = ml::math::mtRand(4);
+        // Default listed first so MWCC lays it out inline after the compare
+        // chain, with the constant-ID cases as forward branches (retail).
+        switch (roll) {
+        default: // 0 -- dynamic selection: iterator must pass its check and
+                 // the two slots must not conflict, otherwise retry.
             if (func_802A7850(iter) != 0 &&
                 func_802A7B90(self->field_0x20, self->field_0x24) == 0) {
                 voiceId = iter + 0xC1C;
@@ -175,8 +184,14 @@ void func_802A6F8C(CVS_THREAD_HAGE* self) {
         }
     }
 
-    // Try to play the selected voice
-    if (func_802A3C44(self, &self->field_0x20->voice, voiceId) == 0) {
+    // Try to play the selected voice on slot 1's embedded CCharVoice
+    // (conditional bias pattern, no else branch).
+    CVoiceHandle* playHandle = self->field_0x20;
+    CCharVoice* voicePtr = (CCharVoice*)playHandle;
+    if (playHandle != NULL) {
+        voicePtr = &playHandle->voice;
+    }
+    if (func_802A3C44(self, voicePtr, voiceId) == 0) {
         // Playback failed -- call completion callback
         self->func_802A3B50();
     }

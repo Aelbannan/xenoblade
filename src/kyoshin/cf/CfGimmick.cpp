@@ -274,13 +274,13 @@ void func_80209288(CfGimmick* self, f32* out, void* bdat, void** table) {
     // emits retail's stw + lha memory truncation idiom.
     s32 rawA = getBdatStringColumnValue(
         *table, *(char**)(lbl_eu_805357E8 + 0x1C) + 2, self->field_64);
-    out[0] = lbl_eu_8066A210 * (f32)*(const s16*)&rawA;
+    out[0] = (f32)*(const s16*)&rawA * lbl_eu_8066A210;
     s32 rawB = getBdatStringColumnValue(
         *table, *(char**)(lbl_eu_805357E8 + 0x20) + 2, self->field_64);
-    out[1] = lbl_eu_8066A210 * (f32)*(const s16*)&rawB;
+    out[1] = (f32)*(const s16*)&rawB * lbl_eu_8066A210;
     s32 rawC = getBdatStringColumnValue(
         *table, *(char**)(lbl_eu_805357E8 + 0x24) + 2, self->field_64);
-    out[2] = lbl_eu_8066A210 * (f32)*(const s16*)&rawC;
+    out[2] = (f32)*(const s16*)&rawC * lbl_eu_8066A210;
 }
 
 void func_8020938C(CfGimmick* self, f32* out, void* unused, void** holder, int v) {
@@ -317,12 +317,17 @@ void func_802095D8(CfGimmick* self, f32* out, void* unused, void** holder, int v
     *(u8*)(*(u8* *)(lbl_eu_805357E8 + 0x24)) = c;
     *(u8*)(*(u8* *)(lbl_eu_805357E8 + 0x20)) = c;
     *(u8*)(*(u8* *)(lbl_eu_805357E8 + 0x1C)) = c;
-    out[0] = lbl_eu_8066A210 * (f32)(s16)getBdatStringColumnValue(
-        *holder, *(char**)(lbl_eu_805357E8 + 0x1C) + 2, self->field_64);
-    out[1] = lbl_eu_8066A210 * (f32)(s16)getBdatStringColumnValue(
-        *holder, *(char**)(lbl_eu_805357E8 + 0x20) + 2, self->field_64);
-    out[2] = lbl_eu_8066A210 * (f32)(s16)getBdatStringColumnValue(
-        *holder, *(char**)(lbl_eu_805357E8 + 0x24) + 2, self->field_64);
+    // Address-taking forces the call result to spill; the s16 deref reload
+    // emits retail's stw + lha memory truncation idiom (same as func_80209288).
+    s32 rawA = getBdatStringColumnValue(
+        *holder, *(char**)(lbl_eu_805357E8 + 0x1C), self->field_64);
+    out[0] = (f32)*(const s16*)&rawA * lbl_eu_8066A210;
+    s32 rawB = getBdatStringColumnValue(
+        *holder, *(char**)(lbl_eu_805357E8 + 0x20), self->field_64);
+    out[1] = (f32)*(const s16*)&rawB * lbl_eu_8066A210;
+    s32 rawC = getBdatStringColumnValue(
+        *holder, *(char**)(lbl_eu_805357E8 + 0x24), self->field_64);
+    out[2] = (f32)*(const s16*)&rawC * lbl_eu_8066A210;
 }
 
 int func_802096EC(void* obj) {
@@ -664,6 +669,12 @@ void func_8020A434(CfGimmickReg* self) {
 // (or the bdat file isn't loaded), the fallback name lbl_eu_80662788 is used.
 unsigned int func_8020A5DC();
 
+// Look up a gimmick name from the bdat table: resolve the column for the
+// requested row (prefixing the column string with '3'), format it into the
+// shared message buffer and post the message.  The write-format path is
+// gated on func_8013C54C() (message system loaded) and func_80124B78() being
+// zero (via the inlined func_8020A5DC boolean).  When the row is out of range
+// (or the bdat file isn't loaded), the fallback name lbl_eu_80662788 is used.
 int func_8020A484(int index) {
     // One reused `name` local: retail colors the bdat/column-string web and
     // the cap/default-name web into r31/r30 respectively.
@@ -672,13 +683,13 @@ int func_8020A484(int index) {
     s32 cnt;
     const char* name;
     if (index != 0) {
-        bdat = lbl_eu_80664148;
-        if (bdat != 0) {
+        if (lbl_eu_80664148 != 0) {
+            bdat = lbl_eu_80664148;
             func_8003AA34();
             // Named cap/cnt like the matched func_8020A608: B41C's result
             // stays callee-saved across the B1EC call.
-            s32 cap = func_8003B41C(bdat);
-            s32 cnt = func_8003B1EC(bdat);
+            cap = func_8003B41C(bdat);
+            cnt = func_8003B1EC(bdat);
             if (cap + cnt > index) {
                 u8* col = *(u8**)(lbl_eu_805357E8 + 0x44);
                 col[4] = 0x33;
@@ -736,79 +747,74 @@ void* func_8020A608(int index, int mod) {
 }
 
 void func_8020A6B0(CfGimmickReg* self, const CfGimmickVec3* point, f32 radius,
-                   int index, int mod, int arg7) {
-    // Distance from the fixed reference point to the requested position.  The
-    // nw4r VEC3 helper kernels reproduce retail's psq_l/ps_sub/psq_st block,
-    // and VEC3LenSq the ps_mul/ps_madd/ps_sum0 distSq per path.
+                   s32 index, s32 mod, s32 arg7) {
+    // Distance from the fixed reference point to the requested position.
+    // VEC3Sub's paired-single kernel reproduces retail's psq_l/ps_sub/psq_st
+    // block; radiusSq is folded into the same schedule (fmuls between loads).
     nw4r::math::VEC3 diff;
     VEC3Sub(&diff, (const nw4r::math::VEC3*)&lbl_eu_805765A0,
             (const nw4r::math::VEC3*)point);
     f32 radiusSq = radius * radius;
 
-    if (self->field_00 != 0) {
-        // Object registered: remove it once the target leaves the radius.
-        // The inner re-test of field_00 reuses the entry cr1 compare (retail
-        // beq cr1) and gates the unregister call.
-        if (VEC3LenSq(&diff) > radiusSq && self->field_00 != 0) {
-            func_800B3A88((UnkClass_805764CC*)func_800B07E8(), self->field_00);
+    void* reg = self->field_00;
+    if (reg != 0) {
+        // Registered object: unregister once the target leaves the radius.
+        // Retail re-tests the entry-time null compare (cr1) after the length
+        // check, keeping one shared return path for both guard fails.
+        if (VEC3LenSq(&diff) > radiusSq && reg != 0) {
+            func_800B3A88((UnkClass_805764CC*)func_800B07E8(), reg);
             self->field_00 = 0;
         }
         return;
     }
 
-    // No object yet: spawn one only when the target is within range.
+    // No object yet: spawn one only when the target is within range.  Both
+    // paths recompute VEC3LenSq (retail duplicates the PS block per branch).
     if (VEC3LenSq(&diff) <= radiusSq) {
-    const char* name;
-    if (index != 0) {
+        // Name lookup: default unless the bdat row resolves.  One shared
+        // default keeps retail's single lbl_eu_80662788 load site.
+        const char* name = (const char*)lbl_eu_80662788;
         void* bdat = lbl_eu_80664148;
-        if (bdat != 0) {
+        if (index != 0 && bdat != 0) {
             func_8003AA34();
-            // Sequence the row-capacity calls so B41C runs first (retail
-            // keeps its result in a callee-saved reg across the B1EC call).
-            u32 cap = func_8003B41C(bdat);
-            u32 cnt = func_8003B1EC(bdat);
-            if (index < (int)(cap + cnt)) {
-                // Patch the requested column's prefix, then read the row value.
+            // B41C's result stays in a callee-saved register across B1EC.
+            s32 cap = func_8003B41C(bdat);
+            s32 cnt = func_8003B1EC(bdat);
+            if (cap + cnt > index) {
+                // Patch the requested column's prefix, then read its value.
                 u8* col = *(u8**)(lbl_eu_805357E8 + 0x44);
                 col[4] = (u8)(mod + 0x31);
                 name = (const char*)getBdatStringColumnValue(
                     bdat, *(char**)(lbl_eu_805357E8 + 0x44), index);
-            } else {
-                name = (const char*)lbl_eu_80662788;
             }
-        } else {
-            name = (const char*)lbl_eu_80662788;
         }
-    } else {
-        name = (const char*)lbl_eu_80662788;
-    }
 
-    UnkClass_805764CC* mgr = (UnkClass_805764CC*)func_800B07E8();
-    CfGimmickObject* obj = func_800B20B4(mgr, 0x4000, 0, 0);
-    if (obj == 0) {
-        self->field_00 = 0;
-        return;
-    }
+        CfGimmickObject* obj = func_800B20B4((UnkClass_805764CC*)func_800B07E8(), 0x4000, 0, 0);
+        if (obj == 0) {
+            self->field_00 = 0;
+            return;
+        }
 
-    if (strlen(name) >= 0x20) {
-        // Truncate over-long names into a fixed 0x20 buffer.
-        char buf[0x20];
-        strcpy(buf, name);
-        buf[0x1F] = 0;
-        func_800C13FC(obj, buf, arg7);
-    } else {
-        func_800C13FC(obj, name, arg7);
-    }
+        if (strlen(name) >= 0x20) {
+            // Truncate over-long names into a fixed 0x40 stack buffer.
+            char buf[0x40];
+            strcpy(buf, name);
+            buf[0x3F] = 0;
+            func_800C13FC(obj, buf, arg7);
+        } else {
+            func_800C13FC(obj, name, arg7);
+        }
 
-    // Activate, then reposition the object right above the requested point.
-    ((void (*)(CfGimmickObject*, int))obj->vtable[0x158 >> 2])(obj, 1);
-    CfGimmickVec3 pos;
-    pos.x = point->x;
-    pos.y = point->y + lbl_eu_80668378;
-    pos.z = point->z;
-    ((void (*)(CfGimmickObject*, const CfGimmickVec3*))obj->vtable[0x9C >> 2])(obj, &pos);
-    obj->field_90 = 1;
-    self->field_00 = (void*)obj;
+        // Activate, then reposition the object above the requested point.
+        ((CfGimmickSpawnIf*)obj)->activate(1);
+        CfGimmickVec3 pos;
+        f32 py = point->y + lbl_eu_80668378;
+        pos.x = point->x;
+        pos.y = py;
+        pos.z = point->z;
+        ((CfGimmickSpawnIf*)obj)->setPos(&pos);
+        obj->field_90 = 1;
+        self->field_00 = (void*)obj;
     }
 }
 
@@ -879,18 +885,20 @@ int func_8020A9F4(CfGimmick* self, const CfGimmickVec3* point, const CfGimmickVe
 // inlined paired-single kernels reproduce retail's psq_l/ps_sub/ps_mul/
 // ps_madd/ps_sum0 sequence.
 int func_8020AA8C(CfGimmick* self, const CfGimmickVec3* point, const CfGimmickVec3* center) {
-    // SDK VEC3Sub + VEC3LenSq kernels, same idiom as func_8020A928.
     nw4r::math::VEC3 diff;
-    VEC3Sub(&diff, (const nw4r::math::VEC3*)point, (const nw4r::math::VEC3*)center);
-    if (VEC3LenSq(&diff) > self->field_40)
-        return 0;
-
-    Vec tmp;
-    PSMTXMultVec((const f32 (*)[4])self, (const Vec*)point, (Vec*)&tmp);
-    if (self->field_30 >= tmp.x && -self->field_30 <= tmp.x &&
-        self->field_3C >= tmp.z && -self->field_3C <= tmp.z &&
-        self->field_34 >= tmp.y && self->field_38 <= tmp.y)
-        return 1;
+    VEC3Sub(&diff, (const nw4r::math::VEC3*)center, (const nw4r::math::VEC3*)point);
+    // Success path nested inside the radius test keeps one shared fail-exit
+    // like retail (.L_8020C9BC).
+    if (VEC3LenSq(&diff) <= self->field_40) {
+        Vec tmp;
+        PSMTXMultVec((const f32 (*)[4])self, (const Vec*)point, (Vec*)&tmp);
+        // Retail tests the local-space extents in z, x, y order, fneg-ing each
+        // half-extent for the lower bound.
+        if (self->field_30 >= tmp.z && -self->field_30 <= tmp.z &&
+            self->field_3C >= tmp.x && -self->field_3C <= tmp.x &&
+            self->field_34 >= tmp.y && self->field_38 <= tmp.y)
+            return 1;
+    }
     return 0;
 }
 

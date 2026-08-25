@@ -17,7 +17,8 @@ extern "C" f32 lbl_eu_80665A68 = 0;
 extern "C" f32 lbl_eu_80665A6C = 0;
 extern "C" f32 lbl_eu_80665A70 = 0;
 extern "C" f32 lbl_eu_80665A74 = 0;
-extern "C" u64 lbl_eu_80665A78 = 0;
+// Retail object spans 8 bytes; only the leading flag byte is accessed.
+extern "C" u8 lbl_eu_80665A78[8] = {0};
 // Retail layout: A80 is an 8-byte align-8 object and A8A spans 6 bytes; the
 // code only ever touches the leading flag byte.
 extern "C" u8 lbl_eu_80665A80[8] __attribute__((aligned(8))) = {0}; // gradient table init flag (+retail tail pad)
@@ -71,8 +72,6 @@ int func_804D8B4C(void* draw, void* desktop, void* material);
 void func_804D8C18(void* draw);
 void func_804D8C68(void* draw, int a, const void* b);
 void func_804DF164(void* tex, int index, int cacheIndex, int wrap);
-s32 func_804F10A0(s32, f32 alpha, void* draw, const ml::CVec3* pos, const TexDrawSize* size,
-                  const f32* color, const void* clampInfo, s32 flag, const void* mtxSrc);
 extern u32 lbl_eu_80665A08; // default clamp-info blob
 extern const f32 lbl_eu_8066B478; // draw-epsilon
 
@@ -89,12 +88,14 @@ void func_804F4628(s32 update, f32 bottom, f32 top);
 void func_804F3988(s32 mode);
 // Gradient-shaded textured quad emitter worker (called from func_804F0258).
 // Defined below, after its helpers.
-void func_804F06C4(int texMap, void* drawCtx, const ml::CVec3* pos, const void* dirA,
-                   const void* dirB, const f32* color, int boundFlag, int flag,
-                   int colorId, int mode);
+struct CDrawCtxLocal;
+void func_804F06C4(int texMap, CDrawCtxLocal* drawCtx, const ml::CVec3* pos,
+                   const f32* gradDir, const f32* uvOrigin, const f32* color,
+                   int boundFlag, int flag, QuadTexCtx* mtxCtx, u8 mode);
 struct TexScaleParam;
 ml::CMat34* func_804F42A0(int update, TexScaleParam* params);
 void func_804F45EC(const void* src);
+f32 getWidthScale__9CDeviceVIFv();
 
 // Shared read-only literals (monolibdata2 .sdata2).
 extern const f32 lbl_eu_8066B440; // size epsilon
@@ -123,17 +124,19 @@ extern const f64 lbl_eu_8066B468;
 extern const f32 lbl_eu_8066B464;
 extern const f64 lbl_eu_8066B470;
 extern const f32 lbl_eu_8066B4C0;
+extern const f32 lbl_eu_8066B4C4; // textured-path chan ambient
 extern const f32 lbl_eu_8066B4C8;
 extern const f32 lbl_eu_8066B4CC;
 extern const f32 lbl_eu_8066B4D0;
+extern const f64 lbl_eu_8066B4D8; // 0x4330000000000000 (i->f magic)
 extern const f64 lbl_eu_8066B500; // 0x4330000000000000 (u->f magic)
 extern const f32 lbl_eu_8066B508; // 0.5f
 extern const f32 lbl_eu_8066B50C;
 extern const f32 lbl_eu_8066B510; // 1.0f
 extern const f64 lbl_eu_8066B518; // 0x4330000000000000 (u->f magic)
 extern const f64 lbl_eu_8066B520; // 0x4330000080000000 (s->f magic)
-extern const f32 lbl_eu_8066B47C; // F10A0 size-scale
-extern const f32 lbl_eu_8066B480; // F10A0
+extern const u32 lbl_eu_8066B47C; // F10A0 chan ambient (word-loaded)
+extern const u32 lbl_eu_8066B480; // F10A0 textured-path chan ambient
 extern const f32 lbl_eu_8066B484; // F10A0
 extern const f32 lbl_eu_8066B488; // spread scale
 extern const f32 lbl_eu_8066B48C; // F10A0 size-scale
@@ -153,6 +156,21 @@ struct CDrawCtxLocal {
     void* field_0x00;
     s32 field_0x04;
     u8 field_0x08;
+};
+
+// Projection info fetched during the depth-sorted path of func_804F06C4;
+// the perspective factor lives at +0x1e0.
+struct ProjInfo {
+    u8 pad_0x00[0x1e0];
+    f32 field_0x1e0;
+};
+
+// GX cache device state: signed viewport extents at +0x4bc/+0x4be feed the
+// gradient aspect-ratio computation in func_804F06C4.
+struct CGXCacheDims {
+    u8 pad_0x00[0x4bc];
+    s16 field_0x4bc;
+    s16 field_0x4be;
 };
 
 // Cached texture-matrix source: the GX cache viewport rect read by
@@ -195,6 +213,25 @@ static inline f32 convS32ToF(s32 v, f64 magic) {
     return (f32)(c.d - magic);
 }
 
+// Int -> double via the 0x4330 magic, kept in double precision (used for the
+// gradient-step loop counter comparison; MWCC keeps the full double).
+static inline f64 convS32ToD(s32 v, f64 magic) {
+    union {
+        u32 w[2];
+        f64 d;
+    } c;
+    c.w[1] = (u32)v ^ 0x80000000;
+    c.w[0] = 0x43300000;
+    return c.d - magic;
+}
+
+class CMarkerDistProvider;
+
+// Marker trail renderer (see definition below).
+s32 func_804F10A0(s32 texMap, f32 alpha, CDrawCtxLocal* draw, const ml::CVec3* pos,
+                  const f32* sizeF, s32 density, CMarkerDistProvider* prov,
+                  QuadTexCtx* mtxSrc, s32 boundFlag);
+
 // Marker/overlay draw entry point: sets up a draw context for `desktop` and
 // blits the view into it, then emits the quad via func_804F10A0.
 void func_804F0F2C(void* desktop, f32 alpha, const ml::CVec3* pos, const TexDrawSize* size,
@@ -210,13 +247,17 @@ void func_804F0F2C(void* desktop, f32 alpha, const ml::CVec3* pos, const TexDraw
     if (func_804D8B4C(&draw, desktop, material) != 0) {
         if (mtxSrc == NULL || mtxSrc->mTex == NULL || mtxSrc->mIndex < 0) {
             func_804D8C68(&draw, 0, 0);
-            func_804F10A0(0, alpha, &draw, pos, size, color, clampInfo, -1, NULL);
+            func_804F10A0(0, alpha, &draw, pos, reinterpret_cast<const f32*>(size),
+                          (s32)1, static_cast<CMarkerDistProvider*>(0),
+                          static_cast<QuadTexCtx*>(0), (s32)-1);
         } else {
             func_804D8C68(&draw, 0, 0);
             if (mtxSrc->mTex != NULL) {
                 func_804DF164(mtxSrc->mTex, mtxSrc->mIndex, 1, mtxSrc->mField08);
             }
-            func_804F10A0(0, alpha, &draw, pos, size, color, clampInfo, 1, mtxSrc);
+            func_804F10A0(0, alpha, &draw, pos, reinterpret_cast<const f32*>(size),
+                          (s32)1, static_cast<CMarkerDistProvider*>(0),
+                          reinterpret_cast<QuadTexCtx*>(mtxSrc), (s32)1);
         }
         func_804D8C18(&draw);
     }
@@ -239,167 +280,294 @@ void func_804F1B88(CMarkerUser* user, f32 scale, ml::CVec3* origin, ml::CVec3* e
                    ml::CVec3* step, s32 count, u8* colorBytes,
                    CMarkerDistProvider* provider, s32 farFlag, bool saveFirst);
 
-// Marker/arrow draw driver (reconstruction draft v1 - structure per retail
-// F10A0 call map; approximated points marked TODO).
-struct TrailCtx {
-    u8 pad_00[8];
-    u8 bytes4;
-    u8 pad_09[3];
-    f32 dirs[12];
+// Pack the four scaled size floats into the marker tint color bytes.
+struct ColorBytes {
+    u8 c[4];
 };
 
-extern "C" s32 func_804F10A0(s32 texMap, f32 alpha, void* drawCtx,
-                             const ml::CVec3* pos, const TexDrawSize* size,
-                             const f32* color, const void* clampInfo,
-                             s32 boundFlag, const void* mtxSrc) {
-    CDrawCtxLocal* draw = static_cast<CDrawCtxLocal*>(drawCtx);
-    f32 fbH = convU16ToF(getRenderModeObj__9CDeviceVIFv()->efbHeight, lbl_eu_8066B498);
+// Shared 0x4330-magic int->float conversion scratch (big-endian: w[0] holds
+// the high word). Reusing one union keeps the composite in a single stack
+// slot pair like retail instead of one spill slot per conversion site.
+union IntFltCvt {
+    u32 w[2];
+    f64 d;
+};
 
-    // Retail +0xec..+0xf4: second rmode fetch feeds both the fbWidth read and
-    // the scale block; all four size floats scaled by B484 as a group.
-    GXRenderModeObj* rmode2 = getRenderModeObj__9CDeviceVIFv();
-    const f32* szf = reinterpret_cast<const f32*>(size);
-    f32 sc0 = lbl_eu_8066B484 * szf[0];
-    f32 sc1 = lbl_eu_8066B484 * szf[1];
-    f32 sc2 = lbl_eu_8066B484 * szf[2];
-    f32 sc3 = lbl_eu_8066B484 * szf[3];
-    u8 b0 = (u8)(s32)sc0;
-    u8 b1 = (u8)(s32)sc1;
-    u8 b2 = (u8)(s32)sc2;
-    u8 b3 = (u8)(s32)sc3;
-    f32 fbW = convU16ToF(rmode2->fbWidth, lbl_eu_8066B498);
+// GX FIFO write window used by the direct vertex emitters here.
+// 0xCC008000: MWCC encodes the store displacement as base 0xCC010000 with
+// disp -0x8000 (s16 displacement range), matching retail lis rX, 0xcc01.
+union FifoWord {
+    f32 f;
+    u8 b;
+};
 
-    f32 fbH2 = convU16ToF(getRenderModeObj__9CDeviceVIFv()->efbHeight, lbl_eu_8066B498);
+// Marker trail renderer: refreshes the ortho projection, configures the GX
+// pipeline for a screen-space marker (flat when boundFlag<0, textured when
+// >=0), normalizes the marker position against the framebuffer, then walks
+// the four gradient-table segments emitting trail dots through
+// func_804F1B88. The triangle strip is bookended by two FIFO vertices: the
+// scaled marker position up front and the first emitted trail point (saved
+// in lbl_eu_80665A68..74 via func_804F1B88's saveFirst) at the end.
+s32 func_804F10A0(s32 texMap, f32 alpha, CDrawCtxLocal* draw, const ml::CVec3* pos,
+                  const f32* sizeF, s32 density, CMarkerDistProvider* prov,
+                  QuadTexCtx* mtxSrc, s32 boundFlag) {
+    IntFltCvt cvt;
+    cvt.w[0] = 0x43300000;
+    cvt.w[1] = getRenderModeObj__9CDeviceVIFv()->efbHeight;
+    f32 scrH = (f32)(cvt.d - lbl_eu_8066B498);
 
-    func_804F4628(1, fbW, fbH2);
+    // Scale the four size floats and pack them to bytes (marker tint color).
+    GXRenderModeObj* rm = getRenderModeObj__9CDeviceVIFv();
+    f32 s0 = lbl_eu_8066B484 * sizeF[0];
+    f32 s1 = lbl_eu_8066B484 * sizeF[1];
+    f32 s2 = lbl_eu_8066B484 * sizeF[2];
+    f32 s3 = lbl_eu_8066B484 * sizeF[3];
+    u16 rawW = rm->fbWidth;
+    ColorBytes col;
+    col.c[0] = (u8)(s32)s0;
+    col.c[1] = (u8)(s32)s1;
+    col.c[2] = (u8)(s32)s2;
+    col.c[3] = (u8)(s32)s3;
+    ColorBytes colOut = col;
+    cvt.w[1] = rawW;
+    f32 scrW1 = (f32)(cvt.d - lbl_eu_8066B498);
+
+    cvt.w[1] = getRenderModeObj__9CDeviceVIFv()->fbWidth;
+    f32 scrW2 = (f32)(cvt.d - lbl_eu_8066B498);
+    cvt.w[1] = getRenderModeObj__9CDeviceVIFv()->efbHeight;
+    f32 scrH2 = (f32)(cvt.d - lbl_eu_8066B498);
+    func_804F4628(1, scrH2, scrW2);
 
     Mtx mtxId;
     PSMTXIdentity(mtxId);
     GXLoadPosMtxImm(mtxId, 0);
     GXSetCurrentMtx(0);
-    GXInitTexObjFilter(reinterpret_cast<GXTexObj*>(draw->field_0x04), GX_LINEAR, GX_LINEAR);
+    GXTexObj* tex = reinterpret_cast<GXTexObj*>(draw->field_0x04);
+    GXInitTexObjFilter(tex, GX_LINEAR, GX_LINEAR);
     GXSetZMode(GX_FALSE, GX_ALWAYS, GX_FALSE);
     GXSetBlendMode(GX_BM_BLEND, (GXBlendFactor)4, (GXBlendFactor)5, GX_LO_CLEAR);
-    GXLoadTexObj(reinterpret_cast<GXTexObj*>(draw->field_0x04), (GXTexMapID)texMap);
+    GXLoadTexObj(tex, (GXTexMapID)texMap);
 
-    if (boundFlag == 0 && mtxSrc == NULL) {
-        // Untextured single-marker path.
+    if (boundFlag < 0) {
+        // Flat marker: single texgen fed by the shared texture matrix.
         GXSetNumTexGens(1);
         GXSetNumTevStages(1);
-        ml::CMat34* texMtx = func_804F42A0(1, NULL);
-        GXLoadTexMtxImm(texMtx->m, 0x1e, GX_MTX_2x4);
-        GXSetTexCoordGen2(GX_TEXCOORD0, GX_TG_MTX2x4, GX_TG_TEX0, 0x1e, GX_FALSE, 0x7d);
+        ml::CMat34* tm = func_804F42A0(1, 0);
+        GXLoadTexMtxImm(tm->m, 0x1e, GX_MTX_2x4);
+        GXSetTexCoordGen2(GX_TEXCOORD0, (GXTexGenType)1, (GXTexGenSrc)4, 0x1e,
+                          GX_FALSE, 0x7d);
         GXSetNumChans(1);
-        GXSetChanCtrl(GX_COLOR0A0, GX_DISABLE, (GXColorSrc)1, (GXColorSrc)0,
+        GXSetChanCtrl(GX_COLOR0A0, GX_DISABLE, (GXColorSrc)0, (GXColorSrc)1,
                       GX_LIGHT_NULL, GX_DF_NONE, (GXAttnFn)2);
-        u32 amb = f32bits10A0(lbl_eu_8066B490);
-        GXSetChanAmbColor(GX_COLOR0A0, *reinterpret_cast<GXColor*>(&amb));
-        GXSetTevOrder(GX_TEVSTAGE0, GX_TEXCOORD0, (GXTexMapID)texMap, GX_COLOR0A0);
-        GXSetTevOp(GX_TEVSTAGE0, GX_MODULATE);
-        GXSetVtxAttrFmt(GX_VTXFMT0, (GXAttr)9, GX_POS_XYZ, GX_F32, 0);
-        GXSetVtxAttrFmt(GX_VTXFMT0, (GXAttr)0xB, GX_CLR_RGBA, GX_RGB8, 0);
-        GXSetVtxAttrFmt(GX_VTXFMT0, (GXAttr)0xD, GX_TEX_ST, GX_F32, 0);
-        GXSetVtxDesc(GX_VA_POS, GX_DIRECT);
-        GXSetVtxDesc((GXAttr)0xB, GX_INDEX8);
-        GXSetVtxDesc((GXAttr)0xD, GX_DIRECT);
-        GXSetVtxDesc((GXAttr)0xE, GX_NONE);
-    } else if (mtxSrc != NULL) {
-        // Textured path A: marker quad written into the caller vertex buffer.
-        GXSetNumTexGens(2);
-        GXSetNumTevStages(2);
-        GXSetNumChans(1);
-        GXSetChanCtrl(GX_COLOR0A0, GX_DISABLE, (GXColorSrc)1, (GXColorSrc)0,
-                      GX_LIGHT_NULL, GX_DF_NONE, (GXAttnFn)2);
-        GXSetVtxAttrFmt(GX_VTXFMT0, (GXAttr)9, GX_POS_XYZ, GX_F32, 0);
-        GXSetVtxAttrFmt(GX_VTXFMT0, (GXAttr)0xB, GX_CLR_RGBA, GX_RGB8, 0);
-        GXSetVtxAttrFmt(GX_VTXFMT0, (GXAttr)0xD, GX_TEX_ST, GX_F32, 0);
-        GXSetVtxAttrFmt(GX_VTXFMT0, (GXAttr)0xE, GX_TEX_ST, GX_F32, 0);
-        GXSetVtxDesc(GX_VA_POS, GX_DIRECT);
-        GXSetVtxDesc((GXAttr)0xB, GX_INDEX8);
-        GXSetVtxDesc((GXAttr)0xD, GX_DIRECT);
-        GXSetVtxDesc((GXAttr)0xE, GX_DIRECT);
-        // TODO(draft): exact 125-basis TexCoordGen2 pair + vertex fill
-        GXSetTexCoordGen2(GX_TEXCOORD0, GX_TG_MTX2x4, GX_TG_TEX0, 125, GX_FALSE, 125);
-        GXSetTexCoordGen2(GX_TEXCOORD1, GX_TG_MTX2x4, GX_TG_TEX0, 125, GX_FALSE, 125);
+        GXColor amb = *reinterpret_cast<const GXColor*>(&lbl_eu_8066B47C);
+        GXSetChanAmbColor(GX_COLOR0A0, amb);
+        GXSetTevOrder(GX_TEVSTAGE0, GX_TEXCOORD0, (GXTexMapID)texMap,
+                      GX_COLOR0A0);
+        GXSetTevOp(GX_TEVSTAGE0, (GXTevMode)0);
+        GXSetVtxAttrFmt(GX_VTXFMT0, (GXAttr)9, (GXCompCnt)1, (GXCompType)4, 0);
+        GXSetVtxAttrFmt(GX_VTXFMT0, (GXAttr)0xb, (GXCompCnt)1, (GXCompType)5, 0);
+        GXSetVtxAttrFmt(GX_VTXFMT0, (GXAttr)0xd, (GXCompCnt)1, (GXCompType)4, 0);
+        GXSetVtxDesc((GXAttr)9, GX_DIRECT);
+        GXSetVtxDesc((GXAttr)0xb, GX_DIRECT);
+        GXSetVtxDesc((GXAttr)0xd, GX_DIRECT);
+        GXSetVtxDesc((GXAttr)0xe, GX_NONE);
     } else {
-        // Textured path B.
+        // Textured marker: second texcoord uses the shared matrix or one
+        // rebuilt in place from the caller's source floats.
+        GXColor amb = *reinterpret_cast<const GXColor*>(&lbl_eu_8066B480);
         GXSetNumTexGens(2);
         GXSetNumTevStages(2);
+        ml::CMat34* tm = func_804F42A0(1, 0);
+        GXLoadTexMtxImm(tm->m, 0x1e, GX_MTX_2x4);
+        GXSetTexCoordGen2(GX_TEXCOORD0, (GXTexGenType)1, (GXTexGenSrc)4, 0x1e,
+                          GX_FALSE, 0x7d);
+        if (mtxSrc == 0) {
+            GXSetTexCoordGen2(GX_TEXCOORD1, (GXTexGenType)1, (GXTexGenSrc)5,
+                              0x3c, GX_FALSE, 0x7d);
+        } else {
+            const f32 zc = lbl_eu_8066B478;
+            mtxSrc->mtx[0][0] = mtxSrc->field_0x18;
+            mtxSrc->mtx[0][1] = zc;
+            mtxSrc->mtx[0][2] = zc;
+            mtxSrc->mtx[1][0] = zc;
+            mtxSrc->mtx[1][1] = mtxSrc->field_0x1c;
+            mtxSrc->mtx[1][2] = zc;
+            mtxSrc->mtx[2][0] = zc;
+            mtxSrc->mtx[2][1] = zc;
+            mtxSrc->mtx[2][2] = mtxSrc->field_0x20;
+            mtxSrc->mtx[0][3] = zc + mtxSrc->field_0x0c;
+            mtxSrc->mtx[1][3] = zc + mtxSrc->field_0x10;
+            mtxSrc->mtx[2][3] = zc + mtxSrc->field_0x14;
+            GXLoadTexMtxImm(mtxSrc->mtx, 0x21, GX_MTX_2x4);
+            GXSetTexCoordGen2(GX_TEXCOORD1, (GXTexGenType)1, (GXTexGenSrc)5,
+                              0x21, GX_FALSE, 0x7d);
+        }
         GXSetNumChans(1);
-        GXSetChanCtrl(GX_COLOR0A0, GX_DISABLE, (GXColorSrc)1, (GXColorSrc)0,
+        GXSetChanCtrl(GX_COLOR0A0, GX_DISABLE, (GXColorSrc)0, (GXColorSrc)1,
                       GX_LIGHT_NULL, GX_DF_NONE, (GXAttnFn)2);
-        GXSetTexCoordGen2(GX_TEXCOORD0, GX_TG_MTX2x4, GX_TG_TEX0, 125, GX_FALSE, 125);
-        GXSetTexCoordGen2(GX_TEXCOORD1, GX_TG_MTX2x4, GX_TG_TEX0, 125, GX_FALSE, 125);
-        GXSetVtxAttrFmt(GX_VTXFMT0, (GXAttr)9, GX_POS_XYZ, GX_F32, 0);
-        GXSetVtxAttrFmt(GX_VTXFMT0, (GXAttr)0xB, GX_CLR_RGBA, GX_RGB8, 0);
-        GXSetVtxAttrFmt(GX_VTXFMT0, (GXAttr)0xD, GX_TEX_ST, GX_F32, 0);
-        GXSetVtxAttrFmt(GX_VTXFMT0, (GXAttr)0xE, GX_TEX_ST, GX_F32, 0);
-        GXSetVtxDesc(GX_VA_POS, GX_DIRECT);
-        GXSetVtxDesc((GXAttr)0xB, GX_INDEX8);
-        GXSetVtxDesc((GXAttr)0xD, GX_DIRECT);
-        GXSetVtxDesc((GXAttr)0xE, GX_DIRECT);
+        GXSetChanAmbColor(GX_COLOR0A0, amb);
+        GXSetTevOrder(GX_TEVSTAGE0, GX_TEXCOORD0, (GXTexMapID)texMap,
+                      GX_COLOR0A0);
+        GXSetTevOp(GX_TEVSTAGE0, (GXTevMode)0);
+        // Second stage: texcoord 1 sampled from the bound map; color output
+        // zeroed, alpha passes the rasterized alpha through.
+        GXSetTevOrder((GXTevStageID)1, (GXTexCoordID)1, (GXTexMapID)boundFlag,
+                      (GXChannelID)0xff);
+        GXSetTevColorIn((GXTevStageID)1, (GXTevColorArg)0xf, (GXTevColorArg)0xf,
+                        (GXTevColorArg)0xf, (GXTevColorArg)0x0);
+        GXSetTevColorOp((GXTevStageID)1, GX_TEV_ADD, GX_TB_ZERO, GX_CS_SCALE_1,
+                        GX_FALSE, GX_TEVPREV);
+        GXSetTevAlphaIn((GXTevStageID)1, (GXTevAlphaArg)0x7, (GXTevAlphaArg)0x0,
+                        (GXTevAlphaArg)0x4, (GXTevAlphaArg)0x7);
+        GXSetTevAlphaOp((GXTevStageID)1, GX_TEV_ADD, GX_TB_ZERO, GX_CS_SCALE_1,
+                        GX_TRUE, GX_TEVPREV);
+        GXSetVtxAttrFmt(GX_VTXFMT0, (GXAttr)9, (GXCompCnt)1, (GXCompType)4, 0);
+        GXSetVtxAttrFmt(GX_VTXFMT0, (GXAttr)0xb, (GXCompCnt)1, (GXCompType)5, 0);
+        GXSetVtxAttrFmt(GX_VTXFMT0, (GXAttr)0xd, (GXCompCnt)1, (GXCompType)4, 0);
+        GXSetVtxAttrFmt(GX_VTXFMT0, (GXAttr)0xe, (GXCompCnt)1, (GXCompType)4, 0);
+        GXSetVtxDesc((GXAttr)9, GX_DIRECT);
+        GXSetVtxDesc((GXAttr)0xb, GX_DIRECT);
+        GXSetVtxDesc((GXAttr)0xd, GX_DIRECT);
+        GXSetVtxDesc((GXAttr)0xe, GX_DIRECT);
     }
 
-    // Common tail state.
-    GXSetNumChans(1);
-    GXSetChanCtrl(GX_COLOR0A0, GX_DISABLE, (GXColorSrc)1, (GXColorSrc)0,
-                  GX_LIGHT_NULL, GX_DF_NONE, (GXAttnFn)2);
-    u32 amb2 = f32bits10A0(lbl_eu_8066B490);
-    GXSetChanAmbColor(GX_COLOR0A0, *reinterpret_cast<GXColor*>(&amb2));
-    GXSetTevOrder(GX_TEVSTAGE0, GX_TEXCOORD_NULL, (GXTexMapID)texMap, GX_COLOR0A0);
-    GXSetTevOp(GX_TEVSTAGE0, GX_MODULATE);
-    GXSetTevOrder(GX_TEVSTAGE1, GX_TEXCOORD_NULL, GX_TEXMAP_NULL, GX_COLOR0A0);
-    GXSetTevColorIn(GX_TEVSTAGE0, GX_CC_ZERO, GX_CC_ZERO, GX_CC_ZERO, GX_CC_RASA);
-    GXSetTevColorOp(GX_TEVSTAGE0, GX_TEV_ADD, GX_TB_ZERO, GX_CS_SCALE_1, GX_TRUE, GX_TEVPREV);
-    GXSetTevAlphaIn(GX_TEVSTAGE0, GX_CA_ZERO, GX_CA_ZERO, GX_CA_ZERO, GX_CA_RASA);
-    GXSetTevAlphaOp(GX_TEVSTAGE0, GX_TEV_ADD, GX_TB_ZERO, GX_CS_SCALE_1, GX_TRUE, GX_TEVPREV);
-    GXSetVtxAttrFmt(GX_VTXFMT0, (GXAttr)9, GX_POS_XYZ, GX_F32, 0);
-    GXSetVtxAttrFmt(GX_VTXFMT0, (GXAttr)0xB, GX_CLR_RGBA, GX_RGB8, 0);
-    GXSetVtxAttrFmt(GX_VTXFMT0, (GXAttr)0xD, GX_TEX_ST, GX_F32, 0);
-    GXSetVtxAttrFmt(GX_VTXFMT0, (GXAttr)0xE, GX_TEX_ST, GX_F32, 0);
-    GXSetVtxDesc(GX_VA_POS, GX_DIRECT);
-    GXSetVtxDesc((GXAttr)0xB, GX_INDEX8);
-    GXSetVtxDesc((GXAttr)0xD, GX_DIRECT);
-    GXSetVtxDesc((GXAttr)0xE, GX_DIRECT);
-
-    // Gradient table lazy init (12 entries).
-    if (lbl_eu_806617C0[0] == 0.0f) {
-        // TODO(draft): exact constant pattern from retail +0x3a0 block
-        for (int i = 0; i < 12; i++) {
-            lbl_eu_806617C0[i] = (i % 3 == 1) ? 1.0f : 0.0f;
-        }
+    // Lazy init of the gradient ramp corners (B488-scaled unit square).
+    if (lbl_eu_80665A78[0] == 0) {
+        f32 z = lbl_eu_8066B478;
+        f32 gs = lbl_eu_8066B488;
+        lbl_eu_806617C0[0] = z;
+        lbl_eu_806617C0[1] = z;
+        lbl_eu_806617C0[2] = z;
+        lbl_eu_806617C0[3] = gs;
+        lbl_eu_806617C0[4] = z;
+        lbl_eu_806617C0[5] = z;
+        lbl_eu_806617C0[6] = gs;
+        lbl_eu_806617C0[7] = gs;
+        lbl_eu_806617C0[8] = z;
+        lbl_eu_806617C0[9] = z;
+        lbl_eu_806617C0[10] = gs;
+        lbl_eu_806617C0[11] = z;
+        lbl_eu_80665A78[0] = 1;
     }
 
-    // Four trail angles with wrap normalization (TODO(draft): exact sources).
+    // Normalize the marker position against the framebuffer and clamp to the
+    // unit square; textured markers carry a second texcoord pair per vertex.
+    bool textured = boundFlag >= 0;
+    f32 v[3];
+    v[2] = lbl_eu_8066B478;
+    v[0] = pos->x / scrH;
+    v[1] = pos->y / scrW1;
+    if (v[0] < lbl_eu_8066B478) v[0] = lbl_eu_8066B478;
+    if (lbl_eu_8066B488 < v[0]) v[0] = lbl_eu_8066B488;
+    if (v[1] < lbl_eu_8066B478) v[1] = lbl_eu_8066B478;
+    if (lbl_eu_8066B488 < v[1]) v[1] = lbl_eu_8066B488;
+
+    // Angle from the normalized position to each ramp corner, wrapped into
+    // [corner-PI, corner+PI]; each segment's dot count scales with the
+    // wrapped angle magnitude relative to density/TAU.
     f32 ang[4];
-    ang[0] = atan2(fbH2 - alpha, fbH - alpha);
-    ang[1] = atan2(alpha - fbW, fbW - alpha);
-    ang[2] = atan2(pos->y - fbH2, pos->x - fbH);
-    ang[3] = atan2(size->field_0x0c - fbW, alpha - fbH);
-    for (int i = 0; i < 4; i++) {
-        while (ang[i] > lbl_eu_8066B494) {
-            ang[i] -= lbl_eu_8066B494;
-        }
-        while (ang[i] < -lbl_eu_8066B494) {
-            ang[i] += lbl_eu_8066B494;
-        }
+    ang[0] = (f32)atan2(lbl_eu_806617C0[1] - v[1], lbl_eu_806617C0[0] - v[0]);
+    ang[1] = (f32)atan2(lbl_eu_806617C0[4] - v[1], lbl_eu_806617C0[3] - v[0]);
+    ang[2] = (f32)atan2(lbl_eu_806617C0[7] - v[1], lbl_eu_806617C0[6] - v[0]);
+    ang[3] = (f32)atan2(lbl_eu_806617C0[10] - v[1], lbl_eu_806617C0[9] - v[0]);
+
+    f32 a0 = ang[0];
+    f32 lo0 = ang[0] - lbl_eu_8066B490;
+    f32 hi0 = lbl_eu_8066B490 + ang[0];
+    while (a0 <= lo0) a0 += lbl_eu_8066B48C;
+    while (hi0 < a0) a0 -= lbl_eu_8066B48C;
+    cvt.w[1] = (u32)density ^ 0x80000000u;
+    s32 n0 = (s32)((f32)(cvt.d - lbl_eu_8066B4A0) * fabsf(a0 - ang[0]) /
+                   lbl_eu_8066B494);
+    if (n0 <= 0) n0 = 1;
+
+    f32 a1 = ang[1];
+    f32 lo1 = ang[1] - lbl_eu_8066B490;
+    f32 hi1 = lbl_eu_8066B490 + ang[1];
+    while (a1 <= lo1) a1 += lbl_eu_8066B48C;
+    while (hi1 < a1) a1 -= lbl_eu_8066B48C;
+    cvt.w[1] = (u32)density ^ 0x80000000u;
+    s32 n1 = (s32)((f32)(cvt.d - lbl_eu_8066B4A0) * fabsf(a1 - ang[1]) /
+                   lbl_eu_8066B494);
+    if (n1 <= 0) n1 = 1;
+
+    f32 a2 = ang[2];
+    f32 lo2 = ang[2] - lbl_eu_8066B490;
+    f32 hi2 = lbl_eu_8066B490 + ang[2];
+    while (a2 <= lo2) a2 += lbl_eu_8066B48C;
+    while (hi2 < a2) a2 -= lbl_eu_8066B48C;
+    cvt.w[1] = (u32)density ^ 0x80000000u;
+    s32 n2 = (s32)((f32)(cvt.d - lbl_eu_8066B4A0) * fabsf(a2 - ang[2]) /
+                   lbl_eu_8066B494);
+    if (n2 <= 0) n2 = 1;
+
+    f32 a3 = ang[3];
+    f32 lo3 = ang[3] - lbl_eu_8066B490;
+    f32 hi3 = lbl_eu_8066B490 + ang[3];
+    while (a3 <= lo3) a3 += lbl_eu_8066B48C;
+    while (hi3 < a3) a3 -= lbl_eu_8066B48C;
+    cvt.w[1] = (u32)density ^ 0x80000000u;
+    s32 n3 = (s32)((f32)(cvt.d - lbl_eu_8066B4A0) * fabsf(a3 - ang[3]) /
+                   lbl_eu_8066B494);
+    if (n3 <= 0) n3 = 1;
+
+    // One triangle strip: two bookend vertices plus one dot per step.
+    GXBegin((GXPrimitive)0xa0, GX_VTXFMT0, (u16)((n3 + n2) + (n1 + n0) + 2));
+
+    // Leading strip vertex: scaled marker position with transparent tint.
+    cvt.w[1] = getRenderModeObj__9CDeviceVIFv()->efbHeight;
+    f32 hh = (f32)(cvt.d - lbl_eu_8066B498);
+    cvt.w[1] = getRenderModeObj__9CDeviceVIFv()->fbWidth;
+    f32 ww = (f32)(cvt.d - lbl_eu_8066B498);
+    FifoWord* fifo = reinterpret_cast<FifoWord*>(0xCC008000);
+    fifo->f = v[0] * hh;
+    fifo->f = v[1] * ww;
+    fifo->f = lbl_eu_8066B478;
+    fifo->b = colOut.c[0];
+    fifo->b = colOut.c[1];
+    fifo->b = colOut.c[2];
+    fifo->b = 0;
+    fifo->f = v[0];
+    fifo->f = v[1];
+    if (textured) {
+        fifo->f = v[0];
+        fifo->f = v[1];
     }
 
-    // Emit the four trails through the shared emitter.
-    u8 col[4];
-    col[0] = b0;
-    col[1] = b1;
-    col[2] = b2;
-    col[3] = b3;
-    func_804F1B88(NULL, 1.0f, const_cast<ml::CVec3*>(pos), const_cast<ml::CVec3*>(pos),
-                  const_cast<ml::CVec3*>(pos), 1, col, NULL, boundFlag != 0, false);
-    func_804F1B88(NULL, 1.0f, const_cast<ml::CVec3*>(pos), const_cast<ml::CVec3*>(pos),
-                  const_cast<ml::CVec3*>(pos), 1, col, NULL, boundFlag != 0, false);
-    func_804F1B88(NULL, 1.0f, const_cast<ml::CVec3*>(pos), const_cast<ml::CVec3*>(pos),
-                  const_cast<ml::CVec3*>(pos), 1, col, NULL, boundFlag != 0, false);
-    func_804F1B88(NULL, 1.0f, const_cast<ml::CVec3*>(pos), const_cast<ml::CVec3*>(pos),
-                  const_cast<ml::CVec3*>(pos), 1, col, NULL, boundFlag != 0, false);
-    return 1;
+    // Emit the four trail segments; only the first call remembers its first
+    // emitted point (reused as the trailing strip vertex below).
+    ml::CVec3* t = reinterpret_cast<ml::CVec3*>(lbl_eu_806617C0);
+    bool save = true;
+    func_804F1B88(reinterpret_cast<CMarkerUser*>(draw->field_0x00), alpha, t,
+                  t + 1, reinterpret_cast<ml::CVec3*>(v), n0, colOut.c, prov,
+                  textured, save);
+    save = false;
+    func_804F1B88(reinterpret_cast<CMarkerUser*>(draw->field_0x00), alpha, t + 1,
+                  t + 2, reinterpret_cast<ml::CVec3*>(v), n1, colOut.c, prov,
+                  textured, save);
+    save = false;
+    func_804F1B88(reinterpret_cast<CMarkerUser*>(draw->field_0x00), alpha, t + 2,
+                  t + 3, reinterpret_cast<ml::CVec3*>(v), n2, colOut.c, prov,
+                  textured, save);
+    save = false;
+    func_804F1B88(reinterpret_cast<CMarkerUser*>(draw->field_0x00), alpha, t + 3,
+                  t, reinterpret_cast<ml::CVec3*>(v), n3, colOut.c, prov,
+                  textured, save);
+
+    // Trailing strip vertex: first trail point saved by func_804F1B88.
+    fifo->f = lbl_eu_80665A68;
+    fifo->f = lbl_eu_80665A6C;
+    fifo->f = lbl_eu_8066B478;
+    fifo->b = colOut.c[0];
+    fifo->b = colOut.c[1];
+    fifo->b = colOut.c[2];
+    fifo->b = colOut.c[3];
+    fifo->f = lbl_eu_80665A70;
+    fifo->f = lbl_eu_80665A74;
+    if (textured) {
+        fifo->f = lbl_eu_80665A70;
+        fifo->f = lbl_eu_80665A74;
+    }
 }
 
 // Callback object polled while emitting marker vertices; slot vptr+0xc
@@ -411,13 +579,6 @@ public:
     virtual f32 getDistFactor() = 0; // vptr + 0xc
 };
 
-// Alternate GX FIFO write window used by the direct vertex emitters here.
-// 0xCC008000: MWCC encodes the store displacement as base 0xCC010000 with
-// disp -0x8000 (s16 displacement range), matching retail lis rX, 0xcc01.
-union FifoWord {
-    f32 f;
-    u8 b;
-};
 static volatile FifoWord* const s_altFifo = reinterpret_cast<volatile FifoWord*>(0xCC008000);
 
 // Screen-space marker trail: walks from `origin` toward `extent` in `count`
@@ -571,45 +732,61 @@ static inline u32 floatBits(f32 f) {
 
 // Textured quad blit worker (see func_804F1F18). Normalizes the quad
 // position against the render-mode dimensions, refreshes the projection via
-// func_804F4628, configures the fixed-function pipeline and streams one quad
-// per gradient step straight into the main GX FIFO.
+// func_804F4628, configures the fixed-function pipeline and streams a
+// gradient quad strip straight into the main GX FIFO. The strip's corner
+// offsets walk by alphaMax-scaled steps each iteration and the color alpha
+// byte halves per emitted quad until it reaches zero.
+// The FIFO pointer is deliberately non-volatile: retail relies on MWCC being
+// free to schedule the word/byte stores (they all target the same FIFO window
+// and hardware consumes them in issue order).
 void func_804F213C(s32 texMap, void* drawCtx, const ml::CVec3* pos, const f32* rgba,
                    s32 boundFlag, const void* mtxSrc, f32 alpha, f32 alphaMax) {
     CDrawCtxLocal* draw = static_cast<CDrawCtxLocal*>(drawCtx);
     const f32 zero = lbl_eu_8066B4B0;
 
-    f32 fbH = convU16ToF(getRenderModeObj__9CDeviceVIFv()->efbHeight, lbl_eu_8066B498);
+    // Framebuffer dims: height first, then width, each via its own
+    // getRenderModeObj fetch (matches retail fetch order).
+    f32 x1 = convU16ToF(getRenderModeObj__9CDeviceVIFv()->efbHeight, lbl_eu_8066B498);
     f32 ratio = alpha / alphaMax;
-    f32 fbW = convU16ToF(getRenderModeObj__9CDeviceVIFv()->fbWidth, lbl_eu_8066B498);
+    f32 y1 = convU16ToF(getRenderModeObj__9CDeviceVIFv()->fbWidth, lbl_eu_8066B498);
 
-    // Normalize the quad position against the framebuffer size.
     f32 px = pos->x;
     f32 py = pos->y;
-    f32 kx = lbl_eu_8066B4C8 * fbH;
-    f32 ky = lbl_eu_8066B4C8 * fbW;
+
+    // Normalize the quad position against the framebuffer size.
+    f32 kx = lbl_eu_8066B4C8 * x1;
     f32 tx = px / kx;
-    f32 dx = (fbH - px) / kx;
-    f32 dy = (fbW - py) / ky;
+    f32 dx = (x1 - px) / kx;
+    f32 ky = lbl_eu_8066B4C8 * y1;
     f32 ty = py / ky;
+    f32 dy = (y1 - py) / ky;
 
     // Gradient color packed to bytes for the indexed color attribute.
-    u8 cr = (u8)(s32)(rgba[0] * lbl_eu_8066B4CC);
-    u8 cg = (u8)(s32)(rgba[1] * lbl_eu_8066B4CC);
-    u8 cb = (u8)(s32)(rgba[2] * lbl_eu_8066B4CC);
-    u8 ca = (u8)(s32)(rgba[3] * lbl_eu_8066B4CC);
+    // Kept as a 4-byte array so it lives in a stack slot like retail
+    // (MWCC stages the four fctiwz results through spill slots and packs
+    // them with a single word copy).
+    s8 col[4];
+    col[0] = (s8)(rgba[0] * lbl_eu_8066B4CC);
+    col[1] = (s8)(rgba[1] * lbl_eu_8066B4CC);
+    col[2] = (s8)(rgba[2] * lbl_eu_8066B4CC);
+    col[3] = (s8)(rgba[3] * lbl_eu_8066B4CC);
 
-    f32 f23 = px / fbH;
-    f32 f22 = py / fbW;
+    f32 u0 = px / x1;
+    f32 v0 = py / y1;
 
-    // Per-step offsets scaled by the fade ceiling.
-    f32 sx0 = alphaMax * tx;
-    f32 sx1 = alphaMax * dx;
-    f32 sy0 = alphaMax * dy;
-    f32 sy1 = alphaMax * ty;
+    // Running corner offsets: two start at zero, two at the framebuffer
+    // extents, and every emitted quad advances them by the scaled steps.
+    f32 x0 = zero;
+    f32 stepPx = alphaMax * tx;
+    f32 stepDx = alphaMax * dx;
+    f32 stepPy = alphaMax * ty;
+    f32 stepDy = alphaMax * dy;
+    f32 y0 = zero;
 
-    f32 vh = convU16ToF(getRenderModeObj__9CDeviceVIFv()->efbHeight, lbl_eu_8066B498);
-    f32 vw = convU16ToF(getRenderModeObj__9CDeviceVIFv()->fbWidth, lbl_eu_8066B498);
-    func_804F4628(1, vh, vw);
+    // Projection refresh dims (retail reads efbHeight for both slots here).
+    f32 mh = convU16ToF(getRenderModeObj__9CDeviceVIFv()->efbHeight, lbl_eu_8066B498);
+    f32 mw = convU16ToF(getRenderModeObj__9CDeviceVIFv()->efbHeight, lbl_eu_8066B498);
+    func_804F4628(1, mw, mh);
 
     Mtx mtxId;
     PSMTXIdentity(mtxId);
@@ -620,8 +797,11 @@ void func_804F213C(s32 texMap, void* drawCtx, const ml::CVec3* pos, const f32* r
     GXSetBlendMode(GX_BM_BLEND, (GXBlendFactor)4, (GXBlendFactor)5, GX_LO_CLEAR);
     GXLoadTexObj(reinterpret_cast<GXTexObj*>(draw->field_0x04), (GXTexMapID)texMap);
 
+    FifoWord* fifo;
+    const f64 i2fMagic = lbl_eu_8066B4D8;
+
     if (boundFlag < 0) {
-        // Untextured gradient path.
+        // Untextured single-texgen gradient path.
         GXSetNumTexGens(1);
         GXSetNumTevStages(1);
         ml::CMat34* texMtx = func_804F42A0(1, NULL);
@@ -634,31 +814,145 @@ void func_804F213C(s32 texMap, void* drawCtx, const ml::CVec3* pos, const f32* r
         GXSetChanAmbColor(GX_COLOR0A0, *reinterpret_cast<GXColor*>(&amb));
         GXSetTevOrder(GX_TEVSTAGE0, GX_TEXCOORD0, (GXTexMapID)texMap, GX_COLOR0A0);
         GXSetTevOp(GX_TEVSTAGE0, GX_MODULATE);
+        GXSetVtxAttrFmt(GX_VTXFMT0, GX_VA_POS, GX_POS_XYZ, GX_F32, 0);
+        GXSetVtxAttrFmt(GX_VTXFMT0, GX_VA_CLR0, GX_CLR_RGBA, GX_RGB8, 0);
+        GXSetVtxAttrFmt(GX_VTXFMT0, GX_VA_TEX0, GX_TEX_ST, GX_F32, 0);
+        GXSetVtxDesc(GX_VA_POS, GX_DIRECT);
+        GXSetVtxDesc(GX_VA_CLR0, GX_DIRECT);
+        GXSetVtxDesc(GX_VA_TEX0, GX_DIRECT);
+        GXSetVtxDesc((GXAttr)0xE, GX_NONE);
+
+        fifo = reinterpret_cast<FifoWord*>(0xCC008000);
+        s16 i = 0;
+        while (convS32ToD(i, i2fMagic) < ratio) {
+            x0 -= stepPx;
+            x1 += stepDx;
+            col[3] >>= 1;
+            y0 -= stepPy;
+            y1 += stepDy;
+            if (col[3] == 0) return;
+            GXBegin((GXPrimitive)0xA0, GX_VTXFMT0, 6);
+            fifo->f = px;
+            fifo->f = py;
+            fifo->f = zero;
+            fifo->b = col[0]; fifo->b = col[1]; fifo->b = col[2]; fifo->b = col[3];
+            fifo->f = u0;
+            fifo->f = v0;
+            fifo->f = zero;
+            fifo->b = col[0]; fifo->b = col[1]; fifo->b = col[2]; fifo->b = col[3];
+            fifo->f = zero; fifo->f = zero;
+            fifo->f = x1; fifo->f = y0;
+            fifo->f = zero;
+            fifo->b = col[0]; fifo->b = col[1]; fifo->b = col[2]; fifo->b = col[3];
+            fifo->f = zero; fifo->f = zero;
+            fifo->f = x1; fifo->f = y1;
+            fifo->f = zero;
+            fifo->b = col[0]; fifo->b = col[1]; fifo->b = col[2]; fifo->b = col[3];
+            fifo->f = lbl_eu_8066B4D0; fifo->f = zero;
+            fifo->f = x1; fifo->f = y1;
+            fifo->f = lbl_eu_8066B4D0; fifo->f = lbl_eu_8066B4D0;
+            fifo->f = lbl_eu_8066B4D0;
+            fifo->f = x0; fifo->f = y1;
+            fifo->f = zero;
+            fifo->b = col[0]; fifo->b = col[1]; fifo->b = col[2]; fifo->b = col[3];
+            fifo->f = zero; fifo->f = lbl_eu_8066B4D0;
+            fifo->f = x0; fifo->f = y0;
+            fifo->f = zero;
+            fifo->b = col[0]; fifo->b = col[1]; fifo->b = col[2]; fifo->b = col[3];
+            fifo->f = zero; fifo->f = zero;
+            fifo->f = zero;
+            i++;
+        }
+        return;
     }
 
+    // Textured path: second texcoord either uses the shared matrix or a
+    // transform rebuilt in place from mtxSrc's source floats.
+    u32 amb = floatBits(lbl_eu_8066B4C4);
+    GXSetNumTexGens(2);
+    GXSetNumTevStages(2);
+    ml::CMat34* texMtx = func_804F42A0(1, NULL);
+    GXLoadTexMtxImm(texMtx->m, 0x1e, GX_MTX_2x4);
+    GXSetTexCoordGen2(GX_TEXCOORD0, GX_TG_MTX2x4, GX_TG_TEX0, 0x1e, GX_FALSE, 0x7d);
+    if (mtxSrc == NULL) {
+        GXSetTexCoordGen2(GX_TEXCOORD1, GX_TG_MTX2x4, GX_TG_TEX1, 0x3c, GX_FALSE, 0x7d);
+    } else {
+        QuadTexCtx* ctx = (QuadTexCtx*)mtxSrc;
+        const f32 zc = lbl_eu_8066B4B0;
+        ctx->mtx[0][0] = ctx->field_0x18;
+        ctx->mtx[0][1] = zc;
+        ctx->mtx[0][2] = zc;
+        ctx->mtx[1][0] = zc;
+        ctx->mtx[1][1] = ctx->field_0x1c;
+        ctx->mtx[1][2] = zc;
+        ctx->mtx[2][0] = zc;
+        ctx->mtx[2][1] = zc;
+        ctx->mtx[2][2] = ctx->field_0x20;
+        ctx->mtx[0][3] = zc + ctx->field_0x0c;
+        ctx->mtx[1][3] = zc + ctx->field_0x10;
+        ctx->mtx[2][3] = zc + ctx->field_0x14;
+        GXLoadTexMtxImm(ctx->mtx, 0x21, GX_MTX_2x4);
+        GXSetTexCoordGen2(GX_TEXCOORD1, GX_TG_MTX2x4, GX_TG_TEX1, 0x21, GX_FALSE, 0x7d);
+    }
+    GXSetNumChans(1);
+    GXSetChanCtrl(GX_COLOR0A0, GX_DISABLE, (GXColorSrc)1, (GXColorSrc)0, GX_LIGHT_NULL,
+                  GX_DF_NONE, (GXAttnFn)2);
+    GXSetChanAmbColor(GX_COLOR0A0, *reinterpret_cast<GXColor*>(&amb));
+    GXSetTevOrder(GX_TEVSTAGE0, GX_TEXCOORD0, (GXTexMapID)texMap, GX_COLOR0A0);
+    GXSetTevOp(GX_TEVSTAGE0, GX_MODULATE);
     GXSetVtxAttrFmt(GX_VTXFMT0, GX_VA_POS, GX_POS_XYZ, GX_F32, 0);
     GXSetVtxAttrFmt(GX_VTXFMT0, GX_VA_CLR0, GX_CLR_RGBA, GX_RGB8, 0);
     GXSetVtxAttrFmt(GX_VTXFMT0, GX_VA_TEX0, GX_TEX_ST, GX_F32, 0);
+    GXSetVtxAttrFmt(GX_VTXFMT0, (GXAttr)0xE, GX_TEX_ST, GX_F32, 0);
     GXSetVtxDesc(GX_VA_POS, GX_DIRECT);
-    GXSetVtxDesc(GX_VA_CLR0, GX_INDEX8);
+    GXSetVtxDesc(GX_VA_CLR0, GX_DIRECT);
     GXSetVtxDesc(GX_VA_TEX0, GX_DIRECT);
+    GXSetVtxDesc((GXAttr)0xE, GX_DIRECT);
 
-    // Emit one quad per gradient step until the fade ratio is exhausted.
-    volatile FifoWord* f = s_fifo;
-    s32 i = 0;
-    do {
-        GXBegin((GXPrimitive)0xA0, GX_VTXFMT0, 4);
-        f->f = zero; f->f = zero;
-        f->b = cr; f->b = cg; f->b = cb; f->b = ca;
-        f->f = lbl_eu_8066B4D0; f->f = lbl_eu_8066B4D0;
-        f->f = f23 + sx0; f->f = zero;
-        f->b = cr; f->b = cg; f->b = cb; f->b = ca;
-        f->f = lbl_eu_8066B4D0; f->f = f22 + sy0;
-        f->f = f23 + sx1; f->f = f22 + sy1;
-        f->b = cr; f->b = cg; f->b = cb; f->b = ca;
-        f->f = zero; f->f = f22;
+    fifo = reinterpret_cast<FifoWord*>(0xCC008000);
+    s16 i = 0;
+    while (convS32ToD(i, i2fMagic) < ratio) {
+        x0 -= stepPx;
+        x1 += stepDx;
+        col[3] >>= 1;
+        y0 -= stepPy;
+        y1 += stepDy;
+        if (col[3] == 0) return;
+        GXBegin((GXPrimitive)0xA0, GX_VTXFMT0, 6);
+        fifo->f = px;
+        fifo->f = py;
+        fifo->f = zero;
+        fifo->b = col[0]; fifo->b = col[1]; fifo->b = col[2]; fifo->b = col[3];
+        fifo->f = u0;
+        fifo->f = v0;
+        fifo->f = zero;
+        fifo->b = col[0]; fifo->b = col[1]; fifo->b = col[2]; fifo->b = col[3];
+        fifo->f = zero; fifo->f = zero;
+        fifo->f = x1; fifo->f = y0;
+        fifo->f = zero; fifo->f = zero;
+        fifo->f = zero;
+        fifo->b = col[0]; fifo->b = col[1]; fifo->b = col[2]; fifo->b = col[3];
+        fifo->f = zero; fifo->f = zero;
+        fifo->f = x1; fifo->f = y0;
+        fifo->f = x1; fifo->f = y1;
+        fifo->f = zero;
+        fifo->b = col[0]; fifo->b = col[1]; fifo->b = col[2]; fifo->b = col[3];
+        fifo->f = lbl_eu_8066B4D0; fifo->f = zero;
+        fifo->f = x1; fifo->f = y1;
+        fifo->f = lbl_eu_8066B4D0; fifo->f = lbl_eu_8066B4D0;
+        fifo->f = lbl_eu_8066B4D0;
+        fifo->f = x0; fifo->f = y1;
+        fifo->f = zero;
+        fifo->b = col[0]; fifo->b = col[1]; fifo->b = col[2]; fifo->b = col[3];
+        fifo->f = zero; fifo->f = lbl_eu_8066B4D0;
+        fifo->f = x0; fifo->f = y0;
+        fifo->f = zero; fifo->f = zero;
+        fifo->b = col[0]; fifo->b = col[1]; fifo->b = col[2]; fifo->b = col[3];
+        fifo->f = zero; fifo->f = zero;
+        fifo->f = x0; fifo->f = y0;
+        fifo->f = zero; fifo->f = zero;
         i++;
-    } while ((f32)i < ratio);
+    }
 }
 
 extern "C" void func_804F2A8C(void* self) {
@@ -1330,20 +1624,23 @@ void func_804F0258(void* desktop, DrawQuad* quad, ml::CVec3* dir, TexDrawSize* s
                     hiU[2] = lbl_eu_8066B448;
 
                     func_804D8C68(&subU, 0, 0);
-                    func_804F06C4(0, (void*)&subU, (const ml::CVec3*)&ml::CVec3::zero,
-                                  (const void*)loU, (const void*)hiU,
-                                  (const f32*)&ml::CCol4::white, -1, 0, 0, 0);
+                    func_804F06C4(0, &subU, (const ml::CVec3*)&ml::CVec3::zero,
+                                  (const f32*)&ml::CVec3::unit, (const f32*)hiU,
+                                  (const f32*)&ml::CCol4::white, -1, 0,
+                                  (QuadTexCtx*)NULL, 0);
                     func_804D8C68(&draw, 0, loU);
-                    func_804F06C4(0, (void*)&subU, (const ml::CVec3*)&ml::CVec3::zero,
-                                  (const void*)&ml::CVec3::unit,
-                                  (const void*)&ml::CVec3::unit,
-                                  (const f32*)&ml::CCol4::white, -1, 0, 0, 0);
+                    func_804F06C4(0, &subU, (const ml::CVec3*)&ml::CVec3::zero,
+                                  (const f32*)&ml::CVec3::unit,
+                                  (const f32*)&ml::CVec3::unit,
+                                  (const f32*)&ml::CCol4::white, -1, 0,
+                                  (QuadTexCtx*)NULL, 0);
                     func_804D8C18(&subU);
                 }
             }
-            func_804F06C4(0, (void*)&draw, reinterpret_cast<const ml::CVec3*>(quad),
-                          (const void*)&ml::CVec3::unit, (const void*)&v,
-                          reinterpret_cast<const f32*>(size), -1, 1, 0, 1);
+            func_804F06C4(0, &draw, reinterpret_cast<const ml::CVec3*>(quad),
+                          (const f32*)&ml::CVec3::unit, (const f32*)&v,
+                          reinterpret_cast<const f32*>(size), -1, 1,
+                          (QuadTexCtx*)NULL, 1);
         } else {
             if (lbl_eu_8066B448 == v.x && lbl_eu_8066B448 == v.y) {
                 func_804D8C68(&draw, 0, 0);
@@ -1373,23 +1670,26 @@ void func_804F0258(void* desktop, DrawQuad* quad, ml::CVec3* dir, TexDrawSize* s
                     hiB[2] = lbl_eu_8066B448;
 
                     func_804D8C68(&subB, 0, 0);
-                    func_804F06C4(0, (void*)&subB, (const ml::CVec3*)&ml::CVec3::zero,
-                                  (const void*)loB, (const void*)hiB,
-                                  (const f32*)&ml::CCol4::white, -1, 0, 0, 0);
+                    func_804F06C4(0, &subB, (const ml::CVec3*)&ml::CVec3::zero,
+                                  (const f32*)&ml::CVec3::unit, (const f32*)hiB,
+                                  (const f32*)&ml::CCol4::white, -1, 0,
+                                  (QuadTexCtx*)NULL, 0);
                     func_804D8C68(&draw, 0, loB);
-                    func_804F06C4(0, (void*)&subB, (const ml::CVec3*)&ml::CVec3::zero,
-                                  (const void*)&ml::CVec3::unit,
-                                  (const void*)&ml::CVec3::unit,
-                                  (const f32*)&ml::CCol4::white, -1, 0, 0, 0);
+                    func_804F06C4(0, &subB, (const ml::CVec3*)&ml::CVec3::zero,
+                                  (const f32*)&ml::CVec3::unit,
+                                  (const f32*)&ml::CVec3::unit,
+                                  (const f32*)&ml::CCol4::white, -1, 0,
+                                  (QuadTexCtx*)NULL, 0);
                     func_804D8C18(&subB);
                 }
             }
             if (mtxSrc->mTex != NULL) {
                 func_804DF164(mtxSrc->mTex, mtxSrc->mIndex, 1, mtxSrc->mField08);
             }
-            func_804F06C4(0, (void*)&draw, reinterpret_cast<const ml::CVec3*>(quad),
-                          (const void*)&ml::CVec3::unit, (const void*)&v,
-                          reinterpret_cast<const f32*>(size), 1, 1, (int)mtxSrc, 1);
+            func_804F06C4(0, &draw, reinterpret_cast<const ml::CVec3*>(quad),
+                          (const f32*)&ml::CVec3::unit, (const f32*)&v,
+                          reinterpret_cast<const f32*>(size), 1, 1,
+                          reinterpret_cast<QuadTexCtx*>(mtxSrc), 1);
         }
         func_804D8C18(&draw);
     }
@@ -1401,54 +1701,204 @@ void func_804F0258(void* desktop, DrawQuad* quad, ml::CVec3* dir, TexDrawSize* s
 // Packs the RGBA color floats into bytes, picks a z-compare mode from the
 // draw flags, computes a perspective split via tan() on the depth-sorted
 // path, then streams a 4-vertex gradient quad into the main FIFO.
-void func_804F06C4(int texMap, void* drawCtx, const ml::CVec3* pos, const void* dirA,
-                   const void* dirB, const f32* color, int boundFlag, int flag,
-                   int colorId, int mode) {
-    // Pack the four RGBA floats into bytes.
-    GXColor col;
-    col.r = (u8)(s32)(color[0] * lbl_eu_8066B450);
-    col.g = (u8)(s32)(color[1] * lbl_eu_8066B450);
-    col.b = (u8)(s32)(color[2] * lbl_eu_8066B450);
-    col.a = (u8)(s32)(color[3] * lbl_eu_8066B450);
+//
+// flag==0 or degenerate z -> unsorted path: position normalized against the
+// render target and offset by gradDir; otherwise a perspective split point
+// derived from the projection info and GX cache aspect ratio positions the
+// quad. boundFlag<0 emits one texture layer; otherwise two (with an optional
+// custom second matrix rebuilt in place inside mtxCtx).
+void func_804F06C4(int texMap, CDrawCtxLocal* drawCtx, const ml::CVec3* pos,
+                   const f32* gradDir, const f32* uvOrigin, const f32* color,
+                   int boundFlag, int flag, QuadTexCtx* mtxCtx, u8 mode) {
+    // Pack the four RGBA floats into bytes, staged through integer storage
+    // (byte assemble -> word copy -> byte extract) as in retail.
+    struct ByteColor {
+        u8 b[4];
+    };
+    ByteColor in;
+    in.b[0] = (u8)(s32)(color[0] * lbl_eu_8066B450);
+    in.b[1] = (u8)(s32)(color[1] * lbl_eu_8066B450);
+    in.b[2] = (u8)(s32)(color[2] * lbl_eu_8066B450);
+    in.b[3] = (u8)(s32)(color[3] * lbl_eu_8066B450);
+    union {
+        ByteColor bytes;
+        u32 raw;
+    } stage;
+    stage.bytes = in;
+    u32 raw = stage.raw;
+    union {
+        u32 raw;
+        GXColor c;
+    } out;
+    out.raw = raw;
+    GXColor col = out.c;
 
-    f32 depth;
-    if (flag == 0 || pos->z == lbl_eu_8066B440) {
-        GXSetZMode(GX_FALSE, GX_ALWAYS, GX_FALSE);
-        func_804F4628(colorId, lbl_eu_8066B448, lbl_eu_8066B448);
-        depth = lbl_eu_8066B444;
-    } else {
-        // Depth-sorted path: pick a z-compare from the sign of the extent and
-        // derive a perspective scale from the view angle.
-        if (pos->z < lbl_eu_8066B440 && pos->z != lbl_eu_8066B440) {
+    // Quad corners: A = top-left, B = bottom-right; z = depth plane value.
+    f32 ax, ay, bx, by, z;
+
+    if (flag != 0 && pos->z != lbl_eu_8066B440) {
+        // Depth-sorted path.
+        ProjInfo* pi = static_cast<ProjInfo*>(func_80496264(drawCtx->field_0x00, -1));
+        f32 persp = lbl_eu_8066B454 * pi->field_0x1e0;
+        if (pos->z == lbl_eu_8066B440 || lbl_eu_8066B440 < pos->z) {
             GXSetZMode(GX_TRUE, GX_LEQUAL, GX_FALSE);
-            depth = pos->z;
+            z = pos->z;
         } else {
-            GXSetZMode(GX_TRUE, GX_GREATER, GX_FALSE);
-            depth = -pos->z;
+            GXSetZMode(GX_TRUE, GX_GEQUAL, GX_FALSE);
+            z = -pos->z;
         }
-        func_804F45EC(*(const void**)dirA);
-        f32 t = lbl_eu_8066B458 * depth / lbl_eu_8066B45C;
-        tan(t);
+        func_804F45EC(drawCtx->field_0x00);
+        f32 depthTan = z * (f32)tan(lbl_eu_8066B458 * persp / lbl_eu_8066B45C);
+
+        // Aspect ratio of the GX cache viewport, scaled by device width scale.
+        CGXCacheDims* gx = static_cast<CGXCacheDims*>(cacheInstance__9CDeviceGX);
+        f32 aspect = lbl_eu_8066B460 *
+                     (convS32ToF(gx->field_0x4bc, lbl_eu_8066B468) /
+                      convS32ToF(gx->field_0x4be, lbl_eu_8066B468));
+        aspect *= getWidthScale__9CDeviceVIFv();
+
+        // Split position: x measured against height, y against width.
+        f32 splitX = lbl_eu_8066B464 * depthTan * pos->x /
+                     convU16ToF(getRenderModeObj__9CDeviceVIFv()->efbHeight,
+                                lbl_eu_8066B470);
+        f32 negDT = -depthTan;
+        ax = aspect * (splitX - depthTan);
+        bx = aspect * (splitX + depthTan);
+        f32 splitY = lbl_eu_8066B464 * negDT * pos->y /
+                     convU16ToF(getRenderModeObj__9CDeviceVIFv()->fbWidth,
+                                lbl_eu_8066B470);
+        z = -depthTan;
+        ay = splitY + depthTan;
+        by = splitY - depthTan;
+    } else {
+        // Unsorted path.
+        GXSetZMode(GX_FALSE, GX_ALWAYS, GX_FALSE);
+        func_804F4628(mode, lbl_eu_8066B448, lbl_eu_8066B448);
+        z = lbl_eu_8066B440;
+        ax = pos->x;
+        ay = pos->y;
+        if (ax != lbl_eu_8066B440) {
+            ax /= convU16ToF(getRenderModeObj__9CDeviceVIFv()->efbHeight,
+                             lbl_eu_8066B470);
+        }
+        if (ay != lbl_eu_8066B440) {
+            ay /= convU16ToF(getRenderModeObj__9CDeviceVIFv()->fbWidth,
+                             lbl_eu_8066B470);
+        }
+        bx = ax + gradDir[0];
+        by = ay + gradDir[1];
     }
+
+    // Gradient direction extents; held in a stack array across the GX setup
+    // calls below.
+    f32 uv[2];
+    uv[0] = uvOrigin[0];
+    uv[1] = uvOrigin[1];
 
     Mtx mtxId;
     PSMTXIdentity(mtxId);
     GXLoadPosMtxImm(mtxId, 0);
     GXSetCurrentMtx(0);
 
-    f32 lo0 = pos->x;
-    f32 hi0 = pos->y;
-    f32 lo1 = depth;
-    f32 hi1 = depth;
+    GXTexObj* tex = reinterpret_cast<GXTexObj*>(drawCtx->field_0x04);
+    GXInitTexObjFilter(tex, GX_LINEAR, GX_LINEAR);
+    GXSetBlendMode(GX_BM_BLEND, (GXBlendFactor)4, (GXBlendFactor)5, GX_LO_CLEAR);
+    GXLoadTexObj(tex, (GXTexMapID)texMap);
 
-    GXBegin((GXPrimitive)0xA0, GX_VTXFMT0, 4);
-    volatile FifoWord* f = s_fifo;
-    f->f = lo1; f->f = hi1; f->f = lo0; f->f = hi0; f->f = lo1; f->f = hi1;
-    f->f = lbl_eu_8066B444; f->f = lbl_eu_8066B444;
-    f->f = lo1; f->f = hi1; f->f = lo0; f->f = lbl_eu_8066B448;
-    f->f = lbl_eu_8066B444; f->f = lbl_eu_8066B444;
-    f->f = lo1; f->f = lbl_eu_8066B448; f->f = lo0; f->f = hi0;
-    f->f = lbl_eu_8066B448; f->f = lbl_eu_8066B444;
+    if (boundFlag < 0) {
+        // Single-texture path.
+        GXSetNumTexGens(1);
+        GXSetNumTevStages(1);
+        ml::CMat34* tm = func_804F42A0(mode, (TexScaleParam*)uvOrigin);
+        GXLoadTexMtxImm(tm->m, 0x1e, GX_MTX_2x4);
+        GXSetTexCoordGen2(GX_TEXCOORD0, GX_TG_MTX2x4, GX_TG_TEX0, 0x1e, GX_FALSE, 0x7d);
+        GXSetNumChans(1);
+        GXSetChanCtrl(GX_COLOR0A0, GX_DISABLE, (GXColorSrc)1, (GXColorSrc)0,
+                      GX_LIGHT_NULL, GX_DF_NONE, (GXAttnFn)2);
+        GXColor matCol = col;
+        GXSetChanMatColor(GX_COLOR0A0, matCol);
+        GXSetTevOrder(GX_TEVSTAGE0, GX_TEXCOORD0, (GXTexMapID)texMap, GX_COLOR0A0);
+        GXSetTevOp(GX_TEVSTAGE0, (GXTevMode)0);
+        GXSetVtxAttrFmt(GX_VTXFMT0, (GXAttr)9, GX_POS_XYZ, GX_F32, 0);
+        GXSetVtxAttrFmt(GX_VTXFMT0, (GXAttr)0xB, GX_CLR_RGBA, GX_RGB8, 0);
+        GXSetVtxAttrFmt(GX_VTXFMT0, (GXAttr)0xD, GX_TEX_ST, GX_F32, 0);
+        GXSetVtxDesc(GX_VA_POS, GX_DIRECT);
+        GXSetVtxDesc((GXAttr)0xB, GX_NONE);
+        GXSetVtxDesc((GXAttr)0xD, GX_DIRECT);
+        GXSetVtxDesc((GXAttr)0xE, GX_NONE);
+
+        GXBegin((GXPrimitive)0xA0, GX_VTXFMT0, 4);
+        volatile FifoWord* f = s_fifo;
+        f->f = ax; f->f = ay; f->f = z;
+        f->f = lbl_eu_8066B440; f->f = lbl_eu_8066B440;
+        f->f = bx; f->f = ay; f->f = z; f->f = uv[0]; f->f = lbl_eu_8066B440;
+        f->f = bx; f->f = by; f->f = z; f->f = uv[0]; f->f = uv[1];
+        f->f = ax; f->f = by; f->f = z; f->f = lbl_eu_8066B440; f->f = uv[1];
+    } else {
+        // Two-texture path with an optional custom second matrix.
+        GXSetNumTexGens(2);
+        GXSetNumTevStages(2);
+        ml::CMat34* tm = func_804F42A0(mode, (TexScaleParam*)uvOrigin);
+        GXLoadTexMtxImm(tm->m, 0x1e, GX_MTX_2x4);
+        GXSetTexCoordGen2(GX_TEXCOORD0, GX_TG_MTX2x4, GX_TG_TEX0, 0x1e, GX_FALSE, 0x7d);
+        if (mtxCtx == NULL) {
+            GXSetTexCoordGen2(GX_TEXCOORD1, GX_TG_MTX2x4, GX_TG_TEX1, 0x3c, GX_FALSE, 0x7d);
+        } else {
+            // Rebuild the second texture matrix in place from the source
+            // floats (diagonal at 0x18/0x1c/0x20, translation at 0x0c/0x10/0x14).
+            mtxCtx->mtx[0][0] = mtxCtx->field_0x18;
+            mtxCtx->mtx[0][1] = lbl_eu_8066B440;
+            mtxCtx->mtx[0][2] = lbl_eu_8066B440;
+            mtxCtx->mtx[0][3] = lbl_eu_8066B440 + mtxCtx->field_0x0c;
+            mtxCtx->mtx[1][0] = lbl_eu_8066B440;
+            mtxCtx->mtx[1][1] = mtxCtx->field_0x1c;
+            mtxCtx->mtx[1][2] = lbl_eu_8066B440;
+            mtxCtx->mtx[1][3] = lbl_eu_8066B440 + mtxCtx->field_0x10;
+            mtxCtx->mtx[2][0] = lbl_eu_8066B440;
+            mtxCtx->mtx[2][1] = lbl_eu_8066B440;
+            mtxCtx->mtx[2][2] = mtxCtx->field_0x20;
+            mtxCtx->mtx[2][3] = lbl_eu_8066B440 + mtxCtx->field_0x14;
+            GXLoadTexMtxImm(mtxCtx->mtx, 0x21, GX_MTX_2x4);
+            GXSetTexCoordGen2(GX_TEXCOORD1, GX_TG_MTX2x4, GX_TG_TEX1, 0x21, GX_FALSE, 0x7d);
+        }
+        GXSetNumChans(1);
+        GXSetChanCtrl(GX_COLOR0A0, GX_DISABLE, (GXColorSrc)1, (GXColorSrc)0,
+                      GX_LIGHT_NULL, GX_DF_NONE, (GXAttnFn)2);
+        GXColor matCol = col;
+        GXSetChanMatColor(GX_COLOR0A0, matCol);
+        GXSetTevOrder(GX_TEVSTAGE0, GX_TEXCOORD0, (GXTexMapID)texMap, GX_COLOR0A0);
+        GXSetTevOp(GX_TEVSTAGE0, (GXTevMode)0);
+        GXSetTevOrder((GXTevStageID)1, (GXTexCoordID)1, (GXTexMapID)boundFlag,
+                      (GXChannelID)0xff);
+        GXSetTevColorIn((GXTevStageID)1, (GXTevColorArg)0xf, (GXTevColorArg)0xf,
+                        (GXTevColorArg)0xf, (GXTevColorArg)0x0);
+        GXSetTevColorOp((GXTevStageID)1, GX_TEV_ADD, GX_TB_ZERO, GX_CS_SCALE_1,
+                        GX_FALSE, GX_TEVPREV);
+        GXSetTevAlphaIn((GXTevStageID)1, (GXTevAlphaArg)7, (GXTevAlphaArg)0,
+                        (GXTevAlphaArg)4, (GXTevAlphaArg)7);
+        GXSetTevAlphaOp((GXTevStageID)1, GX_TEV_ADD, GX_TB_ZERO, GX_CS_SCALE_1,
+                        GX_TRUE, GX_TEVPREV);
+        GXSetVtxAttrFmt(GX_VTXFMT0, (GXAttr)9, GX_POS_XYZ, GX_F32, 0);
+        GXSetVtxAttrFmt(GX_VTXFMT0, (GXAttr)0xB, GX_CLR_RGBA, GX_RGB8, 0);
+        GXSetVtxAttrFmt(GX_VTXFMT0, (GXAttr)0xD, GX_TEX_ST, GX_F32, 0);
+        GXSetVtxAttrFmt(GX_VTXFMT0, (GXAttr)0xE, GX_TEX_ST, GX_F32, 0);
+        GXSetVtxDesc(GX_VA_POS, GX_DIRECT);
+        GXSetVtxDesc((GXAttr)0xB, GX_NONE);
+        GXSetVtxDesc((GXAttr)0xD, GX_DIRECT);
+        GXSetVtxDesc((GXAttr)0xE, GX_DIRECT);
+
+        GXBegin((GXPrimitive)0xA0, GX_VTXFMT0, 4);
+        volatile FifoWord* f = s_fifo;
+        f->f = ax; f->f = ay; f->f = z;
+        f->f = lbl_eu_8066B440; f->f = lbl_eu_8066B440;
+        f->f = lbl_eu_8066B440; f->f = lbl_eu_8066B440;
+        f->f = bx; f->f = ay; f->f = z; f->f = uv[0]; f->f = lbl_eu_8066B440;
+        f->f = lbl_eu_8066B440; f->f = lbl_eu_8066B440;
+        f->f = bx; f->f = by; f->f = z; f->f = uv[0]; f->f = uv[1];
+        f->f = lbl_eu_8066B448; f->f = lbl_eu_8066B448;
+        f->f = ax; f->f = by; f->f = z; f->f = lbl_eu_8066B440; f->f = uv[1];
+        f->f = lbl_eu_8066B440; f->f = lbl_eu_8066B448;
+    }
 }
 
 void func_804F45EC(const void* src) {

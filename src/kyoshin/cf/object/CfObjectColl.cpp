@@ -140,6 +140,14 @@ struct IfRetVec {
     virtual ml::CVec3* getVec(); // 0xAC
 };
 
+struct IfLoader {
+    virtual void _v0008();
+    // slot 0xC also receives the live angle in f1
+    virtual int load(cf::CfObjectColl* self, cf::CfObject* obj, ml::CVec3* out,
+                     float angle);
+};
+
+
 // Lazily bind each coll-impl singleton once, then return the packed resource
 // pointer for field_0x98 in 1..5 (defaulting to the second instance slot).
 // Retail callee keeps a flat, unmangled name (reloc-name fix, PLAN.md 17.6).
@@ -180,13 +188,9 @@ void cf::CfObjectColl::func_800AB57C() {
 // as coll-disabled, optionally fetch the current vector through slot 0xAC,
 // then run the resource load through the coll-impl singleton (slot 0xC) and
 // drive the per-state +0x154 timer update.
-struct IfLoader {
-    virtual void _v0008();
-    // slot 0xC also receives the live angle in f1
-    virtual int load(cf::CfObjectColl* self, cf::CfObject* obj, ml::CVec3* out,
-                     float angle);
-};
-int func_800AB580(cf::CfObjectColl* self, cf::CfObject* obj, ml::CVec3* out, float f1) {
+// Retail symbol is flat/unmangled; C linkage keeps the emitted name
+// byte-exact so objdiff/certifier pair it (body codegen is unchanged).
+extern "C" int func_800AB580(cf::CfObjectColl* self, cf::CfObject* obj, ml::CVec3* out, float f1) {
     if (obj == NULL)
         return 0;
     u32 flags = self->field_0x68;
@@ -200,12 +204,13 @@ int func_800AB580(cf::CfObjectColl* self, cf::CfObject* obj, ml::CVec3* out, flo
     int ok = reinterpret_cast<IfLoader*>(CfObjectColl_initCollImplInstances(self))
                  ->load(self, obj, out, f1);
     // Flag bit 0: a successful load while the flag is set fails without
-    // clearing; a failed load clears the flag.
+    // clearing; a failed load clears the flag. The clear path re-reads the
+    // flag through a volatile cast so MWCC emits a fresh lhz like retail.
     if (self->field_0x158 & 1) {
         if (ok != 0) {
             ok = 0;
         } else {
-            self->field_0x158 &= ~1;
+            *(volatile u16*)&self->field_0x158 &= ~1;
         }
     }
     if ((int)self->field_0x94 == 6) {
@@ -269,46 +274,81 @@ void cf::CfObjectColl::func_800AB7A8() {
     reinterpret_cast<IfArgs*>(this)->fn39((u8*)this + 0x3c);
 }
 
-// Refresh resource through slot 0x9C, then copy both vector blocks, stamp the
-// state words, stash four halfwords and reset +0x154 / raise flag bit 0.
-void func_800AB7F8(cf::CfObjectColl* self, const cf::CollVec* a, const cf::CollVec* b,
-                   u16 p4, u16 p5, u16 p6, u16 p7, float val) {
+// Pointers stay non-const: retail interleaves loads with stores (aliasing).
+// Locals declared in store order to steer MWCC's register coloring.
+void func_800ABF24(cf::CfObjectColl* self, cf::CollVec* a, cf::CollVec* b, float val) {
     reinterpret_cast<CfObjIf*>(self)->vf009C();
+    u32 v4 = a->w4;
     u32 v0 = a->w0;
-    self->field_0x98 = 4;
-    self->field_0xA4 = a->w4;
-    u16 flg = self->field_0x158;
-    self->field_0x94 = 6;
+    self->field_0xA4 = v4;
     u32 t0 = b->w0;
-    u32 t4 = b->w4;
-    u32 v8 = a->w8;
-    u32 t8 = b->w8;
     self->field_0xA0 = v0;
+    u32 v8 = a->w8;
+    u32 t4 = b->w4;
+    u32 t8 = b->w8;
     self->field_0xA8 = v8;
     self->field_0xAC = t0;
     self->field_0xB0 = t4;
     self->field_0xB4 = t8;
     self->field_0xB8 = val;
+    self->field_0x98 = 4;
+    self->field_0x94 = 5;
+}
+
+// Refresh resource through slot 0x9C, then copy both vector blocks, stamp the
+// state words, stash four halfwords and reset +0x154 / raise flag bit 0.
+// Pointers stay non-const: retail interleaves loads with the self stores.
+// Residual (open-item): fully matched except MWCC hoists the sdata2 `lfs` of
+// lbl_eu_80666910 to the head of the tail load group and pairs each remaining
+// load with its store; retail keeps program order (b0, a8, b4, b8) and batches
+// all four stores after the lfs. Every source lever tried (const-ness, locals
+// vs direct statements, decl-order permutations, volatile reads) either
+// regresses or leaves the shape unchanged.
+void func_800AB7F8(cf::CfObjectColl* self, cf::CollVec* a, cf::CollVec* b,
+                   u16 p4, u16 p5, u16 p6, u16 p7, float val) {
+    reinterpret_cast<CfObjIf*>(self)->vf009C();
+    // Pointers stay non-const: retail interleaves loads with the self stores.
+    u32 v0 = a->w0;
+    self->field_0xA4 = a->w4;
+    u16 flg = self->field_0x158;
+    self->field_0xA0 = v0;
+    self->field_0xAC = b->w0;
     flg |= 1;
+    float def = lbl_eu_80666910;
+    self->field_0xA8 = a->w8;
+    self->field_0xB0 = b->w4;
+    self->field_0xB4 = b->w8;
+    self->field_0xB8 = val;
+    self->field_0x98 = 4;
+    self->field_0x94 = 6;
     self->field_0x15A = p5;
     self->field_0x15C = p4;
     self->field_0x15E = p7;
     self->field_0x160 = p6;
-    self->field_0x154 = lbl_eu_80666910;
+    self->field_0x154 = def;
     self->field_0x158 = flg;
 }
 
-// Same vector-copy shape as func_800ABDE4, but stamps 0x94=1/0x98=5 and
-// raises bit 0 of the flag halfword at +0x158.
-void func_800AB8CC(cf::CfObjectColl* self, const cf::CollVec* a, const cf::CollVec* b, float val) {
+// Refresh resource through virtual slot 0x9C, copy both 12-byte vector blocks
+// into +0xA0..+0xB4, stamp state words 0x94=1/0x98=5 and raise bit 0 of the
+// flag halfword at +0x158.
+// Pointers stay non-const: const lets MWCC treat the vector loads as invariant
+// and batch them ahead of every self store, which retail never does.
+// Residual: retail schedules the flag's `ori` one slot later (after the
+// b->w0 load); every source shape tried yields ori at the first free ALU slot
+// and base-grouped loads (open-item packet in session notes).
+void func_800AB8CC(cf::CfObjectColl* self, cf::CollVec* a, cf::CollVec* b, float val) {
     reinterpret_cast<CfObjIf*>(self)->vf009C();
     u32 v0 = a->w0;
-    self->field_0xA4 = a->w4;
-    u32 t0 = b->w0;
-    u32 t4 = b->w4;
-    u32 v8 = a->w8;
-    u32 t8 = b->w8;
+    u32 v4 = a->w4;
+    self->field_0xA4 = v4;
+    u16 flg = self->field_0x158;
+    flg |= 1;
     self->field_0xA0 = v0;
+    u32 t0 = b->w0;
+    u32 v8 = a->w8;
+    u32 t4 = b->w4;
+    u32 t8 = b->w8;
     self->field_0xA8 = v8;
     self->field_0xAC = t0;
     self->field_0xB0 = t4;
@@ -316,7 +356,7 @@ void func_800AB8CC(cf::CfObjectColl* self, const cf::CollVec* a, const cf::CollV
     self->field_0xB8 = val;
     self->field_0x98 = 5;
     self->field_0x94 = 1;
-    self->field_0x158 |= 1;
+    self->field_0x158 = flg;
 }
 
 // Copy two 12-byte vector blocks into the object and store the pair of
@@ -395,28 +435,42 @@ void func_800ABA18(cf::CfObjectColl* self, cf::CollVec* a, const ml::CVec3* ext,
 // Lerp the stored vector pair A'(0xBC)..B'(0xC8) toward B' by the factor at
 // +0x150 and write the result through the out pointer.
 void func_800ABB9C(ml::CVec3* out, cf::CfObjectColl* self) {
-    ml::CVec3 diff = *reinterpret_cast<ml::CVec3*>(&self->field_0xC8)
-                   - *reinterpret_cast<ml::CVec3*>(&self->field_0xBC);
-    ml::CVec3 step = diff * self->field_0x150;
-    out->set(*reinterpret_cast<ml::CVec3*>(&self->field_0xBC) + step);
+    float s = self->field_0x150;
+    ml::CVec3* b = reinterpret_cast<ml::CVec3*>(&self->field_0xC8);
+    ml::CVec3* a = reinterpret_cast<ml::CVec3*>(&self->field_0xBC);
+    ml::CVec3 diff = *b - *a;
+    ml::CVec3 step = diff * s;
+    out->set(step + *a);
+}
+
+// Sum of the coll object's two stored vectors; written as an inlinable
+// by-value helper so MWCC materializes the intermediate copy like retail.
+static ml::CVec3 CollVecSum(cf::CfObjectColl* self) {
+    ml::CVec3 out;
+    ml::CVec3::add(out, *reinterpret_cast<ml::CVec3*>(&self->field_0xA0),
+                        *reinterpret_cast<ml::CVec3*>(&self->field_0xAC));
+    return out;
 }
 
 // State 3 fetches the current vector through slot 0xAC; otherwise the result
 // is the scaled sum of the two stored vectors (0xA0 / 0xAC).
+// Residual (open-item): shape, size (232B) and relocs fully match; only the
+// three PS-kernel base registers are cyclically rotated vs retail
+// (add-pOut/scale-pIn/scale-pOut: decomp r5/r7/r6 vs retail r6/r5/r7).
+// Every source lever tried (operator+ vs add()/scale() statics, by-value
+// helpers, named vs anonymous temps, decl-order permutations) either elides
+// the mid set() copy or leaves the rotation unchanged.
 void func_800ABC5C(ml::CVec3* out, cf::CfObjectColl* self) {
     if ((int)self->field_0x98 == 3) {
         out->set(*reinterpret_cast<IfRetVec*>(self)->getVec());
     } else {
-        ml::CVec3 res = *reinterpret_cast<ml::CVec3*>(&self->field_0xA0)
-                      + *reinterpret_cast<ml::CVec3*>(&self->field_0xAC);
-        ml::CVec3 scaled = res * lbl_eu_80666930;
-        out->set(scaled);
+        out->set(CollVecSum(self) * lbl_eu_80666930);
     }
 }
 
 // Copy two 12-byte vector blocks into the 0xA0/0xAC region, store the scalar,
 // then stamp the state marker words at 0x94/0x98.
-void func_800ABD44(cf::CfObjectColl* self, cf::CollVec* a, const cf::CollVec* b, float val) {
+void func_800ABD44(cf::CfObjectColl* self, const cf::CollVec* a, const cf::CollVec* b, float val) {
     reinterpret_cast<CfObjIf*>(self)->vf009C();
     // Retail interleaves each load with the following store instead of
     // batching all six loads up front.
@@ -425,8 +479,7 @@ void func_800ABD44(cf::CfObjectColl* self, cf::CollVec* a, const cf::CollVec* b,
     self->field_0xA4 = v4;
     u32 t0 = b->w0;
     self->field_0xA0 = v0;
-    u32 v8 = a->w8;
-    self->field_0xA8 = v8;
+    self->field_0xA8 = a->w8;
     self->field_0xAC = t0;
     self->field_0xB0 = b->w4;
     self->field_0xB4 = b->w8;    self->field_0xB8 = val;
@@ -436,33 +489,40 @@ void func_800ABD44(cf::CfObjectColl* self, cf::CollVec* a, const cf::CollVec* b,
 
 // Copy two 12-byte vector blocks into the 0xA0/0xAC region, store the scalar,
 // then stamp the state marker words at 0x94/0x98.
-void func_800ABDE4(cf::CfObjectColl* self, const cf::CollVec* a, const cf::CollVec* b, float val) {
+// Pointers stay non-const: retail interleaves each load with the following
+// store, which requires potential aliasing between self and a/b.
+void func_800ABDE4(cf::CfObjectColl* self, cf::CollVec* a, cf::CollVec* b, float val) {
     reinterpret_cast<CfObjIf*>(self)->vf009C();
     u32 v0 = a->w0;
-    self->field_0xA4 = a->w4;
+    u32 v4 = a->w4;
+    self->field_0xA4 = v4;
     u32 t0 = b->w0;
-    u32 t4 = b->w4;
-    u32 v8 = a->w8;
-    u32 t8 = b->w8;
     self->field_0xA0 = v0;
+    u32 t1 = b->w4;
+    u32 t8 = b->w8;
+    u32 v8 = a->w8;
     self->field_0xA8 = v8;
     self->field_0xAC = t0;
-    self->field_0xB0 = t4;
+    self->field_0xB0 = t1;
     self->field_0xB4 = t8;
     self->field_0xB8 = val;
     self->field_0x98 = 4;
     self->field_0x94 = 2;
 }
 
-void func_800ABE84(cf::CfObjectColl* self, const cf::CollVec* a, const cf::CollVec* b, float val) {
+// Parameter order puts the B-block pointer in r4/r30; MWCC's RA sorts the
+// trailing loads by (offset, base reg), so the low base must belong to `b`
+// for the reused register to land on b->w8 like retail.
+void func_800ABE84(cf::CfObjectColl* self, const cf::CollVec* b, cf::CollVec* a, float val) {
     reinterpret_cast<CfObjIf*>(self)->vf009C();
     u32 v0 = a->w0;
-    self->field_0xA4 = a->w4;
+    u32 v4 = a->w4;
+    self->field_0xA4 = v4;
     u32 t0 = b->w0;
-    u32 t4 = b->w4;
-    u32 v8 = a->w8;
-    u32 t8 = b->w8;
     self->field_0xA0 = v0;
+    u32 t4 = b->w4;
+    u32 t8 = b->w8;
+    u32 v8 = a->w8;
     self->field_0xA8 = v8;
     self->field_0xAC = t0;
     self->field_0xB0 = t4;
@@ -472,30 +532,16 @@ void func_800ABE84(cf::CfObjectColl* self, const cf::CollVec* a, const cf::CollV
     self->field_0x94 = 3;
 }
 
-void func_800ABF24(cf::CfObjectColl* self, const cf::CollVec* a, const cf::CollVec* b, float val) {
-    reinterpret_cast<CfObjIf*>(self)->vf009C();
-    u32 v0 = a->w0;
-    self->field_0xA4 = a->w4;
-    u32 t0 = b->w0;
-    u32 t4 = b->w4;
-    u32 v8 = a->w8;
-    u32 t8 = b->w8;
-    self->field_0xA0 = v0;
-    self->field_0xA8 = v8;
-    self->field_0xAC = t0;
-    self->field_0xB0 = t4;
-    self->field_0xB4 = t8;
-    self->field_0xB8 = val;
-    self->field_0x98 = 4;
-    self->field_0x94 = 5;
-}
-
 // Refresh resource via slot 0x9C, negate/expand the extent vector into the
 // 0xD8 block, build a Y-rotation matrix at +0xF0 (angle scaled to FIdx space),
 // invert it in place, then stamp the state words 0x98=3 / 0x94=5.
-void func_800ABFC4(cf::CfObjectColl* self, const ml::CVec3* pos, const ml::CVec3* ext, float angle) {
+void func_800ABFC4(cf::CfObjectColl* self, ml::CVec3* pos, const ml::CVec3* ext, float angle) {
     reinterpret_cast<CfObjIf*>(self)->vf009C();
-    ml::CVec3 e = *ext;
+    Mtx& m = self->field_0xF0;
+    ml::CVec3 e;
+    e.x = ext->x;
+    e.y = ext->y;
+    e.z = ext->z;
     self->field_0xD8 = -e.x;
     self->field_0xDC = lbl_eu_80666910;
     self->field_0xE0 = -e.z;
@@ -505,7 +551,6 @@ void func_800ABFC4(cf::CfObjectColl* self, const ml::CVec3* pos, const ml::CVec3
     self->field_0x14C = angle;
     f32 s = nw4r::math::SinFIdx(lbl_eu_80666928 * angle);
     f32 c = nw4r::math::CosFIdx(lbl_eu_80666928 * angle);
-    Mtx& m = self->field_0xF0;
     m[0][0] = c;
     m[0][1] = lbl_eu_80666910;
     m[0][2] = s;
@@ -528,16 +573,21 @@ void func_800ABFC4(cf::CfObjectColl* self, const ml::CVec3* pos, const ml::CVec3
 
 // Reset the +0x154 default, refresh the resource via virtual slot 0x9C, then
 // copy two 12-byte vector blocks into the 0xA0/0xAC region with marker 4/4.
-void func_800AC110(cf::CfObjectColl* self, const cf::CollVec* a, const cf::CollVec* b, float val) {
+// Residual (open-item): fully matched except the two offset-8 tail loads
+// (a->w8 / b->w8) get their registers swapped relative to retail (r3/r6).
+// Load order, store positions, size (172B) and relocs all match; every
+// source lever tried (const-ness, local creation order, struct-copy,
+// volatile) either regresses scheduling or leaves the swap unchanged.
+void func_800AC110(cf::CfObjectColl* self, cf::CollVec* a, const cf::CollVec* b, float val) {
     self->field_0x154 = lbl_eu_80666910;
     reinterpret_cast<CfObjIf*>(self)->vf009C();
     u32 v0 = a->w0;
     self->field_0xA4 = a->w4;
     u32 t0 = b->w0;
-    u32 t4 = b->w4;
-    u32 v8 = a->w8;
-    u32 t8 = b->w8;
     self->field_0xA0 = v0;
+    u32 t4 = b->w4;
+    u32 t8 = b->w8;
+    u32 v8 = a->w8;
     self->field_0xA8 = v8;
     self->field_0xAC = t0;
     self->field_0xB0 = t4;

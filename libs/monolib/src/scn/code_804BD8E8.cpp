@@ -2,6 +2,7 @@
 // Replace stubs with high-level C/C++ during decomp.
 
 #include <harness_catalog.h>
+#include <PowerPC_EABI_Support/Runtime/MWCPlusLib.h>
 
 // [.bss] work areas defined at the bottom of this TU.
 extern u8 lbl_eu_8065F428[];
@@ -29,6 +30,16 @@ extern "C" void func_804BA26C(const char* self, u32 a, u32 b, u32 c, u32 d);
 extern "C" void func_804B9E14(char* state, const f32* offset, u32 flags, int mode);
 extern "C" void func_804B877C(char* state, const f32* offset, u32 flags, int mode);
 extern "C" void func_804B7804(char* self);
+
+// Cross-TU imports (monolib/coli ray/query passes; retail plain symbols).
+extern "C" void func_804B8C2C(void* state, const void* a1, const void* a2,
+                               u32 a3, u32 a4, u32 a5);
+extern "C" void func_804B91E0(void* state, const void* pos, u32 filterA,
+                              u32 mode, u32 flag);
+extern "C" void func_804B9818(void* state);
+extern "C" void func_804BF59C();
+extern "C" void func_8004B0B0(void* obj);
+extern u8 lbl_eu_8066597F;
 extern "C" f32 PSVECMag(const f32* v);
 void operator delete(void* ptr) throw();
 
@@ -299,15 +310,33 @@ s32 func_804BE2E8(const f32* offset, u32 flags, int mode, int select) {
     return lbl_eu_80665988;
 }
 
-void func_804BE348(){}
+// Forward the segment-query pass to the collision manager and surface the
+// shared entry count.
+u32 func_804BE348(const void* a1, const void* a2, const void* a3, u32 a4,
+                  u32 a5) {
+    func_804B8C2C((void*)lbl_eu_8065F32C, a1, a2, a3, a4, a5);
+    return lbl_eu_80665988;
+}
 
-void func_804BE398(){}
+// Forward the vertical ray registration pass to the collision manager.
+u32 func_804BE398(const void* a1, const void* a2, u32 a3, u32 a4) {
+    func_804B91E0((void*)lbl_eu_8065F32C, a1, a2, a3, a4);
+    return lbl_eu_80665988;
+}
 
 void func_804BE3E0(u32 a1, u32 a2, u32 a3, u32 a4) {
     func_804BA26C(lbl_eu_8065F32C, a1, a2, a3, a4);
 }
 
-void func_804BE408(){}
+// Run the mover ray pass variant, then project the tracked position when
+// any resource entry is active.
+s32 func_804BE408(void* a1) {
+    func_804B9818((void*)lbl_eu_8065F32C);
+    if (lbl_eu_80665988 != 0) {
+        return func_804BE62C((ml::CVec3*)a1);
+    }
+    return 0;
+}
 
 // 12-byte header block copied out of a ScnResourceEntry.
 struct ScnResHead {
@@ -318,7 +347,7 @@ struct ScnResHead {
 
 struct ScnResourceEntry {
     ScnResHead head;             // 0x00
-    u8 field_0x0C[0x18 - 0x0C];  // 0x0C
+    ScnResHead mid;              // 0x0C - second header block
     void* field_0x18;            // 0x18 - payload pointer
     u32 field_0x1C;              // 0x1C
     int value;                   // 0x20
@@ -378,7 +407,14 @@ void func_804BE4B4(ScnResHead* dst, int index) {
     dst->field_0x08 = entries[index].head.field_0x08;
 }
 
-void func_804BE4E0(){}
+// Copy the 12-byte secondary header of resource entry [index] into dst.
+void func_804BE4E0(ScnResHead* dst, int index) {
+    extern unsigned char lbl_eu_8065F428[];
+    ScnResourceEntry* entries = (ScnResourceEntry*)lbl_eu_8065F428;
+    dst->field_0x04 = entries[index].mid.field_0x04;
+    dst->field_0x00 = entries[index].mid.field_0x00;
+    dst->field_0x08 = entries[index].mid.field_0x08;
+}
 
 extern "C" { extern unsigned char lbl_eu_8065F428[]; }
 extern "C" void* func_804BE50C(u32 idx) { return (void*)((char*)lbl_eu_8065F428 + idx * 0x24); }
@@ -388,8 +424,8 @@ void* func_804BE520(int index) {
     return (void*)(lbl_eu_8065F428 + index * sizeof(ScnResourceEntry) + 0x0c);
 }
 
-extern "C" void func_804BE62C();
-extern "C" void func_804BE538(void) { func_804BE62C(); }
+extern "C" s32 func_804BE62C(ml::CVec3* out);
+extern "C" void func_804BE538(void) { ((s32 (*)())&func_804BE62C)(); }
 
 // Fetch the scale/pair table row referenced by resource entry [index].
 s32 func_804BE53C(f32* dst, s32 index) {
@@ -410,11 +446,11 @@ s32 func_804BE53C(f32* dst, s32 index) {
 extern "C" int func_804BEE54(u32 flags);
 extern "C" int func_804BE5A0(u32 flags) { return func_804BEE54(flags); }
 
-extern "C" void func_804BEEAC();
-extern "C" void func_804BE5A4(void) { func_804BEEAC(); }
+extern "C" int func_804BEEAC(u32 flags, u32 index);
+extern "C" void func_804BE5A4(void) { ((int (*)())&func_804BEEAC)(); }
 
-extern "C" void func_804BEDFC();
-extern "C" void func_804BE5A8(void) { func_804BEDFC(); }
+extern "C" s32 func_804BEDFC(u8* dst, u32 mask, u32 index, u32 offset);
+extern "C" void func_804BE5A8(void) { ((s32 (*)())&func_804BEDFC)(); }
 
 int func_804BE5AC() {
     return func_804BEE54(0x8000);
@@ -426,7 +462,22 @@ u8 func_804BE5B8() { return lbl_eu_8066597C; }
 
 u8 func_804BE5C0() { return lbl_eu_8066597D; }
 
-void func_804BE5C8(){}
+// Scan the resource entries for one whose info selects an enabled mask bit.
+s32 func_804BE5C8() {
+    extern unsigned char lbl_eu_8065F428[];
+    ScnResourceEntry* entries = (ScnResourceEntry*)lbl_eu_8065F428;
+    s32 count = lbl_eu_80665988;
+    if (count <= 0) {
+        return 0;
+    }
+    do {
+        if (entries->value != 0) {
+            return 1;
+        }
+        entries++;
+    } while (--count != 0);
+    return 0;
+}
 
 int func_804BE604(int index) {
     extern unsigned char lbl_eu_8065F428[];
@@ -626,17 +677,55 @@ s32 func_804BE62C(ml::CVec3* out) {
 
 #pragma push
 #pragma auto_inline off
-extern "C" void func_804BEDFC(){}
+// Report whether resource entry [index]'s info selects a mask bit enabled by
+// 'mask', and store the following table record's byte at 'offset' into *dst.
+extern "C" s32 func_804BEDFC(u8* dst, u32 mask, u32 index, u32 offset) {
+    extern unsigned char lbl_eu_8065F428[];
+    ScnResourceEntry* entries = (ScnResourceEntry*)lbl_eu_8065F428;
+    u32* table = *(u32**)(lbl_eu_8065F32C + 40);
+    u32 sel = *(u16*)((u8*)entries[index].field_0x18 + 0x12);
+    if (table[sel] & mask) {
+        *dst = *(u8*)((char*)&table[sel + 1] + offset);
+        return 1;
+    }
+    return 0;
+}
 #pragma pop
 
 #pragma push
 #pragma auto_inline off
-extern "C" int func_804BEE54(u32 flags) { return 0; }
+// Scan every active resource entry; report 1 when any entry's info selects a
+// mask bit enabled by 'flags'.
+extern "C" int func_804BEE54(u32 flags) {
+    extern unsigned char lbl_eu_8065F428[];
+    s32 count = lbl_eu_80665988;
+    if (count == 0) {
+        return 0;
+    }
+    u32* table = *(u32**)(lbl_eu_8065F32C + 40);
+    ScnResourceEntry* p = (ScnResourceEntry*)lbl_eu_8065F428;
+    for (; count > 0; --count) {
+        u32 sel = *(u16*)((u8*)p->field_0x18 + 0x12);
+        if (flags & table[sel]) {
+            return 1;
+        }
+        p++;
+    }
+    return 0;
+}
 #pragma pop
 
 #pragma push
 #pragma auto_inline off
-extern "C" void func_804BEEAC(){}
+// Report whether resource entry [index]'s info selects a mask bit enabled by
+// 'flags' (result shifted left by one like retail).
+extern "C" int func_804BEEAC(u32 flags, u32 index) {
+    extern unsigned char lbl_eu_8065F428[];
+    ScnResourceEntry* entries = (ScnResourceEntry*)lbl_eu_8065F428;
+    u32* table = *(u32**)(lbl_eu_8065F32C + 40);
+    u32 sel = *(u16*)((u8*)entries[index].field_0x18 + 0x12);
+    return (flags & table[sel]) != 0 ? 2 : 0;
+}
 #pragma pop
 
 // Dissolved monolibdata2 sdata slot: word 0 is the func_804BF274 pointer
@@ -652,6 +741,7 @@ void func_804BEEEC() {
 // normalized offset between the tracked position and the entry position, run
 // the threshold ladder, project onto the crossing-history table and flag the
 // ground/anchor crossings.
+extern "C" s32 func_804BEEF8(s32 idx);
 s32 func_804BEEF8(s32 idx) {
     ScnWork* w = (ScnWork*)lbl_eu_8065F428;
     // Indexed from element 0 like retail (addi 0 + add addressing shape).
@@ -796,7 +886,17 @@ s32 func_804BF274(s32 index) {
 
 #pragma push
 #pragma auto_inline off
-extern "C" void func_804BF3B4(){}
+// Install the active crossing-record callback (func_804BEEF8 when enabled,
+// func_804BF274 otherwise) and its enabled flag.
+extern "C" void func_804BF3B4(s32 flag) {
+    if (flag != 0) {
+        lbl_eu_80663AD8[0] = (u32)&func_804BEEF8;
+        lbl_eu_8066597F = 1;
+    } else {
+        lbl_eu_80663AD8[0] = (u32)&func_804BF274;
+        lbl_eu_8066597F = 0;
+    }
+}
 #pragma pop
 
 // Quantize the vector length: snap v onto a grid derived from 'scale' and
@@ -837,7 +937,13 @@ s32 func_804BF3EC(f32* v, f32* outLen, s32 flag, f32 scale) {
 }
 
 // --- hard-symbol stubs (scaffold_hard_symbols) ---
-void sinit_804BF540(){}
+// Construct the 32 resource-entry records and the 32 history slots.
+void sinit_804BF540() {
+    __construct_array(lbl_eu_8065F428, (ConstructorDestructor)func_804BF59C,
+                      NULL, 0x24, 32);
+    __construct_array(lbl_eu_8065F8C0, (ConstructorDestructor)func_8004B0B0,
+                      NULL, 12, 32);
+}
 
 // ===== Dissolved monolibdata2 (blob surgery) data owned by this TU =====
 // func_804BF274 is defined in this TU above (plain C++ linkage, unmangled name)

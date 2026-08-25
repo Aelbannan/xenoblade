@@ -3,6 +3,11 @@
 
 #include <types.h>
 
+// Concurrent-edit shield: CfCam.hpp now carries tentative definitions of
+// lbl_eu_8066A1FC while several headers declare it extern "C"; rename the
+// identifier out of the way per include group (this TU never uses it).
+#define lbl_eu_8066A1FC cf_ptstate_2pi_a
+
 // func_801F941C's shared header declares it with (self, u32, u32), but the
 // CMenuPTState::Move call site leaves r4/r5 unset in retail; shadow the
 // 3-arg declaration during include and re-declare the 1-arg form below.
@@ -11,19 +16,37 @@
 #undef func_801F941C
 
 #include "kyoshin/CTaskGame.hpp"
+// NOTE: CfObjectActor.hpp is deliberately NOT included here:
+// CAIAction.hpp (its line-5 include) still carries a stale 2-arg declaration
+// of getBdatStringColumnValue that collides with the canonical 3-arg decl in
+// plugin/ocBdat.hpp (MWCC 10197 "illegal function overloading"). Instead this
+// TU includes CfObjectMove.hpp directly for the func_800BE12C owner decl and
+// the other CfObject* declarations CfObjectActor would have provided.
+#include "kyoshin/cf/object/CfObjectMove.hpp"  // func_800BE12C (owner decl)
 // CfGameManager.hpp (via code_8018F8D8.hpp) internally mixes a void* and a
 // CBattleManagerView* declaration of this getter; this TU calls none of them,
 // so rename it out of the way for every include below.
 // (func_80174B4C / func_80174C98 now have single unified decls on the
 // CfMapItemManager owner header; no pre-include renames needed for them.)
-#include "kyoshin/cf/object/CfObjectActor.hpp"
-#include "kyoshin/cf/CBattleManager.hpp"
+// NOTE: CBattleManager.hpp temporarily dropped - its include subtree currently
+// mixes a CfCam.hpp tentative definition of lbl_eu_8066A1FC with extern "C"
+// declarations of the same symbol (concurrent-edit conflict).
 #include "kyoshin/cf/CfGameManagerData.hpp"  // H3 label-owner decl (lbl_eu_80663E14; lbl_eu_80663E24)
+#include "kyoshin/cf/CBattleManagerApi.hpp"
+#include "kyoshin/cf/CfMapItemManager.hpp"
+#include "monolib/math/CVec3.hpp"
+#undef lbl_eu_8066A1FC
+
+// Imports used only by func_80190940.
+extern float lbl_eu_80667A94;
+extern u32 lbl_eu_80532A28[3];   // 12-byte member-function-pointer pool entry
 
 
 // C-linkage (unmangled) helpers referenced by the catalog functions below.
 // These retail symbols are defined in other TUs / the linked library.
 extern "C" {
+    // Defined later in this TU (state-blob copy used by Init).
+    void func_80192268(SCopy_80192268* dst, const SCopy_80192268* src);
     extern u32 lbl_eu_80663E28;
     extern u32 lbl_eu_80664300;
     extern float lbl_eu_80667A70;
@@ -38,7 +61,7 @@ extern "C" {
     bool func_8006EF04__Fi(int mask);
     u32  func_8009CF8C(u32 resource);
     int  func_80148778(void* obj, int id);
-    int  func_8027E018(void* obj, void* arg);
+    int  func_8027E018(volatile s16* obj, FuncActorRef* arg);
     void __dt__80043E88(void* holder, int flag);
     int func_80061A80(u32 a, u32 b, u32 c, u32 d, u32 e, u32 f);
     int func_80061870(u32 a, u32 b, u32 c, u32 d, u32 e, u32 f);
@@ -70,7 +93,17 @@ extern "C" {
     int  func_80085838__Q22cf13CfGameManagerFv();
     void func_8007FECC__Q22cf13CfGameManagerFv();
     void func_8008294C__Q22cf13CfGameManagerFv(bool enable);
+    void func_8007FE2C__Q22cf13CfGameManagerFv();
     void func_8007E0D0__Q22cf13CfGameManagerFv(bool alternate);
+
+    long func_8017FD44();
+    // func_8004C5EC: canonical u32(void*) decl comes from CfObjectMove.hpp.
+    int func_800EA444();
+    long __ptmf_cmpr(u32* slot, u32* pmf1, u32* pmf2);
+    void func_80043E08(CfEnumListHolder90940* holder, int cap, int mode);
+    // func_80043F18: canonical void*(void*) decl comes from CPartyStateWin.hpp
+    // (included via code_8018F8D8.hpp); call sites cast to CfEnumList90940*.
+    u8* func_800F6EAC(CfEnumList90940* list, int idx);
 }
 
 namespace cf {}
@@ -596,20 +629,533 @@ int func_80190840(MenuCmdRingView* buf, u32* outFlag) {
 extern float lbl_eu_80667A90;
 float func_80190938() { return lbl_eu_80667A90; }
 
-void func_80190940(){}
+// State-gate probe: refresh the actor's current control word through the
+// +0x4 sub-object's slot-0x30 getter, then test it against `gate` via
+// func_80174C98. Inlined by MWCC at every retail call site.
+static int probeGate90940(FuncActorRef* actor, u32 gate) {
+    u32 val = *(u32*)(*reinterpret_cast<CActorSubVtbl**>(actor->field_0004))
+                  ->fw_30(actor->field_0004);
+    return func_80174C98(actor, &val, gate);
+}
+
+// Battle-target search used by the party menu: validates the queried actor
+// against a long chain of state gates, then sweeps the enum-list of nearby
+// actors (tracking distance to each candidate), and finally runs a
+// mode-specific selection pass over the closest candidates.
+int func_80190940(FuncResultRef* self, FuncActorRef* actor, int mode,
+                  FuncActorRef* filter) {
+    self->field_0004 = 0;
+    self->field_0008 = 0;
+    self->field_000c = NULL;
+
+    if (probeGate90940(actor, 0x802) == 0) return 0;
+    if (probeGate90940(actor, 1) == 0) return 0;
+    cf::CfGameManager::getInstance();
+    if (!func_8006EF04__Fi(0x100)) return 0;
+    if (func_8009CF8C(0x335f) != 0) return 0;
+    if (func_8017FD44() != 0) return 0;
+    if (!func_8006EF04__Fi(0x400)) return 0;
+    if (!func_8006EF04__Fi(0x1000)) return 0;
+    if (probeGate90940(actor, 0x1f) == 0) return 0;
+    if (probeGate90940(actor, 0x1000) == 0) return 0;
+    if (probeGate90940(actor, 0x806) == 0) return 0;
+
+    BmView90940* bm = reinterpret_cast<BmView90940*>(getInstance__Q22cf14CBattleManagerFv());
+    if (bm->field_0x1aa == 0) return 0;
+    if (bm->field_0x20c8 == 0) return 0;
+
+    // If a talk object is attached its +0x374 word must be set.
+    if (actor->field_3f60 != NULL &&
+        reinterpret_cast<Sub3F60View*>(actor->field_3f60)->field_0x374 == 0) {
+        return 0;
+    }
+    if ((*reinterpret_cast<CActorVtblExt**>(actor))->fw_2bc(actor) != 0) {
+        return 0;
+    }
+
+    u8* tags = actor->field_0008;
+    // None of the busy/exclusion tags may be present; tag 0xB must be.
+    if (func_80148778(tags, 0x9) != 0) return 0;
+    if (func_80148778(tags, 0xf) != 0) return 0;
+    if (func_80148778(tags, 0x10) != 0) return 0;
+    if (func_80148778(tags, 0xa) != 0) return 0;
+    if (func_80148778(tags, 0xb) == 0) return 0;
+    // None of the event-lockout tags may be present either.
+    if (func_80148778(tags, 0xeb) != 0) return 0;
+    if (func_80148778(tags, 0xf0) != 0) return 0;
+    if (func_80148778(tags, 0xf1) != 0) return 0;
+    if (func_80148778(tags, 0xf8) != 0) return 0;
+    if (probeGate90940(actor, 0xa) == 0) return 0;
+    if (probeGate90940(actor, 0xb) == 0) return 0;
+    if (probeGate90940(actor, 0x1a) == 0) return 0;
+    if (func_8004C5EC(actor->field_3f60) == 0x31) return 0;
+
+    long r190 = (*reinterpret_cast<CActorCmpVtbl**>(actor))->fw_190(actor);
+    long r18c = (*reinterpret_cast<CActorCmpVtbl**>(actor))->fw_18c(actor);
+    if (r190 == r18c) return 0;
+
+    // While in state 5 the actor's voice-height must stay below the cap.
+    if (actor->field_3f28 == 5 &&
+        (*reinterpret_cast<CActorVtblExt**>(actor))->fw_158(actor) >=
+            lbl_eu_80667A94) {
+        return 0;
+    }
+
+    self->field_0008 = 0;
+    CfEnumListHolder90940 holder;
+    func_80043E08(&holder, 0x20, 0);
+
+    float dists[2];       // sp+0x38
+    FuncActorRef* cands[2]; // sp+0x40
+
+    // Candidate sweep: collect actors whose position sub-object differs from
+    // the queried one, recording their distance (mag of position delta minus
+    // each candidate's bias float). The two-slot arrays intentionally overlap
+    // later stack slots like retail when more than two entries appear.
+    int count = 0;
+    for (int i = 0; i < (int)((CfEnumList90940*)func_80043F18(&holder))->count; i++) {
+        u8* basePos = actor ? reinterpret_cast<u8*>(&actor->field_3e9c)
+                            : reinterpret_cast<u8*>(NULL);
+        u8* data = func_800F6EAC((CfEnumList90940*)func_80043F18(&holder), i);
+        if (data == basePos) continue;
+        data = func_800F6EAC((CfEnumList90940*)func_80043F18(&holder), i);
+        FuncActorRef* cand = (data != NULL)
+            ? reinterpret_cast<FuncActorRef*>(data - 0x3e9c)
+            : static_cast<FuncActorRef*>(NULL);
+        cands[count] = cand;
+
+        // Component-wise distance between the actor's and the candidate's
+        // +0x3E9C positions (slot-0xAC Vec3 getters); MWCC pairs the XY/ZW
+        // subtracts into ps_sub.
+        u8* posSubA = reinterpret_cast<u8*>(&actor->field_3e9c);
+        u8* posSubB = reinterpret_cast<u8*>(&cand->field_3e9c);
+        const float* posA =
+            (*reinterpret_cast<CSubPosVtblAC**>(posSubA))->fw_ac(posSubA);
+        const float* posB =
+            (*reinterpret_cast<CSubPosVtblAC**>(posSubB))->fw_ac(posSubB);
+        Vec diff;
+        diff.x = posB[0] - posA[0];
+        diff.y = posB[1] - posA[1];
+        diff.z = posB[2] - posA[2];
+        float mag = PSVECMag(&diff);
+        dists[count] = mag - cand->field_44d8;
+        count++;
+    }
+    // Move the nearer of the first two candidates into slot 0.
+    if (cands[1] != NULL && dists[0] > dists[1]) {
+        float td = dists[0];
+        FuncActorRef* tp = cands[0];
+        dists[0] = dists[1];
+        cands[0] = cands[1];
+        dists[1] = td;
+        cands[1] = tp;
+    }
+
+#define ACCEPT(v, subFlagSet)                                                  \
+    do {                                                                       \
+        self->field_000c = cand;                                               \
+        if (subFlagSet) self->field_0008 = 1;                                  \
+        self->field_0004 = (v);                                                \
+        __dt__80043E88(&holder, -1);                                           \
+        return (v);                                                            \
+    } while (0)
+
+    if (mode <= 1) {
+        // Mode 0/1: nearest candidate engaged in battle with a free slot.
+        const float thr = lbl_eu_80667A90;
+        for (int k = 0; k < count; k++) {
+            FuncActorRef* cand = cands[k];
+            if ((*reinterpret_cast<CActorVtblExt**>(cand))->fw_2bc(cand) == 0)
+                continue;
+            u8* candPos = reinterpret_cast<u8*>(&cand->field_3e9c);
+            if ((*reinterpret_cast<CSubPosVtbl84**>(candPos))->fw_84(candPos) == 0)
+                continue;
+            if (func_8004C5EC(cand->field_3f60) != 5) continue;
+            if (probeGate90940(cand, 0x1d) != 0) continue;
+            if (bm->field_0x194 < 100) continue;
+            if (dists[k] > thr) continue;
+            if (filter != NULL && filter != cand) continue;
+            ACCEPT(1, false);
+        }
+    }
+    if (mode == 0 || mode == 2) {
+        // Mode 0/2: nearest candidate carrying one of the support tags.
+        const float thr = lbl_eu_80667A90;
+        for (int k = 0; k < count; k++) {
+            FuncActorRef* cand = cands[k];
+            if ((*reinterpret_cast<CActorVtblExt**>(cand))->fw_2bc(cand) != 0)
+                continue;
+            u8* tags2 = cand->field_0008;
+            if (!(func_80148778(tags2, 0xf) != 0 ||
+                  func_80148778(tags2, 0x9) != 0 ||
+                  func_80148778(tags2, 0xb) != 0))
+                continue;
+            if (dists[k] > thr) continue;
+            if (filter != NULL && filter != cand) continue;
+            ACCEPT(2, false);
+        }
+    }
+    if (mode == 0 || mode == 3) {
+        // Mode 0/3: nearest candidate with the chain-attack tag ready.
+        const float thr = lbl_eu_80667A90;
+        for (int k = 0; k < count; k++) {
+            FuncActorRef* cand = cands[k];
+            if ((*reinterpret_cast<CActorVtblExt**>(cand))->fw_2bc(cand) != 0)
+                continue;
+            if (func_80148778(cand->field_0008, 0x10) == 0) continue;
+            if (probeGate90940(cand, 0x16) != 0) continue;
+            if (dists[k] > thr) continue;
+            if (filter != NULL && filter != cand) continue;
+            ACCEPT(3, false);
+        }
+    }
+    if (mode == 0 || mode == 4) {
+        // Mode 0/4: revive-target scan gated on the battle manager's
+        // revive-handler registration (member-function-pointer compare).
+        int gate = 0;
+        if (func_800EA444() != 0 &&
+            reinterpret_cast<BmByte261A4*>(bm)->field_0x261a4 == 0) {
+            gate = 1;
+        }
+        int armed = 0;
+        if (gate && bm->field_0x194 >= 100) {
+            armed = 1;
+        }
+        if (armed) {
+            u32 pmfLocal[3];
+            pmfLocal[0] = lbl_eu_80532A28[0];
+            pmfLocal[1] = lbl_eu_80532A28[1];
+            pmfLocal[2] = lbl_eu_80532A28[2];
+            if (__ptmf_cmpr(reinterpret_cast<BmPtmf28354*>(bm)->field_0x28354,
+                            pmfLocal, lbl_eu_80532A28) != 0) {
+                gate = 2;
+            }
+        }
+        if (gate == 2) {
+            if (count == 0) {
+                self->field_0004 = 0;
+                __dt__80043E88(&holder, -1);
+                return 0;
+            }
+            const float thr = lbl_eu_80667A90;
+            for (int k = 0; k < count; k++) {
+                FuncActorRef* cand = cands[k];
+                if ((*reinterpret_cast<CActorVtblExt**>(cand))->fw_2bc(cand) !=
+                    0)
+                    continue;
+                if (dists[k] > thr) continue;
+                if (cand->field_3388 & 0x10) continue;
+                if (func_8027E018(&bm->field_0x20c8, cand) == 0) continue;
+                ACCEPT(4, true);
+            }
+        }
+    }
+    if (mode == 0 || mode == 7) {
+        // Mode 0/7: nearest candidate available for a top-up action.
+        const float thr = lbl_eu_80667A90;
+        for (int k = 0; k < count; k++) {
+            FuncActorRef* cand = cands[k];
+            if ((*reinterpret_cast<CActorVtblExt**>(cand))->fw_2bc(cand) != 0)
+                continue;
+            if (probeGate90940(cand, 0x1d) != 0) continue;
+            if ((*reinterpret_cast<CActorVtblExt**>(cand))->fw_308(cand) >=
+                2)
+                continue;
+            if (dists[k] > thr) continue;
+            ACCEPT(7, false);
+        }
+    }
+#undef ACCEPT
+
+    {
+        int res = self->field_0004;
+        __dt__80043E88(&holder, -1);
+        return res;
+    }
+}
 
 // Member dtors (~CPartyStateWin, ~CBgTex) and the CProcess base dtor are
 // compiler-generated here, matching retail's guard structure.
 CMenuPTState::~CMenuPTState() {}
 
-void CMenuPTState::Init() {}
+// Party-menu state initialization: rebuild the background texture and the
+// party-state window on the stack, copy them member-by-member into the
+// persistent fields (region layout per CMenuPTWinCopyView), then register
+// the IScnRender sub-object as a render callback at priority 0xd.
+void CMenuPTState::Init() {
+    func_8008294C__Q22cf13CfGameManagerFv(true);
+    func_8007FE2C__Q22cf13CfGameManagerFv();
+    {
+        // Retail builds both temporaries via the unmangled slice ctor symbols,
+        // so they are constructed into raw storage under C linkage. The view
+        // macros re-derive the addresses at every statement: retail keeps no
+        // cached pointers in callee-saved registers across the copy.
+        u32 bgStore[sizeof(CBgTex) / 4];
+#define bgTemp reinterpret_cast<CBgTex*>(bgStore)
+        __ct__CBgTex(bgTemp, 0);
+        field_0x60.mMemRegion = bgTemp->mMemRegion;
+        field_0x60.mFileHandle = bgTemp->mFileHandle;
+        field_0x60.mLayout = bgTemp->mLayout;
+        field_0x60.mLayoutReady = bgTemp->mLayoutReady;
+        field_0x60.mLoaded = bgTemp->mLoaded;
+        field_0x60.mPtmMode = bgTemp->mPtmMode;
+        __dt__6CBgTexFv(bgTemp, -1);
+#undef bgTemp
+    }
+    func_801C3C14(&field_0x60);
+
+    u32 winStore[sizeof(CPartyStateWin) / 4];
+#define winTmp reinterpret_cast<CPartyStateWin*>(winStore)
+#define d reinterpret_cast<CMenuPTWinCopyView*>(&field_0x80)
+#define s reinterpret_cast<CMenuPTWinCopyView*>(winStore)
+    __ct__CPartyStateWin(winTmp, (u32)this, (u32)field_0x5C);
+    // Memberwise copy of the freshly built window into the persistent member.
+
+    d->v0008 = s->v0008;
+    d->v000c = s->v000c;
+    d->v0010 = s->v0010;
+    d->v0014 = s->v0014;
+    d->v001c = s->v001c;
+    d->v0020 = s->v0020;
+    d->v0024 = s->v0024;
+    d->v0028 = s->v0028;
+    d->v002c = s->v002c;
+    d->v0030 = s->v0030;
+    d->v0034 = s->v0034;
+    d->v0038 = s->v0038;
+    d->v003c = s->v003c;
+    d->v0040 = s->v0040;
+    d->v0044 = s->v0044;
+    d->v0048 = s->v0048;
+    d->v004c = s->v004c;
+    d->v004d = s->v004d;
+    d->v004e = s->v004e;
+    d->v004f = s->v004f;
+    d->v0054 = s->v0054;
+    d->v0058 = s->v0058;
+    d->v005c = s->v005c;
+    d->v0060 = s->v0060;
+    // func_80191C88 is imported under C linkage with opaque u8* parameters
+    // (see CPartyStateWin.hpp); call sites pass the blob sub-objects.
+    func_80191C88((u8*)&d->blob0064, (const u8*)&s->blob0064);
+    func_80191C88((u8*)&d->blob05a8, (const u8*)&s->blob05a8);
+    func_80191C88((u8*)&d->blob0ae4, (const u8*)&s->blob0ae4);
+    d->v1020 = s->v1020;
+    d->v1024 = s->v1024;
+    d->v1028 = s->v1028;
+    d->v102c = s->v102c;
+    d->v1030 = s->v1030;
+    d->v1034 = s->v1034;
+    d->v1038 = s->v1038;
+    d->v103c = s->v103c;
+    d->v1040 = s->v1040;
+    d->v1044 = s->v1044;
+    d->v1048 = s->v1048;
+    d->v104c = s->v104c;
+    d->v1050 = s->v1050;
+    func_80191C88((u8*)&d->blob1054, (const u8*)&s->blob1054);
+    d->v1590 = s->v1590;
+    d->v1594 = s->v1594;
+    func_80191C88((u8*)&d->blob1598, (const u8*)&s->blob1598);
+    func_80191C88((u8*)&d->blob1ad4, (const u8*)&s->blob1ad4);
+    d->v2010 = s->v2010;
+    d->v2014 = s->v2014;
+    d->v2018 = s->v2018;
+    d->v201c = s->v201c;
+    d->v2020 = s->v2020;
+    d->v2024 = s->v2024;
+    d->v2028 = s->v2028;
+    d->v202c = s->v202c;
+    d->v2030 = s->v2030;
+    d->v2034 = s->v2034;
+    d->v2038 = s->v2038;
+    d->v203c = s->v203c;
+    d->v2040 = s->v2040;
+    func_80191C88((u8*)&d->blob2044, (const u8*)&s->blob2044);
+    d->v2580 = s->v2580;
+    d->v2584 = s->v2584;
+    func_80191C88((u8*)&d->blob2588, (const u8*)&s->blob2588);
+    func_80191C88((u8*)&d->blob2ac4, (const u8*)&s->blob2ac4);
+    d->v3000 = s->v3000;
+    d->v3004 = s->v3004;
+    d->v3008 = s->v3008;
+    d->v300c = s->v300c;
+    d->v3010 = s->v3010;
+    d->v3014 = s->v3014;
+    d->v3018 = s->v3018;
+    d->v301c = s->v301c;
+    d->v3020 = s->v3020;
+    d->v3024 = s->v3024;
+    d->v3028 = s->v3028;
+    d->v302c = s->v302c;
+    d->v3030 = s->v3030;
+    d->v3034 = s->v3034;
+    d->v303c = s->v303c;
+    d->v3040 = s->v3040;
+    d->v3044 = s->v3044;
+    d->v3048 = s->v3048;
+    d->v304c = s->v304c;
+    d->v3050 = s->v3050;
+    d->v3054 = s->v3054;
+    d->v3058 = s->v3058;
+    d->v305c = s->v305c;
+    d->v3060 = s->v3060;
+    d->v3064 = s->v3064;
+    d->v3068 = s->v3068;
+    d->v3069 = s->v3069;
+    d->kpack3084.v3087 = s->kpack3084.v3087;
+    d->v3070 = s->v3070;
+    d->v3074 = s->v3074;
+    d->v3078 = s->v3078;
+    d->v307c = s->v307c;
+    d->v3080 = s->v3080;
+    d->v3081 = s->v3081;
+    d->kpack3084.b3084 = s->kpack3084.b3084;
+    d->kpack3084.b3085 = s->kpack3084.b3085;
+    d->kpack3084.b3086 = s->kpack3084.b3086;
+    d->kpack3084.h308b = s->kpack3084.h308b;
+    d->kpack3084.b308d = s->kpack3084.b308d;
+    d->kpack3084.b308e = s->kpack3084.b308e;
+    d->kpack3084.b308f = s->kpack3084.b308f;
+    d->v309c = s->v309c;
+    d->v30a0 = s->v30a0;
+    d->v30a4 = s->v30a4;
+    d->v30a8 = s->v30a8;
+    func_80191C88((u8*)&d->blob30ac, (const u8*)&s->blob30ac);
+    d->v35e8 = s->v35e8;
+    d->v35ec = s->v35ec;
+    func_80191C88((u8*)&d->blob35f0, (const u8*)&s->blob35f0);
+    func_80191C88((u8*)&d->blob3b2c, (const u8*)&s->blob3b2c);
+    {
+        // 15-word run, fully unrolled (retail emits lwz/stw per element).
+        d->v4068[0] = s->v4068[0];
+        d->v4068[1] = s->v4068[1];
+        d->v4068[2] = s->v4068[2];
+        d->v4068[3] = s->v4068[3];
+        d->v4068[4] = s->v4068[4];
+        d->v4068[5] = s->v4068[5];
+        d->v4068[6] = s->v4068[6];
+        d->v4068[7] = s->v4068[7];
+        d->v4068[8] = s->v4068[8];
+        d->v4068[9] = s->v4068[9];
+        d->v4068[10] = s->v4068[10];
+        d->v4068[11] = s->v4068[11];
+        d->v4068[12] = s->v4068[12];
+        d->v4068[13] = s->v4068[13];
+        d->v4068[14] = s->v4068[14];
+    }
+    d->v40a4 = s->v40a4;
+    d->v40a8 = s->v40a8;
+    d->v40ac = s->v40ac;
+    d->v40b0 = s->v40b0;
+    d->v40b1 = s->v40b1;
+    // 13-record 8-byte pair walk (retail lwzu/stwu mtctr/bdnz loop) plus the
+    // trailing word copied after the loop.
+    u32* sp13 = (u32*)&s->pairs13[0].lo - 1;
+    u32* dp13 = (u32*)&d->pairs13[0].lo - 1;
+    for (int n = 13; n != 0; n--) {
+        u32 lo = *(sp13 + 1);
+        u32 hi = *(sp13 + 2);
+        *(dp13 + 1) = lo;
+        *(dp13 + 2) = hi;
+        sp13 += 2;
+        dp13 += 2;
+    }
+    *(dp13 + 1) = *(sp13 + 1);
+    d->v4120 = s->v4120;
+    d->v4124 = s->v4124;
+    d->v4128 = s->v4128;
+    d->v412c = s->v412c;
+    d->v4130 = s->v4130;
+    d->v4134 = s->v4134;
+    d->v4138 = s->v4138;
+    d->v413c = s->v413c;
+    d->v4140 = s->v4140;
+    d->v4144 = s->v4144;
+    d->v4148 = s->v4148;
+    d->v414c = s->v414c;
+    d->v4154 = s->v4154;
+    d->v4158 = s->v4158;
+    d->v415c = s->v415c;
+    d->v4160 = s->v4160;
+    d->v4164 = s->v4164;
+    d->v4168 = s->v4168;
+    d->v416c = s->v416c;
+    d->v4170 = s->v4170;
+    d->v4174 = s->v4174;
+    d->v4178 = s->v4178;
+    d->v417c = s->v417c;
+    d->v4180 = s->v4180;
+    d->v4184 = s->v4184;
+    d->v4188 = s->v4188;
+    d->v418c = s->v418c;
+    d->v4198 = s->v4198;
+    d->v419c = s->v419c;
+    d->v419d = s->v419d;
+    d->v41a4 = s->v41a4;
+    d->v41a8 = s->v41a8;
+    d->v41ac = s->v41ac;
+    d->v41b0 = s->v41b0;
+    d->v41b4 = s->v41b4;
+    d->v41b5 = s->v41b5;
+    d->v41bc = s->v41bc;
+    d->v41c0 = s->v41c0;
+    d->v41c4 = s->v41c4;
+    d->v41c8 = s->v41c8;
+    d->v41cc = s->v41cc;
+    d->v41cd = s->v41cd;
+    d->v41d4 = s->v41d4;
+    d->v41d8 = s->v41d8;
+    d->v41dc = s->v41dc;
+    d->v41e0 = s->v41e0;
+    d->opack41e8.v41e8 = s->opack41e8.v41e8;
+    d->opack41e8.v41e9 = s->opack41e8.v41e9;
+    d->opack41e8.v41ea = s->opack41e8.v41ea;
+    d->opack41e8.v41ee = s->opack41e8.v41ee;
+    func_80166F80(&d->f41f4, &s->f41f4);
+    func_80192268(&d->blob4400, &s->blob4400);
+    // Tail run (CSysWin flags + window timer float).
+    d->v6bac = s->v6bac;
+    d->v6bb0 = s->v6bb0;
+    d->v6bb4 = s->v6bb4;
+    d->v6bb8 = s->v6bb8;
+    d->v6bbc = s->v6bbc;
+    d->v6bc0 = s->v6bc0;
+    d->v6bc4 = s->v6bc4;
+    d->v6bc8 = s->v6bc8;
+    d->v6bcc = s->v6bcc;
+    d->v6bd0 = s->v6bd0;
+    d->v6bd4 = s->v6bd4;
+    d->v6bd8 = s->v6bd8;
+    d->v6bdc = s->v6bdc;
+    d->v6bdd = s->v6bdd;
+    d->v6bde = s->v6bde;
+    d->v6bdf = s->v6bdf;
+    d->v6be0 = s->v6be0;
+    d->v6be1 = s->v6be1;
+    d->v6be4 = s->v6be4;
+    d->v6be5 = s->v6be5;
+    d->v6be8 = s->v6be8;
+
+    __dt__14CPartyStateWinFv(winTmp, -1);
+#undef winTmp
+#undef d
+#undef s
+
+    field_0x5C->addRenderCB(this, 0xd, 1);
+    func_804962A0(field_0x5C, 0);
+}
 
 // Memberwise copy of the SCopy_80191C88 state blob from src to dst, in the
 // exact order retail reads them (regions 0x00/0x10/0x39/0x499/0x4db are not
 // copied). The three 8-byte runs compile to mtctr/bdnz lwzu+stwu copy loops
-// (loop counts: 52, 16, 16). Note: the retail bloat-free form (f0 reuse, no
-// FPR-save prologue) requires -O4,s; under unit -O4,p MWCC over-schedules the
-// float copies into f14-f31.
+// (loop counts: 52, 16, 16). Retail is size-optimized here: under unit -O4,p
+// the long runs unroll and the float copies get batched into f14-f31 (which
+// drags in _savegpr/_restgpr prologue code retail doesn't have), so this one
+// function compiles with optimize_for_size like other rolled-copy sites.
+// NOTE: no codegen-steering pragmas here: the vu*/vf* volatile field types
+// already force the retail load/store program order and keep the pair runs
+// rolled (see SCopy_80191C88 above).
 void func_80191C88(SCopy_80191C88* dst, const SCopy_80191C88* src) {
     dst->f_04 = src->f_04;
     dst->f_08 = src->f_08;
@@ -626,9 +1172,17 @@ void func_80191C88(SCopy_80191C88* dst, const SCopy_80191C88* src) {
     dst->b_38 = src->b_38;
     dst->f_3c = src->f_3c;
 
-    for (int i = 0; i < 52; i++) {
-        dst->arrA[i].lo = src->arrA[i].lo;
-        dst->arrA[i].hi = src->arrA[i].hi;
+    // Biased one element back so the accesses fuse into lwzu/stwu forms
+    // (retail mtctr/bdnz walk shape).
+    u32* sA = (u32*)&src->arrA[0].lo - 1;
+    u32* dA = (u32*)&dst->arrA[0].lo - 1;
+    for (int n = 52; n != 0; n--) {
+        u32 lo = *(sA + 1);
+        u32 hi = *(sA + 2);
+        *(dA + 1) = lo;
+        *(dA + 2) = hi;
+        sA += 2;
+        dA += 2;
     }
 
     dst->f_1e0 = src->f_1e0; dst->f_1e4 = src->f_1e4;

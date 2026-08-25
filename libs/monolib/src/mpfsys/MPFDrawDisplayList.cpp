@@ -19,6 +19,11 @@
 extern const f64 lbl_eu_8066A7F8;  // u8/u16->f32 magic
 extern const f64 lbl_eu_8066A808;  // s32->f32 magic
 
+// nw4r diagnostics (retail-named; see UnkClass_80471EC8.cpp).
+extern "C" void Warning__Q24nw4r2dbFPCciPCce(const char*, int, const char*, ...);
+extern const char lbl_eu_80526324[];
+extern const char lbl_eu_80526300[];
+
 // Builtin (f32) casts pool TU-local magic doubles; the retail object
 // references the blob pool entries (lbl_eu_8066A7F8 u8/u16, lbl_eu_8066A808
 // s32) instead. Union helpers keep this TU's .sdata2 empty (retail shape).
@@ -43,6 +48,11 @@ union S32Cast {
 static inline f64 s32ToF64_a808(s32 v, S32Cast* c) {
     c->w[1] = (u32)v ^ 0x80000000u;
     return c->d - lbl_eu_8066A808;
+}
+// f32 flavor over the same caller-owned slot (header pre-stored once).
+static inline f32 s32ToF32_a808(s32 v, S32Cast* c) {
+    c->w[1] = (u32)v ^ 0x80000000u;
+    return (f32)(c->d - lbl_eu_8066A808);
 }
 
 // ---------------------------------------------------------------------------
@@ -516,7 +526,7 @@ void func_804783D0__Q26mpfsys18MPFDrawDisplayListFv(mpfsys::MPFDrawDisplayList* 
 // Height/color walker + position advance (defined below in this unit).
 bool func_804753B4__Q26mpfsys18MPFDrawDisplayListFv(mpfsys::MPFDrawDisplayList* self, const MPFDrawEntry* e);
 bool func_80476104__Q26mpfsys18MPFDrawDisplayListFv(mpfsys::MPFDrawDisplayList* self);
-MPFDrawSlot* func_80475238__Q26mpfsys18MPFDrawDisplayListFv(mpfsys::MPFDrawDisplayList* self, u32 index, u8 v1, u8 v2, u16 v3, u16 v4, f32 f1, f32 f2);
+MPFDrawSlot* func_80475238__Q26mpfsys18MPFDrawDisplayListFv(mpfsys::MPFDrawDisplayList* self, u32 index, s32 v1, s32 v2, u16 v3, u16 v4, f32 f1, f32 f2);
 bool func_80475E64__Q26mpfsys18MPFDrawDisplayListFv(mpfsys::MPFDrawDisplayList* self, MPFDrawCell* cell);
 void func_804752EC__Q26mpfsys18MPFDrawDisplayListFv(mpfsys::MPFDrawDisplayList* self, MPFDrawListHdr* hdr);
 
@@ -560,45 +570,64 @@ void func_8047509C__Q26mpfsys18MPFDrawDisplayListFv(mpfsys::MPFDrawDisplayList* 
 }
 
 // func_80475C78: walk the cell grid from the node bounds.  Each cell
-// interpolates a grid coordinate from the vertex pair, then either recurses
-// into a sub-cell or runs its draw-list entries through the height/color
-// walker (func_804753B4) and advances the position (func_80476104).
+// interpolates a quantized grid coordinate from the vertex pair, then either
+// descends into a sub-cell (even grid value) or runs its draw-list entries
+// through the height/color walker (func_804753B4) and advances the position
+// (func_80476104).  The x coordinate re-reads the i1 vertex x as its own
+// multiplier (retail shape).
 bool func_80475C78__Q26mpfsys18MPFDrawDisplayListFv(mpfsys::MPFDrawDisplayList* self) {
     MPFDrawListLayout* d = (MPFDrawListLayout*)self;
-    MPFDrawPos* pos = d->field_0x14;
-    MPFDrawNode* node = d->field_0x4;
-    f32 px = pos->x;
-    if (node->field_0x34 > px || node->field_0x2c < px) return false;
+    // Declarations in MWCC scratch-color priority (ascending); assignments
+    // keep the retail load/statement order.
+    u32 mask;
+    s32 ix;
+    s32 iz;
+    const MPFDrawVert* v1;
+    MPFDrawNode* node;
+    MPFDrawCell* cells;
+    MPFDrawPos* pos;
+    pos = d->field_0x14;
+    node = d->field_0x4;
+
+    // Gate: the walk position must lie inside the node's X/Z extents.
+    if (node->field_0x34 > pos->x || node->field_0x2c < pos->x) return false;
     if (node->field_0x38 > pos->z || node->field_0x30 < pos->z) return false;
 
-    MPFDrawCell* cells = d->field_0x34;
-    u32 mask = d->field_0x38;
+    mask = d->field_0x38;
+    cells = d->field_0x34;
+
     MPFDrawCell* e = cells;
     while (true) {
         if (!(e->mask & mask)) break;
-        const MPFDrawVert* v1 = &d->field_0x1C[e->i1];
-        const MPFDrawVert* v0 = &d->field_0x1C[e->i0];
-        s32 ix = (s32)((pos->x - v1->x) * v0->x);
-        s32 iz = (s32)((pos->z - v1->y) * v0->y);
+        v1 = &d->field_0x1C[e->i1];
+        ix = (s32)((pos->x - d->field_0x1C[e->i1].x) * d->field_0x1C[e->i0].x);
+        iz = (s32)((pos->z - v1->y) * d->field_0x1C[e->i0].y);
         if (ix < 0 || ix >= e->w) return false;
         if (iz < 0 || iz >= e->h) return false;
 
         u32 cell = d->field_0x20[e->offset + ix * e->w + iz];
-        if (cell == 0) return false;
-        if (cell & 1) {
-            const u16* p = &d->field_0x24[cell];
-            s32 n = d->field_0x24[cell];
-            p++;
-            for (s32 i = 0; i < n; i++) {
-                if (func_804753B4__Q26mpfsys18MPFDrawDisplayListFv(self, &d->field_0x30[*p])) {
-                    if (func_80476104__Q26mpfsys18MPFDrawDisplayListFv(self)) return true;
-                }
+        if (cell != 0) {
+            s32 odd = cell & 1;
+            if (odd != 0) {
+                // Declaration order drives saved-reg colors: n -> r30,
+                // p -> r29, i -> r28.
+                s32 n = d->field_0x24[cell];
+                const u16* p = &d->field_0x24[cell];
                 p++;
+                s32 i = 0;
+                while (i < n) {
+                    if (func_804753B4__Q26mpfsys18MPFDrawDisplayListFv(self, &d->field_0x30[*p])) {
+                        if (func_80476104__Q26mpfsys18MPFDrawDisplayListFv(self)) return true;
+                    }
+                    i++;
+                    p++;
+                }
+                return false;
             }
-            return false;
-        } else {
-            e = &d->field_0x34[cell];
+            e = &cells[cell];
+            continue;
         }
+        return false;
     }
     return false;
 }
@@ -607,17 +636,32 @@ bool func_80475C78__Q26mpfsys18MPFDrawDisplayListFv(mpfsys::MPFDrawDisplayList* 
 // bounds are grown to include the position; when the slot's step counter
 // exceeds its limit the position is moved to the embedded second slot, and
 // when the slot list is exhausted a fresh slot is allocated from the arena.
+//
+// All state is reached through d->... on every use (no caching): retail
+// reloads the walk position and the current slot around every call/store.
+// Declaration order drives scratch colors to r27/r26 and the third clamp
+// result stays in r0.
 bool func_80476104__Q26mpfsys18MPFDrawDisplayListFv(mpfsys::MPFDrawDisplayList* self) {
     MPFDrawListLayout* d = (MPFDrawListLayout*)self;
+    s32 n;
+    s32 rnd;
+    s32 off;
+    s32 r;
+    s32 g;
+    s32 b;
+    f32 height;
+
     d->field_0x14->field_0xf = (u8)d->field_0x3c;
 
     if (d->field_0x18->field_0x18 != 0) {
-        s32 n = d->field_0x18->field_0x18;
-        s32 rnd = n << 1;
-        s32 off = n << 2;
-        s32 r = (s32)d->field_0x14->r + (rand() % rnd) * 4 - off;
-        s32 g = (s32)d->field_0x14->g + (rand() % rnd) * 4 - off;
-        s32 b = (s32)d->field_0x14->b + (rand() % rnd) * 4 - off;
+        // Jitter the interpolated vertex color by +/- n over each channel,
+        // clamped to the u8 range.  rnd = 2n, off = 4n.
+        n = d->field_0x18->field_0x18;
+        rnd = n << 1;
+        off = n << 2;
+        r = d->field_0x14->r + (rand() % rnd) * 4 - off;
+        g = d->field_0x14->g + (rand() % rnd) * 4 - off;
+        b = d->field_0x14->b + (rand() % rnd) * 4 - off;
         if (r > 0xff) r = 0xff;
         else if (r < 0) r = 0;
         if (g > 0xff) g = 0xff;
@@ -629,36 +673,47 @@ bool func_80476104__Q26mpfsys18MPFDrawDisplayListFv(mpfsys::MPFDrawDisplayList* 
         d->field_0x14->b = (u8)b;
     }
 
+    // Grow the slot's Y bounds to include the walk position.
     if (d->field_0x50->field_0x18 >= d->field_0x14->y) d->field_0x50->field_0x18 = d->field_0x14->y;
     if (d->field_0x50->field_0x20 <= d->field_0x14->y) d->field_0x50->field_0x20 = d->field_0x14->y;
 
     d->field_0x50->field_0x28++;
-    MPFDrawSlot* hdr = d->field_0x50;
-    if (hdr->field_0x2a > hdr->field_0x28) {
+    // Unsigned compare (cmplw).  if/else keeps the allocation path as the
+    // fall-through and shares one `return false` exit with the slide path,
+    // matching the retail branch layout.
+    if ((u32)d->field_0x50->field_0x2a <= (u32)d->field_0x50->field_0x28) {
+        // Slot exhausted: grow the buffer chain, then claim a fresh slot
+        // carrying over the color, dimensions and height of the filled one.
+        func_804752EC__Q26mpfsys18MPFDrawDisplayListFv(self, (MPFDrawListHdr*)d->field_0x50);
+        height = d->field_0x50->field_0x24;
+        // Reuses `off` (dead after the jitter block) to hold the carried
+        // slot color across the allocation call - this is what pins it to
+        // the same saved register (r29) as retail.
+        off = d->field_0x50->field_0xc;
+        MPFDrawSlot* slot = func_80475238__Q26mpfsys18MPFDrawDisplayListFv(
+            self, 0x20, off, d->field_0x50->field_0xd + 1, d->field_0x50->field_0x10,
+            d->field_0x50->field_0x12, d->field_0x50->field_0x14, d->field_0x50->field_0x1c);
+        d->field_0x50 = slot;
+        if (slot != NULL) {
+            // Carry the walk position into the new slot's embedded position
+            // area; x/z are read from the old position after the allocation.
+            f32 x = d->field_0x14->x;
+            f32 z = d->field_0x14->z;
+            d->field_0x14 = (MPFDrawPos*)((u8*)slot + 0x2c);
+            slot->field_0xc = (u8)off;
+            d->field_0x50->field_0x24 = height;
+            d->field_0x14->x = x;
+            d->field_0x14->z = z;
+        } else {
+            return true;
+        }
+    } else {
+        // Slot not full yet: slide to the embedded second position slot.
         d->field_0x14->field_0x10 = d->field_0x14->x;
         d->field_0x14->field_0x18 = d->field_0x14->z;
         d->field_0x14 = (MPFDrawPos*)((u8*)d->field_0x14 + 0x10);
-        return false;
     }
-
-    func_804752EC__Q26mpfsys18MPFDrawDisplayListFv(self, (MPFDrawListHdr*)hdr);
-    u8 v1 = hdr->field_0xc;
-    f32 f31v = hdr->field_0x24;
-    MPFDrawSlot* slot = func_80475238__Q26mpfsys18MPFDrawDisplayListFv(
-        self, 0x20, v1, hdr->field_0xd + 1, hdr->field_0x10, hdr->field_0x12,
-        hdr->field_0x14, hdr->field_0x1c);
-    d->field_0x50 = slot;
-    if (slot != 0) {
-        f32 x = d->field_0x14->x;
-        f32 z = d->field_0x14->z;
-        d->field_0x14 = (MPFDrawPos*)((u8*)slot + 0x2c);
-        slot->field_0xc = v1;
-        d->field_0x50->field_0x24 = f31v;
-        d->field_0x14->x = x;
-        d->field_0x14->z = z;
-        return false;
-    }
-    return true;
+    return false;
 }
 
 // func_8047958C: attach a node chain and hand it to the plain draw walker
@@ -683,7 +738,7 @@ void func_804795A4__Q26mpfsys18MPFDrawDisplayListFv(mpfsys::MPFDrawDisplayList* 
 // func_80475238: scan the global slot chain for a free slot at/after the
 // given 16-byte-unit position and fill it; otherwise record the best-fit
 // insertion slot in self+0x54 and report failure.
-MPFDrawSlot* func_80475238__Q26mpfsys18MPFDrawDisplayListFv(mpfsys::MPFDrawDisplayList* self, u32 index, u8 v1, u8 v2, u16 v3, u16 v4, f32 f1, f32 f2) {
+MPFDrawSlot* func_80475238__Q26mpfsys18MPFDrawDisplayListFv(mpfsys::MPFDrawDisplayList* self, u32 index, s32 v1, s32 v2, u16 v3, u16 v4, f32 f1, f32 f2) {
     MPFDrawMgrLayout* d = (MPFDrawMgrLayout*)self;
     u32 key;
     MPFDrawSlot* best;
@@ -1032,8 +1087,7 @@ void func_804782C4__Q26mpfsys18MPFDrawDisplayListFv(mpfsys::MPFDrawDisplayList* 
     } else {
         if (arg->field_0x2 & 2) {
             // Parenthesised scaled term keeps MWCC's add operand order.
-            u32 base = s->field_0x2c;
-            arg->field_0x18 = (u8*)(base + arg->field_0x0 * 0x600) + 0x300;        } else {
+            arg->field_0x18 = (u8*)(s->field_0x2c + arg->field_0x0 * 0x600) + 0x300;        } else {
             arg->field_0x18 = (u8*)(s->field_0x2c + arg->field_0x0 * 0x600);
         }
         s32 n = (arg->field_0x4 + 1) * 3;
@@ -1055,91 +1109,127 @@ void func_804782C4__Q26mpfsys18MPFDrawDisplayListFv(mpfsys::MPFDrawDisplayList* 
 // MPFDrawCfg entry array (0xcc0-byte stride) for the node chain attached at
 // self+0x04, submitting each enabled entry's position/color arrays and its
 // display list.
+//
+// Residual vs retail (17 mismatches @ last build): retail recomputes the
+// entry base each iteration (add r24,r27,r31) while MWCC insistently turns
+// this source into a loop-carried pointer (or-copy + +=1 step).  Recompute
+// forms instead trigger strength reduction (cursor steals r31); declaration
+// order here is required for the retail register map (off=r31 .. entry=r24).
 void func_804795BC__Q26mpfsys18MPFDrawDisplayListFv(mpfsys::MPFDrawDisplayList* self, MPFDrawNode* node) {
+    // Declaration order drives MWCC's preserved-register assignment (first
+    // declared takes the highest GPR), so the walk state is declared in
+    // retail allocation order: off, posOff, clrOff, dataBase, entries,
+    // count, i, entry.
     MPFDrawCfg* cfg = (MPFDrawCfg*)lbl_eu_80665874;
-    MPFDrawMgrLayout* mgr = (MPFDrawMgrLayout*)self;
-    MPFDrawNode* chain = mgr->field_0x4;
-    u16 flags = cfg->field_0x8;
+    MPFDrawNode* chain = ((MPFDrawMgrLayout*)self)->field_0x4;
     u8* base = lbl_eu_80665840;
-    MPFDispEntry* entries = cfg->field_0x10;
+    u32 off;
+    u32 posOff;
+    u32 clrOff;
     MPFDrawData* dataBase = (MPFDrawData*)(base + chain->field_0x0);
+    MPFDispEntry* entries = cfg->field_0x10;
     s32 count;
-    if (flags & 1) {
+    s32 i;
+    MPFDispEntry* entry;
+
+    if (cfg->field_0x8 & 1) {
         count = cfg->field_0x0;
-    } else if (flags & 4) {
-        count = cfg->field_0x4;
-        entries += cfg->field_0xc;
     } else {
-        return;
+        if (!(cfg->field_0x8 & 4)) return;
+        count = cfg->field_0x4;
+        // Element-pointer scaling emits the plain mulli/add shape.
+        entries += cfg->field_0xc;
     }
     if (count == 0) return;
+
     func_8047491C__Q26mpfsys17UnkClass_80471EC8Fv();
     func_80474AA0__Q26mpfsys17UnkClass_80471EC8Fv();
     func_80474F2C__Q26mpfsys17UnkClass_80471EC8Fv();
-    u32 off = 0;
-    for (s32 i = 0; i < count; i++, off += sizeof(MPFDispEntry)) {
-        MPFDispEntry* entry = (MPFDispEntry*)((u8*)entries + off);
-        u8* posArr = entry->arrayA;
-        u8* clrArr = entry->arrayB;
-        if (entry->field_0x2 & 2) continue;
-        // The per-item data address is recomputed at every use (matches retail).
-        func_804737CC__Q26mpfsys17UnkClass_80471EC8Fif(
-            dataBase[entry->field_0x0].field_0x14, dataBase[entry->field_0x0].field_0x1c);
-        func_80474DF8__Q26mpfsys17UnkClass_80471EC8Fv(dataBase[entry->field_0x0].field_0x19);
-        if (dataBase[entry->field_0x0].field_0x10 & 8) {
-            func_80474E68__Q26mpfsys17UnkClass_80471EC8Fv();
-        } else {
-            func_80474E24__Q26mpfsys17UnkClass_80471EC8Fv();
+
+    off = 0;
+    entry = entries;
+    for (i = 0; i < count; i++) {
+        posOff = off + 0x20;
+        clrOff = posOff + 0xbe0;
+        if (!(entry->field_0x2 & 2)) {
+            // The per-item data address is recomputed at every use (matches retail).
+            func_804737CC__Q26mpfsys17UnkClass_80471EC8Fif(
+                dataBase[entry->field_0x0].field_0x14, dataBase[entry->field_0x0].field_0x1c);
+            func_80474DF8__Q26mpfsys17UnkClass_80471EC8Fv(dataBase[entry->field_0x0].field_0x19);
+            if (dataBase[entry->field_0x0].field_0x10 & 8) {
+                func_80474E68__Q26mpfsys17UnkClass_80471EC8Fv();
+            } else {
+                func_80474E24__Q26mpfsys17UnkClass_80471EC8Fv();
+            }
+            GXSetArray(GX_VA_POS, (u8*)entries + posOff, 12);
+            GXSetArray(GX_VA_CLR0, (u8*)entries + clrOff, 3);
+            GXCallDisplayList(entry->field_0x18, entry->field_0xc);
         }
-        GXSetArray(GX_VA_POS, posArr, 12);
-        GXSetArray(GX_VA_CLR0, clrArr, 3);
-        GXCallDisplayList(entry->field_0x18, entry->field_0xc);
+        off += sizeof(MPFDispEntry);
+        entry += 1;
     }
 }
 
 // func_804796F0: draw the vertex-colored display list.  Same walk as
 // func_804795BC but for entries with bit 1 set, with the color TEV alpha
 // inputs reconfigured up front.
+//
+// Declaration order drives MWCC's preserved-register assignment (first
+// declared takes the highest GPR); retail map is off=r31 .. entry=r24.
 void func_804796F0__Q26mpfsys18MPFDrawDisplayListFv(mpfsys::MPFDrawDisplayList* self, MPFDrawNode* node) {
+    s32 flags;
     MPFDrawCfg* cfg = (MPFDrawCfg*)lbl_eu_80665874;
-    MPFDrawMgrLayout* mgr = (MPFDrawMgrLayout*)self;
-    MPFDrawNode* chain = mgr->field_0x4;
-    u16 flags = cfg->field_0x8;
+    MPFDrawNode* chain = ((MPFDrawMgrLayout*)self)->field_0x4;
     u8* base = lbl_eu_80665840;
-    MPFDispEntry* entries = cfg->field_0x10;
+    flags = cfg->field_0x8;
+    u32 off;
+    u32 posOff;
+    u32 clrOff;
     MPFDrawData* dataBase = (MPFDrawData*)(base + chain->field_0x0);
+    // Integer base keeps the per-iteration recompute as a plain add (MWCC
+    // otherwise turns the pointer sum into a loop-carried cursor).
+    u32 entriesAddr = (u32)cfg->field_0x10;
     s32 count;
+    s32 i;
+
     if (flags & 1) {
         count = cfg->field_0x0;
-    } else if (flags & 4) {
-        count = cfg->field_0x4;
-        entries += cfg->field_0xc;
     } else {
-        return;
+        if (!(flags & 4)) return;
+        count = cfg->field_0x4;
+        // Element scaling emits the plain mulli/add shape.
+        entriesAddr += cfg->field_0xc * sizeof(MPFDispEntry);
     }
     if (count == 0) return;
+
     func_8047491C__Q26mpfsys17UnkClass_80471EC8Fv();
     func_80474A40__Q26mpfsys17UnkClass_80471EC8Fv();
     func_80474F54__Q26mpfsys17UnkClass_80471EC8Fv();
     GXSetTevAlphaIn(GX_TEVSTAGE0, GX_CA_ZERO, GX_CA_RASA, GX_CA_TEXA, GX_CA_ZERO);
-    u32 off = 0;
-    for (s32 i = 0; i < count; i++, off += sizeof(MPFDispEntry)) {
-        MPFDispEntry* entry = (MPFDispEntry*)((u8*)entries + off);
-        u8* posArr = entry->arrayA;
-        u8* clrArr = entry->arrayB;
-        if (!(entry->field_0x2 & 2)) continue;
-        // The per-item data address is recomputed at every use (matches retail).
-        func_804737CC__Q26mpfsys17UnkClass_80471EC8Fif(
-            dataBase[entry->field_0x0].field_0x14, dataBase[entry->field_0x0].field_0x1c);
-        func_80474DF8__Q26mpfsys17UnkClass_80471EC8Fv(dataBase[entry->field_0x0].field_0x19);
-        if (dataBase[entry->field_0x0].field_0x10 & 8) {
-            func_80474E68__Q26mpfsys17UnkClass_80471EC8Fv();
-        } else {
-            func_80474E24__Q26mpfsys17UnkClass_80471EC8Fv();
+
+    i = 0;
+    off = 0;
+    while (i < count) {
+        MPFDispEntry* entry = (MPFDispEntry*)(entriesAddr + off);
+        // Array offsets are formed before the enable test (matches retail).
+        posOff = off + 0x20;
+        clrOff = posOff + 0xbe0;
+        if (entry->field_0x2 & 2) {
+            // The per-item data address is recomputed at every use (matches retail).
+            func_804737CC__Q26mpfsys17UnkClass_80471EC8Fif(
+                dataBase[entry->field_0x0].field_0x14, dataBase[entry->field_0x0].field_0x1c);
+            func_80474DF8__Q26mpfsys17UnkClass_80471EC8Fv(dataBase[entry->field_0x0].field_0x19);
+            if (dataBase[entry->field_0x0].field_0x10 & 8) {
+                func_80474E68__Q26mpfsys17UnkClass_80471EC8Fv();
+            } else {
+                func_80474E24__Q26mpfsys17UnkClass_80471EC8Fv();
+            }
+            GXSetArray(GX_VA_POS, (u8*)(entriesAddr + posOff), 12);
+            GXSetArray(GX_VA_CLR0, (u8*)(entriesAddr + clrOff), 3);
+            GXCallDisplayList(entry->field_0x18, entry->field_0xc);
         }
-        GXSetArray(GX_VA_POS, posArr, 12);
-        GXSetArray(GX_VA_CLR0, clrArr, 3);
-        GXCallDisplayList(entry->field_0x18, entry->field_0xc);
+        off += sizeof(MPFDispEntry);
+        i++;
     }
 }
 
@@ -1156,10 +1246,12 @@ void func_80478C94__Q26mpfsys18MPFDrawDisplayListFv(mpfsys::MPFDrawDisplayList* 
     MPFDrawMgrLayout* d = (MPFDrawMgrLayout*)self;
     MPFDrawNode* node = d->field_0x4;
     s32 prevLayer = -1;
-    MPFBillItem* itemBase = (MPFBillItem*)(lbl_eu_80665840 + node->field_0x0);
+    // volatile: retail spills the item base to the stack (sp+0x3c) and
+    // reloads it every outer iteration.
+    volatile MPFBillItem* itemBase = (MPFBillItem*)(lbl_eu_80665840 + node->field_0x0);
     Vec* arena = (Vec*)func_804B5A68();
-    s32 countA = 8;
     s32 countB = 0;
+    s32 countA = 8;
     Vec diff;
     Vec tmp;
     MPFDrawSlot* slot = ((MPFDrawListLayout*)self)->field_0x58;
@@ -1176,7 +1268,7 @@ void func_80478C94__Q26mpfsys18MPFDrawDisplayListFv(mpfsys::MPFDrawDisplayList* 
     while (slot != 0) {
         if (func_80478BDC__Q26mpfsys18MPFDrawDisplayListFv((mpfsys::MPFDrawDisplayList*)slot)) {
             s32 layer = slot->field_0xc;
-            MPFBillItem* item = &itemBase[layer];
+            MPFBillItem* item = (MPFBillItem*)&itemBase[layer]; 
             if (!(lbl_eu_80665864[item->field_0x34 >> 5] & (1u << (item->field_0x34 & 31)))) {
                 f32 f1 = item->field_0x30;
                 f32 f26;
@@ -1276,7 +1368,17 @@ void func_80478C94__Q26mpfsys18MPFDrawDisplayListFv(mpfsys::MPFDrawDisplayList* 
                             if (f29 <= f23) {
                                 goto nextProbe;
                             }
-                            f0 = nw4r::math::FrSqrt(f29) * f29;
+                            // Guard the square root: warn and clamp when the
+                            // squared distance went negative.
+                            if (!(f29 >= f31)) {
+                                Warning__Q24nw4r2dbFPCciPCce(lbl_eu_80526324, 0x273,
+                                                             lbl_eu_80526300);
+                            }
+                            f32 sq = f31;
+                            if (!(f29 <= f31)) {
+                                sq = f29 * nw4r::math::FrSqrt(f29);
+                            }
+                            f0 = sq;
                             r19 = (s32)(f20 * f25 * (f0 - f26));
                             goto emit;
                         } else {
@@ -1359,6 +1461,7 @@ void func_80478C94__Q26mpfsys18MPFDrawDisplayListFv(mpfsys::MPFDrawDisplayList* 
                         u8 pb = probe->b;
                         s32 idx = (pg + k) + (pb + pr);
                         u32 color = ((u32)(pr >> 2) << 26) | ((u32)pg << 18) | ((u32)pb << 12) | (((u32)r19 & 0xFFFFFF) << 6);
+                        union { u32 w; u8 b[4]; } col;
                         s32 aidx = (countB & ((idx % countA) << 1)) + 2;
                         Vec* pos = (Vec*)entry->field_0x10;
                         if (idx & 1) {
@@ -1373,12 +1476,11 @@ void func_80478C94__Q26mpfsys18MPFDrawDisplayListFv(mpfsys::MPFDrawDisplayList* 
                             nw4r::math::VEC3Add((nw4r::math::VEC3*)&pos[3], (const nw4r::math::VEC3*)probe, (const nw4r::math::VEC3*)&arena[1]);
                         }
                         entry->field_0x10 = (u32)(pos + 4);
-                        u8 colorBytes[4];
-                        *(u32*)colorBytes = color;
+                        col.w = color;
                         u8* cptr = (u8*)entry->field_0x14;
-                        cptr[0] = colorBytes[0];
-                        cptr[1] = colorBytes[1];
-                        cptr[2] = colorBytes[2];
+                        cptr[0] = col.b[0];
+                        cptr[1] = col.b[1];
+                        cptr[2] = col.b[2];
                         entry->field_0x14 = (u32)(cptr + 3);
                         entry->field_0x4 += 4;
                         entry->field_0x8 += 0xc;
@@ -1418,21 +1520,20 @@ bool func_80476344__Q26mpfsys18MPFDrawDisplayListFv(mpfsys::MPFDrawDisplayList* 
     MPFDrawListLayout* d = (MPFDrawListLayout*)self;
     MPFDrawGlobal* g = lbl_eu_80665838;
     f32* cell = (f32*)((u8*)g + 0x2d20 + index * 0xc);
-    f32 refx = lbl_eu_80658410.x;
-    f32 refz = lbl_eu_80658410.z;
     f32 oldx = cell[0];
     f32 oldz = cell[2];
-    cell[0] = refx;
-    cell[2] = refz;
-    s32 ix = (s32)refx;
-    s32 iz = (s32)refz;
+    cell[0] = lbl_eu_80658410.x;
+    s32 ix = (s32)lbl_eu_80658410.x;
+    s32 iz = (s32)lbl_eu_80658410.z;
+    s32 step = 1;
     s32 ox = (s32)oldx;
     s32 oz = (s32)oldz;
+    cell[2] = lbl_eu_80658410.z;
 
-    u32 flag = lbl_eu_8066586C & ~0x7Eu;
+    // Density-gate bits (2/3) in the shared TEV state, selected by mode.
+    u32 flag = lbl_eu_8066586C & ~0xCu;
     lbl_eu_8066586C = flag;
     s32 span;
-    s32 step;
     s32 spacing;
     if (mode < 3) {
         lbl_eu_8066586C = flag | 8;
@@ -1447,85 +1548,107 @@ bool func_80476344__Q26mpfsys18MPFDrawDisplayListFv(mpfsys::MPFDrawDisplayList* 
     } else {
         span = mode - 2;
         spacing = 0xa;
-        step = 1;
     }
 
     // If the reference position aligns to the density spacing on both axes
     // the cell index is advanced and this call bails out early.
     if (ix - (ix / spacing) * spacing == ox - (ox / spacing) * spacing &&
         iz - (iz / spacing) * spacing == oz - (oz / spacing) * spacing) {
+        MPFDrawNode* node = d->field_0x4;
         s16 next = g->field_0x2E12 + 1;
-        if (next >= (s32)d->field_0x4->field_0x4) {
+        if ((u32)node->field_0x4 <= (u32)next) {
             next = 0;
         }
         g->field_0x2E12 = next;
         return true;
     }
 
-    // Normalize the spacing and derive the scaled probe radius.
-    f32 f26 = s32ToF_a808(spacing);
-    f32 f27 = nw4r::math::FrSqrt(f26 * f26 + f26 * f26) * (f26 * f26 + f26 * f26) * lbl_eu_8066A810;
-    s32 r4 = (s32)(scale / f26) + 4;
-    s32 r22 = r4 * 2;
+    // Two alternating fast-cast slots (retail pre-stores both 0x43300000
+    // headers once and reuses slot A/B for every int->float conversion).
+    S32Cast cvtA;
+    S32Cast cvtB;
+    cvtA.w[0] = 0x43300000u;
+    cvtB.w[0] = 0x43300000u;
+
+    // Fast-cast the spacing and validate the probe disc; degenerate spacing
+    // raises the retail diagnostic and the normalized radius falls back to 0.
+    f32 f26 = s32ToF32_a808(spacing, &cvtA);
+    f32 sq = f26 * f26;
+    f32 dd = f26 * f26 + sq;
+    if (dd < lbl_eu_8066A7E8) {
+        Warning__Q24nw4r2dbFPCciPCce(lbl_eu_80526324, 0x273, lbl_eu_80526300);
+    }
+    f32 norm = lbl_eu_8066A7E8;
+    sq = f26 * f26;
+    dd = f26 * f26 + sq;
+    if (dd > lbl_eu_8066A7E8) {
+        f32 inv = nw4r::math::FrSqrt(dd);
+        sq = f26 * f26;
+        norm = (f26 * f26 + sq) * inv;
+    }
+    f32 f27 = norm * lbl_eu_8066A810;
+
+    s32 r22 = ((s32)(scale / f26) + 4) * 2;
     f32 f25 = (scale + f27) * (scale + f27);
     s32 r23 = span * span;
-    s32 r7 = spacing * r4;
+    s32 r7 = spacing * (r22 / 2);
     s32 r5 = ix / 10;
-    s32 r3b = iz / 10;
+    s32 rz = iz / 10;
     s32 r6 = ix - r7;
-    s32 r4b = iz - r7;
-    s32 r5b = (r22 * step) >> 1;
-    s32 r14 = r5 + 0x2710 - r5b;
-    s32 r25 = r3b + 0x2710 - r5b;
-    f32 f24 = s32ToF_a808(r6);
-    f32 f23 = s32ToF_a808(r4b);
+    s32 r4 = iz - r7;
+    s32 rhalf = (r22 * step) / 2;
+    s32 r14 = r5 + 0x2710 - rhalf;
+    s32 r25 = rz + 0x2710 - rhalf;
+    f32 f24 = s32ToF32_a808(r6, &cvtB);
+    f32 f23 = s32ToF32_a808(r4, &cvtA);
 
-    // Bit array of already-placed quads.
+    // Bit array of grid positions claimed by surviving slots.
     u32* bits = (u32*)func_804B5A68();
-    DCZeroRange((void*)bits, ((r22 * r22) >> 5) + 1);
+    DCZeroRange((void*)bits, (((r22 * r22) >> 5) + 1) * 4);
 
-    // Clear any existing slots that are inside the new probe radius.
+    // Claim every in-range slot's grid position, then deactivate the slots
+    // whose probe disc falls inside the refreshed radius.
     {
+        const u32 one = 1;
         MPFDrawSlot* slot = lbl_eu_80665870;
         while (slot != 0) {
             if ((slot->field_0xe & 2) && slot->field_0xc == (u8)index) {
                 f32 dx = slot->field_0x1c - lbl_eu_80658410.z;
                 f32 dz = slot->field_0x14 - lbl_eu_80658410.x;
+                f32 rr = slot->field_0x24 + f27;
                 f32 d2 = dx * dx + dz * dz;
-                f32 r = slot->field_0x24 + f27;
-                if (d2 <= r * r) {
-                    slot->field_0xe &= ~1u;
+                if (d2 <= rr * rr) {
+                    slot->field_0xe &= (u8)~one;
                 }
+                s32 bx = (r14 - slot->field_0x10) / step;
+                s32 bz = (r25 - slot->field_0x12) / step;
+                s32 bit = r22 * bx + bz;
+                bits[bit >> 5] |= one << (bit & 31);
             }
             slot = slot->next;
         }
     }
 
-    f32 f22 = f26 / s32ToF_a808(span);
+    f32 f22 = f26 / s32ToF32_a808(span, &cvtB);
     f32 f21 = lbl_eu_8066A814 * f22 - f26;
     f32 f28 = lbl_eu_8066A814;
     f32 f30 = lbl_eu_8066A820;
     f32 f29 = lbl_eu_8066A81C;
-    f32 ref2x = lbl_eu_80658410.x;
-    f32 ref2z = lbl_eu_80658410.z;
     s32 r28 = 0;
     s32 r29 = 0;
     s32 r20 = 0;
     s32 r26 = 0;
-    s32 r19 = 0;
-    s32 cellOff = r14;
-    s32 rowOff = r25;
-    s32 rows = r22;
-    s32 cols = r22;
+    s32 rowOff = 0;
 
-    for (s32 row = 0; row < rows; row++) {
-        f32 f20 = f24 + s32ToF_a808(row) * f26;
-        f32 f19 = f20 + f28 * f26 - ref2x;
-        s32 rowBase = cellOff + rowOff;
-        for (s32 col = 0; col < cols; col++) {
-            f32 f18 = f23 + s32ToF_a808(col) * f26;
-            f32 dz = f18 + f28 * f26 - ref2z;
-            s32 bitOff = col + r28;
+    for (s32 row = 0; row < r22; row++) {
+        f32 f20 = s32ToF32_a808(row, &cvtA) * f26 + f24;
+        f32 f19 = f28 * f26 + f20 - lbl_eu_80658410.x;
+        s32 rowBase = r28;
+        s32 vx = r14 + rowOff;
+        for (s32 col = 0; col < r22; col++) {
+            f32 f18 = s32ToF32_a808(col, &cvtB) * f26 + f23;
+            f32 dz = f28 * f26 + f18 - lbl_eu_80658410.z;
+            s32 bitOff = col + rowBase;
             if (bits[bitOff >> 5] & (1u << (bitOff & 31))) {
                 goto nextCol;
             }
@@ -1534,88 +1657,125 @@ bool func_80476344__Q26mpfsys18MPFDrawDisplayListFv(mpfsys::MPFDrawDisplayList* 
             }
             {
                 MPFDrawSlot* slot = func_80475238__Q26mpfsys18MPFDrawDisplayListFv(
-                    self, r23, 0, (u8)index, (u16)rowBase, (u16)(r25 + r26), f20, f18);
+                    self, r23, index, 0, (u16)vx, (u16)(r25 + r26), f20, f18);
                 d->field_0x50 = slot;
                 if (slot == 0) {
-                    lbl_eu_80665838->field_0x2DFC = lbl_eu_8066A7E8;
-                    // fallthrough: reset cell and fail
-                    cell[0] = lbl_eu_8066A818;
-                    cell[2] = lbl_eu_8066A818;
-                    return false;
+                    goto failReset;
                 }
                 d->field_0x14 = (MPFDrawPos*)((u8*)slot + 0x2c);
                 slot->field_0x24 = scale;
                 f32 f2 = f20 + f26;
                 f32 f1 = f18 + f26;
                 MPFDrawNode* node = d->field_0x4;
+                s32 walked = 0;
                 if (node->field_0x34 <= f2 && node->field_0x2c <= f20 &&
                     node->field_0x38 <= f1 && node->field_0x30 <= f18) {
                     d->field_0x40 = f20;
                     d->field_0x44 = f18;
                     d->field_0x48 = f2;
                     d->field_0x4C = f1;
-                    if (func_80475E64__Q26mpfsys18MPFDrawDisplayListFv(self, d->field_0x34)) {
-                        r20++;
-                        if (r20 > 0x14 && d->field_0x3c == 0) {
-                            cell[0] = lbl_eu_8066A818;
-                            cell[2] = lbl_eu_8066A818;
-                            return false;
-                        }
-                        goto nextCol;
-                    }
+                    walked = func_80475E64__Q26mpfsys18MPFDrawDisplayListFv(self, d->field_0x34);
                 }
-                // Fill the walk: scatter positions, then advance the slot.
-                if (d->field_0x54 != 0) {
-                    MPFDrawSlot* best = d->field_0x54;
-                    best->field_0x28 = (u16)r29;
-                    best->field_0x2a = (u16)r29;
-                    best->field_0xc = slot->field_0xc;
-                    best->field_0xd = slot->field_0xd;
-                    best->field_0x10 = slot->field_0x10;
-                    best->field_0x12 = slot->field_0x12;
-                    best->field_0x14 = slot->field_0x14;
-                    best->field_0x1c = slot->field_0x1c;
-                    best->field_0x18 = slot->field_0x18;
-                    best->field_0x20 = slot->field_0x20;
-                    best->field_0x24 = slot->field_0x24;
-                    d->field_0x50 = best;
-                }
-                func_804752EC__Q26mpfsys18MPFDrawDisplayListFv(self, (MPFDrawListHdr*)d->field_0x50);
-                if (d->field_0x18->field_0x17 == 1) {
-                    // Scatter walk: random jitter around the grid position.
-                    f32 f31 = lbl_eu_8066A820 * (lbl_eu_8066A814 * f22);
-                    s32 n = r23;
-                    for (s32 i = 0; i < n; i++) {
-                        f32 fx = s32ToF_a808(rand() % 100) * lbl_eu_8066A820;
-                        f32 fx2 = f22 * fx + f20 - f21;
-                        d->field_0x14->x = f31 * s32ToF_a808(rand() % 100) * lbl_eu_8066A820 - (lbl_eu_8066A81C * f22) + fx2;
-                        if (func_80475C78__Q26mpfsys18MPFDrawDisplayListFv(self)) {
-                            break;
+                if (walked) {
+                    // Grid walk hit: scatter billboards over the fresh quad.
+                    s32 kind = d->field_0x18->field_0x17;
+                    if (kind == 1) {
+                        // Jittered scatter: two draws per billboard, the jitter
+                        // scaled by the span-normalized step.
+                        f32 f31 = f30 * (f28 * f22);
+                        for (s32 i = 0; i < r23; i++) {
+                            s32 rv = rand();
+                            f32 base = f22 * s32ToF32_a808(i % span, &cvtB) + f20 - f21;
+                            d->field_0x14->x = f31 * s32ToF32_a808(rv % 100, &cvtA) + (base - f29 * f22);
+                            s32 rv2 = rand();
+                            f32 base2 = f22 * s32ToF32_a808(i % span, &cvtB) + f18 - f21;
+                            d->field_0x14->z = f31 * s32ToF32_a808(rv2 % 100, &cvtA) + (base2 - f29 * f22);
+                            if (func_80475C78__Q26mpfsys18MPFDrawDisplayListFv(self)) {
+                                break;
+                            }
+                        }
+                    } else if (kind == 2) {
+                        // Uniform random scatter across the quad.
+                        f32 f31 = f30 * f22;
+                        for (s32 i = 0; i < r23; i++) {
+                            d->field_0x14->x = f31 * s32ToF32_a808(rand() % (span * 100), &cvtA) + f20 - f21;
+                            d->field_0x14->z = f31 * s32ToF32_a808(rand() % (span * 100), &cvtB) + f18 - f21;
+                            if (func_80475C78__Q26mpfsys18MPFDrawDisplayListFv(self)) {
+                                break;
+                            }
+                        }
+                    } else {
+                        // Deterministic sweep along the span diagonal.
+                        for (s32 i = 0; i < r23; i++) {
+                            d->field_0x14->x = f22 * s32ToF32_a808(i % span, &cvtA) + f20 - f21;
+                            d->field_0x14->z = f22 * s32ToF32_a808(i / span, &cvtB) + i - f21;
+                            if (func_80475C78__Q26mpfsys18MPFDrawDisplayListFv(self)) {
+                                break;
+                            }
                         }
                     }
+                    if (d->field_0x50 == 0) {
+                        goto failReset;
+                    }
+                    if (d->field_0x50->field_0x28 == 0 && d->field_0x54 != 0) {
+                        MPFDrawSlot* cur = d->field_0x50;
+                        MPFDrawSlot* best = d->field_0x54;
+                        best->field_0x28 = (u16)r29;
+                        best->field_0x2a = (u16)r29;
+                        best->field_0xc = cur->field_0xc;
+                        best->field_0xd = cur->field_0xd;
+                        best->field_0x10 = cur->field_0x10;
+                        best->field_0x12 = cur->field_0x12;
+                        best->field_0x14 = cur->field_0x14;
+                        best->field_0x1c = cur->field_0x1c;
+                        best->field_0x18 = cur->field_0x18;
+                        best->field_0x20 = cur->field_0x20;
+                        best->field_0x24 = cur->field_0x24;
+                        d->field_0x50 = best;
+                    }
+                    func_804752EC__Q26mpfsys18MPFDrawDisplayListFv(self, (MPFDrawListHdr*)d->field_0x50);
+                } else {
+                    // Walk missed: splice in the best-fit slot and advance it.
+                    if (d->field_0x54 != 0) {
+                        MPFDrawSlot* best = d->field_0x54;
+                        best->field_0x28 = (u16)r29;
+                        best->field_0x2a = (u16)r29;
+                        best->field_0xc = slot->field_0xc;
+                        best->field_0xd = slot->field_0xd;
+                        best->field_0x10 = slot->field_0x10;
+                        best->field_0x12 = slot->field_0x12;
+                        best->field_0x14 = slot->field_0x14;
+                        best->field_0x1c = slot->field_0x1c;
+                        best->field_0x18 = slot->field_0x18;
+                        best->field_0x20 = slot->field_0x20;
+                        best->field_0x24 = slot->field_0x24;
+                        d->field_0x50 = best;
+                    }
+                    func_804752EC__Q26mpfsys18MPFDrawDisplayListFv(self, (MPFDrawListHdr*)d->field_0x50);
                 }
                 r20++;
                 if (r20 > 0x14 && d->field_0x3c == 0) {
-                    cell[0] = lbl_eu_8066A818;
-                    cell[2] = lbl_eu_8066A818;
-                    return false;
+                    goto failReset;
                 }
             }
         nextCol:
             r26 += step;
-            r19++;
         }
-        r28 += rows;
+        r28 += r22;
         rowOff += step;
     }
 
+failReset:
     cell[0] = lbl_eu_8066A818;
     cell[2] = lbl_eu_8066A818;
-    s16 next = g->field_0x2E12 + 1;
-    if (next >= (s32)d->field_0x4->field_0x4) {
-        next = 0;
+    {
+        MPFDrawNode* node = d->field_0x4;
+        s16 next = g->field_0x2E12 + 1;
+        if ((u32)node->field_0x4 <= (u32)next) {
+            next = 0;
+        }
+        g->field_0x2E12 = next;
     }
-    g->field_0x2E12 = next;
     return false;
 }
 
@@ -1626,6 +1786,12 @@ bool func_80476344__Q26mpfsys18MPFDrawDisplayListFv(mpfsys::MPFDrawDisplayList* 
 bool func_80476E50__Q26mpfsys18MPFDrawDisplayListFv(mpfsys::MPFDrawDisplayList* self, s32 index, s32 mode, f32 scale) {
     MPFDrawListLayout* d = (MPFDrawListLayout*)self;
     MPFDrawGlobal* g = lbl_eu_80665838;
+    // Two persistent int->float bit-cast slots (retail stores both 0x43300000
+    // headers once in the prologue and only rewrites the low word).
+    S32Cast cvtA;
+    S32Cast cvtB;
+    cvtA.w[0] = 0x43300000u;
+    cvtB.w[0] = 0x43300000u;
     f32* cell = (f32*)((u8*)g + 0x2d20 + index * 0xc);
     f32 refx = lbl_eu_80658410.x;
     f32 refz = lbl_eu_80658410.z;
@@ -1644,17 +1810,7 @@ bool func_80476E50__Q26mpfsys18MPFDrawDisplayListFv(mpfsys::MPFDrawDisplayList* 
     f32 f30 = f1 * nw4r::math::FrSqrt(f1);
     f32 f22 = scale - lbl_eu_8066A82C;
 
-    // Round the reference position to the 10-unit grid.
-    s32 r6 = ix / 10;
-    s32 r5 = iz / 10;
-    s32 r3 = oz / 10;
-    s32 r0 = ox / 10;
-    s32 r14 = ix - r6 * 10;
-    s32 r18 = iz - r5 * 10;
-    s32 r17 = oz - r3 * 10;
-    s32 r19 = ox - r0 * 10;
-
-    if (r14 == r18 && r17 == r19) {
+    if (ix - ix % 10 == ox - ox % 10 && iz % 10 == oz % 10) {
         s16 next = g->field_0x2E12 + 1;
         if (next >= (s32)d->field_0x4->field_0x4) {
             next = 0;
@@ -1673,28 +1829,31 @@ bool func_80476E50__Q26mpfsys18MPFDrawDisplayListFv(mpfsys::MPFDrawDisplayList* 
         r22 = (mode > 8) ? 5 : 4;
     } else {
         s32 v = mode ^ 6;
-        r22 = (((v >> 1) - (v & mode)) >> 31) + 4;
+        r22 = 4 + (((v >> 1) - (v & mode)) < 0 ? 1 : 0);
     }
 
     // Probe spacing factor for the step-count rows.
     f32 f21 = lbl_eu_8066A7E8;
     if (r22 >= 3) {
-        f21 = lbl_eu_8066A814 * s32ToF_a808(r22) / (s32ToF_a808(r22 - 2));
+        f21 = lbl_eu_8066A814 * s32ToF32_a808(r22, &cvtA) /
+              s32ToF32_a808(r22 - 2, &cvtB);
     }
 
-    s32 r23 = r22 * ((s32)(f18 / f27) + 1) * 2;
+    s32 r23 = ((s32)(f18 / f27) + 1) * 2;
     s32 r24 = mode * mode;
     s32 r28 = mode * 100;
-    s32 r29 = r24 + 1;
     f32 f15 = lbl_eu_8066A808;
-    s32 r14b = ix / 10 * 10;
-    s32 r17b = iz / 10 * 10;
-    s32 r18b = r14;
-    s32 r19b = r17;
+    s32 r14b = ix - ix % 10;
+    s32 r17b = iz - iz % 10;
+    s32 r18b = ix % 10;
+    s32 r19b = iz % 10;
 
-    // Bit array of already-placed quads.
+    // Bit array of already-placed quads (size in bytes, rounded up to a word).
     u32* bits = (u32*)func_804B5A68();
-    DCZeroRange((void*)bits, ((r22 * r23 * r23) >> 5) + 1);
+    s32 bitBytes = (((r22 * r23 * r23) >> 5) + 1) * 4;
+    DCZeroRange((void*)bits, bitBytes);
+    // Scatter stride/count for the index chain below.
+    s32 r29 = mode * (mode / 2 + 1) + 1;
 
     // Clear existing slots inside the new probe radius.
     {
@@ -1728,69 +1887,101 @@ bool func_80476E50__Q26mpfsys18MPFDrawDisplayListFv(mpfsys::MPFDrawDisplayList* 
         }
     }
 
-    // Grid walk: three nested loops over the interpolated rows.
-    s32 r20 = 1;
-    s32 r26 = 0;
-    s32 r27 = 0;
-    s32 r14c = 0;
-    s32 r25 = 0;
-    s32 r19c = 0;
+    // Grid walk.  Position bases mirror the retail stack-slot scheme:
+    // slot40 = A814*A824 + (float)floor10(ix), f25 = A824/(rem) ramp bases,
+    // xb/zb are the 10000-offset integer bases shared by both axes.
     f32 f16 = lbl_eu_8066A820;
     f32 f14 = lbl_eu_8066A81C;
     f32 f31 = lbl_eu_8066A814;
+    f32 f40 = f31 * f27 + (f32)r14b;
+    f32 f25 = f31 * f27 + (f32)(r17b - r23 / 2 * 10);
+    f32 f26 = (f32)r17b;
+    f32 f24 = f27 / (f32)(r17b - r23 / 2 * 10);
+    f32 f23 = -(f31 * f24) + f27;
+    s32 xb = r14b / 10 + 10000 - r23 / 2;
+    s32 zb = r17b / 10 + 10000 - r23 / 2;
+    s32 t0 = r24 >> 1;
+    s32 placed = 0;
 
     for (s32 zz = 0; zz < r23; zz++) {
-        f32 f20 = f27 * s32ToF_a808(zz) + lbl_eu_8066A840;
-        f32 f29 = f20 - lbl_eu_8066A844;
+        cvtA.w[1] = (u32)zz ^ 0x80000000u;
+        f32 f20 = (f32)(cvtA.d - f15) * f27 + f40;
+        f32 f29 = f20 - (f32)r14b;
+        s32 s60 = xb + zz;
         for (s32 xx = 0; xx < r23; xx++) {
-            s32 r20c = 0;
+            cvtB.w[1] = (u32)xx ^ 0x80000000u;
+            f32 f19 = (f32)(cvtB.d - f15) * f27 + f25;
+            f32 f28 = f19 - f26;
+            s32 s5c = zb + xx;
+            s32 r14c = 0;
+            s32 r26 = 0;
             for (s32 s = 0; s < r22; s++) {
-                s32 bit = (s * r23 + zz) * r23 + xx;
+                s32 bit = (zz + r14c) * r23 + xx;
                 if (bits[bit >> 5] & (1u << (bit & 31))) {
-                    continue;
+                    goto next_step;
                 }
                 // Interpolated position for this sub-step.
                 f32 f17;
-                if (r20c == 0) {
+                if (s == 0) {
                     f17 = f18;
-                } else if (r20c == r22 - 1) {
+                } else if (s == r22 - 1) {
                     f17 = lbl_eu_8066A82C;
                 } else {
-                    f17 = -f31 * f22 + f18 + f21 * (s32ToF_a808(r20c - 1));
+                    cvtA.w[1] = (u32)(s - 1) ^ 0x80000000u;
+                    f17 = -f31 * f22 + f18 + f21 * (f32)(cvtA.d - f15);
                 }
-                f32 f1b = f17 + f30;
-                f32 f0 = f29 * f29;
-                if (f0 + (f17 + f30) * (f17 + f30) > (f1b) * (f1b)) {
-                    continue;
+                if (f29 * f29 + f28 * f28 > (f17 + f30) * (f17 + f30)) {
+                    goto next_step;
                 }
                 {
+                    // Row reduction: two halve-and-subtract chains over the
+                    // squared density mode produce the quad index pair.
+                    s32 rr;
+                    s32 rv;
+                    if (s == r22 - 1) {
+                        rr = r24;
+                        s32 t = t0;
+                        for (s32 i = 1; i < r22; i++) {
+                            t >>= 1;
+                            rr -= t;
+                        }
+                        rv = r24 - rr;
+                    } else {
+                        rr = r24;
+                        rv = 0;
+                        for (s32 i = s; i < r22; i++) {
+                            rr >>= 1;
+                            rv += rr;
+                        }
+                        rv = rr + t0 - rv;
+                    }
                     MPFDrawSlot* slot = func_80475238__Q26mpfsys18MPFDrawDisplayListFv(
-                        self, r19, r20c, (u8)index, (u16)(r14c + r26),
-                        (u16)(r18b + r25), f20, f17);
+                        self, rr, index, r26, (u16)s60,
+                        (u16)s5c, f20, f19);
                     d->field_0x50 = slot;
                     if (slot == 0) {
                         cell[0] = lbl_eu_8066A818;
                         cell[2] = lbl_eu_8066A818;
                         return false;
                     }
-                    if (r20c == 0) {
+                    if (s == 0) {
                         // Row start: bound the walk and hand it over.
                         f32 f2 = f20 + f27;
                         MPFDrawNode* node = d->field_0x4;
                         if (node->field_0x34 <= f2 && node->field_0x2c <= f20 &&
-                            node->field_0x38 <= f17 && node->field_0x30 <= f17) {
+                            node->field_0x38 <= f19 && node->field_0x30 <= f19) {
                             d->field_0x40 = f20;
-                            d->field_0x44 = f17;
+                            d->field_0x44 = f19;
                             d->field_0x48 = f2;
-                            d->field_0x4C = f17;
+                            d->field_0x4C = f19;
                             if (func_80475E64__Q26mpfsys18MPFDrawDisplayListFv(self, d->field_0x34)) {
-                                r20++;
-                                if (r20 > 0x14 && d->field_0x3c == 0) {
+                                placed++;
+                                if (placed > 0x14 && d->field_0x3c == 0) {
                                     cell[0] = lbl_eu_8066A818;
                                     cell[2] = lbl_eu_8066A818;
                                     return false;
                                 }
-                                continue;
+                                goto next_step;
                             }
                         }
                         // Merge the best-fit slot and advance the walk.
@@ -1810,26 +2001,57 @@ bool func_80476E50__Q26mpfsys18MPFDrawDisplayListFv(mpfsys::MPFDrawDisplayList* 
                             d->field_0x50 = best;
                         }
                         func_804752EC__Q26mpfsys18MPFDrawDisplayListFv(self, (MPFDrawListHdr*)d->field_0x50);
-                        if (d->field_0x18->field_0x17 == 1) {
-                            // Jittered scatter walk.
-                            f32 f24 = f27 / s32ToF_a808(xx + 1);
-                            f32 f23 = f27 - lbl_eu_8066A814 * f24;
-                            f32 f0b = f31 * f24;
-                            s32 n = r19;
-                            for (s32 i = 0; i < n; i++) {
-                                f32 rnd1 = s32ToF_a808(rand() % 100) * lbl_eu_8066A820;
-                                f32 rnd2 = s32ToF_a808(rand() % 100) * lbl_eu_8066A820;
-                                f32 fx = f24 * rnd1 + f20 - f23;
-                                f32 fz = f24 * rnd2 + f17 - f23;
-                                d->field_0x14->x = f16 * rnd2 - f14 * f24 + fx;
-                                d->field_0x14->z = f16 * rnd1 - f14 * f24 + fz;
+                        if (d->field_0x18->field_0x17 != 1 && d->field_0x18->field_0x17 != 2) {
+                            // Deterministic sub-grid: index v picks a cell;
+                            // its /mode and %mode parts give the z/x offsets.
+                            s32 cnt = 0;
+                            while (cnt < rr) {
+                                s32 v = s60 + (cnt + rv) * r29;
+                                s32 m = v % r24;
+                                d->field_0x14->x = f24 * (m % mode) + f20 - f23;
+                                d->field_0x14->z = f24 * (m / mode) + f19 - f23;
                                 if (func_80475C78__Q26mpfsys18MPFDrawDisplayListFv(self)) {
                                     break;
                                 }
+                                cnt++;
+                            }
+                        } else if (d->field_0x18->field_0x17 == 1) {
+                            // Jittered: deterministic base plus a
+                            // rand()%100 term scaled by A820*A814*step.
+                            f32 ramp = f16 * f31 * f24;
+                            s32 cnt = 0;
+                            while (cnt < rr) {
+                                s32 v = s60 + (cnt + rv) * r29;
+                                s32 m = v % r24;
+                                s32 q = m % mode;
+                                s32 rnd1 = rand() % 100;
+                                d->field_0x14->x = f24 * q + f20 - f23 - f14 * f24 +
+                                                   ramp * s32ToF_a808(rnd1);
+                                s32 rnd2 = rand() % 100;
+                                d->field_0x14->z = f24 * q + f19 - f23 - f14 * f24 +
+                                                   ramp * s32ToF_a808(rnd2);
+                                if (func_80475C78__Q26mpfsys18MPFDrawDisplayListFv(self)) {
+                                    break;
+                                }
+                                cnt++;
+                            }
+                        } else {
+                            // Fully random over mode*100 positions.
+                            f32 ramp = f16 * f24;
+                            s32 cnt = 0;
+                            while (cnt < rr) {
+                                s32 rnd1 = rand() % r28;
+                                d->field_0x14->x = ramp * s32ToF_a808(rnd1) + f20 - f23;
+                                s32 rnd2 = rand() % r28;
+                                d->field_0x14->z = ramp * s32ToF_a808(rnd2) + f19 - f23;
+                                if (func_80475C78__Q26mpfsys18MPFDrawDisplayListFv(self)) {
+                                    break;
+                                }
+                                cnt++;
                             }
                         }
-                        r20++;
-                        if (r20 > 0x14 && d->field_0x3c == 0) {
+                        placed++;
+                        if (placed > 0x14 && d->field_0x3c == 0) {
                             cell[0] = lbl_eu_8066A818;
                             cell[2] = lbl_eu_8066A818;
                             return false;
@@ -1841,12 +2063,9 @@ bool func_80476E50__Q26mpfsys18MPFDrawDisplayListFv(mpfsys::MPFDrawDisplayList* 
                         func_804752EC__Q26mpfsys18MPFDrawDisplayListFv(self, (MPFDrawListHdr*)slot);
                     }
                 }
+            next_step: ;
             }
-            r26 += r23;
-            r25 += 10;
-            r20c++;
         }
-        r14c += r23;
     }
 
     cell[0] = lbl_eu_8066A818;
@@ -1867,8 +2086,13 @@ bool func_80476E50__Q26mpfsys18MPFDrawDisplayListFv(mpfsys::MPFDrawDisplayList* 
 // values recurse into the referenced sub-cell.
 bool func_80475E64__Q26mpfsys18MPFDrawDisplayListFv(mpfsys::MPFDrawDisplayList* self, MPFDrawCell* cell) {
     MPFDrawListLayout* d = (MPFDrawListLayout*)self;
-    S32Cast cvt;
-    cvt.w[0] = 0x43300000u;
+    // Two alternating bit-cast slots (retail pre-stores both 0x43300000
+    // headers up front, then reuses slot A for the min bounds and slot B
+    // for the max bounds).
+    S32Cast cvtA;
+    S32Cast cvtB;
+    cvtA.w[0] = 0x43300000u;
+    cvtB.w[0] = 0x43300000u;
     if (!(cell->mask & d->field_0x38)) return false;
 
     const MPFDrawVert* v1 = &d->field_0x1C[cell->i1];
@@ -1878,28 +2102,28 @@ bool func_80475E64__Q26mpfsys18MPFDrawDisplayListFv(mpfsys::MPFDrawDisplayList* 
     // Grid X start from the min-X bound (floor with an inclusive-equal step).
     f32 fx = (d->field_0x40 - v1->x) * v0->x;
     s32 ix = (s32)fx;
-    if (fx - s32ToF64_a808(ix, &cvt) <= lbl_eu_8066A800) ix--;
+    if (fx - s32ToF64_a808(ix, &cvtA) <= lbl_eu_8066A800) ix--;
     if (ix > cell->w - 1) return false;
     if (ix < 0) ix = 0;
 
     // Grid Z start from the min-Z bound.
     f32 fz = (d->field_0x44 - v1->y) * v0->y;
     s32 iz0 = (s32)fz;
-    if (fz - s32ToF64_a808(iz0, &cvt) <= lbl_eu_8066A800) iz0--;
+    if (fz - s32ToF64_a808(iz0, &cvtB) <= lbl_eu_8066A800) iz0--;
     if (iz0 > h - 1) return false;
     if (iz0 < 0) iz0 = 0;
 
     // Grid X end from the max-X bound (rounded to nearest).
     f32 gx = (d->field_0x48 - v1->x) * v0->x;
     s32 ex = (s32)gx;
-    if (gx - s32ToF64_a808(ex, &cvt) >= lbl_eu_8066A804) ex++;
+    if (gx - s32ToF64_a808(ex, &cvtA) >= lbl_eu_8066A804) ex++;
     if (ex < 0) return false;
     if (ex > cell->w - 1) ex = cell->w - 1;
 
     // Grid Z end from the max-Z bound.
     f32 gz = (d->field_0x4C - v1->y) * v0->y;
     s32 ez = (s32)gz;
-    if (gz - s32ToF64_a808(ez, &cvt) >= lbl_eu_8066A804) ez++;
+    if (gz - s32ToF64_a808(ez, &cvtB) >= lbl_eu_8066A804) ez++;
     if (ez < 0) return false;
     if (ez > h - 1) ez = h - 1;
 
@@ -1930,16 +2154,19 @@ void func_804783D0__Q26mpfsys18MPFDrawDisplayListFv(mpfsys::MPFDrawDisplayList* 
     MPFBillItem* item = (MPFBillItem*)self;
     Vec a;
     Vec b;
+    // Single shared int->float bit-cast slot (retail reuses one stack slot
+    // at sp+0x20 for every conversion in every path).
+    S32Cast cvt;
 
     if (item->flags & 2) {
         // Two base vectors, transformed by the shared matrix, then by each
         // layer's draw matrix (func_804734F4 result).
-        dst[0].x = -item->x;
         dst[0].y = lbl_eu_8066A7E8;
         dst[0].z = lbl_eu_8066A7E8;
-        dst[1].x = item->x;
         dst[1].y = lbl_eu_8066A7E8;
         dst[1].z = lbl_eu_8066A7E8;
+        dst[0].x = -item->x;
+        dst[1].x = item->x;
         PSMTXMultVec(lbl_eu_80658428, &dst[0], &dst[0]);
         PSMTXMultVec(lbl_eu_80658428, &dst[1], &dst[1]);
 
@@ -1947,16 +2174,16 @@ void func_804783D0__Q26mpfsys18MPFDrawDisplayListFv(mpfsys::MPFDrawDisplayList* 
         Vec* out = &dst[2];
 
         if (item->spread != lbl_eu_8066A7E8) {
-            // Ramp the y offset with the iteration counter.
+            // Ramp the y offset with the iteration counter (Gekko fast-cast
+            // int->float through a shared stack bit-cast slot).
             s32 count = lbl_eu_8066A728;
-            f32 f31 = lbl_eu_8066A730;
             for (s32 i = 0; i < count; i++) {
-                f32 fi = s32ToF_a808(i);
                 f32 sp = item->spread;
-                f32 f28 = lbl_eu_8066A810;
-                f32 f27 = lbl_eu_8066A7F0;
-                f32 t = f28 * sp;
-                f32 k = item->y * (fi * t * f31 + f27 - sp);
+                f32 t = lbl_eu_8066A810 * sp;
+                cvt.w[0] = 0x43300000u;
+                cvt.w[1] = (u32)i ^ 0x80000000u;
+                f32 fi = (f32)(cvt.d - lbl_eu_8066A808);
+                f32 k = item->y * (fi * t * lbl_eu_8066A730 + lbl_eu_8066A7F0 - sp);
                 a.x = -item->x;
                 a.y = k;
                 a.z = lbl_eu_8066A7E8;
@@ -2010,30 +2237,28 @@ void func_804783D0__Q26mpfsys18MPFDrawDisplayListFv(mpfsys::MPFDrawDisplayList* 
     } else {
         if (item->spread != lbl_eu_8066A7E8) {
             // Fixed 10-iteration ramp, transformed directly into the output.
-            dst[0].x = -item->x;
             dst[0].y = lbl_eu_8066A7E8;
             dst[0].z = lbl_eu_8066A7E8;
-            dst[1].x = item->x;
             dst[1].y = lbl_eu_8066A7E8;
             dst[1].z = lbl_eu_8066A7E8;
+            dst[0].x = -item->x;
+            dst[1].x = item->x;
             PSMTXMultVec(lbl_eu_80658428, &dst[0], &dst[0]);
             PSMTXMultVec(lbl_eu_80658428, &dst[1], &dst[1]);
             Vec* out = &dst[2];
-            f32 f28 = lbl_eu_8066A810;
-            f32 f29 = lbl_eu_8066A83C;
-            f32 f30 = lbl_eu_8066A7F0;
-            f32 f31 = lbl_eu_8066A7E8;
             for (s32 i = 0; i < 10; i++) {
-                f32 fi = s32ToF_a808(i % 10);
                 f32 sp = item->spread;
-                f32 t = f28 * sp;
-                f32 k = item->y * (f29 * (fi * t) + f30 - sp);
+                f32 t = lbl_eu_8066A810 * sp;
+                cvt.w[0] = 0x43300000u;
+                cvt.w[1] = ((u32)(i % 10)) ^ 0x80000000u;
+                f32 fi = (f32)(cvt.d - lbl_eu_8066A808);
+                f32 k = item->y * (lbl_eu_8066A83C * (fi * t) + lbl_eu_8066A7F0 - sp);
                 a.x = -item->x;
                 a.y = k;
-                a.z = f31;
+                a.z = lbl_eu_8066A7E8;
                 b.x = item->x;
                 b.y = k;
-                b.z = f31;
+                b.z = lbl_eu_8066A7E8;
                 PSMTXMultVec(lbl_eu_80658428, &a, &out[0]);
                 PSMTXMultVec(lbl_eu_80658428, &b, &out[1]);
                 out += 2;
@@ -2049,28 +2274,146 @@ void func_804783D0__Q26mpfsys18MPFDrawDisplayListFv(mpfsys::MPFDrawDisplayList* 
             // Four-vector fan: two mirrored pairs, the second pair carrying
             // the y position.
             *flagsOut = 0;
-            dst[0].x = -item->x;
             dst[0].y = lbl_eu_8066A7E8;
             dst[0].z = lbl_eu_8066A7E8;
-            dst[1].x = item->x;
             dst[1].y = lbl_eu_8066A7E8;
             dst[1].z = lbl_eu_8066A7E8;
-            dst[3].x = -item->x;
+            dst[2].y = item->y;
             dst[3].y = item->y;
+            dst[2].z = lbl_eu_8066A7E8;
             dst[3].z = lbl_eu_8066A7E8;
-            dst[4].x = item->x;
-            dst[4].y = item->y;
-            dst[4].z = lbl_eu_8066A7E8;
+            dst[0].x = -item->x;
+            dst[1].x = item->x;
+            dst[2].x = -item->x;
+            dst[3].x = item->x;
             PSMTXMultVec(lbl_eu_80658428, &dst[0], &dst[0]);
             PSMTXMultVec(lbl_eu_80658428, &dst[1], &dst[1]);
+            PSMTXMultVec(lbl_eu_80658428, &dst[2], &dst[2]);
             PSMTXMultVec(lbl_eu_80658428, &dst[3], &dst[3]);
-            PSMTXMultVec(lbl_eu_80658428, &dst[4], &dst[4]);
             if (item->flags & 4) {
                 dst[0].y = -dst[0].y;
                 dst[1].y = -dst[1].y;
             }
         }
     }
+}
+
+// func_80477F80: per-frame billboard regeneration driver.  Chains the arena
+// region bases off the attached draw node, then for each active map cell that
+// has come due (round-robin index in the global state) regenerates its display
+// list quads via func_80476E50 / func_80476344, collecting a completion mask.
+// The mask drives the slot retirement walk (func_80474FB0), after which the
+// slots are bucketed (func_8047509C) and the accumulated display-list buffers
+// are flushed into the configured entry array and cache-stored.
+//
+// The retail Fv symbol actually receives (self, draw node, flagA, flagB).
+void func_80477F80__Q26mpfsys18MPFDrawDisplayListFv(mpfsys::MPFDrawDisplayList* self, MPFDrawNode* node,
+                                                    s32 flagA, s32 flagB) {
+    // Declarations in retail scratch-color order.
+    s32 count;
+    s32 i;
+    s32 cellIdx;
+    u32 doneMask;
+    u32 k;
+    MPFDrawListLayout* d = (MPFDrawListLayout*)self;
+
+    d->field_0x4 = node;
+    if (node->field_0x4 == 0) {
+        return;
+    }
+
+    // Default single pass (retail hoists this into the chain schedule);
+    // multi-cell mode opens the gate and iterates every cell instead.
+    count = 1;
+    // Each region sits at arena-base + its node offset; the base global is
+    // re-read per statement (retail emits one SDA reference each).
+    d->field_0x10 = (MPFDrawCol*)(lbl_eu_80665840 + node->field_0x14);
+    d->field_0x1C = (MPFDrawVert*)(lbl_eu_80665840 + node->field_0x28);
+    d->field_0x20 = (u32*)(lbl_eu_80665840 + node->field_0x20);
+    d->field_0x24 = (u16*)(lbl_eu_80665840 + node->field_0x1C);
+    d->field_0x30 = (MPFDrawEntry*)(lbl_eu_80665840 + node->field_0x8);
+    d->field_0x34 = (MPFDrawCell*)(lbl_eu_80665840 + node->field_0x18);
+    d->field_0x8 = (MPFDrawVert*)(lbl_eu_80665840 + node->field_0xC);
+    d->field_0xC = (MPFDrawTri*)(lbl_eu_80665840 + node->field_0x10);
+    d->field_0x18 = (MPFDrawItem*)(lbl_eu_80665840 + node->field_0x0);
+
+    // Multi-cell mode: open the gate.
+    if (flagA != 0) {
+        d->field_0x3c = 0xf;
+        count = node->field_0x4;
+    } else {
+        d->field_0x3c = 0;
+    }
+
+    f32 threshold = lbl_eu_8066A838;
+
+    for (i = 0; i < count; i++) {
+        cellIdx = lbl_eu_80665838->field_0x2E12;
+        doneMask = 0;
+        for (k = 0; k < (u32)((MPFDrawNode*)d->field_0x4)->field_0x4; k++) {
+            // Cells outside the current round-robin slot are only touched in
+            // multi-cell mode (mask bit alone).
+            if (cellIdx == (s32)k || flagA != 0) {
+                MPFDrawItem* item = d->field_0x18;
+                if (lbl_eu_80665864[item->field_0x34 >> 5] & (1u << (item->field_0x34 & 31))) {
+                    // Due for regeneration: advance the round-robin index.
+                    s16 next = (s16)(lbl_eu_80665838->field_0x2E12 + 1);
+                    if (next >= (s32)((MPFDrawNode*)d->field_0x4)->field_0x4) {
+                        next = 0;
+                    }
+                    lbl_eu_80665838->field_0x2E12 = next;
+                    doneMask |= 1u << k;
+                } else if (flagB != 0) {
+                    // Regenerate now; the density split picks the interpolated
+                    // walker when the scatter mode is dense and the scale is
+                    // under the fast-path threshold.
+                    d->field_0x38 = 1u << k;
+                    f32 scale = item->field_0x28;
+                    bool ok;
+                    if (item->field_0x16 >= 6 && scale < threshold) {
+                        ok = func_80476E50__Q26mpfsys18MPFDrawDisplayListFv(self, k, item->field_0x16 - 2, scale);
+                    } else {
+                        ok = func_80476344__Q26mpfsys18MPFDrawDisplayListFv(self, k, item->field_0x16, scale);
+                    }
+                    if (ok) {
+                        doneMask |= 1u << k;
+                    }
+                } else {
+                    doneMask |= 1u << k;
+                }
+            }
+            d->field_0x18 = (MPFDrawItem*)((u8*)d->field_0x18 + sizeof(MPFDrawItem));
+        }
+        func_80474FB0__Q26mpfsys18MPFDrawDisplayListFv(self, doneMask);
+        func_8047509C__Q26mpfsys18MPFDrawDisplayListFv(self);
+    }
+
+    // Flush the accumulated quads into the configured display-list entry
+    // array.  Bit 0 of the config flags selects appending after the entries
+    // already written this frame (counter at cfg+4); otherwise the full array
+    // is rewritten from scratch (counter at cfg+0) and the position/color
+    // arena gets the larger 0x900-per-cell reservation.
+    MPFDrawCfg* cfg = lbl_eu_80665874;
+    u8* entries = (u8*)cfg->field_0x10;
+    d->field_0x28 = (u32)((u8*)cfg + 0x20);
+    u32 flags = cfg->field_0x8;
+    if (flags & 1) {
+        cfg->field_0x8 = (u16)((flags & ~0xFFFFu) | 4);
+        cfg->field_0x4 = 0;
+        entries += cfg->field_0xc * sizeof(MPFDispEntryFull);
+        d->field_0x2C = d->field_0x28 + ((MPFDrawNode*)d->field_0x4)->field_0x4 * 0x300;
+        func_80478C94__Q26mpfsys18MPFDrawDisplayListFv(self, (MPFDispEntryFull*)entries, &cfg->field_0x4,
+                                                       cfg->field_0xc);
+        DCStoreRange(entries, cfg->field_0x4 * 0xcc0);
+    } else {
+        cfg->field_0x8 = (u16)(flags | 3);
+        cfg->field_0x0 = 0;
+        d->field_0x2C = d->field_0x28 + ((MPFDrawNode*)d->field_0x4)->field_0x4 * 0x900;
+        func_80478C94__Q26mpfsys18MPFDrawDisplayListFv(self, (MPFDispEntryFull*)entries, &cfg->field_0x0,
+                                                       cfg->field_0xc);
+        DCStoreRange(entries, cfg->field_0x0 * 0xcc0);
+    }
+    DCStoreRange((void*)d->field_0x2C, ((MPFDrawNode*)d->field_0x4)->field_0x4 * 0x600);
 }
 
 } // extern "C"

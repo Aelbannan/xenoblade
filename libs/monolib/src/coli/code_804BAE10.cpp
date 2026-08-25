@@ -2,6 +2,7 @@
 // Replace stubs with high-level C/C++ during decomp.
 
 #include <harness_catalog.h>
+#include <nw4r/math/math_types.h>
 #include <cmath>
 
 // --- shared collision-query state ----------------------------------------
@@ -13,6 +14,9 @@ struct Vec3 {
     f32 x;
     f32 y;
     f32 z;
+    // float-wise copy so struct copies compile to lfs/stfs triples
+    Vec3() {}
+    Vec3(const Vec3& o) : x(o.x), y(o.y), z(o.z) {}
 };
 
 extern Vec3 lbl_eu_8065F3F0;
@@ -21,7 +25,15 @@ extern f32 lbl_eu_80665960;
 extern const f32 lbl_eu_8066AEF4;  // sdata2: slab max init
 extern const f32 lbl_eu_8066AEF8;  // sdata2: slab min init
 extern const f32 lbl_eu_8066AEFC;  // sdata2: degenerate-axis epsilon
+// sdata2 sweep tables: entries consumed with a 12-byte stride; the additive
+// base table sits 16 bytes into the same region and is indexed identically.
+struct SweepTab {
+    f32 scale;
+    f32 field_0x4;
+    f32 field_0x8;
+};
 extern const f32 lbl_eu_8066AEF0;  // sdata2: segment direction scale
+extern const f32 lbl_eu_8066AF00;  // sdata2: sweep additive base
 extern const f32 lbl_eu_8066AF04;  // sdata2: box-min init value
 extern const f32 lbl_eu_8066AF08;  // sdata2: box-max init value
 extern Vec3 lbl_eu_8065F408;       // box extents (lbl_eu_8065F3F0 + 0x18)
@@ -68,51 +80,94 @@ extern "C" void func_804BAE10(void* self) { *(u32*)self = 0; }
 // AABB origin per-axis, then test the squared distance of the clamped point
 // against the query radius stored in lbl_eu_80665960.
 bool func_804BAE1C(const Vec3* a, const Vec3* b) {
-    Vec3 v;
-    v.x = lbl_eu_8065F3F0.x;
-    v.y = lbl_eu_8065F3F0.y;
-    v.z = lbl_eu_8065F3F0.z;
+    Vec3 v = lbl_eu_8065F3F0;
     if (a->x < lbl_eu_8065F3F0.x) v.x = a->x;
     if (a->y < lbl_eu_8065F3F0.y) v.y = a->y;
     if (a->z < lbl_eu_8065F3F0.z) v.z = a->z;
     if (b->x > lbl_eu_8065F3F0.x) v.x = b->x;
     if (b->y > lbl_eu_8065F3F0.y) v.y = b->y;
     if (b->z > lbl_eu_8065F3F0.z) v.z = b->z;
-    v.x -= lbl_eu_8065F3F0.x;
-    v.y -= lbl_eu_8065F3F0.y;
-    v.z -= lbl_eu_8065F3F0.z;
-    return v.x * v.x + v.y * v.y + v.z * v.z < lbl_eu_80665960;
+    // in-place subtract + dot via the SDK ps kernels (retail paired singles)
+    nw4r::math::VEC3& vv = *reinterpret_cast<nw4r::math::VEC3*>(&v);
+    const nw4r::math::VEC3& gv = *reinterpret_cast<const nw4r::math::VEC3*>(&lbl_eu_8065F3F0);
+    nw4r::math::VEC3Sub(&vv, &vv, &gv);
+    return nw4r::math::VEC3Dot(&vv, &vv) < lbl_eu_80665960;
 }
 
-void func_804BAF34(){}
+// Shared query state: three adjacent VEC3s at lbl_eu_8065F3F0 (min corner,
+// max corner, half-extents) - retail addresses them through one base pointer.
+struct QueryState {
+    nw4r::math::VEC3 min;
+    nw4r::math::VEC3 max;
+    nw4r::math::VEC3 ext;
+};
+
+// Segment-vs-AABB test helper (same culling shape as the first half of
+// func_804BB4EC): shrink the segment [b -> a] toward its midpoint by the
+// sdata2 scale, form D = query-box min corner - shrunken point, then reject
+// if any axis slab test or edge-plane cross test fails.
+bool func_804BAF34(const Vec3* a, const Vec3* b) {
+    QueryState& qs = *reinterpret_cast<QueryState*>(&lbl_eu_8065F3F0);
+    const nw4r::math::VEC3& va = *reinterpret_cast<const nw4r::math::VEC3*>(a);
+    const nw4r::math::VEC3& vb = *reinterpret_cast<const nw4r::math::VEC3*>(b);
+
+    nw4r::math::VEC3 mid;
+    nw4r::math::VEC3 diff;
+    nw4r::math::VEC3Sub(&diff, &va, &vb);
+    // shrink toward b in place; retail reuses diff's stack slot for the result
+    nw4r::math::VEC3Scale(&diff, &diff, lbl_eu_8066AEF0);
+    nw4r::math::VEC3Add(&mid, &vb, &diff);
+
+    // vector from the shrunken point to the box min corner
+    f32 nx = qs.min.x - mid.x;
+    f32 ny = qs.min.y - mid.y;
+    f32 nz = qs.min.z - mid.z;
+    if (__fabsf(nx) > diff.x + qs.ext.x) return false;
+    if (__fabsf(ny) > diff.y + qs.ext.y) return false;
+    if (__fabsf(nz) > diff.z + qs.ext.z) return false;
+    // edge-plane tests against the box max corner
+    if (__fabsf(nz * qs.max.y - ny * qs.max.z) > ny * qs.ext.z + nz * qs.ext.y)
+        return false;
+    if (__fabsf(nx * qs.max.z - nz * qs.max.x) > nx * qs.ext.z + nz * qs.ext.x)
+        return false;
+    if (__fabsf(ny * qs.max.x - nx * qs.max.y) > nx * qs.ext.y + ny * qs.ext.x)
+        return false;
+    return true;
+}
 
 // Segment-vs-AABB slab test over the three axes.  Returns false as soon as
 // the running [min,max] interval (initialized from the sdata2 constants)
 // collapses; axes whose scale equals the epsilon constant fall back to a
 // point-in-range check of the AABB corner.
 bool func_804BB0C8(const f32* a, const f32* b) {
-    const f32* minCorner = &lbl_eu_8065F3F0.x;  // r6
     const f32* scale = &lbl_eu_8065F3FC.x;      // r5
+    const f32* minCorner = &lbl_eu_8065F3F0.x;  // r6
+    f32 s;
+    f32 eps;
     f32 maxVal = lbl_eu_8066AEF4;
     f32 minVal = lbl_eu_8066AEF8;
-    f32 eps = lbl_eu_8066AEFC;
-    for (int i = 0; i < 3; i++) {
-        f32 s = scale[i];
-        if (s != eps) {
-            f32 t1 = s * (b[i] - minCorner[i]);
-            f32 t0 = s * (a[i] - minCorner[i]);
-            if (t1 > t0) {
-                if (t0 > minVal) minVal = t0;
-                if (t1 < maxVal) maxVal = t1;
+    eps = lbl_eu_8066AEFC;
+    for (int i = 3; i != 0; i--) {
+        s = *scale;
+        if (eps != s) {
+            f32 tB = s * (*b - *minCorner);
+            f32 tA = s * (*a - *minCorner);
+            if (tB > tA) {
+                if (tA > minVal) minVal = tA;
+                if (tB < maxVal) maxVal = tB;
             } else {
-                if (t1 > minVal) minVal = t1;
-                if (t0 < maxVal) maxVal = t0;
+                if (tB > minVal) minVal = tB;
+                if (tA < maxVal) maxVal = tA;
             }
             if (minVal > maxVal) return false;
         } else {
-            if (minCorner[i] < b[i]) return false;
-            if (minCorner[i] > a[i]) return false;
+            // degenerate axis: box must straddle the slab position
+            if (*minCorner < *b || *minCorner > *a) return false;
         }
+        ++scale;
+        ++minCorner;
+        ++b;
+        ++a;
     }
     return true;
 }
@@ -223,15 +278,39 @@ void func_804BB4EC(ColiObj* self, ColiTri* tri) {
     }
 }
 
-void func_804BB768(ColiObj* self, ColiTri* tri);
-
-// Guard the not-yet-recovered stub so MWCC does not inline the empty body and
-// drop the call sites (func_804BC134 tail-calls it; see MWCC_CASES
-// empty-stub pattern).
-#pragma push
-#pragma auto_inline off
-void func_804BB768(ColiObj* self, ColiTri* tri) {}
-#pragma pop
+// Box-vs-triangle-tree walker. Culls the subtree as soon as one of the
+// node's bounding planes puts the query box entirely on the near side
+// (vertex B below the min corner on x/z, vertex A above it, or the y span /
+// radius test failing); otherwise dispatches into branch children or the
+// leaf triangle range, mirroring func_804BB2C0.
+void func_804BB768(ColiObj* self, ColiTri* tri) {
+    // vertex indices are cached; descend only when the query box lies
+    // inside the node's bounds (x/z span contains min corner, y below A,
+    // B above the query sphere)
+    const Vec3* vA = &self->verts[tri->field_0x4];
+    const Vec3* vB = &self->verts[tri->field_0x6];
+    if (vB->x <= lbl_eu_8065F3F0.x && lbl_eu_8065F3F0.x <= vA->x &&
+        vB->z <= lbl_eu_8065F3F0.z && lbl_eu_8065F3F0.z <= vA->z &&
+        vA->y >= lbl_eu_8065F3F0.y && lbl_eu_80665960 >= vB->y) {
+        if ((tri->field_0x0 & 6) != 0) {
+            u32 idx;
+            if ((tri->field_0x0 & 2) != 0) {
+                u32 base = tri->field_0x8;
+                func_804B791C(self, &self->indices[base + 1]);
+                idx = base + self->indices[base] + 1;
+            } else {
+                idx = tri->field_0x8;
+            }
+            if ((tri->field_0x0 & 4) != 0) {
+                func_804B7ACC(self, &self->indices[idx + 1]);
+            }
+        } else {
+            for (u32 i = tri->field_0x8; i < tri->field_0x8 + tri->field_0x1; i++) {
+                func_804BB768(self, &self->tris[self->indices[i]]);
+            }
+        }
+    }
+}
 
 // Box-vs-triangle-tree walker. Culls the subtree as soon as the query box
 // (lbl_eu_8065F3F0 min / lbl_eu_8065F3FC max) lies entirely on the near side
@@ -374,7 +453,39 @@ extern "C" void func_804BBFA0(ColiObj* self, const Vec3* src, int idx, f32 radiu
     func_804BB2C0(self, &self->tris[idx]);
 }
 
-void func_804BBFD4(){}
+// Segment-sweep query setup: shrink the segment [a,b] toward its midpoint by
+// the per-index scale factor, record the shrunken endpoints as the shared
+// query min/max corners, expand the box extents by |max| + the per-index
+// base, then descend into the segment-vs-tree walker.
+void func_804BBFD4(ColiObj* self, const Vec3* a, const Vec3* b, int idx) {
+    // paired-single vector kernels (VEC3Add/Sub/Scale) reproduce retail PS ops
+    QueryState& qs = *reinterpret_cast<QueryState*>(&lbl_eu_8065F3F0);
+    const nw4r::math::VEC3& va = *reinterpret_cast<const nw4r::math::VEC3*>(a);
+    const nw4r::math::VEC3& vb = *reinterpret_cast<const nw4r::math::VEC3*>(b);
+
+    nw4r::math::VEC3 t;
+    nw4r::math::VEC3Add(&t, &va, &vb);
+    // copy-constructed intermediate (retail keeps a float-wise copy here)
+    Vec3 m(*reinterpret_cast<const Vec3*>(&t));
+
+    f32 scale = lbl_eu_8066AEF0;
+    f32 base = lbl_eu_8066AF00;
+
+    nw4r::math::VEC3 n;
+    nw4r::math::VEC3Scale(&n, reinterpret_cast<const nw4r::math::VEC3*>(&m), scale);
+    // box corners are recorded as raw word copies (retail lwz/stw)
+    qs.min = *reinterpret_cast<const nw4r::math::VEC3*>(&n);
+
+    nw4r::math::VEC3 dt;
+    nw4r::math::VEC3Sub(&dt, &vb, &qs.min);
+    Vec3 d(*reinterpret_cast<const Vec3*>(&dt));
+    qs.max = *reinterpret_cast<const nw4r::math::VEC3*>(&d);
+
+    qs.ext.x = base + __fabsf(qs.max.x);
+    qs.ext.y = base + __fabsf(qs.max.y);
+    qs.ext.z = base + __fabsf(qs.max.z);
+    func_804BB4EC(self, &self->tris[idx]);
+}
 
 // Record the query box (src) + radius, then dispatch to the box-vs-object
 // walker with the triangle selected by idx. The box is copied as raw u32

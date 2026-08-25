@@ -199,20 +199,33 @@ void fn_803AFDB0(MPVUMC* ctx) {
 /* fn_803AFFB4: forward-mode macroblock - read it, then lay out the six
  * output row bases (luma + chroma, with 8-pixel offsets for half rows). */
 void fn_803AFFB4(MPVUMC* ctx) {
+    /* column/row in locals so each is loaded once and shifted twice */
+    register s32 row = ctx->field_0xce0;
+    register s32 col = ctx->field_0xcdc;
+    s32 x8 = col * 8;
+    s32 x16 = col * 16;
     s32 sizes[2];
-    sizes[0] = ctx->field_0xcdc * 8 * ctx->field_0xbfc + ctx->field_0xce0 * 8;
-    sizes[1] = ctx->field_0xcdc * 16 * ctx->field_0xbfe + ctx->field_0xce0 * 16;
+
+    sizes[0] = x8 * ctx->field_0xbfc + row * 8;
+    sizes[1] = x16 * ctx->field_0xbfe + row * 16;
     mpvumc_OneReadMb(ctx, ctx->rdArg0, sizes, (u8*)ctx + 0xbf0, (u8*)ctx + 0xc90);
 
+    col = ctx->field_0xcdc;
+    row = ctx->field_0xce0;
+    x8 = col * 8;
+    x16 = col * 16;
+    /* reuse the sizes slots for the output row bases */
+    sizes[0] = x8 * ctx->t3 + row * 8;
+    sizes[1] = x16 * ctx->t4 + row * 16;
     {
-        s32 v0 = ctx->field_0xce0 * 8 + ctx->field_0xcdc * 8 * ctx->t3;
-        s32 v1 = ctx->field_0xce0 * 16 + ctx->field_0xcdc * 16 * ctx->t4;
-        ctx->out[0] = ctx->t0 + v0;
-        ctx->out[2] = ctx->t1 + v0;
-        ctx->out[4] = ctx->t2 + v1;
-        ctx->out[6] = ctx->out[4] + 8;
-        ctx->out[8] = ctx->t2 + v1 + ctx->t4 * 8;
-        ctx->out[10] = ctx->out[8] + 8;
+        s32 base = ctx->t2 + sizes[1];
+        s32 mid = base + ctx->t4 * 8;
+        ctx->out[0] = ctx->t0 + sizes[0];
+        ctx->out[2] = ctx->t1 + sizes[0];
+        ctx->out[4] = base;
+        ctx->out[6] = base + 8;
+        ctx->out[8] = mid;
+        ctx->out[10] = mid + 8;
     }
     mpvumc_OneMakeMb((u8*)ctx + 0xa90, (u8*)ctx + 0xaa0, ctx->field_0xcec);
 }
@@ -220,21 +233,64 @@ void fn_803AFFB4(MPVUMC* ctx) {
 /* fn_803B00B8: backward-mode variant of fn_803AFFB4 (different MV vectors
  * and second reference sub-buffers). */
 void fn_803B00B8(MPVUMC* ctx) {
+    /* Temporaries pinned so each column/row field is loaded exactly once per
+     * call phase; all four shifted products are formed before each size sum. */
     s32 sizes[2];
-    sizes[0] = ctx->field_0xcdc * 8 * ctx->field_0xc0c + ctx->field_0xce0 * 8;
-    sizes[1] = ctx->field_0xcdc * 16 * ctx->field_0xc0e + ctx->field_0xce0 * 16;
+    s32 col;
+    s32 st8;
+    s32 row;
+    s32 y8;
+    s32 x16;
+    s32 y16;
+    s32 t3;
+    s32 v0;
+    s32 t4;
+    s32 t4x8;
+    s32 v1;
+    s32 t0;
+    s32 t1;
+    s32 t2;
+    s32 sz0;
+    s32 sz1;
+    s32 b;
+    s32 mid;
+
+    col = ctx->field_0xcdc;
+    st8 = ctx->field_0xc0c;
+    row = ctx->field_0xce0;
+    x16 = col * 16;
+    y8 = row * 8;
+    y16 = row * 16;
+    sizes[0] = col * 8 * st8 + y8;
+    sizes[1] = x16 * ctx->field_0xc0e + y16;
     mpvumc_OneReadMb(ctx, ctx->rdArg0, sizes, (u8*)ctx + 0xc00, (u8*)ctx + 0xcb4);
 
-    {
-        s32 v0 = ctx->field_0xce0 * 8 + ctx->field_0xcdc * 8 * ctx->t3;
-        s32 v1 = ctx->field_0xce0 * 16 + ctx->field_0xcdc * 16 * ctx->t4;
-        ctx->out[0] = ctx->t0 + v0;
-        ctx->out[2] = ctx->t1 + v0;
-        ctx->out[4] = ctx->t2 + v1;
-        ctx->out[6] = ctx->out[4] + 8;
-        ctx->out[8] = ctx->t2 + v1 + ctx->t4 * 8;
-        ctx->out[10] = ctx->out[8] + 8;
-    }
+    /* chroma bases derive from the out[4] value in-register */
+    col = ctx->field_0xcdc;
+    t3 = ctx->t3;
+    row = ctx->field_0xce0;
+    x16 = col * 16;
+    y8 = row * 8;
+    y16 = row * 16;
+    v0 = col * 8 * t3 + y8;
+    sizes[0] = v0;
+    t4 = ctx->t4;
+    t4x8 = t4 * 8;
+    v1 = x16 * t4 + y16;
+    sizes[1] = v1;
+    t0 = ctx->t0;
+    t1 = ctx->t1;
+    ctx->out[0] = t0 + v0;
+    t2 = ctx->t2;
+    sz0 = sizes[0];
+    ctx->out[2] = t1 + sz0;
+    sz1 = sizes[1];
+    b = t2 + sz1;
+    ctx->out[4] = b;
+    ctx->out[6] = b + 8;
+    mid = b + t4x8;
+    ctx->out[8] = mid;
+    ctx->out[10] = mid + 8;
     mpvumc_OneMakeMb((u8*)ctx + 0xa90, (u8*)ctx + 0xaa0, ctx->field_0xcec);
 }
 
@@ -584,22 +640,21 @@ void MPVUMC_PpicSkipped(MPVUMC* ctx, s32 n) {
 /* B-picture skip: rewind the macroblock cursor and replay the skipped
  * macroblocks through the P-picture skip dispatcher (field_0xc74). */
 void MPVUMC_BpicSkipped(MPVUMC* ctx, s32 n) {
-    s32 nm1 = n - 1;
     s32 end = ctx->field_0xcd8;
-    s32 row = ctx->field_0xce0;
-    s32 zero = 0;
     void (*fn)(MPVUMC*);
     ctx->field_0xcec = 0;
     fn = ctx->field_0xc74;
-    ctx->field_0xcd8 = end - nm1;
-    ctx->field_0xce0 = row - nm1;
+    ctx->field_0xcd8 = end - (n - 1);
+    ctx->field_0xce0 -= n - 1;
     while (ctx->field_0xce0 < 0) {
-        ctx->field_0xcdc -= 1;
         ctx->field_0xce0 += ctx->field_0xb64;
+        ctx->field_0xcdc -= 1;
     }
+    s32 zero = 0;
     while (ctx->field_0xcd8 < end) {
         fn(ctx);
-        if (++ctx->field_0xce0 >= ctx->field_0xb64) {
+        ctx->field_0xce0 += 1;
+        if (ctx->field_0xce0 >= ctx->field_0xb64) {
             ctx->field_0xce0 = zero;
             ctx->field_0xcdc += 1;
         }

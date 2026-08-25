@@ -5,7 +5,6 @@
 const char* __ENCVersion =
     "<< RVL_SDK - ENC \trelease build: Feb 27 2009 10:05:42 (0x4302_145) >>";
 static BOOL encRegistered = FALSE;
-u8 encutility_sbss_pad[4]; /* retail .sbss 0x4 -> 0x8 (align tail); non-static so -ipa file keeps it */
 
 static void ENCiRegisterVersion(){
     if(!encRegistered){

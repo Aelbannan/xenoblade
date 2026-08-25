@@ -156,8 +156,6 @@ fatal:
     return FALSE;
 }
 
-static char lbl_80546840[48];
-
 const char* const __DVDDeviceErrorMessage[] = {
     "\n\n\nエラーコード００１。\n"
     "不明なデバイスが見つかりました。",
@@ -181,15 +179,10 @@ const char* const __DVDDeviceErrorMessage[] = {
     "\n\n\nErrore #001:\n"
     "rilevato un dispositivo non autorizzato.",
 
-    lbl_80546840,
-    NULL
+    // Dutch: retail pools the literal directly as the 7th pointer; the
+    // message is 47 bytes with its NUL, ending .data at 0x197 (no pad).
+    "\n\n\nFout #001:\nongeoorloofd onderdeel gevonden.",
 };
-
-// 1-byte pad: retail .data ends at 0x198 (string pool 4-align); the Dutch
-// message is 47 bytes, so a 48-byte array supplies the final pad byte.
-static char lbl_80546840[48] = "\n\n\nFout #001:\nongeoorloofd onderdeel gevonden.";
-
-
 
 static void __DVDShowDeviceErrorMessage(void) {
     const char* message;

@@ -1,19 +1,10 @@
-// The include chain (CfObjectActor.hpp -> CAIAction.hpp / CSuddenCommu.hpp)
-// declares the shared battle-manager singleton getter with an incompatible
-// return type vs include/CfGameManager.hpp's declaration; this TU's own
-// static member definition emits the symbol.
-#define getInstance__Q22cf14CBattleManagerFv battleManagerSingletonGetUnused
-// The CfObjectMove.hpp / CAIAction.hpp chain carries two incompatible
-// extern "C" forms of func_800BE12C ((u8*,...) vs (void*,...)). Pre-include
-// CAIAction.hpp with its void* form renamed out of the way, so the later
-// chain inclusion (pragma once) only leaves the u8* form visible.
-#define func_800BE12C battleManagerAiActionStatusVoidUnused
+// (func_800BE12C now has a single unified decl on CfObjectMove.hpp; only one
+// form exists, so no pre-include rename is needed here.)
 #define func_80174C98 battleManagerAiActionWalkerVoidUnused
 #include "kyoshin/cf/object/CAIAction.hpp"
+#include "monolib/scn/CScnTimeApi.hpp"
 #undef func_80174C98
-#undef func_800BE12C
 #include "kyoshin/cf/CBattleManager.hpp"
-#undef getInstance__Q22cf14CBattleManagerFv
 #include "monolib/math/CVec3.hpp"
 
 struct BMIf {
@@ -23,24 +14,9 @@ struct BMIf {
     virtual void vf0024();
 };
 #include "kyoshin/UnkClass_805764CC.hpp"
-// The resource headers included by CfObjectPc carry incompatible provisional
-// owner types for this shared forwarding symbol. It is unused in this TU.
-#define func_800BB618 battleManagerResourceForwardUnused
-// The resource CfObjectPc.hpp declares the shared battle-manager singleton
-// getter with an incompatible return type (see the guard on the
-// CBattleManager.hpp include above).
-#define getInstance__Q22cf14CBattleManagerFv battleManagerSingletonGetUnused2
-// CfObjectPc.hpp carries its own provisional cf::CfSoundMan definition that
-// conflicts with CfSoundMan.hpp's (included below); rename it out of the way
-// so this TU binds to the CfSoundMan.hpp form.
-#define CfSoundMan battleManagerPcSoundManUnused
 #include "kyoshin/cf/object/CfObjectPc.hpp"
-#undef CfSoundMan
-#undef getInstance__Q22cf14CBattleManagerFv
-#undef func_800BB618
 #define func_800BB618 battleManagerEnemyResourceForwardUnused
 #define func_800BCFA0 battleManagerEnemyPositionRefreshUnused
-#define func_800BE12C battleManagerEnemyStatusUpdateUnused
 #define lbl_eu_80663E14 battleManagerEnemySceneUnused
 #define lbl_eu_8066A208 battleManagerEnemyEpsilonUnused
 #define getUnk80664658 battleManagerEnemyGimmickGetUnused
@@ -82,7 +58,6 @@ struct BMIf {
 #undef getUnk80664658
 #undef lbl_eu_8066A208
 #undef lbl_eu_80663E14
-#undef func_800BE12C
 #undef func_800BCFA0
 #undef func_800BB618
 // CfSoundMan.hpp's import of func_800821F8__Q22cf13CfGameManagerFv uses a
@@ -92,35 +67,23 @@ struct BMIf {
 // different UnkClass_800821F8Snd return type than CfGameManager.hpp's decl
 // already visible here; alias it out (this TU calls the CfGameManager form).
 #define func_800821F8__Q22cf13CfGameManagerFv battleManagerSndGameMgrImportUnused
-// CfSoundMan.hpp's func_8049603C(int) return-type clashes with CSuddenCommu.hpp's
-// void* form (already visible via CBattleManager.hpp); unused in this TU.
-#define func_8049603C battleManagerSndCamViewUnused
 #define func_80496264 battleManagerSndPoseBlockUnused
 #include "kyoshin/cf/CfSoundMan.hpp"
 #undef func_800821F8__Q22cf13CfGameManagerFv
-#undef func_8049603C
 #undef func_80496264
 // The include/kyoshin/cf/CfGameManager.hpp C-ABI import tail conflicts with
 // the cfsys/chain walker decls already visible in this TU for the few names
 // it shares; guard only those (call sites bind to the global-scope decls,
-// same retail symbol names).
-#define func_80496288 cfgGameMgrImportUnused
+// same retail symbol names). (func_80496288 now has a single unified decl.)
 #define func_800D9354 cfgGameMgr9354Unused
-#define func_8049603C battleManagerGameMgrCamViewUnused
 // CfGameManager.hpp's C-ABI 'void func_800AD860(void*)' form conflicts with the
 // C++ 'void*' decl from CfObjectMove.hpp already visible here; guard it (the
 // call sites bind to the global-scope C++ decl, same retail symbol).
 #define func_800AD860 battleManagerGameMgrAd860Unused
-// CfGameManager.hpp's 'u32 func_801412D0(u32)' clashes with CVision.hpp's
-// (void*) form already visible here; guard it (call sites use the void* form).
-#define func_801412D0 battleManagerGameMgr1412D0Unused
 #include "kyoshin/cf/CfGameManager.hpp"
-#undef func_801412D0
 #undef func_800D9354
-#undef func_80496288
-#undef func_8049603C
 #undef func_800AD860
-// (func_801412D0 undef'd directly after the include above)
+// (func_801412D0 is owned by kyoshin/CUIWindowManager.hpp; single decl.)
 #include "monolib/work.hpp"
 
 // Arts-data row returned by func_8009EC9C: the per-entry table scanned by
@@ -132,7 +95,6 @@ extern void func_8009D7E4(UNKTYPE* r3, u32 r4);
 // Status add/remove helper (retail func_800BE12C). The shared headers carry
 // two incompatible extern "C" forms ((u8*,...) and (void*,...)); this TU uses
 // the u8* form throughout, declared once here.
-extern "C" void func_800BE12C(u8* obj, int a, int b, int c, int d);
 
 // Game state check function (name already contains __Fi; extern "C" prevents
 // MWCC from double-mangling it to func_8006EF04__Fi__Fi).
@@ -791,7 +753,6 @@ static __inline cf::CfObjectMove* getObjectMove(void* actorAccessor) {
 }
 
 extern "C" int mtRand__Q22ml4mathFii(int a, int b);
-extern "C" u32 getBdatStringColumnValue(void* pData, const char* pColumnName, int index);  // u32 matches CfObjectPoint.hpp
 extern "C" void* getFP__FPCc(const char* str);
 // func_8003AA34: already declared (void form) by a visible shared header.
 extern "C" u8 lbl_eu_80573EEC[];
@@ -10647,10 +10608,9 @@ extern "C" void func_800E85F0(void* self, void* actor, void* target, void* move)
     if (((E85F0_Move*)move)->flags78 & 0x800) {              // 0x800E9130
         if (e_vf2A8(actor) == 0) {                           // 0x800E9138 chain-arts pass
             stat = (void*)func_80148778((u8*)actor + 8, 0x10A);
-            void* tgtSub = (target != nullptr) ? (u8*)target + 0x3E9C : target;
             // Retail parks the chain type in the move pointer's register --
             // mirrored here by reusing the parameter slot.
-            move = (void*)(uintptr_t)func_801B1E74(tgtSub, -1, stat, 0);
+            move = (void*)(uintptr_t)func_801B1E74((target != nullptr) ? (u8*)target + 0x3E9C : target, -1, stat, 0);
             s32 type = (s32)(uintptr_t)move;
             // 0x800E91C4..0x800E92A0: art id picked per chain type; the
             // neg/or/srwi pair in retail computes (stat/0x10A result != 0).
@@ -11445,8 +11405,7 @@ extern "C" void func_800EA484(cf::CBattleManager* self, f32 value, int flags) {
             reinterpret_cast<E484_Mirror*>(r27)->vt5C4(value);
             func_800F4A98(func_80043F18(&h2), 0x80000, 0);
             for (u32 i = 0; i < ((cf::CVisionEnumList*)func_80043F18(&h2))->count; i++) {
-                void* o = func_800F6EAC(func_80043F18(&h2), i);
-                void* r29 = __dynamic_cast(o, 0, &lbl_eu_80661970, &lbl_eu_806618F0, 0);
+                void* r29 = __dynamic_cast(func_800F6EAC(func_80043F18(&h2), i), 0, &lbl_eu_80661970, &lbl_eu_806618F0, 0);
                 // Match the cast object's +0x9C pointer against either vision
                 // actor (or its embedded move sub-object at +0x3E9C).
                 if ((r26 != nullptr && ((E484_TypeObj*)r29)->field_9C == (u8*)r26 + 0x3E9C) ||

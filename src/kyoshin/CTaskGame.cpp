@@ -1,14 +1,8 @@
 #include "kyoshin/CTaskGame.hpp"
-// CfGameManager.hpp declares func_8049603C as UnkScnResult*(CScn*), which
-// conflicts with CTaskGame.hpp's CTaskGameCamView*(CScn*). Rename it out for
-// this include (repo convention, see CGame.cpp / CMenuBattleMode.cpp).
-#define func_8049603C taskGameCfGameMgr9603CUnused
-#define func_8049602C taskGameCfGameMgr9602CUnused
+#include "libs/monolib/src/scn/CScn_8049603C.hpp" // func_8049603C (single owner decl)
 #include "kyoshin/cf/CTaskGameCf.hpp"
 #include "kyoshin/cf/CfObjectEnumList.hpp"
 #include "kyoshin/cf/CfGameManager.hpp"
-#undef func_8049603C
-#undef func_8049602C
 #include "kyoshin/CGame.hpp"
 #include "kyoshin/CLoad.hpp"
 
@@ -598,7 +592,7 @@ extern "C" void cbRenderBefore__9CTaskGameFv(CTaskGame* self, CScn* scene) {
             }
         } else if (lbl_eu_80663D24 == 1) {
             if (func_802AE6BC(lbl_eu_80663D1C) != 0) {
-                if (func_8049603C(scene)->field_C < lbl_eu_80665D78) {
+                if (((CTaskGameCamView*)func_8049603C(scene))->field_C < lbl_eu_80665D78) {
                     lbl_eu_80663D24++;
                     func_802AE758(lbl_eu_80663D1C);
                 }
@@ -628,9 +622,9 @@ extern "C" void cbRenderBefore__9CTaskGameFv(CTaskGame* self, CScn* scene) {
             self->unk8C++;
             if (!(lbl_eu_80663E28 & 0x01000000) && !(lbl_eu_80663E24 & 0xafa40000)) {
                 if ((s16)self->unk8C > 0x1e) {
-                    if (func_8049603C(scene)->field_4 == func_8049603C(scene)->field_0 &&
-                        func_8049603C(scene)->field_8 == func_8049603C(scene)->field_4 &&
-                        func_8049603C(scene)->field_0 == lbl_eu_80665D74) {
+                    if (((CTaskGameCamView*)func_8049603C(scene))->field_4 == ((CTaskGameCamView*)func_8049603C(scene))->field_0 &&
+                        ((CTaskGameCamView*)func_8049603C(scene))->field_8 == ((CTaskGameCamView*)func_8049603C(scene))->field_4 &&
+                        ((CTaskGameCamView*)func_8049603C(scene))->field_0 == lbl_eu_80665D74) {
                         lbl_eu_80663D28 = 1;
                     }
                 }
@@ -649,9 +643,9 @@ extern "C" void cbRenderBefore__9CTaskGameFv(CTaskGame* self, CScn* scene) {
             }
         }
         // Camera at idle pose with non-origin x -> skip the draw.
-        if (func_8049603C(scene)->field_4 == func_8049603C(scene)->field_0 &&
-            func_8049603C(scene)->field_8 == func_8049603C(scene)->field_4 &&
-            func_8049603C(scene)->field_0 != lbl_eu_80665D74) {
+        if (((CTaskGameCamView*)func_8049603C(scene))->field_4 == ((CTaskGameCamView*)func_8049603C(scene))->field_0 &&
+            ((CTaskGameCamView*)func_8049603C(scene))->field_8 == ((CTaskGameCamView*)func_8049603C(scene))->field_4 &&
+            ((CTaskGameCamView*)func_8049603C(scene))->field_0 != lbl_eu_80665D74) {
             goto L_8004316C;
         }
         if (func_801684F4() != 0) {
@@ -748,9 +742,9 @@ L_8004321C:
             }
             lbl_eu_80663D20->mLayoutReady = (lbl_eu_806649F4 == 0);
             // Camera at idle pose with non-origin x -> D34-gated draw.
-            if (func_8049603C(scene)->field_4 == func_8049603C(scene)->field_0 &&
-                func_8049603C(scene)->field_8 == func_8049603C(scene)->field_4 &&
-                func_8049603C(scene)->field_0 != lbl_eu_80665D74) {
+            if (((CTaskGameCamView*)func_8049603C(scene))->field_4 == ((CTaskGameCamView*)func_8049603C(scene))->field_0 &&
+                ((CTaskGameCamView*)func_8049603C(scene))->field_8 == ((CTaskGameCamView*)func_8049603C(scene))->field_4 &&
+                ((CTaskGameCamView*)func_8049603C(scene))->field_0 != lbl_eu_80665D74) {
                 goto L_80043454;
             }
             if (func_801684F4() != 0) {

@@ -413,37 +413,38 @@ extern "C" void __declspec(noinline) func_8025D4E4(CPcKizunaCur* self) {
 // Move the affinity-chart cursor by one row in the given direction (arg!=0
 // steps backward, wrapping 0->7), skipping invalid target rows.
 extern "C" void func_8025E3A4(CPcKizunagram* self, u32 arg) {
-    S8Bytes order;
-    order.w[0] = lbl_eu_80668888;
-    order.w[1] = lbl_eu_8066888C;
+    // 8-entry row order table built from two sdata words.
+    u32 order[2];
+    order[0] = lbl_eu_80668888;
+    order[1] = lbl_eu_8066888C;
     func_8003AA34();
-    const void* table = getFP__FPCc(lbl_eu_8050D868 + 0x7f);
-    int count = func_8003B1EC((void*)table);
+    void* table = getFP__FPCc(lbl_eu_8050D868 + 0x7f);
+    int count = func_8003B1EC(table);
     // Locate the current character row inside the 8-entry order list.
-    // Constant trip count lets MWCC drive the loop with mtctr/bdnz like retail.
-    u32 idx = 0;
-    u32 k = 0;
-    u32 n = 8;
-    do {
-        if ((s8)self->mField28 == order.b[k]) {
+    // Constant-bound for-loop lets MWCC drive the trip count with mtctr/bdnz
+    // while keeping the row index in a register like retail (r6).
+    int idx = 0;
+    for (u8 k = 0; k < 8; k++) {
+        u8 b = ((u8*)order)[k];
+        if (b == (s8)self->mField28) {
             idx = k;
             break;
         }
-        k++;
-    } while (--n != 0);
+    }
     // Step the cursor and commit the first BDAT-valid target row found.
+    // Single index variable: retail reuses one register (r26) for both the
+    // search result and the stepping cursor.
     int tries = 0;
-    int idx2 = (int)idx;
     do {
         if (arg != 0) {
-            idx2 = idx2 - 1;
-            if (idx2 < 0) idx2 = 7;
+            idx = idx - 1;
+            if (idx < 0) idx = 7;
         } else {
-            idx2 = idx2 + 1;
-            if (idx2 > 7) idx2 = 0;
+            idx = idx + 1;
+            if (idx > 7) idx = 0;
         }
-        if (func_8025E960(self, table, (u8)((u8)order.b[idx2] + 1)) != 0) {
-            self->mField28 = order.b[idx2];
+        if (func_8025E960(self, table, (u8)(((u8*)order)[idx] + 1)) != 0) {
+            self->mField28 = ((u8*)order)[idx];
             break;
         }
         tries++;
@@ -641,23 +642,28 @@ int CPcKizunagram::OnFileEvent(CEventFile* event) {
 
 // Compress an 11-slot CPcKizunagramBig into the compact CPcKizunaCompact:
 // each 0xC4 slot collapses to 0xD bytes (the set state bytes only).
-extern "C" void func_8025EC0C(CPcKizunaCompact* dst, const CPcKizunagramBig* src) {
+// Retail saves r30/r31 with individual stw's (speed-style prologue) even
+// though the unit is -O4,s; disable lmw/stmw for this function only.
+#pragma push
+#pragma use_lmw_stmw off
+// src is non-const: a const param makes MWCC hoist the tail-field loads
+// above the LR-save/prologue stores, which retail does not do.
+extern "C" void func_8025EC0C(CPcKizunaCompact* dst, CPcKizunagramBig* src) {
     dst->field_0xA8 = src->field_0x89C;
     dst->field_0x90 = src->field_0x884;
     memcpy(dst->data94, src->data888, 0x14);
-    // Walk with two independent source pointers (retail keeps two induction
-    // registers for the same slot): the slot pointer covers the sub fields and
-    // byteC0, the entry pointer (same address, byte-cast advance) covers data00.
+    // The nonvolatiles hold the parameters themselves (retail r31=src,
+    // r30=dst); the slot cursor aliases src and the entry cursor is a copy
+    // taken after the call.
     const CPcKizunaSlot* s = &src->slots[0];
-    const CPcKizunaSlotEntry* e = (const CPcKizunaSlotEntry*)s;
+    const CPcKizunaSlot* e = s;
     CPcKizunaCompactSlot* d = &dst->slots[0];
     for (int i = 0; i < 0xb; i++) {
         d->bytes[0xC] = s->byteC0;
-        d->bytes[0] = (u8)e->word;
-        d->bytes[1] = e->byte14;
-        // Advance the entry cursor right after its last use (retail keeps this
-        // induction register separate from the slot cursor).
-        e = (const CPcKizunaSlotEntry*)((const u8*)e + 0xC4);
+        d->bytes[0] = (u8)e->data00.word;
+        d->bytes[1] = e->data00.byte14;
+        // Advance the entry cursor right after its last use.
+        e++;
         d->bytes[2] = (u8)s->sub[0].word;
         d->bytes[3] = s->sub[0].byte14;
         d->bytes[4] = (u8)s->sub[1].word;
@@ -672,6 +678,7 @@ extern "C" void func_8025EC0C(CPcKizunaCompact* dst, const CPcKizunagramBig* src
         d++;
     }
 }
+#pragma pop
 
 // Invert func_8025EC0C: rebuild each 0xC4 slot from its compact 0xD form.
 // Retail signature is (src=compact, dst=big) - r3 holds the compact struct.
@@ -1148,21 +1155,30 @@ searchDone:
     func_8025F114((CPcKizunagramBig*)self, entry);
 }
 
+#pragma push
+// Retail saves r28-r31 with individual stw's (speed-style frame), unlike the
+// -O4,s stmw/helpers the unit default produces for this function.
+#pragma optimize_for_size off
 extern "C" void func_8025F9AC(CPcKizunaChart* self, int a, int b) {
-    // The retail keeps the base pointer at the total-chart position
-    // (self + a*0xC4 + b*0x20) and reads the matching working-copy entry
-    // 0x3D4 bytes past it, so the entry fields stay large displacements.
-    CPcKizunaWorkEntryPos* wp = (CPcKizunaWorkEntryPos*)(&self->searchSlots[a].data00 + b);
-    u16 id = wp->entry.field04;
-    CPcKizunaSlotEntry* nxt = wp->entry.pField18;
-    CPcKizunaSlotEntry* prv = wp->entry.pField1C;
+    // Retail keeps the total-chart position (self + a*0xC4 + b*0x20) as the
+    // base register and reads the working-copy entry at +0x3D4 displacements.
+    u32 off = a * 0xC4;
+    u32 sub = b << 5;
+    CPcKizunaWorkEntryPos* wp = (CPcKizunaWorkEntryPos*)((u8*)self + off + sub);
+    CPcKizunaSlotEntry* nxt;
+    CPcKizunaSlotEntry* prv;
+    u8 saved;
+    u16 id;
+    nxt = wp->entry.pField18;
+    id = wp->entry.field04;
+    prv = wp->entry.pField1C;
     if (nxt != 0) nxt->pField1C = prv;
     if (prv != 0) prv->pField18 = nxt;
-    // The retail re-derives the position base after the unlink (its first base
-    // register was clobbered by the pField1C load), so recompute it here.
-    CPcKizunaWorkEntryPos* wq =
-        (CPcKizunaWorkEntryPos*)((u8*)&self->searchSlots[a] + b * 0x20);
-    u8 saved = wq->entry.byte14 & 1;
+
+    // The retail re-derives the position base after the unlink, so recompute
+    // it here instead of reusing the first pointer.
+    CPcKizunaWorkEntryPos* wq = (CPcKizunaWorkEntryPos*)((u8*)self + off + sub);
+    saved = wq->entry.byte14 & 1;
     memset(&wq->entry, 0, 0x20);
     wq->entry.byte14 = saved;
 
@@ -1190,3 +1206,4 @@ searchDone:
         *p &= ~(1u << (id & 0x1f));
     }
 }
+#pragma pop

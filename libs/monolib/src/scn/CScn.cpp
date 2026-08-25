@@ -246,7 +246,8 @@ extern "C" void* func_80496274(void* _this) {
 }
 extern "C" void func_8049627C(u8* self, int arg) { func_8049B0A0(*(UnkScn68**)((char*)self + 0x68), (short)arg); }
 // Scene time scale: PAL consoles without the speed fix run at 1.2x.
-float func_80496288(u8* self) {
+float func_80496288(void* self_) {
+    u8* self = (u8*)self_;
     int pal = 0;
     if (CDeviceVI::isTvFormatPal()) {
         if (self[0x3E9] == 0)

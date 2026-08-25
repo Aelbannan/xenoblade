@@ -2,9 +2,11 @@
 // Replace stubs with high-level C/C++ during decomp.
 
 #include "kyoshin/cf/CfObjectEnumList.hpp"
+#include "kyoshin/cf/CBattleManagerApi.hpp"
 #include "monolib/math.hpp"      // ml::CVec3
 #include "monolib/util/MemManager.hpp"  // mtl::MemManager (allocate_array)
 #include <nw4r/math.h>            // VEC3Sub (paired-single) + PSVECMag
+#include <revolution/mtx/vec.h>   // PSVECAdd
 
 // Forward decl (was pulled in via CfCam.hpp, which now conflicts with this
 // TU's extern "C" declarations of func_8016FE34/func_800BBC0C).
@@ -36,12 +38,15 @@ namespace cf {
                 mVtable = (void*)&lbl_eu_8052585C;
                 // clearList: null every node's mNext until back at the
                 // sentinel (mStartNode member re-read each iteration).
-                CfSelectorNode* sentinel = mStartNode;
-                CfSelectorNode* node = sentinel->mNext;
+                CfSelectorNode* cur;
+                CfSelectorNode* node = mStartNode->mNext;
                 while (node != mStartNode) {
-                    CfSelectorNode* next = node->mNext;
-                    node->mNext = NULL;
-                    node = next;
+                    // Copy-then-advance: the null store goes through the old
+                    // node pointer while the walk register is reused for
+                    // next (retail mr/lwz/stw schedule).
+                    cur = node;
+                    node = node->mNext;
+                    cur->mNext = NULL;
                 }
                 mStartNode->mNext = mStartNode;
                 mStartNode->mPrev = mStartNode;
@@ -90,6 +95,20 @@ namespace cf {
     }
 }
 
+namespace cf {
+
+// Inlined flag-clear helper: bounds arrive as opaque pointer params, so
+// MWCC's unroller emits the full cloned-guard set (entry test + materialized
+// bool + divwu trip) seen in the retail ctor's mObjInfo init loops.
+static void enumClearObjFlags(CfObjEnumList::sObjInfo* begin,
+                              CfObjEnumList::sObjInfo* end) {
+    for (; begin < end; ++begin) {
+        begin->field_18 = 0;
+    }
+}
+
+}  // namespace cf
+
 // __ct__cf_CfObjEnumList: CfObjEnumList constructor (retail symbol is the
 // unmangled global name, so this is a global function, not a member).  The
 // reslist<T> base is initialized inline first (base vtable store, backing
@@ -115,14 +134,10 @@ void __ct__cf_CfObjEnumList(cf::CfObjEnumList* self) {
     self->mPtrCount = 0;
     self->mSortVtableB = (void*)&lbl_eu_8052BDA0[0];
     self->mSortVtableA = (void*)&lbl_eu_8052BDA0[8];
-    // mObjInfo flag-byte init: element 0 handled separately (retail peels it
-    // into the straight-line store block), the rest is an unrolled pointer
-    // walk by MWCC.
+    // mObjInfo flag-byte init: element 0 peeled into the straight-line store
+    // block, the rest is MWCC's x8-unroll + scalar remainder of a pointer walk.
     self->mObjInfo[0].field_18 = 0;
-    for (cf::CfObjEnumList::sObjInfo* p = &self->mObjInfo[1];
-         p < &self->mObjInfo[384]; ++p) {
-        p->field_18 = 0;
-    }
+    cf::enumClearObjFlags(&self->mObjInfo[1], &self->mObjInfo[384]);
     self->mObjInfoCount = 0;
     self->mList = mtl::MemManager::allocate_array(
         0x20E8, mtl::MemManager::getHandleMEM1());
@@ -146,9 +161,9 @@ void __ct__cf_CfObjEnumList(cf::CfObjEnumList* self) {
 void func_800F49F8(cf::CfObjEnumList* self, cf::CfObjEnumList* src) {
     for (u32 i = 0; i < src->mPtrCount; i++) {
         u32 idx = self->mObjInfoCount;
-        cf::CfObjEnumList::sObjInfo* srcInfo = src->mPtrArray[i];
-        self->mObjInfoCount = idx + 1;
         cf::CfObjEnumList::sObjInfo* dst = &self->mObjInfo[idx];
+        self->mObjInfoCount = idx + 1;
+        cf::CfObjEnumList::sObjInfo* srcInfo = src->mPtrArray[i];
         dst->objectId = srcInfo->objectId;
         dst->object = srcInfo->object;
         // Deferred-store locals: retail loads field_0C before field_08 but
@@ -160,9 +175,11 @@ void func_800F49F8(cf::CfObjEnumList* self, cf::CfObjEnumList* src) {
         dst->field_10 = srcInfo->field_10;
         dst->field_14 = srcInfo->field_14;
         dst->field_18 = srcInfo->field_18;
-        self->mPtrArray[self->mPtrCount] =
+        // Post-increment: single mPtrCount load feeds both the slot address
+        // and the stored-back count (a separate count statement would force
+        // an aliasing reload).
+        self->mPtrArray[self->mPtrCount++] =
             &self->mObjInfo[self->mObjInfoCount - 1];
-        self->mPtrCount = self->mPtrCount + 1;
     }
 }
 
@@ -394,7 +411,6 @@ int func_80148778(void*, int);
 int func_80051B38(CfEnumActorAux*);
 int func_8009CF8C(int);
 CfEnumKind* func_800AB3D0(CfEnumObject*);
-void* getInstance__Q22cf14CBattleManagerFv();
 int func_800DA06C(void*, CfEnumActor*);
 CfEnumActor* func_800EA384(void*);
 CfEnumActor* func_800EA3AC(void*, CfEnumObject*);
@@ -1220,117 +1236,158 @@ void func_800F6ED0(cf::CfObjEnumList* self, ml::CVec3* spot) {
     enumRefreshSort(self, 0);
 }
 
+// Frame-origin shorts of the scene view frame used by __ct__800FA9B4.
+struct EnumViewFrameShorts {
+    u8 _pad[0x1C8];
+    s16 originX;             // 0x1C8
+    s16 originY;             // 0x1CA
+    u8 _pad2[0x230 - 0x1CC];
+    s16 sizeX;               // 0x230
+    s16 sizeY;               // 0x232
+};
+
 // __ct__800FA9B4: rebuild the list by projecting every object position through
 // the scene's view transform: func_80496264/func_8049627C fetch the pose block
 // and view frame, func_8049B59C writes the view-space position into info+8 for
-// two probe slots, then a screen-rect depth gate (getFrame2ViewOffset +
-// func_804BE348) and the func_804B5088 probe decide acceptance.  Accepted
-// entries get the 0x10 mark bit; every entry is re-appended.
+// two probe slots, then a screen-rect gate (getFrame2ViewOffset), the coli
+// probe func_804BE348 on t[k]+border-offset, and the global func_804B5088
+// probe decide acceptance.  Accepted entries get the 0x10 mark bit; every
+// entry is re-appended.
 void __ct__800FA9B4(cf::CfObjEnumList* list, void* scene, u32 options) {
-    if (list->mPtrCount == 0) {
+    u32 count = list->mPtrCount;
+    u32 markInvert = options & 2;   // option bit 2 flips the 0x10 marking
+    // Remember the scene pointer in the trailing field for later refreshes.
+    list->field_303C = (u32)scene;
+    if (count == 0) {
         return;
     }
     void* pose = func_80496264(scene, 0);
-    u8* frame = static_cast<u8*>(func_8049627C(scene, 0));
-    struct RebuildCtx {
-        u32 ownsCopy;                          // +0x000 (<- list+0x1C)
+    EnumViewFrameShorts* vf =
+        reinterpret_cast<EnumViewFrameShorts*>(func_8049627C(scene, 0));
+    s16 border = -20;   // screen-space border, live across the whole loop
+
+    // Snapshot context: leading never-written word, array copy, sort descriptor.
+    struct Ctx {
+        u32 pad;                               // +0x000 (never written)
         cf::CfObjEnumList::sObjInfo* arr[384]; // +0x004
         u32 count;                             // +0x604
-        u8* b;                                 // +0x608
-        u8* a;                                 // +0x60C
-        u32 field;                             // +0x610
+        void* descHi;                          // +0x608 (lbl_eu_8052BDA0 + 8)
+        void* descLo;                          // +0x60C (lbl_eu_8052BDA0)
+        u32 sortFlag;                          // +0x610
     };
-    RebuildCtx ctx;
-    ctx.ownsCopy = list->mOwnsList;
-    ctx.count = list->mPtrCount;
-    ctx.a = lbl_eu_8052BDA0;
-    ctx.b = lbl_eu_8052BDA0 + 8;
-    ctx.field = list->field_062C;
     struct CopyArr {
         cf::CfObjEnumList::sObjInfo* arr[384];
     };
+    Ctx ctx;
     *reinterpret_cast<CopyArr*>(ctx.arr) =
         *reinterpret_cast<CopyArr*>(list->mPtrArray);
+    ctx.count = count;
+    ctx.descHi = &lbl_eu_8052BDA0[8];
+    ctx.descLo = &lbl_eu_8052BDA0[0];
+    ctx.sortFlag = list->field_062C;
     list->mPtrCount = 0;
-    const float c02 = lbl_eu_80666EC8; // f28: 0.2 depth scale
-    const float c01 = lbl_eu_80666ECC; // f31
-    const double magic = lbl_eu_80666EC0; // s32->double conversion magic
-    (void)c01;
-    (void)magic;
-    // Frame-origin shorts + probe-table record layout.
-    struct ViewFrameBlock {
-        u8 _pad[0x1C8];
-        s16 originX;             // 0x1C8
-        s16 originY;             // 0x1CA
-        u8 _pad2[0x230 - 0x1CC];
-        s16 sizeX;               // 0x230
+
+    const float padA = lbl_eu_80666EB8;        // probe offset x/z
+    const float padB = lbl_eu_80666ECC;        // probe offset y
+    const float depthScale = lbl_eu_80666EC8;  // z-blend factor
+    struct SRect16 {
+        s16 x, y, w, h;
     };
-    ViewFrameBlock* vf = reinterpret_cast<ViewFrameBlock*>(frame);
+
     for (u32 i = 0; i < ctx.count; i++) {
         cf::CfObjEnumList::sObjInfo* p = ctx.arr[i];
         CfEnumObjPosView* obj = reinterpret_cast<CfEnumObjPosView*>(p->object);
-        // Three stacked position temps; v128 fills all three, the vAC fallback
-        // only the latter two (retail store pattern).
-        ml::CVec3 tmp[3];
-        CfEnumPosBlock* v = obj->v128();
-        if (v != 0) {
-            float tz = v->z;
-            float ty = v->y;
-            float tx = v->x;
-            tmp[0].x = tx;
-            tmp[0].y = ty;
-            tmp[0].z = tz;
-            tmp[1] = tmp[0];
-            tmp[2] = tmp[0];
+        ml::CVec3 t[2];
+        CfEnumPosBlock* blk = obj->v128();
+        if (blk != 0) {
+            float pz = blk->z;
+            float py = blk->y;
+            float px = blk->x;
+            ml::CVec3 tmp;
+            tmp.x = px;
+            tmp.y = py;
+            tmp.z = pz;
+            t[0] = tmp;
+            t[1] = tmp;
+            // Blend the second slot's z toward the object's raw y by 0.2.
+            CfEnumPosBlock* ac1 =
+                reinterpret_cast<CfEnumPosBlock*>(obj->vAC());
+            float ay = ac1->y;
+            CfEnumPosBlock* ac2 =
+                reinterpret_cast<CfEnumPosBlock*>(obj->vAC());
+            t[1].z = depthScale * (t[1].z - ac2->y) + ay;
         } else {
-            ml::CVec3* src =
-                reinterpret_cast<ml::CVec3*>(obj->vAC());
-            tmp[1].x = src->x;
-            tmp[1].y = src->y;
-            tmp[1].z = src->z;
-            tmp[2] = tmp[1];
+            ml::CVec3* src = reinterpret_cast<ml::CVec3*>(
+                reinterpret_cast<CfEnumPosBlock*>(obj->vAC()));
+            t[0] = *src;
+            t[1] = t[0];
         }
-        bool confirmed = false;
+        bool keep = false;
         for (int k = 0; k < 2; k++) {
-            // View-space transform lands in info.field_08/0C/10.
-            int ret = func_8049B59C(&p->field_08, pose, &tmp[1 + k]);
+            // View-space transform lands in p->field_08/0C/10.
+            int ret = func_8049B59C(&p->field_08, pose, &t[k]);
             p->field_18 |= 1;
-            if (ret != 0) {
-                // Screen-rect depth gate: offset the frame rect by the frame's
-                // stored origin shorts and scale by 0.2 (retail converts the
-                // combined s16 via the 2^52 double idiom).
-                struct SRect16 {
-                    s16 x, y, w, h;
-                } rc;
+            keep = ret != 0;
+            if (keep) {
+                // Screen-rect gate: reject when (x,y) falls outside the frame
+                // box expanded by the border (converted via the 2^52 idiom).
+                SRect16 rc;
                 getFrame2ViewOffset__10CViewFrameFR7CRect16PC10CViewFrame(
-                    &rc, frame + 0x1DC);
-                s16 fx = vf->originX;
-                s16 fy = vf->originY;
-                s16 fw = vf->sizeX;
-                float vx = (float)(fw + rc.x + fx + (-20)) * c02;
-                float vy = (float)(fy + rc.y) * c02;
-                ml::CVec3 probe;
-                probe.x = vx;
-                probe.y = vy;
-                probe.z = p->field_10;
-                if (func_804BE348(&probe, &probe, 0x44A45, 0, 0) != 0) {
-                    confirmed = false;
-                    break;
+                    &rc, (u8*)vf + 0x1DC);
+                s16 ox = vf->originX;
+                s16 oy = vf->originY;
+                s16 sx = vf->sizeX;
+                s16 sy = vf->sizeY;
+                SRect16 clip;
+                clip.x = sx + rc.x;
+                clip.y = sy + rc.y;
+                SRect16 clipCopy = clip;
+                clip.x = border;
+                clip.y = border;
+                clip.w = ox - border * 2;
+                clip.h = oy - border * 2;
+                float depthX = p->field_08;
+                float depthY = p->field_0C;
+                if (!(depthX >= (float)(int)clip.x &&
+                      (float)((int)ox - border * 2 + border) >= depthX &&
+                      depthY >= (float)(int)clip.y &&
+                      (float)((int)oy - border * 2 + border) >= depthY)) {
+                    keep = false;
+                }
+                if (keep) {
+                    // Coli probe against t[k] offset by the border vector.
+                    ml::CVec3 base;
+                    base.x = padA;
+                    base.y = padB;
+                    base.z = padA;
+                    ml::CVec3 sum;
+                    nw4r::math::VEC3Add(
+                        (nw4r::math::VEC3*)&sum, (nw4r::math::VEC3*)&t[k],
+                        (nw4r::math::VEC3*)&base);
+                    ml::CVec3 probe = sum;
+                    if (func_804BE348((u8*)pose + 0x10C, &probe, 0x44A45, 0,
+                                      0) != 0) {
+                        keep = false;
+                    }
+                }
+                if (keep) {
+                    keep = func_804B5088(lbl_eu_80665958, (u8*)pose + 0x10C,
+                                         &t[k], 1, 0) == 0;
                 }
             }
-            // Global probe table walk (12-byte records indexed by slot k).
-            confirmed = func_804B5088(
-                            reinterpret_cast<cf::CfCamFollow*>((&lbl_eu_80665958)[k]),
-                            (u8*)pose + 0x10C, &tmp[1 + k], 1, 0) == 0;
-            if (confirmed) {
+            if (keep) {
                 break;
             }
         }
-        bool accept = !confirmed;
-        if (options & 2) {
-            accept = confirmed;
+        // Mark bit 0x10 when the probes rejected the entry; option bit 2
+        // inverts the marking condition.
+        bool mark;
+        if (markInvert) {
+            mark = keep;
+        } else {
+            mark = !keep;
         }
-        if (accept) {
+        if (mark) {
             p->field_18 |= 0x10;
         }
         list->mPtrArray[list->mPtrCount++] = p;
@@ -1418,19 +1475,27 @@ void __ct__800FAE3C(cf::CfObjEnumList* list, ml::CVec3* arg1, u32 options) {
 
 // __ct__800FB044: rebuild the object list by distance from spot.  dist =
 // PSVECMag(obj->vAC() - spot), minus aux->field_63C when aux exists.  The
-// entry is kept (mark 0x20) when dist < threshold and either a collision is
-// found (func_804B1AD8 on aux+0x60C) or func_800FD3FC accepts it (options
-// bit 3).
+// entry is marked 0x20 / kept when dist < threshold and either the aux cone
+// probe accepts (func_804B1AD8 on aux+0x60C, accept-on-zero) or the
+// func_800FD3FC fallback accepts (also inverted, options bit 3).  Options
+// bit 1 inverts the final decision; kept entries are only re-appended when
+// options bit 0 is set.
 void __ct__800FB044(cf::CfObjEnumList* list, ml::CVec3* spot, u32 options,
                     float threshold) {
+    u32 invert = options & 2;
     if (list->mPtrCount == 0) {
         return;
     }
+    // Rebuild context: the retail frame places a never-written leading word,
+    // then the array snapshot, then the sort descriptor {count, lbl+8, lbl,
+    // field_062C}.  Taking the array's address (in the copy below) makes the
+    // struct address-taken, so the loop re-reads count from the stack each
+    // iteration.
     struct RebuildCtx {
         cf::CfObjEnumList::sObjInfo* arr[384]; // +0x000
         u32 count;                             // +0x600
-        u8* b;                                 // +0x604
-        u8* a;                                 // +0x608
+        void* b;                               // +0x604 (lbl_eu_8052BDA0 + 8)
+        void* a;                               // +0x608 (lbl_eu_8052BDA0)
         u32 field;                             // +0x60C
     };
     struct CopyArr {
@@ -1448,35 +1513,36 @@ void __ct__800FB044(cf::CfObjEnumList* list, ml::CVec3* spot, u32 options,
         cf::CfObjEnumList::sObjInfo* p = ctx.arr[i];
         CfEnumObject* obj = reinterpret_cast<CfEnumObject*>(p->object);
         CfEnumActor* aux = func_800BBC0C(obj);
-        nw4r::math::VEC3 delta;
+        // Three stacked delta temps (address-taken array keeps the middle
+        // dead copy alive): VEC3Sub fills slot 0, scalar copies fill slots
+        // 1 and 2, PSVECMag consumes slot 2.
+        nw4r::math::VEC3 tmp[3];
         nw4r::math::VEC3Sub(
-            &delta,
+            &tmp[0],
             reinterpret_cast<nw4r::math::VEC3*>(
                 reinterpret_cast<CfEnumObjPosView*>(obj)->vAC()),
             reinterpret_cast<const nw4r::math::VEC3*>(spot));
-        nw4r::math::VEC3 d1;
-        nw4r::math::VEC3 d2;
-        d1.x = delta.x;
-        d1.y = delta.y;
-        d1.z = delta.z;
-        d2.x = delta.x;
-        d2.y = delta.y;
-        d2.z = delta.z;
-        p->field_14 = PSVECMag((const Vec*)&d2);
+        tmp[1].x = tmp[0].x;
+        tmp[1].y = tmp[0].y;
+        tmp[1].z = tmp[0].z;
+        tmp[2].x = tmp[0].x;
+        tmp[2].y = tmp[0].y;
+        tmp[2].z = tmp[0].z;
+        p->field_14 = PSVECMag((const Vec*)&tmp[2]);
         if (aux != 0) {
             p->field_14 -=
                 reinterpret_cast<CfEnumActorView*>(aux)->field_63C;
         }
-        bool flag = p->field_14 < threshold;
+        int flag = p->field_14 < threshold;
         if ((obj->field68 & 4) && flag && aux != 0) {
             flag = func_804B1AD8(
                        &reinterpret_cast<CfEnumActorView*>(aux)->field_60C,
-                       spot, threshold) != 0;
+                       spot, threshold) == 0;
         }
         if (!flag && (options & 8)) {
-            flag = func_800FD3FC(list, aux, spot) != 0;
+            flag = func_800FD3FC(list, aux, spot) == 0;
         }
-        if (options & 2) {
+        if (invert) {
             flag = !flag;
         }
         if (flag) {
@@ -1498,32 +1564,37 @@ void __ct__800FB044(cf::CfObjEnumList* list, ml::CVec3* spot, u32 options,
 // flags bit 0 is set (otherwise appended unconditionally).
 void func_800FB270(cf::CfObjEnumList* self, ml::CVec3* spot, u32 flags,
                    float range, float cone, float angleOffset) {
+    u32 invert = flags & 2;
     if (self->mPtrCount == 0) {
         return;
     }
     struct RebuildCtx {
         cf::CfObjEnumList::sObjInfo* arr[384]; // +0x000
         u32 count;                             // +0x600
-        void* b;                               // +0x604
-        void* a;                               // +0x608
+        void* hi;                              // +0x604 (lbl_eu_8052BDA0 + 8)
+        void* lo;                              // +0x608 (lbl_eu_8052BDA0)
         u32 field;                             // +0x60C
     };
     struct CopyArr {
         cf::CfObjEnumList::sObjInfo* arr[384];
     };
+    nw4r::math::VEC3 d;
+    nw4r::math::VEC3 delta;
+    nw4r::math::VEC3* dp = &d;
+    nw4r::math::VEC3* deltap = &delta;
+    const float pi = lbl_eu_8066A1F8;
+    const float negPi = -pi;
+    const float twoPi = lbl_eu_8066A1FC;
+    const float angScale = lbl_eu_80666ED0;
+    const float halfScale = lbl_eu_80666ED4;
     RebuildCtx ctx;
     *reinterpret_cast<CopyArr*>(ctx.arr) =
         *reinterpret_cast<CopyArr*>(self->mPtrArray);
     ctx.count = self->mPtrCount;
-    ctx.a = &lbl_eu_8052BDA0[0];
-    ctx.b = &lbl_eu_8052BDA0[8];
+    ctx.lo = &lbl_eu_8052BDA0[0];
+    ctx.hi = &lbl_eu_8052BDA0[8];
     ctx.field = self->field_062C;
     self->mPtrCount = 0;
-    const float pi = lbl_eu_8066A1F8;        // f26
-    const float twoPi = lbl_eu_8066A1FC;     // f25
-    const float angScale = lbl_eu_80666ED0;  // f24
-    const float halfScale = lbl_eu_80666ED4; // f28
-    u32 invert = flags & 2;
     for (u32 i = 0; i < ctx.count; i++) {
         cf::CfObjEnumList::sObjInfo* p = ctx.arr[i];
         CfEnumObject* obj = reinterpret_cast<CfEnumObject*>(p->object);
@@ -1535,35 +1606,39 @@ void func_800FB270(cf::CfObjEnumList* self, ml::CVec3* spot, u32 flags,
         }
         nw4r::math::VEC3* pos = reinterpret_cast<nw4r::math::VEC3*>(
             reinterpret_cast<CfEnumObjPosView*>(obj)->vAC());
-        nw4r::math::VEC3 delta;
-        nw4r::math::VEC3Sub(&delta, pos,
+        nw4r::math::VEC3Sub(deltap, pos,
                             reinterpret_cast<const nw4r::math::VEC3*>(spot));
-        nw4r::math::VEC3 d;
-        d.x = delta.x;
-        d.y = delta.y;
-        d.z = delta.z;
-        float dist = PSVECMag((const Vec*)&d);
-        float ang = angScale * nw4r::math::Atan2FIdx(d.x, d.z) - angleOffset;
+        d.x = deltap->x;
+        d.y = deltap->y;
+        d.z = deltap->z;
+        float dist = PSVECMag((const Vec*)dp);
+        float ang =
+            angScale * nw4r::math::Atan2FIdx(d.x, d.z) - angleOffset;
         while (pi <= ang) {
             ang -= twoPi;
         }
-        while (ang < -pi) {
+        while (ang < negPi) {
             ang += twoPi;
         }
-        bool hit = targetDist >= dist && -cone * halfScale <= ang &&
-                   ang <= cone * halfScale;
-        if ((obj->field68 & 4) && hit && aux != 0) {
-            hit = func_804B1C9C(
-                      &reinterpret_cast<CfEnumActorView*>(aux)->field_60C,
-                      spot, range, cone, angleOffset) != 0;
+        // Rejection polarity: entries outside the cone are flagged 0x40.
+        bool rejected =
+            !(targetDist >= dist && -(cone * halfScale) <= ang &&
+              ang <= cone * halfScale);
+        // Precise aux-side cone probe rescues coarse rejections (accept on
+        // nonzero); the FD3FC fallback double-checks coarse acceptances
+        // (reject on zero).
+        if ((obj->field68 & 4) && rejected && aux != 0) {
+            rejected = func_804B1C9C(
+                           &reinterpret_cast<CfEnumActorView*>(aux)->field_60C,
+                           spot, range, cone, angleOffset) == 0;
         }
-        if (!hit && (flags & 8)) {
-            hit = func_800FD3FC(self, aux, spot) != 0;
+        if (!rejected && (flags & 8)) {
+            rejected = func_800FD3FC(self, aux, spot) == 0;
         }
         if (invert) {
-            hit = !hit;
+            rejected = !rejected;
         }
-        if (hit) {
+        if (rejected) {
             p->field_18 |= 0x40;
             if (flags & 1) {
                 self->mPtrArray[self->mPtrCount++] = p;
@@ -1585,11 +1660,12 @@ void func_800FB5AC(cf::CfObjEnumList* self, ml::CVec3* spot, u32 flags,
         return;
     }
     struct RebuildCtx {
-        cf::CfObjEnumList::sObjInfo* arr[384]; // +0x000
-        u32 count;                             // +0x600
-        void* b;                               // +0x604
-        void* a;                               // +0x608
-        u32 field;                             // +0x60C
+        u32 pad00;                             // +0x000 (unwritten stack slot)
+        cf::CfObjEnumList::sObjInfo* arr[384]; // +0x004
+        u32 count;                             // +0x604
+        void* b;                               // +0x608
+        void* a;                               // +0x60C
+        u32 field;                             // +0x610
     };
     struct CopyArr {
         cf::CfObjEnumList::sObjInfo* arr[384];
@@ -1798,11 +1874,14 @@ void __ct__800FBF08(cf::CfObjEnumList* list, u32 tag, u32 flags) {
     ctx.a = lbl_eu_8052BDA0 + 8;
     ctx.field = list->field_062C;
     list->mPtrCount = 0;
+    // Explicit walk pointer + counter: keeps the pointer-register init at the
+    // declaration point, ahead of the flag-mask extraction (retail order).
+    cf::CfObjEnumList::sObjInfo** it = &ctx.arr[0];
     u32 invert = flags & 2;       // accept-hit instead of reject-hit
     u32 appendMarked = flags & 1; // re-append 0x70-marked entries
     u32 n = ctx.count;
-    for (u32 i = 0; i < n; i++) {
-        cf::CfObjEnumList::sObjInfo* p = ctx.arr[i];
+    for (u32 i = 0; i < n; ++it, i++) {
+        cf::CfObjEnumList::sObjInfo* p = *it;
         CfEnumActor* actor =
             func_8016FE34(reinterpret_cast<CfEnumObject*>(p->object));
         if (actor == 0) {
@@ -2612,7 +2691,10 @@ void* func_800FD378(cf::CfObjEnumList* self, int index) {
 // table (4 diagonal offsets) is added to both corners; any probe hit returns 1.
 extern "C" int func_800FD3FC(cf::CfObjEnumList* list, CfEnumActor* aux,
                              ml::CVec3* spot) {
-    if (aux == 0) {
+    // Copy into a local first: MWCC then moves the param into a callee-saved
+    // reg BEFORE the null-test branch (retail cmpwi/mr/bne order).
+    CfEnumActor* actor = aux;
+    if (actor == 0) {
         return 1;
     }
     // Declaration order drives the stack slots (first declared -> highest):
@@ -2623,15 +2705,15 @@ extern "C" int func_800FD3FC(cf::CfObjEnumList* list, CfEnumActor* aux,
     ml::CVec3 tmp;     // v128-path float -> word round trip
     ml::CVec3 v1;      // loop probe corner (0x38)
     ml::CVec3 v2;      // loop probe corner (0x2C)
-    // Locals force MWCC to load all three before storing.
+    // Staging locals read z,y,x: MWCC assigns first-read -> f0, so retail's
+    // final mapping is sx->f2, sy->f1, sz->f0.
     float sz = spot->z;
     float sy = spot->y;
     float sx = spot->x;
     spotCopy.x = sx;
     spotCopy.y = sy;
     spotCopy.z = sz;
-    CfEnumObjPosView* view = reinterpret_cast<CfEnumObjPosView*>(aux);
-    CfEnumPosBlock* blk = view->v128();
+    CfEnumPosBlock* blk = reinterpret_cast<CfEnumObjPosView*>(actor)->v128();
     if (blk != 0) {
         float tz = blk->z;
         float ty = blk->y;
@@ -2641,12 +2723,15 @@ extern "C" int func_800FD3FC(cf::CfObjEnumList* list, CfEnumActor* aux,
         tmp.z = tz;
         objPos = tmp;   // word copy (retail lwz/stw)
     } else {
-        objPos = *reinterpret_cast<ml::CVec3*>(view->vAC());
+        objPos = *reinterpret_cast<ml::CVec3*>(
+            reinterpret_cast<CfEnumObjPosView*>(actor)->vAC());
     }
+    // Pointers declared before the nudges so the compare schedule matches
+    // retail (fcmpo on f1=spotCopy.y vs f0=objPos.y).
+    ml::CVec3* high = &objPos;    // larger Y -> first probe arg
+    ml::CVec3* low = &spotCopy;   // smaller Y
     spotCopy.y += lbl_eu_80666ECC;
     objPos.y += lbl_eu_80666ECC;
-    ml::CVec3* low = &spotCopy;   // r23: smaller Y
-    ml::CVec3* high = &objPos;    // r24: larger Y
     if (spotCopy.y > objPos.y) {
         low = &objPos;
         high = &spotCopy;
@@ -2674,9 +2759,10 @@ extern "C" int func_800FD3FC(cf::CfObjEnumList* list, CfEnumActor* aux,
         lbl_eu_80573A30[11] = lbl_eu_80666EF0;
         lbl_eu_80663F08 = 1;
     }
+    const ml::CVec3* tblBase =
+        reinterpret_cast<const ml::CVec3*>(lbl_eu_80573A30);
     for (u32 i = 0; i < 4; i++) {
-        const ml::CVec3& tbl =
-            reinterpret_cast<const ml::CVec3*>(lbl_eu_80573A30)[i];
+        const ml::CVec3& tbl = tblBase[i];
         // add() = { temp; VEC3Add(temp, lhs, rhs); out.set(temp); } - the
         // ps result lands in the helper temp (0x14/0x08), then a scalar copy
         // into v1/v2 (0x38/0x2C), exactly the retail's loop body.

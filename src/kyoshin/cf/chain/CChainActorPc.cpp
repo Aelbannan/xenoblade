@@ -1,10 +1,8 @@
 
 #include "kyoshin/cf/chain/CChainActorPc.hpp"
+#include "kyoshin/cf/CBattleManagerApi.hpp"
 
 namespace cf { class CBattleManager; class CfObjectMove; class CfGameManager; class CChain; }
-
-// Retail symbol: cf::CBattleManager::getInstance()
-cf::CBattleManager* getInstance__Q22cf14CBattleManagerFv();
 
 // Forward decl: cf::CfGameManager::getPlayer(int)
 namespace cf { class CfGameManager { public: static cf::CfObjectMove* getPlayer(int); }; }
@@ -273,6 +271,7 @@ extern "C" void func_80281F38(cf::CChainActorPc* self, int arg) {
 // flag 0xf8 is set on the unk0 object; otherwise delegates to func_8027A024.
 extern "C" int func_80281FA0(cf::CChainActorPc* self, void* arg) {
     // Call vtable entry 29: check some active/in-battle condition
+    // Residual: vtable double-load stages in r5 vs retail r12 chain.
     int (*vfunc)(void*) = ((int(**)(void*))self->mVTable)[29];
     if (vfunc(self) != 0) return 0;
     // Check battle-manager flag 0xf8 on this->unk0 + 8

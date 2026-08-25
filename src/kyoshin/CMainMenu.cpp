@@ -783,7 +783,7 @@ battle:
     // Active battle objects (non-empty manager list). Declaration order
     // mirrors the matched func_8027F0B8 loop so MWCC colors node r3 /
     // sentinel r5 like retail.
-    CMainMenuBattleMgr* bm = getInstance__Q22cf14CBattleManagerFv();
+    CMainMenuBattleMgr* bm = (CMainMenuBattleMgr*)getInstance__Q22cf14CBattleManagerFv();
     CMainMenuBattleNode* node;
     int count;
     CMainMenuBattleNode* sentinel = bm->list;

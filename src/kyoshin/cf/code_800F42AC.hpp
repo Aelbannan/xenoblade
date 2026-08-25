@@ -41,8 +41,8 @@ extern "C" int func_80148778(void* self, int id);
 extern "C" void* func_80149154(void* self, int id);
 extern "C" void func_8009D018(u32 a, u32 b);
 extern "C" void* func_80141270(u32 a);
-extern "C" void* func_801412D0(u32 a);
-extern "C" void func_8013F244(void);
+// func_801412D0 is owned by kyoshin/CUIWindowManager.hpp.
+
 
 // ---------------------------------------------------------------------------
 // sdata2 floating point constants referenced via sda21/@sda21 by this TU.

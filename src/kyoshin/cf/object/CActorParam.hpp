@@ -11,7 +11,7 @@
 // above the frame stores (MWCC_CASES §extern-const-float-hoist); plain
 // `extern float` leaves the lfs after the GPR saves (4-byte shift).
 extern const float lbl_eu_806677E4; // sdata2: default gauge value (CActorParam_UnkVirtualFunc67)
-extern float lbl_eu_806677E0; // sdata2: gauge default (CActorParam_UnkVirtualFunc141)
+extern const float lbl_eu_806677E0; // sdata2: gauge default (CActorParam_UnkVirtualFunc141/142)
 extern void* lbl_eu_806640DC; // .sbss arts bdat file pointer (CActorParam_UnkVirtualFunc87)
 extern char lbl_eu_80503438[]; // rodata column-name string block (CActorParam_UnkVirtualFunc87)
 extern double lbl_eu_80667848; // sdata2: +0.5 rounding constant (CActorParam_UnkVirtualFunc149)
@@ -27,6 +27,21 @@ extern const float lbl_eu_80667868; // sdata2: SP/exp gain scale (CActorParam_Un
 extern const float lbl_eu_8066786C; // sdata2: arts-gauge threshold (CActorParam_UnkVirtualFunc12)
 extern const float lbl_eu_80667800; // sdata2: 2.0f arts-slot default (Func140; const so the load is scheduled before the unk0 store)
 extern const float lbl_eu_80667804; // sdata2: 3.0f arts-slot default (Func140; const so MWCC loads it once for the two stores)
+// lbl_eu_8066A1F8 (pi) is declared in CfObjectEnumList.hpp
+// CActorParam_UnkVirtualFunc177 constants (const so MWCC hoists each into a
+// callee-saved FPR above the main battle-entry loop, matching retail).
+extern const float lbl_eu_80667814; // 0.05f crit-scale
+extern const double lbl_eu_80667820; // 0.15 clamp-level rate
+extern const float lbl_eu_80667828; // -1.0f negate
+extern const float lbl_eu_8066782C; // 0.5f half multiplier
+extern const float lbl_eu_80667834; // 0.9f
+extern const float lbl_eu_80667838; // 0.1f status tick
+extern const float lbl_eu_8066783C; // 5.0f default duration
+extern const float lbl_eu_80667840; // 2.5f boost multiplier
+extern const float lbl_eu_80667844; // 4.0f extended duration
+extern const float lbl_eu_80667808; // sdata2: unk1620 default (ctor)
+extern const float lbl_eu_8066780C; // sdata2: unk1630 multiplier (ctor)
+extern const float lbl_eu_80667810; // sdata2: unk1630 pi divisor (ctor)
 
 namespace cf {
 
@@ -63,25 +78,28 @@ namespace cf {
             init();
         }
 
+        // Order matches retail ctor scheduling: scalars, unk8 wipe, gauge
+        // floats default to the sdata2 constant (not 0!), unk84 wipe, flags
+        // last.
         void init(){
             unk0 = 0;
             unk4 = 0;
+            std::memset(unk8, 0, sizeof(unk8));
             unk48 = 0;
             unk4C = -1;
             unk50 = 0;
-            unk54 = 0;
-            unk58 = 0;
-            unk5C = 0;
-            unk60 = 0;
-            unk64 = 0;
+            unk54 = lbl_eu_806677E4;
+            unk58 = lbl_eu_806677E4;
+            unk5C = lbl_eu_806677E4;
+            unk60 = lbl_eu_806677E4;
+            unk64 = lbl_eu_806677E4;
             unk7C = 0;
             unk80 = 0;
             unkB8 = 0;
-            unk68 = 0;
-            unk6C = 0;
+            unk68 = lbl_eu_806677E4;
+            unk6C = lbl_eu_806677E4;
             unk70 = 0;
             unk72 = 0;
-            std::memset(unk8, 0, sizeof(unk8));
             std::memset(unk84, 0, sizeof(unk84));
             mFlagsArray[0].flags = 0;
             mFlagsArray[1].flags = 0;
@@ -166,7 +184,7 @@ namespace cf {
 
             std::memset(this, 0, sizeof(*this)); //wtf??
 
-            unk5C = 1.0f;
+            unk5C = lbl_eu_806677E8;
             unk38 = 5;
             unk3A = 5;
         }
@@ -309,6 +327,7 @@ namespace cf {
         float field_0x180C;
         u8 _pad1810[0x1812 - 0x1810];
         s16 field_0x1812;
+        u8 _pad1814[0x1816 - 0x1814];
         s16 field_0x1816;
         u8 _pad1818[0x181A - 0x1818];
         s16 field_0x181A;

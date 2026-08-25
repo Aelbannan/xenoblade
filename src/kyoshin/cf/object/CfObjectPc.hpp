@@ -2,6 +2,7 @@
 
 #include <types.h>
 #include "kyoshin/cf/object/CfObjectActor.hpp"
+#include "kyoshin/plugin/ocBdat.hpp"
 
 extern UNKTYPE* func_800B708C(BOOL r3);
 extern UNKTYPE* func_800AD860(UNKTYPE* r3);
@@ -60,14 +61,14 @@ extern "C" void func_804B0AD4(void* region, int param, float a, float b);
 extern "C" void __dl__FPv(void* object);
 extern "C" void __dt__Q22cf12CfObjectMoveFv(cf::CfObjectMove* self, int flag);
 extern "C" void __ct__8009ED08(void* destination, u32 itemId);   // CtrlObjectParam.cpp
-extern "C" u32 getBdatStringColumnValue(void* file, const char* column, int index);
 extern "C" unsigned long func_80061FFC();   // bdat heap handle getter
 // NOTE: retail keeps the virtual-call result in r3 across the second arg's
 // address computation, so the value is the FIRST declared parameter.
 extern "C" void func_80175A50(u32 value, u8* obj);       // CActorParam.cpp
 extern "C" void func_8014B804(u8* self, int index, int a2, int a3, int a4,
     int a5, int a6, int a7, int a8, int a9, int a10, int a11, int a12, int a13);
-// getInstance__Q22cf14CBattleManagerFv is declared by kyoshin/cf/object/CAIAction.hpp.
+// getInstance__Q22cf14CBattleManagerFv is declared by kyoshin/cf/CBattleManagerApi.hpp
+// (pulled in via CAIAction.hpp).
 extern "C" void CActorParam_UnkVirtualFunc176__Q22cf11CActorParamFv(
     cf::CActorParam* self, float value);   // CActorParam virtual 0x354 (Fv name, float in f1)
 extern "C" void func_800A11A4(u8* obj, int flag);         // CtrlObjectParam.cpp
@@ -133,12 +134,8 @@ int func_8003B41C(void* mgr);                  // first bdat row index
 int func_8003B1EC(void* mgr);                  // bdat row count
 unsigned long func_801BA2C8(void* obj);        // battle-manager state probe (unified with CChainTimer.hpp)
 }
-namespace cf {
-class CfSoundMan {
-public:
-    static void func_801BFC38(u32 a, u32 b, u32 c, u32 d, float v);
-};
-}
+// cf::CfSoundMan lives on kyoshin/cf/CfSoundMan.hpp (single definition;
+// include it where func_801BFC38 is needed).
 
 // Flags object reached through +0x3F34 (word at +0x7A4).
 struct FlagsObj7A4 {

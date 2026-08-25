@@ -2,6 +2,7 @@
 // Replace stubs with high-level C/C++ during decomp.
 
 #include <harness_catalog.h>
+#include "monolib/scn/CScnTimeApi.hpp"
 #include "monolib/scn/CScnRootNw4r.hpp"           // extern "C" __dt__12CScnRootNw4rFv
 #include "libs/monolib/src/scn/CScnRootNw4r.hpp"  // CScnRootNw4r class + fields
 #include "monolib/util/MemManager.hpp"            // mtl::MemManager

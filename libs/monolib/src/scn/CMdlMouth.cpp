@@ -1,5 +1,6 @@
 // monolib/src/scn/CMdlMouth - mouth-animation helper object.
 #include <harness_catalog.h>
+#include "monolib/scn/CScnTimeApi.hpp"
 #include <string.h>
 #include <monolib/math.hpp>
 #include <nw4r/math.h>

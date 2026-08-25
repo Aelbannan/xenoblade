@@ -1,6 +1,7 @@
 #pragma once
 
 #include <types.h>
+#include "kyoshin/cf/CBattleManagerApi.hpp"
 
 class CPad;
 class CScn;
@@ -689,12 +690,9 @@ struct UnkScnResult {
 // view). The FUNCTION must return this exact type - divergent return types
 // trip MWCC 10505 when both headers land in one TU.
 struct CTaskGameCamView;
-extern "C" void* func_8049603C(CScn* scene);
-// NOTE: keep this prototype IDENTICAL to the ones in src/kyoshin/CTaskGame.hpp
-// and src/kyoshin/cf/CTaskREvtSequence.hpp (void*, int, void*) - divergent
-// extern "C" type lists for the same symbol make any TU that includes more
-// than one of these headers fail with "illegal function overloading" (10197).
-extern "C" void func_8049602C(void* scene, int mode, void* vec);
+// func_8049603C is declared once in libs/monolib/src/scn/CScn_8049603C.hpp
+// (owner: monolib CScn); include that header where the symbol is used.
+
 extern const float lbl_eu_80666568;
 
 // --- func_80084F50 imports ---
@@ -709,7 +707,8 @@ extern "C" void __dt__8023E448();
 extern "C" void func_801592EC();
 extern "C" CfFileEventIdsView* func_8009D5FC();
 extern "C" void func_8018C8F4(u8* object, u32 value);
-extern "C" CBattleManagerView* getInstance__Q22cf14CBattleManagerFv();
+// getInstance__Q22cf14CBattleManagerFv comes from CBattleManagerApi.hpp (void*);
+// callers cast at the use site.
 extern "C" void func_802959AC(cf::CHelpManager* object);
 extern "C" void func_8007F1FC__Q22cf13CfGameManagerFv(void* buffer, s32 mode);
 extern "C" void func_80083D50__Q22cf13CfGameManagerFv(u32 first, u32 second,

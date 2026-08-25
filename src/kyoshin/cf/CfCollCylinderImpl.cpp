@@ -11,23 +11,60 @@ void func_800AB010(void* self, cf::CfCollCylinderImpl* impl) {
     // falls through past it, re-loading mKind for the 6/5/0/2 chain (so a
     // kind==1 hull ends up coloured by the default else). The else-chain then
     // binds to case 6, giving each matched body its own branch-to-tail.
+    //
+    // Colour components go through named float locals: MWCC colours the FPRs
+    // by local declaration order (low -> high) while emitting the sdata2
+    // loads in assignment order, which is what fixes the retail register
+    // assignment (components allocated high-to-low).
     if (impl->mKind == 1) {
-        col = ml::CCol4(lbl_eu_80666910, lbl_eu_80666914, lbl_eu_80666914, lbl_eu_8066692C);
+        float ca, cg, cr;
+        cg = lbl_eu_80666914;
+        cr = lbl_eu_80666910;
+        ca = lbl_eu_8066692C;
+        col = ml::CCol4(cr, cg, cg, ca);
     }
     if (impl->mKind == 6) {
-        col = ml::CCol4(lbl_eu_80666910, lbl_eu_80666938, lbl_eu_80666938, lbl_eu_8066692C);
+        float ca, cg, cr;
+        cg = lbl_eu_80666938;
+        cr = lbl_eu_80666910;
+        ca = lbl_eu_8066692C;
+        col = ml::CCol4(cr, cg, cg, ca);
     } else if (impl->mKind == 5) {
         if ((impl->mSubKind & 0xFFFF) == 1) {
-            col = ml::CCol4(lbl_eu_80666910, lbl_eu_80666914, lbl_eu_80666914, lbl_eu_8066693C);
+            float ca, cg, cr;
+            cg = lbl_eu_80666910;
+            cr = lbl_eu_80666914;
+            ca = lbl_eu_8066693C;
+            col = ml::CCol4(cr, cg, cg, ca);
         } else {
-            col = ml::CCol4(lbl_eu_80666930, lbl_eu_80666910, lbl_eu_80666914, lbl_eu_8066692C);
+            float ca, cb, cg, cr;
+            cr = lbl_eu_80666930;
+            cg = lbl_eu_80666910;
+            cb = lbl_eu_80666914;
+            ca = lbl_eu_8066692C;
+            col = ml::CCol4(cr, cg, cb, ca);
         }
     } else if (impl->mKind == 0) {
-        col = ml::CCol4(lbl_eu_80666918, lbl_eu_80666914, lbl_eu_80666930, lbl_eu_8066692C);
+        float ca, cb, cg, cr;
+        cr = lbl_eu_80666918;
+        cg = lbl_eu_80666914;
+        cb = lbl_eu_80666930;
+        ca = lbl_eu_8066692C;
+        col = ml::CCol4(cr, cg, cb, ca);
     } else if (impl->mKind == 2) {
-        col = ml::CCol4(lbl_eu_8066693C, lbl_eu_80666918, lbl_eu_80666914, lbl_eu_80666934);
+        float ca, cb, cg, cr;
+        cr = lbl_eu_8066693C;
+        cg = lbl_eu_80666918;
+        cb = lbl_eu_80666914;
+        ca = lbl_eu_80666934;
+        col = ml::CCol4(cr, cg, cb, ca);
     } else {
-        col = ml::CCol4(lbl_eu_80666910, lbl_eu_80666930, lbl_eu_80666914, lbl_eu_80666934);
+        float ca, cb, cg, cr;
+        cr = lbl_eu_80666910;
+        cg = lbl_eu_80666930;
+        cb = lbl_eu_80666914;
+        ca = lbl_eu_80666934;
+        col = ml::CCol4(cr, cg, cb, ca);
     }
 
     renderCylinder__Q22cf18CfDebugDrawManagerFv(&impl->mStart, &impl->mEnd, &col, impl->mRadius);
@@ -39,6 +76,8 @@ void func_800AB010(void* self, cf::CfCollCylinderImpl* impl) {
 void func_800AB248(void* self, cf::CfCollCylinderImpl* impl, void* a, void* b, float f1) {
     float heightDiff = impl->mEnd.y - impl->mStart.y;
 
+    // When f1 is under the threshold the whole cylinder is submitted;
+    // otherwise a truncated/shortened segment starting below mStart is drawn.
     if (f1 < lbl_eu_80666940) {
         func_800A5B18(a, &impl->mStart, b, impl->mRadius + f1, heightDiff);
     } else {

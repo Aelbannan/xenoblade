@@ -1,6 +1,7 @@
 // Auto-scaffolded catalog TU for kyoshin/cf/chain/CChainActorEne
 // Replace stubs with high-level C/C++ during decomp.
 
+#include "kyoshin/cf/CBattleManagerApi.hpp"
 #include "kyoshin/harness_catalog.hpp"
 #include "kyoshin/cf/chain/CChainActorEne.hpp"
 #include "kyoshin/cf/chain/CChainActorPc.hpp"
@@ -197,35 +198,49 @@ extern "C" int func_802815B8(cf::CChainActorEne* self) {
 // through the timeline object of this chain actor, for both the special
 // enemy chain case and the plain self case.
 extern "C" void func_802816FC(cf::CChainActorEne* self) {
-    u32 a0 = self->unk0;
-    if (a0 != 0) a0 += 0x3e9c;
-    EneChainObj* o0 = (EneChainObj*)func_800AD860((void*)a0);
-    bool special = false;
-    if (o0 != 0 && (o0->type == 0x96b || o0->type == 0x96c)) special = true;
-    if (special) {
-        // Scan the gimmick-object list for a 0x96b timeline and clear the
-        // "rework" bit (bit 1 of the 0xa0 flag) on its battle actor.
-        GlistList* list = (GlistList*)func_800B6BC8();
-        EneChainObj* found = 0;
-        for (GlistNode* node = list->field_04->next; node != list->field_04; node = node->next) {
-            EneChainObj* o = (EneChainObj*)func_800AD860(node->obj);
-            if (o != 0 && o->type == 0x96b) {
-                found = o;
-                break;
-            }
-        }
-        if (found != 0) {
-            BattleActor* act = (BattleActor*)func_80193AB0(func_80193670(), found->id);
-            if (act != 0) act->flagA0 &= ~2;
-        }
+    u32 a1 = self->unk0;
+    if (a1 != 0) a1 += 0x3e9c;
+    EneChainObj* obj = (EneChainObj*)func_800AD860((void*)a1);
+
+    // Special enemy-chain types (0x96b/0x96c) share the 0x96b timeline.
+    int special;
+    if (obj == 0) {
+        special = 0;
+    } else {
+        int t = obj->type;
+        special = 1;
+        if (t != 0x96b && t != 0x96c) special = 0;
     }
+    if (special != 0) {
+        // Scan the gimmick-object circular list for a 0x96b timeline and
+        // clear the "rework" bit (bit 1 of the 0xa0 flag) on its battle
+        // actor. found aliases the list header during the scan and is only
+        // nulled when the scan exhausts without a match (retail reuses one
+        // register for both, so the null-store sits on the fall-through path).
+        GlistList* list = (GlistList*)func_800B6BC8();
+        EneChainObj* found = (EneChainObj*)list;
+        GlistNode* node = list->field_04->next;
+        while (node != list->field_04) {
+            EneChainObj* o = (EneChainObj*)func_800AD860(node->obj);
+            if (o != 0 && o->type == 0x96b) goto matched;
+            node = node->next;
+        }
+        found = 0;
+    matched:;
+        BattleActor* act = 0;
+        if (found != 0) {
+            act = (BattleActor*)func_80193AB0(func_80193670(), found->id);
+        }
+        if (act != 0) act->flagA0 &= ~2;
+    }
+
     // Always also clear the bit on the actor found through our own timeline.
     u32 a2 = self->unk0;
     if (a2 != 0) a2 += 0x3e9c;
-    EneChainObj* o2 = (EneChainObj*)func_800AD860((void*)a2);
-    if (o2 != 0) {
-        BattleActor* act = (BattleActor*)func_80193AB0(func_80193670(), o2->id);
-        if (act != 0) act->flagA0 &= ~2;
+    EneChainObj* obj2 = (EneChainObj*)func_800AD860((void*)a2);
+    if (obj2 != 0) {
+        BattleActor* act2 = (BattleActor*)func_80193AB0(func_80193670(), obj2->id);
+        if (act2 != 0) act2->flagA0 &= ~2;
     }
 }
 

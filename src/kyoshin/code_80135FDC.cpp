@@ -1,13 +1,10 @@
 // Auto-scaffolded catalog TU for kyoshin/code_80135FDC
 // Replace stubs with high-level C/C++ during decomp.
 
-// CfGameManager.hpp declares extern "C" UnkScnResult* func_8049603C(CScn*),
-// conflicting with code_80135FDC.hpp's CTaskGameCamView* shape; hide it here.
-#define func_8049603C code35FDCCfGameManager9603CUnused
+#include "libs/monolib/src/scn/CScn_8049603C.hpp" // func_8049603C (single owner decl)
 #include "kyoshin/harness_catalog.hpp"
 #include "kyoshin/cf/CfGameManager.hpp"
-#undef func_8049603C
-// code_80135FDC.hpp declares this TU's exported functions with caller-tuned
+
 // signatures that differ from the (not-yet-matched) definitions below, so
 // suppress those declarations when included from this defining TU.
 #define CODE_80135FDC_CPP
@@ -34,8 +31,10 @@
 #include <stdlib.h>
 #include <ctype.h>
 
+extern "C" void func_800826F0__Q22cf13CfGameManagerFv(u32 value);
+
 extern "C" {
-// copyVEC3 stays inline: CCollepedia.hpp declares it as (void*, void*) - a
+// copyVEC3 stays inline
 // move into code_80135FDC.hpp would clash in CCollepedia.cpp.
 extern void copyVEC3(nw4r::math::VEC3*, const nw4r::math::VEC3*);
 // func_8009CF8C stays inline: include/functions.hpp declares it as
@@ -1924,10 +1923,8 @@ extern "C" void func_8013996C(CAnimOwnerIf* owner, void* src, u32 idx) {
     // ((idx & 0xFF) * 8).
     u8 i8 = (u8)idx;
     s16* s = (s16*)src;
-    // Two rotating temporaries mirror retail's register rotation
-    // (r3/r4/r0) and its one-load-lookahead copy schedule.
-    s16 ta = s[0];
     s16* d = (s16*)(data + i8 * 8 + 0x10);
+    s16 ta = s[0];
     s16 tb = s[1];
     d[0] = ta;
     ta = s[2];

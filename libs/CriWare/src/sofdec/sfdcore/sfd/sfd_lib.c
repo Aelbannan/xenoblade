@@ -4,7 +4,7 @@
 #include <harness_catalog.h>
 
 /* Forward declarations for external functions */
-extern void UTY_InitTmr(void);
+extern void UTY_InitTmr(s32 enable);
 extern void SJRBF_Init(void);
 extern void SFPLY_Init(void);
 extern void SFHDS_Init(void);
@@ -13,8 +13,7 @@ extern void UTY_MemsetDword(void* dst, u32 val, u32 count);
 extern void MEM_Copy(void* dst, void* src, u32 size);
 extern s32 SFTIM_Init(void* ctx, u32 param);
 extern void SFBUF_Init(void* ctx);
-extern s32 SFTRN_Init(void* ctx, u32 param);
-extern u32 lbl_eu_8051C590[];
+extern s32 SFTRN_Init(void* ctx, u32 param);extern u32 lbl_eu_8051C590[];
 extern u32 lbl_eu_8051CA10[];
 extern u32 lbl_eu_80567ED8[];
 extern u32 lbl_eu_80606E20[];
@@ -30,22 +29,20 @@ u32 SFD_IsVersionCompatible(void* self, u32 version) {
 }
 
 s32 fn_803C3320(void* cfg) {
-    s32 result;
-    void (*fn)(void*, void*);
     u32* ctx = lbl_eu_80606E20;
-    u32* evt = lbl_eu_80567ED8;
+    s32 result;
 
-    evt[3] = (u32)cfg + 4;
-
+    /* Notify listener object (virtual call: vtable method at +0x24) with event block */
     if (ctx[5] != 0) {
-        fn = *(void (**)(void*, void*))((u8*)(u32)ctx[5] + 0x24);
-        fn((void*)ctx[5], &evt[1]);
+        u32* obj = (u32*)ctx[5];
+        lbl_eu_80567ED8[3] = (u32)cfg + 4;
+        (*(void (**)(void*, void*))((u8*)*obj + 0x24))(obj, &lbl_eu_80567ED8[1]);
     }
 
     ctx[0xCD] = 0x39B0;
     ctx[0xCE] = (u32)lbl_eu_8051C590;
 
-    UTY_InitTmr();
+    UTY_InitTmr(1);
     SJRBF_Init();
 
     result = fn_803C3400(cfg);
@@ -55,29 +52,29 @@ s32 fn_803C3320(void* cfg) {
         criware_803BFD20();
     }
 
+    /* Second notification carries the init result pointer */
     if (ctx[5] != 0) {
-        evt[0x1D] = (u32)&result;
-        fn = *(void (**)(void*, void*))((u8*)(u32)ctx[5] + 0x24);
-        fn((void*)ctx[5], &evt[0x1B]);
+        u32* obj = (u32*)ctx[5];
+        lbl_eu_80567ED8[0x1D] = (u32)&result;
+        (*(void (**)(void*, void*))((u8*)*obj + 0x24))(obj, &lbl_eu_80567ED8[0x1B]);
     }
 
     return result;
 }
 
 s32 fn_803C3400(void* cfg) {
-    s32 error = 0;
+    s32 error;
     u32* ctx = lbl_eu_80606E38;
-    u32 tmp;
 
     UTY_MemsetDword(ctx, 0, 0xC7);
     MEM_Copy(ctx, lbl_eu_8051CA10, 0x190);
-    tmp = *(u32*)cfg;
-    ctx[0x64] = tmp;
-    ctx[0x65] = *(u32*)((u8*)cfg + 4);
+    ctx[0x64] = *(u32*)cfg;
+    ctx[0x65] = ((u32*)cfg)[1];
     ctx[0x66] = 0;
     ctx[0x7E] = 0x5A5A5A5A;
 
-    SFTIM_Init((u8*)ctx + 0x19C, 1);
+    error = 0;
+    SFTIM_Init((u8*)ctx + 0x19C, ((u32*)cfg)[1]);
     SFBUF_Init((u8*)ctx + 0x1B0);
 
     ctx[0x7C] = 0;
@@ -89,8 +86,9 @@ s32 fn_803C3400(void* cfg) {
     ctx[0x83] = 0;
     ctx[0x84] = 0;
     ctx[0x85] = 0;
+    ctx[0x86] = 0;
 
-    s32 trnResult = SFTRN_Init((u8*)ctx + 0x1B4, tmp);
+    s32 trnResult = SFTRN_Init((u8*)ctx + 0x1B4, *(u32*)cfg);
     if (trnResult != 0) {
         error = trnResult;
     }
@@ -179,26 +177,6 @@ s32 SFLIB_SetErr(s32 val, u32 err_code) {
     return err_code;
 }
 
-s32 criware_803C0D94(void* handle, void (*errFn)(u32, u32), u32 errArg) {
-    s32 r;
-    if (handle == NULL) {
-        lbl_eu_80606E20[0] = (u32)errFn;
-        lbl_eu_80606E20[1] = errArg;
-        return 0;
-    }
-    if (handle == NULL || *(s32*)((u8*)handle + 0x54) == 0)
-        r = -1;
-    else {
-        lbl_eu_8060715C = handle;
-        r = 0;
-    }
-    if (r != 0)
-        return SFLIB_SetErr(0, 0xFF000101);
-    *(void (**)(u32, u32))((u8*)handle + 0xA08) = errFn;
-    *(u32*)((u8*)handle + 0xA0C) = errArg;
-    return 0;
-}
-
 s32 SFLIB_CheckHn(void* h) {
     typedef struct SfdHandleHeader {
         u8 _00[0x54];
@@ -207,6 +185,29 @@ s32 SFLIB_CheckHn(void* h) {
     if (h == NULL) return -1;
     if (((SfdHandleHeader*)h)->errorState == 0) return -1;
     lbl_eu_8060715C = h;
+    return 0;
+}
+
+s32 criware_803C0D94(void* handle, void (*errFn)(u32, u32), u32 errArg) {
+    typedef struct SfdHandleHeader {
+        u8 _00[0x54];
+        s32 errorState;
+        u8 _58[0xA08 - 0x58];
+        void (*errFnCb)(u32, u32);
+        u32 cbArg;
+    } SfdHandleHeader;
+    SfdHandleHeader* h = (SfdHandleHeader*)handle;
+
+    if (h == NULL) {
+        lbl_eu_80606E20[0] = (u32)errFn;
+        lbl_eu_80606E20[1] = errArg;
+    } else {
+        s32 ret = SFLIB_CheckHn(h);  // inlined by the compiler
+        if (ret != 0)
+            return SFLIB_SetErr(0, 0xFF000101);
+        h->errFnCb = errFn;
+        h->cbArg = errArg;
+    }
     return 0;
 }
 

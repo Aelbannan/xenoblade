@@ -5,6 +5,35 @@ namespace nw4r {
 namespace snd {
 namespace detail {
 
+namespace {
+
+// Single-callsite helpers; MWCC inlines them back into their callers.
+// Factoring the min-search loop out reorders the inlining expansion of the IR
+// web, which is the only lever that shifts MWCC's Chaitin color tie-break
+// between pLowest and the other loop locals.
+BasicSound* FindLowestPrioritySound(
+    int& lowestPrio,
+    BasicSoundExtPlayList& rList) {
+    lowestPrio = BasicSound::PRIORITY_MAX + 1;
+    BasicSound* pLowest = NULL;
+
+    for (BasicSoundExtPlayList::Iterator it = rList.GetBeginIter();
+         it != rList.GetEndIter(); ++it) {
+
+        BasicSound* pCurrent = &*it;
+        int currentPrio = pCurrent->CalcCurrentPlayerPriority();
+
+        if (lowestPrio > currentPrio) {
+            pLowest = pCurrent;
+            lowestPrio = currentPrio;
+        }
+    }
+
+    return pLowest;
+}
+
+} // namespace
+
 bool ExternalSoundPlayer::AppendSound(BasicSound* pSound) {
     SoundThread::AutoLock lock;
 
@@ -15,19 +44,9 @@ bool ExternalSoundPlayer::AppendSound(BasicSound* pSound) {
     }
 
     while (GetPlayingSoundCount() >= mPlayableCount) {
-        int lowestPrio = BasicSound::PRIORITY_MAX + 1;
-        BasicSound* pLowest = NULL;
-
-        for (BasicSoundExtPlayList::Iterator it = mSoundList.GetBeginIter();
-             it != mSoundList.GetEndIter(); ++it) {
-
-            int currentPrio = it->CalcCurrentPlayerPriority();
-
-            if (lowestPrio > currentPrio) {
-                lowestPrio = currentPrio;
-                pLowest = &*it;
-            }
-        }
+        int lowestPrio;
+        BasicSound* pLowest =
+            FindLowestPrioritySound(lowestPrio, mSoundList);
 
         if (pLowest == NULL) {
             return false;
@@ -61,20 +80,9 @@ bool ExternalSoundPlayer::detail_CanPlaySound(int count) {
     // evict; otherwise playback is always allowed (retail structure funnels
     // all allowed paths into the single trailing return true).
     if (GetPlayingSoundCount() >= mPlayableCount) {
-        int lowestPrio = BasicSound::PRIORITY_MAX + 1;
-        BasicSound* pLowest = NULL;
-
-        for (BasicSoundExtPlayList::Iterator it = mSoundList.GetBeginIter();
-             it != mSoundList.GetEndIter(); ++it) {
-
-            BasicSound* pCurrent = &*it;
-            int currentPrio = pCurrent->CalcCurrentPlayerPriority();
-
-            if (lowestPrio > currentPrio) {
-                pLowest = pCurrent;
-                lowestPrio = currentPrio;
-            }
-        }
+        int lowestPrio;
+        BasicSound* pLowest =
+            FindLowestPrioritySound(lowestPrio, mSoundList);
 
         if (pLowest == NULL) {
             return false;

@@ -2,7 +2,9 @@
 #include <string.h>
 #include <types.h>
 #include "kyoshin/menu/CMenuUpdate.hpp"
+#include "libs/monolib/src/scn/CScn_8049603C.hpp" // func_8049603C (single owner decl)
 #include "monolib/lib/UnkClass_8045F564.hpp"
+#include "kyoshin/cf/CfGameManagerUnityHelpers.hpp" // code80135FDC_getByte_64059 (owner-API decl)
 #include "kyoshin/cf/CfGameManager.hpp"
 #include "kyoshin/cf/IResInfo.hpp"
 #include "monolib/util/FixStr.hpp"

@@ -950,8 +950,7 @@ extern "C" __declspec(noinline) int func_8023719C(CArtsInfo* self, u8 arg2, u8 a
 // layout (all guards jump forward to it).
 int func_80237238(CArtsInfo* self) {
     CArtsCharData* obj = (CArtsCharData*)func_8009EC9C(self->field_0x54);
-    int weapon = obj->field_0x26;
-    if (weapon == -1) goto fail;
+    if (obj->field_0x26 == -1) goto fail;
     CArtsInfoListEntry* e = func_80157C4C(2);
     if (e == 0) goto fail;
     u32 v0 = e->field_0x0;
@@ -964,12 +963,12 @@ int func_80237238(CArtsInfo* self) {
         // Both operands are masked to u16 before the multiply; the scaled
         // product goes through the shared s32->f64 magic and is clamped to
         // 999 with an unsigned compare.
-        hp = (int)(lbl_eu_80668690 * ConvS32ToF64((hp & 0xffff) * (base & 0xffff)));
+        hp = (int)(lbl_eu_80668690 * (float)((base & 0xffff) * (hp & 0xffff)));
         if ((hp & 0xffffu) >= 0x3e7u) hp = 0x3e7;  // unsigned cmpli, clamp 999
     }
     // Both lookups inline: MWCC evaluates + right-to-left, so func_802370A8
     // (rightmost) runs first and its result survives in r31 like retail.
-    return (int)(lbl_eu_80668694 * ConvS32ToF64((hp & 0xffff) * ((int)func_80236E6C(self, 0x52) + (int)func_802370A8(self) + 100))) & 0xffff;
+    return (int)(lbl_eu_80668694 * (float)((hp & 0xffff) * ((int)func_80236E6C(self, 0x52) + (int)func_802370A8(self) + 100))) & 0xffff;
 fail:
     return 0;
 }

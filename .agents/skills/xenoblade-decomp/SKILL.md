@@ -1,7 +1,7 @@
 ---
 name: xenoblade-decomp
 description: >-
-  Primary agent workflow for the Xenoblade Chronicles Wii co-op decompilation
+  Primary agent workflow for the Xenoblade Chronicles Wii decompilation
   fork. Invoke at the start of tasks in this repository when decompiling,
   matching, editing src/kyoshin or configure.py, running the coop runner,
   objdiff, DECOMP_MAP targets, or MWCC EQUIVALENT_MATCH / FULL_MATCH work.
@@ -9,7 +9,7 @@ description: >-
 
 # Xenoblade decompilation
 
-Operational workflow + acceptance policy for this **private/downstream** co-op fork.
+Operational workflow + acceptance policy for this **private/downstream** decomp/matching fork.
 Read only the routing doc for the residual you're chasing (see **Routing**).
 
 ## Rules that never change
@@ -200,7 +200,6 @@ bake for DOL-split absolutes like `_stack_addr` is the only ok case).
 ## Do not
 
 - Commit `orig/`, `main.dol`, RELs, or disc assets; submit AI reconstruction upstream.
-- Call `CGame::wkRender` or full frame update twice for split-screen experiments.
 - Decompile to asm or registers outside the PS backend; micro-manage registers/stack.
 - Chase byte-identity via binary patching / instruction insertion.
 
@@ -229,4 +228,4 @@ bake for DOL-split absolutes like `_stack_addr` is the only ok case).
 | `docs/MWCC_PATTERNS.md` | General/reusable MWCC knowledge + KB protocol + templates |
 | `docs/MWCC_CASES.md` | **Per-target** matching records (search via `mwcc_kb.py`) |
 | `tools/mwcc_kb.py` | Search patterns + cases + attempt history (SQLite index) |
-| `PLAN.md` / `COOP_IMPLEMENTATION_MAP.md` | Architecture / co-op capability graph |
+| `PLAN.md` | Architecture / matching policy (§§2, 3, 17) |

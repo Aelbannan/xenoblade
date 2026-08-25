@@ -7,7 +7,7 @@
 #include "monolib/math/Random.hpp"
 #include <cstring>
 
-// ── Target 2: us-802b24f0 (__ct__802AFA80) ─────────────────────────────────
+// us-802b24f0 (__ct__802AFA80)
 // Factory/constructor for the battle-begin voice thread.  Verifies the voice
 // handle's embedded character matches player 0 (and the data source is
 // ready), computes a phase count from the handle/data sizes (0, 1 or 2),
@@ -71,7 +71,7 @@ CVS_THREAD_BATTLE_BEGIN* __ct__802AFA80(CVoiceHandle* handle, CVoiceHandle* A) {
     return obj;
 }
 
-// ── Target 3: us-802b26c4 (func_802AFC54) ──────────────────────────────────
+// us-802b26c4 (func_802AFC54)
 // Init: restore the base state triple, seed the slot array from the manager
 // (capacity 3), then dispatch to the process virtual when the slot count is
 // non-positive.
@@ -94,7 +94,7 @@ void func_802AFC54(CVS_THREAD_BATTLE_BEGIN* self) {
 
 void func_802AFCC8(){}
 
-// ── Target 5: us-802b2b5c (func_802B00EC) ──────────────────────────────────
+// us-802b2b5c (func_802B00EC)
 // Advance the active-slot counter (up or down, per the direction flag).  When
 // the counter wraps back to 0 the process virtual is dispatched again.
 void func_802B00EC(CVS_THREAD_BATTLE_BEGIN* self) {
@@ -123,7 +123,7 @@ void func_802B00EC(CVS_THREAD_BATTLE_BEGIN* self) {
     self->func_802A3B50();
 }
 
-// ── Target 4: us-802b2c20 (func_802B01B0) ──────────────────────────────────
+// us-802b2c20 (func_802B01B0)
 // Remove a released voice from the slot array (and the dedicated slot) by
 // matching the embedded CCharVoice pointer against the one being freed.
 void func_802B01B0(CVS_THREAD_BATTLE_BEGIN* self, CCharVoice* voicePtr) {
@@ -156,7 +156,7 @@ void func_802B01B0(CVS_THREAD_BATTLE_BEGIN* self, CCharVoice* voicePtr) {
     }
 }
 
-// ── Target 1: us-802b2cb8 (func_802B0248) ──────────────────────────────────
+// us-802b2cb8 (func_802B0248)
 // Select a battle-start voice ID from the current handle playback state.
 // Dispatches on func_802A77E8(handle); the first arg (self) is unused.
 int func_802B0248(CVS_THREAD_BATTLE_BEGIN* self, CVoiceHandle* handle) {
@@ -213,7 +213,7 @@ int CVS_THREAD_BATTLE_BEGIN::blank1() {
     return BUFFER_SIZE;
 }
 
-// ── Target 2: us-802b2db4 (func_802B0344) ──────────────────────────────────
+// us-802b2db4 (func_802B0344)
 // Play a battle-start line: when the manager flags are active, compute the
 // embedded voice pointer and play the 0x1E-byte voice for the current ID.
 int func_802B0344(CVoiceHandle* self) {
@@ -225,7 +225,7 @@ int func_802B0344(CVoiceHandle* self) {
     return 0;
 }
 
-// ── Target 1: us-802b2e14 (func_802B03A4) ──────────────────────────────────
+// us-802b2e14 (func_802B03A4)
 // Bit test on the shared voice-ID helper: report whether its second-lowest
 // bit is set.
 int func_802B03A4() {

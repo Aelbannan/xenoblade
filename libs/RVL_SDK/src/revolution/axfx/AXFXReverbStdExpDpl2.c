@@ -5,10 +5,9 @@
 #include <math.h>
 #include <string.h>
 
-// Shared .sdata2 pool constants referenced by retail (defined in port/data_defs.cpp)
-extern f32 float_8066BE98; // 1.0f
-extern f32 float_8066BE9C; // 0.6f
-extern f64 double_8066BEA0; // 2^52 bias for the 0x4330 int->float trick
+// Retail pools the shared float constants locally in this TU's .sdata2
+// slice (labels float_8066BE98/9C + double_8066BEA0); spell them as plain
+// literals so MWCC pools anon copies in the same first-use order.
 
 static u32 __EarlySizeTable[8] = {163, 317, 479, 641, 797, 967, 1123, 1283};
 
@@ -222,10 +221,10 @@ void AXFXReverbStdExpCallbackDpl2(AXFX_BUFFERUPDATE_DPL2* bufferUpdate, AXFX_REV
         outBusData[3] = reverb->busOut->right_surround;
     }
 
-    lpfCoef1 = float_8066BE98 - reverb->lpfCoef;
+    lpfCoef1 = 1.0f - reverb->lpfCoef;
     lpfCoef2 = reverb->lpfCoef;
-    earlyGain = reverb->earlyGain * float_8066BE9C;
-    fusedGain = reverb->fusedGain * float_8066BE9C;
+    earlyGain = reverb->earlyGain * 0.6f;
+    fusedGain = reverb->fusedGain * 0.6f;
     earlyCoef = reverb->earlyCoef;
     combCoef0 = reverb->combCoef[0];
     combCoef1 = reverb->combCoef[1];

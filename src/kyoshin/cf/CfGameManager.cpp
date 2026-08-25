@@ -2,7 +2,9 @@
 // ctor for func_8007E218; init() calls the 1-arg placement form. Rename the
 // 2-arg copy away while including the header, then declare the 1-arg form.
 #define __ct__Q22cf17UnkClass_8018EF3CFv ct_UnkClass_8018EF3C_2arg
+#include "kyoshin/cf/CBattleManagerApi.hpp"
 #include "kyoshin/cf/CfGameManager.hpp"
+#include "monolib/scn/CScnTimeApi.hpp"
 #undef __ct__Q22cf17UnkClass_8018EF3CFv
 #include "kyoshin/cf/CfPadData.hpp"
 #include "kyoshin/cf/CfPadTask.hpp"
@@ -28,18 +30,16 @@
 #include "kyoshin/cf/object/CfObjectMove.hpp"
 #undef func_80081900__Q22cf13CfGameManagerFv
 #undef getPlayer__Q22cf13CfGameManagerFi
-// CfObjectMap.hpp's import block declares func_80496288 as float(CScn*),
-// func_800AA33C as int(char*,...) and getBdatStringColumnValue with s32,
-// clashing with the proper extern "C" versions already in scope from
-// CfObjectMove.hpp / IResInfo.hpp / CActorParam.hpp#CBattleState.hpp (MWCC
-// forbids overloading an extern "C" function). Rename CfObjectMap.hpp's
-// copies out of the way; this TU uses the properly-typed declarations from
-// those headers.
-#define func_80496288 cfObjectMapFunc_80496288
+// CfObjectMap.hpp's import block declares func_800AA33C as int(char*,...)
+// and getBdatStringColumnValue with s32, clashing with the proper extern "C"
+// versions already in scope from CfObjectMove.hpp / IResInfo.hpp /
+// CActorParam.hpp#CBattleState.hpp (MWCC forbids overloading an extern "C"
+// function). Rename CfObjectMap.hpp's copies out of the way; this TU uses the
+// properly-typed declarations from those headers. (func_80496288 now has a
+// single unified decl.)
 #define func_800AA33C cfObjectMapFunc_800AA33C
 #define getBdatStringColumnValue cfObjectMapGetBdatStringColumnValue
 #include "kyoshin/cf/object/CfObjectMap.hpp"
-#undef func_80496288
 #undef func_800AA33C
 #undef getBdatStringColumnValue
 #include "kyoshin/cf/voice/CCharVoice.hpp"
@@ -418,6 +418,8 @@ extern const float lbl_eu_80666544;
 #define func_8007DECC__Q22cf13CfGameManagerFv unityHelpersWrapFunc_8007DECC
 #define func_8008294C__Q22cf13CfGameManagerFv unityHelpersWrapFunc_8008294C
 #include "kyoshin/cf/CfGameManagerUnityHelpers.hpp"
+#include "libs/monolib/src/scn/CScn_8049603C.hpp"
+extern "C" void func_8049602C(void*, u32, const void*);
 #undef func_80083D50__Q22cf13CfGameManagerFv
 #undef func_800827E4__Q22cf13CfGameManagerFv
 #undef func_8007DECC__Q22cf13CfGameManagerFv
@@ -1018,7 +1020,7 @@ void* cf::CfGameManager::func_8007C8C8() {
     if (lbl_eu_80663E60 != 0) {
         func_801889D0(lbl_eu_80663E60);
     }
-    func_800D9354(getInstance__Q22cf14CBattleManagerFv());
+    func_800D9354((CBattleManagerView*)getInstance__Q22cf14CBattleManagerFv());
     if (lbl_eu_80663E24 & 0x80) {
         func_80295A88(lbl_eu_80664A10);
     }
@@ -1755,21 +1757,13 @@ extern "C" void func_8007C6C0__Q22cf13CfGameManagerFv(cf::CfGameManager* self, v
 // updates the active text-display entry (lbl_eu_805716F8 or lbl_eu_80571658)
 // when the player side indicator changes, then clears the 0x8 flag.
 extern "C" void func_8007CF64__Q22cf13CfGameManagerFv(cf::CfGameManager* self) {
-    if ((lbl_eu_80663E24 & 0x4) != 0) {
-        return;
-    }
-    if (cf::CfGameManager::func_800829B8()) {
-        return;
-    }
-    if ((lbl_eu_80663E24 & 0x80) == 0) {
+    if ((lbl_eu_80663E24 & 0x4) != 0 || cf::CfGameManager::func_800829B8() ||
+        (lbl_eu_80663E24 & 0x80) == 0) {
         return;
     }
 
     cf::CfObjectMove* player = cf::CfGameManager::getPlayer(0);
-    if (player == nullptr) {
-        return;
-    }
-    if (player->CfObject_UnkVirtualFunc9() == 0) {
+    if (player == nullptr || player->CfObject_UnkVirtualFunc9() == 0) {
         return;
     }
     if ((lbl_eu_806642E0 & 1) != 0) {
@@ -1860,6 +1854,7 @@ void cf::CfGameManager::func_8007DCB8() {
         lbl_eu_80663E74 = lbl_eu_80664090;
         lbl_eu_80663E78 = 1;
     }
+    void* table = lbl_eu_80663E74;
     char* base = lbl_eu_804FB824;
     for (s32 dataId = 1; dataId <= 13; ++dataId) {
         UnkClass_8009EC9C* data = static_cast<UnkClass_8009EC9C*>(func_8009EC9C(static_cast<u16>(dataId)));
@@ -1867,17 +1862,17 @@ void cf::CfGameManager::func_8007DCB8() {
         for (s32 col = 0; col <= 5; ++col) {
             u16 value = 0;
             if (col == 0) {
-                value = static_cast<u16>(getBdatStringColumnValue(lbl_eu_80663E74, base + 0x28, dataId));
+                value = static_cast<u16>(getBdatStringColumnValue(table, base + 0x28, dataId));
             } else if (col == 1) {
-                value = static_cast<u16>(getBdatStringColumnValue(lbl_eu_80663E74, base + 0x31, dataId));
+                value = static_cast<u16>(getBdatStringColumnValue(table, base + 0x31, dataId));
             } else if (col == 2) {
-                value = static_cast<u16>(getBdatStringColumnValue(lbl_eu_80663E74, base + 0x3A, dataId));
+                value = static_cast<u16>(getBdatStringColumnValue(table, base + 0x3A, dataId));
             } else if (col == 3) {
-                value = static_cast<u16>(getBdatStringColumnValue(lbl_eu_80663E74, base + 0x42, dataId));
+                value = static_cast<u16>(getBdatStringColumnValue(table, base + 0x42, dataId));
             } else if (col == 4) {
-                value = static_cast<u16>(getBdatStringColumnValue(lbl_eu_80663E74, base + 0x4C, dataId));
+                value = static_cast<u16>(getBdatStringColumnValue(table, base + 0x4C, dataId));
             } else if (col == 5) {
-                value = static_cast<u16>(getBdatStringColumnValue(lbl_eu_80663E74, base + 0x55, dataId));
+                value = static_cast<u16>(getBdatStringColumnValue(table, base + 0x55, dataId));
             }
             s16 result;
             s16 extra;
@@ -2099,8 +2094,8 @@ void cf::CfGameManager::func_80084F50() {
     // Only the last getInstance result is kept in a saved register (live
     // across the memset); the first two are consumed in scratch.
     if (getInstance__Q22cf14CBattleManagerFv() != nullptr) {
-        func_8018C8F4(getInstance__Q22cf14CBattleManagerFv()->field_0x194, 0);
-        CBattleManagerView* battle = getInstance__Q22cf14CBattleManagerFv();
+        func_8018C8F4(((CBattleManagerView*)getInstance__Q22cf14CBattleManagerFv())->field_0x194, 0);
+        CBattleManagerView* battle = (CBattleManagerView*)getInstance__Q22cf14CBattleManagerFv();
         memset(battle->cleared_0x94, 0, 0x100);
         reinterpret_cast<CBattleManagerVt1C*>(battle)->m1C(2, 0);
     }

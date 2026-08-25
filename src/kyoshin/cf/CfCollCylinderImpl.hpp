@@ -10,6 +10,8 @@ extern "C" void func_800A5B18(void* a, void* b, void* c, float f1, float f2);
 // emits the Fv symbol name verbatim, so it needs C linkage to avoid mangling).
 extern "C" void renderCylinder__Q22cf18CfDebugDrawManagerFv(void* start, void* end, ml::CCol4* color, float radius);
 // Debug color constants for the collision-cylinder render (loaded from .sdata2).
+// const qualifies these as compile-time-invariant so MWCC hoists their sda21
+// loads to the top of each function (retail shape; MWCC_CASES extern-const pattern).
 extern "C" float lbl_eu_80666910; // 0.0
 extern "C" float lbl_eu_80666914; // 1.0
 extern "C" float lbl_eu_80666918; // 0.3
@@ -18,8 +20,10 @@ extern "C" float lbl_eu_80666930; // 0.5
 extern "C" float lbl_eu_80666934; // 0.15
 extern "C" float lbl_eu_80666938; // 0.7
 extern "C" float lbl_eu_8066693C; // 0.2
-extern "C" float lbl_eu_80666940; // 0.01 threshold
-// 0.4 truncation factor
+// const qualifies this so MWCC hoists its load to function top, letting the
+// threshold compare emit before the height-diff loads (retail shape).
+extern "C" const float lbl_eu_80666940; // 0.01 threshold
+// 0.4 truncation factor - NOT const: retail loads this lazily in the else arm.
 extern "C" float lbl_eu_80666944;
 
 namespace cf {

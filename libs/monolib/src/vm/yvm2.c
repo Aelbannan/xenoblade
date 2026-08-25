@@ -121,7 +121,11 @@ inline void vmInitDataLink(SBHeader* data, VMArg* pEntry){
     }
 }
 
+void encodeScrambleSub(u8* pData, int length);
+
 //Tries to load the given script file, and returns true/false depending on if loading was successful.
+//NOTE: retail inlines vmPluginSearch/vmOCSearch into this function (no call
+//sites), so their bodies are expanded directly into the import loops below.
 BOOL vmLink(u8* pData){
     SBHeader* header = (SBHeader*)pData;
 
@@ -155,44 +159,82 @@ BOOL vmLink(u8* pData){
     adjustSectionPtr(pData, &header->usrAtrPoolOfs);
     adjustSectionPtr(pData, &header->debugSymbolsOfs);
 
-    //Decrypt the script data if encrypted
-    if(header->flags & SB_FLAG_ENCRYPTED) encodeScramble(pData);
+    //Descramble the script data if encrypted (retail inlines encodeScramble here)
+    if(header->flags & SB_FLAG_ENCRYPTED){
+        //Descramble the ID pool section
+        SBSectionHeader* sectionHeader = header->idPoolOfs;
+        u32 idSectionAddr = (u32)sectionHeader + sectionHeader->entriesOffset + (sectionHeader->entries * sectionHeader->offsetSize);
+        int idSectionSize = (u32)header->intPoolOfs - idSectionAddr;
+        encodeScrambleSub((u8*)idSectionAddr, (idSectionSize/4)*4);
+
+        //Descramble the string pool section
+        sectionHeader = header->stringPoolOfs;
+        u32 strSectionAddr = (u32)sectionHeader + sectionHeader->entriesOffset + (sectionHeader->entries * sectionHeader->offsetSize);
+        int strSectionSize = (u32)header->functionPoolOfs - strSectionAddr;
+        encodeScrambleSub((u8*)strSectionAddr, (strSectionSize/4)*4);
+    }
 
     //Load plugin imports
     PluginImportEntry* pluginImportPtr = (PluginImportEntry*)getSectionEntriesPtr(header->pluginImportsOfs);
-    PluginImportEntry* pluginImportEnd = pluginImportPtr + header->pluginImportsOfs->entries;
 
-    for(; pluginImportPtr < pluginImportEnd; pluginImportPtr++){
+    for(int i = 0; i < header->pluginImportsOfs->entries; i++){
         //Search for the plugin entry
         const char* string1 = vmIdPoolGet(header, pluginImportPtr->unk0);
         const char* string2 = vmIdPoolGet(header, pluginImportPtr->unk2);
-        u32 index = vmPluginSearch(string1, string2);
+        //vmPluginSearch, inlined (retail keeps no call here)
+        u32 index = -1;
+        for(int k = 0; k < MAX_PLUGINS; k++){
+            const char* name = vmState.plugins[k].unk0;
+            if (name != NULL && strcmp(name, string1) == 0) {
+                PluginFuncData* struct1 = vmState.plugins[k].unk4;
+                PluginFuncData* struct2 = vmState.plugins[k].unk4;
+
+                for(int j = 0; struct1->name != NULL; j++) {
+                    if (strcmp(struct2->name, string2) == 0) {
+                        index = (k << 16) | j;
+                        break;
+                    }
+
+                    struct2++;
+                    struct1++;
+                }
+            }
+            if(index != -1) break;
+        }
 
         if(index == -1) return FALSE;
-        
-        pluginImportPtr->unk0 = (index >> 16) & 0xFFFF;
+
+        pluginImportPtr->unk0 = index >> 16;
         pluginImportPtr->unk2 = index & 0xFFFF;
+        pluginImportPtr++;
     }
 
     //Load OC imports
     OCImportEntry* ocImportEntryPtr = (OCImportEntry*)getSectionEntriesPtr(header->ocImportsOfs);
-    OCImportEntry* ocImportEnd = ocImportEntryPtr + header->ocImportsOfs->entries;
 
-    for(; ocImportEntryPtr < ocImportEnd; ocImportEntryPtr++){
+    for(int i = 0; i < header->ocImportsOfs->entries; i++){
         //Search for the OC entry
         const char* string = vmIdPoolGet(header, ocImportEntryPtr->unk0);
-        u32 index = vmOCSearch(string);
+        //vmOCSearch, inlined (retail keeps no call here)
+        u32 index = -1;
+        for(int k = 0; k < MAX_OCS; k++) {
+            OCData* data = vmState.ocs[k].unk0;
+            if (data != NULL && strcmp(data->name, string) == 0){
+                index = k;
+                break;
+            }
+        }
 
         if(index == -1) return FALSE;
 
         ocImportEntryPtr->unk0 = (u16)index;
+        ocImportEntryPtr++;
     }
 
     //Load function imports
     FunctionImportEntry* funcImportEntryPtr = (FunctionImportEntry*)getSectionEntriesPtr(header->functionImportsOfs);
-    FunctionImportEntry* funcImportEnd = funcImportEntryPtr + header->functionImportsOfs->entries;
 
-    for(; funcImportEntryPtr < funcImportEnd; funcImportEntryPtr++){
+    for(int i = 0; i < header->functionImportsOfs->entries; i++){
         const char* packageName = vmIdPoolGet(header, funcImportEntryPtr->unk0);
         const char* funcName = vmIdPoolGet(header, funcImportEntryPtr->unk2);
         //Search for the function import in the loaded files
@@ -201,8 +243,9 @@ BOOL vmLink(u8* pData){
         //If no matching function was found, return
         if(index == -1) return FALSE;
 
-        funcImportEntryPtr->unk0 = (index >> 16) & 0xFFFF;
+        funcImportEntryPtr->unk0 = index >> 16;
         funcImportEntryPtr->unk2 = index & 0xFFFF;
+        funcImportEntryPtr++;
     }
 
     //Load static var data
@@ -224,7 +267,15 @@ BOOL vmLink(u8* pData){
         }
     }
 
-    u32 something = vmSysAtrSearch(header, 1);
+    //Resolve system attribute 1 to a package index (retail inlines vmSysAtrSearch)
+    u32 something;
+    u16 sysAtr = *vmSysAtrPoolGet(header, 1);
+    if(sysAtr == 0xFFFF){
+        something = 0;
+    }else{
+        something = (u32)vmIdPoolGet(header, sysAtr);
+    }
+
     VMPackage* package = vmPackageSearch(header);
     package->unk4 = something;
 
@@ -327,16 +378,15 @@ void vmThreadRemove(u32 id){
 inline void vmThreadExec(VMThread* pThread){
     int result = 0;
 
-    do{
-        //Set this thread as the active thread
-        vmState.activeThread = pThread;
+    //Set this thread as the active thread
+    vmState.activeThread = pThread;
 
+    do{
         int pc = pThread->reg.pc;
         u8 code = pThread->codeData[pc];
         //Call the corresponding opcode handler function
         //Retail references the handler table through the raw label symbol
-        OpcodeFunc func = lbl_eu_8056F038[code];
-        result = func(pThread, code);
+        result = lbl_eu_8056F038[code](pThread, code);
 
         if (result == VMC_RESULT_1) {
             pThread->unk48 = 1;
@@ -748,7 +798,9 @@ VMArg* vmStackNextGet(VMThread* pThread){
 //optimize_for_size is scoped to THIS function only: the vmc read loops below
 //must stay -O4 so MWCC auto-unrolls them to match retail.
 #pragma optimize_for_size on
-void encodeScrambleSub(u8* pData, int length) {
+//noinline: retail vmLink calls this via bl (MWCC would otherwise inline the
+//whole scramble loop into every caller).
+void __declspec(noinline) encodeScrambleSub(u8* pData, int length) {
     //Rotate each group of 32 bits by 2 to the right
     //aaaaaaaa bbbbbbbb cccccccc dddddddd -> ddaaaaaa aabbbbbb bbcccccc ccdddddd
     for(int i = 0; i < length; i += 4){
@@ -1084,7 +1136,7 @@ static inline void incrementPc(VMThread* pThread, u8 code){
 //TU-local view of FunctionPoolEntry with named fields (sb_types.h is shared/read-only)
 typedef struct FuncPoolEntryView {
     u16 unk0;
-    s16 unk2;
+    u16 unk2;
     u16 unk4;
     u16 unk6;
     u16 localsId; //0x8: local pool id (0xFFFF = none)
@@ -1864,15 +1916,21 @@ int vmc_call(VMThread* pThread, u8 code){
 }
 
 int vmc_call_entry(VMThread* pThread, u32 r4, s16 r5, u32 r6){
+    //Full 32-bit stack word: bits 0-7 = passed arg count, bits 8-15 = declared count,
+    //bits 16-23 = caller frame marker. Truncating to u8 breaks the checks below.
+    u32 uVar11;
     FuncPoolEntryView* poolEntry = &((FuncPoolEntryView*)getSectionEntriesPtr(pThread->scriptData->functionPoolOfs))[r4];
-    int uVar11 = vmArgCntGet(pThread);
+    uVar11 = (pThread->stack + pThread->reg.sp)[-1].value.uintVal;
 
-    if (poolEntry->unk4 > ((uVar11 >> 8) & 0xFF)) {
-        vmExceptionThrow(pThread, VM_EXCEPTION_8);
+    if ((int)((uVar11 >> 8) & 0xFF) > poolEntry->unk4) {
+        //Inlined vmExceptionThrow
+        pThread->reg.exception = VM_EXCEPTION_8;
+        pThread->reg.unk10 = pThread->reg.pc;
+        vmExceptionProc(pThread);
         return VMC_RESULT_0;
     }
 
-    s16 iVar10 = poolEntry->unk2 - (uVar11 & 0xFF);
+    int iVar10 = poolEntry->unk2 - (uVar11 & 0xFF);
 
     if(iVar10 > 0){
         int limit = (uVar11 & 0xFF) + 1;
@@ -1891,12 +1949,13 @@ int vmc_call_entry(VMThread* pThread, u32 r4, s16 r5, u32 r6){
         pThread->stack[pThread->reg.sp - 1].value.uintVal = (poolEntry->unk2 & 0xFF) | (uVar11 & 0xFF00);
     }
 
-    VMArg* puVar4 = vmStackNextGet(pThread);
+    VMArg* puVar4 = &pThread->stack[pThread->reg.sp++];
     puVar4->type = VM_TYPE_SYS;
     puVar4->unk2 = 0;
     puVar4->value.intVal = pThread->reg.unk8;
 
-    VMArg* uVar14 = vmStackNextGet(pThread);
+    int spIdx = pThread->reg.sp++;
+    VMArg* uVar14 = &pThread->stack[spIdx];
     uVar14->type = VM_TYPE_SYS;
     uVar14->unk2 = r5;
     uVar14->value.intVal = r6;
@@ -1909,11 +1968,11 @@ int vmc_call_entry(VMThread* pThread, u32 r4, s16 r5, u32 r6){
         memcpy(&pThread->stack[pThread->reg.unk8], getRelativePtr(piVar5), piVar5->unk4 * sizeof(VMArg));
         pThread->reg.sp += piVar5->unk4;
 
-        //Rebase ARRAY args into the callee frame
+        //Rebase ARRAY args into the callee frame (retail emits addis rX, unk8, 0x8000)
         for(int i = 0; i < piVar5->unk4; i++){
             VMArg* pVVar7 = &pThread->stack[pThread->reg.unk8 + i];
             if (pVVar7->type == VM_TYPE_ARRAY) {
-                pVVar7->value.uintVal = (pVVar7->value.uintVal + pThread->reg.unk8) - 0x80000000;
+                pVVar7->value.uintVal = pVVar7->value.uintVal + (pThread->reg.unk8 + 0x80000000);
             }
         }
     }
@@ -2105,22 +2164,52 @@ int vmc_next(VMThread* pThread, u8 code){
 }
 
 int vmc_plugin(VMThread* pThread, u8 code){
-    VMCOpcode* op = &lbl_eu_8056ECE8[code];
+    //Same decode skeleton as the matched vmc_ld_plugin: opcode entry kept live
+    //(reloaded at the end), import base materialized before the reader.
     SBHeader* scriptData = pThread->scriptData;
-    s16 paramSize = op->paramSize;
-    SBSectionHeader* importsOfs = scriptData->pluginImportsOfs;
+    PluginImportEntry* entryBase = (PluginImportEntry*)poolEntryOfsGet(scriptData->pluginImportsOfs, 0);
     int pc = pThread->reg.pc;
-    u32 index = vmDataGetCached(pThread, pc + 1, paramSize);
-    PluginImportEntry* imports = (PluginImportEntry*)getSectionEntriesPtr(importsOfs);
+    u8* data = pThread->codeData;
+    //No explicit opcode-entry local: writing the table lookup at both uses lets
+    //MWCC CSE it into one pointer kept live across the function (like retail).
+    int index = getOpcodeParamArg(pThread, data, pc + 1, lbl_eu_8056ECE8[code].paramSize);
 
+    //Inlined vmc_plugin_sub. NOTE: unlike the OC path, the declared count lives
+    //in bits 16-23 of the packed arg-count word.
+    u16 sel = entryBase[index].unk2;
     u32 argCnt = vmArgCntGet(pThread);
+    u16 pluginId = entryBase[index].unk0;
     pThread->waitMode = FALSE;
-    u16 sel = imports[index].unk2;
-    u16 pluginId = imports[index].unk0;
-    PluginFunc func = vmState.plugins[pluginId].unk4[sel].func;
-    int result = func(pThread);
+    int result = vmState.plugins[pluginId].unk4[sel].func(pThread);
 
-    return pluginSubTail(pThread, argCnt, result, op);
+    if(pThread->reg.exception != 0){
+        return VMC_RESULT_0;
+    }
+    if(pThread->waitMode != FALSE){
+        return VMC_RESULT_1;
+    }
+
+    //No named masked locals: retail extracts the packed halves AT their use
+    //points (extrwi at the compare, clrlwi at the sp math), so write the raw
+    //expressions inline and let MWCC place the extracts.
+    if(result > 1 || (argCnt >> 16 & 0xFF) > result){
+        vmExceptionThrow(pThread, VM_EXCEPTION_8);
+        return VMC_RESULT_0;
+    }
+
+    int oldSp = pThread->reg.sp;
+    int newSp = oldSp - (result + (argCnt & 0xFF) + 1);
+    pThread->reg.sp = newSp;
+
+    //If the callee declares a return value, carry the top-of-stack arg to the
+    //new frame (retail bumps sp BEFORE the byte copy).
+    if((argCnt >> 16 & 0xFF) != 0){
+        pThread->reg.sp = newSp + 1;
+        copyArg(&pThread->stack[newSp], &pThread->stack[oldSp - 1]);
+    }
+
+    pThread->reg.pc += lbl_eu_8056ECE8[code].paramSize + 1;
+    return VMC_RESULT_0;
 }
 
 int vmc_call_far(VMThread* pThread, u8 code){
@@ -2133,20 +2222,56 @@ int vmc_call_far(VMThread* pThread, u8 code){
 }
 
 int vmc_get_oc(VMThread* pThread, u8 code){
-    VMCOpcode* op = &lbl_eu_8056ECE8[code];
+    //Order mirrors retail: opcode table entry first, then pc + paramSize, then
+    //the inlined reader loop, and only afterwards the ocImports/scriptData chain.
+    //The plugin-call tail is fully inlined (retail has no helper call here).
     int pc = pThread->reg.pc;
-    SBSectionHeader* ocImportsOfs = pThread->scriptData->ocImportsOfs;
-    u32 no = vmDataGetCached(pThread, pc + 1, op->paramSize);
+    u32 no = vmDataGetCached(pThread, pc + 1, lbl_eu_8056ECE8[code].paramSize);
 
-    u32 argCnt = vmArgCntGet(pThread);
+    //Explicit scriptData local so MWCC issues the dependent ocImportsOfs load
+    //immediately after the base load, matching retail's schedule
+    SBHeader* scriptData = pThread->scriptData;
+    SBSectionHeader* ocImportsOfs = scriptData->ocImportsOfs;
+    OCImportEntry* entries = (OCImportEntry*)getSectionEntriesPtr(ocImportsOfs);
+    //Raw packed word from the slot below the stack top; must NOT be truncated
+    //through vmArgCntGet (retail keeps the full word in a callee-saved reg)
+    u32 argCnt = (pThread->stack + pThread->reg.sp)[-1].value.uintVal;
     pThread->waitMode = FALSE;
 
-    OCImportEntry* entries = (OCImportEntry*)((char*)ocImportsOfs + ocImportsOfs->entriesOffset);
     u16 ocIndex = entries[no].unk0;
     OCCtorFunc ctor = vmState.ocs[ocIndex].unk0->ctor;
     int result = ctor(pThread, NULL, ocIndex);
 
-    return pluginSubTail(pThread, argCnt, result, op);
+    //Retail fully inlines the plugin-call tail here (no bl); keep it expanded
+    //with the paramSize re-read through the opcode table
+    if(pThread->reg.exception != 0){
+        return VMC_RESULT_0;
+    }
+    if(pThread->waitMode){
+        return VMC_RESULT_1;
+    }
+
+    //declared count packed at bits 8-15 of the raw arg-count word
+    u8 declaredCnt = (argCnt >> 8) & 0xFF;
+    if(result > 1 || declaredCnt > result){
+        vmExceptionThrow(pThread, VM_EXCEPTION_8);
+        return VMC_RESULT_0;
+    }
+
+    u8 actualCnt = argCnt & 0xFF;
+    int sp = pThread->reg.sp;
+    int newSp = sp - (result + actualCnt + 1);
+    pThread->reg.sp = newSp;
+
+    //If the callee declares a return value, carry the top-of-stack arg to the new frame
+    if(declaredCnt != 0){
+        VMArg* src = &pThread->stack[sp - 1];
+        pThread->reg.sp = newSp + 1;
+        copyArg(&pThread->stack[newSp], src);
+    }
+
+    pThread->reg.pc += lbl_eu_8056ECE8[code].paramSize + 1;
+    return VMC_RESULT_0;
 }
 
 //Retail inlines the opcode param reader and a property-table search against the
@@ -2167,31 +2292,34 @@ int vmc_getter(VMThread* pThread, u8 code){
     OCData* ocData = vmState.ocs[arg->unk2].unk0;
     const char* name = vmIdPoolGet(pThread->scriptData, no);
 
-    //Inline property search (retail keeps no vmPropertySearch call here)
+    //Inline property search (retail keeps no vmPropertySearch call here).
+    //Byte-offset iterator walked alongside the pointer; MWCC keeps the
+    //(base + offset) recompute per entry
     int len = strlen(name);
-    int propertyIndex = -1;
     OCProperty* base = ocData->properties;
+    int propertyIndex = 0;
 
     if(base != NULL){
         //Byte-offset iterator walked alongside the pointer; MWCC keeps the
         //(base + offset) recompute per entry
         OCProperty* it = base;
-        u32 offset = 0;
         u32 i = 0;
+        u32 offset = 0;
 
         while(it->name != NULL){
             OCProperty* entry = (OCProperty*)((char*)base + offset);
 
             if(len == entry->nameLength && strcmp(name, entry->name) == 0){
                 propertyIndex = i;
-                break;
+                goto found;
             }
             it++;
             i++;
             offset += sizeof(OCProperty);
         }
+        propertyIndex = -1;
+found:;
     }
-
 
     if (propertyIndex < 0) {
         saveArg(pThread, arg, 0);
@@ -2200,8 +2328,9 @@ int vmc_getter(VMThread* pThread, u8 code){
     }
 
     //Retail loads getFunc once into ctr and branches on it
-    if(base[propertyIndex].getFunc != NULL){
-        base[propertyIndex].getFunc(pThread, arg->value.intVal, ocData);
+    OCGetSetFunc func = base[propertyIndex].getFunc;
+    if(func != NULL){
+        func(pThread, arg->value.intVal, ocData);
     }else{
         saveArg(pThread, arg, 0);
         vmExceptionThrow(pThread,VM_EXCEPTION_INVALID_GETSET_FUNC);
@@ -2272,6 +2401,29 @@ int vmc_setter(VMThread* pThread, u8 code){
     return VMC_RESULT_0;
 }
 
+//SEND dispatches through a 3-arg selector entry (thread, stack arg, target OC)
+typedef int (*OCSelectorSendFunc)(VMThread* pThread, int val, OCData* ocData);
+
+//vmSelectorSearch inlined into SEND (retail keeps no call at the send sites)
+static inline int vmSelectorSearchSend(OCData* pOC, const char* pName){
+    int length = strlen(pName);
+
+    if(pOC->selectors != NULL){
+        int i = 0;
+
+        while(pOC->selectors[i].name != NULL){
+            OCSelector* entry = &pOC->selectors[i];
+
+            if(length == entry->nameLength && strcmp(pName, entry->name) == 0){
+                return i;
+            }
+            i++;
+        }
+    }
+
+    return -1;
+}
+
 int vmc_send(VMThread* pThread, u8 code){
     int pc = pThread->reg.pc;
     int no = vmDataGetCached(pThread, pc + 1, lbl_eu_8056ECE8[code].paramSize);
@@ -2283,55 +2435,37 @@ int vmc_send(VMThread* pThread, u8 code){
       return VMC_RESULT_0;
     }
 
-    int argCnt = pThread->stack[pThread->reg.sp - 1].value.intVal;
+    //Caching the id-pool section header is load-bearing: retail keeps it in a
+    //callee-saved register across both name-pool lookups.
+    SBSectionHeader* idPool = pThread->scriptData->idPoolOfs;
+    int argCnt = arg[-1].value.intVal;
     OCData* ocData = vmState.ocs[arg->unk2].unk0;
-    const char* name = vmIdPoolGet(pThread->scriptData, no);
 
-    //Inline vmSelectorSearch against this OC's selectors (retail keeps no call)
-    int len = strlen(name);
-    int sel = -1;
-    if(ocData->selectors != NULL){
-        OCSelector* it = ocData->selectors;
-        for(u32 i = 0; it->name != NULL; it++, i++){
-            OCSelector* entry = &ocData->selectors[i];
-            if(len == entry->nameLength && strcmp(name, entry->name) == 0){
-                sel = (int)i;
-                break;
-            }
-        }
-    }
+    //Inline selector search (retail keeps no vmSelectorSearch call here)
+    int sel = vmSelectorSearchSend(ocData, poolEntryGet(idPool, no));
 
-    OCSelectorFunc func;
-    if(sel < 0){
+    //Two distinct func load sites (own-OC hit vs builtin hit), like retail
+    OCSelectorSendFunc func;
+    if(sel >= 0){
+        func = (OCSelectorSendFunc)ocData->selectors[sel].func;
+    }else{
         //Fall back to the builtin OC's selectors (re-reading the name pool entry)
         OCData* builtin = vmState.builtinOC;
-        int bsel = -1;
         if(builtin != NULL){
-            const char* name2 = vmIdPoolGet(pThread->scriptData, no);
-            int len2 = strlen(name2);
-            if(builtin->selectors != NULL){
-                OCSelector* it = builtin->selectors;
-                for(u32 i = 0; it->name != NULL; it++, i++){
-                    OCSelector* entry = &builtin->selectors[i];
-                    if(len2 == entry->nameLength && strcmp(name2, entry->name) == 0){
-                        bsel = (int)i;
-                        break;
-                    }
-                }
+            sel = vmSelectorSearchSend(builtin, poolEntryGet(idPool, no));
+            if(sel >= 0){
+                func = (OCSelectorSendFunc)builtin->selectors[sel].func;
             }
         }
-        if(bsel < 0){
+        if(sel < 0){
             saveArg(pThread, arg, 0);
             vmExceptionThrow(pThread, VM_EXCEPTION_SEND_ERROR);
             return VMC_RESULT_0;
         }
-        func = builtin->selectors[bsel].func;
-    }else{
-        func = ocData->selectors[sel].func;
     }
 
     pThread->waitMode = FALSE;
-    int ret = func(pThread, arg->value.intVal);
+    int ret = func(pThread, arg->value.intVal, ocData);
 
     int result;
     if(pThread->reg.exception != 0){
@@ -2339,13 +2473,13 @@ int vmc_send(VMThread* pThread, u8 code){
     }else if(pThread->waitMode != FALSE){
         result = VMC_RESULT_1;
     }else{
-        if(ret > 1 || ((argCnt >> 8) & 0xFF) > ret){
+        if(ret > 1 || ((argCnt >> 16) & 0xFF) > ret){
             vmExceptionThrow(pThread, VM_EXCEPTION_8);
             result = VMC_RESULT_0;
         }else{
             int base = pThread->reg.sp - 1;
             pThread->reg.sp -= ret + (argCnt & 0xFF) + 1;
-            if(((argCnt >> 8) & 0xFF) != 0){
+            if(((argCnt >> 16) & 0xFF) != 0){
                 vmPush(pThread, &pThread->stack[base]);
             }
             pThread->reg.pc += lbl_eu_8056ECE8[code].paramSize + 1;
@@ -2384,28 +2518,30 @@ int vmc_sizeof(VMThread* pThread, u8 code){
 
 int vmc_switch(VMThread* pThread, u8 code){
     int pc = pThread->reg.pc;
-    int param = vmDataGet(pThread,pc + 1,lbl_eu_8056ECE8[code].paramSize);
-    VMArg* arg = vmStackPrevGet(pThread);
-    int caseNum = arg->value.intVal;
-    int paramsOffset = pThread->reg.pc + 6;
+    //Decode the case-table length straight into endIndex so the decoder
+    //accumulator register flows into endIndex without an intermediate copy.
+    int endIndex = vmDataGet(pThread,pc + 1,lbl_eu_8056ECE8[code].paramSize);
+    //Pop the switched value off the stack
+    int midCaseNum;
     int i = 0;
-    int endIndex = param;
+    int midIndex;
+    int caseNum = vmStackPrevGet(pThread)->value.intVal;
+    int paramsOffset = pThread->reg.pc + 6;
 
     //Do a binary search to quickly find the right case
     while(i < endIndex){
-        int midIndex = (i + endIndex)/2;
-        int offset = paramsOffset + (midIndex * 8);
-        int midCaseNum = vmDataGet(pThread,offset,4);
+        midIndex = (i + endIndex)/2;
+        midCaseNum = vmDataGet(pThread,paramsOffset + (midIndex * 8),4);
 
         if(caseNum > midCaseNum){
             //Keep right half
             i = midIndex + 1;
         }else if(caseNum < midCaseNum){
             //Keep left half
-            endIndex = i;
+            endIndex = midIndex;
         }else{
             //The case was found, jump to it
-            pThread->reg.pc += vmDataGet(pThread,offset + 4,4);
+            pThread->reg.pc += vmDataGet(pThread,paramsOffset + (midIndex * 8) + 4,4);
             return VMC_RESULT_0;
         }
     }

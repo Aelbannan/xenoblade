@@ -5,6 +5,7 @@
 #include "monolib/lib/UnkClass_8045F564.hpp"
 
 class CFileHandle;
+class CEventFile;
 
 // Full object layout for CLoad (used by C-linkage accessors)
 struct CLoadFull {
@@ -33,7 +34,7 @@ class CLoad : public CLoadVtblBase {
 public:
     CLoad(u8 arg);
     ~CLoad();
-    void OnFileEvent();
+    bool OnFileEvent(CEventFile* pEventFile);
 
     /* 0x04 */ UnkClass_8045F564 mMemRegion;
     /* 0x14 */ CFileHandle* mFileHandle;

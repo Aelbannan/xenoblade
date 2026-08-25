@@ -2,6 +2,7 @@
 // FULL_MATCH: func_80192BE4, func_80192BEC (vtable adjustor thunks).
 
 #include "kyoshin/menu/CMenuPTState.hpp"
+#include "monolib/scn/CScnTimeApi.hpp"
 
 // Retail CProcess / mem-manager / win-ctor imports (defined in other TUs).
 extern "C" void __ct__8CProcessFv(CProcess* self);
@@ -100,7 +101,7 @@ void CMenuPTState::func_80192BEC() {
 // UnkClass_80192BF4: PT-state FX/timer accumulator
 // ---------------------------------------------------------------------------
 
-// Target: us-80194310 - FUNC_80192BF4 constructor.
+// us-80194310 - FUNC_80192BF4 constructor.
 // Initializes the counter/timer/wealth block. Byte-identical (implicit float pool).
 cf::UnkClass_80192BF4::UnkClass_80192BF4() {
     field_0x00 = 0;
@@ -115,10 +116,10 @@ extern "C" void __ct__80192C10(cf::UnkClass_80192BF4* self) {
     self->field_0x08 = -1.0f;
 }
 
-extern const f32 lbl_eu_80667A98;         // float pool: zero threshold
-extern double lbl_eu_80667AA0;            // double pool: 0x4330000080000000 magic
+extern "C" const f32 lbl_eu_80667A98;    // float pool: zero threshold
+extern "C" const double lbl_eu_80667AA0;  // double pool: 0x4330000080000000 magic
 
-// Target: us-80194348 - func_80192C2C.
+// us-80194348 - func_80192C2C.
 // If the accumulator is still positive, bump the counter, then query the
 // passed actor (vtable slot 0x308) for a count and store (count*2+6) into both
 // the value and the timer fields.
@@ -127,11 +128,12 @@ extern "C" void func_80192C2C(cf::UnkClass_80192BF4* self, void* obj) {
         self->field_0x00++;
     }
 
-    // Call virtual function at vtable slot 0x61 (offset 0x308): returns a count.
-    typedef int (*VtFn)(void*);
-    int count = (*(VtFn*)((u8*)*(void**)obj + 0x308))(obj);
+    // Virtual call through slot 0x308 (getCount) -- MWCC stages the vtable
+    // through r12 for real member virtual calls.
+    int count = ((cf::CMenuPtStateActor*)obj)->getCount();
 
-    // Signed int->float conversion (MWCC 0x4330000080000000 double trick).
+    // Signed int->float conversion (MWCC 0x4330000080000000 magic; the
+    // builtin conversion is the only frsp-free byte-exact shape).
     f32 val = (f32)(count * 2 + 6);
     self->field_0x08 = val;
     self->field_0x04 = val;
@@ -156,9 +158,8 @@ struct CEnumList {
 
 extern "C" void* func_800F6EAC(void* list, u32 idx);
 extern "C" int func_80148778(void* obj, int id);
-extern "C" f32 func_80496288(void* scene);
 
-// Target: us-801943cc - func_80192CB0.
+// us-801943cc - func_80192CB0.
 // If the timer is still running (>0), scan the battle object list for any actor
 // carrying status 0x10 or 0xf. If none is found, decay the timer by the per-frame
 // delta; when it crosses zero reset the whole block.

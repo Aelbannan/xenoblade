@@ -1,17 +1,15 @@
 #include <revolution/AX.h>
 #include <revolution/OS.h>
 
-// Retail .data is 0x48 bytes: the version string (0x45 incl. NUL) followed by 3
-// zero pad bytes so the next unit's .data starts 8-aligned.
-static char s_AXVersionStr[0x48] =
+// Retail .data slice is the version string alone (0x45 incl. NUL); the split
+// ends there and the next unit's .data supplies its own alignment.
+static char s_AXVersionStr[0x45] =
     "<< RVL_SDK - AX \trelease build: Feb 27 2009 10:01:36 (0x4302_145) >>";
 
-// Retail .sdata slice is 8 bytes: the version string pointer (reloc) followed by
-// 4 zero pad bytes (gap_09_80662F8C_sdata) aligning the next unit's .sdata.
+// Retail .sdata slice is just the version-string pointer (4 bytes).
 struct AXVersionDesc {
     const char* str; // +0x0: pointer to version string
-    u32 pad;         // +0x4: zero pad
-} __AXVersion = { s_AXVersionStr, 0 };
+} __AXVersion = { s_AXVersionStr };
 
 static BOOL __init = FALSE;
 

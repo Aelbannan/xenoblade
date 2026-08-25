@@ -21,7 +21,6 @@ extern u8 lbl_eu_805E7D40[];
 #define LSE_SIZE  0x238
 
 void *lsc_Create(void *);
-int lsc_EntryFileRange(void *, const char *, int, int, int);
 void LSC_Stop(void *);
 
 void *LSC_Create(void *handle) {
@@ -37,9 +36,21 @@ typedef struct LscStm {
     char pad[0x20 - 4];     /* +0x04 */
 } LscStm;
 
+/* Per-file slot record (0x20 bytes each, 16 slots at entry + 0x38) */
+typedef struct LscSlot {
+    s32         cnt;    /* +0x00 playback counter, wraps at 0x7FFFFFFF */
+    char        *fname;  /* +0x04 */
+    s32         sum;    /* +0x08 checksum: sum of fname bytes */
+    s32         f44;    /* +0x0C */
+    s32         f48;    /* +0x10 */
+    s32         f4c;    /* +0x14 */
+    void       *hndl;   /* +0x18 (cleared by lsc_Create) */
+    s32         f54;    /* +0x1C */
+} LscSlot;
+
 typedef struct LscEntry {
     u8     flag;            /* +0x00 */
-    u8     stat;            /* +0x01 */
+    s8     stat;            /* +0x01 */
     u8     pause;           /* +0x02 */
     u8     loop;            /* +0x03 */
     u8     dummy;           /* +0x04 */
@@ -55,9 +66,10 @@ typedef struct LscEntry {
     s32    f2c;             /* +0x2C */
     char   pad30[0x34 - 0x30]; /* +0x30 */
     s32    f34;             /* +0x34 */
-    char   pad38[0x50 - 0x38]; /* +0x38 */
-    LscStm stms[16];        /* +0x50 */
+    LscSlot slots[16];      /* +0x38 */
 } LscEntry;
+
+int lsc_EntryFileRange(LscEntry *, char *, int, int, int);
 
 void *lsc_Create(void *handle) {
     s32 crs;
@@ -95,7 +107,7 @@ void *lsc_Create(void *handle) {
         entry->limit = (total * 8) / 10;
 
         for (i = 0; i < 0x10; i++)
-            entry->stms[i].hndl = NULL;
+            entry->slots[i].hndl = NULL;
 
         entry->flag = 1;
     }
@@ -146,7 +158,7 @@ void LSC_SetStmHndl(void *entry, void *stm) {
 int LSC_EntryFname(void *entry, const char *fname) {
     int r;
     LSC_Enter();
-    r = lsc_EntryFileRange(entry, fname, 0, 0, 0x100000 - 1);
+    r = lsc_EntryFileRange(entry, (char *)fname, 0, 0, 0x100000 - 1);
     LSC_Leave();
     return r;
 }
@@ -154,32 +166,58 @@ int LSC_EntryFname(void *entry, const char *fname) {
 int LSC_EntryFileRange(void *entry, const char *fname, int off_lo, int off_hi, int size) {
     int r;
     LSC_Enter();
-    r = lsc_EntryFileRange(entry, fname, off_lo, off_hi, size);
+    r = lsc_EntryFileRange(entry, (char *)fname, off_lo, off_hi, size);
     LSC_Leave();
     return r;
 }
 
-int lsc_EntryFileRange(void *entry, const char *fname, int off_lo, int off_hi, int size) {
+int lsc_EntryFileRange(LscEntry *e, char *fname, int off_lo, int off_hi, int size) {
+    LscSlot *slot;
+    int cnt;
     int i;
-    u8 *e = (u8 *)entry;
-    char *dst;
+    int sum;
+    u32 len;
 
-    LSC_LockCrs(entry);
+    if (e == NULL) {
+        LSC_CallErrFunc_(lbl_eu_80518478 + 0xB1);
+        return -1;
+    }
+    if (e->num >= 0x10)
+        return -1;
+    if (fname == NULL) {
+        LSC_CallErrFunc_(lbl_eu_80518478 + 0xDA);
+        return -1;
+    }
 
-    if ((s8)e[0x01] > 0)
-        LSC_Stop(entry);
+    /* Slots form a ring; the new slot inherits the previous slot's counter. */
+    slot = &e->slots[e->cur];
+    i = (e->cur + 15) % 16;
+    cnt = e->slots[i].cnt;
+    if (cnt == 0x7FFFFFFF)
+        cnt = 0;
+    else
+        cnt = cnt + 1;
+    slot->cnt = cnt;
+    slot->fname = fname;
 
-    dst = (char *)e + 0x3C;
-    for (i = 0; i < 14 && fname[i]; i++)
-        dst[i] = fname[i];
-    dst[i] = 0;
+    len = strlen(fname);
+    slot->sum = 0;
+    for (i = 0; i < len; i++) {
+        sum = slot->sum + fname[i];
+        slot->sum = sum;
+    }
 
-    *(s32 *)(e + 0x44) = off_lo;
-    *(s32 *)(e + 0x48) = off_hi;
-    *(s32 *)(e + 0x4C) = size;
+    slot->f48 = off_hi;
+    slot->f4c = size;
+    slot->f44 = off_lo;
+    slot->hndl = NULL;
+    slot->f54 = 0;
 
-    LSC_UnlockCrs(entry);
-    return 0;
+    e->num++;
+    if (e->stat == 1)
+        e->stat = 2;
+    e->cur = e->cur + 1;
+    return cnt;
 }
 
 void LSC_Start(void *entry) {

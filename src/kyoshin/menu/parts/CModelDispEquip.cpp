@@ -18,7 +18,7 @@ extern "C" void func_801FFBC4(CModelDispEquip*, CActParamHolder*);
 extern "C" __declspec(noinline) void func_801FFAB4(float* dest, float a, float b, float c, float d);
 
 // ============================================================
-// Target: us-80201254 | __ct__CModelDispEquip (constructor)
+// us-80201254 | __ct__CModelDispEquip (constructor)
 // ============================================================
 extern "C" void __ct__CModelDispEquip(CModelDispEquip* self, u32 somePtr, s32 equipSlot) {
     // No self alias: retail keeps only self(r31), holder and the equipSlot
@@ -75,7 +75,7 @@ extern "C" void __ct__CModelDispEquip(CModelDispEquip* self, u32 somePtr, s32 eq
 }
 
 // ============================================================
-// Target: us-802013cc | func_801FF6DC
+// us-802013cc | func_801FF6DC
 // ============================================================
 extern "C" __declspec(noinline) void func_801FF6DC(u8* ptr) {
     *(u32*)ptr = 0;
@@ -84,7 +84,7 @@ extern "C" __declspec(noinline) void func_801FF6DC(u8* ptr) {
 }
 
 // ============================================================
-// Target: us-802013e0 | __dt__801FF6F0
+// us-802013e0 | __dt__801FF6F0
 // ============================================================
 // Destroys the holder's act-param array via __destroy_arr, then the act-param
 // object, then frees the holder if flag > 0 (retail order: array, obj, delete).
@@ -100,7 +100,7 @@ done:
 }
 
 // ============================================================
-// Target: us-8020144c | __dt__15CModelDispEquipFv
+// us-8020144c | __dt__15CModelDispEquipFv
 // ============================================================
 // NOTE: retail prologue is `stmw r30` (shape a) - MWCC_CASES says only
 // #pragma optimize_for_size merges the saves (forbidden this session);
@@ -115,7 +115,7 @@ extern "C" void* __dt__15CModelDispEquipFv(CModelDispEquip* self, int param) {
 }
 
 // ============================================================
-// Target: us-802014a0 | func_801FF7B0
+// us-802014a0 | func_801FF7B0
 // ============================================================
 // Snap scale1/scale2 to the sinit-built global vectors (bit-copied as words,
 // retail lwzu/lwz -> stw), then sync pose+scales. Pointer-walk locals trigger
@@ -130,7 +130,7 @@ extern "C" void func_801FF7B0(CModelDispEquip* self) {
 }
 
 // ============================================================
-// Target: us-8020151c | func_801FF82C
+// us-8020151c | func_801FF82C
 // ============================================================
 extern "C" void func_801FF82C(CModelDispEquip* self) {
     switch (self->state) {
@@ -152,7 +152,7 @@ extern "C" void func_801FF82C(CModelDispEquip* self) {
 }
 
 // ============================================================
-// Target: us-80201564 | func_801FF874
+// us-80201564 | func_801FF874
 // ============================================================
 // Reset the equip display: drain the 9 slot + model file jobs, free loaded
 // slot buffers and the model arc buffer, then mark the state-21 flag.
@@ -186,21 +186,21 @@ extern "C" void func_801FF874(CModelDispEquip* self) {
 }
 
 // ============================================================
-// Target: us-8020164c | func_801FF95C (getState20)
+// us-8020164c | func_801FF95C (getState20)
 // ============================================================
 extern "C" u8 func_801FF95C(CModelDispEquip* self) {
     return self->state20;
 }
 
 // ============================================================
-// Target: us-80201654 | func_801FF964 (getState21)
+// us-80201654 | func_801FF964 (getState21)
 // ============================================================
 extern "C" u8 func_801FF964(CModelDispEquip* self) {
     return self->state21;
 }
 
 // ============================================================
-// Target: us-8020165c | func_801FF96C (setState14)
+// us-8020165c | func_801FF96C (setState14)
 // ============================================================
 extern "C" void func_801FF96C(CModelDispEquip* self) {
     if (self->state != 0) return;
@@ -209,7 +209,7 @@ extern "C" void func_801FF96C(CModelDispEquip* self) {
 }
 
 // ============================================================
-// Target: us-8020167c | func_801FF98C (setState14_3)
+// us-8020167c | func_801FF98C (setState14_3)
 // ============================================================
 extern "C" void func_801FF98C(CModelDispEquip* self) {
     self->state = 3;
@@ -217,14 +217,14 @@ extern "C" void func_801FF98C(CModelDispEquip* self) {
 }
 
 // ============================================================
-// Target: us-80201690 | func_801FF9A0
+// us-80201690 | func_801FF9A0
 // ============================================================
 extern "C" u32 func_801FF9A0(CModelDispEquip* self) {
     return (u32)(u8)self->equipSlot;
 }
 
 // ============================================================
-// Target: us-8020169c | func_801FF9AC
+// us-8020169c | func_801FF9AC
 // ============================================================
 // Fade the display out (state 1 step): advance the alpha timer and, once it
 // passes the threshold, step alpha down toward 1.0 (clamped, with the state
@@ -263,7 +263,7 @@ void func_801FF9AC(CModelDispEquip* self) {
 }
 
 // ============================================================
-// Target: us-802017a4 | func_801FFAB4 (storeFloats)
+// us-802017a4 | func_801FFAB4 (storeFloats)
 // ============================================================
 extern "C" __declspec(noinline) void func_801FFAB4(float* dest, float a, float b, float c, float d) {
     dest[0] = a;
@@ -273,7 +273,7 @@ extern "C" __declspec(noinline) void func_801FFAB4(float* dest, float a, float b
 }
 
 // ============================================================
-// Target: us-802017cc | func_801FFADC
+// us-802017cc | func_801FFADC
 // ============================================================
 // Fade the equip display in (state 3 step): bump alpha toward the clamp,
 // poke the act-param object with the new alpha, then write the quad color
@@ -305,7 +305,7 @@ extern "C" __declspec(noinline) void func_801FFADC(CModelDispEquip* self) {
 }
 
 // ============================================================
-// Target: us-802018b4 | func_801FFBC4
+// us-802018b4 | func_801FFBC4
 // ============================================================
 // Tear down the equip display: stop the effect slots and anim-model slots,
 // release the loaded models/records, and drain the file slots.
@@ -378,7 +378,7 @@ extern "C" void func_801FFBC4(CModelDispEquip* self, CActParamHolder* holder) {
 }
 
 // ============================================================
-// Target: us-80201ab4 | func_801FFDC4
+// us-80201ab4 | func_801FFDC4
 // ============================================================
 // Build the equipment display: select the enum list for the current equip
 // slot, verify the first actor (model id, move state, file load), then create
@@ -511,12 +511,12 @@ extern "C" void func_801FFDC4(CModelDispEquip* self) {
 }
 
 // ============================================================
-// Target: us-80202078 | func_80200388
+// us-80202078 | func_80200388
 // ============================================================
 extern "C" void func_80200388(void* self, u32 val) { *(u32*)((u8*)self + 4) = val; *(u32*)((u8*)self + 0x34) = val; }
 
 // ============================================================
-// Target: us-80202084 | func_80200394
+// us-80202084 | func_80200394
 // ============================================================
 // Build the equipment display for the 4th+ equip slot (equipSlot >= 3,
 // dispatched from func_801FFDB0): resolve the character record, load the 3
@@ -740,7 +740,7 @@ extern "C" void func_80200394(CModelDispEquip* self) {
 }
 
 // ============================================================
-// Target: us-80202914 | func_80200C20
+// us-80202914 | func_80200C20
 // ============================================================
 // Load the equip model arc: build the packed path token from `param` and
 // the manager handle, size the file, pick an alloc handle for the buffer
@@ -773,7 +773,7 @@ extern "C" int func_80200C20(CModelDispEquip* self, u32 param) {
 }
 
 // ============================================================
-// Target: us-802029e0 | func_80200CE8
+// us-802029e0 | func_80200CE8
 // ============================================================
 // Per-frame tick for the equip display: while the holder is live, a countdown
 // timer periodically rolls a random sign that picks one of three anim ids; for
@@ -804,7 +804,7 @@ void func_80200CE8(CModelDispEquip* self) {
 }
 
 // ============================================================
-// Target: us-80202ad8 | OnFileEvent__15CModelDispEquipFP10CEventFile
+// us-80202ad8 | OnFileEvent__15CModelDispEquipFP10CEventFile
 // ============================================================
 // CDeviceFile async-load callback: find the slot whose handle matches the
 // event's file handle, hand the loaded buffer to the slot, and clear the
@@ -836,7 +836,7 @@ int CModelDispEquip::OnFileEvent(CEventFile* event) {
 }
 
 // ============================================================
-// Target: us-80202b8c | func_80200E94
+// us-80202b8c | func_80200E94
 // ============================================================
 // Per-slot model hooks: if the animation model slot is occupied, stop the old
 // model via vtable+0xC8 then re-arm it via vtable+0xC4 with (model, arg, 0).
@@ -866,7 +866,7 @@ extern "C" void func_80200F08(CModelDispEquip* self, void* move, void* arg, int 
 }
 
 // ============================================================
-// Target: us-80202ca8 | func_80200FB0
+// us-80202ca8 | func_80200FB0
 // ============================================================
 // Stop the previous equipment model and hand the picked name record to
 // func_80200F08: `kind` 0 uses the anim slot (func_800BEDC4), `kind` 1 the
@@ -922,7 +922,7 @@ extern "C" void func_80200FB0(CModelDispEquip* self, CModelDispParent* parent,
 }
 
 // ============================================================
-// Target: us-80202e40 | func_80201148
+// us-80202e40 | func_80201148
 // ============================================================
 // Swap the equipment display model for `kind` (0/1) and `subKind` (0/1):
 // look up the weapon's name record via the Bdat column (string table at
@@ -960,7 +960,7 @@ extern "C" void func_80201148(CModelDispEquip* self, u32 unused,
 }
 
 // ============================================================
-// Target: us-80201aa0 | func_801FFDB0
+// us-80201aa0 | func_801FFDB0
 // ============================================================
 extern "C" void func_801FFDB0(CModelDispEquip* self) {
     if (self->equipSlot < 3)
@@ -970,7 +970,7 @@ extern "C" void func_801FFDB0(CModelDispEquip* self) {
 }
 
 // ============================================================
-// Target: us-80202c94 | func_80200F9C
+// us-80202c94 | func_80200F9C
 // ============================================================
 extern "C" void func_80200F9C(CModelDispEquip* self) {
     if (self->equipSlot < 3)
@@ -980,7 +980,7 @@ extern "C" void func_80200F9C(CModelDispEquip* self) {
 }
 
 // ============================================================
-// Target: us-802017b8 | func_801FFAC8
+// us-802017b8 | func_801FFAC8
 // ============================================================
 extern "C" void func_801FFAC8(CModelDispEquip* self) {
     if (self->state21 == 0)
@@ -990,7 +990,7 @@ extern "C" void func_801FFAC8(CModelDispEquip* self) {
 }
 
 // ============================================================
-// Target: us-80202f90 | func_80201298
+// us-80202f90 | func_80201298
 // ============================================================
 // For each occupied animation-model slot: pull the next chain object off the
 // act-param, cache it at actParams[i]+0x4B4, and replay animation `arg`.
@@ -1006,12 +1006,12 @@ extern "C" void func_80201298(CModelDispEquip* self, u32 unused, void* arg) {
 }
 
 // ============================================================
-// Target: us-80203010 | func_80201318 (empty)
+// us-80203010 | func_80201318 (empty)
 // ============================================================
 extern "C" void func_80201318() {}
 
 // ============================================================
-// Target: us-80203014 | func_8020131C
+// us-80203014 | func_8020131C
 // ============================================================
 // Handle a model-slot command: cmd 2 loads the anim model into the first free
 // slot (creating an effect from the model arc, wiring it via the second-base
@@ -1063,12 +1063,12 @@ void func_8020131C(CModelDispEquip* self, u32 unused, CModelDispEquipCmd* cmd) {
 }
 
 // ============================================================
-// Target: us-80203138 | func_80201440 (empty)
+// us-80203138 | func_80201440 (empty)
 // ============================================================
 extern "C" void func_80201440() {}
 
 // ============================================================
-// Target: us-8020313c | func_80201444
+// us-8020313c | func_80201444
 // ============================================================
 extern "C" void func_80201444(CModelDispEquip* self, u32 val) {
     // Holder-base addressing (addi r6,r3,16 + 0xff4(rX) like retail) plus
@@ -1087,7 +1087,7 @@ extern "C" void func_80201444(CModelDispEquip* self, u32 val) {
 }
 
 // ============================================================
-// Target: us-80203174 | func_8020147C
+// us-80203174 | func_8020147C
 // ============================================================
 extern "C" void func_8020147C(CModelDispEquip* self, s32 val) {
     // Calls through a cast pointer to keep MWCC from inlining the empty stub
@@ -1098,7 +1098,7 @@ extern "C" void func_8020147C(CModelDispEquip* self, s32 val) {
 }
 
 // ============================================================
-// Target: us-802031b8 | func_802014C0
+// us-802031b8 | func_802014C0
 // ============================================================
 extern "C" void func_802014C0(CModelDispEquip* self) {
     ((void (*)(CModelDispEquip*))func_801FF874)(self);
@@ -1109,7 +1109,7 @@ extern "C" void func_802014C0(CModelDispEquip* self) {
 }
 
 // ============================================================
-// Target: us-80203214 | func_8020151C
+// us-80203214 | func_8020151C
 // ============================================================
 extern "C" void func_8020151C(CModelDispEquip* self) {
     ((void (*)(CModelDispEquip*))func_801FF874)(self);
@@ -1119,7 +1119,7 @@ extern "C" void func_8020151C(CModelDispEquip* self) {
 }
 
 // ============================================================
-// Target: us-80203268 | func_80201570
+// us-80203268 | func_80201570
 // ============================================================
 // Fade alpha up while the act-param sub-object is live; bit 0x20 of the
 // act-param flags guards the func_8004B52C call.
@@ -1133,7 +1133,7 @@ extern "C" void func_80201570(CModelDispEquip* self) {
 }
 
 // ============================================================
-// Target: us-802032cc | func_802015D4
+// us-802032cc | func_802015D4
 // ============================================================
 // Fade alpha down (mirror of func_80201570).
 extern "C" void func_802015D4(CModelDispEquip* self) {
@@ -1146,7 +1146,7 @@ extern "C" void func_802015D4(CModelDispEquip* self) {
 }
 
 // ============================================================
-// Target: us-80203330 | func_80201638
+// us-80203330 | func_80201638
 // ============================================================
 // Ramp scale1[1]/scale2[1] up by the step, clamped at the upper bounds.
 extern "C" void func_80201638(CModelDispEquip* self) {
@@ -1160,7 +1160,7 @@ extern "C" void func_80201638(CModelDispEquip* self) {
 }
 
 // ============================================================
-// Target: us-802033b4 | func_802016BC
+// us-802033b4 | func_802016BC
 // ============================================================
 // Ramp scale1[1]/scale2[1] down by the step, clamped at the lower bounds.
 extern "C" void func_802016BC(CModelDispEquip* self) {
@@ -1174,7 +1174,7 @@ extern "C" void func_802016BC(CModelDispEquip* self) {
 }
 
 // ============================================================
-// Target: us-80203438 | func_80201740
+// us-80203438 | func_80201740
 // ============================================================
 // Decrement scale1[2] toward lbl_eu_80668294, then sync pose + scales.
 extern "C" void func_80201740(CModelDispEquip* self) {
@@ -1185,7 +1185,7 @@ extern "C" void func_80201740(CModelDispEquip* self) {
 }
 
 // ============================================================
-// Target: us-8020349c | func_802017A4
+// us-8020349c | func_802017A4
 // ============================================================
 // Increment scale1[2] toward lbl_eu_80668298 (mirror of func_80201740).
 extern "C" void func_802017A4(CModelDispEquip* self) {
@@ -1196,7 +1196,7 @@ extern "C" void func_802017A4(CModelDispEquip* self) {
 }
 
 // ============================================================
-// Target: us-80203500 | func_80201808
+// us-80203500 | func_80201808
 // ============================================================
 // Re-arm the display: while the holder is live, rebuild the color quad from
 // the (step, 1, 1) vector, poke the act-param object with colorA, and push
@@ -1226,7 +1226,7 @@ void func_80201808(CModelDispEquip* self) {
 }
 
 // ============================================================
-// Target: us-802035f8 | func_80201900
+// us-802035f8 | func_80201900
 // ============================================================
 // Same as func_80201808 but the color quad is built from (1, 1, 1) - used to
 // reset the display colors to neutral white.
@@ -1254,7 +1254,7 @@ void func_80201900(CModelDispEquip* self) {
 }
 
 // ============================================================
-// Target: us-802036f0 | sinit_802019F8
+// us-802036f0 | sinit_802019F8
 // ============================================================
 extern "C" void sinit_802019F8() {
     func_8004B60C(lbl_eu_80576550, lbl_eu_80668274, lbl_eu_8066829C, lbl_eu_80668278);

@@ -146,7 +146,9 @@ typedef struct {
 ** Globals and external references
 *******************************************************************************/
 
-extern tL2C_CB l2cb;
+/* Retail defines l2cb here (l2c_main.o .bss, 0x7E8 bytes, align 8); every
+ * other l2cap TU references it extern. */
+tL2C_CB l2cb;
 extern tBTU_CB btu_cb;
 
 extern tL2C_LCB *l2cu_find_lcb_by_handle(UINT16 handle);

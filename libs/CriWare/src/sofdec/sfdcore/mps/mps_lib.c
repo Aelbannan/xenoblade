@@ -39,8 +39,9 @@ int MPS_Init(int max_streams, void *work_buf) {
     MPS_STREAM *streams;
     u32 magic;
 
-    /* endianness check: first byte of 0x01020304 must be 0x01 (big-endian) */
-    lbl_eu_80606DD8 = (u32)&lbl_eu_8051C488;
+    /* endianness check: first byte of 0x01020304 must be 0x01 (big-endian);
+     * the default-handler store is scheduled below the check */
+    lbl_eu_80606DD8 = (u32)lbl_eu_8051C488;
     magic = 0x01020304;
     if (((u8 *)&magic)[0] != 1) {
         for (;;) ((void (*)(void))-1)();
@@ -74,8 +75,8 @@ int MPS_Init(int max_streams, void *work_buf) {
 }
 
 void MPS_Finish(void) {
-    int i = 0;
     u8 *entry = (u8 *)lbl_eu_80606DDC[0] + 0x10;
+    int i = 0;
     int count = ((u32 *)lbl_eu_80606DDC[0])[3];
 
     for (; i < count; entry += MPS_ENTRY_SIZE, i++) {

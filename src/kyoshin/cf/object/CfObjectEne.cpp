@@ -1,4 +1,6 @@
+#include "kyoshin/cf/CBattleManagerApi.hpp"
 #include <types.h>
+#include "monolib/scn/CScnTimeApi.hpp"
 #include <cstring>
 // harness_catalog.hpp pulls cf/CfGameManager.hpp (via CTaskGameEff.hpp),
 // whose extern "C" getInstance__Q22cf14CBattleManagerFv returns
@@ -237,9 +239,9 @@ int func_800ADB2C__Q22cf11CfObjectEneFv(cf::CfObjectEne* self) {
 void cf::CfObjectEne::func_800ADBD4() {
     u32 wordA = *((cf::CfActorUnk4Vt30*)((cf::CfActorField04*)this)->field_0x04)->vf30();
     u32 wordB;
-    if (func_80174C98((u8*)this, &wordA, 0x803) == 0 &&
+    if (func_80174C98((void*)this, (int*)&wordA, 0x803) == 0 &&
         ((wordB = *((cf::CfActorUnk4Vt30*)((cf::CfActorField04*)this)->field_0x04)->vf30()),
-         func_80174C98((u8*)this, &wordB, 0xE)) == 0) {
+         func_80174C98((void*)this, (int*)&wordB, 0xE)) == 0) {
         if (func_80148778(&((cf::CfEneB8View*)this)->field_0x8, 0x35) == 0) {
             ((cf::CfEneB8V14*)this)->m14(0x35);
         }
@@ -256,7 +258,7 @@ void cf::CfObjectEne::func_800ADBD4() {
     getInstance__Q22cf13CfGameManagerFv();
     if (func_8006EF04__Fi(0x1000000) != 0) {
         u32 wordC = *((cf::CfActorUnk4Vt30*)((cf::CfActorField04*)this)->field_0x04)->vf30();
-        if (func_80174C98((u8*)this, &wordC, 0x1) == 0) {
+        if (func_80174C98((void*)this, (int*)&wordC, 0x1) == 0) {
             u8* p = ((cf::CfEneField3F34*)this)->field_0x3F34;
             if (p != 0)
                 ((cf::CfEneField7A4*)p)->field_0x7A4 |= 0x80000000;

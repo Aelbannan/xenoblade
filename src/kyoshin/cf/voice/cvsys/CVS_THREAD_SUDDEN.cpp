@@ -3,7 +3,7 @@
 
 #include "kyoshin/cf/voice/cvsys/CVS_THREAD_SUDDEN.hpp"
 
-// ── Target 1: us-802ab400 (func_802A8CCC) ──────────────────────────────────
+// us-802ab400 (func_802A8CCC)
 // If no active voice, clear the handle slot.
 void func_802A8CCC(CVS_THREAD_SUDDEN* self) {
     if (func_802A3E88(self) == 0) {
@@ -11,7 +11,7 @@ void func_802A8CCC(CVS_THREAD_SUDDEN* self) {
     }
 }
 
-// ── Target 2: us-802ab43c (func_802A8D08) ──────────────────────────────────
+// us-802ab43c (func_802A8D08)
 // Remove a voice by matching its embedded CCharVoice pointer against the
 // slot (voiceHandle). A CVoiceHandle stores the CCharVoice at offset 0x3E9C,
 // so a non-null handle is biased by 0x3E9C before comparing.
@@ -28,7 +28,7 @@ void func_802A8D08(CVS_THREAD_SUDDEN* self, CCharVoice* voicePtr) {
     }
 }
 
-// ── Target 3: us-802ab494 (func_802A8D60) ──────────────────────────────────
+// us-802ab494 (func_802A8D60)
 // Prepare/play a voice. Calls the completion check (and the playback-start
 // helper if busy), stores the inverse-bias of voicePtr (back to the owning
 // CVoiceHandle) into the slot, re-biases to the CCharVoice, then plays.
@@ -52,7 +52,7 @@ void func_802A8D60(CVS_THREAD_SUDDEN* self, CCharVoice* voicePtr, int voiceId) {
     func_802A3C44(self, vp, voiceId);
 }
 
-// ── Target 4: us-802ab338 (__ct__802A8C04) ─────────────────────────────────
+// us-802ab338 (__ct__802A8C04)
 // Factory for CVS_THREAD_SUDDEN. Allocates the handle buffer (1, 0 - the
 // handle is discarded), then the 0x24-byte thread object, constructs the
 // base, sets vtable/owner fields and copies init data from lbl_eu_80539CE8.

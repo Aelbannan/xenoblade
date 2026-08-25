@@ -452,11 +452,7 @@ public:
     void Move();
 
 
-    // Fork helper for presentation gating (coop::ShouldRenderSplitScreen).
-    u16 getFlags() const {
-        return mFlags;
-    }
-    void setTimeout30() {
+
         unk120 = 30;
     }
     void setFlagState(bool value) {

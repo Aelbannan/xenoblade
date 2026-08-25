@@ -126,10 +126,11 @@ void MPVSL_DecSliceOne(MpvSlice* self, void* sj, MpvSliceOut* out) {
         sj, 1, 0x7FFFFFFF, &self->chunk);
 
     {
-        u32 p = (u32)(uintptr_t)self->chunk.p;
-        const u32* q = (const u32*)(uintptr_t)(p & ~3u);
+        const u8* p8 = (const u8*)self->chunk.p;
+        const u8* qa = (const u8*)(uintptr_t)((u32)(uintptr_t)p8 & ~3u);
+        bitoff = (s32)(p8 - qa) << 3;
+        const u32* q = (const u32*)(uintptr_t)qa;
         u32 w0 = q[0];
-        bitoff = (s32)((p - (u32)(uintptr_t)q) << 3);
         u32 w1 = q[1];
         u32 hi;
         u8 byte0;
@@ -141,6 +142,7 @@ void MPVSL_DecSliceOne(MpvSlice* self, void* sj, MpvSliceOut* out) {
         } else {
             buf = w1;
         }
+        /* First payload byte carries the macroblock count for this slice. */
         byte0 = (u8)hi;
         cur = q[2];
         self->ce0 = -1;

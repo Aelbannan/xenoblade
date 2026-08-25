@@ -51,6 +51,7 @@ extern f32 lbl_eu_806670B0;   // ctor grid-scale multiplier
 extern f32 lbl_eu_806670B4;   // func_8011B05C SRT rotation constant
 extern f32 lbl_eu_806670BC;   // func_8011B05C scale factor
 extern f32 lbl_eu_8066A1F8;   // func_8011B05C scale divisor
+extern f32 lbl_eu_806670C0;   // func_8011B05C battle-target node scale
 // Panic file/format strings used by func_8011B05C (u8 pools).
 extern u8 lbl_eu_8052CBC0[];
 extern u8 lbl_eu_8052CB8C[];
@@ -93,7 +94,7 @@ struct CMMGlobalGimmick {
     u8 field_0x00[0x214];       // 0x00..0x214
     u32 field_214;              // 0x214
 };
-CMMGlobalGimmick* getUnk80664658();
+extern "C" CMMGlobalGimmick* getUnk80664658();
 
 // Cross-TU layout/BDAT helpers. Plain C++ declarations so MWCC re-derives the
 // retail mangled names (func_80136E84__FPP... / func_80137038__FPP... / ...).
@@ -106,6 +107,12 @@ void func_80139124(nw4r::lyt::ArcResourceAccessor* accessor);
 // emitted call relocs matching retail (func_8003AA34 / getFP__FPCc).
 extern "C" void* func_8003AA34();   // matches code_801862C0.hpp's declaration
 extern "C" void* getFP__FPCc(const char* name);
+// Gimmick-row helpers used by func_80116B40 (unmangled retail symbols;
+// same declaration scheme as CFloorMap.hpp).
+extern "C" u32 func_8013C038(u16 id);
+struct CMMGimmickPos { f32 x; f32 y; f32 z; };
+extern "C" CMMGimmickPos* func_801F4E68(CMMGlobalGimmick* mgr, u16 id);
+extern "C" unsigned long func_8009ECF0();
 extern "C" int func_8013BE88();
 extern "C" int func_801AC124();
 // Move() gate/state helpers (unmangled retail symbols - C linkage).
@@ -174,13 +181,14 @@ struct CMMSubHead {
     u8* mPtr08;      // 0x34 abs - cached 'timg' resource (Move)
 };
 
-// Marker-table region 0x38..0x178. The leading bytes alias the loader flags.
+// Marker-table region 0x38..0x178 (0x140 bytes). The leading bytes alias the
+// loader flags.
 struct CMMTableBlock {
     u8 mFlag38;      // 0x38 - clock-show flag (Move)
     u8 mFlag39;      // 0x39
     u8 mFlag3A;      // 0x3A
     u8 mPad3B;
-    u32 mW[0x4C];    // 0x3C..0x178 (func_801160A8 marker table)
+    u32 mW[0x4F];    // 0x3C..0x178 (func_801160A8 marker table)
 };
 
 // Gimmick-view region 0x178..0x820.
@@ -358,3 +366,5 @@ extern "C" void func_80118058(CMiniMap* self);
 extern "C" void __ct__CMiniMap(CMiniMap* self);
 MiniMapTable* func_80115FD0(MiniMapTable* self);
 void func_801165EC(CMiniMapGimmickView* self);
+// Per-frame gimmick-view updater (retail unmangled symbol).
+extern "C" void func_801168A0(CMiniMapGimmickView* self);

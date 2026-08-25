@@ -8,14 +8,7 @@
 // skip code_80135FDC.hpp's caller-tuned exports so the differing arity decls
 // don't clash (same mechanism code_80135FDC.cpp itself uses).
 #define CODE_80135FDC_CPP
-// code_801862C0.hpp (pulled in by harness_catalog.hpp) declares
-// getBdatStringColumnValue as `u32(void*, const char*, int)` while
-// code_80135FDC.hpp needs `void*(void*, const char*, const char*)`; MWCC
-// rejects the conflicting C-linkage overload, so rename this TU's unused copy
-// out of the way (same scheme as CGame.cpp).
-#define getBdatStringColumnValue cmapselCode35FDCBdatUnused
 #include "kyoshin/code_80135FDC.hpp"
-#undef getBdatStringColumnValue
 #include "monolib/device.hpp"
 #include "monolib/lib/CLibLayout.hpp"
 #include "monolib/lib/UnkClass_8045F564.hpp"

@@ -1388,8 +1388,8 @@ s32 func_80157CD0(u32 arg) {
     void* list = func_801579C4(arg, &count, &stride);
     if (list != 0) {
         char* p = (char*)list;
-        s32 step = stride;
-        for (s32 i = count, off = 0; i > 0; i--, off += step) {
+        s32 off = 0;
+        for (s32 i = count; i > 0; i--, off += stride) {
             // Offset-indexed walk (retail lwzx r0,r3,r4 / add r4,r4,r5).
             if (*(u32*)(p + off) == 0) result++;
         }

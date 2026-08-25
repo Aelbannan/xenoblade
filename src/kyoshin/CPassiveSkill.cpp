@@ -1,27 +1,25 @@
 // Auto-scaffolded catalog TU for kyoshin/CPassiveSkill
 // Replace stubs with high-level C/C++ during decomp.
 
-// func_80137924 is declared sret-style (void(VEC3*,...)) by CSysWin.hpp;
+// func_80137924: CSysWin.hpp declares the sret spelling (void(VEC3*,...));
 // this TU needs the value-returning spelling (VEC3(Pane*,Pane*,Pane*)) so
 // the nested-call form allocates the sret buffer and the by-value argument
 // copy in retail's stack-slot order. Same PPC ABI (hidden pointer in r3).
-// The define must precede CPassiveSkill.hpp (which includes CSysWin.hpp).
-#define func_80137924 passiveSkill137924SretUnused
+// The value view lives in its own namespace (extern "C" keeps the retail
+// symbol) so it cannot collide with CSysWin.hpp's pointer-form decl - same
+// pattern as CMenuArtsSet.cpp's artsFAD0View.
 #include "kyoshin/harness_catalog.hpp"
 #include "kyoshin/CPassiveSkill.hpp"
-#undef func_80137924
 #include "kyoshin/CSysWin.hpp"
-// func_8049603C is declared with conflicting return types by CfGameManager.hpp
-// (UnkScnResult*, via harness_catalog -> CTaskGameEff) and this header
-// (CTaskGameCamView*). This TU never calls it - rename the decl away.
-#define func_8049603C passiveSkill9603CUnused
+namespace passiveSkillVecView {
+extern "C" nw4r::math::VEC3
+    func_80137924(nw4r::lyt::Pane* paneA, nw4r::lyt::Pane* paneB,
+                  nw4r::lyt::Pane* root);
+} // namespace passiveSkillVecView
 #include "kyoshin/code_80135FDC.hpp"
 
-// Value-returning spelling of func_80137924 (see include note above);
+// Value-returning spelling of func_80137924 (passiveSkillVecView above);
 // ABI-identical to the sret form.
-extern "C" nw4r::math::VEC3 func_80137924(nw4r::lyt::Pane* paneA,
-                                         nw4r::lyt::Pane* paneB,
-                                         nw4r::lyt::Pane* root);
 
 // Named .sdata2 conversion magic: defining it lets MWCC's constant pool reuse
 // the retail symbol for the (f32)u16 casts in func_802646E8 instead of
@@ -2157,7 +2155,7 @@ extern "C" __declspec(noinline) void func_80269004(UI::CPassiveSkillLine* self) 
         nw4r::lyt::Pane* paneB =
             self->field_8->GetRootPane()->FindPaneByName(&lbl_eu_8050DC20[0x4a5], true);
         func_80266250(reinterpret_cast<UI::CPassiveSkillCur*>(&self->mInfo),
-                      func_80137924(paneA, paneB, self->field_8->GetRootPane()));
+                      passiveSkillVecView::func_80137924(paneA, paneB, self->field_8->GetRootPane()));
     }
     self->field_8->Animate(0);
     func_8026D080(self);
@@ -3151,7 +3149,7 @@ __declspec(noinline) void func_8026C4A4(UI::CPassiveSkillLine* self) {
     nw4r::lyt::Pane* paneF = self->field_8->GetRootPane()->FindPaneByName(
         &lbl_eu_8050DC20[0x4a5], true);
     nw4r::math::VEC3 pos =
-        func_80137924(paneE, paneF, self->field_8->GetRootPane());
+        passiveSkillVecView::func_80137924(paneE, paneF, self->field_8->GetRootPane());
     func_801D2150(self->mInfo.field_24->GetRootPane(), &pos);
     if ((s8)self->field_F6 != 0) {
         u8 chId = func_801392B4((s8)self->field_F3);
@@ -3225,7 +3223,7 @@ self->field_8->GetRootPane()->FindPaneByName(buf, true);
 nw4r::lyt::Pane* paneD = self->field_8->GetRootPane()->FindPaneByName(
 &lbl_eu_8050DC20[0x4a5], true);
 nw4r::math::VEC3 pos =
-    func_80137924(paneC, paneD, self->field_8->GetRootPane());
+passiveSkillVecView::func_80137924(paneC, paneD, self->field_8->GetRootPane());
 func_801D2150(self->mInfo.field_24->GetRootPane(), &pos);
 u8 ch = func_801392B4((s8)self->field_F3);
 func_8009EC9C(ch);
@@ -3263,7 +3261,7 @@ nw4r::lyt::Pane* paneA =
 nw4r::lyt::Pane* paneB = self->field_8->GetRootPane()->FindPaneByName(
     &lbl_eu_8050DC20[0x4a5], true);
 nw4r::math::VEC3 pos =
-    func_80137924(paneA, paneB, self->field_8->GetRootPane());
+    passiveSkillVecView::func_80137924(paneA, paneB, self->field_8->GetRootPane());
     func_801D2150(self->mInfo.field_24->GetRootPane(), &pos);
 func_80264F7C(self, 2, 0, func_801392B4((s8)self->field_F3),
               (s8)self->field_F7, (s8)self->field_F8);
@@ -3502,9 +3500,6 @@ __declspec(noinline) void func_8026D210(UI::CPassiveSkillLine* self) {
         struct { u32 hi; u32 lo; } w;
         double d;
     } conv;
-    // NB: lo (value) written BEFORE hi (magic) - retail's store order;
-    // keeping the byte in r3 through the first store is what lets MWCC
-    // contract the double subtract into fsubs on the raw lfd'd operands.
     conv.w.lo = v;
     conv.w.hi = 0x43300000u;
     f32 f = (f32)(conv.d - lbl_eu_80668910) / lbl_eu_8066893C;

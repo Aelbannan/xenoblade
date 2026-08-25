@@ -153,7 +153,6 @@ extern "C" void func_80495E60(void* ptr);
 extern "C" void* func_80495EAC(void* global, void* bdat, int val);
 
 // Random
-extern "C" f32 func_80496288(void* global);
 
 // Device
 extern "C" int getLanguage__9CDeviceSCFv();

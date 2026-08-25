@@ -74,13 +74,11 @@ public:
 
 // C-linkage imports (retail symbol names - keep linkage/signatures verbatim)
 extern "C" void* func_8003B4B0(void* bdat, const char* col);
-// NOTE: getBdatStringColumnValue is intentionally NOT promoted to this header.
-// It is the repo's most-shared cross-TU import, and parallel TU conversions
-// declare it with different signatures in their own headers (e.g.
-// CHelp_LearnArts.hpp: `const char*`, CErrMes.cpp: `void`), so a shared
-// declaration here causes conflicting-redeclaration build errors in any TU
-// that includes both headers. It stays local to ocBdat.cpp (the defining TU,
-// retail signature `u32 (void*, const char*, s32)`).
+// Canonical declaration of the shared bdat column reader (defining TU:
+// ocBdat.cpp; retail signature `u32 (void*, const char*, s32)`). The third
+// parameter MUST be spelled s32 (= signed long under MWCC), never int - the
+// two are distinct types and extern "C" names cannot be overloaded.
+extern "C" u32 getBdatStringColumnValue(void* bdat, const char* col, s32 index);
 extern "C" u32 func_8003AD98(void* bdat, const char* col, s32 row, s32 index);
 extern "C" u32 func_eu_8003B488(void* bdat, const char* col1, s32 row, const char* col2);
 extern "C" u32 func_8003B748(void* table, void* col, s32 row, s32 index);

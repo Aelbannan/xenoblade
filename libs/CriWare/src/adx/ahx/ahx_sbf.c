@@ -11,8 +11,9 @@ void AHXDCD_SetupWtbl(u32 val) { lbl_eu_805E64BC = val; }
 
 extern u32 lbl_eu_805E64B0;
 
-// float constant pool entry used by MWCC (2147483648.0f)
-extern float lbl_eu_80517560;
+// MWCC literal-pool constants (retail .rodata @ 0x80517560): the SBF window
+// scale factor 2147483648.0f plus an adjacent 0.0f pool entry.
+const float lbl_eu_80517560[2] = {2147483648.0f, 0.0f};
 
 void ahxsbf_init_filter(void);
 
@@ -43,30 +44,34 @@ extern AhxSbfWork lbl_eu_805E64A8;
 
 void ahxsbf_init_filter(void) {
     AhxSbfWork* w = &lbl_eu_805E64A8;
-    u8* src;
     u8* dst;
+    u8* adst;
+    u8* src;
     s32 i;
+    s32 j;
 
     if (w->flag != 0) {
         return;
     }
 
+    /* Copy the synthesis window table to a 32-byte aligned scratch buffer,
+     * then normalize it in place (MWCC keeps the scale factor in f1). */
     src = (u8*)w->wtbl;
-    dst = (u8*)(((u32)src + 0x1F) & ~0x1F);
-    w->dstW = dst;
+    w->dstW = dst = (u8*)(((u32)src + 0x1F) & ~0x1F);
     for (i = 0x800; i >= 0; i--) {
         dst[i] = src[i];
     }
 
-    for (i = 0; i < 0x200; i++) {
-        ((float*)w->dstW)[i] *= lbl_eu_80517560;
+    /* Scale factor comes from MWCC's literal pool (lbl_eu_80517560). */
+    for (j = 0; j < 0x200; j++) {
+        ((float*)w->dstW)[j] *= lbl_eu_80517560[0];
     }
 
+    /* Copy the filter table to its aligned scratch buffer. */
     src = (u8*)w->ftbl;
-    dst = (u8*)(((u32)src + 0x1F) & ~0x1F);
-    w->dstF = dst;
-    for (i = 0x2000; i >= 0; i--) {
-        dst[i] = src[i];
+    w->dstF = adst = (u8*)(((u32)src + 0x1F) & ~0x1F);
+    for (j = 0x2000; j >= 0; j--) {
+        adst[j] = src[j];
     }
 
     w->flag = 1;

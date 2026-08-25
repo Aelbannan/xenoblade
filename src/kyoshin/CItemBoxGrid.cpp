@@ -3,6 +3,7 @@
 
 #include "kyoshin/harness_catalog.hpp"
 #include "kyoshin/CItemBoxGrid.hpp"
+#include "kyoshin/CUIWindowManager.hpp"
 #include "kyoshin/CExchangeWin.hpp"
 #include <stdio.h>
 #include <string.h>
@@ -5588,7 +5589,7 @@ void func_801C4BB4(void* self) {
                 }
             } else {
                 // Fallback: no base name and no teach key - check ability slots
-                u32 obj = func_801412D0((u16)id);
+                u32 obj = (u32)func_801412D0((u16)id);
                 if (!func_80140854((void*)obj, 0, 0)) {
                     if ((u8)func_801361E8((u32)tbl, &XB_K[0xd], (u16)id) == 2) XB_PUSH(tbl, 0x1a);
                 }

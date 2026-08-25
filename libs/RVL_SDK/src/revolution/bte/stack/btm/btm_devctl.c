@@ -1123,6 +1123,13 @@ tBTM_STATUS BTM_WritePageTimeout(UINT16 timeout)
     return BTM_NO_RESOURCES;
 }
 
+/* Retail pools the log strings of BTM_WriteVoiceSettings and
+ * BTM_EnableTestMode in this TU's .data between the WritePageTimeout and
+ * ReadStoredLinkKey literals; both functions themselves are linker-GC'd
+ * dead code, so only the strings survive in the split. */
+char btm_write_voice_settings_msg[] = "BTM: BTM_WriteVoiceSettings: Settings: 0x%04x.";
+char btm_enable_test_mode_msg[] = "BTM: BTM_EnableTestMode";
+
 /* ------------------------------------------------------------------ */
 /*  BTM_ReadStoredLinkKey - read the stored link key(s) from the      */
 /*  controller's NVRAM.  BD_ANY means read all keys.                  */

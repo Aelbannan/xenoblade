@@ -21,7 +21,7 @@ struct CHelpClosePartyMenuIf : cf::CHelpClosePartyMenuShift {
     virtual void _v01C(u32 flag); // vtable slot 0x1C == mVtbl->mSlots[7]
 };
 
-// Target 2: us-802bafa4
+// us-802bafa4
 // Calls vtbl slot 7 with 1 (true) only if both func_80293C10 and func_80192BD0
 // return zero; otherwise 0.
 void CHelp_ClosePartyMenu::func_802B8534() {

@@ -1,4 +1,5 @@
 #include <types.h>
+#include "monolib/scn/CScnTimeApi.hpp"
 #include "kyoshin/cf/CfGameManager.hpp"
 #include <monolib/device/CDeviceVI.hpp>
 #include <functions.hpp>
@@ -17,11 +18,13 @@ extern u32 lbl_eu_80663E24;
 
 namespace cf {
 
+// Party-gauge controller: holds the gauge counter (clamped to [0, 300])
+// plus a frame-time accumulator used to tick it down during play.
 class UnkClass_8018C5FC {
 public:
     UnkClass_8018C5FC();
-    s32 unk0;
-    f32 unk4;
+    s32 gaugeValue;   // +0x00: party gauge counter, clamped to [0, 0x12c]
+    f32 tickAccum;    // +0x04: accumulated scaled frame time until next tick
 };
 
 // --- linked-list / battle-object types used by func_8018C610 ---
@@ -69,92 +72,93 @@ extern "C" {
     // which would emit func_8009CF8C__Fi; the cf-namespace extern "C" decl
     // below shadows it so the unmangled func_8009CF8C reloc is emitted.
     u32 func_8009CF8C(u32);
-    f32 func_80496288(u32*);
-    CMB_Bm_8018C5FC* getInstance__Q22cf14CBattleManagerFv();
     CMB_PartyList_8018C5FC* func_800B6BA4__Fv();
     s32 func_8026178C(s32, u32);
     void func_802A293C(s32, s32);
     void func_801BFC38__Q22cf10CfSoundManFUlUlUlUlf(u32, u32, u32, u32, f32);
 }
 
-UnkClass_8018C5FC::UnkClass_8018C5FC() : unk0(0) {
-    unk4 = lbl_eu_80667A30;
+UnkClass_8018C5FC::UnkClass_8018C5FC() : gaugeValue(0) {
+    tickAccum = lbl_eu_80667A30;
 }
 
 // Timer-based counter decrement: decreases the party gauge over time.
 // When the timer elapses and there are no active battles, the counter
 // decrements by 1 (if a qualifying party member is present) or by 2.
 void func_8018C610(UnkClass_8018C5FC* _this) {
-    if ((__cntlzw(func_8009CF8C(0x3357)) >> 5) != 0) return;
+    u32 cf8cVal = func_8009CF8C(0x3357);
+    u32 cntlz = (u32)__cntlzw(cf8cVal);
+    if ((cntlz >> 5) != 0) return;
     if (cf::CfGameManager::func_800829B8()) return;
     if (lbl_eu_80663E24 & 0xafa40000) return;
 
     f32 scale = func_80496288(&lbl_eu_80663E14);
-    f32 val = CDeviceVI::getSecPerFrame() * scale + _this->unk4;
-    _this->unk4 = val;
-
-    if (val >= lbl_eu_80667A34) {
-        _this->unk4 = lbl_eu_80667A30;
-        s32 adjust = 0;
+    if ((_this->tickAccum += CDeviceVI::getSecPerFrame() * scale) >= lbl_eu_80667A34) {
+        _this->tickAccum = lbl_eu_80667A30;
 
         // Count active battles by walking the battle manager's actor list.
-        // Retail hoists the head-sentinel into a register once (r5).
-        CMB_Bm_8018C5FC* bm = getInstance__Q22cf14CBattleManagerFv();
-        CMB_ListNode_8018C5FC* sentinel = bm->listHead;
+        s32 adjust = 0;
+        CMB_Bm_8018C5FC* bm = (CMB_Bm_8018C5FC*)getInstance__Q22cf14CBattleManagerFv();
+        CMB_ListNode_8018C5FC* head = bm->listHead;
         s32 battleCount = 0;
-        for (CMB_ListNode_8018C5FC* node = sentinel->next;
-             node != sentinel; node = node->next)
+        for (CMB_ListNode_8018C5FC* node = head->next;
+             node != head; node = node->next)
         {
             battleCount++;
         }
-
         if (battleCount == 0) {
             // No active battle: scan the party member list for a qualifying
             // character (virtual call via vtable+0x290 on the low-priority
-            // subobject at data-0x3e9c, null-guarded) to decide whether to
-            // drop the gauge by 1 or 2. The loop reloads list->headNode at
-            // its bottom like retail.
+            // subobject) to decide whether to drop the gauge by 1 or 2. The
+            // loop reloads list->headNode at its bottom like retail.
             CMB_PartyList_8018C5FC* list = func_800B6BA4__Fv();
             s32 found = 0;
             for (CMB_ListNode_8018C5FC* node = list->headNode->next;
                  node != list->headNode; node = node->next)
             {
-                CMB_CfObj_8018C5FC* obj =
-                    node->data ? &node->data->obj : (CMB_CfObj_8018C5FC*)0;
-                s32 ret = obj->vtable->func_290(obj);
-
-                if (ret != 0) {
-                    ret = obj->vtable->func_290(obj);
-                    ret = func_8026178C(ret, 0x69);
+                s32 ret = 0;
+                if (node->data != 0) {
+                    ret = node->data->obj.vtable->func_290(&node->data->obj);
                 }
 
-                if (ret != 0) {
-                    found = 1;
-                    break;
+                ret = ret != 0
+                          ? func_8026178C(node->data->obj.vtable->func_290(&node->data->obj),
+                                          0x69)
+                          : 0;
+
+                if (ret == 0) {
+                    continue;
                 }
+                found = 1;
+                break;
             }
-            adjust = found ? -1 : -2;
+            adjust = -2;
+            if (found != 0) {
+                adjust = -1;
+            }
         }
 
         if (adjust != 0) {
             // newVal is computed before the re-check guard (retail loads
-            // unk0+adjust into a reg ahead of the call); oldVal is reloaded
+            // gaugeValue+adjust into a reg ahead of the call); oldVal is reloaded
             // only after the guard passes.
-            s32 newVal = _this->unk0 + adjust;
-            if ((__cntlzw(func_8009CF8C(0x3357)) >> 5) != 0) return;
+            s32 newVal = _this->gaugeValue + adjust;
+            u32 cf8cVal2 = func_8009CF8C(0x3357);
+            u32 cntlz2 = (u32)__cntlzw(cf8cVal2);
+            if ((cntlz2 >> 5) != 0) return;
 
-            s32 oldVal = _this->unk0;
-            _this->unk0 = newVal;
+            s32 oldVal = _this->gaugeValue;
+            _this->gaugeValue = newVal;
 
             if (newVal < 0) {
-                _this->unk0 = 0;
+                _this->gaugeValue = 0;
             } else if (newVal > 0x12c) {
-                _this->unk0 = 0x12c;
+                _this->gaugeValue = 0x12c;
             }
 
-            func_802A293C(_this->unk0, oldVal);
+            func_802A293C(_this->gaugeValue, oldVal);
 
-            s32 clamped = _this->unk0;
+            s32 clamped = _this->gaugeValue;
             if ((oldVal < 0x64 && clamped >= 0x64) ||
                 (oldVal < 0xc8 && clamped >= 0xc8))
             {
@@ -166,58 +170,58 @@ void func_8018C610(UnkClass_8018C5FC* _this) {
 
 // Add a delta to the party gauge counter, clamp to [0, 300], and return the new value.
 s32 func_8018C820(UnkClass_8018C5FC* _this, s32 delta) {
-    s32 newVal = _this->unk0 + delta;
+    s32 newVal = _this->gaugeValue + delta;
 
     u32 cf8cVal = func_8009CF8C(0x3357);
     u32 cntlz = (u32)__cntlzw(cf8cVal);
-    if ((cntlz >> 5) != 0) return _this->unk0;
+    if ((cntlz >> 5) != 0) return _this->gaugeValue;
 
-    s32 oldVal = _this->unk0;
-    _this->unk0 = newVal;
+    s32 oldVal = _this->gaugeValue;
+    _this->gaugeValue = newVal;
 
     if (newVal < 0) {
-        _this->unk0 = 0;
+        _this->gaugeValue = 0;
     } else if (newVal > 0x12c) {
-        _this->unk0 = 0x12c;
+        _this->gaugeValue = 0x12c;
     }
 
-    func_802A293C(_this->unk0, oldVal);
+    func_802A293C(_this->gaugeValue, oldVal);
 
-    s32 clamped = _this->unk0;
+    s32 clamped = _this->gaugeValue;
     if ((oldVal < 0x64 && clamped >= 0x64) ||
         (oldVal < 0xc8 && clamped >= 0xc8))
     {
         func_801BFC38__Q22cf10CfSoundManFUlUlUlUlf(0, 0x64, 0, 0, lbl_eu_80667A38);
     }
 
-    return _this->unk0;
+    return _this->gaugeValue;
 }
 
 // Set the party gauge counter to a value, clamp to [0, 300], and return the new value.
 s32 func_8018C8F4(UnkClass_8018C5FC* _this, s32 val) {
     u32 cf8cVal = func_8009CF8C(0x3357);
     u32 cntlz = (u32)__cntlzw(cf8cVal);
-    if ((cntlz >> 5) != 0) return _this->unk0;
+    if ((cntlz >> 5) != 0) return _this->gaugeValue;
 
-    s32 oldVal = _this->unk0;
-    _this->unk0 = val;
+    s32 oldVal = _this->gaugeValue;
+    _this->gaugeValue = val;
 
     if (val < 0) {
-        _this->unk0 = 0;
+        _this->gaugeValue = 0;
     } else if (val > 0x12c) {
-        _this->unk0 = 0x12c;
+        _this->gaugeValue = 0x12c;
     }
 
-    func_802A293C(_this->unk0, oldVal);
+    func_802A293C(_this->gaugeValue, oldVal);
 
-    s32 clamped = _this->unk0;
+    s32 clamped = _this->gaugeValue;
     if ((oldVal < 0x64 && clamped >= 0x64) ||
         (oldVal < 0xc8 && clamped >= 0xc8))
     {
         func_801BFC38__Q22cf10CfSoundManFUlUlUlUlf(0, 0x64, 0, 0, lbl_eu_80667A38);
     }
 
-    return _this->unk0;
+    return _this->gaugeValue;
 }
 
 } // namespace cf

@@ -14,6 +14,14 @@
  */
 
 #include "kyoshin/cf/CfGimmick.hpp"
+
+// View of the singleton returned by func_8003AA34 whose members are the
+// per-gimmick-type bdat table pointers; the ctor loads the object-gimmick
+// table pointer through an sda21 member reloc.
+struct CfGimmickTableSet {
+    u8* lbl_eu_80664128;   // object-gimmick bdat table
+};
+
 // NOTE: CtrlMovePC.hpp deliberately NOT included here -- its extern "C"
 // getUnk80664658() declaration conflicts with CfGimmick.hpp's. Only
 // cf::CCtrlMovePC / func_80199678 were needed, declared below.
@@ -55,7 +63,7 @@ struct CfGimmickObjectStep {
     /* 0x07 */ u8 field_07;    // area-manager id (func_800817BC)
     /* 0x08 */ u16 field_08;   // effect/flag bitmask
     /* 0x0A */ u16 field_0A;   // sound id (func_80208C60 / func_80208C48)
-    /* 0x0C */ u8 gap_0C[2];   // frame count (CfGimmickLodFrame alias)
+    /* 0x0C */ u16 field_0C;   // frame count (CfGimmickLodFrame alias)
     /* 0x0E */ u8 field_0E;    // sound flag byte
     /* 0x0F */ u8 gap_0F;
 };
@@ -169,6 +177,12 @@ public:
     // destructor pair before the first declared virtual below.
     // slot 0x158 / 4 = 86: set-mode entry used by func_801F61B0.
     virtual void setMode(int mode) = 0;
+    // Fillers up to slot 0x168 / 4 = 90: the map-object value setter invoked
+    // on func_80186BC8 results by func_801F6E60.
+    virtual void unk5B() = 0;
+    virtual void unk5C() = 0;
+    virtual void unk5D() = 0;
+    virtual void setMapObjValue(f32 value) = 0;
 };
 
 namespace cf {
@@ -176,12 +190,15 @@ namespace cf {
 class CfGimmickObject {
 public:
     ~CfGimmickObject();
+    CfGimmickObject(s32 row, CfGimmickObject** tail, int count,
+                    u32* flagWords);
 
     /* 0x00 */ void* vtable;           // manual vptr (lbl_eu_80534F70)
     /* 0x04 */ f32 field_04[3];        // position basis handed to func_802089BC
     /* 0x10 */ CfGimmickVec3 field_10; // reference point for the colliders
     /* 0x1C */ u8 field_1C[0x30];      // collider A 3x4 matrix dest (func_802089BC)
-    /* 0x4C */ u8 gap_4C[0x64 - 0x4C];
+    /* 0x4C */ u8 gap_4C[0x60 - 0x4C];
+    /* 0x60 */ u32 field_60;
     /* 0x64 */ u16 field_64;
     /* 0x66 */ u16 field_66;
     /* 0x68 */ u16 field_68;           // map-object id passed to func_80186BC8
@@ -193,7 +210,7 @@ public:
     /* 0x78 */ CfGimmickObjectMgr* field_78;  // area manager (func_800817BC)
     /* 0x7C */ CfGimmickReg field_7C;  // gimmick-object registration slot
     /* 0x80 */ u16 field_80;
-    /* 0x82 */ u8 gap_82[0x84 - 0x82];
+    /* 0x82 */ u16 field_82;
     /* 0x84 */ CfGimmickObjectArea field_84[2];  // 2 x 0x10-byte gimmick-area tables
     /* 0xA4 */ CfGimmickObjectStep field_A4[2];  // 2 x 0x10 per-step entries
     /* 0xC4 */ u16 field_C4;
@@ -210,7 +227,7 @@ public:
     /* 0x144 */ u16 field_144[3];      // u16 id table fired by func_801F8BB8
     /* 0x14A */ u16 field_14A[4];      // u16 table scanned by func_801F72A4
     /* 0x152 */ u16 field_152;         // party-member flag word (func_801F6D8C)
-    /* 0x154 */ u8 gap_154[0x156 - 0x154];
+    /* 0x154 */ u16 field_154;
     /* 0x156 */ u16 field_156;
     /* 0x158 */ u16 field_158;         // gimmick id passed to func_80208C48
     /* 0x15A */ u16 field_15A;
@@ -250,6 +267,24 @@ public:
 // Retail vtable for cf::CfGimmickObject (stored at +0x00 by the dtor).
 extern u8 lbl_eu_80534F70[];
 
+// Base ctor of the replicated CfGimmick layout (invoked by name).
+extern "C" void __ct__cf_CfGimmick(void* self);
+
+// Bdat column-name bases used by the ctor: lbl_eu_80507B60 holds inline
+// column names, lbl_eu_805357E8 a pointer table (see CfGimmick.hpp), and
+// the two arrays below hold per-index column-name buffers whose second byte
+// the ctor overwrites with the 1-based slot digit ('1'+i).
+extern char lbl_eu_80507B60[];
+extern char* lbl_eu_80534F00[8];   // area-table column names (2 slots x 8)
+extern char* lbl_eu_80534F20[10];  // step-table column names (5 slots x 10)
+
+// Gimmick sub-object initializers (CfGimmick.cpp family; holder receives
+// &ctor-local bdat handle slot like the sibling gimmick ctors).
+extern "C" void func_80208F34(void* self, void* out, void* bdat, void* holder);
+extern "C" void func_80209020(void* self, void* out, void* bdat, void* holder);
+extern "C" void func_8020915C(void* self, void* out, void* bdat, void* holder);
+extern "C" void func_80209288(void* self, void* out, void* bdat, void* holder);
+
 // PMF dispatch tables (6 x 12-byte member pointers) indexed by field_188 in
 // func_801F5B00; MWCC lowers (self->*table[idx])() to mulli/add + `bl
 // __ptmf_scall` against the retail __ptmf_scall helper.
@@ -284,6 +319,7 @@ void func_801F76A8(cf::CfGimmickObject* self);
 void func_801F61B0(cf::CfGimmickObject* self, int mode);
 void func_801F6E60(cf::CfGimmickObject* self, u8 arg);
 void func_801F5C2C(cf::CfGimmickObject* self, int a, int b);
+// Sound-stop helper (func_801BFED0) is declared in CfGimmick.hpp.
 void func_801F6B98(cf::CfGimmickObject* self, u8 lod,
                    const CfGimmickLodFrame* frame);
 // Same-TU per-frame updates (raw retail names).
@@ -325,7 +361,6 @@ void func_8020974C(unsigned int a, int b);
 unsigned int func_801587E8(unsigned short id);
 u32 func_800822F4__Q22cf13CfGameManagerFv();
 u32 func_80082354__Q22cf13CfGameManagerFv(u32 resourceId);
-f32 func_80496288(void* ptr);
 u16 func_80208C48(u16 id, f32* vec);
 void func_80193678(int id);
 // Step-table / sound helpers (func_801F6780 / func_801F76A8).
@@ -346,7 +381,6 @@ void func_8020A0F8();
 CfGimmickObjectMgr* func_800817BC__Q22cf13CfGameManagerFv(u32 id, u32 mode);
 void* getPlayer__Q22cf13CfGameManagerFi(int index);
 void func_80199678(void* ctrl, int flag);  // CCtrlMovePC helper (CtrlMoveBase)
-void func_800BE12C(u8* obj, int a, int b, int c, int d);
 void func_80080F44__Q22cf13CfGameManagerFv(void* obj);
 }
 
@@ -417,4 +451,12 @@ struct CfGimmickObjectListNode {
 struct CfGimmickObjectList {
     void* field_00;                 // +0x00
     CfGimmickObjectListNode* head;  // +0x04
+};
+
+// Type-distinct view of the fight-list header (sentinel pointer also at
+// +0x04). Used for the init read in cfCountMatchingPlayers so MWCC keeps it
+// separate from the loop-condition read (retail hoists that one alone).
+struct CfGimmickListNodeRoot {
+    u8 pad[4];
+    CfGimmickListNode* root;   // +0x04
 };

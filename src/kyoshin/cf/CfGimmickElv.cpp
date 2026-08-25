@@ -2,6 +2,7 @@
 // Decompiled from retail ASM at build/us/asm/kyoshin/cf/CfGimmickElv.s
 
 #include "kyoshin/cf/CfGimmickElv.hpp"
+#include "monolib/scn/CScnTimeApi.hpp"
 
 // External globals
 extern "C" {

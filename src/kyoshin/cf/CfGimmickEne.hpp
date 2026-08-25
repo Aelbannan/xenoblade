@@ -264,7 +264,6 @@ extern unsigned short func_801BFC38__Q22cf10CfSoundManFUlUlUlUlf(
 
 // Scene / frame helpers (monolib scn).
 extern cf::CfGimmickEneScene* lbl_eu_80663E14;            // CScn* global (@sda21)
-extern f32 func_80496288(cf::CfGimmickEneScene* scene);   // frame delta time
 extern cf::CfGimmickEneScene* func_8049698C();            // current-scene global
 extern cf::CfGimmickEneSceneState* func_8048ECD0(cf::CfGimmickEneScene* scene);  // -> +0x8C
 

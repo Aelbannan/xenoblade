@@ -3135,13 +3135,16 @@ static inline ActParamT1Rec* nextT1Rec(ActParamT1Rec* rec) {
 
 
 extern "C" u32 func_80053960(ActParamData388* obj) {
-    if (obj->mField4C4 != 0) {
-        return obj->mField4C4;
+    const u8* p = reinterpret_cast<const u8*>(obj);
+    u32 v4C4 = *(const u32*)(p + 0x4C4);
+    if (v4C4 != 0) {
+        return v4C4;
     }
-    if (obj->mPtr08 != 0) {
-        return obj->mPtr08->mField18;
+    const void* p08 = *(const void* const*)(p + 0x08);
+    if (p08 != 0) {
+        return *(const u32*)(reinterpret_cast<const u8*>(p08) + 0x18);
     }
-    return obj->mField4B4;
+    return *(const u32*)(p + 0x4B4);
 }
 
 extern "C" void* func_800547D4(ActParamT1Host* host, ActParamT1Dst* dst, ActParamT1Src* src) {

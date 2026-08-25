@@ -239,7 +239,7 @@ extern u32 lbl_eu_80663E24;     // global flags
 extern u32 lbl_eu_80663D90;     // global value copied into mField78
 
 // ---------------------------------------------------------------------------
-// Target 1: __ct__cf_CtrlMoveNpc - constructor
+// __ct__cf_CtrlMoveNpc - constructor
 // ---------------------------------------------------------------------------
 namespace cf {
 CCtrlMoveNpc::CCtrlMoveNpc() {
@@ -250,7 +250,7 @@ CCtrlMoveNpc::CCtrlMoveNpc() {
 }
 
 // ---------------------------------------------------------------------------
-// Target 2: func_8019F8E0 - dispatch the state ptmf if set; return "was set".
+// func_8019F8E0 - dispatch the state ptmf if set; return "was set".
 // ---------------------------------------------------------------------------
 namespace cf {
 int func_8019F8E0(CCtrlMoveNpc* self) {
@@ -262,7 +262,7 @@ int func_8019F8E0(CCtrlMoveNpc* self) {
 }
 
 // ---------------------------------------------------------------------------
-// Target 5: func_8019F6E8 - pick a movement target, initialise move fields and
+// func_8019F6E8 - pick a movement target, initialise move fields and
 // set the state fn. Approached-fraction is clamped into [0, max].
 // ---------------------------------------------------------------------------
 namespace cf {
@@ -314,7 +314,7 @@ void func_8019F6E8(CCtrlMoveNpc* self, const ml::CVec3* vec, f32 scale, f32 para
 }
 
 // ---------------------------------------------------------------------------
-// Target 4: func_8019FB54 - range check an Npc table row against row/value
+// func_8019FB54 - range check an Npc table row against row/value
 // columns. Returns whether the row is "usable" for the current situation.
 // C linkage inherited from the prototype above (retail symbol is unmangled).
 // ---------------------------------------------------------------------------
@@ -359,7 +359,7 @@ int func_8019FB54(u32 idx, const char* p1, const char* p2, const char* p3,
 }
 
 // ---------------------------------------------------------------------------
-// Target 3: func_8019FD2C - walk the table rows, toggling a per-row bit in the
+// func_8019FD2C - walk the table rows, toggling a per-row bit in the
 // bitmap and notifying LOD when the usable-flag flips.
 // C linkage inherited from the CfGameManager.hpp declaration
 // (retail symbol is the unmangled pre-mangled name).
@@ -410,7 +410,7 @@ void func_8019FD2C() {
 // Non-target functions kept from the scaffold so the unit still builds.
 // ---------------------------------------------------------------------------
 // ---------------------------------------------------------------------------
-// Target: func_8019F93C - approach-an Npc toward its movement target. Computes
+// func_8019F93C - approach-an Npc toward its movement target. Computes
 // the target delta, drives the move helpers, and returns to idle (empty state
 // fn) once the target is nearly reached or approach no longer applies.
 // ---------------------------------------------------------------------------
@@ -468,6 +468,6 @@ void func_8019F93C(CCtrlMoveNpc* self) {
 }
 
 // func_8019FB40 - clear the 16-byte Npc row bitmap.
-void* func_8019FB40() {
-    return memset(lbl_eu_805757E0, 0, 0x10);
+void func_8019FB40() {
+    memset(lbl_eu_805757E0, 0, 0x10);
 }

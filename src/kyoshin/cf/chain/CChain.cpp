@@ -1,15 +1,14 @@
+#include "kyoshin/cf/CBattleManagerApi.hpp"
 #include "kyoshin/cf/chain/CChain.hpp"
 #include "kyoshin/cf/CfGameManager.hpp"
 #include "kyoshin/cf/CfSoundMan.hpp"
 #include "kyoshin/menu/CMenuArtsSelect.hpp"
 #include "monolib/math/Random.hpp"
-
 extern "C" CChainGimmickList* func_800B6BC8();
 extern "C" int func_801537E0(void* self);
 // func_800BE12C / func_800F3970 are also declared locally (with different arg
 // spellings) by CBattleManager.cpp / CVision.cpp, which include CChain.hpp
 // via CBattleManager.hpp - keep them out of the header like the trio above.
-extern "C" void func_800BE12C(void* obj, int a, int b, int c, int d);
 extern "C" void func_800F3970(void* bm, void* target, void* src, s32 a, s32 b);
 
 struct ChIf {
@@ -212,19 +211,22 @@ struct ChIf2 {
 
 namespace cf {
     CChain::CChain(){
-        // Implicit member construction (actor-list / time / combo ctors, plus
-        // the inlined vptr+field stores for member / timers / chance) runs
-        // before this body; the body mirrors the retail reset block.
-        int zero = 0;
+        // The member sub-objects construct implicitly before this body, in
+        // declaration order: actor-list / member / two timers / time / chance /
+        // combo (retail interleaves the inlined vptr-store ctors of member,
+        // timers and chance between the out-of-line actor-list, time and
+        // combo ctors). The body mirrors the retail reset block.
         func_802AB3D0((CBattleChainMenuState*)&unk1F0C[0]);
-        if (zero != 0) {
+        unk1F0C[0x11] = 0;
+        ((CChainHeadView*)this)->field_2 = 0;
+        // Retail keeps this branch: the condition is forwarded to the constant
+        // 0 just stored, but MWCC does not fold the branch itself.
+        if (((CChainHeadView*)this)->field_2 != 0) {
             mChainTime.mTimer = lbl_eu_80668A18;
             mChainTime.mEnabled = 0;
             mChainTime.mPaused = 1;
             lbl_eu_80663DA0 &= 0xFE;
         }
-        unk1F0C[0x11] = zero;
-        ((CChainHeadView*)this)->field_2 = zero;
         ((CChainHeadView*)this)->field_2 = 0;
         ((CChainHeadView*)this)->field_0 = 0;
         ((CChainHeadView*)this)->field_1 = -1;
@@ -493,23 +495,51 @@ void func_8027732C(cf::CChain* self) {
 // gauge-accumulating ranges (0xA..0xC or 0x14..0x15); resolves the member
 // entry for the target battle object, registers the combo, and refreshes the
 // arts-voice flag from the current arts id.
-void func_802773EC(cf::CChain* self, cf::CChainBattleObj2A4* target) {
-    int ok = 0;
+// Params are copied to locals up-front: retail colors them by the
+// locals rule (first-declared -> r31), not the parameter rule.
+void func_802773EC(cf::CChain* chain, cf::CChainBattleObj2A4* battleObj) {
+    cf::CChain* self = chain;
+    cf::CChainBattleObj2A4* target = battleObj;
+    // Mirror the retail gate shape: one byte load feeding two unsigned
+    // range checks, each setting an ok flag; falling through both clears
+    // the run flag and exits.
     int flag = 1;
+    int ok = 0;
     u8 v = self->unk0[2];
-    if (0xA <= v && v <= 0xC) ok = 1;
+    // Separate nested ifs keep the retail two-cmplwi-per-range shape
+    // (a combined condition folds into an addi/rlwinm range trick).
+    if (v >= 0xA) {
+        if (v <= 0xC) {
+            ok = 1;
+        }
+    }
     if (ok == 0) {
-        if (0x14 <= v && v <= 0x15) ok = 1;
+        ok = 0;
+        if (v >= 0x14) {
+            if (v <= 0x15) {
+                ok = 1;
+            }
+        }
+        if (ok == 0) {
+            flag = 0;
+        }
     }
-    if (ok == 0) flag = 0;
     if (flag == 0) return;
+
     cf::CChainMemberListMirror* mv = (cf::CChainMemberListMirror*)self;
-    u8 rawIdx = self->unk0[0];
-    cf::CChainActor* actor = 0;
-    if ((int)(s8)rawIdx < (int)mv->mChainMember.mCount) {
-        actor = mv->mChainMember.mActors[(s8)rawIdx];
+    s8 idx = (s8)self->unk0[0];
+    cf::CChainActor* actor;
+    if ((int)idx < (int)mv->mChainMember.mCount) {
+        actor = mv->mChainMember.mActors[idx];
+    } else {
+        actor = 0;
     }
-    u32 actorKey = (actor != 0) ? actor->unk0 : 0;
+    u32 actorKey;
+    if (actor != 0) {
+        actorKey = actor->unk0;
+    } else {
+        actorKey = 0;
+    }
     if ((u32)target != actorKey) return;
     if (self->unk0[3] != 0) return;
     func_80293E24(&self->mChainCombo, (cf::CfObjectActor*)target);
@@ -720,7 +750,7 @@ __declspec(noinline) void func_80277B38(cf::CChain* self) {
         }
         func_800F3970(getInstance__Q22cf14CBattleManagerFv(), (void*)actor->unk0,
                       0, 0, 0);
-        func_8027C098(&self->mChainChance);
+        func_8027C098((cf::CChainChance*)&self->mChainChance);
         func_80276C30();
         ((cf::CChainActorVtIfB38*)actor0)->v012(0, 0);
         cf::CfSoundMan::func_801BFC38(0, 0x69, 0, 0, lbl_eu_80668A40);
@@ -992,7 +1022,7 @@ __declspec(noinline) void func_80277B38(cf::CChain* self) {
         } else {
             nextActor = 0;
         }
-        if (func_8027C154(&self->mChainChance, (cf::CChainBattleObj*)actor->unk0,
+        if (func_8027C154((cf::CChainChance*)&self->mChainChance, (cf::CChainBattleObj*)actor->unk0,
                           (cf::CChainBattleObj*)nextActor->unk0) != 0) {
             u8 newState = (u8)(h->field_2 + 1);
             self->mChainTime.mTimer = lbl_eu_80668A48;
@@ -1595,20 +1625,21 @@ void func_80279694(cf::CChain* self, u32 param) {
 // whether its arts category byte equals 4.
 // Retail passes the chain object in r3 at every call site (e.g.
 // func_8027990C's `mr r3, r28; bl func_80279A4C`); the body ignores it.
-// C linkage keeps the call reloc name verbatim.
 extern "C" int func_80279A4C(cf::CChain* self) {
     CChainGimmickList* list = func_800B6BC8();
     CChainGimmickListNode* head = list->head;
-    CChainGimmickListNode* node = head->next;
-    while (node != head) {
-        cf::CChainBattleObj2A4* obj;
-        if (node->object != 0) {
-            obj = (cf::CChainBattleObj2A4*)((u8*)node->object - 0x3e9c);
-        } else {
-            obj = 0;
+    CChainGimmickListNode* node;
+    int local;
+    cf::CChainBattleObj2A4* obj;
+    for (node = head->next; node != head; node = node->next) {
+        // Retail folds the null check into a conditional subtract on the
+        // same register (a null entry just faults through the id read).
+        obj = (cf::CChainBattleObj2A4*)node->object;
+        if (obj != 0) {
+            obj = (cf::CChainBattleObj2A4*)((u8*)obj - 0x3e9c);
         }
         if (obj->field_3F28 == 0x9C5) {
-            int local = *(int*)((cf::CChainSub4*)obj->field_04)->f30();
+            local = *(int*)((cf::CChainSub4*)obj->field_04)->f30();
             if (func_80174C98(obj, &local, 0xA) == 0) return 0;
             CChainCombo_ArtsCategoryHolder* holder = obj->v167();
             if (holder->mArtsCategory == 0) return 0;
@@ -1616,7 +1647,6 @@ extern "C" int func_80279A4C(cf::CChain* self) {
                        ? 1
                        : 0;
         }
-        node = node->next;
     }
     return 0;
 }

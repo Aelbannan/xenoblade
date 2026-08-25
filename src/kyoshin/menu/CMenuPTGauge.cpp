@@ -1,27 +1,15 @@
 // func_8004302C must be declared extern "C" before any include chain pulls
 // in functions.hpp's plain C++ copy (MWCC rejects the reverse redeclaration),
 // so this header goes first.
-#define func_8004392C ptgCtaskGame4392CUnused
-#define func_8049603C ptgCtaskGame9603CUnused
 #include "kyoshin/CTaskGame.hpp"
-#undef func_8049603C
-#undef func_8004392C
 #include "kyoshin/menu/CMenuPTGauge.hpp"
-
-// CTaskGame.hpp declares func_8004392C with a u32 third arg (line 486), which
-// conflicts with the void* copy in CVision.hpp (reached via CBattleManager.hpp
-// below); rename it out of the way. This TU uses none of them.
 
 #include "kyoshin/cf/CBattleManager.hpp"
 // code_80135FDC.hpp declares lbl_eu_8066A208 as u32 (line 188), conflicting
 // with the const float epsilon copies elsewhere; rename it out of the way.
 // This TU uses none of them.
 #define lbl_eu_8066A208 ptgCode35FDCepsilonUnused
-#define func_8049603C ptgCode35FDC9603CUnused
-#define getBdatStringColumnValue ptgCode35FDCBdatStrUnused
 #include "kyoshin/code_80135FDC.hpp"
-#undef getBdatStringColumnValue
-#undef func_8049603C
 #undef lbl_eu_8066A208
 #include "monolib/device/CDeviceFont.hpp"
 #include "monolib/util/MemManager.hpp"
@@ -343,7 +331,7 @@ done:
 extern "C" int func_80187710() {
     return lbl_eu_806642D8;
 }
-void __dt__12CMenuPTGaugeFv(void*);
+extern "C" void __dt__12CMenuPTGaugeFv(void*); // real member dtor (retail unmangled symbol)
 // IWorkEvent dtor this-adjusting thunk (retail: subi r3,-0x58; b __dt__12CMenuPTGaugeFv)
 extern "C" void func_80187EFC(void* self){
     __dt__12CMenuPTGaugeFv((char*)self - 0x58);
@@ -352,7 +340,7 @@ extern "C" void func_80187F04(void* self) {
     extern void cbRenderBefore__12CMenuPTGaugeFv(void*);
     cbRenderBefore__12CMenuPTGaugeFv((char*)self - 0x5c);
 }
-void __dt__12CMenuPTGaugeFv(void*); void func_80187F0C(void* p) {
+extern "C" void __dt__12CMenuPTGaugeFv(void*); void func_80187F0C(void* p) {
     // Adjust from IScnRender subobject (+0x5c) back to CMenuPTGauge
     __dt__12CMenuPTGaugeFv(static_cast<char*>(p) - 0x5c);
 }

@@ -1,14 +1,11 @@
-// CAIAction.hpp (via CfObjectPc.hpp -> CfObjectActor.hpp) declares void*
-// forms of func_800BE12C / func_80174C98 that conflict with the u8*/other
-// forms in CfObjectMove.hpp etc. (MWCC 10197). This TU calls neither, so
-// pre-include the u8* forms, then rename the conflicting decls out of the
-// way for the include (CVision.cpp idiom).
+// CAIAction.hpp declares a func_80174C98 form that conflicts with the
+// CfObjectMove.hpp form included below (MWCC 10197). This TU calls neither,
+// so rename the conflicting decl out of the way for the include
+// (CVision.cpp idiom). (func_800BE12C now has a single unified decl.)
 #include "kyoshin/cf/object/CfObject.hpp"
 #include "kyoshin/cf/object/CfObjectMove.hpp"
-#define func_800BE12C pluginVoiceAiActionMoveDeclUnused
 #define func_80174C98 pluginVoiceAiActionGateDeclUnused
 #include "kyoshin/cf/object/CAIAction.hpp"
-#undef func_800BE12C
 #undef func_80174C98
 #include "kyoshin/plugin/pluginVoice.hpp"
 #include "kyoshin/cf/object/CfObjectPc.hpp"

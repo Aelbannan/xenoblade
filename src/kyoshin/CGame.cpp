@@ -2,13 +2,6 @@
 #include "kyoshin/cf/CTaskREvent.hpp"
 #include "kyoshin/cf/CBattleManager.hpp"
 #include "kyoshin/cf/CfGameManager.hpp"
-// CTaskGame.hpp declares func_8004392C (u32 3rd arg) / func_8049603C (CScn* arg),
-// which conflict with CVision.hpp:396 (void* 3rd arg) and CSuddenCommu.hpp:328
-// (void* arg) - both pulled in earlier via CBattleManager.hpp. C-linkage names
-// cannot be overloaded in MWCC, so rename the CTaskGame.hpp copies out of the
-// way (same scheme as CMenuArtsSelect.cpp); this TU uses neither function.
-#define func_8004392C cgameCtaskGame4392CUnused
-#define func_8049603C cgameCtaskGame9603CUnused
 // CTaskGame.hpp declares a minimal CLibHbm (static-only view); monolib/lib.hpp
 // later pulls in the full CLibHbm.hpp class (CTaskGame.hpp:87 documents the
 // clash). CGame.cpp uses the full class, so rename the minimal copy away.
@@ -20,21 +13,15 @@
 #include "kyoshin/CTaskGame.hpp"
 #undef func_eu_804520D0
 #undef CLibHbm
-#undef func_8049603C
-#undef func_8004392C
-// code_80135FDC.hpp declares several imports with signatures conflicting with
+// code_80135FDC.hpp
 // headers already pulled in above (via CBattleManager.hpp / CTaskREvent.hpp):
 // getCurrentView__5CViewFv as void* (CTaskREvent.hpp:245 declares CView*),
-// lbl_eu_8066A208 as u32 (CfObjectMove.hpp:99 declares const float),
-// func_8049603C as CTaskGameCamView* (CSuddenCommu.hpp:328 declares void*),
-// getBdatStringColumnValue as void* (CfGimmick.hpp:159 declares u32).
+// lbl_eu_8066A208 as u32 (CfObjectMove.hpp:99 declares const float).
 // C-linkage names cannot be overloaded in MWCC, so rename the code_80135FDC.hpp copies
 // out of the way (same scheme as CMenuArtsSelect.cpp). This TU only uses
 // func_80137038 / func_80137250 from that header.
 #define getCurrentView__5CViewFv cgameGetCurrentViewUnused
 #define lbl_eu_8066A208 cgameCode35FDCepsilonUnused
-#define func_8049603C cgameCode35FDC9603CUnused
-#define getBdatStringColumnValue cgameCode35FDCBdatColumnUnused
 // CTaskLOD helper param widths differ from CTaskREvent.hpp (s16): s8/u8 here.
 #define func_80462D04__8CTaskLODFv cgameLod62D04Unused
 #define func_80462D5C__8CTaskLODFv cgameLod62D5CUnused
@@ -44,8 +31,6 @@
 #undef getInstance__14Class_80296898Fv
 #undef func_80462D5C__8CTaskLODFv
 #undef func_80462D04__8CTaskLODFv
-#undef getBdatStringColumnValue
-#undef func_8049603C
 #undef lbl_eu_8066A208
 #undef getCurrentView__5CViewFv
 #include "monolib/lib.hpp"
@@ -82,7 +67,7 @@ CGame* CGame::spInstance;
 static FixStr<64> lbl_80573C80;
 nw4r::lyt::Layout* CGame::lbl_80666604;
 nw4r::lyt::ArcResourceAccessor* CGame::sArcResourceAccessor;
-const char* CGame::scViewName = "巨神"; //"Bionis"
+const char* CGame::scViewName = "XENOBLADE";
 CGameRestart* CGameRestart::spInstance;
 
 CGame::CGame(const char* pName, CWorkThread* pParent) :

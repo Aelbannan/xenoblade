@@ -6,7 +6,7 @@
 #include "kyoshin/harness_catalog.hpp"
 #include "monolib/math/Random.hpp"
 
-// ── Target 1: us-802a8540 (func_802A5E0C) ──────────────────────────────────
+// us-802a8540 (func_802A5E0C)
 // Completion callback: if no active voice, call the playback-start virtual.
 void func_802A5E0C(CVS_THREAD_DOWN* self) {
     if (func_802A3E88(self) == 0) {
@@ -14,7 +14,7 @@ void func_802A5E0C(CVS_THREAD_DOWN* self) {
     }
 }
 
-// ── Target 2: us-802a8588 (func_802A5E54) ──────────────────────────────────
+// us-802a8588 (func_802A5E54)
 // Remove a voice from the slots by matching its embedded CCharVoice pointer.
 // Each slot stores a CVoiceHandle; the comparison target is the CCharVoice
 // embedded at +0x3E9C inside that handle (or NULL when the slot is empty).
@@ -42,7 +42,7 @@ void func_802A5E54(CVS_THREAD_DOWN* self, CCharVoice* voicePtr) {
     }
 }
 
-// ── Target 3: us-802a83c4 (func_802A5C90) ──────────────────────────────────
+// us-802a83c4 (func_802A5C90)
 // Advance/play function for voice slot 1 (field_0x20).
 // Copies init data from lbl_eu_80539A74 into the base state words 0x00-0x08,
 // checks if the voice is still active (vtable method at offset 0x2BC), and
@@ -77,7 +77,7 @@ void func_802A5C90(CVS_THREAD_DOWN* self) {
     }
 }
 
-// ── Target 4: us-802a8480 (func_802A5D4C) ──────────────────────────────────
+// us-802a8480 (func_802A5D4C)
 // Advance/play function for voice slot 2 (field_0x24).
 // Copies init data from lbl_eu_80539A80 into the base state words 0x00-0x08,
 // checks if the voice is still active, and if inactive, plays a voice ID
@@ -117,7 +117,7 @@ void func_802A5D4C(CVS_THREAD_DOWN* self) {
     }
 }
 
-// ── Target 5: us-802a82bc (__ct__802A5B88) ─────────────────────────────────
+// us-802a82bc (__ct__802A5B88)
 // Factory/constructor for CVS_THREAD_DOWN. Takes two owner CVoiceHandles
 // (each must have the factory-active flag bit 1 set at 0x3F00), allocates a
 // throwaway handle buffer (0xF0 bytes) and the object itself (0x28 bytes),

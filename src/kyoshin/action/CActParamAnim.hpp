@@ -317,7 +317,6 @@ extern "C" void func_80055F08(void* data);
 extern "C" void func_8004C608(void* self);
 extern "C" void func_8004CC8C(void* self);
 extern "C" void func_80055AC4(void* data);
-extern "C" f32 func_80496288(void* obj);
 extern "C" void* func_80496264(void* obj, s32 id);
 extern "C" void func_80484E5C(void* self, f32 value);
 extern "C" int func_804BE398(void* vec, u32 a, u32 b, u32 c, f32 d, f32 e);

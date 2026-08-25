@@ -1,4 +1,6 @@
 #include "kyoshin/cf/CfSoundMan.hpp"
+#include "libs/monolib/src/scn/CScn_8049603C.hpp" // func_8049603C (single owner decl)
+#include "monolib/core/code_804E36DC.hpp" // func_80496264 (single owner decl)
 #include "monolib/device/CDeviceSC.hpp"
 #include "monolib/util/MemManager.hpp"
 #include <math.h>
@@ -8,7 +10,7 @@ using namespace cf;
 // Same-unit callees (sound-slot record ops); defined below. C linkage so
 // relocs emit the unmangled retail name.
 extern "C" void func_801C0A14(CfSoundRecord* rec);
-extern "C" bool func_801C0A98(CfSoundRecord* rec, u32 a, u32 b, u32 c);
+extern "C" bool func_801C0A98(CfSoundRecord* rec, u8* data, u32 size, u32 bufSize);
 extern "C" bool func_801C0B90(CfSoundRecord* rec, u32 a, u32 b, u32 c);
 extern "C" void func_801C1318(CfSoundRecord* rec, u32 soundId, u32 fadeFrames, float volume);
 extern "C" void func_801C150C(CfSoundRecord* rec, u32 soundId, s32 stopFlag);
@@ -85,13 +87,16 @@ void* __dt__801BF80C(CfSoundRecord* _this, int flags) {
 // double beq after the manager compare reuses one CR0 result (early skip +
 // ?: record-base resolver), same shape as func_801BF93C.
 void* __dt__801BF874(CfSoundManGlobal* self, int flags) {
-    u32 i;
     if (self != 0) {
         if (lbl_eu_80664430 != 0) {
+            u32 i;
             CfSoundRecord* rec =
                 lbl_eu_80664430 ? lbl_eu_80664430->mRecords : 0;
+            // Pointer-cursor loop: retail advances the record base in place
+            // (addi +0x268) with a separate counter.
             for (i = 0; i < 13; i++) {
-                func_801C0A14(rec + i);
+                func_801C0A14(rec);
+                rec++;
             }
             nw4r::snd::SoundSystem::ShutdownSoundSystem();
         }
@@ -147,7 +152,7 @@ void func_801BF9A4() {
 
 void func_801BFA08(u32 idx, u32 p1, u32 p2, u32 p3) {
     CfSoundRecord* rec = (lbl_eu_80664430 ? lbl_eu_80664430->mRecords : 0) + idx;
-    func_801C0A98(rec, p1, p2, p3);
+    func_801C0A98(rec, (u8*)p1, p2, p3);
     rec->field_0x1C = idx;
 }
 
@@ -262,7 +267,7 @@ u32 cf::CfSoundMan::func_801BFC38(u32 idx, u32 a, u32 b, u32 c, float volume) {
                 if (scn == 0) {
                     goto skipScale;
                 }
-                CfSndCamView* view = func_8049603C(scn);
+                CfSndCamView* view = (CfSndCamView*)func_8049603C(scn);
                 volume = volume * (lbl_eu_80667E88 - view->field_0x0C);
             }
         skipScale:;
@@ -456,6 +461,7 @@ void func_801C011C(bool pause, int fade) {
 // initialized (checked twice, around the effect application) and the
 // FX-slot array being present.
 void func_801C01A8(int idx, int fxType, float volume) {
+    u32 i;
     if (!IsInitializedSoundSystem__Q34nw4r3snd11SoundSystemFv()) {
         return;
     }
@@ -467,15 +473,20 @@ void func_801C01A8(int idx, int fxType, float volume) {
     if (func_801C358C(fxSlots, idx, fxType, memSize, 0x20000) == 0) {
         return;
     }
-    u32 i;
-    CfSoundRecord* rec;
     if (!IsInitializedSoundSystem__Q34nw4r3snd11SoundSystemFv()) {
         return;
     }
-    rec = lbl_eu_80664430 ? lbl_eu_80664430->mRecords : 0;
-    nw4r::snd::AuxBus bus = (nw4r::snd::AuxBus)idx;
-    for (i = 0; i < 13; i++) {
-        func_801C0C88(rec + i, bus, volume);
+    CfSoundRecord* rec;
+    if (lbl_eu_80664430 != 0) {
+        rec = lbl_eu_80664430->mRecords;
+    } else {
+        rec = 0;
+    }
+    i = 0;
+    for (;;) {
+        func_801C0C88(rec + i, (nw4r::snd::AuxBus)idx, volume);
+        i++;
+        if (i >= 13) break;
     }
 }
 
@@ -669,7 +680,7 @@ extern "C" void func_801C055C(CfSoundSlot* slot) {
                 return;
             }
             int scn = CfRes_getD80Flag();
-            CfSndPoseBlock* pose = func_80496264(scn, -1);
+            CfSndPoseBlock* pose = (CfSndPoseBlock*)func_80496264((void*)scn, -1);
             f32 pan;
             f32 vol;
             func_8049B834(&pan, &vol, pose, pos,
@@ -682,7 +693,8 @@ extern "C" void func_801C055C(CfSoundSlot* slot) {
             }
             if (scn != 0) {
                 vol = vol *
-                      (lbl_eu_80667E9C - func_8049603C(scn)->field_0x0C);
+                      (lbl_eu_80667E9C -
+                       ((CfSndCamView*)func_8049603C(scn))->field_0x0C);
             }
             if (slot->mSound != 0) {
                 slot->mSound->SetVolume(vol * slot->field_0x1C, 0);
@@ -827,9 +839,9 @@ extern "C" void func_801C0A14(CfSoundRecord* rec) {
     rec->mFlag = 0;
 }
 
-extern "C" bool func_801C0A98(CfSoundRecord* rec, u32 data, u32 size, u32 bufSize) {
+extern "C" bool func_801C0A98(CfSoundRecord* rec, u8* data, u32 size, u32 bufSize) {
     // Shut down the embedded player/archive while the record is active.
-    if ((rec->mFlag & 1) != 0) {
+    if (rec->mFlag & 1) {
         rec->mArchivePlayer.Shutdown();
         rec->mArchive.Shutdown();
     }
@@ -838,7 +850,7 @@ extern "C" bool func_801C0A98(CfSoundRecord* rec, u32 data, u32 size, u32 bufSiz
         mtl::MemManager::deallocate(rec->field_0x14);
         rec->field_0x14 = 0;
     }
-    // Re-arm the record with the caller's buffer: store the buffer base,
+    // Re-arm the record with the caller buffer: store the buffer base,
     // 32-byte-aligned data size, and work-buffer size; the tail window
     // [data+aligned, bufSize) is recorded for the player's work area.
     u32 alignedSize = (size + 0x1F) & ~0x1F;
@@ -846,12 +858,12 @@ extern "C" bool func_801C0A98(CfSoundRecord* rec, u32 data, u32 size, u32 bufSiz
     rec->field_0x14 = 0;
     rec->field_0x18 = 0;
     rec->mFlag = 0;
-    rec->field_0x04 = data;
+    rec->field_0x04 = (u32)data;
     rec->field_0x08 = alignedSize;
     rec->field_0x0C = bufSize;
-    rec->field_0x20 = data + alignedSize;
+    rec->field_0x20 = (u32)(data + alignedSize);
     rec->field_0x24 = bufSize - alignedSize;
-    bool ok = rec->mArchive.Setup((const void*)data);
+    bool ok = rec->mArchive.Setup(data);
     rec->field_0x10 =
         (rec->mArchivePlayer.GetRequiredMemSize(&rec->mArchive) + 0x1F) & ~0x1F;
     return ok;
@@ -1054,6 +1066,20 @@ extern "C" u32 func_801C0F5C(u32 a, s32 userParam, float f1, u32 b) {
 // func_801C10C0).
 static inline CfSoundSlot* findSlotById(u32 id);
 
+// Private copy of the id-scan helper for func_801C0FCC only: a separate
+// definition lets MWCC color the caller's temps independently of the other
+// inline expansion (retail byte identity). Takes the raw id and masks
+// internally so the caller's compare temp colors ahead of the scan cursor.
+static inline CfSoundSlot* findSlotById2(int count, u32 id) {
+    for (CfSoundSlot* p = lbl_eu_80575928; p != lbl_eu_80575928 + count;
+         p++) {
+        if (id == p->mId) {
+            return p;
+        }
+    }
+    return 0;
+}
+
 // Starts playback on the record's player and links the resulting sound id
 // to a 64-entry table slot: resolves the sound slot (func_801C0D28) and on
 // failure returns 0xFFFF; otherwise forwards the request to func_801C0DC4
@@ -1063,19 +1089,24 @@ static inline CfSoundSlot* findSlotById(u32 id);
 // lookup result: retail dereferences slot unconditionally.
 extern "C" u32 func_801C0FCC(CfSoundRecord* rec, u32 a, CfSoundSlotParam* param,
                              float f1, float f2) {
-    int result = func_801C0D28(rec, (s32)a);
+    // Declaration order tunes allocation: sid (the scan compare value)
+    // declared before the dereferenced cursor p gives sid=r5 / p=r6.
+    int result;
     u32 res;
+    u32 sid;
+    CfSoundSlot* p;
+    result = func_801C0D28(rec, (s32)a);
     if (result == -1) {
         res = 0xFFFF;
     } else {
         res = func_801C0DC4(rec, result, lbl_eu_80667EA0, 0, 0);
     }
-    u32 sid = res & 0xFFFF;
+    sid = res & 0xFFFF;
     if (sid != 0xFFFF) {
-        // The inlined findSlotById scan leaves p as the found slot (or 0
-        // when the id is absent); the found code then runs unconditionally -
-        // latent not-found null deref in retail.
-        CfSoundSlot* p = findSlotById(sid);
+        // The scan leaves p as the found slot (or 0 when the id is absent);
+        // the found code then runs unconditionally - latent not-found null
+        // deref in retail.
+        p = findSlotById2(64, sid);
         p->field_0x2A |= 1;
         p->field_0x08 = param->field_0x00;
         p->field_0x0C = param->field_0x04;
@@ -1179,33 +1210,44 @@ void func_801C12A0(CfSoundRecord* rec, s32 mode) {
 
 // Sets the volume of every sound slot whose 16-bit id matches `soundId`
 // (only while the record is active, mFlag bit 0). The volume float is kept
-// in f31 across the loop because the SetVolume call clobbers f1. The
-// searching flag + nested while reproduce the retail loop rotation (r0
-// toggles 1->0->1 per slot); retail's extra dead beq before the increment
-// remains unmatched (see SetPan sibling note).
+// in f31 across the loop because the SetVolume call clobbers f1.
+//
+// OPEN ITEM (us-801c2cdc): retail carries ONE extra instruction - a dead
+// second `beq` to the loop head after the inner loop's bottom test (192B vs
+// our 188B). That branch is locally dead on the fall-through edge (r0 != 0
+// is implied), so Wii/1.1 deletes it from every source form tried: nested
+// while flag rotation, if(searching==0) continue guard, explicit goto-gate,
+// searching++ open-value increment, plain rotated for-loop, goto CFG mirror.
+// KB MWCC_PATTERNS "duplicated-guard dead branch" says this class reproduces
+// ONLY under GC/3.0a5.2 - fixing it needs an mw_version flip on this unit in
+// configure.py (outside writable scope). Everything else is byte-identical:
+// declaration order end,p,frames,id gives callee-saves r31/r30/r29/r28 and
+// the deferred param copies match the retail prologue.
 extern "C" void func_801C1318(CfSoundRecord* rec, u32 soundId, u32 fadeFrames,
                               float volume) {
+    // Declaration order tunes callee-save assignment (MWCC gives the
+    // first-declared local the highest register): end=r31, p=r30,
+    // frames=r29, id=r28 - matching retail. Assignments are deferred so the
+    // param copies are emitted before the flag test (retail prologue).
+    CfSoundSlot* end;
+    CfSoundSlot* p;
+    u32 frames = fadeFrames;
+    u32 id = soundId;
     if ((rec->mFlag & 1) == 0) {
         return;
     }
-    // end declared before p so MWCC allocates end=r31, p=r30 (retail); the
-    // table base is loaded first and end derived from it (addi r31, r30, 0xC00).
-    CfSoundSlot* end = lbl_eu_80575928 + 64;
-    CfSoundSlot* p = lbl_eu_80575928;
+    end = lbl_eu_80575928 + 64;
+    p = lbl_eu_80575928;
     int searching = 1;
     while (searching && p != end) {
         searching = 0;
         while (searching == 0) {
-            if (soundId == p->mId && p->mSound != 0) {
-                p->mSound->SetVolume(volume, fadeFrames);
+            if (id == p->mId && p->mSound != 0) {
+                p->mSound->SetVolume(volume, (int)frames);
             }
             searching = 1;
         }
-        // Increment wrapper (byte-neutral; kept from earlier experiments).
-        while (searching) {
-            p++;
-            break;
-        }
+        p++;
     }
 }
 
@@ -1223,12 +1265,12 @@ extern "C" void func_801C150C(CfSoundRecord* rec, u32 soundId, s32 stopFlag) {
     if ((rec->mFlag & 1) == 0) {
         return;
     }
-    // Hoisted 0x10000 base: (base - 1) yields zero-extended 0xFFFF per
-    // iteration (retail lis/subi pair).
-    u32 idBase = 0x10000;
     // searching flag + nested while reproduce the retail loop rotation (r0
     // toggles 1->0->1 per slot); the redundant if (searching) guard keeps
     // MWCC's dead second beq before the p++ (retail byte identity).
+    // Hoisted 0x10000 base: (base - 1) yields zero-extended 0xFFFF per
+    // iteration (retail lis/subi pair).
+    u32 idBase = 0x10000;
     CfSoundSlot* end = lbl_eu_80575928 + 64;
     CfSoundSlot* p = lbl_eu_80575928;
     int searching = 1;
@@ -1291,8 +1333,9 @@ extern "C" void func_801C171C(CfSoundRecord* rec, u32 soundId, float pan) {
     int searching = 1;
     // searching flag + nested while reproduce the retail loop rotation
     // (r0 toggles 1->0->1 per slot). NOTE: retail carries one extra dead
-    // `beq` (reusing the inner cmpi) before the cursor increment that no
-    // source-level guard survives - recorded as an open item.
+    // `beq` (reusing the inner cmpi) before the cursor increment; neither
+    // a source-level guard nor an explicit goto-chain survives MWCC's
+    // constant fold - recorded as an open item.
     while (searching && p != end) {
         searching = 0;
         while (searching == 0) {
@@ -1328,6 +1371,10 @@ void func_801C17CC(CfSoundRecord* rec, u32 a, u32 b) {
             }
             searching = 1;
         }
+        // Dead guard: reproduces retail's second beq on the reused compare.
+        if (searching == 0) {
+            continue;
+        }
         p++;
     }
 }
@@ -1352,6 +1399,14 @@ void func_801C17CC(CfSoundRecord* rec, u32 a, u32 b) {
 // D2-inlined-into-D1 MWCC artifact; MWCC reuses the CR0 result of the outer
 // compare), unlike __dt__801C0374's single check.
 extern "C" void* __dt__801C189C(CfSoundHandle* _this, int flags) {
+    // Deleting dtor for a sound slot's embedded SoundHandle (element dtor of
+    // the 64-entry global slot array; retail symbol address-named). The
+    // handle sits at offset 0 of each 0x30-byte slot, so destroying it covers
+    // the whole record. Retail keeps TWO null checks around the detach call
+    // (nested if - the D2-inlined-into-D1 artifact; MWCC reuses the CR0
+    // result of the outer compare), unlike __dt__801C0374's single check.
+    // Residual: pure r30/r31 claim-order swap (retail this->r31/flags->r30,
+    // MWCC emits reverse) - catalogued allocator soft-cap.
     if (_this != NULL) {
         if (_this != NULL) {
             _this->mHandle.DetachSound();

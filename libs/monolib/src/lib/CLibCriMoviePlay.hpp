@@ -40,13 +40,15 @@ extern "C" {
 struct MovieEntry {
     u32 mFlags;              // 0x00
     void* mPlyHandle;        // 0x04 - CRI movie player handle (opaque)
-    u8 mCprmData[0x1C];      // 0x08 - CRI cprm structure inline data
+    u8 mCprmData[0x18];      // 0x08 - CRI cprm structure inline data
+    void* mWorkBuf;          // 0x20 - CRI work buffer (allocated in startMovie)
     u32 mWorkSize;           // 0x24 - calculated work buffer size (inside cprm)
     u8 mCprmData2[0x2C];     // 0x28 - remaining cprm fields
     void* mAllocHandle;      // 0x54 - CRI alloc handle stored in a pointer slot
     u32 mAllocHandle2;       // 0x58 - secondary allocation handle
     bool mActive;            // 0x5C - entry active/has-filename flag
-    char mFilename[0x43];    // 0x5D - filename buffer
+    char mFilename[0x3F];    // 0x5D - filename buffer
+    u32 mFilenameLen;        // 0x9C - strlen of mFilename
     u32 mStreamId;           // 0xA0 - stream ID
     void* mTexBufY;          // 0xA4 - Y texture buffer pointer (written from void* allocate)
     u32 mTexBufYSize;        // 0xA8 - Y texture buffer size
@@ -56,11 +58,11 @@ struct MovieEntry {
     GXTexObj mTexObjCbCr;    // 0xD4 - GX texture object for CbCr plane
     u16 mTexWidth;           // 0xF4 - texture width
     u16 mTexHeight;          // 0xF6 - texture height
-    u32 mAction;             // 0xF8 - movie action/state machine
+    s32 mAction;             // 0xF8 - movie action/state machine (signed: retail cmpi)
     u32 mPlayerId;           // 0xFC - player identifier / packed ID
     u32 mField100;           // 0x100
     float mColor[4];         // 0x104 - RGBA overlay color
-    u32 mPlaybackState;      // 0x114 - playback state from mwPlyGetStat
+    s32 mPlaybackState;      // 0x114 - playback state from mwPlyGetStat (signed: retail cmpi switch)
     bool mGlobalPause;       // 0x118 - global pause flag
     bool mPauseOverride;     // 0x119 - pause override flag
     void* mSavedTexBufY;     // 0x11C - saved Y buffer ptr (for cleanup)

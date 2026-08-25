@@ -45,7 +45,7 @@ typedef struct SvmCtrl {
     SvmCbArea cb_area;         /* 0x010 */
     char err_msg[0x100];       /* 0x020 */
     SvmErrCb err_cb;           /* 0x120 */
-    SvmSvrEntry svr_tbl[8][6]; /* 0x128 */
+    SvmSvrEntry svr_tbl[6][8]; /* 0x128 - [exec row][slot]; DelCbSvr indexes [idx][svrId] */
     SvmCbPair bdr_tbl[8];      /* 0x368 */
     SvmExecArea exec;          /* 0x3A8 */
     u64 field_0x3E8;           /* 0x3E8 */
@@ -171,14 +171,28 @@ s32 SVM_SetCbSvrWithString(u32 svrId, void* fn, void* ctx, const char* name) {
     return ret;
 }
 
-/* Inlined error-report body; retail duplicates this into every caller. */
-static inline void svm_ReportErr(SvmErrCb* ecb, char* errmsg, const char* msg) {
+/* Inlined error-report body; retail duplicates this into every caller.
+   The message is formed as base + offset from a runtime base value so the
+   NULL check survives as `addic. r5, r3, off` instead of being folded away.
+   Func fetches stay folded off the ctrl register while the object fetch is
+   issued through the global name (mixed shape mirrors SVM_Lock/SVM_Unlock,
+   giving the unfolded addi + lwz pair load). */
+/* Inline (not macro): base must arrive as an opaque r3 parameter so the
+   NULL test survives as addic. r5, r3, off with msg live for Strncpy.
+   ecb live across the Strncpy call makes MWCC rematerialize the pair
+   address (addi + lwz) for the object fetch, matching retail. */
+static inline void svm_ReportErr(const char* base, s32 off) {
+    /* Direct-global accesses throughout: with no ctrl local in the helper,
+       MWCC can share the caller's hoisted address register instead of
+       rematerializing the global address inside the inlined body. */
+    SvmErrCb* ecb = &lbl_eu_805F26F0.err_cb;
+    const char* msg = &base[off];
     if (msg == NULL) {
-        ecb->func(ecb->object, NULL);
+        lbl_eu_805F26F0.err_cb.func(ecb->object, NULL);
     } else {
-        CRICRW_Strncpy(errmsg, (void*)0x100, msg, 0xFF);
-        if (ecb->func != NULL)
-            ecb->func(ecb->object, errmsg);
+        CRICRW_Strncpy(lbl_eu_805F26F0.err_msg, (void*)0x100, msg, 0xFF);
+        if (lbl_eu_805F26F0.err_cb.func != NULL)
+            lbl_eu_805F26F0.err_cb.func(ecb->object, lbl_eu_805F26F0.err_msg);
     }
 }
 
@@ -186,9 +200,10 @@ s32 svm_SetCbSvr(u32 svrId, void* fn, void* ctx, const char* name) {
     SvmCtrl* ctrl = &lbl_eu_805F26F0;
     s32 i;
     if (svrId > 7) {
-        svm_ReportErr(&ctrl->err_cb, ctrl->err_msg, &lbl_eu_80518F50[0x47]);
+        svm_ReportErr(lbl_eu_80518F50, 0x47);
         return -1;
     }
+    /* First free slot; func/object are stored before the name branch. */
     for (i = 0; i < 6; i++) {
         SvmSvrEntry* entry = &ctrl->svr_tbl[svrId][i];
         if (entry->func == NULL) {
@@ -200,39 +215,41 @@ s32 svm_SetCbSvr(u32 svrId, void* fn, void* ctx, const char* name) {
     }
     if (i != 6)
         return i;
-    svm_ReportErr(&ctrl->err_cb, ctrl->err_msg, &lbl_eu_80518F50[0x75]);
+    svm_ReportErr(lbl_eu_80518F50, 0x75);
     return -1;
 }
 
 void SVM_DelCbSvr(u32 svrId, u32 idx) {
     SvmCtrl* ctrl = &lbl_eu_805F26F0;
-    SvmErrCb* ecb = &ctrl->err_cb;
-    SVM_LOCK();
+    if (ctrl->cb_area.lock.func != NULL) {
+        ctrl->cb_area.lock.func(lbl_eu_805F26F0.cb_area.lock.object);
+        if (ctrl->lock_count == 0)
+            ctrl->lock_flag = 1;
+        ctrl->lock_count++;
+    }
     if (idx > 5) {
-        const char* msg = &lbl_eu_80518F50[0xA3];
-        if (msg == NULL) {
-            ecb->func(ecb->object, NULL);
-        } else {
-            CRICRW_Strncpy(ctrl->err_msg, (void*)0x100, msg, 0xFF);
-            if (ecb->func != NULL)
-                ecb->func(ecb->object, ctrl->err_msg);
-        }
+        svm_ReportErr(lbl_eu_80518F50, 0xA3);
     } else if (svrId > 7) {
-        const char* msg = &lbl_eu_80518F50[0xC3];
-        if (msg == NULL) {
-            ecb->func(ecb->object, NULL);
-        } else {
-            CRICRW_Strncpy(ctrl->err_msg, (void*)0x100, msg, 0xFF);
-            if (ecb->func != NULL)
-                ecb->func(ecb->object, ctrl->err_msg);
-        }
+        svm_ReportErr(lbl_eu_80518F50, 0xC3);
     } else {
-        SvmSvrEntry* entry = &ctrl->svr_tbl[svrId][idx];
+        /* Slot clearing: row is the exec-server index, column the slot id. */
+        SvmSvrEntry* entry = &ctrl->svr_tbl[idx][svrId];
         entry->func = NULL;
         entry->object = NULL;
         entry->name = NULL;
     }
-    SVM_UNLOCK();
+    {
+        SvmCbPair* cb = &ctrl->cb_area.unlock;
+        if (ctrl->cb_area.unlock.func != NULL) {
+            ctrl->lock_count--;
+            if (ctrl->lock_count == 0) {
+                if (ctrl->lock_flag != 1)
+                    SVM_CallErr(lbl_eu_80518F50, ctrl->lock_flag, 1);
+                ctrl->lock_flag = 0;
+            }
+            cb->func(cb->object);
+        }
+    }
 }
 
 void SVM_SetCbSvrIdWithString(u32 svrId, u32 idx, void* fn, void* ctx, const char* name) {
@@ -243,40 +260,18 @@ void SVM_SetCbSvrIdWithString(u32 svrId, u32 idx, void* fn, void* ctx, const cha
 
 void svm_SetCbSvrId(u32 svrId, u32 idx, void* fn, void* ctx, const char* name) {
     SvmCtrl* ctrl = &lbl_eu_805F26F0;
-    SvmErrCb* ecb = &ctrl->err_cb;
     if (idx > 5) {
-        const char* msg = &lbl_eu_80518F50[0xE9];
-        if (msg == NULL) {
-            ecb->func(ecb->object, NULL);
-        } else {
-            CRICRW_Strncpy(ctrl->err_msg, (void*)0x100, msg, 0xFF);
-            if (ecb->func != NULL)
-                ecb->func(ecb->object, ctrl->err_msg);
-        }
+        svm_ReportErr(lbl_eu_80518F50, 0xE9);
         return;
     }
     if (svrId > 7) {
-        const char* msg = &lbl_eu_80518F50[0x10B];
-        if (msg == NULL) {
-            ecb->func(ecb->object, NULL);
-        } else {
-            CRICRW_Strncpy(ctrl->err_msg, (void*)0x100, msg, 0xFF);
-            if (ecb->func != NULL)
-                ecb->func(ecb->object, ctrl->err_msg);
-        }
+        svm_ReportErr(lbl_eu_80518F50, 0x10B);
         return;
     }
     {
-        SvmSvrEntry* entry = &ctrl->svr_tbl[svrId][idx];
+        SvmSvrEntry* entry = &ctrl->svr_tbl[idx][svrId];
         if (entry->func != NULL) {
-            const char* msg = &lbl_eu_80518F50[0x131];
-            if (msg == NULL) {
-                ecb->func(ecb->object, NULL);
-            } else {
-                CRICRW_Strncpy(ctrl->err_msg, (void*)0x100, msg, 0xFF);
-                if (ecb->func != NULL)
-                    ecb->func(ecb->object, ctrl->err_msg);
-            }
+            svm_ReportErr(lbl_eu_80518F50, 0x131);
         }
         entry->func = (u32 (*)(void*))fn;
         entry->object = ctx;
@@ -459,7 +454,7 @@ u32 SVM_ExecSvrMain(void) {
 /* Single-call-site copy of the server runner for SVM_ExecSvrMwIdle.
    The p/end pointer pair keeps both entry addresses derived from the
    table row (closer to retail's two-step address computation). */
-static inline u32 svm_ExecSvrMwIdleSub(SvmSvrEntry (*tbl)[6]) {
+static inline u32 svm_ExecSvrMwIdleSub(SvmSvrEntry (*tbl)[8]) {
     SvmCtrl* ctrl = &lbl_eu_805F26F0;
     u32 result = 0;
     u32 one = 1;
@@ -562,17 +557,45 @@ void SVM_Finish(void) {
     memset(&ctrl->err_cb, 0, 8);
 }
 
+/* NOTE: retail keeps the callback-pair address materialized (addi + lwz)
+   instead of folding the load displacement off the ctrl base; peephole
+   must stay off across this body or MWCC rewrites it to lwz disp(r31). */
+/* NOTE: retail materializes the callback-pair address (addi + lwz) for each
+   callback argument instead of folding a displacement off the ctrl base.
+   No high-level source form tried (pair-pointer locals, volatile barriers,
+   global-direct accesses, #pragma peephole off) reproduces the unfolded
+   load under this unit's codegen; the folded lwz disp is the residual. */
 s32 SVM_TestAndSet(u32* p) {
     SvmCtrl* ctrl = &lbl_eu_805F26F0;
-    if (ctrl->testandset_fn != NULL)
-        return ((s32 (*)(u32*))ctrl->testandset_fn)(p);
-    SVM_LOCK();
-    {
-        u32 old = *p;
-        s32 result;
+    s32 result;
+    u32 old;
+    if (ctrl->testandset_fn != NULL) {
+        result = ((s32 (*)(u32*))ctrl->testandset_fn)(p);
+    } else {
+        /* Inline lock */
+        if (ctrl->cb_area.lock.func != NULL) {
+            SvmCbPair* cb = &ctrl->cb_area.lock;
+            ctrl->cb_area.lock.func(cb->object);
+            if (ctrl->lock_count == 0)
+                ctrl->lock_flag = 1;
+            ctrl->lock_count++;
+        }
+        /* Swap in the locked value; result uses MWCC's compare idiom
+           (((old - 1) | (1 - old)) >> 31). */
+        old = *p;
         *p = 1;
-        result = (old == 0) ? 0 : 1;
-        SVM_UNLOCK();
-        return result;
+        result = (old != 1);
+        /* Inline unlock: callee is fetched at the call site (after the
+           error path) so no pointer lives across SVM_CallErr. */
+        if (ctrl->cb_area.unlock.func != NULL) {
+            ctrl->lock_count--;
+            if (ctrl->lock_count == 0) {
+                if (ctrl->lock_flag != 1)
+                    SVM_CallErr(lbl_eu_80518F50, ctrl->lock_flag, 1);
+                ctrl->lock_flag = 0;
+            }
+            ctrl->cb_area.unlock.func(lbl_eu_805F26F0.cb_area.unlock.object);
+        }
     }
+    return result;
 }

@@ -118,5 +118,5 @@ u32 func_801355A0();
 
 // Unmangled retail callees - C ABI. The retail reloc names for these are the
 // literal unmangled identifiers, so they must be declared with C linkage.
-extern "C" void func_8003AA34();
+extern "C" void* func_8003AA34();
 extern "C" void func_8029B05C(CTutorial* pTutorial);

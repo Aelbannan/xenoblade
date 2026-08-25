@@ -8,7 +8,68 @@
 #include "kyoshin/cf/chain/CChainChance.hpp"
 #include "kyoshin/cf/chain/CChainCombo.hpp"
 
+// Retail .data vtable mirrors assigned by the inlined sub-object ctors below.
+// Full-size (0x10) so MWCC emits the lis/addi HA-LO pair instead of sda21.
+struct CChainVtSym { u8 bytes[0x10]; };
+extern CChainVtSym lbl_eu_80538284;
+extern CChainVtSym lbl_eu_80538278;
+extern CChainVtSym lbl_eu_8053826C;
+
+extern "C" void func_8027C45C(cf::CChainList* self);
+
 namespace cf {
+    // Inlined-construction mirrors for the CChain tail sub-objects. Retail
+    // initializes each with a tiny inlined ctor that stores its .data vtable
+    // pointer (and zeroes the leading counter), so these are plain structs
+    // with manual vptr fields, not polymorphic classes. The implicit CChain
+    // ctor then emits the retail construction order exactly (member -> two
+    // timers -> chance interleaved between the out-of-line actor-list / time /
+    // combo ctors).
+
+    // 0xEC: opaque body + vtable at +0xE8; ctor also resets the list via
+    // func_8027C45C.
+    class CChainMemberInit {
+    public:
+        u8 unk0[0xE8];   //0x00
+        void* mVtbl;     //0xE8
+
+        CChainMemberInit() {
+            mVtbl = &lbl_eu_80538284;
+            func_8027C45C((CChainList*)this);
+        }
+    };
+
+    // 0x8: leading s16 counter + vtable at +0x4.
+    class CChainTimerInit {
+    public:
+        s16 unk0;        //0x0 (read/written signed by chain code)
+        u8 unk2[2];
+        void* mVtbl;     //0x4
+
+        CChainTimerInit() {
+            mVtbl = &lbl_eu_80538278;
+            unk0 = 0;
+        }
+    };
+
+    // 0x18: counter, an embedded timer-vtable pointer at +0x4, and its own
+    // vtable at +0x10.
+    class CChainChanceInit {
+    public:
+        s16 mChainCount;  //0x0
+        u8 unk2[2];
+        void* mTimerVtbl; //0x4
+        u8 unk8[8];
+        void* mVtbl;      //0x10
+        u8 unk14[4];      //0x14
+
+        CChainChanceInit() {
+            mTimerVtbl = &lbl_eu_80538278;
+            mVtbl = &lbl_eu_8053826C;
+            mChainCount = 0;
+        }
+    };
+
     //size: 0x1F0C?
     class CChain {
     public:
@@ -19,11 +80,11 @@ namespace cf {
 
         u8 unk0[0x18];
         CChainActorList mChainActorList; //0x18
-        CChainMember mChainMember; //0x1DC8
-        CChainTimer mChainTimer1; //0x1EB4
-        CChainTimer mChainTimer2; //0x1EBC
+        CChainMemberInit mChainMember; //0x1DC8
+        CChainTimerInit mChainTimer1; //0x1EB4
+        CChainTimerInit mChainTimer2; //0x1EBC
         CChainTime mChainTime; //0x1EC4
-        CChainChance mChainChance; //0x1EDC
+        CChainChanceInit mChainChance; //0x1EDC
         CChainCombo mChainCombo; //0x1EF4
         u8 unk1F0C[0x14];
     };

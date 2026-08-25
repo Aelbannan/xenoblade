@@ -35,8 +35,7 @@ public:
     // Render callback (dispatched through the IScnRender subobject vtable)
     void cbRenderBefore();
 
-    u32 ptmf0[3];                 // 0x3C-0x47: null PMF callback slot group 1
-    u32 ptmf1[3];                 // 0x48-0x53: null PMF callback slot group 2
+    u32 mPtmfCallbacks[6];        // 0x3C-0x53: null PMF callback slots (two 3-word groups)
     u8 mField54;                  // 0x54: phase flag
     u8 mField55;                  // 0x55
     u8 _pad56[2];                 // 0x56-0x57

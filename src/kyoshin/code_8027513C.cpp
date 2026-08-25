@@ -4,6 +4,7 @@
 #include "kyoshin/harness_catalog.hpp"
 
 #include "kyoshin/code_8027513C.hpp"
+#include "libs/monolib/src/scn/CScn_8049603C.hpp" // func_8049603C (single owner decl)
 #include "kyoshin/cf/CfGameManager.hpp"
 #include "kyoshin/cf/object/CfObjectMove.hpp"
 #include "kyoshin/cf/object/CfObjectEff.hpp"
@@ -19,7 +20,7 @@ void func_800ACC14(void* self, s8 val);
 void func_800ACC64(cf::CfObjectEff* obj, const float* src);
 void func_800ACF78(cf::CfObjectEff* eff, cf::CfObjectMove* obj, int arg);
 void func_801BFDE8(int arg0, int arg1, float* pos, float arg3, float arg4);
-UnkCamObj* func_8049603C(CScn* arg);
+// func_8049603C: single owner decl in libs/monolib/src/scn/CScn_8049603C.hpp.
 
 // Vtable helper structs for calling methods whose return type
 // or signature differs from the header declaration.

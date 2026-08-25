@@ -871,10 +871,8 @@ struct CtrlActChainObj {
 // C-linkage imports (retail symbol names - keep linkage/signatures verbatim)
 // ---------------------------------------------------------------------------
 extern "C" void func_80174C24(void* obj, u32 flag);
-extern "C" f32 func_80496288(void* scene);      // frame delta time
 extern "C" void* func_8016FE34(void* r3);       // voice/battle-list resolve
 extern "C" int func_8004C5EC(void* battleObj);  // battle-state page id
-extern "C" void func_800BE12C(void* obj, int a, int b, int c, int d);
 extern "C" void func_80174B4C(void* actor, u32 flags);
 extern "C" int func_80174C98(void* actor, u32* val, int flags);
 extern "C" int func_80148778(void* obj, int id);
@@ -889,7 +887,7 @@ extern "C" int func_804B526C(void* a, void* b, void* c, void* d, int e, int f, i
 extern "C" int func_804B54D4(void* a, void* b, void* c, int d, int e);
 // func_800D2D64 imports: arts-param lookups, battle-manager sub-views and the
 // arts-id predicate. (getInstance__Q22cf14CBattleManagerFv is declared in
-// CtrlPc.hpp as CBattleManagerView*.)
+// kyoshin/cf/CBattleManagerApi.hpp.)
 extern "C" void* func_80153CAC(void* base, int index);
 extern "C" void* getArtsParamByIdx(void* base, int index);
 extern "C" void* func_800EA444(void* bm);

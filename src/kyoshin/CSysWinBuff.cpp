@@ -40,7 +40,7 @@ extern "C" void func_80274B20() {}
 extern "C" void func_80274B24() {}
 
 // ---------------------------------------------------------------------------
-// Target 1: CSysWinBuff::~CSysWinBuff (us-80276958)
+// CSysWinBuff::~CSysWinBuff (us-80276958)
 // Complete-object destructor. The embedded CSysWin is destroyed (flags -1),
 // then the CProcess base guarded by the nested double null-check (an MWCC
 // D2-inlined-into-D1 artifact), then conditional operator delete when the
@@ -62,7 +62,7 @@ extern "C" void* __dt__11CSysWinBuffFv(CSysWinBuff* _this, int flags) {
 }
 
 // ---------------------------------------------------------------------------
-// Target 2: func_80274A84 (us-80276f08) - IWorkEvent::OnFileEvent body.
+// func_80274A84 (us-80276f08) - IWorkEvent::OnFileEvent body.
 // When the loaded arc matches mFileHandle: hand its data buffer to CBdat
 // (releases the archive), re-store the loaded file-pointer (getFP) in the
 // global, clear the handle and return true; otherwise false.
@@ -80,7 +80,7 @@ extern "C" bool func_80274A84(CSysWinBuff* self, CEventFile* pEventFile) {
 }
 
 // ---------------------------------------------------------------------------
-// Target 3: CSysWinBuff::Term (us-80276b08)
+// CSysWinBuff::Term (us-80276b08)
 // Wait for the VI, release the arc file handle and tear down the embedded
 // CSysWin, release the BDAT archive, clear the two globals, deregister the
 // render callback (this-adjusting IScnRender view at +0x70), then re-enable
@@ -102,7 +102,7 @@ void CSysWinBuff::Term() {
 }
 
 // ---------------------------------------------------------------------------
-// Target 4: CSysWinBuff::cbRenderBefore (us-80276d34)
+// CSysWinBuff::cbRenderBefore (us-80276d34)
 // Gate prefix (task busy / global render flag / scene active / cf busy) then
 // draw the embedded CSysWin through a stack DrawInfo.
 // ---------------------------------------------------------------------------
@@ -122,7 +122,7 @@ void CSysWinBuff::cbRenderBefore() {
 }
 
 // ---------------------------------------------------------------------------
-// Target 5: create__11CSysWinBuffFv (us-80276dcc)
+// create__11CSysWinBuffFv (us-80276dcc)
 // Allocate the CSysWinBuff singleton (0xBC bytes) from work memory, run the
 // CProcess ctor, lay out the IUIWindow + Move region by hand, construct the
 // embedded CSysWin and register as a CProcess child of `registerParent`.
@@ -190,7 +190,7 @@ extern "C" CSysWinBuff* create__11CSysWinBuffFv(CProcess* registerParent, CScn* 
 }
 
 // ---------------------------------------------------------------------------
-// Target 1: CSysWinBuff::Init (us-802769cc)
+// CSysWinBuff::Init (us-802769cc)
 // Register the render callback through the IScnRender subobject view at +0x70,
 // request the common-archive System.arc through the IWorkEvent view at +0x6C,
 // then rebuild the embedded CSysWin storage: construct a stack temp, copy its
@@ -241,7 +241,7 @@ void CSysWinBuff::Init() {
 }
 
 // ---------------------------------------------------------------------------
-// Target 2: CSysWinBuff::Move (us-80276b88)
+// CSysWinBuff::Move (us-80276b88)
 // Gate prefix (task busy / global render flag / scene active / cf busy / boot
 // flag) then a 4-state machine driving the system window:
 //   0 load the window label and ready the window; 1 wait active;

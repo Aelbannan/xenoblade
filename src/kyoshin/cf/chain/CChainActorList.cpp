@@ -4,14 +4,7 @@
 #include "kyoshin/cf/object/CfObjectActor.hpp"
 #include "kyoshin/cf/chain/CChainCombo.hpp"
 #include "kyoshin/cf/CArtsSet.hpp"
-// CAIAction.hpp (via CfObjectActor.hpp) declares getInstance__Q22cf14C-
-// BattleManagerFv as extern "C" void*; CfGameManager.hpp redeclares it with
-// return type CBattleManagerView*, which MWCC rejects (10505). This TU never
-// calls it - rename it out of the way for this include (CBattleManager.cpp
-// idiom).
-#define getInstance__Q22cf14CBattleManagerFv chainActorListBmGetUnused
 #include "kyoshin/cf/CfGameManager.hpp"
-#undef getInstance__Q22cf14CBattleManagerFv
 #include "monolib/core/CPadManager.hpp"
 #include <new>
 #include <cstring>

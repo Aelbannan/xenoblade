@@ -586,7 +586,7 @@ extern "C" f32 lbl_eu_80667CE8;
 extern "C" void func_80081E90__Q22cf13CfGameManagerFv(u32 a, u32 b, u32 c);
 extern "C" void func_8006E5D8();
 extern "C" void* getHandleMEM2__Q23mtl10MemManagerFv();
-extern "C" void* func_8004392C(u32 a, u32 b, void* c, u32 d, u32 e, f32 f = 0.0f);
+// func_8004392C is owned by kyoshin/CTaskGame.hpp (single unified decl).
 extern "C" bool func_801537E0(void* obj);
 extern "C" void func_801537F0(void* obj);
 extern "C" int func_800B708C__Fi(int id);
@@ -633,7 +633,6 @@ extern "C" int func_800F46C0(void* a, void* b);
 extern "C" void* func_800EA444(void* self);
 extern "C" void func_800A26A4(void* a, int b, void* c, int d, int e, int f, int g);
 extern "C" int func_8026178C(void* data, u32 mode);
-extern "C" f32 func_80496288(void*);
 extern "C" void func_80170AB0(void* self, void* dst);
 extern "C" void func_80174C24(void* obj, u32 flag);
 extern "C" f64 lbl_eu_80667D18;
@@ -697,8 +696,8 @@ extern "C" void* __RTTI__Q22cf13CfObjectActor;
 extern "C" void func_8009D018(u32 a, u32 b);
 // Return type must match CfGameManager.hpp's declaration (u32), or MWCC
 // rejects the redeclaration when both headers are included in one TU.
-extern "C" void* func_801412D0(u32);
-extern "C" void func_8013F244(void);
+// func_801412D0 is owned by kyoshin/CUIWindowManager.hpp.
+
 extern "C" void func_8016FF14(void* obj, void* dst);
 extern "C" void func_801C01A8(u32 a, u32 b, f32 c);
 extern "C" void func_801C028C(u32 a, u32 b);

@@ -6,7 +6,7 @@
 
 #include "kyoshin/code_802B8A3C.hpp"
 
-// ── Target 1: us-802bb76c (func_802B8CFC) ─────────────────────────────────
+// us-802bb76c (func_802B8CFC)
 // Completion callback: if no active voice is playing, invoke the playback
 // virtual (blank1, vtable slot 3 / offset 0x8).
 void func_802B8CFC(CVS_THREAD_ORDER* self) {
@@ -15,7 +15,7 @@ void func_802B8CFC(CVS_THREAD_ORDER* self) {
     }
 }
 
-// ── Target 2: us-802bb4ac (__ct__CVS_THREAD_ORDER) ────────────────────────
+// us-802bb4ac (__ct__CVS_THREAD_ORDER)
 // Factory/constructor for CVS_THREAD_ORDER. Reserves a discarded 0x78-byte
 // handle buffer, allocates the 0x24-byte object, constructs the base, sets
 // the vtable/owner fields, and copies the init-state triple from
@@ -49,7 +49,7 @@ CVS_THREAD_ORDER* __ct__CVS_THREAD_ORDER(CVoiceHandle* owner) {
     return self;
 }
 
-// ── Target 3: us-802bb57c (func_802B8B0C) ─────────────────────────────────
+// us-802bb57c (func_802B8B0C)
 // (Re)initialise the thread and start playback. If a battle is active, or
 // the player's voice is idle and the per-slot voice id allows it, plays the
 // configured voice for this thread's slot.
@@ -94,7 +94,7 @@ void func_802B8B0C(CVS_THREAD_ORDER* self) {
     }
 }
 
-// ── Target 4: us-802bb670 (func_802B8C00) ─────────────────────────────────
+// us-802bb670 (func_802B8C00)
 // Playback dispatcher. If the voice is already active or a battle is in
 // progress, completes early; otherwise copies the init triple, enumerates the
 // player's battle-voice list and plays a random voice (mtRand(2)+0x9C9) for
@@ -139,7 +139,7 @@ int func_802B8D44(CVS_THREAD_ORDER* self) {
     return CVS_THREAD_ORDER::BUFFER_SIZE;
 }
 
-// ── Target 5: us-802bb7bc (func_802B8D4C) ─────────────────────────────────
+// us-802bb7bc (func_802B8D4C)
 // Search the voice-config table for a matching voice and play it. Resolution
 // first uses the player's voice selector; failing that, iterates the battle
 // object list and gimmick list looking for a matching selector.

@@ -1,7 +1,11 @@
 // Auto-scaffolded catalog TU for kyoshin/cf/CfMapItemManager
 // Replace stubs with high-level C/C++ during decomp.
 
+#include "kyoshin/cf/CBattleManagerApi.hpp"
 #include "kyoshin/harness_catalog.hpp"
+#include "monolib/scn/CScnTimeApi.hpp"
+
+#include "kyoshin/cf/CfGameManagerData.hpp"
 #include <math.h>
 #include "monolib/math.hpp"
 
@@ -27,20 +31,26 @@ extern "C" void func_802808AC(s32 mode);
 
 // Cross-TU imports for func_801742D4 (mangled retail symbols; headers are
 // outside this session's writable scope).
-extern "C" bool func_80083118__Q22cf13CfGameManagerFv(void* self);
-extern "C" void func_80086E6C__Q22cf13CfGameManagerFv(void* self);
+extern "C" bool func_80083118__Q22cf13CfGameManagerFv(s32 self);
+extern "C" void func_80086E6C__Q22cf13CfGameManagerFv(int self);
+extern "C" void* getPlayer__Q22cf13CfGameManagerFi(s32 idx);
+// These CfGameManager helpers ignore their incoming r3 in retail; they are
+// declared argument-less so MWCC leaves the caller's r3 untouched (matching
+// the stale-register chain in the retail asm).
+extern "C" int func_80084BF4__Q22cf13CfGameManagerFv();
+extern "C" int func_8008585C__Q22cf13CfGameManagerFv();
+extern "C" int func_80085840__Q22cf13CfGameManagerFv();
 extern "C" u8* func_8016FE34(void* obj);
 extern "C" bool func_800FF8B0();
 extern "C" bool func_80251550();
-extern "C" bool func_801586D4(unsigned short id);
+extern "C" void* func_801586D4(unsigned short id);
 extern "C" bool func_802B37F4();
 extern "C" void* func_801351C4(int idx);
 extern "C" void func_8009D018(unsigned long index, unsigned long value);
-extern "C" void func_80140E00(int arg1, int arg2, int arg3, int arg4);
+extern "C" int func_80140E00(int arg1, int arg2, int arg3, int arg4);
 extern "C" void func_801BFC38__Q22cf10CfSoundManFUlUlUlUlf(unsigned long a, unsigned long b, unsigned long c, unsigned long d, float e);
 // Extra imports for func_80173CA0.
 extern "C" int CfRes_getD80Flag();
-extern "C" f32 func_80496288();
 extern "C" u32 func_8016DF2C();
 extern "C" u32 func_80086DBC__Q22cf13CfGameManagerFv();
 extern "C" u32 func_800822F4__Q22cf13CfGameManagerFv();
@@ -62,7 +72,7 @@ extern f32 lbl_eu_806677D4;
 extern f32 lbl_eu_806677D8;
 extern f32 lbl_eu_80667790;
 
-bool func_80174C98(u8* obj, u32* flags, u32 id);
+extern "C" s32 func_80174C98(u8* obj, u32* flags, u32 id);
 
 // Read-only view of the player object up to the position getter at vtable
 // slot 0xAC (returns ml::CVec3*).
@@ -152,9 +162,9 @@ struct CfMapItem {
 // Buffer filled by CfMapItemManagerIf::getMapItem (vt +0x10 slot).
 struct MapItemBuffer {
     u32 field_00;              // 0x00
-    u32 field_04;              // 0x04
-    u32 field_08;              // 0x08
-    u32 field_0C;              // 0x0C
+    u32 field_04;              // 0x04: pos x
+    u32 field_08;              // 0x08: pos y
+    u32 field_0C;              // 0x0C: pos z
     f32 field_10;              // 0x10
     u16 field_14;              // 0x14
     s16 field_16;              // 0x16
@@ -175,10 +185,9 @@ public:
 // the vtable pointer: slot 0 is never stored into (mCount is 1-based).
 class CfMapItemManager {
 public:
-    union {
-        void* vtable;             // 0x00
-        CfMapItem mItems[512];    // 0x00 (0x1C * 512 = 0x3800)
-    };
+    // 0x00: item array overlaps the vtable pointer (slot 0 is never stored
+    // into - mCount is 1-based - so the vtable stays intact).
+    CfMapItem mItems[512];       // 0x00 (0x1C * 512 = 0x3800)
     u8 field_3800[4];             // 0x3800
     u16 mCount;                   // 0x3804
     u16 field_3806;               // 0x3806
@@ -200,10 +209,13 @@ extern "C" void* __dt__801732F8(void* self, int mode) {
 extern "C" void func_802B2938(void* mgr, u32 handle);
 
 void func_80173338(CfMapItemManager* self) {
+    u32 zero = 0;
     for (u32 i = 1; i < self->mCount; i++) {
-        if (self->mItems[i].field_04 != 0) {
-            func_802B2938(func_802B262C(), self->mItems[i].field_04);
-            self->mItems[i].field_04 = 0;
+        u32* handle = &self->mItems[i].field_04;
+        u32 h = *handle;
+        if (h != 0) {
+            func_802B2938(func_802B262C(), h);
+            *handle = zero;
         }
     }
     self->mCount = 0;
@@ -212,23 +224,210 @@ void func_80173338(CfMapItemManager* self) {
     memset(&self->mItems[0].field_04, 0, 0x3800);
 }
 
+// Column-name scratch keys and sdata2 constants used by func_801733C0.
+extern u8 lbl_eu_80662420[8];      // "itm?Per" key (byte 3 rewritten per pick)
+extern char lbl_eu_805033C0[];     // bdat column-name blob
+extern f32 lbl_eu_80667784;
+extern f32 lbl_eu_80667788;
+extern f32 lbl_eu_8066778C;
+extern f32 lbl_eu_80667798;
+// lbl_eu_80667790 (line ~70) and lbl_eu_8066A210 come from earlier decls/headers.
+// s16 -> float conversion magic double (0x4330000080000000): defining it lets
+// MWCC's constant pool reuse the retail symbol for the implicit conversions
+// instead of emitting a TU-local @N label (CFloorMap.cpp idiom).
+extern const double lbl_eu_806677A0 = 0x4330000080000000ll;
+
+// Random-angle table filler (monolib scn unit; defining TU code_800A3B24.cpp).
+// Retail call site uses the plain unmangled linker name.
+extern "C" void func_800A3B24(ml::CVec3* out, int seed);
+// Segment ground-probe helper (defining TU code_800A3B24.cpp; retail call site
+// passes a scene-query id as the third argument).
+extern "C" int func_800A7094(ml::CVec3* a, ml::CVec3* b, int query, float f,
+                             float g);
+
+// BDAT cell accessor: raw word in, consumed through its signed/unsigned half.
+union BdatCell {
+    u32 raw;
+    s16 s;
+    u16 u;
+    u8 b;
+};
+
 #pragma push
 #pragma auto_inline off
-extern "C" void func_801733C0(void* a, void* b, void* c, int d) {}
+int func_801733C0(CfMapItemManager* self, u32 row, void* c, int pick) {
+    MapItemBuffer* buf = static_cast<MapItemBuffer*>(c);
+
+    void* table = reinterpret_cast<CfMapItemManagerIf*>(self)->getBdatTable();
+    // Build the "itm<pick>Per" weight-column key for this lottery slot.
+    char* key = (char*)lbl_eu_80662420;
+    char* strBase = lbl_eu_805033C0;
+    key[3] = '1' + pick;
+
+    // Spawn-offset columns (x/y/z) arrive as signed shorts converted to float.
+    ml::CVec3 offs;
+    BdatCell cellX;
+    cellX.raw = getBdatStringColumnValue(table, strBase, row);
+    offs.x = cellX.s;
+
+    BdatCell cellY;
+    cellY.raw = getBdatStringColumnValue(table, strBase + 5, row);
+    offs.y = cellY.s;
+
+    BdatCell cellZ;
+    cellZ.raw = getBdatStringColumnValue(table, strBase + 0xa, row);
+    offs.z = cellZ.s;
+
+    BdatCell cellCount;
+    cellCount.raw = getBdatStringColumnValue(table, strBase + 0xf, row);
+    u32 count = cellCount.u;
+
+    BdatCell cellFlag;
+    cellFlag.raw = getBdatStringColumnValue(table, strBase + 0x16, row);
+    u8 flag = cellFlag.b;
+
+    BdatCell cellSel;
+    cellSel.raw = getBdatStringColumnValue(table, key, row);
+    u32 sel = cellSel.u;
+
+    // Clear the previous lottery-slot field, insert the new pick, and drop the
+    // "position resolved" bit.
+    u32 flags = buf->field_18;
+    flags = (flags & ~0x7000u) | ((pick << 17) & 0x7000u);
+    flags &= ~0x40000u;
+    buf->field_18 = flags;
+
+    if (sel == 0) {
+        // No weight for this pick: fall back to the plain itm1Per column.
+        lbl_eu_80662420[3] = '1';
+        cellSel.raw = getBdatStringColumnValue(table, key, row);
+        sel = cellSel.u;
+        if (sel != 0) {
+            buf->field_18 &= ~0x7000u;
+        }
+    }
+
+    if (sel != 0) {
+        // Try up to 16 randomized offsets around the spawn point until a
+        // ground probe succeeds.
+        int placed = 0;
+        // Loop-invariant spread/sin constants; retail caches these in
+        // callee-saved f27-f31 across the probe calls.
+        const f32 sinA = lbl_eu_80667788;
+        const f32 sinB = lbl_eu_8066A210;
+        const f32 sinC = lbl_eu_8066778C;
+        const f32 angStep = lbl_eu_80667790;
+        const f32 spread = lbl_eu_80667784;
+        ml::CVec3 rnd;      // raw random offset
+        ml::CVec3 scaled;   // random offset scaled by the spread factor
+        ml::CVec3 center;   // column offsets as a vector
+        ml::CVec3 pos;      // candidate position
+        ml::CVec3 cur;      // accepted position
+        ml::CVec3 probe;    // probe segment endpoint
+        for (int i = 0; i < 16; i++) {
+            func_800A3B24(&rnd, count * 100);
+            scaled = rnd * spread;
+            center.set(scaled);
+            pos = center + offs;
+            cur = pos;
+            probe = pos;
+            if (flag == 0) {
+                // No facing flag: accept whatever offset was drawn.
+                placed = 1;
+                continue;
+            }
+            float ang;
+            if (reinterpret_cast<CfMapItemManagerIf*>(self)->unk00C()) {
+                ang = lbl_eu_80667780;
+            } else {
+                ang = nw4r::math::SinFIdx(sinC * (sinA * sinB));
+            }
+            probe.y -= angStep;
+            if (func_800A7094(&probe, &cur, 0x4a05, lbl_eu_80667794, ang)) {
+                placed = 1;
+                break;
+            }
+            // Shrink the random-offset table window between attempts.
+            count = ((count << 4) - count) >> 4;
+        }
+
+        // Snap to the ground height when the object supports it.
+        if (reinterpret_cast<CfMapItemManagerIf*>(self)->unk00C() && placed == 0) {
+            placed = 1;
+            cur = offs;
+            buf->field_18 |= 0x2000;
+        }
+
+        if (placed != 0) {
+            // Commit the resolved position: y is lifted by the ground offset,
+            // x/z are transferred as raw bit patterns.
+            cur.y += lbl_eu_80667798;
+            buf->field_08 = *(u32*)&cur.y;
+
+            buf->field_04 = *(u32*)&cur.x;
+            buf->field_0C = *(u32*)&cur.z;
+            buf->field_14 = (u16)sel;
+            buf->field_00 = 0;
+            buf->field_18 =
+                (buf->field_18 | ((row >> 12) & 0xFFFu)) & ~0x38000u;
+            buf->field_10 = lbl_eu_80667780;
+            buf->field_16 = 0;
+        } else {
+            reinterpret_cast<CfMapItemManagerIf*>(self)->unk00C();
+            sel = 0;
+        }
+    }
+
+    return (u16)sel;
+}
 #pragma pop
 
 int func_801737CC(void* self) { return 0; }
 
-// Returns a value IPA cannot fold (reads a mutable global), so callers keep
-// their real call+branch shape under -O4.
+// sdata scratch key: "itm?Per" - byte 3 is rewritten each iteration with
+// '1'+i to select lottery weight column itm1Per..itm8Per.
+extern u8 lbl_eu_80662428[8];
+
+// Weighted lottery over up to 8 columns: roll mtRand(100), walk cumulative
+// weights from the bdat row, and forward the winning column index.
 #pragma push
 #pragma auto_inline off
-extern "C" int func_801737D4(CfMapItemManager* self, u32 row, CfMapItem* item) {
-    return lbl_eu_80664184;
+int func_801737D4(CfMapItemManager* self, u32 row, CfMapItem* item) {
+    // Declaration order controls callee-saved register assignment; this
+    // ordering reproduces retail's r26-r31 allocation.
+    int pick;
+    int rnd;
+    CfMapItemManagerIf* iface;
+    void* table;
+    int i;
+    int total;
+    // Column values are consumed as their low byte; keeping the raw return
+    // in a union reproduces retail's stw-then-lbz memory temp.
+    union {
+        u32 raw;
+        u8 b;
+    } col;
+
+    total = 0;
+    rnd = ml::math::mtRand(100);
+    pick = 0;
+    iface = reinterpret_cast<CfMapItemManagerIf*>(self);
+    table = iface->getBdatTable();
+    for (i = 0; i < 8; i++) {
+        lbl_eu_80662428[3] = '1' + i;
+        col.raw = getBdatStringColumnValue(table, (const char*)lbl_eu_80662428, row);
+        int next = col.b + total;
+        if (rnd >= total && rnd < next) {
+            pick = i;
+            break;
+        }
+        total = next;
+    }
+    return func_801733C0(self, row, item, pick);
 }
 #pragma pop
 
-extern "C" void func_80173894(void* self, void* b, void* c) { func_801733C0(self, b, c, 0); }
+extern "C" void func_80173894(void* self, u32 b, void* c) { func_801733C0((CfMapItemManager*)self, b, c, 0); }
 
 extern "C" u32 func_8017389C() { return (u32)lbl_eu_806640C0; }
 
@@ -239,36 +438,50 @@ extern "C" u32 func_801738A4() { return (u32)lbl_eu_806640D0; }
 // ml::CVec3::zero instead of asking the vt callback.
 void func_801738AC(CfMapItemManager* self) {
     func_8003AA34();
-    CfMapItemManagerIf* iface = reinterpret_cast<CfMapItemManagerIf*>(self);
-    void* table = iface->getBdatTable();
+    // Declaration order drives callee-saved coloring (first -> highest reg):
+    // retail maps zeroW>r30, cols>r29, table>r28, end>r27, row>r26,
+    // count>r25, i>r24.
+    void* table = reinterpret_cast<CfMapItemManagerIf*>(self)->getBdatTable();
+    s32 end;
     s32 row = (s32)func_8003B41C(table);
-    s32 end = row + (s32)func_8003B1EC(table);
+    end = row + (s32)func_8003B1EC(table);    f32 one;
     f32 scale = lbl_eu_80667780;
     if (lbl_eu_80664298 != 0) {
-        scale = lbl_eu_806677A8 * (lbl_eu_80667794 * (f64)(u32)1);
+        // Runtime-shaped int->double conversion via the 0x43300000 scratch
+        // double, minus the shared magic constant (retail keeps the full
+        // store/lfd/fsub sequence).
+        union { double d; u32 w[2]; } cv;
+        cv.w[1] = 1;
+        cv.w[0] = 0x43300000;
+        scale = lbl_eu_806677A8 * (lbl_eu_80667794 * (cv.d - lbl_eu_806677B0));
     }
     self->mCount = 1;
+    const char* cols = lbl_eu_805033C0;
+    const u32* zeroW = reinterpret_cast<const u32*>(&ml::CVec3::zero);
+    one = lbl_eu_80667780;
+    MapItemBuffer buf;
 
     while (row < end) {
-        u32 n = getBdatStringColumnValue(table, &lbl_eu_805033C0[0x1b], row);
-        MapItemBuffer buf;
-        u8 count = (u8)n;
-        buf.field_10 = lbl_eu_80667780;
+        // Column value consumed as its low byte.
+        u8 count = (u8)getBdatStringColumnValue(table, cols + 0x1b, row);
+        u16 i = 0;
+        buf.field_10 = one;
         buf.field_14 = 0;
-        for (u16 i = 0; i < count; i++) {
+        while (i < count) {
             if (lbl_eu_80664298 != 0) {
-                // Fixed-position path: zero position, synthesized flags.
-                u32 v18 = buf.field_18 & 0xFFFF;
-                v18 = (v18 & ~0x7C000);
-                v18 = (v18 & ~0xFFF) | ((u32)(row >> 12) & 0xFFF);
-                v18 |= 0x10000;
-                buf.field_00 = 0;
-                buf.field_04 = *(u32*)&ml::CVec3::zero.x;
-                buf.field_08 = *(u32*)&ml::CVec3::zero.y;
-                buf.field_0C = *(u32*)&ml::CVec3::zero.z;
+                // Fixed-position path: synthesize flags from the row number
+                // (top 12 bits) plus the active bit, zero the position.
+                u32 fl = buf.field_18 & 0xFFFF;
+                fl &= ~0x40000u;
+                fl |= (row << 20) & 0xFFF00000u;
+                fl |= 0x10000u;
+                buf.field_04 = zeroW[0];
+                buf.field_08 = zeroW[1];
+                buf.field_0C = zeroW[2];
                 buf.field_16 = 0;
                 buf.field_14 = 0;
-                buf.field_18 = v18;
+                buf.field_00 = 0;
+                buf.field_18 = fl;
                 buf.field_10 = scale;
 
                 u16 n2 = self->mCount;
@@ -281,8 +494,8 @@ void func_801738AC(CfMapItemManager* self) {
                 item->field_14 = buf.field_10;
                 item->field_18 = buf.field_14;
                 item->field_1A = buf.field_16;
-                *(u32*)&self->mItems[n2 + 1].field_00 = buf.field_18;
-            } else if (iface->getMapItem(row, &buf)) {
+                ((u32*)item)[7] = buf.field_18;
+            } else if (reinterpret_cast<CfMapItemManagerIf*>(self)->getMapItem(row, &buf)) {
                 u16 n2 = self->mCount;
                 CfMapItem* item = &self->mItems[n2];
                 self->mCount = n2 + 1;
@@ -293,8 +506,9 @@ void func_801738AC(CfMapItemManager* self) {
                 item->field_14 = buf.field_10;
                 item->field_18 = buf.field_14;
                 item->field_1A = buf.field_16;
-                *(u32*)&self->mItems[n2 + 1].field_00 = buf.field_18;
+                ((u32*)item)[7] = buf.field_18;
             }
+            i++;
         }
         row++;
     }
@@ -401,7 +615,8 @@ static inline void despawnItemDirect(CfMapItemManager* mgr, MapItemRec* rec) {
 // ticks respawn timers, evaluates bdat gating columns (area / clock / story /
 // season), spawns or releases the associated hikari item, and finally picks
 // the closest eligible item (or an exact proximity hit) as the return index.
-int func_80173CA0(CfMapItemManager* self, ml::CVec3* pos) {
+// Retail resolves callers to the unmangled symbol.
+extern "C" int func_80173CA0(CfMapItemManager* self, ml::CVec3* pos) {
     func_8003AA34();
     CfMapItemManagerIf* iface = reinterpret_cast<CfMapItemManagerIf*>(self);
     void* table = iface->getBdatTable();
@@ -429,7 +644,7 @@ int func_80173CA0(CfMapItemManager* self, ml::CVec3* pos) {
             // Timer-only slot: decay field_10 back toward the default scale.
             if ((work->field_18 & 0x8000) == 0) continue;
             CfRes_getD80Flag();
-            f32 dec = func_80496288();
+            f32 dec = func_80496288(lbl_eu_80663E14);
             f32 t = work->field_10;
             if (t > k80) {
                 work->field_10 = t - dec;
@@ -575,63 +790,70 @@ public:
 // gate it on battle/story state, then either clear the record or convert it
 // to a timed respawn entry from the bdat column at +0x6a.
 void func_801742D4(CfMapItemManager* self) {
-    cf::CfGameManager* gm = cf::CfGameManager::getInstance();
-    CfPlayerPosView* player = (CfPlayerPosView*)cf::CfGameManager::getPlayer(0);
-    if (player == 0) return;
+    // Declaration order drives callee-saved coloring; retail maps
+    // pv(player/gate)>r28, self>r29, idx/kind>r30, pick>r31, loader>r27.
+    u32 pv;                 // player pointer, later the battle-gate word
+    MapItemRec* pick;       // doubles as the final-ok flag (retail li r31,1)
+    int idx;
+
+    pv = (u32)getPlayer__Q22cf13CfGameManagerFi(0);
+    if (pv == 0) return;
     if (lbl_eu_80663E24 & 0x00400000) return;          // bit 22: cutscene-ish gate
-    if (gm->func_80084BF4()) return;
+    if (func_80084BF4__Q22cf13CfGameManagerFv() != 0) return;
     if (lbl_eu_80663E24 & 0xAFA40000) return;
-    if (gm->func_8008585C()) return;
-    if (!gm->func_80085840()) return;
+    if (func_8008585C__Q22cf13CfGameManagerFv() != 0) return;
+    if (func_80085840__Q22cf13CfGameManagerFv() == 0) return;
 
     // Player feet position + small Y offset, fed to the item lookup.
-    ml::CVec3 pos = *player->getPos();
+    ml::CVec3* pp = ((CfPlayerPosView*)pv)->getPos();
+    ml::CVec3 pos;
+    pos.x = pp->x;
+    pos.y = pp->y;
+    pos.z = pp->z;
     pos.y += lbl_eu_80667790;
-    int idx = func_80173CA0(self, &pos);
+    idx = func_80173CA0(self, &pos);
     if (idx == 0) return;
-    if (!func_80083118__Q22cf13CfGameManagerFv(gm)) return;
-    CfMapItem* item = &self->mItems[idx];
-    u8* loader = func_8016FE34(player);
+    if (!func_80083118__Q22cf13CfGameManagerFv(0)) return;
+    u8* loader = func_8016FE34((void*)pv);
     if (loader == 0) return;
-    if (func_800FF8B0()) return;
-    if (func_80251550()) return;
+    if (func_800FF8B0() != 0) return;
+    if (func_80251550() != 0) return;
 
-    // Battle-state gate: when the singleton's instance ring is non-empty the
-    // item must pass one of the category probes (3 or 4).
-    bool ok = false;
-    CBmSingletonView* bm = (CBmSingletonView*)getInstance__Q22cf14CBattleManagerFv();
-    u32 count = 0;
+    // Battle-state gate: the singleton's instance ring is walked once; a
+    // non-zero walk result skips the category probes and aborts the pick-up.
+    void* bm = getInstance__Q22cf14CBattleManagerFv();
     if (bm != 0) {
-        CBmNode* sentinel = (CBmNode*)bm->field_8;
+        CBmNode* sentinel = (CBmNode*)((CBmSingletonView*)bm)->field_8;
         CBmNode* cur = *(CBmNode**)sentinel;
-        while ((u32*)cur != (u32*)sentinel) {
+        u32 count = 0;
+        do {
             cur = *(CBmNode**)cur;
             count++;
-        }
-        ok = count == 0;
+        } while (cur != sentinel);
+        // Retail-shaped nonzero test on the walked length.
+        pv = ((u32)(-(s32)count | count)) >> 31;
     }
-    if (!ok) {
+    pick = 0;
+    if (pv == 0) {
         // Probe the loader object's flag words for categories 3 then 4; both
         // must fail to abort the pick-up.
+        pv = 1;
         ProbeObj* po = (ProbeObj*)loader;
-        bool passed = false;
         u32 flagv = *(u32*)po->field_4->p030();
-        if (func_80174C98((u8*)po, &flagv, 3)) {
-            passed = true;
-        } else {
+        if (!func_80174C98(loader, &flagv, 3)) {
             flagv = *(u32*)po->field_4->p030();
-            if (func_80174C98((u8*)po, &flagv, 4)) passed = true;
+            if (!func_80174C98(loader, &flagv, 4)) pv = 0;
         }
-        ok = passed;
+        if (pv != 0) pick = (MapItemRec*)1;
     }
-    if (!ok) return;
+    if (pick == 0) return;
 
-    MapItemRec* rec = (MapItemRec*)&self->mItems[idx];
+    MapItemRec* rec = pick = (MapItemRec*)&self->mItems[idx];
     unsigned short kind = rec->field_18;
-    if (func_801586D4(kind) == 0) return;
-    u32 helpPtr = *(u32*)func_801351C4(kind);
-    if (((helpPtr >> 12) & 0xF) == 0xa) {
-        ((u8*)lbl_eu_80664A10)[0x14] = 1;
+    void* helpRow = func_801586D4(kind);
+    if (helpRow == 0) return;
+    if (((*(u32*)helpRow >> 12) & 0xF) == 0xa) {
+        *((u8*)lbl_eu_80664A10 + 0x14) = 1;
     }
     if (rec->field_04 != 0) {
         func_802B37F4();
@@ -651,13 +873,16 @@ void func_801742D4(CfMapItemManager* self) {
     } else {
         // Event-driven respawn: read the timer column and arm the record.
         func_801351C4(kind);
-        u32 val = getBdatStringColumnValue((void*)lbl_eu_806640A8, &lbl_eu_805033C0[0x6a], lbl_eu_80664184);
-        u8 secs = (u8)val;
+        u8 secs = (u8)getBdatStringColumnValue((void*)lbl_eu_806640A8, &lbl_eu_805033C0[0x6a], lbl_eu_80664184);
         if (secs != 0) {
+            // u32->double via the 0x43300000 scratch double.
+            union { double d; u32 w[2]; } cv;
+            cv.w[0] = 0x43300000;
+            cv.w[1] = secs;
             rec->field_18 = 0;
             rec->field_04 = 0;
-            rec->field_14_f = lbl_eu_806677A8 * (lbl_eu_80667794 * ((double)(u32)secs - lbl_eu_806677B0));
             rec->field_1C |= 0x10000;
+            rec->field_14_f = lbl_eu_806677A8 * (lbl_eu_80667794 * (cv.d - lbl_eu_806677B0));
         } else {
             rec->field_18 = 0;
             rec->field_04 = 0;
@@ -666,8 +891,7 @@ void func_801742D4(CfMapItemManager* self) {
             rec->field_1C = (rec->field_1C & 0xFFFF) & ~0x2000;
         }
     }
-    func_80140E00(2, idx, 0, 0);
-    func_80086E6C__Q22cf13CfGameManagerFv(gm);
+    func_80086E6C__Q22cf13CfGameManagerFv(func_80140E00(2, kind, 0, 0));
 }
 
 int func_80174650(void* self) { return 1; }
@@ -687,25 +911,42 @@ void* func_80174658(ItemWorkState* self) {
     self->field_00 = 0;
     self->field_02 = 2;
     memset(self->field_04, 0, 5);
-    // Load both constants before storing so MWCC keeps them in f1/f0;
-    // the early self copy mirrors retail's mr r3,r31 between the two loads.
+    // E4 is held in a temp across the mr r3,r31 self copy; E8 is consumed
+    // directly. This is the closest shape to retail: loads land E4->f1 then
+    // E8->f0, but MWCC's scheduler insists on emitting the f0 store first
+    // (retail stores f1,0xC before f0,0x10); 10+ source shapes tried.
     f32 e4 = lbl_eu_806677E4;
     ItemWorkState* ret = self;
-    f32 e8 = lbl_eu_806677E8;
-    self->field_0C = e4;
-    self->field_10 = e8;
+    self->field_10 = lbl_eu_806677E8;
+    ret->field_0C = e4;
     return ret;
 }
 
-s16 func_801748B8(CfMapItem* self, s16 delta);
+// Retail resolves this helper's calls through the unmangled symbol.
+extern "C" s16 func_801748B8(CfMapItem* self, s16 delta);
 
 // func_801746B4 - advance a map item's timer; when it crosses the threshold,
 // move the item one "notch" (per its type) toward the mid position.
-void func_801746B4(CfMapItem* self, f32 delta) {
-    f32 v = self->field_0C_f + delta / lbl_eu_806677EC;
-    self->field_0C_f = v;
-    if (v < lbl_eu_806677E8) return;
-    self->field_0C_f = v - lbl_eu_806677E8;
+//
+// Case 2 evaluates the half-range threshold (field_10 scaled by the type
+// byte, halved) repeatedly instead of caching it - retail re-emits the whole
+// float-to-int conversion at every use through two alternating scratch
+// doubles (ca/cb), so the source mirrors that shape site by site.
+extern "C" void func_801746B4(CfMapItem* self, f32 delta) {
+    // Compound assignment on the parameter keeps the running value in f1.
+    delta /= lbl_eu_806677EC;
+    delta += self->field_0C_f;
+    self->field_0C_f = delta;
+    // Declared after the arithmetic; MWCC emits these two independent
+    // stores in reverse declaration order.
+    // Declared in reverse: MWCC assigns later-declared locals the lower
+    // stack slots, and retail has ca at +8 / cb at +0x10.
+    union { double d; u32 w[2]; } cb, ca;
+    ca.w[0] = 0x43300000;
+    cb.w[0] = 0x43300000;
+    if (delta < lbl_eu_806677E8) return;
+    self->field_0C_f = delta - lbl_eu_806677E8;
+#define HALF(u) ((int)(self->field_10_f * (u.d - lbl_eu_806677F0)) / 2)
     switch (self->field_02) {
     case 3:
         func_801748B8(self, -2);
@@ -713,49 +954,56 @@ void func_801746B4(CfMapItem* self, f32 delta) {
     case 1:
         func_801748B8(self, 4);
         break;
-    case 2: {
-        s32 half = (s32)(self->field_10_f * (f64)self->data[self->field_02]) / 2;
-        if (self->field_00 > half) {
+    case 2:
+        ca.w[1] = self->data[self->field_02];
+        if (self->field_00 > HALF(ca)) {
             func_801748B8(self, -2);
-            s32 half2 = (s32)(self->field_10_f * (f64)self->data[self->field_02]) / 2;
-            if (self->field_00 < half2) {
-                self->field_00 = (s16)half2;
+            u32 b = self->data[self->field_02];
+            cb.w[1] = b;
+            if (self->field_00 < HALF(cb)) {
+                ca.w[1] = b;
+                self->field_00 = HALF(ca);
             }
         } else {
-            s32 half2b = (s32)(self->field_10_f * (f64)self->data[self->field_02]) / 2;
-            if (self->field_00 < half2b) {
+            cb.w[1] = self->data[self->field_02];
+            if (self->field_00 < HALF(cb)) {
                 func_801748B8(self, 4);
-                s32 half3 = (s32)(self->field_10_f * (f64)self->data[self->field_02]) / 2;
-                if (self->field_00 > half3) {
-                    self->field_00 = (s16)half3;
+                u32 b = self->data[self->field_02];
+                ca.w[1] = b;
+                if (self->field_00 > HALF(ca)) {
+                    cb.w[1] = b;
+                    self->field_00 = HALF(cb);
                 }
             }
         }
         break;
     }
-    }
+#undef HALF
 }
 
 // u32->double via the 0x43300000 exponent trick; the magic blob is
 // subtracted from retail's shared sdata2 constant so the fsub reloc names
 // lbl_eu_806677F0 instead of pooling a TU-local @N (MWCC_PATTERNS 7i).
-s16 func_801748B8(CfMapItem* self, s16 delta) {
-    // The high words are preloaded once (retail hoists both stores into the
-    // prologue) and each site only refreshes the value word.
-    union { double d; u32 w[2]; } cvA;
+// type is re-read inside each arm (retail emits one lha per arm, below the
+// dispatch) - a single load hoisted above the branch makes MWCC sink the
+// second scratch-double store out of the prologue.
+extern "C" s16 func_801748B8(CfMapItem* self, s16 delta) {
+    // High words preloaded in the prologue (cvA @sp+8, cvB @sp+0x10;
+    // later-declared local takes the lower slot).
     union { double d; u32 w[2]; } cvB;
+    union { double d; u32 w[2]; } cvA;
     cvA.w[0] = 0x43300000;
     cvB.w[0] = 0x43300000;
-    s16 type = self->field_02;
     if (delta > 0) {
+        s16 type = self->field_02;
         if ((u32)(type - 1) <= 1) {
-            // Types 1..2: advance; stepping past the half range moves up a type.
+            // Types 1..2: advance; overshoot becomes the recursion delta.
             s16 nx = self->field_00 + delta;
             self->field_00 = nx;
             cvA.w[1] = self->data[type];
-            s16 rem = nx - (s16)(self->field_10_f * (cvA.d - lbl_eu_806677F0));
+            int rem = nx - (int)(self->field_10_f * (cvA.d - lbl_eu_806677F0));
             if (rem > 0) {
-                s32 t = type + 1;
+                int t = type + 1;
                 self->field_02 = t;
                 if (t < 0) self->field_02 = 0;
                 else if (t > 4) self->field_02 = 4;
@@ -764,28 +1012,32 @@ s16 func_801748B8(CfMapItem* self, s16 delta) {
                 func_801748B8(self, rem);
             }
         } else if (type == 3) {
-            // Type 3 clamps at the half range instead of wrapping.
+            // Type 3 clamps at the half range instead of wrapping; the data
+            // byte is loaded once and fed through each scratch double.
             s16 nx = self->field_00 + delta;
             self->field_00 = nx;
-            cvA.w[1] = self->data[type];
-            s16 half = (s16)(self->field_10_f * (cvA.d - lbl_eu_806677F0));
+            u8 b = self->data[type];
+            cvB.w[1] = b;
+            int half = (int)(self->field_10_f * (cvB.d - lbl_eu_806677F0));
             if (nx - half > 0) {
-                self->field_00 = (s16)(self->field_10_f * (cvA.d - lbl_eu_806677F0));
+                cvA.w[1] = b;
+                self->field_00 = (int)(self->field_10_f * (cvA.d - lbl_eu_806677F0));
             }
         }
     } else {
+        s16 type = self->field_02;
         if ((u32)(type - 2) <= 1) {
             // Types 2..3: advance; going below zero steps down a type.
             s16 nx = self->field_00 + delta;
             self->field_00 = nx;
             if (nx < 0) {
-                s32 t = type - 1;
+                int t = type - 1;
                 self->field_02 = t;
                 if (t < 0) self->field_02 = 0;
                 else if (t > 4) self->field_02 = 4;
                 func_802808AC(1);
                 cvB.w[1] = self->data[self->field_02];
-                self->field_00 = (s16)(self->field_10_f * (cvB.d - lbl_eu_806677F0));
+                self->field_00 = (int)(self->field_10_f * (cvB.d - lbl_eu_806677F0));
                 func_801748B8(self, nx);
             }
         } else if (type == 1) {
@@ -838,79 +1090,102 @@ public:
 };
 
 void func_80174C24(CfMapItemLoader* self, u32 id) {
-    // Nested ifs keep the two unsigned compares separate (retail shape).
-    if (id > 0x3f) {
-        if (id < 0x7c0) {
-            self->mpLoad->beginRange(0x7c0);
-            self->mpLoad->loadId(id);
-        }
-    }
+    // Early returns keep the two unsigned compares separate (retail shape).
+    if (id <= 0x3f) return;
+    if (id >= 0x7c0) return;
+    self->mpLoad->beginRange(0x7c0);
+    self->mpLoad->loadId(id);
 }
 
-// Map-item id category probe (recursive).  Tests the caller-provided flag
-// word(s) against 'id':
-//  - id < 0x40 / id < 0x7c0: equality against the corresponding bitfield of
-//    the first flag word.
-//  - id >= 0xfff: raw bitmask AND test.
-//  - id in [0x800,0x807]: per-category dispatch (retail jump table
-//    jumptable_eu_80531710); each category ORs range equalities and falls
-//    back to recursive sub-category probes.
-bool func_80174C98(u8* obj, u32* flags, u32 id) {
-    u32 v;
+//  - id >= 0xfff or outside the [0x800,0x807] category window: raw bitmask
+//    AND test.
+//  - otherwise: per-category dispatch (retail jump table jumptable_eu_80531710);
+//    each category ORs range equalities, category 3 mixes in recursive
+//    sub-category probes.
+extern "C" s32 func_80174C98(u8* obj, u32* flags, u32 id) {
+    s32 hit;
     if (id <= 0x3f) {
-        v = flags[0] & 0x3F;
-        return v - id == 0;
+        u32 v = flags[0] & 0x3F;
+        return (v - id) == 0;
     }
     if (id <= 0x7bf) {
-        v = flags[0] & 0x7C0;
-        return v - id == 0;
-    }
-    if (id >= 0xfff) {
-        return (flags[0] & id) != 0;
+        u32 v = flags[0] & 0x7C0;
+        return (v - id) == 0;
     }
 
-    // id is in the [0x800, 0x807] category range.
-    u32 low6 = flags[0] & 0x3F;
-    u32 mid = flags[0] & 0x7C0;
-    switch (id - 0x800) {
-    case 0:
-        return low6 == 0xd || low6 == 0xe || low6 == 0xf;
-    case 1:
-        return low6 == 0x9 || low6 == 0xa || low6 == 0xb;
-    case 2:
-        // {3,4} or {8} or {e} or 5
-        if (low6 == 3 || low6 == 4) return true;
-        if (low6 == 8) return true;
-        if (low6 == 0xe) return true;
-        return low6 == 5;
-    case 3: {
-        // Range/recursion mix: {6,7}, mid==0x1c0, then sub-probes 9/a/b,
-        // {0x13,0x12,0x14}, sub-probes 0x16/0x17/0xf, ...
-        bool hit = low6 == 6 || low6 == 7;
-        if (!hit) hit = mid == 0x1c0;
+    // Category dispatch: each body loads the flag word once, masks the
+    // relevant field, and tests membership via the subtract-and-test-zero
+    // idiom.
+    switch (id) {
+    case 0x800: {
+        u32 low6 = flags[0] & 0x3F;
+        return (low6 - 0xd) == 0 || (low6 - 0xe) == 0 || (low6 - 0xf) == 0;
+    }
+    case 0x801: {
+        u32 low6 = flags[0] & 0x3F;
+        return (low6 - 9) == 0 || (low6 - 0xa) == 0 || (low6 - 0xb) == 0;
+    }
+    case 0x802: {
+        u32 low6 = flags[0] & 0x3F;
+        return (low6 - 3) == 0 || (low6 - 4) == 0 || (low6 - 8) == 0 ||
+               (low6 - 0xe) == 0 || (low6 - 5) == 0;
+    }
+    case 0x803: {
+        // Long guarded chain: range tests mixed with recursive probes.
+        u32 low6 = flags[0] & 0x3F;
+        s32 hit = (low6 - 6) == 0;
+        if (!hit) hit = (low6 - 7) == 0;
+        if (!hit) hit = ((flags[0] & 0x7C0) - 0x1c0) == 0;
         if (!hit) {
             hit = func_80174C98(obj, flags, 9);
             if (!hit) hit = func_80174C98(obj, flags, 0xa);
             if (!hit) hit = func_80174C98(obj, flags, 0xb);
         }
-        if (!hit) hit = low6 == 0x13;
-        if (!hit) hit = low6 == 0x12;
-        if (!hit) hit = low6 == 0x14;
+        if (!hit) hit = LOW6(0x13);
+        if (!hit) hit = LOW6(0x12);
+        if (!hit) hit = LOW6(0x14);
         if (!hit) {
             hit = func_80174C98(obj, flags, 0x16);
             if (!hit) hit = func_80174C98(obj, flags, 0x17);
             if (!hit) hit = func_80174C98(obj, flags, 0xf);
         }
-        if (!hit) hit = low6 == 0x15;
+        if (!hit) hit = (low6 - 0x15) == 0;
+        if (!hit) hit = (low6 - 0x18) == 0;
+        if (!hit) hit = (low6 - 0x19) == 0;
+        if (!hit) hit = (low6 - 0x1a) == 0;
+        if (!hit) hit = (low6 - 0x1b) == 0;
+        if (!hit) hit = (low6 - 0x10) == 0;
+        if (!hit) hit = (low6 - 0xd) == 0;
+        if (!hit) hit = (low6 - 0xf) == 0;
+        if (!hit) hit = (low6 - 0x1f) == 0;
         return hit;
     }
-    default:
-        // Remaining categories: 0x7c0-field equality against the coarse
-        // granularity list (0x80 step).
-        return mid == 0x80 || mid == 0xc0 || mid == 0x100 || mid == 0x140 ||
-               mid == 0x180 || mid == 0x1c0 || mid == 0x200 || mid == 0x240 ||
-               mid == 0x280 || mid == 0x2c0 || mid == 0x300;
+    case 0x806: {
+        u32 low6 = flags[0] & 0x3F;
+        return (low6 - 0x10) == 0 || (low6 - 0x11) == 0;
     }
+    case 0x804: {
+        u32 low6 = flags[0] & 0x3F;
+        return (low6 - 1) == 0 || (low6 - 2) == 0;
+    }
+    case 0x805: {
+        u32 low6 = flags[0] & 0x3F;
+        return (low6 - 0x16) == 0 || (low6 - 0x17) == 0 || (low6 - 0xf) == 0;
+    }
+    case 0x807: {
+        // Coarse granularity list (0x80 steps of the 0x7c0 field).
+        u32 mid = flags[0] & 0x7C0;
+        return (mid - 0x80) == 0 || (mid - 0xc0) == 0 || (mid - 0x100) == 0 ||
+               (mid - 0x140) == 0 || (mid - 0x180) == 0 || (mid - 0x1c0) == 0 ||
+               (mid - 0x200) == 0 || (mid - 0x240) == 0 || (mid - 0x280) == 0 ||
+               (mid - 0x2c0) == 0 || (mid - 0x300) == 0;
+    }
+    default:
+        // Raw bitmask test for every other id.
+        return (flags[0] & id) != 0;
+    }
+#undef MID
+#undef LOW6
 }
 
 // Reset a 0x78-byte map marker record: clear tail flags, wipe the record,
@@ -928,11 +1203,20 @@ public:
     u32 field_74;                 // 0x74
 };
 
+// Retail keeps the tail clear as a rolled guarded bdnz byte walk; under
+// unit -O4 the fill recognizer rewrites it into the aligned expansion, so
+// force the size-optimized rolled form for this function only.
+#pragma push
+#pragma optimize_for_size on
 void func_801751DC(CfMapMarker* self) {
     self->field_70 = 0;
-    // Retail clears these three bytes with an explicit byte loop.
-    for (s32 i = 0; i < 3; i++) {
-        self->field_71[i] = 0;
+    u8* p = self->field_71;
+    u8* e = reinterpret_cast<u8*>(&self->field_74);
+    if (p < e) {
+        for (u32 n = (u32)(e - p); n != 0; --n) {
+            *p = 0;
+            p++;
+        }
     }
     self->field_74 = 0;
     memset(self, 0, 0x78);
@@ -940,3 +1224,4 @@ void func_801751DC(CfMapMarker* self) {
     self->field_38 = 5;
     self->field_3A = 5;
 }
+#pragma pop

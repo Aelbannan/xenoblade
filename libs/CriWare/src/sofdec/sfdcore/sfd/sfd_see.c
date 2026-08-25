@@ -183,38 +183,47 @@ s32 SFD_SetSeekPos(void* self, s32 seekPos) {
     return 0;
 }
 
+// Fin analysis: once decoding is finishing up, accumulate the final playback
+// position/time into the avplay handle from the seek target or stream header.
 void sfsee_ExecFinAnaly(void* self) {
-    u8* ptr = (u8*)self + 0x2674;
-    u32* p = *(u32**)((u8*)self + 0x2670);
+    u8* sub = (u8*)self + 0x2674;
+    u8* p = *(u8**)((u8*)self + 0x2670);
     s32 flag = 0;
+
     if (SFCON_IsEndcodeSkip(self) != 0)
         return;
-    if ((s32)*(s32*)((u8*)p + 0xDAC) <= 0) {
-        s32 r6;
-        if (*(s32*)(ptr + 4) == -3)
-            r6 = 0;
+
+    if (*(s32*)(p + 0xDAC) <= 0) {
+        s32 v6;
+
+        if (*(s32*)(sub + 4) == -3)
+            v6 = 0;
         else
-            r6 = *(s32*)((u8*)p + 0xDD4);
-        if (r6 >= 0) {
+            v6 = *(s32*)(p + 0xDD4);
+        if (v6 >= 0) {
+            // Look up the current channel's remaining duration; only apply it
+            // when the header carried a valid (non-negative) value.
             s32 r0 = -1;
-            s32 idx2 = *(s32*)((u8*)self + 0x1408 + *(s32*)((u8*)self + 0x1FEC) * 0x74);
-            u8* q = (u8*)self + 0x1FD8 + idx2 * 0x44;
-            s32 result = *(s32*)(q + 0x20);
-            if (result >= 0)
-                r0 = result;
+            s32 t = *(s32*)((u8*)self + 0x1FEC);
+            u8* ent = (u8*)self + t * 0x74;
+            s32 ch = *(s32*)(ent + 0x1408);
+            u8* q = ((u8*)self + 0x1FD8) + ch * 0x44;
+            s32 v = *(s32*)(q + 0x20);
+            if (v >= 0)
+                r0 = v;
             if (r0 != -1) {
-                *(s32*)((u8*)p + 0xDAC) = r6 + r0;
+                *(s32*)(p + 0xDAC) = v6 + r0;
                 flag = 1;
             }
         }
     }
-    if ((s32)*(s32*)((u8*)p + 0xDB0) <= 0) {
-        if (*(s32*)((u8*)self + 0xE50) > 0) {
-            *(s32*)((u8*)p + 0xDB0) = *(s32*)((u8*)self + 0xE50);
-            flag = 1;
-            *(s32*)((u8*)p + 0xDB4) = *(s32*)((u8*)self + 0xE54);
-        }
+
+    if (*(s32*)(p + 0xDB0) <= 0 && *(s32*)((u8*)self + 0xE50) > 0) {
+        *(s32*)(p + 0xDB0) = *(s32*)((u8*)self + 0xE50);
+        flag = 1;
+        *(s32*)(p + 0xDB4) = *(s32*)((u8*)self + 0xE54);
     }
+
     if (flag)
         sfsee_UpdateEByteRate(self);
 }

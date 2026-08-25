@@ -45,16 +45,10 @@ void CTTask<CUIBattleManager::CTest>::Draw() {
 }
 
 // CfGameManager.hpp and CAIAction.hpp (via CfObjectPc.hpp) declare clashing
-// return types for this import; hide one copy while including each header.
-#define getInstance__Q22cf14CBattleManagerFv cuiBattleBmGetInstanceUnused
+// return types for this import; the single canonical copy now lives in
+// kyoshin/cf/CBattleManagerApi.hpp (pulled in by both headers).
 #include "kyoshin/cf/CfGameManager.hpp"
-#undef getInstance__Q22cf14CBattleManagerFv
-// CTaskGame.hpp's func_8049603C (CTaskGameCamView* return) clashes with
-// CfGameManager.hpp's (UnkScnResult*) above; this TU calls neither - shield
-// per the house convention (see CBattleManager.cpp / CfCam.cpp).
-#define func_8049603C cuiBattleMgrCtaskGame9603CUnused
 #include "kyoshin/CTaskGame.hpp"
-#undef func_8049603C
 #include "kyoshin/cf/object/CfObjectPc.hpp"
 #include "monolib/device/CDeviceFile.hpp"
 #include "monolib/device/CDeviceVI.hpp"

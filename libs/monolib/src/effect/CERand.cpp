@@ -13,7 +13,6 @@
 #include "monolib/effect/CERand.hpp"
 
 using namespace ml;
-
 // ---- Shared monolibdata2 sdata2 pool entries ----
 extern double lbl_eu_8066B240; // signed s32->f64 magic (0x43300000_80000000), CERandomizer
 extern double lbl_eu_8066B258; // signed s32->f64 magic (0x43300000_80000000), CERandomizerSimple
@@ -27,6 +26,71 @@ extern float lbl_eu_8066B230;  // 0.0f
 // ---- Dissolved storage of the global randomizer instances ----
 extern u8 lbl_eu_80660028[16]; // ceRandomizerSimple (.bss, CNReqtaskSave.o slice)
 extern u32 lbl_eu_80665A08[2]; // ceRandomizer (.sbss, CNReqtaskCheck.o slice)
+
+// ---- Dissolved retail vtable/RTTI data (hand-built, retail layout) ----
+//
+// Retail CERand.o owns .rodata 0x80524658 (0x30: RTTI class-name strings),
+// .data 0x8056FE08 (0x50: two vtables + two derived-typeinfo base lists) and
+// .sdata 0x80663BB0 (0x18: three {name, base-list} type_info locators).
+// Byte/reloc ground truth: build/us/asm/monolib/src/effect/CERand.s.
+//
+// The classes are NOT novtable here: constructing the throwaway CERandomizer
+// below keeps MWCC emitting the out-of-line copies of the header-inline
+// virtuals that retail keeps in this TU. That construction also makes MWCC
+// emit ITS OWN vtable/RTTI/class-name copies (wrong order/names); they trail
+// this block in each section and are tail-dropped by the CERand.o UNIT_RULES,
+// leaving exactly the retail-named layout below.
+
+extern "C" {
+u32 rand__18CERandomizerSimpleFv();
+float randF__18CERandomizerSimpleFv();
+float randFHalf__18CERandomizerSimpleFv();
+float randSign__18CERandomizerSimpleFv();
+u32 rand__12CERandomizerFv();
+float randF__12CERandomizerFv();
+float randFHalf__12CERandomizerFv();
+float randSign__12CERandomizerFv();
+}
+
+// Forward references (definitions below / cross-referenced).
+extern "C" const char lbl_eu_80524658[];
+extern "C" const char lbl_eu_8052466C[];
+extern "C" const char lbl_eu_80524678[];
+extern "C" u32 lbl_eu_8056FE20[4];
+extern "C" u32 lbl_eu_8056FE48[4];
+extern "C" u32 lbl_eu_80663BB0[2];
+extern "C" u32 lbl_eu_80663BB8[2];
+extern "C" u32 lbl_eu_80663BC0[2];
+
+// [.rodata] 0x80524658 | sizes include retail align padding.
+extern "C" __declspec(section ".rodata") __attribute__((aligned(8))) const char lbl_eu_80524658[0x14] = "CERandomizerSimple";
+extern "C" __declspec(section ".rodata") const char lbl_eu_8052466C[0xC] = "IRandomizer";
+extern "C" __declspec(section ".rodata") const char lbl_eu_80524678[0x10] = "CERandomizer";
+
+// [.data] 0x8056FE08 | vtables {locator, 0, slots...} + base lists.
+extern "C" u32 lbl_eu_8056FE08[6] __attribute__((aligned(8))) = {
+    (u32)&lbl_eu_80663BB0, 0x00000000,
+    (u32)&rand__18CERandomizerSimpleFv, (u32)&randF__18CERandomizerSimpleFv,
+    (u32)&randFHalf__18CERandomizerSimpleFv, (u32)&randSign__18CERandomizerSimpleFv,
+};
+extern "C" u32 lbl_eu_8056FE20[4] = { (u32)&lbl_eu_80663BB8, 0, 0, 0 };
+extern "C" u32 lbl_eu_8056FE30[6] = {
+    (u32)&lbl_eu_80663BC0, 0x00000000,
+    (u32)&rand__12CERandomizerFv, (u32)&randF__12CERandomizerFv,
+    (u32)&randFHalf__12CERandomizerFv, (u32)&randSign__12CERandomizerFv,
+};
+extern "C" u32 lbl_eu_8056FE48[4] = { (u32)&lbl_eu_80663BB8, 0, 0, 0 };
+
+// [.sdata] 0x80663BB0 | type_info locators {name, base-list}.
+extern "C" __declspec(section ".sdata") __attribute__((aligned(8))) u32 lbl_eu_80663BB0[2] = {
+    (u32)&lbl_eu_80524658, (u32)&lbl_eu_8056FE20,
+};
+extern "C" __declspec(section ".sdata") u32 lbl_eu_80663BB8[2] = {
+    (u32)&lbl_eu_8052466C, 0,
+};
+extern "C" __declspec(section ".sdata") u32 lbl_eu_80663BC0[2] = {
+    (u32)&lbl_eu_80524678, (u32)&lbl_eu_8056FE48,
+};
 
 // Vtables (retail .data of this TU).
 extern u32 lbl_eu_8056FE08[]; // CERandomizerSimple

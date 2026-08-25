@@ -137,6 +137,14 @@ struct CScnItemBig {
 // The base ctor is inlined; MWCC emits the base-vtable store at entry and
 // the derived-vtable store at the end, reproducing the retail double-store
 // schedule.
+#pragma push
+#pragma auto_inline off
+// Emit the standalone reslist<CScnItem*> constructor for the retail symbol
+// __ct__reslist_CScnItem. With -inline auto MWCC else folds the template
+// default-ctor into every call site and never emits a global body;
+// instantiate BEFORE any use so the out-of-line copy is authoritative.
+template reslist<CScnItem*>::reslist();
+#pragma pop
 template class reslist<CScnItem*>;
 
 // Doubly-linked list node used by the item-pool free-list helpers.

@@ -2,6 +2,9 @@
 // Replace stubs with high-level C/C++ during decomp.
 
 #include "kyoshin/harness_catalog.hpp"
+#include "kyoshin/cf/object/CfObjectMove.hpp" // func_800BE12C (owner decl)
+#include "libs/monolib/src/scn/CScn_8049603C.hpp" // func_8049603C (single owner decl)
+#include "monolib/scn/CScnTimeApi.hpp"
 #include "kyoshin/cfsys/CfObjectImplMove.hpp"
 #include <nw4r/math.h>
 #include <revolution/mtx/mtxvec.h>
@@ -107,9 +110,9 @@ void func_800CAB30(CfObjectImplMoveObj* self, CfMoveEvtParam* param) {
                 lbl_eu_80666C64);
         }
         // Reset driver state and clear the move buffer.
-        actor->field_3594 = 0;
-        actor->field_3590 = 0;
-        actor->field_3388 &= ~0x10;
+        actor->mst.field_214 = 0;
+        actor->mst.field_210 = 0;
+        actor->mst.field_8 &= ~0x10;
         u32 v805check = 0;
         u32 v805 = actor->field_04->b30()->field_0;
         v805check = func_80174C98(actor, &v805, 0x805);
@@ -121,7 +124,7 @@ void func_800CAB30(CfObjectImplMoveObj* self, CfMoveEvtParam* param) {
                     func_800BE12C(&actor->sub, 0x31, 0, -1, 1);
             }
         } else {
-            func_8014B2DC(actor->field_3380);
+            func_8014B2DC(actor->mst.buf);
         }
         // Release handlers 0xee / 0xf4.
         static const u16 kHandlers2[] = {0xee, 0xf4};
@@ -177,63 +180,68 @@ void func_800CB21C(CfObjectImplMoveObj* self, u32 id) {
     }
 }
 
-// Move-event dispatcher: routes the incoming event id (param +0xc) after the
-// generic func_800CB21C pre-dispatch. Case 0xb additionally raises the actor's
-// 0x40 presentation mask; ids 9/0xb-0xf run the battle-id-gated request build;
-// id 0x10 re-registers the embedded handler; ids 0x33/0xf7 clear bit groups in
-// every vf29C item.
+// Move-event dispatcher: runs the func_800CB9AC pre-dispatch with the event
+// id, then routes per id. Cases 9/0xb-0xe share the battle-gated request
+// build (case 0xb first raises the actor's 0x40 presentation mask); case 0xa
+// only refreshes via vfB4; case 0xf adds the 0x194 sound request and a
+// conditional 0x31 move-state request behind three handler probes; case 0x10
+// re-registers handlers behind a 0x30 request; ids 0x33/0xf7 discard eight
+// vf29C results while clearing flag-bit groups of the actor's +0x74 word.
 void func_800CB454(CfObjectImplMoveObj* self, CfMoveEvtParam* param) {
-    CfActorObj* actor = self->field_0x18;
-    u16 id = param->field_C;
-    func_800CB21C(self, id);
-    switch (id) {
+    // Retail reloads the id halfword from the parameter block for every
+    // comparison (param stays cached in r31), so no local copy is kept.
+    func_800CB9AC(self, param->field_C);
+    switch (param->field_C) {
+    case 0xa:
+        self->field_0x18->f43();
+        break;
     case 0xb:
-        func_80174C24(actor, 0x40);
+        func_80174C24(self->field_0x18, 0x40);
         // fallthrough
     case 9:
-    case 0xc:
-    case 0xd:
-    case 0xe: {
-        self->vfB4();
+    case 0xc: {
+        self->field_0x18->f43();
         getInstance__Q22cf13CfGameManagerFv();
-        if (func_8006EF04(0x400))
-            return;
+        if (func_8006EF04(0x04000000))
+            break;
         CfMoveBMId* bmId =
             (CfMoveBMId*)func_800EA444(getInstance__Q22cf14CBattleManagerFv());
-        if (bmId == nullptr || bmId->field_0 != actor->sub.field_74)
-            return;
+        if (bmId == nullptr ||
+            self->field_0x18->sub.field_74 != bmId->field_0)
+            break;
         void* src = func_800F477C();
         CfMoveAcReq req;
-        memset(&req._04_0B, 0, 0xe);
-        memset(&req, 0, 0x20);
+        memset(&req.at4.raw, 0, 0xe);
+        memset(&req, 0, sizeof(req));
         if (src != nullptr) {
-            req.field_D = ((u8*)src)[0x77];
-            req.field_6 = 0x5a;
-            req.field_12 = *(u16*)((u8*)src + 0);
-            req.field_10 = 0;
+            req.at4.body.field_D = 0x5a;
+            req.field_12 = ((u8*)src)[0x77];
+            req.field_14 = lbl_eu_80666C60;
+            req.at4.body.field_10 = 0;
+            req.at4.body.field_6 = 6;
         } else {
-            req.field_D = 4;
+            req.at4.body.field_D = 4;
             req.field_12 = 0xFFFF;
-            req.field_10 = 0;
-            req.field_6 = 6;
+            req.field_14 = lbl_eu_80666C60;
+            req.at4.body.field_10 = 0;
+            req.at4.body.field_6 = 6;
         }
-        req.field_14 = lbl_eu_80666C60;
-        func_8014AC38(actor->field_3380, &req);
+        func_8014AC38(self->field_0x18->mst.buf, &req);
         break;
     }
     case 0x10: {
-        // Handler re-registration: both registered ids must be absent and the
-        // 0x2bc probe empty; then request 0x30 unless the +0x4ec flag blocks it.
-        CfActorObj* a = self->field_0x18;
-        u32 v1a = a->field_04->b30()->field_0;
-        if (func_80174C98(a, &v1a, 0x1a) != 0)
-            return;
-        u32 v19 = a->field_04->b30()->field_0;
-        if (func_80174C98(a, &v19, 0x19) != 0)
-            return;
-        if (a->f173() != 0)
-            return;
-        CfEmbeddedSubObj_3E9C* sub = &a->sub;
+        // Handler re-registration: all three probes must come back empty;
+        // then request state 0x30 unless the driver flag (or its +0x4ec
+        // mirror on the +0xc4 object) blocks it.
+        u32 v1a = self->field_0x18->field_04->b30()->field_0;
+        if (func_80174C98(self->field_0x18, &v1a, 0x1a) != 0)
+            break;
+        u32 v19 = self->field_0x18->field_04->b30()->field_0;
+        if (func_80174C98(self->field_0x18, &v19, 0x19) != 0)
+            break;
+        if (self->field_0x18->f173() != 0)
+            break;
+        CfEmbeddedSubObj_3E9C* sub = &self->field_0x18->sub;
         if ((sub->field_64 & 2) == 0) {
             func_800BE12C(sub, 0x30, 0, -1, 1);
         } else if ((((CfMoveC4Obj*)sub->field_C4)->field_4EC & 2) == 0) {
@@ -241,41 +249,70 @@ void func_800CB454(CfObjectImplMoveObj* self, CfMoveEvtParam* param) {
         }
         break;
     }
-    case 0xf:
-        self->vfB4();
-        {
-            CfActorObj* a = self->field_0x18;
-            u32 v1a = a->field_04->b30()->field_0;
-            if (func_80174C98(a, &v1a, 0x1a) != 0)
-                return;
-            u32 v19 = a->field_04->b30()->field_0;
-            if (func_80174C98(a, &v19, 0x19) != 0)
-                return;
-            if (a->f173() != 0)
-                return;
-            if ((a->sub.field_64 & 2) != 0)
-                func_800BE12C(&a->sub, 0x31, 0, -1, 1);
+    case 0xf: {
+        self->field_0x18->f43();
+        func_801BFE8C(0, 0x194, 0);
+        getInstance__Q22cf13CfGameManagerFv();
+        if (!func_8006EF04(0x04000000)) {
+            CfMoveBMId* bmId = (CfMoveBMId*)func_800EA444(
+                getInstance__Q22cf14CBattleManagerFv());
+            if (bmId != nullptr &&
+                self->field_0x18->sub.field_74 == bmId->field_0) {
+                void* src = func_800F477C();
+                CfMoveAcReq req;
+                memset(&req.at4.raw, 0, 0xe);
+                memset(&req, 0, sizeof(req));
+                if (src != nullptr) {
+                    req.at4.body.field_D = 0x5a;
+                    req.field_12 = ((u8*)src)[0x77];
+                    req.field_14 = lbl_eu_80666C60;
+                    req.at4.body.field_10 = 0;
+                    req.at4.body.field_6 = 6;
+                } else {
+                    req.at4.body.field_D = 4;
+                    req.field_12 = 0xFFFF;
+                    req.field_14 = lbl_eu_80666C60;
+                    req.at4.body.field_10 = 0;
+                    req.at4.body.field_6 = 6;
+                }
+                func_8014AC38(self->field_0x18->mst.buf, &req);
+            }
         }
+        // Handler probes (ids 0x805/0x1a/0x19), then a conditional 0x31
+        // move-state request gated on the driver flag word.
+        u32 v805 = self->field_0x18->field_04->b30()->field_0;
+        if (func_80174C98(self->field_0x18, &v805, 0x805) != 0)
+            break;
+        u32 v1a = self->field_0x18->field_04->b30()->field_0;
+        if (func_80174C98(self->field_0x18, &v1a, 0x1a) != 0)
+            break;
+        u32 v19 = self->field_0x18->field_04->b30()->field_0;
+        if (func_80174C98(self->field_0x18, &v19, 0x19) != 0)
+            break;
+        if (self->field_0x18->f173() != 0)
+            break;
+        CfEmbeddedSubObj_3E9C* subF = &self->field_0x18->sub;
+        if ((subF->field_64 & 2) != 0)
+            func_800BE12C(subF, 0x31, 0, -1, 1);
         break;
+    }
     case 0x33:
+        // Eight vf29C dispatches whose results are discarded; each pass
+        // clears bit mask 0x8000 of the actor's own +0x74 word.
         for (int i = 0; i < 8; i++) {
-            CfMoveVf29CX74* item =
-                (CfMoveVf29CX74*)self->field_0x18->vf29C(i);
-            item->field_74 &= 0xFC03FFFF;   // rlwinm 0,17,15: clear bits 16-25
+            self->field_0x18->vf29C(i);
+            self->field_0x18->field_74 &= 0xFFFF7FFF;
         }
         break;
     case 0xf7:
+        // Same sweep clearing bit mask 0x00c0 instead.
         for (int i = 0; i < 8; i++) {
-            CfMoveVf29CX74* item =
-                (CfMoveVf29CX74*)self->field_0x18->vf29C(i);
-            item->field_74 &= 0xFCFFFFFF;   // rlwinm 0,25,23: clear bits 24-25
+            self->field_0x18->vf29C(i);
+            self->field_0x18->field_74 &= 0xFFFFFF3F;
         }
-        break;
-    default:
-        break;
     }
-    // Presentation tail: forward the param when its gate bits are set.
-    if (param->field_2E != 0 || (param->field_30 & 2) == 0) {
+    // Presentation tail: forward the param unless both gate bits are set.
+    if (param->field_2E == 0 || (param->field_30 & 2) != 0) {
         func_801A891C(self->field_0x18, param);
     }
 }
@@ -390,9 +427,9 @@ void func_800CBBD8(CfObjectImplMoveObj* self) {
     func_800F6ED0(func_80043F18(&holder), handle);
     if (func_80043F18(&holder)->field_620 != 0) {
         // Effects exist: clear the driver state and re-register the sub-object.
-        self->field_0x18->field_3594 = 0;
-        self->field_0x18->field_3590 = 0;
-        func_8014B2DC(self->field_0x18->field_3380);
+        self->field_0x18->mst.field_214 = 0;
+        self->field_0x18->mst.field_210 = 0;
+        func_8014B2DC(self->field_0x18->mst.buf);
         func_800BE12C(&self->field_0x18->sub, 0x31, 0, -1, 1);
     } else {
         self->vf70(func_800F6E08(func_80043F18(&holder)));
@@ -405,7 +442,7 @@ void func_800CBBD8(CfObjectImplMoveObj* self) {
         CfActorObj* act = self->field_0x18;
         u32 vD = act->field_04->b30()->field_0;
         if (func_80174C98(act, &vD, 0x806) != 0) {
-            func_8014B2DC(act->field_3380);
+            func_8014B2DC(act->mst.buf);
         } else {
             func_80174B4C(act, 5);
             act->f138();
@@ -619,7 +656,7 @@ void func_800CC964(CfObjectImplMoveObj* self, u32 id, CfMoveReqParam* param) {
             return;
         }
         CfObjectImplMoveSubObj* drv = self->mSubObj;
-        f32 vol = *(f32*)((u8*)func_8049603C(lbl_eu_80663E14) + 0xc);
+        f32 vol = ((f32*)func_8049603C((CScn*)lbl_eu_80663E14))[3];
         void* handle = (void*)drv->field_0x74;
         func_801BFE20(0, snd, handle,
             lbl_eu_80666CA8 * (lbl_eu_80666C64 - vol));
@@ -738,7 +775,7 @@ void func_800CC964(CfObjectImplMoveObj* self, u32 id, CfMoveReqParam* param) {
     case 0x16: {
         // Battle-gated 0x27 request: skipped while a battle intro counter is
         // running (CBattleManager +0x20c8).
-        CBattleManagerView* bm = getInstance__Q22cf14CBattleManagerFv();
+        CBattleManagerView* bm = (CBattleManagerView*)getInstance__Q22cf14CBattleManagerFv();
         if (bm != nullptr) {
             if (*(s16*)((u8*)bm + 0x20c8) != 0) {
                 break;
@@ -766,7 +803,60 @@ void func_800CC964(CfObjectImplMoveObj* self, u32 id, CfMoveReqParam* param) {
 
 void func_800CD268(){}
 
-void func_800CD460(){}
+// Camera-shake trigger: when the bound move event object exists, measure the
+// distance between the actor's target position and the scene pose position;
+// if it is within the threshold (param override, or base constant x event
+// scale), fade a shake scale from 1 down to 0 across the threshold band and
+// fire the camera shake with the parameter block's vectors scaled by it.
+void func_800CD460(CfObjectImplMoveObj* self, CfMoveCd460Target* target,
+                   CfMoveCd460Arg* param) {
+    CfMoveEvt60* evt = (CfMoveEvt60*)self->field_0x18->sub.field_98;
+    if (evt == nullptr) {
+        return;
+    }
+
+    CfMoveCd460Pose* pose = (CfMoveCd460Pose*)func_80496264(lbl_eu_80663E14, -1);
+
+    // Position delta between the actor and the scene pose: VEC3Sub lowers to
+    // the inlined PS kernel; the components are then re-stored through a
+    // stack-slot pointer whose address feeds PSVECMag.
+    CfMoveVec3f magIn;
+    CfMoveVec3f diff;
+    Vec* pMag = (Vec*)&magIn;
+    nw4r::math::VEC3Sub((nw4r::math::VEC3*)&diff,
+                        (nw4r::math::VEC3*)&target->pos,
+                        (nw4r::math::VEC3*)&pose->pos);
+    pMag->x = diff.x; pMag->y = diff.y; pMag->z = diff.z;
+    f32 dist = PSVECMag(pMag);
+
+    f32 thresh = param->field_40;
+    if (lbl_eu_80666C60 == thresh) {
+        CfMoveEvt60* cur = (CfMoveEvt60*)self->field_0x18->sub.field_98;
+        thresh = lbl_eu_80666C68 * cur->field_2E8;
+    }
+    if (dist > thresh) {
+        return;
+    }
+
+    // Falloff: full shake at 0 distance, fading to 0 at the threshold edge.
+    // Written without intermediates so MWCC fuses (dist - C9C*thresh) into
+    // the retail fnmsubs.
+    f32 scale = lbl_eu_80666C64;
+    if (lbl_eu_80666C9C * thresh <= dist) {
+        scale = lbl_eu_80666C64 -
+                (dist - lbl_eu_80666C9C * thresh) /
+                    (lbl_eu_80666C88 * thresh);
+    }
+
+    CfMoveCd460Shake shake;
+    memcpy(&shake, &param->shake, sizeof(shake));
+    // VEC3Scale is the inlined PS kernel behind retail's ps_muls0 pairs.
+    nw4r::math::VEC3Scale((nw4r::math::VEC3*)&shake.vecA,
+                          (nw4r::math::VEC3*)&shake.vecA, scale);
+    nw4r::math::VEC3Scale((nw4r::math::VEC3*)&shake.vecB,
+                          (nw4r::math::VEC3*)&shake.vecB, scale);
+    func_8007B044(&shake, 0);
+}
 
 void func_800BE824(void*, unsigned int);
 
@@ -818,24 +908,68 @@ void func_800CE544(CfObjectImplMoveObj* self) {
     self->field_0x18->field_04->b20(0x800000);
     CfMoveEnumHolder holder;
     func_80043D90(&holder);
-    CfMoveEnumList* list = func_80043F18(&holder);
-    func_800F4A98(list, 0x20, 0);
+    func_800F4A98(func_80043F18(&holder), 0x20, 0);
     u32 handle = self->vf48();
-    list = func_80043F18(&holder);
-    func_800F6ED0(list, handle);
-    // The count is re-read through func_80043F18 every use (retail reloads
-    // +0x620 from a fresh call each time).
-    for (u32 i = 0; i < func_80043F18(&holder)->field_620; i++) {
-        void* entry = func_800F6EAC(func_80043F18(&holder), i);
-        self->field_0x18->vf2C4(func_8016FE34(entry), lbl_eu_80666C60,
-            lbl_eu_80666C60, lbl_eu_80666C60);
+    func_800F6ED0(func_80043F18(&holder), handle);
+    // The count is re-read through func_80043F18 on every use (retail makes
+    // a fresh call each time).
+    if (func_80043F18(&holder)->field_620 != 0) {
+        for (u32 i = 0; i < func_80043F18(&holder)->field_620; i++) {
+            void* entry =
+                func_8016FE34(func_800F6EAC(func_80043F18(&holder), i));
+            self->field_0x18->vf2C4(entry, lbl_eu_80666C60, lbl_eu_80666C60,
+                lbl_eu_80666C60);
+        }
     }
     self->vf70(func_800F6E08(func_80043F18(&holder)));
     self->vf80();
     __dt__80043E88(&holder, -1);
 }
 
-void func_800CE6A0(){}
+// Move-state reset driver: probes the actor's vf29C item chain (up to three
+// calls, each gated on the chained item's +0x50 pointer / +0x48 halfword) to
+// raise the presentation virtual or the func_800CB9AC event dispatch, then
+// releases the embedded handlers (0xf via slot 0x20, 0x100 via slot 0x30),
+// clears the move state bits and resets the driver bookkeeping fields.
+void func_800CE6A0(CfObjectImplMoveObj* self) {
+    CfMoveVf29CItem* item = self->field_0x18->vf29C(0);
+    if (item->field_0x50 != nullptr) {
+        CfMoveVf29CItem* item2 = self->field_0x18->vf29C(0);
+        if (((CfMoveVf29CItem*)item2->field_0x50)->field_0x48 != 0) {
+            // Chained item's state halfword is live: forward it as an event id.
+            CfMoveVf29CItem* item3 = self->field_0x18->vf29C(0);
+            self->vf98(((CfMoveVf29CItem*)item3->field_0x50)->field_0x48);
+        }
+    }
+    item = self->field_0x18->vf29C(0);
+    if ((item->field_0x78 & 0x400) != 0) {
+        // Only when the actor's 0x2a8 probe is empty, re-raise the event.
+        if (self->field_0x18->vf2A8() == nullptr) {
+            CfMoveVf29CItem* item4 = self->field_0x18->vf29C(0);
+            func_800CB9AC(self,
+                ((CfMoveVf29CItem*)item4->field_0x50)->field_0x48);
+        }
+    }
+    // Release the embedded handler for ids 0xf (slot 0x20) and 0x100
+    // (slot 0x30); retail uses lwzu onto actor+8 for each dispatch.
+    ((CfMoveHandler8*)self->field_0x18->field_08)->h20(0xf);
+    ((CfMoveHandler8*)self->field_0x18->field_08)->h30(0x100);
+    self->field_0x18->field_04->b20(0x00400000);
+    self->field_0x18->field_04->b20(0x00800000);
+    self->field_0x18->sub.vfn14(nullptr);
+    func_80174B4C(self->field_0x18, 0x08000000);
+    func_80174B4C(self->field_0x18, 0x10000000);
+    self->field_0x18->field_3E98 = 0;
+    self->field_0x18->mst.field_8 &= ~0x10;
+    CfActorMstBlock* mst = &self->field_0x18->mst;
+    mst->field_afc = 1;
+    mst->field_4 = 1;
+    func_8014B2DC(mst->buf);
+    CfActorObj* actor = self->field_0x18;
+    actor->mst.field_214 = 0;
+    actor->mst.field_210 = 0;
+    self->field_0x18->vf2B0();
+}
 
 void func_800CE8AC(CfObjectImplMoveObj* self) {
     // Virtual dispatch on the sub-object embedded at +0x3e9c of the actor
@@ -850,26 +984,28 @@ void func_800CE8AC(CfObjectImplMoveObj* self) {
 // embedded handler already resolves to param - rebind it via func_802A31AC,
 // refresh the handler slots, and forward the parameter to vf84.
 void func_800CE8E4(CfObjectImplMoveObj* self, void* param) {
+    // Retail reloads self->field_0x18 (actor) from memory before every use.
     CfActorObj* actor = self->field_0x18;
     u32 valA = actor->field_04->b30()->field_0;
     if (func_80174C98(actor, &valA, 0xa) != 0) {
         return;
     }
+    actor = self->field_0x18;
     u32 valB = actor->field_04->b30()->field_0;
     if (func_80174C98(actor, &valB, 0xb) != 0) {
         return;
     }
     getInstance__Q22cf13CfGameManagerFv();
-    if (func_8006EF04(0x400)) {
+    if (func_8006EF04(0x04000000)) {
         return;
     }
-    if (actor->sub.vfn13() == param) {
+    if (self->field_0x18->sub.vfn13() == param) {
         return;
     }
-    func_802A31AC(actor, actor->sub.vfn13(), param);
-    actor->sub.vfn14(param);
+    func_802A31AC(self->field_0x18, self->field_0x18->sub.vfn13(), param);
+    self->field_0x18->sub.vfn14(param);
     if (param != nullptr) {
-        actor->sub.vfn00(4);
+        self->field_0x18->sub.vfn00(4);
     }
     self->vf84(param);
 }
@@ -985,7 +1121,95 @@ void func_800CEE28(CfObjectImplMoveObj* self) {
 
 void func_800CEE7C(void) {}
 
-void func_800CEE80(){}
+// Impact/land presentation driver: resolves an effect object through the
+// bound move event (slot 0x44 refreshes the cached handle at +0x20 when it is
+// unset, slot 0x40 queries the active effect), falls back to the event's
+// +0x14ac object, builds the presentation vector, picks effect/sound ids from
+// the move timers, then drives the effect manager, the attach helper and the
+// positional sound.
+void func_800CEE80(CfObjectImplMoveObj* self) {
+    if (self->mSubObj->field_0x98 == nullptr) {
+        return;
+    }
+    // Retail performs this dead global reload; keep it (volatile in header).
+    u32 evtGate = lbl_eu_80661D40;
+    (void)evtGate;
+    CfMoveEvt98* evt =
+        (CfMoveEvt98*)((CfActorObj*)self->field_0x18)->sub.field_98;
+    u32 res;
+    if (evt == nullptr) {
+        res = 0;
+    } else if ((evt->field_0x7A4 & 0x40000000) == 0) {
+        res = 0;
+    } else {
+        if (self->field_0x20 == 0xFFFFFFFF) {
+            // Refresh the cached effect handle through the event object.
+            self->field_0x20 = evt->vf44();
+        }
+        if (self->field_0x20 == 0xFFFFFFFF) {
+            res = 0;
+        } else {
+            // Retail reloads the registration slot before the query.
+            res = (u32)((CfMoveEvt98*)((CfActorObj*)self->field_0x18)
+                            ->sub.field_98)->vf40();
+        }
+    }
+    // No live effect: fall back to the event's stored result object.
+    if (res == 0) {
+        CfMoveEvt98* fb = (CfMoveEvt98*)self->mSubObj->field_0x98;
+        if ((fb->field_0x7A4 & 0x40000000) != 0) {
+            res = fb->field_0x14AC;
+        }
+    }
+    if (res == 0) {
+        return;
+    }
+    CfMovePosObj* obj = (CfMovePosObj*)res;
+    // Buffered component temps: retail allocates x/y/z in source order
+    // (f1/f0/f2) but schedules the loads z/y/x between the id constants.
+    f32 vz = obj->field_0x2C;
+    u32 flag = 0;      // set when the shake counter is positive
+    f32 vy = obj->field_0x1C;
+    u32 kind = 0x2e;   // default effect id
+    f32 vx = obj->field_0xC;
+    u32 sndId = 0xd9;  // default impact sound
+    CfMoveVec3f vec;
+    vec.x = vx;
+    vec.y = vy;
+    vec.z = vz;
+    vec.y = lbl_eu_80666C74 +
+            ((CfMoveEvt60*)((CfActorObj*)self->field_0x18)->sub.field_C4)
+                ->field_4FC;
+
+    CfObjectImplMoveSubObj* sub = self->mSubObj;
+    CfMoveEvt60* e60 =
+        (CfMoveEvt60*)((CfEmbeddedSubObj_3E9C*)sub)->field_C4;
+    if (e60->field_3C4 > lbl_eu_80666CA0 ||
+        e60->field_4F8 < lbl_eu_80666C88) {
+        // Move window expired: fixed tier plus a shake trigger while the
+        // global presentation counter runs.
+        kind = 0x2d;
+        sndId = 0xd8;
+        if ((int)lbl_eu_80663EF0 > 0) {
+            flag = 1;
+        }
+    } else if ((sub->field_0x64 & 0x8000) != 0) {
+        lbl_eu_80663EF0 = 0x3c;
+    }
+    CfMoveMgrEfView* mgr =
+        (CfMoveMgrEfView*)func_8008187C__Q22cf13CfGameManagerFv(kind);
+    mgr->vfn9C(&vec);
+    CfMoveEvt98* evp = (CfMoveEvt98*)self->mSubObj->field_0x98;
+    f32 epos[4] = {evp->field_760, evp->field_764, evp->field_768,
+        lbl_eu_80666C64};
+    func_800ACC64(mgr, epos);
+    if (flag == 0) {
+        f32 vol = ((f32*)func_8049603C((CScn*)lbl_eu_80663E14))[3];
+        func_801BFDE8(0, sndId, &vec, lbl_eu_80666C64 - vol,
+            lbl_eu_80666C98);
+    }
+    self->field_0x24 = lbl_eu_80666CA4;
+}
 
 // Contact/move-start driver: transforms the contact point into world space,
 // runs the screen-edge checks, then either fires the fixed 0xce presentation
@@ -1049,7 +1273,7 @@ void func_800CF064(CfObjectImplMoveObj* self, CfMoveContact* param) {
         if (lbl_eu_80663EF0 != 0) {
             return;
         }
-        f32 vol = *(f32*)((u8*)func_8049603C(lbl_eu_80663E14) + 0xc);
+        f32 vol = ((f32*)func_8049603C((CScn*)lbl_eu_80663E14))[3];
         void* handle = (void*)(uintptr_t)self->mSubObj->field_0x74;
         func_801BFE20(0, 0xce, handle,
             lbl_eu_80666CA8 * (lbl_eu_80666C64 - vol));
@@ -1144,7 +1368,7 @@ void func_800CF064(CfObjectImplMoveObj* self, CfMoveContact* param) {
     // Tail: tiered impact sound.
     if ((int)sndId >= 0 && lbl_eu_80663EF0 == 0) {
         sub = self->mSubObj;
-        f32 vol = *(f32*)((u8*)func_8049603C(lbl_eu_80663E14) + 0xc);
+        f32 vol = ((f32*)func_8049603C((CScn*)lbl_eu_80663E14))[3];
         void* handle = (void*)(uintptr_t)sub->field_0x74;
         func_801BFE20(0, sndId, handle,
             lbl_eu_80666CA8 * (lbl_eu_80666C64 - vol));
@@ -1208,7 +1432,7 @@ void func_800CF810(CfObjectImplMoveObj* self, CfMoveContact* arg) {
         tier = 0x197;
     if (lbl_eu_80663EF0 != 0)
         return;
-    f32 vol = *(f32*)((u8*)func_8049603C(lbl_eu_80663E14) + 0xc);
+    f32 vol = ((f32*)func_8049603C((CScn*)lbl_eu_80663E14))[3];
     func_801BFE20(0, tier, self->field_0x18 ? (void*)self->field_0x18 : nullptr,
         lbl_eu_80666CA8 * (lbl_eu_80666C64 - vol));
 }

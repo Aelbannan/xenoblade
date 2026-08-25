@@ -121,16 +121,16 @@ ut::FileStream* SoundArchive::detail_OpenFileStream(u32 id, void* pBuffer,
     }
 
     // External file paths are resolved against mExtFileRoot unless absolute
-    if (fileInfo.extFilePath != NULL) {
-        // Loaded here so the register allocation matches retail
+    const char* pExtPath = fileInfo.extFilePath;
+    if (pExtPath != NULL) {
         u32 fileSize = fileInfo.fileSize;
         char pathBuffer[FILE_PATH_MAX];
         const char* pFullPath;
 
-        if (fileInfo.extFilePath[0] == '/') {
-            pFullPath = fileInfo.extFilePath;
+        if (pExtPath[0] == '/') {
+            pFullPath = pExtPath;
         } else {
-            u32 fileLen = std::strlen(fileInfo.extFilePath);
+            u32 fileLen = std::strlen(pExtPath);
             u32 dirLen = std::strlen(mExtFileRoot);
 
             if (fileLen + dirLen >= FILE_PATH_MAX) {
@@ -138,13 +138,12 @@ ut::FileStream* SoundArchive::detail_OpenFileStream(u32 id, void* pBuffer,
             }
 
             std::strncpy(pathBuffer, mExtFileRoot, dirLen + 1);
-            std::strncat(pathBuffer, fileInfo.extFilePath, fileLen + 1);
+            std::strncat(pathBuffer, pExtPath, fileLen + 1);
 
             pFullPath = pathBuffer;
         }
 
-        return OpenExtStream(pBuffer, bufferSize, pFullPath, 0,
-                             fileSize);
+        return OpenExtStream(pBuffer, bufferSize, pFullPath, 0, fileSize);
     }
 
     FilePos filePos;
@@ -163,17 +162,18 @@ ut::FileStream* SoundArchive::detail_OpenFileStream(u32 id, void* pBuffer,
         return NULL;
     }
 
-    u32 offset = groupInfo.offset + groupItemInfo.offset;
     u32 size = groupItemInfo.size;
 
-    if (groupInfo.extFilePath != NULL) {
+    pExtPath = groupInfo.extFilePath;
+    u32 offset = groupInfo.offset + groupItemInfo.offset;
+    if (pExtPath != NULL) {
         char pathBuffer[FILE_PATH_MAX];
         const char* pFullPath;
 
-        if (groupInfo.extFilePath[0] == '/') {
-            pFullPath = groupInfo.extFilePath;
+        if (pExtPath[0] == '/') {
+            pFullPath = pExtPath;
         } else {
-            u32 fileLen = std::strlen(groupInfo.extFilePath);
+            u32 fileLen = std::strlen(pExtPath);
             u32 dirLen = std::strlen(mExtFileRoot);
 
             if (fileLen + dirLen >= FILE_PATH_MAX) {
@@ -181,13 +181,12 @@ ut::FileStream* SoundArchive::detail_OpenFileStream(u32 id, void* pBuffer,
             }
 
             std::strncpy(pathBuffer, mExtFileRoot, dirLen + 1);
-            std::strncat(pathBuffer, groupInfo.extFilePath, fileLen + 1);
+            std::strncat(pathBuffer, pExtPath, fileLen + 1);
 
             pFullPath = pathBuffer;
         }
 
-        return OpenExtStream(pBuffer, bufferSize, pFullPath, offset,
-                             size);
+        return OpenExtStream(pBuffer, bufferSize, pFullPath, offset, size);
     }
 
     return OpenStream(pBuffer, bufferSize, offset, size);

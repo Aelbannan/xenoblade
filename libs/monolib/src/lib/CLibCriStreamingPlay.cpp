@@ -176,6 +176,8 @@ static StreamEntry* findStreamSlot(u32 id) {
     return NULL;
 }
 
+static void releaseSlot(StreamEntry* entry);
+
 // Find a free (unused) stream slot; NULL if all five are in use.
 static StreamEntry* findFreeSlot() {
     u8* entry = reinterpret_cast<u8*>(lbl_eu_806656E8) + 0x1C8;
@@ -408,56 +410,43 @@ extern "C" int func_8045B5AC__20CLibCriStreamingPlayFv(const char* filename, int
     return slot->id;
 }
 
-// func_8045B970 - Check if stream ID is active
-extern "C" bool func_8045B970__20CLibCriStreamingPlayFv(int id) {
-    u8* entry = (u8*)lbl_eu_806656E8 + 0x1C8;
-    
-    // Check each of 5 stream slots
+// func_8045B970 - Check if stream ID is active.
+// Unrolled-by-MWCC 5-slot scan: id == -1 (id+0x10000 wraps to 0xFFFF)
+// matches any slot that is itself not unused (-1).
+extern "C" bool func_8045B970__20CLibCriStreamingPlayFv(u32 id) {
+    CLibCriStreamingPlayData* data = reinterpret_cast<CLibCriStreamingPlayData*>(
+        reinterpret_cast<u8*>(lbl_eu_806656E8) + 0x1C8);
+
     for (int i = 0; i < 5; i++) {
-        u32 slotId = *(u32*)(entry + 4);
-        // Check if this slot matches the requested ID
-        if (slotId == (u32)id && (slotId + 0x10000) != 0xFFFF) return true;
-        // Check if slot is unused and we're looking for any active
-        if ((slotId + 0x10000) != 0xFFFF && ((u32)id + 0x10000) == 0xFFFF) return true;
-        entry += 0x94;
+        u32 v = (u32)data->entries[i].id;
+        if (v == id && v + 0x10000 != 0xFFFF) return true;
+        if (v + 0x10000 != 0xFFFF && id + 0x10000 == 0xFFFF) return true;
     }
-    
+
     return false;
 }
 
-// func_8045BAB0 - Stop a specific stream
+// func_8045BAB0 - Stop a specific stream.
+// Unrolled match chain (same shape as func_8045BE48): reproduces retail's
+// per-stage "bne next / b done" pairs and chained pointer advance.
 extern "C" void func_8045BAB0__20CLibCriStreamingPlayFv(int id) {
     StreamEntry* entry = reinterpret_cast<StreamEntry*>(
         reinterpret_cast<u8*>(lbl_eu_806656E8) + 0x1C8);
-    StreamEntry* found = NULL;
 
-    // Find stream by ID
-    for (int i = 0; i < 5; i++) {
-        if (entry->id == id) {
-            found = entry;
-            break;
+    entry =
+        (u32)entry->id == (u32)id ? entry :
+        (u32)(++entry)->id == (u32)id ? entry :
+        (u32)(++entry)->id == (u32)id ? entry :
+        (u32)(++entry)->id == (u32)id ? entry :
+        (u32)(++entry)->id == (u32)id ? entry :
+        (entry = NULL);
+
+    // Retail emits a doubled null-guard branch pair here.
+    if (entry != NULL) {
+        if (entry != NULL) {
+            releaseSlot(entry);
         }
-        entry++;
     }
-
-    if (found == NULL) return;
-
-    // Destroy ADXT handle
-    if (found->adxt != NULL) {
-        if (found->flags & 0x04) ADXT_DetachAhx(found->adxt);
-        ADXT_Destroy(found->adxt);
-        found->adxt = NULL;
-    }
-
-    // Free buffer
-    if (found->buffer != NULL) {
-        mtl::MemManager::deallocate(found->buffer);
-        found->buffer = NULL;
-    }
-
-    // Mark as unused
-    found->id = -1;
-    found->flags = 0;
 }
 
 // func_8045BBA0 - Stop all streams
@@ -530,19 +519,22 @@ extern "C" void func_8045BC4C__20CLibCriStreamingPlayFv(int id, bool pause) {
 
 // func_8045BE48 - Get playback position.
 // Retail entry takes the stream id directly in r3 (see func_8045B5AC).
+// The search must stay a conditional-expression chain: if/else and loop forms
+// fuse the match exit into a single branch, while this shape reproduces
+// retail's per-stage "bne next / b done" pair and chained pointer advance.
 extern "C" int func_8045BE48__20CLibCriStreamingPlayFv(int id) {
     StreamEntry* entry = reinterpret_cast<StreamEntry*>(
         reinterpret_cast<u8*>(lbl_eu_806656E8) + 0x1C8);
 
-    // Find stream by ID (retail compares ids unsigned).
-    int i;
-    for (i = 0; i < 5; i++) {
-        if ((u32)entry->id == (u32)id) break;
-        entry++;
-    }
-    if (i == 5) entry = NULL;
-    if (entry == NULL) return 0;
-    return (int)entry->field_0x84;
+    entry =
+        (u32)entry->id == (u32)id ? entry :
+        (u32)(++entry)->id == (u32)id ? entry :
+        (u32)(++entry)->id == (u32)id ? entry :
+        (u32)(++entry)->id == (u32)id ? entry :
+        (u32)(++entry)->id == (u32)id ? entry :
+        (entry = NULL);
+
+    return entry != NULL ? (int)entry->field_0x84 : 0;
 }
 
 // Compute the ADXT_Pause argument: global pause counter | stream pause bits | flow.
@@ -765,83 +757,86 @@ void CLibCriStreamingPlay::OnPauseTrigger(bool paused) {
     }
 }
 
-// func_8045C67C - Get current volume for stream
+// func_8045C67C - Get current volume for stream.
+// Unrolled match chain (same shape as func_8045BE48): reproduces retail's
+// per-stage "bne next / b done" pairs and chained pointer advance.
 extern "C" float func_8045C67C__20CLibCriStreamingPlayFv(int id) {
-    u8* inst = (u8*)lbl_eu_806656E8;
-    u8* entry = inst + 0x1C8;
-    u8* found = nullptr;
-    
-    for (int i = 0; i < 5; i++) {
-        if (*(u32*)(entry + 4) == (u32)id) {
-            found = entry;
-            break;
-        }
-        entry += 0x94;
-    }
-    
-    if (!found) return lbl_eu_8066A50C; // 1.0
-    return *(float*)(found + 0x64);
+    StreamEntry* entry = reinterpret_cast<StreamEntry*>(
+        reinterpret_cast<u8*>(lbl_eu_806656E8) + 0x1C8);
+
+    entry =
+        (u32)entry->id == (u32)id ? entry :
+        (u32)(++entry)->id == (u32)id ? entry :
+        (u32)(++entry)->id == (u32)id ? entry :
+        (u32)(++entry)->id == (u32)id ? entry :
+        (u32)(++entry)->id == (u32)id ? entry :
+        (entry = NULL);
+
+    return entry == NULL ? lbl_eu_8066A50C : entry->field_0x64;
 }
 
-// func_8045C700 - Set volume immediately
+// func_8045C700 - Set volume immediately.
+// Unrolled match chain (same shape as func_8045BE48): reproduces retail's
+// per-stage "bne next / b done" pairs and chained pointer advance.
 extern "C" void func_8045C700__20CLibCriStreamingPlayFv(int id, float volume) {
-    u8* inst = (u8*)lbl_eu_806656E8;
-    u8* entry = inst + 0x1C8;
-    u8* found = nullptr;
-    
-    for (int i = 0; i < 5; i++) {
-        if (*(u32*)(entry + 4) == (u32)id) {
-            found = entry;
-            break;
+    StreamEntry* entry = reinterpret_cast<StreamEntry*>(
+        reinterpret_cast<u8*>(lbl_eu_806656E8) + 0x1C8);
+
+    entry =
+        (u32)entry->id == (u32)id ? entry :
+        (u32)(++entry)->id == (u32)id ? entry :
+        (u32)(++entry)->id == (u32)id ? entry :
+        (u32)(++entry)->id == (u32)id ? entry :
+        (u32)(++entry)->id == (u32)id ? entry :
+        (entry = NULL);
+
+    if (entry != NULL) {
+        // Set volume and fade parameters
+        entry->field_0x64 = volume;
+        double d = volume;
+        float vol = (float)d;
+        entry->field_0x68 = volume;
+        entry->field_0x6C = vol;
+        float zero = lbl_eu_8066A50C;
+        entry->field_0x70 = zero;
+        entry->field_0x74 = zero;
+
+        // Calculate and set output volume
+        float totalVol = entry->field_0x7C * (entry->field_0x78 * vol);
+        if (CWorkControl::hasFlow()) {
+            totalVol = zero;
         }
-        entry += 0x94;
+        int outVol = lookupVolume((int)(lbl_eu_8066A510 * totalVol));
+        ADXT_SetOutVol(entry->adxt, outVol);
     }
-    
-    if (!found) return;
-    
-    // Set volume and fade parameters
-    *(float*)(found + 0x64) = volume;
-    float vol = (float)volume;
-    *(float*)(found + 0x68) = volume;
-    *(float*)(found + 0x6C) = vol;
-    *(float*)(found + 0x70) = lbl_eu_8066A50C; // 1.0
-    *(float*)(found + 0x74) = lbl_eu_8066A50C;
-    
-    // Calculate and set output volume
-    float totalVol = vol * *(float*)(found + 0x78) * *(float*)(found + 0x7C);
-    bool flow = CWorkControl::hasFlow();
-    if (flow) totalVol = lbl_eu_8066A50C;
-    int volDb = (int)(lbl_eu_8066A510 * totalVol);
-    int outVol = lookupVolume(volDb);
-    ADXT_SetOutVol(*(void**)(found + 8), outVol);
 }
 
-// func_8045C8B0 - Set volume multiplier
+// func_8045C8B0 - Set volume multiplier.
+// Unrolled match chain (same shape as func_8045BE48): reproduces retail's
+// per-stage "bne next / b done" pairs and chained pointer advance.
 extern "C" void func_8045C8B0__20CLibCriStreamingPlayFv(int id, float volume) {
-    u8* inst = (u8*)lbl_eu_806656E8;
-    u8* entry = inst + 0x1C8;
-    u8* found = nullptr;
-    
-    for (int i = 0; i < 5; i++) {
-        if (*(u32*)(entry + 4) == (u32)id) {
-            found = entry;
-            break;
+    StreamEntry* entry = reinterpret_cast<StreamEntry*>(
+        reinterpret_cast<u8*>(lbl_eu_806656E8) + 0x1C8);
+
+    entry =
+        (u32)entry->id == (u32)id ? entry :
+        (u32)(++entry)->id == (u32)id ? entry :
+        (u32)(++entry)->id == (u32)id ? entry :
+        (u32)(++entry)->id == (u32)id ? entry :
+        (u32)(++entry)->id == (u32)id ? entry :
+        (entry = NULL);
+
+    if (entry != NULL) {
+        // Set volume multiplier, then recompute the output volume:
+        // multiplier * (level * mult1), forced to 1.0 during a flow.
+        entry->field_0x7C = volume;
+        float totalVol = volume * (entry->field_0x64 * entry->field_0x78);
+        if (CWorkControl::hasFlow()) {
+            totalVol = lbl_eu_8066A50C;
         }
-        entry += 0x94;
+        int outVol = lookupVolume((int)(lbl_eu_8066A510 * totalVol));
+        ADXT_SetOutVol(entry->adxt, outVol);
     }
-    
-    if (!found) return;
-    
-    // Set volume multiplier
-    *(float*)(found + 0x7C) = (float)volume;
-    
-    // Calculate and set output volume
-    float totalVol = *(float*)(found + 0x64) * *(float*)(found + 0x78) * (float)volume;
-    bool flow = CWorkControl::hasFlow();
-    if (flow) totalVol = lbl_eu_8066A50C;
-    int volDb = (int)(lbl_eu_8066A510 * totalVol);
-    int outVol = lookupVolume(volDb);
-    ADXT_SetOutVol(*(void**)(found + 8), outVol);
 }
 
 // func_8045CA4C - Start a volume fade.
@@ -967,48 +962,49 @@ void CLibCriStreamingPlay::func_8045CF30() {
 // func_8045CFDC - Calculate buffer size for stream.
 // Retail entry takes the channel flag directly in r3 (see also func_8045B5AC).
 extern "C" int func_8045CFDC__20CLibCriStreamingPlayFv(int ch) {
-    u32 rate = lbl_eu_806637A0;
+    // Channel count: 1 when ch is non-zero (AHX/mono flag), else 2.
     int neg = -ch;
-    int sign = (neg | ch) >> 31;
-    u32 a = rate / 1000;
-    u32 b = a * (u32)((sign + 2) * 25000);
-    // b scaled by fixed-point 0xBA2F8BA3 (high word only), then >>5.
+    ch = neg | ch;
+    u32 t = ((ch >> 31) + 2) * 25000;
+    u32 b = t * (lbl_eu_806637A0 / 1000);
     u32 c = b / 44;
-    u32 d = (c >> 5) * 6;
+    u32 d = c * 6;
     u32 e = (d + 0x800) & ~0x7FFu;
-    return (int)(e + (u32)((sign + 2) * 24768) + 100);
+    return (int)(e + (u32)(((ch >> 31) + 2) * 24768) + 100);
 }
 
-// func_8045D03C - Check if stream is playing/paused
-extern "C" bool func_8045D03C__20CLibCriStreamingPlayFv(int id) {
+// func_8045D03C - Check if stream is playing/paused.
+// Unrolled match chain (same shape as func_8045BE48): reproduces retail's
+// per-stage "bne next / b done" pairs and chained pointer advance.
+extern "C" bool func_8045D03C__20CLibCriStreamingPlayFv(CLibCriStreamingPlay* self) {
+    u32 flags;
     CLibCriStreamingPlay* inst = lbl_eu_806656E8;
     if (inst == NULL) return false;
 
     StreamEntry* entry = reinterpret_cast<StreamEntry*>(
         reinterpret_cast<u8*>(inst) + 0x1C8);
-    StreamEntry* found = NULL;
 
-    // Find stream by ID
-    for (int i = 0; i < 5; i++) {
-        if (entry->id == id) {
-            found = entry;
-            break;
-        }
-        entry++;
-    }
+    entry =
+        (u32)entry->id == (u32)self ? entry :
+        (u32)(++entry)->id == (u32)self ? entry :
+        (u32)(++entry)->id == (u32)self ? entry :
+        (u32)(++entry)->id == (u32)self ? entry :
+        (u32)(++entry)->id == (u32)self ? entry :
+        (entry = NULL);
 
-    if (found == NULL) return false;
-    if (found->adxt == NULL) return false;
+    if (entry == NULL) return false;
+    if (entry->adxt == NULL) return false;
 
-    // Paused when: stream pause flag set, global pause counter non-zero,
+    // Paused when: stream pause bits set, global pause counter non-zero,
     // or the flow is active.
-    u32 flags = found->flags;
-    bool flow = CWorkControl::hasFlow();
-    CLibCriStreamingPlayData* data = reinterpret_cast<CLibCriStreamingPlayData*>(
-        reinterpret_cast<u8*>(inst) + 0x1C8);
-    s32 pauseCount = data->pauseCount;
-
-    return flow || (pauseCount != 0) || (flags & 1) || (flags & 2);
+    flags = entry->flags;
+    u32 bit0 = flags & 1;
+    u32 bit1 = (flags >> 1) & 1;
+    int flow = CWorkControl::hasFlow();
+    s32 pauseCount = *(s32*)(reinterpret_cast<u8*>(inst) + 0x4B0);
+    u32 paused = (u32)(pauseCount != 0);
+    u32 bits = paused | bit0;
+    return (flow | (bits | bit1)) != 0;
 }
 
 // func_8045D140 - CDeviceVICb thunk: adjust this and call func_8045CF30

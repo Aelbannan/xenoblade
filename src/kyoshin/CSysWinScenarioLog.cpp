@@ -1,5 +1,6 @@
 // Auto-scaffolded catalog TU for kyoshin/CSysWinScenarioLog
 
+#include "kyoshin/cf/CBattleManagerApi.hpp"
 #include <types.h>
 
 #include "kyoshin/CSysWinScenarioLog.hpp"
@@ -9,11 +10,7 @@
 #include "monolib/device/CDeviceFont.hpp"
 #include "kyoshin/cf/CfGameManager.hpp"
 #include "kyoshin/cf/object/CfObject.hpp"
-// CTaskGame.hpp re-declares func_8049603C with a typed return that conflicts
-// with CfGameManager.hpp's void* form; this TU never calls it, so hide it.
-#define func_8049603C scenarioLog9603CUnused
 #include "kyoshin/CTaskGame.hpp"
-#undef func_8049603C
 #include "monolib/device/CDeviceFile.hpp"
 #include "monolib/work/IWorkEvent.hpp"
 #include "monolib/device/CDeviceVI.hpp"
@@ -62,7 +59,7 @@ static inline void scenarioLadder(u32 id) {
 }
 
 // ---------------------------------------------------------------------------
-// ---- Target 1: func_8027F0A0 (us-80281524) -------------------------------
+// func_8027F0A0 (us-80281524)
 // Clears the "scenario log open / state" globals to their closed values.
 // ---------------------------------------------------------------------------
 void func_8027F0A0() {
@@ -79,7 +76,7 @@ void func_8027F0A0() {
 // calls them out-of-line).
 
 // ---------------------------------------------------------------------------
-// ---- Target 5: CSysWinScenarioLog::~CSysWinScenarioLog (us-80280a38) ------
+// CSysWinScenarioLog::~CSysWinScenarioLog (us-80280a38)
 // D1-inlined-into-D2 virtual dtor (same shape as CMainMenu). Subobjects are
 // destroyed in reverse order: mMemRegion@0x7c, then CProcess base, then
 // conditional operator delete. The nested double null-check is the MWCC
@@ -101,7 +98,7 @@ extern "C" void* __dt__18CSysWinScenarioLogFv(CSysWinScenarioLog* _this, int fla
 }
 
 // ---------------------------------------------------------------------------
-// ---- Target 5: CSysWinScenarioLog::CSysWinScenarioLog (us-80280934) -------
+// CSysWinScenarioLog::CSysWinScenarioLog (us-80280934)
 // C-linkage ctor (retail symbol __ct__CSysWinScenarioLog carries no class-length
 // mangling, so it stays a plain global function - same idiom as CSystemWindow).
 // Runs CProcess's ctor, fills the IUIWindow base region by hand (temp vtable at
@@ -169,7 +166,7 @@ extern "C" CSysWinScenarioLog* __ct__CSysWinScenarioLog(CSysWinScenarioLog* s,
 }
 
 // ---------------------------------------------------------------------------
-// ---- Target 6: func_8027E9E8 (us-80280e6c) -------------------------------
+// func_8027E9E8 (us-80280e6c)
 // Allocate the CSysWinScenarioLog singleton from work memory, construct it,
 // store it, and register it as a child of `parent`. Returns null when already
 // created. (Regist is called even if the allocation failed, matching retail.)
@@ -191,7 +188,7 @@ CSysWinScenarioLog* func_8027E9E8(CProcess* parent, u8* param) {
 }
 
 // ---------------------------------------------------------------------------
-// ---- Target 8: func_8027F0B8 (us-8028153c) -------------------------------
+// func_8027F0B8 (us-8028153c)
 // When the battle list holds members and the scene is ready, force the
 // scenario-sequence close for a fixed id, then mark the window as shown.
 // ---------------------------------------------------------------------------
@@ -227,7 +224,7 @@ void func_8027F0B8() {
 }
 
 // ---------------------------------------------------------------------------
-// ---- Target 10: func_80280804 (us-80282c88) ------------------------------
+// func_80280804 (us-80282c88)
 // Object that owns a state-flags dword at +0x3F00.
 // ---------------------------------------------------------------------------
 struct CScenarioFlagObj {
@@ -316,7 +313,7 @@ void func_8027EF50() {
     lbl_eu_80664912 = 0;
 }
 // ---------------------------------------------------------------------------
-// ---- Target: CSysWinScenarioLog::cbRenderBefore (us-80280dc0) -------------
+// CSysWinScenarioLog::cbRenderBefore (us-80280dc0)
 // Draw the scenario-log layout behind the scene while the game is live: same
 // gate chain as Move() but testing bit 10 of the pause word, then Z-off and
 // a layout draw with a stack DrawInfo (raw buffer, direct ctor/dtor calls).
@@ -356,7 +353,7 @@ __declspec(noinline) void CSysWinScenarioLog::cbRenderBefore() {
 }
 
 // ---------------------------------------------------------------------------
-// ---- Target 6: CSysWinScenarioLog::Move (us-80280c54) ---------------------
+// CSysWinScenarioLog::Move (us-80280c54)
 // Advance the scenario-log window's opening/closing state machine.
 // Gate layout mirrors retail: the first guard folds to a direct branch to the
 // shared epilogue, the pause-bit guard renders as the branch-over-branch
@@ -415,7 +412,7 @@ void CSysWinScenarioLog::Move() {
 }
 
 // ---------------------------------------------------------------------------
-// ---- Target 4: func_8027EA6C (us-80280ef0) -------------------------------
+// func_8027EA6C (us-80280ef0)
 // Open the scenario-log window content (Move state 0): guard on the layout
 // being loaded and the BDAT file pointer being set, mark the window busy,
 // pick the first message row whose id reaches the message-count threshold,
@@ -484,7 +481,7 @@ extern "C" void func_8027EA6C(CSysWinScenarioLog* self) {
 }
 
 // ---------------------------------------------------------------------------
-// ---- Target 2: func_8027F148 (us-802815cc) -------------------------------
+// func_8027F148 (us-802815cc)
 // Scenario-log open gate: every actor in the manager list must report its
 // device usable (vtable 0x2bc) and pass the arts-state gate
 // (func_80174C98 with the +0x4 sub-object's slot-0x30 state, mode 0x1d);
@@ -553,7 +550,7 @@ done:
 }
 
 // ---------------------------------------------------------------------------
-// ---- Target 2: func_8027F2DC (us-80281760) -------------------------------
+// func_8027F2DC (us-80281760)
 // Advance scenario-log counters based on the owner's sub-state. Guards against
 // two condition shapes (base==1 with sub value 7, base==5 with sub value in
 // [7,14]) that force an early return, bumps/closes the 0x3d/0x3e counters,
@@ -680,7 +677,7 @@ void func_8027F2DC(CScenarioLogOwner* self) {
 }
 
 // ---------------------------------------------------------------------------
-// ---- Target 1: func_8027F848 (us-80281ccc) -------------------------------
+// func_8027F848 (us-80281ccc)
 // Scenario-log sequence progress. Guarded by the owner flag word bit 1. Emits
 // one-shot sequence-close calls at several time/event gates, bumps and closes
 // the 0x26/0x38 counters, then marks the global flags and increments the
@@ -753,7 +750,7 @@ void func_8027F848(CScenarioLogOwner* arg0, s32 arg1, CScenarioLogArg2* arg2) {
 }
 
 // ---------------------------------------------------------------------------
-// ---- Target 4: func_8027FC04 (us-80282088) -------------------------------
+// func_8027FC04 (us-80282088)
 // When both the owner (bit 2) and the peer window (bit 1) gates are set,
 // resolve both device objects via their vtable-0x28c virtual and drive the
 // scenario-log counters for the pair.
@@ -771,7 +768,7 @@ void func_8027FC04(CScenarioLogOwner* self, CScenarioLogOwner* other) {
 }
 
 // ---------------------------------------------------------------------------
-// ---- Target 3: func_8027FC80 (us-80282104) -------------------------------
+// func_8027FC80 (us-80282104)
 // Drive the scenario-log counters for a given device/window pair: bump 0x4
 // with its 50/200/1000/5000 gate ladder, then, unless the game mode is 0x16,
 // run state-dependent ladders: window state 1/2 bumps 0xd (and sets a guard
@@ -908,7 +905,7 @@ extern "C" void func_8027FC80(CSysWinDevice* arg0, void* arg1) {
     }
 }
 // ---------------------------------------------------------------------------
-// ---- Target: func_802804F8 (us-8028297c) ----------------------------------
+// func_802804F8 (us-8028297c)
 // Device-side one-shot latch: when the device's owner has scenario flag bit 2
 // live, store the device's usable result (vtable 0x2bc) into the one-shot
 // byte lbl_eu_80664918.
@@ -925,7 +922,7 @@ void func_802804F8(CSysWinDevice* self) {
 }
 
 // ---------------------------------------------------------------------------
-// ---- Target 1: func_80280588 (us-80282a0c) --------------------------------
+// func_80280588 (us-80282a0c)
 // Device-side scenario-log gate: when the device's owner is set and its flag
 // word bit 1 is live, and the one-shot byte is still clear, ask the device
 // (vtable 0x2bc) whether it is usable; if so, drive the pair's counters via
@@ -957,7 +954,7 @@ walk:
 }
 
 // ---------------------------------------------------------------------------
-// ---- Target 1: func_80280640 (us-80282ac4) -------------------------------
+// func_80280640 (us-80282ac4)
 // Device-side scenario-log gate (variant of func_80280588): when the device's
 // owner is set with flag bit 2 live and the one-shot byte is clear, ask the
 // device (vtable 0x2bc) whether it is usable; if so, scan the actor list for
@@ -1023,7 +1020,7 @@ emit:
     lbl_eu_80664918 = 1;
 }
 // ---------------------------------------------------------------------------
-// ---- Target 1: func_802807A0 (us-80282c24) -------------------------------
+// func_802807A0 (us-80282c24)
 // When the owner's scenario gate (flag bit 2) is set and the owner is a
 // member of the battle manager's list, resolve the owner's device object via
 // its vtable and drive the scenario-log counters for that device.
@@ -1085,7 +1082,7 @@ after:
 }
 
 // ---------------------------------------------------------------------------
-// ---- Target 10: func_802809C8 (us-80282e4c) -------------------------------
+// func_802809C8 (us-80282e4c)
 // Bump/close the scenario-log sequence counters at three gates (10 / 100 /
 // 500). Retails only clamps once per open window and only closes each gate
 // when the scene is not booting and no subwindow is freezing the game.
@@ -1200,7 +1197,7 @@ void func_80280BF0() {
 }
 
 // ---------------------------------------------------------------------------
-// ---- Target 5: func_80280D04 (us-80283188) --------------------------------
+// func_80280D04 (us-80283188)
 // Progress the scenario-log sequence through its tiers. Each gate closes an
 // earlier tier before later tiers can advance (1 / 100 / 1000, then, once
 // self reaches 5, a nested 1 / 20 / 50 ladder).
@@ -1231,7 +1228,7 @@ void func_80280D04(s32 self) {
 }
 
 // ---------------------------------------------------------------------------
-// ---- Target 6: func_80280DBC (us-80283240) --------------------------------
+// func_80280DBC (us-80283240)
 // Scan a 2x2 grid of 8 u8 samples (stride 2) for values exceeding thresholds
 // and notify the scenario log at ascending severities; count how many entries
 // are >= 10 and emit a summary gate at 5 / 10 / 16.
@@ -1286,7 +1283,7 @@ void func_80280DBC(u8* self) {
 }
 
 // ---------------------------------------------------------------------------
-// ---- Target 1: func_80280E9C (us-80283320) --------------------------------
+// func_80280E9C (us-80283320)
 // Walk 2 segments of 3 runs; each run scans 5 slots (stride 0x20) for any
 // taken slot at +0x24. Returns early when a whole run is free; otherwise
 // closes the sequence for 0x4E once all segments have at least one taken
@@ -1324,7 +1321,7 @@ void func_80280E9C(u8* self) {
 }
 
 // ---------------------------------------------------------------------------
-// ---- Target 5: func_80280F44 (us-802833c8) -------------------------------
+// func_80280F44 (us-802833c8)
 // Character-slot pressure sweep: for each character id 1..7 count how many of
 // the 5 party-slot entries are fully occupied, emit sequence gates at 1 / 3
 // (per-id 0x50..0x56 ladder) / 5 occupied entries, and close with a summary
@@ -1461,7 +1458,7 @@ extern "C" void func_802811FC(u8* self){
 }
 
 // ---------------------------------------------------------------------------
-// ---- Target 4: func_8028120C (us-80283690) --------------------------------
+// func_8028120C (us-80283690)
 // Find a free slot in one of the two round-robin slot tables (selected by the
 // owner's flag word: bit 1 -> table A at +0x00, bit 2 -> table B at +0x180),
 // bump the table's index (wrapping at 3 / 0x38), call the free slot's vtable
@@ -1524,7 +1521,7 @@ extern "C" u32 __declspec(noinline) func_8027EE88(u32 self, u32 arg) {
 }
 
 // ---------------------------------------------------------------------------
-// ---- Target 3: func_8027EC80 (us-80281104) -------------------------------
+// func_8027EC80 (us-80281104)
 // File-event handler for the scenario-log window. When the exchanged file
 // matches mFileHandle74: create the scratch region, take the file data,
 // allocate + construct the tag processor, build the arc accessor + layout +
@@ -1576,7 +1573,7 @@ extern "C" int func_8027EC80(CSysWinScenarioLog* self, CFileHandle* fh) {
 }
 
 // ---------------------------------------------------------------------------
-// ---- Target: CSysWinScenarioLog::Init (us-80280aac) -----------------------
+// CSysWinScenarioLog::Init (us-80280aac)
 // Register this window's IScnRender sub-object (+0x70) with the owning scene,
 // then kick off both file loads against the IWorkEvent sub-object (+0x6C):
 // the layout archive from MEM2 and the BDAT common archive (+0x18 into the
@@ -1609,7 +1606,7 @@ void CSysWinScenarioLog::Init() {
 }
 
 // ---------------------------------------------------------------------------
-// ---- Target 3: CSysWinScenarioLog::Term (us-80280b60) ---------------------
+// CSysWinScenarioLog::Term (us-80280b60)
 // Tear down the scenario-log window: wait for the VI, release the two file
 // handles and the BDAT archive, destroy the layout pair (vtable slot-2 call
 // with arg 1, guarded like retail's double-beq), free the arc accessor, clear

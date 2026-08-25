@@ -2,6 +2,7 @@
 
 #include <types.h>
 #include "kyoshin/cf/object/CfObjectModel.hpp"
+#include "kyoshin/plugin/ocBdat.hpp"
 
 class CScn;
 class CView;
@@ -162,7 +163,6 @@ extern "C" {
     void* func_804C1BA0(void* mgr, void* handle, int flag);
     void func_804C1D7C(void* mgr, void* resource);
     void func_804C1F10(void* mgr, u16 value, float amount);
-    float func_80496288(CScn* scene);
     void func_80496294(CScn* scene, float value);
     void* func_80495EB0(void* r3, void* r4, void* r5);
     void* func_80489A60(void* r3, void* r4, u32 r5, u32 r6, u32 r7, u32 r8);
@@ -194,7 +194,7 @@ extern "C" {
     int func_800AA33C(char* buf, u32 packed, int prefixFlag, int suffixFlag);
     void CfRes_delegateOp2(void* r3, void* r4, void* r5);
     void func_801C028C(u32 r3, u32 r4);
-    u32 getBdatStringColumnValue(void* bdat, const char* column, s32 index);
+    // getBdatStringColumnValue: canonical decl in plugin/ocBdat.hpp.
     UnkGimmickGlobalView* getUnk80664658();
 
     // ---- this TU's own retail symbols (Fv-annotated / unmangled) ----

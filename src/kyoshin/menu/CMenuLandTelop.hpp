@@ -149,7 +149,8 @@ void cbRenderBefore__14CMenuLandTelopFv(void* _this);
 int func_80226B94();
 int func_8013BE50();
 // getBdatStringColumnValue / getInstance__Q22cf14CBattleManagerFv come from
-// their canonical headers via the include chain (u32 / CBattleManagerView*).
+// their canonical headers via the include chain (u32 / void* from
+// kyoshin/cf/CBattleManagerApi.hpp).
 int func_80144FC8();
 int func_80144FF0();
 void func_80145018();

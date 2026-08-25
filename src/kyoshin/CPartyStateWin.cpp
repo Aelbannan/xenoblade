@@ -377,7 +377,7 @@ extern "C" void func_801FA220(u8* r3, const u8* r4) {
     destBytes[0x15] = srcBytes[0x15];
 }
 
-// Target: us-801fbf10 | func_801FA254
+// us-801fbf10 | func_801FA254
 // Window teardown: wait for the draw callback, switch the mem allocator off
 // the optimal path, unregister the owning scene's render callback, destroy
 // the six embedded sub-objects, flag the scene bytes and detach the child
@@ -430,7 +430,7 @@ void func_801FA254(CPartyStateWin* self) {
 }
 #pragma optimize_for_size off
 
-// Target: us-801fbff4 | func_801FA338
+// us-801fbff4 | func_801FA338
 // Party-window frame step: dispatch on the window state byte (0..0x14) and
 // run the per-state handler, then update every embedded sub-object (the
 // equip-change update is skipped while the equip display is active, state
@@ -544,7 +544,7 @@ extern "C" void func_801FA4F4(CPartyStateWin* self) {
     }
 }
 
-// Target: us-801fc1e0 | func_801FA524
+// us-801fc1e0 | func_801FA524
 // Menu-close gate: returns 1 while the window is armed (state 0xC), the game
 // manager is not ready, or the system window is active; otherwise advances the
 // equip-change state and returns its result.
@@ -561,7 +561,7 @@ int func_801FA524(CPartyStateWin* self) {
     return func_80202484(reinterpret_cast<CEquipChange*>(&self->_pad4150));
 }
 
-// Target: us-801fc258 | func_801FA59C
+// us-801fc258 | func_801FA59C
 // Party-menu open: once the title help and party state settle, update all
 // sub-objects, arm the window (state 0x1) and play the open sound.
 extern "C" __declspec(noinline) void func_801FA59C(CPartyStateWin* self) {
@@ -576,7 +576,7 @@ extern "C" __declspec(noinline) void func_801FA59C(CPartyStateWin* self) {
     }
 }
 
-// Target: us-801fc2d0 | func_801FA614
+// us-801fc2d0 | func_801FA614
 // Menu-open gate: when the title help is idle, the party state is settled and
 // the model display is ready, arm the window (state 0x2).
 extern "C" __declspec(noinline) void func_801FA614(CPartyStateWin* self) {
@@ -587,7 +587,7 @@ extern "C" __declspec(noinline) void func_801FA614(CPartyStateWin* self) {
     }
 }
 
-// Target: us-801fc330 | func_801FA674
+// us-801fc330 | func_801FA674
 // Party-menu pad input step: map the turbo/pressed flags to the A/B/Y
 // buttons (classic vs Wii layout) and the four directions, then run the
 // party-state sub-step for whichever input is active. A/B act on the
@@ -681,7 +681,7 @@ extern "C" __declspec(noinline) void func_801FA8AC(CPartyStateWin* self) {
     }
 }
 
-// Target: us-801fc5e8 | func_801FA92C
+// us-801fc5e8 | func_801FA92C
 // Window refresh gate: once the title help, party state, model display,
 // equip change and system window all settle, rebuild the window (reload the
 // string-pool name, stamp it into the title help, set the title-help byte,
@@ -717,7 +717,7 @@ extern "C" __declspec(noinline) void func_801FAA10(CPartyStateWin* self) {
         *((u8*)self + 0x6BE4) = 7;
 }
 
-// Target: us-801fc71c | func_801FAA60
+// us-801fc71c | func_801FAA60
 // Equip-change input step: increments the window timer field_6BE8 (clamped at
 // lbl_eu_806681E0), then while the equip-change sub-object is active,
 // dispatches on the held/pressed/turbo pad flags. Two mirror chains (classic
@@ -1082,7 +1082,7 @@ tail:
     }
 }
 
-// Target: us-801fd21c | func_801FB560
+// us-801fd21c | func_801FB560
 // Party-window refresh: once the title help is idle and the equip display /
 // equip-change states are settled, rebuild the window (reload the string
 // pool names, refresh all sub-objects) and arm state 0x9.
@@ -1101,7 +1101,7 @@ extern "C" __declspec(noinline) void func_801FB560(CPartyStateWin* self) {
     }
 }
 
-// Target: us-801fd2c8 | func_801FB60C (same body as func_801FA614)
+// us-801fd2c8 | func_801FB60C (same body as func_801FA614)
 extern "C" __declspec(noinline) void func_801FB60C(CPartyStateWin* self) {
     if (isIdle__11CTitleAHelpFv(reinterpret_cast<CTitleAHelp*>(&self->_pad18)) &&
         func_801FD184(reinterpret_cast<CPartyState*>(&self->_pad3038)) &&
@@ -1110,7 +1110,7 @@ extern "C" __declspec(noinline) void func_801FB60C(CPartyStateWin* self) {
     }
 }
 
-// Target: us-801fd328 | func_801FB66C
+// us-801fd328 | func_801FB66C
 // Equip display enter: once state20 clears, restart the display, hand the
 // current equip-slot category to CEquipChange and arm the window (state 0x7).
 extern "C" __declspec(noinline) void func_801FB66C(CPartyStateWin* self) {
@@ -1123,7 +1123,7 @@ extern "C" __declspec(noinline) void func_801FB66C(CPartyStateWin* self) {
     }
 }
 
-// Target: us-801fd388 | func_801FB6CC
+// us-801fd388 | func_801FB6CC
 // Equip display enter (restart variant): once state20 clears, restart the
 // display, hand the current equip-slot category to CEquipChange and arm the
 // window (state 0x7).
@@ -1137,7 +1137,7 @@ extern "C" __declspec(noinline) void func_801FB6CC(CPartyStateWin* self) {
     }
 }
 
-// Target: us-801fd3e8 | func_801FB72C
+// us-801fd3e8 | func_801FB72C
 // Equip display refresh: once the display settles, reset its slot, hand the
 // current slot to CEquipChange, and when the party has fewer than 3 members
 // filter the party list by the slot's name-table entry and detach the
@@ -1182,7 +1182,7 @@ extern "C" __declspec(noinline) void func_801FB72C(CPartyStateWin* self) {
 }
 #pragma optimize_for_size off
 
-// Target: us-801fd4f0 | func_801FB834
+// us-801fd4f0 | func_801FB834
 // Shortcut-open: when the mode-appropriate button combo is pressed (classic
 // mode vs not), arm the window (state 0xF) and open the system window.
 extern "C" __declspec(noinline) void func_801FB834(CPartyStateWin* self);
@@ -1204,7 +1204,7 @@ extern "C" __declspec(noinline) void func_801FB834(CPartyStateWin* self) {
 }
 #pragma optimize_for_size off
 
-// Target: us-801fd56c | func_801FB8B0
+// us-801fd56c | func_801FB8B0
 // Equip display exit: once state20 clears, arm the window (state 0x11),
 // restart the display and repaint it.
 extern "C" __declspec(noinline) void func_801FB8B0(CPartyStateWin* self) {
@@ -1317,7 +1317,7 @@ armBlock:
     func_80138078(0x2);
 }
 
-// Target: us-801fd89c | func_801FBBE0
+// us-801fd89c | func_801FBBE0
 // Menu-open for the equip window: once state20 clears, arm the window
 // (state 0x14), restart the display and repaint it.
 extern "C" __declspec(noinline) void func_801FBBE0(CPartyStateWin* self) {
@@ -1349,7 +1349,7 @@ extern "C" __declspec(noinline) void func_801FBC7C(CPartyStateWin* self) {
 }
 #pragma optimize_for_size off
 
-// Target: us-801faf94 | ctor (retail symbol __ct__14CPartyStateWinFUlUl)
+// us-801faf94 | ctor (retail symbol __ct__14CPartyStateWinFUlUl)
 // Constructs the composite vtables, stores the two ctor args, then builds
 // the six embedded sub-objects in ascending address order and finishes with
 // the byte flags and the field_6BE8 float.
@@ -1544,7 +1544,7 @@ extern "C" void func_801F941C(CPartyStateWin* self, u32 arg1, u32 arg2) {
     }
     scn->addRenderCB(render, 0xd, 0);
 }
-// Target: us-801fb358 | func_801F969C
+// us-801fb358 | func_801F969C
 // Content rect for a window row: offset the embedded frame rect by the frame's
 // content origin, then copy the offset pair + the stored pair out as a 4x s16
 // quad.
@@ -1592,7 +1592,7 @@ extern "C" __declspec(noinline) void func_801F9730(CPartyStateWin* self, const u
     self->mQuad444[3] = src[3];
 }
 
-// Target: us-801fb410 | func_801F9754
+// us-801fb410 | func_801F9754
 // Pushes a 0x24-byte record into the ring buffer of the view object at
 // CPartyStateWin +0x14. The record payload is read from an uninitialized
 // stack local (retail reads its own frame at sp+0xC..0x2A; the only retail
@@ -1638,7 +1638,7 @@ extern "C" void func_801F9754(CPartyStateWinRing* self, u32 flag) {
     self->field_0x3f4 += 1;
     self->field_0x3fc = self->field_0x3f4 - 1;
 }
-// Target: us-801fb4d8 | func_801F981C (0x48)
+// us-801fb4d8 | func_801F981C (0x48)
 // Pre-fills the two memory-accounting counters of a CPartyStateWinMem with
 // the largest allocatable size of the MEM1 handle and of the scene-alloc
 // handle; returns self (retail keeps `this` in r31 and returns it).
@@ -1648,7 +1648,7 @@ __declspec(noinline) CPartyStateWinMem* func_801F981C(CPartyStateWinMem* self) {
     return self;
 }
 
-// Target: us-801fb520 | func_801F9864 (0x30)
+// us-801fb520 | func_801F9864 (0x30)
 // Records a 6-argument party-window payload into a PartyGaugeRecord (layout
 // in CPartyStateWin.hpp). The array fill is a constant-trip countdown loop;
 // optimize_for_size keeps it ROLLED (retail 0x30 body; plain -O4,p fully

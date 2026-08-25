@@ -21,6 +21,9 @@ struct CMenuGetItemMultiEntry {
     u32 packed;
     u16 value;
     u8 rest[0x2e];
+    // Default ctor zeroes value (+4, halfword) then packed (+0): the retail
+    // CMenuGetItemMulti ctor's array-init loop stores in that order.
+    CMenuGetItemMultiEntry() { value = 0; packed = 0; }
 };
 
 struct CMenuGetItemPaneView {
@@ -52,7 +55,11 @@ public:
     // Deliberately NON-polymorphic (CMenuGetItem idiom): the CProcess base
     // region (incl. composite vtable at +0x10) is opaque storage; the
     // IWorkEvent/IScnRender subobject vtable slots are explicit fields below.
-    u8 _00[0x54];
+    u8 _00[0x10];
+    u32 field_10;            // composite vtable (interim -> final)
+    u8 _14[0x28];            // 0x14-0x3B rest of the CProcess base region
+    u32 mPtmfSlot3C[3];      // 0x3C null PTMF callback slot (__ptmf_null)
+    u32 mPtmfSlot48[3];      // 0x48 null PTMF callback slot (__ptmf_null)
     nw4r::lyt::Layout* mLayout;              // +0x54
     u32 field_58;
     u32 field_5C;
@@ -69,7 +76,8 @@ public:
     nw4r::lyt::AnimTransform* mAnim;         // +0x88
     u32 mInitialItems[4];                    // +0x8C
     u32 mVisibleItemCount;                   // +0x9C
-    CMenuGetItemMultiEntry mEntries[4];      // +0xA0
+    CMenuGetItemMultiEntry mFirstEntry;      // +0xA0 (ctor inlined by MWCC)
+    CMenuGetItemMultiEntry mRestEntries[3];  // +0xD4 (array-init bdnz loop)
     u32 mEntryCount;                         // +0x170
     CBaseCur mCursor;                        // +0x174
     u8 mSystemWindow[0x3C];                  // +0x18C CSysWin storage (raw;
@@ -185,8 +193,6 @@ extern u32 lbl_eu_80663E28;
 // Pane size/position step factor used by func_801B5630's pane adjustments
 // (.sdata2). Sibling lbl_eu_80667E18 is the int->double conversion magic
 // (0x43300000_80000000) that MWCC emits for the (f32)(s32) casts there.
-// C linkage required: a plain C++ `extern const f64` gets internalized into
-// an anonymous literal pool by MWCC (reloc name @12630).
 // Plain (non-const) extern: a `const f64` reference gets internalized by
 // MWCC into an anonymous literal pool (@12670), breaking the reloc name.
 extern f32 lbl_eu_80667E14;
@@ -204,7 +210,9 @@ extern f32 lbl_eu_80667E28;
 // slot index by this to derive the page (field_20D), using the sibling
 // int->double magic constant 80667E08 for the (f64) index conversion.
 extern f32 lbl_eu_80667E2C;
-extern const f64 lbl_eu_80667E08;
+// Non-const: a `const f64` here gets internalized by MWCC into an anonymous
+// literal pool (@12738), breaking the reloc name.
+extern f64 lbl_eu_80667E08;
 
 // Item-window font/table pointers (.sbss) used by the category-4/8 item
 // handlers (func_801B6184 / func_801B69F4) and func_801B7A58.
@@ -300,3 +308,27 @@ extern "C" u8* __ct__CMenuGetItemMulti(u8* obj, CScn* pScene, u32 a, u32 b, u32 
 // C++-linkage import: retail symbol is the mangled func_800B708C__Fi
 // (actor id -> action source).
 int func_800B708C(int id);
+
+// Character-record lookup helpers (func_801B78B4's category-13 display):
+// func_8009EC9C fetches the manager object for a slot id, and
+// func_800A32BC reads the character index from it.
+extern "C" u32 func_800A32BC(void* mgr);
+// Active-character id read off the slot-manager object
+// (func_801B6184's equipped-item window scaling).
+extern "C" u32 func_800A082C(void* mgr);
+
+// Per-rank slot record returned by the item impl's getSlot (+0x2C): bit 0
+// of the +4 word marks the slot filled, bits 4-15 hold the slot item id,
+// bits 7-9 the rank index and bits 10-15 a signed rank value.
+struct CMenuGetItemRankSlot {
+    u8 _00[4];
+    u16 bits04;
+};
+
+// Category-13 record view: the flag byte (+0xE8) and the two-bit select byte
+// (+0xE9) that pick the alternate rank-name string.
+struct CMenuGetItemCat13Record {
+    u8 _00[0xe8];
+    u8 flagE8;
+    u8 bitsE9;
+};

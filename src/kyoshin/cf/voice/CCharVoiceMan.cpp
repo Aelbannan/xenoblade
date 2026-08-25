@@ -1,3 +1,4 @@
+#include "kyoshin/cf/CBattleManagerApi.hpp"
 #include "kyoshin/cf/voice/CCharVoiceMan.hpp"
 #include "kyoshin/UnkClass_805764CC.hpp"
 #include "monolib/math/Random.hpp"

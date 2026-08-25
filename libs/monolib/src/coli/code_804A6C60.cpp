@@ -850,8 +850,7 @@ CColiObject* func_804A7ACC(CColiObject* self, const CColiSubSpec804A7878* spec,
     // const load lands in f2, and the +0x308 store folds the double->float
     // conversion into stfs straight from the call-result register (f1).
     double mag = PSVECMag((const Vec*)&self->field_0x68);
-    f32 magF = (f32)mag;
-    f32 inv = lbl_eu_8066AE3C / magF;
+    f32 inv = lbl_eu_8066AE3C / (f32)mag;
     self->field_0x308 = mag;
     VEC3Scale(&self->field_0x68, &self->field_0x68, inv);
     self->field_0x8c = 0;

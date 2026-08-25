@@ -41,7 +41,7 @@ class __declspec(novtable) CTaskColiManager;
 // Full-size externs (retail: walk-state object at 0x8065D138, target table at
 // 0x8056F4F0). Declared at global scope so MWCC emits the names unmangled.
 extern u32 lbl_eu_8056F4F0[3];
-extern f32 lbl_eu_8066AEC0;
+extern const f32 lbl_eu_8066AEC0;
 extern const f32 lbl_eu_8066AEA8;
 extern const f32 lbl_eu_8066AEB0;
 extern const f32 lbl_eu_8066AEC4;
@@ -263,17 +263,20 @@ struct CColiWalkStateObj : CColiWalkState {
 
 extern CColiWalkStateObj lbl_eu_8065D138;
 
-// Query scratch filled by func_804B077C/func_804B06FC: low bound at +0x8,
-// high bound at +0x14.
+// Query scratch filled by func_804B077C/func_804B06FC: component-wise min x
+// at +0x0 and max x at +0xC (trailing pad keeps the retail 0x18-byte slot).
 struct CColiQuery {
-    char pad0[0x8]; //0x0
-    f32 lo;         //0x8
-    char pad1[0x8]; //0xC
-    f32 hi;         //0x14
+    f32 lo;         //0x0 min x
+    f32 pad0[2];    //0x4
+    f32 hi;         //0xC max x
+    char pad1[0x8]; //0x10
 };
 
 int func_804B4E10(CColiQueryResult* self, CColiQueryNode* owner, const Vec* a,
                   u32 mask, int arg, int isFirst, f32 val) {
+    // val survives every helper call in an FP saved register.
+    const f32 v = val;
+
     // Both direction bits must be set in the owner's flags.
     u32 oflags = owner->flags;
     if (!(oflags & 4) || !(oflags & 2)) return 0;
@@ -283,18 +286,33 @@ int func_804B4E10(CColiQueryResult* self, CColiQueryNode* owner, const Vec* a,
     CColiWalkState* st = (CColiWalkState*)(u32)isFirst;
     int init = 0;
     if (isFirst == 0) {
+        // All walk-state accesses are volatile so MWCC keeps the whole
+        // sequence in retail order: AEC4 seed load, flag clear, init mark,
+        // AEC8 seed, x/y snapshot with y stored first, the zero literal
+        // load wedged between the snapshot stores, then z.
+        volatile CColiWalkState* vs = &lbl_eu_8065D138;
         st = &lbl_eu_8065D138;
-        st->flag = 0;
+        f32 v5c;
+        f32 v4c = lbl_eu_8066AEC4;
+        vs->flag = 0;
         init = 1;
-        st->src = *(const CColiSrcVec*)a;
-        st->bbMax[2] = lbl_eu_8066AEC4;
-        st->f5c = lbl_eu_8066AEC8;
-        f32 zero = lbl_eu_8066AEC0;
-        st->bbMin[0] = zero;
-        st->bbMin[1] = zero;
-        st->bbMin[2] = zero;
-        st->bbMax[0] = zero;
-        st->bbMax[1] = zero;
+        v5c = *(const volatile f32*)&lbl_eu_8066AEC8;
+        const volatile CColiSrcVec* av = (const volatile CColiSrcVec*)a;
+        u32 hi;
+        u32 lo = av->x;
+        hi = av->y;
+        vs->src.y = hi;
+        f32 zero = *(const volatile f32*)&lbl_eu_8066AEC0;
+        vs->src.x = lo;
+        u32 zv = av->z;
+        vs->src.z = zv;
+        vs->bbMax[2] = v4c;
+        vs->f5c = v5c;
+        vs->bbMin[0] = zero;
+        vs->bbMin[1] = zero;
+        vs->bbMin[2] = zero;
+        vs->bbMax[0] = zero;
+        vs->bbMax[1] = zero;
         self->bbMin[0] = zero;
         self->bbMin[1] = zero;
         self->bbMin[2] = zero;
@@ -305,7 +323,6 @@ int func_804B4E10(CColiQueryResult* self, CColiQueryNode* owner, const Vec* a,
 
     char seg[0x318];
     CColiQuery query;
-    const f32 v = val;
     func_804A790C(&seg, a, st, v);
     int found = 0;
     func_804B06FC(&query, a, v);
@@ -315,10 +332,12 @@ int func_804B4E10(CColiQueryResult* self, CColiQueryNode* owner, const Vec* a,
     CColiQueryNode* n = owner->next;
     while (n != 0) {
         if (!(mask & n->filter)) {
-            if (query.lo >= n->maxX && owner->level <= n->level &&
-                func_804B0818(&query, n) != 0 &&
-                func_804B204C(n, &seg, arg) != 0) {
-                found = 1;
+            if (query.lo >= n->maxX) {
+                if ((int)owner->level <= (int)n->level &&
+                    func_804B0818(&query, n) != 0 &&
+                    func_804B204C(n, &seg, arg) != 0) {
+                    found = 1;
+                }
             }
         }
         n = n->next;
@@ -329,7 +348,7 @@ int func_804B4E10(CColiQueryResult* self, CColiQueryNode* owner, const Vec* a,
     for (n = owner->prev; n != 0; n = n->prev) {
         if (!(mask & n->filter)) {
             if (query.hi <= n->minX) {
-                if (owner->level <= n->level &&
+                if ((int)owner->level <= (int)n->level &&
                     func_804B0818(&query, n) != 0 &&
                     func_804B204C(n, &seg, arg) != 0) {
                     found = 1;
@@ -340,19 +359,30 @@ int func_804B4E10(CColiQueryResult* self, CColiQueryNode* owner, const Vec* a,
         }
     }
 
-    if (!init) return found;
-    if (!found) return 0;
-    if (!lbl_eu_8065D138.flag) return 0;
-    // Word copies (lwz/stw) of the accumulated AABB, like the src snapshot.
-    *(CColiSrcVec*)&self->bbMin[0] =
-        *(const CColiSrcVec*)&lbl_eu_8065D138.bbMin[0];
-    *(CColiSrcVec*)&self->bbMax[0] =
-        *(const CColiSrcVec*)&lbl_eu_8065D138.bbMax[0];
-    return 1;
+    if (init != 0) {
+        if (found == 0) {
+            return 0;
+        }
+        if (lbl_eu_8065D138.flag != 0) {
+            // Word copies of the accumulated AABB via the pipelined
+            // two-word struct-copy expansion (y stored before x, trailing z).
+            *(CColiPairCopy*)&self->bbMin[0] =
+                *(const CColiPairCopy*)&lbl_eu_8065D138.bbMin[0];
+            *(CColiPairCopy*)&self->bbMax[0] =
+                *(const CColiPairCopy*)&lbl_eu_8065D138.bbMax[0];
+            return 1;
+        }
+        return 0;
+    }
+    return found;
 }
 
 int func_804B526C(CColiQueryResult* self, CColiQueryNode* owner, const Vec* a,
                   const Vec* b, u32 mask, int arg, int isFirst) {
+    // Distinct web for `b`: retail materializes it into a callee-saved
+    // register at entry (it must survive the first helper call).
+    const Vec* bv;
+
     // Both direction bits must be set in the owner's flags.
     u32 oflags = owner->flags;
     if (!(oflags & 4) || !(oflags & 2)) return 0;
@@ -363,17 +393,29 @@ int func_804B526C(CColiQueryResult* self, CColiQueryNode* owner, const Vec* a,
     int init = 0;
     if (isFirst == 0) {
         st = &lbl_eu_8065D138;
-        st->flag = 0;
+        // All walk-state accesses are volatile so MWCC keeps the whole
+        // sequence in retail order (seed load, flag clear, init mark, f5c
+        // seed, x/y snapshot with y stored first, z, zero-fill seed).
+        volatile CColiWalkState* vs = &lbl_eu_8065D138;
+        f32 v76 = lbl_eu_8066AEC4;
+        vs->flag = 0;
         init = 1;
-        st->src = *(const CColiSrcVec*)a;
-        st->bbMax[2] = lbl_eu_8066AEC4;
-        st->f5c = lbl_eu_8066AEC8;
-        f32 zero = lbl_eu_8066AEC0;
-        st->bbMin[0] = zero;
-        st->bbMin[1] = zero;
-        st->bbMin[2] = zero;
-        st->bbMax[0] = zero;
-        st->bbMax[1] = zero;
+        f32 v92 = *(const volatile f32*)&lbl_eu_8066AEC8;
+        const volatile CColiSrcVec* av = (const volatile CColiSrcVec*)a;
+        u32 lo = av->x;
+        u32 hi = av->y;
+        vs->src.y = hi;
+        vs->src.x = lo;
+        u32 zv = av->z;
+        vs->src.z = zv;
+        f32 zero = *(const volatile f32*)&lbl_eu_8066AEC0;
+        vs->bbMax[2] = v76;
+        vs->f5c = v92;
+        vs->bbMin[0] = zero;
+        vs->bbMin[1] = zero;
+        vs->bbMin[2] = zero;
+        vs->bbMax[0] = zero;
+        vs->bbMax[1] = zero;
         self->bbMin[0] = zero;
         self->bbMin[1] = zero;
         self->bbMin[2] = zero;
@@ -384,19 +426,24 @@ int func_804B526C(CColiQueryResult* self, CColiQueryNode* owner, const Vec* a,
 
     char seg[0x318];
     CColiQuery query;
-    func_804A7ACC(&seg, a, b, st);
+    bv = b;
+    func_804A7ACC(&seg, a, bv, st);
     int found = 0;
-    func_804B077C(&query, a, b);
+    func_804B077C(&query, a, bv);
 
     // Forward pass along the next chain: nodes whose +0x18 bound is below
     // the query low bound are skipped.
     CColiQueryNode* n = owner->next;
     while (n != 0) {
+        // Nested ifs keep each test's loads at its retail position (the
+        // level lhz must stay below the bound fcmpo).
         if (!(mask & n->filter)) {
-            if (query.lo >= n->maxX && owner->level <= n->level &&
-                func_804B0818(&query, n) != 0 &&
-                func_804B21A8(n, &seg, arg) != 0) {
-                found = 1;
+            if (query.lo >= n->maxX) {
+                if ((s16)owner->level <= (s16)n->level &&
+                    func_804B0818(&query, n) != 0 &&
+                    func_804B21A8(n, &seg, arg) != 0) {
+                    found = 1;
+                }
             }
         }
         n = n->next;
@@ -407,7 +454,7 @@ int func_804B526C(CColiQueryResult* self, CColiQueryNode* owner, const Vec* a,
     for (n = owner->prev; n != 0; n = n->prev) {
         if (!(mask & n->filter)) {
             if (query.hi <= n->minX) {
-                if (owner->level <= n->level &&
+                if ((int)owner->level <= (int)n->level &&
                     func_804B0818(&query, n) != 0 &&
                     func_804B21A8(n, &seg, arg) != 0) {
                     found = 1;
@@ -419,13 +466,30 @@ int func_804B526C(CColiQueryResult* self, CColiQueryNode* owner, const Vec* a,
     }
 
     if (!init) return found;
-    if (!found) return 0;
-    if (!lbl_eu_8065D138.flag) return 0;
-    // Word copies (lwz/stw) of the accumulated AABB, like the src snapshot.
-    *(CColiSrcVec*)&self->bbMin[0] =
-        *(const CColiSrcVec*)&lbl_eu_8065D138.bbMin[0];
-    *(CColiSrcVec*)&self->bbMax[0] =
-        *(const CColiSrcVec*)&lbl_eu_8065D138.bbMax[0];
+    if (found == 0) return 0;
+    if (lbl_eu_8065D138.flag == 0) return 0;
+    // Word copies of the accumulated AABB: pipelined pairs (load x/y, store
+    // y/x) plus a trailing z word.
+    {
+        const CColiSrcVec* smin =
+            (const CColiSrcVec*)&lbl_eu_8065D138.bbMin[0];
+        CColiSrcVec* dmin = (CColiSrcVec*)&self->bbMin[0];
+        u32 mlo = smin->x;
+        u32 mhi = smin->y;
+        dmin->y = mhi;
+        dmin->x = mlo;
+        dmin->z = smin->z;
+    }
+    {
+        const CColiSrcVec* smax =
+            (const CColiSrcVec*)&lbl_eu_8065D138.bbMax[0];
+        CColiSrcVec* dmax = (CColiSrcVec*)&self->bbMax[0];
+        u32 xlo = smax->x;
+        u32 xhi = smax->y;
+        dmax->y = xhi;
+        dmax->x = xlo;
+        dmax->z = smax->z;
+    }
     return 1;
 }
 
@@ -1006,16 +1070,31 @@ void func_804B3B18(CColiCapsuleNode* self, const CColiMgr* mgr,
     v.x = lbl_eu_8066AEB0;
     v.y = lbl_eu_8066AEB8;
     v.z = lbl_eu_8066AEB0;
+
     nw4r::math::VEC3TransformNormal((nw4r::math::VEC3*)&v,
                                     (const nw4r::math::MTX34*)tmp,
                                     (const nw4r::math::VEC3*)&v);
 
-    self->posA[2] = tmp[2][3] + v.z;
-    self->posA[1] = tmp[1][3] + v.y;
-    self->posA[0] = tmp[0][3] + v.x;
-    self->posB[2] = tmp[2][3] - v.z;
-    self->posB[1] = tmp[1][3] - v.y;
-    self->posB[0] = tmp[0][3] - v.x;
+    const f32 az = tmp[2][3] + v.z;
+    const f32 ay = tmp[1][3] + v.y;
+    const f32 ax = tmp[0][3] + v.x;
+
+    // Radius-axis normal seed held as scalars: retail keeps these two
+    // literals live in registers across the endpoint math and stores them
+    // into the reused vector slot just before the second transform.
+    const f32 seedX = lbl_eu_8066AEB4;
+    const f32 seedYZ = lbl_eu_8066AEB0;
+
+    self->posA[1] = ay;
+    self->posA[0] = ax;
+    self->posA[2] = az;
+
+    const f32 by = tmp[1][3] - v.y;
+    const f32 bx = tmp[0][3] - v.x;
+    const f32 bz = tmp[2][3] - v.z;
+    self->posB[0] = bx;
+    self->posB[1] = by;
+    self->posB[2] = bz;
 
     nw4r::math::VEC3Sub((nw4r::math::VEC3*)&self->dir,
                         (const nw4r::math::VEC3*)&self->posB,
@@ -1023,9 +1102,9 @@ void func_804B3B18(CColiCapsuleNode* self, const CColiMgr* mgr,
     self->lenSq = nw4r::math::VEC3Dot((const nw4r::math::VEC3*)&self->dir,
                                       (const nw4r::math::VEC3*)&self->dir);
 
-    v.x = lbl_eu_8066AEB4;
-    v.y = lbl_eu_8066AEB0;
-    v.z = lbl_eu_8066AEB0;
+    v.x = seedX;
+    v.y = seedYZ;
+    v.z = seedYZ;
     nw4r::math::VEC3TransformNormal((nw4r::math::VEC3*)&v,
                                     (const nw4r::math::MTX34*)tmp,
                                     (const nw4r::math::VEC3*)&v);
@@ -1577,17 +1656,20 @@ int func_804B5088(CColiQueryResult* self, const Vec* a, const Vec* b,
     if (isFirst == 0) {
         st = &lbl_eu_8065D138;
         st->flag = 0;
-        // One-shot volatile reads pin each pool load to its statement
-        // position (plain const refs/pointers get hoisted to block start).
-        f32 v76 = *(const volatile f32*)&lbl_eu_8066AEC4;
+        // Local-pointer reads keep FPR coloring and load positions near
+        // retail (plain const refs hoist to block start).
+        const f32* p8 = &lbl_eu_8066AEC8;
+        f32 v92 = *p8;
         init = 1;
-        f32 v92 = *(const volatile f32*)&lbl_eu_8066AEC8;
+        const f32* p4 = &lbl_eu_8066AEC4;
+        f32 v76 = *p4;
         // Src snapshot: load x/y, store y (hi) before x (lo), then z.
         const CColiSrcVec* av = (const CColiSrcVec*)a;
         u32 lo = av->x;
         u32 hi = av->y;
         st->src.y = hi;
-        f32 zero = *(const volatile f32*)&lbl_eu_8066AEC0;
+        const f32* p0 = &lbl_eu_8066AEC0;
+        f32 zero = *p0;
         st->src.x = lo;
         st->src.z = av->z;
         st->bbMax[2] = v76;

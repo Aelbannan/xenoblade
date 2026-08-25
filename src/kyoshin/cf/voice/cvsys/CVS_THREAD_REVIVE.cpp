@@ -6,7 +6,7 @@
 #include "kyoshin/harness_catalog.hpp"
 #include "monolib/math/Random.hpp"
 
-// ── Target 6: us-802aae00 (__ct__802A86CC) ────────────────────────────────
+// us-802aae00 (__ct__802A86CC)
 // Factory/constructor for CVS_THREAD_REVIVE. Takes two owner objects (with a
 // field at offset 0x3F00 that must have bit 1 set), allocates a voice-handle
 // buffer (0xE6 bytes, discarded) and the object itself (0x28 bytes), calls
@@ -57,7 +57,7 @@ CVS_THREAD_REVIVE* __ct__802A86CC(CVoiceHandle* owner1, CVoiceHandle* owner2) {
     return self;
 }
 
-// ── Target 7: us-802aaf08 (func_802A87D4) ─────────────────────────────────
+// us-802aaf08 (func_802A87D4)
 // Advance/play function. Copies init data from lbl_eu_80539CA4, then if both
 // voice slots are populated and slot 1 is inactive, plays a state-based voice
 // (slot-2 iterator + 0x204) or a fallback voice (0x21E) depending on iterator
@@ -108,7 +108,7 @@ void func_802A87D4(CVS_THREAD_REVIVE* self) {
     }
 }
 
-// ── Target 5: us-802ab038 (func_802A8904) ─────────────────────────────────
+// us-802ab038 (func_802A8904)
 // Advance/play function for voice slot 2 (field_0x24). Copies init data from
 // lbl_eu_80539CB0, checks the slot-2 voice state (vtable method at 0x308);
 // if >= 3 plays 0x711, otherwise a random voice (0x714 when mtRand==0, else
@@ -156,7 +156,7 @@ void func_802A8904(CVS_THREAD_REVIVE* self) {
     }
 }
 
-// ── Target 1: us-802ab134 (func_802A8A00) ──────────────────────────────────
+// us-802ab134 (func_802A8A00)
 // Completion callback: if no active voice, call the playback-start virtual.
 void func_802A8A00(CVS_THREAD_REVIVE* self) {
     if (func_802A3E88(self) == 0) {
@@ -164,7 +164,7 @@ void func_802A8A00(CVS_THREAD_REVIVE* self) {
     }
 }
 
-// ── Target 2: us-802ab17c (func_802A8A48) ──────────────────────────────────
+// us-802ab17c (func_802A8A48)
 // Remove a voice from the slots by matching its embedded CCharVoice pointer.
 void func_802A8A48(CVS_THREAD_REVIVE* self, CCharVoice* voicePtr) {
     func_802A3BEC(self, voicePtr);
@@ -196,7 +196,7 @@ int CVS_THREAD_REVIVE::blank1() {
     return BUFFER_SIZE;
 }
 
-// ── Target 4: us-802ab1fc (func_802A8AC8) ──────────────────────────────────
+// us-802ab1fc (func_802A8AC8)
 // Voice-ID init helper: if the handle is active-gated, allocate a 0x6E-byte
 // handle buffer, then play voice (arg + 0x1005) via func_802A3D54.
 int func_802A8AC8(CVoiceHandle* self, int arg) {
@@ -217,7 +217,7 @@ int func_802A8AC8(CVoiceHandle* self, int arg) {
     return 0;
 }
 
-// ── Target 3: us-802ab2a0 (func_802A8B6C) ──────────────────────────────────
+// us-802ab2a0 (func_802A8B6C)
 // Voice-ID init helper: if the handle is active-gated, allocate a 0x3C-byte
 // handle buffer, then play voice 0x100E via func_802A3D54.
 int func_802A8B6C(CVoiceHandle* self) {

@@ -1,3 +1,4 @@
+#include "kyoshin/cf/CBattleManagerApi.hpp"
 #include "kyoshin/cf/object/CActorParam.hpp"
 #include "kyoshin/cf/CfGimmick.hpp"
 #include "kyoshin/cf/CfGameManager.hpp"
@@ -100,6 +101,7 @@ namespace cf {
         unk3358 = 0;
         unk335A = 2;
 
+        float idk = 2.0f * (ml::pi/3.0f);
 
         unk3364 = 0;
         unk3368 = 0;
@@ -107,7 +109,7 @@ namespace cf {
         
         unk15FC = 0;
         unk15E4 = 2;
-        unk15E8 = 1.0f;
+        unk15E8 = 1;
         unk15EC = 0;
         unk15F0 = 0;
         unk1600 = 0;
@@ -119,13 +121,13 @@ namespace cf {
         unk1618 = 0;
         unk1616 = 0; //r0
         unk1614 = 0; //r0
-        unk1650.unk44 = 2.0f;
-        unk1650.unk4C = 2.0f * (ml::pi/3.0f);
+        unk1650.unk44 = 2;
+        unk1650.unk4C = idk;
         unk161C = 0;
-        unk1620 = 40.0f;
-        unk1624 = 2.0f * (ml::pi / 18.0f);
+        unk1620 = 40;
+        unk1624 = idk;
         unk1628 = 0;
-        unk1630 = 3.0f * (ml::pi / 18.0f);
+        unk1630 = 3;
 
         unk2A80 = 0;
         unk336C = 0;
@@ -244,8 +246,8 @@ void CActorParam_UnkVirtualFunc141__Q22cf11CActorParamFv(cf::CActorParam* self, 
 }
 void cf::CActorParam::CActorParam_UnkVirtualFunc142() {
     cf::CActorParamUnk1928View* view = reinterpret_cast<cf::CActorParamUnk1928View*>(this);
-    float v = lbl_eu_806677E4;
     float v0 = lbl_eu_806677E0;
+    float v = lbl_eu_806677E4;
     cf::CActorParam_UnkStruct5* e = view->entries;
     e[0].unk4 = v; e[0].unk0 = v; e[0].unkC = v; e[0].unk8 = v;
     e[0].unk10 = v0;
@@ -385,16 +387,16 @@ s16 CActorParam_UnkVirtualFunc155__Q22cf11CActorParamFv(void* self) { return *(s
 s16 CActorParam_UnkVirtualFunc157__Q22cf11CActorParamFv(void* self) { return *(s16*)((u8*)self + 0x335a); }
 void cf::CActorParam::CActorParam_UnkVirtualFunc160() {
     cf::CActorParamStatusView* v = reinterpret_cast<cf::CActorParamStatusView*>(this);
+    // 0x335A = 2 is stored first; the rate byte (0x335E) is widened to
+    // double via the 0x43300000 magic and scaled by the gauge max (0x3368);
+    // the truncating half is stored at 0x3358.
     *(volatile s16*)((u8*)this + 0x335A) = 2;
     float max = *(volatile float*)((u8*)this + 0x3368);
-    // u8 gauge byte -> float via the u32->double stack-magic conversion
-    // (retail references lbl_eu_806677F0); the (float) cast keeps the
-    // conversion inline with single-precision fsubs/fmuls (no frsp).
-    // Volatiles pin the retail load order (lfs 0x3368 before lbz 0x335E).
     v->field_0x3358 = (u16)((int)(max * (float)(u32)*(volatile u8*)((u8*)this + 0x335E)) / 2);
 }
 float CActorParam_UnkVirtualFunc23__Q22cf11CActorParamFv(void* self) { return *(float*)((u8*)self + 0x15e8); }
 void CActorParam_UnkVirtualFunc21__Q22cf11CActorParamFv(void* self, float val) { *(float*)((u8*)self + 0x15e8) = val; }
+
 
 namespace {
 struct F175SrcVt {
@@ -416,33 +418,12 @@ struct F175Unk15DCVt {
     virtual void f38(); virtual void f3C(void*);
 };
 struct F175ElemBase {
-    char name[0x20];
-    u32 len;
-    u32 f24;
-    u16 f28;
-    u8 f2A, f2B;
-    f32 f2C, f30;
-    s16 f34, f36;
-    u32 f38;
-    u16 f3C;
-    u8 f3E;
-    u16 f40;
-    u8 f42, f43, f44;
-    u16 f46, f48;
-    s16 f4A, f4C;
-    f32 f50, f54;
-    u16 f58, f5A, f5C, f5E;
-    f32 f60;
-    u16 f64;
-    u8 f66, f67;
-    s16 f68, f6A;
-    u32 f6C;
-    u8 f70;
-    u8 pad71;
-    u16 f72, f74;
-    u8 f76, f77;
-    u32 f78;
-    f32 f7C, f80;
+    char name[0x20]; u32 len; u32 f24; u16 f28; u8 f2A, f2B;
+    f32 f2C, f30; s16 f34, f36; u32 f38; u16 f3C; u8 f3E; u16 f40;
+    u8 f42, f43, f44; u16 f46, f48; s16 f4A, f4C; f32 f50, f54;
+    u16 f58, f5A, f5C, f5E; f32 f60; u16 f64; u8 f66, f67;
+    s16 f68, f6A; u32 f6C; u8 f70; u8 pad71; u16 f72, f74;
+    u8 f76, f77; u32 f78; f32 f7C, f80;
 };
 struct F175ElemA : F175ElemBase { u8 pad84[4]; u32 f88; };
 struct F175ElemB : F175ElemBase { u32 tail84; };
@@ -451,9 +432,6 @@ struct F175ElemB : F175ElemBase { u32 tail84; };
 #define F175_CP(off, type) *(type*)((u8*)dst + (off)) = *(type*)((u8*)src + (off))
 #define F175_PAIR(lo, hi) { u32 tl = *(u32*)((u8*)src + (lo)); u32 th = *(u32*)((u8*)src + (hi)); *(u32*)((u8*)dst + (hi)) = th; *(u32*)((u8*)dst + (lo)) = tl; }
 
-#pragma push
-#pragma optimize_for_size on
-#pragma dont_inline on
 void func_80175A50(cf::CActorParam* dst, cf::CActorParam* src) {
     void* arg = reinterpret_cast<F175SrcVt*>(src)->_v098();
     reinterpret_cast<F175Unk15DCVt*>(dst->unk15DC)->f3C(arg);
@@ -495,18 +473,13 @@ void func_80175A50(cf::CActorParam* dst, cf::CActorParam* src) {
     F175_PAIR(0x1844, 0x1848);
     F175_PAIR(0x184C, 0x1850);
     F175_CP(0x1854, u32); F175_CP(0x1858, u32);
-    F175_CP(0x1858, u32);
-    { // record loop 24 x 8
-        int n = 24;
-        u32* se = (u32*)((u8*)src + 0x1924);
-        u32* de = (u32*)((u8*)dst + 0x1924);
-        for (int i = 0; i < n; i++) { de[1] = se[1]; de[2] = se[2]; se += 2; de += 2; }
-    }
+    { int n = 24; u32* se = (u32*)((u8*)src + 0x1924); u32* de = (u32*)((u8*)dst + 0x1924);
+      for (int i = 0; i < n; i++) { de[1] = se[1]; de[2] = se[2]; se += 2; de += 2; } }
     F175_CP(0x19E8, u16); F175_CP(0x19EA, u16);
     F175_PAIR(0x19EC, 0x19F0); F175_PAIR(0x19F4, 0x19F8);
     F175_PAIR(0x19FC, 0x1A00); F175_PAIR(0x1A04, 0x1A08);
     F175_PAIR(0x1A0C, 0x1A10); F175_PAIR(0x1A14, 0x1A18);
-    { // elements 0x1A20..0x2740 stride 140
+    { // elem A
         F175ElemA* ee = (F175ElemA*)((u8*)dst + 0x2740);
         F175ElemA* de = (F175ElemA*)((u8*)dst + 0x1A20);
         F175ElemA* se = (F175ElemA*)((u8*)src + 0x1A20);
@@ -531,8 +504,8 @@ void func_80175A50(cf::CActorParam* dst, cf::CActorParam* src) {
             se += 1; de += 1;
         } while (de != ee);
     }
-    F175_CP(0x2740, u32); F175_CP(0x2744, u32); F175_CP(0x2750 - 8 + 8, u32);
-    { // elements 0x2750..0x2A80 stride 136
+    F175_CP(0x2740, u32); F175_CP(0x2744, u32); F175_CP(0x2758 - 8, u32);
+    { // elem B
         F175ElemB* ee = (F175ElemB*)((u8*)dst + 0x2A80);
         F175ElemB* de = (F175ElemB*)((u8*)dst + 0x2750);
         F175ElemB* se = (F175ElemB*)((u8*)src + 0x2750);
@@ -574,7 +547,7 @@ void func_80175A50(cf::CActorParam* dst, cf::CActorParam* src) {
     F175_PAIR(0x331C, 0x3320); F175_PAIR(0x3324, 0x3328); F175_PAIR(0x332C, 0x3330);
     F175_PAIR(0x3334, 0x3338); F175_PAIR(0x333C, 0x3340); F175_PAIR(0x3344, 0x3348);
     F175_CP(0x334C, u32); F175_CP(0x3350, u32);
-    // 0x31DC block
+    // 31DC block
     F175_CP(0x31DC, u32); F175_CP(0x31E0, u32);
 #define F175_PAIRb(lo, hi) { u32 tl = *(u32*)((u8*)src + (lo)); u32 th = *(u32*)((u8*)src + (hi)); *(u32*)((u8*)dst + (hi)) = th; *(u32*)((u8*)dst + (lo)) = tl; }
     F175_PAIRb(0x31E4, 0x31E8); F175_PAIRb(0x31EC, 0x31F0); F175_PAIRb(0x31F4, 0x31F8);
@@ -614,7 +587,7 @@ void func_80175A50(cf::CActorParam* dst, cf::CActorParam* src) {
 #undef F175_CP
 #undef F175_PAIR
 }
-#pragma pop
+
 // ==== CActorParam_UnkVirtualFunc177 (us-80177eec): battle action update ====
 
 // Vtable call helpers (indirect calls through retail vtable offsets).
@@ -870,10 +843,18 @@ void func_801765A4(cf::CActorParam* self, int arg, float f1) {
             (u32)reinterpret_cast<APIf*>(reinterpret_cast<cf::CActorParam765View*>(self)->field_0x15DC)->vf4C();
     }
     u32 t = *(u32*)(reinterpret_cast<Unk4Vt*>(self->CActorState::unk4)->vf30()) & 0x3F;
-    if (t == 3 || t == 4 || t == 8 || t == 0xE || t == 5) {
+    switch (t) {
+    case 3:
+    case 4:
+    case 8:
+    case 0xE:
+    case 5:
         if ((*(u32*)(reinterpret_cast<Unk4Vt*>(self->CActorState::unk4)->vf30()) & 0x3F) != 8) {
             func_801746B4((u8*)self + 0x3358, f30);
         }
+        break;
+    default:
+        break;
     }
     reinterpret_cast<CActorParamVt*>(self)->vf358(f31);
     if (arg != 0) {

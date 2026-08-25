@@ -7,8 +7,10 @@
 // later transitive inclusion a no-op); the properly-typed import is declared
 // below.
 #define __dt__8023E448 dt_8023E448_stale_void_decl
+#define func_8007F9AC cf_func_8007F9AC_stale_void_decl
 #include "kyoshin/cf/CfGameManager.hpp"
 #undef __dt__8023E448
+#undef func_8007F9AC
 #include "kyoshin/cf/CfNandManager.hpp"
 #include "kyoshin/harness_catalog.hpp"
 // (CSaveLoad.hpp intentionally not included: its void return for
@@ -38,10 +40,15 @@ public:
 void __dt__Q22cf13CfNandManagerFv(void*);
 void cbRenderBefore__Q22cf13CfNandManagerFv(void*);
 
-// defined later in this TU
-int func_8023CD9C(CfNandSaveBlock* block);
-void func_8023E544(cf::CfNandManager* self, void* unk, u8* flag, u32* out);
-void func_8023EABC(cf::CfNandManager* self, u32 type, u8* status, u32* out);
+// defined later in this TU (retail symbol names are unmangled)
+extern "C" int func_8023CD9C(CfNandSaveBlock* block);
+// NOTE: retail keeps the raw parameter in r3 for the null/version/magic
+// checks and the first region-1 argument, and only materializes the
+// full-image pointer (r30) once the CRC chain starts.
+extern "C" void func_8023E544(cf::CfNandManager* self, u32 type, u8* flag,
+                               u32* out);
+extern "C" void func_8023EABC(cf::CfNandManager* self, u32 type, u8* status,
+                              u32* out);
 
 // Constructor (retail flat symbol __ct__cf_CfNandManager). Takes the scene
 // pointer create() forwards in r4, but the body ignores it.
@@ -226,7 +233,7 @@ int func_8023C1C0() {
 // Target us-8023e320: build a 3-member party snapshot (player info + scale
 // via the player vtable, static fallback data for missing slots) and run
 // OSCalcCRC16 over the whole struct.
-void func_8023C1F0(CfNandPartySnapshot* snapshot) {
+extern "C" u32 func_8023C1F0(CfNandPartySnapshot* snapshot) {
     snapshot->field_30 = 0;
     if (cf::CBattleManager::getInstance() != 0) {
         snapshot->field_30 = ((CfNandBmView*)cf::CBattleManager::getInstance())->field_194;
@@ -256,10 +263,140 @@ void func_8023C1F0(CfNandPartySnapshot* snapshot) {
         }
         entry++;
     }
-    OSCalcCRC16((const u8*)snapshot, 0x34);
+    return OSCalcCRC16((const u8*)snapshot, 0x34);
 }
 
-void func_8023C2E4(){}
+// Target us-8023e414: build the 0x6C28-byte NAND work buffer from the shared
+// character blob: bulk-copy the 0x41F0 head, then per entry (14 iterations)
+// copy fields/arrays, fetch clamp bounds through the +0x17C subobject's
+// virtual +0x224 slot, clamp three floats, build the 0x14 scratch and the
+// compact kizuna block. Afterwards drain the party-slot queue into the tail
+// (aligned up to even) and CRC16 the whole buffer.
+extern "C" u32 func_8023C2E4(CfNandWorkBuf* work) {
+    // Local alias born at entry keeps the parameter web first in MWCC's
+    // allocation order (retail parks it in r25 before the first call).
+    CfNandWorkBuf* dst = work;
+    u8* blob = (u8*)func_8009D5FC();
+    memcpy(dst, blob, 0x41F0);
+
+    // Placement bit: getPlayer(0)+0xC4 -> +0x4EC bit30, copied into every
+    // entry at +0x2C0.
+    CfNandPlayerC4* player = (CfNandPlayerC4*)cf::CfGameManager::getPlayer(0);
+    int ok = 0;
+    if (player != 0) {
+        if (player->fieldC4 != 0) {
+            ok = 1;
+        }
+    }
+    u32 flagBit;
+    if (ok != 0) {
+        flagBit = (player->fieldC4->field4EC >> 30) & 1;
+    } else {
+        flagBit = 0;
+    }
+
+    // Trip counts hoisted so MWCC parks them in preserved registers across
+    // the entry loop (retail r30/r31).
+    u32 n1 = 48;
+    u32 n2 = 36;
+    CfNandWorkEntrySrc* s = (CfNandWorkEntrySrc*)(blob + 0x41F0);
+    CfNandWorkEntryDst* d = work->entry;
+    for (int i = 0; i < 14; i++) {
+        // Clamp bounds stay live across all the field copies below.
+        CfNandClampView* clamp = s->sub.vf224();
+        d->head.f000 = s->head.f000;
+        d->head.f002 = s->head.f002;
+        d->head.f006 = s->head.f006;
+        d->head.f00A = s->head.f00A;
+        d->head.f00E = s->head.f00E;
+        d->head.f012 = s->head.f012;
+        d->head.f016 = s->head.f016;
+        d->head.f01C = s->head.f01C;
+        d->head.f020 = s->head.f020;
+        d->head.f024 = s->head.f024;
+        for (u32 k = 0; k < n1; k++) {
+            d->arr028[k] = s->arr028[k];
+        }
+        for (u32 k = 0; k < n2; k++) {
+            d->arr0E8[k] = s->arr0E8[k];
+        }
+        d->f178 = s->f178;
+        d->f17C = s->f17CC;
+        d->f180 = s->f17D0;
+        d->f184 = s->f17D4;
+        d->f188 = s->f17D8;
+        d->f18C = s->f17DC;
+        d->f190 = s->f17E0;
+        d->f194 = s->f17E4;
+        d->f198 = s->f17E8;
+        d->f19A = s->f17EA;
+        d->f19C = s->f17EC;
+        d->f1A0 = s->f17F0;
+        d->f1A4 = s->f17F4;
+        d->f1A8 = s->f17F8;
+        d->f1AA = s->f17FA;
+        d->f1AC = s->f17FC;
+        d->f1AE = s->f17FE;
+        d->f1B0 = s->f1800;
+        d->f1B2 = s->f1802;
+        d->f1B4 = s->f1804;
+        d->f1B6 = s->f1806;
+        d->f1B8 = s->f1808;
+        d->f1BC = s->f180C;
+        d->f1C0 = s->f1810;
+        d->f1C4 = s->f1814;
+        d->f1C8 = s->f1818;
+        d->f1CC = s->f181C;
+        d->f1D0 = s->f1820;
+        d->f1D1 = s->f1821;
+        d->f1D2 = s->f1822;
+        d->f1D3 = s->f1823;
+        d->f1D4 = s->f1824;
+        d->f1D8 = s->f1828;
+        d->f1DC = s->f182C;
+        d->f1E0 = s->f1830;
+        d->f1E4 = s->f1834;
+        d->f1E8 = s->f1838;
+        d->f1EC = s->f183C;
+        d->f1F0 = s->f1840;
+        // Clamp against the virtual-call bounds (min of both sides).
+        d->f180 = clamp->f04 <= d->f18C ? clamp->f04 : d->f18C;
+        d->f188 = clamp->f0C <= d->f194 ? clamp->f0C : d->f194;
+        d->f184 = clamp->f08 <= d->f190 ? clamp->f08 : d->f190;
+
+        CfNandSub14 sub14;
+        func_80174658(&sub14);
+        u32 qA = s->f177C;
+        u32 qB = s->f1780;
+        u32 qC = s->f1784;
+        sub14.f00 = s->f34D4;
+        sub14.f02 = s->f34D6;
+        sub14.f04 = s->f34D8;
+        sub14.f08 = s->f34DC;
+        sub14.f0C = s->f34E0;
+        sub14.f10 = s->f34E4;
+        d->f2A0 = qA;
+        d->f2A4 = qB;
+        d->f2A8 = qC;
+        d->f2AC = sub14.f00;
+        d->f2AE = sub14.f02;
+        d->f2B0 = sub14.f04;
+        d->f2B4 = sub14.f08;
+        d->f2B8 = sub14.f0C;
+        d->f2BC = sub14.f10;
+        d->f2C0 = (u8)flagBit;        memset(d->tail, 0, sizeof(d->tail));
+        func_8025EC0C(d->kizuna, s->kizunaSrc);
+        s++;
+        d++;
+    }
+    // Drain the party-slot queue into the buffer tail, aligned up to even.
+    u8* q = (u8*)dst + 0x44B1;
+    if ((u32)q & 1) {
+        q = (u8*)dst + 0x44B2;
+    }
+    ((cf::CfGameManager*)q)->func_80082834();
+    return OSCalcCRC16((const u8*)dst, 0x6C28);
+}
 
 // Target us-8023e7bc: fill a texture descriptor block and copy/memset its
 // payload region (32 bytes aligned up from the 0x38-byte header) with the
@@ -308,7 +445,8 @@ extern "C" void func_8023C68C(CfNandTexBlock* self, void* src) {
 // Target us-8023e8f4: lay out one save-buffer slot: clear the payload,
 // stamp scenario/date/progress metadata, copy the two party records and the
 // bdat character name, build the embedded texture block, then CRC16 it.
-extern "C" void func_8023C7C4(CfNandSaveSource* src, CfNandSaveBuf* dst, u32 id) {
+// (Returns the CRC so callers can stamp their descriptors.)
+extern "C" u32 func_8023C7C4(CfNandSaveSource* src, CfNandSaveBuf* dst, u32 id) {
     // Size expressions kept structurally distinct so MWCC does not CSE them
     // into one preserved-register constant (retail computes each separately).
     memset(dst, 0, 0x9C80);
@@ -340,89 +478,285 @@ extern "C" void func_8023C7C4(CfNandSaveSource* src, CfNandSaveBuf* dst, u32 id)
                                                  (int)(u16)dst->mRecord[0].w[0]),
            0x20);
     func_8023C68C(&dst->tex, (void*)id);
-    OSCalcCRC16((const u8*)dst, 0x10000 - 0x6380);
-    func_8023C2E4(); // TEMP probe
+    return OSCalcCRC16((const u8*)dst, 0x10000 - 0x6380);
 }
 
-void func_8023C93C(){}
+// Target us-8023ea80: assemble the full 0x248F0 on-media save image (version
+// tag 0x70002) into the caller-provided buffer: header, per-region tag/CRC
+// descriptors, save slot, work buffer, party snapshot, item blob, and the
+// compacted save-name directory. Returns 0 when no buffer was given.
+int func_8023C93C(CfNandSaveImage* img, u32 id) {
+    if (img == nullptr) {
+        return 0;
+    }
+    // Shared descriptor word 0x10 (MWCC CSEs the constant into a preserved
+    // register and even folds the slot-tag length arithmetic around it).
+    img->magic = 0x55535244;   // 'USRD'
+    img->unk08 = 0x10;
+    img->totalSize = 0x248F0;
+    img->version = 0x70002;
+
+    // FLAG region: copy the shared capture data and stamp its descriptor.
+    u32 len = func_8009CF84();
+    memcpy(img->flagData, func_8009CF0C(), len);
+    u32 crc = OSCalcCRC16(img->flagData, len);
+    img->flagTag.tag = 0x464C4147;
+    img->flagTag.unk08 = 0x10;
+    img->flagTag.length = 0x1230;
+    img->flagTag.crc = crc;
+
+    // GAME/work-buffer region built by func_8023C2E4 (returns its CRC).
+    crc = func_8023C2E4(&img->work);
+    img->gameTag.tag = 0x47414D45;
+    img->gameTag.unk08 = 0x10;
+    img->gameTag.length = 0x6C50;
+    img->gameTag.crc = crc;
+
+    // TIME region: progress word + three scalar settings.
+    img->progress.field00 = func_8006A80C();
+    img->progress.f04 = lbl_eu_80663D94;
+    img->progress.f08 = lbl_eu_80661AF4;
+    img->progress.f0A = lbl_eu_80661AF6;
+    crc = OSCalcCRC16((const u8*)&img->progress, 0xC);
+    img->timeTag.tag = 0x54494D45;
+    img->timeTag.unk08 = 0x10;
+    img->timeTag.length = 0x30;
+    img->timeTag.crc = crc;
+
+    // PCPM region: party snapshot from func_8023C1F0.
+    crc = func_8023C1F0(&img->snapshot);
+    img->partyTag.tag = 0x5043504D;
+    img->partyTag.unk08 = 0x10;
+    img->partyTag.length = 0x50;
+    img->partyTag.crc = crc;
+
+    // CAMD region: camera block filled through its +0xC subrecord.
+    func_8006CBD8((u8*)&img->camBlock, (u8*)&img->camBlock.f0C);
+    crc = OSCalcCRC16((const u8*)&img->camBlock, 0x10);
+    img->camTag.tag = 0x43414D44;
+    img->camTag.unk08 = 0x10;
+    img->camTag.length = 0x30;
+    img->camTag.crc = crc;
+
+    // ITEM region: bulk copy of the shared item blob.
+    memcpy(img->itemBlob, lbl_eu_806641B8, 0x12120);
+    crc = OSCalcCRC16(img->itemBlob, 0x12120);
+    img->itemTag.tag = 0x4954454D;
+    img->itemTag.unk08 = 0x10;
+    img->itemTag.length = 0x12120;
+    img->itemTag.crc = crc;
+
+    // WTHR region: message count with a game-manager fallback when zero.
+    func_8016E09C(&img->wthrBlock);
+    u16 cnt = (u16)func_8009CF8C(0x3F);
+    img->wthrBlock.f0E = cnt;
+    if (cnt == 0) {
+        img->wthrBlock.f0E = (u16)func_8007F9AC__Q22cf13CfGameManagerFv();
+    }
+    crc = OSCalcCRC16((const u8*)&img->wthrBlock, 0x10);
+    img->wthrTag.tag = 0x57544852;
+    img->wthrTag.unk08 = 0x10;
+    img->wthrTag.length = 0x30;
+    img->wthrTag.crc = crc;
+
+    // SNDS region: three audio-query floats plus a zero word.
+    img->sndArea.f00 = func_801C0014();
+    img->sndArea.f04 = func_801896A0();
+    img->sndArea.f08 = func_801895EC();
+    img->sndArea.f0C = 0;
+    crc = OSCalcCRC16((const u8*)&img->sndArea, 0x10);
+    img->sndTag.tag = 0x534E4453;
+    img->sndTag.unk08 = 0x10;
+    img->sndTag.length = 0x30;
+    img->sndTag.crc = crc;
+
+    // MINE region CRC (contents are left as produced upstream).
+    // MINE region is filled by func_80207C94, then CRC'd.
+    func_80207C94(img->mineRegion);
+    crc = OSCalcCRC16(img->mineRegion, 0x384);
+    img->mineTag.tag = 0x4D494E45;
+    img->mineTag.unk08 = 0x10;
+    img->mineTag.length = 0x3B0;
+    img->mineTag.crc = crc;
+
+    // Save-slot payload built over the whole image as its data source.
+    crc = func_8023C7C4((CfNandSaveSource*)img, &img->slot, id);
+    img->slotTag.tag = 0x5448554D;
+    img->slotTag.length = 0xA010;
+    img->slotTag.unk08 = 0x10;
+    img->slotTag.crc = crc;
+
+    // TBOX region: compact the circular save-name directory into flat
+    // 0x1C-byte records (the counter lives at table+0).
+    CfNandNameRoot* cont = func_800B6CA0();
+    memset(&img->names, 0, sizeof(img->names));
+    img->names.count = 0;
+    // Root pointer is re-read from the container every iteration (retail
+    // keeps only the container in a preserved register).
+    for (CfNandNameNode* n = cont->mNext->mNext; n != cont->mNext;
+         n = n->mNext) {
+        CfNandSaveNameEntry* e = &img->names.entries[img->names.count];
+        e->f04 = n->f08;
+        e->f08 = n->f0C;
+        e->f0C = n->f10;
+        e->f10 = n->f14;
+        e->f14 = n->f18;
+        e->f18 = n->f1C;
+        e->f1C = n->f20;
+        e->f1E = n->f22;
+        e->f1F = n->f23;
+        e->f04 = 0;
+        img->names.count++;
+    }
+    crc = OSCalcCRC16((const u8*)&img->names, 0x234);
+    img->tboxTag.tag = 0x54424F58;
+    img->tboxTag.unk08 = 0x10;
+    img->tboxTag.length = 0x410;
+    img->tboxTag.crc = crc;
+
+    // OPTD tail: snapshot of the option singleton.
+    memcpy(img->optdBlob, getInstance__14Class_80296898Fv(), 0x40);
+    crc = OSCalcCRC16(img->optdBlob, 0x40);
+    img->optdTag.tag = 0x4F505444;
+    img->optdTag.unk08 = 0x10;
+    img->optdTag.length = 0x40;
+    img->optdTag.crc = crc;
+    return 1;
+}
 
 // Validate the CRC chain of a save image. Returns 1 when every region
-// checksum matches. Region extents depend on the version tag: 0x70002 uses
-// OSCalcCRC16 over the 0x70002 tail, 0x70001/0x60002 use
-// MemManager::calculateCrc over their tails.
-int func_8023CD9C(CfNandSaveBlock* block) {
+// checksum matches. Retail emits three FULLY UNROLLED branch bodies (no
+// sharing): 0x70002 -> OSCalcCRC16 over the 0x70002 tail, 0x70001 ->
+// MemManager::calculateCrc over the larger 0x70001 tail, and 0x60002 ->
+// calculateCrc with the FIRST region check omitted entirely.
+// Validate the CRC chain of a save image. Returns 1 when every region
+// checksum matches. Every checksum word is the .crc of the tag block that
+// precedes its region in CfNandSaveImage. Retail emits three FULLY UNROLLED
+// branch bodies (no sharing): 0x70002 -> OSCalcCRC16, 0x70001 ->
+// MemManager::calculateCrc, and 0x60002 -> calculateCrc with the FIRST
+// region check omitted entirely.
+extern "C" int func_8023CD9C(CfNandSaveBlock* block) {
     if (block == nullptr) {
         return 0;
     }
-    u32 version = block->field_0C;
-    if (version != 0x70002 && version != 0x70001 && version != 0x60002) {
-        return 0;
-    }
-    u32 magic = block->magic;
-    if (magic != 0x444D4D59 && magic != 0x55535244) {
-        return 0;
-    }
-
     int result = 1;
-    CfNandSaveHead* img = (CfNandSaveHead*)block;
-    if ((OSCalcCRC16(img->r1, 0x9C80) & 0xFFFF) != img->crc0) {
-        result = 0;
+    if (!(block->field_0C == 0x70002 || block->field_0C == 0x70001 ||
+          block->field_0C == 0x60002)) {
+        return 0;
     }
-    if ((OSCalcCRC16(img->r2, func_8009CF84()) & 0xFFFF) != img->crc1) {
-        result = 0;
+    // Magic/version checks read through the parameter (retail keeps them
+    // in volatile regs; MWCC CSEs each load across both compares).
+    if (block->magic != 0x444D4D59 && block->magic != 0x55535244) {
+        return 0;
     }
-    if ((OSCalcCRC16(img->r3, 0x6C28) & 0xFFFF) != img->crc2) {
-        result = 0;
-    }
-    if ((OSCalcCRC16(img->r4, 0xC) & 0xFFFF) != img->crc3) {
-        result = 0;
-    }
-    if ((OSCalcCRC16(img->r5, 0x34) & 0xFFFF) != img->crc4) {
-        result = 0;
-    }
-    if ((OSCalcCRC16(img->r6, 0x10) & 0xFFFF) != img->crc5) {
-        result = 0;
-    }
-
-    u8* base = (u8*)img + 0x11F60;
-    if (version == 0x70002) {
-        CfNandSaveTailOSC* t = (CfNandSaveTailOSC*)base;
-        if ((OSCalcCRC16(t->r7, 0x12120) & 0xFFFF) != img->crc6) {
+    CfNandSaveImage* img = (CfNandSaveImage*)block;
+    if (block->field_0C == 0x70002) {
+        if ((OSCalcCRC16(block->data, 0x9C80) & 0xFFFF) != img->slotTag.crc) {
             result = 0;
         }
-        if ((OSCalcCRC16(t->r8, 0x10) & 0xFFFF) != t->crc7) {
+        if ((OSCalcCRC16(img->flagData, func_8009CF84()) & 0xFFFF) != img->flagTag.crc) {
             result = 0;
         }
-        if ((OSCalcCRC16(t->r9, 0x10) & 0xFFFF) != t->crc8) {
+        if ((OSCalcCRC16((const u8*)&img->work, 0x6C28) & 0xFFFF) != img->gameTag.crc) {
             result = 0;
         }
-        if ((OSCalcCRC16(t->r10, 0x384) & 0xFFFF) != t->crc9) {
+        if ((OSCalcCRC16((const u8*)&img->progress, 0xC) & 0xFFFF) != img->timeTag.crc) {
             result = 0;
         }
-        if ((OSCalcCRC16(t->r11, 0x234) & 0xFFFF) != t->crc10) {
+        if ((OSCalcCRC16((const u8*)&img->snapshot, 0x34) & 0xFFFF) != img->partyTag.crc) {
             result = 0;
         }
-        if ((OSCalcCRC16(t->r12, 0x40) & 0xFFFF) != t->crc11) {
+        if ((OSCalcCRC16((const u8*)&img->camBlock, 0x10) & 0xFFFF) != img->camTag.crc) {
+            result = 0;
+        }
+        if ((OSCalcCRC16(img->itemBlob, 0x12120) & 0xFFFF) != img->itemTag.crc) {
+            result = 0;
+        }
+        if ((OSCalcCRC16((const u8*)&img->wthrBlock, 0x10) & 0xFFFF) != img->wthrTag.crc) {
+            result = 0;
+        }
+        if ((OSCalcCRC16((const u8*)&img->sndArea, 0x10) & 0xFFFF) != img->sndTag.crc) {
+            result = 0;
+        }
+        if ((OSCalcCRC16(img->mineRegion, 0x384) & 0xFFFF) != img->mineTag.crc) {
+            result = 0;
+        }
+        if ((OSCalcCRC16((const u8*)&img->names, 0x234) & 0xFFFF) != img->tboxTag.crc) {
+            result = 0;
+        }
+        if ((OSCalcCRC16(img->optdBlob, 0x40) & 0xFFFF) != img->optdTag.crc) {
+            result = 0;
+        }
+    } else if (block->field_0C == 0x70001) {
+        if ((mtl::MemManager::calculateCrc(block->data, 0x9C80) & 0xFFFF) != img->slotTag.crc) {
+            result = 0;
+        }
+        if ((mtl::MemManager::calculateCrc(img->flagData, func_8009CF84()) & 0xFFFF) != img->flagTag.crc) {
+            result = 0;
+        }
+        if ((mtl::MemManager::calculateCrc((const u8*)&img->work, 0x6C28) & 0xFFFF) != img->gameTag.crc) {
+            result = 0;
+        }
+        if ((mtl::MemManager::calculateCrc((const u8*)&img->progress, 0xC) & 0xFFFF) != img->timeTag.crc) {
+            result = 0;
+        }
+        if ((mtl::MemManager::calculateCrc((const u8*)&img->snapshot, 0x34) & 0xFFFF) != img->partyTag.crc) {
+            result = 0;
+        }
+        if ((mtl::MemManager::calculateCrc((const u8*)&img->camBlock, 0x10) & 0xFFFF) != img->camTag.crc) {
+            result = 0;
+        }
+        if ((mtl::MemManager::calculateCrc(img->itemBlob, 0x157D0) & 0xFFFF) != img->itemTag.crc) {
+            result = 0;
+        }
+        if ((mtl::MemManager::calculateCrc((const u8*)&img->wthrBlock, 0x10) & 0xFFFF) != img->wthrTag.crc) {
+            result = 0;
+        }
+        if ((mtl::MemManager::calculateCrc((const u8*)&img->sndArea, 0x10) & 0xFFFF) != img->sndTag.crc) {
+            result = 0;
+        }
+        if ((mtl::MemManager::calculateCrc(img->mineRegion, 0x384) & 0xFFFF) != img->mineTag.crc) {
+            result = 0;
+        }
+        if ((mtl::MemManager::calculateCrc((const u8*)&img->names, 0x234) & 0xFFFF) != img->tboxTag.crc) {
+            result = 0;
+        }
+        if ((mtl::MemManager::calculateCrc(img->optdBlob, 0x40) & 0xFFFF) != img->optdTag.crc) {
             result = 0;
         }
     } else {
-        CfNandSaveTailCalc* t = (CfNandSaveTailCalc*)base;
-        if ((mtl::MemManager::calculateCrc(t->r7, 0x157D0) & 0xFFFF) != img->crc6) {
+        // Version 0x60002: same chain minus the leading slot-region check.
+        if ((mtl::MemManager::calculateCrc(img->flagData, func_8009CF84()) & 0xFFFF) != img->flagTag.crc) {
             result = 0;
         }
-        if ((mtl::MemManager::calculateCrc(t->r8, 0x10) & 0xFFFF) != t->crc7) {
+        if ((mtl::MemManager::calculateCrc((const u8*)&img->work, 0x6C28) & 0xFFFF) != img->gameTag.crc) {
             result = 0;
         }
-        if ((mtl::MemManager::calculateCrc(t->r9, 0x10) & 0xFFFF) != t->crc8) {
+        if ((mtl::MemManager::calculateCrc((const u8*)&img->progress, 0xC) & 0xFFFF) != img->timeTag.crc) {
             result = 0;
         }
-        if ((mtl::MemManager::calculateCrc(t->r10, 0x384) & 0xFFFF) != t->crc9) {
+        if ((mtl::MemManager::calculateCrc((const u8*)&img->snapshot, 0x34) & 0xFFFF) != img->partyTag.crc) {
             result = 0;
         }
-        if ((mtl::MemManager::calculateCrc(t->r11, 0x234) & 0xFFFF) != t->crc10) {
+        if ((mtl::MemManager::calculateCrc((const u8*)&img->camBlock, 0x10) & 0xFFFF) != img->camTag.crc) {
             result = 0;
         }
-        if ((mtl::MemManager::calculateCrc(t->r12, 0x40) & 0xFFFF) != t->crc11) {
+        if ((mtl::MemManager::calculateCrc(img->itemBlob, 0x157D0) & 0xFFFF) != img->itemTag.crc) {
+            result = 0;
+        }
+        if ((mtl::MemManager::calculateCrc((const u8*)&img->wthrBlock, 0x10) & 0xFFFF) != img->wthrTag.crc) {
+            result = 0;
+        }
+        if ((mtl::MemManager::calculateCrc((const u8*)&img->sndArea, 0x10) & 0xFFFF) != img->sndTag.crc) {
+            result = 0;
+        }
+        if ((mtl::MemManager::calculateCrc(img->mineRegion, 0x384) & 0xFFFF) != img->mineTag.crc) {
+            result = 0;
+        }
+        if ((mtl::MemManager::calculateCrc((const u8*)&img->names, 0x234) & 0xFFFF) != img->tboxTag.crc) {
+            result = 0;
+        }
+        if ((mtl::MemManager::calculateCrc(img->optdBlob, 0x40) & 0xFFFF) != img->optdTag.crc) {
             result = 0;
         }
     }
@@ -490,7 +824,9 @@ extern "C" u32 func_8023E4D4__Q22cf13CfNandManagerFv(void* unused, CEventFile* f
 // version 0x70002 is CRC16-checked via OSCalcCRC16, 0x70001 via
 // MemManager::calculateCrc; a mismatch reports status 3. Any other version
 // just clears the flag and out.
-void func_8023E544(cf::CfNandManager* self, void* unk, u8* flag, u32* out) {
+extern "C" void func_8023E544(cf::CfNandManager* self, u32 type, u8* flag,
+                              u32* out) {
+    (void)type;
     if (*flag == 0) {
         return;
     }
@@ -543,12 +879,13 @@ __declspec(noinline) void __dt__8023E63C(cf::CfNandManager* self) {
     u8 status = (u8)canAct; // result byte reported to the callback
     u32 out = 0;            // result word reported to the callback
 
-    // Phase 1: validate / refresh state for this event type.
-    switch (type) {
-    case 3:
-        func_8023E544(self, (void*)(u32)type, &status, &out);
-        break;
-    case 0x12:
+    // Phase 1: validate / refresh state for this event type. Written as a
+    // compare chain (not a switch): retail emits sequential cmplwi tests.
+    // Cases 3/0x12 re-read the field (retail reloads lhz into a scratch reg
+    // after the entry check), cases 2/0x11 reuse the entry-time value.
+    if (self->mPending.mType == 3) {
+        func_8023E544(self, type, &status, &out);
+    } else if (self->mPending.mType == 0x12) {
         if (canAct != 0) {
             CfNandSaveBlock* block = (CfNandSaveBlock*)self->mPending.mPayload;
             if (block->magic != 0x444D4D59) { // 'DMMY' = empty slot
@@ -557,53 +894,48 @@ __declspec(noinline) void __dt__8023E63C(cf::CfNandManager* self) {
         } else {
             out = 5;
         }
-        break;
-    case 2:
+    } else if (type == 2) {
         if (canAct != 0) {
             self->mPending.mCb = 0;
         } else {
             self->mEventQueue.mTail = 0;
             self->mEventQueue.mHead = 0;
         }
-        break;
-    case 0x11: {
+    } else if (type == 0x11) {
         lbl_eu_8066476E = 0;
         if (canAct == 0) {
             out = 5;
-            break;
-        }
-        // Build the save-file name either by formatting or from the static
-        // suffix of the bdat blob, then scan the directory entry list.
-        ml::FixStr<32> name(true);
-        if (self->mPending.mSubtype != 0) {
-            name.format(lbl_eu_8050B470, lbl_eu_806628C0);
         } else {
-            name = (const char*)(lbl_eu_8050B470 + 7);
-        }
-        s32 found = 0;
-        const char* entry = (const char*)self->mPending.mPayload;
-        for (s32 i = 0; i < lbl_eu_80664778; i++) {
-            if (strcmp(name.c_str(), entry) == 0) {
-                found = 1;
-                break;
+            // Build the save-file name either by formatting or from the
+            // static suffix of the bdat blob, then scan the directory list.
+            const char* entry = (const char*)self->mPending.mPayload;
+            s32 count = lbl_eu_80664778;
+            ml::FixStr<32> name(true);
+            if (self->mPending.mSubtype != 0) {
+                name.format(lbl_eu_8050B470, lbl_eu_806628C0);
+            } else {
+                name = (const char*)(lbl_eu_8050B470 + 7);
             }
-            entry += strlen(entry) + 1;
+            s32 found = 0;
+            s32 i;
+            for (i = 0; i < count; i++) {
+                if (strcmp(name.c_str(), entry) == 0) {
+                    found = 1;
+                    break;
+                }
+                entry += strlen(entry) + 1;
+            }
+            status = (u8)found;
+            if (found != 0) {
+                lbl_eu_8066476E |= (u16)(1 << self->mPending.mSubtype);
+            } else {
+                out = 0;
+            }
         }
-        status = (u8)found;
-        if (found != 0) {
-            lbl_eu_8066476E |= (u16)(1 << self->mPending.mSubtype);
-        } else {
-            out = 0;
-        }
-        break;
-    }
-    default:
-        break;
     }
 
     // Phase 2: post-process based on the validation result.
-    switch (type) {
-    case 0xB:
+    if (type == 0xB) {
         if (status != 0) {
             if (self->mPending.mSubtype != 3) {
                 self->mPending.mCb = 0;
@@ -612,8 +944,7 @@ __declspec(noinline) void __dt__8023E63C(cf::CfNandManager* self) {
             self->mEventQueue.mTail = 0;
             self->mEventQueue.mHead = 0;
         }
-        break;
-    case 0x11:
+    } else if (type == 0x11) {
         if (status != 0) {
             s32 size = self->mEventQueue.mSize;
             s32 next = self->mEventQueue.mHead + 1;
@@ -621,16 +952,14 @@ __declspec(noinline) void __dt__8023E63C(cf::CfNandManager* self) {
             self->mEventQueue.mTail--;
             self->mEventQueue.mHead = next % size;
         }
-        break;
-    case 0x12:
+    } else if (type == 0x12) {
         if (self->mPending.mSubtype == 3) {
             status = (u8)(self->field_184 != 0);
         } else {
             self->mPending.mCb = 0;
             self->field_180 = 0;
         }
-        break;
-    case 0xA:
+    } else if (type == 0xA) {
         if (status != 0) {
             // Advance the ring head by two slots and rewind the tail by three
             // (the load pipeline reserves one extra event slot).
@@ -640,9 +969,6 @@ __declspec(noinline) void __dt__8023E63C(cf::CfNandManager* self) {
             m = (m + 1) % size;
             self->mEventQueue.mHead = (m + 1) % size;
         }
-        break;
-    default:
-        break;
     }
 
     // Phase 3: re-validate the payload when a write/erase completed, then
@@ -693,7 +1019,7 @@ __declspec(noinline) void __dt__8023E63C(cf::CfNandManager* self) {
 // unused here). field_180 bit0/bit2 report 1, else 2. Types 1/2 report 3,
 // 6/7 report 4, everything else in 3..0x26 falls into the dense switch that
 // MWCC lowers to the retail jump table (jumptable_eu_80536B2C).
-void func_8023EABC(cf::CfNandManager* self, u32 type, u8* status, u32* out) {
+extern "C" void func_8023EABC(cf::CfNandManager* self, u32 type, u8* status, u32* out) {
     // Leading equality chains, then the dense switch over 3..0x26.
     if (type == 0x10 || type == 0x21) {
         u32 flags = self->field_180;
@@ -1335,7 +1661,58 @@ u32 func_8024005C() {
     return 0;
 }
 
-void func_80240084(){}
+// Downscale the screen-sized RGBA8 EFB capture in lbl_eu_80664780 into the
+// 164x116 tiled RGB565 texture at lbl_eu_8066477C (nearest-neighbour via
+// per-axis screen/tile scale factors), flush it, and arm the counter to 3.
+//
+// The int->double conversions are spelled manually through the shared
+// .sdata2 correction doubles (lbl_eu_806686F8 = 2^52 for unsigned sources,
+// lbl_eu_80668700 = 2^52+2^31 for signed) so the pool relocs land on the
+// retail labels instead of TU-local @N pool entries.
+void func_80240084() {
+    union { double d; u32 w[2]; } cu, cs;
+    cu.w[0] = 0x43300000;
+    cs.w[0] = 0x43300000;
+    u32 size = GXGetTexBufferSize(0xa4, 0x74, 4, (GXBool)0, 0);
+    cu.w[1] = (u32)CDeviceVI::getRenderModeObj()->fbWidth;
+    cs.w[1] = 164u ^ 0x80000000;
+    double scaleX = (cu.d - lbl_eu_806686F8) / (cs.d - lbl_eu_80668700);
+    cu.w[1] = (u32)CDeviceVI::getRenderModeObj()->efbHeight;
+    cs.w[1] = 116u ^ 0x80000000;
+    double scaleY = (cu.d - lbl_eu_806686F8) / (cs.d - lbl_eu_80668700);
+    // Cached per-loop constants: the clamp threshold stays as a float so the
+    // compare widens it via lfs, and the signed correction double is hoisted
+    // into an FPR for the whole pixel loop.
+    const f32 th = lbl_eu_806686E0;
+    const double cB = lbl_eu_80668700;
+    for (int i = 0; i < 0x74; i++) {
+        for (int j = 0; j < 0xa4; j++) {
+            cs.w[1] = (u32)j ^ 0x80000000;
+            double vx = (cs.d - cB) * scaleX;
+            cs.w[1] = (u32)i ^ 0x80000000;
+            double vy = (cs.d - cB) * scaleY;
+            int x = vx > th ? vx + lbl_eu_806686E8 : vx + lbl_eu_806686F0;
+            int y = vy > th ? vy + lbl_eu_806686E8 : vy + lbl_eu_806686F0;
+            // Source: RGBA8 tile group - AR plane at tile*0x40, GB at +0x20.
+            const u8* s =
+                lbl_eu_80664780 +
+                (((y >> 2) * (CDeviceVI::getRenderModeObj()->fbWidth >> 2) +
+                  (x >> 2))
+                 << 6) +
+                (((y & 3) << 2) + (x & 3)) * 2;
+            u32 px = (s[0] << 24) | (s[1] << 16) | (s[0x20] << 8) | s[0x21];
+            // Pack RGBA8888 -> RGB565.
+            u16 c = (u16)(((px >> 8) & 0xF800) | ((px >> 5) & 0x7E0) |
+                          ((px >> 3) & 0x1F));
+            // Dest: 32-byte RGB565 tiles, 164/4 tiles per row.
+            u16* d = (u16*)lbl_eu_8066477C +
+                     ((j >> 2) + (i >> 2) * 41) * 8 + (i & 3) * 2 + (j & 3);
+            *d = c;
+        }
+    }
+    lbl_eu_80664770 = 3;
+    DCFlushRange(lbl_eu_8066477C, size);
+}
 
 // Target us-80242518: (re)build the NAND resource buffers: two GX texture
 // buffer sizes (a fixed 0xa4x0x74 tile and a VI-size buffer) merged into one

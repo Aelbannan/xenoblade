@@ -754,7 +754,6 @@ extern "C" char* func_800AA5C0(void* handle);
 extern "C" void func_800BB618(cf::CfResPcParent* parent, int arg);
 extern "C" void func_800BC3B0(cf::CfObjectMove* player, float value);
 extern "C" void func_800BCFA0(cf::CfResPcParent* parent);
-extern "C" void func_800BE12C(void* parent, int handle, int a, int b, int c);
 extern "C" int func_804BE470(void* a1, void* a2, void* a3, void* a4, void* a5);
 extern "C" void func_804BD94C(void* a, void* b, u32 c, u32 d, u32 e, u32 f,
                               float f1, float f2, float f3, float f4, float f5);

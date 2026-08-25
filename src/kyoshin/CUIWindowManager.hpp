@@ -5,6 +5,7 @@
 #include "monolib/work/CTTask.hpp"
 #include "monolib/util/MemManager.hpp"
 #include "monolib/work/CWorkThreadSystem.hpp"
+#include "kyoshin/plugin/ocBdat.hpp"
 #include <new>
 
 class IUIWindow;
@@ -94,13 +95,14 @@ IUIWindow* func_80124AEC(CProcess* pParent, void* pSceneOrWin, u32 flag, u32 a3,
 int func_80135694(u16 arg);
 int func_801356BC();
 int func_801356E0();
-void* func_801355F4();
-void func_8003AA34();
+namespace nw4r { namespace lyt { class ArcResourceAccessor; } }
+nw4r::lyt::ArcResourceAccessor* func_801355F4();
+void* func_8003AA34();
 u32 func_8003B1EC(void* fp);
 
 // Quest-entry index lookup (owning TU: CUICfManager). Full-width arg/result
 // (retail passes/returns the register unmasked).
-int func_80138138(int idx);
+u32 func_80138138(u16 idx);
 
 // Multi-item entry guard (owning TU: CUICfManager): 5 u16 args, nonzero
 // blocks the window creation.
@@ -141,18 +143,12 @@ IUIWindow* func_801B4790(CProcess* pParent, CScn* pScene, u32 a2);
 CTalkWindow* func_8012CC78(CProcess* parent, u32 arg1, u32 arg2,
                             const u8* msgSrc, u32 arg3, u32 arg4, u32 arg5);
 
-// bdat column read (owning TU: code_8003B148 family): returns the column
-// value at the given row index. extern "C": must match the canonical
-// declaration in CfBdat.hpp/code_80135FDC.hpp (a C++-mangled overload of the
-// same name is an illegal-overload error when both headers are visible).
-extern "C" u32 getBdatStringColumnValue(void* bdat, const char* col, s32 index);
-
 // CMenuUpdate window factory (owning TU: kyoshin/menu/CMenuUpdate).
 IUIWindow* func_80142B4C(CProcess* self, CScn* pScene, int r5, int r6, int r7,
                           int r8);
 
 // Quest text lookup: returns a byte value for the entry/text/row.
-u8 func_801361E8(u32 entry, const char* text, u32 row);
+u32 func_801361E8(u32 entry, const char* text, u32 row);
 
 // Flag-buffer helpers (owning TU: this unit).
 u8* func_80140AFC(u32 target);
@@ -204,7 +200,7 @@ void* func_800B708C(int id);
 extern "C" {
 void* getPlayer__Q22cf13CfGameManagerFi(int index);
 void func_8009ECD0(u32 id);
-u8 func_8013600C(const char* tbl, const char* key, u32 idx);
+u8 func_8013600C(const void* tbl, const void* key, u32 idx);
 void func_8013B88C(u8 v);
 }
 
@@ -221,6 +217,11 @@ struct CActorFlagsView {
 extern u8 lbl_eu_80573C50[0xC8];     // flag buffer (0xC8 bytes, byte flags)
 extern void* lbl_eu_80573D18[0x1C];  // per-table entry pointers (filled at runtime)
 extern const u8 lbl_804FC1D0[0x70];  // per-table base offsets (rodata)
+
+// Flag-buffer builder (defined in this TU): zeroes the 0xC8-byte flag
+// buffer, marks it active, refreshes per-table entry pointers, scans every
+// table's rows for `row + baseOffset[i] == target`.
+extern "C" u8* func_801412D0(u32 target);
 
 // Pair of consecutive per-table base offsets; the flag-buffer builders copy
 // the 28-entry offset table as 14 x 8-byte chunks.
@@ -274,11 +275,6 @@ public:
 
     void Term();
     void Move();
-
-    // Fork helper for presentation gating (coop::ShouldRenderSplitScreen).
-    bool hasOpenWindows() const {
-        return !mWindowList1.empty() || !mWindowList2.empty();
-    }
 
 public:
     //0x00-0x54 CTTask

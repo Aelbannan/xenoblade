@@ -89,28 +89,35 @@ f32 FrSqrt__Q24nw4r4mathFf(f32);
 bool func_8004B354(void*, const ml::CVec3*);
 }
 
-// Fall/air update: runs while airborne. Applies the fall-timer penalty,
-// scales the velocity by the frame time, notifies the +0x3A0 chain through
-// its vt+0xE8 slot, and lands via func_80051AA8/func_80051A9C depending on
-// whether the simulation is paused.
-void __declspec(noinline) func_8005B820(cf::CActParamAnimGame* selfV) {
+// Fall/air update: runs while airborne. Refreshes the fall scale pair,
+// applies the fall-timer penalty, integrates velocity/move over the frame
+// time into a drift delta, then either dispatches the paused vt+0xE8 probe
+// or lands via func_80051AA8/func_80051A9C.
+// Retail symbol is an unmangled C-ABI global; extern "C" keeps the call-site
+// reloc on the retail name (approved fix, PLAN.md §17.6).
+extern "C" void __declspec(noinline) func_8005B820(cf::CActParamAnimGame* selfV) {
     cf::CActParamAnimGameView* self = (cf::CActParamAnimGameView*)selfV;
     func_80051C40(self);
+    self->f394 = lbl_eu_806660B0;
+    self->f398 = lbl_eu_806660B4;
     if ((self->flags0C & 0x100) == 0) {
         ml::CVec3 pos;
         pos.x = self->pos3A8.x;
         pos.y = self->pos3A8.y;
         pos.z = self->pos3A8.z;
-        // Mirror the air/fall flag from the gate bit.
-        if (self->flags4EC & 0x40000000) {
+        // Mirror (inverted) the air/fall bit from the snapshot flag word.
+        // Volatile read keeps MWCC from fusing the test into a record-form
+        // rotate (retail lowers it via cntlzw/srwi).
+        volatile u32& snap4F0 = self->flags4F0;
+        if (!(snap4F0 & 2)) {
             self->flags4EC |= 0x400000;
         } else {
             self->flags4EC &= ~0x400000;
         }
-        // Fall-timer overshoot penalty.
-        f32 drop = self->f508 - (self->f500 + self->pos3A8.y);
+        // Fall-timer overshoot penalty: past the cap the penalty saturates.
+        f32 drop = self->f4FC - (self->f508 + self->pos3A8.y);
         if (drop > lbl_eu_80666040) {
-            f32 scale = lbl_eu_806660BC;
+            f32 scale = lbl_eu_806660B8;
             if (!(drop >= lbl_eu_806660C0)) {
                 scale = lbl_eu_806660BC * drop * lbl_eu_806660B8;
             }
@@ -119,43 +126,55 @@ void __declspec(noinline) func_8005B820(cf::CActParamAnimGame* selfV) {
         func_8004B7DC(self, -self->f380);
         func_80052924(self, lbl_eu_806660C4);
         func_800527E8(self);
-        // Advance the velocity by gravity over the elapsed frame time and
-        // accumulate the horizontal drift into the working position.
+        // Advance velocity and move vec over the frame time; the accumulated
+        // drift is (vel*dt + face dir) + move*dt. The intermediate copies are
+        // kept so each stage lands in its own stack temporary (retail layout).
         f32 speed = self->f390;
         f32 dt = speed * getSecPerFrame__9CDeviceVIFv();
-        ml::CVec3 vel;
-        vel.x = self->vel3C0.x * dt;
-        vel.y = self->vel3C0.y * dt;
-        vel.z = self->vel3C0.z * dt;
-        ml::CVec3 step;
-        step.x = vel.x;
-        step.y = vel.y;
-        step.z = vel.z;
-        ml::CVec3 acc;
-        acc.x = self->move3F0.x * dt + self->vec3D4.x;
-        acc.y = self->move3F0.y * dt + self->vec3D4.y;
-        acc.z = self->move3F0.z * dt + self->vec3D4.z;
-        ml::CVec3 delta;
-        delta.x = step.x + acc.x;
-        delta.y = step.y + acc.y;
-        delta.z = step.z + acc.z;
+        ml::CVec3 velStep = self->vel3C0 * dt;
+        ml::CVec3 moveStep = self->move3F0 * dt;
+        ml::CVec3 faceSum = velStep + self->face3CC;
+        ml::CVec3 sumA = faceSum;
+        ml::CVec3 delta = sumA + moveStep;
+        // Fold in the +0x3A0 chain's airborne accumulator.
         if (self->obj3A0 != 0) {
-            ((cf::CActParamAnimGameObj7EC*)((cf::CActParamAnimGameObj3A0*)self->obj3A0)->sub7EC)->v18(0);
+            cf::CActParamAnimGameObj3A0* obj = (cf::CActParamAnimGameObj3A0*)self->obj3A0;
+            delta += obj->pos7CC;
         }
-        // Normalize the accumulated speed into +0x448.
-        f32 sp2 = delta.x * delta.x + delta.z * delta.z;
+        // Ground clamp: pull y toward the ground height once past the bound.
+        {
+            f32 t = self->f4FC - (delta.y + pos.y) - lbl_eu_806660C8;
+            if (t > lbl_eu_80666040) {
+                pos.y += t;
+            }
+        }
+        {
+            f32 t = self->f4FC - (delta.y + pos.y) - lbl_eu_80666050;
+            if (t > lbl_eu_80666040) {
+                self->f394 = lbl_eu_80666040;
+                self->flags4EC |= 0x40000000;
+            }
+        }
+        // Normalize the horizontal speed into +0x448.
+        f32 sp2 = delta.z * delta.z + delta.x * delta.x;
+        if (sp2 < lbl_eu_80666040) {
+            Warning__Q24nw4r2dbFPCciPCce(lbl_eu_80526324, 0x273, lbl_eu_80526300);
+        }
+        f32 len = lbl_eu_80666040;
         if (sp2 > lbl_eu_80666040) {
-            self->f448 = delta.x * FrSqrt__Q24nw4r4mathFf(sp2);
-        } else {
-            self->f448 = lbl_eu_80666040;
+            len = sp2 * FrSqrt__Q24nw4r4mathFf(sp2);
         }
+        self->f448 = len;
         func_804BC9EC__Fv();
-        bool paused = func_804BCC10() != 0;
-        if (paused) {
-            // Dispatch the vt+0xE8 notification with the position/delta pair,
-            // then land in the paused branch.
-            ((cf::CActParamAnimGameVtE0*)self)->vE0();
-            func_80051AA8(self, 0);
+        if (func_804BCC10() != 0) {
+            // Paused: probe the vt+0xE8 hook with the position/delta pair;
+            // land only when the vertical speed is positive or the hook
+            // reports failure.
+            int ret = ((cf::CActParamAnimGameVtE8*)self)->vE8(&pos, &delta);
+            f32 vy = self->vel3C0.y;
+            if (vy > lbl_eu_80666040 || ret == 0) {
+                func_80051AA8(self, 0);
+            }
         } else {
             func_80051AA8(self, 1);
             func_80051A9C(self);
@@ -254,36 +273,39 @@ struct CActParamAnimGameBeObj {
 // Main per-frame actor update: resolves the ground/obstacle probes, runs the
 // obstacle-scan loop (nearest/tallest hits), refreshes the facing vector, and
 // feeds the move vec into the +0x3A0 chain. C-linkage retail symbol; called
-// by func_8005D2C4.
-extern "C" void __declspec(noinline) func_8005A5B0(cf::CActParamAnimGame* self) {
-    self->field_47C = lbl_eu_8066604C;
-    self->field_0C &= ~0x800;
-    self->field_4AC = 0;
-    self->field_520 = zero__Q22ml5CVec3;
+// by func_8005D2C4. Goes through the absolute-offset view: the embedded base
+// compiles 0x36C larger than retail, so direct member access shifts every
+// displacement.
+extern "C" void __declspec(noinline) func_8005A5B0(cf::CActParamAnimGame* selfV) {
+    cf::CActParamAnimGameView* self = (cf::CActParamAnimGameView*)selfV;
+    self->f47C = lbl_eu_8066604C;
+    self->flags0C &= ~0x800;
+    self->field4AC = 0;
+    self->probe520 = zero__Q22ml5CVec3;
 
-    if (self->field_4EC & 0x40) {
-        self->field_4EC &= ~0x40;
+    if (self->flags4EC & 0x40) {
+        self->flags4EC &= ~0x40;
         goto shared;
     }
 
-    if (self->field_270 & 0x20) {
+    if (self->flags270 & 0x20) {
         // Ground contact already tracked: probe straight down, then commit.
         ml::CVec3 vecA(lbl_eu_80666040, lbl_eu_80666050, lbl_eu_80666040);
-        ml::CVec3 vec220 = self->field_3A8 + vecA;
-        if (func_804BE470(&vec220, &self->field_520, 0, 0, 0, lbl_eu_80666054, lbl_eu_80666040)) {
+        ml::CVec3 vec220 = self->pos3A8 + vecA;
+        if (func_804BE470(&vec220, &self->probe520, 0, 0, 0, lbl_eu_80666054, lbl_eu_80666040)) {
             CActParamAnimGameBeObj* obj = (CActParamAnimGameBeObj*)func_804BE520(0);
             if (obj->y < 0.0f) {
-                self->field_4EC |= 0x20000000;
+                self->flags4EC |= 0x20000000;
             } else {
-                ml::CVec3 vec88 = self->field_3A8 + self->field_520;
-                self->field_488 += self->field_520.y;
+                ml::CVec3 vec88 = self->pos3A8 + self->probe520;
+                self->f488 += self->probe520.y;
                 func_8004B354(self, &vec88);
-                if (self->field_3A0) func_804876E4(self->field_3A0, &self->field_520);
+                if (self->obj3A0) func_804876E4(self->obj3A0, &self->probe520);
             }
         }
-        if ((self->field_0C & 0x80) == 0) {
-            if (self->field_488 - self->field_3A8.y > lbl_eu_80666058) {
-                self->field_4EC |= 0x80;
+        if ((self->flags0C & 0x80) == 0) {
+            if (self->f488 - self->pos3A8.y > lbl_eu_80666058) {
+                self->flags4EC |= 0x80;
             }
         }
         goto shared;
@@ -293,55 +315,55 @@ extern "C" void __declspec(noinline) func_8005A5B0(cf::CActParamAnimGame* self) 
         // Probe down; the f2-height path re-aims the actor when the probe
         // point lies beyond the facing half-plane.
         ml::CVec3 vecA(lbl_eu_80666040, lbl_eu_80666050, lbl_eu_80666040);
-        ml::CVec3 vec214 = self->field_3A8 + vecA;
+        ml::CVec3 vec214 = self->pos3A8 + vecA;
         f32 localF = 0.0f;
-        if (self->field_3CC.x == 0.0f && self->field_3CC.z == 0.0f) {
-            if (func_804BE470(&vec214, &self->field_520, &localF, 0, 0, lbl_eu_80666054, lbl_eu_80666040)) {
+        if (self->face3CC.x == 0.0f && self->face3CC.z == 0.0f) {
+            if (func_804BE470(&vec214, &self->probe520, &localF, 0, 0, lbl_eu_80666054, lbl_eu_80666040)) {
                 CActParamAnimGameBeObj* obj = (CActParamAnimGameBeObj*)func_804BE520(0);
                 if (obj->y < 0.0f) {
-                    self->field_4EC |= 0x20000000;
+                    self->flags4EC |= 0x20000000;
                 } else {
-                    ml::CVec3 vec = self->field_3A8 + self->field_520;
-                    self->field_488 += self->field_520.y;
+                    ml::CVec3 vec = self->pos3A8 + self->probe520;
+                    self->f488 += self->probe520.y;
                     func_8004B354(self, &vec);
-                    if (localF != 0.0f) func_8004B52C(self, localF + self->field_444);
-                    if (self->field_3A0) func_804876E4(self->field_3A0, &self->field_520);
+                    if (localF != 0.0f) func_8004B52C(self, localF + self->f444);
+                    if (self->obj3A0) func_804876E4(self->obj3A0, &self->probe520);
                 }
             }
         } else {
-            if (func_804BE470(&vec214, &self->field_520, 0, 0, 0, lbl_eu_80666054, lbl_eu_80666040)) {
+            if (func_804BE470(&vec214, &self->probe520, 0, 0, 0, lbl_eu_80666054, lbl_eu_80666040)) {
                 CActParamAnimGameBeObj* obj = (CActParamAnimGameBeObj*)func_804BE520(0);
                 if (obj->y < 0.0f) {
-                    self->field_4EC |= 0x20000000;
+                    self->flags4EC |= 0x20000000;
                 } else {
-                    ml::CVec3 vec = self->field_3A8 + self->field_520;
-                    self->field_488 += self->field_520.y;
+                    ml::CVec3 vec = self->pos3A8 + self->probe520;
+                    self->f488 += self->probe520.y;
                     func_8004B354(self, &vec);
-                    if (self->field_3A0) func_804876E4(self->field_3A0, &self->field_520);
+                    if (self->obj3A0) func_804876E4(self->obj3A0, &self->probe520);
                 }
             }
         }
-        self->field_4EC &= ~0x40000;
+        self->flags4EC &= ~0x40000;
         goto shared;
     }
 
 shared:
     {
         ml::CVec3 vecA(lbl_eu_80666040, lbl_eu_80666060, lbl_eu_80666040);
-        ml::CVec3 vec58 = self->field_3A8 + vecA;
-        *(u32*)&self->field_3E4.x = *(u32*)&vec58.x;
-        *(u32*)&self->field_3E4.y = *(u32*)&vec58.y;
-        *(u32*)&self->field_3E4.z = *(u32*)&vec58.z;
+        ml::CVec3 vec58 = self->pos3A8 + vecA;
+        *(u32*)&self->tgt3E4.x = *(u32*)&vec58.x;
+        *(u32*)&self->tgt3E4.y = *(u32*)&vec58.y;
+        *(u32*)&self->tgt3E4.z = *(u32*)&vec58.z;
         f32 f31v = lbl_eu_8066605C;
         ml::CVec3 vecB(lbl_eu_80666040, lbl_eu_80666064, lbl_eu_80666040);
-        ml::CVec3 vec4C = self->field_3A8 + vecB;
+        ml::CVec3 vec4C = self->pos3A8 + vecB;
         ml::CVec3 vec124 = vec4C;
         int r31v = 1;
         if (((BE398Fn)func_804BE398)(&vec124, 0xa04, 0, 1, lbl_eu_80666060, lbl_eu_80666040)) {
             int count = func_804BE4AC();
-            f32 f30 = lbl_eu_80666068 + self->field_3A8.y;
+            f32 f30 = lbl_eu_80666068 + self->pos3A8.y;
             int r30v = -1;
-            f32 f29 = lbl_eu_8066606C + self->field_3A8.y;
+            f32 f29 = lbl_eu_8066606C + self->pos3A8.y;
             int r29v = -1;
             f32 f28 = f30 - lbl_eu_80666070;
             f32 f24 = lbl_eu_80666050;
@@ -360,7 +382,7 @@ shared:
                     if (y >= f29) {
                         if (f27 > y) { f27 = y; r29v = r25v; }
                     } else {
-                        if (f24 + self->field_3A8.y > y) {
+                        if (f24 + self->pos3A8.y > y) {
                             if (f26 < y) { f26 = y; r27v = r25v; }
                             if (f23 < y) { f23 = y; r26v = r25v; }
                         }
@@ -383,41 +405,41 @@ shared:
             }
             if (r30v != -1) {
                 r28v = r30v;
-                if (self->field_3C0.y <= 0.0f) {
-                    if (ml::math::abs(self->field_3A8.y - f28) <= lbl_eu_8066606C) {
-                        if ((self->field_4EC & 4) == 0) {
+                if (self->vel3C0.y <= 0.0f) {
+                    if (ml::math::abs(self->pos3A8.y - f28) <= lbl_eu_8066606C) {
+                        if ((self->flags4EC & 4) == 0) {
                             ml::CVec3 vec1fc;
                             if (func_804BE53C(&vec1fc, r30v)) {
                                 f32 fr = (f32)getTargetFramerate__9CDeviceVIFv();
                                 vec1fc *= fr;
-                                *(u32*)&self->field_3F0.x = *(u32*)&vec1fc.x;
-                                *(u32*)&self->field_3F0.y = *(u32*)&vec1fc.y;
-                                *(u32*)&self->field_3F0.z = *(u32*)&vec1fc.z;
+                                *(u32*)&self->move3F0.x = *(u32*)&vec1fc.x;
+                                *(u32*)&self->move3F0.y = *(u32*)&vec1fc.y;
+                                *(u32*)&self->move3F0.z = *(u32*)&vec1fc.z;
                                 r31v = 0;
                             }
                         }
                     }
                 }
-                self->field_47C = f28;
+                self->f47C = f28;
             }
             if (r29v != -1) {
                 r25v = 0;
-                self->field_4FC = f27;
-                if (r30v != -1) self->field_4F8 = f27 - f28;
+                self->f4FC = f27;
+                if (r30v != -1) self->f4F8 = f27 - f28;
                 r28v = r29v;
-                if ((self->field_4EC & 4) == 0) {
+                if ((self->flags4EC & 4) == 0) {
                     ml::CVec3 vec1f0;
                     if (func_804BE53C(&vec1f0, r29v)) {
                         f32 fr = (f32)getTargetFramerate__9CDeviceVIFv();
                         vec1f0 *= fr;
-                        *(u32*)&self->field_3F0.x = *(u32*)&vec1f0.x;
-                        *(u32*)&self->field_3F0.y = *(u32*)&vec1f0.y;
-                        *(u32*)&self->field_3F0.z = *(u32*)&vec1f0.z;
+                        *(u32*)&self->move3F0.x = *(u32*)&vec1f0.x;
+                        *(u32*)&self->move3F0.y = *(u32*)&vec1f0.y;
+                        *(u32*)&self->move3F0.z = *(u32*)&vec1f0.z;
                         r31v = 0;
                     }
                 }
-                if (self->field_4F8 > self->field_508) {
-                    f23 = lbl_eu_80666044 + self->field_3A8.y;
+                if (self->f4F8 > self->f508) {
+                    f23 = lbl_eu_80666044 + self->pos3A8.y;
                     int r22v = -1;
                     f27 = lbl_eu_8066607C;
                     f29 = lbl_eu_80666040;
@@ -433,7 +455,7 @@ shared:
                     if (r22v != -1) {
                         ml::CVec3 vec1e4;
                         func_804BE4E0(&vec1e4, r22v);
-                        if (vec1e4.x * self->field_3CC.x + vec1e4.z * self->field_3CC.z <= 0.0f) {
+                        if (vec1e4.x * self->face3CC.x + vec1e4.z * self->face3CC.z <= 0.0f) {
                             ml::CVec3 vec1d8;
                             vec1d8.x = vec1e4.x;
                             vec1d8.y = 0.0f;
@@ -453,16 +475,16 @@ shared:
                             } else {
                                 PSVECNormalize((const Vec*)&cross, (Vec*)&cross);
                             }
-                            f32 dot = cross.x * self->field_3CC.x + cross.z * self->field_3CC.z;
+                            f32 dot = cross.x * self->face3CC.x + cross.z * self->face3CC.z;
                             f32 fz = 0.0f;
                             f32 fx = cross.x * dot;
                             f32 fz2 = cross.z * dot;
-                            *(u32*)&self->field_3CC.y = *(u32*)&fz;
-                            *(u32*)&self->field_3CC.x = *(u32*)&fx;
-                            *(u32*)&self->field_3CC.z = *(u32*)&fz2;
-                            *(u32*)&self->field_3F0.x = *(u32*)&vec1d8.x;
-                            *(u32*)&self->field_3F0.y = *(u32*)&vec1d8.y;
-                            *(u32*)&self->field_3F0.z = *(u32*)&vec1d8.z;
+                            *(u32*)&self->face3CC.y = *(u32*)&fz;
+                            *(u32*)&self->face3CC.x = *(u32*)&fx;
+                            *(u32*)&self->face3CC.z = *(u32*)&fz2;
+                            *(u32*)&self->move3F0.x = *(u32*)&vec1d8.x;
+                            *(u32*)&self->move3F0.y = *(u32*)&vec1d8.y;
+                            *(u32*)&self->move3F0.z = *(u32*)&vec1d8.z;
                             r25v = 1;
                             r31v = 0;
                         }
@@ -471,25 +493,25 @@ shared:
             }
             if (r28v != -1) {
                 CActParamAnimGameBeObj* o = (CActParamAnimGameBeObj*)func_804BE50C(r28v);
-                *(u32*)&self->field_3E4.x = *(u32*)&o->x;
-                *(u32*)&self->field_3E4.y = *(u32*)&o->y;
-                *(u32*)&self->field_3E4.z = *(u32*)&o->z;
+                *(u32*)&self->tgt3E4.x = *(u32*)&o->x;
+                *(u32*)&self->tgt3E4.y = *(u32*)&o->y;
+                *(u32*)&self->tgt3E4.z = *(u32*)&o->z;
                 CActParamAnimGameBeObj* o2 = (CActParamAnimGameBeObj*)func_804BE520(r28v);
-                *(u32*)&self->field_3D8.x = *(u32*)&o2->x;
-                *(u32*)&self->field_3D8.y = *(u32*)&o2->y;
-                *(u32*)&self->field_3D8.z = *(u32*)&o2->z;
-                void* sub = ((cf::CActParamAnimGameObj3A0*)self->field_3A0)->sub7EC;
+                *(u32*)&self->hit3D8.x = *(u32*)&o2->x;
+                *(u32*)&self->hit3D8.y = *(u32*)&o2->y;
+                *(u32*)&self->hit3D8.z = *(u32*)&o2->z;
+                void* sub = ((cf::CActParamAnimGameObj3A0*)self->obj3A0)->sub7EC;
                 if (sub != 0) {
                     ml::CVec3 vec;
-                    vec.x = self->field_3E4.x;
-                    vec.y = self->field_3E4.y;
-                    vec.z = self->field_3E4.z;
+                    vec.x = self->tgt3E4.x;
+                    vec.y = self->tgt3E4.y;
+                    vec.z = self->tgt3E4.z;
                     ((cf::CActParamAnimGameObj7EC*)sub)->v14(&vec);
                 }
-                if ((self->field_4EC & 0x20000000) && r25v == 0) {
-                    f32 dot = self->field_3D8.x * self->field_3CC.x + self->field_3E4.z * self->field_3CC.z;
+                if ((self->flags4EC & 0x20000000) && r25v == 0) {
+                    f32 dot = self->hit3D8.x * self->face3CC.x + self->tgt3E4.z * self->face3CC.z;
                     if (dot <= 0.0f) {
-                        ml::CVec3 v1c0(self->field_3D8.x, 0.0f, self->field_3E4.z);
+                        ml::CVec3 v1c0(self->hit3D8.x, 0.0f, self->tgt3E4.z);
                         ml::CVec3 up2(0.0f, 1.0f, 0.0f);
                         ml::CVec3 cross2;
                         PSVECCrossProduct((const Vec*)&v1c0, (const Vec*)&up2, (Vec*)&cross2);
@@ -499,13 +521,13 @@ shared:
                         } else {
                             PSVECNormalize((const Vec*)&cross2, (Vec*)&cross2);
                         }
-                        f32 dot2 = cross2.x * self->field_3CC.x + cross2.z * self->field_3CC.z;
+                        f32 dot2 = cross2.x * self->face3CC.x + cross2.z * self->face3CC.z;
                         f32 fz = 0.0f;
                         f32 fx = cross2.x * dot2;
                         f32 fz2 = cross2.z * dot2;
-                        *(u32*)&self->field_3CC.y = *(u32*)&fz;
-                        *(u32*)&self->field_3CC.x = *(u32*)&fx;
-                        *(u32*)&self->field_3CC.z = *(u32*)&fz2;
+                        *(u32*)&self->face3CC.y = *(u32*)&fz;
+                        *(u32*)&self->face3CC.x = *(u32*)&fx;
+                        *(u32*)&self->face3CC.z = *(u32*)&fz2;
                     }
                 }
                 u32 local8 = 0;
@@ -518,13 +540,13 @@ shared:
                         func_804BE5A8(&local8, 0x10000, r29v, 0);
                     }
                 }
-                self->field_4AC = local8;
+                self->field4AC = local8;
                 if (func_804BE604(r28v)) {
-                    self->field_4EC |= 0x1000000;
+                    self->flags4EC |= 0x1000000;
                 }
                 if (func_804BE5A4(0x4000, r28v)) {
-                    if (ml::math::abs(self->field_3A8.y - f28) <= lbl_eu_80666050) {
-                        self->field_4EC |= 0x80;
+                    if (ml::math::abs(self->pos3A8.y - f28) <= lbl_eu_80666050) {
+                        self->flags4EC |= 0x80;
                     }
                 }
                 if (r27v != -1 && r29v == -1) {
@@ -534,26 +556,26 @@ shared:
                 }
                 if (func_804BE5A4(0x20000, r27v)) {
                     f32 objY = ((CActParamAnimGameBeObj*)func_804BE50C(r27v))->y;
-                    if (self->field_3A8.y - objY <= lbl_eu_80666044) {
-                        self->field_4EC |= 0x1000000;
+                    if (self->pos3A8.y - objY <= lbl_eu_80666044) {
+                        self->flags4EC |= 0x1000000;
                         func_804BE5A8(&local8, 0x20000, r27v, 1);
-                        self->field_4B0 = local8;
+                        self->id4B0 = local8;
                     }
                 }
                 if (func_804BE5A4(0x8000, r28v)) {
-                    self->field_4EC |= 0x800000;
+                    self->flags4EC |= 0x800000;
                 } else {
-                    self->field_4EC &= ~0x800000;
+                    self->flags4EC &= ~0x800000;
                 }
                 if (func_804BE5A4(0x400, r28v)) {
-                    if ((self->field_0C & 2) != 0 && (self->field_270 & 0x20) == 0) {
+                    if ((self->flags0C & 2) != 0 && (self->flags270 & 0x20) == 0) {
                         ml::CVec3 vec1a8;
                         func_804BE4E0(&vec1a8, r28v);
-                        ml::CVec3 vec19c = self->field_3F0;
-                        f32 f5 = self->field_390 * getSecPerFrame__9CDeviceVIFv();
-                        ml::CVec3 tmp = self->field_3C0 * f5;
+                        ml::CVec3 vec19c = self->move3F0;
+                        f32 f5 = self->f390 * getSecPerFrame__9CDeviceVIFv();
+                        ml::CVec3 tmp = self->vel3C0 * f5;
                         ml::CVec3 vec190 = tmp;
-                        vec190 += self->field_3CC;
+                        vec190 += self->face3CC;
                         if (vec190.x == 0.0f && vec190.z == 0.0f) {
                             f31v = lbl_eu_80666090;
                             if (vec1a8.y <= f31v) {
@@ -562,7 +584,7 @@ shared:
                             }
                         } else {
                             if (f5 != 0.0f) f5 = 1.0f / f5;
-                            if (self->field_0C & 0x200000) {
+                            if (self->flags0C & 0x200000) {
                                 vec19c += vec190 * (lbl_eu_80666084 * f5);
                             } else {
                                 vec19c += vec190 * (lbl_eu_80666080 * f5);
@@ -599,35 +621,35 @@ shared:
                             }
                             f31v = lbl_eu_8066609C;
                         }
-                        *(u32*)&self->field_3F0.x = *(u32*)&vec19c.x;
-                        *(u32*)&self->field_3F0.y = *(u32*)&vec19c.y;
-                        *(u32*)&self->field_3F0.z = *(u32*)&vec19c.z;
-                        self->field_0C |= 0x30;
+                        *(u32*)&self->move3F0.x = *(u32*)&vec19c.x;
+                        *(u32*)&self->move3F0.y = *(u32*)&vec19c.y;
+                        *(u32*)&self->move3F0.z = *(u32*)&vec19c.z;
+                        self->flags0C |= 0x30;
                     } else {
-                        self->field_0C &= ~0x40000;
+                        self->flags0C &= ~0x40000;
                     }
                 } else {
-                    self->field_0C &= ~0x40000;
+                    self->flags0C &= ~0x40000;
                 }
                 if (r26v != -1) {
-                    self->field_4EC |= 0x8000000;
+                    self->flags4EC |= 0x8000000;
                 }
-                if (self->field_530 & 0x400) {
-                    if (self->field_270 & 0x20) {
-                        ml::CVec3 diff = self->field_3A8 - self->field_3B4;
+                if (self->flags530 & 0x400) {
+                    if (self->flags270 & 0x20) {
+                        ml::CVec3 diff = self->pos3A8 - self->ground3B4;
                         f32 len2 = diff.x * diff.x + diff.y * diff.y + diff.z * diff.z;
                         if (len2 <= lbl_eu_806660A0) {
-                            if (func_804BE348(&self->field_3A8, &self->field_3B4, 0, 0x4000, 0)) {
-                                self->field_4EC |= 0x80;
+                            if (func_804BE348(&self->pos3A8, &self->ground3B4, 0, 0x4000, 0)) {
+                                self->flags4EC |= 0x80;
                             }
                         }
                     }
                 }
                 if (r31v != 0) {
-                    ml::CVec3 v = self->field_3F0 * f31v;
-                    *(u32*)&self->field_3F0.x = *(u32*)&v.x;
-                    *(u32*)&self->field_3F0.y = *(u32*)&v.y;
-                    *(u32*)&self->field_3F0.z = *(u32*)&v.z;
+                    ml::CVec3 v = self->move3F0 * f31v;
+                    *(u32*)&self->move3F0.x = *(u32*)&v.x;
+                    *(u32*)&self->move3F0.y = *(u32*)&v.y;
+                    *(u32*)&self->move3F0.z = *(u32*)&v.z;
                 }
             }
         }
@@ -1067,10 +1089,9 @@ void cf::CActParamAnimGame::func_8005D2C4() {
 
     if (v->state374 == 2) {
         // In-battle mode: mark ready and run the full movement/step logic.
-        // Load both flag words up front (retail interleaves the two RMWs;
-        // the +0xC word is born first so it colors r0, the +0x530 word r4).
-        u32 flags0C = v->flags0C;
+        // Load +0x530 first (colors r4 at retail), then +0xC.
         u16 flags530 = v->flags530;
+        u32 flags0C = v->flags0C;
         v->flags530 = flags530 | 1;
         v->flags0C = flags0C & ~0x80000;
         func_8005BC14(this);
@@ -1089,14 +1110,17 @@ void cf::CActParamAnimGame::func_8005D2C4() {
                 v->flags530 &= 0xF5CF;
                 func_8004B354(this, (ml::CVec3*)&v->f514);
             } else if (flags & 0x800) {
-                // Small lateral pull toward the facing direction.
+                // Small lateral pull toward the facing direction. Build the
+                // position member-wise, clear the flag between the position
+                // setup and the trig calls (retail interleave), and phrase
+                // each offset as const*trig so fmuls colors f0=const,f1=f444.
                 ml::CVec3 p;
                 p.x = v->pos3A8.x;
                 p.y = v->pos3A8.y;
                 p.z = v->pos3A8.z;
                 v->flags530 &= 0xF7FF;
-                p.x -= lbl_eu_80666068 * nw4r::math::SinFIdx(lbl_eu_806660CC * v->f444);
-                p.z -= lbl_eu_80666068 * nw4r::math::CosFIdx(lbl_eu_806660CC * v->f444);
+                p.x -= lbl_eu_80666068 * nw4r::math::SinFIdx(v->f444 * lbl_eu_806660CC);
+                p.z -= lbl_eu_80666068 * nw4r::math::CosFIdx(v->f444 * lbl_eu_806660CC);
                 func_8004B354(this, &p);
             }
             if (v->f4F8 > lbl_eu_80666040) {
@@ -1126,14 +1150,18 @@ void cf::CActParamAnimGame::func_8005D2C4() {
     }
 
     // Notify the +0x3A0 chain's +0x7EC sub-object when the fall state and
-    // distance from ground allow it.
+    // distance from ground allow it. The +0x4AC word is read before the
+    // sub-object null test (retail interleave).
     void* obj = v->obj3A0;
     if (obj != 0) {
         void* sub = ((CActParamAnimGameObj3A0*)obj)->sub7EC;
+        u32 ac = v->field4AC;
         if (sub != 0) {
-            int arg = 0;
-            if (v->field4AC < 5 && v->f4F8 < lbl_eu_806660D4 && (v->flags4EC & 0x10) == 0) {
+            int arg;
+            if (ac < 5 && v->f4F8 < lbl_eu_806660D4 && (v->flags4EC & 0x8000000) == 0) {
                 arg = 1;
+            } else {
+                arg = 0;
             }
             ((CActParamAnimGameObj7EC*)sub)->v8(arg);
         }
@@ -1435,31 +1463,28 @@ void cf::CActParamAnimGame::func_8005DCA8() {
     m[2][1] = -sinv;
     m[2][2] = lbl_eu_80666040;
     m[2][3] = cosv;
-    // Retail feeds the rotation math through double round-trips (three frsp:
-    // cos, sin, then negated sin) while the matrix keeps raw float copies;
-    // the ctor arg order (y, x, z) reproduces MWCC's right-to-left argument
-    // evaluation and thus its temp allocation.
-    double dsin = sinv;
-    double dcos = cosv;
-    ml::CVec3 rot(m[0][0] * lbl_eu_80666040 + m[0][1] * lbl_eu_80666044 + m[0][2] * lbl_eu_80666040,
-                  m[0][0] * -(f32)dsin + m[0][1] * lbl_eu_80666040 + m[0][2] * (f32)dcos,
-                  m[0][0] * (f32)dcos + m[0][1] * lbl_eu_80666040 + m[0][2] * (f32)dsin);
+    // Retail feeds the rotation math through double round-trips (three frsp)
+    // while the matrix keeps raw float copies.
+    ml::CVec3 rot;
+    rot.x = m[0][0] * (f32)-(double)sinv + m[0][1] * lbl_eu_80666040 + m[0][2] * (f32)(double)cosv;
+    rot.y = m[0][0] * lbl_eu_80666040 + m[0][1] * lbl_eu_80666044 + m[0][2] * lbl_eu_80666040;
+    rot.z = m[0][0] * (f32)(double)cosv + m[0][1] * lbl_eu_80666040 + m[0][2] * (f32)(double)sinv;
     func_8004B7C0(this, &rot);
     func_8004CEF8(this, 0);
-    d.x = nw4r::math::SinFIdx(v->f444 * lbl_eu_806660CC) * lbl_eu_80666104;
+    d.x = lbl_eu_80666104 * nw4r::math::SinFIdx(v->f444 * lbl_eu_806660CC);
     d.y = lbl_eu_80666040;
-    d.z = nw4r::math::CosFIdx(v->f444 * lbl_eu_806660CC) * lbl_eu_80666104;
+    d.z = lbl_eu_80666104 * nw4r::math::CosFIdx(v->f444 * lbl_eu_806660CC);
     ml::CVec3 delta(v->pos3A8.x - d.x, v->pos3A8.y - d.y, v->pos3A8.z - d.z);
     ml::CVec3 target;
     target.x = delta.x;
     target.y = delta.y;
     target.z = delta.z;
     ((bool (*)(void*, ml::CVec3*, const ml::CVec3*, const ml::CVec3*))func_8004B354)(this, &target, &delta, &d);
-    // Interleaved RMW pair: load both words before either store (retail shape).
-    u32 flags0c = v->flags0C;
-    u32 flags4ec = v->flags4EC;
-    v->flags4EC = flags4ec | 0x40000;
-    v->flags0C = flags0c & ~0x80;
+    // Interleaved RMW pair: compute both masked words, then store (retail shape).
+    u32 flags4ec = v->flags4EC | 0x40000;
+    u32 flags0c = v->flags0C & ~0x80;
+    v->flags4EC = flags4ec;
+    v->flags0C = flags0c;
 }
 
 // Ground-hit record written by func_804BE4E0/func_804BE4B4: contact x/z plus
@@ -1483,16 +1508,12 @@ bool __declspec(noinline) func_8005DE68(cf::CActParamAnimGame* selfV) {
     vecUp.x = lbl_eu_80666040;
     vecUp.y = lbl_eu_80666044;
     vecUp.z = lbl_eu_80666040;
-    ml::CVec3 vec50;
-    vec50.x = self->pos3A8.x + vecUp.x;
-    vec50.y = self->pos3A8.y + vecUp.y;
-    vec50.z = self->pos3A8.z + vecUp.z;
-    ml::CVec3 vecEC;
-    vecEC.x = vec50.x;
-    vecEC.y = vec50.y;
-    vecEC.z = vec50.z;
-    f32 sinv = nw4r::math::SinFIdx(lbl_eu_806660CC * self->f444);
-    f32 cosv = nw4r::math::CosFIdx(lbl_eu_806660CC * self->f444);
+    ml::CVec3 vec50 = self->pos3A8 + vecUp;
+    ml::CVec3 vecEC(vec50);
+    ml::CVec3 sincos;
+    sincos.x = nw4r::math::SinFIdx(lbl_eu_806660CC * self->f444);
+    sincos.y = lbl_eu_80666040;
+    sincos.z = nw4r::math::CosFIdx(lbl_eu_806660CC * self->f444);
     // Normalize the facing dir; a zero-length dir stays zero.
     ml::CVec3 dir;
     dir.x = self->face3CC.x;
@@ -1507,64 +1528,68 @@ bool __declspec(noinline) func_8005DE68(cf::CActParamAnimGame* selfV) {
         PSVECNormalize((const Vec*)&dir, (Vec*)&dir);
     }
     // Movement-cone gate: facing must align with the anim direction.
-    f32 dot = dir.z * cosv;
-    dot = dir.x * sinv + dot;
-    if (!(dot >= lbl_eu_8066605C)) {
+    if (!(dir.x * sincos.x + dir.z * sincos.z >= lbl_eu_8066605C)) {
         return false;
     }
-    ml::CVec3 sincos;
-    sincos.x = sinv;
-    sincos.y = lbl_eu_80666040;
-    sincos.z = cosv;
     ml::CVec3 vec44;
-    vec44.x = vecEC.x - sincos.x;
-    vec44.y = vecEC.y - sincos.y;
-    vec44.z = vecEC.z - sincos.z;
+    nw4r::math::VEC3Sub((nw4r::math::VEC3*)&vec44, vecEC, sincos);
     ml::CVec3 vec38;
-    vec38.x = sincos.x * lbl_eu_80666050;
-    vec38.y = sincos.y * lbl_eu_80666050;
-    vec38.z = sincos.z * lbl_eu_80666050;
-    ml::CVec3 vec80;
-    vec80.x = vec44.x + vecEC.x;
-    vec80.y = vec44.y + vecEC.y;
-    vec80.z = vec44.z + vecEC.z;
-    ml::CVec3 vec8C;
-    vec8C.x = vec80.x;
-    vec8C.y = vec80.y;
-    vec8C.z = vec80.z;
-    ml::CVec3 vec98;
-    vec98.x = vec44.x;
-    vec98.y = vec44.y;
-    vec98.z = vec44.z;
+    nw4r::math::VEC3Scale((nw4r::math::VEC3*)&vec38, sincos, lbl_eu_80666050);
+    ml::CVec3 vec80 = vec38;
+    ml::CVec3 vec2C = vecEC + vec80;
+    ml::CVec3 vec8C(vec2C);
+    ml::CVec3 vec98(vec44);
+    // Wall sweep ahead of the actor (wall mask 0x2000, no region filter).
     if (func_804BE348(&vec98, &vec8C, 0, 0x2000, 0) == 0) {
         return false;
     }
-    CActParamAnimGameHitRec hit;
+    ml::CVec3 hit;
     func_804BE4B4(&hit, 0);
-    // Landing-point radius gate against the refined ground point.
-    f32 dx = hit.x - vecEC.x;
-    f32 dy = hit.z - vecEC.z;
-    f32 dz = hit.t - lbl_eu_80666124;
-    f32 s = lbl_eu_806619FC;
-    f32 d2 = dx * s * (dx * s) + dy * dy + dz * dz;
-    if (!(d2 <= lbl_eu_80666120)) {
+    // Landing-point radius gate: contact must stay within lbl_619F8 of
+    // the lifted position (x/z only).
+    if (!((hit.x - vecEC.x) * (hit.x - vecEC.x) +
+              (hit.z - vecEC.z) * (hit.z - vecEC.z) <=
+          lbl_eu_806619F8 * lbl_eu_806619F8)) {
         return false;
     }
-    // Refine the recorded ground point along the normal, re-aim the actor,
-    // then snap to the validated point.
-    ml::CVec3 tgt;
-    tgt.x = hit.w * lbl_eu_806619FC + hit.x;
-    tgt.y = self->pos3A8.y + lbl_eu_80666044;
-    tgt.z = hit.t * lbl_eu_806619FC + hit.z;
+    // Fetch the wall normal, then re-probe along the facing dir with the
+    // region filter enabled to find the true step-up ground point.
+    ml::CVec3 norm;
+    func_804BE4E0(&norm, 0);
+    ml::CVec3 vec20;
+    nw4r::math::VEC3Sub((nw4r::math::VEC3*)&vec20, vecEC, sincos);
+    ml::CVec3 vec14;
+    nw4r::math::VEC3Scale((nw4r::math::VEC3*)&vec14, sincos, lbl_eu_80666050);
+    ml::CVec3 vec5C = vec14;
+    ml::CVec3 vec08 = vecEC + vec5C;
+    ml::CVec3 vec68(vec08);
+    ml::CVec3 vec74(vec20);
+    if (func_804BE348(&vec74, &vec68, self->filter4A8, 0, 0) == 0) {
+        return false;
+    }
+    ml::CVec3 hit2;
+    func_804BE4B4(&hit2, 0);
+    // Both contacts must agree within lbl_6120.
+    if ((hit2.x - hit.x) * (hit2.x - hit.x) +
+            (hit2.y - hit.y) * (hit2.y - hit.y) +
+            (hit2.z - hit.z) * (hit2.z - hit.z) >
+        lbl_eu_80666120) {
+        return false;
+    }
+    // Refine the ground point along the wall normal, re-aim the actor,
+    // then record the validated step destination at +0x514.
+    vecEC.x = -norm.x * lbl_eu_806619F8 + hit.x;
+    vecEC.y = self->pos3A8.y + lbl_eu_80666080;
+    vecEC.z = -norm.z * lbl_eu_806619F8 + hit.z;
     func_8004B52C(selfV,
-                  lbl_eu_806660E0 * Atan2FIdx__Q24nw4r4mathFff(-hit.x, -hit.z));
+                  lbl_eu_806660E0 * Atan2FIdx__Q24nw4r4mathFff(-norm.x, -norm.z));
     if (((BE398Fn)func_804BE398)(&vecEC, self->filter4A8, 0, 0,
                                  lbl_eu_80666124, lbl_eu_8066AF20) != 0) {
         func_804BE4B4(&self->f514, 0);
     } else {
-        self->f514 = tgt.x;
-        self->f518 = tgt.y;
-        self->f51C = tgt.z;
+        self->f514 = vecEC.x;
+        self->f518 = vecEC.y;
+        self->f51C = vecEC.z;
     }
     return true;
 }
@@ -1576,24 +1601,12 @@ bool __declspec(noinline) func_8005DE68(cf::CActParamAnimGame* selfV) {
 // ground point at +0x514. Returns false when any probe misses.
 bool __declspec(noinline) func_8005E28C(cf::CActParamAnimGame* selfV) {
     cf::CActParamAnimGameView* self = (cf::CActParamAnimGameView*)selfV;
-    ml::CVec3 vecUp;
-    vecUp.x = lbl_eu_80666040;
-    vecUp.y = lbl_eu_80666044;
-    vecUp.z = lbl_eu_80666040;
-    ml::CVec3 vec38;
-    vec38.x = self->pos3A8.x + vecUp.x;
-    vec38.y = self->pos3A8.y + vecUp.y;
-    vec38.z = self->pos3A8.z + vecUp.z;
-    ml::CVec3 vecB0;
-    vecB0.x = vec38.x;
-    vecB0.y = vec38.y;
-    vecB0.z = vec38.z;
+    ml::CVec3 up(lbl_eu_80666040, lbl_eu_80666044, lbl_eu_80666040);
+    ml::CVec3 start = self->pos3A8 + up;
+    ml::CVec3 base(start);
     // Normalize the facing dir; a zero-length dir stays zero.
-    ml::CVec3 dir;
-    dir.x = self->face3CC.x;
-    dir.y = self->face3CC.y;
-    f32 len2 = self->face3CC.y * self->face3CC.y;
-    dir.z = self->face3CC.z;
+    ml::CVec3 dir(self->face3CC);
+    f32 len2 = dir.y * dir.y;
     len2 = dir.x * dir.x + len2;
     len2 = dir.z * dir.z + len2;
     if (len2 == lbl_eu_80666040) {
@@ -1601,61 +1614,52 @@ bool __declspec(noinline) func_8005E28C(cf::CActParamAnimGame* selfV) {
     } else {
         PSVECNormalize((const Vec*)&dir, (Vec*)&dir);
     }
-    ml::CVec3 vec2C = dir * lbl_eu_80666078;
-    ml::CVec3 vec5C;
-    vec5C.x = vec2C.x;
-    vec5C.y = vec2C.y;
-    vec5C.z = vec2C.z;
-    ml::CVec3 vec20;
-    vec20.x = vec5C.x + vecB0.x;
-    vec20.y = vec5C.y + vecB0.y;
-    vec20.z = vec5C.z + vecB0.z;
-    ml::CVec3 vecA4;
-    vecA4.x = vec20.x;
-    vecA4.y = vec20.y;
-    vecA4.z = vec20.z;
-    if (func_804BE348(&vecB0, &vecA4, self->filter4A8, 0, 0) != 0) {
+    ml::CVec3 ahead = dir * lbl_eu_80666078;
+    ml::CVec3 aheadC(ahead);
+    ml::CVec3 dest = aheadC + base;
+    ml::CVec3 destC(dest);
+    if (func_804BE348(&base, &destC, self->filter4A8, 0, 0) != 0) {
         return false;
     }
-    if (((BE398Fn)func_804BE398)(&vecA4, self->filter4A8, 0, 0,
+    if (((BE398Fn)func_804BE398)(&destC, self->filter4A8, 0, 0,
                                  lbl_eu_80666124, lbl_eu_8066AF20) != 0) {
         return false;
     }
-    ml::CVec3 vec14 = dir * lbl_eu_80666050;
-    vecA4.y -= lbl_eu_80666050;
-    ml::CVec3 vec44;
-    vec44.x = vec14.x;
-    vec44.y = vec14.y;
-    vec44.z = vec14.z;
-    ml::CVec3 vec08;
-    vec08.x = vecA4.x - vec44.x;
-    vec08.y = vecA4.y - vec44.y;
-    vec08.z = vecA4.z - vec44.z;
-    f32 dx = vec08.x - self->pos3A8.x;
-    f32 dy = vec08.y - self->pos3A8.y;
-    f32 dz = vec08.z - self->pos3A8.z;
-    f32 d2 = dz * dz;
-    d2 = dy * dy + d2;
-    d2 = dx * dx + d2;
-    if (!(d2 <= lbl_eu_80666120)) {
+    ml::CVec3 step = dir * lbl_eu_80666050;
+    ml::CVec3 stepC(step);
+    destC.y -= lbl_eu_80666050;
+    ml::CVec3 delta = destC - stepC;
+    ml::CVec3 deltaC(delta);
+    // Second sweep drops the region filter and uses the wall mask 0x2000.
+    if (func_804BE348(&destC, &deltaC, 0, 0x2000, 0) == 0) {
         return false;
     }
-    CActParamAnimGameHitRec hit;
-    func_804BE4E0(&hit, 0);
+    // Landing point must stay within lbl_806619FC of the actor (x/z only).
+    ml::CVec3 land;
+    func_804BE4B4(&land, 0);
+    f32 dx = land.x - self->pos3A8.x;
+    f32 dz = land.z - self->pos3A8.z;
+    f32 d2 = dz * dz;
+    d2 = dx * dx + d2;
+    if (!(d2 <= lbl_eu_806619FC * lbl_eu_806619FC)) {
+        return false;
+    }
+    ml::CVec3 norm;
+    func_804BE4E0(&norm, 0);
     // Re-aim along the ground normal's yaw.
     func_8004B52C(selfV,
-                  lbl_eu_806660E0 * Atan2FIdx__Q24nw4r4mathFff(-hit.x, -hit.z));
-    ml::CVec3 tgt;
-    tgt.x = -hit.x * lbl_eu_806619FC + hit.w;
-    tgt.y = self->pos3A8.y + lbl_eu_80666044;
-    tgt.z = -hit.z * lbl_eu_806619FC + hit.t;
-    if (((BE398Fn)func_804BE398)(&tgt, self->filter4A8, 0, 0,
+                  lbl_eu_806660E0 * Atan2FIdx__Q24nw4r4mathFff(-norm.x, -norm.z));
+    // Retail reuses the dead 'base' slot for the retarget point.
+    base.x = -norm.x * lbl_eu_806619FC + land.x;
+    base.y = self->pos3A8.y + lbl_eu_80666044;
+    base.z = -norm.z * lbl_eu_806619FC + land.z;
+    if (((BE398Fn)func_804BE398)(&base, self->filter4A8, 0, 0,
                                  lbl_eu_80666124, lbl_eu_8066AF20) != 0) {
         func_804BE4B4(&self->f514, 0);
     } else {
-        self->f514 = tgt.x;
-        self->f518 = tgt.y;
-        self->f51C = tgt.z;
+        self->f514 = base.x;
+        self->f518 = base.y;
+        self->f51C = base.z;
     }
     return true;
 }
@@ -1704,49 +1708,65 @@ extern "C" bool func_8005E60C(cf::CActParamAnimGame* selfV) {
 // point, re-probes, and snaps the actor to it.
 extern "C" bool func_8005E7C4(cf::CActParamAnimGame* selfV) {
     cf::CActParamAnimGameView* self = (cf::CActParamAnimGameView*)selfV;
-    if ((u32)(self->state52C - 2) > 2) return false;
-    ml::CVec3 vec(self->pos3A8.x, self->pos3A8.y, self->pos3A8.z);
-    f32 sinv = nw4r::math::SinFIdx(lbl_eu_806660CC * self->f444);
-    vec.x = vec.x + lbl_eu_806660D4 * (-sinv);
-    f32 cosv = nw4r::math::CosFIdx(lbl_eu_806660CC * self->f444);
-    vec.z = vec.z + lbl_eu_806660D4 * (-cosv);
-    vec.y = vec.y + lbl_eu_80666044;
-    if (((BE398Fn)func_804BE398)(&vec, self->filter4A8, 0, 0, lbl_eu_80666048, lbl_eu_80666040) == 0) return false;
-    ml::CVec3 g;
-    func_804BE4B4(&g, 0);
-    if (!(self->pos3A8.y - g.y <= lbl_eu_80666080)) return false;
-    self->f514 = self->pos3A8.x - nw4r::math::SinFIdx(lbl_eu_806660CC * self->f444);
-    self->f51C = self->pos3A8.z - nw4r::math::CosFIdx(lbl_eu_806660CC * self->f444);
-    self->f518 = g.y;
-    ml::CVec3 t(self->f514, self->f518, self->f51C);
-    t.y = lbl_eu_80666044 + self->pos3A8.y;
-    if (((BE398Fn)func_804BE398)(&t, self->filter4A8, 0, 0, lbl_eu_806660D8, lbl_eu_80666040) != 0) {
-        func_804BE4B4(&g, 0);
-        self->f518 = g.y;
+    ml::CVec3 vec;
+    if ((u32)(self->state52C - 2) <= 2u) {
+        vec.x = self->pos3A8.x;
+        vec.y = self->pos3A8.y;
+        vec.z = self->pos3A8.z;
+        f32 sinv = nw4r::math::SinFIdx(self->f444 * lbl_eu_806660CC);
+        vec.x = vec.x + lbl_eu_806660D4 * (-sinv);
+        f32 cosv = nw4r::math::CosFIdx(self->f444 * lbl_eu_806660CC);
+        vec.z = vec.z + lbl_eu_806660D4 * (-cosv);
+        vec.y = vec.y + lbl_eu_80666044;
+        if (((BE398Fn)func_804BE398)(&vec, self->filter4A8, 0, 0, lbl_eu_80666048, lbl_eu_80666040) != 0) {
+            ml::CVec3 g;
+            func_804BE4B4(&g, 0);
+            if (self->pos3A8.y - g.y <= lbl_eu_80666080) {
+                f32 sinv2 = nw4r::math::SinFIdx(self->f444 * lbl_eu_806660CC);
+                self->f514 = self->pos3A8.x - sinv2;
+                f32 cosv2 = nw4r::math::CosFIdx(self->f444 * lbl_eu_806660CC);
+                self->f51C = self->pos3A8.z - cosv2;
+                self->f518 = g.y;
+                *(u32*)&vec.y = *(u32*)&self->f518;
+                *(u32*)&vec.x = *(u32*)&self->f514;
+                *(u32*)&vec.z = *(u32*)&self->f51C;
+                vec.y = lbl_eu_80666044 + self->pos3A8.y;
+                if (((BE398Fn)func_804BE398)(&vec, self->filter4A8, 0, 0, lbl_eu_806660D8, lbl_eu_80666040) != 0) {
+                    func_804BE4B4(&g, 0);
+                    self->f518 = g.y;
+                }
+                *(u32*)&vec.y = *(u32*)&self->pos3A8.y;
+                *(u32*)&vec.x = *(u32*)&self->pos3A8.x;
+                *(u32*)&vec.z = *(u32*)&self->pos3A8.z;
+                vec.y = self->f518;
+                func_8004B354(selfV, &vec);
+                return true;
+            }
+        }
     }
-    ml::CVec3 t2(self->pos3A8.x, self->pos3A8.y, self->pos3A8.z);
-    t2.y = self->f518;
-    func_8004B354(selfV, &t2);
-    return true;
+    return false;
 }
 
 // Facing-dir step probe with movement-cone and landing-radius gates; on
 // success re-aims the actor along the ground normal's yaw and writes the
-// refined ground point to +0x514/+0x518/+0x51C.
+// refined ground point to +0x514/+0x518/+0x51C. Three sweeps share the same
+// ray shape (lifted anchor +/- facing dir): wall probes without the region
+// filter first, then the filtered probe whose contact pair must agree.
 bool __declspec(noinline) func_8005E990(cf::CActParamAnimGame* selfV) {
     cf::CActParamAnimGameView* self = (cf::CActParamAnimGameView*)selfV;
+    // Copy the facing dir once; normalization below happens in place.
+    ml::CVec3 dir = self->face3CC;
     // Degenerate facing (no x/z components): nothing to probe against.
-    if (self->face3CC.x == lbl_eu_80666040 && self->face3CC.z == lbl_eu_80666040) {
+    if (dir.x == lbl_eu_80666040 && dir.z == lbl_eu_80666040) {
         return false;
     }
-    f32 sinv = nw4r::math::SinFIdx(lbl_eu_806660CC * self->f444);
-    f32 cosv = nw4r::math::CosFIdx(lbl_eu_806660CC * self->f444);
+    ml::CVec3 sincos;
+    // The trig results live only inside this struct (retail reloads them
+    // from its stack slot around each probe).
+    sincos.x = nw4r::math::SinFIdx(lbl_eu_806660CC * self->f444);
+    sincos.z = nw4r::math::CosFIdx(lbl_eu_806660CC * self->f444);
     // Normalize the facing dir; a zero-length dir stays zero.
-    ml::CVec3 dir;
-    dir.x = self->face3CC.x;
-    dir.y = self->face3CC.y;
-    f32 len2 = self->face3CC.y * self->face3CC.y;
-    dir.z = self->face3CC.z;
+    f32 len2 = dir.y * dir.y;
     len2 = dir.x * dir.x + len2;
     len2 = dir.z * dir.z + len2;
     if (len2 == lbl_eu_80666040) {
@@ -1755,73 +1775,81 @@ bool __declspec(noinline) func_8005E990(cf::CActParamAnimGame* selfV) {
         PSVECNormalize((const Vec*)&dir, (Vec*)&dir);
     }
     // Movement-cone gate.
-    f32 dot = dir.z * cosv;
-    dot = dir.x * sinv + dot;
-    if (!(dot >= lbl_eu_8066605C)) {
+    if (!(dir.x * sincos.x + dir.z * sincos.z >= lbl_eu_8066605C)) {
         return false;
     }
-    ml::CVec3 sincos;
-    sincos.x = sinv;
     sincos.y = lbl_eu_80666040;
-    sincos.z = cosv;
-    ml::CVec3 ahead;
-    ahead.x = lbl_eu_80666040;
-    ahead.y = lbl_eu_80666050;
-    ahead.z = lbl_eu_80666040;
-    ml::CVec3 vec80;
-    vec80.x = self->pos3A8.x + ahead.x;
-    vec80.y = self->pos3A8.y + ahead.y;
-    vec80.z = self->pos3A8.z + ahead.z;
-    ml::CVec3 vec68 = sincos * lbl_eu_80666050;
-    ml::CVec3 vec140;
-    vec140.x = vec80.x;
-    vec140.y = vec80.y;
-    vec140.z = vec80.z;
+
+    // Sweep 1: unfiltered wall probe around pos+(0,lbl_80666050).
+    ml::CVec3 lift1(lbl_eu_80666040, lbl_eu_80666050, lbl_eu_80666040);
+    ml::CVec3 vec80 = self->pos3A8 + lift1;
+    ml::CVec3 anchorC(vec80);
     ml::CVec3 vec74;
-    vec74.x = vec140.x - vec68.x;
-    vec74.y = vec140.y - vec68.y;
-    vec74.z = vec140.z - vec68.z;
-    ml::CVec3 vecEC;
-    vecEC.x = vec68.x;
-    vecEC.y = vec68.y;
-    vecEC.z = vec68.z;
-    ml::CVec3 vec5C;
-    vec5C.x = vec74.x + vecEC.x;
-    vec5C.y = vec74.y + vecEC.y;
-    vec5C.z = vec74.z + vecEC.z;
-    ml::CVec3 vec104;
-    vec104.x = vec74.x;
-    vec104.y = vec74.y;
-    vec104.z = vec74.z;
-    ml::CVec3 vec98;
-    vec98.x = vec5C.x;
-    vec98.y = vec5C.y;
-    vec98.z = vec5C.z;
-    ml::CVec3 vecAC;
-    vecAC.x = vec104.x;
-    vecAC.y = vec104.y;
-    vecAC.z = vec104.z;
-    if (func_804BE348(&vec98, &vecAC, self->filter4A8, 0x2000, 0) == 0) {
+    nw4r::math::VEC3Sub((nw4r::math::VEC3*)&vec74, anchorC, sincos);
+    ml::CVec3 vec68;
+    nw4r::math::VEC3Scale((nw4r::math::VEC3*)&vec68, sincos, lbl_eu_80666050);
+    ml::CVec3 vecEC(vec68);
+    ml::CVec3 vec5C = vec74 + vecEC;
+    ml::CVec3 vec98(vec74);
+    ml::CVec3 vecAC(vec5C);
+    if (func_804BE348(&vec98, &vecAC, 0, 0x2000, 0) == 0) {
         return false;
     }
-    CActParamAnimGameHitRec hit;
+    ml::CVec3 hit;
     func_804BE4B4(&hit, 0);
-    // Landing-point radius gate.
-    f32 dx = hit.x - vecAC.x;
-    f32 dy = hit.z - vecAC.z;
-    f32 dz = hit.t - hit.w;
-    f32 d2 = dz * dz;
-    d2 = dy * dy + d2;
-    d2 = dx * dx + d2;
-    if (!(d2 <= lbl_eu_80666120)) {
+    // Landing point must stay within the radius of the lifted anchor (xz).
+    f32 dx = hit.x - anchorC.x;
+    f32 dz = hit.z - anchorC.z;
+    if (dx * dx + dz * dz > lbl_eu_80666120 * lbl_eu_80666120) {
         return false;
     }
+
+    // Sweep 2: second unfiltered wall probe around pos+(0,lbl_80666080).
+    ml::CVec3 lift2(lbl_eu_80666040, lbl_eu_80666080, lbl_eu_80666040);
+    ml::CVec3 vec50 = self->pos3A8 + lift2;
+    anchorC = vec50;
+    ml::CVec3 vec44;
+    nw4r::math::VEC3Sub((nw4r::math::VEC3*)&vec44, anchorC, sincos);
+    ml::CVec3 vec38;
+    nw4r::math::VEC3Scale((nw4r::math::VEC3*)&vec38, sincos, lbl_eu_80666050);
+    ml::CVec3 vecB0(vec38);
+    ml::CVec3 vec2C = vec44 + vecB0;
+    ml::CVec3 vecBC(vec44);
+    ml::CVec3 vecC8(vec2C);
+    if (func_804BE348(&vecC8, &vecBC, 0, 0x2000, 0) == 0) {
+        return false;
+    }
+    ml::CVec3 norm;
+    func_804BE4E0(&norm, 0);
+
+    // Sweep 3: the same ray as sweep 2 but with the region filter enabled.
+    ml::CVec3 vec14;
+    nw4r::math::VEC3Scale((nw4r::math::VEC3*)&vec14, sincos, lbl_eu_80666050);
+    ml::CVec3 vec20;
+    nw4r::math::VEC3Sub((nw4r::math::VEC3*)&vec20, anchorC, sincos);
+    ml::CVec3 vec8 = anchorC + vec14;
+    ml::CVec3 vec98b(vec20);
+    ml::CVec3 vecA4(vec8);
+    if (func_804BE348(&vecA4, &vec98b, self->filter4A8, 0, 0) == 0) {
+        return false;
+    }
+    ml::CVec3 land;
+    func_804BE4B4(&land, 0);
+    // Both contacts must agree within the radius (full xyz); the difference
+    // is folded back into the landing-point buffer like retail.
+    nw4r::math::VEC3Sub((nw4r::math::VEC3*)&land,
+                        reinterpret_cast<const nw4r::math::VEC3*>(&land),
+                        reinterpret_cast<const nw4r::math::VEC3*>(&hit));
+    if (land.x * land.x + land.y * land.y + land.z * land.z > lbl_eu_80666120) {
+        return false;
+    }
+    // Re-aim along the ground normal's yaw.
     func_8004B52C(selfV,
-                  lbl_eu_806660E0 * Atan2FIdx__Q24nw4r4mathFff(-hit.x, -hit.z));
-    // Commit the refined point scaled by lbl_80666100 around the position.
-    self->f514 = lbl_eu_80666100 * hit.x + hit.w;
+                  lbl_eu_806660E0 * Atan2FIdx__Q24nw4r4mathFff(-norm.x, -norm.z));
+    // Commit the refined ground point.
+    self->f514 = lbl_eu_80666100 * norm.x + hit.x;
     self->f518 = self->pos3A8.y;
-    self->f51C = lbl_eu_80666100 * hit.z + hit.t;
+    self->f51C = lbl_eu_80666100 * norm.z + hit.z;
     return true;
 }
 

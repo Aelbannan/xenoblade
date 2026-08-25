@@ -52,7 +52,7 @@ struct CVS_THREAD_TENSION_UP_raw {
     u8 field_0x28;              // 0x28
 };
 
-// ── Target 1: us-802ab968 (func_802A9230) ──────────────────────────────────
+// us-802ab968 (func_802A9230)
 // Completion callback: if no active voice is playing, invoke the
 // playback-start virtual (CVS_THREAD::func_802A3B50, vtable slot 2).
 void func_802A9230(CVS_THREAD_TENSION_UP* self) {
@@ -61,7 +61,7 @@ void func_802A9230(CVS_THREAD_TENSION_UP* self) {
     }
 }
 
-// ── Target 2: us-802ab9b0 (func_802A9278) ──────────────────────────────────
+// us-802ab9b0 (func_802A9278)
 // Remove a voice by matching its embedded CCharVoice pointer against the
 // single slot (field_0x20). A CVoiceHandle stores the CCharVoice at offset
 // 0x3E9C, so a non-null handle is biased by 0x3E9C before comparing.
@@ -78,7 +78,7 @@ void func_802A9278(CVS_THREAD_TENSION_UP* self, CCharVoice* voicePtr) {
     }
 }
 
-// ── Target 3: us-802ab51c (__ct__802A8DE8) ─────────────────────────────────
+// us-802ab51c (__ct__802A8DE8)
 // Factory constructor for CVS_THREAD_TENSION_UP.
 // Takes a factory/manager pointer and a thread index (must be >= 3).
 // Allocates a buffer and the thread object, constructs the base,
@@ -127,7 +127,7 @@ CVS_THREAD_TENSION_UP* __ct__802A8DE8(CVoiceFactory* factory, int index) {
     return self;
 }
 
-// ── Target 4: us-802ab628 (func_802A8EEC) ──────────────────────────────────
+// us-802ab628 (func_802A8EEC)
 // Update function: reloads the slot-state triple, checks voice state,
 // plays appropriate voice ID (0x5DE standard or 0x5DD reversed).
 void func_802A8EEC(CVS_THREAD_TENSION_UP* self) {
@@ -197,7 +197,7 @@ fallback:
     self->func_802A3B50();
 }
 
-// ── Target 5: us-802ab784 (func_802A9030) ──────────────────────────────────
+// us-802ab784 (func_802A9030)
 // Voice-select and play function. Reloads slot-state, finds a free handle,
 // selects voice ID based on owner state and flag.
 void func_802A9030(CVS_THREAD_TENSION_UP* self) {

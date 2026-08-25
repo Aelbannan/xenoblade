@@ -2,7 +2,6 @@
 
 #include "kyoshin/menu/CMenuOption.hpp"
 
-#include "kyoshin/cf/CfGameManager.hpp"
 // NOTE: kyoshin/harness_catalog.hpp deliberately omitted - its CScn clashes
 // with monolib/scn.hpp (pulled in by CTaskGame.hpp below).
 #include "kyoshin/CTaskGame.hpp"
@@ -29,22 +28,28 @@ extern "C" CMenuOption* __ct__CMenuOption(CMenuOption* self, CProcess* parent, u
     // and the IScnRender sub-vtable at +0x58.
     *(u32*)((u8*)self + 0x10) = (u32)lbl_eu_8052BF70;
     // Post-increment walk forces MWCC's lwzu fold for the base (btm_sco_init
-    // pattern). The second group walks a fresh pointer at the array base so
-    // its loads stay at disp 0/4/8 of the same folded base register.
+    // pattern). The second group restarts from the array base so its loads
+    // stay at disp 0/4/8.
+    u32 pmfV0;
+    u32 pmfV1;
+    u32 pmfV2;
+    u32 pmfU1;
+    u32 pmfU0;
+    u32 pmfU2;
     u32* src = __ptmf_null;
-    u32 pmfV0 = *src++;
-    u32 pmfV1 = *src++;
-    self->ptmf0[1] = pmfV1;
-    self->ptmf0[0] = pmfV0;
-    u32 pmfV2 = *src++;
-    self->ptmf0[2] = pmfV2;
-    u32* src2 = __ptmf_null;
-    u32 pmfU0 = *src2++;
-    u32 pmfU1 = *src2++;
-    self->ptmf1[1] = pmfU1;
-    self->ptmf1[0] = pmfU0;
-    u32 pmfU2 = *src2++;
-    self->ptmf1[2] = pmfU2;
+    pmfV0 = *src++;
+    pmfV1 = *src++;
+    self->mPtmfCallbacks[1] = pmfV1;
+    self->mPtmfCallbacks[0] = pmfV0;
+    pmfV2 = *src++;
+    self->mPtmfCallbacks[2] = pmfV2;
+    src = __ptmf_null;
+    pmfU0 = *src++;
+    pmfU1 = *src++;
+    self->mPtmfCallbacks[4] = pmfU1;
+    self->mPtmfCallbacks[3] = pmfU0;
+    pmfU2 = *src++;
+    self->mPtmfCallbacks[5] = pmfU2;
     self->mField54 = 0;
     self->mField55 = 0;
 
@@ -61,7 +66,7 @@ extern "C" CMenuOption* __ct__CMenuOption(CMenuOption* self, CProcess* parent, u
 }
 
 // ---------------------------------------------------------------------------
-// Target 1: CMenuOption::~CMenuOption (us-8029dc90) - complete-object dtor.
+// CMenuOption::~CMenuOption (us-8029dc90) - complete-object dtor.
 // Written as the retail D2 form (explicit flags param) so the base-class
 // destruction can target the retail CProcess dtor symbol __dt__800FED0C
 // (0x800FF7F4, the game-side D2 wrapper). A real member destructor would make

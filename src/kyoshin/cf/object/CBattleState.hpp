@@ -1,11 +1,8 @@
 #pragma once
 
 #include <types.h>
+#include "kyoshin/plugin/ocBdat.hpp"
 
-// bdat string lookup + column-name string block used by func_80145BC4
-// (same imports as CMenuLandTelop). getBdatStringColumnValue is a genuine
-// C-ABI SDK helper (declared extern "C" in CfBdat.hpp / CfObjectPoint.hpp).
-extern "C" u32 getBdatStringColumnValue(void* bdat, const char* column, int index);
 extern u8* lbl_eu_806640E0;    // bdat file pointer (.sbss/.sdata)
 extern char lbl_eu_805018A8[]; // bdat column-name string block (.rodata)
 

@@ -129,101 +129,101 @@ void GDLoadTexMtxImm3x3(const math::MTX33& rMtx, u32 id) {
 void GDSetIndTexMtx(u32 id, const math::MTX34& rMtx) {
     volatile unsigned char* const fifo = (volatile unsigned char*)0xCC008000;
 
-    // Top two rows of the 3x4 matrix (the offset matrix).
+    // Top two rows of the 3x4 matrix (the offset matrix), with absolute
+    // values kept alongside for the normalization search below.
     f32 m00 = rMtx.m[0][0];
     f32 m01 = rMtx.m[0][1];
-    f32 m02 = rMtx.m[0][2];
     f32 m10 = rMtx.m[1][0];
+    f32 a00 = __fabsf(m00);
+    f32 m02 = rMtx.m[0][2];
     f32 m11 = rMtx.m[1][1];
     f32 m12 = rMtx.m[1][2];
-
-    f32 a00 = math::FAbs(m00);
-    f32 a01 = math::FAbs(m01);
-    f32 a02 = math::FAbs(m02);
-    f32 a10 = math::FAbs(m10);
-    f32 a11 = math::FAbs(m11);
-    f32 a12 = math::FAbs(m12);
+    f32 a01 = __fabsf(m01);
+    f32 a02 = __fabsf(m02);
+    f32 a10 = __fabsf(m10);
+    f32 a11 = __fabsf(m11);
+    f32 a12 = __fabsf(m12);
 
     s8 scale = 0;
 
     if (a00 >= lbl_eu_80669BCC || a01 >= lbl_eu_80669BCC ||
         a02 >= lbl_eu_80669BCC || a10 >= lbl_eu_80669BCC ||
         a11 >= lbl_eu_80669BCC || a12 >= lbl_eu_80669BCC) {
-        // Scale down: halve every element until the largest |value| <= 1.0f.
+        // Scale down: halve every element until the largest |value| < 1.0f.
         do {
+            if (scale >= 46) {
+                break;
+            }
+            a00 *= lbl_eu_80669BD0;
             m00 *= lbl_eu_80669BD0;
             m01 *= lbl_eu_80669BD0;
             m02 *= lbl_eu_80669BD0;
             m10 *= lbl_eu_80669BD0;
             m11 *= lbl_eu_80669BD0;
             m12 *= lbl_eu_80669BD0;
-            a00 *= lbl_eu_80669BD0;
             a01 *= lbl_eu_80669BD0;
             a02 *= lbl_eu_80669BD0;
             a10 *= lbl_eu_80669BD0;
             a11 *= lbl_eu_80669BD0;
             a12 *= lbl_eu_80669BD0;
             scale++;
-        } while (scale < 46 &&
-                 (a00 >= lbl_eu_80669BCC || a01 >= lbl_eu_80669BCC ||
-                  a02 >= lbl_eu_80669BCC || a10 >= lbl_eu_80669BCC ||
-                  a11 >= lbl_eu_80669BCC || a12 >= lbl_eu_80669BCC));
-    } else {
+        } while (a00 >= lbl_eu_80669BCC || a01 >= lbl_eu_80669BCC ||
+                 a02 >= lbl_eu_80669BCC || a10 >= lbl_eu_80669BCC ||
+                 a11 >= lbl_eu_80669BCC || a12 >= lbl_eu_80669BCC);
+    } else if (a00 < lbl_eu_80669BD0 && a01 < lbl_eu_80669BD0 &&
+               a02 < lbl_eu_80669BD0 && a10 < lbl_eu_80669BD0 &&
+               a11 < lbl_eu_80669BD0 && a12 < lbl_eu_80669BD0) {
         // Scale up: double every element until the largest |value| >= 0.5f.
-        if (a00 < lbl_eu_80669BD0 && a01 < lbl_eu_80669BD0 &&
-            a02 < lbl_eu_80669BD0 && a10 < lbl_eu_80669BD0 &&
-            a11 < lbl_eu_80669BD0 && a12 < lbl_eu_80669BD0) {
-            do {
-                m00 *= lbl_eu_80669BD4;
-                m01 *= lbl_eu_80669BD4;
-                m02 *= lbl_eu_80669BD4;
-                m10 *= lbl_eu_80669BD4;
-                m11 *= lbl_eu_80669BD4;
-                m12 *= lbl_eu_80669BD4;
-                a00 *= lbl_eu_80669BD4;
-                a01 *= lbl_eu_80669BD4;
-                a02 *= lbl_eu_80669BD4;
-                a10 *= lbl_eu_80669BD4;
-                a11 *= lbl_eu_80669BD4;
-                a12 *= lbl_eu_80669BD4;
-                scale--;
-            } while (a00 < lbl_eu_80669BD0 && a01 < lbl_eu_80669BD0 &&
-                     a02 < lbl_eu_80669BD0 && a10 < lbl_eu_80669BD0 &&
-                     a11 < lbl_eu_80669BD0 && a12 < lbl_eu_80669BD0 &&
-                     scale > -17);
-        }
+        do {
+            a00 *= lbl_eu_80669BD4;
+            m00 *= lbl_eu_80669BD4;
+            m01 *= lbl_eu_80669BD4;
+            m02 *= lbl_eu_80669BD4;
+            m10 *= lbl_eu_80669BD4;
+            m11 *= lbl_eu_80669BD4;
+            m12 *= lbl_eu_80669BD4;
+            a01 *= lbl_eu_80669BD4;
+            a02 *= lbl_eu_80669BD4;
+            a10 *= lbl_eu_80669BD4;
+            a11 *= lbl_eu_80669BD4;
+            a12 *= lbl_eu_80669BD4;
+            scale--;
+        } while (a00 < lbl_eu_80669BD0 && a01 < lbl_eu_80669BD0 &&
+                 a02 < lbl_eu_80669BD0 && a10 < lbl_eu_80669BD0 &&
+                 a11 < lbl_eu_80669BD0 && a12 < lbl_eu_80669BD0 &&
+                 scale > -17);
     }
+
 
     // Encode as three XF indirect-matrix register writes. Each word carries an
     // 11-bit fixed-point element pair plus a 2-bit slice of the 6-bit scale
     // exponent (scale + 17) and the XF register id in the top byte.
-    u32 exp = (u32)(scale + 17);
+    f32 scl = lbl_eu_80669BD8;
+    u32 exp = scale + 17;
 
-    s32 w00 = (s32)(m00 * lbl_eu_80669BD8);
-    s32 w01 = (s32)(m01 * lbl_eu_80669BD8);
-    s32 w02 = (s32)(m02 * lbl_eu_80669BD8);
-    s32 w10 = (s32)(m10 * lbl_eu_80669BD8);
-    s32 w11 = (s32)(m11 * lbl_eu_80669BD8);
-    s32 w12 = (s32)(m12 * lbl_eu_80669BD8);
+    s32 w00 = (s32)(scl * m00);
 
-    u32 hi0 = (exp & 3) << 22 | (id + 6) << 24;
-    u32 lo0 = (((u32)w10 & 0x7FF) << 11) | ((u32)w00 & 0x7FF);
-    u32 word0 = hi0 | lo0;
-
-    u32 hi1 = ((exp >> 2) & 3) << 22 | (id + 7) << 24;
-    u32 lo1 = (((u32)w11 & 0x7FF) << 11) | ((u32)w01 & 0x7FF);
-    u32 word1 = hi1 | lo1;
-
-    u32 hi2 = ((exp >> 4) & 3) << 22 | (id + 8) << 24;
-    u32 lo2 = (((u32)w12 & 0x7FF) << 11) | ((u32)w02 & 0x7FF);
-    u32 word2 = hi2 | lo2;
+    u32 word0 = (u32)(exp & 3) << 22;
+    s32 w10 = (s32)(scl * m10);
+    word0 |= (id + 6) << 24;
+    s32 w01 = (s32)(scl * m01);
+    u32 word1 = (u32)((exp >> 2) & 3) << 22;
+    s32 w11 = (s32)(scl * m11);
+    word1 |= (id + 7) << 24;
+    s32 w02 = (s32)(scl * m02);
+    s32 w12 = (s32)(scl * m12);
+    u32 word2 = (u32)((exp >> 4) & 3) << 22;
+    word2 |= (id + 8) << 24;
 
     *fifo = 0x61;
-    *(volatile unsigned int*)fifo = word0;
+    *(volatile unsigned int*)fifo =
+        word0 | (((u32)w10 & 0x7FF) << 11) | ((u32)w00 & 0x7FF);
     *fifo = 0x61;
-    *(volatile unsigned int*)fifo = word1;
+    *(volatile unsigned int*)fifo =
+        word1 | (((u32)w11 & 0x7FF) << 11) | ((u32)w01 & 0x7FF);
     *fifo = 0x61;
-    *(volatile unsigned int*)fifo = word2;
+    *(volatile unsigned int*)fifo =
+        word2 | (((u32)w12 & 0x7FF) << 11) | ((u32)w02 & 0x7FF);
 }
 
 } // namespace fifo

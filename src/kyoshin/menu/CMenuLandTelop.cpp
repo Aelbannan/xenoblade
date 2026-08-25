@@ -3,6 +3,7 @@
 // Matching session: Term / cbRenderBefore / func_801453B8 / func_80144EE4 /
 // constructor (the retail ctor is the unmangled global __ct__CMenuLandTelop).
 
+#include "kyoshin/cf/CBattleManagerApi.hpp"
 #include "kyoshin/harness_catalog.hpp"
 
 #include "kyoshin/menu/CMenuLandTelop.hpp"
@@ -219,7 +220,11 @@ void CMenuLandTelop::Move() {
                     f64 frac = ((f64)(u32)(msgId * weight) - bias) * scale;
                     f64 limit =
                         (reset < frac) ? lbl_eu_806673D8 : lbl_eu_806673E0;
-                    s32 frames = (s32)(((f64)100 - bias) * scale + limit);
+                    // Retail re-converts the SAME (msgId*weight) product here
+                    // (second stw-pair + magic-subtract block), not a literal
+                    // 100.0 — a pooled {100.0} double would have no blob home.
+                    s32 frames =
+                        (s32)(((f64)(u32)(msgId * weight) - bias) * scale + limit);
                     switch (kind) {
                     case 0:
                         func_800A21F8((void*)data, (u16)frames, col0, col1);

@@ -258,7 +258,6 @@ extern "C" void* func_800FEDF8(void);
 extern "C" int func_800DA06C(void* bm, void* obj);
 extern "C" void func_8006BC1C(void* obj, u32 mask);
 extern "C" void func_8006BBF4(void* obj, u32 mask, int flag);
-extern "C" void func_800BE12C(void* obj, int a, int b, int c, int d);
 extern "C" CfObj90E4* func_800FE68C(void);
 extern "C" UnkClass_800821F8View* func_800821F8__Q22cf13CfGameManagerFv(void);
 extern "C" const void* lbl_eu_80661C60;   // __dynamic_cast src typeinfo

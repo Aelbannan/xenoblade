@@ -1,23 +1,7 @@
 #include "kyoshin/menu/CMenuBattleMode.hpp"
 
-// CTaskGame.hpp declares func_8004392C with a u32 third arg (line 486) and
-// func_8049603C with a CScn* arg (line 559), which conflict with the void*
-// copies in CVision.hpp / CSuddenCommu.hpp (reached via the
-// CBattleManager.hpp include below); rename the CTaskGame.hpp copies out of
-// the way (same scheme as CMenuBattlePlayerState.cpp). This TU uses none of
-// them.
-#define func_8004392C menuBmbCtaskGame4392CUnused
-#define func_8049603C menuBmbCtaskGame9603CUnused
 #include "kyoshin/CTaskGame.hpp"
-#undef func_8049603C
-#undef func_8004392C
-// CAIAction.hpp (via CBattleManager.hpp -> CfObjectActor.hpp) declares
-// getInstance__Q22cf14CBattleManagerFv as extern "C" void*, which conflicts
-// with CfGameManager.hpp's CBattleManagerView* return below. This TU uses the
-// static member CBattleManager::getInstance(), not either copy.
-#define getInstance__Q22cf14CBattleManagerFv menuBmbCAIActionGetBMUnused
 #include "kyoshin/cf/CBattleManager.hpp"
-#undef getInstance__Q22cf14CBattleManagerFv
 #include "kyoshin/cf/CfGameManager.hpp"
 // code_800F42AC.hpp declares func_80149154 with an int id arg; CAIAction.hpp
 // (via CBattleManager.hpp -> CfObjectActor.hpp) declares the same name with a
@@ -25,18 +9,11 @@
 #define func_80149154 menuBmbCode800F42AC49154Unused
 #include "kyoshin/cf/code_800F42AC.hpp"
 #undef func_80149154
-// code_80135FDC.hpp declares lbl_eu_8066A208 as u32 (line 188),
-// func_8049603C with a CScn* arg (line 223), and getBdatStringColumnValue
-// as void* (line 238); CfObjectMove.hpp (via the CBattleManager.hpp include
-// above) declares lbl_eu_8066A208 const float, CSuddenCommu.hpp declares
-// func_8049603C with a void* arg, and CfGimmick.hpp declares
-// getBdatStringColumnValue as u32. This TU uses neither copy.
+// code_80135FDC.hpp declares lbl_eu_8066A208 as u32 (line 188);
+// CfObjectMove.hpp (via the CBattleManager.hpp include above) declares it
+// const float. This TU uses neither copy.
 #define lbl_eu_8066A208 menuBmbCode35FDCepsilonUnused
-#define func_8049603C menuBmbCode35FDC9603CUnused
-#define getBdatStringColumnValue menuBmbCode35FDCBdatColUnused
 #include "kyoshin/code_80135FDC.hpp"
-#undef getBdatStringColumnValue
-#undef func_8049603C
 #undef lbl_eu_8066A208
 #include "monolib/device/CDeviceVI.hpp"
 #include "monolib/util/MemManager.hpp"

@@ -1,6 +1,7 @@
 #pragma once
 
 #include <types.h>
+#include "kyoshin/plugin/ocBdat.hpp"
 
 // Forward declarations for the C-linkage imports below.
 class UnkClass_805764CC;
@@ -293,9 +294,6 @@ extern "C" char lbl_eu_80508634[];
 // gimmick extent checks.  Const so MWCC treats the SDA load as read-only and
 // schedules it at retail's position (CfObjectMove.hpp pattern).
 extern "C" const float lbl_eu_80668350;
-
-// Bdat column/row reader (returns the raw cell value as a 32-bit word).
-extern "C" u32 getBdatStringColumnValue(void* bdat, const char* column, int index);
 
 // func_801BFDE8(u32 mode, u32 value, u32 playerValue, float first, float second)
 extern "C" void func_801BFDE8(unsigned int mode, unsigned int value,

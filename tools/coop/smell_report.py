@@ -311,6 +311,22 @@ def cmd_write(rows: dict[str, Stats]) -> int:
 def cmd_check(args, rows: dict[str, Stats]) -> int:
     problems: list[str] = []
 
+    # 0. no backup/scratch junk under src/ (H1 hygiene)
+    RE_JUNK_NAME = re.compile(
+        r'(?:\.(?:bak|mybak|pi_bak|current|orig|tmp|new))$|(?:_pi_.*)?bak$'
+    )
+    junk = sorted(
+        str(p.relative_to(ROOT))
+        for p in (ROOT / "src").rglob("*")
+        if p.is_file() and RE_JUNK_NAME.search(p.name)
+    )
+    if junk:
+        problems.append(
+            "backup/scratch files under src/ (delete them; scratch work belongs in .scratch/):\n  "
+            + "\n  ".join(junk[:20])
+            + (f"\n  … and {len(junk) - 20} more" if len(junk) > 20 else "")
+        )
+
     # 1. freshness
     if REPORT.exists():
         committed = REPORT.read_text()

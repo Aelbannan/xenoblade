@@ -3,9 +3,7 @@
 #include <types.h>
 #include "kyoshin/cf/object/CActorParam.hpp"
 #include "monolib/util/FixStr.hpp"   // ml::FixStr<64> for the func_800AA33C import
-
-// C-linkage import: bdat column lookup (defining TU: ocBdat.cpp).
-extern "C" u32 getBdatStringColumnValue(void* pData, const char* pColumn, int index);
+#include "kyoshin/plugin/ocBdat.hpp"  // getBdatStringColumnValue (defining TU: ocBdat.cpp)
 
 // C-ABI imports used by func_800A18A4 (bdat file lookup / bdat init hook).
 extern "C" void* getFP__FPCc(const char* name);

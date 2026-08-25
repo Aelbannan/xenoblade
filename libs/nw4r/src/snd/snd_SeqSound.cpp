@@ -90,15 +90,17 @@ void SeqSound::Prepare(ut::FileStream* pStream, s32 seqOffset,
 
     // Mirrors LoadData()'s early-return structure after inlining.
     bool ok;
-    PlayerHeap* pHeapRaw = GetPlayerHeap();
-    if (pHeapRaw == NULL) {
+    s32 size;
+    PlayerHeapMirror* pHeap =
+        reinterpret_cast<PlayerHeapMirror*>(GetPlayerHeap());
+    if (pHeap == NULL) {
         ok = false;
         goto check;
     }
 
     {
-        s32 size = p->mFileStream->GetSize();
-        void* pData = reinterpret_cast<PlayerHeapMirror*>(pHeapRaw)->Alloc(size);
+        size = p->mFileStream->GetSize();
+        void* pData = pHeap->Alloc(size);
 
         if (pData == NULL) {
             ok = false;

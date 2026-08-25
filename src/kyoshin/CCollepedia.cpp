@@ -5,12 +5,7 @@
 #include "kyoshin/CCollepedia.hpp"
 #include <revolution/tpl/TPL.h>
 #include "nw4r/lyt.h"
-// func_8049603C is declared with conflicting return types by CTaskGame.hpp
-// (CTaskGameCamView*, via harness_catalog) and code_80135FDC.hpp (void*).
-// This TU never calls it - rename the second decl away (repo-standard guard).
-#define func_8049603C collepedia9603CUnused
 #include "kyoshin/code_80135FDC.hpp"
-#undef func_8049603C
 #include "monolib/util/MemManager.hpp"
 
 // C-linkage imports (functions + data from other TUs) live in CCollepedia.hpp
@@ -70,7 +65,7 @@ extern "C" void* __dt__802531C4(void* self, int dealloc_flag) {
     return result;
 }
 
-// Target 2: us-80255440
+// us-80255440
 // Initialize CCollepedia layout: load layout, bind animations, position panes
 void func_80253204(CCollepedia* this_) {
     func_80136E84(&this_->field_8,
@@ -112,7 +107,7 @@ extern "C" __declspec(noinline) void func_802532FC(CBaseCur* this_) {
     this_->mpLayout->Animate(0);
 }
 
-// Target 5: us-80257984
+// us-80257984
 // Check if animation at field_3C is done, then disable/enable animations and set state
 extern "C" __declspec(noinline) void func_80255748(CCollepedia* this_) {
     if (func_80137444(this_->field_3C, lbl_eu_80668800) != 0) {
@@ -123,7 +118,7 @@ extern "C" __declspec(noinline) void func_80255748(CCollepedia* this_) {
     }
 }
 
-// Target 5: Render layout if active and non-null
+// Render layout if active and non-null
 extern "C" __declspec(noinline) void func_80253360(CBaseCur* this_, nw4r::lyt::DrawInfo* drawInfo) {
     if (this_->mpLayout == nullptr) return;
     if (this_->mActive == 0) return;
@@ -141,7 +136,7 @@ extern "C" __declspec(noinline) void func_8025338C(CBaseCur* this_) {
     }
 }
 
-// Target 4: us-80255630
+// us-80255630
 // Unbind animation, bind new animation, enable animation, set frame to 0, animate
 extern "C" __declspec(noinline) void func_802533F4(CCollepedia* this_) {
     this_->field_8->UnbindAnimation(this_->field_10_ptr);
@@ -243,7 +238,7 @@ void func_802534F0(CLPPageSetup* pg) {
 }
 #pragma pop
 
-// Target 4: Delete the layout at field_4 if present, then clear the pointer
+// Delete the layout at field_4 if present, then clear the pointer
 extern "C" __declspec(noinline) void func_80253794(CCollepedia* this_) {
     if (this_->field_4 != nullptr) {
         delete this_->field_4;
@@ -251,7 +246,7 @@ extern "C" __declspec(noinline) void func_80253794(CCollepedia* this_) {
     }
 }
 
-// Target 2: If layout is loaded, handle state machine and animate
+// If layout is loaded, handle state machine and animate
 extern "C" __declspec(noinline) void func_802537EC(CCollepedia* this_) {
     if (this_->field_4 == nullptr) {
         return;
@@ -278,7 +273,7 @@ extern "C" __declspec(noinline) void func_8025385C(CCollepedia* this_) {
     func_80138078__FUl(0xD);
 }
 
-// Target 3: Return byte at +0xD from a sub-array entry (indexed by arg)
+// Return byte at +0xD from a sub-array entry (indexed by arg)
 // noinline: retail callers invoke this out-of-line.
 extern "C" __declspec(noinline) u32 func_8025415C(u8* obj, u32 index) {
     if (index >= 6) return 0;
@@ -286,14 +281,14 @@ extern "C" __declspec(noinline) u32 func_8025415C(u8* obj, u32 index) {
     return obj[idx * 0x140 + index * 0x34 + 0xD];
 }
 
-// Target 4: Return byte at +0xC from a sub-array entry (indexed by arg)
+// Return byte at +0xC from a sub-array entry (indexed by arg)
 extern "C" __declspec(noinline) u8 func_8025418C(u8* obj, u32 index) {
     if (index >= 6) return 0;
     s8 idx = (s8)obj[1];
     return obj[idx * 0x140 + index * 0x34 + 0xC];
 }
 
-// Target 3: If field_c is 2, set it to 3, clear field_d, and schedule event 0xE
+// If field_c is 2, set it to 3, clear field_d, and schedule event 0xE
 // noinline: retail callers call this out-of-line.
 extern "C" __declspec(noinline) void func_80253888(CCollepedia* this_) {
     u8* stateBytes = reinterpret_cast<u8*>(&this_->field_c_ptr);
@@ -303,7 +298,7 @@ extern "C" __declspec(noinline) void func_80253888(CCollepedia* this_) {
     func_80138078__FUl(0xE);
 }
 
-// Target 1: Set two named panes (0x82, 0x92) on the layout at field_4
+// Set two named panes (0x82, 0x92) on the layout at field_4
 #pragma push
 #pragma optimize_for_size on
 #pragma dont_inline on
@@ -329,7 +324,7 @@ extern "C" void func_80253904(CCollepedia* this_, char* arg2, char* arg3) {
 #pragma push
 #pragma optimize_for_size on
 #pragma dont_inline on
-// Target 2: us-80255bac
+// us-80255bac
 // Format a pane name, find two panes by name, and call func_80137924 to copy text
 // Retail saves r28-r31 with stmw and uses a 0x40-byte stack frame
 // Retail reloads rootPane from *(layout+0x10) each time (no caching)
@@ -342,7 +337,7 @@ extern "C" void func_80253970(CCollepedia* this_, LayoutContainer* container, in
 }
 #pragma pop
 
-// Target 4: Check if anim transform is finished; if so, set state to 2
+// Check if anim transform is finished; if so, set state to 2
 // field_8 is a Layout* but used as AnimTransform* in this context
 extern "C" __declspec(noinline) void func_80253A14(CCollepedia* self) {
     if (func_80137444(reinterpret_cast<nw4r::lyt::AnimTransform*>(self->field_8), lbl_eu_80668800) != 0) {
@@ -353,7 +348,7 @@ extern "C" __declspec(noinline) void func_80253A14(CCollepedia* self) {
 }
 
 
-// Target 1: If the anim transform at field_8 is not finished, reset the state flags
+// If the anim transform at field_8 is not finished, reset the state flags
 // field_8 is a Layout* but used as AnimTransform* in this context
 extern "C" __declspec(noinline) void func_80253A60(CCollepedia* this_) {
     if (func_80137510(reinterpret_cast<nw4r::lyt::AnimTransform*>(this_->field_8), lbl_eu_80668800) != 0) {
@@ -364,7 +359,7 @@ extern "C" __declspec(noinline) void func_80253A60(CCollepedia* this_) {
     }
 }
 
-// Target 1: Init the sub-array header (count=0, index=-1) and zero the entry storage
+// Init the sub-array header (count=0, index=-1) and zero the entry storage
 // noinline: retail callers invoke this out-of-line.
 extern "C" __declspec(noinline) s8* func_80253AB0(s8* this_) {
     this_[0] = 0;
@@ -381,7 +376,7 @@ extern "C" void* __dt__80253AFC(void* self, int dealloc_flag) {
     return result;
 }
 
-// Target 1: us-80255d78
+// us-80255d78
 // Build the collepedia page list:
 //  1. collect the ids of every "collectible" item (kind 0xa), capped at 0x12c,
 //  2. append one page (stride 0x140) per BDAT category (2..0x19) that has at
@@ -512,7 +507,7 @@ extern "C" __declspec(noinline) bool func_80253EE8(u8* this_, u32 arg1, u32 arg2
     return val == 2;
 }
 
-// Target 4: us-80256178
+// us-80256178
 // Handle item selection in the collepedia grid.
 // Entry address folds as ((self + (s8)self[1]*0x140) + row*0x34)[col*0xA + off];
 // retail rematerializes self[1] per access, so the load stays inline.
@@ -546,7 +541,7 @@ extern "C" __declspec(noinline) void func_80253F3C(u8* self, u32 row, u32 col) {
     func_802545C0(self);
 }
 
-// Target 2: Increment sub-array counter, wrap to 0 at max
+// Increment sub-array counter, wrap to 0 at max
 extern "C" __declspec(noinline) void func_80254040(u8* obj) {
     obj[1]++;
     if ((s8)obj[1] >= (s32)obj[0]) {
@@ -582,7 +577,7 @@ unsigned char CCollepedia_getFieldAtIdx(u8* thisPtr) {
     return base[4];
 }
 
-// Target 2: Return a formatted string for the entry at `index` if its byte at +0xC is set
+// Return a formatted string for the entry at `index` if its byte at +0xC is set
 extern "C" __declspec(noinline) char* func_802540F4(u8* self, u32 index) {
     if (index >= 6) return 0;
     s8 idx = (s8)self[1];
@@ -598,7 +593,7 @@ unsigned char CCollepedia_getFieldOffset(const unsigned char* ptr) {
     return ptr[5 + idx * 0x140];
 }
 
-// Target 3: Return byte at +0x16 from a sub-sub-array entry (indexed by arg2, arg3)
+// Return byte at +0x16 from a sub-sub-array entry (indexed by arg2, arg3)
 // Computes arg2*0x34 first to match retail register order
 extern "C" __declspec(noinline) u8 func_802541BC(u8* self, u32 arg2, u32 arg3) {
     if (arg2 >= 6) return 0;
@@ -630,13 +625,13 @@ extern "C" __declspec(noinline) u32 func_8025424C(u8* this_, u32 arg2, u32 arg3)
     return func_80136254((char*)lbl_eu_806640EC, &lbl_eu_8050C6E8[0x185], val);
 }
 
-// Target 1: Load a float from offset 8 of the current sub-array entry
+// Load a float from offset 8 of the current sub-array entry
 extern "C" __declspec(noinline) float func_802542B8(u8* this_) {
     s8 idx = (s8)this_[1];
     return *(float*)(this_ + idx * 0x140 + 8);
 }
 
-// Target 2: us-8025650c
+// us-8025650c
 // Look up an entry in the sub-array, check +0x10 u16 and +0x16 byte.
 // If byte != 1, resolve string via func_8013639C.
 extern "C" __declspec(noinline) char* func_802542D0(u8* self, u32 arg1, u32 arg2) {
@@ -652,7 +647,7 @@ extern "C" __declspec(noinline) char* func_802542D0(u8* self, u32 arg1, u32 arg2
     return (char*)func_8013639C(lbl_eu_80664104, &lbl_eu_8050C6E8[0xAE], val);
 }
 
-// Target 4: us-8025658c
+// us-8025658c
 // Look up an entry in the sub-array, check if item is unlocked (via func_8009EC6C), format its name
 // Returns nullptr if the entry is invalid or locked
 extern "C" char* func_80254350(u8* self, u32 arg2, u32 arg3) {
@@ -673,7 +668,7 @@ extern "C" char* func_80254350(u8* self, u32 arg2, u32 arg3) {
     return NULL;
 }
 
-// Target 3: Read u16 at offset 0xE within the indexed sub-array entry
+// Read u16 at offset 0xE within the indexed sub-array entry
 // If non-zero, resolve via func_80158068 and return as u8
 // The sub-array is indexed by: (s8)self[1] * 0x140 + arg2 * 0x34 + arg3 * 0xA + 0xE
 extern "C" __declspec(noinline) u8 func_8025440C(u8* self, u32 arg2, u32 arg3) {
@@ -689,14 +684,14 @@ extern "C" __declspec(noinline) u8 func_8025440C(u8* self, u32 arg2, u32 arg3) {
     return 0;
 }
 
-// Target 2: Load a byte from offset 6 of the current sub-array entry
+// Load a byte from offset 6 of the current sub-array entry
 extern "C" __declspec(noinline) u32 func_80254484(u8* this_) {
     s8 idx = (s8)this_[1];
     u8* base = this_ + idx * 0x140;
     return base[6];
 }
 
-// Target 3: us-802566d8
+// us-802566d8
 // Fill one grid entry (stride 0xA at self + a*0x140 + b*0x34 + c*0xA):
 // item id, category lookups, and an unlock-state byte.
 extern "C" void func_8025449C(u8* self, int a, int b, int c, u16 itemId) {
@@ -732,12 +727,12 @@ extern "C" void func_8025449C(u8* self, int a, int b, int c, u16 itemId) {
     }
 }
 
-// Target 3: us-80256ae4
+// us-80256ae4
 // Destructor for CCollepedia.
 // Calls sub-object destructors and frees memory if dealloc_flag > 0.
 #pragma optimize_for_size on
 
-// Target 1: us-802567fc
+// us-802567fc
 // Recompute collection progress for every category page.
 // A row counts as "complete" when the leading non-empty slots of its 5
 // columns all have unlock-state 3 (collected); a page is complete when all
@@ -820,7 +815,7 @@ extern "C" void* __dt__11CCollepediaFv(CCollepedia* self, int flag) {
 }
 #pragma optimize_for_size off
 
-// Target 2: us-8025695c - CCollepedia constructor.
+// us-8025695c - CCollepedia constructor.
 // Stores vtable, constructs both memory regions, cursors and the embedded
 // CSysWin at +0x9C, initializes the entry storage, then re-initializes the
 // window from a stack temporary (copying everything after the vtable ptr).
@@ -869,7 +864,7 @@ CCollepedia::CCollepedia() {
 }
 #pragma pop
 
-// Target 1: us-80256b68
+// us-80256b68
 #pragma push
 #pragma optimize_for_size on
 // Initialize CCollepedia: load 3 files, init CSysWin, init sub-array storage.
@@ -900,7 +895,7 @@ void func_8025492C(CCollepedia* this_) {
 }
 #pragma pop
 
-// Target 4: us-80256c5c
+// us-80256c5c
 // Per-frame state machine dispatch on field_49, then update all sub-objects.
 // Routing mirrors retail jumptable_eu_80537378 (17 entries): slots 0/7/10/14
 // are empty and route to the shared tail.
@@ -974,7 +969,7 @@ extern "C" void func_80254A20(CCollepedia* this_) {
 
 #pragma push
 #pragma optimize_for_size on
-// Target 1: us-80256da0
+// us-80256da0
 // Render the CCollepedia display: draw layout, sub-cursors, and syswin if active
 // Retail reads field_48/field_49 and field_38 from r3 (original this) before any reg copy
 extern "C" void func_80254B64(CCollepedia* this_, nw4r::lyt::DrawInfo* drawInfo) {
@@ -994,7 +989,7 @@ extern "C" void func_80254B64(CCollepedia* this_, nw4r::lyt::DrawInfo* drawInfo)
 }
 #pragma pop
 
-// Target 5: us-80256e40
+// us-80256e40
 // Cleanup CCollepedia: free files, layouts, sub-objects
 void func_80254C04(CCollepedia* this_) {
     func_8003AA8C__5CBdatFUl(2);
@@ -1063,7 +1058,7 @@ void CCollepedia_initFields(u8* p) {
     state->field51 = 0;
 }
 
-// Target 3: us-80256fc8
+// us-80256fc8
 // Close the collepedia detail view: set state, reset sub-object, disable animations, enable outro, play sound
 void func_80254D8C(CCollepedia* this_) {
     if (this_->field_28F9 == 0) return;
@@ -1085,7 +1080,7 @@ void func_80254D8C(CCollepedia* this_) {
 #pragma push
 #pragma optimize_for_size on
 #pragma dont_inline on
-// Target 5: us-802570a0
+// us-802570a0
 // Decrement timer counters (field_DA or field_D9) with wrapping, update display, schedule event
 void func_80254E64(CCollepedia* this_) {
     if (CSysWin_getUnk34(&this_->field_9C)) return;
@@ -1118,7 +1113,7 @@ void func_80254E64(CCollepedia* this_) {
 #pragma push
 #pragma optimize_for_size on
 #pragma dont_inline on
-// Target 2: us-80257168
+// us-80257168
 // Increment timer-based navigation: increment field_DA with wrap, or advance field_D9 and update display
 void func_80254F2C(CCollepedia* this_) {
     if (CSysWin_getUnk34(&this_->field_9C)) return;
@@ -1146,7 +1141,7 @@ void func_80254F2C(CCollepedia* this_) {
 }
 #pragma pop
 
-// Target 5: Timer-based countdown that calls func_80255210 when field_D8 reaches 0
+// Timer-based countdown that calls func_80255210 when field_D8 reaches 0
 void func_80255000(CCollepedia* this_) {
     if (this_->field_49 != 3) return;
     if (this_->field_28FA != 0) return;
@@ -1171,7 +1166,7 @@ void func_80255000(CCollepedia* this_) {
     func_80138078__FUl(1);
 }
 
-// Target 3: us-802572f0
+// us-802572f0
 // Increment field_D8 with wrap at 5; when field_D8 == 4 call func_8025516C, then update display
 void func_802550B4(CCollepedia* this_) {
     if (this_->field_49 != 3) return;
@@ -1199,7 +1194,7 @@ void func_802550B4(CCollepedia* this_) {
 #pragma push
 #pragma optimize_for_size on
 #pragma dont_inline on
-// Target 3: us-802573a8
+// us-802573a8
 // Decrement field_D9 with wrapping, update display, and schedule next event
 extern "C" void func_8025516C(CCollepedia* this_) {
     if (this_->field_49 != 3) return;
@@ -1224,7 +1219,7 @@ extern "C" void func_8025516C(CCollepedia* this_) {
 #pragma push
 #pragma optimize_for_size on
 #pragma dont_inline on
-// Target 4: us-8025744c
+// us-8025744c
 // Decrement field_D9 with wrapping (calls func_8025406C instead of func_80254040)
 extern "C" void func_80255210(CCollepedia* this_) {
     if (this_->field_49 != 3) return;
@@ -1244,7 +1239,7 @@ extern "C" void func_80255210(CCollepedia* this_) {
 }
 #pragma pop
 
-// Target 3: us-802574f0
+// us-802574f0
 // Handle CCollepedia navigation: check state and dispatch actions.
 // Early-return states are tested as an unsigned compare chain (cmplwi).
 void func_802552B4(CCollepedia* this_) {
@@ -1282,7 +1277,7 @@ void func_802552B4(CCollepedia* this_) {
     func_80138078__FUl(6);
 }
 
-// Target 4: us-802575e8
+// us-802575e8
 // Per-frame advance for the collepedia selection flow.
 // Early-return states are tested as a signed compare chain (cmpwi/beq).
 #pragma push
@@ -1384,7 +1379,7 @@ extern "C" u8 func_80255698(CCollepedia* self) {
     return self->field_28FA;
 }
 
-// Target 1: Returns 1 if any block condition is active, otherwise calls func_801B481C
+// Returns 1 if any block condition is active, otherwise calls func_801B481C
 extern "C" u32 func_802556DC(CCollepedia* this_) {
     if (this_->field_49 != 3) {
         return 1;
@@ -1398,7 +1393,7 @@ extern "C" u32 func_802556DC(CCollepedia* this_) {
     return func_801B481C();
 }
 
-// Target 2: us-80257a1c
+// us-80257a1c
 // Check if animation at field_40 is done; if so, set state, init sub-object, switch animations
 __declspec(noinline)
 void func_802557E0(CCollepedia* this_) {
@@ -1415,7 +1410,7 @@ void func_802557E0(CCollepedia* this_) {
     }
 }
 
-// Target 1: us-80257ad0
+// us-80257ad0
 // Check if animation at field_40 is still playing; if so, disable field_40 and field_44, enable field_3C, set state to 5
 __declspec(noinline) void func_80255894(CCollepedia* this_) {
     if (func_80137510(this_->field_40, lbl_eu_80668800) != 0) {
@@ -1426,7 +1421,7 @@ __declspec(noinline) void func_80255894(CCollepedia* this_) {
     }
 }
 
-// Target 5: Check if animation at field_3C is done, then set state and init sub-object
+// Check if animation at field_3C is done, then set state and init sub-object
 extern "C" __declspec(noinline) void func_8025592C(CCollepedia* this_) {
     if (func_80137510(this_->field_3C, lbl_eu_80668800) != 0) {
         this_->field_51 = 1;
@@ -1446,7 +1441,7 @@ extern "C" __declspec(noinline) void func_80255984(CCollepedia* this_) {
 #pragma push
 #pragma optimize_for_size on
 #pragma dont_inline on
-// Target 4: us-80257c18
+// us-80257c18
 // Open the collepedia detail view: set state, enable sub-object, update display, load file
 __declspec(noinline) void func_802559DC(CCollepedia* this_) {
     if (this_->field_28F9 == 0) return;
@@ -1475,7 +1470,7 @@ __declspec(noinline) void func_802559DC(CCollepedia* this_) {
 #pragma push
 #pragma optimize_for_size on
 #pragma dont_inline on
-// Target 5: us-80257cf0
+// us-80257cf0
 // If CSysWin is active, set state, look up table entry, format string, call func_8013E2E0
 extern "C" __declspec(noinline) void func_80255AB4(CCollepedia* this_) {
     if (!CSysWin_isActive(&this_->field_9C)) return;
@@ -1497,7 +1492,7 @@ extern "C" __declspec(noinline) void func_80255AB4(CCollepedia* this_) {
 }
 #pragma pop
 
-// Target 1: us-80257d9c
+// us-80257d9c
 #pragma push
 #pragma optimize_for_size on
 #pragma dont_inline on
@@ -1525,7 +1520,7 @@ __declspec(noinline) void func_80255B60(CCollepedia* this_) {
 }
 #pragma pop
 
-// Target 2: us-80257e64
+// us-80257e64
 // If CSysWin is active, do a table lookup and format a sound/effect call
 __declspec(noinline) void func_80255C28(CCollepedia* this_) {
     if (!CSysWin_isActive(&this_->field_9C)) return;
@@ -1538,7 +1533,7 @@ __declspec(noinline) void func_80255C28(CCollepedia* this_) {
     func_8013E2E0((u16)result, 0, 0, 0, 0, 0, 0, 0, 0);
 }
 
-// Target 1: us-80257efc
+// us-80257efc
 // Check layout/resource pointers and the two SDA string-pool pointers, then update display
 void func_80255CC0(CCollepedia* this_) {
     if (this_->field_38 == nullptr || this_->field_34 == nullptr ||
@@ -1552,7 +1547,7 @@ void func_80255CC0(CCollepedia* this_) {
     this_->field_48 = 1;
 }
 
-// Target 5: us-80257f78
+// us-80257f78
 // Load the texture resource for the detail pane selected by `mode` and show it.
 // optimize_for_size gives the retail stmw/lmw block-save frame.
 #pragma push
@@ -1583,7 +1578,7 @@ __declspec(noinline) void func_80255D3C(CCollepedia* this_, const char* name, in
 }
 #pragma pop
 
-// Target 1: us-802580cc
+// us-802580cc
 // Like func_80255D3C but mode 3 resolves the resource name from an item id.
 // optimize_for_size gives the retail stmw/lmw block-save frame (three call sites total).
 #pragma push
@@ -1611,7 +1606,7 @@ __declspec(noinline) void func_80255E90(CCollepedia* this_, const char* name, u3
 
 #pragma push
 #pragma optimize_for_size on
-// Target 5: us-80258658
+// us-80258658
 // Iterate sub-array entries, set pane visibility for each, copy position for current entry, update display
 void func_8025641C(CCollepedia* this_) {
     char buf[0x20];
@@ -1653,7 +1648,7 @@ static double clpConvS32ToF64(s32 x) {
     return u.d - lbl_eu_80668818;
 }
 
-// Target 5: us-802581d4
+// us-802581d4
 // Refresh the detail page: show/hide panes, move the cursor, description
 // text, collected-count label, per-entry rows and texture slots.
 // Retail frame is 0x70 with _savegpr_25: only r25-r31 stay live across calls.
@@ -1719,7 +1714,7 @@ extern "C" __declspec(noinline) void func_80255F98(CCollepedia* this_) {
         &lbl_eu_8050C6E8[0x2d6], true);
     func_80124270(markPane, done);
 }
-// Target 4: Set two pane names on the layout using the current sub-array entry
+// Set two pane names on the layout using the current sub-array entry
 #pragma push
 #pragma optimize_for_size on
 #pragma dont_inline on
@@ -1730,7 +1725,7 @@ extern "C" __declspec(noinline) void func_8025629C(CCollepedia* this_) {
     func_80136B4C(this_->field_38, &lbl_eu_8050C6E8[0x2eb], str2, this_->field_4C);
 }
 #pragma pop
-// Target 2: us-80258550
+// us-80258550
 // Refresh the collepedia display: detail view routes through the shared
 // formatter, list view formats the current entry name and moves the cursor.
 #pragma push
@@ -1761,7 +1756,7 @@ extern "C" void func_80256314(CCollepedia* this_) {
 }
 #pragma pop
 
-// Target 2: us-80258748
+// us-80258748
 // File-load completion callback for the three collepedia archives:
 //  - field_24: main menu arc -> builds the full layout, fonts, animations,
 //    cursors (+0x54/+0x6C/+0x84) and the second-page info record (+0x28EC).

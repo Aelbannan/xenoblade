@@ -1687,10 +1687,10 @@ void func_801D8318(CItemBoxInfo* info) {
         // fold the {zero, zero} s16-pair arrays to a constant, keeping the
         // retail stack build of the four u32 colour args.
         s16 zero = 0;
-        s16 c0hi[2] = {0, *(s16*)((u8*)info + 0xA2)};
-        s16 c0lo[2] = {0, 0};
-        s16 c1hi[2] = {0, *(s16*)((u8*)info + 0xAA)};
-        s16 c1lo[2] = {0, 0};
+        s16 c0hi[2] = {zero, *(s16*)((u8*)info + 0xA2)};
+        s16 c0lo[2] = {zero, zero};
+        s16 c1hi[2] = {zero, *(s16*)((u8*)info + 0xAA)};
+        s16 c1lo[2] = {zero, zero};
         args[1] = *(u32*)c0hi;
         args[0] = *(u32*)c0lo;
         args[3] = *(u32*)c1hi;

@@ -45,7 +45,7 @@ void CTTask<CTaskGamePic>::Draw() {
 }
 
 // ---------------------------------------------------------------------------
-// Target: ctor - Retail `__ct__CTaskGamePic` is a *stripped* symbol (no length
+// ctor - Retail `__ct__CTaskGamePic` is a *stripped* symbol (no length
 // mangling), reconstructed as a global free function (cf. CTaskGameEvt). Calls
 // the CProcess base ctor, sets the interim CTTask vtable, NULLs the Move/Draw
 // PTMFs, installs the final CTaskGamePic vtable and member fields, zeroes the
@@ -103,7 +103,7 @@ extern "C" __declspec(noinline) CTaskGamePic* __ct__CTaskGamePic(CTaskGamePic* p
 #pragma optimize_for_size off
 
 // ---------------------------------------------------------------------------
-// Target: Move - animates the colour fade between the "from" (0xA0) and "to"
+// Move - animates the colour fade between the "from" (0xA0) and "to"
 // (0xB0) RGBA vectors into the current colour (0x90). param_C0 is a 16-bit
 // countdown (index<<8), param_C4 the fixed total. Each call steps 0x100 and
 // lerps current by t = param_C0/param_C4; when the countdown ends the target
@@ -160,7 +160,7 @@ void CTaskGamePic::Move() {
 }
 
 // ---------------------------------------------------------------------------
-// Target: Init - registers the render callback subobject with the scene,
+// Init - registers the render callback subobject with the scene,
 // using priority 0xb (HUD layer).
 // ---------------------------------------------------------------------------
 void CTaskGamePic::Init() {
@@ -174,7 +174,7 @@ CTaskGamePic::~CTaskGamePic() {}
 #pragma optimize_for_size off
 
 // ---------------------------------------------------------------------------
-// Target: func_80294E58 - shifts the 8-word texture/palette parameter block
+// func_80294E58 - shifts the 8-word texture/palette parameter block
 // (0x90..0xC4). If the 3rd source word is non-zero the source block also
 // overwrites the "current" block at 0x90.
 // ---------------------------------------------------------------------------
@@ -199,7 +199,7 @@ extern "C" void func_80294E58(CTaskGamePic* self, u32 index, const u32* src) {
 }
 
 // ---------------------------------------------------------------------------
-// Target: func_80294EC0 - kicks off an async file load for the scene's
+// func_80294EC0 - kicks off an async file load for the scene's
 // resource, using the embedded file-event object at +0x54 as the callback.
 // Retail saves r29-r31 with stmw/lmw (size-opt frame shape).
 // ---------------------------------------------------------------------------
@@ -215,7 +215,7 @@ extern "C" void func_80294EC0(CTaskGamePic* self, const char* path) {
 #pragma optimize_for_size off
 
 // ---------------------------------------------------------------------------
-// Target: Term - unregisters the render callback, cancels the async load,
+// Term - unregisters the render callback, cancels the async load,
 // waits for drawing to drain, and frees palette/texture memory.
 // ---------------------------------------------------------------------------
 void CTaskGamePic::Term() {
@@ -234,7 +234,7 @@ void CTaskGamePic::Term() {
 }
 
 // ---------------------------------------------------------------------------
-// Target: func_8029539C - the file-event handler for the loaded texture.
+// func_8029539C - the file-event handler for the loaded texture.
 // Binds the palette, builds a GX texture object from it, then clears the load.
 // ---------------------------------------------------------------------------
 extern "C" bool func_8029539C(CTaskGamePic* self, CEventFile* pEvent) {
@@ -273,7 +273,7 @@ extern "C" s16 func_80295388(u8* self) {
 }
 
 // ---------------------------------------------------------------------------
-// Target: create - factory. Retail symbol keeps the C-linkage Fv name although
+// create - factory. Retail symbol keeps the C-linkage Fv name although
 // the source takes a parent and a scene arg (cf. CTaskGameCf). Size-opt frame:
 // stmw r29/lmw r29, ctor NOT inlined (noinline on __ct__CTaskGamePic).
 // ---------------------------------------------------------------------------
@@ -290,7 +290,7 @@ extern "C" CTaskGamePic* create__12CTaskGamePicFv(CProcess* pParent, int arg) {
 #pragma optimize_for_size off
 
 // ---------------------------------------------------------------------------
-// Target: cbRenderBefore - pre-render hook: draws the loaded picture texture
+// cbRenderBefore - pre-render hook: draws the loaded picture texture
 // (mTexObj) as a 4-vertex quad centered on the current view, then a full-
 // screen colour wash from the current 0x90 RGBA block. Both passes go through
 // stack CDrawGX helpers; the whole thing is gated on the 0x8C ready flag and

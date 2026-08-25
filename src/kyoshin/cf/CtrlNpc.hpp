@@ -256,7 +256,6 @@ namespace ml { struct CVec3; }
 namespace cf { class CCtrlMoveNpc; }
 
 // Talk/page controller update helpers (func_80093F28).
-extern "C" f32 func_80496288(void* scene);
 extern "C" int func_801413DC(unsigned int arg0, int arg1);
 extern "C" u32 func_8009CF8C(u32 resourceId);
 extern "C" void* getFP__FPCc(const char* name);
@@ -297,8 +296,6 @@ extern "C" void func_80094A9C(cf::CtrlNpc* self, const ml::CVec3* vec,
 extern "C" int func_800A5038(const ml::CVec3* sub, const ml::CVec3* v, f32 f1, f32 f2);
 // Same-TU forward decl: keeps the call reloc from func_800966E8 flat.
 extern "C" int func_800964EC(cf::CtrlNpc* self);
-// Battle-status add/remove helper (same C symbol as CBattleManager.cpp).
-extern "C" void func_800BE12C(void* parent, int handle, int a, int b, int c);
 // CfGameManager helpers: the retail symbols keep the Fv suffix but the real
 // call sites pass arguments / read the return (same scheme as CTaskREvent.hpp),
 // so C linkage emits the literal retail names at the call sites.

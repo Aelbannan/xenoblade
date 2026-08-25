@@ -4,10 +4,6 @@
 #include "kyoshin/plugin/ocBdat.hpp"
 #include "monolib/device/CDeviceSC.hpp"
 
-// Bdat column lookup import (retail signature from defining TU ocBdat.cpp;
-// deliberately not promoted to ocBdat.hpp - see note there).
-extern "C" u32 getBdatStringColumnValue(void* pData, const char* pColumnName, int index);
-
 extern u32 lbl_eu_80664BF8;
 extern u8 lbl_eu_80513420[];
 

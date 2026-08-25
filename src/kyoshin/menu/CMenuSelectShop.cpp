@@ -18,7 +18,7 @@
 #include "kyoshin/menu/CMenuSelectShop.hpp"
 
 // ---------------------------------------------------------------------------
-// Target 1: func_8018A58C  (us-8018bb40)
+// func_8018A58C  (us-8018bb40)
 // Factory: allocate the CMenuSelectShop singleton from work memory, run its
 // ctor, store it in the .sbss global and register it as a CProcess child of
 // `parent`. Returns 0 when the singleton already exists.
@@ -44,7 +44,7 @@ extern "C" CMenuSelectShop* func_8018A58C(CProcess* parent, void* a2,
 #pragma pop
 
 // ---------------------------------------------------------------------------
-// Target 4: CMenuSelectShop ctor (us-8018b39c)
+// CMenuSelectShop ctor (us-8018b39c)
 // CProcess base + IUIWindow region (temp vtable + __ptmf_null callbacks +
 // scalar defaults), then the composite vtable / OC / render slots, the
 // embedded subobjects and scalar state. `scene` goes to mScene, `a3` to
@@ -126,7 +126,7 @@ extern "C" CMenuSelectShop* __dt__15CMenuSelectShopFv(CMenuSelectShop* self, int
 #pragma pop
 
 // ---------------------------------------------------------------------------
-// Target 5: CMenuSelectShop::Init  (us-8018b504)
+// CMenuSelectShop::Init  (us-8018b504)
 // Create the memory region, then build the shop window + cursor on the stack,
 // copy them into their payload slots (skipping each zero-relative vtable),
 // destroy the temporaries and register the render callback.
@@ -207,7 +207,7 @@ void CMenuSelectShop::Term() {
 }
 
 // ---------------------------------------------------------------------------
-// Target 3: CMenuSelectShop::Move  (us-8018b6e0)
+// CMenuSelectShop::Move  (us-8018b6e0)
 // Gate prefix (CTaskGame busy / global bit21 / scene-active / shop windows
 // open), then dispatch on mState and update the shop window + cursor.
 // ---------------------------------------------------------------------------
@@ -243,7 +243,7 @@ void CMenuSelectShop::Move() {
 }
 
 // ---------------------------------------------------------------------------
-// Target 1: func_8018A200  (us-8018b7b4)
+// func_8018A200  (us-8018b7b4)
 // When the shop window has finished loading, start its show animation and flag
 // the menu state. auto_inline off keeps retail's out-of-line `bl` from Move.
 // ---------------------------------------------------------------------------
@@ -258,7 +258,7 @@ extern "C" void func_8018A200(CMenuSelectShop* self) {
 #pragma pop
 
 // ---------------------------------------------------------------------------
-// Target 5: func_8018A248  (us-8018b7fc)
+// func_8018A248  (us-8018b7fc)
 // When the shop window animation is running: activate the cursor, resolve the
 // selected item's screen position into a stack VEC3 (func_8022C930), hand it to
 // the cursor move virtual, and advance the menu state.
@@ -277,7 +277,7 @@ extern "C" void func_8018A248(CMenuSelectShop* self) {
 #pragma pop
 
 // ---------------------------------------------------------------------------
-// Target 1: func_8018A2C0  (us-8018b874)
+// func_8018A2C0  (us-8018b874)
 // Select-shop input state 2 (interactive). Reads the current CfPadData once;
 // which dpad bit positions to test depends on the controller type (retail
 // re-runs the extraction per type). Dispatch order: dir button (turbo & 0x8004)
@@ -360,7 +360,7 @@ extern "C" __declspec(noinline) void func_8018A2C0(CMenuSelectShop* self) {
 #pragma pop
 
 // ---------------------------------------------------------------------------
-// Target 2: func_8018A4A0  (us-8018ba54)
+// func_8018A4A0  (us-8018ba54)
 // When the shop window animation is running, mark the menu state and the field
 // 0x64 busy flag.
 // ---------------------------------------------------------------------------
@@ -375,7 +375,7 @@ extern "C" void func_8018A4A0(CMenuSelectShop* self) {
 #pragma pop
 
 // ---------------------------------------------------------------------------
-// Target 2: CMenuSelectShop::cbRenderBefore  (us-8018ba9c)
+// CMenuSelectShop::cbRenderBefore  (us-8018ba9c)
 // Gate prefix (CTaskGame busy / global bit21 / scene-active) then draw the
 // embedded shop window and (when a selection is present) the cursor through a
 // stack DrawInfo.

@@ -1,6 +1,7 @@
 #pragma once
 
 #include <types.h>
+#include "kyoshin/plugin/ocBdat.hpp"
 
 // C-linkage imports (retail symbol names - keep linkage/signatures verbatim)
 struct CfGimmickElvData;
@@ -11,7 +12,6 @@ extern "C" {
 void __ct__cf_CfGimmick(void* self);
 void __dt__Q22cf9CfGimmickFv(void* self, int mode);
 void* func_8003AA34();
-u32 getBdatStringColumnValue(void* table, const char* colName, s32 rowId);
 void func_8020938C(void* self, void* subobj, void* bdat, void* stack, int idx);
 void func_802095D8(void* self, void* subobj, void* bdat, void* stack, int idx);
 void func_80209488(void* self, void* subobj, void* bdat, void* stack, int idx);
@@ -51,7 +51,6 @@ void func_804BCC30(void* ptr, u8 id);
 void func_804BCC3C(void* ptr, u8 id);
 void* func_804BCC54(void* ptr, u16 id);
 u16 func_804BCC6C(void* ptr, u8 id);
-f32 func_80496288(void* ptr);
 UnkClass_800817BC* func_800817BC__Q22cf13CfGameManagerFv(u32 id, u32 mode);
 void func_801BFED0(int a, u16 b, int c);
 int func_801BFABC(int a);

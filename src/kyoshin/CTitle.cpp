@@ -89,7 +89,7 @@ call:
         logo->mLayout, drawInfo, 0, 1);
 }
 
-// Target: us-802b8d9c - CTitleLogo ctor: implicit vptr (retail
+// us-802b8d9c - CTitleLogo ctor: implicit vptr (retail
 // lbl_eu_8053B368), nulled pointers, phase flag 1.
 CTitleLogo::CTitleLogo() {
     mAccessor = nullptr;
@@ -594,7 +594,7 @@ int func_802B775C(CTitle* self) {
     return self->field_0x25 == 0;
 }
 
-// Target: us-802ba270 - init the embedded +0x2C and +0x48 sub-objects.
+// us-802ba270 - init the embedded +0x2C and +0x48 sub-objects.
 extern "C" void func_802B7800(void* self) {
     func_802B65C8((CTitleLogo*)((u8*)self + 0x2C));
     func_802B6D5C((CTitleMenu*)((u8*)self + 0x48));

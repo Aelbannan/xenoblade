@@ -17,18 +17,6 @@ namespace {
 using namespace nw4hbm;
 using namespace nw4hbm::lyt;
 
-/* Literal pool mirroring retail lbl_80518A98 exactly (order matters).
-   Functions load through this base so displacements match retail; defining
-   it here also makes section layout deterministic (MWCC's anonymous literal
-   pool ordering varies run to run). */
-extern const f32 sPanePool[6] = {
-    0.0f,                  /* +0x00 */
-    1.0f,                  /* +0x04 */
-    0.5f,                  /* +0x08 */
-    1.0f / 255.0f,         /* +0x0C */
-    NW4R_MATH_PI / 180.0f, /* +0x10 */
-    1.0f / 255.0f,         /* +0x14 dup */
-};
 
 void ReverseYAxis(math::MTX34* pMtx) {
     pMtx->m[0][1] = -pMtx->m[0][1];
@@ -42,6 +30,18 @@ namespace nw4hbm {
 namespace lyt {
 
 NW4R_UT_RTTI_DEF_BASE(Pane);
+
+/* Retail-order float pool (retail lbl_80518A98, .rodata +0x00..+0x17):
+ * spelling Pane's float literals as one table keeps MWCC's .rodata layout
+ * deterministic; UNIT_RULES renames the table onto the retail label. */
+extern const f32 sPanePool[6] = {
+    0.0f,                  /* +0x00 */
+    1.0f,                  /* +0x04 */
+    0.5f,                  /* +0x08 */
+    1.0f / 255.0f,         /* +0x0C */
+    NW4R_MATH_PI / 180.0f, /* +0x10 */
+    1.0f / 255.0f,         /* +0x14 (second retail copy) */
+};
 
 namespace detail {
 
@@ -217,13 +217,13 @@ void Pane::CalculateMtx(const DrawInfo& rInfo) {
 
     PSMTXScale(mtx2, scale.x, scale.y, sPanePool[1]);
 
-    PSMTXRotRad(rotateMtx, 'x', (mRotate.x * sPanePool[4]));
+    PSMTXRotRad(rotateMtx, 'x', mRotate.x * sPanePool[4]);
     PSMTXConcat(rotateMtx, mtx2, mtx1);
 
-    PSMTXRotRad(rotateMtx, 'y', (mRotate.y * sPanePool[4]));
+    PSMTXRotRad(rotateMtx, 'y', mRotate.y * sPanePool[4]);
     PSMTXConcat(rotateMtx, mtx1, mtx2);
 
-    PSMTXRotRad(rotateMtx, 'z', (mRotate.z * sPanePool[4]));
+    PSMTXRotRad(rotateMtx, 'z', mRotate.z * sPanePool[4]);
     PSMTXConcat(rotateMtx, mtx2, mtx1);
 
     PSMTXTransApply(mtx1, mMtx, mTranslate.x, mTranslate.y, mTranslate.z);

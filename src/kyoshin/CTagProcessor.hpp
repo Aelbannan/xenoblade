@@ -67,6 +67,17 @@ struct TagColorNames {
 extern const TagColorValues lbl_eu_804FEFB8;
 extern const TagColorNames lbl_eu_804FF488;
 
+/* int->float conversion scratch (retail tag-proc idiom): seed hi with
+ * 0x43300000 once, store (w ^ 0x80000000) into lo per use, then
+ * (f32)(d - lbl_eu_80667200). Big-endian: hi word sits at +0. */
+union TagConvTemp {
+    f64 d;
+    struct {
+        u32 hi;
+        u32 lo;
+    } w;
+};
+
 /* 6-byte color-tag scratch used by func_80128DA0: the write side seeds it
  * from the sdata2 color constants (u32 + u16), the read side (loop matches +
  * final pack) sees three s16 slots. */
@@ -107,7 +118,14 @@ extern const f32 lbl_eu_80667208;
 // message-speed select / line math; retail .sdata2:0x806671F8..0x80667258).
 extern const f32 lbl_eu_806671F8;
 extern const f32 lbl_eu_8066720C;
+extern const f32 lbl_eu_80667210;
+extern const f32 lbl_eu_80667214;
+extern const f32 lbl_eu_80667218;
+extern const f32 lbl_eu_8066721C;
+extern const f32 lbl_eu_80667220;
+extern const f32 lbl_eu_80667224;
 extern const f32 lbl_eu_80667228;
+extern const f32 lbl_eu_8066722C;
 extern const f32 lbl_eu_80667254;
 extern const f32 lbl_eu_80667258;
 
@@ -181,6 +199,10 @@ extern char lbl_eu_8052DCB8[];  // func_8012968C chain-1 file
 extern char lbl_eu_8052DC84[];  // func_8012968C chain-1 message
 extern char lbl_eu_8052DE94[];  // func_8012968C chain-2 file
 extern char lbl_eu_8052DE60[];  // func_8012968C chain-2 message
+extern char lbl_eu_8052DB08[];  // func_8012B440 chain-1 file
+extern char lbl_eu_8052DAD4[];  // func_8012B440 chain-1 message
+extern char lbl_eu_8052DAC0[];  // func_8012B440 chain-2 file
+extern char lbl_eu_8052DA8C[];  // func_8012B440 chain-2 message
 
 /* Tag parameter block (12 bytes, retail tag-proc layout). */
 struct TagParam {
@@ -284,6 +306,8 @@ public:
 class CharWriter {
 public:
     f32 GetFontHeight() const;
+    f32 GetFontAscent() const;   // out-of-line nw4r method (retail bl)
+    f32 GetFontDescent() const;  // out-of-line nw4r method (retail bl)
     void UpdateVertexColor();  // out-of-line nw4r method (retail bl)
 
     u8  pad_00[0x18];                    // +0x00 mColorMapping..mVertexColor-1
@@ -310,7 +334,12 @@ public:
     f32 widthLimit;    // +0x4C mWidthLimit
     f32 charSpace;     // +0x50 mCharSpace
     u8  pad_54[0x8];   // +0x54 mLineSpace / mFontSize.x
-    u32 field_5C;      // +0x5C (mFontSize.y region; func_80129E20 stores here)
+    /* +0x5C mFontSize.y region: the accessors treat it as u32, while
+     * func_8012B440 stores raw float bits into the scratch copy. */
+    union {
+        u32 field_5C;
+        f32 field_5Cf;
+      };
     u8  pad_60[0x8];   // +0x60 mTagProcessor
 };
 #endif
@@ -325,7 +354,8 @@ struct CTagProcMsg {
     u16 buf[0x400];    // +0x000 message buffer (0x800 bytes)
     u8  pad_800[0x4];  // +0x800
     u32 field_804;     // +0x804 talk-source index (func_800B708C arg)
-    u8  pad_808[0x8];  // +0x808
+    f32 field_808;     // +0x808 current char scale
+    u8  pad_80c[0x4];  // +0x80C
     u16 field_810;     // +0x810 next-tag write position / index
     u8  pad_812[0xE];  // +0x812
     u16 field_820;     // +0x820 text-done flag
@@ -387,13 +417,20 @@ struct CTalkTextBoxVtbl {
  * the +0x7C text-setter (next slot after FreeStringBuffer) and the data
  * fields the function touches (position VEC3 at +0x2C, VEC2 at +0x4C,
  * message-speed f32 at +0xF0). */
+/* 12-byte vector copied as an aggregate (MWCC emits lwz/stw pairs) by
+ * func_80127764's pane-position shuffling. */
+struct TagVec3 {
+    f32 v[3];
+};
 struct TalkPaneView : public CTalkTextBoxVtbl {
     virtual void v7C(const u16* text, int flag);  // +0x7C
     u8 pad_04[0x28];      // +0x04 (after vptr)
-    f32 vec_2C[3];        // +0x2C
+    TagVec3 vec_2C;       // +0x2C
     u8 pad_38[0x14];      // +0x38
     f32 field_4C[2];      // +0x4C
-    u8 pad_54[0x9C];      // +0x54
+    u8 pad_54[0x84];      // +0x54
+    wchar_t* field_D8;    // +0xD8 message string pointer
+    u8 pad_E0[0x10];      // +0xE0
     f32 field_F0;         // +0xF0
 };
 
@@ -778,8 +815,8 @@ int func_80128740(void* tagProc, nw4r::lyt::Pane* pane);
 void func_801287BC(CTagProcessorBase* tagProc, nw4r::lyt::Pane* pane,
                    const wchar_t* str);
 // Same signatures as the CTalkWindow.hpp declarations (shared C-ABI symbols).
-void func_80127764(void* tagProc, nw4r::lyt::Pane* a, nw4r::lyt::Pane* b,
-                   nw4r::lyt::Pane* c, int flag);
+void func_80127764(CTagProcMsg* msg, TalkPaneView* a, TalkPaneView* b,
+                   TalkPaneView* c, const wchar_t* text);
 void func_80127E74(nw4r::lyt::AnimTransform* tag, nw4r::lyt::Pane* a,
                    nw4r::lyt::Pane* b, nw4r::lyt::Pane* c);
 
@@ -859,7 +896,8 @@ void* func_8012A388(void* unused, void* ret, wchar_t* str, TagParam* dst);
 void func_8012A070(nw4r::ut::TextWriterBase<wchar_t>* tw, float x, float y);
 // Tag-writer helper: max line width + font height of a string (uses the
 // TextBox's font height getter and char-width getter).
-void func_80127D20(f32* out, void* unused, nw4r::lyt::TextBox* textbox,
+void __declspec(noinline) func_80127D20(f32* out, void* unused,
+                                        nw4r::lyt::TextBox* textbox,
                    const wchar_t* str);
 // Color-tag writer: match tokens against the copied name table and pack the
 // result block. Returns the position after the block.
@@ -870,6 +908,10 @@ void* func_8012A224(void* unused, void* ret, wchar_t* str, TagParam* dst);
 // into a scratch writer, advance the buffer pointer, return 2.
 int func_8012B070(void* unused, TagLineOutView* out, void* unused2,
                   TagWriterHolder* holder);
+// Tag-writer two-string layout: measure the first string in a scratch
+// writer, distribute any excess width of the real writer's copy as char
+// space, print both strings, and advance the buffer pointer. Returns 2.
+int func_8012B440(void* unused, void* unused2, TagWriterHolder* holder);
 u16* func_8012AF90(void* unused, u16* dst, wchar_t* str);
 u16* func_8012B944(void* unused, u16* dst, wchar_t* str);
 // Tag-code writer (code 0xB): split the arg string on ':', map token 0 to a

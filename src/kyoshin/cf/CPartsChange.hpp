@@ -25,7 +25,6 @@ extern u32 lbl_eu_80664184;
 extern "C" void func_8009D018(u32 owner, u32 flag);
 // Frame clock (retail C-ABI, no-arg form used by func_8019514C): returns the
 // current frame timer value (CfRes_getD80Flag is declared in CfResPcImpl.hpp).
-extern "C" f32 func_80496288();
 // Presentation-mode getter used by func_801949E0 (retail unmangled C-ABI).
 extern "C" u32 func_8016E08C();
 extern "C" void func_802918AC(int val);
@@ -52,7 +51,8 @@ extern u32 lbl_eu_80663E24;
 
 // Party-change refresh helpers (func_80197538): battle-membership check
 // (retail unmangled C-ABI import); the battle-manager instance getter
-// getInstance__Q22cf14CBattleManagerFv comes from cf/CfGameManager.hpp.
+// getInstance__Q22cf14CBattleManagerFv comes from
+// kyoshin/cf/CBattleManagerApi.hpp (via cf/CfGameManager.hpp).
 extern "C" int func_800DA06C(void* bm, void* obj);
 
 // CfGameManager statics used by func_80195E5C (retail pre-mangled names).
@@ -124,7 +124,6 @@ extern "C" int func_800B99BC(void* pos, const ml::CVec3* a, int b, int c,
                              float* out1, void* out2, f32 f);
 extern "C" int func_800B998C(void* pos, const void* elem, int b, int c,
                              float* out1, void* out2);
-extern "C" void func_800BE12C(void* obj, int a, int b, int c, int d);
 extern "C" void func_800BC4B8(void* obj, f32 f);
 extern "C" u32 func_8006A6D0();
 // BDAT table size/row accessors used by func_80193D48 (retail unmangled).

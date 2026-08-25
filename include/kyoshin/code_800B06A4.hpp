@@ -1,6 +1,7 @@
 #ifndef KYOSHIN_CODE_800B06A4_HPP
 #define KYOSHIN_CODE_800B06A4_HPP
 #include <types.h>
+#include "kyoshin/cf/CBattleManagerApi.hpp"
 namespace cf {
 struct CfObject { char _pad[4]; };
 struct TboxInfo { char _pad[4]; };
@@ -595,7 +596,6 @@ extern "C" void* func_800B76A4();      // head of the B28 object list
 extern "C" void* func_800B76CC();      // head of the B48 object list
 extern "C" void* func_8016FE34(void* source);
 extern "C" int func_800DA06C(void* bm, void* obj);
-extern "C" void* getInstance__Q22cf14CBattleManagerFv();
 #include "monolib/util/FixStr.hpp"
 template <typename T>
 class _reslist_base {
@@ -1038,7 +1038,6 @@ extern "C" void func_80062600();
 extern "C" void* func_800B6C7C();
 extern "C" void* func_800B6C58();
 extern "C" int func_800AB580(void* obj, void* arg, int flag, float range);
-extern "C" void* getInstance__Q22cf14CBattleManagerFv();
 extern const float lbl_eu_80666A28;
 extern const float lbl_eu_80666A2C;
 extern const float lbl_eu_80666A30;

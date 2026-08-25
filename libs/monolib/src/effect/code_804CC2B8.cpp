@@ -1762,8 +1762,8 @@ extern "C" void __attribute__((never_inline)) func_804CE79C(EffectScene* self, V
 // The color is read inside the call expression so its load schedules with the
 // argument setup (before the -1 cache stores).
 extern "C" void __attribute__((never_inline)) func_804D0194() {
-    // Volatile pins the color load ahead of the r31 save/-1 stores.
-    GXColor color = *(const GXColor*)&lbl_eu_8066B124;
+    GXColor color;
+    *(u32*)&color = *(const u32*)&lbl_eu_8066B124;
     lbl_eu_806659A8 = -1;
     lbl_eu_806659AC = -1;
     GXSetChanMatColor(GX_COLOR0A0, color);

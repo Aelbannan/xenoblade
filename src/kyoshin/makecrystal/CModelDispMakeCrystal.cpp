@@ -3,22 +3,21 @@
 
 #include <types.h>
 
+#include "kyoshin/CTaskGameApi.hpp"
 #include "kyoshin/makecrystal/CModelDispMakeCrystal.hpp"
 
 
 #include "kyoshin/makecrystal/CMCEffStart.hpp"
 #include "kyoshin/makecrystal/CMCCylinderGauge.hpp"
 #include "kyoshin/makecrystal/CMCCrystalList.hpp"
-// code_80135FDC.hpp declares func_8049603C as CTaskGameCamView*, while
-// CfGameManager.hpp declares it as UnkScnResult* - rename one away here
-// (this TU never calls it).
-#define func_8049603C makeCrystalCode35FDC9603CUnused
 // CModelDispMakeCrystal.hpp declares CItem_initItemImplInstances(void*)
 // (retail passes the item pointer), while CfGameManager.hpp declares a
-// zero-arg overload - hide the conflicting decl for this include.
+// zero-arg form - hide the conflicting decl for this include. RESIDUAL:
+// the symbol genuinely has two call shapes in retail (pointer-arg here,
+// no-arg in CfMapMineManager/pluginCfs); unifying them would change r3
+// setup at the no-arg sites, so both decls stay.
 #define CItem_initItemImplInstances makeCrystalCItemInitItemImplInstancesUnused
 #include "kyoshin/code_80135FDC.hpp"
-#undef func_8049603C
 #include "monolib/device/CDeviceVI.hpp"
 #include "monolib/core/CPadManager.hpp"
 #define CItem_initItemImplInstances makeCrystalCItemInitItemImplInstancesUnused
@@ -1860,13 +1859,14 @@ void func_8021E888(CModelDispMakeCrystal* self)
     CMCrySlotEntry* entries = reinterpret_cast<CMCrySlotEntry*>(self);
     func_8021E8E4(self);
     u8 i = 0;
+    s32 n = 0x20;
     do {
-        if (entries[i].m2 == 0) {
-            entries[0]._00[0] = i;
+        if (*reinterpret_cast<u16*>(reinterpret_cast<u8*>(self) + (i << 3) + 2) == 0) {
+            reinterpret_cast<u8*>(self)[0] = i;
             break;
         }
         i++;
-    } while (i < 0x20);
+    } while (--n);
 }
 
 // Retail 0x8022073C: two-pass bubble-sort of the crystal-slot entries,
@@ -3009,7 +3009,7 @@ extern "C" void func_80220954(void* selfp, int sel, u8 chIn)
         off = (u16)(0xe16 - (s == 1));
         break;
     }
-    func_8004392C((u8)ch, off, (void*)getHandleMEM2__Q23mtl10MemManagerFv(), 2, 1,
+    func_8004392C((u8)ch, off, (u32)getHandleMEM2__Q23mtl10MemManagerFv(), 2, 1,
                   lbl_eu_806684A0);
 }
 

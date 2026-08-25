@@ -5,7 +5,7 @@
 #include "kyoshin/harness_catalog.hpp"
 #include "monolib/math/Random.hpp"
 
-// ── Target 1: us-802a98c0 (func_802A718C) ──────────────────────────────────
+// us-802a98c0 (func_802A718C)
 // Completion callback: if no active voice, call the playback-start virtual.
 void func_802A718C(CVS_THREAD_HAGE* self) {
     if (func_802A3E88(self) == 0) {
@@ -13,7 +13,7 @@ void func_802A718C(CVS_THREAD_HAGE* self) {
     }
 }
 
-// ── Target 2: us-802a9908 (func_802A71D4) ──────────────────────────────────
+// us-802a9908 (func_802A71D4)
 // Remove a voice from the slots by matching its embedded CCharVoice pointer.
 void func_802A71D4(CVS_THREAD_HAGE* self, CCharVoice* voicePtr) {
     func_802A3BEC(self, voicePtr);
@@ -39,7 +39,7 @@ void func_802A71D4(CVS_THREAD_HAGE* self, CCharVoice* voicePtr) {
     }
 }
 
-// ── Target 3: us-802a97fc (func_802A70C8) ──────────────────────────────────
+// us-802a97fc (func_802A70C8)
 // Advance/play function for voice slot 2 (field_0x24).
 // Copies init data from lbl_eu_80539BC0 to fields 0x00-0x08, checks if
 // the voice is still active (vtable method at offset 0x2BC), and if
@@ -77,7 +77,7 @@ void func_802A70C8(CVS_THREAD_HAGE* self) {
     }
 }
 
-// ── Target 4: us-802a95b8 (__ct__802A6E84) ──────────────────────────────────
+// us-802a95b8 (__ct__802A6E84)
 // Factory/constructor for CVS_THREAD_HAGE. Takes two owner objects (with a
 // field at offset 0x3F00 that must have bit 1 set), allocates a handle
 // (0xF0 bytes, discarded) and the object itself (0x28 bytes), calls the
@@ -113,7 +113,7 @@ CVS_THREAD_HAGE* __ct__802A6E84(CVS_THREAD_HAGE* owner1, CVS_THREAD_HAGE* owner2
     return self;
 }
 
-// ── Target 5: us-802a96c0 (func_802A6F8C) ──────────────────────────────────
+// us-802a96c0 (func_802A6F8C)
 // Advance/play function for voice slot 1 (field_0x20). Uses a weighted
 // random selection: mtRand(4) picks between three specific voice IDs
 // (0xC24, 0xC25, 0xC26) or a dynamic ID based on the slot 2 iterator

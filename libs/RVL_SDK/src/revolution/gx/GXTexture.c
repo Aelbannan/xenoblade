@@ -636,17 +636,9 @@ u32 GXGetTexObjTlut(GXTexObj* tex_obj) {
 
 #pragma dont_inline on
 void GXLoadTexObjPreLoaded(GXTexObj* obj, GXTexRegion* region, GXTexMapID id) {
-    /* Retail keeps WGPIPE as lis 0xCC01 + -0x8000 across the BP burst. */
-    volatile void* pipe = (volatile void*)&WGPIPE;
-    u8 cmd = GX_FIFO_CMD_LOAD_BP_REG;
+    volatile void* pipe;
     GXTexObjImpl* t = (GXTexObjImpl*)obj;
     GXTexRegionImpl* r = (GXTexRegionImpl*)region;
-    const u8* tblMode0 = (const u8*)lbl_80665A08;
-    const u8* tblMode1 = (const u8*)lbl_80665A10;
-    const u8* tblImage0 = (const u8*)lbl_80665A18;
-    const u8* tblImage1 = (const u8*)lbl_80665A20;
-    const u8* tblImage2 = (const u8*)lbl_80665A28;
-    const u8* tblImage3 = (const u8*)lbl_80665A30;
     u32 mode0Val;
     u32 mode1Val;
     u32 image0Val;
@@ -660,6 +652,12 @@ void GXLoadTexObjPreLoaded(GXTexObj* obj, GXTexRegion* region, GXTexMapID id) {
     u8 image2Id;
     u8 image3Id;
     u8 flags;
+    const u8* tblMode0 = (const u8*)lbl_80665A08;
+    const u8* tblMode1 = (const u8*)lbl_80665A10;
+    const u8* tblImage0 = (const u8*)lbl_80665A18;
+    const u8* tblImage1 = (const u8*)lbl_80665A20;
+    const u8* tblImage2 = (const u8*)lbl_80665A28;
+    const u8* tblImage3 = (const u8*)lbl_80665A30;
 
     /* Retail lbzx order: mode0, mode1, image0, image2, image1, image3. */
     mode0Val = t->mode0;
@@ -677,29 +675,31 @@ void GXLoadTexObjPreLoaded(GXTexObj* obj, GXTexRegion* region, GXTexMapID id) {
     image0Val = t->image0;
     image0Val = __rlwimi(image0Val, image0Id, 24, 0, 7);
 
-    *(volatile u8*)pipe = cmd;
+    /* Initialized at first BP use; keeps params colored first. */
+    pipe = (volatile void*)&WGPIPE;
+    *(volatile u8*)pipe = GX_FIFO_CMD_LOAD_BP_REG;
     image1Val = r->image1;
     image1Val = __rlwimi(image1Val, image1Id, 24, 0, 7);
     *(volatile u32*)pipe = mode0Val;
 
     image2Val = r->image2;
     image2Val = __rlwimi(image2Val, image2Id, 24, 0, 7);
-    *(volatile u8*)pipe = cmd;
+    *(volatile u8*)pipe = GX_FIFO_CMD_LOAD_BP_REG;
     flags = t->flags;
     *(volatile u32*)pipe = mode1Val;
 
     image3Val = t->image3;
-    *(volatile u8*)pipe = cmd;
+    *(volatile u8*)pipe = GX_FIFO_CMD_LOAD_BP_REG;
     image3Val = __rlwimi(image3Val, image3Id, 24, 0, 7);
     *(volatile u32*)pipe = image0Val;
 
-    *(volatile u8*)pipe = cmd;
+    *(volatile u8*)pipe = GX_FIFO_CMD_LOAD_BP_REG;
     *(volatile u32*)pipe = image1Val;
-    *(volatile u8*)pipe = cmd;
+    *(volatile u8*)pipe = GX_FIFO_CMD_LOAD_BP_REG;
     *(volatile u32*)pipe = image2Val;
 
     /* stb for image3 lands before these stores; stw follows. */
-    *(volatile u8*)pipe = cmd;
+    *(volatile u8*)pipe = GX_FIFO_CMD_LOAD_BP_REG;
     t->mode0 = mode0Val;
     t->mode1 = mode1Val;
     t->image0 = image0Val;
@@ -717,7 +717,7 @@ void GXLoadTexObjPreLoaded(GXTexObj* obj, GXTexRegion* region, GXTexMapID id) {
         u8 tlutId = tblTlut[id];
         tlutVal = __rlwimi(tlutVal, tlutId, 24, 0, 7);
         tlr->tlutObj.tlut = tlutVal;
-        *(volatile u8*)pipe = cmd;
+        *(volatile u8*)pipe = GX_FIFO_CMD_LOAD_BP_REG;
         *(volatile u32*)pipe = tlr->tlutObj.tlut;
     }
 

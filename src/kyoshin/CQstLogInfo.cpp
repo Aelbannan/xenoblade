@@ -3,6 +3,7 @@
 
 #include "kyoshin/harness_catalog.hpp"
 #include "kyoshin/CQstLogInfo.hpp"
+#include "kyoshin/CUIWindowManager.hpp"
 #include "kyoshin/CTagProcessor.hpp"
 #include "kyoshin/code_80135FDC.hpp"
 #include "monolib/device/CDeviceFile.hpp"
@@ -66,7 +67,7 @@ CQstLogInfo::CQstLogInfo() {
     field_0x3C = 0;
 }
 
-// Target: us-8022b5a8 - func_80229770
+// us-8022b5a8 - func_80229770
 // If the animation at 0x24 finishes, transition to state 2.
 extern "C" __declspec(noinline) void func_80229770(CQstLogInfo* self) {
     f32 frame = lbl_eu_80668590;
@@ -77,7 +78,7 @@ extern "C" __declspec(noinline) void func_80229770(CQstLogInfo* self) {
     }
 }
 
-// Target: us-8022b5f4 - func_802297BC
+// us-8022b5f4 - func_802297BC
 // If the animation at 0x28 finishes, transition to state 3 and set field 0x39.
 extern "C" __declspec(noinline) void func_802297BC(CQstLogInfo* self) {
     f32 frame = lbl_eu_80668590;
@@ -88,7 +89,7 @@ extern "C" __declspec(noinline) void func_802297BC(CQstLogInfo* self) {
     }
 }
 
-// Target: us-8022b640 - func_80229808
+// us-8022b640 - func_80229808
 // If the animation at 0x28 is done (via func_80137510), transition to state 5.
 extern "C" __declspec(noinline) void func_80229808(CQstLogInfo* self) {
     if (func_80137510(self->field_0x28, lbl_eu_80668590) != 0) {
@@ -97,7 +98,7 @@ extern "C" __declspec(noinline) void func_80229808(CQstLogInfo* self) {
     }
 }
 
-// Target: us-8022b68c - func_80229854
+// us-8022b68c - func_80229854
 // If the animation at 0x24 is done (via func_80137510), reset to state 0.
 extern "C" __declspec(noinline) void func_80229854(CQstLogInfo* self) {
     if (func_80137510(self->field_0x24, lbl_eu_80668590) != 0) {
@@ -106,7 +107,7 @@ extern "C" __declspec(noinline) void func_80229854(CQstLogInfo* self) {
     }
 }
 
-// Target: us-8022b2f8 - func_802294C0
+// us-8022b2f8 - func_802294C0
 // Load the quest-log arc into a mem2 file handle, then clear the loaded flag.
 void func_802294C0(CQstLogInfo* self) {
     self->mFileHandle = CDeviceFile::readFile(mtl::MemManager::getHandleMEM2(),

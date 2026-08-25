@@ -5,9 +5,6 @@
 #include <string.h>
 #include <adx/adxt/adx_inis.hpp>
 
-// File-scope pointer to avoid per-function address materialization overhead.
-static struct AdxInisContext* const s_ctx = &lbl_eu_805E26C8;
-
 // Forward declarations for SVM functions
 s32 SVM_SetCbSvrIdWithString(s32 id, s32 arg, int (*cb)(void), s32 arg2,
                              const char* str);
@@ -81,17 +78,13 @@ int adxt_exec_fssvr(void) {
 // One-time initialization of all ADX subsystems.
 // Uses a refcount so repeated calls are no-ops until ADXT_Finish matches.
 void ADXT_Init(void) {
-    struct AdxInisContext* ctx = &lbl_eu_805E26C8;
+    struct AdxInisContext* const ctx = &lbl_eu_805E26C8;
 
     ctx->field_0x18 = (u8*)lbl_eu_80515FB8;
     criCrw_GetVersion();
 
     // Only perform full init on the first call (refcount == 0).
-    if (ctx->refcount != 0) {
-        ctx->refcount += 1;
-        return;
-    }
-
+    if (ctx->refcount == 0) {
     ADXCRS_Init();
     ADXCRS_Lock();
     SJUNI_Init();
@@ -124,26 +117,26 @@ void ADXT_Init(void) {
     ctx->field_0x0C = 0;
     ADXT_SetDefSvrFreq(0x3c);
     ADXCRS_Unlock();
+    }
 
     ctx->refcount += 1;
 }
 
 // Tears down all ADX subsystems when refcount reaches zero.
 void ADXT_Finish(void) {
-    struct AdxInisContext* ctx = s_ctx;
     const char* str;
+    struct AdxInisContext* ctx = &lbl_eu_805E26C8;
     struct AdxInisHandle* hndl;
     s32 i;
 
     // If refcount is already zero, report error and return.
-    if (ctx->refcount == 0) {
+    if (ctx->refcount <= 0) {
         SVM_CallErr1(lbl_eu_80516010 + 0x33);
         return;
     }
 
     // Decrement refcount; only perform full teardown when it reaches zero.
-    ctx->refcount -= 1;
-    if (ctx->refcount != 0) {
+    if (--ctx->refcount != 0) {
         return;
     }
 
@@ -167,8 +160,8 @@ void ADXT_Finish(void) {
     ADXCRS_Finish();
 
     // Destroy any active handles that remain in the array.
-    str = lbl_eu_80516010;
     hndl = ctx->handles;
+    str = lbl_eu_80516010;
     for (i = 0; i < 16; i++) {
         if (hndl->flag != 0) {
             SVM_CallErr1(str + 0x7e);

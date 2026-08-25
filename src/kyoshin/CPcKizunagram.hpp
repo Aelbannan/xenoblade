@@ -7,6 +7,7 @@
 #include "monolib/work/CEventFile.hpp"
 
 #include <nw4r/lyt.h>
+#include "kyoshin/plugin/ocBdat.hpp"
 
 // Vtable symbol for CPcKizunagram (stored by CPcKizunagramVtblBase).
 extern "C" void* lbl_eu_80537618[];
@@ -239,9 +240,6 @@ extern "C" u32 lbl_eu_80664158;
 // Format-string constants blended into a column-name buffer (func_8025EE94).
 extern "C" u32 lbl_eu_806688A8;
 extern "C" u32 lbl_eu_806688AC;
-
-// BDAT column lookup (unmangled C-linkage retail symbol).
-extern "C" u32 getBdatStringColumnValue(void* bdat, const char* col, s32 index);
 
 // nw4r layout/animation loaders used by the cursor init (func_8025D4E4).
 extern "C" void func_80136E84__FPPQ34nw4r3lyt6LayoutPQ34nw4r3lyt19ArcResourceAccessorPCc(

@@ -21,12 +21,15 @@ namespace ml {
     In that specific case, the function will return a nonsense value. */
     void CPlane::getCross(CVec3& outVec, const CPlane& plane, const CVec3& rayOrigin, const CVec3& rayDir){
         //Calculate the time t at which the ray will intersect the plane
-        float val1 = CVec3::dot(plane.mNormal, rayOrigin) + plane.mDist; //Distance is flipped, so + distance is used
-        float val2 = CVec3::dot(plane.mNormal, rayDir);
-        float t = -val1/val2;
+        //Distance is flipped, so + distance is used
+        float dotNO = CVec3::dot(plane.mNormal, rayOrigin);
+        float dotND = CVec3::dot(plane.mNormal, rayDir);
+        float t = -(plane.mDist + dotNO) / dotND;
         
         //Calculate the intersection point
-        outVec = rayOrigin + rayDir*t;
+        CVec3 scaled;
+        CVec3::scale(scaled, rayDir, t);
+        CVec3::add(outVec, rayOrigin, scaled);
     }
 
 }

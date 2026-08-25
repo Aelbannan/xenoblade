@@ -435,7 +435,7 @@ struct CMainMenuBattleMgr {
     u8 _0[0x8];
     CMainMenuBattleNode* list;  // 0x8 - sentinel node
 };
-extern "C" CMainMenuBattleMgr* getInstance__Q22cf14CBattleManagerFv();
+#include "kyoshin/cf/CBattleManagerApi.hpp"
 
 // Global settings object returned by getUnk80664658 (flag word at +0x214).
 struct CMainMenuGimmickGlobal {

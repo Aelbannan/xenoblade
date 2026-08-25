@@ -3,6 +3,7 @@
 #include "monolib/work.hpp"
 #include "monolib/device.hpp"
 #include "monolib/util.hpp"
+#include "kyoshin/plugin/ocBdat.hpp"
 
 // C-linkage imports (retail symbol names - keep linkage/signatures verbatim)
 extern "C" const char lbl_eu_80500FA4[];
@@ -14,7 +15,6 @@ extern "C" const char* lbl_eu_8052E6F0[];
 extern "C" void* func_8003AA34();
 extern "C" u32 func_8003B41C(void* bdat);
 extern "C" u32 func_8003B1EC(void* bdat);
-extern "C" u32 getBdatStringColumnValue(void* bdat, const char* column, s32 index);
 extern "C" u32 func_800AA2BC(u32 a, u32 b);
 extern "C" int func_800AA33C(ml::FixStr<64>& buf, u32 packed, int prefixFlag, int suffixFlag);
 extern "C" u32 func_800AA714(const char* path);

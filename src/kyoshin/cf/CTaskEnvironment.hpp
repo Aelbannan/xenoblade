@@ -141,7 +141,6 @@ extern "C" int func_8007E1B4__Q22cf13CfGameManagerFv();
 extern "C" void func_80086D98__Q22cf13CfGameManagerFv(unsigned short* outA,
                                                        unsigned short* outB);
 extern "C" unsigned int func_80086DA8__Q22cf13CfGameManagerFv();
-extern "C" float func_80496288(CTaskEnvScene* scene);
 extern "C" void func_804C123C(CTaskEnvLgtCtrlAccess* ctrl, int flag);
 extern "C" void func_804C1270(CTaskEnvLgtCtrlAccess* ctrl, int flag);
 extern "C" void func_804C1600(CTaskEnvLgtCtrlAccess* ctrl, void* arg);

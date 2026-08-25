@@ -142,6 +142,8 @@ protected:
 
 class ArchiveFontBase : public ResFontBase {
 public:
+    ArchiveFontBase();
+
     class CachedStreamReader;
     struct ConstructContext;
     struct FontGlyphGroupsAcs;

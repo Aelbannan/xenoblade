@@ -736,17 +736,19 @@ GetRemain__Q54nw4r2ut6detail15ArchiveFontBase18CachedStreamReaderCFv(const void*
 
 void nw4r::ut::detail::ArchiveFontBase::CachedStreamReader::CopyTo(
     void* pDst, u32 size) {
+    void* dst = pDst;
+    u32 len = size;
     unsigned int* p = (unsigned int*)this;
 
     unsigned int avail = p[5] - p[4];  // mStreamEnd - mBufferPos
 
-    if (avail >= size) {
-        memcpy(pDst, (void*)p[4], size);
-        p[4] = p[4] + size;
+    if (avail >= len) {
+        memcpy(dst, (void*)p[4], len);
+        p[4] = p[4] + len;
     } else {
-        unsigned int remaining = size - avail;
-        memcpy(pDst, (void*)p[4], avail);
-        memcpy((void*)((unsigned int)pDst + avail), (void*)p[1], remaining);
+        unsigned int remaining = len - avail;
+        memcpy(dst, (void*)p[4], avail);
+        memcpy((void*)((unsigned int)dst + avail), (void*)p[1], remaining);
         p[4] = p[5];
         p[1] = p[1] + remaining;
     }

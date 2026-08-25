@@ -7,6 +7,7 @@
 // All 20 functions use placeholder retail symbols (extern "C") so hexdiff /
 // objdiff can pair them exactly with the retail object.
 
+#include "kyoshin/cf/CBattleManagerApi.hpp"
 #include "kyoshin/cf/CtrlMovePC.hpp"
 #include "kyoshin/cf/CtrlMovePC_intf.hpp"
 #include "kyoshin/cf/CfGameManager.hpp"

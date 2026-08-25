@@ -1,4 +1,7 @@
 #include "kyoshin/cf/CfCamEvent.hpp"
+#include "monolib/scn/CScnTimeApi.hpp"
+
+#include "kyoshin/cf/CfGameManagerData.hpp"
 #include <string.h>
 #include <math.h>
 
@@ -180,7 +183,7 @@ void func_8006ACC0(CfCamEvent* self) {
         }
     }
 
-    if (CfRes_getD80Flag() != 0 && func_80496288() != lbl_eu_80666268) {
+    if (CfRes_getD80Flag() != 0 && func_80496288(lbl_eu_80663E14) != lbl_eu_80666268) {
         // Refresh the position/aim copies and recompute the error-checked
         // direction vector from the last lookat target.
         self->unk28 = self->unk274;

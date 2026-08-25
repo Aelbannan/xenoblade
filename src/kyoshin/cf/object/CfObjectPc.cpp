@@ -1,7 +1,10 @@
 // Auto-scaffolded catalog TU for kyoshin/cf/object/CfObjectPc
 // Replace stubs with high-level C/C++ during decomp.
 
+#include "kyoshin/cf/CBattleManagerApi.hpp"
 #include "kyoshin/cf/object/CfObjectPc.hpp"
+#include "kyoshin/cf/CfSoundMan.hpp"   // cf::CfSoundMan::func_801BFC38 (single decl on owner header)
+#include "monolib/scn/CScnTimeApi.hpp"
 #include "kyoshin/cf/object/CActorParam.hpp"
 #include "kyoshin/CArtsInfo.hpp"   // declares extern "C" func_8009EC9C(u32)
 

@@ -7,6 +7,7 @@
 // Replace stubs with high-level C/C++ during decomp.
 
 #include <harness_catalog.h>
+#include "monolib/scn/CScnTimeApi.hpp"
 #include <nw4r/db/db_assert.h>            // nw4r::db::Panic
 #include <nw4r/g3d/g3d_anmclr.h>
 #include <nw4r/g3d/g3d_anmobj.h>
@@ -1537,12 +1538,11 @@ extern "C" __declspec(noinline) void func_804C406C(CScnEnvLgtCtrl* self, float f
     // slot index, j = the two unconditional counters, q = third-walk offset.
     // i/j are signed so the gate walk compares with `cmp` (the count compares
     // widen to unsigned because the counts are u32 fields).
-    u8* p;
     u8* q;
     int i;
     int j;
     if (self->field_0x30_chk != NULL) {
-        // Four control sub-arrays (strides 0x30/0x3C/0x50/0x64); each entry
+        // Four control sub-arrays
         // with bit 16 set at +0x04 receives the refresh dispatch. The count
         // is re-read from self+0x30 every iteration (the dispatch call may
         // alias the control blob).
@@ -1618,10 +1618,12 @@ extern "C" __declspec(noinline) void func_804C406C(CScnEnvLgtCtrl* self, float f
                           self->lgt2.field_0xC0);
         }
     }
-    // Advance the fog blend accumulator and clamp it to the shared ceiling.
+    // Advance the fog blend accumulator
     f32 lim = lbl_eu_8066B014;
-    f32 c0 = self->lgt2.field_0xC0;
-    f32 c4 = self->lgt2.field_0xC4;
+    f32 c0;
+    f32 c4;
+    c4 = self->lgt2.field_0xC4;
+    c0 = self->lgt2.field_0xC0;
     f32 v = f * c4 + c0;
     self->lgt2.field_0xC0 = v;
     if (v > lim) {

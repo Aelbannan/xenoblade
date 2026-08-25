@@ -103,7 +103,6 @@ extern "C" void func_802988BC(CMCGetItemBox*);
 extern "C" void func_80298938(CMCGetItemBox*);
 extern "C" void func_802989A4(CMCGetItemBox*);
 extern "C" void func_80298A20(CMCGetItemBox*);
-void func_80299490(CMCGetItemBox*, int, u32);
 extern "C" void func_80298378(CMCGetItemBox*);
 extern "C" void func_802983E4(CMCGetItemBox*);
 
@@ -119,7 +118,8 @@ void* __dt__80296BB0(CMCGetItemBox* _this, int flags) {
 // -O4,s keeps both passes rolled (pointer-walk + mtctr/bdnz sthx) as in retail.
 #pragma push
 #pragma optimize_for_size on
-void func_80296B44(CMCItemBoxSub* x) {
+// noinline: retail keeps this init helper out-of-line (bl from __ct__CMCGetItemBox).
+__declspec(noinline) void func_80296B44(CMCItemBoxSub* x) {
     // Retail walks a pointer over the table (cmplw loop); the inline bound is
     // CSE-hoisted as an r0 temp, matching retail coloring. Known residual:
     // retail emits the hoisted addi before the param copy; every tested shape
@@ -252,7 +252,7 @@ __declspec(noinline) char* func_80296E98(CMCItemBoxSub* sub, u16 index) {
     CMCItemImplShim* inst = (CMCItemImplShim*)CItem_initItemImplInstances(p);
     // Keep only x/p/strTbl live across calls: recompute &x->shortName
     // at every use so MWCC holds just three callee-saved regs (retail r29-r31).
-    x->shortName.format(strTbl, inst->getName(p));
+    ((ml::FixStr<64>*)&x->shortName)->format(strTbl, inst->getName(p));
     if (x->pad_102 == 3) {
         // Gem slot: rebuild the name as "<kind suffix><saved name>".
         CMCItemImplShim* inst2 = (CMCItemImplShim*)CItem_initItemImplInstances(p);
@@ -260,10 +260,10 @@ __declspec(noinline) char* func_80296E98(CMCItemBoxSub* sub, u16 index) {
         char* itemName = func_80136190(&strTbl[3], &strTbl[0xc],
                                        0x1e - (kind - 1));
         // Refresh the cached length, then splice: format("%s%s", saved, suffix).
-        x->shortName.mLength = strlen(x->shortName.c_str());
+        x->shortName.mLength = strlen(x->shortName.mString);
         char copy[64];
-        strcpy(copy, x->shortName.c_str());
-        x->shortName.format(&strTbl[0x11], copy, itemName);
+        strcpy(copy, x->shortName.mString);
+        ((ml::FixStr<64>*)&x->shortName)->format(&strTbl[0x11], copy, itemName);
     }
     return (char*)&x->shortName;
 }
@@ -283,8 +283,11 @@ __declspec(noinline) char* func_80296E98(CMCItemBoxSub* sub, u16 index) {
 __declspec(noinline) char* func_80296FC0(CMCItemBoxSub* sub, u16 index) {
     CMCItemBoxEntry* base = sub->listBase;
     if (base == 0) return 0;
+    // Retail sign-extends the page counter, scales by 30 and folds the u16
+    // clamp into an unsigned compare against count.
     u16 idx = (u16)(index + (s8)sub->counter * 30);
     if (idx >= sub->count) return 0;
+    // The s16 table offset sign-extends before the *52 scale.
     CMCItemBoxEntry* p = base + sub->table[idx];
     if (p == 0) return 0;
     if (func_801C6E90(p) != 0) {
@@ -292,7 +295,7 @@ __declspec(noinline) char* func_80296FC0(CMCItemBoxSub* sub, u16 index) {
         void* inst = CItem_initItemImplInstances(p);
         u32 v = (u32)((u32(*)(void*, void*))(*(void***)inst)[0x22])(inst, p);
         char* s = func_8013639C((void*)lbl_eu_80664100, &lbl_eu_8050FF8C[0x16], (u16)v);
-        sub->name.format(&lbl_eu_8050FF8C[0], s);
+        ((ml::FixStr<128>*)&sub->name)->format(&lbl_eu_8050FF8C[0], s);
         return (char*)&sub->name;
     }
     u32 type = (p->field_00 >> 12) & 0xF;
@@ -300,13 +303,15 @@ __declspec(noinline) char* func_80296FC0(CMCItemBoxSub* sub, u16 index) {
     if (type == 9 && (p->bytes[3] & 3) == 3) special = 1;
     if (special) {
         char* s = func_80136190(&lbl_eu_8050FF8C[3], &lbl_eu_8050FF8C[0xc], 0x9c);
-        sub->name.format(&lbl_eu_8050FF8C[0], s);
+        ((ml::FixStr<128>*)&sub->name)->format(&lbl_eu_8050FF8C[0], s);
         return (char*)&sub->name;
     }
     u8 pad102 = sub->pad_102;
     u32 id = p->field_00 >> 20;
     if (pad102 == 3) {
         // Gem slot: icon/kind/name triple drives the message placeholders.
+        // Declared in this order so MWCC lays the buffers out at the retail
+        // stack offsets (tbl / fmtBuf / buf48 / tail / copy).
         void* db = (void*)lbl_eu_806640D8;
         void* inst1 = CItem_initItemImplInstances(p);
         u32 icon = (u32)((u32(*)(void*, void*))(*(void***)inst1)[0x15])(inst1, p);
@@ -314,20 +319,24 @@ __declspec(noinline) char* func_80296FC0(CMCItemBoxSub* sub, u16 index) {
         u8 kind = (u8)((u32(*)(void*, void*))(*(void***)inst2)[2])(inst2, p);
         void* inst3 = CItem_initItemImplInstances(p);
         char* nm = (char*)((void*(*)(void*, void*))(*(void***)inst3)[0x24])(inst3, p);
+        CMCItemMsgTbl tbl;
+        char fmtBuf[0x20];
         char buf48[0x20];
+        char tail[0x80];
+        char copy[0x80];
         sprintf(buf48, &lbl_eu_8050FF8C[0x1e], nm);
         u8 mkind = (u8)func_801361E8((u32)db, &lbl_eu_8050FF8C[0x21], (u16)icon);
         char* s2 = func_8013639C((void*)db, &lbl_eu_8050FF8C[0x2a], (u16)icon);
-        sub->name.format(&lbl_eu_8050FF8C[0], s2);
-        u32 len = strlen(sub->name.c_str());
-        char copy[0x80];
-        strcpy(copy, sub->name.c_str());
-        // Japanese/Korean text uses different message variants.
+        ((ml::FixStr<128>*)&sub->name)->format(&lbl_eu_8050FF8C[0], s2);
+        u32 len = strlen(sub->name.mString);
+        strcpy(copy, sub->name.mString);
+        // Japanese/Korean text uses different message variants; retail calls
+        // getLanguage twice instead of caching the result.
         int langB = 1;
         if (CDeviceSC::getLanguage() != 3 && CDeviceSC::getLanguage() != 2) langB = 0;
-        CMCItemMsgTbl tbl;
-        char fmtBuf[0x20];
-        char tail[0x80];
+        // Retail keeps the copied table's element base in a callee-saved
+        // register across the entire walk loop ('%2' handler reads it).
+        const u32* tvals = &tbl.v[0];
         char* p2 = copy;
         while (*p2 != 0) {
             if (*p2 == '%') {
@@ -335,25 +344,39 @@ __declspec(noinline) char* func_80296FC0(CMCItemBoxSub* sub, u16 index) {
                 p2++;
                 if (*p2 == '1') {
                     p2++;
+                    // Retail keeps every case's sprintf block separate.
                     switch ((u8)mkind) {
-                        case 1:
+                        case 1: sprintf(fmtBuf, &lbl_eu_8050FF8C[0x36], buf48); break;
                         case 2: sprintf(fmtBuf, &lbl_eu_8050FF8C[0x36], buf48); break;
                         case 3:
-                        case 4: sprintf(fmtBuf, langB ? &lbl_eu_8050FF8C[0x4c] : &lbl_eu_8050FF8C[0x65], buf48); break;
+                            if (langB) sprintf(fmtBuf, &lbl_eu_8050FF8C[0x4c], buf48);
+                            else       sprintf(fmtBuf, &lbl_eu_8050FF8C[0x65], buf48);
+                            break;
+                        case 4:
+                            if (langB) sprintf(fmtBuf, &lbl_eu_8050FF8C[0x4c], buf48);
+                            else       sprintf(fmtBuf, &lbl_eu_8050FF8C[0x65], buf48);
+                            break;
                     }
                 } else if (*p2 == '2') {
                     p2++;
                     tbl = lbl_eu_8050FF60;
-                    u8 s3 = func_801361E8((u32)db, (const char*)tbl.v[kind], (u16)icon);
-                    sprintf(fmtBuf, langB ? &lbl_eu_8050FF8C[0x7d] : &lbl_eu_8050FF8C[0x96], s3);
+                    u8 s3 = func_801361E8((u32)db, (const char*)tvals[kind], (u16)icon);
+                    if (langB) sprintf(fmtBuf, &lbl_eu_8050FF8C[0x7d], s3);
+                    else       sprintf(fmtBuf, &lbl_eu_8050FF8C[0x96], s3);
                 }
-                // Splice the formatted text in place of the '%x' pair.
+                // Splice the formatted text in place of the '%x' pair. Retail
+                // measures fmtBuf with a rolled inline byte-walk loop, not
+                // strlen.
+                u32 flen = 0;
+                const char* q = fmtBuf;
+                while (*q++ != 0) flen++;
                 sprintf(tail, &lbl_eu_8050FF8C[0], p2);
                 p2 -= 2;
                 sprintf(p2, &lbl_eu_8050FF8C[0], fmtBuf);
-                p2 = p2 + (strlen(fmtBuf) + 1) - 1;
+                p2 += flen;
                 sprintf(p2, &lbl_eu_8050FF8C[0], tail);
-            } else if ((s8)*p2 >= 0x81 && (s8)*p2 <= 0x9f || (s8)*p2 >= 0xe0 && (s8)*p2 <= 0xef) {
+            } else if (((s8)*p2 >= 0x81 && (s8)*p2 <= 0x9f) ||
+                       ((s8)*p2 >= (s8)0xe0 && (s8)*p2 <= 0xef)) {
                 p2 += 2;   // shift-JIS lead byte: skip the trail byte too
             } else {
                 p2 += 1;
@@ -368,14 +391,91 @@ __declspec(noinline) char* func_80296FC0(CMCItemBoxSub* sub, u16 index) {
         void* tbl2 = (void*)lbl_eu_80664A1C;
         if (v <= 5 || pad102 == 2) tbl2 = (void*)lbl_eu_80664A18;
         u32 n = func_80136254((void*)lbl_eu_806640EC, &lbl_eu_8050FF8C[0x16], id);
-        char* s = func_8013639C((void*)tbl2, &lbl_eu_8050FF8C[0x16], (u16)n);
-        sub->name.format(&lbl_eu_8050FF8C[0], s);
+        char* s = func_8013639C(tbl2, &lbl_eu_8050FF8C[0x16], (u16)n);
+        ((ml::FixStr<128>*)&sub->name)->format(&lbl_eu_8050FF8C[0], s);
         return (char*)&sub->name;
     }
 }
 #pragma pop
 
-CMCGetItemBox::CMCGetItemBox() {}
+// Constructor: zero the handle/pointer fields, placement-construct the cursor
+// widgets / sys-win / item-box info, then build default temporaries on the
+// stack and copy them member-wise into the embedded item-box info, cursor
+// table and sub-object storage (everything past each temp's first dword).
+// Cursor pair for the rolled pointer-walk copies below.
+CMCGetItemBox::CMCGetItemBox() {
+    // mVtbl is stored by the CMCGetItemBoxVt base constructor.
+    // memRegion1/memRegion2 are constructed implicitly (declaration order).
+
+    fileHandle1 = 0;
+    fileHandle2 = 0;
+    fileHandle3 = 0;
+    fileHandle4 = 0;
+    memManagerPtr = 0;
+    arcAcc1 = 0;
+    arcAcc2 = 0;
+    layout40 = 0;
+    animTrans1 = 0;
+    animTrans2 = 0;
+    field_4C = 0;
+    field_4D = 0;
+    objAt50 = 0;
+    field_54 = 0;
+    mField55 = 1;
+
+    __ct__CCur07(&subObj_58, 0);
+    __ct__CCur09(&subObj_70, 0);
+    __ct__CCur16(&subObj_88, 0);
+    __ct__CCur18(&subObj_A0, 0);
+    __ct__CSysWin(&sysWin_B8, 0);
+    __ct__CItemBoxInfo(itemBox, 0, 0);
+
+    field_300 = 0;
+    field_301 = 0;
+    mField303 = 0;
+    field_304 = 0;
+    field_305 = 0;
+    func_80296B44(&sub_314);
+
+    // --- default item-box temp -> embedded info: one member-wise struct
+    //     assignment (dest = src + 0xf4); word-array members lower to the
+    //     retail paired lwzu/stwu bdnz loops. ---
+    u8 boxTmp[0x210];
+    __ct__CItemBoxInfo(boxTmp, 0, 0);
+    *(CMCBoxMember*)&itemBox[0x04] = *(CMCBoxMember*)&boxTmp[0x04];
+    // trailing 128-byte run starts one byte past a word boundary (retail
+    // keeps it outside the aligned member block)
+    *(CMCW32*)&itemBox[0x189] = *(CMCW32*)&boxTmp[0x189];
+    __dt__12CItemBoxInfoFv(boxTmp, -1);
+
+    // --- default sys-win temp -> embedded window: one struct assignment ---
+    {
+        u8 winTmp[0x40];
+        __ct__CSysWin(winTmp, 0);
+        *(CMCSysWinMember*)&sysWin_B8.bytes[4] = *(CMCSysWinMember*)&winTmp[4];
+        __dt__7CSysWinFv(winTmp, -1);
+    }
+
+    // --- fresh CMCItemBoxSub temp -> embedded sub-object ---
+    lbl_eu_80664A18 = 0;
+    lbl_eu_80664A1C = 0;
+    lbl_eu_80664A20 = 0;
+    {
+        u8 subTmp[0x1d8];
+        func_80296B44((CMCItemBoxSub*)subTmp);
+        *(CMCSubTableCopy*)sub_314.table = *(CMCSubTableCopy*)subTmp;
+        // FixStr operator= inlines to the retail strlen/strcpy pair.
+        CMCItemBoxSub* t = (CMCItemBoxSub*)subTmp;
+        sub_314.count = t->count;
+        sub_314.pad_102 = t->pad_102;
+        sub_314.limit = t->limit;
+        sub_314.counter = t->counter;
+        *(ml::FixStr<64>*)&sub_314.shortName = *(ml::FixStr<64>*)&t->shortName;
+        *(ml::FixStr<128>*)&sub_314.name = *(ml::FixStr<128>*)&t->name;
+        sub_314.listBase = t->listBase;
+        sub_314.field_1D4 = t->field_1D4;
+    }
+}
 
 // Free-function dtor form: the member dtor's implicit vptr re-store (lis/addi/stw
 // of __vt__13CMCGetItemBox) is not in the retail; the extern-C form skips it.
@@ -1056,15 +1156,17 @@ extern "C" __declspec(noinline) void func_80298AC8(CMCGetItemBox* self, u32 idx,
 // -O4,s keeps the retail stmw r27 frame.
 #pragma push
 #pragma optimize_for_size on
-extern "C" void func_80298FB4(CMCGetItemBox* self, u32 idx, CMCItemBoxEntry* entry, u8 r6) {
+// noinline: retail keeps the bl to this symbol from func_8029967C (its body
+// otherwise folds in, surfacing as a stray CItem_initItemImplInstances call).
+__declspec(noinline) void func_80298FB4(CMCGetItemBox* self, u32 idx, CMCItemBoxEntry* entry, u8 n) {
+    CMCItemBoxEntry* e = entry != 0 ? entry : 0;
     void* h = 0;
-    if (entry != 0) {
-        u32 type = (entry->field_00 >> 12) & 0xF;
+    if (e != 0) {
+        u32 type = (e->field_00 >> 16) & 0xF;
         if (type == 3) {
-            void* inst = CItem_initItemImplInstances(entry);
             h = 0;
-            u32 k = (u32)((u32(*)(void*, void*))(*(void***)inst)[2])(inst, entry);
-            switch ((u16)k) {
+            CMCItemImplShim* inst = (CMCItemImplShim*)CItem_initItemImplInstances(e);
+            switch ((u16)inst->getKind(e)) {
                 case 1: h = func_80138F78(0x197); break;
                 case 2: h = func_80138F78(0x196); break;
                 case 3: h = func_80138F78(0x195); break;
@@ -1077,39 +1179,20 @@ extern "C" void func_80298FB4(CMCGetItemBox* self, u32 idx, CMCItemBoxEntry* ent
             else
                 h = ((AccessorGetRes3*)self->arcAcc1)->GetResource3(0x74696d67u, &lbl_eu_8050FF8C[0x131], 0);
         } else if (type == 9) {
-            void* inst = CItem_initItemImplInstances(entry);
-            u32 k = (u32)((u32(*)(void*, void*))(*(void***)inst)[0x20])(inst, entry);
-            if ((u16)k != 0) {
-                // L_8029B95C: item present.
-                void* inst2 = CItem_initItemImplInstances(entry);
-                h = 0;
-                u32 k2 = (u32)((u32(*)(void*, void*))(*(void***)inst2)[2])(inst2, entry);
-                switch ((u16)k2) {
-                    case 1: h = func_80138F78(0x19c); break;
-                    case 2: h = func_80138F78(0x19b); break;
-                    case 3: h = func_80138F78(0x19a); break;
-                    case 4: h = func_80138F78(0x199); break;
-                    case 5: h = func_80138F78(0x198); break;
-                }
-                if (h != 0)
-                    h = ((AccessorGetRes3*)self->arcAcc2)->GetResource3(0x74696d67u, (const char*)h, 0);
-                else
-                    h = ((AccessorGetRes3*)self->arcAcc1)->GetResource3(0x74696d67u, &lbl_eu_8050FF8C[0x131], 0);
-            } else {
-                // L_8029B858 shared block: item slot valid (gem-type chain 0x191..).
-                if (func_801C6E90(entry) == 0) {
-                    u32 ex = (entry->field_00 >> 12) & 0xF;
-                    int f = 0;
-                    if (ex == 9 && (entry->bytes[3] & 3) == 1) f = 1;
-                    if (f != 0) goto L858;
-                    if (ex != 9) goto after;
-                }
-            L858:
-                {
-                    void* inst2 = CItem_initItemImplInstances(entry);
+            CMCItemImplShim* inst = (CMCItemImplShim*)CItem_initItemImplInstances(e);
+            if ((u16)inst->getCount(e) == 0) {
+                // Empty slot: only resolve a name when the entry is a valid
+                // type-9 item (bdat-managed or flagged in byte 7).
+                do {
+                    if (func_801C6E90(e) == 0) {
+                        u32 ex = (e->field_00 >> 16) & 0xF;
+                        int f = 0;
+                        if (ex == 9 && ((u32)(e->bytes[3] & 3)) == 1) f = 1;
+                        if (f == 0 && ex != 9) break;
+                    }
                     h = 0;
-                    u32 k2 = (u32)((u32(*)(void*, void*))(*(void***)inst2)[2])(inst2, entry);
-                    switch ((u16)k2) {
+                    CMCItemImplShim* inst2 = (CMCItemImplShim*)CItem_initItemImplInstances(e);
+                    switch ((u16)inst2->getKind(e)) {
                         case 1: h = func_80138F78(0x191); break;
                         case 2: h = func_80138F78(0x190); break;
                         case 3: h = func_80138F78(0x18f); break;
@@ -1120,14 +1203,28 @@ extern "C" void func_80298FB4(CMCGetItemBox* self, u32 idx, CMCItemBoxEntry* ent
                         h = ((AccessorGetRes3*)self->arcAcc2)->GetResource3(0x74696d67u, (const char*)h, 0);
                     else
                         h = ((AccessorGetRes3*)self->arcAcc1)->GetResource3(0x74696d67u, &lbl_eu_8050FF8C[0x131], 0);
+                } while (0);
+            } else {
+                // Item present: kind-keyed name chain 0x19c..
+                h = 0;
+                CMCItemImplShim* inst2 = (CMCItemImplShim*)CItem_initItemImplInstances(e);
+                switch ((u16)inst2->getKind(e)) {
+                    case 1: h = func_80138F78(0x19c); break;
+                    case 2: h = func_80138F78(0x19b); break;
+                    case 3: h = func_80138F78(0x19a); break;
+                    case 4: h = func_80138F78(0x199); break;
+                    case 5: h = func_80138F78(0x198); break;
                 }
+                if (h != 0)
+                    h = ((AccessorGetRes3*)self->arcAcc2)->GetResource3(0x74696d67u, (const char*)h, 0);
+                else
+                    h = ((AccessorGetRes3*)self->arcAcc1)->GetResource3(0x74696d67u, &lbl_eu_8050FF8C[0x131], 0);
             }
         }
     }
-after:
     if (h == 0) {
         if (idx != 0) {
-            char* name = func_80138F78((u16)func_80136254((void*)lbl_eu_806640EC, &lbl_eu_8050FF8C[0x15c], (u16)idx));
+            char* name = func_80138F78((u16)func_80136254(lbl_eu_806640EC, &lbl_eu_8050FF8C[0x15c], idx));
             h = ((AccessorGetRes3*)self->arcAcc2)->GetResource3(0x74696d67u, name, 0);
             if (h == 0)
                 h = ((AccessorGetRes3*)self->arcAcc1)->GetResource3(0x74696d67u, &lbl_eu_8050FF8C[0x131], 0);
@@ -1137,14 +1234,15 @@ after:
     }
     if (h != 0) {
         char buf[0x20];
-        sprintf(buf, &lbl_eu_8050FF8C[0x161], (int)(r6 + 1));
+        sprintf(buf, &lbl_eu_8050FF8C[0x161], (int)(n + 1));
         func_80137E7C((void*)self->layout40, buf, (void*)h);
     }
 }
 #pragma pop
 #pragma push
 #pragma optimize_for_size on
-// noinline: called out-of-line from func_8029967C in retail.
+// noinline + C linkage: called out-of-line from func_8029967C in retail
+// (unmangled reloc).
 __declspec(noinline) void func_80299490(CMCGetItemBox* self, int r4, u32 r5) {
     char buf1[0x20];   // sp+0x28
     char buf2[0x20];   // sp+0x08
@@ -1211,33 +1309,48 @@ extern "C" __declspec(noinline) void func_8029967C(CMCGetItemBox* self) {
     // Branchy select: retail defaults r0 to 1 and overwrites with the limit.
     u8 count = sub->limit != 0 ? sub->limit : 1;
     if (count > 1) {
-        // String-table base lives only inside this branch (retail parks it
-        // in a callee-saved reg here and reuses the reg for loop results).
+        // Declared first so the VEC3 claims the low stack slot (retail layout:
+        // vec at sp+8, tab-name buf at sp+0x18).
+        nw4r::math::VEC3 pos;
+        // String-table base lives only until the tab loop: retail kills the
+        // reg there and re-materializes lis/addi for the 0x1b0/0x1b9 uses.
         char* tbl = lbl_eu_8050FF8C;
         // NOTE: retail reloads layout40 before every root-pane access (no
         // cached layout pointer), keeping only 5 callee-saved regs live.
         func_80124270((*(nw4r::lyt::Pane**)((u8*)self->layout40 + 0x10))->FindPaneByName(&tbl[0x19a], true), 1);
         for (u8 i = 0; i < 3; i++) {
             char buf[0x20];
-            sprintf(buf, &tbl[0x1a1], (int)(u8)(i + 1));
-            // Sign bit of (i - count): 1 while the tab is within the page range.
+            sprintf(buf, &tbl[0x1a1], (int)(u8)i + 1);
+            // Sign bit of (unsigned)(i - count): 1 while the tab is within
+            // the page range (retail lowers this to srwi, not srawi).
             func_80124270((*(nw4r::lyt::Pane**)((u8*)self->layout40 + 0x10))->FindPaneByName(buf, true),
-                          (u32)(((int)i - (int)count) >> 31));
+                          ((u32)i - (u32)count) >> 31);
         }
-        func_80136910(self->layout40, &tbl[0x1b0], (u8)(sub->counter + 1));
-        // Slide the page cursor pane: base x plus the scaled counter term.
-        // MWCC lowers both int->float conversions through the 2^52 double
-        // trick; the y/z words are reinterpreted float bits (lfs), like retail.
-        // Pane lookup stays nested in the copyVEC3 args: retail holds the
-        // result only in a volatile reg across the float computation.
-        nw4r::math::VEC3 pos;
+        // Retail computes counter+1 separately at each use (memory reload
+        // across the intervening virtual call), not as a shared temp.
+        func_80136910(self->layout40, &lbl_eu_8050FF8C[0x1b0], (u8)(sub->counter + 1));
+        // Retail evaluates the pane find first (result held in a volatile
+        // reg across the pos computation), then builds/stores the VEC3.
+        nw4r::lyt::Pane* pagePane =
+            self->layout40->GetRootPane()->FindPaneByName(&lbl_eu_8050FF8C[0x1b9], true);
+        // Retail computes the pages low word first (subfic right after the
+        // finds), then reloads it when building the second scratch record.
+        u32 pagesLow = (u32)(u8)(3 - count);
         pos.y = (float&)self->field_30C;
         pos.x = (float&)self->field_308;
+        u8 nextPage = (u8)(sub->counter + 1);
+        // One shared conversion scratch (retail materializes 0x4330 once).
+        union { double d; u32 w[2]; } cvt;
+        cvt.w[1] = 0x43300000u;
+        cvt.w[0] = (u32)(nextPage - 1) ^ 0x8000u;
+        double counterD = cvt.d;
         pos.z = (float&)self->field_310;
-        pos.x += lbl_eu_80668BF4 * (float)(int)sub->counter +
-                 lbl_eu_80668BF4 * (float)(int)(3 - count);
-        copyVEC3((u8*)(*(nw4r::lyt::Pane**)((u8*)self->layout40 + 0x10))->FindPaneByName(&tbl[0x1b9], true) + 0x2C,
-                 (float*)&pos);
+        // Retail parks the scale in f2 right after the z-store.
+        float scale = lbl_eu_80668BF4;
+        cvt.w[0] = pagesLow;
+        pos.x += scale * (float)(counterD - lbl_eu_80668BE0) +
+                 scale * (float)(cvt.d - lbl_eu_80668BD8);
+        copyVEC3((u8*)pagePane + 0x2C, (float*)&pos);
     } else {
         func_80124270((*(nw4r::lyt::Pane**)((u8*)self->layout40 + 0x10))->FindPaneByName(&lbl_eu_8050FF8C[0x19a], true), 0);
     }
@@ -1311,18 +1424,6 @@ extern "C" void func_802999B0(CMCGetItemBox* self) {
 // Branch 1 builds the whole widget: region-guarded buffer, layout + 2 anim
 // transforms, font bind, text stamping, cursor sub-objects and activation;
 // the other branches only feed bdat tables / the second accessor.
-// Construct-on-stack then copy: build the cursor widget in a temporary,
-// move it into the embedded storage, destroy the temp, run the copied
-// widget's slot-2 virtual (update).
-#define CMC_CUR_INIT(obj, ctorSym, dtorSym, arg)                               \
-    do {                                                                       \
-        u8 tmp[0x18];                                                          \
-        ctorSym(tmp, (arg));                                                   \
-        func_8018B0FC(&(obj), tmp);                                            \
-        dtorSym(tmp, -1);                                                      \
-        (*(void (**)(void*))(*(void***)&(obj))[2])(&(obj));                    \
-    } while (0)
-
 // -O4,s keeps the retail _savegpr_28/_restgpr_28 prologue.
 #pragma push
 #pragma optimize_for_size on
@@ -1352,11 +1453,11 @@ bool CMCGetItemBox::OnFileEvent(CEventFile* pEventFile) {
         func_80136F08__FPQ34nw4r3lyt6LayoutPPQ34nw4r3lyt13AnimTransformPQ34nw4r3lyt19ArcResourceAccessorPc(
             this->layout40, &this->animTrans2, this->arcAcc1, &lbl_eu_8050FF8C[0x23b]);
 
-        // Bind the loaded font's pane into the layout root.
-        nw4r::lyt::Pane* rootPane = *(nw4r::lyt::Pane**)((u8*)this->layout40 + 0x10);
+        // Bind the loaded font's pane into the layout root. Retail keeps the
+        // root pane in a callee-saved register only across these calls.
+        nw4r::lyt::Pane* rootPane = this->layout40->GetRootPane();
         void* font = CDeviceFont::func_80452C10(1, this->layout40);
-        void** vtblFont = *(void***)font;
-        void* fontData = ((void*(*)())vtblFont[9])();
+        void* fontData = ((CDeviceFontVt9*)font)->getResource();
         func_8013676C(rootPane, (u32)fontData);
 
         u32 w = (u32)func_801355A0();
@@ -1374,17 +1475,20 @@ bool CMCGetItemBox::OnFileEvent(CEventFile* pEventFile) {
 
         this->layout40->SetAnimationEnable(this->animTrans2, false);
         this->layout40->SetAnimationEnable(this->animTrans1, true);
-        this->layout40->Animate(0);
+        this->layout40->Animate();
 
-        // Hand the tag processor to the tag pane (+0xF8).
-        nw4r::lyt::Pane* tagPane = rootPane->FindPaneByName(&lbl_eu_8050FF8C[0x1d0], true);
+        // Hand the tag processor to the tag pane (+0xF8). Retail reloads the
+        // root pane here rather than keeping it live across the text stamping.
+        nw4r::lyt::Pane* tagPane =
+            this->layout40->GetRootPane()->FindPaneByName(&lbl_eu_8050FF8C[0x1d0], true);
         if (tagPane != 0) *(u32*)((u8*)tagPane + 0xF8) = (u32)this->objAt50;
 
         func_80136B4C(this->layout40, &lbl_eu_8050FF8C[0x274],
                       (char*)func_80136190(&lbl_eu_8050FF8C[0x269], &lbl_eu_8050FF8C[0xc], 6), 0);
 
         // Remember the cursor pane's position.
-        nw4r::lyt::Pane* curPane = rootPane->FindPaneByName(&lbl_eu_8050FF8C[0x281], true);
+        nw4r::lyt::Pane* curPane =
+            this->layout40->GetRootPane()->FindPaneByName(&lbl_eu_8050FF8C[0x281], true);
         copyVEC3((void*)&this->field_308, (float*)((u8*)curPane + 0x2C));
 
         // Cursor sub-objects: construct on the stack with the arc accessor,
@@ -1394,13 +1498,13 @@ bool CMCGetItemBox::OnFileEvent(CEventFile* pEventFile) {
         __ct__CCur07(cur07Buf, this->arcAcc1);
         func_8018B0FC(&this->subObj_58, cur07Buf);
         __dt__6CCur07Fv(cur07Buf, -1);
-        (*(void(**)(void*))(*(void***)&this->subObj_58)[2])(&this->subObj_58);
+        ((CMCCursorWidget*)&this->subObj_58)->vf_00();
 
         u8 cur09Buf[0x18];
         __ct__CCur09(cur09Buf, this->arcAcc1);
         func_8018B0FC(&this->subObj_70, cur09Buf);
         __dt__6CCur09Fv(cur09Buf, -1);
-        (*(void(**)(void*))(*(void***)&this->subObj_70)[2])(&this->subObj_70);
+        ((CMCCursorWidget*)&this->subObj_70)->vf_00();
 
         // Two anchor vectors on cursor 09: the second pair swaps the x base.
         nw4r::math::VEC3 s1;
@@ -1417,13 +1521,13 @@ bool CMCGetItemBox::OnFileEvent(CEventFile* pEventFile) {
         __ct__CCur16(cur16Buf, this->arcAcc1);
         func_8018B0FC(&this->subObj_88, cur16Buf);
         __dt__6CCur16Fv(cur16Buf, -1);
-        (*(void(**)(void*))(*(void***)&this->subObj_88)[2])(&this->subObj_88);
+        ((CMCCursorWidget*)&this->subObj_88)->vf_00();
 
         u8 cur18Buf[0x18];
         __ct__CCur18(cur18Buf, func_801355F4());
         func_8018B0FC(&this->subObj_A0, cur18Buf);
         __dt__6CCur18Fv(cur18Buf, -1);
-        (*(void(**)(void*))(*(void***)&this->subObj_A0)[2])(&this->subObj_A0);
+        ((CMCCursorWidget*)&this->subObj_A0)->vf_00();
 
         func_80298A78(this);
         this->fileHandle1 = 0;
@@ -1452,6 +1556,8 @@ bool CMCGetItemBox::OnFileEvent(CEventFile* pEventFile) {
         void* fileData = h3->mData;
         h3->mData = 0;
         func_8003AA34();
+        // Retail folds the first lookup's offset directly into lis/addi, then
+        // caches the table base for the remaining lookups.
         if (getFP__FPCc(&lbl_eu_8050FF8C[0x29f]) == 0) {
             func_8003AA78__5CBdatFUlPv(2, fileData);
         }

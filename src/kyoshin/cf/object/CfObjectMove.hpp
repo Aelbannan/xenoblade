@@ -121,7 +121,6 @@ extern const float lbl_eu_80666ACC;
 // Scene-time query (CfGameManager.cpp, retail unmangled name): returns the
 // current time value from the shared scene object. extern "C" keeps the
 // call-site reloc at the unmangled retail name (docs/MWCC_CASES.md §2).
-extern "C" f32 func_80496288(void* scene);
 // Minimal bdat imports (CfBdat.hpp cannot be included here: its
 // getBdatStringColumnValue declaration conflicts with harness_catalog.hpp's).
 // The static-member forms keep the retail mangled reloc names.
@@ -143,6 +142,10 @@ extern "C" void func_8004B354(void* self);
 // func_80061FE8): used by CfObject_UnkVirtualFunc47's CtrlEnemy/CtrlNpc
 // allocations.
 extern "C" u32 func_80061FFC();
+// CActParamAnim translation helper (defined in kyoshin/action/CActParamAnim.cpp
+// as extern "C"). Retail CfObject_UnkVirtualFunc27 / UnkVirtualFunc29 call it
+// with the +0xC4 target; C linkage keeps the retail unmangled name.
+extern "C" void func_8004B4A4(void* target, f32 value);
 // Base +0xB4 forced-name implementation (defined in CfObjectModel.cpp as the
 // CfObject member; the retail symbol is Fv but the body reads r4 as a
 // position vector). extern "C" keeps the call-site reloc at the unmangled
@@ -319,8 +322,10 @@ extern "C" u32 func_80061FE8();
 extern "C" void* allocate__Q23mtl10MemManagerFUlUl(u32 size, u32 heap);
 // +0xC8 target ctor (retail 0x8005A3FC, defined in
 // kyoshin/cf/CActParamAnimGame.cpp): func_800BD644 constructs the target
-// with the owning CfObjectMove as the parent.
-extern "C" void __ct__8005A3FC(void* self, void* parent);
+// with the owning CfObjectMove as the parent. Returns the object pointer
+// (MWCC ctor ABI keeps this in r3): declaring void forces func_800BD644
+// to keep the alloc result alive across the call in a callee-saved reg.
+extern "C" void* __ct__8005A3FC(void* self, void* parent);
 // Model sub-object helper used by func_800BD644's tail (defined in the
 // monolib scene library, same family as func_804838DC in
 // CfObjectModel.hpp).
@@ -615,6 +620,23 @@ namespace cf {
         virtual u32 m188();  // vtable +0x188 (CfObjectModel_UnkVirtualFunc5 returns a value in retail)
         virtual void m18C(void* arg);  // vtable +0x18C (CfObjectModel_UnkVirtualFunc6)
     };
+    // Vtable proxy for calling the CfObjectMove slot +0x188 as a
+    // value-returning virtual (retail func_800BD644 queries the model list;
+    // the CfObjectModel-derived proxies land past +0x1C8 because the base
+    // vtable already extends that far). Pins dummies +0x10C..+0x184 after
+    // CfObjectMoveVt108 (last slot +0x108).
+    class CfObjectMoveVt188 : public CfObjectMoveVt108 {
+    public:
+        virtual void m10C(); virtual void m110(); virtual void m114(); virtual void m118();
+        virtual void m11C(); virtual void m120(); virtual void m124(); virtual void m128();
+        virtual void m12C(); virtual void m130(); virtual void m134(); virtual void m138();
+        virtual void m13C(); virtual void m140(); virtual void m144(); virtual void m148();
+        virtual void m14C(); virtual void m150(); virtual void m154(); virtual void m158();
+        virtual void m15C(); virtual void m160(); virtual void m164(); virtual void m168();
+        virtual void m16C(); virtual void m170(); virtual void m174(); virtual void m178();
+        virtual void m17C(); virtual void m180(); virtual void m184();
+        virtual u32 m188();  // vtable +0x188
+    };
     // Vtable proxy for calling a CfObjectMove vtable slot +0x144 with two
     // explicit args (retail CfObject_UnkVirtualFunc39/42 dispatch the bdat
     // result through it; the base header declares CfObject_UnkVirtualFunc61
@@ -639,7 +661,8 @@ namespace cf {
     // the full offset pad, so field_94 lands at 0x94 (same scheme as
     // CfObjectMoveC4Flags).
     struct CfObjectMove90View {
-        u8 _pad90[0x94];     // 0x00-0x93
+        u8 _pad90[0x90];     // 0x00-0x8F
+        u32 field_90;        // 0x90-0x93
         u32 field_94;        // 0x94-0x97
     };
     // View of the CfObject base word at +0x6C (func_800BE3E8 toggles bit 16;
@@ -793,6 +816,12 @@ namespace cf {
         float field_C;          // 0x0C
         u8 _pad10[0x14 - 0x10]; // 0x10-0x13
         float field_14;         // 0x14
+    };
+    // View of the +0xC4 target's flag word (CfObject_UnkVirtualFunc27 ORs in
+    // the 0x20 bit when the incoming position moved on Z only).
+    struct CfObjectMoveC4FlagsView {
+        u8 _pad[0xC];           // 0x00-0x0B
+        u32 flags;              // 0x0C
     };
     // View of the +0x6B4 word inside the +0x60C region (func_800BC4CC toggles
     // bit 12 around the func_804B192C call).

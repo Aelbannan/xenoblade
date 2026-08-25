@@ -2,6 +2,7 @@
 // Replace stubs with high-level C/C++ during decomp.
 
 #include <harness_catalog.h>
+#include "monolib/scn/CScnTimeApi.hpp"
 #include <string.h>
 
 #include "nw4r/g3d/res/g3d_resmdl.h"
@@ -214,7 +215,6 @@ u32 func_804972E8(CScn80496B0C* self, CScnItemAnim* anim, int index,
 
 extern "C" void func_804986F8(CScnChild80496B0C* self, f32 rate);
 // Scene lookup used by the blend-weight updates (retail free function).
-extern "C" f32 func_80496288(CScn* scn);
 // Character-animation setup helper (retail keeps an unmangled linker name,
 // so it is declared and defined with C linkage).
 extern "C" __declspec(noinline) u32 func_80497544(

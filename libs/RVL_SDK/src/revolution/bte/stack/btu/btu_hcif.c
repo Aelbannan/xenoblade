@@ -34,6 +34,14 @@ __declspec(align(4)) char BTU_str_event_mismatch[] = "Event mismatch opcode=%X c
 __declspec(align(4)) char BTU_str_cmd_timeout[] = "Cmd timeout; no cmd in queue";
 __declspec(align(4)) char BTU_str_hci_timeout[] = "BTU HCI command timeout - cmd opcode = 0x%02x";
 
+/* Pool-order anchor: under -ipa off MWCC pools string literals at first .text
+ * use, which puts the two timeout strings ahead of hw_error/event_mismatch;
+ * retail pools them in declaration order. Referencing the first two literals
+ * from this data initializer forces them into the pool first. The pointer
+ * table itself was eliminated by the retail linker (orphan anchor, btm_sec
+ * pattern) - stripped from the object via UNIT_RULES extern_data_sections. */
+char *const btu_hcif_pool_anchor[] = { BTU_str_hw_error, BTU_str_event_mismatch };
+
 /* HCI command opcodes / BTU timer types referenced by the handlers
    (hcidefs.h / btu.h). Kept as local mirrors because the public headers
    carry a different btu_cb layout than the retail image. */

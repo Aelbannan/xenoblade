@@ -5,7 +5,8 @@
 #include <cstring>
 
 #include "kyoshin/cf/CfGimmick.hpp"
-#include "kyoshin/CTaskGame.hpp"   // CTaskGameCamView / func_8049603C (extern "C")
+#include "kyoshin/CTaskGame.hpp"   // CTaskGameCamView
+#include "libs/monolib/src/scn/CScn_8049603C.hpp" // func_8049603C (single owner decl)
 #include "kyoshin/cf/object/CfObjectMove.hpp"
 #include <nw4r/math.h>
 
@@ -166,10 +167,10 @@ void func_80208CC0(void* partyId, s32 flagA, s32 flagB) {
     // Ground-height gate: while the stage base height is above zero, record
     // the downward drop value and flag it (bit 0x8).  The scene-camera height
     // query is re-run inside the block (retail calls func_8049603C twice).
-    f32 rem = lbl_eu_80668358 - func_8049603C(lbl_eu_80663E14)->field_C;
+    f32 rem = lbl_eu_80668358 - ((CTaskGameCamView*)func_8049603C(lbl_eu_80663E14))->field_C;
     if (rem < lbl_eu_80668358) {
         lbl_eu_806646BC |= 0x8;
-        lbl_eu_80662780 = lbl_eu_80668358 - func_8049603C(lbl_eu_80663E14)->field_C;
+        lbl_eu_80662780 = lbl_eu_80668358 - ((CTaskGameCamView*)func_8049603C(lbl_eu_80663E14))->field_C;
     }
 
     if (cf::CfGameManager::getPlayer(0) != 0) {

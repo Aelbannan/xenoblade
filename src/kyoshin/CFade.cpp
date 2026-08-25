@@ -28,8 +28,8 @@ __declspec(noinline) void func_802445F0(CFade* self) {
     }
 }
 
-// Target 5: once the fade-in animation reaches the target frame, mark faded-in.
-// Target 6: once the fade-out animation rewinds, return to idle.
+// once the fade-in animation reaches the target frame, mark faded-in.
+// once the fade-out animation rewinds, return to idle.
 // noinline keeps the retail `bl` instead of inlining the body into
 // func_802443E8. C linkage via CFade.hpp declarations (see above).
 __declspec(noinline) void func_80244558(CFade* self) {
@@ -107,20 +107,20 @@ CFade::CFade() : CFadeVtblBase(), mMemRegion() {
     mVisible = 1;
 }
 
-// Target 7: destructor (member region + conditional delete are compiler-emitted).
+// destructor (member region + conditional delete are compiler-emitted).
 #pragma push
 #pragma optimize_for_size on
 CFade::~CFade() {}
 #pragma pop
 
-// Target 4: start an async read of the fade layout arc.
+// start an async read of the fade layout arc.
 void CFade::func_8024439C() {
     mFileHandle = CDeviceFile::readFile(mtl::MemManager::getHandleMEM2(),
         lbl_eu_8050B5A0, reinterpret_cast<IWorkEvent*>(this), 0, 0);
     CDeviceFile::setHandleFlag2(mFileHandle);
 }
 
-// Target 9: per-frame update. Drive the fade-in/out animations, then refresh
+// per-frame update. Drive the fade-in/out animations, then refresh
 // the layout's animation once loaded and not idle. The s32 copy of the byte
 // state makes MWCC emit signed cmpi (retail), and the sparse switch gives the
 // beq/fallthrough dispatch shape (if/else-if would invert the branches).
@@ -139,14 +139,14 @@ void CFade::func_802443E8() {
     mLayout->Animate(0);
 }
 
-// Target 3: render the fade layout once loaded and fading.
+// render the fade layout once loaded and fading.
 void CFade::func_80244460(nw4r::lyt::DrawInfo* drawInfo) {
     if (mIsLoaded == 0) return;
     if (mFadeState == 0) return;
     func_80137038(mLayout, drawInfo, 0, 1);
 }
 
-// Target 10: unload, freeing the file handle, layout and arc resources.
+// unload, freeing the file handle, layout and arc resources.
 void CFade::func_8024448C() {
     func_801390E0(&mFileHandle);
     nw4r::lyt::Layout* layout = mLayout;
@@ -160,7 +160,7 @@ void CFade::func_8024448C() {
     mMemRegion.func_8045F778();
 }
 
-// Target 1: start fading in if currently idle.
+// start fading in if currently idle.
 void CFade::func_80244518() {
     if (mFadeState == 0) {
         mFadeState = 1;
@@ -168,7 +168,7 @@ void CFade::func_80244518() {
     }
 }
 
-// Target 2: start fading out if fully faded in.
+// start fading out if fully faded in.
 void CFade::func_80244538() {
     if (mFadeState == 2) {
         mFadeState = 3;

@@ -10,13 +10,8 @@ static u32 nwc24TimeCommonResult[8] ALIGN(32);
 static u32 nwc24TimeCommonBuffer[8] ALIGN(32);
 
 static s32 nwc24ShtRetryRest;
-// .sdata is 8 bytes in retail: nwc24ShtFd then 4 zero pad bytes
-// (gap_09_8066307C_sdata-analog) aligning the next unit's .sdata.
-struct Nwc24ShtFd {
-    s32 fd;
-    u32 pad;
-};
-static struct Nwc24ShtFd nwc24ShtFd = { -1, 0 };
+// Retail .sdata is 4 bytes: nwc24ShtFd is a plain s32 fd.
+static s32 nwc24ShtFd = -1;
 static BOOL NWC24iIsRequestPending;
 
 static BOOL NWC24Shutdown_(BOOL final, u32 event);
@@ -72,8 +67,8 @@ NWC24Err NWC24iPrepareShutdown() DECOMP_DONT_INLINE {
     ShutdownFuncInfo.prio = 0x6e;
     OSRegisterShutdownFunction(&ShutdownFuncInfo);
 
-    if (nwc24ShtFd.fd < 0) {
-        result = NWC24iOpenResourceManager_(__FUNCTION__,"/dev/net/kd/request",&nwc24ShtFd.fd,1);
+    if (nwc24ShtFd < 0) {
+        result = NWC24iOpenResourceManager_(__FUNCTION__,"/dev/net/kd/request",&nwc24ShtFd,1);
     }
     nwc24ShtRetryRest = 5;
 
@@ -167,13 +162,17 @@ NWC24Err NWC24iRequestShutdown(u32 param_1, NWC24Err* resultOut) {
 
     // Retail .data pools the __FUNCTION__ names (incl. the stripped
     // NWC24ResumeScheduler) here.
+    // Pooled here: MWCC keeps discarded-value casts only in the later
+    // pool groups, and this lands right between the OSReport messages and
+    // "/dev/net/kd/request" like retail.
+    (void)"NWC24iPrepareShutdown";
     (void)"NWC24SuspendScheduler";
     (void)"NWC24ResumeScheduler";
     (void)"NWC24iRequestShutdown";
 
     shtBuffer[0] = param_1;
     
-    if (IOS_IoctlAsync(nwc24ShtFd.fd, 0x28, shtBuffer, 0x20, shtResult, 0x20, CallbackAsyncIpc, resultOut) < 0) {
+    if (IOS_IoctlAsync(nwc24ShtFd, 0x28, shtBuffer, 0x20, shtResult, 0x20, CallbackAsyncIpc, resultOut) < 0) {
         return -42;
     }
     

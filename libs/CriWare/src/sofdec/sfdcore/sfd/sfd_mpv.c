@@ -11,6 +11,29 @@ typedef struct SFMPVDecView {
 } SFMPVDecView;
 
 // ---------------------------------------------------------------------------
+// Local view of the 11-word tc-save block at self+0xe58 (copy source/target).
+// ---------------------------------------------------------------------------
+// ---------------------------------------------------------------------------
+// Local view of the tc-save region: cur block at +0xe58, prev block at +0xe84,
+// deadline at +0xed4, shc pointer at +0x2068.
+// ---------------------------------------------------------------------------
+typedef struct TCBlockView {
+    u32 w[9];
+    s32 tm;
+    u32 fx;
+} TCBlockView;
+
+typedef struct SfMpvTcView {
+    u8 pad_0x0[0xe58];
+    TCBlockView cur_tc;
+    TCBlockView prv_tc;
+    u8 pad_0xeb0[0x24];
+    s32 lim;
+    u8 pad_0xed8[0x2068 - 0xed8];
+    void* shc;
+} SfMpvTcView;
+
+// ---------------------------------------------------------------------------
 // External declarations
 // ---------------------------------------------------------------------------
 
@@ -256,9 +279,9 @@ int SFMPV_Finish(void) {
 // SFMPV_ExecServer
 // ---------------------------------------------------------------------------
 s32 SFMPV_ExecServer(void* self) {
-    void (*fn)(void*, void*);
-    s32 numfrm;
-    s32 ret = 0;
+    s32 ret;
+    s32 idx;
+    s32 ch;
     s32 v1;
     s32 v2;
     s32 v3;
@@ -267,8 +290,7 @@ s32 SFMPV_ExecServer(void* self) {
 
     if (lbl_eu_80606E34 != NULL) {
         lbl_eu_805688C8[3] = (u32)self;
-        fn = *(void (**)(void*, void*))((u8*)*(u32*)lbl_eu_80606E34 + 0x24);
-        fn(lbl_eu_80606E34, &lbl_eu_805688C8[1]);
+        (*(void (**)(void*, void*))((u8*)*(u32*)lbl_eu_80606E34 + 0x24))(lbl_eu_80606E34, &lbl_eu_805688C8[1]);
     }
 
     if (SFSET_GetCond(self, 5) == 0) {
@@ -293,6 +315,7 @@ s32 SFMPV_ExecServer(void* self) {
     if (*(s32*)((u8*)self + 0x54) == 2) {
         sfmpv_ProcessAuxShc(self);
     }
+    ret = 0;
     for (;;) {
         if (*(s32*)((u8*)self + 0x70) != 0) break;
         if (*(s32*)((u8*)self + 0x74) != 0) break;
@@ -303,33 +326,31 @@ s32 SFMPV_ExecServer(void* self) {
         if (out == 0) break;
     }
     {
-        s32 ch2 = *(s32*)((u8*)self + 0x2070);
-        s32 ch = *(s32*)((u8*)self + 0x2074);
         u32 fcnt[2];
-        u64 v;
-        SFBUF_RingGetSj(self, ch2, &sj);
+        /* idx doubles as ch2 here, then the prep-frame limit, then numfrm */
+        idx = *(s32*)((u8*)self + 0x2070);
+        ch = *(s32*)((u8*)self + 0x2074);
+        SFBUF_RingGetSj(self, idx, &sj);
         SFBUF_GetFlowCnt(sj, &fcnt[0], &fcnt[1]);
-        v = SFBUF_UpdateFlowCnt(((u64)(u32)*(s32*)((u8*)self + 0x9b0) << 32) | (u32)*(s32*)((u8*)self + 0x9b4), fcnt[1]);
-        *(s32*)((u8*)self + 0x9b4) = (s32)v;
-        *(s32*)((u8*)self + 0x9b0) = (s32)(v >> 32);
-        if (SFBUF_GetPrepFlg(self, ch) != 1 && SFBUF_GetPrepFlg(self, ch2) != 1) {
+        *(u64*)((u8*)self + 0x9b0) = SFBUF_UpdateFlowCnt(*(u64*)((u8*)self + 0x9b0), fcnt[0]);
+        if (SFBUF_GetPrepFlg(self, ch) != 1 && SFBUF_GetPrepFlg(self, idx) != 1) {
             s32 r = 0;
             if (SFMPVF_IsTermDec(self) != 0) {
                 r = 1;
             } else {
-                s32 nf = *(s32*)((u8*)self + 0xa78);
                 s32 n = *(s32*)((u8*)self + 0x30);
-                if (nf == -1) {
-                    nf = n + 2;
+                idx = *(s32*)((u8*)self + 0xa78);
+                if (idx == -1) {
+                    idx = n + 2;
                 }
-                if (n + 2 < nf) {
-                    nf = n + 2;
+                if (n + 2 < idx) {
+                    idx = n + 2;
                 }
-                n = SFMPVF_GetNumFrm(self);
+                out = SFMPVF_GetNumFrm(self);
                 if (*(s32*)((u8*)self + 0x68) == 2) {
-                    n += *(s32*)((u8*)self + 0x978);
+                    out += *(s32*)((u8*)self + 0x978);
                 }
-                if (n >= nf && sfmpv_IsVbvEnough(self) != 0) {
+                if (out >= idx && sfmpv_IsVbvEnough(self) != 0) {
                     r = 1;
                 }
             }
@@ -341,13 +362,13 @@ s32 SFMPV_ExecServer(void* self) {
             }
         }
     }
-    numfrm = SFMPVF_GetNumFrm(self);
-    if (numfrm != -1) {
+    ch = SFMPVF_GetNumFrm(self);
+    if (ch != -1) {
         s32 r = 0;
         if (SFMPVF_IsTermDec(self) != 0) {
-            if (numfrm == 0) {
+            if (ch == 0) {
                 r = 1;
-            } else if (*(s32*)((u8*)self + 0x68) == 1 && numfrm == 1) {
+            } else if (*(s32*)((u8*)self + 0x68) == 1 && ch == 1) {
                 if (*(s32*)((u8*)self + 0x978) > *(s32*)((u8*)self + 0x97c)) {
                     r = 1;
                 }
@@ -364,8 +385,7 @@ s32 SFMPV_ExecServer(void* self) {
         lbl_eu_805688C8[0x74 / 4] = (u32)((u8*)self + 0x9b0);
         lbl_eu_805688C8[0x80 / 4] = (u32)((u8*)self + 0x9b8);
         lbl_eu_805688C8[0x8c / 4] = (u32)((u8*)self + 0x9c0);
-        fn = *(void (**)(void*, void*))((u8*)*(u32*)lbl_eu_80606E34 + 0x24);
-        fn(lbl_eu_80606E34, &lbl_eu_805688C8[0x6c / 4]);
+        (*(void (**)(void*, void*))((u8*)*(u32*)lbl_eu_80606E34 + 0x24))(lbl_eu_80606E34, &lbl_eu_805688C8[0x6c / 4]);
     }
     return ret;
 }
@@ -706,18 +726,24 @@ u32 sfmpv_BsearchDelim(void* buf, u32 mask, u32* out) {
 // ---------------------------------------------------------------------------
 s32 sfmpv_DecodeOneUnit(void* self, s32 ch, s32 pat, s32 dlm, s32* out) {
     void (*fn)(void*, void*);
+    s32 out2;
     void* sj;
-    void* shc = *(void**)((u8*)self + 0x2068);
-    u32 info[7];
-    s32 ret = 0;
-    s32 out2 = 0;
-    s32 i;
+    void* p;
+    void* shc2;
+    u32 d_vdo[2];
+    u32 d_end[2];
+    u32 pic[2];
+    s32 ret;
+    s32 c0;
+
     *out = 0;
     *(s32*)((u8*)self + 0x988) = 0;
-    if (*(s32*)((u8*)shc + 8) != 0xcc || *(s32*)((u8*)shc + 0xf8) != 0) {
+    p = *(void**)((u8*)self + 0x2068);
+    if (*(s32*)((u8*)p + 8) != 0xcc || *(s32*)((u8*)p + 0xf8) != 0) {
         pat &= 0xcc;
     }
-    if (SFBUF_RingGetSj(self, *(s32*)((u8*)self + 0x2070), &sj) != 0) {
+    ret = SFBUF_RingGetSj(self, *(s32*)((u8*)self + 0x2070), &sj);
+    if (ret != 0) {
         return 0;
     }
     if ((pat & 0xc8) != 0) {
@@ -728,45 +754,42 @@ s32 sfmpv_DecodeOneUnit(void* self, s32 ch, s32 pat, s32 dlm, s32* out) {
             *(s32*)((u8*)self + 0x2080) = SFBUF_GetRTot(self, *(s32*)((u8*)self + 0x2070)) + 4;
         }
         if (*(s32*)((u8*)self + 0xe50) < 0) {
-            u32* dst = (u32*)((u8*)self + 0xe2c);
-            u32* src = (u32*)((u8*)self + 0xe00);
-            for (i = 0; i < 11; i++) {
-                dst[i] = src[i];
-            }
+            /* refresh the 11-word tc-save block at +0xe2c from +0xe00 */
+            *(TCBlockView*)((u8*)self + 0xe2c) = *(TCBlockView*)((u8*)self + 0xe00);
         }
         if (SFCON_IsEndcodeSkip(self) != 0) {
-            if (sfmpv_ConcatSub(self) == -1) {
-                return -1;
-            }
-            for (;;) {
-                u32 d[2];
-                void* v = *(void**)sj;
-                ((void (*)(void*, int, int, u32*))((void**)v)[6])(sj, 1, 4, d);
-                if (d[1] == 4 && MPV_CheckDelim((u8*)d[0]) == 0x80) {
-                    ((void (*)(void*, int, u32*))((void**)v)[8])(sj, 0, d);
-                    SFBUF_AddRtotSj(self, *(s32*)((u8*)self + 0x2070), 4);
-                    *(s64*)((u8*)self + 0x9b8) += 4;
-                    *(s32*)((u8*)self + 0x50) = 1;
-                } else {
-                    ((void (*)(void*, int, u32*))((void**)v)[7])(sj, 1, d);
-                    break;
+            /* drain concat stream: pull 4-byte units until a non-GOP delimiter */
+            if (sfmpv_ConcatSub(self) != -1) {
+                p = sj;
+                for (;;) {
+                    void* v = *(void**)p;
+                    ((void (*)(void*, int, int, u32*))((void**)v)[6])(p, 1, 4, d_end);
+                    if (d_end[1] == 4 && MPV_CheckDelim((u8*)(u32)d_end[0]) == 0x80) {
+                        ((void (*)(void*, int, u32*))((void**)v)[8])(p, 0, d_end);
+                        SFBUF_AddRtotSj(self, *(s32*)((u8*)self + 0x2070), 4);
+                        *(s64*)((u8*)self + 0x9b8) += 4;
+                        *(s32*)((u8*)self + 0x50) = 1;
+                    } else {
+                        ((void (*)(void*, int, u32*))((void**)v)[7])(p, 1, d_end);
+                        break;
+                    }
                 }
+                *out = 1;
             }
-            *out = 1;
             goto done;
         }
         if (SFCON_IsVideoEndcodeSkip(self) != 0) {
+            p = sj;
             for (;;) {
-                u32 d[2];
-                void* v = *(void**)sj;
-                ((void (*)(void*, int, int, u32*))((void**)v)[6])(sj, 1, 4, d);
-                if (d[1] == 4 && MPV_CheckDelim((u8*)d[0]) == 0x80) {
-                    ((void (*)(void*, int, u32*))((void**)v)[8])(sj, 0, d);
+                void* v = *(void**)p;
+                ((void (*)(void*, int, int, u32*))((void**)v)[6])(p, 1, 4, d_vdo);
+                if (d_vdo[1] == 4 && MPV_CheckDelim((u8*)(u32)d_vdo[0]) == 0x80) {
+                    ((void (*)(void*, int, u32*))((void**)v)[8])(p, 0, d_vdo);
                     SFBUF_AddRtotSj(self, *(s32*)((u8*)self + 0x2070), 4);
                     *(s64*)((u8*)self + 0x9b8) += 4;
                     *(s32*)((u8*)self + 0x50) = 1;
                 } else {
-                    ((void (*)(void*, int, u32*))((void**)v)[7])(sj, 1, d);
+                    ((void (*)(void*, int, u32*))((void**)v)[7])(p, 1, d_vdo);
                     break;
                 }
             }
@@ -775,19 +798,21 @@ s32 sfmpv_DecodeOneUnit(void* self, s32 ch, s32 pat, s32 dlm, s32* out) {
         }
     }
     if (dlm == 0) {
-        s32 r = 0;
+        s32 r;
         if (pat == 0x80) {
             r = 1;
-        } else if (ch <= 4) {
-            if (SFBUF_GetTermFlg(self, *(s32*)((u8*)self + 0x2070)) == 1) {
-                r = 1;
-            }
+        } else if (ch <= 4 && SFBUF_GetTermFlg(self, *(s32*)((u8*)self + 0x2070)) == 1) {
+            r = 1;
+        } else {
+            r = 0;
         }
         if (r == 0) {
-            s32 c0 = SFSET_GetCond(self, 0x4c);
+            /* terminate decode once either playback-limit condition holds */
+            c0 = SFSET_GetCond(self, 0x4c);
             s32 c1 = SFSET_GetCond(self, 0x4d);
+            shc2 = *(void**)((u8*)self + 0x2068);
             if ((c0 != -1 && *(s32*)((u8*)self + 0x960) >= c0) ||
-                (c1 != -1 && *(s32*)((u8*)shc + 0x94) > c1)) {
+                (c1 != -1 && *(s32*)((u8*)shc2 + 0x94) > c1)) {
                 r = 1;
             }
         }
@@ -805,8 +830,8 @@ s32 sfmpv_DecodeOneUnit(void* self, s32 ch, s32 pat, s32 dlm, s32* out) {
         }
         goto done;
     }
-    if ((pat & 0x4c) != 0) {
-        u32 pic[2];
+        if ((pat & 0x4c) != 0) {
+        u32 info[7];
         if (SFBUF_RingGetRead(self, *(s32*)((u8*)self + 0x2070), info) != 0) {
             pic[0] = 0;
             pic[1] = 0;
@@ -819,19 +844,19 @@ s32 sfmpv_DecodeOneUnit(void* self, s32 ch, s32 pat, s32 dlm, s32* out) {
             return ret;
         }
         if (out2 == 0) {
-            if ((pat & *(s32*)((u8*)shc + 8)) != 0) {
-                *(s32*)((u8*)shc + 8) = 0xcc;
+            if ((pat & *(s32*)((u8*)p + 8)) != 0) {
+                *(s32*)((u8*)p + 8) = 0xcc;
             }
-            *(s32*)((u8*)shc + 0xf8) = 1;
+            *(s32*)((u8*)p + 0xf8) = 1;
         }
         if (pat == 0x40 && out2 == -2) {
-            *(s32*)((u8*)shc + 8) = 0xc0;
+            *(s32*)((u8*)p + 8) = 0xc0;
         }
         *out = 1;
         goto done;
     }
     if ((pat & 2) != 0) {
-        u32 pic[2];
+        u32 info[7];
         if (SFBUF_RingGetRead(self, *(s32*)((u8*)self + 0x2070), info) != 0) {
             pic[0] = 0;
             pic[1] = 0;
@@ -850,7 +875,7 @@ s32 sfmpv_DecodeOneUnit(void* self, s32 ch, s32 pat, s32 dlm, s32* out) {
         goto done;
     }
     if (pat != 0x80) {
-        if (sfmpv_GoDdelim(self, 0, 0xcc) > 0) {
+        if (sfmpv_GoDdelim((u8*)self, (u32)sj, 0xcc) > 0) {
             *out = 1;
         }
     }
@@ -924,10 +949,9 @@ s32 sfmpv_ConcatSub(u8* self) {
 // sfmpv_DecodePicAtr
 // ---------------------------------------------------------------------------
 s32 sfmpv_DecodePicAtr(void* self, u32* pic, void* sj, s32 pat, s32* out) {
-    void (*fn)(void*, void*);
-    void* shc;
+    u8* shc;
     void* mpv;
-    void* frm;
+    u8* frm;
     s32 ret;
     s32 fc;
     s32 t1;
@@ -938,18 +962,18 @@ s32 sfmpv_DecodePicAtr(void* self, u32* pic, void* sj, s32 pat, s32* out) {
     s32 pts0;
     s32 pts1;
     u32 pque[4];
+    u32 tc[8];
 
-    shc = *(void**)((u8*)self + 0x2068);
+    shc = *(u8**)((u8*)self + 0x2068);
     mpv = *(void**)shc;
-    frm = (u8*)shc + 0x14;
+    frm = shc + 0x14;
     ((SFMPVDecView*)self)->field_0x3908 = 0;
     MPV_SetPicUsrBuf(mpv, *(void**)((u8*)self + 0x3904), *(void**)((u8*)self + 0x3900));
     fc = SJRBF_GetFlowCnt(sj, 0, 1);
     if (lbl_eu_80606E34 != NULL) {
         lbl_eu_80568A70[3] = (u32)mpv;
         lbl_eu_80568A70[0x18 / 4] = (u32)&fc;
-        fn = *(void (**)(void*, void*))((u8*)*(u32*)lbl_eu_80606E34 + 0x24);
-        fn(lbl_eu_80606E34, &lbl_eu_80568A70[1]);
+        (*(void (**)(void*, void*))((u8*)*(u32*)lbl_eu_80606E34 + 0x24))(lbl_eu_80606E34, &lbl_eu_80568A70[1]);
     }
     *out = MPV_DecodePicAtrSj(mpv, sj);
     t1 = SJRBF_GetFlowCnt(sj, 0, 1) - fc;
@@ -977,8 +1001,7 @@ s32 sfmpv_DecodePicAtr(void* self, u32* pic, void* sj, s32 pat, s32* out) {
         lbl_eu_80568A70[0x74 / 4] = (u32)&t1;
         lbl_eu_80568A70[0x80 / 4] = (u32)out;
         lbl_eu_80568A70[0x8c / 4] = (u32)&ret;
-        fn = *(void (**)(void*, void*))((u8*)*(u32*)lbl_eu_80606E34 + 0x24);
-        fn(lbl_eu_80606E34, &lbl_eu_80568A70[0x6c / 4]);
+        (*(void (**)(void*, void*))((u8*)*(u32*)lbl_eu_80606E34 + 0x24))(lbl_eu_80606E34, &lbl_eu_80568A70[0x6c / 4]);
     }
     SFBUF_AddRtotSj(self, *(s32*)((u8*)self + 0x2070), t1);
     *(s64*)((u8*)self + 0x9b8) += t1;
@@ -1062,11 +1085,9 @@ s32 sfmpv_DecodePicAtr(void* self, u32* pic, void* sj, s32 pat, s32* out) {
         if (pts >= 0 || *(s32*)((u8*)frm + 0x30) == 0 || *(s8*)((u8*)frm + 0x57) != 0) {
             set = 1;
         } else if (rate != 0 && *(s32*)((u8*)self + 0xe00) != 0) {
-            u32 tc[8];
             s32 a;
             s32 b;
             s32 c;
-            s32 d;
             tc[0] = *(s32*)((u8*)self + 0xdb4);
             tc[1] = *(s32*)((u8*)self + 0xdb8);
             tc[2] = *(s32*)((u8*)self + 0xdbc);
@@ -1075,9 +1096,11 @@ s32 sfmpv_DecodePicAtr(void* self, u32* pic, void* sj, s32 pat, s32* out) {
             tc[5] = *(s32*)((u8*)self + 0xdc8);
             tc[6] = *(s32*)((u8*)self + 0xdcc);
             tc[7] = *(s32*)((u8*)self + 0xdd0);
-            SFTIM_Tc2Time(tc, &a, &b);
-            SFTIM_Tc2Time((u8*)self + 0xe04, &c, &d);
-            if (a <= c || a >= c + d * SFSET_GetCond(self, 0x35)) {
+            /* first call: out1->c, out2 shared; second: out1->a, out2->b.
+             * set when c > b and c < b + a * cond(0x35) */
+            SFTIM_Tc2Time(tc, &c, &b);
+            SFTIM_Tc2Time((u8*)self + 0xe04, &a, &b);
+            if (c > b && c < b + a * SFSET_GetCond(self, 0x35)) {
                 set = 1;
             }
         }
@@ -1090,8 +1113,8 @@ s32 sfmpv_DecodePicAtr(void* self, u32* pic, void* sj, s32 pat, s32* out) {
         sfmpv_DoReformTc(self, frm, pts, rate);
     }
     if (*(s32*)((u8*)self + 0xdd4) == 0) {
-        u32 tc[8];
-        s32 t1, t2;
+        s32 o1;
+        s32 o2;
         tc[0] = *(s32*)((u8*)self + 0xdb4);
         tc[1] = *(s32*)((u8*)self + 0xdb8);
         tc[2] = *(s32*)((u8*)self + 0xdbc);
@@ -1100,23 +1123,25 @@ s32 sfmpv_DecodePicAtr(void* self, u32* pic, void* sj, s32 pat, s32* out) {
         tc[5] = *(s32*)((u8*)self + 0xdc8);
         tc[6] = 0;
         tc[7] = *(s32*)((u8*)self + 0xdd0);
-        SFTIM_Tc2Time(tc, &t1, &t2);
-        /* dd4 = valid flag, dd8..df4 = tc[0..7], df8/dfc = converted time */
-        *(s32*)((u8*)self + 0xdd8) = tc[0];
+        SFTIM_Tc2Time(tc, &o1, &o2);
+        /* dd4 = valid flag, dd8..df4 = tc[0..7], df8/dfc = converted time.
+         * Store order mirrors retail (pairs swapped). */
         *(s32*)((u8*)self + 0xddc) = tc[1];
-        *(s32*)((u8*)self + 0xde0) = tc[2];
+        *(s32*)((u8*)self + 0xdd8) = tc[0];
         *(s32*)((u8*)self + 0xde4) = tc[3];
-        *(s32*)((u8*)self + 0xde8) = tc[4];
+        *(s32*)((u8*)self + 0xde0) = tc[2];
         *(s32*)((u8*)self + 0xdec) = tc[5];
-        *(s32*)((u8*)self + 0xdf0) = tc[6];
+        *(s32*)((u8*)self + 0xde8) = tc[4];
         *(s32*)((u8*)self + 0xdf4) = tc[7];
-        *(s32*)((u8*)self + 0xdf8) = t1;
-        *(s32*)((u8*)self + 0xdfc) = t2;
+        *(s32*)((u8*)self + 0xdf0) = tc[6];
+        *(s32*)((u8*)self + 0xdf8) = o1;
+        *(s32*)((u8*)self + 0xdfc) = o2;
         *(s32*)((u8*)self + 0xdd4) = 1;
     }
     {
-        u32 tc[8];
-        s32 t1, t2;
+        s32 o1;
+        s32 o2;
+        s32 delta;
         tc[0] = *(s32*)((u8*)self + 0xdb4);
         tc[1] = *(s32*)((u8*)self + 0xdb8);
         tc[2] = *(s32*)((u8*)self + 0xdbc);
@@ -1125,20 +1150,21 @@ s32 sfmpv_DecodePicAtr(void* self, u32* pic, void* sj, s32 pat, s32* out) {
         tc[5] = *(s32*)((u8*)self + 0xdc8);
         tc[6] = *(s32*)((u8*)self + 0xdcc);
         tc[7] = *(s32*)((u8*)self + 0xdd0);
-        SFTIM_Tc2Time(tc, &t1, &t2);
+        SFTIM_Tc2Time(tc, &o1, &o2);
         /* e58 = valid flag, e5c..e78 = tc[0..7], e7c/e80 = converted time */
-        *(s32*)((u8*)self + 0xe5c) = tc[0];
         *(s32*)((u8*)self + 0xe60) = tc[1];
-        *(s32*)((u8*)self + 0xe64) = tc[2];
+        *(s32*)((u8*)self + 0xe5c) = tc[0];
         *(s32*)((u8*)self + 0xe68) = tc[3];
-        *(s32*)((u8*)self + 0xe6c) = tc[4];
+        *(s32*)((u8*)self + 0xe64) = tc[2];
         *(s32*)((u8*)self + 0xe70) = tc[5];
-        *(s32*)((u8*)self + 0xe74) = tc[6];
+        *(s32*)((u8*)self + 0xe6c) = tc[4];
         *(s32*)((u8*)self + 0xe78) = tc[7];
-        *(s32*)((u8*)self + 0xe7c) = t1 - *(s32*)((u8*)self + 0xdf8);
-        *(s32*)((u8*)self + 0xe80) = t2;
+        *(s32*)((u8*)self + 0xe74) = tc[6];
+        delta = o1 - *(s32*)((u8*)self + 0xdf8);
+        *(s32*)((u8*)self + 0xe7c) = delta;
+        *(s32*)((u8*)self + 0xe80) = o2;
         *(s32*)((u8*)self + 0xe58) = 1;
-        if (*(s32*)((u8*)self + 0xe24) <= *(s32*)((u8*)self + 0xe7c)) {
+        if (*(s32*)((u8*)self + 0xe24) <= delta) {
             *(s32*)((u8*)self + 0xe00) = 1;
             *(s32*)((u8*)self + 0xe04) = tc[0];
             *(s32*)((u8*)self + 0xe08) = tc[1];
@@ -1148,8 +1174,8 @@ s32 sfmpv_DecodePicAtr(void* self, u32* pic, void* sj, s32 pat, s32* out) {
             *(s32*)((u8*)self + 0xe18) = tc[5];
             *(s32*)((u8*)self + 0xe1c) = tc[6];
             *(s32*)((u8*)self + 0xe20) = tc[7];
-            *(s32*)((u8*)self + 0xe24) = t1 - *(s32*)((u8*)self + 0xdf8);
-            *(s32*)((u8*)self + 0xe28) = t2;
+            *(s32*)((u8*)self + 0xe24) = delta;
+            *(s32*)((u8*)self + 0xe28) = o2;
         }
     }
     ret = sfmpv_FirstPicAtr(self, mpv, frm, pic);
@@ -1158,8 +1184,7 @@ s32 sfmpv_DecodePicAtr(void* self, u32* pic, void* sj, s32 pat, s32* out) {
         lbl_eu_80568C18[0x18 / 4] = (u32)((u8*)frm + 0x30);
         lbl_eu_80568C18[0x24 / 4] = (u32)((u8*)frm + 0x68);
         lbl_eu_80568C18[0x30 / 4] = (u32)((u8*)self + 0xe7c);
-        fn = *(void (**)(void*, void*))((u8*)*(u32*)lbl_eu_80606E34 + 0x24);
-        fn(lbl_eu_80606E34, &lbl_eu_80568C18[1]);
+        (*(void (**)(void*, void*))((u8*)*(u32*)lbl_eu_80606E34 + 0x24))(lbl_eu_80606E34, &lbl_eu_80568C18[1]);
     }
     return ret;
 }
@@ -1168,28 +1193,50 @@ s32 sfmpv_DecodePicAtr(void* self, u32* pic, void* sj, s32 pat, s32* out) {
 // sfmpv_ComplementPts
 // ---------------------------------------------------------------------------
 s64 sfmpv_ComplementPts(void* self, u32* dst, void* frm, u32* pts, s32 mode, s32* out1, s32 rate) {
-    s32 frm14 = *(s32*)((u8*)frm + 0x14);
-    s64 v;
+    s64 ptsv;
     s64 d;
-    if (*(s64*)((u8*)self + 0x150) == 0) {
-        /* cur == 0: nothing to complement */
-    } else {
-        if (*(s64*)pts != 0) {
+    s32 frm14 = *(s32*)((u8*)frm + 0x14);
+
+    /* negative accumulated PTS: re-seed it from the frame duration */
+    if (*(s64*)((u8*)self + 0x150) < 0) {
+        ptsv = *(s64*)pts;
+        if (ptsv < 0) {
             return -1;
         }
-        v = ((s64)0x55d4a80 * frm14) / rate;
-        d = *(s64*)pts - v;
-        if (d < 0) {
-            d = 0;
+        {
+            /* frame duration scaled back to PTS units */
+            d = ptsv - ((s64)frm14 * 0x55d4a80) / rate;
+            /* clamp negative delta to zero */
+            if (d < 0) {
+                d = 0;
+            }
         }
-        *(s32*)((u8*)self + 0x154) = (s32)d;
-        *(s32*)((u8*)self + 0x150) = (s32)(d >> 32);
+        *(u32*)((u8*)self + 0x154) = (u32)d;
+        *(u32*)((u8*)self + 0x150) = (u32)(d >> 32);
     }
-    if (*(s64*)pts != 0 || memcmp((u8*)dst + 0x10, pts, 4) == 0) {
-        s64 p = (*(s64*)((u8*)dst + 0x10)) - (*(s64*)((u8*)self + 0x150));
-        if (p < 0) {
-            p = 0;
-        }
+
+    {
+        ptsv = *(s64*)pts;
+        if (ptsv >= 0 && memcmp((u8*)dst + 0x10, pts, 4) == 0) {
+            /* same PTS as the saved stamp: restart the run */
+            s64 p = ptsv - *(s64*)((u8*)self + 0x150);
+            if (p < 0) {
+                p = 0;
+            }
+            dst[4] = pts[0];
+        dst[5] = pts[1];
+        dst[6] = pts[2];
+        dst[7] = pts[3];
+        dst[1] = 0;
+        dst[0] = frm14;
+        dst[2] = (*(s32*)((u8*)frm + 0x18) == 3) ? 1 : 0;
+            out1[0] = pts[0];
+            out1[1] = pts[1];
+            return p;
+        } else {
+            /* continuation: advance by the frame count scaled back to PTS units */
+            s64 p = *(s64*)((u8*)dst + 0x10) - *(s64*)((u8*)self + 0x150);
+        p = (p < 0) ? 0 : p;
         if (mode != 0) {
             dst[0] = 0;
             dst[1] = dst[2] + dst[1] + 1;
@@ -1197,33 +1244,15 @@ s64 sfmpv_ComplementPts(void* self, u32* dst, void* frm, u32* pts, s32 mode, s32
         }
         {
             s32 w = frm14 - dst[0];
-            s32 d2;
-            if (dst[2] < w) {
-                dst[2] = w;
+            dst[2] = (dst[2] <= w) ? w : dst[2];
+            p += ((s64)(dst[1] + w) * 0x55d4a80) / rate;
+        }
+        p = (p < 0) ? 0 : p;
+            if (p < 0) {
+                p = 0;
             }
-            d2 = dst[1] + w;
-            p += ((s64)0x55d4a80 * d2) / rate;
+            return p;
         }
-        if (p < 0) {
-            p = 0;
-        }
-        return p;
-    }
-    {
-        s64 p = *(s64*)pts - *(s64*)((u8*)self + 0x150);
-        if (p < 0) {
-            p = 0;
-        }
-        dst[4] = pts[0];
-        dst[5] = pts[1];
-        dst[6] = pts[2];
-        dst[7] = pts[3];
-        dst[1] = 0;
-        dst[0] = frm14;
-        dst[2] = (*(s32*)((u8*)frm + 0x18) == 3) ? 1 : 0;
-        out1[0] = pts[0];
-        out1[1] = pts[1];
-        return p;
     }
 }
 
@@ -1378,62 +1407,111 @@ void sfmpv_DoReformTc(void* self, void* frm, s64 pts, s32 rep) {
 // ---------------------------------------------------------------------------
 // sfmpv_Pts2Tc
 // ---------------------------------------------------------------------------
-// sfmpv_Pts2Tc takes the pts value as a single s64 (retail call site splits the
-// pair with a lo-first dword move `mr r4,r6; mr r3,r5`); splitting the s64 into
-// two s32 args at the call emits hi-first and breaks DoReformTc's byte match.
+// Output timecode record written by sfmpv_Pts2Tc (view over the tc block).
+typedef struct SFMPVPts2TcOut {
+    u32 fld_0x00;
+    u32 fld_0x04;
+    u32 fld_0x08;
+    u32 fld_0x0c;
+    s32 fld_0x10;
+    s32 fld_0x14;
+    u8 pad_0x18[0x1E - 0x18];
+    s16 fld_0x1E;
+} SFMPVPts2TcOut;
+
+// pts -> timecode. Multiplies by twice the per-v rate, then splits the half-
+// second count either through a drop-frame correction table (rate 0x7512 or
+// low-half 0xea24) or straight base-60 decomposition.
 void sfmpv_Pts2Tc(s64 a, s32 v, s32 t, s32 u, u32* out) {
-    s32 v0 = lbl_eu_8051CBF8[v];
-    s32 t0 = lbl_eu_8051C940[0xf + v];
+    SFMPVPts2TcOut* tc = (SFMPVPts2TcOut*)out;
+    const s32* rateTbl = (const s32*)lbl_eu_8051CBF8;
+    const s32* tbl = (const s32*)lbl_eu_8051C940;
+    const s32* p;
+    s32 v0;
+    s32 t0;
     s32 d;
+    s32 m;
     s32 q0;
     s32 q1;
-    s32 r0;
-    s32 r1;
-    s32 m;
-    s64 m64;
-    m64 = UTY_MulDivRound64(a, (s64)(v * 2), 0x55d4a80);
-    m = (s32)m64;
-    *(s16*)((u8*)out + 0x1e) = (s16)(m & 1);
-    out[0] = v;
-    out[1] = t;
+    s32 q2;
+    s32 rem;
+    s32 acc;
+    s64 prod;
+
+    v0 = rateTbl[v];
+    t0 = tbl[15 + v];
+    prod = UTY_MulDivRound64(a, (s64)(v0 * 2), 0x55d4a80);
+    m = (s32)prod;
+    tc->fld_0x1E = (s16)(m & 1);
+    tc->fld_0x00 = (u32)v;
+    tc->fld_0x04 = (u32)t;
+    /* elapsed half-frames minus offset, clamped at zero */
     d = (m >> 1) - u;
     if (d < 0) {
         d = 0;
     }
-    if (t != 0) {
+    if (t != 0 && (v0 == 0x7512 || (v0 & 0xFFFF) == 0xEA24)) {
+        /* drop-frame path: correct via table pairs */
+        s32 w0;
+        s32 w1;
+        s32 lim;
+        s32 w3;
+        s32 w4;
+        s32 w5;
+        s32 w6;
+        s32 w7;
+        s32 rem0;
+        s32 x;
+        s32 y;
         if (v0 == 0x7512) {
-            t0 = lbl_eu_8051C940[0x18];
-        } else if (v0 == 0xea24) {
-            t0 = lbl_eu_8051C940[0x20];
-        }
-        q0 = d / t0;
-        r0 = d % t0;
-        q1 = r0 / t0;
-        r0 = r0 % t0;
-        if (r0 < t0) {
-            r1 = r0 % t0;
-            q1 = 0;
+            p = tbl + 24;
         } else {
-            r0 -= t0;
-            q1 = r0 / t0 + 1;
-            r0 %= t0;
-            if (r0 < t0) {
-                r0 += t0;
-            } else {
-                r0 -= t0;
-                r1 = r0 % t0 + 1;
-            }
+            p = tbl + 32;
         }
-        out[2] = q0;
-        out[3] = q1;
-        out[4] = r1;
-        out[5] = r0;
+        w0 = p[0];
+        w1 = p[1];
+        q0 = d / w0;
+        rem0 = d % w0;
+        q1 = rem0 / w1;
+        rem = rem0 % w1;
+        lim = p[2];
+        if (rem >= lim) {
+            /* correction window: rem deliberately goes negative here */
+            x = rem - lim;
+            w3 = p[3];
+            q2 = x / w3;
+            acc = q2 + 1;
+            x = x % w3;
+            w4 = p[4];
+            if (x >= w4) {
+                y = x - w4;
+                w5 = p[5];
+                q2 = y / w5 + 1;
+                rem = y % w5;
+            } else {
+                w7 = p[7];
+                rem = x + w7;
+                q2 = 0;
+            }
+        } else {
+            w5 = p[5];
+            q2 = rem / lim;
+            rem = rem - q2 * w5;
+            acc = 0;
+        }
+        w6 = p[6];
+        tc->fld_0x08 = (u32)q0;
+        tc->fld_0x0c = (u32)(w6 * q1 + acc);
+        tc->fld_0x10 = q2;
+        tc->fld_0x14 = rem;
     } else {
-        q0 = d / t0;
-        out[2] = q0;
-        out[3] = (q0 % 60);
-        out[4] = (q0 / 60) % 60;
-        out[5] = q0 / 3600;
+        /* generic base-60 decomposition */
+        s32 mm = d / t0;
+        s64 hr = (s64)(mm / 60 / 60);
+        tc->fld_0x08 = (u32)((u64)hr >> 32);
+        tc->fld_0x0c = (u32)hr;
+        tc->fld_0x10 = (u32)(mm % 60);
+        tc->fld_0x14 = (u32)(d % t0);
     }
 }
 
@@ -1586,72 +1664,110 @@ void sfmpv_SetMpvHd(void* self, s32 bitrate, u32* pic) {
 // ---------------------------------------------------------------------------
 // sfmpv_ChkBufSiz
 // ---------------------------------------------------------------------------
+// Validates/recomputes the frame-memory layout for the requested picture size.
+// Macroblock dims come from self+0x2788/0x278c, the new request from para.
+// size1/size2 are per-frame luma/chroma byte budgets; the search loop finds how
+// many frames of the new budget fit into n old budgets (capped at 16).
 s32 sfmpv_ChkBufSiz(void* self, void* para) {
-    s32 w = *(s32*)((u8*)para + 0);
-    s32 h = *(s32*)((u8*)para + 4);
+    s32 a = (*(s32*)((u8*)self + 0x2788) + 15) / 16;
+    /* frame-object array base, kept live across the whole call */
+    u8* frm = (u8*)self + 0x27f8;
+    s32 b = (*(s32*)((u8*)self + 0x278c) + 15) / 16;
+    s32 va = a * 16;
+    s32 vb = b * 16;
+    s32 ta = (a >> 4) & 1;
+    s32 tb = (b >> 4) & 1;
+    s32 sb = (vb + tb) >> 1;
     s32 n = *(s32*)((u8*)self + 0x279c);
+    s32 sa = (va + ta) >> 1;
     void* shc = *(void**)((u8*)self + 0x2068);
-    s32 w2;
-    s32 h2;
-    s32 a;
-    s32 b;
-    s32 m;
-    s32 i;
+    s32 ca = (sa + 31) / 32;
+    s32 cwa = va / 32;
+    s32 c = (*(s32*)para + 15) / 16;
+    s32 d = (*((s32*)para + 1) + 15) / 16;
+    s32 vp = c * 16;
+    s32 vq = d * 16;
+    s32 tc = (c >> 4) & 1;
+    s32 tq = (d >> 4) & 1;
+    s32 sc = (vp + tc) >> 1;
+    s32 sq = (vq + tq) >> 1;
+    s32 cc = (sc + 31) / 32;
+    s32 cvp = vp / 32;
+    /* per-frame byte budgets for the old (1) and new (2) layouts */
+    s32 size1 = sb * (ca * 32) * 2 + vb * (cwa * 32) + 0x20;
+    s32 size2 = sq * (cc * 32) * 2 + vq * (cvp * 32) + 0x20;
     s32 cnt;
-    w2 = (w + 0xf) / 0x10;
-    h2 = (h + 0xf) / 0x10;
-    a = (w2 + 1) / 2;
-    b = (h2 + 1) / 2;
-    w2 = (w2 * 0x10 + 0x1f) / 0x20;
-    h2 = (h2 * 0x10 + 0x1f) / 0x20;
-    m = w2 * h2;
-    w = w2 * (b * 2 + 0x20) + 0x20;
-    h = a * h2 * 2 + 0x20;
-    if (h * 2 > w * 2) {
+    s32 acc;
+    s32 lim;
+    s32 i;
+    s32 m1;
+    s32 m2;
+    u32 base;
+    u32 v;
+    u32 e0;
+
+    if (size2 * 2 > size1 * 2) {
         return SFLIB_SetErr(self, 0xff000f17);
     }
-    m = n * m;
-    cnt = 0;
-    if (n != 0) {
-        b = 0;
-        i = 0;
-        while (i < n && b <= m) {
-            b += a;
-            if (b > m) break;
-            i++;
+    base = *(u32*)((u8*)self + 0x27a0);
+    if (base == 0) {
+        cnt = n;
+    } else {
+        lim = n * size1;
+        acc = size2;
+        /* how many whole new-budget frames fit in n old ones (cap 16) */
+        for (cnt = 0; cnt < 16; cnt++) {
+            if (acc > lim) {
+                break;
+            }
+            acc += size2;
         }
-        if (i < n) {
+        if (cnt < n) {
             return SFLIB_SetErr(self, 0xff000f17);
         }
         *(s32*)((u8*)self + 0x27a4) = *(s32*)((u8*)self + 0x2790);
-        *(s32*)((u8*)self + 0x27a8) = *(s32*)((u8*)self + 0x2790) + a;
-        for (i = 0; i < n; i++) {
-            *(u32*)((u8*)self + 0x27ac + i * 4) = *(u32*)((u8*)self + 0x27a0) + i * a;
+        *(s32*)((u8*)self + 0x27a8) = *(s32*)((u8*)self + 0x2790) + size2;
+        if (cnt > 0) {
+            u32* q = (u32*)((u8*)self + 0x27ac);
+            for (i = 0; i < cnt; i++) {
+                q[i] = base + i * size2;
+            }
         }
     }
     {
-        s32 ww = (w2 * 2 + 0x1f) / 0x20;
-        s32 hh = (h2 * 2 + 0x1f) / 0x20;
-        *(s16*)((u8*)shc + 0xd6) = (s16)ww;
-        *(s16*)((u8*)shc + 0xd4) = (s16)hh;
-        *(u32*)((u8*)shc + 0xd0) = *(u32*)((u8*)self + 0x27a4);
-        *(u32*)((u8*)shc + 0xc8) = *(u32*)((u8*)self + 0x27a4) + w2 * hh;
-        *(u32*)((u8*)shc + 0xcc) = *(u32*)((u8*)self + 0x27a4) + w2 * hh + h2 * ww;
-        *(s16*)((u8*)shc + 0xe6) = (s16)ww;
-        *(s16*)((u8*)shc + 0xe4) = (s16)hh;
-        *(u32*)((u8*)shc + 0xe0) = *(u32*)((u8*)self + 0x27a8);
-        *(u32*)((u8*)shc + 0xd8) = *(u32*)((u8*)self + 0x27a8) + w2 * hh;
-        *(u32*)((u8*)shc + 0xdc) = *(u32*)((u8*)self + 0x27a8) + w2 * hh + h2 * ww;
+        s32 ww = (vp + 31) / 32;
+        s32 half = vp / 2;
+        s32 hh = (half + 31) / 32;
+        v = *(u32*)((u8*)self + 0x27a4);
+        m1 = vq * (ww * 32);
+        m2 = (vq / 2) * (hh * 32);
+        *(s16*)((u8*)shc + 0xd6) = ww * 32;
+        *(s16*)((u8*)shc + 0xd4) = hh * 32;
+        *(u32*)((u8*)shc + 0xd0) = v;
+        *(u32*)((u8*)shc + 0xc8) = v + m1;
+        *(u32*)((u8*)shc + 0xcc) = v + m1 + m2;
+        *(s16*)((u8*)shc + 0xe6) = ww * 32;
+        *(s16*)((u8*)shc + 0xe4) = hh * 32;
+        e0 = *(u32*)((u8*)self + 0x27a8);
+        *(u32*)((u8*)shc + 0xe0) = e0;
+        *(u32*)((u8*)shc + 0xd8) = e0 + m1;
+        *(u32*)((u8*)shc + 0xdc) = e0 + m1 + m2;
     }
     if (*(s32*)((u8*)self + 0x40) == 3) {
-        n = n > 0xe ? 0xe : n;
-        *(s32*)((u8*)self + 0x27ec) = n + 2;
-        sfmpv_InitFrmObj((u8*)self + 0x27f8, (u32*)((u8*)self + 0x27a4), 2);
-        sfmpv_InitFrmObj((u8*)self + 0x2818, (u32*)((u8*)self + 0x27ac), n);
+        s32 m = 14;
+        if (n < 14) {
+            m = n;
+        }
+        *(s32*)((u8*)self + 0x27ec) = m + 2;
+        sfmpv_InitFrmObj(frm, (u32*)((u8*)self + 0x27a4), 2);
+        sfmpv_InitFrmObj(frm + 0x220, (u32*)((u8*)self + 0x27ac), m);
     } else {
-        n = n > 0x10 ? 0x10 : n;
-        *(s32*)((u8*)self + 0x27ec) = n;
-        sfmpv_InitFrmObj((u8*)self + 0x27f8, (u32*)((u8*)self + 0x27ac), n);
+        s32 m = 16;
+        if (n < 16) {
+            m = n;
+        }
+        *(s32*)((u8*)self + 0x27ec) = m;
+        sfmpv_InitFrmObj(frm, (u32*)((u8*)self + 0x27ac), m);
     }
     return 0;
 }
@@ -1660,122 +1776,125 @@ s32 sfmpv_ChkBufSiz(void* self, void* para) {
 // sfmpv_IsSkip
 // ---------------------------------------------------------------------------
 s32 sfmpv_IsSkip(void* self, void* bpic) {
-    void* shc = *(void**)((u8*)self + 0x2068);
-    void* frm = (u8*)shc + 0x14;
-    s32 ret;
-    s32 type;
-    s32 cond;
+    /* Single work slot: holds the shc pointer, then the pic type, then the verdict.
+       Retail keeps all three in one register (r29). */
+    void* wk = *(void**)((u8*)self + 0x2068);
+    u8* frm = (u8*)wk + 0x14;
     u32 skip;
     if (SFSET_GetCond(self, 0x2f) == 1) {
         return 1;
     }
-    if (SFSEEKI_IsSkip(self, &skip) != 0) {
+    /* the seek-skip call's own result is ignored; only the count matters */
+    SFSEEKI_IsSkip(self, &skip);
+    if (skip != 0) {
         return 1;
     }
     if (SFSET_GetCond(self, 0x27) == 1) {
         return 0;
     }
-    if (*(s8*)((u8*)frm + 0x58) != 0) {
-        return *(s32*)((u8*)shc + 0xf4);
+    if (*(s8*)(frm + 0x58)) {
+        return *(s32*)((u8*)wk + 0xf4);
     }
-    /* retail hoists the type load above the time-check block */
-    type = *(s32*)((u8*)frm + 0x18);
+    /* deadline check: current tc valid, no limiter active, and tc not past deadline */
     {
+        s32 tc = *(s32*)((u8*)self + 0x2678);
         s32 r = 0;
-        if (*(s32*)((u8*)self + 0x2678) >= 0) {
-            if (*(s32*)((u8*)self + 0xeb0) == 0) {
-                if (UTY_CmpTime(*(s32*)((u8*)self + 0x2678), *(s32*)((u8*)self + 0x267c), *(s32*)((u8*)self + 0xe7c), *(s32*)((u8*)self + 0xe80)) == 0) {
-                    r = 1;
-                }
-            }
+        wk = (void*)(uintptr_t)*(s32*)(frm + 0x18);
+        if (tc >= 0 && *(s32*)((u8*)self + 0xeb0) == 0 &&
+            UTY_CmpTime(tc, *(s32*)((u8*)self + 0x267c), *(s32*)((u8*)self + 0xe7c), *(s32*)((u8*)self + 0xe80)) == 0) {
+            r = 1;
         }
         if (r != 0) {
             void (*fn)(void*, void*);
             if (lbl_eu_80606E34 != NULL) {
-                ((u32*)&lbl_eu_80568CF0)[3] = (u32)self;
-                ((u32*)&lbl_eu_80568CF0)[0x18 / 4] = (u32)&lbl_eu_8051C9E0[0];
+                lbl_eu_80568CF0[3] = (u32)self;
+                lbl_eu_80568CF0[0x18 / 4] = (u32)lbl_eu_8051C9E0;
                 fn = *(void (**)(void*, void*))((u8*)*(u32*)lbl_eu_80606E34 + 0x24);
-                fn(lbl_eu_80606E34, &((u32*)&lbl_eu_80568CF0)[1]);
+                fn(lbl_eu_80606E34, &lbl_eu_80568CF0[1]);
             }
-            ret = 1;
+            wk = (void*)1;
             goto out;
         }
     }
-    switch (type) {
-    case 1:
-        cond = (*(s32*)((u8*)self + 0xa24) == 0);
-        break;
-    case 2:
-        cond = (*(s32*)((u8*)self + 0xa28) == 0);
-        break;
-    case 3:
-        cond = (*(s32*)((u8*)self + 0xa2c) == 0);
-        break;
-    default:
-        cond = 0;
-        break;
+    /* unknown picture types are treated as skippable */
+    {
+        s32 cond;
+        switch ((s32)wk) {
+        case 1:
+            cond = (*(s32*)((u8*)self + 0xa24) == 0);
+            break;
+        case 2:
+            cond = (*(s32*)((u8*)self + 0xa28) == 0);
+            break;
+        case 3:
+            cond = (*(s32*)((u8*)self + 0xa2c) == 0);
+            break;
+        default:
+            cond = 1;
+            break;
+        }
+        if (cond) {
+            void (*fn)(void*, void*);
+            if (lbl_eu_80606E34 != NULL) {
+                lbl_eu_80568CF0[3] = (u32)self;
+                lbl_eu_80568CF0[0x18 / 4] = (u32)&lbl_eu_8051C9E0[0x11];
+                fn = *(void (**)(void*, void*))((u8*)*(u32*)lbl_eu_80606E34 + 0x24);
+                fn(lbl_eu_80606E34, &lbl_eu_80568CF0[1]);
+            }
+            wk = (void*)1;
+            goto out;
+        }
     }
-    if (cond) {
+    if (sfmpv_IsEmptyBpic(self, (s32)wk, bpic) != 0) {
         void (*fn)(void*, void*);
         if (lbl_eu_80606E34 != NULL) {
-            ((u32*)&lbl_eu_80568CF0)[3] = (u32)self;
-            ((u32*)&lbl_eu_80568CF0)[0x18 / 4] = (u32)&lbl_eu_8051C9E0[0x11];
+            lbl_eu_80568CF0[3] = (u32)self;
+            lbl_eu_80568CF0[0x18 / 4] = (u32)&lbl_eu_8051C9E0[0x17];
             fn = *(void (**)(void*, void*))((u8*)*(u32*)lbl_eu_80606E34 + 0x24);
-            fn(lbl_eu_80606E34, &((u32*)&lbl_eu_80568CF0)[1]);
+            fn(lbl_eu_80606E34, &lbl_eu_80568CF0[1]);
         }
-        ret = 1;
-        goto out;
-    }
-    if (sfmpv_IsEmptyBpic(self, type, bpic) != 0) {
-        void (*fn)(void*, void*);
-        if (lbl_eu_80606E34 != NULL) {
-            ((u32*)&lbl_eu_80568CF0)[3] = (u32)self;
-            ((u32*)&lbl_eu_80568CF0)[0x18 / 4] = (u32)&lbl_eu_8051C9E0[0x17];
-            fn = *(void (**)(void*, void*))((u8*)*(u32*)lbl_eu_80606E34 + 0x24);
-            fn(lbl_eu_80606E34, &((u32*)&lbl_eu_80568CF0)[1]);
-        }
-        ret = 1;
+        wk = (void*)1;
         goto out;
     }
     {
+        s32 t = *(s32*)((u8*)((SfMpvTcView*)self)->shc + 4);
         s32 flg = 0;
-        s32 t = *(s32*)((u8*)shc + 4);
         if (t == 2) {
-            if (type >= 2 && type <= 3) {
+            if ((u32)((s32)wk - 2) <= 1) {
                 flg = 1;
             }
         } else if (t == 3) {
-            if (type == 3) {
+            if ((s32)wk == 3) {
                 flg = 1;
             }
         }
         if (flg != 0) {
             void (*fn)(void*, void*);
             if (lbl_eu_80606E34 != NULL) {
-                ((u32*)&lbl_eu_80568CF0)[3] = (u32)self;
-                ((u32*)&lbl_eu_80568CF0)[0x18 / 4] = (u32)&lbl_eu_8051C9E0[0x1f];
+                lbl_eu_80568CF0[3] = (u32)self;
+                lbl_eu_80568CF0[0x18 / 4] = (u32)&lbl_eu_8051C9E0[0x1f];
                 fn = *(void (**)(void*, void*))((u8*)*(u32*)lbl_eu_80606E34 + 0x24);
-                fn(lbl_eu_80606E34, &((u32*)&lbl_eu_80568CF0)[1]);
+                fn(lbl_eu_80606E34, &lbl_eu_80568CF0[1]);
             }
-            ret = 1;
+            wk = (void*)1;
             goto out;
         }
-        if (sfmpv_IsLate(self, type) != 0) {
+        if (sfmpv_IsLate(self, (s32)wk) != 0) {
             void (*fn)(void*, void*);
             if (lbl_eu_80606E34 != NULL) {
-                ((u32*)&lbl_eu_80568CF0)[3] = (u32)self;
-                ((u32*)&lbl_eu_80568CF0)[0x18 / 4] = (u32)&lbl_eu_8051C9E0[0x26];
+                lbl_eu_80568CF0[3] = (u32)self;
+                lbl_eu_80568CF0[0x18 / 4] = (u32)&lbl_eu_8051C9E0[0x26];
                 fn = *(void (**)(void*, void*))((u8*)*(u32*)lbl_eu_80606E34 + 0x24);
-                fn(lbl_eu_80606E34, &((u32*)&lbl_eu_80568CF0)[1]);
+                fn(lbl_eu_80606E34, &lbl_eu_80568CF0[1]);
             }
-            ret = 1;
+            wk = (void*)1;
             goto out;
         }
-        ret = 0;
+        wk = (void*)0;
     }
 out:
-    sfmpv_UpdateDefect(self, frm, ret);
-    return ret;
+    sfmpv_UpdateDefect(self, frm, (s32)wk);
+    return (s32)wk;
 }
 
 // ---------------------------------------------------------------------------
@@ -1886,24 +2005,37 @@ s32 sfmpv_IsLate(void* self, s32 type) {
 // sfmpv_SkipFrm
 // ---------------------------------------------------------------------------
 s32 sfmpv_SkipFrm(void* self, void* sj) {
-    u32* src = (u32*)((u8*)self + 0xe58);
-    u32* dst = (u32*)((u8*)self + 0xe84);
-    /* retail keeps both compare operands live so the save path reuses them */
-    s32 tE7c = *(s32*)((u8*)self + 0xe7c);
-    s32 tEd4 = *(s32*)((u8*)self + 0xed4);
-    void* shc = *(void**)((u8*)self + 0x2068);
-    void* mpv = *(void**)shc;
+    /* e58/e84 hold identical 11-word tc-save blocks */
+    SfMpvTcView* v = (SfMpvTcView*)self;
+    void* shc;
+    void* mpv;
+    s32 cur;
+    s32 lim;
+    TCBlockView* dst;
+    TCBlockView* src;
+    shc = v->shc;
+    mpv = *(void**)shc;
+    cur = v->cur_tc.tm;
+    lim = v->lim;
+    dst = &v->prv_tc;
+    src = &v->cur_tc;
     u32 a;
     u32 b;
     s32 r;
     s32 n;
-    s32 i;
-    if (tE7c < tEd4) {
-        for (i = 0; i < 9; i++) {
-            dst[i] = src[i];
-        }
-        dst[9] = (u32)tE7c;
-        dst[10] = src[10];
+    if (cur < lim) {
+        /* staged save: retail hoists every load above every store */
+        dst->w[0] = src->w[0];
+        dst->w[1] = src->w[1];
+        dst->w[2] = src->w[2];
+        dst->w[3] = src->w[3];
+        dst->w[4] = src->w[4];
+        dst->w[5] = src->w[5];
+        dst->w[6] = src->w[6];
+        dst->w[7] = src->w[7];
+        dst->w[8] = src->w[8];
+        dst->tm = cur;
+        dst->fx = src->fx;
     }
     a = SJRBF_GetFlowCnt(sj, 0, 1);
     r = MPV_SkipFrmSj(mpv, sj);
@@ -2095,21 +2227,23 @@ s32 sfmpv_SetFrmPara(void* self, void* frm, void* para, void** out) {
             return -1;
         }
     }
-    *(s16*)((u8*)*out + 0xc) = (s16)*(u32*)((u8*)frm + 0);
-    *(s16*)((u8*)*out + 0xe) = (s16)*(u32*)((u8*)frm + 4);
-    *(s16*)((u8*)*out + 0x10) = (s16)*(u32*)((u8*)frm + 8);
-    *(s16*)((u8*)*out + 0x12) = (s16)*(u32*)((u8*)frm + 0xc);
-    *(u32*)((u8*)*out + 0x14) = *(u32*)((u8*)frm + 0x18);
     {
-        /* 16 pairs copied with walking pointers (MWCC strength-reduced loop) */
+        /* macroblock parameter words; 16 pairs copied with walking pointers */
         u32* src = (u32*)((u8*)frm - 4);
-        u32* dst = (u32*)((u8*)*out + 0x64);
-        s32 n = 0x10;
-        while (--n >= 0) {
-            src += 8;
-            dst += 8;
-            *(dst - 1) = *(src - 1);
-            *dst = *src;
+        *(u16*)((u8*)*out + 0xc) = *(u32*)((u8*)frm + 0);
+        *(u16*)((u8*)*out + 0xe) = *(u32*)((u8*)frm + 4);
+        *(u16*)((u8*)*out + 0x10) = *(u32*)((u8*)frm + 8);
+        *(u16*)((u8*)*out + 0x12) = *(u32*)((u8*)frm + 0xc);
+        *(u32*)((u8*)*out + 0x14) = *(u32*)((u8*)frm + 0x18);
+        {
+            s32 n = 0x10;
+            u32* dst = (u32*)((u8*)*out + 0x64);
+            do {
+                dst[1] = src[1];
+                src += 2;
+                dst += 2;
+                *dst = *src;
+            } while (--n != 0);
         }
     }
     *(u32*)((u8*)*out + 0xec) = *(u32*)((u8*)shc + 0x104);
@@ -2132,36 +2266,48 @@ s32 sfmpv_SetFrmPara(void* self, void* frm, void* para, void** out) {
             }
         }
         {
-            void* r1 = *(void**)((u8*)shc + 0xec);
-            void* r2 = *(void**)((u8*)shc + 0xe8);
+            /* derive luma/chroma plane sizes and fill both reference-plane
+             * descriptor halves; strides come from the frame width */
+            void* r2 = *(void**)((u8*)shc + 0xec);
+            void* r1 = *(void**)((u8*)shc + 0xe8);
             s32 w = *(u32*)((u8*)frm + 0);
             s32 h = *(u32*)((u8*)frm + 4);
-            s32 w2;
-            s32 h2;
-            s32 a;
-            s32 h2b;
-            s32 b;
-            if (r1 == NULL) {
-                r1 = *out;
-            }
+            s32 w16;
+            s32 wBytes;
+            s32 hB32;
+            s32 chromaW;
+            s32 luma16;
+            s32 chromaH;
+            s32 planeSize;
+            s32 chromaSize;
+            u32 y1;
+            u32 y2;
             if (r2 == NULL) {
-                r2 = r1;
+                r2 = *out;
             }
-            w2 = (w + 0xf) / 0x10;
-            h2 = (w2 * 0x10 + 0x1f) / 0x20;
-            a = ((((w2 * 0x10) + ((w2 >> 4) & 1)) >> 1) + 0x1f) / 0x20;
-            h2b = (h + 0xf) / 0x10;
-            b = ((h2b * 0x10) + ((h2b >> 4) & 1)) >> 1;
-            *(s16*)((u8*)para + 0xe) = (s16)(h2 * 0x20);
-            *(s16*)((u8*)para + 0xc) = (s16)(a * 0x20);
-            *(u32*)((u8*)para + 8) = *(u32*)((u8*)r2 + 8);
-            *(u32*)((u8*)para + 0x10) = *(u32*)((u8*)r2 + 8) + (h2b * 0x10) * (h2 * 0x20);
-            *(u32*)((u8*)para + 0x14) = *(u32*)((u8*)r2 + 8) + (h2b * 0x10) * (h2 * 0x20) + b * (a * 0x20);
-            *(s16*)((u8*)para + 0x1c) = (s16)(a * 0x20);
-            *(s16*)((u8*)para + 0x1e) = (s16)(h2 * 0x20);
-            *(u32*)((u8*)para + 0x18) = *(u32*)((u8*)r1 + 8);
-            *(u32*)((u8*)para + 0x20) = *(u32*)((u8*)r1 + 8) + (h2b * 0x10) * (h2 * 0x20);
-            *(u32*)((u8*)para + 0x24) = *(u32*)((u8*)r1 + 8) + (h2b * 0x10) * (h2 * 0x20) + b * (a * 0x20);
+            if (r1 == NULL) {
+                r1 = r2;
+            }
+            w16 = (w + 0xf) / 0x10;
+            wBytes = w16 * 0x10;
+            hB32 = (wBytes + 0x1f) / 0x20;
+            chromaW = ((((wBytes + (w16 >> 4 & 1)) >> 1) + 0x1f) / 0x20) * 0x20;
+            luma16 = (h + 0xf) / 0x10;
+            chromaH = (luma16 * 0x10 + (luma16 >> 4 & 1)) >> 1;
+            planeSize = wBytes * (hB32 * 0x20);
+            chromaSize = chromaH * chromaW;
+            y1 = *(u32*)((u8*)r1 + 8);
+            y2 = *(u32*)((u8*)r2 + 8);
+            *(u16*)((u8*)para + 0xe) = hB32 * 0x20;
+            *(u16*)((u8*)para + 0xc) = chromaW;
+            *(u32*)((u8*)para + 8) = y1;
+            *(u32*)((u8*)para + 0) = y1 + planeSize;
+            *(u32*)((u8*)para + 4) = y1 + planeSize + chromaSize;
+            *(u32*)((u8*)para + 0x18) = y2;
+            *(u32*)((u8*)para + 0x10) = y2 + planeSize;
+            *(u32*)((u8*)para + 0x14) = y2 + planeSize + chromaSize;
+            *(u16*)((u8*)para + 0x1c) = chromaW;
+            *(u16*)((u8*)para + 0x1e) = hB32 * 0x20;
         }
     } else {
         if (*(u32*)((u8*)frm + 0x18) >= 2 && *(u32*)((u8*)frm + 0x18) <= 3) {

@@ -1,8 +1,9 @@
 // Decompiled: monolib/src/nand/CNBanner
 //
-// CNBanner manages the per-save banner filename list. Layout:
-//   +0x000 void*  mVtable   -- data vtable ptr (lbl_eu_80570378)
-//   +0x004 void*  mAlloc0   -- dynamically allocated NANDBanner (0xF0A0, operator delete'd)
+// CNBanner manages the per-save banner filename list, deriving from IWorkEvent
+// so the compiler emits its vtable/RTTI (retail blobs lbl_eu_80570378 etc.).
+// Layout (after the base vtable pointer at +0x000):
+//   +0x004 void*  mAlloc0   -- dynamically allocated NANDBanner (0xF0A0)
 //   +0x008 u32    field_8
 //   +0x00C u32    field_C
 //   +0x010 FixStr<64> mTitle -- UTF-8 title string (mLength at 0x050)
@@ -16,12 +17,18 @@
 //   +0x325 u8     mFlag          -- "needs rebuild" / dirty flag
 //   +0x326 u8     mKind          -- selector forwarded to func_eu_804521BC
 //
-// The retail symbol names (detached / non-standard) are kept as extern "C"
-// stand-alone functions, matching the monolib NAND catalog-TU pattern
-// (see CNand.cpp / CNReqtaskSaveBanner.cpp).
+// OPEN ITEM (split-size): all 9 functions byte-match, but decomp .text is
+// +0x50 over budget. The overflow is the weak out-of-line copy of the
+// inline-empty ~IWorkEvent (~0x48) that MWCC emits into every TU which can
+// see that body (IWORK_EVENT_INLINE_DTOR). Without it, ~CNBanner emits a
+// __dt__10IWorkEventFv call (+0xC structural) instead. Closing this needs a
+// header/tooling change (e.g. a declaration-only-with-visible-empty-strong
+// variant of IWorkEvent.hpp) and is out of scope for this TU's writable files.
 
-#include <types.h>
 #include <string.h>
+// Inline-empty base dtor: retail's derived dtor does not emit a
+// __dt__10IWorkEventFv call (see IWorkEvent.hpp note).
+#define IWORK_EVENT_INLINE_DTOR 1
 #include <monolib/util/FixStr.hpp>
 #include <monolib/util/MemManager.hpp>
 #include <monolib/work/IWorkEvent.hpp>
@@ -30,26 +37,23 @@
 #include <revolution/NAND.h>
 #include <revolution/ENC.h>
 
-// Runtime / external symbols (retail linker names).
+// Address-named retail imports (no C++ declarations exist for these yet).
 extern "C" {
-void __dl__FPv(void*);
-
-// Releases a registered file path from the CDeviceFile manager.
+// Releases a registered file path from the CDeviceFile manager
+// (CDeviceFile::func_8044F0E4; header edit out of scope for this session).
 void func_8044F0E4__11CDeviceFileFPCc(const char* path);
-
-// Locale/count selector latch.
+// Locale/count selector latch (defined in CDeviceFile.cpp).
 void func_eu_804521BC(u8 val);
 }
 
 // Data objects referenced by this unit (global scope -> no C++ mangling).
-extern u32 lbl_eu_80570378[34];  // .data: vtable blob (installed at +0x000), defined below
-extern "C" const char lbl_eu_805248BC[];  // .rodata: path format string ("" for empty slots)
+extern const char lbl_eu_805248BC[];  // .rodata: path format string ("" for empty slots)
 
 // CEventFile as consumed by CNBanner::OnFileEvent: an event type word at +0x0
 // and a file-name/data string pointer at +0xC.
 struct CEventFile {
-    int field_0;        // 0x0  event type
-    u8 pad4[8];         // 0x4
+    int field_0;          // 0x0  event type
+    u8 pad4[8];           // 0x4
     const char* field_C;  // 0xC  file path / name string
 };
 
@@ -67,17 +71,17 @@ struct CNandBannerBlock {
     u8 iconTexture[8][0x1200];  // 0x60A0
 };
 
-class CNBanner {
+class CNBanner : public IWorkEvent {
 public:
     CNBanner();
     ~CNBanner();
+    // IWorkEvent override: only OnFileEvent is ever specialised here.
+    virtual bool OnFileEvent(CEventFile* event);
     void func_804F531C(const char** names, int* ids);
-    bool OnFileEvent(CEventFile* event);
     void func_804F52F8(const char* str);
     void func_804F5304(const char* str);
     void func_804F5310(const char* str);
 
-    void* mVtable;             // 0x000
     void* mAlloc0;             // 0x004
     u32 field_8;               // 0x008
     u32 field_C;               // 0x00C
@@ -95,28 +99,14 @@ public:
 
 // --- constructor ---------------------------------------------------------
 
-// us-804f96c0: initialise the banner manager. The vtable is installed, the
-// path/FixStr members are cleared, the per-slot id arrays are zeroed and the
-// count/flag/latch fields are reset (mKind armed to 1).
+// us-804f96c0: initialise the banner manager. The compiler stores the vtable,
+// default-constructs the FixStr members (inline stb/stw clears plus a counted
+// loop over slots 1..7), then this body zeroes the id array and resets the
+// count/flag fields (mKind armed to 1).
 CNBanner::CNBanner() {
-    this->mVtable = (void*)lbl_eu_80570378;
-    this->mTitle.clear();
-    this->mDesc.clear();
-    this->mPath.clear();
-    this->mFiles[0].clear();
-    // Pointer-walk clears the remaining 7 slots; MWCC lowers this to a
-    // counted loop with a runtime (end - start + 0x43) / 0x44 trip count.
-    for (ml::FixStr<64>* f = &this->mFiles[1]; f < &this->mFiles[8]; f++) {
-        f->clear();
-    }
     this->mAlloc0 = 0;
     this->field_8 = 0;
     this->field_C = 0;
-    // NOTE: retail keeps this fill as `bl memset(this+0x2fc, 0, 0x20)`.
-    // Under this unit's -O4,p flags MWCC inline-expands every tested source
-    // form (direct memset, char* dest, index-fill loop); retail's retained
-    // call points at an -O4,s compile of this TU (cf. sibling
-    // CNReqtaskSaveBanner.cpp), which configure.py must negotiate.
     memset(this->mFileId, 0, sizeof(this->mFileId));
     this->mCount = 0;
     this->mCountRef = 0;
@@ -128,30 +118,31 @@ CNBanner::CNBanner() {
 // --- destructor ----------------------------------------------------------
 
 // us-804f9794: full object destructor (deleting destructor). Frees the dynamic
-// buffer and, when the hidden deleting flag is set, releases the object. MWCC
-// emits the deleting-dtor scaffold (null check, r4 flag test + operator delete
-// of the object, `return this`) automatically for the out-of-line member
-// destructor.
+// buffer and releases registered paths. MWCC emits the deleting-dtor scaffold
+// (null check, r4 flag test + operator delete of the object, `return this`)
+// automatically for the virtual out-of-line member destructor.
 CNBanner::~CNBanner() {
-    this->mVtable = (void*)lbl_eu_80570378;
     if (this->mBusy != 0) {
         func_8044F0E4__11CDeviceFileFPCc(this->mPath.c_str());
+        // Byte offset kept alongside the index: retail walks the slot array
+        // with a base+offset pair (add r3,r28,r30 / lbzu 220(r3)) and reuses
+        // the computed element address for both the empty-check and the
+        // release call.
         int i = 0;
+        int off = 0;
         while (i < this->mCount) {
-            // One shared address per element: retail computes r3 =
-            // &mFiles[i] once (add + lbzu) and reuses it for the check
-            // and the release call.
-            const char* p = this->mFiles[i].mString;
+            const char* p = (const char*)this->mFiles + off;
             if ((s8)p[0] != 0) {
                 func_8044F0E4__11CDeviceFileFPCc(p);
             }
+            off += (int)sizeof(ml::FixStr<64>);
             i++;
         }
         this->mBusy = 0;
         func_eu_804521BC(this->mKind);
     }
     if (this->mAlloc0 != 0) {
-        __dl__FPv(this->mAlloc0);
+        ::operator delete(this->mAlloc0);
         this->mAlloc0 = 0;
     }
 }
@@ -181,20 +172,22 @@ void CNBanner::func_804F531C(const char** names, int* ids) {
 // us-804f9cc4: destroys the banner data block (the object held at +0x000 of a
 // CNReqtaskSaveBannerData). Same teardown as the member destructor but without
 // the object-delete scaffold: it always frees the dynamic buffer alone.
-void __dt__804F5738(CNBanner* self) {
-    if (self->mBusy != 0) {
-        func_8044F0E4__11CDeviceFileFPCc(self->mPath.c_str());
-        for (int i = 0; i < self->mCount; i++) {
-            if ((s8)self->mFiles[i].mString[0] != 0) {
-                func_8044F0E4__11CDeviceFileFPCc(self->mFiles[i].c_str());
+// Retail keeps this under the address-named linker symbol __dt__804F5738;
+// the exact_renames rule for CNBanner.o maps our C++-mangled name onto it.
+void CNBanner_destroyBlock(CNBanner* banner) {
+    if (banner->mBusy != 0) {
+        func_8044F0E4__11CDeviceFileFPCc(banner->mPath.c_str());
+        for (int i = 0; i < banner->mCount; i++) {
+            if ((s8)banner->mFiles[i].mString[0] != 0) {
+                func_8044F0E4__11CDeviceFileFPCc(banner->mFiles[i].c_str());
             }
         }
-        self->mBusy = 0;
-        func_eu_804521BC(self->mKind);
+        banner->mBusy = 0;
+        func_eu_804521BC(banner->mKind);
     }
-    if (self->mAlloc0 != 0) {
-        __dl__FPv(self->mAlloc0);
-        self->mAlloc0 = 0;
+    if (banner->mAlloc0 != 0) {
+        ::operator delete(banner->mAlloc0);
+        banner->mAlloc0 = 0;
     }
 }
 
@@ -332,14 +325,13 @@ extern "C" s32 func_804F53DC(CNBanner* self) {
     self->mCountRef = 0;
     CDeviceFile::readCommonArchiveFile(
         (mtl::ALLOC_HANDLE)((CNandBannerBlock*)self->mAlloc0)->bannerTexture,
-        self->mPath.c_str(), reinterpret_cast<IWorkEvent*>(self), 0x40, 0x6000);
+        self->mPath.c_str(), self, 0x40, 0x6000);
     self->mCountRef++;
 
     for (int j = 0; j < self->mCount; j++) {
         CDeviceFile::readCommonArchiveFile(
             (mtl::ALLOC_HANDLE)((CNandBannerBlock*)self->mAlloc0)->iconTexture[j],
-            self->mFiles[j].c_str(), reinterpret_cast<IWorkEvent*>(self),
-            0x40, 0x1200);
+            self->mFiles[j].c_str(), self, 0x40, 0x1200);
         self->mCountRef++;
     }
 
@@ -351,87 +343,55 @@ extern "C" s32 func_804F53DC(CNBanner* self) {
 
 
 // ===== Dissolved monolibdata2 (blob surgery) data owned by this TU =====
-// Foreign vtable/RTTI symbol refs: C linkage so the emitted reloc names are
-// the retail mangled names. __RTTI__10IWorkEvent must be declared inside a
-// namespace: a plain extern "C" data decl of that name collides with MWCC's
-// RTTI name table under -ipa file once IWorkEvent (virtual class) is in scope
-// (see CView.cpp note); the namespace-scoped C-linkage decl emits the same
-// symbol without the collision.
-namespace m2r { extern "C" u32 __RTTI__10IWorkEvent; }
+// The CNBanner vtable blob (lbl_eu_80570378) and its RTTI chain
+// (lbl_eu_80663CE0 / lbl_eu_80570400) are emitted by the compiler now that
+// CNBanner derives from IWorkEvent and overrides OnFileEvent.
 
-extern "C" void OnFileEvent__8CNBannerFP10CEventFile();
-extern "C" void OnPauseTrigger__10IWorkEventFb(int);
-extern "C" void WorkEvent10__10IWorkEventFv();
-extern "C" void WorkEvent11__10IWorkEventFv();
-extern "C" void WorkEvent12__10IWorkEventFv();
-extern "C" void WorkEvent13__10IWorkEventFv();
-extern "C" void WorkEvent14__10IWorkEventFv();
-extern "C" void WorkEvent15__10IWorkEventFv();
-extern "C" void WorkEvent16__10IWorkEventFv();
-extern "C" void WorkEvent17__10IWorkEventFv();
-extern "C" void WorkEvent18__10IWorkEventFv();
-extern "C" void WorkEvent19__10IWorkEventFv();
-extern "C" void WorkEvent1__10IWorkEventFPvPCc();
-extern "C" void WorkEvent20__10IWorkEventFv();
-extern "C" void WorkEvent21__10IWorkEventFv();
-extern "C" void WorkEvent22__10IWorkEventFv();
-extern "C" void WorkEvent23__10IWorkEventFv();
-extern "C" void WorkEvent24__10IWorkEventFv();
-extern "C" void WorkEvent25__10IWorkEventFv();
-extern "C" void WorkEvent26__10IWorkEventFv();
-extern "C" void WorkEvent27__10IWorkEventFv();
-extern "C" void WorkEvent28__10IWorkEventFv();
-extern "C" void WorkEvent29__10IWorkEventFv();
-extern "C" void WorkEvent30__10IWorkEventFv();
-extern "C" void WorkEvent31__10IWorkEventFv();
-extern "C" void WorkEvent3__10IWorkEventFPv();
-extern "C" void WorkEvent4__10IWorkEventFv();
-extern "C" void WorkEvent6__10IWorkEventFv();
-extern "C" void WorkEvent7__10IWorkEventFv();
-extern "C" void WorkEvent8__10IWorkEventFv();
-extern "C" void WorkEvent9__10IWorkEventFv();
-extern "C" void __dt__8CNBannerFv();
-extern "C" void func_804DA4CC();
-extern "C" void func_eu_804F9EE0();
 extern "C" u32 lbl_eu_80663B70;
 
+// Second vtable in the slice: belongs to another class whose definition is
+// split elsewhere ("CNReqtaskCreatedir" RTTI); kept as hand-written data.
+// Declared as address-typed words so the constants get link-time relocation
+// initializers -- MWCC applies them at link time instead of emitting a
+// dynamic __sinit__ body in .text.
+extern "C" void func_804DA4CC();
+extern "C" void func_eu_804F9EE0();
+
 // forward decls for cross-section refs
-extern "C" u32 lbl_eu_80570400[4];
-extern "C" u32 lbl_eu_80570410[4];
-extern "C" u32 lbl_eu_80570420[3];
-extern "C" u32 lbl_eu_80663CE0[2];
-extern "C" u32 lbl_eu_80663CE8[2];
-extern "C" __declspec(align(4)) const char lbl_eu_805248B0[0x9];
-extern "C" __declspec(align(4)) const char lbl_eu_805248BC[0x4];
-extern "C" __declspec(align(4)) const char lbl_eu_805248C0[0x13];
+extern u32 lbl_eu_80570410[4];
+extern u32 lbl_eu_80570420[3];
+extern u32 lbl_eu_80663CE8[2];
+extern __declspec(align(4)) const char lbl_eu_805248B0[0x9];
+extern __declspec(align(4)) const char lbl_eu_805248C0[0x13];
 
-// [.data] 0x80570378-0x8057042C (180 bytes)
-extern "C" u32 lbl_eu_80570378[34] = { (u32)&lbl_eu_80663CE0, 0x00000000, (u32)&__dt__8CNBannerFv, (u32)&WorkEvent1__10IWorkEventFPvPCc, (u32)&OnFileEvent__8CNBannerFP10CEventFile, (u32)&WorkEvent3__10IWorkEventFPv, (u32)&WorkEvent4__10IWorkEventFv, (u32)&OnPauseTrigger__10IWorkEventFb, (u32)&WorkEvent6__10IWorkEventFv, (u32)&WorkEvent7__10IWorkEventFv, (u32)&WorkEvent8__10IWorkEventFv, (u32)&WorkEvent9__10IWorkEventFv, (u32)&WorkEvent10__10IWorkEventFv, (u32)&WorkEvent11__10IWorkEventFv, (u32)&WorkEvent12__10IWorkEventFv, (u32)&WorkEvent13__10IWorkEventFv, (u32)&WorkEvent14__10IWorkEventFv, (u32)&WorkEvent15__10IWorkEventFv, (u32)&WorkEvent16__10IWorkEventFv, (u32)&WorkEvent17__10IWorkEventFv, (u32)&WorkEvent18__10IWorkEventFv, (u32)&WorkEvent19__10IWorkEventFv, (u32)&WorkEvent20__10IWorkEventFv, (u32)&WorkEvent21__10IWorkEventFv, (u32)&WorkEvent22__10IWorkEventFv, (u32)&WorkEvent23__10IWorkEventFv, (u32)&WorkEvent24__10IWorkEventFv, (u32)&WorkEvent25__10IWorkEventFv, (u32)&WorkEvent26__10IWorkEventFv, (u32)&WorkEvent27__10IWorkEventFv, (u32)&WorkEvent28__10IWorkEventFv, (u32)&WorkEvent29__10IWorkEventFv, (u32)&WorkEvent30__10IWorkEventFv, (u32)&WorkEvent31__10IWorkEventFv };
-DECOMP_FORCEACTIVE(CNBanner_cpp, lbl_eu_80570378);
-extern "C" u32 lbl_eu_80570400[4] = { (u32)&m2r::__RTTI__10IWorkEvent, 0x00000000, 0x00000000, 0x00000000 };
-DECOMP_FORCEACTIVE(CNBanner_cpp, lbl_eu_80570400);
-extern "C" u32 lbl_eu_80570410[4] = { (u32)&lbl_eu_80663CE8, 0x00000000, (u32)&func_eu_804F9EE0, (u32)&func_804DA4CC };
-DECOMP_FORCEACTIVE(CNBanner_cpp, lbl_eu_80570410);
-extern "C" u32 lbl_eu_80570420[3] = { (u32)&lbl_eu_80663B70, 0x00000000, 0x00000000 };
-DECOMP_FORCEACTIVE(CNBanner_cpp, lbl_eu_80570420);
+// [.data] 0x80570410-0x80570420 (16 bytes)
+// Address-typed words get link-time relocation init from MWCC (no __sinit__);
+// plain non-const u32 aggregates land in .data like the retail blobs, so no
+// section attribute is needed.
+extern "C" u32 lbl_eu_80570410[4] = { (u32)&lbl_eu_80663CE8, 0, (u32)func_eu_804F9EE0, (u32)func_804DA4CC };
+// [.data] 0x80570420-0x8057042C (12 bytes)
+extern "C" u32 lbl_eu_80570420[3] = { (u32)lbl_eu_80663B70, 0, 0 };
 
-// [.sdata] 0x80663CE0-0x80663CF0 (16 bytes)
-extern "C" u32 lbl_eu_80663CE0[2] = { (u32)&lbl_eu_805248B0, (u32)&lbl_eu_80570400 };
-DECOMP_FORCEACTIVE(CNBanner_cpp, lbl_eu_80663CE0);
-extern "C" u32 lbl_eu_80663CE8[2] = { (u32)&lbl_eu_805248C0, (u32)&lbl_eu_80570420 };
-DECOMP_FORCEACTIVE(CNBanner_cpp, lbl_eu_80663CE8);
+// [.sdata] 0x80663CE0-0x80663CF0 (16 bytes): RTTI name/hierarchy pairs. The
+// CNBanner pair (lbl_eu_80663CE0 -> lbl_eu_80570400) is compiler-generated;
+// only the second pair stays hand-written.
+// [.sdata] 0x80663CE8-0x80663CF0 (8 bytes): second RTTI name/hierarchy pair
+// ("CNReqtaskCreatedir"); small non-const aggregates go to .sdata without a
+// section attribute.
+extern "C" u32 lbl_eu_80663CE8[2] = { (u32)lbl_eu_805248C0, (u32)lbl_eu_80570420 };
 
-// [.rodata] 0x805248B0-0x805248D3 (35 bytes)
-extern "C" __declspec(align(4)) const char lbl_eu_805248B0[0x9] = { 0x43,0x4E,0x42,0x61,0x6E,0x6E,0x65,0x72,0x00 };
-// 3 pad bytes at +0x9..0xB come from the 4-alignment gap; the all-zero
-// 4-byte object must stay PROGBITS .rodata (a plain const zero array is
-// NOBITS-ified into .sbss2), hence the explicit section decl.
-extern "C" __declspec(section ".rodata") const char lbl_eu_805248BC[0x4] = { 0x00,0x00,0x00,0x00 };
-DECOMP_FORCEACTIVE(CNBanner_cpp, lbl_eu_805248BC);
-extern "C" __declspec(align(4)) const char lbl_eu_805248C0[0x13] = { 0x43,0x4E,0x52,0x65,0x71,0x74,0x61,0x73,0x6B,0x43,0x72,0x65,0x61,0x74,0x65,0x64,0x69,0x72,0x00 };
-DECOMP_FORCEACTIVE(CNBanner_cpp, lbl_eu_805248C0);
+// [.rodata] 0x805248B0-0x805248D3 (35 bytes). The "CNBanner" name string
+// (lbl_eu_805248B0) is compiler-generated as the RTTI type_info name.
+// lbl_eu_805248BC (4 zero bytes, the empty-slot path string) stays UNDEFINED
+// here: only the incomplete-array extern at the top of the file declares it,
+// so MWCC cannot constant-fold the read in func_804F531C and keeps the retail
+// lis+ADDR16-reloc addressing.
+// lbl_eu_805248BC itself stays UNDEFINED: every definable form regresses --
+// const zero-init folds to li r4,0 (.sbss2), non-const lands in .sbss with
+// sda21 addressing. The undefined sized-array reference reproduces the retail
+// lis+ADDR16_HA/LO pair; the symbol ships from the shared monolibdata blob.
+extern "C" const char lbl_eu_805248C0[0x13] = { 0x43,0x4E,0x52,0x65,0x71,0x74,0x61,0x73,0x6B,0x43,0x72,0x65,0x61,0x74,0x65,0x64,0x69,0x72,0x00 };
 
 // [.sbss] 0x80665A98-0x80665A9C (4 bytes) - module-global string pointer
 // (cross-TU global; plan assigns the slot to this TU).
 extern "C" { char* lbl_eu_80665A98; }
-DECOMP_FORCEACTIVE(CNBanner_cpp, lbl_eu_80665A98);

@@ -2,6 +2,7 @@
 
 #include <types.h>
 #include "kyoshin/cf/object/IObjectInfo.hpp"
+#include "kyoshin/cf/CBattleManagerApi.hpp"
 
 namespace cf{
     //size: 0x30?
@@ -271,13 +272,8 @@ extern "C" {
     // Signature matches CChain.hpp (int/CChainBattleObjTail*/int) so both
     // headers can be included in one TU without a rename guard.
     int func_802A3680(int a, CChainBattleObjTail* b, int c);
-    // Battle-manager singleton (retail pre-mangled name; C linkage keeps the
-    // symbol verbatim - CSysWinScenarioLog idiom). CBattleManager.hpp is not
-    // included by CSuddenCommu.cpp (conflicting func_80149154 decl in
-    // CfObjectActor.hpp), so the singleton is reached through this decl.
-    // Return type unified with CAIAction.hpp's extern "C" void* form
-    // (the two cannot coexist - MWCC error 10505); callers cast as needed.
-    void* getInstance__Q22cf14CBattleManagerFv();
+    // Battle-manager singleton: declared once in
+    // kyoshin/cf/CBattleManagerApi.hpp (included at the top of this header).
     // Voice/help imports used by the sudden-commu triggers (unmangled retail
     // names - C linkage keeps the call relocs verbatim).
     u32 func_8009CF8C(u32 resourceId);
@@ -327,8 +323,6 @@ extern "C" {
     int func_80086F9C__Q22cf13CfGameManagerFv(int arg);
     void func_80080F44__Q22cf13CfGameManagerFv(void* obj);
     // Camera/trigger object accessors (lbl_eu_80663E14 is a global pointer).
-    extern "C" void* func_8049603C(void* obj);
-    f32 func_80496288(void* obj);
     int func_8017FD4C(int);
     void func_8017FEF0(void* obj, int arg);
 }

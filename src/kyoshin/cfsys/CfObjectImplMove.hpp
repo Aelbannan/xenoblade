@@ -415,6 +415,29 @@ struct CfMoveC4Obj {
     u32 field_4EC;
 };
 
+// Event object behind the embedded sub-object's +0x98 registration slot
+// (actor +0x3f34), as dispatched by func_800CEE80: slots 0x40/0x44 manage the
+// cached effect handle, the +0x7a4 flag word gates the query, +0x14ac is a
+// fallback result object, and +0x760..0x768 is a presentation position triple.
+class CfMoveEvt98 {
+public:
+    virtual void* p00(); virtual void* p01(); virtual void* p02(); virtual void* p03();
+    virtual void* p04(); virtual void* p05(); virtual void* p06(); virtual void* p07();
+    virtual void* p08(); virtual void* p09(); virtual void* p10(); virtual void* p11();
+    virtual void* p12(); virtual void* p13();
+    virtual void* vf40();             // index 14 -> vtable 0x40
+    virtual u32 vf44();               // index 15 -> vtable 0x44
+
+    u8 _04_75F[0x760 - 0x04];         // 0x04-0x75f
+    f32 field_760;                    // 0x760 (presentation position)
+    f32 field_764;                    // 0x764
+    f32 field_768;                    // 0x768
+    u8 _76C_7A3[0x7a4 - 0x76c];       // 0x76c-0x7a3
+    u32 field_0x7A4;                  // 0x7a4 (flag word; bit 30 probed)
+    u8 _7A8_14AB[0x14ac - 0x7a8];     // 0x7a8-0x14ab
+    u32 field_0x14AC;                 // 0x14ac (fallback result object)
+};
+
 // Contact parameter block handed to func_800CF810.
 struct CfMoveContact {
     u8 _00_09[0xa];
@@ -459,6 +482,10 @@ public:
     virtual void* h10();
     virtual void* h14();
     virtual void* h20(u32 id);   // index 6 -> vtable 0x20
+    virtual void* h24();         // index 7
+    virtual void* h28();         // index 8
+    virtual void* h2C();         // index 9
+    virtual void* h30(u32 id);   // index 10 -> vtable 0x30
 };
 
 // Event parameter block handed to func_800CB454 / func_800CAB30:
@@ -473,23 +500,43 @@ struct CfMoveEvtParam {
 };
 
 // 0x20-byte request buffer built on the stack by func_800CB454 and handed to
-// func_8014AC38.
+// func_8014AC38. Bytes 0x04-0x11 are cleared by one memset, then individual
+// fields are stored.
+struct CfMoveAcReqBody {
+    u8 _04_05[2];                 // 0x04-0x05
+    u8 field_6;                   // 0x06
+    u8 _07_0C[6];                 // 0x07-0x0c
+    u8 field_D;                   // 0x0d
+    u8 _0E_0F[2];                 // 0x0e-0x0f
+    u16 field_10;                 // 0x10
+};
+
 struct CfMoveAcReq {
-    u8 _00_04[4];
-    u8 _04_0B[7];               // +0x04..+0x0a (memset region starts at +4)
-    u8 field_6;
-    u8 _07_0D[6];
-    u8 field_D;
-    u16 field_10;
-    u16 field_12;
-    f32 field_14;
-    u8 _18_20[0xc];
+    union {
+        CfMoveAcReqBody body;     // named-field view of 0x04..0x11
+        u8 raw[0xe];              // memset target (0x04-0x11)
+    } at4;
+    u16 field_12;                 // 0x12
+    f32 field_14;                 // 0x14 (float constant)
+    u8 _18_1F[8];
 };
 
 // Wide view of the vf29C() item (func_800CB454 clears bit groups of +0x74).
 struct CfMoveVf29CX74 {
     u8 _00_73[0x74];
     u32 field_74;
+};
+
+// Move-state bookkeeping block embedded in CfActorObj at +0x3380.
+struct CfActorMstBlock {
+    u8 buf[4];                    // 0x3380 (effect-list buffer)
+    u32 field_4;                  // 0x3384
+    u16 field_8;                  // 0x3388
+    u8 _padA[0x210 - 0xa];
+    u32 field_210;                // 0x3590
+    u32 field_214;                // 0x3594
+    u8 _pad218[0xafc - 0x218];
+    u32 field_afc;                // 0x3E7C
 };
 
 // Actor object reached via CfObjectImplMoveObj::field_0x18; carries the
@@ -553,15 +600,14 @@ public:
 
     CfActorObj4* field_04;                 // 0x04
     u8 field_08[8];                        // 0x08 (handler block probed by func_80148778)
-    u8 _pad10[0x3374 - 0x10];
+    u8 _pad10[0x74 - 0x10];
+    u32 field_74;                          // 0x74 (bit-group clear target)
+    u8 _pad78b[0x3374 - 0x78];
     u32 field_3374;                        // 0x3374
     u8 _pad78[0x3380 - 0x3378];
-    u8 field_3380[8];                      // 0x3380 (effect-list buffer)
-    u16 field_3388;                        // 0x3388
-    u8 _pad8A[0x3590 - 0x338a];
-    u32 field_3590;                        // 0x3590
-    u32 field_3594;                        // 0x3594
-    u8 _pad98[0x3E9C - 0x3598];
+    CfActorMstBlock mst;                   // 0x3380 (move-state bookkeeping)
+    u8 _padE80[0x3E98 - 0x3E80];
+    u32 field_3E98;                        // 0x3E98
     CfEmbeddedSubObj_3E9C sub;             // 0x3E9C (embedded move sub-object)
 };
 
@@ -608,7 +654,7 @@ public:
     virtual void vf8C();                    // index 33
     virtual void vf90();                    // index 34
     virtual void vf94(u32 a);               // index 35 -> vtable 0x94
-    virtual void vf98();                    // index 36
+    virtual void vf98(u32 a);               // index 36 -> vtable 0x98
     virtual void vf9C();                    // index 37
     virtual void vfA0();                    // index 38
     virtual void vfA4();                    // index 39
@@ -671,10 +717,8 @@ extern bool func_8006EF04(int mask);
 // C-linkage imports (retail symbol names are unmangled - keep verbatim).
 extern "C" {
 void* func_8016FE34(void* source);
-f32 func_80496288(void* obj);
 void func_80174B4C(void* actor, u32 mask);
 void func_8014B2DC(u8* buf);
-void func_800BE12C(void* sub, u32 id, u32 b, int c, int d);
 void func_80482AB8(u32 id, void* source);
 void* func_800EA444(void* bm);
 void* getInstance__Q22cf13CfGameManagerFv();
@@ -701,21 +745,57 @@ void func_804E3CDC(void* effect, f32 f1, f32 f2);
 void func_80482AD4(void* handler, void* source);
 void func_8015BD94(void* effect);
 void func_802A0FE8(void* self);
+void* func_80496264(void* scene, int index);  // scene pose lookup (func_800CD460)
+void func_8007B044(void* shake, int flag);    // camera-shake dispatch (func_800CD460)
 }
 
 // Talk-source getter (cf::CfObjectModel.cpp) and battle-entry helper
 void func_800CB21C(CfObjectImplMoveObj* self, u32 id);
+
+// Event dispatcher defined below in this TU; retail symbol is unmangled, so
+// declare it with C linkage here (the definition below inherits it).
+extern "C" void func_800CB9AC(CfObjectImplMoveObj* self, u32 id);
 // (CBattleManager.cpp): retail symbols are unmangled, so keep C linkage
 // (same pattern as the other imports above).
 extern "C" void* func_800BBC0C(void* objParam);
 extern "C" void func_800E1B5C(void* mgr, void* battleObj);
 
-// Declared in CfObjectImplWalker.hpp with a typed return; repeat verbatim to
-// avoid an illegal-overload conflict.
-extern "C" CBattleManagerView* getInstance__Q22cf14CBattleManagerFv();
+// getInstance__Q22cf14CBattleManagerFv: the one shared declaration lives in
+// kyoshin/cf/CBattleManagerApi.hpp (included at the top of this header).
+// Camera-shake parameter block
+// vectors at +0x04 / +0x10 are scaled by the distance falloff factor before
+// the call.
+struct CfMoveCd460Shake {
+    f32 field_00;                   // 0x00 intensity
+    CfMoveVec3f vecA;               // 0x04
+    CfMoveVec3f vecB;               // 0x10
+    u8 _1C_34[0x34 - 0x1c];
+};
+
+// Parameter block for func_800CD460: embedded shake data plus a distance
+// threshold (0 means derive it from the event object's effect scale).
+struct CfMoveCd460Arg {
+    u8 _00_0B[0xc];
+    CfMoveCd460Shake shake;         // 0x0c-0x3f
+    f32 field_40;                   // 0x40 threshold override
+};
+
+// Move-target object view (position at +0x3a8, cf/object/CfObjectMove.hpp).
+struct CfMoveCd460Target {
+    u8 _00_3A7[0x3a8];
+    CfMoveVec3f pos;                // 0x3a8
+};
+
+// Scene pose block returned by func_80496264(scene, -1) (position at +0x10c).
+struct CfMoveCd460Pose {
+    u8 _00_10B[0x10c];
+    CfMoveVec3f pos;                // 0x10c
+};
+
 
 // Retail float constants (sdata2 pool) used by func_800CC638.
 extern const f32 lbl_eu_80666C88;   // event-object f17() comparison threshold
+extern const f32 lbl_eu_80666C68;   // move-distance base threshold
 // sdata2 int->float magic (2^52 = 0x4330000000000000) for the 0x43300000
 // conversion (CfMapEffectManager.hpp convention).
 extern const f64 lbl_eu_80666C90;
@@ -723,7 +803,8 @@ extern const f32 lbl_eu_80666C64;   // func_804E3CDC second argument
 
 extern u32 lbl_eu_80663EF0;
 extern u32 lbl_eu_80663E24;         // global presentation/mode word (CTaskGame.hpp)
-extern void* lbl_eu_80663E14;       // pointer consumed by func_80496288
+class CScn;  // monolib scene (canonical decl: cf/object/CfObjectMove.hpp)
+extern CScn* lbl_eu_80663E14;       // pointer consumed by func_80496288
 
 // float-returning probe over the lbl_eu_80663E14 object (retail symbol is
 // unmangled - keep C linkage, declared above).
@@ -737,6 +818,8 @@ extern const f32 lbl_eu_80666CCC;
 extern const f32 lbl_eu_80666CD0;
 extern const f32 lbl_eu_80666CD4;
 extern const f32 lbl_eu_80666C9C;
+extern const f32 lbl_eu_80666CA0;   // func_800CEE80 timer threshold / vec.y seed
+extern const f32 lbl_eu_80666CA4;   // func_800CEE80 final field_0x24 store
 extern const f32 lbl_eu_80666CAC;
 extern const f32 lbl_eu_80666CB0;
 extern const f32 lbl_eu_80666CB4;
@@ -757,7 +840,9 @@ void Warning(const char* file, int line, const char* fmt, ...);
 // cf::CfGameManager::getPlayer(int)
 void* getPlayer__Q22cf13CfGameManagerFi(int idx);
 
-extern u32 lbl_eu_80661D40;
+// Volatile here: func_800CEE80 performs a dead reload of this word (retail
+// keeps the load), so the compiler must not elide it.
+extern volatile u32 lbl_eu_80661D40;
 
 // Presentation / sound / effect helpers used by the move-event dispatchers.
 extern "C" void func_801A891C(void* actor, void* param);
@@ -765,11 +850,15 @@ extern "C" void func_80174C24(void* actor, u32 mask);
 extern "C" void* func_800F477C(void);
 extern "C" void func_8014AC38(u8* buf, void* req);
 #include <string.h>
-extern "C" void* func_8049603C(void* obj);
+// func_8049603C is declared once in libs/monolib/src/scn/CScn_8049603C.hpp;
+// do not redeclare it here.
 extern "C" void func_801BFC38__Q22cf10CfSoundManFUlUlUlUlf(
     void* soundMan, u32 a, u32 b, u32 c, u32 d, f32 e);
 extern "C" void func_801BFE20(u32 a, u32 b, void* c, f32 d);
 extern "C" void func_800ACC64(void* a, void* b);
+extern "C" void func_801BFDE8(u32 mode, u32 value, void* pos, f32 first,
+    f32 second);
+extern "C" void func_801BFE8C(u32 a, u32 b, u32 c);
 extern "C" void* func_8048315C(void);
 extern "C" int func_804BE398(void* a);
 extern "C" void func_804BE4B4(void* a, int b);

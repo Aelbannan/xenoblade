@@ -6,6 +6,8 @@
 #include "monolib/device.hpp"
 #include "monolib/util/MemManager.hpp"
 #include "monolib/work/IWorkEvent.hpp"
+#include "monolib/work/CEventFile.hpp"
+#include "monolib/lib/CLibLayout.hpp"
 
 // Data imports (retail symbol names; global data is not C++-mangled).
 extern const float lbl_eu_80668DF0;
@@ -19,6 +21,8 @@ u32 func_80137444(nw4r::lyt::AnimTransform*, float);
 extern "C" u32 func_80137510(nw4r::lyt::AnimTransform*, float);
 void func_801390E0(CFileHandle**);
 void func_80139124(nw4r::lyt::ArcResourceAccessor*);
+void func_80136E84(nw4r::lyt::Layout**, nw4r::lyt::ArcResourceAccessor*, const char*);
+void func_80136F08(nw4r::lyt::Layout*, nw4r::lyt::AnimTransform**, nw4r::lyt::ArcResourceAccessor*, char*);
 
 extern "C" void func_802AE7EC(CLoad* self);
 extern "C" void func_802AE894(CLoad* self);
@@ -38,7 +42,50 @@ extern "C" void func_802AE8E0(CLoadFull* self) {
     }
 }
 
-void CLoad::OnFileEvent() {}
+// File-load completion callback: builds the loading-screen layout from the
+// freshly loaded archive and starts its animations.
+// optimize_for_size reproduces the retail [stmw r29]/lmw frame.
+#pragma push
+#pragma optimize_for_size on
+#pragma dont_inline on
+bool CLoad::OnFileEvent(CEventFile* pEventFile) {
+    if (mFileHandle == pEventFile->mFileHandle) {
+        mMemRegion.createRegion(mtl::MemManager::getHandleMEM2(), 0x1400,
+                                &lbl_eu_80510CC8[0x11], 0);
+        Class_8045F858 regionGuard(&mMemRegion);
+
+        // Take ownership of the loaded buffer (inlined CFileHandle::getData),
+        // then flush the MEM2 allocator state before building resources.
+        void* data = mFileHandle->mData;
+        mFileHandle->mData = nullptr;
+        mtl::MemManager::func_80434A4C(false);
+
+        mAccessor = CLibLayout::createArcResourceAccessor();
+        mAccessor->Attach(data, &lbl_eu_80510CC8[0x17]);
+
+        // field_2D selects the language-specific resource names.
+        func_80136E84(&mLayout, mAccessor,
+                      (field_2D != 0) ? &lbl_eu_80510CC8[0x1B] : &lbl_eu_80510CC8[0x2D]);
+        func_80136F08(mLayout, &mAnimTrans0, mAccessor,
+                      (field_2D != 0) ? &lbl_eu_80510CC8[0x3F] : &lbl_eu_80510CC8[0x54]);
+        func_80136F08(mLayout, &mAnimTrans1, mAccessor,
+                      (field_2D != 0) ? &lbl_eu_80510CC8[0x69] : &lbl_eu_80510CC8[0x80]);
+
+        // Fade-in on mAnimTrans0 first; mAnimTrans1 stays bound but disabled.
+        mLayout->SetAnimationEnable(mAnimTrans1, false);
+        mLayout->SetAnimationEnable(mAnimTrans0, true);
+        mLayout->Animate(0);
+
+        func_802AE8E0(reinterpret_cast<CLoadFull*>(this));
+
+        mFileHandle = nullptr;
+        mMemRegion.func_8045F810();
+        return true;
+    }
+    return false;
+}
+// keep the func_802AE8E0 helper call outlined (retail does not inline it)
+#pragma pop
 
 CLoad::CLoad(u8 arg) {
     mFileHandle = nullptr;

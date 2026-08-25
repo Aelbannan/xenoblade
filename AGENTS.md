@@ -1,6 +1,7 @@
-# Xenoblade co-op fork — agent entry point
+# Xenoblade decomp fork — agent entry point
 
-Private/downstream Xenoblade Chronicles Wii decompilation + split-screen co-op mod fork.
+Private/downstream Xenoblade Chronicles Wii decompilation fork (byte-matching; the former
+split-screen co-op feature effort is parked).
 
 ## Lazy-load the skill
 
@@ -9,9 +10,8 @@ decomp/matching task** — decompiling, byte-matching, editing `src/**`/`libs/**
 running the coop runner / objdiff / DECOMP_MAP targets / MWCC `EQUIVALENT_MATCH` / `FULL_MATCH` work.
 It holds the workflow, acceptance policy, and residual routing.
 
-**Skip it for non-decomp asks** (planning, docs, tooling, co-op feature work that doesn't touch
-matching, general repo questions). Your default state should be "no SKILL.md loaded" — load it on
-demand, not up front.
+**Skip it for non-decomp asks** (planning, docs, tooling, general repo questions). Your default
+state should be "no SKILL.md loaded" — load it on demand, not up front.
 
 ## Every task
 
@@ -19,7 +19,6 @@ demand, not up front.
   `targets show/status`, not hand-maintained checklists. `docs/ownership.csv` is legacy.
 - **Architecture/legal rules:** `PLAN.md` §§2, 3, 17 (legal boundaries, invariants, matching policy).
   Read other sections only when the task touches that subsystem.
-- **Co-op architecture:** `COOP_IMPLEMENTATION_MAP.md` — read for co-op feature work.
 
 ## Always
 

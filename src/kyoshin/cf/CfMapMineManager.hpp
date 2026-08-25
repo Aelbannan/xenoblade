@@ -4,6 +4,66 @@
 class UnkClass_800821F8;
 class CItemImplInstances;
 
+// Cast-only vtable interfaces for the CItemImplInstances object returned by
+// CItem_initItemImplInstances(). MWCC prepends 2 RTTI header entries, so the
+// first virtual sits at vtable+0x08.
+struct CItemInstVt1C {
+    virtual void _v08();
+    virtual void _v0C();
+    virtual void _v10();
+    virtual void _v14();
+    virtual void _v18();
+    virtual void _v1C(void* item);  // vtable+0x1C
+};
+struct CItemInstVt50 {
+    virtual u32 _v08(void* item);
+    virtual void _v0C();
+    virtual void _v10();
+    virtual void _v14();
+    virtual void _v18();
+    virtual void _v1C();
+    virtual char* _v20(void* item);  // item name getter
+    virtual void _v24();
+    virtual void _v28();
+    virtual void _v2C();
+    virtual void _v30();
+    virtual void _v34();
+    virtual void _v38();
+    virtual void _v3C();
+    virtual void _v40();
+    virtual void _v44();
+    virtual void _v48();
+    virtual void _v4C();
+    virtual void _v50(void* item, int slot, int value);  // vtable+0x50
+};
+struct CItemInstVt68 {
+    virtual void _v08();
+    virtual void _v0C();
+    virtual void _v10();
+    virtual void _v14();
+    virtual void _v18();
+    virtual void _v1C();
+    virtual void _v20();
+    virtual void _v24();
+    virtual void _v28();
+    virtual void _v2C();
+    virtual void _v30();
+    virtual void _v34();
+    virtual void _v38();
+    virtual void _v3C();
+    virtual void _v40();
+    virtual void _v44();
+    virtual void _v48();
+    virtual void _v4C();
+    virtual void _v50();
+    virtual void _v54();
+    virtual void _v58();
+    virtual void _v5C();
+    virtual void _v60();
+    virtual void _v64();
+    virtual void _v68(void* item, int slot, int value);  // vtable+0x68
+};
+
 // ---------------------------------------------------------------------------
 // C-linkage imports
 // ---------------------------------------------------------------------------
@@ -17,7 +77,6 @@ extern "C" u32 getBdatStringColumnValue(void* file,
 extern "C" u32 func_8003B1EC(void* file);
 extern "C" u32 func_8003B41C(void* file);
 extern "C" int CfRes_getD80Flag();
-extern "C" f32 func_80496288(void*);
 extern "C" u32 func_80061FFC();
 extern "C" const f32 lbl_eu_806682B0;
 extern "C" void* allocate_array__Q23mtl10MemManagerFUlUl(u32 size, u32 handle);
@@ -31,7 +90,7 @@ extern "C" void* func_800B8920(void* obj);
 extern "C" void func_800B9404(void* obj);
 extern "C" void* func_80186BC8(int id);
 extern "C" void func_800BFBF4(u16 id, int mode);
-extern "C" void func_80462E58__8CTaskLODFv(u32 a, u32 b, f32 c);
+extern "C" void func_80462E58__8CTaskLODFv(u32 a, u32 b, f64 c);
 extern "C" void func_801BFC38__Q22cf10CfSoundManFUlUlUlUlf(u32 a, u32 b, u32 c,
                                                            u32 d, f32 e);
 extern "C" CItemImplInstances* CItem_initItemImplInstances();
@@ -72,19 +131,25 @@ extern "C" u16 lbl_eu_80663E44;                 // sbss: current area sub-id
 extern "C" BdatFilePointer* lbl_eu_806640C8;    // sbss: bdat file handle
 extern "C" s32 lbl_eu_806646A4;                 // sbss: cached name length
 extern "C" s8 lbl_eu_806646A8;                  // sbss: one-time init flag
-extern "C" char lbl_eu_80662758[];              // sdata: scratch name buffer
-extern "C" u8 lbl_eu_80662750[];                // sdata: range-pair table
-extern "C" u32 lbl_eu_80662760[];               // sdata: lottery bias table
+extern "C" char lbl_eu_80662758[8];            // sdata: scratch name buffer
+extern "C" u8 lbl_eu_80662750[8];              // sdata: range-pair table
+extern "C" u32 lbl_eu_80662760[2];             // sdata: lottery bias table
 extern "C" char lbl_eu_80508424[];              // rodata: bdat column names
 extern "C" char lbl_eu_80535720[];              // data: scratch name buffer 2
 extern "C" u8 lbl_eu_8053572C[];                // data: reslist vtable
 extern "C" u8 lbl_eu_80535744[];                // data: _reslist_base vtable
 extern "C" const f32 lbl_eu_806682B0;           // rodata: 0.0f literal
+extern const f32 lbl_eu_806682B4;               // sdata2: 1.0e-4f
+extern const f64 lbl_eu_806682B8;               // sdata2: 2^52 + 2^31 (int->double fixup)
 extern const f32 lbl_eu_806682C8;               // rodata: 50.0f
 extern const f32 lbl_eu_806682CC;               // rodata: 40000.0f
 extern const f32 lbl_eu_806682D0;               // rodata: 2.5f
 extern const f32 lbl_eu_806682D4;               // rodata: 6.25f
+extern const f32 lbl_eu_806682E0;               // rodata: sound timer reset value
 extern const f32 lbl_eu_806682E4;               // rodata: 0.6f
 extern const f32 lbl_eu_806682E8;               // rodata: small y offset
+extern const f32 lbl_eu_806682EC;               // rodata: respawn timer scale
+extern const f32 lbl_eu_806682F0;               // rodata: respawn timer scale 2
+extern const f32 lbl_eu_806682F4;               // rodata: message display time
 extern "C" const f64 lbl_eu_806682D8;           // rodata: 0.0 double literal
-extern const f64 lbl_eu_806682C0;               // rodata: 160.0 double literal
+extern "C" const f64 lbl_eu_806682C0;               // rodata: 160.0 double literal

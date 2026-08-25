@@ -33,11 +33,14 @@ void adxhdr_get_ply_prm(u8 *src, u8 *dst) {
 }
 
 int ADX_DecodeHeader(u8 *data, s32 size, s32 *out_data_size, u8 *out_hdr) {
-    s32 remaining;
-    s32 i, ch, ch_count;
-    s32 ch_info_size;
+    /* hdr_size doubles as the remaining-bytes tracker once the fixed
+       header is consumed; MWCC keeps it in a single register that way */
+    s32 hdr_size;
+    s32 i, count;
+    u8 *p;
+    u8 *dst;
 
-    if (out_data_size) {
+    if (out_data_size != NULL) {
         *out_data_size = 0;
     }
 
@@ -47,54 +50,54 @@ int ADX_DecodeHeader(u8 *data, s32 size, s32 *out_data_size, u8 *out_hdr) {
     if ((u16)((data[0] << 8) | data[1]) != 0x8000) return -4;
 
     /* header size */
-    ch_info_size = (data[2] << 8) | data[3];
-    if (out_data_size) *out_data_size = ch_info_size;
+    hdr_size = (data[2] << 8) | data[3];
+    if (out_data_size != NULL) *out_data_size = hdr_size;
 
-    if (!out_hdr) return 0;
+    if (out_hdr == NULL) return 0;
 
-    if (size < ch_info_size + 4) return -2;
-    if (ch_info_size - 6 < 16) return -2;
+    if (size < hdr_size + 4) return -2;
+    if (hdr_size - 6 < 16) return -2;
 
     adxhdr_get_base_info(data + 4, out_hdr);
 
-    /* parse channel info from offset 0x14 in src */
-    i = 0;
-    remaining = ch_info_size - 0x16;
-    {
-        u8 *p = data + 0x14;
-        if (out_hdr[0x3C] == 4) {
-            p += 0x0C;
-            remaining -= 0x0C;
-        }
+    p = data + 0x14;
+    hdr_size -= 0x16;
+    if (out_hdr[0x3C] == 4) {
+        p += 0x0C;
+        hdr_size -= 0x0C;
+    }
 
-        if (remaining < 4) return 0;
+    if (hdr_size < 4) return 0;
 
-        /* number of channel entries */
-        ch_count = (p[2] << 8) | p[3];
-        *(s16 *)(out_hdr + 0x0E) = (s16)ch_count;
-        p += 4;
-        remaining -= 4;
+    /* number of channel entries */
+    *(s16 *)(out_hdr + 0x0E) = (s16)((p[2] << 8) | p[3]);
+    p += 4;
+    hdr_size -= 4;
 
-        if (remaining < ch_count * 0x14) return 0;
+    if (hdr_size < *(s16 *)(out_hdr + 0x0E) * 0x14) return 0;
 
-        for (i = 0; i < ch_count; i++) {
-            u8 *ch_dst = out_hdr + 0x10 + i * 0x14;
-            *(u16 *)(ch_dst + 0) = (u16)((p[0] << 8) | p[1]);
-            *(u16 *)(ch_dst + 2) = (u16)((p[2] << 8) | p[3]);
-            *(u32 *)(ch_dst + 4) = ((u32)p[4] << 24) | ((u32)p[5] << 16) | ((u32)p[6] << 8) | p[7];
-            *(u32 *)(ch_dst + 8) = ((u32)p[8] << 24) | ((u32)p[9] << 16) | ((u32)p[10] << 8) | p[11];
-            *(u32 *)(ch_dst + 12) = ((u32)p[12] << 24) | ((u32)p[13] << 16) | ((u32)p[14] << 8) | p[15];
-            *(u32 *)(ch_dst + 16) = ((u32)p[16] << 24) | ((u32)p[17] << 16) | ((u32)p[18] << 8) | p[19];
-            p += 0x14;
-        }
+    dst = out_hdr;
+    for (i = 0; i < *(s16 *)(out_hdr + 0x0E); i++) {
+        *(u16 *)(dst + 0x10) = (u16)((p[0] << 8) | p[1]);
+        *(u16 *)(dst + 0x12) = (u16)((p[2] << 8) | p[3]);
+        *(u32 *)(dst + 0x14) = ((u32)p[5] << 16) | ((u32)p[4] << 24) | ((u32)p[6] << 8) | p[7];
+        *(u32 *)(dst + 0x18) = ((u32)p[9] << 16) | ((u32)p[8] << 24) | ((u32)p[10] << 8) | p[11];
+        *(u32 *)(dst + 0x1C) = ((u32)p[13] << 16) | ((u32)p[12] << 24) | ((u32)p[14] << 8) | p[15];
+        *(u32 *)(dst + 0x20) = ((u32)p[17] << 16) | ((u32)p[16] << 24) | ((u32)p[18] << 8) | p[19];
+        dst += 0x14;
+        p += 0x14;
+    }
 
-        /* parse play parameters */
-        for (ch = 0; ch < (s8)out_hdr[3]; ch++) {
-            if (remaining < 12) return 0;
-            adxhdr_get_ply_prm(p, out_hdr + 0x24 + ch * 12);
-            p += 12;
-            remaining -= 12;
-        }
+    hdr_size -= *(s16 *)(out_hdr + 0x0E) * 0x14;
+
+    /* parse play parameters */
+    dst = out_hdr + 0x24;
+    for (i = 0; i < (s8)out_hdr[3]; i++) {
+        if (hdr_size < 12) return 0;
+        adxhdr_get_ply_prm(p, dst);
+        p += 0x0C;
+        hdr_size -= 0x0C;
+        dst += 0x0C;
     }
 
     return 0;

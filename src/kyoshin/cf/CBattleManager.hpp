@@ -1,6 +1,7 @@
 #pragma once
 
 #include <types.h>
+#include "kyoshin/cf/CBattleManagerApi.hpp"
 #include "kyoshin/cf/IFactoryEvent.hpp"
 #include "kyoshin/cf/object/CfObjectActor.hpp"
 #include "kyoshin/cf/IBattleEvent.hpp"
@@ -77,6 +78,8 @@ namespace cf{
         void* func_800EA444();
 
         static CBattleManager* getInstance();
+        // TUs that cannot include this class reach the same retail symbol
+        // through kyoshin/cf/CBattleManagerApi.hpp (the one shared copy).
         static void func_800D9190();
         static void func_800D91D0();
         void func_800D9218();

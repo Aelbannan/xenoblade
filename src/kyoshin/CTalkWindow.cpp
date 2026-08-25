@@ -37,7 +37,7 @@ extern u32 lbl_eu_80664044;
 extern "C" void func_8012BDD0() { lbl_eu_80664044 = 0; }
 
 // ---------------------------------------------------------------------------
-// Target 1: __ct__CTalkWindow (us-8012c710)
+// __ct__CTalkWindow (us-8012c710)
 // Runs CProcess's ctor then fills the IUIWindow region by hand (the temp
 // vtable at +0x10 is written first, then the CTalkWindow composite vtable),
 // copies the two null ptmf callback slots, constructs the embedded
@@ -107,7 +107,7 @@ CTalkWindow* __ct__CTalkWindow(CTalkWindow* _this, u32 arg1, u32 arg2,
 }
 
 // ---------------------------------------------------------------------------
-// Target 2: func_8012D8C0 (us-8012e390)
+// func_8012D8C0 (us-8012e390)
 // Window-state 1 driver: play the intro anim (field_88); when the talk-enable
 // flag (field_B4) is set, run the character-voice playback through the talk
 // source (with the page-id / talk-source checks), then switch the enabled
@@ -156,7 +156,7 @@ skip_b9d4:;
 }
 
 // ---------------------------------------------------------------------------
-// Target 4: func_8012DA6C (us-8012e53c)
+// func_8012DA6C (us-8012e53c)
 // Window-state 2 driver: find the three page panes, blend the tag-processor
 // animation (func_801276F4 / func_8012615C depending on the confirm button),
 // then dispatch the result: state 4 accepts the selection, otherwise the
@@ -261,7 +261,7 @@ void func_8012DA6C(CTalkWindow* self) {
 }
 
 // ---------------------------------------------------------------------------
-// Target 5: func_8012D3D8 (us-8012dea8)
+// func_8012D3D8 (us-8012dea8)
 // Place the four corner message panes around the reference pane (0xb0) and
 // lay out the remaining page panes with scale-derived offsets, using the
 // page-name table (lbl_eu_8052DF70) for the final pane.
@@ -544,7 +544,7 @@ p2done:;
 }
 
 // ---------------------------------------------------------------------------
-// Target 2: CTalkWindow::Init (us-8012c8a8)
+// CTalkWindow::Init (us-8012c8a8)
 // Open a scratch region (Class_8045F858 RAII guard), allocate and prime the
 // tag processor, then dispatch on its +0x814 mode byte. Mode 7 builds the
 // full talk layout (5 animations, font binding, message panes, corner
@@ -800,7 +800,7 @@ void CTalkWindow::Init() {
 }
 
 // ---------------------------------------------------------------------------
-// Target 3: CTalkWindow::Move (us-8012d374)
+// CTalkWindow::Move (us-8012d374)
 // Per-frame driver: gate on the task/global flags, run the shared
 // func_8012CD38 update, dispatch the state machine (1..5), then always
 // advance the layout animations.
@@ -874,7 +874,7 @@ void CTalkWindow::Move() {
 }
 
 // ---------------------------------------------------------------------------
-// Target 1: ~CTalkWindow (us-8012c828)
+// ~CTalkWindow (us-8012c828)
 // Complete-object destructor: destroy the embedded UnkClass_8045F564 region
 // (flags -1), then the CProcess base at +0 (guarded by the nested double
 // null-check - an MWCC D2-inlined-into-D1 artifact), then conditional
@@ -897,7 +897,7 @@ extern "C" void* __dt__11CTalkWindowFv(CTalkWindow* _this, int flags) {
 }
 
 // ---------------------------------------------------------------------------
-// Target 3: CTalkWindow::Term (us-8012d2c4)
+// CTalkWindow::Term (us-8012d2c4)
 // Wait for VI draw completion, drop the instance counter, detach the render
 // callback, delete the two layout objects and release the layout-build
 // scratch region.
@@ -922,7 +922,7 @@ void CTalkWindow::Term() {
 }
 
 // ---------------------------------------------------------------------------
-// Target 2: CTalkWindow::cbRenderBefore (us-8012d6a0)
+// CTalkWindow::cbRenderBefore (us-8012d6a0)
 // Gate prefix (task busy / global bit / scene-active / talk source) then draw
 // the layout through a stack DrawInfo.
 // ---------------------------------------------------------------------------
@@ -946,7 +946,7 @@ void CTalkWindow::cbRenderBefore() {
 }
 
 // ---------------------------------------------------------------------------
-// Target 4: func_8012CC78 (us-8012d744)
+// func_8012CC78 (us-8012d744)
 // Talk-window factory: copy the message source into a zeroed stack buffer,
 // allocate the 0xB8-byte CTalkWindow on the work heap, run the ctor (retail
 // C-ABI __ct__CTalkWindow) and register it under the caller's parent.
@@ -969,7 +969,7 @@ extern "C" CTalkWindow* func_8012CC78(CProcess* parent, u32 arg1, u32 arg2,
 }
 
 // ---------------------------------------------------------------------------
-// Target 5: sinit_8012DE98 (us-8012e968)
+// sinit_8012DE98 (us-8012e968)
 // Static initializer for the talk-window float table lbl_eu_80573A70 (48
 // floats). MWCC emits the constant loads from the shared .sdata2 pool, so the
 // source references the retail SDA2 constants by name.

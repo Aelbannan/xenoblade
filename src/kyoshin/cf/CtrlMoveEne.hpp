@@ -2,6 +2,7 @@
 
 #include <types.h>
 #include <monolib/math/CVec3.hpp>
+#include "kyoshin/plugin/ocBdat.hpp"
 
 namespace cf {
 
@@ -1648,13 +1649,10 @@ extern "C" void func_80198710(void* out, void* src, f32 a, int b, int c,
                                f32 d, f32 e);
 extern "C" int func_8019876C(void* a, void* b);
 extern "C" void* getFP__FPCc(const char* name);
-extern "C" u32 getBdatStringColumnValue(void* bdat, const char* column,
-                                         int index);
-// func_8008D51C call sites: battle-object state helpers and the move-data
+// func_8008D51C call sites:
 // refresh (retail C-ABI names; func_8004C5EC is declared in CtrlNpc.hpp).
 // func_8004B7C0 is declared in include/kyoshin/cf/CfGameManager.hpp
 // (returns void*); do not redeclare it here with a different return type.
-extern "C" f32 func_80496288(void* self);
 extern "C" void func_80174B4C(void* obj, u32 flags);   // unified with CVision.hpp/CtrlAct.hpp forms (ABI-identical)
 extern "C" void func_80193710(void* self);
 // func_8008FE8C call site: direction-commit helper (CtrlMoveBase.cpp) and the
@@ -1670,8 +1668,7 @@ extern "C" int func_801984F0(void* self, int index);
 extern "C" void* getInstance__Q22cf13CfGameManagerFv(void);
 extern "C" void* getPlayer__Q22cf13CfGameManagerFi(int index);
 extern "C" void* getUnk80664658(void);
-struct CBattleManagerView;
-extern "C" CBattleManagerView* getInstance__Q22cf14CBattleManagerFv(void);
+#include "kyoshin/cf/CBattleManagerApi.hpp"
 extern "C" void func_800D9CA0(void* self, void* obj);
 // func_8008A2C8 call site: game-flag query (C++ linkage mangles to the retail
 // func_8006EF04__Fi).

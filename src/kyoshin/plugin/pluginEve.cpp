@@ -2,22 +2,9 @@
 // Replace stubs with high-level C/C++ during decomp.
 
 #include "kyoshin/harness_catalog.hpp"
-// The CAIAction.hpp chain declares the shared battle-manager singleton getter
-// returning void*, conflicting with an earlier CBattleManagerView* declaration
-// pulled in by harness_catalog.hpp. Rename it out of the way (same idiom as
-// CBattleManager.cpp); this TU never calls the getter.
-#define getInstance__Q22cf14CBattleManagerFv eveBmSingletonGetUnused
-// CBattleState.hpp (pulled in by these headers) declares
-// getBdatStringColumnValue with `int`; other headers in the chain use the
-// canonical `s32` spelling and MWCC forbids overloading C-linkage fns.
-// Rename the CBattleState copy away while including; this TU never calls it.
-#define getBdatStringColumnValue cbattleStateGetBdatStringColumnValue
-#define func_8049603C pluginEve9603CUnused
 #include "kyoshin/cf/CBattleManager.hpp"
 #include "kyoshin/cf/CfGameManager.hpp"
 #include "kyoshin/cf/object/CfObjectActor.hpp"
-#undef getBdatStringColumnValue
-#undef func_8049603C
 
 // Event/presentation flag bitfields (.sbss)
 extern u32 lbl_eu_80663E28; // secondary mode bitfield (fade/skip status bits)

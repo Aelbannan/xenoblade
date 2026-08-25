@@ -31,13 +31,21 @@ DEFAULT_CONTRIBUTIONS = ROOT / "docs" / "mwcc" / "contributions.jsonl"
 
 
 def _ensure_database(args: argparse.Namespace) -> None:
-    sources = [args.reference, args.attempts, args.contributions]
+    def _abs(path: Path) -> Path:
+        # build_database calls relative_to(root); a relative --path would
+        # raise "not in the subpath of" — resolve against the repo root.
+        return path if path.is_absolute() else ROOT / path
+
+    reference = _abs(args.reference)
+    attempts = _abs(args.attempts) if args.attempts else None
+    contributions = _abs(args.contributions) if args.contributions else None
+    sources = [reference, attempts, contributions]
     if args.rebuild or not database_is_fresh(args.database, sources):
         count = build_database(
             args.database,
-            args.reference,
-            args.attempts,
-            args.contributions,
+            reference,
+            attempts,
+            contributions,
             root=ROOT,
         )
         print(

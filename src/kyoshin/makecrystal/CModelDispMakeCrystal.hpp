@@ -243,7 +243,7 @@ extern "C" void func_8021FC28(CModelDispMakeCrystal*, u8);
 extern "C" void func_8021FD44(CModelDispMakeCrystal*);
 extern "C" void func_802200A8(void*);
 extern "C" void func_80220954(void*, int, u8);
-extern "C" int func_8004392C(u32, u32, void*, u32, u32, f32);
+// func_8004392C is owned by kyoshin/CTaskGame.hpp (single unified decl).
 
 // C-linkage helpers for the cylinder-count finalize (func_8021E5C0):
 // item-step-list setup and scrollbar refresh.

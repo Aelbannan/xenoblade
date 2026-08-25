@@ -2,6 +2,7 @@
 // Replace stubs with high-level C/C++ during decomp.
 
 #include "kyoshin/harness_catalog.hpp"
+#include "monolib/scn/CScnTimeApi.hpp"
 
 #include "kyoshin/cf/CfHikariItemManager.hpp"
 #include "kyoshin/cf/CfGameManager.hpp"
@@ -15,7 +16,7 @@
 #include "revolution/MTX.h"
 #include "revolution/gx/GXHardware.h"
 
-// Target 1 (us-802b50a4): constructor.  Manual vptr store, registers the
+// (us-802b50a4): constructor.  Manual vptr store, registers the
 // render callback, loads the static texture archive, initialises four GX
 // texture objects at +0x1114 (one per i), then zeroes the record array and
 // scratch regions and publishes this into the global lbl_eu_80664C10.
@@ -70,7 +71,7 @@ cf::CfHikariItemManager::CfHikariItemManager() {
     this->field_11A0 = 0;
 }
 
-// Target 4 (us-802b523c): deleting destructor.  Manual vptr store (retail
+// (us-802b523c): deleting destructor.  Manual vptr store (retail
 // lbl_eu_8053AE90), then delete all 0x40 records, zero the +0x1104 scratch
 // region and the counter block, and deregister the render callback.  The
 // nested `if` replicates the MWCC double-null-check shape around the dtor call.
@@ -96,7 +97,7 @@ cf::CfHikariItemManager::~CfHikariItemManager() {
     lbl_eu_80663E14->removeRenderCB((IScnRender*)this);
 }
 
-// Target 3 (us-802b5304): allocate a 0x44-byte Hikari item record, initialize
+// (us-802b5304): allocate a 0x44-byte Hikari item record, initialize
 // it with func_802B3750, copy the caller's 12-byte vector into +0x00..+0x08
 // and append it to the manager's record array.  Returns the record (or NULL
 // when the array is full).  Count compares signed (retail cmpwi).
@@ -122,7 +123,7 @@ CfHikariItemRecord* func_802B2894(cf::CfHikariItemManager* self, const u32* src,
     return rec;
 }
 
-// Target 5 (us-802b53a8): remove `target` from the manager's record array.
+// (us-802b53a8): remove `target` from the manager's record array.
 // Searches for the pointer, deletes it, then shifts the tail of the array
 // down by one and clears the vacated last slot.
 void func_802B2938(cf::CfHikariItemManager* self, CfHikariItemRecord* target) {
@@ -155,7 +156,7 @@ void func_802B2938(cf::CfHikariItemManager* self, CfHikariItemRecord* target) {
 void func_802B2A08(void* self) {
     *(unsigned long*)((char*)self + 0x1194) |= 2;
 }
-// Target 2 (us-802b5488): reset the manager - delete every record, clear the
+// (us-802b5488): reset the manager - delete every record, clear the
 // +0x1104 scratch region and zero the counter block.  Same cleanup tail as the
 // destructor; the nested `if` replicates the MWCC double-null-check shape.
 void func_802B2A18(cf::CfHikariItemManager* self) {
@@ -176,7 +177,7 @@ void func_802B2A18(cf::CfHikariItemManager* self) {
     self->field_1194 = 0;
 }
 
-// Target 2 (us-802b5528): toggle flag bit 0 of +0x1194 - nonzero arg clears
+// (us-802b5528): toggle flag bit 0 of +0x1194 - nonzero arg clears
 // the bit, zero sets it.
 void func_802B2AB8(CfHikariItemRecord* self, u32 enable) {
     if (enable != 0) {
@@ -186,7 +187,7 @@ void func_802B2AB8(CfHikariItemRecord* self, u32 enable) {
     }
 }
 
-// Target 2 (us-802b5550): render-callback body.  Bails when there is no
+// (us-802b5550): render-callback body.  Bails when there is no
 // player, when the game-state flags carry bit 0x02000000/0x200, or while the
 // manager's bit-0 toggle is set.  Otherwise it loads the current view frame's
 // projection + inverse position matrix, normalizes the two camera axes into
@@ -454,7 +455,7 @@ void cf::CfHikariItemManager::cbRenderBefore() {
     }
 }
 
-// Target 3 (us-802b5fd8): claim the next slot in the inline 0x80-entry
+// (us-802b5fd8): claim the next slot in the inline 0x80-entry
 // record pool (bitfield at +0x1104, 0x20-byte entries at +0x104), bail if it
 // is already active, else perturb the spawn position by scaled random offsets
 // (each component gets its own random draw) and init the entry via func_802B4358.
@@ -497,10 +498,10 @@ extern "C" void func_802B3568(cf::CfHikariItemManager* self, const f32* src,
     self->field_119C = count;
 }
 
-// Target 3 (us-802b618c): publish the record's first three words into the
+// (us-802b618c): publish the record's first three words into the
 // .bss global state block and reset the four sbss counters (retail emits
 // four SDA-relocated word stores to lbl_eu_80664C18..24).
-// Target 3 (us-802b618c): publish the record's first three words into the
+// (us-802b618c): publish the record's first three words into the
 // .bss global state block and reset the four sbss counters (retail emits
 // four SDA-relocated word stores to lbl_eu_80664C18..24).
 extern "C" void func_802B371C(const CfHikariItemRecord* self) {
@@ -514,7 +515,7 @@ extern "C" void func_802B371C(const CfHikariItemRecord* self) {
     dst[2] = self->field_08;
 }
 
-// Target 1 (us-802b61c0): initialize a freshly allocated 0x44-byte Hikari
+// (us-802b61c0): initialize a freshly allocated 0x44-byte Hikari
 // item record - zero the vector/accumulator floats, set the four color words
 // and the caller-supplied u16 at +0x40.  Field order mirrors the retail
 // store sequence (0x42 is written before 0x20/0x24).
@@ -537,7 +538,7 @@ extern "C" void func_802B3750(CfHikariItemRecord* self, u16 value) {
     self->field_3C = 0x20AAFF64;
 }
 
-// Target 4 (us-802b6224): destructor for the unknown class at 0x802B37B4
+// (us-802b6224): destructor for the unknown class at 0x802B37B4
 // (address-suffixed retail symbol).
 extern "C" __declspec(noinline) void* __dt__802B37B4(void* self, int flag) {
     if (self != 0 && flag > 0) {
@@ -546,7 +547,7 @@ extern "C" __declspec(noinline) void* __dt__802B37B4(void* self, int flag) {
     return self;
 }
 
-// Target 1 (us-802b6264): flag the u16 at +0x42 with 0x40 and write the
+// (us-802b6264): flag the u16 at +0x42 with 0x40 and write the
 // sdata2 float constant to +0x1C and +0x14.
 extern "C" void func_802B37F4(CfHikariItemRecord* self) {
     u16 val = self->field_42 | 0x40;    // lhz, ori
@@ -556,7 +557,7 @@ extern "C" void func_802B37F4(CfHikariItemRecord* self) {
     self->field_14 = f;                 // stfs 0x14
 }
 
-// Target 1 (us-802b6280): per-frame update of an active Hikari record.  Clears
+// (us-802b6280): per-frame update of an active Hikari record.  Clears
 // the upper flag bits (keeping the 0x40 spawn flag test on the original word),
 // then branches on the 0x40 flag: the spawn path advances the 0x1C/0x14
 // timers (bursting 8 particles when 0x1C hits zero) and returns 1 when 0x1C
@@ -690,7 +691,7 @@ extern "C" s32 func_802B3810(CfHikariItemRecord* self, f32 delta) {
     return r25;
 }
 
-// Target 4 (us-802b6710): per-frame Hikari record update.  Clears the upper
+// (us-802b6710): per-frame Hikari record update.  Clears the upper
 // flag bits, re-derives the two gradient colors from field_40 when the 0x40
 // flag is clear, then re-derives the 0x38/0x3C colors through the 0x10/0x20
 // flag pair.  r30 mirrors the 0x80 flag (0 when set, 1 when clear) - it gates
@@ -740,47 +741,58 @@ extern "C" void func_802B3CA0(CfHikariItemRecord* self) {
     }
 }
 
-// Target 2 (us-802b6874): emit a Hikari quad through the GX FIFO - four
+// (us-802b6874): emit a Hikari quad through the GX FIFO - four
 // vertices at self.pos + corner offset, with the 0x30 color word and the
 // (1,0)/(1,1)/(0,1)/(0,0) byte pair.  Runs only while flag bit 0 is set.
+// Per-vertex sums go into named locals first (same shape as func_802B3F20)
+// so the volatile FIFO stores don't perturb the load/fadd schedule.
 extern "C" void func_802B3E04(CfHikariItemRecord* self, const CfHikariQuadCorners* corners) {
     if ((self->field_42 & 1) == 0) {
         return;
     }
 
-    // Direct per-vertex expressions: MWCC floats the corner loads early and
-    // keeps each sum in a scratch FPR, matching the retail lfs/fadds/stfs run.
-    // Vertex layout: xyz, color word, then the (s,t) uv byte pair.
-    WGPIPE.f = self->field_00f + corners->v[0][0];
-    WGPIPE.f = self->field_04f + corners->v[0][1];
-    WGPIPE.f = self->field_08f + corners->v[0][2];
+    f32 z0 = self->field_08f + corners->v[0][2];
+    f32 x0 = self->field_00f + corners->v[0][0];
+    f32 y0 = self->field_04f + corners->v[0][1];
+    WGPIPE.f = x0;
+    WGPIPE.f = y0;
+    WGPIPE.f = z0;
     WGPIPE.ui = self->field_30;
     WGPIPE.uc = 1;
     WGPIPE.uc = 0;
 
-    WGPIPE.f = self->field_00f + corners->v[1][0];
-    WGPIPE.f = self->field_04f + corners->v[1][1];
-    WGPIPE.f = self->field_08f + corners->v[1][2];
+    f32 x1 = self->field_00f + corners->v[1][0];
+    f32 y1 = self->field_04f + corners->v[1][1];
+    f32 z1 = self->field_08f + corners->v[1][2];
+    WGPIPE.f = x1;
+    WGPIPE.f = y1;
+    WGPIPE.f = z1;
     WGPIPE.ui = self->field_30;
     WGPIPE.uc = 1;
     WGPIPE.uc = 1;
 
-    WGPIPE.f = self->field_00f + corners->v[2][0];
-    WGPIPE.f = self->field_04f + corners->v[2][1];
-    WGPIPE.f = self->field_08f + corners->v[2][2];
+    f32 x2 = self->field_00f + corners->v[2][0];
+    f32 z2 = self->field_08f + corners->v[2][2];
+    f32 y2 = self->field_04f + corners->v[2][1];
+    WGPIPE.f = x2;
+    WGPIPE.f = y2;
+    WGPIPE.f = z2;
     WGPIPE.ui = self->field_30;
     WGPIPE.uc = 0;
     WGPIPE.uc = 1;
 
-    WGPIPE.f = self->field_00f + corners->v[3][0];
-    WGPIPE.f = self->field_04f + corners->v[3][1];
-    WGPIPE.f = self->field_08f + corners->v[3][2];
+    f32 x3 = self->field_00f + corners->v[3][0];
+    f32 y3 = self->field_04f + corners->v[3][1];
+    f32 z3 = self->field_08f + corners->v[3][2];
+    WGPIPE.f = x3;
+    WGPIPE.f = y3;
+    WGPIPE.f = z3;
     WGPIPE.ui = self->field_30;
     WGPIPE.uc = 0;
     WGPIPE.uc = 0;
 }
 
-// Target 3 (us-802b6990): same quad emitter as func_802B3E04 but gated by
+// (us-802b6990): same quad emitter as func_802B3E04 but gated by
 // flag bit 1 and using the 0x34 color word.
 extern "C" void func_802B3F20(CfHikariItemRecord* self, const CfHikariQuadCorners* corners) {
     if ((self->field_42 & 2) == 0) {
@@ -789,7 +801,7 @@ extern "C" void func_802B3F20(CfHikariItemRecord* self, const CfHikariQuadCorner
 
     f32 x0 = self->field_00f + corners->v[0][0];
     f32 y0 = self->field_04f + corners->v[0][1];
-    f32 z0 = self->field_08f + corners->v[0][2];
+    f32 z0 = corners->v[0][2] + self->field_08f;
     WGPIPE.f = x0;
     WGPIPE.f = y0;
     WGPIPE.f = z0;
@@ -828,10 +840,74 @@ extern "C" void func_802B3F20(CfHikariItemRecord* self, const CfHikariQuadCorner
     WGPIPE.uc = 0;
 }
 
+// (us-802b6aac): sparkle-streak emitter for the C20 draw pass.  For each
+// of the two sparkle slots (flag bits 0x4/0x8) derives a size from the
+// slot's progress value at +0x20/+0x24, offsets the single corner offset
+// symmetrically around the record position (retail vectorises the +/- into
+// paired-single ops on stacked VEC3s), then emits one quad stretched
+// upward: bottom vertices get the +0x28/+0x2C brightness added to y, top
+// vertices the -0.3 constant.
 extern "C" void func_802B403C(CfHikariItemRecord* self,
-                              const CfHikariQuadCorners* corners) {}
+                              const CfHikariQuadCorners* corners) {
+    if ((self->field_42 & 0xC) == 0) {
+        return;
+    }
 
-// Target 5 (us-802b6c54): gradient color lookup.  self[0] is a progress value;
+    nw4r::math::VEC3 va;
+    nw4r::math::VEC3 vb;
+
+    for (int i = 0; i < 2; i++) {
+        if (!(self->field_42 & (0x4 << i))) {
+            continue;
+        }
+        f32 k = lbl_eu_80668F40 * (&self->field_20)[i];
+        f32 s = lbl_eu_80668F44 *
+                (lbl_eu_80668F48 - lbl_eu_80668F4C * k);
+        f32 bright = k + (&self->field_28)[i];
+
+        // Scaled corner terms; the +/- results share the position loads
+        // (retail keeps one pos pair copy for both sides).
+        f32 scx = corners->v[0][0] * s;
+        f32 scy = corners->v[0][1] * s;
+        f32 scz = corners->v[0][2] * s;
+        f32 vax = self->field_00f + scx;
+        f32 vay = self->field_04f + scy;
+        f32 vaz = self->field_08f + scz;
+        f32 vbx = self->field_00f - scx;
+        f32 vby = self->field_04f - scy;
+        f32 vbz = self->field_08f - scx; // retail quirk: z uses the x-scaled term
+
+        WGPIPE.f = vax;
+        WGPIPE.f = vay + bright;
+        WGPIPE.f = vaz;
+        WGPIPE.ui = self->colors[2 + i];
+        WGPIPE.uc = 1;
+        WGPIPE.uc = 0;
+
+        WGPIPE.f = va.x;
+        WGPIPE.f = lbl_eu_80668F50 + va.y;
+        WGPIPE.f = va.z;
+        WGPIPE.ui = self->colors[2 + i];
+        WGPIPE.uc = 1;
+        WGPIPE.uc = 1;
+
+        WGPIPE.f = vb.x;
+        WGPIPE.f = lbl_eu_80668F50 + vb.y;
+        WGPIPE.f = vb.z;
+        WGPIPE.ui = self->colors[2 + i];
+        WGPIPE.uc = 0;
+        WGPIPE.uc = 1;
+
+        WGPIPE.f = vb.x;
+        WGPIPE.f = vb.y + bright;
+        WGPIPE.f = vb.z;
+        WGPIPE.ui = self->colors[2 + i];
+        WGPIPE.uc = 0;
+        WGPIPE.uc = 0;
+    }
+}
+
+// (us-802b6c54): gradient color lookup.  self[0] is a progress value;
 // table holds count thresholds followed by count blend weights, rows holds
 // count 4-float (A,R,G,B) rows.  Past the last threshold the value wraps to 0
 // and row 0 is returned; otherwise the row pair bracketing the value is
@@ -874,7 +950,7 @@ extern "C" __declspec(noinline) u32 func_802B41E4(f32* self, const f32* rows, co
            ((u32)(s32)out[0] << 24);
 }
 
-// Target 1 (us-802b6dc8): (re)initialise a Hikari record's motion: copy the
+// (us-802b6dc8): (re)initialise a Hikari record's motion: copy the
 // spawn position words, write the (0, val) halfword pair at +0x1C, then set
 // random velocity components scaled by the sdata2 constants (and the f1 arg
 // for the +0x10 axis) with a zeroed +0x18 accumulator.  Field 0x14 is written
@@ -900,7 +976,7 @@ extern "C" void func_802B4460(CfHikariItemRecord* self) {
     ++lbl_eu_80664C24;
 }
 
-// Target 5 (us-802b6ee0): accumulate delta into +0x18; once it reaches the
+// (us-802b6ee0): accumulate delta into +0x18; once it reaches the
 // sdata2 limit return 1, otherwise advance the +0x00 vector by the +0x0C
 // vector (retail paired-single via the nw4r VEC3Add inline), bump the sbss
 // counter and return 0.
@@ -918,7 +994,7 @@ extern "C" __declspec(noinline) s32 func_802B4470(CfHikariItemRecord* self,
     return 0;
 }
 
-// Target 5 (us-802b6f38): gradient-driven quad emitter.  Derives a scale from
+// (us-802b6f38): gradient-driven quad emitter.  Derives a scale from
 // the +0x18 progress value against the table thresholds, scales each corner
 // offset by it, then pushes four vertices (pos + scaled corner) with the
 // func_802B41E4 colour and the (1,0)/(1,1)/(0,1)/(0,0) byte pair.
@@ -998,7 +1074,7 @@ extern "C" void func_802B44C8(CfHikariItemRecord* self, const CfHikariQuadCorner
     WGPIPE.uc = 0;
 }
 
-// Target 4 (us-802b7150): static-init the .bss gradient table.  Four
+// (us-802b7150): static-init the .bss gradient table.  Four
 // 16-float rows at +0x10/+0x50/+0x90/+0xd0 of lbl_eu_80577680 (func_802B3CA0
 // reads the first three rows indexed by field_40).  Access goes through a
 // 16-float-stride row pointer so MWCC materialises one addi row base per row

@@ -4,11 +4,10 @@
 #include "kyoshin/menu/CMenuGetItemMulti.hpp"
 
 #include "kyoshin/code_80135FDC.hpp"
-// CfGameManager.hpp's func_8049603C decl conflicts with code_80135FDC.hpp's
-// (this TU never calls it) - hide it for the include.
-#define func_8049603C getItemMulti9603CUnused
+// The battle-manager singleton getter has ONE canonical declaration in
+// kyoshin/cf/CBattleManagerApi.hpp; no rename guard is needed anymore.
+#include "kyoshin/cf/CBattleManagerApi.hpp"
 #include "kyoshin/cf/CfGameManager.hpp"
-#undef func_8049603C
 #include "kyoshin/cf/CfPadData.hpp"
 #include "monolib/device/CDeviceFile.hpp"
 #include "monolib/device/CDeviceVI.hpp"
@@ -23,6 +22,34 @@
 #include <nw4r/lyt.h>
 #include <stdio.h>
 #include "revolution/gx/GXPixel.h"
+
+// CfGameManagerUnityHelpers.hpp (via the include chain) already declares a
+// no-arg extern "C" CItem_initItemImplInstances(); MWCC rejects this TU's
+// item-pointer form at global scope as an illegal overload, so keep it in a
+// namespace and shim the call sites through the macro (same pattern as
+// CItemBoxInfo.hpp).
+namespace getMenuMultiItemImplShim {
+extern "C" CMenuGetItemImpl* CItem_initItemImplInstances(CMenuGetItemMultiEntry*);
+}
+using getMenuMultiItemImplShim::CItem_initItemImplInstances;
+#define CItem_initItemImplInstances(entry) \
+    getMenuMultiItemImplShim::CItem_initItemImplInstances(entry)
+
+// Wide-return views of the BDAT lookups used by func_801B78B4: retail
+// stores each result in a raw u32 register (plain mr, no zero-extend) and
+// applies explicit (u8) masks only at the use sites - the u8-returning
+// global decls would force an rlwinm at every assignment.
+namespace getItemMultiE8WideShim {
+extern "C" u32 func_801361E8(u32, const char*, u32);
+}
+using getItemMultiE8WideShim::func_801361E8;
+#define func_801361E8(a, b, c) getItemMultiE8WideShim::func_801361E8(a, b, c)
+
+namespace getItemMulti600CWideShim {
+extern "C" u32 func_8013600C(const void*, const void*, u32);
+}
+using getItemMulti600CWideShim::func_8013600C;
+#define func_8013600C(a, b, c) getItemMulti600CWideShim::func_8013600C(a, b, c)
 
 struct CMenuGetItemPaneWord {
     CMenuGetItemPaneWord() {}
@@ -54,6 +81,24 @@ public:
     virtual CMenuGetItemPaneWord getPaneWord(u32) = 0;
 };
 
+// Wide (u16-returning) view of the item impl's +0x30 slot: func_801B7A58
+// gates its three rank slots on this count kept as a full halfword (retail
+// clrlwi 16), while the byte-returning view used by Init masks to 8 bits.
+class CMenuGetItemImplCount {
+public:
+    virtual u16 getCount(CMenuGetItemMultiEntry*) = 0;      // +0x08
+    virtual void v0C() = 0;
+    virtual void v10() = 0;
+    virtual void v14() = 0;
+    virtual void v18() = 0;
+    virtual void v1C() = 0;
+    virtual char* getName(CMenuGetItemMultiEntry*) = 0;     // +0x20
+    virtual void v24() = 0;
+    virtual void v28() = 0;
+    virtual void* getSlot(CMenuGetItemMultiEntry*, u8) = 0; // +0x2C
+    virtual u16 getCount30(CMenuGetItemMultiEntry*) = 0;    // +0x30
+};
+
 class CMenuGetItemImpl;
 
 struct CMenuGetItemTextureHeader {
@@ -77,20 +122,26 @@ extern u32 lbl_eu_806640EC;
 extern u32 lbl_eu_80664108;
 extern u32 lbl_eu_80664410;
 
+// Ctor-only imports (see __ct__CMenuGetItemMulti below).
+extern char lbl_eu_8052D238[]; // interim composite vtable
+extern char lbl_eu_805338BC[]; // final composite vtable base
+extern u32 __ptmf_null[3];     // null pointer-to-member-function constant
+void __ct__8CProcessFv(CProcess*);
+
 void code80135FDC_postIncByte_64080();
 nw4r::lyt::ArcResourceAccessor* func_801355F4();
 u32 func_801355BC();
 char* func_80138F78(u32);
 CMenuGetItemFourShorts func_801397AC(void*, u32);
-CMenuGetItemImpl* CItem_initItemImplInstances(CMenuGetItemMultiEntry* entry);
 u32 func_80139358(u32);
-char* func_801393CC(u16);
+char* func_801393CC(u32);
 char* func_801394D4(u16);
 u8 func_80157CD0(u16);
 // Retail call sites consume the +6 slot-sum as a raw byte (mr r5, r3, no
 // clrlwi), so the call-site type is u8 despite the CItem.cpp def using u32;
 // the arg is passed raw (mr r3, rN) so the visible param is u32.
 u8 func_80158068(u32);
+// func_80136910 is declared by the included code_80135FDC.hpp / unit header.
 // Retail passes the raw id to func_801392E4 without a halfword mask (mr r3,
 // r4 directly), so the visible param is u32 here.
 u32 func_801392E4(u32);
@@ -131,7 +182,136 @@ void func_801B5630(CMenuGetItemMulti* self);
 extern "C" void __dt__17CMenuGetItemMultiFv(void*, int);
 extern "C" void cbRenderBefore__17CMenuGetItemMultiFv(void*);
 
-void __ct__CMenuGetItemMulti(){}
+// Constructor (retail unmangled global `__ct__CMenuGetItemMulti`, written as a
+// C-ABI free function like CTaskGameEvt/CMenuMakeCrystal so no class-length
+// mangling is emitted). Builds the CProcess base, installs the interim
+// composite vtable, copies __ptmf_null into both callback slots (+0x3C/+0x48),
+// clears the scalar block, swaps in the final composite vtable and the
+// IWorkEvent/IScnRender sub-vtables (+0x24/+0xac from the same base table),
+// then constructs the UnkClass_8045F564 render region (+0x78), zero-inits the
+// entry array and cursor/system-window sub-objects, and arms the state bytes.
+CMenuGetItemMulti* __ct__CMenuGetItemMulti(
+    CMenuGetItemMulti* pThis, CScn* scn, u32 item0, u32 item1, u32 item2,
+    u32 item3, u8 argF6, u8 arg201, u8 argSpecial) {
+    // Zero constant declared up front: its live range then starts at entry
+    // (like MWCC's implicit member-init sequence) and wins the lowest
+    // callee-saved register, matching retail r22.
+    u32 zero = 0;
+
+    __ct__8CProcessFv(reinterpret_cast<CProcess*>(pThis));
+
+    // Interim composite vtable label first (retail materializes its @ha
+    // before the final base's @ha, folding the @l into the store), then the
+    // final composite vtable base + its two interface sub-vtable offsets
+    // (retail holds base in r5, +0x24 in r4, +0xac in r0).
+    char* interimVt = lbl_eu_8052D238;
+    char* vtBase = lbl_eu_805338BC;
+    u32 workEvtVt = (u32)(vtBase + 0x24);
+    u32 scnVt = (u32)(vtBase + 0xac);
+
+    pThis->field_10 = reinterpret_cast<u32>(interimVt);
+
+    // NULL PTMF -> callback slots 0x3C / 0x48 in the retail store order
+    // 0x40,0x3C,0x44 then 0x4C,0x48,0x50. Post-increment derefs fold the
+    // first access of each slot into `lwzu`; re-fetching src between slots
+    // forces the retail reloads.
+    const u32* src = __ptmf_null;
+    u32 w0 = *src++;
+    u32 w1 = *src++;
+    pThis->mPtmfSlot3C[1] = w1; // 0x40
+    pThis->mPtmfSlot3C[0] = w0; // 0x3C
+    u32 w2 = *src++;
+    pThis->mPtmfSlot3C[2] = w2; // 0x44
+    src = __ptmf_null;
+    w1 = *src++;
+    w0 = *src++;
+    pThis->mPtmfSlot48[1] = w1; // 0x4C
+    pThis->mPtmfSlot48[0] = w0; // 0x48
+    w2 = *src++;
+    pThis->mPtmfSlot48[2] = w2; // 0x50
+
+    // Zero constants drive most of the clear stores (retail keeps it in a
+    // callee-saved reg across the UnkClass_8045F564 ctor call).
+
+    pThis->mLayout = reinterpret_cast<nw4r::lyt::Layout*>(zero); // 0x54
+    pThis->field_58 = zero;
+    pThis->field_5C = zero;
+    pThis->field_60 = -1;
+    pThis->field_64 = 0;
+    pThis->field_65 = 0;
+    pThis->field_66 = 0;
+    pThis->field_67 = 1;
+    pThis->field_68 = zero;
+    pThis->field_10 = reinterpret_cast<u32>(vtBase); // final composite vtable
+    pThis->mIWorkEventVtable = workEvtVt; // 0x6C IWorkEvent sub-vtable
+    pThis->mIScnRenderVtable = scnVt;     // 0x70 IScnRender sub-vtable
+    pThis->mScn = scn;
+
+    __ct__17UnkClass_8045F564Fv(reinterpret_cast<UnkClass_8045F564*>(&pThis->mRegion[0]));
+
+    pThis->mAnim = reinterpret_cast<nw4r::lyt::AnimTransform*>(zero);
+    pThis->mInitialItems[0] = item0;
+    pThis->mInitialItems[1] = item1;
+    pThis->mInitialItems[2] = item2;
+    pThis->mInitialItems[3] = item3;
+    pThis->mVisibleItemCount = zero;
+
+    // Entry 0 is a standalone member (ctor inlined); entries 1..3 form the
+    // array MWCC clears via its guarded divwu/bdnz array-init loop.
+    pThis->mFirstEntry.value = (u16)zero;
+    pThis->mFirstEntry.packed = zero;
+    for (CMenuGetItemMultiEntry* cur = &pThis->mRestEntries[0];
+         cur < &pThis->mRestEntries[3]; cur++) {
+        cur->value = (u16)zero;
+        cur->packed = zero;
+    }
+
+    pThis->mEntryCount = zero;
+
+    __ct__CCur18(&pThis->mCursor, NULL);
+    __ct__CSysWin(reinterpret_cast<CSysWin*>(&pThis->mSystemWindow[0]), 0);
+
+    // Second zero constant for the tail clear (retail reuses the freed scn
+    // register slot as a fresh zero, r24).
+    u32 tailZero = 0;
+    pThis->mMaxVisibleItems = 4;
+    pThis->mHasSpecialItem = argSpecial;
+    pThis->field_1F4 = 1;
+    pThis->field_1F5 = (u8)tailZero;
+    pThis->field_1F6 = argF6;
+    pThis->field_1F8 = tailZero;
+    pThis->field_1FC = tailZero;
+    pThis->field_200 = (u8)tailZero;
+    pThis->field_201 = arg201;
+    pThis->mFileHandle = 0;
+    pThis->field_208 = tailZero;
+    pThis->field_20C = (u8)tailZero;
+    pThis->field_20D = (u8)tailZero;
+    pThis->field_20E = (u8)tailZero;
+    pThis->field_20F = argSpecial;
+    // Retail fully unrolls this clear (interleaved stb/stw/sth per slot).
+    pThis->mPaneVisible[0] = (u8)tailZero;
+    pThis->mVisibleEntries[0] = reinterpret_cast<CMenuGetItemMultiEntry*>(tailZero);
+    pThis->mVisibleItemIds[0] = (u16)tailZero;
+    pThis->mPaneVisible[1] = (u8)tailZero;
+    pThis->mVisibleEntries[1] = reinterpret_cast<CMenuGetItemMultiEntry*>(tailZero);
+    pThis->mVisibleItemIds[1] = (u16)tailZero;
+    pThis->mPaneVisible[2] = (u8)tailZero;
+    pThis->mVisibleEntries[2] = reinterpret_cast<CMenuGetItemMultiEntry*>(tailZero);
+    pThis->mVisibleItemIds[2] = (u16)tailZero;
+    pThis->mPaneVisible[3] = (u8)tailZero;
+    pThis->mVisibleEntries[3] = reinterpret_cast<CMenuGetItemMultiEntry*>(tailZero);
+    pThis->mVisibleItemIds[3] = (u16)tailZero;
+    pThis->mPaneVisible[4] = (u8)tailZero;
+    pThis->mVisibleEntries[4] = reinterpret_cast<CMenuGetItemMultiEntry*>(tailZero);
+    pThis->mVisibleItemIds[4] = (u16)tailZero;
+    pThis->mPaneVisible[5] = (u8)tailZero;
+    pThis->mVisibleEntries[5] = reinterpret_cast<CMenuGetItemMultiEntry*>(tailZero);
+    pThis->mVisibleItemIds[5] = (u16)tailZero;
+    pThis->mEntryCount = tailZero;
+    pThis->mEntryCount = 0;
+    return pThis;
+}
 
 // Retail __dt__801B2754: deleting destructor of the 0x36c get-item-multi
 // task object (empty body - the ctor __ct__801B2794 owns all state init).
@@ -340,8 +520,8 @@ void CMenuGetItemMulti::Init() {
     lbl_eu_806643D8.d = lbl_eu_806643C8.d;
 
     if (mEntryCount != 0) {
-        CMenuGetItemMultiEntry* entry = &mEntries[0];
-        while (entry != &mEntries[mEntryCount]) {
+        CMenuGetItemMultiEntry* entry = &mFirstEntry;
+        while (entry != &mFirstEntry + mEntryCount) {
             if (entry != NULL) {
                 sprintf(itemPaneName, &lbl_eu_80504A3C[0x192], mVisibleItemCount + 1);
                 char* itemName;
@@ -851,6 +1031,13 @@ body:
 // Adjust the item-multi pane layout for the visible-item count: each hidden
 // item (4 - mVisibleItemCount, clamped at 0) shrinks the item-text pane
 // height and shifts the close/other panes down by lbl_eu_80667E14 per step.
+//
+// Residual note: the (f32)(s32) casts pool MWCC's internal 0x43300000_80000000
+// magic as a TU-local @12792 label; retail resolves the same bytes to the
+// named .sdata2 symbol lbl_eu_80667E18. No source form references the named
+// symbol without rescheduling the whole block (union forms verified +16B /
+// frame-slot flips), so this needs the standard CMenuGetItemMulti.o
+// pool_patterns rule ((>II 43300000,80000000) -> lbl_eu_80667E18).
 void func_801B5630(CMenuGetItemMulti* self) {
     s32 count = 4 - (s32)self->mVisibleItemCount;
     if (count < 0) {
@@ -1458,14 +1645,18 @@ void func_801B5860(CMenuGetItemMulti* self, int arg2, CMenuGetItemMultiEntry* ar
     nw4r::lyt::Pane* pane = self->mLayout->GetRootPane()->FindPaneByName(
         &lbl_eu_80504A3C[0x404], true);
     if (pane != 0) {
+        // Retail shape: neg+or builds the non-zero test, the flags byte is
+        // loaded in parallel (r5), and bit 0 is merged with a single rlwimi.
         CMenuGetItemPaneView* view = reinterpret_cast<CMenuGetItemPaneView*>(pane);
-        view->flags = (view->flags & 0xfe) | (arg2 != 0);
+        view->flags = (arg2 != 0) | (view->flags & 0xfe);
     }
     if (arg2 != 0) {
         // Inline ternary: branches compute into the arg register (r3), the
         // u16 assignment masks once at the join (retail clrlwi r3, r3, 16).
         u16 id = (arg3 != 0) ? (arg3->packed >> 20) : (u32)arg2;
         func_80136910(self->mLayout, &lbl_eu_80504A3C[0xeb], func_80158068(id));
+        // Arms kept uncast: with the u8-typed helper return the ternary is
+        // signed-typed, which keeps MWCC's clrlwi+cmpwi dispatch chain.
         u8 cat = (arg3 != 0) ? ((arg3->packed >> 16) & 0xf)
                              : func_801392E4(arg2);
         // Goto-chain dispatch: MWCC emits the comparison chain first, then the
@@ -1498,7 +1689,168 @@ void func_801B5860(CMenuGetItemMulti* self, int arg2, CMenuGetItemMultiEntry* ar
     }
 }
 
-__declspec(noinline) void func_801B6184(CMenuGetItemMulti* self, int arg2, CMenuGetItemMultiEntry* arg3) {}
+// Category-2 (equipped item) display update: show the equipped-item panes,
+// look up the item's name/level strings from the font tables, scale the
+// window size by the active character, then fill the stat text panes and
+// refresh the slot colours. arg3 is the packed entry (unused here beyond
+// forwarding to func_801B7A58).
+__declspec(noinline) void func_801B6184(CMenuGetItemMulti* self, int arg2,
+                                        CMenuGetItemMultiEntry* arg3) {
+    nw4r::lyt::Pane* pane;
+    pane = self->mLayout->GetRootPane()->FindPaneByName(&lbl_eu_80504A3C[0x40c], true);
+    reinterpret_cast<CMenuGetItemPaneView*>(pane)->flags =
+        (reinterpret_cast<CMenuGetItemPaneView*>(pane)->flags & 0xfe) | 1;
+    pane = self->mLayout->GetRootPane()->FindPaneByName(&lbl_eu_80504A3C[0x1ca], true);
+    reinterpret_cast<CMenuGetItemPaneView*>(pane)->flags =
+        (reinterpret_cast<CMenuGetItemPaneView*>(pane)->flags & 0xfe) | 1;
+    pane = self->mLayout->GetRootPane()->FindPaneByName(&lbl_eu_80504A3C[0x1d5], true);
+    reinterpret_cast<CMenuGetItemPaneView*>(pane)->flags =
+        (reinterpret_cast<CMenuGetItemPaneView*>(pane)->flags & 0xfe) | 1;
+    pane = self->mLayout->GetRootPane()->FindPaneByName(&lbl_eu_80504A3C[0x1e0], true);
+    reinterpret_cast<CMenuGetItemPaneView*>(pane)->flags =
+        (reinterpret_cast<CMenuGetItemPaneView*>(pane)->flags & 0xfe) | 1;
+    pane = self->mLayout->GetRootPane()->FindPaneByName(&lbl_eu_80504A3C[0x1eb], true);
+    reinterpret_cast<CMenuGetItemPaneView*>(pane)->flags =
+        (reinterpret_cast<CMenuGetItemPaneView*>(pane)->flags & 0xfe) | 1;
+    pane = self->mLayout->GetRootPane()->FindPaneByName(&lbl_eu_80504A3C[0x1f6], true);
+    reinterpret_cast<CMenuGetItemPaneView*>(pane)->flags =
+        (reinterpret_cast<CMenuGetItemPaneView*>(pane)->flags & 0xfe) | 1;
+    pane = self->mLayout->GetRootPane()->FindPaneByName(&lbl_eu_80504A3C[0x201], true);
+    reinterpret_cast<CMenuGetItemPaneView*>(pane)->flags =
+        (reinterpret_cast<CMenuGetItemPaneView*>(pane)->flags & 0xfe) | 1;
+    pane = self->mLayout->GetRootPane()->FindPaneByName(&lbl_eu_80504A3C[0x238], true);
+    reinterpret_cast<CMenuGetItemPaneView*>(pane)->flags =
+        (reinterpret_cast<CMenuGetItemPaneView*>(pane)->flags & 0xfe) | 1;
+    pane = self->mLayout->GetRootPane()->FindPaneByName(&lbl_eu_80504A3C[0x448], true);
+    reinterpret_cast<CMenuGetItemPaneView*>(pane)->flags =
+        (reinterpret_cast<CMenuGetItemPaneView*>(pane)->flags & 0xfe) | 1;
+    pane = self->mLayout->GetRootPane()->FindPaneByName(&lbl_eu_80504A3C[0x453], true);
+    reinterpret_cast<CMenuGetItemPaneView*>(pane)->flags =
+        (reinterpret_cast<CMenuGetItemPaneView*>(pane)->flags & 0xfe) | 1;
+    pane = self->mLayout->GetRootPane()->FindPaneByName(&lbl_eu_80504A3C[0x8b], true);
+    reinterpret_cast<CMenuGetItemPaneView*>(pane)->flags =
+        (reinterpret_cast<CMenuGetItemPaneView*>(pane)->flags & 0xfe) | 1;
+    pane = self->mLayout->GetRootPane()->FindPaneByName(&lbl_eu_80504A3C[0xaf], true);
+    reinterpret_cast<CMenuGetItemPaneView*>(pane)->flags =
+        (reinterpret_cast<CMenuGetItemPaneView*>(pane)->flags & 0xfe) | 1;
+    pane = self->mLayout->GetRootPane()->FindPaneByName(&lbl_eu_80504A3C[0xbb], true);
+    reinterpret_cast<CMenuGetItemPaneView*>(pane)->flags =
+        (reinterpret_cast<CMenuGetItemPaneView*>(pane)->flags & 0xfe) | 1;
+    pane = self->mLayout->GetRootPane()->FindPaneByName(&lbl_eu_80504A3C[0x97], true);
+    reinterpret_cast<CMenuGetItemPaneView*>(pane)->flags =
+        (reinterpret_cast<CMenuGetItemPaneView*>(pane)->flags & 0xfe) | 1;
+    pane = self->mLayout->GetRootPane()->FindPaneByName(&lbl_eu_80504A3C[0xa3], true);
+    reinterpret_cast<CMenuGetItemPaneView*>(pane)->flags =
+        (reinterpret_cast<CMenuGetItemPaneView*>(pane)->flags & 0xfe) | 1;
+    pane = self->mLayout->GetRootPane()->FindPaneByName(&lbl_eu_80504A3C[0x45e], true);
+    reinterpret_cast<CMenuGetItemPaneView*>(pane)->flags =
+        (reinterpret_cast<CMenuGetItemPaneView*>(pane)->flags & 0xfe) | 1;
+    pane = self->mLayout->GetRootPane()->FindPaneByName(&lbl_eu_80504A3C[0x46b], true);
+    reinterpret_cast<CMenuGetItemPaneView*>(pane)->flags =
+        (reinterpret_cast<CMenuGetItemPaneView*>(pane)->flags & 0xfe) | 1;
+    pane = self->mLayout->GetRootPane()->FindPaneByName(&lbl_eu_80504A3C[0x478], true);
+    reinterpret_cast<CMenuGetItemPaneView*>(pane)->flags =
+        (reinterpret_cast<CMenuGetItemPaneView*>(pane)->flags & 0xfe) | 1;
+    pane = self->mLayout->GetRootPane()->FindPaneByName(&lbl_eu_80504A3C[0x485], true);
+    reinterpret_cast<CMenuGetItemPaneView*>(pane)->flags =
+        (reinterpret_cast<CMenuGetItemPaneView*>(pane)->flags & 0xfe) | 1;
+    pane = self->mLayout->GetRootPane()->FindPaneByName(&lbl_eu_80504A3C[0x48f], true);
+    reinterpret_cast<CMenuGetItemPaneView*>(pane)->flags =
+        (reinterpret_cast<CMenuGetItemPaneView*>(pane)->flags & 0xfe) | 1;
+    pane = self->mLayout->GetRootPane()->FindPaneByName(&lbl_eu_80504A3C[0x499], true);
+    reinterpret_cast<CMenuGetItemPaneView*>(pane)->flags =
+        (reinterpret_cast<CMenuGetItemPaneView*>(pane)->flags & 0xfe) | 1;
+
+    // Item-window font pointer + id -> table id (retail keeps both in saved
+    // regs across all the lookups; results stay full-width u32 with masks
+    // only at the use sites).
+    u32 font = lbl_eu_806640F4;
+    func_801392E4(arg2);
+    u32 tableId = func_80139358(arg2);
+
+    u32 w1 = func_80136254((const void*)font, &lbl_eu_80504A3C[0x4e1], (u16)tableId);
+    u32 w2 = func_80136254((const void*)font, &lbl_eu_80504A3C[0x4e9], (u16)tableId);
+    u32 v97 = func_801361E8(font, &lbl_eu_80504A3C[0x4f0], (u16)tableId);
+    u32 va3 = func_801361E8(font, &lbl_eu_80504A3C[0x4f8], (u16)tableId);
+    u32 vaf = func_801361E8(font, &lbl_eu_80504A3C[0x500], (u16)tableId);
+    // Window scale factor: byte lookup converted via the int->double magic
+    // constant, normalized by a per-window constant.
+    u32 vscale = func_801361E8(font, &lbl_eu_80504A3C[0x508], (u16)tableId);
+    f32 total = (f32)((f64)(u8)vscale - lbl_eu_80667E08) / lbl_eu_80667E20;
+    u32 vbb = func_801361E8(font, &lbl_eu_80504A3C[0x517], (u16)tableId);
+
+    if ((vbb & 4) != 0) {
+        // Scale the name/level window by the active character's id-derived
+        // factors, clamped to 999.
+        void* mgr = func_8009EC9C(1);
+        u32 cid = func_800A082C(mgr);
+        w1 = (s32)(lbl_eu_80667E24 * (f64)((u16)w1 * (u16)cid));
+        if ((u16)w1 >= 999) {
+            w1 = 999;
+        }
+        cid = func_800A082C(mgr);
+        w2 = (s32)(lbl_eu_80667E28 * (f64)((u16)w2 * (u16)cid));
+        if ((u16)w2 >= 999) {
+            w2 = 999;
+        }
+    }
+
+    // First non-empty per-level entry contributes its height to the total.
+    for (u32 i = 1; i <= 10; ++i) {
+        char buf[0x20];
+        sprintf(buf, &lbl_eu_80504A3C[0x51c], (u8)i);
+        if (func_801361E8(font, buf, (u16)tableId) != 0) {
+            total += func_8013B380((u8)i);
+            break;
+        }
+    }
+
+    func_80139C98((u16)w1, (u16)w2, 0, total);
+
+    ml::FixStr<32> str;
+    char* midText = func_80136190(&lbl_eu_80504A3C[0x1c1], &lbl_eu_80504A3C[0x182], 11);
+    str.format(&lbl_eu_80504A3C[0x527], (u16)w1, midText, (u16)w2);
+    func_80136B4C(self->mLayout, &lbl_eu_80504A3C[0x8b], str.mString, 0);
+    func_80136910(self->mLayout, &lbl_eu_80504A3C[0x97], (u8)v97);
+    func_80136910(self->mLayout, &lbl_eu_80504A3C[0xa3], (u8)va3);
+
+    // Two more formatted lines: when the lookup byte is set they show the
+    // 127/128 rank strings, otherwise the raw byte value.
+    char* s7f = func_80136190(&lbl_eu_80504A3C[0x1c1], &lbl_eu_80504A3C[0x182], 0x7f);
+    char* s80 = func_80136190(&lbl_eu_80504A3C[0x1c1], &lbl_eu_80504A3C[0x182], 0x80);
+    if ((u8)vaf != 0) {
+        str.format(&lbl_eu_80504A3C[0x52e], s7f, s80);
+    } else {
+        str.format(&lbl_eu_80504A3C[0x535], (u8)vaf, s80);
+    }
+    func_80136B4C(self->mLayout, &lbl_eu_80504A3C[0xaf], str.mString, 0);
+
+    char* t7f = func_80136190(&lbl_eu_80504A3C[0x1c1], &lbl_eu_80504A3C[0x182], 0x7f);
+    char* t80 = func_80136190(&lbl_eu_80504A3C[0x1c1], &lbl_eu_80504A3C[0x182], 0x80);
+    if ((u8)vbb != 0) {
+        str.format(&lbl_eu_80504A3C[0x52e], t7f, t80);
+    } else {
+        str.format(&lbl_eu_80504A3C[0x535], (u8)vbb, t80);
+    }
+    func_80136B4C(self->mLayout, &lbl_eu_80504A3C[0xbb], str.mString, 0);
+
+    // Clear the description panes.
+    func_80136B4C(self->mLayout, &lbl_eu_80504A3C[0xc7], &lbl_eu_80504A3C[0x19f], 0);
+    func_80136B4C(self->mLayout, &lbl_eu_80504A3C[0x448], &lbl_eu_80504A3C[0x19f], 0);
+    func_80136B4C(self->mLayout, &lbl_eu_80504A3C[0x453], &lbl_eu_80504A3C[0x19f], 0);
+
+    // Slot colour/position refresh: shared slots use the default palette,
+    // the two item-specific ones use the alt palette.
+    func_80139A18(self->mLayout, &lbl_eu_80504A3C[0x1ca], &lbl_eu_806643A0, &lbl_eu_806643A8);
+    func_80139A18(self->mLayout, &lbl_eu_80504A3C[0x1eb], &lbl_eu_806643A0, &lbl_eu_806643A8);
+    func_80139A18(self->mLayout, &lbl_eu_80504A3C[0x1f6], &lbl_eu_806643A0, &lbl_eu_806643A8);
+    func_80139A18(self->mLayout, &lbl_eu_80504A3C[0x1d5], &lbl_eu_806643A0, &lbl_eu_806643A8);
+    func_80139A18(self->mLayout, &lbl_eu_80504A3C[0x1e0], &lbl_eu_806643A0, &lbl_eu_806643A8);
+    func_80139A18(self->mLayout, &lbl_eu_80504A3C[0x201], &lbl_eu_806643B0, &lbl_eu_806643B8);
+    func_80139A18(self->mLayout, &lbl_eu_80504A3C[0x238], &lbl_eu_806643B0, &lbl_eu_806643B8);
+
+    func_801B7A58(self, arg2, arg3);
+}
 
 // Category-4/8 (slotted item) display update: show the slotted-item panes,
 // push the per-slot values into the item-text panes, then refresh the
@@ -1566,23 +1918,28 @@ __declspec(noinline) void func_801B69F4(CMenuGetItemMulti* self, int arg2, CMenu
 
     // Cache the item-window font pointer in a saved register (retail keeps it
     // in r24 across the pane calls); the rank block below re-reads the global.
+    // Results stay full-width (retail saves each with a plain mr; the byte
+    // mask happens only when passed as the u8 arg of func_80136910).
     u32 itemFont = lbl_eu_806640F8;
     func_801392E4(arg2);
     u32 tableId = func_80139358(arg2);
-    u8 v1 = func_801361E8(itemFont, &lbl_eu_80504A3C[0x4f0], (u16)tableId);
-    u8 v2 = func_801361E8(itemFont, &lbl_eu_80504A3C[0x4f8], (u16)tableId);
-    u8 v3 = func_801361E8(itemFont, &lbl_eu_80504A3C[0x53a], (u16)tableId);
-    func_80136910(self->mLayout, &lbl_eu_80504A3C[0x97], v1);
-    func_80136910(self->mLayout, &lbl_eu_80504A3C[0xa3], v2);
-    func_80136910(self->mLayout, &lbl_eu_80504A3C[0xc7], v3);
+    u32 v1 = func_801361E8(itemFont, &lbl_eu_80504A3C[0x4f0], (u16)tableId);
+    u32 v2 = func_801361E8(itemFont, &lbl_eu_80504A3C[0x4f8], (u16)tableId);
+    u32 v3 = func_801361E8(itemFont, &lbl_eu_80504A3C[0x53a], (u16)tableId);
+    func_80136910(self->mLayout, &lbl_eu_80504A3C[0x97], (u8)v1);
+    func_80136910(self->mLayout, &lbl_eu_80504A3C[0xa3], (u8)v2);
+    func_80136910(self->mLayout, &lbl_eu_80504A3C[0xc7], (u8)v3);
 
-    // Rank-category name for the slotted-item list header. The retail test
-    // chain is emitted first (range 4-13, then 3/2/1) with the bodies after
-    // it in the order 3/2/1/4-13/default -- a goto-chain reproduces that
-    // layout; a plain if/else-if emits bne-skips instead.
+    // Rank-category name for the slotted-item list header. Retail keeps the
+    // raw lookup result in a saved reg AND takes a byte view once: the
+    // comparison chain runs on the byte view (unsigned range test), while the
+    // suffix switch below re-masks the raw value.
     u32 rankFont = lbl_eu_806640F8;
-    u8 rank = func_801361E8(rankFont, &lbl_eu_80504A3C[0x543],
-                            (u16)func_80139358(arg2));
+    u32 rankVal = func_801361E8(rankFont, &lbl_eu_80504A3C[0x543],
+                                (u16)func_80139358(arg2));
+    // Signed local: MWCC rewrites the 4..13 range test as an unsigned
+    // subi/cmplwi pair but keeps signed cmpwi for the ==3/2/1 tests.
+    s32 rank = rankVal & 0xff;
     char* rankName;
     if (rank >= 4 && rank <= 13) goto rank4_13;
     if (rank == 3) goto rank3;
@@ -1608,7 +1965,7 @@ rankDone:
 
     // Per-rank suffix string (0x77 + rank-4), table-dispatched for ranks 4-12.
     char* rankSuffix = 0;
-    switch (rank - 4) {
+    switch ((u8)rankVal - 4) {
     case 0:
         rankSuffix = func_80136190(&lbl_eu_80504A3C[0x54c], &lbl_eu_80504A3C[0x182], 0x77);
         break;
@@ -1691,11 +2048,16 @@ void func_801B70BC(CMenuGetItemMulti* self, int arg2, CMenuGetItemMultiEntry* ar
         itemId2 = func_80139358((u16)itemId);
     }
 
-    u16 rankCount =
-        (arg3 != 0) ? (u16)CItem_initItemImplInstances(arg3)->getRankCount(arg3)
-                    : func_801361E8(lbl_eu_806640EC, &lbl_eu_80504A3C[0x3b3], (u16)itemId);
-    char* rankName = func_80136190(&lbl_eu_80504A3C[0x1c1], &lbl_eu_80504A3C[0x182],
-                                   30 - ((u8)rankCount - 1));
+    // Rank count is a nested ternary temporary inside the func_80136190
+    // argument (retail masks both arms into r0 and joins with a third
+    // byte-mask straight into the argument register).
+    char* rankName = func_80136190(
+        &lbl_eu_80504A3C[0x1c1], &lbl_eu_80504A3C[0x182],
+        30 - ((u8)((arg3 != 0)
+                       ? (u16)CItem_initItemImplInstances(arg3)->getRankCount(arg3)
+                       : (u16)func_801361E8(lbl_eu_806640EC, &lbl_eu_80504A3C[0x3b3],
+                                            (u16)itemId)) -
+              1));
     func_80136B4C(self->mLayout, &lbl_eu_80504A3C[0xd3], rankName, 0);
 
     u16 v = func_80136254(lbl_eu_806640D8, &lbl_eu_80504A3C[0x554], (u16)itemId2);
@@ -1754,9 +2116,11 @@ __declspec(noinline) void func_801B76CC(CMenuGetItemMulti* self, int arg2) {
     void* tbl = lbl_eu_80664104;
     func_801392E4(arg2);
     u32 tableId = func_80139358(arg2);
+    // Separate statement: retail keeps the lookup result live in r0 across
+    // the func_80136190 arg setup (mr r0, r3 / clrlwi r5, r0, 24).
+    u32 rankN = func_801361E8((u32)tbl, &lbl_eu_80504A3C[0x573], (u16)tableId);
     char* rankText = func_80136190(
-        &lbl_eu_80504A3C[0x1ac], &lbl_eu_80504A3C[0x182],
-        (u8)func_801361E8((u32)tbl, &lbl_eu_80504A3C[0x573], (u16)tableId));
+        &lbl_eu_80504A3C[0x1ac], &lbl_eu_80504A3C[0x182], (u8)rankN);
     func_80136B4C(self->mLayout, &lbl_eu_80504A3C[0x4ae], rankText, 0);
 
     // Description text: fixed string 0x1a gets a formatted entry, otherwise
@@ -1840,9 +2204,299 @@ void func_801B7440(CMenuGetItemMulti* self, CMenuGetItemMultiEntry* arg3) {
     }
 }
 
-__declspec(noinline) void func_801B78B4(CMenuGetItemMulti* self, int arg2) {}
+// Category-13 display update: show the pane, then build the rank-name string
+// from the art/skill record tables (lbl_eu_80664110): three lookups keyed by
+// the item's table id select the rank index, the record-set and a flag byte,
+// and the per-character record (+0xE8/+0xE9 flags) switches the rank suffix
+// between string 44 and 43.
+__declspec(noinline) void func_801B78B4(CMenuGetItemMulti* self, int arg2) {
+    nw4r::lyt::Pane* pane = self->mLayout->GetRootPane()->FindPaneByName(
+        &lbl_eu_80504A3C[0x43c], true);
+    reinterpret_cast<CMenuGetItemPaneView*>(pane)->flags =
+        (reinterpret_cast<CMenuGetItemPaneView*>(pane)->flags & 0xfe) | 1;
 
-void func_801B7A58(){}
+    void* tbl = (void*)lbl_eu_80664110;
+    // No-entry path validates the id through the item table (result unused).
+    func_801392E4(arg2);
+    u32 tableId = func_80139358(arg2);
+    // Raw results kept unmasked (retail stores each with a plain mr and
+    // truncates only at the use sites).
+    int kindA = func_801361E8((u32)tbl, &lbl_eu_80504A3C[0x57e], (u16)tableId);
+    u32 artIdx = func_801361E8((u32)tbl, &lbl_eu_80504A3C[0x58a], (u16)tableId);
+    // Record address: per-character stride 0x49 plus the doubled selector,
+    // folded back into selIdx (all-u32 so MWCC targets its register).
+    u32 selIdx = func_801361E8((u32)tbl, &lbl_eu_80504A3C[0x592], (u16)tableId);
+    selIdx = func_8013600C(&lbl_eu_80504A3C[0x54c], &lbl_eu_80504A3C[0x59b],
+                           (u8)selIdx);
+    void* mgr = func_8009EC9C((u8)artIdx);
+    // Record address: per-character stride 0x49 plus the doubled selector,
+    // kept in u32 locals to match MWCC's register allocation.
+    u32 recBase = reinterpret_cast<u32>(mgr) +
+                  (u8)func_800A32BC(mgr) * 0x49;
+    selIdx = (u8)selIdx * 2 + recBase;
+    CMenuGetItemCat13Record* rec =
+        reinterpret_cast<CMenuGetItemCat13Record*>(selIdx);
+    char* rankName =
+        func_80136190(&lbl_eu_80504A3C[0x1c1], &lbl_eu_80504A3C[0x182], 0x2c);
+
+    switch ((u8)kindA) {
+    case 1:
+        if (rec->flagE8 != 0) {
+            rankName = func_80136190(&lbl_eu_80504A3C[0x1c1],
+                                     &lbl_eu_80504A3C[0x182], 0x2b);
+        }
+        break;
+    case 2:
+        if ((rec->bitsE9 >> 7) & 1) {
+            rankName = func_80136190(&lbl_eu_80504A3C[0x1c1],
+                                     &lbl_eu_80504A3C[0x182], 0x2b);
+        }
+        break;
+    case 3:
+        if ((rec->bitsE9 >> 6) & 1) {
+            rankName = func_80136190(&lbl_eu_80504A3C[0x1c1],
+                                     &lbl_eu_80504A3C[0x182], 0x2b);
+        }
+        break;
+    }
+
+    func_80136B4C(self->mLayout, &lbl_eu_80504A3C[0x59f], rankName, 0);
+}
+
+// Rank-window slot filler (slots 8-10) shared by the equipped/slotted-item
+// handlers: for each of the three rank slots, look up the item's per-rank
+// record and fill the slot's name/rank text panes, then record the id,
+// position and rank data in the mRankSlot* arrays. With no packed entry the
+// ids come from arg2 through the item table instead of the impl vtable.
+void func_801B7A58(CMenuGetItemMulti* self, int arg2, CMenuGetItemMultiEntry* arg3) {
+    // Shared pane-name buffer and formatted-string slot (retail keeps both at
+    // fixed frame offsets across both paths; the ctor-less FixStr(false) is
+    // inert and only mString[0] is cleared up front).
+    ml::FixStr<32> str(false);
+    str.mString[0] = 0;
+    str.mLength = 0;
+    char buf[32];
+    if (arg3 != NULL && arg3->packed != 0) {
+        u16 count = reinterpret_cast<CMenuGetItemImplCount*>(
+            CItem_initItemImplInstances(arg3))->getCount30(arg3);
+        nw4r::math::VEC3 pos;
+        nw4r::math::VEC3 posCopy;
+        for (u8 i = 0; i < 3; ++i) {
+            sprintf(buf, &lbl_eu_80504A3C[0x5aa], (u8)i + 1);
+            nw4r::lyt::Pane* pane =
+                self->mLayout->GetRootPane()->FindPaneByName(buf, true);
+            // Per-slot rank data (zeroed when the slot is inactive).
+            u16 slotItemId = 0;
+            u8 slotRank = 0;
+            s16 slotVal = 0;
+            if ((u8)i < count) {
+                void* texture = 0;
+                reinterpret_cast<CMenuGetItemPaneView*>(pane)->flags =
+                    (reinterpret_cast<CMenuGetItemPaneView*>(pane)->flags & 0xfe) | 1;
+                CMenuGetItemRankSlot* slot = reinterpret_cast<CMenuGetItemRankSlot*>(
+                    CItem_initItemImplInstances(arg3)->getSlot(arg3, i));
+                if (slot != 0 && (slot->bits04 & 1) != 0) {
+                    slotItemId = (slot->bits04 >> 4) & 0xFFF;
+                    void* fontTbl = lbl_eu_806640D8;
+                    slotRank = (slot->bits04 >> 7) & 7;
+                    slotVal = (s16)((slot->bits04 >> 10) & 0x7FF);
+                    char* rankStr = func_80136190(
+                        &lbl_eu_80504A3C[0x1c1], &lbl_eu_80504A3C[0x182],
+                        30 - (slotRank - 1));
+                    switch ((u8)func_801361E8(
+                        (u32)fontTbl, &lbl_eu_80504A3C[0x5b9], slotItemId)) {
+                    case 0:
+                        texture = func_801355F4()->GetResource(
+                            nw4r::lyt::ArcResourceAccessor::RES_TYPE_TEXTURE,
+                            &lbl_eu_80504A3C[0x5c2], NULL);
+                        break;
+                    case 4:
+                        texture = func_801355F4()->GetResource(
+                            nw4r::lyt::ArcResourceAccessor::RES_TYPE_TEXTURE,
+                            &lbl_eu_80504A3C[0x5d8], NULL);
+                        break;
+                    case 5:
+                        texture = func_801355F4()->GetResource(
+                            nw4r::lyt::ArcResourceAccessor::RES_TYPE_TEXTURE,
+                            &lbl_eu_80504A3C[0x5ee], NULL);
+                        break;
+                    case 6:
+                        texture = func_801355F4()->GetResource(
+                            nw4r::lyt::ArcResourceAccessor::RES_TYPE_TEXTURE,
+                            &lbl_eu_80504A3C[0x604], NULL);
+                        break;
+                    case 7:
+                        texture = func_801355F4()->GetResource(
+                            nw4r::lyt::ArcResourceAccessor::RES_TYPE_TEXTURE,
+                            &lbl_eu_80504A3C[0x61a], NULL);
+                        break;
+                    case 8:
+                        texture = func_801355F4()->GetResource(
+                            nw4r::lyt::ArcResourceAccessor::RES_TYPE_TEXTURE,
+                            &lbl_eu_80504A3C[0x630], NULL);
+                        break;
+                    case 9:
+                        texture = func_801355F4()->GetResource(
+                            nw4r::lyt::ArcResourceAccessor::RES_TYPE_TEXTURE,
+                            &lbl_eu_80504A3C[0x646], NULL);
+                        break;
+                    }
+                    str.format(&lbl_eu_80504A3C[0x65c],
+                               func_8013639C(fontTbl, &lbl_eu_80504A3C[0x182],
+                                             slotItemId),
+                               rankStr);
+                } else {
+                    texture = func_801355F4()->GetResource(
+                        nw4r::lyt::ArcResourceAccessor::RES_TYPE_TEXTURE,
+                        &lbl_eu_80504A3C[0x5c2], NULL);
+                    str.format(&lbl_eu_80504A3C[0x65c],
+                               func_80136190(&lbl_eu_80504A3C[0x1c1],
+                                             &lbl_eu_80504A3C[0x182], 0x2a));
+                }
+                sprintf(buf, &lbl_eu_80504A3C[0x65f], (u8)i + 1);
+                func_80136B4C(self->mLayout, buf, str.mString, 0);
+                if (texture != 0) {
+                    func_80137F88(pane, texture);
+                }
+            } else {
+                reinterpret_cast<CMenuGetItemPaneView*>(pane)->flags =
+                    reinterpret_cast<CMenuGetItemPaneView*>(pane)->flags & 0xfe;
+                sprintf(buf, &lbl_eu_80504A3C[0x65f], (u8)i + 1);
+                func_80136B4C(self->mLayout, buf, &lbl_eu_80504A3C[0x19f], 0);
+            }
+
+            nw4r::lyt::Pane* refPane = self->mLayout->GetRootPane()->FindPaneByName(
+                &lbl_eu_80504A3C[0x3d6], true);
+            nw4r::math::VEC3 pos;
+            func_80137924(&pos, pane, refPane, self->mLayout->GetRootPane());
+            u8 idx = (u8)(i + 8);
+            if (idx < 0xc) {
+                self->mRankSlotIds[idx] = slotItemId;
+            }
+            if (idx < 0xc) {
+                self->mRankSlotFlag[idx] = 3;
+            }
+            if (idx < 0xc) {
+                self->mRankSlotFlag2[idx] = slotRank;
+            }
+            if (idx < 0xc) {
+                self->mRankSlotIds2[idx] = slotVal;
+            }
+            nw4r::math::VEC3 posCopy = pos;
+            if (idx < 0xc) {
+                self->mRankSlotPos[idx] = posCopy;
+            }
+        }
+    } else {
+        void* itemTable = func_801393CC(arg2);
+        u32 tableId = func_80139358(arg2);
+        u8 count =
+            (u8)func_801361E8((u32)itemTable, &lbl_eu_80504A3C[0x39e], (u16)tableId);
+        u16 slotId = 0;
+        u8 rankCnt = 0;
+        u16 altFlag = 0;
+        nw4r::math::VEC3 pos;
+        nw4r::math::VEC3 posCopy;
+        for (u8 j = 0; j < 3; ++j) {
+            sprintf(buf, &lbl_eu_80504A3C[0x5aa], (u8)j + 1);
+            nw4r::lyt::Pane* pane =
+                self->mLayout->GetRootPane()->FindPaneByName(buf, true);
+            if ((u8)j < count) {
+                void* texture = 0;
+                reinterpret_cast<CMenuGetItemPaneView*>(pane)->flags =
+                    (reinterpret_cast<CMenuGetItemPaneView*>(pane)->flags & 0xfe) | 1;
+                str.format(&lbl_eu_80504A3C[0x3a7], (u8)j + 1);
+                u16 id = func_80136254(itemTable, str.mString, (u16)tableId);
+                if (id == 0) {
+                    texture = func_801355F4()->GetResource(
+                        nw4r::lyt::ArcResourceAccessor::RES_TYPE_TEXTURE,
+                        &lbl_eu_80504A3C[0x5c2], NULL);
+                    str.format(&lbl_eu_80504A3C[0x65c],
+                               func_80136190(&lbl_eu_80504A3C[0x1c1],
+                                             &lbl_eu_80504A3C[0x182], 0x2a));
+                } else {
+                    altFlag = func_801361E8(lbl_eu_806640EC,
+                                            &lbl_eu_80504A3C[0x66b], id);
+                    rankCnt = func_801361E8(lbl_eu_806640EC,
+                                            &lbl_eu_80504A3C[0x3b3], id);
+                    void* fontTbl2 = lbl_eu_806640D8;
+                    switch ((u8)func_801361E8(
+                        (u32)fontTbl2, &lbl_eu_80504A3C[0x5b9],
+                        (u16)func_80139358(id))) {
+                    case 0:
+                        texture = func_801355F4()->GetResource(
+                            nw4r::lyt::ArcResourceAccessor::RES_TYPE_TEXTURE,
+                            &lbl_eu_80504A3C[0x5c2], NULL);
+                        break;
+                    case 4:
+                        texture = func_801355F4()->GetResource(
+                            nw4r::lyt::ArcResourceAccessor::RES_TYPE_TEXTURE,
+                            &lbl_eu_80504A3C[0x5d8], NULL);
+                        break;
+                    case 5:
+                        texture = func_801355F4()->GetResource(
+                            nw4r::lyt::ArcResourceAccessor::RES_TYPE_TEXTURE,
+                            &lbl_eu_80504A3C[0x5ee], NULL);
+                        break;
+                    case 6:
+                        texture = func_801355F4()->GetResource(
+                            nw4r::lyt::ArcResourceAccessor::RES_TYPE_TEXTURE,
+                            &lbl_eu_80504A3C[0x604], NULL);
+                        break;
+                    case 7:
+                        texture = func_801355F4()->GetResource(
+                            nw4r::lyt::ArcResourceAccessor::RES_TYPE_TEXTURE,
+                            &lbl_eu_80504A3C[0x61a], NULL);
+                        break;
+                    case 8:
+                        texture = func_801355F4()->GetResource(
+                            nw4r::lyt::ArcResourceAccessor::RES_TYPE_TEXTURE,
+                            &lbl_eu_80504A3C[0x630], NULL);
+                        break;
+                    case 9:
+                        texture = func_801355F4()->GetResource(
+                            nw4r::lyt::ArcResourceAccessor::RES_TYPE_TEXTURE,
+                            &lbl_eu_80504A3C[0x646], NULL);
+                        break;
+                    }
+                    str.format(&lbl_eu_80504A3C[0x65c], func_801394D4(id));
+                    slotId = func_80139358(id);
+                }
+                sprintf(buf, &lbl_eu_80504A3C[0x65f], (u8)j + 1);
+                func_80136B4C(self->mLayout, buf, str.mString, 0);
+                if (texture != 0) {
+                    func_80137F88(pane, texture);
+                }
+            } else {
+                sprintf(buf, &lbl_eu_80504A3C[0x65f], (u8)j + 1);
+                func_80136B4C(self->mLayout, buf, &lbl_eu_80504A3C[0x19f], 0);
+                reinterpret_cast<CMenuGetItemPaneView*>(pane)->flags &= 0xfe;
+            }
+
+            nw4r::lyt::Pane* refPane = self->mLayout->GetRootPane()->FindPaneByName(
+                &lbl_eu_80504A3C[0x3d6], true);
+            nw4r::math::VEC3 pos;
+            func_80137924(&pos, pane, refPane, self->mLayout->GetRootPane());
+            u8 idx = (u8)(j + 8);
+            if (idx < 0xc) {
+                self->mRankSlotIds[idx] = slotId;
+            }
+            if (idx < 0xc) {
+                self->mRankSlotFlag[idx] = 3;
+            }
+            if (idx < 0xc) {
+                self->mRankSlotFlag2[idx] = rankCnt;
+            }
+            if (idx < 0xc) {
+                self->mRankSlotIds2[idx] = altFlag;
+            }
+            nw4r::math::VEC3 posCopy = pos;
+            if (idx < 0xc) {
+                self->mRankSlotPos[idx] = posCopy;
+            }
+        }
+    }
+}
 
 // Pad-input handler for the item-select window (Move state 2). Reads the pad
 // and dispatches on five inputs: up/down (pane-list navigation), the turbo
@@ -2190,8 +2844,8 @@ __declspec(noinline) void func_801B82E8(CMenuGetItemMulti* self) {
 //   10-13 -> special iff level in [1, 99), or level 0 with func_80157CD0(cat)
 __declspec(noinline) void func_801B8E2C(CMenuGetItemMulti* self) {
     if ((s8)self->mMaxVisibleItems == 4) {
-        // All four panes visible: sweep every visible item, drop the ones that
-        // are no longer special.
+        // All four panes visible: sweep every visible item, drop the ones
+        // whose grade requirement is now satisfied.
         if (self->mEntryCount != 0) {
             for (u8 i = 0; i < self->mVisibleItemCount; ++i) {
                 CMenuGetItemMultiEntry* entry = self->mVisibleEntries[i];
@@ -2201,18 +2855,22 @@ __declspec(noinline) void func_801B8E2C(CMenuGetItemMulti* self) {
                 if (self->mPaneVisible[i] != 0) {
                     continue;
                 }
-                u32 id = entry->packed >> 20;
-                u16 cat = (entry->packed >> 12) & 0xF;
-                if (cat == 0) {
-                    cat = (u16)func_801392E4(id);
+                u32 packed = entry->packed;
+                u32 id = packed >> 20;
+                // Category nibble falls back to the table lookup when 0;
+                // retail masks the merged value to 16 bits before use.
+                u32 rawCat = (packed >> 12) & 0xF;
+                if (rawCat == 0) {
+                    rawCat = (u16)func_801392E4(id);
                 }
+                u32 cat = rawCat & 0xFFFF;
                 func_80139358(id);
                 int special = 0;
-                if (cat >= 2 && cat <= 9) {
+                if (cat - 2 <= 7u) {
                     if (func_80157CD0(cat) != 0) {
                         special = 1;
                     }
-                } else if (cat >= 10 && cat <= 13) {
+                } else if (cat - 10 <= 3u) {
                     int lvl = func_80158068(id);
                     if (lvl < 1) {
                         if (func_80157CD0(cat) != 0) {
@@ -2237,14 +2895,14 @@ __declspec(noinline) void func_801B8E2C(CMenuGetItemMulti* self) {
                 if (self->mPaneVisible[i] != 0) {
                     continue;
                 }
-                u16 cat = (u16)func_801392E4(id);
+                u32 cat = (u16)func_801392E4(id);
                 func_80139358(id);
                 int special = 0;
-                if (cat >= 2 && cat <= 9) {
+                if (cat - 2 <= 7u) {
                     if (func_80157CD0(cat) != 0) {
                         special = 1;
                     }
-                } else if (cat >= 10 && cat <= 13) {
+                } else if (cat - 10 <= 3u) {
                     int lvl = func_80158068(id);
                     if (lvl < 1) {
                         if (func_80157CD0(cat) != 0) {
@@ -2334,9 +2992,10 @@ __declspec(noinline) void func_801B8E2C(CMenuGetItemMulti* self) {
         // (10-13) below level 99 open the 5-window grade setup; at 99+ they
         // switch to the 3-window rank-max form. Other categories open the
         // same 5-window setup.
-        u8 cat = (u8)((entry->packed >> 12) & 0xF);
-        if (cat >= 10 && cat <= 13) {
-            if (func_80158068(entry->packed >> 20) >= 0x63) {
+        u32 packedSel = entry->packed;
+        u32 cat = (packedSel >> 12) & 0xF;
+        if ((u8)(cat - 10) <= 3u) {
+            if (func_80158068(packedSel >> 20) >= 0x63) {
                 self->field_1F8 = 2;
                 char* name = func_80136190(&lbl_eu_80504A3C[0x177],
                                            &lbl_eu_80504A3C[0x182], 3);
@@ -2415,8 +3074,8 @@ __declspec(noinline) void func_801B8E2C(CMenuGetItemMulti* self) {
         }
         return;
     }
-    u8 cat = (u8)func_801392E4(id);
-    if (cat >= 10 && cat <= 13) {
+    u32 cat = func_801392E4(id) & 0xFF;
+    if ((u8)(cat - 10) <= 3u) {
         if (func_80158068(id) >= 0x63) {
             self->field_1F8 = 2;
             char* name = func_80136190(&lbl_eu_80504A3C[0x177],
@@ -2640,61 +3299,67 @@ void func_801BA144(void* self) { ((void(*)(void*))__dt__17CMenuGetItemMultiFv)((
 // --- hard-symbol stubs (scaffold_hard_symbols) ---
 // Static constructor: initialise the get-item-multi pane colour/position
 // defaults (.sbss). Each entry is an RGBA 16-bit quadruple; alpha stays 0.
+// Statement order mirrors retail so MWCC's register allocation (shared zero
+// register, long-lived lbl_eu_806643D0 pointer) reproduces byte-identical.
 void sinit_801B9FC8() {
-    lbl_eu_806643A0.a = 0;
-    lbl_eu_806643A0.b = 0;
-    lbl_eu_806643A0.c = 0;
-    lbl_eu_806643A0.d = 0;
-    lbl_eu_806643A8.a = 0;
-    lbl_eu_806643A8.b = 0;
-    lbl_eu_806643A8.c = 0;
-    lbl_eu_806643A8.d = 0;
-    lbl_eu_806643B0.a = 0x80;
-    lbl_eu_806643B0.b = 0x80;
-    lbl_eu_806643B0.c = 0;
-    lbl_eu_806643B0.d = 0;
-    lbl_eu_806643B8.a = 0x80;
-    lbl_eu_806643B8.b = 0x80;
-    lbl_eu_806643B8.c = 0;
-    lbl_eu_806643B8.d = 0;
-    lbl_eu_806643C0.a = 0;
-    lbl_eu_806643C0.b = 0;
-    lbl_eu_806643C0.c = 0;
-    lbl_eu_806643C0.d = 0;
-    lbl_eu_806643C8.a = 0;
-    lbl_eu_806643C8.b = 0;
-    lbl_eu_806643C8.c = 0;
-    lbl_eu_806643C8.d = 0;
-    lbl_eu_806643D0.a = 0xff;
-    lbl_eu_806643D0.b = 0xff;
+    // Pane colour/position defaults (.sbss), one RGBA quadruple per pane.
+    // Grouped per symbol in ascending address order - closest shape found
+    // to retail's store/register schedule (interleaved orders reschedule
+    // worse; chained assignments shift but don't close the residual).
     lbl_eu_806643D0.c = 0xfa;
+    lbl_eu_806643A0.d = 0;
+    lbl_eu_806643A0.c = 0;
+    lbl_eu_806643A0.b = 0;
+    lbl_eu_806643A0.a = 0;
+    lbl_eu_806643A8.d = 0;
+    lbl_eu_806643A8.c = 0;
+    lbl_eu_806643A8.b = 0;
+    lbl_eu_806643A8.a = 0;
+    lbl_eu_806643B0.d = 0;
+    lbl_eu_806643B0.c = 0x80;
+    lbl_eu_806643B0.b = 0x80;
+    lbl_eu_806643B0.a = 0x80;
+    lbl_eu_806643B8.d = 0;
+    lbl_eu_806643B8.c = 0x80;
+    lbl_eu_806643B8.b = 0x80;
+    lbl_eu_806643B8.a = 0x80;
+    lbl_eu_806643C0.d = 0;
+    lbl_eu_806643C0.c = 0;
+    lbl_eu_806643C0.b = 0;
+    lbl_eu_806643C0.a = 0;
+    lbl_eu_806643C8.d = 0;
+    lbl_eu_806643C8.c = 0;
+    lbl_eu_806643C8.b = 0;
+    lbl_eu_806643C8.a = 0;
     lbl_eu_806643D0.d = 0;
-    lbl_eu_806643D8.a = 0x80;
-    lbl_eu_806643D8.b = 0x80;
-    lbl_eu_806643D8.c = 0x80;
+    lbl_eu_806643D0.b = 0xff;
+    lbl_eu_806643D0.a = 0xff;
     lbl_eu_806643D8.d = 0;
-    lbl_eu_806643E0.a = 0;
-    lbl_eu_806643E0.b = 0;
-    lbl_eu_806643E0.c = 0;
+    lbl_eu_806643D8.c = 0x80;
+    lbl_eu_806643D8.b = 0x80;
+    lbl_eu_806643D8.a = 0x80;
     lbl_eu_806643E0.d = 0;
-    lbl_eu_806643E8.a = 0;
-    lbl_eu_806643E8.b = 0;
-    lbl_eu_806643E8.c = 0;
+    lbl_eu_806643E0.c = 0;
+    lbl_eu_806643E0.b = 0;
+    lbl_eu_806643E0.a = 0;
     lbl_eu_806643E8.d = 0;
-    lbl_eu_806643F0.a = 0x12;
-    lbl_eu_806643F0.b = 0xa3;
-    lbl_eu_806643F0.c = 0xe7;
+    lbl_eu_806643E8.c = 0;
+    lbl_eu_806643E8.b = 0;
+    lbl_eu_806643E8.a = 0;
     lbl_eu_806643F0.d = 0;
-    lbl_eu_806643F8.a = 0xff;
-    lbl_eu_806643F8.b = 0xff;
-    lbl_eu_806643F8.c = 0xff;
+    lbl_eu_806643F0.c = 0xe7;
+    lbl_eu_806643F0.b = 0xa3;
+    lbl_eu_806643F0.a = 0x12;
     lbl_eu_806643F8.d = 0;
-    lbl_eu_80664400.a = 0xb3;
-    lbl_eu_80664400.b = 0x9;
-    lbl_eu_80664400.c = 0xc0;
+    lbl_eu_806643F8.c = 0xff;
+    lbl_eu_806643F8.b = 0xff;
+    lbl_eu_806643F8.a = 0xff;
     lbl_eu_80664400.d = 0;
-    lbl_eu_80664408.a = 0xff;
-    lbl_eu_80664408.b = 0xff;
-    lbl_eu_80664408.c = 0xff;
+    lbl_eu_80664400.c = 0xc0;
+    lbl_eu_80664400.b = 0x9;
+    lbl_eu_80664400.a = 0xfa;
     lbl_eu_80664408.d = 0;
+    lbl_eu_80664408.c = 0xff;
+    lbl_eu_80664408.b = 0xff;
+    lbl_eu_80664408.a = 0xff;
 }

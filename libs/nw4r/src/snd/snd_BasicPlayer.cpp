@@ -10,8 +10,34 @@ namespace nw4r {
 namespace snd {
 namespace detail {
 
-BasicPlayer::BasicPlayer() : mId(BasicSound::INVALID_ID) {
-    InitParam();
+BasicPlayer::BasicPlayer() {
+    // First remote group written directly; the rest via a bounded walk
+    // (retail keeps a rolled fill loop with runtime trip counts).
+    mParam.mUnk0x6C[0] = lbl_eu_80669EE0;
+    mParam.mUnk0x6C[1] = lbl_eu_80669EE0;
+    mParam.mUnk0x6C[2] = lbl_eu_80669EE4;
+    mParam.mUnk0x6C[3] = lbl_eu_80669EE4;
+    mParam.mUnk0x6C[4] = lbl_eu_80669EE4;
+    mParam.mUnk0x6C[5] = lbl_eu_80669EE4;
+
+    f32* const end = &mParam.mUnk0x6C[WPAD_MAX_CONTROLLERS * 6];
+    f32* it = &mParam.mUnk0x6C[6];
+
+    while (it < end) {
+        it[0] = lbl_eu_80669EE0;
+        it[1] = lbl_eu_80669EE0;
+        it[2] = lbl_eu_80669EE4;
+        it[3] = lbl_eu_80669EE4;
+        it[4] = lbl_eu_80669EE4;
+        it[5] = lbl_eu_80669EE4;
+        it += 6;
+    }
+
+    mParam.Init();
+
+    mId = BasicSound::INVALID_ID;
+
+    mParam.Init();
 }
 
 void PlayerParamSet::Init() {

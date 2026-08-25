@@ -62,7 +62,6 @@ int getFileSize__11CDeviceFileFPCc(const char* pPath, int flags);
 void func_800C1CAC(u32 arg0, u32 arg1);
 void* func_8003AA34();
 int CfRes_getD80Flag();
-float func_80496288();
 u32 getBdatStringColumnValue(void* bdat, const char* column, int index);
 u32 func_80086B1C__Q22cf13CfGameManagerFv();
 u32 func_80086B2C__Q22cf13CfGameManagerFv();

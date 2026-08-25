@@ -35,7 +35,7 @@ extern "C" void func_80294834__FPv(float* self) {
 }
 
 // ---------------------------------------------------------------------------
-// Target 1: func_80294844 (us-80296e40)
+// func_80294844 (us-80296e40)
 // Write a base value to [out+0] and [out+4]. If the incoming parameter is
 // below the threshold A, additionally store a corrected value:
 //   corrected = C * (param - A) - A
@@ -64,7 +64,7 @@ extern "C" unsigned long func_80294624() {
 }
 
 // ---------------------------------------------------------------------------
-// Target 3: func_80294638 - input handling for the save dialog's open state
+// func_80294638 - input handling for the save dialog's open state
 // (called from Move while mFlagDC == 2). Reads the current cf pad data; the
 // two confirm/cancel triggers come from different button bits depending on
 // co-op vs single-player; an up/down D-pad input wraps the save-slot flag.
@@ -124,7 +124,7 @@ extern "C" void func_80294638(CSysWinSave* self) {
 }
 
 // ---------------------------------------------------------------------------
-// Target 1: CSysWinSave::Init - register the render callback, create the
+// CSysWinSave::Init - register the render callback, create the
 // scratch region (guarded by a Class_8045F858 RAII temp), then rebuild the
 // embedded CSysWin and CCur18 bodies by constructing stack temps and copying
 // their non-vtable fields into the embedded storage.
@@ -188,7 +188,7 @@ void CSysWinSave::Init() {
 }
 
 // ---------------------------------------------------------------------------
-// Target 2: CSysWinSave::Move - gate prefix (task busy / global render flag /
+// CSysWinSave::Move - gate prefix (task busy / global render flag /
 // scene active), then a 4-state machine controlling the save dialog:
 //   0 load strings and ready the window; 1 wait active then update cursor;
 //   2 dispatch input to func_80294638; 3 closing transition.
@@ -250,7 +250,7 @@ void CSysWinSave::Move() {
 }
 
 // ---------------------------------------------------------------------------
-// Target 2: CSysWinSave::Term (us-802967ec)
+// CSysWinSave::Term (us-802967ec)
 // Wait for VI draw completion, release the CSysWin and its scratch region, run
 // the CCur18 cursor-update virtual, clear the singleton, detach the render
 // callback, and re-enable the cf load if the signed flag was set.
@@ -271,7 +271,7 @@ void CSysWinSave::Term() {
 }
 
 // ---------------------------------------------------------------------------
-// Target 3: CSysWinSave::~CSysWinSave (us-802965b4)
+// CSysWinSave::~CSysWinSave (us-802965b4)
 // Complete-object destructor. Subobjects destroyed in reverse construction
 // order: CCur18@0xC4, CSysWin@0x88, UnkClass_8045F564@0x78, then the CProcess
 // base (guarded by the nested double null-check, an MWCC D2-inlined-into-D1
@@ -295,7 +295,7 @@ extern "C" void* __dt__11CSysWinSaveFv(CSysWinSave* _this, int flags) {
 }
 
 // ---------------------------------------------------------------------------
-// Target 4: CSysWinSave::cbRenderBefore (us-80296a3c)
+// CSysWinSave::cbRenderBefore (us-80296a3c)
 // Gate prefix (task busy / global bit / scene-active) then draw the embedded
 // CSysWin and CCur18 cursor through a stack DrawInfo.
 // ---------------------------------------------------------------------------
@@ -329,7 +329,7 @@ body:
 }
 
 // ---------------------------------------------------------------------------
-// Target 5: __ct__802944D8 (us-80296ad4)
+// __ct__802944D8 (us-80296ad4)
 // Allocate the CSysWinSave singleton (0xE0 bytes) from work memory, run the
 // CProcess ctor, lay out the IUIWindow + Move region by hand, then construct
 // the embedded UnkClass_8045F564 / CSysWin / CCur18 and register as a CProcess

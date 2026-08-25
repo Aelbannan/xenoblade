@@ -1,7 +1,9 @@
 // Auto-scaffolded catalog TU for kyoshin/cf/CtrlAct
 // Replace stubs with high-level C/C++ during decomp.
 
+#include "kyoshin/cf/CBattleManagerApi.hpp"
 #include "kyoshin/harness_catalog.hpp"
+#include "monolib/scn/CScnTimeApi.hpp"
 
 #include "kyoshin/cf/CtrlAct.hpp"
 

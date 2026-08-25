@@ -1,7 +1,9 @@
 // Auto-scaffolded catalog TU for kyoshin/cf/CtrlMoveEne
 // Replace stubs with high-level C/C++ during decomp.
 
+#include "kyoshin/cf/CBattleManagerApi.hpp"
 #include <stddef.h>
+#include "monolib/scn/CScnTimeApi.hpp"
 
 #include "kyoshin/harness_catalog.hpp"
 

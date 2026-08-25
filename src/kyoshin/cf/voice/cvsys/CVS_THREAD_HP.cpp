@@ -6,7 +6,7 @@
 #include "kyoshin/harness_catalog.hpp"
 #include "monolib/math/Random.hpp"
 
-// ── Target 4: us-802a9988 (__ct__802A7254) ──────────────────────────────────
+// us-802a9988 (__ct__802A7254)
 // Factory for CVS_THREAD_HP. Takes a source voice handle and an integer
 // value (negative -> refuse). Gates on the handle's manager flag (bit 1) and
 // idle state, then picks the HP-change voice ID (0x516 / 0x515) from two
@@ -79,7 +79,7 @@ CVS_THREAD_HP* __ct__802A7254(CVoiceHandle* handle, int arg) {
 // vtable[0x2BC/4] is-active check on a voice handle.
 typedef int (*IsActiveFunc)(CVoiceHandle*);
 
-// ── Target 3: us-802a9b98 (func_802A7464) ──────────────────────────────────
+// us-802a9b98 (func_802A7464)
 // Advance/play function: restore the base state triple from the init table,
 // then if the voice handle slot is present and idle, play the HP-change
 // voice ID; on failure fire the playback-start virtual (blank1).
@@ -107,7 +107,7 @@ void func_802A7464(CVS_THREAD_HP* self) {
     }
 }
 
-// ── Target 2: us-802a9c3c (func_802A7508) ─────────────────────────────────
+// us-802a9c3c (func_802A7508)
 // Advance/play: restore the base state triple from the init table, then pick
 // a random idle voice handle (excluding this thread's own slot) and play the
 // HP-change voice; on failure fire the playback-start virtual (blank1).
@@ -172,7 +172,7 @@ int CVS_THREAD_HP::blank1() {
     return BUFFER_SIZE;
 }
 
-// ── Target 3: us-802a9da8 (func_802A7674) ─────────────────────────────────
+// us-802a9da8 (func_802A7674)
 // Player-voice init: only when the handle's voice is the first player's and
 // the handle is idle, allocate a voice buffer and play a random HP-change
 // voice (base 0xED9). Always returns 0.
@@ -202,7 +202,7 @@ int func_802A7674(CVoiceHandle* self) {
     return 0;
 }
 
-// ── Target 4: us-802a9e78 (func_802A7744) ──────────────────────────────────
+// us-802a9e78 (func_802A7744)
 // Voice-ID init helper. If the handle has its manager flag set, is not
 // actively playing, and a handle buffer can be allocated, play a random
 // HP-change voice (base 0xC81) through the sound system. Always returns 0.
@@ -265,7 +265,7 @@ extern "C" int func_802A7850(int iter) {
     return result;
 }
 
-// ── Target 2: us-802a9fa4 (func_802A7870) ──────────────────────────────────
+// us-802a9fa4 (func_802A7870)
 // Collect idle voice handles from the voice-manager circular list into an
 // output array (excluding one handle), returning how many were stored.
 // `capacity` is a caller-side hint and is not used by the retail body.
@@ -293,7 +293,7 @@ int func_802A7870(CVoiceHandle** out, int capacity, CVoiceHandle* exclude) {
     return count;
 }
 
-// ── Target 1: us-802aa040 (func_802A790C) ──────────────────────────────────
+// us-802aa040 (func_802A790C)
 // Count idle voice handles in the voice-manager circular list, excluding one
 // handle (used by the party-gauge factory to check the free-voice pool).
 int func_802A790C(CVoiceHandle* exclude) {
@@ -318,7 +318,7 @@ int func_802A790C(CVoiceHandle* exclude) {
     return count;
 }
 
-// ── Target 1: us-802aa0cc (func_802A7998) ─────────────────────────────────
+// us-802aa0cc (func_802A7998)
 // Randomly pick one idle voice handle from the voice-manager circular list,
 // excluding `exclude`. Returns NULL when no idle handle is available.
 CVoiceHandle* func_802A7998(CVoiceHandle* exclude) {
@@ -354,7 +354,7 @@ CVoiceHandle* func_802A7998(CVoiceHandle* exclude) {
     return out[ml::math::mtRand(count)];
 }
 
-// ── Target 2: us-802aa188 (func_802A7A54) ──────────────────────────────────
+// us-802aa188 (func_802A7A54)
 // Collect idle voice handles from the voice-manager circular list, then
 // return the first one whose sub-state maps to the given iterator value
 // `match` (NULL when none matches). The loop walks a pointer while keeping
@@ -410,7 +410,7 @@ CVoiceHandle* func_802A7A54(int match) {
     return NULL;
 }
 
-// ── Target 4: us-802aa2c4 (func_802A7B90) ─────────────────────────────────
+// us-802aa2c4 (func_802A7B90)
 // Battle-state gate: map both handles' sub-state indexes to voice-iterator
 // values; the HP-change voice may fire only when the pair is (2, 6) and the
 // cf sequence counter is below 0x91.
@@ -463,7 +463,7 @@ int func_802A7B90(CVoiceHandleState* a, CVoiceHandleState* b) {
     return result;
 }
 
-// ── Target 5: us-802aa3f8 (func_802A7CC4) ─────────────────────────────────
+// us-802aa3f8 (func_802A7CC4)
 // Battle-state gate: same sub-state mapping as func_802A7B90; the voice may
 // fire only when the pair is (1, 3) and the cf sequence counter is below
 // 0x24.
@@ -516,7 +516,7 @@ int func_802A7CC4(CVoiceHandleState* a, CVoiceHandleState* b) {
     return result;
 }
 
-// ── Target 5: us-802aa52c (func_802A7DF8) ──────────────────────────────────
+// us-802aa52c (func_802A7DF8)
 // Map a voice handle's sub-state index (+0x3F28) to a voice-iterator value
 // (same mapping as func_802A77E8); when the result is the HP base state (3),
 // also require the game-manager sequence counter to be below 0x24.
@@ -549,7 +549,7 @@ int func_802A7DF8(CVoiceHandle* handle) {
     return result;
 }
 
-// ── Target 1: us-802aa5e4 (func_802A7EB0) ──────────────────────────────────
+// us-802aa5e4 (func_802A7EB0)
 // Battle-state gate: map both handles' sub-state indexes to voice-iterator
 // values; the HP-change voice may fire only when the pair is (7, 1) and the
 // cf sequence counter is below 0x85.
@@ -602,7 +602,7 @@ int func_802A7EB0(CVoiceHandle* a, CVoiceHandle* b) {
     return result;
 }
 
-// ── Target 3: us-802aa718 (func_802A7FE4) ──────────────────────────────────
+// us-802aa718 (func_802A7FE4)
 // Count idle voice handles in the voice-manager circular list; when the
 // source handle's sub-state maps to one of the iterator values {1, 3, 7},
 // return whether at most one idle handle is available.

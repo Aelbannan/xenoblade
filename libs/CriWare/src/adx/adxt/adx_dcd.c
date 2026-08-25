@@ -137,8 +137,10 @@ int ADX_DecodeInfoExIdly(u8* info, int size, s16* outA, s16* outB)
 int ADX_DecodeInfoExLoop(u8* info, int size, u32* outA, s16* outB,
                          s16* outC, u32* outD, u32* outE, u32* outF, u32* outG)
 {
-    u8 ch;
     int err = 0;
+    int minSize;
+    int off;
+    u8 ch;
     *outB = 0;
     if (size < 0x14) {
         err = -1;
@@ -153,7 +155,7 @@ int ADX_DecodeInfoExLoop(u8* info, int size, u32* outA, s16* outB,
     if (err != 0)
         return err;
     {
-        int minSize = 0x30;
+        minSize = 0x30;
         if (ch == 4)
             minSize = 0x3C;
         if (size < minSize)
@@ -163,11 +165,11 @@ int ADX_DecodeInfoExLoop(u8* info, int size, u32* outA, s16* outB,
         if (*(s16*)(info + 2) < minSize - 4)
             return -1;
         {
-            int off = 0x14;
+            off = 0x14;
             if (ch == 4)
                 off = 0x20;
             *outA = *(s16*)(info + off);
-            const u8* p = off + info;
+            const u8* p = (u8*)((u32)off + (u32)info);
             {
                 s16 loop = *(s16*)(p + 2);
                 *outB = loop;
@@ -188,6 +190,7 @@ int ADX_DecodeInfoAinf(u8* info, int size, u32* outA, u32* outB,
                        s16* outC, s16* outD)
 {
     int err;
+    int minSize;
     u8 ch;
     *outA = 0;
     if (size < 0x14) {
@@ -203,7 +206,7 @@ int ADX_DecodeInfoAinf(u8* info, int size, u32* outA, u32* outB,
     if (err != 0)
         return err;
     {
-        int minSize = 0x3C;
+        minSize = 0x3C;
         if (ch == 4)
             minSize = 0x48;
         if (size < minSize)
@@ -216,7 +219,7 @@ int ADX_DecodeInfoAinf(u8* info, int size, u32* outA, u32* outB,
             int off = 0x14;
             if (ch == 4)
                 off = 0x20;
-            const u8* p = info + off;
+            const u8* p = (u8*)((u32)off + (u32)info);
             off += 4;
             if (*(s16*)(p + 2) != 0)
                 off += 0x14;
@@ -227,9 +230,10 @@ int ADX_DecodeInfoAinf(u8* info, int size, u32* outA, u32* outB,
                     return -2;
                 *outA = *(u32*)(p2 + 4);
                 memcpy(outB, p2 + 8, 0x10);
-                *outC = *(s16*)(info + off + 0x18);
-                *outD = *(s16*)(info + off + 0x1C);
-                *(outD + 1) = *(s16*)(info + off + 0x1E);
+                const u8* tail = (u8*)((u32)off + (u32)info);
+                *outC = *(s16*)(tail + 0x18);
+                *outD = *(s16*)(tail + 0x1C);
+                *(outD + 1) = *(s16*)(tail + 0x1E);
             }
         }
     }

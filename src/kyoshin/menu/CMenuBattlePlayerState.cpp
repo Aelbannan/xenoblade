@@ -1,15 +1,6 @@
 #include "kyoshin/menu/CMenuBattlePlayerState.hpp"
 
-// CTaskGame.hpp declares func_8004392C with a u32 third arg (line 486) and
-// func_8049603C with a CScn* arg (line 559), which conflict with the void*
-// copies in CVision.hpp / CSuddenCommu.hpp (reached via the
-// CBattleManager.hpp include below); rename the CTaskGame.hpp copies out of
-// the way (same scheme as CMenuArtsSelect.cpp). This TU uses none of them.
-#define func_8004392C menuBpsCtaskGame4392CUnused
-#define func_8049603C menuBpsCtaskGame9603CUnused
 #include "kyoshin/CTaskGame.hpp"
-#undef func_8049603C
-#undef func_8004392C
 // CUICfManager.hpp declares func_801B481C as int (line 54); CVision.hpp (via
 // CBattleManager.hpp) declares it as u32. This TU uses neither copy.
 #define func_801B481C menuBpsUiCfMgr481CUnused
@@ -26,23 +17,14 @@
 // CSuddenCommu.hpp / CfGameManager.hpp use CBattleManagerView* - an illegal
 // overload when both are visible in this TU (which only calls the member
 // getInstance). Rename every free-function copy out of the way.
-#define getInstance__Q22cf14CBattleManagerFv menuBpsBmGetInstanceUnused
 #include "kyoshin/cf/CBattleManager.hpp"
 #include "kyoshin/cf/CfGameManager.hpp"
-#undef getInstance__Q22cf14CBattleManagerFv
 #undef func_80174B4C
-// code_80135FDC.hpp declares lbl_eu_8066A208 as u32 (line 188),
-// func_8049603C with a CScn* arg (line 223), and getBdatStringColumnValue
-// as void* (line 238); CfObjectMove.hpp (via the CBattleManager.hpp include
-// above) declares lbl_eu_8066A208 const float, CSuddenCommu.hpp declares
-// func_8049603C with a void* arg, and CfGimmick.hpp declares
-// getBdatStringColumnValue as u32. This TU uses neither copy.
+// code_80135FDC.hpp declares lbl_eu_8066A208 as u32 (line 188);
+// CfObjectMove.hpp (via the CBattleManager.hpp include above) declares it
+// const float. This TU uses neither copy.
 #define lbl_eu_8066A208 menuBpsCode35FDCepsilonUnused
-#define func_8049603C menuBpsCode35FDC9603CUnused
-#define getBdatStringColumnValue menuBpsCode35FDCBdatColUnused
 #include "kyoshin/code_80135FDC.hpp"
-#undef getBdatStringColumnValue
-#undef func_8049603C
 #undef lbl_eu_8066A208
 #include "monolib/device/CDeviceVI.hpp"
 #include "monolib/util/MemManager.hpp"

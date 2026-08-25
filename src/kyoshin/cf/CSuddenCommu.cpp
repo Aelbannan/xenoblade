@@ -1,7 +1,10 @@
 // Auto-scaffolded catalog TU for kyoshin/cf/CSuddenCommu
 // Replace stubs with high-level C/C++ during decomp.
 
+#include "kyoshin/cf/CBattleManagerApi.hpp"
 #include "kyoshin/harness_catalog.hpp"
+#include "libs/monolib/src/scn/CScn_8049603C.hpp" // func_8049603C (single owner decl)
+#include "monolib/scn/CScnTimeApi.hpp"
 #include "kyoshin/cf/CSuddenCommu.hpp"
 #include "kyoshin/cf/CfGameManager.hpp"
 // ml::math::mtRand(int) - mangles to the retail mtRand__Q22ml4mathFi.

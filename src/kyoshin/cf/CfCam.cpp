@@ -1,14 +1,14 @@
 #include "kyoshin/cf/CfCam.hpp"
+#include "monolib/scn/CScnTimeApi.hpp"
+
+#include "kyoshin/cf/CfGameManagerData.hpp"
 #include "kyoshin/cf/object/CfObject.hpp"
 #include <nw4r/math.h>
 #include <math.h>
 #include <string.h>
 #include <monolib/math.hpp>
 #include "kyoshin/cf/CfCam_ps.inl"
-// CfGameManager.hpp's extern "C" func_8049603C(CScn*) conflicts with this
-// TU's no-arg caller shape - rename it out of the way (CMenuGetItemMulti.cpp
-// pattern).
-#define func_8049603C cfCamGameManager9603CUnused
+#include "libs/monolib/src/scn/CScn_8049603C.hpp" // func_8049603C (single owner decl)
 // TEMP unblock: monolib/core/CPadManager.hpp currently fails under MWCC
 // (C++11 static_assert / illegal offsetof constant expressions) and
 // CDeviceRemotePad.hpp pulls it in. This TU only needs CDeviceRemotePad::
@@ -37,7 +37,6 @@ class cfCamGameManagerObjMoveFwd;
 }
 #include "kyoshin/cf/CfGameManager.hpp"
 #undef CfObjectMove
-#undef func_8049603C
 #include <revolution/mtx/quat.h>
 #include <revolution/mtx/mtxvec.h>
 // Runtime RTTI helper + typeinfo pair for func_80073DDC's dynamic_cast
@@ -728,11 +727,11 @@ extern "C" void func_8006B720(int arg1, int arg2) {
 
     // s16 -> f32 via the 0x43300000 double trick; subtracting the named retail
     // blob keeps the lfd reloc on lbl_eu_806662A8 instead of a TU-local pool.
-    cellA = getBdatStringColumnValue(fp, nameA.str, col);
+    cellA = reinterpret_cast<short*>(getBdatStringColumnValue(fp, nameA.str, col));
     convA.w[1] = (u32)(s32)*cellA ^ 0x80000000u;
     convA.w[0] = 0x43300000;
     f32 scaledA = lbl_eu_8066629C * (f32)(convA.d - lbl_eu_806662A8);
-    cellB = getBdatStringColumnValue(fp, nameB.str, col);
+    cellB = reinterpret_cast<short*>(getBdatStringColumnValue(fp, nameB.str, col));
     lbl_eu_80570A2C[1] = scaledA;
     convB.w[1] = (u32)(s32)*cellB ^ 0x80000000u;
     convB.w[0] = 0x43300000;
@@ -1811,7 +1810,7 @@ void func_8006E884(cf::CfCamFollow* self, float argF) {
     }
     // Note: retail compares the incoming float (f1) against 0.0 AFTER the two
     // gate calls without spilling it - keep this operand order when iterating.
-    if (CfRes_getD80Flag() != 0 && func_80496288() != 0 && argF == lbl_eu_806662DC) {
+    if (CfRes_getD80Flag() != 0 && func_80496288(lbl_eu_80663E14) != 0 && argF == lbl_eu_806662DC) {
         // Snap: blend straight from the +0x40 vector into the +0x34 slot.
         func_8006C6E8(&stack50, reinterpret_cast<const nw4r::math::VEC3*>(self->unk10 + 0x30),
                       reinterpret_cast<const nw4r::math::VEC3*>(self->unk188 + 0x40));

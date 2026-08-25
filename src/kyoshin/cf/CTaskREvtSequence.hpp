@@ -100,11 +100,9 @@ class CfEvtCamManager;
 class UnkEvtListEntry;  // full layout below (UnkState_80664268::field_0x10C)
 // func_8016DF4C: reload-count selector (CfResReloadImpl.cpp).
 extern "C" void func_8016DF4C(u32 type);
-// func_8049602C: scene vec4 setter (flat retail name; CTaskGame.hpp declares
-// the identical void* prototype - keep the two spellings in sync, see note
-// there; mismatched extern "C" type lists break TUs including both headers).
-extern "C" void func_8049602C(void* scene, int index, void* vec);
-// func_801644B4 / func_80164CFC: event-task getter / teardown gate
+// func_8049602C: scene vec4 setter - declared once on kyoshin/CTaskGame.hpp
+// (flat retail name); TUs here reach it via that header.
+
 // (CREvtCamera.cpp / CTaskREvent.cpp).
 extern "C" u32 func_801644B4();
 extern "C" void func_80164CFC();
@@ -489,7 +487,7 @@ struct UnkEvtNameData {
 // +0x14, name-data pointer at +0x1C (same first 0x20 bytes as CREvtModel).
 class UnkEvtListEntry {
 public:
-    virtual void* vf_0x08();   // user 0 -> vtable+0x08
+    virtual void* vf_0x08(int flag);   // user 0 -> vtable+0x08: release/stop
     virtual void* vf_0x0C();   // user 1 -> vtable+0x0C
     virtual void* vf_0x10();   // user 2 -> vtable+0x10
     virtual void* vf_0x14();   // user 3 -> vtable+0x14: resolve the name object
@@ -500,10 +498,12 @@ public:
     virtual void* vf_0x28();   // user 8
     virtual void* vf_0x2C();   // user 9 -> vtable+0x2C (func_80169DD0 match call)
     virtual void* vf_0x30();            // user 10 -> vtable+0x30
-    virtual void* vf_0x34(void* arg);    // user 11 -> vtable+0x34 (func_80169F28 loop 2 call)
+    virtual void* vf_0x34(void* arg, void* elem);  // user 11 -> vtable+0x34 (func_80169F28 loop 2 call)
+    virtual void* vf_0x38();   // user 12 -> vtable+0x38
+    virtual void* vf_0x3C();   // user 13 -> vtable+0x3C (func_8016A480 stop call)
     u8 gap04[0x10];            // 0x04-0x13
     s32 field_0x14;            // 0x14: type word (3 = realtime event)
-    u8 gap18[0x04];            // 0x18
+    u32 field_0x18;            // 0x18: flag word (bit 7 read by func_8016A480)
     UnkEvtNameData* field_0x1C; // 0x1C: name-data pointer
     u8 gap20[0x1C];            // 0x20-0x3B
     u8 field_0x3C;             // 0x3C: byte gate (func_8016BB38 returns when 0)
@@ -895,15 +895,277 @@ extern "C" void func_801AACA8(u8 v);
 // Imports for func_80169A38 (event-sequence update): scene fade helpers
 // (CfObjectImplWalker.cpp).
 extern "C" void func_80496294(CScn* scene, float value);
-extern "C" f32 func_80496288(CScn* scene);
+
+// ptmf tables copied into field_0x3C by func_801696CC (retail .data:
+// fixed offsets 0x78/0x84/0x90 inside the lbl_eu_80530A40 pool).
 
 // ptmf tables copied into field_0x3C by func_80169A38 (retail .data:
 // 0x80530ADC / 0x80530AE8).
 extern u32 lbl_eu_80530ADC[3];
 extern u32 lbl_eu_80530AE8[3];
 
+// Realtime-event camera task helpers (CREvtCamera.cpp) called by
+// func_801696CC's tail.
+extern "C" void func_80180210(int flag);
+extern "C" void func_80180394();
+
+// ---- Imports for func_8016925C (event-sequence start) ----
+// Base event-name string getter (CTaskREvent.cpp; retail returns the pointer
+// as a u32).
+extern "C" const char* func_801644AC();
+// Scene alloc-handle getter (CTaskGame.cpp).
+extern "C" u32 func_80495FF0(CScn* scene);
+// BGM stream starter (CTaskGame.cpp): volume arrives in f1.
+extern "C" void func_80043738(u32 a1, const char* path, u32 handle, u32 a4,
+                              u32 a5, u32 a6, float volume);
+// Fade-volume scale source (CTaskREvent.cpp): returns a float in f1.
+extern "C" f32 func_80164478();
+// Minimap/system reset (CREvtModelMap.cpp).
+extern "C" void func_8016FC0C(int val);
+// Guest-mode-off reset (CREvtModelMap.cpp).
+extern "C" void func_80180DCC();
+// Second/third CfGameManager object-list getters (same scheme as
+// func_80086B04 above).
+extern "C" EvtSeqMgrView* func_80086B08__Q22cf13CfGameManagerFv();
+extern "C" EvtSeqMgrView* func_80086B10__Q22cf13CfGameManagerFv();
+// Extra .sdata2 floats / ptmf tables used by func_8016925C.
+extern f32 lbl_eu_80667660;
+extern f32 lbl_eu_80667664;
+extern u32 lbl_eu_80530AA0[3];
+extern u32 lbl_eu_80530AAC[3];
+
+// Flags object reached through the character container at +0x3F34 during the
+// event-sequence reset walks; its vtable slot at absolute 0x84 (user 31)
+// arms a flag word.
+class EvtSeqFlagsObj {
+public:
+    virtual void _f00();
+    virtual void _f01();
+    virtual void _f02();
+    virtual void _f03();
+    virtual void _f04();
+    virtual void _f05();
+    virtual void _f06();
+    virtual void _f07();
+    virtual void _f08();
+    virtual void _f09();
+    virtual void _f10();
+    virtual void _f11();
+    virtual void _f12();
+    virtual void _f13();
+    virtual void _f14();
+    virtual void _f15();
+    virtual void _f16();
+    virtual void _f17();
+    virtual void _f18();
+    virtual void _f19();
+    virtual void _f20();
+    virtual void _f21();
+    virtual void _f22();
+    virtual void _f23();
+    virtual void _f24();
+    virtual void _f25();
+    virtual void _f26();
+    virtual void _f27();
+    virtual void _f28();
+    virtual void _f29();
+    virtual void _f30();
+    virtual void vf_0x84(int flag);  // user 31 -> vtable+0x84
+};
+
+// Object at the head of the character container (+0x3E9C) walked by the
+// func_80086B04/B08 manager lists: the reset slots live at vtable offsets
+// 0x158 (user 84) and 0x1C0 (user 110).
+class EvtSeqResetObj {
+public:
+    virtual void _r000();
+    virtual void _r001();
+    virtual void _r002();
+    virtual void _r003();
+    virtual void _r004();
+    virtual void _r005();
+    virtual void _r006();
+    virtual void _r007();
+    virtual void _r008();
+    virtual void _r009();
+    virtual void _r010();
+    virtual void _r011();
+    virtual void _r012();
+    virtual void _r013();
+    virtual void _r014();
+    virtual void _r015();
+    virtual void _r016();
+    virtual void _r017();
+    virtual void _r018();
+    virtual void _r019();
+    virtual void _r020();
+    virtual void _r021();
+    virtual void _r022();
+    virtual void _r023();
+    virtual void _r024();
+    virtual void _r025();
+    virtual void _r026();
+    virtual void _r027();
+    virtual void _r028();
+    virtual void _r029();
+    virtual void _r030();
+    virtual void _r031();
+    virtual void _r032();
+    virtual void _r033();
+    virtual void _r034();
+    virtual void _r035();
+    virtual void _r036();
+    virtual void _r037();
+    virtual void _r038();
+    virtual void _r039();
+    virtual void _r040();
+    virtual void _r041();
+    virtual void _r042();
+    virtual void _r043();
+    virtual void _r044();
+    virtual void _r045();
+    virtual void _r046();
+    virtual void _r047();
+    virtual void _r048();
+    virtual void _r049();
+    virtual void _r050();
+    virtual void _r051();
+    virtual void _r052();
+    virtual void _r053();
+    virtual void _r054();
+    virtual void _r055();
+    virtual void _r056();
+    virtual void _r057();
+    virtual void _r058();
+    virtual void _r059();
+    virtual void _r060();
+    virtual void _r061();
+    virtual void _r062();
+    virtual void _r063();
+    virtual void _r064();
+    virtual void _r065();
+    virtual void _r066();
+    virtual void _r067();
+    virtual void _r068();
+    virtual void _r069();
+    virtual void _r070();
+    virtual void _r071();
+    virtual void _r072();
+    virtual void _r073();
+    virtual void _r074();
+    virtual void _r075();
+    virtual void _r076();
+    virtual void _r077();
+    virtual void _r078();
+    virtual void _r079();
+    virtual void _r080();
+    virtual void _r081();
+    virtual void _r082();
+    virtual void _r083();
+    virtual void vf_0x158(int arg);  // user 84 -> vtable+0x158: reset step
+    virtual void _r085();
+    virtual void _r086();
+    virtual void _r087();
+    virtual void _r088();
+    virtual void _r089();
+    virtual void _r090();
+    virtual void _r091();
+    virtual void _r092();
+    virtual void _r093();
+    virtual void _r094();
+    virtual void _r095();
+    virtual void _r096();
+    virtual void _r097();
+    virtual void _r098();
+    virtual void _r099();
+    virtual void _r100();
+    virtual void _r101();
+    virtual void _r102();
+    virtual void _r103();
+    virtual void _r104();
+    virtual void _r105();
+    virtual void _r106();
+    virtual void _r107();
+    virtual void _r108();
+    virtual void _r109();
+    virtual void vf_0x1C0(int arg);  // user 110 -> vtable+0x1C0: reset step 2
+};
+
+// Object reached through the func_80086B10 list nodes: a sub-object pointer
+// at +0x98 whose vtable slot at absolute 0x80 (user 30) stops the task.
+class EvtSeqB10Obj {
+public:
+    virtual void _b00();
+    virtual void _b01();
+    virtual void _b02();
+    virtual void _b03();
+    virtual void _b04();
+    virtual void _b05();
+    virtual void _b06();
+    virtual void _b07();
+    virtual void _b08();
+    virtual void _b09();
+    virtual void _b10();
+    virtual void _b11();
+    virtual void _b12();
+    virtual void _b13();
+    virtual void _b14();
+    virtual void _b15();
+    virtual void _b16();
+    virtual void _b17();
+    virtual void _b18();
+    virtual void _b19();
+    virtual void _b20();
+    virtual void _b21();
+    virtual void _b22();
+    virtual void _b23();
+    virtual void _b24();
+    virtual void _b25();
+    virtual void _b26();
+    virtual void _b27();
+    virtual void _b28();
+    virtual void _b29();
+    virtual void vf_0x80(int flag);  // user 30 -> vtable+0x80
+};
+
+// Node-object view for the func_80086B10 walk: the word at +0x98 names the
+// task object stopped by the walk.
+struct EvtSeqB10Node {
+    u8 gap00[0x98];            // 0x00
+    EvtSeqB10Obj* field_0x98;  // 0x98: stop target (null-tested)
+};
+
+// Halfword id pair at the head of the field_0xC4 buffer (published to
+// CfGameManager / the global sda by func_8016925C when both are >= 0).
+struct EvtSeqC4Pair {
+    u8 gap00[0x40];   // 0x00
+    s16 field_0x40;   // 0x40: id halfword A
+    s16 field_0x42;   // 0x42: id halfword B
+};
+
 // .sdata2 int->double magic constant (2^52 + 2^31) and the scale float used
 // by func_8016B860's frame-duration conversions.
 extern f64 lbl_eu_80667680;
 extern f32 lbl_eu_80667688;
+
+// ---- Imports for func_8016A480 (event-sequence teardown / Term body) ----
+class CFileHandle;
+extern "C" void func_80180E1C();
+extern "C" void cancel__11CDeviceFileFP11CFileHandle(CFileHandle* handle);
+extern "C" void func_80462D04__8CTaskLODFv(s16 taskId);
+extern "C" void func_80043BC4();
+// Static shutdown for the shared menu-text state (code_8025FB10.cpp).
+extern "C" void __dt__80261B1C();
+extern "C" void func_80167EF8();
+extern "C" void func_8008670C__Q22cf13CfGameManagerFv();
+extern "C" void func_801338C8();
+extern "C" void func_80133B80();
+extern "C" void func_8012F750(u32 arg);
+extern "C" void func_804900A0__FUl(u32 arg);
+
+// Event-task object behind func_801644B4(): teardown-arm word at +0x1B8.
+struct EvtSeqMgrTaskView {
+    u8 gap00[0x1B8];
+    u32 field_0x1B8;
+};
 

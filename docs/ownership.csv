@@ -132,7 +132,6 @@ func_80133324__12CUICfManagerFv,codex-subagent-3,2026-07-14,CLAIMED; attempt FUL
 setFrustum__11COccCullingFP12CCullFrustum,codex-subagent-4,2026-07-14,CLAIMED; attempt FULL_MATCH; leave other COccCulling functions untouched
 CAIAction_UnkVirtualFunc2__Q22cf9CAIActionFv,codex-subagent-5,2026-07-14,CLAIMED; attempt FULL_MATCH; leave ctor/vfunc1 untouched
 CBattleState_UnkVirtualFunc29__Q22cf12CBattleStateFv,codex,2026-07-14,FULL_MATCH 100%; natural 104-entry scan; exact 0x15C; behaviour PASS; size PASS
-ShouldRenderSplitScreen,cursor-agent,2026-07-14,fork-only PresentationGate predicate; restore stub; host presentation_gate
 CBattleState_UnkVirtualFunc5__Q22cf12CBattleStateFv,opencode,2026-07-16,34.2% STRUCTURAL; first-pass skeleton from asm; id-kind tree + branch dispatch + 0x68-entry scan; size PASS
 Init__15CMenuArtsSelectFv,opencode,2026-07-16,STRUCTURAL first-pass; layout regions + per-slot pane config + font/anim binding; header Init() declared
 Init__22CMenuBattlePlayerStateFv,opencode,2026-07-16,57.5% STRUCTURAL; resource region setup + per-slot layout creation + font binding + render CB registration; size PASS

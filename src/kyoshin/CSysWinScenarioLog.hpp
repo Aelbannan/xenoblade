@@ -852,7 +852,7 @@ extern "C" u32  func_80082694__Q22cf13CfGameManagerFv(u32 id);   // get sequence
 extern "C" void func_8008269C__Q22cf13CfGameManagerFv(u32 id, u32 value); // set sequence value
 extern "C" void func_800826F0__Q22cf13CfGameManagerFv(u32 value);
 extern "C" u32  func_800822F4__Q22cf13CfGameManagerFv(); // unsigned cf sequence counter
-extern "C" CBattleManagerView* getInstance__Q22cf14CBattleManagerFv();
+#include "kyoshin/cf/CBattleManagerApi.hpp"
 extern "C" int   func_800DA06C(void* bm, void* obj); // battle-list membership check
 extern "C" void* func_8016FE34(void* source);
 extern "C" u16  lbl_eu_80664772;          // pause / non-enemy-scene flag

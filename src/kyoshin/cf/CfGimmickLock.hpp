@@ -200,7 +200,6 @@ extern "C" void func_80209F8C();
 
 // Scene / frame-time helpers.
 extern "C" void* func_8049626C(void* a, void* b);
-extern "C" f32 func_80496288(void* scene);
 extern "C" void func_800ACEF8(void* obj, const void* src);
 extern "C" void func_8008B95C(void* target);
 

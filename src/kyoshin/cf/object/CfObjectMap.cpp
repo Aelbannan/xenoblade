@@ -2,6 +2,7 @@
 // Replace stubs with high-level C/C++ during decomp.
 
 #include "kyoshin/harness_catalog.hpp"
+#include "monolib/scn/CScnTimeApi.hpp"
 #include "kyoshin/cf/object/CfObjectMap.hpp"
 #include "monolib/device/CDeviceVI.hpp"
 #include "monolib/math/CVec3.hpp"

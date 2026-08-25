@@ -46,7 +46,6 @@ class CScn;
 // C-ABI imports shared by the menu map-select FX helpers
 extern "C" {
 int CfRes_getD80Flag();
-float func_80496288();  // scene delta-time query (returns f1)
 }
 
 // Imports used by CMenuMapSelect::Move and the landmark FX initializer

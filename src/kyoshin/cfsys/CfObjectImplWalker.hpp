@@ -2,10 +2,11 @@
 
 #include <types.h>
 #include <monolib/math/CVec3.hpp>
+#include "kyoshin/plugin/ocBdat.hpp"
 
 namespace cf {
 
-// Walker interface object. Only the vtable slots and fields this TU touches
+// Walker interface object.
 // are declared; with -RTTI on MWCC reserves two leading vtable slots
 // (offset-to-top + typeinfo), so declared index N sits at vtable offset
 // (N+2)*4. The class is never instantiated here, so no vtable is emitted.
@@ -1064,9 +1065,7 @@ int func_8026178C(u32 a, u32 b);
 void func_80109784(u32 a, u32 b, u32 c);
 void func_800E1B5C(void* mgr, void* battleObj);
 cf::CfWalkGlobal* func_800FE68C();
-// NB: declared as extern "C" CBattleManagerView* in CSysWinScenarioLog.hpp;
-// keep the same signature here to avoid an illegal-overload conflict.
-extern "C" CBattleManagerView* getInstance__Q22cf14CBattleManagerFv();
+#include "kyoshin/cf/CBattleManagerApi.hpp"
 void* func_800BF324(void* objParam);
 void func_80043D90(cf::CfWalkEnumHolder* holder);
 cf::CfWalkEnumList* func_80043F18(cf::CfWalkEnumHolder* holder);
@@ -1078,7 +1077,6 @@ void __dt__80043E88(cf::CfWalkEnumHolder* holder, int flags);
 int func_8013EB90(int v);
 void* getPlayer__Q22cf13CfGameManagerFi(int index);
 void* func_8016FE34(void* src);
-void func_800BE12C(void* obj, int a, int b, int c, int d);
 void func_801F8E20(void* obj, int flag);
 void func_8013EC6C(u32 a, u32 b);
 CfWalkGameMgr* getInstance__Q22cf13CfGameManagerFv();
@@ -1087,7 +1085,6 @@ void func_800FE920(void* obj);
 void func_800FE938(void* obj);
 u32 func_800FE7D8(void* obj);
 void func_800FE738();
-f32 func_80496288(void* scene);
 void func_800C819C();
 void func_800C86E8(void* self);
 void func_800D9978(void* mgr, void* obj);
@@ -1119,10 +1116,6 @@ int func_80148778(void* obj, u32 flag);
 void* func_8003AA34(void);
 void* getFP__FPCc(const char* path);
 u32 func_8003B1EC(void* bdat);
-// NB: canonical decl is u32(...) (CUIWindowManager.hpp); keep signature.
-// extern "C": must match the canonical extern "C" declarations (a C++-mangled
-// overload of the same name is an illegal-overload error when both are visible).
-extern "C" u32 getBdatStringColumnValue(void* bdat, const char* column, s32 index);
 void func_8013D07C(u32 obj, const char* str, int flag);
 int func_801413DC(u32 a, int b);
 void func_802919A0(void);

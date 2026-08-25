@@ -25,6 +25,8 @@ struct AdxInisContext {
     struct AdxInisHandle handles[16];  // 0x20
 };
 
+// Global context for ADXT_Init/ADXT_Finish, stored at lbl_eu_805E26C8.
+// (plain object: taking its address here is the retail form)
 extern struct AdxInisContext lbl_eu_805E26C8;
 extern const char lbl_eu_80515FB8[];
 extern const char lbl_eu_80516010[];

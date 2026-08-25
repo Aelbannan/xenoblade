@@ -34,6 +34,8 @@ extern const f32 lbl_eu_80667104;
 extern const f32 lbl_eu_80667108;
 extern f32 lbl_eu_8066710C;
 extern f32 lbl_eu_8066A1F8;
+// Magic int-to-float conversion bias (MWCC 0x4330/xoris idiom).
+extern const f64 lbl_eu_80667110;
 
 struct SymbolMarkEntry {
     u32 unk00;    // 0x00
@@ -64,9 +66,15 @@ struct SymbolMarkRenderItem {
     u32 ptmfMove[3];       // 0x3C
     u32 ptmfDraw[3];       // 0x48
     void* vt54;            // 0x54: second interface vtable
-    u8 pad58[0x70 - 0x58];
+    u8 pad58[0x60 - 0x58];
+    u32 field60;           // 0x60
+    u32 field64;           // 0x64
+    u32 field68;           // 0x68
+    u8 field6C;            // 0x6C: live flag
+    u8 pad6D[0x70 - 0x6D];
     u32 state70;           // 0x70 (compared against 0x1A by func_8011E540)
-    u32 pad74;             // 0x74
+    u8 field74;            // 0x74
+    u8 pad75[0x78 - 0x75];
     u32 field78;           // 0x78 (zeroed by Init)
 };
 
@@ -94,6 +102,19 @@ struct CfActorFields {
     u8 kind91;                // +0x91
 };
 
+// Fixed 0x4C-byte row of the scene menu table; measured-id halfword at 0x1C.
+struct MenuTableRow {
+    u8 pad00[0x1C];
+    u16 field1C;
+    u8 pad1E[0x4C - 0x1E];
+};
+
+// Scene menu table base: row count pinned at +0x9800, rows start at +0x00.
+struct SceneMenuTable {
+    u8 pad00[0x9800];
+    u32 rowCount9800;
+};
+
 // Scene-bound transform block returned by func_80496264(scene, -1):
 // normal-transform matrix at +0x9C and projection rows at +0x118/+0x120.
 struct ScnXformBlock {
@@ -103,6 +124,10 @@ struct ScnXformBlock {
     f32 proj118[4];           // +0x118
     f32 proj120[4];           // +0x120
 };
+
+// Retail imports used by func_8011EFB0.
+extern "C" void* func_800B6CF8(u32 idx);
+extern "C" void* func_80193804();
 
 // Input record consumed by func_8011E778: three world floats at +0xC/+0x1C/+0x2C.
 struct EntryInputPos {
@@ -150,6 +175,17 @@ public:
     virtual LytPaneFindView* findPane(const char* name, bool pick); // 0x3C
 };
 
+// Current map/area id global (read by func_8011E540's state gate).
+extern u32 lbl_eu_80664184;
+
+// Pointer-to-member-function triple (copied as a struct so MWCC lowers the
+// assignment with its load-ahead schedule).
+struct PtmfTriple {
+    u32 f0;
+    u32 f1;
+    u32 f2;
+};
+
 class CMenuSymbolMark : public CProcess {
 public:
     CMenuSymbolMark(CScn* scn, u32 idx = 0);
@@ -160,10 +196,10 @@ public:
     void cbRenderBefore();
 
     // 0x00-0x3C: CProcess (CDoubleListNode + vtable + CChildListNode + flags)
-    // 0x3C: ptmfMove (12 bytes)
-    u32 ptmfMove[3]; // 0x3C
-    // 0x48: ptmfDraw (12 bytes)
-    u32 ptmfDraw[3]; // 0x48
+    // 0x3C: ptmfMove
+    PtmfTriple ptmfMove; // 0x3C
+    // 0x48: ptmfDraw
+    PtmfTriple ptmfDraw; // 0x48
     u8 mUnk54; // 0x54
     u8 mUnk55; // 0x55
     u8 _pad56[2]; // 0x56
@@ -294,6 +330,7 @@ public:
     virtual void _v158();
     virtual void _v15C();
     virtual int _v160();      // vtable offset 0x160
+    virtual int _v228();      // vtable offset 0x228
 };
 
 // Circular marker-object list shared by func_800B6BEC / func_800B6C58:
@@ -356,6 +393,7 @@ struct StaticDataObj {
 namespace nw4r {
 namespace db {
 void Panic(const char* file, int line, const char* msg, unsigned char sev);
+void Warning(const char* file, int line, const char* msg, ...);
 } // namespace db
 } // namespace nw4r
 
@@ -393,6 +431,69 @@ public:
     u8* mLayout; // 0x70
     u8 _pad74[4]; // 0x74
     u8* mAlignedData; // 0x78
+};
+
+// Extra float constant pool entries used by CArrow3D::cbRenderBefore.
+extern const f32 lbl_eu_80667118;
+extern const f32 lbl_eu_8066711C;
+extern const f32 lbl_eu_80667120;
+extern const f32 lbl_eu_80667124;
+extern const f32 lbl_eu_80667128;
+extern const f32 lbl_eu_8066712C;
+extern const f32 lbl_eu_80667130;
+extern const f32 lbl_eu_8066A1FC;
+extern const f32 lbl_eu_8066A210;
+
+// View over the object reached as (player - 0x3e9c) in cbRenderBefore: only
+// the vtable slot at 0x128 (hp-like float query) is consumed.
+class PlayerHpGate {
+public:
+#define SYM_HP_GATE_SLOT_(off) virtual void _v##off();
+    SYM_HP_GATE_SLOT_(008) SYM_HP_GATE_SLOT_(00C) SYM_HP_GATE_SLOT_(010)
+    SYM_HP_GATE_SLOT_(014) SYM_HP_GATE_SLOT_(018) SYM_HP_GATE_SLOT_(01C)
+    SYM_HP_GATE_SLOT_(020) SYM_HP_GATE_SLOT_(024) SYM_HP_GATE_SLOT_(028)
+    SYM_HP_GATE_SLOT_(02C) SYM_HP_GATE_SLOT_(030) SYM_HP_GATE_SLOT_(034)
+    SYM_HP_GATE_SLOT_(038) SYM_HP_GATE_SLOT_(03C) SYM_HP_GATE_SLOT_(040)
+    SYM_HP_GATE_SLOT_(044) SYM_HP_GATE_SLOT_(048) SYM_HP_GATE_SLOT_(04C)
+    SYM_HP_GATE_SLOT_(050) SYM_HP_GATE_SLOT_(054) SYM_HP_GATE_SLOT_(058)
+    SYM_HP_GATE_SLOT_(05C) SYM_HP_GATE_SLOT_(060) SYM_HP_GATE_SLOT_(064)
+    SYM_HP_GATE_SLOT_(068) SYM_HP_GATE_SLOT_(06C) SYM_HP_GATE_SLOT_(070)
+    SYM_HP_GATE_SLOT_(074) SYM_HP_GATE_SLOT_(078) SYM_HP_GATE_SLOT_(07C)
+    SYM_HP_GATE_SLOT_(080) SYM_HP_GATE_SLOT_(084) SYM_HP_GATE_SLOT_(088)
+    SYM_HP_GATE_SLOT_(08C) SYM_HP_GATE_SLOT_(090) SYM_HP_GATE_SLOT_(094)
+    SYM_HP_GATE_SLOT_(098) SYM_HP_GATE_SLOT_(09C) SYM_HP_GATE_SLOT_(0A0)
+    SYM_HP_GATE_SLOT_(0A4) SYM_HP_GATE_SLOT_(0A8) SYM_HP_GATE_SLOT_(0AC)
+    SYM_HP_GATE_SLOT_(0B0) SYM_HP_GATE_SLOT_(0B4) SYM_HP_GATE_SLOT_(0B8)
+    SYM_HP_GATE_SLOT_(0BC) SYM_HP_GATE_SLOT_(0C0) SYM_HP_GATE_SLOT_(0C4)
+    SYM_HP_GATE_SLOT_(0C8) SYM_HP_GATE_SLOT_(0CC) SYM_HP_GATE_SLOT_(0D0)
+    SYM_HP_GATE_SLOT_(0D4) SYM_HP_GATE_SLOT_(0D8) SYM_HP_GATE_SLOT_(0DC)
+    SYM_HP_GATE_SLOT_(0E0) SYM_HP_GATE_SLOT_(0E4) SYM_HP_GATE_SLOT_(0E8)
+    SYM_HP_GATE_SLOT_(0EC) SYM_HP_GATE_SLOT_(0F0) SYM_HP_GATE_SLOT_(0F4)
+    SYM_HP_GATE_SLOT_(0F8) SYM_HP_GATE_SLOT_(0FC) SYM_HP_GATE_SLOT_(100)
+    SYM_HP_GATE_SLOT_(104) SYM_HP_GATE_SLOT_(108) SYM_HP_GATE_SLOT_(10C)
+    SYM_HP_GATE_SLOT_(110) SYM_HP_GATE_SLOT_(114) SYM_HP_GATE_SLOT_(118)
+    SYM_HP_GATE_SLOT_(11C) SYM_HP_GATE_SLOT_(120) SYM_HP_GATE_SLOT_(124)
+#undef SYM_HP_GATE_SLOT_
+    virtual f32 queryHp(); // vtable offset 0x128
+};
+
+// Raw field views over the arrow resource blob pointed to by mDataPtr (+0x5C).
+struct ArrowResPtrView {
+    u32 arrPosOff;   // 0x00: vertex array for attr 9 (stride 0xC)
+    u32 arrUvOff;    // 0x04: attr 0xA (stride 0xC)
+    u32 arrColOff;   // 0x08: attr 0xB (stride 4)
+    u32 arrIdxOff;   // 0x0C: attr 0xD index array (stride 8), 0 = none
+    u8 pad10[4];
+    u32 dlListOff;   // 0x10: display-list entry table offset
+    u32 dlCount;     // 0x14: number of display-list entries
+};
+
+struct ArrowDLEntry {
+    u32 dlOff;      // 0x00: display list offset into the archive blob
+    u32 dlSize;     // 0x04: display list byte size
+    u16 texIdx;     // 0x08: texture index
+    u16 pltIdx;     // 0x0A: palette index
+    u32 flags;      // 0x0C: bit0 selects the per-entry Z mode (second pass)
 };
 
 // C-linkage imports (retail symbol names - keep linkage/signatures verbatim)

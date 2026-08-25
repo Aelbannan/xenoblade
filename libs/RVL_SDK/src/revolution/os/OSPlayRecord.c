@@ -39,7 +39,7 @@ static BOOL PlayRecordGet;
 
 static OSPlayRecord PlayRecord ALIGN(32);
 static NANDFileInfo FileInfo;
-static u8 BlockRaw[0xbc + 8]; /* NANDCommandBlock + 8-byte .bss align tail (retail .bss 0x1F8->0x200); non-static so -ipa file keeps it */
+static u8 BlockRaw[0xbc]; /* sizeof(NANDCommandBlock); retail .bss total 0x1F8 */
 #define Block (*(NANDCommandBlock*)BlockRaw)
 static OSAlarm PlayRecordAlarm;
 

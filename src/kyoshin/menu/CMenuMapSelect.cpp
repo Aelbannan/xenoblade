@@ -111,7 +111,7 @@ struct CMenuMapSelectRenderShim {
 };
 
 // ---------------------------------------------------------------------------
-// Target: us-802443d4 -- CMenuMapCreate: singleton factory constructor.
+// us-802443d4 -- CMenuMapCreate: singleton factory constructor.
 // Allocates the process from the work heap, constructs the base and members,
 // registers under the parent and returns the singleton (null if it exists).
 // ---------------------------------------------------------------------------
@@ -172,14 +172,14 @@ extern "C" CMenuMapSelect* __ct__CMenuMapSelect(CProcess* parent, CProcess* pare
 }
 
 // ---------------------------------------------------------------------------
-// Target: func_80242354 -- singleton guard
+// func_80242354 -- singleton guard
 // ---------------------------------------------------------------------------
 extern "C" u32 func_80242354() {
     return lbl_eu_80664790 != 0;
 }
 
 // ---------------------------------------------------------------------------
-// Target: us-80244520 -- func_80242368: world map input handler (phase gate).
+// us-80244520 -- func_80242368: world map input handler (phase gate).
 // Reads turbo-press flags plus one controller-dependent trigger bit triple,
 // then dispatches cursor movement / cancel / help / confirm actions.
 // ---------------------------------------------------------------------------
@@ -257,7 +257,7 @@ void CMenuMapSelect::func_80242368() {
 }
 
 // ---------------------------------------------------------------------------
-// Target: us-802446dc -- func_80242524: world map phase 2 -> floor map setup.
+// us-802446dc -- func_80242524: world map phase 2 -> floor map setup.
 // Once the fade reports ready, build a fresh CFloorMap in a stack temporary,
 // assign it over the member (implicit operator= skips the vptr), select the
 // current map and advance to phase 5.
@@ -274,7 +274,7 @@ void func_80242524(CMenuMapSelect* self) {
 }
 
 // ---------------------------------------------------------------------------
-// Target: us-80244be0 -- func_80242A28: floor map input handler (phase 5).
+// us-80244be0 -- func_80242A28: floor map input handler (phase 5).
 // Advances the animation timer, refreshes the help bar text, then dispatches
 // zoom / cursor / selection actions based on the active controller layout.
 // ---------------------------------------------------------------------------

@@ -161,9 +161,11 @@ bool func_80061D2C(CfResBuffer* buffer, u32 mode) {
 
 // func_80061E8C: scan the CfResBuffer ring for a record whose header key
 // byte (bits 24-31) matches `mode`; return 1 immediately on the first match
-// (the remaining data words of the matched record are not popped). Ring
-// indices are saved at entry and restored at exit, so the scan never
-// consumes the ring.
+// (the remaining data words of the matched record are not popped). Each
+// visited record consumes its header+data word pair (both advance the read
+// index), then skips its payload words (count nibble at bits 16-19 of the
+// header). Ring indices are saved at entry and restored at exit, so the scan
+// never consumes the ring.
 bool func_80061E8C(CfResBuffer* buffer, u32 mode) {
     bool found = false;
     u32 saved400 = buffer->field_400;
@@ -174,7 +176,7 @@ bool func_80061E8C(CfResBuffer* buffer, u32 mode) {
             found = true;
             break;
         }
-        u32 count = (pr.header >> 8) & 0xF;
+        u32 count = (pr.header >> 16) & 0xF;
         for (u32 i = 0; i < count; i++) {
             buffer->field_400 = (buffer->field_400 + 1) & 0xFF;
             buffer->field_404 = buffer->field_404 - 1;
@@ -235,58 +237,54 @@ extern "C" __declspec(noinline) int CfRes_callFunc_67E78() {
 
 extern u32 lbl_eu_80663D7C;
 extern int func_80067F10(int, int);
-extern "C" int CfRes_callFunc_67F10() {
+extern "C" void CfRes_callFunc_67F10(s32 value) {
     u32 val = lbl_eu_80663D7C;
     int ret = 0;
     if (val) {
         ret = val + 4;
     }
     if (ret) {
-        return func_80067F10(ret, 1);
+        func_80067F10(ret, 1);
     }
-    return ret;
 }
 
 extern u32 lbl_eu_80663D7C;
-extern "C" int CfRes_callFunc_68078() {
+extern "C" void CfRes_callFunc_68078() {
     u32 val = lbl_eu_80663D7C;
     int ret = 0;
     if (val) {
         ret = val + 4;
     }
     if (ret) {
-        return func_80068078(ret);
+        func_80068078(ret);
     }
-    return ret;
 }
 
 extern "C" {
 extern u32 lbl_eu_80663D7C;
 extern int func_80068110(int, void*);
 }
-extern "C" int CfRes_callFunc_68110(u8* self) {
+extern "C" void CfRes_callFunc_68110(u32 self) {
     u32 val = lbl_eu_80663D7C;
     int ret = 0;
     if (val) {
         ret = val + 4;
     }
     if (ret) {
-        return func_80068110(ret, self);
+        func_80068110(ret, (void*)self);
     }
-    return ret;
 }
 
 extern u32 lbl_eu_80663D7C;
-extern "C" int CfRes_callFunc_68254() {
+extern "C" void CfRes_callFunc_68254() {
     u32 val = lbl_eu_80663D7C;
     int ret = 0;
     if (val) {
         ret = val + 4;
     }
     if (ret) {
-        return func_80068254(ret);
+        func_80068254(ret);
     }
-    return ret;
 }
 
 extern "C" __declspec(noinline) void func_800620F0(){
@@ -1217,22 +1215,20 @@ extern "C" __declspec(noinline) ml::FixStr<64>* CfRes_stub_63ACC(ml::FixStr<64>*
 // returned. 0 when the cache is empty or no entry matches.
 extern "C" int __declspec(noinline) func_80063AD0(void* a, void* b, u32 c, void* d, int size, void* e) {
     int count = func_804D8FB4();
-    if (count <= 0) {
-        return 0;
-    }
-    const char* filePtr = ml::CPathUtil::getFilePtrFromPath((const char*)d);
-    ml::FixStr<64> str;
-    func_80063C7C(str, filePtr);
-    for (int i = 0; i < count; i++) {
-        u32 outField3C;
-        char* outField4Addr;
-        u32 outField40;
-        if (func_804D8FDC(i, &outField3C, &outField4Addr, &outField40) != 0) {
-            if (CfRes_streq(str.mString, outField4Addr) != 0) {
+    if (count > 0) {
+        const char* filePtr = ml::CPathUtil::getFilePtrFromPath((const char*)d);
+        ml::FixStr<64> str;
+        func_80063C7C(str, filePtr);
+        for (int i = 0; i < count; i++) {
+            u32 field40;
+            unsigned long dataPtr;
+            char* namePtr;
+            if (func_804D8FDC(i, &dataPtr, &namePtr, &field40) != 0 &&
+                CfRes_streq(str.mString, namePtr) != 0) {
                 CfRes_initFields4((u8*)e, (int)c, 0, (int)(uintptr_t)b, size);
                 CfRes_setBits1_2((u8*)e);
                 CfRes_vcall34((u8*)e);
-                memcpy(b, (void*)(uintptr_t)outField3C, (size_t)size);
+                memcpy(b, (void*)dataPtr, (size_t)size);
                 DCFlushRange(b, (u32)size);
                 CfRes_resetState2((u8*)e);
                 CfRes_vcall38((u8*)e);
@@ -1311,9 +1307,9 @@ extern "C" int __declspec(noinline) func_80063C7C(ml::FixStr<64>& dest, const ch
         extPos = -1;
     } else {
         u32 sepLen = strlen(&lbl_eu_80661A40);
-        char* searchPos = (dest.mString - 1) + dest.mLength;
         char* searchEnd = dest.mString - 1;
-        while (searchPos != searchEnd) {
+        char* searchPos = (dest.mString - 1) + dest.mLength;
+        while (searchPos > searchEnd) {
             if (strncmp(searchPos, &lbl_eu_80661A40, sepLen) == 0) {
                 extPos = (int)(searchPos - dest.mString);
                 goto found_ext;
@@ -1324,21 +1320,13 @@ extern "C" int __declspec(noinline) func_80063C7C(ml::FixStr<64>& dest, const ch
     }
 
 found_ext:
-    if ((u32)(extPos + 1) > 1u) {
-        char tempBuffer[0x40];
-        volatile int tempLen;  // volatile: retail keeps the dead mLength stores
-        tempBuffer[0] = '\0';
-        tempLen = 0;
-        if (dest.mLength > 0) {
-            if (extPos == -1) {
-                extPos = dest.mLength;
-            }
-            strncpy(tempBuffer, dest.mString, extPos);
-            tempBuffer[extPos] = '\0';
-            tempLen = strlen(tempBuffer);
-        }
-        dest.mLength = strlen(tempBuffer);
-        strcpy(dest.mString, tempBuffer);
+    // Named u32 keeps MWCC's literal addi/cmplwi guard pair (retail shape).
+    u32 posCheck = extPos + 1;
+    if (posCheck > 1u) {
+        // Strip the extension: rebuild dest from its first extPos characters
+        // (inlined FixStr range copy-ctor + assignment).
+        ml::FixStr<64> stripped(dest, 0, extPos);
+        dest = stripped;
         return 1;
     }
     return 0;
@@ -1411,25 +1399,48 @@ int __declspec(noinline) func_80063F1C(u8* a, u8* b, u32 c, u8* d, int e) {
     return ret;
 }
 
+// 0x34-byte sub-record scanned by func_80063FA8: it starts at slot+0x08 and
+// its +4 word is compared against the search value. Kept separate from the
+// slot struct so &slot.rec yields the retail base + idx*0x3C + 8 address.
+struct ResScanRec {
+    u32 field_00;   // slot+0x08
+    u32 field_04;   // slot+0x0C - id compared against the search value
+    u8 _08[0x2C];
+};
+
+// 0x3C-byte table slot walked by func_80063FA8 (payload at +0x08).
+struct ResScanSlot {
+    u8 _00[8];
+    ResScanRec rec; // +0x08
+};
+
 // func_80063FA8: scan the 0x3C-stride resource table for the first entry
-// whose +4 id field matches `value` (0 = no match). `start`/`end` bound the
+// whose +0x0C id field matches `value` (0 = no match). `start`/`end` bound the
 // number of scanned slots, `offset` is the first table index and `stride`
-// advances the index each step.
+// advances the index each step. The record pointer is dereferenced without a
+// null check when the index is out of range - retail does the same load from
+// a null base.
 ResInfoEntry* func_80063FA8(ResInfoEntry* base, int value, int start, int end, int stride, int offset) {
+    ResScanSlot* slots = (ResScanSlot*)base;
     ResInfoEntry* result = 0;
     if (value != 0) {
-        int cur = 0;
-        // Loop counter declared in the for-statement so MWCC maps it to r0
-        // and emits the retail mtctr/bdnz counted-loop form.
-        for (int count = end - start; count > 0; --count) {
+        // entry declared before the accumulator: MWCC colors the pointer
+        // first (r5), then cur (r6), and the materialized range flag lands
+        // in the r0 scratch - matching retail.
+        ResScanRec* entry;
+        for (int count = end - start, cur = 0; count > 0; --count) {
+            int inRange = 0;
             u32 tableIdx = (u32)(offset + cur);
-            // bool (not int): MWCC materializes 0/1 then re-tests it for the
-            // pointer select, matching the retail li r0,0/li r0,1 pair.
-            bool valid = tableIdx <= 0x81;
-            int entryOff = valid ? tableIdx * 0x3c + 8 : 0;
-            ResInfoEntry* entry = (ResInfoEntry*)((u8*)base + entryOff);
-            if (entry->field_0x04 == value) {
-                return entry;
+            if (tableIdx <= 0x81) {
+                inRange = 1;
+            }
+            if (inRange != 0) {
+                entry = &slots[tableIdx].rec;
+            } else {
+                entry = 0;
+            }
+            if (entry->field_04 == value) {
+                return (ResInfoEntry*)entry;
             }
             cur += stride;
         }
@@ -2502,27 +2513,22 @@ int func_80065D00() { return func_800A813C(); }
 int func_80065D04() { return func_800A7EFC(); }
 int func_80065D08() { return func_800A7EFC(); }
 
-// Bit-4/bit-3/bit-6 mask gates on the +0 flags, then the +4 word must be
-// non-zero and the +0x28 word zero; `result` is hoisted into r3 ahead of each
-// conditional return (retail emits li r3,0 before the compares).
-extern "C" int func_80065D0C(void* a1, void* self) {
-    u32 flags = *(u32*)((u8*)self);
+// Bit-4/bit-3/bit-6 mask gates on the +0 flags word, then the +4 word must
+// be non-zero and the +0x28 word zero.
+int func_80065D0C(void* a1, CfResCleanupEntry* self) {
+    u32 flags = self->field_00;
     if (flags & 0x10)
         return 0;
     if (flags & 0x8)
         return 0;
     if (flags & 0x40)
         return 0;
-    // Declared here so the li r3,0 lands between the lwz and the compare
-    // (retail hoists it ahead of cmpwi and uses beqlr).
+    // Retail hoists the zero result into r3 before the compares (beqlr/bnelr
+    // tail returns), which is the shape MWCC emits for a result variable that
+    // starts at 0 and is conditionally set to 1.
     int result = 0;
-    if (*(u32*)((u8*)self + 4) == 0)
-        return result;
-    if (*(u32*)((u8*)self + 0x28) != 0)
-        return result;
-    // Store through the variable so MWCC cannot fold the tail into a
-    // branchless boolean expression (retail ends li r3,1; blr).
-    result = 1;
+    if (self->field_04 != 0 && self->field_28 == 0)
+        result = 1;
     return result;
 }
 

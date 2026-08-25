@@ -13,7 +13,7 @@
    in bta_dm_act.c. The full struct is defined in bta_dm_act.c; we only
    need to reserve the correct size (0x72 bytes). */
 struct bta_dm_cb_t {
-    unsigned char data[0x72];
+    unsigned char data[0x104];
 } bta_dm_cb;
 
 /* --- DM state machine constants --- */
@@ -199,6 +199,7 @@ struct bta_dm_search_cb_t
     char peer_name[0x20];       /* offset 0x20 */
     UINT8 _pad40[0x34];         /* offset 0x40-0x73 */
     void *p_search_queue;       /* offset 0x74 */
+    UINT8 _pad78[4];            /* retail struct size 0x7C */
 };
 
 /* Search control block instance */
@@ -210,60 +211,62 @@ struct bta_dm_search_cb_t bta_dm_search_cb;
  * BTA_DM_SEARCH_IGNORE (0x12) in an action slot terminates the action list.
  */
 
-/* IDLE state: accepts API_SEARCH, API_SEARCH_CANCEL, API_DISCOVER, SDP_RESULT, API_DI_DISCOVER */
+/* IDLE state - retail byte layout (verified against the retail split;
+ * SDP_RESULT is ignored here, SEARCH_CMPL frees the SDP db, and
+ * API_DI_DISCOVER is not accepted in IDLE). */
 static const UINT8 bta_dm_search_idle_st_table[][BTA_DM_SEARCH_NUM_COLS] =
 {
-    /* API_SEARCH */          { BTA_DM_API_SEARCH,              BTA_DM_SEARCH_IGNORE, BTA_DM_SEARCH_ACTIVE },
-    /* API_SEARCH_CANCEL */   { BTA_DM_SEARCH_CANCEL_NOTIFY,    BTA_DM_SEARCH_IGNORE, BTA_DM_SEARCH_IDLE },
-    /* API_DISCOVER */        { BTA_DM_API_DISCOVER,            BTA_DM_SEARCH_IGNORE, BTA_DM_DISCOVER_ACTIVE },
-    /* INQUIRY_CMPL */        { BTA_DM_SEARCH_IGNORE,           BTA_DM_SEARCH_IGNORE, BTA_DM_SEARCH_IDLE },
-    /* REMT_NAME */           { BTA_DM_SEARCH_IGNORE,           BTA_DM_SEARCH_IGNORE, BTA_DM_SEARCH_IDLE },
-    /* SDP_RESULT */          { BTA_DM_FREE_SDP_DB,             BTA_DM_SEARCH_IGNORE, BTA_DM_SEARCH_IDLE },
-    /* SEARCH_CMPL */         { BTA_DM_SEARCH_IGNORE,           BTA_DM_SEARCH_IGNORE, BTA_DM_SEARCH_IDLE },
-    /* DISCOVERY_RESULT */    { BTA_DM_SEARCH_IGNORE,           BTA_DM_SEARCH_IGNORE, BTA_DM_SEARCH_IDLE },
-    /* API_DI_DISCOVER */     { BTA_DM_API_DI_DISCOVER,         BTA_DM_SEARCH_IGNORE, BTA_DM_SEARCH_ACTIVE },
+    /* API_SEARCH */          { 0x00, 0x12, 0x01 },
+    /* API_SEARCH_CANCEL */   { 0x0E, 0x12, 0x00 },
+    /* API_DISCOVER */        { 0x02, 0x12, 0x03 },
+    /* INQUIRY_CMPL */        { 0x12, 0x12, 0x00 },
+    /* REMT_NAME */           { 0x12, 0x12, 0x00 },
+    /* SDP_RESULT */          { 0x12, 0x12, 0x00 },
+    /* SEARCH_CMPL */         { 0x07, 0x12, 0x00 },
+    /* DISCOVERY_RESULT */    { 0x12, 0x12, 0x00 },
+    /* API_DI_DISCOVER */     { 0x12, 0x12, 0x00 },
 };
 
-/* SEARCH_ACTIVE state */
+/* SEARCH_ACTIVE state - retail byte layout */
 static const UINT8 bta_dm_search_search_active_st_table[][BTA_DM_SEARCH_NUM_COLS] =
 {
-    /* API_SEARCH */          { BTA_DM_SEARCH_IGNORE,           BTA_DM_SEARCH_IGNORE, BTA_DM_SEARCH_ACTIVE },
-    /* API_SEARCH_CANCEL */   { BTA_DM_API_SEARCH_CANCEL,       BTA_DM_SEARCH_IGNORE, BTA_DM_SEARCH_CANCELLING },
-    /* API_DISCOVER */        { BTA_DM_SEARCH_IGNORE,           BTA_DM_SEARCH_IGNORE, BTA_DM_SEARCH_ACTIVE },
-    /* INQUIRY_CMPL */        { BTA_DM_INQUIRY_CMPL,            BTA_DM_SEARCH_IGNORE, BTA_DM_SEARCH_ACTIVE },
-    /* REMT_NAME */           { BTA_DM_REMT_NAME,               BTA_DM_SEARCH_IGNORE, BTA_DM_SEARCH_ACTIVE },
-    /* SDP_RESULT */          { BTA_DM_SDP_RESULT,              BTA_DM_SEARCH_IGNORE, BTA_DM_SEARCH_ACTIVE },
-    /* SEARCH_CMPL */         { BTA_DM_SEARCH_CMPL,             BTA_DM_SEARCH_IGNORE, BTA_DM_SEARCH_IDLE },
-    /* DISCOVERY_RESULT */    { BTA_DM_SEARCH_RESULT,           BTA_DM_SEARCH_IGNORE, BTA_DM_SEARCH_ACTIVE },
-    /* API_DI_DISCOVER */     { BTA_DM_SEARCH_IGNORE,           BTA_DM_SEARCH_IGNORE, BTA_DM_SEARCH_ACTIVE },
+    /* API_SEARCH */          { 0x12, 0x12, 0x01 },
+    /* API_SEARCH_CANCEL */   { 0x01, 0x12, 0x02 },
+    /* API_DISCOVER */        { 0x12, 0x12, 0x01 },
+    /* INQUIRY_CMPL */        { 0x03, 0x12, 0x01 },
+    /* REMT_NAME */           { 0x04, 0x12, 0x01 },
+    /* SDP_RESULT */          { 0x11, 0x12, 0x01 },
+    /* SEARCH_CMPL */         { 0x05, 0x12, 0x01 },
+    /* DISCOVERY_RESULT */    { 0x06, 0x12, 0x00 },
+    /* API_DI_DISCOVER */     { 0x09, 0x12, 0x01 },
 };
 
-/* SEARCH_CANCELLING state */
+/* SEARCH_CANCELLING state - retail byte layout */
 static const UINT8 bta_dm_search_search_cancelling_st_table[][BTA_DM_SEARCH_NUM_COLS] =
 {
-    /* API_SEARCH */          { BTA_DM_QUEUE_SEARCH,            BTA_DM_SEARCH_IGNORE, BTA_DM_SEARCH_CANCELLING },
-    /* API_SEARCH_CANCEL */   { BTA_DM_SEARCH_CLEAR_QUEUE,      BTA_DM_SEARCH_CANCEL_NOTIFY, BTA_DM_SEARCH_CANCELLING },
-    /* API_DISCOVER */        { BTA_DM_QUEUE_DISC,              BTA_DM_SEARCH_IGNORE, BTA_DM_SEARCH_CANCELLING },
-    /* INQUIRY_CMPL */        { BTA_DM_SEARCH_CANCEL_CMPL,      BTA_DM_SEARCH_IGNORE, BTA_DM_SEARCH_IDLE },
-    /* REMT_NAME */           { BTA_DM_SEARCH_CANCEL_TRANSAC_CMPL, BTA_DM_SEARCH_CANCEL_CMPL, BTA_DM_SEARCH_IDLE },
-    /* SDP_RESULT */          { BTA_DM_SEARCH_CANCEL_TRANSAC_CMPL, BTA_DM_SEARCH_CANCEL_CMPL, BTA_DM_SEARCH_IDLE },
-    /* SEARCH_CMPL */         { BTA_DM_SEARCH_CANCEL_CMPL,      BTA_DM_SEARCH_IGNORE, BTA_DM_SEARCH_IDLE },
-    /* DISCOVERY_RESULT */    { BTA_DM_SEARCH_CANCEL_CMPL,      BTA_DM_SEARCH_IGNORE, BTA_DM_SEARCH_IDLE },
-    /* API_DI_DISCOVER */     { BTA_DM_SEARCH_IGNORE,           BTA_DM_SEARCH_IGNORE, BTA_DM_SEARCH_CANCELLING },
+    /* API_SEARCH */          { 0x0A, 0x12, 0x02 },
+    /* API_SEARCH_CANCEL */   { 0x0C, 0x0E, 0x02 },
+    /* API_DISCOVER */        { 0x0B, 0x12, 0x02 },
+    /* INQUIRY_CMPL */        { 0x0D, 0x12, 0x00 },
+    /* REMT_NAME */           { 0x0F, 0x0D, 0x00 },
+    /* SDP_RESULT */          { 0x12, 0x12, 0x02 },
+    /* SEARCH_CMPL */         { 0x0F, 0x0D, 0x00 },
+    /* DISCOVERY_RESULT */    { 0x0D, 0x12, 0x00 },
+    /* API_DI_DISCOVER */     { 0x0D, 0x12, 0x00 },
 };
 
-/* DISCOVER_ACTIVE state */
+/* DISCOVER_ACTIVE state - retail byte layout */
 static const UINT8 bta_dm_search_disc_active_st_table[][BTA_DM_SEARCH_NUM_COLS] =
 {
-    /* API_SEARCH */          { BTA_DM_SEARCH_IGNORE,           BTA_DM_SEARCH_IGNORE, BTA_DM_DISCOVER_ACTIVE },
-    /* API_SEARCH_CANCEL */   { BTA_DM_SEARCH_CANCEL_NOTIFY,    BTA_DM_SEARCH_IGNORE, BTA_DM_SEARCH_CANCELLING },
-    /* API_DISCOVER */        { BTA_DM_SEARCH_IGNORE,           BTA_DM_SEARCH_IGNORE, BTA_DM_DISCOVER_ACTIVE },
-    /* INQUIRY_CMPL */        { BTA_DM_SEARCH_IGNORE,           BTA_DM_SEARCH_IGNORE, BTA_DM_DISCOVER_ACTIVE },
-    /* REMT_NAME */           { BTA_DM_DISC_RMT_NAME,           BTA_DM_SEARCH_IGNORE, BTA_DM_DISCOVER_ACTIVE },
-    /* SDP_RESULT */          { BTA_DM_SDP_RESULT,              BTA_DM_SEARCH_IGNORE, BTA_DM_DISCOVER_ACTIVE },
-    /* SEARCH_CMPL */         { BTA_DM_SEARCH_CMPL,             BTA_DM_SEARCH_IGNORE, BTA_DM_SEARCH_IDLE },
-    /* DISCOVERY_RESULT */    { BTA_DM_DISC_RESULT,             BTA_DM_SEARCH_IGNORE, BTA_DM_DISCOVER_ACTIVE },
-    /* API_DI_DISCOVER */     { BTA_DM_SEARCH_IGNORE,           BTA_DM_SEARCH_IGNORE, BTA_DM_DISCOVER_ACTIVE },
+    /* API_SEARCH */          { 0x12, 0x12, 0x03 },
+    /* API_SEARCH_CANCEL */   { 0x0E, 0x12, 0x03 },
+    /* API_DISCOVER */        { 0x12, 0x12, 0x03 },
+    /* INQUIRY_CMPL */        { 0x12, 0x12, 0x03 },
+    /* REMT_NAME */           { 0x10, 0x12, 0x03 },
+    /* SDP_RESULT */          { 0x11, 0x12, 0x03 },
+    /* SEARCH_CMPL */         { 0x05, 0x12, 0x03 },
+    /* DISCOVERY_RESULT */    { 0x12, 0x12, 0x00 },
+    /* API_DI_DISCOVER */     { 0x08, 0x12, 0x03 },
 };
 
 /* Table of per-state state tables, indexed by current state */

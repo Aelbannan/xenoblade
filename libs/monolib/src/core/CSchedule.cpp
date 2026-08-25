@@ -60,25 +60,32 @@ extern "C" int func_804E3614(CSchedule* self) {
     return 1;
 }
 
+// Local view of a schedule child's interface: slot 3 receives the owning
+// CSchedule when the parent is destroyed.
+struct CScheduleChildItf {
+    virtual ~CScheduleChildItf() {}
+    virtual void field_0x08(CSchedule* schedule);
+    // resolves to vtable+0xc
+};
+
 // us-804e77dc: CSchedule::~CSchedule()
 CSchedule::~CSchedule() {
     mTablePtr = (u8*)lbl_eu_80570068;
     if (mEntries != nullptr) {
-        int i;
-        s16 freeSlot = -1;
-        // Notify each child (virtual call at vtable[3], passing this)
+        s16 freeSlot;
+        // Notify each child (virtual slot 3, passing this)
         CScheduleChild* child;
-        u32 n;
-        for (n = 0; n < 4; n++) {
-            child = mChildren[n];
+        u32 i;
+        for (i = 0; i < 4; i++) {
+            child = mChildren[i];
             if (child != nullptr) {
-                void (**vfn)(void*, void*) = *(void(***)(void*, void*))child;
-                vfn[3](child, this);
+                ((CScheduleChildItf*)child)->field_0x08(this);
             }
         }
         // Release resolved handles
         if (mEntryCount > 0) {
-            for (i = 0; i < 0x20; i++) {
+            freeSlot = -1;
+            for (i = 0; (int)i < 0x20; i++) {
                 if (mHandles[i] >= 0) {
                     func_804DFB88(mHandles[i]);
                     mHandles[i] = freeSlot;
@@ -99,31 +106,25 @@ CSchedule::~CSchedule() {
 // Parameters: p4=entries, p5=field_0x08, p6=field_0x0c,
 //             flags_a=packed flags from r7, flags_b=packed flags from r8, p9=field_0x10
 extern "C" int func_804E3434(CSchedule* self, ScheduleEntry* entries, u8* field_0x08_ptr, u8* field_0x0c_ptr, u32 flags_a, u32 flags_b, u8* field_0x10_ptr) {
-    float zero;
-    float one;
-    u32 flags;
-    u32 zero32;
-
     if (entries == nullptr) return 0;
     if (field_0x08_ptr == nullptr) return 0;
 
-    one = lbl_eu_8066B2E0;
-    zero = lbl_eu_8066B2E4;
-    zero32 = 0;
+    float zero = lbl_eu_8066B2E4;
+    float one = lbl_eu_8066B2E0;
 
     self->mEntries = entries;
     self->field_0x08 = field_0x08_ptr;
 
-    self->field_0x14 = zero32;
-    self->field_0x18 = zero32;
-
-    // Build flags: 0xC000 base with bits 21/22 from flags_a/flags_b
-    // (ori 0xC000 + rlwimi per retail)
-    flags = 0xC000 | ((flags_a & 0x800) << 10) | ((flags_b & 0x2000) << 9);
+    // Build flags: 0xC000 base with bits 21/22 merged from flags_a/flags_b
+    // (ori 0xC000 + two rlwimi inserts per retail)
+    u32 flags = ((flags_a & 0x800) << 10) | 0xC000;
+    flags |= (flags_b & 0x2000) << 9;
     self->field_0x00 = static_cast<s16>(flags);
 
     self->field_0x0c = field_0x0c_ptr;
     self->field_0x10 = field_0x10_ptr;
+    self->field_0x14 = 0;
+    self->field_0x18 = 0;
 
     self->field_0x50 = one;
     self->field_0x54 = zero;
@@ -149,7 +150,7 @@ extern "C" int func_804E3434(CSchedule* self, ScheduleEntry* entries, u8* field_
 
     self->field_0x58 = 0x40;
     self->field_0x59 = 0;
-    self->field_0x5c = zero32;
+    self->field_0x5c = 0;
 
     for (int i = 0; i < 32; i++) {
         self->mHandles[i] = -1;

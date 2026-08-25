@@ -684,8 +684,8 @@ extern "C" u32 func_8008235C__Q22cf13CfGameManagerFv(u32);
 extern "C" void func_800A18A4(void*, u8);
 extern "C" u32 func_801380A0(u16);
 extern "C" u32 func_80138138(u16);
-extern "C" void* func_801412D0(u32);
-extern "C" u32 func_80140854(void*, u32, u32);
+// func_801412D0 is owned by kyoshin/CUIWindowManager.hpp.
+
 extern "C" void* getHandleMEM2__Q23mtl10MemManagerFv(void);
 extern "C" void* createRegion__17UnkClass_8045F564FiiPCci(void*, void*, int, const char*, int);
 extern "C" void __ct__14Class_8045F858FP17UnkClass_8045F564(void*, void*);

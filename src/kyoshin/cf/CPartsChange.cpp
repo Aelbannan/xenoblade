@@ -1,7 +1,9 @@
 // Auto-scaffolded catalog TU for kyoshin/cf/CPartsChange
 // Replace stubs with high-level C/C++ during decomp.
 
+#include "kyoshin/cf/CBattleManagerApi.hpp"
 #include "kyoshin/harness_catalog.hpp"
+#include "monolib/scn/CScnTimeApi.hpp"
 
 #include "monolib/util/reslist.hpp"
 #include "monolib/util/CPathUtil.hpp"
@@ -1177,7 +1179,7 @@ void func_80194D5C(CfPartsManager* mgr, const ml::CVec3* pos, f32 f) {
 // the +0x30 sub-block.
 void func_8019514C(CfPartsManager* self) {
     CfRes_getD80Flag();
-    f32 step = func_80496288();
+    f32 step = func_80496288(lbl_eu_80663E14);
     CfPartsElemArray* arr = &self->mElems;
     for (CfPartsElem4C* e = arr->mElems; e != arr->mElems + arr->mCount; e++) {
         if (e->field_1E & 0x400) {

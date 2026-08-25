@@ -376,7 +376,7 @@ extern "C" float lbl_eu_80668C80;  // 0x3F00-flag probability divisor
 // CfGameManager singleton / player getter (retail pre-mangled C-ABI names).
 extern "C" void* getInstance__Q22cf13CfGameManagerFv(void);
 extern "C" void* getPlayer__Q22cf13CfGameManagerFi(int index);
-extern "C" void* getInstance__Q22cf14CBattleManagerFv(void);
+#include "kyoshin/cf/CBattleManagerApi.hpp"
 // Retail node constructors (cvsys TUs) - un-mangled retail names.
 extern "C" cf::CSoundNode* __ct__CVS_THREAD_PARTY_GAGE();
 extern "C" cf::CSoundNode* __ct__802A6AA8();

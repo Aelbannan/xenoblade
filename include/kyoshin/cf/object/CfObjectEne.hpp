@@ -1343,11 +1343,12 @@ extern "C" u32 func_8003B41C(u8* bdat);   // bdat first row
 extern "C" u32 func_8003B1EC(u8* bdat);   // bdat row count
 extern "C" void func_8014B7B0(u8* obj);
 extern "C" void func_8015396C(u8* obj, u32 a, u32 b);
-extern "C" int func_80174C98(u8* actor, u32* outVal, u32 flags);
+extern "C" int func_80174C98(void* actor, int* outVal, int flags); // family-canonical form (CAIAction.hpp) - ABI-identical
 extern "C" void func_801765A4(u8* actor, f32 value, u32 arg);
 extern "C" int func_801BA2C8(u8* self);
 // func_80148778 and getInstance__Q22cf14CBattleManagerFv are declared in
-// CAIAction.hpp (reachable via CfObjectActor.hpp) with void* params - keep
+// CAIAction.hpp / kyoshin/cf/CBattleManagerApi.hpp (reachable via
+// CfObjectActor.hpp) - keep
 // the shared declarations (C-linkage overloads with different pointer types
 // are illegal in MWCC).
 // CfObjectMove subobject member (defined in CfObjectMove.cpp): func_800ADBD4

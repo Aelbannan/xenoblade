@@ -2,6 +2,7 @@
 // Replace stubs with high-level C/C++ during decomp.
 
 #include <harness_catalog.h>
+#include "monolib/scn/CScnTimeApi.hpp"
 
 #include <string.h>
 #include <revolution/GX.h>

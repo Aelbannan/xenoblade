@@ -1,4 +1,5 @@
 #include "kyoshin/cf/CfGimmickJump.hpp"
+#include "monolib/scn/CScnTimeApi.hpp"
 #include "kyoshin/cf/object/CfObjectActor.hpp"
 #include <nw4r/math.h>
 
@@ -50,7 +51,6 @@ extern int func_80209754(u8 flags, void* first, void* second, void* third,
 extern void func_80209F5C();
 extern void* func_8003AA34();
 extern int getBdatStringColumnValue(void* bdat, const char* column, u16 row);
-extern f32 func_80496288(void* scene);
 extern void* func_800817BC__Q22cf13CfGameManagerFv(u16 id, int mode);
 extern int func_801BFAE4(u16 handle);
 extern void func_801BFAE8(u16 handle, void* position);

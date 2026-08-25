@@ -113,7 +113,6 @@ extern "C" u32 getWorkMem__17CWorkThreadSystemFv();
 extern "C" void* allocate__Q23mtl10MemManagerFUlUl(u32, u32);
 extern "C" void Regist__8CProcessFP8CProcessb(void*, void*, bool);
 extern "C" void waitForDrawDone__9CDeviceVIFv();
-extern "C" void removeRenderCB__4CScnFP10IScnRender(void*, void*);
 extern "C" int func_80293C10();
 extern "C" int func_8029A658();
 extern "C" int func_801B481C();

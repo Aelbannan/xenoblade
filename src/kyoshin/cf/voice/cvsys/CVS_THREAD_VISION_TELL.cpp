@@ -6,7 +6,7 @@
 #include "kyoshin/harness_catalog.hpp"
 #include "monolib/math/Random.hpp"
 
-// ── Target 1: us-802ac1fc (func_802A9AC4) ──────────────────────────────────
+// us-802ac1fc (func_802A9AC4)
 // Completion callback: if no active voice, call the playback-start virtual.
 void func_802A9AC4(CVS_THREAD_VISION_TELL* self) {
     if (func_802A3E88(self) == 0) {
@@ -14,7 +14,7 @@ void func_802A9AC4(CVS_THREAD_VISION_TELL* self) {
     }
 }
 
-// ── Target 2: us-802ac244 (func_802A9B0C) ──────────────────────────────────
+// us-802ac244 (func_802A9B0C)
 // Remove a voice from the slots by matching its embedded CCharVoice pointer.
 void func_802A9B0C(CVS_THREAD_VISION_TELL* self, CCharVoice* voicePtr) {
     func_802A3BEC(self, voicePtr);
@@ -40,7 +40,7 @@ void func_802A9B0C(CVS_THREAD_VISION_TELL* self, CCharVoice* voicePtr) {
     }
 }
 
-// ── Target 3: us-802abdf8 (__ct__802A96C0) ──────────────────────────────────
+// us-802abdf8 (__ct__802A96C0)
 // Factory/constructor for CVS_THREAD_VISION_TELL. Takes two voice handles,
 // allocates a throwaway 0x32-byte buffer and the object itself (0x28 bytes),
 // runs the base constructor and sets the derived vtable and slot handles
@@ -90,7 +90,7 @@ CVS_THREAD_VISION_TELL* __ct__802A96C0(CVoiceHandle* h1, CVoiceHandle* h2) {
     return self;
 }
 
-// ── Target 4: us-802abed8 (func_802A97A0) ──────────────────────────────────
+// us-802abed8 (func_802A97A0)
 // Advance/play function for voice slot 1 (field_0x20).
 void func_802A97A0(CVS_THREAD_VISION_TELL* self) {
     // Copy init data -- read index 0 first (lwzu pointer-increment) so MWCC
@@ -159,7 +159,7 @@ void func_802A97A0(CVS_THREAD_VISION_TELL* self) {
     }
 }
 
-// ── Target 5: us-802ac05c (func_802A9924) ──────────────────────────────────
+// us-802ac05c (func_802A9924)
 // Advance/play function for voice slot 2 (field_0x24). Retail re-reads
 // self->field_0x24/field_0x20 from memory at each use (no long-lived caches).
 void func_802A9924(CVS_THREAD_VISION_TELL* self) {

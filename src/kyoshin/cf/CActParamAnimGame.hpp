@@ -56,7 +56,9 @@ struct CActParamAnimGameVt4C {
 // Sub-object reachable via +0x3A0 then +0x7EC; the +0x7EC slot points to an
 // object dispatched through vtable+0x08 with an int arg (func_8005D2C4).
 struct CActParamAnimGameObj3A0 {
-    u8 _00[0x7EC];
+    u8 _00[0x7CC];
+    ml::CVec3 pos7CC;  // +0x7CC airborne drift accumulator
+    u8 _7D8[0x7EC - 0x7D8];
     void* sub7EC;   // +0x7EC
 };
 
@@ -128,6 +130,28 @@ struct CActParamAnimGameVtE0 {
     virtual void v30();  virtual void v31();  virtual void v32();  virtual void v33();
     virtual void v34();  virtual void v35();
     virtual void vE0();  // slot 56 => +0xE0
+};
+
+// Fake SI interface for the virtual dispatch at vtable+0xE8 issued by the
+// paused branch of func_8005B820 (args: &pos, &delta; returns int status).
+// MWCC reserves 2 leading vtable slots, so the Nth declared virtual sits at
+// (N+2)*4: 56 fillers land the called slot at 58*4 = 0xE8. Cast-only usage.
+struct CActParamAnimGameVtE8 {
+    virtual void v00();  virtual void v01();  virtual void v02();  virtual void v03();
+    virtual void v04();  virtual void v05();  virtual void v06();  virtual void v07();
+    virtual void v08();  virtual void v09();  virtual void v0A();  virtual void v0B();
+    virtual void v0C();  virtual void v0D();  virtual void v0E();  virtual void v0F();
+    virtual void v10();  virtual void v11();  virtual void v12();  virtual void v13();
+    virtual void v14();  virtual void v15();  virtual void v16();  virtual void v17();
+    virtual void v18();  virtual void v19();  virtual void v1A();  virtual void v1B();
+    virtual void v1C();  virtual void v1D();  virtual void v1E();  virtual void v1F();
+    virtual void v20();  virtual void v21();  virtual void v22();  virtual void v23();
+    virtual void v24();  virtual void v25();  virtual void v26();  virtual void v27();
+    virtual void v28();  virtual void v29();  virtual void v2A();  virtual void v2B();
+    virtual void v2C();  virtual void v2D();  virtual void v2E();  virtual void v2F();
+    virtual void v30();  virtual void v31();  virtual void v32();  virtual void v33();
+    virtual void v34();  virtual void v35();  virtual void v36();  virtual void v37();
+    virtual int vE8(void* pos, void* delta);  // slot 58 => +0xE8
 };
 
 // Fake SI interface for the virtual dispatch at vtable+0x10 (slot 4) used by
@@ -251,21 +275,25 @@ struct CActParamAnimGameView {
     void* obj3A0;                    // 0x3A0
     u8 _3A4[0x3A8 - 0x3A4];
     ml::CVec3 pos3A8;                // 0x3A8 position
-    u8 _3B4[0x3C0 - 0x3B4];
+    ml::CVec3 ground3B4;             // 0x3B4 ground-probe ref
     ml::CVec3 vel3C0;                // 0x3C0 velocity
     ml::CVec3 face3CC;               // 0x3CC facing dir
     ml::CVec3 vec3D4;                // 0x3D4 accel dir
-    u8 _3E4[0x3F0 - 0x3E4];
+    ml::CVec3 hit3D8;                // 0x3D8 hit pos
+    ml::CVec3 tgt3E4;                // 0x3E4 target pos
     ml::CVec3 move3F0;               // 0x3F0 move vec
     u8 _3FC[0x444 - 0x3FC];
     f32 f444;                        // 0x444 facing fidx
     f32 f448;                        // 0x448 normalized speed
     u8 _44C[0x47C - 0x44C];
     f32 f47C;                        // 0x47C
-    u8 _480[0x4A8 - 0x480];
+    u8 _480[0x488 - 0x480];
+    f32 f488;                        // 0x488 ground height accum
+    u8 _48C[0x4A8 - 0x48C];
     u32 filter4A8;                   // 0x4A8 collision filter
     s32 field4AC;                    // 0x4AC
-    u8 _4B0[0x4E8 - 0x4B0];
+    u32 id4B0;                       // 0x4B0 probe result tag
+    u8 _4B4[0x4E8 - 0x4B4];
     CActParamAnimGameLink* link4E8;  // 0x4E8 region/link pointer
     u32 flags4EC;                    // 0x4EC
     u32 flags4F0;                    // 0x4F0 snapshot
@@ -280,7 +308,7 @@ struct CActParamAnimGameView {
     f32 f514;                        // 0x514 saved ground point x
     f32 f518;                        // 0x518 saved ground point y
     f32 f51C;                        // 0x51C saved ground point z
-    u8 _520[0x52C - 0x520];
+    ml::CVec3 probe520;              // 0x520 probe step vec
     s32 state52C;                    // 0x52C move state
     volatile u16 flags530;           // 0x530
 };
@@ -371,11 +399,14 @@ extern const float lbl_eu_80666098;   // sdata2: dot scale (func_8005A5B0)
 extern const float lbl_eu_8066609C;   // sdata2: move-vec scale (func_8005A5B0)
 extern const float lbl_eu_806660A0;   // sdata2: len threshold (func_8005A5B0)
 extern const float lbl_eu_80666080;   // sdata2: ground-probe threshold (func_8005E7C4)
+extern const float lbl_eu_806660B0;   // sdata2: fall scale x (func_8005B820)
+extern const float lbl_eu_806660B4;   // sdata2: fall scale z (func_8005B820)
 extern const float lbl_eu_806660BC;   // sdata2: pos.y offset / probe arg (func_8005E60C)
 extern const float lbl_eu_806660B8;   // sdata2: fall-penalty scale (func_8005B820)
 extern const float lbl_eu_806660C0;   // sdata2: fall-penalty cap (func_8005B820)
 extern const float lbl_eu_806660CC;   // sdata2: sin/cos fidx multiplier (40.743663f)
 extern const float lbl_eu_806619FC;   // sdata2: normal-refine scale (func_8005E28C)
+extern const float lbl_eu_806619F8;   // sdata2: step-contact radius (func_8005DE68)
 extern const float lbl_eu_80666120;   // sdata2: landing radius squared (func_8005E28C)
 extern const float lbl_eu_806660D4;   // sdata2: lateral offset (func_8005E7C4)
 extern const float lbl_eu_806660D8;   // sdata2: probe arg (func_8005E7C4)

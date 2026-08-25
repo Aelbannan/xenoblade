@@ -2,6 +2,9 @@
 // Replace stubs with high-level C/C++ during decomp.
 
 #include "kyoshin/harness_catalog.hpp"
+#include "monolib/scn/CScnTimeApi.hpp"
+
+#include "kyoshin/cf/CfGameManagerData.hpp"
 #include <monolib/math/Random.hpp>
 #include "monolib/util/FixStr.hpp"
 #include <math.h>
@@ -319,7 +322,7 @@ int func_80074F4C(CfCamShakeState* self, int mode) {
     f32 delta;
     if (CfRes_getD80Flag()) {
         CfRes_getD80Flag();
-        delta = func_80496288();
+        delta = func_80496288(lbl_eu_80663E14);
     } else {
         delta = lbl_eu_80666428;
     }
@@ -2373,7 +2376,7 @@ int func_80079E04(CfCamEventManager* self) {
     if (dyn->m_field04 & 0x04000000) return 0;
 
     CfRes_getD80Flag();
-    f32 val = func_80496288();
+    f32 val = func_80496288(lbl_eu_80663E14);
     // cror eq,lt,eq / bne: proceed only when val <= k.
     if (!(val <= lbl_eu_8066641C)) return 0;
 

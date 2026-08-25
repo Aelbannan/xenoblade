@@ -2,13 +2,6 @@
 
 using namespace ml;
 
-CVec3 COccCulling::sPlaneCoords[] = {
-    CVec3(-0.5f, 0, 0),
-    CVec3(0.5f, 0, 0),
-    CVec3(0.5f, 1, 0),
-    CVec3(-0.5f, 1, 0)
-};
-
 COccCulling::COccCulling() : 
 mFrustumList1(mtl::INVALID_HANDLE),
 mFrustumList2(mtl::INVALID_HANDLE),
@@ -63,14 +56,17 @@ int COccCulling::addFrustum(const CVec3& pos, const CVec3& rot, const CVec3& sca
 }
 
 void COccCulling::setFrustum(CCullFrustum* pFrustum){
-    float xScale = pFrustum->mScale.x;
-    float yScale = pFrustum->mScale.y;
+    // Scale matrix (z fixed to the SDA 1.0f constant), then rotation via the
+    // explicit FIdx variant with lbl_eu_80667C90 as radians->FIdx scale.
     CMat34 rotMat;
-    // z-scale via SDA 1.0f (lbl_eu_80667C88)
-    pFrustum->mMat.setScale(CVec3(xScale, yScale, lbl_eu_80667C88));
-    rotMat.setRotXYZ(pFrustum->mRot);
+    pFrustum->mMat.setScale(CVec3(pFrustum->mScale.x, pFrustum->mScale.y, lbl_eu_80667C88));
+    nw4r::math::MTX34RotXYZFIdx(rotMat,
+        pFrustum->mRot.x * lbl_eu_80667C90,
+        pFrustum->mRot.y * lbl_eu_80667C90,
+        pFrustum->mRot.z * lbl_eu_80667C90);
 
-    CMat34::mul(rotMat, pFrustum->mMat, pFrustum->mMat);
+    // PSMTXConcat(m2, m1, out) inside CMat34::mul -- retail concats (rot, scale, scale).
+    CMat34::mul(pFrustum->mMat, pFrustum->mMat, rotMat);
 
     pFrustum->mMat.addTranslation(pFrustum->mPos);
     pFrustum->mMat.invert(&pFrustum->mMatInv);
@@ -84,28 +80,40 @@ void COccCulling::setFrustum(CCullFrustum* pFrustum){
     pFrustum->unk124 = lbl_eu_80667C8C;
     pFrustum->unk128 = lbl_eu_80667C8C;
 
-    for(int i = 0; i < ARRAY_SIZE(sPlaneCoords); i++){
+    // Walk the retail-owned corner table with a persistent cursor.
+    CVec3* coord = lbl_eu_805757F0;
+    for(int i = 0; i < 4; i++){
         CVec3* unk90i = &pFrustum->unk90[i];
-        pFrustum->mMat.mul(*unk90i, sPlaneCoords[i]);
+        pFrustum->mMat.mul(*unk90i, *coord);
 
-        CVec3 diff = pFrustum->mPos - *unk90i;
-        float magnitude = nw4r::math::VEC3LenSq(diff);
+        float magnitude = nw4r::math::VEC3LenSq(pFrustum->mPos - *unk90i);
 
         if(pFrustum->unk128 < magnitude){
             pFrustum->unk128 = magnitude;
         }
+        coord++;
     }
 
-    pFrustum->unk128 = math::sqrt(pFrustum->unk128);
+    // nw4r FSqrt inline: warn on out-of-range input, sqrt via FrSqrt, else clamp.
+    float maxDistSq = pFrustum->unk128;
+    if(!(maxDistSq >= lbl_eu_80667C8C)){
+        nw4r::db::Warning(lbl_eu_80526324, 0x273, lbl_eu_80526300);
+    }
+    if(maxDistSq <= lbl_eu_80667C8C){
+        pFrustum->unk128 = maxDistSq * nw4r::math::FrSqrt(maxDistSq);
+    }else{
+        pFrustum->unk128 = lbl_eu_80667C8C;
+    }
 
+    // The whole plane build is gated on the low flag bits.
     if(pFrustum->mFlags & CCullFrustum::FLAGS_01){
         pFrustum->mPlane0.set(pFrustum->unk90[0], pFrustum->unk90[1], pFrustum->unk90[2]);
-    }
 
-    pFrustum->mPlane1.set(pFrustum->unk90[0], pFrustum->unk90[1]);
-    pFrustum->mPlane2.set(pFrustum->unk90[1], pFrustum->unk90[2]);
-    pFrustum->mPlane3.set(pFrustum->unk90[2], pFrustum->unk90[3]);
-    pFrustum->mPlane4.set(pFrustum->unk90[3], pFrustum->unk90[0]);
+        pFrustum->mPlane1.set(pFrustum->unk90[0], pFrustum->unk90[1]);
+        pFrustum->mPlane2.set(pFrustum->unk90[1], pFrustum->unk90[2]);
+        pFrustum->mPlane3.set(pFrustum->unk90[2], pFrustum->unk90[3]);
+        pFrustum->mPlane4.set(pFrustum->unk90[3], pFrustum->unk90[0]);
+    }
 }
 
 bool COccCulling::func_801A0F04(CFrustum* r4){
@@ -198,7 +206,13 @@ void COccCulling::func_801A1188(CCullFrustum* pFrustum){
     CVec3 r1_20;
     unk24->unkCC.mul(r1_20, pFrustum->mPos);
     pFrustum->unk124 = -r1_20.z;
-    float dot = CVec3::dot(pFrustum->mDir, unk24->unk10C - pFrustum->mPos);
+
+    // Retail lowers the diff to a direct VEC3Sub plus a component copy.
+    CVec3 toCenter;
+    CVec3 diff;
+    nw4r::math::VEC3Sub(diff, unk24->unk10C, pFrustum->mPos);
+    toCenter.set(diff);
+    float dot = CVec3::dot(pFrustum->mDir, toCenter);
 
     if(dot < lbl_eu_80667C8C){
         pFrustum->mPlane0.set(pFrustum->unk90[0], pFrustum->unk90[1], pFrustum->unk90[2]);

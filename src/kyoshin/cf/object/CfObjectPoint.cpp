@@ -1,4 +1,5 @@
 #include "kyoshin/cf/object/CfObject.hpp"
+#include "monolib/scn/CScnTimeApi.hpp"
 #include "kyoshin/cf/object/CfObjectPoint.hpp"
 #include "kyoshin/cf/object/CObjectParam.hpp"
 #include "kyoshin/code_801862C0.hpp"

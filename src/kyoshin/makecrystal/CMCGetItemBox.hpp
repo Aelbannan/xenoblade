@@ -54,6 +54,85 @@ struct CMCItemBoxCursor {
     u8  pad_D9[0x15C - 0xD9];       // 0xD9-0x15B
 };
 
+/* Trivial FixStr-shaped buffers: unlike ml::FixStr these have no default
+   constructor, so embedding them does not generate implicit member-constructor
+   calls in CMCGetItemBox's constructor (retail has none). */
+struct CMCSubFixStr64 { char mString[64]; int mLength; };
+struct CMCSubFixStr128 { char mString[128]; int mLength; };
+
+// Copy-shape helpers for __ct__CMCGetItemBox (same idiom as CItemBoxGrid.hpp:
+extern "C" void __ct__UnkClass_8011C974(void* dst, void* src);   // 4-word mem-region copy ctor
+// whole-member struct assignments reproduce retail's scheduling, with word
+// arrays lowering to the paired lwzu/stwu bdnz loops).
+struct CMCW6 { u32 w[6]; };
+struct CMCW36 { u32 w[36]; };
+struct CMCW32 { u32 w[32]; };
+struct CMCSubTableCopy { u32 w[0x40]; };
+
+class CMCUnk16 {
+public:
+    u8 d[0x10];
+    CMCUnk16& operator=(const CMCUnk16& o) {
+        __ct__UnkClass_8011C974((void*)d, (void*)o.d);
+        return *this;
+    }
+};
+
+// Word runs whose retail schedule loads both words of a pair and stores the
+// high word first (inlined operator= forces that order inside the enclosing
+// struct assignment).
+struct CMCPairRun2 {
+    u32 w[4];
+    CMCPairRun2& operator=(const CMCPairRun2& o) {
+        u32 l0 = o.w[0]; u32 h0 = o.w[1];
+        w[1] = h0; w[0] = l0;
+        u32 l1 = o.w[2]; u32 h1 = o.w[3];
+        w[3] = h1; w[2] = l1;
+        return *this;
+    }
+};
+struct CMCRun6 {          // pair-reversed, single, pair-reversed, single
+    u32 w[6];
+    CMCRun6& operator=(const CMCRun6& o) {
+        u32 a = o.w[0]; u32 b = o.w[1];
+        w[1] = b; w[0] = a;
+        w[2] = o.w[2];
+        u32 c = o.w[3]; u32 d = o.w[4];
+        w[4] = d; w[3] = c;
+        w[5] = o.w[5];
+        return *this;
+    }
+};
+
+/* itemBox+4 region <- default CItemBoxInfo temp +4 (dest = src + 0xf4). */
+struct CMCBoxMember {
+    CMCUnk16 unk1;
+    CMCUnk16 unk2;
+    u32 w01, w02, w03, w04, w05, w06, w07, w08, w09, w0a;
+    u32 w0b, w0c, w0d, w0e, w0f, w10, w11, w12, w13, w14;
+    u32 w15, w16, w17, w18, w19, w1a, w1b;
+    u8 b90;
+    u32 b94;
+    u8 b98, b99, b9a;
+    CMCPairRun2 crun;
+    u16 hac;
+    u8 hae;
+    CMCW6 p1;
+    CMCW36 p2;
+    CMCRun6 drun;
+    CMCW6 p3;
+    u8 g188;
+};
+
+/* sysWin_B8+4 region <- default CSysWin temp +4 (dest = src + 0xb8). */
+struct CMCSysWinMember {
+    CMCUnk16 unk;
+    u32 a, b, c, dd, e;
+    u8 g28;
+    u32 f2c, f30;
+    u8 t34, t35, t36, t37, t38, t39;
+};
+
 /* Item-box index structure at +0x314 of CMCGetItemBox.
    An s16 offset table, count, counter and backing entry array.
    Note: region +0x108..+0x14C of this object also doubles as a FixStr<64>
@@ -65,8 +144,8 @@ struct CMCItemBoxSub {
     u8  limit;                      // 0x103
     u8  counter;                    // 0x104
     u8  pad_105[0x108 - 0x105];     // 0x105-0x107
-    ml::FixStr<64> shortName;       // 0x108-0x14B: short item-name buffer (mLength at 0x148)
-    ml::FixStr<128> name;           // 0x14C-0x1CF: item-text buffer (mLength at 0x1CC)
+    CMCSubFixStr64 shortName;       // 0x108-0x14B: short item-name buffer (mLength at 0x148)
+    CMCSubFixStr128 name;           // 0x14C-0x1CF: item-text buffer (mLength at 0x1CC)
     CMCItemBoxEntry* listBase;      // 0x1D0: 52-byte Entry array base
     u8  field_1D4;                  // 0x1D4
     u8  pad_1D5[0x1D8 - 0x1D5];     // 0x1D5-0x1D7
@@ -100,16 +179,25 @@ public:
     virtual u32 getCount(void* entry) = 0;           // vtable offset 0x80
 };
 
-class CMCGetItemBox : public IWorkEvent {
+// Base-class ctor stores the shared retail vtable first (MWCC runs base
+// constructors before member constructors, matching the retail order).
+extern "C" void* lbl_eu_80539128[];   // CMCGetItemBox retail vtable
+struct CMCGetItemBoxVt {
+    void* mVtbl;   // 0x00 - lbl_eu_80539128
+    CMCGetItemBoxVt() { mVtbl = (void*)lbl_eu_80539128; }
+};
+
+// Non-polymorphic by design: retail stores the shared vtable (lbl_eu_80539128)
+// manually, so the class declares no virtuals beyond the vtable-slot base.
+class CMCGetItemBox : public CMCGetItemBoxVt {
 public:
     CMCGetItemBox();
-    virtual ~CMCGetItemBox();
-    virtual bool OnFileEvent(CEventFile* pEventFile);
+    ~CMCGetItemBox();
+    bool OnFileEvent(CEventFile* pEventFile);
 
     u8 func_80297D1C();
     u8 func_80297D24();
 
-    // +0x00 vtable
     UnkClass_8045F564 memRegion1;    // 0x04-0x13
     UnkClass_8045F564 memRegion2;    // 0x14-0x23
     CFileHandle* fileHandle1;               // 0x24
@@ -207,9 +295,18 @@ extern const float lbl_eu_80668BF4;
 extern "C" void func_802999B0(CMCGetItemBox*);
 extern "C" void func_80299530(CMCGetItemBox*, u16, void*, u8);
 extern "C" void func_80298AC8(CMCGetItemBox*, u32, CMCItemBoxEntry*, u8);
-extern "C" void func_80298FB4(CMCGetItemBox*, u32, CMCItemBoxEntry*, u8);
+__declspec(noinline) void func_80298FB4(CMCGetItemBox*, u32, CMCItemBoxEntry*, u8);
 extern "C" void __dl__FPv(void*);
 extern "C" __declspec(noinline) CMCItemBoxEntry* func_80296DB0(CMCItemBoxSub*, u32);
+
+// ---------------------------------------------------------------------------
+// Constructor imports (retail symbol names verbatim)
+// ---------------------------------------------------------------------------
+extern "C" void __ct__17UnkClass_8045F564Fv(void* self);
+extern "C" void __ct__CSysWin(void* syswin, int arg);
+extern "C" void __ct__CItemBoxInfo(void* info, int arg2, int arg3);
+extern "C" void __dt__12CItemBoxInfoFv(void* info, int flags);
+extern "C" void __dt__7CSysWinFv(void* syswin, int flags);
 
 // ---------------------------------------------------------------------------
 // OnFileEvent / func_80296FC0 imports (retail symbol names verbatim)

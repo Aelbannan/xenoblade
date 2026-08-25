@@ -461,8 +461,8 @@ void func_80089398(cf::CCtrlMoveBase* self, ml::CVec3* dst,
                    const ml::CVec3* src, int flag);
 int func_800890A8(cf::CCtrlMoveBase* self, ml::CVec3* out, u8* outFlag,
                   const ml::CVec3* src, int flag);
-// getInstance__Q22cf14CBattleManagerFv is declared by cf/CtrlPc.hpp
-// (extern "C" CBattleManagerView* form) - do not redeclare here.
+// getInstance__Q22cf14CBattleManagerFv is declared by
+// kyoshin/cf/CBattleManagerApi.hpp (via cf/CtrlPc.hpp's include chain).
 void* getInstance__Q22cf13CfGameManagerFv(void);
 void* getPlayer__Q22cf13CfGameManagerFi(int idx);
 int func_80085840__Q22cf13CfGameManagerFv(void);
@@ -482,7 +482,6 @@ void* func_80149154(void* obj, int id);
 extern "C" int func_80174C98(void* obj, u32* out, u32 flags);
 extern "C" void func_80174B4C(void* obj, u32 flags);   // C linkage: matches CVision.hpp/CChainTimer.hpp forms (error 10197 otherwise)
 void func_800D9CA0(void* mgr, void* target);
-void func_800BE12C(void* obj, int a, int b, int c, int d);
 void func_8008B580(void* sub);
 void func_8008A23C(void* sub);
 void func_8008A2C8(void* sub);

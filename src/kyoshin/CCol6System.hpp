@@ -216,6 +216,8 @@ public:
     void Term();
     void Move();
     void cbRenderBefore();
+    // Cursor/window position sync; MWCC inlines this into every Move() call site.
+    void updateCursorPos();
 
     /* 0x3C */ u8 mCallbackA[12];               // pointer-to-member-function null (3 words)
     /* 0x48 */ u8 mCallbackB[12];               // pointer-to-member-function null (3 words)

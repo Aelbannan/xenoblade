@@ -95,8 +95,8 @@ extern const f32 lbl_eu_8066B488; // spread scale
 // B4B8 declared BEFORE B498: MWCC unifies its internal (f32)u16 2^52 constant
 // with the first identical extern, and func_804F1F18's retail copy lives at
 // B4B8 while the explicitly-passed conv helpers pin their own aliases.
-extern const f64 lbl_eu_8066B4B8; // 0x4330000000000000 (u->f magic)
 extern const f64 lbl_eu_8066B498; // 0x4330000000000000 (u->f magic)
+extern const f64 lbl_eu_8066B4B8; // 0x4330000000000000 (u->f magic)
 extern const f64 lbl_eu_8066B4A0; // 0x4330000080000000 (s->f magic)
 extern const f32 lbl_eu_8066B4A8; // near distance threshold
 extern const f32 lbl_eu_8066B4AC; // far distance factor
@@ -165,7 +165,7 @@ struct TexMtxSrc {
 // Explicit 0x4330-magic integer -> float conversions so MWCC references the
 // shared named .sdata2 magic doubles instead of synthesizing its own pool
 // entries (retail relocs point at lbl_eu_* names).
-static inline f32 convU16ToF(u16 v, const f64& magic) {
+static inline f32 convU16ToF(u16 v, f64 magic) {
     union {
         u32 w[2];
         f64 d;
@@ -175,7 +175,7 @@ static inline f32 convU16ToF(u16 v, const f64& magic) {
     return (f32)(c.d - magic);
 }
 
-static inline f32 convS32ToF(s32 v, const f64& magic) {
+static inline f32 convS32ToF(s32 v, f64 magic) {
     union {
         u32 w[2];
         f64 d;
@@ -401,11 +401,13 @@ public:
 };
 
 // Alternate GX FIFO write window used by the direct vertex emitters here.
+// 0xCC008000: MWCC encodes the store displacement as base 0xCC010000 with
+// disp -0x8000 (s16 displacement range), matching retail lis rX, 0xcc01.
 union FifoWord {
     f32 f;
     u8 b;
 };
-static volatile FifoWord* const s_altFifo = reinterpret_cast<volatile FifoWord*>(0xCC018000);
+static volatile FifoWord* const s_altFifo = reinterpret_cast<volatile FifoWord*>(0xCC008000);
 
 // Screen-space marker trail: walks from `origin` toward `extent` in `count`
 // steps, normalizes each step offset against `step` and streams position /
@@ -413,31 +415,41 @@ static volatile FifoWord* const s_altFifo = reinterpret_cast<volatile FifoWord*>
 void func_804F1B88(f32 scale, ml::CVec3* origin, ml::CVec3* extent, ml::CVec3* step,
                    s32 count, u8* colorBytes, CMarkerDistProvider* provider, s32 farFlag,
                    bool saveFirst) {
-    f32 fbH = convU16ToF(getRenderModeObj__9CDeviceVIFv()->efbHeight, lbl_eu_8066B498);
-    f32 k = lbl_eu_8066B488 / convS32ToF(count, lbl_eu_8066B4A0);
-    ml::CVec3 delta = *extent - *origin;
-    ml::CVec3 inc = delta * k;
+    // Screen-space basis: x is scaled against the framebuffer height and y
+    // against the width (retail converts height first, then the loop count,
+    // then reads/converts the width).
+    f32 scrX = convU16ToF(getRenderModeObj__9CDeviceVIFv()->efbHeight, lbl_eu_8066B498);
+    f32 fkCount = convS32ToF(count, lbl_eu_8066B4A0);
+    GXRenderModeObj* rmode = getRenderModeObj__9CDeviceVIFv();
+
+    ml::CVec3 dir = *extent - *origin;
+    f32 w = convU16ToF(rmode->fbWidth, lbl_eu_8066B498);
+    f32 k = lbl_eu_8066B488 / fkCount;
+    ml::CVec3 inc = dir * k;
     ml::CVec3 cur = *origin;
+    ml::CVec3 incStep = inc;
 
-    for (s32 i = 0; i < count; i++) {
-        ml::CVec3 d = cur - *step;
-        f32 mag = PSVECMag(d);
-        f32 dist;
-        if (mag <= lbl_eu_8066B4A8) {
-            // Close to the reference point: normalize the (tiny) offset.
-            if (d.x * d.x + d.y * d.y + d.z * d.z == lbl_eu_8066B478) {
-                d.setZero();
-            } else {
-                PSVECNormalize(d, d);
-            }
-            dist = scale * provider->getDistFactor();
+    for (s16 i = 0; i < count; i++) {
+        ml::CVec3 diff = cur - *step;
+        ml::CVec3 nrm = diff;
+        ml::CVec3 work = nrm;
+        f32 mag = PSVECMag(work);
+        if (lbl_eu_8066B4A8 >= mag) {
+            // Far path: fixed falloff factor times the distance factor.
+            work *= lbl_eu_8066B4AC * scale * provider->getDistFactor();
         } else {
-            dist = lbl_eu_8066B4AC * scale * provider->getDistFactor();
+            // Near path: normalize the offset (degenerate -> zero vector),
+            // then scale by the distance factor alone.
+            if (work.x * work.x + work.y * work.y + work.z * work.z == lbl_eu_8066B478) {
+                work = ml::CVec3::zero;
+            } else {
+                PSVECNormalize(work, work);
+            }
+            work *= scale * provider->getDistFactor();
         }
-        d *= dist;
 
-        f32 px = cur.x * fbH + d.x;
-        f32 py = cur.y * fbH + d.y;
+        f32 px = cur.x * scrX + work.x;
+        f32 py = cur.y * w + work.y;
         s_altFifo->f = px;
         s_altFifo->f = py;
         s_altFifo->f = lbl_eu_8066B478;
@@ -448,28 +460,34 @@ void func_804F1B88(f32 scale, ml::CVec3* origin, ml::CVec3* extent, ml::CVec3* s
         s_altFifo->f = cur.x;
         s_altFifo->f = cur.y;
         if (farFlag != 0) {
+            // Far-flagged vertices carry a second texcoord pair.
             s_altFifo->f = cur.x;
             s_altFifo->f = cur.y;
         }
         if (saveFirst && i == 0) {
-            // Remember the first emitted position for later reuse.
+            // Remember the first emitted screen position for later reuse.
             lbl_eu_80665A68 = px;
             lbl_eu_80665A6C = py;
-            lbl_eu_80665A70 = cur.y;
-            lbl_eu_80665A74 = cur.z;
+            lbl_eu_80665A70 = cur.x;
+            lbl_eu_80665A74 = cur.y;
         }
-        cur += inc;
+        cur += incStep;
     }
 }
 
 // Textured-quad blit entry: clamps the screen-space position to the render
 // target, then emits the quad through the shared draw pipeline.
+// Comment above the B498/B4B8 externs: MWCC unifies the internal (f32)u16
+// magic with an identical extern; binding follows the LAST declaration.
 void func_804F1F18(void* desktop, ml::CVec3* pos, TexDrawSize* size, f32 alpha,
                    f32 alphaMax, void* material, TexMtxSrc* mtxSrc) {
-    if (size->field_0x0c <= lbl_eu_8066B4B0) return;
-    if (alpha <= lbl_eu_8066B4B0) return;
+    // Declared in this order so MWCC pins fadeMax to f31 and alpha to f30
+    // (descending-by-declaration allocation; matches retail).
     f32 fadeMax = alphaMax;
-    if (alphaMax <= lbl_eu_8066B4B0) fadeMax = alpha;
+    f32 a = alpha;
+    if (size->field_0x0c <= lbl_eu_8066B4B0) return;
+    if (a <= lbl_eu_8066B4B0) return;
+    if (fadeMax <= lbl_eu_8066B4B0) fadeMax = a;
 
     ml::CVec3 p = *pos;
     f32 fbH = (f32)getRenderModeObj__9CDeviceVIFv()->efbHeight;
@@ -486,14 +504,14 @@ void func_804F1F18(void* desktop, ml::CVec3* pos, TexDrawSize* size, f32 alpha,
         if (mtxSrc == NULL || mtxSrc->mTex == NULL || mtxSrc->mIndex < 0) {
             func_804D8C68(&draw, 0, 0);
             func_804F213C(0, &draw, &p, reinterpret_cast<const f32*>(size), -1, NULL,
-                          alpha, fadeMax);
+                          a, fadeMax);
         } else {
             func_804D8C68(&draw, 0, 0);
             if (mtxSrc->mTex != NULL) {
                 func_804DF164(mtxSrc->mTex, mtxSrc->mIndex, 1, mtxSrc->mField08);
             }
             func_804F213C(0, &draw, &p, reinterpret_cast<const f32*>(size), 1, mtxSrc,
-                          alpha, fadeMax);
+                          a, fadeMax);
         }
         func_804D8C18(&draw);
     }
@@ -680,10 +698,8 @@ void func_804F2B20(CAnimPlayerRef* self, CAnim* anim) {
         u32 id = self->mId;
         self->mAnim = anim;
         self->mPlayer = 0;
-        if (anim != 0 && id != 0) {
-            if (anim->v23()) {
-                self->mPlayer = self->mAnim->v13(self->mId);
-            }
+        if (anim != 0 && id != 0 && anim->v23()) {
+            self->mPlayer = self->mAnim->v13(self->mId);
         }
     }
     if (self->mPlayer == 0 && self->mAnim != 0 && self->mId != 0) {
@@ -712,15 +728,15 @@ MTX34* MTX34RotAxisFIdx(MTX34* pMtx, const VEC3* pAxis, f32 fidx);
 } // namespace nw4r
 
 // Extract the rotation axis/angle of the bound player's world matrix into
-// `out`, renormalizing degenerate basis columns first.
+// `out`, renormalizing degenerate basis columns first. The copy target is a
+// flat 12-float block addressed by column (mat[i], mat[4+i], mat[8+i]).
 bool func_804F2C04(CAnimPlayerRef* self, nw4r::math::MTX34* out) {
     if (self->mPlayer == 0) return false;
 
-    ml::CVec3 axis;
     f32 angle;
+    ml::CVec3 axis;
     if (self->mAnim->v22()) {
-        // Copy the matrix, renormalizing each basis column.
-        ml::CMat34 mat;
+        f32 mat[12];
         CAnimPlayer* p = self->mPlayer;
         for (int i = 0; i < 3; i++) {
             ml::CVec3 col;
@@ -728,28 +744,30 @@ bool func_804F2C04(CAnimPlayerRef* self, nw4r::math::MTX34* out) {
             col.y = p->m[1][i];
             col.z = p->m[2][i];
             f32 mag = col.x * col.x + col.y * col.y + col.z * col.z;
-            if (mag != lbl_eu_8066B4E0) {
-                if (mag < lbl_eu_8066B4E0) {
+            if (mag == lbl_eu_8066B4E0) {
+                mat[i] = p->m[0][i];
+                mat[4 + i] = p->m[1][i];
+                mat[8 + i] = p->m[2][i];
+            } else {
+                if (!(mag >= lbl_eu_8066B4E0)) {
                     Warning__Q24nw4r2dbFPCciPCce(lbl_eu_80526324, 0x273, lbl_eu_80526300);
                 }
-                f32 len = lbl_eu_8066B4E0;
-                if (!(mag <= lbl_eu_8066B4E0)) {
+                f32 len;
+                if (mag > lbl_eu_8066B4E0) {
                     len = mag * FrSqrt__Q24nw4r4mathFf(mag);
+                } else {
+                    len = lbl_eu_8066B4E0;
                 }
-                f32 s = lbl_eu_8066B4E4 / len;
-                mat.m[0][i] = col.x * s;
-                mat.m[1][i] = col.y * s;
-                mat.m[2][i] = col.z * s;
-            } else {
-                mat.m[0][i] = col.x;
-                mat.m[1][i] = col.y;
-                mat.m[2][i] = col.z;
+                nw4r::math::VEC3Scale(col, col, lbl_eu_8066B4E4 / len);
+                mat[i] = col.x;
+                mat[4 + i] = col.y;
+                mat[8 + i] = col.z;
             }
-            mat.m[0][3] = p->m[0][3];
-            mat.m[1][3] = p->m[1][3];
-            mat.m[2][3] = p->m[2][3];
+            mat[3] = p->m[0][3];
+            mat[7] = p->m[1][3];
+            mat[11] = p->m[2][3];
         }
-        mat.getRotAxis(axis, &angle);
+        reinterpret_cast<ml::CMat34*>(&mat)->getRotAxis(axis, &angle);
     } else {
         reinterpret_cast<ml::CMat34*>(self->mPlayer)->getRotAxis(axis, &angle);
     }
@@ -1031,54 +1049,54 @@ ml::CMat34* func_804F42A0(int update, TexScaleParam* params) {
     }
     if (params == NULL) params = reinterpret_cast<TexScaleParam*>(lbl_eu_80661800);
 
-    ml::CMat34& out = reinterpret_cast<ml::CMat34&>(lbl_eu_80661810);
     if (update == 0) {
-        out = ml::CMat34::identity;
-        return &out;
+        ml::CMat34* m = reinterpret_cast<ml::CMat34*>(lbl_eu_80661810);
+        *m = ml::CMat34::identity;
+        return m;
     }
     if (func_8044BE24__8CGXCacheFv(cacheInstance__9CDeviceGX) == 0) {
-        out = ml::CMat34::identity;
-        return &out;
+        ml::CMat34* m = reinterpret_cast<ml::CMat34*>(lbl_eu_80661810);
+        *m = ml::CMat34::identity;
+        return m;
     }
     if (lbl_eu_80665A8A == 0) lbl_eu_80665A8A = 1;
     const CGXCacheView* view =
         static_cast<const CGXCacheView*>(func_8044BE1C__8CGXCacheFv(cacheInstance__9CDeviceGX));
 
-    f32 fbW = convU16ToF(getRenderModeObj__9CDeviceVIFv()->fbWidth, lbl_eu_8066B518);
-    f32 scaleX = fbW / convS32ToF(view->field_0x4 - view->field_0x0, lbl_eu_8066B520);
-    f32 fbH = convU16ToF(getRenderModeObj__9CDeviceVIFv()->efbHeight, lbl_eu_8066B518);
-    f32 scaleY = fbH / convS32ToF(view->field_0x6 - view->field_0x2, lbl_eu_8066B520);
+    // Texture scale factors derived from the GX cache viewport rect.
+    f32 scaleX = convU16ToF(getRenderModeObj__9CDeviceVIFv()->fbWidth, lbl_eu_8066B518) /
+                 convS32ToF(view->field_0x4 - view->field_0x0, lbl_eu_8066B520);
+    f32 scaleY = convU16ToF(getRenderModeObj__9CDeviceVIFv()->efbHeight, lbl_eu_8066B518) /
+                 convS32ToF(view->field_0x6 - view->field_0x2, lbl_eu_8066B520);
     f32 ax = scaleX *
-             (convU16ToF(getRenderModeObj__9CDeviceVIFv()->fbWidth, lbl_eu_8066B518) /
-              convS32ToF(view->field_0x0, lbl_eu_8066B520));
-    f32 ay = scaleY *
-             (convS32ToF(view->field_0x2, lbl_eu_8066B520) /
-              convU16ToF(getRenderModeObj__9CDeviceVIFv()->efbHeight, lbl_eu_8066B518));
-
-    f32 nx = -ax;
-    f32 ny = -ay;
-    f32 half = lbl_eu_8066B508; // 0.5f
-    f32 one = lbl_eu_8066B510;  // 1.0f
+             (convS32ToF(view->field_0x0, lbl_eu_8066B520) /
+              convU16ToF(getRenderModeObj__9CDeviceVIFv()->fbWidth, lbl_eu_8066B518));
     lbl_eu_80661840[0] = ax;
+    f32 t = convS32ToF(view->field_0x2, lbl_eu_8066B520) /
+            convU16ToF(getRenderModeObj__9CDeviceVIFv()->efbHeight, lbl_eu_8066B518);
+    f32 ay = scaleY * t;
+    f32 ny = -ay;
+    f32 nx = -ax;
     lbl_eu_80661840[2] = scaleX;
     lbl_eu_80661840[3] = scaleY;
+    ml::CMat34* m = reinterpret_cast<ml::CMat34*>(lbl_eu_80661810);
+    m->m[0][0] = scaleX;
+    m->m[0][1] = lbl_eu_8066B508;
+    m->m[0][2] = lbl_eu_8066B508;
+    m->m[0][3] = lbl_eu_8066B508;
     lbl_eu_80661840[1] = ay;
-    out.m[0][0] = scaleX;
-    out.m[0][1] = half;
-    out.m[0][2] = half;
-    out.m[0][3] = half;
-    out.m[1][0] = half;
-    out.m[1][1] = scaleY;
-    out.m[1][2] = half;
-    out.m[1][3] = half;
-    out.m[2][0] = half;
-    out.m[2][1] = half;
-    out.m[2][2] = one;
-    out.m[2][3] = half;
-    out.m[2][3] = half + half;
-    out.m[1][3] = half + ny * params->y;
-    out.m[0][3] = half + nx * params->x;
-    return &out;
+    m->m[1][0] = lbl_eu_8066B508;
+    m->m[1][1] = scaleY;
+    m->m[1][2] = lbl_eu_8066B508;
+    m->m[1][3] = lbl_eu_8066B508;
+    m->m[2][0] = lbl_eu_8066B508;
+    m->m[2][1] = lbl_eu_8066B508;
+    m->m[2][2] = lbl_eu_8066B510;
+    m->m[2][3] = lbl_eu_8066B508;
+    m->m[2][3] = lbl_eu_8066B510;
+    m->m[1][3] = lbl_eu_8066B508 + ny * params->y;
+    m->m[0][3] = lbl_eu_8066B508 + nx * params->x;
+    return m;
 }
 
 // Gradient-shaded textured quad emitter: clamps the direction vector into a

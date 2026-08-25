@@ -1,4 +1,5 @@
 #include "kyoshin/CUICfManager.hpp"
+#include "libs/monolib/src/scn/CScn_8049603C.hpp" // func_8049603C (single owner decl)
 #include "kyoshin/cf/CfGameManager.hpp"
 
 // --- CTTask<CUICfManager> out-of-line specializations ---

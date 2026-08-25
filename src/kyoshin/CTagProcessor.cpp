@@ -337,39 +337,41 @@ nw4r::ut::TagProcessorBase<wchar_t>::Operation func_80125B08(
 extern "C" int defaultProcess(void* self) { return 0; }
 
 // Message pre-processor: copy the raw message into the buffer, then walk it
-// in place — a CRLF at the head is stripped (the tail is copied down over
-// it), and a '<name=value>' tag is looked up by name in the tag dispatch
-// table; the matching handler (vtable slot +0x14) consumes the tag and
-// returns the new buffer position, after which the saved tail is copied
-// down over it. Returns the buffer.
+// in place - a CRLF at the head is stripped (the tail is copied down over
+// it), and a '<name=value>' tag is split on '=' by the tokenizer helpers,
+// looked up by name in the tag dispatch table, and consumed by the matching
+// handler object (vtable slot +0x14), which returns the new buffer position;
+// the saved tail (everything past '>') is then copied down over the consumed
+// text. An unmatched tag name is stripped the same way (the handler loop just
+// falls through). Returns the buffer.
 u16* func_80125B58(CTagProcessorBase* self, const void* src, f32 a, f32 b, u32 c) {
     wchar_t bigbuf[0x400];
-    wchar_t scratchA[0x80];
+    u16 scratchA[0x80];
     wchar_t* tokens[16];
     memcpy(self->mBuf, src, 0x800);
     self->field_804 = c;
+    wchar_t* p = (wchar_t*)self->mBuf;
     self->field_808 = a;
     self->field_80c = b;
     self->field_810 = 0;
-    wchar_t* p = (wchar_t*)self->mBuf;
     while (*p != 0) {
         u32 count = 0;
         u32 off = 0;
         memset(bigbuf, 0, sizeof(bigbuf));
         memset(scratchA, 0, sizeof(scratchA));
-        if (p[0] == 0xD && p[1] == 0xA) {
+        u16 ch = p[0];
+        if (ch == 0xD && p[1] == 0xA) {
             wcscpy(bigbuf, p + 2);
             wcscpy(p, bigbuf);
             continue;
         }
-        if (p[0] == 0x3C) {
-            u16 ch;
-            while ((ch = p[off / 2 + 1]) != 0x3E && ch != 0) {
-                scratchA[off / 2] = ch;
+        if (ch == 0x3C) {
+            while ((ch = p[(off >> 1) + 1]) != 0x3E && ch != 0) {
+                scratchA[off >> 1] = ch;
                 count++;
                 off += 2;
             }
-            func_801365E4((u16*)scratchA, 0x3D, (u16**)tokens);
+            func_801365E4(scratchA, 0x3D, (u16**)tokens);
             func_801366F4((u16*)tokens[0]);
             wcscpy(bigbuf, p + count + 2);
             const wchar_t* name = tokens[0];
@@ -377,7 +379,8 @@ u16* func_80125B58(CTagProcessorBase* self, const void* src, f32 a, f32 b, u32 c
                 if (e->name == 0)
                     break;
                 if (wcscmp(name, e->name) == 0) {
-                    p = (wchar_t*)e->obj->v14((u16*)p, tokens[1], &self->field_814);
+                    p = (wchar_t*)e->obj->v14((u16*)p, (const wchar_t*)tokens[1],
+                                              &self->field_814);
                     break;
                 }
             }
@@ -393,11 +396,30 @@ u16* func_80125B58(CTagProcessorBase* self, const void* src, f32 a, f32 b, u32 c
 // buffer from the TextBox, accumulating the max line width (per-glyph font
 // width + the TextBox's per-char spacing at +0xF4) and the line height
 // (0xA and the row-advance inside tag 5 step by the fixed sdata2 constant).
-// Control tags 1..7 advance the buffer by their operand lengths.
+// Control tags advance the buffer by their operand lengths.
 // optimize_for_size: retail uses the -O4,s save shape (_savegpr_17) and the
 // mtctr/bdnz pairs loop.
+//
+// RESIDUAL (open item): sizes now MATCH exactly (900B); shapes align
+// through the prologue and all case blocks. What remains:
+// 1. Register-allocation permutation: retail colors &vals LAST (r21,
+//    lowest priority - the store loop even rematerializes r1+8), ours
+//    ranks it TOP (r31), shifting msg/out/buf/font/i down one slot each,
+//    permuting inner temps + the whole FPR map (lineH f30 vs f27 etc.).
+//    Proven inert levers: declaration order/position, int-vs-unsigned
+//    counters (retail is signed: srawi/addze ceil-div, cmpw loops),
+//    pointer temps, indexed writes, renames, explicit loop-top pointer.
+// 2. Conversion magic: retail references NAMED lbl_eu_80667200; implicit
+//    casts emit private pooled literals (@7188). An explicit TagConvTemp
+//    union (hi=0x43300000 seeded once, lo=w^0x80000000, then
+//    d - lbl_eu_80667200) names the reloc but perturbed scheduling (+8B)
+//    when tried standalone - revisit after (1) is solved.
+// 3. Jump table: ours anchors a local object 32B below retail's
+//    jumptable_eu_8052D5A4 despite equal size; likely follows from .data
+//    layout, may resolve once (1) is fixed.
 #pragma optimize_for_size on
 __declspec(noinline) void func_80125D00(f32* out, CTagMsgView* msg, wchar_t* buf) {
+    u32 vals[16];
     nw4r::lyt::Font* font = ((nw4r::lyt::TextBox*)msg)->GetFont();
     f32 lineH = lbl_eu_806671F4;
     f32 width = lbl_eu_806671F0;
@@ -406,8 +428,8 @@ __declspec(noinline) void func_80125D00(f32* out, CTagMsgView* msg, wchar_t* buf
     f32 speed = lbl_eu_806671F8;
     f32 step = lineH;
     u32 i = 0;
-    u32 vals[0x12];
     for (;;) {
+        const u16* p = (const u16*)buf + i;
         u16 ch = buf[i];
         if (ch == 0) {
             if (width > max)
@@ -422,17 +444,23 @@ __declspec(noinline) void func_80125D00(f32* out, CTagMsgView* msg, wchar_t* buf
             i++;
             continue;
         }
+        // Case mapping mirrors the retail jump table (jumptable_eu_8052D5A4):
+        // 3 -> plain advance, 4/5 -> skip one operand char, 6/7 -> the multi-
+        // row block (which falls through into 8's +1), 8/9 -> skip one more,
+        // B -> skip five, D -> full-width marker, everything else accumulates
+        // width.
         switch (ch) {
         case 1: {
             // <1 skip,cnt>: advance past `skip` chars, then accumulate the
             // width of the following `cnt` chars.
-            u16 v = buf[i + 1];
-            u32 skip = v >> 8;
-            u32 cnt = v & 0xFF;
+            u16 v = p[1];
+            int skip = v >> 8;
+            int cnt = v & 0xFF;
             i += 2 + skip;
-            for (u32 j = 0; j < cnt; j++) {
+            const u16* p = (const u16*)buf + i;
+            for (int j = 0; j < cnt; j++) {
                 f32 sp = msg->field_F4;
-                width += sp + (f32)font->v48(buf[i + j]);
+                width += sp + (f32)font->v48(p[j]);
             }
             i += cnt - 1;
             break;
@@ -441,30 +469,38 @@ __declspec(noinline) void func_80125D00(f32* out, CTagMsgView* msg, wchar_t* buf
             i += 2;
             break;
         case 3:
-            i += 1;
             break;
         case 4:
             i += 1;
             break;
-        case 5: {
-            // <5 cnt,flags>: each following char carries a per-char count in
+        case 5:
+            i += 1;
+            break;
+        case 6:
+        case 7: {
+            // <6/7 cnt,...>: each following char carries a per-char count in
             // its high/low byte; for each of `cnt` rows accumulate the width
             // of that many chars and step the line between rows.
             u16 v = buf[i + 1];
-            u32 cnt = v & 0xFF;
-            u32 pairs = (cnt + (v & 1) + 1) >> 1;
+            int cnt = v & 0xFF;
+            int x = cnt;
+            if (v & 1)
+                x = cnt + 1;
+            int pairs = (x + 1) / 2;
             i += 2;
-            for (u32 j = 0; j < pairs; j++) {
-                u16 c = buf[i + j];
+            const u16* p = (const u16*)buf + i;
+            for (int j = 0; j < pairs; j++) {
+                u16 c = p[j];
                 vals[2 * j] = c >> 8;
                 vals[2 * j + 1] = c & 0xFF;
             }
             i += pairs;
-            for (u32 row = 0; row < cnt; row++) {
-                u32 n = vals[row];
-                for (u32 k = 0; k < n; k++) {
+            for (int row = 0; row < cnt; row++) {
+                int n = vals[row];
+                const u16* q = (const u16*)buf + i;
+                for (int k = 0; k < n; k++) {
                     f32 sp = msg->field_F4;
-                    width += sp + (f32)font->v48(buf[i + k]);
+                    width += sp + (f32)font->v48(q[k]);
                 }
                 if (row < cnt - 1) {
                     lineH += lineStep;
@@ -475,20 +511,21 @@ __declspec(noinline) void func_80125D00(f32* out, CTagMsgView* msg, wchar_t* buf
                 i += n;
             }
             i -= 1;
-            break;
-        }
-        case 6:
+            /* fallthrough */
+        case 8:
             i += 1;
             break;
-        case 7:
+        }
+        case 9:
+            i += 1;
+            break;
+        case 0xB:
+            i += 5;
+            break;
+        case 0xD:
             // Full-width marker: width += speed * (glyph(0x2500) + spacing).
             width += speed * (msg->field_F4 + (f32)font->v48(0x2500));
             break;
-        case 8:
-        case 9:
-        case 0xB:
-        case 0xC:
-        case 0xD:
         default:
             width += msg->field_F4 + (f32)font->v48(ch);
             break;
@@ -874,8 +911,8 @@ __declspec(noinline) int func_8012615C(nw4r::lyt::AnimTransform* tag,
                     namebuf[charIdx] = 0;
                     pane->v78();
                     pane->v74(0x40);
-                    func_80127764(msg, (nw4r::lyt::Pane*)pane, b, c,
-                                   (int)namebuf);
+                    func_80127764(msg, (TalkPaneView*)pane, (TalkPaneView*)b,
+                                   (TalkPaneView*)c, (const wchar_t*)namebuf);
                     u8* ctxBase = (u8*)pane->field_0C + 0x10;
                     // walk 1: find the context node matching the current text
                     ctxA = (u32*)getContextStr(ctxBase);
@@ -1338,12 +1375,6 @@ int func_801276F4(nw4r::lyt::AnimTransform* tag, nw4r::lyt::Pane* a,
 }
 #pragma optimize_for_size off
 
-// Stub (retail body 0x45C bytes, not matched yet). noinline keeps -ipa file
-// from folding the empty body into the tag-writer family's bl sites.
-__declspec(noinline) void func_80127764(void* tagProc, nw4r::lyt::Pane* a,
-                                        nw4r::lyt::Pane* b, nw4r::lyt::Pane* c,
-                                        int flag){}
-
 // noinline: func_801287BC keeps the bl func_80127BC4 / copyVEC3 calls in
 // retail - the tiny same-TU bodies would otherwise be folded into the call
 // sites (same convention as copyVEC2 below).
@@ -1357,6 +1388,155 @@ extern "C" __declspec(noinline) void copyVEC3(float* dst, const float* src) {
     dst[1] = src[1];
     dst[2] = src[2];
 }
+
+// Tag-processor page step: build the current page's text into a scratch
+// buffer - either straight from the caller-supplied string, or by walking
+// the message buffer tags from msg->field_810 (ruby tag 6 expands its packed
+// per-name char counts; tag 9 skips one parameter word, 0xb skips three;
+// codes 0/3/4 end the page and an out-of-window guard stops the walk).
+// Then set the text on the talk textbox, measure the laid-out text and
+// distribute positions/sizes across the message/name panes.
+//
+// MATCH STATUS (in progress): decomp 1112B vs retail 1116B; ALL relocs align
+// except a uniform -4 shift starting at the lbl_eu_8066721C load in the
+// second x-clamp below. Exactly ONE instruction missing there: retail emits
+// `fcmpo; cror eq<-gt|eq; bne end` (merged FP compare) before the c21C load,
+// while every source form tried so far yields either a single direct branch
+// (`pos2[0] < lbl`, current form, -1 insn) or two extra insns
+// (`!(x >= lbl)` / flipped-operand forms). Fix that one cror shape and the
+// whole tail should realign byte-for-byte.
+#pragma optimize_for_size on
+void func_80127764(CTagProcMsg* msg, TalkPaneView* a, TalkPaneView* b,
+                   TalkPaneView* c, const wchar_t* text) {
+    wchar_t buf[0x400];   // page scratch (+0x190)
+    u32 counts[0x10];     // ruby per-entry char counts (+0x50)
+    wchar_t str[0x80];    // name string scratch (+0x90)
+
+    memset(buf, 0, sizeof(buf));
+    if (text == NULL) {
+        u16 out = 0;
+        u16 pos = msg->field_810;
+        u16 code;
+        // message chars live at msg+4+2*i (u16 buffer behind a header);
+        // codes 0/3/4 end the page, the walk stops after 0x3ff chars
+        while ((code = msg->buf[pos + 2]) != 0 && code != 3 && code != 4 &&
+               (int)((u16)pos - msg->field_810) < 0x3ff) {
+            if (code == 6) {
+                // <6> name-list tag: hdr low byte = entry count; bit0 adds a
+                // padding half-slot. The next ceil(m/2) chars pack two count
+                // bytes each (hi then lo); each entry's chars follow.
+                buf[out] = code;
+                pos += 1;
+                u16 hdr = msg->buf[pos + 2];
+                out += 1;
+                buf[out] = hdr;
+                out += 1;
+                pos += 1;
+                u32 n = hdr & 0xff;
+                s32 m = n;
+                if (hdr & 1)
+                    m = n + 1;
+                u32 cnt = 0;
+                u32 bi = 0;
+                while ((s32)cnt < (m >> 1) + (m & 1)) {
+                    u16 pair = msg->buf[pos + 2];
+                    pos += 1;
+                    buf[out] = pair;
+                    out += 1;
+                    counts[bi] = pair >> 8;
+                    counts[bi + 1] = pair & 0xff;
+                    bi += 2;
+                    cnt += 1;
+                }
+                for (u32 j = 0; j < n; j++) {
+                    u32 k = counts[j];
+                    while (k > 0) {
+                        buf[out] = msg->buf[pos + 2];
+                        out += 1;
+                        pos += 1;
+                        k -= 1;
+                    }
+                }
+            } else if (code == 0xb) {
+                pos += 6;
+            } else if (code == 9) {
+                pos += 2;
+            } else {
+                buf[out] = code;
+                out += 1;
+                pos += 1;
+            }
+        }
+        buf[out] = 0;
+    } else {
+        wcscpy(buf, text);
+    }
+
+    a->v7C((const u16*)buf, 0);
+    a->field_F0 = lbl_eu_806671F8;
+
+    f32 meas[2];  // +0x30 measured {x, y} from the layout step
+    func_80125D00(meas, (CTagMsgView*)a, buf);
+    meas[1] = lbl_eu_8066720C * meas[1];
+    f32 pos2[2];  // +0x28 clamped cursor position
+    pos2[0] = meas[0];
+    pos2[1] = meas[1] + lbl_eu_80667210;
+    f32 dim[2];   // +0x20 {width, height}; later reused as corner xy
+    dim[0] = lbl_eu_806671F0;
+    dim[1] = lbl_eu_806671F0;
+    if (c != NULL) {
+        memset(str, 0, sizeof(str));
+        wcscpy(str, c->field_D8);
+        f32 size[2];  // +0x10 measured name width/height
+        func_80127D20(size, msg, (nw4r::lyt::TextBox*)c, str);
+        dim[0] = size[0];
+        dim[1] = size[1];
+        f32 maxX = lbl_eu_80667214 + size[0];
+        if (pos2[0] < maxX)
+            pos2[0] = maxX;
+    }
+    pos2[0] = lbl_eu_806671F8 * msg->field_808 + pos2[0];
+    if (pos2[0] <= lbl_eu_80667218) {
+        pos2[0] = lbl_eu_80667218;
+    } else if (pos2[0] < lbl_eu_80667220) {
+        pos2[0] = lbl_eu_8066721C;
+    }
+    copyVEC2(b->field_4C, pos2);
+
+    TagVec3 t = b->vec_2C;
+    t.v[1] -= lbl_eu_80667224;
+    copyVEC3(&a->vec_2C.v[0], &t.v[0]);
+    copyVEC2(a->field_4C, meas);
+    a->v78();
+    a->v74(0x400);
+
+    if (c != NULL) {
+        f32 w[2];                  // +0x18 corner xy scratch
+        TagVec3 s = a->vec_2C;     // dead in retail too; kept across the
+                                   // opaque helper calls below
+        func_80127BC4(w, a->field_4C);
+        copyVEC3(&s.v[0], b->vec_2C.v);
+        copyVEC2(w, b->field_4C);
+        copyVEC3(c->vec_2C.v, &s.v[0]);
+        copyVEC3(&s.v[0], c->vec_2C.v);
+        copyVEC2(w, c->field_4C);
+        f32 u[2];                  // +0x08
+        u[0] = dim[0];
+        u[1] = w[1];
+        copyVEC2(c->field_4C, u);
+        copyVEC2(dim, c->field_4C);
+        copyVEC3(&s.v[0], b->vec_2C.v);
+        copyVEC2(pos2, b->field_4C);
+        // blend the b/c corners toward the measured box
+        const f32 kBlend = lbl_eu_80667228;
+        f32 nx = dim[0] * kBlend + (s.v[0] - pos2[0] * kBlend);
+        f32 ny = (s.v[1] + pos2[1] * kBlend) - dim[1] * kBlend;
+        s.v[0] = nx + lbl_eu_8066722C;
+        s.v[1] = ny - lbl_eu_80667214;
+        copyVEC3(c->vec_2C.v, &s.v[0]);
+    }
+}
+#pragma optimize_for_size off
 
 // Tag-writer position clamp: copy the message string into a local buffer,
 // measure the text position (func_80125D00), then y = c34*(y-cF4)+c30 with a
@@ -1430,14 +1610,15 @@ void func_8012A070(nw4r::ut::TextWriterBase<wchar_t>* tw, float x, float y) {
 // Tag-writer helper: measure a string's max line width and the font height.
 // The string is copied into a scratch buffer (memset + wcscpy), then the
 // ORIGINAL string is walked accumulating (font->GetCharWidth(c) + 2) into a
-// running sum with a max tracked after the loop; the font height getter
-// (vtable +0x34) is converted to float with the builtin 0x4330/xoris/lfd
-// magic idiom (the magic pools to a TU-local @N label; retail shares it as
-// the named sdata2 blob lbl_eu_80667200 - MWCC_CASES 7i).
+// running sum; when the terminator is hit the running sum becomes the max.
+// The height getter (vtable +0x34) and each width+2 are converted with the
+// builtin 0x4330/xoris/lfd/fsubs magic idiom (magic hoisted once into f31,
+// shared by both sites).
 // optimize_for_size: retail saves r27-r31 + f28-f31 with _savegpr_27 (the
 // -O4,s save shape).
 #pragma optimize_for_size on
-void func_80127D20(f32* out, void* unused, nw4r::lyt::TextBox* textbox,
+void __declspec(noinline) func_80127D20(f32* out, void* unused,
+                                        nw4r::lyt::TextBox* textbox,
                    const wchar_t* str) {
     wchar_t buf[0x400];
     memset(buf, 0, sizeof(buf));
@@ -1445,13 +1626,27 @@ void func_80127D20(f32* out, void* unused, nw4r::lyt::TextBox* textbox,
     nw4r::lyt::Font* font = textbox->GetFont();
     f32 sum = lbl_eu_806671F0;
     u32 i = 0;
-    f32 max = sum;
+    // Separate init from the same constant: retail materializes max via fmr
+    // from the sum register and KEEPS the trailing `sum > max` compare (FP
+    // compares are not folded). Merging the update into the loop condition
+    // rotates the loop into a do-while the retail does not have.
+    f32 max = lbl_eu_806671F0;
+    // Plain (f32)(int) casts: MWCC emits the 0x4330/xoris/lfd/fsubs idiom
+    // byte-identically. Hand-building the bit pattern against
+    // lbl_eu_80667200 would name the sdata2 reloc but adds a rounding insn
+    // and shifts regalloc - the builtin is the closest byte-identical state
+    // (see func_80128C6C note / MWCC_CASES 7i).
     f32 height = (f32)font->v34();
-    for (; ((const u16*)str)[i] != 0; i++) {
-        sum += (f32)(font->v48(((const u16*)str)[i]) + 2);
+    for (;;) {
+        u16 c = str[i];
+        if (c == 0) {
+            if (sum > max)
+                max = sum;
+            break;
+        }
+        sum += (f32)(font->v48(c) + 2);
+        i++;
     }
-    if (sum > max)
-        max = sum;
     out[0] = max;
     out[1] = height;
 }
@@ -1470,7 +1665,8 @@ void func_80127E74(nw4r::lyt::AnimTransform* tag, nw4r::lyt::Pane* a,
     tb->v74(0x400);     // AllocStringBuffer(0x400)
     CTagProcMsg* msg = (CTagProcMsg*)tag;
     msg->field_810++;
-    func_80127764(msg, a, b, c, 0);
+    func_80127764(msg, (TalkPaneView*)a, (TalkPaneView*)b, (TalkPaneView*)c,
+                  0);
     msg->field_820 = 0;
 }
 #pragma pop
@@ -1797,12 +1993,15 @@ void func_801287BC(CTagProcessorBase* msg, nw4r::lyt::Pane* pane,
         out[1] = lbl_eu_8066720C * out[1];
     func_801375A0(out2, pane);
     func_80127BC4(v3, pv->field_4C);
-    f32 k = lbl_eu_80667228;
-    v3[1] = (v3[1] - out[1]) * k;
-    v3[0] = (v3[0] - out[0]) * k;
+    // Retail computes BOTH differences first, then both products; out2
+    // entries forward the stored v3 values.
+    f32 dy = v3[1] - out[1];
+    f32 dx = v3[0] - out[0];
+    v3[1] = dy * lbl_eu_80667228;
+    v3[0] = dx * lbl_eu_80667228;
     out2[0] = v3[0];
     out2[1] = lbl_eu_80667258 - v3[1];
-    copyVEC3(pv->vec_2C, out2);
+    copyVEC3(pv->vec_2C.v, out2);
     pv->v78();
     pv->v74(0x400);
 }
@@ -2487,11 +2686,10 @@ __declspec(noinline) void func_80129F3C(nw4r::ut::TextWriterBase<wchar_t>* tw, f
 #pragma optimize_for_size on
 u16* func_8012A1A4(void* a, u16* dst, wchar_t* str) {
     func_801366F4((u16*)str);
-    const wchar_t* tbl = lbl_eu_80661FC8;
     s16 v = 0xff;
-    if (wcscmp(str, tbl + 0x12) == 0)
+    if (wcscmp(str, &lbl_eu_80661FC8[0x12]) == 0)
         v = 0;
-    else if (wcscmp(str, tbl + 0x15) == 0)
+    else if (wcscmp(str, &lbl_eu_80661FC8[0x15]) == 0)
         v = -1;
     dst[0] = 9;
     dst[1] = (u16)v;
@@ -2698,6 +2896,8 @@ u16* func_8012AAA4(void* a, u16* out, wchar_t* str) {
         v = 0x509CCCFF;
     else if (str[0] == 0x23) {
         int len = wcslen(str + 1);
+        // 'A'..'F' are valid nibble positions that contribute nothing; kept
+        // as explicit cases so the jump table spans '1'..'F' like retail.
         for (int i = 0; i < len; i++) {
             u16 ch = str[i + 1];
             switch (ch) {
@@ -2718,6 +2918,8 @@ u16* func_8012AAA4(void* a, u16* out, wchar_t* str) {
             case '?': v += 15; break;
             // 'A'..'F' are valid hex positions but contribute nothing; kept
             // as explicit cases so the jump table spans '1'..'F' like retail.
+            // NOTE: this MWCC build still folds them out of the emitted table
+            // (cmpli bound 14 vs retail 21); retained for semantic fidelity.
             case 'A':
             case 'B':
             case 'C':
@@ -2758,9 +2960,9 @@ u32 func_8012AD40(void* a, void* b, TagColorArg* arg) {
     bool validIo = true;
     bool validMem2 = true;
     bool validMem1 = true;
-    nw4r::ut::CharWriter* w = arg->field_00;
     nw4r::ut::Color c = *arg->field_04;
-    u32 hi = (u32)w & 0xFF000000;
+    u32 hi = (u32)arg->field_00 & 0xFF000000;
+    nw4r::ut::CharWriter* w = arg->field_00;
     if (hi != 0x80000000 && ((u32)w & 0xFF800000) != 0x81000000)
         validMem1 = false;
     if (!validMem1 && ((u32)w & 0xF8000000) != 0x90000000)
@@ -2785,7 +2987,7 @@ u32 func_8012AD40(void* a, void* b, TagColorArg* arg) {
     validMem2 = true;
     validMem1 = true;
     w = arg->field_00;
-    hi = (u32)w & 0xFF000000;
+    hi = (u32)arg->field_00 & 0xFF000000;
     if (hi != 0x80000000 && ((u32)w & 0xFF800000) != 0x81000000)
         validMem1 = false;
     if (!validMem1 && ((u32)w & 0xF8000000) != 0x90000000)
@@ -2844,31 +3046,31 @@ u16* func_8012AF90(void* unused, u16* dst, wchar_t* str) {
 #pragma optimize_for_size on
 int func_8012B070(void* unused, TagLineOutView* out, void* unused2,
                   TagWriterHolder* holder) {
-    nw4r::ut::TextWriterBase<wchar_t>* tw = holder->field_00;
     const u8* buf = holder->field_04;
+    nw4r::ut::TextWriterBase<wchar_t>* tw = holder->field_00;
     u16 h = *(const u16*)buf;
+    u8 lenLo = h;
+    u32 lenHi = (h >> 8) & 0xFF;
     const wchar_t* s2 = (const wchar_t*)(buf + 2);
-    u32 off = (h >> 7) & 0x1FE;
-    const wchar_t* s1 = (const wchar_t*)(buf + 2 + off);
-    u32 len1 = h & 0xFF;
-    u32 len2 = (h >> 8) & 0xFF;
+    const wchar_t* s1 = s2 + ((h >> 8) & 0xFF);
     nw4r::ut::TextWriterBase<wchar_t> local;
     func_80129D1C((TagCopyBlock*)&local, (const TagCopyBlock*)tw);
     func_80129E20(&local, 0);
     func_8012B204(&local, lbl_eu_806671F0);
-    f32 sy = func_80129C04(&local);
-    f32 ys = lbl_eu_80667264 * sy;
-    f32 sx = func_80129AEC(&local);
-    func_80129F3C(&local, lbl_eu_80667264 * sx, ys);
+    f32 yscale = lbl_eu_80667264 * func_80129C04(&local);
+    f32 xscale = func_80129AEC(&local);
+    func_80129F3C(&local, lbl_eu_80667264 * xscale, yscale);
     func_8012930C(&local, lbl_eu_80667260);
     f32 wlimit = func_801291F4(tw);
     func_8012930C(tw, lbl_eu_80667260);
-    f32 w1 = tw->CalcStringWidth(s1, (int)len1);
-    f32 w2 = local.CalcStringWidth(s2, (int)len2);
-    if (w2 > w1)
+    // "no leading char space" flag, materialized before the width calls
+    u32 noSpace = (holder->field_10 & 1) ^ 1;
+    f32 w1 = tw->CalcStringWidth(s1, lenLo);
+    f32 w2 = local.CalcStringWidth(s2, lenHi);
+    if (w1 < w2)
         w1 = w2;
     f32 cs;
-    if (!(holder->field_10 & 1))
+    if (noSpace != 0)
         cs = func_8012B328(tw);
     else
         cs = lbl_eu_806671F0;
@@ -2876,9 +3078,8 @@ int func_8012B070(void* unused, TagLineOutView* out, void* unused2,
     func_8012930C(tw, wlimit);
     func_80129430(tw, w1);
     out->field_08 = out->field_00 + w1;
-    f32 fh = tw->GetFontHeight();
-    addToCharSpace((u8*)out, fh);
-    holder->field_04 = (const u8*)s1 + 2 * len1;
+    addToCharSpace((u8*)out, tw->GetFontHeight());
+    holder->field_04 = (const u8*)(s1 + lenLo);
     return 2;
 }
 #pragma optimize_for_size off
@@ -2951,18 +3152,164 @@ __declspec(noinline) float func_8012B328(nw4r::ut::TextWriterBase<wchar_t>* tw) 
     return tw->charSpace;
 }
 
-void func_8012B440(){}
+// Tag-writer two-string layout: read the <lenHi|lenLo> header, validate the
+// active writer, then copy it into a scratch writer (zero font size + char
+// space, rescaled by the sdata2 factor). The first string (lenHi chars) is
+// measured on the scratch writer; if the real writer's copy of that string
+// is wider (excess > 0), the excess is distributed as scratch char space and
+// folded into the saved cursor x. Both strings are printed at the adjusted
+// cursor (y lifted by ascent+descent), the excess is walked back off the
+// real writer's cursor twice (once per print), and the buffer pointer
+// advances past both strings. Returns 2.
+__declspec(noinline) int func_8012B440(void* unused, void* unused2,
+                                       TagWriterHolder* holder) {
+    // Long-lived locals declared up front in MWCC's callee-saved priority
+    // order (first declared -> highest register); assigned in statement order
+    // below, matching the retail allocation map (r31..r25).
+    u8 lenLo;
+    u32 savedFontSize;
+    nw4r::ut::TextWriterBase<wchar_t>* msg;
+    u8 lenHi;
+    const u16* s1;
+    const u16* s2;
+    msg = holder->field_00;
+    f32 savedWidth = func_801291F4(msg);
+    func_8012930C(msg, lbl_eu_80667260);
+    // "no leading char space" flag: re-apply the current char space when set.
+    if ((holder->field_10 & 1) == 0)
+        func_80129430(msg, func_8012B328(msg));
+
+    // Validation-flag scratch: initialized before the header decode so the
+    // allocator pins them to the low volatile window (retail r4..r9).
+    bool validRegs2 = true;
+    bool validRegs = true;
+    bool validIo2 = true;
+    bool validIo = true;
+    bool validMem2 = true;
+    bool validMem1 = true;
+
+    const u8* buf = holder->field_04;
+    u32 h = ((const u16*)buf)[0];
+    s1 = (const u16*)(buf + 2);
+    lenHi = h >> 8;
+    lenLo = h & 0xFF;
+    s2 = s1 + lenHi;
+
+    u32 hi = (u32)msg & 0xFF000000;
+    if (hi != 0x80000000 && ((u32)msg & 0xFF800000) != 0x81000000) {
+        validMem1 = false;
+    }
+    if (!validMem1 && ((u32)msg & 0xF8000000) != 0x90000000) {
+        validMem2 = false;
+    }
+    if (!validMem2 && hi != 0xC0000000) {
+        validIo = false;
+    }
+    if (!validIo && ((u32)msg & 0xFF800000) != 0xC1000000) {
+        validIo2 = false;
+    }
+    if (!validIo2 && ((u32)msg & 0xF8000000) != 0xD0000000) {
+        validRegs = false;
+    }
+    if (!validRegs && ((u32)msg & 0xFFFFC000) != 0xE0000000) {
+        validRegs2 = false;
+    }
+    if (!validRegs2) {
+        nw4r::db::Panic(lbl_eu_8052DB08, 0x90, lbl_eu_8052DAD4, msg);
+    }
+
+    savedFontSize = msg->field_5C;
+    f32 cursorX = func_801299D4(msg);
+    f32 cursorY = func_80129564(msg);
+    if (lenHi == 0) {
+        nw4r::db::Panic(&lbl_eu_804FFC48[0x27], 0x120,
+                        &lbl_eu_804FFC48[0x15]);
+    }
+
+    nw4r::ut::TextWriterBase<wchar_t> local;
+    func_80129D1C((TagCopyBlock*)&local, (TagCopyBlock*)msg);
+    func_80129E20(&local, 0x300);
+    func_8012B204(&local, lbl_eu_806671F0);
+
+    validRegs2 = true;
+    validRegs = true;
+    validIo2 = true;
+    validIo = true;
+    validMem2 = true;
+    validMem1 = true;
+    hi = (u32)&local & 0xFF000000;
+    if (hi != 0x80000000 && ((u32)&local & 0xFF800000) != 0x81000000) {
+        validMem1 = false;
+    }
+    if (!validMem1 && ((u32)&local & 0xF8000000) != 0x90000000) {
+        validMem2 = false;
+    }
+    if (!validMem2 && hi != 0xC0000000) {
+        validIo = false;
+    }
+    if (!validIo && ((u32)&local & 0xFF800000) != 0xC1000000) {
+        validIo2 = false;
+    }
+    if (!validIo2 && ((u32)&local & 0xF8000000) != 0xD0000000) {
+        validRegs = false;
+    }
+    if (!validRegs && ((u32)&local & 0xFFFFC000) != 0xE0000000) {
+        validRegs2 = false;
+    }
+    if (!validRegs2) {
+        nw4r::db::Panic(lbl_eu_8052DAC0, 0x5d, lbl_eu_8052DA8C, &local);
+    }
+
+    local.field_5Cf = lbl_eu_806671F0;
+    f32 yscale = lbl_eu_80667264 * func_80129C04(&local);
+    f32 xscale = func_80129AEC(&local);
+    func_80129F3C(&local, lbl_eu_80667264 * xscale, yscale);
+
+    f32 wMsg = msg->CalcStringWidth((const wchar_t*)s1, lenHi);
+    f32 wLocal = local.CalcStringWidth((const wchar_t*)s1, lenHi);
+    f32 excess = wMsg - wLocal;
+    if (excess > lbl_eu_806671F0) {
+        // Distribute the excess width across lenHi chars: fold one char
+        // space worth into the saved cursor x and give the scratch writer
+        // the per-char share. int->float via the retail magic-constant idiom.
+        // volatile keeps MWCC from scalar-replacing the union and folding
+        // the subtract into an unsigned library conversion call.
+        volatile TagConvTemp conv;
+        conv.w.lo = (u32)lenHi ^ 0x80000000;
+        conv.w.hi = 0x43300000;
+        f32 lenF = (f32)(conv.d - lbl_eu_80667200);
+        f32 share = excess / lenF;
+        cursorX += share * lbl_eu_80667228;
+        func_8012B204(&local, share);
+    }
+
+    f32 descent = local.GetFontDescent();
+    f32 height = msg->GetFontAscent() + descent;
+    func_8012A070(&local, cursorX, cursorY - height);
+    local.Print((const wchar_t*)s1, lenHi);
+    if (excess < lbl_eu_806671F0) {
+        func_80129430(msg, -excess * lbl_eu_80667228);
+    }
+    func_80129E20(msg, 0x300);
+    msg->Print((const wchar_t*)s2, lenLo);
+    func_80129E20(msg, savedFontSize);
+    if (excess < lbl_eu_806671F0) {
+        func_80129430(msg, -excess * lbl_eu_80667228);
+    }
+    holder->field_04 = (const u8*)(s2 + lenLo);
+    func_8012930C(msg, savedWidth);
+    return 2;
+}
 
 // Tag-code writer (code 4): same shape as func_8012A1A4, but the first match
 // selects -1 and the second selects 0 (strings at +0x17e / +0x186).
 #pragma optimize_for_size on
 u16* func_8012B8C4(void* a, u16* dst, wchar_t* str) {
     func_801366F4((u16*)str);
-    const wchar_t* tbl = lbl_eu_80661FC8;
     s16 v = 0xff;
-    if (wcscmp(str, tbl + 0xbf) == 0)
+    if (wcscmp(str, &lbl_eu_80661FC8[0xbf]) == 0)
         v = -1;
-    else if (wcscmp(str, tbl + 0xc3) == 0)
+    else if (wcscmp(str, &lbl_eu_80661FC8[0xc3]) == 0)
         v = 0;
     dst[0] = 4;
     dst[1] = (u16)v;

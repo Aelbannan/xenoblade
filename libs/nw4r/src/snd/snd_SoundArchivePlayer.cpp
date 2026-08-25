@@ -1,5 +1,84 @@
-#include <nw4r/snd.h>
+// Pre-include everything snd_SoundArchivePlayer.h needs so the instance-
+// manager member type can be renamed for this TU only (see below).
+#include <nw4r/types_nw4r.h>
 #include <nw4r/ut.h>
+
+#include <nw4r/snd/snd_DisposeCallback.h>
+#include <nw4r/snd/snd_DisposeCallbackManager.h>
+#include <nw4r/snd/snd_InstancePool.h>
+#include <nw4r/snd/snd_MmlParser.h>
+#include <nw4r/snd/snd_MmlSeqTrackAllocator.h>
+#include <nw4r/snd/snd_MmlSeqTrack.h>
+#include <nw4r/snd/snd_NoteOnCallback.h>
+#include <nw4r/snd/snd_SeqSound.h>
+// Retail SoundInfo carries an extra field at 0xC (volume sits at 0x10, not
+// 0xC as the shared header declares). Inject it while parsing.
+#define playerPriority playerPriority_; int field_0x0C
+#include <nw4r/snd/snd_SoundArchive.h>
+#undef playerPriority
+#include <nw4r/snd/snd_SoundArchiveLoader.h>
+#include <nw4r/snd/snd_SoundHandle.h>
+#include <nw4r/snd/snd_BasicSound.h>
+#include <nw4r/snd/snd_SoundActor.h>
+#include <nw4r/snd/snd_SoundPlayer.h>
+#include <nw4r/snd/snd_SoundInstanceManager.h>
+#include <nw4r/snd/snd_SoundStartable.h>
+#include <nw4r/snd/snd_StrmChannel.h>
+#include <nw4r/snd/snd_StrmSound.h>
+#include <nw4r/snd/snd_Util.h>
+#include <nw4r/snd/snd_SeqFile.h>
+#include <nw4r/snd/snd_Bank.h>
+#include <nw4r/snd/snd_WaveFile.h>
+#include <nw4r/snd/snd_WaveSound.h>
+#include <nw4r/snd/snd_WsdPlayer.h>
+
+#include <revolution/OS.h>
+
+namespace nw4r {
+namespace snd {
+namespace detail {
+
+// TU-local stand-in for WsdPlayer: the nested name is preserved so override
+// symbols keep their retail mangling while the shared-header callback stays a
+// bare vtable-pointer base (reference lands at 0x4, as in retail).
+struct WsdPlayer_X : WsdPlayer {
+    struct WsdCallback : ::nw4r::snd::detail::WsdPlayer::WsdCallback {};
+};
+
+} // namespace detail
+} // namespace snd
+} // namespace nw4r
+
+// Rename the base while parsing the player header so the WsdCallback member
+// picks up the padded TU-local layout above.
+#define WsdPlayer WsdPlayer_X
+// Rewrite CreatePlayerHeap to its retail signature while parsing the player
+// header (the shared header still carries the upstream two-parameter shape).
+#define CreatePlayerHeap(unused1, unused2) \
+    CreatePlayerHeap(void** ppBuffer, void* pEnd, u32 bufferSize)
+// Retail layout carries three extra pointer slots between mSoundPlayers and
+// mSoundPlayerCount (everything from the instance managers onward sits 12
+// bytes higher than the shared header declares). Inject them while parsing.
+#define mSoundPlayers mSoundPlayers_; void* field_0x38; void* field_0x3C; void* field_0x40
+// The retail-named PrepareWaveSoundImpl entry point below is a free function
+// (locked header carries a stale 'voices' parameter), so open access to the
+// private members while parsing the class definition.
+#define private public
+#include <nw4r/snd/snd_SoundArchivePlayer.h>
+#undef private
+#undef CreatePlayerHeap
+#undef mSoundPlayers
+#undef WsdPlayer
+
+// Retail-named entry points (see definitions further below for why they are
+// free functions with C linkage).
+extern "C" nw4r::snd::SoundStartable::StartResult
+PrepareWaveSoundImpl__Q34nw4r3snd18SoundArchivePlayerFPQ44nw4r3snd6detail9WaveSoundPCQ44nw4r3snd12SoundArchive9SoundInfoPCQ44nw4r3snd12SoundArchive13WaveSoundInfoQ54nw4r3snd14SoundStartable9StartInfo15StartOffsetTypei(
+    nw4r::snd::SoundArchivePlayer* self, nw4r::snd::detail::WaveSound* pSound,
+    const nw4r::snd::SoundArchive::SoundInfo* pSndInfo,
+    const nw4r::snd::SoundArchive::WaveSoundInfo* pWsdInfo,
+    nw4r::snd::SoundStartable::StartInfo::StartOffsetType startType,
+    int startOffset);
 
 // Retail nw4r_data.s pool constants (plain linker labels; declared at global
 // scope so the names are not mangled into the nw4r::snd namespace).
@@ -9,6 +88,10 @@ extern const float lbl_eu_8066A048;
 // Import from snd_SoundArchive.cpp (retail symbol; not declared in snd_SoundArchive.h)
 extern "C" u32 detail_GetFileCount__Q34nw4r3snd12SoundArchiveCFv(
     const nw4r::snd::SoundArchive* self);
+
+// Import from snd_SoundSystem.cpp (retail symbol; SoundSystem.h does not
+// declare the query and is outside this session's writable scope).
+extern "C" bool IsInitializedSoundSystem__Q34nw4r3snd11SoundSystemFv();
 
 namespace nw4r {
 namespace snd {
@@ -29,10 +112,13 @@ SoundArchivePlayer::SoundArchivePlayer()
     : mSoundArchive(NULL),
       mGroupTable(NULL),
       mFileManager(NULL),
+      mSeqTrackAllocator(NULL),
       mSeqCallback(*this),
       mWsdCallback(*this),
-      mSoundPlayerCount(0),
-      mSoundPlayers(NULL),
+      mSoundPlayers_(NULL),
+      field_0x38(NULL),
+      field_0x3C(NULL),
+      field_0x40(NULL),
       mMmlSeqTrackAllocator(&mMmlParser),
       mSetupBufferAddress(NULL),
       mSetupBufferSize(0) {
@@ -56,39 +142,131 @@ bool SoundArchivePlayer::IsAvailable() const {
 bool SoundArchivePlayer::Setup(const SoundArchive* pArchive, void* pMramBuffer,
                                u32 mramBufferSize, void* pStrmBuffer,
                                u32 strmBufferSize) {
+    if (!IsInitializedSoundSystem__Q34nw4r3snd11SoundSystemFv()) {
+        return false;
+    }
+
     if (!SetupMram(pArchive, pMramBuffer, mramBufferSize)) {
         return false;
     }
 
-    if (!SetupStrmBuffer(pArchive, pStrmBuffer, strmBufferSize)) {
+    // SetupStrmBuffer + GetRequiredStrmBufferSize were inlined by MWCC into
+    // a single body whose result lands in one bool: an info read for the
+    // size check, then another for the channel count handed to the pool.
+    int channels = 0;
+
+    SoundArchive::SoundArchivePlayerInfo reqInfo;
+    if (pArchive->ReadSoundArchivePlayerInfo(&reqInfo)) {
+        channels = reqInfo.strmChannelCount;
+    }
+
+    bool result;
+
+    if (strmBufferSize < static_cast<u32>(channels) * 0xA000) {
+        result = false;
+    } else {
+        channels = 0;
+
+        SoundArchive::SoundArchivePlayerInfo info;
+        if (pArchive->ReadSoundArchivePlayerInfo(&info)) {
+            channels = info.strmChannelCount;
+        }
+
+        // Retail member offsets differ from the shared-header layout here:
+        // the stream pool lives at 0xC8 and the allocator pointer slot at
+        // 0x30.
+        reinterpret_cast<detail::StrmBufferPool*>(
+            reinterpret_cast<char*>(this) + 0xC8)
+            ->Setup(pStrmBuffer, strmBufferSize, channels);
+
+        result = true;
+    }
+
+    if (!result) {
         return false;
     }
 
-    mSeqTrackAllocator = &mMmlSeqTrackAllocator;
+    *reinterpret_cast<detail::SeqTrackAllocator**>(
+        reinterpret_cast<char*>(this) + 0x30) =
+        reinterpret_cast<detail::SeqTrackAllocator*>(
+            reinterpret_cast<char*>(this) + 0xBC);
+
     return true;
 }
 
-void SoundArchivePlayer::Shutdown() {
-    mSoundArchive = NULL;
-    mGroupTable = NULL;
-    mFileManager = NULL;
-    mSeqTrackAllocator = NULL;
-
-    for (int i = 0; i < mSoundPlayerCount; i++) {
-        mSoundPlayers[i].~SoundPlayer();
+// TU-local stand-in for SoundInstanceManager with public members; layout
+// matches the real manager (pool 0x00, priority list 0x04, mutex 0x10).
+template <typename T> class SapInstanceManager {
+public:
+    void Destroy(void* pBuffer, u32 size) {
+        ut::detail::AutoLock<OSMutex> lock(mMutex);
+        mPool.Destroy(pBuffer, size);
     }
 
-    mSoundPlayerCount = 0;
-    mSoundPlayers = NULL;
+    detail::MemoryPool<T> mPool; // at 0x0
+    char field_0x4[0x0C];        // priority list (unused here)
+    OSMutex mMutex;              // at 0x10
+};
 
-    mSeqSoundInstanceManager.Destroy(mSetupBufferAddress, mSetupBufferSize);
-    mStrmSoundInstanceManager.Destroy(mSetupBufferAddress, mSetupBufferSize);
-    mWaveSoundInstanceManager.Destroy(mSetupBufferAddress, mSetupBufferSize);
-    mMmlSeqTrackAllocator.Destroy(mSetupBufferAddress, mSetupBufferSize);
+// Retail SoundArchivePlayer layout touched by Shutdown; the shared header
+// member offsets are not byte-compatible.
+struct SapShutdownLayout {
+    char field_0x0[0x10];
+    /*0x10*/ const SoundArchive* mSoundArchive;
+    /*0x14*/ detail::Util::Table<SoundArchivePlayer::Group>* mGroupTable;
+    /*0x18*/ SoundArchivePlayer_FileManager* mFileManager;
+    /*0x1C*/ void* field_0x1C;
+    char field_0x20[0x10];
+    /*0x30*/ detail::SeqTrackAllocator* mSeqTrackAllocator;
+    char field_0x34[0x08];
+    /*0x3C*/ u32 mSoundPlayerCount;
+    /*0x40*/ SoundPlayer* mSoundPlayers;
+    /*0x44*/ SapInstanceManager<detail::SeqSound> mSeqSoundMgr;
+    /*0x6C*/ SapInstanceManager<detail::StrmSound> mStrmSoundMgr;
+    /*0x94*/ SapInstanceManager<detail::WaveSound> mWaveSoundMgr;
+    char field_0xBC[0x28];
+    /*0xE4*/ void* mSetupBufferAddress;
+    /*0xE8*/ u32 mSetupBufferSize;
+};
 
-    mStrmBufferPool.Shutdown();
-    mSetupBufferAddress = NULL;
-    mSetupBufferSize = 0;
+void SoundArchivePlayer::Shutdown() {
+    SapShutdownLayout* pSelf = reinterpret_cast<SapShutdownLayout*>(this);
+
+    pSelf->mSoundArchive = NULL;
+    pSelf->mGroupTable = NULL;
+    pSelf->mFileManager = NULL;
+    pSelf->field_0x1C = NULL;
+    pSelf->mSeqTrackAllocator = NULL;
+
+    for (int i = 0; i < pSelf->mSoundPlayerCount; i++) {
+        pSelf->mSoundPlayers[i].~SoundPlayer();
+    }
+
+    pSelf->mSoundPlayerCount = 0;
+    pSelf->mSoundPlayers = NULL;
+
+    // Retail member offsets for the stream pool / instance heaps differ
+    // from the shared-header layout.
+    reinterpret_cast<detail::StrmBufferPool*>(reinterpret_cast<char*>(this) +
+                                              0xC8)
+        ->Shutdown();
+
+    // The stream buffer heap is only torn down when it was allocated.
+    if (pSelf->mSetupBufferAddress != NULL) {
+        pSelf->mSeqSoundMgr.Destroy(pSelf->mSetupBufferAddress,
+                                    pSelf->mSetupBufferSize);
+        pSelf->mStrmSoundMgr.Destroy(pSelf->mSetupBufferAddress,
+                                     pSelf->mSetupBufferSize);
+        pSelf->mWaveSoundMgr.Destroy(pSelf->mSetupBufferAddress,
+                                     pSelf->mSetupBufferSize);
+
+        reinterpret_cast<detail::MmlSeqTrackAllocator*>(
+            reinterpret_cast<char*>(this) + 0xBC)
+            ->Destroy(pSelf->mSetupBufferAddress, pSelf->mSetupBufferSize);
+
+        pSelf->mSetupBufferAddress = NULL;
+        pSelf->mSetupBufferSize = 0;
+    }
 }
 
 u32 SoundArchivePlayer::GetRequiredMemSize(const SoundArchive* pArchive) {
@@ -186,21 +364,26 @@ bool SoundArchivePlayer::SetupMram(const SoundArchive* pArchive, void* pBuffer,
     return true;
 }
 
-detail::PlayerHeap* SoundArchivePlayer::CreatePlayerHeap(void* pBuffer,
-                                                         u32 bufferSize) {
-    detail::PlayerHeap* pHeap = new (pBuffer) detail::PlayerHeap();
-
-    pBuffer = ut::AddOffsetToPtr(pBuffer, sizeof(detail::PlayerHeap));
-
-    if (!pHeap->Create(pBuffer, bufferSize)) {
-        return NULL;
-    }
-
-    return pHeap;
-}
+// Retail member offsets for the SoundArchivePlayer fields touched by
+// SetupSoundPlayer and PrepareSeqImpl; the shared header layout is not
+// byte-compatible.
+struct SapFields {
+    char field_0x0[0x10];
+    /*0x10*/ const SoundArchive* mSoundArchive;
+    char field_0x14[0x0C];
+    /*0x20*/ char mSeqCallback[8]; // SeqNoteOnCallback (vtable + player ref)
+    char field_0x28[0x08];
+    detail::SeqTrackAllocator* mSeqTrackAllocator;   // at 0x30
+    void (*mSeqUserprocCallback)(u16, void*, void*); // at 0x34
+    void* mSeqUserprocData;                          // at 0x38
+    u32 mSoundPlayerCount;                           // at 0x3C
+    SoundPlayer* mSoundPlayers;                      // at 0x40
+};
 
 bool SoundArchivePlayer::SetupSoundPlayer(const SoundArchive* pArchive,
                                           void** ppBuffer, void* pEnd) {
+    SapFields& rFields = *reinterpret_cast<SapFields*>(this);
+
     u32 playerCount = pArchive->GetPlayerCount();
     u32 requireSize = playerCount * sizeof(SoundPlayer);
 
@@ -211,13 +394,11 @@ bool SoundArchivePlayer::SetupSoundPlayer(const SoundArchive* pArchive,
         return false;
     }
 
-    void* pPlayerBuffer = *ppBuffer;
+    u8* pPtr = static_cast<u8*>(*ppBuffer);
     *ppBuffer = pPlayerEnd;
 
-    mSoundPlayers = static_cast<SoundPlayer*>(pPlayerBuffer);
-    mSoundPlayerCount = playerCount;
-
-    u8* pPtr = static_cast<u8*>(pPlayerBuffer);
+    rFields.mSoundPlayers = reinterpret_cast<SoundPlayer*>(pPtr);
+    rFields.mSoundPlayerCount = playerCount;
 
     for (u32 i = 0; i < playerCount; i++, pPtr += sizeof(SoundPlayer)) {
         SoundPlayer* pPlayer = new (pPtr) SoundPlayer();
@@ -228,27 +409,16 @@ bool SoundArchivePlayer::SetupSoundPlayer(const SoundArchive* pArchive,
         }
 
         pPlayer->SetPlayableSoundCount(info.playableSoundCount);
-        pPlayer->detail_SetPlayableSoundLimit(info.playableSoundCount);
 
         if (info.heapSize == 0) {
             continue;
         }
 
+        // Heap space for each playable sound is carved off ppBuffer inside
+        // CreatePlayerHeap (which owns the end-of-buffer check).
         for (int j = 0; j < info.playableSoundCount; j++) {
-            u32 requireSize = sizeof(detail::PlayerHeap) + info.heapSize;
-
-            void* pHeapEnd =
-                ut::RoundUp(ut::AddOffsetToPtr(*ppBuffer, requireSize), 4);
-
-            if (ut::ComparePtr(pHeapEnd, pEnd) > 0) {
-                return false;
-            }
-
-            void* pHeapBuffer = *ppBuffer;
-            *ppBuffer = pHeapEnd;
-
             detail::PlayerHeap* pHeap =
-                CreatePlayerHeap(pHeapBuffer, info.heapSize);
+                CreatePlayerHeap(ppBuffer, pEnd, info.heapSize);
 
             if (pHeap == NULL) {
                 return false;
@@ -256,10 +426,45 @@ bool SoundArchivePlayer::SetupSoundPlayer(const SoundArchive* pArchive,
 
             pPlayer->detail_AppendPlayerHeap(pHeap);
         }
+
+        pPlayer->detail_SetPlayableSoundLimit(info.playableSoundCount);
     }
 
     return true;
 }
+
+// Retail shape: bounds-checks against pEnd, then carves the heap off
+// *ppBuffer and advances it. noinline keeps retail's out-of-line call from
+// SetupSoundPlayer (-inline auto would otherwise fold this small body in).
+// Retail shape: bounds-checks against pEnd, then carves the heap off
+// *ppBuffer and advances it.
+// Keep retail's out-of-line call shape: with -inline auto/-ipa file MWCC folds
+// this single-call-site helper into SetupSoundPlayer.
+#pragma push
+#pragma auto_inline off
+detail::PlayerHeap* SoundArchivePlayer::CreatePlayerHeap(
+    void** ppBuffer, void* pEnd, u32 bufferSize) {
+    void* pHeapEnd = ut::RoundUp(
+        ut::AddOffsetToPtr(*ppBuffer, sizeof(detail::PlayerHeap) + bufferSize),
+        4);
+
+    if (ut::ComparePtr(pHeapEnd, pEnd) > 0) {
+        return NULL;
+    }
+
+    void* pHeapBuffer = *ppBuffer;
+    *ppBuffer = pHeapEnd;
+
+    detail::PlayerHeap* pHeap = new (pHeapBuffer) detail::PlayerHeap();
+    void* pBody = ut::AddOffsetToPtr(pHeapBuffer, sizeof(detail::PlayerHeap));
+
+    if (!pHeap->Create(pBody, bufferSize)) {
+        return NULL;
+    }
+
+    return pHeap;
+}
+#pragma pop
 
 bool SoundArchivePlayer::CreateGroupAddressTable(const SoundArchive* pArchive,
                                                  void** ppBuffer, void* pEnd) {
@@ -402,42 +607,91 @@ SoundPlayer& SoundArchivePlayer::GetSoundPlayer(u32 idx) {
     return players[idx];
 }
 
+namespace {
+
+// Retail SoundArchivePlayer layout touched by detail_GetFileAddress; the
+// shared header lacks the file address table member at 0x18.
+struct SapFileAddressLayout {
+    u32 field_0x0[0x4];
+    /*0x10*/ const SoundArchive* mSoundArchive;
+    /*0x14*/ detail::Util::Table<SoundArchivePlayer::Group>* mGroupTable;
+    /*0x18*/ detail::Util::Table<SoundArchivePlayer::Group>* mFileTable;
+    /*0x1C*/ SoundArchivePlayer_FileManager* mFileManager;
+};
+
+// GetFileAddress-style table lookup, inlined at both call sites below.
+inline const void* SapLookupTableAddress(
+    const detail::Util::Table<SoundArchivePlayer::Group>* pTable, u32 id) {
+    if (pTable == NULL) {
+        return NULL;
+    }
+    if (id >= pTable->count) {
+        return NULL;
+    }
+    return pTable->items[id].address;
+}
+
+// Wave-data twin of the lookup above.
+inline const void* SapLookupTableWaveDataAddress(
+    const detail::Util::Table<SoundArchivePlayer::Group>* pTable, u32 id) {
+    if (pTable == NULL) {
+        return NULL;
+    }
+    if (id >= pTable->count) {
+        return NULL;
+    }
+    return pTable->items[id].waveDataAddress;
+}
+
+// Accessor for the retail layout fields touched by detail_GetFileAddress.
+// Kept as a plain cast expression so the compiler schedules the member
+// loads directly off the incoming this-pointer.
+#define SAP_LAYOUT(pPlayer) \
+    (reinterpret_cast<const SapFileAddressLayout*>(pPlayer))
+
+} // namespace
+
 const void* SoundArchivePlayer::detail_GetFileAddress(u32 id) const {
-    if (mFileManager != NULL) {
-        const void* pAddr = mFileManager->GetFileAddress(id);
+    if (SAP_LAYOUT(this)->mFileManager != NULL) {
+        const void* pAddr = SAP_LAYOUT(this)->mFileManager->GetFileAddress(id);
         if (pAddr != NULL) {
             return pAddr;
         }
     }
 
-    const void* pAddr = mSoundArchive->detail_GetFileAddress(id);
+    const void* pAddr =
+        SAP_LAYOUT(this)->mSoundArchive->detail_GetFileAddress(id);
     if (pAddr != NULL) {
         return pAddr;
     }
 
+    // Direct file address table lookup, keyed by fileId
+    const void* pDirect = SapLookupTableAddress(SAP_LAYOUT(this)->mFileTable, id);
+    if (pDirect != NULL) {
+        return pDirect;
+    }
+
     SoundArchive::FileInfo file;
-    if (!mSoundArchive->detail_ReadFileInfo(id, &file)) {
+    if (!SAP_LAYOUT(this)->mSoundArchive->detail_ReadFileInfo(id, &file)) {
         return NULL;
     }
 
     for (unsigned int i = 0; i < file.filePosCount; i++) {
         SoundArchive::FilePos pos;
-        if (!mSoundArchive->detail_ReadFilePos(id, i, &pos)) {
+        if (!SAP_LAYOUT(this)->mSoundArchive->detail_ReadFilePos(id, i, &pos)) {
             continue;
         }
 
         // GetGroupAddress, inlined
-        const void* pGroup = NULL;
-        if (mGroupTable != NULL && pos.groupId < mGroupTable->count) {
-            pGroup = mGroupTable->items[pos.groupId].address;
-        }
-
+        const void* pGroup =
+            SapLookupTableAddress(SAP_LAYOUT(this)->mGroupTable, pos.groupId);
         if (pGroup == NULL) {
             continue;
         }
 
         SoundArchive::GroupItemInfo item;
-        if (mSoundArchive->detail_ReadGroupItemInfo(id, pos.index, &item)) {
+        if (SAP_LAYOUT(this)->mSoundArchive->detail_ReadGroupItemInfo(
+                pos.groupId, pos.index, &item)) {
             return static_cast<const u8*>(pGroup) + item.offset;
         }
     }
@@ -445,34 +699,47 @@ const void* SoundArchivePlayer::detail_GetFileAddress(u32 id) const {
     return NULL;
 }
 
+// Retail member offsets again diverge from the shared header: the manager
+// sits at 0x1C and a second (file-level) wave-data table occupies 0x18.
 const void* SoundArchivePlayer::detail_GetFileWaveDataAddress(u32 id) const {
-    if (mFileManager != NULL) {
-        const void* pAddr = mFileManager->GetFileWaveDataAddress(id);
+    if (SAP_LAYOUT(this)->mFileManager != NULL) {
+        const void* pAddr =
+            SAP_LAYOUT(this)->mFileManager->GetFileWaveDataAddress(id);
         if (pAddr != NULL) {
             return pAddr;
         }
     }
 
-    const void* pAddr = mSoundArchive->detail_GetWaveDataFileAddress(id);
+    const void* pAddr =
+        SAP_LAYOUT(this)->mSoundArchive->detail_GetWaveDataFileAddress(id);
     if (pAddr != NULL) {
         return pAddr;
     }
 
+    // Direct file wave-data table lookup, keyed by fileId
+    const void* pDirect = SapLookupTableWaveDataAddress(
+        SAP_LAYOUT(this)->mFileTable, id);
+    if (pDirect != NULL) {
+        return pDirect;
+    }
+
     SoundArchive::FileInfo file;
-    if (!mSoundArchive->detail_ReadFileInfo(id, &file)) {
+    if (!SAP_LAYOUT(this)->mSoundArchive->detail_ReadFileInfo(id, &file)) {
         return NULL;
     }
 
     for (unsigned int i = 0; i < file.filePosCount; i++) {
         SoundArchive::FilePos pos;
-        if (!mSoundArchive->detail_ReadFilePos(id, i, &pos)) {
+        if (!SAP_LAYOUT(this)->mSoundArchive->detail_ReadFilePos(id, i, &pos)) {
             continue;
         }
 
         // GetGroupWaveDataAddress, inlined
         const void* pGroup = NULL;
-        if (mGroupTable != NULL && pos.groupId < mGroupTable->count) {
-            pGroup = mGroupTable->items[pos.groupId].waveDataAddress;
+        const detail::Util::Table<SoundArchivePlayer::Group>* pTable =
+            SAP_LAYOUT(this)->mGroupTable;
+        if (pTable != NULL && pos.groupId < pTable->count) {
+            pGroup = pTable->items[pos.groupId].waveDataAddress;
         }
 
         if (pGroup == NULL) {
@@ -480,7 +747,8 @@ const void* SoundArchivePlayer::detail_GetFileWaveDataAddress(u32 id) const {
         }
 
         SoundArchive::GroupItemInfo item;
-        if (mSoundArchive->detail_ReadGroupItemInfo(id, pos.index, &item)) {
+        if (SAP_LAYOUT(this)->mSoundArchive->detail_ReadGroupItemInfo(
+                id, pos.index, &item)) {
             return static_cast<const u8*>(pGroup) + item.waveDataOffset;
         }
     }
@@ -553,7 +821,7 @@ SoundStartable::StartResult SoundArchivePlayer::detail_SetupSoundImpl(
     }
 
     u32 playerId = sndInfo.playerId;
-    int playerPriority = sndInfo.playerPriority;
+    int playerPriority = sndInfo.playerPriority_; // padded retail layout
 
     SoundStartable::StartInfo::StartOffsetType startType =
         SoundStartable::StartInfo::START_OFFSET_TYPE_MILLISEC;
@@ -660,8 +928,9 @@ SoundStartable::StartResult SoundArchivePlayer::detail_SetupSoundImpl(
 
         pWaveSound->SetId(id);
 
-        SoundStartable::StartResult result = PrepareWaveSoundImpl(
-            pWaveSound, &sndInfo, &waveInfo, startType, startOffset, 1);
+        SoundStartable::StartResult result =
+            PrepareWaveSoundImpl__Q34nw4r3snd18SoundArchivePlayerFPQ44nw4r3snd6detail9WaveSoundPCQ44nw4r3snd12SoundArchive9SoundInfoPCQ44nw4r3snd12SoundArchive13WaveSoundInfoQ54nw4r3snd14SoundStartable9StartInfo15StartOffsetTypei(
+                this, pWaveSound, &sndInfo, &waveInfo, startType, startOffset);
 
         if (result != SoundStartable::START_SUCCESS) {
             pWaveSound->Shutdown();
@@ -682,22 +951,6 @@ SoundStartable::StartResult SoundArchivePlayer::detail_SetupSoundImpl(
 }
 
 namespace {
-
-// Retail member offsets for the SoundArchivePlayer fields this function
-// touches; the shared header layout is not byte-compatible (see also
-// GetSoundPlayer below).
-struct SapFields {
-    char field_0x0[0x10];
-    /*0x10*/ const SoundArchive* mSoundArchive;
-    char field_0x14[0x0C];
-    /*0x20*/ char mSeqCallback[8]; // SeqNoteOnCallback (vtable + player ref)
-    char field_0x28[0x08];
-    detail::SeqTrackAllocator* mSeqTrackAllocator;   // at 0x30
-    void (*mSeqUserprocCallback)(u16, void*, void*); // at 0x34
-    void* mSeqUserprocData;                          // at 0x38
-    u32 mSoundPlayerCount;                           // at 0x3C
-    SoundPlayer* mSoundPlayers;                      // at 0x40
-};
 
 // Retail SoundArchive::SoundInfo layout (an extra field at 0x8 shifts the
 // tail by 4; see SoundInfoLayout in snd_SoundArchiveFile.cpp).
@@ -949,13 +1202,27 @@ SoundStartable::StartResult SoundArchivePlayer::PrepareStrmImpl(
     return SoundStartable::START_SUCCESS;
 }
 
-SoundStartable::StartResult SoundArchivePlayer::PrepareWaveSoundImpl(
-    detail::WaveSound* pSound, const SoundArchive::SoundInfo* pSndInfo,
-    const SoundArchive::WaveSoundInfo* pWsdInfo,
-    SoundStartable::StartInfo::StartOffsetType startType, int startOffset,
-    int voices) {
+// Retail WaveSound::Prepare has NO 'voices' parameter (the sound's own
+// GetVoiceOutCount() supplies the budget); the locked header declares a stale
+// 7-parameter overload. The retail-named 6-parameter entry point is defined
+// with C linkage in snd_WaveSound.cpp - declare it here so call sites emit the
+// retail symbol.
+extern "C" bool Prepare__Q44nw4r3snd6detail9WaveSoundFPCvlQ54nw4r3snd6detail9WsdPlayer15StartOffsetTypelPCQ54nw4r3snd6detail9WsdPlayer11WsdCallbackUl(
+    detail::WaveSound* self, const void* pWsdData, s32 wsdOffset,
+    detail::WsdPlayer::StartOffsetType startType, s32 startOffset,
+    const detail::WsdPlayer::WsdCallback* pCallback, u32 callbackArg);
 
-    const void* pWsdBin = detail_GetFileAddress(pSndInfo->fileId);
+// Retail PrepareWaveSoundImpl has no 'voices' parameter either (locked header
+// declares one), so like snd_WaveSound.cpp the retail-mangled entry point is
+// defined here as a free function with C linkage.
+extern "C" SoundStartable::StartResult
+PrepareWaveSoundImpl__Q34nw4r3snd18SoundArchivePlayerFPQ44nw4r3snd6detail9WaveSoundPCQ44nw4r3snd12SoundArchive9SoundInfoPCQ44nw4r3snd12SoundArchive13WaveSoundInfoQ54nw4r3snd14SoundStartable9StartInfo15StartOffsetTypei(
+    SoundArchivePlayer* self, detail::WaveSound* pSound,
+    const SoundArchive::SoundInfo* pSndInfo,
+    const SoundArchive::WaveSoundInfo* pWsdInfo,
+    SoundStartable::StartInfo::StartOffsetType startType, int startOffset) {
+
+    const void* pWsdBin = self->detail_GetFileAddress(pSndInfo->fileId);
     if (pWsdBin == NULL) {
         return SoundStartable::START_ERR_NOT_DATA_LOADED;
     }
@@ -986,17 +1253,19 @@ SoundStartable::StartResult SoundArchivePlayer::PrepareWaveSoundImpl(
     }
     }
 
-    if (!pSound->Prepare(pWsdBin, pWsdInfo->subNo, wsdOffsetType, startOffset,
-                         voices, &mWsdCallback, pSndInfo->fileId)) {
+    if (!Prepare__Q44nw4r3snd6detail9WaveSoundFPCvlQ54nw4r3snd6detail9WsdPlayer15StartOffsetTypelPCQ54nw4r3snd6detail9WsdPlayer11WsdCallbackUl(
+            pSound, pWsdBin, pWsdInfo->subNo, wsdOffsetType, startOffset,
+            &self->mWsdCallback, pSndInfo->fileId)) {
         return SoundStartable::START_ERR_UNKNOWN;
     }
 
+    // Setter order matters for codegen parity with retail.
     pSound->SetInitialVolume(pSndInfo->volume / 127.0f);
-    pSound->SetChannelPriority(pWsdInfo->channelPriority);
-    pSound->SetReleasePriorityFix(pWsdInfo->releasePriorityFixFlag);
     pSound->SetRemoteFilter(pSndInfo->remoteFilter);
     pSound->SetPanMode(pSndInfo->panMode);
     pSound->SetPanCurve(pSndInfo->panCurve);
+    pSound->SetChannelPriority(pWsdInfo->channelPriority);
+    pSound->SetReleasePriorityFix(pWsdInfo->releasePriorityFixFlag);
 
     return SoundStartable::START_SUCCESS;
 }

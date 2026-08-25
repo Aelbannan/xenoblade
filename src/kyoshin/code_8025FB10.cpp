@@ -327,7 +327,7 @@ static inline CUnkItem8025FB10* findRecByIndex(CUnkObj8025FB10* obj,
     return NULL;
 }
 
-// Target: us-80261c5c - if the ID's bitmap bit is clear return 0; else look
+// us-80261c5c - if the ID's bitmap bit is clear return 0; else look
 // the ID up in the 66-entry table (signed i/6, i%6 -> row/column), walk the
 // entry's +0x18 child chain to its deepest node (retail unrolls 16 levels
 // then delegates the remainder to func_8025FD60) and return the sum of the
@@ -405,7 +405,7 @@ SUM:
     return total;
 }
 
-// Target: us-80261eac - walk the +0x18 linked list to its last node.
+// us-80261eac - walk the +0x18 linked list to its last node.
 // Retail unrolls 5 levels then tail-calls itself. The nested-if shape with
 // the n3-return kept flat reproduces retail's register rotation (n1=r4,
 // n2=r5, n3=r3, n4=r4, n5=r3) and bottom ret-blocks (MWCC_CASES
@@ -432,7 +432,7 @@ extern "C" CUnkList8025FB10* func_8025FD60(CUnkList8025FB10* p) {
     return n1;
 }
 
-// Target: us-80261f04 - like func_8025FB10 but returns the maximum s16
+// us-80261f04 - like func_8025FB10 but returns the maximum s16
 // +0x0C value along the deepest child's +0x1C sibling chain (or 0 when the
 // ID is absent).
 s32 func_8025FDB8(CUnkObj8025FB10* obj, int index) {
@@ -512,7 +512,7 @@ SMAX:
     return best;
 }
 
-// Target: us-8026215c - like func_8025FB10 but returns the maximum f32
+// us-8026215c - like func_8025FB10 but returns the maximum f32
 // +0x10 value along the deepest child's +0x1C sibling chain, else the shared
 // sdata2 constant (lbl_eu_806688B8).
 f32 func_80260010(CUnkObj8025FB10* obj, int index) {
@@ -591,7 +591,7 @@ MMAX:
     return best;
 }
 
-// Target: us-802623b0 - like func_8025FB10 but stores the sum through the
+// us-802623b0 - like func_8025FB10 but stores the sum through the
 // third argument and returns whether the sum is non-zero.
 bool func_80260264(CUnkObj8025FB10* obj, int index, s32* outSum) {
     s32 sum = 0;
@@ -677,7 +677,7 @@ bool func_80260264(CUnkObj8025FB10* obj, int index, s32* outSum) {
     return sum != 0;
 }
 
-// Target: us-80262664 - dual accessor.  Stores the +0x08 sum chain total for
+// us-80262664 - dual accessor.  Stores the +0x08 sum chain total for
 // the ID through outSum, and (only when that sum is non-zero) the +0x10
 // float max through outFloat; returns whether the float max is non-zero.
 bool func_80260518(CUnkObj8025FB10* obj, int index, s32* outSum, f32* outFloat) {
@@ -884,7 +884,7 @@ FSTORE:
     return best != lbl_eu_806688B8;
 }
 
-// Target: us-80262bb8 - dual accessor.  Stores the +0x08 sum chain total for
+// us-80262bb8 - dual accessor.  Stores the +0x08 sum chain total for
 // the ID through out1, and (only when that sum is non-zero) the +0x0C
 // halfword max through out2; returns whether the second total is non-zero.
 bool func_80260A6C(CUnkObj8025FB10* obj, int index, s32* outSum, s32* outMax) {
@@ -1049,7 +1049,7 @@ bool func_80260A6C(CUnkObj8025FB10* obj, int index, s32* outSum, s32* outMax) {
     return max != 0;
 }
 
-// Target: us-802630fc - triple accessor.  Stores the +0x08 sum chain total
+// us-802630fc - triple accessor.  Stores the +0x08 sum chain total
 // for the ID through outSum, then (when non-zero) the +0x0C halfword max
 // through outMax, then (when non-zero) the +0x10 float max through outFloat;
 // returns whether the float max is non-zero.
@@ -1361,13 +1361,13 @@ FSTORE:
     return best != lbl_eu_806688B8;
 }
 
-// Target: us-802638d8 - test bit (index & 0x1F) of bitmap word (index >> 5)
+// us-802638d8 - test bit (index & 0x1F) of bitmap word (index >> 5)
 // at +0x870. Returns 0/1.
 u8 func_8026178C(CUnk8025FB10* obj, u32 index) {
     return (obj->mBitmap[index >> 5] & (1 << (index & 0x1F))) != 0;
 }
 
-// Target: us-80263904 - gated counter add: when the script flag at slot
+// us-80263904 - gated counter add: when the script flag at slot
 // 0x3356 is set, add value to mValues888[index], clamped to [0, 999999].
 void func_802617B8(CUnk8025FB10* obj, int index, int value) {
     // Materializing the negation reproduces retail's cntlzw/srwi idiom.
@@ -1386,7 +1386,7 @@ void func_802617B8(CUnk8025FB10* obj, int index, int value) {
     }
 }
 
-// Target: us-80263990 - set mValues888[index] to value, clamped to [0, 999999].
+// us-80263990 - set mValues888[index] to value, clamped to [0, 999999].
 void func_80261844(CUnk8025FB10* obj, int index, int value) {
     s32* pValue = &obj->mValues888[index];
     *pValue = value;
@@ -1397,7 +1397,7 @@ void func_80261844(CUnk8025FB10* obj, int index, int value) {
     }
 }
 
-// Target: us-802639c8 - add delta to the +0x884 counter, clamped to [0, 999].
+// us-802639c8 - add delta to the +0x884 counter, clamped to [0, 999].
 void func_8026187C(CUnk8025FB10* obj, int delta) {
     s32 value = obj->mCounter884 + delta;
     obj->mCounter884 = value;
@@ -1415,7 +1415,7 @@ void func_802618AC(u8* obj, int value) {
     else if (value > 0x3e7) *field = 0x3e7;
 }
 
-// Target: us-80263a24 - deep-copy the coop object from src to dst, rebasing
+// us-80263a24 - deep-copy the coop object from src to dst, rebasing
 // the internal self-relative pointers by the instance delta.
 void func_eu_80263A24(CUnkCopyObj8025FB10* dst, CUnkCopyObj8025FB10* src) {
     dst->mBulk = src->mBulk;
@@ -1446,7 +1446,7 @@ void func_eu_80263A24(CUnkCopyObj8025FB10* dst, CUnkCopyObj8025FB10* src) {
     }
 }
 
-// Target: us-80263b68 - init the shared text globals and allocate the tag
+// us-80263b68 - init the shared text globals and allocate the tag
 // processor + text buffer on the lib-layout alloc handle. The ctor is called
 // by its literal retail symbol (unmangled __ct__CTagProcessor) so the call
 // reloc name matches retail; its return value (this) flows back into tagMem
@@ -1481,7 +1481,7 @@ void func_80261944(int arg) {
     lbl_eu_80664874 = 0;
 }
 
-// Target: us-80263bf0 - scan the packed message table for the entry covering
+// us-80263bf0 - scan the packed message table for the entry covering
 // idx and stage its string into the text buffer. Entries are [hi id][lo id]
 // followed by a nul-terminated string; the B8 18 marker terminates the table.
 namespace {
@@ -1549,7 +1549,7 @@ void func_80261960(int idx) {
                                         lbl_eu_806688C0, lbl_eu_806688C0, 0);
 }
 
-// Target: us-80263d14 - draw the shared message centered horizontally,
+// us-80263d14 - draw the shared message centered horizontally,
 // above the bottom of the frame buffer (PAL-safe height offset).
 extern "C" void func_80261B98(const wchar_t* text, f32 x, f32 y);
 
@@ -1572,7 +1572,7 @@ void func_80261A80() {
                   efbHeight - bottomOffset);
 }
 
-// Target: us-80263dcc - static shutdown for the shared text state: free the
+// us-80263dcc - static shutdown for the shared text state: free the
 // tag processor and text buffer, then clear all globals.
 void __dt__80261B1C() {
     lbl_eu_80664864 = 0;

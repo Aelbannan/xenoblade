@@ -46,8 +46,8 @@ extern "C" u32 func_801392E4(u32);
 extern "C" u32 func_80139358(u32);
 extern "C" void* func_80138DA4(const char*);
 extern "C" char* func_801355BC();
-extern "C" void* func_801412D0(u32);
-extern "C" u32 func_80140854(void*, u32, u32);
+// func_801412D0 is owned by kyoshin/CUIWindowManager.hpp.
+
 // Font-info lookup (retail pre-mangled name).
 extern "C" void* func_80452C10__11CDeviceFontFUlPQ34nw4r3lyt6Layout(u32, nw4r::lyt::Layout*);
 // Layout-build helpers (retail unmangled).

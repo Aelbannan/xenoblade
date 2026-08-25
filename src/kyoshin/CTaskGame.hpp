@@ -596,8 +596,9 @@ struct CTaskGameCamView {
     f32 field_8;
     f32 field_C;
 };
-extern "C" CTaskGameCamView* func_8049603C(CScn* scene); // typed return: callers deref ->field_* (10140 void* deref)
-// func_804960A8 is declared in CfGameManager.hpp (bool (CScn*)).
+// func_8049603C is declared once in libs/monolib/src/scn/CScn_8049603C.hpp
+// (owner: monolib CScn); include that header where the symbol is used.
+
 
 // Loading-screen object (CLoad) helpers / gates (flat retail names; defined
 // in CLoad.cpp / CfGameManager.cpp / menu TUs).

@@ -4,6 +4,7 @@
 #include <monolib/math/CVec3.hpp>
 #include <monolib/math/CMat33.hpp>
 #include <monolib/math/CQuat.hpp>
+#include "kyoshin/plugin/ocBdat.hpp"
 
 namespace cf {
 struct CfCamFollow; // fwd decl for extern-C imports below (full layout later)
@@ -128,7 +129,6 @@ extern const float lbl_eu_80666340;         // .sdata2 constant
 // func_8006E884 cross-TU imports (flat retail names).
 extern "C" int func_8007560C();             // gate probe
 extern "C" void func_80071B78(void* self, float f);
-extern "C" int func_80496288();             // scene pose gate
 extern "C" void* func_8006D6F8(void* obj);  // word-block source getter
 extern "C" void* func_8006EEF0(void* obj);  // sub-object getter (+4 vec)
 extern "C" int func_802753B8(void* self);   // cam-control register probe
@@ -523,10 +523,9 @@ void func_80071730(void* dst, void* src);            // retail 0x8007215C (16-by
 void func_80071AB0(cf::CfCamFollow* self, void* a, void* b, int c, float f1, float f2); // in-TU stub (defined below its first use)
 __declspec(noinline) void func_800707C0(void* self, void* a, void* b); // in-TU stub, same signature (mixed linkage keeps the unmangled bl)
 int CfRes_getD80Flag();                              // scene flag gate (CUIErrMesWin.hpp)
-// func_8049603C: this TU calls it with no args; CfGameManager.hpp's
-// (UnkScnResult*(CScn*)) decl is renamed out of the way via #define at include.
-extern "C" void* func_8049603C();
-bool func_80074A74(void* self, float input);         // in-TU def (defined below its first use), same signature (mixed linkage)
+// func_8049603C: declared once in libs/monolib/src/scn/CScn_8049603C.hpp
+// (ellipsis form - this TU calls it with no args).
+
 void func_80070EBC(cf::CfCamFollow* self);           // in-TU def (defined below its first use), same signature (mixed linkage)
 ml::CVec3* func_8004B79C(ml::CVec3* out, const ml::CVec3* v); // retail 0x8004BE74 (vec helper)
 int func_8006C640(cf::CfCamFollow* self, u32 mask, int flag); // CfCam sibling (retail 0x8006D098)
@@ -666,7 +665,6 @@ public:
 void* func_8008221C__Q22cf13CfGameManagerFv();       // CfGameManager active-camera lookup (retail 0x80082BA0)
 class UnkClass_800821F8;
 UnkClass_800821F8* func_800821F8__Q22cf13CfGameManagerFv(); // state object getter (retail 0x80082B7C); must match object/CfObjectMove.hpp's declaration
-short* getBdatStringColumnValue(void* bdat, const char* col, int index); // bdat column read (returns short*)
 // .bss second camera-defaults block (retail 0x80527160): three stride-0x34
 // records plus trailing space, keeping the original 0x100 footprint.
 // Per-camera-id default entry in the 0x80527160 table (stride 0x34).

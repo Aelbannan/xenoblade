@@ -1,6 +1,7 @@
 // Auto-scaffolded catalog TU for kyoshin/cf/CtrlEnemy
 // Replace stubs with high-level C/C++ during decomp.
 
+#include "kyoshin/cf/CBattleManagerApi.hpp"
 #include "kyoshin/harness_catalog.hpp"
 
 #include "kyoshin/cf/CtrlEnemy.hpp"

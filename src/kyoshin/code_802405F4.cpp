@@ -10,11 +10,20 @@
 // code_80135FDC.hpp declares lbl_eu_8066A208 as u32; we need the float
 // (.sdata2 epsilon) view, so rename that declaration away.
 #define lbl_eu_8066A208 menuMapSelEpsilonU32Unused
+// CFloorMap.hpp carries a legacy u32-returning pseudo-import for
+// func_8013606C; code_80135FDC.hpp declares the canonical u16 one
+// (matching the definition in code_80135FDC.cpp). Rename the legacy
+// decl away so the two extern "C" declarations don't clash (10197).
+// Only active while code_802405F4.hpp (which pulls in CFloorMap.hpp)
+// is included; #undef'd before the canonical declaration.
+#define func_8013606C menuMapSelMsgLookupU32Unused
 #include <types.h>
+#include "monolib/scn/CScnTimeApi.hpp"
 #include <monolib/math/CVec3.hpp>
 #include <monolib/math/MTRand.hpp>
 
 #include "kyoshin/code_802405F4.hpp"
+#undef func_8013606C
 #include "kyoshin/code_80135FDC.hpp"
 #include "kyoshin/CTaskGame.hpp"
 #include "kyoshin/cf/CfGameManager.hpp"
@@ -170,7 +179,7 @@ void func_80240878(){}
 // object's two output positions. If nothing is alive, clears everything.
 void func_802408D4(MenuFxObj* obj) {
     CfRes_getD80Flag();
-    float delta = func_80496288();
+    float delta = func_80496288(lbl_eu_80663E14);
 
     obj->pos = ml::CVec3::zero;
     obj->pos2 = ml::CVec3::zero;

@@ -10,7 +10,7 @@
 // vtable[0x2BC/4] is-active check on a voice handle.
 typedef int (*IsActiveFunc)(CVoiceHandle*);
 
-// ── Target 1: us-802ae1a8 (func_802ABA70) ──────────────────────────────────
+// us-802ae1a8 (func_802ABA70)
 // If no voice is active, reset the base state triple in self->unk0..unk8
 // from the init table lbl_eu_8053A1AC.
 void func_802ABA70(CVS_THREAD_BATTLE_END_SP* self) {
@@ -27,7 +27,7 @@ void func_802ABA70(CVS_THREAD_BATTLE_END_SP* self) {
     }
 }
 
-// ── Target 2: us-802ae1f8 (func_802ABAC0) ──────────────────────────────────
+// us-802ae1f8 (func_802ABAC0)
 // Remove a voice from the slot array by matching its embedded CCharVoice.
 // Each non-null handle is biased by +0x3E9C before comparing, so a slot is
 // cleared when its embedded voice matches voicePtr.
@@ -49,7 +49,7 @@ void func_802ABAC0(CVS_THREAD_BATTLE_END_SP* self, CCharVoice* voicePtr) {
     }
 }
 
-// ── Target 3: us-802ae038 (func_802AB900) ──────────────────────────────────
+// us-802ae038 (func_802AB900)
 // Advance the special battle-end sequence. Each command string is a 2-byte
 // pair: [0] = the voice-state to trigger on, [1] = an extra parameter whose
 // absolute value (plus 0xCE4) is the voice ID to play. If the matching slot's
@@ -109,7 +109,7 @@ int CVS_THREAD_BATTLE_END_SP::blank1() {
     return BUFFER_SIZE;
 }
 
-// ── Target 4: us-802add28 (__ct__802AB5F0) ────────────────────────────────
+// us-802add28 (__ct__802AB5F0)
 // Constructor / factory for the special battle-end voice thread. Scans the
 // global voice-manager circular node list for handles whose voice is
 // currently INACTIVE, then selects a command string from the command-list

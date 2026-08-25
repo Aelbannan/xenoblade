@@ -14,6 +14,7 @@
 #define func_80053960 func_80053960_typed_hidden
 
 #include "kyoshin/action/CActParamAnim.hpp"
+#include "monolib/scn/CScnTimeApi.hpp"
 #undef func_80055B88
 #undef func_80053960
 
@@ -1462,10 +1463,10 @@ extern "C" int func_8004B3D8(u32* flags, u32 mask) {
 
 extern "C" void* func_8004B9B8(CActParamAnim* self) {
     void* ptr = *(void**)(reinterpret_cast<u8*>(self) + 8);
-    if (ptr == NULL) {
-        return *(void**)(reinterpret_cast<u8*>(self) + 0x4B4);
+    if (ptr != NULL) {
+        return *(void**)(reinterpret_cast<u8*>(ptr) + 24);
     }
-    return *(void**)(reinterpret_cast<u8*>(ptr) + 24);
+    return *(void**)(reinterpret_cast<u8*>(self) + 0x4B4);
 }
 
 void CActParamAnim::func_8004DAE0() {}
@@ -3637,15 +3638,17 @@ void func_800527E8(CActParamAnim* self) {
     CActParamAnimStateView* view = reinterpret_cast<CActParamAnimStateView*>(self);
     f32 animSpeed = view->field390;
     f32 field380 = view->field380;
-    f32 frameScale = animSpeed * CDeviceVI::getSecPerFrame();
-    f32 x = view->field3C0;
-    f32 z = view->field3C8;
+    f32 secPerFrame = CDeviceVI::getSecPerFrame();
     f32 field384 = view->field384;
-    f32 limit = (field384 * field380) * frameScale;
+    f32 frameScale = animSpeed * secPerFrame;
+    f32 z = view->field3C8;
+    f32 speedProd = field384 * field380;
     Vec v;
+    f32 x = view->field3C0;
     v.x = x;
     v.y = lbl_eu_80665EA0;
     v.z = z;
+    f32 limit = speedProd * frameScale;
     if (PSVECMag(&v) > limit) {
         if (v.x * v.x + v.y * v.y + v.z * v.z == lbl_eu_80665EA0) {
             *reinterpret_cast<ml::CVec3*>(&v) = ml::CVec3::zero;
@@ -4164,12 +4167,73 @@ void func_80051A9C(CActParamAnim* self) {
 }
 
 
+
+// Null-check guards: early return on null, otherwise dispatch into view pipeline
+extern "C" void func_8004BC64(CActParamAnim* self, s32 param) {
+    u8* B = reinterpret_cast<u8*>(self);
+    if (param != 0) {
+        u32 flags = *(u32*)(B + 12);
+        *(u8*)(B + 0x4DA) = 30;
+        *(u32*)(B + 12) = flags | 0x04000000u;
+        return;
+    }
+    *(u32*)(B + 12) &= ~0x04000000u;
+}
+
+extern "C" void* func_8004C5EC(void* self) {
+    void* p = *(void**)(reinterpret_cast<u8*>(self) + 0x2FC);
+    if (p != 0)
+        return p;
+    return *(void**)(reinterpret_cast<u8*>(self) + 0x27C);
+}
+
+extern "C" f32 func_8004CC40(f32 a, f32 b) {
+    return lbl_eu_80665ED0 * nw4r::math::Atan2FIdx(a, b);
+}
+
+extern "C" void func_8004CEF8(void* self, u32 value) {
+    *(u32*)(reinterpret_cast<u8*>(self) + 0x374) = value;
+}
+
+extern "C" void func_8004DACC(void* self) {
+    u8* B = reinterpret_cast<u8*>(self);
+    *(u8*)(B + 0x4BE) = 0;
+    *(u8*)(B + 0x4BF) = 0;
+    *(u32*)(B + 0x4C0) = 0;
+}
+
+extern "C" void func_80051CAC(CActParamAnim* self) {
+    u32 flags = *(u32*)(reinterpret_cast<u8*>(self) + 12);
+    u32 masked = flags & ~0x10u;
+    *(u32*)(reinterpret_cast<u8*>(self) + 12) = masked;
+    if ((flags & 2) == 0)
+        return;
+    masked &= ~0x80u;
+    *(u8*)(reinterpret_cast<u8*>(self) + 0x498) = 0;
+    *(u32*)(reinterpret_cast<u8*>(self) + 12) = masked;
+}
+
+extern "C" void func_8004B884(CActParamAnim* self, f32 value) {
+    void* ptr = *(void**)(reinterpret_cast<u8*>(self) + 928);
+    if (ptr == 0)
+        return;
+    func_80484F80(ptr, value);
+}
+
+extern "C" int func_8004B990(void* obj, u32 sel) {
+    if (*(void**)((u8*)obj + 928) == 0)
+        return 0;
+    if (sel != 0)
+        return func_80485464(*(u8**)((u8*)obj + 928), sel);
+    return func_80485244(*(u8**)((u8*)obj + 928));
+}
+
 extern "C" void func_80051AA8(CActParamAnim* self, u32 param) {
     if (param != 0) {
         *(u32*)(reinterpret_cast<u8*>(self) + 12) |= 2;
         return;
     }
-    *(u32*)(reinterpret_cast<u8*>(self) + 12) &= 0xBFFFFFFFu;
+    *(u32*)(reinterpret_cast<u8*>(self) + 12) &= ~2u;
 }
 
 

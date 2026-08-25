@@ -150,7 +150,8 @@ extern "C" {
 
     // bdat helpers
     void* getFP__FPCc(const char* name);
-    const char* getBdatStringColumnValue(void* bdat, const char* col, u32 index);
+    // getBdatStringColumnValue: canonical decl in plugin/ocBdat.hpp
+    // (pulled in via harness_catalog.hpp).
     u32 func_8003B1EC(void* bdat);
     void func_8003AA34();
 

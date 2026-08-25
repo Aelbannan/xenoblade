@@ -341,7 +341,7 @@ void sinit_800FEA14() {
 extern "C" void func_800FD774(cf::CfSelectorInner* list) {}
 
 // ---------------------------------------------------------------------
-// Target: func_800FDE4C (retail 0x800FE934, size 0xAC).
+// func_800FDE4C (retail 0x800FE934, size 0xAC).
 // Re-initialises the selector state when the singleton exists.
 // ---------------------------------------------------------------------
 void func_800FDE4C(cf::CfObjectSelectorData* obj, u32 a4, u32 a5) {
@@ -381,7 +381,7 @@ void func_800FDE4C(cf::CfObjectSelectorData* obj, u32 a4, u32 a5) {
 }
 
 // ---------------------------------------------------------------------
-// Target: __ct__800FDB4C (retail 0x800FE634, size 0xD0).
+// __ct__800FDB4C (retail 0x800FE634, size 0xD0).
 // Singleton factory: allocate the 0xC188 data block, construct the four
 // resource lists (two top-level, one inside each inner selector), then
 // reset the scalar state fields.
@@ -417,7 +417,7 @@ void __ct__800FDB4C() {
 }
 
 // ---------------------------------------------------------------------
-// Target: __dt__800FDC1C (retail 0x800FE704, size 0x230).
+// __dt__800FDC1C (retail 0x800FE704, size 0x230).
 // Singleton destroy: deleting destructor of the data block (four member
 // destructors inlined) then clear the singleton pointer.
 // ---------------------------------------------------------------------
@@ -429,7 +429,7 @@ void __dt__800FDC1C() {
 }
 
 // ---------------------------------------------------------------------
-// Target: __dt__800FDEF8 (retail 0x800FE9E0, size 0x20C).
+// __dt__800FDEF8 (retail 0x800FE9E0, size 0x20C).
 // Non-deleting reset: re-initialise the scalar state and clear the four
 // resource lists (walk + free + reset capacity) when the singleton exists.
 // ---------------------------------------------------------------------
@@ -460,7 +460,7 @@ void __dt__800FDEF8(cf::CfObjectSelectorData* obj) {
 }
 
 // ---------------------------------------------------------------------
-// Target: func_800FE860 (retail 0x800FF348, size 0xB0).
+// func_800FE860 (retail 0x800FF348, size 0xB0).
 // Toggles the 0x40 "selected" bits on both selector-target states and the
 // 0x100 "active" bit, but only when the request direction matches the
 // current activation state.

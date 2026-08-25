@@ -1,8 +1,6 @@
 // Auto-scaffolded catalog TU for kyoshin/CTutorialList
 // Replace stubs with high-level C/C++ during decomp.
 
-// func_8049603C: prevent cross-header return-type conflicts.
-#define func_8049603C tutorialList9603CUnused
 #include "kyoshin/harness_catalog.hpp"
 #include "kyoshin/CTutorialList.hpp"
 #include "kyoshin/CSortMenu.hpp"

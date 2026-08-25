@@ -585,7 +585,6 @@ extern char  lbl_eu_80527638[0xA]; // data column-name buffer (digit at +8)
 extern f32   lbl_eu_8066645C;      // sdata2 compare constant
 extern "C" f32   Atan2FIdx__Q24nw4r4mathFff(f32 y, f32 x);
 extern "C" int   CfRes_getD80Flag();
-extern "C" f32   func_80496288();
 extern "C" void  func_800756D0(ml::CVec3* out, CinemCamSrc* src);
 extern "C" int func_8007AA4C(CfCamEventManager* self);
 extern "C" int func_80079E04(CfCamEventManager* self);

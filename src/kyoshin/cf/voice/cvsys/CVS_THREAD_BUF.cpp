@@ -9,7 +9,7 @@ void __ct__802A4E48(){}
 
 void func_802A5174(){}
 
-// ── Target 3: us-802a76d8 (func_802A4FA4) ─────────────────────────────────
+// us-802a76d8 (func_802A4FA4)
 // Advance the current voice slot: restore the base state triple, then if the
 // current slot's voice is still strongly active pull the next line; otherwise
 // (no handle / active / play rejected) restart via the playback virtual.
@@ -47,7 +47,7 @@ restart:
     self->func_802A3B50();
 }
 
-// ── Target 1: us-802a7794 (func_802A5060) ─────────────────────────────────
+// us-802a7794 (func_802A5060)
 // Advance the slot index; when it passes the slot limit, restart the thread,
 // otherwise re-copy the init-state triple into the base fields.
 void func_802A5060(CVS_THREAD_BUF* self) {
@@ -69,7 +69,7 @@ void func_802A5060(CVS_THREAD_BUF* self) {
     }
 }
 
-// ── Target 2: us-802a7814 (func_802A50E0) ─────────────────────────────────
+// us-802a7814 (func_802A50E0)
 // Remove a released voice from the three slots: the base handler runs first,
 // then each slot whose biased embedded CCharVoice matches is cleared. Written
 // unrolled -- retail shows three independent check/store sequences.

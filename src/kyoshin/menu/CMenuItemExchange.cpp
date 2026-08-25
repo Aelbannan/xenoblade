@@ -97,7 +97,7 @@ extern "C" void* __dt__17CMenuItemExchangeFv(void* self, int flags) {
 #pragma pop
 
 // ---------------------------------------------------------------------------
-// Target: CMenuItemExchange::Init (us-801bf844)
+// CMenuItemExchange::Init (us-801bf844)
 // Construct each embedded widget through a stack temporary (retail unmangled
 // ctor), copy its body into the member with the retail copy helper, then
 // destroy the temporary. Finishes by registering the OC render callback on

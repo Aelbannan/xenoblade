@@ -5,24 +5,13 @@
 //
 // CTaskGame.hpp:571 also declares lbl_eu_80663E24 non-volatile, which
 // conflicts with the volatile declaration in CfObjectMove.hpp (reached via
-// the CBattleManager.hpp include below), CTaskGame.hpp:486 declares
-// func_8004392C with a u32 third arg (conflicting with CVision.hpp:170's
-// void* third arg), and CTaskGame.hpp:559 declares func_8049603C with a
-// CScn* arg (conflicting with CSuddenCommu.hpp:320's void* arg). Rename all
-// three CTaskGame.hpp copies out of the way (same scheme as
-// CMenuKizunaTalk.hpp's func_801361E8 rename); this TU uses none of them.
+// the CBattleManager.hpp include below). Rename that CTaskGame.hpp copy out
+// of the way (same scheme as CMenuKizunaTalk.hpp's func_801361E8 rename).
+// (func_8004392C now has a single unified decl.)
 #define lbl_eu_80663E24 artsSelectCtaskGameE24Unused
-// Several transitively included cf headers declare
-// getInstance__Q22cf14CBattleManagerFv as extern "C" void*, conflicting with
-// CfGameManager.hpp:662's CBattleManagerView* version. This TU only uses the
-// cf::CBattleManager::getInstance() member (different spelling), so rename the
-// free-function copies out of the way across the whole include closure.
-#define getInstance__Q22cf14CBattleManagerFv artsSelectBmGetInstanceUnused
-#define func_8004392C artsSelectCtaskGame4392CUnused
-#define func_8049603C artsSelectCtaskGame9603CUnused
+// The battle-manager singleton getter has ONE canonical declaration in
+// kyoshin/cf/CBattleManagerApi.hpp; no rename guards are needed anymore.
 #include "kyoshin/CTaskGame.hpp"
-#undef func_8049603C
-#undef func_8004392C
 #undef lbl_eu_80663E24
 
 #include "kyoshin/menu/CMenuArtsSelect.hpp"
@@ -44,59 +33,56 @@
 #undef func_8012FD60
 #include <nw4r/math.h>
 
-// CVision.hpp declares func_80496288 with a void* arg, conflicting with
-// CfObjectMove.hpp's CScn* version (both pulled in via CBattleManager.hpp).
-// This TU does not use func_80496288; pre-include CVision.hpp with the
-// declaration renamed so only the CScn* version survives. Its lbl_eu_80663E24
-// copy is volatile, which now clashes with CfObjectMove.hpp's non-volatile
-// extern (recently aligned with CSystemWindow.hpp); this TU reads E24 via the
-// CfObjectMove copy, so rename CVision's out of the way too.
-#define func_80496288 artsSelectVisionTimeQueryUnused
+// CVision.hpp's lbl_eu_80663E24 copy is volatile, which clashes with
+// CfObjectMove.hpp's non-volatile extern (recently aligned with
+// CSystemWindow.hpp); this TU reads E24 via the CfObjectMove copy, so rename
+// CVision's copy out of the way. (CVision.hpp's func_80496288 copy is gone;
+// the symbol now has a single unified decl.)
 #define lbl_eu_80663E24 artsSelectVisionE24Unused
 #include "kyoshin/cf/CVision.hpp"
 #undef lbl_eu_80663E24
-#undef func_80496288
 // CSuddenCommu.hpp's import signatures now match the chain / CfObjectActor
-// headers (see CSuddenCommu.hpp); only its func_8049603C (void* arg vs
-// CTaskGame.hpp's CScn* version pulled in via CBattleManager.hpp) stays
-// renamed.
-// CSuddenCommu.hpp:280 also declares getInstance__Q22cf14CBattleManagerFv as
-// void*, conflicting with CfGameManager.hpp:662's CBattleManagerView* version
-// (both extern "C"). This TU uses the cf::CBattleManager::getInstance() member,
-// so rename CSuddenCommu's copy out of the way.
-#define func_8049603C artsSelectSuddenCommuCamViewUnused
+// headers (see CSuddenCommu.hpp); its battle-manager singleton copy is now
+// unified in kyoshin/cf/CBattleManagerApi.hpp.
+// CSuddenCommu.hpp:285 also declares func_8017FD44 with a void* arg; this TU
+// uses the C-linkage no-arg version (unmangled retail symbol).
+#define func_8017FD44 artsSelectSuddenCommuFd44Unused
 #include "kyoshin/cf/CSuddenCommu.hpp"
-#undef func_8049603C
+#undef func_8017FD44
 // CChain.hpp:737 declares func_80107C54 with (void*, int), conflicting with
 // this TU's (CMenuArtsSelect*, s32) extern "C" import used by the matched
 // func_80104454; rename the CChain.hpp copy out of the way. Its volatile
 // lbl_eu_80663E24 also clashes with CfObjectMove.hpp's non-volatile extern.
 #define func_80107C54 artsSelectChainSlotProbeUnused
+// CChainActorList.hpp (via CChain.hpp) declares func_8017FD44(void*);
+// this TU uses the C-linkage no-arg version.
+#define func_8017FD44 artsSelectChainFd44Unused
 #define lbl_eu_80663E24 artsSelectChainE24Unused
 #include "kyoshin/cf/chain/CChain.hpp"
 #undef lbl_eu_80663E24
 #undef func_80107C54
+#undef func_8017FD44
 #include "kyoshin/cf/CBattleManager.hpp"
-#define artsSelectBmGetInstanceUnused artsSelectBmGetInstanceCfgm
 #include "kyoshin/cf/CfGameManager.hpp"
-#undef artsSelectBmGetInstanceUnused
-#undef getInstance__Q22cf14CBattleManagerFv
 // code_80135FDC.hpp:168 declares lbl_eu_8066A208 as u32 (conflicting with
 // CfObjectMove.hpp:97's const float), :172 declares lbl_eu_80663E24 as
-// non-volatile u32 (conflicting with CfObjectMove.hpp:71's volatile u32), and
-// :218 declares void* getBdatStringColumnValue (conflicting with
-// CfGimmick.hpp:159's u32 version). This TU uses none of these copies.
+// non-volatile u32 (conflicting with CfObjectMove.hpp:71's volatile u32).
+// This TU uses none of these copies.
 #define lbl_eu_8066A208 artsSelectCode35FDCepsilonUnused
 #define lbl_eu_80663E24 artsSelectCode35FDCe24Unused
-#define getBdatStringColumnValue artsSelectCode35FDCBdatColumnUnused
 #include "kyoshin/code_80135FDC.hpp"
-#undef getBdatStringColumnValue
 #undef lbl_eu_80663E24
 #undef lbl_eu_8066A208
 
 #include "decomp.h"
 #include <revolution/GX.h>
 #include <stdio.h>
+
+// sdata2 conversion-magic doubles (2^52 family) are defined globally in
+// port/data_defs.cpp (lbl_eu_80666F30 / lbl_eu_80666F38); declaring them here
+// lets conversions reference the shared .sdata2 pool entries by retail name.
+extern const double lbl_eu_80666F30;  // s16 -> f32 magic (2^52 + 2^31)
+extern const double lbl_eu_80666F38;  // u16 -> f32 magic (2^52)
 
 
 extern "C" {
@@ -258,6 +244,41 @@ struct ArtsTableVtbl {
     virtual f32 mFn14();  // #3 => +0x14: getMax
 };
 
+// func_80105D54 support types.
+
+// Opaque scene pose object (func_80496264 result; passed to func_8049B59C).
+struct ArtsSelPose {
+    u8 _pad00[0x10];
+};
+
+// 12-byte rodata id table copied by value into func_80105D54 locals.
+struct ArtsSelEnumIds {
+    u32 id[3];
+};
+
+// 8-byte CfObjEnumList holder (func_80043D90 ctor / __dt__80043E88 dtor).
+struct ArtsEnumHolder {
+    u8 _data[8];
+};
+
+// Enum-list handle returned by func_80043F18 (element count at +0x620).
+struct ArtsEnumList {
+    u8 _pad00[0x620];
+    u32 mCount620;  // +0x620
+};
+
+// One enum-list slot (func_800F6EC0 result): +0x4 object, compared by +0x8C.
+struct ArtsEnumSlot {
+    u8 _pad00[4];
+    CfObjectMoveArtsView* mObj;  // +0x04
+};
+
+// 5-byte mode table assembled on stack in func_80105D54 (word copy + byte).
+struct ArtsSelModeTbl {
+    u32 data;
+    u8 extra;
+};
+
 
 
 // lbl_eu_80663E24 / lbl_eu_80663E28 are declared by CfObjectMove.hpp, which
@@ -306,8 +327,36 @@ extern "C" void func_80107580(CMenuArtsSelect*);
 extern "C" void func_801072E0(CMenuArtsSelect*);
 extern "C" int func_80107970(CMenuArtsSelect*, s32);
 extern "C" int func_80107C54(CMenuArtsSelect*, s32);
+// Move calls these helpers through their UNMANGLED retail symbols (retail
+// reloc targets are the C-linkage names, not the mangled member names).
+extern "C" void func_80105A34(CMenuArtsSelect* self);
+extern "C" void func_80105D54(CMenuArtsSelect* self);
+extern "C" void func_80106450(CMenuArtsSelect* self);
+extern "C" void func_801065E4(CMenuArtsSelect* self);
+extern "C" void func_80106900(CMenuArtsSelect* self);
+extern "C" void func_80106C30(CMenuArtsSelect*, s32);
+extern "C" void func_80106EC8(CMenuArtsSelect*, s32);
+extern "C" void func_801071B8(CMenuArtsSelect*, s32);
+extern "C" void func_801080F8(CMenuArtsSelect*);
 extern "C" int func_80154168(const u8*);
 extern "C" int func_8015419C(u8*);
+// func_80105D54 imports (unmangled retail names)
+void func_8010ED38(void*);
+void func_8010ED58(void*);
+void func_8010A710(void*);
+void func_8010A7A8(void*);
+int func_8017FD44();
+void* func_800B8B94(s32 id);                 // actor-container lookup by id
+void* func_80496264(void* scn, int index);   // matches CfCam.hpp decl
+void func_8049B59C(f32* out, void* pose, nw4r::math::VEC3* pos);
+void func_80043D90(void* holder);
+void* func_80043F18(void* holder);
+void __dt__80043E88(void* holder, int flag);
+void func_800F4A98(void* list, u32 type, u32 filter);
+void* func_800F6EC0(void* list, u32 index);
+extern const u32 lbl_eu_80666F54;  // mode-table word
+extern const u8 lbl_eu_80666F58;   // mode-table extra byte
+extern const ArtsSelEnumIds lbl_eu_804FD128;
 // Unmangled imports used by the batch-14o targets (no header declares these in
 // this TU's include closure; retail symbols are C-linkage names).
 extern "C" FourShorts func_80139658(nw4r::lyt::Layout*, const char*, int);
@@ -319,11 +368,6 @@ extern "C" u8* func_8012FD60(const char* name);
 extern "C" u8* func_8012FC74(const char* name);
 extern "C" void func_80137F88(nw4r::lyt::Pane* pane, u8* tex);
 extern s16 lbl_eu_804FD11C[];  // rodata selTab (s16[5]) - same table as lbl_eu_804FD0D0+0x4c
-// sdata2 conversion-magic doubles: MWCC's constant pool reuses these named
-// .sdata2 symbols instead of emitting TU-local @N labels for the u16/s16 ->
-// f32 conversions (CfResReloadImpl.cpp idiom).
-double lbl_eu_80666F30 = 0x4330000080000000ll;  // s16 -> f32 magic (2^52 + 2^31)
-double lbl_eu_80666F38 = 0x4330000000000000ll;  // u16 -> f32 magic (2^52)
 extern "C" int func_800DA06C(void*, void*);
 extern "C" void func_8010EDDC(void*, u8);
 extern "C" void func_8010ED18(void*);
@@ -360,12 +404,18 @@ extern const f32 lbl_eu_80666F5C; // frame-count limit (func_80106450 unk344 cap
 // addends - see hexdiff reloc-drift notes).
 extern char lbl_eu_8052C1C0[];
 extern char lbl_eu_8052C084[];
-extern u32 __ptmf_null[3];
+// Retail .data label holding the null PTMF triple (same idiom as
+// CMenuBattleDamage's matched ctor; referencing __ptmf_null directly drifts
+// both the reloc name and the @ha/@l split).
+extern u32 lbl_eu_80535AD0[3];
 void __ct__8CProcessFv(CProcess*);
 void __ct__17UnkClass_8045F564Fv(UnkClass_8045F564*);
 }
 
 // Retail linker name is unlengthened `__ct__CMenuArtsSelect` (not __ct__15...).
+// Statement order mirrors the FULL_MATCH CMenuBattleDamage ctor in this TU
+// family: base ctor, interim vtable, final MI vtable + interface pieces, PTMF
+// null copies, then the field clears and the 9-iteration array clear loop.
 extern "C" CMenuArtsSelect* __ct__CMenuArtsSelect(CMenuArtsSelect* self, CScn* scn) {
     CMenuArtsSelect* p;
     char* vtFinal;
@@ -376,55 +426,49 @@ extern "C" CMenuArtsSelect* __ct__CMenuArtsSelect(CMenuArtsSelect* self, CScn* s
     u32 ptmfWord1;
     u32 ptmfWord2;
     u32 z;
-    u32 i;
-    u32 left;
-    s32 modeB;
-    s32 modeC;
-    s32 mode10;
-    s32 mode9;
-    s32 mode4;
-    s8 neg1;
-    u8* base;
 
     p = self;
     __ct__8CProcessFv(reinterpret_cast<CProcess*>(p));
     // Interim CProcess vtable, then final MI vtable + interface pieces.
-    p->vtable = lbl_eu_8052C1C0;
+    p->vtable = reinterpret_cast<void*>(lbl_eu_8052C1C0);
     vtFinal = lbl_eu_8052C084;
     // Retail: lwzu of [0], then stw [1]@+0x40 before [0]@+0x3C.
-    ptmfWord0 = __ptmf_null[0];
     vtWork = vtFinal + 0x24;
     vtScn = vtFinal + 0xAC;
+    ptmfWord0 = lbl_eu_80535AD0[0];
     z = 0;
-    ptmfWord1 = __ptmf_null[1];
+    ptmfWord1 = lbl_eu_80535AD0[1];
     p->ptmfMove[1] = ptmfWord1;
     vtInfo = vtFinal + 0xBC;
     p->ptmfMove[0] = ptmfWord0;
-    ptmfWord2 = __ptmf_null[2];
+    ptmfWord2 = lbl_eu_80535AD0[2];
     p->ptmfMove[2] = ptmfWord2;
-    ptmfWord0 = __ptmf_null[0];
-    ptmfWord1 = __ptmf_null[1];
+    ptmfWord0 = lbl_eu_80535AD0[0];
+    ptmfWord1 = lbl_eu_80535AD0[1];
     p->ptmfDraw[1] = ptmfWord1;
     p->ptmfDraw[0] = ptmfWord0;
-    ptmfWord2 = __ptmf_null[2];
+    ptmfWord2 = lbl_eu_80535AD0[2];
     p->ptmfDraw[2] = ptmfWord2;
     p->unk54 = (u8)z;
     p->unk55 = (u8)z;
-    p->vtable = vtFinal;
-    p->vtWorkEvent = vtWork;
-    p->vtScnRender = vtScn;
-    p->vtObjectInfo = vtInfo;
+    p->vtable = reinterpret_cast<void*>(vtFinal);
+    p->vtWorkEvent = reinterpret_cast<void*>(vtWork);
+    p->vtScnRender = reinterpret_cast<void*>(vtScn);
+    p->vtObjectInfo = reinterpret_cast<void*>(vtInfo);
     p->mScn = scn;
     p->unk68 = z;
     __ct__17UnkClass_8045F564Fv(&p->unk6C);
 
-    mode9 = 9;
+    // Loop-only locals declared at first assignment: MWCC colors callee-saved
+    // registers by VR birth order, and the retail prologue only saves
+    // r29-r31, so these must not be born at function entry.
+    s32 mode9 = 9;
     f32 zeroF = lbl_eu_80666F28;
-    mode4 = 4;
-    neg1 = -1;
-    modeB = 0xb;
-    modeC = 0xc;
-    mode10 = 0x10;
+    s32 mode4 = 4;
+    s8 neg1 = -1;
+    s32 modeB = 0xb;
+    s32 modeC = 0xc;
+    s32 mode10 = 0x10;
     // Field clears must use z (r31). Setting i=0 before those stores makes
     // MWCC CSE the zeros onto the loop index (r8) and breaks ~20 stw encodings.
     p->unk7C = neg1;
@@ -456,9 +500,9 @@ extern "C" CMenuArtsSelect* __ct__CMenuArtsSelect(CMenuArtsSelect* self, CScn* s
     p->unk348 = (u8)z;
 
     // for(left!=0;left--) -> mtctr/bdnz (MWCC_CASES 8c13).
-    i = 0;
-    base = reinterpret_cast<u8*>(p);
-    for (left = mode9; left != 0; left--) {
+    u32 i = 0;
+    u8* base = reinterpret_cast<u8*>(p);
+    for (u32 left = mode9; left != 0; left--) {
         if ((u8)i < 8) {
             *reinterpret_cast<u32*>(base + 0xa4 + ((u8)i << 2)) = z;
         }
@@ -595,36 +639,40 @@ void CTTask<IUIBattle>::Draw() {
 template<>
 CTTask<IUIBattle>::~CTTask() {}
 
+// Retail rematerializes the arc base per region rather than caching one copy;
+// spell it inline via macro so MWCC sees each reference directly.
+#define arc lbl_eu_804FD1E0
 void CMenuArtsSelect::Init() {
-    mtl::ALLOC_HANDLE handle = mtl::MemManager::getHandleMEM2();
-    unk6C.createRegion(handle, 0x17a00, lbl_eu_804FD1E0, 0);
+    // Table pointers declared once: MWCC pins them in persistent registers
+    // (retail r26/r29/r28) for the whole function.
+    // Position/scale tables live for the whole function (retail pins them in
+    // r26/r29/r28); every helper block derives its lookups from them.
+    unk6C.createRegion(mtl::MemManager::getHandleMEM2(), 0x17a00, lbl_eu_804FD1E0, 0);
     Class_8045F858 regionGuard(&unk6C);
 
     mtl::MemManager::func_80434A4C(0);
-    u32 allocHandle = getAllocHandle__10CLibLayoutFv();
-    void* tagProc = allocate__Q23mtl10MemManagerFUlUl(0x858, allocHandle);
+    void* tagProc = allocate__Q23mtl10MemManagerFUlUl(0x858, getAllocHandle__10CLibLayoutFv());
     if (tagProc != NULL) {
         __ct__CTagProcessor(tagProc);
     }
     unk294 = static_cast<nw4r::lyt::Layout*>(tagProc);
 
-    nw4r::lyt::ArcResourceAccessor* accessor = func_801355F4();
-    unk68 = reinterpret_cast<u32>(accessor);
+    unk68 = reinterpret_cast<u32>(func_801355F4());
 
-    func_80136E84(&unk80, accessor, lbl_eu_804FD1E0 + 0x10);
-    func_80136F08(unk80, &unk84, accessor, lbl_eu_804FD1E0 + 0x27);
-    func_80136F08(unk80, &unk88, accessor, lbl_eu_804FD1E0 + 0x41);
+    func_80136E84(&unk80, reinterpret_cast<nw4r::lyt::ArcResourceAccessor*>(unk68), arc + 0x10);
+    func_80136F08(unk80, &unk84, reinterpret_cast<nw4r::lyt::ArcResourceAccessor*>(unk68), arc + 0x27);
+    func_80136F08(unk80, &unk88, reinterpret_cast<nw4r::lyt::ArcResourceAccessor*>(unk68), arc + 0x41);
 
     {
         nw4r::lyt::Pane* rootPane = unk80->GetRootPane();
         u8* fontObj = func_80452C10__11CDeviceFontFUlPQ34nw4r3lyt6Layout(1, unk80);
         typedef u32 (*FontVFn)(void*);
-        u32 fontResult = (*reinterpret_cast<FontVFn**>(fontObj))[0x24 / 4](fontObj);
-        func_8013676C(rootPane, fontResult);
+        u32 lineSpace = (*reinterpret_cast<FontVFn**>(fontObj))[0x24 / 4](fontObj);
+        func_8013676C(rootPane, lineSpace);
     }
 
     {
-        nw4r::lyt::Pane* pane = unk80->GetRootPane()->FindPaneByName(lbl_eu_804FD1E0 + 0x5c, true);
+        nw4r::lyt::Pane* pane = unk80->GetRootPane()->FindPaneByName(arc + 0x5c, true);
         if (pane != NULL) {
             // TextBox::mpTagProcessor at offset 0xF8
             struct TextBoxLayout { u8 _[0xF8]; void* mpTagProcessor; };
@@ -632,66 +680,50 @@ void CMenuArtsSelect::Init() {
         }
     }
 
-    func_80136B4C(unk80, lbl_eu_804FD1E0 + 0x69, NULL, 0);
-    func_80136B4C(unk80, lbl_eu_804FD1E0 + 0x5c, NULL, reinterpret_cast<u32>(unk294));
+    func_80136B4C(unk80, arc + 0x69, NULL, 0);
+    func_80136B4C(unk80, arc + 0x5c, NULL, reinterpret_cast<u32>(unk294));
 
     unk80->SetAnimationEnable(unk88, false);
     unk80->SetAnimationEnable(unk84, true);
     unk80->Animate(0);
 
-    func_80136E84(&unk8C, accessor, lbl_eu_804FD1E0 + 0x74);
-    func_80136F08(unk8C, &unk90, accessor, lbl_eu_804FD1E0 + 0x8d);
-    func_80136F08(unk8C, &unk94, accessor, lbl_eu_804FD1E0 + 0xa9);
+    // Table pointers stay live from here to the last layout group (retail
+    // pins them in r26/r29/r28).
+    s16* posX = reinterpret_cast<s16*>(lbl_eu_804FD0D0);         // +0x00: s16[9]
+    s16* posY = reinterpret_cast<s16*>(lbl_eu_804FD0D0 + 0x14);  // +0x14: s16[9]
+    f32* scale = reinterpret_cast<f32*>(lbl_eu_804FD0D0 + 0x28); // +0x28: f32[9]
+
+    func_80136E84(&unk8C, reinterpret_cast<nw4r::lyt::ArcResourceAccessor*>(unk68), arc + 0x74);
+    func_80136F08(unk8C, &unk90, reinterpret_cast<nw4r::lyt::ArcResourceAccessor*>(unk68), arc + 0x8d);
+    func_80136F08(unk8C, &unk94, reinterpret_cast<nw4r::lyt::ArcResourceAccessor*>(unk68), arc + 0xa9);
 
     {
-        s16* posX = reinterpret_cast<s16*>(lbl_eu_804FD0D0 + 0x00);
-        s16* posY = reinterpret_cast<s16*>(lbl_eu_804FD0D0 + 0x14);
-        f32* scale = reinterpret_cast<f32*>(lbl_eu_804FD0D0 + 0x28);
-
-        s32 idx = unk324;
-        nw4r::lyt::Pane* pane = unk8C->GetRootPane()->FindPaneByName(lbl_eu_804FD1E0 + 0xc7, true);
-        {
-            s16* posX = reinterpret_cast<s16*>(lbl_eu_804FD0D0 + 0x00);
-            s16* posY = reinterpret_cast<s16*>(lbl_eu_804FD0D0 + 0x14);
-            f32* scale = reinterpret_cast<f32*>(lbl_eu_804FD0D0 + 0x28);
-            nw4r::math::VEC3 trans = pane->GetTranslate();
-            trans.x = static_cast<f32>(posX[idx]);
-            trans.y = static_cast<f32>(posY[idx]);
-            pane->SetTranslate(trans);
-        }
-        {
-            f32 s = scale[idx];
-            pane->SetScale(nw4r::math::VEC2(s, s));
-        }
-        pane->SetVisible(false);
+        nw4r::lyt::Pane* pane = unk8C->GetRootPane()->FindPaneByName(arc + 0xc7, true);
+        nw4r::math::VEC3 trans = pane->GetTranslate();
+        trans.x = static_cast<f32>(posX[unk324]);
+        trans.y = static_cast<f32>(posY[unk324]);
+        pane->SetTranslate(trans);
+        f32 s = scale[unk324];
+        pane->SetScale(nw4r::math::VEC2(s, s));
     }
+    unk8C->GetRootPane()->SetVisible(false);
 
     unk8C->SetAnimationEnable(unk90, false);
     unk8C->SetAnimationEnable(unk94, true);
     unk8C->Animate(0);
 
-    func_80136E84(&unk98, accessor, lbl_eu_804FD1E0 + 0xd2);
-    func_80136F08(unk98, &unk9C, accessor, lbl_eu_804FD1E0 + 0xf0);
-    func_80136F08(unk98, &unkA0, accessor, lbl_eu_804FD1E0 + 0x113);
+    func_80136E84(&unk98, reinterpret_cast<nw4r::lyt::ArcResourceAccessor*>(unk68), arc + 0xd2);
+    func_80136F08(unk98, &unk9C, reinterpret_cast<nw4r::lyt::ArcResourceAccessor*>(unk68), arc + 0xf0);
+    func_80136F08(unk98, &unkA0, reinterpret_cast<nw4r::lyt::ArcResourceAccessor*>(unk68), arc + 0x113);
 
     {
-        s16* posY = reinterpret_cast<s16*>(lbl_eu_804FD0D0 + 0x14);
-        f32* scale = reinterpret_cast<f32*>(lbl_eu_804FD0D0 + 0x28);
-
-        nw4r::lyt::Pane* pane = unk98->GetRootPane()->FindPaneByName(lbl_eu_804FD1E0 + 0x139, true);
-        {
-            s16* posX = reinterpret_cast<s16*>(lbl_eu_804FD0D0 + 0x00);
-            s16* posY = reinterpret_cast<s16*>(lbl_eu_804FD0D0 + 0x14);
-            f32* scale = reinterpret_cast<f32*>(lbl_eu_804FD0D0 + 0x28);
-            nw4r::math::VEC3 trans = pane->GetTranslate();
-            trans.x = 0.0f;
-            trans.y = static_cast<f32>(posY[4]);
-            pane->SetTranslate(trans);
-        }
-        {
-            f32 s = scale[4];
-            pane->SetScale(nw4r::math::VEC2(s, s));
-        }
+        nw4r::lyt::Pane* pane = unk98->GetRootPane()->FindPaneByName(arc + 0x139, true);
+        nw4r::math::VEC3 trans = pane->GetTranslate();
+        trans.x = static_cast<f32>(0);
+        trans.y = static_cast<f32>(-146);
+        pane->SetTranslate(trans);
+        f32 s = scale[4];
+        pane->SetScale(nw4r::math::VEC2(s, s));
     }
 
     unk98->SetAnimationEnable(unkA0, false);
@@ -699,173 +731,96 @@ void CMenuArtsSelect::Init() {
     unk9C->SetFrame(0.0f);
     unk98->Animate(0);
 
-    {
-        s16* posX = reinterpret_cast<s16*>(lbl_eu_804FD0D0 + 0x00);
-        s16* posY = reinterpret_cast<s16*>(lbl_eu_804FD0D0 + 0x14);
-        f32* scale = reinterpret_cast<f32*>(lbl_eu_804FD0D0 + 0x28);
+    // Per-slot layouts: retail re-finds the pane for each of
+    // Get/SetTranslate and SetScale (three virtual FindPaneByName calls).
+    for (s32 i = 0; i < 8; i++) {
+        func_80136E84(&unkA4[i], reinterpret_cast<nw4r::lyt::ArcResourceAccessor*>(unk68), arc + 0xd2);
+        func_80136F08(unkA4[i], &unkC4[i], reinterpret_cast<nw4r::lyt::ArcResourceAccessor*>(unk68), arc + 0xf0);
+        func_80136F08(unkA4[i], &unkE4[i], reinterpret_cast<nw4r::lyt::ArcResourceAccessor*>(unk68), arc + 0x113);
 
-        for (s32 i = 0; i < 8; i++) {
-            func_80136E84(&unkA4[i], accessor, lbl_eu_804FD1E0 + 0xd2);
-            func_80136F08(unkA4[i], &unkC4[i], accessor, lbl_eu_804FD1E0 + 0xf0);
-            func_80136F08(unkA4[i], &unkE4[i], accessor, lbl_eu_804FD1E0 + 0x113);
+        nw4r::math::VEC3 trans =
+            unkA4[i]->GetRootPane()->FindPaneByName(arc + 0x139, true)->GetTranslate();
+        s32 lookupIdx = (i < 4) ? i : (i + 1);
+        trans.x = static_cast<f32>(posX[lookupIdx]);
+        trans.y = static_cast<f32>(posY[lookupIdx]);
+        unkA4[i]->GetRootPane()->FindPaneByName(arc + 0x139, true)->SetTranslate(trans);
+        f32 s = scale[lookupIdx];
+        unkA4[i]->GetRootPane()->FindPaneByName(arc + 0x139, true)->SetScale(nw4r::math::VEC2(s, s));
 
-            nw4r::lyt::Pane* pane = unkA4[i]->GetRootPane()->FindPaneByName(lbl_eu_804FD1E0 + 0x139, true);
+        unkA4[i]->SetAnimationEnable(unkE4[i], false);
+        unkA4[i]->SetAnimationEnable(unkC4[i], true);
 
-            s32 lookupIdx = (i < 4) ? i : (i + 1);
-            {
-            s16* posX = reinterpret_cast<s16*>(lbl_eu_804FD0D0 + 0x00);
-            s16* posY = reinterpret_cast<s16*>(lbl_eu_804FD0D0 + 0x14);
-            f32* scale = reinterpret_cast<f32*>(lbl_eu_804FD0D0 + 0x28);
-                nw4r::math::VEC3 trans = pane->GetTranslate();
-                trans.x = static_cast<f32>(posX[lookupIdx]);
-                trans.y = static_cast<f32>(posY[lookupIdx]);
-                pane->SetTranslate(trans);
-            }
-            {
-                f32 s = scale[lookupIdx];
-                pane->SetScale(nw4r::math::VEC2(s, s));
-            }
+        f32 frame = static_cast<f32>(unkC4[i]->GetFrameSize()) - 1.0f;
+        unkC4[i]->SetFrame(frame);
 
-            unkA4[i]->SetAnimationEnable(unkE4[i], false);
-            unkA4[i]->SetAnimationEnable(unkC4[i], true);
+        unkA4[i]->Animate(0);
 
-            f32 frame = static_cast<f32>(unkC4[i]->GetFrameSize()) - 1.0f;
-            unkC4[i]->SetFrame(frame);
-
-            unkA4[i]->Animate(0);
-
-            unk337[i] = 1;
-        }
+        unk337[i] = 1;
     }
 
     unk318 = 0;
 
-    {
-        s16* posX = reinterpret_cast<s16*>(lbl_eu_804FD0D0 + 0x00);
-        s16* posY = reinterpret_cast<s16*>(lbl_eu_804FD0D0 + 0x14);
-        f32* scale = reinterpret_cast<f32*>(lbl_eu_804FD0D0 + 0x28);
+    for (s32 i = 0; i < 9; i++) {
+        func_80136E84(&unk104[i], reinterpret_cast<nw4r::lyt::ArcResourceAccessor*>(unk68), arc + 0x142);
+        func_80136F08(unk104[i], &unk128[i], reinterpret_cast<nw4r::lyt::ArcResourceAccessor*>(unk68), arc + 0x160);
+        func_80136F08(unk104[i], &unk14C[i], reinterpret_cast<nw4r::lyt::ArcResourceAccessor*>(unk68), arc + 0x181);
 
-        for (s32 i = 0; i < 9; i++) {
-            func_80136E84(&unk104[i], accessor, lbl_eu_804FD1E0 + 0x142);
-            func_80136F08(unk104[i], &unk128[i], accessor, lbl_eu_804FD1E0 + 0x160);
-            func_80136F08(unk104[i], &unk14C[i], accessor, lbl_eu_804FD1E0 + 0x181);
+        nw4r::math::VEC3 trans =
+            unk104[i]->GetRootPane()->FindPaneByName(arc + 0x1a3, true)->GetTranslate();
+        s32 lookupIdx = (i == 8) ? 4 : ((i < 4) ? i : (i + 1));
+        trans.x = static_cast<f32>(posX[lookupIdx]);
+        trans.y = static_cast<f32>(posY[lookupIdx]);
+        unk104[i]->GetRootPane()->FindPaneByName(arc + 0x1a3, true)->SetTranslate(trans);
+        f32 s = scale[lookupIdx];
+        unk104[i]->GetRootPane()->FindPaneByName(arc + 0x1a3, true)->SetScale(nw4r::math::VEC2(s, s));
 
-            nw4r::lyt::Pane* pane = unk104[i]->GetRootPane()->FindPaneByName(lbl_eu_804FD1E0 + 0x1a3, true);
-
-            s32 lookupIdx;
-            if (i >= 8) {
-                lookupIdx = 4;
-            } else if (i < 4) {
-                lookupIdx = i;
-            } else {
-                lookupIdx = i + 1;
-            }
-            {
-            s16* posX = reinterpret_cast<s16*>(lbl_eu_804FD0D0 + 0x00);
-            s16* posY = reinterpret_cast<s16*>(lbl_eu_804FD0D0 + 0x14);
-            f32* scale = reinterpret_cast<f32*>(lbl_eu_804FD0D0 + 0x28);
-                nw4r::math::VEC3 trans = pane->GetTranslate();
-                trans.x = static_cast<f32>(posX[lookupIdx]);
-                trans.y = static_cast<f32>(posY[lookupIdx]);
-                pane->SetTranslate(trans);
-            }
-            {
-                f32 s = scale[lookupIdx];
-                pane->SetScale(nw4r::math::VEC2(s, s));
-            }
-
-            unk104[i]->SetAnimationEnable(unk14C[i], false);
-            unk104[i]->SetAnimationEnable(unk128[i], true);
-            unk128[i]->SetFrame(0.0f);
-            unk104[i]->Animate(0);
-        }
+        unk104[i]->SetAnimationEnable(unk14C[i], false);
+        unk104[i]->SetAnimationEnable(unk128[i], true);
+        unk128[i]->SetFrame(0.0f);
+        unk104[i]->Animate(0);
     }
 
     unk310 = 0;
 
-    {
-        s16* posX = reinterpret_cast<s16*>(lbl_eu_804FD0D0 + 0x00);
-        s16* posY = reinterpret_cast<s16*>(lbl_eu_804FD0D0 + 0x14);
-        f32* scale = reinterpret_cast<f32*>(lbl_eu_804FD0D0 + 0x28);
+    for (s32 i = 0; i < 9; i++) {
+        func_80136E84(&unk170[i], reinterpret_cast<nw4r::lyt::ArcResourceAccessor*>(unk68), arc + 0x1ac);
+        func_80136F08(unk170[i], &unk194[i], reinterpret_cast<nw4r::lyt::ArcResourceAccessor*>(unk68), arc + 0x1cb);
 
-        for (s32 i = 0; i < 9; i++) {
-            func_80136E84(&unk170[i], accessor, lbl_eu_804FD1E0 + 0x1ac);
-            func_80136F08(unk170[i], &unk194[i], accessor, lbl_eu_804FD1E0 + 0x1cb);
+        unk170[i]->SetAnimationEnable(unk194[i], true);
+        unk194[i]->SetFrame(0.0f);
+        unk170[i]->Animate(0);
 
-            unk170[i]->SetAnimationEnable(unk194[i], true);
-            unk194[i]->SetFrame(0.0f);
-            unk170[i]->Animate(0);
-
-            nw4r::lyt::Pane* pane = unk170[i]->GetRootPane()->FindPaneByName(lbl_eu_804FD1E0 + 0x1ed, true);
-
-            s32 lookupIdx;
-            if (i >= 8) {
-                lookupIdx = 4;
-            } else if (i < 4) {
-                lookupIdx = i;
-            } else {
-                lookupIdx = i + 1;
-            }
-            {
-            s16* posX = reinterpret_cast<s16*>(lbl_eu_804FD0D0 + 0x00);
-            s16* posY = reinterpret_cast<s16*>(lbl_eu_804FD0D0 + 0x14);
-            f32* scale = reinterpret_cast<f32*>(lbl_eu_804FD0D0 + 0x28);
-                nw4r::math::VEC3 trans = pane->GetTranslate();
-                trans.x = static_cast<f32>(posX[lookupIdx]);
-                trans.y = static_cast<f32>(posY[lookupIdx]);
-                // trans.z unchanged
-                pane->SetTranslate(trans);
-            }
-            {
-                f32 s = scale[lookupIdx];
-                pane->SetScale(nw4r::math::VEC2(s, s));
-            }
-        }
+        nw4r::math::VEC3 trans =
+            unk170[i]->GetRootPane()->FindPaneByName(arc + 0x1ed, true)->GetTranslate();
+        s32 lookupIdx = (i == 8) ? 4 : ((i < 4) ? i : (i + 1));
+        trans.x = static_cast<f32>(posX[lookupIdx]);
+        trans.y = static_cast<f32>(posY[lookupIdx]);
+        unk170[i]->GetRootPane()->FindPaneByName(arc + 0x1ed, true)->SetTranslate(trans);
+        f32 s = scale[lookupIdx];
+        unk170[i]->GetRootPane()->FindPaneByName(arc + 0x1ed, true)->SetScale(nw4r::math::VEC2(s, s));
     }
 
     unk314 = 0;
 
-    {
-        s16* posX = reinterpret_cast<s16*>(lbl_eu_804FD0D0 + 0x00);
-        s16* posY = reinterpret_cast<s16*>(lbl_eu_804FD0D0 + 0x14);
-        f32* scale = reinterpret_cast<f32*>(lbl_eu_804FD0D0 + 0x28);
+    for (s32 i = 0; i < 9; i++) {
+        func_80136E84(&unk1B8[i], reinterpret_cast<nw4r::lyt::ArcResourceAccessor*>(unk68), arc + 0x1f7);
+        func_80136F08(unk1B8[i], &unk1DC[i], reinterpret_cast<nw4r::lyt::ArcResourceAccessor*>(unk68), arc + 0x217);
 
-        for (s32 i = 0; i < 9; i++) {
-            func_80136E84(&unk1B8[i], accessor, lbl_eu_804FD1E0 + 0x1f7);
-            func_80136F08(unk1B8[i], &unk1DC[i], accessor, lbl_eu_804FD1E0 + 0x217);
+        nw4r::math::VEC3 trans =
+            unk1B8[i]->GetRootPane()->FindPaneByName(arc + 0x23e, true)->GetTranslate();
+        s32 lookupIdx = (i == 8) ? 4 : ((i < 4) ? i : (i + 1));
+        trans.x = static_cast<f32>(posX[lookupIdx]);
+        trans.y = static_cast<f32>(posY[lookupIdx]);
+        unk1B8[i]->GetRootPane()->FindPaneByName(arc + 0x23e, true)->SetTranslate(trans);
+        f32 s = scale[lookupIdx];
+        unk1B8[i]->GetRootPane()->FindPaneByName(arc + 0x23e, true)->SetScale(nw4r::math::VEC2(s, s));
 
-            nw4r::lyt::Pane* pane = unk1B8[i]->GetRootPane()->FindPaneByName(lbl_eu_804FD1E0 + 0x23e, true);
+        unk1B8[i]->SetAnimationEnable(unk1DC[i], true);
 
-            s32 lookupIdx;
-            if (i >= 8) {
-                lookupIdx = 4;
-            } else if (i < 4) {
-                lookupIdx = i;
-            } else {
-                lookupIdx = i + 1;
-            }
-            {
-            s16* posX = reinterpret_cast<s16*>(lbl_eu_804FD0D0 + 0x00);
-            s16* posY = reinterpret_cast<s16*>(lbl_eu_804FD0D0 + 0x14);
-            f32* scale = reinterpret_cast<f32*>(lbl_eu_804FD0D0 + 0x28);
-                nw4r::math::VEC3 trans = pane->GetTranslate();
-                trans.x = static_cast<f32>(posX[lookupIdx]);
-                trans.y = static_cast<f32>(posY[lookupIdx]);
-                // trans.z unchanged
-                pane->SetTranslate(trans);
-            }
-            {
-                f32 s = scale[lookupIdx];
-                pane->SetScale(nw4r::math::VEC2(s, s));
-            }
+        f32 frame = static_cast<f32>(unk1DC[i]->GetFrameSize()) - 1.0f;
+        unk1DC[i]->SetFrame(frame);
 
-            unk1B8[i]->SetAnimationEnable(unk1DC[i], true);
-
-            f32 frame = static_cast<f32>(unk1DC[i]->GetFrameSize()) - 1.0f;
-            unk1DC[i]->SetFrame(frame);
-
-            unk1B8[i]->Animate(0);
-        }
+        unk1B8[i]->Animate(0);
     }
 
     unk30C = 0;
@@ -873,7 +828,9 @@ void CMenuArtsSelect::Init() {
 
     func_80108994();
     func_80139198(0);
-    unk31C = func_801392C0();
+    unk31C = code80135FDC_getByte_64077();
+#undef arc
+
 
     {
         IScnRender* cb = reinterpret_cast<IScnRender*>(this);
@@ -972,8 +929,8 @@ void CMenuArtsSelect::Term() {
 }
 
 void CMenuArtsSelect::Move() {
-    // Extra early NV (live across the function) nudges this into r21 so
-    // savegpr starts at r20 like retail.
+    // NV shift base kept live across the function; occupies the one
+    // callee-saved slot below `this` so savegpr starts at r20 like retail.
     u32 one = 1;
 
     CTaskGame::getInstance();
@@ -1028,7 +985,7 @@ after_bit21:
     DECOMP_ASM_INSN_END
 after_ce48:
 
-    func_801080F8();
+    ::func_801080F8(this);
 
     {
         u8 flag = func_8013BEB8();
@@ -1050,10 +1007,11 @@ after_ce48:
     }
 
     if (unk298 >= 2) {
-        cf::CfObjectMove* move = cf::CfGameManager::getPlayer(0);
-        BattleActor* actor = reinterpret_cast<BattleActor*>(move);
-        if (move != NULL) {
-            actor = (BattleActor*)((char*)move - 0x3e9c);
+        // Single-register idiom: retail does mr rN,r3 / subi rN,rN,0x3e9c.
+        BattleActor* actor =
+            reinterpret_cast<BattleActor*>(cf::CfGameManager::getPlayer(0));
+        if (actor != NULL) {
+            actor = (BattleActor*)((char*)actor - 0x3e9c);
         }
         if (actor != NULL) {
             typedef void* (*GetPtrFn)(void*);
@@ -1064,9 +1022,9 @@ after_ce48:
                 if (unk348 == 0) {
                     unk348 = 1;
                     unk328 = 4;
-                    func_80107580();
+                    ::func_80107580(this);
                     if (unk324 == 4) {
-                        func_801072E0();
+                        ::func_801072E0(this);
                     }
                 }
             } else {
@@ -1079,7 +1037,7 @@ after_ce48:
     case 0:
         unk308 |= 0x10u;
         if (func_8012FA5C() != 0) {
-            func_80107580();
+            ::func_80107580(this);
             func_80138078__FUl(0x42);
             unk298 = 1;
         }
@@ -1100,7 +1058,7 @@ after_ce48:
         }
         break;
     case 2:
-        func_80104454();
+        ::func_80104454(this);
         break;
     case 3:
         unk308 |= 0x90u;
@@ -1108,25 +1066,15 @@ after_ce48:
             unk54 = 1;
         }
         if (unk308 & 0x2u) {
-            f32 homes[5];
-            homes[0] = lbl_eu_80666F28;
-            homes[1] = lbl_eu_80666F40 * unk88->GetFrame();
-            homes[2] = lbl_eu_80666F28;
-            homes[3] = homes[1];
-            homes[4] = lbl_eu_80666F28;
-            nw4r::math::VEC3 paneTrans98 = unk98->GetRootPane()->GetTranslate();
-            paneTrans98.x = homes[0];
-            paneTrans98.y = homes[1];
-            paneTrans98.z = homes[2];
-            unk98->GetRootPane()->SetTranslate(paneTrans98);
-            // Sink homes[3/4] so the array storage is not truncated.
-            (void)*(volatile f32*)&homes[3];
-            (void)*(volatile f32*)&homes[4];
+            // MWCC inlines GetRootPane / GetFrame / SetTranslate here.
+            f32 frame = unk88->GetFrame();
+            unk98->GetRootPane()->SetTranslate(nw4r::math::VEC3(
+                lbl_eu_80666F28, lbl_eu_80666F40 * frame, lbl_eu_80666F28));
             unk308 |= 0x1u;
         }
         break;
     case 4:
-        func_80105A34();
+        ::func_80105A34(this);
         break;
     case 5:
         if (func_80110A70() != NULL) {
@@ -1142,7 +1090,7 @@ after_ce48:
         }
         break;
     case 6:
-        func_80105D54();
+        ::func_80105D54(this);
         break;
     case 7:
         if (func_80110A70() != NULL) {
@@ -1159,24 +1107,25 @@ after_ce48:
         }
         break;
     case 8:
-        func_80106450();
+        ::func_80106450(this);
         break;
     default:
         break;
     }
 
     if (unk298 != 0) {
-        cf::CfObjectMove* move = cf::CfGameManager::getPlayer(0);
-        BattleActor* actor = reinterpret_cast<BattleActor*>(move);
-        if (move != NULL) {
-            actor = (BattleActor*)((char*)move - 0x3e9c);
+        // Single-register idiom: retail does mr rN,r3 / subi rN,rN,0x3e9c.
+        BattleActor* actor =
+            reinterpret_cast<BattleActor*>(cf::CfGameManager::getPlayer(0));
+        if (actor != NULL) {
+            actor = (BattleActor*)((char*)actor - 0x3e9c);
         }
         if (actor != NULL) {
             if (unk298 >= 2 && !(unk308 & 0x80u)) {
                 if (unk328 == 4) {
                     switch (static_cast<s32>(unk29C)) {
                     case 9:
-                        func_801065E4();
+                        ::func_801065E4(this);
                         break;
                     case 10:
                         unk308 |= 0x3u;
@@ -1185,7 +1134,7 @@ after_ce48:
                         }
                         break;
                     case 11:
-                        func_80106900();
+                        ::func_80106900(this);
                         break;
                     default:
                         break;
@@ -1196,7 +1145,7 @@ after_ce48:
                 for (s32 i = 0; i < 8; i++) {
                     switch (static_cast<s32>(unk2A0[i])) {
                     case 9:
-                        func_80106C30(i);
+                        ::func_80106C30(this, i);
                         break;
                     case 10: {
                         unk318 |= (one << i) | (one << (i + 9));
@@ -1243,7 +1192,7 @@ after_ce48:
                         break;
                     }
                     case 11:
-                        func_80106EC8(i);
+                        ::func_80106EC8(this, i);
                         break;
                     default:
                         break;
@@ -1277,10 +1226,10 @@ after_ce48:
                 switch (static_cast<s32>(unk2C0[i])) {
                 case 0xc: {
                     s32 nextIdx = (i >= 8) ? 0 : (i + 1);
-                    u32 mask = (1u << i) | (1u << (i + 9));
+                    u32 mask = (one << i) | (one << (i + 9));
                     unk310 &= ~mask;
                     if (unk200[nextIdx]->unkBB & 1) {
-                        if (func_80107C54(i) != 0) {
+                        if (::func_80107C54(this, i) != 0) {
                             unk104[i]->SetAnimationEnable(unk14C[i], false);
                             unk104[i]->SetAnimationEnable(unk128[i], true);
                             unk128[i]->SetFrame(lbl_eu_80666F28);
@@ -1293,21 +1242,21 @@ after_ce48:
                 case 0xd: {
                     s32 nextIdx = (i >= 8) ? 0 : (i + 1);
                     if (unk200[nextIdx]->unkBB & 1) {
-                        unk310 |= (1u << i) | (1u << (i + 9));
+                        unk310 |= (one << i) | (one << (i + 9));
                         if (func_80137444(unk128[i], lbl_eu_80666F2C) != 0) {
                             unk2C0[i] = 0xe;
                         }
                     } else {
-                        unk310 &= ~((1u << i) | (1u << (i + 9)));
+                        unk310 &= ~((one << i) | (one << (i + 9)));
                         unk2C0[i] = 0xc;
                     }
                     break;
                 }
                 case 0xe:
-                    func_801071B8(i);
+                    ::func_801071B8(this, i);
                     break;
                 case 0xf:
-                    unk310 |= (1u << i) | (1u << (i + 9));
+                    unk310 |= (one << i) | (one << (i + 9));
                     if (func_80137444(unk14C[i], lbl_eu_80666F2C) != 0) {
                         unk2C0[i] = 0xc;
                     }
@@ -1318,25 +1267,25 @@ after_ce48:
 
                 switch (static_cast<s32>(unk2E4[i])) {
                 case 0x10:
-                    unk314 &= ~((1u << i) | (1u << (i + 9)));
-                    if (func_80107970(i) != 0) {
+                    unk314 &= ~((one << i) | (one << (i + 9)));
+                    if (::func_80107970(this, i) != 0) {
                         unk2E4[i] = 0x11;
                     }
                     break;
                 case 0x11:
-                    unk314 |= (1u << i) | (1u << (i + 9));
+                    unk314 |= (one << i) | (one << (i + 9));
                     if (func_80137444(unk194[i], lbl_eu_80666F2C) != 0) {
                         unk2E4[i] = 0x12;
                     }
                     break;
                 case 0x12:
-                    unk314 = (unk314 | (1u << i)) & ~(1u << (i + 9));
-                    if (func_80107970(i) == 0) {
+                    unk314 = (unk314 | (one << i)) & ~(one << (i + 9));
+                    if (::func_80107970(this, i) == 0) {
                         unk2E4[i] = 0x13;
                     }
                     break;
                 case 0x13:
-                    unk314 |= (1u << i) | (1u << (i + 9));
+                    unk314 |= (one << i) | (one << (i + 9));
                     if (func_80137510(unk194[i],
                                       lbl_eu_80666F2C) != 0) {
                         unk2E4[i] = 0x10;
@@ -1350,9 +1299,9 @@ after_ce48:
 
         for (s32 i = 0; i < 9; i++) {
             if (func_80137444(unk1DC[i], lbl_eu_80666F2C) != 0) {
-                unk30C = static_cast<u16>(unk30C & ~static_cast<u16>(1u << i));
+                unk30C = static_cast<u16>(unk30C & ~static_cast<u16>(one << i));
             } else {
-                unk30C = static_cast<u16>(unk30C | static_cast<u16>(1u << i));
+                unk30C = static_cast<u16>(unk30C | static_cast<u16>(one << i));
             }
         }
     }
@@ -2307,10 +2256,10 @@ void CMenuArtsSelect::func_80105A34() {
     // Case-4 page-mode driver: when the party-target latch fires, adopt the
     // talent page (unk328 = 4) or revert to the main arts page, refreshing
     // the name/help text; the unk90 anim completion rewinds the sub-anims.
-    cf::CfObjectMove* move = cf::CfGameManager::getPlayer(0);
-    BattleActor* actor = reinterpret_cast<BattleActor*>(move);
-    if (move != NULL) {
-        actor = reinterpret_cast<BattleActor*>(reinterpret_cast<char*>(move) - 0x3e9c);
+    BattleActor* actor =
+        reinterpret_cast<BattleActor*>(cf::CfGameManager::getPlayer(0));
+    if (actor != NULL) {
+        actor = reinterpret_cast<BattleActor*>(reinterpret_cast<char*>(actor) - 0x3e9c);
     }
     if (actor != NULL) {
         u32* pVal = reinterpret_cast<u32*>(
@@ -2390,7 +2339,279 @@ void CMenuArtsSelect::func_80105A34() {
         unk298 = 2;
     }
 }
-void CMenuArtsSelect::func_80105D54(){}
+// ---------------------------------------------------------------------------
+// func_80105D54 (us-8010683c) -- arts-select confirm/target handler.
+// First hides the current entry (twice, gated by the open-gate probe and the
+// slot probe), then reads the pad: turbo page bits drive a candidate scan of
+// the three party slots whose results are distance-sorted; direction bits
+// rotate unk330 through the sorted list, and the confirm bit switches the
+// page/mode (unk7C/unk7D/unk7E) and moves to state 8.
+// ---------------------------------------------------------------------------
+extern "C" void func_80105D54(CMenuArtsSelect* self) {
+    typedef void* (*GetPtrFn)(void*);
+    typedef f32 (*GetF32Fn)(void*);
+
+    // Stack locals laid out to mirror retail frame slots
+    // (0x08 / 0x10 / 0x18 / 0x20 / 0x2c / 0x38).
+    u8 order[3];            // candidate slot ids (retail +0x08)
+    ArtsEnumHolder holder;  // enum-list holder (retail +0x10)
+    ArtsSelModeTbl tbl;     // mode-table copy (retail +0x18)
+    ArtsSelEnumIds ids;     // enum id table copy (retail +0x20)
+    f32 d;                  // distance temp (retail +0x2c)
+    f32 dist[3];            // candidate distances (retail +0x38)
+
+    if (func_8010784C(self) != 0) {
+        UnkArtsSelectEntry* e =
+            reinterpret_cast<UnkArtsSelectEntry*>(self->unk8C->GetRootPane());
+        e->unkBB = static_cast<u8>((e->unkBB & 0xFEu) | 1);
+        func_80138078__FUl(6);
+        self->unk298 = 7;
+        if (func_80110A70() != NULL) {
+            func_8010ED38(reinterpret_cast<u8*>(func_80110A70()) + 0x7e4);
+        }
+        if (func_8010CE48() != NULL) {
+            func_8010A710(reinterpret_cast<u8*>(func_8010CE48()) + 0x7cc);
+        }
+    }
+
+    s32 probeIdx = self->unk324;
+    if (probeIdx == 4) {
+        probeIdx = 8;
+    } else if (probeIdx > 4) {
+        probeIdx = probeIdx - 1;
+    }
+    if (func_80107C54(self, probeIdx) != 0) {
+        UnkArtsSelectEntry* e =
+            reinterpret_cast<UnkArtsSelectEntry*>(self->unk8C->GetRootPane());
+        e->unkBB = static_cast<u8>((e->unkBB & 0xFEu) | 1);
+        func_80138078__FUl(6);
+        self->unk298 = 7;
+        if (func_80110A70() != NULL) {
+            func_8010ED38(reinterpret_cast<u8*>(func_80110A70()) + 0x7e4);
+        }
+        if (func_8010CE48() != NULL) {
+            func_8010A710(reinterpret_cast<u8*>(func_8010CE48()) + 0x7cc);
+        }
+    }
+
+    CPad* pad = cf::CfGameManager::getCurrentPad();
+    bool bA;
+    bool bB;
+    bool bC;
+    bool bD;
+    int selDir;
+    if (cf::CfGameManager::func_80086F9C(-1) != 0) {
+        if ((pad->mHeldButtonFlags & (1u << 27)) != 0) return;
+        if ((pad->mHeldButtonFlags & (1u << 28)) != 0) return;
+        if ((pad->mHeldButtonFlags & (1u << 25)) != 0) return;
+        if ((pad->mHeldButtonFlags & (1u << 26)) != 0) return;
+        bA = (pad->mTurboPressButtonFlags >> 2) & 1;
+        bB = (pad->mTurboPressButtonFlags >> 3) & 1;
+        bC = pad->mTurboPressButtonFlags & 1;
+        bD = (pad->mTurboPressButtonFlags >> 1) & 1;
+        selDir = (pad->mPressedButtonFlags >> 21) & 1;
+        if ((pad->mHeldButtonFlags & (1u << 22)) != 0) selDir = 0;
+    } else {
+        if ((pad->mHeldButtonFlags & (1u << 11)) != 0) return;
+        if ((pad->mHeldButtonFlags & (1u << 12)) != 0) return;
+        bA = (pad->mTurboPressButtonFlags >> 2) & 1;
+        bB = (pad->mTurboPressButtonFlags >> 3) & 1;
+        bC = pad->mTurboPressButtonFlags & 1;
+        bD = (pad->mTurboPressButtonFlags >> 1) & 1;
+        selDir = (pad->mPressedButtonFlags >> 4) & 1;
+        if ((pad->mHeldButtonFlags & (1u << 5)) != 0) selDir = 0;
+    }
+
+    if (!bA && !bB && !bC && !bD) {
+        // No page-direction input.
+        if (selDir == 0) {
+            if (self->unk324 == 0) return;
+            if (func_8017FD44() != 0) return;
+            func_80138078__FUl(6);
+            self->unk298 = 7;
+            if (func_80110A70() != NULL) {
+                func_8010ED38(reinterpret_cast<u8*>(func_80110A70()) + 0x7e4);
+            }
+            if (func_8010CE48() != NULL) {
+                func_8010A710(reinterpret_cast<u8*>(func_8010CE48()) + 0x7cc);
+            }
+            return;
+        }
+
+        // Confirm: record page/mode switch into unk7C/unk7D/unk7E.
+        if (self->unk324 == 4) {
+            tbl.data = lbl_eu_80666F54;
+            tbl.extra = lbl_eu_80666F58;
+            self->unk7C = 0;
+            self->unk7D = reinterpret_cast<const u8*>(&tbl)[self->unk328];
+            self->unk7E = static_cast<u8>(self->unk330);
+        } else {
+            func_80496264(self->mScn, -1);
+            int* cfg = func_8009ECB0();            u32 id = cfg[self->unk330 + 1];
+            BattleActor* cand =
+                static_cast<BattleActor*>(func_800B8B94(id));
+            CfObjectMoveArtsView* mv = reinterpret_cast<CfObjectMoveArtsView*>(cand);
+            if (mv != NULL) {
+                mv = reinterpret_cast<CfObjectMoveArtsView*>(
+                    reinterpret_cast<char*>(mv) + 0x3e9c);
+            }
+            s32 matchIdx = 0;
+            if (mv != NULL) {
+                func_80043D90(&holder);
+                ids.id[0] = lbl_eu_804FD128.id[0];
+                ids.id[1] = lbl_eu_804FD128.id[1];
+                ids.id[2] = lbl_eu_804FD128.id[2];
+                // Find which enum type matches the target's +0x8C object id.
+                for (s32 k = 0; k < 3; k++) {
+                    ArtsEnumList* list =
+                        static_cast<ArtsEnumList*>(func_80043F18(&holder));
+                    func_800F4A98(list, ids.id[k], 0);
+                    list = static_cast<ArtsEnumList*>(func_80043F18(&holder));
+                    if (list->mCount620 == 0) continue;
+                    list = static_cast<ArtsEnumList*>(func_80043F18(&holder));
+                    ArtsEnumSlot* slot =
+                        static_cast<ArtsEnumSlot*>(func_800F6EC0(list, 0));
+                    if (slot->mObj == NULL) continue;
+                    if (mv->field_8C == slot->mObj->field_8C) {
+                        matchIdx = k;
+                        break;
+                    }
+                }
+                __dt__80043E88(&holder, -1);
+            }
+            s32 v = self->unk324;
+            if (v > 4) v--;
+            self->unk7C = 1;
+            self->unk7D = v;
+            self->unk7E = matchIdx;
+        }
+
+        bool skipState = false;
+        if (self->unk324 == 4 && self->unk328 == 7) {
+            if (func_802795D4(
+                    reinterpret_cast<u8*>(cf::CBattleManager::getInstance()) + 0x1a8,
+                    0) == 0) {
+                skipState = true;
+            }
+        }
+        if (!skipState) {
+            self->unk298 = 8;
+            if (func_80110A70() != NULL) {
+                func_8010ED58(reinterpret_cast<u8*>(func_80110A70()) + 0x7e4);
+            }
+            if (func_8010CE48() != NULL) {
+                func_8010A7A8(reinterpret_cast<u8*>(func_8010CE48()) + 0x7cc);
+            }
+            func_80138078__FUl(0x5f);
+        }
+        return;
+    }
+
+    // Page direction held: scan the three party candidates.
+    BattleActor* actor =
+        reinterpret_cast<BattleActor*>(cf::CfGameManager::getPlayer(0));
+    if (actor != NULL) {
+        actor = reinterpret_cast<BattleActor*>(reinterpret_cast<char*>(actor) - 0x3e9c);
+    }
+    if (self->unk31C <= 1) return;
+    if (actor == NULL) return;
+
+    void* pose = func_80496264(self->mScn, -1);
+    int* cfg = func_8009ECB0();
+
+    s32 listIdx = self->unk324;
+    if (listIdx == 4) {
+        listIdx = 8;
+    } else if (listIdx > 4) {
+        listIdx = listIdx - 1;
+    }
+
+    bool hasGauge = false;
+    if (listIdx < 8) {
+        void* arts = artsVslot<GetPtrFn>(actor, 0x278)(actor);
+        ArtsParamInfo* p =
+            reinterpret_cast<ArtsParamInfo*>(getArtsParamAtCnt(arts, listIdx));
+        if (func_8015419C(reinterpret_cast<u8*>(p)) != 0) hasGauge = true;
+    }
+
+    f32 zeroF = lbl_eu_80666F28;
+    s32 count = 0;
+    for (s32 i = 0; i < 3; i++) {
+        u32 entryId = cfg[i + 1];
+        BattleActor* cand = static_cast<BattleActor*>(func_800B8B94(entryId));
+        CfObjectMoveArtsView* mv = reinterpret_cast<CfObjectMoveArtsView*>(cand);
+        if (mv != NULL) {
+            mv = reinterpret_cast<CfObjectMoveArtsView*>(
+                reinterpret_cast<char*>(mv) + 0x3e9c);
+        }
+        if (mv == NULL) continue;
+        f32 g = artsVslot<GetF32Fn>(cand, 0x128)(cand);
+        if (g <= zeroF) continue;
+        if (hasGauge) {
+            if (entryId == actor->mField3F28) continue;
+        }
+        nw4r::math::VEC3* pos =
+            artsVslot<nw4r::math::VEC3* (*)(void*)>(mv, 0xAC)(mv);
+        f32 d;
+        func_8049B59C(&d, pose, pos);
+        dist[count] = d;
+        order[count] = static_cast<u8>(i);
+        count++;
+    }
+
+    u8 changed = 0;
+    if (count >= 2) {
+        if (bC || bD) {
+            // Bubble sort descending by distance (retail pass loop).
+            for (s32 pass = 0; pass < count;) {
+                bool sorted = true;
+                for (s32 j = 0; j < count - 1; j++) {
+                    u8 a = order[j];
+                    u8 b = order[j + 1];
+                    if (dist[a] > dist[b]) {
+                        order[j] = b;
+                        order[j + 1] = a;
+                        sorted = false;
+                    }
+                }
+                if (sorted) break;
+                pass++;
+            }
+        }
+        s32 sel = 0;
+        for (s32 j = 0; j < count; j++) {
+            if (order[j] == self->unk330) {
+                sel = j;
+                break;
+            }
+        }
+        if (bC || bA) {
+            sel--;
+            if (sel < 0) sel = count - 1;
+        } else {
+            sel++;
+            if (sel >= count) sel = 0;
+        }
+        self->unk330 = order[sel];
+        changed = 1;
+    } else {
+        if (count != 0) {
+            if (self->unk330 != order[0]) {
+                self->unk330 = order[0];
+                changed = 1;
+            }
+        }
+    }
+    if (changed) {
+        if (func_80110A70() != NULL) {
+            func_8010EDDC((u8*)func_80110A70() + 0x7e4, (u8)self->unk330);
+        }
+        if (func_8010CE48() != NULL) {
+            func_8010A848((u8*)func_8010CE48() + 0x7cc, (u8)self->unk330);
+        }
+        func_80138078__FUl(0x54);
+    }
+}
 // ---------------------------------------------------------------------------
 // func_80106450 (us-80106f38) -- arts-select open frame timer + auto-open.
 // unk344 counts up by 1.0f per frame; when it passes the cap the menu jumps
@@ -2467,6 +2688,10 @@ void CMenuArtsSelect::func_801065E4() {
         actor = reinterpret_cast<BattleActor*>(reinterpret_cast<char*>(actor) - 0x3e9c);
     }
     if (actor != NULL) {
+        // NOTE: retail names the shared .sdata2 2^52 magic (lbl_eu_80666F38)
+        // for this u16->f32 conversion; MWCC will not merge the implicit
+        // conversion literal against the named constant in this function's
+        // schedule, so the @N pool entry here stays a known residual.
         f32 frameLimit = static_cast<f32>(unk9C->GetFrameSize()) - lbl_eu_80666F2C;
         f32 v = frameLimit * reinterpret_cast<ArtsActorVtbl*>(actor)->mFn160();
         if (v != unk9C->GetFrame() || (unk308 & 0x4) != 0) {
@@ -2505,6 +2730,8 @@ void CMenuArtsSelect::func_801065E4() {
 
         // Window rect: slot defaults to {0,0,0,fs.c}; when the talent latch
         // survives, use the {0x14,0x58,0xc6} highlight rect and unk291 = 1.
+        // MWCC lowers the ArtsGaugeBox initializer to a word-pair copy of the
+        // FourShorts plus an lha readback for .w (see header note).
         FourShorts fs = func_80139658(unk98, lbl_eu_804FD1E0 + 0x27a, 1);
         s16 rect[6] = {0, 0, 0, fs.c, fs.a, fs.b};
         unk291 = 0;
@@ -2535,23 +2762,42 @@ void CMenuArtsSelect::func_80106900() {
     // talent latch survives, set the highlight rect and replay the anims.
     unk308 &= ~0x3;
 
-    cf::CfObjectMove* move = cf::CfGameManager::getPlayer(0);
-    BattleActor* actor = reinterpret_cast<BattleActor*>(move);
-    if (move != NULL) {
-        actor = reinterpret_cast<BattleActor*>(reinterpret_cast<char*>(move) - 0x3e9c);
+    // Self-adjust: null test reads the pre-adjust value (retail: mr/beq/subi).
+    BattleActor* actor =
+        reinterpret_cast<BattleActor*>(cf::CfGameManager::getPlayer(0));
+    if (actor != NULL) {
+        actor = reinterpret_cast<BattleActor*>(reinterpret_cast<char*>(actor) - 0x3e9c);
     }
     if (actor != NULL) {
-        f32 frameLimit = static_cast<f32>(unk9C->GetFrameSize()) - lbl_eu_80666F2C;
-        f32 v = frameLimit * reinterpret_cast<ArtsActorVtbl*>(actor)->mFn160();
+        // u16 -> f32 goes through double; the [0x43300000, v] bit-pattern
+        // scratch is declared first so its stack slot lands at the top of the
+        // frame like retail's conversion scratch (0x38/0x3c(sp)).
+        f32 frameLimit;
+        f32 v;
+        {
+            union {
+                double d;
+                u32 w[2];
+            } conv;
+            conv.w[1] = static_cast<u16>(unk9C->GetFrameSize());
+            double magic = lbl_eu_80666F38;  // blocks the idiom fold
+            conv.w[0] = 0x43300000;
+            frameLimit = static_cast<f32>(conv.d - magic) - lbl_eu_80666F2C;
+        }
+        v = frameLimit * reinterpret_cast<ArtsActorVtbl*>(actor)->mFn160();
         if (v < frameLimit) {
             unk98->SetAnimationEnable(unkA0, false);
             unk98->SetAnimationEnable(unk9C, true);
             unk29C = 0x9;
             FourShorts fs = func_80139658(unk98, lbl_eu_804FD1E0 + 0x27a, 1);
-            s16 rect[6] = {0, 0, 0, fs.c, fs.a, fs.b};
+            // Aggregate init lowers to a word-pair quad copy plus an lha
+            // readback for .w (see header note on ArtsGaugeBox).
+            ArtsGaugeBox box = {0, 0, 0, fs.c, fs};
             unk291 = 0;
-            func_801398A4(unk98, lbl_eu_804FD1E0 + 0x27a, rect, 1);
-            func_801398A4(unk98, lbl_eu_804FD1E0 + 0x283, rect, 1);
+            func_801398A4(unk98, lbl_eu_804FD1E0 + 0x27a,
+                          reinterpret_cast<s16*>(&box), 1);
+            func_801398A4(unk98, lbl_eu_804FD1E0 + 0x283,
+                          reinterpret_cast<s16*>(&box), 1);
         } else {
             s32 flag = 0;
             u8* arts = static_cast<u8*>(
@@ -2574,10 +2820,12 @@ void CMenuArtsSelect::func_80106900() {
             if (flag != 0) {
                 unk308 |= 0x3;
                 FourShorts fs = func_80139658(unk98, lbl_eu_804FD1E0 + 0x27a, 1);
-                s16 rect[6] = {0x14, 0x58, 0xc6, fs.c, fs.a, fs.b};
+                ArtsGaugeBox box = {0x14, 0x58, 0xc6, fs.c, fs};
                 unk291 = 1;
-                func_801398A4(unk98, lbl_eu_804FD1E0 + 0x27a, rect, 1);
-                func_801398A4(unk98, lbl_eu_804FD1E0 + 0x283, rect, 1);
+                func_801398A4(unk98, lbl_eu_804FD1E0 + 0x27a,
+                              reinterpret_cast<s16*>(&box), 1);
+                func_801398A4(unk98, lbl_eu_804FD1E0 + 0x283,
+                              reinterpret_cast<s16*>(&box), 1);
                 unk98->SetAnimationEnable(unkA0, false);
                 unk98->SetAnimationEnable(unk9C, true);
                 unk9C->SetFrame(lbl_eu_80666F28);
@@ -2670,8 +2918,7 @@ void CMenuArtsSelect::func_80106EC8(s32 index) {
         actor = reinterpret_cast<BattleActor*>(reinterpret_cast<char*>(move) - 0x3e9c);
     }
     if (actor == NULL) return;
-    u8* arts = static_cast<u8*>(
-        reinterpret_cast<ArtsActorVtbl*>(actor)->mFn278());
+    void* arts = reinterpret_cast<ArtsActorVtbl*>(actor)->mFn278();
 
     s32 flag = 0;
     if (index < 8) {
@@ -2679,8 +2926,7 @@ void CMenuArtsSelect::func_80106EC8(s32 index) {
         cf::CfObjectMove* pl = cf::CfGameManager::getPlayer(0);
         if (pl != NULL) {
             void* other = func_8016FE34(pl);
-            u8* arts2 = static_cast<u8*>(
-                reinterpret_cast<ArtsActorVtbl*>(other)->mFn278());
+            void* arts2 = reinterpret_cast<ArtsActorVtbl*>(other)->mFn278();
             ArtsParamInfo* p = reinterpret_cast<ArtsParamInfo*>(
                 getArtsParamAtCnt(arts2, index));
             if (p->mCheckFlag != 0) {
@@ -2689,41 +2935,51 @@ void CMenuArtsSelect::func_80106EC8(s32 index) {
         }
     }
 
-    if (flag != 0) {
+    // Both branches' locals live in one switch-body scope so MWCC gives them
+    // disjoint stack slots (retail keeps two fs/box sets).
+    switch (flag) {
+    case 0:
+        if ((unk318 & (1 << index)) != 0) {
+            FourShorts fs = func_80139658(unkA4[index], lbl_eu_804FD1E0 + 0x27a, 1);
+            ArtsGaugeBox box = {0, 0, 0, fs.d, fs};
+            unk289[index] = 0;
+            func_801398A4(unkA4[index], lbl_eu_804FD1E0 + 0x27a,
+                          reinterpret_cast<s16*>(&box), 1);
+            func_801398A4(unkA4[index], lbl_eu_804FD1E0 + 0x283,
+                          reinterpret_cast<s16*>(&box), 1);
+        }
+        unk318 &= ~((1 << index) | (1 << (index + 9)));
+
+        // Latch the current/max gauge ratio into the slot's anim frame.
+        ArtsParamLocal* p = reinterpret_cast<ArtsParamLocal*>(getArtsParamAtCnt(arts, index));
+        f32 ratio;
+        if (p->mFn14() == lbl_eu_80666F28) {
+            ratio = lbl_eu_80666F44;
+        } else {
+            ratio = p->mRatioNum / p->mFn14();
+        }
+        // u16 frame-size -> f32 (MWCC magic), then trim 2 frames.
+        f32 frame = static_cast<f32>(static_cast<u16>(unkC4[index]->GetFrameSize())) -
+                    lbl_eu_80666F2C;
+        if (ratio > lbl_eu_80666F28) {
+            unk318 |= (1 << index) | (1 << (index + 9));
+            unk2A0[index] = 9;
+        } else {
+            unkC4[index]->SetFrame(frame);
+        }
+        break;
+
+    default:
         unk318 |= (1 << index) | (1 << (index + 9));
-        FourShorts fs = func_80139658(unkA4[index], lbl_eu_804FD1E0 + 0x27a, 1);
-        s16 rect[6] = {0x14, 0x58, 0xc6, fs.c, fs.a, fs.b};
+        FourShorts fs2 = func_80139658(unkA4[index], lbl_eu_804FD1E0 + 0x27a, 1);
+        ArtsGaugeBox box2 = {0x14, 0x58, 0xc6, fs2.d, fs2};
         unk289[index] = 1;
-        func_801398A4(unkA4[index], lbl_eu_804FD1E0 + 0x27a, rect, 1);
-        func_801398A4(unkA4[index], lbl_eu_804FD1E0 + 0x283, rect, 1);
+        func_801398A4(unkA4[index], lbl_eu_804FD1E0 + 0x27a,
+                      reinterpret_cast<s16*>(&box2), 1);
+        func_801398A4(unkA4[index], lbl_eu_804FD1E0 + 0x283,
+                      reinterpret_cast<s16*>(&box2), 1);
         unkC4[index]->SetFrame(lbl_eu_80666F28);
-        return;
-    }
-
-    if ((unk318 & (1 << index)) != 0) {
-        FourShorts fs = func_80139658(unkA4[index], lbl_eu_804FD1E0 + 0x27a, 1);
-        s16 rect[6] = {0, 0, 0, fs.c, fs.a, fs.b};
-        unk289[index] = 0;
-        func_801398A4(unkA4[index], lbl_eu_804FD1E0 + 0x27a, rect, 1);
-        func_801398A4(unkA4[index], lbl_eu_804FD1E0 + 0x283, rect, 1);
-    }
-    unk318 &= ~((1 << index) | (1 << (index + 9)));
-
-    // Latch the current/max gauge ratio into the slot's anim frame.
-    ArtsParamLocal* p = reinterpret_cast<ArtsParamLocal*>(getArtsParamAtCnt(arts, index));
-    f32 ratio;
-    if (p->mFn14() == lbl_eu_80666F28) {
-        ratio = lbl_eu_80666F44;
-    } else {
-        ratio = p->mRatioNum / p->mFn14();
-    }
-    f32 frame = static_cast<f32>(static_cast<u16>(unkC4[index]->GetFrameSize())) -
-                lbl_eu_80666F2C;
-    if (ratio > lbl_eu_80666F28) {
-        unk318 |= 1 << (index + 9);
-        unk2A0[index] = 9;
-    } else {
-        unkC4[index]->SetFrame(frame);
+        break;
     }
 }
 // ---------------------------------------------------------------------------
@@ -3024,7 +3280,8 @@ int CMenuArtsSelect::func_80107970(s32 index) {
         ArtsActionSource* srcRaw =
             static_cast<ArtsActionSource*>(func_800B708C(index));
         if (srcRaw == NULL) return 0;
-        // Squared distance between the action source position and the player.
+        // Squared distance between the action source position and the player;
+        // threshold constant depends on srcFlags bit 3.
         nw4r::math::VEC3* srcPos =
             reinterpret_cast<ArtsActionSrcVtbl*>(srcRaw)->mFnAC();
         nw4r::math::VEC3* myPos =
@@ -3034,7 +3291,7 @@ int CMenuArtsSelect::func_80107970(s32 index) {
         d.y = myPos->y - srcPos->y;
         d.z = myPos->z - srcPos->z;
         nw4r::math::VEC3 e = d;
-        f32 dist = e.z * e.z + (e.x * e.x + e.y * e.y);
+        f32 dist = e.x * e.x + e.y * e.y + e.z * e.z;
         f32 limit;
         if (srcRaw->mFlags & 0x8) {
             limit = lbl_eu_80666F60;
@@ -3064,18 +3321,19 @@ int CMenuArtsSelect::func_80107C54(s32 index) {
     // Per-slot arts usability gate. Bit16 of the global settings flag word
     // blocks everything; each arts mode has its own set of rejection probes
     // (sub-state flags, chain validity, skill availability).
+    // Hoisted so MWCC colors it into r31 ahead of `this` (retail prologue).
+    ArtsParamInfo* p;
     if (getUnk80664658()->field_214 & 0x10000) return 1;
 
     if (index < 8) {
-        cf::CfObjectMove* move = cf::CfGameManager::getPlayer(0);
-        BattleActor* actor = reinterpret_cast<BattleActor*>(move);
-        if (move != NULL) {
-            actor = reinterpret_cast<BattleActor*>(reinterpret_cast<char*>(move) - 0x3e9c);
+        BattleActor* actor = reinterpret_cast<BattleActor*>(cf::CfGameManager::getPlayer(0));
+        if (actor != NULL) {
+            actor = reinterpret_cast<BattleActor*>(reinterpret_cast<char*>(actor) - 0x3e9c);
         }
         if (actor == NULL) return 0;
         u8* arts = static_cast<u8*>(
             reinterpret_cast<ArtsActorVtbl*>(actor)->mFn278());
-        ArtsParamInfo* p = reinterpret_cast<ArtsParamInfo*>(getArtsParamAtCnt(arts, index));
+        p = reinterpret_cast<ArtsParamInfo*>(getArtsParamAtCnt(arts, index));
         if (p->mCheckFlag == 0) return 1;
         if (func_80154280(p, actor, 0) & 0xd0) return 1;
         if (actor->mField3F60 != NULL) {
@@ -3111,10 +3369,9 @@ int CMenuArtsSelect::func_80107C54(s32 index) {
     }
 
     // Talent page (index >= 8): page-mode dependent probes.
-    cf::CfObjectMove* move = cf::CfGameManager::getPlayer(0);
-    BattleActor* actor = reinterpret_cast<BattleActor*>(move);
-    if (move != NULL) {
-        actor = reinterpret_cast<BattleActor*>(reinterpret_cast<char*>(move) - 0x3e9c);
+    BattleActor* actor = reinterpret_cast<BattleActor*>(cf::CfGameManager::getPlayer(0));
+    if (actor != NULL) {
+        actor = reinterpret_cast<BattleActor*>(reinterpret_cast<char*>(actor) - 0x3e9c);
     }
     if (actor != NULL) {
         if (unk328 == 4) {
@@ -3173,9 +3430,12 @@ int CMenuArtsSelect::func_80107C54(s32 index) {
     }
 
     if (unk328 == 3) {
+        // Retail evaluates the chain pointer before re-fetching the manager
+        // for the 0x194 counter compare.
+        u8* chain = reinterpret_cast<u8*>(cf::CBattleManager::getInstance()) + 0x1a8;
         cf::CBattleManager* bm = cf::CBattleManager::getInstance();
         if (*reinterpret_cast<s32*>(reinterpret_cast<u8*>(bm) + 0x194) != 0x12c ||
-            func_802795D4(reinterpret_cast<u8*>(bm) + 0x1a8, 0) == 0) {
+            func_802795D4(chain, 0) == 0) {
             return 1;
         }
     }

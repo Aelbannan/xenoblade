@@ -2,6 +2,7 @@
 // Replace stubs with high-level C/C++ during decomp.
 
 #include "kyoshin/harness_catalog.hpp"
+#include "monolib/scn/CScnTimeApi.hpp"
 
 #include <cstdio>
 #include <cmath>
@@ -384,7 +385,7 @@ void func_800948F8(cf::CtrlNpc* self, u32 a, u32 b, int count,
 
 // 0x80095474: record the movement target words (current position from the
 // character object + the new target vec), then compute the heading toward the
-// target: a distance check picks a turn amount (jittered/continued), the
+// a distance check picks a turn amount (jittered/continued), the
 // heading is stored to field_0C, and the character is kicked if it is idle.
 void __declspec(noinline) func_80094A9C(cf::CtrlNpc* self,
                                         const ml::CVec3* vec, f32 scale,

@@ -1,6 +1,7 @@
 #pragma once
 
 #include <types.h>
+#include "kyoshin/plugin/ocBdat.hpp"
 
 #include "monolib/device/CFileHandle.hpp"
 #include "monolib/work/IWorkEvent.hpp"
@@ -285,9 +286,7 @@ extern "C" void* func_8009EC9C(u32 idx);
 extern "C" int func_8009EBE8(u32 idx);
 extern "C" void func_8009EB94(u32 idx, u32 value);
 extern "C" void func_80157824(u8, u32);
-struct UnkScnResult;
-extern "C" void* func_8049603C(CScn* scene);
-extern "C" void func_800826F0__Q22cf13CfGameManagerFv(u32);
+
 extern "C" void func_80462D04__8CTaskLODFv(s8);
 extern "C" void func_80462D5C__8CTaskLODFv(u8);
 extern "C" int func_80462E1C__8CTaskLODFv(u8);
@@ -301,9 +300,7 @@ extern "C" f32 FrSqrt__Q24nw4r4mathFf(f32);
 
 // standalone BDAT helpers
 extern "C" void* getFP__FPCc(const char*);
-// Canonical signature (matches CfBdat.hpp/CfGimmick.hpp/code_801862C0.hpp;
-// conflicting extern "C" declarations are an illegal overload).
-extern "C" u32 getBdatStringColumnValue(void*, const char*, s32); // s32(long): matches defining TU ocBdat.cpp verbatim
+// getBdatStringColumnValue: canonical decl in plugin/ocBdat.hpp (included above).
 
 // misc single decls
 extern "C" void func_80136D74(nw4r::lyt::Layout*, char*, u32);

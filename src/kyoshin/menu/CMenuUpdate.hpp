@@ -197,8 +197,8 @@ extern "C" bool func_801BCF38();
 extern "C" bool func_8029A658();
 extern "C" bool func_8029EE58();
 extern "C" bool func_8013BFA8();
-extern "C" Unk_8049603C* func_8049603C();
-extern "C" bool code80135FDC_getByte_64059();
+// func_8049603C: declared once in libs/monolib/src/scn/CScn_8049603C.hpp.
+
 extern "C" int func_8013BE50();
 extern "C" void* CfRes_getE14();
 extern "C" bool func_8009CF8C(int);

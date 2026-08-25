@@ -1,6 +1,7 @@
 #pragma once
 
 #include <types.h>
+#include "kyoshin/plugin/ocBdat.hpp"
 
 // Minimal nw4r sound-object interface used by func_8016CFDC (slot entry +0x00
 // dereferenced to call SetPlayerPriority). Declared here rather than via
@@ -164,9 +165,9 @@ struct CfResReloadImpl {
     /* 0x00 */ CfResReloadParent* field_00;   // parent/reference pointer
     /* 0x04 */ f32 field_04;                  // timer or delay float
     /* 0x08 */ u16 field_08;                  // type/category (also PMTF index in func_8016DE8C)
-    /* 0x0A */ s16 field_0A;                  // state/param (-1 = invalid; lha by callers)
+    /* 0x0A */ u16 field_0A;                  // state/param (-1 = invalid; lha by callers)
     /* 0x0C */ u16 field_0C;                  // counter
-    /* 0x0E */ u16 field_0E;                  // state/param (-1 = invalid)
+    /* 0x0E */ s16 field_0E;                  // state/param (-1 = invalid)
     /* 0x10 */ void* field_10;  // secondary vtable pointer (via CfResReloadVtIf cast)
     /* 0x14 */ u32 field_14[2];               // work buffer (2 words)
     /* 0x1C */ s16 field_1C;                  // reload count/state (lha by func_8016D3F8)
@@ -325,7 +326,7 @@ extern float lbl_eu_8066769C;
 extern float lbl_eu_806676A0;
 extern float lbl_eu_8066A208;
 extern float lbl_eu_806676CC;
-extern double lbl_eu_806676D0;
+extern const double lbl_eu_806676D0;
 
 extern "C" cf::CfResLookupEntry* func_80062EC4(int);
 extern "C" int func_80062998(int, int, int);
@@ -341,7 +342,6 @@ extern "C" int func_801AAAA0(int a);
 extern "C" cf::DeviceSearchEntry* func_80068928(u8* self, u32 id, int start, int end);
 extern "C" int func_801BFE20(int a, int b, u8* c, float f1, float f2);
 extern "C" cf::SoundSlotEntry* func_801BFAE4(u16 handle);
-extern "C" u32 getBdatStringColumnValue(void* bdat, const char* column, int index);
 extern "C" u16 func_8006A6D0();
 extern "C" void* CfRes_getInstanceField();
 // More C-ABI imports used by func_8016DF4C / func_8016DAF8 / func_8016EA68.
@@ -362,14 +362,17 @@ extern float lbl_eu_806676A4;    // vtable-slot-0x168 float arg
 extern float lbl_eu_806676A8;    // func_800BC3B0 restore-heal float
 // 2^52 conversion constant: u16 -> float via the double-magic trick (retail
 // references the named .sdata2 double; a direct (f32) cast would pool a
-// TU-local constant instead).
-extern double lbl_eu_806676C0;
+// TU-local constant instead). const -> readonly sdata2 pool.
+extern const double lbl_eu_806676C0;
 extern float lbl_eu_806676BC;    // func_8018896C second float arg
 
 // Secondary-interface vtable stored at +0x10 by the constructor (.data).
-extern void* lbl_eu_80530FF0[];
-// Delay/timer float seeded by the constructor (.sdata2).
-extern float lbl_eu_80667698;
+// Typed-object declaration (CfResPcImpl pattern): the ctor stores &symbol.
+extern cf::CfResReloadVtIf lbl_eu_80530FF0;
+// Delay/timer float seeded by the constructor (.sdata2). const -> readonly
+// sdata2 pool: lets MWCC hoist the lfs above the member stores (CArtsInfo
+// pattern).
+extern const float lbl_eu_80667698;
 
 // BDAT table pointer and cached row index read by func_8016E578 / func_8016EC58.
 extern void* lbl_eu_806640A8;   // BDAT table pointer (.sbss)

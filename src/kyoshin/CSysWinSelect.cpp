@@ -93,7 +93,7 @@ void CSysWinSelect::Move() {
 }
 
 // ---------------------------------------------------------------------------
-// Target 3: CSysWinSelect::~CSysWinSelect (us-801257ac)
+// CSysWinSelect::~CSysWinSelect (us-801257ac)
 // Complete-object destructor. Subobjects destroyed in reverse construction
 // order: CCur18@0xB4, then CSysWin@0x78, then the CProcess base. Written as a
 // C-linkage definition carrying the retail mangled-member symbol so the flags
@@ -121,7 +121,7 @@ extern "C" CSysWinSelect* __dt__13CSysWinSelectFv(CSysWinSelect* _this,
 }
 
 // ---------------------------------------------------------------------------
-// Target 2: CSysWinSelect::Term (us-801258e8)
+// CSysWinSelect::Term (us-801258e8)
 // Wait for draw-done, detach the render callback from the owning scene, release
 // the embedded CSysWin, run the CCur18 cursor update virtual, clear the
 // singleton global. The `if (this)` prepending on the render-cb arg is the MWCC
@@ -140,7 +140,7 @@ void CSysWinSelect::Term() {
 }
 
 // ---------------------------------------------------------------------------
-// Target 4: func_80125070 (us-80125b4c)
+// func_80125070 (us-80125b4c)
 // Allocate the CSysWinSelect singleton (0x250 bytes) from work memory, run its
 // constructor, store it in the .sbss global, and register it as a CProcess
 // child of `parent`. Returns 0 when the singleton already exists. Regist is
@@ -163,7 +163,7 @@ CSysWinSelect* func_80125070(CProcess* parent, void* a2, void* a3, void* a4,
 }
 
 // ---------------------------------------------------------------------------
-// Target 2: func_801250FC (us-80125bd8)
+// func_801250FC (us-80125bd8)
 // The state==2 input handling for the select dialog. Reads the current cf pad
 // data; the confirm button flag is read from a different bit in co-op vs
 // single-player, and the D-pad up/down bits select the cursor row (wrapping).
@@ -214,7 +214,7 @@ extern "C" void func_801250FC(CSysWinSelect* self) {
 }
 
 // ---------------------------------------------------------------------------
-// Target 1: nw4r::ut::Color dtor (us-80125dac)
+// nw4r::ut::Color dtor (us-80125dac)
 // Scalar-deleting destructor with the flag > 0 delete gate. Emitted into this
 // TU by MWCC for a deleted nw4r::ut::Color subobject.
 // ---------------------------------------------------------------------------
@@ -226,7 +226,7 @@ void* __dt__Q34nw4r2ut5ColorFv(void* self, int flags) {
 }
 
 // ---------------------------------------------------------------------------
-// Target 5: CSysWinSelect::cbRenderBefore (us-80125ab4)
+// CSysWinSelect::cbRenderBefore (us-80125ab4)
 // Gate prefix (CTaskGame busy / global bit21 / scene-active) then draw the
 // embedded CSysWin and CCur18 cursor through a stack DrawInfo.
 // ---------------------------------------------------------------------------

@@ -2,6 +2,7 @@
 // Replace stubs with high-level C/C++ during decomp.
 
 #include "kyoshin/cfsys/CfObjectImplEne.hpp"
+#include "monolib/scn/CScnTimeApi.hpp"
 #include "monolib/math/CVec3.hpp"
 #include "kyoshin/realtimeevt/CREvtEffect.hpp"
 

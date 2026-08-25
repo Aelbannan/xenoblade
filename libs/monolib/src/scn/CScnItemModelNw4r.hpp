@@ -733,7 +733,6 @@ extern char lbl_eu_80526300[];
 // result.
 extern "C" void* func_80496264(void* rsrc, int idx);
 // Owner scale getter (defined in CScn.cpp), func_8048AB2C fade scale input.
-extern "C" f32 func_80496288(CScnItemModelNw4rOwner* owner);
 
 // func_8048AB2C shadow-math constants (.sdata2).
 extern const float lbl_eu_8066A908;  // short-delta length-squared threshold

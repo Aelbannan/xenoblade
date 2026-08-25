@@ -46,7 +46,6 @@ extern "C" void func_8014AA10(void* obj, unsigned int value);
 
 // C-linkage imports (retail symbols are unmangled).
 extern "C" int func_80055F94(u8* obj, int arg);   // CActParamData short-value helper
-extern "C" void func_800BE12C(u8* obj, int a, int b, int c, int d);  // status add/remove
 
 // Retail symbol is Fv but the real ABI passes (self, arg, f1, f2, f3);
 // CfObjectActor::CActorParam_UnkVirtualFunc140 tail-calls this base entry

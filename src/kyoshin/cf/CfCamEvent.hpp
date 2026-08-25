@@ -169,7 +169,6 @@ extern "C" void func_800707C0(void*, void*, void*);
 extern "C" int func_80073640(void*, ml::CVec3*, ml::CVec3*, ml::CVec3*, int);
 extern "C" void func_80071AB0(void*, void*, void*, int, float, float);
 extern "C" int CfRes_getD80Flag();
-extern "C" f32 func_80496288();
 extern "C" int func_804BE398(void*, u32, u32, u32, f32, f32);
 extern "C" void func_804876DC();
 extern "C" void func_80484E04(void*, int);

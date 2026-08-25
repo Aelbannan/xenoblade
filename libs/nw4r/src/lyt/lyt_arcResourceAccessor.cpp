@@ -9,6 +9,15 @@
 // to retail while emitting no local .data vtable copy).
 extern "C" unsigned char lbl_eu_80569CB8[];
 
+namespace {
+// Retail schedules the derived vptr store inside the member-init phase
+// (standard ABI order: base call -> vptr -> member ctors), not in the ctor
+// body. Attaching it to the mArcBuf initializer via a comma expression puts
+// it in that phase; the scheduler then weaves it between the FontRefLinkList
+// member stores exactly as retail does.
+inline void InitVptr(void* obj) { *(void**)obj = (void*)lbl_eu_80569CB8; }
+} // namespace
+
 /******************************************************************************
  *
  * Utility functions
@@ -119,9 +128,7 @@ ut::Font* FindFont(FontRefLinkList* pFontList, const char* pName) {
  * ArcResourceAccessor
  *
  ******************************************************************************/
-ArcResourceAccessor::ArcResourceAccessor() : mArcBuf(NULL) {
-    *(void**)this = (void*)lbl_eu_80569CB8;
-}
+ArcResourceAccessor::ArcResourceAccessor() : mArcBuf((InitVptr(this), (void*)NULL)) {}
 
 bool ArcResourceAccessor::Attach(void* pArchive, const char* pRootDir) {
     BOOL success = ARCInitHandle(pArchive, &mArcHandle);

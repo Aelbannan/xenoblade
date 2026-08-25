@@ -2,7 +2,9 @@
 // Retail disassembly is used only as a reference for the data layout and
 // control flow; all implementation below is ordinary C/C++.
 
+#include "kyoshin/cf/CBattleManagerApi.hpp"
 #include "kyoshin/harness_catalog.hpp"
+#include "monolib/scn/CScnTimeApi.hpp"
 #include "kyoshin/cf/CfGimmickWarp.hpp"
 #include "kyoshin/cf/CfGameManager.hpp"
 
@@ -353,7 +355,6 @@ WarpObject* func_800817BC__Q22cf13CfGameManagerFv(u8, int);
 void func_8006CC4C();
 u32 func_80174C98(WarpPlayer*, u32*, u32);
 void func_800ACC14(WarpObject*, int);
-f32 func_80496288(void*);
 int func_804BE398(WarpVec3*, u32, u32, u32, f32, f32);
 void func_804BE4B4(WarpVec3*, int);
 u16 func_80208C48(u16, const WarpVec3*);

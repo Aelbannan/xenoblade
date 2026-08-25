@@ -2,6 +2,7 @@
 // Replace stubs with high-level C/C++ during decomp.
 
 #include <types.h>
+#include "monolib/scn/CScnTimeApi.hpp"
 #include <string.h>
 
 // CTaskCulling::func_801A2BD0 (static) is called by Term. Note: this TU does
@@ -28,6 +29,11 @@
 #include "monolib/device/CFileHandle.hpp"
 // ml::CCol4::white/black are passed to func_8049602C by func_80169050.
 #include "monolib/math/CCol4.hpp"
+// CGame::setTaskManagerUpdateCount (static) is called by func_8016A480.
+#include "kyoshin/CGame.hpp"
+// CREvtLightNotifyIf (+0x2F3C game-manager sub-object interface) is called
+// by func_8016A480.
+#include "kyoshin/realtimeevt/CREvtLight.hpp"
 // nw4r g3d resource walk used by func_8016AF4C / func_8016B5A4.
 #include "nw4r/g3d/res/g3d_resfile.h"
 #include "nw4r/g3d/res/g3d_resdict.h"
@@ -548,10 +554,18 @@ extern "C" void func_80168800(cf::CTaskREvtSequence* self) {
     // movie, with the light/movie counts zeroed when their tables are
     // absent.
     EvtSeqWalkBuf* wb = reinterpret_cast<EvtSeqWalkBuf*>(self->field_0xC4);
-    u32 light = self->field_0xEC != 0 ? wb->field_0x34 : 0;
-    u32 movie = self->field_0xF4 != 0 ? wb->field_0x48 : 0;
-    u32 total = (wb->field_0x28 + (light + movie)) +
-                (wb->field_0x20 + wb->field_0x24);
+    // Retail form: both counts are loaded up front and zeroed only when their
+    // table pointer is null (branch-over-store shape).
+    u32 light = wb->field_0x34;
+    if (self->field_0xEC == 0) {
+        light = 0;
+    }
+    u32 movie = wb->field_0x48;
+    if (self->field_0xF4 == 0) {
+        movie = 0;
+    }
+    u32 total =
+        wb->field_0x28 + (light + movie) + (wb->field_0x20 + wb->field_0x24);
     u32 handle = static_cast<u32>(mtl::MemManager::getHandleMEM2());
     self->field_0xB0 = handle;
     self->field_0xA4 = reinterpret_cast<UnkEvtListEntry**>(
@@ -586,6 +600,12 @@ extern "C" void func_80168800(cf::CTaskREvtSequence* self) {
     if (self->field_0xD4 != 0 &&
         reinterpret_cast<EvtSeqWalkBuf*>(self->field_0xC4)->field_0x20 != 0) {
         u32 i = 0;
+        // Retail hoists the high halves of the two patched id words and the
+        // shared count into callee-saved regs; the stores add 0x409 at use.
+        // Declaration order matches the retail materialization order.
+        u32 cnt3 = 3;
+        u32 hi2 = 0x1C90;
+        u32 hi1 = 0x1BE0;
         while (i <
                reinterpret_cast<EvtSeqWalkBuf*>(self->field_0xC4)->field_0x20) {
             EvtSeqWalkEntry* entry = reinterpret_cast<EvtSeqWalkEntry*>(
@@ -599,13 +619,15 @@ extern "C" void func_80168800(cf::CTaskREvtSequence* self) {
                 if (strcmp(name, &lbl_eu_80503098[0x21]) == 0) {
                     strcpy(name, &lbl_eu_80503098[0x2A]);
                     reinterpret_cast<EvtSeqType3Entry*>(entry)->field_0x20 =
-                        0x1BE00409;
-                    reinterpret_cast<EvtSeqType3Entry*>(entry)->field_0x28 = 3;
+                        hi1 + 0x409;
+                    reinterpret_cast<EvtSeqType3Entry*>(entry)->field_0x28 =
+                        cnt3;
                 } else if (strcmp(name, &lbl_eu_80503098[0x33]) == 0) {
                     strcpy(name, &lbl_eu_80503098[0x3C]);
                     reinterpret_cast<EvtSeqType3Entry*>(entry)->field_0x20 =
-                        0x1C900409;
-                    reinterpret_cast<EvtSeqType3Entry*>(entry)->field_0x28 = 3;
+                        hi2 + 0x409;
+                    reinterpret_cast<EvtSeqType3Entry*>(entry)->field_0x28 =
+                        cnt3;
                 }
             }
             u32 idx = self->field_0xA8;
@@ -906,11 +928,381 @@ void func_80169050(cf::CTaskREvtSequence* self) {
     }
 }
 
-void func_8016925C(){}
+void func_8016925C(cf::CTaskREvtSequence* self) {
+    // Event-sequence start. Aborts while CfGameManager is busy or any
+    // realtime-event entry reports not-ready (vf_0x20). Then: optional BGM
+    // stream kick for the field_0xE0 subtitle table, id-halfword publish,
+    // three manager object-list reset walks, a state-list ready scan (arms/
+    // clears the 0x10000/0x8000 presentation bits), per-entry start/advance
+    // dispatch, and the ptmf-table + fade setup tail.
+    if (cf::CfGameManager::func_800829B8() != 0) {
+        return;
+    }
+    char buf[0x20];
+    // Running length is kept in memory between the strcat calls (retail
+    // spills it; the total itself is never consumed).
+    volatile u32 len;
+    {
+        u32 n = 0;
+        u32 scaled = 0;
+        while (n < self->field_0xA8) {
+            UnkEvtListEntry* e = *(UnkEvtListEntry**) (
+                (u8*)self->field_0xA4 + scaled);
+            if (e->vf_0x20() != 0) {
+                return;
+            }
+            n++;
+            scaled += 4;
+        }
+    }
+    if (self->field_0xE0 != 0) {
+        // Build "<base><suffix 0x45><subtitle name>" and stream it as BGM at
+        // the sequence's volume scale, picking the alloc handle from the
+        // buffer's memory-bank flag bits.
+        const char* base = (const char*)func_801644AC();
+        len = strlen(base);
+        strcpy(buf, base);
+        const char* sfx = &lbl_eu_80503098[0x45];
+        u32 l2 = strlen(sfx);
+        strcat(buf, sfx);
+        len = len + l2;
+        const char* tail = (const char*)(self->field_0xE0 + 0xC);
+        u32 l3 = strlen(tail);
+        strcat(buf, tail);
+        len = len + l3;
+        u32 handle = func_80495FF0(lbl_eu_80663E14);
+        if ((reinterpret_cast<UnkStateC4*>(self->field_0xC4)->field_0x4C &
+             1) != 0) {
+            handle = static_cast<u32>(mtl::MemManager::getHandleMEM1());
+        }
+        if ((reinterpret_cast<UnkStateC4*>(self->field_0xC4)->field_0x4C &
+             0x20) != 0) {
+            handle = static_cast<u32>(mtl::MemManager::getHandleMEM2());
+        }
+        f32 vol = func_80164478() * lbl_eu_80667660;
+        func_80043738(1, buf, handle, 1, 0, 0, vol);
+    }
+    // Publish the scene fade value, then the id halfword pair (only when
+    // both are non-negative; the second consumer re-reads the buffer).
+    reinterpret_cast<EvtSeqScnView*>(lbl_eu_80663E14)
+        ->field_0x5C->field_0xD4 = lbl_eu_80667664;
+    EvtSeqC4Pair* pair = reinterpret_cast<EvtSeqC4Pair*>(self->field_0xC4);
+    if (pair->field_0x40 >= 0 && pair->field_0x42 >= 0) {
+        func_80086B5C__Q22cf13CfGameManagerFv(
+            (u16)pair->field_0x40, (u16)pair->field_0x42, 0);
+        pair = reinterpret_cast<EvtSeqC4Pair*>(self->field_0xC4);
+        func_800599E0(getGlobalSda(), (u16)pair->field_0x40,
+                      (u16)pair->field_0x42, 0);
+    }
+    // Walk 1+2: full reset (two virtual steps + flags-object arm) over the
+   // func_80086B04 list; single-step reset over the func_80086B08 list.
+    // The container base is node->field_0x8 - 0x3E9C (null maps to 0, so the
+    // retail still dispatches through the fixed 0x3E9C page).
+    {
+        EvtSeqMgrView* mgr = func_80086B04__Q22cf13CfGameManagerFv();
+        UnkNode4594* node = mgr->field_0x4->field_0x0;
+        while (node != func_80086B04__Q22cf13CfGameManagerFv()->field_0x4) {
+            u8* p = node->field_0x8 ? reinterpret_cast<u8*>(node->field_0x8) -
+                                          0x3E9C
+                                    : 0;
+            EvtSeqResetObj* o =
+                reinterpret_cast<EvtSeqResetObj*>(p + 0x3E9C);
+            o->vf_0x158(0);
+            o->vf_0x1C0(0);
+            EvtSeqFlagsObj* flg =
+                reinterpret_cast<EvtSeqFlagsObj*>(p + 0x3F34 - 0x3E9C);
+            if (flg != 0) {
+                flg->vf_0x84(1);
+            }
+            node = node->field_0x0;
+        }
+    }
+    {
+        EvtSeqMgrView* mgr = func_80086B08__Q22cf13CfGameManagerFv();
+        UnkNode4594* node = mgr->field_0x4->field_0x0;
+        while (node != func_80086B08__Q22cf13CfGameManagerFv()->field_0x4) {
+            u8* p = node->field_0x8 ? reinterpret_cast<u8*>(node->field_0x8) -
+                                          0x3E9C
+                                    : 0;
+            EvtSeqResetObj* o =
+                reinterpret_cast<EvtSeqResetObj*>(p + 0x3E9C);
+            o->vf_0x158(0);
+            node = node->field_0x0;
+        }
+    }
+    // Ready scan over the realtime-event list from the camera slot on: any
+    // resolved type-1 entry arms bit 16 of the shared state (and clears the
+    // fade-out gate); otherwise clear the arm bit.
+    {
+        u32 flag = 0;
+        u32 i = reinterpret_cast<UnkStateC4Obj*>(lbl_eu_80664268->field_0xC4)
+                    ->field_0x28;
+        u32 scaled = i << 2;
+        while (i < reinterpret_cast<UnkStateC4Obj*>(lbl_eu_80664268->field_0xC4)
+                           ->field_0x20 +
+                       reinterpret_cast<UnkStateC4Obj*>(
+                           lbl_eu_80664268->field_0xC4)
+                           ->field_0x28) {
+            UnkState_80664268* st = lbl_eu_80664268;
+            UnkEvtListEntry* e = *(UnkEvtListEntry**) (
+                (u8*)st->field_0xA4 + scaled);
+            if (e->field_0x14 == 1 && e->vf_0x14() != 0) {
+                flag = 1;
+            }
+            i++;
+            scaled += 4;
+        }
+        if (flag != 0) {
+            lbl_eu_80664268->field_0x5C |= 0x10000;
+        } else {
+            lbl_eu_80664268->field_0x5C &= ~0x8000u;
+        }
+        if (flag == 0) {
+            // Nothing armed: stop the tasks on the third manager's object
+            // list, then reset the minimap system.
+            EvtSeqMgrView* mgr = func_80086B10__Q22cf13CfGameManagerFv();
+            UnkNode4594* node = mgr->field_0x4->field_0x0;
+            while (node !=
+                   func_80086B10__Q22cf13CfGameManagerFv()->field_0x4) {
+                EvtSeqB10Node* n =
+                    reinterpret_cast<EvtSeqB10Node*>(node->field_0x8);
+                if (n->field_0x98 != 0) {
+                    n->field_0x98->vf_0x80(1);
+                }
+                node = node->field_0x0;
+            }
+            func_8016FC0C(0);
+        }
+    }
+    if (func_80164910() != 0) {
+        func_800B1C78(0);
+    }
+    // Start every realtime-event entry, run the event dispatch advance, then
+    // tick them once.
+    {
+        u32 scaled = 0;
+        u32 n = 0;
+        while (n < self->field_0xA8) {
+            UnkEvtListEntry* e = *(UnkEvtListEntry**) (
+                (u8*)self->field_0xA4 + scaled);
+            e->vf_0x0C();
+            n++;
+            scaled += 4;
+        }
+    }
+    func_80180DCC();
+    func_80169F28(self);
+    {
+        u32 scaled = 0;
+        u32 n = 0;
+        while (n < self->field_0xA8) {
+            UnkEvtListEntry* e = *(UnkEvtListEntry**) (
+                (u8*)self->field_0xA4 + scaled);
+            e->vf_0x24();
+            n++;
+            scaled += 4;
+        }
+    }
+    func_80180210(1);
+    func_80180394();
+    // Select the move-callback table by whether the walk continues past this
+    // sequence step, tint the scene window to the BGM volume, mark the scene
+    // render-active, and clear the frame counter / arm the 0x400 gate.
+    EvtSeqWalkBuf* cc = reinterpret_cast<EvtSeqWalkBuf*>(self->field_0xCC);
+    u32 next = self->field_0xF8 + 1;
+    const u32* src;
+    if (next < cc->field_0x8) {
+        src = &lbl_eu_80530AAC[0];
+    } else {
+        src = &lbl_eu_80530AA0[0];
+    }
+    u32 w1, w0, w2;
+    w0 = *src++;
+    w1 = *src++;
+    self->field_0x40 = w1;
+    self->field_0x3C = w0;
+    w2 = *src++;
+    self->field_0x44 = w2;
+    {
+        EvtSeqVec4 v = { lbl_eu_80667658, lbl_eu_80667658, lbl_eu_80667658,
+                         lbl_eu_80667658 };
+        func_8049602C(lbl_eu_80663E14, 0xF, &v);
+    }
+    func_eu_8049AB50((u8*)lbl_eu_80663E14, 1);
+    self->field_0x104 = 0;
+    self->field_0x5C |= 0x400;
+}
 
 int func_801696C4(void* self) { return 0; }
 
-void func_801696CC(){}
+void func_801696CC(cf::CTaskREvtSequence* self) {
+    // 12-byte ptmf table overlay (retail copies these as struct reads).
+    struct EvtSeqPtmf3 {
+        u32 w0;
+        u32 w1;
+        u32 w2;
+    };
+    // Event-sequence update (variant B): pump func_8016B860, then the same
+    // color/ptmf prologue as func_80169A38 (table 0x80530AB8). The walk-index
+    // snapshots (retail r29/r28) are read before either branch so the
+    // 0x4-flag path can restore them after the fade-counter increments.
+    // The ptmf tables live at fixed offsets inside the 0x80530A40 pool;
+    // holding the pool base in one register across the whole body lets MWCC
+    // fold each access into lwz base,+off / addi+lwz pairs like retail.
+    const u32* tbl = lbl_eu_80530A40;
+    u32 cond;
+    u32 snap104;
+    u32 snap100;
+    u32 cnt;
+    u32 flag1;
+    u32 flag2;
+    UnkStateTable_D0* entry;
+    func_8016B860(self);
+    if (cf::CfGameManager::func_800829B8() != 0) {
+        return;
+    }
+    if (self->field_0x5C & 0x8) {
+        EvtSeqC4Buf* buf = reinterpret_cast<EvtSeqC4Buf*>(self->field_0xC4);
+        s16 t = buf->field_0x44;
+        if (t == 2) {
+            func_8049602C(lbl_eu_80663E14, 0,
+                          reinterpret_cast<EvtSeqVec4*>(&ml::CCol4::white));
+        } else if (t != 3) {
+            func_8049602C(lbl_eu_80663E14, 0,
+                          reinterpret_cast<EvtSeqVec4*>(&ml::CCol4::black));
+        }
+        // Binding the table slice as an array reference forces MWCC to
+        // materialize the derived address in a register (retail: addi
+        // r3, r31, K followed by 0/4/8(r3)-style loads).
+        const u32 (&tab)[3] =
+            *reinterpret_cast<const u32 (*)[3]>(&tbl[0x1E]);
+        u32 w1 = tab[1];
+        self->field_0x40 = w1;
+        self->field_0x3C = tab[0];
+        self->field_0x44 = tab[2];
+        flag1 = 1;
+    } else {
+        flag1 = 0;
+    }
+    if (flag1 != 0) {
+        return;
+    }
+    // The shared-state pointer is read once here (retail hoists the sda
+    // load above both snapshot loads); field_0x100 is read once into `cnt`
+    // and reused across the virtual-call walk for both compares.
+    UnkState_80664268* g = lbl_eu_80664268;
+    snap104 = self->field_0x104;
+    snap100 = self->field_0x100;
+    if (g == 0) {
+        flag2 = 1;
+    } else {
+        flag2 = (g->field_0x5C >> 18) & 1;
+    }
+    if (flag2 != 0) {
+        func_80496294(lbl_eu_80663E14, lbl_eu_80667668);
+        cond = 0;
+    } else {
+        func_80496294(lbl_eu_80663E14, lbl_eu_8066766C);
+        UnkStateTable_D0* d0 = self->field_0xD0;
+        entry = reinterpret_cast<UnkStateTable_D0*>(
+            reinterpret_cast<u8*>(d0) + d0->field_0x4 * self->field_0xF8);
+        if (func_80496288(lbl_eu_80663E14) > lbl_eu_80667658) {
+            self->field_0x104 += 1;
+            self->field_0x100 += 1;
+        }
+        cond = self->field_0x100 >= entry->field_0xC;
+    }
+    if (cond != 0) {
+        if ((self->field_0x5C & 0x4) == 0) {
+            // Fade-in path: undo any fade-counter bump and arm the 0x800 bit.
+            func_80496294(lbl_eu_80663E14, lbl_eu_80667668);
+            self->field_0x104 = snap104;
+            self->field_0x5C |= 0x800;
+            self->field_0x100 = snap100;
+        } else {
+            // Advance path: clear the 0x1000 gate, drain the CX stream,
+            // advance the walk index and dispatch, then swap the ptmf table
+            // depending on whether the walk index is exhausted.
+            self->field_0x5C &= ~0x1000u;
+            func_80496294(lbl_eu_80663E14, lbl_eu_8066766C);
+            for (;;) {
+                s32 n = CXReadUncompLH(
+                    reinterpret_cast<CXUncompContextLH*>(self->mCxBuffer),
+                    reinterpret_cast<const void*>(self->field_0x124), 0x2000);
+                if (n <= 0) {
+                    self->field_0x5C &= ~0x40;
+                    self->field_0x120 =
+                        reinterpret_cast<UnkSeq120*>(self->field_0x11C);
+                    break;
+                }
+                self->field_0x124 += 0x2000;
+            }
+            self->field_0xF8 += 1;
+            func_80169F28(self);
+            EvtSeqWalkBuf* cc =
+                reinterpret_cast<EvtSeqWalkBuf*>(self->field_0xCC);
+            if (self->field_0xF8 + 1 < cc->field_0x8) {
+                const u32 (&tab)[3] =
+                    *reinterpret_cast<const u32 (*)[3]>(&tbl[0x24]);
+                u32 w1 = tab[1];
+                self->field_0x40 = w1;
+                self->field_0x3C = tab[0];
+                self->field_0x44 = tab[2];
+            } else {
+                const u32 (&tab)[3] =
+                    *reinterpret_cast<const u32 (*)[3]>(&tbl[0x21]);
+                u32 w1 = tab[1];
+                self->field_0x40 = w1;
+                self->field_0x3C = tab[0];
+                self->field_0x44 = tab[2];
+            }
+        }
+    } else {
+        cnt = self->field_0x100;
+        if ((s32)cnt >= 1 && (self->field_0x5C & 0x400000) == 0) {
+            u32 scaled = 0;
+            u32 n = 0;
+            while (n < self->field_0xA8) {
+                UnkEvtListEntry* e = *(UnkEvtListEntry**) (
+                    (u8*)self->field_0xA4 + scaled);
+                e->vf_0x10();
+                n++;
+                scaled += 4;
+            }
+            self->field_0x5C |= 0x100000;
+        }
+        if ((s32)cnt >= 2 && (self->field_0x5C & 0x200000) == 0) {
+            EvtSeqWalkBuf* cc =
+                reinterpret_cast<EvtSeqWalkBuf*>(self->field_0xCC);
+            if (self->field_0xF8 + 1 < cc->field_0x8) {
+                func_80169DD0(self, self->field_0xF8 + 1);
+            }
+            self->field_0x5C |= 0x200000;
+        }
+    }
+    {
+        u32 scaled = 0;
+        u32 n = 0;
+        while (n < self->field_0xA8) {
+            UnkEvtListEntry* e = *(UnkEvtListEntry**) (
+                (u8*)self->field_0xA4 + scaled);
+            e->vf_0x24();
+            n++;
+            scaled += 4;
+        }
+    }
+    if (cond != 0) {
+        func_80180210(1);
+    }
+    if (cond != 0 || self->field_0x109 != 0) {
+        func_8016BB38(self);
+    }
+    self->field_0x109 = 0;
+    if (cond != 0) {
+        func_80180394();
+    }
+    self->field_0x114 = 0;
+}
 
 void func_80169A34() {}
 
@@ -938,7 +1330,7 @@ void func_80169A38(cf::CTaskREvtSequence* self) {
                           reinterpret_cast<EvtSeqVec4*>(&ml::CCol4::black));
         }
         u32 w0, w1, w2;
-        const u32* src = lbl_eu_80530ADC;
+        const u32* src = &lbl_eu_80530ADC[0];
         w0 = *src++;
         flag1 = true;
         w1 = *src++;
@@ -979,7 +1371,7 @@ void func_80169A38(cf::CTaskREvtSequence* self) {
     }
     if (cond != 0) {
         u32 w1, w0, w2;
-        const u32* src = lbl_eu_80530AE8;
+        const u32* src = &lbl_eu_80530AE8[0];
         w0 = *src++;
         w1 = *src++;
         self->field_0x40 = w1;
@@ -989,8 +1381,8 @@ void func_80169A38(cf::CTaskREvtSequence* self) {
     } else {
         if ((s32)self->field_0x100 >= 1) {
             if ((self->field_0x5C & 0x400000) == 0) {
-                n = 0;
-                scaled = 0;
+                u32 scaled = 0;
+                u32 n = 0;
                 while (n < self->field_0xA8) {
                     UnkEvtListEntry* e = *(UnkEvtListEntry**)(
                         (u8*)self->field_0xA4 + scaled);
@@ -1002,14 +1394,16 @@ void func_80169A38(cf::CTaskREvtSequence* self) {
             }
         }
     }
-    n = 0;
-    scaled = 0;
-    while (n < self->field_0xA8) {
-        UnkEvtListEntry* e = *(UnkEvtListEntry**)(
-            (u8*)self->field_0xA4 + scaled);
-        e->vf_0x24();
-        n++;
-        scaled += 4;
+    {
+        u32 scaled = 0;
+        u32 n = 0;
+        while (n < self->field_0xA8) {
+            UnkEvtListEntry* e = *(UnkEvtListEntry**)(
+                (u8*)self->field_0xA4 + scaled);
+            e->vf_0x24();
+            n++;
+            scaled += 4;
+        }
     }
     // Final fade-out check recomputes the table entry locally (retail does
     // not reuse the flag2-branch pointer here).
@@ -1132,17 +1526,16 @@ void func_80169DD0(cf::CTaskREvtSequence* self, u32 idx) {
 void func_80169F24() {}
 
 void func_80169F28(cf::CTaskREvtSequence* self) {
-    // Event-sequence dispatch. Cache the walk header's table pointers into the
-    // object's scratch words (0x23C-0x24C), then walk the four id lists
-    // (camera/effect/light/movie) feeding each realtime-event object: the id
-    // word selects a 0x14-byte entry whose +0xC offset locates the object's
-    // data inside the sequence buffer (0 when the id word is -1). `n` is the
-    // accumulated list index carried across the loops; the list base is
-    // re-read from the object each iteration because the setup calls may
-    // resize it. Locals are declared in reverse-alloc order (k r31, off r30,
-    // entry r29, walk r28, n r27, i r26, self r25) to match retail.
-    u32 k = 0;                // r31: list byte index
-    u32 off = 0;              // r30: id-list byte offset
+    // Event-sequence dispatch. The walk header's table pointers are cached
+    // into the object's scratch words (0x23C-0x24C), then the four id lists
+    // (camera/effect/light/movie) are walked feeding each realtime-event
+    // object: the id word selects a 0x14-byte entry whose +0xC offset locates
+    // the object's data inside the sequence buffer (0 when the id word is
+    // -1). `n` is the accumulated list index carried across the loops; the
+    // list base is re-read from the object each iteration because the setup
+    // calls may resize it.
+    u32 k = 0;                // r31: list byte index / loop-2 counter
+    u32 off;                  // r30: id-list byte offset (assigned below)
     UnkStateTable_D0* entry;  // r29: selected table entry
     UnkSeq120* walk;          // r28: walk header
     u32 n = 0;                // r27: accumulated list index
@@ -1151,12 +1544,18 @@ void func_80169F28(cf::CTaskREvtSequence* self) {
     UnkStateTable_D0* table = self->field_0xD0;
     walk = self->field_0x120;
     u32 stride = table->field_0x4;
+    i = 0;
+    off = 0;
     u32 idx = self->field_0xF8;
 
     self->field_0x24C = reinterpret_cast<u32>(
         reinterpret_cast<u8*>(walk) + walk->field_0x14);
     self->field_0x23C = reinterpret_cast<u32>(
         reinterpret_cast<u8*>(walk) + walk->field_0x18 + 0xC);
+
+    entry = reinterpret_cast<UnkStateTable_D0*>(
+        reinterpret_cast<u8*>(table) + stride * idx);
+
     self->field_0x240 = reinterpret_cast<u32>(
         reinterpret_cast<u8*>(walk) + walk->field_0x1C + 0xC);
     self->field_0x244 = reinterpret_cast<u32>(
@@ -1164,12 +1563,8 @@ void func_80169F28(cf::CTaskREvtSequence* self) {
     self->field_0x248 = reinterpret_cast<u32>(
         reinterpret_cast<u8*>(walk) + walk->field_0x24 + 0xC);
 
-    entry = reinterpret_cast<UnkStateTable_D0*>(
-        reinterpret_cast<u8*>(table) + stride * idx);
-
-    // List 1 (camera): field_0x244 id list, 2-word elements. The list entry
-    // is loaded after the id check; the +0x43C store re-reads it from the
-    // object (retail reloads both words after the setup call).
+    // List 1 (camera): field_0x244 id list, 2-word elements. After the setup
+    // call, a -1 entry word is back-filled with the object's +0x43C result.
     while (i <
            reinterpret_cast<UnkStateC4Obj*>(self->field_0xC4)->field_0x28) {
         u32 word = *(u32*)((u8*)self->field_0x244 + off);
@@ -1186,7 +1581,7 @@ void func_80169F28(cf::CTaskREvtSequence* self) {
             *(UnkEvtListEntry**)((u8*)self->field_0xA4 + k);
         func_80180664(reinterpret_cast<CREvtCamera*>(e), (void*)arg,
                       (void*)((u8*)self->field_0x244 + off));
-        if (entry->field_0xC == 0xFFFFFFFF) {
+        if ((u32)entry->field_0xC == 0xFFFFFFFF) {
             entry->field_0xC = reinterpret_cast<EvtSeqObj43C*>(
                                    *(UnkEvtListEntry**)((u8*)self->field_0xA4 +
                                                         k))
@@ -1198,12 +1593,12 @@ void func_80169F28(cf::CTaskREvtSequence* self) {
         k += 4;
     }
 
-    // List 2 (effect): field_0x23C id list, 2-word elements; the dispatch is
-    // a virtual call at vtable+0x34.
+    // List 2 (effect): field_0x23C id list, 2-word elements; dispatched via
+    // the vtable+0x34 slot with (data, elem-address).
     {
-        u32 i2 = 0;       // r31
-        u32 off2 = 0;     // r30
-        u32 k2 = n * 4;   // r26
+        u32 i2 = 0;      // r31
+        u32 off2 = 0;    // r30
+        u32 k2 = n << 2; // r26
         while (i2 <
                reinterpret_cast<UnkStateC4Obj*>(self->field_0xC4)->field_0x20) {
             u32 word = *(u32*)((u8*)self->field_0x23C + off2);
@@ -1218,9 +1613,9 @@ void func_80169F28(cf::CTaskREvtSequence* self) {
             }
             UnkEvtListEntry* e =
                 *(UnkEvtListEntry**)((u8*)self->field_0xA4 + k2);
-            e->vf_0x34((void*)arg);
             n++;
             k2 += 4;
+            e->vf_0x34((void*)arg, (void*)((u8*)self->field_0x23C + off2));
             off2 += 8;
             i2++;
         }
@@ -1228,9 +1623,9 @@ void func_80169F28(cf::CTaskREvtSequence* self) {
 
     // List 3 (light): field_0x240 id list, 3-word elements.
     {
-        u32 i3 = 0;       // r31
-        u32 off3 = 0;     // r30
-        u32 k3 = n * 4;   // r26
+        u32 i3 = 0;      // r31
+        u32 off3 = 0;    // r30
+        u32 k3 = n << 2; // r26
         while (i3 <
                reinterpret_cast<UnkStateC4Obj*>(self->field_0xC4)->field_0x24) {
             u32 word = *(u32*)((u8*)self->field_0x240 + off3);
@@ -1245,10 +1640,10 @@ void func_80169F28(cf::CTaskREvtSequence* self) {
             }
             UnkEvtListEntry* e =
                 *(UnkEvtListEntry**)((u8*)self->field_0xA4 + k3);
-            func_80185378(reinterpret_cast<CREvtEffect*>(e), (void*)arg,
-                          (void*)((u8*)self->field_0x240 + off3));
             n++;
             k3 += 4;
+            func_80185378(reinterpret_cast<CREvtEffect*>(e), (void*)arg,
+                          (void*)((u8*)self->field_0x240 + off3));
             off3 += 0xC;
             i3++;
         }
@@ -1257,11 +1652,11 @@ void func_80169F28(cf::CTaskREvtSequence* self) {
     // List 4 (movie): field_0x248 id list, 1-word elements; only when the
     // 0xEC gate is set.
     if (self->field_0xEC != 0) {
-        u32 i4 = 0;       // r31
-        u32 off4 = 0;     // r30
-        u32 k4 = n * 4;   // r26
-        while (i4 <
-               reinterpret_cast<UnkStateC4Obj*>(self->field_0xC4)->field_0x34) {
+        u32 i4 = 0;      // r31
+        u32 off4 = 0;    // r30
+        u32 k4 = n << 2; // r26
+        while (i4 < reinterpret_cast<UnkStateC4Obj*>(self->field_0xC4)
+                        ->field_0x34) {
             u32 word = *(u32*)((u8*)self->field_0x248 + off4);
             u32 arg;
             if (word == 0xFFFFFFFF) {
@@ -1274,46 +1669,44 @@ void func_80169F28(cf::CTaskREvtSequence* self) {
             }
             UnkEvtListEntry* e =
                 *(UnkEvtListEntry**)((u8*)self->field_0xA4 + k4);
-            func_801C36C4(reinterpret_cast<CREvtLight*>(e),
-                          reinterpret_cast<const char*>(arg),
-                          reinterpret_cast<u32>((u8*)self->field_0x248 + off4));
             n++;
             k4 += 4;
+            func_801C36C4(
+                reinterpret_cast<CREvtLight*>(e),
+                reinterpret_cast<const char*>(arg),
+                reinterpret_cast<u32>((u8*)self->field_0x248 + off4));
             off4 += 4;
             i4++;
         }
     }
 
-    // Final walk: reset every remaining list entry (movie stop).
-    {
-        u32 k5 = n * 4;   // r26
-        u32 i5 = 0;       // r27
-        while (i5 <
-               reinterpret_cast<UnkStateC4Obj*>(self->field_0xC4)->field_0x48) {
-            UnkEvtListEntry* e =
-                *(UnkEvtListEntry**)((u8*)self->field_0xA4 + k5);
-            func_80294BA4(reinterpret_cast<CREvtMovie*>(e));
-            k5 += 4;
-            i5++;
-        }
+    // Final walk: reset every remaining list entry (movie stop). Reuses the
+    // i/n register slots (retail: byte index in r26, counter in r27).
+    i = n << 2;
+    n = 0;
+    while (n < reinterpret_cast<UnkStateC4Obj*>(self->field_0xC4)->field_0x48) {
+        UnkEvtListEntry* e =
+            *(UnkEvtListEntry**)((u8*)self->field_0xA4 + i);
+        i += 4;
+        func_80294BA4(reinterpret_cast<CREvtMovie*>(e));
+        n++;
     }
 
-    // Apply the entry's scene / fade flags: arm the 0x4 bit, clear the 0x4
-    // bit, restore the BGM volume and arm the culling state, then clear the
-    // low 12 bits of the object flag word.
+    // Apply the entry's scene / fade flags: arm or clear the scene bit 0x4,
+    // restore the BGM volume and arm the culling state, then clear bits
+    // 8-11 of the object flag word. Retail re-reads the flag word into a
+    // scratch register for each test (no cached local).
     if (entry->field_0x38 & 1) {
-        u32* f = reinterpret_cast<EvtSeqScn7C*>(lbl_eu_80663E14)->field_0x7C;
-        *f |= 4;
+        reinterpret_cast<EvtSeqScn7C*>(lbl_eu_80663E14)->field_0x7C[0] |= 4;
     }
     if (entry->field_0x38 & 2) {
-        u32* f = reinterpret_cast<EvtSeqScn7C*>(lbl_eu_80663E14)->field_0x7C;
-        *f &= ~4;
+        reinterpret_cast<EvtSeqScn7C*>(lbl_eu_80663E14)->field_0x7C[0] &= ~4u;
     }
     if (lbl_eu_80667658 != entry->field_0x3C) {
         func_8048EA38(entry->field_0x3C);
     }
     cf::CTaskCulling::func_801A2BD0((entry->field_0x38 >> 3) & 1);
-    self->field_0x5C &= ~0xFFF;
+    self->field_0x5C &= ~0xF00;
 }
 
 u32 func_8016A24C(int idx) {
@@ -1424,7 +1817,297 @@ void cf::CTaskREvtSequence::Term() {
     func_8048EA38(field_0x12C);
 }
 
-void func_8016A480(void* self){}
+// Event-sequence teardown (retail func_8016A480, the body behind
+// cf::CTaskREvtSequence::Term): stop the VI pipeline, reset every manager
+// list, cancel pending async file loads, drain the realtime-event entry
+// array, apply BGM/fade events from the sequence buffer, then release the
+// scene callback and restore task-manager state.
+void func_8016A480(void* selfv) {
+    cf::CTaskREvtSequence* self =
+        static_cast<cf::CTaskREvtSequence*>(selfv);
+    CDeviceVI::waitForDrawDone();
+    self->field_0x115 = 1;
+    if (func_80164910() != 0) {
+        lbl_eu_80663E28 &= ~0x00800000u;
+        func_8007FE1C__Q22cf13CfGameManagerFv(0x1000, 0);
+    }
+    func_80180E1C();
+    if (self->field_0x10C != 0) {
+        mtl::MemManager::deallocate(
+            reinterpret_cast<void*>(self->field_0x10C));
+        self->field_0x10C = 0;
+    }
+    reinterpret_cast<EvtSeqMgrTaskView*>(func_801644B4())->field_0x1B8 = 1;
+    // Walk 1: full two-step reset + flags-object arm over the manager's
+    // object list. Container base is node->field_0x8 - 0x3E9C (null maps to
+    // 0 so dispatch still happens through the fixed page).
+    {
+        EvtSeqMgrView* mgr = func_80086B04__Q22cf13CfGameManagerFv();
+        UnkNode4594* node = mgr->field_0x4->field_0x0;
+        while (node != func_80086B04__Q22cf13CfGameManagerFv()->field_0x4) {
+            u8* p = node->field_0x8
+                        ? reinterpret_cast<u8*>(node->field_0x8) - 0x3E9C
+                        : 0;
+            // Retail recomputes the object address from the container base
+            // before each dispatch - keep these as temporaries, not locals.
+            reinterpret_cast<EvtSeqResetObj*>(p + 0x3E9C)->vf_0x158(1);
+            reinterpret_cast<EvtSeqResetObj*>(p + 0x3E9C)->vf_0x1C0(1);
+            EvtSeqFlagsObj* flg = reinterpret_cast<EvtSeqFlagsObj*>(p + 0x3F34);
+            if (flg != 0) {
+                reinterpret_cast<EvtSeqFlagsObj*>(p + 0x3F34)->vf_0x84(0);
+            }
+            node = node->field_0x0;
+        }
+    }
+    // Walk 2: single-step reset over the second manager object list.
+    {
+        EvtSeqMgrView* mgr = func_80086B08__Q22cf13CfGameManagerFv();
+        UnkNode4594* node = mgr->field_0x4->field_0x0;
+        while (node != func_80086B08__Q22cf13CfGameManagerFv()->field_0x4) {
+            u8* p = node->field_0x8
+                        ? reinterpret_cast<u8*>(node->field_0x8) - 0x3E9C
+                        : 0;
+            reinterpret_cast<EvtSeqResetObj*>(p + 0x3E9C)->vf_0x158(1);
+            node = node->field_0x0;
+        }
+    }
+    // Stop the tasks on the third list unless presentation mode is armed and
+    // the shared event state has bit 16 set.
+    if ((lbl_eu_80663E28 & 0x01000000) != 0 ||
+        (lbl_eu_80664268->field_0x5C & 0x00010000) == 0) {
+        EvtSeqMgrView* mgr = func_80086B10__Q22cf13CfGameManagerFv();
+        UnkNode4594* node = mgr->field_0x4->field_0x0;
+        while (node != func_80086B10__Q22cf13CfGameManagerFv()->field_0x4) {
+            EvtSeqB10Node* n = reinterpret_cast<EvtSeqB10Node*>(node->field_0x8);
+            if (n->field_0x98 != 0) {
+                n->field_0x98->vf_0x80(0);
+            }
+            node = node->field_0x0;
+        }
+        func_8016FC0C(1);
+    }
+    if (func_80164910() != 0) {
+        func_800B1C78(1);
+    }
+    // Cancel the three async file loads (direct read / common archive /
+    // sequence chunk); cancelling the archive also drops its buffer.
+    if (self->field_0xB8 != 0) {
+        cancel__11CDeviceFileFP11CFileHandle(
+            reinterpret_cast<CFileHandle*>(self->field_0xB8));
+        self->field_0xB8 = 0;
+    }
+    if (self->field_0xBC != 0) {
+        cancel__11CDeviceFileFP11CFileHandle(
+            reinterpret_cast<CFileHandle*>(self->field_0xBC));
+        self->field_0xBC = 0;
+        self->field_0xC4 = 0;
+    }
+    if (self->field_0xFC != 0) {
+        cancel__11CDeviceFileFP11CFileHandle(
+            reinterpret_cast<CFileHandle*>(self->field_0xFC));
+        self->field_0xFC = 0;
+    }
+    if (self->field_0xC4 != 0) {
+        // Drain pass: stop any live type-3 realtime entry; entries with flag
+        // bit 7 also get their release callback and are removed from the
+        // list. Repeat while anything was removed. The array base is
+        // re-read through self on every access (retail addressing).
+        bool removed;
+        u32 i;
+        u32 off;
+        do {
+            removed = false;
+            for (i = 0, off = 0; i < self->field_0xA8; i++, off += 4) {
+                UnkEvtListEntry* e =
+                    *(UnkEvtListEntry**)((u8*)self->field_0xA4 + off);
+                if (e != 0 && e->field_0x14 == 3) {
+                    e->vf_0x3C();
+                    removed = true;
+                    if ((e->field_0x18 & 0x80) != 0) {
+                        UnkEvtListEntry* e2 =
+                            *(UnkEvtListEntry**)((u8*)self->field_0xA4 + off);
+                        if (e2 != 0) {
+                            e2->vf_0x08(1);
+                        }
+                        *(UnkEvtListEntry**)((u8*)self->field_0xA4 + off) = 0;
+                    }
+                }
+            }
+        } while (removed);
+        func_80180210(0);
+        // Final sweep: release whatever remains.
+        for (i = 0, off = 0; i < self->field_0xA8; i++, off += 4) {
+            UnkEvtListEntry* e =
+                *(UnkEvtListEntry**)((u8*)self->field_0xA4 + off);
+            if (e != 0) {
+                e->vf_0x08(1);
+                *(UnkEvtListEntry**)((u8*)self->field_0xA4 + off) = 0;
+            }
+        }
+        // LOD table: re-arm each active row through CTaskLOD.
+        for (u32 j = 0;
+             j < reinterpret_cast<EvtSeqC4Buf*>(self->field_0xC4)->field_0x38;
+             j++) {
+            UnkBB38Table* t = reinterpret_cast<UnkBB38Table*>(
+                reinterpret_cast<u8*>(self->field_0xF0) +
+                self->field_0xF0->field_0x4 * j);
+            u8 b = t->field_0x9;
+            if (b != 0 && b != 0xFF) {
+                func_80462D04__8CTaskLODFv(t->field_0xA);
+            }
+        }
+        // BGM/fade event rows: only when the fade-out gate bit is clear and
+        // a duration table is loaded.
+        if ((self->field_0x5C & 0x00400000) == 0) {
+            if (self->field_0x108 == 0 && self->field_0xE8 != 0) {
+                for (u32 k = 0;
+                     k < reinterpret_cast<EvtSeqC4Buf*>(self->field_0xC4)
+                             ->field_0x38;
+                     k++) {
+                    UnkE8Table* e = reinterpret_cast<UnkE8Table*>(
+                        reinterpret_cast<u8*>(self->field_0xE8) +
+                        self->field_0xE8->field_0x4 * k);
+                    u16 id = e->field_0x8;
+                    if (id != 0 && (s32)id >= (s32)self->field_0x104) {
+                        u8 ty = e->field_0xA;
+                        if (ty == 1 || ty == 2) {
+                            if (ty == 2) {
+                                // Gate halfword: 0 always plays, 1 plays when
+                                // the DBC gate misses, 2 plays when it hits.
+                                u16 gate = e->field_0xE;
+                                bool play = false;
+                                if (gate == 0) {
+                                    play = true;
+                                } else if (gate == 1) {
+                                    u32 cond = lbl_eu_80664268 != 0 &&
+                                               cf::CfGameManager::func_80086DBC() == 4;
+                                    if (cond == 0) {
+                                        play = true;
+                                    }
+                                } else if (gate == 2) {
+                                    u32 cond = lbl_eu_80664268 != 0 &&
+                                               cf::CfGameManager::func_80086DBC() == 4;
+                                    if (cond != 0) {
+                                        play = true;
+                                    }
+                                }
+                                if (!play) {
+                                    continue;
+                                }
+                            }
+                            // Negative duration means a fixed volume;
+                            // otherwise convert frames to seconds via the
+                            // int->double magic constant.
+                            f32 f1;
+                            s16 dur = e->field_0xC;
+                            if (dur < 0) {
+                                f1 = lbl_eu_8066766C;
+                            } else {
+                                f1 = static_cast<f32>(
+                                    (static_cast<f64>(dur) - lbl_eu_80667680) *
+                                    CDeviceVI::getSecPerFrame());
+                            }
+                            if (ty == 1) {
+                                func_80189034(
+                                    reinterpret_cast<const char*>(&e->field_0x10),
+                                    1, f1, lbl_eu_8066766C);
+                            } else {
+                                func_80188D34(
+                                    reinterpret_cast<const char*>(&e->field_0x10),
+                                    1, f1, lbl_eu_8066766C);
+                            }
+                        }
+                    }
+                }
+            }
+            // Type-tag pass: rows tagged 4/6 set/clear the event-window bit.
+            if (self->field_0xE8 != 0) {
+                u16 bits = lbl_eu_806642E0;
+                for (u32 k = 0;
+                     k < reinterpret_cast<EvtSeqC4Buf*>(self->field_0xC4)
+                             ->field_0x38;
+                     k++) {
+                    UnkE8Table* e = reinterpret_cast<UnkE8Table*>(
+                        reinterpret_cast<u8*>(self->field_0xE8) +
+                        self->field_0xE8->field_0x4 * k);
+                    u8 ty = e->field_0xA;
+                    if (ty == 4) {
+                        bits |= 1;
+                    } else if (ty == 6) {
+                        bits &= ~1u;
+                    }
+                    lbl_eu_806642E0 = bits;
+                }
+            }
+        }
+    }
+    // Presentation mode fades the BGM out; otherwise only reset the screen
+    // dimmer once the event manager is up.
+    if ((self->field_0x5C & 0x00400000) != 0) {
+        if ((lbl_eu_80663E28 & 0x01000000) == 0) {
+            func_80043BC4();
+        }
+        func_80189318(0, lbl_eu_80667658);
+        func_80189424(lbl_eu_80667658);
+    } else {
+        if (func_80164910() != 0 && (lbl_eu_80663E28 & 0x01000000) == 0) {
+            func_80043BC4();
+        }
+    }
+    // Push a flat black fade into the scene when no sequence data remains.
+    if (func_80164910() == 0 && self->field_0xC4 != 0 &&
+        reinterpret_cast<EvtSeqC4Buf*>(self->field_0xC4)->field_0x44 == 3) {
+        func_8049602C(lbl_eu_80663E14, 0,
+                      reinterpret_cast<EvtSeqVec4*>(&ml::CCol4::black));
+    }
+    if (self->field_0xC0 != 0) {
+        mtl::MemManager::deallocate(reinterpret_cast<void*>(self->field_0xC0));
+        self->field_0xC0 = 0;
+    }
+    // Detach the render callback (+0x58 IScnRender sub-object) and shut down
+    // the shared menu-text state.
+    if ((self->field_0x5C & 0x08000000) != 0) {
+        if (self != 0) {
+            lbl_eu_80663E14->removeRenderCB(
+                static_cast<IScnRender*>(
+                    reinterpret_cast<EvtSeqWithRender*>(self)));
+        }
+        __dt__80261B1C();
+    }
+    func_80167EF8();
+    func_8008670C__Q22cf13CfGameManagerFv();
+    if (cf::CfGameManager::func_80083298() != nullptr) {
+        if (*(void**)((u8*)cf::CfGameManager::func_80083298() + 0x2F3C) !=
+            nullptr) {
+            CREvtLightNotifyIf* notif = (CREvtLightNotifyIf*)*(void**)(
+                (u8*)cf::CfGameManager::func_80083298() + 0x2F3C);
+            notif->_v068(1);
+        }
+    }
+    if (func_80164910() != 0) {
+        func_801AAC78(0);
+    }
+    func_801AACA8(0);
+    CGame::setTaskManagerUpdateCount(1);
+    self->field_0xC4 = 0;
+    if ((self->field_0x5C & 0x04000000) != 0) {
+        func_804900A0__FUl(0);
+    }
+    if (func_8011C2E8() == 0) {
+        if (func_80164910() == 0 &&
+            strstr(self->mPath, &lbl_eu_80503098[0x49]) == 0) {
+            func_801338C8();
+        }
+    }
+    if ((self->field_0x5C & 0x00040000) != 0) {
+        if (func_801AC088() == 0) {
+            func_8012F750(0);
+        }
+        if (func_80110A70() == 0) {
+            func_80133B80();
+        }
+    }
+}
 
 
 
@@ -2122,33 +2805,44 @@ void func_8016BC1C(UnkEvtListEntry* self) {
 
 int func_8016BDA8(EvtBdabModel* self, u32* out) {
     // Event-slot claim probe (called from the realtime-event dispatcher).
-    // Inactive while the shared state walk is in its first three frames;
+    // Inactive while the shared state walk is past its first frame window;
     // otherwise scans this model's claimed id/slot table for a slot matching
     // the current state index and, on a hit, advances the shared per-index
     // byte counter (+6 when the event is a type-2, else +1) and reports the
     // id through `out`.
+    s32 sum;  // declared first: drives MWCC's callee-saved coloring (r31)
     UnkState_80664268* st = lbl_eu_80664268;
-    if (st->field_0xF8 >= 1 && st->field_0x100 < 3) {
+    if ((s32)st->field_0xF8 >= 1 && (s32)st->field_0x100 < 3) {
         return 0;
     }
     if (self->field_0x18 & 0x100) {
         // Packed-slot path: scan the eight halfword slots at mPtr1C+0x38.
         // A nonzero slot whose low byte minus (slot-table base + 2) equals
         // field_0xF8 claims the frame.
-        EvtBdabPtr1C* p1c = reinterpret_cast<EvtBdabPtr1C*>(self->field_0x1C);
-        EvtSeqC4View80* c4 = reinterpret_cast<EvtSeqC4View80*>(st->field_0xC4);
-        for (u32 i = 0; i < 8; i++) {
-            u16 h = p1c->field_0x38[i];
-            if (h == 0) {
-                return 0;
-            }
-            if (st->field_0xF8 == (h & 0xFF) - (c4->field_0x80 + 2)) {
-                if (out != 0) {
-                    *out = h & 0xFF;
+        // Two groups of four keeps the retail mtctr=2 shape: the inner
+        // constant-trip scan unrolls while the counted outer loop stays
+        // rolled. Everything reads through self/state directly.
+        for (int row = 0; row < 2; row++) {
+            for (int k = 0; k < 4; k++) {
+                u16 h = reinterpret_cast<EvtBdabPtr1C*>(self->field_0x1C)
+                            ->field_0x38[row * 4 + k];
+                if (h == 0) {
+                    goto notFound;
                 }
-                return 1;
+                if (lbl_eu_80664268->field_0xF8 ==
+                    (h & 0xFF) -
+                    (reinterpret_cast<EvtSeqC4View80*>(
+                         lbl_eu_80664268->field_0xC4)
+                         ->field_0x80 +
+                     2)) {
+                    if (out != 0) {
+                        *out = h & 0xFF;
+                    }
+                    return 1;
+                }
             }
         }
+    notFound:
         return 0;
     }
     EvtBdabPtr1C* p1c = reinterpret_cast<EvtBdabPtr1C*>(self->field_0x1C);
@@ -2166,48 +2860,67 @@ int func_8016BDA8(EvtBdabModel* self, u32* out) {
     // between the current state index and the claim; crossing 150 with a
     // live (< 8) counter byte triggers the advance. Then a second, unweighted
     // backward scan accepts any live counter byte.
-    u32 sum = 0;
+    sum = 0;
     if (func_801729D0(self) == 0) {
-        EvtSeqC4View80* c4 = reinterpret_cast<EvtSeqC4View80*>(st->field_0xC4);
-        UnkStateTable_D0* d0 = st->field_0xD0;
-        u32 stride = d0->field_0x4;
-        u32 f8 = st->field_0xF8;
-        u32 diff = idv - f8;
-        if (diff < c4->field_0x80 + 3) {
-            for (u32 idx = idv - 1; (s32)idx >= (s32)f8; --idx) {
+        // Re-read the shared state and this model's slot object after the
+        // probe call - neither is kept live across the call.
+        UnkState_80664268* post = lbl_eu_80664268;
+        EvtBdabPtr1C* pc = reinterpret_cast<EvtBdabPtr1C*>(self->field_0x1C);
+        u32 idv2 = pc->field_0x30;
+        u32 f8 = post->field_0xF8;
+        u32 base = reinterpret_cast<EvtSeqC4View80*>(post->field_0xC4)->field_0x80;
+        u32 diff = idv2 - f8;
+        if (diff < base + 3) {
+            u32 idx = idv2 - 1;
+            while ((s32)idx >= (s32)f8) {
+                // Weight word of the idx-th D0-table entry; both the table
+                // pointer and the stride are re-read here each iteration.
+                UnkStateTable_D0* d0 = post->field_0xD0;
                 sum += reinterpret_cast<UnkStateTable_D0*>(
-                           reinterpret_cast<u8*>(d0) + stride * idx)
+                           reinterpret_cast<u8*>(d0) + d0->field_0x4 * idx)
                            ->field_0xC;
-                u8 t = st->field_0x13C[idx];
-                if (t < 8 && sum >= 0x96) {
-                    st->field_0x13C[f8] +=
-                        (u8)(self->field_0x14 == 2 ? 6 : 1);
+                if (post->field_0x13C[idx] < 8 && sum >= 0x96) {
+                    post->field_0x13C[f8] +=
+                        (u8)((s32)self->field_0x14 == 2 ? 6 : 1);
                     if (out != 0) {
-                        *out = idv;
+                        *out = reinterpret_cast<EvtBdabPtr1C*>(
+                                   self->field_0x1C)
+                                   ->field_0x30;
                     }
                     return 1;
                 }
+                idx--;
             }
         }
-        if (diff < c4->field_0x80 + 5) {
-            for (u32 idx = idv - 1; (s32)idx >= (s32)f8; --idx) {
-                if (st->field_0x13C[idx] < 8) {
-                    st->field_0x13C[f8] +=
-                        (u8)(self->field_0x14 == 2 ? 6 : 1);
+        if (diff < base + 5) {
+            // Second scan reads the shared state afresh.
+            UnkState_80664268* cur = lbl_eu_80664268;
+            u32 idx = idv2 - 1;
+            while ((s32)idx >= (s32)f8) {
+                if (cur->field_0x13C[idx] < 8) {
+                    post->field_0x13C[f8] +=
+                        (u8)((s32)self->field_0x14 == 2 ? 6 : 1);
                     if (out != 0) {
-                        *out = idv;
+                        *out = reinterpret_cast<EvtBdabPtr1C*>(
+                                   self->field_0x1C)
+                                   ->field_0x30;
                     }
                     return 1;
                 }
+                idx--;
             }
         }
     }
     // Final gate: only when the claimed slot directly follows the state index.
-    if (st->field_0xF8 == idv - 1) {
-        st->field_0x13C[st->field_0xF8] +=
-            (u8)(self->field_0x14 == 2 ? 6 : 1);
+    u32 finId =
+        reinterpret_cast<EvtBdabPtr1C*>(self->field_0x1C)->field_0x30;
+    UnkState_80664268* fin = lbl_eu_80664268;
+    if (fin->field_0xF8 == finId - 1) {
+        fin->field_0x13C[fin->field_0xF8] +=
+            (u8)((s32)self->field_0x14 == 2 ? 6 : 1);
         if (out != 0) {
-            *out = idv;
+            *out = reinterpret_cast<EvtBdabPtr1C*>(self->field_0x1C)
+                       ->field_0x30;
         }
         return 1;
     }

@@ -119,8 +119,10 @@ static volatile BOOL GXOverflowSuspendInProgress;
 static OSThread* __GXCurrentThread;
 static u8 CPGPLinked[8];
 
-static const char lbl_8054B8C0[0x18] = "CPUFifo: %08X - %08X\n";
-static const char lbl_8054B8D8[0x18] = "GP Fifo: %08X - %08X\n";
+/* Retail pools these in .data (non-const); sizes give the exact split tail
+ * (0x18 + 0x16 = 0x2E). */
+static char lbl_8054B8C0[0x18] = "CPUFifo: %08X - %08X\n";
+static char lbl_8054B8D8[0x16] = "GP Fifo: %08X - %08X\n";
 
 void GXCPInterruptHandler(s32 interrupt, OSContext* context) {
     gxdt->cpStatReg = GX_CP_REG_READ_U16(CP_STATUS);
@@ -327,58 +329,42 @@ void GXSetGPFifo(GXFifoObj* fifo) {
     }
 
     realFifo = (GXFifoObjImpl*)fifo;
+    *(u32*)&GPFifo.wrap = *(u32*)&realFifo->wrap;
     {
-        GXFifoObjImpl* dst = &GPFifo;
-        void* end;
-        u32 size;
-        void* hiWatermark;
-        void* loWatermark;
-        void* readPtr;
-        void* writePtr;
-        u32 count;
-        void* base;
+        void* writePtr = realFifo->writePtr;
+        void* readPtr = realFifo->readPtr;
+        void* loWatermark = realFifo->loWatermark;
+        void* hiWatermark = realFifo->hiWatermark;
+        u32 size = realFifo->size;
+        void* base = realFifo->base;
+        u32 count = realFifo->count;
 
-        /* Retail copies the 0x20 bind word first, then loads fields
-           end..count, and finally base (stored back last). */
-        *(u32*)&dst->wrap = *(u32*)&realFifo->wrap;
-        end = realFifo->end;
-        size = realFifo->size;
-        hiWatermark = realFifo->hiWatermark;
-        loWatermark = realFifo->loWatermark;
-        readPtr = realFifo->readPtr;
-        writePtr = realFifo->writePtr;
-        count = realFifo->count;
-        base = realFifo->base;
-
-        dst->end = end;
-        dst->size = size;
-        dst->hiWatermark = hiWatermark;
-        dst->loWatermark = loWatermark;
-        dst->readPtr = readPtr;
-        dst->writePtr = writePtr;
-        dst->count = count;
+        /* Retail hoists all field loads ahead of the stores. */
+        GPFifo.end = realFifo->end;
+        GPFifo.size = size;
+        GPFifo.hiWatermark = hiWatermark;
+        GPFifo.loWatermark = loWatermark;
+        GPFifo.readPtr = readPtr;
+        GPFifo.writePtr = writePtr;
+        GPFifo.count = count;
         GPFifoReady[0] = 1;
-        dst->bind_gp = GX_TRUE;
+        GPFifo.bind_gp = GX_TRUE;
         GPFifo.base = base;
-    }
 
-    {
-        GXFifoObjImpl* gpHome = &GPFifo;
-
-        GX_CP_REG_WRITE_U16(CP_FIFO_BASEL, (u16)(u32)GPFifo.base);
+        GX_CP_REG_WRITE_U16(CP_FIFO_BASEL, (u16)(u32)base);
         GX_CP_REG_WRITE_U16(CP_FIFO_TOPL, (u16)(u32)GPFifo.end);
         GX_CP_REG_WRITE_U16(CP_FIFO_COUNTL, (u16)GPFifo.count);
         GX_CP_REG_WRITE_U16(CP_FIFO_WPTRL, (u16)(u32)GPFifo.writePtr);
         GX_CP_REG_WRITE_U16(CP_FIFO_RPTRL, (u16)(u32)GPFifo.readPtr);
         GX_CP_REG_WRITE_U16(CP_FIFO_HICNTL, (u16)(u32)GPFifo.hiWatermark);
         GX_CP_REG_WRITE_U16(CP_FIFO_LOCNTL, (u16)(u32)GPFifo.loWatermark);
-        GX_CP_REG_WRITE_U16(CP_FIFO_BASEH, CP_PTR_HI(gpHome->base));
-        GX_CP_REG_WRITE_U16(CP_FIFO_TOPH, CP_PTR_HI(gpHome->end));
-        GX_CP_REG_WRITE_U16(CP_FIFO_COUNTH, (u16)((s32)gpHome->count >> 16));
-        GX_CP_REG_WRITE_U16(CP_FIFO_WPTRH, CP_PTR_HI(gpHome->writePtr));
-        GX_CP_REG_WRITE_U16(CP_FIFO_RPTRH, CP_PTR_HI(gpHome->readPtr));
-        GX_CP_REG_WRITE_U16(CP_FIFO_HICNTH, (u16)((u32)gpHome->hiWatermark >> 16));
-        GX_CP_REG_WRITE_U16(CP_FIFO_LOCNTH, (u16)((u32)gpHome->loWatermark >> 16));
+        GX_CP_REG_WRITE_U16(CP_FIFO_BASEH, CP_PTR_HI(GPFifo.base));
+        GX_CP_REG_WRITE_U16(CP_FIFO_TOPH, CP_PTR_HI(GPFifo.end));
+        GX_CP_REG_WRITE_U16(CP_FIFO_COUNTH, (u16)((s32)GPFifo.count >> 16));
+        GX_CP_REG_WRITE_U16(CP_FIFO_WPTRH, CP_PTR_HI(GPFifo.writePtr));
+        GX_CP_REG_WRITE_U16(CP_FIFO_RPTRH, CP_PTR_HI(GPFifo.readPtr));
+        GX_CP_REG_WRITE_U16(CP_FIFO_HICNTH, (u16)((u32)GPFifo.hiWatermark >> 16));
+        GX_CP_REG_WRITE_U16(CP_FIFO_LOCNTH, (u16)((u32)GPFifo.loWatermark >> 16));
     }
 
     PPCSync();

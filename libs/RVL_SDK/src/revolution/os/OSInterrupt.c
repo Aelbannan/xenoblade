@@ -8,7 +8,6 @@
 #include <string.h>
 
 static OSInterruptHandler* InterruptHandlerTable;
-u8 osinterrupt_sbss_pad[4]; /* retail .sbss 0x14 -> 0x18 (align tail); non-static so -ipa file keeps it */
 s64 __OSLastInterruptTime;
 s16 __OSLastInterrupt;
 u32 __OSLastInterruptSrr0;

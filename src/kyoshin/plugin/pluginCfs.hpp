@@ -84,8 +84,8 @@ namespace cf {
 
 // Dispatch-only shim for the CfGameManager vtable: RTTI consumes emitted
 // slots 0 and 4, so declared slot n sits at vtable offset 8+4n. 84 pure
-// fillers put notifyPreload at offset 0x158, matching how setWarpArea
-// dispatches its preload notifier.
+// fillers (vf_00..vf_14C) put notifyPreload at offset 0x158, matching how
+// the plugin functions dispatch their preload notifier.
 class CfGameManagerVt158 {
 public:
     virtual void vf_00() = 0; virtual void vf_04() = 0;
@@ -106,7 +106,8 @@ public:
     virtual void vf_78() = 0; virtual void vf_7C() = 0;
     virtual void vf_80() = 0; virtual void vf_84() = 0;
     virtual void vf_88() = 0; virtual void vf_8C() = 0;
-    virtual void vf_90() = 0; virtual void vf_94() = 0;
+    virtual void vf_90() = 0;
+    virtual void setPos(ml::CVec3* pos);       // vtable offset 0x9C
     virtual void vf_98() = 0; virtual void vf_9C() = 0;
     virtual void vf_A0() = 0; virtual void vf_A4() = 0;
     virtual void vf_A8() = 0; virtual void vf_AC() = 0;
@@ -130,7 +131,6 @@ public:
     virtual void vf_138() = 0; virtual void vf_13C() = 0;
     virtual void vf_140() = 0; virtual void vf_144() = 0;
     virtual void vf_148() = 0; virtual void vf_14C() = 0;
-    virtual void vf_150() = 0; virtual void vf_154() = 0;
     virtual void notifyPreload(bool enable);   // vtable offset 0x158
 };
 

@@ -35,8 +35,8 @@ AXPROFILE __AXLocalProfile;
 
 static volatile u32 __AXOutFrame;
 static u32 __AXAiDmaFrame;
-u8 axout_sbss_pad[4]; /* retail .sbss 0x3C -> 0x40 (align tail); non-static so -ipa file keeps it */
-static u32 __AXOutDspReady;
+static s32 __AXOutDspReady;
+
 static AXOutCallback __AXUserFrameCallback;
 static volatile BOOL __AXDSPInitFlag;
 static volatile BOOL __AXDSPDoneFlag;

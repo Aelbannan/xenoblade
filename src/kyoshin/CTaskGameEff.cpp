@@ -91,7 +91,7 @@ extern "C" void __dt__8CProcessFv(void* self, int flags);
 // when the delete flag is positive. The redundant `if (self != 0)` re-check
 // reproduces the retail's dead second beq.
 #pragma optimize_for_size on
-extern "C" void* __dt__12CTaskGameEffFv(void* self, int flags) {
+extern "C" __declspec(noinline) void* __dt__12CTaskGameEffFv(void* self, int flags) {
     if (self != 0) {
         if ((u8*)self + 0x74 != 0) {
             __dt___reslist_base_CScn((u8*)self + 0x74, 0);

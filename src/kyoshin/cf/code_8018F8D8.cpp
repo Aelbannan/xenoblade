@@ -5,27 +5,20 @@
 
 #include "kyoshin/cf/code_8018F8D8.hpp"
 
-// CTaskGame.hpp declares func_8004392C with a u32 third arg and func_8049603C
-// with a CScn* arg, conflicting with the CVision.hpp / CSuddenCommu.hpp copies
-// reached via CBattleManager.hpp below; this TU uses neither copy.
-#define func_8004392C f8d8CtaskGame4392CUnused
-#define func_8049603C f8d8CtaskGame9603CUnused
 #include "kyoshin/CTaskGame.hpp"
-#undef func_8049603C
-#undef func_8004392C
+// CfGameManager.hpp (via code_8018F8D8.hpp) internally mixes a void* and a
+// CBattleManagerView* declaration of this getter; this TU calls none of them,
+// so rename it out of the way for every include below.
 // Several headers redeclare battle-manager imports with incompatible
 // signatures; this TU calls none of them. Pre-include CfObjectActor.hpp so
 // its 5-arg func_80174B4C declaration keeps the real name, then rename the
 // CChainTimer / CVision copies and every free-function singleton getter out
 // of the way (same idiom as CMenuBattlePlayerState.cpp).
-#define getInstance__Q22cf14CBattleManagerFv f8d8BmGetInstanceActor
 #include "kyoshin/cf/object/CfObjectActor.hpp"
-#undef getInstance__Q22cf14CBattleManagerFv
 #define func_80174B4C f8d8ChainTimer74B4CUnused
-#define getInstance__Q22cf14CBattleManagerFv f8d8BmGetInstanceChain
 #include "kyoshin/cf/CBattleManager.hpp"
-#undef getInstance__Q22cf14CBattleManagerFv
 #undef func_80174B4C
+
 
 // C-linkage (unmangled) helpers referenced by the catalog functions below.
 // These retail symbols are defined in other TUs / the linked library.
@@ -50,11 +43,10 @@ extern "C" {
     void __dt__80043E88(void* holder, int flag);
     int func_80061A80(u32 a, u32 b, u32 c, u32 d, u32 e, u32 f);
     int func_80061870(u32 a, u32 b, u32 c, u32 d, u32 e, u32 f);
-    void func_800BE12C(u8* obj, int a, int b, int c, int d);
     void func_8012F860();
     void func_801338C8();
     void func_80133AE8();
-    bool func_8011C2E8();
+    s32 func_8011C2E8();
     void func_80080F40__Q22cf13CfGameManagerFv(void* this_, u32 second, u32 third);
 
     void func_801AAC78(int arg);
@@ -68,7 +60,7 @@ extern "C" {
     int  func_804962A0(CScn* scn, int flag);
     void func_8009EB2C(int a, int b, u8* c);
     int  func_eu_80062E58(u16 a, u16 b, int c);
-    int  func_80061D2C(const void* obj, int idx);
+    bool func_80061D2C(UnkClass_80085334* obj, u32 mode);
     void func_801C3D9C(u8* obj);
     void func_801FA254(u8* obj);
     void func_8008566C__Q22cf13CfGameManagerFv(u32 mode, const UnkFloat4* value, u32 third);
@@ -376,16 +368,22 @@ int func_801904D0(void* self) {
     // If the colour-fade is already active (bit30 of lbl28), just clear it.
     // Otherwise set up an all-zero colour mix and dispatch a full-colour
     // request event when the colour-change latch (bit12) is set.
+    // Bit 1 (0x2): colour-fade-active latch.
     if (!(lbl_eu_80663E28 & 0x2)) {
         float f = lbl_eu_80667A70;
         UnkFloat4 v;
-        v.field_0x0 = v.field_0x4 = v.field_0x8 = v.field_0xC = f;
+        v.field_0x0 = f;
+        v.field_0x4 = f;
+        v.field_0x8 = f;
+        v.field_0xC = f;
         func_8008566C__Q22cf13CfGameManagerFv(0x1e, &v, 1);
         if (lbl_eu_80663E24 & 0x80000) {
             func_80061870((u32)self, 0x1c, 0x28, 0, 0, 0);
         }
     } else {
-        lbl_eu_80663E28 &= ~0x2;
+        // Volatile view forces retail's fresh reload of the flag word here
+        // (MWCC would otherwise CSE it with the test above).
+        lbl_eu_80663E28 = *(volatile u32*)&lbl_eu_80663E28 & ~0x2;
     }
     func_80085878__Q22cf13CfGameManagerFv();
     return 0;
@@ -481,7 +479,7 @@ int func_eu_80191E88(CFuncHost408* self, u32 arg1, u32 arg2) {
     UnkR31_8019E88* p = reinterpret_cast<UnkR31_8019E88*>(func_8009D5FC());
     func_8009EB2C((arg2 >> 20) & 0x7f, (arg2 >> 10) & 0x3ff, self->field_0x408 + 0x28);
     if (func_eu_80062E58(p->field_0x2, p->field_0x0, 3) == 0) {
-        func_80061D2C(self, 0x28);
+        func_80061D2C(reinterpret_cast<UnkClass_80085334*>(self), 0x28);
     }
     return 0;
 }
@@ -891,22 +889,17 @@ void CMenuPTState::Move() {
 }
 
 void CMenuPTState::cbRenderBefore() {
-    // Gate: skip while a task event is running or a realtime event is busy,
-    // then disable Z testing and draw the background texture via a temp
-    // DrawInfo (construct -> setup -> CBgTex draw -> destroy).
+    // OR-combined guard: MWCC emits the retail beq-body/b-exit pair for the
+    // second disjunct (MWCC_CASES "OR-combined guard" pattern).
     CTaskGame::getInstance();
-    if (CTaskGame::func_800426F0()) {
+    if (CTaskGame::func_800426F0() != 0 || (lbl_eu_80663E28 & (1u << 21)) != 0) {
         return;
     }
-    if (lbl_eu_80663E28 & (1u << 21)) {
+    if (func_8013BE50() == 0) {
         return;
-    } else {
-        if (func_8013BE50() == 0) {
-            return;
-        }
-        GXSetZMode(GX_FALSE, GX_NEVER, GX_FALSE);
-        nw4r::lyt::DrawInfo drawInfo;
-        func_80137250__FPQ34nw4r3lyt8DrawInfo(&drawInfo);
-        field_0x60.func_801C3D7C(&drawInfo);
     }
+    GXSetZMode(GX_FALSE, GX_NEVER, GX_FALSE);
+    nw4r::lyt::DrawInfo drawInfo;
+    func_80137250__FPQ34nw4r3lyt8DrawInfo(&drawInfo);
+    func_801C3D7C(&field_0x60, &drawInfo);
 }

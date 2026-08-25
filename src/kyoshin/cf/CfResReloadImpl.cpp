@@ -13,16 +13,19 @@ void* memset(void*, int, unsigned long);
 // __ct__Q22cf15CfResReloadImplF...); names starting with "__" are emitted
 // verbatim, so the literal name is used (same as the CREvtObj precedent).
 cf::CfResReloadImpl* __ct__cf_CfResReloadImpl(cf::CfResReloadImpl* self, cf::CfResReloadParent* parent) {
+    // const sdata2 float: MWCC hoists the lfs above all the member stores.
     self->field_00 = parent;
     self->field_04 = lbl_eu_80667698;
-    self->field_0A = -1;
-    self->field_0C = 0;
-    self->field_0E = -1;
-    self->field_10 = lbl_eu_80530FF0;
+    s16 invalid = -1;
+    int zero = 0;
+    self->field_0A = (u16)invalid;
+    self->field_0C = (u16)zero;
+    self->field_0E = invalid;
+    self->field_10 = &lbl_eu_80530FF0;
     self->field_1C = 3;
     self->field_1E = 0;
     self->field_1F = 0;
-    self->field_08 = 0;  // retail writes the type field last
+    self->field_08 = 0;
     memset(&self->field_14, 0, sizeof(self->field_14));
     return self;
 }
@@ -40,20 +43,27 @@ int checkTypeIsValid(cf::CfResReloadImpl* arg) {
 // object must be nonzero. Otherwise returns the normalized (field_08 >= 3)
 // flag computed by checkTypeIsValid's expression.
 int func_8016CE5C(const cf::CfResReloadImpl* self) {
-    // All parent accesses go through self->field_00 directly; retail reloads
-    // the parent pointer at every site (keeps self live in r31 instead).
-    if ((self->field_00->field_64 & 0x4) && self->field_04 > lbl_eu_80667698 &&
-        self->field_08 == 1 && (self->field_00->field_6C & 0x20)) {
-        cf::CfResLookupEntry* e = func_80062EC4(self->field_0A);
-        if (e->field_04 == self->field_00->field_70) {
-            cf::CfResEntryObjIf* obj = e->field_2C;
-            if (obj->_v040() != 0) {
+    // Retail hoists the parent load above the LR spill (const self), keeps it
+    // in one register for both flag-word tests, then reloads it from self
+    // only after the lookup call.
+    cf::CfResReloadParent* p = self->field_00;
+    if ((p->field_64 & 0x4) && self->field_04 > lbl_eu_80667698 &&
+        self->field_08 == 1 && (p->field_6C & 0x20)) {
+        cf::CfResLookupEntry* e = func_80062EC4((s16)self->field_0A);
+        cf::CfResReloadParent* q = self->field_00;
+        if (e->field_04 == q->field_70) {
+            // slot +0x40 takes the owning entry as r4 (same convention as
+            // func_8016D688's CfResEntryIf2 dispatches)
+            if (((cf::CfResEntryIf2*)e->field_2C)->_v040(e) != 0) {
                 return 1;
             }
         }
     }
-    u32 t = self->field_08;
-    return (int)(((t | 0xFFFFFFFCu) - ((t - 3u) >> 1)) >> 31);
+    // Tail: normalized (>= 3) test. NOTE (open item): retail colors the
+    // shift term into r0 and emits li r3,3 + orc for the or-term; every
+    // source shape tried converges to li r0,-4 + or with opposite colors.
+    u16 tv = self->field_08;
+    return (int)(((tv | 0xFFFFFFFCu) - ((tv - 3u) >> 1)) >> 31);
 }
 
 // FULL_MATCH: vtable slot 6 - returns constant resource type identifier
@@ -66,13 +76,26 @@ int getTypeId() { return 12; }
 int func_8016CF24(cf::CfResReloadImpl* self) {
     int v = ((cf::CfResReloadVtIf*)self)->_v034(1);
     if (self->field_1F == 0 && v != 0) {
-        int h = func_80063A60(v);
+        unsigned int h = func_80063A60(v);
         if (h != 0) {
-            // retail: magic constant materialized into r3 first, h+0xBCFFF
-            // into r0 second (addis/subi), mulhwu + correction + extrwi.
-            u32 q1 = __mulhwu(0x5AC056B1u, h + 0xBCFFF);
+            // retail: magic materialized into r3, h+0xBCFFF built addis-
+            // first via addis/subi into r0, mulhwu + correction + extrwi.
+            // Residual reg-swap: our __mulhwu expands with r3 reserved for
+            // the product, so the magic low half is finalized into r0 while
+            // retail's divide-style template keeps it in r3 (read before
+            // write). Every high-level shape converges to one of these two
+            // colorings.
+            // retail: magic materialized into r3, h+0xBCFFF built addis-
+            // first via addis/subi into r0, mulhwu + correction + extrwi.
+            // Residual reg-swap: our __mulhwu expansion reserves r3 for the
+            // product, so the magic low half finalizes into r0 while
+            // retail's template keeps it in r3 (read before write).
+            u32 xh = h + 0xC0000;
+            u32 x = xh - 0x3001;
             self->field_1F =
-                (u8)(((((h + 0xBCFFF - q1) >> 1) + q1) >> 19) & 0xFF);
+                (u8)((((x - __mulhwu(0x5AC056B1u, x)) >> 1) +
+                      __mulhwu(0x5AC056B1u, x)) >>
+                     19);
         }
     }
     u8 f = self->field_1F;
@@ -169,10 +192,14 @@ int func_8016D1D8(const cf::CfResReloadImpl* self) {
             r = e->field_32 + 5;
         }
     }
-    if (r == -1) {
+    // Single-case switch: MWCC lowers it to cmpwi/beq before the
+    // redundant-select elimination can fold the identity away.
+    switch (r) {
+    default:
+        return r;
+    case -1:
         return -1;
     }
-    return r;
 }
 
 // Iterates the two secondary-interface slots (+0x34 with 0 and 1); when a
@@ -704,8 +731,10 @@ float lbl_eu_806676B0;
 float lbl_eu_80666210;
 // 2^52 doubles used by the s16/u16 -> f32 conversion magic (MWCC's pool
 // reuses these named .sdata2 symbols instead of emitting TU-local @N labels).
-double lbl_eu_806676C0 = 0x4330000000000000ll;
-double lbl_eu_806676D0 = 0x4330000000000000ll;
+// const so the literals land in the readonly sdata2 pool where MWCC's cast
+// constants fold onto them.
+const double lbl_eu_806676C0 = 0x4330000000000000ll;
+const double lbl_eu_806676D0 = 0x4330000000000000ll;
 
 u16 getReloadParam0() { return lbl_eu_80664278; }
 
@@ -828,26 +857,58 @@ void updateReloadTypeState(u16 r3, u16 r4) {
     lbl_eu_8066427C = r4;
 }
 
+// Position vector view with the loop-operator -= so MWCC PS-vectorizes the
+// component subtract into psq_l/ps_sub pairs (same idiom as the matched
+// proximity check in code_800B06A4.cpp).
+struct ReloadPosVec {
+    float v[3];
+    ReloadPosVec& operator-=(const ReloadPosVec& rhs) {
+        for (int i = 0; i < 3; i++) {
+            v[i] -= rhs.v[i];
+        }
+        return *this;
+    }
+};
+
 // Reload-distance check: reads three s16-derived floats plus a u16-derived
 // radius from the BDAT table (two column sets selected by arg2), returns 1
 // when the radius is non-positive or the horizontal distance between the
 // self position and the point falls inside the radius. The y-difference is
-// checked separately after the horizontal radius test.
+// checked separately (from the raw positions) after the horizontal test.
+// Conversions use plain casts so MWCC emits its native stw-spill/lha/xoris/
+// lfd/fsubs/stfs int->float sequence (the manual 2^52 union form schedules
+// worse here); the cast constants land as TU-local @N pool labels - known
+// §7i residual.
 extern "C" int func_8016E1AC(cf::CfResReloadImpl* self, u32 arg2, int arg3) {
     void* bdat = lbl_eu_806640A8;
     u16 row = (u16)lbl_eu_80664184;
     f32 vals[3];
     f32 radius;
+    // Distinct named locals per column: retail keeps four descending stack
+    // slots per branch (0x24/0x20/0x1c/0x18), so each call result needs its
+    // own variable.
+    u32 c0;
+    u32 c1;
+    u32 c2;
+    u32 cr;
     if (arg2 == 2) {
-        vals[0] = (f32)(s16)(u16)getBdatStringColumnValue(bdat, lbl_eu_80503140 + 0x5, row);
-        vals[1] = (f32)(s16)(u16)getBdatStringColumnValue(bdat, lbl_eu_80503140 + 0xf, row);
-        vals[2] = (f32)(s16)(u16)getBdatStringColumnValue(bdat, lbl_eu_80503140 + 0x19, row);
-        radius = (f32)(u16)getBdatStringColumnValue(bdat, lbl_eu_80503140 + 0x23, row);
+        c0 = getBdatStringColumnValue(bdat, lbl_eu_80503140 + 0x05, row);
+        vals[0] = (f32)(s16)(u16)c0;
+        c1 = getBdatStringColumnValue(bdat, lbl_eu_80503140 + 0x0f, row);
+        vals[1] = (f32)(s16)(u16)c1;
+        c2 = getBdatStringColumnValue(bdat, lbl_eu_80503140 + 0x19, row);
+        vals[2] = (f32)(s16)(u16)c2;
+        cr = getBdatStringColumnValue(bdat, lbl_eu_80503140 + 0x23, row);
+        radius = (f32)(u16)cr;
     } else {
-        vals[0] = (f32)(s16)(u16)getBdatStringColumnValue(bdat, lbl_eu_80503140 + 0x2d, row);
-        vals[1] = (f32)(s16)(u16)getBdatStringColumnValue(bdat, lbl_eu_80503140 + 0x37, row);
-        vals[2] = (f32)(s16)(u16)getBdatStringColumnValue(bdat, lbl_eu_80503140 + 0x41, row);
-        radius = (f32)(u16)getBdatStringColumnValue(bdat, lbl_eu_80503140 + 0x4b, row);
+        c0 = getBdatStringColumnValue(bdat, lbl_eu_80503140 + 0x2d, row);
+        vals[0] = (f32)(s16)(u16)c0;
+        c1 = getBdatStringColumnValue(bdat, lbl_eu_80503140 + 0x37, row);
+        vals[1] = (f32)(s16)(u16)c1;
+        c2 = getBdatStringColumnValue(bdat, lbl_eu_80503140 + 0x41, row);
+        vals[2] = (f32)(s16)(u16)c2;
+        cr = getBdatStringColumnValue(bdat, lbl_eu_80503140 + 0x4b, row);
+        radius = (f32)(u16)cr;
     }
     if (radius <= lbl_eu_8066A208) {
         return 1;
@@ -855,18 +916,13 @@ extern "C" int func_8016E1AC(cf::CfResReloadImpl* self, u32 arg2, int arg3) {
     if (arg3 != 0) {
         radius -= lbl_eu_806676CC;
     }
-    f32* pos = (f32*)self;
-    f32 d0 = pos[0] - vals[0];
-    f32 d1 = pos[1] - vals[1];
-    f32 d2 = pos[2] - vals[2];
-    if (d0 * d0 + d2 * d2 >= radius * radius) {
+    ReloadPosVec delta = *(ReloadPosVec*)self;
+    delta -= *(ReloadPosVec*)vals;
+    if ((double)delta.v[0] * delta.v[0] + (double)delta.v[2] * delta.v[2] >=
+        (double)radius * radius) {
         return 0;
     }
-    f32 ad = d1;
-    if (ad < 0.0f) {
-        ad = -ad;
-    }
-    if (ad >= radius) {
+    if ((f32)__fabs((double)((f32*)self)[1] - vals[1]) >= radius) {
         return 0;
     }
     return 1;
@@ -945,40 +1001,95 @@ extern "C" int func_8016E578(u32 type, int sub) {
 // value of the first column (optionally boosted by 5/10 when the type's
 // bit-pair matches arg3) and writes the second-column*10 product (or a magic
 // constant / random-window value) to out1. out2 receives the fourth column.
-// Retail cmplwi compares mean type/arg2 are unsigned.
+// Column pointers are computed as "default then overwrite" so MWCC emits the
+// speculative addi before the cmplwi/bne pair like retail. Each call result
+// gets a full-word store through a byte buffer (retail stw slot + lbz/lhz
+// reload); the halfword view of slot 3 is re-read per test because the
+// *out1/*out2 pointer stores may alias it, so MWCC cannot cache it.
 extern "C" int func_8016E654(u32 type, u32 arg2, int arg3, u16* out1, u16* out2) {
     void* bdat = lbl_eu_806640A8;
     u16 row = (u16)lbl_eu_80664184;
-    // Byte locals force the full-word store of the call result; the int
-    // copies materialize the byte (lbz) and keep the if-chain adds unmasked
-    // (retail: stw r3,slot + lbz rX,slot instead of an inline rlwinm).
-    u8 v1 = (u8)getBdatStringColumnValue(bdat, type == 2 ? lbl_eu_80503140 + 0x9c : lbl_eu_80503140 + 0xa8, row);
-    int r1 = v1;
-    u8 v2 = (u8)getBdatStringColumnValue(bdat, type == 2 ? lbl_eu_80503140 + 0xb4 : lbl_eu_80503140 + 0xc0, row);
-    int r2 = v2;
-    u16 v3 = (u16)getBdatStringColumnValue(bdat, type == 2 ? lbl_eu_80503140 + 0x8c : lbl_eu_80503140 + 0x94, row);
-    u8 v4 = (u8)getBdatStringColumnValue(bdat, type == 2 ? lbl_eu_80503140 + 0xcc : lbl_eu_80503140 + 0xd4, row);
+    char* c1;
+    if (type == 2) {
+        c1 = lbl_eu_80503140 + 0x9c;
+    } else {
+        c1 = lbl_eu_80503140 + 0xa8;
+    }
 
-    *out2 = v4;
-    int m = r2 * 10;
-    u16 m16 = (u16)m;
+    u8 s1[4];
+    *(u32*)s1 = getBdatStringColumnValue(bdat, c1, row);
+    u8 v1 = s1[0];
+
+    char* c2;
+    if (type == 2) {
+        c2 = lbl_eu_80503140 + 0xb4;
+    } else {
+        c2 = lbl_eu_80503140 + 0xc0;
+    }
+    u8 s2[4];
+    *(u32*)s2 = getBdatStringColumnValue(bdat, c2, row);
+    u8 v2 = s2[0];
+
+    char* c3;
+    if (type == 2) {
+        c3 = lbl_eu_80503140 + 0x8c;
+    } else {
+        c3 = lbl_eu_80503140 + 0x94;
+    }
+    u8 s3[4];
+    *(u32*)s3 = getBdatStringColumnValue(bdat, c3, row);
+
+    char* c4;
+    if (type == 2) {
+        c4 = lbl_eu_80503140 + 0xcc;
+    } else {
+        c4 = lbl_eu_80503140 + 0xd4;
+    }
+    u8 s4[4];
+    *(u32*)s4 = getBdatStringColumnValue(bdat, c4, row);
+
+    u16 m16 = v2 * 10;
+    *out2 = s4[0];
     *out1 = m16;
 
-    if ((v3 & 0x600) && arg2 < 3) {
-        *out1 = (v3 & 0x400) ? 0x2d0 : 0x168;
+    // halfword re-reads of the slot-3 word, one per flag test
+#define V3 (*(u16*)s3)
+    if ((V3 & 0x600) && arg2 < 3) {
+        u16 big = 0x168;
+        if (V3 & 0x200) {
+            big = 0x2d0;
+        }
+        *out1 = big;
         return 0x64;
     }
-    if ((v3 & 0x6) && arg3 == 1) {
-        r1 += (v3 & 0x4) ? 0xa : 0x5;
-    } else if ((v3 & 0x18) && arg3 == 2) {
-        r1 += (v3 & 0x10) ? 0xa : 0x5;
-    } else if ((v3 & 0x60) && arg3 == 3) {
-        r1 += (v3 & 0x40) ? 0xa : 0x5;
-    } else if ((v3 & 0x180) && arg3 == 4) {
-        r1 += (v3 & 0x80) ? 0xa : 0x5;
+    if ((V3 & 0x6) && arg3 == 1) {
+        int bump = 0x5;
+        if (V3 & 0x4) {
+            bump = 0xa;
+        }
+        v1 += bump;
+    } else if ((V3 & 0x18) && arg3 == 2) {
+        int bump = 0x5;
+        if (V3 & 0x10) {
+            bump = 0xa;
+        }
+        v1 += bump;
+    } else if ((V3 & 0x60) && arg3 == 3) {
+        int bump = 0x5;
+        if (V3 & 0x40) {
+            bump = 0xa;
+        }
+        v1 += bump;
+    } else if ((V3 & 0x180) && arg3 == 4) {
+        int bump = 0x5;
+        if (V3 & 0x80) {
+            bump = 0xa;
+        }
+        v1 += bump;
     }
+#undef V3
     *out1 = (u16)(m16 - ml::math::mtRand(m16 / 6));
-    return r1;
+    return v1;
 }
 
 // Searches up to *counter reload candidates for one whose delay window fits
@@ -1057,12 +1168,16 @@ extern "C" u16 func_8016E854(cf::CfResReloadImpl* self, u16* out1, u16* counter,
 // short-circuit to the default; otherwise the value depends on
 // lbl_eu_80664280 (1 -> 0x65, 2 -> 0x66) passing through func_801AAAA0.
 float func_8016E9CC() {
-    // Single short-circuit || chain: both true-paths share one 'delay = B4'
-    // block. Residual: retail issues a second SDA load of lbl_eu_80663E24
-    // before merging bits 25/10; MWCC CSEs our references into one load.
+    // Both true-paths share one 'delay = B4' block. Retail issues a separate
+    // SDA load of lbl_eu_80663E24 for the bit-25/10 merge, so the first test
+    // reads its own copy.
     float delay;
-    if ((lbl_eu_80663E24 & 0x00400000) || (lbl_eu_80663E24 & 0x02000000) ||
-        (lbl_eu_80663E24 & 0x400)) {
+    // Two hoisted reads (first volatile so they cannot be merged); retail
+    // issues both SDA loads up front, testing bit 22 from the first.
+    u32 chkA = *(volatile u32*)&lbl_eu_80663E24;
+    u32 chkB = lbl_eu_80663E24;
+    if ((chkA & 0x00400000) ||
+        ((chkB & 0x02000000) | (chkB & 0x400))) {
         delay = lbl_eu_806676B4;
     } else {
         int sel = 0;
@@ -1096,25 +1211,30 @@ extern "C" void func_8016EA68(cf::CfResReloadImpl* self) {
     if (typeRet == 1) {
         u16 p = lbl_eu_80664280;
         u16 row = (u16)lbl_eu_80664184;
+        char* tbl = lbl_eu_80503140;
         void* bdat = lbl_eu_806640A8;
-        char* col = lbl_eu_80503140 + 0xd4;
+        char* col = tbl + 0xd4;
         if (p == 2) {
-            col = lbl_eu_80503140 + 0xcc;
+            col = tbl + 0xcc;
         }
-        u32 res = getBdatStringColumnValue(bdat, col, row);
-        lbl_eu_80664278 = (u8)res;
+        // Full-word store of the call result to the stack, then byte reload:
+        // retail emits stw/lbz instead of folding the mask.
+        u8 bytes[4];
+        *(u32*)bytes = getBdatStringColumnValue(bdat, col, row);
+        lbl_eu_80664278 = bytes[0];
         return;
     }
-    f32 t = lbl_eu_80664284 - func_80069EE4();
-    lbl_eu_80664284 = t;
-    if (t > lbl_eu_806676C8) {
+    // Compound -=: ties the subtract to the store so the stfs lands ahead
+    // of the compare like retail.
+    lbl_eu_80664284 -= func_80069EE4();
+    if (lbl_eu_80664284 > lbl_eu_806676C8) {
         u16 p = lbl_eu_80664280;
         if (p == 0) {
             return;
         }
-        if ((u16)(p - 1) <= 1 &&
-            ((int(*)(cf::CfResReloadImpl*, u16, int))func_8016E1AC)(self, p, 0) ==
-                0) {
+        // (p + 0x10000 - 1) & 0xFFFF <= 1 lowers to retail's addis/subi pair.
+        u32 pw = p + 0x10000;
+        if ((u16)(pw - 1) <= 1 && func_8016E1AC(self, p, 0) == 0) {
             lbl_eu_80664284 = lbl_eu_806676C8;
             return;
         }
@@ -1122,15 +1242,17 @@ extern "C" void func_8016EA68(cf::CfResReloadImpl* self) {
         u16 r = (u16)func_8016E578(lbl_eu_80664280, rnd);
         if (r == 0 || typeRet == 0) {
             u16 o1;
-            u16 o2;
             u16 o3;
+            u16 o2;
             u16 ret = func_8016E854(self, &o1, &lbl_eu_80664280, &o2, &o3);
-            lbl_eu_80664278 = ret;
-            // u16 -> float via the 2^52 double-magic trick.
-            lbl_eu_80664284 = (f32)o1 * lbl_eu_80666210;
+            // Volatile accesses keep the two SDA loads of lbl_eu_80663E24
+            // unmerged around the count store.
+            u32 chkA = *(volatile u32*)&lbl_eu_80663E24;
+            *(volatile u16*)&lbl_eu_80664278 = ret;
+            u32 chkB = *(volatile u32*)&lbl_eu_80663E24;
+            *(volatile float*)&lbl_eu_80664284 = (f32)o1 * lbl_eu_80666210;
             float delay;
-            if ((lbl_eu_80663E24 & 0x00400000) || (lbl_eu_80663E24 & 0x02000000) ||
-                (lbl_eu_80663E24 & 0x400)) {
+            if ((chkA & 0x00400000) || ((chkB & 0x02000000) | (chkB & 0x400))) {
                 delay = lbl_eu_806676B4;
             } else {
                 int sel = 0;
@@ -1168,17 +1290,25 @@ void func_8016EC58(cf::CfResReloadImpl* self) {
     if (bdat != 0) {
         u16 p = lbl_eu_80664280;
         // Each branch owns its own result local: retail spills the three
-        // call results to separate stack slots (0x8/0xc/0x10).
+        // call results to separate stack slots (0x8/0xc/0x10). The u32 ->
+        // bytes[0] spill/reload forces the retail `stw r3,N(r1); lbz`
+        // shape instead of a folded rlwinm.
         if (p == 0) {
-            u8 v = (u8)getBdatStringColumnValue(
-                bdat, lbl_eu_80531068[func_8006A6D0()], row);
-            lbl_eu_8066427E = v;
+            u32 v = getBdatStringColumnValue(
+                bdat, lbl_eu_80531068[(u16)func_8006A6D0()], row);
+            u8 bytes[4];
+            *(u32*)bytes = v;
+            lbl_eu_8066427E = bytes[0];
         } else if (p == 1) {
-            u8 v = (u8)getBdatStringColumnValue(bdat, lbl_eu_80503140 + 0xdc, row);
-            lbl_eu_8066427E = v;
+            u32 v = getBdatStringColumnValue(bdat, lbl_eu_80503140 + 0xdc, row);
+            u8 bytes[4];
+            *(u32*)bytes = v;
+            lbl_eu_8066427E = bytes[0];
         } else if (p == 2) {
-            u8 v = (u8)getBdatStringColumnValue(bdat, lbl_eu_80503140 + 0xe4, row);
-            lbl_eu_8066427E = v;
+            u32 v = getBdatStringColumnValue(bdat, lbl_eu_80503140 + 0xe4, row);
+            u8 bytes[4];
+            *(u32*)bytes = v;
+            lbl_eu_8066427E = bytes[0];
         }
     }
     func_8016EA68(self);

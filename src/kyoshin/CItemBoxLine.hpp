@@ -524,7 +524,7 @@ extern "C" u32 func_801D3C74(void*, u32);
 // Layout/anim builders + text/table helpers declared by the code_80135FDC unit.
 // func_80136910 is a C++ function (mangled retail name); the text helpers are
 // C-ABI (plain retail names).
-void func_80136910(nw4r::lyt::Layout*, char*, u8);
+extern "C" void func_80136910__FPQ34nw4r3lyt6LayoutPcUc(nw4r::lyt::Layout*, char*, u32);
 extern "C" void func_80136B4C(nw4r::lyt::Layout*, char*, char*, u32);
 extern "C" char* func_80136190(char*, char*, u32);
 extern "C" char* func_8013639C(void*, char*);

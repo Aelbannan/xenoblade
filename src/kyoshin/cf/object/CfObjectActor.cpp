@@ -1,3 +1,4 @@
+#include "kyoshin/cf/CBattleManagerApi.hpp"
 #include "kyoshin/cf/object/CfObjectActor.hpp"
 #include "kyoshin/code_802B8A3C.hpp"  // func_80174C98 / func_800B708C imports
 

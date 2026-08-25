@@ -7,11 +7,13 @@
 s32 SFLIB_CheckHn(void* h);
 s32 SFLIB_SetErr(void* h, u32 err_code);
 
-// PTS queue entry (16 bytes), stored at the queue buffer.
+// PTS queue entry / input-output record (16 bytes).
 typedef struct SfdPtsEntry {
-    u32 lo;   // 0x00 pts low
-    u32 hi;   // 0x04 pts high
-    u32 pos;  // 0x08 write position
+    union {
+        s64 pts;   // 0x00 64-bit PTS
+        u32 hw[2]; // 0x00 raw halves
+    } u;
+    u32 pos;  // 0x08 byte position
     u32 size; // 0x0C byte size
 } SfdPtsEntry; // 0x10 bytes
 
@@ -20,9 +22,19 @@ typedef struct SfdPtsQue {
     SfdPtsEntry* entries; // 0x00
     s32 maxIdx;           // 0x04 ring capacity (entries)
     s32 count;            // 0x08 number of valid entries
-    s32 unk0C;            // 0x0C
+    s32 unk0C;            // 0x0C write index
     s32 start;            // 0x10 read position
 } SfdPtsQue;
+
+// PTS input record passed by the demuxer.
+typedef struct SfdPtsData {
+    union {
+        s64 pts;   // 0x00 64-bit PTS
+        u32 hw[2]; // 0x00 raw halves (hw[0] = high)
+    } u;
+    u32 pos;   // 0x08 byte position
+    u32 size;  // 0x0C byte size
+} SfdPtsData;
 
 s32 sfpts_SearchPtsQue(SfdPtsQue* q, u32 target, u32 win_start, u32 win_len);
 
@@ -59,13 +71,12 @@ s32 SFD_SetVideoPts(void* self, void* pts, s32 size) {
     return 0;
 }
 
-s32 SFPTS_WritePtsQue(void* self, s32 idx, void* data, void* out) {
+s32 SFPTS_WritePtsQue(void* self, s32 idx, void* data, u32* o) {
     u32* d = (u32*)data;
-    u32* o = (u32*)out;
     SfdPtsQue* q;
     s32 r;
     o[0] = 0;
-    if ((s64)(((u64)d[0] << 32) | (u64)d[1]) <= 0)
+    if (((SfdPtsData*)data)->u.pts < 0)
         return 0;
     q = (SfdPtsQue*)((u8*)self + idx * 0x74 + 0x13f0);
     if (q->entries == 0)
@@ -76,11 +87,11 @@ s32 SFPTS_WritePtsQue(void* self, s32 idx, void* data, void* out) {
     } else {
         s32 uc = q->unk0C;
         s32 next = uc + 1;
-        SfdPtsEntry* e = q->entries + uc;
-        e->lo = d[0];
-        e->hi = d[1];
-        e->pos = d[2];
-        e->size = d[3];
+        SfdPtsEntry* e = &q->entries[uc];
+        e->u.pts = ((SfdPtsData*)data)->u.pts;
+        e->pos = ((SfdPtsData*)data)->pos;
+        e->size = ((SfdPtsData*)data)->size;
+        /* wrap write index: speculative subtract, override when no wrap */
         s32 nn = (next < q->maxIdx) ? next : next - q->maxIdx;
         s32 c2 = q->count + 1;
         q->count = c2;
@@ -96,6 +107,15 @@ s32 SFPTS_WritePtsQue(void* self, s32 idx, void* data, void* out) {
     return 0;
 }
 
+// Per-stream PTS control block (one per demux index, stride 0x74).
+typedef struct SfdPtsCtrl {
+    u8 pad[0x13D0];
+    u32 winStart; // 0x13D0 search window start
+    u32 winLen;   // 0x13D4 search window length
+    u8 pad2[0x18];
+    SfdPtsQue que; // 0x13F0
+} SfdPtsCtrl;
+
 s32 SFPTS_ReadPtsQue(void* self, s32 idx, u32 arg, void* out) {
     u32* o = (u32*)out;
     SfdPtsQue* q;
@@ -108,41 +128,29 @@ s32 SFPTS_ReadPtsQue(void* self, s32 idx, u32 arg, void* out) {
     win_len = *(u32*)((u8*)self + idx * 0x74 + 0x13d4);
     if (q->entries == 0)
         return 0;
+
     if (arg == 0) {
         if (q->count != 0) {
-            SfdPtsEntry* e = q->entries;
-            e += q->start;
-            u32 lo = e->lo;
-            u32 hi = e->hi;
-            u32 pos = e->pos;
-            u32 size = e->size;
-            o[1] = hi;
-            o[0] = lo;
-            o[3] = size;
-            o[2] = pos;
-            q->start = (q->start + 1 >= q->maxIdx) ? q->start + 1 - q->maxIdx : q->start + 1;
-            q->count = q->count - 1;
+            SfdPtsEntry* e = &q->entries[q->start];
+            *(SfdPtsEntry*)out = *e;
+            /* advance read index with ring wraparound */
+            s32 next = q->start + 1;
+            q->start = (next < q->maxIdx) ? next : next - q->maxIdx;
+            q->count--;
         }
     } else {
+        /* target position past the window end wraps back into it */
         if (arg >= win_start + win_len)
             arg -= win_len;
         if (q->count != 0) {
-            s32 idx2 = sfpts_SearchPtsQue(q, arg, win_start, win_len);
-            if (idx2 != -1) {
-                s32 ns = (q->start + idx2 >= q->maxIdx) ? q->start + idx2 - q->maxIdx : q->start + idx2;
-                q->count = q->count - idx2;
+            s32 found = sfpts_SearchPtsQue(q, arg, win_start, win_len);
+            if (found != -1) {
+                s32 ns = q->start + found;
+                ns = (ns < q->maxIdx) ? ns : ns - q->maxIdx;
+                q->count -= found;
                 q->start = ns;
-                {
-                    SfdPtsEntry* e = &q->entries[ns];
-                    u32 lo = e->lo;
-                    u32 hi = e->hi;
-                    u32 pos = e->pos;
-                    u32 size = e->size;
-                    o[1] = hi;
-                    o[0] = lo;
-                    o[3] = size;
-                    o[2] = pos;
-                }
+                SfdPtsEntry* e = &q->entries[ns];
+                *(SfdPtsEntry*)out = *e;
             }
         }
     }

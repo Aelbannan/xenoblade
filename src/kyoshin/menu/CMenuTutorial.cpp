@@ -7,12 +7,7 @@
 #include "monolib/util/MemManager.hpp"
 #include "monolib/device/CDeviceVI.hpp"
 #include "monolib/scn/CScn.hpp"
-// CfGameManager.hpp declares func_8049603C as CTaskGameCamView*(CScn*), which
-// conflicts with code_80135FDC.hpp's void*(CScn*). Rename it out for this
-// include (repo convention, see CTaskGame.cpp / CGame.cpp).
-#define func_8049603C menuTutCfGameMgr9603CUnused
 #include "kyoshin/cf/CfGameManager.hpp"
-#undef func_8049603C
 #include "kyoshin/code_80135FDC.hpp"
 #include "monolib/core/CPadManager.hpp"
 

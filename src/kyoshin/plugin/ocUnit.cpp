@@ -1,6 +1,7 @@
 // Auto-scaffolded catalog TU for kyoshin/plugin/ocUnit
 // Replace stubs with high-level C/C++ during decomp.
 
+#include "kyoshin/cf/CBattleManagerApi.hpp"
 #include "kyoshin/plugin/ocUnit.hpp"
 #include "kyoshin/cf/CfGameManager.hpp"
 #include "monolib/device/CDeviceVI.hpp"

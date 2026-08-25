@@ -6,7 +6,7 @@
 #include "kyoshin/harness_catalog.hpp"
 #include "monolib/math/Random.hpp"
 
-// ── Target 1: us-802a802c (func_802A58F8) ──────────────────────────────────
+// us-802a802c (func_802A58F8)
 // If the thread reports no active voice, clear the voice handle slot.
 void func_802A58F8(cf::CVS_THREAD_CHAIN* self) {
     if (func_802A3E88(self) == 0) {
@@ -14,7 +14,7 @@ void func_802A58F8(cf::CVS_THREAD_CHAIN* self) {
     }
 }
 
-// ── Target 2: us-802a8068 (func_802A5934) ──────────────────────────────────
+// us-802a8068 (func_802A5934)
 // Remove a voice by matching its embedded CCharVoice against the slot.
 // A CVoiceHandle stores the CCharVoice at offset 0x3E9C, so a non-null handle
 // is biased by 0x3E9C before comparing against the incoming voice pointer.
@@ -31,7 +31,7 @@ void func_802A5934(cf::CVS_THREAD_CHAIN* self, CCharVoice* voicePtr) {
     }
 }
 
-// ── Target 3: us-802a80c0 (func_802A598C) ──────────────────────────────────
+// us-802a80c0 (func_802A598C)
 // Prepare/play a voice: run the completion check (and playback-start helper
 // if busy), store the inverse-biased handle into the slot, re-bias to the
 // embedded CCharVoice and play the given voice ID.
@@ -55,7 +55,7 @@ int func_802A598C(cf::CVS_THREAD_CHAIN* self, CCharVoice* voicePtr, int voiceId)
     return func_802A3C44(self, embedded, voiceId);
 }
 
-// ── Target 4: us-802a8238 (func_802A5B04) ──────────────────────────────────
+// us-802a8238 (func_802A5B04)
 // Chain actor voice trigger. The actor handle must have its factory-active
 // flag (bit 1 of the 0x3F00 manager word) set; a thread buffer (0xA) is
 // reserved, then a random chain voice (mtRand(2) + 0x321) is played. Always
@@ -75,7 +75,7 @@ int func_802A5B04(CVoiceHandle* self, int flag) {
     return 0;
 }
 
-// ── Target 5: us-802a7f64 (__ct__802A5830) ────────────────────────────────
+// us-802a7f64 (__ct__802A5830)
 // Factory for CVS_THREAD_CHAIN. Allocates the handle buffer ((1,0) - the
 // handle is discarded), then the 0x24-byte thread object, constructs the
 // base, sets vtable/owner fields and copies init data from lbl_eu_80539A30.
@@ -120,7 +120,7 @@ cf::CVS_THREAD_CHAIN* __ct__802A5830() {
     return self;
 }
 
-// ── Target 6: us-802a8148 (func_802A5A14) ─────────────────────────────────
+// us-802a8148 (func_802A5A14)
 // Chain voice lifetime handler. Validates the factory-active flag, that the
 // voice is not already active (vtable[0x2BC/4]), and that the previous sound
 // is not the chain-stop marker; then reserves a 0x12C buffer and plays either

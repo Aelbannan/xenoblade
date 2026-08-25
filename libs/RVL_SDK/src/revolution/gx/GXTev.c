@@ -298,7 +298,8 @@ void GXSetZTexture(GXZTexOp op, GXTexFmt fmt, u32 bias)
 void GXSetTevOrder(GXTevStageID stage, GXTexCoordID coord, GXTexMapID map,
                    GXChannelID channel)
 {
-    static const u32 c2r[10] = { 0, 1, 0, 1, 0, 1, 7, 5, 6, 0 };
+    /* Retail keeps this table in .data (non-const), not .rodata. */
+    static u32 c2r[10] = { 0, 1, 0, 1, 0, 1, 7, 5, 6, 0 };
     u32 *ptref = &__GXData->tref[stage / 2];
     u32 tmap, tcoord, ccSel, te;
     u32 tref;

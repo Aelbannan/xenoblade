@@ -187,10 +187,6 @@ struct CAIActionEnumHolder {
 // "C" type lists for one symbol break every TU whose include chain pulls two
 // of them together with "illegal function overloading" 10197).
 extern "C" int func_80174C98(void* obj, int* out, int tag);
-// Canonical u8* form - MUST match CfObjectMove.hpp:340 / CfObjectActor.hpp:49
-// (divergent extern "C" type lists for one symbol break every TU whose include
-// chain pulls two of them together with "illegal function overloading" 10197).
-extern "C" void func_800BE12C(u8* moveObj, int a, int b, int c, int d);
 
 extern "C" void* func_8016FE34(void*);          // -> func_8016FE34
 // NOTE (agent pi-019fef06, 2026-08-11): the two declarations below were
@@ -237,7 +233,7 @@ extern "C" int func_80148778(void*, int);
 extern "C" void* func_80149154(void*, u32);
 extern "C" void* func_800EA444(void*);
 extern "C" void* getPlayer__Q22cf13CfGameManagerFi(int);
-extern "C" void* getInstance__Q22cf14CBattleManagerFv(void);
+#include "kyoshin/cf/CBattleManagerApi.hpp"
 extern "C" int rand(void);
 extern "C" f32 func_801C37CC(void*, void*);
 extern "C" int func_801C3850(void*, void*);

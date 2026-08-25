@@ -194,7 +194,7 @@ CException* lbl_eu_80665610[2];
 //Unused in release
 CErrorWii CWorkRoot::sErrorWii;
 
-void CWorkRoot::initialize(){
+__declspec(noinline) void CWorkRoot::initialize(){
     lbl_eu_8066560C = EXIT_PROG_END;
     //Initialize the math library
     ml::math::initialize();
@@ -204,7 +204,7 @@ void CWorkRoot::initialize(){
     CWorkRootThread::create("CWorkRoot", nullptr);
 }
 
-void CWorkRoot::destroy(){
+__declspec(noinline) void CWorkRoot::destroy(){
     VISetPreRetraceCallback(nullptr);
     if(CWorkRootThread::spInstance != nullptr){
         delete CWorkRootThread::spInstance;
@@ -227,7 +227,7 @@ bool CWorkRoot::dummy1(CWorkThread* pThread){
     return pThread->isRunning();
 }
 
-void CWorkRoot::standbyWork(CWorkThread* pThread, bool arg1){
+__declspec(noinline) void CWorkRoot::standbyWork(CWorkThread* pThread, bool arg1){
     reslist<CWorkThread*>* children = &pThread->mChildren;
     
     //Something is sus here
@@ -267,7 +267,7 @@ void CWorkRoot::standbyWork(CWorkThread* pThread, bool arg1){
     } while (true);
 }
 
-void CWorkRoot::updateWork(CWorkThread* pThread, bool arg1){
+__declspec(noinline) void CWorkRoot::updateWork(CWorkThread* pThread, bool arg1){
     if(!(arg1 ^ pThread->isEvent3())){
         if(pThread->isRunning()){
             bool r4 = !(pThread->isPaused() || pThread->isEvent7() || pThread->isAppException());
@@ -287,7 +287,7 @@ void CWorkRoot::updateWork(CWorkThread* pThread, bool arg1){
     }
 }
 
-void CWorkRoot::standbyWork(){
+__declspec(noinline) void CWorkRoot::standbyWork(){
     CWorkRootThread* thread = CWorkRootThread::getInstance();
     _reslist_node<CWorkThread*>* iter;
     int count;
@@ -330,7 +330,7 @@ check:
     standbyWork(CWorkRootThread::getInstance(), false);
 }
 
-void CWorkRoot::renderWork(){
+__declspec(noinline) void CWorkRoot::renderWork(){
     if(getInstance__9CDeviceGXFv() != nullptr){
         onRenderWork__9CDeviceGXFv();
     }
@@ -352,7 +352,7 @@ bool CWorkRoot::isShutdownAll(){
     return hasChild(CWorkRootThread::spInstance) ? false : true;
 }
 
-bool CWorkRoot::runSingle(){
+__declspec(noinline) bool CWorkRoot::runSingle(){
     //Trigger the start frame event in CDeviceClock
     if(getInstance__12CDeviceClockFv() != nullptr){
         onStartFrame__12CDeviceClockFv();
@@ -374,7 +374,7 @@ bool CWorkRoot::runSingle(){
     return isShutdownAll() ? false : true;
 }
 
-void CWorkRoot::exit(){
+__declspec(noinline) void CWorkRoot::exit(){
     //Check the current exit mode to determine how to handle the program stopping
     if(lbl_eu_8066560C == EXIT_WII_MENU){
         //Exit to Wii menu

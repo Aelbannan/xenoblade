@@ -3,12 +3,7 @@
 
 #include "kyoshin/harness_catalog.hpp"
 #include "kyoshin/CKizunagram.hpp"
-// code_80135FDC.hpp declares func_8049603C (UnkScnResult* return) which
-// conflicts with CTaskGame.hpp's CTaskGameCamView* declaration pulled in via
-// CKizunagram.hpp. This TU never calls it, so rename it away for the include.
-#define func_8049603C kizunaCode35FDC9603CUnused
 #include "kyoshin/code_80135FDC.hpp"  // layout/anim/font helpers (extern "C" pre-mangled names)
-#undef func_8049603C
 #include "monolib/device/CDeviceFile.hpp"
 #include "monolib/device/CFileHandle.hpp"
 #include "monolib/work/CEventFile.hpp"

@@ -324,8 +324,7 @@ extern "C" UnkClass_800821F8Snd* func_800821F8__Q22cf13CfGameManagerFv();
 // other TUs).
 extern "C" u32 func_80252538();
 extern "C" int CfRes_getD80Flag();
-extern "C" CfSndCamView* func_8049603C(int scene);
-extern "C" CfSndPoseBlock* func_80496264(int scene, int index);
+
 // Computes a distance-based pan/volume pair from the actor position against
 // the pose block; maxDist comes in as the float argument.
 extern "C" void func_8049B834(f32* outPan, f32* outVol, CfSndPoseBlock* pose,

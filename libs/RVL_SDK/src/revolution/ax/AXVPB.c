@@ -56,7 +56,7 @@ static u32 __AXMixCycles[] = {2,   408,  408,  810,  1404, 1404, 1404, 1404,
                               707, 1115, 1115, 1517, 2111, 2111, 2111, 2111};
 
 // Retail .data is 0xA0: this table plus 4 zero pad words.
-static u32 __AXRmtMixCycles[8] = {4, 86, 151, 151};
+static u32 __AXRmtMixCycles[4] = {4, 86, 151, 151}; /* retail slice 0x10 */
 
 static void __AXVPBInitCommon(void);
 static u32 __AXGetSrcCycles(u16 select, const AXPBSRC* src);

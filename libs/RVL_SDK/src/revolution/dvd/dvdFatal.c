@@ -3,7 +3,6 @@
 #include <revolution/SC.h>
 
 static funcptr_t FatalFunc = NULL;
-u8 dvdFatal_sbss_pad[4]; /* retail .sbss 0x4 -> 0x8 (align tail); non-static so -ipa file keeps it */
 
 const char* const __DVDErrorMessageDefault[] = {
     // clang-format off

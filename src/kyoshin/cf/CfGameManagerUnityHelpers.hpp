@@ -1773,11 +1773,11 @@ extern "C" Unk80338Object* __ct__80080338(Unk80338Object* self) {
     self->field_0x14 = zero;
     self->field_0x18 = zero;
     self->field_0x1C = zero;
+    UnkCharEffect304* effect = &self->effect_0x68;
     __ct__CCharVoice(&self->voice_0x28);
     result->vtable_0x0 = lbl_eu_8052A7E8;
     result->vtable_0xC = &lbl_eu_8052A7E8[0xB4];
     result->vtable_0x10 = &lbl_eu_8052A7E8[0xC4];
-    UnkCharEffect304* effect = &result->effect_0x68;
     __ct__CCharEffect(effect);
     effect->vtable_0x0 = lbl_eu_8052FE68;
     result->field_0x36C = zero;
@@ -2652,7 +2652,7 @@ extern "C" bool func_8007DA0C__Q22cf13CfGameManagerFv(cf::CfGameManager* manager
 extern "C" s16 lbl_eu_80663E3E;
 extern "C" u32 lbl_eu_80663EE0;
 extern const float lbl_eu_80666508;
-extern "C" void func_80188D34(u32 first, bool enable, float value, float fadeTime);
+extern "C" void func_80188D34(u32 first, u8 enable, float value, float fadeTime);
 extern "C" void func_8007D7A4__Q22cf13CfGameManagerFv() {
     func_80188D34(0, true, lbl_eu_80666508, lbl_eu_8066649C);
     if (lbl_eu_80663E3E != 0) {

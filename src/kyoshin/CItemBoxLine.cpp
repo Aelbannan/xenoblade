@@ -23,7 +23,7 @@ int func_801F2880(u32 unused, u32 key);
 
 void func_80137038(nw4r::lyt::Layout*, nw4r::lyt::DrawInfo*, int, int);
 int sprintf(char*, const char*, ...);
-void func_80136910(nw4r::lyt::Layout*, char*, u8);
+extern "C" void func_80136910__FPQ34nw4r3lyt6LayoutPcUc(nw4r::lyt::Layout*, char*, u32);
 
 // ============================================================================
 // func_801ED774: busy-guard chain - only read the selector byte when every
@@ -1902,8 +1902,8 @@ void func_801F107C(CItemBoxLine* self, u32 itemData) {
     char* nameB = func_80136190(&lbl_eu_805071B0[0x248], &lbl_eu_805071B0[0x6c], 0xb);
     str.format(&lbl_eu_805071B0[0x5ca], (u16)v23, nameB, (u16)v22);
     func_80136B4C(self->field40, &lbl_eu_805071B0[0x4a6], str.mString, 0);
-    func_80136910(self->field40, &lbl_eu_805071B0[0x4ca], c);
-    func_80136910(self->field40, &lbl_eu_805071B0[0x4d6], d);
+    func_80136910__FPQ34nw4r3lyt6LayoutPcUc(self->field40, &lbl_eu_805071B0[0x4ca], c);
+    func_80136910__FPQ34nw4r3lyt6LayoutPcUc(self->field40, &lbl_eu_805071B0[0x4d6], d);
     char* n7f = func_80136190(&lbl_eu_805071B0[0x248], &lbl_eu_805071B0[0x6c], 0x7f);
     char* n80 = func_80136190(&lbl_eu_805071B0[0x248], &lbl_eu_805071B0[0x6c], 0x80);
     if (e != 0) {
@@ -1969,9 +1969,9 @@ void func_801F183C(CItemBoxLine* self, u32 itemData) {
     u8 a = func_801361E8(table, &lbl_eu_805071B0[0x59e], kind);
     u8 b = func_801361E8(table, &lbl_eu_805071B0[0x5a6], kind);
     u8 c = func_801361E8(table, &lbl_eu_805071B0[0x5d8], kind);
-    func_80136910(self->field40, &lbl_eu_805071B0[0x4ca], a);
-    func_80136910(self->field40, &lbl_eu_805071B0[0x4d6], b);
-    func_80136910(self->field40, &lbl_eu_805071B0[0x4e2], c);
+    func_80136910__FPQ34nw4r3lyt6LayoutPcUc(self->field40, &lbl_eu_805071B0[0x4ca], a);
+    func_80136910__FPQ34nw4r3lyt6LayoutPcUc(self->field40, &lbl_eu_805071B0[0x4d6], b);
+    func_80136910__FPQ34nw4r3lyt6LayoutPcUc(self->field40, &lbl_eu_805071B0[0x4e2], c);
 
     // Slot-name format ladder (kind selector). The range check and the three
     // equality tests each branch to their case body; the bodies sit after the
@@ -2038,7 +2038,7 @@ selDone:
 #pragma optimize_for_size on
 void func_801F08B4(CItemBoxLine* self, u32 itemData) {
     func_801F0A58((void*)self, itemData);
-    func_80136910(self->field40, &lbl_eu_805071B0[0x3e6], func_80158068(itemData));
+    func_80136910__FPQ34nw4r3lyt6LayoutPcUc(self->field40, &lbl_eu_805071B0[0x3e6], func_80158068(itemData));
     switch ((int)self->tabEntries[(s8)self->field6D]) {
     case 2:
     case 4:

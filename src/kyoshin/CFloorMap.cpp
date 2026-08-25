@@ -219,7 +219,7 @@ void func_8024577C(void* self, u16 val) {
     count = base[0x318];
 
     while (i < count) {
-        if (*(const u16*)(base + i * 0x18 + 0x18) == val) {
+        if (*(const u16*)(i * 0x18 + 0x18 + base) == val) {
             if (i >= 5) {
                 cur->field_0A = 4;
                 cur->field_0B = i - 4;

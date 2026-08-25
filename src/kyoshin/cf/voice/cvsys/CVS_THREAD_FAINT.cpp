@@ -6,7 +6,7 @@
 #include "kyoshin/cf/voice/cvsys/CVS_THREAD_CHAIN.hpp"
 #include "monolib/math/Random.hpp"
 
-// ── Target 1: us-802a9460 (func_802A6D2C) ──────────────────────────────────
+// us-802a9460 (func_802A6D2C)
 // Completion callback: if no active voice, call the playback-start virtual.
 void func_802A6D2C(CVS_THREAD_FAINT* self) {
     if (func_802A3E88(self) == 0) {
@@ -14,7 +14,7 @@ void func_802A6D2C(CVS_THREAD_FAINT* self) {
     }
 }
 
-// ── Target 2: us-802a94a8 (func_802A6D74) ──────────────────────────────────
+// us-802a94a8 (func_802A6D74)
 // Remove a voice from the slots by matching its embedded CCharVoice pointer.
 void func_802A6D74(CVS_THREAD_FAINT* self, CCharVoice* voicePtr) {
     func_802A3BEC(self, voicePtr);
@@ -41,7 +41,7 @@ void func_802A6D74(CVS_THREAD_FAINT* self, CCharVoice* voicePtr) {
     }
 }
 
-// ── Target 3: us-802a9528 (func_802A6DF4) ──────────────────────────────────
+// us-802a9528 (func_802A6DF4)
 // Owner-level voice play: requires factory flags set, allocates a throwaway
 // handle, bails if the owner voice is already the current one (0xA), and
 // otherwise plays the 0x2BF line.
@@ -58,7 +58,7 @@ int func_802A6DF4(CVoiceHandle* self) {
     return 0;
 }
 
-// ── Target 4: us-802a92e4 (func_802A6BB0) ──────────────────────────────────
+// us-802a92e4 (func_802A6BB0)
 // Advance/play function for voice slot 1 (field_0x20).
 // Copies init data from lbl_eu_80539B64 to fields 0x00-0x08, checks if
 // the voice is still active (vtable method at offset 0x2BC), and if
@@ -91,7 +91,7 @@ void func_802A6BB0(CVS_THREAD_FAINT* self) {
     }
 }
 
-// ── Target 5: us-802a93a0 (func_802A6C6C) ──────────────────────────────────
+// us-802a93a0 (func_802A6C6C)
 // Advance/play function for voice slot 2 (field_0x24).
 // Copies init data from lbl_eu_80539B70 to fields 0x00-0x08, checks if
 // the voice is still active, and if inactive, plays a voice ID chosen by
@@ -129,7 +129,7 @@ void func_802A6C6C(CVS_THREAD_FAINT* self) {
     }
 }
 
-// ── Target 6: us-802a91dc (__ct__802A6AA8) ──────────────────────────────────
+// us-802a91dc (__ct__802A6AA8)
 // Factory/constructor for CVS_THREAD_FAINT. Takes two owner objects (with a
 // field at offset 0x3F00 that must have bit 1 set), allocates a handle
 // (0xF0 bytes, discarded) and the object itself (0x28 bytes), calls the

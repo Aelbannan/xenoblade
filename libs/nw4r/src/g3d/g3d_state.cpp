@@ -690,7 +690,6 @@ void G3DState::LoadResTlutObj(const ResTlutObj tlutObj) {
 // ScnDependentMtxFunc::EnvironmentMapping (retail .data at 8051D660).
 extern const unsigned char lbl_eu_8051D660[];
 
-
 namespace nw4r {
 namespace g3d {
 namespace detail {
@@ -946,6 +945,11 @@ void G3DState::LoadResMatChan(const ResMatChan chan, u32 maskDiffColor,
     // lbl_eu_80669C08).
     u32 ambFlag = pData->chan[0].flag;
     GXColor scaled;
+    // Amb color 0 (XF 0x100A): the runtime color is scaled component-wise by
+    // the resource's ambColor bytes (value * scale / 255, rounded). The u32 ->
+    // f64 cast makes MWCC emit its shared 2^52 magic-double conversion
+    // (xoris/stw/lfd/fsub vs the pooled magic constant, retail .sdata2
+    // lbl_eu_80669C08).
     scaled.r = (u8)(lbl_eu_80669BFC +
                     (f32)((f64)(u32)((u32)amb.r * (u32)pData->chan[0].ambColor.r)) *
                         lbl_eu_80669C00);
@@ -1896,6 +1900,158 @@ void EnvironmentMapping(math::MTX34* pMtx, s8 camRef, s8 lightRef) {
 
     PSMTXCopy(
         lbl_eu_8061DFA0.mEnvMtxArray[lbl_eu_8061DFA0.mCurCameraID], *pMtx);
+}
+
+// Builds a specular environment texgen matrix. The half vector between the
+// view direction and the light direction (or, without a usable light, between
+// the view direction and a camera basis) becomes the matrix forward axis;
+// the remaining axes come from cross products with a chosen up vector. When
+// neither reference is usable, copies the current environment matrix.
+void EnvironmentSpecularMapping(math::MTX34* pMtx, s8 camRef, s8 lightRef) {
+    if (pMtx == NULL) {
+        return;
+    }
+
+    // Declaration order drives MWCC's stack-slot assignment.
+    math::VEC3 half;
+    math::VEC3 up;
+    math::VEC3 viewDir;
+    math::VEC3 dir;
+    math::VEC3 back;
+    math::VEC3 side;
+    math::VEC3 axis;
+    // Negate-through-temporaries: kept at function scope so MWCC gives each
+    // its own stack slot like retail (disjoint branches would otherwise
+    // share one slot).
+    math::VEC3 negDir;
+    math::VEC3 negPos;
+
+    // View direction: negated third row of the current camera's view matrix.
+    const math::MTX34& rCurView =
+        lbl_eu_8061DFA0.mViewMtxArray[lbl_eu_8061DFA0.mCurCameraID];
+    viewDir.x = -rCurView.m[2][0];
+    viewDir.y = -rCurView.m[2][1];
+    viewDir.z = -rCurView.m[2][2];
+
+    // Lazily refresh the cached inverse of the current view matrix.
+    if (!(lbl_eu_8061DFA0.mFlag & 1)) {
+        PSMTXInverse(
+            lbl_eu_8061DFA0.mViewMtxArray[lbl_eu_8061DFA0.mCurCameraID],
+            lbl_eu_8061DFA0.mViewMtx);
+        lbl_eu_8061DFA0.mFlag |= 1;
+    }
+
+    if (lightRef >= 0 && lightRef < 0x80 &&
+        reinterpret_cast<LightObj*>(
+            GetLightObj__Q34nw4r3g3d8G3DStateFi(lightRef))
+            ->IsEnable()) {
+        LightObj* pLight = reinterpret_cast<LightObj*>(
+            GetLightObj__Q34nw4r3g3d8G3DStateFi(lightRef));
+
+        pLight->GetLightDir(&dir);
+
+        // Diffuse lights drive the matrix from their position; spot lights
+        // from their direction (falling back to the position when the
+        // direction is degenerate).
+        if (pLight->IsDiffuseLight() ||
+            (dir.x == lbl_eu_80669BEC && dir.y == lbl_eu_80669BEC &&
+             dir.z == lbl_eu_80669BEC)) {
+            pLight->GetLightPos(&dir);
+            VEC3TransformNormal(&dir, &lbl_eu_8061DFA0.mViewMtx, &dir);
+
+            // Negate through a temporary: reproduces retail's raw-store /
+            // forwarded-frsp-reload pair.
+            negPos.x = -dir.x;
+            negPos.y = -dir.y;
+            negPos.z = -dir.z;
+            dir.x = negPos.x;
+            dir.y = negPos.y;
+            dir.z = negPos.z;
+
+            if (negPos.x == lbl_eu_80669BEC &&
+                negPos.y == lbl_eu_80669BEC &&
+                negPos.z == lbl_eu_80669BEC) {
+                dir.y = lbl_eu_80669BF0;
+            }
+        } else {
+            VEC3TransformNormal(&dir, &lbl_eu_8061DFA0.mViewMtx, &dir);
+        }
+
+        // Specular lights use the negated direction directly; everything
+        // else averages it with the view direction.
+        if (!pLight->IsSpecularLight()) {
+            C_VECHalfAngle(reinterpret_cast<const Vec*>(&viewDir),
+                           reinterpret_cast<const Vec*>(&dir),
+                           reinterpret_cast<Vec*>(&half));
+        } else {
+            // Same negate-through-temporary pattern as the diffuse path.
+            negDir.x = -dir.x;
+            negDir.y = -dir.y;
+            negDir.z = -dir.z;
+            half.x = negDir.x;
+            half.y = negDir.y;
+            half.z = negDir.z;
+        }
+
+        // Pick an up vector not parallel to the half vector.
+        if (__fabs(half.x) >= lbl_eu_80669BF4 ||
+            __fabs(half.z) >= lbl_eu_80669BF4) {
+            up.x = lbl_eu_80669BEC;
+            up.y = lbl_eu_80669BF8;
+            up.z = lbl_eu_80669BEC;
+        } else {
+            up.x = lbl_eu_80669BEC;
+            up.y = lbl_eu_80669BEC;
+            up.z = (half.y <= lbl_eu_80669BEC) ? lbl_eu_80669BF8
+                                               : lbl_eu_80669BF0;
+        }
+    } else if (camRef >= 0 && camRef < 0x20) {
+        const math::MTX34& rView = lbl_eu_8061DFA0.mViewMtxArray[camRef];
+
+        // Up = second row of the referenced view matrix; back = negated
+        // third row.
+        up.x = rView.m[1][0];
+        up.y = rView.m[1][1];
+        up.z = rView.m[1][2];
+
+        back.x = -rView.m[2][0];
+        back.y = -rView.m[2][1];
+        back.z = -rView.m[2][2];
+
+        C_VECHalfAngle(reinterpret_cast<const Vec*>(&viewDir),
+                       reinterpret_cast<const Vec*>(&back),
+                       reinterpret_cast<Vec*>(&half));
+    } else {
+        PSMTXCopy(
+            lbl_eu_8061DFA0.mEnvMtxArray[lbl_eu_8061DFA0.mCurCameraID], *pMtx);
+        return;
+    }
+
+    // Orthonormal basis: normalize the half vector and cross out the
+    // sideways/vertical axes.
+    PSVECNormalize(half, half);
+    PSVECCrossProduct(up, half, side);
+    PSVECNormalize(side, side);
+    PSVECCrossProduct(half, side, axis);
+
+    pMtx->m[0][0] = side.x;
+    pMtx->m[0][1] = side.y;
+    pMtx->m[0][2] = side.z;
+    pMtx->m[1][0] = axis.x;
+    pMtx->m[1][1] = axis.y;
+    pMtx->m[1][2] = axis.z;
+    pMtx->m[2][0] = half.x;
+    pMtx->m[2][1] = half.y;
+    pMtx->m[2][2] = half.z;
+
+    PSMTXConcat(*pMtx, lbl_eu_8061DFA0.mViewMtx, *pMtx);
+
+    f32 zero = lbl_eu_80669BEC;
+    pMtx->m[0][3] = pMtx->m[1][3] = pMtx->m[2][3] = zero;
+
+    PSMTXConcat(
+        lbl_eu_8061DFA0.mEnvMtxArray[lbl_eu_8061DFA0.mCurCameraID], *pMtx,
+        *pMtx);
 }
 
 } // namespace ScnDependentMtxFunc

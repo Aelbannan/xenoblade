@@ -3,12 +3,8 @@
 
 #include "kyoshin/harness_catalog.hpp"
 #include "kyoshin/cf/object/CfObjectEff.hpp"
-// code_800F42AC.hpp declares 'void* func_801412D0(u32)', which clashes with
-// the 'u32 func_801412D0(u32)' declaration pulled in above (same workaround
-// as CBattleManager.cpp). This TU doesn't use it, so rename it out of the way.
-#define func_801412D0 cfObjectEffGameMgr1412D0Unused
+#include "kyoshin/CUIWindowManagerApi.hpp"
 #include "kyoshin/cf/code_800F42AC.hpp"
-#undef func_801412D0
 #include "kyoshin/realtimeevt/CREvtEffect.hpp"
 
 struct CfObjIf {

@@ -6,7 +6,7 @@
 #include "monolib/math/Random.hpp"
 #include <cstring>
 
-// ── Target 1: us-802a74fc (func_802A4DC8) ──────────────────────────────────
+// us-802a74fc (func_802A4DC8)
 // Remove a released voice from the slot array by matching the embedded
 // CCharVoice pointer against the one being freed.
 void func_802A4DC8(CVS_THREAD_BATTLE_END* self, CCharVoice* voicePtr) {
@@ -25,7 +25,7 @@ void func_802A4DC8(CVS_THREAD_BATTLE_END* self, CCharVoice* voicePtr) {
     }
 }
 
-// ── Target 2: us-802a7438 (func_802A4D04) ──────────────────────────────────
+// us-802a7438 (func_802A4D04)
 // Advance the active-slot counter (up or down depending on field_0x38).
 // When the counter reaches field_0x2c, fire the end virtual; otherwise the
 // init triple is re-copied into the base fields.
@@ -61,7 +61,7 @@ void func_802A4D04(CVS_THREAD_BATTLE_END* self) {
     }
 }
 
-// ── Target 3: us-802a70b0 (func_802A497C) ──────────────────────────────────
+// us-802a70b0 (func_802A497C)
 // (Re)initialise the thread: seed the slot array, pick a random starting
 // slot, and set the active flag based on whether any listed voice is live.
 void func_802A497C(CVS_THREAD_BATTLE_END* self) {
@@ -109,7 +109,7 @@ void func_802A497C(CVS_THREAD_BATTLE_END* self) {
     self->field_0x39 = 0;
 }
 
-// ── Target 4: us-802a6fa4 (__ct__802A4870) ─────────────────────────────────
+// us-802a6fa4 (__ct__802A4870)
 // Factory/constructor.  Allocates a handle buffer (discarded) and the object,
 // runs the base constructor, sets the subclass vtable, then initialises the
 // slot array and state flags (including a random scan direction).
@@ -139,7 +139,7 @@ CVS_THREAD_BATTLE_END* __ct__802A4870(int owner) try {
     throw;
 }
 
-// ── Target 5: us-802a71ac (func_802A4A78) ──────────────────────────────────
+// us-802a71ac (func_802A4A78)
 // Play/advance the battle-end voice.  When the counter is not at the limit,
 // pick a random ending line; otherwise gate on the thread sub-state (via
 // func_802A77E8 mode) and play the appropriate variant ID.

@@ -46,6 +46,15 @@ struct FourShorts {
     s16 a, b, c, d;
 };
 
+// Gauge highlight box passed to func_801398A4 (us-801079b0): three window
+// coords, a fourth filled from the gauge quad's last short, then the whole
+// quad copied verbatim (MWCC lowers the initializer to a word-pair copy of
+// the FourShorts plus an lha readback for .w).
+struct ArtsGaugeBox {
+    s16 x, y, z, w;
+    FourShorts quad;
+};
+
 // Per-mode arts name/gauge-id rodata tables (func_80107580 copies them
 // by value into locals, indexed by unk328).
 struct ArtsModeIds {

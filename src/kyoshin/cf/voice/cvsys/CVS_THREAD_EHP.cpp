@@ -15,7 +15,7 @@ int func_802A6818() {
     return 0xB4;
 }
 
-// ── Target 1: us-802a8e4c (func_802A6718) ──────────────────────────────────
+// us-802a8e4c (func_802A6718)
 // Completion callback: if no active voice is playing, invoke the
 // playback-start virtual (CVS_THREAD::func_802A3B50, vtable slot 0).
 void func_802A6718(CVS_THREAD_EHP* self) {
@@ -24,7 +24,7 @@ void func_802A6718(CVS_THREAD_EHP* self) {
     }
 }
 
-// ── Target 2: us-802a8e94 (func_802A6760) ──────────────────────────────────
+// us-802a8e94 (func_802A6760)
 // Remove a voice from all slots by matching its embedded CCharVoice pointer.
 // A CVoiceHandle stores the CCharVoice at offset 0x3E9C, so a non-null handle
 // is biased by 0x3E9C before comparing against the incoming voice pointer.
@@ -64,7 +64,7 @@ void func_802A6760(CVS_THREAD_EHP* self, CCharVoice* voicePtr) {
     }
 }
 
-// ── Target 3: us-802a8cc0 (func_802A658C) ──────────────────────────────────
+// us-802a8cc0 (func_802A658C)
 // Advance the rotating index (field_0x38) forward or backward depending on the
 // direction flag (field_0x44), wrapping at the bounds (0..field_0x3c). When the
 // index lands on the stop index (field_0x40), the playback-start virtual is
@@ -100,7 +100,7 @@ void func_802A658C(CVS_THREAD_EHP* self) {
     }
 }
 
-// ── Target 4: us-802a8d84 (func_802A6650) ──────────────────────────────────
+// us-802a8d84 (func_802A6650)
 // Play function for slot 2. Reloads the slot-state triple from lbl_eu_80539B20,
 // finds a free voice handle (excluding slot 2's own handle), and if that handle
 // is inactive plays a random voice ID (mtRand(2) + 0x51D). On any failure the
@@ -137,7 +137,7 @@ void func_802A6650(CVS_THREAD_EHP* self) {
     self->func_802A3B50();
 }
 
-// ── Target 5: us-802a8f54 (func_802A6820) ──────────────────────────────────
+// us-802a8f54 (func_802A6820)
 // Standalone EHP voice selector. Given two party-slot indices (a, b), it picks
 // a voice ID based on their relationship, allocates a 0xAA-byte buffer, and
 // plays the voice on the currently free handle. Returns 0 in all paths.

@@ -95,6 +95,12 @@ extern const float lbl_eu_80668FA8;
 extern const float lbl_eu_80668FAC;
 extern const float lbl_eu_80668FB0;
 extern const float lbl_eu_80668FB4;
+// sdata2 sparkle-streak constants for func_802B403C (scale/brightness).
+extern const float lbl_eu_80668F40; // 0.025f
+extern const float lbl_eu_80668F44; // 0.5f
+extern const float lbl_eu_80668F48; // 0.9f
+extern const float lbl_eu_80668F4C; // 0.7f
+extern const float lbl_eu_80668F50; // -0.3f
 // sdata2 gradient-scale constants for func_802B44C8.  NON-const like
 // lbl_eu_80668EC8: the loads must stay after the func_802B41E4 call.
 extern float lbl_eu_80668F64;
@@ -133,7 +139,6 @@ extern u32 lbl_eu_80663E24;
 
 // Scene/camera helpers (retail C-linkage symbols).
 extern "C" void* func_8049626C(void* scene, void* view);
-extern "C" f32 func_80496288(void* scene);
 // Manager singleton getter (retail func_802B262C, defined in CMenuGameClear).
 extern "C" cf::CfHikariItemManager* func_802B262C();
 

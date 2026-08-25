@@ -2,6 +2,9 @@
 // Replace stubs with high-level C/C++ during decomp.
 
 #include "kyoshin/cf/CfTFile.hpp"
+#include "monolib/scn/CScnTimeApi.hpp"
+
+#include "kyoshin/cf/CfGameManagerData.hpp"
 #include "monolib/device/CDeviceVI.hpp"
 #include <decomp.h>
 #include <math.h>
@@ -222,7 +225,7 @@ float func_80069EE4() {
 void func_80069F2C() {
     if (CfRes_getD80Flag()) {
         CfRes_getD80Flag();
-        lbl_eu_80661AF0 = func_80496288();
+        lbl_eu_80661AF0 = func_80496288(lbl_eu_80663E14);
     }
     float f4 = lbl_eu_80663D94;
     lbl_eu_80663D98 = f4;

@@ -13,7 +13,7 @@
 
 // --- referenced retail symbols (C linkage: plain symbol names) ---
 // TU-local: declared as int here (retail defers narrowing); other TUs
-// declare it as u16 independently — no cross-TU conflict since each TU
+// declare it as u16 independently -- no cross-TU conflict since each TU
 // compiles separately.
 extern "C" int func_80136254(const void*, const void*, int);
 
@@ -1255,7 +1255,7 @@ void* __dt__80285954(void* self, int mode) {
 }
 
 // func_80285994 (us-80287e18): layout-cursor setup. Retail calls (relocs now
-// resolved — the old comment's "MetroTRK/undecompiled-TU" blocker is stale):
+// resolved -- the old comment's "MetroTRK/undecompiled-TU" blocker is stale):
 //   1. func_80136E84(&mpLayout, mArcResAcc, "mf00_reg00_curs07.brlyt")
 //   2. func_80136F08(mpLayout, &mpAnimTrans0, mArcResAcc, "..._roop.brlan")
 //   3. func_80136F08(mpLayout, &mpAnimTrans1, mArcResAcc, "..._on.brlan")
@@ -1367,7 +1367,7 @@ extern "C" __declspec(noinline) CEIBPageCur* __ct__CEIBPageCur(CEIBPageCur* self
 
 // Destructor clone: free object memory when this is non-null and delete flag set.
 // noinline: the dtor body's flag test is constant-foldable at inlined call
-// sites (mode -1) and would be elided entirely — the retail keeps the `bl`.
+// sites (mode -1) and would be elided entirely -- the retail keeps the `bl`.
 extern "C" __declspec(noinline) void* __dt__80285C44(void* self, int mode) {
     if (self && mode > 0) {
         __dl__FPv(self);
@@ -1716,7 +1716,7 @@ extern "C" void func_802867E0(CEquipItemBox* self) {
         func_801D3454(tmp, &self->_padSortMenu[0]);
         ((CEquipItemBoxCur18View*)&self->ccur18[0])->vf04(tmp);
     } else {
-        // Sort menu idle: retail dispatches on unk_375 FIRST — no sel==-1
+        // Sort menu idle: retail dispatches on unk_375 FIRST -- no sel==-1
         // gate here; that check happens in the caller/dispatch above.
         if (self->unk_375 != 0) {
             // Scan backward for next non-empty page
@@ -1824,7 +1824,7 @@ extern "C" __declspec(noinline) void func_80286B94(CEquipItemBox* self) {
         while (j != (s8)self->unk_376) {
             if ((s8)j < 0) j = 2;
             if (ArrayGet12(arr,
-                            (u8)((s8)self->unk_377 + j * 4)) != 0) {
+                            (u8)(self->unk_377 + j * 4)) != 0) {
                 self->unk_376 = (u8)j;
                 break;
             }
@@ -1832,7 +1832,7 @@ extern "C" __declspec(noinline) void func_80286B94(CEquipItemBox* self) {
         }
         nw4r::math::VEC3 tmp2;
         func_801CB9D8(&tmp2, arr,
-                      (u8)((s8)self->unk_377 + (s8)self->unk_376 * 4));
+                      (u8)(self->unk_377 + (s8)self->unk_376 * 4));
         ((CEquipItemBoxCur18View*)&self->ccur18[0])->vf04(&tmp2);
         func_80138078__FUl(1);
         return;
@@ -1845,12 +1845,12 @@ extern "C" __declspec(noinline) void func_80286B94(CEquipItemBox* self) {
         return;
     }
     u8 b = self->unk_1f4;
-    if (b == 0) {
+    if ((s8)b == 0) {
         self->unk_1f4 = 4;
         func_80287024(self);
         func_80289CC0(self);
     } else {
-        u8 v = b - 1;
+        u8 v = (u8)(b - 1);
         self->unk_1f4 = v;
         if ((s8)v < 0) self->unk_1f4 = 4;
         func_80289CC0(self);
@@ -1924,7 +1924,7 @@ extern "C" void func_80286D7C(CEquipItemBox* self) {
 // lists.
 #pragma push
 #pragma optimize_for_size on
-void CEquipItemBox::func_80286F6C() {
+__declspec(noinline) void CEquipItemBox::func_80286F6C() {
     if (CSysWin_getUnk34(_padSysWin1) != 0) return;
     if (func_801D3320(_padSortMenu) != 0) return;
     CEquipItemGrid* grid = (CEquipItemGrid*)&_pad37D[1];
@@ -1945,7 +1945,7 @@ void CEquipItemBox::func_80286F6C() {
 // Step the equip-grid page cursor backward when the box is idle; wrap the
 // page index at the grid extent and play the page-change sound for multi-page
 // lists (backward mirror of func_80286F6C).
-extern "C" void func_80287024(CEquipItemBox* self) {
+extern "C" __declspec(noinline) void func_80287024(CEquipItemBox* self) {
     if (CSysWin_getUnk34(&self->_padSysWin1[0]) != 0) return;
     if (func_801D3320(&self->_padSortMenu[0]) != 0) return;
     CEquipItemGrid* grid = (CEquipItemGrid*)&self->_pad37D[1];
@@ -2333,7 +2333,7 @@ extern "C" u32 func_80288544(CEquipItemBox* self) {
 }
 #pragma pop
 
-// us-8028ab5c: guarded teardown — skips while the sort/syswin sub-objects are
+// us-8028ab5c: guarded teardown -- skips while the sort/syswin sub-objects are
 // busy; on success flags unk_1f5 = -1 and runs the close sequence
 // (func_80289CC0, func_80289AA4, func_80138078(2)).
 extern "C" void func_802886D8(CEquipItemBox* self) {
@@ -2421,8 +2421,10 @@ extern "C" int func_80288948(CEquipItemBox* self) {
     if ((s8)sel == -1) return 0;
     u32 b;
     u32 a;
-    int idx = sel * 5 + self->unk_1f4;
-    u8 cat = (u8)((self->unk_1fc >> 8) & 0xff);
+    int idx;
+    u8 cat;
+    idx = sel * 5 + self->unk_1f4;
+    cat = (u8)((self->unk_1fc >> 8) & 0xff);
     a = func_802832D8((CEquipItemGrid*)((u8*)self + 0x37E), (u8)idx);
     b = func_801392B4(cat);
     return a == b;
@@ -2981,7 +2983,7 @@ extern "C" void func_8028A0C0(CEquipItemBox* self, u8 val) {
 // the last) with the current page stored in unk_373.
 #pragma push
 #pragma auto_inline off
-extern "C" void func_8028A0E0(CEquipItemBox* self) {
+extern "C" __declspec(noinline) void func_8028A0E0(CEquipItemBox* self) {
     if (func_801D3320(self->_padSortMenu) != 0) return;
     u8 v = self->unk_373 + 1;
     self->unk_373 = v;
@@ -2996,7 +2998,7 @@ extern "C" void func_8028A0E0(CEquipItemBox* self) {
 
 // Step the sort-menu page selection forwards (wrapping back to page 0 after the
 // last page) with the current page stored in unk_373.
-extern "C" void func_8028A160(CEquipItemBox* self) {
+extern "C" __declspec(noinline) void func_8028A160(CEquipItemBox* self) {
     if (func_801D3320(self->_padSortMenu) != 0) return;
     u8 v = self->unk_373 - 1;
     self->unk_373 = v;

@@ -649,7 +649,7 @@ config.libs = [
             Object(Matching, "kyoshin/makecrystal/code_80213488.cpp", extra_cflags=["-O4,s", "-func_align 4"]),  # retail func_80213488 keeps the stmw/rolled-loop size form (was pragma optimize_for_size); -func_align 4 kills inter-function padding
             Object(NonMatching, "kyoshin/makecrystal/CMCCrystalBox.cpp"),
             Object(NonMatching, "kyoshin/makecrystal/CMCCrystalInfo.cpp"),
-            Object(NonMatching, "kyoshin/makecrystal/CModelDispMakeCrystal.cpp"),
+            Object(NonMatching, "kyoshin/makecrystal/CModelDispMakeCrystal.cpp", extra_cflags=["-O4,s", "-func_align 4"]),  # retail func_8021E888 keeps the mtctr/bdnz rolled loop (O4,p unrolls); -func_align 4 keeps .text packed
             Object(Matching, "kyoshin/makecrystal/CMCCylinderGauge.cpp"),
             Object(NonMatching, "kyoshin/makecrystal/CMCCrystalList.cpp"),
             Object(NonMatching, "kyoshin/makecrystal/CMCEffStart.cpp", extra_cflags=["-O4,s", "-func_align 4"]),

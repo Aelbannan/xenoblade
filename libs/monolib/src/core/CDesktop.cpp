@@ -135,29 +135,33 @@ void CDesktop::wkRenderAfter(){
 }
 
 bool CDesktop::wkStandbyLogin(){
-    if(CDeviceFile::getInstance() == nullptr || CDeviceFile::isInitialized() == false){
-        return false;
-    }
-
+    // Positive-condition nesting: retail branches beq->shared-fail-tail for
+    // both guards and emits the `return false` at the end of the function.
+    if(CDeviceFile::getInstance() != nullptr && CDeviceFile::isInitialized()){
     // Seed the CGXCache color cache with a transparent-black CCol4, then tell
     // CDeviceFile that the desktop owns the file work threads.
+    CGXCache* cache = CDeviceGX::getCacheInstance();
     func_800407C8_tmp col1;
-    func_800407C8(&col1, lbl_eu_8066A460, lbl_eu_8066A460, lbl_eu_8066A460, lbl_eu_8066A45C);
-    func_8044A578__8CGXCacheFv(CDeviceGX::getCacheInstance(), &col1, 1);
+    func_8044A578__8CGXCacheFv(cache, func_800407C8(&col1, lbl_eu_8066A460, lbl_eu_8066A460, lbl_eu_8066A460, lbl_eu_8066A45C), 1);
     func_8044E770__11CDeviceFileFP11CWorkThread(this);
 
     // Create the desktop's view (named after the desktop itself), then give
     // it a transparent-black clear color.
-    CView* view = this->pssCreateView(this->mName.c_str(), CViewRoot::getInstance(), 0x80);
-    mView = view;
+    mView = this->pssCreateView(this->mName.c_str(), CViewRoot::getInstance(), 0x80);
+    func_8044E770__11CDeviceFileFP11CWorkThread(this);
+
+    // Create the desktop's view (named after the desktop itself), then give
+    // it a transparent-black clear color.
+    mView = this->pssCreateView(this->mName.c_str(), CViewRoot::getInstance(), 0x80);
 
     ml::CVec4 col2;
     func_800407C8(reinterpret_cast<func_800407C8_tmp*>(&col2), lbl_eu_8066A460, lbl_eu_8066A460, lbl_eu_8066A460, lbl_eu_8066A45C);
-    view->unk444 = col2;
+    mView->unk444 = col2;
 
     // Push a tag-3 context message (the drainer ORs unk278 with 0x3). Retail
     // copies the raw bytes of an uninitialized 0x24-byte entry local; the
     // payload is ignored by the tag-3 consumer.
+    CView* view = mView;
     u32 sum = view->unk3F0 + view->mContextRingWriteIndex;
     u32 slot = sum % view->mContextRingCapacity;
     CViewContextRingEntry* entry = reinterpret_cast<CViewContextRingEntry*>(
@@ -168,28 +172,30 @@ bool CDesktop::wkStandbyLogin(){
     entry->pad = 0;
     view->mContextRingWriteIndex += 1;
     view->unk3FC = view->mContextRingWriteIndex - 1;
-    view->unk460 = 0x13;
+    mView->unk460 = 0x13;
 
     // Name the view after the "Desktop" string (both the view-local name and
     // the inherited CWorkThread name; the base name only while still empty).
     // lbl_eu_80663760[0] holds the "Desktop" string pointer (sdata2 pool).
     const char* desktop = reinterpret_cast<const char*>(lbl_eu_80663760[0]);
-    view->mName = desktop;
-    if(view->CWorkThread::mName.mLength == 0){
-        view->CWorkThread::mName = desktop;
+    mView->mName.mLength = strlen(desktop);
+    strcpy(mView->mName.mString, desktop);
+    if(mView->CWorkThread::mName.mLength == 0){
+        mView->CWorkThread::mName.mLength = strlen(desktop);
+        strcpy(mView->CWorkThread::mName.mString, desktop);
     }
 
-    // Spawn the background and exception work threads; their names come from
-    // the shared string pool ("CDesktopBackGround" / "CDesktopException").
-    // Retail placement-constructs the raw CProc subobject in work memory (no
-    // derived ctor exists), installs the dissolved vtable by hand, records the
-    // singleton, then registers the thread.
+    // Spawn the background and exception work threads; their names come
+    // directly from the shared string pool ("CDesktopBackGround" at offset 0,
+    // "CDesktopException" at +0x13). Retail placement-constructs the raw
+    // CProc subobject in work memory (no derived ctor exists), installs the
+    // dissolved vtable by hand, records the singleton, then registers the
+    // thread.
     CProcRoot* root = CProcRoot::getInstance();
-    const char* pool = lbl_eu_80522F44;
 
     void* bgMem = allocate__Q23mtl10MemManagerFUlUl(0x1F0, getWorkMem__17CWorkThreadSystemFv());
     if(bgMem != nullptr){
-        __ct__5CProcFPCcP11CWorkThreads(bgMem, pool, root, 8);
+        __ct__5CProcFPCcP11CWorkThreads(bgMem, lbl_eu_80522F44, root, 8);
         *(u32**)bgMem = (u32*)lbl_eu_8056CB08;
         lbl_eu_806656B4 = static_cast<CDesktopBackGround*>(bgMem);
     }
@@ -198,7 +204,7 @@ bool CDesktop::wkStandbyLogin(){
 
     void* exMem = allocate__Q23mtl10MemManagerFUlUl(0x1F0, getWorkMem__17CWorkThreadSystemFv());
     if(exMem != nullptr){
-        __ct__5CProcFPCcP11CWorkThreads(exMem, pool + 0x13, root, 0x40);
+        __ct__5CProcFPCcP11CWorkThreads(exMem, lbl_eu_80522F44 + 0x13, root, 0x40);
         *(u32**)exMem = (u32*)lbl_eu_8056CA48;
         lbl_eu_806656B8 = reinterpret_cast<u32>(exMem);
     }
@@ -213,6 +219,9 @@ bool CDesktop::wkStandbyLogin(){
     CDeviceVI::setFlag0(false);
     CDeviceVI::setFlag4(false);
     return CProc::wkStandbyLogin();
+    }
+
+    return false;
 }
 
 // Logout: once the desktop has no children and the background work thread is

@@ -5,6 +5,7 @@
 // Secondary callback interface at offset 0x14
 
 #include <types.h>
+#include "monolib/scn/CScnTimeApi.hpp"
 #include <string.h>
 #include <nw4r/g3d/res/g3d_resanmchr.h>
 #include <nw4r/math/math_types.h>

@@ -6,6 +6,7 @@
 // relationship meet value (rlt_meet), and a timer for dialogue triggers.
 
 #include "kyoshin/cf/object/CfObjectNpc.hpp"
+#include "monolib/scn/CScnTimeApi.hpp"
 #include "kyoshin/cf/code_800F42AC.hpp"   // CfGameManager::getInstance, func_8006EF04
 
 namespace cf {

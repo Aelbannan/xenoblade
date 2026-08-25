@@ -340,7 +340,7 @@ u32 func_80141FE0(int index){
         int rowBase = (int)CBdat::func_8003B41C(fp);
         int rowCount = (int)CBdat::func_8003B1EC(fp);
         if(index < rowBase + rowCount){
-            result = func_800AA714(getBdatStringColumnValue(fp, &lbl_eu_80500FA4[0x34f], index));
+            result = func_800AA714((const char*)getBdatStringColumnValue(fp, &lbl_eu_80500FA4[0x34f], index));
         }
     }
     return result;
@@ -449,7 +449,7 @@ u32 func_80142074(void* arg1, u16 arg2, u32 arg3){
     s16 b;
     func_80157F04(arg2, &a, &b);
     if(a == 2){
-        return func_800AA714(getBdatStringColumnValue(cf::CfBdat::spItmWpnListFileData, &lbl_eu_80500FA4[0x34f], (u16)b));
+        return func_800AA714((const char*)getBdatStringColumnValue(cf::CfBdat::spItmWpnListFileData, &lbl_eu_80500FA4[0x34f], (u16)b));
     }
     int t = 0;
     if(a == 4) t = 1;

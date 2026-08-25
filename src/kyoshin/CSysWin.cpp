@@ -27,7 +27,7 @@ struct CSysWinPaneOverlay {
     f32 size[2];  // +0x4C - Pane::mSize (width, height)
 };
 
-// Target 5: us-8022d450 - CSysWin constructor (US retail short C-linkage
+// us-8022d450 - CSysWin constructor (US retail short C-linkage
 // symbol __ct__CSysWin; the class declares no virtuals so MWCC never emits a
 // __vt__7CSysWin of its own). Stores the retail vtable BEFORE the embedded
 // UnkClass_8045F564 is constructed (retail ctor order), then zero/one-inits
@@ -57,7 +57,7 @@ extern "C" CSysWin* __ct__CSysWin(CSysWin* self, int arg) {
 }
 #pragma pop
 
-// Target 5 (prior): us-8022d4d8 - complete-object destructor.
+// us-8022d4d8 - complete-object destructor.
 // Written as the C-linkage free function the retail symbol names: null-check,
 // destroy the embedded UnkClass_8045F564 scratch region, then conditional
 // operator delete when flags > 0.
@@ -80,7 +80,7 @@ extern "C" void probe_2reg(CSysWin* self, int kind) {
     func_80137038(self->mLayout, 0, kind, 2);
 }
 
-// Target 3: us-8022de64 - set the two window label texts from the shared
+// us-8022de64 - set the two window label texts from the shared
 // string pool (offsets +0x77 / +0x82) into the layout. optimize_for_size
 // matches the retail stmw/lmw prologue for the 3 callee-saved regs (r29-r31)
 // under the unit's -O4,p flags (see MWCC_CASES #16).
@@ -108,7 +108,7 @@ extern "C" void func_8022BF6C(CSysWin* self, char* a, char* b) {
 // No definition here: an empty body would be inlined into callers and drop the
 // call; the matcher for us-8022dec0 will provide the real body.
 
-// Target 1: us-8022e0ac - format a pane name (idx+1), find two panes in the
+// us-8022e0ac - format a pane name (idx+1), find two panes in the
 // second window's layout, and compute the second pane's absolute screen
 // position into out (ancestor translate sum via func_80137924). Same shape as
 // func_8022C930 / func_80253970: each GetRootPane() is a fresh load (retail
@@ -125,7 +125,7 @@ extern "C" void func_8022C1B4(nw4r::math::VEC3* out, CSysWin* window, int idx) {
 }
 #pragma pop
 
-// Target 3: us-8022e150 - advance the window animation; mark it active (phase 2)
+// us-8022e150 - advance the window animation; mark it active (phase 2)
 // when the anim transform consumed the step.
 #pragma dont_inline on
 extern "C" void func_8022C258(CSysWin* self) {
@@ -137,7 +137,7 @@ extern "C" void func_8022C258(CSysWin* self) {
 }
 #pragma dont_inline off
 
-// Target 2: us-8022e19c - advance the window when the game-manager's active
+// us-8022e19c - advance the window when the game-manager's active
 // kind differs from the window's current kind (window kind must be < 5).
 #pragma dont_inline on
 extern "C" void func_8022C2A4(CSysWin* self) {
@@ -147,7 +147,7 @@ extern "C" void func_8022C2A4(CSysWin* self) {
 }
 #pragma dont_inline off
 
-// Target 4: us-8022e1f0 - rewind the window animation; clear the open flag
+// us-8022e1f0 - rewind the window animation; clear the open flag
 // (phase 0) once the reverse anim finishes.
 #pragma dont_inline on
 extern "C" void func_8022C2F8(CSysWin* self) {
@@ -160,7 +160,7 @@ extern "C" void func_8022C2F8(CSysWin* self) {
 }
 #pragma dont_inline off
 
-// Target 1: us-8022e240 - layout/kind setup after a file load (called by
+// us-8022e240 - layout/kind setup after a file load (called by
 // OnFileEvent once the System window layout is built): find the two label
 // panes, write all six label texts, bind the tag processor into each label
 // pane, then re-apply the current kind's pane visibility via func_8022B90C.
@@ -226,7 +226,7 @@ extern "C" void func_8022C348(CSysWin* self) {
 }
 #pragma pop
 
-// Target 4: us-8022e43c - build the System window layout from the loaded arc
+// us-8022e43c - build the System window layout from the loaded arc
 // file (the mFileHandle match gate). Mirrors the CSelShopWin load path: mem
 // region, tag processor, resource accessor, layout + anim transform, font
 // binding, then hand off to func_8022C348 and release the handle/region. The
@@ -267,7 +267,7 @@ bool CSysWin::OnFileEvent(CEventFile* pEventFile) {
 }
 #pragma pop
 
-// Target 1: us-8022d52c - load the System.arc file (IWorkEvent callback = this)
+// us-8022d52c - load the System.arc file (IWorkEvent callback = this)
 // into the window's file-handle slot, mark the handle, and clear the ready flag.
 extern "C" void func_8022B6F4(CSysWin* self) {
     u32 allocHandle = mtl::MemManager::getHandleMEM2();
@@ -277,7 +277,7 @@ extern "C" void func_8022B6F4(CSysWin* self) {
     self->field_28 = 0;
 }
 
-// Target 4: us-8022d580 - per-frame update: run the phase handler for the
+// us-8022d580 - per-frame update: run the phase handler for the
 // current animation phase, then advance the layout animation (open-flag gate).
 // The three phase handlers carry dont_inline so the dispatch calls stay direct
 // bl's. Goto-chain dispatch (MWCC_CASES §7d2): switch/if-else shapes don't
@@ -303,7 +303,7 @@ extern "C" void func_8022B748(CSysWin* self) {
     }
 }
 
-// Target 1: us-8022d600 - draw the system-window layout when it is open and
+// us-8022d600 - draw the system-window layout when it is open and
 // animated (field_34/field_35 guards), passing through the caller's DrawInfo.
 extern "C" void func_8022B7C8(CSysWin* self, nw4r::lyt::DrawInfo* drawInfo) {
     if (self->field_34 == 0) return;
@@ -311,7 +311,7 @@ extern "C" void func_8022B7C8(CSysWin* self, nw4r::lyt::DrawInfo* drawInfo) {
     return func_80137038(self->mLayout, drawInfo, 0, 1);
 }
 
-// Target 3: us-8022d62c - tear down the window layout and free its resources.
+// us-8022d62c - tear down the window layout and free its resources.
 // The `if (x != 0) { delete x; x = 0; }` shape reproduces retail's double-beq
 // prologue check (same as CBattery::func_802B9364).
 #pragma push
@@ -335,7 +335,7 @@ extern "C" void func_8022B7F4(CSysWin* self) {
 }
 #pragma pop
 
-// Target 2: us-8022d6f0 - open the window (only when idle): mark phase 1 and
+// us-8022d6f0 - open the window (only when idle): mark phase 1 and
 // play the opening UI sound.
 extern "C" void func_8022B8B8(CSysWin* self) {
     if (self->field_35 != 0) return;
@@ -345,7 +345,7 @@ extern "C" void func_8022B8B8(CSysWin* self) {
     return func_80138078(0xd);
 }
 
-// Target 2: us-8022d744 - switch the window's visible pane for the given kind:
+// us-8022d744 - switch the window's visible pane for the given kind:
 // hide both panes first, then re-show the one selected by the 4-way switch
 // (each case keeps its own call site in retail - no fall-through merging).
 // optimize_for_size matches the retail stmw/lmw prologue (r30-r31).
@@ -371,7 +371,7 @@ extern "C" void func_8022B90C(CSysWin* self, int kind) {
     }
 }
 #pragma pop
-// Target 2: us-8022d7ec - set the system-window content for one of the four
+// us-8022d7ec - set the system-window content for one of the four
 // window kinds. Finds the shared label pane once, then per kind: writes the
 // label texts (cases 0/2/3 use the incoming strings), binds the tag processor
 // into the label pane(s), sizes the icon pane from the label pane's height
@@ -533,7 +533,7 @@ end:
     ;
 }
 
-// Target 5: us-8022dec0 - window-kind advance: pick the label/message set for
+// us-8022dec0 - window-kind advance: pick the label/message set for
 // the kind, set both window label texts, then bind the icon texture (from the
 // arc 'timg' resource) and size the two icon panes to the texture dims. The
 // 5-byte label index table is built from the two .sdata2 globals (word + byte).

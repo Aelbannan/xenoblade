@@ -58,6 +58,11 @@ extern "C" void __dl__FPv(void* p);
 extern "C" void __dt__11CDeviceVICbFv(void* self, int flag);
 extern "C" void __ct__11CDeviceVICbFv(void* self);
 extern "C" void __dt__11CWorkThreadFv(void* self, int flag);
+// CLibCri full-object constructor. Retail exports it under the plain member
+// mangling (cross-TU callers construct via `new CLibCri(...)`), and the
+// defining unit must emit exactly that symbol, so the C linkage is fixed by
+// this declaration; the out-of-line definition below inherits it.
+extern "C" void* __ct__7CLibCriFPCcP11CWorkThread(CLibCri* object, const char* pName, CWorkThread* pParent);
 extern "C" u32 lbl_eu_8056CE58[52]; // CLibCri primary vtable (defined below)
 
 // Foreign vtable-slot symbols (retail flat names). The __RTTI__* typeinfo
@@ -152,21 +157,39 @@ void CLibCri::func_80459830() {
     }
 }
 
+// Vptr layout view over the CLibCri MI object: the primary (CWorkThread)
+// vptr at 0x000 plus the two secondary-base vptrs at 0x1C4 (CDeviceVICb) and
+// 0x1C8 (IErrorWii). Lets the ctor/dtor re-point the three slots at the
+// dissolved retail vtable blob through typed fields.
+struct CLibCriVptrView {
+    void* vtPrimary;   //0x000 CWorkThread primary vptr
+    void* pad[112];    //0x004
+    void* vtViCb;      //0x1C4 CDeviceVICb sub-vptr
+    void* vtErrorWii;  //0x1C8 IErrorWii sub-vptr
+};
+
 // ============================================================================
-// CLibCri constructor (extern "C" free-function form: a real member ctor
-// would auto-emit __vt__7CLibCri + __RTTI__ locators here, blowing the data
-// sections; the retail vtable is the dissolved blob below).
+// CLibCri constructor (see declaration above for why the retail symbol is a
+// flat full-object ctor).
 // ============================================================================
-extern "C" void __ct__7CLibCriFPCcP11CWorkThread(CLibCri* self, const char* pName, CWorkThread* pParent) {
-    __ct__11CWorkThreadFPCcP11CWorkThreadi(self, pName, pParent, 2);
-    __ct__11CDeviceVICbFv((char*)self + 0x1C4);
-    // full-object construction: restore the primary + both MI sub-vptrs
-    *(void**)self = &lbl_eu_8056CE58;
-    *(void**)((char*)self + 0x1C4) = (char*)&lbl_eu_8056CE58 + 0xA0;
-    self->mType = CWorkThread::THREAD_CLIBCRI;
-    *(void**)((char*)self + 0x1C8) = (char*)&lbl_eu_8056CE58 + 0xB8;
-    lbl_eu_806656D8 = self;
-    CErrorWii::addCallback(static_cast<IErrorWii*>(self));
+void* __ct__7CLibCriFPCcP11CWorkThread(CLibCri* object, const char* pName, CWorkThread* pParent) {
+    __ct__11CWorkThreadFPCcP11CWorkThreadi(object, pName, pParent, 2);
+    __ct__11CDeviceVICbFv(&((CLibCriVptrView*)object)->vtViCb);
+    // full-object construction: restore the primary + both MI sub-vptrs.
+    // The two secondary slots point at the CDeviceVICb / IErrorWii
+    // sub-vtables carved out of the dissolved blob (+0xA0 / +0xB8), spelled
+    // as element indexes into the u32 word array.
+    CLibCriVptrView* vp = (CLibCriVptrView*)object;
+    vp->vtPrimary = &lbl_eu_8056CE58[0];
+    vp->vtViCb = &lbl_eu_8056CE58[0xA0 / sizeof(u32)];
+    vp->vtErrorWii = &lbl_eu_8056CE58[0xB8 / sizeof(u32)];
+    lbl_eu_806656D8 = object;
+    object->mType = CWorkThread::THREAD_CLIBCRI;
+    // Implicit guarded CLibCri* -> IErrorWii* conversion (null-check +
+    // this-adjust +0x1C8); do not spell the null check by hand. The ctor
+    // returns object (retail keeps it live across the call for the epilog).
+    CErrorWii::addCallback(static_cast<IErrorWii*>(object));
+    return object;
 }
 
 // ============================================================================

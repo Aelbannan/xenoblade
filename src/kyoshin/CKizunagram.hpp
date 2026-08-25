@@ -144,7 +144,7 @@ struct UnkKizunaVec3 {
 };
 
 // ---------------------------------------------------------------------------
-// Target 7 (func_80259344) support types.
+// func_80259344 support types.
 // ---------------------------------------------------------------------------
 
 // Two-word (8-byte) struct return building block for func_80259344.
@@ -327,7 +327,7 @@ struct UnkKizunaSelf59228 {
 };
 
 // ---------------------------------------------------------------------------
-// Target 5 (func_80257EE0) support types.
+// func_80257EE0 support types.
 // ---------------------------------------------------------------------------
 
 // Object with a virtual method at vtable slot 14 (+0x38) taking one int.
@@ -356,7 +356,7 @@ struct UnkKizunaSelf57EE0 {
 };
 
 // ---------------------------------------------------------------------------
-// Target 7 (func_802592D8) support types.
+// func_802592D8 support types.
 // ---------------------------------------------------------------------------
 
 struct UnkKizunaSelf592D8 {
@@ -389,7 +389,7 @@ struct UnkKizunaSelfCAE4 {
 };
 
 // ---------------------------------------------------------------------------
-// Target 1 (func_80257B6C) support type.
+// func_80257B6C support type.
 // ---------------------------------------------------------------------------
 
 // func_80257B6C self: the line layout at +0x08 (Animate + root pane), two
@@ -403,7 +403,7 @@ struct UnkKizunaSelf57B6C {
 };
 
 // ---------------------------------------------------------------------------
-// Target 10 (func_80257AFC) support types.
+// func_80257AFC support types.
 // ---------------------------------------------------------------------------
 
 // Result of the slot-15 virtual; copyVEC2 source lives at +0x4C.
@@ -478,7 +478,7 @@ struct UnkKizunaSelfB958 {
 };
 
 // ---------------------------------------------------------------------------
-// Target 3 (func_8025C510) support type: two file handles (0x28 / 0x2C).
+// func_8025C510 support type: two file handles (0x28 / 0x2C).
 // ---------------------------------------------------------------------------
 struct UnkKizunaSelfC510 {
     u8 _00[0x28];
@@ -487,7 +487,7 @@ struct UnkKizunaSelfC510 {
 };
 
 // ---------------------------------------------------------------------------
-// Target 4 (func_8025C7FC) support type.
+// func_8025C7FC support type.
 // ---------------------------------------------------------------------------
 struct UnkKizunaSelfC7FC {
     u8 _00[0x39];
@@ -502,7 +502,7 @@ struct UnkKizunaSelfC7FC {
 };
 
 // ---------------------------------------------------------------------------
-// Target 5 (func_8025CE00) support type.
+// func_8025CE00 support type.
 // ---------------------------------------------------------------------------
 struct UnkKizunaSelfCE00 {
     u8 _00[0x3A];
@@ -538,7 +538,7 @@ struct UnkKizunaSelfCE78 {
 };
 
 // ---------------------------------------------------------------------------
-// Target 6 (func_8025C21C) support types.
+// func_8025C21C support types.
 // ---------------------------------------------------------------------------
 
 // Child object with retail slots 8 (+0x20) and 14 (+0x38); declared idx 6 / 12.
@@ -594,7 +594,7 @@ struct UnkKizunaSelfAB {
 };
 
 // ---------------------------------------------------------------------------
-// Target 9 (func_8025C6F0) support type.
+// func_8025C6F0 support type.
 // ---------------------------------------------------------------------------
 struct UnkKizunaSelfC6F0 {
     u8 _00[0x08];
@@ -616,7 +616,7 @@ struct UnkKizunaSelfC6F0 {
 };
 
 // ---------------------------------------------------------------------------
-// Target 10 (func_80257E58) support types.
+// func_80257E58 support types.
 // ---------------------------------------------------------------------------
 
 // Child layout object with retail slots 11 (+0x2C) and 14 (+0x38); declared idx 9 / 12.
@@ -792,7 +792,7 @@ struct UnkKizunaPaneFinalize {
 };
 
 // ---------------------------------------------------------------------------
-// Target 2 (func_8025CF40) support types.
+// func_8025CF40 support types.
 // ---------------------------------------------------------------------------
 
 // Embedded line state at +0x68 of the func_8025CF40 self: layout matches
@@ -849,7 +849,7 @@ struct UnkKizunaSelfCF40 {
 };
 
 // ---------------------------------------------------------------------------
-// Target 5 (func_8025B670) support type.
+// func_8025B670 support type.
 // ---------------------------------------------------------------------------
 
 struct UnkKizunaSelfB670 {

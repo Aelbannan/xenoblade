@@ -25,27 +25,37 @@ extern IPCResult IUSB_OpenDeviceIds(const char* interface, u16 vid, u16 pid);
 
 /* Global control block and trace flags (retail linker symbols). */
 tUUSB_CB usb;
-u8 uusb_g_usb_devid_found;
-u8 uusb_g_trace_state_initialized;
 
-/* NTD (Nintendo Test/Dev?) USB bridge globals shared with other BTE TUs. */
-s32 __ntd_ios_file_descriptor = -1;
-u32 __ntd_ohci;
-u32 __ntd_ohci_init_flag;
-u8 __ntd_pid_vid_specified;
-u32 __ntd_vid;
-u32 __ntd_pid;
-
-/* Device interface names for IUSB_OpenDeviceIds (retail .sdata labels). */
-static char lbl_806658D0[] = "oh0";
-static char lbl_806658D4[] = "oh1";
+/* Retail .bss packs the fiber stacks 32-byte aligned: 0x10 gap after usb
+ * (0x4C -> 0x60), matching the retail split layout. */
+u8 uusb_bss_gap_805BD99C[0x10];
 
 /* Fiber stacks for the BTE HCI message dispatcher (retail linker symbols). */
 u8 __uusb_ppc_stack1[0x1000];
 u8 __uusb_ppc_stack2[0x1000];
 
-/* Upper-layer wait-for-HCI flag (retail .sdata symbol). */
+/* Upper-layer wait-for-HCI flag (retail .sdata symbol; first in the .sdata
+ * slice, ahead of __ntd_ios_file_descriptor and the interface names). */
 u32 wait4hci = 1;
+
+/* NTD (Nintendo Test/Dev?) USB bridge globals shared with other BTE TUs. */
+s32 __ntd_ios_file_descriptor = -1;
+
+/* Device interface names for IUSB_OpenDeviceIds (retail .sdata labels). */
+static char lbl_806658D0[] = "oh0";
+static char lbl_806658D4[] = "oh1";
+
+/* Small zero-init statics (.sbss): MWCC emits this class in REVERSE
+ * declaration order, so they are listed pid-last -> found-last to produce
+ * the retail layout found(+0)/trace(+1)/ohci(+4)/flag(+8)/specified(+0xC)
+ * /vid(+0x10)/pid(+0x14). */
+u32 __ntd_pid;
+u32 __ntd_vid;
+u8 __ntd_pid_vid_specified;
+u32 __ntd_ohci_init_flag;
+u32 __ntd_ohci;
+u8 uusb_g_trace_state_initialized;
+u8 uusb_g_usb_devid_found;
 
 /* uusb_CloseDeviceCB - completion callback for IUSB_CloseDeviceAsync.
  * Tears down the control block, closes the IUSB library, resets the UUSB

@@ -1,5 +1,6 @@
 // kyoshin/menu/CMenuKeyAssign - key-assign (button mapping) menu (singleton).
 
+#include "kyoshin/cf/CBattleManagerApi.hpp"
 #include "kyoshin/menu/CMenuKeyAssign.hpp"
 
 #include "kyoshin/cf/CfGameManager.hpp"
@@ -38,7 +39,7 @@ extern "C" void func_801159DC(CMenuKeyAssign* self);
 extern "C" void func_80115060(CMenuKeyAssign* self, int state, int count, int mode);
 extern "C" void func_801154D0(CMenuKeyAssign* self, int a, int b, int c, int d, int e, int mode);
 
-// Target: us-8011492c - CMenuKeyAssign::~CMenuKeyAssign
+// us-8011492c - CMenuKeyAssign::~CMenuKeyAssign
 // Complete-object destructor. The UnkClass_8045F564 scratch region at +0x64 is
 // destroyed first (member dtor with r4=-1), then the CProcess base guarded by
 // the nested double null-check (an MWCC D2-inlined-into-D1 artifact), then the
@@ -87,7 +88,7 @@ void CMenuKeyAssign::Init() {
     reinterpret_cast<UnkClass_8045F564*>(&mUnkClass[0])->func_8045F810();
 }
 
-// Target: us-80114a84 - CMenuKeyAssign::Term
+// us-80114a84 - CMenuKeyAssign::Term
 // Wait for VI draw completion, detach the render callback (IScnRender
 // subobject at +0x5C, null-this safe), destroy the layout, release the scratch
 // region and clear the singleton.
@@ -111,7 +112,7 @@ void CMenuKeyAssign::Term() {
     lbl_eu_80663FA8 = NULL;
 }
 
-// Target: us-80114b04 - CMenuKeyAssign::Move
+// us-80114b04 - CMenuKeyAssign::Move
 // Per-frame input handling: gate prefix (task busy / global bits / scene
 // active / presentation flags / menu state), then dispatch on battle vs
 // non-battle state, pad bits and the arts-select singleton to open the key-
@@ -549,7 +550,7 @@ done:
 
 void Draw__14CMenuKeyAssignFv(void) {}
 
-// Target: us-80115964 - CMenuKeyAssign::cbRenderBefore
+// us-80115964 - CMenuKeyAssign::cbRenderBefore
 // Gate prefix (task busy / global bits / scene-active / presentation flags)
 // then draw the embedded layout through a stack DrawInfo.
 void CMenuKeyAssign::cbRenderBefore() {
@@ -1022,7 +1023,7 @@ extern "C" void func_80115DB0(CMenuKeyAssign* self, char* str, int idx) {
     p->flags = (p->flags & 0xFE) | 1;
 }
 
-// Target: us-80116a94 - IWorkEvent vtable adjustor thunk (subobject at +0x58).
+// us-80116a94 - IWorkEvent vtable adjustor thunk (subobject at +0x58).
 // Called through the subobject vtable destructor slot, `this` points at
 // CMenuKeyAssign + 0x58, so subtract 0x58 before forwarding to the full-object
 // member. The retail emits exactly subi r3,r3,0x58; b <member>.
@@ -1031,6 +1032,6 @@ void func_80115FB8(void* self) { ((void(*)(void*))__dt__14CMenuKeyAssignFv)((cha
 // IScnRender vtable cbRenderBefore adjustor thunk (subobject at +0x5C).
 void func_80115FC0(void* self) { ((void(*)(void*))cbRenderBefore__14CMenuKeyAssignFv)((char*)self - 0x5c); }
 
-// Target: us-80116aa4 - IScnRender vtable adjustor thunk (subobject at +0x5C).
+// us-80116aa4 - IScnRender vtable adjustor thunk (subobject at +0x5C).
 // Same shape as func_80115FB8 but for the IScnRender subobject.
 void func_80115FC8(void* self) { ((void(*)(void*))__dt__14CMenuKeyAssignFv)((char*)self - 0x5c); }

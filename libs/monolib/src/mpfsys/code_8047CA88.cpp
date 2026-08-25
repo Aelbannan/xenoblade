@@ -43,6 +43,7 @@ extern "C" void func_8047CAA8__17UnkClass_8047CA88Fv(
     nw4r::math::VEC3Sub(&tmp, (nw4r::math::VEC3*)&param->x,
                         (nw4r::math::VEC3*)self->field_04);
 
+    // Component dot through the nw4r PS inline kernel (ps_mul/ps_madd/ps_sum0).
     f32 dot = nw4r::math::VEC3Dot((nw4r::math::VEC3*)&self->field_08, &tmp);
 
     f32 clamped = self->field_14 * dot;
@@ -82,7 +83,6 @@ extern "C" void func_8047CC4C__17UnkClass_8047CA88Fv(
     u32 off = *(u32*)((u8*)desc + 0x24);
     self->field_04 = dataPtr;
     u8* base = (u8*)desc + off;
-    void* target = base + 0x20;
 
     struct UnkRaw3 { f32 x, y, z; };
     UnkRaw3 raw;
@@ -97,14 +97,15 @@ extern "C" void func_8047CC4C__17UnkClass_8047CA88Fv(
     *(u32*)&self->field_0C = *(u32*)&raw.y;
     *(u32*)&self->field_10 = *(u32*)&raw.z;
 
-    self->field_14 =
-        inv / nw4r::math::VEC3Dot((nw4r::math::VEC3*)&self->field_08,
+    f32 dot = nw4r::math::VEC3Dot((nw4r::math::VEC3*)&self->field_08,
                                   (nw4r::math::VEC3*)&self->field_08);
+    self->field_14 = inv / dot;
 
     self->field_20 = (u8*)desc + *(u32*)(base + 4);
     self->field_24 = (u8*)desc + *(u32*)(base + 8);
     self->field_18 = scale;
-    self->field_1C = target;
+    self->field_1C = base + 0x20;
 
-    func_8047CAA8__17UnkClass_8047CA88Fv(self, (UnkParam_8047CA88*)target);
+    func_8047CAA8__17UnkClass_8047CA88Fv(
+        self, (UnkParam_8047CA88*)((u8*)base + 0x20));
 }

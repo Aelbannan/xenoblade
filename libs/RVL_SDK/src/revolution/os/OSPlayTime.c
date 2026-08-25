@@ -16,18 +16,19 @@
 #include <revolution/OS/OSAlarm.h>
 #include <revolution/OS/OSError.h>
 
-// External globals from sbss/bss
-extern void *volatile __OSExpireAIFade;
-extern u32 __OSExpireSetExpiredFlag;
-extern void (*__OSExpireCallback)(void);
-extern u64 __OSExpireTime;
-extern OSAlarm __OSExpireAlarm;
+// Retail defines these in OSPlayTime.o (.sbss/.bss); keep global bindings.
+void *volatile __OSExpireAIFade;
+u32 __OSExpireSetExpiredFlag;
+u64 __OSExpireCallback; /* retail st_size 8: stored as 8-byte, cast when called */
+u64 __OSExpireTime;
+OSAlarm __OSExpireAlarm;
+u8 pad_805D5530[0x10]; /* retail .bss tail after __OSExpireAlarm (0x40 total) */
 
 // Retail .data string pool (named per config/us/symbols.txt so the string
 // relocs carry the retail labels; local scope matches retail)
-static char lbl_8055EEB8[0x14] = "/shared2/expired";
-static char lbl_8055EECC[0x10] = "OSPlayTime.c";
-static char lbl_8055EEDC[0x1C] = "PlayTime: %d seconds left\n";
+static char lbl_8055EEB8[0x11] = "/shared2/expired";
+static char lbl_8055EECC[0xD] = "OSPlayTime.c";
+static char lbl_8055EEDC[0x1B] = "PlayTime: %d seconds left\n";
 
 // Float/double constants in .sdata2 (loaded via extern to match retail relocs)
 extern const f32 float_8066C1D8;
@@ -210,8 +211,8 @@ void __OSPlayTimeAlarmExpired(OSAlarm* alarm, OSContext* ctx) {
     u16 flags;
     BOOL created;
 
-    if (__OSExpireCallback != NULL) {
-        __OSExpireCallback();
+    if (__OSExpireCallback != 0) {
+        ((void (*)(void))__OSExpireCallback)();
         return;
     }
 

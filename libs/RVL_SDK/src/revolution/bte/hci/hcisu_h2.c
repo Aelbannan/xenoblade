@@ -53,6 +53,10 @@ const UINT8 hcisu_msg_evt_table[8] = {0x13, 0x00, 0x11, 0x00, 0x12, 0x00,
 
 UINT8 hcisu_h2_cb[0x24];
 
+/* Retail .bss keeps a 0x1C alignment gap after the control block
+ * (pad_805BBC44) before the next unit's .bss slice starts. */
+u8 pad_805BBC44[0x1C];
+
 /* BTU control block (btu.h): hcit_acl_data_size at 0x7C, hcit_acl_pkt_size at 0x7E. */
 #include <revolution/bte/stack/include/btu.h>
 

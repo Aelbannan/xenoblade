@@ -1,7 +1,9 @@
 // Auto-scaffolded catalog TU for kyoshin/cf/CVision
 // Replace stubs with high-level C/C++ during decomp.
 
+#include "kyoshin/cf/CBattleManagerApi.hpp"
 #include <types.h>
+#include "monolib/scn/CScnTimeApi.hpp"
 #include <PowerPC_EABI_Support/Runtime/MWCPlusLib.h>
 #include <new>
 // Forward decl: CfGameManager.hpp's `static cf::CfGameManager* init(...)` relies
@@ -13,6 +15,8 @@ namespace cf { class CfGameManager; }
 // catalog copy, so rename it out of the way (CGame.cpp idiom).
 #define getBdatStringColumnValue visionCppCatalogBdatColUnused
 #include "kyoshin/harness_catalog.hpp"
+#include "kyoshin/CTaskGameApi.hpp"
+#include "kyoshin/CUIWindowManagerApi.hpp"
 #undef getBdatStringColumnValue
 #include "kyoshin/cf/CVision.hpp"
 #include "kyoshin/cf/CArtsSet.hpp"
@@ -30,9 +34,8 @@ extern "C" void* __dt__801A36D0(cf::UnkClass_801A36D0* self, int deleting);
 // header's symbols so its C-linkage decls don't overload-conflict with the
 // chain headers pulled in by CBattleManager.hpp).
 //
-// CSuddenCommu.hpp's imports now match the chain headers (see CSuddenCommu.hpp)
-// except func_8049603C (void* arg here vs CScn* in CTaskGame.hpp), so only
-// that one is renamed; the symbols this TU uses (lbl_eu_80663E24,
+// CSuddenCommu.hpp's imports now match the chain headers (see CSuddenCommu.hpp);
+// the symbols this TU uses (lbl_eu_80663E24,
 // func_80496288, func_8006EF04__Fi, func_80260264) resolve to the
 // chain-header / local declarations instead.
 //
@@ -40,31 +43,17 @@ extern "C" void* __dt__801A36D0(cf::UnkClass_801A36D0* self, int deleting);
 // CChainTimer.hpp but takes an int id at the retail call sites here, so those
 // two headers are pre-included under a rename and CVision.cpp keeps its
 // (int id) declaration.
-#define func_8049603C visionCppCamView
-// CSuddenCommu.hpp declares getInstance__Q22cf14CBattleManagerFv as void*, which
-// now conflicts with the CBattleManagerView* declaration in the chain headers.
-// This TU never calls it, so rename it out of the way (CMenuBattleMode idiom).
-#define getInstance__Q22cf14CBattleManagerFv visionCppBmGetInstanceUnused
 #include "kyoshin/cf/CSuddenCommu.hpp"
-#undef getInstance__Q22cf14CBattleManagerFv
-#undef func_8049603C
 #define func_8016FE34 visionCppChainActorLookup
-#define getInstance__Q22cf14CBattleManagerFv visionCppBmGetInstanceUnused
 // CAIAction.hpp declares func_80174C98 as void(const void*,void*,int), which
 // conflicts with CSuddenCommu.hpp's int(void*,int*,int) form (MWCC 10197).
 // This TU uses the CSuddenCommu form; rename the other out of the way.
 #define func_80174C98 visionCppAiActionGateUnused
-// Same for its func_800BE12C void*-form vs the u8*-form used by this TU.
-#define func_800BE12C visionCppAiActionMoveUnused
 #include "kyoshin/cf/object/CAIAction.hpp"
-#undef func_800BE12C
 #undef func_80174C98
-#undef getInstance__Q22cf14CBattleManagerFv
 #undef func_8016FE34
 #define func_8016FE34 visionCppChainTimerActorLookup
-#define getInstance__Q22cf14CBattleManagerFv visionCppBmGetInstanceUnused2
 #include "kyoshin/cf/chain/CChainTimer.hpp"
-#undef getInstance__Q22cf14CBattleManagerFv
 #undef func_8016FE34
 #include "kyoshin/cf/CBattleManager.hpp"
 
@@ -100,7 +89,6 @@ extern "C" int func_80260264(void* self, int id, void* result); // matches CSudd
 // in the imports section of kyoshin/cf/CVision.hpp -- sibling TUs use those
 // symbols with different signatures or define stubs, so the shared decls live
 // in the common header instead of being repeated inline here.
-extern "C" void func_800BE12C(u8* a, int b, int c, int d, int e); // CfObjectActor.hpp/CfObjectMove.hpp declare (u8*,int,int,int,int)
 extern "C" void func_800E921C(void* a, void* b, void* c, void* d, void* e); // CBattleManager.cpp defines an empty stub
 
 // Per-battle-slot object iterated in func_801A897C (stride 0x834).
@@ -1012,7 +1000,7 @@ void func_801A47D0(CVision* self) {
     bool atBase = (lbl_eu_80667CD4 == self->field_2619C);
     if (atBase) {
         void* mem = getHandleMEM2__Q23mtl10MemManagerFv();
-        func_8004392C(1, 0x12f, mem, 2, 1, lbl_eu_80667CF8);
+        func_8004392C(1, 0x12f, (u32)mem, 2, 1, lbl_eu_80667CF8);
     }
     // Materialized timer-window checks (retail evaluates each into r0).
     int w1;
@@ -1113,7 +1101,7 @@ void func_801A4BC8(CVision* self) {
     if (atBase) {
         self->vt_2C(3);
         void* mem = getHandleMEM2__Q23mtl10MemManagerFv();
-        func_8004392C(1, 0x130, mem, 2, 1, lbl_eu_80667CF8);
+        func_8004392C(1, 0x130, (u32)mem, 2, 1, lbl_eu_80667CF8);
     }
     // Materialized timer-window checks (retail evaluates both into r0).
     int w1;

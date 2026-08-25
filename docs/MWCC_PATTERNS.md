@@ -3266,3 +3266,141 @@ hiding time/input-dependent logic are common in this codebase.
 - Result:    objects pass objdiff again (CLibCriMoviePlay cycle unblocked).
 - Confidence: repo_proven
 - Applies to/a.k.a.: any rule that grows .strtab by manual section surgery.
+
+## 8. Trivial accessors need noinline when retail calls them out-of-line
+
+**Symptom:** decomp contains inline load instructions (`lwz`/`lha`/`lbz` + optional
+`rlwinm` bit-extract) where retail has a `bl` to a small function.
+
+**Cause:** MWCC inlines single-load accessor functions even at -O4,p with default
+inline settings, because the body is cheaper than the call overhead. Retail's
+compiler (same version but different TU context / IPO state) kept them out-of-line.
+
+**Diagnosis:** look for `lwz rN, offset(rM)` followed by optional bit-extract
+where `offset` matches a known struct field referenced by an extern "C" accessor.
+Cross-reference: if a function matching that description exists and its address
+is called by retail but the loads appear directly in your output → it was inlined.
+
+**Fix:** wrap the definition in `#pragma dont_inline on` / `#pragma dont_inline reset`.
+Do NOT use `__declspec(noinline)` — it can interfere with other MWCC optimizations.
+
+**Example pair:** func_80083290 (`*(s16*)(data+0x532)`) and func_80083284
+(`(*(u32*)(data+0x4EC) >> 20) & 1`) — both were inlined into func_80083118,
+adding 16 bytes of inline loads where retail had two 4-byte bl instructions.
+
+## 8. Late-definition inlining defeats `#pragma auto_inline off`
+MWCC may inline a TU-local function into callers that appear EARLIER in the file,
+even when `#pragma auto_inline off` precedes the callee's definition — the pragma
+only affects code generated after it. Symptom: caller contains the callee's body
+(syswin gates, page-wrap logic, sound call) and is oversized by exactly the
+callee's size. Fix: `__declspec(noinline)` on the callee definition itself
+(pragma-order immune). Confirmed: func_8028A0E0→D7C, func_80287024+func_80286F6C→B94.
+
+## 9. Raw-u8 address arithmetic vs spurious `(s8)` casts
+For grid addressing like `(u8)(unk_377 + idx*4)`, retail emits NO extsb on the
+byte load — write the cast exactly as `(u8)(self->unk_377 + ...)` without
+`(s8)` on the byte field. Each extra `(s8)` costs one `extsb` instruction and
+breaks linear alignment for all following code.
+
+## 10. Zero-test on a byte field: record-form extsb vs cmpi
+Retail tests `(s8)b == 0` via `lbz rN / extsb. rM, rN` (Rc=1 folds the compare).
+To reproduce: keep the variable `u8` and cast only inside the test:
+`u8 b = self->field; if ((s8)b == 0) {...}`. Declaring the variable itself as
+`s8` swaps register allocation (load lands in the temp register instead).
+
+## 9. Sequential early-return guards should be `||` chains
+
+**Symptom:** decomp emits TWO branch instructions (conditional + unconditional
+`b exit`) where retail has ONE for the same early-return predicate; cascading
+offset drift through the rest of the function; decomp LARGER than retail.
+
+**Cause:** retail's compiler merges consecutive `if (...) return;` guards into
+a single branch chain (short-circuit evaluation). Expressing them as separate
+`if` blocks in source prevents MWCC from seeing them as mergeable.
+
+**Fix:** rewrite sequential guards that share the same return target as a single
+`||` chain:
+```cpp
+if ((flags & 0x4) != 0 || checkFunc() || (flags & 0x80) == 0) {
+    return;
+}
+```
+
+**Measured impact:** func_8007CF64 8.7% -> 34.4% match, structural diffs
+127 -> 73, from two guard merges alone.
+
+## 10. `bool` params generate 12-byte booleanization — use `u8` when retail passes raw
+
+**Symptom:** decomp emits `neg r0, rN` / `or r0, r0, rN` / `rlwinm rD, r0, 1, 31, 31`
+(12 bytes) before a call where retail passes the byte directly.
+
+**Cause:** MWCC booleanizes `bool` arguments to normalize any nonzero value to 1
+(`(v | -v) >> 31`). Retail's source used `u8`/`int`, passing the raw value.
+
+**Fix:** change the extern declaration from `bool` to `u8`.
+
+**Measured impact:** func_8007CF64 34.4% -> 82.0% match (structural 73 -> 19,
+size converged to exact 0x22c/0x22c) — the function calls func_80188D34 four
+times, each site dropping 12 bytes of booleanization code.
+
+## `-ipa off` string pool order follows .text first-use — force declaration order with a data-side anchor (btu_hcif, GC/3.0a5.2 -ipa off)
+
+**Symptom:** .data string literals emit in use order (function at the END of
+.text pools first) instead of source declaration order; retail .data has them
+in declaration order.
+
+**Cause:** under `-ipa off` MWCC appends each literal to the pool at its first
+.text reference while emitting functions, so pool order = text first-use order.
+
+**Fix:** reference the literals that must pool early from a file-scope data
+initializer placed before all functions (`char *const unit_pool_anchor[] = {
+str_a, str_b };`). Data initializers create their literals at parse time,
+ahead of every function. The pointer table itself was eliminated by the retail
+linker (btm_sec orphan-anchor pattern): strip it via UNIT_RULES
+`extern_data_sections`. Bonus: the strings stop being folded anon `@N` and
+become named globals, which makes §17.6 exact_renames onto the retail split's
+local labels trivial.
+
+- Result:    btu_hcif `.data` gate MATCH; .text byte-identical pre/post
+- Confidence: repo_proven
+
+## const → non-const moves pooled strings/tables from .rodata to .data with zero codegen change (GXFifo / GXTev, Wii/1.1)
+
+**Symptom:** data gate fails with `.rodata: retail 0x0 != decomp N` and
+`.data: retail M != decomp 0` — same bytes, wrong section.
+
+**Cause:** retail's original source declared these objects without `const`;
+MWCC files `static const char[]` / function-local `static const u32[]` into
+.rodata instead.
+
+**Fix:** drop `const` from the declaration (keep explicit array sizes to pin
+the split tail, e.g. `[0x18]` + `[0x16]`). Function codegen is unchanged —
+only the section home moves. Verified GXSetTevOrder byte-diff identical before/
+after (GXTev.c c2r[10]).
+
+- Result:    GXFifo + GXTev data gates MATCH raw (no rules needed)
+- Confidence: repo_proven
+
+## Unmatched-text literal pools: dedupe compiler-duplicated words, then permute_sdata2_words into retail order (KPAD, Wii/1.1 -ipa file)
+
+**Symptom:** .sdata2 is a permutation (+duplicates) of the retail pool; every
+attempt to reorder declarations is ignored because MWCC folds `static const`
+scalars into anonymous per-use literals.
+
+**Cause:** pool order follows decomp .text first-use order — meaningless until
+the functions themselves are matched.
+
+**Fix (UNIT_RULES, no source churn):**
+1. `drop_data_range` the compiler-duplicated literal words (same constant
+   pooled once per use-site cluster).
+2. New `permute_sdata2_words=(j→i, ...)`: position j receives the word
+   currently at index i; symbols and their st_values follow their VALUES, so
+   every existing .text load keeps reading the same constant.
+Compute the permutation by greedy value-matching against the retail .sdata
+asm dump. When the text is later matched, revisit: the permuted layout may
+diverge from what matched codegen naturally pools.
+
+- Result:    KPAD data gate MATCH (.data/.sdata/.sbss/.bss also realigned by
+             declaration reorder alone — MWCC emits named globals in source
+             order; only folded literals need the permutation)
+- Confidence: repo_proven

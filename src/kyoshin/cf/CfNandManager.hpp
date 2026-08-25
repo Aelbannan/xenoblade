@@ -284,6 +284,11 @@ extern "C" void func_80084F50__Q22cf13CfGameManagerFv();
 extern char lbl_eu_8050B470[];                  // bdat column-name blob
 extern void* lbl_eu_80664090;                   // bdat table object
 extern f32 lbl_eu_806686E0;                     // fallback float constant
+// Scale-offset doubles used by the capture downsampler (func_80240084).
+extern double lbl_eu_806686E8;                  // offset added past threshold
+extern double lbl_eu_806686F0;                 // offset added below threshold
+extern double lbl_eu_806686F8;                 // scale numerator offset
+extern double lbl_eu_80668700;                 // scale denominator / coord offset
 
 // Inner descriptor written at +0x14 of the texture block built by
 // func_8023C68C (height/width/format of the 0xa4x0x74 capture tile).
@@ -418,3 +423,468 @@ struct CfNandBmView {
 // 0x80-stride per-player table whose entry address is written into pushed
 // events by func_8023FEDC (.data).
 extern u8 lbl_eu_80576AC0[];
+
+// --- imports used only by func_8023C2E4 ---
+extern "C" void func_8025EC0C(u8* dst, const u8* src);   // kizuna compaction
+struct CfNandSub14;
+extern "C" void func_80174658(CfNandSub14* state);        // scratch initializer
+
+// Clamp bounds fetched through the per-entry virtual call in func_8023C2E4.
+struct CfNandClampView {
+    u8 _pad04[4];
+    f32 f04; // +0x04
+    f32 f08; // +0x08
+    f32 f0C; // +0x0C
+};
+
+// Subobject embedded at save-source entry +0x17C, dispatched virtually at
+// vtable slot +0x224. Never constructed (novtable); placeholder slots mirror
+// the CfNandPlayerVt recipe so vf224 lands at vtable+0x224.
+struct __attribute__((packed)) __declspec(novtable) CfNandEntryVt {
+    virtual void _v008();
+    virtual void _v00C();
+    virtual void _v010();
+    virtual void _v014();
+    virtual void _v018();
+    virtual void _v01C();
+    virtual void _v020();
+    virtual void _v024();
+    virtual void _v028();
+    virtual void _v02C();
+    virtual void _v030();
+    virtual void _v034();
+    virtual void _v038();
+    virtual void _v03C();
+    virtual void _v040();
+    virtual void _v044();
+    virtual void _v048();
+    virtual void _v04C();
+    virtual void _v050();
+    virtual void _v054();
+    virtual void _v058();
+    virtual void _v05C();
+    virtual void _v060();
+    virtual void _v064();
+    virtual void _v068();
+    virtual void _v06C();
+    virtual void _v070();
+    virtual void _v074();
+    virtual void _v078();
+    virtual void _v07C();
+    virtual void _v080();
+    virtual void _v084();
+    virtual void _v088();
+    virtual void _v08C();
+    virtual void _v090();
+    virtual void _v094();
+    virtual void _v098();
+    virtual void _v09C();
+    virtual void _v0A0();
+    virtual void _v0A4();
+    virtual void _v0A8();
+    virtual void _v0AC();
+    virtual void _v0B0();
+    virtual void _v0B4();
+    virtual void _v0B8();
+    virtual void _v0BC();
+    virtual void _v0C0();
+    virtual void _v0C4();
+    virtual void _v0C8();
+    virtual void _v0CC();
+    virtual void _v0D0();
+    virtual void _v0D4();
+    virtual void _v0D8();
+    virtual void _v0DC();
+    virtual void _v0E0();
+    virtual void _v0E4();
+    virtual void _v0E8();
+    virtual void _v0EC();
+    virtual void _v0F0();
+    virtual void _v0F4();
+    virtual void _v0F8();
+    virtual void _v0FC();
+    virtual void _v100();
+    virtual void _v104();
+    virtual void _v108();
+    virtual void _v10C();
+    virtual void _v110();
+    virtual void _v114();
+    virtual void _v118();
+    virtual void _v11C();
+    virtual void _v120();
+    virtual void _v124();
+    virtual void _v128();
+    virtual void _v12C();
+    virtual void _v130();
+    virtual void _v134();
+    virtual void _v138();
+    virtual void _v13C();
+    virtual void _v140();
+    virtual void _v144();
+    virtual void _v148();
+    virtual void _v14C();
+    virtual void _v150();
+    virtual void _v154();
+    virtual void _v158();
+    virtual void _v15C();
+    virtual void _v160();
+    virtual void _v164();
+    virtual void _v168();
+    virtual void _v16C();
+    virtual void _v170();
+    virtual void _v174();
+    virtual void _v178();
+    virtual void _v17C();
+    virtual void _v180();
+    virtual void _v184();
+    virtual void _v188();
+    virtual void _v18C();
+    virtual void _v190();
+    virtual void _v194();
+    virtual void _v198();
+    virtual void _v19C();
+    virtual void _v1A0();
+    virtual void _v1A4();
+    virtual void _v1A8();
+    virtual void _v1AC();
+    virtual void _v1B0();
+    virtual void _v1B4();
+    virtual void _v1B8();
+    virtual void _v1BC();
+    virtual void _v1C0();
+    virtual void _v1C4();
+    virtual void _v1C8();
+    virtual void _v1CC();
+    virtual void _v1D0();
+    virtual void _v1D4();
+    virtual void _v1D8();
+    virtual void _v1DC();
+    virtual void _v1E0();
+    virtual void _v1E4();
+    virtual void _v1E8();
+    virtual void _v1EC();
+    virtual void _v1F0();
+    virtual void _v1F4();
+    virtual void _v1F8();
+    virtual void _v1FC();
+    virtual void _v200();
+    virtual void _v204();
+    virtual void _v208();
+    virtual void _v20C();
+    virtual void _v210();
+    virtual void _v214();
+    virtual void _v218();
+    virtual void _v21C();
+    virtual void _v220();
+    virtual CfNandClampView* vf224(); // vtable +0x224
+};
+
+// 0x14-byte scratch initialized by func_80174658 inside the func_8023C2E4
+// entry loop, filled from the source entry, then copied into the destination.
+struct CfNandSub14 {
+    s16 f00;
+    s16 f02;
+    u32 f04;
+    u8 f08;
+    u8 _pad09[3];
+    f32 f0C;
+    f32 f10;
+};
+
+// Player-side view for func_8023C2E4's placement bit: getPlayer(0)+0xC4 points
+// at an object whose +0x4EC word bit30 becomes the per-entry flag byte.
+struct CfNandSub4EC {
+    u8 _pad[0x4EC];
+    u32 field4EC;
+};
+struct CfNandPlayerC4 {
+    u8 _pad[0xC4];
+    CfNandSub4EC* fieldC4;
+};
+
+// Unaligned head fields of a work entry (offsets 0x02..0x24 are 2-mod-4),
+// kept in a minimal packed substruct so the rest of the entry stays naturally
+// aligned (MWCC needs aligned arrays to emit its word-pair copy loops).
+struct __attribute__((packed)) CfNandEntryHead {
+    u16 f000;
+    u32 f002;
+    u32 f006;
+    u32 f00A;
+    u32 f00E;
+    u32 f012;
+    u32 f016;
+    u16 gap01A;
+    u32 f01C;
+    u32 f020;
+    u32 f024;
+}; // 0x28
+
+// One 0x304-byte destination entry built by func_8023C2E4.
+struct CfNandWorkEntryDst {
+    CfNandEntryHead head;
+    u32 arr028[48]; // 0x28..0xE7
+    u32 arr0E8[36]; // 0xE8..0x177
+    u16 f178;
+    u16 gap17A;
+    u32 f17C;
+    f32 f180;
+    f32 f184;
+    f32 f188;
+    f32 f18C;
+    f32 f190;
+    f32 f194;
+    s16 f198;
+    s16 f19A;
+    s16 f19C;
+    u16 gap19E;
+    f32 f1A0;
+    f32 f1A4;
+    s16 f1A8;
+    s16 f1AA;
+    s16 f1AC;
+    s16 f1AE;
+    s16 f1B0;
+    s16 f1B2;
+    s16 f1B4;
+    s16 f1B6;
+    u8 f1B8;
+    u8 gap1B9[3];
+    f32 f1BC;
+    f32 f1C0;
+    f32 f1C4;
+    f32 f1C8;
+    f32 f1CC;
+    u8 f1D0;
+    u8 f1D1;
+    u8 f1D2;
+    u8 f1D3;
+    u8 f1D4;
+    u8 gap1D5[3];
+    f32 f1D8;
+    u32 f1DC;
+    u32 f1E0;
+    u32 f1E4;
+    u32 f1E8;
+    u32 f1EC;
+    u32 f1F0;
+    u8 kizuna[0xAC]; // 0x1F4: compact kizuna block (func_8025EC0C)
+    u32 f2A0;
+    u32 f2A4;
+    u32 f2A8;
+    s16 f2AC;
+    s16 f2AE;
+    u32 f2B0;
+    u8 f2B4;
+    u8 gap2B5[3];
+    f32 f2B8;
+    f32 f2BC;
+    u8 f2C0;
+    u8 tail[0x40]; // zero-filled scratch region
+    u8 gapEnd[3];
+}; // 0x304
+
+// One 0x3DD4-byte source entry read by func_8023C2E4.
+struct CfNandWorkEntrySrc {
+    CfNandEntryHead head;
+    u32 arr028[48]; // 0x28..0xE7
+    u32 arr0E8[36]; // 0xE8..0x177
+    u16 f178;
+    u16 gap17A;
+    CfNandEntryVt sub; // 0x17C: virtually dispatched subobject
+    u8 gap180[0x159C]; // 0x180..0x177B
+    u32 f177C;
+    u32 f1780;
+    u32 f1784;
+    u8 gap1788[0x1D4C]; // 0x1788..0x17CB
+    u32 f17CC;
+    f32 f17D0;
+    f32 f17D4;
+    f32 f17D8;
+    f32 f17DC;
+    f32 f17E0;
+    f32 f17E4;
+    s16 f17E8;
+    s16 f17EA;
+    s16 f17EC;
+    u16 gap17EE;
+    f32 f17F0;
+    f32 f17F4;
+    s16 f17F8;
+    s16 f17FA;
+    s16 f17FC;
+    s16 f17FE;
+    s16 f1800;
+    s16 f1802;
+    s16 f1804;
+    s16 f1806;
+    u8 f1808;
+    u8 gap1809[3];
+    f32 f180C;
+    f32 f1810;
+    f32 f1814;
+    f32 f1818;
+    f32 f181C;
+    u8 f1820;
+    u8 f1821;
+    u8 f1822;
+    u8 f1823;
+    u8 f1824;
+    u8 gap1825[3];
+    f32 f1828;
+    u32 f182C;
+    u32 f1830;
+    u32 f1834;
+    u32 f1838;
+    u32 f183C;
+    u32 f1840;
+    s16 f34D4;
+    s16 f34D6;
+    u32 f34D8;
+    u8 f34DC;
+    u8 gap34DD[3];
+    f32 f34E0;
+    f32 f34E4;
+    u8 gap34E8[0x4C];
+    u8 kizunaSrc[0x8A0]; // big kizuna block compacted into the destination
+}; // 0x3DD4
+
+// Whole destination buffer CRC16'd by func_8023C2E4 (0x6C28 bytes).
+struct CfNandWorkBuf {
+    u8 head[0x41F0]; // bulk-copied from the character blob
+    CfNandWorkEntryDst entry[14];
+};
+
+// --- imports for the save-image builder (func_8023C93C) ---
+extern "C" u8* func_8009CF0C();                     // capture-region source pointer
+extern "C" void func_8006CBD8(u8* dst, u8* src);    // camera settings fill
+extern "C" void func_8016E09C(struct CfNandWthrBlock* w);
+extern "C" void func_80207C94(u8* dst);             // MINE region builder
+f32 func_801C0014();                                // mangled __Fv in retail
+extern "C" f32 func_801896A0();
+extern "C" f32 func_801895EC();
+extern "C" struct CfNandNameRoot* func_800B6CA0(); // save-name directory container
+// Retail symbol is CfGameManager's static member but returns its result in r3.
+extern "C" u32 func_8007F9AC__Q22cf13CfGameManagerFv();
+extern "C" u8* getInstance__14Class_80296898Fv();
+extern char* lbl_eu_806641B8;                       // item blob (see CItem.hpp)
+extern u16 lbl_eu_80661AF4;
+extern u16 lbl_eu_80661AF6;
+extern f32 lbl_eu_80663D94;                         // progress-area float default
+
+// Descriptor block preceding each CRC'd region of the save image.
+struct CfNandSaveTagBlock {
+    u32 tag;     // four-character region tag
+    u32 length;  // region length
+    u32 unk08;   // always 0x10
+    u32 crc;     // CRC16 of the following region
+};
+
+// 0x0C progress area at image +0x11EB0.
+struct CfNandProgressArea {
+    u32 field00;
+    f32 f04;
+    u16 f08;
+    u16 f0A;
+};
+
+// 0x10 weather block at image +0x24090 (+0xE carries the message id).
+struct CfNandWthrBlock {
+    u8 _pad0[0xE];
+    u16 f0E;
+};
+
+// 0x10 sound/mix area at image +0x240C0 (three floats from audio queries).
+struct CfNandSndArea {
+    f32 f00;
+    f32 f04;
+    f32 f08;
+    u32 f0C;
+};
+
+// Camera settings block at image +0x11F30 (filler writes through +0xC).
+struct CfNandCamBlock {
+    u8 _pad0[0xC];
+    u32 f0C;
+};
+
+// Node of the circular save-name directory chain rooted by func_800B6CA0.
+struct CfNandNameNode {
+    CfNandNameNode* mNext; // 0x00
+    u8 _pad04[4];
+    u32 f08;
+    u32 f0C;
+    u32 f10;
+    u32 f14;
+    f32 f18;
+    u32 f1C;
+    u16 f20;
+    u8 f22;
+    u8 f23;
+};
+
+// Container whose +0x04 roots the circular name-directory chain.
+struct CfNandNameRoot {
+    u8 _pad0[4];
+    CfNandNameNode* mNext;
+};
+
+// One compacted 0x1C-byte directory entry in the save image.
+struct __attribute__((packed)) CfNandSaveNameEntry {
+    u32 f04; // copied first, then cleared (retail keeps both stores)
+    u32 f08;
+    u32 f0C;
+    u32 f10;
+    f32 f14;
+    u32 f18;
+    u16 f1C;
+    u8 f1E;
+    u8 f1F;
+}; // 0x1C
+
+struct CfNandSaveNameTable {
+    s32 count; // live entry counter (kept at table+0)
+    CfNandSaveNameEntry entries[20];
+}; // 0x234
+
+// Full on-media save image assembled by func_8023C93C (0x248F0 bytes,
+// version tag 0x70002): header, tagged CRC regions, and tails.
+struct CfNandSaveImage {
+    u32 magic;                    // 0x00: 'USRD'
+    u32 totalSize;                // 0x04: 0x248F0
+    u32 unk08;                    // 0x08: 0x10
+    u32 version;                  // 0x0C: 0x70002
+    CfNandSaveTagBlock slotTag;   // 0x10
+    CfNandSaveBuf slot;           // 0x20: save-slot payload built by func_8023C7C4
+    u8 slotPad[0x9BE8];           // pad the slot out to +0x9CC0
+    u8 pad9CC0[0x360];            // -> 0xA020
+    CfNandSaveTagBlock flagTag;   // 0xA020
+    u8 flagData[0x1220];          // 0xA030
+    CfNandSaveTagBlock gameTag;   // 0xB250
+    CfNandWorkBuf work;           // 0xB260
+    u8 pad11E88[0x18];            // -> 0x11EA0
+    CfNandSaveTagBlock timeTag;   // 0x11EA0
+    CfNandProgressArea progress;  // 0x11EB0
+    u8 pad11EBC[0x14];            // -> 0x11ED0
+    CfNandSaveTagBlock partyTag;  // 0x11ED0
+    CfNandPartySnapshot snapshot; // 0x11EE0
+    u8 pad11F14[0xC];             // -> 0x11F20
+    CfNandSaveTagBlock camTag;    // 0x11F20
+    CfNandCamBlock camBlock;      // 0x11F30
+    u8 pad11F40[0x10];            // -> 0x11F50
+    CfNandSaveTagBlock itemTag;   // 0x11F50
+    u8 itemBlob[0x12120];         // 0x11F60
+    CfNandSaveTagBlock wthrTag;   // 0x24080
+    CfNandWthrBlock wthrBlock;    // 0x24090
+    u8 pad240A0[0x10];            // -> 0x240B0
+    CfNandSaveTagBlock sndTag;    // 0x240B0
+    CfNandSndArea sndArea;        // 0x240C0
+    u8 pad240D0[0x10];            // -> 0x240E0
+    CfNandSaveTagBlock mineTag;   // 0x240E0
+    u8 mineRegion[0x384];         // 0x240F0
+    u8 pad24474[0x1C];            // -> 0x24490
+    CfNandSaveTagBlock tboxTag;   // 0x24490
+    CfNandSaveNameTable names;    // 0x244A0
+    u8 pad246D4[0x1CC];           // -> 0x248A0
+    CfNandSaveTagBlock optdTag;   // 0x248A0
+    u8 optdBlob[0x40];            // 0x248B0
+}; // 0x248F0

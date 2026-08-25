@@ -154,10 +154,10 @@ extern "C" __declspec(noinline) void* __ct__8018385C(void* self, int flag) {
     if (self != 0) {
         char* s = (char*)self;
 
-        // Install vtables, then invoke slot-15 entry straight out of the
-        // vtable data symbol so MWCC materializes the address into r12.
-        FLD(void*, s, 0x38) = (char*)lbl_eu_805321F0 + 0x44;
+        // Install vtables in retail emission order (base first), then invoke
+        // slot-15 entry straight out of the vtable data symbol.
         FLD(void*, s, 0x00) = lbl_eu_805321F0;
+        FLD(void*, s, 0x38) = (char*)lbl_eu_805321F0 + 0x44;
         ((void (*)(void*))lbl_eu_805321F0[0x3C / 4])(s);
 
         __ct__80172668(self, 0);

@@ -956,7 +956,14 @@ The retail bte hh unit needs `mw_version="GC/3.0a5.2"` (same family as bta_dm_ac
 | `bta_hh_start_sdp` call vanished from `bta_hh_open_act` | The empty `void bta_hh_start_sdp(...) {}` stub was auto-inlined and the call eliminated | Guard stub bodies with `#pragma push` / `#pragma auto_inline off` / `#pragma pop` |
 | `bta_hh_get_acl_q_info` `mulli r0,r4,0x24` vs retail `0x34` | Local `tHID_HOST_DEV_CTB` conn pad was short, shrinking the devices[] stride | Pad `conn` to 0x24 bytes (entry stride 0x34) — match the full member sizes, not just the touched fields |
 
-**bta_hh_api.c — same GC/3.0a5.2 fix, but `-func_align 4` (not 16):** the message-builder API functions (`BTA_HhClose`, `BTA_HhRemoveDev`, `BTA_HhGetAclQueueInfo`, `BTA_HhEnable`, `BTA_HhOpen`, `BTA_HhSendData`, `BTA_HhAddDev`) were `HIGH_MATCH` under Wii/1.1 with pure schedule swaps: retail hoists **all** constant loads and the call-arg `mr r3,rN` **before** the `sth`/`stb`/`stw` stores (`li r0,evt; mr r3,r31; sth r0,0(r31); …`), while Wii/1.1 interleaves each `li` with its store and puts the `mr` after the first store. GC/3.0a5.2 reproduces retail byte-for-byte with the plain Broadcom source (BT_HDR `event`/`layer_specific` fields, `if ((p_buf = GKI_getbuf(sizeof(BT_HDR))) != NULL)` — no struct-pointer or cast tricks needed). `-func_align 16` was left on the unit and the whole-unit `.text` overshot the split budget by 0x34 (inter-function padding); switching to `-func_align 4` packs to 0x3D0 = retail exactly. Verified: 7/8 functions 0 structural mismatches (Close/RemoveDev/GetAclQueueInfo/Enable/Open 100%, SendData 3 reg-swaps+3 structural, AddDev 5 pure reg-swaps), BTA_HhDisable (accepted under Wii/1.1) stays 100% under GC.
+**bta_hh_cback — the 2026-08 demotion was pure flag drift (FULL_MATCH, us-802e5ee8):** the unit was sitting at 39.5% / "89 structural" / split OVER by 0x94 with `-func_align 16`; switching to the bte-family `-func_align 4` made it 100% byte-for-byte with **zero source changes** — every "structural" was a scheduling NOP or inter-fn pad. Two data-side lessons from finishing the unit's `.data` gate:
+
+| Symptom | Cause | Fix |
+|---------|-------|-----|
+| `.data` embeds two 9-entry ADDR32 tables of `&bta_hh_cback+N` (the trace/dispatch switch jump tables); addends drift even when .text is 100% | The data gate compares `.rela.data` addends, which encode each build's internal case-block offsets — a function-level FULL_MATCH does **not** imply .data equality for switch-heavy functions | Match the function body first; the tables then follow |
+| Trace-string pool order differs while code is identical (`.text` string refs are relocated immediates) | MWCC pools literals in **source case order** but builds jump tables in **case-value order**; retail's trace table being `base+value*8` proves its enum order | Retail's local enum must equal what the producer TU sends — here `hidh_api.h`'s `HID_HDEV_EVT_*` (OPEN,CLOSE,RETRYING,INTR_DATA,INTR_DATC,CTRL_DATA,CTRL_DATC,HANDSHAKE,VC_UNPLUG). Our TU had invented a different order (misrouting hidh events); also retail groups CTRL_DATC with INTR_DATC in the `utl_freebuf` case. Reorder enum + switches to match |
+
+**bta_hh_api.c — same GC/3.0a5.2 fix, but `-func_align 4` (not 16):**
 
 ### bta_dm_pm.c — bta_dm_init_pm + bta_dm_pm_btm_cback FULL_MATCH (GC/3.0a5.2 `-func_align 4` `-ipa off`)
 
@@ -1405,6 +1412,23 @@ return ret;
 - Result: FULL_MATCH 100%, exact 0xfc size
 - Confidence: repo_proven
 - Applies to/a.k.a.: any `&out_param` call pattern (CalcCopySize(&count), CopyTo(&data,4), scanf-style writers); pairs with the ut_ArchiveFontBase RequestData branch-form entry above (same TU family)
+
+## nw4r ut_PackedFont — missing base-ctor decl in the TU's mirror class silently drops the `bl __ct__Base` (GC/3.0a5.2 `-O4,p`, FULL_MATCH)
+
+`ut_PackedFont.cpp` is an extern-C-mangled TU: it redeclares `detail::ArchiveFontBase` as a local
+mirror class (methods only, ctor NOT declared) and calls cross-TU functions via mangled symbols.
+Symptom: the reconstructed `PackedFont::PackedFont()` compiled to member-zero stores + manual vptr
+store with **no `bl __ct__ArchiveFontBase`** — because to MWCC the mirror base has a trivial
+implicit ctor, so there is nothing to call. hexdiff then pairs the retail ctor against unrelated
+code (0.0%).
+- Fix: declare `ArchiveFontBase();` in the mirror class (making the base non-trivial) and define
+  `PackedFont::PackedFont()` in the retail store order (`field_0x28=0; vptr=lbl_eu_8056B084;
+  field_0x2A/2C/30/34/38=0`). Result 0x58 byte-for-byte incl. the base call.
+- Rule for mangled-symbol TUs: whenever a source class derives from a mirror-declared base, the
+  mirror must redeclare every implicitly-called special member the retail emits (ctor, dtor);
+  otherwise the compiler elides the call and the slot pairs against garbage.
+- Same-TU sibling: `__dt__Q34nw4r2ut10PackedFontFv` was already hand-written as extern "C" for the
+  same reason.
 
 ## kyoshin CCur — func_801D202C: goto-gate blocks + fake-interface r12 dispatch + switch-for-signed-compare (Wii/1.1 `-O4,p`)
 
@@ -10174,7 +10198,7 @@ referenced by real code/data.
 - Symptom:   registry shows all targets ACCEPTED/FULL_MATCH, but a fresh hexdiff --all shows 5/16 matched with heavy regressions (several 0-3%) and .text OVER by 0x130.
 - Cause:     CERand.cpp was rewritten from normal class methods to extern "C" fragments + hand-built vtable/RTTI data to fix the data gate. The rewrite changed register allocation and inlining for 11 of 16 functions; the 2026-08-15 "TU-final mass re-certification" covered the PRE-rewrite source. Data now MATCHES byte-for-byte but code certs are stale.
 - Fix:       (open) restore method-style definitions while keeping the dissolved hand-written data block — the vtable initializers reference the same mangled names MWCC emits for real methods, so both can coexist if the classes are kept novtable/no-auto-vtable. Then re-run cycle on every function in the TU after ANY data-dissolve source rewrite.
-- Result:    OPEN — claims released for anyone to resume. Lesson: ALWAYS hexdiff --all the whole TU (not just data diff) after data-surgery edits; ACCEPTED statuses do not self-invalidate when the source changes underneath them.
+- Result:    OPEN (code re-cert) — data gate RESTORED 2026-08-25: the Aug-24 method-style rewrite had also regressed the data gate (rodata string order Simple/Rand/IRand vs retail Simple/IRand/Rand, .data 0x4C vs 0x50, .sdata relocs to anon @N). Fix: hand-build the retail-named layout (lbl_eu_80524658/66C/678 strings, lbl_eu_8056FE08/20/30/48, lbl_eu_80663BB0/BB8/BC0) as extern "C" arrays FIRST in the TU while KEEPING the non-novtable auto-emission machinery; MWCC dedupes its auto vtable/RTTI against the user definitions (one copy per class per TU), so the out-of-line inline virtuals stay emitted AND every reloc natively carries the retail lbl_eu name — raw object data-matches with no renames. UNIT_RULES keeps no-op drop_data_tail/retarget guard rails. 12/16 functions still match, split exact 0x548.
 - Confidence: repo_proven
 - Applies to/a.k.a.: every TU that received a monolibdata/blob dissolve after its functions were certified; audit candidates = any unit whose data gate went green later than its last cycle log.
 
@@ -10268,3 +10292,35 @@ referenced by real code/data.
 - Result:    FULL_MATCH, semantic-certified (us-80082018).
 - Confidence: repo_proven
 - Applies to/a.k.a.: any function defined in a shared unity-helpers HEADER whose retail counterpart lives in a .cpp — when hexdiff shows inlined-callee bodies where retail has `bl`, wrap with dont_inline before trying statement surgery. Also: audit stale registry statuses (`NOTE`/`TOOLING_FIX`/`SOUNDNESS_ANALYSIS` at claimed "100%") — one sampled was actually 40.8%.
+
+## Vtable double-load staging wall (r5 vs retail r12) — OPEN
+Seen in: `func_80192C2C` (CMenuPTState), `func_80281FA0` (CChainActorPc).
+Retail emits `lwz r12,0(rX); lwz r12,K(r12); mtctr r12` for virtual calls.
+Our decomp consistently emits `lwz r5,0(rX); lwz r12,K(r5); mtctr r12`.
+Tried: inline fn-ptr call (no temp), named fn-ptr local, array-indexed vtable view (`vt[0xC2]`), direct pointer arithmetic. All identical.
+Hypothesis: retail source used a real C++ virtual member call on a typed class; MWCC's virtual-call codegen path differs from the generic fn-ptr path and keeps the vtable web in r12. Next lever: reconstruct a minimal class with the right vtable layout and call `obj->method()`. Witness blocked either way (r12 is ABI indirect-call reg).
+
+## CLibCriMoviePlay func_8045A54C (us-8045e564) — releaseEntry FULL_MATCH: mWorkBuf@0x20 recovery + signed mAction + setOptimalAlloc retail symbol (Wii/1.1, -O4,p)
+- Symptom:   88.7% with frees targeting mTexBufCbCr@0xAC; retail frees a word at entry+0x20 and compares action with `cmpi` (signed) while decomp used `cmpli`.
+- Cause:     MovieEntry layout guesswork — the CRI work-buffer pointer lives at 0x20 (inside what was spelled as an opaque cprm byte blob), and the action field is signed s32. Additionally MemManager::setOptimalAlloc resolved to `setOptimalAlloc__Q23mtl10MemManagerFb` but retail calls `func_80434A4C__Q23mtl10MemManagerFb` for the same operation.
+- Fix:       split MovieEntry.mCprmData[0x1C] into u8[0x18] + void* mWorkBuf@0x20 + tail; startMovie stores allocate_tail result into mWorkBuf; A54C frees/mulls mWorkBuf in both action branches; declare mAction as s32 (loop counter also u32 → cmpli); call extern-C func_80434A4C__Q23mtl10MemManagerFb directly instead of MemManager::setOptimalAlloc.
+- Result:    FULL_MATCH 100% 0xF8, semantic-certified.
+- Confidence: repo_proven
+- Applies to/a.k.a.: struct-field recovery via cross-referencing alloc/free sites (the freed offset reveals where the allocation was stored); signed-vs-unsigned member fields visible through cmpi/cmpli choice; static-method calls whose retail symbol is a func_XXXXXX alias must be referenced by the retail name.
+
+## Duplicate parent-tail padding causes +4 field shift — FIXED
+`CfObjectNpc` declared `u8 pad_718[4]` even though parent `CfObjectMove` already
+ends with `float mField718` at 0x718-0x71B. Result: every NPC-specific field sat
+4 bytes high (mIconType 0x720 vs retail 0x71C, mRltMeet 0x722 vs 0x71E).
+Fix: delete the pad array; class size stays 0x724. Unblocked `func_800BF920`
+(us-800c0368) and `func_800BF984` (us-800c03cc) to FULL_MATCH instantly.
+Lesson: when a derived class shows a uniform +N shift on ALL its trailing
+fields, check whether its first declared member duplicates the parent's tail.
+
+## Register-renaming witness ABI policy — IMPORTANT
+The witness rejects ANY permutation touching r0, r12, or r3–r10 (PPC arg/indirect-call
+regs) and f0–f2. Only swaps wholly among callee-saved-adjacent volatiles outside those
+ranges can pass. In practice this means: residual diffs that rename r4↔r5, r6↔r7 etc.
+CANNOT be certified via witness — must be fixed statically in source. Confirmed on
+us-801ffd88 (r30→r31), us-8003aa6c (r5→r0), us-80060cd4 (f2→f3), us-80194348 (r5→r12),
+us-80115a2c (r6→r7).

@@ -6,8 +6,8 @@
 #include "monolib/vm/yvm2.h"
 #include <string.h>
 
-// Kept inline (not promoted to ocBdat.hpp): see the NOTE in ocBdat.hpp. This
-// TU is the defining TU; retail signature is u32 (void*, const char*, s32).
+// Defining TU; canonical declaration lives in plugin/ocBdat.hpp
+// (retail signature u32 (void*, const char*, s32)).
 extern "C" u32 getBdatStringColumnValue(void* bdat, const char* col, s32 index) {
     BdatHeader* hdr = static_cast<BdatHeader*>(bdat);
     char* base = reinterpret_cast<char*>(hdr);

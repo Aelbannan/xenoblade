@@ -43,27 +43,16 @@ CMenuTitle* __ct__CMenuTitle(CMenuTitle* _this, CProcess* parent, u32 arg2) {
         __ct__8CProcessFv((CProcess*)shim);
         shim->vtable = lbl_eu_8053B1AC;
 
-        // Two null member-function-pointer records (task callbacks), built
-        // from the compiler's __ptmf_null table. Statement order mirrors the
-        // retail load/store interleave (ptmf2 is loaded only after cb1).
-        u32* ptmf = __ptmf_null;
-        char* vtFinal = lbl_eu_8053B0B8;
-        u32 ptmf1 = ptmf[1];
-        u32 ptmf0 = ptmf[0];
-        char* vt54 = vtFinal + 0x24; // secondary-base vtable slot +0x54
-        shim->callbacks[0] = ptmf0;
-        char* vt58 = vtFinal + 0xac; // secondary-base vtable slot +0x58
-        shim->callbacks[1] = ptmf1;
-        u32 ptmf2 = ptmf[2];
-        shim->callbacks[2] = ptmf2;
-        ptmf1 = ptmf[1];
-        ptmf0 = ptmf[0];
-        shim->callbacks[3] = ptmf0;
-        shim->callbacks[4] = ptmf1;
-        ptmf2 = ptmf[2];
-        shim->callbacks[5] = ptmf2;
+        // Two null member-function-pointer records (task callbacks): 12-byte
+        // struct copies from the compiler's __ptmf_null table (one per slot;
+        // single materialization of the table base, like retail).
+        struct PTMF12 { u32 w[3]; };
+        *(PTMF12*)&shim->callbacks[0] = *(PTMF12*)(uintptr_t)__ptmf_null;
+        *(PTMF12*)&shim->callbacks[3] = *(PTMF12*)(uintptr_t)__ptmf_null;
+        char* vt54 = lbl_eu_8053B0B8 + 0x24; // secondary-base vtable slot +0x54
+        char* vt58 = lbl_eu_8053B0B8 + 0xac; // secondary-base vtable slot +0x58
 
-        shim->vtable = vtFinal;
+        shim->vtable = lbl_eu_8053B0B8;
         shim->field54 = vt54;
         shim->field58 = vt58;
         shim->parent = parent;
@@ -149,57 +138,61 @@ void func_802B6020(CMenuTitleInput* self) {
 
 void func_802B60CC(CMenuTitleInput* self) {
     // Only accept input while enabled (field_e9) and not in the transient
-    // field_ea state (e.g. during an animation/transition). The if/else-if
-    // form is what makes MWCC emit the retail two-branch guard (beq/beq/b).
-    if (self->field_e9 == 0) {
-        return;
-    } else if (self->field_ea != 0) {
+    // field_ea state (e.g. during an animation/transition). The || guard
+    // makes MWCC emit the retail branch-over-branch on the last disjunct
+    // (beq exit / beq body / b exit).
+    if (self->field_e9 == 0 || self->field_ea != 0) {
         return;
     }
 
-    CfPadDataLocal* pad =
-        (CfPadDataLocal*)cf::CfGameManager::getCfPadData();
+    {
+        CfPadDataLocal* pad =
+            (CfPadDataLocal*)cf::CfGameManager::getCfPadData();
 
-    // Direction/stick trigger bits differ between controller types; retail
-    // re-runs the whole extraction block per branch (both flag words reloaded).
-    u32 trigger1, trigger2, dirButton, cancelButton;
-    if (func_80086F9C__Q22cf13CfGameManagerFv(-1) != 0) {
-        // Classic controller: trigger bits 21, 22 from right.
-        u32 f = pad->mTurboPressButtonFlags;   // lwz r0
-        u32 p = pad->mPadPressedFlags;          // lwz r4
-        // 0x10008 = bit16|bit3; exceeds the andi immediate, so MWCC masks it
-        // via rlwinm+rlwimi keeping the bit positions.
-        u32 dirVal = f & 0x8004;
-        u32 cancelVal = f & 0x10008;
-        trigger1 = (p >> 21) & 1;
-        trigger2 = (p >> 22) & 1;
-        // (x | -x) >> 31 converts any non-zero value to 1, zero to 0.
-        cancelButton = (u32)(-(s32)cancelVal | cancelVal) >> 31;
-        dirButton = (u32)(-(s32)dirVal | dirVal) >> 31;
-    } else {
-        // Wiimote/Nunchuk: trigger bits 4, 5 from right.
-        u32 f = pad->mTurboPressButtonFlags;
-        u32 p = pad->mPadPressedFlags;
-        u32 dirVal = f & 0x8004;
-        u32 cancelVal = f & 0x10008;
-        trigger1 = (p >> 4) & 1;
-        trigger2 = (p >> 5) & 1;
-        cancelButton = (u32)(-(s32)cancelVal | cancelVal) >> 31;
-        dirButton = (u32)(-(s32)dirVal | dirVal) >> 31;
-    }
-
-    // Each branch handles one input; every path falls through to the exit.
-    if (trigger1 != 0) {
-        if (func_802B775C(&self->mSub) != 0) {
-            self->field_e8 = 8;
+        // Direction/stick trigger bits differ between controller types; retail
+        // re-runs the whole extraction block per branch (both flag words reloaded).
+        // 0x10008 = bit16|bit3 exceeds the andi immediate, so MWCC masks it via
+        // rlwinm+rlwimi; (x | -x) >> 31 converts any non-zero value to 1.
+        u32 turbo;
+        u32 pressed;
+        u32 trigger1;
+        u32 trigger2;
+        u32 cancelButton;
+        u32 dirButton;
+        s32 controllerType = func_80086F9C__Q22cf13CfGameManagerFv(-1);
+        if (controllerType != 0) {
+            // Classic controller: trigger bits 21, 22 from right.
+            turbo = pad->mTurboPressButtonFlags;
+            pressed = pad->mPadPressedFlags;
+            trigger1 = (pressed >> 21) & 1;
+            trigger2 = (pressed >> 22) & 1;
+            dirButton = (u32)(-(s32)(turbo & 0x8004) | (turbo & 0x8004)) >> 31;
+            cancelButton =
+                (u32)(-(s32)(turbo & 0x10008) | (turbo & 0x10008)) >> 31;
+        } else {
+            // Wiimote/Nunchuk: trigger bits 4, 5 from right.
+            turbo = pad->mTurboPressButtonFlags;
+            pressed = pad->mPadPressedFlags;
+            trigger1 = (pressed >> 4) & 1;
+            trigger2 = (pressed >> 5) & 1;
+            dirButton = (u32)(-(s32)(turbo & 0x8004) | (turbo & 0x8004)) >> 31;
+            cancelButton =
+                (u32)(-(s32)(turbo & 0x10008) | (turbo & 0x10008)) >> 31;
         }
-    } else if (trigger2 != 0) {
-        self->field_e8 = 7;
-        func_802B75D8(&self->mSub);
-    } else if (dirButton != 0) {
-        func_802B7650(&self->mSub);
-    } else if (cancelButton != 0) {
-        func_802B76D4(&self->mSub);
+
+        // Each branch handles one input; every path falls through to the exit.
+        if (trigger1 != 0) {
+            if (func_802B775C(&self->mSub) != 0) {
+                self->field_e8 = 8;
+            }
+        } else if (trigger2 != 0) {
+            self->field_e8 = 7;
+            func_802B75D8(&self->mSub);
+        } else if (dirButton != 0) {
+            func_802B7650(&self->mSub);
+        } else if (cancelButton != 0) {
+            func_802B76D4(&self->mSub);
+        }
     }
 }
 

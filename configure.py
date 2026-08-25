@@ -568,7 +568,7 @@ config.libs = [
             Object(NonMatching, "kyoshin/menu/code_8018C5FC.cpp"),
             Object(NonMatching, "kyoshin/cf/CfResPcImpl.cpp"),
             Object(NonMatching, "kyoshin/cf/code_8018F8D8.cpp"),
-            Object(NonMatching, "kyoshin/menu/CMenuPTState.cpp"),
+            Object(Matching, "kyoshin/menu/CMenuPTState.cpp"),
             Object(NonMatching, "kyoshin/cf/CPartsChange.cpp"),
             Object(NonMatching, "kyoshin/cf/CtrlMovePC.cpp"),
             Object(Matching, "kyoshin/cf/CtrlMoveNpc.cpp"),

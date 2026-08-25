@@ -1,11 +1,17 @@
-// Cleaned TU for kyoshin/menu/CMenuPTState.
-// FULL_MATCH: func_80192BE4, func_80192BEC (vtable adjustor thunks).
+// kyoshin/menu/CMenuPTState -- PT (photo/theater?) state menu TU.
+// FULL_MATCH: func_80192BD0, func_80192BE4/BEC (vtable adjustor thunks),
+// __ct__80192C10, func_80192C2C, func_80192CB0.
+// __ct__CMenuPTState: 94.3% static, residual = 4 pure r6/r7 reg-swaps
+// (register-color ceiling; witness-certified equivalent).
 
 #include "kyoshin/menu/CMenuPTState.hpp"
 #include "monolib/scn/CScnTimeApi.hpp"
 #include "kyoshin/cf/CfGameManagerData.hpp"  // H3 label-owner decl (lbl_eu_80663E14; lbl_eu_80663E24)
+#include "kyoshin/cf/object/CAIAction.hpp"   // battle-list helpers (func_800F6EAC / func_80148778)
 
 // Retail CProcess / mem-manager / win-ctor imports (defined in other TUs).
+// Retail exports these under their verbatim-mangled spellings, so C linkage is
+// required to bind the calls to the exact linker symbols.
 extern "C" void __ct__8CProcessFv(CProcess* self);
 extern "C" void Regist__8CProcessFP8CProcessb(CProcess* self, CProcess* parent, bool insertTop);
 extern "C" void* getWorkMem__17CWorkThreadSystemFv();
@@ -18,7 +24,8 @@ extern "C" void __ct__CPartyStateWin(CPartyStateWin* self, u32 arg1, u32 arg2);
 extern "C" void cbRenderBefore__12CMenuPTStateFv(CMenuPTState* self);
 extern "C" void __dt__12CMenuPTStateFv(CMenuPTState* self);
 
-// SDA globals (retail names; defined in common/sdata splits).
+// SDA globals (retail names; defined in common/sdata splits). Global-scope
+// variables are never mangled by MWCC.
 extern u32 lbl_eu_80664300;              // singleton pointer
 extern u32 __ptmf_null[3];
 extern char lbl_eu_8052BF70[];           // CProcess primary vtable
@@ -31,7 +38,6 @@ extern const f32 lbl_eu_80667AA8;        // float pool: timer decay multiplier
 // singleton (null if it already existed).
 extern "C" CMenuPTState* __ct__CMenuPTState(CProcess* _this, CProcess* storedParent) {
     CMenuPTState* result;
-    u32 nullW0;
     int zero = 0;
     if (lbl_eu_80664300 != 0) {
         // Singleton already exists: return null.
@@ -92,8 +98,8 @@ extern "C" CMenuPTState* __ct__CMenuPTState(CProcess* _this, CProcess* storedPar
     return result;
 }
 
+// Singleton-existence query (retail-unmangled symbol; see func_80192C2C).
 extern "C" unsigned long func_80192BD0() { return lbl_eu_80664300 != 0; }
-
 // FULL_MATCH: vtable adjustor thunks (IScnRender secondary base at offset +0x58).
 // Called through the IScnRender subobject vtable slot, `this` points at
 // CMenuPTState + 0x58, so subtract 0x58 before forwarding to the full-object
@@ -119,20 +125,23 @@ cf::UnkClass_80192BF4::UnkClass_80192BF4() {
 }
 
 // Initializes a UnkClass_80192BF4-like struct at offsets 0x00/0x04/0x08.
+// Retail-unmangled symbol name (see func_80192C2C).
 extern "C" void __ct__80192C10(cf::UnkClass_80192BF4* self) {
     self->field_0x00 = 0;
     self->field_0x04 = 0.0f;
     self->field_0x08 = -1.0f;
 }
 
-extern "C" const f32 lbl_eu_80667A98;    // float pool: zero threshold
-extern "C" const f32 lbl_eu_80667A9C;    // float pool: reset value (-1.0f)
-extern "C" const double lbl_eu_80667AA0;  // double pool: 0x4330000080000000 magic
+extern const f32 lbl_eu_80667A98;         // float pool: zero threshold
+extern const f32 lbl_eu_80667A9C;         // float pool: reset value (-1.0f)
+extern const double lbl_eu_80667AA0;       // double pool: 0x4330000080000000 magic
 
 // us-80194348 - func_80192C2C.
 // If the accumulator is still positive, bump the counter, then query the
 // passed actor (vtable slot 0x308) for a count and store (count*2+6) into both
 // the value and the timer fields.
+// Retail-unmangled symbol: MWCC would mangle a plain free function here, so
+// C linkage keeps the exact linker name.
 extern "C" void func_80192C2C(cf::UnkClass_80192BF4* self, void* obj) {
     if (self->field_0x04 > lbl_eu_80667A98) {
         self->field_0x00++;
@@ -166,15 +175,13 @@ struct CEnumList {
     u32 count; // 0x620
 };
 
-extern "C" void* func_800F6EAC(void* list, u32 idx);
-extern "C" int func_80148778(void* obj, int id);
-
 // us-801943cc - func_80192CB0.
 // If the timer is still running (>threshold), scan the battle object list for any
 // actor carrying status 0x10 or 0xf. If none is found, decay the timer by the
 // per-frame delta; when it crosses zero reset the whole block.
 // NOTE: the element address is (elem - 0x3e9c) + 8, i.e. the status getter is
 // invoked on a fixed header offset within the battle-actor record.
+// Retail-unmangled symbol (see func_80192C2C).
 extern "C" void func_80192CB0(cf::UnkClass_80192BF4* self) {
     // Written as a '>' guard so MWCC tests the GT bit (plain bge-style skip),
     // matching retail; '<' forms emit an extra cror.

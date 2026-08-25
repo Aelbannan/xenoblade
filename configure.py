@@ -442,7 +442,7 @@ config.libs = [
             Object(Matching, "kyoshin/plugin/ocCfp.cpp"),
             Object(Matching, "kyoshin/plugin/pluginMain.cpp"),
             Object(NonMatching, "kyoshin/plugin/pluginUi.cpp"),
-            Object(NonMatching, "kyoshin/plugin/pluginEve.cpp"),
+            Object(Matching, "kyoshin/plugin/pluginEve.cpp"),
             Object(NonMatching, "kyoshin/plugin/pluginCfs.cpp"),
             Object(Matching, "kyoshin/plugin/pluginMath.cpp"),
             Object(NonMatching, "kyoshin/action/CActParamAnim.cpp"),

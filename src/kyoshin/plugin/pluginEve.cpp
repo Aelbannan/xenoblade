@@ -7,13 +7,20 @@
 // pulled in by harness_catalog.hpp. Rename it out of the way (same idiom as
 // CBattleManager.cpp); this TU never calls the getter.
 #define getInstance__Q22cf14CBattleManagerFv eveBmSingletonGetUnused
+// CBattleState.hpp (pulled in by these headers) declares
+// getBdatStringColumnValue with `int`; other headers in the chain use the
+// canonical `s32` spelling and MWCC forbids overloading C-linkage fns.
+// Rename the CBattleState copy away while including; this TU never calls it.
+#define getBdatStringColumnValue cbattleStateGetBdatStringColumnValue
+#define func_8049603C pluginEve9603CUnused
 #include "kyoshin/cf/CBattleManager.hpp"
-#undef getInstance__Q22cf14CBattleManagerFv
 #include "kyoshin/cf/CfGameManager.hpp"
 #include "kyoshin/cf/object/CfObjectActor.hpp"
+#undef getBdatStringColumnValue
+#undef func_8049603C
 
 // Event/presentation flag bitfields (.sbss)
-extern u32 lbl_eu_80663E28; // secondary mode bitfield
+extern u32 lbl_eu_80663E28; // secondary mode bitfield (fade/skip status bits)
 extern u32 lbl_eu_80663E24; // primary event/presentation bitfield
 
 extern "C" u32 func_8009CF8C(u32 addr); // global data/flag memory reader
@@ -63,11 +70,12 @@ int setFlag(VMThread* pThread) {
     int value = vmArgIntGet(4, vmArgPtrGet(pThread, 3));
 
     u32 low = flags & 0xffff;
-    u32 high = flags >> 16;
+    int addr;
     int valid = 1;
+    u32 high = flags >> 16;
     if (idx < (int)low) {
-        int addr = (int)high + idx;
         // Larger flag-bank addresses only permit a limited value magnitude.
+        addr = high + idx;
         if (addr >= 0x20) {
             if (addr < 0x220) {
                 if (value > 0xffff) valid = 0;
@@ -77,23 +85,27 @@ int setFlag(VMThread* pThread) {
                 if (value > 0x1) valid = 0;
             }
         }
-        if (valid == 0) {
+        if (valid != 0) {
+            func_8009D018(addr, value);
+            // Special flags: 0x22:03E8 (sequence) expects a 16-bit value near
+            // 0xFF, and 0x0A:212C needs a camera/event reset. Compared via
+            // split high/low halves to match retail codegen.
+            if ((u32)(flags - 0x02200000) == 0x3e8) {
+                if ((u32)(value - 0xfe) <= 1) {
+                    func_80140E00(4, idx, 0);
+                }
+            }
+            if ((u32)(flags - 0x0a200000) == 0x12c) {
+                func_80291A04();
+            }
+        } else {
             vmPluginExceptionThrow(pThread);
             return 0;
         }
-
-        func_8009D018(addr, value);
-        // Special flags: 0x22:03E8 (sequence) expects a 16-bit value near
-        // 0xFF, and 0x0A:212C needs a camera/event reset.
-        if (flags == 0x022003e8 && (u32)(value - 0xfe) <= 1) {
-            func_80140E00(4, idx, 0);
-        }
-        if (flags == 0x0a20012c) {
-            func_80291A04();
-        }
+    } else {
+        vmPluginExceptionThrow(pThread);
         return 0;
     }
-    vmPluginExceptionThrow(pThread);
     return 0;
 }
 
@@ -140,14 +152,15 @@ int setAwardFlagF1(VMThread* pThread) {
 extern "C" void func_800862D0__Q22cf13CfGameManagerFv();
 extern "C" void func_800F4004(cf::CBattleManager* bm);
 int realtimeEventStart(VMThread* pThread) {
-    int v;
+    // Arg 1: skip-if-busy flag (default TRUE).
+    int skipIfBusy;
     if (vmArgOmitChk(pThread, 1) != 0) {
-        v = 1;
+        skipIfBusy = 1;
     } else {
-        v = vmArgBoolGet(2, vmArgPtrGet(pThread, 1));
+        skipIfBusy = vmArgBoolGet(2, vmArgPtrGet(pThread, 1));
     }
     int proceeding = 1; // unchanged unless we fall back to wait mode
-    if (v != 0 && (lbl_eu_80663E24 & 0xafa40000) != 0) {
+    if (skipIfBusy != 0 && (lbl_eu_80663E24 & 0xafa40000) != 0) {
         vmWaitModeSet(pThread);
         proceeding = 0;
     }
@@ -201,6 +214,9 @@ public:
 class CfActorTalkView : public CfActorTalkBasePad, public cf::CObjectState {
 };
 
+// The retail symbol for this callback is the plain (C-style) name `onTalk`;
+// define it as a normal C++ function here and let the symbol-recovery tooling
+// map the emitted mangled name onto the retail symbol.
 int onTalk(VMThread* pThread) {
     // Report (TRUE=1 / FALSE=2) whether the player actor's embedded move
     // object is currently talking.
@@ -348,9 +364,10 @@ int isVisionEvent(VMThread* pThread) {
     return eventFlagBool(pThread, 26);
 }
 
+// Command-table name/data labels for the "eve" plugin (retail data symbols).
+extern char lbl_eu_804FACF0[];
+extern PluginFuncData lbl_eu_80525EF8[];
+
 extern "C" void pluginEveRegist() {
-    extern void vmPluginRegist(void*, void*);
-    extern char lbl_eu_804FACF0[];
-    extern char lbl_eu_80525EF8[];
-    vmPluginRegist((void*)lbl_eu_804FACF0, (void*)lbl_eu_80525EF8);
+    vmPluginRegist(lbl_eu_804FACF0, lbl_eu_80525EF8);
 }

@@ -28,14 +28,12 @@ static inline bool isSceneActive() {
 }
 
 // Bump the scenario counter `id` by one (clamped to 0xFFFF) while the scene is
-// active; returns the (possibly bumped) value for later gate checks. The pause
-// gate is written as an early return (same shape as the matched func_8027EE88
-// helper) so MWCC lays the bump out like retail's branch-over-branch.
+// active; returns the (possibly bumped) value for later gate checks. Early
+// return on the paused path makes MWCC materialize the result copy before the
+// compare, giving retail's `lhz / mr / cmpi / beq / b` ladder.
 static inline u32 scenarioBump(u32 id) {
-    u32 v = func_80082694__Q22cf13CfGameManagerFv(id);
-    u16 pauseFlag = lbl_eu_80664772;
-    u32 n = v;
-    if (pauseFlag != 0) {
+    u32 n = func_80082694__Q22cf13CfGameManagerFv(id);
+    if (lbl_eu_80664772 != 0) {
         return n;
     }
     n = n + 1;
@@ -322,8 +320,10 @@ void func_8027EF50() {
 // Draw the scenario-log layout behind the scene while the game is live: same
 // gate chain as Move() but testing bit 10 of the pause word, then Z-off and
 // a layout draw with a stack DrawInfo (raw buffer, direct ctor/dtor calls).
+// noinline keeps the this-adjusting vtable thunk func_8027EE78 a two-instruction
+// subi + tail-call instead of a full inline copy.
 // ---------------------------------------------------------------------------
-void CSysWinScenarioLog::cbRenderBefore() {
+__declspec(noinline) void CSysWinScenarioLog::cbRenderBefore() {
     // OR-combined guards with early return (MWCC_CASES control_flow pattern):
     // the first disjunct folds to a direct branch to the shared epilogue and
     // the second becomes the branch-over-branch gate (beq forward + b end).
@@ -358,17 +358,27 @@ void CSysWinScenarioLog::cbRenderBefore() {
 // ---------------------------------------------------------------------------
 // ---- Target 6: CSysWinScenarioLog::Move (us-80280c54) ---------------------
 // Advance the scenario-log window's opening/closing state machine.
+// Gate layout mirrors retail: the first guard folds to a direct branch to the
+// shared epilogue, the pause-bit guard renders as the branch-over-branch
+// (beq forward + b end, cbRenderBefore pattern), and the remaining guards are
+// separate single-condition early returns (direct conditional branches).
 // ---------------------------------------------------------------------------
 void CSysWinScenarioLog::Move() {
-    // Gate: not in a modal task-game state, pause bit clear, event byte set,
-    // no active camera event, and the layout is loaded.
-    if (CTaskGame::getInstance()->func_800426F0() == false) {
-        if (lbl_eu_80663E28 & 0x200000) {
-            // pause/scenario bit set: skip the whole update
-        } else if (func_8013BE50() != 0 &&
-                   func_8029A658() == 0 &&
-                   mpLayout != 0) {
-            switch (mState) {
+    if (CTaskGame::getInstance()->func_800426F0() != 0 ||
+        (lbl_eu_80663E28 & 0x200000) != 0) {
+        return;
+    }
+    if (func_8013BE50() == 0) {
+        return;
+    }
+    if (func_8029A658() != 0) {
+        return;
+    }
+    if (mpLayout == 0) {
+        return;
+    }
+    {
+        switch (mState) {
         case 0:
             func_8027EA6C(this);
             break;
@@ -401,7 +411,6 @@ void CSysWinScenarioLog::Move() {
         }
         // Layout virtual update (vtable slot 0x38) with a null argument.
         ((CSysWinLayoutHook*)mpLayout)->mAt38(0);
-        }
     }
 }
 
@@ -484,7 +493,11 @@ extern "C" void func_8027EA6C(CSysWinScenarioLog* self) {
 // ---------------------------------------------------------------------------
 void func_8027F148() {
     int result;
+    u32 n;
     CSysWinActorList* list = func_800B6BA4();
+    // Declaration order drives MWCC callee-saved coloring (retail colors the
+    // walk pointer r29 and the adjusted device base r30).
+    u8* base;
     CSysWinActorListNode* node = list->sentinel->next;
     while (node != list->sentinel) {
         // First usable-gate call takes the base pointer as a pure argument
@@ -496,7 +509,7 @@ void func_8027F148() {
             result = 0;
             goto done;
         }
-        u8* base = node->object;
+        base = node->object;
         if (base != 0) {
             base -= 0x3E9C;
         }
@@ -513,11 +526,27 @@ void func_8027F148() {
     result = 1;
 done:
     if (result != 0) {
-        u32 v = scenarioBump(0x3c);
-        if (v >= 1) {
+        // Inline bump (scenarioBump shape hoists the keep-copy wrong here):
+        // the two-arm if/else makes MWCC hoist the phi copy above the branch,
+        // matching retail's lhz/mr/cmpi schedule.
+        // Two-arm keep-first bump (best known shape; MWCC sinks the phi
+        // copy after the branch - same residual 3 as siblings 80280804/
+        // 802809C8/80280BF0, scheduling-swap class per MWCC_CASES).
+        u32 cur = func_80082694__Q22cf13CfGameManagerFv(0x3c);
+        if (lbl_eu_80664772 != 0) {
+            // Scene frozen by a subwindow: keep the un-bumped value.
+            n = cur;
+        } else {
+            n = cur + 1;
+            if (n >= 0xFFFF) {
+                n = 0xFFFF;
+            }
+            func_8008269C__Q22cf13CfGameManagerFv(0x3c, n);
+        }
+        if (n >= 1) {
             scenarioClose(0x3c);
         }
-        if (v >= 0x32) {
+        if (n >= 0x32) {
             scenarioClose(0x57);
         }
     }
@@ -569,11 +598,23 @@ void func_8027F2DC(CScenarioLogOwner* self) {
             if (p == 0) {
                 result = 0;
             } else {
+                // Switch lowering keeps both compares intact (retail emits
+                // cmpi 7 / blt + cmpi 0xe / ble without range fusion).
                 s32 val = (s32)p->field_0x8->field_0x18;
-                if (val < 7 || val > 0xE) {
-                    result = 0;
-                } else {
+                switch (val) {
+                case 7:
+                case 8:
+                case 9:
+                case 10:
+                case 11:
+                case 12:
+                case 13:
+                case 14:
                     result = 1;
+                    break;
+                default:
+                    result = 0;
+                    break;
                 }
             }
         }
@@ -731,13 +772,14 @@ void func_8027FC04(CScenarioLogOwner* self, CScenarioLogOwner* other) {
 
 // ---------------------------------------------------------------------------
 // ---- Target 3: func_8027FC80 (us-80282104) -------------------------------
-// Drive the scenario-log counters for a given device/window pair: bumps 0x4,
-// then conditionally runs 0xd/0x10/0x13/0x1c ladders based on the window state
-// (device flag word + a vtable-returned frame counter), and finally, when the
-// arg1 player matches the first slot, closes 0x5d/0x5e.
-// NOTE: the 0x13 ladder's exact per-id thresholds are reconstructed as a
-// best-effort ladder over ids 0x13..0x1b (the 0x1b close is visible in
-// retail); only 0x13/0x1b and the surrounding control flow are byte-visible.
+// Drive the scenario-log counters for a given device/window pair: bump 0x4
+// with its 50/200/1000/5000 gate ladder, then, unless the game mode is 0x16,
+// run state-dependent ladders: window state 1/2 bumps 0xd (and sets a guard
+// that suppresses the remaining flag-driven ladders), the clear-flag case
+// bumps 0x10, the 0x100-flag case bumps 0x13, fixed window states 6/7/9 bump
+// 0x16/0x18/0x1a, and the 0x8000-flag case bumps 0x1c. Finally, when arg1's
+// embedded player matches the first slot, compare progress values (vtable
+// 0x224) and close 0x5d/0x5e once arg1 trails arg0 by 5 / 10.
 // ---------------------------------------------------------------------------
 extern "C" void func_8027FC80(CSysWinDevice* arg0, void* arg1) {
     u32 dev = csysWinCallE0(arg0);
@@ -771,70 +813,86 @@ extern "C" void func_8027FC80(CSysWinDevice* arg0, void* arg1) {
             }
             guard = 1;
         }
-    }
-
-    if (guard == 0) {
-        u32 flags = arg0->field_0x3374;
-        if ((flags & 0x100) == 0 && (flags & 0x8000) == 0) {
-            u32 v10 = scenarioBump(0x10);
-            if (v10 >= 0x1E) {
-                scenarioClose(0x10);
+        if (guard == 0) {
+            // Bool-materialized gate (retail emits li r3,0 / two bit tests /
+            // li r3,1 / cmpi): enter the ladder only when neither flag is set.
+            u32 flags = arg0->field_0x3374;
+            int ok = 0;
+            if ((flags & 0x100) == 0) {
+                if ((flags & 0x10000) == 0) {
+                    ok = 1;
+                }
             }
-            if (v10 >= 0x64) {
-                scenarioClose(0x11);
-            }
-            if (v10 >= 0xFA) {
-                scenarioClose(0x12);
+            if (ok != 0) {
+                u32 v10 = scenarioBump(0x10);
+                if (v10 >= 0x1E) {
+                    scenarioClose(0x10);
+                }
+                if (v10 >= 0x64) {
+                    scenarioClose(0x11);
+                }
+                if (v10 >= 0xFA) {
+                    scenarioClose(0x12);
+                }
             }
         }
-    }
-
-    if (guard == 0) {
-        if (arg0->field_0x3374 & 0x100) {
-            // 0x13 ladder: closing 0x13..0x1b (best-effort thresholds).
-            u32 v13 = scenarioBump(0x13);
-            if (v13 >= 0x1E) {
-                scenarioClose(0x13);
+        if (guard == 0) {
+            if (arg0->field_0x3374 & 0x100) {
+                u32 v13 = scenarioBump(0x13);
+                if (v13 >= 0x1E) {
+                    scenarioClose(0x13);
+                }
+                if (v13 >= 0x64) {
+                    scenarioClose(0x14);
+                }
+                if (v13 >= 0xFA) {
+                    scenarioClose(0x15);
+                }
             }
-            if (v13 >= 0x64) {
-                scenarioClose(0x14);
-            }
-            if (v13 >= 0xFA) {
-                scenarioClose(0x15);
-            }
-            if (v13 >= 0x3E8) {
+        }
+        if ((s32)dev == 6) {
+            u32 v16 = scenarioBump(0x16);
+            if (v16 >= 0x1E) {
                 scenarioClose(0x16);
             }
-            if (v13 >= 0x1388) {
+            if (v16 >= 0x64) {
                 scenarioClose(0x17);
             }
-            if (v13 >= 0x2710) {
+        }
+        if ((s32)dev == 7) {
+            u32 v18 = scenarioBump(0x18);
+            if (v18 >= 0x1E) {
                 scenarioClose(0x18);
             }
-            if (v13 >= 0x4E20) {
+            if (v18 >= 0x64) {
                 scenarioClose(0x19);
             }
-            if (v13 >= 0x9C40) {
+        }
+        if ((s32)dev == 9) {
+            u32 v1a = scenarioBump(0x1A);
+            if (v1a >= 0x1E) {
                 scenarioClose(0x1A);
             }
-            if (v13 >= 0x13880) {
+            if (v1a >= 0x64) {
                 scenarioClose(0x1B);
             }
         }
-    }
-
-    if (guard == 0) {
-        if (arg0->field_0x3374 & 0x8000) {
-            u32 v1c = scenarioBump(0x1C);
-            if (v1c >= 0x1E) {
-                scenarioClose(0x1C);
+        if (guard == 0) {
+            if (arg0->field_0x3374 & 0x10000) {
+                u32 v1c = scenarioBump(0x1C);
+                if (v1c >= 0x1E) {
+                    scenarioClose(0x1C);
+                }
             }
         }
     }
 
     if (arg1 != 0) {
         CScenarioLogOwner* p = csysWinCall9C(arg1);
-        const u8* pp = p ? &p->field_0x3E9C : nullptr;
+        const u8* pp = (const u8*)p;
+        if (p != 0) {
+            pp += 0x3E9C;
+        }
         if (pp == (const u8*)cf::CfGameManager::getPlayer(0)) {
             u32 a0 = csysWinCall224(arg0)->field_0;
             u32 b0 = csysWinCall224(arg1)->field_0;
@@ -906,63 +964,63 @@ walk:
 // the first owner that passes a state gate (sub-state 1: flag bits 14/15;
 // sub-state 4: the character category is 1) and drive the pair's counters
 // with that owner, then latch the one-shot byte.
+// NOTE: all three guards are one || chain so MWCC keeps retail's layout:
+// the flag recheck survives mid-chain, and the final usable test renders as
+// the branch-over-branch (bne body; b epilogue).
+// RESIDUAL (10 pure reg-swaps, Chaitin ceiling): retail colors the walk as
+// node=r29 / owner+found=r30; every source lever tried (declaration order,
+// block scoping, early dead inits, inline helpers, for/while forms) leaves
+// node=r30 / owner=r29. Same class as menu-bps-move party-fill permutation.
 // ---------------------------------------------------------------------------
+
 void func_80280640(CSysWinDevice* self) {
-    bool flag = false;
+    int flag = 0;
     if (((CSysWinDevView*)self)->mAt9C() != 0 &&
-        ((((CSysWinDevView*)self)->mAt9C())->field_0x3F00 & 0x4)) {
-        flag = true;
+        ((((CSysWinDevView*)self)->mAt9C())->field_0x3F00 & 4)) {
+        flag = 1;
     }
-    // Gate chain: retail emits `bne walk; b gate_done` (branch-over-branch)
-    // for the final device-usable test - the last test written negated with
-    // an explicit `goto walk` after it (MWCC_CASES verified pattern).
-    if (flag == 0) {
-        goto gate_done;
+    // One || chain for all three guards: the flag recheck stays (mid-chain
+    // disjuncts can't be folded past the lbl byte read) and the final test
+    // renders as retail's branch-over-branch (bne body; b epilogue).
+    if (flag == 0 || lbl_eu_80664918 != 0 ||
+        ((CSysWinDevView*)self)->mAt2BC() == 0) {
+        return;
     }
-    if (lbl_eu_80664918 != 0) {
-        goto gate_done;
-    }
-    if (((CSysWinDevView*)self)->mAt2BC() == 0) {
-        goto gate_done;
-    }
-    goto walk;
-walk:
-    {
-        CSysWinActorList* list = func_800B6BA4();
-        CSysWinActorListNode* node = list->sentinel->next;
-        CScenarioLogOwner* found;
-        while (node != list->sentinel) {
-            CScenarioLogOwner* owner = (CScenarioLogOwner*)node->object;
-            if (owner != 0) {
-                owner = (CScenarioLogOwner*)((u8*)owner - 0x3E9C);
-            }
-            int result = 0;
-            u16 h = owner->field_0x3F28;
-            if (h == 1) {
-                u32 flags = owner->field_0x3374;
-                result = 1;
-                if ((flags & 0x4000) == 0 && (flags & 0x8000) == 0) {
+    CSysWinActorList* list = func_800B6BA4();
+    CSysWinActorListNode* node = list->sentinel->next;
+    CScenarioLogOwner* found;
+    while (node != list->sentinel) {
+        CScenarioLogOwner* owner =
+            (CScenarioLogOwner*)(node->object != 0 ? node->object - 0x3E9C
+                                                   : node->object);
+        int result;
+        u16 h = owner->field_0x3F28;
+        if (h == 1) {
+            u32 flags = owner->field_0x3374;
+            result = 1;
+            if ((flags & 0x4000) == 0) {
+                if ((flags & 0x8000) == 0) {
                     result = 0;
                 }
-            } else if (h == 4) {
-                func_8009EC9C(4);
-                result = (func_800A32BC() == 1);
             }
-            if (result != 0) {
-                found = owner;
-                goto done;
-            }
-            node = node->next;
+        } else if (h == 4) {
+            func_8009EC9C(4);
+            result = (func_800A32BC() == 1);
+        } else {
+            result = 0;
         }
-        // Loop fell through with no matching owner: pass null. (The
-        // found = owner path jumps past this default, matching retail.)
-        found = 0;
-    done:
-        func_8027FC80(self, found);
-        lbl_eu_80664918 = 1;
+        if (result != 0) {
+            found = owner;
+            goto emit;
+        }
+        node = node->next;
     }
-gate_done:
-    ;
+    // Loop fell through with no matching owner: pass null. (The
+    // found-owner path jumps past this default, matching retail.)
+    found = 0;
+emit:
+    func_8027FC80(self, found);
+    lbl_eu_80664918 = 1;
 }
 // ---------------------------------------------------------------------------
 // ---- Target 1: func_802807A0 (us-80282c24) -------------------------------
@@ -982,23 +1040,30 @@ void func_802808AC(s32 self) {
         return;
     }
     u32 seq = func_80082694__Q22cf13CfGameManagerFv(0x2C);
-    // Early-return bump (same shape as scenarioBump/func_8027EE88): keeps
-    // MWCC's `mr r31, r3` ahead of the pause-flag compare.
+    // Two-arm phi merge reproduces retail's `beq bump; b after` pair.
+    // RESIDUAL (3 structural): MWCC sinks the keep-path copy (`mr r31,r3`)
+    // after the cmpi/beq; retail hoists it between the lhz and cmpi.
+    // Ruled out: goto dispatch (direct + negated), empty-then/else,
+    // do-while break, switch equality chain, ternary+comma merge (adds a
+    // temp), pre-assigned keep value (+duplicated arm), flag-read-first
+    // order (hoists lhz above the bl into r31), arms swapped. Same
+    // scheduling-swap class as rfc_FlowReq (MWCC_CASES ~line 703).
     {
         u16 pauseFlag = lbl_eu_80664772;
         u32 n;
         if (pauseFlag != 0) {
+            // Scene frozen by a subwindow: keep the un-bumped value.
             n = seq;
-            goto keep;
+        } else {
+            n = seq + 1;
+            if (n >= 0xFFFF) {
+                n = 0xFFFF;
+            }
+            func_8008269C__Q22cf13CfGameManagerFv(0x2C, n);
         }
-        n = seq + 1;
-        if (n >= 0xFFFF) {
-            n = 0xFFFF;
-        }
-        func_8008269C__Q22cf13CfGameManagerFv(0x2C, n);
-    keep:
         seq = n;
     }
+after:
     if (seq >= 0x1) {
         bool booting = func_800822F4__Q22cf13CfGameManagerFv() <= 3;
         if (!booting && isSceneActive()) {
@@ -1029,8 +1094,7 @@ void func_802809C8() {
     u32 n;
     u32 cur = func_80082694__Q22cf13CfGameManagerFv(0x23);
     // Two-arm if/else assigning n on both sides reproduces retail's
-    // `beq bump; b after` guard pair (same shape as func_80280804); the
-    // keep-arm copy is the phi resolution.
+    // `beq bump; b after` guard pair; the keep-arm copy is the phi resolution.
     if (lbl_eu_80664772 != 0) {
         // Scene frozen by a subwindow: keep the un-bumped value.
         n = cur;
@@ -1266,67 +1330,39 @@ void func_80280E9C(u8* self) {
 // (per-id 0x50..0x56 ladder) / 5 occupied entries, and close with a summary
 // gate once 7 characters reached the >= 5 threshold.
 // ---------------------------------------------------------------------------
-// Count how many of the 5 character entries (stride 0xC4) are fully occupied
-// (every one of the five sub-slot pointers at +0x20..+0xA0 is non-null). The
-// scan loops are written inline (three copies) so the loop counters land in
-// the retail's high registers (r29-r31) rather than the inlined helper's.
-static inline int countFullEntries(u8* p) {
-    int n = 0;
-    for (int k = 0; k < 5; k++, p += 0xC4) {
-        CSysWinCharSlot* e = (CSysWinCharSlot*)p;
-        int slot;
-        if (e->sub0 == 0) {
-            slot = 0;
-        } else if (e->sub1 == 0) {
-            slot = 1;
-        } else if (e->sub2 == 0) {
-            slot = 2;
-        } else if (e->sub3 == 0) {
-            slot = 3;
-        } else if (e->sub4 == 0) {
-            slot = 4;
-        } else {
-            slot = -1;
-        }
-        if (slot == -1) {
-            n++;
-        }
-    }
-    return n;
-}
-
 void func_80280F44() {
+    // Trip-count holders: constant-propagated to `li 5` and hoisted by LICM to
+    // the function entry, where each colors into a callee-saved register that
+    // feeds `mtctr` at every inner-loop entry (retail r31/r30/r29).
+    int n8 = 5;
+    int n3 = 5;
+    int nN = 5;
+    // Declaration order drives callee-saved coloring (first -> r31):
+    // n8/n3/nN -> r31/r30/r29, c3 -> r28, count -> r27, total -> r26, i -> r25.
+    int c3;
+    int count;
     int total = 0;
-    for (int i = 1; i <= 7; i++) {
-        int count;
+    int i;
+    for (i = 1; i <= 7; i++) {
         if (i != 3) {
             u8* p = (u8*)func_8009EC9C((u16)i) + 0x3534;
             count = 0;
-            for (int k = 5; k > 0; k--) {
+            for (int k = nN; k > 0; k--) {
                 CSysWinCharSlot* e = (CSysWinCharSlot*)p;
                 int slot;
                 if (e->sub0 == 0) {
                     slot = 0;
-                    goto chk;
-                }
-                if (e->sub1 == 0) {
+                } else if (e->sub1 == 0) {
                     slot = 1;
-                    goto chk;
-                }
-                if (e->sub2 == 0) {
+                } else if (e->sub2 == 0) {
                     slot = 2;
-                    goto chk;
-                }
-                if (e->sub3 == 0) {
+                } else if (e->sub3 == 0) {
                     slot = 3;
-                    goto chk;
-                }
-                if (e->sub4 == 0) {
+                } else if (e->sub4 == 0) {
                     slot = 4;
-                    goto chk;
+                } else {
+                    slot = -1;
                 }
-                slot = -1;
-            chk:
                 if (slot == -1) {
                     count++;
                 }
@@ -1334,8 +1370,8 @@ void func_80280F44() {
             }
         } else {
             u8* p3 = (u8*)func_8009EC9C(3) + 0x3534;
-            int c3 = 0;
-            for (int k = 5; k > 0; k--, p3 += 0xC4) {
+            c3 = 0;
+            for (int k = n3; k > 0; k--) {
                 CSysWinCharSlot* e = (CSysWinCharSlot*)p3;
                 int slot;
                 if (e->sub0 == 0) {
@@ -1354,10 +1390,11 @@ void func_80280F44() {
                 if (slot == -1) {
                     c3++;
                 }
+                p3 += 0xC4;
             }
             u8* p8 = (u8*)func_8009EC9C(8) + 0x3534;
             count = 0;
-            for (int k = 5; k > 0; k--, p8 += 0xC4) {
+            for (int k = n8; k > 0; k--) {
                 CSysWinCharSlot* e = (CSysWinCharSlot*)p8;
                 int slot;
                 if (e->sub0 == 0) {
@@ -1376,6 +1413,7 @@ void func_80280F44() {
                 if (slot == -1) {
                     count++;
                 }
+                p8 += 0xC4;
             }
             if (count < c3) {
                 count = c3;

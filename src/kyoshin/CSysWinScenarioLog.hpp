@@ -437,9 +437,7 @@ public:
     virtual void s9();
     virtual void sA();
     virtual void sB();
-    virtual void sC();
-    virtual void sD();
-    virtual void mAt38(u32 arg);   // vtable slot 14 == offset 0x38
+    virtual void mAt38(u32 arg);   // index 12 -> vtable offset 0x38
 };
 
 // Pad-button view used by Move() (button word at +0x4).
@@ -495,23 +493,161 @@ struct CSysWinDevice {
     u32 field_0x3374;                     // +0x3374 flags
 };
 
+// func_8027FC80 device-object vtable view: with -RTTI a virtual declared at
+// index N lands at vtable offset (N+2)*4, so mAtE0 (index 54) sits on 0xE0 and
+// mAt224 (index 135) on 0x224. Genuine virtual calls make MWCC emit retail's
+// `lwz r12, 0(rN) / lwz r12, off(r12) / mtctr / bctrl` dispatch.
+class CSysWinFc80DevView {
+public:
+    virtual void v00() = 0;
+    virtual void v01() = 0;
+    virtual void v02() = 0;
+    virtual void v03() = 0;
+    virtual void v04() = 0;
+    virtual void v05() = 0;
+    virtual void v06() = 0;
+    virtual void v07() = 0;
+    virtual void v08() = 0;
+    virtual void v09() = 0;
+    virtual void v0A() = 0;
+    virtual void v0B() = 0;
+    virtual void v0C() = 0;
+    virtual void v0D() = 0;
+    virtual void v0E() = 0;
+    virtual void v0F() = 0;
+    virtual void v10() = 0;
+    virtual void v11() = 0;
+    virtual void v12() = 0;
+    virtual void v13() = 0;
+    virtual void v14() = 0;
+    virtual void v15() = 0;
+    virtual void v16() = 0;
+    virtual void v17() = 0;
+    virtual void v18() = 0;
+    virtual void v19() = 0;
+    virtual void v1A() = 0;
+    virtual void v1B() = 0;
+    virtual void v1C() = 0;
+    virtual void v1D() = 0;
+    virtual void v1E() = 0;
+    virtual void v1F() = 0;
+    virtual void v20() = 0;
+    virtual void v21() = 0;
+    virtual void v22() = 0;
+    virtual void v23() = 0;
+    virtual void v24() = 0;
+    virtual void v25() = 0;
+    virtual void v26() = 0;
+    virtual void v27() = 0;
+    virtual void v28() = 0;
+    virtual void v29() = 0;
+    virtual void v2A() = 0;
+    virtual void v2B() = 0;
+    virtual void v2C() = 0;
+    virtual void v2D() = 0;
+    virtual void v2E() = 0;
+    virtual void v2F() = 0;
+    virtual void v30() = 0;
+    virtual void v31() = 0;
+    virtual void v32() = 0;
+    virtual void v33() = 0;
+    virtual void v34() = 0;
+    virtual void v35() = 0;
+    virtual u32 mAtE0() = 0;      // index 54 -> vtable 0xE0
+    virtual void v37() = 0;
+    virtual void v38() = 0;
+    virtual void v39() = 0;
+    virtual void v3A() = 0;
+    virtual void v3B() = 0;
+    virtual void v3C() = 0;
+    virtual void v3D() = 0;
+    virtual void v3E() = 0;
+    virtual void v3F() = 0;
+    virtual void v40() = 0;
+    virtual void v41() = 0;
+    virtual void v42() = 0;
+    virtual void v43() = 0;
+    virtual void v44() = 0;
+    virtual void v45() = 0;
+    virtual void v46() = 0;
+    virtual void v47() = 0;
+    virtual void v48() = 0;
+    virtual void v49() = 0;
+    virtual void v4A() = 0;
+    virtual void v4B() = 0;
+    virtual void v4C() = 0;
+    virtual void v4D() = 0;
+    virtual void v4E() = 0;
+    virtual void v4F() = 0;
+    virtual void v50() = 0;
+    virtual void v51() = 0;
+    virtual void v52() = 0;
+    virtual void v53() = 0;
+    virtual void v54() = 0;
+    virtual void v55() = 0;
+    virtual void v56() = 0;
+    virtual void v57() = 0;
+    virtual void v58() = 0;
+    virtual void v59() = 0;
+    virtual void v5A() = 0;
+    virtual void v5B() = 0;
+    virtual void v5C() = 0;
+    virtual void v5D() = 0;
+    virtual void v5E() = 0;
+    virtual void v5F() = 0;
+    virtual void v60() = 0;
+    virtual void v61() = 0;
+    virtual void v62() = 0;
+    virtual void v63() = 0;
+    virtual void v64() = 0;
+    virtual void v65() = 0;
+    virtual void v66() = 0;
+    virtual void v67() = 0;
+    virtual void v68() = 0;
+    virtual void v69() = 0;
+    virtual void v6A() = 0;
+    virtual void v6B() = 0;
+    virtual void v6C() = 0;
+    virtual void v6D() = 0;
+    virtual void v6E() = 0;
+    virtual void v6F() = 0;
+    virtual void v70() = 0;
+    virtual void v71() = 0;
+    virtual void v72() = 0;
+    virtual void v73() = 0;
+    virtual void v74() = 0;
+    virtual void v75() = 0;
+    virtual void v76() = 0;
+    virtual void v77() = 0;
+    virtual void v78() = 0;
+    virtual void v79() = 0;
+    virtual void v7A() = 0;
+    virtual void v7B() = 0;
+    virtual void v7C() = 0;
+    virtual void v7D() = 0;
+    virtual void v7E() = 0;
+    virtual void v7F() = 0;
+    virtual void v80() = 0;
+    virtual void v81() = 0;
+    virtual void v82() = 0;
+    virtual void v83() = 0;
+    virtual void v84() = 0;
+    virtual void v85() = 0;
+    virtual void v86() = 0;
+    virtual CSysWinDevEntry* mAt224() = 0;  // index 135 -> vtable 0x224
+};
+
 // func_8027FC80 helper: invoke a virtual at a runtime vtable offset on a raw
 // object pointer. MWCC cannot express these as member calls without emitting a
 // whole new vtable, so the call goes through the object's stored vtable.
 inline u32 csysWinCallE0(void* self) {
-    typedef u32 (*Fn)(void*);
-    void** vt = (void**)*(void**)self;
-    return ((Fn)vt[0xE0 / 4])(self);
+    return ((CSysWinFc80DevView*)self)->mAtE0();
 }
 inline CScenarioLogOwner* csysWinCall9C(void* self) {
-    typedef CScenarioLogOwner* (*Fn)(void*);
-    void** vt = (void**)*(void**)self;
-    return ((Fn)vt[0x9C / 4])(self);
+    return ((CSysWinDevView*)self)->mAt9C();
 }
 inline CSysWinDevEntry* csysWinCall224(void* self) {
-    typedef CSysWinDevEntry* (*Fn)(void*);
-    void** vt = (void**)*(void**)self;
-    return ((Fn)vt[0x224 / 4])(self);
+    return ((CSysWinFc80DevView*)self)->mAt224();
 }
 
 // Vtable view of the scenario-log owner's virtual table used by

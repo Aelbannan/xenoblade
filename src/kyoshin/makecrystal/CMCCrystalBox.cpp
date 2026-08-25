@@ -1436,9 +1436,19 @@ u8* func_8021625C(CMCCrystalBox* self) {
     CMCCrystalBoxParam t3;            // +0x10 (bubble-sort temp)
     CMCCrystalBoxParam tmp3;          // +0x8  (fill-loop temp)
 
-    unsigned long* tbl;
-    CMCCrystalBoxParam* swapA;
-    CMCCrystalBoxParam* swapB;
+    // Exactly nine working variables mirroring retail's saved-register
+    // homes; each serves several phases (like retail's register reuse):
+    // count:r31, tb:r30 (clear sentinel / selection-table base),
+    // wk:r28 (sort-table walk / item ptr / bubble limit), ii:r27,
+    // jj:r26, nm:r25 (item name / bubble outer), sa:r24, sb:r23.
+    u8 count;
+    unsigned long tb;
+    unsigned long wk;
+    unsigned int ii;
+    unsigned int jj;
+    u16 nm;
+    CMCCrystalBoxParam* sa;
+    CMCCrystalBoxParam* sb;
 
     // Initialise the selection table (head + 32 slots) and copy the slots
     // into the +0x2D8 sub-table.
@@ -1449,36 +1459,36 @@ u8* func_8021625C(CMCCrystalBox* self) {
     // word-copy loop.
     *(ParamBlock*)self->subTable = *(ParamBlock*)selT.slots;
 
-    // Clear the sort table twice: a pointer walk (8-byte stride through the
-    // unsigned long* view), then a slot re-init via a stack temp so each
-    // entry is written by func_80213E20.
-    tbl = (unsigned long*)sortTable;
-    u8 count = 0;
+    // Clear the sort table twice: a pointer walk, then a slot re-init via a
+    // stack temp so each entry is written by func_80213E20.
+    wk = (unsigned long)sortTable;
+    tb = (unsigned long)&selT;
+    count = 0;
     do {
-        func_80213E04((CMCCrystalBoxParam*)tbl, 0, 0);
-        tbl += 2;
-    } while (tbl < (unsigned long*)&selT);
-    unsigned int i = 0;
+        func_80213E04((CMCCrystalBoxParam*)wk, 0, 0);
+        wk += 8;
+    } while (wk < tb);
+    ii = 0;
     do {
-        func_80213E20(&sortTable[i], func_80213E04(&pa, 0, 0));
-        i++;
-    } while (i < 0x20);
+        func_80213E20(&sortTable[ii], func_80213E04(&pa, 0, 0));
+        ii++;
+    } while (ii < 0x20);
 
     // Aggregate the 8-slot selection table: for each placed item, walk its
     // 4 sub-items, accumulate quantities of matching crystal ids in the sort
     // table, and append new ids.
-    tbl = (unsigned long*)((u8*)self + 0x1480);
-    for (i = 0; i < 8; i++) {
-        unsigned long* item = (unsigned long*)func_802165CC(tbl, (u8)i);
-        if (item == 0 || *item == 0) continue;
-        for (unsigned int j = 0; j < 4; j++) {
-            CItemImplFacade2* inst = (CItemImplFacade2*)CItem_initItemImplInstances(item);
-            u16 name = inst->GetName(item, (u8)j);
-            if ((s16)name <= 0) continue;
-            u16 flag = inst->GetFlag(item, (u8)j);
+    tb = (unsigned long)((u8*)self + 0x1480);
+    for (ii = 0; ii < 8; ii++) {
+        wk = func_802165CC((unsigned long*)tb, (u8)ii);
+        if (wk == 0 || *(unsigned long*)wk == 0) continue;
+        for (jj = 0; jj < 4; jj++) {
+            CItemImplFacade2* inst = (CItemImplFacade2*)CItem_initItemImplInstances((unsigned long*)wk);
+            nm = inst->GetName((unsigned long*)wk, (u8)jj);
+            if ((s16)nm <= 0) continue;
+            u16 flag = inst->GetFlag((unsigned long*)wk, (u8)jj);
             int found = 0;
             for (u8 k = 0; k < count; k++) {
-                if (sortTable[k].m0 == (s16)name) {
+                if (sortTable[k].m0 == (s16)nm) {
                     sortTable[k].m2 += flag;
                     found = 1;
                     break;
@@ -1486,56 +1496,48 @@ u8* func_8021625C(CMCCrystalBox* self) {
             }
             if (found == 0) {
                 func_80213E20(&sortTable[count],
-                              func_80213E04(&tmp2, (s16)name, (s16)flag));
+                              func_80213E04(&tmp2, (s16)nm, (s16)flag));
                 count++;
             }
         }
     }
 
     // Bubble-sort the sort table by quantity (ascending).
-    {
-        u8 total = (u8)((u8)count - 1);
-        u8 bi;
-        u8 bj;
-        for (bi = 0; bi < total; bi++) {
-            for (bj = 0; bj < (u8)(total - bi); bj++) {
-                if (sortTable[bj].m2 < sortTable[bj + 1].m2) {
-                    swapA = &sortTable[bj];
-                    swapB = &sortTable[bj + 1];
-                    func_802165E8(&t1, swapA);
-                    func_80213E20(swapA, func_802165E8(&t2, swapB));
-                    func_80213E20(swapB, func_802165E8(&t3, &t1));
-                }
+    wk = (unsigned long)((u8)count - 1);
+    for (nm = 0; nm < (u8)wk; nm++) {
+        for (jj = 0; jj < (unsigned int)(wk - (u8)nm); jj++) {
+            if (sortTable[jj].m2 < sortTable[jj + 1].m2) {
+                sa = &sortTable[jj];
+                sb = &sortTable[jj + 1];
+                func_802165E8(&t1, sa);
+                func_80213E20(sa, func_802165E8(&t2, sb));
+                func_80213E20(sb, func_802165E8(&t3, &t1));
             }
         }
     }
 
     // Copy the sorted table into the +0x2D8 sub-table, bumping the cursor.
-    {
-        u8 k;
-        for (k = 0; k < (u8)count; k++) {
-        func_80213E04(&tmp3, sortTable[k].m0, sortTable[k].m2);
+    for (u8 fk = 0; fk < (u8)count; fk++) {
+        func_80213E04(&tmp3, sortTable[fk].m0, sortTable[fk].m2);
         u8 cur = self->unk2D6;
         self->unk2D6 = cur + 1;
         func_80213E20(&self->subTable[cur], &tmp3);
-        }
     }
 
     // Refresh the current-item byte from the first placed item, then drive
     // each placed item's slot-0x10 virtual.
-    tbl = (unsigned long*)((u8*)self + 0x1480);
-    for (i = 0; i < 8; i++) {
-        unsigned long* item = (unsigned long*)func_802165CC(tbl, (u8)i);
-        if (item == 0 || *item == 0) continue;
-        CItemImplFacade2* inst = (CItemImplFacade2*)CItem_initItemImplInstances(item);
-        self->unk2D7 = (u8)inst->GetCount(item);
+    for (ii = 0; ii < 8; ii++) {
+        wk = func_802165CC((unsigned long*)tb, (u8)ii);
+        if (wk == 0 || *(unsigned long*)wk == 0) continue;
+        CItemImplFacade2* inst = (CItemImplFacade2*)CItem_initItemImplInstances((unsigned long*)wk);
+        self->unk2D7 = (u8)inst->GetCount((unsigned long*)wk);
         break;
     }
-    for (i = 0; i < 8; i++) {
-        unsigned long* item = (unsigned long*)func_802165CC(tbl, (u8)i);
-        if (item == 0 || *item == 0) continue;
-        CItemImplFacade2* inst = (CItemImplFacade2*)CItem_initItemImplInstances(item);
-        inst->vf_08(item);
+    for (ii = 0; ii < 8; ii++) {
+        wk = func_802165CC((unsigned long*)tb, (u8)ii);
+        if (wk == 0 || *(unsigned long*)wk == 0) continue;
+        CItemImplFacade2* inst = (CItemImplFacade2*)CItem_initItemImplInstances((unsigned long*)wk);
+        inst->vf_08((unsigned long*)wk);
     }
 
     return &self->unk2D6;

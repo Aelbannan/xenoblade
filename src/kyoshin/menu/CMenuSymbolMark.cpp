@@ -62,9 +62,6 @@ extern u8 lbl_eu_8052CDF8[];
 // for an entry whose kind byte is a real unlockable kind and whose table
 // lookup returns 1.
 extern "C" int func_8011D338() {
-    // Both table bases are hoisted into registers by MWCC (declared first).
-    const char* str = (const char*)&lbl_eu_804FE720[0];
-    u32* tbl = lbl_eu_80573D18;
     for (u32 rank = 1; rank < 0x1b; rank++) {
         u32 start = func_801380A0((u16)rank);
         if ((u16)start == 0) {
@@ -72,18 +69,18 @@ extern "C" int func_8011D338() {
         }
         u32 end = (u16)func_801380A0((u16)(rank + 1));
         for (u32 id = start; (u16)id < end; id++) {
-            u32 check = 0;
             u32 kind = (u8)func_8009CF8C((u16)id + 0x220);
+            u32 check = 0;
             if (kind != 0) {
                 if (kind != 0xc8 && kind != 0xfe && kind != 0xff) {
                     check = 1;
                 }
             }
-            if (check != 0) {
-                if ((u8)func_801361E8(tbl[func_80138138((u16)id)],
-                                      str + 0x2f, id) == 1) {
-                    return 1;
-                }
+            if (check != 0 &&
+                (u8)func_801361E8(lbl_eu_80573D18[func_80138138((u16)id)],
+                                  (const char*)(&lbl_eu_804FE720[0]) + 0x2f,
+                                  (u16)id) == 1) {
+                return 1;
             }
         }
     }

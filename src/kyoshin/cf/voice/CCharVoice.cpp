@@ -1,9 +1,10 @@
 #include "kyoshin/cf/voice/CCharVoice.hpp"
 #include <string.h>
 
+extern CVoiceName lbl_eu_805106D4;    // empty default name (""), rodata blob
+
 extern "C" {
     extern char* lbl_eu_80662C98;       // pointer to default voice path string
-    extern const char lbl_eu_805106D4[];  // empty default name ("")
     extern void* lbl_eu_80663E14;       // manager singleton for character lookup
 
     extern float lbl_eu_80668C58;
@@ -34,15 +35,22 @@ extern "C" {
 }
 
 // __ct__CCharVoice (0x802A3230)
+// Hoisting the empty-name base pointer and the two init constants into locals
+// makes MWCC keep them live in r30/r31/r0 across all the member stores,
+// matching the retail allocation.
 extern "C" CCharVoice* __ct__CCharVoice(CCharVoice* self)
 {
+    CVoiceName* emptyName = &lbl_eu_805106D4;
+    void* zero = 0;
+    s32   negOne = -1;
+
     self->mVtable         = lbl_eu_805398B0;
-    self->mOwner          = 0;
-    self->mVoiceId        = -1;
-    self->mPriorityCheck  = -1;
-    self->mSoundHandle    = -1;
-    self->mFileNameLen    = strlen(lbl_eu_805106D4);
-    strcpy(self->mFileName, lbl_eu_805106D4);
+    self->mOwner          = zero;
+    self->mVoiceId        = negOne + 1;
+    self->mPriorityCheck  = negOne;
+    self->mSoundHandle    = negOne;
+    self->mFileNameLen    = strlen((char*)emptyName);
+    strcpy(self->mFileName, (char*)emptyName);
     self->mField34        = 0;
     self->mBattleSndHandle = 0xFFFF;
     return self;

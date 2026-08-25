@@ -755,7 +755,6 @@ void FifoSend__Q44nw4r3g3d8G3DState13IndTexMtxInfoCFv(
 
 void LoadResTexObj__Q34nw4r3g3d8G3DStateFQ34nw4r3g3d9ResTexObj(){}
 
-void LoadResTev__Q34nw4r3g3d8G3DStateFQ34nw4r3g3d6ResTev(){}
 
 
 namespace nw4r {
@@ -967,6 +966,80 @@ void G3DState::LoadResMatChan(const ResMatChan chan, u32 maskDiffColor,
                             lbl_eu_8061A520.nTevs, lbl_eu_8061A520.nInds,
                             lbl_eu_8061A520.cullMode);
         lbl_eu_8061A520.flag |= 3;
+    }
+}
+
+void G3DState::LoadResTev(ResTev tev) {
+    // Local copy: MWCC homes the by-value resource handle into a
+    // callee-saved register at entry, before any other spills - matches
+    // retail's early mr-to-r31 homing.
+    ResTev res = tev;
+
+    if (res.ptr() == NULL) {
+        return;
+    }
+
+    // Materialized comparison result plus per-arm reassignment reproduces
+    // retail's default-cached / set-on-change / re-test sequence: the TEV
+    // display list is only uploaded when the resource pointer changed.
+    // Cache-on-left flips the compare operand order to match retail.
+    bool cacheIsSame;
+    if (lbl_eu_80665454 == reinterpret_cast<u32>(res.ptr())) {
+        cacheIsSame = true;
+    } else {
+        lbl_eu_80665454 = reinterpret_cast<u32>(res.ptr());
+        cacheIsSame = false;
+    }
+
+    if (!cacheIsSame) {
+        // Re-emit the genMode BP word when the pix/tev caches dirtied it.
+        u32 flag = lbl_eu_8061A520.flag;
+        if ((flag & 0x4) && (flag & 3) == 2) {
+            volatile u8* fifo = (volatile u8*)0xCC008000;
+            const u8* cull = (const u8*)&lbl_eu_80669BE8;
+            GXCullMode cullMode = lbl_eu_8061A520.cullMode;
+
+            *fifo = 0x61;
+            *(volatile u32*)fifo = 0xFE07FC3F;
+
+            *fifo = 0x61;
+            *(volatile u32*)fifo = lbl_eu_8061A520.nTexGens |
+                                   (lbl_eu_8061A520.nChans << 4) |
+                                   ((lbl_eu_8061A520.nTevs - 1) << 10) |
+                                   (cull[cullMode] << 14) |
+                                   (lbl_eu_8061A520.nInds << 16);
+
+            lbl_eu_8061A520.flag |= 1;
+        }
+
+        bool sync = lbl_eu_80665448;
+        lbl_eu_80665448 = 0;
+        res.CallDisplayList(sync);
+    }
+
+    // Re-emit texcoord scales when the texture cache was invalidated since
+    // the last upload and the cached scales have not been re-emitted yet.
+    TexCoordScaleCache* pScale = &lbl_eu_8061A520.texCoordScale;
+    u32 scaleFlag = pScale->flag;
+    u8 nTexGens = lbl_eu_8061A520.nTexGens;
+
+    if ((scaleFlag & 2) && (scaleFlag & 1) == 0 && nTexGens != 0) {
+        for (u8 i = 0; i < nTexGens; i++) {
+            // The dst-cache updates are assignment expressions inside the
+            // call arguments; evaluating them in-place reproduces retail's
+            // exact argument-setup interleaving.
+            if (pScale->dirty[i] != 0xFF) {
+                fifo::GDSetTexCoordScale2(
+                    static_cast<GXTexCoordID>(i),
+                    (pScale->dst[i].scaleS =
+                         pScale->src[pScale->dirty[i]].scaleS),
+                    false, false,
+                    (pScale->dst[i].scaleT =
+                         pScale->src[pScale->dirty[i]].scaleT),
+                    false, false);
+            }
+        }
+        pScale->flag |= 1;
     }
 }
 

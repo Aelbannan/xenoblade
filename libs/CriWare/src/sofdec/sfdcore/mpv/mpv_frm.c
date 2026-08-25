@@ -89,24 +89,31 @@ extern s32 MPV_GoNextDelimSj(void* a);
 extern s32 MPV_MoveChunk(void* a, s32 b, s32 c);
 
 s32 MPV_SkipFrmSj(void* hn, void* sj) {
-    void* p = sj;
+    void* h;
     s32 code;
-    if (MPVLIB_CheckHn(hn) != 0)
-        return MPVERR_SetCode(NULL, 0xFF03020A);
-    code = 0xFF030305;
-    for (;;) {
-        int r = MPV_GoNextDelimSj(p);
-        if (r == 0)
-            break;
-        if (r & 0xCC) {
-            code = 0;
+    void* p;
+    s32 rc;
+    h = hn;
+    p = sj;
+    if (MPVLIB_CheckHn(h) != 0)
+        rc = MPVERR_SetCode(NULL, 0xFF03020A);
+    else {
+        code = 0xFF030305;
+        for (;;) {
+            int r = MPV_GoNextDelimSj(p);
+            if (r == 0)
+                break;
+            if (r & 0xCC) {
+                code = 0;
+                break;
+            }
+            if (MPV_MoveChunk(p, 1, 4) == 4)
+                continue;
             break;
         }
-        if (MPV_MoveChunk(p, 1, 4) == 4)
-            continue;
-        break;
+        rc = MPVERR_SetCode(h, code);
     }
-    return MPVERR_SetCode(hn, code);
+    return rc;
 }
 
 extern int MPVLIB_CheckHn(void*);

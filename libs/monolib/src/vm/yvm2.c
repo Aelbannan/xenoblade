@@ -976,15 +976,15 @@ u32 vmFuncFarSearch(const char* pPackageName, const char* pFuncName){
     int i;
     int j;
     for(i = 0; i < MAX_PACKAGES; i++){
+        const char* name = (const char*)vmState.packages[i].unk4;
         //Check if the package name matches
-        if(vmState.packages[i].unk4 == NULL){
+        if(name == NULL){
             continue;
         }
-        if(strcmp((const char*)vmState.packages[i].unk4, pPackageName) != 0){
+        if(strcmp(name, pPackageName) != 0){
             continue;
         }
-        {
-            SBHeader* struct1 = vmState.packages[i].scriptDataPtr;
+        SBHeader* struct1 = vmState.packages[i].scriptDataPtr;
             SBSectionHeader* funcPoolSectionHeader = struct1->functionPoolOfs;
             FunctionPoolEntry* entries = (FunctionPoolEntry*)getSectionEntriesPtr(funcPoolSectionHeader);
 
@@ -998,7 +998,6 @@ u32 vmFuncFarSearch(const char* pPackageName, const char* pFuncName){
             }
 
             return -1;
-        }
     }
 
     return -1;

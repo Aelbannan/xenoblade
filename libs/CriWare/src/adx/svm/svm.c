@@ -408,29 +408,32 @@ u32 SVM_ExecSvrUhigh(void) {
     return result;
 }
 
-u32 SVM_ExecSvrFs(void) {
+/* Row-pointer form; MWCC inlines this per wrapper, materializing the
+   arguments as pseudos (two-step table chain, dedicated flags register). */
+static inline u32 svm_ExecSvrRow(SvmSvrEntry (*tbl)[6], s32 id) {
     SvmCtrl* ctrl = &lbl_eu_805F26F0;
     u32 result = 0;
-    u32 i = 0;
+    s32 i;
     u32 one = 1;
-    /* Flat table-base pointer makes MWCC emit the two-step addi chain
-       (ctrl+0x128, then row offset) seen in retail; flags stays in its own
-       callee-saved register across the server calls. */
-    SvmSvrEntry* tbl = &ctrl->svr_tbl[0][0];
-    u32* flags = ctrl->exec.flags;
-    SvmSvrEntry* p = &tbl[24];
     u32 zero = 0;
-    for (; i < 6; i++, p++) {
+    u32* flags = ctrl->exec.flags;
+    u32* cnts = ctrl->exec.counts;
+    SvmSvrEntry* p = tbl[id];
+    for (i = 0; i < 6; i++, p++) {
         u32 (*fn)(void*) = p->func;
         void* obj = p->object;
         if (fn != NULL) {
-            flags[4] = one;
+            flags[id] = one;
             result |= fn(obj);
-            flags[4] = zero;
+            flags[id] = zero;
         }
     }
-    ctrl->exec.counts[4] += 1;
+    cnts[id] += 1;
     return result;
+}
+
+u32 SVM_ExecSvrFs(void) {
+    return svm_ExecSvrRow(lbl_eu_805F26F0.svr_tbl, 4);
 }
 
 u32 SVM_ExecSvrMain(void) {

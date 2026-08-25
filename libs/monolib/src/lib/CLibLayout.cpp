@@ -170,10 +170,10 @@ nw4r::lyt::Picture* CLibLayout::createPicture(void) {
     nw4r::lyt::Picture* picture = static_cast<nw4r::lyt::Picture*>(MEMAllocFromAllocator(
         &lbl_eu_80665710->mAllocator, 0xF0));
 
+    nw4r::lyt::TexMap texmap(reinterpret_cast<TPLPalette*>(this), 0);
+
     if (picture != NULL) {
         try {
-            // TexMap(palette, id) resets bias-clamp and anisotropy to defaults.
-            nw4r::lyt::TexMap texmap(reinterpret_cast<TPLPalette*>(this), 0);
             // Direct ctor call on the raw buffer: placement-new would add a
             // NULL guard the retail function does not have.
             __ct__Q34nw4r3lyt7PictureFRCQ34nw4r3lyt6TexMap(picture, texmap);
@@ -292,10 +292,8 @@ void func_8045F4E4__10CLibLayoutFv(MEMAllocator* allocator, void* block) {
     // Free callback for the nw4r layout allocator: blocks inside the layout
     // region (or inside a tracked instance's buffer range) go back to the
     // MemManager; anything else is ignored.
-    // Retail spells ONE anchor local assigned twice: the re-assignment at
-    // loop head forces the new value into a different register (the old copy
-    // is still live-in at the def), yielding retail's r5-anchor/r3-element
-    // split. The intervening deallocate call keeps the two loads from CSE.
+    // Retail emits exactly two lbl_eu_80665710 loads (range check + loop head)
+    // and walks a fused base-increment induction (singleton-copy += 4).
     if (lbl_eu_80665710->mRangeStart <= (u32)block &&
         lbl_eu_80665710->mRangeEnd > (u32)block) {
         if (block != NULL) {
@@ -304,11 +302,18 @@ void func_8045F4E4__10CLibLayoutFv(MEMAllocator* allocator, void* block) {
         return;
     }
 
-// Volatile word view of the singleton: blocks CSE so the loop-head count
-// read stays a separate temp from the body's array-walk base (retail colors
-// the count scratch r3-dead and the carried singleton copy r5).
-    u32 i = 0;
-    while (i < lbl_eu_80665710->instanceCount) {
+    // NOTE: keep both lbl_eu_80665710 reads INLINE (no anchor local, no
+    // volatile view, no pointer cursor). Verified negatives (this + prior
+    // sessions): naming either global read CSEs the second load away
+    // (.text 0x7c); an anchor local spanning the early-return call forces a
+    // callee-saved r5 + prologue frame (+0x24); a volatile word read of
+    // instanceCount DOES move the loop-head reload into retail's r5 but
+    // degrades ctr/bdnz to an explicit counter (+8 bytes); caching that
+    // volatile read in the for-init gets folded back to one temp (colors
+    // revert). Residual vs retail is purely the {singleton-walker, element}
+    // register colors (r5,r3) vs (r3,r5) -- see attempts.jsonl open item;
+    // recorded sole remaining lever is a unit mw_version sweep (configure.py).
+    for (u32 i = 0; i < lbl_eu_80665710->instanceCount; i++) {
         UnkClass_8045F564* inst = lbl_eu_80665710->instanceArray[i];
         if (inst->unk8 <= (u32)block && inst->unkC > (u32)block) {
             if (block != NULL) {
@@ -316,7 +321,6 @@ void func_8045F4E4__10CLibLayoutFv(MEMAllocator* allocator, void* block) {
             }
             return;
         }
-        i++;
     }
 }
 

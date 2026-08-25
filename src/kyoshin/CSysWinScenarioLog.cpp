@@ -308,25 +308,35 @@ void func_8027EF50() {
 // a layout draw with a stack DrawInfo (raw buffer, direct ctor/dtor calls).
 // ---------------------------------------------------------------------------
 void CSysWinScenarioLog::cbRenderBefore() {
-    // Same gate chain as Move() (pause word bit 21 here): skip the draw while
-    // a modal task-game state is live, the scenario bit is set, an event is
-    // pending, a camera event runs, or the layout isn't loaded.
-    if (CTaskGame::getInstance()->func_800426F0() == false) {
-        if (lbl_eu_80663E28 & 0x200000) {
-            // scenario/pause bit set: skip the whole draw
-        } else if (func_8013BE50() != 0 &&
-                   func_8029A658() == 0 &&
-                   mpLayout != 0) {
-            GXSetZMode(GX_FALSE, GX_NEVER, GX_FALSE);
-            u8 drawInfo[0x60];
-            __ct__Q34nw4r3lyt8DrawInfoFv(drawInfo);
-            func_80137250(reinterpret_cast<nw4r::lyt::DrawInfo*>(drawInfo));
-            func_80137038(mpLayout, reinterpret_cast<nw4r::lyt::DrawInfo*>(drawInfo),
-                          0, 1);
-            __dt__Q34nw4r3lyt8DrawInfoFv(
-                reinterpret_cast<nw4r::lyt::DrawInfo*>(drawInfo), -1);
-        }
+    // OR-combined guards with early return (MWCC_CASES control_flow pattern):
+    // the first disjunct folds to a direct branch to the shared epilogue and
+    // the second becomes the branch-over-branch gate (beq forward + b end).
+    if (CTaskGame::getInstance()->func_800426F0() != 0 ||
+        (lbl_eu_80663E28 & 0x200000) != 0) {
+        return;
     }
+    // Separate single-condition early returns fold to direct branches
+    // (an || chain would put a spurious branch-over-branch on the last
+    // disjunct).
+    if (func_8013BE50() == 0) {
+        return;
+    }
+    if (func_8029A658() != 0) {
+        return;
+    }
+    if (mpLayout == 0) {
+        return;
+    }
+    GXSetZMode(GX_FALSE, GX_NEVER, GX_FALSE);
+    // Raw-storage DrawInfo built/destroyed via the pre-mangled ct/dt calls so
+    // the body keeps retail's direct bl sequence.
+    u8 drawInfo[0x60];
+    __ct__Q34nw4r3lyt8DrawInfoFv(drawInfo);
+    func_80137250(reinterpret_cast<nw4r::lyt::DrawInfo*>(drawInfo));
+    func_80137038(mpLayout,
+                  reinterpret_cast<nw4r::lyt::DrawInfo*>(drawInfo), 0, 1);
+    __dt__Q34nw4r3lyt8DrawInfoFv(
+        reinterpret_cast<nw4r::lyt::DrawInfo*>(drawInfo), -1);
 }
 
 // ---------------------------------------------------------------------------

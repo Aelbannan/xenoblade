@@ -805,28 +805,30 @@ void func_80168F38(cf::CTaskREvtSequence* self) {
 int func_80169048(void* self) { return 1; }
 
 void func_80169050(cf::CTaskREvtSequence* self) {
-    // CX stream pump + event-state update. While the chunk-read flag (0x40)
-    // is set, drain the 0x250 context in 0x2000-byte steps; on EOF clear the
-    // 0x20 gate and move the walk cursor to the arena base. Then (unless the
-    // 0x8 flag path already re-armed the move callback) arm the 0x20000
+    // CX stream pump + event-state update. While the stream-active flag (bit
+    // 25) is set, drain the 0x250 context in 0x2000-byte steps; on EOF clear
+    // the bit again and move the walk cursor to the arena base. Then (unless
+    // the 0x8 flag path already re-armed the move callback) arm the 0x20000
     // bit and, when the 0x200 gate is clear, walk the field_0xE8 table
     // arming the 0x1 bit of the event-window halfword for type-6 entries.
     if ((self->field_0x5C & 0x4) == 0) {
         return;
     }
     if (self->field_0x5C & 0x40) {
+        // Drain the CX stream: keep pumping 0x2000-byte chunks until the
+        // decompressor reports exhaustion, then reset the walk cursor.
         for (;;) {
             s32 n = CXReadUncompLH(
                 reinterpret_cast<CXUncompContextLH*>(self->mCxBuffer),
                 reinterpret_cast<const void*>(self->field_0x124), 0x2000);
             if (n > 0) {
                 self->field_0x124 += 0x2000;
-            } else {
-                self->field_0x5C &= ~0x20;
-                self->field_0x120 =
-                    reinterpret_cast<UnkSeq120*>(self->field_0x11C);
-                break;
+                continue;
             }
+            self->field_0x5C &= ~0x40;
+            self->field_0x120 =
+                reinterpret_cast<UnkSeq120*>(self->field_0x11C);
+            break;
         }
     }
     u32 flag1;
@@ -842,14 +844,10 @@ void func_80169050(cf::CTaskREvtSequence* self) {
             func_8049602C(lbl_eu_80663E14, 0,
                           reinterpret_cast<EvtSeqVec4*>(&ml::CCol4::black));
         }
-        u32 w1, w0, w2;
-        const u32* src = &lbl_eu_80530A88[0];
-        w0 = *src++;
-        w1 = *src++;
-        self->field_0x40 = w1;
-        self->field_0x3C = w0;
-        w2 = *src++;
-        self->field_0x44 = w2;
+        const u32* src = lbl_eu_80530A88;
+        self->field_0x40 = src[1];
+        self->field_0x3C = src[0];
+        self->field_0x44 = src[2];
         flag1 = 1;
     } else {
         flag1 = 0;
@@ -862,21 +860,15 @@ void func_80169050(cf::CTaskREvtSequence* self) {
         return;
     }
     u32 flag2 = 0;
-    {
-        u32 w1, w0, w2;
-        const u32* src = &lbl_eu_80530A94[0];
-        w0 = *src++;
-        w1 = *src++;
-        self->field_0x40 = w1;
-        self->field_0x3C = w0;
-        w2 = *src++;
-        self->field_0x44 = w2;
-    }
+    const u32* src94 = lbl_eu_80530A94;
+    self->field_0x40 = src94[1];
+    self->field_0x3C = src94[0];
+    self->field_0x44 = src94[2];
     if (self->field_0xE8 != 0) {
         u16 h = lbl_eu_806642E0;
-        u32 j = 0;
-        do {
-            UnkE8Table* table = self->field_0xE8;
+        UnkE8Table* table = self->field_0xE8;
+        EvtSeqC4Buf* c4 = reinterpret_cast<EvtSeqC4Buf*>(self->field_0xC4);
+        for (u32 j = 0; j < c4->field_0x38; j++) {
             UnkE8Table* entry = reinterpret_cast<UnkE8Table*>(
                 reinterpret_cast<u8*>(table) + table->field_0x4 * j);
             if (entry->field_0xA == 3) {
@@ -885,13 +877,9 @@ void func_80169050(cf::CTaskREvtSequence* self) {
                 }
                 flag1 = 1;
             } else if (entry->field_0xA == 6) {
-                h |= 1;
-                lbl_eu_806642E0 = h;
+                lbl_eu_806642E0 = h | 1;
             }
-            j++;
-        } while (j <
-                 reinterpret_cast<EvtSeqC4Buf*>(self->field_0xC4)
-                     ->field_0x38);
+        }
     }
     // Fade the BGM back in unless both walk flags were raised while the event
     // manager was already ready; then arm the presentation flag and rebuild
@@ -1817,7 +1805,9 @@ int func_8016B5A4(u8* data, const char* name, s32* out) {
                             lbl_eu_80530D68, lbl_eu_806623CC);
         }
         // Signed compare: retail emits cmpi (not cmpli) against type 2.
-        if (reinterpret_cast<EvtSeqResEntry*>(result)->field_0xC != 2) {
+        // Signed compare: retail emits cmpi (not cmpli) against type 2.
+        if (static_cast<s32>(
+                reinterpret_cast<EvtSeqResEntry*>(result)->field_0xC) != 2) {
             nw4r::db::Panic(lbl_eu_80530ECC, 0x44, lbl_eu_80530E88);
         }
         if (result == 0) {

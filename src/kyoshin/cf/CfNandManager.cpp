@@ -1330,20 +1330,23 @@ void cf::CfNandManager::cbRenderBefore() {
     // While the counter is armed (1), copy the EFB into the shared texture
     // buffer and flush it, then disarm.
     if (lbl_eu_80664770 == 1) {
-        // Widths are consumed straight from the reload (no local survives the
-        // intervening calls); heights live across calls in preserved regs.
-        u16 efbH = CDeviceVI::getRenderModeObj()->efbHeight;
-        GXSetTexCopySrc(0, 0, CDeviceVI::getRenderModeObj()->fbWidth, efbH);
-        efbH = CDeviceVI::getRenderModeObj()->efbHeight;
-        GXSetTexCopyDst(CDeviceVI::getRenderModeObj()->fbWidth, efbH, (GXTexFmt)6,
+        // The leading width local takes the first preserved slot (r31) but is
+        // copy-forwarded into the arg register; heights/sizes land in r30.
+        // Rule A (decl order): h3 declared first takes r31; the early
+        // heights fall to r30.
+        u16 h3;
+        u16 h1 = CDeviceVI::getRenderModeObj()->efbHeight;
+        GXSetTexCopySrc(0, 0, CDeviceVI::getRenderModeObj()->fbWidth, h1);
+        u16 h2 = CDeviceVI::getRenderModeObj()->efbHeight;
+        GXSetTexCopyDst(CDeviceVI::getRenderModeObj()->fbWidth, h2, (GXTexFmt)6,
                         (GXBool)0);
         GXCopyTex(lbl_eu_80664780, (GXBool)0);
         GXPixModeSync();
         GXInvalidateTexAll();
         u32 size1 = GXGetTexBufferSize(0xa4, 0x74, 4, (GXBool)0, 0);
-        u16 h = CDeviceVI::getRenderModeObj()->efbHeight;
+        h3 = CDeviceVI::getRenderModeObj()->efbHeight;
         u32 size2 =
-            GXGetTexBufferSize(CDeviceVI::getRenderModeObj()->fbWidth, h, (GXTexFmt)6,
+            GXGetTexBufferSize(CDeviceVI::getRenderModeObj()->fbWidth, h3, (GXTexFmt)6,
                                (GXBool)0, 0);
         DCFlushRange(lbl_eu_8066477C, size1 + size2);
         lbl_eu_80664770 = 2;

@@ -6,12 +6,12 @@
 #include "kyoshin/cf/CfGameManager.hpp"
 
 struct UnkClass_8009ECB0;
+struct UnkClass_805764CC;
 
-// Planted s32->f32 conversion magic (0x4330000080000000): naming one pooled
-// constant makes MWCC unify the literal pool so the builtin conversion's
-// anonymous @N label resolves to this retail sdata2 address
-// (MWCC_CASES: ocUnit::turn pool-unification idiom).
-const f64 lbl_eu_80665E40 = 4503601774854144.0;
+// Planted s32->f32 conversion magic (0x4330000080000000 = 2^52 + 2^31),
+// imported from retail sdata2: MWCC pools the builtin cast's magic as a
+// TU-local label that resolves to this symbol (MWCC_CASES 7i).
+extern const f64 lbl_eu_80665E40;
 
 // ============================================================================
 // External declarations (called functions not declared in included headers)
@@ -67,7 +67,7 @@ extern "C" {
     void func_8009E0A8(int*, int);
     int func_8009E284(int*, int);
     int* func_8009D790(int*, int);
-    void func_800B6800(float, void*, int);    void* func_800B07E8__Fv();
+    void func_800B6800(UnkClass_805764CC*, void*, int, float);    void* func_800B07E8__Fv();
     void func_800B1AF4(void*);
     void func_8007C360__Q22cf13CfGameManagerFv(float, int, int);
     void func_8007F830__Q22cf13CfGameManagerFv(int, int);
@@ -1311,9 +1311,12 @@ int setDispOffArea(VMThread* vmThread) {
     void* obj = func_801864DC(func_801862C0(), *(int*)((u8*)ocObj + 4));
 
     if (obj != NULL) {
-        void* box = func_800B07E8__Fv();
-        float fAreaId = areaId;
-        func_800B6800(fAreaId, obj, 1);
+        // The singleton from func_800B07E8__Fv is passed as the callee's self.
+        // The int->float arg uses MWCC's builtin biased-conversion idiom
+        // (xoris/lis 0x4330/stw/stw/lfd/fsubs); its magic pools as a TU-local
+        // label that resolves to lbl_eu_80665E40 (MWCC_CASES 7i/fsub-rule).
+        UnkClass_805764CC* box = (UnkClass_805764CC*)func_800B07E8__Fv();
+        func_800B6800(box, obj, 1, areaId);
     }
 
     return 0;

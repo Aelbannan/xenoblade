@@ -657,6 +657,11 @@ extern "C" void func_8025449C(u8* self, int a, int b, int c, u16 itemId) {
     }
 }
 
+// Target 3: us-80256ae4
+// Destructor for CCollepedia.
+// Calls sub-object destructors and frees memory if dealloc_flag > 0.
+#pragma optimize_for_size on
+
 // Target 1: us-802567fc
 // Recompute collection progress for every category page.
 // A row counts as "complete" when the leading non-empty slots of its 5
@@ -664,23 +669,28 @@ extern "C" void func_8025449C(u8* self, int a, int b, int c, u16 itemId) {
 // its rows are complete. The per-page progress float at +8 is either 1.0
 // (complete page) or collected-count / seen-count.
 extern "C" __declspec(noinline) void func_802545C0(u8* self) {
+    u8* group;
+    u8* row;
     u8 i;
-    int r;
-    int c;
+    u8 groupDone;
+    u8 rowCount;
+    u8 r;
+    u8 rowDone;
+    u8 c;
 
     for (i = 0; i < self[0]; i++) {
-        u8* group = self + i * 0x140;
-        u8 rowCount = group[5];
-        u8 groupDone = 1;
+        group = self + i * 0x140;
+        rowCount = group[5];
+        groupDone = 1;
         for (r = 0; r < rowCount; r++) {
-            u8* row = group + r * 0x34;
-            u8 rowDone = 1;
+            row = group + r * 0x34;
+            rowDone = 1;
             for (c = 0; c < 5; c++) {
                 u8 state = row[c * 0xA + 0x16];
-                if (state != 3) {
-                    if (state != 0) rowDone = 0;
-                    break;
-                }
+                if (state == 0) break;
+                if (state == 3) continue;
+                rowDone = 0;
+                break;
             }
             row[0xD] = rowDone;
             if (rowDone == 0) groupDone = 0;
@@ -692,14 +702,14 @@ extern "C" __declspec(noinline) void func_802545C0(u8* self) {
     // an empty slot, seeded with the constant below.
     float one = lbl_eu_80668800;
     for (i = 0; i < self[0]; i++) {
-        u8* group = self + i * 0x140;
+        group = self + i * 0x140;
         if (group[6] != 0) {
             *(float*)(group + 8) = one;
         } else {
             float denom = lbl_eu_806687F8;
             float num = denom;
-            u8 cnt = group[5];
-            for (r = 0; r < cnt; r++) {
+            rowCount = group[5];
+            for (r = 0; r < rowCount; r++) {
                 u8* row = group + r * 0x34;
                 for (c = 0; c < 5; c++) {
                     u8 state = row[c * 0xA + 0x16];
@@ -713,10 +723,6 @@ extern "C" __declspec(noinline) void func_802545C0(u8* self) {
     }
 }
 
-// Target 3: us-80256ae4
-// Destructor for CCollepedia.
-// Calls sub-object destructors and frees memory if dealloc_flag > 0.
-#pragma optimize_for_size on
 extern "C" void* __dt__11CCollepediaFv(CCollepedia* self, int flag) {
     if (self) {
         __dt__7CSysWinFv((u8*)self + 0x9C, -1);

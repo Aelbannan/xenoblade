@@ -1393,28 +1393,162 @@ void func_801D77BC(CItemBoxInfo* info, u16 arg2) {
     }
 }
 #pragma pop
-void func_801D79F8(CItemBoxInfo* info, u16 arg2, void* arg3, u16 arg4) {
-    func_801D85D8(info);
-    void* layout = info->state.layout;
-    char* base = (char*)&lbl_eu_805063BC;
+#pragma push
+#pragma optimize_for_size on
+// Retail func_801D79F8 (kind-3 detail renderer): rebuild the detail record
+// (func_801D5564), print the description/caption text, position the cursor
+// row from the layout panes, stash the equip summary at info+0xB0.., then per
+// player slot recolor the row panes and stamp the owning player's name onto
+// equipment entries that resolve back to the selected item.
+void func_801D79F8(CItemBoxInfo* info, u16 arg2, void* arg3, u32 arg4) {
+    // Frame order mirrors retail (descending slots): record > caption storage
+    // > position > colours > slot values > cursor temp > staged pair.
+    CItemBoxDetailRec rec;
+    char textStorage[sizeof(ml::FixStr<32>)];
+    ml::FixStr<32>& caption = *reinterpret_cast<ml::FixStr<32>*>(textStorage);
+    nw4r::math::VEC3 pos;
+    CItemBoxVertexColors cols;
+    CItemBoxSlotVals vals;
+    nw4r::math::VEC3 tmp;
+    CItemBoxTagStage cur;
+    CItemBoxTagStage stage;
+
     func_801D8A88(info);
-    void* r = func_80157C4C_1(0);
-    if (r != NULL && *(u32*)r != 0) {
-        func_801D5564(info, 0, r, info);
+    func_801D85D8(info);
+    func_801D5564(&rec, info, (void*)(u32)arg2, arg3);
+    CItemBoxDetailBody body = rec.body;
+
+    char* base = (char*)&lbl_eu_805063BC;
+    func_80136B4C((nw4r::lyt::Layout*)info->state.layout, base + 0x45a, body.text, 0);
+
+    caption.mString[0] = 0;
+    caption.mLength = 0;
+    void* item = NULL;
+    if (arg3 != NULL) {
+        item = arg3;
     }
-    u32 max = func_801392C0();
-    for (u32 i = 0; i < max; i++) {
-        u8 v = func_801392B4(i);
-        void* inst = CItem_initItemImplInstances(info);
-        u16 cat = func_80139358(v);
-        func_80136190(base + 0x130, base + 0x139, cat);
-        func_80136B4C((nw4r::lyt::Layout*)layout, base + 0x267, base + 0x2aa, 0);
-        func_80136B4C((nw4r::lyt::Layout*)layout, base + 0x273, base + 0x2aa, 0);
-        func_80136B4C((nw4r::lyt::Layout*)layout, base + 0x303, base + 0x2aa, 0);
-        func_80136B4C((nw4r::lyt::Layout*)layout, base + 0x303, base + 0x2aa, 0);
-        func_801D77A4(info, v, arg4);
+    if (body.kind == 0x30) {
+        func_80136B4C((nw4r::lyt::Layout*)info->state.layout, base + 0x466, base + 0x2aa, 0);
+    } else {
+        if (body.flag18 != 0) {
+            // Flag values 3/4 pick a count-formatted caption label.
+            if ((u32)(body.flag18 - 3) <= 1) {
+                char* label = func_80136190(base + 0x130, base + 0x139, 0x21);
+                caption.format(base + 0x419, &body.kind, label);
+            } else {
+                caption.format(base + 0x41e, &body.kind);
+            }
+        } else {
+            caption.format(base + 0x41e, &body.kind);
+        }
+        func_80136B4C((nw4r::lyt::Layout*)info->state.layout, base + 0x466, caption.mString, 0);
+    }
+
+    // Ternaries kept inline at their use sites so the results stay in the
+    // ABI return register instead of living across the whole state!=4 block.
+    func_80136B4C((nw4r::lyt::Layout*)info->state.layout, base + 0x472,
+                  (arg3 != NULL)
+                      ? (const char*)((CItemImplVt*)CItem_initItemImplInstances(item))->_v20(item)
+                      : func_801394D4(arg2),
+                  0);
+
+    if (*(u8*)((u8*)info + 0x9A) != 4) {
+        nw4r::lyt::Pane* pane =
+            ((nw4r::lyt::Pane*)*(void**)((u8*)info->state.layout + 0x10))->FindPaneByName(base + 0x472, true);
+        nw4r::lyt::Pane* pane2 =
+            ((nw4r::lyt::Pane*)*(void**)((u8*)info->state.layout + 0x10))->FindPaneByName(base + 0x16e, true);
+        func_80137924((nw4r::math::VEC3*)&pos, pane, pane2,
+                      (nw4r::lyt::Pane*)*(void**)((u8*)info->state.layout + 0x10));
+
+        *(s16*)((u8*)info + 0xB0) = (arg3 != NULL)
+            ? ((CItemImplVt*)CItem_initItemImplInstances(item))->_v54(item)
+            : func_80139358(arg2);
+        *(u8*)((u8*)info + 0x158) = (arg3 != NULL) ? 3 : 9;
+        *(u8*)((u8*)info + 0x164) = (u8)((arg3 != NULL)
+            ? (u16)((CItemImplVt*)CItem_initItemImplInstances(item))->_v08(item)
+            : 0);
+        setItemBoxIndex((CItemBoxInfo*)((u8*)info + 0xB0), 0,
+                        (s16)((arg3 != NULL)
+                            ? (s16)((CItemImplVt*)CItem_initItemImplInstances(item))->_v90(item)
+                            : 0));
+        tmp = *(nw4r::math::VEC3*)&pos;
+        copyVEC3((u8*)info + 0xC8, &tmp);
+    }
+
+    u16 cat2 = (arg3 != NULL)
+        ? ((CItemImplVt*)CItem_initItemImplInstances(item))->_v54(item)
+        : func_80139358(arg2);
+    u8 rows = (u8)func_801361E8((u32)(&lbl_eu_806640D8)[cat2], base + 0x47d, cat2);
+    func_80136B4C((nw4r::lyt::Layout*)info->state.layout, base + 0x484,
+                  func_80136190(base + 0x130, base + 0x139, rows + 0x15), 0);
+
+    stage.tbl = lbl_eu_80668030;
+    stage.h = lbl_eu_80668034;
+    u8 playerByte = (u8)(arg4 >> 16);
+
+    for (u32 i = 0; (u32)(u8)i < (u32)(u8)code80135FDC_getByte_64077(); i++) {
+        u32 idx = (u8)i + 1;
+        sprintf(caption.mString, base + 0x303, idx);
+        func_80137B44((nw4r::lyt::Layout*)info->state.layout, caption.mString, -1);
+        cols.w[0] = 0;
+        cols.w[1] = 0;
+        cols.w[2] = 0;
+        cols.w[3] = 0;
+        cols.w[0] = *(u32*)((u8*)info + 0x9C);
+        cols.w[1] = *(u32*)((u8*)info + 0xA0);
+        cols.w[2] = *(u32*)((u8*)info + 0xA4);
+        cols.w[3] = *(u32*)((u8*)info + 0xA8);
+        sprintf(caption.mString, base + 0x161, idx);
+        nw4r::lyt::Pane* pane =
+            ((nw4r::lyt::Pane*)*(void**)((u8*)info->state.layout + 0x10))->FindPaneByName(caption.mString, true);
+        if (pane != NULL) {
+            void* colorObj = ((CItemBoxPaneVt*)pane)->getColorObject();
+            for (u32 j = 0; j < 2; j++) {
+                func_801D62F8(colorObj, j, &cols.w[j * 2]);
+            }
+        }
+        if (arg3 == NULL) continue;
+        u8 flag = func_801392B4(i);
+        if (flag == 0) continue;
+        void* lookup = func_8009EC9C(flag);
+        cur.tbl = *(u32*)((u8*)lookup + 8);
+        cur.h = *(u16*)((u8*)lookup + 0xc);
+        vals.v26 = *(s16*)((u8*)lookup + 0x26);
+        vals.v1C = *(s16*)((u8*)lookup + 0x1c);
+        vals.v1E = *(s16*)((u8*)lookup + 0x1e);
+        vals.v20 = *(s16*)((u8*)lookup + 0x20);
+        vals.v22 = *(s16*)((u8*)lookup + 0x22);
+        vals.v24 = *(s16*)((u8*)lookup + 0x24);
+        for (u32 k = 0; k < 6; k++) {
+            void* hit = func_80157C4C(((u8*)&cur)[k], vals.s[k]);
+            if (hit == NULL || *(u32*)hit == 0) continue;
+            u8 n = ((CItemImplVt*)CItem_initItemImplInstances(hit))->_v30(hit);
+            for (u32 m = 0; (u32)(u8)m < (u32)n; m++) {
+                s16 v40 = ((CItemImplVt*)CItem_initItemImplInstances(hit))->_v40(hit, m);
+                void* rec3 = func_80157C4C(3, v40);
+                if (rec3 == NULL || *(u32*)rec3 == 0 || rec3 != arg3) continue;
+                sprintf(caption.mString, base + 0x30e, idx);
+                u8 owner = func_801392B4((u32)playerByte);
+                u32 name;
+                if (flag == owner) {
+                    name = ((CItemNameLookupVt*)info->state.arcResourceAccessor)
+                               ->findName(0x74696d67, (u32)(base + 0x319), 0);
+                } else {
+                    name = ((CItemNameLookupVt*)info->state.arcResourceAccessor)
+                               ->findName(0x74696d67, (u32)(base + 0x32d), 0);
+                }
+                if (name == 0) {
+                    name = ((CItemNameLookupVt*)info->state.arcResourceAccessor)
+                               ->findName(0x74696d67, (u32)(base + 0x341), 0);
+                }
+                if (name != 0) {
+                    func_80137E7C((nw4r::lyt::Layout*)info->state.layout, caption.mString, name);
+                }
+            }
+        }
     }
 }
+#pragma pop
 #pragma push
 #pragma optimize_for_size on
 // Four-word label-argument record copied by func_801D8058/func_801E3730.

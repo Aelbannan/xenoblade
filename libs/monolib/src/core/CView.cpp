@@ -716,15 +716,21 @@ void func_8043E010__5CViewFv(CView* view) {
     }
 
     // Count the work IDs attached to the current view; bail if empty.
-    reslist<WORK_ID>* selfList = (reslist<WORK_ID>*)&current->unk238;
-    if (selfList->size() == 0) {
+    endNode = (_reslist_node<WORK_ID>*)current->unk238.mStartNodePtr;
+    curNode = endNode->mNext;
+    count = 0;
+    while (curNode != endNode) {
+        count++;
+        curNode = curNode->mNext;
+    }
+    if (count == 0) {
         return;
     }
 
     // Resolve the current view's proc root from its first attached work ID.
     CProc* thisRoot;
     thisRoot = pssGetRoot__5CProcFP5CProc(CProc::convertToProc(
-        getWorkThread__9CWorkUtilFUl(selfList->front())));
+        getWorkThread__9CWorkUtilFUl(endNode->mNext->mItem)));
 
     bool swapped;
     _reslist_node<CWorkThread*>* cur;
@@ -752,17 +758,17 @@ void func_8043E010__5CViewFv(CView* view) {
             itemCur = CView::convertToView(cur->mItem);
             itemNext = CView::convertToView(next->mItem);
             {
-                c1 = 0;
                 s1 = (_reslist_node<WORK_ID>*)itemCur->unk238.mStartNodePtr;
                 n1 = s1->mNext;
+                c1 = 0;
                 while (n1 != s1) {
                     c1++;
                     n1 = n1->mNext;
                 }
                 if (c1 != 0) {
-                    c2 = 0;
                     s2 = (_reslist_node<WORK_ID>*)itemNext->unk238.mStartNodePtr;
                     n2 = s2->mNext;
+                    c2 = 0;
                     while (n2 != s2) {
                         c2++;
                         n2 = n2->mNext;
@@ -798,17 +804,17 @@ void func_8043E010__5CViewFv(CView* view) {
             itemCur = CView::convertToView(cur->mItem);
             itemNext = CView::convertToView(next->mItem);
             {
-                c1 = 0;
                 s1 = (_reslist_node<WORK_ID>*)itemCur->unk238.mStartNodePtr;
                 n1 = s1->mNext;
+                c1 = 0;
                 while (n1 != s1) {
                     c1++;
                     n1 = n1->mNext;
                 }
                 if (c1 != 0) {
-                    c2 = 0;
                     s2 = (_reslist_node<WORK_ID>*)itemNext->unk238.mStartNodePtr;
                     n2 = s2->mNext;
+                    c2 = 0;
                     while (n2 != s2) {
                         c2++;
                         n2 = n2->mNext;

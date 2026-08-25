@@ -1226,23 +1226,41 @@ void func_804B3658(CColiSphereOb* self, const CColiMgr* mgr,
     n.z = lbl_eu_8066AEB0;
     nw4r::math::VEC3TransformNormal(&n, (const nw4r::math::MTX34*)src, &n);
 
-    // Radius stored straight from the magnitude; the first bounds check
-    // store-forwards the live value (frsp).
+    // Radius stored straight from the magnitude; the first bounds check's
+    // radius local is store-forwarded (frsp).
     self->radius = PSVECMag((const Vec*)&n);
     self->hd.flags |= 1;
 
-    if (lbl_eu_80665944->max[0] < self->pos[0] + self->radius)
-        lbl_eu_80665944->max[0] = self->pos[0] + self->radius;
-    if (lbl_eu_80665944->min[0] > self->pos[0] - self->radius)
-        lbl_eu_80665944->min[0] = self->pos[0] - self->radius;
-    if (lbl_eu_80665944->max[1] < self->pos[1] + self->radius)
-        lbl_eu_80665944->max[1] = self->pos[1] + self->radius;
-    if (lbl_eu_80665944->min[1] > self->pos[1] - self->radius)
-        lbl_eu_80665944->min[1] = self->pos[1] - self->radius;
-    if (lbl_eu_80665944->max[2] < self->pos[2] + self->radius)
-        lbl_eu_80665944->max[2] = self->pos[2] + self->radius;
-    if (lbl_eu_80665944->min[2] > self->pos[2] - self->radius)
-        lbl_eu_80665944->min[2] = self->pos[2] - self->radius;
+    {
+        f32 r = self->radius;
+        if (lbl_eu_80665944->max[0] < self->pos[0] + r)
+            lbl_eu_80665944->max[0] = self->pos[0] + r;
+    }
+    {
+        f32 r = self->radius;
+        if (lbl_eu_80665944->min[0] > self->pos[0] - r)
+            lbl_eu_80665944->min[0] = self->pos[0] - r;
+    }
+    {
+        f32 r = self->radius;
+        if (lbl_eu_80665944->max[1] < self->pos[1] + r)
+            lbl_eu_80665944->max[1] = self->pos[1] + r;
+    }
+    {
+        f32 r = self->radius;
+        if (lbl_eu_80665944->min[1] > self->pos[1] - r)
+            lbl_eu_80665944->min[1] = self->pos[1] - r;
+    }
+    {
+        f32 r = self->radius;
+        if (lbl_eu_80665944->max[2] < self->pos[2] + r)
+            lbl_eu_80665944->max[2] = self->pos[2] + r;
+    }
+    {
+        f32 r = self->radius;
+        if (lbl_eu_80665944->min[2] > self->pos[2] - r)
+            lbl_eu_80665944->min[2] = self->pos[2] - r;
+    }
 }
 
 // ---------------------------------------------------------------------------

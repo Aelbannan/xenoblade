@@ -411,7 +411,41 @@ extern "C" int func_801C6E90(void*);
 extern "C" u32 func_801D4AB0(void*);
 extern "C" void func_801D6394(CItemBoxInfo*, u32, void*, u32);
 extern "C" void func_801D5DA4(CItemBoxInfo*, u16, void*, u16);
-extern "C" void func_801D79F8(CItemBoxInfo*, u16, void*, u16);
+extern "C" void func_801D79F8(CItemBoxInfo*, u16, void*, u32);
+
+// 0xA8-byte detail record built by func_801D5564 for func_801D79F8; only the
+// 0xA4-byte body (offset 4..0xA7) is copied out whole by the callers (retail
+// mtctr 8-byte-pair copy loop over 20 iterations).
+struct CItemBoxDetailBody {
+    char* text;      // 0x00 - description text pointer
+    u8 kind;         // 0x04 - compared against 0x30
+    u8 _05[3];
+    u8 _08[0x10];
+    u8 flag18;       // 0x18 - caption selector (3/4 select the count label)
+    u8 _19[0x8B];    // pad to 0xA4
+};
+struct CItemBoxDetailRec {
+    u32 _00;
+    CItemBoxDetailBody body;
+};
+
+// Six per-slot equip s16 values staged from the lookup record inside the
+// func_801D79F8 slot loop ([0] = record+0x26 field, [1..5] = +0x1c..+0x24).
+union CItemBoxSlotVals {
+    struct {
+        s16 v26;
+        s16 v1C;
+        s16 v1E;
+        s16 v20;
+        s16 v22;
+        s16 v24;
+    };
+    s16 s[6];
+};
+
+// .sdata2 table-handle pair staged once before the func_801D79F8 slot loop.
+extern const u32 lbl_eu_80668030;
+extern const u16 lbl_eu_80668034;
 extern "C" void func_801D8058(CItemBoxInfo*, u32);
 extern "C" void func_801D77BC(CItemBoxInfo*, u16);
 extern "C" void func_801D8318(CItemBoxInfo*);
@@ -491,8 +525,8 @@ union CItemBoxColorAny {
 // .sdata2 table-handle pair staged by func_801E3228.
 extern const u32 lbl_eu_80668064;
 extern const u16 lbl_eu_80668068;
-// 0x10-byte POD vertex-colour pair passed as one sprintf vararg in
-// func_801E3228; built memberwise (retail stw zero-fill + word copies).
+// 0x10-byte POD vertex-colour quad built per-slot in func_801D79F8 from
+// info+0x9C..0xA8 and consumed pairwise by func_801D62F8.
 struct CItemBoxVertexColors {
     u32 w[4];
 };

@@ -1262,38 +1262,50 @@ void CGXCache::func_8044B660() {
         // use -unk500 as the far plane (same near=1.0 / ortho shape as the
         // non-adjusted path). Each delta is loaded before the getRenderModeObj
         // call that follows so it survives the call in r30 (retail ping-pong).
-        // All int->float conversions go through the shared magic doubles so
-        // the lfd relocs name the retail .sdata2 slots.
+        // Conversions use two caller-owned magic-double slots: the signed
+        // edge goes through one slot, and the unsigned fb dimension AND the
+        // following delta share the second slot (the delta store overwrites
+        // the dimension and is re-read after the division, exactly like
+        // retail's stw/lfd pair).
         GXRenderModeObj* rmo;
-        f32 far = (f32)(-unk500);
+        F64Cvt su, ss;
+        su.w[0] = 0x43300000u;
+        ss.w[0] = 0x43300000u;
         s32 dx = cacheInstance__9CDeviceGX->mScissorDeltaX;
         f32 right, left, bottom, top;
         rmo = getRenderModeObj__9CDeviceVIFv();
-        f32 fw = (f32)rmo->fbWidth;
-        f32 mr = (f32)mRectRight;
-        right = mr / fw * (f32)dx;
-        dx = cacheInstance__9CDeviceGX->mScissorDeltaX;
+        f32 den = cvtU32Slot(&su, rmo->fbWidth);
+        f32 num = cvtS32Slot(&ss, mRectRight);
+        f32 del = cvtS32Slot(&su, dx);
+        right = num / den * del;
+        dx = cacheInstance__9CDeviceGX->mScissorDeltaY;
         rmo = getRenderModeObj__9CDeviceVIFv();
-        f32 fw2 = (f32)rmo->fbWidth;
-        f32 ml = (f32)mRectLeft;
-        left = ml / fw2 * (f32)dx;
-        s32 dy = cacheInstance__9CDeviceGX->mScissorDeltaY;
+        den = cvtU32Slot(&su, rmo->fbWidth);
+        num = cvtS32Slot(&ss, mRectLeft);
+        del = cvtS32Slot(&su, dx);
+        left = num / den * del;
+        dx = cacheInstance__9CDeviceGX->mScissorDeltaY;
         rmo = getRenderModeObj__9CDeviceVIFv();
-        f32 eh = (f32)rmo->efbHeight;
-        f32 mb = (f32)mRectBottom;
-        bottom = mb / eh * (f32)dy;
-        dy = cacheInstance__9CDeviceGX->mScissorDeltaY;
+        den = cvtU32Slot(&su, rmo->efbHeight);
+        num = cvtS32Slot(&ss, mRectBottom);
+        del = cvtS32Slot(&su, dx);
+        bottom = num / den * del;
+        dx = cacheInstance__9CDeviceGX->mScissorDeltaY;
         rmo = getRenderModeObj__9CDeviceVIFv();
-        f32 eh2 = (f32)rmo->efbHeight;
-        f32 mt = (f32)mRectTop;
-        top = mt / eh2 * (f32)dy;
+        den = cvtU32Slot(&su, rmo->efbHeight);
+        num = cvtS32Slot(&ss, mRectTop);
+        del = cvtS32Slot(&su, dx);
+        top = num / den * del;
+        f32 far = cvtS32Slot(&ss, -unk500);
         C_MTXOrtho(mProjMtx, top, bottom, left, right, lbl_eu_8066A378, far);
     } else {
         // Plain ortho: top/left/near = 1.0, bottom = deltaY, right = deltaX,
         // far = -unk500 (same shape as func_8044B5C0).
-        f32 far = (f32)(-unk500);
-        f32 right = (f32)cacheInstance__9CDeviceGX->mScissorDeltaX;
-        f32 bottom = (f32)cacheInstance__9CDeviceGX->mScissorDeltaY;
+        F64Cvt cs;
+        cs.w[0] = 0x43300000u;
+        f32 far = cvtS32Slot(&cs, -unk500);
+        f32 right = cvtS32Slot(&cs, cacheInstance__9CDeviceGX->mScissorDeltaX);
+        f32 bottom = cvtS32Slot(&cs, cacheInstance__9CDeviceGX->mScissorDeltaY);
         C_MTXOrtho(mProjMtx, lbl_eu_8066A378, bottom, lbl_eu_8066A378, right,
                    lbl_eu_8066A378, far);
     }
@@ -2285,8 +2297,8 @@ CGXCache::CGXCache() {
     func_800407C8_tmp v4;
     u32 col;
     s16 rect[4];
-    s16 subH;    // heights for the sub-rect + stack rect temps (retail r31)
     s16 fullH;   // heights for the four full-screen rects (retail r30)
+    s16 subH;    // heights for the sub-rect + stack rect temps (retail r31)
 
     // Base ctor stores the IStateCache vtable; rebind to the CGXCache vtable.
     __ct__IStateCache(this);
@@ -2296,14 +2308,14 @@ CGXCache::CGXCache() {
     __ct__CMsgParam_32(&unk4, (u32)this);
 
     // Five full-screen rects (0x4A0, 0x4A8, 0x4B0, 0x4B8) + identity mtx.
-    fullH = getEFBHeight();
-    initFullRect(&rect4A0, fullH);
-    fullH = getEFBHeight();
-    initFullRect(&rect4A8, fullH);
-    fullH = getEFBHeight();
-    initFullRect(&rect4B0, fullH);
-    fullH = getEFBHeight();
-    initFullRect(&unk4B8, fullH);
+    subH = getEFBHeight();
+    initFullRect(&rect4A0, subH);
+    subH = getEFBHeight();
+    initFullRect(&rect4A8, subH);
+    subH = getEFBHeight();
+    initFullRect(&rect4B0, subH);
+    subH = getEFBHeight();
+    initFullRect(&unk4B8, subH);
     __ct__80449548(&mProjMtx);
 
     unk500 = 0x7fff;
@@ -2312,8 +2324,8 @@ CGXCache::CGXCache() {
     unk508 = 0;
     unk50C = 0;
 
-    subH = getEFBHeight();
-    initFullRect(&mRectLeft, subH);   // 0x510 sub-rect
+    fullH = getEFBHeight();
+    initFullRect(&mRectLeft, fullH);   // 0x510 sub-rect
     mAdjustProj = 0;
 
     // Ring command cache entries: cmds 0, 3..9, 0xd carry a wid pointer; 1
@@ -2342,12 +2354,12 @@ CGXCache::CGXCache() {
     col = func_80449550(ml::CCol4::white);
     ((CMsgParam<32>*)&unk4)->func_8044972C(0xa, (u8*)&col);
 
-    subH = getEFBHeight();
-    initFullRect(rect, subH);
+    fullH = getEFBHeight();
+    initFullRect(rect, fullH);
     ((CMsgParam<32>*)&unk4)->func_804495C4(0xb, (u32*)rect);
 
-    subH = getEFBHeight();
-    initFullRect(rect, subH);
+    fullH = getEFBHeight();
+    initFullRect(rect, fullH);
     ((CMsgParam<32>*)&unk4)->func_804495C4(0xc, (u32*)rect);
 
     ((CMsgParam<32>*)&unk4)->func_80449B94(0xd, &lbl_eu_80663640);

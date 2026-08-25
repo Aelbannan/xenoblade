@@ -471,30 +471,20 @@ bool func_800A49E4(const nw4r::math::VEC3& a, const nw4r::math::VEC3& b,
                   const nw4r::math::VEC3& c, float r2) {
     // Project c onto the XZ line through a-b and test whether the closest
     // point lies within the squared radius r2 (all vectors flattened to y=0).
-    nw4r::math::VEC3 av, bv, cv;
-    av.x = a.x;
-    av.y = lbl_eu_806667D8;
-    av.z = a.z;
-    bv.x = b.x;
-    bv.y = lbl_eu_806667D8;
-    bv.z = b.z;
-    cv.x = c.x;
-    cv.y = lbl_eu_806667D8;
-    cv.z = c.z;
-    nw4r::math::VEC3 ab, ac, cb;
-    nw4r::math::VEC3 t1, t2, t3;
-    nw4r::math::VEC3Sub(&t1, &bv, &av);
-    ab = t1;
-    nw4r::math::VEC3Sub(&t2, &cv, &av);
-    ac = t2;
-    nw4r::math::VEC3Sub(&t3, &cv, &bv);
-    cb = t3;
-    float dot = nw4r::math::VEC3Dot(&ac, &ab);
+    ml::CVec3 av, bv, cv;
+    av.set(a.x, lbl_eu_806667D8, a.z);
+    bv.set(b.x, lbl_eu_806667D8, b.z);
+    cv.set(c.x, lbl_eu_806667D8, c.z);
+    ml::CVec3 ab, ac, cb;
+    ml::CVec3::sub(ab, bv, av);
+    ml::CVec3::sub(ac, cv, av);
+    ml::CVec3::sub(cb, cv, bv);
+    float dot = ml::CVec3::dot(ac, ab);
     if (dot < lbl_eu_806667D8) return false;
-    float len2 = nw4r::math::VEC3Dot(&ab, &ab);
+    float len2 = ml::CVec3::dot(ab, ab);
     if (dot > len2) return false;
     float t = dot / len2;
-    return nw4r::math::VEC3Dot(&ac, &ac) - dot * t <= r2;
+    return ml::CVec3::dot(ac, ac) - dot * t <= r2;
 }
 
 float func_800A4B5C(const ml::CVec3& a, const ml::CVec3& b, const ml::CVec3& c) {
@@ -510,8 +500,8 @@ float func_800A4B5C(const ml::CVec3& a, const ml::CVec3& b, const ml::CVec3& c) 
     ab.set(t1);
     nw4r::math::VEC3Sub(t2, c, a);
     ac.set(t2);
-    float dot = nw4r::math::VEC3Dot(ac, ab);
     float len2 = nw4r::math::VEC3Dot(ab, ab);
+    float dot = nw4r::math::VEC3Dot(ac, ab);
     float t;
     if (len2 < lbl_eu_806667F8) {
         t = lbl_eu_806667D8;

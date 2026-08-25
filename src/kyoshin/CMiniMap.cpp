@@ -2130,7 +2130,71 @@ extern "C" void func_80116670(CMiniMapGimmickView* self, u32 table, void* layout
         self->field_0x400[j] = res;
     }
 }
-extern "C" void __declspec(noinline) func_801168A0(CMiniMapGimmickView* self) {}
+// ============================================================================
+// func_801168A0 - update gimmick-view marker rows from the player's position.
+// For each live row: diff = player pos - row pos. Rows with the update flag
+// set are radius-clamped (Warning/FrSqrt idiom shared with the Move sections);
+// rows without it just drop out of range (clear the entry's enable bit).
+// Both paths then store integer-truncated grid coords into the pane record.
+// ============================================================================
+void __declspec(noinline) func_801168A0(CMiniMapGimmickView* self) {
+    // The position source is the +0x3E9C member of the player object; retail
+    // null-tests the container-of pointer before dereferencing.
+    cf::CfObjectMove* player = cf::CfGameManager::getPlayer(0);
+    if (player != NULL) {
+        player = (cf::CfObjectMove*)((u8*)player - 0x3E9C);
+    }
+    if (player == NULL) {
+        return;
+    }
+
+    // Retail hoists the scale-derived constants ahead of the position copy.
+    f32 gridStep = lbl_eu_80667094 * self->field_0x08;   // one grid cell (world units)
+    f32 radius = lbl_eu_806670A0 * self->field_0x08;     // clamp radius (flagged rows)
+
+    ml::CVec3* pposPtr = ((MiniMapObj*)((u8*)player + 0x3E9C))->GetPos();
+    ml::CVec3 ppos;
+    ppos.x = pposPtr->x;
+    ppos.y = pposPtr->y;
+    ppos.z = pposPtr->z;
+
+    f32 gridStepSq = gridStep * gridStep;                // in-range threshold (others)
+    f32 zero = lbl_eu_80667090;
+
+    for (u32 i = 0; i < self->field_0x6A4; i++) {
+        ml::CVec3 diff = ppos - self->field_0x5D4[i];
+
+        if (self->field_0x694[i] != 0) {
+            f32 mag = PSVECMag((const Vec*)&diff);
+            if (mag > radius) {
+                f32 len2 = nw4r::math::VEC3LenSq(diff);
+                if (len2 < zero) {
+                    Warning__Q24nw4r2dbFPCciPCce(
+                        (const char*)lbl_eu_80526324, 0x273,
+                        (const char*)lbl_eu_80526300);
+                }
+                f32 len =
+                    (len2 <= zero) ? zero : len2 * FrSqrt__Q24nw4r4mathFf(len2);
+                f32 k = radius / len;
+                diff.x *= k;
+                diff.z *= k;
+            }
+        } else if (nw4r::math::VEC3LenSq(diff) > gridStepSq) {
+            // Row fell off the visible grid: hide its pane record and skip.
+            self->field_0x594_entries[i]->field_BB &= 0xFE;
+            continue;
+        }
+
+        CMMMapEntry* entry = self->field_0x594_entries[i];
+        s32 gx = (s32)(diff.x / self->field_0x08);
+        s32 gz = (s32)(diff.z / self->field_0x08);
+        f32 fgx = (f32)gx;
+        f32 fgz = (f32)gz;
+        entry->field_2C = fgx;
+        entry->field_30 = fgz;
+        entry->field_34 = zero;
+    }
+}
 extern "C" void __declspec(noinline) func_80116B40(void* self) {}
 
 // func_801165EC - reset the minimap gimmick-view tables (retail unmangled

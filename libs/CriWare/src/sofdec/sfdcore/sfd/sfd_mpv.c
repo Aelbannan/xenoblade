@@ -2592,19 +2592,13 @@ s32 sfmpv_ReprocessShc(void* self, void* shc, s32* out) {
     u32 pic[2];
     u32 out2;
 
-    *out = 0;
     {
         s32 v = *(s32*)((u8*)self + 0x2670);
         hd = *(void**)((u8*)self + 0x2068);
-        /* branch-per-case keeps MWCC from CSE-ing the three NULL stores */
-        if (v == 0) {
-            p = NULL;
-        } else if (*(s32*)((u8*)hd + 0x10) > 0) {
-            p = NULL;
-        } else {
-            p = (u8*)v + 0xad0;
-        }
+        /* nested ?: reproduces retail's fall-through-NULL / branch-to-addr layout */
+        p = (v == 0) ? NULL : (*(s32*)((u8*)hd + 0x10) > 0 ? NULL : (u8*)v + 0xad0);
     }
+    *out = 0;
     if (p == NULL) {
         return 0;
     }

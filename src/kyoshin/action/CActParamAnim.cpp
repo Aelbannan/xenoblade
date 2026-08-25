@@ -3293,6 +3293,35 @@ void CActParamAnim::stopAnim() {
 // its target, then rotates the move direction (+0x408) toward the desired
 // heading (turn / strafe / counter-turn modes) and commits the resulting
 // rotation quaternion to the attached sub-object.
+// Commit helper: normalize-or-replace the move direction (+0x408), build the
+// shortest-arc quaternion toward it, pre-multiply by the angle rotation, and
+// push the result to the attached sub-object.
+    #define COMMIT_QUAT()                                                        \
+    do {                                                                          \
+        if (iv->field408 == lbl_eu_80665EA0 && iv->field40C == lbl_eu_80665EA0 && \
+            iv->field410 == lbl_eu_80665EA0) {                                     \
+            func_8004B3F0(&iv->field408,                                           \
+                          reinterpret_cast<const f32*>(&ml::CVec3::unitY));        \
+        } else {                                                                  \
+            func_8004CBC8(reinterpret_cast<ml::CVec3*>(&iv->field408));            \
+        }                                                                         \
+        nw4r::math::VEC3 unitYCopy;                                               \
+        func_8004B79C(&unitYCopy.x,                                               \
+                      reinterpret_cast<const f32*>(&ml::CVec3::unitY));            \
+        Quaternion qa;                                                            \
+        Quaternion qb;                                                            \
+        func_8004B0B4(&qa);                                                       \
+        func_8004B0B4(&qb);                                                       \
+        func_80052584(&qa, reinterpret_cast<const Vec*>(&ml::CVec3::unitY),       \
+                      reinterpret_cast<const Vec*>(&iv->field408));                \
+        func_800526C0(&qb, reinterpret_cast<const Vec*>(&ml::CVec3::unitY),       \
+                      f31);                                                        \
+        func_8005274C(&qa, &qb);                                                  \
+        if (s->object3A0 != 0) {                                                  \
+            func_80052780(func_8048315C(s->object3A0), &qa);                       \
+        }                                                                         \
+    } while (0)
+
 extern "C" void func_80051CD4(CActParamAnim* self) {
     CActParamAnimStateView* s = reinterpret_cast<CActParamAnimStateView*>(self);
     CActParamAnimInitView* iv = reinterpret_cast<CActParamAnimInitView*>(self);
@@ -3302,46 +3331,55 @@ extern "C" void func_80051CD4(CActParamAnim* self) {
     if (func_8004CC80() != 0) return;
     func_8004B344(self);
 
-    f32 f30 = lbl_eu_80665EA0;
     f32 f31 = lbl_eu_80665EA0;
     if (func_80052540(self) == 0) {
         // dt-scaled angular step limit.
-        f30 = func_8004B7B8(self);
+        f32 f30 = func_8004B7B8(self);
         f31 = func_8005254C(self) * f30;
         void* obj = func_8004B51C(self);
-        // Path C (chase the sub-object target via func_80052554) is taken when
-        // the object's +0x14 virtual returns 0 and the 0x100 flag is set.
-        bool pathC = false;
         if (obj != 0) {
+            // Chase the sub-object target (func_80052554) when the object's
+            // +0x14 virtual returns 0 and the 0x100 flag is clear; otherwise
+            // clamp the anim angle toward the stored heading (+0x440).
+            bool chase = false;
             if (reinterpret_cast<CActParamAnimObjVt14*>(obj)->f14() == 0 &&
-                func_8004B3D8(flagp, 0x100) != 0) {
-                pathC = true;
+                func_8004B3D8(flagp, 0x100) == 0) {
+                chase = true;
             }
-        }
-        // Clamp the anim angle (+0x444) toward its target by at most +/-f31.
-        if (pathC) {
-            if (func_80051BF4(self) == 0) {
-                f30 = func_8004B61C(self);
-                f32 target = func_80052554(func_8004B51C(self));
-                f32 d = func_8004BC28(target - f30);
+            if (chase) {
+                if (func_80051BF4(self) == 0) {
+                    f32 cur = func_8004B61C(self);
+                    f32 d = func_8004BC28(func_80052554(func_8004B51C(self)) - cur);
+                    if (d > f31) {
+                        s->field444 = func_8004BC28(func_8004B61C(self) + f31);
+                    } else if (d < -f31) {
+                        s->field444 = func_8004BC28(func_8004B61C(self) - f31);
+                    } else {
+                        s->field444 = func_8004BC28(func_80052554(func_8004B51C(self)));
+                        func_8004B694(flagp, 0x100);
+                    }
+                    s->field440 = func_8004B61C(self);
+                }
+            } else {
+                f32 d = func_8004BC28(iv->field440 - func_8004B61C(self));
                 if (d > f31) {
                     s->field444 = func_8004BC28(func_8004B61C(self) + f31);
                 } else if (d < -f31) {
                     s->field444 = func_8004BC28(func_8004B61C(self) - f31);
                 } else {
-                    s->field444 = func_80052554(func_8004B51C(self));
+                    s->field444 = func_8004BC28(iv->field440);
                     func_8004B694(flagp, 0x100);
                 }
-                s->field440 = func_8004B61C(self);
+                func_8004B61C(self);
             }
         } else {
-            f32 d = func_8004BC28(s->field440 - func_8004B61C(self));
+            f32 d = func_8004BC28(iv->field440 - func_8004B61C(self));
             if (d > f31) {
                 s->field444 = func_8004BC28(func_8004B61C(self) + f31);
             } else if (d < -f31) {
                 s->field444 = func_8004BC28(func_8004B61C(self) - f31);
             } else {
-                s->field444 = s->field440;
+                s->field444 = func_8004BC28(iv->field440);
                 func_8004B694(flagp, 0x100);
             }
             func_8004B61C(self);
@@ -3385,12 +3423,11 @@ extern "C" void func_80051CD4(CActParamAnim* self) {
     } while (0)
 
     bool turnMode = func_8004B3D8(flagp, 0x2000) != 0;
-    if (!turnMode && func_80052568(reinterpret_cast<u8*>(self) + 0x10) != 0) {
+    if (!turnMode && func_8005255C(reinterpret_cast<u8*>(self) + 0x10) != 0) {
         turnMode = true; // child probe true falls through to the turn section
     }
-    bool done = false;
-    if (!turnMode && func_8004B3D8(flagp, 0x4000) != 0) {
-        // Strafe/dash mode: orbit the heading around the radial direction.
+    if (turnMode) {
+        // Turn mode: converge the move direction onto the desired heading.
         if (func_8004B848(self) != 0) {
             nw4r::math::VEC3 n;
             func_8004B79C(&n.x, &iv->field3D8);
@@ -3477,50 +3514,76 @@ extern "C" void func_80051CD4(CActParamAnim* self) {
             func_8004B75C(&d2.x, &d.x, lbl_eu_80665ECC);
             func_8004B738(&iv->field408, &d2.x);
         }
-        COMMIT_QUAT(true);
-        done = true;
-    }
-    if (!done) {
-        if (s->field4DC > 0) {
+        COMMIT_QUAT();
+        s->field4DC = 0xF;
+    } else if (func_8004B3D8(flagp, 0x4000) != 0) {
+        // Strafe/dash mode: orbit the heading around the radial direction.
+        if (func_8004B848(self) != 0) {
+            nw4r::math::VEC3 n;
+            func_8004B79C(&n.x, &iv->field3D8);
+            if (iv->field3DC < lbl_eu_8066AF20) {
+                f32 root = func_8004EC78(iv->field3E0 * iv->field3E0 +
+                                         iv->field3D8 * iv->field3D8);
+                if (root != lbl_eu_80665EA0) {
+                    f32 k = lbl_eu_80665E9C / root;
+                    n.y = lbl_eu_80665EA0;
+                    f32 t = func_8004EC78(lbl_eu_80665E9C -
+                                          lbl_eu_8066AF20 * lbl_eu_8066AF20);
+                    n.x = iv->field3D8 * k * t;
+                    n.z = iv->field3E0 * k * t;
+                }
+            }
+            f32 mag = n.y;
+            if (mag == lbl_eu_80665EA0) {
+                mag = lbl_eu_80665E9C;
+            }
+            nw4r::math::VEC3 radial;
+            func_8004B60C(&radial.x, func_8004CC74(f31), lbl_eu_80665EA0,
+                          func_8004CC68(f31));
+            // Remove the component along n so the radial stays on the plane.
+            radial.y -= func_800504BC(&radial.x, &n.x) / mag;
+            func_8004CBC8(reinterpret_cast<ml::CVec3*>(&radial));
+            f32 ang2 = lbl_eu_8066A200 + func_8004CC40(radial.x, radial.z);
+            nw4r::math::VEC3 dir;
+            func_8004B60C(&dir.x, func_8004CC74(ang2), lbl_eu_80665EA0,
+                          func_8004CC68(ang2));
+            nw4r::math::VEC3 axis;
+            func_8004B0B0(&axis);
+            func_800527B0(&radial, &axis, &dir);
+            nw4r::math::VEC3 d;
+            func_8004CB80(&d.x, &axis.x, &iv->field408);
+            nw4r::math::VEC3 d2;
+            func_8004B75C(&d2.x, &d.x, lbl_eu_80665ECC);
+            func_8004B738(&iv->field408, &d2.x);
+        } else {
+            nw4r::math::VEC3 fwd;
+            func_8004B60C(&fwd.x, lbl_eu_80665EA0, lbl_eu_80665E9C,
+                          lbl_eu_80665EA0);
+            nw4r::math::VEC3 d;
+            func_8004CB80(&d.x, &fwd.x, &iv->field408);
+            nw4r::math::VEC3 d2;
+            func_8004B75C(&d2.x, &d.x, lbl_eu_80665ECC);
+            func_8004B738(&iv->field408, &d2.x);
+        }
+        COMMIT_QUAT();
+    } else {
+        s16* counter = reinterpret_cast<s16*>(&s->field4DC);
+        if (*counter > 0) {
             // Counter-turn mode: slow drift toward unit Y while the counter
-            // runs down.
+            // runs down (signed halfword, retail lha/subi/sth).
             nw4r::math::VEC3 d;
             func_8004CB80(&d.x, reinterpret_cast<const f32*>(&ml::CVec3::unitY),
                           &iv->field408);
             nw4r::math::VEC3 d2;
             func_8004B75C(&d2.x, &d.x, lbl_eu_80665F58);
             func_8004B738(&iv->field408, &d2.x);
-            if (iv->field408 == lbl_eu_80665EA0 &&
-                iv->field40C == lbl_eu_80665EA0 &&
-                iv->field410 == lbl_eu_80665EA0) {
-                func_8004B3F0(&iv->field408,
-                              reinterpret_cast<const f32*>(&ml::CVec3::unitY));
-            } else {
-                func_8004CBC8(reinterpret_cast<ml::CVec3*>(&iv->field408));
-            }
-            nw4r::math::VEC3 unitYCopy;
-            func_8004B79C(&unitYCopy.x,
-                          reinterpret_cast<const f32*>(&ml::CVec3::unitY));
-            Quaternion qa;
-            Quaternion qb;
-            func_8004B0B4(&qa);
-            func_8004B0B4(&qb);
-            func_80052584(&qa, reinterpret_cast<const Vec*>(&ml::CVec3::unitY),
-                          reinterpret_cast<const Vec*>(&iv->field408));
-            func_800526C0(&qb, reinterpret_cast<const Vec*>(&ml::CVec3::unitY),
-                          f31);
-            func_8005274C(&qa, &qb);
-            if (s->object3A0 != 0) {
-                func_80052780(func_8048315C(s->object3A0), &qa);
-            }
-            s->field4DC--;
-            done = true;
-        }
-        if (!done && s->object3A0 != 0) {
+            COMMIT_QUAT();
+            *counter = *counter - 1;
+        } else if (s->object3A0 != 0) {
             func_8004B344(self);
             if (func_80052540(self) == 0) {
                 nw4r::math::VEC3 v;
-                func_8004B60C(&v, lbl_eu_80665EA0, f31, lbl_eu_80665EA0);
+                func_8004B60C(&v.x, lbl_eu_80665EA0, f31, lbl_eu_80665EA0);
                 func_8004B5F0(func_8048315C(s->object3A0), &v.x);
             }
         }
@@ -3745,8 +3808,8 @@ void CActParamAnim::func_80052934() {
     }
 
     u32 flags = s->field0C;
-    nw4r::math::VEC3 cur;
     if ((flags & 0x100) == 0) {
+        nw4r::math::VEC3 cur;
         cur.x = s->field3A8;
         cur.y = s->field3AC;
         cur.z = s->field3B0;

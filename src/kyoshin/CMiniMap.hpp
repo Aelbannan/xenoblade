@@ -251,6 +251,18 @@ struct MiniMapTable {
     nw4r::lyt::Pane* field_13C;   // 0x13C - pane parent (layout root pane)
 };
 
+// Pane-entry record written by func_801168A0: integer-truncated grid coords
+// at +0x2C/+0x30, constant at +0x34, and a per-entry enable byte at +0xB7
+// (bit0 cleared when a row exceeds the grid radius).
+struct CMMMapEntry {
+    u8 pad_00[0x2C];
+    f32 field_2C;
+    f32 field_30;
+    f32 field_34;
+    u8 pad_38[0xBB - 0x38];
+    u8 field_BB;
+};
+
 // Gimmick/marker view tables used by func_801165EC / func_801167EC /
 // func_801168A0 (subobject of the minimap object at +0x17C).
 struct CMiniMapGimmickView {
@@ -269,8 +281,21 @@ struct CMiniMapGimmickView {
     u8 field_0x400[25 * 8];             // 0x400..0x4C8
     u8 field_0x4C8[0x590 - 0x4C8];     // 0x4C8..0x590
     u32 field_0x590;                   // 0x590
-    u8 field_0x594[0x6A4 - 0x594];     // 0x594..0x6A4
-    u32 field_0x6A4;                   // 0x6A4
+    // Per-row working set (0x594..0x6A4). Three interleaved views over the
+    // same storage: pane-entry pointers stride 4 from 0x594, marker world
+    // positions stride 0xC from 0x5D4, and per-row flags stride 1 from 0x694.
+    union {
+        u8 field_0x594[0x110];                 // 0x594..0x6A4 raw view
+        struct {
+            u8 pad_0x594[0x40];
+            ml::CVec3 field_0x5D4[17];         // 0x5D4.. per-row world positions
+        };
+        struct {
+            CMMMapEntry* field_0x594_entries[64]; // 0x594.. per-row pane records
+            u8 field_0x694[16];                // 0x694.. per-row update flags
+        };
+    };
+    u32 field_0x6A4;                   // 0x6A4 - live row count
 };
 
 // Same-unit minimap helpers whose retail symbols are unmangled (func_*):

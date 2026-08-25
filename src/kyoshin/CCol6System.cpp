@@ -1078,29 +1078,27 @@ extern "C" CCol6System* __ct__CCol6System(CCol6System* self, CProcess* parent) {
     __ct__8CProcessFv((CProcess*)self);
     shim->vtable = (void*)lbl_eu_8052D238;
 
-    // Materialize the composite vtable address + offset values before the
-    // callback copy so MWCC schedules their lis/addi ahead of the __ptmf_null
-    // base (retail interleaves the final-vtable lis between the temp-vtable
-    // store and the ptmf lwzu).
     char* finalVt = lbl_eu_8053001C;
-    u32 vt6c = (u32)(finalVt + 0x24);
-    u32 vt70 = (u32)(finalVt + 0xac);
 
-    // Copy the null member-function pointer into both callback slots. Retail
-    // loads __ptmf_null[0],[1],[2] per block and stores the second slot of
-    // each pair first, so use intermediate locals with swapped store order.
-    const u32* ptmf = __ptmf_null;
-    u32 ptmfWord0 = ptmf[0];
-    u32 ptmfWord1 = ptmf[1];
+    // Copy the null member-function pointer into both callback slots (same
+    // shape as the CCol6Hint ctor: retail materializes the __ptmf_null base
+    // once via an update-form first load (*p++ folds the symbol's low half
+    // into lwzu), then indexes the remaining words relative to the advanced
+    // pointer; each block stores its second slot first).
+    u32* ptmf = __ptmf_null;
+    u32 ptmfWord0 = *ptmf++;
+    u32 vt6c = (u32)(finalVt + 0x24);
+    u32 ptmfWord1 = ptmf[0];
     shim->callbacks[1] = ptmfWord1;
+    u32 vt70 = (u32)(finalVt + 0xac);
     shim->callbacks[0] = ptmfWord0;
-    u32 ptmfWord2 = __ptmf_null[2];
+    u32 ptmfWord2 = ptmf[1];
     shim->callbacks[2] = ptmfWord2;
-    ptmfWord0 = __ptmf_null[0];
-    ptmfWord1 = __ptmf_null[1];
+    ptmfWord0 = ptmf[-1];
+    ptmfWord1 = ptmf[0];
     shim->callbacks[4] = ptmfWord1;
     shim->callbacks[3] = ptmfWord0;
-    ptmfWord2 = __ptmf_null[2];
+    ptmfWord2 = ptmf[1];
     shim->callbacks[5] = ptmfWord2;
 
     shim->field54 = 0;
@@ -1141,16 +1139,27 @@ extern "C" CCol6System* __ct__CCol6System(CCol6System* self, CProcess* parent) {
     // lfs/stfs-to-stack + lwz/stw), while the trailing float/byte pairs are
     // stored directly.
     f32 f = lbl_eu_80667564;
-    self->mCamPos = ml::CVec3(f, f, f);
-    self->mCamLookAt = ml::CVec3(f, f, f);
-    self->mVec168 = ml::CVec3(f, f, f);
-    self->mVec174 = ml::CVec3(f, f, f);
+    // Declared in this (reverse) order: MWCC lays consecutive CVec3 locals
+    // out at descending stack slots, and this order reproduces retail's
+    // sp+0x08..0x5c assignment.
+    ml::CVec3 vec194V(f, f, f);
+    ml::CVec3 vec188V(f, f, f);
+    ml::CVec3 vec1ACV(f, f, f);
+    ml::CVec3 vec1A0V(f, f, f);
+    ml::CVec3 lookAtV(f, f, f);
+    ml::CVec3 camPosV(f, f, f);
+    ml::CVec3 vec174(f, f, f);
+    ml::CVec3 vec168(f, f, f);
+    self->mCamPos = camPosV;
+    self->mCamLookAt = lookAtV;
+    self->mVec168 = vec168;
+    self->mVec174 = vec174;
     self->mField180 = f;
     self->mField184 = 0;
-    self->mVec188 = ml::CVec3(f, f, f);
-    self->mVec194 = ml::CVec3(f, f, f);
-    self->mVec1A0 = ml::CVec3(f, f, f);
-    self->mVec1AC = ml::CVec3(f, f, f);
+    self->mVec188 = vec188V;
+    self->mVec194 = vec194V;
+    self->mVec1A0 = vec1A0V;
+    self->mVec1AC = vec1ACV;
     self->mField1B8 = f;
     self->mField1BC = 0;
     return self;

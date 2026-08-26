@@ -1811,7 +1811,7 @@ config.libs = [
             Object(NonMatching, "monolib/src/math/CCol4.cpp"),
             Object(NonMatching, "monolib/src/math/CMat34.cpp"),
             Object(NonMatching, "monolib/src/math/CMat44.cpp"),
-            Object(NonMatching, "monolib/src/math/CPlane.cpp"),
+            Object(NonMatching, "monolib/src/math/CPlane.cpp", extra_cflags=["-ipa off"]),
             Object(NonMatching, "monolib/src/math/CQuat.cpp"),
             Object(NonMatching, "monolib/src/work/CWorkThreadSystem.cpp"),
             Object(NonMatching, "monolib/src/work/CWorkThread.cpp"),

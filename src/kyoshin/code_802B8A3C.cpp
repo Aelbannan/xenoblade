@@ -22,6 +22,8 @@ void func_802B8CFC(CVS_THREAD_ORDER* self) {
 // the vtable/owner fields, and copies the init-state triple from
 // lbl_eu_8053B7E8. Returns NULL on allocation failure.
 CVS_THREAD_ORDER* __ct__CVS_THREAD_ORDER(CVoiceHandle* owner) {
+    u32 v1;
+
     if (func_802A330C(0x78, 0) == NULL) {
         return NULL;
     }
@@ -29,23 +31,28 @@ CVS_THREAD_ORDER* __ct__CVS_THREAD_ORDER(CVoiceHandle* owner) {
     if (self == NULL) {
         return NULL;
     }
+    CVS_THREAD_ORDER_raw* raw = (CVS_THREAD_ORDER_raw*)self;
 
-    // Construct the base (can throw -> EH guard), then set vtable + slot.
+    // Retail guards the constructor region with a redundant self null
+    // re-check (the `beq`) and a zero-arg __throw pad; the try-block form
+    // below reproduces that exception lowering.
     if (self != NULL) {
         try {
+            // Base constructor (self still live in r3), then vtable + owner.
             __ct__cf_CVS_THREAD();
-            ((void**)self)[7] = (void**)lbl_eu_8053B818;
-            ((CVS_THREAD_ORDER_Data*)self)->field_0x20 = owner;
+            raw->vtable = (u32*)lbl_eu_8053B818;
+            raw->field_0x20 = owner;
         } catch (...) {
-            throw;
+            __throw(0, 0, 0);
         }
     }
 
-    // Copy the init-state triple into the first 3 u32s (outside try).
-    const u32* base = (u32*)lbl_eu_8053B7E8;
-    self->unk0 = (u32*)base[0];
-    self->unk4 = base[1];
-    self->unk8 = base[2];
+    // Copy init data from the global table into the object's first 3 u32s.
+    const u32* base = (const u32*)(u32)lbl_eu_8053B7E8;
+    v1 = base[1];
+    raw->state0 = base[0];
+    raw->state1 = v1;
+    raw->state2 = base[2];
 
     return self;
 }
@@ -55,15 +62,15 @@ CVS_THREAD_ORDER* __ct__CVS_THREAD_ORDER(CVoiceHandle* owner) {
 // the player's voice is idle and the per-slot voice id allows it, plays the
 // configured voice for this thread's slot.
 void func_802B8B0C(CVS_THREAD_ORDER* self) {
-    // Copy init-state triple using an incrementing source pointer so MWCC
-    // keeps the lwzu pattern on the first element.
-    u32* src = (u32*)lbl_eu_8053B800;
-    u32 v0 = *src++;
-    u32 v1 = *src++;
-    self->unk4 = v1;
-    self->unk0 = (u32*)v0;
-    u32 v2 = *src++;
-    self->unk8 = v2;
+    // Copy init-state triple. First element read via post-increment (lwzu);
+    // words 1 and 2 are indexed off the base pointer.
+    u32 v0;
+    u32* src = (u32*)(u32)lbl_eu_8053B800;
+    v0 = *src++;
+    OrderThreadWords* words = (OrderThreadWords*)self;
+    words->words[1] = src[0];
+    words->words[0] = v0;
+    words->words[2] = src[1];
 
     if (((BattleMgrView*)cf::CBattleManager::getInstance())->field_0x20C8 != 0) {
         // Battle is active: jump straight to playback.
@@ -71,11 +78,13 @@ void func_802B8B0C(CVS_THREAD_ORDER* self) {
         return;
     }
 
-    CVoiceHandle* handle = (CVoiceHandle*)func_8016FE34((void*)cf::CfGameManager::getPlayer(0));
+    CVoiceHandle* handle = (CVoiceHandle*)func_8016FE34(cf::CfGameManager::getPlayer(0));
     if (handle == NULL) {
         return;
     }
-    if (((int (*)(CVoiceHandle*))handle->vtable[0x2BC / 4])(handle) != 0) {
+    // Genuine virtual call via the view class so MWCC emits the retail
+    // r12-chain for the vtable-0x2bc probe.
+    if (((CVoiceDevView*)handle)->mAt2BC() != 0) {
         return;
     }
 
@@ -101,6 +110,15 @@ void func_802B8B0C(CVS_THREAD_ORDER* self) {
 // player's battle-voice list and plays a random voice (mtRand(2)+0x9C9) for
 // each idle entry.
 void func_802B8C00(CVS_THREAD_ORDER* self) {
+    u32 v0;
+    u32* src;
+    CVoiceHandle* handle;
+    CVoiceHandle* arr[3];
+    CVoiceHandle** bb;
+    int zz;
+    int count;
+    int rnd;
+
     if (func_802A3E88(self) != 0) {
         return;
     }
@@ -109,28 +127,33 @@ void func_802B8C00(CVS_THREAD_ORDER* self) {
         return;
     }
 
-    u32* src = (u32*)lbl_eu_8053B80C;
-    u32 v0 = *src++;
-    u32 v1 = *src++;
-    self->unk4 = v1;
-    self->unk0 = (u32*)v0;
-    u32 v2 = *src++;
-    self->unk8 = v2;
+    // Copy init-state triple: word 0 read via post-increment (lwzu), words
+    // 1 and 2 read back through the retained base pointer.
+    src = (u32*)(u32)lbl_eu_8053B80C;
+    v0 = *src++;
+    ((OrderThreadWords*)self)->words[1] = src[0];
+    ((OrderThreadWords*)self)->words[0] = v0;
+    ((OrderThreadWords*)self)->words[2] = src[1];
 
-    CVoiceHandle* handle = (CVoiceHandle*)func_8016FE34((void*)cf::CfGameManager::getPlayer(0));
-    CVoiceHandle* arr[3];
-    int count = func_802A7870(arr, 3, handle);
+    handle = (CVoiceHandle*)func_8016FE34(cf::CfGameManager::getPlayer(0));
+    count = func_802A7870(arr, 3, handle);
 
-    for (int i = 0; i < count; i++) {
-        CVoiceHandle* h = arr[i];
-        CCharVoice* biased = (CCharVoice*)h;
-        if (h != NULL) {
-            biased = &h->voice;
-        }
-        int voiceId = ml::math::mtRand(2) + 0x9C9;
-        if (func_802A3C44(self, biased, voiceId) == 0) {
+    // Counter/walker loop matching retail's register layout: reusing
+    // `handle` as the entry variable (instead of a separate loop local)
+    // is what puts its web in r30 like retail.
+    bb = arr;
+    zz = 0;
+    while (zz < count) {
+        handle = *bb;
+        CCharVoice* biased = (handle != NULL) ? &handle->voice : (CCharVoice*)handle;
+        // Rand result held in its own temp; the bias is added at the call
+        // site (retail keeps mr/addi separate around the argument setup).
+        rnd = ml::math::mtRand(2);
+        if (func_802A3C44(self, biased, rnd + 0x9C9) == 0) {
             self->func_802A3B50();
         }
+        bb++;
+        zz++;
     }
 }
 
@@ -141,21 +164,27 @@ int func_802B8D44(CVS_THREAD_ORDER* self) {
 }
 
 // us-802bb7bc (func_802B8D4C)
-// Search the voice-config table for a matching voice and play it. Resolution
-// first uses the player's voice selector; failing that, iterates the battle
-// object list and gimmick list looking for a matching selector.
+// Resolve a config entry from the player's voice selector; failing that, walk
+// the gimmick list comparing each object's name against 0x803. Play the found
+// entry's voice. Returns 0 unconditionally.
 int func_802B8D4C() {
-    OrderConfigEntry* cfg = NULL;
+    OrderConfigEntry* cfg;
 
-    // First resolution path: player's embedded voice selector.
+    // First resolution path: player's embedded voice selector. The virtual
+    // probe runs on the biased voice pointer (handle + 0x3E9C), which retail
+    // fuses into an lwzu.
     CVoiceHandle* handle = (CVoiceHandle*)func_8016FE34((void*)cf::CfGameManager::getPlayer(0));
-    if (handle != NULL) {
-        int sel = ((int (*)(CCharVoice*))((void**)handle->voice.mVtable)[0x4C / 4])(&handle->voice);
-        void* src = func_8016FE34(func_800B708C(sel));
-        if (src != NULL) {
-            OrderConfigEntry* e = &lbl_eu_8053B840[0];
+    if (handle == NULL) {
+        cfg = NULL;
+    } else {
+        int sel = ((CVoiceSelView*)&handle->voice)->mAt4C();
+        GimmickHandleData* src = (GimmickHandleData*)func_8016FE34(func_800B708C(sel));
+        if (src == NULL) {
+            cfg = NULL;
+        } else {
+            OrderConfigEntry* e = lbl_eu_8053B840;
             while (e->key != 0) {
-                if (e->key == ((GimmickHandleData*)src)->field_3F28) {
+                if (e->key == src->field_3F28) {
                     break;
                 }
                 e++;
@@ -167,30 +196,33 @@ int func_802B8D4C() {
         }
     }
 
-    // Second resolution path: scan battle objects + gimmicks when the first
-    // search found nothing.
+    // Second resolution path: count live battle objects, then scan the
+    // gimmick list for one whose probed name matches key 0x803.
     if (cfg == NULL) {
         BattleMgrView* bm = (BattleMgrView*)cf::CBattleManager::getInstance();
-        void* head = bm->listHead;
         int count = 0;
-        void* p = *(void**)head;
-        while (p != head) {
-            p = *(void**)p;
+        u8* p = *(u8**)bm->listHead;
+        u8* list = bm->listHead;
+        for (; p != list; p = *(u8**)p) {
             count++;
         }
 
-        if (count > 0) {
+        if (count <= 0) {
+            cfg = NULL;
+        } else {
             OrderGimmickList* glist = func_800B6BC8();
-            for (OrderGimmickNode* node = glist->head->next; node != glist->head; node = node->next) {
-                GimmickHandleData* gh = (GimmickHandleData*)node->object;
+            OrderGimmickNode* cur;
+            for (cur = glist->head->next; cur != glist->head; cur = cur->next) {
+                // De-bias the gimmick object pointer back to its handle.
+                GimmickHandleData* gh = (GimmickHandleData*)cur->object;
                 if (gh != NULL) {
-                    gh = (GimmickHandleData*)((char*)node->object - 0x3E9C);
+                    gh = (GimmickHandleData*)((char*)gh - 0x3E9C);
                 }
 
-                void* result = ((void* (*)(void*))((void**)gh->field_4)[0x30 / 4])(gh->field_4);
-                u32 val = *(u32*)result;
-                if (func_80174C98(gh, (int*)&val, 0x803) != 0) {
-                    OrderConfigEntry* e = &lbl_eu_8053B840[0];
+                GimmickNameValue* nameObj = ((CGimmickNameView*)gh->field_4)->mAt30();
+                u32 val = nameObj->name;
+                if (func_80174C98(gh, &val, 0x803) != 0) {
+                    OrderConfigEntry* e = lbl_eu_8053B840;
                     while (e->key != 0) {
                         if (e->key == gh->field_3F28) {
                             break;
@@ -206,18 +238,26 @@ int func_802B8D4C() {
                     }
                 }
             }
+            cfg = NULL;
         }
     }
 
+    // Retail carries a redundant self-reassignment here (the inlined search
+    // helper's merge point); reproduced as a ternary.
+    cfg = (cfg != NULL) ? cfg : NULL;
+
     // Play the configured voice, if any.
-    int voiceId = -1;
-    void* playHandle = NULL;
+    s16 voiceId;
+    CVoiceHandle* playHandle;
     if (cfg != NULL) {
-        void* h = func_802A7A54(cfg->field_4);
-        if (h != NULL) {
-            playHandle = h;
+        playHandle = (CVoiceHandle*)func_802A7A54(cfg->field_4);
+        if (playHandle == NULL) {
+            voiceId = -1;
+        } else {
             voiceId = cfg->field_6;
         }
+    } else {
+        voiceId = -1;
     }
     if (voiceId <= 0) {
         return 0;
@@ -229,10 +269,11 @@ int func_802B8D4C() {
         return 0;
     }
 
-    CCharVoice* voice = (CCharVoice*)playHandle;
+    // Bias the handle to its embedded voice object (+0x3E9C) in place,
+    // matching retail's single r26 web.
     if (playHandle != NULL) {
-        voice = (CCharVoice*)((char*)playHandle + 0x3E9C);
+        playHandle = (CVoiceHandle*)&playHandle->voice;
     }
-    func_802A3D54(voice, voiceId, 0x14);
+    func_802A3D54((CCharVoice*)playHandle, voiceId, 0x14);
     return 0;
 }

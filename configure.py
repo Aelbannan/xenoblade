@@ -484,7 +484,7 @@ config.libs = [
             Object(NonMatching, "kyoshin/cf/object/CfObjectColl.cpp"),
             Object(NonMatching, "kyoshin/cf/object/CfObjectEff.cpp"),
             Object(NonMatching, "kyoshin/cf/object/CfObjectEne.cpp"),
-            Object(NonMatching, "kyoshin/code_800B06A4.cpp", mw_version="GC/3.0a5.2"),  # retail: GC/3.0a5.2 (func_800B67CC range check keeps two cmpli/bclr blocks; Wii/1.1 folds to (u8)(val-1)<=23)
+            Object(NonMatching, "kyoshin/code_800B06A4.cpp", mw_version="GC/3.0a5.2"),  # retail: GC/3.0a5.2 (func_800B67CC range check keeps two cmpli/bclr blocks; Wii/1.1 folds to (u8)(val-1)<=23). NOTE 2026-08-25 rematch probe: reslist ctor family/__dt__800B0AF4/func_800B66BC only go byte-clean under Wii/1.x (.scratch/reslist_probe7 + triage b06a4_triage_{GC,W11}.json), but Wii/1.1 regresses accepted FULL_MATCHes func_800B15A4 (0->108), func_800B8920 (0->20), func_800B31F8 (0->9), func_800B67CC (0->4) - TU split by mw_version is the next angle
             Object(NonMatching, "kyoshin/cf/object/CfObjectMap.cpp"),
             Object(NonMatching, "kyoshin/cf/object/CfObjectModel.cpp"),
             Object(NonMatching, "kyoshin/cf/object/CfObjectMove.cpp"),
@@ -1962,7 +1962,7 @@ config.libs = [
             Object(NonMatching, "monolib/src/scn/CScnFadeMan.cpp"),
             Object(Matching, "monolib/src/scn/CScnFilter.cpp"),
             Object(NonMatching, "monolib/src/scn/CScnFilterMan.cpp", extra_cflags=["-ipa off"]),  # retail update() chains D564's opaque return (or r5,r3,r3) - Wii/1.1 -ipa file value-propagates the in-TU dst address away
-            Object(NonMatching, "monolib/src/scn/CScnFogMan.cpp"),
+            Object(Matching, "monolib/src/scn/CScnFogMan.cpp"),
             Object(NonMatching, "monolib/src/scn/CScnFrame.cpp"),
             Object(NonMatching, "monolib/src/scn/CScnIdMan.cpp"),
             Object(NonMatching, "monolib/src/scn/CScnItemAnim.cpp"),
@@ -1988,7 +1988,7 @@ config.libs = [
             Object(Matching, "monolib/src/work/CWorkSystemCache.cpp"),
             Object(NonMatching, "monolib/src/effect/code_804D9274.cpp"),
             Object(NonMatching, "monolib/src/nand/CNand.cpp", extra_cflags=["-O4,s", "-func_align 4"]),
-            Object(NonMatching, "monolib/src/nand/CNReqtaskSave.cpp", extra_cflags=["-O4,s"]),
+            Object(Matching, "monolib/src/nand/CNReqtaskSave.cpp", extra_cflags=["-O4,s", "-func_align 4"]),  # retail packed (fn sizes sum to the 0xB20 slice); align 16 inserts ori pads
             Object(Matching, "monolib/src/nand/CNReqtaskLoad.cpp", extra_cflags=["-O4,s", "-func_align 4"]),
             Object(Matching, "monolib/src/nand/CNReqtaskReaddir.cpp", extra_cflags=["-O4,s", "-func_align 4"]),
             Object(Matching, "monolib/src/nand/CNReqtaskRemove.cpp", extra_cflags=["-O4,s", "-func_align 4"]),

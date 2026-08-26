@@ -144,11 +144,13 @@ struct EffResListNode {
     EffResListNode* mPrev;   // 0x04
     CScn* mItem;             // 0x08 - stored scene pointer
 
-    // Mirror of _reslist_node<T*>::setItem - guarded store with rethrow.
+    // Mirror of _reslist_node<T*>::setItem - the retail inline guards on the
+    // node address itself (addic. rX, node, 8), not on the stored value.
     void setItem(CScn* value) {
-        if (value != nullptr) {
+        CScn** dest = &mItem;
+        if (dest != nullptr) {
             try {
-                mItem = value;
+                *dest = value;
             } catch (...) {
                 throw;
             }
@@ -173,9 +175,26 @@ struct ResListCScn {
     }
 
     void push_back(CScn* item) {
+        // Expanded like the proven CF_QUEUE_MENU shape: loop-carried i
+        // declared/colored first, then startNode/capacity assigned in that
+        // order so startNode colors above capacity.
         EffResListNode* startNode = mHead;
-        int i = findFirstEmptySlotIndex();
-        EffResListNode* temp = &mList[i];
+        int capacity;
+        int i = 0;
+        EffResListNode* temp;
+        capacity = mCapacity;
+        goto slot_check;
+    slot_body:
+        if (mList[i].mNext == nullptr) {
+            goto slot_found;
+        }
+        i++;
+    slot_check:
+        if (i < capacity) {
+            goto slot_body;
+        }
+    slot_found:
+        temp = &mList[i];
         temp->setItem(item);
         temp->mNext = startNode;
         temp->mPrev = startNode->mPrev;

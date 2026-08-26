@@ -1,4 +1,4 @@
-// Auto-scaffolded catalog TU for kyoshin/CTaskGameEff
+// CTaskGameEff: battle effect task (kyoshin/CTaskGameEff)
 // Replace stubs with high-level C/C++ during decomp.
 
 #include "kyoshin/harness_catalog.hpp"
@@ -11,66 +11,56 @@ extern "C" void __dl__FPv(void*);
 
 extern u32 __ptmf_null[3];
 
-#pragma optimize_for_size on
 __declspec(noinline) CTaskGameEff* __ct__CTaskGameEff(CTaskGameEff* pThis, CScn* scene) {
     __ct__8CProcessFv(pThis);
 
+    // Sub-object vtables, kept as locals so MWCC holds the bases in registers
+    // across the member stores.
     char* vtbl = reinterpret_cast<char*>(const_cast<u8*>(lbl_eu_80525BFC)); // final CTaskGameEff vtable
+    u32 v54 = (u32)(vtbl + 0x24);      // 0x54 render-callback sub-vtable
+    u32 v58 = (u32)(vtbl + 0x34);      // 0x58 render-callback sub-vtable
+    u32 v70 = (u32)lbl_eu_80525C90;    // CEffRenderHighPrio vtable
+    u32 v74i = (u32)lbl_eu_80525C84;   // scene-list interim vtable
+    u32 v74f = (u32)lbl_eu_80525C6C;   // scene-list final vtable
+    EffResListNode* node = &pThis->mSceneList.mStartNode;
+
     u32* p = reinterpret_cast<u32*>(pThis);
 
     // Interim CTTask<CTaskGameEff> vtable (overwritten by the final vptr).
     p[4] = reinterpret_cast<u32>(lbl_eu_80525CAC);
 
-    // NULL PTMF -> mMoveFunc (0x3C): word-wise copy in the retail load/store
-    // order, with the callback/list sub-vtable computations interleaved so
-    // their lis/addi pairs schedule like retail.
-    const u32* src = __ptmf_null;
-    u32 w0 = *src++;
-    u32 v70 = (u32)lbl_eu_80525C90;    // CEffRenderHighPrio vtable
-    u32 v74i = (u32)lbl_eu_80525C84;   // scene-list interim vtable
-    u32 v74f = (u32)lbl_eu_80525C6C;   // scene-list final vtable
-    u32 w1 = *src++;
-    u32 v54 = (u32)(vtbl + 0x24);      // 0x54 render-callback sub-vtable
-    p[0x10] = w1;
-    u32 v58 = (u32)(vtbl + 0x34);      // 0x58 render-callback sub-vtable
-    f32 time = lbl_eu_80665D90;
-    p[0xF] = w0;
-    u32 w2 = *src++;
-    p[0x11] = w2;
+    f32 time = lbl_eu_80665D90;        // default effect time
 
-    // NULL PTMF -> mDrawFunc (0x48): fresh loads (the move-hook stores may
-    // alias the pool).
-    src = __ptmf_null;
-    u32 d0 = *src++;
-    u32 d1 = *src++;
-    p[0x13] = d1;
-    p[0x12] = d0;
-    p[0x14] = *src++;
+    // NULL PTMF -> mMoveFunc (0x3C) / mDrawFunc (0x48): whole 12-byte
+    // pointer-to-member assignments; MWCC picks the load/store schedule.
+    CTaskGameEffPtmf* pMf = reinterpret_cast<CTaskGameEffPtmf*>(reinterpret_cast<char*>(pThis) + 0x3c);
+    const CTaskGameEffPtmf* pNull = reinterpret_cast<const CTaskGameEffPtmf*>(__ptmf_null);
+    *pMf = *pNull;
+    u32 zero = 0;
+    CTaskGameEffPtmf* pDf = reinterpret_cast<CTaskGameEffPtmf*>(reinterpret_cast<char*>(pThis) + 0x48);
+    *pDf = *pNull;
 
     // Final vtable + member fields.
     p[4] = (u32)vtbl;
     p[0x15] = v54;
     p[0x16] = v58;
     p[0x17] = (u32)scene;           // 0x5C mScene
-    p[0x18] = 0;                    // 0x60 mMemAlloc
+    p[0x18] = zero;                 // 0x60 mMemAlloc
     reinterpret_cast<u8*>(pThis)[0x64] = 1;  // mActive
-    p[0x1A] = 0;                    // 0x68
+    p[0x1A] = zero;                 // 0x68
     pThis->field_0x6C = time;       // 0x6C default effect time
     p[0x1C] = v70;                  // 0x70
     p[0x1D] = v74i;                 // 0x74 (interim)
-    p[0x22] = 0;                    // 0x88 mSceneList.mList
-    p[0x23] = 0;                    // 0x8C mSceneList.mCapacity
-    reinterpret_cast<u8*>(pThis)[0x90] = 0;  // mSceneList.unk1C
+    p[0x22] = zero;                 // 0x88 mSceneList.mList
+    p[0x23] = zero;                 // 0x8C mSceneList.mCapacity
+    reinterpret_cast<u8*>(pThis)[0x90] = (u8)zero;  // mSceneList.unk1C
     // Self-linked sentinel header node.
-    EffResListNode* node = &pThis->mSceneList.mStartNode;
     pThis->mSceneList.mHead = node;   // 0x78
     node->mNext = node;               // 0x7C
     node->mPrev = node;               // 0x80
     p[0x1D] = v74f;                 // 0x74 (final)
-
     return pThis;
 }
-#pragma optimize_for_size off
 
 void* __dt__80044BB0(void* obj, int mode) {
     if (obj != 0 && mode > 0) {
@@ -335,6 +325,8 @@ void* func_800451D8(int index, void* manager) {
 // Renders/updates effect resources via the global effect singleton at lbl_eu_8065FC18.
 // First parameter (this) is unused; second parameter is forwarded to func_804CBB84.
 // The cache/ViewRoot pair flushes GX state before and after the effect calls.
+// NOTE: func_80045284 and func_800452EC share one `optimize_for_size on`
+// region - retail saves r30+r31 via stmw in both.
 #pragma optimize_for_size on
 void func_80045284(void* unused, void* param) {
     CDeviceGX::getCacheInstance()->func_8044BE38();
@@ -346,12 +338,12 @@ void func_80045284(void* unused, void* param) {
     CDeviceGX::getCacheInstance()->func_8044BE38();
     CViewRoot::func_80442DA8();
 }
-#pragma optimize_for_size off
 
 // func_800452EC: register `scene` with the effect task - push it onto the
 // scene list (inlined reslist push_back incl. setItem's guarded item store)
 // and attach the task's three render callbacks to the scene.
-// func_80045284 uses optimize_for_size; this function matches without it.
+// optimize_for_size on: retail saves r30+r31 via stmw and keeps sp in r31
+// (the inlined setItem try-block SP store targets 0x1c(r31)).
 void func_800452EC(CScn* scene) {
     CTaskGameEff* gTask = lbl_eu_80663D40;
     if (gTask != nullptr && scene != nullptr) {

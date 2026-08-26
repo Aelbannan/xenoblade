@@ -39,15 +39,15 @@ void ADXB_SetAhxInSj(void* self);
 void ADXB_SetAhxDecSmpl(void* self, u32 val);
 void ADXB_AhxTermSupply(void* self);
 s32 ADXB_DecodeHeader(void* self, void* data);
-s32 ADXB_GetDecErrMode(void* self);
+s32 ADXB_GetDecErrMode(void);
 void ADXB_TakeSnapshot(void* self);
 void ADXB_RestoreSnapshot(void* self);
 
 void* SJRBF_GetBufPtr(void* self);
-u32 SJRBF_GetBufSize(void* self);
-u32 SJRBF_GetXtrSize(void* self);
+s32 SJRBF_GetBufSize(void* self);
+s32 SJRBF_GetXtrSize(void* self);
 void SJ_SplitChunk(void* src, s32 size, void* dst1, void* dst2);
-s32 ADX_DecodeFooter(u8* data, s16* outLen);
+s32 ADX_DecodeFooter(u8* data, s32 maxLen, s16* outLen);
 
 void ADXCRS_Lock(void);
 void ADXCRS_Unlock(void);
@@ -62,7 +62,6 @@ extern u8 lbl_eu_805160B8[];
 /* Forward declarations */
 void adxsjd_decode_prep(void* self);
 void adxsjd_get_wr(void* self, u32* outHalf, u32* outNumSmpl, u32* outTrap);
-void adxsjd_decexec_start(void* self);
 void adxsjd_decexec_end(void* self);
 void adxsjd_insert_proc(void* self);
 void adxsjd_discard_proc(void* self);
@@ -87,32 +86,30 @@ void ADXSJD_Finish(void) {
 }
 
 void* ADXSJD_Create(void* stream, s32 numChan, void* sjArray) {
-    void* sjd = NULL;
-    u8* base = lbl_eu_805E3358;
-    int i;
-    void* sj0;
-    s32 halfBuf, halfXtr;
     void* bufPtr;
-    s32 bufSize, xtrSize;
+    void* sj0;
+    u8* sjd;
+    u8* p;
+    s32 i;
+    s32 j;
+    s32 halfBuf;
     void* adxb;
-    u32* src;
-    u32* dst;
 
-    /* Find free slot (unrolled 8-at-a-time scan) */
+    /* Find a free slot in the 16-entry work area (0xB4 bytes per entry) */
+    p = lbl_eu_805E3358;
+    sj0 = *(void**)sjArray;
     for (i = 0; i < 16; i++) {
-        if (*(s8*)(base + i * 0xB4) == 0) break;
+        if ((s8)*p == 0) break;
+        p += 0xB4;
     }
     if (i == 16) return NULL;
     sjd = &lbl_eu_805E3358[i * 0xB4];
 
-    sj0 = *(void**)sjArray;
     bufPtr = SJRBF_GetBufPtr(sj0);
-    bufSize = SJRBF_GetBufSize(sj0);
-    halfBuf = bufSize / 2;
-    xtrSize = SJRBF_GetXtrSize(sj0);
-    halfXtr = xtrSize / 2;
-
-    adxb = ADXB_Create((void*)numChan, bufPtr, halfBuf, halfBuf + halfXtr);
+    halfBuf = SJRBF_GetBufSize(sj0) / 2;
+    *(void**)((u8*)sjd + 0x04) = ADXB_Create((void*)numChan, bufPtr, halfBuf,
+                                             halfBuf + SJRBF_GetXtrSize(sj0) / 2);
+    adxb = *(void**)((u8*)sjd + 0x04);
     if (adxb == NULL) return NULL;
 
     ADXB_EntryGetWrFunc(adxb, adxsjd_get_wr, sjd);
@@ -120,10 +117,8 @@ void* ADXSJD_Create(void* stream, s32 numChan, void* sjArray) {
     *(s8*)((u8*)sjd + 0x02) = (s8)numChan;
 
     /* Copy channel SJ pointers */
-    src = (u32*)sjArray;
-    dst = (u32*)((u8*)sjd + 0x0C);
-    for (i = 0; i < numChan; i++) {
-        dst[i] = src[i];
+    for (j = 0; j < numChan; j++) {
+        ((u32*)sjd)[j + 3] = ((u32*)sjArray)[j];
     }
 
     /* Initialize state fields */
@@ -201,141 +196,112 @@ void ADXSJD_Stop(void* self) {
     *(u8*)((u8*)self + 0x01) = 0;
 }
 
+/* Chunk pair returned by SJ_SplitChunk / consumed by SJ commit/unread */
+typedef struct {
+    void* ptr;
+    s32 len;
+} SjChunk;
 void adxsjd_decode_prep(void* self) {
-    void* inSj = *(void**)((u8*)self + 0x08);
     void* adxb = *(void**)((u8*)self + 0x04);
-    u32 sjBuf[4]; /* stack buffer for SJ split/commit */
+    void* inSj = *(void**)((u8*)self + 0x08);
+    struct {
+        SjChunk tail; /* sp+0x08: remainder chunk */
+        SjChunk head; /* sp+0x10: chunk consumed by the decoder */
+    } chk;
     s32 hdrLen;
     s32 fmt;
 
-    /* Read from input SJ via virtual call (vtable[6] = offset 0x18) */
-    {
-        void** vtbl = *(void***)inSj;
-        void (*readFn)(void*, s32, void*) = (void (*)(void*, s32, void*))vtbl[6];
-        readFn(inSj, 1, sjBuf);
-    }
+    /* Read one chunk from the input SJ (vtable slot 6 takes a size limit) */
+    ((void (*)(void*, s32, s32, void*))(*(void***)inSj)[6])(inSj, 1, 0xC800, &chk.head);
 
-    /* Check chunk length */
-    if ((s32)sjBuf[1] <= 0) {
-        /* No data, cancel read via vtable[7] = offset 0x1C */
-        void** vtbl = *(void***)inSj;
-        void (*unreadFn)(void*, s32, void*) = (void (*)(void*, s32, void*))vtbl[7];
-        unreadFn(inSj, 1, sjBuf);
+    s32 len = chk.head.len;
+
+    /* Empty chunk: give it back */
+    if (len <= 0) {
+        ((void (*)(void*, s32, void*))(*(void***)inSj)[7])(inSj, 1, &chk.head);
         return;
     }
 
-    /* Check ADXB status fields */
-    {
-        s16 f9A = *(s16*)((u8*)adxb + 0x9A);
-        s16 f98 = *(s16*)((u8*)adxb + 0x98);
-
-        if (f9A == 0 && f98 != 0x0D) {
-            /* Scan for leading zero bytes in chunk */
-            u8* p = (u8*)sjBuf[0];
-            s32 idx = 0;
-            while (idx < (s32)sjBuf[1]) {
-                if (*p != 0) break;
-                p++;
-                idx++;
-            }
-
-            /* Split off leading bytes and commit */
-            SJ_SplitChunk(sjBuf, idx, sjBuf, sjBuf + 2);
-            {
-                void** vtbl = *(void***)inSj;
-                void (*commitFn)(void*, s32, void*) = (void (*)(void*, s32, void*))vtbl[8];
-                commitFn(inSj, 0, sjBuf);
-            }
-
-            if ((s32)sjBuf[1] < 0x10) {
-                void** vtbl = *(void***)inSj;
-                void (*unreadFn)(void*, s32, void*) = (void (*)(void*, s32, void*))vtbl[7];
-                unreadFn(inSj, 1, sjBuf);
-                return;
-            }
+    /* Fresh non-AHX stream: skip zero padding before the header */
+    if (*(s16*)((u8*)adxb + 0x9A) == 0 && *(s16*)((u8*)adxb + 0x98) != 0x0D) {
+        s8* p = (s8*)chk.head.ptr;
+        s32 idx;
+        /* Condition-first loop: idx starts at 0 so the body never runs
+         * (matches retail, which guards with a constant-false test) */
+        for (idx = 0; idx < 0; idx++) {
+            if (*p != 0) break;
+            p++;
+        }
+        SJ_SplitChunk(&chk.head, idx, &chk.tail, &chk.head);
+        ((void (*)(void*, s32, void*))(*(void***)inSj)[8])(inSj, 0, &chk.head);
+        len = chk.head.len;
+        if (len < 0x10) {
+            /* Too small to hold a header */
+            ((void (*)(void*, s32, void*))(*(void***)inSj)[7])(inSj, 1, &chk.head);
+            return;
         }
     }
 
-    /* Decode header */
-    {
-        s16 f9A = *(s16*)((u8*)adxb + 0x9A);
-        s16 f98 = *(s16*)((u8*)adxb + 0x98);
-
-        if (f9A == 0 && f98 != 0x0D) {
-            hdrLen = ADXB_DecodeHeader(adxb, (u8*)sjBuf[0]);
-            if (hdrLen == 0 || hdrLen > (s32)sjBuf[1]) {
-                void** vtbl = *(void***)inSj;
-                void (*unreadFn)(void*, s32, void*) = (void (*)(void*, s32, void*))vtbl[7];
-                unreadFn(inSj, 1, sjBuf);
-                return;
+    if (*(s16*)((u8*)adxb + 0x9A) == 0 && *(s16*)((u8*)adxb + 0x98) != 0x0D) {
+        hdrLen = ADXB_DecodeHeader(adxb, (s8*)chk.head.ptr);
+        if (hdrLen == 0 || hdrLen > chk.head.len) {
+            ((void (*)(void*, s32, void*))(*(void***)inSj)[7])(inSj, 1, &chk.head);
+            return;
+        } else if (hdrLen < 0) {
+            ((void (*)(void*, s32, void*))(*(void***)inSj)[7])(inSj, 1, &chk.head);
+            /* NOTE: retail emits no argument setup here */
+            if (ADXB_GetDecErrMode() == 0) {
+                u8* errStr = lbl_eu_805160B8;
+                ADXERR_CallErrFunc2_(errStr, errStr + 0x1E);
             }
-            if (hdrLen < (s32)sjBuf[1]) {
-                void** vtbl = *(void***)inSj;
-                void (*unreadFn)(void*, s32, void*) = (void (*)(void*, s32, void*))vtbl[7];
-                unreadFn(inSj, 1, sjBuf);
-                if (ADXB_GetDecErrMode(adxb) == 0) {
-                    ADXERR_CallErrFunc2_(lbl_eu_805160B8, lbl_eu_805160B8 + 0x1E);
-                }
-                *(u8*)((u8*)self + 0x01) = 4;
-                return;
-            }
+            *(u8*)((u8*)self + 0x01) = 4;
+            return;
+        }
+    } else {
+        if (*(s16*)((u8*)adxb + 0x98) == 0x0D) {
+            ADXB_SetDefPrm(adxb);
+            hdrLen = 0;
         } else {
-            if (f98 == 0x0D) {
-                ADXB_SetDefPrm(adxb);
-            } else {
-                criware_eu_8038A864(adxb);
-            }
+            criware_eu_8038A864(adxb);
             hdrLen = 0;
         }
     }
 
     *(u32*)((u8*)self + 0xA0) = hdrLen;
 
-    /* Call filter callback if registered */
+    /* Notify the registered filter callback with the stream properties */
     if (*(u32*)((u8*)self + 0x50) != 0) {
-        void (*fltFunc)(void*, s32, s32, s32, u32) =
-            *(void (**)(void*, s32, s32, s32, u32))((u8*)self + 0x50);
-        void* fltCtx = *(void**)((u8*)self + 0x54);
-        fltFunc(fltCtx,
-                ADXB_GetFormat(adxb),
-                ADXB_GetNumChan(adxb),
-                ADXB_GetSfreq(adxb),
-                ADXB_GetTotalNumSmpl(adxb));
+        s32 fltFmt = ADXB_GetFormat(adxb);
+        s32 fltCh = ADXB_GetNumChan(adxb);
+        s32 fltSfreq = ADXB_GetSfreq(adxb);
+        u32 fltTotal = ADXB_GetTotalNumSmpl(adxb);
+        ((void (*)(void*, s32, s32, s32, u32))*(u32*)((u8*)self + 0x50))(
+            *(void**)((u8*)self + 0x54), fltFmt, fltCh, fltSfreq, fltTotal);
     }
 
-    /* Set AHX flag for format 4 */
+    /* AHX streams set a dedicated flag */
     if (ADXB_GetFormat(adxb) == 4) {
         *(u8*)((u8*)self + 0x03) = 1;
     }
 
-    /* Copy SPSD info for format 2 */
+    /* Format 2 carries inline SPSD info right after the header */
     if (ADXB_GetFormat(adxb) == 2) {
-        u32 copyLen = sjBuf[1];
-        if (copyLen > 0x40) copyLen = 0x40;
-        memcpy((u8*)self + 0x60, (void*)sjBuf[0], copyLen);
+        memcpy((u8*)self + 0x60, chk.head.ptr,
+               (chk.head.len < 0x40) ? chk.head.len : 0x40);
     }
 
-    /* Handle different format types */
     fmt = ADXB_GetFormat(adxb);
-    if ((fmt >= 0x0A && fmt <= 0x0D) || fmt == 0x14 || fmt == 0x0F) {
-        void** vtbl = *(void***)inSj;
-        void (*unreadFn)(void*, s32, void*) = (void (*)(void*, s32, void*))vtbl[7];
-        unreadFn(inSj, 1, sjBuf);
+    if ((u32)(fmt - 0xA) <= 3 || fmt == 0x14 || fmt == 0xF) {
+        /* These formats re-read everything themselves */
+        ((void (*)(void*, s32, void*))(*(void***)inSj)[7])(inSj, 1, &chk.head);
     } else {
-        SJ_SplitChunk(sjBuf, hdrLen, sjBuf, sjBuf + 2);
-        {
-            void** vtbl = *(void***)inSj;
-            void (*commitFn)(void*, s32, void*) = (void (*)(void*, s32, void*))vtbl[8];
-            commitFn(inSj, 0, sjBuf);
-        }
-        {
-            void** vtbl = *(void***)inSj;
-            void (*unreadFn)(void*, s32, void*) = (void (*)(void*, s32, void*))vtbl[7];
-            unreadFn(inSj, 1, sjBuf);
-        }
+        /* Consume the header, queue the remainder for decoding */
+        SJ_SplitChunk(&chk.head, hdrLen, &chk.head, &chk.tail);
+        ((void (*)(void*, s32, void*))(*(void***)inSj)[8])(inSj, 0, &chk.head);
+        ((void (*)(void*, s32, void*))(*(void***)inSj)[7])(inSj, 1, &chk.tail);
     }
 
-    /* Call link-switch callback if present */
+    /* Link-switch hook, registered globally */
     if (*(u32*)((u8*)adxb + 0xE0) != 0) {
         void (*cb)(void*, u32) = *(void (**)(void*, u32))&lbl_eu_805E3354;
         if (cb != NULL) {
@@ -395,191 +361,177 @@ void adxsjd_get_wr(void* self, u32* outHalf, u32* outNumSmpl, u32* outTrap) {
     ADXB_GetPcmBuf(*(void**)((u8*)self + 0x04));
 }
 
-void adxsjd_decexec_start(void* self) {
-    void* adxb = *(void**)((u8*)self + 0x04);
-    void* inSj = *(void**)((u8*)self + 0x08);
-    u32 sjBuf[4];
-    s32 needEnd = 0;
-    u32 totalSmpl;
+/* SJ decoder handle work area (0xB4 bytes per slot) */
+typedef struct SjdWork {
+    s8 inUse;       /* 0x00 */
+    s8 status;      /* 0x01: decoder state */
+    s8 numChan;     /* 0x02 */
+    s8 ahxFlag;     /* 0x03 */
+    void* adxb;     /* 0x04: bound ADXB handle */
+    void* inSj;     /* 0x08: input stream journal */
+    void* chan[2];  /* 0x0C: per-channel output SJs */
+    SjChunk chunk;  /* 0x14: chunk currently staged for the decoder */
+    u8 pad1C[0x10];
+    u32 totalSamples; /* 0x2C */
+    u32 totalDtLen;   /* 0x30 */
+    u32 decPos;       /* 0x34 */
+    u32 maxDecSmpl;   /* 0x38 */
+    s32 trapNumSmpl;  /* 0x3C */
+    u32 trapCnt;      /* 0x40 */
+    u32 trapDtLen;    /* 0x44 */
+    void* trapFunc;   /* 0x48 */
+    void* trapCtx;    /* 0x4C */
+    u8 pad50[0x50];
+    u32 hdrLen;     /* 0xA0 */
+    u32 lnkSw;      /* 0xA4 */
+    s32 insertCnt;  /* 0xA8: pending insert (samples) */
+    s32 discardCnt; /* 0xAC: pending discard (samples) */
+    u32 pcmLoop;    /* 0xB0: non-zero keeps looping PCM playback alive */
+} SjdWork;
 
-    /* Check trap callback */
+/* Minimal view of the ADXB handle for direct field reads */
+typedef struct AdxBView {
+    u8 pad00[0x98];
+    s16 format; /* 0x98: current codec format id */
+} AdxBView;
+
+/* Round-half-up signed division by 2, as emitted by MWCC for s32 x / 2:
+ * (x + (u32)x >> 31) >> 1 */
+void adxsjd_decexec_start(SjdWork* sjd) {
+    void* adxb = sjd->adxb;
+    void* inSj = sjd->inSj;
+    s32 flg = 0; /* end-of-stream flag; also holds the read-limit constant */
+    SjChunk tail;   /* sp+0x18: remainder chunk given back to the input SJ */
+    SjChunk mid;    /* sp+0x10: scratch chunk for the PCM truncation split */
+    s16 footerLen;  /* sp+0x08 */
+    s32 totalSmpl;
+
+    /* Trap callback: fires once the decoded-sample counter reaches the trap point */
     {
-        s32 trapNum = *(s32*)((u8*)self + 0x3C);
-        if (trapNum >= 0 && *(u32*)((u8*)self + 0x40) >= (u32)trapNum) {
-            void (*trapFn)(void*, u32, u32) = *(void (**)(void*, u32, u32))((u8*)self + 0x48);
-            if (trapFn != NULL) {
-                trapFn(*(void**)((u8*)self + 0x4C),
-                       *(u32*)((u8*)self + 0x40),
-                       *(u32*)((u8*)self + 0x44));
+        s32 trapNum = sjd->trapNumSmpl;
+        if (trapNum >= 0 && (s32)sjd->trapCnt >= trapNum) {
+            if (sjd->trapFunc != NULL) {
+                ((void (*)(void*, s32))sjd->trapFunc)(sjd->trapCtx, trapNum);
             }
         }
     }
 
-    /* Check AHX termination */
-    if (*(u8*)((u8*)self + 0x03) == 1) {
-        void** vtbl = *(void***)inSj;
-        s32 (*getStatFn)(void*, s32) = (s32 (*)(void*, s32))vtbl[9];
-        if (getStatFn(inSj, 1) == 0) {
-            *(u8*)((u8*)self + 0x01) = 3;
+    /* AHX stream: stop once its dedicated server drained the input */
+    if (sjd->ahxFlag == 1) {
+        if (((s32 (*)(void*, s32))(*(void***)inSj)[9])(inSj, 1) == 0) {
+            sjd->status = 3;
             return;
         }
     }
 
-    /* Read from input SJ */
-    {
-        void** vtbl = *(void***)inSj;
-        void (*readFn)(void*, s32, void*) = (void (*)(void*, s32, void*))vtbl[6];
-        readFn(inSj, 1, sjBuf);
-    }
+    /* Pull the next chunk into the handle's persistent chunk */
+    ((void (*)(void*, s32, s32, void*))(*(void***)inSj)[6])(inSj, 1, 0x7FFFFFFF,
+                                                            &sjd->chunk);
 
-    /* Check format: 0 = undetermined */
+    /* Format not yet determined: sniff for an AHX footer tag */
     if (ADXB_GetFormat(adxb) == 0) {
-        u32 cLen = *(u32*)((u8*)self + 0x18);
-        if (cLen >= 4) {
-            u16 magic = *(u16*)*(u32*)((u8*)self + 0x14);
-            if (magic == 0x8001) {
-                s16 footerLen;
-                *(u8*)((u8*)self + 0x01) = 3;
-                if (ADX_DecodeFooter(*(u8**)((u8*)self + 0x14), &footerLen)) {
-                    if ((u32)footerLen > cLen) {
-                        void** vtbl = *(void***)inSj;
-                        void (*readFn)(void*, s32, void*) = (void (*)(void*, s32, void*))vtbl[6];
-                        readFn(inSj, 1, sjBuf);
+        if ((s32)sjd->chunk.len >= 4) {
+            if (*(u16*)sjd->chunk.ptr == 0x8001) {
+                sjd->status = 3;
+                if (ADX_DecodeFooter((u8*)sjd->chunk.ptr, (s32)sjd->chunk.len, &footerLen) == 0) {
+                    if ((s32)footerLen > (s32)sjd->chunk.len) {
+                        /* Not enough data for the footer yet: give the chunk back */
+                        ((void (*)(void*, s32, void*))(*(void***)inSj)[7])(inSj, 1, &sjd->chunk);
                         return;
                     }
-                    SJ_SplitChunk((u8*)self + 0x14, (u32)footerLen, (u8*)self + 0x14, sjBuf);
-                    {
-                        void** vtbl = *(void***)inSj;
-                        void (*commitFn)(void*, s32, void*) = (void (*)(void*, s32, void*))vtbl[8];
-                        commitFn(inSj, 0, (u8*)self + 0x14);
-                    }
-                    {
-                        void** vtbl = *(void***)inSj;
-                        void (*unreadFn)(void*, s32, void*) = (void (*)(void*, s32, void*))vtbl[7];
-                        unreadFn(inSj, 1, sjBuf);
-                    }
+                    /* Consume the footer, queue the rest for decoding */
+                    SJ_SplitChunk(&sjd->chunk, footerLen, &sjd->chunk, &tail);
+                    ((void (*)(void*, s32, void*))(*(void***)inSj)[8])(inSj, 0, &sjd->chunk);
+                    ((void (*)(void*, s32, void*))(*(void***)inSj)[7])(inSj, 1, &tail);
                 }
 
-                /* Link switch loop */
-                if (*(u32*)((u8*)self + 0xA4) != 0) {
-                    while (1) {
-                        u32 dataLen;
-                        s32 skip;
-                        void** vtbl;
-                        void (*readFn)(void*, s32, void*);
-                        void (*commitFn)(void*, s32, void*);
-                        void (*unreadFn)(void*, s32, void*);
+                /* Link switch: drain leading zero padding between linked streams */
+                if (sjd->lnkSw != 0) {
+                    u32 dataLen;
+                    s32 skip;
 
-                        vtbl = *(void***)inSj;
-                        readFn = (void (*)(void*, s32, void*))vtbl[6];
-                        readFn(inSj, 1, sjBuf);
-                        dataLen = *(u32*)((u8*)self + 0x18);
+                    flg = (s32)0x80000000; /* read-limit constant */
+                    do {
+                        ((void (*)(void*, s32, s32, void*))(*(void***)inSj)[6])(
+                            inSj, 1, (u32)flg - 1, &sjd->chunk);
+                        dataLen = sjd->chunk.len;
                         if (dataLen == 0) break;
-                        skip = 0;
-                        {
-                            u8* p = *(u8**)((u8*)self + 0x14);
-                            while (skip < (s32)dataLen) {
-                                if (p[skip] != 0) break;
-                                skip++;
-                            }
+                        for (skip = 0; skip < (s32)dataLen; skip++) {
+                            if (((s8*)sjd->chunk.ptr)[skip] != 0) break;
                         }
-                        SJ_SplitChunk((u8*)self + 0x14, (u32)skip, (u8*)self + 0x14, sjBuf);
-                        vtbl = *(void***)inSj;
-                        commitFn = (void (*)(void*, s32, void*))vtbl[8];
-                        commitFn(inSj, 0, (u8*)self + 0x14);
-                        vtbl = *(void***)inSj;
-                        unreadFn = (void (*)(void*, s32, void*))vtbl[7];
-                        unreadFn(inSj, 1, sjBuf);
-                        if (skip >= (s32)dataLen) break;
-                    }
+                        SJ_SplitChunk(&sjd->chunk, skip, &sjd->chunk, &tail);
+                        ((void (*)(void*, s32, void*))(*(void***)inSj)[8])(inSj, 0, &sjd->chunk);
+                        ((void (*)(void*, s32, void*))(*(void***)inSj)[7])(inSj, 1, &tail);
+                    } while (skip >= (s32)dataLen);
                 }
                 return;
             }
         }
     }
 
-    /* Check if decoding is complete */
-    totalSmpl = ADXB_GetTotalNumSmpl(adxb);
-    if (*(u32*)((u8*)self + 0x34) >= totalSmpl) {
-        if (ADXB_GetFormat(adxb) == 1 && *(u32*)((u8*)self + 0xB0) == 1) {
-            /* Continue */
-        } else {
-            needEnd = 1;
+    /* End-of-stream detection */
+    totalSmpl = ADXB_GetTotalNumSmpl(sjd->adxb);
+    if ((s32)sjd->decPos >= totalSmpl) {
+        /* Looping PCM streams never end here */
+        if (ADXB_GetFormat(adxb) != 1 || (s32)sjd->pcmLoop != 1) {
+            flg = 1;
         }
-    } else if (ADXB_GetFormat(adxb) == 0x0A) {
-        u32 decPos = *(u32*)((u8*)self + 0x34);
-        if (decPos > 0 && decPos + 0x240 >= totalSmpl) {
-            needEnd = 1;
+    } else if (ADXB_GetFormat(adxb) == 0xA) {
+        /* AHX: end shortly after the last block is consumed */
+        s32 decPos = sjd->decPos;
+        if (decPos > 0) {
+            if (decPos + 0x240 >= totalSmpl) {
+                flg = 1;
+            }
         }
-        if ((s32)totalSmpl <= 0) {
-            needEnd = 1;
+        if (totalSmpl <= 0) {
+            flg = 1;
         }
     }
 
-    if (needEnd) {
-        *(u8*)((u8*)self + 0x01) = 3;
-        {
-            void** vtbl = *(void***)inSj;
-            void (*unreadFn)(void*, s32, void*) = (void (*)(void*, s32, void*))vtbl[7];
-            unreadFn(inSj, 1, sjBuf);
-        }
+    if (flg != 0) {
+        sjd->status = 3;
+        ((void (*)(void*, s32, void*))(*(void***)inSj)[7])(inSj, 1, &sjd->chunk);
         return;
     }
 
-    /* Check block sample availability */
+    /* Wait until channel 0 has room for a whole block of samples */
     {
-        s32 blkSmpl = ADXB_GetBlkSmpl(adxb);
-        void* sj0 = *(void**)((u8*)self + 0x0C);
-        void** vtbl = *(void***)sj0;
-        s32 (*getFreeFn)(void*, s32) = (s32 (*)(void*, s32))vtbl[9];
-        s32 freeSize = getFreeFn(sj0, 0);
-        u32 avail = ((u32)freeSize + ((u32)freeSize >> 31)) / 2;
-        if (avail < (u32)blkSmpl) {
-            void** vtbl2 = *(void***)inSj;
-            void (*unreadFn)(void*, s32, void*) = (void (*)(void*, s32, void*))vtbl2[7];
-            unreadFn(inSj, 1, sjBuf);
+        u32 blkSmpl = ADXB_GetBlkSmpl(sjd->adxb);
+        void* sj0 = sjd->chan[0];
+        s32 freeSize = ((s32 (*)(void*, s32))(*(void***)sj0)[9])(sj0, 0);
+        s32 avail = freeSize / 2;
+        if (avail < (s32)blkSmpl) {
+            ((void (*)(void*, s32, void*))(*(void***)inSj)[7])(inSj, 1, &sjd->chunk);
             return;
         }
     }
 
-    /* Handle 16-bit PCM truncation */
-    if (*(u32*)((u8*)self + 0xB0) != 1 && ADXB_GetFormat(adxb) == 1) {
+    /* Non-looping 16-bit PCM: trim the final partial block */
+    if ((s32)sjd->pcmLoop != 1 && ADXB_GetFormat(adxb) == 1) {
         if (ADXB_GetFmtBps(adxb) == 0x10) {
-            s32 nch = ADXB_GetNumChan(adxb);
-            u32 cLen = *(u32*)((u8*)self + 0x18);
-            u32 bps = (cLen / nch + ((cLen / nch) >> 31)) / 2;
-            u32 endPos = *(u32*)((u8*)self + 0x34) + bps;
-            if (endPos > totalSmpl) {
-                u32 remain = totalSmpl - *(u32*)((u8*)self + 0x34);
+            s32 nch = ADXB_GetNumChan(sjd->adxb);
+            s32 half = ((s32)sjd->chunk.len / nch) / 2;
+            s32 decPos = sjd->decPos;
+            if (decPos + half > totalSmpl) {
+                s32 remain = totalSmpl - decPos;
                 u32 byteLen = nch * remain * 2;
-                SJ_SplitChunk((u8*)self + 0x14, byteLen, (u8*)self + 0x14, sjBuf);
-                {
-                    void** vtbl = *(void***)inSj;
-                    void (*unreadFn)(void*, s32, void*) = (void (*)(void*, s32, void*))vtbl[7];
-                    unreadFn(inSj, 1, sjBuf);
-                }
+                SJ_SplitChunk(&sjd->chunk, byteLen, &sjd->chunk, &mid);
+                ((void (*)(void*, s32, void*))(*(void***)inSj)[7])(inSj, 1, &mid);
             }
         } else {
             ADXERR_CallErrFunc2_(lbl_eu_805160B8 + 0x3F, lbl_eu_805160B8 + 0x60);
         }
     }
 
-    /* AHX format: discard chunk */
-    if (ADXB_GetFormat(adxb) == 0x0A) {
-        void** vtbl = *(void***)inSj;
-        void (*unreadFn)(void*, s32, void*) = (void (*)(void*, s32, void*))vtbl[7];
-        unreadFn(inSj, 1, sjBuf);
+    /* AHX: the decoder re-reads everything itself, give the chunk back */
+    if (ADXB_GetFormat(adxb) == 0xA) {
+        ((void (*)(void*, s32, void*))(*(void***)inSj)[7])(inSj, 1, &sjd->chunk);
     }
 
-    ADXB_EntryData(adxb, *(u8**)((u8*)self + 0x14), *(u32*)((u8*)self + 0x18));
+    ADXB_EntryData(adxb, sjd->chunk.ptr, sjd->chunk.len);
     ADXB_Start(adxb);
 }
-
-/* Chunk pair returned by SJ_SplitChunk / consumed by SJ commit/unread */
-typedef struct {
-    void* ptr;
-    u32 len;
-} SjChunk;
 
 void adxsjd_decexec_end(void* self) {
     s32 decDtLen;
@@ -659,184 +611,206 @@ void adxsjd_decexec_end(void* self) {
     ADXB_Reset(adxb);
 }
 
-void ADXSJD_ExecHndl(void* self) {
-    void* adxb;
-    s16 fmt;
-
-    /* Insert proc */
-    if (*(s32*)((u8*)self + 0xA8) > 0) {
+void ADXSJD_ExecHndl(SjdWork* sjd) {
+    /* Insert proc: runs under the resource lock */
+    if (sjd->insertCnt > 0) {
         ADXCRS_Lock();
-        adxsjd_insert_proc(self);
+        adxsjd_insert_proc(sjd);
         ADXCRS_Unlock();
     }
 
     /* State machine */
-    if (*(s8*)((u8*)self + 0x01) == 2) {
-        adxb = *(void**)((u8*)self + 0x04);
+    if (sjd->status == 2) {
+        void* adxb = sjd->adxb;
         if (ADXB_GetStat(adxb) == 0) {
-            adxsjd_decexec_start(self);
+            adxsjd_decexec_start(sjd);
         }
         ADXB_ExecHndl(adxb);
         if (ADXB_GetStat(adxb) == 3) {
-            adxsjd_decexec_end(self);
+            adxsjd_decexec_end(sjd);
         }
-        fmt = ADXB_GetFormat(adxb);
-        if ((fmt >= 0x0A && fmt <= 0x0C) || fmt == 0x14 || fmt == 0x0F) {
-            u32 dtLen = ADXB_GetDecDtLen(adxb);
-            u32 numSmpl = ADXB_GetDecNumSmpl(adxb);
-            *(u32*)((u8*)self + 0x2C) += numSmpl;
-            *(u32*)((u8*)self + 0x30) += dtLen;
-            *(u32*)((u8*)self + 0x34) += numSmpl;
+        {
+            /* Formats 0x0A-0x0C, 0x0F and 0x14 decode without decexec_end:
+             * accumulate their block progress directly */
+            s16 fmt = ((AdxBView*)adxb)->format;
+            if ((u16)(fmt - 0x0A) <= 2 || fmt == 0x14 || fmt == 0x0F) {
+                /* Re-read the handle: decexec_end may have rebound it */
+                adxb = sjd->adxb;
+                u32 dtLen = ADXB_GetDecDtLen(adxb);
+                u32 numSmpl = ADXB_GetDecNumSmpl(adxb);
+                sjd->totalSamples += numSmpl;
+                sjd->totalDtLen += dtLen;
+                sjd->decPos += numSmpl;
+            }
         }
-    } else if (*(s8*)((u8*)self + 0x01) == 1) {
-        adxsjd_decode_prep(self);
+    } else if (sjd->status == 1) {
+        adxsjd_decode_prep(sjd);
     }
 
-    /* Discard proc */
-    if (*(s32*)((u8*)self + 0xAC) > 0) {
+    /* Discard proc: runs under the resource lock */
+    if (sjd->discardCnt > 0) {
         ADXCRS_Lock();
-        adxsjd_discard_proc(self);
+        adxsjd_discard_proc(sjd);
         ADXCRS_Unlock();
     }
 }
 
 void adxsjd_insert_proc(void* self) {
-    int i, nch;
-    u32 totalInsert, maxInsert, aligned, half;
     u32 wrBuf[2];
+    s32 i;
+    void** p;
+    s32 maxInsert;
+    s32 half;
 
-    nch = (s32)*(s8*)((u8*)self + 0x02);
-    totalInsert = *(u32*)((u8*)self + 0xA8) * 2;
-    maxInsert = totalInsert;
+    p = (void**)self;
+    i = 0;
+    /* Pending insert samples converted to byte count */
+    maxInsert = *(u32*)((u8*)self + 0xA8) * 2;
 
-    /* Determine max insertable bytes */
-    for (i = 0; i < nch; i++) {
-        void* chan = *(void**)((u8*)self + 0x0C + i * 4);
-        void** vtbl = *(void***)chan;
-        void (*getBufFn)(void*, s32, s32, void*) = (void (*)(void*, s32, s32, void*))vtbl[6];
-        getBufFn(chan, 0, 0x7FFFFFFF, wrBuf);
-        if (maxInsert > wrBuf[1]) {
-            maxInsert = wrBuf[1];
+    /* Phase 1: query free space per channel and take the minimum */
+    for (; i < (s32)*(s8*)((u8*)self + 0x02); i++) {
+        ((void (*)(void*, s32, s32, void*))(*(void***)*(void**)((u8*)p + 0x0C))[6])(
+            *(void**)((u8*)p + 0x0C), 0, 0x7FFFFFFF, wrBuf);
+        maxInsert = (maxInsert < (s32)wrBuf[1]) ? maxInsert : (s32)wrBuf[1];
+        {
+            void* chan = *(void**)((u8*)p + 0x0C);
+            ((void (*)(void*, s32, void*))(*(void***)chan)[7])(chan, 0, wrBuf);
         }
+        p++;
     }
 
-    aligned = (maxInsert + 1) & ~1u;
-    half = aligned / 2;
-    if ((s32)aligned <= 0) return;
+    /* Guard uses the same halving as below; MWCC folds (/2)*2 onto the
+     * sign-biased intermediate */
+    half = maxInsert / 2;
+    if ((s32)(half * 2) <= 0) return;
 
-    /* Insert silence into each channel */
-    for (i = 0; i < nch; i++) {
-        void* chan = *(void**)((u8*)self + 0x0C + i * 4);
-        void** vtbl = *(void***)chan;
-        void (*getBufFn)(void*, s32, s32, void*) = (void (*)(void*, s32, s32, void*))vtbl[6];
-        void (*commitFn)(void*, s32, void*) = (void (*)(void*, s32, void*))vtbl[8];
-        getBufFn(chan, 0, aligned, wrBuf);
-        memset((void*)wrBuf[0], 0, aligned);
-        commitFn(chan, 1, wrBuf);
+    /* Phase 2: insert silence of the aligned byte count into every channel */
+    i = 0;
+    p = (void**)self;
+    for (; i < (s32)*(s8*)((u8*)self + 0x02); i++) {
+        ((void (*)(void*, s32, s32, void*))(*(void***)*(void**)((u8*)p + 0x0C))[6])(
+            *(void**)((u8*)p + 0x0C), 0, half * 2, wrBuf);
+        memset((void*)wrBuf[0], 0, half * 2);
+        {
+            void* chan = *(void**)((u8*)p + 0x0C);
+            ((void (*)(void*, s32, void*))(*(void***)chan)[8])(chan, 1, wrBuf);
+        }
+        p++;
     }
 
-    *(s32*)((u8*)self + 0xA8) -= (s32)half;
+    *(s32*)((u8*)self + 0xA8) -= half;
 }
 
 void adxsjd_discard_proc(void* self) {
-    int i, nch;
-    u32 totalDiscard, maxDiscard, aligned, half;
-    u32 wrBuf[2];
+    SjChunk chunk;
+    void** chanP;
+    s32 i;
+    s32 maxDiscard;
+    s32 half;
 
-    nch = (s32)*(s8*)((u8*)self + 0x02);
-    totalDiscard = *(u32*)((u8*)self + 0xAC) * 2;
-    maxDiscard = totalDiscard;
+    chanP = (void**)self;
+    i = 0;
+    maxDiscard = *(s32*)((u8*)self + 0xAC) * 2;
 
-    /* Determine max discardable bytes */
-    for (i = 0; i < nch; i++) {
-        void* chan = *(void**)((u8*)self + 0x0C + i * 4);
-        void** vtbl = *(void***)chan;
-        void (*getBufFn)(void*, s32, s32, void*) = (void (*)(void*, s32, s32, void*))vtbl[6];
-        getBufFn(chan, 1, 0x7FFFFFFF, wrBuf);
-        if (maxDiscard > wrBuf[1]) {
-            maxDiscard = wrBuf[1];
+    /* Phase 1: query free space per channel and take the minimum */
+    for (; i < (s32)*(s8*)((u8*)self + 0x02); i++) {
+        ((void (*)(void*, s32, s32, void*))(*(void***)*(void**)((u8*)chanP + 0x0C))[6])(
+            *(void**)((u8*)chanP + 0x0C), 1, 0x7FFFFFFF, &chunk);
+        maxDiscard = (maxDiscard < (s32)chunk.len) ? maxDiscard : (s32)chunk.len;
+        {
+            void* chan = *(void**)((u8*)chanP + 0x0C);
+            ((void (*)(void*, s32, void*))(*(void***)chan)[7])(chan, 1, &chunk);
         }
+        chanP++;
     }
 
-    aligned = (maxDiscard + 1) & ~1u;
-    half = aligned / 2;
-    if ((s32)aligned <= 0) return;
+    /* Guard uses the same halving as below; MWCC folds (/2)*2 onto the
+     * sign-biased intermediate */
+    half = maxDiscard / 2;
+    if ((s32)(half * 2) <= 0) return;
 
-    /* Discard from each channel */
-    for (i = 0; i < nch; i++) {
-        void* chan = *(void**)((u8*)self + 0x0C + i * 4);
-        void** vtbl = *(void***)chan;
-        void (*getBufFn)(void*, s32, s32, void*) = (void (*)(void*, s32, s32, void*))vtbl[6];
-        void (*unreadFn)(void*, s32, void*) = (void (*)(void*, s32, void*))vtbl[7];
-        getBufFn(chan, 1, aligned, wrBuf);
-        unreadFn(chan, 0, wrBuf);
+    /* Phase 2: discard the aligned byte count from every channel */
+    chanP = (void**)self;
+    i = 0;
+    for (; i < (s32)*(s8*)((u8*)self + 0x02); i++) {
+        void* chan = *(void**)((u8*)chanP + 0x0C);
+        ((void (*)(void*, s32, s32, void*))(*(void***)chan)[6])(chan, 1, half * 2, &chunk);
+        {
+            void* chan2 = *(void**)((u8*)chanP + 0x0C);
+            ((void (*)(void*, s32, void*))(*(void***)chan2)[8])(chan2, 0, &chunk);
+        }
+        chanP++;
     }
 
-    *(s32*)((u8*)self + 0xAC) -= (s32)half;
+    *(s32*)((u8*)self + 0xAC) -= half;
 }
 
 void ADXSJD_ExecServer(void) {
+    u8* work = (u8*)&lbl_eu_805E3340;
     int i;
-    u8* base = (u8*)&lbl_eu_805E3340;
+    u8* sjd;
 
-    /* Pre-server callback */
+    /* Pre-server callback (indirect through stored function pointer) */
     {
-        u32 preCb = *(u32*)(base + 0x04);
-        if (preCb != 0) {
-            void (*cb)(void*) = (void (*)(void*))preCb;
-            cb(*(void**)(base + 0x08));
+        void (**preCb)(void*) = (void (**)(void*))(work + 0x04);
+        if (*preCb != NULL) {
+            (*preCb)(*(void**)(work + 0x08));
         }
     }
 
-    /* Process each handle */
-    {
-        u8* sjd = base + 0x18;
-        for (i = 0; i < 16; i++) {
-            if (*sjd == 1) {
-                /* Insert */
-                if (*(s32*)(sjd + 0xA8) > 0) {
-                    ADXCRS_Lock();
-                    adxsjd_insert_proc(sjd);
-                    ADXCRS_Unlock();
-                }
-
-                if (*(s8*)(sjd + 0x01) == 2) {
-                    void* adxb = *(void**)(sjd + 0x04);
-                    s16 fmt;
-                    if (ADXB_GetStat(adxb) == 0) {
-                        adxsjd_decexec_start(sjd);
-                    }
-                    ADXB_ExecHndl(adxb);
-                    if (ADXB_GetStat(adxb) == 3) {
-                        adxsjd_decexec_end(sjd);
-                    }
-                    fmt = ADXB_GetFormat(adxb);
-                    if ((fmt >= 0x0A && fmt <= 0x0C) || fmt == 0x14 || fmt == 0x0F) {
-                        *(u32*)(sjd + 0x2C) += ADXB_GetDecNumSmpl(adxb);
-                        *(u32*)(sjd + 0x30) += ADXB_GetDecDtLen(adxb);
-                        *(u32*)(sjd + 0x34) += ADXB_GetDecNumSmpl(adxb);
-                    }
-                } else if (*(s8*)(sjd + 0x01) == 1) {
-                    adxsjd_decode_prep(sjd);
-                }
-
-                /* Discard */
-                if (*(s32*)(sjd + 0xAC) > 0) {
-                    ADXCRS_Lock();
-                    adxsjd_discard_proc(sjd);
-                    ADXCRS_Unlock();
-                }
+    /* Process each handle slot */
+    for (i = 0; i < 16; i++) {
+        u8* sjd2 = work + 0x18 + i * 0xB4;
+        if (*(s8*)sjd2 == 1) {
+            /* Pending insert runs under the resource lock */
+            if (*(s32*)(sjd2 + 0xA8) > 0) {
+                ADXCRS_Lock();
+                adxsjd_insert_proc(sjd2);
+                ADXCRS_Unlock();
             }
-            sjd += 0xB4;
+
+            if (*(s8*)(sjd2 + 0x01) == 2) {
+                void* adxb = *(void**)(sjd2 + 0x04);
+                if (ADXB_GetStat(adxb) == 0) {
+                    adxsjd_decexec_start((SjdWork*)sjd2);
+                }
+                ADXB_ExecHndl(adxb);
+                if (ADXB_GetStat(adxb) == 3) {
+                    adxsjd_decexec_end(sjd2);
+                }
+                {
+                    /* Formats 0x0A-0x0C, 0x0F and 0x14 accumulate block
+                     * progress directly instead of via decexec_end */
+                    s16 fmt = ((AdxBView*)adxb)->format;
+                    if ((u16)(fmt - 0x0A) <= 2 || fmt == 0x14 || fmt == 0x0F) {
+                        u32 dtLen;
+                        u32 numSmpl;
+                        void* adxb2 = *(void**)(sjd2 + 0x04);
+                        dtLen = ADXB_GetDecDtLen(adxb2);
+                        numSmpl = ADXB_GetDecNumSmpl(adxb2);
+                        *(u32*)(sjd2 + 0x2C) += numSmpl;
+                        *(u32*)(sjd2 + 0x30) += dtLen;
+                        *(u32*)(sjd2 + 0x34) += numSmpl;
+                    }
+                }
+            } else if (*(s8*)(sjd2 + 0x01) == 1) {
+                adxsjd_decode_prep(sjd2);
+            }
+
+            /* Pending discard runs under the resource lock */
+            if (*(s32*)(sjd2 + 0xAC) > 0) {
+                ADXCRS_Lock();
+                adxsjd_discard_proc(sjd2);
+                ADXCRS_Unlock();
+            }
         }
     }
 
     /* Post-server callback */
     {
-        u32 postCb = *(u32*)(base + 0x0C);
-        if (postCb != 0) {
-            void (*cb)(void*) = (void (*)(void*))postCb;
-            cb(*(void**)(base + 0x10));
+        void (**postCb)(void*) = (void (**)(void*))(work + 0x0C);
+        if (*postCb != NULL) {
+            (*postCb)(*(void**)(work + 0x10));
         }
     }
 }

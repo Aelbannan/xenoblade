@@ -1,33 +1,20 @@
 // (func_800BE12C now has a single unified decl on CfObjectMove.hpp; only one
 // form exists, so no pre-include rename is needed here.)
-// getArtsSlotRC: CAIAction.hpp and CChainActorList.hpp declare conflicting
-// C-linkage signatures; this TU calls neither, so rename it out of the way
-// for the duration of the include block.
-// getArtsSlotRC: CAIAction.hpp and CChainActorList.hpp declare conflicting
-// C-linkage signatures; this TU calls neither, so rename CAIAction.hpp's
-// variant out of the way for just that include.
-#define getArtsSlotRC cbmgr_artsSlotRcUnused
-#define getArtsParamRC2 cbmgr_artsParamRc2Unused
-#define func_8009EC9C cbmgr_func8009EC9CUnused
+// (single-owner-decl cleanup: all six pre-include renames are gone.
+// getArtsSlotRC / getArtsParamRC2 resolve via the single owner decl pair on
+// chain/CChainActorList.hpp (CAIAction.hpp's foreign copies removed);
+// func_8009EC9C resolves via the aligned u32 owner-form decls (CfObjectPc.hpp
+// / CVision.hpp; defined in CtrlObjectParam.cpp); func_800824FC__Q2..Fv and
+// func_8025FB10 share aligned extern "C" decls between CChainActorList.hpp /
+// CfGameManagerUnityHelpers.hpp / CChainTimer.hpp; lbl_eu_8066A1F8 keeps its
+// owner decl on action/CActParamAnim.hpp, with this TU's copies aligned to
+// CChain.hpp's const form (const is load-bearing for chain-TU scheduling).)
 #include "kyoshin/cf/object/CAIAction.hpp"
-#undef getArtsSlotRC
-#undef getArtsParamRC2
-#undef func_8009EC9C
-// func_8025FB10: u32 form (CChainActorList.hpp) is canonical; CChainTimer.hpp's
-// int form conflicts. Same pre-include + rename recipe as CMenuBattleMode.cpp.
-// func_800824FC: renames CChainActorList's int form (this TU uses the s32
-// spelling shared with CfGameManagerUnityHelpers.hpp).
-#define func_800824FC__Q22cf13CfGameManagerFv cbmgr_800824FCUnused
 #include "kyoshin/cf/chain/CChainActorList.hpp"
-#undef func_800824FC__Q22cf13CfGameManagerFv
-#define func_8025FB10 cbmgr_8025FB10Unused
-// lbl_eu_8066A1F8: CChain.hpp declares a const f32 variant that conflicts
-// with this TU's plain-float decls (CfObjectEne.hpp / local). Rename it for
-// the duration of this aggregate include.
-#define lbl_eu_8066A1F8 cbmgr_pi8066A1F8Unused
+// lbl_eu_8066A1F8: CChain.hpp's const f32 form is kept (load-bearing for
+// chain-TU scheduling); CfObjectEne.hpp and this TU's local decl are aligned
+// to it, so no pre-include rename is needed.
 #include "kyoshin/cf/CBattleManager.hpp"
-#undef lbl_eu_8066A1F8
-#undef func_8025FB10
 #include "kyoshin/cf/CfMapItemManager.hpp"
 #include "monolib/scn/CScnTimeApi.hpp"
 #include "kyoshin/cf/CBattleManager.hpp"
@@ -61,9 +48,9 @@ struct BMIf {
 #include "monolib/work.hpp"
 
 // Arts-data row returned by func_8009EC9C: the per-entry table scanned by
-// func_800C0174 starts at +0x1C (passed to func_8009D7E4). C-linkage so the
-// call reloc binds to the retail-unmangled name (declared in CArtsInfo.hpp).
-extern "C" void* func_8009EC9C(u32);
+// func_800C0174 starts at +0x1C (passed to func_8009D7E4). (func_8009EC9C
+// itself resolves via the aligned u32 owner-form decls: CfObjectPc.hpp /
+// CVision.hpp; defined in CtrlObjectParam.cpp - no local copy needed.)
 extern void func_8009D7E4(UNKTYPE* r3, u32 r4);
 
 // Status add/remove helper (retail func_800BE12C). The shared headers carry
@@ -92,7 +79,8 @@ extern "C" UnkClass_805764CC* func_800B07E8__Fv();
 extern "C" void func_800B8804__FPvPQ22cf13IFactoryEvent(UnkClass_805764CC* holder, cf::IFactoryEvent* ev);
 extern "C" void func_800B88E0(UnkClass_805764CC* holder, cf::IFactoryEvent* ev);
 // Cross-actor id lookup used by func_800F3970's dispatch table (/100 scale).
-extern "C" s32 func_800824FC__Q22cf13CfGameManagerFv(s32 first, s32 second);
+// (func_800824FC__Q2..Fv resolves via the single extern "C" s32 owner decl on
+// chain/CChainActorList.hpp, included above - no local copy needed.)
 
 // ============================================================
 // Explicit template specializations: _reslist_base / reslist
@@ -4439,7 +4427,7 @@ extern f32 lbl_eu_80666DFC;
 extern f32 lbl_eu_80666E14;
 extern f32 lbl_eu_80666E28;
 extern f32 lbl_eu_80666E18;
-extern f32 lbl_eu_8066A1F8;
+extern const f32 lbl_eu_8066A1F8;   // const form aligned with CChain.hpp / CfObjectEne.hpp
 extern "C" s32 func_80086DBC__Q22cf13CfGameManagerFv(void);
 extern "C" u32 func_8004C5EC(void*);
 
@@ -11387,13 +11375,13 @@ extern "C" void func_800EA484(cf::CBattleManager* self, f32 value, int flags) {
                 void* r29 = __dynamic_cast(func_800F6EAC(func_80043F18(&h2), i), 0, &lbl_eu_80661970, &lbl_eu_806618F0, 0);
                 // Match the cast object's +0x9C pointer against either vision
                 // actor (or its embedded move sub-object at +0x3E9C).
-                // Re-read the pair fields through vision each iteration:
-                // retail recomputes the +0x3E9C adjustment per pass (the
-                // vt88 virtual call bars hoisting the memory load).
-                if ((func_8016FE34(func_800B708C((s32)vp->field_00)) != nullptr &&
-                     ((E484_TypeObj*)r29)->field_9C == (u8*)func_8016FE34(func_800B708C((s32)vp->field_00)) + 0x3E9C) ||
-                    (func_8016FE34(func_800B708C((s32)vp->field_04)) != nullptr &&
-                     ((E484_TypeObj*)r29)->field_9C == (u8*)func_8016FE34(func_800B708C((s32)vp->field_04)) + 0x3E9C))
+                // Fresh locals per iteration: retail recomputes the +0x3E9C
+                // adjustments mid-loop (after each null check), so they must
+                // not be hoisted.
+                void* adj26 = (r26 != nullptr) ? (u8*)r26 + 0x3E9C : r26;
+                void* adj27 = (r27 != nullptr) ? (u8*)r27 + 0x3E9C : r27;
+                if ((r26 != nullptr && ((E484_TypeObj*)r29)->field_9C == adj26) ||
+                    (r27 != nullptr && ((E484_TypeObj*)r29)->field_9C == adj27))
                     reinterpret_cast<E484_Mirror*>(r29)->vt88(value);
                 if (r26 != nullptr) {
                     void* b = ((E484_VisionActor*)r26)->field_45B8;

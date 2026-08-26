@@ -1264,7 +1264,7 @@ int sfply_ResetHn(void* self) {
     u8 tmpInfo[0x190];
 
     s32 hadTrk;
-    s32 savTermId;
+    s32 savTermId = 0;
     s32 sav0x64;
     u32 savA0C;
     u32 sav1078;
@@ -1290,8 +1290,6 @@ int sfply_ResetHn(void* self) {
     u32 cbGrp2[3];
     u32 cycGrp[4];
     u32 tfGrp[4];
-
-    savTermId = 0;
 
     cfgHdr = *(SfdCopyBlk*)hn;
     hadTrk = FIELD(s32, hn, 0xA3C);

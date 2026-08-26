@@ -95,6 +95,41 @@ extern "C" void __dt__10CScrollBarFv(void*, int);
 extern "C" void __dt__6CCur18Fv(void*, int);
 extern "C" void __dt__17UnkClass_8045F564Fv(void*, int);
 
+// Constructor imports (retail short/mangled names; same set as
+// CQstLogList.hpp).
+extern "C" void __ct__17UnkClass_8045F564Fv(void* self);
+extern "C" u32 lbl_eu_8053A2A8[];   // CTutorialList vtable (.data; array -> lis/addi)
+extern "C" void __ct__CSortMenu(void* self);
+extern "C" void __ct__UnkClass_8011C974(void* dest, const u32* src);  // 4-word mem-region copy
+extern "C" void func_8011C998(CScrollBarData* dst, const CScrollBarData* src);  // CScrollBar copy
+
+// Mirror of the CSortMenu body (0xF0 bytes) followed by the tutorial-list
+// extension (id table + summary halfwords), used by the constructor's
+// temp-to-member copies. Pointer fields are opaque storage.
+struct CTutorialListMenuData {
+    u32 mVtbl;                 // +0x00 (not copied)
+    u8  mUnk04[0x10];          // +0x04 UnkClass_8045F564 (__ct__UnkClass_8011C974)
+    u32 mFileHandle;           // +0x14
+    u32 mArcResAcc;            // +0x18
+    u32 mpLayout;              // +0x1C
+    u32 mpAnimTrans0;          // +0x20
+    u32 mpAnimTrans1;          // +0x24
+    u8  field_28;              // +0x28
+    u8  field_29;              // +0x29
+    u8  field_2A;              // +0x2A
+    u8  field_2B;              // +0x2B
+    u8  mScrollBar[0x40];      // +0x2C CScrollBar (copied via func_8011C998)
+    u32 mArray[32];            // +0x6C (0x80-byte block copy)
+    u8  mCount;                // +0xEC
+    u8  mPage;                 // +0xED
+    u8  mSubPage;              // +0xEE
+    u8  mPadEF;                // +0xEF (keeps mTable at +0xF0)
+    u8  mTable[0x100];         // +0xF0 tutorial id table (zero-seeded + copied)
+    u16 mField1F0;             // +0x1F0 content size
+    s16 mField1F2;             // +0x1F2 row id
+    s16 mField1F4;             // +0x1F4 selection id
+};
+
 // File-load / layout-build imports with unmangled retail names (same set as
 // CKizunaTalkList.hpp; these retail symbols are not C++-mangled).
 extern "C" void* getHandleMEM2__Q23mtl10MemManagerFv();
@@ -132,6 +167,19 @@ struct CTutorialMsgObj {
     CTutorialMsgChain* chain;  // 0x8
 };
 
+// Vtable view of the font-info object returned by CDeviceFont::func_80452C10:
+// virtual index 7 (vtable+0x24) returns the value bound via func_8013676C.
+struct CTutorialFontView {
+    virtual void _v00();
+    virtual void _v04();
+    virtual void _v08();
+    virtual void _v0C();
+    virtual void _v10();
+    virtual void _v14();
+    virtual void _v18();
+    virtual u32 fontData();  // vtable+0x24 (raw slot 9)
+};
+
 // Field view of the embedded CCur18 cursor (+0x2C). OnFileEvent copies a
 // stack-constructed cursor into it without touching the +0x00 vtable.
 struct CTutorialCur18Data {
@@ -162,16 +210,17 @@ extern "C" void func_802ACC30(u8*, u16, int);
 class CTutorialList {
 public:
     CTutorialList(u16 count);
-    virtual ~CTutorialList();
     int OnFileEvent(CEventFile* event);
 
     u8 func_802AD300();
-    u8 func_802AD984();
+    int func_802AD984();
     u8 func_802AD2A4();
 
     // Fields are public: the retail widget functions are C-linkage free
     // functions (func_802AD308 etc.) that need raw member access.
-    // vptr at +0x00 (implicit from virtual dtor)
+    // Retail stores the vtable label explicitly (non-polymorphic view),
+    // matching CQstLogList.
+    void* mVtbl;                          // 0x00 vtable (lbl_eu_8053A2A8)
     u8 mGap04[0x10];                      // 0x04: UnkClass_8045F564 (0x10)
     void* mField14;                       // 0x14: CFileHandle*
     void* mField18;                       // 0x18: ArcResourceAccessor*

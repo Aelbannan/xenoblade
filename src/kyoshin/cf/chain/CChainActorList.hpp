@@ -153,11 +153,13 @@ public:
 
 // CfGameManager pair-value query (retail Fv-form symbol; call sites pass
 // two ids even though the suffix does not reflect them) and the tuning-value
-// accessor (owner: code_8025FB10.cpp).
+// accessor (owner: code_8025FB10.cpp). Single winning decls: extern "C" s32
+// form matches CfGameManagerUnityHelpers.hpp; int(void*,u32) form matches
+// CChainTimer.hpp so both headers co-exist without rename guards.
 class CChainActorObjId;
-int func_800824FC__Q22cf13CfGameManagerFv(int firstId, int secondId);
-u32 func_8025FB10(CChainActorObjId* data, u32 flag);
-extern "C" int func_8017FD44(void*);
+extern "C" s32 func_800824FC__Q22cf13CfGameManagerFv(s32 firstId, s32 secondId);
+extern "C" int func_8025FB10(void* data, u32 flag);
+extern "C" int func_8017FD44(void);
 extern "C" int func_8017FD4C(int);
 extern "C" int func_80086F9C__Q22cf13CfGameManagerFv(int arg);
 extern "C" int getArtsSlotRC(const void* arts, short index, short subindex);

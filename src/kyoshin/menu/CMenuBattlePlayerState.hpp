@@ -111,7 +111,8 @@ struct CMenuBattlePlayerStateSlot {
     u32 unk254; // +0x254: ctor default 0xb
     u32 unk258; // +0x258: slot index
     u32 unk25C; // +0x25C → this+0x2d0: per-layout draw flag bits
-    u8 pad260[0x264 - 0x260];
+    u8 unk260; // +0x260: mode-change jingle gate (from lbl_eu_80663E24 bit 26)
+    u8 pad261[0x264 - 0x261];
     f32 unk264; // +0x264
     u32 unk268; // +0x268: last matched arts-icon slot cursor
     u32 unk26C; // +0x26C: last matched level-icon cursor
@@ -174,6 +175,15 @@ extern const double lbl_eu_80666FB8; // unsigned-int -> double bias
 // `extern u8* lbl_eu_806640E0;`.
 // Per-level HP-gauge width table indexed by the quantized gauge value.
 extern f32 lbl_eu_804FD6E0[5];
+
+// Tension state-machine thresholds (func_8010D8D4 switch arms).
+extern const f32 lbl_eu_80666FE0;
+extern const f32 lbl_eu_80666FE4;
+
+struct CMenuBattleDamageQueue;
+// Draws one queued damage number; the caller embeds the queue object at
+// slot+0x74 (sub-layout resource region).
+void func_8010ACC4(CMenuBattleDamageQueue* queue);
 
 // Pane/material helpers from code_80135FDC.cpp not yet declared elsewhere.
 // func_80136D74 / func_80136190 / func_80138F78 come from code_80135FDC.hpp.

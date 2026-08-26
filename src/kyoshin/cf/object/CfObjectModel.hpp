@@ -2,15 +2,22 @@
 
 #include <types.h>
 #include "kyoshin/cf/object/CfObject.hpp"
+#include "monolib/math/CVec3.hpp"
 
 // Retail data labels referenced by this unit.
 extern const float lbl_eu_80666A68;   // CfObject_UnkVirtualFunc20 constant / CfObject_UnkVirtualFunc56 fallback
 extern float lbl_eu_80666A6C;   // func_800BBA08 position constant (stack-vector fill)
+extern const float lbl_eu_80666A70;   // UnkVirtualFunc25 first probe FP arg
+extern const float lbl_eu_80666A74;   // UnkVirtualFunc25 probe second FP arg
+extern const float lbl_eu_80666A78;   // UnkVirtualFunc25 lift-offset Y element
+extern const float lbl_eu_80666A7C;   // UnkVirtualFunc25 lifted re-probe FP arg
 extern const float lbl_eu_80666A80;   // CfObject_UnkVirtualFunc20 (model) stack-vector middle element
 extern const float lbl_eu_80666A84;   // CfObject_UnkVirtualFunc20 (model) slot +0xB4 scale argument
 extern const float lbl_eu_8066A210;   // CfObject_UnkVirtualFunc32 scale factor
 extern const float lbl_eu_8066A20C;   // CfObject_UnkVirtualFunc34 scale factor
 extern u8 lbl_eu_804FC548[];   // CfObjectModel_UnkVirtualFunc3 null placeholder (rodata, 8 bytes)
+extern u8 lbl_eu_80529318[];   // cf::CfObject vtable (retail .data, stored by the model dtor)
+extern u8 lbl_eu_805294E0[];   // cf::CfObjectModel vtable (retail .data)
 extern const char lbl_eu_80529678[];   // Panic file (node-lookup assert, line 0x53)
 extern const char lbl_eu_80529658[];   // Panic fmt (CfObject_UnkVirtualFunc52/53)
 
@@ -19,6 +26,10 @@ namespace g3d {
 struct ResMdlData;  // forward decl (full type in nw4r/g3d/res/g3d_resmdl.h)
 }
 }
+
+// Retail ml static zero vector (unmangled symbol; ml::CVec3 comes from
+// monolib/math/CVec3.hpp, already included transitively).
+extern ml::CVec3 zero__Q22ml5CVec3;
 
 namespace cf {
     // Sub-object at CfObjectModel+0x98: flag words read by func_800BB934
@@ -117,6 +128,33 @@ namespace cf {
         virtual void m170();
         virtual float m174();  // vtable +0x174 (CfObject_UnkVirtualFunc73 returns a float in retail)
     };
+    // Vtable proxy for calling a cf-chain vtable slot +0x120 with a name-string
+    // argument and a u32 result (retail CfObjectModel_UnkVirtualFunc14 checks
+    // the return; the base header declares the slot no-arg/void). Dummy slots
+    // pin the offset.
+    class CfObjectVt120 : public CfObjectModelSub98Vt {
+    public:
+        virtual void mAC(); virtual void mB0(); virtual void mB4(); virtual void mB8();
+        virtual void mBC(); virtual void mC0(); virtual void mC4(); virtual void mC8();
+        virtual void mCC(); virtual void mD0(); virtual void mD4(); virtual void mD8();
+        virtual void mDC(); virtual void mE0(); virtual void mE4(); virtual void mE8();
+        virtual void mEC(); virtual void mF0(); virtual void mF4(); virtual void mF8();
+        virtual void mFC(); virtual void m100(); virtual void m104(); virtual void m108();
+        virtual void m10C(); virtual void m110(); virtual void m114(); virtual void m118();
+        virtual void m11C();
+        virtual u32 m120(const char* name);  // vtable +0x120
+    };
+    // Vtable proxy for calling the model sub-object's vtable slot +0x3C with a
+    // name argument; the slot returns a matrix pointer whose translation column
+    // (+0xC/+0x1C/+0x2C) feeds the position vector.
+    class CfObjectParamVt3C {
+    public:
+        virtual void m08(); virtual void m0C(); virtual void m10(); virtual void m14();
+        virtual void m18(); virtual void m1C(); virtual void m20(); virtual void m24();
+        virtual void m28(); virtual void m2C(); virtual void m30(); virtual void m34();
+        virtual void m38();
+        virtual float* m3C(const char* name);  // vtable +0x3C
+    };
     //min size: 0xbe
     class CfObjectModel : public CfObject {
     public:
@@ -135,7 +173,7 @@ namespace cf {
         virtual void CfObjectModel_UnkVirtualFunc10(); //0x19C
         virtual void CfObjectModel_UnkVirtualFunc11(); //0x1A0
         virtual void CfObjectModel_UnkVirtualFunc12(); //0x1A4
-        virtual void CfObjectModel_UnkVirtualFunc13(); //0x1A8
+        virtual void CfObjectModel_UnkVirtualFunc13(const ml::CVec3* pos); //0x1A8 (retail passes a stack vector)
         virtual void CfObjectModel_UnkVirtualFunc14(); //0x1AC
         virtual void CfObjectModel_UnkVirtualFunc15(); //0x1B0
         virtual void CfObjectModel_UnkVirtualFunc16(); //0x1B4
@@ -156,7 +194,8 @@ namespace cf {
         float field_A0;               // 0xA0-0xA3
         u8 field_0xA4[0xC];           // 0xA4-0xAF
         void* mSubObjB0;      // 0xB0-0xB3
-        u8 unkB4[0xBC - 0xB4]; // 0xB4-0xBB
+        cf::CfObjectModel* field_B4; // 0xB4 (source object stored by UnkVirtualFunc14)
+        const char* field_B8;        // 0xB8 (name/fallback label stored by UnkVirtualFunc14)
         u8 field_BC;          // 0xBC
         u8 field_BD;          // 0xBD
     CfObjectModel();

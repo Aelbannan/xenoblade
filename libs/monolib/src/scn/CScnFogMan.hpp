@@ -2,6 +2,8 @@
 
 #include <types.h>
 
+class CScnEnvLgtCtrl;  // full definition in CScnEnvLgtCtrl.hpp
+
 // A word-packed 4-component vector (color/parameters) read by func_8049DE74
 // as raw 32-bit words.
 struct SWordVec {
@@ -11,12 +13,23 @@ struct SWordVec {
     u32 v3;
 };
 
+// Scene-view object behind CScnFogMan+0x04: func_8048ECD8 resolves the owning
+// nw4r::g3d::ScnRoot from it, and +0x7C holds the fog-controller pointer
+// consumed by fog mode 2.
+struct SFogRootView {
+    u8 pad_0x00[0x7c];
+    CScnEnvLgtCtrl* field_0x7c;
+};
+
 class CScnFogMan {
 public:
     virtual ~CScnFogMan();
 
-    u32 unk04;        // 0x4  (scene root pointer)
-    u32 value08;      // 0x8  (fog mode)
+    union {                           // 0x4 scene-view object
+        u32 field_0x04;               // raw view (ctor param)
+        SFogRootView* rootView;       // typed view
+    };
+    s32 value08;      // 0x8  (fog mode)
     f32 field_0xC;    // 0xc
     f32 field_0x10;   // 0x10
     f32 field_0x14;   // 0x14
@@ -44,3 +57,8 @@ public:
     f32 field_0x6c;   // 0x6c
     f32 field_0x70;   // 0x70
 };
+
+// Cross-TU import (definition in CScnEnvLgtCtrl.cpp): set +0x00 bit 0x20 /
+// clear bit 0x10 on the environment-light controller, then walk its
+// light-object ring applying the fog-manager state.
+void func_804C1674(CScnEnvLgtCtrl* self);

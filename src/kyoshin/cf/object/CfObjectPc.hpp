@@ -74,6 +74,7 @@ extern "C" void func_8014B804(u8* self, int index, int a2, int a3, int a4,
 extern "C" void CActorParam_UnkVirtualFunc176__Q22cf11CActorParamFv(
     cf::CActorParam* self, float value);   // CActorParam virtual 0x354 (Fv name, float in f1)
 extern "C" void func_800A11A4(u8* obj, int flag);         // CtrlObjectParam.cpp
+extern "C" void* func_8009EC9C(u32 index);   // CtrlObjectParam.cpp (character-data lookup; owner canonical u32 form)
 extern "C" void func_800A13C4(u8* obj, int flag);         // CtrlObjectParam.cpp
 extern "C" void func_8018CBE8(u8* obj);                   // CfResPcImpl.cpp
 extern "C" void func_8012FAA8();                          // camera/screen reset
@@ -161,6 +162,12 @@ public:
 };
 struct PcSub4Pad { u8 _pad[0x4]; };
 struct PcSub4Fake : PcSub4Pad, PcSub4VtIf {};
+// Distinct type, identical layout: alternating spellings keeps MWCC from
+// CSE-ing the sub-object address into one temp (retail reloads it).
+struct PcSub4PadB { u8 _pad[0x4]; };
+struct PcSub4FakeB : PcSub4PadB, PcSub4VtIf {};
+struct PcSub4PadC { u8 _pad[0x4]; };
+struct PcSub4FakeC : PcSub4PadC, PcSub4VtIf {};
 
 // Interface over the sub-object at this+0x8 (slots 0x14/0x20 used by
 // func_800C0524).
@@ -175,6 +182,8 @@ public:
 };
 struct PcSub8Pad { u8 _pad[0x8]; };
 struct PcSub8Fake : PcSub8Pad, PcSub8VtIf {};
+struct PcSub8PadB { u8 _pad[0x8]; };
+struct PcSub8FakeB : PcSub8PadB, PcSub8VtIf {};
 
 // Linked-list node/head view of the battle-manager list at +0x48.
 struct BmListNode {

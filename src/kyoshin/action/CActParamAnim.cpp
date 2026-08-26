@@ -1597,7 +1597,7 @@ int func_8004DDD0__13CActParamAnimFv(CActParamAnim* self, u32 param) {
         int t;
         if (owner == 0) {
             t = 1;
-        } else if (lbl_eu_80665EA0 == view->field394) {
+        } else if (view->field394 == lbl_eu_80665EA0) {
             t = 1;
         } else {
             t = (owner->field14 * view->field430) < lbl_eu_80665ECC;
@@ -1659,7 +1659,9 @@ int func_8004DF9C__13CActParamAnimFv(CActParamAnim* self, u32 param) {
         ok = 0;
     } else {
         int t;
-        if (view->field394 == lbl_eu_80665EA0) {
+        if (owner == 0) {
+            t = 1;
+        } else if (view->field394 == lbl_eu_80665EA0) {
             t = 1;
         } else {
             t = (owner->field14 * view->field430) < lbl_eu_80665ECC;
@@ -1722,7 +1724,9 @@ int func_8004E168__13CActParamAnimFv(CActParamAnim* self, u32 param) {
         ok = 0;
     } else {
         int t;
-        if (view->field394 == lbl_eu_80665EA0) {
+        if (owner == 0) {
+            t = 1;
+        } else if (view->field394 == lbl_eu_80665EA0) {
             t = 1;
         } else {
             t = (owner->field14 * view->field430) < lbl_eu_80665ECC;
@@ -1785,7 +1789,9 @@ int func_8004E334__13CActParamAnimFv(CActParamAnim* self, u32 param) {
         ok = 0;
     } else {
         int t;
-        if (view->field394 == lbl_eu_80665EA0) {
+        if (owner == 0) {
+            t = 1;
+        } else if (view->field394 == lbl_eu_80665EA0) {
             t = 1;
         } else {
             t = (owner->field14 * view->field430) < lbl_eu_80665ECC;

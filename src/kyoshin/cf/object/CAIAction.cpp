@@ -3,6 +3,11 @@
 #include "kyoshin/cf/object/CfObjectMoveApi.hpp"
 #include "kyoshin/cf/CfMapItemManager.hpp"
 #include "kyoshin/cf/object/CAIAction.hpp"
+// Owner-header decls for imports whose copies were removed from CAIAction.hpp:
+// getArtsSlotRC/getArtsParamRC2 (canonical const void*/short forms) and
+// func_8009EC9C (single owner decl on CArtsInfo.hpp).
+#include "kyoshin/cf/chain/CChainActorList.hpp"
+#include "kyoshin/CArtsInfo.hpp"
 
 #include <cstring>
 
@@ -178,7 +183,7 @@ void func_8014AA10(void* obj, unsigned int value) {
 // already matches bytes [0x5..0xD] of `in`, returns 0 (duplicate); otherwise
 // stores the slot, increments unk214, sets bit 0x8 in the new slot's flags,
 // and returns 1.
-u32 func_8014AC38(cf::CAIAction* self, const cf::CAIActionSlot* in) {
+extern "C" u32 func_8014AC38(cf::CAIAction* self, const cf::CAIActionSlot* in) {
     u32 count = self->unk214;
     for (u32 i = 0; i < count; i++) {
         u32 ringIdx = (self->unk210 + i) % self->unk218;
@@ -289,7 +294,7 @@ void func_8014AE00(cf::CAIAction* self) {
         i--;
     }
 }
-int func_8014B120(cf::CAIAction* self, const cf::CAIActionSlot* in) {
+extern "C" int func_8014B120(cf::CAIAction* self, const cf::CAIActionSlot* in) {
     u32 i;
     for (i = 0; i < self->unk214; i++) {
         u32 cap = self->unk218;
@@ -2853,7 +2858,7 @@ struct CAIPartyObjVt : CAIVtObj {
 // Resets the action ring (count/start/trailer), then queries the party's
 // current state via three tagged probes (3 / 0x1c / 0x805); if none hits,
 // queues action 0x31 and refreshes the battle-object handle.
-void func_801537F0(cf::CAIAction* self) {
+extern "C" void func_801537F0(cf::CAIAction* self) {
     // Reset the ring; retail computes unk8|4 between clearing unk214/unk210.
     self->unk8 = self->unk8 | 4;
     self->unk214 = 0;

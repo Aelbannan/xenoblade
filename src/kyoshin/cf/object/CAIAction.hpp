@@ -99,9 +99,11 @@ public:
 
 } // namespace cf
 
-extern void func_801537F0(cf::CAIAction* self);
-extern int func_8014B120(cf::CAIAction* self, const cf::CAIActionSlot* in);
-extern u32 func_8014AC38(cf::CAIAction* self, const cf::CAIActionSlot* in);
+// (The former C++-linkage forward decls of func_801537F0 / func_8014B120 /
+// func_8014AC38 were removed: they overloaded the extern "C" forms on
+// CVision.hpp / chain/CChain.hpp (MWCC 10197) in every TU that includes
+// both headers. The definitions in CAIAction.cpp are marked extern "C"
+// directly; callers use the canonical extern "C" header decls.)
 
 // Fv mangling, but callers leave outA in r4 and outB in r5
 extern "C" void CAIAction_UnkVirtualFunc1__Q22cf9CAIActionFv(cf::CAIAction* self,
@@ -206,7 +208,6 @@ extern "C" int func_801541B0(void* party, u32 arg);
 extern "C" int func_80153DCC(void* artsSet, int idx);
 extern "C" int func_801B1FFC(int idx);
 extern "C" u16 func_8016DF2C(void);   // canonical u16 form (chapter/episode getter)
-extern "C" void* func_8009EC9C(u16 idx);
 extern "C" u32 func_800A32BC(void* obj);
 extern "C" u32 func_8009CF8C(u32 id);
 extern "C" int func_80158018(u32 v);
@@ -217,11 +218,12 @@ extern "C" void* func_80193670(void);
 extern "C" int func_80260264(void* self, int id, void* out);
 extern "C" int func_80145C00(int id);   // canonical int param (CBattleState.cpp definition)
 extern "C" int func_801554DC(void* param, void* actor, u32 flags);
+// (getArtsSlotRC / getArtsParamRC2 moved to their single owner decl on
+// kyoshin/cf/chain/CChainActorList.hpp - int/const void* forms matching the
+// CActorParam.cpp definitions; this header's u16/void* copies are gone.)
 extern "C" void* getArtsParamByIdx(void* artsSet, int idx);
 extern "C" u16 func_80153CAC(const void* artsSet, int idx);
 extern "C" u16 getArtsSlotAtCnt(void* artsSet, u32 idx);
-extern "C" u16 getArtsSlotRC(void* artsSet, int a, int b);
-extern "C" void* getArtsParamRC2(void* artsSet, int a, int b);
 extern "C" void* getAtkParam(void* artsSet, int idx);
 // BDAT select table + global bdat root (data imports).
 extern u32 lbl_eu_806640F8;

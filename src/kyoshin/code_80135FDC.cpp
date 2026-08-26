@@ -1163,7 +1163,7 @@ extern "C" void func_80137F88(void* a, void* palette) {
 }
 
 void func_80138078__FUl(u32 arg) {
-    extern void func_801BFC38__Q22cf10CfSoundManFUlUlUlUlf(u32, u32, u32, u32, f32);
+    extern u16 func_801BFC38__Q22cf10CfSoundManFUlUlUlUlf(u32 r3, u32 r4, u32 r5, u32 r6, float f1); // play SE
     extern f32 lbl_eu_80667300;
     func_801BFC38__Q22cf10CfSoundManFUlUlUlUlf(0, arg, 0, 0, lbl_eu_80667300);
 }

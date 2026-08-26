@@ -1,6 +1,9 @@
 // Auto-scaffolded catalog TU for monolib/src/scn/CScnCameraMan
 // Replace stubs with high-level C/C++ during decomp.
 
+// Inline-empty ~IWorkEvent so MWCC elides the base-dtor call in the
+// CScnCameraMan destructor (retail shape - see IWorkEvent.hpp).
+#define IWORK_EVENT_INLINE_DTOR
 #include <types.h>
 #include "libs/monolib/src/scn/CScnCameraMan.hpp"
 #include <revolution/MTX.h>
@@ -8,7 +11,32 @@
 #include "monolib/device/CDeviceVI.hpp"
 #include "monolib/scn/CScnItemCamera.hpp"
 
-CScnCameraMan::CScnCameraMan() {}
+// Installs the retail vtable (novtable class), stores the camera parameter
+// block, fills every view slot with the "no view" sentinel, then creates the
+// ten default cameras (0..9) in the scene pool.
+CScnCameraMan::CScnCameraMan(CScnCameraParam* param) {
+    *(void**)this = (void*)lbl_eu_8056EA40;
+    mParam = param;
+    mCamId = 0;
+    // The sentinel is read through a pointer that may alias the view table /
+    // counter (retail reloads it after every store and keeps every mCount
+    // writeback; direct reads get CSE'd into one load).
+    // Sentinel read through a pointer (retail reloads it per slot); the
+    // member-counter loop fully unrolls with one mCount writeback per slot.
+    // Best-known shape: unrolls x10 like retail; residual vs retail is
+    // MWCC post-unroll strength reduction (retail keeps slwi/add addressing
+    // and an addi counter chain; every source form folds to displacements
+    // plus hoisted constants - cf. KB func_800A26A4 note).
+    unsigned short n = 0;
+    for (; n < 10; n++) {
+        mCount = n;
+        mViews[mCount] = lbl_eu_80663A0C;
+    }
+    mCount = 10;
+    for (int i = 0; i < 10; i++) {
+        func_8049F9A8((CScnCameraItemHost*)mParam, i);
+    }
+}
 
 CScnCameraMan::~CScnCameraMan() {
     *(void**)this = (void*)lbl_eu_8056EA40;
@@ -126,31 +154,50 @@ void func_8049B024(CScnCameraMan* cam) {
 
 // Returns the CView work thread for mViews[id] when it is currently a CView
 // (thread type in the CView range, 0x30..0x35); otherwise walks the camera
-// list and repeats the check. Falls back to the current camera id when `id`
-// is negative.
+// list and repeats the check. Falls back to the current camera id (sign-
+// extended from s16, like retail's extsh) when `id` is negative. Every path
+// through the getWorkThread call exits the function, so the loop only ever
+// iterates on views that are unregistered (0xFFFFFFFF) - this is what lets
+// MWCC keep sentinel/node in volatile registers.
+// Returns the CView work thread for mViews[id] when it is currently a CView
+// (thread type in the CView range); otherwise walks the camera list and
+// repeats the check. Falls back to the current camera id (sign-extended from
+// s16, like retail's extsh) when `id` is negative.
+// NOTE (byte-matching): the second comparison must be COMMUTED (constant on
+// the left); writing `type < THREAD_CVIEW_MAX` lets MWCC fuse the pair into
+// subi/cmpli, which retail does not do.
 CWorkThread* func_8049B0A0(CScnCameraMan* cam, s32 id) {
     if (id < 0) {
         id = (s16)cam->mCamId;
     }
 
     CScnCameraList* list = func_8048C698(cam->mParam->mPool, 4);
+    CScnCameraNode* node;
     CScnCameraNode* sentinel = list->sentinel;
-    CScnCameraNode* node = sentinel->next;
+    node = sentinel->next;
+    CWorkThread* thread;
     while (node != sentinel) {
         u32 viewId = cam->mViews[id];
         if (viewId != 0xFFFFFFFF) {
-            CWorkThread* thread = CWorkUtil::getWorkThread(viewId);
+            // Every path through the getWorkThread call exits the function,
+            // so the loop only iterates on unregistered views.
+            thread = CWorkUtil::getWorkThread(viewId);
             if (thread != NULL) {
-                if (thread->mType >= CWorkThread::THREAD_CVIEW &&
-                    thread->mType < CWorkThread::THREAD_CVIEW_MAX) {
-                    return thread;
+                int type = thread->mType;
+                if (type < CWorkThread::THREAD_CVIEW) {
+                    return NULL;
                 }
-                return NULL;
+                if (CWorkThread::THREAD_CVIEW_MAX > type) {
+                    goto keep;
+                }
             }
+            return NULL;
         }
         node = node->next;
     }
     return NULL;
+keep:
+    return thread;
 }
 
 // Searches the scene pool's camera list for the item whose camera id equals
@@ -259,9 +306,81 @@ bool CScnCameraMan::WorkEvent3(UNKTYPE* r4) {
     return false;
 }
 
-// Not yet decompiled (retail 0x8049F164): keeps the pool camera selected.
-bool CScnCameraMan::WorkEvent1(UNKTYPE* r4, const char* r5) {
-    return false;
+// Handles the camera-set work event: `r5` must be the camera-select command
+// pointer (lbl_eu_80663A08). Finds the pool camera item matching mCamId, then
+// pushes the event's slot values into it: euler rotation (scaled by a shared
+// factor and converted via CCamUtil), fov, near/far planes (each followed by
+// a depth-range rebuild), position, and distance.
+// NOTE (byte-matching): best-known state is 78 mismatches / exact 396B size.
+// Known residuals vs retail:
+// - payload/item callee-saved colors swapped (retail ev->r29, item->r31;
+//   every tried declaration order yields the opposite pair or worse).
+// - retail sinks the `return false` tail after the body with a single bne;
+//   this shape inlines the false block after the compare instead. A nested
+//   single-return guard reproduces retail's far branch but regresses the
+//   call/camId scheduling (-8B).
+// - retail carries a dead `cmpwi cr0,r30,0` (mCamId vs 0, result unused);
+//   no source idiom found that folds to a bare dead compare.
+// - reloc names for func_8049EB60/F6D4/F824 are C++-mangled until those
+//   definitions adopt their plain retail symbol names.
+bool CScnCameraMan::WorkEvent1(UNKTYPE* payload, const char* r5) {
+    CEvent1* ev = (CEvent1*)payload;
+    if (r5 != (const char*)lbl_eu_80663A08) {
+        return false;
+    }
+
+    s32 camId = mCamId;
+
+    CScnCameraList* list = func_8048C698(mParam->mPool, 4);
+    CScnItemCamera* item = NULL;
+    for (CScnCameraNode* node = list->sentinel->next; node != list->sentinel;
+         node = node->next) {
+        CScnCameraItem* cur = node->item;
+        if (camId == cur->mIndex) {
+            item = (CScnItemCamera*)cur;
+            break;
+        }
+    }
+
+    if (item == NULL) {
+        return false;
+    }
+
+    f32 scale = lbl_eu_8066AB48;
+
+    // Slot 2 holds the target euler vector; scale every component, then copy
+    // member-wise into the non-const argument (retail uses lfs/stfs).
+    ml::CVec3* src = (ml::CVec3*)func_8043B588__7CEvent1Fv(ev, 2);
+    ml::CVec3 scaled;
+    scaled.x = src->x * scale;
+    scaled.y = src->y * scale;
+    scaled.z = src->z * scale;
+
+    ml::CVec3 dir;
+    dir.x = scaled.x;
+    dir.y = scaled.y;
+    dir.z = scaled.z;
+
+    ml::CVec3 rot;
+    ml::CCamUtil::getXYZ2ZXY(rot, dir);
+
+    CScnItemCameraCamTail* cam = (CScnItemCameraCamTail*)item;
+    cam->field_0x60 = *(u32*)&rot.x;
+    cam->field_0x64 = *(u32*)&rot.y;
+    cam->field_0x68 = *(u32*)&rot.z;
+
+    cam->mFovY = func_8043B574__7CEvent1Fv(ev, 3);
+    func_8049EB60(item);
+
+    f32 farZ = func_8043B574__7CEvent1Fv(ev, 5);
+    cam->mNearZ = func_8043B574__7CEvent1Fv(ev, 4);
+    cam->mFarZ = farZ;
+    func_8049EB60(item);
+
+    // Slot 1 holds the new position; slot 6 the camera distance.
+    func_8049F6D4(item, (ml::CVec3*)func_8043B588__7CEvent1Fv(ev, 1));
+    func_8049F824(item, func_8043B574__7CEvent1Fv(ev, 6));
+    return true;
 }
 
 extern u32 lbl_eu_80663A08;
@@ -269,34 +388,135 @@ extern "C" void func_8043A70C__11CScriptCodeFv(void* a, void* b);
 extern "C" void func_8049B3FC() { func_8043A70C__11CScriptCodeFv((void*)lbl_eu_80663A08, 0); }
 
 // Retail s16->f32 magic double (2^52 + 2^31 = 0x4330000080000000; owned by
-// CGXCache.cpp's pool range). Referenced as an extern so this TU emits no
-// local .sdata2 (retail shape).
+// CGXCache.cpp's pool range). Plain (f32) casts below expand to the same
+// xoris/lfd/fsubs idiom; the cast constant pools anonymously (@6139).
 extern const double lbl_eu_8066AB60;
-
-// (f32) casts pool TU-local magic doubles; the union helper pins the retail
-// symbol and keeps .sdata2 empty.
-static inline f32 s16ToF_ab60(s16 v) {
-    union { double d; u32 w[2]; } c;
-    c.w[0] = 0x43300000u;
-    c.w[1] = (u32)v ^ 0x80000000u;
-    return (f32)(c.d - lbl_eu_8066AB60);
-}
 
 extern "C" void func_8043A57C__11CScriptCodeFv(void* self);
 extern "C" void func_8049B408() { func_8043A57C__11CScriptCodeFv((void*)lbl_eu_80663A08); }
 
-void func_8049B59C(){}
+// MWCC's built-in (f32)(s16) cast pools the 0x4330000080000000 magic constant
+// anonymously; assembling the double by hand keeps the retail reference to
+// lbl_eu_8066AB60.
+
+// Projects a world position onto the camera item's screen rectangle: transforms
+// `pos` into camera space (view matrix at +0xCC), rejects points behind the
+// near plane, divides by z, runs the projected point through the coefficient
+// block at +0x150 (three plane-style rows), then rescales into screen space
+// using the aspect ratio, the VI width scale, and the s16 screen offsets.
+// NOTE (byte-matching): locals are declared so MWCC's reverse-declaration
+// slot assignment yields the retail stack layout (v lowest, conversions last).
+bool func_8049B59C(ml::CVec3* out, CScnItemCameraProject* item, ml::CVec3* pos) {
+    // s16 -> f32 through the 0x43300000/xoris double trick; hand-assembled so
+    // the magic constant keeps its retail reference to lbl_eu_8066AB60.
+    union {
+        double d;
+        u32 w[2];
+    } convB, convA;
+    ml::CVec3 dir;
+    ml::CVec3 result;
+    ml::CVec3 v;
+    out->x = lbl_eu_8066AB50;
+    out->y = lbl_eu_8066AB50;
+    out->z = lbl_eu_8066AB50;
+
+    PSMTXMultVec(item->mViewMtx, (Vec*)pos, (Vec*)&v);
+
+    // Points in front of the camera have negative z; the body runs when the
+    // point is at or beyond the near plane.
+    dir.x = v.x;
+    dir.y = v.y;
+    dir.z = v.z;
+
+    bool ret;
+    if (!(v.z >= -item->mNearZ)) {
+        return false;
+    }
+    // Materializing the return flag up front lets MWCC hoist li r3,1 above
+    // the getWidthScale call like retail.
+    ret = true;
+
+    f32 inv = lbl_eu_8066AB54 / v.z;
+    dir.x = v.x * inv;
+    dir.y = v.y * inv;
+    dir.z = inv;
+
+    // Three plane rows (dot with the z-divided camera-space point);
+    // parentheses pin MWCC's multiply/fma association to retail's.
+    const f32* m = item->mProj;
+    result.z = m[12] + (inv * m[11] + (dir.x * m[9] + dir.y * m[10]));
+    result.y = m[8] + (inv * m[7] + (dir.x * m[5] + dir.y * m[6]));
+    result.x = m[4] + (inv * m[3] + (dir.x * m[1] + dir.y * m[2]));
+    *out = result;
+
+    // Read once up front: MWCC parks the aspect in f31 across getWidthScale.
+    f32 aspect = item->mAspect;
+    f32 sx = aspect * CDeviceVI::getWidthScale();
+    out->x = out->x / sx;
+
+    f32 ny = item->mAspect * out->y;
+    out->y = ny;
+
+    convA.w[1] = (u32)(s32)item->mOffsetX ^ 0x80000000;
+    convA.w[0] = 0x43300000;
+    out->x = lbl_eu_8066AB58 * (f32)(convA.d - lbl_eu_8066AB60) *
+             (lbl_eu_8066AB54 - out->x);
+    convB.w[1] = (u32)(s32)item->mOffsetY ^ 0x80000000;
+    convB.w[0] = 0x43300000;
+    out->y = (f32)(convB.d - lbl_eu_8066AB60) * lbl_eu_8066AB58 *
+             (lbl_eu_8066AB54 + out->y);
+    return ret;
+}
 
 // Builds the camera item's perspective projection matrix from its fov / near /
 // far planes. The horizontal fov is widened for 16:9 by scaling the aspect
 // (scissor-rect ratio x fixed multiplier) with CDeviceVI::getWidthScale().
 void func_8049B764(Mtx44 mtx, CScnItemCamera* item) {
+    // Volatile reads pin the depth loads at the top of the function (retail
+    // parks them in f31/f30 across the width-scale call).
+    const CScnItemCameraFrustumVt* vt = (const CScnItemCameraFrustumVt*)item;
+    f32 farZ = vt->mFarZ;
+    f32 nearZ = vt->mNearZ;
+
     CGXCacheTail* cache = (CGXCacheTail*)CDeviceGX::getCacheInstance();
-    f32 aspect = lbl_eu_8066AB6C * (s16ToF_ab60(cache->mScissorDeltaX) / s16ToF_ab60(cache->mScissorDeltaY));
-    C_MTXPerspective(mtx, item->mFovY, aspect * CDeviceVI::getWidthScale(), item->mNearZ, item->mFarZ);
+    f32 aspect = ((f32)cache->mScissorDeltaX / (f32)cache->mScissorDeltaY) *
+                 lbl_eu_8066AB6C;
+    C_MTXPerspective(mtx, item->mFovY, aspect * CDeviceVI::getWidthScale(),
+                     nearZ, farZ);
 }
 
-void func_8049B834(){}
+// Computes a distance-based falloff factor for `pos` relative to camera `item`
+// (1 at <= fMin, linearly down to 0 at >= fMax) into *outFall, and the x
+// component of the view-space direction to `pos` (normalized, zero-safe) into
+// *outDirX.
+void func_8049B834(f32* outDirX, f32* outFall, CScnCameraItem* item,
+                   ml::CVec3* pos, f32 fMin, f32 fMax) {
+    // Difference between the target point and the camera position; magnitude
+    // is sign-independent. operator- keeps its temp and the named copy in
+    // separate stack slots (retail shape).
+    ml::CVec3 diff = *pos - item->mPos;
+    f32 dist = PSVECMag((const Vec*)&diff);
+
+    *outFall = lbl_eu_8066AB68;
+    if (dist < fMax) {
+        if (dist < fMin) {
+            *outFall = lbl_eu_8066AB54;
+        } else {
+            // Linear falloff between the near and far distances.
+            *outFall = lbl_eu_8066AB54 - (dist - fMin) / (fMax - fMin);
+        }
+    }
+
+    ml::CVec3 dir;
+    PSMTXMultVec(item->mMtx, (Vec*)pos, (Vec*)&dir);
+    f32 sqLen = dir.y * dir.y + dir.x * dir.x + dir.z * dir.z;
+    if (sqLen == lbl_eu_8066AB68) {
+        dir = ml::CVec3::zero;
+    } else {
+        PSVECNormalize((Vec*)&dir, (Vec*)&dir);
+    }
+    *outDirX = dir.x;
+}
 
 // ===== Dissolved monolibdata2 (blob surgery) data owned by this TU =====
 // [.data] 0x8056EA40-0x8056EAD8 (0x98 = 152B): CScnCameraMan vtable.

@@ -23,6 +23,12 @@ namespace cf {
         void func_800BFB90();
         int func_800BFAB0(u32 arg4, u32 arg5);
 
+        // Declared but NOT defined in this fork: retail's CfObjectObj ctor
+        // exists under the forced flat name __ct__cf_CfObjectObj (defined as
+        // a free function in CfObjectObj.cpp). Derived ctors synthesize an
+        // UNDEF bl that postprocess exact_renames maps onto it.
+        CfObjectObj();
+
         // Declared but NOT defined in this fork: retail's CfObjectObj dtor
         // exists under the forced flat name __dt__800BFA14 (defined as a
         // free function in CfObjectObj.cpp). Derived dtors (CfObjectTbox)

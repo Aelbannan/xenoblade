@@ -2134,7 +2134,35 @@ extern "C" void func_800A26A4(cf::CtrlObjectParamTypeView* self, int arg4, int a
     }
 }
 
-void func_800A282C(){}
+extern "C" void func_800A282C(cf::CtrlObjectParamTypeView* self, int arg4) {
+    // Arts-change gate (same shape as func_800A2974): valid row id < 9,
+    // nonzero delta, party member or func_8008235C pass, and for row 3 the
+    // frame counter below 0x1D - then bump the arts counter at +0x3534.
+    u16 type = self->field_00;
+    if (type >= 9 || arg4 == 0) return;
+    cf::CtrlObjectParamSlotTable* tbl =
+        reinterpret_cast<cf::CtrlObjectParamSlotTable*>(lbl_eu_80663E88);
+    int found;
+    if (type == tbl->slots[0]) {
+        found = 1;
+    } else {
+        for (int i = 1; i < 9; ++i) {
+            if (type == tbl->slots[i]) {
+                found = 1;
+                goto probed;
+            }
+        }
+        found = 0;
+    }
+probed:
+    if (!found) {
+        if (func_8008235C__Q22cf13CfGameManagerFv(type) == 0) return;
+    }
+    if (self->field_00 == 3) {
+        if ((u32)cf::CfGameManager::func_800822F4() >= 0x1D) return;
+    }
+    func_8026187C(self->big, arg4);
+}
 
 // ── func_800A2974 (us-800a334c) ───────────────────────────────────────────
 // Arts-change gate: when the character row id is a party member (or the
@@ -2167,18 +2195,24 @@ extern "C" void func_800A2974(void* selfV, u16 arg2) {
     if (type >= 9 || arg2 == 0) return;
     cf::CtrlObjectParamSlotTable* tbl =
         reinterpret_cast<cf::CtrlObjectParamSlotTable*>(lbl_eu_80663E88);
-    int found = 0;
-    for (int i = 0; i < 9; ++i) {
-        if (type == tbl->slots[i]) {
-            found = 1;
-            break;
+    int found;
+    if (type == tbl->slots[0]) {
+        found = 1;
+    } else {
+        for (int i = 1; i < 9; ++i) {
+            if (type == tbl->slots[i]) {
+                found = 1;
+                goto probed;
+            }
         }
+        found = 0;
     }
+probed:
     if (!found) {
         if (func_8008235C__Q22cf13CfGameManagerFv(type) == 0) return;
     }
     if (self->field_00 == 3) {
-        if (cf::CfGameManager::func_800822F4() >= 0x1D) return;
+        if ((u32)cf::CfGameManager::func_800822F4() >= 0x1D) return;
     }
     func_802618AC(self->big, arg2);
 }

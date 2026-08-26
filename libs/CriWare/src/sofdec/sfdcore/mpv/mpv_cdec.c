@@ -9,11 +9,11 @@ extern void fn_803BDF3C(void* a, s32 b);
 extern void DCT_IsrInit(void);
 extern void DCT_IsrInitScaleTbl(void* tbl);
 extern u32 lbl_eu_8051C080;
-extern u32 lbl_eu_80602A68[];
-extern u32 lbl_eu_80602A6C[];
+extern volatile u32 lbl_eu_80602A68[];
+extern volatile u32 lbl_eu_80602A6C[];
 
 void MPVCDEC_Init(void* self) {
-    u32* arr = lbl_eu_80602A6C;
+    u32* arr = (u32*)lbl_eu_80602A6C;
     u32 val = (u32)&lbl_eu_8051C080;
     lbl_eu_80602A68[0] = (u32)self;
     fn_803BDF3C((void*)fn_803A7770, 0);
@@ -27,11 +27,11 @@ void fn_803A7770(void) { MPVERR_SetCode(0); }
 extern void DCT_IsrTrans(void* self, s32 val);
 
 void MPVCDEC_StartFrame(void* self) {
-    u8* base = (u8*)self;
-    *(void**)(base + 0xc84) = DCT_IsrTrans;
-    *(u32*)(base + 0x9b4) = lbl_eu_80602A68[0] + 0x1160;
-    *(u32*)(base + 0xc68) = ((u32*)lbl_eu_80602A6C[2])[0];
-    *(u32*)(base + 0xc6c) = ((u32*)lbl_eu_80602A6C[2])[1];
+    *(u32*)((u8*)self + 0xc84) = (u32)DCT_IsrTrans;
+    *(u32*)((u8*)self + 0x9b4) = lbl_eu_80602A68[0] + 0x1160;
+    /* Table entry re-read for each store (matches retail's double load). */
+    *(u32*)((u8*)self + 0xc68) = ((u32*)lbl_eu_80602A6C[2])[0];
+    *(u32*)((u8*)self + 0xc6c) = ((volatile u32*)lbl_eu_80602A6C[2])[1];
 }
 
 typedef struct MPVC_Blk {
@@ -103,28 +103,54 @@ int mpvcdec_NintraBlocksInt1(void* self) {
     return 0;
 }
 
+/* Zero the two halves of the decoder work region (self+0 .. self+0x300).
+ * Written pair-wise (odd word first) to match MWCC's fully-unrolled store
+ * order; the base pointer advances mid-way so each half keeps its own
+ * base register. */
+
+#define Z2(a, i) do { a[(i)+1] = 0; a[i] = 0; } while (0)
+
 /* Process intra blocks: zero the work region, build the block descriptor and
  * drive one decode/transform pass per macroblock type.
  */
 int mpvcdec_IntraBlocksInt1(void* self) {
     MPVC_dec *dec = (MPVC_dec*)self;
-    MPVC_Blk *blk = (MPVC_Blk*)((u8*)self + 0x9c4);
     u32 *z = (u32*)self;
+    u32 *z2 = (u32*)((u8*)self + 0x88);
     u32 h, r2, r3, r4, r5, r6;
-    s32 i;
 
-    /* clear the work region; MWCC fully unrolls this into straight-line stores */
-    for (i = 0; i < 0xc0; i += 2) {
-        z[i + 1] = 0;
-        z[i] = 0;
-    }
+    /* Clear the whole work region (0x300 bytes). */
+    Z2(z, 0); Z2(z, 2); Z2(z, 4); Z2(z, 6); Z2(z, 8); Z2(z, 10);
+    Z2(z, 12); Z2(z, 14); Z2(z, 16); Z2(z, 18); Z2(z, 20); Z2(z, 22);
+    Z2(z, 24); Z2(z, 26); Z2(z, 28); Z2(z, 30); Z2(z, 32); Z2(z, 34);
+    Z2(z, 36); Z2(z, 38); Z2(z, 40); Z2(z, 42); Z2(z, 44); Z2(z, 46);
+    Z2(z, 48); Z2(z, 50); Z2(z, 52); Z2(z, 54); Z2(z, 56); Z2(z, 58);
+    Z2(z, 60); Z2(z, 62); Z2(z, 64); Z2(z, 66);
+    Z2(z2, 34); Z2(z2, 36); Z2(z2, 38); Z2(z2, 40); Z2(z2, 42);
+    Z2(z2, 44); Z2(z2, 46); Z2(z2, 48); Z2(z2, 50); Z2(z2, 52);
+    Z2(z2, 54); Z2(z2, 56); Z2(z2, 58); Z2(z2, 60); Z2(z2, 62);
+    Z2(z2, 64); Z2(z2, 66); Z2(z2, 68); Z2(z2, 70); Z2(z2, 72);
+    Z2(z2, 74); Z2(z2, 76); Z2(z2, 78); Z2(z2, 80); Z2(z2, 82);
+    Z2(z2, 84); Z2(z2, 86); Z2(z2, 88); Z2(z2, 90); Z2(z2, 92);
+    Z2(z2, 94); Z2(z2, 96); Z2(z2, 98); Z2(z2, 100); Z2(z2, 102);
+    Z2(z2, 104); Z2(z2, 106); Z2(z2, 108); Z2(z2, 110); Z2(z2, 112);
+    Z2(z2, 114); Z2(z2, 116); Z2(z2, 118); Z2(z2, 120); Z2(z2, 122);
+    Z2(z2, 124); Z2(z2, 126); Z2(z2, 128); Z2(z2, 130); Z2(z2, 132);
+    Z2(z2, 134); Z2(z2, 136); Z2(z2, 138); Z2(z2, 140); Z2(z2, 142);
+    Z2(z2, 144); Z2(z2, 146); Z2(z2, 148); Z2(z2, 150); Z2(z2, 152);
+    Z2(z2, 154); Z2(z2, 156);
+#undef Z2
 
+    /* Per-decode block descriptor at self+0x9c4 */
+    {
+    MPVC_Blk *blk = (MPVC_Blk*)((u8*)self + 0x9c4);
     blk->fld_0x1c = dec->field_0xd0c[0];
     blk->fld_0x20 = (u32)((u8*)self + 0x300);
     blk->fld_0x24 = dec->field_0xc8c;
     blk->fld_0x28 = (u32)((u8*)self + 0xcf0);
     blk->fld_0x2c = dec->field_0xd4c;
     blk->fld_0x30 = 0;
+
     h = dec->field_0xd3c(self, blk);
 
     blk->fld_0x1c = dec->field_0xd0c[1];
@@ -151,6 +177,7 @@ int mpvcdec_IntraBlocksInt1(void* self) {
     dec->field_0xc84(dec->field_0xd0c[3], r4);
     dec->field_0xc84(dec->field_0xd0c[4], r5);
     dec->field_0xc84(dec->field_0xd0c[5], r6);
+    }
 
     return 0;
 }

@@ -55,7 +55,7 @@ UnkClass_800817BC* func_800817BC__Q22cf13CfGameManagerFv(u32 id, u32 mode);
 void func_801BFED0(int a, u16 b, int c);
 int func_801BFABC(int a);
 void func_801BFF78(int a, u16 b, int c);
-u16 func_801BFC38__Q22cf10CfSoundManFUlUlUlUlf(u32 a, u32 b, u32 c, u32 d, f32 f);
+extern "C" u16 func_801BFC38__Q22cf10CfSoundManFUlUlUlUlf(u32 a, u32 b, u32 c, u32 d, f32 f);
 void func_801BFAE8(u16 id, void* pos);
 void __dl__FPv(void* ptr);
 void __ptmf_scall(void* obj, void* ptmf);

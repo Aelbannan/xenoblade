@@ -2,6 +2,8 @@
 
 #include <types.h>
 
+class CScn;
+
 #include "monolib/work/CProcess.hpp"
 #include "monolib/scn/IScnRender.hpp"
 #include "kyoshin/CBgTex.hpp"
@@ -39,18 +41,19 @@ public:
     u8 mState;                // 0x2284: state machine byte (Move dispatch)
 };
 
-// Move() state-machine handlers (states 0-9). Retail names are unmangled;
-// definitions live in CMenuQuestLog.cpp.
+// Move() state-machine handlers (states 0-9). US retail strips the member
+// mangling, so declare them with C linkage so calls bind the literal retail
+// symbols; definitions live in CMenuQuestLog.cpp.
 extern "C" void func_8011CDF4(unsigned char* self);
-void func_8011CD6C(CMenuQuestLog* self);
-void func_8011CE44(CMenuQuestLog* self);
+extern "C" void func_8011CD6C(CMenuQuestLog* self);
+extern "C" void func_8011CE44(CMenuQuestLog* self);
 extern "C" void func_8011D03C(unsigned char* self);
 extern "C" void func_8011D08C(unsigned char* self);
-void func_8011D0FC(CMenuQuestLog* self);
-void func_8011D158(CMenuQuestLog* self);
-void func_8011D1A8(CMenuQuestLog* self);
-void func_8011D22C(CMenuQuestLog* self);
-void func_8011D298(CMenuQuestLog* self);
+extern "C" void func_8011D0FC(CMenuQuestLog* self);
+extern "C" void func_8011D158(CMenuQuestLog* self);
+extern "C" void func_8011D1A8(CMenuQuestLog* self);
+extern "C" void func_8011D22C(CMenuQuestLog* self);
+extern "C" void func_8011D298(CMenuQuestLog* self);
 
 class UnkClass_8011C974 {
 public:
@@ -61,12 +64,44 @@ public:
 
 // Quest-log sub-object helpers. Retail uses the unmangled func_ names, so
 // declare them with C linkage (a C++ member call would re-mangle the reloc).
+extern "C" void func_802282F8(CQstLogList* self);
+extern "C" void func_80227D78(CQstLogList* self, int arg);
+extern "C" int func_80227CD4(CQstLogList* self);
+extern "C" void func_80228280(CQstLogList* self, int arg);
+extern "C" void func_80227DE8(CQstLogList* self);
+extern "C" void func_80227EC8(CQstLogList* self);
+extern "C" void func_80227FC0(CQstLogList* self);
+extern "C" void func_8022807C(CQstLogList* self);
+extern "C" void func_80228164(CQstLogList* self);
+extern "C" void func_801C414C(CTitleAHelp* self);
 extern "C" bool func_802296D0(CQstLogInfo* self);
 extern "C" bool func_802296D8(CQstLogInfo* self);
+
+// cf::CfPadData view for getCfPadData: pressed-button flags at +0x04 and
+// short-press turbo flags at +0x104 (cf::CfPadData itself is incomplete).
+struct CQuestLogPadData {
+    u8 _00[0x4];
+    u32 mPressedButtonFlags;    // +0x04 CPad::mPressedButtonFlags
+    u8 _08[0x104 - 0x8];
+    u32 mTurboPressButtonFlags; // +0x104
+};
 extern "C" void func_802296E0(CQstLogInfo* self);
 extern "C" void func_80227CDC(CQstLogList* self);
 extern "C" void func_801C41E8(CTitleAHelp* self, u8 mode);
 extern "C" void func_801C416C(CTitleAHelp* self);
+extern "C" void func_801C4198(CTitleAHelp* self);
+extern "C" void func_80229724(CQstLogInfo* self);
+
+// Widget teardown helpers called by Term (retail unmangled names).
+extern "C" void func_801C3D9C(CBgTex* self);
+extern "C" void func_801C40A0(CTitleAHelp* self);
+extern "C" void func_80227BD8(CQstLogList* self);
+extern "C" void func_80229620(CQstLogInfo* self);
+
+// Term tail helpers.
+extern "C" u8 func_8013B980();
+extern "C" void func_80135550();
+extern "C" u8 code80135FDC_getByte_64080();
 
 // Retail constructor symbol (unmangled global, 2 args after `this`). The
 // factory (func_8011CCE0) calls it out-of-line; the stub definition in the
@@ -77,6 +112,7 @@ extern "C" CMenuQuestLog* __ct__CMenuQuestLog(CMenuQuestLog* _this, CProcess* pa
 extern CMenuQuestLog* lbl_eu_80663FC0;
 
 // C-linkage imports (retail symbol names - keep linkage/signatures verbatim)
+extern "C" void removeRenderCB__4CScnFP10IScnRender(CScn* scn, IScnRender* cb);
 extern "C" bool isIdle__11CTitleAHelpFv(void*);
 extern "C" bool func_80227CCC(void*);
 extern "C" unsigned int func_80228394(void*);

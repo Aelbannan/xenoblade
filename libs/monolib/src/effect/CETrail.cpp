@@ -104,7 +104,9 @@ void func_804C0454(void* light, void* arg);
 void func_804C07F0(void* light, const void* color);
 void func_804C08C8(void* light, u32 mode);
 void func_804C09E0(void* light, s32 mode, f32 a, f32 b);
-void* func_8048ECD8(void* scene, void* arg, s32 index);
+// Scene-root accessor (see CScnMem.cpp); single-argument signature keeps
+// MWCC's IPA register info intact so r4/r5 constants survive across the calls.
+void* func_8048ECD8(void* scene);
 }
 
 namespace nw4r {
@@ -258,7 +260,6 @@ static void trailClearListDerived(CETrail* t) {
     head->m_next = head;
     head->m_prev = head;
 }
-
 // ---------------------------------------------------------------------------
 // __dt__804D6C60: CETrail constructor (retail placeholder name)
 // ---------------------------------------------------------------------------
@@ -267,9 +268,15 @@ extern "C" void* __dt__804D6C60(CETrail* t, u32 count, s16 segCount, void* linkA
     t->m_vtable2 = (void*)lbl_eu_8056FC40;
     t->m_vtable = (void*)lbl_eu_8056FC64;
 
-    ml::CVec3 za = ml::CVec3::zero;
+    ml::CVec3 za;
+    za.x = ml::CVec3::zero.x;
+    za.y = ml::CVec3::zero.y;
+    za.z = ml::CVec3::zero.z;
+    ml::CVec3 zb;
+    zb.x = ml::CVec3::zero.x;
+    zb.y = ml::CVec3::zero.y;
+    zb.z = ml::CVec3::zero.z;
     t->m_startNode.m_item.m_posA = za;
-    ml::CVec3 zb = ml::CVec3::zero;
     t->m_startNode.m_item.m_posB = zb;
     t->m_startNode.m_item.m_age = lbl_eu_8066B15C;
     t->m_list = nullptr;
@@ -296,15 +303,15 @@ extern "C" void* __dt__804D6C60(CETrail* t, u32 count, s16 segCount, void* linkA
     t->m_buffer = nullptr;
     t->m_verts = nullptr;
 
-    func_804F2A8C((u8*)&t->m_link0 + 0xC);
-    func_804F2A8C((u8*)&t->m_link1 + 0xC);
+    func_804F2A8C((char*)&t->m_link0 + 0xC);
+    func_804F2A8C((char*)&t->m_link1 + 0xC);
 
     if ((s32)count < 2) {
         count = 2;
     }
 
-    mtl::ALLOC_HANDLE handle = *(u32*)&lbl_eu_8065FC18[1];
-    void* block = mtl::MemManager::allocate_array(count * 0x24 + 0x10, handle);
+    // MemManager handle is re-read from the global at every use (never cached).
+    void* block = mtl::MemManager::allocate_array(count * 0x24 + 0x10, *(u32*)&lbl_eu_8065FC18[1]);
     t->m_list = (CETrailNode*)__construct_new_array(block, (void (*)(void*))func_804D70A0, nullptr, 0x24, count);
 
     for (u32 i = 0; i < count; i++) {
@@ -312,11 +319,29 @@ extern "C" void* __dt__804D6C60(CETrail* t, u32 count, s16 segCount, void* linkA
     }
     t->m_capacity = count;
 
-    trailClearList(t);
+    // Inline clear: head pointer is re-read through t every iteration.
+    {
+        CETrailNode* cur = t->m_head->m_next;
+        while (cur != t->m_head) {
+            CETrailNode* old = cur;
+            cur = old->m_next;
+            old->m_next = nullptr;
+        }
+        t->m_head->m_next = t->m_head;
+        t->m_head->m_prev = t->m_head;
+    }
 
+    // Nested identical null-tests survive in retail codegen.
     if (t->m_verts != nullptr) {
-        delete[] t->m_verts;
+        if (t->m_verts != nullptr) {
+            __dla__FPv((char*)t->m_verts - 16);
+        }
         t->m_verts = nullptr;
+    }
+
+    if (t->m_buffer != nullptr) {
+        __dla__FPv(t->m_buffer);
+        t->m_buffer = nullptr;
     }
 
     t->m_segCount = segCount;
@@ -383,17 +408,14 @@ extern "C" void* __dt__804D6C60(CETrail* t, u32 count, s16 segCount, void* linkA
 // ---------------------------------------------------------------------------
 // func_804D70A0: POINT node constructor
 // ---------------------------------------------------------------------------
-// POINT node ctor: copy CVec3::zero into both positions, set the age. The
-// age constant must be declared const to hoist its pool load (0 structural);
-// residual is 17 pure float/gpr register swaps plus a stack-slot-order
-// difference in the Vec3 copies that the witness refuses (non-register
-// bits) -- open item.
+// POINT node ctor: build a zero position via the copy ctor (per-component
+// float stores), assign it to m_posB, then repeat for m_posA, then the age.
 extern "C" void func_804D70A0(CETrailNode* node) {
-    ml::CVec3 second;
-    ml::CVec3 zero = ml::CVec3::zero;
-    second = zero;
-    node->m_item.m_posA = second;
-    node->m_item.m_posB = zero;
+    ml::CVec3 posA, posB;
+    posB.set(ml::CVec3::zero);
+    posA.set(ml::CVec3::zero);
+    node->m_item.m_posA = posA;
+    node->m_item.m_posB = posB;
     node->m_item.m_age = lbl_eu_8066B15C;
 }
 
@@ -415,31 +437,62 @@ extern "C" CETrail* __dt___reslist_base_CETrail_POINT(CETrail* t, int deleting) 
     return t;
 }
 
+// Base-dtor body without the deleting call; the derived deleting dtor inlines
+// this whole shape (including its own null check) in retail.
+static void reslistBaseCleanup(CETrail* t) {
+    if (t != nullptr) {
+        t->m_vtable = (void*)lbl_eu_8056FC64;
+        CETrailNode* old;
+        CETrailNode* cur = t->m_head->m_next;
+        while (cur != t->m_head) {
+            old = cur;
+            cur = old->m_next;
+            old->m_next = 0;
+        }
+        t->m_head->m_next = t->m_head;
+        t->m_head->m_prev = t->m_head;
+        if (!t->m_ownsList && t->m_list != nullptr) {
+            delete[] t->m_list;
+            t->m_list = nullptr;
+        }
+    }
+}
+
 // ---------------------------------------------------------------------------
 // __dt__reslist_CETrail_POINT: reslist deleting destructor
 // ---------------------------------------------------------------------------
 extern "C" CETrail* __dt__reslist_CETrail_POINT(CETrail* t, int deleting) {
     if (t != nullptr) {
-        if (t != nullptr) {
-            t->m_vtable = (void*)lbl_eu_8056FC64;
-            CETrailNode* cur = t->m_head->m_next;
-            while (cur != t->m_head) {
-                CETrailNode* old = cur;
-                cur = old->m_next;
-                old->m_next = nullptr;
-            }
-            t->m_head->m_next = t->m_head;
-            t->m_head->m_prev = t->m_head;
-            if (!t->m_ownsList && t->m_list != nullptr) {
-                delete[] t->m_list;
-                t->m_list = nullptr;
-            }
-        }
+        reslistBaseCleanup(t);
         if (deleting > 0) {
             __dl__FPv(t);
         }
     }
     return t;
+}
+
+// Derived-half cleanup, spelled as a helper: when MWCC inlines it, the
+// callee's own null-test survives next to the caller's, giving retail's
+// doubled `beq` after the m_capacity store.
+static inline void reslistDerivedCleanup(CETrail* t) {
+    // && form on a register value keeps retail's duplicated null-test branch
+    if (t != nullptr && t != nullptr) {
+        t->m_vtable = (void*)lbl_eu_8056FC64;
+        CETrailNode* cur = t->m_head->m_next;
+        while (cur != t->m_head) {
+            CETrailNode* old = cur;
+            cur = old->m_next;
+            old->m_next = nullptr;
+        }
+        t->m_head->m_next = t->m_head;
+        t->m_head->m_prev = t->m_head;
+        if (t->m_ownsList == 0 && t->m_list != nullptr) {
+            if (t->m_list != nullptr) {
+                __dla__FPv((char*)t->m_list - 16);
+            }
+            t->m_list = nullptr;
+        }
+    }
 }
 
 // ---------------------------------------------------------------------------
@@ -450,7 +503,10 @@ extern "C" CETrail* __dt__7CETrailFv(CETrail* t, int deleting) {
         t->m_vtable2 = (void*)lbl_eu_8056FC40;
 
         if (t->m_verts != nullptr) {
-            delete[] t->m_verts;
+            // retail re-tests the pointer before the array-deleter call
+            if (t->m_verts != nullptr) {
+                __dla__FPv((char*)t->m_verts - 16);
+            }
             t->m_verts = nullptr;
         }
         if (t->m_buffer != nullptr) {
@@ -459,30 +515,15 @@ extern "C" CETrail* __dt__7CETrailFv(CETrail* t, int deleting) {
         }
 
         trailClearList(t);
-        if (!t->m_ownsList && t->m_list != nullptr) {
-            delete[] t->m_list;
+        if (t->m_ownsList == 0 && t->m_list != nullptr) {
+            if (t->m_list != nullptr) {
+                __dla__FPv((char*)t->m_list - 16);
+            }
             t->m_list = nullptr;
         }
         t->m_capacity = 0;
 
-        if (t != nullptr) {
-            t->m_vtable = (void*)lbl_eu_8056FC64;
-            {
-                CETrailNode* head = t->m_head;
-                CETrailNode* cur = head->m_next;
-                while (cur != head) {
-                    CETrailNode* old = cur;
-                    cur = old->m_next;
-                    old->m_next = nullptr;
-                }
-                head->m_next = head;
-                head->m_prev = head;
-            }
-            if (!t->m_ownsList && t->m_list != nullptr) {
-                delete[] t->m_list;
-                t->m_list = nullptr;
-            }
-        }
+        reslistDerivedCleanup(t);
 
         if (deleting > 0) {
             __dl__FPv(t);
@@ -502,21 +543,66 @@ extern "C" void func_804D73FC(CETrail* t) {
 // ---------------------------------------------------------------------------
 // func_804D7434: draw the trail strip
 // ---------------------------------------------------------------------------
+// Builds the integer->double bit pattern (0x43300000 exponent slot) directly,
+// so the only fsubs is the explicit lbl_eu_8066B180 offset like retail.
+union IntToF64 {
+    f64 f;
+    u32 u[2];
+};
+
 extern "C" void func_804D7434(CETrail* t, s32 mode, const u8* color) {
-    bool draw = false;
-    if (t->m_verts != nullptr && trailListSize(t) >= 2) {
-        // retail: f32 alpha = (f32)color[3]; draw = alpha > 0.0f; compare u8
-        draw = color[3] != 0;
+    // Two persistent int->double bit-cast slots; retail pre-stores both
+    // 0x43300000 headers once in the prologue and only rewrites the low word.
+    IntToF64 convShade;
+    IntToF64 convGate;
+    convGate.u[0] = 0x43300000u;
+    convShade.u[0] = 0x43300000u;
+
+    // Gate: valid vertex buffer, at least two counted nodes (the rotated
+    // while counts the head sentinel once), and non-zero alpha.
+    bool draw;
+    if (t->m_verts != nullptr) {
+        CETrailNode* cur = t->m_head->m_next;
+        u32 n = 0;
+        CETrailNode* head = t->m_head;
+        while (cur != head) {
+            cur = cur->m_next;
+            n++;
+        }
+        if (n >= 2) {
+            // Alpha through the integer->double round-trip, compared > 0.
+            convGate.u[1] = color[3];
+            draw = (convGate.f - lbl_eu_8066B180) > lbl_eu_8066B15C;
+        } else {
+            draw = false;
+        }
+    } else {
+        draw = false;
     }
     if (!draw) {
         return;
     }
 
-    func_804D6074(&t->m_segCount, t, color, t->m_mode != 2, mode < 0, &t->m_color, &t->m_scale);
+    func_804D6074(&t->m_segCount, t, color, t->m_mode == 2, mode != 0, &t->m_color, &t->m_scale);
 
     mtl::MemManager::func_80434A4C(false);
 
     switch (mode) {
+    default: {
+        GXBegin(GX_TRIANGLESTRIP, GX_VTXFMT2, (u16)t->m_numVerts);
+        for (s16 i = 0; i < t->m_numVerts; i++) {
+            CETrailVertex* v = &t->m_verts[i];
+            WGPIPE.f = v->m_x;
+            WGPIPE.f = v->m_y;
+            WGPIPE.f = v->m_z;
+            WGPIPE.uc = color[0];
+            WGPIPE.uc = color[1];
+            WGPIPE.uc = color[2];
+            convShade.u[1] = v->m_shade;
+            WGPIPE.uc = (u8)(s32)(convShade.f - lbl_eu_8066B180);
+        }
+        break;
+    }
     case 1: {
         GXBegin(GX_TRIANGLESTRIP, GX_VTXFMT2, (u16)t->m_numVerts);
         for (s16 i = 0; i < t->m_numVerts; i++) {
@@ -527,7 +613,8 @@ extern "C" void func_804D7434(CETrail* t, s32 mode, const u8* color) {
             WGPIPE.uc = color[0];
             WGPIPE.uc = color[1];
             WGPIPE.uc = color[2];
-            WGPIPE.uc = v->m_shade;
+            convShade.u[1] = v->m_shade;
+            WGPIPE.uc = (u8)(s32)(convShade.f - lbl_eu_8066B180);
             WGPIPE.f = t->m_texU0Scale * (t->m_texU0 + v->m_u);
             WGPIPE.f = t->m_texV0Scale * (t->m_texV0 + v->m_v);
         }
@@ -543,25 +630,12 @@ extern "C" void func_804D7434(CETrail* t, s32 mode, const u8* color) {
             WGPIPE.uc = color[0];
             WGPIPE.uc = color[1];
             WGPIPE.uc = color[2];
-            WGPIPE.uc = v->m_shade;
+            convShade.u[1] = v->m_shade;
+            WGPIPE.uc = (u8)(s32)(convShade.f - lbl_eu_8066B180);
             WGPIPE.f = t->m_texU0Scale * (t->m_texU0 + v->m_u);
             WGPIPE.f = t->m_texV0Scale * (t->m_texV0 + v->m_v);
             WGPIPE.f = t->m_texU1Scale * (t->m_texU1 + v->m_u);
             WGPIPE.f = t->m_texV1Scale * (t->m_texV1 + v->m_v);
-        }
-        break;
-    }
-    default: {
-        GXBegin(GX_TRIANGLESTRIP, GX_VTXFMT2, (u16)t->m_numVerts);
-        for (s16 i = 0; i < t->m_numVerts; i++) {
-            CETrailVertex* v = &t->m_verts[i];
-            WGPIPE.f = v->m_x;
-            WGPIPE.f = v->m_y;
-            WGPIPE.f = v->m_z;
-            WGPIPE.uc = color[0];
-            WGPIPE.uc = color[1];
-            WGPIPE.uc = color[2];
-            WGPIPE.uc = v->m_shade;
         }
         break;
     }
@@ -584,6 +658,22 @@ extern "C" void func_804D77E4(CETrail* t, const Mtx* M, const ml::CVec4* color, 
     f32 k = lbl_eu_8066B178;
 
     switch (t->m_mode) {
+    default: {
+        ml::CVec3 off;
+        off.x = lbl_eu_8066B15C;
+        off.y = k * f;
+        off.z = lbl_eu_8066B15C;
+        f32 c = lbl_eu_8066B188;
+        ml::CVec3 offc = off * c;
+        ml::CVec3 raw1;
+        PSMTXMultVec(*M, offc, raw1);
+        ml::CVec3 v1 = raw1;
+        ml::CVec3 raw2;
+        PSMTXMultVec(*M, off, raw2);
+        ml::CVec3 v2 = raw2;
+        func_804D7B28(t, &v2, &v1, color, scale);
+        break;
+    }
     case 1: {
         func_804EE8FC(&t->m_link0, t->m_15C);
         ml::CVec3 pos0;
@@ -620,117 +710,70 @@ extern "C" void func_804D77E4(CETrail* t, const Mtx* M, const ml::CVec4* color, 
         pos1.y = t->m_link1.m_mtx10;
         pos1.z = t->m_link1.m_mtx20;
 
-        ml::CVec3 sum0;
-        sum0.x = pos0.x + off.x;
-        sum0.y = pos0.y + off.y;
-        sum0.z = pos0.z + off.z;
-        ml::CVec3 diff0;
-        diff0.x = pos0.x - off.x;
-        diff0.y = pos0.y - off.y;
-        diff0.z = pos0.z - off.z;
+        // Retail computes each sum/diff through the nw4r paired-single
+        // VEC3Add/VEC3Sub kernels, then copies the temp into the named local.
+        ml::CVec3 sum0 = pos0 + off;
+        ml::CVec3 diff0 = pos0 - off;
         func_804D7B28(t, &sum0, &diff0, color, scale);
 
-        ml::CVec3 sum1;
-        sum1.x = pos1.x + off.x;
-        sum1.y = pos1.y + off.y;
-        sum1.z = pos1.z + off.z;
-        ml::CVec3 diff1;
-        diff1.x = pos1.x - off.x;
-        diff1.y = pos1.y - off.y;
-        diff1.z = pos1.z - off.z;
+        ml::CVec3 sum1 = pos1 + off;
+        ml::CVec3 diff1 = pos1 - off;
         func_804D7B28(t, &sum1, &diff1, color, scale);
-        break;
-    }
-    default: {
-        ml::CVec3 off;
-        off.x = lbl_eu_8066B15C;
-        off.y = k * f;
-        off.z = lbl_eu_8066B15C;
-        f32 c = lbl_eu_8066B188;
-        ml::CVec3 offc;
-        offc.x = off.x * c;
-        offc.y = off.y * c;
-        offc.z = off.z * c;
-        ml::CVec3 v1;
-        PSMTXMultVec(*M, offc, v1);
-        ml::CVec3 v2;
-        PSMTXMultVec(*M, off, v2);
-        func_804D7B28(t, &v2, &v1, color, scale);
         break;
     }
     }
 }
 
-extern "C" void func_804D7B28(CETrail* t, const ml::CVec3* posA, const ml::CVec3* posB,
-                              const ml::CVec4* color, const ml::CVec4* scale) {
-    CETrailNode* head = t->m_head;
+// ---------------------------------------------------------------------------
+// func_804D7B28: append a trail point (reslist<POINT> method shapes)
+// ---------------------------------------------------------------------------
+// CETrail embeds a reslist<CETrail::POINT>-shaped header, and the retail body
+// is built from inlined reslist method templates. Each helper below mirrors
+// the corresponding reslist.hpp member INCLUDING its local declaration order,
+// because MWCC's register/slot coloring for the inlined loops follows it.
 
-    // Distance between posA and the newest point
-    f32 dist;
-    {
-        u32 n = 0;
-        CETrailNode* cur = head->m_next;
-        while (cur != head) {
-            cur = cur->m_next;
-            n++;
-        }
-        if (n != 0) {
-            CETrailNode* newest = head->m_prev;
-            ml::CVec3 d;
-            d.x = posA->x - newest->m_item.m_posA.x;
-            d.y = posA->y - newest->m_item.m_posA.y;
-            d.z = posA->z - newest->m_item.m_posA.z;
-            dist = PSVECMag(d);
-        } else {
-            dist = lbl_eu_8066B15C;
-        }
+// Iterator view mirroring _reslist_iterator<POINT> (by-ref operator forms
+// force MWCC to home the iterator objects to frame slots like retail).
+struct TrailIterator {
+    CETrailNode* m_node;
+    explicit TrailIterator(CETrailNode* n) : m_node(n) {}
+    TrailIterator& operator++() {
+        m_node = m_node->m_next;
+        return *this;
+    }
+    bool operator!=(const TrailIterator& rhs) const { return m_node != rhs.m_node; }
+};
+
+static u32 trailSize(CETrailNode* head) {
+    u32 length = 0;
+
+    TrailIterator first(head->m_next);
+    TrailIterator last(head);
+
+    while (first != last) {
+        length++;
+        ++first;
     }
 
-    // Drop the oldest point when the trail would not advance
-    {
-        u32 n = 0;
-        CETrailNode* cur = head->m_next;
-        while (cur != head) {
-            cur = cur->m_next;
-            n++;
-        }
-        if (n != 0 && dist == lbl_eu_8066B15C) {
-            CETrailNode* oldest = head->m_next;
-            CETrailNode* prev = oldest->m_prev;
-            CETrailNode* next = oldest->m_next;
-            prev->m_next = next;
-            next->m_prev = prev;
-            oldest->m_next = nullptr;
-            return;
-        }
-    }
+    return length;
+}
 
-    // Make room when at capacity
-    {
-        u32 n = 0;
-        CETrailNode* cur = head->m_next;
-        while (cur != head) {
-            cur = cur->m_next;
-            n++;
-        }
-        if (t->m_capacity <= n) {
-            CETrailNode* oldest = head->m_next;
-            CETrailNode* prev = oldest->m_prev;
-            CETrailNode* next = oldest->m_next;
-            prev->m_next = next;
-            next->m_prev = prev;
-            oldest->m_next = nullptr;
-        }
-    }
+static void trailPopFront(CETrailNode* head) {
+    CETrailNode* prevNode;
+    CETrailNode* nextNode;
+    CETrailNode* frontNode;
 
-    // Build the new point
-    CETrailPoint item;
-    item.m_posA = *posA;
-    item.m_posB = *posB;
-    item.m_age = lbl_eu_8066B15C;
+    frontNode = head->m_next;
+    nextNode = frontNode->m_next;
+    prevNode = frontNode->m_prev;
+    prevNode->m_next = nextNode;
+    nextNode->m_prev = prevNode;
+    frontNode->m_next = nullptr;
+}
 
-    // Find a free slot
-    u32 i = 0;
+static s32 trailFindFirstEmptySlotIndex(CETrail* t) {
+    s32 i = 0;
+
     while (i < t->m_capacity) {
         if (t->m_list[i].m_next == nullptr) {
             break;
@@ -738,36 +781,75 @@ extern "C" void func_804D7B28(CETrail* t, const ml::CVec3* posA, const ml::CVec3
         i++;
     }
 
-    CETrailNode* slot = &t->m_list[i];
-    slot->m_item = item;
-    slot->m_next = head;
-    slot->m_prev = head->m_prev;
-    head->m_prev->m_next = slot;
-    head->m_prev = slot;
+    return i;
+}
 
-    // Age existing points
+static void trailSetItem(CETrailNode* node, const CETrailPoint& value) {
+    CETrailPoint* ptr = &node->m_item;
+    if (ptr != nullptr) {
+        try {
+            *ptr = value;
+        } catch (...) {
+            throw;
+        }
+    }
+}
+
+static void trailPushBack(CETrailNode* head, CETrail* t, const CETrailPoint& item) {
+    s32 i = trailFindFirstEmptySlotIndex(t);
+
+    CETrailNode* temp = &t->m_list[i];
+
+    trailSetItem(temp, item);
+    temp->m_next = head;
+    temp->m_prev = head->m_prev;
+    head->m_prev->m_next = temp;
+    head->m_prev = temp;
+}
+
+extern "C" void func_804D7B28(CETrail* t, const ml::CVec3* posA, const ml::CVec3* posB,
+                              const ml::CVec4* color, const ml::CVec4* scale) {
+    // Distance between posA and the list's first point (front(), like retail)
+    f32 dist;
+    if (trailSize(t->m_head) != 0) {
+        ml::CVec3 d = *posA - t->m_head->m_next->m_item.m_posA;
+        dist = PSVECMag(d);
+    } else {
+        dist = lbl_eu_8066B15C;
+    }
+
+    // Trail would not advance: drop the oldest point
+    if (trailSize(t->m_head) != 0 && dist == lbl_eu_8066B15C) {
+        trailPopFront(t->m_head);
+        return;
+    }
+
+    // Make room when at capacity
+    if (t->m_capacity <= trailSize(t->m_head)) {
+        trailPopFront(t->m_head);
+    }
+
+    CETrailPoint item;
+    item.m_posA = *posA;
+    item.m_posB = *posB;
+    item.m_age = lbl_eu_8066B15C;
+    trailPushBack(t->m_head, t, item);
+
+    // Age every point by walking back from the last node; the loop exits on
+    // the front node (head->next re-read each iteration like retail).
     f32 frontAge;
-    {
-        u32 n = 0;
-        CETrailNode* cur = head->m_next;
-        while (cur != head) {
-            cur = cur->m_next;
-            n++;
-        }
-        if (n >= 2) {
-            cur = head->m_prev->m_prev;
-            while (true) {
-                cur->m_item.m_age += dist;
-                CETrailNode* oldest = head->m_next;
-                if (cur == oldest) {
-                    frontAge = oldest->m_item.m_age;
-                    break;
-                }
-                cur = cur->m_prev;
+    if (trailSize(t->m_head) >= 2) {
+        CETrailNode* cur = t->m_head->m_prev;
+        while (true) {
+            cur->m_item.m_age += dist;
+            if (cur == t->m_head->m_next) {
+                break;
             }
-        } else {
-            frontAge = lbl_eu_8066B15C;
+            cur = cur->m_prev;
         }
+        frontAge = t->m_head->m_next->m_item.m_age;
+    } else {
+        frontAge = lbl_eu_8066B15C;
     }
 
     t->m_color = *color;
@@ -775,15 +857,12 @@ extern "C" void func_804D7B28(CETrail* t, const ml::CVec3* posA, const ml::CVec3
     if (scale->x > lbl_eu_8066B15C) {
         t->m_scale.x = frontAge / scale->x;
     } else {
-        t->m_scale.w = lbl_eu_8066B158;
+        t->m_scale.z = lbl_eu_8066B158;
         t->m_scale.x = lbl_eu_8066B158;
     }
 
     if (scale->y > lbl_eu_8066B15C) {
-        ml::CVec3 d;
-        d.x = posB->x - posA->x;
-        d.y = posB->y - posA->y;
-        d.z = posB->z - posA->z;
+        ml::CVec3 d = *posB - *posA;
         t->m_scale.y = PSVECMag(d) / scale->y;
     } else {
         t->m_scale.y = lbl_eu_8066B158;
@@ -796,10 +875,7 @@ extern "C" void func_804D7B28(CETrail* t, const ml::CVec3* posA, const ml::CVec3
     }
 
     if (scale->w > lbl_eu_8066B15C) {
-        ml::CVec3 d;
-        d.x = posB->x - posA->x;
-        d.y = posB->y - posA->y;
-        d.z = posB->z - posA->z;
+        ml::CVec3 d = *posB - *posA;
         t->m_scale.w = PSVECMag(d) / scale->w;
     } else {
         t->m_scale.w = lbl_eu_8066B158;
@@ -829,6 +905,9 @@ struct CETrailLightDtor {
     CLight* m_light;
 };
 
+// __dt__804D80F0: light attachment deleting destructor.
+// Known residual: MWCC colors the m_light temp r0 in every hand-written
+// variant tried; retail reuses the freed arg register r4 (2 pure reg-swaps).
 extern "C" CETrailLightDtor* __dt__804D80F0(CETrailLightDtor* self, int deleting) {
     if (self != nullptr) {
         if (self->m_light != nullptr) {
@@ -850,7 +929,7 @@ struct LightColor {
     f32 r, g, b, a;
 };
 
-void func_804D8160(CETrailLight* self, void* arg, s32 mode, const CETrailLightParam* p, f32 f1, f32 f2) {
+void func_804D8160(CETrailLight* self, void* arg, s32 mode, CETrailLightParam* p, f32 f1, f32 f2) {
     // NOTE: self->m_light is re-read for every call (never cached in a local)
     // so MWCC keeps it in a volatile register like retail.
     if (self->m_light == nullptr) {
@@ -870,7 +949,9 @@ void func_804D8160(CETrailLight* self, void* arg, s32 mode, const CETrailLightPa
         f2 = lbl_eu_8066B1A0;
     }
 
-    // Clamp the light index through a float round-trip (retail does the same)
+    // Clamp the light index through a float round-trip (retail does the same);
+    // the int conversion stays inline at the call site so its stack round-trip
+    // lands between the C08C8 and C09E0 calls like retail.
     f32 fm = (f32)mode;
     if (fm < lbl_eu_8066B1A4) {
         fm = lbl_eu_8066B1A4;
@@ -885,8 +966,8 @@ void func_804D8160(CETrailLight* self, void* arg, s32 mode, const CETrailLightPa
     func_804C09E0(self->m_light, m, f1, f2);
 
     LightColor out;
-    out.b = p->m_b * p->m_intensity;
     self->m_light->m_3C = lbl_eu_8066B1AC;
+    out.b = p->m_b * p->m_intensity;
     out.g = p->m_g * p->m_intensity;
     out.r = p->m_r * p->m_intensity;
     out.a = lbl_eu_8066B1A4;
@@ -896,19 +977,21 @@ void func_804D8160(CETrailLight* self, void* arg, s32 mode, const CETrailLightPa
 // ---------------------------------------------------------------------------
 // func_804D82DC: snapshot the scene fog state
 // ---------------------------------------------------------------------------
-extern "C" void func_804D82DC(CScnRootEnv* scene) {
+// func_804D82DC: snapshot the scene fog state
+void func_804D82DC(CScnRootEnv* scene) {
+    // -1 stays live in a register across both lookups; 0 is rematerialized.
     s32 invalid = -1;
-    s32 zero = 0;
     lbl_eu_806659B8 = scene;
     lbl_eu_80663B38 = invalid;
-    lbl_eu_806659BC = zero;
+    lbl_eu_806659BC = 0;
     lbl_eu_80663B3C[0] = 1;
 
-    nw4r::g3d::ScnRoot* root = (nw4r::g3d::ScnRoot*)func_8048ECD8(scene, (void*)zero, invalid);
-    *(FogData*)&lbl_eu_8065FCA0 = *root->GetFog(zero);
+    nw4r::g3d::ScnRoot* root = (nw4r::g3d::ScnRoot*)func_8048ECD8(scene);
+    *(FogData*)&lbl_eu_8065FCA0 = *root->GetFog(0);
 
-    nw4r::g3d::ScnRoot* root2 = (nw4r::g3d::ScnRoot*)func_8048ECD8(scene, &lbl_eu_8065FCA0, invalid);
-    *(FogData*)&lbl_eu_8065FCD0 = *root2->GetFog(zero);
+    // Retail re-reads the global for the second lookup.
+    nw4r::g3d::ScnRoot* root2 = (nw4r::g3d::ScnRoot*)func_8048ECD8(lbl_eu_806659B8);
+    *(FogData*)&lbl_eu_8065FCD0 = *root2->GetFog(0);
 }
 
 // ---------------------------------------------------------------------------

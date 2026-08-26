@@ -1052,18 +1052,17 @@ void func_80494188(CScnVirtualLightPool* self, CScnVirtualLightPoolSlot* slot) {
 // (retail func_80494208).
 void func_80494208(CScnVirtualLightData* self, int flag) {
     if (flag != 0) {
-        f32 lim = lbl_eu_8066AA18;
-        f32 v = self->field_0xBC + lbl_eu_8066AA78;
-        self->field_0xBC = v;
-        if (v > lim) {
-            self->field_0xBC = lim;
+        // Real compound assignment: MWCC evaluates the RHS constant first,
+        // reloads the member and adds into the RHS register (retail
+        // fadds f1,f2,f1); the clamp literal is then allocated last (f0).
+        self->field_0xBC += lbl_eu_8066AA78;
+        if (self->field_0xBC > lbl_eu_8066AA18) {
+            self->field_0xBC = lbl_eu_8066AA18;
         }
     } else {
-        f32 lim = lbl_eu_8066AA24;
-        f32 v = self->field_0xBC - lbl_eu_8066AA78;
-        self->field_0xBC = v;
-        if (v < lim) {
-            self->field_0xBC = lim;
+        self->field_0xBC -= lbl_eu_8066AA78;
+        if (self->field_0xBC < lbl_eu_8066AA24) {
+            self->field_0xBC = lbl_eu_8066AA24;
         }
     }
     ml::CVec4 v18;

@@ -20,57 +20,60 @@ extern "C" __declspec(noinline) void func_801FFAB4(float* dest, float a, float b
 // ============================================================
 // us-80201254 | __ct__CModelDispEquip (constructor)
 // ============================================================
-extern "C" void __ct__CModelDispEquip(CModelDispEquip* self, u32 somePtr, s32 equipSlot) {
+CModelDispEquip::CModelDispEquip(u32 somePtr, s32 equipSlot) {
     // No self alias: retail keeps only self(r31), holder and the equipSlot
     // param in the saved pool (r31/r29/r28) - an extra live value shifts
     // _savegpr_27 vs _savegpr_28.
-    self->somePtr = somePtr;
-    self->_vtable = (u32)lbl_eu_805354C8;
-    CActParamHolder* holder = &self->actParamHolder;
-    self->_vtable2 = (u32)lbl_eu_805354C8 + 0x88;
-    self->_vtable3 = (u32)lbl_eu_805354C8 + 0xB4;
+    this->somePtr = somePtr;
+    _vtable = (u32)lbl_eu_805354C8;
+    // Early holder alias: retail materializes self+0x10 once here (r29); it
+    // dies after __construct_array so the file-slot walk can reuse the reg.
+    CActParamHolder* holder = &this->actParamHolder;
+    _vtable2 = (u32)lbl_eu_805354C8 + 0x88;
+    _vtable3 = (u32)lbl_eu_805354C8 + 0xB4;
     __ct__Q22cf17CActParamAnimGameFv(reinterpret_cast<cf::CActParamAnimGame*>(&holder->actParam));
     __construct_array(&holder->actParams[0], (void*)__ct__Q22cf17CActParamAnimGameFv,
                       (void*)__dt__Q22cf17CActParamAnimGameFv, 0x53C, 2);
-    self->weaponId = 0;
-    self->equipSlot = equipSlot;
-    self->state = 0;
-    self->alpha = lbl_eu_80668270;
-    self->alphaTimer = lbl_eu_80668274;
-    self->state20 = 1;
-    self->state21 = 1;
-    FileSlot* slot = &self->fileSlots[0];
+    weaponId = 0;
+    this->equipSlot = equipSlot;
+    state = 0;
+    alpha = lbl_eu_80668270;
+    alphaTimer = lbl_eu_80668274;
+    state20 = 1;
+    state21 = 1;
+    FileSlot* slot = &this->fileSlots[0];
     do {
         func_801FF6DC(reinterpret_cast<u8*>(slot));
         slot++;
-    } while (slot < &self->fileSlots[9]);
-    self->modelFileHandle = 0;
-    self->modelData = 0;
-    holder->field_0x00 = 0;
-    holder->field_0x04 = 0;
-    holder->field_0x08 = 0;
-    holder->unk_55C = 0;
-    holder->timer = 0;
-    holder->currentModelPtr = 0;
-    u8 i = 0;
-    u8 n = 2;
-    do {
-        holder->animModelPtrs[i] = 0;
-        ((CActParamHolderTail*)holder)->animPtrs[i] = 0;
-        i++;
-        n--;
-    } while (n != 0);
-    i = 0;
-    n = 8;
-    do {
-        ((CActParamHolderTail*)holder)->equipPtrs[i] = 0;
-        i++;
-        n--;
-    } while (n != 0);
+    } while (slot < &this->fileSlots[9]);
+    modelFileHandle = 0;
+    modelData = 0;
+    // Scalar clears stay this-> based (retail stores via self+offset); the
+    // array clears below re-derive the holder base for their indexed walks.
+    this->actParamHolder.field_0x00 = 0;
+    this->actParamHolder.field_0x04 = 0;
+    this->actParamHolder.field_0x08 = 0;
+    this->actParamHolder.unk_55C = 0;
+    this->actParamHolder.timer = 0;
+    this->actParamHolder.currentModelPtr = 0;
+    CActParamHolder* tail = &this->actParamHolder;
+    // Single up-counting index doubles as the address scale (retail
+    // clrlslwi r0,r6,24,2) with a rolled mtctr/bdnz loop body.
+    for (u8 i = 0; i < 2; i++) {
+        tail->animModelPtrs[i] = 0;
+        ((CActParamHolderTail*)tail)->animPtrs[i] = 0;
+    }
+    for (u8 i = 0; i < 8; i++) {
+        ((CActParamHolderTail*)tail)->equipPtrs[i] = 0;
+    }
+    // Retail re-inits a stack temp per slot and copies it field-by-field
+    // (lwz/stw x2 + lbz/stb), not as one struct assignment.
     FileSlot tmp;
     for (u8 j = 0; j < 9; j++) {
         func_801FF6DC(reinterpret_cast<u8*>(&tmp));
-        self->fileSlots[j] = tmp;
+        this->fileSlots[j].handle = tmp.handle;
+        this->fileSlots[j].data = tmp.data;
+        this->fileSlots[j].flag = tmp.flag;
     }
 }
 
@@ -384,28 +387,31 @@ extern "C" void func_801FFBC4(CModelDispEquip* self, CActParamHolder* holder) {
 // slot, verify the first actor (model id, move state, file load), then create
 // the display model, wire the param slots + anim models, and start the idle
 // animation.
+// Retail allocation: 0x60 frame saving r26-r31 - exactly six values live
+// across calls (self/holder/actor/flag + two locals); keep helper temps
+// scoped tightly and never hold more than six past a call boundary.
 extern "C" void func_801FFDC4(CModelDispEquip* self) {
-    CActParamHolder* holder = &self->actParamHolder;
     // Pointer-walk loads trigger the retail lwzu base fold (MWCC_CASES
-    // btm_sco_init note): loads grouped before the stores.
-    u32* srcp = lbl_eu_80507FD0;
-    u32 v0 = *srcp++;
-    u32 v1 = *srcp++;
-    u32 v2 = *srcp++;
+    // btm_sco_init note); the scheduler hoists all three loads ahead of the
+    // stores like retail.
     u32 src[3];
-    src[0] = v0;
-    src[1] = v1;
-    src[2] = v2;
+    CModelDispMca mca;
+    f32 tmpB[3];
+    f32 tmpA[3];
     CModelDispListHolder lh;
+    u32* srcp = lbl_eu_80507FD0;
+    src[0] = *srcp++;
+    src[1] = *srcp++;
+    src[2] = *srcp++;
+    CActParamHolder* holder = &self->actParamHolder;
     func_80043D90(&lh);
     func_800F4A98(func_80043F18(&lh), src[self->equipSlot], 0);
-    CModelDispEnumList* list = func_80043F18(&lh);
-    if (list->field_620 >= 1) {
+    if (func_80043F18(&lh)->field_620 >= 1) {
         CModelDispSlot* slot = func_800F6EC0(func_80043F18(&lh), 0);
         cf::CfObjectMove* cfMove = slot->field_04;
         if (cfMove != 0) {
             CModelDispActor* actor = func_800BFC68(cfMove);
-            int ready = actor != 0 ? 1 : 0;
+            int ready = actor != 0;
             u32 m = 0;
             if (actor != 0) {
                 m = actor->field_3F2C;
@@ -414,21 +420,22 @@ extern "C" void func_801FFDC4(CModelDispEquip* self) {
                 if (func_80200C20(self, actor->field_3F28) == 0) ready = 0;
             }
             if (holder->field_0x00 == 0 && ready != 0) {
-                // ---- build the display model ----
+                // ---- build the display model (retail statement order) ----
                 ((CActParamHolderTail*)holder)->currentModelPtr = (u32)actor;
                 holder->field_0x00 = func_80495E8C(self->somePtr, m, -1, 1);
                 reinterpret_cast<CModelDispModelVt*>(holder->field_0x00)->m64(0);
                 ((CActParamHolderTail*)holder)->equipPtrs[1] =
-                    ((u32)reinterpret_cast<CModelDispMoveVt*>(&actor->move)->m148(1) >> 12) & 0x3FF;
+                    ((u32)reinterpret_cast<CModelDispMoveVt*>(&actor->move)->m148(1) >> 10) & 0x3FF;
                 s16 be = func_800BE954(reinterpret_cast<CModelDispMoveVt*>(&actor->move));
                 CModelDispParamSlot* param = func_80062C28(be, 0);
-                for (int idx = 2; idx <= 5; idx++) {
+                // u8 index: retail emits clrlwi/mulli address math + cmplwi/ble
+                for (u8 idx = 2; idx <= 5; idx++) {
                     if (reinterpret_cast<CModelDispMoveVt*>(&actor->move)->m148(idx) != 0) {
                         CModelDispVt8* obj = param[idx].field_2C;
                         func_804831C4(reinterpret_cast<CModelDispModelVt*>(holder->field_0x00),
                                       obj->m00(&param[idx], actor->field_3F28));
-                        ((CActParamHolderTail*)holder)->equipPtrs[idx] =
-                            ((u32)reinterpret_cast<CModelDispMoveVt*>(&actor->move)->m148(idx) >> 12) & 0x3FF;
+                        holder->equipPtrs[idx] =
+                            ((u32)reinterpret_cast<CModelDispMoveVt*>(&actor->move)->m148(idx) >> 10) & 0x3FF;
                     }
                 }
                 holder->field_0x04 = func_800584B8(self->somePtr, actor->field_3F30, &lbl_eu_80507FF8[0]);
@@ -438,15 +445,22 @@ extern "C" void func_801FFDC4(CModelDispEquip* self) {
                 func_8004B624(&holder->actParam, reinterpret_cast<CModelDispModelVt*>(holder->field_0x00),
                               holder->field_0x08, reinterpret_cast<CModelDispMoveVt*>(&actor->move)->m184());
                 func_8004B6A4(&holder->actParam, holder->field_0x04, actor->field_3F30);
-                holder->actParam.field_0x0C &= ~0x800000;
-                f32 tmpB[4];
+                // Pinned via the §17.6 rotate intrinsic: plain '&= ~0x800000'
+                // lets the optimizer pick a different mask encoding here.
+                holder->actParam.field_0x0C =
+                    __rlwinm(holder->actParam.field_0x0C, 0, 24, 22);
                 func_8004B354(&holder->actParam,
                     (const f32*)func_8004B60C(tmpB, lbl_eu_8066827C, lbl_eu_80668274, lbl_eu_80668274));
                 holder->actParam.field_0x0C |= 0x160;
-                func_80200388(&holder->actParam,
-                    self != 0 ? reinterpret_cast<u32>(reinterpret_cast<u8*>(self) + 4) : 0);
-                f32 tmpA[4];
+                // Copy-then-adjust shape (retail cmpwi/mr/beq/addi): default
+                // is self itself, not null.
+                u32 parentArg = reinterpret_cast<u32>(self);
+                if (self != 0)
+                    parentArg = reinterpret_cast<u32>(reinterpret_cast<u8*>(self) + 4);
+                func_80200388(&holder->actParam, parentArg);
                 func_8004B60C(tmpA, lbl_eu_8066827C, lbl_eu_80668274, lbl_eu_80668274);
+                // Word-copy gives retail's lwz/stw schedule (a float copy would
+                // emit lfs/stfs).
                 struct V3 {
                     u32 w[3];
                 };
@@ -473,7 +487,6 @@ extern "C" void func_801FFDC4(CModelDispEquip* self) {
                 }
                 if ((actor->field_3F08 & 0x20000) != 0) {
                     if (reinterpret_cast<CModelDispMoveVt*>(&actor->move)->m188() != 0) {
-                        CModelDispMca mca;
                         __ct__CMcaFile(&mca, reinterpret_cast<CModelDispMoveVt*>(&actor->move)->m188());
                         holder->unk_55C = func_80495EAC(self->somePtr, mca.mDataAdj, &lbl_eu_80507FF8[8]);
                     }
@@ -481,14 +494,14 @@ extern "C" void func_801FFDC4(CModelDispEquip* self) {
                 for (u8 i = 0; i < 2; i++) {
                     CModelDispModelVt* am =
                         reinterpret_cast<CModelDispModelVt*>(holder->animModelPtrs[i]);
-                    if (am != 0 && holder->unk_55C != 0) {
-                        holder->actParams[i].field_0x378 = i;
-                        func_8005A594(&holder->actParams[i]);
-                        func_8004B624(&holder->actParams[i], am, holder->unk_55C,
-                                      reinterpret_cast<CModelDispMoveVt*>(&actor->move)->m188());
-                        func_8004B9D4(&holder->actParams[i],
-                                      func_8004C5EC(&holder->actParam), 0, -1, 0);
-                    }
+                    if (am == 0 || holder->unk_55C == 0)
+                        continue;
+                    holder->actParams[i].field_0x378 = i;
+                    func_8005A594(&holder->actParams[i]);
+                    func_8004B624(&holder->actParams[i], am, holder->unk_55C,
+                                  reinterpret_cast<CModelDispMoveVt*>(&actor->move)->m188());
+                    func_8004B9D4(&holder->actParams[i],
+                                  func_8004C5EC(&holder->actParam), 0, -1, 0);
                 }
                 if (actor->field_3F28 == 8) {
                     if (func_800822F4__Q22cf13CfGameManagerFv() >= 0x167) {
@@ -496,7 +509,7 @@ extern "C" void func_801FFDC4(CModelDispEquip* self) {
                     }
                 }
                 holder->timer = 0x96;
-                reinterpret_cast<CModelDispVt48*>(holder->field_0x00)->m18(self->alpha);
+                reinterpret_cast<CModelDispModelVt*>(holder->field_0x00)->m48(self->alpha);
                 reinterpret_cast<CModelDispModelVt*>(holder->field_0x00)->m9C(3, 0);
                 self->state21 = 1;
                 func_801FF96C(self);
@@ -513,7 +526,8 @@ extern "C" void func_801FFDC4(CModelDispEquip* self) {
 // ============================================================
 // us-80202078 | func_80200388
 // ============================================================
-extern "C" void func_80200388(void* self, u32 val) { *(u32*)((u8*)self + 4) = val; *(u32*)((u8*)self + 0x34) = val; }
+// Retail always calls this (never inlines it) - keep the noinline.
+extern "C" __declspec(noinline) void func_80200388(void* self, u32 val) { *(u32*)((u8*)self + 4) = val; *(u32*)((u8*)self + 0x34) = val; }
 
 // ============================================================
 // us-80202084 | func_80200394
@@ -611,10 +625,18 @@ extern "C" void func_80200394(CModelDispEquip* self) {
 
     // Per-slot equip model files (slots 0-4): charId <= 8 registers the model
     // directly via func_80062AD8; larger ids go through the async file load.
+    // Buffer declared outside the loop with explicit per-iteration resets:
+    // the invariant zero stores hoist into a saved reg (retail r20) instead
+    // of being rematerialized each iteration.
+    ml::FixStr<64> buf(false);
+    // false-init + explicit resets keep the ctor inline (retail emits two
+    // zero stores); note MWCC folds any spelling of these constants into
+    // identical code.
     for (u32 i = 1; i <= 5; i++) {
         u32 modelId = ((CActParamHolderTail*)holder)->equipPtrs[i];
         if (modelId == 0) continue;
-        ml::FixStr<64> buf(true);
+        buf.mString[0] = '\0';
+        buf.mLength = 0;
         if (func_800AA33C(buf, modelId, 1, 1) == 0) continue;
         FileSlot* fs = &self->fileSlots[i - 1];
         if (fs->data != 0) continue;
@@ -640,11 +662,12 @@ extern "C" void func_80200394(CModelDispEquip* self) {
     if (allLoaded == 0) return;
 
     // ---- build the display model ----
-    CModelDispModelVt* model = func_80495E8C(self->somePtr, (u32)self->fileSlots[0].data, -1, 1);
-    holder->field_0x00 = model;
-    model->m64(0);
-    func_80485684(holder->field_0x00, 1);
-    func_80482DF4(holder->field_0x00, 1);
+    // No cached model local: retail reloads holder->field_0x00 (r30-based
+    // lwz) before every use; an extra live value shifts the saved-reg pool.
+    holder->field_0x00 = func_80495E8C(self->somePtr, (u32)self->fileSlots[0].data, -1, 1);
+    reinterpret_cast<CModelDispModelVt*>(holder->field_0x00)->m64(0);
+    func_80485684(reinterpret_cast<CModelDispObj*>(holder->field_0x00), 1);
+    func_80482DF4(reinterpret_cast<CModelDispObj*>(holder->field_0x00), 1);
     if (holder->field_0x00 == 0) return;
     func_804831C4(reinterpret_cast<CModelDispModelVt*>(holder->field_0x00),
                   reinterpret_cast<CModelDispNameParam*>(self->fileSlots[1].data));
@@ -657,20 +680,22 @@ extern "C" void func_80200394(CModelDispEquip* self) {
 
     // Pick the anim-model set for the weapon type (2 = off-hand only,
     // 3 = both, 8 = both, anything else = main-hand only).
-    u8* f5 = self->fileSlots[5].data;
-    u8 wtype = func_8013600C(&lbl_eu_80507FF8[0x2F], &lbl_eu_80507FF8[0x58], rec->weaponId);
+    // f5/wtype stay untyped-register-friendly: retail holds f5 in r20 across
+    // the whole dispatch and the wtype byte in r0.
+    CModelDispNameParam* f5 = reinterpret_cast<CModelDispNameParam*>(self->fileSlots[5].data);
+    u8 wtype = (u8)func_8013600C(&lbl_eu_80507FF8[0x2F], &lbl_eu_80507FF8[0x58], rec->weaponId);
     if (wtype == 8) {
-        holder->animModelPtrs[0] = func_80495E94(self->somePtr, reinterpret_cast<CModelDispNameParam*>(f5));
-        holder->animModelPtrs[1] = func_80495E94(self->somePtr, reinterpret_cast<CModelDispNameParam*>(f5));
+        holder->animModelPtrs[0] = func_80495E94(self->somePtr, f5);
+        holder->animModelPtrs[1] = func_80495E94(self->somePtr, f5);
     } else {
-        wtype = func_8013600C(&lbl_eu_80507FF8[0x2F], &lbl_eu_80507FF8[0x62], rec->weaponId);
+        wtype = (u8)func_8013600C(&lbl_eu_80507FF8[0x2F], &lbl_eu_80507FF8[0x62], rec->weaponId);
         if (wtype == 3) {
             holder->animModelPtrs[0] = func_80495E94(self->somePtr, reinterpret_cast<CModelDispNameParam*>(f5));
             holder->animModelPtrs[1] = func_80495E94(self->somePtr, reinterpret_cast<CModelDispNameParam*>(f5));
         } else if (wtype == 2) {
-            holder->animModelPtrs[0] = func_80495E94(self->somePtr, reinterpret_cast<CModelDispNameParam*>(f5));
+            holder->animModelPtrs[0] = func_80495E94(self->somePtr, f5);
         } else {
-            holder->animModelPtrs[1] = func_80495E94(self->somePtr, reinterpret_cast<CModelDispNameParam*>(f5));
+            holder->animModelPtrs[1] = func_80495E94(self->somePtr, f5);
         }
     }
 
@@ -679,14 +704,16 @@ extern "C" void func_80200394(CModelDispEquip* self) {
         u8 sub = (u8)func_8014235C(rec->weaponId, &lbl_eu_80507FF8[0x58], 0);
         if (sub != 0) {
             reinterpret_cast<CModelDispModelVt*>(holder->field_0x00)->mC4(
-                reinterpret_cast<CModelDispModelVt*>(holder->animModelPtrs[0]), func_800BBC08(sub), 0);
+                reinterpret_cast<CModelDispModelVt*>(holder->animModelPtrs[0]),
+                func_800BBC08(sub), 0);
         }
     }
     if (holder->animModelPtrs[1] != 0) {
         u8 sub = (u8)func_8014235C(rec->weaponId, &lbl_eu_80507FF8[0x58], 1);
         if (sub != 0) {
             reinterpret_cast<CModelDispModelVt*>(holder->field_0x00)->mC4(
-                reinterpret_cast<CModelDispModelVt*>(holder->animModelPtrs[1]), func_800BBC08(sub), 0);
+                reinterpret_cast<CModelDispModelVt*>(holder->animModelPtrs[1]),
+                func_800BBC08(sub), 0);
         }
     }
 
@@ -702,12 +729,19 @@ extern "C" void func_80200394(CModelDispEquip* self) {
     func_8004B354(&holder->actParam,
                   (const f32*)func_8004B60C(tmpB, lbl_eu_8066827C, lbl_eu_80668274, lbl_eu_80668274));
     holder->actParam.field_0x0C |= 0x160;
-    func_80200388(&holder->actParam,
-                  self != 0 ? reinterpret_cast<u32>(reinterpret_cast<u8*>(self) + 4) : 0);
+    // Copy-then-adjust shape (retail cmpwi/mr/beq/addi): default is self
+    // itself, not null.
+    u32 parentArg = reinterpret_cast<u32>(self);
+    if (self != 0)
+        parentArg = reinterpret_cast<u32>(reinterpret_cast<u8*>(self) + 4);
+    func_80200388(&holder->actParam, parentArg);
     func_8004B60C(tmpA, lbl_eu_8066827C, lbl_eu_80668274, lbl_eu_80668274);
-    self->colorG = tmpA[1];
-    self->colorR = tmpA[0];
-    self->colorB = tmpA[2];
+    // Word-copy gives retail's lwz/stw color schedule (float assigns would
+    // emit lfs/stfs). f8 is interleaved mid-copy like retail.
+    struct V3 {
+        u32 w[3];
+    };
+    *(V3*)&self->colorR = *(const V3*)tmpA;
     self->colorA = lbl_eu_80668274;
 
     u32 f8 = (u32)self->fileSlots[8].data;
@@ -745,30 +779,37 @@ extern "C" void func_80200394(CModelDispEquip* self) {
 // Load the equip model arc: build the packed path token from `param` and
 // the manager handle, size the file, pick an alloc handle for the buffer
 // (func_801F9894), and kick the async read into modelFileHandle.
-// The path token packs param<<20 | 0x78000000 | ((managerHandle>>10 & 0x7F)<<15)
-// - retail builds it with oris + rlwimi (bits 15..21).
+// Path token: param<<20 | 0x78000000 | (rotl(handle,22) into bits 15..21) -
+// retail emits slwi + oris + rlwimi for exactly this expression form.
 extern "C" int func_80200C20(CModelDispEquip* self, u32 param) {
     CModelDispFileCtx ctx;
     func_801F981C(&ctx);
     if (self->modelData != 0)
         return 1;
-    if (self->modelFileHandle != 0)
-        return 0;
-    void* h = func_8007DE94__Q22cf13CfGameManagerFv(param, 5);
-    // false-init + explicit clear() keeps MWCC from emitting the out-of-line
-    // FixStr(bool) call - retail inlines the two zero stores (mString[0], mLength).
-    ml::FixStr<64> buf(false);
-    buf.clear();
-    // oris 0x7800 + rlwimi(h rot22 into bits 15..21) in retail
-    u32 packed = ((u32)param << 20) | 0x78000000 | ((((u32)h >> 10) & 0x7F) << 15);
-    func_800AA33C(buf, packed, 1, 1);
-    int size = getFileSize__11CDeviceFileFPCc(buf.mString, 1);
-    if (size < 0)
-        return 0;
-    u32 alloc = func_801F9894(&ctx, (u32)size);
-    CFileHandle* fh = (CFileHandle*)readFile__11CDeviceFileFUlPCcP10IWorkEventii(alloc, buf.mString, self, 0, 0);
-    self->modelFileHandle = fh;
-    setHandleFlag1__11CDeviceFileFP11CFileHandle(fh);
+    // Positive-condition nesting: retail branches OVER the body to the shared
+    // li r3,0 tail (bne/blt), instead of early-returning from inside.
+    if (self->modelFileHandle == 0) {
+        void* h = func_8007DE94__Q22cf13CfGameManagerFv(param, 5);
+        // false-init + explicit field stores keep MWCC from emitting the
+        // out-of-line FixStr(bool) call - retail inlines the two zero stores.
+        ml::FixStr<64> buf(false);
+        buf.mString[0] = '\0';
+        buf.mLength = 0;
+        // retail: slwi(param,20) + oris 0x7800, then rlwimi(h rot22 into bits
+        // 15..21). Keeping the insert inside the arg expression makes MWCC
+        // copy the manager handle out of r3 (mr r6) before taking &buf.
+        func_800AA33C(buf,
+                      __rlwimi(((u32)param << 20) | 0x78000000, (u32)h, 22, 15, 21),
+                      1, 1);
+        int size = getFileSize__11CDeviceFileFPCc(buf.mString, 1);
+        if (size >= 0) {
+            u32 alloc = func_801F9894(&ctx, (u32)size);
+            CFileHandle* fh =
+                (CFileHandle*)readFile__11CDeviceFileFUlPCcP10IWorkEventii(alloc, buf.mString, self, 0, 0);
+            self->modelFileHandle = fh;
+            setHandleFlag1__11CDeviceFileFP11CFileHandle(fh);
+        }
+    }
     return 0;
 }
 
@@ -811,6 +852,9 @@ void func_80200CE8(CModelDispEquip* self) {
 // handle. The 9-slot scan falls back to the dedicated model slot (0x1090),
 // whose buffer becomes modelData (only for event type 1).
 int CModelDispEquip::OnFileEvent(CEventFile* event) {
+    // h declared before d: MWCC colors locals in declaration order here, and
+    // retail wants the buffer temp (d) in r4 with the lbl pointer in r5.
+    CFileHandle* h;
     u8* d;
     for (u8 i = 0; i < 9; i++) {
         FileSlot* slot = &fileSlots[i];
@@ -822,13 +866,15 @@ int CModelDispEquip::OnFileEvent(CEventFile* event) {
         slot->handle = 0;
         return 1;
     }
-    CFileHandle* h = modelFileHandle;
+    h = modelFileHandle;
     if (h == event->field_04) {
         if (event->field_00 == 1) {
             d = h->mData;
             h->mData = 0;
             modelData = d;
-            func_804CC1BC(lbl_eu_8065FC18);
+            // Two-arg register call: retail passes the old buffer (d, r4)
+            // alongside the manager.
+            func_804CC1BC(lbl_eu_8065FC18, d);
         }
         modelFileHandle = 0;
     }
@@ -875,46 +921,51 @@ extern "C" void func_80200FB0(CModelDispEquip* self, CModelDispParent* parent,
                               int kind, int subKind) {
     CActParamHolder* holder = &self->actParamHolder;
     if (holder->field_0x00 != parent->field_0x3A0) return;
-    // Pointer-walk loads trigger the retail lwzu base fold (MWCC_CASES
-    // btm_sco_init note): loads grouped before the stores.
-    u32* srcp = lbl_eu_80507FDC;
-    u32 v0 = *srcp++;
-    u32 v1 = *srcp++;
-    u32 v2 = *srcp++;
-    u32 src[3];
-    src[0] = v0;
-    src[1] = v1;
-    src[2] = v2;
+    // 12-byte filter triple: retail copies it as one struct value (lis/lwzu/
+    // lwz/lwz into r6/r5/r4/r0) before storing to the stack slot.
+    CModelDispFilterTbl tbl = *(const CModelDispFilterTbl*)lbl_eu_80507FDC;
     CModelDispListHolder lh;
     func_80043D90(&lh);
-    CModelDispEnumList* list = func_80043F18(&lh);
-    func_800F4A98(list, src[self->equipSlot], 0);
-    list = func_80043F18(&lh);
-    if (list->field_620 >= 1) {
-        CModelDispSlot* slot = func_800F6EC0(list, 0);
+    func_800F4A98(func_80043F18(&lh), tbl.slot[self->equipSlot], 0);
+    // Fresh enum-list walks: the count check and the slot lookup each re-call
+    // func_80043F18 (retail never reuses the previous result).
+    if (func_80043F18(&lh)->field_620 >= 1) {
+        CModelDispSlot* slot = func_800F6EC0(func_80043F18(&lh), 0);
         cf::CfObjectMove* cfMove = slot->field_04;
         if (cfMove != 0) {
             CModelDispActor* actor = func_800BFC68(cfMove);
-            int idx = 0;
+            // Retail initializes res (r5) before idx (r30).
             CModelDispNameParam* res = 0;
-            if (kind == 0) {
-                if (subKind == 0) {
+            int idx = 0;
+            // Retail builds the dispatch as cmpwi/beq chains with out-of-line
+            // case bodies (switch codegen), sharing one res check per kind.
+            switch (kind) {
+            case 0:
+                switch (subKind) {
+                case 0:
                     idx = 0;
-                    res = func_800BEDC4(reinterpret_cast<CModelDispMoveVt*>(&actor->move), 0);
-                } else if (subKind == 1) {
+                    res = func_800BEDC4(reinterpret_cast<CModelDispMoveVt*>(&actor->move), idx);
+                    break;
+                case 1:
                     idx = 1;
-                    res = func_800BEDC4(reinterpret_cast<CModelDispMoveVt*>(&actor->move), 1);
+                    res = func_800BEDC4(reinterpret_cast<CModelDispMoveVt*>(&actor->move), idx);
+                    break;
                 }
                 if (res != 0) func_80200F08(self, actor, res, idx);
-            } else if (kind == 1) {
-                if (subKind == 0) {
+                break;
+            case 1:
+                switch (subKind) {
+                case 0:
                     idx = 0;
-                    res = func_800BED80(reinterpret_cast<CModelDispMoveVt*>(&actor->move), 0);
-                } else if (subKind == 1) {
+                    res = func_800BED80(reinterpret_cast<CModelDispMoveVt*>(&actor->move), idx);
+                    break;
+                case 1:
                     idx = 1;
-                    res = func_800BED80(reinterpret_cast<CModelDispMoveVt*>(&actor->move), 1);
+                    res = func_800BED80(reinterpret_cast<CModelDispMoveVt*>(&actor->move), idx);
+                    break;
                 }
                 if (res != 0) func_80200F08(self, actor, res, idx);
+                break;
             }
         }
     }
@@ -933,25 +984,33 @@ extern "C" void func_80201148(CModelDispEquip* self, u32 unused,
     // arg declared before index so MWCC colors arg=r4, index=r31 like retail.
     CModelDispNameParam* arg = 0;
     int index = 0;
+    // Retail builds both dispatches as cmpwi/beq chains with out-of-line
+    // case bodies (switch codegen), re-checking arg per kind block.
     switch (kind) {
     case 0:
-        if (subKind == 0) {
+        switch (subKind) {
+        case 0:
             index = 0;
             arg = func_800BBC08((u8)func_8014235C(self->weaponId, &lbl_eu_80507FF8[0x62], 0));
-        } else if (subKind == 1) {
+            break;
+        case 1:
             index = 1;
             arg = func_800BBC08((u8)func_8014235C(self->weaponId, &lbl_eu_80507FF8[0x62], 1));
+            break;
         }
         if (arg != 0)
             func_80200E94(self, arg, index);
         break;
     case 1:
-        if (subKind == 0) {
+        switch (subKind) {
+        case 0:
             index = 0;
             arg = func_800BBC08((u8)func_8014235C(self->weaponId, &lbl_eu_80507FF8[0x58], 0));
-        } else if (subKind == 1) {
+            break;
+        case 1:
             index = 1;
             arg = func_800BBC08((u8)func_8014235C(self->weaponId, &lbl_eu_80507FF8[0x58], 1));
+            break;
         }
         if (arg != 0)
             func_80200E94(self, arg, index);
@@ -1019,7 +1078,9 @@ extern "C" void func_80201318() {}
 // every occupied slot's effect active (byte +0x59).
 // Retail passes the command buffer in r5: the vtable entry forwards
 // (this, unused, cmd), so the middle parameter is part of the signature.
-void func_8020131C(CModelDispEquip* self, u32 unused, CModelDispEquipCmd* cmd) {
+// Retail symbol is unmangled (global), so the free function has C linkage.
+extern "C" void func_8020131C(CModelDispEquip* self, u32 unused,
+                              const CModelDispEquipCmd* cmd) {
     CActParamHolder* holder = &self->actParamHolder;
     if (cmd->field_0x0A == 2) {
         int val = 0xb;
@@ -1306,9 +1367,11 @@ void CModelDispEquip::thunk8_1444() {
 void CModelDispEquip::thunk8_dtor() {
     ((void(*)(void*))__dt__15CModelDispEquipFv)((char*)this - 8);
 }
-// Retail: subi r3,r3,-4; b func_80201298 (extern "C" free thunks, unmangled)
+// Retail: subi r3,r3,-4; b <target> (extern "C" free thunks, unmangled).
+// The tail-call only adjusts r3; the callee's other params are left as-is,
+// so the callees are cast to single-argument function pointers.
 extern "C" void func_80201A44(void* self) { ((void(*)(void*))func_80201298)((char*)self - 4); }
-extern "C" void func_80201A54(void* self) { ((void(*)(void*, u32, void*))func_8020131C)((char*)self - 4, 0, (CModelDispEquipCmd*)((char*)self - 4)); }
+extern "C" void func_80201A54(void* self) { ((void(*)(void*))func_8020131C)((char*)self - 4); }
 extern "C" void func_80201A64(void* self) { ((void(*)(void*))func_80200F9C)((char*)self - 4); }
 // Retail: subi r3,r3,-8; b func_80201444
 extern "C" void func_80201A74(void* self) { ((void(*)(void*))func_80201444)((char*)self - 8); }

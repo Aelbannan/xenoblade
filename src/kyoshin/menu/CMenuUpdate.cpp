@@ -54,7 +54,7 @@ struct NullPtmfTriple {
 extern "C" u32 getField10(u8* self);
 extern "C" void setField67(u8* self, u8 val);
 extern "C" void setField64(u8* self, u8 val);
-extern "C" u8 getField64(u8* self);
+extern "C" int getField64(u8* self);
 
 // IWorkEvent
 extern "C" __declspec(noinline) void __ct__IWorkEvent(void* self) {
@@ -266,7 +266,7 @@ extern "C" void func_8014295C(u8* self, u8 val) { self[0x67] = val; }
 extern "C" __declspec(noinline) void func_80142C98(u8* self, u8 val) { self[0x64] = val; }
 extern "C" __declspec(noinline) void setField64(u8* self, u8 val) { self[0x64] = val; }
 extern "C" u8 func_80143F4C(u8* self) { return self[0x64]; }
-extern "C" __declspec(noinline) u8 getField64(u8* self) { return self[0x64]; }
+extern "C" __declspec(noinline) int getField64(u8* self) { return self[0x64]; }
 extern "C" __declspec(noinline) void* getGlobalA10() { return (void*)lbl_eu_80664A10; }
 extern "C" __declspec(noinline) int getGlobal0E0() { return lbl_eu_806640E0; }
 extern "C" __declspec(noinline) void func_80142C64(void* self) { ((u8*)self)[0x15] = 1; }
@@ -308,7 +308,7 @@ extern "C" void* func_80142B4C(void* self, u32 r4, int r5, int r6, int r7, int r
         }
     }
     if (lbl_eu_80664198 != 0) {
-        func_80143ADC((void*)(u32)lbl_eu_80664198, r5, r6, r7, r8);
+        func_80143ADC((CMenuUpdate*)(void*)(u32)lbl_eu_80664198, r5, r6, r7, r8);
         return 0;
     }
     void* workMem = getWorkMem__17CWorkThreadSystemFv();
@@ -344,68 +344,81 @@ extern "C" void func_80142CA0(void* self, void* name, void* fmtArg) {
 
 // func_80142D60 - (re)bind the window layout's textures, animations and pane
 // visibility for the current state, then start the active animation.
-// Retail reloads mLayout from the object before every use rather than caching
-// it; mirror that so register allocation matches.
-#define layout (obj->mLayout)
+// The string-pool base is written as a plain address expression at every use;
+// MWCC's CSE materializes it into a register per region (matching retail's
+// repeated lis/addi pairs) and mLayout is reloaded from the object before
+// every use.
 extern "C" __declspec(noinline) void func_80142D60(void* self) {
     CMenuUpdate* obj = (CMenuUpdate*)self;
-    const char* pool = (const char*)lbl_eu_805013C8;
 
-    layout->UnbindAllAnimation();
+    obj->mLayout->UnbindAllAnimation();
 
     // Shared icon texture: message id picked by controller type.
-    char* handle = func_80138F78(func_8013606C(
-        pool + 0x82, cf::CfGameManager::func_80086F9C(-1) ? pool + 0x70 : pool + 0x79, 0x2a));
+    char* icon = func_80138F78(
+        func_8013606C((const char*)lbl_eu_805013C8 + 0x82,
+                      cf::CfGameManager::func_80086F9C(-1) ? (const char*)lbl_eu_805013C8 + 0x70
+                                                           : (const char*)lbl_eu_805013C8 + 0x79,
+                      0x2a));
     void* tex = ((nw4r::lyt::ArcResourceAccessor*)func_801355F4())
-                    ->GetResource(0x74696D67 /* 'timg' */, handle, NULL);
+                    ->GetResource(0x74696D67 /* 'timg' */, icon, NULL);
     if (tex != NULL) {
-        func_80137E7C(layout, pool + 0x90, tex);
-        func_80137E7C(layout, pool + 0x9d, tex);
-        func_80137E7C(layout, pool + 0xaa, tex);
+        func_80137E7C(obj->mLayout, (const char*)lbl_eu_805013C8 + 0x90, tex);
+        func_80137E7C(obj->mLayout, (const char*)lbl_eu_805013C8 + 0x9d, tex);
+        func_80137E7C(obj->mLayout, (const char*)lbl_eu_805013C8 + 0xaa, tex);
 
         // Texture object carries pixel dimensions through a two-level chain.
-        u16 h = ((CMenuUpdateTexObj*)tex)->mChain->mDims->mH;
-        u16 w = ((CMenuUpdateTexObj*)tex)->mChain->mDims->mW;
+        // u32 locals so the int->float conversion uses the 0x4330 double trick.
+        u32 h = ((CMenuUpdateTexObj*)tex)->mChain->mDims->mH;
+        u32 w = ((CMenuUpdateTexObj*)tex)->mChain->mDims->mW;
 
-        nw4r::lyt::Pane* pane =
-            ((nw4r::lyt::Pane*)getField10((u8*)layout))->FindPaneByName(pool + 0x90, true);
+        nw4r::lyt::Pane* pane = ((nw4r::lyt::Pane*)getField10((u8*)obj->mLayout))
+                                    ->FindPaneByName((const char*)lbl_eu_805013C8 + 0x90, true);
         if (pane != NULL) {
             float v[2];
-            setVec2(v, (f32)h, (f32)w);
+            setVec2(v, h, w);
             func_80124288(pane, v);
         }
-        pane = ((nw4r::lyt::Pane*)getField10((u8*)layout))->FindPaneByName(pool + 0x9d, true);
+        pane = ((nw4r::lyt::Pane*)getField10((u8*)obj->mLayout))
+                   ->FindPaneByName((const char*)lbl_eu_805013C8 + 0x9d, true);
         if (pane != NULL) {
             float v[2];
-            setVec2(v, (f32)h, (f32)w);
+            setVec2(v, h, w);
             func_80124288(pane, v);
         }
-        pane = ((nw4r::lyt::Pane*)getField10((u8*)layout))->FindPaneByName(pool + 0xaa, true);
+        pane = ((nw4r::lyt::Pane*)getField10((u8*)obj->mLayout))
+                   ->FindPaneByName((const char*)lbl_eu_805013C8 + 0xaa, true);
         if (pane != NULL) {
             float v[2];
-            setVec2(v, (f32)h, (f32)w);
+            setVec2(v, h, w);
             func_80124288(pane, v);
         }
     }
 
     // Bind the three state animations and hide all four state panes.
-    char* animName = func_80136190(pool + 0x82, pool + 0x64, 0x2a);
-    func_80136B4C(layout, pool + 0xb7, animName, 0);
-    func_80136B4C(layout, pool + 0xc5, animName, 0);
-    func_80136B4C(layout, pool + 0xd3, animName, 0);
+    char* animName =
+        func_80136190((const char*)lbl_eu_805013C8 + 0x82, (const char*)lbl_eu_805013C8 + 0x64,
+                      0x2a);
+    func_80136B4C(obj->mLayout, (const char*)lbl_eu_805013C8 + 0xb7, animName, 0);
+    func_80136B4C(obj->mLayout, (const char*)lbl_eu_805013C8 + 0xc5, animName, 0);
+    func_80136B4C(obj->mLayout, (const char*)lbl_eu_805013C8 + 0xd3, animName, 0);
 
-    nw4r::lyt::Pane* paneA =
-        ((nw4r::lyt::Pane*)getField10((u8*)layout))->FindPaneByName(pool + 0xe1, true);
-    nw4r::lyt::Pane* paneB =
-        ((nw4r::lyt::Pane*)getField10((u8*)layout))->FindPaneByName(pool + 0xec, true);
-    nw4r::lyt::Pane* paneC =
-        ((nw4r::lyt::Pane*)getField10((u8*)layout))->FindPaneByName(pool + 0xf6, true);
-    nw4r::lyt::Pane* paneD =
-        ((nw4r::lyt::Pane*)getField10((u8*)layout))->FindPaneByName(pool + 0xff, true);
+    nw4r::lyt::Pane* paneA = ((nw4r::lyt::Pane*)getField10((u8*)obj->mLayout))
+                                 ->FindPaneByName((const char*)lbl_eu_805013C8 + 0xe1, true);
+    nw4r::lyt::Pane* paneB = ((nw4r::lyt::Pane*)getField10((u8*)obj->mLayout))
+                                 ->FindPaneByName((const char*)lbl_eu_805013C8 + 0xec, true);
+    nw4r::lyt::Pane* paneC = ((nw4r::lyt::Pane*)getField10((u8*)obj->mLayout))
+                                 ->FindPaneByName((const char*)lbl_eu_805013C8 + 0xf6, true);
+    nw4r::lyt::Pane* paneD = ((nw4r::lyt::Pane*)getField10((u8*)obj->mLayout))
+                                 ->FindPaneByName((const char*)lbl_eu_805013C8 + 0xff, true);
     func_80124270(paneA, 0);
     func_80124270(paneB, 0);
     func_80124270(paneC, 0);
     func_80124270(paneD, 0);
+
+    // Shared temporaries: one slot each across all switch arms keeps MWCC's
+    // stack frame at the retail size.
+    void* res;
+    const char* name;
 
     switch (obj->mState) {
     case 1:
@@ -415,105 +428,104 @@ extern "C" __declspec(noinline) void func_80142D60(void* self) {
 
     case 2: {
         func_80124270(paneC, 1);
-        void* res = ((nw4r::lyt::ArcResourceAccessor*)func_801355F4())
-                        ->GetResource(0x74696D67, pool + 0x107, NULL);
+        res = ((nw4r::lyt::ArcResourceAccessor*)func_801355F4())
+                  ->GetResource(0x74696D67, (const char*)lbl_eu_805013C8 + 0x107, NULL);
         if (res != NULL) {
-            func_80137E7C(layout, pool + 0x120, res);
+            func_80137E7C(obj->mLayout, (const char*)lbl_eu_805013C8 + 0x120, res);
         }
         obj->mActiveAnim = obj->mAnim1;
         break;
     }
 
     case 4: {
-        char* s = func_80136190(pool + 0x140, pool + 0x14d, obj->mSubState + 0x6f);
-        func_80142CA0(obj, (void*)(pool + 0x156), s);
-        func_80142CA0(obj, (void*)(pool + 0x161), s);
+        char* s = func_80136190((const char*)lbl_eu_805013C8 + 0x140,
+                                (const char*)lbl_eu_805013C8 + 0x14d, obj->mSubState + 0x6f);
+        func_80142CA0(obj, (void*)((const char*)lbl_eu_805013C8 + 0x156), s);
+        func_80142CA0(obj, (void*)((const char*)lbl_eu_805013C8 + 0x161), s);
 
         // Sub-type specific texture over the first text slot.
-        void* res = NULL;
+        res = NULL;
         switch (obj->mSubType) {
         case 1:
             res = ((nw4r::lyt::ArcResourceAccessor*)func_801355F4())
-                      ->GetResource(0x74696D67, pool + 0x16c, NULL);
+                      ->GetResource(0x74696D67, (const char*)lbl_eu_805013C8 + 0x16c, NULL);
             break;
         case 2:
             res = ((nw4r::lyt::ArcResourceAccessor*)func_801355F4())
-                      ->GetResource(0x74696D67, pool + 0x187, NULL);
+                      ->GetResource(0x74696D67, (const char*)lbl_eu_805013C8 + 0x187, NULL);
             break;
         case 3:
             res = ((nw4r::lyt::ArcResourceAccessor*)func_801355F4())
-                      ->GetResource(0x74696D67, pool + 0x1a2, NULL);
+                      ->GetResource(0x74696D67, (const char*)lbl_eu_805013C8 + 0x1a2, NULL);
             break;
         case 4:
             res = ((nw4r::lyt::ArcResourceAccessor*)func_801355F4())
-                      ->GetResource(0x74696D67, pool + 0x1bd, NULL);
+                      ->GetResource(0x74696D67, (const char*)lbl_eu_805013C8 + 0x1bd, NULL);
             break;
         case 5:
             res = ((nw4r::lyt::ArcResourceAccessor*)func_801355F4())
-                      ->GetResource(0x74696D67, pool + 0x1d8, NULL);
+                      ->GetResource(0x74696D67, (const char*)lbl_eu_805013C8 + 0x1d8, NULL);
             break;
         }
         if (res != NULL) {
-            func_80137E7C(layout, pool + 0x156, res);
+            func_80137E7C(obj->mLayout, (const char*)lbl_eu_805013C8 + 0x156, res);
         }
 
         // Counter sign selects the countdown vs count-up gauge group; the
         // magnitude picks the number-strip texture bound to the gauge pane.
         if (obj->mCounter < 0) {
-            func_80124270(
-                ((nw4r::lyt::Pane*)getField10((u8*)layout))->FindPaneByName(pool + 0x1f3, true),
-                1);
-            func_80124270(
-                ((nw4r::lyt::Pane*)getField10((u8*)layout))->FindPaneByName(pool + 0x1fe, true),
-                0);
-            func_80124270(
-                ((nw4r::lyt::Pane*)getField10((u8*)layout))->FindPaneByName(pool + 0x209, true),
-                0);
-            func_80124270(
-                ((nw4r::lyt::Pane*)getField10((u8*)layout))->FindPaneByName(pool + 0x213, true),
-                1);
-            const char* name;
+            func_80124270(((nw4r::lyt::Pane*)getField10((u8*)obj->mLayout))
+                              ->FindPaneByName((const char*)lbl_eu_805013C8 + 0x1f3, true),
+                          1);
+            func_80124270(((nw4r::lyt::Pane*)getField10((u8*)obj->mLayout))
+                              ->FindPaneByName((const char*)lbl_eu_805013C8 + 0x1fe, true),
+                          0);
+            func_80124270(((nw4r::lyt::Pane*)getField10((u8*)obj->mLayout))
+                              ->FindPaneByName((const char*)lbl_eu_805013C8 + 0x209, true),
+                          0);
+            func_80124270(((nw4r::lyt::Pane*)getField10((u8*)obj->mLayout))
+                              ->FindPaneByName((const char*)lbl_eu_805013C8 + 0x213, true),
+                          1);
             if (obj->mCounter <= -200) {
-                name = pool + 0x21c;
+                name = (const char*)lbl_eu_805013C8 + 0x21c;
             } else if (obj->mCounter <= -100) {
-                name = pool + 0x230;
+                name = (const char*)lbl_eu_805013C8 + 0x230;
             } else {
-                name = pool + 0x244;
+                name = (const char*)lbl_eu_805013C8 + 0x244;
             }
             res = ((nw4r::lyt::ArcResourceAccessor*)func_801355F4())
                       ->GetResource(0x74696D67, name, NULL);
             if (res != NULL) {
-                func_80137E7C(layout, pool + 0x213, res);
+                func_80137E7C(obj->mLayout, (const char*)lbl_eu_805013C8 + 0x213, res);
             }
         } else {
-            func_80124270(
-                ((nw4r::lyt::Pane*)getField10((u8*)layout))->FindPaneByName(pool + 0x1f3, true),
-                0);
-            func_80124270(
-                ((nw4r::lyt::Pane*)getField10((u8*)layout))->FindPaneByName(pool + 0x1fe, true),
-                1);
-            func_80124270(
-                ((nw4r::lyt::Pane*)getField10((u8*)layout))->FindPaneByName(pool + 0x258, true),
-                0);
-            func_80124270(
-                ((nw4r::lyt::Pane*)getField10((u8*)layout))->FindPaneByName(pool + 0x262, true),
-                1);
-            const char* name;
+            func_80124270(((nw4r::lyt::Pane*)getField10((u8*)obj->mLayout))
+                              ->FindPaneByName((const char*)lbl_eu_805013C8 + 0x1f3, true),
+                          0);
+            func_80124270(((nw4r::lyt::Pane*)getField10((u8*)obj->mLayout))
+                              ->FindPaneByName((const char*)lbl_eu_805013C8 + 0x1fe, true),
+                          1);
+            func_80124270(((nw4r::lyt::Pane*)getField10((u8*)obj->mLayout))
+                              ->FindPaneByName((const char*)lbl_eu_805013C8 + 0x258, true),
+                          0);
+            func_80124270(((nw4r::lyt::Pane*)getField10((u8*)obj->mLayout))
+                              ->FindPaneByName((const char*)lbl_eu_805013C8 + 0x262, true),
+                          1);
             if (obj->mCounter >= 500) {
-                name = pool + 0x26b;
+                name = (const char*)lbl_eu_805013C8 + 0x26b;
             } else if (obj->mCounter >= 300) {
-                name = pool + 0x27f;
+                name = (const char*)lbl_eu_805013C8 + 0x27f;
             } else if (obj->mCounter >= 200) {
-                name = pool + 0x21c;
+                name = (const char*)lbl_eu_805013C8 + 0x21c;
             } else if (obj->mCounter >= 100) {
-                name = pool + 0x230;
+                name = (const char*)lbl_eu_805013C8 + 0x230;
             } else {
-                name = pool + 0x244;
+                name = (const char*)lbl_eu_805013C8 + 0x244;
             }
             res = ((nw4r::lyt::ArcResourceAccessor*)func_801355F4())
                       ->GetResource(0x74696D67, name, NULL);
             if (res != NULL) {
-                func_80137E7C(layout, pool + 0x262, res);
+                func_80137E7C(obj->mLayout, (const char*)lbl_eu_805013C8 + 0x262, res);
             }
         }
         func_80124270(paneA, 1);
@@ -523,8 +535,10 @@ extern "C" __declspec(noinline) void func_80142D60(void* self) {
 
     case 5: {
         // Wide-vs-narrow number strip chosen by whether 32 digits fit.
-        u16 len = func_8013606C(pool + 0x293, pool + 0x2a4, 5);
+        // wideFlag initializes before the len call (retail hoists li r26,0).
         u32 wideFlag = 0;
+        u16 len = func_8013606C((const char*)lbl_eu_805013C8 + 0x293,
+                                (const char*)lbl_eu_805013C8 + 0x2a4, 5);
         if ((u32)func_8009CF8C(0x20) >= (u32)len) {
             wideFlag = 1;
         }
@@ -537,70 +551,70 @@ extern "C" __declspec(noinline) void func_80142D60(void* self) {
         pairA[1] = lbl_eu_806673B4[wideFlag];
 
         char* s1 = func_80136190(
-            pool + 0x140, pool + 0x14d,
-            func_8013606C(pool + 0x2ab, (const char*)(u32)obj->mSubType, pairB[wideFlag]));
+            (const char*)lbl_eu_805013C8 + 0x140, (const char*)lbl_eu_805013C8 + 0x14d,
+            func_8013606C((const char*)lbl_eu_805013C8 + 0x2ab, (const char*)obj->mSubType,
+                          pairB[wideFlag]));
         char* s2 = func_80136190(
-            pool + 0x140, pool + 0x14d,
-            func_8013606C(pool + 0x2ab, (const char*)(u32)obj->mSubType, pairA[wideFlag]));
-        func_80142CA0(obj, (void*)(pool + 0x156), s1);
-        func_80142CA0(obj, (void*)(pool + 0x161), s2);
-        func_80137B44(layout, pool + 0x156, -1);
+            (const char*)lbl_eu_805013C8 + 0x140, (const char*)lbl_eu_805013C8 + 0x14d,
+            func_8013606C((const char*)lbl_eu_805013C8 + 0x2ab, (const char*)obj->mSubType,
+                          pairA[wideFlag]));
+        func_80142CA0(obj, (void*)((const char*)lbl_eu_805013C8 + 0x156), s1);
+        func_80142CA0(obj, (void*)((const char*)lbl_eu_805013C8 + 0x161), s2);
+        func_80137B44(obj->mLayout, (const char*)lbl_eu_805013C8 + 0x156, -1);
 
         if (obj->mCounter < 0) {
-            func_80124270(
-                ((nw4r::lyt::Pane*)getField10((u8*)layout))->FindPaneByName(pool + 0x1f3, true),
-                1);
-            func_80124270(
-                ((nw4r::lyt::Pane*)getField10((u8*)layout))->FindPaneByName(pool + 0x1fe, true),
-                0);
-            func_80124270(
-                ((nw4r::lyt::Pane*)getField10((u8*)layout))->FindPaneByName(pool + 0x209, true),
-                1);
-            func_80124270(
-                ((nw4r::lyt::Pane*)getField10((u8*)layout))->FindPaneByName(pool + 0x213, true),
-                0);
-            const char* name;
+            func_80124270(((nw4r::lyt::Pane*)getField10((u8*)obj->mLayout))
+                              ->FindPaneByName((const char*)lbl_eu_805013C8 + 0x1f3, true),
+                          1);
+            func_80124270(((nw4r::lyt::Pane*)getField10((u8*)obj->mLayout))
+                              ->FindPaneByName((const char*)lbl_eu_805013C8 + 0x1fe, true),
+                          0);
+            func_80124270(((nw4r::lyt::Pane*)getField10((u8*)obj->mLayout))
+                              ->FindPaneByName((const char*)lbl_eu_805013C8 + 0x209, true),
+                          1);
+            func_80124270(((nw4r::lyt::Pane*)getField10((u8*)obj->mLayout))
+                              ->FindPaneByName((const char*)lbl_eu_805013C8 + 0x213, true),
+                          0);
             if (obj->mCounter <= -50) {
-                name = pool + 0x2ba;
+                name = (const char*)lbl_eu_805013C8 + 0x2ba;
             } else if (obj->mCounter <= -16) {
-                name = pool + 0x2d0;
+                name = (const char*)lbl_eu_805013C8 + 0x2d0;
             } else {
-                name = pool + 0x2e6;
+                name = (const char*)lbl_eu_805013C8 + 0x2e6;
             }
-            void* res = ((nw4r::lyt::ArcResourceAccessor*)func_801355F4())
-                            ->GetResource(0x74696D67, name, NULL);
+            res = ((nw4r::lyt::ArcResourceAccessor*)func_801355F4())
+                      ->GetResource(0x74696D67, name, NULL);
             if (res != NULL) {
-                func_80137E7C(layout, pool + 0x209, res);
+                func_80137E7C(obj->mLayout, (const char*)lbl_eu_805013C8 + 0x209, res);
             }
         } else {
-            func_80124270(
-                ((nw4r::lyt::Pane*)getField10((u8*)layout))->FindPaneByName(pool + 0x1f3, true),
-                0);
-            func_80124270(
-                ((nw4r::lyt::Pane*)getField10((u8*)layout))->FindPaneByName(pool + 0x1fe, true),
-                1);
-            func_80124270(
-                ((nw4r::lyt::Pane*)getField10((u8*)layout))->FindPaneByName(pool + 0x258, true),
-                1);
-            func_80124270(
-                ((nw4r::lyt::Pane*)getField10((u8*)layout))->FindPaneByName(pool + 0x262, true),
-                0);
-            const char* name;
+            func_80124270(((nw4r::lyt::Pane*)getField10((u8*)obj->mLayout))
+                              ->FindPaneByName((const char*)lbl_eu_805013C8 + 0x1f3, true),
+                          0);
+            func_80124270(((nw4r::lyt::Pane*)getField10((u8*)obj->mLayout))
+                              ->FindPaneByName((const char*)lbl_eu_805013C8 + 0x1fe, true),
+                          1);
+            func_80124270(((nw4r::lyt::Pane*)getField10((u8*)obj->mLayout))
+                              ->FindPaneByName((const char*)lbl_eu_805013C8 + 0x258, true),
+                          1);
+            func_80124270(((nw4r::lyt::Pane*)getField10((u8*)obj->mLayout))
+                              ->FindPaneByName((const char*)lbl_eu_805013C8 + 0x262, true),
+                          0);
             if (obj->mCounter >= 300) {
-                name = pool + 0x2fc;
+                name = (const char*)lbl_eu_805013C8 + 0x2fc;
             } else if (obj->mCounter >= 50) {
-                name = pool + 0x2ba;
+                name = (const char*)lbl_eu_805013C8 + 0x2ba;
             } else if (obj->mCounter >= 21) {
-                name = pool + 0x312;
+                name = (const char*)lbl_eu_805013C8 + 0x312;
             } else if (obj->mCounter >= 16) {
-                name = pool + 0x2d0;
+                name = (const char*)lbl_eu_805013C8 + 0x2d0;
             } else {
-                name = pool + 0x2e6;
+                name = (const char*)lbl_eu_805013C8 + 0x2e6;
             }
-            void* res = ((nw4r::lyt::ArcResourceAccessor*)func_801355F4())
-                            ->GetResource(0x74696D67, name, NULL);
+            res = ((nw4r::lyt::ArcResourceAccessor*)func_801355F4())
+                      ->GetResource(0x74696D67, name, NULL);
             if (res != NULL) {
-                func_80137E7C(layout, pool + 0x258, res);
+                func_80137E7C(obj->mLayout, (const char*)lbl_eu_805013C8 + 0x258, res);
             }
         }
         func_80124270(paneA, 1);
@@ -609,8 +623,9 @@ extern "C" __declspec(noinline) void func_80142D60(void* self) {
     }
 
     case 6:
-        func_80136B4C(layout, pool + 0x328,
-                      func_8013639C((const void*)getGlobal0E0(), pool + 0x330, obj->mSubState),
+        func_80136B4C(obj->mLayout, (const char*)lbl_eu_805013C8 + 0x328,
+                      func_8013639C((const void*)getGlobal0E0(),
+                                    (const char*)lbl_eu_805013C8 + 0x330, obj->mSubState),
                       0);
         func_80124270(paneD, 1);
         obj->mActiveAnim = obj->mAnim1;
@@ -618,10 +633,10 @@ extern "C" __declspec(noinline) void func_80142D60(void* self) {
 
     case 3: {
         func_80124270(paneC, 1);
-        void* res = ((nw4r::lyt::ArcResourceAccessor*)func_801355F4())
-                        ->GetResource(0x74696D67, pool + 0x335, NULL);
+        res = ((nw4r::lyt::ArcResourceAccessor*)func_801355F4())
+                  ->GetResource(0x74696D67, (const char*)lbl_eu_805013C8 + 0x335, NULL);
         if (res != NULL) {
-            func_80137E7C(layout, pool + 0x120, res);
+            func_80137E7C(obj->mLayout, (const char*)lbl_eu_805013C8 + 0x120, res);
         }
         obj->mActiveAnim = obj->mAnim1;
         break;
@@ -629,99 +644,139 @@ extern "C" __declspec(noinline) void func_80142D60(void* self) {
     }
 
     // Start the active animation from its initial frame.
-    layout->BindAnimation(obj->mActiveAnim);
-    layout->SetAnimationEnable(obj->mActiveAnim, true);
+    obj->mLayout->BindAnimation(obj->mActiveAnim);
+    obj->mLayout->SetAnimationEnable(obj->mActiveAnim, true);
     setFieldFloat10(obj->mActiveAnim, lbl_eu_806673A0);
-    layout->Animate(0);
-#undef layout
+    obj->mLayout->Animate(0);
 }
 
-// func_80143ADC
 // func_80143ADC - insert/select a window entry.
 // r4 = entry type, r5..r7 = payload words. Selects an existing matching entry
 // or appends into the first free slot; the general path preserves leading
 // entries, clears the table, and re-appends around the new entry.
-extern "C" __declspec(noinline) void func_80143ADC(void* self, u32 r4, u32 r5, u32 r6, u32 r7) {
-    CMenuUpdate* obj = (CMenuUpdate*)self;
+extern "C" __declspec(noinline) void func_80143ADC(CMenuUpdate* obj, int type, u32 arg1, u32 arg2,
+                                                    u32 arg3) {
+    // Local re-declarations in this order pin MWCC's parameter-save order.
+    u32 sArg2 = arg2;
+    CMenuUpdate* self = obj;
+    int sType = type;
+    u32 sArg1 = arg1;
+    u32 sArg3 = arg3;
 
     // Free-slot scan over entries[0..6] only (entry 7 is never tested).
     int found = 0;
-    if (obj->mEntries[0].field_0 == 0) found = 1;
-    else if (obj->mEntries[1].field_0 == 0) found = 1;
-    else if (obj->mEntries[2].field_0 == 0) found = 1;
-    else if (obj->mEntries[3].field_0 == 0) found = 1;
-    else if (obj->mEntries[4].field_0 == 0) found = 1;
-    else if (obj->mEntries[5].field_0 == 0) found = 1;
-    else if (obj->mEntries[6].field_0 == 0) found = 1;
+    if (self->mEntries[0].field_0 == 0) found = 1;
+    else if (self->mEntries[1].field_0 == 0) found = 1;
+    else if (self->mEntries[2].field_0 == 0) found = 1;
+    else if (self->mEntries[3].field_0 == 0) found = 1;
+    else if (self->mEntries[4].field_0 == 0) found = 1;
+    else if (self->mEntries[5].field_0 == 0) found = 1;
+    else if (self->mEntries[6].field_0 == 0) found = 1;
     if (!found) return;
 
-    // Insert helper shared by the append paths: fill slot, then clear the
-    // one-shot "new window" flag if it was still set.
-#define INSERT_ENTRY(slot)                                                    \
-    do {                                                                      \
-        CMenuUpdate_8014274C e;                                               \
-        func_80143F54((u32*)(slot),                                           \
-                      (u32*)init_8014274C(&e, r4, r5, r6, r7));               \
-        if (!getField64((u8*)self)) return;                                   \
-        setField64((u8*)self, 0);                                             \
-        return;                                                               \
-    } while (0)
-
-    if ((int)r4 < 4) {
-        if (obj->mState == r4) return;
-        for (int i = 0; i < 8; i++) {
-            if (obj->mEntries[i].field_0 == r4) return;
-            if (obj->mEntries[i].field_0 == 0) INSERT_ENTRY(&obj->mEntries[i].field_0);
+    if (sType < 4) {
+        if (self->mState == sType) return;
+        // Counted loop (mtctr shape): match-type test precedes the free-slot
+        // insert; inserting fills the slot then clears the one-shot flag.
+        for (u8 i = 0; i < 8; i++) {
+            CMenuUpdate_8014274C* e = &self->mEntries[i];
+            if (e->field_0 == sType) return;
+            if (e->field_0 == 0) {
+                CMenuUpdate_8014274C t;
+                func_80143F54((u32*)e, (u32*)init_8014274C(&t, sType, sArg1, sArg2, sArg3));
+                if (!getField64((u8*)self)) return;
+                setField64((u8*)self, 0);
+                return;
+            }
         }
         return;
     }
 
-    if (r4 == 6) {
-        if (obj->mSubState == r5) return;
-        for (int i = 0; i < 8; i++)
-            if (obj->mEntries[i].field_0 == 6 && obj->mEntries[i].field_4 == r5) return;
-        for (int i = 0; i < 8; i++)
-            if (obj->mEntries[i].field_0 == 0) INSERT_ENTRY(&obj->mEntries[i].field_0);
+    if (sType == 6) {
+        if (self->mSubState == (int)sArg1) return;
+        // Duplicate-substate probe (unrolled x4 by the compiler).
+        u8 i;
+        for (i = 0; i < 8; i++) {
+            CMenuUpdate_8014274C* e = &self->mEntries[i];
+            if (e->field_0 == 6 && e->field_4 == (int)sArg1) return;
+        }
+        for (i = 0; i < 8; i++) {
+            CMenuUpdate_8014274C* e = &self->mEntries[i];
+            if (e->field_0 == 0) {
+                CMenuUpdate_8014274C t;
+                func_80143F54((u32*)e, (u32*)init_8014274C(&t, sType, sArg1, sArg2, sArg3));
+                if (!getField64((u8*)self)) return;
+                setField64((u8*)self, 0);
+                return;
+            }
+        }
         return;
     }
-#undef INSERT_ENTRY
 
-    // General insert: preserve existing entries, clear the table, then
-    // rebuild as [preserved][new entry][remaining non-empty].
-    CMenuUpdate_8014274C keepA[10]; // sp+0xc8..
-    for (int k = 0; k < 10; k++) __ct__8014274C(&keepA[k]);
-    int nA = 0;
-    for (int i = 0; i < 8; i++) {
-        if (obj->mEntries[i].field_0 == 6) {
-            func_80143F54((u32*)&keepA[nA].field_0, (u32*)&obj->mEntries[i].field_0);
+    // General insert: rebuild the table as [kept tail][new entry][prefix].
+    // Retail zeroes two scratch tables with eight out-of-line ctor calls each.
+    CMenuUpdate_8014274C keepA[8]; // sp+0xc8..
+    __ct__8014274C(&keepA[0]);
+    __ct__8014274C(&keepA[1]);
+    __ct__8014274C(&keepA[2]);
+    __ct__8014274C(&keepA[3]);
+    __ct__8014274C(&keepA[4]);
+    __ct__8014274C(&keepA[5]);
+    __ct__8014274C(&keepA[6]);
+    __ct__8014274C(&keepA[7]);
+
+    // Save the trailing active-window entries (types 4/5) into keepA.
+    u8 nA = 0;
+    u8 i;
+    for (i = 0; i < 8; i++) {
+        CMenuUpdate_8014274C* e = &self->mEntries[i];
+        if (e->field_0 == 4 || e->field_0 == 5) {
+            func_80143F54((u32*)&keepA[nA].field_0, (u32*)&e->field_0);
             nA++;
         }
     }
 
-    CMenuUpdate_8014274C keepB[11]; // sp+0x18..
-    for (int k = 0; k < 11; k++) __ct__8014274C(&keepB[k]);
-    int nB = 0;
-    for (int i = nA; i < 8 && obj->mEntries[i].field_0 != 0; i++) {
-        func_80143F54((u32*)&keepB[nB].field_0, (u32*)&obj->mEntries[i].field_0);
+    CMenuUpdate_8014274C keepB[8]; // sp+0x48..
+    __ct__8014274C(&keepB[0]);
+    __ct__8014274C(&keepB[1]);
+    __ct__8014274C(&keepB[2]);
+    __ct__8014274C(&keepB[3]);
+    __ct__8014274C(&keepB[4]);
+    __ct__8014274C(&keepB[5]);
+    __ct__8014274C(&keepB[6]);
+    __ct__8014274C(&keepB[7]);
+
+    // Save the leading non-empty run (starting after the kept tail) keepB.
+    u8 nB = 0;
+    u8 idx = nA;
+    for (; idx < 8; idx++) {
+        if (self->mEntries[idx].field_0 == 0) break;
+        func_80143F54((u32*)&keepB[nB].field_0, (u32*)&self->mEntries[idx].field_0);
         nB++;
     }
 
-    for (int k = 0; k < 8; k++) {
+    // Blank the whole table through a per-slot zeroed temporary.
+    for (u8 k = 0; k < 8; k++) {
         CMenuUpdate_8014274C clr;
-        clr.__ct__8014274C();
-        func_80143F54((u32*)&obj->mEntries[k].field_0, (u32*)&clr.field_0);
+        __ct__8014274C(&clr);
+        func_80143F54((u32*)&self->mEntries[k].field_0, (u32*)&clr.field_0);
     }
 
-    for (int j = 0; j < nA; j++)
-        func_80143F54((u32*)&obj->mEntries[j].field_0, (u32*)&keepA[j].field_0);
+    // Re-file: kept tail, the new entry, then the saved prefix run. The
+    // write index reuses nA itself (retail keeps both in one register).
+    u8 j;
+    for (j = 0; j < nA; j++) {
+        func_80143F54((u32*)&self->mEntries[j].field_0, (u32*)&keepA[j].field_0);
+    }
 
-    CMenuUpdate_8014274C neu;
-    func_80143F54((u32*)&obj->mEntries[nA].field_0,
-                  (u32*)init_8014274C(&neu, r4, r5, r6, r7));
+    CMenuUpdate_8014274C neu; // sp+0x8
+    func_80143F54((u32*)&self->mEntries[nA].field_0,
+                  (u32*)init_8014274C(&neu, sType, sArg1, sArg2, sArg3));
     nA++;
 
-    for (int j = 0; j < nB; j++)
-        func_80143F54((u32*)&obj->mEntries[nA + j].field_0, (u32*)&keepB[j].field_0);
+    for (j = 0; j < nB; j++) {
+        func_80143F54((u32*)&self->mEntries[nA + j].field_0, (u32*)&keepB[j].field_0);
+    }
 }
 
 // func_80143F78 - pause/transition guard; decrements a fade timer in 0x12C
@@ -764,6 +819,7 @@ extern "C" __declspec(noinline) void func_801440A8(void* self) {
         obj->mMode = 2;
         setFieldFloat10(obj->mActiveAnim, lbl_eu_806673A0);
 
+        u8 iA, nAct, nRest, iB, k, w, j;
         CMenuUpdate_8014274C act[8]; // sp+0xa8
         __ct__8014274C(&act[0]);
         __ct__8014274C(&act[1]);
@@ -773,7 +829,6 @@ extern "C" __declspec(noinline) void func_801440A8(void* self) {
         __ct__8014274C(&act[5]);
         __ct__8014274C(&act[6]);
         __ct__8014274C(&act[7]);
-        u8 iA, nAct;
         nAct = 0;
         iA = 0;
         for (; iA < 8; iA++) {
@@ -791,7 +846,6 @@ extern "C" __declspec(noinline) void func_801440A8(void* self) {
         __ct__8014274C(&rest[5]);
         __ct__8014274C(&rest[6]);
         __ct__8014274C(&rest[7]);
-        u8 nRest, iB;
         iB = nAct;
         nRest = 0;
         while (iB < 8) {
@@ -800,24 +854,20 @@ extern "C" __declspec(noinline) void func_801440A8(void* self) {
             iB++;
         }
 
-        u8 k;
         for (k = 0; k < 8; k++) {
             CMenuUpdate_8014274C clr;
             func_80143F54((u32*)&obj->mEntries[k].field_0,
                           (u32*)__ct__8014274C(&clr));
         }
 
-        u8 w, j;
         w = 0;
         for (j = 0; j < nAct; j++) {
             func_80143F54((u32*)&obj->mEntries[w++].field_0, (u32*)&act[j].field_0);
         }
         // Re-file the saved header block right after the active entries.
         func_80143F54((u32*)&obj->mEntries[w++].field_0, (u32*)&obj->mState);
-        j = 0;
-        while (j < nRest) {
+        for (j = 0; j < nRest; j++) {
             func_80143F54((u32*)&obj->mEntries[w++].field_0, (u32*)&rest[j].field_0);
-            j++;
         }
 
         CMenuUpdate_8014274C clrState;

@@ -375,63 +375,66 @@ int SFTIM_GetNextItime(void* self, int time) {
 }
 
 void SFTIM_VbIn(void) {
-    u8* wk = (u8*)lbl_eu_80606E38;
-    u8* cb = (u8*)lbl_eu_80568EA0;
-    u32** handles = (u32**)(wk + 0x1FC);
+    u8* wk;
+    s32 delta;
+    u32** ppHn;
     s32 i;
-    s32 timeVal, timeUnit;
+    void* h;
+    u32 csB;
+    u32 csA;
+    u8* cb;
 
+    wk = (u8*)lbl_eu_80606E38;
+    ppHn = (u32**)(wk + 0x1FC);
     *(u32*)(wk + 0x19C) = *(u32*)(wk + 0x19C) + 1;
+    cb = (u8*)lbl_eu_80568EA0;
 
-    for (i = 0; i < 8; i++) {
-        void* h = handles[i];
+    for (i = 0; i < 8; i++, ppHn++) {
+        h = (void*)*ppHn;
         if (SFLIB_CheckHn(h) == -1) {
             continue;
         }
 
         {
             u8* hp = (u8*)h;
-            s32 speedNum = *(s32*)(hp + 0x1048);
-            s32 speedMul = *(s32*)(wk + 0x1AC);
-            s32 speedDen = *(s32*)(hp + 0x104C);
-            s32 delta = (speedNum * speedMul) / speedDen;
-            s32 state = *(s32*)(hp + 0x54);
-            s32 active;
-
-            if (state != 4) {
-                active = 0;
-            } else if (*(s32*)(hp + 0x5C) != 0) {
-                active = 0;
-            } else {
-                active = (*(s32*)(hp + 0x980) == 0);
-            }
-
-            if (active) {
-                *(s32*)(hp + 0x1044) += delta;
-                if (*(s32*)(hp + 0x1384) != 0) {
-                    char cs[8];
-                    SFLIB_LockCs(cs);
-                    if (*(s32*)(hp + 0x138C) != -1) {
-                        s32 idx = *(s32*)(hp + 0x138C) + 1;
-                        *(s32*)(hp + 0x138C) = idx;
-                        if (idx >= *(s32*)(hp + 0x1384)) {
-                            *(s32*)(hp + 0x138C) = 0;
-                            *(s32*)(hp + 0x1388) = 0;
-                        }
-                    }
-                    SFLIB_UnlockCs(cs);
-                }
-            }
+            /* Delta advances even while paused/idle; gated below by state. */
+            delta = (*(s32*)(hp + 0x1048) * *(s32*)(wk + 0x1AC)) / *(s32*)(hp + 0x104C);
 
             {
-                s32 audioActive;
-                if (*(s32*)(hp + 0x106C) == -1) {
-                    audioActive = 0;
+                s32 active;
+                if (*(s32*)(hp + 0x54) != 4) {
+                    active = 0;
+                } else if (*(s32*)(hp + 0x5C) != 0) {
+                    active = 0;
                 } else {
-                    audioActive = (*(s32*)(hp + 0x58) == 4);
+                    active = (*(s32*)(hp + 0x980) == 0);
                 }
-                if (audioActive) {
-                    *(s32*)(hp + 0x106C) += delta;
+
+                if (active) {
+                    *(s32*)(hp + 0x1044) += delta;
+                    if (*(s32*)(hp + 0x1384) != 0) {
+                        SFLIB_LockCs(&csA);
+                        if (*(s32*)(hp + 0x138C) != -1) {
+                            *(s32*)(hp + 0x138C) += 1;
+                            if (*(s32*)(hp + 0x138C) >= *(s32*)(hp + 0x1384)) {
+                                /* Chained store keeps a zero temp live, as in retail */
+                            *(s32*)(hp + 0x1388) = *(s32*)(hp + 0x138C) = 0;
+                            }
+                        }
+                        SFLIB_UnlockCs(&csA);
+                    }
+                }
+
+                {
+                    s32 audioActive;
+                    if (*(s32*)(hp + 0x106C) == -1) {
+                        audioActive = 0;
+                    } else {
+                        audioActive = (*(s32*)(hp + 0x58) == 4);
+                    }
+                    if (audioActive) {
+                        *(s32*)(hp + 0x106C) += delta;
+                    }
                 }
             }
         }
@@ -441,19 +444,21 @@ void SFTIM_VbIn(void) {
         }
 
         {
+            /* Out params for the per-handle time fetch */
+            s32 timeVal;
+            s32 timeUnit;
             u8* hp = (u8*)h;
-            char cs[8];
             s32 mode;
-            Tc2TimeFn fn;
+            s32 (*getTimeFn)(void*, s32*, s32*);
 
-            SFLIB_LockCs(cs);
+            SFLIB_LockCs(&csB);
             mode = SFSET_GetCond(h, 0x0F);
-            fn = *(Tc2TimeFn*)(hp + 0xD98 + mode * 4);
-            if (fn == NULL) {
-                fn = (Tc2TimeFn)sftim_GetTimeNone;
+            getTimeFn = *(s32 (**)(void*, s32*, s32*))(hp + 0xD98 + mode * 4);
+            if (getTimeFn == NULL) {
+                getTimeFn = sftim_GetTimeNone;
             }
-            fn((s32)h, &timeVal, &timeUnit, NULL, 0);
-            SFLIB_UnlockCs(cs);
+            getTimeFn(h, &timeVal, &timeUnit);
+            SFLIB_UnlockCs(&csB);
 
             if (*(s32*)(hp + 0x1028) != timeVal || *(s32*)(hp + 0x102C) != timeUnit) {
                 if (SFSET_GetCond(h, 0x47) == 1) {
@@ -465,12 +470,14 @@ void SFTIM_VbIn(void) {
                 *(s32*)(hp + 0x102C) = timeUnit;
 
                 if (lbl_eu_80606E34 != NULL) {
-                    u32* fnTbl;
                     *(void**)(cb + 0x0C) = h;
                     *(void**)(cb + 0x18) = &timeVal;
                     *(void**)(cb + 0x24) = &timeUnit;
-                    fnTbl = *(u32**)lbl_eu_80606E34;
-                    ((void (*)(void*, void*))fnTbl[9])(lbl_eu_80606E34, cb + 4);
+                    {
+                        /* Virtual dispatch: obj->vtable[9](obj, &cb.args) */
+                        u32* vtbl = *(u32**)lbl_eu_80606E34;
+                        ((void (*)(void*, void*))vtbl[9])(lbl_eu_80606E34, cb + 4);
+                    }
                 }
             }
             *(s32*)(hp + 0x50) = 1;
@@ -819,17 +826,29 @@ void SFTIM_Tc2Time(void* tcdata, s32* out1, s32* out2) {
 /* Timecode conversion helpers. Drop-frame variants add (min/10)*2 dropped
  * frames and use seconds-to-frames constants that account for the drop. */
 void sftim_Tc2TimeN(s32 tc, void* tcdata, s32* out1, s32* out2, s32 rate) {
-    u8* td = (u8*)tcdata;
-    s32 unit = 1000 / rate;
-    s32 min = *(s32*)(td + 0xC);
-    s32 hour = *(s32*)(td + 0x8);
-    s32 sec = *(s32*)(td + 0x10);
-    s32 frame = *(s32*)(td + 0x14);
-    s32 frame2 = *(s32*)(td + 0x18);
-    s32 fps = tc / rate;
-    s32 field = *(s16*)(td + 0x1E);
+    register s32 unit = 1000;
+    s32 fps;
+    s32 min;
+    s32 hour;
+    s32 sec;
+    s32 frame;
+    s32 frame2;
+    s16 field;
 
-    *out1 = (sec + min * 60 + hour * 3600) * fps + (frame + frame2) * unit + field * (unit / 2);
+    unit /= rate;
+    fps = tc / rate;
+    min = *(s32*)((u8*)tcdata + 0xC);
+    hour = *(s32*)((u8*)tcdata + 0x8);
+    sec = *(s32*)((u8*)tcdata + 0x10);
+    frame = *(s32*)((u8*)tcdata + 0x14);
+    frame2 = *(s32*)((u8*)tcdata + 0x18);
+
+    /* Division kept ahead of the frame sum so every field stays live at the
+     * divw, matching retail's callee-saved allocation of the quotient. */
+    s32 val;
+    val = fps * (sec + min * 60 + hour * 3600);
+    field = *(s16*)((u8*)tcdata + 0x1E);
+    *out1 = val + unit * (frame + frame2) + field * (unit / 2);
     *out2 = fps;
 }
 
@@ -891,51 +910,97 @@ void sftim_Tc2Time59N(s32 tc, void* tcdata, s32* out1, s32* out2, s32 rate) {
 }
 
 void sftim_Tc2Time23D(s32 tc, void* tcdata, s32* out1, s32* out2, s32 rate) {
-    u8* td = (u8*)tcdata;
-    s32 unit = 1000 / rate;
-    s32 min = *(s32*)(td + 0xC);
-    s32 drop = (min / 10) * 2;
-    s32 frame = *(s32*)(td + 0x14);
-    s32 frame2 = *(s32*)(td + 0x18);
-    s32 totalFrame = frame + frame2;
-    s32 hour = *(s32*)(td + 0x8);
-    s32 sec = *(s32*)(td + 0x10);
-    s32 field = *(s16*)(td + 0x1E);
-    s32 half = unit / 2;
-    s32 fpr = tc / rate;
+    s32 unit;
+    s32 min;
+    s32 drop;
+    s32 frame;
+    s32 frame2;
+    s32 totalFrame;
+    s32 hour;
+    s32 sec;
+    s32 field;
 
-    *out1 = (drop + hour * 86292 + sec * 24 + min * 1438 + totalFrame) * unit + field * half;
-    *out2 = fpr;
+    unit = 1000;
+    unit /= rate;
+    min = *(s32*)((u8*)tcdata + 0xC);
+    drop = min / 10;
+    frame = *(s32*)((u8*)tcdata + 0x14);
+    frame2 = *(s32*)((u8*)tcdata + 0x18);
+    totalFrame = frame + frame2;
+    hour = *(s32*)((u8*)tcdata + 0x8);
+    sec = *(s32*)((u8*)tcdata + 0x10);
+    field = *(s16*)((u8*)tcdata + 0x1E);
+    /* 23.976fps drop-frame: each minute drops 2 ticks, compensating
+     * the 1000/1001 ratio; per-unit constants absorb the same skew. */
+    *out1 = (drop * 2 + hour * 86292 + (sec * 24 + min * 1438) + totalFrame) * unit
+        + field * (unit / 2);
+    *out2 = tc / rate;
 }
 
-void sftim_Tc2Time29D(s32 tc, void* tcdata, s32* out1, s32* out2, s32 rate) {
-    u8* td = (u8*)tcdata;
-    s32 unit = 1000 / rate;
-    s32 min = *(s32*)(td + 0xC);
-    s32 frame = *(s32*)(td + 0x14);
-    s32 frame2 = *(s32*)(td + 0x18);
-    s32 hour = *(s32*)(td + 0x8);
-    s32 sec = *(s32*)(td + 0x10);
-    s32 field = *(s16*)(td + 0x1E);
+/* SRTV timecode packet laid out as the decoder fills it. */
+typedef struct SftimTimecode {
+    u8 pad_0x00[0x08];
+    s32 hour;   /* 0x08 */
+    s32 min;    /* 0x0C */
+    s32 sec;    /* 0x10 */
+    s32 frame;  /* 0x14 */
+    s32 frame2; /* 0x18 */
+    u8 pad_0x1C[0x02];
+    s16 field;  /* 0x1E */
+} SftimTimecode;
 
-    *out1 = ((min / 10) * 2 + hour * 107892 + sec * 30 + min * 1798 + (frame + frame2)) * unit
-        + field * (unit / 2);
+void sftim_Tc2Time29D(s32 tc, void* tcdata, s32* out1, s32* out2, s32 rate) {
+    SftimTimecode* td = (SftimTimecode*)tcdata;
+    register s32 unit = 1000;
+    s32 min;
+    s32 sec;
+    s32 frame;
+    s32 frame2;
+    s32 hour;
+    s32 drop;
+    s32 half;
+    s32 totalFrame;
+    s16 field;
+
+    /* Drop-frame: every 10th minute drops 2 ticks (1798 vs 1800 per minute,
+     * 107892 vs 108000 per hour); half-unit compensates the field tick. */
+    unit /= rate;
+    min = td->min;
+    sec = td->sec;
+    frame = td->frame;
+    frame2 = td->frame2;
+    hour = td->hour;
+    totalFrame = frame + frame2;
+    drop = min / 10;
+    field = td->field;
+
+    s32 time = (drop * 2 + hour * 107892 + sec * 30 + min * 1798 + totalFrame) * unit;
+    time += field * (unit / 2);
+    *out1 = time;
     *out2 = tc / rate;
 }
 
 void sftim_Tc2Time59D(s32 tc, void* tcdata, s32* out1, s32* out2, s32 rate) {
-    u8* td = (u8*)tcdata;
-    s32 unit = 1000 / rate;
-    s32 min = *(s32*)(td + 0xC);
-    s32 frame = *(s32*)(td + 0x14);
-    s32 frame2 = *(s32*)(td + 0x18);
-    s32 hour = *(s32*)(td + 0x8);
-    s32 sec = *(s32*)(td + 0x10);
-    s32 field = *(s16*)(td + 0x1E);
+    register s32 unit = 1000;
+    SftimTimecode* td = (SftimTimecode*)tcdata;
+    s32 fps;
+    s32 min;
+    s32 drop;
+    s32 frame;
+    s32 totalFrame;
 
-    *out1 = ((min / 10) * 2 + hour * 215892 + sec * 60 + min * 3598 + (frame + frame2)) * unit
-        + field * (unit / 2);
-    *out2 = tc / rate;
+    unit /= rate;
+    fps = tc / rate;
+    min = td->min;
+    drop = min / 10;
+    frame = td->frame;
+    totalFrame = frame + td->frame2;
+
+    /* Drop-frame TC -> total ms: every 10th minute drops 2 ticks (3598 vs 3600
+     * per minute, 215892 vs 216000 per hour); half-unit covers the field tick. */
+    *out1 = (totalFrame + ((drop * 2 + td->hour * 215892) + (td->sec * 60 + min * 3598))) * unit
+        + td->field * (unit / 2);
+    *out2 = fps;
 }
 
 void SFTIM_Pause(void* self, s32 mode) {
@@ -1226,6 +1291,13 @@ s32 SFTIM_ExecCyclicFrameOutput(void* self) {
 }
 
 void SFD_CalcCycleFromFps(s32 fps, s32* out1, s32* out2) {
+    /* Ratio of frame duration to vsync interval picks the playback cycle.
+     * NOTE: retail loads every constant (thresholds 0.4/0.75/../3.5, the
+     * 0.5 rounding bias, and the 0x4330000080000000 s32->f32 conversion
+     * magic) from the shared rodata blob lbl_eu_8051CBF8+0x70..0x98;
+     * MWCC (GC/3.0a5.2) pools them TU-locally and the manual-bias reshape
+     * (MWCC_PATTERNS 7i) schedules worse under this toolchain, so the
+     * literal form below is the closest reachable shape. */
     f32 vsyncFreq = (f32)*(s32*)(lbl_eu_80606E38 + 0x1A4);
     f32 ratio = vsyncFreq / (f32)fps;
 

@@ -238,7 +238,7 @@ extern "C" void func_80142C80();
 extern "C" void func_80142CA0(void* self, void* r4, void* r5);
 extern "C" void* noop_80142D5C(void* self);
 extern "C" void func_80142D60(void* self);
-extern "C" void func_80143ADC(void* self, u32 r4, u32 r5, u32 r6, u32 r7);
+extern "C" void func_80143ADC(CMenuUpdate* self, int r4, u32 r5, u32 r6, u32 r7);
 extern "C" int func_80143F78(void* self);
 extern "C" void func_80144070(void* self);
 extern "C" void func_801440A8(void* self);

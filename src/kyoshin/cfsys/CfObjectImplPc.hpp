@@ -959,23 +959,26 @@ void func_800CAA44(void* self);
 void func_800CEE28(void* self, u32 param);
 void func_800CEBE0(void* self);
 int func_80148778(void* obj, int id);
-unsigned int func_800822F4__Q22cf13CfGameManagerFv(void);
+extern "C" u32 func_800822F4__Q22cf13CfGameManagerFv(void); // canonical u32 form
 void func_800CA948(u8* self);
 void func_8015BB3C(u8* a, u8* b, u8* c);
 void func_802A0B8C(u8* self, u8* owner);
 u32 func_80061FE8();
 char* func_800BEDC4(u8* move, int index);
 char* func_800BED80(u8* move, int index);
-u8* func_8016FE34(u8* src);
-u8* func_800F6EAC(u8* list, u32 idx);
-u8* func_800F6ED0(u8* list, u32 value);
-u8* func_800F6E08(u8* list);
-void func_80043D90(u8* holder);
-u8* func_80043F18(u8* holder);
-void func_800F4A98(u8* list, u32 type, u32 filter);
-void __dt__80043E88(u8* holder, int flag);
+void* func_8016FE34(void* src); // canonical void* form (CAIAction/CtrlPc owners)
+// Enum-list helper family: single canonical extern "C" void* forms
+// (CVision.hpp owner) so TUs including several of these headers see one
+// declaration per retail name (MWCC 10197). Opaque pointers - ABI unchanged.
+void* func_800F6EAC(void* list, u32 idx); // canonical void* return (CVision.hpp owner)
+void func_800F6ED0(void* list, void* value);
+void* func_800F6E08(void* list);
+void func_80043D90(void* holder);
+void* func_80043F18(void* holder);
+void func_800F4A98(void* list, u32 type, u32 filter);
+void __dt__80043E88(void* holder, int flag);
 void func_800AA318(u32 packed, u32* out0, u32* out1, u32* out2, u32* out3);
-void func_800CB9AC(u8* self, u32 param);
+void func_800CB9AC(void* self, u32 param); // canonical void* form (shared with CfObjectImplMove.hpp)
 u8* __ct__cf_CPcEffect07(u8* obj, u8* actor);
 int func_80145F78(int id);
 int func_80145C00(int val);
@@ -984,7 +987,7 @@ bool func_80260264(void* obj, s32 idx, s32* out);
 void func_800BF29C(void* sub, u32 a, f32 b, u32 c, f32 d, u32 e);
 void func_800BF2B0(void* sub, u32 a, u32 b);
 void func_800BE12C(void* sub, u32 a, u32 b, s32 c, u32 d);
-void func_8004CEF8(void* obj, s32 val);
+void func_8004CEF8(void* obj, u32 val); // canonical u32 form (CActParamAnimGame.hpp/ImplMove.hpp)
 void func_802A300C(void* obj);
 void func_800EC8FC(void* mgr, void* obj, void* evtCopy, s32 flag);
 void func_800CB454(cf::CfObjectImplPc* self, CfObjectImplPcEvt* evt);
@@ -992,7 +995,7 @@ void func_8018C820(void* obj, int value);
 void func_8014B2DC(void* blk);
 void func_801B248C(int value);
 void func_800CAB30(cf::CfObjectImplPc* self, CfObjectImplPcEvt* evt);
-void func_800F3970(void* mgr, void* obj, void* obj2, s32 a, s32 b);
+// (func_800F3970: single shared import lives on CBattleManagerApi.hpp.)
 void func_800CD5DC(void* self, u32 a, u32 b, u32 c, u32 d, u32 e);
 int func_8004B9B8(void* obj);
 void func_8004B9D4(void* obj, u32 a, u32 b, void* c, u32 d);
@@ -1053,7 +1056,7 @@ extern "C" void* func_800FE68C(void);
 extern "C" void func_800EC918(void* mgr, void* obj, void* obj2, void* arg,
                                u32 flag);
 extern "C" int func_8026178C(void* obj, u32 idx);
-extern "C" int func_8025FB10(void* obj, u32 idx);
+extern "C" int func_8025FB10(void* obj, u32 idx); // canonical int form (owner decl: chain/CChainActorList.hpp)
 extern "C" void func_800CAB2C(void* self);
 extern "C" void func_8014AC38(void* blk, void* rec);
 extern "C" void func_800F38E0(void* mgr, void* obj, s32 id);

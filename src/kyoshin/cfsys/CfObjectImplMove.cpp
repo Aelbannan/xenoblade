@@ -15,6 +15,11 @@
 #include "monolib/math/CVec3.hpp"
 #include "kyoshin/cf/CfGameManagerData.hpp"  // H3 label-owner decl (lbl_eu_80663E14; lbl_eu_80663E24)
 
+// Variant func_804BE398 ABI (r7 ptr + f1 float) used by func_800CF064 /
+// func_800CF810 ground probes; retail marshals args that way there (see
+// those sites below). The header decl stays canonical.
+typedef int (*BE398PtrF32)(void*, u32, u32, u32, void*, f32);
+
 void func_800CEE80(CfObjectImplMoveObj* self);
 void func_800CF064(CfObjectImplMoveObj* self, CfMoveContact* param);
 void func_800CF810(CfObjectImplMoveObj* self, CfMoveContact* param);
@@ -94,11 +99,11 @@ void func_800CAB30(CfObjectImplMoveObj* self, CfMoveEvtParam* param) {
     u16 id = param->field_C;
     func_800CB21C(self, id);
     if (id == 0x111) {
-        func_801BFC38__Q22cf10CfSoundManFUlUlUlUlf(nullptr, 0x1c8, 0, 0,
+        func_801BFC38__Q22cf10CfSoundManFUlUlUlUlf(0, 0x1c8, 0, 0,
             lbl_eu_80666C64);
     }
     if (id == 0x112) {
-        func_801BFC38__Q22cf10CfSoundManFUlUlUlUlf(nullptr, 0x1c7, 0, 0,
+        func_801BFC38__Q22cf10CfSoundManFUlUlUlUlf(0, 0x1c7, 0, 0,
             lbl_eu_80666C64);
     }
     switch (id) {
@@ -124,7 +129,7 @@ void func_800CAB30(CfObjectImplMoveObj* self, CfMoveEvtParam* param) {
         }
         break;
     case 0xf:
-        func_801BFC38__Q22cf10CfSoundManFUlUlUlUlf(nullptr, 0x194, 0, 0,
+        func_801BFC38__Q22cf10CfSoundManFUlUlUlUlf(0, 0x194, 0, 0,
             lbl_eu_80666C64);
         // Reset driver state and re-init the move buffer (retail reloads
         // self->field_0x18 for each of these stores).
@@ -229,7 +234,7 @@ void func_800CAB30(CfObjectImplMoveObj* self, CfMoveEvtParam* param) {
     }
     // Presentation tail: forward the param unless both gate bits are set.
     if (param->field_2E == 0 || (param->field_30 & 2) == 0) {
-        func_801A891C(self->field_0x18, param);
+        func_801A891C(self->field_0x18, (int)param);
     }
 }
 
@@ -407,7 +412,7 @@ void func_800CB454(CfObjectImplMoveObj* self, CfMoveEvtParam* param) {
     }
     // Presentation tail: forward the param unless both gate bits are set.
     if (param->field_2E == 0 || (param->field_30 & 2) != 0) {
-        func_801A891C(self->field_0x18, param);
+        func_801A891C(self->field_0x18, (int)param);
     }
 }
 
@@ -419,7 +424,8 @@ void func_800CB94C(CfObjectImplMoveObj* self, u32 id) {
     }
 }
 
-void func_800CB9AC(CfObjectImplMoveObj* self, u32 id) {
+void func_800CB9AC(void* selfV, u32 id) {
+    CfObjectImplMoveObj* self = (CfObjectImplMoveObj*)selfV;
     // Presentation/event gate: when the 0x04000000 event flag is set, skip all
     // move dispatch. Otherwise map the incoming id to an embedded sub-object
     // command (vtable 0x20c). Case order is retail's body emission order.
@@ -518,8 +524,8 @@ void func_800CBBD8(CfObjectImplMoveObj* self) {
     func_80043F18(&holder);
     func_800F4A98(func_80043F18(&holder), 0x20, 0x800);
     int handle = self->vf48();
-    func_800F6ED0(func_80043F18(&holder), handle);
-    if (func_80043F18(&holder)->field_620 != 0) {
+    func_800F6ED0(func_80043F18(&holder), (void*)handle);
+    if (((CfMoveEnumList*)func_80043F18(&holder))->field_620 != 0) {
         // Effects exist: clear the driver state and re-register the sub-object.
         self->field_0x18->mst.field_214 = 0;
         self->field_0x18->mst.field_210 = 0;
@@ -540,7 +546,7 @@ void func_800CBBD8(CfObjectImplMoveObj* self) {
         } else {
             func_80174B4C(act, 5);
             act->f138();
-            int count = func_80043F18(&holder)->field_620;
+            int count = ((CfMoveEnumList*)func_80043F18(&holder))->field_620;
             for (int i = 0; i < count; i++) {
                 func_8016FE34(
                     func_800F6EAC(func_80043F18(&holder), i));
@@ -748,7 +754,7 @@ void func_800CC964(CfObjectImplMoveObj* self, u32 id, CfMoveReqParam* param) {
         }
         u32 handle = ((CfObjectImplMoveSubObj*)self->mSubObj)->field_0x74;
         f32 vol = ((f32*)func_8049603C((CScn*)lbl_eu_80663E14))[3];
-        func_801BFE20(0, snd, (void*)handle,
+        func_801BFE20(0, snd, (u8*)(uintptr_t)handle,
             lbl_eu_80666C64 - vol, lbl_eu_80666C98);
         break;
     }
@@ -1416,11 +1422,11 @@ void func_800CE544(CfObjectImplMoveObj* self) {
     func_80043D90(&holder);
     func_800F4A98(func_80043F18(&holder), 0x20, 0);
     u32 handle = self->vf48();
-    func_800F6ED0(func_80043F18(&holder), handle);
+    func_800F6ED0(func_80043F18(&holder), (void*)handle);
     // The count is re-read through func_80043F18 on every use (retail makes
     // a fresh call each time).
-    if (func_80043F18(&holder)->field_620 != 0) {
-        for (u32 i = 0; i < func_80043F18(&holder)->field_620; i++) {
+    if (((CfMoveEnumList*)func_80043F18(&holder))->field_620 != 0) {
+        for (u32 i = 0; i < ((CfMoveEnumList*)func_80043F18(&holder))->field_620; i++) {
             void* entry =
                 func_8016FE34(func_800F6EAC(func_80043F18(&holder), i));
             self->field_0x18->vf2C4(entry, lbl_eu_80666C60, lbl_eu_80666C60,
@@ -1711,7 +1717,7 @@ void func_800CEE80(CfObjectImplMoveObj* self) {
     func_800ACC64(mgr, epos);
     if (flag == 0) {
         f32 vol = ((f32*)func_8049603C((CScn*)lbl_eu_80663E14))[3];
-        func_801BFDE8(0, sndId, &vec, lbl_eu_80666C64 - vol,
+        func_801BFDE8(0, sndId, (u32)(uintptr_t)&vec, lbl_eu_80666C64 - vol,
             lbl_eu_80666C98);
     }
     self->field_0x24 = lbl_eu_80666CA4;
@@ -1756,7 +1762,9 @@ void func_800CF064(CfObjectImplMoveObj* self, CfMoveContact* param) {
     nw4r::math::VEC3 lifted;
     nw4r::math::VEC3Add(&lifted, (const nw4r::math::VEC3*)&world, &lift);
     nw4r::math::VEC3 chk = lifted;
-    if (func_804BE398(&chk, 0, 0, 0, &lifted, lbl_eu_80666CAC) == 0) {
+    // Variant ABI (r7 ptr + f1): cast keeps the retail arg marshaling while
+    // the header decl stays canonical (CfCam BE398Fn convention).
+    if (((BE398PtrF32)func_804BE398)(&chk, 0, 0, 0, &lifted, lbl_eu_80666CAC) == 0) {
         return;
     }
     func_804BE4B4(&world, 0);
@@ -1794,7 +1802,7 @@ void func_800CF064(CfObjectImplMoveObj* self, CfMoveContact* param) {
         }
         f32 vol = ((f32*)func_8049603C((CScn*)lbl_eu_80663E14))[3];
         u32 handle = self->mSubObj->field_0x74;
-        func_801BFE20(0, 0xce, (void*)(uintptr_t)handle,
+        func_801BFE20(0, 0xce, (u8*)(uintptr_t)handle,
             lbl_eu_80666CA8 * (lbl_eu_80666C64 - vol), lbl_eu_80666C98);
         return;
     }
@@ -1960,7 +1968,7 @@ void func_800CF064(CfObjectImplMoveObj* self, CfMoveContact* param) {
     if ((int)sndId >= 0 && lbl_eu_80663EF0 == 0) {
         f32 vol = ((f32*)func_8049603C((CScn*)lbl_eu_80663E14))[3];
         u32 handle = self->mSubObj->field_0x74;
-        func_801BFE20(0, sndId, (void*)(uintptr_t)handle,
+        func_801BFE20(0, sndId, (u8*)(uintptr_t)handle,
             lbl_eu_80666CA8 * (lbl_eu_80666C64 - vol), lbl_eu_80666C98);
     }
 }
@@ -2007,7 +2015,7 @@ void func_800CF810(CfObjectImplMoveObj* self, CfMoveContact* param) {
     probe.x = wpos.x;
     probe.y = wpos.y;
     probe.z = wpos.z;
-    if (func_804BE398(&probe, 0, 0, 0, &wpos, lbl_eu_80666CCC) == 0)
+    if (((BE398PtrF32)func_804BE398)(&probe, 0, 0, 0, &wpos, lbl_eu_80666CCC) == 0)
         return;
     func_804BE4B4(&world, 0);
     CfMoveVec3f nrm;
@@ -2192,7 +2200,7 @@ void func_800CF810(CfObjectImplMoveObj* self, CfMoveContact* param) {
         return;
     u32 handle = self->mSubObj->field_0x74;
     f32 vol = ((f32*)func_8049603C((CScn*)lbl_eu_80663E14))[3];
-    func_801BFE20(0, sndId, (void*)(uintptr_t)handle,
+    func_801BFE20(0, sndId, (u8*)(uintptr_t)handle,
                   lbl_eu_80666CA8 * (lbl_eu_80666C64 - vol),
                   lbl_eu_80666C98);
 }

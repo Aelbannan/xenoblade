@@ -29,7 +29,6 @@ extern "C" void func_80206BD4(CfMapMineManager* self);  // retail unmangled (def
 extern "C" void func_800B44A0(UnkClass_805764CC* self, void* arg); // retail unmangled
 extern void* func_800B61FFC();
 extern "C" void func_800B137C(void* self, unsigned long handle, unsigned long count);
-extern void func_800B8524(void* singleton, void* self, void* other);
 
 void func_80081258(void* self);
 void func_80081264(void* self, cf::CfObject* obj);
@@ -125,7 +124,7 @@ struct CfReslistLayout {
     bool field_0x1C;         // 0x1C
 };
 
-void __ct__reslist_cf_IFactoryEvent(void* self) {
+extern "C" void __ct__reslist_cf_IFactoryEvent(void* self) {
     extern void* lbl_eu_805290B8[];
     extern void* lbl_eu_805290A0[];
     CfReslistLayout* obj = (CfReslistLayout*)self;
@@ -145,18 +144,18 @@ void __ct__reslist_cf_IFactoryEvent(void* self) {
 // addressing instead of SDA21. The base vtable store is volatile so MWCC's
 // dead-store elimination keeps it (the derived install provably overwrites
 // +0, but retail emits both stores).
-void __ct__reslist_cf_CfObject(void* self) {
+extern "C" void __ct__reslist_cf_CfObject(void* self) {
     extern void* lbl_eu_8052585C[];
     extern void* lbl_eu_805290E8[];
-    CfReslistLayout* obj = (CfReslistLayout*)self;
+    CfReslistLayout* o = (CfReslistLayout*)self;
     *(volatile u32*)((u8*)self) = (u32)lbl_eu_8052585C;
-    obj->mList = 0;
-    obj->mCapacity = 0;
-    obj->field_0x1C = false;
-    obj->mStartNodePtr = &obj->mStartNode;
-    obj->mStartNodePtr->mNext = &obj->mStartNode;
-    obj->mStartNodePtr->mPrev = &obj->mStartNode;
-    obj->mVtable = (void*)lbl_eu_805290E8;
+    o->mList = 0;
+    o->mCapacity = 0;
+    o->field_0x1C = false;
+    o->mStartNodePtr = &o->mStartNode;
+    o->mStartNodePtr->mNext = &o->mStartNode;
+    o->mStartNodePtr->mPrev = &o->mStartNode;
+    o->mVtable = (void*)lbl_eu_805290E8;
 }
 // us-800b186c - func_800B0FA0
 #pragma push
@@ -225,6 +224,10 @@ void gvar_clearF24(){lbl_eu_80663F24 = 0;}
 void FactoryEvent4__Q22cf13IFactoryEventFv(){}
 void UnkClass_805764CC::set_u32_00(u32 val){*(u32*)((u8*)this + 0x0) = val;}
 void copy_int_ptr(int* dst, int* src){*dst = *src;}
+// us-800b2398 - func_800B1ACC: copy the second u32 of src into dst.
+extern "C" void func_800B1ACC(void* a, void* b) {
+    *(u32*)a = ((u32*)b)[1];
+}
 void init_182C(){}
 #pragma push
 #pragma auto_inline off
@@ -452,11 +455,14 @@ public:
 // us-800b7bfc - fetch the node list, run the teardown dtor, then
 // pass (list, handle, 0x14) to the binder helper. func_80061FFC is declared
 // via the TU-wide extern (see line 59 family).
+#pragma push
+#pragma auto_inline off
 extern "C" void func_800B72DC(void* self) {
     reslist<cf::TboxInfo>* obj = (reslist<cf::TboxInfo>*)func_800B6CA0();
     __dt__800B183C(obj);
     func_800B137C(obj, func_80061FFC(), 0x14);
 }
+#pragma pop
 extern "C" void func_800B4278(void* object, u32 mask);
 
 extern "C" void func_800B1AF4(void* self) {
@@ -500,7 +506,10 @@ extern "C" void func_800B1BBC(void* self) {
 }
 #pragma pop
 // func_800B1C00: bit 6 of the global flag word (retail: lwz r0,lbl_eu_80663EE0; extrwi r3,r0,1,25 = (x>>6)&1)
+#pragma push
+#pragma auto_inline off
 extern "C" DECOMP_DONT_INLINE u32 func_800B1C00(){ extern u32 lbl_eu_80663EE0; return (lbl_eu_80663EE0 >> 6) & 1; }
+#pragma pop
 void init_1C0C(){}
 void init_1C24(){}
 #pragma push
@@ -526,7 +535,10 @@ void func_800B1C78(UnkClass_805764CC* self) {
 void init_1CDC(){}
 void init_1E18(){}
 // field_0xCA0; if nonzero tail-call with (field, r4-passthrough) (retail lwz;cmpwi;beqlr;b)
+#pragma push
+#pragma auto_inline off
 extern "C" void func_800B1E18(UnkClass_805764CC* self, void* obj){if (self->field_0xCA0){func_8019397C(self->field_0xCA0, obj);}}
+#pragma pop
 void init_1E2C(){}
 
 // us-800b26f8 - reset the singleton's FixStr scratch buffer, then
@@ -906,6 +918,8 @@ extern "C" void func_800B42E8(void* object, u32 value) {
 // find entries where data->field_0x94 == 2, and if name is NULL or
 // strcmp(name, data->field_0x120) == 0, call func_800B3A88(self, data).
 // The list has sentinel at *(self+0xBCC), nodes are [0]=next, [8]=data_ptr.
+#pragma push
+#pragma auto_inline off
 extern "C" DECOMP_DONT_INLINE void func_800B4368(UnkClass_805764CC* self, const char* name) {
     u8* cur = *(u8**)(*(u8**)((u8*)self + 0xBCC));
 
@@ -920,7 +934,7 @@ extern "C" DECOMP_DONT_INLINE void func_800B4368(UnkClass_805764CC* self, const 
         }
     }
 }
-#pragma inline
+#pragma pop
 // List-walk search: start at *headPtr and skip nodes until the cursor equals
 // *valA or its +8 link equals *valB, advancing *headPtr past each skipped
 // node; store the found node to *out (retail func_800B4554).
@@ -1131,6 +1145,8 @@ void init_66BC(){}
 // us-800b70c8 - Return 1 if byte at offset 2 is in [1, 24].
 // (retail codegen: lbz; li r3,0; cmplwi r0,1; bltlr; cmplwi r0,24; bgtlr; li r3,1; blr -
 //  matches under GC/3.0a5.2; Wii/1.1 folds the range into (u8)(val-1)<=23)
+#pragma push
+#pragma auto_inline off
 extern "C" DECOMP_DONT_INLINE int func_800B67CC(void* self) {
     u8 val = *(u8*)((u8*)self + 2);
     int result = 0;
@@ -1141,7 +1157,7 @@ extern "C" DECOMP_DONT_INLINE int func_800B67CC(void* self) {
     }
     return result;
 }
-#pragma inline
+#pragma pop
 void* UnkClass_805764CC::getPtr_1A8(){return (void*)((u8*)this + 0x1a8);}
 void UnkClass_805764CC::clear_700(){*(u32*)((u8*)this + 1792) = 0;}
 void init_6800(){}
@@ -1155,7 +1171,10 @@ void* sub_getReslist_B88(){return &UnkClass_805764CC::func_800B07E8()->field_0xB
 void* sub_getReslist_BE8(){return &UnkClass_805764CC::func_800B07E8()->field_0xBE8;}
 void* sub_getReslist_BC8(){return &UnkClass_805764CC::func_800B07E8()->field_0xBC8;}
 void* sub_getReslist_C08(){return &UnkClass_805764CC::func_800B07E8()->field_0xC08;}
-void* sub_getReslist_C48(){return &UnkClass_805764CC::func_800B07E8()->field_0xC48;}
+#pragma push
+#pragma auto_inline off
+extern "C" void* func_800B6CA0() { return (char*)func_800B07E8() + 0xC48; }
+#pragma pop
 extern "C" reslist<cf::CfObject*>* func_800B6CC4() {
     UnkClass_805764CC* obj = func_800B07E8();
     func_800B4400(obj);
@@ -1506,11 +1525,12 @@ extern "C" void func_800B66BC(UnkClass_805764CC* self, void* arg) {
     if (func_800B1C0C(2) == 0) {
         func_800B655C(self, (const F8C0ListSource*)((u8*)self + 0xb48));
     }
-    if (lbl_eu_80663ED8 > 0.0f) {
+    if (lbl_eu_80663ED8 > lbl_eu_806669D8) {
         float dt = func_80069EA0();
         lbl_eu_80663ED8 -= dt;
-        if (lbl_eu_80663ED8 < 0.0f) {
-            lbl_eu_80663ED8 = 0.0f;
+        float updated = lbl_eu_80663ED8;
+        if (updated < lbl_eu_806669D8) {
+            lbl_eu_80663ED8 = lbl_eu_806669D8;
         }
     }
     int result = 0;
@@ -1717,7 +1737,6 @@ void init_8D5C(){}
 void init_8FC4(){}
 void sub_dispatchInit_1(){func_800B07E8(); ((void(*)())init_dispatchTarget_1)();}
 void sub_dispatchInit_2(){func_800B07E8(); ((void(*)())init_dispatchTarget_2)();}
-extern "C" void func_800B8524(void* singleton, void* self, void* other);
 // us-800b9c18 - pass the singleton, self and arg to the pair helper.
 extern "C" void func_800B92FC(void* self, void* arg) {
     UnkClass_805764CC* obj = func_800B07E8();
@@ -1837,7 +1856,7 @@ void init_9A30(){}
 // addressing; the base vtable store is volatile so MWCC keeps both stores.
 // Struct-typed sentinel access reproduces the retail scheduling (same shape
 // as the CfObject/IFactoryEvent siblings, with the zeros at 0x2c/0x30/0x34).
-void __ct__reslist_cf_TboxInfo(void* self) {
+extern "C" void __ct__reslist_cf_TboxInfo(void* self) {
     extern void* lbl_eu_805290DC[];
     extern void* lbl_eu_805290C4[];
     // Retail scheduling: DC addr -> li r0 -> store DC -> node ptr -> zero 0x2c
@@ -2260,6 +2279,15 @@ extern "C" u32 func_800B2D28(u8* self) {
 #pragma auto_inline off
 extern "C" u32 func_800B31D4(u8* self) {
     return (*(u32*)(self + 0x64) >> 7) & 1;
+}
+#pragma pop
+// func_800B31BC: sibling predicate, bit 7 of field at +0x64.
+// The asm-scaffold copy carried a stale 0x90 reset body; retail is this 3-op
+// bit test (called out-of-line from func_800B4120 / func_800B2ED0).
+#pragma push
+#pragma auto_inline off
+extern "C" int func_800B31BC(void* self) {
+    return (int)((*(u32*)((u8*)self + 0x64) >> 8) & 1);
 }
 #pragma pop
 // us-800b4630 - return bit 31 of field at +0x64
@@ -2794,7 +2822,7 @@ void func_800B946C(void* arg) {
 }
 // us-800b9dbc - func_800B94A0
 // Fetch the singleton and forward (singleton, name) to func_800B4368.
-void func_800B94A0(const char* name) {
+extern "C" void func_800B94A0(const char* name) {
     func_800B4368(func_800B07E8(), name);
 }
 // us-800b9e64 - func_800B9548

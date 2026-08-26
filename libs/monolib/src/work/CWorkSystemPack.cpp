@@ -16,10 +16,7 @@
 // ---------------------------------------------------------------------------
 class CPackItem {
 public:
-    // The 3rd param carries the CRI partition id (stored to field_0x68; -1 =
-    // none). Retail callers pass it even though the retail symbol mangles as
-    // the 2-param __ct__9CPackItemFPCci (defaulted arg, so MWCC omits it).
-    CPackItem(const char* name, int partitionId, int arg3 = 0);
+    CPackItem(const char* name, int partitionId);
     virtual ~CPackItem();              // vtable+0
     virtual bool func_0x4();           // vtable+4
     virtual bool func_0x8(int flag);   // vtable+8
@@ -92,7 +89,8 @@ struct ArcItemList {
     bool unk1C;                   // 0x1C
 };
 
-struct CWorkSystemPack {
+class __declspec(novtable) CWorkSystemPack : public CWorkThread {
+public:
     CWorkSystemPack(const char* pName, CWorkThread* pParent);
     ~CWorkSystemPack();
     static bool func_804DDDF4(const char* pName, void* pOut, u32* pFileId);
@@ -103,10 +101,8 @@ struct CWorkSystemPack {
     bool wkStandbyLogout();
     void wkUpdate();
 
-    u32 m_vtable;           // 0x0 - CWorkSystemPack vtable (lbl_eu_8056FE58)
-    u8 pad_4[0x50 - 0x4];
-    int mType;              // 0x50 - CWorkThread::ThreadType
-    u8 pad_54[0x1C4 - 0x54];
+    // 0x0: vtable
+    // 0x0-0x1c4: CWorkThread (mType at 0x50)
     PackItemList mPackList; // 0x1C4 - reslist<CPackItem*>
     ArcItemList mArcList;   // 0x1E4 - reslist<CArcItem*>
 };
@@ -241,20 +237,27 @@ __attribute__((never_inline)) void func_804DDF00(const char* pPath) {
     ml::FixStr<0x100> str = pPath;
     func_eu_804520D0(str.mString);
 
-    CArcItem* newItem = (CArcItem*)mtl::MemManager::allocate(0x58, CWorkThreadSystem::getWorkMem());
-    if (newItem != 0) {
-        new (newItem) CArcItem(str.mString);
-    }
+    // Named pointer web parks &str in a callee-saved reg across the two
+    // calls (retail shape); the allocation result feeds placement-new
+    // directly so it never claims a saved register - MWCC's intrinsic
+    // placement-new null guard is the cmpwi/beq retail shows.
+    char* pStr = str.mString;
+    // Split webs: 'raw' dies inside the new-expression, 'newItem' is born
+    // from the placement-new result (the ctor's r3 return) so it survives
+    // to the list insert without claiming a saved register.
+    CArcItem* raw = (CArcItem*)mtl::MemManager::allocate(0x58, CWorkThreadSystem::getWorkMem());
+    CArcItem* newItem = new (raw) CArcItem(pStr);
 
     CWorkSystemPack* sys = lbl_eu_80665A10;
     int i = 0;
+    int cap = sys->mArcList.mCapacity;
     ArcItemListNode* startNode = sys->mArcList.mStartNodePtr;
-    while (i < sys->mArcList.mCapacity) {
+    while (i < cap) {
         if (sys->mArcList.mList[i].mNext == 0) break;
         i++;
     }
+    CArcItem** pSlot = &sys->mArcList.mList[i].mItem;
     ArcItemListNode* temp = &sys->mArcList.mList[i];
-    CArcItem** pSlot = &temp->mItem;
     if (pSlot != 0) {
         try {
             *pSlot = newItem;
@@ -272,17 +275,22 @@ __attribute__((never_inline)) void func_804DDF00(const char* pPath) {
 // Register one static pkh filename: pick the lowest partition index not yet
 // used by any pack item, construct the CPackItem (CRI partition id from the
 // caller), and push it onto the singleton's pack list (first free slot).
+// Retail calls the 2-param CPackItem ctor with a THIRD (ignored) argument
+// (the function's own arg2 forwarded), keeping r29 live across the allocate
+// calls. Declared under the retail mangled name to reproduce that call.
+extern "C" CPackItem* __ct__9CPackItemFPCci(CPackItem* mem, const char* name, int idx, int partition);
+
 #pragma optimize_for_size on
 __attribute__((never_inline)) void func_804DDE3C(const char* pName, int pPartitionId) {
-    CWorkSystemPack* sys = lbl_eu_80665A10;
+    // No local singleton copy: retail reloads lbl_eu_80665A10 (SDA) at each
+    // use site, keeping only pName/pPartitionId/i/newItem in callee-saved regs.
     int i = 0;
-    PackItemListNode* sentinel = sys->mPackList.mStartNodePtr;
-    PackItemListNode* first = sentinel->mNext;
+    PackItemListNode* sentinel = lbl_eu_80665A10->mPackList.mStartNodePtr;
     while (true) {
-        PackItemListNode* node = first;
+        PackItemListNode* node = sentinel->mNext;
         bool found = false;
         while (node != sentinel) {
-            if (node->mItem->mAdxPartitionId == i) {
+            if (i == node->mItem->mAdxPartitionId) {
                 found = true;
                 break;
             }
@@ -294,16 +302,19 @@ __attribute__((never_inline)) void func_804DDE3C(const char* pName, int pPartiti
 
     CPackItem* newItem = (CPackItem*)mtl::MemManager::allocate(0x8C, CWorkThreadSystem::getWorkMem());
     if (newItem != 0) {
-        new (newItem) CPackItem(pName, i, pPartitionId);
+        newItem = __ct__9CPackItemFPCci(newItem, pName, i, pPartitionId);
     }
 
+    CWorkSystemPack* sys2 = lbl_eu_80665A10;
     int j = 0;
-    PackItemListNode* startNode = sys->mPackList.mStartNodePtr;
-    while (j < sys->mPackList.mCapacity) {
-        if (sys->mPackList.mList[j].mNext == 0) break;
+    int cap = sys2->mPackList.mCapacity;
+    PackItemListNode* startNode = sys2->mPackList.mStartNodePtr;
+    PackItemListNode* temp;
+    while (j < cap) {
+        if (sys2->mPackList.mList[j].mNext == 0) break;
         j++;
     }
-    PackItemListNode* temp = &sys->mPackList.mList[j];
+    temp = &sys2->mPackList.mList[j];
     CPackItem** pSlot = &temp->mItem;
     if (pSlot != 0) {
         try {
@@ -321,33 +332,49 @@ __attribute__((never_inline)) void func_804DDE3C(const char* pName, int pPartiti
 
 } // extern "C"
 
+// Inlined alloc+clear used by the ctor: going through the list pointer keeps
+// MWCC reloading mList every iteration (retail shape).
 #pragma optimize_for_size on
-CWorkSystemPack::CWorkSystemPack(const char* pName, CWorkThread* pParent) {
-    // Base thread init (placement-new: the mirror class has no CWorkThread base).
-    new (this) CWorkThread(pName, pParent, 0);
+static void InitPackNodeArray(PackItemList* list, u32 bytes, int count) {
+    list->mList = (PackItemListNode*)mtl::MemManager::allocate_array(bytes, CWorkThreadSystem::getWorkMem());
+    for (int j = 0; j < count; j++) {
+        list->mList[j].mNext = 0;
+    }
+    list->mCapacity = count;
+}
+#pragma optimize_for_size off
+
+#pragma optimize_for_size on
+// Base ctor runs in the init list (retail emits the plain __ct__11CWorkThread
+// bl with capacity 0); the class is novtable so the retail vtable is stored
+// manually (CWorkSystemCache pattern).
+CWorkSystemPack::CWorkSystemPack(const char* pName, CWorkThread* pParent)
+    : CWorkThread(pName, pParent, 0) {
+    int i; // declared early: birth order keeps the loop index off the zero-reg copy path
 
     // CWorkSystemPack vtable, then the two reslists. Each list's inlined ctor
     // chain (_reslist_base then reslist) stores its vtable twice: base, then
     // derived (e.g. pack: lbl_eu_8056FF48 then lbl_eu_8056FF30).
+    // Same shape as the matched CWorkSystemCache ctor: the sentinel-pointer
+    // reads between the two vtable stores block MWCC's DSE of the base-vtable
+    // / NULL-mList stores that the derived overwrite makes look dead.
     mPackList.mList = 0;
-    m_vtable = (u32)lbl_eu_8056FE58;
+    *(u32**)this = (u32*)lbl_eu_8056FE58;
     mPackList.m_vtable = (u32)lbl_eu_8056FF48;
     mPackList.mCapacity = 0;
     mPackList.unk1C = false;
-    PackItemListNode* pStart = &mPackList.mStartNode;
-    mPackList.mStartNodePtr = pStart;
-    mPackList.mStartNode.mNext = pStart;
-    mPackList.mStartNode.mPrev = pStart;
+    mPackList.mStartNodePtr = &mPackList.mStartNode;
+    mPackList.mStartNodePtr->mNext = &mPackList.mStartNode;
+    mPackList.mStartNodePtr->mPrev = mPackList.mStartNodePtr->mNext;
     mPackList.m_vtable = (u32)lbl_eu_8056FF30;
 
     mArcList.m_vtable = (u32)lbl_eu_8056FF24;
     mArcList.mList = 0;
     mArcList.mCapacity = 0;
     mArcList.unk1C = false;
-    ArcItemListNode* aStart = &mArcList.mStartNode;
-    mArcList.mStartNodePtr = aStart;
-    mArcList.mStartNode.mNext = aStart;
-    mArcList.mStartNode.mPrev = aStart;
+    mArcList.mStartNodePtr = &mArcList.mStartNode;
+    mArcList.mStartNodePtr->mNext = &mArcList.mStartNode;
+    mArcList.mStartNodePtr->mPrev = mArcList.mStartNodePtr->mNext;
     mArcList.m_vtable = (u32)lbl_eu_8056FF0C;
 
     lbl_eu_80665A10 = this;
@@ -359,24 +386,27 @@ CWorkSystemPack::CWorkSystemPack(const char* pName, CWorkThread* pParent) {
     mArcList.mCapacity = 1;
 
     mPackList.mList = (PackItemListNode*)mtl::MemManager::allocate_array(0xC0, CWorkThreadSystem::getWorkMem());
-    for (int i = 0; i < 16; i++) {
-        mPackList.mList[i].mNext = 0;
+    int j = 0;
+    while (j < 16) {
+        mPackList.mList[j].mNext = 0;
+        j++;
     }
     mPackList.mCapacity = 16;
 
     // Register the static arc / pkh filename tables (both NULL-terminated).
-    if (lbl_eu_80665A18[0] != 0) {
-        const char* const* p = lbl_eu_80665A18[0];
-        while (*p != 0) {
-            func_804DDF00(*p);
-            p++;
+    // 'it = p - 1; while (*++it)' reproduces retail's subi/lwzu walk rotation.
+    const char* const* p = lbl_eu_80665A18[0];
+    if (p != 0) {
+        const char* const* it = p - 1;
+        while (*++it != 0) {
+            func_804DDF00(*it);
         }
     }
-    if (lbl_eu_80665A14 != 0) {
-        const char* const* p = lbl_eu_80665A14;
-        while (*p != 0) {
-            func_804DDE3C(*p, -1);
-            p++;
+    const char* const* q = lbl_eu_80665A14;
+    if (q != 0) {
+        const char* const* jt = q - 1;
+        while (*++jt != 0) {
+            func_804DDE3C(*jt, -1);
         }
     }
 }
@@ -410,22 +440,28 @@ extern "C" void* __dt__15CWorkSystemPackFv(CWorkSystemPack* self, int flags) {
 // Walk the pack list, comparing each item's base name against pName. Returns
 // the lookupFile() result (found flag) for the matching item, or 0 if no item
 // matches.
-__attribute__((never_inline)) bool func_804DDD54(const char* pName, const char* pPath, char** outPkbPath,
+// Retail symbol is unmangled - this helper has C linkage in the original.
+// Retail's addic/subfe setnz bool tail is the optimize_for_size (-O4,s)
+// codegen signature; the default -O4,p emits neg/or/rlwinm instead.
+#pragma push
+#pragma optimize_for_size on
+extern "C" __declspec(noinline) bool func_804DDD54(const char* pName, const char* pPath, char** outPkbPath,
                    u32* outEntryId, u32* outIndex, u32* outFileId) {
     const char* pFile = ml::CPathUtil::getFilePtrFromPath(pPath);
-    CWorkSystemPack* sys = lbl_eu_80665A10;
-    PackItemListNode* sentinel = sys->mPackList.mStartNodePtr;
-    PackItemListNode* node = sentinel->mNext;
+    PackItemListNode* sentinel;
+    PackItemListNode* node;
+    sentinel = lbl_eu_80665A10->mPackList.mStartNodePtr;
+    node = sentinel->mNext;
     while (node != sentinel) {
-        if (strcmp(node->mItem->mBaseName, pName) != 0) {
-            node = node->mNext;
-            continue;
+        if (!strcmp(node->mItem->mBaseName, pName)) {
+            return node->mItem->lookupFile(pFile, outPkbPath, outEntryId,
+                                           outIndex, outFileId);
         }
-        return node->mItem->lookupFile(pFile, outPkbPath, outEntryId, outIndex,
-                                       outFileId);
+        node = node->mNext;
     }
     return false;
 }
+#pragma pop
 
 // Resolve a pack file id for pPath: first via the static lookup, then via the
 // item search (returns the file id << 11). Returns -1 if neither matched.
@@ -433,16 +469,6 @@ __attribute__((never_inline)) bool func_804DDD54(const char* pName, const char* 
 // +0x1E8, nodes link via +0, item pointer at +8) and forward to the first
 // item's func_804DEC6C when the list is non-empty (retail unmangled reloc).
 extern "C" bool func_804DEC6C(void* item, const char* pPath, void** pOutStartAddr, u32* pOutLength);
-
-__attribute__((never_inline)) bool CWorkSystemPack::func_804DDDF4(const char* pName, void* pOut, u32* pFileId) {
-    CWorkSystemPack* sys = lbl_eu_80665A10;
-    u8* head = *(u8**)((u8*)sys + 0x1E8);
-    u8* first = *(u8**)head;
-    if (first != head) {
-        return func_804DEC6C(*(void**)(first + 8), pName, (void**)pOut, pFileId);
-    }
-    return false;
-}
 
 #pragma push
 #pragma optimize_for_size on
@@ -464,6 +490,21 @@ s32 func_804DDCD4(const char* pName, const char* pPath) {
     return -1;
 }
 #pragma pop
+
+// Static lookup: walk the singleton's circular pack-item list (head at
+// +0x1E8, nodes link via +0, item pointer at +8) and forward to the first
+// item's func_804DEC6C when the list is non-empty.
+// __declspec(noinline) keeps retail's out-of-line bl - without it -inline auto
+// folds this small helper into func_804DDCD4 below.
+__declspec(noinline) bool CWorkSystemPack::func_804DDDF4(const char* pName, void* pOut, u32* pFileId) {
+    CWorkSystemPack* sys = lbl_eu_80665A10;
+    u8* head = *(u8**)((u8*)sys + 0x1E8);
+    u8* first = *(u8**)head;
+    if (first != head) {
+        return func_804DEC6C(*(void**)(first + 8), pName, (void**)pOut, pFileId);
+    }
+    return false;
+}
 
 // Login gate: walk the circular pack-item list (head at +0x1E8, nodes link
 // via +0, data pointer at +8) and require every item's field_0x2C == 2.
@@ -593,30 +634,37 @@ int func_804DE010(const char* pName) {
 
 // Remove the pack item whose base name matches pName from the pack list,
 // destroying the item (vtable+8 call) and unlinking its node.
+// optimize_for_size reproduces retail's stmw/lmw frame and the
+// addic.-1/subfe setnz strcmp tail.
+#pragma push
+#pragma optimize_for_size on
 void func_eu_804E2340(const char* pName) {
-    CWorkSystemPack* sys = lbl_eu_80665A10;
-    PackItemListNode* sentinel = sys->mPackList.mStartNodePtr;
+    // Don't cache the singleton in a local: retail only keeps 3 values live
+    // (pName, sentinel, node) and saves r29-r31.
+    PackItemListNode* sentinel = lbl_eu_80665A10->mPackList.mStartNodePtr;
     PackItemListNode* node = sentinel->mNext;
     while (node != sentinel) {
-        if (strcmp(node->mItem->mBaseName, pName) != 0) {
-            node = node->mNext;
-            continue;
-        }
-        // Retail reloads node->mItem after the strcmp call (fresh load into r3)
-        // and tests it with the nested double-if, so don't keep a local across
-        // the call.
-        if (node->mItem != 0) {
+        // Named bool with == 0 reproduces retail's addic.-1/subfe. setnz tail.
+        bool match = strcmp(node->mItem->mBaseName, pName) == 0;
+        if (match) {
+            // Retail reloads node->mItem after the strcmp call (fresh load into
+            // r3) and tests it with the nested double-if, so don't keep a local
+            // across the call.
             if (node->mItem != 0) {
-                ((CPackItemDestroyHook*)node->mItem)->destroy(1);
+                if (node->mItem != 0) {
+                    ((CPackItemDestroyHook*)node->mItem)->destroy(1);
+                }
+                node->mItem = 0;
             }
-            node->mItem = 0;
+            node->mPrev->mNext = node->mNext;
+            node->mNext->mPrev = node->mPrev;
+            node->mNext = 0;
+            break;
         }
-        node->mPrev->mNext = node->mNext;
-        node->mNext->mPrev = node->mPrev;
-        node->mNext = 0;
-        break;
+        node = node->mNext;
     }
 }
+#pragma pop
 
 // Returns false if any pack item other than pExcept is currently mid-load
 // (LOAD_STATE_LOADING_AHX_ADX_FILE == 2).

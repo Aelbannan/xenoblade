@@ -240,13 +240,15 @@ public:
 // ---------------------------------------------------------------------------
 
 // Cross-TU callees (resolved via the retail symbol map).
-extern "C" void func_800B3A88(UnkClass_805764CC* self, void* target);
+extern "C" void func_800B3A88(void* self, void* target);
 extern "C" void func_801BFED0(int a, u16 b, int c);
 extern "C" int func_8009CF8C(void*);
 
 // Small-data globals accessed by CfGimmick-region helpers (@sda21 loads/stores).
 extern "C" u32 lbl_eu_806646B4;
 extern "C" u32 lbl_eu_806646BC;
+// Cached value written by func_80208EDC (retail: single stw + blr).
+extern "C" u32 lbl_eu_806646B8;
 extern "C" float lbl_eu_80662784;
 extern "C" u16 lbl_eu_806646C0;
 extern "C" int lbl_eu_805765B0[10];
@@ -296,8 +298,9 @@ extern "C" char lbl_eu_80508634[];
 extern "C" const float lbl_eu_80668350;
 
 // func_801BFDE8(u32 mode, u32 value, u32 playerValue, float first, float second)
-extern "C" void func_801BFDE8(unsigned int mode, unsigned int value,
-                               unsigned int playerValue, float first, float second);
+// u32 spellings (not unsigned int): must match CfObjectImplMove.hpp/UnityHelpers exactly
+extern "C" void func_801BFDE8(u32 mode, u32 value,
+                               u32 playerValue, float first, float second);
 // Sound constants loaded in func_80208C48 / func_80208C60 (retail .sda21 loads)
 extern "C" float lbl_eu_80668358;
 extern "C" float lbl_eu_8066835C;
@@ -318,7 +321,7 @@ extern "C" f32 lbl_eu_806646B0;
 extern "C" const f32 lbl_eu_80668378;
 extern "C" void func_800C13FC(void* obj, const char* name, int arg);
 // Create/attach a gimmick object (C-ABI, unmangled): manager first, then flags.
-extern "C" CfGimmickObject* func_800B20B4(UnkClass_805764CC* mgr, int a, int b, int c);
+extern "C" CfGimmickObject* func_800B20B4(void* mgr, int a, int b, int c);
 
 // Message-posting helpers (CUICfManager.cpp / CUIWindowManager.cpp).
 extern "C" u32 func_8013C54C();

@@ -412,7 +412,7 @@ __declspec(noinline) void func_801F5C2C(cf::CfGimmickObject* self, int a, int b)
     if (mgrId != 0) {
         func_80208EE4(self);
         CfGimmickObjectMgr* mgr =
-            func_800817BC__Q22cf13CfGameManagerFv(mgrId, 0);
+            (CfGimmickObjectMgr*)func_800817BC__Q22cf13CfGameManagerFv(mgrId, 0);
         self->field_78 = mgr;
         if (mgr != 0)
             mgr->field_B0 = self;
@@ -770,7 +770,7 @@ void func_801F6780(cf::CfGimmickObject* self) {
     if (step->field_07 != 0) {
         func_80208EE4(self);
         CfGimmickObjectMgr* mgr =
-            func_800817BC__Q22cf13CfGameManagerFv(step->field_07, 0);
+            (CfGimmickObjectMgr*)func_800817BC__Q22cf13CfGameManagerFv(step->field_07, 0);
         self->field_78 = mgr;
         if (mgr != 0) {
             mgr->field_B0 = self;

@@ -209,15 +209,10 @@ extern "C" void* func_8003AA34();
 // Layout animation frame-target check (CSysWin.cpp / CCol6System.hpp decl).
 int func_80137444(nw4r::lyt::AnimTransform* anim, float frame);
 
-// CItemBoxGrid.hpp declares the BDAT byte-column reader with a u8 return,
-// which makes MWCC emit an rlwinm byte mask at every call site. The retail
-// callee already zero-extends (lbz) and callers keep the raw result (mr),
-// masking only at use, so the header's u8 declaration is renamed out of the
-// way and the import is redeclared with a wide return (same ABI).
-#define func_801361E8 kizunaTalkBdatByteUnused
 #include "kyoshin/CItemBoxGrid.hpp"
-#undef func_801361E8
-extern "C" u32 func_801361E8(u32 fp, const char* col, u32 id);
+// func_801361E8 comes from CItemBoxGrid.hpp's wide-view (u32) decl - the
+// callee's lbz already zero-extends and callers keep the raw result (mr),
+// masking only at use. The old rename guard + local redeclaration are gone.
 
 // u32-word pair / f64 view used for MWCC's 0x43300000 int->float conversion
 // (subtracts the retail .sdata2 magic double lbl_eu_80667E70).

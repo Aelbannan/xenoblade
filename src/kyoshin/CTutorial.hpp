@@ -4,6 +4,8 @@
 
 #include "monolib/lib/UnkClass_8045F564.hpp"
 
+#include "monolib/work/IWorkEvent.hpp"
+
 // Forward declarations for nw4r layout types used by CTutorial members.
 namespace nw4r {
 namespace lyt {
@@ -37,9 +39,21 @@ struct CTutorialFontObj {
     CTutorialFontVtbl* mpVtbl;
 };
 
-class CTutorial {
+// IWorkEvent-compatible vtable for CTutorial (split1 .data, shared pool).
+extern u8 lbl_eu_80539230[136];
+
+/* Empty base (no size, EBO): inline ctor makes MWCC emit the vptr store
+first, before the member region ctors (retail order). Paired with
+__declspec(novtable) on CTutorial so no TU-local __vt__9CTutorial is emitted -
+the store references the retail shared-pool label (COccCulling pattern). */
+struct CTutorialVtblBase {
+    CTutorialVtblBase() { *(void**)this = (void*)lbl_eu_80539230; }
+};
+
+// __declspec(novtable): suppresses the implicit __vt__9CTutorial emission.
+struct __declspec(novtable) CTutorial : CTutorialVtblBase {
 public:
-    CTutorial();
+    CTutorial(u8 param_1, u8 param_2);
     virtual ~CTutorial();
     bool OnFileEvent(CEventFile* pEventFile);
 
@@ -70,6 +84,8 @@ public:
     void func_8029AE9C();
     // Rewind-anim start handler (retail func_8029AF7C).
     void func_8029AF7C();
+    // Advance-anim fully finished (retail func_8029ACEC).
+    void func_8029ACEC();
     // Reset the 0x3340..0x33BE UI flag block (retail func_8029B498).
     void func_8029B498();
 
@@ -120,3 +136,8 @@ u32 func_801355A0();
 // literal unmangled identifiers, so they must be declared with C linkage.
 extern "C" void* func_8003AA34();
 extern "C" void func_8029B05C(CTutorial* pTutorial);
+
+
+// Retail calls the language-flag query through its unmangled Fv symbol with a
+// dummy -1 argument that the callee ignores.
+extern "C" int func_80086F9C__Q22cf13CfGameManagerFv(int arg);

@@ -7,29 +7,89 @@
 #include "libs/monolib/src/scn/CScn_8049603C.hpp" // func_8049603C (single owner decl)
 #include "monolib/scn/CScnTimeApi.hpp"
 #include "kyoshin/cf/CSuddenCommu.hpp"
+#include "kyoshin/cf/CfSoundMan.hpp" // cf::CfSoundMan::func_801BFC38
 #include "kyoshin/cf/CfGameManager.hpp"
 // ml::math::mtRand(int) - mangles to the retail mtRand__Q22ml4mathFi.
 #include "monolib/math/Random.hpp"
 // CBattleManager.hpp currently pulls a conflicting CfObjectActor.hpp decl
 // (func_80149154 overload); use the standalone header chain instead.
-#include "kyoshin/cf/CVision.hpp"
-#include "kyoshin/cf/chain/CChainTime.hpp"
+// NOTE: CVision.hpp omitted - its extern "C" func_80043D90(void*) clashes
+// with the typed decl reachable via harness_catalog.hpp -> CfObjectImplMove.hpp.
+#include "kyoshin/cf/CCharEffect.hpp" // func_800ACC14 (cue release)
 #include "kyoshin/cf/CfObjectEnumList.hpp"
 
 namespace cf {}
 using namespace cf;
 
-// Same-TU siblings defined later in this file.
-void func_801BB464(CSuddenCommu* self, int playerIdx, int mode, CSuddenCommuActor* player, int arg5);
-void func_801BC474(CSuddenCommu* self);
+// Named .sdata2 signed int->float conversion magic (bit pattern
+// 0x4330000080000000, i.e. 2^52 + 2^31): defining it lets MWCC's constant
+// pool reuse the retail symbol for the (f32) int casts inside func_801BA490
+// instead of emitting a TU-local @N label (CVision / CfResReloadImpl idiom).
+extern const double lbl_eu_80667E40 = 4505750238502912.0;
 
-cf::CSuddenCommu::CSuddenCommu() {}
+// Constructor: clears the commu state, parks the voice id at -1 (retiring
+// any prior voice via func_802A35B8) and initializes the timer from the
+// sdata2 constant.
+cf::CSuddenCommu::CSuddenCommu() {
+    s32 const zero = 0;
+    s32 const negOne = -1;
+    *(u32*)&this->field_24 = zero;
+    // novtable class: install the retail split-data vtable by hand.
+    *(void**)this = (void*)lbl_eu_805339C0;
+    this->field_10 = (u32)negOne;
+    this->field_20 = zero;
+    this->field_14 = zero;
+    this->field_4 = negOne;
+    this->field_6 = negOne;
+    this->field_8 = negOne;
+    this->field_A = zero;
+    this->field_C = zero;
+    this->field_E = zero;
+    func_802A35B8(negOne);
+    f32 const v30 = lbl_eu_80667E30;
+    this->field_10 = (u32)negOne;
+    this->field_18 = v30;
+    // Plain (non-volatile) final store: keeps the LR restore below the
+    // callee-saved loads, matching retail epilogue order.
+    *(u32*)&this->field_24 = zero;
+}
 
-void func_801BA1DC(){}
+// Commu state reset: clears the pairing/state fields and retires the current
+// voice id, then parks the timer at E30 and zeroes the flag word.
+void func_801BA1DC(CSuddenCommu* self) {
+    self->field_14 = 0;
+    self->field_4 = -1;
+    self->field_6 = -1;
+    self->field_8 = -1;
+    self->field_A = 0;
+    self->field_C = 0;
+    self->field_E = 0;
+    func_802A35B8(self->field_10);
+    f32 const v30 = lbl_eu_80667E30;
+    // Volatile accesses chain the retail order: float load, field_10 commit,
+    // timer store, flag clear (MWCC otherwise reorders the FP store).
+    self->field_10 = (u32)-1;
+    self->field_18 = v30;
+    self->field_24 = 0;
+}
 
 extern "C" void func_801BA250(void* self) { *(u32*)((u8*)self + 0x20) = 0; }
 
-void func_801BA25C(){}
+// Sudden-commu per-frame driver: only runs while the CfGameManager singleton
+// is absent (getInstance() == 0); otherwise just re-arms (func_801BADE4) and
+// ticks (func_801BBCBC), then dispatches the handler selected by field_14
+// through the retail PMF table (12-byte ptmf stride). The const-reference
+// binding keeps MWCC from materializing a stack local - it passes the table
+// entry address straight to __ptmf_scall in r12.
+typedef void (CSuddenCommu::*CSuddenCommuStateFn)();
+void func_801BA25C(CSuddenCommu* self) {
+    if (func_800829B8__Q22cf13CfGameManagerFv() != 0) return;
+    func_801BADE4(self);
+    if (func_801BBCBC(self) != 0) return;
+    CSuddenCommuStateFn const& pmf =
+        *(CSuddenCommuStateFn const*)((u8*)&lbl_eu_80575870[self->field_14 * 3]);
+    (self->*pmf)();
+}
 
 unsigned long func_801BA2C8(void* self) {
     unsigned long v = *(unsigned long*)((char*)self + 0x14);
@@ -48,7 +108,7 @@ __declspec(noinline) int func_801BA2DC(CSuddenCommu* self) {
     if ((self->field_24 & 1) == 0) return 0;
     CSuddenCommuGlobal* global = getUnk80664658();
     if (global->field_214 & 2) return 0;
-    if (func_8017FD44(global) != 0) return 0;
+    if (func_8017FD44() != 0) return 0;
     CSuddenCommuActor* player = (CSuddenCommuActor*)cf::CfGameManager::getPlayer(0);
     if (player != 0) player = (CSuddenCommuActor*)((char*)player - 0x3E9C);
     if (player == 0) return 0;
@@ -77,11 +137,6 @@ __declspec(noinline) int func_801BA2DC(CSuddenCommu* self) {
 // truncated result. Then commit the count to the party gauge and either reset
 // the commu state (field_C == 4) or re-arm the partner pairing.
 //
-// The u32->f32 conversion magic (0x4330000080000000) is defined as a named
-// .sdata2 double below so MWCC's constant pool reuses it for the (f32)(u32)
-// casts instead of emitting a TU-local @N label (CfResReloadImpl idiom).
-double lbl_eu_80667E40 = 4503601774854144.0;
-
 __declspec(noinline) void func_801BA490(CSuddenCommu* self) {
     u32 total = lbl_eu_806625E0;
     f32 scale = lbl_eu_80667E34;
@@ -94,14 +149,14 @@ __declspec(noinline) void func_801BA490(CSuddenCommu* self) {
         void* obj = player->field_15E0;
         if (obj == 0) continue;
 
-        u32 valA;
-        f32 valB;
-        if (func_80260518(obj, 0x34, &valA, &valB) != 0) {
+        u32 stat;
+        f32 statF;
+        if (func_80260518(obj, 0x34, &stat, &statF) != 0) {
             CSuddenCommuCmd cmd;
             std::memset(&cmd, 0, sizeof(cmd));
             cmd.field_C = 2;
-            cmd.field_10 = valA;
-            cmd.field_20 = valB;
+            cmd.field_10 = stat;
+            cmd.field_20 = statF;
             for (int j = 0; j < 3; j++) {
                 void* spot2 = cf::CfGameManager::getPlayer(j);
                 CSuddenCommuActor* other = (CSuddenCommuActor*)spot2;
@@ -113,12 +168,14 @@ __declspec(noinline) void func_801BA490(CSuddenCommu* self) {
             }
         }
 
-        if (func_80260264(obj, 0x61, &valA) != 0) {
-            total += valA;
+        if (func_80260264(obj, 0x61, &stat) != 0) {
+            total += stat;
         }
 
-        if (func_80260264(obj, 0x47, &valA) != 0) {
-            f32 f28 = scale * (f32)valA;
+        if (func_80260264(obj, 0x47, &stat) != 0) {
+            // Plain (f32) casts: MWCC emits the 0x4330/xoris stack-double
+            // trick natively, pooling the magic into lbl_eu_80667E40 above.
+            f32 prod = scale * (f32)stat;
             for (int j = 0; j < 3; j++) {
                 void* spot2 = cf::CfGameManager::getPlayer(j);
                 CSuddenCommuActor* other = (CSuddenCommuActor*)spot2;
@@ -126,8 +183,10 @@ __declspec(noinline) void func_801BA490(CSuddenCommu* self) {
                 if (other == 0) continue;
                 if (((CSuddenCommuActorVt*)other)->vf2BC() == 0) {
                     getInstance__Q22cf14CBattleManagerFv();
-                    f32 f29 = func_800D81A8(0, other, 0);
-                    f32 w = f29 * (f28 * ((CSuddenCommuActorVt*)other)->vf12C()) + scale;
+                    f32 res = func_800D81A8(0, other, 0);
+                    f32 w = res * (prod * ((CSuddenCommuActorVt*)other)->vf12C()) + scale;
+                    // Truncate -> back-to-float -> truncate -> back-to-float;
+                    // each u32->f32 step compiles to the shared 0x4330 trick.
                     s32 i2 = (s32)w;
                     f32 g = (f32)(u32)i2;
                     s32 j2 = (s32)g;
@@ -215,14 +274,13 @@ __declspec(noinline) void func_801BA978(CSuddenCommu* self) {
         if (state == 4) {
             func_800EA484((cf::CBattleManager*)getInstance__Q22cf14CBattleManagerFv(), lbl_eu_80667E38, 0x13);
             self->field_14 = 0;
-            u32 voice = self->field_10;
             self->field_4 = -1;
             self->field_6 = -1;
             self->field_8 = -1;
             self->field_A = 0;
             self->field_C = 0;
             self->field_E = 0;
-            func_802A35B8(voice);
+            func_802A35B8(self->field_10);
             f32 v30 = lbl_eu_80667E30;
             volatile f32* p18 = &self->field_18;
             self->field_10 = -1;
@@ -244,14 +302,13 @@ __declspec(noinline) void func_801BA978(CSuddenCommu* self) {
         } else {
             func_800EA484((cf::CBattleManager*)getInstance__Q22cf14CBattleManagerFv(), lbl_eu_80667E38, 0x13);
             self->field_14 = 0;
-            u32 voice = self->field_10;
             self->field_4 = -1;
             self->field_6 = -1;
             self->field_8 = -1;
             self->field_A = 0;
             self->field_C = 0;
             self->field_E = 0;
-            func_802A35B8(voice);
+            func_802A35B8(self->field_10);
             f32 v30 = lbl_eu_80667E30;
             volatile f32* p18 = &self->field_18;
             self->field_10 = -1;
@@ -261,14 +318,13 @@ __declspec(noinline) void func_801BA978(CSuddenCommu* self) {
     } else {
         func_800EA484((cf::CBattleManager*)getInstance__Q22cf14CBattleManagerFv(), lbl_eu_80667E38, 0x13);
         self->field_14 = 0;
-        u32 voice = self->field_10;
         self->field_4 = -1;
         self->field_6 = -1;
         self->field_8 = -1;
         self->field_A = 0;
         self->field_C = 0;
         self->field_E = 0;
-        func_802A35B8(voice);
+        func_802A35B8(self->field_10);
         f32 v30 = lbl_eu_80667E30;
         volatile f32* p18 = &self->field_18;
         self->field_10 = -1;
@@ -282,6 +338,16 @@ __declspec(noinline) void func_801BA978(CSuddenCommu* self) {
 // slots for the actor matching the attacker. Depending on the target's HP
 // (vtable slot 0x128) against lbl_eu_80667E48 and the move flag words,
 // dispatch the commu (func_801BB464) with mode 3 / 1 / 0.
+//
+// OPEN RESIDUAL (us-801bc48c): retail ends the mode-0 arm with a DUPLICATED
+// exit branch (`bl func_801BB464; b <epi>; b <epi>`) right before the loop
+// latch; every dispatch path here exits the FUNCTION (retail `ble <epi>` on
+// count<=1, not the latch). All high-level spellings tried (plain return,
+// break, goto-shared-exit with multi-pred block, do{}while(0), else-return,
+// negated-guard early return, materialized type, for(;;) wrapper) compile to
+// byte-identical output with a single merged exit - MWCC threads them all.
+// The missing 4B accounts for the whole remaining diff (10 shifted tail
+// slots, 10 branch-displacement words, both restgpr reloc sites).
 void func_801BAB94(CSuddenCommu* self, CSuddenCommuActor* attacker,
                    CSuddenCommuActor* target, CSuddenCommuMoveData* move) {
     if (!(attacker->flags3F00 & 0x2)) return;
@@ -294,30 +360,34 @@ void func_801BAB94(CSuddenCommu* self, CSuddenCommuActor* attacker,
         if (player != attacker) continue;
         if (((CSuddenCommuActorVt*)target)->vf128() <= lbl_eu_80667E48) {
             CSuddenCommuBmList* bm = (CSuddenCommuBmList*)getInstance__Q22cf14CBattleManagerFv();
-            CSuddenCommuListNode* sentinel = (CSuddenCommuListNode*)bm->mHead;
-            int count = 0;
             CSuddenCommuListNode* node;
-            for (node = sentinel->next; node != sentinel; node = node->next) {
+            int count;
+            void* list = bm->mHead;
+            count = 0;
+            node = (CSuddenCommuListNode*)*(void**)list;
+            for (; node != list; node = node->next) {
                 count++;
             }
-            if (count > 1) {
-                int arg5 = 0;
-                if (!(move->field_78 & 0x200)) arg5 = 0x19;
-                func_801BB464(self, i, 3, player, arg5);
-                break;
-            }
+            if (count <= 1) return;
+            int arg5 = 0;
+            if (!(move->field_78 & 0x200)) arg5 = 0x19;
+            func_801BB464(self, i, 3, player, arg5);
+            return;
         } else {
-            if (move->field_74 & 0x100) {
+            u32 flags = move->field_74;
+            if (flags & 0x100) {
                 func_801BB464(self, i, 1, player, 0);
-                break;
-            } else if (move->field_74 & 0x40) {
+                return;
+            }
+            if (!(flags & 0x40)) return;
+            for (;;) {
                 if (((CSuddenCommuActorVt*)target)->vfE0() == 1 ||
                     ((CSuddenCommuActorVt*)target)->vfE0() == 2) {
                     func_801BB464(self, i, 0, player, 0);
-                    break;
                 }
                 break;
             }
+            return;
         }
     }
 }
@@ -356,7 +426,7 @@ void func_801BAD24(CSuddenCommu* self, CSuddenCommuActor* attacker, CSuddenCommu
 // were checked, arm the commu again (field_24 |= 1); otherwise run the
 // pre-start gate (voice, battle flags, camera mode, player voice ids) and
 // either re-enter the commu (state 4) or restart the timer.
-void func_801BADE4(CSuddenCommu* self) {
+extern "C" void func_801BADE4(CSuddenCommu* self) {
     // Single "current player" slot reused across the probe blocks (retail r30).
     CSuddenCommuActor* player;
     self->field_24 &= ~1;
@@ -473,14 +543,24 @@ commu_end:
 // field_4, queue the others in pair_6/field_A, optionally shuffle the queue,
 // probe the partner's voice action (0x803) and either arm (field_14 = 1) or
 // park the timer at E50.
+//
+// OPEN RESIDUAL (us-801bcd5c, 42 mism / size -4B): retail ends the found
+// check with a DUPLICATED exit (`bne body; b <epi>` before the arm block);
+// every high-level spelling (plain if-return, &&, nested if, goto gate,
+// else-return, switch(found) case-0/default, cached s16 local) compiles to
+// a single merged exit - MWCC threads them all. Same class as the
+// documented us-801bc48c duplicated-exit wall in func_801BAB94.
 __declspec(noinline) void func_801BB464(CSuddenCommu* self, int playerIdx, int type, CSuddenCommuActor* player, int arg5) {
     cf::CfGameManager::getInstance();
     if (func_8006EF04__Fi(0x04000000) != 0) return;
-    int chance = ml::math::mtRand(100) - arg5;
-    if (chance < 0) chance = 0;
+    // Mutate the parameter: merging the arg5/chance webs lets MWCC reuse
+    // arg5's saved register for the roll result (retail subf r26,r26,r3).
+    arg5 = ml::math::mtRand(100) - arg5;
+    if (arg5 < 0) arg5 = 0;
     self->field_C = type;
     self->field_E = type;
-    u8 thresh;
+    int thresh; // int: retail keeps the table byte in a full register
+    // (no rlwinm re-mask after the += below).
     if (type == 0) {
         thresh = (&lbl_eu_806625E8)[((CSuddenCommuActorVt*)player)->vf308()];
     }
@@ -499,7 +579,7 @@ __declspec(noinline) void func_801BB464(CSuddenCommu* self, int playerIdx, int t
         thresh = (&lbl_eu_80662600)[((CSuddenCommuActorVt*)player)->vf308()];
         self->field_E = 1;
     }
-    if (chance >= thresh) return;
+    if (arg5 >= thresh) return;
     self->field_A = 0;
     int found = 0;
     for (int i = 0; i < 3; i++) {
@@ -508,9 +588,10 @@ __declspec(noinline) void func_801BB464(CSuddenCommu* self, int playerIdx, int t
         if (spot != 0) p = (CSuddenCommuActor*)((char*)spot - 0x3E9C);
         if (p == 0) continue;
         // Any active voice/action flag (or a non-zero body-36C word) aborts
-        // the whole commu start.
+        // the whole commu start. Declared in reverse so the ascending slot
+        // cursor places w1 at the lowest offset (retail w1@sp+0xC..w6@sp+0x20).
+        u32 w6, w5, w4, w3, w2, w1;
         int busy = 0;
-        u32 w1, w2, w3, w4, w5, w6;
         if (func_80174C98(p, (int*)&(w1 = *p->field_4->vf30()), 0x1c) != 0) busy = 1;
         else if (func_80174C98(p, (int*)&(w2 = *p->field_4->vf30()), 0x16) != 0) busy = 1;
         else if (func_80174C98(p, (int*)&(w3 = *p->field_4->vf30()), 0x17) != 0) busy = 1;
@@ -518,7 +599,9 @@ __declspec(noinline) void func_801BB464(CSuddenCommu* self, int playerIdx, int t
         else if (func_80174C98(p, (int*)&(w5 = *p->field_4->vf30()), 0x1a) != 0) busy = 1;
         else if (func_80174C98(p, (int*)&(w6 = *p->field_4->vf30()), 0x19) != 0) busy = 1;
         else busy = !!p->field_3ED4->field_36C;
-        if (busy != 0) return;
+        if (busy != 0) {
+            return;
+        }
         if (playerIdx == i) {
             self->field_4 = i;
             found = 1;
@@ -527,15 +610,16 @@ __declspec(noinline) void func_801BB464(CSuddenCommu* self, int playerIdx, int t
             self->field_A = self->field_A + 1;
         }
     }
-    if (self->field_A == 0) return;
+    // Cached once in a scratch register by MWCC (retail reuses r0 for both
+    // the zero-test and the swap test; no call intervenes).
+    s16 queued = self->field_A;
+    if (queued == 0) return;
     if (found == 0) return;
     // With exactly two queued partners the retail randomly swaps the pair.
-    if (self->field_A == 2) {
-        if (ml::math::mtRand(2) != 0) {
-            s16 t = self->field_6;
-            self->field_6 = self->field_8;
-            self->field_8 = t;
-        }
+    if (queued == 2 && ml::math::mtRand(2) != 0) {
+        s16 t = self->field_6;
+        self->field_6 = self->field_8;
+        self->field_8 = t;
     }
     u32 v = *player->field_4->vf30();
     if (func_80174C98(player, (int*)&v, 0x803) != 0) {
@@ -563,11 +647,14 @@ void func_801BB81C(CSuddenCommu* self) {
         if (player != 0)
             player = (char*)player + 0x3E9C;
         cue = (CSuddenCommuVoiceCue*)func_800451D8(0xC0, (int)player);
-        self->field_20 = (u32)cue;
+        self->field_20p = cue;
         if (cue != 0) {
             ((CSuddenCommuVoiceCueVt*)cue)->vf88(lbl_eu_80667E58);
-            ((CSuddenCommuVoiceCue*)self->field_20)->field_B0 = self;
-            func_801BFC38__Q22cf10CfSoundManFUlUlUlUlf(0, 0x8e, 0, 0, lbl_eu_80667E38);
+            // Typed re-read through field_20p (see header note): the typed
+            // access path lets MWCC order the float-arg load before this
+            // store, matching retail.
+            self->field_20p->field_B0 = self;
+            cf::CfSoundMan::func_801BFC38(0, 0x8e, 0, 0, lbl_eu_80667E38);
         }
     }
     // Retail interleaves the field_1C store inside the field_24 read-modify-
@@ -583,7 +670,20 @@ void func_801BB81C(CSuddenCommu* self) {
         self->field_14 = 3;
 }
 
-void func_801BB91C(){}
+// Voice-node gate (state 1 handler): once the voice id at +0x10 is retired,
+// re-arm via func_801BC6A4 using the initiator slot constant 0 when +0x04 is
+// set, otherwise the queued partner at +0x06; then advance state (+0x14) to 3
+// (committed even when neither partner id is set).
+void func_801BB91C(CSuddenCommu* self) {
+    bool missing = !func_802A3748(self->field_10);
+    if (missing) {
+        if (self->field_4 != 0)
+            func_801BC6A4(self, 0, 4);
+        else if (self->field_6 != 0)
+            func_801BC6A4(self, self->field_6, 4);
+        self->field_14 = 3;
+    }
+}
 
 // Voice-node gate: if no voice node is registered for the id at +0x10,
 // record state 4 at +0x14 (flag dispatch in func_801BB9DC picks it up).
@@ -664,32 +764,52 @@ void func_801BBBF4(CSuddenCommu* self) {
     }
 }
 
-void func_801BBC38(){}
+// Commu-state initializer (same reset shape as func_801BA1DC) preceded by a
+// battle-manager voice-volume call that retires cue id 0x13.
+void func_801BBC38(CSuddenCommu* self) {
+    cf::CBattleManager* bm = (cf::CBattleManager*)getInstance__Q22cf14CBattleManagerFv();
+    func_800EA484(bm, lbl_eu_80667E38, 0x13);
+    self->field_14 = 0;
+    self->field_4 = -1;
+    self->field_6 = -1;
+    self->field_8 = -1;
+    self->field_A = 0;
+    self->field_C = 0;
+    self->field_E = 0;
+    func_802A35B8(self->field_10);
+    f32 const v30 = lbl_eu_80667E30;
+    // Volatile accesses chain the retail order (see func_801BA1DC).
+    self->field_10 = (u32)-1;
+    self->field_18 = v30;
+    // Plain (non-volatile) final store: a volatile last store makes MWCC hoist
+    // the LR restore above the callee-saved loads; retail shows restores-first.
+    *(u32*)&self->field_24 = 0;
+}
 
-// Sudden-commu per-frame tick. Returns 1 while the commu camera/pad handling
-// stays live, 0 once the commu finishes. While field_14 is non-zero the three
-// players are scanned for the current commu partner: when the partner's
-// sub-object list shows one of the six voice/action flags (0x1C/0x16/0x17/
-// 0x18/0x1A/0x19) the commu state is reset (voice retired, cue cleared) and
-// the camera path is skipped; otherwise the camera/trigger gate runs and, on
-// pad input, the voice-cue is advanced and the commu flags updated.
-//
-// NOTE: the retail brief elides the camera/trigger block between .L_801BDA68
-// and the .L_801BDB5C pad dispatch - that section is reconstructed below as
-// a best-effort (field_24 bit-3 arm + cue advance) and marked.
+// Sudden-commu per-frame tick. Returns 1 while the commu stays live this
+// frame, 0 once it finishes. While field_14 is non-zero the players are
+// probed for the six voice/action busy flags: a hit resets the whole commu
+// state and skips both the camera gate and the pad dispatch. The camera gate
+// (global flag mask / camera distance) runs the end-of-commu reset; after it
+// the pad dispatch advances the voice-cue on bit 0x8 or reads pad input on
+// bit 0x10. When the tick ends with no dispatch, the live cue object is
+// released (via func_80080F44 when the commu just ended, else func_800ACC14).
 int func_801BBCBC(CSuddenCommu* self) {
+    // camRun mirrors retail r31 (camera/pad path taken), ended retail r30.
+    int camRun;
+    int ended;
     CSuddenCommuActor* player;
     if (self->field_14 != 0) {
         void* spot0 = cf::CfGameManager::getPlayer(0);
         player = (CSuddenCommuActor*)spot0;
         if (spot0 != 0) player = (CSuddenCommuActor*)((char*)spot0 - 0x3E9C);
-        int handled = 0;
-        int r30 = 0;
+        camRun = 0;
+        ended = 0;
         if (player != 0) {
-            handled = 1;
+            camRun = 1;
+            int found;
             if (self->field_C == 4) {
                 u32 v6, v5, v4, v3, v2, v1;
-                int found = 0;
                 if (func_80174C98(player, (int*)&(v1 = *player->field_4->vf30()), 0x1c) != 0) found = 1;
                 else if (func_80174C98(player, (int*)&(v2 = *player->field_4->vf30()), 0x16) != 0) found = 1;
                 else if (func_80174C98(player, (int*)&(v3 = *player->field_4->vf30()), 0x17) != 0) found = 1;
@@ -697,33 +817,14 @@ int func_801BBCBC(CSuddenCommu* self) {
                 else if (func_80174C98(player, (int*)&(v5 = *player->field_4->vf30()), 0x1a) != 0) found = 1;
                 else if (func_80174C98(player, (int*)&(v6 = *player->field_4->vf30()), 0x19) != 0) found = 1;
                 else found = !!player->field_3ED4->field_36C;
-                if (found != 0) {
-                    // Voice retired and state reset; the camera path is skipped.
-                    func_801BC590(self);
-                    func_800EA484((cf::CBattleManager*)getInstance__Q22cf14CBattleManagerFv(), lbl_eu_80667E38, 0x13);
-                    func_800EA484((cf::CBattleManager*)getInstance__Q22cf14CBattleManagerFv(), lbl_eu_80667E38, 0x13);
-                    self->field_14 = 0;
-                    self->field_4 = -1;
-                    self->field_6 = -1;
-                    self->field_8 = -1;
-                    self->field_A = 0;
-                    self->field_C = 0;
-                    self->field_E = 0;
-                    func_802A35B8(self->field_10);
-                    self->field_10 = -1;
-                    self->field_18 = lbl_eu_80667E30;
-                    self->field_24 = 0;
-                    handled = 0;
-                }
             } else {
-                int found = 0;
+                found = 0;
                 for (int i = 0; i < 3; i++) {
                     void* spot = cf::CfGameManager::getPlayer(i);
                     player = (CSuddenCommuActor*)spot;
                     if (spot != 0) player = (CSuddenCommuActor*)((char*)spot - 0x3E9C);
                     if (player == 0) continue;
                     u32 w6, w5, w4, w3, w2, w1;
-                    found = 0;
                     if (func_80174C98(player, (int*)&(w1 = *player->field_4->vf30()), 0x1c) != 0) found = 1;
                     else if (func_80174C98(player, (int*)&(w2 = *player->field_4->vf30()), 0x16) != 0) found = 1;
                     else if (func_80174C98(player, (int*)&(w3 = *player->field_4->vf30()), 0x17) != 0) found = 1;
@@ -733,139 +834,168 @@ int func_801BBCBC(CSuddenCommu* self) {
                     else found = !!player->field_3ED4->field_36C;
                     if (found != 0) break;
                 }
-                if (found != 0) {
-                    func_801BC590(self);
-                    func_800EA484((cf::CBattleManager*)getInstance__Q22cf14CBattleManagerFv(), lbl_eu_80667E38, 0x13);
-                    func_800EA484((cf::CBattleManager*)getInstance__Q22cf14CBattleManagerFv(), lbl_eu_80667E38, 0x13);
-                    self->field_14 = 0;
-                    self->field_4 = -1;
-                    self->field_6 = -1;
-                    self->field_8 = -1;
-                    self->field_A = 0;
-                    self->field_C = 0;
-                    self->field_E = 0;
-                    func_802A35B8(self->field_10);
-                    self->field_10 = -1;
-                    self->field_18 = lbl_eu_80667E30;
-                    self->field_24 = 0;
-                    handled = 0;
-                }
             }
-        } else {
-            r30 = 1;
-        }
-
-        // Camera/trigger gate: when the global flag mask or the camera
-        // distance check passes, the camera/voice-cue block (elided from the
-        // retail brief) runs and dispatches into the pad handler; otherwise
-        // the camera is parked and the tick ends.
-        if (handled != 0) {
-            bool camTrigger = (lbl_eu_80663E24 & 0xAFA40000) != 0;
-            if (!camTrigger) {
-                f32 dist = ((CSuddenCommuCamView*)func_8049603C(lbl_eu_80663E14))->field_C;
-                if (lbl_eu_80667E38 - dist >= lbl_eu_80667E38) goto cam_park;
+            if (found != 0) {
+                // Busy actor: retire the voice, reset the commu state, and
+                // drop out of the camera path for this frame.
+                func_801BC590(self);
+                func_800EA484((cf::CBattleManager*)getInstance__Q22cf14CBattleManagerFv(), lbl_eu_80667E38, 0x13);
+                func_800EA484((cf::CBattleManager*)getInstance__Q22cf14CBattleManagerFv(), lbl_eu_80667E38, 0x13);
+                self->field_14 = 0;
+                self->field_4 = -1;
+                self->field_6 = -1;
+                self->field_8 = -1;
+                self->field_A = 0;
+                self->field_C = 0;
+                self->field_E = 0;
+                func_802A35B8(self->field_10);
+                f32 const v30 = lbl_eu_80667E30;
+                camRun = 0;
+                self->field_10 = -1;
+                self->field_18 = v30;
+                self->field_24 = 0;
             }
-            // .L_801BDA68 (elided: camera/voice-cue advance) - best effort:
-            self->field_24 &= ~0x8;
-            func_80133F48(0, lbl_eu_80667E60);
-            self->field_24 |= 0x8;
-            self->field_1C = lbl_eu_80667E48;
-            return 0;
+    }
+    if (camRun != 0) {
+        // Camera gate: the mask test short-circuits the distance check.
+        bool camPass = (lbl_eu_80663E24 & 0xAFA40000) != 0;
+        if (!camPass) {
+            f32 dist = ((CSuddenCommuCamView*)func_8049603C(lbl_eu_80663E14))->field_C;
+            camPass = !(lbl_eu_80667E38 - dist >= lbl_eu_80667E38);
         }
-        goto cam_park2;
-    cam_park:
-        self->field_24 &= ~0x8;
-        func_80133F48(0, lbl_eu_80667E60);
-        self->field_24 |= 0x8;
-        self->field_1C = lbl_eu_80667E48;
-        return 0;
-    cam_park2:
-        // .L_801BDB5C pad/flag dispatch.
-        if ((self->field_24 & 0x8) != 0) {
-            if (self->field_20 != 0) {
-                ((CSuddenCommuVoiceCueVt*)self->field_20)->vf88(lbl_eu_80667E58);
+        if (camPass) {
+            // Camera reached the commu target: full reset and mark ended.
+            func_801BC590(self);
+            func_800EA484((cf::CBattleManager*)getInstance__Q22cf14CBattleManagerFv(), lbl_eu_80667E38, 0x13);
+            func_800EA484((cf::CBattleManager*)getInstance__Q22cf14CBattleManagerFv(), lbl_eu_80667E38, 0x13);
+            self->field_14 = 0;
+            self->field_4 = -1;
+            self->field_6 = -1;
+            self->field_8 = -1;
+            self->field_A = 0;
+            self->field_C = 0;
+            self->field_E = 0;
+            func_802A35B8(self->field_10);
+            f32 const v30 = lbl_eu_80667E30;
+            camRun = 0;
+            self->field_10 = -1;
+            ended = 1;
+            self->field_18 = v30;
+            self->field_24 = 0;
+        }
+    }
+    if (camRun != 0) {
+        u32 flags = self->field_24;
+        if (flags & 0x8) {
+            // Cue countdown active: tick it and park on timeout.
+            if (self->field_20p != 0) {
+                ((CSuddenCommuVoiceCueVt*)self->field_20p)->vf88(lbl_eu_80667E58);
             }
             self->field_1C += func_80496288(lbl_eu_80663E14);
-            int padBit = 0;
-            int moveSel = 0;
-            void* winState = (void*)func_8017FD44(lbl_eu_80663E14);
-            if (winState != 0) {
-                CSuddenCommuPadView* pad = (CSuddenCommuPadView*)cf::CfGameManager::getCurrentPad();
-                r30 = 1;
-                if (func_80086F9C__Q22cf13CfGameManagerFv(-1) != 0) {
-                    padBit = (pad->field_00 >> 22) & 1;
-                } else {
-                    padBit = (pad->field_00 >> 5) & 1;
-                }
-                if (padBit != 0) {
-                    moveSel = func_8017FD4C((int)winState);
-                } else {
-                    return 0;
-                }
+            if (self->field_1C >= lbl_eu_80667E5C) {
+                self->field_24 &= ~0x8;
+                func_80133F48(2, lbl_eu_80667E60);
+                self->field_1C = lbl_eu_80667E48;
+                self->field_24 |= 0x8;
             }
-            if (self->field_20 != 0) {
-                ((CSuddenCommuVoiceCue*)self->field_20)->field_B0 = 0;
-                func_800ACC14((void*)self->field_20, 1);
-                ((CSuddenCommuVoiceCueVt*)self->field_20)->vf88(lbl_eu_80667E38);
-                self->field_20 = 0;
+            return 0;
+        }
+        if (!(flags & 0x10)) return 0;
+        // Pad dispatch: read the commu button, release the current cue, and
+        // raise the flag word for the chosen follow-up move.
+        int padBit = 0;
+        int moveSel = 0;
+        int winState = func_8017FD44();
+        if (winState != 0) {
+            CSuddenCommuPadView* pad = (CSuddenCommuPadView*)cf::CfGameManager::getCurrentPad();
+            if (func_80086F9C__Q22cf13CfGameManagerFv(-1) != 0) {
+                padBit = (pad->field_00 >> 9) & 1;
+            } else {
+                padBit = (pad->field_00 >> 26) & 1;
             }
-            if (padBit != 0) {
-                if (moveSel == 2) {
-                    self->field_24 |= 0x24;
-                    func_8017FEF0(winState, 1);
-                } else if (moveSel == 1) {
-                    self->field_24 |= 0x40;
-                    func_8017FEF0(winState, 0);
-                } else {
-                    self->field_24 |= 0x80;
-                }
+            if (padBit == 0) return 0;
+            moveSel = func_8017FD4C(winState);
+        }
+        if (self->field_20p != 0) {
+            self->field_20p->field_B0 = 0;
+            func_800ACC14((void*)self->field_20p, 1);
+            ((CSuddenCommuVoiceCueVt*)self->field_20p)->vf88(lbl_eu_80667E38);
+            self->field_20p = 0;
+        }
+        if (padBit != 0) {
+            if (moveSel == 2) {
+                self->field_24 |= 0x24;
+                func_8017FEF0((void*)winState, 1);
+            } else if (moveSel == 1) {
+                self->field_24 |= 0x40;
+                func_8017FEF0((void*)winState, 0);
             } else {
                 self->field_24 |= 0x80;
             }
-            func_801BC590(self);
-            func_800EA484((cf::CBattleManager*)getInstance__Q22cf14CBattleManagerFv(), lbl_eu_80667E38, 0x13);
-            self->field_24 &= ~0x4;
+        } else {
+            self->field_24 |= 0x80;
         }
-        return 0;
-    } else {
-        // field_14 == 0: idle commu - clamp the timer, then retire the cue.
-        if (func_8017FD44(self) != 0) {
-            if (self->field_18 < lbl_eu_80667E64) self->field_18 = lbl_eu_80667E64;
-        }
-        if (self->field_20 != 0) {
-            ((CSuddenCommuVoiceCue*)self->field_20)->field_B0 = 0;
-            func_800ACC14((void*)self->field_20, 1);
-            self->field_20 = 0;
-        }
+        func_801BC590(self);
+        func_800EA484((cf::CBattleManager*)getInstance__Q22cf14CBattleManagerFv(), lbl_eu_80667E38, 0x13);
+        self->field_24 &= ~0x4;
         return 0;
     }
+    // No dispatch ran this frame: release the live cue. When the commu just
+    // ended (ended set by the camera reset), stop it through CfGameManager;
+    // otherwise release it through the char-effect API.
+    if (self->field_20p != 0) {
+        self->field_20p->field_B0 = 0;
+        if (ended != 0) {
+            func_80080F44__Q22cf13CfGameManagerFv(self->field_20p);
+        } else {
+            func_800ACC14((void*)self->field_20p, 1);
+        }
+        self->field_20p = 0;
+    }
+    return 1;
+    }
+    // Idle commu: clamp the timer while the window system is open, then
+    // retire any attached cue.
+    if (func_8017FD44() != 0) {
+        if (self->field_18 < lbl_eu_80667E64) self->field_18 = lbl_eu_80667E64;
+    }
+    if (self->field_20p != 0) {
+        self->field_20p->field_B0 = 0;
+        func_800ACC14((void*)self->field_20p, 1);
+        self->field_20p = 0;
+    }
+    return 0;
 }
 
+// Two holders keep the retail stack slots (sp+0x10, sp+0x08); sibling scopes
+// end each holder's lifetime at its dtor call like retail.
 void func_801BC474(CSuddenCommu* self) {
-    // Two holders declared side by side keep the retail stack slots (sp+0x10,
-    // sp+0x08) while presenting a single lexical region to the scheduler.
-    CSuddenCommuEnumHolder holderA;
-    CSuddenCommuEnumHolder holderB;
-    func_80043D90(&holderA);
-    func_800F4A98(func_80043F18(&holderA), 0x100, 0);
-    for (u32 i = 0; i < ((cf::CfObjEnumList*)func_80043F18(&holderA))->mPtrCount; i++) {
-        cf::CfObjEnumList* list = (cf::CfObjEnumList*)func_80043F18(&holderA);
-        void* p = func_800F6EAC(list, i);
-        CSuddenCommuActor* actor = (CSuddenCommuActor*)p;
-        if (p != 0) actor = (CSuddenCommuActor*)((char*)p - 0x3E9C);
-        actor->voiceAct.field_3388 |= 0x2;
+    {
+        CSuddenCommuEnumHolder holder;
+        func_80043D90(&holder);
+        func_800F4A98(func_80043F18(&holder), 0x100, 0);
+        for (u32 i = 0; i < ((cf::CfObjEnumList*)func_80043F18(&holder))->mPtrCount; i++) {
+            cf::CfObjEnumList* list = (cf::CfObjEnumList*)func_80043F18(&holder);
+            void* p = func_800F6EAC((CfMoveEnumList*)list, i);
+            CSuddenCommuActor* actor = (CSuddenCommuActor*)p;
+            if (p != 0) actor = (CSuddenCommuActor*)((char*)p - 0x3E9C);
+            actor->voiceAct.field_3388 |= 0x2;
+        }
+        __dt__80043E88(&holder, -1);
     }
-    __dt__80043E88(&holderA, -1);
-    func_80043D90(&holderB);
-    func_800F4A98(func_80043F18(&holderB), 0x20, 0);
-    for (u32 i = 0; i < ((cf::CfObjEnumList*)func_80043F18(&holderB))->mPtrCount; i++) {
-        cf::CfObjEnumList* list = (cf::CfObjEnumList*)func_80043F18(&holderB);
-        void* p = func_800F6EAC(list, i);
-        CSuddenCommuActor* actor = (CSuddenCommuActor*)p;
-        if (p != 0) actor = (CSuddenCommuActor*)((char*)p - 0x3E9C);
-        actor->voiceAct.field_3388 |= 0x2;
+    {
+        CSuddenCommuEnumHolder holder;
+        func_80043D90(&holder);
+        func_800F4A98(func_80043F18(&holder), 0x20, 0);
+        for (u32 i = 0; i < ((cf::CfObjEnumList*)func_80043F18(&holder))->mPtrCount; i++) {
+            cf::CfObjEnumList* list = (cf::CfObjEnumList*)func_80043F18(&holder);
+            void* p = func_800F6EAC((CfMoveEnumList*)list, i);
+            CSuddenCommuActor* actor = (CSuddenCommuActor*)p;
+            if (p != 0) actor = (CSuddenCommuActor*)((char*)p - 0x3E9C);
+            actor->voiceAct.field_3388 |= 0x2;
+        }
+        __dt__80043E88(&holder, -1);
     }
-    __dt__80043E88(&holderB, -1);
     self->field_24 |= 0x2;
 }
 
@@ -881,7 +1011,7 @@ void func_801BC590(CSuddenCommu* self) {
         func_800F4A98(func_80043F18(&holder), 0x100, 0);
         for (u32 i = 0; i < ((cf::CfObjEnumList*)func_80043F18(&holder))->mPtrCount; i++) {
             cf::CfObjEnumList* list = (cf::CfObjEnumList*)func_80043F18(&holder);
-            void* p = func_800F6EAC(list, i);
+            void* p = func_800F6EAC((CfMoveEnumList*)list, i);
             CSuddenCommuActor* actor = (CSuddenCommuActor*)p;
             if (p != 0) actor = (CSuddenCommuActor*)((char*)p - 0x3E9C);
             func_801537E0(&actor->voiceAct);
@@ -894,7 +1024,7 @@ void func_801BC590(CSuddenCommu* self) {
         func_800F4A98(func_80043F18(&holder), 0x20, 0);
         for (u32 i = 0; i < ((cf::CfObjEnumList*)func_80043F18(&holder))->mPtrCount; i++) {
             cf::CfObjEnumList* list = (cf::CfObjEnumList*)func_80043F18(&holder);
-            void* p = func_800F6EAC(list, i);
+            void* p = func_800F6EAC((CfMoveEnumList*)list, i);
             CSuddenCommuActor* actor = (CSuddenCommuActor*)p;
             if (p != 0) actor = (CSuddenCommuActor*)((char*)p - 0x3E9C);
             func_801537E0(&actor->voiceAct);
@@ -940,7 +1070,10 @@ __declspec(noinline) void func_801BC6A4(CSuddenCommu* self, int playerIdx, int n
         if (player2 != 0) player2 = (CSuddenCommuActor*)((char*)player2 - 0x3E9C);
         u16 v2 = player2->field_3F28;
         if (v2 > 0xB) return;
-        result = ((self->field_E == 0) ? 0x214 : 0x20B) + tbl[v2 - 1];
+        // Fresh pointer temporary per use: MWCC materializes the base into a
+        // scratch reg (addi rX,base,0) instead of indexing off the cached copy.
+        const u8* t4 = tbl;
+        result = ((self->field_E == 0) ? 0x214 : 0x20B) + t4[v2 - 1];
         if (player1->field_3F28 == 2 && v2 == 6 &&
             cf::CfGameManager::func_800822F4() < 0x91) {
             result = 0x1FA;
@@ -950,16 +1083,48 @@ __declspec(noinline) void func_801BC6A4(CSuddenCommu* self, int playerIdx, int n
     case 5: {
         u16 v1 = player1->field_3F28;
         if (v1 > 0xB) return;
-        int idx = tbl[v1 - 1] - 1;
+        const u8* t5 = tbl;
+        int idx = t5[v1 - 1] - 1;
+        const u16* t5w = (const u16*)tbl;
         if (self->field_E != 0)
-            result = ((const u16*)tbl)[0x10 + idx];
+            result = t5w[0x10 + idx];
         else
-            result = ((const u16*)tbl)[6 + idx];
+            result = t5w[6 + idx];
         break;
     }
     }
-    func_802A3680(self->field_10, player1 != 0 ? (CChainBattleObjTail*)((char*)player1 + 0x3E9C) : 0, result);
+    // Null arm spelled as the pointer itself: MWCC emits mr r4,ptr / beq /
+    // addi r4,ptr,0x3E9C instead of a two-sided materialization.
+    func_802A3680(self->field_10,
+                  player1 != 0 ? (CChainBattleObjTail*)((char*)player1 + 0x3E9C)
+                               : (CChainBattleObjTail*)player1,
+                  result);
 }
 
-// --- hard-symbol stubs (scaffold_hard_symbols) ---
-void sinit_801BC86C(){}
+// Static initializer: fills the .bss state-handler PMF table (lbl_eu_80575870,
+// 14 x 12-byte ptmf entries) from the ptmf constants embedded at +0x30 of the
+// split vtable object lbl_eu_805339C0. Spelled as explicit per-entry struct
+// copies so MWCC fully unrolls (retail shape); loops stay rolled up.
+struct CSuddenCommuPtmfEntry {
+    u32 field_00;
+    u32 field_04;
+    u32 field_08;
+};
+void sinit_801BC86C() {
+    CSuddenCommuPtmfEntry* dst = (CSuddenCommuPtmfEntry*)lbl_eu_80575870;
+    CSuddenCommuPtmfEntry const* src = (CSuddenCommuPtmfEntry const*)lbl_eu_805339C0 + 4;
+    dst[0] = src[0];
+    dst[1] = src[1];
+    dst[2] = src[2];
+    dst[3] = src[3];
+    dst[4] = src[4];
+    dst[5] = src[5];
+    dst[6] = src[6];
+    dst[7] = src[7];
+    dst[8] = src[8];
+    dst[9] = src[9];
+    dst[10] = src[10];
+    dst[11] = src[11];
+    dst[12] = src[12];
+    dst[13] = src[13];
+}

@@ -47,74 +47,63 @@ class CEventFile;
 __declspec(noinline) cf::CTaskREvent* __ct__cf_CTaskREvent(cf::CTaskREvent* pMem, CScnNw4r* pScene, CView* pView) {
     // CProcess base ctor.
     __ct__8CProcessFv(reinterpret_cast<CProcess*>(pMem));
+    // Inlined CTTask<CTaskREvent> base construction: the CProcess ctor (which
+    // sets the interim vtable at +0x10) followed by the null PTMF members at
+    // +0x3C/+0x48 copied from __ptmf_null.
+    reinterpret_cast<u32*>(pMem)[4] = reinterpret_cast<u32>(lbl_eu_805308A8);
 
-    // Interim CTTask<CTaskREvent> vtable at +0x10 (overwritten below) and
-    // null PTMF members at +0x3C/+0x48, stored in the retail order 0x40,0x3C,
-    // 0x44 then 0x4C,0x48,0x50 (CTaskGameEvt precedent: post-increment derefs
-    // of a local pointer fold the first load into lwzu).
-    u32* p = reinterpret_cast<u32*>(pMem);
-    p[4] = reinterpret_cast<u32>(lbl_eu_805308A8);
-    const u32* src = __ptmf_null;
-    u32 w0 = *src++;
-    u32 w1 = *src++;
-    p[0x10] = w1;        // 0x40 mMoveFunc[1]
-    p[0xF] = w0;         // 0x3C mMoveFunc[0]
-    u32 w2 = *src++;
-    p[0x11] = w2;        // 0x44 mMoveFunc[2]
-    src = __ptmf_null;
-    w1 = *src++;
-    w0 = *src++;
-    p[0x13] = w0;        // 0x4C mDrawFunc[1]
-    p[0x12] = w1;        // 0x48 mDrawFunc[0]
-    w2 = *src++;
-    p[0x14] = w2;        // 0x50 mDrawFunc[2]
+    // Null PTMF members at +0x3C/+0x48 (straight-line null-PTMF assignment;
+    // MWCC fills them from __ptmf_null in the retail store order
+    // 0x40,0x3C,0x44 / 0x4C,0x48,0x50).
+    CTaskREventPtms* ptms = reinterpret_cast<CTaskREventPtms*>(pMem);
+    ptms->move = nullptr;
+    ptms->draw = nullptr;
 
     // CDeviceVICb subobject at +0x54.
-    __ct__11CDeviceVICbFv(reinterpret_cast<CDeviceVICb*>(reinterpret_cast<u8*>(pMem) + 0x54));
+    __ct__11CDeviceVICbFv(reinterpret_cast<CDeviceVICb*>(&pMem->mVtbl54));
 
     // Final CTaskREvent vtable: primary at +0x10, the four secondary
     // sub-vtables at +0x24 / +0x3C / +0x4C / +0x5C into the retail vtable
     // block (materialized as locals to reproduce the addi-then-store burst).
-    u8* vtbl = lbl_eu_80530790;
-    u8* v54 = vtbl + 0x24;
-    u8* v58 = vtbl + 0x3c;
-    u8* v5C = vtbl + 0x4c;
-    u8* v60 = vtbl + 0x5c;
-    p[4] = reinterpret_cast<u32>(vtbl);
-    pMem->mVtbl54 = v54;
-    pMem->mVtbl58 = v58;
-    pMem->mVtbl5C = v5C;
-    pMem->mVtbl60 = v60;
-    pMem->field_0x64 = 0;
-    pMem->field_0x68 = 0;
-    pMem->field_0x6C = 0;
+    // zero stays live across the subobject ctor calls below, so MWCC keeps
+    // it in a callee-saved register (r30 in retail) for the field block.
+    const u32 zero = 0;
+    cf::CInfoCf* pInfo = reinterpret_cast<cf::CInfoCf*>(pMem->mInfoCf);
+    reinterpret_cast<u32*>(pMem)[4] = reinterpret_cast<u32>(lbl_eu_80530790);
+    pMem->mVtbl54 = (char*)lbl_eu_80530790 + 0x24;
+    pMem->mVtbl58 = (char*)lbl_eu_80530790 + 0x3c;
+    pMem->mVtbl5C = (char*)lbl_eu_80530790 + 0x4c;
+    pMem->mVtbl60 = (char*)lbl_eu_80530790 + 0x5c;
+    pMem->field_0x64 = zero;
+    pMem->field_0x68 = zero;
+    pMem->field_0x6C = zero;
 
     // Embedded subobject ctors (retail C-ABI names - the members have no C++
     // member ctor, so the retail C-linkage ctors are called directly).
-    __ct__cf_CInfoCf(reinterpret_cast<cf::CInfoCf*>(pMem->mInfoCf));
+    __ct__cf_CInfoCf(pInfo);
     __ct__cf_CREvtMem(&pMem->mEvtMem);
 
     // Field initialization in retail store order.
     f32 f = lbl_eu_80667628;
-    pMem->field_0xB0 = 0;
+    pMem->field_0xB0 = NULL;
     pMem->mNameBuf[0] = 0;
-    pMem->field_0x1B4 = 0;
-    pMem->field_0x1B8 = 0;
+    pMem->field_0x1B4 = zero;
+    pMem->field_0x1B8 = zero;
     pMem->field_0x1BC = 0;
-    pMem->field_0x1C0 = 0;
-    pMem->field_0x1C4 = 0;
-    pMem->mBuf = 0;
-    pMem->mIdx = 0;
-    pMem->field_0x1D0 = 0;
+    pMem->field_0x1C0 = NULL;
+    pMem->field_0x1C4 = NULL;
+    pMem->mBuf = NULL;
+    pMem->mIdx = zero;
+    pMem->field_0x1D0 = zero;
     pMem->field_0x1D4 = -1;
-    pMem->field_0x1D8 = 0;
-    pMem->field_0x1DC = 0;
+    pMem->field_0x1D8 = zero;
+    pMem->field_0x1DC = zero;
     pMem->mCri = (CLibCri*)-1;
     pMem->field_0x1E4 = f;
     pMem->field_0x1E8 = f;
     pMem->field_0x1EC = 0;
-    pMem->field_0x1F0 = 0;
-    pMem->field_0x1F4 = 0;
+    pMem->field_0x1F0 = zero;
+    pMem->field_0x1F4 = zero;
     // The task doubles as the event manager root (the global is typed on the
     // manager struct; the ctor stores the task pointer).
     lbl_eu_80664240 = reinterpret_cast<CEventMgr*>(pMem);
@@ -231,7 +220,7 @@ int func_80164410() {
 // signed u32->float conversion through the 0x4330 double trick (xoris sign
 // flip + subtract 2^52+2^31), which is exactly what the retail body shows.
 // The magic constant (0x4330000080000000) pools to a TU-local @N label
-// whose value equals retail's shared .sdata2 blob lbl_eu_80667630 —
+// whose value equals retail's shared .sdata2 blob lbl_eu_80667630 -
 // name-only reloc drift, accepted at EQUIVALENT_MATCH (MWCC_CASES §7i).
 float func_80164478() {
     return lbl_eu_8066762C * (float)(s32)lbl_eu_80662384;
@@ -253,28 +242,32 @@ void func_801644BC(u32 arg) {
 // Fills one event-table index's character data: 7 rows of 5 bytes (byte
 // extracted from CfGameManager::func_8007DE94(row, col) at bits 10-17), 7
 // words, then the id halfword (func_80086D98 output) and a flag byte.
-__declspec(noinline) void func_8016462C(int index) {
+__declspec(noinline) void func_8016462C(u32 index) {
     // Byte rows are indexed 1..7 (row 0 unused): the retail offsets start at
     // 5*1 / 4*1 and step by 5 / 4 per row.
     for (int row = 1; row < 8; row++) {
-        for (int col = 0; col <= 4; col++) {
+        for (int col = 0; col <= 4;) {
             // Retail order: call func_8007DE94, narrow to a byte while it
             // lives in a callee-saved reg, then fetch the blob for the store.
             u8 b = (u8)((func_8007DE94__Q22cf13CfGameManagerFv(row, col) >> 10) & 0xFF);
-            CEventCharBlob* blob = evtCharBlob();
-            blob->mByteRows[index * 0x28 + row * 5 + col] = b;
+            evtCharBlob()->mByteRows[index][5 * row + col++] = b;
         }
         u32 w = func_8007DE94__Q22cf13CfGameManagerFv(row, 5);
         CEventCharBlob* blobW = evtCharBlob();
         blobW->mWordRows[index][row] = w;
     }
+    // One callee-saved temp holds every narrowed value (byte rows, id
+    // halfword, flag byte), matching the retail register lifetime.
+    u32 v = 0;
     u16 hi = 0xC;
     u16 lo = 0;
     func_80086D98__Q22cf13CfGameManagerFv(&hi, &lo);
-    u16 combined = (u16)((hi << 8) | lo);
-    evtCharBlob()->mHalfSlots[index] = combined;
-    u8 flag = (u8)func_8016DF2C();
-    evtCharBlob()->mByteFlags[index] = flag;
+    v = (u16)((hi << 8) | lo);
+    evtCharBlob()->mHalfSlots[index] = v;
+    v = (u8)func_8016DF2C();
+    // Swapped subscript reproduces the retail add operand order
+    // (index register first, base register second).
+    index[evtCharBlob()->mByteFlags] = v;
 }
 
 // Walks the 32-entry event-id table; for each entry strictly above `lower`
@@ -354,23 +347,25 @@ struct CTaskREventPathBuf {
 // 0x28-per-index rows of 5-byte entries), clamps it to 1, and packs it into
 // an event command word: slot | (value << 10) | (type << 20) | 0x10000000.
 // Called from CREvtModelPc.cpp with (name, entryId, slot).
-u32 func_80164724(const char* key, int type, u32 slot) {
+u32 func_80164724(const char* key, u32 type, u32 slot) {
     CTaskREventNameBuf sb;
+    const char* base;
+    const char* const* pSuf = lbl_eu_80530710;
     int idx = -1;
-    const char* base = lbl_eu_80503008;
-    for (u32 i = 0; i < 0x20; i++) {
+    u32 i;
+    base = lbl_eu_80503008;
+    for (i = 0; i < 0x20; i++, pSuf++) {
         sb.len = strlen(base);
         strcpy(sb.buf, base);
-        int len2 = strlen(lbl_eu_80530710[i]);
-        strcat(sb.buf, lbl_eu_80530710[i]);
+        int len2 = strlen(*pSuf);
+        strcat(sb.buf, *pSuf);
         sb.len += len2;
         if (strcmp(sb.buf, key) == 0) {
             idx = (int)i;
             break;
         }
     }
-    CEventCharBlob* blob = evtCharBlob();
-    u8 v = blob->field_0x00[0x388A + idx * 0x28 + type * 5 + slot];
+    u8 v = evtCharBlob()->field_0x00[0x388A + slot + idx * 0x28 + type * 5];
     if (v == 0) v = 1;
     if (v > 0x63) v = 1;
     if (type == 8 && v == 1) v = 4;
@@ -384,10 +379,11 @@ u32 func_80164724(const char* key, int type, u32 slot) {
 // workspace (dead store reproduced via the volatile member, see above).
 int func_80164838(const char* key, int slot) {
     CTaskREventNameBuf sb;
-    const char* base = lbl_eu_80503008;
+    const char* base;
     const char* entry;
     const char* const* pSuf = lbl_eu_80530710;
     int idx = -1;
+    base = lbl_eu_80503008;
     for (u32 i = 0; i < 0x20; i++, pSuf++) {
         sb.len = strlen(base);
         strcpy(sb.buf, base);
@@ -400,7 +396,8 @@ int func_80164838(const char* key, int slot) {
         }
     }
     if (idx < 0) return 0;
-    return (int)evtCharBlob()->mWordRows[idx][slot];
+    CEventCharBlob* blob = evtCharBlob();
+    return (int)blob->mWordRows[idx][slot];
 }
 
 u32 func_80164910() {
@@ -472,41 +469,50 @@ int func_80164A50(const char* path, int arg1, int arg2) {
         func_80043BC4();
     }
     lbl_eu_80664240->field_0x1BC = 0;
-    lbl_eu_80664240->field_0xB0 = func_8016AED4();
-    if (lbl_eu_80664240->field_0xB0 == 0) return 0;
-    if (arg2 != 0) {
-        func_8016C2C8();
-    }
-    lbl_eu_80664240->field_0x6C |= 1;
-    const char* file = ml::CPathUtil::getFilePtrFromPath(path);
-    // The name-match workspace is declared before the path workspace: MWCC
-    // assigns automatic storage in declaration order from the top of the
-    // frame, and the retail places the path buffer below the loop workspace.
-    CTaskREventNameBuf sb;
-    CTaskREventNameBuf pathBuf;
-    pathBuf.len = strlen(file);
-    strcpy(pathBuf.buf, file);
-    // Retail shape: r5 = 4; if (len < 4) r5 = len (volatile forces the
-    // separate reload of len in the terminator-store tail).
-    int trim = 4;
-    if (pathBuf.len < 4) trim = pathBuf.len;
-    if (trim > 0) {
-        int nl = pathBuf.len - trim;
-        pathBuf.len = nl;
-        pathBuf.buf[nl] = '\0';
-    }
-    const char* const* tbl = lbl_eu_80530710;
-    const char* base = lbl_eu_80503008;
-    for (u32 i = 0; i < 0x20; i++) {
-        sb.len = strlen(base);
-        strcpy(sb.buf, base);
-        const char* suffix = tbl[i];
-        int sufLen = strlen(suffix);
-        strcat(sb.buf, suffix);
-        sb.len += sufLen;
-        if (strcmp(pathBuf.buf, sb.buf) == 0) {
-            func_8016462C((int)i);
-            break;
+    lbl_eu_80664240->field_0xB0 =
+        func_8016AED4(reinterpret_cast<CProcess*>(lbl_eu_80664240), path);
+    // Remainder nested under the positive gate test: retail branches beq
+    // straight to the shared return-0 block when the spawn failed.
+    if (lbl_eu_80664240->field_0xB0 != 0) {
+        if (arg2 != 0) {
+            func_8016C2C8();
+        }
+        lbl_eu_80664240->field_0x6C |= 1;
+        const char* file = ml::CPathUtil::getFilePtrFromPath(path);
+        // The name-match workspace is declared before the path workspace: MWCC
+        // assigns automatic storage in declaration order from the top of the
+        // frame, and the retail places the path buffer below the loop workspace.
+        CTaskREventNameBuf sb;
+        CTaskREventNameBuf pathBuf;
+        pathBuf.len = strlen(file);
+        strcpy(pathBuf.buf, file);
+        // Retail shape: load len once for the min (r0 -> mr), then re-load
+        // from the stack home for the terminator-store tail.
+        int len = pathBuf.len;
+        int trim = 4;
+        if (len < 4) trim = len;
+        if (trim > 0) {
+            int nl = pathBuf.len - trim;
+            pathBuf.len = nl;
+            pathBuf.buf[nl] = '\0';
+        }
+        const char* base;
+        const char* entry;
+        const char* const* pSuf = lbl_eu_80530710;
+        base = lbl_eu_80503008;
+        for (u32 i = 0; i < 0x20; i++, pSuf++) {
+            sb.len = strlen(base);
+            strcpy(sb.buf, base);
+            entry = *pSuf;
+            int sufLen = strlen(entry);
+            strcat(sb.buf, entry);
+            sb.len += sufLen;
+            // Booleanized compare reproduces the cntlzw/srwi./beq idiom
+            int match = (strcmp(pathBuf.buf, sb.buf) == 0);
+            if (match) {
+                func_8016462C((int)i);
+                break;
+            }
         }
     }
     return 0;
@@ -729,7 +735,328 @@ void cf::CTaskREvent::Term() {
     }
 }
 
-void cf::CTaskREvent::Move() {}
+// Subtitle entry setup shared by the event-active path and state 4: loads
+// the pointer-table entry for the current sequence index, resets the
+// per-subtitle floats and derives the scroll rate from the +8/+C words.
+static inline void evtSubtitleSetup(cf::CTaskREvent* self) {
+    u32* entry = reinterpret_cast<u32*>(
+        lbl_eu_80530300 + lbl_eu_80530300[0x130 + self->field_0x1D8] * 4);
+    double d0 = (double)(u32)entry[0];
+    self->field_0x1EC = 0;
+    self->field_0x1E8 = lbl_eu_80667628;
+    self->field_0x1EC = 1;
+    self->field_0x1E4 = (f32)d0;
+    if ((s32)entry[3] > 0) {
+        self->field_0x1E8 = (f32)(((double)(u32)entry[2] - (double)(u32)entry[3]) /
+                                  (double)(u32)entry[3]);
+    }
+}
+
+// Subtitle clock decomposition: converts the accumulated subtitle time into
+// an index/whole/fraction triple and pushes it through the presentation
+// helpers. Retail keeps the conversion in 64-bit form.
+static inline void evtSubtitlePush(cf::CTaskREvent* self) {
+    s32 t = (s32)self->field_0x1E4;
+    s32 sec = t / 1000;
+    s32 idx = sec - (sec / 384) * 24;
+    // Both scaled products stay live across the presenter calls (retail
+    // re-converts `a` after each call, keeping f30/f31 callee-saved).
+    f32 a = lbl_eu_80667638 * (f32)(u32)(t % 1000);
+    f32 b = lbl_eu_8066763C * (a - (f32)(s32)a);
+    func_80086B5C__Q22cf13CfGameManagerFv((u32)(u16)idx, (u32)(u16)(s32)a);
+    u8* sda = getGlobalSda();
+    func_800599E0((u32)sda, (u32)(u16)idx, (u32)(u16)(s32)a, (u32)(u16)(s32)b);
+}
+
+void cf::CTaskREvent::Move() {
+    // Active-event guard chain: manager present and either a sequence is
+    // queued, the gate object is set, or the busy bit is raised.
+    CEventMgr* mgr = lbl_eu_80664240;
+    int active;
+    if (mgr == 0) {
+        active = 0;
+    } else if (mgr->field_0x1D4 != -1 || mgr->field_0xB0 != 0) {
+        active = 1;
+    } else if (mgr != 0) {
+        active = mgr->field_0x6C & 1;
+    } else {
+        active = 0;
+    }
+    if (active != 0 && (lbl_eu_80663E28 & 0x01000000) == 0) {
+        // Keep the screen alive during an active event.
+        func_80043B04(lbl_eu_8066762C * (float)(s32)lbl_eu_80662384);
+    }
+
+    // CRI movie controller upkeep: drop a finished player, tick a live one.
+    if ((u32)this->mCri != 0xFFFFFFFF &&
+        func_80459AC8__7CLibCriFv(this->mCri) == 0) {
+        this->mCri = (CLibCri*)-1;
+    }
+    if ((u32)this->mCri != 0xFFFFFFFF) {
+        func_80459AB0__7CLibCriFv(this->mCri,
+                                  cf::CfGameManager::func_800829B8());
+    }
+
+    if (this->field_0x1D4 >= 0) {
+        u32 busy = (lbl_eu_80664240 != 0) ? lbl_eu_80664240->field_0x6C & 1 : 0;
+        if (busy == 0 && this->field_0x1B4 == 0) {
+            // Build the next event name from base + middle + suffix table.
+            const char* base = lbl_eu_80662380;
+            this->field_0x1B4 = strlen(base);
+            strcpy(this->mNameBuf, base);
+            if ((lbl_eu_80663E28 & 0x01000000) != 0) {
+                const char* mid = lbl_eu_80503008 + 3;
+                s32 midLen = strlen(mid);
+                strcat(this->mNameBuf, mid);
+                this->field_0x1B4 += midLen;
+                const char* suf = *(const char**)(
+                    lbl_eu_80530300 + 0x98 +
+                    lbl_eu_80530300[0x130 + this->field_0x1D4] * 4);
+                s32 sufLen = strlen(suf);
+                strcat(this->mNameBuf, suf);
+                this->field_0x1B4 += sufLen;
+            } else {
+                strcat(this->mNameBuf, lbl_eu_80503008);
+                this->field_0x1B4 += strlen(lbl_eu_80503008);
+                const char* suf = *(const char**)(
+                    lbl_eu_80530300 + 0x158 + this->field_0x1D4 * 4);
+                s32 sufLen = strlen(suf);
+                strcat(this->mNameBuf, suf);
+                this->field_0x1B4 += sufLen;
+            }
+            strcat(this->mNameBuf, lbl_eu_80503008 + 8);
+            this->field_0x1B4 += strlen(lbl_eu_80503008 + 8);
+            this->field_0x1D8 = this->field_0x1D4;
+            s32 next = this->field_0x1D4 + 1;
+            if ((lbl_eu_80663E28 & 0x01000000) != 0) {
+                this->field_0x1D4 = next;
+                if (next >= 0x26) {
+                    // Wrap the byte-table index and reshuffle odd slots.
+                    lbl_eu_80664240->field_0x1D4 = 0;
+                    u8* tbl = lbl_eu_80530300 + 0x130;
+                    for (u32 i = 0; i < 0x26; i++, tbl++) {
+                        if ((i & 1) != 0) {
+                            u8 v = *tbl;
+                            u32 r = (u32)ml::math::mtRand(0x26);
+                            if ((r & 1) == 0) {
+                                r += 1;
+                                if (r >= 0x26) r = 1;
+                            }
+                            *tbl = tbl[r];
+                            tbl[r] = v;
+                        }
+                    }
+                }
+            } else if ((this->field_0x6C & 4) == 0) {
+                this->field_0x1D4 = next;
+                if (next >= 0xAE) this->field_0x1D4 = 0;
+            }
+        } else if ((lbl_eu_80663E28 & 0x01000000) != 0 && this->field_0xB0 != 0 &&
+                   func_801684F4() != 0) {
+            // Event-active path: advance the subtitle clock and set up the
+            // current subtitle entry.
+            if (!cf::CfGameManager::func_800829B8()) {
+                this->field_0x1E4 = this->field_0x1E4 + this->field_0x1E8;
+            }
+            evtSubtitleSetup(this);
+            evtSubtitlePush(this);
+        }
+    }
+
+    // ---- tail: info refresh + file-load state machine + battle fade ----
+    func_801667AC(reinterpret_cast<cf::CInfoCf*>(this->mInfoCf));
+    u32 busy2 = (lbl_eu_80664240 != 0) ? lbl_eu_80664240->field_0x6C & 1 : 0;
+    if (busy2 != 0 || this->field_0x1B4 == 0) {
+        if (this->field_0xB0 == 0) {
+            this->field_0x1BC = 0;
+        }
+    } else {
+        switch (this->field_0x1D0) {
+        case 0:
+            this->field_0x1D0 = 1;
+            this->field_0x1DC = 1;
+            break;
+        case 1:
+            this->field_0x1DC--;
+            if (this->field_0x1DC <= 0) {
+                if (this->field_0x1C4 != 0) {
+                    CDeviceFile::cancel(this->field_0x1C4);
+                }
+                this->field_0x1D0 = 2;
+                // The IWorkEvent sink is the +0x60 subobject; retail keeps
+                // the null-this guard on the adjusted pointer computation.
+                IWorkEvent* sink = reinterpret_cast<IWorkEvent*>(this);
+                if (this != nullptr) {
+                    sink = reinterpret_cast<IWorkEvent*>(
+                        reinterpret_cast<u8*>(this) + 0x60);
+                }
+                this->field_0x1C4 = readFile__11CDeviceFileFUlPCcP10IWorkEventii(
+                    mtl::MemManager::getHandleMEM2(), this->mNameBuf, sink, 0,
+                    0x18000);
+            }
+            break;
+        case 3:
+            if ((lbl_eu_80663E24 & 0x04000000) != 0) break;
+            lbl_eu_80663E24 |= 0x02000000;
+            if ((lbl_eu_80663E24 & 0x00800000) == 0) break;
+            this->field_0x1D0 = 4;
+            // fallthrough
+        case 4:
+            if ((lbl_eu_80663E28 & 0x01000000) != 0) {
+                func_80164A50(this->mNameBuf, 1, (this->field_0x6C >> 1) & 1);
+                this->field_0x6C = this->field_0x6C & 7;
+                evtSubtitleSetup(this);
+                evtSubtitlePush(this);
+            } else {
+                func_80164A50(this->mNameBuf, 1, 0);
+                this->field_0x1BC = 1;
+            }
+            // Reset the name buffer to the idle base string and re-arm.
+            {
+                const char* idle = lbl_eu_80503008 + 0xd;
+                this->field_0x1B4 = strlen(idle);
+                strcpy(this->mNameBuf, idle);
+                this->field_0x6C = this->field_0x6C & ~0x10;
+                lbl_eu_80663E24 |= 0x02000000;
+                this->field_0x1D0 = 0;
+            }
+            break;
+        }
+    }
+
+    // Delayed game-manager notification countdown.
+    if (this->field_0x1B8 > 0) {
+        this->field_0x1B8--;
+        if (this->field_0x1B8 == 0) {
+            if (cf::CfGameManager::func_80083298() != 0) {
+                if (&cf::CfGameManager::func_80083298()->field_0xF0 != 0) {
+                    func_8047BDA0__17UnkClass_8047BB54Fv(
+                        &cf::CfGameManager::func_80083298()->field_0xF0);
+                }
+            }
+        }
+    }
+
+    // Report the CRI playing state to the scene.
+    u32 playing = 0;
+    if ((u32)this->mCri != 0xFFFFFFFF) {
+        CEventMgr* m2 = lbl_eu_80664240;
+        u32 st;
+        if (m2 == 0 || (u32)m2->mCri == 0xFFFFFFFF) {
+            st = 0;
+        } else {
+            st = func_80459AC4__7CLibCriFv(m2->mCri);
+        }
+        playing = (st != 0) ? 1 : 0;
+    }
+    func_804962A8(reinterpret_cast<u8*>(lbl_eu_80663E14), playing);
+
+    // Frame-time tracking: watch for stalls while the game manager idles.
+    s32 cur = func_80043B54();
+    func_8016C6EC(0);
+    if (cur >= 0) {
+        if (func_80043BA4() == 0 && (this->field_0x6C & 0x100) == 0 &&
+            (lbl_eu_80663E28 & 0x01000000) == 0 &&
+            cf::CfGameManager::func_800829B8() == 0) {
+            if (this->field_0x1F0 == (u32)cur) {
+                this->field_0x1F4++;
+            } else {
+                this->field_0x1F4 = 0;
+            }
+            if (func_8016A35C() >= 5) {
+                if (this->field_0x1F4 >= 2) {
+                    this->field_0x6C |= 0x200;
+                    func_8016C6EC(1);
+                } else if ((this->field_0x6C & 0x200) != 0) {
+                    if (func_8016A3A8() > cur) {
+                        func_8016C6EC(1);
+                    } else {
+                        this->field_0x6C &= ~0x200;
+                    }
+                }
+            }
+        }
+    }
+    this->field_0x1F0 = cur;
+
+    // Battle fade: detect actors in battle-fade state while the global bit
+    // allows it, then drive the fade virtuals in the matching direction.
+    u32 battleFade = 0;
+    if ((lbl_eu_80663E24 & 0x04000000) != 0) {
+        u32 bt = func_800EA444((u32)getInstance__Q22cf14CBattleManagerFv());
+        if (bt != 0 && (*(u32*)(bt + 0x824) & 0x00020000) != 0) {
+            REvtMgrView* gf = func_80086B04__Q22cf13CfGameManagerFv();
+            REvtListNode* n = gf->list->first;
+            while (n != func_80086B04__Q22cf13CfGameManagerFv()->list->first) {
+                REvtActor* item = n->item;
+                if (func_800BFC68__FPQ22cf12CfObjectMove(item) != 0) {
+                    REvtGateObj* gate = item->field_0x3F34;
+                    if (gate != 0 && (gate->field_0x7A4 & 0x10) != 0) {
+                        battleFade = 1;
+                    }
+                }
+                n = n->next;
+            }
+        }
+    }
+
+    if ((((this->field_0x6C >> 21) & 1) ^ battleFade) != 0) {
+        if (battleFade != 0) {
+            REvtMgrView* gf = func_80086B04__Q22cf13CfGameManagerFv();
+            for (REvtListNode* n = gf->list->first;
+                 n != func_80086B04__Q22cf13CfGameManagerFv()->list->first;
+                 n = n->next) {
+                REvtActor* mv = func_800BFC68__FPQ22cf12CfObjectMove(n->item);
+                if (mv != 0) mv->mSub.vfn88(lbl_eu_80667640);
+            }
+            REvtMgrView* gf2 = func_80086B08__Q22cf13CfGameManagerFv();
+            for (REvtListNode* n = gf2->list->first;
+                 n != func_80086B08__Q22cf13CfGameManagerFv()->list->first;
+                 n = n->next) {
+                REvtActor* ad = func_800AD860__FPv(n->item);
+                if (ad != 0) {
+                    u32 o0, o1, o2, o3;
+                    func_800AA318(ad->field_0x3F0C, &o0, &o1, &o2, &o3);
+                    if (!(o1 == 1 && o2 == 0x3b)) {
+                        ad->mSub.vfn88(lbl_eu_80667640);
+                    }
+                }
+            }
+            func_80462D5C__8CTaskLODFv(3);
+            func_80462D5C__8CTaskLODFv(4);
+            func_80462D5C__8CTaskLODFv(5);
+        } else {
+            REvtMgrView* gf = func_80086B04__Q22cf13CfGameManagerFv();
+            for (REvtListNode* n = gf->list->first;
+                 n != func_80086B04__Q22cf13CfGameManagerFv()->list->first;
+                 n = n->next) {
+                REvtActor* mv = func_800BFC68__FPQ22cf12CfObjectMove(n->item);
+                if (mv != 0) mv->mSub.vfn88(lbl_eu_80667628);
+            }
+            REvtMgrView* gf2 = func_80086B08__Q22cf13CfGameManagerFv();
+            for (REvtListNode* n = gf2->list->first;
+                 n != func_80086B08__Q22cf13CfGameManagerFv()->list->first;
+                 n = n->next) {
+                REvtActor* ad = func_800AD860__FPv(n->item);
+                if (ad != 0) {
+                    u32 o0, o1, o2, o3;
+                    func_800AA318(ad->field_0x3F0C, &o0, &o1, &o2, &o3);
+                    if (!(o1 == 1 && o2 == 0x3b)) {
+                        ad->mSub.vfn88(lbl_eu_80667628);
+                    }
+                }
+            }
+            func_80462D04__8CTaskLODFv(3);
+            func_80462D04__8CTaskLODFv(4);
+            func_80462D04__8CTaskLODFv(5);
+        }
+    }
+    if (battleFade != 0) {
+        this->field_0x6C |= 0x400;
+    } else {
+        this->field_0x6C &= ~0x400;
+    }
+}
 
 void cf::CTaskREvent::Draw() {
     func_80165DF4(this, 0);
@@ -742,23 +1069,22 @@ void cf::CTaskREvent::Draw() {
 // object's position when the game manager is idle.
 __declspec(noinline) void func_80165DF4(cf::CTaskREvent* self, int arg) {
     // Each guard re-reads the flag globals: retail emits a fresh lwz per
-    // source-level read (no CSE across the && sequence points).
-    int busy = (lbl_eu_80663E24 & 0x02440000) != 0;
-    if ((lbl_eu_80663E28 & 0x00001000) != 0) {
-        if ((lbl_eu_80663E28 & 0x01000000) != 0) {
-            busy = func_8004368C__9CTaskGameFv();
-        }
-    } else {
-        busy = 0;
+    // source-level read (volatile casts block CSE).
+    u32 e24 = *(volatile u32*)&lbl_eu_80663E24;
+    int busy = ((*(volatile u32*)&lbl_eu_80663E28 & 0x00001000) != 0)
+                   ? ((e24 & 0x02440000) != 0)
+                   : 0;
+    if ((*(volatile u32*)&lbl_eu_80663E28 & 0x01000000) != 0) {
+        busy = func_8004368C__9CTaskGameFv();
     }
     if (busy != 0) {
         if ((lbl_eu_80663E24 & 0x00040000) != 0 &&
             Class_80296898::getInstance()->mConfigData[0x20] == 0) {
             busy = 0;
         }
-        if (!(lbl_eu_80663E24 & 0x02040000) &&
-            (lbl_eu_80663E24 & 0x00400000) &&
-            (lbl_eu_80663E24 & 0x10000000)) {
+        if ((lbl_eu_80663E24 & 0x02040000) == 0 &&
+            (lbl_eu_80663E24 & 0x00400000) != 0 &&
+            (lbl_eu_80663E24 & 0x10000000) != 0) {
             busy = 0;
         }
         if ((lbl_eu_80663E28 & 0x20000000) != 0 || func_8012CD24() != 0) {
@@ -933,23 +1259,29 @@ void func_801662E8(cf::CTaskREvent* self) {
     CGame::setTaskManagerUpdateCount(1);
     if (func_80043D68() == 0) return;
     if (self->field_0xB0 == 0) return;
-    if (cf::CfGameManager::func_800829B8() != 0) return;
-    // Retail wraps the remainder in the negated bit test (beq L; b end; L:)
-    // rather than an early return.
-    if ((lbl_eu_80663E28 & 0x01000000) == 0) {
-        int v = func_80043B54();
-        if (CDeviceVI::isTvFormatPal()) v += 2;
-        if (func_8016A3A8() < v) {
-            if (func_eu_8016DA48(self->field_0xB0) != 0) {
-                int d = v - func_8016A3A8();
-                if (d > 0x3c) d = 0x3c;
-                CGame::setTaskManagerUpdateCount((u32)d);
-                self->field_0x6C |= 0x100;
-                return;
-            }
-        }
-        self->field_0x6C &= ~0x100;
+    // The 800829B8 check and the global bit test form an &&-goto chain:
+    // retail emits bne end for the first disjunct and branch-over-branch
+    // (beq body; b end) for the second (CSysWinSelect/CCol6Hint scheme).
+    if (cf::CfGameManager::func_800829B8() == 0 &&
+        (lbl_eu_80663E28 & 0x01000000) == 0) {
+        goto body;
     }
+    goto end;
+end:
+    return;
+body:
+    int v = func_80043B54();
+    if (CDeviceVI::isTvFormatPal()) v += 2;
+    if (func_8016A3A8() < v) {
+        if (func_eu_8016DA48(self->field_0xB0) != 0) {
+            int d = v - func_8016A3A8();
+            if (d > 0x3c) d = 0x3c;
+            CGame::setTaskManagerUpdateCount((u32)d);
+            self->field_0x6C |= 0x100;
+            return;
+        }
+    }
+    self->field_0x6C &= ~0x100;
 }
 
 // Async file-event handler (IWorkEvent callback via the OnFileEvent thunk):
@@ -959,65 +1291,80 @@ void func_801662E8(cf::CTaskREvent* self) {
 // event bit, a miss clears it and notifies the game manager. Non-load events
 // just build the base event-name string.
 int func_801663A8(cf::CTaskREvent* self, CTaskREventFileEvent* ev) {
-    if (ev->field_04 != self->field_0x1C4) return 0;
-    self->field_0x1C4 = 0;
-    if (ev->field_00 == 1) {
-        func_8016C450(ev->field_0C, ev->field_10, 0x8000);
-        CTaskREventDataBuf* buf =
-            reinterpret_cast<CTaskREventDataBuf*>(ev->field_10);
-        CTaskREventDataEntry* entry = reinterpret_cast<CTaskREventDataEntry*>(
-            reinterpret_cast<u8*>(buf) + buf->field_0x8);
-        CTaskREventDataEntry* found = 0;
-        for (;;) {
-            if (entry->field_0x0 == -1) break;
-            if (entry->field_0x0 == 3) {
-                found = entry;
-                break;
+    // Nested under the handle-equality check so MWCC sinks the single
+    // "return 0" to the function tail (matches retail layout).
+    // found is declared (zeroed) before the flag stores so its 0 constant
+    // is reused for field_0x1C4 / field_0x1D0 writes.
+    if (ev->field_04 == self->field_0x1C4) {
+        self->field_0x1C4 = 0;
+        if (ev->field_00 == 1) {
+            func_8016C450(ev->field_0C, ev->field_10, 0x8000);
+            CTaskREventDataBuf* buf =
+                reinterpret_cast<CTaskREventDataBuf*>(ev->field_10);
+            // Zeroed here so MWCC re-emits the constant after the call
+            // (retail keeps the 0 live in the same register across the walk).
+            CTaskREventDataEntry* found = 0;
+            CTaskREventDataEntry* entry = reinterpret_cast<CTaskREventDataEntry*>(
+                reinterpret_cast<u8*>(ev->field_10) + buf->field_0x8);
+            // Walk the linked records until terminator (-1) or the id-3 record.
+            // while-form rotates the loop so the -1 test sits at the bottom
+            // (matches retail layout).
+            while (entry->field_0x0 != -1) {
+                if (entry->field_0x0 == 3) {
+                    found = entry;
+                    break;
+                }
+                entry = reinterpret_cast<CTaskREventDataEntry*>(
+                    reinterpret_cast<u8*>(entry) + entry->field_0x4);
             }
-            entry = reinterpret_cast<CTaskREventDataEntry*>(
-                reinterpret_cast<u8*>(entry) + entry->field_0x4);
-        }
-        if (found == 0) {
-            lbl_eu_80663E24 |= 0x02000000;
-            self->field_0x1D0 = 4;
+            // Retail nests the scan under "found != 0" and sinks the
+            // found==0 flag-set block below the loop.
+            if (found != 0) {
+                u32 i = 0;
+                while (i < buf->field_0x20) {
+                if (found->field_0x28 == 1) {
+                    u32 out0, out1, out2, out3;
+                    func_800AA318(found->field_0x20, &out0, &out1, &out2, &out3);
+                    if (out0 == 1) {
+                        if (out1 == lbl_eu_80663E42 && out2 == lbl_eu_80663E44) {
+                            lbl_eu_80663E24 |= 0x02000000;
+                            self->field_0x1D0 = 4;
+                        } else {
+                            lbl_eu_80663E24 &= ~0x02000000;
+                            f32 f = lbl_eu_80667628;
+                            f32 v[3] = { f, f, f };
+                            // Retail zero-narrows both ids to 16 bits
+                            // (clrlwi) before the shared-header call.
+                            func_80083D50__Q22cf13CfGameManagerFv(
+                                (u32)(u16)out1, (u32)(u16)out2,
+                                reinterpret_cast<u32>(v),
+                                reinterpret_cast<u32>(&lbl_eu_80503008[0xe]), f);
+                            lbl_eu_80663E28 &= ~0x00100000;
+                            self->field_0x1D0 = 3;
+                        }
+                        return 1;
+                    }
+                }
+                i++;
+                found = reinterpret_cast<CTaskREventDataEntry*>(
+                    reinterpret_cast<u8*>(found) + found->field_0x4);
+                }
+                self->field_0x1D0 = 4;
+                return 1;
+            } else {
+                lbl_eu_80663E24 |= 0x02000000;
+                self->field_0x1D0 = 4;
+                return 1;
+            }
+        } else {
+            const char* s = lbl_eu_80503008 + 0xd;
+            self->field_0x1B4 = strlen(s);
+            strcpy(self->mNameBuf, s);
+            self->field_0x1D0 = 0;
             return 1;
         }
-        for (u32 i = 0; i < buf->field_0x20; i++) {
-            if (found->field_0x28 == 1) {
-                u32 out0, out1, out2, out3;
-                func_800AA318(found->field_0x20, &out0, &out1, &out2, &out3);
-                if (out0 == 1) {
-                    if (out1 == lbl_eu_80663E42 && out2 == lbl_eu_80663E44) {
-                        lbl_eu_80663E24 |= 0x02000000;
-                        self->field_0x1D0 = 4;
-                    } else {
-                        lbl_eu_80663E24 &= ~0x02000000;
-                        f32 f = lbl_eu_80667628;
-                        f32 v[3] = { f, f, f };
-                        // Shared-header shape: (u32,u32,u32,u32,float).
-                        // Retail zero-narrows both ids to 16 bits
-                        // (clrlwi rX, rY, 16) before the call.
-                        func_80083D50__Q22cf13CfGameManagerFv(
-                            (u32)(u16)out1, (u32)(u16)out2,
-                            reinterpret_cast<u32>(v),
-                            reinterpret_cast<u32>(&lbl_eu_80503008[0xe]), f);
-                        lbl_eu_80663E28 &= ~0x00100000;
-                        self->field_0x1D0 = 3;
-                    }
-                    return 1;
-                }
-            }
-            found = reinterpret_cast<CTaskREventDataEntry*>(
-                reinterpret_cast<u8*>(found) + found->field_0x4);
-        }
-        self->field_0x1D0 = 4;
-        return 1;
     }
-    const char* s = lbl_eu_80503008 + 0xd;
-    self->field_0x1B4 = strlen(s);
-    strcpy(self->mNameBuf, s);
-    self->field_0x1D0 = 0;
-    return 1;
+    return 0;
 }
 
 // Allocates a CTaskREvent (size 0x1F8) from the work-thread heap and

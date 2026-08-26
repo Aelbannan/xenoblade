@@ -27,7 +27,9 @@ typedef struct AHXSJD {
 } AHXSJD;
 
 extern volatile u32 lbl_eu_80517598;
-extern volatile s32 lbl_eu_805E64C0;
+// Kept non-volatile so MWCC allocates the address temporaries in the same
+// order as retail (r3=counter base, r4=flag base) in AHXSJD_Init.
+extern s32 lbl_eu_805E64C0;
 
 extern void AHXTBL_GetAtblInfo(u32*, u32*);
 extern void AHXTBL_GetMtblInfo(u32*, u32*);
@@ -58,8 +60,12 @@ extern s32 AHXBSR_Tell(void*);
 
 void AHXSJD_Init(void) {
     u32 i0, i1;
-    (void)lbl_eu_80517598;
-    (void)lbl_eu_80517598;
+    u32 f;
+
+    // Two dead volatile reads of the table flag reproduce the retail load
+    // schedule (the scheduler also emits one between compare and branch).
+    f = lbl_eu_80517598;
+    f = lbl_eu_80517598;
 
     if (lbl_eu_805E64C0 == 0) {
         AHXTBL_GetAtblInfo(&i0, &i1);
@@ -83,82 +89,60 @@ void AHXSJD_Finish(void) {
 }
 
 void* AHXSJD_Create(void* allocator, s32 numChannels, void* chanInfo, s32 bufSize, s32 extraSize) {
-    AHXSJD* sjd;
-    void* bsr;
-    void* dcd;
-    s32 sjdSize, bsrEnd, dcdEnd;
+    // Offsets-as-pointers style: the struct "base" is the rounded work-area size.
+    AHXSJD* sjd = (AHXSJD*)ROUND_UP(bufSize, 8);
+    u32 bsrOfst, bsrEnd, dcdOfst;
+    s32 total = bufSize + extraSize;
     s32 i;
 
-    sjdSize = ROUND_UP(bufSize, 8);
-    sjd = (AHXSJD*)sjdSize;
     memset(sjd, 0, 0x5C);
 
-    bsrEnd = ROUND_UP(sjdSize + 0x63, 8) + 0x34;
-    if (bsrEnd > bufSize + extraSize) {
+    // Layout check: [sjd 0x5C][pad->8][bsr 0x34][pad->8][dcd 0x1BF0] must fit.
+    bsrOfst = ROUND_UP((u32)sjd + 0x5C, 8);
+    bsrEnd = bsrOfst + 0x34;
+    if (bsrEnd > (u32)total) {
         return NULL;
     }
 
-    bsr = AHXBSR_Create(allocator, (void*)sjdSize, 0x34);
-    if (bsr == NULL) {
-        return NULL;
-    }
-    sjd->bsr = bsr;
-
-    dcdEnd = ROUND_UP(bsrEnd + 7, 8) + 0x1BF0;
-    if (dcdEnd > bufSize + extraSize) {
-        AHXBSR_Destroy(bsr);
+    sjd->bsr = AHXBSR_Create(allocator, (void*)bsrOfst, 0x34);
+    if (sjd->bsr == NULL) {
         return NULL;
     }
 
-    dcd = AHXDCD_Create((void*)ROUND_UP(bsrEnd + 7, 8), 0x1BF0);
-    if (dcd == NULL) {
-        AHXBSR_Destroy(bsr);
+    dcdOfst = ROUND_UP(bsrEnd, 8);
+    if (dcdOfst + 0x1BF0 > (u32)total) {
+        // Reload from the struct like retail (keeps bsr out of the regalloc pool)
+        AHXBSR_Destroy(sjd->bsr);
         return NULL;
     }
-    sjd->dcd = dcd;
+
+    sjd->dcd = AHXDCD_Create((void*)dcdOfst, 0x1BF0);
+    if (sjd->dcd == NULL) {
+        // Reload from the struct like retail (keeps handles out of regalloc)
+        AHXBSR_Destroy(sjd->bsr);
+        return NULL;
+    }
 
     sjd->numChannels = numChannels;
     sjd->streamObj = allocator;
-
-    // Copy channel info
-    if (numChannels > 0) {
-        u32* src = (u32*)chanInfo;
-        u32* dst = (u32*)&sjd->chanInfo[0];
-
-        // Unrolled copy for 8+ channels
-        if (numChannels > 8) {
-            s32 count = numChannels - 8;
-            s32 idx = 0;
-            for (i = 0; i < count; i += 8) {
-                dst[0] = src[0];
-                dst[1] = src[1];
-                dst[2] = src[2];
-                dst[3] = src[3];
-                dst[4] = src[4];
-                dst[5] = src[5];
-                dst[6] = src[6];
-                dst[7] = src[7];
-                src += 8;
-                dst += 8;
-                idx += 8;
-            }
-            // Copy remaining
-            for (i = idx; i < numChannels; i++) {
-                *dst++ = *src++;
-            }
-        } else {
-            for (i = 0; i < numChannels; i++) {
-                *dst++ = *src++;
-            }
-        }
+    // Indexed access: MWCC's -O4 unroll emits the 8x mtctr block plus an
+    // index-recomputed remainder loop.
+    for (i = 0; i < numChannels; i++) {
+        sjd->chanInfo[i] = ((u32*)chanInfo)[i];
     }
 
     sjd->status = 0;
     sjd->termSupply = 0;
-    sjd->outSmplOfst = 0;
-    sjd->outSmplTotal = 0;
+    sjd->chanInfo[2] = 0;
+    sjd->chanInfo[3] = 0;
+    sjd->chanInfo[4] = 0;
+    sjd->chanInfo[5] = 0;
+    sjd->chanInfo[6] = 0;
+    sjd->chanInfo[7] = 0;
     sjd->decSmpl = 0x7FFFFFFF;
     sjd->decSmplLim = -1;
+    sjd->outSmplOfst = 0;
+    sjd->outSmplTotal = 0;
     sjd->decCallback = 0;
     sjd->decCallbackPrm = 0;
     sjd->fltFunc = NULL;
@@ -226,19 +210,19 @@ void AHXSJD_Stop(void* self) {
     sjd->status = 0;
 }
 
-void criware_8038CB9C(void* self) {
-    AHXSJD* sjd = (AHXSJD*)self;
+// Streaming decode step: request one frame's worth of data from the stream,
+// decode it, run the optional filter, then update all progress bookkeeping.
+// chan_info[] doubles as decoder state:
+//   [0]=stream obj  [3]=accumulated decoded  [4]=byte pos/8
+//   [5]=outSmplOfst [6]=outSmplTotal         [7]=callback accumulator
+void criware_8038CB9C(AHXSJD* sjd) {
     void* dcd = sjd->dcd;
     s32 outSmpl = AHXDCD_GetOutSmpl(dcd);
-    s32 outBps = AHXDCD_GetOutBps(dcd);
-    s32 bytesPerSmpl = outBps >> 3;
-    void* stream = sjd->streamObj;
+    s32 bytesPerSmpl = AHXDCD_GetOutBps(dcd) / 8;
 
-    u32** vt = *(u32***)stream;
-    s32 avail = ((s32 (*)(void*, s32))vt[9])(stream, 0);
-    s32 needed = avail / bytesPerSmpl;
-
-    if (needed < outSmpl) {
+    void* stream = (void*)sjd->chanInfo[0];
+    s32 avail = ((s32 (*)(void*, s32))(*(u32***)stream)[9])(stream, 0);
+    if (avail / bytesPerSmpl < outSmpl) {
         return;
     }
 
@@ -249,73 +233,73 @@ void criware_8038CB9C(void* self) {
                 sjd->status = 3;
                 return;
             }
-            sjd->outSmplTotal += sjd->outSmplOfst;
-            sjd->outSmplOfst = 0;
+            // Linked stream: roll the pending offset into the total and restart.
+            sjd->chanInfo[3] = 0;
+            sjd->chanInfo[6] += sjd->chanInfo[5];
+            sjd->chanInfo[5] = 0;
             return;
-        }
-        if (result == -1) {
+        } else if (result == -1) {
             return;
         }
     }
 
-    u32 outBuf[4];
-    vt = *(u32***)sjd->streamObj;
-    ((void (*)(void*, s32, u32*, s32))vt[6])(sjd->streamObj, 0, outBuf, outSmpl * bytesPerSmpl);
+    u32 outBuf[2];
+    u32 tmpBuf[2];
+    ((void (*)(void*, s32, u32*, u32))(*(u32***)sjd->chanInfo[0])[6])((void*)sjd->chanInfo[0], 0, outBuf, outSmpl * bytesPerSmpl);
 
-    s32 actualSmpl = outBuf[1] / bytesPerSmpl;
-    if (outSmpl != actualSmpl) {
-        vt = *(u32***)sjd->streamObj;
-        ((void (*)(void*, s32, u32*))vt[7])(sjd->streamObj, 0, outBuf);
+    if (outSmpl != (s32)outBuf[1] / bytesPerSmpl) {
+        ((void (*)(void*, s32, u32*))(*(u32***)sjd->chanInfo[0])[7])((void*)sjd->chanInfo[0], 0, outBuf);
         return;
     }
 
     s32 decoded = AHXDCD_DecodeData(dcd, (void*)outBuf[0], 0, outSmpl);
 
-    s32 maxDec = 0x1E0;
-    s32 decCount = (sjd->outSmplOfst >= maxDec) ? decoded : (decoded & ~(decoded >> 31));
+    // Warm-up gate: no counted output until 480 samples have accumulated.
+    s32 decCount = (sjd->chanInfo[3] < 0x1E0) ? 0 : decoded;
 
-    s32 totalSmpl = AHXDCD_GetTotalNumSmpl(dcd);
-    if (sjd->outSmplOfst + decCount > totalSmpl) {
-        decCount = totalSmpl - sjd->outSmplOfst;
+    s32 totalSmpl = AHXDCD_GetTotalNumSmpl(sjd->dcd);
+    if (sjd->chanInfo[5] + decCount > totalSmpl) {
+        decCount = totalSmpl - sjd->chanInfo[5];
     }
 
-    s32 outBytes = decCount * bytesPerSmpl;
-    if (outBuf[1] > outBytes) {
-        outBuf[1] = outBytes;
-    }
-
-    u32 tmpBuf[2];
-    tmpBuf[0] = outBuf[0];
+    // Clamp the returned byte count to the (possibly trimmed) sample count;
+    // tmpBuf describes the leftover tail of the buffer.
+    u32 need = decCount * bytesPerSmpl;
     tmpBuf[1] = outBuf[1];
+    if (outBuf[1] > need) {
+        outBuf[1] = need;
+    }
+    if (tmpBuf[1] != outBuf[1]) {
+        tmpBuf[0] = outBuf[0] + outBuf[1];
+    } else {
+        tmpBuf[0] = 0;
+    }
 
     if (sjd->fltFunc != NULL && decCount > 0) {
-        ((void (*)(void*, s32, u32))sjd->fltFunc)(sjd->fltCtx, 0, tmpBuf[0]);
+        ((void (*)(void*, s32, u32))sjd->fltFunc)(sjd->fltCtx, 0, outBuf[0]);
     }
 
-    vt = *(u32***)sjd->streamObj;
-    ((void (*)(void*, s32, u32*))vt[8])(sjd->streamObj, 1, outBuf);
+    ((void (*)(void*, s32, u32*))(*(u32***)sjd->chanInfo[0])[8])((void*)sjd->chanInfo[0], 1, outBuf);
 
-    vt = *(u32***)sjd->streamObj;
-    ((void (*)(void*, s32, u32*))vt[7])(sjd->streamObj, 0, tmpBuf);
+    ((void (*)(void*, s32, u32*))(*(u32***)sjd->chanInfo[0])[7])((void*)sjd->chanInfo[0], 0, tmpBuf);
 
-    sjd->outSmplOfst += decoded;
+    sjd->chanInfo[3] += decoded;
 
-    s32 bsrPos = AHXBSR_Tell(sjd->bsr);
-    s32 bytes = (bsrPos + 7) >> 3;
+    s32 bytes = (AHXBSR_Tell(sjd->bsr) + 7) / 8;
     u32 decSmplLim = sjd->decSmplLim;
 
-    sjd->decSmpl = bytes;
-    sjd->outSmplOfst += decCount;
-    sjd->outSmplTotal += decoded;
-    sjd->decCallback += decoded;
+    sjd->chanInfo[4] = bytes;
+    sjd->chanInfo[5] += decCount;
+    sjd->chanInfo[7] += decoded;
+    sjd->outSmplOfst += decoded;
 
-    if (decSmplLim > 0 && sjd->decCallback >= decSmplLim) {
-        if (sjd->decCallbackPrm != 0) {
-            ((void (*)(u32))sjd->decCallbackPrm)(sjd->decCallback);
+    if (decSmplLim >= 0 && sjd->outSmplOfst >= decSmplLim) {
+        if (sjd->decCallback != 0) {
+            ((void (*)(u32))sjd->decCallback)(sjd->decCallbackPrm);
         }
     }
 
-    if (sjd->lnkSw == 0 && sjd->outSmplOfst >= totalSmpl) {
+    if (sjd->lnkSw == 0 && sjd->chanInfo[5] >= totalSmpl) {
         sjd->status = 3;
     }
 }

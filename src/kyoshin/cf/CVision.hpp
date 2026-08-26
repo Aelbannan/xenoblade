@@ -266,6 +266,7 @@ namespace cf{
         virtual void f070(); virtual void f074(); virtual void f078(); virtual void f07C();
         virtual void f080(); virtual void f084(); virtual void f088(); virtual void f08C();
         virtual void f090(); virtual void f094(); virtual void f098();
+        virtual void f09C(); virtual void f0A0();
         virtual void* vfAC();       // index 41 -> vtable 0xAC
     };
 
@@ -588,7 +589,7 @@ extern "C" void func_80081E90__Q22cf13CfGameManagerFv(u32 a, u32 b, u32 c);
 extern "C" void func_8006E5D8();
 extern "C" void* getHandleMEM2__Q23mtl10MemManagerFv();
 // func_8004392C is owned by kyoshin/CTaskGame.hpp (single unified decl).
-extern "C" bool func_801537E0(void* obj);
+extern "C" void func_801537E0(void* obj); // void return: CAIAction.cpp definition
 extern "C" void func_801537F0(void* obj);
 extern "C" int func_800B708C__Fi(int id);
 extern "C" float func_800F42AC(void* obj);
@@ -604,7 +605,7 @@ extern "C" u8 func_800A32C4(void* row);
 extern "C" void* func_8009EC9C(u32 index);
 extern "C" void* getPlayer__Q22cf13CfGameManagerFi(int idx);
 extern "C" void func_801BFE8C(u32 a, u32 b, u32 c);
-extern "C" void func_801BFC38__Q22cf10CfSoundManFUlUlUlUlf(u32 a, u32 b, u32 c, u32 d, f32 e);
+extern "C" u16 func_801BFC38__Q22cf10CfSoundManFUlUlUlUlf(u32 a, u32 b, u32 c, u32 d, f32 e);
 extern "C" void func_80043D90(void* list);
 extern "C" void* func_80043F18(void* list);
 extern "C" void __dt__80043E88(void* list, int tags);

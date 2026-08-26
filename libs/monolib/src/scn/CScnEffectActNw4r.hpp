@@ -116,11 +116,45 @@ struct CScnEffectActMgr {
     virtual void v11() = 0;
     virtual void v12() = 0;
     virtual CScnEffectAct* v13(u32 idx) = 0;
+    // Slots 14..43 are dispatched from other TUs; signatures unrecovered.
+    virtual void v14() = 0;
+    virtual void v15() = 0;
+    virtual void v16() = 0;
+    virtual void v17() = 0;
+    virtual void v18() = 0;
+    virtual void v19() = 0;
+    virtual void v20() = 0;
+    virtual void v21() = 0;
+    virtual void v22() = 0;
+    virtual void v23() = 0;
+    virtual void v24() = 0;
+    virtual void v25() = 0;
+    virtual void v26() = 0;
+    virtual void v27() = 0;
+    virtual void v28() = 0;
+    virtual void v29() = 0;
+    virtual void v30() = 0;
+    virtual void v31() = 0;
+    virtual void v32() = 0;
+    virtual void v33() = 0;
+    virtual void v34() = 0;
+    virtual void v35() = 0;
+    virtual void v36() = 0;
+    virtual void v37() = 0;
+    virtual void v38() = 0;
+    virtual void v39() = 0;
+    virtual void v40() = 0;
+    virtual void v41() = 0;
+    virtual void v42() = 0;
+    virtual void v43() = 0;
     virtual ~CScnEffectActMgr() {}
 
     /* 0x04 */ u8 pad_0x4[0x300];
     /* 0x304 */ f32 field_0x304;
-    /* 0x308 */ u8 pad_0x308[0x49c];
+    /* 0x308 */ f32 field_0x308;
+    /* 0x30c */ f32 field_0x30c;
+    /* 0x310 */ f32 field_0x310;
+    /* 0x314 */ u8 pad_0x314[0x490];
     /* 0x7a4 */ u32 field_0x7a4;
     /* 0x7a8 */ u8 pad_0x7a8[0x1c];
     /* 0x7c4 */ CScnEffectAct* field_0x7c4;
@@ -133,6 +167,15 @@ struct CScnEffectActMgr {
 // Import from monolib/src/scn/CScnItemModel.cpp: base pointer of the
 // manager's act data (caller applies the slot offset).
 extern "C" u8* func_8048315C(CScnEffectActMgr* mgr);
+
+// Cross-TU imports behind the CScnEffectActNw4r vtable thunks and update
+// hooks (unrecovered retail plain-name symbols).
+extern "C" bool func_80495E60(CScnEffectActMgr* mgr);
+extern "C" void func_80484E5C(CScnEffectActMgr* mgr);
+extern "C" void func_804838DC(CScnEffectActMgr* mgr);
+extern "C" void func_80482AB8(CScnEffectActMgr* mgr);
+extern "C" void func_80482AD4(CScnEffectActMgr* mgr);
+extern "C" void func_8048856C(CScnEffectActMgr* mgr);
 
 class __declspec(novtable) CScnEffectActNw4r {
 public:

@@ -63,6 +63,14 @@ public:
     u32 mFieldB0;        // 0xB0
 };
 
+// u32 word-pair / f64 view for MWCC's 0x43300000 int->float conversion;
+// subtract the sdata2 magic double lbl_eu_80667DF8 so the pool reloc matches
+// retail instead of an MWCC @N constant.
+union PcEffectF64Conv {
+    u32 w[2];
+    f64 d;
+};
+
 // Holder returned by the schedule sub-object's slot fetch; +0x94 points at the
 // fixed-timestep CSchedule driven by func_804E3CDC.
 struct PcEffectSchedHolder {
@@ -211,9 +219,10 @@ public:
     virtual void f20C();  // 0x20C
     virtual void f210();  // 0x210
     virtual void f214();  // 0x214
-    virtual void f218();  // 0x218
-    virtual void f21C();  // 0x21C
-    virtual PcEffectSchedHolder* GetSlot(u16 id);  // 0x220
+    // NOTE: retail's vtable layout puts the slot fetch at byte offset 0x220;
+    // MWCC counts two extra slots for this class shape, so the trailing
+    // placeholders are omitted to land GetSlot on the retail offset.
+    virtual PcEffectSchedHolder* GetSlot(u16 id);
 };
 
 // View of the actor object at CPcEffect07::mField0C with the embedded
@@ -230,27 +239,171 @@ struct PcEffectActorView {
 //   +0x08: transform matrix pointer
 //   +0x0C: slot ID (u8)
 struct PcEffectEntry {
+    PcEffectEntry();
     /* 0x00 */ CPcEffect07Obj* mObj;
     /* 0x04 */ s16 mActive;
     /* 0x06 */ s16 mField06;
     /* 0x08 */ ml::CMat34* mMat;
     /* 0x0C */ u8 mId;
-    /* 0x0D */ u8 _0D[0x0B];
+    /* 0x0D */ u8 _0D[3];
+    /* 0x10 */ u32 _10;
+    /* 0x14 */ u8 _14;
+    /* 0x15 */ u8 _15[3];
+};
+
+// Backward-scan record view: the negative-index scan walks 0x18-strided
+// records starting at data+0x30 (record 2), testing the s16 at +0x14 - which
+// aliases each entry's mActive.
+struct PcEffectScanRec {
+    /* 0x00 */ u8 _00[0x14];
+    /* 0x14 */ s16 mActive;
+    /* 0x16 */ u8 _16[2];
 };
 
 // PcEffect07 state blob (lbl_eu_80664398). Three entries at stride 0x18;
 // offset 0x58 = maxEffects count.
 struct PcEffectData {
-    u8 _00[0x10];
+    u8 _00[0xC];
+    PcEffectActorView* mActor;  // 0x0C (aliases CPcEffect07::mField0C)
     PcEffectEntry entries[3];  // 0x10-0x58
     u8 maxEffects;             // 0x58
+    u8 _59[3];
+    f32 mField5C;              // 0x5C
+    f32 mField60;              // 0x60
 };
+
+// Factory view over the global bank object: vtable slot 0x28 creates an
+// effect object for the given effect id (0x700+n).
+class PcEffectFactoryView {
+public:
+    virtual void f00();  // 0x00
+    virtual void f04();  // 0x04
+    virtual void f08();  // 0x08
+    virtual void f0C();  // 0x0C
+    virtual void f10();  // 0x10
+    virtual void f14();  // 0x14
+    virtual void f18();  // 0x18
+    virtual void f1C();  // 0x1C
+    virtual void f20();  // 0x20
+    virtual void f24();  // 0x24
+    virtual CPcEffect07Obj* Create(u32 id, s32 a, s32 b, s32 c);  // 0x28
+};
+
+// View of the schedule sub-object for vtable slot 0x12C (fetch the transform
+// holder for a slot record). Separate from PcEffectScheduleSub, whose layout
+// targets slot 0x220; never instantiated so no vtable is emitted.
+class PcEffectSchedFetchSub {
+public:
+    virtual void f000();  // 0x000
+    virtual void f004();  // 0x004
+    virtual void f008();  // 0x008
+    virtual void f00C();  // 0x00C
+    virtual void f010();  // 0x010
+    virtual void f014();  // 0x014
+    virtual void f018();  // 0x018
+    virtual void f01C();  // 0x01C
+    virtual void f020();  // 0x020
+    virtual void f024();  // 0x024
+    virtual void f028();  // 0x028
+    virtual void f02C();  // 0x02C
+    virtual void f030();  // 0x030
+    virtual void f034();  // 0x034
+    virtual void f038();  // 0x038
+    virtual void f03C();  // 0x03C
+    virtual void f040();  // 0x040
+    virtual void f044();  // 0x044
+    virtual void f048();  // 0x048
+    virtual void f04C();  // 0x04C
+    virtual void f050();  // 0x050
+    virtual void f054();  // 0x054
+    virtual void f058();  // 0x058
+    virtual void f05C();  // 0x05C
+    virtual void f060();  // 0x060
+    virtual void f064();  // 0x064
+    virtual void f068();  // 0x068
+    virtual void f06C();  // 0x06C
+    virtual void f070();  // 0x070
+    virtual void f074();  // 0x074
+    virtual void f078();  // 0x078
+    virtual void f07C();  // 0x07C
+    virtual void f080();  // 0x080
+    virtual void f084();  // 0x084
+    virtual void f088();  // 0x088
+    virtual void f08C();  // 0x08C
+    virtual void f090();  // 0x090
+    virtual void f094();  // 0x094
+    virtual void f098();  // 0x098
+    virtual void f09C();  // 0x09C
+    virtual void f0A0();  // 0x0A0
+    virtual void f0A4();  // 0x0A4
+    virtual void f0A8();  // 0x0A8
+    virtual void f0AC();  // 0x0AC
+    virtual void f0B0();  // 0x0B0
+    virtual void f0B4();  // 0x0B4
+    virtual void f0B8();  // 0x0B8
+    virtual void f0BC();  // 0x0BC
+    virtual void f0C0();  // 0x0C0
+    virtual void f0C4();  // 0x0C4
+    virtual void f0C8();  // 0x0C8
+    virtual void f0CC();  // 0x0CC
+    virtual void f0D0();  // 0x0D0
+    virtual void f0D4();  // 0x0D4
+    virtual void f0D8();  // 0x0D8
+    virtual void f0DC();  // 0x0DC
+    virtual void f0E0();  // 0x0E0
+    virtual void f0E4();  // 0x0E4
+    virtual void f0E8();  // 0x0E8
+    virtual void f0EC();  // 0x0EC
+    virtual void f0F0();  // 0x0F0
+    virtual void f0F4();  // 0x0F4
+    virtual void f0F8();  // 0x0F8
+    virtual void f0FC();  // 0x0FC
+    virtual void f100();  // 0x100
+    virtual void f104();  // 0x104
+    virtual void f108();  // 0x108
+    virtual void f10C();  // 0x10C
+    virtual void f110();  // 0x110
+    virtual void f114();  // 0x114
+    virtual void f118();  // 0x118
+    virtual void f11C();  // 0x11C
+    virtual void f120();  // 0x120
+    virtual void f124();  // 0x124
+    virtual void f128();  // 0x128
+    // Fetches the transform/schedule holder for a slot record (the caller's
+    // PcEffectScanRec view of the entry array); result is stored as mMat.
+    virtual PcEffectSchedHolder* GetHolder(u32 key);  // 0x12C
+};
+
+// Spawn-path record view: aliases entry i at bank + i*0x18 (entry starts at
+// +0x10 of the record).
+struct PcEffectSpawnRec {
+    /* 0x10 */ CPcEffect07Obj* mObj;
+    /* 0x14 */ s16 mActive;
+    /* 0x16 */ u16 _16;
+    /* 0x18 */ ml::CMat34* mMat;
+    /* 0x1C */ u8 mId;
+};
+
+// Imports from other TUs used by this TU's free functions.
+extern "C" void func_800ACFD8(void* obj, void* target);
+extern "C" void func_800ACC14(void* obj, s8 val);
+extern "C" void func_800ACF78(CPcEffect07Obj* obj, PcEffectScheduleSub* sub, s32 flags);
+
+// Effect-id -> wstring table index matrix (indexed by selector slot).
+extern u32 lbl_eu_80533738[];
+// sdata2 float constant (spawn cooldown reset value).
+extern const f32 lbl_eu_80667DEC;
 
 // External data symbols referenced by this TU (defined in other TUs).
 extern PcEffectData* lbl_eu_80664398;   // PcEffect07 state (three effect slots)
 extern u16 lbl_eu_805049F8[];           // wstring table of slot ids (index = id - 0x700)
 extern const f32 lbl_eu_80667DF4;       // sdata2 float constant (schedule interval)
+extern const f32 lbl_eu_80667DE8;       // sdata2 float constant (ctor initial value)
+extern const f32 lbl_eu_80667DF0;       // sdata2 float constant (spawn reset value)
 extern const f64 lbl_eu_80667DF8;       // sdata2 int->float conversion magic (0x4330000080000000)
+
+// Spawn/attach an effect object into a slot (see CPcEffect07.cpp).
+extern "C" s32 func_801B19F0(u8 type, s32 slotSel);
 
 // 0x18-stride mat-slot view: the transform pointer of slot i sits at
 // self + 0x18 + i*0x18 (overlaps PcEffectEntry.mMat).
@@ -259,17 +412,31 @@ struct PcEffectMatSlot {
     ml::CMat34* mMat;  // 0x18
 };
 
+// Twin vtable-pointer base subobjects (+0 / +4, retail lbl_eu_80533744 and
+// lbl_eu_80533744+0x10). Ctors defined out-of-line in the .cpp so they inline
+// into the CPcEffect07 constructor in retail order.
+struct CPcEffect07VtA {
+    void* mVT;
+    CPcEffect07VtA();
+};
+struct CPcEffect07VtB {
+    void* mVT;
+    CPcEffect07VtB();
+};
+
 namespace cf {
 
-class CPcEffect07 {
+class CPcEffect07 : public CPcEffect07VtA, public CPcEffect07VtB {
 public:
-    CPcEffect07();
-    virtual ~CPcEffect07();
+    CPcEffect07(PcEffectActorView* actor);
 
-    u8 _00[0x08];
+    u32 mField08;                 // 0x08
     PcEffectActorView* mField0C;  // 0x0C: actor whose +0x3E9C sub-object fetches schedules
     PcEffectEntry mEntries[3];    // 0x10-0x58: effect entries (stride 0x18)
-    u8 _58[0x68 - 0x58];          // 0x58-0x67
+    u8 maxEffects;                // 0x58
+    f32 mField5C;                 // 0x5C
+    f32 mField60;                 // 0x60
+    u8 _64[0x68 - 0x64];          // 0x64-0x67
 };
 
 } // namespace cf

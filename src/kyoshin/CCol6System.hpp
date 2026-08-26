@@ -393,7 +393,7 @@ void func_80081E90__Q22cf13CfGameManagerFv(u32, u32, u32);           // CfGameMa
 void* func_801BFAE4(u16 handle);                                      // CfSoundMan.cpp
 void func_80082088__Q22cf13CfGameManagerFv(u32, ml::CVec3*, ml::CVec3*, u32, f32); // CfGameManager.cpp
 UnkClass_80083298View* func_80083298__Q22cf13CfGameManagerFv();       // CfGameManager.cpp
-u16 func_801BFC38__Q22cf10CfSoundManFUlUlUlUlf(u32, u32, u32, u32, f32); // CfSoundMan.cpp (returns sound handle)
+extern "C" u16 func_801BFC38__Q22cf10CfSoundManFUlUlUlUlf(u32, u32, u32, u32, f32); // CfSoundMan.cpp (returns sound handle)
 extern "C" void func_eu_801651A0(char* buffer, const char* format, ...); // EU format helper (unmangled retail)
 void func_8022B9B4(void* syswin, const char* msg, int flag);          // CSysWin.cpp
 void func_8022BFC8(void* syswin, int flag);                           // CSysWin.cpp

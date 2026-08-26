@@ -53,17 +53,27 @@ extern const float lbl_eu_8066A1FC;
 extern const float lbl_eu_8066A210;
 
 namespace cf {
+    // Manual dispatch tables installed at CAttackParam+0x84 by the ctor
+    // (retail sinit/ctor store these blob labels there and call slot +0x8
+    // through them via bctrl - the class's virtual-dispatch scheme).
+    extern "C" void* lbl_eu_8052F610[];
+    extern "C" void* lbl_eu_8052F5E8[];
+
+    typedef void (*AttackParamSlot)(CAttackParam* self);
+
     CArtsParam lbl_80577580;
 
     CAttackParam::CAttackParam(){
+        unk84 = lbl_eu_8052F610;
         unk0 = 0;
         unk20 = 0;
         unk78 = 0;
-        CAttackParam_UnkVirtualFunc1();
+        ((AttackParamSlot*)unk84)[2](this);
     }
 
     CArtsParam::CArtsParam(){
-        static_cast<CAttackParam*>(this)->CAttackParam_UnkVirtualFunc1();
+        unk84 = lbl_eu_8052F5E8;
+        ((AttackParamSlot*)unk84)[2](this);
     }
 
     void CArtsParam::CArtsParam_UnkVirtualFunc1(){

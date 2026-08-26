@@ -35,7 +35,6 @@ public:
     CScnFadeMan(CScn* scene);
     ~CScnFadeMan();
     void update();
-    void cbRenderBefore();
 
     u8* m_vtable;             //0x0 retail vtable pointer (lbl_eu_8056EB50)
     CScn* mScene;             //0x4

@@ -169,7 +169,7 @@ void CMenuKeyAssign::Move() {
         }
         if ((pad->mHeldButtonFlags & 0x10) != 0) {
             int b = func_801B0F8C();
-            if (b == 0 && func_8017FD44((void*)b) == 0) {
+            if (b == 0 && func_8017FD44() == 0) {
                 func_801154D0(self, 9, 10, 13, 12, 0, 1);
                 goto done;
             }
@@ -186,7 +186,7 @@ void CMenuKeyAssign::Move() {
                     if ((pad->mHeldButtonFlags & 8) != 0) {
                         int b2 = func_801B0F8C();
                         if (battleMode == 0 && b2 == 0 &&
-                            func_8017FD44((void*)b2) == 0) {
+                            func_8017FD44() == 0) {
                             CMenuKeyAssignBattleMgr* bmv =
                                 (CMenuKeyAssignBattleMgr*)bm;
                             u32 cnt = 0;
@@ -373,7 +373,7 @@ void CMenuKeyAssign::Move() {
     }
     if ((pad->mHeldButtonFlags & 0x800) != 0) {
         int b = func_801B0F8C();
-        if (b == 0 && func_8017FD44((void*)b) == 0) {
+        if (b == 0 && func_8017FD44() == 0) {
             func_801154D0(self, 9, 10, 13, 12, 0, 1);
             goto done;
         }
@@ -385,7 +385,7 @@ void CMenuKeyAssign::Move() {
     if ((pad->mHeldButtonFlags & 0x1000) != 0) {
         if (battleMode == 0) {
             int b = func_801B0F8C();
-            if (b == 0 && func_8017FD44((void*)b) == 0) {
+            if (b == 0 && func_8017FD44() == 0) {
                 if (arts != 0) {
                     u32 id = *arts->mSub04->getActorId();
                     if (func_80174C98(arts, &id, 0x803) != 0) {

@@ -3,6 +3,7 @@
 
 #include "kyoshin/code_801862C0.hpp"
 #include "kyoshin/cf/CfMapMineManager.hpp" // func_800B8920 / func_800B9404
+#include "kyoshin/cf/object/CfObjectMoveApi.hpp" // func_800BE12C
 
 // CArtsSelectSlot / CArtsSelectBucket are defined in code_801862C0.hpp.
 
@@ -229,13 +230,15 @@ void func_80186664(u8* self) {
 void func_801866F0(MapObjVt** objects, int row) {
     // Refresh the bdat manager (result unused; it populates lbl_eu_806640B0).
     func_8003AA34();
-    void* bdat = lbl_eu_806640B0;
     const char* cols = (const char*)lbl_eu_805038C8;
+    void* bdat = lbl_eu_806640B0;
 
-    u32 model = (u8)getBdatStringColumnValue(bdat, cols + 0x00, row);
-    u32 motion = (u8)getBdatStringColumnValue(bdat, cols + 0x06, row);
+    // Column values stay memory-resident in u32 slots; the narrow reads
+    // (lbz/lha/lhz through the slot) match retail's store/reload shape.
+    u32 modelCol = getBdatStringColumnValue(bdat, cols + 0x00, row);
+    u32 motionCol = getBdatStringColumnValue(bdat, cols + 0x06, row);
     objects[row] = reinterpret_cast<MapObjVt*>(
-        func_80081694__Q22cf13CfGameManagerFv(model, motion));
+        func_80081694__Q22cf13CfGameManagerFv(*(u8*)&modelCol, *(u8*)&motionCol));
     if (objects[row] == NULL) {
         return;
     }
@@ -248,41 +251,47 @@ void func_801866F0(MapObjVt** objects, int row) {
     pos.z = lbl_eu_806679C0 *
             (f32)((f64)(s32)getBdatStringColumnValue(bdat, cols + 0x17, row) - lbl_eu_806679D0);
 
-    // volatile matches retail's store/reload of the rotation intermediates
-    // around the remaining bdat reads (they live in stack slots, not FPRs).
-    volatile f32 rotX =
-        (f32)((f64)(s16)getBdatStringColumnValue(bdat, cols + 0x1c, row) - lbl_eu_806679D0) *
-        lbl_eu_806679C4;
-    volatile f32 rotY =
-        (f32)((f64)(s16)getBdatStringColumnValue(bdat, cols + 0x21, row) - lbl_eu_806679D0) *
-        lbl_eu_806679C4;
-    volatile f32 rotZ =
-        (f32)((f64)(s16)getBdatStringColumnValue(bdat, cols + 0x26, row) - lbl_eu_806679D0) *
-        lbl_eu_806679C4;
-    u8 ground = (u8)getBdatStringColumnValue(bdat, cols + 0x2b, row);
-    u8 gravity = (u8)getBdatStringColumnValue(bdat, cols + 0x32, row);
-    f32 scale = lbl_eu_806679C8 *
-                (f32)((f64)(u32)(u16)getBdatStringColumnValue(bdat, cols + 0x3a, row) -
-                      lbl_eu_806679D8);
+    // Rotations are hundredths of a degree (s16 column) times 0.01; volatile
+    // keeps them in stack slots across the intervening bdat calls.
+    volatile f32 rotX;
+    volatile f32 rotY;
+    volatile f32 rotZ;
+    u32 rotXCol = getBdatStringColumnValue(bdat, cols + 0x1c, row);
+    rotX = lbl_eu_806679C4 * (f32)((f64)*(s16*)&rotXCol - lbl_eu_806679D0);
+    u32 rotYCol = getBdatStringColumnValue(bdat, cols + 0x21, row);
+    rotY = lbl_eu_806679C4 * (f32)((f64)*(s16*)&rotYCol - lbl_eu_806679D0);
+    u32 rotZCol = getBdatStringColumnValue(bdat, cols + 0x26, row);
+    rotZ = lbl_eu_806679C4 * (f32)((f64)*(s16*)&rotZCol - lbl_eu_806679D0);
+
+    u32 airCol = getBdatStringColumnValue(bdat, cols + 0x2b, row);
+    u32 groundCol = getBdatStringColumnValue(bdat, cols + 0x32, row);
+    // Narrowed immediately into a register-held scalar (retail keeps this
+    // byte live in a callee-saved register until the setVisible calls).
+    int ground = *(u8*)&groundCol;
+    u32 scaleCol = getBdatStringColumnValue(bdat, cols + 0x3a, row);
+    f32 scale = lbl_eu_806679C8 * (f32)((f64)*(u16*)&scaleCol - lbl_eu_806679D8);
 
     Vec3f rot;
     rot.x = rotX * lbl_eu_8066A210;
     rot.y = rotY * lbl_eu_8066A210;
     rot.z = rotZ * lbl_eu_8066A210;
-    if (ground != 0) {
+    if (*(u8*)&airCol == 0) {
         objects[row]->placeOnGround(&pos, lbl_eu_806679CC);
     } else {
         objects[row]->placeInAir(&pos, lbl_eu_806679CC);
     }
+    // Retail copies the current position out (result unused) - keep it.
     Vec3f curPos = *objects[row]->getPos();
     objects[row]->applyRot(&rot);
     objects[row]->setScale(scale);
-    int visible = (gravity == 0);
+    int visible = (ground == 0);
     objects[row]->setVisible(visible);
     objects[row]->setVisible2(visible);
 
-    u8 disp = (u8)getBdatStringColumnValue(bdat, cols + 0x40, row);
-    if (disp != 0) {
+    // Re-derive the column-pool address here (retail rematerializes it for
+    // the final call instead of keeping the pointer live past setVisible).
+    u32 dispCol = getBdatStringColumnValue(bdat, (const char*)lbl_eu_805038C8 + 0x40, row);
+    if (*(u8*)&dispCol != 0) {
         objects[row]->field_6C |= 0x1000;
     } else {
         objects[row]->field_6C &= ~0x8;
@@ -309,13 +318,15 @@ int func_80186A70(void* p, s32 row, const char* c1, const char* c2,
     u16 cur;
     bdat = lbl_eu_806640B0;
     v1 = getBdatStringColumnValue(bdat, c1, row);
-    if ((u16)v1 != 0) {
+    // Narrow reads go through the value's storage (not casts) so MWCC keeps
+    // the column values memory-resident like retail (stw + lhz/lbz).
+    if (*(u16*)&v1 != 0) {
         // Resource id gate: must sit inside the closed [lo,hi] byte window
         // around the cf game manager resource counter.
-        cur = func_80082354__Q22cf13CfGameManagerFv((u16)v1);
+        cur = func_80082354__Q22cf13CfGameManagerFv(*(u16*)&v1);
         v2 = getBdatStringColumnValue(bdat, c2, row);
         v3 = getBdatStringColumnValue(bdat, c3, row);
-        if (cur < (u8)v2 || cur > (u8)v3) {
+        if ((u32)cur < *(u8*)&v2 || (u32)cur > *(u8*)&v3) {
             return 0;
         }
     }
@@ -326,8 +337,8 @@ int func_80186A70(void* p, s32 row, const char* c1, const char* c2,
     v7 = getBdatStringColumnValue(bdat, c7, row);
     // Sequence counter must land in either halfword window; a zero upper
     // bound disables its window.
-    if ((cur >= (u16)v4 && cur <= (u16)v5 && (u16)v5 != 0) ||
-        (cur >= (u16)v6 && cur <= (u16)v7 && (u16)v7 != 0)) {
+    if (((u32)cur >= *(u16*)&v4 && (u32)cur <= *(u16*)&v5 && *(u16*)&v5 != 0) ||
+        ((u32)cur >= *(u16*)&v6 && (u32)cur <= *(u16*)&v7 && *(u16*)&v7 != 0)) {
         return 1;
     }
     return 0;
@@ -385,11 +396,79 @@ void func_80186C7C(void* p) {
     }
 }
 
+/* func_80186D20: per-row sync of the arts-select container against the bdat
+   table. For each valid row: run the availability check (func_80186A70);
+   spawn the map object when the slot is empty and available, or tear down
+   (flag + clear) when it is occupied but no longer available. Occupied rows
+   then optionally apply a state id read from the bdat columns, gated on the
+   global flag words lbl_eu_80663E24/28 and a second availability window. */
+void func_80186D20(void* p) {
+    void* bdat = lbl_eu_806640B0;
+    const char* gateCol;
+    const char* cols;
+    ArtsEntryVt** slots;
+    u16* slotFlags;
+    void* curTable;
+    s32 end;
+    s32 row;
+
+    row = func_8003B41C(bdat);
+    end = row + func_8003B1EC(bdat);
+    cols = (const char*)lbl_eu_805038C8;
+    slots = reinterpret_cast<ArtsEntryVt**>(p) + row;
+    slotFlags = reinterpret_cast<u16*>(p) + row;
+    // Retail hoists the availability-check's last column pointer into a
+    // callee-saved register ahead of the loop.
+    gateCol = cols + 0xe4;
+    for (; row < end; row++, slots++, slotFlags++) {
+        int avail = func_80186A70(p, row, cols + 0xa0, cols + 0xac,
+                                  cols + 0xb9, cols + 0xc6, cols + 0xd0,
+                                  cols + 0xda, gateCol);
+        ArtsEntryVt* entry = *slots;
+        if (entry == NULL && avail != 0) {
+            func_801866F0(reinterpret_cast<MapObjVt**>(p), row);
+        }
+        if (*slots != NULL && avail == 0) {
+            (*slots)->field_68 |= 0x40;
+            *slots = NULL;
+            slotFlags[0x80] = 0;
+        }
+        if (*slots != NULL) {
+            // Bits 6/10 of the global flag word gate the state refresh.
+            int flag = ((((lbl_eu_80663E24 >> 6) & 1) |
+                         ((lbl_eu_80663E24 >> 10) & 1)) != 0);
+            curTable = lbl_eu_806640B0;
+            u8 hasName = (u8)getBdatStringColumnValue(curTable, cols + 0x45, row);
+            if (hasName != 0) {
+                (*slots)->applyState(!flag); // retail passes !flag
+            }
+            int doState = 1;
+            if (flag != 0) {
+                // Busy bit in the second flag word blocks the whole refresh.
+                if ((lbl_eu_80663E28 & 0x01000000) == 0) {
+                    doState = 0;
+                }
+            }
+            if (doState) {
+                u8 stateId = (u8)getBdatStringColumnValue(curTable, cols + 0x4b, row);
+                if (stateId != 0 &&
+                    func_80186A70(p, row, cols + 0x52, cols + 0x5e,
+                                  cols + 0x6b, cols + 0x78, cols + 0x82,
+                                  cols + 0x8c, cols + 0x96) != 0 &&
+                    stateId != slotFlags[0x80]) {
+                    func_800BE12C((u8*)*slots, stateId, 1, -1, 1);
+                    slotFlags[0x80] = stateId;
+                }
+            }
+        }
+    }
+}
+void func_80186D20_UNUSED(void* p) {
+    (void)p;
+}
+
 // func_80186C7C: notify every armed widget in the arts-select container.
 // For each of the 64 slots: if the slot holds a widget with a notifier, call
 // the notifier's vtable+0x88 entry with 1 when the widget's 0x6C flag bit
 // 0x10000000 is set AND the argument is non-zero, else 0. The container
 // (retail leaves r3 untouched on return)
-
-
-void* func_80186D20(void* p){ return 0; }

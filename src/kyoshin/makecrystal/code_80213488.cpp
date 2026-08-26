@@ -118,8 +118,8 @@ void func_80213570(MakeCrystalTable* d, u8 target) {
     while ((u16)i < total) {
         void* obj = func_80157C4C(d->byte_1002, (s16)i);
         if (obj != 0 && *(void**)obj != 0) {
-            CrystalItemImpl* inst =
-                (CrystalItemImpl*)(CItem_initItemImplInstances)();
+                CrystalItemImpl* inst =
+                    (CrystalItemImpl*)CItem_initItemImplInstances(obj);
             u32 rid = inst->getCrystalItemId(obj);
             if (target == (u16)rid) {
                 u16 n = d->count;

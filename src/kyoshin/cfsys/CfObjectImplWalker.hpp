@@ -991,6 +991,106 @@ public:
     void func_800BE898(int a, unsigned long b, float c, float d);
 };
 
+// Battle-object view reached through CfWalkBattleObj::field_3F60 (battle
+// object +0x3F60): flag word at +0x4EC, vtable slot 0x80 called with (int).
+// Same shape as CfImplEneField3F60 (CfObjectImplEne.hpp); pure virtuals keep
+// this a cast-only view (no vtable/out-of-line defs emitted).
+struct CfWalkBfObj {
+    virtual void g00() = 0;                  // index 0
+    virtual void g04() = 0;                  // index 1
+    virtual void g08() = 0;                  // index 2
+    virtual void g0C() = 0;                  // index 3
+    virtual void g10() = 0;                  // index 4
+    virtual void g14() = 0;                  // index 5
+    virtual void g18() = 0;                  // index 6
+    virtual void g1C() = 0;                  // index 7
+    virtual void g20() = 0;                  // index 8
+    virtual void g24() = 0;                  // index 9
+    virtual void g28() = 0;                  // index 10
+    virtual void g2C() = 0;                  // index 11
+    virtual void g30() = 0;                  // index 12
+    virtual void g34() = 0;                  // index 13
+    virtual void g38() = 0;                  // index 14
+    virtual void g3C() = 0;                  // index 15
+    virtual void g40() = 0;                  // index 16
+    virtual void g44() = 0;                  // index 17
+    virtual void g48() = 0;                  // index 18
+    virtual void g4C() = 0;                  // index 19
+    virtual void g50() = 0;                  // index 20
+    virtual void g54() = 0;                  // index 21
+    virtual void g58() = 0;                  // index 22
+    virtual void g5C() = 0;                  // index 23
+    virtual void g60() = 0;                  // index 24
+    virtual void g64() = 0;                  // index 25
+    virtual void g68() = 0;                  // index 26
+    virtual void g6C() = 0;                  // index 27
+    virtual void g70() = 0;                  // index 28
+    virtual void g74() = 0;                  // index 29
+    virtual int vf80(int a) = 0;             // index 30 -> vtable offset 0x80
+
+    u8 _pad04[0x4EC - 0x04];                 // 0x04-0x4EB
+    u32 field_4EC;                           // 0x4EC
+};
+
+// Cast-only view of CfWalkBattleObj for battle-start sync: slot 0x11C
+// (battle-hook notify, takes the hook-table address) and slot 0x314
+// (sync close). Pure virtuals - never instantiated, no vtable emitted.
+struct CfWalkBattleObjSync {
+    virtual void g00() = 0;     virtual void g01() = 0;     virtual void g02() = 0;     virtual void g03() = 0;
+    virtual void g04() = 0;     virtual void g05() = 0;     virtual void g06() = 0;     virtual void g07() = 0;
+    virtual void g08() = 0;     virtual void g09() = 0;     virtual void g0A() = 0;     virtual void g0B() = 0;
+    virtual void g0C() = 0;     virtual void g0D() = 0;     virtual void g0E() = 0;     virtual void g0F() = 0;
+    virtual void g10() = 0;     virtual void g11() = 0;     virtual void g12() = 0;     virtual void g13() = 0;
+    virtual void g14() = 0;     virtual void g15() = 0;     virtual void g16() = 0;     virtual void g17() = 0;
+    virtual void g18() = 0;     virtual void g19() = 0;     virtual void g1A() = 0;     virtual void g1B() = 0;
+    virtual void g1C() = 0;     virtual void g1D() = 0;     virtual void g1E() = 0;     virtual void g1F() = 0;
+    virtual void g20() = 0;     virtual void g21() = 0;     virtual void g22() = 0;     virtual void g23() = 0;
+    virtual void g24() = 0;     virtual void g25() = 0;     virtual void g26() = 0;     virtual void g27() = 0;
+    virtual void g28() = 0;     virtual void g29() = 0;     virtual void g2A() = 0;     virtual void g2B() = 0;
+    virtual void g2C() = 0;     virtual void g2D() = 0;     virtual void g2E() = 0;     virtual void g2F() = 0;
+    virtual void g30() = 0;     virtual void g31() = 0;     virtual void g32() = 0;     virtual void g33() = 0;
+    virtual void g34() = 0;     virtual void g35() = 0;     virtual void g36() = 0;     virtual void g37() = 0;
+    virtual void g38() = 0;     virtual void g39() = 0;     virtual void g3A() = 0;     virtual void g3B() = 0;
+    virtual void g3C() = 0;     virtual void g3D() = 0;     virtual void g3E() = 0;     virtual void g3F() = 0;
+    virtual void g40() = 0;     virtual void g41() = 0;     virtual void g42() = 0;     virtual void g43() = 0;
+    virtual void g44() = 0;     virtual void g45() = 0;     virtual void g46() = 0;
+    virtual void vf11C(f32 hook) = 0;    // index 71 -> vtable offset 0x11C (f32 arg)
+    virtual void g048() = 0;     virtual void g049() = 0;     virtual void g04A() = 0;     virtual void g04B() = 0;
+    virtual void g04C() = 0;     virtual void g04D() = 0;     virtual void g04E() = 0;     virtual void g04F() = 0;
+    virtual void g050() = 0;     virtual void g051() = 0;     virtual void g052() = 0;     virtual void g053() = 0;
+    virtual void g054() = 0;     virtual void g055() = 0;     virtual void g056() = 0;     virtual void g057() = 0;
+    virtual void g058() = 0;     virtual void g059() = 0;     virtual void g05A() = 0;     virtual void g05B() = 0;
+    virtual void g05C() = 0;     virtual void g05D() = 0;     virtual void g05E() = 0;     virtual void g05F() = 0;
+    virtual void g060() = 0;     virtual void g061() = 0;     virtual void g062() = 0;     virtual void g063() = 0;
+    virtual void g064() = 0;     virtual void g065() = 0;     virtual void g066() = 0;     virtual void g067() = 0;
+    virtual void g068() = 0;     virtual void g069() = 0;     virtual void g06A() = 0;     virtual void g06B() = 0;
+    virtual void g06C() = 0;     virtual void g06D() = 0;     virtual void g06E() = 0;     virtual void g06F() = 0;
+    virtual void g070() = 0;     virtual void g071() = 0;     virtual void g072() = 0;     virtual void g073() = 0;
+    virtual void g074() = 0;     virtual void g075() = 0;     virtual void g076() = 0;     virtual void g077() = 0;
+    virtual void g078() = 0;     virtual void g079() = 0;     virtual void g07A() = 0;     virtual void g07B() = 0;
+    virtual void g07C() = 0;     virtual void g07D() = 0;     virtual void g07E() = 0;     virtual void g07F() = 0;
+    virtual void g080() = 0;     virtual void g081() = 0;     virtual void g082() = 0;     virtual void g083() = 0;
+    virtual void g084() = 0;     virtual void g085() = 0;     virtual void g086() = 0;     virtual void g087() = 0;
+    virtual void g088() = 0;     virtual void g089() = 0;     virtual void g08A() = 0;     virtual void g08B() = 0;
+    virtual void g08C() = 0;     virtual void g08D() = 0;     virtual void g08E() = 0;     virtual void g08F() = 0;
+    virtual void g090() = 0;     virtual void g091() = 0;     virtual void g092() = 0;     virtual void g093() = 0;
+    virtual void g094() = 0;     virtual void g095() = 0;     virtual void g096() = 0;     virtual void g097() = 0;
+    virtual void g098() = 0;     virtual void g099() = 0;     virtual void g09A() = 0;     virtual void g09B() = 0;
+    virtual void g09C() = 0;     virtual void g09D() = 0;     virtual void g09E() = 0;     virtual void g09F() = 0;
+    virtual void g0A0() = 0;     virtual void g0A1() = 0;     virtual void g0A2() = 0;     virtual void g0A3() = 0;
+    virtual void g0A4() = 0;     virtual void g0A5() = 0;     virtual void g0A6() = 0;     virtual void g0A7() = 0;
+    virtual void g0A8() = 0;     virtual void g0A9() = 0;     virtual void g0AA() = 0;     virtual void g0AB() = 0;
+    virtual void g0AC() = 0;     virtual void g0AD() = 0;     virtual void g0AE() = 0;     virtual void g0AF() = 0;
+    virtual void g0B0() = 0;     virtual void g0B1() = 0;     virtual void g0B2() = 0;     virtual void g0B3() = 0;
+    virtual void g0B4() = 0;     virtual void g0B5() = 0;     virtual void g0B6() = 0;     virtual void g0B7() = 0;
+    virtual void g0B8() = 0;     virtual void g0B9() = 0;     virtual void g0BA() = 0;     virtual void g0BB() = 0;
+    virtual void g0BC() = 0;     virtual void g0BD() = 0;     virtual void g0BE() = 0;     virtual void g0BF() = 0;
+    virtual void g0C0() = 0;     virtual void g0C1() = 0;     virtual void g0C2() = 0;     virtual void g0C3() = 0;
+    virtual void g0C4() = 0;
+    virtual void vf314() = 0;            // index 197 -> vtable offset 0x314
+};
+
+
 } // namespace cf
 
 // Singly-linked chain node (next pointer at +0); battle lists hang off the
@@ -1026,9 +1126,13 @@ public:
 
     u8 _pad04[0x08 - 0x04];                    // 0x04-0x07
     CfWalkChainNode* field_08;                 // 0x08 battle list head
-    u8 _pad0C[0x48 - 0x0C];                    // 0x0C-0x47
+    u8 _pad0C[0x28 - 0x0C];                    // 0x0C-0x27
+    CfWalkChainNode* field_28;                 // 0x28 battle list head
+    u8 _pad2C[0x48 - 0x2C];                    // 0x2C-0x47
     CfWalkChainNode* field_48;                 // 0x48 battle list head (walk sweep)
-    u8 _pad4C[0x1AA - 0x4C];                   // 0x4C-0x1A9
+    u8 _pad4C[0x194 - 0x4C];                   // 0x4C-0x193
+    s32 field_194;                             // 0x194 live-battle count/turn frame
+    u8 _pad198[0x1AA - 0x198];                 // 0x198-0x1A9
     u8 field_1AA;                              // 0x1AA (battle-state flag)
     u8 _pad1AB[0x20C8 - 0x1AB];                // 0x1AB-0x20C7
     s16 field_20C8;                            // 0x20C8
@@ -1068,19 +1172,21 @@ void func_800E1B5C(void* mgr, void* battleObj);
 cf::CfWalkGlobal* func_800FE68C();
 #include "kyoshin/cf/CBattleManagerApi.hpp"
 void* func_800BF324(void* objParam);
-void func_80043D90(cf::CfWalkEnumHolder* holder);
-cf::CfWalkEnumList* func_80043F18(cf::CfWalkEnumHolder* holder);
-void func_800F4A98(cf::CfWalkEnumList* list, u32 type, u32 filter);
-void* func_800F6E98(cf::CfWalkEnumList* list, int index);
+void func_800BF2B0(void* sub, u32 a, u32 b); // canonical form (CfObjectImplPc.hpp; def CfObjectMove.cpp)
+// Enum-list helper family: canonical extern "C" void* forms (CVision.hpp).
+void func_80043D90(void* holder);
+void* func_80043F18(void* holder);
+void func_800F4A98(void* list, u32 type, u32 filter);
+void* func_800F6E98(void* list, int index); // canonical void* form (CtrlPc.hpp owner)
 void* func_800BBC0C(void* objParam);
 void func_800BC3D8(void* player, float value);
-void __dt__80043E88(cf::CfWalkEnumHolder* holder, int flags);
+void __dt__80043E88(void* holder, int flags); // canonical void* form (CVision.hpp owner)
 int func_8013EB90(int v);
 void* getPlayer__Q22cf13CfGameManagerFi(int index);
 void* func_8016FE34(void* src);
 void func_801F8E20(void* obj, int flag);
 void func_8013EC6C(u32 a, u32 b);
-CfWalkGameMgr* getInstance__Q22cf13CfGameManagerFv();
+void* getInstance__Q22cf13CfGameManagerFv(); // canonical void* form (CBattleManagerApi.hpp owner)
 void func_800FE950(void* obj, u32 a, u32 b, u32 c);
 void func_800FE920(void* obj);
 void func_800FE938(void* obj);
@@ -1101,15 +1207,16 @@ u32 func_80082694__Q22cf13CfGameManagerFv(u32 id);
 void func_8008269C__Q22cf13CfGameManagerFv(u32 id, u32 value);
 void func_800826F0__Q22cf13CfGameManagerFv(u32 id);
 int func_80085840__Q22cf13CfGameManagerFv();
+extern "C" void func_80084A00__Q22cf13CfGameManagerFv(); // CfGameManagerUnityHelpers.hpp (stub def)
 void* __dynamic_cast(void* obj, long offset, const void* srcType, const void* dstType, void* tmp);
 
 // Enum-list / selector helpers (CfObjectEnumList + selector subsystem).
-void* func_800F6EAC(cf::CfWalkEnumList* list, int index);
-void func_800F6ED0(cf::CfWalkEnumList* list, void* value);
-void* func_800F6E08(cf::CfWalkEnumList* list);
-void* func_800F6EC0(cf::CfWalkEnumList* list, u32 index);
+void* func_800F6EAC(void* list, u32 index);
+void func_800F6ED0(void* list, void* value);
+void* func_800F6E08(void* list);
+void* func_800F6EC0(void* list, u32 index); // canonical void* form (CAIAction/CItemBoxGrid)
 int func_800FE6A4(cf::CfWalkGlobal* g, u32 a, u32 b, u32 c);
-int func_80148778(void* obj, u32 flag);
+int func_80148778(void* obj, int id); // canonical (void*,int) form
 
 // Bdat table helpers.
 void* func_8003AA34(void);
@@ -1142,7 +1249,7 @@ int func_80084BF4__Q22cf13CfGameManagerFv(void);
 int func_800967F8(void);
 // getInstance__11CSysWinBuffFv is declared in CMainMenu.hpp (already in scope).
 void* getUnk80664658(void);
-int func_804BE398(void* vec, u32 a, u32 b, u32 c, f32 d, f32 e);
+int func_804BE398(void* vec, int a, int b, int c, f32 d, f32 e); // canonical int form (CtrlMoveBase.hpp owner)
 void* func_804BE520(int index);
 void func_800BF29C(void* obj, int a, int b, u32 c, f32 d, f32 e);
 void func_800BC3B0(void* obj, f32 value);

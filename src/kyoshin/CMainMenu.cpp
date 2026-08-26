@@ -2,12 +2,13 @@
 // Replace stubs with high-level C/C++ during decomp.
 
 #include <types.h>
+#include <string.h>
 #include "kyoshin/CMainMenu.hpp"
 #include "kyoshin/IUICf.hpp"
 #include "kyoshin/CBaseCur.hpp"
 #include "kyoshin/code_80135FDC.hpp"
-#include "kyoshin/menu/CMenuPassiveSkill.hpp"
 #include "monolib/device/CDeviceFile.hpp"
+#include "monolib/device/CDeviceVI.hpp"          // waitForDrawDone
 #include "monolib/util/MemManager.hpp"
 #include "monolib/work/CTTask.hpp"
 #include "monolib/work/IWorkEvent.hpp"
@@ -19,8 +20,11 @@
 #include <nw4r/math/math_types.h>
 #include "kyoshin/cf/CfGameManagerData.hpp"  // H3 label-owner decl (lbl_eu_80663E14; lbl_eu_80663E24)
 
+// C-linkage import (retail unmangled symbol).
+extern "C" void func_8013676C(void* node, u32 font);
+
 // CBaseCur shared helpers (defined in CCur.cpp)
-extern void func_801D21CC(CBaseCur* cur);
+extern "C" void func_801D21CC(CBaseCur* cur);
 
 // Destructor for CBaseCur-derived class at vtable 0x800FEA30.
 // Standard MWCC virtual dtor: null-check, call base dtor with flag 0,
@@ -141,13 +145,15 @@ extern "C" void func_800FEF4C(CMainMenu* self) {
         if (func_80137444__FPQ34nw4r3lyt13AnimTransformf(self->field_0x80, lbl_eu_80666F18) == 0) {
             break;
         }
+        // Strings hoisted above the branch like retail; MWCC colors the
+        // temps across both arms.
         {
+            char* s1;
+            char* s2;
             int n = self->field_0xC0 + 1;
             if (n > 0) {
-                char* s1 =
-                    func_80136190(lbl_eu_804FCEBC + 0x5e, lbl_eu_804FCEBC + 0x67, n);
-                char* s2 =
-                    func_80136190(lbl_eu_804FCEBC + 0x5e, lbl_eu_804FCEBC + 0x6c, n);
+                s1 = func_80136190(lbl_eu_804FCEBC + 0x5e, lbl_eu_804FCEBC + 0x67, n);
+                s2 = func_80136190(lbl_eu_804FCEBC + 0x5e, lbl_eu_804FCEBC + 0x6c, n);
                 func_80136B4C(self->field_0x7C, lbl_eu_804FCEBC + 0x71, s1, 0);
                 func_80136B4C(self->field_0x7C, lbl_eu_804FCEBC + 0x7c, s2, 0);
             } else {
@@ -232,6 +238,86 @@ extern "C" void func_800FEF4C(CMainMenu* self) {
 // attach it to a fresh ArcResourceAccessor, build the layout + four
 // animations, bind the device font, reset text panes and animation state,
 // then build both cursors on the stack and copy them into their slots.
+// CMainMenu constructor (retail symbol __ct__CMainMenu: the split symbol
+// carries no class-length mangling, so it stays a plain C-linkage global
+// function rather than a member ctor - same idiom as __ct__CSimpleEveTalkWin).
+//
+// Runs CProcess's ctor then fills the IWorkEvent base region by hand (base
+// ctor is out-of-line in retail, its effects are emitted inline here): the
+// vtable at +0x10 is written twice (temp vtable lbl_eu_8052BF70, then the
+// composite vtable lbl_eu_8052BE24 whose +0x24/+0xAC sub-tables back the
+// +0x58/+0x5C interface pointers), the two __ptmf_null callback slots are
+// copied, the embedded UnkClass_8045F564 region and both cursors are
+// constructed, and finally the move-callback hook lbl_eu_8052BDE8 is installed.
+extern "C" CMainMenu* __ct__CMainMenu(CMainMenu* _this, CScn* scene) {
+    __ct__8CProcessFv(reinterpret_cast<CProcess*>(_this));
+    _this->mVtable = (void*)lbl_eu_8052BF70;
+
+    // Composite vtable base and its two interface sub-table pointers,
+    // materialized before the callback copy so MWCC schedules their lis/addi
+    // ahead of the __ptmf_null base (same shape as __ct__CSysWinSelect).
+    char* compVt = lbl_eu_8052BE24;
+    u32 evtVt = (u32)(compVt + 0x24);
+    u32 scnVt = (u32)(compVt + 0xac);
+
+    // Copy the null member-function pointer into both callback slots (store
+    // order 0x40,0x3C,0x44 then 0x4C,0x48,0x50). Post-increment derefs of a
+    // local pointer make MWCC fold the first access into `lwzu` instead of an
+    // extra addi-materialised pointer - cf. CTaskGameEvt / CSysWinSelect.
+    const u32* src = __ptmf_null;
+    u32 w0 = *src++;
+    u32 w1 = *src++;
+    _this->field_0x40 = w1;
+    _this->field_0x3C = w0;
+    u32 w2 = *src++;
+    _this->field_0x44 = w2;
+    src = __ptmf_null;
+    w1 = *src++;
+    w0 = *src++;
+    _this->field_0x4C = w0;
+    _this->field_0x48 = w1;
+    w2 = *src++;
+    _this->field_0x50 = w2;
+
+    _this->field_0x54 = 0;
+    _this->field_0x55 = 0;
+    _this->mVtable = (void*)compVt;
+    _this->mIWorkEventVtbl = evtVt;
+    _this->field_0x5C = scnVt;
+
+    __ct__17UnkClass_8045F564Fv(reinterpret_cast<u8*>(_this) + 0x60);
+
+    CBaseCur* baseCur = reinterpret_cast<CBaseCur*>(reinterpret_cast<u8*>(_this) + 0x90);
+    _this->field_0x70 = scene;
+    _this->field_0x74 = NULL;
+    _this->field_0x78 = NULL;
+    _this->field_0x7C = NULL;
+    _this->field_0x80 = NULL;
+    _this->field_0x84 = NULL;
+    _this->field_0x88 = NULL;
+    _this->field_0x8C = NULL;
+    __ct__8CBaseCurFv(baseCur, NULL);
+    baseCur->mVtable = (void*)lbl_eu_8052BF28;
+    __ct__CSubCur(reinterpret_cast<CBaseCur*>(reinterpret_cast<u8*>(_this) + 0xA8), NULL);
+
+    _this->field_0xC0 = 3;
+
+    // Install the move-callback hook. Retail folds the symbol's low half into
+    // an update-form first load, then reads words 1/2 relative to the advanced
+    // pointer; store order is 0x40, 0x3C, 0x44.
+    // v0-before-pointer declaration order: the lwzu result claims r4 and the
+    // base pointer takes r5 (cf. func_802A97A0).
+    u32 h0;
+    u32* hook = lbl_eu_8052BDE8;
+    _this->field_0xC4 = 0;
+    _this->field_0xE0 = 0;
+    h0 = *hook++;
+    _this->field_0x40 = hook[0];
+    _this->field_0x3C = h0;
+    _this->field_0x44 = hook[1];
+    return _this;
+}
+
 extern "C" bool __ct__800FF300(CMainMenu* self, CEventFile* pEventFile) {
     if (self->field_0x74 == pEventFile->mFileHandle) {
         // Long-lived rodata base: retail caches lbl_eu_804FCEBC in a
@@ -346,7 +432,27 @@ extern "C" void func_800FEA88(CBaseCur* self) {
     func_801D21CC(self);
 }
 
-void CMainMenu::cbRenderBefore() {}
+// Render callback: draws the menu layout and its two embedded cursors.
+// Gated on task-busy state, the global mode bitfield (bit 10), the
+// system-window-active gate, and the presentation flag word.
+void CMainMenu::cbRenderBefore() {
+    // Single OR so MWCC emits the short-circuit branches: A -> bne exit,
+    // B -> beq continue / b exit (same shape as CMiniMap::cbRenderBefore).
+    if (CTaskGame::getInstance()->func_800426F0() || (lbl_eu_80663E28 & 0x200000))
+        return;
+    if (!func_8013BE50())
+        return;
+    if (lbl_eu_80663E24 & 0xAFE40000)
+        return;
+    GXSetZMode(GX_FALSE, GX_NEVER, GX_FALSE);
+    // Scope-exit dtor is auto-emitted as the retail direct call; an explicit
+    // dtor call would emit a virtual dispatch.
+    nw4r::lyt::DrawInfo drawInfo;
+    func_80137250(&drawInfo);
+    func_80137038(field_0x7C, &drawInfo, 0, 1);
+    func_801D20B0((char*)this + 0x90, &drawInfo);
+    func_801D20B0((char*)this + 0xA8, &drawInfo);
+}
 
 // Finds the "Param" pane in the layout's root pane and sets its translate
 // to the given position (3 floats: x, y, z).
@@ -362,14 +468,18 @@ void CMainMenu::func_800FEB14(float* pos) {
 
 extern u32 lbl_eu_80663F18;
 
-// Creates the CMainMenu singleton: allocates from work memory via placement new,
+// Creates the CMainMenu singleton: allocates from work memory,
+// constructs via the unmangled retail ctor fragment __ct__CMainMenu,
 // stores in lbl_eu_80663F18, and registers as a child of the given CProcess.
 // Returns NULL if already created.
 extern "C" void* func_800FF6BC(void* parent, void* param) {
     if (lbl_eu_80663F18) {
         return NULL;
     }
-    CMainMenu* menu = new (CWorkThreadSystem::getWorkMem()) CMainMenu(param);
+    CMainMenu* menu = (CMainMenu*)CWorkThreadSystem::getWorkMem();
+    if (menu != NULL) {
+        __ct__CMainMenu(menu, (CScn*)param);
+    }
     lbl_eu_80663F18 = (u32)menu;
     Regist__8CProcessFP8CProcessb(menu, parent, false);
     return (void*)lbl_eu_80663F18;
@@ -474,10 +584,9 @@ extern "C" void func_80100E14(CMainMenu* self) {
                 cond = 1;
             } else {
             math:
-                // Odd free-roam gate computed from the player-state resource
-                // (retail bit-twiddling reproduced verbatim).
-                u32 x = func_8009CF8C(0x20);
-                cond = ((x | ~0x18E) - ((x - 0x18E) >> 1)) >> 31;
+                // Retail booleanizes this bound check arithmetically
+                // (subi/orc/srwi/subf/srwi idiom for unsigned >=).
+                cond = (func_8009CF8C(0x20) >= 0x18E);
             }
         }
         if (cond != 0) idx = 0x16;
@@ -486,12 +595,18 @@ extern "C" void func_80100E14(CMainMenu* self) {
     char* base = lbl_eu_804FCEBC;
     char buf[0x20];
     sprintf(buf, base + 0x121, self->field_0xC0 + 1, self->field_0xC4 + 1);
-    nw4r::lyt::Pane* pane1 =
-        self->field_0x7C->GetRootPane()->FindPaneByName(buf, true);
-    nw4r::lyt::Pane* pane2 =
-        self->field_0x7C->GetRootPane()->FindPaneByName(base + 0x133, true);
+    // First two lookups go through the root-pane virtual; the fourth argument
+    // of func_80137924 is the layout's raw +0x10 root pointer (no dispatch).
+    // Declaration order nudges MWCC's callee-saved coloring.
+    nw4r::lyt::Pane* pane1;
+    nw4r::lyt::Pane* pane2;
+    nw4r::lyt::Pane* root = *(nw4r::lyt::Pane**)((u8*)self->field_0x7C + 0x10);
+    pane1 = root->FindPaneByName(buf, true);
+    pane2 = root->FindPaneByName(base + 0x133, true);
     nw4r::math::VEC3 vec;
-    func_80137924(&vec, pane1, pane2, self->field_0x7C->GetRootPane());
+    // Fourth argument reloads the raw root pointer (no dispatch).
+    func_80137924(&vec, pane1, pane2,
+                  *(nw4r::lyt::Pane**)((u8*)self->field_0x7C + 0x10));
     ((CMainMenuCurVt*)&self->subCur)->vfn_0x10(&vec);
     if (idx > 0) {
         char* s1 = func_80136190(base + 0x5e, base + 0x67, idx);
@@ -864,17 +979,14 @@ extern "C" void func_80101BF8(CMainMenu* self) {
         } else {
         math:
             // Odd free-roam gate computed from the player-state resource
-            // (retail bit-twiddling reproduced verbatim).
+            // (retail bit-twiddling reproduced verbatim: subi/orc/srwi/subf).
             u32 x = func_8009CF8C(0x20);
-            u32 d = x - 0x18E;
-            u32 a = x | ~0x18E;
-            u32 b = d >> 1;
-            cond = (a - b) >> 31;
+            cond = (x >= 0x18Eu);
         }
     }
     self->field_0xDA = cond;
 
-    self->field_0xDB = (lbl_eu_80663E28 >> 1) & 1;
+    self->field_0xDB = (lbl_eu_80663E28 >> 30) & 1;
     self->field_0xDC = 0;
 
     // Main cursor items 0..6: pane name is sprintf'ed, position is bright
@@ -901,15 +1013,8 @@ extern "C" void func_80101BF8(CMainMenu* self) {
 
     // Sub-menu items 0..13: fixed pane names copied into a stack table;
     // availability flag bytes live at 0xCF+i (field_0xC8[7+i]).
-    const char* names[14] = {
-        (const char*)lbl_eu_804FCE50[0],  (const char*)lbl_eu_804FCE50[1],
-        (const char*)lbl_eu_804FCE50[2],  (const char*)lbl_eu_804FCE50[3],
-        (const char*)lbl_eu_804FCE50[4],  (const char*)lbl_eu_804FCE50[5],
-        (const char*)lbl_eu_804FCE50[6],  (const char*)lbl_eu_804FCE50[7],
-        (const char*)lbl_eu_804FCE50[8],  (const char*)lbl_eu_804FCE50[9],
-        (const char*)lbl_eu_804FCE50[10], (const char*)lbl_eu_804FCE50[11],
-        (const char*)lbl_eu_804FCE50[12], (const char*)lbl_eu_804FCE50[13],
-    };
+    const char* names[14];
+    *(CMainMenuNameTable*)names = *(CMainMenuNameTable*)lbl_eu_804FCE50;
     for (u32 i = 0; i < 14; i++) {
         if (self->field_0xC8[(u8)i + 7] != 0) {
             s16 pos[4];
@@ -961,4 +1066,26 @@ CTTask<IUICf>::~CTTask() {
 }
 
 
-extern "C" void Term__9CMainMenuFv() {}
+// CMainMenu::Term (us-800ff944): wait for the VI draw to complete, drop the
+// render callback (+0x5C cross-cast) and the file handle, run both cursors'
+// shutdown virtuals, delete the layout, release the arc accessor, tear down
+// the +0x60 memory region, then clear the singleton.
+void CMainMenu::Term() {
+    CDeviceVI::waitForDrawDone();
+    IScnRender* render = reinterpret_cast<IScnRender*>(this);
+    if (this != 0) {
+        render = reinterpret_cast<IScnRender*>((char*)this + 0x5C);
+    }
+    field_0x70->removeRenderCB(render);
+    func_801390E0(&field_0x74);
+    ((CMainMenuCurVt*)&_90[0])->_v00C();
+    ((CMainMenuCurVt*)&subCur)->_v00C();
+    if (field_0x7C != 0) {
+        delete field_0x7C;
+        field_0x7C = 0;
+    }
+    func_80139124(field_0x78);
+    field_0x78 = 0;
+    reinterpret_cast<UnkClass_8045F564*>(&_60[0])->func_8045F778();
+    lbl_eu_80663F18 = 0;
+}

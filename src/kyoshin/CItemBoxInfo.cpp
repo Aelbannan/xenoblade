@@ -1688,13 +1688,20 @@ void func_801D8318(CItemBoxInfo* info) {
         // retail stack build of the four u32 colour args.
         s16 zero = 0;
         s16 c0hi[2] = {zero, *(s16*)((u8*)info + 0xA2)};
-        s16 c0lo[2] = {zero, zero};
+        // All-zero pairs: retail stores the halfwords in DESCENDING element
+        // order; the four colour words are copied to args[] in ASCENDING
+        // slot order (see func_801E3B9C finding).
+        s16 c0lo[2];
+        c0lo[1] = zero;
+        c0lo[0] = zero;
         s16 c1hi[2] = {zero, *(s16*)((u8*)info + 0xAA)};
-        s16 c1lo[2] = {zero, zero};
-        args[1] = *(u32*)c0hi;
+        s16 c1lo[2];
+        c1lo[1] = zero;
+        c1lo[0] = zero;
         args[0] = *(u32*)c0lo;
-        args[3] = *(u32*)c1hi;
+        args[1] = *(u32*)c0hi;
         args[2] = *(u32*)c1lo;
+        args[3] = *(u32*)c1hi;
         sprintf(buf, &lbl_eu_805063BC[0x161], idx, args[0], args[1], args[2], args[3]);
         nw4r::lyt::Pane* pane = ((nw4r::lyt::Pane*)*(void**)((u8*)info->state.layout + 0x10))->FindPaneByName(buf, true);
         if (pane != NULL) {
@@ -1815,9 +1822,13 @@ void func_801D8930(CItemBoxInfo* info) {
         // u32 varargs copy at sp+0x18..0x27.
         s16 zero = 0;
         s16 c0hi[2] = {zero, *(s16*)((u8*)info + 0xA2)};
-        s16 c0lo[2] = {zero, zero};
+        s16 c0lo[2];
+        c0lo[1] = zero;
+        c0lo[0] = zero;
         s16 c1hi[2] = {zero, *(s16*)((u8*)info + 0xAA)};
-        s16 c1lo[2] = {zero, zero};
+        s16 c1lo[2];
+        c1lo[1] = zero;
+        c1lo[0] = zero;
         u32 args[4];
         args[0] = *(u32*)c0lo;
         args[1] = *(u32*)c0hi;
@@ -1922,9 +1933,14 @@ extern "C" void func_801D8C0C(CItemBoxInfo* info) {
                 func_80137C1C(pane2, 0x777777ffu);
                 s16 zero = 0;
                 s16 c0hi[2] = {zero, *(s16*)((u8*)info + 0xA2)};
-                s16 c0lo[2] = {zero, zero};
+                // All-zero pairs stored DESCENDING (retail order).
+                s16 c0lo[2];
+                c0lo[1] = zero;
+                c0lo[0] = zero;
                 s16 c1hi[2] = {zero, *(s16*)((u8*)info + 0xAA)};
-                s16 c1lo[2] = {zero, zero};
+                s16 c1lo[2];
+                c1lo[1] = zero;
+                c1lo[0] = zero;
                 u32 args[4];
                 args[0] = *(u32*)c0lo;
                 args[1] = *(u32*)c0hi;
@@ -5931,13 +5947,19 @@ void func_801E3918(CItemBoxInfo2* info) {
         func_80137B44((nw4r::lyt::Layout*)info->state.layout, buf, 0x777777ff);
         u32 args[4];
         s16 c0hi[2] = {zero, *(s16*)((u8*)info + 0xA2)};
-        s16 c0lo[2] = {zero, zero};
+        // All-zero pairs stored DESCENDING; colour words copied to args[]
+        // ASCENDING (retail order - see func_801E3B9C finding).
+        s16 c0lo[2];
+        c0lo[1] = zero;
+        c0lo[0] = zero;
         s16 c1hi[2] = {zero, *(s16*)((u8*)info + 0xAA)};
-        s16 c1lo[2] = {zero, zero};
-        args[1] = *(u32*)c0hi;
+        s16 c1lo[2];
+        c1lo[1] = zero;
+        c1lo[0] = zero;
         args[0] = *(u32*)c0lo;
-        args[3] = *(u32*)c1hi;
+        args[1] = *(u32*)c0hi;
         args[2] = *(u32*)c1lo;
+        args[3] = *(u32*)c1hi;
         sprintf(buf, &lbl_eu_805063BC[0x161], idx, args[0], args[1], args[2], args[3]);
         nw4r::lyt::Pane* pane = ((nw4r::lyt::Pane*)*(void**)((u8*)info->state.layout + 0x10))->FindPaneByName(buf, true);
         if (pane != NULL) {
@@ -5983,13 +6005,22 @@ void func_801E3B9C(CItemBoxInfo2* info) {
         func_80137B44((nw4r::lyt::Layout*)info->state.layout, text, 0x777777ff);
         u32 args[4];
         s16 hiA[2] = {shade, *(s16*)((u8*)info + 0xA2)};
-        s16 loA[2] = {shade, shade};
+        // All-shade pairs: retail emits the two halfword stores in DESCENDING
+        // address order (element 1 before element 0); explicit assignments
+        // reproduce that order where the initializer list emits ascending.
+        s16 loA[2];
+        loA[1] = shade;
+        loA[0] = shade;
         s16 hiB[2] = {shade, *(s16*)((u8*)info + 0xAA)};
-        s16 loB[2] = {shade, shade};
-        args[1] = *(u32*)hiA;
+        s16 loB[2];
+        loB[1] = shade;
+        loB[0] = shade;
+        // Ascending assignment order: retail copies the four colour words
+        // to the stack in slot order (24, 28, 32, 36).
         args[0] = *(u32*)loA;
-        args[3] = *(u32*)hiB;
+        args[1] = *(u32*)hiA;
         args[2] = *(u32*)loB;
+        args[3] = *(u32*)hiB;
         sprintf(text, &lbl_eu_805063BC[0x161], slot, args[0], args[1], args[2], args[3]);
         nw4r::lyt::Pane* pPane = ((nw4r::lyt::Pane*)*(void**)((u8*)info->state.layout + 0x10))->FindPaneByName(text, true);
         if (pPane != NULL) {
@@ -6157,12 +6188,17 @@ extern "C" void func_801E4194(CItemBoxInfo2* info) {
                 func_80137F88(pane2, found);
                 func_80137C1C(pane2, 0x777777ffu);
                 // Selection colours: two 8-byte pairs built from the s16s at +0xA2
-                // and +0xAA.
+                // and +0xAA. All-zero pairs: retail stores the halfwords in
+                // DESCENDING element order (see func_801E3B9C finding).
                 s16 zero = 0;
                 s16 c0hi[2] = {zero, *(s16*)((u8*)info + 0xA2)};
-                s16 c0lo[2] = {zero, zero};
+                s16 c0lo[2];
+                c0lo[1] = zero;
+                c0lo[0] = zero;
                 s16 c1hi[2] = {zero, *(s16*)((u8*)info + 0xAA)};
-                s16 c1lo[2] = {zero, zero};
+                s16 c1lo[2];
+                c1lo[1] = zero;
+                c1lo[0] = zero;
                 u32 args[4];
                 args[0] = *(u32*)c0lo;
                 args[1] = *(u32*)c0hi;

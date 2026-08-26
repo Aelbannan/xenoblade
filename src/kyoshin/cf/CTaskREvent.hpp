@@ -31,6 +31,16 @@ class CTaskREvent;
 struct CInfoCf;
 }
 
+namespace cf {
+class CTaskREvent;
+// Layout view exposing the CTTask PTMF slots (+0x3C/+0x48) for null-init.
+struct CTaskREventPtms {
+    u8 pad[0x3C];
+    void (CTaskREvent::*move)();
+    void (CTaskREvent::*draw)();
+};
+}
+
 // Object pointed at by CEventMgr::field_0xB0; only byte +0x39 is touched
 // (func_80164CFC clears it to 1 while tearing an event down).
 struct CEventMgrB0 {
@@ -124,7 +134,7 @@ struct UnkClass_800821F8 {
 // at +0x3D8C are [index][row], then per-index byte flags and halfwords.
 struct CEventCharBlob {
     u8 field_0x00[0x388B];
-    u8 mByteRows[32 * 8 * 5]; // +0x388B (32 x 0x28)
+    u8 mByteRows[32][0x28];   // +0x388B (32 x 0x28)
     u8 field_0x3D8B;          // +0x3D8B
     u32 mWordRows[32][8];     // +0x3D8C (32 x 0x20)
     u8 field_0x418C[0x4190 - 0x418C];
@@ -159,6 +169,65 @@ struct CTaskREventVtblView {
 class CTaskREvent {
 public:
     void OnFileEvent(CEventFile* ev);
+};
+
+class IWorkEvent;
+
+// View of the embedded sub-object dispatched by cf::CTaskREvent::Move():
+// only the vtable slot 0x168 (index 88) fade call is exercised.
+struct REvtMoveSub {
+    virtual void* m00(); virtual void* m01(); virtual void* m02(); virtual void* m03();
+    virtual void* m04(); virtual void* m05(); virtual void* m06(); virtual void* m07();
+    virtual void* m08(); virtual void* m09(); virtual void* m10(); virtual void* m11();
+    virtual void* m12(); virtual void* m13(); virtual void* m14(); virtual void* m15();
+    virtual void* m16(); virtual void* m17(); virtual void* m18(); virtual void* m19();
+    virtual void* m20(); virtual void* m21(); virtual void* m22(); virtual void* m23();
+    virtual void* m24(); virtual void* m25(); virtual void* m26(); virtual void* m27();
+    virtual void* m28(); virtual void* m29(); virtual void* m30(); virtual void* m31();
+    virtual void* m32(); virtual void* m33(); virtual void* m34(); virtual void* m35();
+    virtual void* m36(); virtual void* m37(); virtual void* m38(); virtual void* m39();
+    virtual void* m40(); virtual void* m41(); virtual void* m42(); virtual void* m43();
+    virtual void* m44(); virtual void* m45(); virtual void* m46(); virtual void* m47();
+    virtual void* m48(); virtual void* m49(); virtual void* m50(); virtual void* m51();
+    virtual void* m52(); virtual void* m53(); virtual void* m54(); virtual void* m55();
+    virtual void* m56(); virtual void* m57(); virtual void* m58(); virtual void* m59();
+    virtual void* m60(); virtual void* m61(); virtual void* m62(); virtual void* m63();
+    virtual void* m64(); virtual void* m65(); virtual void* m66(); virtual void* m67();
+    virtual void* m68(); virtual void* m69(); virtual void* m70(); virtual void* m71();
+    virtual void* m72(); virtual void* m73(); virtual void* m74(); virtual void* m75();
+    virtual void* m76(); virtual void* m77(); virtual void* m78(); virtual void* m79();
+    virtual void* m80(); virtual void* m81(); virtual void* m82(); virtual void* m83();
+    virtual void* m84(); virtual void* m85(); virtual void* m86(); virtual void* m87();
+    virtual void vfn88(f32 v);   // index 88 -> vtable 0x168 (fade)
+};
+
+// Battle gate object behind REvtActor::field_0x3F34 (bit 0x10 of +0x7A4).
+struct REvtGateObj {
+    u8 _00[0x7A4];
+    u32 field_0x7A4;
+};
+
+// Actor/move-object view walked by Move()'s battle fade loops.
+struct REvtActor {
+    u8 _0000[0x3E9C];
+    REvtMoveSub mSub;                       // +0x3E9C (own vtable)
+    u8 _3EA0[0x3F0C - 0x3EA0];
+    u32 field_0x3F0C;                       // packed word for func_800AA318
+    u8 _3F10[0x3F34 - 0x3F10];
+    REvtGateObj* field_0x3F34;
+};
+
+// Circular list node over actors (+0x00 next, +0x08 item).
+struct REvtListNode {
+    REvtListNode* next;
+    REvtActor* item;
+};
+struct REvtListHead { REvtListNode* first; };
+
+// Manager view returned by func_80086B04/func_80086B08 (+0x04 list head).
+struct REvtMgrView {
+    u8 _00[0x4];
+    REvtListHead* list;
 };
 
 // Data symbols (retail linker names - global scope, no extern "C" needed)
@@ -214,7 +283,7 @@ extern "C" {
     void func_80164F6C();
     void func_80165DF4(cf::CTaskREvent* self, int arg);
     void func_80166050(cf::CTaskREvent* self, int arg);
-    void func_8016462C(int index);
+    void func_8016462C(u32 index);
     // CRI movie-player setup: retail func_80164ED0 passes 4 extra words even
     // though the retail symbol is Fv; declared here with the caller's shape.
     CLibCri* func_80459AA8__7CLibCriFv(const char* self, u32 memHandle, u32 buffer, int flag, int zero);
@@ -224,7 +293,7 @@ extern "C" {
     int func_80164C48();
     void func_80164CFC();
     void func_8016455C(CEventDataTable* self);
-    u32 func_80164724(const char* key, int type, u32 slot);
+    u32 func_80164724(const char* key, u32 type, u32 slot);
     // Retail ctor symbol is the pre-mangled name __ct__cf_CTaskREvent (a
     // global function, not a cf::CTaskREvent member); declared here so the
     // definition in the .cpp keeps C linkage and emits the plain name.
@@ -276,7 +345,7 @@ extern "C" {
     // CREvtMem have no member ctor).
     void __ct__8CProcessFv(CProcess* p);
     void __ct__11CDeviceVICbFv(CDeviceVICb* p);
-    void __ct__cf_CInfoCf(cf::CInfoCf* p);
+    cf::CInfoCf* __ct__cf_CInfoCf(cf::CInfoCf* p);
     void __ct__cf_CREvtMem(cf::CREvtMem* p);
     // IFlagEvent registration helper (mirror of func_8009D514 used by the
     // dtor; retail C-ABI name).
@@ -285,7 +354,9 @@ extern "C" {
     void func_801667AC(cf::CInfoCf* self);
     void func_80166784(cf::CInfoCf* p);
     int getFileSize__11CDeviceFileFPCc(const char* path, int flag);
-    CEventMgrB0* func_8016AED4();
+    // Spawns the realtime-event task for `name` under `parent` and returns
+    // its gate object (same signature as CTaskREvtSequence.hpp).
+    CEventMgrB0* func_8016AED4(CProcess* parent, const char* name);
     void func_8016C2C8();
     // Imports for func_801663A8
     void func_8016C450(u32 a, u32 b, u32 c);
@@ -300,12 +371,27 @@ extern "C" {
     void func_80043B04(float v);
     u32 func_80459AC8__7CLibCriFv(CLibCri* self);
     void func_80459AB0__7CLibCriFv(CLibCri* self, u32 arg);
-    void* func_80086B04__Q22cf13CfGameManagerFv();
-    void* func_80086B08__Q22cf13CfGameManagerFv();
-    void* func_800BFC68__FPQ22cf12CfObjectMove(void* obj);
-    void* func_800AD860__FPv(void* obj);
+    REvtMgrView* func_80086B04__Q22cf13CfGameManagerFv();
+    REvtMgrView* func_80086B08__Q22cf13CfGameManagerFv();
+    REvtActor* func_800BFC68__FPQ22cf12CfObjectMove(REvtActor* obj);
+    REvtActor* func_800AD860__FPv(REvtActor* obj);
     void func_80462D5C__8CTaskLODFv(s16 taskID);
     void func_80462D04__8CTaskLODFv(s16 taskID);
+    // Imports for cf::CTaskREvent::Move
+    u32 func_801684F4();
+    void func_8016C6EC(int arg);
+    int func_8016A35C();
+    int func_80043BA4();
+    void func_804962A8(u8* self, u32 flag);
+    u32 func_800EA444(u32 battle);
+    f32 lbl_eu_80667638;
+    f32 lbl_eu_8066763C;
+    f32 lbl_eu_80667640;
+    void func_80086B5C__Q22cf13CfGameManagerFv(u32 a, u32 b);
+    u8* getGlobalSda();
+    void func_800599E0(u32 a, u32 b, u32 c, u32 d);
+    CFileHandle* readFile__11CDeviceFileFUlPCcP10IWorkEventii(
+        u32 handle, const char* path, IWorkEvent* sink, int a, int b);
 }
 
 namespace cf{

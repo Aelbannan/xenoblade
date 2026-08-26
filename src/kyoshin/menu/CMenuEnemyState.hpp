@@ -62,6 +62,69 @@ public:
     virtual u32 m24() = 0;    // 0x24  (font-handle getter)
 };
 
+// Generic vtable view covering every slot the enemy-menu helpers dispatch to
+// (highest offset 0x298 -> slot 154). Slots return int so results can be
+// reinterpreted per site; all-pure and never constructed (no vtable emitted).
+class MenuEnemyVt {
+public:
+    virtual int m000() = 0; virtual int m001() = 0; virtual int m002() = 0;
+    virtual int m003() = 0; virtual int m004() = 0; virtual int m005() = 0;
+    virtual int m006() = 0; virtual int m007() = 0; virtual int m008() = 0;
+    virtual int m009() = 0; virtual int* m010() = 0; virtual int m011() = 0;
+    virtual int* m012() = 0; virtual int m013() = 0; virtual int m014() = 0;
+    virtual int m015() = 0; virtual int m016() = 0; virtual int m017() = 0;
+    virtual int m018() = 0; virtual int m019() = 0; virtual int m020() = 0;
+    virtual int m021() = 0; virtual int m022() = 0; virtual int m023() = 0;
+    virtual int m024() = 0; virtual int m025() = 0; virtual int m026() = 0;
+    virtual int m027() = 0; virtual int m028() = 0; virtual int m029() = 0;
+    virtual int m030() = 0; virtual int m031() = 0; virtual int m032() = 0;
+    virtual int m033() = 0; virtual int m034() = 0; virtual int m035() = 0;
+    virtual int m036() = 0; virtual int m037() = 0; virtual int m038() = 0;
+    virtual int m039() = 0; virtual int m040() = 0; virtual int m041() = 0;
+    virtual int m042() = 0; virtual int m043() = 0; virtual int m044() = 0;
+    virtual int m045() = 0; virtual int m046() = 0; virtual int m047() = 0;
+    virtual int m048() = 0; virtual int m049() = 0; virtual int m050() = 0;
+    virtual int m051() = 0; virtual int m052() = 0; virtual int m053() = 0;
+    virtual int m054() = 0; virtual int m055() = 0; virtual int m056() = 0;
+    virtual int m057() = 0; virtual int m058() = 0; virtual int m059() = 0;
+    virtual int m060() = 0; virtual int m061() = 0; virtual int m062() = 0;
+    virtual int m063() = 0; virtual int m064() = 0; virtual int m065() = 0;
+    virtual int m066() = 0; virtual int m067() = 0; virtual int m068() = 0;
+    virtual int m069() = 0; virtual int m070() = 0; virtual int m071() = 0;
+    virtual int m072() = 0; virtual int m073() = 0; virtual int m074() = 0;
+    virtual int m075() = 0; virtual int m076() = 0; virtual int m077() = 0;
+    virtual int m078() = 0; virtual int m079() = 0; virtual int m080() = 0;
+    virtual int m081() = 0; virtual int m082() = 0; virtual int m083() = 0;
+    virtual int m084() = 0; virtual int m085() = 0; virtual int m086() = 0;
+    virtual int m087() = 0; virtual int m088() = 0; virtual int m089() = 0;
+    virtual int m090() = 0; virtual int m091() = 0; virtual int m092() = 0;
+    virtual int m093() = 0; virtual int m094() = 0; virtual int m095() = 0;
+    virtual int m096() = 0; virtual int m097() = 0; virtual int m098() = 0;
+    virtual int m099() = 0; virtual int m100() = 0; virtual int m101() = 0;
+    virtual int m102() = 0; virtual int m103() = 0; virtual int m104() = 0;
+    virtual int m105() = 0; virtual int m106() = 0; virtual int m107() = 0;
+    virtual int m108() = 0; virtual int m109() = 0; virtual int m110() = 0;
+    virtual int m111() = 0; virtual int m112() = 0; virtual int m113() = 0;
+    virtual int m114() = 0; virtual int m115() = 0; virtual int m116() = 0;
+    virtual int m117() = 0; virtual int m118() = 0; virtual int m119() = 0;
+    virtual int m120() = 0; virtual int m121() = 0; virtual int m122() = 0;
+    virtual int m123() = 0; virtual int m124() = 0; virtual int m125() = 0;
+    virtual int m126() = 0; virtual int m127() = 0; virtual int m128() = 0;
+    virtual int m129() = 0; virtual int m130() = 0; virtual int m131() = 0;
+    virtual int m132() = 0; virtual int m133() = 0; virtual int m134() = 0;
+    virtual int m135() = 0; virtual int m136() = 0; virtual int m137() = 0;
+    virtual int m138() = 0; virtual int m139() = 0; virtual int m140() = 0;
+    virtual int m141() = 0; virtual int m142() = 0; virtual int m143() = 0;
+    virtual int m144() = 0; virtual int m145() = 0; virtual int m146() = 0;
+    virtual int m147() = 0; virtual int m148() = 0; virtual int m149() = 0;
+    virtual int m150() = 0; virtual int m151() = 0; virtual int m152() = 0;
+    virtual int m153() = 0; virtual int m154() = 0; virtual int m155() = 0;
+    virtual int m156() = 0; virtual int m157() = 0; virtual int m158() = 0;
+    virtual int m159() = 0; virtual int m160() = 0; virtual int m161() = 0;
+    virtual int m162() = 0; virtual int m163() = 0; virtual int m164() = 0;
+    virtual int m165() = 0;
+};
+
 // CPcSelectCursor lives at offset 0x7E4 and is 0x48 bytes.
 // Several fields alias into CMenuEnemyState (unk800..unk828).
 // Declared here so the source can name the sub-fields.
@@ -229,7 +292,9 @@ extern "C" char* func_80138F78(u32 id);
 // Enemy-menu helpers used by the panel/cursor functions (retail unmangled).
 // (func_8009ECB0 is declared in include/functions.hpp as `extern "C" int*`.)
 extern "C" void* func_800B8B94(s32 a);
-extern "C" void* func_800EA444(void);
+// Unprototyped-style import shared by two callers in this TU.
+extern "C" void* func_800EA444(void* mgr);
+extern "C" int func_800F4648(void* self);
 extern "C" void func_8049B59C(void* out, void* pose, const void* in);
 extern "C" void func_80137DB8(void* a, u32 b, u32 c);
 extern "C" char* func_80138DA4(const char* s);

@@ -484,7 +484,7 @@ config.libs = [
             Object(NonMatching, "kyoshin/cf/object/CfObjectColl.cpp"),
             Object(NonMatching, "kyoshin/cf/object/CfObjectEff.cpp"),
             Object(Matching, "kyoshin/cf/object/CfObjectEne.cpp"),
-            Object(NonMatching, "kyoshin/code_800B06A4.cpp", mw_version="GC/3.0a5.2"),  # retail: GC/3.0a5.2 (func_800B67CC range check keeps two cmpli/bclr blocks; Wii/1.1 folds to (u8)(val-1)<=23). NOTE 2026-08-25 rematch probe: reslist ctor family/__dt__800B0AF4/func_800B66BC only go byte-clean under Wii/1.x (.scratch/reslist_probe7 + triage b06a4_triage_{GC,W11}.json), but Wii/1.1 regresses accepted FULL_MATCHes func_800B15A4 (0->108), func_800B8920 (0->20), func_800B31F8 (0->9), func_800B67CC (0->4) - TU split by mw_version is the next angle
+            Object(NonMatching, "kyoshin/code_800B06A4.cpp", mw_version="GC/3.0a5.2"),  # retail: GC/3.0a5.2 (func_800B67CC range check keeps two cmpli/bclr blocks; Wii/1.1 folds to (u8)(val-1)<=23). NOTE 2026-08-25 rematch probe: reslist ctor family/__dt__800B0AF4/func_800B66BC only go byte-clean under Wii/1.x (.scratch/reslist_probe7 + triage b06a4_triage_{GC,W11}.json), but Wii/1.1 regresses accepted FULL_MATCHes func_800B15A4 (0->108), func_800B8920 (0->20), func_800B31F8 (0->9), func_800B67CC (0->4); full sweep .scratch/version_sweep.py shows NO available version satisfies both families - TU split by mw_version is the next angle
             Object(NonMatching, "kyoshin/cf/object/CfObjectMap.cpp"),
             Object(NonMatching, "kyoshin/cf/object/CfObjectModel.cpp"),
             Object(NonMatching, "kyoshin/cf/object/CfObjectMove.cpp"),
@@ -740,7 +740,7 @@ config.libs = [
             Object(Matching, "kyoshin/cf/voice/cvsys/CVS_THREAD_VISION_BREAK.cpp"),
             Object(NonMatching, "kyoshin/cf/voice/cvsys/CVS_THREAD_VISION_TELL.cpp"),
             Object(Matching, "kyoshin/menu/CMenuBattleChain.cpp"),
-            Object(NonMatching, "kyoshin/cf/voice/cvsys/CVS_THREAD_BATTLE_END_SP.cpp"),
+            Object(Matching, "kyoshin/cf/voice/cvsys/CVS_THREAD_BATTLE_END_SP.cpp"),
             Object(Matching, "kyoshin/cf/CfGimmickSaveOff.cpp"),
             Object(NonMatching, "kyoshin/menu/CMenuTutorialList.cpp", extra_cflags=["-O4,s"]),
             Object(NonMatching, "kyoshin/CTutorialList.cpp", extra_cflags=["-O4,s"]),

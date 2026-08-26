@@ -82,6 +82,20 @@ inline float convF32(s32 v) {
     return (float)(u.d - lbl_eu_8066A300);
 }
 
+// Two-slot variant used by CView_UnkVirtualFunc9: retail declares two
+// conversion buffers, pre-stores the 0x43300000 high word of both up front,
+// and only writes the sign-flipped low word per conversion.
+typedef union { double d; u32 w[2]; } ConvBuf;
+
+inline void convBufInit(ConvBuf* u) {
+    u->w[0] = 0x43300000;
+}
+
+inline float convF32At(ConvBuf* u, s32 v) {
+    u->w[1] = (u32)v ^ 0x80000000;
+    return (float)(u->d - lbl_eu_8066A300);
+}
+
 // Blob monolibdata1/1d dissolve: this TU owns .rodata 0x80522650-
 // 0x80522660, .sdata 0x806635A0-0x806635A8, .data 0x8056B700-0x8056B710.
 #include "monolib/data_vtables.hpp"
@@ -117,8 +131,8 @@ bool CViewFrame::render() {
 
     // Scope early expand locals so they cannot bleed into the post-bl own/r3 schedule.
     {
-        CView* owner = mOwner;
         bool expand = false;
+        CView* owner = mOwner;
         CView* view = owner->mFrame.mOwner;
         ml::CRect16* r = (ml::CRect16*)&rect;
         // Direct volatile stores keep the 0x230/232/1c8/1ca read order.
@@ -137,7 +151,9 @@ bool CViewFrame::render() {
         }
 
         if (expand != 0) {
-            view = *(CView* volatile*)&owner->mFrame.mOwner;
+            // Fresh temp for the volatile reload: retail keeps the original
+            // view pointer dead after the rect stores.
+            CView* view2 = *(CView* volatile*)&owner->mFrame.mOwner;
             expand = false;
 
             {
@@ -145,8 +161,8 @@ bool CViewFrame::render() {
                 rect.mSize.x = (s16)(rect.mSize.x + (s16)(border * 2));
             }
 
-            if ((view->unk27C & 2) != 0) {
-                u32 mode = view->unk278;
+            if ((view2->unk27C & 2) != 0) {
+                u32 mode = view2->unk278;
                 if ((mode & 1) == 0 && (mode & 2) == 0) {
                     expand = true;
                 }
@@ -292,97 +308,115 @@ bool CViewFrame::render() {
     return true;
 }
 
-// Draw the 8-segment frame border into the CDrawGX batch: 4 outer
-// edge rectangles (left, bottom, right, top) with the frame colour,
-// then 4 inner 1px highlight/outline lines (right+bottom outer
-// outline, top+left inner highlight) at the scaled-down colour.
-// @param self  CViewFrame with mBorder thickness and mFrameColor.
-// @param draw  Target CDrawGX draw context.
-// @param rect  Bounding rectangle of the frame area to draw.
+// Draw the 8-segment frame border into the CDrawGX batch: 4 outer edge
+// rectangles (left, bottom, right, top) with the frame colour, then 4 inner
+// 1px highlight/outline lines at the darker scaled colour. Each quad builds
+// into its own rect local (matching the retail stack slots), and the border
+// thickness / owner alpha are re-read inline per use.
 extern "C" void func_804409D0__10CViewFrameFPvPv(CViewFrame* self, void* draw, void* rect) {
-    CDrawGX* d = (CDrawGX*)draw;
     ml::CRect16* r = (ml::CRect16*)rect;
-    ml::CCol4 col;
-    ml::CRect16 piece;
+    CDrawGX* d = (CDrawGX*)draw;
+    CView* owner = self->mOwner;
+    float alpha = owner->mAlpha;
     s16 border = self->mBorder;
-    float scale = lbl_eu_8066A318;
-    float opacity = self->mOwner->mAlpha;
 
-    col.r = self->mFrameColor.r * scale;
-    col.g = self->mFrameColor.g * scale;
-    col.b = self->mFrameColor.b * scale;
-    col.a = self->mFrameColor.a * opacity;
-    d->setCol(col);
+    ml::CCol4 drawCol;
+    ml::CCol4 col = self->mFrameColor;
+    ml::CCol4 drawCol2;
+    ml::CCol4 col2;
+
+    drawCol.g = col.g * lbl_eu_8066A318;
+    drawCol.b = col.b * lbl_eu_8066A318;
+    col.a = col.a * alpha;
+    drawCol.a = col.a;
+    drawCol.r = col.r * lbl_eu_8066A318;
+    d->setCol(drawCol);
+
+    ml::CRect16 qL;
+    ml::CRect16 qB;
+    ml::CRect16 qR;
+    ml::CRect16 qT;
+
 
     d->begin(9, 1);
-    piece.mPos.x = r->mPos.x;
-    piece.mPos.y = r->mPos.y;
-    piece.mSize.x = border;
-    piece.mSize.y = r->mSize.y;
-    d->add(piece);
+    qL.mPos.x = r->mPos.x;
+    qL.mPos.y = r->mPos.y;
+    qL.mSize.x = border;
+    qL.mSize.y = r->mSize.y;
+    d->add(qL);
     d->end();
 
     d->begin(9, 1);
-    piece.mPos.x = r->mPos.x;
-    piece.mPos.y = (s16)((s16)(r->mPos.y + r->mSize.y) - border);
-    piece.mSize.x = r->mSize.x;
-    piece.mSize.y = border;
-    d->add(piece);
+    qB.mPos.x = r->mPos.x;
+    qB.mPos.y = (s16)((s16)(r->mPos.y + r->mSize.y) - border);
+    qB.mSize.x = r->mSize.x;
+    qB.mSize.y = border;
+    d->add(qB);
     d->end();
 
     d->begin(9, 1);
-    piece.mPos.x = (s16)((s16)(r->mPos.x + r->mSize.x) - border);
-    piece.mPos.y = r->mPos.y;
-    piece.mSize.x = border;
-    piece.mSize.y = r->mSize.y;
-    d->add(piece);
+    qR.mPos.x = (s16)((s16)(r->mPos.x + r->mSize.x) - border);
+    qR.mPos.y = r->mPos.y;
+    qR.mSize.x = border;
+    qR.mSize.y = r->mSize.y;
+    d->add(qR);
     d->end();
 
     d->begin(9, 1);
-    piece.mPos.x = r->mPos.x;
-    piece.mPos.y = r->mPos.y;
-    piece.mSize.x = r->mSize.x;
-    piece.mSize.y = border;
-    d->add(piece);
+    qT.mPos.x = r->mPos.x;
+    qT.mPos.y = r->mPos.y;
+    qT.mSize.x = r->mSize.x;
+    qT.mSize.y = border;
+    d->add(qT);
     d->end();
 
-    scale = lbl_eu_8066A2F4;
-    col.r = self->mFrameColor.r * scale;
-    col.g = self->mFrameColor.g * scale;
-    col.b = self->mFrameColor.b * scale;
-    col.a = self->mFrameColor.a * opacity;
-    d->setCol(col);
+    col2 = self->mFrameColor;
+    ml::CRect16 qIL;
+    ml::CRect16 qIT;
+    ml::CRect16 qOB;
+    ml::CRect16 qOR;
 
+    drawCol2.b = col2.b * lbl_eu_8066A2F4;
+    drawCol2.g = col2.g * lbl_eu_8066A2F4;
+    col2.a = col2.a * alpha;
+    drawCol2.a = col2.a;
+    drawCol2.r = col2.r * lbl_eu_8066A2F4;
+    d->setCol(drawCol2);
+
+    // Left inner highlight line.
     d->begin(9, 1);
-    piece.mPos.x = (s16)((s16)(border + r->mPos.x) - 1);
-    piece.mPos.y = (s16)(r->mPos.y + border);
-    piece.mSize.x = 1;
-    piece.mSize.y = (s16)(r->mSize.y - (s16)(border * 2));
-    d->add(piece);
+    qIL.mPos.x = (s16)((s16)(border + r->mPos.x) - 1);
+    qIL.mPos.y = (s16)(r->mPos.y + border);
+    qIL.mSize.x = 1;
+    qIL.mSize.y = (s16)(r->mSize.y - (s16)(border * 2));
+    d->add(qIL);
     d->end();
 
+    // Top inner highlight line.
     d->begin(9, 1);
-    piece.mPos.x = (s16)(r->mPos.x + border);
-    piece.mPos.y = (s16)((s16)(border + r->mPos.y) - 1);
-    piece.mSize.x = (s16)(r->mSize.x - (s16)(border * 2));
-    piece.mSize.y = 1;
-    d->add(piece);
+    qIT.mPos.x = (s16)(r->mPos.x + border);
+    qIT.mPos.y = (s16)((s16)(border + r->mPos.y) - 1);
+    qIT.mSize.x = (s16)(r->mSize.x - (s16)(border * 2));
+    qIT.mSize.y = 1;
+    d->add(qIT);
     d->end();
 
+    // Bottom outer outline.
     d->begin(9, 1);
-    piece.mPos.x = (s16)(r->mPos.x - 1);
-    piece.mPos.y = (s16)((s16)(r->mPos.y + r->mSize.y) - 1);
-    piece.mSize.x = r->mSize.x;
-    piece.mSize.y = 1;
-    d->add(piece);
+    qOB.mPos.x = (s16)(r->mPos.x - 1);
+    qOB.mPos.y = (s16)((s16)(r->mPos.y + r->mSize.y) - 1);
+    qOB.mSize.x = r->mSize.x;
+    qOB.mSize.y = 1;
+    d->add(qOB);
     d->end();
 
+    // Right outer outline.
     d->begin(9, 1);
-    piece.mPos.x = (s16)((s16)(r->mPos.x + r->mSize.x) - 1);
-    piece.mPos.y = r->mPos.y;
-    piece.mSize.x = 1;
-    piece.mSize.y = r->mSize.y;
-    d->add(piece);
+    qOR.mPos.x = (s16)((s16)(r->mPos.x + r->mSize.x) - 1);
+    qOR.mPos.y = r->mPos.y;
+    qOR.mSize.x = 1;
+    qOR.mSize.y = r->mSize.y;
+    d->add(qOR);
     d->end();
 }
 
@@ -392,9 +426,10 @@ extern "C" void func_804409D0__10CViewFrameFPvPv(CViewFrame* self, void* draw, v
 // hand the rect to func_804409D0 for the outer border.
 extern "C" void func_804406D8__10CViewFrameFPv(CViewFrame* self, void* draw) {
     CDrawGX* d = (CDrawGX*)draw;
-    CView* owner = self->mOwner;
-    CView* view = owner->mFrame.mOwner;
-    s16 width = view->mRectData.mViewSize.x;
+    CView* view = self->mOwner->mFrame.mOwner;
+    // Kept as int: retail widens via lha and adds border*2 without a final
+    // extsh; the only (s16) truncation points are the add() args and rect.
+    int width = view->mRectData.mViewSize.x;
     int inner = 0;
     if ((view->unk27C & 1) != 0) {
         u32 mode = view->unk278;
@@ -410,20 +445,14 @@ extern "C" void func_804406D8__10CViewFrameFPv(CViewFrame* self, void* draw) {
         }
     }
     if (expand != 0) {
-        s16 ownerBorder = owner->mFrame.mBorder;
-        width = (s16)(width + (s16)(ownerBorder * 2));
+        s16 ownerBorder = self->mOwner->mFrame.mBorder;
+        width += ownerBorder * 2;
     }
 
     s16 border = self->mBorder;
-    s16 x2 = (s16)(width - (s16)(border * 2));
-    s16 xRight = (s16)(border + x2);
-    s16 y2 = (s16)(border + 0x16);
-    ml::CCol4 col;
-    col.r = self->mColor28.r;
-    col.g = self->mColor28.g;
-    col.b = self->mColor28.b;
-    col.a = self->mColor28.a;
-    if (hasCurrent__5CViewCFv(owner) != 0) {
+    // Word copy (retail emits lwz/stw pairs, not per-field lfs/stfs).
+    ml::CCol4 col = self->mColor28;
+    if (hasCurrent__5CViewCFv(self->mOwner) != 0) {
         // Grey out the frame colour when the view is not current.
         float lum = lbl_eu_8066A310 * col.g + lbl_eu_8066A30C * col.r +
                     lbl_eu_8066A308 * col.b;
@@ -433,33 +462,41 @@ extern "C" void func_804406D8__10CViewFrameFPv(CViewFrame* self, void* draw) {
     }
     col.a = self->mOwner->mAlpha;
 
+    int x2 = width - border * 2;
+    int xRight = border + x2;
+    int y2 = border + 0x16;
+
     d->begin(8, 4);
     {
-        ml::CCol4 c = col;
-        c.r = c.r * lbl_eu_8066A2EC;
-        c.g = c.g * lbl_eu_8066A2EC;
-        c.b = c.b * lbl_eu_8066A2EC;
+        ml::CCol4 c;
+        c.r = col.r * lbl_eu_8066A2EC;
+        c.g = col.g * lbl_eu_8066A2EC;
+        c.b = col.b * lbl_eu_8066A2EC;
+        c.a = col.a;
         d->add(border, border, c);
     }
     {
-        ml::CCol4 c = col;
-        c.r = c.r * lbl_eu_8066A2F0;
-        c.g = c.g * lbl_eu_8066A2F0;
-        c.b = c.b * lbl_eu_8066A2F0;
+        ml::CCol4 c;
+        c.r = col.r * lbl_eu_8066A2F0;
+        c.g = col.g * lbl_eu_8066A2F0;
+        c.b = col.b * lbl_eu_8066A2F0;
+        c.a = col.a;
         d->add(xRight, border, c);
     }
     {
-        ml::CCol4 c = col;
-        c.r = c.r * lbl_eu_8066A2EC;
-        c.g = c.g * lbl_eu_8066A2EC;
-        c.b = c.b * lbl_eu_8066A2EC;
+        ml::CCol4 c;
+        c.r = col.r * lbl_eu_8066A2EC;
+        c.g = col.g * lbl_eu_8066A2EC;
+        c.b = col.b * lbl_eu_8066A2EC;
+        c.a = col.a;
         d->add(border, y2, c);
     }
     {
-        ml::CCol4 c = col;
-        c.r = c.r * lbl_eu_8066A2F0;
-        c.g = c.g * lbl_eu_8066A2F0;
-        c.b = c.b * lbl_eu_8066A2F0;
+        ml::CCol4 c;
+        c.r = col.r * lbl_eu_8066A2F0;
+        c.g = col.g * lbl_eu_8066A2F0;
+        c.b = col.b * lbl_eu_8066A2F0;
+        c.a = col.a;
         d->add(xRight, y2, c);
     }
     d->end();
@@ -478,7 +515,7 @@ extern "C" void func_804406D8__10CViewFrameFPv(CViewFrame* self, void* draw) {
     rect.mPos.x = 0;
     rect.mPos.y = 0;
     rect.mSize.x = width;
-    rect.mSize.y = (s16)(border * 2 + 0x16);
+    rect.mSize.y = border * 2 + 0x16;
     func_804409D0__10CViewFrameFPvPv(self, draw, &rect);
 }
 
@@ -486,113 +523,157 @@ extern "C" void func_804406D8__10CViewFrameFPv(CViewFrame* self, void* draw) {
 // pointer position, expanding around the owner's border and adjusting for the
 // split line when the owner view is in split mode.
 extern "C" void func_80440D78__10CViewFrameFPvPv(CViewFrame* self, void* draw, void* pos) {
-    CDrawGX* d = (CDrawGX*)draw;
-    ml::CPnt16* p = (ml::CPnt16*)pos;
     CView* owner = self->mOwner;
+    ml::CPnt16* p = (ml::CPnt16*)pos;
+    CViewFrame* frm = self;
+    CDrawGX* d = (CDrawGX*)draw;
     CView* view = owner->mFrame.mOwner;
-    s16 width = view->mRectData.mViewSize.x;
-    s16 height = view->mRectData.mViewSize.y;
+    u32 flags = view->unk27C;
     int inner = 0;
-    if ((view->unk27C & 1) != 0 && (view->unk278 & 1) == 0) {
-        inner = 1;
+    int expand = 0;
+    int width = view->mRectData.mViewSize.x;
+
+    // Border-expand gates: each test re-reads the mode word fresh.
+    if ((flags & 1) != 0) {
+        if ((view->unk278 & 1) == 0) {
+            inner = 1;
+        }
     }
-    if (inner != 0 && (view->unk278 & 2) == 0) {
-        width = (s16)(width + (s16)(owner->mFrame.mBorder * 2));
+    int height = view->mRectData.mViewSize.y;
+    if (inner != 0) {
+        if ((view->unk278 & 2) == 0) {
+            expand = 1;
+        }
+    }
+    if (expand != 0) {
+        s16 border = owner->mFrame.mBorder;
+        width += border * 2;
+        // Split gate: flags bit1 set and neither mode bit set.
         int split = 0;
-        if ((view->unk27C & 2) != 0 && (view->unk278 & 1) == 0 &&
-            (view->unk278 & 2) == 0) {
-            split = 1;
+        if ((flags & 2) != 0) {
+            u32 mode = view->unk278;
+            if ((mode & 1) == 0 && (mode & 2) == 0) {
+                split = 1;
+            }
         }
         if (split != 0) {
-            height = (s16)(height + (s16)(owner->mFrame.mBorder * 3 + 0x16));
+            height += border * 3 + 0x16;
         } else {
-            height = (s16)(height + (s16)(owner->mFrame.mBorder * 2));
+            height += border * 2;
         }
     }
 
-    s16 splitLine = getSplitLine__5CViewFv(owner);
+    int splitLine = getSplitLine__5CViewFv(owner);
     if (func_8043CE90__5CViewFv(owner) != 0) {
         // Split mode: the border quad sits to the right of the split line.
-        s16 border = self->mBorder;
-        s16 x = p->x;
-        s16 y = (s16)(splitLine + p->y);
-        s16 w = width;
-        int inner2 = 0;
-        if ((owner->unk27C & 1) != 0 && (owner->unk278 & 1) == 0) {
-            inner2 = 1;
+        owner = frm->mOwner;
+        int eFlag = 0;
+        int xFlag = 0;
+        // Reuse the height slot: retail colors y into the same callee-saved
+        // register that held height (dead on this path).
+        height = splitLine + p->y;
+        u32 flags2 = owner->unk27C;
+        int x = p->x;
+        if ((flags2 & 1) != 0) {
+            if ((owner->unk278 & 1) == 0) {
+                eFlag = 1;
+            }
         }
-        if (inner2 != 0 && (owner->unk278 & 2) == 0) {
-            x = (s16)(x + border);
-            y = (s16)(y + border);
-            w = (s16)(w - (s16)(border * 2));
+        if (eFlag != 0) {
+            if ((owner->unk278 & 2) == 0) {
+                xFlag = 1;
+            }
         }
-        if ((owner->unk27C & 2) != 0 && (owner->unk278 & 1) == 0 &&
-            (owner->unk278 & 2) == 0) {
-            y = (s16)(y + (s16)(border + 0x16));
+        if (xFlag != 0) {
+            x += frm->mBorder;
+            height += frm->mBorder;
+            width -= frm->mBorder * 2;
+        }
+        int yFlag = 0;
+        if ((flags2 & 2) != 0) {
+            u32 mode = owner->unk278;
+            if ((mode & 1) == 0 && (mode & 2) == 0) {
+                yFlag = 1;
+            }
+        }
+        if (yFlag != 0) {
+            height += frm->mBorder + 0x16;
         }
 
-        ml::CCol4 col = self->mFrameColor;
-        col.a = col.a * owner->mAlpha;
+        // Fresh colour copy per quad; alpha re-read from the owner each time
+        // (retail never keeps a float live across the draw calls).
+        ml::CCol4 col = frm->mFrameColor;
+        col.a = col.a * frm->mOwner->mAlpha;
         ml::CCol4 c;
-        float scale = lbl_eu_8066A318;
-        c.r = col.r * scale;
-        c.g = col.g * scale;
-        c.b = col.b * scale;
+        c.r = col.r * lbl_eu_8066A318;
+        c.g = col.g * lbl_eu_8066A318;
+        c.b = col.b * lbl_eu_8066A318;
         c.a = col.a;
         d->setCol(c);
 
         d->begin(9, 1);
         ml::CRect16 rect;
         rect.mPos.x = x;
-        rect.mPos.y = y;
-        rect.mSize.x = w;
-        rect.mSize.y = border;
+        rect.mPos.y = height;
+        rect.mSize.x = width;
+        rect.mSize.y = frm->mBorder;
         d->add(rect);
         d->end();
 
-        scale = lbl_eu_8066A2F4;
-        c.r = col.r * scale;
-        c.g = col.g * scale;
-        c.b = col.b * scale;
+        col = frm->mFrameColor;
+        col.a = col.a * frm->mOwner->mAlpha;
+        c.r = col.r * lbl_eu_8066A2F4;
+        c.g = col.g * lbl_eu_8066A2F4;
+        c.b = col.b * lbl_eu_8066A2F4;
         c.a = col.a;
         d->setCol(c);
 
         d->begin(9, 1);
         ml::CRect16 line;
         line.mPos.x = x;
-        line.mPos.y = (s16)(y + border - 1);
-        line.mSize.x = w;
+        line.mPos.y = (s16)(height + frm->mBorder - 1);
+        line.mSize.x = width;
         line.mSize.y = 1;
         d->add(line);
         d->end();
     } else {
         // Normal mode: the border quad runs along the split line.
-        s16 border = self->mBorder;
         ml::CRect16 rect;
-        rect.mPos.x = (s16)(splitLine + p->x);
+        rect.mPos.x = splitLine + p->x;
         rect.mPos.y = p->y;
-        rect.mSize.x = border;
+        rect.mSize.x = frm->mBorder;
         rect.mSize.y = height;
+        owner = frm->mOwner;
         int inner2 = 0;
-        if ((owner->unk27C & 1) != 0 && (owner->unk278 & 1) == 0) {
-            inner2 = 1;
+        if ((owner->unk27C & 1) != 0) {
+            u32 mode = owner->unk278;
+            if ((mode & 1) == 0 && (mode & 2) == 0) {
+                inner2 = 1;
+            }
         }
         if (inner2 != 0) {
-            rect.mPos.x = (s16)(rect.mPos.x + border);
+            rect.mPos.x = (s16)(rect.mPos.x + frm->mBorder);
         }
-        if ((owner->unk27C & 2) != 0 && (owner->unk278 & 1) == 0 &&
-            (owner->unk278 & 2) == 0) {
-            rect.mPos.y = (s16)(rect.mPos.y + (s16)(border + 0x16));
-            rect.mSize.y = (s16)(rect.mSize.y - (s16)(border + 0x16));
+        int split2 = 0;
+        owner = frm->mOwner;
+        if ((owner->unk27C & 2) != 0) {
+            u32 mode = owner->unk278;
+            if ((mode & 1) == 0 && (mode & 2) == 0) {
+                split2 = 1;
+            }
+        }
+        if (split2 != 0) {
+            s16 adj = frm->mBorder + 0x16;
+            rect.mPos.y = (s16)(rect.mPos.y + adj);
+            rect.mSize.y = (s16)(rect.mSize.y - adj);
         }
 
-        ml::CCol4 col = self->mFrameColor;
-        col.a = col.a * owner->mAlpha;
+        ml::CCol4 col = frm->mFrameColor;
+        col.a = col.a * frm->mOwner->mAlpha;
         ml::CCol4 c;
-        float scale = lbl_eu_8066A318;
-        c.r = col.r * scale;
-        c.g = col.g * scale;
-        c.b = col.b * scale;
+        c.r = col.r * lbl_eu_8066A318;
+        c.g = col.g * lbl_eu_8066A318;
+        c.b = col.b * lbl_eu_8066A318;
         c.a = col.a;
         d->setCol(c);
 
@@ -600,16 +681,17 @@ extern "C" void func_80440D78__10CViewFrameFPvPv(CViewFrame* self, void* draw, v
         d->add(rect);
         d->end();
 
-        scale = lbl_eu_8066A2F4;
-        c.r = col.r * scale;
-        c.g = col.g * scale;
-        c.b = col.b * scale;
+        col = frm->mFrameColor;
+        col.a = col.a * frm->mOwner->mAlpha;
+        c.r = col.r * lbl_eu_8066A2F4;
+        c.g = col.g * lbl_eu_8066A2F4;
+        c.b = col.b * lbl_eu_8066A2F4;
         c.a = col.a;
         d->setCol(c);
 
         d->begin(9, 1);
         ml::CRect16 line;
-        line.mPos.x = (s16)(rect.mPos.x + border - 1);
+        line.mPos.x = (s16)(rect.mPos.x + frm->mBorder - 1);
         line.mPos.y = rect.mPos.y;
         line.mSize.x = 1;
         line.mSize.y = rect.mSize.y;
@@ -734,110 +816,131 @@ extern "C" void func_8043FC60__10CViewFrameFUl(CViewFrame* self, u32 val) {
 // returns 1.
 extern "C" int CView_UnkVirtualFunc1__10CViewFrameFv(CViewFrame* self, CWorkThread* pThread) {
     const CFrameWorkPos* pos = (const CFrameWorkPos*)pThread;
+    // Decl order mirrors the retail frame layout (first = highest address):
+    // bufB@0x28, bufA@0x20, rect2@0x18, rect@0x10, parentRect@0x8.
+    // Declared (and pre-initialised with the 0x43300000 high words) before
+    // the work-type check so the lis/stw pair hoists into the prologue.
+    ConvBuf bufB;
+    ConvBuf bufA;
+    ml::CRect16 rect2;
+    ml::CRect rect;
+    ml::CRect parentRect;
+    convBufInit(&bufA);
+    convBufInit(&bufB);
+
     if ((s32)self->unk38 == 8) {
         return 0;
     }
 
-    CView* owner = self->mOwner;
-    CView* view = func_8043DF3C__5CViewFv(owner);
-    ml::CRect rect;
+    CView* view = func_8043DF3C__5CViewFv(self->mOwner);
     func_8043E46C__5CViewFRQ22ml5CRectP5CView(&rect, view);
 
-    ml::CRect16 rect2;
-    CView* frameOwner = owner->mFrame.mOwner;
-    rect2.mPos.x = frameOwner->mFrame.mContentX;
-    rect2.mPos.y = frameOwner->mFrame.mContentY;
-    rect2.mSize.x = frameOwner->mRectData.mViewSize.x;
-    rect2.mSize.y = frameOwner->mRectData.mViewSize.y;
-    rect.mSize.x = (s16)(pos->mPos.x - rect.mPos.x);
-    rect.mSize.y = (s16)(pos->mPos.y - rect.mPos.y);
-
+    // Build rect2 from the frame owner's content rect while diffing the
+    // pointer position against rect's origin.
     {
-        int inner = 0;
+        CView* owner = self->mOwner;
+        int expand = 0;
+        CView* frameOwner = owner->mFrame.mOwner;
+        rect2.mPos.x = frameOwner->mFrame.mContentX;
+        rect.mSize.x = pos->mPos.x - rect.mPos.x;
+        rect2.mPos.y = frameOwner->mFrame.mContentY;
+        rect2.mSize.x = frameOwner->mRectData.mViewSize.x;
+        rect.mSize.y = pos->mPos.y - rect.mPos.y;
+        rect2.mSize.y = frameOwner->mRectData.mViewSize.y;
+
         if ((frameOwner->unk27C & 1) != 0) {
             u32 mode = frameOwner->unk278;
-            if ((mode & 1) == 0) {
-                inner = 1;
+            if ((mode & 1) == 0 && (mode & 2) == 0) {
+                expand = 1;
             }
         }
-        if (inner != 0) {
+        if (expand != 0) {
             s16 border = owner->mFrame.mBorder;
             rect2.mSize.x = (s16)(rect2.mSize.x + (s16)(border * 2));
-            int split = 0;
-            CView* v2 = owner->mFrame.mOwner;
-            if ((v2->unk27C & 2) != 0) {
-                u32 mode = v2->unk278;
+
+            expand = 0;
+            CView* fo2 = owner->mFrame.mOwner;
+            if ((fo2->unk27C & 2) != 0) {
+                u32 mode = fo2->unk278;
                 if ((mode & 1) == 0 && (mode & 2) == 0) {
-                    split = 1;
+                    expand = 1;
                 }
             }
-            if (split != 0) {
-                s16 b2 = owner->mFrame.mBorder;
-                rect2.mSize.y = (s16)(rect2.mSize.y + (s16)(b2 * 3 + 0x16));
+            if (expand != 0) {
+                rect2.mSize.y = (s16)(rect2.mSize.y + (s16)(border * 3 + 0x16));
             } else {
-                s16 b2 = owner->mFrame.mBorder;
-                rect2.mSize.y = (s16)(rect2.mSize.y + (s16)(b2 * 2));
+                rect2.mSize.y = (s16)(rect2.mSize.y + (s16)(border * 2));
             }
         }
     }
 
-    // Frame modes 9: the rect tracks the pointer delta from its last spot.
-    if ((owner->unk27C & 0x200) == 0 && (s32)self->unk38 == 9) {
+    // Mode 9: the rect tracks the pointer delta from its last spot.
+    if ((self->mOwner->unk27C & 0x200) == 0 && self->unk38 == 9) {
         rect2.mPos.x = (s16)(rect2.mPos.x + (s16)(pos->mPos.x - self->unk50));
         rect2.mPos.y = (s16)(rect2.mPos.y + (s16)(pos->mPos.y - self->unk52));
     }
 
-    int mode = (s32)self->unk38;
-    if ((owner->unk27C & 0x100) == 0) {
-        if (mode == 4 || mode == 1 || mode == 3) {
-            // Top-left anchored resize.
-            rect2.mPos.x = (s16)(convF32(rect.mSize.x) - self->unk40);
-            rect2.mSize.x = (s16)(convF32(rect.mSize.x) -
-                                  (convF32(rect.mSize.x - rect2.mPos.x) - self->unk40));
-            if (rect2.mSize.x < 8) {
-                rect2.mPos.x = (s16)(rect2.mPos.x - (s16)(8 - rect2.mSize.x));
+    // Resize handles: only active when the 0x100 flag is clear. Each axis
+    // recomputes new pos/size around the stored float offsets (unk3C..unk48)
+    // and clamps the size to a minimum of 8.
+    if ((self->mOwner->unk27C & 0x100) == 0) {
+        if (self->unk38 == 4 || self->unk38 == 1 || self->unk38 == 3) {
+            float fx = convF32At(&bufB, rect.mSize.x - rect2.mPos.x);
+            float fw = convF32At(&bufA, rect2.mSize.x);
+            s16 newX = (s16)(convF32At(&bufA, rect.mSize.x) - self->unk40);
+            s16 newW = (s16)(fw - (fx - self->unk40));
+            rect2.mSize.x = newW;
+            rect2.mPos.x = newX;
+            if (newW < 8) {
                 rect2.mSize.x = 8;
+                rect2.mPos.x = (s16)(newX - (s16)(8 - newW));
             }
         }
-        if (mode == 6 || (u32)mode <= 1) {
-            rect2.mPos.y = (s16)(convF32(rect.mSize.y) - self->unk44);
-            rect2.mSize.y = (s16)(rect2.mSize.y -
-                                  (s16)((rect.mSize.y - rect2.mPos.y) - (int)self->unk44));
-            if (rect2.mSize.y < 8) {
-                rect2.mPos.y = (s16)(rect2.mPos.y - (s16)(8 - rect2.mSize.y));
+        if (self->unk38 == 6 || self->unk38 <= 1) {
+            float fy = convF32At(&bufB, rect.mSize.y);
+            int i44 = (int)self->unk44;
+            s16 dh = (s16)(rect.mSize.y - rect2.mPos.y - i44);
+            s16 newH = (s16)(rect2.mSize.y - dh);
+            s16 newY = (s16)(fy - self->unk44);
+            rect2.mSize.y = newH;
+            rect2.mPos.y = newY;
+            if (newH < 8) {
                 rect2.mSize.y = 8;
+                rect2.mPos.y = (s16)(newY - (s16)(8 - newH));
             }
         }
-        if (mode == 5 || mode == 0 || mode == 2) {
-            rect2.mSize.x = (s16)(convF32(rect2.mSize.x) +
-                                  (convF32(rect.mSize.x - (rect2.mPos.x + rect2.mSize.x)) -
-                                   self->unk3C));
+        if (self->unk38 == 5 || self->unk38 == 0 || self->unk38 == 2) {
+            float fe = convF32At(&bufB, rect.mSize.x - (rect2.mPos.x + rect2.mSize.x));
+            float fw = convF32At(&bufA, rect2.mSize.x);
+            rect2.mSize.x = (s16)(fw + (fe - self->unk3C));
             if (rect2.mSize.x < 8) {
                 rect2.mSize.x = 8;
             }
         }
-        if (mode == 7 || (u32)(mode - 2) <= 1) {
-            rect2.mSize.y = (s16)(convF32(rect2.mSize.y) +
-                                  (convF32(rect.mSize.y - (rect2.mPos.y + rect2.mSize.y)) -
-                                   self->unk48));
+        if (self->unk38 == 7 || self->unk38 - 2 <= 1) {
+            float fe = convF32At(&bufB, rect.mSize.y - (rect2.mPos.y + rect2.mSize.y));
+            float fh = convF32At(&bufA, rect2.mSize.y);
+            rect2.mSize.y = (s16)(fh + (fe - self->unk48));
             if (rect2.mSize.y < 8) {
                 rect2.mSize.y = 8;
             }
         }
     }
 
-    func_8043CCCC__5CViewFv(owner, &rect2);
-    if (func_8043CAFC__5CViewFv(owner) != 0) {
-        ml::CRect parentRect;
-        func_8043E6AC__5CViewFRQ22ml5CRectP5CView(&parentRect, owner);
-        parentRect.mSize.x = (s16)(pos->mPos.x - parentRect.mPos.x);
-        parentRect.mSize.y = (s16)(pos->mPos.y - parentRect.mPos.y);
+    func_8043CCCC__5CViewFv(self->mOwner, &rect2);
+    if (func_8043CAFC__5CViewFv(self->mOwner) != 0) {
+        func_8043E6AC__5CViewFRQ22ml5CRectP5CView(&parentRect, self->mOwner);
+        parentRect.mSize.x = pos->mPos.x - parentRect.mPos.x;
+        parentRect.mSize.y = pos->mPos.y - parentRect.mPos.y;
         rect.mSize = parentRect.mSize;
-        if ((s32)self->unk38 == 0xa) {
-            setSplitLine__5CViewFs(owner, (s16)(convF32(rect.mSize.y) - self->unk4C));
+        // Split-edge drag: write the split line from the pointer offset.
+        if (self->unk38 == 0xa) {
+            setSplitLine__5CViewFs(self->mOwner,
+                                   (s16)(convF32At(&bufA, rect.mSize.y) - self->unk4C));
         }
-        if ((s32)self->unk38 == 0xb) {
-            setSplitLine__5CViewFs(owner, (s16)(convF32(rect.mSize.x) - self->unk4C));
+        if (self->unk38 == 0xb) {
+            setSplitLine__5CViewFs(self->mOwner,
+                                   (s16)(convF32At(&bufB, rect.mSize.x) - self->unk4C));
         }
     }
 
@@ -858,36 +961,46 @@ extern "C" int CView_UnkVirtualFunc8__10CViewFrameFv(CViewFrame* self) {
 // border-expand sizing, then records the thread position (unk50) and returns
 // whether the frame's work type (xor 8) halves to a negative value (the
 // split-frame indicator used by detachRenderWork).
-extern "C" int CView_UnkVirtualFunc9__10CViewFrameFv(CViewFrame* self, CWorkThread* pThread) {
+int CView_UnkVirtualFunc9__10CViewFrameFv(CViewFrame* self, CWorkThread* pThread) {
     const CFrameWorkPos* pos = (const CFrameWorkPos*)pThread;
+    ConvBuf bufB;
+    ConvBuf bufA;
+    convBufInit(&bufA);
+    convBufInit(&bufB);
     if (pos->mType != 1) {
         return 0;
     }
 
+    // Resolve the work type via the hit-test helper.
     self->unk38 = (u32)func_80441310__10CViewFrameFP11CWorkThread(self, pThread);
 
-    ml::CRect viewRect;
-    func_8043E58C__5CViewFRQ22ml5CRectP5CView(&viewRect, self->mOwner);
+    ml::CRect rect;
+    func_8043E58C__5CViewFRQ22ml5CRectP5CView(&rect, self->mOwner);
 
-    ml::CRect16 scratch;
-    int dx = pos->mPos.x - viewRect.mPos.x;
-    int dy = pos->mPos.y - viewRect.mPos.y;
-    self->unk40 = convF32((s16)dx);
-    self->unk44 = convF32((s16)dy);
-    scratch.mPos.x = (s16)dx;
-    scratch.mPos.y = (s16)dy;
+    ml::CPnt16 d;
+    CView* owner = self->mOwner;
+    int expand = 0;
+    int inner = 0;
+    s16 dx = pos->mPos.x - rect.mPos.x;
+    s16 dy = pos->mPos.y - rect.mPos.y;
+    float fx = convF32At(&bufA, dx);
+    float fy = convF32At(&bufB, dy);
+    self->unk40 = fx;
+    self->unk44 = fy;
+    d.x = dx;
+    d.y = dy;
 
     {
-        CView* view = self->mOwner->mFrame.mOwner;
-        s16 width = view->mRectData.mViewSize.x;
-        int inner = 0;
+        // Width path: expand by 2*border when border-expand gates pass.
+        // Flags (inner/expand) and owner are declared above, before dx/dy.
+        CView* view = owner->mFrame.mOwner;
+        int width = view->mRectData.mViewSize.x;
         if ((view->unk27C & 1) != 0) {
             u32 mode = view->unk278;
             if ((mode & 1) == 0) {
                 inner = 1;
             }
         }
-        int expand = 0;
         if (inner != 0) {
             u32 mode = view->unk278;
             if ((mode & 2) == 0) {
@@ -895,63 +1008,66 @@ extern "C" int CView_UnkVirtualFunc9__10CViewFrameFv(CViewFrame* self, CWorkThre
             }
         }
         if (expand != 0) {
-            s16 border = self->mOwner->mFrame.mBorder;
-            width = (s16)(width + (s16)(border * 2));
+            s16 border = owner->mFrame.mBorder;
+            width += border * 2;
         }
-        self->unk3C = convF32(scratch.mPos.x - width);
+        self->unk3C = convF32At(&bufA, d.x - width);
     }
 
     {
-        CView* view = self->mOwner->mFrame.mOwner;
+        // Height path: same gates, plus a taller +0x16 inset in split mode.
+        // Height flags are fresh locals (zeroed after the width conversion).
+        CView* view = owner->mFrame.mOwner;
+        u32 flags = view->unk27C;
         s16 height = view->mRectData.mViewSize.y;
-        int inner = 0;
-        if ((view->unk27C & 1) != 0) {
+        int hInner = 0;
+        int hExpand = 0;
+        int hSplit = 0;
+        if ((flags & 1) != 0) {
             u32 mode = view->unk278;
             if ((mode & 1) == 0) {
-                inner = 1;
+                hInner = 1;
             }
         }
-        int expand = 0;
-        if (inner != 0) {
-            u32 mode = view->unk278;
-            if ((mode & 2) == 0) {
-                expand = 1;
+        if (hInner != 0) {
+            if ((flags & 2) == 0) {
+                hExpand = 1;
             }
         }
-        if (expand != 0) {
-            s16 border = self->mOwner->mFrame.mBorder;
-            int split = 0;
-            if ((view->unk27C & 2) != 0) {
+        if (hExpand != 0) {
+            s16 border = owner->mFrame.mBorder;
+            if ((flags & 2) != 0) {
                 u32 mode = view->unk278;
                 if ((mode & 1) == 0 && (mode & 2) == 0) {
-                    split = 1;
+                    hSplit = 1;
                 }
             }
-            if (split != 0) {
+            if (hSplit != 0) {
                 height = (s16)(height + (s16)(border * 3 + 0x16));
             } else {
                 height = (s16)(height + (s16)(border * 2));
             }
         }
-        self->unk48 = convF32(scratch.mPos.y - height);
+        self->unk48 = convF32At(&bufB, d.y - height);
     }
 
     if (func_8043CAFC__5CViewFv(self->mOwner) != 0) {
         ml::CRect parentRect;
         func_8043E6AC__5CViewFRQ22ml5CRectP5CView(&parentRect, self->mOwner);
-        parentRect.mSize.x = (s16)(pos->mPos.x - parentRect.mPos.x);
-        parentRect.mSize.y = (s16)(pos->mPos.y - parentRect.mPos.y);
-        scratch.mPos = parentRect.mSize;
+        parentRect.mSize.x = pos->mPos.x - parentRect.mPos.x;
+        parentRect.mSize.y = pos->mPos.y - parentRect.mPos.y;
+        d = parentRect.mSize;
         if (func_8043CE90__5CViewFv(self->mOwner) != 0) {
-            self->unk4C = convF32(scratch.mPos.y - getSplitLine__5CViewFv(self->mOwner));
+            self->unk4C = convF32At(&bufA, d.y - getSplitLine__5CViewFv(self->mOwner));
         } else {
-            self->unk4C = convF32(scratch.mPos.x - getSplitLine__5CViewFv(self->mOwner));
+            self->unk4C = convF32At(&bufB, d.x - getSplitLine__5CViewFv(self->mOwner));
         }
     }
 
     *(u32*)&self->unk50 = *(u32*)&pos->mPos;
-    int v = (int)self->unk38 ^ 8;
-    return (v >> 1) - ((v >> 3) & 1) < 0;
+    // Split indicator: sign of ((type^8)>>1 - (type^8)&0x10).
+    int v = (int)(self->unk38 ^ 8u);
+    return ((v >> 1) - (v & 0x10)) < 0;
 }
 
 // Map a work-thread type to a render-list index (see detachRenderWork).
@@ -980,253 +1096,234 @@ extern "C" int func_80441290__10CViewFrameFi(CViewFrame* self, int r4) {
 // hit region (0-7 edge/corner handles, 9 split handle, 0xa/0xb view edges,
 // 8 = no hit). The pointer thread is treated as a CPnt16 position.
 extern "C" int func_80441310__10CViewFrameFP11CWorkThread(CViewFrame* self, CWorkThread* pThread) {
-    const ml::CPnt16* p = (const ml::CPnt16*)pThread;
+    int result = 8;
+    const CFrameWorkPos* wp = (const CFrameWorkPos*)pThread;
+
+    // One distinct rect local per retail stack slot (no overlap between blocks).
     ml::CRect16 rectA; // view content rect (func_8043E58C)
-    ml::CRect16 rectB; // parent rect (func_8043E6AC)
+    ml::CRect16 splitRect;
+    ml::CRect16 trV;
+    ml::CRect16 trH;
+    ml::CRect16 tlV;
+    ml::CRect16 tlH;
+    ml::CRect16 brV;
+    ml::CRect16 brH;
+    ml::CRect16 blV;
+    ml::CRect16 blH;
+    ml::CRect16 edgeL;
+    ml::CRect16 edgeR;
+    ml::CRect16 edgeT;
+    ml::CRect16 edgeB;
+    ml::CRect16 splitRect2;
+    ml::CRect16 curRect;
+    ml::CRect16 othRect;
+    ml::CRect16 nSplitRect;
+    ml::CRect16 nCurRect;
+    ml::CRect16 nOthRect;
+    ml::CRect16 parentRect; // func_8043E6AC result (unused afterwards)
+
     func_8043E58C__5CViewFRQ22ml5CRectP5CView((ml::CRect*)&rectA, self->mOwner);
-    func_8043E6AC__5CViewFRQ22ml5CRectP5CView((ml::CRect*)&rectB, self->mOwner);
+    func_8043E6AC__5CViewFRQ22ml5CRectP5CView((ml::CRect*)&parentRect, self->mOwner);
 
     CView* owner = self->mOwner;
-    int inner = 0;
-    if ((owner->unk27C & 1) != 0) {
-        u32 mode = owner->unk278;
-        if ((mode & 1) == 0) {
-            inner = 1;
-        }
-    }
-    int expand = 0;
-    if (inner != 0) {
-        u32 mode = owner->unk278;
-        if ((mode & 2) == 0) {
-            expand = 1;
-        }
-    }
+    u32 flags = owner->unk27C;
 
-    if (expand != 0) {
+    if ((flags & 1) != 0 && (owner->unk278 & 1) == 0 && (owner->unk278 & 2) == 0) {
         // Split handle at the top of the frame (y = mBorder band).
-        int f1 = 0;
-        if ((owner->unk27C & 0x80) != 0) {
-            u32 mode = owner->unk278;
-            if ((mode & 1) == 0 && (mode & 2) == 0) {
-                f1 = 1;
+        if ((flags & 0x80) != 0 && (owner->unk278 & 1) == 0 && (owner->unk278 & 2) == 0) {
+            splitRect.mPos.x = rectA.mPos.x + self->mBorder;
+            splitRect.mPos.y = rectA.mPos.y + self->mBorder;
+            splitRect.mSize.x = rectA.mSize.x - self->mBorder * 2;
+            splitRect.mSize.y = 0x16;
+            CView* v2 = self->mOwner;
+            if ((v2->unk27C & 0x80) != 0 && (v2->unk278 & 1) == 0 && (v2->unk278 & 2) == 0) {
+                splitRect = rectA;
             }
-        }
-        if (f1 != 0) {
-            ml::CRect16 hit;
-            hit.mPos.x = (s16)(rectA.mPos.x + self->mBorder);
-            hit.mPos.y = (s16)(rectA.mPos.y + self->mBorder);
-            hit.mSize.x = (s16)(rectA.mSize.x - (s16)(self->mBorder * 2));
-            hit.mSize.y = 0x16;
-            int f2 = 0;
-            if ((owner->unk27C & 0x80) != 0) {
-                u32 mode = owner->unk278;
-                if ((mode & 1) == 0 && (mode & 2) == 0) {
-                    f2 = 1;
-                }
-            }
-            if (f2 != 0) {
-                hit = rectA;
-            }
-            if (hit.isInside(*p)) {
-                return 9;
+            if (splitRect.isInside(wp->mPos)) {
+                result = 9;
+                goto done;
             }
         }
 
-        if ((owner->unk27C & 0x100) == 0) {
-            s16 xr = (s16)(rectA.mPos.x + rectA.mSize.x);
-            s16 y = rectA.mPos.y;
-            ml::CRect16 r1;
-            r1.mPos.x = (s16)(xr - self->mBorder);
-            r1.mPos.y = y;
-            r1.mSize.x = self->mBorder;
-            r1.mSize.y = 0x10;
-            ml::CRect16 r2;
-            r2.mPos.x = (s16)(xr - 0x10);
-            r2.mPos.y = y;
-            r2.mSize.x = 0x10;
-            r2.mSize.y = self->mBorder;
-            if (r1.isInside(*p) || r2.isInside(*p)) {
-                return 0;
+        // Resize handles (top-right, top-left, bottom-right, bottom-left),
+        // each an L-shaped pair of thin rects; disabled by the 0x100 flag.
+        if ((self->mOwner->unk27C & 0x100) == 0) {
+            s16 xr = rectA.mPos.x + rectA.mSize.x;
+            trV.mPos.x = xr - self->mBorder;
+            trV.mPos.y = rectA.mPos.y;
+            trV.mSize.x = self->mBorder;
+            trV.mSize.y = 0x10;
+            trH.mPos.x = xr - 0x10;
+            trH.mPos.y = rectA.mPos.y;
+            trH.mSize.x = 0x10;
+            trH.mSize.y = self->mBorder;
+            if (trV.isInside(wp->mPos) || trH.isInside(wp->mPos)) {
+                result = 0;
+                goto done;
             }
         }
-        if ((owner->unk27C & 0x100) == 0) {
-            s16 x = rectA.mPos.x;
-            s16 y = rectA.mPos.y;
-            ml::CRect16 r1;
-            r1.mPos.x = x;
-            r1.mPos.y = y;
-            r1.mSize.x = self->mBorder;
-            r1.mSize.y = 0x10;
-            ml::CRect16 r2;
-            r2.mPos.x = x;
-            r2.mPos.y = y;
-            r2.mSize.x = 0x10;
-            r2.mSize.y = self->mBorder;
-            if (r1.isInside(*p) || r2.isInside(*p)) {
-                return 1;
+        if ((self->mOwner->unk27C & 0x100) == 0) {
+            tlV.mPos.x = rectA.mPos.x;
+            tlV.mPos.y = rectA.mPos.y;
+            tlV.mSize.x = 0x10;
+            tlV.mSize.y = self->mBorder;
+            tlH.mPos.x = rectA.mPos.x;
+            tlH.mPos.y = rectA.mPos.y;
+            tlH.mSize.x = self->mBorder;
+            tlH.mSize.y = 0x10;
+            if (tlV.isInside(wp->mPos) || tlH.isInside(wp->mPos)) {
+                result = 1;
+                goto done;
             }
         }
-        if ((owner->unk27C & 0x100) == 0) {
-            s16 xr = (s16)(rectA.mPos.x + rectA.mSize.x);
-            s16 yr = (s16)(rectA.mPos.y + rectA.mSize.y);
-            ml::CRect16 r1;
-            r1.mPos.x = (s16)(xr - self->mBorder);
-            r1.mPos.y = (s16)(yr - 0x10);
-            r1.mSize.x = self->mBorder;
-            r1.mSize.y = 0x10;
-            ml::CRect16 r2;
-            r2.mPos.x = (s16)(xr - 0x10);
-            r2.mPos.y = (s16)(yr - self->mBorder);
-            r2.mSize.x = 0x10;
-            r2.mSize.y = self->mBorder;
-            if (r1.isInside(*p) || r2.isInside(*p)) {
-                return 2;
+        if ((self->mOwner->unk27C & 0x100) == 0) {
+            s16 xr = rectA.mPos.x + rectA.mSize.x;
+            s16 yr = rectA.mPos.y + rectA.mSize.y;
+            brV.mPos.x = xr - self->mBorder;
+            brV.mPos.y = yr - 0x10;
+            brV.mSize.x = self->mBorder;
+            brV.mSize.y = 0x10;
+            brH.mPos.x = xr - 0x10;
+            brH.mPos.y = yr - self->mBorder;
+            brH.mSize.x = 0x10;
+            brH.mSize.y = self->mBorder;
+            if (brV.isInside(wp->mPos) || brH.isInside(wp->mPos)) {
+                result = 2;
+                goto done;
             }
         }
-        if ((owner->unk27C & 0x100) == 0) {
-            s16 yr = (s16)(rectA.mPos.y + rectA.mSize.y);
-            ml::CRect16 r1;
-            r1.mPos.x = rectA.mPos.x;
-            r1.mPos.y = (s16)(yr - 0x10);
-            r1.mSize.x = self->mBorder;
-            r1.mSize.y = 0x10;
-            ml::CRect16 r2;
-            r2.mPos.x = rectA.mPos.x;
-            r2.mPos.y = (s16)(yr - self->mBorder);
-            r2.mSize.x = 0x10;
-            r2.mSize.y = self->mBorder;
-            if (r1.isInside(*p) || r2.isInside(*p)) {
-                return 3;
+        if ((self->mOwner->unk27C & 0x100) == 0) {
+            s16 yr = rectA.mPos.y + rectA.mSize.y;
+            blV.mPos.x = rectA.mPos.x;
+            blV.mPos.y = yr - 0x10;
+            blV.mSize.x = self->mBorder;
+            blV.mSize.y = 0x10;
+            blH.mPos.x = rectA.mPos.x;
+            blH.mPos.y = yr - self->mBorder;
+            blH.mSize.x = 0x10;
+            blH.mSize.y = self->mBorder;
+            if (blV.isInside(wp->mPos) || blH.isInside(wp->mPos)) {
+                result = 3;
+                goto done;
             }
         }
-        if ((owner->unk27C & 0x100) == 0) {
-            ml::CRect16 r;
-            r.mPos.x = rectA.mPos.x;
-            r.mPos.y = (s16)(rectA.mPos.y + 0x10);
-            r.mSize.x = self->mBorder;
-            r.mSize.y = (s16)(rectA.mSize.y - 0x20);
-            if (r.isInside(*p)) {
-                return 4;
+        // Edge handles: left, right, top, bottom strips.
+        if ((self->mOwner->unk27C & 0x100) == 0) {
+            edgeL.mPos.x = rectA.mPos.x;
+            edgeL.mPos.y = rectA.mPos.y + 0x10;
+            edgeL.mSize.x = self->mBorder;
+            edgeL.mSize.y = rectA.mSize.y - 0x20;
+            if (edgeL.isInside(wp->mPos)) {
+                result = 4;
+                goto done;
             }
         }
-        if ((owner->unk27C & 0x100) == 0) {
-            s16 xr = (s16)(rectA.mPos.x + rectA.mSize.x);
-            ml::CRect16 r;
-            r.mPos.x = (s16)(xr - self->mBorder);
-            r.mPos.y = (s16)(rectA.mPos.y + 0x10);
-            r.mSize.x = self->mBorder;
-            r.mSize.y = (s16)(rectA.mSize.y - 0x20);
-            if (r.isInside(*p)) {
-                return 5;
+        if ((self->mOwner->unk27C & 0x100) == 0) {
+            s16 xr = rectA.mPos.x + rectA.mSize.x;
+            edgeR.mPos.x = xr - self->mBorder;
+            edgeR.mPos.y = rectA.mPos.y + 0x10;
+            edgeR.mSize.x = self->mBorder;
+            edgeR.mSize.y = rectA.mSize.y - 0x20;
+            if (edgeR.isInside(wp->mPos)) {
+                result = 5;
+                goto done;
             }
         }
-        if ((owner->unk27C & 0x100) == 0) {
-            ml::CRect16 r;
-            r.mPos.x = (s16)(rectA.mPos.x + 0x10);
-            r.mPos.y = rectA.mPos.y;
-            r.mSize.x = (s16)(rectA.mSize.x - 0x20);
-            r.mSize.y = self->mBorder;
-            if (r.isInside(*p)) {
-                return 6;
+        if ((self->mOwner->unk27C & 0x100) == 0) {
+            edgeT.mPos.x = rectA.mPos.x + 0x10;
+            edgeT.mPos.y = rectA.mPos.y;
+            edgeT.mSize.x = rectA.mSize.x - 0x20;
+            edgeT.mSize.y = self->mBorder;
+            if (edgeT.isInside(wp->mPos)) {
+                result = 6;
+                goto done;
             }
         }
-        if ((owner->unk27C & 0x100) == 0) {
-            s16 yr = (s16)(rectA.mPos.y + rectA.mSize.y);
-            ml::CRect16 r;
-            r.mPos.x = (s16)(rectA.mPos.x + 0x10);
-            r.mPos.y = (s16)(yr - self->mBorder);
-            r.mSize.x = (s16)(rectA.mSize.x - 0x20);
-            r.mSize.y = self->mBorder;
-            if (r.isInside(*p)) {
-                return 7;
+        if ((self->mOwner->unk27C & 0x100) == 0) {
+            s16 yr = rectA.mPos.y + rectA.mSize.y;
+            edgeB.mPos.x = rectA.mPos.x + 0x10;
+            edgeB.mPos.y = yr - self->mBorder;
+            edgeB.mSize.x = rectA.mSize.x - 0x20;
+            edgeB.mSize.y = self->mBorder;
+            if (edgeB.isInside(wp->mPos)) {
+                result = 7;
+                goto done;
             }
         }
-        if ((owner->unk27C & 0x100) == 0) {
-            // Split handle band again (full content width).
-            ml::CRect16 hit;
-            hit.mPos.x = (s16)(rectA.mPos.x + self->mBorder);
-            hit.mPos.y = (s16)(rectA.mPos.y + self->mBorder);
-            hit.mSize.x = (s16)(rectA.mSize.x - (s16)(self->mBorder * 2));
-            hit.mSize.y = 0x16;
-            int f2 = 0;
-            if ((owner->unk27C & 0x80) != 0) {
-                u32 mode = owner->unk278;
-                if ((mode & 1) == 0 && (mode & 2) == 0) {
-                    f2 = 1;
+        // Split handle band again (full content width), fresh flag reads.
+        {
+            CView* v2 = self->mOwner;
+            if ((v2->unk27C & 0x80) != 0 && (v2->unk278 & 1) == 0 && (v2->unk278 & 2) == 0) {
+                splitRect2.mPos.x = rectA.mPos.x + self->mBorder;
+                splitRect2.mPos.y = rectA.mPos.y + self->mBorder;
+                splitRect2.mSize.x = rectA.mSize.x - self->mBorder * 2;
+                splitRect2.mSize.y = 0x16;
+                if ((v2->unk27C & 0x80) != 0 && (v2->unk278 & 1) == 0 && (v2->unk278 & 2) == 0) {
+                    splitRect2 = rectA;
                 }
-            }
-            if (f2 != 0) {
-                hit = rectA;
-            }
-            if (hit.isInside(*p)) {
-                return 9;
+                if (splitRect2.isInside(wp->mPos)) {
+                    result = 9;
+                    goto done;
+                }
             }
         }
     } else {
         // Non-expanded: single split-handle band at the top.
-        int f1 = 0;
-        if ((owner->unk27C & 0x80) != 0) {
-            u32 mode = owner->unk278;
-            if ((mode & 1) == 0 && (mode & 2) == 0) {
-                f1 = 1;
+        if ((flags & 0x80) != 0 && (owner->unk278 & 1) == 0 && (owner->unk278 & 2) == 0) {
+            nSplitRect.mPos.x = rectA.mPos.x + self->mBorder;
+            nSplitRect.mPos.y = rectA.mPos.y + self->mBorder;
+            nSplitRect.mSize.x = rectA.mSize.x - self->mBorder * 2;
+            nSplitRect.mSize.y = 0x16;
+            CView* v2 = self->mOwner;
+            if ((v2->unk27C & 0x80) != 0 && (v2->unk278 & 1) == 0 && (v2->unk278 & 2) == 0) {
+                nSplitRect = rectA;
             }
-        }
-        if (f1 != 0) {
-            ml::CRect16 hit;
-            hit.mPos.x = (s16)(rectA.mPos.x + self->mBorder);
-            hit.mPos.y = (s16)(rectA.mPos.y + self->mBorder);
-            hit.mSize.x = (s16)(rectA.mSize.x - (s16)(self->mBorder * 2));
-            hit.mSize.y = 0x16;
-            int f2 = 0;
-            if ((owner->unk27C & 0x80) != 0) {
-                u32 mode = owner->unk278;
-                if ((mode & 1) == 0 && (mode & 2) == 0) {
-                    f2 = 1;
-                }
-            }
-            if (f2 != 0) {
-                hit = rectA;
-            }
-            if (hit.isInside(*p)) {
-                return 9;
+            if (nSplitRect.isInside(wp->mPos)) {
+                result = 9;
+                goto done;
             }
         }
     }
 
-    // Bottom edge under the current view / split view.
+    // Bottom edge under the current view (split mode: 0xa / normal: 0xb).
     {
         int hit = 0;
-        if (func_8043CAFC__5CViewFv(owner) != 0 &&
-            func_8043CE90__5CViewFv(owner) != 0 &&
-            (owner->unk278 & 0x20) == 0) {
-            CView* cur = func_8043CEAC__5CViewFv(owner);
-            ml::CRect16 r;
-            func_8043E7CC__5CViewFRQ22ml5CRectP5CView((ml::CRect*)&r, cur);
-            r.mSize.y = self->mBorder;
-            r.mPos.y = (s16)(r.mPos.y - self->mBorder);
-            hit = r.isInside(*p);
+        if (func_8043CAFC__5CViewFv(self->mOwner) != 0) {
+            if (func_8043CE90__5CViewFv(self->mOwner) != 0) {
+                if ((self->mOwner->unk278 & 0x20) == 0) {
+                    func_8043E7CC__5CViewFRQ22ml5CRectP5CView(
+                        (ml::CRect*)&curRect, func_8043CEAC__5CViewFv(self->mOwner));
+                    curRect.mSize.y = self->mBorder;
+                    curRect.mPos.y = curRect.mPos.y - self->mBorder;
+                    hit = curRect.isInside(wp->mPos);
+                }
+            }
         }
         if (hit != 0) {
-            return 0xa;
+            result = 0xa;
+            goto done;
         }
     }
     {
         int hit = 0;
-        if (func_8043CAFC__5CViewFv(owner) != 0 &&
-            func_8043CE90__5CViewFv(owner) == 0 &&
-            (owner->unk278 & 0x20) == 0) {
-            CView* cur = func_8043CEAC__5CViewFv(owner);
-            ml::CRect16 r;
-            func_8043E7CC__5CViewFRQ22ml5CRectP5CView((ml::CRect*)&r, cur);
-            r.mSize.y = self->mBorder;
-            r.mPos.y = (s16)(r.mPos.y - self->mBorder);
-            hit = r.isInside(*p);
+        if (func_8043CAFC__5CViewFv(self->mOwner) != 0) {
+            if (func_8043CE90__5CViewFv(self->mOwner) == 0) {
+                if ((self->mOwner->unk278 & 0x20) == 0) {
+                    func_8043E7CC__5CViewFRQ22ml5CRectP5CView(
+                        (ml::CRect*)&othRect, func_8043CEAC__5CViewFv(self->mOwner));
+                    othRect.mSize.y = self->mBorder;
+                    othRect.mPos.y = othRect.mPos.y - self->mBorder;
+                    hit = othRect.isInside(wp->mPos);
+                }
+            }
         }
         if (hit != 0) {
-            return 0xb;
+            result = 0xb;
+            goto done;
         }
     }
-    return 8;
+done:
+    return result;
 }
 
 // The retail binary declares the CViewFrame constructor as a plain global
@@ -1238,6 +1335,11 @@ extern "C" void __ct__CViewFrame(CViewFrame* self) {
     // top (retail loads f5..f0 in first-use order); declaration order drives
     // the register assignment - the retail claims HIGH first (fZero lands in
     // f5), so the declarations are REVERSED vs the use order.
+    // NOTE: MWCC colors FP locals f0-upward in declaration order and emits
+    // the hoisted lfs block in the same order, so the retail prologue weave
+    // (lfs f5/lis/li r5/lfs f4/f3/addi/f2/li r4/f1/li r0/f0) is NOT
+    // reproducible by reordering these decls alone - every variant tried
+    // (decl flip, split fZero, int-first, stmt-interleave) regressed.
     float f06 = lbl_eu_8066A2FC; // 0.6
     float f04 = lbl_eu_8066A2F8; // 0.4
     float f08 = lbl_eu_8066A2F4; // 0.8
@@ -1275,66 +1377,85 @@ extern "C" void __ct__CViewFrame(CViewFrame* self) {
 // Compute the frame-to-view offset rect. Retail quirk: the caller passes a
 // CRect16 as the object pointer, a CViewFrame as 'frame', and the source rect
 // as 'src' (the member name is kept for symbol compatibility). Applies the
-// same border-expand/split gates as getFrame2ViewOffset.
+// same border-expand/split gates as getFrame2ViewOffset: the position grows
+// by the border (+split gap on y), the size shrinks by twice the border
+// (again + split gap on y).
 extern "C" void func_80441EF0__10CViewFrameFR7CRect16PC10CViewFrame(
     ml::CRect16* out, const CViewFrame* frame, const ml::CRect16* src) {
+    // Field-wise halfword copy (retail sign-extends each field).
     out->mPos.x = src->mPos.x;
     out->mPos.y = src->mPos.y;
     out->mSize.x = src->mSize.x;
     out->mSize.y = src->mSize.y;
 
-    CView* owner = frame->mOwner;
+    // Position pass: flags word cached in a local (retail keeps it in one
+    // reg across both gates); each individual bit-test re-loads the mode word.
+    // Declaration order drives MWCC register assignment toward retail
+    // (gateOuter=r5, flags=r6, view=r8, gateInner=r9, xAdj=r10, yAdj=r11).
+    int gateInner;
+    int gateOuter;
     s16 xAdj = 0;
     s16 yAdj = 0;
-    int flag1 = 0;
-    int flag2 = 0;
+    gateInner = 0;
+    gateOuter = 0;
+    CView* view = frame->mOwner;
+    u32 flags = view->unk27C;
 
-    if ((owner->unk27C & 1) != 0 && (owner->unk278 & 1) == 0) {
-        flag2 = 1;
+    if ((flags & 1) != 0 && (view->unk278 & 1) == 0) {
+        gateOuter = 1;
     }
-    if (flag2 != 0 && (owner->unk278 & 2) == 0) {
-        flag1 = 1;
+    if (gateOuter != 0 && (view->unk278 & 2) == 0) {
+        gateInner = 1;
     }
-    if (flag1 != 0) {
-        s16 border = frame->mBorder;
-        xAdj = border;
-        yAdj = border;
+    if (gateInner != 0) {
         int split = 0;
-        if ((owner->unk27C & 2) != 0 && (owner->unk278 & 1) == 0 &&
-            (owner->unk278 & 2) == 0) {
-            split = 1;
+        s16 border = frame->mBorder;
+        yAdj = border;
+        xAdj = yAdj;
+        if ((flags & 2) != 0) {
+            u32 mode = view->unk278;
+            if ((mode & 1) == 0 && (mode & 2) == 0) {
+                split = 1;
+            }
         }
         if (split != 0) {
             yAdj = (s16)(border + (s16)(border + 0x16));
         }
     }
+    // Size pass: identical gates, but the adjustments are doubled and
+    // subtracted (retail emits neg/extsh + add). Declared before the position
+    // updates so allocation overlaps pass-1 ranges, matching retail colors.
+    s16 sxAdj = 0;
+    s16 syAdj = 0;
+    int gateInner2 = 0;
+    int gateOuter2 = 0;
+
     out->mPos.x = (s16)(out->mPos.x + xAdj);
     out->mPos.y = (s16)(out->mPos.y + yAdj);
 
-    owner = frame->mOwner;
-    flag2 = 0;
-    flag1 = 0;
-    if ((owner->unk27C & 1) != 0 && (owner->unk278 & 1) == 0) {
-        flag2 = 1;
+    CView* view2 = frame->mOwner;
+    u32 flags2 = view2->unk27C;
+
+    if ((flags2 & 1) != 0 && (view2->unk278 & 1) == 0) {
+        gateOuter2 = 1;
     }
-    if (flag2 != 0 && (owner->unk278 & 2) == 0) {
-        flag1 = 1;
+    if (gateOuter2 != 0 && (view2->unk278 & 2) == 0) {
+        gateInner2 = 1;
     }
-    s16 sxAdj = 0;
-    s16 syAdj = 0;
-    if (flag1 != 0) {
+    if (gateInner2 != 0) {
         s16 border = frame->mBorder;
+        int split = 0;
         sxAdj = (s16)(border * 2);
         syAdj = sxAdj;
-        int split = 0;
-        if ((owner->unk27C & 2) != 0 && (owner->unk278 & 1) == 0 &&
-            (owner->unk278 & 2) == 0) {
-            split = 1;
+        if ((flags2 & 2) != 0) {
+            u32 mode = view2->unk278;
+            if ((mode & 1) == 0 && (mode & 2) == 0) {
+                split = 1;
+            }
         }
         if (split != 0) {
             syAdj = (s16)(sxAdj + (s16)(border + 0x16));
         }
     }
-    out->mSize.x = (s16)(out->mSize.x + (s16)(-sxAdj));
-    out->mSize.y = (s16)(out->mSize.y + (s16)(-syAdj));
-}
+    out->mSize.x = (s16)(out->mSize.x + (s16)-sxAdj);
+    out->mSize.y = (s16)(out->mSize.y + (s16)-syAdj);}

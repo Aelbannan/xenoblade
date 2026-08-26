@@ -44,7 +44,7 @@ struct UnkClass_8046368C {
  */
 struct LODCacheIndex {
     s16 field_0x0;   // 0x00 near distance
-    u16 field_0x2;   // 0x02 far distance
+    u16 far;         // 0x02 far cutoff
 };
 
 /**
@@ -113,6 +113,9 @@ extern void (*lbl_eu_8056D700[])(LOD::UnkClass_8046368C*);  // .data dispatch
 // constant pool reuse the retail symbols for the builtin (f32)u16/(f32)s32
 // casts instead of emitting TU-local @N labels (CfResReloadImpl /
 // CSuddenCommu idiom, same as CMiniMap.cpp's 806670A8).
+// Declared extern only: a TU-local const definition would let MWCC const-fold
+// reads into anonymous @N pool labels instead of retail-symbol relocs
+// (CMiniMap.cpp 806670A8 note).
 extern const f32 lbl_eu_8066A5C0;  // 1.0f
 extern const f32 lbl_eu_8066A5C4;  // default LOD value
 extern const double lbl_eu_8066A5C8;  // 2^52 (u16->f32 magic, blob-owned)
@@ -246,36 +249,23 @@ extern "C" void func_804636AC__Q23LOD17UnkClass_8046368CFv(UnkClass_8046368C* se
 // ===========================================================================
 s32 CLODCacheManagerS::func_80463590()
 {
-    // One shared conversion temp: retail reuses a single 8-byte stack slot for
-    // both u16->f32 round-trips and keeps 0x43300000 / 2^52 in registers.
-    union {
-        double d;
-        u32 w[2];
-    } c;
-    f32 lim = lbl_eu_80665754;
-
     // Sweep up to the near distance: report the first element's near state.
-    c.w[1] = field_0x0;
-    c.w[0] = 0x43300000u;
-    f32 nearF = (f32)(c.d - lbl_eu_8066A5C8);
-    if (lim <= nearF) {
-        return lbl_eu_80665748[field_0x8].field_0x0 != 0 ? 1 : 0;
+    if (lbl_eu_80665754 <= (f32)(u32)field_0x0) {
+        return lbl_eu_80665748[field_0x8].field_0x0 != 0;
     }
 
     // Sweep past the far distance: report the last element's near state.
-    c.w[1] = field_0x2;
-    f32 farF = (f32)(c.d - lbl_eu_8066A5C8);
-    if (lim >= farF) {
-        return lbl_eu_80665748[field_0x8 + field_0x6 - 1].field_0x0 != 0 ? 1 : 0;
+    if (lbl_eu_80665754 >= (f32)(u32)field_0x2) {
+        return lbl_eu_80665748[field_0x8 + field_0x6 - 1].field_0x0 != 0;
     }
 
     // Inside the sweep: walk forward until a bin's far cutoff exceeds the key.
     u16 key = lbl_eu_80665758;
-    s32 cnt = field_0x6;
+    s32 cnt = (s32)field_0x6;
     LODCacheIndex* e = &lbl_eu_80665748[field_0x8 + 1];
     for (s32 j = 1; j < cnt; j++) {
-        if (key < e->field_0x2) {
-            return (e - 1)->field_0x0 != 0 ? 1 : 0;
+        if (key < e->far) {
+            return (e - 1)->field_0x0 != 0;
         }
         e++;
     }
@@ -291,32 +281,50 @@ s32 CLODCacheManagerS::func_80463590()
 // ===========================================================================
 f32 CLODCacheManagerS::func_80463118()
 {
-    f32 nearF = u16ToF_a5c8(field_0x0);
-    f32 lim = lbl_eu_80665754;
-
-    if (lim <= nearF) {
+    // Plain builtin u16/s32 -> f32 casts: MWCC emits the 0x43300000 stack
+    // scratch / xoris / fsubs-of-2^52-magic sequence per conversion, reusing
+    // two scratch slots across the whole function (retail shape).
+    if (lbl_eu_80665754 <= (f32)field_0x0) {
         return lbl_eu_8066573C[field_0x8].near;
     }
 
-    f32 farF = u16ToF_a5c8(field_0x2);
-    if (lim >= farF) {
-        return lbl_eu_8066573C[field_0x8 + field_0x6 - 1].near;
+    if (lbl_eu_80665754 >= (f32)field_0x2) {
+        LODDistEntry* end = &lbl_eu_8066573C[field_0x8 + field_0x6];
+        return end[-1].near;
     }
 
+    // Walk the straddling bins; counter runs over entries after the first.
+    s32 base = field_0x8;
+    s32 cnt = field_0x6;
+    LODDistEntry* e = &lbl_eu_8066573C[base + 1];
     u16 key = lbl_eu_80665758;
-    s32 cnt = (s32)field_0x6;
-    s32 base = (s32)field_0x8;
-    for (s32 i = base + 1; i < base + cnt; i++) {
-        u16 A = lbl_eu_8066573C[i].far;
-        if (key < A) {
-            u16 B = lbl_eu_8066573C[i - 1].far;
-            f32 t = (lim - u16ToF_a5c8(B)) / s32ToF_a5d0((s32)A - (s32)B);
-            return lbl_eu_8066573C[i - 1].near * (lbl_eu_8066A5C0 - t) +
-                   lbl_eu_8066573C[i].near * t;
-        }
+    if (cnt > 1) {
+        s32 n = cnt - 1;
+        do {
+            u16 A = e->far;
+            if (key < A) {
+                u16 B = e[-1].far;
+                s32 d = (s32)A - (s32)B;
+                f32 bFar = (f32)B;
+                f32 denom = (f32)d;
+                f32 t = (lbl_eu_80665754 - bFar) / denom;
+                return e[-1].near * (lbl_eu_8066A5C0 - t) + e->near * t;
+            }
+            e++;
+        } while (--n != 0);
     }
     return lbl_eu_8066A5C4;
 }
+
+/**
+ * Integer->double bit-conversion scratch slot (MWCC 0x4330-prefix trick).
+ * w[0] is the high word (always 0x43300000), w[1] the payload; subtracting a
+ * shared 2^52 magic double yields the numeric value.
+ */
+union F64ConvScratch {
+    double d;
+    u32 w[2];
+};
 
 // ===========================================================================
 // us-8046720c  func_8046323C  (cubic catmull-rom distance lookup)
@@ -324,38 +332,60 @@ f32 CLODCacheManagerS::func_80463118()
 // Same sweep as func_80463118, but the straddling pair is interpolated with a
 // catmull-rom cubic over four consecutive level samples.  Basis constants
 // lbl_eu_8066A5D8 / _DC / _E0.
+//
+// Retail keeps TWO persistent 0x4330-prefix conversion scratch doubles on the
+// stack across the whole function: slot A converts field_0x0 (u16) here and
+// the signed span (A-B) in the loop; slot B converts field_0x2 (u16) and the
+// unsigned previous-bin cutoff B.  Modelling them as two union locals makes
+// MWCC allocate the identical frame (sp-0x20) and reuse the high words.
 // ===========================================================================
 f32 CLODCacheManagerS::func_8046323C()
 {
-    f32 lim = lbl_eu_80665754;
+    F64ConvScratch cvtB;   // sp+0x10 (MWCC allocates locals in reverse order)
+    F64ConvScratch cvtA;   // sp+0x08
 
-    if (lim <= u16ToF_a5c8(field_0x0)) {
+    // high word first (retail stores 0x4330 before the payload word)
+    cvtA.w[0] = 0x43300000u;
+    cvtA.w[1] = field_0x0;
+    if (lbl_eu_80665754 <= (f32)(cvtA.d - lbl_eu_8066A5C8)) {
         return lbl_eu_80665740[field_0x8].f00;
     }
 
-    if (lim >= u16ToF_a5c8(field_0x2)) {
+    cvtB.w[0] = 0x43300000u;
+    cvtB.w[1] = field_0x2;
+    if (lbl_eu_80665754 >= (f32)(cvtB.d - lbl_eu_8066A5C8)) {
         return lbl_eu_80665740[field_0x8 + field_0x6 - 1].f00;
     }
 
     u16 key = lbl_eu_80665758;
-    s32 cnt = (s32)field_0x6;
-    s32 base = (s32)field_0x8;
-    for (s32 k = base + 1; k < base + cnt; k++) {
-        u16 A = lbl_eu_80665740[k].far;
-        if (key < A) {
-            u16 B = lbl_eu_80665740[k - 1].far;
-            f32 t  = (lim - u16ToF_a5c8(B)) / s32ToF_a5d0((s32)A - (s32)B);
+    LODLevelEntry* e = &lbl_eu_80665740[field_0x8 + 1];
+    s32 n = field_0x6 - 1;
+    if (n > 0) {
+        do {
+            u16 cutA = e->far;
+            if (key < cutA) {
+            u16 cutB = e[-1].far;
+            cvtB.w[1] = cutB;
+            s32 span = (s32)cutA - (s32)cutB;
+            cvtA.w[1] = (u32)span ^ 0x80000000u;
+            f32 t = (lbl_eu_80665754 - (f32)(cvtB.d - lbl_eu_8066A5C8)) /
+                    (f32)(cvtA.d - lbl_eu_8066A5D0);
+            // Catmull-Rom cubic over four consecutive level samples.
+            // DC*t2 is shared between the v and c3 terms (retail CSE).
             f32 t2 = t * t;
             f32 t3 = t * t2;
+            f32 dcT2 = lbl_eu_8066A5DC * t2;
             f32 u = t + (t3 - lbl_eu_8066A5D8 * t2);
-            f32 v = lbl_eu_8066A5C0 + (lbl_eu_8066A5D8 * t3 - lbl_eu_8066A5DC * t2);
-            f32 c3 = lbl_eu_8066A5E0 * t3 + lbl_eu_8066A5DC * t2;
+            f32 v = lbl_eu_8066A5C0 + (lbl_eu_8066A5D8 * t3 - dcT2);
+            f32 c3 = lbl_eu_8066A5E0 * t3 + dcT2;
             f32 w = t3 - t2;
-            return lbl_eu_80665740[k - 1].f04 * u +
-                   lbl_eu_80665740[k - 1].f00 * v +
-                   lbl_eu_80665740[k].f00 * c3 +
-                   lbl_eu_80665740[k].f08 * w;
-        }
+            return e[-1].f04 * u +
+                   e[-1].f00 * v +
+                   e->f00 * c3 +
+                   e->f08 * w;
+            }
+            e++;
+        } while (--n != 0);
     }
     return lbl_eu_8066A5C4;
 }
@@ -366,49 +396,56 @@ f32 CLODCacheManagerS::func_8046323C()
 // Looks up a cache record by the pair table, then over each straddling bin
 // rounds `offset + (1-t)*prev + t*cur` to an integer and emits the bin's
 // 2D word pair (outX/outY) when it equals the current sample, else the
-// previous bin's pair.  Returns Fv (args via r3/r4/r5: outputs, index).
+// previous bin's pair.
+//
+// Plain builtin u16/s32 -> f32 casts throughout: MWCC emits the 0x43300000
+// stack-scratch / fsubs-of-2^52-magic sequence per conversion, reusing two
+// scratch slots (sp+0x08 signed, sp+0x10 unsigned) across the whole function
+// (same shape as func_80463118).
 // ===========================================================================
 extern "C" void func_8046339C__Q23LOD17CLODCacheManagerSFv(s32* outA, s32* outB,
                                                            u32 index)
 {
-    f32 lim = lbl_eu_80665754;
-    u32 entry = lbl_eu_8066574C[index];       // pair-table offset
-    u32 recIdx = ((u16*)lbl_eu_80665750)[entry + 1];
-    CLODCacheManagerS* rec = lbl_eu_80665738 + recIdx;
+    u16 kind = ((u16*)lbl_eu_80665750)[lbl_eu_8066574C[index] + 1];
+    CLODCacheManagerS* rec = lbl_eu_80665738 + kind;
 
-    if (lim <= u16ToF_a5c8(rec->field_0x0)) {
+    if (lbl_eu_80665754 <= (f32)rec->field_0x0) {
         *outA = lbl_eu_80665744[rec->field_0x8].outX;
         *outB = lbl_eu_80665744[rec->field_0x8].outY;
         return;
     }
 
-    if (lim >= u16ToF_a5c8(rec->field_0x2)) {
+    if (lbl_eu_80665754 >= (f32)rec->field_0x2) {
         *outA = lbl_eu_80665744[rec->field_0x8 + rec->field_0x6 - 1].outX;
         *outB = lbl_eu_80665744[rec->field_0x8 + rec->field_0x6 - 1].outY;
         return;
     }
 
-    s32 base = (s32)rec->field_0x8;
-    s32 cnt = (s32)rec->field_0x6;
-    LODShortEntry* e = &lbl_eu_80665744[base + 1];
+    LODShortEntry* e = &lbl_eu_80665744[rec->field_0x8 + 1];
     u16 key = lbl_eu_80665758;
-    for (s32 j = 1; j < cnt; j++) {
-        u16 A = e->far;
-        if (key < A) {
-            u16 B = (e - 1)->far;
-            f32 t = (lim - u16ToF_a5c8(B)) / s32ToF_a5d0((s32)A - (s32)B);
-            f32 lerp = s32ToF_a5d0((e - 1)->val) * (lbl_eu_8066A5C0 - t) + s32ToF_a5d0(e->val) * t;
-            s32 ri = (s32)(lbl_eu_8066A5E4 + lerp);
-            if (ri == e->val) {
-                *outA = e->outX;
-                *outB = e->outY;
-            } else {
-                *outA = (e - 1)->outX;
-                *outB = (e - 1)->outY;
+    s32 n = rec->field_0x6 - 1;
+    if (n > 0) {
+        do {
+            u16 A = e->far;
+            if (key < A) {
+                u16 B = (e - 1)->far;
+                s32 span = (s32)A - (s32)B;
+                f32 t = (lbl_eu_80665754 - (f32)B) / (f32)span;
+                // Rounded lerp of the straddling sample pair plus offset.
+                s16 curVal = e->val;
+                f32 v = lbl_eu_8066A5E4 +
+                        (e - 1)->val * (lbl_eu_8066A5C0 - t) + e->val * t;
+                if ((s32)v == curVal) {
+                    *outA = e->outX;
+                    *outB = e->outY;
+                } else {
+                    *outA = (e - 1)->outX;
+                    *outB = (e - 1)->outY;
+                }
+                return;
             }
-            return;
-        }
-        e++;
+            e++;
+        } while (--n != 0);
     }
     *outA = 0;
     *outB = 0;

@@ -8,8 +8,118 @@
 #include "kyoshin/action/CActParamAnim.hpp"
 #include <nw4r/g3d/res/g3d_resmdl.h>
 #include <nw4r/db/db_assert.h>
+#include "kyoshin/code_801862C0.hpp"
 
-cf::CfObjectModel::CfObjectModel() {}
+namespace {
+// Cast-only replica of the cf-chain vtable head (CObjectParam occupies
+// 0x08-0x50, the first CfObject slot lands at 0x54). novtable: never
+// constructed, only reinterpret_cast, so MWCC emits no vtable data and the
+// m68() call compiles to a genuine load-vptr/load-slot/bctrl dispatch.
+struct __declspec(novtable) ModelDtorVt : public cf::CObjectParam {
+    virtual void m54();  // 0x54 (base-dtor placeholder)
+    virtual void m58();  // 0x58
+    virtual void m5C();  // 0x5C
+    virtual void m60();  // 0x60
+    virtual void m64();  // 0x64
+    virtual void m68();  // 0x68: cleanup slot called by the model dtor
+};
+
+// View of the +0xB0 sub-object: it stores its function-table pointer at
+// +0x10 (not +0x00), so the proxy derives from a 0x10-byte prefix base and
+// inherits the vptr slot right after it; slot +0x08 is the deleting dtor.
+struct SubObjB0Head {
+    u8 _pad00[0x10];   // 0x00-0x0F
+};
+struct __declspec(novtable) SubObjB0If : SubObjB0Head {
+    virtual void m08(s32 flag);  // table +0x08: deleting destructor
+};
+} // namespace
+
+// Complete-object constructor (retail __ct__Q22cf13CfObjectModelFv). Two
+// stages, mirroring retail scheduling: stage 1 installs the model vtable,
+// zeroes/fills the shared base region (0x04-0x8F) with the position
+// constants, and issues one virtual dispatch (slot +0x5C). Stage 2 sets the
+// 0x00100000 flag bit, installs the cf::CfObject base vtable (the derived
+// ctor finishes by leaving the object looking like a plain CfObject;
+// subclasses overwrite the vtable afterwards), then initializes the
+// model-specific tail 0x90-0xC0 with field_BD = 1. Constants are read from
+// the globals in both stages (retail reloads them after the call instead of
+// keeping them in nonvolatile FPRs - the prologue saves no floats).
+cf::CfObjectModel::CfObjectModel() {
+    // Unnamed gap fields reached through small overlays; everything else
+    // uses the real inherited members.
+    struct Gap34 { u8 _p00[0x34]; u32 w34; };          // 0x34
+    struct Gap10 { u8 _p00[0x10]; u8 b10; };           // 0x10 (retail zeroes only the byte)
+    struct Gap48 { u8 _p00[0x48]; float f48; };        // 0x48
+    struct Gap50 { u8 _p00[0x50]; float f50; };        // 0x50
+    struct Sub54Flt { float a, b, c; };                // 0x54-0x5F
+    struct Gap6C { u8 _p00[0x6C]; u32 w6c; u32 w70; u32 w74; u8 b78; };  // 0x6C-0x78
+    struct Gap88 { u8 _p00[0x88]; u32 w88; u16 h8c; u16 h8e; };           // 0x88-0x8F
+    struct Tail90 {                                    // 0x90-0xC3
+        u32 w90, w94;
+        cf::CfObjectModelSub98* sub98;
+        u32 w9c;
+        float fa0;
+        float fa4[3];
+        void* subB0;
+        u32 wb4, wb8;
+        u8 bbc, bbd;
+        u8 _pbe[2];
+        u32 wc0;
+    };
+    Gap10* g10 = reinterpret_cast<Gap10*>(this);
+    Gap34* g34 = reinterpret_cast<Gap34*>(this);
+    Gap48* g48 = reinterpret_cast<Gap48*>(this);
+    Gap50* g50 = reinterpret_cast<Gap50*>(this);
+    Gap6C* g6c = reinterpret_cast<Gap6C*>(this);
+    Gap88* g88 = reinterpret_cast<Gap88*>(this);
+    Tail90* t90 = reinterpret_cast<Tail90*>(this);
+    unk4 = 0;
+    unk8 = 0;
+    unkC = 0;
+    g10->b10 = 0;  // retail stores only the byte at 0x10
+    field_30 = 0;
+    g34->w34 = 0;
+    *(void**)this = (void*)lbl_eu_805294E0;
+    mSubObj38 = 0;
+    mPos3C = lbl_eu_80666A68;
+    mPos40 = lbl_eu_80666A68;
+    mPos44 = lbl_eu_80666A68;
+    g48->f48 = lbl_eu_80666A68;
+    mField4C = lbl_eu_80666A68;
+    g50->f50 = lbl_eu_80666A68;
+    Sub54Flt* sub54 = reinterpret_cast<Sub54Flt*>(&mSubObj54);
+    sub54->a = lbl_eu_80666A68;
+    sub54->b = lbl_eu_80666A68;
+    sub54->c = lbl_eu_80666A68;
+    mFloat60 = lbl_eu_80666A6C;
+    mFlags68 = 0;
+    g6c->w6c = 0;
+    g6c->w70 = 0;
+    g6c->w74 = 0;
+    g6c->b78 = 0;
+    g88->w88 = 0;
+    g88->h8c = 0;
+    g88->h8e = 0;
+    reinterpret_cast<ModelDtorVt*>(this)->m5C();  // vtable +0x5C
+    // Phase 2: flag bit, base vtable install, model-tail init.
+    mFlags68 |= 0x00100000;
+    *(void**)this = (void*)lbl_eu_80529318;
+    t90->w90 = 0;
+    t90->w94 = 0;
+    t90->sub98 = 0;
+    t90->w9c = 0;
+    t90->fa0 = lbl_eu_80666A68;
+    t90->fa4[0] = lbl_eu_80666A6C;
+    t90->fa4[1] = lbl_eu_80666A6C;
+    t90->fa4[2] = lbl_eu_80666A6C;
+    t90->subB0 = 0;
+    t90->wb4 = 0;
+    t90->wb8 = 0;
+    t90->bbc = 0;
+    t90->bbd = 1;
+    t90->wc0 = 0;
+}
 
 // Retail returns 1 even though the base CfObject header declares the slot as
 // void; defined with the verbatim mangled name so the vtable slot 0x58
@@ -20,7 +130,44 @@ int CfObject_UnkVirtualFunc2__Q22cf13CfObjectModelFv(cf::CfObjectModel* self) {
     return 1;
 }
 
-cf::CfObjectModel::~CfObjectModel() {}
+// Complete-object destructor (retail __dt__Q22cf13CfObjectModelFv). Written
+// out by hand because MWCC's auto dtor machinery would emit an implicit D1
+// vtable store and a synthesized base-dtor call that retail does not have.
+// Sequence: read the +0x68 flags word, install the cf::CfObject vtable,
+// unregister from the manager when bit 0x40000000 is set, run the slot-0x68
+// cleanup, destroy the +0xB0 sub-object, then restore the model vtable and
+// run slot-0x68 once more before the delete-flag wrapper.
+extern "C" __declspec(noinline) cf::CfObjectModel* __dt__Q22cf13CfObjectModelFv(
+    cf::CfObjectModel* self, s32 deleteFlag) {
+    // Null guard branches straight past the whole body including the
+    // delete-flag wrapper (retail beq lands on the shared epilogue).
+    if (self == 0) {
+        goto finish;
+    }
+    u32 flags = self->mFlags68;
+        *(void**)self = (void*)lbl_eu_80529318;
+        if (flags & 0x40000000) {
+            func_80186474(func_801862C0(), self);
+        }
+        reinterpret_cast<ModelDtorVt*>(self)->m68();
+        if (self->mSubObjB0 != 0) {
+            if (self->mSubObjB0 != 0) {
+                // Redundant nested re-check reproduces retail's dead second
+                // beq (MWCC keeps both branch targets).
+                reinterpret_cast<SubObjB0If*>(self->mSubObjB0)->m08(1);
+            }
+            self->mSubObjB0 = 0;
+        }
+        if (self != 0) {
+            *(void**)self = (void*)lbl_eu_805294E0;
+            reinterpret_cast<ModelDtorVt*>(self)->m68();
+        }
+    if (deleteFlag > 0) {
+        operator delete(self);
+    }
+finish:
+    return self;
+}
 
 // POD deleting destructor (retail symbol is address-derived, no class name):
 // delete self only when a delete flag is passed, then return self.
@@ -98,14 +245,15 @@ void func_800BAB64(cf::CfObjectModel* self) {
 void CfObject_UnkVirtualFunc8__Q22cf13CfObjectModelFv(cf::CfObjectModel* self, void* newObj) {
     if (self->mSubObj38 != 0) {
         reinterpret_cast<cf::CfObjectSub38If*>(self->mSubObj38)->mAC();
+    }
+    if (self->mSubObj38 != 0) {
+        // Redundant re-check on the reloaded pointer: MWCC shares the compare
+        // between the two tests and emits two beq targets (skip-call /
+        // skip-block), matching retail.
         if (self->mSubObj38 != 0) {
-            // Redundant nested check on the reloaded value mirrors retail's
-            // two beq targets (MWCC keeps both branches).
-            if (self->mSubObj38 != 0) {
-                reinterpret_cast<cf::CfObjectSub38If*>(self->mSubObj38)->m08(1);
-            }
-            self->mSubObj38 = 0;
+            reinterpret_cast<cf::CfObjectSub38If*>(self->mSubObj38)->m08(1);
         }
+        self->mSubObj38 = 0;
     }
     self->mSubObj38 = newObj;
     if (newObj != 0) {
@@ -236,7 +384,65 @@ void CfObject_UnkVirtualFunc22__Q22cf13CfObjectModelFv(cf::CfObjectModel* self, 
     *reinterpret_cast<ml::CVec3*>(&self->mPos3C) = *vec;
 }
 
-void cf::CfObject::CfObject_UnkVirtualFunc25() {}
+// Collision/ground-query helpers used by UnkVirtualFunc25 below (retail ABI:
+// func_804BE398 takes four GPR args plus two FP args; func_800A7094 takes a
+// probe vector, result vector, filter word and two floats).
+// func_804BE398/BE4B4/BE4E0 come from CActParamAnim.hpp (retail ABI: four
+// GPR args plus two FP args on the probe).
+extern "C" int func_800A7094(ml::CVec3* pos, ml::CVec3* out, int filter,
+                             float f, float g);
+
+// Base ground-snap entry point. Retail symbol is Fv (the base header declares
+// slot +0xB4 parameter-less) but the body consumes the caller's r4/f1 as
+// (position, scale). Selects a collision filter word from bits 30/29 of
+// +0x64, probes downward from the position, optionally re-probes from a
+// lifted point, and finally dispatches vtable slot +0x9C with the probed
+// position still live in r4.
+extern "C" void CfObject_UnkVirtualFunc25__Q22cf8CfObjectFv(
+    cf::CfObject* self, ml::CVec3* pos, float scale) {
+    ml::CVec3 probe;
+    ml::CVec3 hitPos;
+    ml::CVec3 normal;
+    ml::CVec3 lifted;
+
+    u32 flags = self->unk64;
+    // Filter word: default mid variant; bit30 clear picks the narrow one,
+    // bit29 (when bit30 set) picks the wide one. Each unk64 bit test is
+    // normalized through the double-cntlzw booleanize idiom (retail
+    // booleanizes twice).
+    u32 filter = 0x44a09;
+    if ((((u32)__cntlzw((u32)__cntlzw(flags & 0x2) >> 5)) >> 5) == 0) {
+        filter = 0x4a05;
+    } else if ((((u32)__cntlzw((u32)__cntlzw(flags & 0x4) >> 5)) >> 5) != 0) {
+        filter = 0x44a11;
+    }
+
+    if ((((u32)__cntlzw((u32)__cntlzw(flags & 0x2) >> 5)) >> 5) != 0) {
+        func_800A7094(pos, &probe, filter, scale, lbl_eu_80666A68);
+
+        // Probe down from the hit point...
+        int found = func_804BE398(&probe, 0, 0x40000, 0, lbl_eu_80666A70,
+                                  lbl_eu_80666A74);
+        if (found != 0) {
+            func_804BE4B4(&hitPos, 0);
+            func_804BE4E0(&normal, 0);
+            // ...then re-probe from a lifted copy of the hit point.
+            ml::CVec3 offset(lbl_eu_80666A68, lbl_eu_80666A78, lbl_eu_80666A68);
+            ml::CVec3 sum = probe + offset;
+            lifted.set(sum);
+            if (func_804BE398(&lifted, 0x44a05, 0, 0, lbl_eu_80666A7C,
+                              lbl_eu_80666A74)) {
+                found = 0;
+            }
+        }
+        if (found != 0) {
+            probe.y -= lbl_eu_80666A6C;
+        }
+    } else {
+        func_800A7094(pos, &probe, 0x4a05, scale, lbl_eu_80666A68);
+    }
+    self->CfObject_UnkVirtualFunc19();
+}
 
 // Retail symbol is Fv (no params) but the body consumes two floats in f1/f2 -
 // forced-name form; packs them with a constant into a stack vector and calls
@@ -524,7 +730,49 @@ void CfObjectModel_UnkVirtualFunc13__Q22cf13CfObjectModelFv(cf::CfObjectModel* s
     }
 }
 
-void cf::CfObjectModel::CfObjectModel_UnkVirtualFunc14() {}
+// Retail symbol is Fv (no params) but the body reads r4/r5; written with the
+// verbatim mangled name. Copies another object's named node position into
+// this object via the sub-object, remembering the source and name.
+void CfObjectModel_UnkVirtualFunc14__Q22cf13CfObjectModelFv(
+    cf::CfObjectModel* self, cf::CfObjectModel* other, const char* name) {
+    if (self->field_BC == 0) {
+        self->field_B4 = 0;
+        self->field_B8 = 0;
+        self->field_BD = 1;
+    }
+    if (self->mSubObj98 == 0) {
+        return;
+    }
+    if (other != 0) {
+        if (other->mSubObj98 == 0 || name == 0) {
+            return;
+        }
+
+        // Resolve the name through the source object; fall back to the retail
+        // placeholder label (+1) when the lookup reports failure.
+        const char* target = name;
+        if (reinterpret_cast<cf::CfObjectVt120*>(other)->m120(name) == 0) {
+            target = reinterpret_cast<const char*>(&lbl_eu_804FC548[1]);
+        }
+
+        ml::CVec3 pos;
+        cf::CfObjectModelSub98* srcSub = other->mSubObj98;
+        if (srcSub != 0) {
+            float* mtx = reinterpret_cast<cf::CfObjectParamVt3C*>(srcSub)->m3C(target);
+            pos = ml::CVec3(mtx[3], mtx[7], mtx[11]);
+        } else {
+            pos = zero__Q22ml5CVec3;
+        }
+        self->CfObjectModel_UnkVirtualFunc13(&pos);
+        self->field_B4 = other;
+        self->field_B8 = target;
+        return;
+    }
+    // Release the current binding when inactive.
+    if (self->field_BC == 0) {
+        func_80484E10(self->mSubObj98, 0, 1);
+    }
+}
 
 extern "C" void CfObjectModel_UnkVirtualFunc15__Q22cf13CfObjectModelFv(cf::CfObjectModel* self, int val) {
     // Store (val != 0) at field_BC, then tail-call the virtual

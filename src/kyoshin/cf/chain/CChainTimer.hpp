@@ -272,7 +272,7 @@ void func_801043BC();
 void func_8027CC3C(void* self, void* owner);
 void func_8027CD08(void* self, void* owner);
 int func_80146300(int val, int flag);
-int func_8025FB10(void* self, u32 value);
+// (func_8025FB10: single winning decl lives on chain/CChainActorList.hpp.)
 int* func_8009ECB0();
 }
 // C++-mangled retail helper func_800B708C__Fi (actor id -> action source).

@@ -11,6 +11,7 @@
 #include <types.h>
 #include <string.h>
 #include <revolution/NAND.h>
+#include "libs/monolib/include/monolib/util/FixStr.hpp"
 #include "libs/monolib/src/nand/CNReqtaskSave.hpp"
 
 // CException (monolib/core) - only its address/return value is used here.
@@ -24,6 +25,10 @@ extern "C" { // lbl_* and func_* retail names need unmangled emission
     extern u8 lbl_eu_806659D8[8];                // save-task "open" flag block (byte 0 read)
     extern const wchar_t* lbl_eu_80663B60;       // NAND error message for -4 / -64
     extern const wchar_t* lbl_eu_80663B64;       // NAND error message for -3 / -2
+    extern const char lbl_eu_80524608[];         // "%s%s" format string (.rodata)
+    extern char* lbl_eu_80663B80;                // save path prefix (.sdata)
+    extern s8 lbl_eu_806659E4;                   // path-buffer initialized flag (retail 1B @sda21)
+    extern u8 lbl_eu_80660000[40];               // static FixStr<32> path buffer (.bss)
 
     // NAND subsystem primitives (stripped retail names -> C linkage).
     // Note: retail func_804DB348 (CNReqtaskCheck unit) and func_804DACE8 (this
@@ -32,7 +37,7 @@ extern "C" { // lbl_* and func_* retail names need unmangled emission
     // reproduce the retail call bytes.
     s32 func_804DA69C(void);                                 // NAND close primitive (defined below)
     const char* func_804DAEE8(CNReqtaskSaveData* data);      // save path/handle builder (defined below)
-    s32 func_804DA540(const char* path, u32 flag);           // NAND open/set-buffer primitive (defined below)
+    s32 func_804DA540(const char* path, u8 flag);            // NAND open wrapper (defined below)
     const char* func_804DA98C(u8 id);                        // temp-path builder (defined below)
     void func_804DA97C(void* param);                         // NAND completion callback (defined below)
     CNReqtaskCheckVtbl** func_804DB348(CNReqtaskCheckData* data);  // check sub-task config
@@ -63,8 +68,10 @@ extern "C" { // lbl_* and func_* retail names need unmangled emission
     int func_eu_804DEF20(CNRequest* req, const char* buf, u8 size, u8 a3); // request-record setup wrapper
     int func_804DACAC(CNRequest* req, u32 a1, u8 a2);                       // init save-banner sub-task
 
+    s32 func_804DA4E0(u32 neededBlocks, u32 neededFiles, u32* answer); // NAND check (async)
+
     // Task poll + save state machine (definitions inherit C linkage).
-    int func_804DAAF8(CNRequest* self, u8* out);                 // CNRequest task poll (defined below)
+    int func_804DAAF8(CNRequest* self, bool* out);                 // CNRequest task poll (defined below)
     s32 func_804DAD38(CNReqtaskSaveVtbl* vtable, CNReqtaskSaveData* data); // save state machine (defined below)
 
     // The five NAND async wrappers below (definitions inherit C linkage).
@@ -76,7 +83,9 @@ extern "C" { // lbl_* and func_* retail names need unmangled emission
     s32 func_804DA7CC(const char* from, const char* to);     // NAND move (async)
     s32 func_eu_804DEB4C(const char* path, u8 perm, u8 attr); // NAND create-dir (async)
     s32 func_804DA91C(const char* path);                     // NAND change-dir (async)
+    s32 func_804DA82C(u32* pos);                             // NAND tell (async)
     s32 func_804DA628(u32 addr, u32 size);                   // NAND write (async) - fixed save file-info (defined below)
+    s32 func_804DA5B4(u32 addr, u32 size);                   // NAND read (async) - fixed save file-info (defined below)
     s32 func_804DA898(char* nameList, u32* num, const char* path); // NAND read-dir (async) (defined below)
 }
 
@@ -145,15 +154,69 @@ extern "C" __declspec(noinline) void sinit_804DAF58() {
     func_804DAF60(&lbl_eu_806659E0);
 }
 
-void func_804DA4E0(){}
+// us-804de720: func_804DA4E0
+// NAND check (async) wrapper; same shape as func_804DA70C: stamps the busy
+// flag, clears the result latch, launches NANDCheckAsync with the completion
+// callback and shared command block (needed blocks/files/answer forwarded
+// from the caller), routes an immediate nonzero return through the error
+// dispatcher and clears the busy flag. The raw NAND result is returned.
+// (Upstream of any optimize_for_size "off" pair, so the unit-level -O4,s
+// already produces the retail stmw r30 frame here.)
+s32 func_804DA4E0(u32 neededBlocks, u32 neededFiles, u32* answer) {
+    lbl_eu_806659D0 = 1;
+    lbl_eu_806659D4 = 0;
+    s32 ret = NANDCheckAsync(neededBlocks, neededFiles, answer,
+                             (NANDAsyncCallback)func_804DA97C, &lbl_eu_8065FE30);
+    if (ret != 0) {
+        func_804DAA58(ret);
+        lbl_eu_806659D0 = 0;
+    }
+    return ret;
+}
 
-// NAND open/set-buffer primitive (stub; symbol kept for the func_804DAD38
-// state machine's open step). noinline: retail func_804DAD38 emits
-// `bl func_804DA540`; without it MWCC inlines this placeholder and changes
-// the caller.
-__declspec(noinline) s32 func_804DA540(const char* path, u32 flag) { return 0; }
+// us-804de780: func_804DA540
+// NAND open (async) wrapper for the save flow's open step: stamps the busy
+// flag, clears the result latch, launches NANDOpenAsync on the fixed save
+// file-info (lbl_eu_8065FEEC) with the completion callback and shared command
+// block. On success latches the "save file open" flag (lbl_eu_806659D8 byte 0);
+// on an immediate error routes through func_804DAA58 and clears the busy flag.
+// The raw NAND result is returned either way. flag is u8 so forwarding it to
+// NANDOpenAsync's u8 mode emits no rlwinm truncation (retail does mr r5,r4).
+// noinline: retail func_804DAD38 emits `bl func_804DA540`; without it MWCC
+// inlines this wrapper into the state machine.
+__declspec(noinline) s32 func_804DA540(const char* path, u8 flag) {
+    lbl_eu_806659D0 = 1;
+    lbl_eu_806659D4 = 0;
+    s32 ret = NANDOpenAsync(path, &lbl_eu_8065FEEC, flag,
+                            (NANDAsyncCallback)func_804DA97C, &lbl_eu_8065FE30);
+    // Written with the error path as the if-body: MWCC lowers this to the
+    // retail `cmpwi/beq` shape branching to the success store.
+    if (ret != 0) {
+        func_804DAA58(ret);
+        lbl_eu_806659D0 = 0;
+    } else {
+        lbl_eu_806659D8[0] = 1;
+    }
+    return ret;
+}
 
-void func_804DA5B4(){}
+// us-804de7f4: func_804DA5B4
+// NAND read (async) wrapper; same shape as func_804DA628 but reads from the
+// fixed save file-info (lbl_eu_8065FEEC): stamps the busy flag, clears the
+// shared result latch, launches NANDReadAsync with the caller's buffer
+// address/size, completion callback and command block, routes an immediate
+// nonzero return through func_804DAA58 and clears the busy flag.
+__declspec(noinline) s32 func_804DA5B4(u32 addr, u32 size) {
+    lbl_eu_806659D0 = 1;
+    lbl_eu_806659D4 = 0;
+    s32 ret = NANDReadAsync(&lbl_eu_8065FEEC, (u8*)addr, size,
+                            (NANDAsyncCallback)func_804DA97C, &lbl_eu_8065FE30);
+    if (ret != 0) {
+        func_804DAA58(ret);
+        lbl_eu_806659D0 = 0;
+    }
+    return ret;
+}
 
 // us-804de868: func_804DA628
 // NAND write (async) wrapper for the save flow: stamps the busy flag, clears
@@ -184,15 +247,17 @@ __declspec(noinline) s32 func_804DA628(u32 addr, u32 size) {
 s32 __declspec(noinline) func_804DA69C(void) {
     lbl_eu_806659D0 = 1;
     lbl_eu_806659D4 = 0;
+    // Retail argument order: file-info, completion callback, command block.
     s32 ret = NANDCloseAsync(
-        reinterpret_cast<NANDFileInfo*>(reinterpret_cast<void*>(&func_804DA97C)),
-        reinterpret_cast<NANDAsyncCallback>(&lbl_eu_8065FE30),
-        reinterpret_cast<NANDCommandBlock*>(&lbl_eu_8065FEEC));
+        reinterpret_cast<NANDFileInfo*>(&lbl_eu_8065FEEC),
+        (NANDAsyncCallback)func_804DA97C,
+        &lbl_eu_8065FE30);
     if (ret != 0) {
         func_804DAA58(ret);
         lbl_eu_806659D0 = 0;
     } else {
-        lbl_eu_806659D0 = 0;
+        // Success path clears the save-open flag byte, not the busy flag.
+        lbl_eu_806659D8[0] = 0;
     }
     return ret;
 }
@@ -257,7 +322,27 @@ __declspec(noinline) s32 func_804DA7CC(const char* from, const char* to) {
 }
 #pragma pop
 
-void func_804DA82C(){}
+// us-804dea6c: func_804DA82C
+// NAND tell (async) wrapper; same shape as func_804DA70C: stamps the busy
+// flag, clears the result latch, launches NANDTellAsync on the fixed save
+// file-info (lbl_eu_8065FEEC) with the caller's position out-pointer,
+// completion callback and shared command block. On an immediate nonzero
+// return the error is routed through func_804DAA58 and the busy flag is
+// cleared. The raw NAND result is returned either way.
+#pragma push
+#pragma optimize_for_size on  // -O4,s keeps the retail stmw r30 frame
+__declspec(noinline) s32 func_804DA82C(u32* pos) {
+    lbl_eu_806659D0 = 1;
+    lbl_eu_806659D4 = 0;
+    s32 ret = NANDTellAsync(&lbl_eu_8065FEEC, pos,
+                            (NANDAsyncCallback)func_804DA97C, &lbl_eu_8065FE30);
+    if (ret != 0) {
+        func_804DAA58(ret);
+        lbl_eu_806659D0 = 0;
+    }
+    return ret;
+}
+#pragma pop
 
 // us-804dead8: func_804DA898
 // NAND read-dir (async) wrapper; same shape as func_804DA70C. The caller (the
@@ -383,14 +468,10 @@ extern "C" void* __ct__CNRequest(void* self) {
 // running, 0 is returned and `out` is untouched.
 #pragma push
 #pragma optimize_for_size on
-int func_804DAAF8(CNRequest* self, u8* out) {
+int func_804DAAF8(CNRequest* self, bool* out) {
     int ret = self->field_0x0->taskSlot2(self->field_0x4);
-    // Word-sized temporary: assigning straight to *out makes MWCC fold the
-    // u8 conversion into the shift (rlwinm byte mask); retail keeps the
-    // compare result as a full word and truncates only at the stb store.
     if (ret != 0) {
-        int done = (ret == 1);
-        *out = done;
+        *out = (ret == 1);
         self->field_0x0->taskSlot3(self->field_0x4);
         self->field_0x0 = 0;
         return 1;
@@ -509,90 +590,107 @@ __declspec(noinline) CNReqtaskSaveVtbl** func_804DACE8(
 #pragma push
 #pragma optimize_for_size on
 s32 func_804DAD38(CNReqtaskSaveVtbl* vtable, CNReqtaskSaveData* data) {
+    CNReqtaskSaveData* d = data;
+
     if (lbl_eu_806659D0 != 0) { // NAND subsystem busy
         return 0;
     }
 
     // Once the save has begun (state >= 2), a negative global result latch
     // means the pending operation failed.
-    if ((s8)data->state >= 2 && lbl_eu_806659D4 < 0) {
-        return 2;
+    if ((s8)d->state >= 2) {
+        if (lbl_eu_806659D4 < 0) {
+            return 2;
+        }
     }
 
-    switch ((s8)data->state) {
+    switch ((s8)d->state) {
         case 0: {
-            s32 r = func_804DA540(func_804DAEE8(data), 2);
+            s32 r = func_804DA540(func_804DAEE8(d), 2);
             if (r != 0) {
                 return 2;
             }
-            data->state = 1;
-            break;
+            d->state = 1;
+            goto ret0;
         }
         case 1: {
+            // Open result dispatch: 0 = write the buffer, -12 (no such file)
+            // = create it and retry the open via state 6, anything else fails
+            // the save.
             s32 last = lbl_eu_806659D4;
-            // Any nonzero latch other than -12 (no such file) fails the save.
-            // Written as a fused guard so MWCC emits the retail
-            // `cmpwi 0/beq skip; cmpwi -12/bne error` shape.
-            if (last != 0 && last != -12) {
-                return 2;
-            }
             if (last != 0) {
-                // No such file: create it (func_804DA70C) and retry the open
-                // via state 6. Retail lays this block out before the write
-                // branch below (the `last == 0` test jumps past it).
-                const char* path = func_804DAEE8(data);
-                s32 r = func_804DA70C(path, data->field_0x18, 0);
-                if (r != 0) {
+                if (last == -12) {
+                    // No such file: create it (func_804DA70C) and retry the
+                    // open via state 6.
+                    s32 r = func_804DA70C(func_804DAEE8(d), d->field_0x18, 0);
+                    if (r != 0) {
+                        return 2;
+                    }
+                    d->state = 6;
+                } else {
                     return 2;
                 }
-                data->state = 6;
             } else {
                 // Open succeeded: write the buffer.
-                s32 r = func_804DA628(data->field_0x10, data->field_0x14);
+                s32 r = func_804DA628(d->field_0x10, d->field_0x14);
                 if (r != 0) {
                     return 2;
                 }
-                data->state = 2;
+                d->state = 2;
             }
-            break;
+            goto ret0;
         }
         case 2: {
             s32 r = func_804DA69C();
             if (r != 0) {
                 return 2;
             }
-            data->state = 3;
-            break;
+            d->state = 3;
+            goto ret0;
         }
         case 3: {
             // Evaluate the temp path first (retail keeps it in r31 across the
             // func_804DAEE8 call that produces the source path).
-            const char* to = func_804DA98C(data->field_0x19);
-            if (func_804DA7CC(func_804DAEE8(data), to) != 0) {
+            const char* to = func_804DA98C(d->field_0x19);
+            if (func_804DA7CC(func_804DAEE8(d), to) != 0) {
                 return 2;
             }
-            data->state = 4;
-            break;
+            d->state = 4;
+            goto ret0;
         }
         case 4:
-            data->state = 5;
-            break;
+            d->state = 5;
+            goto ret0;
         case 5:
             return 1;
         case 6:
-            data->state = 0;
-            break;
+            d->state = 0;
+            goto ret0;
         default:
             break;
     }
+ret0:
     return 0;
 }
 #pragma pop
 
-// Save path/handle builder (stub; symbol kept for the func_804DAD38 open and
-// move steps). noinline: retail func_804DAD38 emits `bl func_804DAEE8`;
-// without it MWCC inlines this placeholder and changes the caller.
-__declspec(noinline) const char* func_804DAEE8(CNReqtaskSaveData* data) { return (const char*)0; }
+// us-804df1a4: func_804DAEE8
+// Save path builder: formats "<prefix><sub-path>" ("%s%s", prefix from the
+// shared .sdata pointer, sub-path from the task data block) into the unit's
+// static FixStr<32> buffer (lbl_eu_80660000) and returns it. On the first
+// call (initialized flag still clear) the buffer is cleared and the flag
+// latched to 1; later calls skip straight to the format.
+// noinline: retail func_804DAD38 emits `bl func_804DAEE8`; without it MWCC
+// inlines this placeholder and changes the caller.
+__declspec(noinline) const char* func_804DAEE8(CNReqtaskSaveData* data) {
+    if (lbl_eu_806659E4 == 0) {
+        reinterpret_cast<ml::FixStr<32>&>(lbl_eu_80660000).clear();
+        lbl_eu_806659E4 = 1;
+    }
+    reinterpret_cast<ml::FixStr<32>&>(lbl_eu_80660000)
+        .format(lbl_eu_80524608, lbl_eu_80663B80, data);
+    return reinterpret_cast<const ml::FixStr<32>&>(lbl_eu_80660000).c_str();
+}
 
 // ===== Dissolved monolibdata2 (blob surgery) data owned by this TU =====
 // func_804DAD38 / func_804DA4CC are defined in this TU with C++ linkage
@@ -646,4 +744,4 @@ s32 lbl_eu_806659D4;
 // 0x1C). Only byte 0 is ever read (lbz @sda21).
 u8 lbl_eu_806659D8[8];
 CNReqtaskSaveVtbl* lbl_eu_806659E0;
-u32 lbl_eu_806659E4;   // retail 1B at +0x14; 4B pads section to 0x18
+s8 lbl_eu_806659E4;    // retail 1B at +0x14 (signed: read back via extsb.)

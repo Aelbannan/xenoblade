@@ -152,16 +152,19 @@ struct CModelDispModelVt {
     virtual void m0C(); virtual void m0D(); virtual void m0E(); virtual void m0F();
     virtual void m48(f32 value);        // #17 => +0x48
     virtual void m10(); virtual void m11(); virtual void m12(); virtual void m13();
-    virtual void m14(); virtual void m15(); virtual void m16();
-    virtual void m64(u32 arg);          // #24 => +0x64
+    virtual void m14(); virtual void m15();
+    // (retail: 6 fillers between m48 and m64, 13 between m64 and m9C,
+    // 9 between m9C and mC4 - verified against func_801FFDC4 dispatches)
+    virtual void m64(u32 arg);          // slot 25 => +0x64
     virtual void m17(); virtual void m18(); virtual void m19(); virtual void m1A();
     virtual void m1B(); virtual void m1C(); virtual void m1D(); virtual void m1E();
     virtual void m1F(); virtual void m20(); virtual void m21(); virtual void m22();
     virtual void m23();
-    virtual void m9C(u32 a, u32 b);     // #38 => +0x9C
+    virtual void m9C(u32 a, u32 b);     // slot 39 => +0x9C
     virtual void m25(); virtual void m26(); virtual void m27();
     virtual void m28(); virtual void m29(); virtual void m2A(); virtual void m2B();
     virtual void m2C();
+    virtual void m2D();
     virtual void mC4(CModelDispModelVt* animModel, CModelDispNameParam* name, u32 flag); // #48 => +0xC4
     virtual void mC8(CModelDispModelVt* animModel); // #49 => +0xC8
 };
@@ -243,6 +246,12 @@ struct CModelDispParent {
     CModelDispObj* field_0x3A0; // +0x3A0
 };
 
+// 12-byte filter triple copied by value out of lbl_eu_80507FDC in
+// func_80200FB0 (retail loads it as one struct: lwzu/lwz/lwz).
+struct CModelDispFilterTbl {
+    u32 slot[3];
+};
+
 // Actor container (func_800BFC68 result): CfObjectMove embedded at +0x3E9C.
 struct CModelDispActor {
     u8 _00[0x3E9C];
@@ -302,7 +311,7 @@ struct CActParamHolderTail {
 
 class CModelDispEquip {
 public:
-    CModelDispEquip();
+    CModelDispEquip(u32 somePtr, s32 equipSlot);
     ~CModelDispEquip();
     int OnFileEvent(CEventFile* event);
 
@@ -424,7 +433,7 @@ extern "C" int getFileSize__11CDeviceFileFPCc(const char* path, int flags);
 extern "C" void* readFile__11CDeviceFileFUlPCcP10IWorkEventii(u32 allocHandle, const char* path, void* workEvent, int, int);
 extern "C" void setHandleFlag1__11CDeviceFileFP11CFileHandle(CFileHandle* fh);
 extern "C" void func_801390E0__FPP11CFileHandle(CFileHandle** handlePtr);
-extern "C" void func_804CC1BC(void* arg);
+extern "C" void func_804CC1BC(void* mgr, void* data);
 extern "C" void func_804CC1D8(void* arg, void* data); // (manager, buffer): the
 // buffer rides in r4 from the null-check load - keeps the check color r4.
 extern "C" void waitForDrawDone__9CDeviceVIFv();
@@ -456,7 +465,8 @@ extern "C" CModelDispModelVt* func_80495E8C(u32 global, u32 id, int a, int b);
 extern "C" CModelDispModelVt* func_80495E94(u32 global, CModelDispNameParam* param);
 extern "C" CModelDispObj* func_80495EAC(u32 global, u8* mDataAdj, const char* name);
 extern "C" void func_80495E60(CModelDispObj* obj);
-extern "C" s16 func_800BE954(CModelDispMoveVt* move);
+extern "C" int func_800BE954(CModelDispMoveVt* move); // int return: callers store
+// into an s16 local, forcing the extsh into the home register at assignment.
 extern "C" CModelDispParamSlot* func_80062C28(s16 id, int a);
 extern "C" CModelDispParamSlot* func_80062DA4(s16 id);
 extern "C" void func_8004B6BC(CActParamAnimView* self, CModelDispObj* obj);

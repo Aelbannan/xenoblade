@@ -4,7 +4,25 @@
 #include "kyoshin/cf/CBattleManagerApi.hpp"
 #include "kyoshin/cf/object/CfObjectMoveApi.hpp"
 #include "kyoshin/cf/CfMapItemManager.hpp"
+// harness_catalog.hpp pulls CTaskGameEff.hpp -> CfObjectImplMove/Walker.hpp,
+// whose C++-linkage typed func_80043D90 / func_804BE398 decls clash with the
+// canonical extern "C" forms in CtrlMoveBase.hpp / CtrlPc.hpp. Hide them for
+// this TU (our call sites use the canonical extern "C" ABI).
+#define func_80043D90 func_80043D90_altdecl
+#define func_8014B2DC func_8014B2DC_altdecl
+#define func_80043F18 func_80043F18_altdecl
+#define func_80043E88 func_80043E88_altdecl
+#define __dt__80043E88 __dt__80043E88_altdecl
+#define func_800F6E08 func_800F6E08_altdecl
+#define func_800F4A98 func_800F4A98_altdecl
 #include "kyoshin/harness_catalog.hpp"
+#undef func_80043D90
+#undef func_8014B2DC
+#undef func_80043F18
+#undef func_80043E88
+#undef __dt__80043E88
+#undef func_800F6E08
+#undef func_800F4A98
 #include "monolib/scn/CScnTimeApi.hpp"
 
 #include "kyoshin/cf/CtrlAct.hpp"
@@ -2110,26 +2128,40 @@ void func_800D5874(CtrlActView* self, u32 kindParam, int param2) {
     self->mField44 = self->mPlayer->mSub3E9C.getPosition()->f[2];
     // Kind dispatch: retail lowers this as two equality-cascade switches
     // over cached register subjects (kind, then param2).
-    u32 kind = self->mFlags58.mKind;
-    if (kind == 3) {
+    // Retail lowers both ladders as switch-style compare cascades with the
+    // case bodies grouped after the full test sequence.
+    switch (self->mFlags58.mKind) {
+    case 3:
         self->mFlags58.mParam = param2;
-    } else if (kind == 4 || kind == 0xa) {
+        break;
+    case 4:
+    case 0xa:
         self->mField54 = lbl_eu_80666D04;
-    } else if (kind == 2) {
-        // Param ladder, ascending compare cascade like retail.
-        if (param2 == 0x28) {
+        break;
+    case 2:
+        switch (param2) {
+        case 0x28:
             self->mFlags58.mParam = 5;
-        } else if (param2 == 0x29) {
+            break;
+        case 0x29:
             self->mFlags58.mParam = 0xa;
-        } else if (param2 == 0x2a) {
+            break;
+        case 0x2a:
             self->mFlags58.mParam = 0xf;
-        } else if (param2 == 0x2b) {
+            break;
+        case 0x2b:
             self->mFlags58.mParam = 0x14;
-        } else if (param2 == 0x2c) {
+            break;
+        case 0x2c:
             self->mFlags58.mParam = 0x19;
-        } else {
+            break;
+        default:
             self->mFlags58.mParam = 5;
+            break;
         }
+        break;
+    default:
+        break;
     }
 }
 
@@ -2173,9 +2205,9 @@ extern "C" void func_800D5A2C(CtrlActView* self) {
             void* candidate = 0;
             CfEnumListHolder holder;
             func_80043D90(&holder);
-            CfEnumList* lst = func_80043F18(&holder);
+            CfEnumList* lst = (CfEnumList*)func_80043F18(&holder);
             func_800F4A98(lst, data[i], 0);
-            lst = func_80043F18(&holder);
+            lst = (CfEnumList*)func_80043F18(&holder);
             int id = (int)(intptr_t)func_800F6E08(lst);
             if (id != 0) {
                 void* actor = func_800B708C(id);

@@ -9,6 +9,7 @@
 #include "monolib/scn/CScnTimeApi.hpp"
 #include "kyoshin/cf/code_800F42AC.hpp"   // CfGameManager::getInstance, func_8006EF04
 #include "kyoshin/cf/CfGameManagerData.hpp"  // H3 label-owner decl (lbl_eu_80663E14; lbl_eu_80663E24)
+#include <string.h>
 
 namespace cf {
 
@@ -20,11 +21,9 @@ struct CfObjectNpc_model98 {
 };
 
 // vtable slot 0x8C returns a f32 in retail even though the base header declares
-// it void; call it through a float-typed member-function pointer to read f1.
+// it void; the proxy's getScale8C() reads f1.
 float CfObjectNpc::readSlot8c() {
-    typedef float (cf::CfObject::*CfVf15)();
-    return (this->*reinterpret_cast<CfVf15>(
-        &cf::CfObject::CfObject_UnkVirtualFunc15))();
+    return reinterpret_cast<CfObjectNpcVt*>(this)->getScale8C();
 }
 
 // 0x800BFD48
@@ -87,13 +86,18 @@ void CfObjectNpc::func_800BF4DC() {
             func_8013EB90(1) == 0) {
             if (this->mTimer > lbl_eu_80666AEC) {
                 this->CObjectState_UnkVirtualFunc5(3);
-                this->CObjectParam_UnkVirtualFunc6();
-                this->CfObjectModel_UnkVirtualFunc14();
+                // Slots 0x50 and 0x1AC take arguments though the base headers
+                // declare them argument-less; call through the vtable proxy.
+                reinterpret_cast<CfObjectNpcVt*>(this)->m50(0);
+                reinterpret_cast<CfObjectNpcVt*>(this)->m1AC(
+                    0, (const char*)lbl_eu_804FC580);
                 this->mTimer = lbl_eu_80666AE0;
             } else {
-                this->mTimer += func_80496288(lbl_eu_80663E14) *
-                                this->readSlot8c() / lbl_eu_80666AF0;
-            }
+                // Local forces the scene-pointer load before the slot call,
+                // matching retail's r31 hoist.
+                CScn* scene = lbl_eu_80663E14;
+                this->mTimer += func_80496288(scene) *
+                                this->readSlot8c() / lbl_eu_80666AF0;            }
             resetTimer = false;
         }
     }
@@ -101,11 +105,47 @@ void CfObjectNpc::func_800BF4DC() {
     if (resetTimer) {
         this->mTimer = lbl_eu_80666AE0;
     }
-    this->CfObject_UnkVirtualFunc4();
+    // Direct (non-virtual) base call, matching retail's bl.
+    this->CfObjectMove::CfObject_UnkVirtualFunc4();
 }
 
 // 0x800C016C
-void CfObjectNpc::func_800BF764() {}
+// Loads the NPC's display parameters from its BDAT row and pushes them into
+// the model through a series of virtual setters. Columns come from the shared
+// BDAT column-name table; numeric columns are converted with the classic
+// 0x4330 integer-to-double bias constant.
+void CfObjectNpc::func_800BF764() {
+    func_8003AA34();
+    void* fp = getFP__FPCc((const char*)this + 0x78);
+
+    // Length-probe the name column: if it exceeds 0x1F chars, fall back to
+    // the fixed string baked into the column-name table at +0xC.
+    if (strlen((const char*)getBdatStringColumnValue(
+            fp, (const char*)&lbl_eu_804FC580[7], unk8C_3)) > 0x1F) {
+        reinterpret_cast<CfObjectNpcVt*>(this)->setName(
+            (const char*)&lbl_eu_804FC580[0xC]);
+    } else {
+        reinterpret_cast<CfObjectNpcVt*>(this)->setName(
+            (const char*)getBdatStringColumnValue(
+                fp, (const char*)&lbl_eu_804FC580[7], unk8C_3));
+    }
+
+    reinterpret_cast<CfObjectNpcVt*>(this)->setTime(lbl_eu_80666AF4);
+    reinterpret_cast<CfObjectNpcVt*>(this)->moveTime(lbl_eu_80666AF8);
+
+    u32 col11 = getBdatStringColumnValue(
+        fp, (const char*)&lbl_eu_804FC580[0x11], unk8C_3);
+    f32 val1 = (f32)(u32)(u8)col11 /
+        *(f32*)reinterpret_cast<CfObjectNpcVt*>(this)->getScalePtr();
+    reinterpret_cast<CfObjectNpcVt*>(this)->setSpeed(val1);
+
+    u32 col1c = getBdatStringColumnValue(
+        fp, (const char*)&lbl_eu_804FC580[0x1C], unk8C_3);
+    f32 val2 = (f32)(u32)(u16)col1c / lbl_eu_80666AFC;
+    reinterpret_cast<CfObjectNpcVt*>(this)->setFade(val2);
+
+    reinterpret_cast<CfObjectNpcVt*>(this)->applyParams();
+}
 
 // 0x800C0314
 void CfObjectNpc::func_800BF8CC() {

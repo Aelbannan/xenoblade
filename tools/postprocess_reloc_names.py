@@ -1726,8 +1726,10 @@ UNIT_RULES: dict[str, UnitRules] = {
     ),
     "code_804645CC.o": UnitRules(
         # pool-coupled: local .sdata2 pool -> CGXCache pool symbols (lbl_eu_8066Axxx).
+        # Retail loads the s32->f32 conversion magic via lfd against
+        # lbl_eu_8066A628 (func_80465730/6577C sites); A388 belongs to other units.
         pool_patterns=(
-            (struct.pack(">II", 0x43300000, 0x80000000), "lbl_eu_8066A388"),
+            (struct.pack(">II", 0x43300000, 0x80000000), "lbl_eu_8066A628"),
         ),
         extern_data_sections=(".sdata2",),
     ),
@@ -2067,7 +2069,12 @@ UNIT_RULES: dict[str, UnitRules] = {
             (struct.pack(">II", MAGIC_HI, MAGIC_LO), "lbl_eu_80665C38"),
             (struct.pack(">I", 0x45000000), "lbl_eu_80665C30"),
         ),
-        extern_data_sections=(".sdata2",),
+        exact_renames=(
+            # dynamic_cast RTTI descriptor: retail references the .sdata blob
+            # label lbl_eu_806618D8 (= __RTTI__Q22cf13CfObjectActor, func_8003EB64).
+            ("__RTTI__Q22cf13CfObjectActor", "lbl_eu_806618D8"),
+        ),
+        extern_data_sections=(".sdata2", ".sdata"),
     ),
     "pluginEve.o": UnitRules(
         # fadeIn/fadeOut fade-color loads. Retail sites read the plugin
@@ -2443,7 +2450,7 @@ UNIT_RULES: dict[str, UnitRules] = {
             #   split1.o (site-confirmed: lis/addi jumptable_eu_805369A0 at
             #   802377A0, jumptable_eu_805369D4 at 8023955C).
             ("@7793", "jumptable_eu_805369A0"),
-            ("@8105", "jumptable_eu_805369D4"),
+            ("@8081", "jumptable_eu_805369D4"),
         ),
         # int->double conversion magics live in split1.s .sdata2 (bytes
         # verified: 80668698 = 2^52+2^31, 806686A8 = 2^52).
@@ -2455,11 +2462,13 @@ UNIT_RULES: dict[str, UnitRules] = {
     ),
     # ---- kyoshin data-dissolve batch (retail keeps ALL data in split blobs;
     # each entry strips the TU-local copies and retargets live refs) ----
-    "code_802405F4.o": UnitRules(
+"code_802405F4.o": UnitRules(
         # Move__14CMenuMapSelectFv dispatch jumptable ships from split1.s
         # (site-confirmed: lis/addi jumptable_eu_80536CF8 at 80244034).
-        exact_renames=(
-            ("@12922", "jumptable_eu_80536CF8"),
+        # Size-keyed (12 all-reloc zero words) so MWCC anon renumbering
+        # across TU rebuilds cannot stale the key.
+        data_pool_patterns=(
+            (".data", bytes(0x30), "jumptable_eu_80536CF8"),
         ),
         extern_data_sections=(".data",),
     ),
@@ -2489,11 +2498,12 @@ UNIT_RULES: dict[str, UnitRules] = {
         ),
         extern_data_sections=(".sdata2", ".data", ".rodata", ".sdata"),
     ),
-    "CMenuKizunagram.o": UnitRules(
+"CMenuKizunagram.o": UnitRules(
         # Move__15CMenuKizunagramFv dispatch jumptable ships from split1.s
         # (site-confirmed: lis/addi jumptable_eu_80537480 at 80259320).
-        exact_renames=(
-            ("@11000", "jumptable_eu_80537480"),
+        # Size-keyed (11 all-reloc zero words) against anon renumbering.
+        data_pool_patterns=(
+            (".data", bytes(0x2c), "jumptable_eu_80537480"),
         ),
         extern_data_sections=(".data",),
     ),
@@ -2552,11 +2562,12 @@ UNIT_RULES: dict[str, UnitRules] = {
         # Dead MWCC-emitted string/float pools; no kept-section relocs.
         extern_data_sections=(".data", ".rodata", ".sdata"),
     ),
-    "CFloorMap.o": UnitRules(
+"CFloorMap.o": UnitRules(
         # func_8024F1FC dispatch jumptable ships from split1.s
         # (jumptable_eu_80536FB0; 29 slots spelling func_8024F1FC cases).
-        exact_renames=(
-            ("@14484", "jumptable_eu_80536FB0"),
+        # Size-keyed so MWCC anon renumbering cannot stale the key.
+        data_pool_patterns=(
+            (".data", bytes(0x74), "jumptable_eu_80536FB0"),
         ),
         # int->double magic 2^52+2^31 -> shared pool lbl_eu_80668770
         # (bytes verified; the like-named local def is skipped by the
@@ -2621,13 +2632,14 @@ UNIT_RULES: dict[str, UnitRules] = {
         ),
         extern_data_sections=(".sdata2",),
     ),
-    "CChain.o": UnitRules(
+"CChain.o": UnitRules(
         # func_80276D30 / func_80277B38 dispatch jumptables ship from
         # split1.s (jumptable_eu_805381D4 = 11 slots, jumptable_eu_80538200
-        # = 27 slots over the same functions' case labels).
-        exact_renames=(
-            ("@15263", "jumptable_eu_805381D4"),
-            ("@15609", "jumptable_eu_80538200"),
+        # = 27 slots over the same functions' case labels). Size-keyed
+        # (distinct 0x2c/0x6c word counts) against anon renumbering.
+        data_pool_patterns=(
+            (".data", bytes(0x2c), "jumptable_eu_805381D4"),
+            (".data", bytes(0x6c), "jumptable_eu_80538200"),
         ),
         # int->double magic 2^52+2^31 -> shared .sdata2 (bytes verified
         # against lbl_eu_80668A38).
@@ -2686,6 +2698,14 @@ UNIT_RULES: dict[str, UnitRules] = {
     "CMenuKizunaTalkList.o": UnitRules(
         # Dead MWCC-emitted string/float pools; no kept-section relocs.
         extern_data_sections=(".data", ".rodata", ".sdata"),
+        # ~CMenuKizunaTalkList (compiler-generated destroying dtor) calls the
+        # base CProcess dtor; MWCC binds it to the locally emitted
+        # __dt__8CProcessFv copy, but retail calls the game-side wrapper
+        # __dt__800FED0C (defined in CMainMenu). The local copy has exactly
+        # this one referencer, so an exact rename suffices.
+        exact_renames=(
+            ("__dt__8CProcessFv", "__dt__800FED0C"),
+        ),
     ),
     "code_8027513C.o": UnitRules(
         # Dead MWCC-emitted pools; no kept-section relocs reference them.
@@ -4279,7 +4299,10 @@ UNIT_RULES: dict[str, UnitRules] = {
         drop_text_symbols=("__ct__Q44nw4r3lyt6detail8PaneBaseFv",),
         exact_renames=(
             ("__vt__Q34nw4r3lyt4Pane", "lbl_eu_805698F0"),
-            ("mspAllocator__Q34nw4r3lyt6Layout", "lbl_eu_80665488"),
+            # Retail lyt_pane references the Layout allocator ONLY via its
+            # sbss label lbl_eu_80665478 (Pane dtor's two DeleteObj frees);
+            # the 80665488 target belongs to sibling lyt TUs, not this one.
+            ("mspAllocator__Q34nw4r3lyt6Layout", "lbl_eu_80665478"),
         ),
         pool_patterns=(
             (struct.pack(">I", 0x00000000), "lbl_eu_80669D38"),
@@ -4548,14 +4571,19 @@ UNIT_RULES: dict[str, UnitRules] = {
         extern_data_sections=(".sdata",),
     ),
     "dvd_broadway.o": UnitRules(
-        # Both DECOMP_FORCEACTIVE emitters are retail-absent text and must
-        # STAY in source: c155 anchors .bss first-reference ordering (removing
-        # it regresses DVDLowOpenPartition/TicketView sda-offset selection),
-        # c495 pools the tmd strings at their retail offsets. Dropped here.
+        # DVDLowOpenPartitionWithTmdAndTicket is real source but GC'd from the
+        # retail image (never called); its string literals still pool at their
+        # retail .data offsets and are reused by TicketView via -str reuse.
+        # Drop only its retail-absent .text here.
         drop_text_symbols=(
-            "FORCEACTIVEdvd_broadway_c155",
-            "FORCEACTIVEdvd_broadway_c495",
+            "initDvdContexts",
+            "DVDLowOpenPartitionWithTmdAndTicket",
+            "DVDLowGetCoverStatus",
+            "DVDLowGetCoverReg",
         ),
+        # The dropped function's pre-drop alignment pad survives the shift;
+        # re-lay survivors at func_align=16 like the retail linker's GC did.
+        repack_after_drop=16,
         # MWCC 4-pads the final format string (0xF08); retail .data ends at
         # 0xF06.
         drop_data_tail=((".data", 0xF06),),
@@ -5400,6 +5428,18 @@ UNIT_RULES: dict[str, UnitRules] = {
     # Lock_ deleting-dtor was linker-GC'd (its only referencer, the inlined
     # RAII sites, needs no out-of-line copy). Reproduce the sinit by hand and
     # rename it to the retail backslash form; drop the orphan dtor.
+    "ut_CharWriter.o": UnitRules(
+        # Builtin-cast int->f32 idiom (retail fsubs against the shared signed
+        # magic): MWCC pools the 0x4330000080000000 double locally; rename it
+        # onto the nw4r_data.s blob label (GetFontWidth/Height/Ascent/Descent,
+        # SetFontSize, Print, PrintGlyph, SetupGX*), then strip the local copy
+        # (retail ut_CharWriter.o is .text/.sbss only).
+        pool_patterns=(
+            (struct.pack(">II", 0x43300000, 0x80000000), "lbl_eu_8066A148"),
+        ),
+        extern_data_sections=(".sdata2",),
+    ),
+
     "ut_LockedCache.o": UnitRules(
         exact_renames=(
             ("__sinit_ut_LockedCache_cpp", r"__sinit_\ut_LockedCache_cpp"),
@@ -5918,6 +5958,12 @@ UNIT_RULES: dict[str, UnitRules] = {
     ),
     "CDeviceFontLayer.o": UnitRules(
         pad_data_section=((".data", 0xD8), (".rodata", 0x78), (".sdata", 0x18)),
+        # The u32->f64 conversion magic (2^52) must carry the retail
+        # CGXCache/monolibdata2 pool name before the local .sdata2 is stripped
+        # (func_80453F78 lfd site).
+        pool_patterns=(
+            (struct.pack(">II", 0x43300000, 0x00000000), "lbl_eu_8066A420"),
+        ),
         drop_data_tail=((".sdata2", 0x0),),
     ),
     "CLibLayout.o": UnitRules(
@@ -6349,7 +6395,7 @@ UNIT_RULES: dict[str, UnitRules] = {
             ("__vt__Q44nw4r3snd6detail5Voice", "lbl_eu_8056AD4C"),
             # CalcMixParam switch table (MWCC @N numbering drifts; only .data
             # pool symbol in the TU).
-            ("@12170", "jumptable_eu_8056AD28"),
+            ("@12176", "jumptable_eu_8056AD28"),
         ),
         extern_data_sections=(".sdata2", ".data"),
     ),
@@ -6534,12 +6580,20 @@ UNIT_RULES: dict[str, UnitRules] = {
             ("sZeroBuffer__Q44nw4r3snd6detail9AxManager", "lbl_eu_80637B20"),
             ("@9183", "lbl_eu_80637E5C"),
             ("instance$9180", "lbl_eu_80637E68"),
+            # u32->f64 magic double pooled locally (@N drifts with TU growth);
+            # retail loads it from nw4r_data.s lbl_eu_80669E80.
+            ("@10283", "lbl_eu_80669E80"),
             # AiDmaCallbackFunc's static bool has no retail counterpart (the
             # retail linker GC'd PrepareReset/AiDmaCallbackFunc entirely - no
             # AIRegisterDMACallback/AXSetMaxDspCycles caller survives). Park it
             # in the hidden pad byte right after this TU's own guard flag so
             # runtime behavior stays that of a private static.
             ("finishedFlag$9563", "gap_10_806654BD_sbss"),
+            # AppendEffect's ratio init pools the extern 1.0f into a local
+            # literal entry; content-mapping labels it lbl_eu_80669A6C but
+            # retail loads lbl_eu_80669E7C there (source refs E7C; nothing
+            # else in this TU legitimately lands on A6C).
+            ("lbl_eu_80669A6C", "lbl_eu_80669E7C"),
         ),
         prefix_renames=(
             ("@GUARD@instance$", "lbl_eu_806654BC"),
@@ -6553,8 +6607,8 @@ UNIT_RULES: dict[str, UnitRules] = {
         # construct lbl_eu_80637F74 (instance) with __register_global_object
         # node lbl_eu_80637F68).
         exact_renames=(
-            ("@8919", "lbl_eu_80637F68"),
-            ("instance$8916", "lbl_eu_80637F74"),
+            ("@8925", "lbl_eu_80637F68"),
+            ("instance$8922", "lbl_eu_80637F74"),
         ),
         prefix_renames=(
             ("@GUARD@instance$", "lbl_eu_806654C0"),
@@ -6594,7 +6648,10 @@ UNIT_RULES: dict[str, UnitRules] = {
     ),
     "g3d_resnode.o": UnitRules(
         pool_patterns=(
-            (struct.pack(">I", 0x3F800000), "lbl_eu_80669A6C"),
+            # CalcChrAnmResult pools its own 1.0f; retail loads it from
+            # lbl_eu_80669AA0 (fn+0x38 site). PatchChrAnmResult references
+            # AA0/AA4/AA8 as source-level externs and needs no rename.
+            (struct.pack(">I", 0x3F800000), "lbl_eu_80669AA0"),
             (struct.pack(">I", 0x3F360B61), "lbl_eu_80669AA4"),
         ),
         extern_data_sections=(".sdata2",),
@@ -6661,23 +6718,19 @@ UNIT_RULES: dict[str, UnitRules] = {
         # match the -1.0f slot); retail names them D0C..D0F / D10..D13.
         # -1.0f/90.0f land on BF0/B04 via content but retail loads them from
         # its own D18/D1C slots — retarget those too.
+        # OPEN ITEM (LightSetting ctor, 6 residual name-drifts): retail loads
+        # the two white colors via four 1-byte blob symbols each
+        # (lbl_eu_80669D0C..D0F / D10..D13); our single pooled cookie carries
+        # CORRECT addends 0..3 per lane but is one symbol, so objdiff counts
+        # the non-base lanes as name drifts. Needs a symbol-split postprocess
+        # primitive (split slot sym at +0/+1/+2/+3) before this can hit 100%.
+        # Do NOT retarget_relocs here: all four lane relocs share one symbol,
+        # so successive retargets just re-rename the same entry.
         exact_renames=(
             ("@9841", "lbl_eu_80669D0C"),
             ("@9843", "lbl_eu_80669D10"),
             ("lbl_eu_80669BF0", "lbl_eu_80669D18"),
             ("lbl_eu_80669B04", "lbl_eu_80669D1C"),
-        ),
-        # Retail splits each white-color byte load onto its own 1-byte blob
-        # symbol (nw4r_data.s); our pooled cookie is one symbol, so point the
-        # byte-lane relocs at the retail per-byte names as UNDEF refs.
-        # Offsets are absolute .text r_offsets (ctor base 0x528).
-        retarget_relocs=(
-            (".text", 0x5D4, "lbl_eu_80669D0D"),
-            (".text", 0x5D8, "lbl_eu_80669D0E"),
-            (".text", 0x5DC, "lbl_eu_80669D0F"),
-            (".text", 0x5E4, "lbl_eu_80669D11"),
-            (".text", 0x5E8, "lbl_eu_80669D12"),
-            (".text", 0x5EC, "lbl_eu_80669D13"),
         ),
         pool_patterns=(
             (struct.pack(">I", 0x00000000), "lbl_eu_80669D00"),
@@ -6760,9 +6813,12 @@ UNIT_RULES: dict[str, UnitRules] = {
     ),
     "g3d_anmscn.o": UnitRules(
         pool_patterns=(
-            (struct.pack(">I", 0x00000000), "lbl_eu_80669A68"),
-            (struct.pack(">I", 0x3F800000), "lbl_eu_80669A6C"),
-            (struct.pack(">II", 0x43300000, 0x00000000), "lbl_eu_80669A78"),
+            # Retail g3d_anmscn split asm references only BA0 (=0.0f), BA4,
+            # BA8 (=1.0f), BB0, BB8 - never the A68/A6C slots this rule used to
+            # target (MakeDiffuseLightObj drift, 2026-08; contents verified in
+            # nw4r_data.s).
+            (struct.pack(">I", 0x00000000), "lbl_eu_80669BA0"),
+            (struct.pack(">I", 0x3F800000), "lbl_eu_80669BA8"),
             (struct.pack(">I", 0xD01502F9), "lbl_eu_80669BA4"),
         ),
         # Retail split is .text-only besides sda refs: GetAnmPlayPolicy's
@@ -6794,6 +6850,31 @@ UNIT_RULES: dict[str, UnitRules] = {
             ("__vt__Q34nw4r3g3d12AnmObjMatClr", "lbl_eu_805691C8"),
         ),
         extern_data_sections=(".sdata2", ".data", ".rodata"),
+    ),
+
+    # g3d dcc trio (maya/xsi/3dsmax): each TU keeps a DECOMP_FORCEACTIVE
+    # emitter as its ONLY compile-time anchor for the 14 anon-namespace
+    # TexSrtMtx/ProductTexSrtMtx functions, which retail reaches solely through
+    # the nw4r_data.s dispatch tables lbl_eu_8051D6C0/lbl_eu_8051D6DC (+xsi/
+    # 3dsmax equivalents). Without the emitter -ipa file dead-strips all 14
+    # ('not written yet'; attempts 61552/61553): ((used)) is ignored by this
+    # MWCC, #pragma force_active does not stop -ipa file DCE (verified
+    # 13/14 stripped), external linkage would change the @unnamed@g3d_*_cpp@
+    # mangled names the blob tables relocate against, and an in-TU copy of the
+    # tables would move data ownership out of nw4r_data.s. The emitter itself
+    # is retail-absent (+0xFC/+0x140/+0x100 split overflow); drop it here like
+    # CNBanner/CDeviceGX/CGame_wkStandbyLogin/CWorkSystemCache.
+    # NOTE: stub symbol names embed the emitter's CLOSING-PAREN line number;
+    # the trailing-* prefix match tolerates that drift. Still keep the emitter
+    # invocation stable where practical.
+    "g3d_maya.o": UnitRules(
+        drop_text_symbols=("FORCEACTIVEg3d_maya_cpp*",),
+    ),
+    "g3d_xsi.o": UnitRules(
+        drop_text_symbols=("FORCEACTIVEg3d_xsi_cpp*",),
+    ),
+    "g3d_3dsmax.o": UnitRules(
+        drop_text_symbols=("FORCEACTIVEg3d_3dsmax_cpp*",),
     ),
 
     "g3d_scnroot.o": UnitRules(
@@ -7123,6 +7204,8 @@ UNIT_RULES: dict[str, UnitRules] = {
             ("spCurDropNmlListFileData__Q22cf6CfBdat", "lbl_eu_8066414C"),
             ("spCurDropRarListFileData__Q22cf6CfBdat", "lbl_eu_80664150"),
             ("spCurDropSprListFileData__Q22cf6CfBdat", "lbl_eu_80664154"),
+            ("spMnuEveStartFileData__Q22cf6CfBdat", "lbl_eu_80664174"),
+            ("spMnuEveTableFileData__Q22cf6CfBdat", "lbl_eu_80664178"),
             # misc state read/written across functions:
             ("lbl_80666A6C__Q22cf6CfBdat", "lbl_eu_8066417C"),
             ("lbl_80666A70__Q22cf6CfBdat", "_lbl_eu_80664180"),
@@ -7219,6 +7302,82 @@ UNIT_RULES: dict[str, UnitRules] = {
         pad_data_section=((".data", 0x268),),
         drop_data_tail=((".data", 0x268),),
     ),
+    "vi.o": UnitRules(
+        # MWCC anon pools vs retail labels: .data head string pool and the
+        # 5-byte .sdata version-string object.
+        exact_renames=(
+            ("@2516", "lbl_8055FAA0"),
+            ("@4203", "lbl_80665D18"),
+        ),
+        # __VIRetraceHandler is a §17.6 code residual (CODE_MATCH, three case
+        # blocks sit 8 bytes off retail): pin its switch-table addends.
+        # (offsets are pre-drop: the tables sit 16 bytes later in raw MWCC
+        # output because of vi_timing_pad ahead of them; all nine case-label
+        # addends are +8 vs our residual code layout)
+        addend_sets=(
+            (".data", 760, 848),
+            (".data", 764, 856),
+            (".data", 768, 864),
+            (".data", 772, 848),
+            (".data", 776, 856),
+            (".data", 780, 864),
+            (".data", 784, 848),
+            (".data", 788, 848),
+            (".data", 792, 848),
+        ),
+        # vi_timing_pad is pure MWCC overhead (retail's timing table already
+        # carries its own 2-byte tail); drop it plus the align pad before
+        # GXPal524ProgAa so taps/GXPals/SFI land at the retail offsets.
+        drop_data_range=(
+            (".data", 0x1ED, 0x1F9),
+            (".data", 0x295, 0x299),
+        ),
+    ),
+    "scsystem.o": UnitRules(
+        # MWCC anon numbering vs retail splitter: the NameAndIDTbl name-string
+        # literals (@2099..@2135 -> @724..@760) and the __SCVersion pool ref
+        # (@2098 -> @723). Bytes already match; names only.
+        exact_renames=(
+            ("@2098", "@723"),
+            ("@2099", "@724"),
+            ("@2100", "@725"),
+            ("@2101", "@726"),
+            ("@2102", "@727"),
+            ("@2103", "@728"),
+            ("@2104", "@729"),
+            ("@2105", "@730"),
+            ("@2106", "@731"),
+            ("@2107", "@732"),
+            ("@2108", "@733"),
+            ("@2109", "@734"),
+            ("@2110", "@735"),
+            ("@2111", "@736"),
+            ("@2112", "@737"),
+            ("@2113", "@738"),
+            ("@2114", "@739"),
+            ("@2115", "@740"),
+            ("@2116", "@741"),
+            ("@2117", "@742"),
+            ("@2118", "@743"),
+            ("@2119", "@744"),
+            ("@2120", "@745"),
+            ("@2121", "@746"),
+            ("@2122", "@747"),
+            ("@2123", "@748"),
+            ("@2124", "@749"),
+            ("@2125", "@750"),
+            ("@2126", "@751"),
+            ("@2127", "@752"),
+            ("@2128", "@753"),
+            ("@2129", "@754"),
+            ("@2130", "@755"),
+            ("@2131", "@756"),
+            ("@2132", "@757"),
+            ("@2133", "@758"),
+            ("@2134", "@759"),
+            ("@2135", "@760"),
+        ),
+    ),
     "WUD.o": UnitRules(
         # Retail .data pools rebuilt as named byte arrays in WUD.c; MWCC pads
         # the larger arrays to 4/8 (retail packs at 1/4) — drop the seven
@@ -7241,31 +7400,21 @@ UNIT_RULES: dict[str, UnitRules] = {
         ),
         inject_relocs=(
             (".data", 0x144, "@etb_80010138"),
-            (".data", 0xCF4, "__wudSecurityEventStackCallback"),
-            (".data", 0xCFC, "__wudSecurityEventStackCallback"),
-            (".data", 0xD00, "__wudSecurityEventStackCallback"),
-            (".data", 0xD04, "__wudSecurityEventStackCallback"),
-            (".data", 0xD08, "__wudSecurityEventStackCallback"),
-            (".data", 0xD0C, "__wudSecurityEventStackCallback"),
-            (".data", 0xD10, "__wudSecurityEventStackCallback"),
-            (".data", 0xD14, "__wudSecurityEventStackCallback"),
-            (".data", 0xD18, "__wudSecurityEventStackCallback"),
-        ),
-        addend_sets=(
-            (".data", 0xCF4, 92),
-            (".data", 0xCFC, 264),
-            (".data", 0xD00, 292),
-            (".data", 0xD04, 452),
-            (".data", 0xD08, 720),
-            (".data", 0xD0C, 736),
-            (".data", 0xD10, 972),
-            (".data", 0xD14, 1312),
-            (".data", 0xD18, 1328),
+            (".data", 0xCF4, "__wudSecurityEventStackCallback+92"),
+            (".data", 0xCF8, "__wudSecurityEventStackCallback+264"),
+            (".data", 0xCFC, "__wudSecurityEventStackCallback+292"),
+            (".data", 0xD00, "__wudSecurityEventStackCallback+452"),
+            (".data", 0xD04, "__wudSecurityEventStackCallback+720"),
+            (".data", 0xD08, "__wudSecurityEventStackCallback+736"),
+            (".data", 0xD0C, "__wudSecurityEventStackCallback+972"),
+            (".data", 0xD10, "__wudSecurityEventStackCallback+1312"),
+            (".data", 0xD14, "__wudSecurityEventStackCallback+1328"),
         ),
         # retail names the patch-table ETB pointer "@etb_80010138".
         exact_renames=(("etb_80010138", "@etb_80010138"),),
-        # jumptable_80562FA0[0] = {1} keeps the array out of .bss; re-zero it.
-        zero_data_range=((".data", 0xCF4, 0xCF5),),
+        # jumptable_80562FA0's last byte is initialized to 1 to keep the array
+        # out of .bss; re-zero it (no reloc points at that word).
+        zero_data_range=((".data", 0xD17, 0xD18),),
         drop_data_tail=((".data", 0x11A8),),
     ),
     "OSNet.o": UnitRules(
@@ -7315,6 +7464,12 @@ UNIT_RULES: dict[str, UnitRules] = {
     "CMenuTutorial.o": UnitRules(
         # Unreferenced local data copies (incl. phantom 4-byte .sdata2 slot).
         extern_data_sections=(".data", ".rodata", ".sdata", ".sdata2"),
+        # ~CMenuTutorial's compiler-generated base-dtor call binds to the
+        # locally emitted __dt__8CProcessFv; retail calls the game-side
+        # wrapper __dt__800FED0C (single referencer, CMenuKizunaTalkList pattern).
+        exact_renames=(
+            ("__dt__8CProcessFv", "__dt__800FED0C"),
+        ),
     ),
     "CTutorial.o": UnitRules(
         extern_data_sections=(".data", ".rodata", ".sdata"),
@@ -7374,11 +7529,11 @@ UNIT_RULES: dict[str, UnitRules] = {
         # jumptable_eu_805394E8, D7FC -> 8053953C, D990 -> 80539590,
         # DD6C -> 805395E4, C4F4 (0x2C table) -> 805394BC.
         exact_renames=(
-            ("@8509", "jumptable_eu_805394E8"),
-            ("@8536", "jumptable_eu_8053953C"),
+            ("@8512", "jumptable_eu_805394E8"),
+            ("@8544", "jumptable_eu_8053953C"),
             ("@8599", "jumptable_eu_80539590"),
             ("@8700", "jumptable_eu_805395E4"),
-            ("@8790", "jumptable_eu_805394BC"),
+            ("@8793", "jumptable_eu_805394BC"),
         ),
         extern_data_sections=(".data",),
     ),
@@ -7493,6 +7648,8 @@ UNIT_RULES: dict[str, UnitRules] = {
             # Derived dtor's base-dtor call: retail chains through CfObjectObj's
             # dtor (forced flat name __dt__800BFA14, defined in CfObjectObj.o).
             ("__dt__Q22cf11CfObjectObjFv", "__dt__800BFA14"),
+            # Derived ctor's base-ctor call: same scheme, __ct__cf_CfObjectObj.
+            ("__ct__Q22cf11CfObjectObjFv", "__ct__cf_CfObjectObj"),
         ),
         extern_data_sections=(".data", ".rodata", ".sdata"),
     ),
@@ -7733,7 +7890,8 @@ UNIT_RULES: dict[str, UnitRules] = {
         extern_data_sections=(".sdata2",),
     ),
     "CMenuArtsSet.o": UnitRules(
-        # Four identical 0x24 zero jumptables paired by use-site offsets:
+        # Four identical 0x24 zero jumptables paired by use-site offsets
+        # (keys refreshed to current MWCC anon numbering after TU rebuild):
         # func_802308B0 rel 578/586 -> jumptable_eu_8053689C (retail
         # 584/592), rel 806/814 -> jumptable_eu_80536878 (retail 808/816);
         # func_80231014 rel 98/106 -> jumptable_eu_805368E4 (retail 96/104,
@@ -7741,10 +7899,10 @@ UNIT_RULES: dict[str, UnitRules] = {
         # (retail 320/328). Remaining pool slot is the HI conversion double
         # lbl_eu_80668670.
         exact_renames=(
-            ("@13061", "jumptable_eu_8053689C"),
-            ("@13062", "jumptable_eu_80536878"),
-            ("@13157", "jumptable_eu_805368E4"),
-            ("@13158", "jumptable_eu_805368C0"),
+            ("@13056", "jumptable_eu_8053689C"),
+            ("@13057", "jumptable_eu_80536878"),
+            ("@13152", "jumptable_eu_805368E4"),
+            ("@13153", "jumptable_eu_805368C0"),
         ),
         pool_patterns=(
             (struct.pack(">II", 0x43300000, 0x80000000), "lbl_eu_80668670"),
@@ -7789,42 +7947,9 @@ UNIT_RULES: dict[str, UnitRules] = {
     ),
 
     # --- CriWare sofdec data dissolve onto the criware_data.s shared pool ---
-
-    "cftyp422_ppc.o": UnitRules(
-        # TU-local .rodata is only MWCC's 8-byte s32->f64 conversion magic
-        # (43300000_80000000, anon @32). Retail stores that magic INSIDE the
-        # shared YCbCr float table at lbl_eu_805197B0+0x18 (floats[6..7] =
-        # 176.0f,-0.0f) and loads it once as lfd base+0x18 in the Init; the
-        # TU already externs lbl_eu_805197B0 for the six f32 coefficients.
-        # Retarget both @32 relocs onto that label with addend +0x18 so link
-        # addresses equal retail's base+0x18, then strip the local pool
-        # (retail split carries no .rodata).
-        retarget_relocs=(
-            (".text", 0x0E, "lbl_eu_805197B0"),
-            (".text", 0x3A, "lbl_eu_805197B0"),
-        ),
-        addend_sets=(
-            (".text", 0x0E, 0x18),
-            (".text", 0x3A, 0x18),
-        ),
-        # The retarget leaves the renamed pool entry LOCAL UNDEF; mwldeppc
-        # cannot bind that against criware_data.o at link (verified), so
-        # promote it (and the pre-existing extern) to GLOBAL.
-        globalize_symbols=("lbl_eu_805197B0",),
-        extern_data_sections=(".rodata",),
-    ),
-
-    "mwsfdcre.o": UnitRules(
-        # TU-local .rodata = lone s32->f64 conversion magic (@439); retail
-        # lfd's it from the dedicated blob double lbl_eu_8051A3C0
-        # (.double 4503601774854144) in mwsfcre_CalcWorkStmBuf. Rename by
-        # content and strip (addend stays 0: the blob label IS the magic).
-        data_pool_patterns=(
-            (".rodata", struct.pack(">II", MAGIC_HI, MAGIC_LO), "lbl_eu_8051A3C0"),
-        ),
-        globalize_symbols=("lbl_eu_8051A3C0",),
-        extern_data_sections=(".rodata",),
-    ),
+    # (cftyp422_ppc / mwsfdcre conversion-magic pools were later eliminated at
+    # source level - bias loaded through the externed table / no local pool -
+    # so their rules were removed; the units data-match raw.)
 
     "mwsfdply.o": UnitRules(
         # Same lone conversion-magic pool (@265) -> blob double
@@ -8059,6 +8184,10 @@ UNIT_RULES: dict[str, UnitRules] = {
             (struct.pack(">II", 0x3FE00000, 0x00000000), "lbl_eu_806669B8"), # 0.5
             (struct.pack(">II", 0xBFE00000, 0x00000000), "lbl_eu_806669C0"), # -0.5
             (struct.pack(">I", 0x3F800000), "lbl_eu_80666980"),              # 1.0f
+            # 0.0f float-zero: referenced by CActorParam_UnkVirtualFunc148's
+            # entry-init (retail loads lbl_eu_80666968; MWCC pools an anon
+            # @N slot for the literal-0 float stores).
+            (struct.pack(">I", 0x00000000), "lbl_eu_80666968"),
         ),
         extern_data_sections=(".sdata2",),
     ),
@@ -9246,13 +9375,18 @@ def drop_text_symbols(
     str_off = struct.unpack_from(">I", data, str_hdr + 16)[0]
 
     # Collect drop ranges (start, end) for named .text FUNCs.
+    # A name ending in '*' matches by PREFIX -- use it for DECOMP_FORCEACTIVE
+    # anchor stubs whose symbol embeds a __LINE__ that drifts with every edit
+    # above the macro (exact-match silently disarms the drop; MWCC_CASES
+    # "reslist::size() declaration order" follow-up).
     drops: list[tuple[int, int, int]] = []  # (sym_entry_off, start, end)
-    name_set = set(names)
+    exact = {n for n in names if not n.endswith("*")}
+    prefixes = tuple(n[:-1] for n in names if n.endswith("*"))
     for so in range(0, sym_size, 16):
         st_name = struct.unpack_from(">I", data, sym_off + so)[0]
         end = data.index(0, str_off + st_name)
         sname = data[str_off + st_name : end].decode("ascii")
-        if sname not in name_set:
+        if sname not in exact and not sname.startswith(prefixes):
             continue
         st_value = struct.unpack_from(">I", data, sym_off + so + 4)[0]
         st_size = struct.unpack_from(">I", data, sym_off + so + 8)[0]
@@ -10333,6 +10467,14 @@ def inject_reloc_to_symbol(path: Path, section: str, offset: int, sym_name: str)
     sym_size = struct.unpack_from(">I", data, sym_hoff + 20)[0]
     str_hoff = e_shoff + str_idx * e_shentsize
     str_off = struct.unpack_from(">I", data, str_hoff + 16)[0]
+    # "symbol+addend" spelling sets the injected r_addend directly (the
+    # addend_sets pass runs before this one, so it cannot patch these).
+    addend = 0
+    sym_base = sym_name
+    if "+" in sym_name:
+        sym_base, addend_str = sym_name.rsplit("+", 1)
+        addend = int(addend_str, 0)
+        sym_name = sym_base
     target_bytes = sym_name.encode("ascii")
     for j in range(0, sym_size, 16):
         st_name = struct.unpack_from(">I", data, sym_off + j)[0]
@@ -10362,7 +10504,7 @@ def inject_reloc_to_symbol(path: Path, section: str, offset: int, sym_name: str)
         if r_offset == offset:
             return False
 
-    entry = struct.pack(">IIi", offset, (target_sym_idx << 8) | 1, 0)  # R_PPC_ADDR32
+    entry = struct.pack(">IIi", offset, (target_sym_idx << 8) | 1, addend)  # R_PPC_ADDR32
     rela_end = rela_off + rela_size
     data = data[:rela_end] + entry + data[rela_end:]
     e_shoff = struct.unpack_from(">I", data, 32)[0]

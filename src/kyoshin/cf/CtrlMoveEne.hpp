@@ -1616,9 +1616,10 @@ extern "C" int func_804B526C(void* a, void* b, void* c, void* d, int e, int f,
 extern cf::CFunc8008CDE8Probe* lbl_eu_80665958;
 extern u8 lbl_eu_80571810[0x38];
 // Collision-list height probe API used by func_8008B9C0 (retail C-ABI names;
-// same declarations as CtrlAct.hpp). func_804BE398 is the 6-arg ground probe
-// passing two FP args after the GPR args.
-extern "C" int func_804BE398(void* vec, int a, int b, int c, f32 d, f32 e);
+// same declarations as CtrlAct.hpp). func_804BE398's canonical declaration
+// lives in cfsys/CfObjectImplMove.hpp (visible via harness_catalog); its ABI
+// there differs from this unit's 6-arg FP form, so call sites cast through
+// BE398GroundProbe below instead of re-declaring (extern "C" overloading).
 extern "C" int func_804BE4AC(void);
 extern "C" void* func_804BE50C(u32 index);
 extern "C" void* func_804BE520(int index);
@@ -1664,14 +1665,17 @@ extern "C" void* func_8016FE34(void* src);
 extern "C" int func_80148778(void* self, int id);
 extern "C" int func_801984F0(void* self, int index);
 extern "C" void* getInstance__Q22cf13CfGameManagerFv(void);
-extern "C" void* getPlayer__Q22cf13CfGameManagerFi(int index);
+// NOTE: deliberately no extern "C" - matches the plain-C++-linkage form
+// used by CPartsChange.hpp / CfGimmickObject.hpp / CtrlEnemy.hpp; an
+// extern "C" duplicate here collides when those headers are visible.
+void* getPlayer__Q22cf13CfGameManagerFi(int index);
 extern "C" void* getUnk80664658(void);
 #include "kyoshin/cf/CBattleManagerApi.hpp"
 extern "C" void func_800D9CA0(void* self, void* obj);
 extern "C" void func_800BE12C(void* obj, int a, int b, int c, int d);
 // func_8008A2C8 call site: game-flag query (C++ linkage mangles to the retail
 // func_8006EF04__Fi).
-int func_8006EF04(int r3);
+bool func_8006EF04(int r3);
 
 // .sdata2 float constants compared/stored by the func_80092CC4 family.
 // Declared const so MWCC treats the pool loads as constants and hoists them

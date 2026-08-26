@@ -106,6 +106,9 @@ void uusb_ReadIntrDataCB(IPCResult result, void* arg) {
         return;
     }
 
+    /* Retail emits 'li r0,0; cmplw' for this test; every MWCC source shape
+     * (~35 tried incl. typed-NULL casts) folds to 'cmpwi r4,0' - documented
+     * full-function allocator artifact (docs/MWCC_CASES.md, uusb_ppc.c). */
     if (arg == NULL) goto rearm;
     if (result <= 0) {
         GKI_freebuf(arg);
@@ -278,9 +281,9 @@ void uusb_WriteBulkDataCB(IPCResult result, void* arg) {
  * open the device ("oh0" / "oh1" interface), build the write queues and the
  * intr/bulk read pools, then move to READY and clear the wait-for-HCI flag. */
 void UUSB_Register(void* cb_arg) {
+    IPCResult fd;
     u32 pid;
     u32 vid;
-    IPCResult fd;
 
     memset(&usb, 0, sizeof(usb));
 
@@ -312,10 +315,8 @@ void UUSB_Register(void* cb_arg) {
 
     pid = usb.pid;
     vid = usb.vid;
-    usb.field_0x10 = 0;
-    usb.field_0x11 = 0;
-    usb.field_0x12 = 0;
-    usb.field_0x13 = 0;
+
+    usb.field_0x13 = usb.field_0x12 = usb.field_0x11 = usb.field_0x10 = 0;
 
     if (__ntd_ohci_init_flag == 1) {
         if (__ntd_ohci == 0) {

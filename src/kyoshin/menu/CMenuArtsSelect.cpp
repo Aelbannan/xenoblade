@@ -35,23 +35,16 @@
 // CSuddenCommu.hpp's import signatures now match the chain / CfObjectActor
 // headers (see CSuddenCommu.hpp); its battle-manager singleton copy is now
 // unified in kyoshin/cf/CBattleManagerApi.hpp.
-// CSuddenCommu.hpp:285 also declares func_8017FD44 with a void* arg; this TU
-// uses the C-linkage no-arg version (unmangled retail symbol).
-#define func_8017FD44 artsSelectSuddenCommuFd44Unused
+// CSuddenCommu.hpp declares func_8017FD44 with the unified no-arg form
+// (retail callers never materialize r3 before this call).
 #include "kyoshin/cf/CSuddenCommu.hpp"
-#undef func_8017FD44
 // CChain.hpp's lbl_eu_80663E24 copy is volatile and clashes with
 // CfObjectMove.hpp's non-volatile extern (excluded symbol, other agent).
 // (func_80107C54: the TU-local decl now matches CChain.hpp's (void*, s32)
 // form - no guard needed.)
-// CChainActorList.hpp (via CChain.hpp) declares func_8017FD44(void*);
-// this TU uses the C-linkage no-arg version.
-// RESIDUAL: two load-bearing caller conventions exist for func_8017FD44
-// (no-arg here/CfCam/CtrlPc vs void*-arg in CSuddenCommu/CMenuKeyAssign);
-// converting the arg-taking sites would change their r3 setup codegen.
-#define func_8017FD44 artsSelectChainFd44Unused
+// CChainActorList.hpp (via CChain.hpp) declares func_8017FD44 with the
+// unified no-arg form - no guard needed.
 #include "kyoshin/cf/chain/CChain.hpp"
-#undef func_8017FD44
 #include "kyoshin/cf/CBattleManager.hpp"
 #include "kyoshin/cf/CfGameManager.hpp"
 // code_80135FDC.hpp:168 declares lbl_eu_8066A208 as u32 (conflicting with
@@ -330,7 +323,6 @@ void func_8010ED38(void*);
 void func_8010ED58(void*);
 void func_8010A710(void*);
 void func_8010A7A8(void*);
-int func_8017FD44();
 void* func_800B8B94(s32 id);                 // actor-container lookup by id
 void* func_80496264(void* scn, int index);   // matches CfCam.hpp decl
 void func_8049B59C(f32* out, void* pose, nw4r::math::VEC3* pos);

@@ -783,7 +783,7 @@ extern "C" void* func_8015730C(u32 kind, u32 slot, u32 mode);
 extern "C" s8* func_80157948(u16 dataId, u32 slot);
 extern "C" u32 func_80157FDC(u32 value);
 class CItemImplInstances;
-extern "C" CItemImplInstances* CItem_initItemImplInstances();
+extern "C" void* CItem_initItemImplInstances(void* item);
 extern "C" void func_8009DB28(void* data, u32 index);
 extern "C" void func_8009D790_full(void* data, u32 index);
 extern "C" void func_80141D48(void* dst, void* src, u8 value);

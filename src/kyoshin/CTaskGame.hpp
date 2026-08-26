@@ -63,6 +63,16 @@ extern "C" f32 getSecPerFrame__9CDeviceVIFv();
 // CDeviceFileCri.hpp:108).
 extern "C" u32 getTargetFramerate__9CDeviceVIFv();
 
+// Mirror of the CTTask move-hook ptmf region (0x3C-0x48) for word-wise pool
+// copies, so stores use named fields instead of raw offset arithmetic. The
+// pad places the fields at the absolute offsets retail writes (self+0x3C...).
+struct CTaskGamePtmfWords {
+    u8 pad[0x3C];
+    u32 field_0x3C;
+    u32 field_0x40;
+    u32 field_0x44;
+};
+
 class ITitleMenu{
 public:
     virtual ~ITitleMenu(){}
@@ -219,6 +229,11 @@ extern CTTask<CTaskGame>::MoveFunc lbl_eu_80525850;
 // Retail no-arg reset helper func_80043BC4 (DISCOVERY target us-80044160 in
 // this unit); func_80043C88 calls it with the C-ABI flat name.
 extern "C" void func_80043BC4();
+// Retail per-mode cf::CTaskGameCf start helpers are FLAT C symbols
+// (0x800448B8 / 0x800448D8, no member mangling); the instance returned by
+// getInstance() flows through r3.
+extern "C" void func_8004431C(cf::CTaskGameCf* instance);
+extern "C" void func_8004433C(cf::CTaskGameCf* instance);
 // Sound-state reset helper (flat retail name; defined in code_80187F14.cpp).
 // Retail func_80043BC4 calls it behind the unk68 bit 0x80 gate.
 extern "C" void func_80189C7C();
@@ -411,15 +426,7 @@ extern "C" void func_800B15A4(void* obj);
 // Object-factory singleton accessor (C++ linkage -> retail func_800B07E8__Fv).
 extern void* func_800B07E8();
 
-// Mirror of the CTTask move-hook ptmf region (0x3C-0x48) for word-wise pool
-// copies, so stores use named fields instead of raw offset arithmetic. The
-// pad places the fields at the absolute offsets retail writes (self+0x3C...).
-struct CTaskGamePtmfWords {
-    u8 pad[0x3C];
-    u32 field_0x3C;
-    u32 field_0x40;
-    u32 field_0x44;
-};
+// (definition moved above class CTaskGame; see CTaskGamePtmfWords)
 
 // Three-word ptmf pool entry view (&lbl_eu_80525568 + offset); member access
 // through this view makes MWCC materialize the entry address in a register
@@ -460,6 +467,7 @@ struct CTaskGameFlags68 {
 // vec4 setter call (lbl_eu_80665D6C, .sdata2; lbl_eu_80665D74 is declared in
 // include/lbls_kyoshin.hpp).
 extern const f32 lbl_eu_80665D6C;
+extern const f32 lbl_eu_80665D74;
 
 // Object pointed to by CTaskGame::unkD4: flag word at +0x60 (func_80040A3C
 // clears its bit 0x2).
@@ -609,23 +617,51 @@ extern u32 lbl_eu_80663D34;
 extern u32 lbl_eu_806649F4;
 extern const f32 lbl_eu_80665D78;
 
-extern "C" int func_802AE6B4(CLoad* self);
-extern "C" int func_802AE6BC(CLoad* self);
-extern "C" void func_802AE6C4(CLoad* self);
-extern "C" void func_802AE758(CLoad* self);
-extern "C" void func_802AE62C(CLoad* self);
-extern "C" void func_802AE5F0(CLoad* self, nw4r::lyt::DrawInfo* di);
-extern "C" void func_802AE560(CLoad* self);
-extern "C" void func_802AE508(CLoad* self);
+// CLoad helpers: declared by CLoad.hpp (proper C++ linkage).
 // CLoad constructor with the stripped retail name (the C++ ctor emits a
-// mangled symbol; retail call sites use the flat one).
-extern "C" void __ct__CLoad(CLoad* self, u8 arg);
+// mangled symbol; retail call sites use the flat one). Declared returning
+// CLoad* (PPC ctors return self in r3) so callers can chain the register
+// value instead of keeping the local live across the call.
+extern "C" CLoad* __ct__CLoad(CLoad* self, u8 arg);
 // Scene render-callback removal + teardown helpers called by Term
 // (retail verbatim symbols).
 extern "C" void removeRenderCB__4CScnFP10IScnRender(CScn* scn, IScnRender* cb);
 extern "C" void __dt__8009D72C();
 extern "C" void __dt__8047BFFC();
 extern "C" void func_8047D028__17UnkClass_8047CD0CFv();
+
+// --- CTaskGame::Init factory imports (flat retail names; defined in the
+// monolib / cf / kyoshin TUs with C linkage) ---
+class CTaskGameEvt;
+class CTaskGamePic;
+// Scene async-load kick + resource-flag setter.
+extern "C" void func_80496118(CScn* scn, CWorkThread* work, u32 flag);
+// Scene factory (defined in monolib with the flat retail symbol).
+extern "C" CScnNw4r* create__8CScnNw4rFv(CProcess* parent, char* name,
+                                         u32 arg1, u32 handle, void* param);
+extern "C" void CfRes_setD80Flag(void* scene);
+// Global actor-param work-buffer builder (defined in CtrlObjectParam.cpp).
+extern "C" void __ct__8009D604();
+// Effect-task factory (defined in CTaskGameEff.cpp with the flat name).
+extern "C" void func_800450CC(CProcess* parent, CScn* scene);
+extern "C" void* create__8CTaskLODFv(void* parent, void* p1, void* p2, u32 handle,
+                                     u32 size);
+extern "C" void* create__16CTaskColiManagerFv(CProcess* parent, void* scene,
+                                               void* view);
+extern "C" void __dt__8047BFA8();
+extern "C" void func_8047D024__17UnkClass_8047CD0CFv();
+extern "C" void* create__Q22cf13CfNandManagerFv(CProcess* parent, void* scene);
+extern "C" void addRenderCB__4CScnFP10IScnRenderUlUl(void* scn, void* cb, u32 a,
+                                                      u32 b);
+extern "C" u8 getLanguage__9CDeviceSCFv();
+extern "C" void func_80294EC0(CTaskGamePic* self, const char* path);
+extern "C" CTaskGamePic* create__12CTaskGamePicFv(CProcess* parent, int arg);
+extern "C" CTaskGameEvt* create__12CTaskGameEvtFv(CProcess* parent, int arg);
+// Scene-create name pointer (.sdata; points into .sdata2 string space).
+extern char* lbl_eu_80661908;
+extern const f32 lbl_eu_80665D70;
+// Move-hook ptmf pool entry used by Init (lbl_eu_80525568 + 0xC).
+extern u32 lbl_eu_80525574[3];
 extern "C" int func_802B0D10();
 extern "C" int func_800FF738();
 extern "C" bool CMenuArtsSelect_isCreated();

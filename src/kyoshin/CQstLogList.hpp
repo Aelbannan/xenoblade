@@ -166,7 +166,10 @@ extern "C" void func_801D377C(CSortMenu* _this);  // page down
 extern "C" void func_801D3454(nw4r::math::VEC3* out, CSortMenu* _this);  // copy sort-menu state
 
 // Imports with unmangled retail names (defined in CSortMenu.cpp / cursor TUs).
-extern "C" u8 func_801D32DC(CSortMenu* _this);
+extern "C" int func_801D32DC(CSortMenu* _this);
+extern "C" void func_801D350C(void*);                  // sort-menu array reset
+extern "C" void func_801D3518(void*, void*);            // sort-menu array append
+extern "C" void func_801D353C(void*, u8);               // sort-menu page set
 extern "C" void func_801D216C(void*, u8);
 extern "C" void func_801D3430(CQstLogListSortMenuData*, const nw4r::math::VEC3*);
 extern "C" void func_801D3330(CQstLogListSortMenuData*);

@@ -14,11 +14,27 @@
 #include "kyoshin/cf/chain/CChainTimer.hpp"
 #include "kyoshin/cf/CfMapItemManager.hpp"
 #include "kyoshin/cf/chain/UnkClass_800D8DBC.hpp"
-#include "kyoshin/cf/CBattleManager.hpp"
+#include "kyoshin/cf/CVision.hpp" // lbl_eu_80663DA0, func_801537E0/F0
+#include "kyoshin/cf/CBattleManagerApi.hpp"
 #include "kyoshin/cf/CArtsSet.hpp"
 #include "kyoshin/menu/CMenuArtsSelect.hpp"
 #include "kyoshin/cf/object/CfObjectMove.hpp" // func_800829B8__Q22cf13CfGameManagerFv
+#include "kyoshin/cf/chain/CChainActorList.hpp" // lbl_eu_80538338
+#include "kyoshin/cf/chain/CChain.hpp" // extern-C func_80107C54 (retail-unmangled)
 #include <math.h>
+
+// Offset-typed view of cf::CBattleManager for the chain-start gates (the full
+// class header drags in a conflicting func_801BFC38 declaration chain).
+// Byte phase counter at 0x1AA (head of the embedded CChain), sudden-commu
+// sub-object at 0x216C.
+namespace cf {
+struct CBattleManagerChainGate {
+    u8 _pad0[0x1AA];
+    u8 mChainPhase;                 // 0x1AA = CChain::unk0[2]
+    u8 _pad1AB[0x216C - 0x1AB];
+    u8 mSuddenCommu;                // 0x216C (address taken)
+};
+} // namespace cf
 
 // Same-TU helpers (retail symbols func_8027D8C4 / func_8027DB74 /
 // func_8027E070 / func_8027E200 are unmangled, so they are defined with C
@@ -28,9 +44,41 @@ extern "C" void func_8027D8C4(cf::CChainState* self);
 extern "C" int func_8027E070(cf::CChainState* self, cf::CChainBattleObj* obj);
 extern "C" int func_8027E200(cf::CChainState* self, cf::CChainBattleObj* obj, int flag);
 
-cf::UnkClass_800D8DBC::UnkClass_800D8DBC() {}
+// The member sub-objects construct implicitly before this body (flusher
+// vptr/zero, chain-temp memset, chain-time ctor call, chain-timer vptr).
+// The body assigns the chain-temp manual vtable, then runs the inlined
+// chain reset (func_8027D1A4 semantics): unk0 is still uninitialized at
+// that point, so the runtime branch against it survives like retail.
+cf::UnkClass_800D8DBC::UnkClass_800D8DBC() {
+    mChainTemp.mVTable = (u32)&lbl_eu_80538338;
 
-void func_8027D1A4(){}
+    cf::CChainState* self = (cf::CChainState*)this;
+    if (self->field_0 != 0) {
+        lbl_eu_80663DA0 &= 0xFE;
+        self->field_84.resetChainTime();
+        self->field_10 = 0;
+        self->field_14 = 0;
+    }
+    self->field_0 = 0;
+    self->field_4 = 0;
+    self->field_8 = 0;
+    self->field_C = 0;
+}
+
+// Chain reset: if a chain is active, clear the global chain flag, reset the
+// embedded chain timer and wave state; then zero the whole chain state.
+extern "C" void func_8027D1A4(cf::CChainState* self) {
+    if (self->field_0 != 0) {
+        lbl_eu_80663DA0 &= 0xFE;
+        self->field_84.resetChainTime();
+        self->field_10 = 0;
+        self->field_14 = 0;
+    }
+    self->field_0 = 0;
+    self->field_4 = 0;
+    self->field_8 = 0;
+    self->field_C = 0;
+}
 
 // Per-frame chain-state update. Clears dead battle objects out of the state,
 // resets the chain when any died, otherwise advances the state machine and
@@ -40,13 +88,21 @@ void func_8027D20C(cf::CChainState* self) {
     if (self->field_0 == 0) return;
 
     int changed = 0;
-    cf::CChainBattleObj* p = self->field_4;
-    if (func_800B8920(p ? &p->mSub : 0) == 0) {
+    // Wave interpolation buffers, declared at function scope so their live
+    // ranges match the retail allocation.
+    f32 s;
+    f32 src[3];
+    f32 prodT[3];
+    f32 dst[3];
+    // False arm yields the same value as the true arm when field_4 is null,
+    // so MWCC folds the ternary to the retail conditional-addi form.
+    if (func_800B8920(self->field_4 ? &self->field_4->mSub
+                                    : (cf::CChainVoiceSub*)self->field_4) == 0) {
         self->field_4 = 0;
         changed = 1;
     }
-    p = self->field_8;
-    if (func_800B8920(p ? &p->mSub : 0) == 0) {
+    if (func_800B8920(self->field_8 ? &self->field_8->mSub
+                                    : (cf::CChainVoiceSub*)self->field_8) == 0) {
         self->field_8 = 0;
         changed = 1;
         self->field_10 = 0;
@@ -69,9 +125,12 @@ void func_8027D20C(cf::CChainState* self) {
         self->field_4 = 0;
         self->field_8 = 0;
         self->field_C = 0;
-    } else {
-        func_8027D8C4(self);
+    }
+    if (!changed) {
+        // Retail evaluates the chain-timer countdown before advancing the
+        // state machine.
         if (self->field_9C.unk0 > 0) self->field_9C.unk0--;
+        func_8027D8C4(self);
 
         if (self->field_10 != 0) {
             // Phase counter wraps at 0x23, then drives a sinusoidal
@@ -79,13 +138,17 @@ void func_8027D20C(cf::CChainState* self) {
             self->field_14++;
             if (self->field_14 >= 0x23) self->field_14 = 0;
 
-            f32 s = sin(lbl_eu_80668A90 * (f32)self->field_14 / lbl_eu_80668A94);
-            f32 t = lbl_eu_80668A98 - s;
-            f32 wave[3];
-            wave[0] = lbl_eu_80656C40[0] * s + lbl_eu_80656C64[0] * t;
-            wave[1] = lbl_eu_80656C40[1] * s + lbl_eu_80656C64[1] * t;
-            wave[2] = lbl_eu_80656C40[2] * s + lbl_eu_80656C64[2] * t;
-            func_800BBA7C(&self->field_10->mSub, wave);
+            s = sin(lbl_eu_80668A90 * self->field_14 / lbl_eu_80668A94);
+            src[0] = lbl_eu_80656C40[0] * s;
+            prodT[0] = lbl_eu_80656C64[0] * (lbl_eu_80668A98 - s);
+            prodT[2] = lbl_eu_80656C64[2] * (lbl_eu_80668A98 - s);
+            src[2] = lbl_eu_80656C40[2] * s;
+            dst[2] = src[2] + prodT[2];
+            prodT[1] = lbl_eu_80656C64[1] * (lbl_eu_80668A98 - s);
+            src[1] = lbl_eu_80656C40[1] * s;
+            dst[0] = src[0] + prodT[0];
+            dst[1] = src[1] + prodT[1];
+            func_800BBA7C(&self->field_10->mSub, dst);
         }
 
         func_8027CF3C(&self->field_84);
@@ -290,6 +353,8 @@ extern "C" void func_8027DB74(cf::CChainState* self, int val) {
             // Warn when the voice actor drifts beyond the chain range: the
             // squared distance between the chain target and the voice actor's
             // positions (vtable slot 0xAC of the embedded voice sub-objects).
+            // Spelled as VEC3Sub into a local plus a component-wise copy so
+            // MWCC keeps both stack vectors and the paired-single square-sum.
             int actorId = (int)self->field_C;
             cf::CChainBattleObj* target = self->field_8;
             cf::CChainBattleObj* voice =
@@ -298,14 +363,16 @@ extern "C" void func_8027DB74(cf::CChainState* self, int val) {
             if (voice == 0) {
                 distSq = lbl_eu_80668AC4;
             } else {
-                nw4r::math::VEC3* p1 = target->mSub.v41();
-                nw4r::math::VEC3* p2 = voice->mSub.v41();
-                // SDK inline VEC3Sub emits the retail paired-single
-                // subtraction; the squared length is a plain scalar dot that
-                // MWCC -O4 vectorizes.
+                // Component copy into a second vector keeps both stack
+                // vectors live so MWCC emits the paired-single square-sum.
                 nw4r::math::VEC3 d;
-                nw4r::math::VEC3Sub(&d, p2, p1);
-                distSq = d.x * d.x + d.y * d.y + d.z * d.z;
+                nw4r::math::VEC3 delta;
+                nw4r::math::VEC3Sub(&delta, voice->mSub.v41(),
+                                    target->mSub.v41());
+                d.x = delta.x;
+                d.y = delta.y;
+                d.z = delta.z;
+                distSq = nw4r::math::VEC3LenSq(&d);
             }
             if (distSq < lbl_eu_80668AC8)
                 self->field_8->mSub.v18(self->field_C);
@@ -343,14 +410,32 @@ int func_8027DE44(cf::CChainState* self, cf::CChainBattleObj* p1,
     if (self->field_0 != 0) {
         ok = 0;
     } else {
-        int v = cf::CBattleManager::getInstance()->mChain.unk0[2];
+        // Battle-phase gate: phases 1..0x18 block chain starts.
+        // NOTE (wall class 13): retail keeps the two standalone cmplwi
+        // compares (cmplwi 1/blt + cmplwi 0x18/bgt); every Wii/1.1 spelling
+        // tried so far folds to addi/rlwinm/cmpli ((u8)(v-1)<=0x17) - see
+        // func_800B67CC / func_8007560C notes. Needs the configure.py
+        // per-unit version split; switching this TU regresses its 5
+        // Wii/1.1 FULL_MATCHes.
+        // Retail calls the singleton getter once per gate (reload into r3).
+        u8 v = ((cf::CBattleManagerChainGate*)getInstance__Q22cf14CBattleManagerFv())
+                   ->mChainPhase;
+        // Battle-phase gate: phases 1..0x18 block chain starts.
+        // NOTE (wall class 13): retail keeps two standalone cmplwi compares;
+        // Wii/1.1 folds every spelling tried to addi/rlwinm/cmpli — needs the
+        // configure.py GC-version split (cf. func_800B67CC notes).
         int inRange = 0;
-        if (v >= 1 && v <= 0x18) inRange = 1;
+        if (v >= 1) {
+            if (v <= 0x18)
+                inRange = 1;
+        }
         if (inRange != 0) {
             ok = 0;
         } else {
-            ok = (func_801BA2C8(
-                      &cf::CBattleManager::getInstance()->mSuddenCommu) == 0);
+            int commu = func_801BA2C8(
+                &((cf::CBattleManagerChainGate*)getInstance__Q22cf14CBattleManagerFv())
+                     ->mSuddenCommu);
+            ok = (commu == 0);
         }
     }
     if (ok == 0) return 0;
@@ -360,7 +445,7 @@ int func_8027DE44(cf::CChainState* self, cf::CChainBattleObj* p1,
     self->field_8 = p2;
     self->field_C = p3;
     lbl_eu_80663DA0 |= 1;
-    func_8027CEB0(&self->field_84, (u8)((p1->field_3F00 >> 1) & 1));
+    func_8027CEB0(&self->field_84, (p1->field_3F00 >> 1) & 1);
     self->field_84.mTimer = lbl_eu_80668AA8;
     self->field_84.mEnabled = 1;
     self->field_84.mPaused = 1;
@@ -368,9 +453,37 @@ int func_8027DE44(cf::CChainState* self, cf::CChainBattleObj* p1,
     return 1;
 }
 
-void func_8027DF38(){}
+// Chain-target arts gate: with an active chain, when flag==0 scan arts slot
+// cnt - if it passes func_80154280 and its id is not 2 the chain is usable;
+// otherwise only fail while the chain state is still in state 2.
+extern "C" int func_8027DF38(cf::CChainState* self, cf::CChainBattleObj* obj,
+                             int flag, int cnt) {
+    if (self->field_0 == 0) return 0;
 
-void func_8027E018(){}
+    int res = 0;
+    if (flag == 0) {
+        if (cnt >= 0) {
+            if (cnt < 8) {
+                cf::CAttackParam* artsParam =
+                    (cf::CAttackParam*)getArtsParamAtCnt(obj->v157(), cnt);
+                if (func_80154280(artsParam, obj, -2) == 0)
+                    res = (artsParam->unk5E == 2);
+                else
+                    res = 0;
+            }
+        }
+        if (res != 0) return 1;
+    }
+    if (self->field_0 == 2) return 0;
+    return 1;
+}
+
+// Chain-start usability gate: only allow starting a chain on obj when it
+// passes the battle-object usability check.
+extern "C" int func_8027E018(cf::CChainState* self, cf::CChainBattleObj* obj) {
+    if (func_8027E070(self, obj) == 0) return 0;
+    return func_8027E200(self, obj, 1);
+}
 
 // Battle-object usability check: chainable (vtable 0x2bc), owns the actor id
 // flags (func_80174C98), and in arts-select mode is not on cooldown
@@ -395,7 +508,13 @@ extern "C" int func_8027E070(cf::CChainState* self, cf::CChainBattleObj* obj) {
 
 // Arts-select usability scan: returns 1 when the first selectable arts slot
 // (through the menu, or the battle object directly) passes all gates.
+// Per-slot pipeline: menu slot check (state-2 path only), busy-slot skip
+// (slot 8 while field_3F28 == 5), a pre-check that drops slots whose arts
+// param is flagged (id == 2 via func_80154280 -2), then the real usage check
+// with the caller flag (slot 8 uses the RC arts param).
 extern "C" int func_8027E200(cf::CChainState* self, cf::CChainBattleObj* obj, int flag) {
+    // Declared first: MWCC pins it to r30 across both loops like retail.
+    cf::CAttackParam* artsParam;
     int f = 0x22;
     if (flag) f |= 0x10;
 
@@ -403,31 +522,34 @@ extern "C" int func_8027E200(cf::CChainState* self, cf::CChainBattleObj* obj, in
         CMenuArtsSelect* menu = CMenuArtsSelect_getInstance();
         if (menu == 0) return 1;
         for (int i = 0; i <= 8; i++) {
-            if (menu->func_80107C54(i) != 0) continue;
+            if (func_80107C54(menu, i) != 0) continue;
+            // Init-then-flag form: retail emits li r3,0 + conditional set.
             int menuSkip = 0;
             if (obj->field_3F28 == 5 && i == 8) menuSkip = 1;
             if (menuSkip != 0) continue;
+            // Out-of-range arm spelled as if/else with ||. NOTE (wall class
+            // 13): retail keeps two separate signed compares (cmpi 0/blt,
+            // cmpi 8/blt); the Wii/1.1 compiler locked for this unit always
+            // folds the range test to cmpli 7/bgt - cf. the func_8027DE44
+            // version-split note above.
             int skip;
-            if (i >= 0 && i < 8) {
-                cf::CAttackParam* artsParam =
-                    (cf::CAttackParam*)getArtsParamAtCnt(obj->v157(), i);
+            if (i < 0 || i >= 8) {
+                skip = 0;
+            } else {
+                artsParam = (cf::CAttackParam*)getArtsParamAtCnt(obj->v157(), i);
                 if (func_80154280(artsParam, obj, -2) != 0)
                     skip = 0;
                 else
                     skip = (artsParam->unk5E == 2);
-            } else {
-                skip = 0;
             }
             if (skip != 0) continue;
             int res;
             if (i < 8) {
-                cf::CAttackParam* artsParam =
-                    (cf::CAttackParam*)getArtsParamAtCnt(obj->v157(), i);
-                res = func_80154280(artsParam, obj, f);
+                res = func_80154280(
+                    (cf::CAttackParam*)getArtsParamAtCnt(obj->v157(), i), obj, f);
             } else if (i == 8) {
-                cf::CAttackParam* artsParam =
-                    (cf::CAttackParam*)getArtsParamRC(obj->v157(), 2, 0);
-                res = func_80154280(artsParam, obj, f);
+                res = func_80154280(
+                    (cf::CAttackParam*)getArtsParamRC(obj->v157(), 2, 0), obj, f);
             } else {
                 res = 0;
             }
@@ -441,26 +563,23 @@ extern "C" int func_8027E200(cf::CChainState* self, cf::CChainBattleObj* obj, in
         if (obj->field_3F28 == 5 && i == 8) menuSkip = 1;
         if (menuSkip != 0) continue;
         int skip;
-        if (i >= 0 && i < 8) {
-            cf::CAttackParam* artsParam =
-                (cf::CAttackParam*)getArtsParamAtCnt(obj->v157(), i);
+        if (i < 0 || i >= 8) {
+            skip = 0;
+        } else {
+            artsParam = (cf::CAttackParam*)getArtsParamAtCnt(obj->v157(), i);
             if (func_80154280(artsParam, obj, -2) != 0)
                 skip = 0;
             else
                 skip = (artsParam->unk5E == 2);
-        } else {
-            skip = 0;
         }
         if (skip != 0) continue;
         int res;
         if (i < 8) {
-            cf::CAttackParam* artsParam =
-                (cf::CAttackParam*)getArtsParamAtCnt(obj->v157(), i);
-            res = func_80154280(artsParam, obj, f);
+            res = func_80154280(
+                (cf::CAttackParam*)getArtsParamAtCnt(obj->v157(), i), obj, f);
         } else if (i == 8) {
-            cf::CAttackParam* artsParam =
-                (cf::CAttackParam*)getArtsParamRC(obj->v157(), 2, 0);
-            res = func_80154280(artsParam, obj, f);
+            res = func_80154280(
+                (cf::CAttackParam*)getArtsParamRC(obj->v157(), 2, 0), obj, f);
         } else {
             res = 0;
         }

@@ -255,21 +255,25 @@ void func_802A1610(){
         for (cur2 = sentinel2->next; cur2 != sentinel2; cur2 = cur2->next)
             icount++;
         int iresult;
+        cf::CVoiceActorState* arr2[3];
         if (icount <= 0) {
             iresult = 0;
         } else {
-            cf::CVoiceActorState* arr[3];
-            int n = func_802A7870(arr, 3, 0);
+            int n = func_802A7870(arr2, 3, 0);
             if (n <= 1) {
                 iresult = 0;
             } else {
                 float limit = lbl_eu_80668C70;
+                // Walking pointer like retail (not arr[i] indexing).
+                cf::CVoiceActorState** it = arr2;
                 int i = 0;
-                for (; i < n; i++) {
-                    if (limit <= ((cf::CVoiceActorStateIf*)arr[i])->fn_130()) {
+                while (i < n) {
+                    if (!(limit <= ((cf::CVoiceActorStateIf*)*it)->fn_130())) {
                         iresult = 0;
                         goto interactStore;
                     }
+                    ++it;
+                    ++i;
                 }
                 iresult = 1;
             }
@@ -291,15 +295,12 @@ interactStore:
         }
 
         // Field-id window [0x108, 0x116): flag byte 0x222 on a mask hit.
+        // Single && chain keeps retail's three sequential tests (MWCC folds
+        // nested range ifs into one unsigned compare, retail keeps two cmpis).
         int phase = func_800822F4__Q22cf13CfGameManagerFv();
-        if (phase > 0x108) {
-            if (phase < 0x116) {
-                u32 one = 1;
-                u32 mask = one << (lbl_eu_80663E42 - 1);
-                if (mask & 0x7F)
-                    m->unk222 = (u8)one;
-            }
-        }
+        if (phase > 0x108 && phase < 0x116 &&
+            ((1 << (lbl_eu_80663E42 - 1)) & 0x7F))
+            m->unk222 = 1;
 
         // Battle voice auto-talk: resolve the current player and fire.
         if (m->unk223 != 0) {
@@ -990,23 +991,25 @@ void func_802A2C88() {
         m->unk210 = node;
     }
 }
-void func_802A2D0C() {
+// Retail takes an actor argument that flows straight into func_802A6958;
+// keeping r3 live across the singleton load makes MWCC color the manager r4.
+void func_802A2D0C(void* actor) {
     cf::CCharVoiceMan* m;
-    if (lbl_eu_80663E24 & 0x00400000)
-        return;
-    m = lbl_eu_80664A58;
-    if (m->unk229 != 0) {
-        cf::CSoundNode* node = func_802A6958();
+    if (!(lbl_eu_80663E24 & 0x00400000)) {
         m = lbl_eu_80664A58;
-        if (node != 0) {
-            cf::CSoundNode* tail = m->unk210;
-            if (tail != 0)
-                tail->next = node;
-            if (m->unk20C == 0) {
-                m->unk20C = node;
-                m->unk208 = (u32)node - (u32)&m->unk4[0];
+        if (m->unk229 != 0) {
+            cf::CSoundNode* node = func_802A6958(actor);
+            m = lbl_eu_80664A58;
+            if (node != 0) {
+                cf::CSoundNode* tail = m->unk210;
+                if (tail != 0)
+                    tail->next = node;
+                if (m->unk20C == 0) {
+                    m->unk20C = node;
+                    m->unk208 = (u32)node - (u32)&m->unk4[0];
+                }
+                m->unk210 = node;
             }
-            m->unk210 = node;
         }
     }
 }
@@ -1290,69 +1293,62 @@ int func_802A330C(int a, int b) {
 success:
     return 1;
 }
+// Same-TU inline search helper (MWCC_CASES 'bne next; b found' recipe): the
+// loop written directly folds `cmplw; bne latch; b found' into `beq found',
+// but a helper with `return node' inside the loop keeps retail's
+// branch-over-branch split after inlining.
+static __inline cf::CSoundNode* FindVoiceNodeById(u32 id) {
+    for (cf::CSoundNode* node = lbl_eu_80664A58->unk20C; node != 0;
+         node = node->next) {
+        int match = __ptmf_cmpr(node, &lbl_eu_805398C0) != 0 &&
+                    __ptmf_test(node) != 0;
+        if (match == 0)
+            continue;
+        if (id == node->field_18)
+            return node;
+    }
+    // Not found: the loop-exit path nulls the node; the found jump keeps it.
+    return 0;
+}
+
 // Scan the voice-event list for the node whose type matches the reference pmf
 // AND whose +0x18 id matches `arg`, then run its level-thread handler (+0x08).
+// Uses the inline search helper so the id-compare keeps retail's
+// branch-over-branch split (`cmplw; bne latch; b found`).
 void func_802A35B8(u32 arg) {
-    cf::CCharVoiceMan* m = lbl_eu_80664A58;
-    if (m == 0)
+    cf::CSoundNode* node;
+    if (lbl_eu_80664A58 == 0)
         return;
-    cf::CSoundNode* node = m->unk20C;
-    while (node != 0) {
-        bool match = false;
-        if (__ptmf_cmpr(node, &lbl_eu_805398C0) != 0 && __ptmf_test(node) != 0)
-            match = true;
-        if (match) {
-            if (arg == node->field_18)
-                goto found;
-        }
-        node = node->next;
-    }
-    // Not found: null the node on the loop-exit path only (the found jump
-    // above skips this store, keeping the matching node for the dispatch).
-    node = 0;
-found:
+    node = FindVoiceNodeById(arg);
     if (node != 0)
         ((cf::CVoiceNodeIf*)node)->vf08();
 }
-// Scan the list for a matching node (type + id), then run its battle-voice
-// dispatch (+0x18) with two extra args; returns its result (0 if not found).
-// The reference pmf address is hoisted into a saved register before the
-// loop (retail lis r31 once) and the id is copied first (mr r26).
 void* func_802A3680(void* a, void* b, void* c) {
-    u32 id = (u32)a;
-    cf::CSoundNode* node = lbl_eu_80664A58->unk20C;
-    while (node != 0) {
-        bool match = false;
-        if (__ptmf_cmpr(node, (void*)&lbl_eu_805398C0) != 0 && __ptmf_test(node) != 0)
-            match = true;
-        if (match) {
-            if (id == node->field_18)
-                goto found;
-        }
-        node = node->next;
-    }
-    // Not found: the loop-exit path nulls the node; the found jump keeps it.
-    node = 0;
-found:
+    cf::CSoundNode* node = FindVoiceNodeById((u32)a);
     if (node == 0)
         return 0;
     return ((cf::CVoiceNodeIf*)node)->vf18(b, c);
 }
 // Scan for a node whose type matches the reference pmf and whose +0x18 id is
-// `arg`; if found, hand it to func_802A3E88 (0 if not found). The pmf reference
-// address is hoisted before the loop so MWCC keeps it in a saved register
-// (lis once, addi @l per iteration) like retail.
+// `arg`; if found, hand it to func_802A3E88 (0 if not found). The pmf
+// reference is passed as a direct address-of-global expression so MWCC hoists
+// `lis r31, lbl@ha` before the loop and emits `addi @l` per iteration.
+// for-loop + continue keeps the increment in a latch block like retail.
 int func_802A3748(u32 arg) {
-    void* ref = &lbl_eu_805398C0;
-    cf::CSoundNode* node = lbl_eu_80664A58->unk20C;
-    while (node != 0) {
-        bool match = false;
-        if (__ptmf_cmpr(node, ref) != 0 && __ptmf_test(node) != 0)
-            match = true;
-        if (match && arg == node->field_18)
-            break;
-        node = node->next;
+    cf::CSoundNode* node;
+    // for-loop: `continue` jumps to the increment latch, giving retail's
+    // explicit `bne latch; b found` pair off the id-compare.
+    for (node = lbl_eu_80664A58->unk20C; node != 0; node = node->next) {
+        int match = __ptmf_cmpr(node, &lbl_eu_805398C0) != 0 && __ptmf_test(node) != 0;
+        if (match == 0)
+            continue;
+        if (arg != node->field_18)
+            continue;
+        goto found;
     }
+    // Loop exhausted: null the node before the shared found-check.
+    node = 0;
+found:
     if (node == 0)
         return 0;
     return (int)func_802A3E88(node);
@@ -1379,26 +1375,26 @@ void CCharVoiceMan_FactoryEvent2(void* self, void* actor) {
 // Retail references this helper by its bare unmangled symbol (C linkage), so
 // the definition keeps C linkage to emit the exact call-site reloc name.
 extern "C" int func_802A38C8(cf::CCharVoiceMan* self) {
-    void* bm = getInstance__Q22cf14CBattleManagerFv();
-    cf::CVoiceBattleNode* sentinel = ((cf::CBattleManagerNodeList*)bm)->sentinel;
+    // Hoisted so MWCC colors this call-crossing local into r31 like retail.
+    cf::CVoiceActorState* actor;
+    cf::CBattleManagerNodeList* list = (cf::CBattleManagerNodeList*)getInstance__Q22cf14CBattleManagerFv();
     int count = 0;
-    cf::CVoiceBattleNode* cur = sentinel->next;
-    while (cur != sentinel) {
-        cur = cur->next;
+    cf::CVoiceBattleNode* cur;
+    for (cur = list->sentinel->next; list->sentinel != cur; cur = cur->next)
         count++;
-    }
     if (count <= 0)
         return 0;
 
     cf::CVoiceActorState* p = (cf::CVoiceActorState*)getPlayer__Q22cf13CfGameManagerFi(0);
     if (p != 0)
         p = (cf::CVoiceActorState*)((u8*)p - 0x3E9C);
-    if (p == 0)
+    // Plain copy keeps the actor local materialized before the branch.
+    actor = p;
+    if (actor == 0)
         return 0;
-    // Advance to the embedded move base and dispatch its +0x4C virtual; the
-    // advanced pointer is dead after the call, so MWCC folds the addi into an
-    // update-form vptr load (retail lwzu r12, 0x3e9c(r3)) leaving p back at
-    // the actor base for the level/gauge virtuals below.
+    // Advance p onto the embedded move base and dispatch its +0x4C virtual;
+    // p is dead after this, so MWCC folds the add into an update-form vptr
+    // load (retail lwzu r12, 0x3e9c(r3)).
     p = (cf::CVoiceActorState*)((u8*)p + 0x3E9C);
     void* mv = ((cf::CVoiceMoveIf*)p)->fn_4C();
 
@@ -1410,7 +1406,7 @@ extern "C" int func_802A38C8(cf::CCharVoiceMan* self) {
     if (!(other->field_3F00 & 0x4))
         return 0;
 
-    int diff = ((cf::CVoiceActorStateIf*)p)->fn_108() - 3;
+    int diff = ((cf::CVoiceActorStateIf*)actor)->fn_108() - 3;
     if (((cf::CVoiceActorStateIf*)other)->fn_108() < diff)
         return 0;
 
@@ -1419,13 +1415,21 @@ extern "C" int func_802A38C8(cf::CCharVoiceMan* self) {
 
     cf::CVoiceActorState* arr[3];
     int n = func_802A7870(arr, 3, 0);
-    if (n <= 1)
+    int cnt;
+    // Same assignment-in-condition shape: retail interleaves the count copy
+    // between cmpwi r3,1 and bgt.
+    if ((cnt = n) <= 1)
         return 0;
     float limit = lbl_eu_80668C70;
-    for (int i = 0; i < n; i++) {
-        cf::CVoiceActorState* obj = arr[i];
+    // Named walking iterator: declaration order (cnt, it, i) colors
+    // cnt=r31, it=r30, i=r29 like retail.
+    cf::CVoiceActorState** it;
+    int i;
+    for (it = arr, i = 0; i < cnt; i++) {
+        cf::CVoiceActorState* obj = *it;
         if (((cf::CVoiceActorStateIf*)obj)->fn_130() < limit)
             return 0;
+        ++it;
     }
     return 1;
 }

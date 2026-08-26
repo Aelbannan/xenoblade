@@ -12,6 +12,12 @@
 #include "kyoshin/cf/CfCamEvent_1.hpp"
 #include "monolib/math/FloatUtils.hpp"  // H3 label-owner decl (lbl_eu_8066A208)
 
+// Collision-query ABI: retail passes four GPR args then two FP args
+// (f1/f2). Declared per-TU with incompatible C++ signatures elsewhere,
+// so call sites go through this cast instead of any header prototype.
+typedef int (*CamGroundQueryFn)(void*, u32, u32, u32, f32, f32);
+typedef void (*CamGroundRecordFn)(void*, int);
+
 // bdat column byte read: the (u8) truncation of the u32 column value, which
 // MWCC lowers through a stack temp (stw + lbz) when inlined via a helper
 // (same shape as CfGimmickElv.cpp's getCol8/getCol16 helpers).
@@ -669,12 +675,9 @@ void func_800756D0(ml::CVec3* out, CinemCamSrc* src) {
         // staging is member-wise on POD views: ml::CVec3 methods emit
         // out-of-line __ct__/set/__as__ calls that retail inlined.
         CamTripletLocals pos;
-        f32 pz = body->z;
-        f32 py = body->y;
-        f32 px = body->x;
-        pos.x = px;
-        pos.y = py;
-        pos.z = pz;
+        pos.x = body->x;
+        pos.y = body->y;
+        pos.z = body->z;
         ((u32*)out)[0] = ((u32*)&pos)[0];
         ((u32*)out)[1] = ((u32*)&pos)[1];
         ((u32*)out)[2] = ((u32*)&pos)[2];
@@ -948,10 +951,11 @@ void func_80075934(ml::CVec3* out1, ml::CVec3* out2, CamCamSrc* a, CamCamSrc* b,
             CinemVecOut* vb = (CinemVecOut*)((CamEventVoice*)handle)
                                   ->vtable->fn_0xAC(handle);
             if (vb->v.y - ya >= lbl_eu_80666428) {
-                if (func_804BE398((float*)out2, 0x4044a05, 0, 0,
-                                  lbl_eu_80666448, lbl_eu_8066641C)) {
+                if (((CamGroundQueryFn)func_804BE398)(
+                        (float*)out2, 0x4044a05, 0, 0,
+                        lbl_eu_80666448, lbl_eu_8066641C)) {
                     CamTripletLocals t; // retail 0x1B8
-                    func_804BE4B4((float*)&t, 0);
+                    ((CamGroundRecordFn)func_804BE4B4)((float*)&t, 0);
                     out2->y = t.y + lbl_eu_80666428;
                 } else {
                     out2->y = out2->y + lbl_eu_80666428;
@@ -1105,7 +1109,8 @@ int func_800762A0(CfCamEventManager* self) {
 
 
 // Bitmask capability check: returns 1 iff 'flags' grants the given capability.
-int func_80076C08(int type_, int state, int flags) {
+// extern "C": retail symbol is the bare name.
+extern "C" int func_80076C08(int type_, int state, int flags) {
     if (flags == 0) return 1;
     if ((flags & 1) && type_ == 0 && state != 0) return 1;
     if ((flags & 2) && type_ == 0 && state == 0) return 1;
@@ -1118,7 +1123,8 @@ int func_80076C08(int type_, int state, int flags) {
 }
 
 // Returns 1 when 'flags' bit n pairs with 'type_' == n+1.
-int func_80076CE4(int type_, int flags) {
+// extern "C": retail symbol is the bare name.
+extern "C" int func_80076CE4(int type_, int flags) {
     if (flags == 0) return 1;
     if ((flags & 1) && type_ == 1) return 1;
     if ((flags & 2) && type_ == 2) return 1;
@@ -1173,11 +1179,11 @@ int func_80076D8C(int unused, int type_, CamEventSrc* src, CamEventTargetInfo* o
     colBase = (const char*)lbl_eu_804FB5D0;
     digitBuf = lbl_eu_80661BB8;
     for (; row < rowEnd; row++) {
-        c0 = getCol8(g, (const char*)lbl_eu_804FB5D0, row);
+        c0 = getBdatStringColumnValue(g, (const char*)lbl_eu_804FB5D0, row);
         if (type_ != c0) continue;
-        c1 = getCol8(g, colBase + 8, row);
+        c1 = getBdatStringColumnValue(g, colBase + 8, row);
         if (func_80076CE4((int)typeA, c1) == 0) continue;
-        c2 = getCol8(g, colBase + 0x13, row);
+        c2 = getBdatStringColumnValue(g, colBase + 0x13, row);
         if (func_80076C08((int)typeB, state, c2) == 0) continue;
 
         u32 rem = (u32)ml::math::mtRand(100);
@@ -1185,9 +1191,9 @@ int func_80076D8C(int unused, int type_, CamEventSrc* src, CamEventTargetInfo* o
             u8 digit = (u8)(i + 0x30);
             digitBuf[4] = digit;
             buf2[8] = digit;
-            w = getCol8(g, (const char*)lbl_eu_80661BB8, row);
+            w = getBdatStringColumnValue(g, (const char*)lbl_eu_80661BB8, row);
             if (rem < w) {
-                w2 = getCol8(g, buf2, row);
+                w2 = getBdatStringColumnValue(g, buf2, row);
                 *outCol = w2;
                 *outRow = row;
                 return 1;
@@ -3094,173 +3100,173 @@ void sinit_8007BE74() {
     // Retail walks the prototypes through a pointer: address-taken
     // arrays stay contiguous on the stack, dead direct-indexed stores
     // get scattered into unique slots.
+    CamEventTableEntry* tbl = lbl_eu_805273C8;
     CamPrototypeVec* p = &local[23];
-    p = &local[23];
     p->x = lbl_eu_80666458;
     p->y = lbl_eu_80666458;
     p->z = lbl_eu_8066641C;
-    lbl_eu_805273C8[0].v0.x = lbl_eu_80666458;
-    lbl_eu_805273C8[0].v0.y = lbl_eu_80666458;
-    lbl_eu_805273C8[0].v0.z = lbl_eu_8066641C;
+    tbl[0].v0.x = lbl_eu_80666458;
+    tbl[0].v0.y = lbl_eu_80666458;
+    tbl[0].v0.z = lbl_eu_8066641C;
     p = &local[22];
     p->x = lbl_eu_80666458;
     p->y = lbl_eu_80666458;
     p->z = lbl_eu_8066641C;
-    lbl_eu_805273C8[0].v1.x = lbl_eu_80666458;
-    lbl_eu_805273C8[0].v1.y = lbl_eu_80666458;
-    lbl_eu_805273C8[0].v1.z = lbl_eu_8066641C;
+    tbl[0].v1.x = lbl_eu_80666458;
+    tbl[0].v1.y = lbl_eu_80666458;
+    tbl[0].v1.z = lbl_eu_8066641C;
     p = &local[21];
     p->x = lbl_eu_80666474;
     p->y = lbl_eu_80666474;
     p->z = lbl_eu_8066641C;
-    lbl_eu_805273C8[1].v0.x = lbl_eu_80666474;
-    lbl_eu_805273C8[1].v0.y = lbl_eu_80666474;
-    lbl_eu_805273C8[1].v0.z = lbl_eu_8066641C;
+    tbl[1].v0.x = lbl_eu_80666474;
+    tbl[1].v0.y = lbl_eu_80666474;
+    tbl[1].v0.z = lbl_eu_8066641C;
     p = &local[20];
     p->x = lbl_eu_80666474;
     p->y = lbl_eu_80666474;
     p->z = lbl_eu_8066641C;
-    lbl_eu_805273C8[1].v1.x = lbl_eu_80666474;
-    lbl_eu_805273C8[1].v1.y = lbl_eu_80666474;
-    lbl_eu_805273C8[1].v1.z = lbl_eu_8066641C;
+    tbl[1].v1.x = lbl_eu_80666474;
+    tbl[1].v1.y = lbl_eu_80666474;
+    tbl[1].v1.z = lbl_eu_8066641C;
     p = &local[19];
     p->x = lbl_eu_80666478;
     p->y = lbl_eu_80666478;
     p->z = lbl_eu_8066641C;
-    lbl_eu_805273C8[2].v0.x = lbl_eu_80666478;
-    lbl_eu_805273C8[2].v0.y = lbl_eu_80666478;
-    lbl_eu_805273C8[2].v0.z = lbl_eu_8066641C;
+    tbl[2].v0.x = lbl_eu_80666478;
+    tbl[2].v0.y = lbl_eu_80666478;
+    tbl[2].v0.z = lbl_eu_8066641C;
     p = &local[18];
     p->x = lbl_eu_80666478;
     p->y = lbl_eu_80666478;
     p->z = lbl_eu_8066641C;
-    lbl_eu_805273C8[2].v1.x = lbl_eu_80666478;
-    lbl_eu_805273C8[2].v1.y = lbl_eu_80666478;
-    lbl_eu_805273C8[2].v1.z = lbl_eu_8066641C;
+    tbl[2].v1.x = lbl_eu_80666478;
+    tbl[2].v1.y = lbl_eu_80666478;
+    tbl[2].v1.z = lbl_eu_8066641C;
     p = &local[17];
     p->x = lbl_eu_8066647C;
     p->y = lbl_eu_8066647C;
     p->z = lbl_eu_80666478;
-    lbl_eu_805273C8[3].v0.x = lbl_eu_8066647C;
-    lbl_eu_805273C8[3].v0.y = lbl_eu_8066647C;
-    lbl_eu_805273C8[3].v0.z = lbl_eu_80666478;
+    tbl[3].v0.x = lbl_eu_8066647C;
+    tbl[3].v0.y = lbl_eu_8066647C;
+    tbl[3].v0.z = lbl_eu_80666478;
     p = &local[16];
     p->x = lbl_eu_8066647C;
     p->y = lbl_eu_8066647C;
     p->z = lbl_eu_80666478;
-    lbl_eu_805273C8[3].v1.x = lbl_eu_8066647C;
-    lbl_eu_805273C8[3].v1.y = lbl_eu_8066647C;
-    lbl_eu_805273C8[3].v1.z = lbl_eu_80666478;
+    tbl[3].v1.x = lbl_eu_8066647C;
+    tbl[3].v1.y = lbl_eu_8066647C;
+    tbl[3].v1.z = lbl_eu_80666478;
     p = &local[15];
     p->x = lbl_eu_80666480;
     p->y = lbl_eu_80666480;
     p->z = lbl_eu_80666484;
-    lbl_eu_805273C8[4].v0.x = lbl_eu_80666480;
-    lbl_eu_805273C8[4].v0.y = lbl_eu_80666480;
-    lbl_eu_805273C8[4].v0.z = lbl_eu_80666484;
+    tbl[4].v0.x = lbl_eu_80666480;
+    tbl[4].v0.y = lbl_eu_80666480;
+    tbl[4].v0.z = lbl_eu_80666484;
     p = &local[14];
     p->x = lbl_eu_80666480;
     p->y = lbl_eu_80666480;
     p->z = lbl_eu_80666484;
-    lbl_eu_805273C8[4].v1.x = lbl_eu_80666480;
-    lbl_eu_805273C8[4].v1.y = lbl_eu_80666480;
-    lbl_eu_805273C8[4].v1.z = lbl_eu_80666484;
+    tbl[4].v1.x = lbl_eu_80666480;
+    tbl[4].v1.y = lbl_eu_80666480;
+    tbl[4].v1.z = lbl_eu_80666484;
     p = &local[13];
     p->x = lbl_eu_80666480;
     p->y = lbl_eu_80666480;
     p->z = lbl_eu_80666484;
-    lbl_eu_805273C8[5].v0.x = lbl_eu_80666480;
-    lbl_eu_805273C8[5].v0.y = lbl_eu_80666480;
-    lbl_eu_805273C8[5].v0.z = lbl_eu_80666484;
+    tbl[5].v0.x = lbl_eu_80666480;
+    tbl[5].v0.y = lbl_eu_80666480;
+    tbl[5].v0.z = lbl_eu_80666484;
     p = &local[12];
     p->x = lbl_eu_80666480;
     p->y = lbl_eu_80666480;
     p->z = lbl_eu_80666484;
-    lbl_eu_805273C8[5].v1.x = lbl_eu_80666480;
-    lbl_eu_805273C8[5].v1.y = lbl_eu_80666480;
-    lbl_eu_805273C8[5].v1.z = lbl_eu_80666484;
+    tbl[5].v1.x = lbl_eu_80666480;
+    tbl[5].v1.y = lbl_eu_80666480;
+    tbl[5].v1.z = lbl_eu_80666484;
     p = &local[11];
     p->x = lbl_eu_8066641C;
     p->y = lbl_eu_80666458;
     p->z = lbl_eu_8066641C;
-    lbl_eu_805273C8[6].v0.x = lbl_eu_8066641C;
-    lbl_eu_805273C8[6].v0.y = lbl_eu_80666458;
-    lbl_eu_805273C8[6].v0.z = lbl_eu_8066641C;
+    tbl[6].v0.x = lbl_eu_8066641C;
+    tbl[6].v0.y = lbl_eu_80666458;
+    tbl[6].v0.z = lbl_eu_8066641C;
     p = &local[10];
     p->x = lbl_eu_80666478;
     p->y = lbl_eu_80666458;
     p->z = lbl_eu_8066641C;
-    lbl_eu_805273C8[6].v1.x = lbl_eu_80666478;
-    lbl_eu_805273C8[6].v1.y = lbl_eu_80666458;
-    lbl_eu_805273C8[6].v1.z = lbl_eu_8066641C;
+    tbl[6].v1.x = lbl_eu_80666478;
+    tbl[6].v1.y = lbl_eu_80666458;
+    tbl[6].v1.z = lbl_eu_8066641C;
     p = &local[9];
     p->x = lbl_eu_80666458;
     p->y = lbl_eu_80666474;
     p->z = lbl_eu_80666458;
-    lbl_eu_805273C8[7].v0.x = lbl_eu_80666458;
-    lbl_eu_805273C8[7].v0.y = lbl_eu_80666474;
-    lbl_eu_805273C8[7].v0.z = lbl_eu_80666458;
+    tbl[7].v0.x = lbl_eu_80666458;
+    tbl[7].v0.y = lbl_eu_80666474;
+    tbl[7].v0.z = lbl_eu_80666458;
     p = &local[8];
     p->x = lbl_eu_80666488;
     p->y = lbl_eu_80666478;
     p->z = lbl_eu_8066641C;
-    lbl_eu_805273C8[7].v1.x = lbl_eu_80666488;
-    lbl_eu_805273C8[7].v1.y = lbl_eu_80666478;
-    lbl_eu_805273C8[7].v1.z = lbl_eu_8066641C;
+    tbl[7].v1.x = lbl_eu_80666488;
+    tbl[7].v1.y = lbl_eu_80666478;
+    tbl[7].v1.z = lbl_eu_8066641C;
     p = &local[7];
     p->x = lbl_eu_80666478;
     p->y = lbl_eu_80666458;
     p->z = lbl_eu_80666458;
-    lbl_eu_805273C8[8].v0.x = lbl_eu_80666478;
-    lbl_eu_805273C8[8].v0.y = lbl_eu_80666458;
-    lbl_eu_805273C8[8].v0.z = lbl_eu_80666458;
+    tbl[8].v0.x = lbl_eu_80666478;
+    tbl[8].v0.y = lbl_eu_80666458;
+    tbl[8].v0.z = lbl_eu_80666458;
     p = &local[6];
     p->x = lbl_eu_8066648C;
     p->y = lbl_eu_8066647C;
     p->z = lbl_eu_80666478;
-    lbl_eu_805273C8[8].v1.x = lbl_eu_8066648C;
-    lbl_eu_805273C8[8].v1.y = lbl_eu_8066647C;
-    lbl_eu_805273C8[8].v1.z = lbl_eu_80666478;
+    tbl[8].v1.x = lbl_eu_8066648C;
+    tbl[8].v1.y = lbl_eu_8066647C;
+    tbl[8].v1.z = lbl_eu_80666478;
     p = &local[5];
     p->x = lbl_eu_8066641C;
     p->y = lbl_eu_80666458;
     p->z = lbl_eu_8066641C;
-    lbl_eu_805273C8[9].v0.x = lbl_eu_8066641C;
-    lbl_eu_805273C8[9].v0.y = lbl_eu_80666458;
-    lbl_eu_805273C8[9].v0.z = lbl_eu_8066641C;
+    tbl[9].v0.x = lbl_eu_8066641C;
+    tbl[9].v0.y = lbl_eu_80666458;
+    tbl[9].v0.z = lbl_eu_8066641C;
     p = &local[4];
     p->x = lbl_eu_80666478;
     p->y = lbl_eu_80666474;
     p->z = lbl_eu_8066641C;
-    lbl_eu_805273C8[9].v1.x = lbl_eu_80666478;
-    lbl_eu_805273C8[9].v1.y = lbl_eu_80666474;
-    lbl_eu_805273C8[9].v1.z = lbl_eu_8066641C;
+    tbl[9].v1.x = lbl_eu_80666478;
+    tbl[9].v1.y = lbl_eu_80666474;
+    tbl[9].v1.z = lbl_eu_8066641C;
     p = &local[3];
     p->x = lbl_eu_80666478;
     p->y = lbl_eu_80666474;
     p->z = lbl_eu_80666458;
-    lbl_eu_805273C8[10].v0.x = lbl_eu_80666478;
-    lbl_eu_805273C8[10].v0.y = lbl_eu_80666474;
-    lbl_eu_805273C8[10].v0.z = lbl_eu_80666458;
+    tbl[10].v0.x = lbl_eu_80666478;
+    tbl[10].v0.y = lbl_eu_80666474;
+    tbl[10].v0.z = lbl_eu_80666458;
     p = &local[2];
     p->x = lbl_eu_80666490;
     p->y = lbl_eu_80666464;
     p->z = lbl_eu_8066647C;
-    lbl_eu_805273C8[10].v1.x = lbl_eu_80666490;
-    lbl_eu_805273C8[10].v1.y = lbl_eu_80666464;
-    lbl_eu_805273C8[10].v1.z = lbl_eu_8066647C;
+    tbl[10].v1.x = lbl_eu_80666490;
+    tbl[10].v1.y = lbl_eu_80666464;
+    tbl[10].v1.z = lbl_eu_8066647C;
     p = &local[1];
     p->x = lbl_eu_80666474;
     p->y = lbl_eu_80666480;
     p->z = lbl_eu_80666458;
-    lbl_eu_805273C8[11].v0.x = lbl_eu_80666474;
-    lbl_eu_805273C8[11].v0.y = lbl_eu_80666480;
-    lbl_eu_805273C8[11].v0.z = lbl_eu_80666458;
+    tbl[11].v0.x = lbl_eu_80666474;
+    tbl[11].v0.y = lbl_eu_80666480;
+    tbl[11].v0.z = lbl_eu_80666458;
     p = &local[0];
     p->x = lbl_eu_80666428;
     p->y = lbl_eu_8066647C;
     p->z = lbl_eu_8066647C;
-    lbl_eu_805273C8[11].v1.x = lbl_eu_80666428;
-    lbl_eu_805273C8[11].v1.y = lbl_eu_8066647C;
-    lbl_eu_805273C8[11].v1.z = lbl_eu_8066647C;
+    tbl[11].v1.x = lbl_eu_80666428;
+    tbl[11].v1.y = lbl_eu_8066647C;
+    tbl[11].v1.z = lbl_eu_8066647C;
 }

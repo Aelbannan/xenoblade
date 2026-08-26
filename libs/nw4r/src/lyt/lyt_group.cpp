@@ -42,12 +42,29 @@ void Group::Init() {
 Group::~Group() {
     NW4R_UT_LINKLIST_FOREACH_SAFE (it, mPaneLinkList, {
         mPaneLinkList.Erase(it);
-        Layout::DeleteObj(&*it);
+
+        // Layout::DeleteObj spelled out so the allocator is referenced by its
+        // retail label (lbl_eu_80665478) instead of the mangled static-member
+        // name (same pattern as GroupContainer::~GroupContainer below).
+        detail::PaneLink* pObj = &*it;
+        if (pObj != NULL) {
+            pObj->~PaneLink();
+            MEMFreeToAllocator(lbl_eu_80665478, pObj);
+        }
     })
 }
 
 void Group::AppendPane(Pane* pPane) {
-    detail::PaneLink* pLink = Layout::NewObj<detail::PaneLink>();
+    // Layout::NewObj<detail::PaneLink> spelled out against the retail
+    // allocator label (see ~Group above); body mirrors the lyt_layout.h
+    // template exactly so the schedule is unchanged.
+    void* pMem = MEMAllocFromAllocator(lbl_eu_80665478, sizeof(detail::PaneLink));
+    detail::PaneLink* pLink;
+    if (pMem != NULL) {
+        pLink = new (pMem) detail::PaneLink();
+    } else {
+        pLink = NULL;
+    }
 
     if (pLink != NULL) {
         pLink->mTarget = pPane;

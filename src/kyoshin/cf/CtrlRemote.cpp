@@ -145,7 +145,9 @@ void func_80098EF8(CtrlPcVf38* self)
 
     u32 vf14res = self->mField5C->mSub3ED4->vf14(0x800);
     u8 bs = ((CBattleManagerViewPc*)getInstance__Q22cf14CBattleManagerFv())->mField1AA;
-    int inBattle = (bs >= 1 && bs <= 0x18) ? 1 : 0;
+    // Commuted second compare keeps MWCC from fusing the range test into
+    // subi+cmpli; retail emits two separate cmplwi branches.
+    int inBattle = (bs >= 1u && 0x18u >= bs) ? 1 : 0;
     int timerNZ =
         ((CBattleManagerViewPc*)getInstance__Q22cf14CBattleManagerFv())->mField20C8 != 0 ? 1 : 0;
     int probe1a = probePlayerCtrl((cf::CtrlPc*)self, &v1a, 0x1a);
@@ -841,33 +843,25 @@ void func_8009AE80(CtrlPcVf37State* self)
     int flag31 = 0;
     int flag30 = 0;
 
+    // The pad-mask ternary is written inline at each use site: retail keeps
+    // the selected mask in a callee-saved register and leaves the freshly
+    // loaded menu-state word in r0, which only falls out of this expression
+    // shape.
+    #define PAD_MASK(idx) \
+        (func_80086F9C__Q22cf13CfGameManagerFv(-1) ? lbl_eu_80527F10[(idx)] \
+                                                   : lbl_eu_80527E98[(idx)])
     if (actionSrc == NULL) {
         // No action source: gate the 0x4000 range purely on the vf37 words.
-        u32 mask7 = func_80086F9C__Q22cf13CfGameManagerFv(-1)
-                        ? lbl_eu_80527F10[7]
-                        : lbl_eu_80527E98[7];
-        if ((self->vf37()->mField0 & mask7) != 0) {
+        if ((self->vf37()->mField0 & PAD_MASK(7)) != 0) {
             int keep = 1;
-            u32 mask8 = func_80086F9C__Q22cf13CfGameManagerFv(-1)
-                            ? lbl_eu_80527F10[8]
-                            : lbl_eu_80527E98[8];
-            CtrlPcSub37Ae80* s = self->vf37();
-            if ((s->mField8 & mask8) == 0) {
-                u32 mask9 = func_80086F9C__Q22cf13CfGameManagerFv(-1)
-                                ? lbl_eu_80527F10[9]
-                                : lbl_eu_80527E98[9];
-                CtrlPcSub37Ae80* s2 = self->vf37();
-                if ((s2->mField8 & mask9) == 0) {
+            if ((self->vf37()->mField8 & PAD_MASK(8)) == 0) {
+                if ((self->vf37()->mField8 & PAD_MASK(9)) == 0) {
                     keep = 0;
                 }
             }
             if (func_80086F9C__Q22cf13CfGameManagerFv(-1) == 0 && keep == 0) {
                 keep = 1;
-                u32 mask7b = func_80086F9C__Q22cf13CfGameManagerFv(-1)
-                                 ? lbl_eu_80527F10[7]
-                                 : lbl_eu_80527E98[7];
-                CtrlPcSub37Ae80* s3 = self->vf37();
-                if ((s3->mField14 & mask7b) == 0) {
+                if ((self->vf37()->mField14 & PAD_MASK(7)) == 0) {
                     keep = 0;
                 }
             }
@@ -875,11 +869,7 @@ void func_8009AE80(CtrlPcVf37State* self)
                 flag31 = 1;
             }
         } else {
-            u32 mask7c = func_80086F9C__Q22cf13CfGameManagerFv(-1)
-                             ? lbl_eu_80527F10[7]
-                             : lbl_eu_80527E98[7];
-            CtrlPcSub37Ae80* s4 = self->vf37();
-            if ((s4->mField10 & mask7c) != 0) {
+            if ((self->vf37()->mField10 & PAD_MASK(7)) != 0) {
                 flag31 = 1;
             } else {
                 self->mField5C->mSub3ED4->vf11(0x4000);
@@ -887,10 +877,7 @@ void func_8009AE80(CtrlPcVf37State* self)
         }
     } else {
         // Action source present: the 0x10 menu word arms both flags.
-        u32 mask7 = func_80086F9C__Q22cf13CfGameManagerFv(-1)
-                        ? lbl_eu_80527F10[7]
-                        : lbl_eu_80527E98[7];
-        if ((self->vf37()->mField10 & mask7) != 0) {
+        if ((self->vf37()->mField10 & PAD_MASK(7)) != 0) {
             if (func_80086F9C__Q22cf13CfGameManagerFv(-1) == 0) {
                 flag30 = 1;
                 flag31 = 1;
@@ -899,23 +886,14 @@ void func_8009AE80(CtrlPcVf37State* self)
                 flag31 = 1;
             }
         }
-        u32 mask5 = func_80086F9C__Q22cf13CfGameManagerFv(-1)
-                        ? lbl_eu_80527F10[5]
-                        : lbl_eu_80527E98[5];
-        if ((self->vf37()->mField8 & mask5) == 0) {
+        if ((self->vf37()->mField8 & PAD_MASK(5)) == 0) {
             if (self->mField5C->mSub3ED4->vf14(0x4000) == 0) {
                 // Gate-3 probe plus the 0x04 menu word sets flag30.
-                u32 mask1 = func_80086F9C__Q22cf13CfGameManagerFv(-1)
-                                ? lbl_eu_80527F10[1]
-                                : lbl_eu_80527E98[1];
-                if ((self->vf37()->mField4 & mask1) != 0) {
+                if ((self->vf37()->mField4 & PAD_MASK(1)) != 0) {
                     u32 v3;
                     if (probePlayerCtrl((cf::CtrlPc*)self, &v3, 3) != 0 &&
                         func_80148778(&self->mField5C->mField8, 0x11) == 0) {
-                        u32 mask16 = func_80086F9C__Q22cf13CfGameManagerFv(-1)
-                                         ? lbl_eu_80527F10[16]
-                                         : lbl_eu_80527E98[16];
-                        if ((self->vf37()->mField0 & mask16) == 0) {
+                        if ((self->vf37()->mField0 & PAD_MASK(16)) == 0) {
                             flag30 = 1;
                         }
                     }
@@ -941,10 +919,7 @@ void func_8009AE80(CtrlPcVf37State* self)
         if (self->mField5C->mSub3E9C.v01(0x100) == 0) {
             self->mField5C->mSub3ED4->vf10(0x4000, 1);
             self->mField2C |= 0x400;
-            u32 mask7 = func_80086F9C__Q22cf13CfGameManagerFv(-1)
-                            ? lbl_eu_80527F10[7]
-                            : lbl_eu_80527E98[7];
-            if ((self->vf37()->mField0 & mask7) == 0) {
+            if ((self->vf37()->mField0 & PAD_MASK(7)) == 0) {
                 self->mField5C->mSub3ED4->vf11(0x4000);
             }
         }
@@ -962,17 +937,13 @@ void func_8009AE80(CtrlPcVf37State* self)
         }
     }
 
-    CfObjAe80* sys = (CfObjAe80*)func_800FE68C();
-    if ((sys->mFieldC180 & 1) != 0) {
+    if ((((CfObjAe80*)func_800FE68C())->mFieldC180 & 1) != 0) {
         return;
     }
-    if ((sys->mFieldC180 & 2) == 0) {
+    if ((((CfObjAe80*)func_800FE68C())->mFieldC180 & 2) == 0) {
         return;
     }
-    u32 mask7 = func_80086F9C__Q22cf13CfGameManagerFv(-1)
-                    ? lbl_eu_80527F10[7]
-                    : lbl_eu_80527E98[7];
-    if ((self->vf37()->mField0 & mask7) == 0) {
+    if ((self->vf37()->mField0 & PAD_MASK(7)) == 0) {
         return;
     }
     u32 v805;
@@ -991,22 +962,17 @@ void func_8009AE80(CtrlPcVf37State* self)
         (self->vf37()->mField0 & 0x10000000) != 0) {
         return;
     }
-    // Mirror the 0x08 menu-word bits into +0x2C (mask 0x24 -> 0x80000,
-    // mask 0x20 -> 0x100000).
-    u32 mask9 = func_80086F9C__Q22cf13CfGameManagerFv(-1)
-                    ? lbl_eu_80527F10[9]
-                    : lbl_eu_80527E98[9];
-    if ((self->vf37()->mField8 & mask9) != 0) {
+    // Mirror the 0x08 menu-word bits into +0x2C (mask idx 9 -> 0x80000,
+    // mask idx 8 -> 0x100000).
+    if ((self->vf37()->mField8 & PAD_MASK(9)) != 0) {
         self->mField2C |= 0x80000;
         return;
     }
-    u32 mask8 = func_80086F9C__Q22cf13CfGameManagerFv(-1)
-                    ? lbl_eu_80527F10[8]
-                    : lbl_eu_80527E98[8];
-    if ((self->vf37()->mField8 & mask8) != 0) {
+    if ((self->vf37()->mField8 & PAD_MASK(8)) != 0) {
         self->mField2C |= 0x100000;
     }
 }
+#undef PAD_MASK
 
 // Target us-8009c160. Remote-control command dispatch: after the 0x400
 // global gate and the basic arts gates pass, branch on the 0x800 sub-object
@@ -1023,14 +989,10 @@ void func_8009B788(CtrlPcVf38* self)
         return;
     }
 
-    // Gates 1 and 2 share the loaded player pointer.
-    CtrlPlayerObj* player = self->mField5C;
-    u32 v1 = *player->mField4->vf30();
-    if (func_80174C98(player, &v1, 1) != 0) {
-        return;
-    }
-    u32 v2 = *player->mField4->vf30();
-    if (func_80174C98(player, &v2, 2) != 0) {
+    u32 v1;
+    u32 v2;
+    if (probePlayerCtrl((cf::CtrlPc*)self, &v1, 1) != 0 ||
+        probePlayerCtrl((cf::CtrlPc*)self, &v2, 2) != 0) {
         return;
     }
 
@@ -1052,7 +1014,7 @@ void func_8009B788(CtrlPcVf38* self)
         u32 v803;
         u32 v1f;
         if (probePlayerCtrl((cf::CtrlPc*)self, &v803, 0x803) == 0 ||
-            probePlayerCtrl((cf::CtrlPc*)self, &v1f, 0x1f) == 0) {
+            probePlayerCtrl((cf::CtrlPc*)self, &v1f, 0x1f) != 0) {
             // Camera-sweep path: only when the voice/battle target exists,
             // its cutscene bit is clear, and the handle resolves.
             CtrlPlayerSub3F60* sub3f60 = self->mField5C->mField3F60;
@@ -1075,56 +1037,70 @@ void func_8009B788(CtrlPcVf38* self)
     u32 ve;
     u32 v8;
     u32 v1fb;
-    if (probePlayerCtrl((cf::CtrlPc*)self, &v3, 3) == 0 &&
-        probePlayerCtrl((cf::CtrlPc*)self, &ve, 0xe) == 0 &&
-        probePlayerCtrl((cf::CtrlPc*)self, &v8, 8) == 0 &&
-        probePlayerCtrl((cf::CtrlPc*)self, &v1fb, 0x1f) == 0) {
-        if (self->mField5C->mSub3E9C.v01(0x200) != 0) {
-            self->mField4 |= 0x8;
+    if (probePlayerCtrl((cf::CtrlPc*)self, &v3, 3) != 0 ||
+        probePlayerCtrl((cf::CtrlPc*)self, &ve, 0xe) != 0 ||
+        probePlayerCtrl((cf::CtrlPc*)self, &v8, 8) != 0 ||
+        probePlayerCtrl((cf::CtrlPc*)self, &v1fb, 0x1f) != 0) {
+        if (self->mField5C->mSub3ED4->vf14(0x400) != 0) {
             return;
         }
-        u32 v6;
-        u32 v9;
-        u32 v12;
-        u32 v13;
-        u32 v14;
-        if (probePlayerCtrl((cf::CtrlPc*)self, &v6, 6) == 0 &&
-            probePlayerCtrl((cf::CtrlPc*)self, &v9, 9) == 0 &&
-            probePlayerCtrl((cf::CtrlPc*)self, &v12, 0x12) == 0 &&
-            probePlayerCtrl((cf::CtrlPc*)self, &v13, 0x13) == 0 &&
-            probePlayerCtrl((cf::CtrlPc*)self, &v14, 0x14) == 0) {
+        CtrlPlayerSub3F60* sub3f60 = self->mField5C->mField3F60;
+        if (sub3f60 == NULL) {
+            return;
+        }
+        if (sub3f60->mField4EC & 0x2) {
+            return;
+        }
+        if (self->mField5C->mSub3ED4->vf14(0x4000) != 0) {
             return;
         }
         ArtsSelStateViewPc* sel = CMenuArtsSelect_getSelectState();
-        if (sel == NULL || sel->byte0 != 0 || sel->byte1 != 0) {
+        if (sel == NULL) {
+            return;
+        }
+        if (sel->byte0) {
+            return;
+        }
+        if (sel->byte1) {
+            return;
+        }
+        if (self->mField5C->mSub3ED4->vf14(0x40000) != 0) {
+            return;
+        }
+        if (func_8016FE34(handle) == 0) {
+            return;
+        }
+        self->mField5C->mSub3E9C.v00(0x100);
+        return;
+    }
+
+    if (self->mField5C->mSub3E9C.v01(0x200) != 0) {
+        self->mField4 |= 0x8;
+        return;
+    }
+    u32 v6;
+    u32 v9;
+    u32 v12;
+    u32 v13;
+    u32 v14;
+    if (probePlayerCtrl((cf::CtrlPc*)self, &v6, 6) != 0 ||
+        probePlayerCtrl((cf::CtrlPc*)self, &v9, 9) != 0 ||
+        probePlayerCtrl((cf::CtrlPc*)self, &v12, 0x12) != 0 ||
+        probePlayerCtrl((cf::CtrlPc*)self, &v13, 0x13) != 0 ||
+        probePlayerCtrl((cf::CtrlPc*)self, &v14, 0x14) != 0) {
+        ArtsSelStateViewPc* sel = CMenuArtsSelect_getSelectState();
+        if (sel == NULL) {
+            return;
+        }
+        if (sel->byte0) {
+            return;
+        }
+        if (sel->byte1) {
             return;
         }
         self->mField4 |= 0x8;
         func_802A2CF0();
-        return;
     }
-
-    if (self->mField5C->mSub3ED4->vf14(0x400) != 0) {
-        return;
-    }
-    CtrlPlayerSub3F60* sub3f60 = self->mField5C->mField3F60;
-    if (sub3f60 == NULL || (sub3f60->mField4EC & 0x2) != 0) {
-        return;
-    }
-    if (self->mField5C->mSub3ED4->vf14(0x4000) != 0) {
-        return;
-    }
-    ArtsSelStateViewPc* sel = CMenuArtsSelect_getSelectState();
-    if (sel == NULL || sel->byte0 != 0 || sel->byte1 != 0) {
-        return;
-    }
-    if (self->mField5C->mSub3ED4->vf14(0x400) != 0) {
-        return;
-    }
-    if (func_8016FE34(handle) == 0) {
-        return;
-    }
-    self->mField5C->mSub3E9C.v00(0x100);
 }
 
 void func_8009BD14(CtrlPcVf38* self)

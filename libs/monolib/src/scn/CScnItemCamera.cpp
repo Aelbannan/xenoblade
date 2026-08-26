@@ -44,8 +44,19 @@ extern const char lbl_eu_80526300[];
 
 // Static camera default-parameter table initialized by sinit_8049FC60 (.bss).
 // Defined in this TU (dissolved monolibdata2): 12B + 28B retail split.
-extern f32 lbl_eu_80658658[3];
-extern f32 lbl_eu_80658664[7];
+
+// Camera default-parameter table row: one CVec3.
+struct SCamDefaultRow {
+    f32 x, y, z;
+};
+
+// Union view of the default table (row struct used by sinit).
+union SCamDefaultTable {
+    f32 v[10];
+    SCamDefaultRow rows[3];
+};
+
+extern SCamDefaultTable lbl_eu_80658658;
 
 // ============================================================
 // FULL_MATCH functions
@@ -276,18 +287,24 @@ void func_8049EB60(CScnItemCamera* self) {
 void func_8049F168(CScnItemCamera* self, ml::CVec3* v) {
     CScnItemCameraLayout* cam = (CScnItemCameraLayout*)self;
 
+    // Aim point (0x138) += v.
     nw4r::math::VEC3Add((nw4r::math::VEC3*)&self->mCamParam0,
                         (nw4r::math::VEC3*)&self->mCamParam0,
                         (nw4r::math::VEC3*)v);
 
+    // Position (0x54) += v, staged through two temporaries: the helper
+    // writes the sum into newPos (paired stores), the CVec3 copy ctor
+    // makes a member-wise float copy, and the final field stores are
+    // raw-bit word copies (retail lwz/stw shape).
     ml::CVec3 newPos;
     nw4r::math::VEC3Add((nw4r::math::VEC3*)&newPos,
                         (nw4r::math::VEC3*)&self->mTransform.mPos,
                         (nw4r::math::VEC3*)v);
+    ml::CVec3 tmp(newPos);
 
-    cam->mPosX = *(u32*)&newPos.x;
-    cam->mPosY = *(u32*)&newPos.y;
-    cam->mPosZ = *(u32*)&newPos.z;
+    cam->mPosX = *(u32*)&tmp.x;
+    cam->mPosY = *(u32*)&tmp.y;
+    cam->mPosZ = *(u32*)&tmp.z;
 
     ((CScnItemCameraRefreshIf*)self)->refresh();
 }
@@ -298,19 +315,20 @@ void func_8049F168(CScnItemCamera* self, ml::CVec3* v) {
 // floats arranged as three CVec3s (0x00, 0x0C, 0x18).
 // ============================================================
 void sinit_8049FC60() {
-    // Row starts addressed off lbl_eu_80658658 (+0/+12/+24), row elements
-    // 1-2 off lbl_eu_80658664 - mirrors retail's mixed base/pointer stores.
-    lbl_eu_80658658[0] = lbl_eu_8066ABF0;
-    lbl_eu_80658658[1] = lbl_eu_8066AC00;
-    lbl_eu_80658658[2] = lbl_eu_8066AC38;
-
-    lbl_eu_80658658[3] = lbl_eu_8066ABF0;
-    lbl_eu_80658664[1] = lbl_eu_8066ABF0;
-    lbl_eu_80658664[2] = lbl_eu_8066ABF0;
-
-    lbl_eu_80658658[6] = lbl_eu_8066ABF0;
-    lbl_eu_80658664[4] = lbl_eu_8066ABF0;
-    lbl_eu_80658664[5] = lbl_eu_8066AC1C;
+    // Union-typed object: raw-float stores for row heads (.x), struct-row
+    // casts for .y/.z. Retail additionally materializes three addi row
+    // bases (r6/r5/r4/r3); every high-level shape tried folds to one base
+    // via MWCC CSE - see sinit_804C86C0 KNOWN RESIDUAL note in
+    // code_804C8684.cpp (same codegen artifact).
+    lbl_eu_80658658.v[0] = lbl_eu_8066ABF0;
+    ((SCamDefaultRow*)&lbl_eu_80658658)->y = lbl_eu_8066AC00;
+    ((SCamDefaultRow*)&lbl_eu_80658658)->z = lbl_eu_8066AC38;
+    lbl_eu_80658658.v[3] = lbl_eu_8066ABF0;
+    ((volatile SCamDefaultTable*)&lbl_eu_80658658)->rows[1].y = lbl_eu_8066ABF0;
+    ((volatile SCamDefaultTable*)&lbl_eu_80658658)->rows[1].z = lbl_eu_8066ABF0;
+    lbl_eu_80658658.v[6] = lbl_eu_8066ABF0;
+    ((volatile SCamDefaultTable*)&lbl_eu_80658658)->rows[2].y = lbl_eu_8066ABF0;
+    ((volatile SCamDefaultTable*)&lbl_eu_80658658)->rows[2].z = lbl_eu_8066AC1C;
 }
 
 // ============================================================
@@ -509,9 +527,9 @@ CScnItemCamera* __ct__CScnItemCamera(CScnItemCamera* obj, CScnItemCamera* parent
     strcpy(obj->mName, name);
 
     obj->mTransform.mFlags = 0;
-    obj->mCamParam0 = lbl_eu_80658664[0];
-    obj->mCamParam1 = lbl_eu_80658664[1];
-    obj->mCamParam2 = lbl_eu_80658664[2];
+    obj->mCamParam0 = lbl_eu_80658658.v[3];
+    obj->mCamParam1 = lbl_eu_80658658.v[4];
+    obj->mCamParam2 = lbl_eu_80658658.v[5];
     obj->mDepthNear = lbl_eu_8066ABF0;
     obj->mDepthMid = lbl_eu_8066ABF0;
     obj->mDepthFarNear = lbl_eu_8066ABF0;
@@ -808,19 +826,19 @@ CScnItemCamera* func_8049F9A8(CScnCameraItemHost* self, int arg2) {
 
     // Seed the transform position (0x54) and the aim point (0x138) from the
     // static default tables (raw bit copies).
-    lay->mPosX = *(const u32*)&lbl_eu_80658658[0];
-    lay->mPosY = *(const u32*)&lbl_eu_80658658[1];
-    lay->mPosZ = *(const u32*)&lbl_eu_80658658[2];
-    lay->mCamParam0 = *(const u32*)&lbl_eu_80658664[0];
-    lay->mCamParam1 = *(const u32*)&lbl_eu_80658664[1];
-    lay->mCamParam2 = *(const u32*)&lbl_eu_80658664[2];
+    lay->mPosX = *(const u32*)&lbl_eu_80658658.v[0];
+    lay->mPosY = *(const u32*)&lbl_eu_80658658.v[1];
+    lay->mPosZ = *(const u32*)&lbl_eu_80658658.v[2];
+    lay->mCamParam0 = *(const u32*)&lbl_eu_80658658.v[3];
+    lay->mCamParam1 = *(const u32*)&lbl_eu_80658658.v[4];
+    lay->mCamParam2 = *(const u32*)&lbl_eu_80658658.v[5];
     cam->mTransform.mRot.z = lbl_eu_8066ABF0;
 
     // diff = aim point - table origin; distance + yaw/pitch derive from it.
     nw4r::math::VEC3 diff;
     nw4r::math::VEC3Sub((nw4r::math::VEC3*)&diff,
                         (const nw4r::math::VEC3*)&cam->mCamParam0,
-                        (const nw4r::math::VEC3*)&lbl_eu_80658658[0]);
+                        (const nw4r::math::VEC3*)&lbl_eu_80658658.v[0]);
     nw4r::math::VEC3 dir = diff;
 
     lay->mUnk1F4 = PSVECMag((const Vec*)&dir);
@@ -1155,5 +1173,4 @@ extern "C" u32 lbl_sd_120[2] = { 0x72656600, 0x00000000 };
 
 
 // [.bss] 0x80658658-0x80658680 (0x28 = 40B): camera default-parameter table.
-f32 lbl_eu_80658658[3];
-f32 lbl_eu_80658664[7];
+SCamDefaultTable lbl_eu_80658658;

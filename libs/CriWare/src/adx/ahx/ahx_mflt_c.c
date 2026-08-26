@@ -1,4 +1,5 @@
 #include <harness_catalog.h>
+#include "lbls_criware.hpp"
 
 /* AHX SBF filter multiply (extended).
  * a   = 32-tap filter coefficient array (fixed across both passes)
@@ -13,21 +14,28 @@
  *   out[48]      = -sum(a[0..31])
  *   out[49..63]  = dot(a, b + 32*(33+i)), reversed
  *
- * The 32-tap dot product is written as 20 individual accumulate statements
- * followed by a 12-tap chained expression. That statement boundary keeps
- * MWCC's scheduler window shallow (loads run ~6 ahead like retail); a single
- * 32-tap chain makes MWCC hoist ~10 loads ahead, which overflows the FPR
- * scratch pool and forces extra callee-saved FPR claims (frame 0xB0 vs 0x90).
- * The retail is a single f0 chain; the residual (+2 instr per pass) comes from
- * the second statement's chain accumulating in a fresh register and copying
- * back to f0.
+ * Every tap up to 23 is an individual accumulate statement; taps 24..31 form
+ * one chained expression. The statement boundary keeps MWCC's scheduler
+ * window shallow (retail claims only f24-f31, frame 0x90); pure single-
+ * statement forms (one 32-tap chain, or all 32 taps as separate statements,
+ * or comma-joined statements) let MWCC claim 12 callee-saved FPRs (frame
+ * 0xB0). Any multi-product additive statement costs one extra merge op per
+ * pass (+8 bytes total) because MWCC computes the product chain in a fresh
+ * accumulator and folds sum in at the end - parenthesising the anchor does
+ * NOT prevent this. Best known residual: structural ~122 / reg_swap ~162.
+ * Volatile-casting the loads does not reduce FPR allocation pressure; swapping
+ * multiply operand order (b*a) flips load order - wrong direction. Also
+ * ruled out (2026-10 TU-final session): splitting taps 24..31 into a
+ * short-lived `float t` chain folded with `sum += t` (byte-identical output,
+ * still +8); moving b0's declaration after the out+ pointers (worse,
+ * reg_swap 162 -> 168). Declaring `s` at its first use is codegen-neutral.
+ * Also ruled out (TU-final attempt 2): putting `sum` at the END of the
+ * 24..31 chain (`... + p31 + sum`; reg_swap 161 vs 162, still +8) and
+ * shortening the chained tail to taps 28..31 with individual statements
+ * through tap 27 (structural 117 but reg_swap 172, still +8). Moving the
+ * lbl_eu_80517548 extern into "lbls_criware.hpp" is codegen-neutral.
  */
 
-extern float lbl_eu_80517548[];
-
-/* The 20+12 statement split keeps MWCC's scheduler window shallow (loads run
- * ~6 ahead like retail); a single 32-tap chain hoists ~10 loads ahead,
- * overflowing the FPR pool (frame 0xB0 vs retail 0x90). */
 #define AHX_DOT(sum, a, bb) \
     sum = (a)[0] * (bb)[0]; \
     sum += (a)[1] * (bb)[1]; \
@@ -49,19 +57,22 @@ extern float lbl_eu_80517548[];
     sum += (a)[17] * (bb)[17]; \
     sum += (a)[18] * (bb)[18]; \
     sum += (a)[19] * (bb)[19]; \
-    sum = sum + (a)[20] * (bb)[20] + (a)[21] * (bb)[21] + (a)[22] * (bb)[22] + \
-          (a)[23] * (bb)[23] + (a)[24] * (bb)[24] + (a)[25] * (bb)[25] + \
-          (a)[26] * (bb)[26] + (a)[27] * (bb)[27] + (a)[28] * (bb)[28] + \
-          (a)[29] * (bb)[29] + (a)[30] * (bb)[30] + (a)[31] * (bb)[31];
+    sum += (a)[20] * (bb)[20]; \
+    sum += (a)[21] * (bb)[21]; \
+    sum += (a)[22] * (bb)[22]; \
+    sum += (a)[23] * (bb)[23]; \
+    sum = sum + (a)[24] * (bb)[24] + (a)[25] * (bb)[25] + (a)[26] * (bb)[26] + \
+          (a)[27] * (bb)[27] + (a)[28] * (bb)[28] + (a)[29] * (bb)[29] + \
+          (a)[30] * (bb)[30] + (a)[31] * (bb)[31];
 
 void ahxsbf_mult_flt_ex(float *a, float *b, float *out) {
-    float *ofwd = out;
+
     float *b0 = b;
+    float *ofwd = out;
     float *orev = out + 0x20;
     float *ifwd = out + 0x21;
     float *irev = out + 0x3F;
     float sum;
-    float s;
     s32 i = 0x10;
 
     do {
@@ -71,9 +82,8 @@ void ahxsbf_mult_flt_ex(float *a, float *b, float *out) {
         b += 0x20;
     } while (--i != 0);
 
-    out[0x10] = lbl_eu_80517548[0];
-
     b = b0 + 0x420;
+    out[0x10] = lbl_eu_80517548[0];
     i = 0xF;
     do {
         AHX_DOT(sum, a, b)
@@ -82,7 +92,7 @@ void ahxsbf_mult_flt_ex(float *a, float *b, float *out) {
         b += 0x20;
     } while (--i != 0);
 
-    s = a[0];
+    float s = a[0];
     s += a[1];
     s += a[2];
     s += a[3];

@@ -25,8 +25,9 @@ extern u32 Vdac_Flag_Changed;
 extern DVDCommandBlock __DVDStopMotorCommandBlock;
 
 // Defined in this TU (retail .sbss / .sdata).
-extern void* PreCB;
-extern void* PostCB;
+/* retail defines these here (.sbss); PreCB's object is 8 bytes */
+void* PreCB[2];
+void* PostCB;
 const char* __VIVersion = "<< RVL_SDK - VI \trelease build: Feb 27 2009 10:04:46 (0x4302_145) >>";
 
 #define CLAMP_VI(x, l, h) (((x) > (h)) ? (h) : (((x) < (l)) ? (l) : (x)))
@@ -136,10 +137,57 @@ static BOOL IsInitialized = FALSE;
 s16 displayOffsetH;
 s16 displayOffsetV;
 
+timing_s timing[11] = {
+    { 6, 240, 24, 25, 3, 2, 12, 13, 12, 13, 520, 519, 520, 519, 525, 429, 64, 71, 105, 162, 373, 122, 412 },
+    { 6, 240, 24, 24, 4, 4, 12, 12, 12, 12, 520, 520, 520, 520, 526, 429, 64, 71, 105, 162, 373, 122, 412 },
+    { 5, 287, 35, 36, 1, 0, 13, 12, 11, 10, 619, 618, 617, 620, 625, 432, 64, 75, 106, 172, 380, 133, 420 },
+    { 5, 287, 33, 33, 2, 2, 13, 11, 13, 11, 619, 621, 619, 621, 624, 432, 64, 75, 106, 172, 380, 133, 420 },
+    { 6, 240, 24, 25, 3, 2, 16, 15, 14, 13, 518, 517, 516, 519, 525, 429, 64, 78, 112, 162, 373, 122, 412 },
+    { 6, 240, 24, 24, 4, 4, 16, 14, 16, 14, 518, 520, 518, 520, 526, 429, 64, 78, 112, 162, 373, 122, 412 },
+    { 12, 480, 48, 48, 6, 6, 24, 24, 24, 24, 1038, 1038, 1038, 1038, 1050, 429, 64, 71, 105, 162, 373, 122, 412 },
+    { 12, 480, 44, 44, 10, 10, 24, 24, 24, 24, 1038, 1038, 1038, 1038, 1050, 429, 64, 71, 105, 168, 379, 122, 412 },
+    { 6, 241, 24, 25, 1, 0, 12, 13, 12, 13, 520, 519, 520, 519, 525, 429, 64, 71, 105, 159, 370, 122, 412 },
+    { 12, 480, 48, 48, 6, 6, 24, 24, 24, 24, 1038, 1038, 1038, 1038, 1050, 429, 64, 71, 105, 180, 391, 122, 412 },
+    { 10, 576, 62, 62, 6, 6, 20, 20, 20, 20, 1240, 1240, 1240, 1240, 1250, 432, 64, 75, 106, 172, 380, 122, 412 },
+};
+/* retail pads the timing table to a 4-byte tail; bytes zeroed and the
+ * keeper tail dropped by the vi.o unit rules (12 bytes keeps this out of
+ * .sdata) */
+char vi_timing_pad[12] = { 1, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0 };
+
 u16 taps[26] = {
     0x1F0, 0x1DC, 0x1AE, 0x174, 0x129, 0x0DB, 0x08E, 0x046, 0x00C, 0x0E2,
     0x0CB, 0x0C0, 0x0C4, 0x0CF, 0x0DE, 0x0EC, 0x0FC, 0x008, 0x00F, 0x013,
     0x013, 0x00F, 0x00C, 0x008, 0x001, 0x000,
+};
+
+/* Retail .data carries these progressive-mode filter tables between taps and
+ * the shutdown info (unreferenced by surviving code). */
+u8 GXPal528Prog[60] = {
+     0x00, 0x00, 0x00, 0x06, 0x02, 0x80, 0x02, 0x10, 0x02, 0x10, 0x00,
+     0x28, 0x00, 0x17, 0x02, 0x80, 0x02, 0x10, 0x00, 0x00, 0x00, 0x00,
+     0x00, 0x00, 0x00, 0x00, 0x06, 0x06, 0x06, 0x06, 0x06, 0x06, 0x06,
+     0x06, 0x06, 0x06, 0x06, 0x06, 0x06, 0x06, 0x06, 0x06, 0x06, 0x06,
+     0x06, 0x06, 0x06, 0x06, 0x06, 0x06, 0x00, 0x00, 0x15, 0x16, 0x15,
+     0x00, 0x00, 0x00, 0x00, 0x00
+};
+
+u8 GXPal528ProgSoft[60] = {
+     0x00, 0x00, 0x00, 0x06, 0x02, 0x80, 0x02, 0x10, 0x02, 0x10, 0x00,
+     0x28, 0x00, 0x17, 0x02, 0x80, 0x02, 0x10, 0x00, 0x00, 0x00, 0x00,
+     0x00, 0x00, 0x00, 0x00, 0x06, 0x06, 0x06, 0x06, 0x06, 0x06, 0x06,
+     0x06, 0x06, 0x06, 0x06, 0x06, 0x06, 0x06, 0x06, 0x06, 0x06, 0x06,
+     0x06, 0x06, 0x06, 0x06, 0x06, 0x06, 0x08, 0x08, 0x0A, 0x0C, 0x0A,
+     0x08, 0x08, 0x00, 0x00, 0x00
+};
+
+u8 GXPal524ProgAa[64] = {
+     0x00, 0x00, 0x00, 0x06, 0x02, 0x80, 0x01, 0x08, 0x02, 0x0C, 0x00,
+     0x28, 0x00, 0x17, 0x02, 0x80, 0x02, 0x0C, 0x00, 0x00, 0x00, 0x00,
+     0x00, 0x00, 0x00, 0x01, 0x03, 0x02, 0x09, 0x06, 0x03, 0x0A, 0x03,
+     0x02, 0x09, 0x06, 0x03, 0x0A, 0x09, 0x02, 0x03, 0x06, 0x09, 0x0A,
+     0x09, 0x02, 0x03, 0x06, 0x09, 0x0A, 0x04, 0x08, 0x0C, 0x10, 0x0C,
+     0x08, 0x04, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00
 };
 
 // Index (from the top bit) of the highest set bit of a 64-bit value.
@@ -156,19 +204,7 @@ static s32 cntlzd(u64 bit) {
     }
     return __cntlzw(lo) + 32;
 }
-timing_s timing[11] = {
-    { 6, 240, 24, 25, 3, 2, 12, 13, 12, 13, 520, 519, 520, 519, 525, 429, 64, 71, 105, 162, 373, 122, 412 },
-    { 6, 240, 24, 24, 4, 4, 12, 12, 12, 12, 520, 520, 520, 520, 526, 429, 64, 71, 105, 162, 373, 122, 412 },
-    { 5, 287, 35, 36, 1, 0, 13, 12, 11, 10, 619, 618, 617, 620, 625, 432, 64, 75, 106, 172, 380, 133, 420 },
-    { 5, 287, 33, 33, 2, 2, 13, 11, 13, 11, 619, 621, 619, 621, 624, 432, 64, 75, 106, 172, 380, 133, 420 },
-    { 6, 240, 24, 25, 3, 2, 16, 15, 14, 13, 518, 517, 516, 519, 525, 429, 64, 78, 112, 162, 373, 122, 412 },
-    { 6, 240, 24, 24, 4, 4, 16, 14, 16, 14, 518, 520, 518, 520, 526, 429, 64, 78, 112, 162, 373, 122, 412 },
-    { 12, 480, 48, 48, 6, 6, 24, 24, 24, 24, 1038, 1038, 1038, 1038, 1050, 429, 64, 71, 105, 162, 373, 122, 412 },
-    { 12, 480, 44, 44, 10, 10, 24, 24, 24, 24, 1038, 1038, 1038, 1038, 1050, 429, 64, 71, 105, 168, 379, 122, 412 },
-    { 6, 241, 24, 25, 1, 0, 12, 13, 12, 13, 520, 519, 520, 519, 525, 429, 64, 71, 105, 159, 370, 122, 412 },
-    { 12, 480, 48, 48, 6, 6, 24, 24, 24, 24, 1038, 1038, 1038, 1038, 1050, 429, 64, 71, 105, 180, 391, 122, 412 },
-    { 10, 576, 62, 62, 6, 6, 20, 20, 20, 20, 1240, 1240, 1240, 1240, 1250, 432, 64, 75, 106, 172, 380, 122, 412 },
-};
+
 
 timing_s* timingExtra;
 u16 regs[59];
@@ -325,8 +361,8 @@ void __VIRetraceHandler(s16 intrType, OSContext* ctx) {
     OSClearContext(&exceptionContext);
     OSSetCurrentContext(&exceptionContext);
 
-    if (PreCB) {
-        ((VIRetraceCallback)PreCB)(retraceCount);
+    if (PreCB[0]) {
+        ((VIRetraceCallback)PreCB[0])(retraceCount);
     }
 
     if (vsync_timing_test_flag) {
@@ -595,10 +631,10 @@ void __VIRetraceHandler(s16 intrType, OSContext* ctx) {
 }
 
 VIRetraceCallback VISetPreRetraceCallback(VIRetraceCallback callback) {
-    extern void* PreCB;
-    VIRetraceCallback prev = (VIRetraceCallback)PreCB;
+    extern void* PreCB[];
+    VIRetraceCallback prev = (VIRetraceCallback)PreCB[0];
     BOOL enabled = OSDisableInterrupts();
-    PreCB = callback;
+    PreCB[0] = callback;
     OSRestoreInterrupts(enabled);
     return prev;
 }
@@ -842,7 +878,7 @@ void VIInit(void) {
     value = (value & ~0x8000) | (0 << 15);
     VI_HW_REGS[VI_DI1_H] = (u16)value;
 
-    PreCB = NULL;
+    PreCB[0] = NULL;
     PostCB = NULL;
     __OSSetInterruptHandler(OS_INTR_PI_VI, (OSInterruptHandler)__VIRetraceHandler);
     __OSUnmaskInterrupts(OS_INTR_MASK(OS_INTR_PI_VI));

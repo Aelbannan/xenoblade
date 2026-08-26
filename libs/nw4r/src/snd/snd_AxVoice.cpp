@@ -1,7 +1,41 @@
+// Retail mangles the AxVoice ADPCM API against nw4r::snd::AdpcmParam
+// (Q34nw4r3snd10AdpcmParam); the read-only headers resolve their unqualified
+// "AdpcmParam" to the detail-scope struct instead. Include the types header
+// first, define the snd-scope struct, then temporarily remap the identifier
+// so the remaining headers' declarations pick up the retail type.
+#include <nw4r/types_nw4r.h>
+#include <nw4r/snd/snd_Types.h>
+namespace nw4r {
+namespace snd {
+struct AdpcmParam {
+    u16 coef[16];   // at 0x0
+    u16 gain;       // at 0x20
+    u16 pred_scale; // at 0x22
+    u16 yn1;        // at 0x24
+    u16 yn2;        // at 0x26
+};
+} // namespace snd
+} // namespace nw4r
+#define AdpcmParam snd::AdpcmParam
 #include <nw4r/snd.h>
 #include <nw4r/ut.h>
+#undef AdpcmParam
 
 #include <cstring>
+
+// Retail .sdata2 float-pool entries shared by the AxVoice src helpers
+// (values confirmed against port/data_defs.cpp). Global-scope variable
+// declarations are not mangled by MWCC; referencing the labels keeps the
+// sda21 relocs pointed at the shared pool entries instead of TU-local
+// duplicates.
+extern const f32 lbl_eu_80669E90; // 32000.0f (AX_SAMPLE_RATE)
+extern const f32 lbl_eu_80669EA8; // 65535.0f
+extern const f32 lbl_eu_80669EAC; // 0.0f
+extern const f32 lbl_eu_80669EB0; // 65536.0f
+
+// Retail per-channel biquad coefficient provider objects. Indexed by the
+// raw biquad selector; NULL entries mean "no provider -> clear the filter".
+extern void* lbl_eu_80637C20[];
 
 // AxVoice::IsNeedNextUpdate is not declared in snd_AxVoice.h (header is
 // read-only this session); the retail symbol is referenced verbatim so
@@ -24,14 +58,19 @@ AxVoice::AxVoice()
 AxVoice::~AxVoice() {}
 
 void AxVoice::Setup(const void* pWave, Format fmt, int rate) {
-    ut::AutoInterruptLock lock;
+    // Retail inlines the interrupt guard here as plain
+    // OSDisableInterrupts/OSRestoreInterrupts calls.
+    u32 enabled = OSDisableInterrupts();
 
     mWaveData = pWave;
-    mFormat = fmt;
-    mSampleRate = rate;
 
     std::memset(&mMixPrev, 0, sizeof(MixParam));
+
+    mFormat = fmt;
+    mSampleRate = rate;
     mFirstMixUpdateFlag = true;
+
+    OSRestoreInterrupts(enabled);
 }
 
 bool AxVoice::IsPlayFinished() const {
@@ -175,8 +214,11 @@ void AxVoice::VoiceCallback(void* pArg) {
 }
 
 u32 AxVoice::GetDspAddressBySample(const void* pBase, u32 samples, Format fmt) {
+    // Fresh-temp form: keeps the cached pointer live across repeated inlined
+    // expansions of this helper (retail copies then conditionally overwrites).
+    const void* pPhys = pBase;
     if (pBase != NULL) {
-        pBase = OSCachedToPhysical(pBase);
+        pPhys = OSCachedToPhysical(pBase);
     }
 
     u32 addr = 0;
@@ -186,19 +228,19 @@ u32 AxVoice::GetDspAddressBySample(const void* pBase, u32 samples, Format fmt) {
         // clang-format off
         addr = (samples / AX_ADPCM_SAMPLES_PER_FRAME * AX_ADPCM_NIBBLES_PER_FRAME) +
                (samples % AX_ADPCM_SAMPLES_PER_FRAME) +
-               (reinterpret_cast<u32>(pBase) * sizeof(u16)) +
+               (reinterpret_cast<u32>(pPhys) * sizeof(u16)) +
                sizeof(u16);
         // clang-format on
         break;
     }
 
     case SAMPLE_FORMAT_PCM_S8: {
-        addr = reinterpret_cast<u32>(pBase) + samples;
+        addr = reinterpret_cast<u32>(pPhys) + samples;
 
         break;
     }
     case SAMPLE_FORMAT_PCM_S16: {
-        addr = reinterpret_cast<u32>(pBase) / sizeof(u16) + samples;
+        addr = reinterpret_cast<u32>(pPhys) / sizeof(u16) + samples;
         break;
     }
     }
@@ -333,16 +375,15 @@ void AxVoice::SetAddr(bool loop, const void* pWave, u32 offset, u32 loopStart,
     ut::AutoInterruptLock lock;
 
     u32 startAddr;
-    u32 endAddr;
     u32 loopAddr;
-    const void* pBuffer;
+    u32 endAddr;
 
     if (!mVpb.IsAvailable()) {
         return;
     }
 
     if (offset > loopEnd) {
-        pBuffer = AxManager::GetInstance().GetZeroBufferAddress();
+        const void* pBuffer = AxManager::GetInstance().GetZeroBufferAddress();
         loop = false;
 
         startAddr = GetDspAddressBySample(pBuffer, 0, mFormat);
@@ -352,7 +393,7 @@ void AxVoice::SetAddr(bool loop, const void* pWave, u32 offset, u32 loopStart,
         if (loop) {
             loopAddr = GetDspAddressBySample(pWave, loopStart, mFormat);
         } else {
-            pBuffer = AxManager::GetInstance().GetZeroBufferAddress();
+            const void* pBuffer = AxManager::GetInstance().GetZeroBufferAddress();
             loopAddr = GetDspAddressBySample(pBuffer, 0, mFormat);
         }
 
@@ -363,16 +404,31 @@ void AxVoice::SetAddr(bool loop, const void* pWave, u32 offset, u32 loopStart,
     AXPBADDR addr;
 
     addr.loopFlag = loop;
-    addr.format = mFormat;
 
-    addr.loopAddressHi = loopAddr >> 16 & 0xFFFF;
-    addr.loopAddressLo = loopAddr & 0xFFFF;
+    // Translate the internal sample-format code into the AX PB format code.
+    switch (mFormat) {
+    case SAMPLE_FORMAT_PCM_S16:
+        addr.format = FORMAT_PCM16;
+        break;
 
-    addr.endAddressHi = endAddr >> 16 & 0xFFFF;
-    addr.endAddressLo = endAddr & 0xFFFF;
+    case SAMPLE_FORMAT_PCM_S8:
+        addr.format = FORMAT_PCM8;
+        break;
 
-    addr.currentAddressHi = startAddr >> 16 & 0xFFFF;
-    addr.currentAddressLo = startAddr & 0xFFFF;
+    case SAMPLE_FORMAT_DSP_ADPCM:
+    default:
+        addr.format = FORMAT_ADPCM;
+        break;
+    }
+
+    addr.loopAddressHi = loopAddr >> 16;
+    addr.loopAddressLo = loopAddr;
+
+    addr.endAddressHi = endAddr >> 16;
+    addr.endAddressLo = endAddr;
+
+    addr.currentAddressHi = startAddr >> 16;
+    addr.currentAddressLo = startAddr;
 
     mVpb.SetVoiceAddr(addr);
 }
@@ -399,7 +455,7 @@ void AxVoice::SetSrcType(SrcType type, f32 pitch) {
     mVpb.SetVoiceSrcType(type);
 }
 
-void AxVoice::SetAdpcm(const AdpcmParam* pParam) {
+void AxVoice::SetAdpcm(const snd::AdpcmParam* pParam) {
     ut::AutoInterruptLock lock;
     AXPBADPCM adpcm;
 
@@ -677,10 +733,14 @@ void AxVoice::SetSrc(f32 ratio, bool initial) {
     }
 
     if (initial) {
-        ratio = GetDspRatio(ratio);
-        u32 ratioBits = 65536 * ratio;
+        // Local (not the parameter): retail keeps this in scratch floats.
+        // Retail clamps the ratio only when (re)initializing the SRC block.
+        f32 dspRatio = ut::Clamp(
+            GetDspRatio(ratio), lbl_eu_80669EAC, lbl_eu_80669EA8);
 
         AXPBSRC src;
+
+        u32 ratioBits = lbl_eu_80669EB0 * dspRatio;
 
         src.ratioHi = ratioBits >> 16 & 0xFFFF;
         src.ratioLo = ratioBits & 0xFFFF;
@@ -694,8 +754,7 @@ void AxVoice::SetSrc(f32 ratio, bool initial) {
 
         mVpb.SetVoiceSrc(src);
     } else {
-        ratio = GetDspRatio(ratio);
-        mVpb.SetVoiceSrcRatio(ratio);
+        mVpb.SetVoiceSrcRatio(GetDspRatio(ratio));
     }
 }
 
@@ -768,7 +827,7 @@ void AxVoice::SetRemoteFilter(u8 filter) {
 
 void AxVoice::CalcOffsetAdpcmParam(u16* pPredScale, u16* pYN1, u16* pYN2,
                                    u32 offset, const void* pData,
-                                   const AdpcmParam& rParam) {
+                                   const snd::AdpcmParam& rParam) {
     AXPBADPCM adpcm;
     std::memcpy(adpcm.a, rParam.coef, sizeof(adpcm.a));
     adpcm.gain = rParam.gain;
@@ -778,7 +837,8 @@ void AxVoice::CalcOffsetAdpcmParam(u16* pPredScale, u16* pYN1, u16* pYN2,
 
     // Pass the raw AX sample-format code (3 = DSP ADPCM); the header's Format
     // placeholders don't match the retail encoding.
-    u32 addr = GetDspAddressBySample(pData, 0,
+    const void* pBuffer = pData;
+    u32 addr = GetDspAddressBySample(pBuffer, 0,
                                      static_cast<Format>(SAMPLE_FORMAT_DSP_ADPCM));
     u32 end = GetDspAddressBySample(pData, offset,
                                     static_cast<Format>(SAMPLE_FORMAT_DSP_ADPCM));
@@ -1361,4 +1421,274 @@ void AxVoiceParamBlock::UpdateDelta() {
 } // namespace snd
 } // namespace nw4r
 
-void SetBiquad__Q44nw4r3snd6detail7AxVoiceFUcf(){}
+// Retail types this helper's format argument as the raw nw4r::snd::SampleFormat
+// encoding (0 = PCM_S32/none, 1 = PCM_S16, 2 = PCM_S8, 3 = DSP_ADPCM), not the
+// legacy AxVoice::Format placeholder enum used by the read-only header, so the
+// definition carries the retail symbol directly.
+namespace {
+
+// View of the per-voice AX structures written by SetBiquad: AxVoice keeps a
+// pointer to its DSP parameter block at offset 0x0 (voice biquad state at
+// +0xEA) and the DSP sync flag word directly at offset 0x4.
+struct AxBiquadData {
+    u8 field_0x00[0xEA];
+    u16 biquad[10];        // on,xn1,xn2,yn1,yn2,b0..a2
+};
+
+struct AxHeaderView {
+    void* pData;           // at 0x0 -> AxBiquadData
+    u32 sync;              // at 0x4
+};
+
+// Biquad coefficient set handed back by a provider.
+struct BiquadCoefs {
+    u16 b0;
+    u16 b1;
+    u16 b2;
+    u16 a1;
+    u16 a2;
+};
+
+// Full biquad filter state written to the voice parameter block.
+struct BiquadBlock {
+    u16 on;
+    u16 xn1;
+    u16 xn2;
+    u16 yn1;
+    u16 yn2;
+    u16 b0;
+    u16 b1;
+    u16 b2;
+    u16 a1;
+    u16 a2;
+};
+
+// Abstract biquad coefficient provider; GetBiquadCoefs sits at vtable slot
+// 3 (offset 0xC).
+class IBiquadProvider {
+public:
+    virtual ~IBiquadProvider();
+    virtual void GetBiquadCoefs(int biquadType, BiquadCoefs* pCoefs,
+                                f32 value);
+};
+
+} // namespace
+
+extern "C" u32
+    GetSampleByDspAddress__Q44nw4r3snd6detail7AxVoiceFPCvUlQ34nw4r3snd12SampleFormat(
+        const void* pBase, u32 addr, nw4r::snd::SampleFormat fmt) {
+    if (pBase != NULL) {
+        pBase = OSCachedToPhysical(pBase);
+    }
+
+    u32 samples = 0;
+
+    switch (fmt) {
+    case nw4r::snd::SAMPLE_FORMAT_PCM_S8: {
+        samples = addr - reinterpret_cast<u32>(pBase);
+        break;
+    }
+
+    case nw4r::snd::SAMPLE_FORMAT_DSP_ADPCM: {
+        // Nibble address -> sample index within the DSP ADPCM stream.
+        samples = addr - reinterpret_cast<u32>(pBase) * sizeof(u16);
+        // clang-format off
+        samples = (samples % AX_ADPCM_NIBBLES_PER_FRAME) +
+                  (samples / AX_ADPCM_NIBBLES_PER_FRAME * AX_ADPCM_SAMPLES_PER_FRAME) -
+                  sizeof(u16);
+        // clang-format on
+        break;
+    }
+
+    case nw4r::snd::SAMPLE_FORMAT_PCM_S16: {
+        samples = addr - reinterpret_cast<u32>(pBase) / sizeof(u16);
+        break;
+    }
+    }
+
+    return samples;
+}
+
+// IsNeedNextUpdate compares AxVoice's private mMixPrev (offset 0x1E) against
+// rParam field-by-field. The header is read-only this session, so the retail
+// entry point keeps its verbatim symbol and reads mMixPrev through a
+// layout-matched view instead of member access.
+namespace {
+struct MixPrevView {
+    u8 field_0x00[0x1E]; // AxVoice header up to mMixPrev
+    u16 vL;
+    u16 vR;
+    u16 vS;
+    u16 vAuxAL;
+    u16 vAuxAR;
+    u16 vAuxAS;
+    u16 vAuxBL;
+    u16 vAuxBR;
+    u16 vAuxBS;
+    u16 vAuxCL;
+    u16 vAuxCR;
+    u16 vAuxCS;
+};
+} // namespace
+
+extern "C" bool IsNeedNextUpdate__Q44nw4r3snd6detail7AxVoiceCFRCQ54nw4r3snd6detail7AxVoice8MixParam(
+    const nw4r::snd::detail::AxVoice* pThis,
+    const nw4r::snd::detail::AxVoice::MixParam& rParam) {
+    const MixPrevView& rPrev = *reinterpret_cast<const MixPrevView*>(pThis);
+
+    if (rPrev.vL != rParam.vL) {
+        return true;
+    }
+    if (rPrev.vR != rParam.vR) {
+        return true;
+    }
+    if (rPrev.vS != rParam.vS) {
+        return true;
+    }
+    if (rPrev.vAuxAL != rParam.vAuxAL) {
+        return true;
+    }
+    if (rPrev.vAuxAR != rParam.vAuxAR) {
+        return true;
+    }
+    if (rPrev.vAuxAS != rParam.vAuxAS) {
+        return true;
+    }
+    if (rPrev.vAuxBL != rParam.vAuxBL) {
+        return true;
+    }
+    if (rPrev.vAuxBR != rParam.vAuxBR) {
+        return true;
+    }
+    if (rPrev.vAuxBS != rParam.vAuxBS) {
+        return true;
+    }
+    if (rPrev.vAuxCL != rParam.vAuxCL) {
+        return true;
+    }
+    if (rPrev.vAuxCR != rParam.vAuxCR) {
+        return true;
+    }
+
+    return rPrev.vAuxCS != rParam.vAuxCS;
+}
+
+// SetBiquad is not declared in snd_AxVoice.h (header is read-only this
+// session), so the definition keeps the retail member symbol and receives
+// `this` explicitly; the voice's parameter-block pointer lives at offset
+// 0x0 of AxVoice.
+namespace {
+AxBiquadData* GetAxPbOf(const nw4r::snd::detail::AxVoice* pVoice) {
+    return reinterpret_cast<AxBiquadData*>(
+        *reinterpret_cast<void* const*>(pVoice));
+}
+
+AxHeaderView* GetAxHeader(nw4r::snd::detail::AxVoice* pVoice) {
+    return reinterpret_cast<AxHeaderView*>(pVoice);
+}
+} // namespace
+extern "C" void SetBiquad__Q44nw4r3snd6detail7AxVoiceFUcf(
+    nw4r::snd::detail::AxVoice* pThis, unsigned char biquad, f32 value) {
+    nw4r::ut::AutoInterruptLock lock;
+
+    if (GetAxPbOf(pThis) == NULL) {
+        return;
+    }
+
+    // Make sure the AX manager (which owns the provider table) is live.
+    nw4r::snd::detail::AxManager::GetInstance();
+
+    // Sequential availability checks clear the flag; either failure routes
+    // to the "filter off" path.
+    void* pProvider = lbl_eu_80637C20[biquad];
+    bool enable = true;
+    if (biquad == 0) {
+        enable = false;
+    }
+    if (pProvider == NULL) {
+        enable = false;
+    }
+
+    if (!enable) {
+        // No provider (or selector 0): silence the filter. Only the state
+        // half of the block is cleared before the bulk copy.
+        BiquadBlock clear;
+        clear.on = 0;
+        clear.xn1 = 0;
+        clear.xn2 = 0;
+        clear.yn1 = 0;
+        clear.yn2 = 0;
+
+        u32 lock = OSDisableInterrupts();
+        if (GetAxPbOf(pThis) == NULL) {
+            OSRestoreInterrupts(lock);
+        } else {
+            std::memcpy(GetAxPbOf(pThis)->biquad, &clear, sizeof(BiquadBlock));
+            GetAxHeader(pThis)->sync |= AX_PBSYNC_BIQUAD;
+            OSRestoreInterrupts(lock);
+        }
+    } else {
+        BiquadCoefs coefs;
+        u32 lock;
+
+        static_cast<IBiquadProvider*>(pProvider)
+            ->GetBiquadCoefs(biquad, &coefs, value);
+
+        bool biquadOn =
+            GetAxPbOf(pThis) != NULL &&
+            GetAxPbOf(pThis)->biquad[0] == AX_PB_BIQUAD_ON;
+
+        if (biquadOn) {
+            // Filter already running: update only the coefficients.
+            u16 b0;
+            u16 b1;
+            u16 b2;
+            u16 a1;
+            u16 a2;
+
+            // Reverse-order evaluation matches the retail temp scheduling.
+            a2 = coefs.a2;
+            a1 = coefs.a1;
+            b2 = coefs.b2;
+            b1 = coefs.b1;
+            b0 = coefs.b0;
+
+            lock = OSDisableInterrupts();
+            if (GetAxPbOf(pThis) == NULL) {
+                OSRestoreInterrupts(lock);
+            } else {
+                GetAxPbOf(pThis)->biquad[5] = b0;
+                GetAxPbOf(pThis)->biquad[6] = b1;
+                GetAxPbOf(pThis)->biquad[7] = b2;
+                GetAxPbOf(pThis)->biquad[8] = a1;
+                GetAxPbOf(pThis)->biquad[9] = a2;
+                GetAxHeader(pThis)->sync |= AX_PBSYNC_BIQUAD_COEFS;
+                OSRestoreInterrupts(lock);
+            }
+        } else {
+            // Cold start: reset the history registers and program the new
+            // coefficients in one block.
+            BiquadBlock iir;
+            iir.on = AX_PB_BIQUAD_ON;
+            iir.xn1 = 0;
+            iir.xn2 = 0;
+            iir.yn1 = 0;
+            iir.yn2 = 0;
+            iir.b0 = coefs.b0;
+            iir.b1 = coefs.b1;
+            iir.b2 = coefs.b2;
+            iir.a1 = coefs.a1;
+            iir.a2 = coefs.a2;
+
+            lock = OSDisableInterrupts();
+            if (GetAxPbOf(pThis) == NULL) {
+                OSRestoreInterrupts(lock);
+            } else {
+                std::memcpy(GetAxPbOf(pThis)->biquad, &iir,
+                            sizeof(BiquadBlock));
+                GetAxHeader(pThis)->sync |= AX_PBSYNC_BIQUAD;
+                OSRestoreInterrupts(lock);
+            }
+        }
+    } // lock restores the outer interrupt level
+}

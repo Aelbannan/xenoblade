@@ -102,15 +102,29 @@ void axrna_voice_drop(void* voice);
 void AXRNA_Destroy(void* self);
 void AXRNA_SetTransSw(void* self, s32 sw);
 void AXRNA_SetPlaySw(void* self, s32 sw);
-/* Channel-slot layout used by the streaming feed (offsets within an RNA
- * object). Field accesses go through the struct pointer so the compiler
- * must reload each object pointer after opaque calls, as in retail. */
+/* RNA object layout used by the streaming feed. The per-channel view has
+ * stride 4, so all channel state is reached through one union window:
+ * ch[0] = input ring (0x28), ch[2] = playback ring (0x30), ch[40] =
+ * output SJ (0xC8); MWCC strength-reduces these indexes into a single
+ * walking pointer, matching retail. Field accesses stay through the
+ * struct so pointers reload after opaque calls, as in retail. */
 typedef struct AxRnaFeed {
-    u8 pad0[0x10];
-    void* mem[6];       /* 0x10 per-channel buffer bases */
-    void* in_ring[2];   /* 0x28 shared input ring */
-    void* rings[38];    /* 0x30 playback rings */
-    void* out_sj[1];    /* 0xC8 output SJ objects */
+    u8 pad0[3];
+    s8 nch;              /* 0x03 channel count */
+    u8 pad1[0x24];       /* 0x04..0x27 */
+    union {
+        void* ch[41];    /* 0x28..0xCB stride-4 channel window */
+        struct {
+            u8 pad2[0x38];   /* 0x28..0x5F */
+            s32 halfFeedPos; /* 0x60 last-fed size (samples) */
+            s32 feedTotal;   /* 0x64 running fed total */
+            u8 pad3[0x54];   /* 0x68..0xBB */
+            s32 srcLen;      /* 0xBC input chunk length (samples) */
+            s32 ratio;       /* 0xC0 resample ratio */
+            s32 skipCnt;     /* 0xC4 consecutive underflow counter */
+            void* outSj0;    /* 0xC8 output SJ of channel 0 */
+        } sc;
+    } u;
 } AxRnaFeed;
 
 void AXRNA_SetSfreq(void* self, s32 sfreq);
@@ -165,11 +179,11 @@ void* AXRNA_Create(void* obj_arr, s32 maxnch, u8* buf) {
     void* slot;
     void* sj;
     void* vpb;
-    u32 i;
     u32 j;
     u32 n;
-    u8* ch;
     u8* bufp;
+    u8* ch;
+    u32 i;
 
     if (maxnch <= 0) {
         RNAERR_CallErrFunc((const char*)(lbl_eu_80519150 + 0));
@@ -218,8 +232,12 @@ void* AXRNA_Create(void* obj_arr, s32 maxnch, u8* buf) {
         u32* d = (u32*)slot;
         u32* s = (u32*)obj_arr;
         u32 k;
-        for (k = 0; k < (u32)(s8)((u8*)slot)[2]; k++) {
-            d[0xa] = *s++;
+        for (k = 0; k < (u32)(s8)((u8*)slot)[2];) {
+            /* increment order matches retail: load, ++k, store, ++s, ++d */
+            u32 v = *s;
+            k++;
+            d[0xa] = v;
+            s++;
             d++;
         }
     }
@@ -231,8 +249,8 @@ void* AXRNA_Create(void* obj_arr, s32 maxnch, u8* buf) {
     *(s32*)((u8*)slot + 0x94) = -0x3c0;
     *(s32*)((u8*)slot + 0x98) = 0;
 
-    ch = (u8*)slot;
     bufp = buf;
+    ch = (u8*)slot;
     for (i = 0; i < (s8)((u8*)slot)[2]; i++) {
         *(u32*)(ch + 0x10) = (u32)bufp;
         *(u32*)((u8*)slot + 0x18) = 0x1000;
@@ -359,6 +377,11 @@ void AXRNA_Destroy(void* self) {
 }
 
 void AXRNA_SetTransSw(void* self, s32 sw) {
+    /* Declaration order drives MWCC callee-saved assignment (retail:
+     * ch=r29, p38=r28, p48=r27, loop counter=r26). */
+    u8* ch;
+    u8* p38;
+    u8* p48;
     s32 cur;
     s32 i, j, k;
     if (self == NULL)
@@ -371,9 +394,6 @@ void AXRNA_SetTransSw(void* self, s32 sw) {
     if (sw == cur)
         return;
     if (sw == 1) {
-        u8* p48;
-        u8* p38;
-        u8* ch;
         GCRNA_LockCs();
         ch = (u8*)self;
         p38 = (u8*)self + 0x38;
@@ -402,8 +422,7 @@ void AXRNA_SetTransSw(void* self, s32 sw) {
         *(u8*)((u8*)self + 1) |= 1;
         GCRNA_UnlockCs();
     } else if (sw == 0) {
-        s32 nch = (s8)((u8*)self)[3];
-        for (i = 0; i < nch; i++) {
+        for (i = 0; i < (s32)(s8)((u8*)self)[3]; i++) {
             s32 cnt = 0;
             for (j = 0; j < 0x14; j++) {
                 for (k = 0; k < 0xa; k++) {
@@ -431,7 +450,8 @@ void AXRNA_SetTransSw(void* self, s32 sw) {
                 return;
             }
         }
-        *(u8*)((u8*)self + 1) &= ~2;
+        /* NB: bug-for-bug, retail masks with 2 (clears every other flag bit) */
+        *(u8*)((u8*)self + 1) &= 2;
     } else {
         RNAERR_CallErrFunc((const char*)(lbl_eu_80519150 + 0x142));
     }
@@ -597,66 +617,68 @@ void axrna_update_play(void* self) {
 }
 
 void axrna_start_trans(void* self) {
+    /* Walkers per retail: ch strides 4 over channels (voices +8, flags
+     * +0x58, playback ring +0x30, input ring +0x28); st strides 8 over
+     * the cached last-chunk slots (chunkB copy at +0x38, chunkA at
+     * +0x48); p38/p48 are the putChunk arguments. */
+    u8* ch;
+    u8* st;
+    u8* p38;
+    u8* p48;
     s32 i;
-    SJ_CHUNK chunkA;
+    void* sj;
+    void* obj;
     SJ_CHUNK chunkB;
-    SJ_CHUNK chunkC;
     SJ_CHUNK chunkD;
+    SJ_CHUNK chunkA;
+    SJ_CHUNK chunkC;
     s32 size;
-    u8* ch = (u8*)self + 0x38;
-    u8* cs = (u8*)self + 0x48;
-    u8* p38 = (u8*)self;
-    u8* p48 = (u8*)self;
+    p38 = (u8*)self + 0x38;
+    p48 = (u8*)self + 0x48;
+    ch = (u8*)self;
+    st = (u8*)self;
 
     for (i = 0; i < (s8)((u8*)self)[3]; i++) {
         if (*(u32*)(ch + 8) == 0)
             goto next;
         if (*(u32*)(ch + 0x58) != 0)
             goto next;
-        {
-            void* sj = *(void**)(ch + 0x30);
-            SJ_VT(sj)->getChunk(sj, 0, 0x2000, &chunkA);
-        }
-        {
-            void* obj = *(void**)(ch + 0x28);
-            SJ_VT(obj)->getChunk(obj, 1, chunkA.size, &chunkB);
-        }
-        size = (chunkA.size < chunkB.size) ? chunkA.size : chunkB.size;
-        size = (size / 0x20) * 0x20;
+        sj = *(void**)(ch + 0x30);
+        SJ_VT(sj)->getChunk(sj, 0, 0x2000, &chunkA);
+        obj = *(void**)(ch + 0x28);
+        SJ_VT(obj)->getChunk(obj, 1, chunkA.size, &chunkB);
+        /* signed truncating divide-by-32 round-down (srawi/addze in retail) */
+        size = ((chunkB.size < chunkA.size) ? chunkB.size : chunkA.size) / 0x20
+               * 0x20;
         SJ_SplitChunk(&chunkA, size, &chunkA, &chunkC);
-        {
-            void* sj = *(void**)(ch + 0x30);
-            SJ_VT(sj)->ungetChunk(sj, 0, &chunkC);
-        }
+        sj = *(void**)(ch + 0x30);
+        SJ_VT(sj)->ungetChunk(sj, 0, &chunkC);
         SJ_SplitChunk(&chunkB, size, &chunkB, &chunkD);
-        {
-            void* obj = *(void**)(ch + 0x28);
-            SJ_VT(obj)->ungetChunk(obj, 1, &chunkD);
-        }
+        obj = *(void**)(ch + 0x28);
+        SJ_VT(obj)->ungetChunk(obj, 1, &chunkD);
         if (size == 0)
             return;
-        *(s32*)(cs + 0x38) = (u32)chunkB.ptr;
-        *(s32*)(cs + 0x3c) = chunkB.size;
-        *(s32*)(cs + 0x48) = (u32)chunkA.ptr;
-        *(s32*)(cs + 0x4c) = chunkA.size;
-        *(s32*)((u8*)self + 0x60) = size >> 1;
-        DCFlushRange(*(void**)(cs + 0x38), *(u32*)(cs + 0x3c));
+        *(SJ_CHUNK*)(st + 0x38) = chunkB;
+        *(SJ_CHUNK*)(st + 0x48) = chunkA;
+        /* logical shift right here (srwi in retail), unlike start_flash */
+        *(u32*)((u8*)self + 0x60) = (u32)size >> 1;
+        DCFlushRange(*(void**)(st + 0x38), *(u32*)(st + 0x3c));
         *(s32*)(ch + 0x58) = 1;
         memcpy(chunkA.ptr, chunkB.ptr, size);
         DCFlushRange(chunkA.ptr, size);
         if (*(s32*)(ch + 0x58) == 1) {
-            void* obj = *(void**)(ch + 0x28);
+            obj = *(void**)(ch + 0x28);
             SJ_VT(obj)->putChunk(obj, 0, p38);
             obj = *(void**)(ch + 0x30);
             SJ_VT(obj)->putChunk(obj, 1, p48);
             *(s32*)(ch + 0x58) = 0;
-            if (i == (s8)((u8*)self)[3] - 1) {
-                *(s32*)((u8*)self + 0x64) += *(s32*)((u8*)self + 0x60);
+            if (i == (s32)(s8)((u8*)self)[3] - 1) {
+                *(u32*)((u8*)self + 0x64) += *(u32*)((u8*)self + 0x60);
             }
         }
     next:
         ch += 4;
-        cs += 8;
+        st += 8;
         p38 += 8;
         p48 += 8;
     }
@@ -664,95 +686,101 @@ void axrna_start_trans(void* self) {
 
 /* Streaming feed: resamples input-ring data into the output rings, then
  * mirrors one chunk per channel from the output rings back into the
- * playback rings. Compare widths follow retail (unsigned avail/size tests,
- * signed half/min tests). */
+ * playback rings. NB (bug-for-bug): the availability probe reads
+ * _this->in_ring but every actual chunk op walks the per-channel pointer
+ * chp (stride 4), and the skip counter only resets on a successful feed. */
 void criware_80399F4C(AxRnaFeed* _this) {
+    /* Declaration order drives MWCC callee-saved assignment (retail:
+     * chp=r29, dstx2=r28, srcx2=r27, i=r26, src_len=r25, dst_len=r24,
+     * m=r23). */
+    AxRnaFeed* chp;
+    s32 dstx2;
+    s32 srcx2;
+    s32 i;
     s32 src_len;
     s32 dst_len;
-    s32 c4;
     s32 m;
-    s32 i;
-    AxRnaFeed* chp;
-    void* sj;
-    void* obj;
-    void* ring;
-    SJ_CHUNK chunk1;
+    s32 c4;
     SJ_CHUNK chunk2;
     SJ_CHUNK out;
     SJ_CHUNK split1;
+    SJ_CHUNK chunk1;
     SJ_CHUNK split2;
 
-    src_len = *(s32*)((u8*)_this + 0xbc);
-    dst_len = (src_len * *(s32*)((u8*)_this + 0xc0)) / 100;
-    dst_len &= ~3;
-    if ((s8)_this->pad0[3] > 1) {
-        RNAERR_CallErrFunc((const char*)lbl_eu_80519150 + 0x450);
+    src_len = _this->u.sc.srcLen;
+    dst_len = (src_len * _this->u.sc.ratio / 100) & ~3;
+    if (_this->nch > 1) {
+        RNAERR_CallErrFunc((const char*)(lbl_eu_80519150 + 0x450));
         return;
     }
 
     chp = _this;
-    for (i = 0; i < (s8)_this->pad0[3]; i++) {
-        sj = chp->out_sj[0];
-        if ((u32)SJ_VT(sj)->getAvail(sj, 0) < (u32)(dst_len * 2)) {
+    dstx2 = dst_len * 2;
+    srcx2 = src_len * 2;
+    for (i = 0; i < _this->nch; i++) {
+        /* NB: every SJ access reloads the object pointer from the slot,
+         * matching retail (no caching across the opaque vtable calls). */
+        if ((u32)SJ_VT(chp->u.ch[40])->getAvail(chp->u.ch[40], 0)
+            < (u32)dstx2) {
             goto tail;
         }
-        obj = _this->in_ring[0];
-        if ((u32)SJ_VT(obj)->getAvail(obj, 1) < (u32)(src_len * 2)) {
-            c4 = *(s32*)&_this->pad0[0xc4];
+        if ((u32)SJ_VT(_this->u.ch[0])->getAvail(_this->u.ch[0], 1)
+            < (u32)srcx2) {
+            c4 = _this->u.sc.skipCnt;
             if (c4 <= 2) {
                 goto skip_inc;
             }
         }
-        SJ_VT(sj)->getChunk(sj, 0, dst_len * 2, &chunk1);
-        if ((u32)chunk1.size < (u32)(dst_len * 2)) {
-            RNAERR_CallErrFunc((const char*)lbl_eu_80519150 + 0x488);
-            SJ_VT(sj)->ungetChunk(sj, 0, &chunk1);
+        /* resample src_len input samples into a dst_len-sample chunk */
+        SJ_VT(chp->u.ch[40])->getChunk(chp->u.ch[40], 0, dstx2, &chunk1);
+        if ((u32)chunk1.size < (u32)dstx2) {
+            RNAERR_CallErrFunc((const char*)(lbl_eu_80519150 + 0x488));
+            /* retail recomputes this slot from the base (+i*4), not chp */
+            SJ_VT(_this->u.ch[i + 40])->ungetChunk(_this->u.ch[i + 40], 0,
+                                                   &chunk1);
             return;
         }
-        /* pull src_len samples out of the shared input ring */
-        obj = chp->in_ring[0];
-        SJ_VT(obj)->getChunk(obj, 1, src_len * 2, &chunk2);
-        memcpy((void*)lbl_eu_805F3A4C, chunk2.ptr, chunk2.size);
-        SJ_VT(obj)->putChunk(obj, 0, &chunk2);
-        m = (s32)((u32)chunk2.size >> 1);
+        SJ_VT(chp->u.ch[0])->getChunk(chp->u.ch[0], 1, srcx2, &chunk2);
+        memcpy(lbl_eu_805F3A4C, chunk2.ptr, chunk2.size);
+        SJ_VT(chp->u.ch[0])->putChunk(chp->u.ch[0], 0, &chunk2);
+        m = (u32)chunk2.size >> 1;
         if (m < src_len) {
-            SJ_VT(obj)->getChunk(obj, 1, (src_len - m) * 2, &chunk2);
-            memcpy((void*)((char*)lbl_eu_805F3A4C + m * 2), chunk2.ptr,
-                   chunk2.size);
-            SJ_VT(obj)->putChunk(obj, 0, &chunk2);
-            m += (s32)((u32)chunk2.size >> 1);
+            /* ring wrapped: pull the remainder, zero-fill any shortfall */
+            SJ_VT(chp->u.ch[0])->getChunk(chp->u.ch[0], 1, (src_len - m) * 2,
+                                          &chunk2);
+            memcpy((char*)lbl_eu_805F3A4C + m * 2, chunk2.ptr, chunk2.size);
+            SJ_VT(chp->u.ch[0])->putChunk(chp->u.ch[0], 0, &chunk2);
+            m += (u32)chunk2.size >> 1;
             if (m < src_len) {
-                memset((void*)((char*)lbl_eu_805F3A4C + m * 2), 0,
-                       (src_len - m) * 2);
+                memset((char*)lbl_eu_805F3A4C + m * 2, 0, (src_len - m) * 2);
             }
         }
         criware_8039B4E0((s16*)lbl_eu_805F3A4C, src_len, (s16*)chunk1.ptr,
                          dst_len);
-        SJ_VT(sj)->putChunk(sj, 1, &chunk1);
-        *(s32*)((u8*)_this + 0xc4) = 0;
+        SJ_VT(chp->u.ch[40])->putChunk(chp->u.ch[40], 1, &chunk1);
+        _this->u.sc.skipCnt = 0;
         goto tail;
     skip_inc:
-        *(s32*)((u8*)_this + 0xc4) = c4 + 1;
+        _this->u.sc.skipCnt = c4 + 1;
     tail:
-        ring = chp->rings[0];
-        SJ_VT(ring)->getChunk(ring, 0, 0x2000, &out);
-        sj = chp->out_sj[0];
-        SJ_VT(sj)->getChunk(sj, 1, out.size, &chunk1);
-        m = (chunk1.size < out.size) ? chunk1.size : out.size;
-        m = (m / 0x20) * 0x20;
+        /* mirror one aligned chunk from the output ring to the playback ring */
+        SJ_VT(chp->u.ch[2])->getChunk(chp->u.ch[2], 0, 0x2000, &out);
+        SJ_VT(chp->u.ch[40])->getChunk(chp->u.ch[40], 1, out.size, &chunk1);
+        /* signed round-to-multiple-of-32 of the smaller chunk size */
+        m = ((chunk1.size < out.size) ? chunk1.size : out.size) / 0x20 * 0x20;
         SJ_SplitChunk(&out, m, &out, &split1);
-        SJ_VT(ring)->ungetChunk(ring, 0, &split1);
+        SJ_VT(chp->u.ch[2])->ungetChunk(chp->u.ch[2], 0, &split1);
         SJ_SplitChunk(&chunk1, m, &chunk1, &split2);
-        SJ_VT(sj)->ungetChunk(sj, 1, &split2);
+        SJ_VT(chp->u.ch[40])->ungetChunk(chp->u.ch[40], 1, &split2);
         memcpy(out.ptr, chunk1.ptr, m);
         DCFlushRange(out.ptr, m);
-        SJ_VT(sj)->putChunk(sj, 0, &chunk1);
-        SJ_VT(ring)->putChunk(ring, 1, &out);
-        *(s32*)((u8*)_this + 0x60) = (u32)m >> 1;
-        if (i == (s8)((u8*)_this)[3] - 1) {
-            *(s32*)((u8*)_this + 0x64) += (u32)m >> 1;
+        SJ_VT(chp->u.ch[40])->putChunk(chp->u.ch[40], 0, &chunk1);
+        SJ_VT(chp->u.ch[2])->putChunk(chp->u.ch[2], 1, &out);
+        _this->u.sc.halfFeedPos = (u32)m >> 1;
+        if (i == _this->nch - 1) {
+            _this->u.sc.feedTotal += (u32)m >> 1;
         }
-        if (*(s32*)((u8*)_this + 0x64) > 0xBB80) {
+        if (_this->u.sc.feedTotal > 0xBB80) {
             lbl_eu_805F3A48++;
         }
         chp = (AxRnaFeed*)((char*)chp + 4);

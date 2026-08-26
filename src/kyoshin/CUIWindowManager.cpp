@@ -1222,18 +1222,54 @@ queue_found:
 // inlined push_back scan.
 extern "C" IUIWindow* func_8027E9E8(CProcess* pProc, CScn* pScene);
 int func_8013D8A0() {
+    volatile u32 savedRet;
     CUIWindowManager* inst = lbl_eu_80664088;
     if (inst == NULL) {
         return 0;
     }
-
-    IUIWindow* window = func_8027E9E8((CProcess*)inst->unk9C, inst->unk58);
-    if (window == NULL) {
-        return 0;
+    {
+        u32 tempRet = (u32)func_8027E9E8((CProcess*)inst->unk9C, inst->unk58);
+        savedRet = tempRet;
+        if (tempRet == 0) {
+            return 0;
+        }
     }
-
-    IUIWindow** slot = &window;
-    lbl_eu_80664088->mWindowList1.push_back(*slot);
+    inst = lbl_eu_80664088;
+    int i = 0;
+    int byteOff = 0;
+    WindowNode* temp;
+    int capacity;
+    WindowNode* startNode;
+    startNode = inst->mWindowList1.mStartNodePtr;
+    capacity = inst->mWindowList1.mCapacity;
+    goto queue_check;
+queue_body:
+    if (*(u32*)((u8*)inst->mWindowList1.mList + byteOff) == 0) {
+        goto queue_found;
+    }
+    byteOff += 0xc;
+    i++;
+queue_check:
+    if (i < capacity) {
+        goto queue_body;
+    }
+queue_found:
+    temp = (WindowNode*)((u8*)inst->mWindowList1.mList + i * 0xc);
+    {
+        u32* ptr = (u32*)&temp->mItem;
+        if (ptr != 0) {
+            try {
+                *ptr = savedRet;
+            } catch (...) {
+                throw;
+            }
+        }
+    }
+    temp->mNext = startNode;
+    temp->mPrev = startNode->mPrev;
+    startNode->mPrev->mNext = temp;
+    startNode->mPrev = temp;
+    return savedRet;
 }
 // Retail window creator (same body shape as func_8013D7C0).
 extern "C" IUIWindow* func_8013D978(u32 a1, u32 a2, u32 a3) {
@@ -1471,40 +1507,110 @@ queue_found:
 // Retail window creator: create the window from func_801602F4 and queue it
 // on the primary window list.
 extern "C" IUIWindow* func_8013DD94() {
+    volatile u32 savedRet;
     CUIWindowManager* inst = lbl_eu_80664088;
     if (inst == NULL) {
         return NULL;
     }
-
-    IUIWindow* window = func_801602F4((CProcess*)inst->unk9C, inst->unk58);
-    if (window == NULL) {
-        return NULL;
+    {
+        u32 tempRet = (u32)func_801602F4((CProcess*)inst->unk9C, inst->unk58);
+        savedRet = tempRet;
+        if (tempRet == 0) {
+            return NULL;
+        }
     }
-
     // Re-read the singleton: its live range ends at the factory call, so
     // retail reloads the global for the inlined push_back.
-    IUIWindow** slot = &window;
-    lbl_eu_80664088->mWindowList1.push_back(*slot);
-    return *slot;
+    inst = lbl_eu_80664088;
+    int i = 0;
+    int byteOff = 0;
+    WindowNode* temp;
+    int capacity;
+    WindowNode* startNode;
+    startNode = inst->mWindowList1.mStartNodePtr;
+    capacity = inst->mWindowList1.mCapacity;
+    goto queue_check;
+queue_body:
+    if (*(u32*)((u8*)inst->mWindowList1.mList + byteOff) == 0) {
+        goto queue_found;
+    }
+    byteOff += 0xc;
+    i++;
+queue_check:
+    if (i < capacity) {
+        goto queue_body;
+    }
+queue_found:
+    temp = (WindowNode*)((u8*)inst->mWindowList1.mList + i * 0xc);
+    {
+        u32* ptr = (u32*)&temp->mItem;
+        if (ptr != 0) {
+            try {
+                *ptr = savedRet;
+            } catch (...) {
+                throw;
+            }
+        }
+    }
+    temp->mNext = startNode;
+    temp->mPrev = startNode->mPrev;
+    startNode->mPrev->mNext = temp;
+    startNode->mPrev = temp;
+    return (IUIWindow*)savedRet;
 }
 // Retail window creator: create the Col6 hint window and queue it on the
 // primary window list.
 extern "C" IUIWindow* func_8013DE6C() {
+    volatile u32 savedRet;
     CUIWindowManager* inst = lbl_eu_80664088;
     if (inst == NULL) {
         return NULL;
     }
-
-    IUIWindow* window = func_8015DCD0((CProcess*)inst->unk9C, inst->unk58);
-    if (window == NULL) {
-        return NULL;
+    {
+        u32 tempRet = (u32)func_8015DCD0((CProcess*)inst->unk9C, inst->unk58);
+        savedRet = tempRet;
+        if (tempRet == 0) {
+            return NULL;
+        }
     }
-
     // Re-read the singleton: its live range ends at the factory call, so
     // retail reloads the global for the inlined push_back.
-    IUIWindow** slot = &window;
-    lbl_eu_80664088->mWindowList1.push_back(*slot);
-    return *slot;
+    inst = lbl_eu_80664088;
+    int i = 0;
+    int byteOff = 0;
+    WindowNode* temp;
+    int capacity;
+    WindowNode* startNode;
+    startNode = inst->mWindowList1.mStartNodePtr;
+    capacity = inst->mWindowList1.mCapacity;
+    goto queue_check;
+queue_body:
+    if (*(u32*)((u8*)inst->mWindowList1.mList + byteOff) == 0) {
+        goto queue_found;
+    }
+    byteOff += 0xc;
+    i++;
+queue_check:
+    if (i < capacity) {
+        goto queue_body;
+    }
+queue_found:
+    temp = (WindowNode*)((u8*)inst->mWindowList1.mList + i * 0xc);
+    {
+        u32* ptr = (u32*)&temp->mItem;
+        if (ptr != 0) {
+            try {
+                *ptr = savedRet;
+            } catch (...) {
+                throw;
+            }
+        }
+    }
+    temp->mNext = startNode;
+    temp->mPrev = startNode->mPrev;
+    startNode->mPrev->mNext = temp;
+    startNode->mPrev = temp;
+    return (IUIWindow*)savedRet;
 }
 
 // NOTE: retail inlines reslist<IUIWindow*>::push_back into every window
@@ -1584,17 +1690,17 @@ int func_8013E030() {
             return 0;
         }
     }
-    CUIWindowManager* inst2 = lbl_eu_80664088;
+    inst = lbl_eu_80664088;
     int i = 0;
     int byteOff = 0;
     WindowNode* temp;
     int capacity;
     WindowNode* startNode;
-    startNode = inst2->mWindowList1.mStartNodePtr;
-    capacity = inst2->mWindowList1.mCapacity;
+    startNode = inst->mWindowList1.mStartNodePtr;
+    capacity = inst->mWindowList1.mCapacity;
     goto queue_check;
 queue_body:
-    if (*(u32*)((u8*)inst2->mWindowList1.mList + byteOff) == 0) {
+    if (*(u32*)((u8*)inst->mWindowList1.mList + byteOff) == 0) {
         goto queue_found;
     }
     byteOff += 0xc;
@@ -1604,7 +1710,7 @@ queue_check:
         goto queue_body;
     }
 queue_found:
-    temp = (WindowNode*)((u8*)inst2->mWindowList1.mList + i * 0xc);
+    temp = (WindowNode*)((u8*)inst->mWindowList1.mList + i * 0xc);
     {
         // Expanded node::setItem: reading the volatile savedRet inside the
         // guard keeps the reload after the addic./beq, as in retail.
@@ -1621,6 +1727,7 @@ queue_found:
     temp->mPrev = startNode->mPrev;
     startNode->mPrev->mNext = temp;
     startNode->mPrev = temp;
+    return savedRet;
 }
 // Retail window creator: create the shop-select window and queue it on the
 // primary list (expanded inlined reslist::push_back). A quest-menu open guard
@@ -1682,21 +1789,57 @@ queue_found:
 // Retail window creator: create the item-exchange window and queue it on the
 // primary window list.
 extern "C" IUIWindow* func_8013E204(u32 id) {
+    volatile u32 savedRet;
     CUIWindowManager* inst = lbl_eu_80664088;
     if (inst == NULL) {
         return NULL;
     }
-
-    IUIWindow* window = func_801BEDE0((CProcess*)inst->unk9C, inst->unk58, id);
-    if (window == NULL) {
-        return NULL;
+    {
+        u32 tempRet =
+            (u32)func_801BEDE0((CProcess*)inst->unk9C, inst->unk58, id);
+        savedRet = tempRet;
+        if (tempRet == 0) {
+            return NULL;
+        }
     }
-
-    // Address-taken local: retail spills the window across the inlined
-    // push_back scan.
-    IUIWindow** slot = &window;
-    lbl_eu_80664088->mWindowList1.push_back(*slot);
-    return *slot;
+    // Re-read the singleton: its live range ends at the factory call, so
+    // retail reloads the global for the inlined push_back.
+    inst = lbl_eu_80664088;
+    int i = 0;
+    int byteOff = 0;
+    WindowNode* temp;
+    int capacity;
+    WindowNode* startNode;
+    startNode = inst->mWindowList1.mStartNodePtr;
+    capacity = inst->mWindowList1.mCapacity;
+    goto queue_check;
+queue_body:
+    if (*(u32*)((u8*)inst->mWindowList1.mList + byteOff) == 0) {
+        goto queue_found;
+    }
+    byteOff += 0xc;
+    i++;
+queue_check:
+    if (i < capacity) {
+        goto queue_body;
+    }
+queue_found:
+    temp = (WindowNode*)((u8*)inst->mWindowList1.mList + i * 0xc);
+    {
+        u32* ptr = (u32*)&temp->mItem;
+        if (ptr != 0) {
+            try {
+                *ptr = savedRet;
+            } catch (...) {
+                throw;
+            }
+        }
+    }
+    temp->mNext = startNode;
+    temp->mPrev = startNode->mPrev;
+    startNode->mPrev->mNext = temp;
+    startNode->mPrev = temp;
+    return (IUIWindow*)savedRet;
 }
 
 // Window factory: create an item-multi window on the primary queue. The
@@ -2107,19 +2250,56 @@ queue_found:
 // Retail window creator: create the save window (CSysWinSave) and queue it on
 // the primary window list.
 extern "C" IUIWindow* func_8013E9D8() {
+    volatile u32 savedRet;
     CUIWindowManager* inst = lbl_eu_80664088;
     if (inst == NULL) {
         return NULL;
     }
-
-    IUIWindow* window = __ct__802944D8((CProcess*)inst->unk9C, inst->unk58);
-    if (window == NULL) {
-        return NULL;
+    {
+        u32 tempRet = (u32)__ct__802944D8((CProcess*)inst->unk9C, inst->unk58);
+        savedRet = tempRet;
+        if (tempRet == 0) {
+            return NULL;
+        }
     }
-
-    IUIWindow** slot = &window;
-    lbl_eu_80664088->mWindowList1.push_back(*slot);
-    return *slot;
+    // Re-read the singleton: its live range ends at the factory call, so
+    // retail reloads the global for the inlined push_back.
+    inst = lbl_eu_80664088;
+    int i = 0;
+    int byteOff = 0;
+    WindowNode* temp;
+    int capacity;
+    WindowNode* startNode;
+    startNode = inst->mWindowList1.mStartNodePtr;
+    capacity = inst->mWindowList1.mCapacity;
+    goto queue_check;
+queue_body:
+    if (*(u32*)((u8*)inst->mWindowList1.mList + byteOff) == 0) {
+        goto queue_found;
+    }
+    byteOff += 0xc;
+    i++;
+queue_check:
+    if (i < capacity) {
+        goto queue_body;
+    }
+queue_found:
+    temp = (WindowNode*)((u8*)inst->mWindowList1.mList + i * 0xc);
+    {
+        u32* ptr = (u32*)&temp->mItem;
+        if (ptr != 0) {
+            try {
+                *ptr = savedRet;
+            } catch (...) {
+                throw;
+            }
+        }
+    }
+    temp->mNext = startNode;
+    temp->mPrev = startNode->mPrev;
+    startNode->mPrev->mNext = temp;
+    startNode->mPrev = temp;
+    return (IUIWindow*)savedRet;
 }
 
 // Retail window creator (same body shape as func_8013D7C0).

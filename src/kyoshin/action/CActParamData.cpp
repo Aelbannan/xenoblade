@@ -1,13 +1,11 @@
 // Auto-scaffolded catalog TU for kyoshin/action/CActParamData
 // Replace stubs with high-level C/C++ during decomp.
 
-// CfGameManager.hpp and CBattleManager.hpp disagree on func_800D9354's
-// signature; this TU never calls it, so rename the clashing decl away
-// (same workaround as CtrlMoveBase.cpp).
-#define func_800D9354 cfGameMgr9354DeclUnused
+// func_800D9354 has a single shared decl on kyoshin/cf/CBattleManagerApi.hpp;
+// CfGameManager.hpp carries no local copy.
 #include "kyoshin/harness_catalog.hpp"
-#undef func_800D9354
 #include "kyoshin/action/CActParamData.hpp"
+
 #include "libs/monolib/src/scn/CScnItemAnim.hpp"
 #include "monolib/util/FixStr.hpp"
 #include <stdarg.h>
@@ -2669,70 +2667,48 @@ convert:
 // byte-match of the conversion blocks still open (see attempts.jsonl).
 // ============================================================
 int func_80057BA0(u32 flags, ActParamT19ArgA* a, ActParamT19ArgB* b, ActParamT19ArgC* c) {
-    union {
-        u32 w[2];
-        double d;
-    } cx, cy;
-    cx.w[0] = 0x43300000u;
-    cy.w[0] = 0x43300000u;
     if ((flags & 2) == 0) {
         return 0;
     }
     u16 x = c->mShort28;
-    if (x == 0 && c->mShort2A == 0) {
+    if (x == 0) {
+        if (c->mShort2A != 0) {
+            // Upper index only: pass when t reaches it.
+            if (b->mFloat54 >= c->mShort2A) {
+                goto dispatch;
+            }
+            goto ret0;
+        }
         goto dispatch;
     }
-    if (x != 0) {
-        goto lower;
-    }
-    // x == 0: only an upper bound is set.
-    if (c->mShort2A == 0) {
-        goto lower;
-    }
-    cy.w[1] = c->mShort2A;
-    if (!(b->mFloat54 < cy.d - lbl_eu_80665F90)) {
-        goto dispatch;
-    }
-lower:
-    // y == 0: only a lower bound is set.
+    // x != 0
     if (c->mShort2A != 0) {
         goto window;
     }
-    if (x == 0) {
-        goto window;
-    }
-    cx.w[1] = x;
-    if (b->mFloat54 <= cx.d - lbl_eu_80665F90) {
+    // Lower index only: pass when t reaches it.
+    if (b->mFloat54 >= x) {
         goto dispatch;
     }
+    goto ret0;
 window:
-    // Both bounds set: pass only when t is at most the lower bound and
-    // exactly equals the upper bound value.
-    if (x == 0) {
-        return 0;
+    // Both indices set: t must reach the lower index but stay below the
+    // upper one.
+    if (b->mFloat54 < x) {
+        goto ret0;
     }
-    if (c->mShort2A == 0) {
-        return 0;
+    if (b->mFloat54 >= c->mShort2A) {
+        goto ret0;
     }
-    cx.w[1] = x;
-    double xv = cx.d - lbl_eu_80665F90;
-    if (b->mFloat54 > xv) {
-        return 0;
-    }
-    cy.w[1] = c->mShort2A;
-    double yv = cy.d - lbl_eu_80665F90;
-    if (b->mFloat54 != yv) {
-        return 0;
-    }
+    goto dispatch;
+ret0:
+    return 0;
 dispatch:
     u32 packed = c->mField08;
     return lbl_eu_805705F0[(u16)packed - 0x2A](a->mField10, c->mField24,
                                                packed >> 16)
                ? 1
                : 0;
-}
-
-// us-80057d24: func_80057A64
+}// us-80057d24: func_80057A64
 // Window variant of func_80057BA0: bounds are the halfword pair at c+0x10 /
 // c+0x12, flag bit 0 gates, and the dispatch passes (vals->mField10,
 // c->mField0C, hi) into lbl_eu_805705F0[(u16)lo - 0x2A].
@@ -2745,61 +2721,42 @@ struct ActParamT19ArgD {
 };
 int func_80057A64(u32 flags, ActParamT19ArgA* a, ActParamT19ArgB* b,
                   ActParamT19ArgD* c) {
-    union {
-        u32 w[2];
-        double d;
-    } cx, cy;
-    cx.w[0] = 0x43300000u;
-    cy.w[0] = 0x43300000u;
     if ((flags & 1) == 0) {
         return 0;
     }
     u16 x = c->mShort10;
-    if (x == 0 && c->mShort12 == 0) {
+    if (x == 0) {
+        // x == 0
+        if (c->mShort12 != 0) {
+            // y only: pass when t reaches it.
+            if (b->mFloat54 >= c->mShort12) {
+                goto dispatch;
+            }
+            goto ret0;
+        }
         goto dispatch;
     }
-    if (x != 0) {
-        goto lower;
-    }
-    // x == 0: only an upper bound is set.
-    if (c->mShort12 == 0) {
-        goto lower;
-    }
-    cy.w[1] = c->mShort12;
-    if (!(b->mFloat54 < cy.d - lbl_eu_80665F90)) {
-        goto dispatch;
-    }
-lower:
-    // y == 0: only a lower bound is set.
+    // x != 0
     if (c->mShort12 != 0) {
         goto window;
     }
-    if (x == 0) {
-        goto window;
-    }
-    cx.w[1] = x;
-    if (b->mFloat54 <= cx.d - lbl_eu_80665F90) {
+    // x only: pass when t reaches it.
+    if (b->mFloat54 >= x) {
         goto dispatch;
     }
+    goto ret0;
 window:
-    // Both bounds set: pass only when t is at most the lower bound and
-    // exactly equals the upper bound value.
-    if (x == 0) {
-        return 0;
+    // Both indices set: t must reach the lower index but stay below the
+    // upper one.
+    if (b->mFloat54 < x) {
+        goto ret0;
     }
-    if (c->mShort12 == 0) {
-        return 0;
+    if (b->mFloat54 >= c->mShort12) {
+        goto ret0;
     }
-    cx.w[1] = x;
-    double xv = cx.d - lbl_eu_80665F90;
-    if (b->mFloat54 > xv) {
-        return 0;
-    }
-    cy.w[1] = c->mShort12;
-    double yv = cy.d - lbl_eu_80665F90;
-    if (b->mFloat54 != yv) {
-        return 0;
-    }
+    goto dispatch;
+ret0:
+    return 0;
 dispatch:
     u32 packed = c->mWord08;
     return lbl_eu_805705F0[(u16)packed - 0x2A](a->mField10, c->mField0C,

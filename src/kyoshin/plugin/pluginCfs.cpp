@@ -1348,7 +1348,7 @@ int equipItem(VMThread* vmThread) {
             // Same item type already equipped: nothing to do
             if (itemId >= 0 && itemId != (*slotRec >> 20)) {
                 // Item-type probe via the singleton (result discarded)
-                ((CItemImplInstance*)CItem_initItemImplInstances())
+                ((CItemImplInstance*)CItem_initItemImplInstances(slotRec))
                     ->getItemId(slotRec);
                 changed = 1;
                 act = 1;
@@ -1384,7 +1384,7 @@ int equipItem(VMThread* vmThread) {
                 void* invSlot = func_8015783C(type, charId, 0);
                 if (itemId == 0) {
                     // Empty equip: refresh the inventory entry's item view
-                    ((CItemImplInstance*)CItem_initItemImplInstances())
+                    ((CItemImplInstance*)CItem_initItemImplInstances(invSlot))
                         ->getItemId(invSlot);
                 } else {
                     func_80158118(invSlot, itemId & 0xFFFF, 1);
@@ -1437,7 +1437,7 @@ int equipWeapon(VMThread* pThread) {
             return 0;
         }
         // Item-type probe via the item implementation singleton (result unused)
-        ((CItemImplInstance*)CItem_initItemImplInstances())->getItemId(weaponSlot);
+        ((CItemImplInstance*)CItem_initItemImplInstances(weaponSlot))->getItemId(weaponSlot);
         short slotVal;
         int unkVal;
         func_80158420(weaponId & 0xFFFF, &slotVal, 1, &unkVal);
@@ -1452,7 +1452,7 @@ int equipWeapon(VMThread* pThread) {
             void* invSlot = func_8015783C(2, charId, 0);
             if (weaponId == 0) {
                 // Empty equip: refresh the inventory entry's item view (discarded)
-                ((CItemImplInstance*)CItem_initItemImplInstances())->getItemId(invSlot);
+                ((CItemImplInstance*)CItem_initItemImplInstances(invSlot))->getItemId(invSlot);
             } else {
                 func_80158118(invSlot, weaponId & 0xFFFF, 1);
                 func_80155A00(invSlot);
@@ -1486,7 +1486,7 @@ int getWeaponSlot(VMThread* vmThread) {
     slotData = func_8009D790(&charData[7], 5);
 
     if (slotData != NULL) {
-        CItemImplInstance* inst = (CItemImplInstance*)CItem_initItemImplInstances();
+        CItemImplInstance* inst = (CItemImplInstance*)CItem_initItemImplInstances(slotData);
         itemId = inst->getWeaponSlot(slotData) & 0xFFFF;
     } else {
         // Swapped first guard blocks MWCC's unsigned-range fusion so the
@@ -1498,7 +1498,7 @@ int getWeaponSlot(VMThread* vmThread) {
             // Item-type nibble sits at bits 16-19; reading it unsigned lets
             // MWCC fold shift+mask into a single rotate and emit cmpli.
             if ((*invSlot >> 16 & 0xF) == 2) {
-                CItemImplInstance* inst = (CItemImplInstance*)CItem_initItemImplInstances();
+                CItemImplInstance* inst = (CItemImplInstance*)CItem_initItemImplInstances((void*)invSlot);
                 itemId = inst->getWeaponSlot((void*)invSlot) & 0xFFFF;
             }
         } while (0);
@@ -1528,7 +1528,7 @@ int setWeaponSlot(VMThread* vmThread) {
     slotData = func_8009D790(&charData[7], 5);
 
     if (slotData != NULL) {
-        CItemImplInstance* inst = (CItemImplInstance*)CItem_initItemImplInstances();
+        CItemImplInstance* inst = (CItemImplInstance*)CItem_initItemImplInstances(slotData);
         inst->setWeaponSlot(slotData, itemId);
     } else {
         // Swapped-operand guards block MWCC's range-check fusion (see getWeaponSlot).
@@ -1536,7 +1536,7 @@ int setWeaponSlot(VMThread* vmThread) {
             if (1 > charId) break;
             if (11 < charId) break;
             int* invSlot = (int*)func_8015783C(2, charId, 0);
-            CItemImplInstance* inst = (CItemImplInstance*)CItem_initItemImplInstances();
+            CItemImplInstance* inst = (CItemImplInstance*)CItem_initItemImplInstances(invSlot);
             inst->setWeaponSlot(invSlot, itemId);
         } while (0);
     }

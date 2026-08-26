@@ -84,8 +84,7 @@ public:
     virtual void v04() = 0;
     virtual void v05() = 0;
     virtual void v06() = 0;
-    virtual void v07() = 0;
-    virtual u32 sf9() = 0; // vtable +0x24
+    virtual u32 sf9() = 0; // vtable +0x24 (empirical: 8 dummies gave +0x28)
 };
 
 // Overlay structs for the 'timg' message resource consumed by OnFileEvent:
@@ -615,7 +614,8 @@ extern "C" CItemImplV* CItem_initItemImplInstances(CArtsInfoListEntry* entry);
 // Retail call sites bind to the unmangled names, so keep C linkage
 // (same style as CItemBoxGrid.hpp).
 extern "C" int func_8026178C(void*, u32);
-extern "C" u32 func_8025FB10(void*, u32);
+// int-return form: single winning decl shared with chain/CChainActorList.hpp.
+extern "C" int func_8025FB10(void*, u32);
 
 // Float -> s32 conversion helper used by the arts-grid percentage functions
 // (func_8023916C): takes the scaled float in f1 and returns the truncated

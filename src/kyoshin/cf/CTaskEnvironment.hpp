@@ -55,7 +55,15 @@ struct CTaskEnvScene {
 
 // Opaque monolib light-group objects created by func_80058844.
 class CTimeLightGrp;
-class CVirtualLightObj;
+
+// Monolib virtual light object registered into scene-manager slots. Only the
+// +0x19 byte is known: func_80058844 sets it through the pointer returned by
+// the registration helpers (retail stores through r3 after the call).
+class CVirtualLightObj {
+public:
+    u8 pad00[0x19];
+    u8 field_0x19;
+};
 
 // Object pointed to by CTaskEnvironment +0xE0/+0xE4 (Term calls its vtable
 // slot-1 method with 1; retail r12 indirect dispatch).
@@ -174,7 +182,8 @@ extern "C" void __ct__8CProcessFv(CProcess* self);
 // C-linkage imports used by the environment-light setup (retail symbols).
 extern "C" void func_804923F8(CTaskEnvScnMgr* mgr, int flag);
 extern "C" void* func_80496004(void* scene);
-extern "C" void __ct__CTimeLightGrp(CTimeLightGrp* self, void* parent);
+extern "C" CTimeLightGrp* __ct__CTimeLightGrp(CTimeLightGrp* self,
+                                               void* parent);
 extern "C" CVirtualLightObj* func_804930BC(CTaskEnvScnMgr* mgr, const u8* slot,
                                            const void* color);
 extern "C" CVirtualLightObj* func_804933AC(CTaskEnvScnMgr* mgr, const u8* slot,

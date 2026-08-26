@@ -144,25 +144,29 @@ void adxm_unlock(void) {
 
 // Raise the mwidle thread to its "border" priority and spin until it has
 // actually started running (flag at 0x44 cleared), then restore the priority.
-// If the thread never acknowledges, report the error string and carry on.
+// If the thread never acknowledges within the spin limit, report the error
+// string and carry on.
 void adxm_goto_mwidle_border(void) {
     struct AdxmBase* base = &lbl_eu_805F3A50;
-    struct AdxParams* prm = &base->field_0x10;
-    s32 spin;
+    struct AdxParams* prm;
     s32 prio;
+    s32 spin;
+    s32 limit;
 
     if (base->field_0x390 != 1) {
-        prio = (s32)prm->field_0x18;
+        struct AdxParams* prm = &base->field_0x10;
         base->field_0x44 = 1;
-        OSSetThreadPriority(&base->field_0x398, (s32)prm->field_0x00);
+        prio = prm->field_0x18;
+        OSSetThreadPriority(&base->field_0x398, prm->field_0x00);
+        limit = 0xBEBC200;
         spin = 0;
         do {
             OSResumeThread(&base->field_0x398);
             if (base->field_0x44 == 0)
                 break;
             spin += 1;
-        } while (spin < 0xBEBC200);
-        if (spin == 0xBEBC200)
+        } while (spin < limit);
+        if (spin == limit)
             SVM_CallErr1(lbl_eu_805196D4);
         OSSetThreadPriority(&base->field_0x398, prio);
     }
@@ -179,18 +183,19 @@ void adxm_safe_proc(void) {
 extern u32 lbl_eu_805E26DC;
 
 void adxm_vsync_proc(void) {
-    u32* cnt = &lbl_eu_805E26DC;
     struct AdxmBase* base = &lbl_eu_805F3A50;
-    struct AdxMwCb* cb = &base->field_0x68;
     while (base->field_0x9D8 == 1) {
         u32 a;
         u32 b;
         VIWaitForRetrace();
+        /* counters: read both before either store (retail shape) */
+        b = lbl_eu_805E26DC + 1;
         a = base->field_0x4C + 1;
-        b = *cnt + 1;
+        lbl_eu_805E26DC = b;
         base->field_0x4C = a;
-        *cnt = b;
         SVM_ExecSvrVsync();
+        /* independent derivation keeps this pointer out of base's value graph */
+        struct AdxMwCb* cb = &lbl_eu_805F3A50.field_0x68;
         if (base->field_0x390 == 0) {
             OSResumeThread(&base->field_0x398);
             if (base->field_0x68.fn != NULL) {
@@ -213,8 +218,11 @@ void adxm_fs_proc(void) {
 
 void adxm_mwidle_proc(void) {
     struct AdxmBase* base = &lbl_eu_805F3A50;
-    struct AdxParams* prm = &base->field_0x10;
-    struct AdxMwCb* cb = &base->field_0x68;
+    s32 zero = 0;
+    /* Derive prm/cb straight from the global (not via base) so MWCC keeps
+     * them as separate addi webs off the shared base register, like retail */
+    struct AdxParams* prm = &lbl_eu_805F3A50.field_0x10;
+    struct AdxMwCb* cb = &lbl_eu_805F3A50.field_0x68;
     s32 r;
     while (base->field_0x9E8 == 1) {
         base->field_0x54 += 1;
@@ -224,10 +232,10 @@ void adxm_mwidle_proc(void) {
                 continue;
         }
         if (base->field_0x44 == 1) {
-            base->field_0x44 = 0;
+            base->field_0x44 = zero;
             OSSetThreadPriority(&base->field_0x398, (s32)prm->field_0x18);
         }
-        if (base->field_0x68.fn != NULL) {
+        if (cb->fn != NULL) {
             cb->fn(cb->obj);
         }
         if (r == 0 && base->field_0x08 == 1) {

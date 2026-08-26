@@ -3847,13 +3847,13 @@ reordering among uninitialized decls alone had no effect (birth follows first us
 - Confidence: repo_proven (8 independent certifications)
 - Applies to/a.k.a.: supersedes "operand order invariant to expression shape" for the named-local case; also fixed the 0xDC mtRand-gated variants; do NOT hoist the const itself into a local (it becomes call-persistent → f31 + early load, regresses).
 
-## Witness ABI-gate: register-renaming permutations touching r22 and below are rejected (<tooling boundary>)
-- Symptom:   cycle witness FAIL with `witness-gate: abi-boundary | rho perm maps gpr r22 -> r24; ABI registers must be fixed` on an otherwise role-clean pure-reg-swap residual.
-- Cause:     the register-renaming witness treats r22 (and below) as fixed ABI registers and refuses any rho permutation that remaps them; saved-register rotations whose diff set includes r21/r22 can never certify at EQUIVALENT_MATCH.
-- Fix:       no source-level workaround — such targets must reach FULL_MATCH (exact colors) or stay recorded near-misses. Check the diff's register-mapping table for r22-or-lower entries BEFORE running cycle on a reg-swap-only residual.
-- Result:    func_801DF610 97.3% CODE_MATCH rejected despite 100% role-clean swaps.
+## CItemBoxInfo rotation family: witness path CLOSED (confirms existing stmw save-area entry above); NEW: hexdiff can mask real store-displacement diffs as 'reg_swap'
+- Symptom:   0-structural pure-reg-swap near-misses in stmw-framed functions fail cycle with abi-boundary (`rho perm maps gpr rN -> rM` for N inside the function's own stmw mask) — confirms the func_80284DCC/func_80284F1C stmw finding. Separately, hexdiff classified rows as pure `reg_swap` even when the store DISPLACEMENT also differed (e.g. `sth r28,18(sp)` vs `sth r30,16(sp)`), hiding real instruction-stream divergence from the diff view; the witness caught it at its fields gate (`slot 76 ... 0x00000002` = displacement low bit).
+- Cause:     (a) stmw/lmw save-mask registers are pinned ABI for the rho permutation (existing rule); (b) hexdiff's role-clean classification keys on register-field mapping and does not surface displacement-bit deltas on those rows.
+- Fix:       decode the raw words directly (XOR both sides' instruction streams, mask GPR fields) to expose displacement/immediate deltas that hexdiff hides. In func_801E3B9C this revealed retail stores each all-shade s16 pair in DESCENDING element order (`{z,z}` pairs via explicit `arr[1]=z; arr[0]=z;`) and copies the four colour words to args[] in ASCENDING slot order — both now matched in source.
+- Result:    func_801E3B9C stream fully order-matched; still witness-closed by the stmw pin (needs FULL_MATCH). func_801DF610 same.
 - Confidence: repo_proven
-- Applies to/a.k.a.: saved-reg rotation wall family (func_801D8318/D8C0C/D8930/E9190/E9224/DF4E0/DF578); witness-gate; EQUIVALENT_MATCH eligibility pre-check.
+- Applies to/a.k.a.: func_801D8318/D8C0C/D8930/E9190/E9224/DF4E0/DF578/E3918/E4194 rotation family; any stmw-framed reg-swap target; hexdiff-vs-witness granularity gap.
 
 ## Derived dtor must chain through a base whose retail dtor is a forced-name free function: declare the base dtor undefined + exact_renames the UNDEF (CfObjectTbox fix, Wii/1.1 -O4,p)
 - Symptom:   derived `~Derived()` hexdiff shows an extra `cmpi this,0 / beq` guard around a direct `bl __dt__<GrandBase>Fv` call; retail instead calls an intermediate base's dtor unconditionally via a flat retail name (`__dt__800BFA14`), size +8.
@@ -4066,3 +4066,104 @@ reordering among uninitialized decls alone had no effect (birth follows first us
 - Result:    CNBanner .sbss 0x4 MATCH; all 9 functions still byte-exact.
 - Confidence: repo_proven
 - Applies to/a.k.a.: any monolib TU with `-sdata 0` whose retail split carries a small .sbss object; pairs with the inject_relocs recipe above.
+
+## Cross-header extern "C" conflicts surface only when a new include leaks into an existing chain (infra, CfCamEvent_1 TU blocked by CTaskGameEff.hpp edit)
+- Symptom:   TU that compiled cleanly for days suddenly fails with `(10505) illegal overloading` / `(10563) identifier redeclared` / `(10197) illegal function overloading` in headers it includes — but none of those headers were touched by this agent.
+- Cause:     another agent's edit to a transitively-included header (e.g., adding `#include "CfObjectImplMove.hpp"` to CTaskGameEff.hpp) introduces a second, divergent extern "C" declaration of a symbol your hpp also declares. MWCC errors lazily at the first USE site, not at the declaration.
+- Diagnosis: run the compiler directly with `-maxerrors 20` (not via hexdiff/ninja) to get the full error list; trace which newly-visible header brings each conflicting decl; grep all declarations of each name across include/ and src/.
+- Fix:       per conflict, (1) align return types to the canonical DEFINITION (grep ocBdat.cpp etc.), (2) make const-ness consistent (sdata2 constants are const), (3) remove divergent prototypes entirely and cast through local function-pointer typedefs at call sites (see interface-cast pattern above). Verify zero blast radius: grep all other includers of the changed header for uses of the changed names.
+- Result:    CfCamEvent_1 TU unblocked; 16/39 FULL_MATCH preserved; zero regressions.
+- Confidence: repo_proven
+- Applies to/a.k.a.: multi-agent concurrent edits; shared bdat/math/collision headers; any TU whose build breaks without its own sources changing
+
+## Direct extern "C" calls vs static inline wrappers: bare-symbol call sites need the direct form (func_80076D8C fix, GC/3.0a5.2 -O4,p)
+- Symptom:   reloc drift shows mangled callee (`getCol8__FPvPCci`, `func_80076CE4__Fii`) where retail has bare names (`getBdatStringColumnValue`, `func_80076CE4`); plus extra instructions from the wrapper layer.
+- Cause:     `static inline` helper wrappers around extern "C" functions emit their own frame + mangled call when MWCC declines to inline them under -ipa file.
+- Fix:       replace wrapper calls with direct `(u8)extern_c_function(...)` calls; declare the callees' definitions as `extern "C"` if retail uses bare symbols. Note: extern "C" linkage change requires re-verification of the changed function's own match status.
+- Result:    func_80076D8C 17.2% -> 31.1%; all callee reloc names now match retail.
+- Confidence: repo_proven
+- Applies to/a.k.a.: getCol8/getCol16-style column-read helpers; any static inline wrapping an extern "C" API
+
+## Sub-100 instruction_match on byte-identical functions = objdiff unlinked-object scoring artifact (midband batch 01 finding, Wii/1.1)
+- Symptom:   registry row labelled FULL_MATCH with persisted instruction_match stuck below 100 (tiny functions across different units all reporting the identical 97.5 floor; larger ones 98.x-99.9x), while `hexdiff --json` shows mismatch_count=0, reg_swap=0, structural=0, reloc_drift=[] and `cycle` issues a full-match equivalence certificate.
+- Cause:     objdiff scores raw instruction bytes on UNLINKED .o pairs; REL24/SDA21 displacement fields that only resolve at DOL link cannot match, and tiny functions get diluted by section-level weighting. Not reachable by any high-level C++ change.
+- Fix:       none required — certify via hexdiff --json (0/0/0, drift empty, size ok) plus the cycle full-match certificate; the registry `status: FULL_MATCH` is the acceptance authority. Do NOT chase the percentage with source churn (each speculative edit risks regressing real matches).
+- Result:    19/63 midband rows closed as FULL_MATCH with documented artifact residual; 44 rows measure a true 100.0 after a fresh cycle refresh.
+- Confidence: repo_proven
+- Applies to/a.k.a.: any batch whose mandate reads "instruction_match in (0,100) is a real residual" — triage with hexdiff FIRST; most such rows are stale or artifact, not real residuals.
+
+## #pragma force_active does NOT stop -ipa file compile-time dead-stripping (g3d dcc trio, GC/3.0a5.2 -ipa file)
+- Symptom:   anon-namespace (internal-linkage) functions referenced only by retail data-blob tables are stripped at COMPILE time ("not written yet" in hexdiff) even when wrapped in `#pragma force_active on ... off`.
+- Cause:     force_active only sets the linker no-deadstrip symbol attribute; the `-ipa file` pass runs earlier in the compiler and strips unreferenced internal-linkage entities regardless. Same failure mode as `__attribute__((used))` (this MWCC ignores it too).
+- Fix:       none exists in-source for fixed mangled names + fixed data ownership. Keep the DECOMP_FORCEACTIVE emitter as the compile-time anchor and remove it from the linked object with UNIT_RULES `drop_text_symbols` (CNBanner/CDeviceGX/CGame_wkStandbyLogin/CWorkSystemCache precedent). Use the TRAILING-* prefix form ("FORCEACTIVE<unit>_cpp*") -- stub symbols embed a __LINE__ that drifts with every edit above the macro, and an exact name silently disarms the drop. The emitter's variadic `fake_function` call costs 0xAC-0x13C of retail-absent .text per unit until dropped.
+- Result:    g3d_maya/xsi/3dsmax: stubs kept, drops applied; split overflow +0xFC/+0x140/+0x100 -> +0x50/+0x4/+0x68 (residuals are genuine code-size overshoot of unmatched functions — verify tails are real epilogue code with a byte dump before ever considering patch_symbol_sizes).
+- Confidence: repo_proven
+- Applies to/a.k.a.: any TU whose internal-linkage functions are reachable only from data.s tables; pairs with the drop_text_symbols/repack_after_drop recipes.
+## Retire DECOMP_FORCEACTIVE emitters by restoring the real GC'd functions they were faking (dvd_broadway.c, Wii/1.1 -O4,p)
+- Symptom:   a unit carries `DECOMP_FORCEACTIVE` emitters (retail-absent variadic fake functions) held alive only to (a) pool string literals at retail .data offsets, (b) pin .bss first-reference order / keep unused .bss symbols alive; each emitter costs retail-absent .text until dropped and reads as fake in source.
+- Cause:     the retail SOURCE defined real functions there that the retail linker GC'd from the image; the literals/.bss pins they produced while compiling are still visible in the DOL-extracted retail .o. The emitters approximated their compile-time side effects.
+- Fix:       restore the REAL functions at their retail source positions (bodies templated from surviving siblings; only their literal-emission order matters since the text is dropped) and list them in `drop_text_symbols` exactly like the emitters were. Three concrete levers: (1) string-literal pooling — a restored function pools its own __FUNCTION__ + OSReport literals in first-use order at its position; shared literals (`"@@@ (...) IOS_IoctlvAsync..."`) reuse earlier pools via `-str reuse`, adding no .data. (2) .bss symbol liveness — a reference inside any restored function keeps the variable in .bss at its first-reference slot. (3) .bss FIRST-REFERENCE pin without a fake — make an early real helper non-static: static+single-call helpers are fully inlined away and pin nothing, but a non-static definition forces an outline copy at its early source position whose references pin the order (drop that outline copy via drop_text_symbols). After larger drops, `repack_after_drop=<func_align>` re-lays survivors so split-size still fits.
+- Result:    dvd_broadway.c: both emitters removed, 3 fake UnusedStr byte arrays deleted, 32/32 hexdiff green, split exact fit 0x26B0, .bss/.sbss layouts identical to retail; pre-existing section-symbol reloc-name drift unchanged.
+- Confidence: repo_proven
+- Applies to/a.k.a.: any FORCEACTIVE kept only for data-layout side effects; pairs with drop_text_symbols/repack_after_drop; KB cross-ref "WPAD bss order = first-reference order; only a real .text reference pins it".
+
+## extern "C" prototyped calls with >=6 lvalue args fail type-check (10248) — cast one arg to an integer rvalue (monolib/src/scn code_804BD8E8, Wii/1.1 -O4,p)
+- Symptom:   `(10248) function call 'f(void *, {lval} const void *, ...)' does not match 'f(void *, const void *, ...)'` on a call whose argument types exactly match the extern "C" prototype. Reproduces in a 6-line scratch TU; fires at 6 lvalue args (5 lvalues + 1 literal is fine).
+- Cause:     MWCC Wii/1.1 C++ front-end bug in the overload/candidate check when every argument is an lvalue and the candidate list has one extern "C" function. Casts to POINTER types still count as lvalues (`(const void*)a` fails); only integer-cast/literal rvalues clear it.
+- Fix:       cast one argument to its integer type at the callsite, e.g. pass `(u32)a3` for a `u32` param. Unprototyped `extern "C" void f();` decls are NOT an escape — `-lang=c++` treats them as zero-arg strict.
+- Result:    func_804BE348/func_804BE398 wrappers compile and match 100%.
+- Confidence: repo_proven
+- Applies to/a.k.a.: any TU forwarding many word args through extern "C" cross-TU entry points.
+
+## Countdown loops: only the `for (; n > 0; --n)` spelling gets mtctr/bdnz; do-while(--n) emits addic./bc (code_804BD8E8 func_804BE5C8 fix, Wii/1.1 -O4,p)
+- Symptom:   retail scan loop is `mtctr rN; cmpi; ble .Lskip; body; addi; bdnz`; decomp do-while with `while (--count)` lowers to `addic. rN,rN,-1; bc 4,2` (+2 instructions).
+- Cause:     MWCC's CTR-form recognition keys on the canonical counted-for shape (bound tested >0 before entry, decrement in the for-expression). A do-while with an explicit pre-guard keeps the counter in a GPR.
+- Fix:       write `for (; count > 0; --count) { ... }` (guard folds into the same cr0 as any preceding compare). Single-exit wrapper `if (n != 0) { for... } return K;` makes both exit paths share one tail `li/bclr`.
+- Result:    func_804BE5C8 and func_804BEE54 FULL_MATCH.
+- Confidence: repo_proven
+- Applies to/a.k.a.: pairs with the reslist::size() countdown note in MWCC_CASES (CDeviceFileCri).
+
+## Plain-name export of scaffolded funcs: extern "C" declaration BEFORE the definition; matched zero-arg wrappers keep their bare `b` via fn-pointer cast call (code_804BD8E8 linkage sweep, Wii/1.1)
+- Symptom:   decomp object exports `func_XXXX__Fv`-style mangled symbols while retail relocs (and sibling wrappers) reference plain `func_XXXX`; nm shows `U func_XXXX` + `T func_XXXX__Fv` in the same object.
+- Cause:     auto-scaffold declared stubs without extern "C"; MWCC then treats a later mismatching declaration as a distinct entity instead of erroring.
+- Fix:       declare `extern "C" <real signature> func_XXXX(<params>);` above the definition (the definition inherits C linkage, no keyword needed). Wrappers that must stay byte-exact bare `b func_XXXX` tail-calls but now face a prototyped callee compile as `((ret (*)())&func_XXXX)();` — zero args materialized, direct branch preserved.
+- Result:    func_804BE62C/func_804BEEF8 plain-name exports fixed; func_804BE538/BE5A4/BE5A8/BE628 stayed 100%.
+- Confidence: repo_proven
+- Applies to/a.k.a.: catalog TUs with mixed scaffolding; check nm on build/us/src/**/*.o when cycle reports unresolved/plain-symbol drift.
+
+## Dense switch dispatching same-TU helpers: noinline every case target
+
+- Symptom:   dispatcher function explodes to many times retail size; hexdiff shows hundreds of structural diffs and decomp-side relocs vanish (case bodies present inline instead of `bl` per case)
+- Cause:     `-ipa file` inlines every same-TU callee into the switch, destroying the jump-table form
+- Fix:       add `__declspec(noinline)` to each case-target DEFINITION (bodies unchanged), plus an `extern "C"` declaration block BEFORE the definitions so call sites resolve to the unmangled retail symbols. Verify the state->function mapping against the retail asm table entry-by-entry (a one-slot shift cascades through all subsequent relocs). Existing postprocess `data_pool_patterns` rules name the auto-emitted jumptable once the shape matches
+- Result:    func_8021FEDC (CModelDispMakeCrystal) 0.7% -> 100.0% FULL_MATCH; unit .text overage 3640B -> 324B
+- Confidence: repo_proven
+- Applies to/a.k.a.: any state-machine/opcode dispatcher over same-TU runners; also check the cmpli bounds constant (table size) and inline-case bodies against retail before assuming deeper problems
+
+### Weak-definition anti-folding for code references to locally-defined data labels (ScheduleList ctors)
+
+When a dissolved-data splice defines its vtable/label arrays **in the same TU** that references them
+from code (`self->vtable = (void*)&lbl_eu_XXXX`), MWCC folds multiple nearby-label references into ONE
+`lis/addi` anchor register plus constant-offset `addi`s (`addi r0,r27,+84`), while retail - whose ctor
+TU saw those tables as extern - emits one named `R_PPC_ADDR16_HA/LO` reloc pair PER reference. Byte
+shapes then diverge structurally and no extern "C" rename applies (symbols are already correctly
+named).
+
+**Fix:** mark the table *definitions* `__attribute__((weak))`. A weak definition can be overridden at
+link time, so MWCC must not fold references to it and emits individual named HA/LO relocs; the section
+bytes and layout are unchanged, and no other definition exists so addresses resolve identically.
+Verified on Wii/1.1 -O4,p: `extern "C" u32 lbl_eu_80570078[12] __attribute__((weak)) = {...};`
+converted 3 folded refs back into 3 named reloc pairs (structural mismatches 112 -> 99, frame delta
+-0x7c -> -0x60 in __ct__804E4B64) with zero regressions across all other unit functions.
+
+Applies to/a.k.a.: any TU where code must take named-reloc references to data labels it also defines
+(vptr stores in ctors/dtors of dissolved-data splices); complement to the "extern incomplete-array
+keeps sda21 away" trick (MWCC_CASES §1a) which only covers symbols defined in OTHER TUs.
+
+## Retail-inlined factory: spell it as a helper call over a STRING LITERAL so -ipa folds params through the inline (CWorkRoot::initialize fix, Wii/1.1 -O4,p -ipa file)
+- Symptom:   `initialize` hand-inlined the CWorkRootThread construction body (new + ctor + entryWork + spInstance store) and landed pure r30/r31 color inversions; swapping declaration order changed NOTHING (MWCC canonicalized), and passing the retail-named label `&lbl_eu_80522744[0]` instead of a literal BROKE the schedule entirely (getWorkMem hoisted above the string lis; prologue shrank to one saved reg).
+- Cause:     retail's shape is `create(pName, parent)` inlined by IPA with the call-site LITERAL constant-propagated through the inline — the parameter web is born as a known constant, which drives both scheduling and scratch coloring. An opaque named-array argument kills the constant fold, and IPA makes different inline/schedule decisions.
+- Fix:       keep the static factory (`CWorkRootThread::create(...)`) and call it with the string LITERAL: `create("CWorkRoot", nullptr)`. Residual: the literal pools as anon `@stringBase0` instead of the retail pool label (0.2% name-only reloc drift) — pairing it via UNIT_RULES would collide with the already-defined lbl_eu_80522744 array symbol, so accept at FULL_MATCH-with-certificate.
+- Result:    initialize FULL_MATCH 99.8% (from CODE_MATCH 98.5% with 13+ reg_swaps / 36 structural variants tried); standbyWork(thread,bool) refreshed to 100.0%.
+- Confidence: repo_proven
+- Applies to/a.k.a.: any TU where retail inlined a create/init factory into a caller — prefer helper-call-plus-literal over hand-inlining the body; register_mapping.md Rule A does not apply when an IPA-folded constant is the first-born web.

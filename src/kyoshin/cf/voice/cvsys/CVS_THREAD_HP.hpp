@@ -10,6 +10,13 @@ extern "C" {
     int  func_802A3C44(CVS_THREAD* self, CCharVoice* voicePtr, int voiceId);
     int  func_802A3D54(CCharVoice* voicePtr, int voiceId, int arg);
     CVoiceHandle* func_802A330C(int size, int align);
+
+    // Ring-buffer allocator from CCharVoiceMan.
+    u8* func_802A34E4(int size);
+
+    // Base-class constructor for CVS_THREAD (retail mangled
+    // __ct__cf_CVS_THREAD).
+    void __ct__cf_CVS_THREAD(void* self);
 }
 
 // Circular voice-node list returned by the voice manager func_800B6BA4().
@@ -85,14 +92,11 @@ extern f32 lbl_eu_80668CA0;
 extern f32 lbl_eu_80668CA4;
 
 // Randomly pick one idle voice handle from the voice-manager circular list,
-// excluding `exclude` (NULL when none available).
-CVoiceHandle* func_802A7998(CVoiceHandle* exclude);
+// excluding `exclude` (NULL when none available). Retail symbol is the plain
+// unmangled name, so keep C linkage.
+extern "C" CVoiceHandle* func_802A7998(CVoiceHandle* exclude);
 
-// Ring-buffer allocator from CCharVoiceMan (retail C++ linkage).
-u8* func_802A34E4(int size);
 
-// Base-class constructor for CVS_THREAD (retail mangled __ct__cf_CVS_THREAD).
-void __ct__cf_CVS_THREAD(void* self);
 
 /**
  * CVS_THREAD_HP - voice thread for HP-change audio events.

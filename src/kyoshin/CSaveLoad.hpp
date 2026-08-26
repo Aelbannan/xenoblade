@@ -10,7 +10,7 @@ class CSLCur {
 public:
     CSLCur();
     void func_8028EA74();
-    void func_8028EEC0();
+    // Retail defines func_8028EEC0 as an unmangled C-linkage helper, not a member.
 
     // Vtable-like pointer set manually (initialized to lbl_eu_8053884C); kept void*.
     void* mField0;    // 0x00
@@ -59,7 +59,7 @@ public:
     u8 mField123;                                        // 0x123
     u8 mField124;                                        // 0x124
     u8 _pad_125;                                         // 0x125
-    u16 mField126;                                       // 0x126 (halfword cursor position)
+    s16 mField126;                                       // 0x126 (halfword cursor position, signed)
     u8 mField128;                                        // 0x128
     u8 mField129;                                        // 0x129
     u8 mField12A;                                        // 0x12A
@@ -177,6 +177,7 @@ class CCur18Obj {
 public:
     virtual void vf2(int) = 0;  // slot 2 (0x08) - destructor
     virtual void vf3() = 0;     // slot 3 (0x0C) - cursor update function
+    virtual void vf4(int) = 0;  // slot 4 (0x10) - set button text (used by func_802908A4)
 };
 
 // Struct with ArcResourceAccessor at +0x00, Layout at +0x04, AnimTransform at +0x08.
@@ -235,6 +236,15 @@ struct CurMirror40 {
     void* w10;                      // +0x10
     u8 b14;                         // +0x14
     u8 b15;                         // +0x15
+};
+
+struct CurMirror110 {
+    void* w0;                       // +0x00
+    void* w4;                       // +0x04
+    void* w8;                       // +0x08
+    u8 bC;                          // +0x0C
+    u8 bD;                          // +0x0D
+    u8 bE;                          // +0x0E
 };
 
 struct CurMirror13C {

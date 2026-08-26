@@ -70,9 +70,9 @@ struct ColiObj {
 // Collision walk helpers in the sibling coli unit (code_804B59C8): take the
 // processing object plus a pointer into its u16 index array. C linkage so the
 // bl relocs carry the retail names.
-extern "C" void func_804B791C(ColiObj* self, const u16* list);
-extern "C" void func_804B7ACC(ColiObj* self, const u16* list);
-extern "C" bool func_804B7B6C(ColiObj* self, const u16* list);
+extern "C" void func_804B791C(ColiObj* self, const u16* list, u16 value);
+extern "C" void func_804B7ACC(ColiObj* self, const u16* list, int count);
+extern "C" bool func_804B7B6C(ColiObj* self, const u16* list, int count);
 
 extern "C" void func_804BAE10(void* self) { *(u32*)self = 0; }
 
@@ -195,12 +195,13 @@ bool func_804BB228(const Vec3* a, const Vec3* b) {
 // against the query radius, then descend into the node's children (branch
 // nodes) or iterate its child-triangle range (leaf nodes).
 void func_804BB2C0(ColiObj* self, ColiTri* tri) {
+    // both vertex indices are read before any address math (retail lhz pair)
+    const Vec3* vA = &self->verts[tri->field_0x4];
+    const Vec3* vB = &self->verts[tri->field_0x6];
     Vec3 v;
     v.x = lbl_eu_8065F3F0.x;
     v.y = lbl_eu_8065F3F0.y;
     v.z = lbl_eu_8065F3F0.z;
-    const Vec3* vA = &self->verts[tri->field_0x4];
-    const Vec3* vB = &self->verts[tri->field_0x6];
     if (vA->x < lbl_eu_8065F3F0.x) v.x = vA->x;
     if (vA->y < lbl_eu_8065F3F0.y) v.y = vA->y;
     if (vA->z < lbl_eu_8065F3F0.z) v.z = vA->z;
@@ -214,13 +215,14 @@ void func_804BB2C0(ColiObj* self, ColiTri* tri) {
         if ((tri->field_0x0 & 6) != 0) {
             u32 idx;
             if ((tri->field_0x0 & 2) != 0) {
-                func_804B791C(self, &self->indices[tri->field_0x8 + 1]);
+                func_804B791C(self, &self->indices[tri->field_0x8 + 1],
+                              self->indices[tri->field_0x8]);
                 idx = tri->field_0x8 + self->indices[tri->field_0x8] + 1;
             } else {
                 idx = tri->field_0x8;
             }
             if ((tri->field_0x0 & 4) != 0) {
-                func_804B7ACC(self, &self->indices[idx + 1]);
+                func_804B7ACC(self, &self->indices[idx + 1], self->indices[idx]);
             }
         } else {
             for (u32 i = tri->field_0x8; i < tri->field_0x8 + tri->field_0x1; i++) {
@@ -230,49 +232,61 @@ void func_804BB2C0(ColiObj* self, ColiTri* tri) {
     }
 }
 
-// Segment-vs-triangle-tree walker. Project a scaled segment from vertex A
-// toward vertex B, reject the node when the point escapes the box expanded by
-// lbl_eu_8065F408 or fails one of the three edge plane tests, otherwise
-// dispatch into children/leaves like func_804BB904.
+// Segment-vs-triangle-tree walker. Scale the segment (vertex A toward
+// vertex B), step from B by the scaled difference, and reject the node when
+// the point escapes the box expanded by the extents or fails one of the
+// three edge-plane tests (each compared against the two perpendicular
+// extent axes); otherwise dispatch into children/leaves.
 void func_804BB4EC(ColiObj* self, ColiTri* tri) {
-    const Vec3* vB = &self->verts[tri->field_0x6];
-    const Vec3* vA = &self->verts[tri->field_0x4];
-    f32 dx = (vB->x - vA->x) * lbl_eu_8066AEF0;
-    f32 dy = (vB->y - vA->y) * lbl_eu_8066AEF0;
-    f32 dz = (vB->z - vA->z) * lbl_eu_8066AEF0;
-    f32 px = vA->x + dx;
-    f32 py = vA->y + dy;
-    f32 pz = vA->z + dz;
+    QueryState& qs = *reinterpret_cast<QueryState*>(&lbl_eu_8065F3F0);
+    const nw4r::math::VEC3* vA =
+        reinterpret_cast<const nw4r::math::VEC3*>(&self->verts[tri->field_0x4]);
+    const nw4r::math::VEC3* vB =
+        reinterpret_cast<const nw4r::math::VEC3*>(&self->verts[tri->field_0x6]);
+    // scaled segment vector, then step point from vertex B
+    nw4r::math::VEC3 d;
+    nw4r::math::VEC3Sub(&d, vA, vB);
+    nw4r::math::VEC3Scale(&d, &d, lbl_eu_8066AEF0);
+    nw4r::math::VEC3 p;
+    nw4r::math::VEC3Add(&p, vB, &d);
+    const nw4r::math::VEC3& mn = qs.min;
     // vector from the moving point to the box min corner
-    f32 nx = lbl_eu_8065F3F0.x - px;
-    f32 ny = lbl_eu_8065F3F0.y - py;
-    f32 nz = lbl_eu_8065F3F0.z - pz;
-    if (__fabsf(nx) > dx + lbl_eu_8065F408.x) return;
-    if (__fabsf(ny) > dy + lbl_eu_8065F408.y) return;
-    if (__fabsf(nz) > dz + lbl_eu_8065F408.z) return;
-    // edge-plane tests against the max corner (lbl_eu_8065F3FC)
-    if (__fabsf(nz * lbl_eu_8065F3FC.y - ny * lbl_eu_8065F3FC.z) >
-        dy * lbl_eu_8065F3FC.z + dz * lbl_eu_8065F408.y)
+    Vec3 n;
+    n.x = mn.x - p.x;
+    n.y = mn.y - p.y;
+    n.z = mn.z - p.z;
+    const nw4r::math::VEC3& ex = qs.ext;
+    if (__fabsf(n.x) > d.x + ex.x) return;
+    if (__fabsf(n.y) > d.y + ex.y) return;
+    if (__fabsf(n.z) > d.z + ex.z) return;
+    // edge-plane tests against the box max corner
+    const nw4r::math::VEC3& mx = qs.max;
+    f32 rhs1 = d.y * ex.z + d.z * ex.y;
+    if (__fabsf(n.y * mx.z - n.z * mx.y) > rhs1)
         return;
-    if (__fabsf(nx * lbl_eu_8065F3FC.z - nz * lbl_eu_8065F3F0.y) >
-        dx * lbl_eu_8065F3FC.z + dz * lbl_eu_8065F408.z)
+    f32 rhs2 = d.x * ex.z + d.z * ex.x;
+    if (__fabsf(n.x * mx.z - n.z * mx.x) > rhs2)
         return;
-    if (__fabsf(ny * lbl_eu_8065F3F0.y - nx * lbl_eu_8065F3FC.y) >
-        dx * lbl_eu_8065F408.y + dy * lbl_eu_8065F408.z)
+    f32 rhs3 = d.x * ex.y + d.y * ex.x;
+    if (__fabsf(n.y * mx.x - n.x * mx.y) > rhs3)
         return;
     if ((tri->field_0x0 & 6) != 0) {
         u32 idx;
         if ((tri->field_0x0 & 2) != 0) {
-            func_804B791C(self, &self->indices[tri->field_0x8 + 1]);
+            func_804B791C(self, &self->indices[tri->field_0x8 + 1],
+                          self->indices[tri->field_0x8]);
             idx = tri->field_0x8 + self->indices[tri->field_0x8] + 1;
         } else {
             idx = tri->field_0x8;
         }
         if ((tri->field_0x0 & 4) != 0) {
-            func_804B7ACC(self, &self->indices[idx + 1]);
+            func_804B7ACC(self, &self->indices[idx + 1], self->indices[idx]);
         }
     } else {
-        for (u32 i = tri->field_0x8; i < tri->field_0x8 + tri->field_0x1; i++) {
+        // bounds hoisted; signed ints so retail emits cmpw/blt
+        int start = tri->field_0x8;
+        int end = start + tri->field_0x1;
+        for (int i = start; i < end; i++) {
             func_804BB4EC(self, &self->tris[self->indices[i]]);
         }
     }
@@ -283,6 +297,8 @@ void func_804BB4EC(ColiObj* self, ColiTri* tri) {
 // (vertex B below the min corner on x/z, vertex A above it, or the y span /
 // radius test failing); otherwise dispatches into branch children or the
 // leaf triangle range, mirroring func_804BB2C0.
+extern "C" void func_804BB768(ColiObj* self, ColiTri* tri);
+
 void func_804BB768(ColiObj* self, ColiTri* tri) {
     // vertex indices are cached; descend only when the query box lies
     // inside the node's bounds (x/z span contains min corner, y below A,
@@ -295,17 +311,19 @@ void func_804BB768(ColiObj* self, ColiTri* tri) {
         if ((tri->field_0x0 & 6) != 0) {
             u32 idx;
             if ((tri->field_0x0 & 2) != 0) {
-                u32 base = tri->field_0x8;
-                func_804B791C(self, &self->indices[base + 1]);
-                idx = base + self->indices[base] + 1;
+                func_804B791C(self, &self->indices[tri->field_0x8 + 1],
+                              self->indices[tri->field_0x8]);
+                idx = tri->field_0x8 + self->indices[tri->field_0x8] + 1;
             } else {
                 idx = tri->field_0x8;
             }
             if ((tri->field_0x0 & 4) != 0) {
-                func_804B7ACC(self, &self->indices[idx + 1]);
+                func_804B7ACC(self, &self->indices[idx + 1], self->indices[idx]);
             }
         } else {
-            for (u32 i = tri->field_0x8; i < tri->field_0x8 + tri->field_0x1; i++) {
+            int start = tri->field_0x8;
+            int end = start + tri->field_0x1;
+            for (int i = start; i < end; i++) {
                 func_804BB768(self, &self->tris[self->indices[i]]);
             }
         }
@@ -317,25 +335,34 @@ void func_804BB768(ColiObj* self, ColiTri* tri) {
 // of one of the node's bounding planes (vertex A far side / vertex B near
 // side); otherwise dispatches into branch children or the leaf triangle
 // range, mirroring func_804BB2C0.
+// Retail emits this walker with C linkage (reloc name func_804BB904), so
+// the recursive call site must reference the unmangled symbol.
+extern "C" void func_804BB904(ColiObj* self, ColiTri* tri);
+
 void func_804BB904(ColiObj* self, ColiTri* tri) {
-    const Vec3* vB = &self->verts[tri->field_0x6];
     const Vec3* vA = &self->verts[tri->field_0x4];
+    const Vec3* vB = &self->verts[tri->field_0x6];
     if (vB->x <= lbl_eu_8065F3F0.x && lbl_eu_8065F3FC.x <= vA->x &&
         vB->z <= lbl_eu_8065F3F0.z && lbl_eu_8065F3FC.z <= vA->z &&
         vB->y <= lbl_eu_8065F3F0.y && lbl_eu_8065F3FC.y <= vA->y) {
         if ((tri->field_0x0 & 6) != 0) {
             u32 idx;
             if ((tri->field_0x0 & 2) != 0) {
-                func_804B791C(self, &self->indices[tri->field_0x8 + 1]);
+                func_804B791C(self, &self->indices[tri->field_0x8 + 1],
+                              self->indices[tri->field_0x8]);
                 idx = tri->field_0x8 + self->indices[tri->field_0x8] + 1;
             } else {
                 idx = tri->field_0x8;
             }
             if ((tri->field_0x0 & 4) != 0) {
-                func_804B7ACC(self, &self->indices[idx + 1]);
+                func_804B7ACC(self, &self->indices[idx + 1], self->indices[idx]);
             }
         } else {
-            for (u32 i = tri->field_0x8; i < tri->field_0x8 + tri->field_0x1; i++) {
+            // bounds hoisted: retail keeps start/end/2*i live across the loop
+            // (signed ints: retail emits cmpw/blt)
+            int start = tri->field_0x8;
+            int end = start + tri->field_0x1;
+            for (int i = start; i < end; i++) {
                 func_804BB904(self, &self->tris[self->indices[i]]);
             }
         }
@@ -347,97 +374,127 @@ void func_804BB904(ColiObj* self, ColiTri* tri) {
 // split plane on its axis; if the box lies entirely on one side only that
 // side's child is visited, otherwise the near child is visited first and the
 // far child visited only when the near side reported no hit.
-extern "C" bool func_804BBAB0(ColiObj* self, ColiNode* node) {
+// Axis-aligned BVH walker over the secondary arrays: split nodes test the
+// query box (lbl_eu_8065F3F0 min / lbl_eu_8065F3FC max) against the node's
+// split plane on its axis; if the box lies entirely on one side only that
+// side's child is visited, otherwise the near child is visited first and the
+// far child visited only when the near side reported no hit.
+// Retail one-level-inlines each direct self-call; the child visits below are
+// therefore written out (deeper levels stay truly recursive).
+extern "C" bool func_804BBAB0(ColiObj* self, ColiNode* node);
+
+bool func_804BBAB0(ColiObj* self, ColiNode* node) {
     if (node->field_0x8 == 3) {
-        return func_804B7B6C(self, &self->indices2[node->field_0x0 + 1]);
+        return func_804B7B6C(self, &self->indices2[node->field_0x0 + 1],
+                             self->indices2[node->field_0x0]);
     }
-    const f32* minBox = &lbl_eu_8065F3F0.x;
-    const f32* maxBox = &lbl_eu_8065F3FC.x;
-    f32 dmin = node->field_0x4 - minBox[node->field_0x8];
-    f32 dmax = node->field_0x4 - maxBox[node->field_0x8];
-    if (dmin * dmax >= lbl_eu_8066AEFC) {
-        // box entirely on one side of the plane: descend into that side only.
-        // The child visit is written out inline (matches retail's one-level
-        // self-inlining); its own children go through real recursive calls.
-        ColiNode* child;
-        if (dmin >= lbl_eu_8066AEFC) {
-            child = &self->tris2[self->indices2[node->field_0x0 + 1]];
+    u16 axis = node->field_0x8;
+    f32 dmin = node->field_0x4 - (&lbl_eu_8065F3F0.x)[axis];
+    f32 dmax = node->field_0x4 - (&lbl_eu_8065F3FC.x)[axis];
+    // Written in retail layout order: straddle path falls through first with
+    // plain forward branches; each direct self-call site is written out once
+    // (retail one-level-inlines them); deeper levels stay truly recursive.
+    bool hit;
+    if (dmin * dmax < lbl_eu_8066AEFC) {
+        // plane straddles the box: near child first (inlined), far child on miss
+        ColiNode* nearChild = &self->tris2[self->indices2[node->field_0x0]];
+        if (nearChild->field_0x8 == 3) {
+            hit = func_804B7B6C(self, &self->indices2[nearChild->field_0x0 + 1],
+                                self->indices2[nearChild->field_0x0]);
         } else {
-            child = &self->tris2[self->indices2[node->field_0x0]];
-        }
-        bool hit;
-        if (child->field_0x8 == 3) {
-            hit = func_804B7B6C(self, &self->indices2[child->field_0x0 + 1]);
-        } else {
-            f32 cdmin = child->field_0x4 - minBox[child->field_0x8];
-            f32 cdmax = child->field_0x4 - maxBox[child->field_0x8];
-            if (cdmin * cdmax >= lbl_eu_8066AEFC) {
-                if (cdmin >= lbl_eu_8066AEFC) {
-                    hit = func_804BBAB0(self, &self->tris2[self->indices2[child->field_0x0 + 1]]);
+            u16 nAxis = nearChild->field_0x8;
+            f32 ndmin = nearChild->field_0x4 - (&lbl_eu_8065F3F0.x)[nAxis];
+            f32 ndmax = nearChild->field_0x4 - (&lbl_eu_8065F3FC.x)[nAxis];
+            if (ndmin * ndmax < lbl_eu_8066AEFC) {
+                // gchild straddles its plane too
+                if (func_804BBAB0(self, &self->tris2[self->indices2[nearChild->field_0x0]])) {
+                    hit = true;
                 } else {
-                    hit = func_804BBAB0(self, &self->tris2[self->indices2[child->field_0x0]]);
+                    hit = func_804BBAB0(self,
+                                        &self->tris2[self->indices2[nearChild->field_0x0 + 1]]);
                 }
+            } else if (ndmin < lbl_eu_8066AEFC) {
+                hit = func_804BBAB0(self, &self->tris2[self->indices2[nearChild->field_0x0]]);
             } else {
-                hit = false;
-                if (cdmax < lbl_eu_8066AEFC) {
-                    hit = func_804BBAB0(self, &self->tris2[self->indices2[child->field_0x0]]);
+                hit = func_804BBAB0(self, &self->tris2[self->indices2[nearChild->field_0x0 + 1]]);
+            }
+        }
+        if (hit) {
+            return true;
+        }
+        // far child visit (inlined), result returned directly
+        ColiNode* farChild = &self->tris2[self->indices2[node->field_0x0 + 1]];
+        bool hit2;
+        if (farChild->field_0x8 == 3) {
+            hit2 = func_804B7B6C(self, &self->indices2[farChild->field_0x0 + 1],
+                                 self->indices2[farChild->field_0x0]);
+        } else {
+            u16 fAxis = farChild->field_0x8;
+            f32 fdmin = farChild->field_0x4 - (&lbl_eu_8065F3F0.x)[fAxis];
+            f32 fdmax = farChild->field_0x4 - (&lbl_eu_8065F3FC.x)[fAxis];
+            if (fdmin * fdmax < lbl_eu_8066AEFC) {
+                // gchild straddles its plane too
+                if (func_804BBAB0(self, &self->tris2[self->indices2[farChild->field_0x0]])) {
+                    hit2 = true;
+                } else {
+                    hit2 = func_804BBAB0(self,
+                                         &self->tris2[self->indices2[farChild->field_0x0 + 1]]);
                 }
-                if (!hit) {
+            } else if (fdmin < lbl_eu_8066AEFC) {
+                hit2 = func_804BBAB0(self, &self->tris2[self->indices2[farChild->field_0x0]]);
+            } else {
+                hit2 = func_804BBAB0(self, &self->tris2[self->indices2[farChild->field_0x0 + 1]]);
+            }
+        }
+        return hit2;
+    }
+
+    // box entirely on one side of the plane: descend into that side only
+    // (each side written out - retail keeps two inline visit copies here)
+    if (dmin >= lbl_eu_8066AEFC) {
+        ColiNode* child = &self->tris2[self->indices2[node->field_0x0 + 1]];
+        if (child->field_0x8 == 3) {
+            hit = func_804B7B6C(self, &self->indices2[child->field_0x0 + 1],
+                                self->indices2[child->field_0x0]);
+        } else {
+            u16 cAxis = child->field_0x8;
+            f32 cdmin = child->field_0x4 - (&lbl_eu_8065F3F0.x)[cAxis];
+            f32 cdmax = child->field_0x4 - (&lbl_eu_8065F3FC.x)[cAxis];
+            if (cdmin * cdmax < lbl_eu_8066AEFC) {
+                if (func_804BBAB0(self, &self->tris2[self->indices2[child->field_0x0]])) {
+                    hit = true;
+                } else {
                     hit = func_804BBAB0(self, &self->tris2[self->indices2[child->field_0x0 + 1]]);
                 }
+            } else if (cdmin < lbl_eu_8066AEFC) {
+                hit = func_804BBAB0(self, &self->tris2[self->indices2[child->field_0x0]]);
+            } else {
+                hit = func_804BBAB0(self, &self->tris2[self->indices2[child->field_0x0 + 1]]);
             }
         }
         return hit;
     }
-    // near side: visit the near child first (inlined), then the far child
-    ColiNode* nearChild = &self->tris2[self->indices2[node->field_0x0]];
-    bool hit;
-    if (nearChild->field_0x8 == 3) {
-        hit = func_804B7B6C(self, &self->indices2[nearChild->field_0x0 + 1]);
+    ColiNode* child = &self->tris2[self->indices2[node->field_0x0]];
+    if (child->field_0x8 == 3) {
+        hit = func_804B7B6C(self, &self->indices2[child->field_0x0 + 1],
+                            self->indices2[child->field_0x0]);
     } else {
-        f32 ndmin = nearChild->field_0x4 - minBox[nearChild->field_0x8];
-        f32 ndmax = nearChild->field_0x4 - maxBox[nearChild->field_0x8];
-        if (ndmin * ndmax >= lbl_eu_8066AEFC) {
-            if (ndmin >= lbl_eu_8066AEFC) {
-                hit = func_804BBAB0(self, &self->tris2[self->indices2[nearChild->field_0x0 + 1]]);
+        u16 cAxis = child->field_0x8;
+        f32 cdmin = child->field_0x4 - (&lbl_eu_8065F3F0.x)[cAxis];
+        f32 cdmax = child->field_0x4 - (&lbl_eu_8065F3FC.x)[cAxis];
+        if (cdmin * cdmax < lbl_eu_8066AEFC) {
+            if (func_804BBAB0(self, &self->tris2[self->indices2[child->field_0x0]])) {
+                hit = true;
             } else {
-                hit = func_804BBAB0(self, &self->tris2[self->indices2[nearChild->field_0x0]]);
+                hit = func_804BBAB0(self, &self->tris2[self->indices2[child->field_0x0 + 1]]);
             }
+        } else if (cdmin < lbl_eu_8066AEFC) {
+            hit = func_804BBAB0(self, &self->tris2[self->indices2[child->field_0x0]]);
         } else {
-            hit = false;
-            if (ndmax < lbl_eu_8066AEFC) {
-                hit = func_804BBAB0(self, &self->tris2[self->indices2[nearChild->field_0x0]]);
-            }
-            if (!hit) {
-                hit = func_804BBAB0(self, &self->tris2[self->indices2[nearChild->field_0x0 + 1]]);
-            }
+            hit = func_804BBAB0(self, &self->tris2[self->indices2[child->field_0x0 + 1]]);
         }
     }
-    if (hit) return true;
-    ColiNode* farChild = &self->tris2[self->indices2[node->field_0x0 + 1]];
-    bool hit2;
-    if (farChild->field_0x8 == 3) {
-        hit2 = func_804B7B6C(self, &self->indices2[farChild->field_0x0 + 1]);
-    } else {
-        f32 fdmin = farChild->field_0x4 - minBox[farChild->field_0x8];
-        f32 fdmax = farChild->field_0x4 - maxBox[farChild->field_0x8];
-        if (fdmin * fdmax >= lbl_eu_8066AEFC) {
-            if (fdmin >= lbl_eu_8066AEFC) {
-                hit2 = func_804BBAB0(self, &self->tris2[self->indices2[farChild->field_0x0 + 1]]);
-            } else {
-                hit2 = func_804BBAB0(self, &self->tris2[self->indices2[farChild->field_0x0]]);
-            }
-        } else {
-            hit2 = false;
-            if (fdmax < lbl_eu_8066AEFC) {
-                hit2 = func_804BBAB0(self, &self->tris2[self->indices2[farChild->field_0x0]]);
-            }
-            if (!hit2) {
-                hit2 = func_804BBAB0(self, &self->tris2[self->indices2[farChild->field_0x0 + 1]]);
-            }
-        }
-    }
-    return hit2;
+    return hit;
 }
 
 // Record the query box (src) + squared radius, then dispatch to the
@@ -500,145 +557,169 @@ extern "C" void func_804BC134(ColiObj* self, const Vec3* src, int idx, f32 radiu
     func_804BB768(self, &self->tris[idx]);
 }
 
-// Oriented-box query setup: accumulate the 8 transformed corner candidates
-// (axis pairs scaled by the three float args plus base offsets), track the
-// running candidate box initialized from the sdata2 constants, merge it into
-// the shared query AABB (lbl_eu_8065F3F0 / lbl_eu_8065F3FC), then descend
-// into the box-vs-tree walker at tri index idx.
+// Oriented-box query setup: pts holds the six signed extent axes
+// (+X,-X,+Y,-Y,+Z,-Z); each corner bit picks one vector from every pair,
+// scales it and offsets by base. All 8 corners are materialized before the
+// shared query AABB (seeded from the sdata2 slab constants) is folded,
+// matching retail's schedule.
 void func_804BC164(ColiObj* self, const Vec3* pts, const Vec3* base, f32 s0, f32 s1, f32 s2,
                    int idx) {
-    Vec3 lo;
-    Vec3 hi;
-    lo.x = lbl_eu_8066AF04;
-    lo.y = lbl_eu_8066AF04;
-    lo.z = lbl_eu_8066AF04;
-    hi.x = lbl_eu_8066AF08;
-    hi.y = lbl_eu_8066AF08;
-    hi.z = lbl_eu_8066AF08;
+    // scale the three signed axis pairs (+X,-X / +Y,-Y / +Z,-Z) once, then
+    // enumerate the 8 corners by accumulating one axis from each pair onto
+    // the base point (partial sums shared across inner iterations)
+    const nw4r::math::VEC3* p = reinterpret_cast<const nw4r::math::VEC3*>(pts);
+    const nw4r::math::VEC3& b = *reinterpret_cast<const nw4r::math::VEC3*>(base);
+    nw4r::math::VEC3 ax0, ax1, ay0, ay1, az0, az1;
+    nw4r::math::VEC3 ta, tb;
+    nw4r::math::VEC3 s00, s01, s10, s11;
+    // scaled axes are formed lazily, interleaved with the partial sums
+    nw4r::math::VEC3Scale(&ax0, &p[0], s1);
+    nw4r::math::VEC3Add(&ta, &b, &ax0);
+    nw4r::math::VEC3Scale(&ay0, &p[2], s0);
+    nw4r::math::VEC3Add(&s00, &ta, &ay0);
+    nw4r::math::VEC3Scale(&az0, &p[4], s2);
+    nw4r::math::VEC3Scale(&az0, &p[4], s2);
+    Vec3 corners[8];
+    nw4r::math::VEC3* c = reinterpret_cast<nw4r::math::VEC3*>(corners);
+    nw4r::math::VEC3Add(&c[0], &s00, &az0);
+    nw4r::math::VEC3Scale(&ax1, &p[1], s1);
+    nw4r::math::VEC3Add(&tb, &b, &ax1);
+    nw4r::math::VEC3Add(&s10, &tb, &ay0);
+    nw4r::math::VEC3Add(&c[1], &s10, &az0);
+    nw4r::math::VEC3Scale(&ay1, &p[3], s0);
+    nw4r::math::VEC3Add(&s01, &ta, &ay1);
+    nw4r::math::VEC3Add(&c[2], &s01, &az0);
+    nw4r::math::VEC3Add(&s11, &tb, &ay1);
+    nw4r::math::VEC3Add(&c[3], &s11, &az0);
+    nw4r::math::VEC3Scale(&az1, &p[5], s2);
+    nw4r::math::VEC3Add(&c[4], &s00, &az1);
+    nw4r::math::VEC3Add(&c[5], &s10, &az1);
+    nw4r::math::VEC3Add(&c[6], &s01, &az1);
+    nw4r::math::VEC3Add(&c[7], &s11, &az1);
+    Vec3* mn = &lbl_eu_8065F3F0;
+    Vec3* mx = &lbl_eu_8065F3FC;
+    mn->x = mn->y = mn->z = lbl_eu_8066AF04;
+    mx->x = mx->y = mx->z = lbl_eu_8066AF08;
+    const volatile Vec3* cc = (const volatile Vec3*)corners;
     for (int i = 0; i < 8; i++) {
-        f32 x = pts[i].x * s0 + base->x;
-        f32 y = pts[i].y * s1 + base->y;
-        f32 z = pts[i].z * s2 + base->z;
-        if (x < lo.x) lo.x = x;
-        if (y < lo.y) lo.y = y;
-        if (z < lo.z) lo.z = z;
-        if (x > hi.x) hi.x = x;
-        if (y > hi.y) hi.y = y;
-        if (z > hi.z) hi.z = z;
+        if (cc->x < mn->x) mn->x = cc->x;
+        if (cc->x > mx->x) mx->x = cc->x;
+        if (cc->y < mn->y) mn->y = cc->y;
+        if (cc->y > mx->y) mx->y = cc->y;
+        if (cc->z < mn->z) mn->z = cc->z;
+        if (cc->z > mx->z) mx->z = cc->z;
+        ++cc;
     }
-    if (lo.x < lbl_eu_8065F3F0.x) lbl_eu_8065F3F0.x = lo.x;
-    if (lo.y < lbl_eu_8065F3F0.y) lbl_eu_8065F3F0.y = lo.y;
-    if (lo.z < lbl_eu_8065F3F0.z) lbl_eu_8065F3F0.z = lo.z;
-    if (lbl_eu_8065F3FC.x > hi.x) lbl_eu_8065F3FC.x = hi.x;
-    if (lbl_eu_8065F3FC.y > hi.y) lbl_eu_8065F3FC.y = hi.y;
-    if (lbl_eu_8065F3FC.z > hi.z) lbl_eu_8065F3FC.z = hi.z;
     func_804BB904(self, &self->tris[idx]);
 }
 // Box query entry: record the query box (arg2 -> min corner lbl_eu_8065F3F0,
 // arg3 -> max corner lbl_eu_8065F3FC, copied as raw u32 words) and walk the
 // secondary BVH rooted at self->tris2. The root level of the walk is written
-// out inline (retail one-level-inlines func_804BBAB0); deeper levels recurse
+// out (retail one-level-inlines func_804BBAB0); deeper levels recurse
 // through func_804BBAB0.
 bool func_804BC494(ColiObj* self, const Vec3* minSrc, const Vec3* maxSrc) {
     u32* dstMin = (u32*)&lbl_eu_8065F3F0;
     u32* dstMax = (u32*)&lbl_eu_8065F3FC;
     const u32* sMin = (const u32*)minSrc;
     const u32* sMax = (const u32*)maxSrc;
-    dstMin[0] = sMin[0];
-    dstMax[0] = sMax[0];
-    dstMin[1] = sMin[1];
-    dstMin[2] = sMin[2];
-    dstMax[1] = sMax[1];
-    dstMax[2] = sMax[2];
+    *dstMin++ = *sMin++;
+    *dstMax++ = *sMax++;
+    *dstMin++ = *sMin++;
+    *dstMin++ = *sMin++;
+    *dstMax++ = *sMax++;
+    *dstMax = *sMax;
 
     ColiNode* node = self->tris2;
     if (node->field_0x8 == 3) {
-        return func_804B7B6C(self, &self->indices2[node->field_0x0 + 1]);
+        u32 idx = node->field_0x0;
+        return func_804B7B6C(self, &self->indices2[idx + 1], self->indices2[idx]);
     }
     f32 dmin = node->field_0x4 - (&lbl_eu_8065F3F0.x)[node->field_0x8];
     f32 dmax = node->field_0x4 - (&lbl_eu_8065F3FC.x)[node->field_0x8];
-    if (dmin * dmax >= lbl_eu_8066AEFC) {
-        // box entirely on one side of the plane: descend into that side only.
-        ColiNode* child;
-        if (dmin >= lbl_eu_8066AEFC) {
-            child = &self->tris2[self->indices2[node->field_0x0 + 1]];
-        } else {
-            child = &self->tris2[self->indices2[node->field_0x0]];
-        }
-        bool hit;
-        if (child->field_0x8 == 3) {
-            hit = func_804B7B6C(self, &self->indices2[child->field_0x0 + 1]);
-        } else {
-            f32 cdmin = child->field_0x4 - (&lbl_eu_8065F3F0.x)[child->field_0x8];
-            f32 cdmax = child->field_0x4 - (&lbl_eu_8065F3FC.x)[child->field_0x8];
-            if (cdmin * cdmax >= lbl_eu_8066AEFC) {
-                if (cdmin >= lbl_eu_8066AEFC) {
-                    hit = func_804BBAB0(self, &self->tris2[self->indices2[child->field_0x0 + 1]]);
-                } else {
-                    hit = func_804BBAB0(self, &self->tris2[self->indices2[child->field_0x0]]);
-                }
-            } else {
-                hit = false;
-                if (cdmax < lbl_eu_8066AEFC) {
-                    hit = func_804BBAB0(self, &self->tris2[self->indices2[child->field_0x0]]);
-                }
-                if (!hit) {
-                    hit = func_804BBAB0(self, &self->tris2[self->indices2[child->field_0x0 + 1]]);
-                }
-            }
-        }
-        return hit;
-    }
-    // plane straddles the box: visit the near child first (inlined), then the
-    // far child only when the near side reported no hit.
-    ColiNode* nearChild = &self->tris2[self->indices2[node->field_0x0]];
     bool hit;
-    if (nearChild->field_0x8 == 3) {
-        hit = func_804B7B6C(self, &self->indices2[nearChild->field_0x0 + 1]);
-    } else {
+    if (dmin * dmax < lbl_eu_8066AEFC) {
+        // plane straddles the box: visit the near child first (inlined), then
+        // the far child only when the near side reported no hit.
+        ColiNode* nearChild = &self->tris2[self->indices2[node->field_0x0]];
+        if (nearChild->field_0x8 == 3) {
+            u32 idx = nearChild->field_0x0;
+            return func_804B7B6C(self, &self->indices2[idx + 1], self->indices2[idx]);
+        }
         f32 ndmin = nearChild->field_0x4 - (&lbl_eu_8065F3F0.x)[nearChild->field_0x8];
         f32 ndmax = nearChild->field_0x4 - (&lbl_eu_8065F3FC.x)[nearChild->field_0x8];
-        if (ndmin * ndmax >= lbl_eu_8066AEFC) {
-            if (ndmin >= lbl_eu_8066AEFC) {
-                hit = func_804BBAB0(self, &self->tris2[self->indices2[nearChild->field_0x0 + 1]]);
+        if (ndmin * ndmax < lbl_eu_8066AEFC) {
+            if (func_804BBAB0(self, &self->tris2[self->indices2[nearChild->field_0x0]])) {
+                hit = true;
             } else {
-                hit = func_804BBAB0(self, &self->tris2[self->indices2[nearChild->field_0x0]]);
+                hit = func_804BBAB0(self,
+                                    &self->tris2[self->indices2[nearChild->field_0x0 + 1]]);
             }
+        } else if (ndmin < lbl_eu_8066AEFC) {
+            return func_804BBAB0(self, &self->tris2[self->indices2[nearChild->field_0x0]]);
         } else {
-            hit = false;
-            if (ndmax < lbl_eu_8066AEFC) {
-                hit = func_804BBAB0(self, &self->tris2[self->indices2[nearChild->field_0x0]]);
-            }
-            if (!hit) {
-                hit = func_804BBAB0(self, &self->tris2[self->indices2[nearChild->field_0x0 + 1]]);
-            }
+            return func_804BBAB0(self, &self->tris2[self->indices2[nearChild->field_0x0 + 1]]);
         }
-    }
-    if (hit) return true;
-    ColiNode* farChild = &self->tris2[self->indices2[node->field_0x0 + 1]];
-    bool hit2;
-    if (farChild->field_0x8 == 3) {
-        hit2 = func_804B7B6C(self, &self->indices2[farChild->field_0x0 + 1]);
-    } else {
+        if (hit) return true;
+
+        ColiNode* farChild = &self->tris2[self->indices2[node->field_0x0 + 1]];
+        if (farChild->field_0x8 == 3) {
+            u32 idx = farChild->field_0x0;
+            return func_804B7B6C(self, &self->indices2[idx + 1], self->indices2[idx]);
+        }
         f32 fdmin = farChild->field_0x4 - (&lbl_eu_8065F3F0.x)[farChild->field_0x8];
         f32 fdmax = farChild->field_0x4 - (&lbl_eu_8065F3FC.x)[farChild->field_0x8];
-        if (fdmin * fdmax >= lbl_eu_8066AEFC) {
-            if (fdmin >= lbl_eu_8066AEFC) {
-                hit2 = func_804BBAB0(self, &self->tris2[self->indices2[farChild->field_0x0 + 1]]);
-            } else {
-                hit2 = func_804BBAB0(self, &self->tris2[self->indices2[farChild->field_0x0]]);
+        if (fdmin * fdmax < lbl_eu_8066AEFC) {
+            if (func_804BBAB0(self, &self->tris2[self->indices2[farChild->field_0x0]])) {
+                return true;
             }
-        } else {
-            hit2 = false;
-            if (fdmax < lbl_eu_8066AEFC) {
-                hit2 = func_804BBAB0(self, &self->tris2[self->indices2[farChild->field_0x0]]);
-            }
-            if (!hit2) {
-                hit2 = func_804BBAB0(self, &self->tris2[self->indices2[farChild->field_0x0 + 1]]);
-            }
+            return func_804BBAB0(self, &self->tris2[self->indices2[farChild->field_0x0 + 1]]);
         }
+        if (fdmin < lbl_eu_8066AEFC) {
+            return func_804BBAB0(self, &self->tris2[self->indices2[farChild->field_0x0]]);
+        }
+        return func_804BBAB0(self, &self->tris2[self->indices2[farChild->field_0x0 + 1]]);
     }
-    return hit2;
+
+    // box entirely on one side of the plane: descend into that side only.
+    // Each side is written out with an inlined child visit (deeper levels
+    // recurse through func_804BBAB0).
+    ColiNode* child;
+    if (dmin >= lbl_eu_8066AEFC) {
+        child = &self->tris2[self->indices2[node->field_0x0 + 1]];
+        if (child->field_0x8 == 3) {
+            u32 idx = child->field_0x0;
+            return func_804B7B6C(self, &self->indices2[idx + 1], self->indices2[idx]);
+        }
+        f32 cdmin = child->field_0x4 - (&lbl_eu_8065F3F0.x)[child->field_0x8];
+        f32 cdmax = child->field_0x4 - (&lbl_eu_8065F3FC.x)[child->field_0x8];
+        if (cdmin * cdmax < lbl_eu_8066AEFC) {
+            if (func_804BBAB0(self, &self->tris2[self->indices2[child->field_0x0]])) {
+                return true;
+            }
+            return func_804BBAB0(self, &self->tris2[self->indices2[child->field_0x0 + 1]]);
+        }
+        if (cdmin < lbl_eu_8066AEFC) {
+            return func_804BBAB0(self, &self->tris2[self->indices2[child->field_0x0]]);
+        }
+        return func_804BBAB0(self, &self->tris2[self->indices2[child->field_0x0 + 1]]);
+    }
+    child = &self->tris2[self->indices2[node->field_0x0]];
+    if (child->field_0x8 == 3) {
+        u32 idx = child->field_0x0;
+        return func_804B7B6C(self, &self->indices2[idx + 1], self->indices2[idx]);
+    }
+    f32 cdmin = child->field_0x4 - (&lbl_eu_8065F3F0.x)[child->field_0x8];
+    f32 cdmax = child->field_0x4 - (&lbl_eu_8065F3FC.x)[child->field_0x8];
+    if (cdmin * cdmax < lbl_eu_8066AEFC) {
+        if (func_804BBAB0(self, &self->tris2[self->indices2[child->field_0x0]])) {
+            return true;
+        }
+        return func_804BBAB0(self, &self->tris2[self->indices2[child->field_0x0 + 1]]);
+    }
+    if (cdmin < lbl_eu_8066AEFC) {
+        return func_804BBAB0(self, &self->tris2[self->indices2[child->field_0x0]]);
+    }
+    return func_804BBAB0(self, &self->tris2[self->indices2[child->field_0x0 + 1]]);
 }
 
 extern "C" u32 func_804BC9A0(u32* self) { return *(u32*)self != 0; }

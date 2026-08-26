@@ -1518,11 +1518,10 @@ bool func_804B7DD4(u32* self, int idx) {
         idx = 320;
     }
     u32* bits = (u32*)lbl_eu_8065F1A0;
-    bool ok = true;
     // Word fetched before the mask so the scheduler matches retail.
     u32 word = bits[idx >> 5];
     bits[idx >> 5] = word | (1u << (idx & 0x1F));
-    return ok;
+    return true;
 }
 
 // func_804B7E0C - update one mover-state entry: save the current matrix and

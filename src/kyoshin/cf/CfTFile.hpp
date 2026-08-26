@@ -31,6 +31,11 @@ struct CfTFileData {
     u8 mPad[0x628 - 0x622];        // 0x622
 };  // size 0x628
 
+} // namespace cf
+
+// Retail emits the member mangling of a GLOBAL-scope class (cf.
+// OnFileEvent__7CfTFileFP10CEventFile), so CfTFile itself lives at global
+// scope; the entry/data structs stay in namespace cf.
 class CfTFile {
 public:
     CfTFile();
@@ -43,9 +48,12 @@ public:
     CFileHandle* mFile;         // 0x828 (active file handle, CDeviceFile::cancel target)
     u32 mField82C;              // 0x82C
     u32 mField830;              // 0x830
-    CfTFileData mData;          // 0x834
+    cf::CfTFileData mData;      // 0x834
 };
 
+namespace cf {
+// Alias so existing `cf::CfTFile` references keep resolving to the same type.
+using ::CfTFile;
 } // namespace cf
 
 // C-ABI helper imports referenced by this TU. func_8006A53C is defined in
@@ -58,6 +66,7 @@ public:
 #include "kyoshin/plugin/ocBdat.hpp"  // getBdatStringColumnValue (owner)
 extern "C" {
 __declspec(noinline) int func_8006A53C(u16 a, u16 b);
+int func_8006A40C(int mode);
 int func_800AA33C(ml::FixStr<64>& buf, u32 packed, int prefixFlag, int suffixFlag);
 int getFileSize__11CDeviceFileFPCc(const char* pPath, int flags);
 void func_800C1CAC(u32 arg0, u32 arg1);

@@ -3,7 +3,13 @@
 
 #include "kyoshin/harness_catalog.hpp"
 #include "kyoshin/CQstLogList.hpp"
+// CfObjectImplMove.hpp (via harness_catalog.hpp) declares lbl_eu_80526324 as
+// const char[]; code_80135FDC.hpp's u8[] decl of the same name clashes and
+// this TU never uses it - rename it away for this one include.
+#define lbl_eu_80526324 lbl_eu_80526324_unused_u8_decl
+#define lbl_eu_80526300 lbl_eu_80526300_unused_u8_decl
 #include "kyoshin/code_80135FDC.hpp"
+#undef lbl_eu_80526324
 #include "monolib/work/CEventFile.hpp"
 
 #include <stdio.h>
@@ -16,7 +22,7 @@ u8 CQstLogList::func_80227CCC() { return mSortEnabled; }
 // -O4,p unroll (MWCC_CASES line 226).
 #pragma push
 #pragma optimize_for_size on
-extern "C" CQstLogListEntry* func_80227994(CQstLogListEntry* pDst, const CQstLogListEntry* pSrc) {
+extern "C" __declspec(noinline) CQstLogListEntry* func_80227994(CQstLogListEntry* pDst, const CQstLogListEntry* pSrc) {
     *pDst = *pSrc;
     return pDst;
 }
@@ -156,13 +162,16 @@ void func_80228164(CQstLogList* self) {
         func_80228B10(self);
         func_80138078(6);
     } else {
-        // Four live values here (self/root/pool base/pane1) drive the
+        // Four live values here (self/pool base/root/pane1) drive the
         // retail r28-r31 allocation.
+        // Nested-call argument form (right-to-left eval): pane1 is
+        // evaluated first and must survive the second FindPaneByName call,
+        // reproducing the retail r29/r30/r31 assignment.
         nw4r::math::VEC3 pos;
+        char* const s = lbl_eu_80509AB4;
         nw4r::lyt::Pane* root = self->mpLayout->GetRootPane();
-        nw4r::lyt::Pane* pane1 = root->FindPaneByName(&lbl_eu_80509AB4[0x33], true);
-        nw4r::lyt::Pane* pane2 = root->FindPaneByName(&lbl_eu_80509AB4[0x2a], true);
-        func_80137924(&pos, pane2, pane1, root);
+        func_80137924(&pos, root->FindPaneByName(&s[0x2a], true),
+                      root->FindPaneByName(&s[0x33], true), root);
         func_801D3430(&self->mSortMenuData, &pos);
         func_80228C04(self);
         func_801D216C(&self->mCur18[0], 1);
@@ -177,7 +186,10 @@ void func_80228164(CQstLogList* self) {
 // Sort-menu confirm/select: rebuilds the quest list (func_80228C98) and
 // re-sorts (func_80228B10) when the sort menu reports an active button.
 // noinline: retail keeps this an out-of-line call from func_802282F8.
-extern "C" __declspec(noinline) void func_80228280(CQstLogList* self, int flag) {
+// pragma optimize_for_size: retail saves r30-r31 via stmw/lmw.
+#pragma push
+#pragma optimize_for_size on
+__declspec(noinline) void func_80228280(CQstLogList* self, int flag) {
     if (func_801D3328(&self->mSortMenuData) != 0) {
         func_801D216C(&self->mCur18[0], 1);
         func_801D3408(&self->mSortMenuData);
@@ -189,6 +201,7 @@ extern "C" __declspec(noinline) void func_80228280(CQstLogList* self, int flag) 
         }
     }
 }
+#pragma pop
 
 // retail: lwz r0,lbl_eu_80664730@sda21; clrlwi r3,r0,16 = (u16)global
 extern "C" u32 func_80228394() { extern u32 lbl_eu_80664730; return lbl_eu_80664730 & 0xFFFF; }
@@ -348,23 +361,30 @@ extern "C" __declspec(noinline) void func_802289F8(CQstLogList* self) {
 // the bl relocs from the scroll/page handlers bound to the retail symbol).
 extern "C" __declspec(noinline) void func_802285A4(CQstLogList* self) {
     // Quest text table entry selected by the two signed index bytes.
-    int off = (self->field_0x17B + self->field_0x17C) * 0x22;
-    s32 e0 = (s8)lbl_eu_80576670[off];
-    u8 e1 = lbl_eu_80576670[off + 1];
+    // Declaration order matters here: MWCC pre-colors the callee-saved
+    // homes for row/e1/questId/e0 in this order, matching retail.
+    const char* row;
+    u8 e1;
+    u32 questId;
+    s32 e0;
+    s32 sum = self->field_0x17B + self->field_0x17C;
+    int off = sum * 0x22;
+    row = &lbl_eu_80576670[off];
+    e0 = (s8)lbl_eu_80576670[off];
+    e1 = row[1];
     func_802289F8(self);
     lbl_eu_8066472C = 0;
     func_80227260(&self->mQstData.mList[0], e1, (u8)e0);
 
     // Rebuild the visible rows from the quest-info buffer, starting at the
     // current scroll position; stop after ten rows or the list end.
-    u32 cur;
     int i = 0;
     u16 total = selectQstIndex(&self->mQstData.mList[0]);
-    cur = (u16)self->field_0x17E;
+    u32 cur = (u16)self->field_0x17E;
     for (; (u16)cur < total; i++, cur++) {
         if (i >= 10) break;
         CQstLogListQstInfo* entry = func_802276F4(&self->mQstData.mList[0], (u16)cur);
-        u16 questId = entry->f0;
+        questId = entry->f0;
         u32 idx = func_80138138(questId);
         u8 res = (u8)func_8009CF8C(questId + 0x220);
         func_802286F4(self, (const char*)lbl_eu_80573D18[idx], questId,
@@ -375,7 +395,7 @@ extern "C" __declspec(noinline) void func_802285A4(CQstLogList* self) {
             lbl_eu_80664738 = res;
         }
     }
-    lbl_eu_8066472C = total;
+    lbl_eu_8066472C = (u16)total;
     if (CScrollBar_isVisible(&self->mScrollBar)) {
         func_801F36BC(&self->mScrollBar, 10, (u16)lbl_eu_8066472C);
     }
@@ -386,6 +406,9 @@ extern "C" __declspec(noinline) void func_802285A4(CQstLogList* self) {
 // the icon against the proportion pane and move the cursor to it.
 // Locals are declared buf/pos/tmp so the stack slots land at the retail
 // offsets (buf 0x20, pos 0x14, tmp 0x08) keeping r29/r30/r31 live (stmw).
+// pragma optimize_for_size: retail saves r29-r31 via stmw/lmw.
+#pragma push
+#pragma optimize_for_size on
 extern "C" __declspec(noinline) void func_80228B10(CQstLogList* self) {
     char buf[0x20];
     nw4r::math::VEC3 pos;
@@ -405,8 +428,26 @@ extern "C" __declspec(noinline) void func_80228B10(CQstLogList* self) {
         reinterpret_cast<CCur18View*>(&self->mCur18[0])->vf04(&pos);
     }
 }
+#pragma pop
 
-extern "C" __declspec(noinline) void func_80228C04(CQstLogList* self) {}
+// Re-populate the embedded sort menu's array from the shared quest text table
+// (one entry per logged quest) and select the current page.
+// noinline: retail keeps this an out-of-line call from func_80228164.
+// pragma optimize_for_size: retail saves r29-r31 via stmw/lmw.
+#pragma push
+#pragma optimize_for_size on
+__declspec(noinline) void func_80228C04(CQstLogList* self) {
+    if (func_801D32DC(reinterpret_cast<CSortMenu*>(&self->mSortMenuData)) == 0) {
+        return;
+    }
+    func_801D350C(&self->mSortMenuData);
+    for (u8 i = 0; i < (int)lbl_eu_80664728; i++) {
+        func_801D3518(&self->mSortMenuData, &lbl_eu_80576670[i * 0x22] + 2);
+    }
+    func_801D353C(&self->mSortMenuData,
+                  (u8)(self->field_0x17B + self->field_0x17C));
+}
+#pragma pop
 
 // Rebuild the quest list display from the sort-menu/quest state: formats the
 // quest text pane name and loads the entry text (func_80136A1C).
@@ -451,21 +492,33 @@ void func_80227A60(CQstLogList* self) {
 // sort key), then sizes the quest panes from the 'timg' message resource.
 int CQstLogList::OnFileEvent(CEventFile* event) {
     if (mFileHandle == event->mFileHandle) {
+    // Local declaration order fixes the retail stack frame: region guard
+    // 0x0C, cursor temp 0x18, five 0x24-stride entry buffers 0x30..0xE2 and
+    // the quest-type index array at 0xE8.
+    u8 regionBuf[8];           // 0x0C - RAII scratch-region guard storage
+    u8 tmpCur[0x18];           // 0x18 - stack-constructed cursor
+    CQstLogListEntry rowSort;  // 0x30 - entry buffer reused for sorted rows
+    CQstLogListEntry row3;     // 0x54
+    CQstLogListEntry row2;     // 0x78
+    CQstLogListEntry row1;     // 0x9C
+    CQstLogListEntry row0;     // 0xC0
+    u8 indices[0x3C];          // 0xE8 - collected quest types
+
     // Scratch heap region (RAII Class_8045F858 guard), then detach the file
-    // buffer and attach it to the layout arc resource accessor. The string
-    // pool base is materialized after the handle (retail r30).
-    u8 regionBuf[8];
+    // buffer and attach it to the layout arc resource accessor. The handle
+    // is fetched before the string-pool base is materialized (retail order).
     void* mem2 = getHandleMEM2__Q23mtl10MemManagerFv();
     char* const s = lbl_eu_80509AB4;
-    createRegion__17UnkClass_8045F564FiiPCci(&mUnk04[0], (int)mem2, 0x10000,
-                                             &s[0x112], 0);
+    createRegion__17UnkClass_8045F564FiiPCci(
+        &mUnk04[0], (int)mem2, 0x10000, &s[0x112], 0);
     __ct__14Class_8045F858FP17UnkClass_8045F564(regionBuf, &mUnk04[0]);
 
-    void* fileData = mFileHandle->getData();
+    // The detached file-data pointer is loaded inline at the Attach call
+    // site so it never gets a stack slot.
     func_80434A4C__Q23mtl10MemManagerFb(false);
     mArcResAcc =
         (nw4r::lyt::ArcResourceAccessor*)createArcResourceAccessor__10CLibLayoutFv();
-    mArcResAcc->Attach(fileData, &s[0x11e]);
+    mArcResAcc->Attach(mFileHandle->getData(), &s[0x11e]);
 
     func_80136E84(&mpLayout, mArcResAcc, &s[0x122]);
     func_80136F08(mpLayout, &mpAnim0, mArcResAcc, &s[0x135]);
@@ -483,7 +536,6 @@ int CQstLogList::OnFileEvent(CEventFile* event) {
 
     // Build the cursor on the stack, copy its body into the member region
     // (skipping the +0x00 vtable pointer) and destroy the temp.
-    u8 tmpCur[0x18];
     __ct__CCur18(tmpCur, func_801355F4());
     CCur18Data* curDst = reinterpret_cast<CCur18Data*>(&mCur18[0]);
     CCur18Data* curSrc = reinterpret_cast<CCur18Data*>(tmpCur);
@@ -500,46 +552,45 @@ int CQstLogList::OnFileEvent(CEventFile* event) {
     // text), appending each entry to the shared quest-text table. The
     // buffers are declared in reverse use order so the stack slots land at
     // the retail offsets (b4 lowest, b0 highest).
-    CQstLogListEntry b4, b3, b2, b1, b0;
-    b0.mField0 = 0xFF;
-    b0.mField1 = 0;
-    sprintf((char*)&b0.mData[0], &s[0x10],
+    // Prime the four fixed quest-log rows (0xFF head byte + formatted text),
+    // appending each entry to the shared quest-text table.
+    row0.mField0 = 0xFF;
+    row0.mField1 = 0;
+    sprintf((char*)&row0.mData[0], &s[0x10],
             func_80136190(&s[0x166], &s[0x76], 0x44));
     char* const table = lbl_eu_80576670;
     u32 n0 = lbl_eu_80664728;
     lbl_eu_80664728 = n0 + 1;
-    func_80227994((CQstLogListEntry*)&table[n0 * 0x22], &b0);
+    func_80227994((CQstLogListEntry*)&table[n0 * 0x22], &row0);
 
-    b1.mField0 = 0xFF;
-    b1.mField1 = 1;
-    sprintf((char*)&b1.mData[0], &s[0x10],
+    row1.mField0 = 0xFF;
+    row1.mField1 = 1;
+    sprintf((char*)&row1.mData[0], &s[0x10],
             func_80136190(&s[0x166], &s[0x76], 0x45));
     u32 n1 = lbl_eu_80664728;
     lbl_eu_80664728 = n1 + 1;
-    func_80227994((CQstLogListEntry*)&table[n1 * 0x22], &b1);
+    func_80227994((CQstLogListEntry*)&table[n1 * 0x22], &row1);
 
-    b2.mField0 = 0xFF;
-    b2.mField1 = 2;
-    sprintf((char*)&b2.mData[0], &s[0x10],
+    row2.mField0 = 0xFF;
+    row2.mField1 = 2;
+    sprintf((char*)&row2.mData[0], &s[0x10],
             func_80136190(&s[0x166], &s[0x76], 0x46));
     u32 n2 = lbl_eu_80664728;
     lbl_eu_80664728 = n2 + 1;
-    func_80227994((CQstLogListEntry*)&table[n2 * 0x22], &b2);
+    func_80227994((CQstLogListEntry*)&table[n2 * 0x22], &row2);
 
-    b3.mField0 = 0xFF;
-    b3.mField1 = 3;
-    sprintf((char*)&b3.mData[0], &s[0x10],
+    row3.mField0 = 0xFF;
+    row3.mField1 = 3;
+    sprintf((char*)&row3.mData[0], &s[0x10],
             func_80136190(&s[0x166], &s[0x76], 0x47));
     u32 n3 = lbl_eu_80664728;
     lbl_eu_80664728 = n3 + 1;
-    func_80227994((CQstLogListEntry*)&table[n3 * 0x22], &b3);
+    func_80227994((CQstLogListEntry*)&table[n3 * 0x22], &row3);
 
     // Collect every quest type (2..0x1c) that has at least one active,
-    // uncompleted quest in the BDAT quest table. Retail dispatches 6..0x1c
-    // through a jump table; every path runs the same quest scan below, so
-    // the switch is a semantic no-op for all i (2..5 fall straight through).
+    // uncompleted quest in the BDAT quest table. Types 6..0x1c dispatch
+    // through the retail jump table into the shared quest scan below.
     s32 numQuests = (s32)func_8003B1EC(lbl_eu_806640A0);
-    u8 indices[0x3c];
     u8 count = 0;
     for (u8 i = 2; i <= 0x1c; i++) {
         switch (i) {
@@ -547,47 +598,48 @@ int CQstLogList::OnFileEvent(CEventFile* event) {
         case 0xE: case 0xF: case 0x10: case 0x11: case 0x12: case 0x13: case 0x14:
         case 0x15: case 0x16: case 0x17: case 0x18: case 0x19: case 0x1A: case 0x1B:
         case 0x1C:
-            break;
-        }
-        for (s32 j = 1; j <= numQuests; j++) {
-            if (func_801361E8((u32)lbl_eu_806640A0, &s[0x70], j) == i &&
-                func_801361E8((u32)lbl_eu_806640A0, &s[0x170], j) == 0 &&
-                func_8009CF8C((u32)(j + 0x20c8)) != 0) {
-                indices[count++] = i;
-                break;
+            for (s32 j = 1; j <= numQuests; j++) {
+                if (func_801361E8((u32)lbl_eu_806640A0, &s[0x70], j) == i &&
+                    func_801361E8((u32)lbl_eu_806640A0, &s[0x170], j) == 0 &&
+                    func_8009CF8C((u32)(j + 0x20c8)) != 0) {
+                    indices[count++] = i;
+                    break;
+                }
             }
+            break;
         }
     }
 
-    // Bubble-sort the collected quest types by their BDAT sort key, biggest
-    // key first (the xor-swap idiom is MWCC's byte-register swap pattern).
+    // Bubble-sort the collected quest types by their BDAT sort key (biggest
+    // key first) and stop early once a pass makes no swap.
     u8 n = count;
     s8 last = (s8)(n - 1);
     for (u8 outer = 0; outer < n; outer++) {
-        int swapped = 0;
+        bool swapped = false;
         for (s8 inner = 0; inner < (s8)(last - outer); inner++) {
             u8 a = indices[inner];
             u8 b = indices[inner + 1];
             if (func_801361E8((u32)lbl_eu_806640A8, &s[0xa], a) >
                 func_801361E8((u32)lbl_eu_806640A8, &s[0xa], b)) {
+                u8 tmpSwap = a;
                 indices[inner] = b;
-                indices[inner + 1] = a;
-                swapped = 1;
+                indices[inner + 1] = tmpSwap;
+                swapped = true;
             }
         }
-        if (swapped == 0) break;
+        if (!swapped) break;
     }
 
     // Append the sorted quest types as rows 5+ (byte1 = 4) with their names.
     for (u8 k = 0; k < count; k++) {
         u8 idx = indices[k];
         char* text = func_8013639C(lbl_eu_806640A8, &s[0x76], idx);
-        b4.mField0 = idx;
-        b4.mField1 = 4;
-        sprintf((char*)&b4.mData[0], &lbl_eu_80509AB4[0x10], text);
+        rowSort.mField0 = idx;
+        rowSort.mField1 = 4;
+        sprintf((char*)&rowSort.mData[0], &s[0x10], text);
         u32 nk = lbl_eu_80664728;
         lbl_eu_80664728 = nk + 1;
-        func_80227994((CQstLogListEntry*)&lbl_eu_80576670[nk * 0x22], &b4);
+        func_80227994((CQstLogListEntry*)&table[nk * 0x22], &rowSort);
     }
 
     // Refresh the sort-menu header text and rebuild the list display.
@@ -607,16 +659,11 @@ int CQstLogList::OnFileEvent(CEventFile* event) {
     if (obj != 0) {
         func_80137E7C(mpLayout, &s[0x1a5], obj);
         CQstLogListCoords* coords = obj->chain->pCoords;
-        u16 row = coords->c2;
-        u16 col = coords->c0;
         nw4r::lyt::Pane* pane = mpLayout->GetRootPane()->FindPaneByName(
             &s[0x1a5], true);
         if (pane != 0) {
-            float src[2];
-            src[0] = (float)row;
-            src[1] = (float)col;
-            reinterpret_cast<PaneSizeRegion*>(pane)->width = src[0];
-            reinterpret_cast<PaneSizeRegion*>(pane)->height = src[1];
+            reinterpret_cast<PaneSizeRegion*>(pane)->width = coords->c2;
+            reinterpret_cast<PaneSizeRegion*>(pane)->height = coords->c0;
         }
     }
 
@@ -651,6 +698,9 @@ int CQstLogList::OnFileEvent(CEventFile* event) {
 
 // Draws the layout plus the scroll bar, sort menu and cursor when the
 // quest-log layout is loaded (field_0x170).
+// pragma optimize_for_size: retail saves r30-r31 via stmw/lmw.
+#pragma push
+#pragma optimize_for_size on
 void func_80227B6C(CQstLogList* self, nw4r::lyt::DrawInfo* drawInfo) {
     if (self->field_0x170 != 0) {
         func_80137038(self->mpLayout, drawInfo, 0, 1);
@@ -659,6 +709,7 @@ void func_80227B6C(CQstLogList* self, nw4r::lyt::DrawInfo* drawInfo) {
         func_801D20B0(&self->mCur18[0], drawInfo);
     }
 }
+#pragma pop
 
 // Unload the quest-log screen: close the arc file handle, delete the layout,
 // release the resource accessor and tear down cursor/scroll bar/sort menu.
@@ -743,6 +794,9 @@ extern "C" void func_80227AC4(CQstLogList* self) {
 
 // Sort-menu exit callback: when the sort menu is closing (mode 3) switch to
 // mode 4, disable sorting and request scroll-bar out.
+// pragma optimize_for_size: retail saves r30-r31 (self + flag) via stmw/lmw.
+#pragma push
+#pragma optimize_for_size on
 void func_80227D78(CQstLogList* self, int flag) {
     if (self->field_0x174 == 3) {
         self->field_0x174 = 4;
@@ -755,6 +809,7 @@ void func_80227D78(CQstLogList* self, int flag) {
         }
     }
 }
+#pragma pop
 
 // Quest-log scroll up. With the sort menu open, scroll up through its
 // options; otherwise step the row index (field_0x17D) back, wrapping through
@@ -814,11 +869,19 @@ CQstLogList::~CQstLogList() {
 // ctor name). Builds the sub-objects, primes the shared quest text table
 // (lbl_eu_80576670) and copies the temp-constructed CSortMenu / QstData
 // bodies into the members the same way the retail ctor does.
+// pragma optimize_for_size: retail keeps the sort-menu region copy rolled
+// (mtctr/bdnz); -O4,p fully unrolls it.
+#pragma push
+#pragma optimize_for_size on
 CQstLogList::CQstLogList(u16 arg2) {
-    CScrollBarData tmp;          // temp CScrollBar body (member copy source)
-    CQstLogListEntry buf;        // per-entry text buffer
+    // Declaration order sets the retail stack slots: tmp3 0x160, tmp2 0x70,
+    // buf 0x48, tmp 0x08 (frame 0x2180).
+    CQstLogListQstData tmp3;       // temp quest-info buffer (member copy source)
     CQstLogListSortMenuData tmp2;  // temp CSortMenu body (member copy source)
-    CQstLogListQstData tmp3;     // temp quest-info buffer (member copy source)
+    CQstLogListEntry buf;          // per-entry text buffer
+    CScrollBarData tmp;            // temp CScrollBar body (member copy source)
+    const u8* pSrc;                // temp QstInfo copy cursor
+    u8* pDst;                      // member QstInfo copy cursor
 
     mVtable = (u32)lbl_eu_80536288;
     __ct__17UnkClass_8045F564Fv(&mUnk04[0]);
@@ -843,12 +906,14 @@ CQstLogList::CQstLogList(u16 arg2) {
     func_80226FAC(&mQstData.mList[0]);
 
     // Prime the 32 quest text entries: 0xFF/0x00 head bytes + a cleared
-    // "%s" string, copied into the shared table.
-    for (u8 i = 0; i < 0x20; i++) {
-        buf.mField0 = 0xFF;
+    // "%s" string, copied into the shared table. Counter is u32 truncated
+    // at the multiply (retail clrlwi) with an unsigned loop compare.
+    for (u32 tbl_i = 0; tbl_i < 0x20; tbl_i++) {
+        buf.mField0 = -1;
         buf.mField1 = 0;
         sprintf((char*)&buf.mData[0], &lbl_eu_80509AB4[0x10], 0);
-        func_80227994((CQstLogListEntry*)&lbl_eu_80576670[i * 0x22], &buf);
+        func_80227994(
+            (CQstLogListEntry*)&lbl_eu_80576670[(u8)tbl_i * 0x22], &buf);
     }
 
     lbl_eu_80664728 = 0;
@@ -873,9 +938,18 @@ CQstLogList::CQstLogList(u16 arg2) {
     mSortMenuData.field_0x2A = tmp2.field_0x2A;
     mSortMenuData.field_0x2B = tmp2.field_0x2B;
     func_8011C998(&mSortMenuData.mScrollBar, &tmp2.mScrollBar);
-    for (int k = 0; k < 16; k++) {
-        mSortMenuData.mArray[k * 2] = tmp2.mArray[k * 2];
-        mSortMenuData.mArray[k * 2 + 1] = tmp2.mArray[k * 2 + 1];
+    // 0x80-byte raw region copy (sort-menu +0x68..+0xE8: pad word, array,
+    // count/page/subpage).
+    {
+        // 0x80-byte block struct assign: MWCC emits its canonical
+        // lwz/lwzu + stw/stwu mtctr loop for whole-struct copies.
+        struct SortMenuRegion {
+            u8 bytes[0x80];
+        };
+        *reinterpret_cast<SortMenuRegion*>(
+            reinterpret_cast<char*>(&mSortMenuData) + 0x6C) =
+            *reinterpret_cast<const SortMenuRegion*>(
+                reinterpret_cast<const char*>(&tmp2) + 0x6C);
     }
     mSortMenuData.mCount = tmp2.mCount;
     mSortMenuData.mPage = tmp2.mPage;
@@ -885,14 +959,22 @@ CQstLogList::CQstLogList(u16 arg2) {
     // Build a temp quest-info buffer and copy the 0x400 records plus the
     // 6-byte tail into the member, then destroy the temp.
     func_80226FAC(&tmp3.mList[0]);
-    u32 k2 = 0;
-    do {
-        copyQstInfo(&mQstData.mList[k2 * 8], &tmp3.mList[k2 * 8]);
-        k2++;
-    } while (k2 < 0x400);
+    // 0x400-record copy; retail compares the running member pointer against
+    // the member-buffer end (cmplw), not a counter.
+    {
+        pDst = &mQstData.mList[0];
+        pSrc = &tmp3.mList[0];
+        // Bottom-checked loop; end address hoisted by the compiler.
+        do {
+            copyQstInfo(pDst, pSrc);
+            pDst += 8;
+            pSrc += 8;
+        } while (pDst < &mQstData.mList[8 * 0x400]);
+    }
     mQstData.field_2000 = tmp3.field_2000;
     mQstData.field_2002 = tmp3.field_2002;
     mQstData.field_2004 = tmp3.field_2004;
     mQstData.field_2005 = tmp3.field_2005;
     __destroy_arr(&tmp3, (void*)&__dt__80227030, 8, 0x400);
 }
+#pragma pop

@@ -210,7 +210,7 @@ void __ct__17UnkClass_8045F564Fv(u8* self);
 // any included header).
 int func_801042C8();
 int func_801B0F8C();
-int func_8017FD44(void*);
+int func_8017FD44(void);
 int func_800FF738();
 // Arts-state gate helpers used by Move (retail unmangled; declared in their
 // own TUs but not by any included header).

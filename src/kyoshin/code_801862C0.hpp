@@ -43,10 +43,8 @@ void* func_80186474(void* self, void* src);
 void* func_801864DC(void* pObj, int slot);
 void func_80186664(u8* self);
 void func_801866F0(struct MapObjVt** objects, int row);
-void* func_80186A70(void* p);
 void* func_80186BC8(int p);
 void func_80186C7C(void* p);
-void* func_80186D20(void* p);
 
 // cf::CfGameManager sequence/resource counters (retail mangled symbols).
 u32 func_800822F4__Q22cf13CfGameManagerFv(void);
@@ -56,6 +54,15 @@ u32 func_80082354__Q22cf13CfGameManagerFv(u32 resourceId);
 }
 #endif
 
+// Sync loop (C++ linkage; defined in code_801862C0.cpp).
+void func_80186D20(void* p);
+
+// Arts-availability check (retail keeps the unmangled C symbol even though
+// the 9-argument form spills the last column pointer to the stack).
+extern "C" int func_80186A70(void* p, s32 row, const char* c1, const char* c2,
+                             const char* c3, const char* c4, const char* c5,
+                             const char* c6, const char* c7);
+
 // C-linkage imports (retail symbol names - keep linkage/signatures verbatim)
 extern "C" u32 lbl_eu_806642D0; // SDA singleton pointer for the arts select object (opaque pointer)
 extern "C" void* memset(void*, int, unsigned long);
@@ -63,6 +70,10 @@ extern "C" void* memset(void*, int, unsigned long);
 // Imported data symbols (other splits) referenced by func_801862C0
 // One-time init guard flag in SDA.
 extern s8 lbl_eu_806642C8;
+
+// Game-state flag words (CUICfManager .sbss) read by func_80186D20.
+extern u32 lbl_eu_80663E24;
+extern u32 lbl_eu_80663E28;
 
 // Column-name pool for the map-object spawn table (.rodata, other split).
 extern u8 lbl_eu_805038C8[];
@@ -216,6 +227,100 @@ public:
     virtual void _v080();
     virtual void _v084();
     virtual void notify(int armed); // 0x88
+};
+
+// Container slot object: state flag word at 0x68 and a vtable dispatcher;
+// slot 0x158 applies a motion/state id.
+class ArtsEntryVt {
+public:
+    virtual void _v008();
+    virtual void _v00C();
+    virtual void _v010();
+    virtual void _v014();
+    virtual void _v018();
+    virtual void _v01C();
+    virtual void _v020();
+    virtual void _v024();
+    virtual void _v028();
+    virtual void _v02C();
+    virtual void _v030();
+    virtual void _v034();
+    virtual void _v038();
+    virtual void _v03C();
+    virtual void _v040();
+    virtual void _v044();
+    virtual void _v048();
+    virtual void _v04C();
+    virtual void _v050();
+    virtual void _v054();
+    virtual void _v058();
+    virtual void _v05C();
+    virtual void _v060();
+    virtual void _v064();
+    virtual void _v068();
+    virtual void _v06C();
+    virtual void _v070();
+    virtual void _v074();
+    virtual void _v078();
+    virtual void _v07C();
+    virtual void _v080();
+    virtual void _v084();
+    virtual void _v088();
+    virtual void _v08C();
+    virtual void _v090();
+    virtual void _v094();
+    virtual void _v098();
+    virtual void _v09C();
+    virtual void _v0A0();
+    virtual void _v0A4();
+    virtual void _v0A8();
+    virtual void _v0AC();
+    virtual void _v0B0();
+    virtual void _v0B4();
+    virtual void _v0B8();
+    virtual void _v0BC();
+    virtual void _v0C0();
+    virtual void _v0C4();
+    virtual void _v0C8();
+    virtual void _v0CC();
+    virtual void _v0D0();
+    virtual void _v0D4();
+    virtual void _v0D8();
+    virtual void _v0DC();
+    virtual void _v0E0();
+    virtual void _v0E4();
+    virtual void _v0E8();
+    virtual void _v0EC();
+    virtual void _v0F0();
+    virtual void _v0F4();
+    virtual void _v0F8();
+    virtual void _v0FC();
+    virtual void _v100();
+    virtual void _v104();
+    virtual void _v108();
+    virtual void _v10C();
+    virtual void _v110();
+    virtual void _v114();
+    virtual void _v118();
+    virtual void _v11C();
+    virtual void _v120();
+    virtual void _v124();
+    virtual void _v128();
+    virtual void _v12C();
+    virtual void _v130();
+    virtual void _v134();
+    virtual void _v138();
+    virtual void _v13C();
+    virtual void _v140();
+    virtual void _v144();
+    virtual void _v148();
+    virtual void _v14C();
+    virtual void _v150();
+    virtual void _v154();
+    virtual void applyState(int id); // 0x158
+
+    u8 pad_04[0x64]; // 0x04..0x67
+    u32 field_68;    // 0x68: state flag bits (bit 0x40)
 };
 
 // One arts-select container slot: a widget with a state flag word and a

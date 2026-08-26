@@ -45,6 +45,8 @@ extern "C" {
     extern u32 __RTTI__10IWorkEvent[];
     extern u32 __RTTI__11CWorkThread[];
     extern void __dt__16CDeviceFontLayerFv();
+    extern void __ct__7CDrawGXFv(void* self);
+    extern void clear__7CDrawGXFv(void* self);
     extern void WorkEvent1__10IWorkEventFPvPCc();
     extern void OnFileEvent__10IWorkEventFP10CEventFile();
     extern void WorkEvent3__10IWorkEventFPv();
@@ -85,6 +87,7 @@ extern "C" {
     extern f32 lbl_eu_8066A408;
     extern f32 lbl_eu_8066A40C;
     extern f32 lbl_eu_8066A410;
+    extern const f64 lbl_eu_8066A418; // 0x4330000080000000 int->double bias
 }
 
 
@@ -108,11 +111,15 @@ public:
     virtual void* GetSlot9();                         // 0x24 - dispatch-only
 };
 
+// Draw-command payload (replay view of a queued record).
+struct CDeviceFontLayerCmdData;
+
 // Draw-command list node (reslist-style: next at 0x0, payload at 0x8).
 struct CDeviceFontLayerCmdNode {
     CDeviceFontLayerCmdNode* mNext; // 0x0
     u32 mPad4;                      // 0x4
-    struct CDeviceFontLayerCmdData* mData; // 0x8
+    // volatile: retail re-loads the payload pointer in every switch case
+    CDeviceFontLayerCmdData* volatile mData; // 0x8
 };
 
 // Queued draw-command record carved from the shared scratch buffer.
@@ -125,6 +132,31 @@ struct LAYER_QUE {
         ml::CCol4 mCol;
         struct { u16 mPad4; u16 mPad6; s16 mX; s16 mY; }; // 0x04
     };
+};
+
+// 8-byte fixed-size command header carved from the shared scratch buffer;
+// records are addressed via the end-of-record cursor (header at [-1]).
+struct SCRATCH_CMD {
+    u16 mCmd;  // 0x0
+    u16 mSize; // 0x2
+    u32 mArg;  // 0x4
+};
+
+// 0xC-byte scale-command record as addressed via its end pointer.
+struct ScaleCmd {
+    u16 mCmd;  // 0x0
+    u16 mSize; // 0x2
+    f32 mSX;   // 0x4
+    f32 mSY;   // 0x8
+};
+
+// 8-byte text-command header carved from the shared scratch buffer; the
+// string payload follows the header inline.
+struct TextQue {
+    u16 mCmd;  // 0x0
+    u16 mSize; // 0x2
+    s16 mX;    // 0x4
+    s16 mY;    // 0x6
 };
 
 // Draw-command payload (replay view of a queued record).
@@ -370,21 +402,20 @@ extern "C" void* __dt__reslist_const_CDeviceFontLayer_LAYER_QUE(LayerQueList* se
     // the deleting-mode delete sits outside the inner check.
     if (self != NULL) {
         if (self != NULL) {
-            LayerQueList* list = self;
-            list->mVtbl = (u32)lbl_eu_8056C89C;
-            LayerQueNode* cleared = NULL;
-            LayerQueNode* node = list->mStartNodePtr->mNext;
-            while (node != list->mStartNodePtr) {
+            self->mVtbl = (u32)lbl_eu_8056C89C;
+            LayerQueNode* node;
+            node = self->mStartNodePtr->mNext;
+            while (self->mStartNodePtr != node) {
                 LayerQueNode* prev = node;
                 node = node->mNext;
-                prev->mNext = cleared;
+                prev->mNext = NULL;
             }
-            list->mStartNodePtr->mNext = list->mStartNodePtr;
-            list->mStartNodePtr->mPrev = list->mStartNodePtr;
-            if (list->field_0x1C == false) {
-                if (list->mList != NULL) {
-                    delete[] list->mList;
-                    list->mList = NULL;
+            self->mStartNodePtr->mNext = self->mStartNodePtr;
+            self->mStartNodePtr->mPrev = self->mStartNodePtr;
+            if (self->field_0x1C == false) {
+                if (self->mList != NULL) {
+                    delete[] self->mList;
+                    self->mList = NULL;
                 }
             }
         }
@@ -410,22 +441,25 @@ CDeviceFontLayer::CDeviceFontLayer(const char* pName, CWorkThread* pParent,
     mQueList.mStartNodePtr->mNext = mQueList.mStartNodePtr;
     mQueList.mStartNodePtr->mPrev = mQueList.mStartNodePtr;
     mQueList.mVtbl = (u32)lbl_eu_8056C884;
-    mScaleX = lbl_eu_8066A408;
-    mScaleY = lbl_eu_8066A408;
+    // Chained assign: one shared lfs (retail shape), stores 0x1ec then 0x1f0.
+    mScaleY = mScaleX = lbl_eu_8066A408;
     mFontId = 0;
     field_0x1F8 = 0;
     mFlag1FC = 1;
     // Constructed here (not in the init list) to keep the retail order.
-    new (drawGX()) CDrawGX();
+    // Direct ctor-symbol call: placement-new would emit MWCC's intrinsic
+    // null guard (addic./beq) that retail does not have.
+    __ct__7CDrawGXFv(drawGX());
+    // Retail hoists all three constant reads to right after the ctor call.
+    f32 col = lbl_eu_8066A40C;
+    f32 bg = lbl_eu_8066A410;
     mFlag2F0 = 0;
     mType = 0x3F; // CWorkThread::TYPE_FONT_LAYER
-    mScaleX = lbl_eu_8066A408;
-    mScaleY = lbl_eu_8066A408;
-    mColor.set(lbl_eu_8066A40C, lbl_eu_8066A40C, lbl_eu_8066A40C,
-               lbl_eu_8066A40C);
-    mBgColor.set(lbl_eu_8066A410, lbl_eu_8066A410, lbl_eu_8066A410,
-                 lbl_eu_8066A410);
+    mScaleY = mScaleX = lbl_eu_8066A408;
+    mColor.set(col, col, col, col);
+    mBgColor.set(bg, bg, bg, bg);
     mQueList.clearList();
+    drawGX()->clear();
     mDirty = 0;
     drawGX()->setFlag(0x10, true);
 }
@@ -458,32 +492,37 @@ CDeviceFontLayer::~CDeviceFontLayer() {
 // width (glyph width scaled by `scale`, plus 2px per glyph when fontId is
 // nonzero) and returns the maximum. Measured lines are copied into a local
 // buffer; the trailing (final) line is measured in place.
+//
+// Accumulation uses natural u32->double casts; MWCC lowers them to the
+// retail 0x43300000/xoris magic-double sequence with its own frame-top
+// temporaries and the shared .sdata2 bias constant.
 // ---------------------------------------------------------------------------
 extern "C" u32 func_80453D78__16CDeviceFontLayerFv(const char* str,
                                                    u32 fontId, f32 scale) {
     char buf[0x400];
     u32 maxWidth = 0;
     u32 count = 0;
-    u32 cur = 0;
+    u32 cur;
     IDeviceFontInfo* info;
 
     while (str[count] != 0) {
         if (str[count] == '\n') {
             memcpy(buf, str, count);
-            buf[count] = 0;
+            buf[count] = '\0';
             const char* p = buf;
             info = func_80452C10__11CDeviceFontFUlPQ34nw4r3lyt6Layout(fontId);
             if (info == 0) {
                 cur = 0;
             } else {
                 cur = 0;
-                GlyphOut g;
+                void* tex;
+                u32 gx, gy, gw;
                 while (*p != 0) {
-                    p = info->GetFontTexture(p, &g.tex, &g.x, &g.y, &g.w);
+                    p = info->GetFontTexture(p, &tex, &gx, &gy, &gw);
                     if (fontId != 0) {
-                        g.w += 2;
+                        gw += 2;
                     }
-                    cur = (s32)((f32)cur + (f32)g.w * scale);
+                    cur = (u32)((f64)gw * scale + (f64)cur);
                 }
             }
             if (maxWidth < cur) {
@@ -501,13 +540,14 @@ extern "C" u32 func_80453D78__16CDeviceFontLayerFv(const char* str,
         cur = 0;
     } else {
         cur = 0;
-        GlyphOut g;
+        void* tex;
+        u32 gx, gy, gw;
         while (*str != 0) {
-            str = info->GetFontTexture(str, &g.tex, &g.x, &g.y, &g.w);
+            str = info->GetFontTexture(str, &tex, &gx, &gy, &gw);
             if (fontId != 0) {
-                g.w += 2;
+                gw += 2;
             }
-            cur = (s32)((f32)cur + (f32)g.w * scale);
+            cur = (u32)((f64)gw * scale + (f64)cur);
         }
     }
     if (maxWidth < cur) {
@@ -517,33 +557,61 @@ extern "C" u32 func_80453D78__16CDeviceFontLayerFv(const char* str,
 }
 
 // Queue a text-draw command (cmd 0) with an inline string payload.
-u32 func_80453BB4__16CDeviceFontLayerFv(CDeviceFontLayer* self, s16 x, s16 y,
-                                        const char* str) {
-    FONT_LAYER_RESERVE_SLOTS(self);
+// No return value (retail leaves r3 untouched at the blr).
+void func_80453BB4__16CDeviceFontLayerFv(CDeviceFontLayer* self, s16 x, s16 y,
+                                         const char* str) {
+    if (self->mQueList.mCapacity == 0)
+        self->mQueList.reserve(self->mAllocHandle);
 
-    // Reserve the fixed header first.
+    // Carve the record out of the shared scratch buffer: TextQue is exactly
+    // 8 bytes, so end-1 addresses the record header (the retail shape keeps
+    // the end-of-record cursor live and rebases to the start afterwards).
     u32 cursor = lbl_eu_80665694 + 8;
+    TextQue* cmd = (TextQue*)((u8*)lbl_eu_80665690 + cursor) - 1;
     lbl_eu_80665694 = cursor;
-    LAYER_QUE* cmd = (LAYER_QUE*)((u8*)lbl_eu_80665690 + cursor - 8);
     cmd->mCmd = 0;
     cmd->mX = x;
     cmd->mY = y;
 
-    // Then the inline string (with terminator); the end cursor is aligned
-    // up to 4 and the total record size stored into the header.
-    int len = strlen(str) + 1;
-    lbl_eu_80665694 += len;
-    memcpy((u8*)lbl_eu_80665690 + lbl_eu_80665694 - len, str, len);
-    u32 aligned = lbl_eu_80665694;
-    u32 rem = aligned & 3;
-    if (rem != 0) {
-        aligned = aligned + 4 - rem;
-        lbl_eu_80665694 = aligned;
+    // Inline string payload (with terminator).
+    u32 len = strlen(str) + 1;
+    u32 newCursor = lbl_eu_80665694 + len;
+    lbl_eu_80665694 = newCursor;
+    memcpy((u8*)lbl_eu_80665690 + newCursor - len, str, len);
+
+    // Align the end cursor up to 4 and record the total record size.
+    int cur = lbl_eu_80665694;
+    int rem = cur & 3;
+    if (rem != 0)
+        cur = cur + 4 - rem;
+    int total = (u8*)lbl_eu_80665690 + cur - (u8*)cmd;
+    lbl_eu_80665694 = cur;
+    cmd->mSize = (u16)total;
+
+    // Hand-inlined reslist<const LAYER_QUE*> append (retail walks the slot
+    // array with a count + byte-offset pair, then links the node).
+    int i;
+    int capacity;
+    LayerQueNode* startNode;
+    startNode = self->mQueList.mStartNodePtr;
+    capacity = self->mQueList.mCapacity;
+    for (i = 0; i < capacity; i++) {
+        if (self->mQueList.mList[i].mNext == NULL)
+            break;
     }
-    cmd->mSize = (u16)((u8*)lbl_eu_80665690 + aligned - (u8*)cmd);
-    cmd->mSize = (u16)((u8*)lbl_eu_80665690 + lbl_eu_80665694 - (u8*)cmd);
-    self->mQueList.push_back(cmd);
-    return 0;
+    LayerQueNode* temp = self->mQueList.mList + i;
+    const LAYER_QUE** ptr = &temp->mItem;
+    if (ptr != NULL) {
+        try {
+            *ptr = (const LAYER_QUE*)cmd;
+        } catch (...) {
+            throw;
+        }
+    }
+    temp->mNext = startNode;
+    temp->mPrev = startNode->mPrev;
+    startNode->mPrev->mNext = temp;
+    startNode->mPrev = temp;
 }
 
 // Look up the font-info record for this layer's font id; when found, query
@@ -568,51 +636,134 @@ void func_80453FF0__16CDeviceFontLayerFv(CDeviceFontLayer* self,
     if (same)
         return;
 
+    LAYER_QUE* cmd;
     FONT_LAYER_RESERVE_SLOTS(self);
 
-    u8* base = (u8*)lbl_eu_80665690;
+    // Record addressed via its end pointer (retail writes fields
+    // end-relative), rebased to the start for the queue append.
     u32 cursor = lbl_eu_80665694 + 0x14;
     lbl_eu_80665694 = cursor;
-    LAYER_QUE* cmd = (LAYER_QUE*)(base + cursor - 0x14);
+    cmd = (LAYER_QUE*)((u8*)lbl_eu_80665690 + cursor) - 1;
     cmd->mCmd = 1;
     cmd->mSize = 0x14;
     cmd->mCol = *col;
-    self->mQueList.push_back(cmd);
+
+    // Hand-inlined reslist<const LAYER_QUE*> append (retail walks the slot
+    // array with a count + byte-offset pair, then links the node).
+    LayerQueList* list = &self->mQueList;
+    int i;
+    int byteOff;
+    int capacity;
+    LayerQueNode* sentinel;
+    sentinel = list->mStartNodePtr;
+    capacity = list->mCapacity;
+    for (i = 0, byteOff = 0; i < capacity; i++) {
+        if (*(void**)((u8*)list->mList + byteOff) == NULL)
+            break;
+        byteOff += sizeof(LayerQueNode);
+    }
+    LayerQueNode* temp = &list->mList[i];
+    const LAYER_QUE** ptr = &temp->mItem;
+    if (ptr != NULL) {
+        try {
+            *ptr = cmd;
+        } catch (...) {
+            throw;
+        }
+    }
+    temp->mNext = sentinel;
+    temp->mPrev = sentinel->mPrev;
+    sentinel->mPrev->mNext = temp;
+    sentinel->mPrev = temp;
 
     self->mBgColor = *col;
 }
 
 // Queue a text-scale change; the layer's own scale is updated immediately.
+// Single chained record-pointer expression: MWCC forms the end-of-record
+// pointer, writes the leading fields end-relative, then rebases to the
+// record start (subi) for the trailing field and the queue append.
 void func_804541F8__16CDeviceFontLayerFv(CDeviceFontLayer* self, f32 scaleX,
                                          f32 scaleY) {
     FONT_LAYER_RESERVE_SLOTS(self);
 
-    u8* base = (u8*)lbl_eu_80665690;
     u32 cursor = lbl_eu_80665694 + 0xc;
     lbl_eu_80665694 = cursor;
-    LAYER_QUE* cmd = (LAYER_QUE*)(base + cursor - 0xc);
+    LAYER_QUE* cmd = (LAYER_QUE*)((u8*)lbl_eu_80665690 + cursor - 0xc);
     cmd->mCmd = 3;
     cmd->mSize = 0xc;
     cmd->mF[0] = scaleX;
     cmd->mF[1] = scaleY;
-    self->mQueList.push_back(cmd);
+
+    LayerQueList* list = &self->mQueList;
+    int i;
+    int byteOff;
+    int capacity;
+    LayerQueNode* sentinel;
+    sentinel = list->mStartNodePtr;
+    capacity = list->mCapacity;
+    for (i = 0, byteOff = 0; i < capacity; i++) {
+        if (*(void**)((u8*)list->mList + byteOff) == NULL)
+            break;
+        byteOff += sizeof(LayerQueNode);
+    }
+    LayerQueNode* temp = &list->mList[i];
+    const LAYER_QUE** ptr = &temp->mItem;
+    if (ptr != NULL) {
+        try {
+            *ptr = cmd;
+        } catch (...) {
+            throw;
+        }
+    }
+    temp->mNext = sentinel;
+    temp->mPrev = sentinel->mPrev;
+    sentinel->mPrev->mNext = temp;
+    sentinel->mPrev = temp;
 
     self->mScaleX = scaleX;
     self->mScaleY = scaleY;
 }
 
 // Queue a font-id change; the layer's own font id is updated immediately.
+// The reslist append follows the func_8048C524/CDeviceVI recipe: hand-inlined
+// push_back walk with explicit byteOff + comma-init so the register assignment
+// matches retail (cmd r4, i r5, byteOff r6, capacity r7, sentinel r8).
 void func_8045438C__16CDeviceFontLayerFv(CDeviceFontLayer* self, u32 arg) {
     FONT_LAYER_RESERVE_SLOTS(self);
 
-    u8* base = (u8*)lbl_eu_80665690;
     u32 cursor = lbl_eu_80665694 + 8;
     lbl_eu_80665694 = cursor;
-    LAYER_QUE* cmd = (LAYER_QUE*)(base + cursor - 8);
+    LAYER_QUE* cmd = (LAYER_QUE*)((u8*)lbl_eu_80665690 + cursor - 8);
     cmd->mCmd = 5;
     cmd->mSize = 8;
     cmd->mArg[0] = arg;
-    self->mQueList.push_back(cmd);
+
+    LayerQueList* list = &self->mQueList;
+    int i;
+    int byteOff;
+    int capacity;
+    LayerQueNode* startNode;
+    startNode = list->mStartNodePtr;
+    capacity = list->mCapacity;
+    for (i = 0, byteOff = 0; i < capacity; i++) {
+        if (*(void**)((u8*)list->mList + byteOff) == NULL)
+            break;
+        byteOff += sizeof(LayerQueNode);
+    }
+    LayerQueNode* temp = &list->mList[i];
+    const LAYER_QUE** ptr = &temp->mItem;
+    if (ptr != NULL) {
+        try {
+            *ptr = cmd;
+        } catch (...) {
+            throw;
+        }
+    }
+    temp->mNext = startNode;
+    temp->mPrev = startNode->mPrev;
+    startNode->mPrev->mNext = temp;
+    startNode->mPrev = temp;
 
     self->mFontId = arg;
 }
@@ -626,21 +777,15 @@ void func_8045438C__16CDeviceFontLayerFv(CDeviceFontLayer* self, u32 arg) {
 // ---------------------------------------------------------------------------
 extern "C" void func_80454508__16CDeviceFontLayerFv(CDeviceFontLayer* self,
                                                     u32 arg) {
-    if (self->mQueList.mCapacity == 0) {
-        // reserve(handle, 0x180): 0x180 nodes x 0xC bytes + item padding.
-        self->mQueList.mList = (LayerQueNode*)mtl::MemManager::allocate_array(
-            0x1200, self->mAllocHandle);
-        for (int i = 0; i < 0x180; i++) {
-            self->mQueList.mList[i].mNext = NULL;
-        }
-        self->mQueList.mCapacity = 0x180;
-    }
+    // Lazily allocate the slot array via the shared reserve() helper.
+    FONT_LAYER_RESERVE_SLOTS(self);
 
-    // Append the command record at the scratch-buffer write cursor.
-    u8* base = (u8*)lbl_eu_80665690;
+    // Append the command record at the scratch-buffer write cursor. The
+    // record is addressed via the end-of-record pointer, one 8-byte header
+    // back (retail keeps the end pointer live and stores at [-1]).
     u32 cursor = lbl_eu_80665694 + 8;
     lbl_eu_80665694 = cursor;
-    LAYER_QUE* cmd = (LAYER_QUE*)(base + cursor - 8);
+    LAYER_QUE* cmd = (LAYER_QUE*)((u8*)lbl_eu_80665690 + cursor - 8);
     cmd->mCmd = 6;
     cmd->mSize = 8;
     cmd->mArg[0] = arg;
@@ -784,10 +929,12 @@ extern "C" void func_80454B70__16CDeviceFontLayerFv(CDeviceFontLayer* self,
     }
     while (node != (CDeviceFontLayerCmdNode*)self->mQueList.mStartNodePtr) {
         switch (node->mData->mCmd) {
-        case 3:
-            self->mScaleX = *(f32*)&node->mData->mArg0;
-            self->mScaleY = *(f32*)&node->mData->mArg1;
+        case 3: {
+            CDeviceFontLayerCmdData* d = node->mData;
+            self->mScaleX = *(f32*)&d->mArg0;
+            self->mScaleY = *(f32*)&d->mArg1;
             break;
+        }
         case 4:
             self->drawGX()->setGXCacheId(node->mData->mArg0);
             break;
@@ -797,14 +944,16 @@ extern "C" void func_80454B70__16CDeviceFontLayerFv(CDeviceFontLayer* self,
         case 2:
             self->mColor = *(ml::CCol4*)&node->mData->mArg0;
             break;
-        case 0:
+        case 0: {
+            CDeviceFontLayerCmdData* d = node->mData;
             func_804546C8__16CDeviceFontLayerFP7CDrawGX(
                 self->drawGX(), self->mFontId,
-                (const char*)&node->mData->mArg1,
-                (s16)node->mData->mArg0,
-                (s16)(node->mData->mArg0 >> 16), self->mScaleX,
+                (const char*)&d->mArg1,
+                ((TextQue*)d)->mX,
+                ((TextQue*)d)->mY, self->mScaleX,
                 self->mScaleY, &self->mColor, self->mFlag1FC);
             break;
+        }
         case 5:
             self->mFontId = node->mData->mArg0;
             break;
@@ -818,23 +967,28 @@ extern "C" void func_80454B70__16CDeviceFontLayerFv(CDeviceFontLayer* self,
 
     self->mDirty = 1;
     if (flag != 0) {
-        // Color reset pulls 1.0f/0.0f from the shared float globals.
-        self->mColor.set(lbl_eu_8066A40C, lbl_eu_8066A40C, lbl_eu_8066A40C,
-                         lbl_eu_8066A40C);
-        self->mBgColor.set(lbl_eu_8066A410, lbl_eu_8066A410, lbl_eu_8066A410,
-                           lbl_eu_8066A410);
-        // Unlink every queued node and reset the list head to empty.
+        // Color reset pulls 1.0f/0.0f from the shared float globals; both
+        // loads are hoisted above their store groups (retail shape), with
+        // col landing in f1 and bg in f0.
+        f32 bg = lbl_eu_8066A410, col = lbl_eu_8066A40C;
+        self->mColor.set(col, col, col, col);
+        self->mBgColor.set(bg, bg, bg, bg);
+        // Unlink every queued node and reset the list ring to empty.
         LayerQueNode* n = self->mQueList.mStartNodePtr->mNext;
         while (n != self->mQueList.mStartNodePtr) {
-            LayerQueNode* next = n->mNext;
-            n->mNext = NULL;
-            n = next;
+            LayerQueNode* done = n;
+            n = n->mNext;
+            done->mNext = NULL;
         }
         self->mQueList.mStartNodePtr->mNext = self->mQueList.mStartNodePtr;
         self->mQueList.mStartNodePtr->mPrev = self->mQueList.mStartNodePtr;
         self->drawGX()->clear();
+        // Read-modify-write split so the flags load is scheduled before the
+        // mDirty store (retail shape).
+        CDrawGXColorLayout* gxLayout = (CDrawGXColorLayout*)self->mDrawGXBuf;
+        u32 gxFlags = gxLayout->mFlags;
         self->mDirty = 0;
-        self->drawGX()->setFlag(0x10, true);
+        gxLayout->mFlags = gxFlags | 0x10;
     }
 
     self->drawGX()->func_80456570(1);

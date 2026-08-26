@@ -88,3 +88,20 @@ public:
     s16 field_0x78;
 };
 
+// State-dispatch ptmf table (.data: lbl_eu_80537F98), indexed by field_0x6C.
+// Entries: state 0 -> func_80275454, state 1 -> func_802756F0. MWCC lowers
+// (self->*table[idx])() to mulli/lis/addi + `bl __ptmf_scall`.
+typedef void (UnkCode8027513C::*UnkCode8027513CStateFn)();
+extern UnkCode8027513CStateFn lbl_eu_80537F98[2];
+
+// Child-effect state notifier (retail symbol is unmangled C-linkage).
+extern "C" void func_800ACC14(void* obj, s8 val);
+
+// func_800ACC64/func_800ACF78/func_801BFDE8: retail-unmangled C-linkage
+// imports already declared by CfObjectImplMove.hpp.
+// Retail calls func_8008187C through the cf::CfGameManager member declaration
+// (mangled func_8008187C__Q22cf13CfGameManagerFv) even though the callee
+// actually takes a type code in r3 and returns a CfObjectEff*. Declare the
+// literal retail symbol with C linkage so the bl reloc name matches.
+extern "C" void* func_8008187C__Q22cf13CfGameManagerFv(u32 index);
+

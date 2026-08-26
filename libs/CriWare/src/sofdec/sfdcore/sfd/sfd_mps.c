@@ -5,7 +5,7 @@
 
 int SFD_SetElementOutSj(void* self, s32 idx, s32 data, s32 arg3, s32 arg4);
 int SFMPS_Init(void);int SFMPS_Finish(void);
-void SFMPS_ExecServer(void* self);
+s32 SFMPS_ExecServer(void* self);
 int sfmps_DecodeSomeUnit(void* self);
 int criware_803C1490(void* self, s32* out_a, s32* out_b, s32 unused, s32* out_c);
 int sfmps_DecodeOneUnit(void* self, s32 buf, s32 size, s32* out_size, s32* out_flag, s32 a5);
@@ -40,6 +40,9 @@ extern s32 (*lbl_eu_80619BAC)(void*, void*);
 // External function declarations
 s32 SFLIB_CheckHn(void* h);
 s32 SFLIB_SetErr(s32 val, u32 err_code);
+// 4-byte wrapper thunk at .text:0x803C34F8 that SFMPS_Init's error path
+// calls (retail symbol fn_803C34F8; SFLIB_SetErr proper sits at +4).
+extern s32 fn_803C34F8(s32 val, u32 err_code);
 void SFSET_SetCond(void* self, u32 idx, u32 val);
 u32 SFSET_GetCond(void* self, u32 idx);
 void SFBUF_SetPrepFlg(void* self, u32 idx, u32 val);
@@ -48,12 +51,12 @@ void SFBUF_SetTermFlg(void* buf, s32 idx, u32 flg);
 int SFBUF_GetTermFlg(void* self, int idx);
 u32 SFBUF_GetRTot(void* self, u32 idx);
 s32 SFBUF_GetWTot(void* self, u32 idx);
-s32 SFBUF_RingGetRead(void* self, u32 idx, void* out);
+s32 SFBUF_RingGetRead(void* self, u32 idx, s32* out);
 s32 SFBUF_RingGetWrite(void* self, u32 idx, void* out);
 s32 SFBUF_RingAddRead(void* self, u32 idx, u32 size);
 s32 SFBUF_RingAddWrite(void* self, u32 idx, u32 size, void* extra);
 void SFBUF_GetFlowCnt(void* self, u32* readCnt, u32* writeCnt);
-u64 SFBUF_UpdateFlowCnt(u64 v, u32 x);
+u64 SFBUF_UpdateFlowCnt(u32 hi, u32 lo, u32 x);
 void SFBUF_GetUoch(void* self, int idx, int sub_idx, u32* dst);
 u32 SFTRN_GetPrepFlg(void* self, u32 idx);
 void SFTRN_SetTermFlg(void* self, u32 idx, u32 val);
@@ -98,7 +101,7 @@ int SFD_SetElementOutSj(void* self, s32 idx, s32 data, s32 arg3, s32 arg4) {
 int SFMPS_Init(void) {
     int ret = MPS_Init(8, lbl_eu_80607160);
     if (ret) {
-        return SFLIB_SetErr(0, 0xff000d01);
+        return fn_803C34F8(0, 0xff000d01);
     }
     lbl_eu_80607AF0 = 0;
     return 0;
@@ -109,39 +112,33 @@ int SFMPS_Finish(void) {
     return 0;
 }
 
-void SFMPS_ExecServer(void* self) {
-    void (*fn)(void*, void*);
-    int endflg;
-    int ret;
-    s32* mps_sub;
-    s32 prepflg;
-    s32 cond_val;
+/* Server tick: notify callback head/tail, terminate-flag gate, decode pass,
+   then (once stream counts are known) buffer-prep bookkeeping and the two
+   auto-clear cond conditions. */s32 SFMPS_ExecServer(void* self) {
+    s32 flg;
+    s32 ret;
+    u32* sub;
 
     if (lbl_eu_80606E34 != NULL) {
         lbl_eu_805687F4[3] = (u32)self;
-        fn = *(void (**)(void*, void*))((u8*)*(u32*)lbl_eu_80606E34 + 0x24);
-        fn(lbl_eu_80606E34, &lbl_eu_805687F4[1]);
+        ((void (*)(void*, void*))(*(u32*)((u8*)*(u32*)lbl_eu_80606E34 + 0x24)))
+            (lbl_eu_80606E34, &lbl_eu_805687F4[1]);
     }
 
-    if (*(s32*)((u8*)self + 0x2034) != 8) {
-        endflg = SFBUF_GetTermFlg(self, *(s32*)((u8*)self + 0x2034)) & 1;
-    } else {
-        endflg = 1;
-    }
-    if (*(s32*)((u8*)self + 0x2030) != 8) {
-        endflg = endflg & SFBUF_GetTermFlg(self, *(s32*)((u8*)self + 0x2030));
-    }
-    if (*(s32*)((u8*)self + 0x2038) != 8) {
-        endflg = endflg & SFBUF_GetTermFlg(self, *(s32*)((u8*)self + 0x2038));
-    }
+    /* all three ring buffers terminated? */
+    flg = 1;
+    if (*(s32*)((u8*)self + 0x2034) != 8)
+        flg = SFBUF_GetTermFlg(self, *(s32*)((u8*)self + 0x2034)) & 1;
+    if (*(s32*)((u8*)self + 0x2030) != 8)
+        flg = flg & SFBUF_GetTermFlg(self, *(s32*)((u8*)self + 0x2030));
+    if (*(s32*)((u8*)self + 0x2038) != 8)
+        flg = flg & SFBUF_GetTermFlg(self, *(s32*)((u8*)self + 0x2038));
 
-    if (endflg == 1) {
+    if (flg == 1) {
         ret = 0;
     } else {
-        void* mps_work;
-        mps_sub = *(s32**)((u8*)self + 0x2024);
-        mps_work = (void*)mps_sub[0];
-        MPS_SetSystemFn(mps_work,
+        sub = *(u32**)((u8*)self + 0x2024);
+        MPS_SetSystemFn((void*)sub[0],
                         *(void**)((u8*)self + 0xd44),
                         *(void**)((u8*)self + 0xd48));
         ret = sfmps_DecodeSomeUnit(self);
@@ -150,34 +147,29 @@ void SFMPS_ExecServer(void* self) {
             s32 num_a, num_b;
             sfmps_GetStmNum(self, &num_a, &num_b);
 
-            if (*(s32*)((u8*)self + 0x2034) != 8) {
-                prepflg = SFBUF_GetPrepFlg(self, *(s32*)((u8*)self + 0x2034));
-            } else {
-                prepflg = 0;
-            }
-            if (*(s32*)((u8*)self + 0x2030) != 8) {
-                prepflg |= SFBUF_GetPrepFlg(self, *(s32*)((u8*)self + 0x2030));
-            }
-            if (*(s32*)((u8*)self + 0x2038) != 8) {
-                prepflg |= SFBUF_GetPrepFlg(self, *(s32*)((u8*)self + 0x2038));
-            }
+            /* any ring prepared? */
+            flg = 0;
+            if (*(s32*)((u8*)self + 0x2034) != 8)
+                flg = SFBUF_GetPrepFlg(self, *(s32*)((u8*)self + 0x2034));
+            if (*(s32*)((u8*)self + 0x2030) != 8)
+                flg = flg | SFBUF_GetPrepFlg(self, *(s32*)((u8*)self + 0x2030));
+            if (*(s32*)((u8*)self + 0x2038) != 8)
+                flg = flg | SFBUF_GetPrepFlg(self, *(s32*)((u8*)self + 0x2038));
 
-            if (prepflg != 1) {
-                s32 idx = *(s32*)((u8*)self + 0x202c);
-                if (SFBUF_GetPrepFlg(self, idx) == 1) {
-                    s32* sub = (s32*)((u8*)self + idx * 0x74);
-                    s32 f8 = *(s32*)((u8*)self + 0x8);
-                    s32 max_buf = *(s32*)((u8*)self + 0xa74);
-                    s32 f13d4 = sub[0x13d4 / 4];
-                    s32 limit;
-                    s32 wt;
+            if (flg != 1) {
+                /* input ring caught up to the decode watermark -> mark all
+                   rings prepared; watermark = clamp(f8, fallbacks, max).
+                   The current-ring index is re-read after each call. */
+                if (SFBUF_GetPrepFlg(self, *(s32*)((u8*)self + 0x202c)) == 1) {
+                    u32* rec = (u32*)((u8*)self + *(s32*)((u8*)self + 0x202c) * 0x74);
+                    s32 lim = *(s32*)((u8*)self + 0x8);
+                    s32 maxb = *(s32*)((u8*)self + 0xa74);
 
-                    if (f8 <= 0) f8 = f13d4;
-                    if (f8 <= 0) f8 = max_buf;
-                    if (f8 < max_buf) max_buf = f8;
+                    if (lim <= 0) lim = *(s32*)((u8*)rec + 0x13d4);
+                    if (lim <= 0) lim = maxb;
+                    if (lim < maxb) maxb = lim;
 
-                    wt = SFBUF_GetWTot(self, 0);
-                    if (wt >= max_buf) {
+                    if (SFBUF_GetWTot(self, 0) >= maxb) {
                         if (*(s32*)((u8*)self + 0x2034) != 8)
                             SFBUF_SetPrepFlg(self, *(s32*)((u8*)self + 0x2034), 1);
                         if (*(s32*)((u8*)self + 0x2030) != 8)
@@ -190,9 +182,10 @@ void SFMPS_ExecServer(void* self) {
 
             sfmps_SetMvInf(self);
 
-            mps_sub = *(s32**)((u8*)self + 0x2024);
-            cond_val = SFSET_GetCond(self, 6);
-            if (cond_val != 0) {
+            sub = *(u32**)((u8*)self + 0x2024);
+
+            /* video stream fully read and transferred -> clear cond 6 */
+            if (SFSET_GetCond(self, 6) != 0) {
                 if (SFSET_GetCond(self, 0x50) != 0) {
                     if (SFBUF_GetWTot(self, 2) == 0) {
                         if (SFTRN_GetPrepFlg(self, 6) != 0) {
@@ -202,10 +195,11 @@ void SFMPS_ExecServer(void* self) {
                 }
             }
 
+            /* audio stream fully read and transferred -> clear cond 5 */
             if (SFSET_GetCond(self, 5) != 0) {
                 if (SFSET_GetCond(self, 0x4f) != 0) {
                     if (SFBUF_GetWTot(self, 1) == 0) {
-                        if (mps_sub[1] == 0) {
+                        if (sub[1] == 0) {
                             if (SFTRN_GetPrepFlg(self, 7) != 0) {
                                 SFSET_SetCond(self, 5, 0);
                             }
@@ -222,9 +216,11 @@ void SFMPS_ExecServer(void* self) {
         lbl_eu_805687F4[0x74 / 4] = (u32)((u8*)self + 0x998);
         lbl_eu_805687F4[0x80 / 4] = (u32)((u8*)self + 0x9a0);
         lbl_eu_805687F4[0x8c / 4] = (u32)((u8*)self + 0x9a8);
-        fn = *(void (**)(void*, void*))((u8*)*(u32*)lbl_eu_80606E34 + 0x24);
-        fn(lbl_eu_80606E34, &lbl_eu_805687F4[0x6c / 4]);
+        ((void (*)(void*, void*))(*(u32*)((u8*)*(u32*)lbl_eu_80606E34 + 0x24)))
+            (lbl_eu_80606E34, &lbl_eu_805687F4[0x6c / 4]);
     }
+
+    return ret;
 }
 
 int sfmps_DecodeSomeUnit(void* self) {
@@ -233,11 +229,10 @@ int sfmps_DecodeSomeUnit(void* self) {
     s32 cond_val = SFSET_GetCond(self, 0x4b);
     s32 total = 0;
     s32 read_size, data_size, out_size, dummy, out_flag;
-    u32 flow_b, flow_a;
+    u32 flow_w, flow_r;
+    s32 add_size;
 
     for (;;) {
-        s32 err;
-
         if (*(s32*)((u8*)self + 0x70) != 0)
             break;
 
@@ -247,44 +242,57 @@ int sfmps_DecodeSomeUnit(void* self) {
         ret = sfmps_DecodeOneUnit(self, read_size, data_size, &out_size, &out_flag, dummy);
         if (ret != 0) break;
 
+        /* 64-byte-read and 64-byte-skip counters are hi/lo pairs */
         *(s64*)((u8*)self + 0x9a0) += out_size;
         *(s64*)((u8*)self + 0x9a8) += out_flag;
 
         if (out_size == 0)
             break;
 
-        s32 add_size = out_size;
-        err = SFBUF_RingAddRead(self, *(s32*)((u8*)self + 0x202c), add_size);
-        if (err == 0) {
-            *(s32*)((u8*)self + 0x39a8) += add_size;
-            err = 0;
+        {
+            add_size = out_size;
+            ret = SFBUF_RingAddRead(self, *(s32*)((u8*)self + 0x202c), add_size);
+            if (ret == 0) {
+                *(s32*)((u8*)self + 0x39a8) += add_size;
+                ret = 0;
+            }
         }
-        ret = err;
-        if (err != 0)
+        if (ret != 0)
             break;
         total += out_size + out_flag;
-        if (cond_val != -1 && total >= cond_val)
-            break;
+        if (cond_val != -1)
+            if (total >= cond_val)
+                break;
     }
 
-    SFBUF_GetFlowCnt(*(void**)((u8*)self + 0x13cc), &flow_a, &flow_b);
+    SFBUF_GetFlowCnt(*(void**)((u8*)self + 0x13cc), &flow_r, &flow_w);
     {
-        u32 hi = *(u32*)((u8*)self + 0x998);
-        u32 lo = *(u32*)((u8*)self + 0x99c);
-        u64 v = SFBUF_UpdateFlowCnt(((u64)hi << 32) | lo, flow_a);
-        *(u32*)((u8*)self + 0x998) = (u32)(v >> 32);
-        *(u32*)((u8*)self + 0x99c) = (u32)v;
+        *(u64*)((u8*)self + 0x998) = SFBUF_UpdateFlowCnt(*(u32*)((u8*)self + 0x998),
+                                                         *(u32*)((u8*)self + 0x99c),
+                                                         flow_r);
     }
 
     return ret;
 }
 
 int criware_803C1490(void* self, s32* out_a, s32* out_b, s32 unused, s32* out_c) {
+    /* server notify bookkeeping block at self+0x39a0 */
+    struct SfmpsNotify {
+        u8 pad[0x202c];
+        s32 field_0x202c;
+        u8 pad2[0x39a0 - 0x2030];
+        u32 field_0x39a0;
+        u32 field_0x39a4;
+        u32 field_0x39a8;
+        u32 field_0x39ac;
+    };
+    struct SfmpsNotify* work = (struct SfmpsNotify*)self;
     s32 ret;
     s32 idx;
+    u32 addr;
     s32 tmp[10];
 
-    idx = *(s32*)((u8*)self + 0x202c);
+    idx = work->field_0x202c;
     *out_a = 0;
     *out_b = 0;
     *out_c = 0;
@@ -298,15 +306,15 @@ int criware_803C1490(void* self, s32* out_a, s32* out_b, s32 unused, s32* out_c)
     *out_c = tmp[1] + tmp[3];
 
     if (*out_b >= 0x800) {
-        u32 addr = *out_a;
-        if (addr != *(u32*)((u8*)self + 0x39ac)) {
-            u32 accum = *(u32*)((u8*)self + 0x39a8);
+        addr = *out_a;
+        if (addr != work->field_0x39ac) {
+            u32 accum = work->field_0x39a8;
             if ((accum & 0x7ff) == 0) {
-                void (*cb)(s32, s32) = (void (*)(s32, s32))(*(u32*)((u8*)self + 0x39a0));
-                s32 arg = *(s32*)((u8*)self + 0x39a4);
+                void (*cb)(s32, s32) = (void (*)(s32, s32))work->field_0x39a0;
+                s32 arg = work->field_0x39a4;
                 if (cb != NULL)
                     cb(arg, addr);
-                *(u32*)((u8*)self + 0x39ac) = *out_a;
+                work->field_0x39ac = *out_a;
             }
         }
     }
@@ -457,23 +465,28 @@ void sfmps_pesfn(void* self, u8 stream_kind, s32 arg3, s32 arg4) {
 
 void sfmps_SkipNext(void* self, s32 buf, s32 size, s32* out_size) {
     s32 skip_cnt;
+    u8* p;
+    s32 i;
     s32 hdr_size;
-    int all_zero;
-    int i;
+    s32 all_zero;
+    s32 idx;
+    s32* rec;
+    s32 is_wrap;
 
     *out_size = 0;
     hdr_size = *(s32*)((u8*)self + 0x2c);
 
     if (size >= hdr_size + 3) {
         /* header-sized run of NUL bytes: skip it wholesale */
-        all_zero = 1;
-        s32 p = buf;
+        p = (u8*)buf;
         for (i = 0; i < hdr_size; i++) {
             if (*(s8*)p++ != 0) {
                 all_zero = 0;
-                break;
+                goto nonzero;
             }
         }
+        all_zero = 1;
+nonzero:
         if (all_zero) {
             *out_size = hdr_size;
             return;
@@ -481,9 +494,9 @@ void sfmps_SkipNext(void* self, s32 buf, s32 size, s32* out_size) {
     }
 
     skip_cnt = 0;
-    while (size >= 4) {
-        int delim = MPS_CheckDelim((const u8*)buf);
-        if (delim & 0x000d0000) {
+
+    while (4 <= size) {
+        if (MPS_CheckDelim((const u8*)buf) & 0x000d0000) {
             *out_size = skip_cnt;
             return;
         }
@@ -492,75 +505,98 @@ void sfmps_SkipNext(void* self, s32 buf, s32 size, s32* out_size) {
         size--;
     }
 
-    /* trailing partial header: treat as wrapped if it abuts the ring wrap point */
+    /* trailing partial header: treated as wrapped if it abuts the ring wrap point */
+    /* RESIDUAL (us-803c41ac): retail splits these guards into cmpwi r29,0 / ble
+       + bge cr1 (cr1 CSE'd from the loop-head cmpwi cr1,r29,4, incl. one dead
+       re-test). Every source spelling tried (&&, nested ifs, !(size>=4),
+       reversed operands) still fuses into subi/cmpli range checks here.
+       Best state: mismatch 32 / structural 18 / reg_swap 14 (banked was 50/29). */
     if (size > 0 && size < 4) {
-        s32 idx = *(s32*)((u8*)self + 0x202c);
-        s32* sub = (s32*)((u8*)self + idx * 0x74);
-        int is_wrap;
+            idx = *(s32*)((u8*)self + 0x202c);
+            rec = (s32*)((u8*)self + idx * 0x74);
 
-        if (*(s32*)((u8*)sub + 0x13c8) == 0 &&
-            (*(s32*)((u8*)sub + 0x13d8) != 0 || *(s32*)((u8*)sub + 0x13dc) != 0)) {
-            is_wrap = 0;
-        } else {
-            is_wrap = (*(s32*)((u8*)sub + 0x13d0) + *(s32*)((u8*)sub + 0x13d4)) == (buf + size);
-        }
+            if (rec[0x4f2] == 0 && (rec[0x4f6] != 0 || rec[0x4f7] != 0)) {
+                is_wrap = 0;
+            } else {
+                is_wrap = (rec[0x4f4] + rec[0x4f5]) == (buf + size);
+            }
 
-        if (is_wrap) {
-            skip_cnt += size;
-            size = 0;
-        }
+            if (is_wrap) {
+                skip_cnt += size;
+                size = 0;
+            }
     }
 
-    if (size > 0 && size < 4) {
-        if (SFSET_GetCond(self, 0x55) != 0) {
-            skip_cnt += size;
+    if (size > 0) {
+        if (!(size >= 4)) {
+            if (SFSET_GetCond(self, 0x55) != 0) {
+                skip_cnt += size;
+            }
         }
     }
 
     *out_size = skip_cnt;
 }
 
+/* Packet-header record filled in by MPS_GetPketHd (sp+0x48 in retail) */
+typedef struct SfmpsPketHd {
+    s32 f00;         /* 0x00 */
+    s32 f04;         /* 0x04 */
+    u8 pad08[8];
+    s32 f10;         /* 0x10: stream id (0xbc..0xff), indexes the SJ table */
+    s32 f14;         /* 0x14: sub-stream kind (must be <= 3) */
+    s32 f18;         /* 0x18 */
+    u8 pad1c[8];
+    s32 f24;         /* 0x24: packet payload size */
+} SfmpsPketHd;
+
 int sfmps_CopyPketData(void* self, s32 buf, s32 size, s32* out_size, s32* out_flag) {
     int ret = 0;
-    void* mps_sub;
-    s32 pket_buf[10];
-    s32 pket_type;
-    s32 pket_size;
+    /* ring-read result pairs (ptr,size); kept in distinct slots like retail */
+    struct { void* p; s32 n; } t2;
+    struct { void* p; s32 n; } t1;
+    SfmpsPketHd hd;
+    /* scratch block handed to the per-kind copy routines (sp+0x18 in retail) */
+    s32 copy_blk[12];
+    s32 copied;
+    s32* mps_sub;
+    s32 stm_id;
+    s32 pkt_size;
     void* sj;
-    s32 tmp_size;
 
     *out_size = 0;
     *out_flag = 0;
 
-    mps_sub = *(void**)((u8*)self + 0x2024);
+    mps_sub = *(s32**)((u8*)self + 0x2024);
 
-    if (MPS_GetPketHd(*(void**)mps_sub, pket_buf)) {
+    if (MPS_GetPketHd(*(void**)mps_sub, &hd)) {
         ret = SFLIB_SetErr((s32)self, 0xff000d06);
     }
 
-    pket_type = pket_buf[2];
-    pket_size = pket_buf[3];
+    stm_id = hd.f10;
 
-    if ((u32)(pket_type - 0xbc) > 0x43) {
+    if ((u32)(stm_id - 0xbc) > 0x43) {
         *out_flag = 1;
-        SFLIB_SetErr((s32)self, 0xff000d0f);
-        return ret;
+        return SFLIB_SetErr((s32)self, 0xff000d0f);
     }
-    if (pket_size > 3) {
+
+    pkt_size = hd.f24;
+
+    if (hd.f14 > 3) {
         *out_flag = 1;
         return 0;
     }
-    if (pket_size < 0) {
-        SFLIB_SetErr((s32)self, 0xff000d0e);
-        return ret;
+    if (pkt_size < 0) {
+        return SFLIB_SetErr((s32)self, 0xff000d0e);
     }
-    if (pket_size == 0) {
+    if (pkt_size == 0) {
         *out_size = 0;
         *out_flag = 1;
         return 0;
     }
 
-    if (size < pket_size) {
+    if (size < pkt_size) {
+        /* truncated packet: flush the pipeline if this stream already ended */
         if (SFBUF_GetTermFlg(self, *(s32*)((u8*)self + 0x202c)) == 1) {
             SFTRN_SetTermFlg(self, 1, 1);
             if (*(s32*)((u8*)self + 0x2034) != 8)
@@ -573,54 +609,52 @@ int sfmps_CopyPketData(void* self, s32 buf, s32 size, s32* out_size, s32* out_fl
         return 0;
     }
 
-    sj = *(void**)((u8*)mps_sub + pket_type * 4 + 0x40);
+    sj = *(void**)((u8*)mps_sub + 0x40 + (stm_id - 0xbc) * 4);
     if (sj != NULL) {
-        void** vtbl = *(void***)sj;
-        s32 avail;
-        void (*notify_fn)(void*, s32) = *(void(**)(void*, s32))((u8*)mps_sub + 0x150);
-        void* notify_arg = *(void**)((u8*)mps_sub + 0x154);
-        s32 total_copied = 0;
+        /* SJ present: copy the packet through the ring-buffer object.
+           The vtable pointer is re-read before each indirect call. */
+        /* cache the notify callback; reuses the by-then-dead self/size slots */
+        self = *(void**)((u8*)mps_sub + 0x154);
+        size = *(s32*)((u8*)mps_sub + 0x150);
 
-        avail = ((s32(*)(void*, s32))vtbl[9])(sj, 0);
-        if (avail < pket_size) {
-            total_copied = 0;
+        if ((*(s32 (**)(void*, s32))((u8*)*(void**)sj + 0x24))(sj, 0) < pkt_size) {
+            copied = 0;
         } else {
-            void* tmp_ptr;
-            s32 tmp_sz;
-            ((void(*)(void*, s32, s32, void*))vtbl[6])(sj, 0, pket_size, &tmp_ptr);
-            MEM_Copy((void*)buf, tmp_ptr, tmp_sz);
-            ((void(*)(void*, s32, void*))vtbl[8])(sj, 1, &tmp_ptr);
+            (*(void (**)(void*, s32, s32, void*))((u8*)*(void**)sj + 0x18))(sj, 0, pkt_size, &t1);
+            MEM_Copy((void*)buf, t1.p, t1.n);
+            (*(void (**)(void*, s32, void*))((u8*)*(void**)sj + 0x20))(sj, 1, &t1);
 
-            if (tmp_sz == 0) {
-                total_copied = 0;
+            if (t1.n == 0) {
+                copied = 0;
             } else {
-                s32 remaining = pket_size - tmp_sz;
-                buf += tmp_sz;
-
-                if (remaining > 0) {
-                    ((void(*)(void*, s32, s32, void*))vtbl[6])(sj, 0, remaining, &tmp_ptr);
-                    MEM_Copy((void*)buf, tmp_ptr, tmp_sz);
-                    ((void(*)(void*, s32, void*))vtbl[8])(sj, 1, &tmp_ptr);
-                    if (tmp_sz != remaining) {
-                        lbl_eu_80607AF0++;
+                /* wrapped copy: remainder comes from the ring start;
+                   reuses the flag slot like retail */
+                copied = pkt_size - t1.n;
+                buf += t1.n;
+                if (copied > 0) {
+                    (*(void (**)(void*, s32, s32, void*))((u8*)*(void**)sj + 0x18))(sj, 0, copied, &t2);
+                    MEM_Copy((void*)buf, t2.p, t2.n);
+                    (*(void (**)(void*, s32, void*))((u8*)*(void**)sj + 0x20))(sj, 1, &t2);
+                    if (t2.n != copied) {
+                        lbl_eu_80607AF0++; /* global underrun counter */
                     }
                 }
-
-                if (notify_fn != NULL) {
-                    notify_fn(notify_arg, pket_type);
-                }
-                total_copied = 1;
+                copied = 1;
             }
         }
-        *out_flag = total_copied;
+        *out_flag = copied;
+        if (copied == 1 && size != 0) {
+            ((void (*)(void*, s32))size)(self, stm_id);
+        }
     } else {
-        typedef int (*copy_fn_t)(void*, s32, s32, s32*);
-        copy_fn_t fn = ((copy_fn_t*)lbl_eu_8051C930)[pket_size];
-        *out_flag = fn(self, buf, pket_size, &tmp_size);
+        /* no SJ: route through the per-kind copy dispatch table */
+        typedef s32 (*copy_fn_t)(void*, s32, s32, s32, s32, s32, s32*);
+        copy_fn_t fn = ((copy_fn_t*)lbl_eu_8051C930)[hd.f14];
+        *out_flag = fn(self, hd.f18, buf, pkt_size, hd.f00, hd.f04, copy_blk);
     }
 
     if (*out_flag == 1) {
-        *out_size = pket_size;
+        *out_size = pkt_size;
     } else if (*out_flag != 0) {
         ret = *out_flag;
     }
@@ -628,48 +662,68 @@ int sfmps_CopyPketData(void* self, s32 buf, s32 size, s32* out_size, s32* out_fl
     return ret;
 }
 
+/* MPS sub-work layout (only fields touched by sfmps_CopyAudio) */
+typedef struct SfmpsWork {
+    u8 pad0[0x10];
+    s64 ptsMin;    /* 0x10 */
+    s64 ptsMax;    /* 0x18 */
+    u8 pad20[0x08];
+    s32 lastAudio; /* 0x28 */
+    s32 lastVideo; /* 0x2c */
+    s32 firstAudio;/* 0x30 */
+    s32 f34;
+    s32 audioCh;   /* 0x38 */
+    s32 f3c;
+} SfmpsWork;
+
 int sfmps_CopyAudio(void* self, s32 stream_kind, s32 buf, s32 size, s64 pts) {
-    void* mps_sub;
+    SfmpsWork* work;
     s32 split_val;
     int skip;
+    s32 v;
 
     if (SFSET_GetCond(self, 6) == 0)
         return 1;
 
-    mps_sub = *(void**)((u8*)self + 0x2024);
+    work = *(SfmpsWork**)((u8*)self + 0x2024);
 
-    if (*(s32*)((u8*)mps_sub + 0x38) == -1)
-        *(s32*)((u8*)mps_sub + 0x38) = stream_kind;
-    if (*(s32*)((u8*)mps_sub + 0x30) == -1)
-        *(s32*)((u8*)mps_sub + 0x30) = stream_kind;
+    if (work->audioCh == -1)
+        work->audioCh = stream_kind;
+    if (work->firstAudio == -1)
+        work->firstAudio = stream_kind;
 
     split_val = SFSET_GetCond(self, 0x1e);
     if (split_val != -1) {
         if (SFSET_GetCond(self, 0x37) != 0) {
-            s32 prev = *(s32*)((u8*)mps_sub + 0x28);
-            s32 v = prev ^ stream_kind;
-            /* sign bit of ((v>>1)-(v&prev)) via unsigned shift */
-            skip = (int)((u32)((v >> 1) - (v & prev)) >> 31);
+            /* sign bit of ((v>>1)-(v&prev)); true iff new stream differs from
+               the tracked one under the current split mode. Compound ops keep
+               MWCC's schedule as shift-then-mask. Residual: pure reg-swap,
+               decomp colors {load,v}={r0,r4}, retail {r4,r0} - allocator
+               artifact, no source lever found (see session notes). */
+            v = work->lastAudio ^ stream_kind;
+            skip = v >> 1;
+            v &= work->lastAudio;
+            skip = (u32)(skip - v) >> 31;
         } else {
-            skip = (*(s32*)((u8*)mps_sub + 0x30) == stream_kind) ? 1 : 0;
+            v = (stream_kind == work->firstAudio) ? 1 : 0;
+            skip = v;
         }
         if (skip)
-            *(s32*)((u8*)mps_sub + 0x38) = split_val;
+            work->audioCh = split_val;
     }
 
-    *(s32*)((u8*)mps_sub + 0x28) = stream_kind;
+    work->lastAudio = stream_kind;
 
-    if (*(s32*)((u8*)mps_sub + 0x38) != stream_kind)
+    if (work->audioCh != stream_kind)
         return 1;
 
+    /* running PTS min/max clamp (guarded by pts > 0, borrow-chain compare) */
     {
         if (pts >= 0) {
-            s64 min = *(s64*)((u8*)mps_sub + 0x10);
-            if (min > pts) min = pts;
-            *(s64*)((u8*)mps_sub + 0x10) = min;
-            s64 max = *(s64*)((u8*)mps_sub + 0x18);
-            if (pts > max) max = pts;
-            *(s64*)((u8*)mps_sub + 0x18) = max;
+            s64 min = work->ptsMin;
+            work->ptsMin = (pts < min) ? pts : min;
+            s64 max = work->ptsMax;
+            work->ptsMax = (pts < max) ? pts : max;
         }
     }
 
@@ -689,13 +743,16 @@ int sfmps_CopyVideo(void* self, s32 stream_kind, s32 buf, s32 size, s64 pts) {
         s32 new_val;
         s32 nb, na;
 
-        switch (SFSET_GetCond(self, 0x3b)) {
+        switch ((s32)SFSET_GetCond(self, 0x3b)) {
         case 1:
             new_val = stream_kind;
             break;
         case 2:
             sfmps_GetStmNum(self, &na, &nb);
-            new_val = (nb >= 2) ? 2 : stream_kind;
+            if (nb >= 2)
+                new_val = 2;
+            else
+                new_val = stream_kind;
             break;
         default:
             new_val = stream_kind;
@@ -728,12 +785,9 @@ int sfmps_CopyVideo(void* self, s32 stream_kind, s32 buf, s32 size, s64 pts) {
         }
         if (skip && *(s32*)((u8*)mps_sub + 0x34) != split_val) {
             /* only switch on a real GOP/sequence start code */
-            int is_video = 0;
-            if (size >= 4) {
-                u8* p = (u8*)buf;
-                is_video = (p[0] == 0 && p[1] == 0 && p[2] == 1 &&
-                            (p[3] == 0xb3 || p[3] == 0xb8));
-            }
+            u8* p = (u8*)buf;
+            int is_video = size >= 4 && p[0] == 0 && p[1] == 0 && p[2] == 1 &&
+                           (p[3] == 0xb3 || p[3] == 0xb8);
             if (is_video)
                 *(s32*)((u8*)mps_sub + 0x34) = split_val;
         }
@@ -746,6 +800,7 @@ int sfmps_CopyVideo(void* self, s32 stream_kind, s32 buf, s32 size, s64 pts) {
 
     return sfmps_CopyDstBuft(self, *(s32*)((u8*)self + 0x2030), buf, size, pts);
 }
+
 
 int sfmps_CopyPrvate(void* self, s32 kind, s32 buf, s32 size) {
     s32 hdr_out;
@@ -760,77 +815,68 @@ int sfmps_CopyPrvate(void* self, s32 kind, s32 buf, s32 size) {
     return sfmps_CopyUsrSj(self, kind, buf, size);
 }
 
-int sfmps_CopyUsrSj(void* self, s32 buf, s32 size, s32 out_kind) {
-    void* sj;
-    void** vtbl;
-    s32 avail;
+int sfmps_CopyUsrSj(void* self, s32 src, s32 dst, s32 size) {
+    /* uoch[] = { sj, notify_fn_a, notify_fn_b, notify_arg_b }; the running
+     * destination pointer doubles as the success flag at the end. */
     u32 uoch[4];
-    void (*fn1)(void*, s32);
-    void (*fn2)(void*, s32);
-    void* arg1;
-    void* arg2;
+    void* sj;
+    void (*fn_a)(void*, s32);
+    void (*fn_b)(void*, s32);
+    void* fn_b_arg;
+    /* two distinct ring-read result pairs (ptr,size); MWCC keeps them in
+     * separate stack slots like retail */
+    struct { void* p; s32 n; } t1;
+    struct { void* p; s32 n; } t2;
 
     if (*(s32*)((u8*)self + 0x2038) == 8)
         return 1;
 
-    SFBUF_GetUoch(self, *(s32*)((u8*)self + 0x2038), buf, uoch);
+    SFBUF_GetUoch(self, *(s32*)((u8*)self + 0x2038), src, uoch);
 
     sj = (void*)uoch[0];
-    fn1 = (void(*)(void*, s32))uoch[1];
-    arg1 = (void*)uoch[2];
-    fn2 = (void(*)(void*, s32))uoch[3];
-    arg2 = (void*)uoch[2];
+    fn_a = (void (*)(void*, s32))uoch[1];
+    fn_b = (void (*)(void*, s32))uoch[2];
+    fn_b_arg = (void*)uoch[3];
 
     if (sj == NULL)
         return 1;
 
-    vtbl = *(void***)sj;
-    avail = ((s32(*)(void*, s32))vtbl[9])(sj, 0);
-
-    if (avail < size) {
-        out_kind = 0;
+    /* not enough free space in the SJ buffer */
+    if ((*(s32 (**)(void*, s32))((u8*)*(void**)sj + 0x24))(sj, 0) < size) {
+        dst = 0;
     } else {
-        void* tmp_ptr;
-        s32 tmp_sz;
-        s32 total = 1;
+        (*(void (**)(void*, s32, s32, void*))((u8*)*(void**)sj + 0x18))(sj, 0, size, &t1);
+        /* NOTE: retail passes the read pointer as MEM_Copy's first argument */
+        MEM_Copy(t1.p, (void*)dst, t1.n);
+        (*(void (**)(void*, s32, void*))((u8*)*(void**)sj + 0x20))(sj, 1, &t1);
 
-        ((void(*)(void*, s32, s32, void*))vtbl[6])(sj, 0, size, &tmp_ptr);
-        MEM_Copy((void*)buf, tmp_ptr, tmp_sz);
-        ((void(*)(void*, s32, void*))vtbl[8])(sj, 1, &tmp_ptr);
-
-        if (tmp_sz == 0) {
-            out_kind = 0;
+        if (t1.n == 0) {
+            dst = 0;
         } else {
-            s32 remaining = size - tmp_sz;
-            buf += tmp_sz;
+            size -= t1.n;
+            dst += t1.n;
 
-            if (remaining > 0) {
-                ((void(*)(void*, s32, s32, void*))vtbl[6])(sj, 0, remaining, &tmp_ptr);
-                MEM_Copy((void*)buf, tmp_ptr, tmp_sz);
-                ((void(*)(void*, s32, void*))vtbl[8])(sj, 1, &tmp_ptr);
-                if (tmp_sz != remaining) {
-                    lbl_eu_80607AF0++;
-                }
+            /* wrapped read: fetch the remainder from the ring start */
+            if (size > 0) {
+                (*(void (**)(void*, s32, s32, void*))((u8*)*(void**)sj + 0x18))(sj, 0, size, &t2);
+                MEM_Copy(t2.p, (void*)dst, t2.n);
+                (*(void (**)(void*, s32, void*))((u8*)*(void**)sj + 0x20))(sj, 1, &t2);
+                if (t2.n != size)
+                    lbl_eu_80607AF0++; /* global underrun counter */
             }
 
-            if (total == 1) {
-                if (fn1 != NULL)
-                    fn1(arg1, buf);
-                if (fn2 != NULL)
-                    fn2(arg2, buf);
-            }
-            return total;
+            dst = 1;
         }
     }
 
-    if (out_kind == 1) {
-        if (fn1 != NULL)
-            fn1(arg1, buf);
-        if (fn2 != NULL)
-            fn2(arg2, buf);
+    if (dst == 1) {
+        if (fn_a != NULL)
+            fn_a(self, src);
+        if (fn_b != NULL)
+            fn_b(fn_b_arg, src);
     }
 
-    return out_kind;
+    return dst;
 }
 
 int sfmps_CopyPadding(void) {
@@ -916,8 +962,10 @@ int sfmps_ChkSupply(void* self, s32 buf, s32 size, s32 a5) {
     stream_idx = *(s32*)((u8*)self + 0x202c);
 
     if (size >= 4) {
+        /* CheckDelim returns bit flags (0x10000 video / 0x40000 audio /
+           0x80000 endcode), hence the large-immediate comparisons */
         delim = MPS_CheckDelim((const u8*)buf);
-        if (!(delim - 8)) {
+        if (delim == 0x80000) {
             if (*(s32*)((u8*)self + 0x203c) < 0) {
                 *(s32*)((u8*)self + 0x203c) = SFBUF_GetRTot(self, stream_idx) + 4;
             }
@@ -929,10 +977,16 @@ int sfmps_ChkSupply(void* self, s32 buf, s32 size, s32 a5) {
         delim = 0;
     }
 
-    endflg = 0;
-    if (!(delim - 8)) {
-        if (!SFCON_IsEndcodeSkip(self) && !SFCON_IsSystemEndcodeSkip(self))
-            endflg = 1;
+    /* exact retail shape: negated tests, innermost flag assigned as a
+       negation (MWCC: beq->li 1 / fallthrough li 0) */
+    if (delim == 0x80000) {
+        if (!SFCON_IsEndcodeSkip(self)) {
+            endflg = !SFCON_IsSystemEndcodeSkip(self);
+        } else {
+            endflg = 0;
+        }
+    } else {
+        endflg = 0;
     }
 
     if (endflg) {
@@ -960,7 +1014,7 @@ int sfmps_ChkSupply(void* self, s32 buf, s32 size, s32 a5) {
     }
 
     if (size < 0x40) {
-        if (!(delim - 1) || !(delim - 4)) {
+        if (delim == 0x10000 || delim == 0x40000) {
             if (SFBUF_GetTermFlg(self, stream_idx) == 1) {
                 SFTRN_SetTermFlg(self, 1, 1);
                 if (*(s32*)((u8*)self + 0x2034) != 8)

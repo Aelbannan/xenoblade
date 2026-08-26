@@ -104,8 +104,8 @@ void func_8020974C(unsigned int a, int b);
 int func_80209754(unsigned short flag, void* a, void* b, void* c,
                   unsigned int d);
 void func_80208C48(void* self, void* arg);
-unsigned int func_800822F4__Q22cf13CfGameManagerFv(void);
-unsigned int func_80082354__Q22cf13CfGameManagerFv(unsigned int a);
+u32 func_800822F4__Q22cf13CfGameManagerFv(void);
+u32 func_80082354__Q22cf13CfGameManagerFv(u32 a);
 unsigned int func_801587E8(unsigned short id);
 void* func_8003AA34(void);
 void func_80208F34(void* self, void* subobj, void* bdat, void* stack);

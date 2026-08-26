@@ -434,7 +434,7 @@ namespace cf {
         u16 field_E6;           // +0xE6
         u8  pad_E8[0x17C - 0xE8];
         CActorParam mParam;     // +0x17C..0x34FF (vtable)
-        u8  pad_3500[0x34];     // +0x3500..0x3533
+        u8  pad_3500[0x38];     // mParam ends 0x34FC; retail counter at +0x3534
         u8  big[0x8A0];         // +0x3534..0x3DD3
     };
 

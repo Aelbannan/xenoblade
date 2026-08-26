@@ -558,14 +558,14 @@ __declspec(noinline) void CWorkRoot::initialize(){
     //Initialize VI
     VIInit();
 
-    /* Retail folds CWorkRootThread::create into this function: the handle
+    /* Retail folds CWorkRootThread::create into this function (handle
     operator new inlines down to a direct MemManager::allocate call whose
-    result gets the standard new-expression null check. */
-    const char* pName = &lbl_eu_80522744[0];
-    CWorkRootThread* thread =
-        new (CWorkThreadSystem::getWorkMem()) CWorkRootThread(pName, nullptr);
-    CWorkUtil::entryWork(thread, nullptr, false);
-    CWorkRootThread::spInstance = thread;
+    result gets the standard new-expression null check). Spell it as the
+    create() call over the string LITERAL - the literal lets -ipa fold the
+    parameter through the inline and reproduce retail's scheduling exactly;
+    the pooled @stringBase0 copy is paired to the retail pool label
+    lbl_eu_80522744 via UNIT_RULES data_pool_patterns. */
+    CWorkRootThread::create("CWorkRoot", nullptr);
 }
 #pragma pop
 

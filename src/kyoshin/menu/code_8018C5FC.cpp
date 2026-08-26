@@ -73,7 +73,7 @@ extern "C" {
     CMB_PartyList_8018C5FC* func_800B6BA4__Fv();
     s32 func_8026178C(s32, u32);
     void func_802A293C(s32, s32);
-    void func_801BFC38__Q22cf10CfSoundManFUlUlUlUlf(u32, u32, u32, u32, f32);
+    extern "C" u16 func_801BFC38__Q22cf10CfSoundManFUlUlUlUlf(u32, u32, u32, u32, f32);
 }
 
 UnkClass_8018C5FC::UnkClass_8018C5FC() : gaugeValue(0) {

@@ -674,7 +674,7 @@ extern "C" f32   lbl_eu_80666454;
 extern const float lbl_eu_8066A210;
 extern "C" void* lbl_eu_806640BC;
 extern "C" u8    lbl_eu_804FB5D0[];
-extern "C" int   func_8003B1EC(void* self);
+extern "C" u32   func_8003B1EC(void* self);
 extern "C" void* func_8003AA34(void);
 extern "C" u32   func_8003B41C(void* bdat);
 extern void* lbl_eu_80664164;      // sbss bdat-table pointer (set by func_8003AA34)
@@ -745,8 +745,6 @@ extern "C" int func_800A4050(void* dst, void* b, void* c);
 extern "C" void func_80074010(void* out, void* in, f32 f, void* vec);
 extern "C" f32 lbl_eu_80666450;   // sdata2 damping factor
 extern "C" void* func_800FE68C(void);
-extern "C" void* func_804BE398(float*, u32, u32, u32, float, float);
-extern "C" void func_804BE4B4(float*, u32);
 extern "C" int func_804BE348(void* a, void* b, u32 c, u32 d);
 extern "C" void func_80075934(ml::CVec3* out1, ml::CVec3* out2, CamCamSrc* a,
                                CamCamSrc* b, ml::CVec3* v1, ml::CVec3* v2,
@@ -755,7 +753,7 @@ extern "C" UnkClass_800821F8* func_800821F8__Q22cf13CfGameManagerFv(void);
 extern "C" u32   func_80061FFC(void);
 extern "C" void  func_80240878(u8* p);
 extern "C" void  func_80240A64(u8* base);
-extern "C" f32 lbl_eu_8066A200;
+extern const f32 lbl_eu_8066A200;
 extern "C" f32 SinFIdx__Q24nw4r4mathFf(f32);
 extern "C" void func_800A41BC(f32* out, CfCamEventElem* a, CfCamEventElem* b,
                               CfCamEventElem* c, CfCamEventElem* d, f32 t);

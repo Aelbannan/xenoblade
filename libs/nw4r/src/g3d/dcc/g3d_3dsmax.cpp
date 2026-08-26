@@ -308,7 +308,8 @@ DECOMP_FORCEACTIVE(g3d_3dsmax_cpp,
                    MakeTexSrtMtx_SRT, ProductTexSrtMtx_S, ProductTexSrtMtx_R,
                    ProductTexSrtMtx_T, ProductTexSrtMtx_SR, ProductTexSrtMtx_RT,
                    ProductTexSrtMtx_ST, ProductTexSrtMtx_SRT);
-
+// The emitter function itself is retail-absent; tools/postprocess_reloc_names.py
+// UNIT_RULES drops it from the link (drop_text_symbols, trailing-* prefix match).
 
 bool CalcTexMtx_3dsmax(math::MTX34* pMtx, bool bSet, const TexSrt& rSrt, TexSrt::Flag flag) {
     u32 idx = DECOMP_PPC_RLWINM(flag, 31, 29, 31);

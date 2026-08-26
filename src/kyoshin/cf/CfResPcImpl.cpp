@@ -260,7 +260,7 @@ int func_8018D00C(cf::CfResPcImpl* self) {
         if (state < 0) {
             return 0;
         }
-        u32 token = (cf::CfBdat::func_801422A8(func_8009EC9C(result)->field_18) >> 20) & 0x7F;
+        u32 token = (cf::CfBdat::func_801422A8(((cf::CfResPcCharData*)func_8009EC9C(result))->field_18) >> 20) & 0x7F;
         if ((result == 4 || (u32)(result - 0xC) <= 1) && token == 0x2B) {
             result = (result << 20) | 0x3800AC0A;
         } else {
@@ -619,7 +619,8 @@ void func_8018D79C(cf::CfResPcImpl* self) {
             }
         }
     }
-    cf::CfResPcCharData* charData = func_8009EC9C(self->field_00->field_8C);
+    cf::CfResPcCharData* charData =
+        (cf::CfResPcCharData*)func_8009EC9C(self->field_00->field_8C);
     u32 idx = 0;
     for (int i = 1; i <= 5; i++, idx++) {
         int v = ((cf::CfResPcVtIf*)self)->_v034(i);

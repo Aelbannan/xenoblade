@@ -27,8 +27,8 @@ static int sfbuf_InitRingSj(void *self, u32 *cumulative, u32 *sizes,
 void sfbuf_InitVfrmBuf(void *self, void *handle, u32 *cumulative,
                         u32 *sizes, int idx);
 void sfbuf_InitAringBuf(void *self, u32 *cumulative, u32 *sizes, int idx);
-void sfbuf_RingGetSub(void *self, int idx, u32 *out, int mode);
-void sfbuf_RingAddSub(void *self, int idx, u32 size, int mode);
+s32 sfbuf_RingGetSub(void *self, int idx, u32 *out, int mode);
+s32 sfbuf_RingAddSub(void *self, int idx, u32 size, int mode);
 
 /* Buffer constants */
 #define SFBUF_MAX_IDX   8
@@ -109,18 +109,19 @@ void SFBUF_Init(void) {
  */
 static int sfbuf_InitRingSj(void *self, u32 *cumulative, u32 *sizes,
                               int idx, u32 extraSize) {
-    u8 *p = sfbuf_base(self, idx);
-    u32 bufSize = sizes[idx];
-    struct RingHead {
-        u32 f10, f14, f18, f1c, f20, f24;
-    } head;
-    u32 actualSize;
-    u32 memObj;
-    void *ringObj;
+    u8 *p;
     u32 err;
     int active;
     int state;
+    u32 bufSize;
+    struct RingHead {
+        u32 f10, f14, f18, f1c, f20, f24;
+    } head;
     u32 cs;
+    void *ringObj;
+
+    p = sfbuf_base(self, idx);
+    bufSize = sizes[idx];
 
     if (bufSize == 0) {
         /* Buffer not allocated - mark inactive */
@@ -129,26 +130,26 @@ static int sfbuf_InitRingSj(void *self, u32 *cumulative, u32 *sizes,
         goto store;
     }
 
-    actualSize = bufSize - extraSize;
-    memObj = cumulative[idx]; /* buffer memory pointer */
     err = 0;
 
-    head.f10 = 0;
+    head.f10 = err;
     active = 1;
     state = 5; /* active */
-    head.f18 = memObj;
-    head.f1c = actualSize;
+    head.f18 = cumulative[idx]; /* buffer memory pointer */
+    head.f1c = bufSize - extraSize;
 
     /* Allocate ring buffer */
-    if ((s32)actualSize <= 0) {
+    if ((s32)(bufSize - extraSize) <= 0) {
         err = SFLIB_SetErr(NULL, SFBUF_ERR_BASE + 0x0C);
     } else {
         head.f20 = extraSize;
-        head.f24 = 0;
-        ringObj = SJRBF_Create((void *)memObj, actualSize, extraSize);
+        head.f24 = err;
+        ringObj = SJRBF_Create((void *)cumulative[idx], bufSize - extraSize, extraSize);
         head.f14 = (u32)ringObj;
         if (ringObj == NULL) {
             err = SFLIB_SetErr(NULL, SFBUF_ERR_BASE + 0x0A);
+        } else {
+            err = 0;
         }
     }
 
@@ -192,66 +193,66 @@ store:
  * @param config Configuration array with sizes and metadata
  */
 int SFBUF_InitHn(void *hn, void *area, u32 *cfg) {
+    /* Base of the buffer area; kept live through the final state stores */
+    u8 *base = (u8 *)area;
     u32 cumulative[8];
-    u32 *sizes = cfg + 8;
+    /* Size table starts at cfg[2]: sizes[i] == cfg[2 + i] */
+    u32 *sizes = cfg + 2;
     s32 extraSize;
-    s32 c1;
     s32 r;
-    int i;
+    u32 sum;
 
-    /* Build cumulative offset array from config sizes (starting at cfg[1]) */
-    c1 = (s32)cfg[1];
-    cumulative[0] = c1;
-    for (i = 1; i < 8; i++) {
-        cumulative[i] = cumulative[i - 1] + (s32)sizes[i - 1];
-    }
+    /* Build cumulative offset array: starts at cfg[1], each entry adds
+     * the previous size from the size table. */
+    sum = cfg[1];
+    cumulative[0] = sum;
+    sum += sizes[0]; cumulative[1] = sum;
+    sum += sizes[1]; cumulative[2] = sum;
+    sum += sizes[2]; cumulative[3] = sum;
+    sum += sizes[3]; cumulative[4] = sum;
+    sum += sizes[4]; cumulative[5] = sum;
+    sum += sizes[5]; cumulative[6] = sum;
+    sum += sizes[6]; cumulative[7] = sum;
 
-    /* Compute extra size as remainder of cfg[2] / cfg[11] */
-    extraSize = (s32)cfg[2] - ((s32)cfg[2] / (s32)cfg[11]) * (s32)cfg[11];
+    /* Extra per-slot size = sizes[0] modulo the slot-count field */
+    extraSize = (s32)sizes[0] % (s32)cfg[11];
 
-    /* Initialize ring buffer (index 0) */
-    r = sfbuf_InitRingSj(area, cumulative, sizes, 0, extraSize);
+    /* Initialize the three ring buffer slots, returning on first failure.
+     * Slot 1 uses a fixed 0x800 extra size. */
+    r = sfbuf_InitRingSj(base, cumulative, sizes, 0, extraSize);
     if (r != 0) return r;
 
-    /* Initialize ring buffer 1 (0x800 extra) */
-    r = sfbuf_InitRingSj(area, cumulative, sizes, 1, 0x800);
+    r = sfbuf_InitRingSj(base, cumulative, sizes, 1, 0x800);
     if (r != 0) return r;
 
-    /* Initialize ring buffer 2 */
-    r = sfbuf_InitRingSj(area, cumulative, sizes, 2, 0);
+    r = sfbuf_InitRingSj(base, cumulative, sizes, 2, 0);
     if (r != 0) return r;
 
-    /* Initialize video frame buffer 0 (index 3) */
-    sfbuf_InitVfrmBuf(hn, area, cumulative, sizes, 3);
-
-    /* Initialize audio ring buffer 0 (index 4) */
-    sfbuf_InitAringBuf(area, cumulative, sizes, 4);
-
-    /* Initialize video frame buffer 1 (index 5) */
-    sfbuf_InitVfrmBuf(hn, area, cumulative, sizes, 5);
-
-    /* Initialize audio ring buffer 1 (index 6) */
-    sfbuf_InitAringBuf(area, cumulative, sizes, 6);
+    /* Video/audio buffer pairs for both transports */
+    sfbuf_InitVfrmBuf(hn, base, cumulative, sizes, 3);
+    sfbuf_InitAringBuf(base, cumulative, sizes, 4);
+    sfbuf_InitVfrmBuf(hn, base, cumulative, sizes, 5);
+    sfbuf_InitAringBuf(base, cumulative, sizes, 6);
 
     /* Set initial handle state */
-    *(u32 *)((u8 *)area + 0x32C) = 3;
-    *(u32 *)((u8 *)area + 0x330) = 1;
-    *(u32 *)((u8 *)area + 0x334) = 0;
-    *(u32 *)((u8 *)area + 0x338) = 0;
-    *(u32 *)((u8 *)area + 0x378) = 9;
-    *(u32 *)((u8 *)area + 0x37C) = 9;
-    *(u32 *)((u8 *)area + 0x33C) = 0;
-    *(u32 *)((u8 *)area + 0x340) = 0;
-    *(u32 *)((u8 *)area + 0x344) = 0;
-    *(u32 *)((u8 *)area + 0x348) = 0;
-    *(u32 *)((u8 *)area + 0x34C) = 0;
-    *(u32 *)((u8 *)area + 0x350) = 0;
-    *(u32 *)((u8 *)area + 0x354) = 0;
-    *(u32 *)((u8 *)area + 0x358) = 0;
-    *(u32 *)((u8 *)area + 0x35C) = 0;
-    *(u32 *)((u8 *)area + 0x360) = 0;
-    *(u32 *)((u8 *)area + 0x364) = 0;
-    *(u32 *)((u8 *)area + 0x368) = 0;
+    *(u32 *)(base + 0x32C) = 3;
+    *(u32 *)(base + 0x330) = 1;
+    *(u32 *)(base + 0x334) = 0;
+    *(u32 *)(base + 0x338) = 0;
+    *(u32 *)(base + 0x378) = 9;
+    *(u32 *)(base + 0x37C) = 9;
+    *(u32 *)(base + 0x33C) = 0;
+    *(u32 *)(base + 0x340) = 0;
+    *(u32 *)(base + 0x344) = 0;
+    *(u32 *)(base + 0x348) = 0;
+    *(u32 *)(base + 0x34C) = 0;
+    *(u32 *)(base + 0x350) = 0;
+    *(u32 *)(base + 0x354) = 0;
+    *(u32 *)(base + 0x358) = 0;
+    *(u32 *)(base + 0x35C) = 0;
+    *(u32 *)(base + 0x360) = 0;
+    *(u32 *)(base + 0x364) = 0;
+    *(u32 *)(base + 0x368) = 0;
     return 0;
 }
 
@@ -261,38 +262,41 @@ int SFBUF_InitHn(void *hn, void *area, u32 *cfg) {
  * Iterates through the three primary buffer types (ring, vfrm, aring)
  * and destroys their associated SJ objects if they are in the active state.
  */
+/* Supply record written by SFBUF_SetSupplySj; SJ object pointer at +0x04. */
+struct SfdSupply {
+    u32 field_0x00;
+    void *sj;
+};
+
+/* Destroys the SJ object in sup->sj and clears it. Kept out of
+ * SFBUF_DestroySj's dataflow so the record address stays materialized
+ * across the virtual call. */
+static void sfbuf_DestroySlot(struct SfdSupply *sup) {
+    if (sup->sj != NULL) {
+        SJ_VT(sup->sj)->destroy(sup->sj);
+        sup->sj = NULL;
+    }
+}
+
 void SFBUF_DestroySj(void *self) {
+    u32 *rec = (u32 *)((u8 *)self + 0x13C8);
     u8 *base = (u8 *)self;
-    u8 *supply = base + 0x13C8;
-    void *obj;
 
-    /* Buffer 0: ring buffer */
-    if (*(u32 *)(base + 0x13B8) == SFBUF_STATE_ACTIVE) {
-        obj = *(void **)(supply + 0x04);
-        if (obj != NULL) {
-            SJ_VT(obj)->destroy(obj);
-            *(u32 *)(supply + 0x04) = 0;
-        }
+    /* Ring buffer */
+    if (*(s32 *)(base + 0x13B8) == SFBUF_STATE_ACTIVE) {
+        sfbuf_DestroySlot((struct SfdSupply *)rec);
     }
 
-    /* Buffer 1: vfrm buffer */
-    supply = base + 0x143C;
-    if (*(u32 *)(base + 0x142C) == SFBUF_STATE_ACTIVE) {
-        obj = *(void **)(supply + 0x04);
-        if (obj != NULL) {
-            SJ_VT(obj)->destroy(obj);
-            *(u32 *)(supply + 0x04) = 0;
-        }
+    /* Vfrm buffer */
+    rec = (u32 *)(base + 0x143C);
+    if (*(s32 *)(base + 0x142C) == SFBUF_STATE_ACTIVE) {
+        sfbuf_DestroySlot((struct SfdSupply *)rec);
     }
 
-    /* Buffer 2: aring buffer */
-    supply = base + 0x14B0;
-    if (*(u32 *)(base + 0x14A0) == SFBUF_STATE_ACTIVE) {
-        obj = *(void **)(supply + 0x04);
-        if (obj != NULL) {
-            SJ_VT(obj)->destroy(obj);
-            *(u32 *)(supply + 0x04) = 0;
-        }
+    /* Aring buffer */
+    rec = (u32 *)(base + 0x14B0);
+    if (*(s32 *)(base + 0x14A0) == SFBUF_STATE_ACTIVE) {
+        sfbuf_DestroySlot((struct SfdSupply *)rec);
     }
 }
 
@@ -373,23 +377,28 @@ void sfbuf_InitAringBuf(void *self, u32 *cumulative, u32 *sizes, int idx) {
  * @return 0 on success, -1 on error
  */
 s32 SFBUF_SetSupplySj(void *self, u32 *supply) {
-    int res = 0;
-    int idx;
     u8 *buf;
     u8 *dst;
+    s32 res;
+    int idx;
     u32 cs;
+    u32 flag;
 
     /* Validate supply configuration */
     if (supply[1] == 0) {
         res = -1;
-    } else if (supply[0] != 0) {
+    } else if (supply[0] == 0) {
         if (supply[2] == 0) {
             res = -1;
         } else if ((s32)supply[3] <= 0) {
             res = -1;
         } else if ((s32)supply[5] > 0) {
             res = -1;
+        } else {
+            res = 0;
         }
+    } else {
+        res = 0;
     }
 
     if (res != 0) {
@@ -397,13 +406,14 @@ s32 SFBUF_SetSupplySj(void *self, u32 *supply) {
     }
 
     /* Determine buffer index from transport type */
-    idx = 0;
-    if (!SFTRN_IsSetup(self, 1)) {
-        if (SFTRN_IsSetup(self, 2)) {
-            idx = 1;
-        } else if (SFTRN_IsSetup(self, 3)) {
-            idx = 2;
-        }
+    if (SFTRN_IsSetup(self, 1)) {
+        idx = 0;
+    } else if (SFTRN_IsSetup(self, 2)) {
+        idx = 1;
+    } else if (SFTRN_IsSetup(self, 3)) {
+        idx = 2;
+    } else {
+        idx = 0;
     }
 
     buf = (u8 *)self + idx * SFBUF_BUF_STRIDE;
@@ -414,35 +424,32 @@ s32 SFBUF_SetSupplySj(void *self, u32 *supply) {
         return SFLIB_SetErr(self, SFBUF_ERR_BASE + 0x09);
     }
 
-    /* Compute non-zero flag for supply pointer */
-    {
-        u32 ptr = supply[1];
-        u32 flag = (u32)(-(s32)ptr | ptr) >> 31;
+    /* Compute non-zero flag for supply size */
+    flag = (u32)(-(s32)supply[1] | supply[1]) >> 31;
 
-        SFLIB_LockCs(&cs);
+    SFLIB_LockCs(&cs);
 
-        /* Store active flag */
-        *(u32 *)(buf + 0x13BC) = flag;
+    /* Store active flag */
+    *(u32 *)(buf + 0x13BC) = flag;
 
-        /* Copy supply fields (ptr, size, readLen, writeLen) */
-        *(u32 *)(dst + 0x00) = supply[0];
-        *(u32 *)(dst + 0x04) = supply[1];
-        *(u32 *)(dst + 0x08) = supply[2];
-        *(u32 *)(dst + 0x0C) = supply[3];
-        *(u32 *)(dst + 0x10) = supply[4];
-        *(u32 *)(dst + 0x14) = supply[5];
+    /* Copy supply fields (ptr, size, readLen, writeLen) */
+    *(u32 *)(dst + 0x00) = supply[0];
+    *(u32 *)(dst + 0x04) = supply[1];
+    *(u32 *)(dst + 0x08) = supply[2];
+    *(u32 *)(dst + 0x0C) = supply[3];
+    *(u32 *)(dst + 0x10) = supply[4];
+    *(u32 *)(dst + 0x14) = supply[5];
 
-        /* Clear counters and state */
-        *(u32 *)(dst + 0x18) = 0;
-        *(u32 *)(dst + 0x1C) = 0;
-        *(u32 *)(dst + 0x20) = 0;
-        *(u32 *)(dst + 0x24) = 0;
+    /* Clear counters and state */
+    *(u32 *)(dst + 0x18) = 0;
+    *(u32 *)(dst + 0x1C) = 0;
+    *(u32 *)(dst + 0x20) = 0;
+    *(u32 *)(dst + 0x24) = 0;
 
-        SFLIB_UnlockCs(&cs);
+    SFLIB_UnlockCs(&cs);
 
-        /* Reset PTS queue */
-        SFPTS_ResetPtsQue(dst + 0x28);
-    }
+    /* Reset PTS queue */
+    SFPTS_ResetPtsQue(dst + 0x28);
 
     return 0;
 }
@@ -460,15 +467,9 @@ int fn_803C1CAC(void *self) {
     int bufIdx;
     u32 *fields;
 
-    if (SFTRN_IsSetup(self, 1)) {
-        bufIdx = 0;
-    } else if (SFTRN_IsSetup(self, 2)) {
-        bufIdx = 1;
-    } else if (SFTRN_IsSetup(self, 3)) {
-        bufIdx = 2;
-    } else {
-        bufIdx = 0;
-    }
+    bufIdx = SFTRN_IsSetup(self, 1) ? 0 :
+             SFTRN_IsSetup(self, 2) ? 1 :
+             !SFTRN_IsSetup(self, 3) ? 0 : 2;
 
     fields = (u32 *)((u8 *)self + bufIdx * 0x74 + 0x13B8);
 
@@ -534,57 +535,50 @@ void SFBUF_GetUoch(void *self, int idx, int sub_idx, u32 *dst) {
  * @param out   Output data structure
  * @param mode  Access mode (0=write, 1=read)
  */
-void sfbuf_RingGetSub(void *self, int idx, u32 *out, int mode) {
+s32 sfbuf_RingGetSub(void *self, int idx, u32 *out, int mode) {
     u8 *p = sfbuf_base(self, idx);
-    u32 active = *(u32 *)(p + 0x13BC);
-    void *ringObj = *(void **)(p + 0x13CC);
+    u32 zero = 0;
+    u32 maxCnt = 0x7FFFFFFF;
+    u32 avail;
+    u32 info[2];
+    u32 chunk[2];
+    u32 active;
+    void *ringObj;
+    s32 i;
 
     /* Clear output structure */
-    out[0] = 0;
-    out[1] = 0;
-    out[2] = 0;
-    out[3] = 0;
-    out[4] = 0;
-    out[5] = 0;
-    out[6] = 0;
+    for (i = 0; i < 7; i++) {
+        out[i] = zero;
+    }
 
     /* Check if buffer is active */
+    active = *(u32 *)(p + 0x13BC);
+    ringObj = *(void **)(p + 0x13CC);
     if (active == 0 || ringObj == NULL) {
-        return;
+        return 0;
     }
 
-    /* Call virtual methods on the ring buffer object */
-    {
-        struct SjObjVtbl *vt = SJ_VT(ringObj);
-        int (*getAvail)(void *, int) = vt->getAvail;
-        int (*getChunk)(void *, int, int, void *) = vt->getChunk;
-        int (*ungetChunk)(void *, int, void *) = vt->ungetChunk;
+    /* Query available size and take a chunk covering the whole ring */
+    avail = (u32)SJ_VT(ringObj)->getAvail(ringObj, mode);
+    SJ_VT(ringObj)->getChunk(ringObj, mode, maxCnt, info);
 
-        u32 dataAvail = (u32)getAvail(ringObj, mode);
-        u32 info[2];
-        u32 chunk[2];
-
-        getChunk(ringObj, mode, 0x7FFFFFFF, info);
-
-        if (info[1] < dataAvail) {
-            /* Need second chunk */
-            getChunk(ringObj, mode, 0x7FFFFFFF, chunk);
-            ungetChunk(ringObj, mode, chunk);
-        } else {
-            chunk[0] = 0;
-            chunk[1] = 0;
-        }
-
-        /* Get final data */
-        getChunk(ringObj, mode, 0x7FFFFFFF, info);
-        ungetChunk(ringObj, mode, info);
-
-        /* Copy results to output */
-        out[0] = info[0];
-        out[1] = info[1];
-        out[2] = chunk[0];
-        out[3] = chunk[1];
+    if ((s32)info[1] < (s32)avail) {
+        /* Data wraps: take and return the second (pre-wrap) chunk */
+        SJ_VT(ringObj)->getChunk(ringObj, mode, maxCnt, chunk);
+        SJ_VT(ringObj)->ungetChunk(ringObj, mode, chunk);
+    } else {
+        chunk[0] = zero;
+        chunk[1] = zero;
     }
+
+    /* Undo the initial chunk reservation */
+    SJ_VT(ringObj)->ungetChunk(ringObj, mode, info);
+
+    out[0] = info[0];
+    out[1] = info[1];
+    out[2] = chunk[0];
+    out[3] = chunk[1];
+    return 0;
 }
 
 /*
@@ -613,83 +607,86 @@ void SFBUF_RingGetRead(void *self, int idx, u32 *out) {
  * @param mode   Access mode (0=write, 1=read)
  * @return 0 on success, error code on failure
  */
-void sfbuf_RingAddSub(void *self, int idx, u32 size, int mode) {
-    u8 *p = sfbuf_base(self, idx);
+s32 sfbuf_RingAddSub(void *self, int idx, u32 size, int mode) {
+    u8 *p = (u8 *)self + idx * SFBUF_BUF_STRIDE;
+    s32 result = 0;
     u8 *supply = p + 0x13C8;
-    u32 active = *(u32 *)(p + 0x13BC);
-    void *ringObj = *(void **)(p + 0x13CC);
-    u32 result = 0;
+    void *rb = *(void **)(p + 0x13CC);
 
-    /* Check inputs */
-    if (size == 0) return;
-    if (active == 0 || ringObj == NULL) return;
+    if (size == 0) {
+        return 0;
+    }
+    if (*(u32 *)(p + 0x13BC) == 0 || rb == NULL) {
+        return 0;
+    }
 
-    /* Call virtual methods on the ring buffer object */
     {
-        struct SjObjVtbl *vt = SJ_VT(ringObj);
-        int (*getChunk)(void *, int, int, void *) = vt->getChunk;
-        int (*putChunk)(void *, int, void *) = vt->putChunk;
-        int (*getAvail)(void *, int) = vt->getAvail;
-
-        u32 isRead = (mode == 1) ? 1 : 0;
         u32 info[2];
 
-        /* Get available space */
-        getChunk(ringObj, isRead, 0x7FFFFFFF, info);
-        putChunk(ringObj, isRead, info);
+        /* Reserve space for the incoming data. Note: retail passes the raw
+         * access-mode word as the size argument of this first call. */
+        SJ_VT(rb)->getChunk(rb, mode, size, info);
+        SJ_VT(rb)->putChunk(rb, (mode != 0), info);
 
-        if (info[1] < size) {
-            /* Not enough space - try second chunk */
-            u32 remaining = size - info[1];
+        if ((s32)info[1] < (s32)size) {
+            /* Ring wraps: reserve the pre-wrap remainder too */
             u32 chunk[2];
+            u32 remain = size - info[1];
 
-            getChunk(ringObj, isRead, remaining, chunk);
-            putChunk(ringObj, isRead, chunk);
+            SJ_VT(rb)->getChunk(rb, mode, remain, chunk);
+            SJ_VT(rb)->putChunk(rb, (mode != 0), chunk);
 
-            if (chunk[1] < remaining) {
-                SFLIB_SetErr(self, SFBUF_ERR_BASE + 0x0B);
-                result = 1;
+            if ((s32)chunk[1] < (s32)remain) {
+                result = SFLIB_SetErr(self, SFBUF_ERR_BASE + 0x0B);
             }
         }
 
-        /* Update PTS tracking for read mode */
+        /* Track DLM (decode latency marker) position validity for reads
+         * on the video ring only. */
         if (mode == 1 && idx == 1) {
-            u32 dlm[2];
-            u32 pts[2];
+            void *sj = *(void **)(supply + 0x04);
+            u32 avail;
+            u32 buf[2];
+            u32 buf2[2];
+            u32 pos;
 
-            /* Slot 6 in its 3-arg (DLM) shape. */
-            ((u32 (*)(void *, int, u32 *))vt->getChunk)(ringObj, 1, dlm);
-            vt->ungetChunk(ringObj, 1, pts);
+            avail = SJ_VT(sj)->getAvail(sj, 1);
+            SJ_VT(sj)->getChunk(sj, 1, 0x7FFFFFFF, buf);
 
-            /* Check PTS validity */
-            if (dlm[0] < pts[0] || dlm[0] >= pts[0] + pts[1]) {
-                /* PTS out of range - reset */
-                vt->ungetChunk(ringObj, 1, pts);
-                if (dlm[0] >= pts[0] && dlm[0] < pts[0] + pts[1]) {
-                    /* Still valid */
-                } else {
-                    *(u32 *)(p + 0x13E0) = 0;
-                    *(u32 *)(p + 0x13E4) = 0;
-                }
+            if ((s32)buf[1] < (s32)avail) {
+                /* Data wraps: fetch and inspect the second segment */
+                SJ_VT(sj)->getChunk(sj, 1, 0x7FFFFFFF, buf2);
+                SJ_VT(sj)->ungetChunk(sj, 1, buf2);
+            } else {
+                buf2[0] = 0;
+                buf2[1] = 0;
+            }
+
+            SJ_VT(sj)->ungetChunk(sj, 1, buf);
+
+            /* If the recorded DLM position lies in neither segment,
+             * it no longer points at live data - clear it. */
+            pos = *(u32 *)(supply + 0x18);
+            if (!((pos >= buf[0] && pos < buf[0] + buf[1]) ||
+                  (pos >= buf2[0] && pos < buf2[0] + buf2[1]))) {
+                *(u32 *)(supply + 0x18) = 0;
+                *(u32 *)(supply + 0x1C) = 0;
             }
         }
 
-        /* Update counters */
-        if (mode == 1) {
-            u32 *cntPtr = (u32 *)(p + 0x13E4);
-            if ((s32)*cntPtr >= 0) {
-                *cntPtr += size;
-            }
-        } else {
-            u32 *cntPtr = (u32 *)(p + 0x13E0);
-            if ((s32)*cntPtr >= 0) {
-                *cntPtr += size;
+        /* Advance the running total (read total for reads, write total
+         * for writes) unless it is disabled (negative). */
+        {
+            u32 *cnt = (u32 *)(supply + ((mode == 1) ? 0x24 : 0x20));
+            if ((s32)*cnt >= 0) {
+                *cnt += size;
             }
         }
     }
 
-    /* Mark buffer as updated */
+    /* Mark handle as updated */
     *(u32 *)((u8 *)self + 0x50) = 1;
+    return result;
 }
 
 /*
@@ -963,24 +960,25 @@ s32 SFBUF_RingGetDataSiz(void *self, int idx) {
  * @param writeCnt  Output: write flow count
  */
 void SFBUF_GetFlowCnt(void *self, u32 *readCnt, u32 *writeCnt) {
-    struct SjObjVtbl *vt = SJ_VT(self);
-    u32 initResult = (u32)vt->getUuid(self);
     u32 *w = writeCnt;
     u32 *r = readCnt;
+    int flag;
 
-    if (initResult == (u32)lbl_eu_80606E10) {
-        *w = SJRBF_GetFlowCnt(self, 0, 1);
+    /* Identify the buffer object by its UUID (virtual slot 0x10) and
+     * query flow counters through the matching concrete API. */
+    flag = (SJ_VT(self)->getUuid(self) == lbl_eu_80606E10);
+    if (flag) {
         *r = SJRBF_GetFlowCnt(self, 1, 1);
-    } else if (initResult == (u32)lbl_eu_80606E14) {
-        u32 bufSize = SJMEM_GetBufSize(self);
-        *r = bufSize;
-
-        vt = SJ_VT(self);
-        /* Slot 9 in its 1-arg (avail) shape. */
-        *w = bufSize - (u32)((u32 (*)(void *))vt->getAvail)(self);
+        *w = SJRBF_GetFlowCnt(self, 0, 1);
     } else {
-        *w = 0;
-        *r = 0;
+        flag = (SJ_VT(self)->getUuid(self) == lbl_eu_80606E14);
+        if (flag) {
+            *r = SJMEM_GetBufSize(self);
+            *w = *r - (u32)SJ_VT(self)->getAvail(self, 1);
+        } else {
+            *r = 0;
+            *w = 0;
+        }
     }
 }
 

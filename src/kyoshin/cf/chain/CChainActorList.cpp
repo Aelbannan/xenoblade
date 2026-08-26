@@ -1074,7 +1074,7 @@ void func_8027BFE0(unsigned int param) {
 // action selected by func_8017FD4C; writes result to *out and returns 1.
 int func_8027C33C(cf::CChainAction* self, u8* out){
     if (self->field_0 > 0) return 0;
-    int sel = func_8017FD44(self);
+    int sel = func_8017FD44();
     if (sel == 0) {
         *out = 0;
         return 1;

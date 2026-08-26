@@ -616,13 +616,13 @@ L_flags:
     func_80043D90(holder);
     func_800F4A98(func_80043F18(holder), 0x80000002, 0);
     u32 startId = self->vf40();
-    func_800F6ED0(func_80043F18(holder), startId);
+    func_800F6ED0(func_80043F18(holder), (void*)startId);
     if (((cf::CfEnumList*)func_80043F18(holder))->field_620 != 0) {
         // Non-empty list: reset iteration (holder passed directly), publish
         // the result via vtable 0x70, and forward entry 0's actor to 0x2C4.
         u32 resetId = (u32)func_800F6E08(holder);
         self->vf68(resetId);
-        u8* item = func_800F6EAC(func_80043F18(holder), 0);
+        u8* item = (u8*)func_800F6EAC(func_80043F18(holder), 0);
         u8* target = item;
         if (target != 0) {
             target -= 0x3e9c;  // back up from the embedded mSub to the owner
@@ -1121,7 +1121,7 @@ void func_800C86E8(cf::CfObjectImplPc* self)
     func_80043D90(holder);
     func_800F4A98(func_80043F18(holder), 0x80000002, 0);
     u32 startId = self->vf40();
-    func_800F6ED0(func_80043F18(holder), startId);
+    func_800F6ED0(func_80043F18(holder), (void*)startId);
     // Unrotated in retail (init; b cond; body; incr; cond) - kept as a plain
     // while since MWCC emits identical bytes either way.
     u32 i = 0;

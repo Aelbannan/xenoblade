@@ -18,12 +18,40 @@ union IntToF32Conv {
 // Retail layout mirror: userproc callback/arg at +0x118/+0x11C and the real
 // track pointer array at +0x120. The shared header places mTracks at 0x118,
 // so everything written here goes through this mirror instead.
+// Retail layout mirror: SeqTrack stores the parser base address at +0x1C
+// (the shared header's field layout differs).
+struct SeqTrackRetailSlots {
+    char field_0x0[0x1C];
+    const u8* baseAddr; // at 0x1C
+};
+
 struct SeqPlayerRetailSlots {
-    char field_0x0[0x118];
+    char field_0x0[0xEC];
+    bool activeFlag;                          // at 0xEC
+    bool startedFlag;                         // at 0xED
+    char field_0xEE[0xF4 - 0xEE];
+    f32 tempoRatio;                           // at 0xF4
+    char field_0xF8[0xFC - 0xF8];
+    u32 skipTickCounter;                      // at 0xFC
+    f32 skipTimeCounter;                      // at 0x100
+    char field_0x104[0x10A - 0x104];
+    u8 timebase;                              // at 0x10A
+    u16 tempo;                                // at 0x10C
+    char field_0x10E[0x114 - 0x10E];
+    nw4r::snd::detail::SeqTrackAllocator* allocator; // at 0x114
     void* callback;                       // at 0x118
     void* arg;                            // at 0x11C
     nw4r::snd::detail::SeqTrack* tracks[16]; // at 0x120
+    char field_0x160[0x180 - 0x160];
+    int tickCounter;                          // at 0x180
 };
+
+// Loads timebase*tempo through the 0x43300000/2^52 conversion union.
+inline f64 LoadTempoProduct(SeqPlayerRetailSlots* pSlot, IntToF32Conv& conv) {
+    conv.w[0] = 0x43300000;
+    conv.w[1] = (u32)(pSlot->timebase * pSlot->tempo) ^ 0x80000000;
+    return conv.d;
+}
 
 } // namespace
 
@@ -32,10 +60,49 @@ namespace snd {
 namespace detail {
 
 volatile s16 SeqPlayer::mGlobalVariable[GLOBAL_VARIABLE_NUM];
+
 // NOTE (matching residual): the header declares static bool
 // mGobalVariableInitialized (@typo) but retail never defines or reads it -
 // InitSeqPlayer eagerly fills the global-variable array with -1 before any
 // sound can run, so there is no lazy-init guard byte in the retail data pool.
+
+// FinishPlayer body (retail inlines it into Stop/~SeqPlayer via IPA). Kept
+// as a standalone callee so `-ipa file` re-inlines it in CALLER context,
+// reproducing retail's Chaitin register colors.
+static inline void FinishPlayerImpl(SeqPlayer& rPlayer) {
+    SeqPlayer* pPlayer = &rPlayer;
+    SoundThread::AutoLock lock;
+
+    if (reinterpret_cast<SeqPlayerRetailSlots*>(pPlayer)->startedFlag) {
+        SoundThread::GetInstance().UnregisterPlayerCallback(pPlayer);
+        reinterpret_cast<SeqPlayerRetailSlots*>(pPlayer)->startedFlag = false;
+    }
+
+    if (reinterpret_cast<SeqPlayerRetailSlots*>(pPlayer)->activeFlag) {
+        DisposeCallbackManager::GetInstance().UnregisterDisposeCallback(
+            pPlayer);
+        reinterpret_cast<SeqPlayerRetailSlots*>(pPlayer)->activeFlag = false;
+    }
+
+    // Explicit continue keeps two scope-exit edges (retail emits the
+    // track-lock unlock twice); FreeTrack's argument reloads the slot.
+    // Induction pointer based at the player; the 0x120 track-array base is
+    // folded into the access displacement (pSlot[0x48]), as in retail.
+    SeqTrack** pSlot = reinterpret_cast<SeqTrack**>(pPlayer);
+    for (int i = 0; i < SeqPlayer::TRACK_NUM; pSlot++, i++) {
+        SoundThread::AutoLock trackLock;
+
+        SeqTrack* pTrack =
+            (i > SeqPlayer::TRACK_NUM - 1) ? NULL : pSlot[0x48];
+        if (pTrack == NULL) {
+            continue;
+        }
+        pTrack->Close();
+        reinterpret_cast<SeqPlayerRetailSlots*>(pPlayer)
+            ->allocator->FreeTrack(pSlot[0x48]);
+        pSlot[0x48] = NULL;
+    }
+}
 
 SeqPlayer::SeqPlayer() {
     mActiveFlag = false;
@@ -74,65 +141,19 @@ SeqPlayer::SeqPlayer() {
 void SeqPlayer::Stop() {
     SoundThread::AutoLock lock;
 
-    {
-        SoundThread::AutoLock finishLock;
-
-        if (mStartedFlag) {
-            SoundThread::GetInstance().UnregisterPlayerCallback(this);
-            mStartedFlag = false;
-        }
-
-        if (mActiveFlag) {
-            DisposeCallbackManager::GetInstance().UnregisterDisposeCallback(
-                this);
-            mActiveFlag = false;
-        }
-
-        SeqTrack** pSlot =
-            reinterpret_cast<SeqPlayerRetailSlots*>(this)->tracks;
-        for (int i = 0; i < TRACK_NUM; i++, pSlot++) {
-            SoundThread::AutoLock trackLock;
-
-            SeqTrack* pTrack = (i > TRACK_NUM - 1) ? NULL : *pSlot;
-            if (pTrack != NULL) {
-                pTrack->Close();
-                mSeqTrackAllocator->FreeTrack(pTrack);
-                *pSlot = NULL;
-            }
-        }
-    }
+    FinishPlayerImpl(*this);
 }
 
 SeqPlayer::~SeqPlayer() {
-    SoundThread::AutoLock lock;
-
     {
-        SoundThread::AutoLock finishLock;
+        SoundThread::AutoLock lock;
 
-        if (mStartedFlag) {
-            SoundThread::GetInstance().UnregisterPlayerCallback(this);
-            mStartedFlag = false;
-        }
-
-        if (mActiveFlag) {
-            DisposeCallbackManager::GetInstance().UnregisterDisposeCallback(
-                this);
-            mActiveFlag = false;
-        }
-
-        SeqTrack** pSlot =
-            reinterpret_cast<SeqPlayerRetailSlots*>(this)->tracks;
-        for (int i = 0; i < TRACK_NUM; i++, pSlot++) {
-            SoundThread::AutoLock trackLock;
-
-            SeqTrack* pTrack = (i > TRACK_NUM - 1) ? NULL : *pSlot;
-            if (pTrack != NULL) {
-                pTrack->Close();
-                mSeqTrackAllocator->FreeTrack(pTrack);
-                *pSlot = NULL;
-            }
-        }
+        // FinishPlayer fully inlined here by -ipa (same as Stop).
+        FinishPlayerImpl(*this);
     }
+
+    // Retail destructor takes the hidden delete flag; free the player when
+    // the deletion bit is set.
 }
 
 void SeqPlayer::InitParam(int voices, NoteOnCallback* pCallback) {
@@ -140,10 +161,10 @@ void SeqPlayer::InitParam(int voices, NoteOnCallback* pCallback) {
 
     mStartedFlag = false;
     mPauseFlag = false;
-    mTempoRatio = 1.0f;
+    mTempoRatio = lbl_eu_8066A000;
     mSkipTickCounter = 0;
-    mSkipTimeCounter = 0.0f;
-    mPanRange = 1.0f;
+    mSkipTimeCounter = lbl_eu_8066A004;
+    mPanRange = lbl_eu_8066A000;
     mTickCounter = 0;
     mVoiceOutCount = voices;
 
@@ -153,13 +174,14 @@ void SeqPlayer::InitParam(int voices, NoteOnCallback* pCallback) {
     mParserParam.priority = 64;
     mParserParam.callback = pCallback;
 
-    mTickFraction = 0.0f;
+    mTickFraction = lbl_eu_8066A004;
 
     for (int i = 0; i < LOCAL_VARIABLE_NUM; i++) {
         mLocalVariable[i] = DEFAULT_VARIABLE_VALUE;
     }
+    // Header layout puts mTracks at 0x118; retail keeps it at 0x120.
     for (int i = 0; i < TRACK_NUM; i++) {
-        mTracks[i] = NULL;
+        reinterpret_cast<SeqPlayerRetailSlots*>(this)->tracks[i] = NULL;
     }
 }
 
@@ -172,33 +194,9 @@ SeqPlayer::SetupResult SeqPlayer::Setup(SeqTrackAllocator* pAllocator,
 
     {
         SoundThread::AutoLock stopLock;
-        {
-            SoundThread::AutoLock finishLock;
 
-            if (mStartedFlag) {
-                SoundThread::GetInstance().UnregisterPlayerCallback(this);
-                mStartedFlag = false;
-            }
-
-            if (mActiveFlag) {
-                DisposeCallbackManager::GetInstance().UnregisterDisposeCallback(
-                    this);
-                mActiveFlag = false;
-            }
-
-            SeqTrack** pSlot =
-                reinterpret_cast<SeqPlayerRetailSlots*>(this)->tracks;
-            for (int i = 0; i < TRACK_NUM; i++, pSlot++) {
-                SoundThread::AutoLock trackLock;
-
-                SeqTrack* pClose = (i > TRACK_NUM - 1) ? NULL : *pSlot;
-                if (pClose != NULL) {
-                    pClose->Close();
-                    mSeqTrackAllocator->FreeTrack(pClose);
-                    *pSlot = NULL;
-                }
-            }
-        }
+        // FinishPlayer inlined by retail; it owns its own lock scope.
+        FinishPlayerImpl(*this);
     }
 
     InitParam(voices, pCallback);
@@ -218,19 +216,29 @@ SeqPlayer::SetupResult SeqPlayer::Setup(SeqTrackAllocator* pAllocator,
             return SETUP_ERR_CANNOT_ALLOCATE_TRACK;
         }
 
+        // SetPlayerTrack inlined by retail (owns its own lock).
         u32 trackFlags = allocTrackFlags;
         for (int i = 0; trackFlags != 0; trackFlags >>= 1, i++) {
             if (trackFlags & 1) {
                 SeqTrack* pTrack = pAllocator->AllocTrack(this);
-                SetPlayerTrack(i, pTrack);
+
+                SoundThread::AutoLock trackLock;
+
+                // Explicit continue keeps two scope-exit edges (retail emits
+                // the mutex unlock on both paths).
+                if (i > TRACK_NUM - 1) {
+                    continue;
+                }
+                reinterpret_cast<SeqTrack**>(this)[0x48 + i] = pTrack;
+                pTrack->SetPlayerTrackNo(i);
             }
         }
     }
 
     DisposeCallbackManager::GetInstance().RegisterDisposeCallback(this);
 
-    mSeqTrackAllocator = pAllocator;
-    mActiveFlag = true;
+    reinterpret_cast<SeqPlayerRetailSlots*>(this)->allocator = pAllocator;
+    reinterpret_cast<SeqPlayerRetailSlots*>(this)->activeFlag = true;
 
     return SETUP_SUCCESS;
 }
@@ -260,8 +268,13 @@ void SeqPlayer::Pause(bool flag) {
 
     mPauseFlag = flag;
 
+    // GetPlayerTrack(i) inlined by retail: MWCC keeps (this + i*4) as the
+    // induction pointer and folds the 0x120 track-array base into the load.
     for (int i = 0; i < TRACK_NUM; i++) {
-        SeqTrack* pTrack = GetPlayerTrack(i);
+        SeqTrack* pTrack =
+            (i > TRACK_NUM - 1)
+                ? NULL
+                : reinterpret_cast<SeqTrack**>(this)[0x48 + i];
 
         if (pTrack != NULL) {
             pTrack->PauseAllChannel(flag);
@@ -344,59 +357,35 @@ void SeqPlayer::SetTrackPitch(u32 trackFlags, f32 pitch) {
 void SeqPlayer::InvalidateData(const void* pStart, const void* pEnd) {
     SoundThread::AutoLock lock;
 
-    if (mActiveFlag) {
+    if (reinterpret_cast<SeqPlayerRetailSlots*>(this)->activeFlag) {
+        // First scan has no calls on the non-matching path, so MWCC walks it
+        // entirely in volatile registers: the induction pointer is based at
+        // the player with the 0x120 track-array base folded into the load.
+        SeqTrack** pTracks = reinterpret_cast<SeqTrack**>(this);
         for (int i = 0; i < TRACK_NUM; i++) {
-            SeqTrack* pTrack = (i > TRACK_NUM - 1) ? NULL : mTracks[i];
+            SeqTrack* pTrack =
+                (i > TRACK_NUM - 1) ? NULL : reinterpret_cast<SeqTrack**>(this)[0x48 + i];
             if (pTrack == NULL) {
                 continue;
             }
 
-            const u8* pBase = pTrack->GetParserTrackParam().baseAddr;
+            const u8* pBase =
+                reinterpret_cast<SeqTrackRetailSlots*>(pTrack)->baseAddr;
             if (pStart <= pBase && pBase <= pEnd) {
                 // SeqPlayer::Stop() inlined by retail.
-                SoundThread::AutoLock stopLock;
+                // Hoisted NULL for the track-slot store; retail pins it in
+                // a callee-saved register across the close loop.
+                SeqTrack* pRemovedTrack = NULL;
 
                 {
-                    SoundThread::AutoLock finishLock;
+                    SoundThread::AutoLock stopLock;
 
-                    if (mStartedFlag) {
-                        SoundThread::GetInstance().UnregisterPlayerCallback(
-                            this);
-                        mStartedFlag = false;
-                    }
-
-                    if (mActiveFlag) {
-                        DisposeCallbackManager::GetInstance()
-                            .UnregisterDisposeCallback(this);
-                        mActiveFlag = false;
-                    }
-
-                    SeqTrack** pSlot = reinterpret_cast<SeqPlayerRetailSlots*>(
-                        this)->tracks;
-                    for (int j = 0; j < TRACK_NUM; j++, pSlot++) {
-                        SoundThread::AutoLock trackLock;
-
-                        SeqTrack* pClose = (j > TRACK_NUM - 1) ? NULL : *pSlot;
-                        if (pClose != NULL) {
-                            pClose->Close();
-                            mSeqTrackAllocator->FreeTrack(pClose);
-                            *pSlot = NULL;
-                        }
-                    }
+                    FinishPlayerImpl(*this);
                 }
                 break;
             }
         }
     }
-}
-
-SeqTrack* SeqPlayer::GetPlayerTrack(int idx) {
-    if (idx > TRACK_NUM - 1) {
-        return NULL;
-    }
-
-    SeqTrack** tracks = (SeqTrack**)((u8*)this + 0x120);
-    return tracks[idx];
 }
 
 void SeqPlayer::SetPlayerTrack(int idx, SeqTrack* pTrack) {
@@ -410,13 +399,30 @@ void SeqPlayer::SetPlayerTrack(int idx, SeqTrack* pTrack) {
     pTrack->SetPlayerTrackNo(idx);
 }
 
+SeqTrack* SeqPlayer::GetPlayerTrack(int idx) {
+    if (idx > TRACK_NUM - 1) {
+        return NULL;
+    }
+
+    SeqTrack** tracks = (SeqTrack**)((u8*)this + 0x120);
+    return tracks[idx];
+}
+
 int SeqPlayer::ParseNextTick(bool doNoteOn) {
     SoundThread::AutoLock lock;
 
     bool active = false;
+    // Retail hoists this NULL into a callee-saved register before the loop
+    // (loop-invariant store value for the close-track path).
+    SeqTrack* pRemovedTrack = NULL;
 
     for (int i = 0; i < TRACK_NUM; i++) {
-        SeqTrack* pTrack = (i > TRACK_NUM - 1) ? NULL : mTracks[i];
+        // GetPlayerTrack(i) inlined by retail: bounds-checked load off the
+        // 0x120 track array.
+        SeqTrack* pTrack =
+            (i > TRACK_NUM - 1)
+                ? NULL
+                : reinterpret_cast<SeqPlayerRetailSlots*>(this)->tracks[i];
         if (pTrack == NULL) {
             continue;
         }
@@ -424,15 +430,31 @@ int SeqPlayer::ParseNextTick(bool doNoteOn) {
         pTrack->UpdateChannelLength();
 
         if (pTrack->ParseNextTick(doNoteOn) < 0) {
-            // Inlined CloseTrack (retail inlines it; owns its own lock).
-            SoundThread::AutoLock lock2;
+            // Inlined CloseTrack (retail inlines it; owns its own lock). The
+            // do/break form keeps two scope-exit edges, matching retail's
+            // duplicated mutex-unlock sequence.
+            do {
+                SoundThread::AutoLock lock2;
 
-            SeqTrack* pClose = (i > TRACK_NUM - 1) ? NULL : mTracks[i];
-            if (pClose != NULL) {
+                SeqTrack* pClose =
+                    (i > TRACK_NUM - 1)
+                        ? NULL
+                        : reinterpret_cast<SeqPlayerRetailSlots*>(this)
+                              ->tracks[i];
+                if (pClose == NULL) {
+                    break;
+                }
+
                 pClose->Close();
-                mSeqTrackAllocator->FreeTrack(pClose);
-                mTracks[i] = NULL;
-            }
+                // Retail reloads the track slot for the FreeTrack argument
+                // (pClose does not stay live across the Close call).
+                reinterpret_cast<SeqPlayerRetailSlots*>(this)
+                    ->allocator->FreeTrack(
+                        reinterpret_cast<SeqPlayerRetailSlots*>(this)
+                            ->tracks[i]);
+                reinterpret_cast<SeqPlayerRetailSlots*>(this)->tracks[i] =
+                    pRemovedTrack;
+            } while (false);
         }
 
         if (pTrack->IsOpened()) {
@@ -470,19 +492,29 @@ void SeqPlayer::Update() {
         return;
     }
 
-    if (mSkipTickCounter != 0 || mSkipTimeCounter > 0.0f) {
+    if (mSkipTickCounter != 0 || mSkipTimeCounter > lbl_eu_8066A004) {
         SkipTick();
 
     } else if (!mPauseFlag) {
         UpdateTick(3);
     }
 
-    // UpdateChannelParam inlined by retail.
-    for (int i = 0; i < TRACK_NUM; i++) {
-        SeqTrack* pTrack = GetPlayerTrack(i);
+    {
+        // Second AutoLock scope: retail re-locks the sound thread around the
+        // parameter update pass and unlocks twice on exit.
+        SoundThread::AutoLock paramLock;
 
-        if (pTrack != NULL) {
-            pTrack->UpdateChannelParam();
+        for (int i = 0; i < TRACK_NUM; i++) {
+            // GetPlayerTrack(i) inlined by retail: bounds-checked load off the
+            // 0x120 track array.
+            SeqTrack* pTrack =
+                (i > TRACK_NUM - 1)
+                    ? NULL
+                    : reinterpret_cast<SeqTrack**>(this)[0x48 + i];
+
+            if (pTrack != NULL) {
+                pTrack->UpdateChannelParam();
+            }
         }
     }
 }
@@ -496,12 +528,16 @@ void SeqPlayer::UpdateTick(int msec) {
     conv.w[0] = 0x43300000;
     conv.w[1] =
         (u32)(mParserParam.timebase * mParserParam.tempo) ^ 0x80000000;
-    f32 tickPerMsec = mTempoRatio * (f32)(conv.d - lbl_eu_8066A008) /
-                      lbl_eu_8066A010;
-    if (tickPerMsec == lbl_eu_8066A004) {
+    f32 tickPerMsec =
+        mTempoRatio *
+        ((f32)(conv.d - lbl_eu_8066A008) / lbl_eu_8066A010);
+    if (lbl_eu_8066A004 == tickPerMsec) {
         return;
     }
 
+    // Retail keeps the 0x43300000 constant live across the loop by writing
+    // both union halves on each conversion.
+    conv.w[0] = 0x43300000;
     conv.w[1] = (u32)msec ^ 0x80000000;
     f32 restMsec = (f32)(conv.d - lbl_eu_8066A008);
     f32 nextMsec = mTickFraction / tickPerMsec;
@@ -531,7 +567,10 @@ void SeqPlayer::UpdateTick(int msec) {
                 SeqTrack* pClose = (i > TRACK_NUM - 1) ? NULL : *pSlot;
                 if (pClose != NULL) {
                     pClose->Close();
-                    mSeqTrackAllocator->FreeTrack(pClose);
+                    // Retail reloads the slot for FreeTrack (pClose does not
+                    // stay live across Close).
+                    reinterpret_cast<SeqPlayerRetailSlots*>(this)
+                        ->allocator->FreeTrack(*pSlot);
                     *pSlot = NULL;
                 }
             }
@@ -540,11 +579,15 @@ void SeqPlayer::UpdateTick(int msec) {
 
         mTickCounter++;
 
+        conv.w[0] = 0x43300000;
         conv.w[1] =
             (u32)(mParserParam.timebase * mParserParam.tempo) ^ 0x80000000;
-        tickPerMsec = mTempoRatio * (f32)(conv.d - lbl_eu_8066A008) /
-                      lbl_eu_8066A010;
-        if (tickPerMsec == lbl_eu_8066A004) {
+        // Multiply-last ordering keeps this tree distinct from the head
+        // computation so MWCC's PRE pass cannot merge them.
+        tickPerMsec =
+            ((f32)(conv.d - lbl_eu_8066A008) / lbl_eu_8066A010) *
+            mTempoRatio;
+        if (lbl_eu_8066A004 == tickPerMsec) {
             return;
         }
 
@@ -556,9 +599,12 @@ void SeqPlayer::UpdateTick(int msec) {
 }
 
 void SeqPlayer::SkipTick() {
-    SeqTrack** pSlot = reinterpret_cast<SeqPlayerRetailSlots*>(this)->tracks;
-    for (int i = 0; i < TRACK_NUM; i++, pSlot++) {
-        SeqTrack* pTrack = (i > TRACK_NUM - 1) ? NULL : *pSlot;
+    // Release every voice on every open track before skipping ahead.
+    for (int i = 0; i < TRACK_NUM; i++) {
+        SeqTrack* pTrack =
+            (i > TRACK_NUM - 1)
+                ? NULL
+                : reinterpret_cast<SeqPlayerRetailSlots*>(this)->tracks[i];
 
         if (pTrack != NULL) {
             pTrack->ReleaseAllChannel(127);
@@ -566,53 +612,88 @@ void SeqPlayer::SkipTick() {
         }
     }
 
-    // Retail tests mSkipTickCounter (kept in a register across the loop
-    // condition) against MAX_SKIP_TICK_PER_FRAME at the top of each pass.
-    while (mSkipTickCounter != 0 || mSkipTimeCounter * GetBaseTempo() >= 1.0f) {
-        if (mSkipTickCounter >= MAX_SKIP_TICK_PER_FRAME) {
+    // Base tempo: mTempoRatio * (timebase * tempo) / 60000, with the integer
+    // product converted through the retail 2^52 pool constant.
+    IntToF32Conv conv;
+
+    while (reinterpret_cast<SeqPlayerRetailSlots*>(this)->skipTickCounter !=
+               0 ||
+           reinterpret_cast<SeqPlayerRetailSlots*>(this)->skipTimeCounter *
+                   (reinterpret_cast<SeqPlayerRetailSlots*>(this)->tempoRatio *
+                    ((f32)(LoadTempoProduct(
+                               reinterpret_cast<SeqPlayerRetailSlots*>(this),
+                               conv) -
+                           lbl_eu_8066A008) /
+                     lbl_eu_8066A010)) >=
+               lbl_eu_8066A000) {
+        if (reinterpret_cast<SeqPlayerRetailSlots*>(this)->tickCounter >=
+            MAX_SKIP_TICK_PER_FRAME) {
             return;
         }
 
-        if (mSkipTickCounter != 0) {
-            mSkipTickCounter--;
+        // Consume one skipped tick, or the time equivalent of one tick.
+        if (reinterpret_cast<SeqPlayerRetailSlots*>(this)->skipTickCounter !=
+            0) {
+            reinterpret_cast<SeqPlayerRetailSlots*>(this)->skipTickCounter--;
         } else {
-            mSkipTimeCounter -= 1.0f / GetBaseTempo();
+            f64 d = LoadTempoProduct(
+                reinterpret_cast<SeqPlayerRetailSlots*>(this), conv);
+            reinterpret_cast<SeqPlayerRetailSlots*>(this)->skipTimeCounter -=
+                lbl_eu_8066A000 /
+                (reinterpret_cast<SeqPlayerRetailSlots*>(this)->tempoRatio *
+                 ((f32)(d - lbl_eu_8066A008) / lbl_eu_8066A010));
         }
 
-        if (ParseNextTick(false) != 0) {
+        if (ParseNextTick(false)) {
             // FinishPlayer inlined by retail.
             SoundThread::AutoLock finishLock;
 
-            if (mStartedFlag) {
-                SoundThread::GetInstance().UnregisterPlayerCallback(this);
-                mStartedFlag = false;
+            if (reinterpret_cast<SeqPlayerRetailSlots*>(this)->startedFlag) {
+                // Checked downcast to the embedded PlayerCallback subobject.
+                SoundThread::GetInstance().UnregisterPlayerCallback(
+                    reinterpret_cast<SoundThread::PlayerCallback*>(
+                        reinterpret_cast<char*>(this) + 0xE0));
+                reinterpret_cast<SeqPlayerRetailSlots*>(this)->startedFlag =
+                    false;
             }
 
-            if (mActiveFlag) {
+            if (reinterpret_cast<SeqPlayerRetailSlots*>(this)->activeFlag) {
                 DisposeCallbackManager::GetInstance()
-                    .UnregisterDisposeCallback(this);
-                mActiveFlag = false;
+                    .UnregisterDisposeCallback(reinterpret_cast<DisposeCallback*>(
+                        reinterpret_cast<char*>(this) + 0xD4));
+                reinterpret_cast<SeqPlayerRetailSlots*>(this)->activeFlag =
+                    false;
             }
 
-            SeqTrack** pSlot =
-                reinterpret_cast<SeqPlayerRetailSlots*>(this)->tracks;
-            for (int i = 0; i < TRACK_NUM; i++, pSlot++) {
+            for (int i = 0; i < TRACK_NUM; i++) {
                 SoundThread::AutoLock trackLock;
 
-                SeqTrack* pClose = (i > TRACK_NUM - 1) ? NULL : *pSlot;
-                if (pClose != NULL) {
-                    pClose->Close();
-                    mSeqTrackAllocator->FreeTrack(pClose);
-                    *pSlot = NULL;
+                SeqTrack* pClose =
+                    (i > TRACK_NUM - 1)
+                        ? NULL
+                        : reinterpret_cast<SeqPlayerRetailSlots*>(this)
+                              ->tracks[i];
+                if (pClose == NULL) {
+                    continue;
                 }
+
+                pClose->Close();
+                // Retail reloads the track slot for FreeTrack (pClose does
+                // not stay live across Close).
+                reinterpret_cast<SeqPlayerRetailSlots*>(this)->allocator
+                    ->FreeTrack(
+                        reinterpret_cast<SeqPlayerRetailSlots*>(this)
+                            ->tracks[i]);
+                reinterpret_cast<SeqPlayerRetailSlots*>(this)->tracks[i] = NULL;
             }
             return;
         }
 
-        mTickCounter++;
+        reinterpret_cast<SeqPlayerRetailSlots*>(this)->tickCounter++;
     }
 
-    mSkipTimeCounter = lbl_eu_8066A004;
+    reinterpret_cast<SeqPlayerRetailSlots*>(this)->skipTimeCounter =
+        lbl_eu_8066A004;
 }
 
 void SeqPlayer::InitGlobalVariable() {

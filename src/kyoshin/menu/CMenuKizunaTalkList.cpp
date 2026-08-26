@@ -82,11 +82,11 @@ extern "C" void __dt__Q34nw4r3lyt8DrawInfoFv(void* self, int dealloc);
 // factory func_80272414 and the idle check func_80272488).
 extern unsigned long lbl_eu_806648B0;
 
-// CfGameManager one-arg controller-type query, kept as the retail-mangled C
-// symbol (extern "C" stops C++ `__Fs` param mangling). The inline header
-// wrapper drops the -1 argument, so it cannot be used here (retail loads r3=-1
-// even though the no-arg function ignores it). Same quirk as CMenuTutorial.
-extern "C" bool func_80086F9C__Q22cf13CfGameManagerFv(s16);
+// CfGameManager one-arg controller-type query: declared extern "C" int(int)
+// in CMenuTutorial.hpp-style headers; do NOT redeclare here with a different
+// signature (MWCC: illegal function overloading). The inline header wrapper
+// drops the -1 argument, so call the verbatim-mangled symbol directly
+// (retail loads r3=-1 even though the no-arg function ignores it).
 
 // CfGameManager one-arg init flag (retail loads r3=1 into the no-arg symbol).
 extern "C" void func_8008294C__Q22cf13CfGameManagerFv(u8);

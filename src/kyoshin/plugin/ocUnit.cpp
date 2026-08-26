@@ -2067,15 +2067,14 @@ extern "C" int func_8003FFF4(VMThread* pThread, int handle) {
 // Register the OC unit: init contexts then vmOCRegist each of the five
 // OCData sub-objects in the shared plugin area (lbl_eu_80524E50).
 extern char lbl_eu_80524E50[];
-extern "C" int vmOCRegist(void* pOC);
 extern "C" void ocUnitRegist() {
     void* base = (void*)&lbl_eu_80524E50;
     func_801862E0(func_801862C0());
-    vmOCRegist((char*)base + 0x2D0);
-    vmOCRegist((char*)base + 0x398);
-    vmOCRegist((char*)base + 0x488);
-    vmOCRegist((char*)base + 0x560);
-    vmOCRegist((char*)base + 0x638);
+    vmOCRegist((OCData*)((char*)base + 0x2D0));
+    vmOCRegist((OCData*)((char*)base + 0x398));
+    vmOCRegist((OCData*)((char*)base + 0x488));
+    vmOCRegist((OCData*)((char*)base + 0x560));
+    vmOCRegist((OCData*)((char*)base + 0x638));
 }
 
 void CObjectState_UnkVirtualFunc1__Q22cf12CObjectStateFv(void* self, unsigned long bits) {

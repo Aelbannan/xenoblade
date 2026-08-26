@@ -837,20 +837,21 @@ extern bool func_8006EF04(int mask);
 // C-linkage imports (retail symbol names are unmangled - keep verbatim).
 extern "C" {
 void* func_8016FE34(void* source);
-void func_8014B2DC(u8* buf);
+void func_8014B2DC(void* buf); // canonical void* form (CtrlAct.hpp/ImplPc.hpp)
 void func_80482AB8(u32 id, void* source);
 void* func_800EA444(void* bm);
 #include "kyoshin/cf/CfMapItemManager.hpp" // func_80174C98 (owner decl)
 void* getInstance__Q22cf13CfGameManagerFv();
 void func_802A0E08(void* self);
 void func_802A31AC(void* a, void* b, void* c);
-void func_80043D90(CfMoveEnumHolder* holder);
-CfMoveEnumList* func_80043F18(CfMoveEnumHolder* holder);
-void func_800F4A98(CfMoveEnumList* list, u32 type, u32 filter);
-void func_800F6ED0(CfMoveEnumList* list, u32 value);
-void* func_800F6EAC(CfMoveEnumList* list, u32 idx);
-void* func_800F6E08(CfMoveEnumList* list);
-void __dt__80043E88(CfMoveEnumHolder* holder, int flags);
+// Enum-list helper family: canonical extern "C" void* forms (CVision.hpp).
+void func_80043D90(void* holder);
+void* func_80043F18(void* holder);
+void func_800F4A98(void* list, u32 type, u32 filter);
+void func_800F6ED0(void* list, void* value); // canonical (void*,void*) form (CAIAction/ImplPc/ImplWalker)
+void* func_800F6EAC(void* list, u32 idx);
+void* func_800F6E08(void* list);
+void __dt__80043E88(void* holder, int flags);
 
 // The CfObjectImplMove destructor, called directly by the func_800CFFBC /
 // func_800CFFC4 adjusting thunks. The C++ member form would emit the 2-arg
@@ -888,7 +889,7 @@ extern "C" void func_8004CEF8(void* obj, u32 param);
 
 // Event dispatcher defined below in this TU; retail symbol is unmangled, so
 // declare it with C linkage here (the definition below inherits it).
-extern "C" void func_800CB9AC(CfObjectImplMoveObj* self, u32 id);
+extern "C" void func_800CB9AC(void* self, u32 id); // canonical void* form (shared with CfObjectImplPc.hpp)
 // (CBattleManager.cpp): retail symbols are unmangled, so keep C linkage
 // (same pattern as the other imports above).
 extern "C" void* func_800BBC0C(void* objParam);
@@ -981,33 +982,40 @@ void Warning(const char* file, int line, const char* fmt, ...);
 } // namespace db
 } // namespace nw4r
 
-// cf::CfGameManager::getPlayer(int)
-void* getPlayer__Q22cf13CfGameManagerFi(int idx);
+// cf::CfGameManager::getPlayer(int) - extern "C" keeps MWCC from
+// re-mangling the pre-mangled retail name (CPartsChange.hpp convention).
+extern "C" void* getPlayer__Q22cf13CfGameManagerFi(int idx);
 
 // Volatile here: func_800CEE80 performs a dead reload of this word (retail
 // keeps the load), so the compiler must not elide it.
 extern volatile u32 lbl_eu_80661D40;
 
 // Presentation / sound / effect helpers used by the move-event dispatchers.
-extern "C" void func_801A891C(void* actor, void* param);
+extern "C" void func_801A891C(void* actor, int param); // canonical (void*,int) form (CfObjectActor.hpp)
 extern "C" void func_80174C24(void* actor, u32 mask);
 extern "C" void* func_800F477C(void);
-extern "C" void func_8014AC38(u8* buf, void* req);
+extern "C" void func_8014AC38(void* buf, void* req); // canonical void* form (CVision.hpp/CtrlPc.hpp)
 #include <string.h>
 // func_8049603C is declared once in libs/monolib/src/scn/CScn_8049603C.hpp;
 // do not redeclare it here.
-// Member-shaped: retail r3=this(null), r4..r6 ints, f1 float.
-extern "C" void func_801BFC38__Q22cf10CfSoundManFUlUlUlUlf(
-    void* soundMan, u32 a, u32 b, u32 c, f32 e);
-extern "C" void func_801BFE20(u32 a, u32 b, void* c, f32 d, f32 e);
+// Single shared flat-name form (CfGimmickEne/CfGimmickObject/CVision/
+// CfMapMineManager/CPartsChange convention).
+extern "C" u16 func_801BFC38__Q22cf10CfSoundManFUlUlUlUlf(
+    u32 soundMan, u32 a, u32 b, u32 c, f32 e);
+// Same form as CfResPcImpl/CfResReloadImpl/CfResObjImpl (single shared
+// signature; retail function returns the sound id).
+extern "C" int func_801BFE20(int a, int b, u8* c, float f1, float f2);
 extern "C" void func_800ACC64(void* a, void* b);
-extern "C" void func_801BFDE8(u32 mode, u32 value, void* pos, f32 first,
-    f32 second);
-extern "C" void func_801BFE8C(u32 a, u32 b, u32 c);
+extern "C" void func_801BFDE8(u32 mode, u32 value, u32 playerValue, f32 first,
+    f32 second); // single shared uint form (CfGimmick.hpp / UnityHelpers)
+extern "C" void func_801BFE8C(u32 a, u32 b, u32 c); // canonical u32 form (CVision/CfResReload/ImplPc/ImplEne)
 extern "C" void* func_8048315C(void);
 // func_800CF810 shape: ground/screen probe writing the adjusted position and
 // taking the source vector plus a float constant.
-extern "C" int func_804BE398(void* out, u32 a, u32 b, u32 c, void* src, f32 d);
+// Canonical form (matches CPartsChange.hpp / CtrlMoveBase.hpp / CfCam.cpp).
+// Call sites needing another ABI cast through a local fn-pointer typedef
+// (CfCam BE398Fn convention).
+extern "C" int func_804BE398(void* vec, int a, int b, int c, f32 d, f32 e); // int (not u32) to match CtrlMoveBase.hpp - u32/int here made the two extern "C" decls distinct signatures (illegal overloading) in every TU seeing both
 extern "C" void func_804BE4B4(void* a, int b);
 extern "C" void func_804BE4E0(void* a, int b);
 // (remaining helpers are declared by their owning headers)

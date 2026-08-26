@@ -14,7 +14,7 @@
 // markers), so it is emitted as a global function with a manual vtable store
 // (same convention as __ct__cf_CfGimmick / __ct__cf_CfGimmickSaveOff). The
 // class carries a manual vptr at +0x00 (set to lbl_eu_80526F98).
-cf::CfTFile* __ct__cf_CfTFile(cf::CfTFile* self) {
+CfTFile* __ct__cf_CfTFile(CfTFile* self) {
     *(void**)self = (void*)lbl_eu_80526F98;
     self->mFile = 0;
     self->mField82C = 0;
@@ -27,7 +27,7 @@ cf::CfTFile* __ct__cf_CfTFile(cf::CfTFile* self) {
 
 // Cancel the active file (if any), wipe the payload and reset the file-event
 // flag word down to its top nibble.
-void func_800699B0(cf::CfTFile* self) {
+void func_800699B0(CfTFile* self) {
     if (self->mFile != 0) {
         CDeviceFile::cancel(self->mFile);
         self->mFile = 0;
@@ -40,7 +40,7 @@ void func_800699B0(cf::CfTFile* self) {
 }
 
 // Cancel the active file (if any), wipe the payload and reset the counters.
-void func_80069A18(cf::CfTFile* self) {
+void func_80069A18(CfTFile* self) {
     if (self->mFile != 0) {
         CDeviceFile::cancel(self->mFile);
         self->mFile = 0;
@@ -51,7 +51,7 @@ void func_80069A18(cf::CfTFile* self) {
 }
 
 // Copy the payload block and the current-entry counter from src.
-void func_80069A78(cf::CfTFile* dst, cf::CfTFile* src) {
+void func_80069A78(CfTFile* dst, CfTFile* src) {
     if (src != 0) {
         memcpy(&dst->mData, &src->mData, sizeof(cf::CfTFileData));
         dst->mField830 = src->mField830;
@@ -64,7 +64,7 @@ void func_80069A78(cf::CfTFile* dst, cf::CfTFile* src) {
 // the static format string otherwise), then opens the common archive through
 // the device layer. Returns 1 on success (token recorded in mField830), 0 on
 // failure (flag word gets its bit 2 set).
-int func_80069ACC(cf::CfTFile* self, u32 param) {
+int func_80069ACC(CfTFile* self, u32 param) {
     if (self->mField830 == param) {
         return 1;
     }
@@ -113,7 +113,7 @@ extern "C" u32 func_80069C14(u8* self) {
 }
 
 // First non-null entry of the mData+0x400 file-event section.
-cf::CfTFileEntry* func_80069C28(cf::CfTFile* self) {
+cf::CfTFileEntry* func_80069C28(CfTFile* self) {
     cf::CfTFileData* data = &self->mData;
     if (data != 0) {
         u16 count = data->mCount3;
@@ -129,46 +129,52 @@ cf::CfTFileEntry* func_80069C28(cf::CfTFile* self) {
 // Match a file-event key against the five event tables (mEntries0..4) in
 // order, returning a pointer to the first entry whose mKey equals `key`.
 // Returns null when the key is zero or not present in any table.
-// Guard for the entry matcher: both the table pointer and the key must be
-// non-null. Kept as a tiny helper so MWCC emits the guard as its own block.
-static int isReady(cf::CfTFileData* data, int key) {
-    return data != 0 && key != 0;
-}
-
-// Match a file-event key against the five event tables (mEntries0..4) in
-// order, returning a pointer to the first entry whose mKey equals `key`.
-// Returns null when the key is zero or not present in any table.
-cf::CfTFileEntry* func_80069C78(cf::CfTFile* self, int key) {
-    cf::CfTFileData* data = &self->mData;
-    if (isReady(data, key)) {
-        u16 count = data->mCount0;
-        for (int i = 0; i < count; i++) {
-            if (data->mEntries0[i].mKey == key) return &data->mEntries0[i];
+// Retail inlines this section scan into the wrapper; keeping it as a
+// parameterised helper preserves the unfused parameter guards.
+static inline cf::CfTFileEntry* findEventEntry(cf::CfTFileData* data, int key) {
+    int i;
+    u16 count;
+    if (data == 0) {
+        return 0;
+    }
+    if (key != 0) {
+        count = data->mCount0;
+        for (i = 0; i < count; i++) {
+            if (key == data->mEntries0[i].mKey) return &data->mEntries0[i];
         }
         count = data->mCount1;
-        for (int i = 0; i < count; i++) {
-            if (data->mEntries1[i].mKey == key) return &data->mEntries1[i];
+        for (i = 0; i < count; i++) {
+            if (key == data->mEntries1[i].mKey) return &data->mEntries1[i];
         }
         count = data->mCount2;
-        for (int i = 0; i < count; i++) {
-            if (data->mEntries2[i].mKey == key) return &data->mEntries2[i];
+        for (i = 0; i < count; i++) {
+            if (key == data->mEntries2[i].mKey) return &data->mEntries2[i];
         }
         count = data->mCount3;
-        for (int i = 0; i < count; i++) {
-            if (data->mEntries3[i].mKey == key) return &data->mEntries3[i];
+        for (i = 0; i < count; i++) {
+            if (key == data->mEntries3[i].mKey) return &data->mEntries3[i];
         }
         count = data->mCount4;
-        for (int i = 0; i < count; i++) {
-            if (data->mEntries4[i].mKey == key) return &data->mEntries4[i];
+        for (i = 0; i < count; i++) {
+            if (key == data->mEntries4[i].mKey) return &data->mEntries4[i];
         }
     }
     return 0;
 }
 
+cf::CfTFileEntry* func_80069C78(CfTFile* self, int key) {
+    union {
+        cf::CfTFileData* p;
+        u32 w;
+    } tables;
+    tables.p = &self->mData;
+    return findEventEntry(tables.p, key);
+}
+
 // Dispatch a completed file-event to the shared handler: fires only when the
 // event's handle matches the active file and the payload byte is pending
 // (field_14 non-zero), then clears the handle and reports success.
-int cf::CfTFile::OnFileEvent(CEventFile* pEventFile) {
+int CfTFile::OnFileEvent(CEventFile* pEventFile) {
     int result = 0;
     if (this->mFile == pEventFile->mFileHandle) {
         if (pEventFile->unk0 == 1 && pEventFile->field_14 != 0) {
@@ -182,7 +188,8 @@ int cf::CfTFile::OnFileEvent(CEventFile* pEventFile) {
     return result;
 }
 
-cf::CfTFile* __dt__Q22cf7CfTFileFv(cf::CfTFile* obj, int flag) {
+// Retail dtor mangling of the global-scope CfTFile class.
+CfTFile* __dt__7CfTFileFv(CfTFile* obj, int flag) {
     if (obj != nullptr && flag > 0) {
         operator delete(obj);
     }
@@ -224,36 +231,35 @@ float func_80069EE4() {
 // the clock passes the display threshold.
 void func_80069F2C() {
     if (CfRes_getD80Flag()) {
-        CfRes_getD80Flag();
-        lbl_eu_80661AF0 = func_80496288(lbl_eu_80663E14);
+        // Retail reuses the flag call's r3 as the scene-pointer argument.
+        lbl_eu_80661AF0 = func_80496288((void*)CfRes_getD80Flag());
     }
-    float f4 = lbl_eu_80663D94;
-    lbl_eu_80663D98 = f4;
-    if (!(lbl_eu_80663DA0 & 1)) {
-        // u16 -> float via the 2^52 double-magic trick.
-        union {
-            u32 w[2];
-            double d;
-        } magic;
-        magic.w[1] = lbl_eu_80661AF8;
-        magic.w[0] = 0x43300000;
-        float f1 = lbl_eu_80661AF0 * (float)(magic.d - lbl_eu_80666220);
-        f1 = lbl_eu_80663D9C + f1;
-        float f0 = f4 + f1;
-        lbl_eu_80663D94 = f0;
-        float f2 = f0 - f4;
-        f4 = f0;
-        lbl_eu_80663D9C = f1 - f2;
+    int paused = lbl_eu_80663DA0 & 1;
+    float oldClock = lbl_eu_80663D94;
+    lbl_eu_80663D98 = oldClock;
+    if (!paused) {
+        // Advance the clock by frames*rate, keeping a Kahan-style residual
+        // (what the addition lost) in lbl_eu_80663D9C. The u16 frame counter
+        // converts through MWCC's inline 2^52 double-magic (unsigned path).
+        float delta = lbl_eu_80661AF0 * (float)(u32)lbl_eu_80661AF8;
+        float sum = lbl_eu_80663D9C + delta;
+        // Kahan update through the shared clock global; the residual keeps
+        // what the addition lost.
+        lbl_eu_80663D94 = oldClock + sum;
+        lbl_eu_80663D9C = sum - (lbl_eu_80663D94 - oldClock);
+        oldClock = lbl_eu_80663D94;
     }
-    if (f4 >= lbl_eu_80666228) {
-        lbl_eu_80661AF4++;
-        if ((u16)lbl_eu_80661AF4 > 365) {
+    if ((float)(double)oldClock >= lbl_eu_80666228) {
+        // Elapsed-day / year counters roll over once the clock passes the
+        // display threshold.
+        if (++lbl_eu_80661AF4 > 365) {
             lbl_eu_80661AF4 = 1;
-            lbl_eu_80661AF6++;
-            if ((u16)lbl_eu_80661AF6 > 9999) {
+            if (++lbl_eu_80661AF6 > 9999) {
                 lbl_eu_80661AF6 = 9999;
             }
         }
+        // Discarded-calibration style wrap: keep only the fmod remainder,
+        // reset the residual, store the residual constant first.
         float t = (float)fmod(lbl_eu_80663D94, lbl_eu_80666230);
         lbl_eu_80663D9C = lbl_eu_80666238;
         lbl_eu_80663D94 = t;
@@ -268,30 +274,19 @@ extern "C" void func_8006A028(float v) {
 }
 
 // Play-clock advance: report the current rates as truncated u16 frames, then
-// fold the caller's two u32 counters into the shared float clock through the
-// 2^52 double-magic (u32 -> float).
+// fold the caller's two u32 counters into the shared float clock (the u32 ->
+// float casts emit MWCC's inline 2^52 double-magic conversion).
 void func_8006A03C(u32 a, u32 b) {
-    union {
-        u32 w[2];
-        double d;
-    } convB;
-    union {
-        u32 w[2];
-        double d;
-    } convA;
     int y, x;
     x = (int)(float)fmod(lbl_eu_80663D94 / lbl_eu_8066623C, lbl_eu_80666240);
     y = (int)(float)fmod(lbl_eu_80663D94 / lbl_eu_80666248, lbl_eu_80666250);
+    // Discarded fmod: retail still performs the call.
     fmod(lbl_eu_80663D94, lbl_eu_80666230);
     func_8006A53C((u16)x, (u16)y);
-    convB.w[1] = b;
-    convB.w[0] = 0x43300000;
-    convA.w[1] = a;
-    convA.w[0] = 0x43300000;
-    float r = lbl_eu_80666248 * (float)(convB.d - lbl_eu_80666220) + lbl_eu_8066623C * (float)(convA.d - lbl_eu_80666220);
     lbl_eu_80663D9C = lbl_eu_80666238;
     lbl_eu_80663D98 = lbl_eu_80663D94;
-    lbl_eu_80663D94 = r;
+    lbl_eu_80663D94 =
+        lbl_eu_8066623C * (float)a + lbl_eu_80666248 * (float)b;
 }
 
 // Advance the shared play clock by one frame: the delta is fmod'ing the
@@ -311,25 +306,15 @@ void func_8006A12C(u32 v) {
 
 // Same clock advance as func_8006A12C, but the frame-delta term is the
 // truncated integer frame count (u16) of the fmod result instead of the
-// caller-supplied value.
+// caller-supplied value. Both int-to-float conversions use direct builtin
+// casts so MWCC emits the single-rounded 0x43300000 magic (fsubs) rather
+// than the double-rounded manual-union form.
 void func_8006A1A0(u32 v) {
-    union {
-        u32 w[2];
-        double d;
-    } convV;
-    union {
-        u32 w[2];
-        double d;
-    } convN;
     float t = (float)fmod(lbl_eu_80663D94 / lbl_eu_80666248, lbl_eu_80666250);
-    int n = (int)t;
-    u16 m = (u16)n;
-    convV.w[1] = v;
-    convV.w[0] = 0x43300000;
-    convN.w[0] = 0x43300000;
-    convN.w[1] = m;
+    u16 m = (u16)(int)t;
     lbl_eu_80663D9C = lbl_eu_80666238;
-    lbl_eu_80663D94 = lbl_eu_8066623C * (float)(convN.d - lbl_eu_80666220) + lbl_eu_80666248 * (float)(convV.d - lbl_eu_80666220);
+    lbl_eu_80663D94 =
+        lbl_eu_8066623C * (float)(u16)(int)t + lbl_eu_80666248 * (float)v;
 }
 
 // Snapshot the current play-clock rates into two u16 frame counters, and
@@ -379,28 +364,32 @@ u16 func_8006A404() { return lbl_eu_80661AF8; }
 // bdat file or the column is unavailable.
 int func_8006A40C(int mode) {
     func_8003AA34();
-    u8* bdat = (u8*)func_80086B2C__Q22cf13CfGameManagerFv();
+    u32 bdat = func_80086B2C__Q22cf13CfGameManagerFv();
     int row = (int)func_80086B1C__Q22cf13CfGameManagerFv();
-    const char* colMin = 0;
-    const char* colSec = 0;
+    const char* pSec;
+    const char* pMin;
     if (bdat != 0) {
+        pMin = 0;
+        pSec = 0;
         if (mode == 1) {
-            colMin = lbl_eu_804FB420;
-            colSec = lbl_eu_804FB420 + 0xa;
+            pMin = lbl_eu_804FB420;
+            pSec = lbl_eu_804FB420 + 0xa;
         } else if (mode == 2) {
-            colMin = lbl_eu_804FB420 + 0x14;
-            colSec = lbl_eu_804FB420 + 0x1e;
+            pMin = lbl_eu_804FB420 + 0x14;
+            pSec = lbl_eu_804FB420 + 0x1e;
         } else if (mode == 3) {
-            colMin = lbl_eu_804FB420 + 0x28;
-            colSec = lbl_eu_804FB420 + 0x32;
+            pMin = lbl_eu_804FB420 + 0x28;
+            pSec = lbl_eu_804FB420 + 0x32;
         } else if (mode == 4) {
-            colMin = lbl_eu_804FB420 + 0x3c;
-            colSec = lbl_eu_804FB420 + 0x44;
+            pMin = lbl_eu_804FB420 + 0x3c;
+            pSec = lbl_eu_804FB420 + 0x44;
         }
-        if (colMin != 0) {
-            const u8* v1 = (const u8*)getBdatStringColumnValue(bdat, colMin, row);
-            const u8* v2 = (const u8*)getBdatStringColumnValue(bdat, colSec, row);
-            return v1[0] * 60 + v2[0];
+        if (pMin != 0) {
+            // Both column pointers are fetched before either byte is read
+            // (retail spills both results, then loads the bytes).
+            char* vMin = (char*)getBdatStringColumnValue((void*)bdat, pMin, row);
+            char* vSec = (char*)getBdatStringColumnValue((void*)bdat, pSec, row);
+            return vMin[0] * 60 + vSec[0];
         }
     }
     return lbl_eu_80527030[mode] * 60 + lbl_eu_8052703C[mode];
@@ -423,28 +412,28 @@ static int inWindow(u32 target, u32 hi, u32 lo) {
 }
 
 // Select the play-time display mode for the given minute-of-day `target`
-// (b + a*60). The three bdat time values are fetched through func_8006A40C
-// and the pair of consecutive windows (times[1],times[2]) / (times[2],
-// times[3]) is scanned with wrap-around indexing; returns 1..3 for a window
-// hit and 4 when the target falls in none of them.
+// (b + a*60). Fetches the four bdat time values times[1..4], builds a
+// wrap-shifted copy sel[] = times[2..4],times[1], then scans the three
+// consecutive minute windows with wrap-around indexing; returns 1..3 for a
+// window hit and 4 when the target falls in none of them.
 int func_8006A53C(u16 a, u16 b) {
     u32 target = (u16)(b + a * 60);
-    u16 times[6];
+    u16 times[5];
     u16 sel[4];
-    int i;
-    for (i = 1; i < 4; i++) {
+    int i = 1;
+    do {
         times[i] = (u16)func_8006A40C(i);
-    }
-    for (i = 2; i < 6; i++) {
-        int idx = i;
+    } while (++i <= 4);
+    for (i = 0; i < 4; i++) {
+        int idx = i + 2;
         if (idx >= 5) idx = 1;
-        sel[i - 2] = times[idx];
+        sel[i] = times[idx];
     }
     int result = 1;
-    for (i = 0; i < 2; i++) {
-        if (inWindow(target, times[i + 1], sel[i])) return result;
+    for (i = 1; i < 5; i += 2) {
+        if (inWindow(target, times[i], sel[i - 1])) return result;
         result++;
-        if (inWindow(target, times[i + 2], sel[i + 1])) return result;
+        if (inWindow(target, times[i + 1], sel[i])) return result;
         result++;
     }
     return 4;

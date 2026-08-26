@@ -527,7 +527,7 @@ int CfRes_getD80Flag();                              // scene flag gate (CUIErrM
 
 void func_80070EBC(cf::CfCamFollow* self);           // in-TU def (defined below its first use), same signature (mixed linkage)
 ml::CVec3* func_8004B79C(ml::CVec3* out, const ml::CVec3* v); // retail 0x8004BE74 (vec helper)
-int func_8006C640(cf::CfCamFollow* self, u32 mask, int flag); // CfCam sibling (retail 0x8006D098)
+void func_8006C640(cf::CfCamFollow* self, u32 mask, int flag); // CfCam sibling (retail 0x8006D098)
 int func_8007FE24__Q22cf13CfGameManagerFv(u32);          // CfGameManager state gate (retail 0x8007FE24)
 void func_8006CB0C(void* out, void* self, void* dir, void* sel); // follow-cam vector prep (see below decl)
 int func_8007F91C__Q22cf13CfGameManagerFv();             // CfGameManager gate (retail 0x8007F91C)
@@ -717,7 +717,7 @@ void* func_8006C670(void* obj);           // CfCam sibling
 unsigned int func_8006CA20(const void* self); // CfCam sibling (in-TU def has const CfCamFollow*)
 void func_8006BC1C(void* self, int mask); // CfCam sibling flag clear
 int func_80071A90(void* self);            // CfCam sibling
-int func_80071A9C(void* self);            // CfCam sibling
+void func_80071A9C(void* self);            // CfCam sibling
 int func_8006EEF8(void* self);            // CfCam sibling gate
 int func_8006DC34(void* x);               // CfCam sibling probes
 int func_8006DC40(void* x);

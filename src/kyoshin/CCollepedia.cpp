@@ -532,7 +532,7 @@ extern "C" __declspec(noinline) void func_80253F3C(u8* self, u32 row, u32 col) {
     // Grant path falls through first in retail; consume call is branched to
     if (remaining <= 0) {
         // Grant the item via its impl instance (virtual method at slot 0x10)
-        void* itemInst = CItem_initItemImplInstances();
+        void* itemInst = CItem_initItemImplInstances((void*)res);
         ((void (*)(void*, u32))(*(void***)itemInst)[4])(itemInst, res);
     } else {
         func_80158118((void*)res, itemId, remaining);

@@ -13,8 +13,6 @@ extern "C" {
     int  func_802A3C44(CVS_THREAD* self, CCharVoice* voicePtr, int voiceId);
     void __ct__cf_CVS_THREAD();
     int  func_802A77E8(CVoiceHandle* handle);
-    __declspec(noreturn) void __throw(char* throwtype, void* location,
-                                      void* dtor);
 }
 
 // ── Shared views over the voice-owner object ─────────────────────────────
@@ -74,10 +72,21 @@ struct CVoiceVTV {
 // what retail func_802AF43C calls it through.
 
 int func_802AF02C(BattleMainOwnerView* owner);
-int func_802AF13C(BattleMainOwnerView* owner, int arg);
+// Retail exports this selector as an unmangled symbol, so it keeps C linkage
+// (callers' bl relocs target the plain name).
+extern "C" int func_802AF13C(BattleMainOwnerView* owner, int arg);
 
 // Import without a declaring header (compile-only scaffolding).
 extern "C" CVoiceHandle* func_802A7998(CVoiceHandle* handle);
+
+// Word-wise overlay over the base thread's 12-byte handler ptmf (offsets
+// 0x00-0x0B): each variant's init tables write three words that together
+// form the member-function pointer.
+struct BmStateTriple {
+    u32 unk0;  // +0x00
+    u32 unk4;  // +0x04
+    u32 unk8;  // +0x08
+};
 
 // Init-state triples and this subclass's vtable.
 extern u32 lbl_eu_8053AA58[3];
@@ -168,7 +177,8 @@ struct BmCtorFrame {
 
 int func_802AED0C(BattleMainOwnerView* owner);
 int func_802AEF80(BattleMainOwnerView* owner);
-int func_802AF2DC(BattleMainOwnerView* owner);
+// C-linkage so the retail unmangled symbol func_802AF2DC is referenced.
+extern "C" int func_802AF2DC(BattleMainOwnerView* owner);
 int func_802AF388(BattleMainOwnerView* owner);
 int func_802AF3DC(CVoiceHandle* self);
 int func_802AF43C(CVoiceHandle* self);
@@ -177,64 +187,153 @@ int func_802AF4FC(CVoiceHandle* self, int param);
 int func_802AF56C(CVoiceHandle* self);
 int func_802AF9D0(CVoiceHandle* self, int param, int size);
 
-// Shared tail of the three voice-id selectors: walk forward past leading
-// non-positive halfwords (the walk is capped at one step), then pick a
-// random element from that prefix range via mtRand.
-static s16 PickRandomVoiceId(s16* vals) {
-    int i = 0;
-    while (i < 1 && vals[i] <= 0)
-        i++;
-    int n = i < 1 ? 1 : i;
-    return vals[ml::math::mtRand(n)];
-}
-
 // Scan the 60-stride list at lbl_eu_8053A4B8 for the entry whose id matches
 // the owner's +0x3F28 sub-state, then draw a random voice from pool A.
+// Goto shapes pin MWCC's branch layout: two-way exit at 'top' (bne/b) and a
+// pre-tested walk loop whose counter is tested before each pool halfword.
 int func_802AED0C(BattleMainOwnerView* owner) {
-    VoiceIdListEntry* p = lbl_eu_8053A4B8;
-    goto check;
-top:
-    if (p->id != (s32)owner->field_0x3F28)
-        goto next;
-    goto found;
-next:
-    p++;
-check:
-    if (p->id != 0)
-        goto top;
-    p = NULL;
-found:
-    if (p == NULL)
-        return -1;
-    return PickRandomVoiceId(p->valsA);
-}
-
-// Same scan as func_802AED0C, drawing from pool B.
-int func_802AEF80(BattleMainOwnerView* owner) {
-    VoiceIdListEntry* p;
-    for (p = lbl_eu_8053A4B8; p->id != 0; p++) {
-        if (p->id == owner->field_0x3F28)
+    VoiceIdListEntry* e = lbl_eu_8053A4B8;
+    int cur;
+    // Structured scan: the shared 'cur' feeds both the terminator test and
+    // the match compare; the continue-arm pins retail's bne/b branch split.
+    while ((cur = e->id) != 0) {
+        // Two-way exit; MWCC canonicalizes this pair into a single inverted
+        // branch regardless of syntactic form (goto pairs, continue,
+        // switch, volatile) - see open-item notes.
+        if (cur != (s32)owner->field_0x3F28)
+            e++;
+        else
             goto found;
     }
-    p = NULL;
+    e = NULL;
 found:
-    if (p == NULL)
+    if (e == NULL)
         return -1;
-    return PickRandomVoiceId(p->valsB);
+
+    // Walk the leading positive run of pool A (one step max).
+    char* c = (char*)e;
+    int i = 0;
+    goto wcheck;
+winc:
+    c += 2;
+    i++;
+wcheck:
+    if (i >= 1)
+        goto wdone;
+    if (*(s16*)(c + 4) > 0)
+        goto winc;
+wdone:
+    int n = i < 1 ? 1 : i;
+    return *(s16*)((char*)e + ml::math::mtRand(n) * 2 + 4);
+}
+
+// Battle-main play helper (0x0A-byte variant): when the owner passes the
+// +0x3F00 bit-2 gate, aim the embedded voice at +0x3E9C, fetch the voice id
+// from the selector, and call the playback helper.
+// Defined BEFORE func_802AEF80 so MWCC cannot see the callee body and
+// inline it (retail keeps the bl).
+int func_802AF49C(CVoiceHandle* self) {
+    if (!(self->field_0x3F00 & 4))
+        return 0;
+    CCharVoice* voicePtr = (CCharVoice*)self;
+    if (self != NULL) {
+        voicePtr = &self->voice;
+    }
+    // Block-scope extern declaration hides the in-TU body from MWCC's
+    // -O4 inliner so the call stays a bl (matches retail).
+    extern int func_802AEF80(BattleMainOwnerView* owner);
+    int voiceId = func_802AEF80((BattleMainOwnerView*)self);
+    func_802A3D54(voicePtr, voiceId, 0xA);
+    return 0;
+}
+
+// __declspec(noinline): retail keeps this selector outlined (callers emit
+// bl); without it MWCC's -O4 inliner copies the body into func_802AF49C.
+// Same goto-shaped body as func_802AED0C (pool B at +0x0C); inlining the
+// walk here instead of via the helper keeps MWCC's register colours equal
+// to retail.
+__declspec(noinline) int func_802AEF80(BattleMainOwnerView* owner) {
+    VoiceIdListEntry* e = lbl_eu_8053A4B8;
+    int cur;
+    // Terminator on the freshly loaded word; negated match arm uses
+    // continue-in-block so the two-way exit survives (any goto out of the
+    // loop re-triggers MWCC's branch fold into one inverted conditional).
+    for (;;) {
+        cur = e->id;
+        if (cur == 0) {
+            e = NULL;
+            break;
+        }
+        if (cur != (s32)owner->field_0x3F28) {
+            e++;
+            continue;
+        }
+        break;
+    }
+found:
+    if (e == NULL)
+        return -1;
+
+    // Walk the leading positive run of pool B (one step max).
+    char* c = (char*)e;
+    int i = 0;
+    goto wcheck;
+winc:
+    c += 2;
+    i++;
+wcheck:
+    if (i >= 1)
+        goto wdone;
+    if (*(s16*)(c + 12) > 0)
+        goto winc;
+wdone:
+    int n = i < 1 ? 1 : i;
+    return *(s16*)((char*)e + ml::math::mtRand(n) * 2 + 12);
 }
 
 // Same scan as func_802AED0C, drawing from pool C.
-int func_802AF2DC(BattleMainOwnerView* owner) {
-    VoiceIdListEntry* p;
-    for (p = lbl_eu_8053A4B8; p->id != 0; p++) {
-        if (p->id == owner->field_0x3F28)
-            goto found;
+// __declspec(noinline): retail keeps this selector outlined; without it
+// MWCC's -O4 inliner copies the body into func_802AF56C.
+// __declspec(noinline): retail keeps this selector outlined; without it
+// MWCC's -O4 inliner copies the body into func_802AF56C.
+// Same goto-shaped body as func_802AED0C (pool C at +0x38).
+__declspec(noinline) int func_802AF2DC(BattleMainOwnerView* owner) {
+    VoiceIdListEntry* e = lbl_eu_8053A4B8;
+    int cur;
+    // Terminator on the freshly loaded word; negated match arm uses
+    // continue-in-block (best-known shape for retail's branch layout -
+    // see open-item notes on the loop-exit branch polarity wall).
+    for (;;) {
+        cur = e->id;
+        if (cur == 0) {
+            e = NULL;
+            break;
+        }
+        if (cur != (s32)owner->field_0x3F28) {
+            e++;
+            continue;
+        }
+        break;
     }
-    p = NULL;
 found:
-    if (p == NULL)
+    if (e == NULL)
         return -1;
-    return PickRandomVoiceId(p->valsC);
+
+    // Walk the leading positive run of pool C (one step max).
+    char* c = (char*)e;
+    int i = 0;
+    goto wcheck;
+winc:
+    c += 2;
+    i++;
+wcheck:
+    if (i >= 1)
+        goto wdone;
+    if (*(s16*)(c + 0x38) > 0)
+        goto winc;
+wdone:
+    int n = i < 1 ? 1 : i;
+    return *(s16*)((char*)e + ml::math::mtRand(n) * 2 + 0x38);
 }
 
 // ── us-802b1a9c (func_802AF02C) ─────────────────────────────────────────────
@@ -243,40 +342,72 @@ found:
 // (value must lie in [0x10,0x18]), fetch the equipment-data pool selected
 // by the work object's byte at +0x77, and draw a random halfword from the
 // leading run of positive entries (capped at 2).
-int func_802AF02C(BattleMainOwnerView* owner) {
+// Same-TU inline search helper (btm_bda_to_acl pattern): the inlined
+// `return p` lowers to retail's branch-over-branch `bne next; b found`
+// split, which every direct loop form folds into a single beq.
+static __inline VoiceIdListEntry* bmFindEntry(BattleMainOwnerView* owner) {
     VoiceIdListEntry* p = lbl_eu_8053A4B8;
-    for (;;) {
-        if ((s32)owner->field_0x3F28 == p->id)
-            break;
+    int cur;
+    while ((cur = p->id) != 0) {
+        if (cur == (s32)owner->field_0x3F28)
+            return p;
         p++;
-        if (p->id != 0)
-            continue;
-        p = NULL;
-        break;
     }
+    return NULL;
+}
+
+int func_802AF02C(BattleMainOwnerView* owner) {
+    VoiceIdListEntry* p = bmFindEntry(owner);
     if (p == NULL)
         return -1;
 
+    // Guard chain: null target gets its own exit; the state range check
+    // shares one load across an || so retail emits blt/ble around one
+    // shared fail block.
     UnkTarget* target = owner->unkTarget;
     if (target == NULL)
         return -1;
-    if (target->field_0x08->field_0x18 < 0x10)
-        return -1;
-    if (target->field_0x08->field_0x18 > 0x18)
-        return -1;
+    UnkTargetInner* inner = target->field_0x08;
+    int state = inner->field_0x18;
+    // Range gate shaped so test 1 branches over test 2 into the shared
+    // fail block, and test 2 branches over the fail block when passing.
+    if (state < 0x10)
+        goto fail;
+    // Commuted second bound (0x18 < state) blocks MWCC's subi/cmpli
+    // range-check fusion; retail keeps two separate cmpi tests.
+    if (0x18 < state)
+        goto fail;
+    goto ok;
+fail:
+    return -1;
+ok:
 
     // Slot 0x2A4 yields the work object; its +0x50 selects the pool byte.
     UnkEquipData* equip = ((BmOwnerVTV*)owner)->getWork()->field_0x50;
     if (equip == NULL)
         return -1;
 
-    char* pool = (char*)p + equip->field_0x77 * 4;
-    s16* vals = (s16*)(pool + 0xE);
+    // Pool base lands in the scan-variable register (r31 in retail) and a
+    // separate cursor walks it; the random pick indexes the pool base.
+    // Cursor copy of p advanced first; p then re-points via the cursor
+    // (retail add-into-temp / addi-into-base / mr chain).
+    char* c = (char*)p;
+    c += equip->field_0x77 * 4;
+    p = (VoiceIdListEntry*)(c + 0xE);
+    s16* v = (s16*)p;
     int i = 0;
-    while (i < 2 && vals[i] > 0)
-        i++;
+    goto wchk;
+winc:
+    v += 1;
+    i++;
+wchk:
+    if (i >= 2)
+        goto wdone;
+    if (*v > 0)
+        goto winc;
+wdone:
     int n = i < 1 ? 1 : i;
-    return vals[ml::math::mtRand(n)];
+    return *(s16*)((char*)p + ml::math::mtRand(n) * 2);
 }
 
 // Bit-2 gate on +0x3F00, then scan the 60-stride list at lbl_eu_8053A4B8 for
@@ -286,11 +417,20 @@ int func_802AF388(BattleMainOwnerView* self) {
         return 0;
     // Scan until the 0 terminator; on a match keep the entry pointer, else
     // clear it so the final boolean reports whether anything matched.
-    const VoiceIdListEntry* p;
-    for (p = lbl_eu_8053A4B8; p->id != 0; p++) {
-        if (p->id == self->field_0x3F28)
-            goto found;
-    }
+    // The +0x3F28 halfword is reloaded every iteration (retail lhz inside
+    // the loop), so the match test sits in the loop body.
+    const VoiceIdListEntry* p = lbl_eu_8053A4B8;
+    int cur;
+    goto check;
+top:
+    if (cur == (s32)self->field_0x3F28)
+        goto found;
+next:
+    p++;
+check:
+    cur = p->id;
+    if (cur != 0)
+        goto top;
     p = NULL;
 found:
     return p != NULL;
@@ -402,18 +542,6 @@ found:
     return *(s16*)((char*)e + ml::math::mtRand(i < 1 ? 1 : i) * 2 + 6);
 }
 
-int func_802AF49C(CVoiceHandle* self) {
-    if (!(self->field_0x3F00 & 4))
-        return 0;
-    CCharVoice* voicePtr = (CCharVoice*)self;
-    if (self != NULL) {
-        voicePtr = &self->voice;
-    }
-    int voiceId = func_802AEF80((BattleMainOwnerView*)self);
-    func_802A3D54(voicePtr, voiceId, 0xA);
-    return 0;
-}
-
 // Playback helper gated on a negative request parameter: only when param < 0
 // and the +0x3F00 bit-2 gate passes is a voice drawn from the local selector
 // and played through the embedded CCharVoice with a 0xB4 buffer.
@@ -426,7 +554,8 @@ int func_802AF4FC(CVoiceHandle* self, int param) {
     if (self != NULL) {
         voicePtr = &self->voice;
     }
-    int voiceId = func_802AF13C((BattleMainOwnerView*)self, 0);
+    // Retail forwards the request parameter into the selector unchanged.
+    int voiceId = func_802AF13C((BattleMainOwnerView*)self, param);
     func_802A3D54(voicePtr, voiceId, 0xB4);
     return 0;
 }
@@ -490,12 +619,13 @@ void* __ct__802AF5CC(int arg) {
 
     // Seed the init-state triple; load word 1 before word 0 so the register
     // colours match retail (r0 = word 1, r4 = word 0).
+    BmStateTriple* st = (BmStateTriple*)&self->unk0;
     const u32* base = lbl_eu_8053AA58;
     u32 w1 = base[1];
     u32 w0 = base[0];
-    self->unk0 = (u32*)w0;
-    self->unk4 = w1;
-    self->unk8 = base[2];
+    st->unk0 = w0;
+    st->unk4 = w1;
+    st->unk8 = base[2];
 
     return &f;
 }
@@ -507,12 +637,13 @@ void* __ct__802AF5CC(int arg) {
 void func_802AF724(CVS_THREAD_BATTLE_MAIN* self) {
     // Restore the base state triple via the lwzu/spread load-with-update
     // pattern (v0 declared first so the lwzu destination colours low).
+    BmStateTriple* st = (BmStateTriple*)&self->unk0;
     u32 v0;
     const u32* src = lbl_eu_8053AA64;
     v0 = *src++;
-    self->unk4 = *src++;
-    self->unk0 = (u32*)v0;
-    self->unk8 = *src;
+    st->unk4 = *src++;
+    st->unk0 = v0;
+    st->unk8 = *src;
 
     CCharVoice* voice = (CCharVoice*)cf::CfGameManager::getPlayer(0);
     CVoiceHandle* handle = (CVoiceHandle*)voice;
@@ -545,12 +676,13 @@ void func_802AF844(CVS_THREAD_BATTLE_MAIN* self) {
     if (func_802A3E88((CVS_THREAD*)self) != 0)
         return;
 
+    BmStateTriple* st = (BmStateTriple*)&self->unk0;
     u32 v0;
     const u32* src = lbl_eu_8053AA70;
     v0 = *src++;
-    self->unk4 = *src++;
-    self->unk0 = (u32*)v0;
-    self->unk8 = *src;
+    st->unk4 = *src++;
+    st->unk0 = v0;
+    st->unk8 = *src;
 
     CCharVoice* voice = (CCharVoice*)cf::CfGameManager::getPlayer(0);
     CVoiceHandle* handle = (CVoiceHandle*)voice;
@@ -597,7 +729,7 @@ int func_802AF9C8() { return 270; }
 // argument-biased denominator, bucket it against four descending float
 // thresholds (each also required to exceed the second virtual's value), and
 // return the halfword pooled at entry+0x2E+bucket*2.
-int func_802AF13C(BattleMainOwnerView* owner, int arg) {
+extern "C" int func_802AF13C(BattleMainOwnerView* owner, int arg) {
     VoiceIdListEntry* p = lbl_eu_8053A4B8;
     for (;;) {
         if ((s32)owner->field_0x3F28 == p->id)

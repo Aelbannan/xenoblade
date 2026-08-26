@@ -7,9 +7,6 @@
 #include "kyoshin/cf/voice/cvsys/CVS_THREAD_BATTLE_END_SP.hpp"
 #include "monolib/math/Random.hpp"
 
-// vtable[0x2BC/4] is-active check on a voice handle.
-typedef int (*IsActiveFunc)(CVoiceHandle*);
-
 // us-802ae1a8 (func_802ABA70)
 // If no voice is active, reset the base state triple in self->unk0..unk8
 // from the init table lbl_eu_8053A1AC.
@@ -18,12 +15,13 @@ void func_802ABA70(CVS_THREAD_BATTLE_END_SP* self) {
         // Pointer increment reproduces the lwzu/spread load-with-update.
         // v0 is declared first so MWCC colours it (the lwzu destination) into
         // the lower register r3, and p into r4 -- matching retail ordering.
+        CVS_THREAD_STATE3* st = (CVS_THREAD_STATE3*)self;
         u32 v0;
         const u32* p = lbl_eu_8053A1AC;
         v0 = *p++;
-        self->unk4 = *p++;
-        self->unk0 = (u32*)v0;
-        self->unk8 = *p;
+        st->word4 = *p++;
+        st->word0 = v0;
+        st->word8 = *p;
     }
 }
 
@@ -31,21 +29,28 @@ void func_802ABA70(CVS_THREAD_BATTLE_END_SP* self) {
 // Remove a voice from the slot array by matching its embedded CCharVoice.
 // Each non-null handle is biased by +0x3E9C before comparing, so a slot is
 // cleared when its embedded voice matches voicePtr.
+//
+// NOTE: the explicit word-wise walk of self (p += 4) reproduces retail's
+// cursor register (r5); the remaining 7-insn diff is a pure counter/handle
+// register-color swap (decomp i=r4/handle=r6 vs retail i=r6/handle=r4) that
+// resisted every declaration-order permutation tried.
 void func_802ABAC0(CVS_THREAD_BATTLE_END_SP* self, CCharVoice* voicePtr) {
     func_802A3BEC(self, voicePtr);
 
     CVoiceHandle* handle;
-    CCharVoice* biased;
+    CVS_THREAD_BATTLE_END_SP* p = self;
     int i;
     for (i = 0; self->count > i; i++) {
-        handle = self->slots[i];
-        biased = (CCharVoice*)handle;
+        handle = p->slots[0];
+        // Bias the handle to its embedded CCharVoice in place.
         if (handle != NULL) {
-            biased = &handle->voice;
+            handle = (CVoiceHandle*)&handle->voice;
         }
-        if (biased == voicePtr) {
-            self->slots[i] = NULL;
+        if ((CCharVoice*)handle == voicePtr) {
+            p->slots[0] = NULL;
         }
+        // Walk the slot array one word per iteration.
+        p = (CVS_THREAD_BATTLE_END_SP*)((u8*)p + 4);
     }
 }
 
@@ -57,37 +62,56 @@ void func_802ABAC0(CVS_THREAD_BATTLE_END_SP* self, CCharVoice* voicePtr) {
 // active handle) the sequence ends via the blank1() virtual. Steps the
 // command string by 2 bytes while a full pair remains.
 void func_802AB900(CVS_THREAD_BATTLE_END_SP* self) {
-    // Restore the base state triple.
+    // Restore the base state triple. Declaring v0 before p colours v0 into
+    // the lower register (the lwzu destination), matching retail.
+    CVS_THREAD_STATE3* st = (CVS_THREAD_STATE3*)self;
+    u32 v0;
     const u32* p = lbl_eu_8053A1A0;
-    u32 v0 = *p++;
-    self->unk4 = *p++;
-    self->unk0 = (u32*)v0;
-    self->unk8 = *p;
+    v0 = *p++;
+    st->word4 = *p++;
+    st->word0 = v0;
+    st->word8 = *p;
+
+    int cmd0;
+    int i;
+    CVoiceHandle* found;
+    CVS_THREAD_BATTLE_END_SP* cur;
 
     for (;;) {
-        s8 cmd0 = self->cmdString[0];
-        CVoiceHandle* found = NULL;
-        if (cmd0 > 0) {
-            int i;
+        cmd0 = *self->cmdString;
+        if (cmd0 <= 0) {
+            found = NULL;
+        } else {
+            // Walk the slot array word-by-word; on a match the slot itself
+            // becomes the result.
+            found = NULL;
+            cur = self;
             for (i = 0; i < self->count; i++) {
-                CVoiceHandle* h = self->slots[i];
+                CVoiceHandle* h = cur->slots[0];
                 if (h != NULL && func_802A77E8(h) == cmd0) {
                     found = self->slots[i];
-                    break;
+                    goto matched;
                 }
+                cur = (CVS_THREAD_BATTLE_END_SP*)((u8*)cur + 4);
             }
+            found = NULL;
         }
-
+matched:
         if (found == NULL) {
-            self->blank1();
+            self->func_802A3B50();
             return;
         }
 
-        if (((IsActiveFunc)found->vtable[0x2BC / 4])(found) == 0) {
-            // Voice inactive -- play the command's voice ID.
-            int voiceId = labs(self->cmdString[1]) + 0xCE4;
-            if (func_802A3C44(self, &found->voice, voiceId) == 0) {
-                self->blank1();
+        if (((CVS_THREAD_BATTLE_END_SP_Vtbl*)found)->isVoiceActive() == 0) {
+            // Voice inactive -- bias the handle to its embedded CCharVoice
+            // and play the command's voice ID (|param| + 0xCE4).
+            int voiceId = labs(self->cmdString[1]);
+            if (found != NULL) {
+                found = (CVoiceHandle*)&found->voice;
+            }
+            if (func_802A3C44(self, (CCharVoice*)found,
+                              voiceId + CVS_THREAD_BATTLE_END_SP::VOICE_ID_BIAS) == 0) {
+                self->func_802A3B50();
                 return;
             }
         }
@@ -104,9 +128,11 @@ void func_802AB900(CVS_THREAD_BATTLE_END_SP* self) {
     }
 }
 
-// Virtual override: returns the logical allocation size for this thread type.
-int CVS_THREAD_BATTLE_END_SP::blank1() {
-    return BUFFER_SIZE;
+// Virtual override body (vtable[2]): returns the logical allocation size for
+// this thread type. Retail exports this as the unmangled symbol func_802ABB38,
+// so the definition keeps the retail name.
+int func_802ABB38() {
+    return CVS_THREAD_BATTLE_END_SP::BUFFER_SIZE;
 }
 
 // us-802add28 (__ct__802AB5F0)
@@ -116,75 +142,94 @@ int CVS_THREAD_BATTLE_END_SP::blank1() {
 // table whose trigger matches the active count and whose expected voice IDs
 // all appear among the inactive handles. Allocates a 0x46-byte handle buffer
 // (discarded) and a 0x34-byte object, initialises it, and returns it.
+// The construction tail sits in a try block whose catch rethrows via the
+// runtime __throw(0,0,0); retail guards it with a redundant null re-check.
 CVS_THREAD_BATTLE_END_SP* __ct__802AB5F0() {
-    // Collect inactive voice handles from the voice-manager list.
-    CVoiceManager* mgr = func_800B6BA4();
-    CVoiceListNode* node = mgr->field_4->field_0;
+    // Collect inactive voice handles from the voice-manager list. The loop
+    // condition reloads the sentinel each iteration, as retail does.
+    CVoiceManager* mgr = (CVoiceManager*)func_800B6BA4();
     CVoiceHandle* active[8];
+    CVoiceHandle* handle;
     int count = 0;
 
+    CVoiceListNode* node = mgr->field_4->field_0;
     while (node != mgr->field_4) {
-        CCharVoice* voice = node->field_8;
-        CVoiceHandle* h = (CVoiceHandle*)voice;
-        if (voice != NULL) {
-            // Bias the embedded CCharVoice back to its owning handle.
-            h = (CVoiceHandle*)((u8*)voice - 0x3E9C);
+        // Bias the embedded CCharVoice back to its owning handle.
+        handle = (CVoiceHandle*)node->field_8;
+        if (handle != NULL) {
+            handle = (CVoiceHandle*)((u8*)handle - 0x3E9C);
         }
-        if (((IsActiveFunc)h->vtable[0x2BC / 4])(h) == 0) {
-            active[count++] = h;
+        if (((CVS_THREAD_BATTLE_END_SP_Vtbl*)handle)->isVoiceActive() == 0) {
+            active[count++] = handle;
         }
         node = node->field_0;
     }
 
-    if (count == 0) {
+    if (count <= 0) {
         return NULL;
     }
 
     // Search the command-list table for an entry that matches the active set.
-    const void* const* tbl = (const void* const*)lbl_eu_8053A100;
-    const char* selected = NULL;
-    for (const void* const* e = tbl; *e != NULL; e++) {
-        const char* list = (const char*)*e;
-        if ((s8)list[0] != count) {
+    // Each table entry E is a NULL-terminated array of pointers:
+    //   E[0]       -> id-byte string (byte 0 = required active count,
+    //                 bytes 1..count = expected voice IDs)
+    //   E[1..len]  -> candidate command strings
+    //   E[len+1]   -> NULL terminator
+    // Assignment-in-condition shares the table load between the NULL test
+    // and the body (retail reuses the tested word as the entry pointer).
+    const u32* cmdString = NULL;
+    const u32* work;
+    const u32* entry;
+    for (work = lbl_eu_8053A100;
+         (entry = (const u32*)*work) != NULL;
+         work++) {
+        const char* ids = (const char*)entry[0];
+        if ((s8)ids[0] != count) {
             continue;
         }
         // Verify each expected voice ID (bytes 1..count) is present.
         int allMatch = 1;
-        for (int idx = 1; idx <= count; idx++) {
+        int idx = 1;
+        while (idx < count + 1) {
             int found = 0;
-            for (int j = 0; j < count; j++) {
-                if ((s8)list[idx] == func_802A77E8(active[j])) {
+            int j = 0;
+            while (j < count) {
+                if ((s8)ids[idx] == func_802A77E8(active[j])) {
                     found = 1;
                     break;
                 }
+                j++;
             }
-            if (!found) {
+            if (found == 0) {
                 allMatch = 0;
                 break;
             }
+            idx++;
         }
-        if (!allMatch) {
+        if (allMatch == 0) {
             continue;
         }
 
-        // Count word-sized command entries (terminated by a zero word).
-        const u32* lw = (const u32*)list;
+        // Count the command pointers (terminated by a NULL entry).
+        // Reload the table entry like retail; walk and pick share that word.
+        const u32* base = (const u32*)*work;
+        const u32* w = base;
         int len = 0;
-        while (lw[1] != 0) {
-            lw++;
+        while (w[1] != 0) {
+            w++;
             len++;
         }
-        // Pick a random command from the list.
-        int rnd = ml::math::mtRand(len);
-        selected = (const char*)((const u32*)list)[1 + rnd];
+        // Pick a random command string from the entry.
+        const u32* pick = base + ml::math::mtRand(len);
+        cmdString = (const u32*)pick[1];
         break;
     }
 
-    if (selected == NULL) {
+    if (cmdString == NULL) {
         return NULL;
     }
     // The shutdown sentinel forces a NULL result when the factory gate is up.
-    if (func_802A8140() != 0 && selected == (const char*)&lbl_eu_80668DB0) {
+    if (func_802A8140() != 0 && cmdString == (const u32*)&lbl_eu_80668DB0) {
         return NULL;
     }
 
@@ -192,28 +237,31 @@ CVS_THREAD_BATTLE_END_SP* __ct__802AB5F0() {
     if (func_802A330C(0x46, 1) == NULL) {
         return NULL;
     }
-    CVS_THREAD_BATTLE_END_SP* obj = (CVS_THREAD_BATTLE_END_SP*)func_802A34E4(0x34);
-    if (obj == NULL) {
+    CVS_THREAD_BATTLE_END_SP* self = (CVS_THREAD_BATTLE_END_SP*)func_802A34E4(0x34);
+    if (self == NULL) {
         return NULL;
     }
 
-    // Construct the object. This portion lives inside the exception handler.
-    try {
-        __ct__cf_CVS_THREAD(obj);
-        ((void**)obj)[7] = (void**)lbl_eu_8053A1B8;
-        obj->count = count;
-        obj->cmdString = (char*)selected;
-        for (int k = 0; k < count; k++) {
-            obj->slots[k] = active[k];
+    // Redundant null re-check reproduces retail's `beq` guard on the EH
+    // region; r3 still holds self so the base ctor needs no argument reload.
+    if (self != NULL) {
+        try {
+            __ct__cf_CVS_THREAD();
+            ((CVS_THREAD_BATTLE_END_SP_raw*)self)->vtable =
+                (u32*)lbl_eu_8053A1B8;
+            self->count = count;
+            self->cmdString = (char*)cmdString;
+            int k;
+            for (k = 0; k < count; k++) {
+                self->slots[k] = active[k];
+            }
+        } catch (...) {
+            __throw(0, 0, 0);
         }
-    } catch (...) {
-        throw;
     }
 
-    // Final base-state triple.
-    const u32* fin = lbl_eu_8053A194;
-    obj->unk0 = (u32*)fin[0];
-    obj->unk4 = fin[1];
-    obj->unk8 = fin[2];
-    return obj;
+    // Final base-state triple (installs the handler ptmf at offset 0).
+    // Typed 12-byte ptmf struct copy reproduces retail's grouped schedule.
+    *(VoiceCb*)self = *(VoiceCb*)lbl_eu_8053A194;
+    return self;
 }

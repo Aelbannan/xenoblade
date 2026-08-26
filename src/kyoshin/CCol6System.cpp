@@ -14,11 +14,8 @@ class CfGameManager;
 
 #include <string.h>
 
-// CfGameManager.hpp declares CItem_initItemImplInstances as a no-arg extern
-// "C" function, so a 1-arg redeclaration would trip MWCC 10197. Route the
-// call site through a casted function pointer instead (CItemBoxGrid
-// precedent) - same retail symbol/reloc at the call.
-#define CItem_initItemImplInstances(item) ((void* (*)(void*))CItem_initItemImplInstances)(item)
+// CItem_initItemImplInstances now has the unified pointer-arg decl
+// (include/kyoshin/cf/CfGameManager.hpp); plain calls match retail directly.
 
 // Resolve ml::FixStr<128>::format calls to the explicit specialization that
 // CfScript.cpp defines (retail symbol format__Q22ml10FixStr<128>FPCce); a

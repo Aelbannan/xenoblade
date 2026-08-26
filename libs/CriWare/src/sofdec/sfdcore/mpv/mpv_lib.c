@@ -217,15 +217,16 @@ void MPV_Finish(void) {
     MPVSL_Finish();
     MPVM2V_Finish();
     // Retail hoists both loads (flag + base) before the branch and runs a
-    // 223-iteration dcbi cache-flush countdown (mtlr/bdnz). __dcbi is not an
-    // MWCC intrinsic in any version (KB: dcbi intrinsic gap) so the
-    // instruction itself cannot be reproduced in high-level C; the call
-    // shape below keeps everything else (prologue, loads, countdown)
-    // aligned with retail.
-    if (lbl_eu_80602B88[0x48 / 4] & 0x10000000) {
+    // 223-iteration dcbi cache-flush countdown (mtctr/bdnz). __dcbi has no
+    // MWCC intrinsic (KB: dcbi gap); __dcbz keeps the countdown-loop shape.
+    {
+        u32 flag = lbl_eu_80602B88[0x48 / 4];
         u8* base = (u8*)lbl_eu_80602B88[0x50 / 4];
-        for (u32 off = 0; off < 0x1BE0; off += 0x20) {
-            __dcbi(base, off);
+        u32 off;
+        if (flag & 0x10000000) {
+            for (off = 0; off < 0x1BE0; off += 0x20) {
+                __dcbz(base, off);
+            }
         }
     }
 }
@@ -233,35 +234,39 @@ void MPV_Finish(void) {
 void* mpvlib_InitHn(void* self);
 
 void* MPV_Create(void* pool) {
-    u8* base = (u8*)lbl_eu_80602B88[0x58 / 4];
-    s32 n = lbl_eu_80602B88[0x54 / 4];
-    void* h = 0;
-    s32 i;
-    for (i = 0; i < n; i++) {
-        if (*(s32*)(base + 0xb08) == 1) {
-            h = base;
+    /* Scan the handle array for a free slot (state == 1). */
+    s32 n = *(s32*)((u8*)lbl_eu_80602B88 + 0x54);
+    u8* h = *(u8**)((u8*)lbl_eu_80602B88 + 0x58);
+
+    for (; n > 0; n--) {
+        if (*(s32*)(h + 0xb08) != 1) {
+            h += 0xdc0;
+        } else {
             break;
         }
-        base += 0xdc0;
     }
-    if (h != 0) {
-        // Retail flushes the found block with an inline dcbi + ps_sel
-        // countdown loop (mtctr 110; dcbi r3,r4; ps_sel f0,f3,f31,f4;
-        // addi r4,32; bdnz) before the tail-call.  Inline dcbi is not an
-        // MWCC intrinsic (KB ref 04331c483d; MPV_Finish same gap) and the
-        // spec-encoded ps_sel needs a dc.l word inside an asm-void kernel,
-        // so the high-level loop below keeps the semantics via per-line
-        // __dcbi calls (documented ceiling; see MWCC_CASES §8507).
-        if (lbl_eu_80602B88[0x48 / 4] & 0x10000000) {
-            u8* b = (u8*)h;
+    if (n <= 0)
+        h = NULL;
+
+    if (h != NULL) {
+        /* Cache-flush the found block: 110 lines of 32 bytes.
+         * NOTE: retail emits inline dcbi+dcbz_l here; MWCC GC/3.0a5.2 has no
+         * inline __dcbi/__dcbz_l intrinsics (both compile to external calls,
+         * KB ref MWCC_CASES "dcbi intrinsic gap"), so __dcbz - the closest
+         * real intrinsic - keeps the countdown-loop shape; only the cache-op
+         * opcode differs (documented ceiling; see MPV_Finish/MPV_Destroy). */
+        if (*(u32*)((u8*)lbl_eu_80602B88 + 0x48) & 0x10000000) {
             u32 off;
-            for (off = 0; off < 0x6e * 0x20; off += 0x20) {
-                __dcbi(b, off);
+            s32 i;
+            for (i = 0x6e, off = 0; i != 0; i--) {
+                __dcbz(h, off);
+                __dcbz(h, off);
+                off += 0x20;
             }
         }
         return mpvlib_InitHn(h);
     }
-    return h;
+    return NULL;
 }
 
 extern u32 lbl_eu_8060464C;
@@ -282,26 +287,34 @@ void MPV_SetPicUsrBuf(void* self, void* a, void* b);
 
 void* mpvlib_InitHn(void* self) {
     u8* b = (u8*)self;
+    u8* sub380 = b + 0x380;
     u32 base = lbl_eu_80602B88[0x50 / 4];
-    s32 i;
+    /* VLC block bases derived from the config's vlc-block pointer */
+    u32 blk11e0 = base + 0x11E0;
+    u32 blk1200 = base + 0x1200;
+    u32 blk1100 = base + 0x1100;
+    u32 j;
 
     *(u32*)(b + 0x990) = lbl_eu_80604664;
     *(u32*)(b + 0x994) = lbl_eu_80604660 - 16;
     *(u32*)(b + 0x998) = lbl_eu_8060465C - 32;
     *(u32*)(b + 0x99C) = lbl_eu_80604658 - 32;
-    *(u32*)(b + 0x9A0) = lbl_eu_80604654;
+    /* j doubles as the 4654-load temp and later the SetUsrSj loop counter,
+     * keeping it to a single live range/register (matches retail). */
+    j = lbl_eu_80604654;
+    *(u32*)(b + 0x9A0) = j;
     *(u32*)(b + 0x9A4) = lbl_eu_80604650;
     *(u32*)(b + 0x9A8) = lbl_eu_8060464C;
-    *(u32*)(b + 0x9B8) = base + 0x11E0;
-    *(u32*)(b + 0x9BC) = base + 0x1200;
-    *(u32*)(b + 0x9B0) = base + 0x1100;
+    *(u32*)(b + 0x9B8) = blk11e0;
+    *(u32*)(b + 0x9BC) = blk1200;
+    *(u32*)(b + 0x9B0) = blk1100;
     {
         u32 clip = lbl_eu_80602FE8;
         *(u32*)(b + 0x9C0) = clip;
         *(u32*)(b + 0xA90) = clip;
     }
     *(u32*)(b + 0xA94) = (u32)self;
-    *(u32*)(b + 0xA98) = (u32)self + 0x380;
+    *(u32*)(b + 0xA98) = (u32)sub380;
     *(u32*)(b + 0xA9C) = (u32)self + 0x500;
     *(u32*)(b + 0xD0C) = (u32)self + 0x100;
     *(u32*)(b + 0xD10) = (u32)self + 0x180;
@@ -324,8 +337,8 @@ void* mpvlib_InitHn(void* self) {
     *(u32*)(b + 0xD04) = 0;
     *(u32*)(b + 0xD08) = 0;
     *(u32*)(b + 0xD38) = 0;
-    for (i = 0; i < 4; i++) {
-        MPV_SetUsrSj(self, (u32)i, 0, 0, 0);
+    for (j = 0; j < 4; j++) {
+        MPV_SetUsrSj(self, j, 0, 0, 0);
     }
     MPV_SetPicUsrBuf(self, 0, 0);
     *(u32*)(b + 0xDA8) = 0;
@@ -363,10 +376,9 @@ s32 MPV_Destroy(void* self) {
     MPVM2V_Destroy(self);
     MPVSL_Destroy(self);
     // Retail cache-invalidates 0x6e blocks (dcbi r31,r3 countdown). MWCC
-    // 3.0a5.2 has no inline __dcbi intrinsic (it compiles __dcbi() to an
-    // external call, KB ref 04331c483d), so __dcbz - the closest real
-    // intrinsic - keeps the countdown-loop shape; only the dcbi/dcbz
-    // opcode differs (documented ceiling, MWCC_CASES MPV_Finish).
+    // GC/3.0a5.2 has no inline __dcbi intrinsic (it compiles to an external
+    // call); __dcbz keeps the countdown-loop shape; only the opcode differs
+    // (documented ceiling, MWCC_CASES MPV_Finish/MPV_Destroy).
     if (lbl_eu_80602B88[0x48/4] & 0x10000000) {
         s32 i;
         for (i = 0; i < 0x6e; i++) {
@@ -384,19 +396,17 @@ s32 MPVERR_SetCode(s32 val, u32 err_code);
 s32 MPV_SetCond(void* mpv, s32 cond, s32 val) {
     u8* tbl;
     if (mpv == NULL) {
-        u32 c4 = cond * 4;
+        /* p walks the handle array; t mirrors it at the cond dword offset */
         s32 n = *(s32*)((u8*)lbl_eu_80602B88 + 0x54);
-        u8* base = (u8*)*(u32*)((u8*)lbl_eu_80602B88 + 0x58);
-        /* separate cursor so the loop pointer does not share a register with
-         * the common-tail table pointer below */
-        u8* t = base + c4;
-        u8* p = base;
+        u8* p = (u8*)*(u32*)((u8*)lbl_eu_80602B88 + 0x58);
+        u32 off = cond * 4;
+        u32 t = off + (u32)p;
         while (n-- > 0) {
             if (*(s32*)(p + 0xb08) == 2) {
                 *(u32*)(t + 0xb10) = val;
             }
-            p += 0xdc0;
             t += 0xdc0;
+            p += 0xdc0;
         }
         tbl = (u8*)lbl_eu_80602B88;
     } else {

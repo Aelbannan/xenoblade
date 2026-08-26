@@ -406,45 +406,57 @@ void func_804979A4(CScn80496B0C* self, ml::CVec3* outA, ml::CVec3* outB,
 // shared frame counter, then when the two heads belong to the same item anim
 // releases the fading child completely and re-arms the model release.
 void func_80497AA8(CScn80496B0C* self) {
-    if (self->field_0x0 == NULL || self->field_0x8->field_0x84[0] == NULL) {
+    // No scene local: MWCC keeps the first load in a volatile reg and
+    // rematerializes self->field_0x0 after intervening calls.
+    if (self->field_0x0 == NULL) {
         return;
     }
-    CScn* scn = self->field_0x0;
-    CScnChild80496B0C* child1 = self->field_0x8;
-    CScnChild80496B0C* child2 = self->field_0xC;
-    CScnModel80496B0C* model = self->field_0x4;
-
-    if (model->field_0x7A4 & 0x2000) {
+    if (self->field_0x8->field_0x84[0] == NULL) {
+        return;
+    }
+    FConv conv;
+    if (self->field_0x4->field_0x7A4 & 0x2000) {
         // Quantized mode: round the scaled frame to an integer and feed the
-        // same quantized frame to every bound animation object.
+        // same quantized frame to every bound animation object. The int->float
+        // narrowing goes through the shared 0x4330 magic double (retail
+        // rematerializes the whole conversion per loop).
         s32 frames =
-            (s32)(self->field_0x178 * func_80496288(scn) + lbl_eu_8066AAD8);
-        for (u32 i = 0; i < 3; i++) {
-            CScnNode80496B0C* n = child1->field_0x84[i];
+            (s32)(self->field_0x178 * func_80496288(self->field_0x0) +
+                  lbl_eu_8066AAD8);
+        CScnChild80496B0C* walk = self->field_0x8;
+        for (u32 i = 0; i < 3; i++, walk = (CScnChild80496B0C*)((u8*)walk + 4)) {
+            CScnNode80496B0C* n = walk->field_0x84[0];
             if (n == NULL) {
                 continue;
             }
-            n->field_0x10->v8((f32)frames);
+            n->field_0x10->v8((f32)fconvS(
+                (u32)frames ^ 0x80000000u, conv, lbl_eu_8066AAD0));
         }
-        for (u32 i = 0; i < 3; i++) {
-            CScnNode80496B0C* n = child2->field_0x84[i];
+        walk = self->field_0xC;
+        for (u32 i = 0; i < 3; i++, walk = (CScnChild80496B0C*)((u8*)walk + 4)) {
+            CScnNode80496B0C* n = walk->field_0x84[0];
             if (n == NULL) {
                 continue;
             }
-            n->field_0x10->v8((f32)frames);
+            n->field_0x10->v8((f32)fconvS(
+                (u32)frames ^ 0x80000000u, conv, lbl_eu_8066AAD0));
         }
     } else {
-        f32 s = self->field_0x178 * func_80496288(scn);
-        for (u32 i = 0; i < 3; i++) {
-            CScnNode80496B0C* n = child1->field_0x84[i];
+        f32 s = self->field_0x178 * func_80496288(self->field_0x0);
+        CScnChild80496B0C* walk = self->field_0x8;
+        for (u32 i = 0; i < 3; i++, walk = (CScnChild80496B0C*)((u8*)walk + 4)) {
+            CScnNode80496B0C* n = walk->field_0x84[0];
             if (n == NULL) {
                 continue;
             }
             n->field_0x10->v8(s);
         }
-        s = self->field_0x178 * func_80496288(scn);
-        for (u32 i = 0; i < 3; i++) {
-            CScnNode80496B0C* n = child2->field_0x84[i];
+        // Retail re-reads the scene pointer here (volatile calls clobbered
+        // the cached register).
+        s = self->field_0x178 * func_80496288(self->field_0x0);
+        walk = self->field_0xC;
+        for (u32 i = 0; i < 3; i++, walk = (CScnChild80496B0C*)((u8*)walk + 4)) {
+            CScnNode80496B0C* n = walk->field_0x84[0];
             if (n == NULL) {
                 continue;
             }
@@ -452,83 +464,104 @@ void func_80497AA8(CScn80496B0C* self) {
         }
     }
 
-    // Advance the fade weight on the second child.
+    // Advance the fade weight on the second child. The fading child stays
+    // cached in a callee-saved register from here to the end of the update.
+    CScnChild80496B0C* fade = self->field_0xC;
     f32 weight = lbl_eu_8066AAC4;
-    if (child2->field_0x84[0] != NULL) {
-        f32 step = func_80496288(scn);
+    if (fade->field_0x84[0] != NULL) {
+        // No accumulator local: retail re-reads field_0x174 around the rate
+        // call, keeping the running sum only in volatile registers. prev is
+        // also read after the call so nothing floats across it.
+        self->field_0x174 =
+            self->field_0x174 +
+            self->field_0x178 * func_80496288(self->field_0x0);
         f32 prev = self->field_0x170;
-        f32 acc = self->field_0x174 + self->field_0x178 * step;
-        self->field_0x174 = acc;
-        if (prev > acc) {
+        if (prev > self->field_0x174) {
+            // Fade finished backwards: ease the weight toward the floor.
+            weight = lbl_eu_8066AAD8 +
+                     lbl_eu_8066AAD8 *
+                         ((prev - self->field_0x174) / prev);
+        } else {
+            // Fade progressing normally: drop to half, and when the fade has
+            // regressed past the previous mark, release the head binding.
             weight = lbl_eu_8066AAD8;
-            step = func_80496288(scn);
-            f32 target = self->field_0x174 - self->field_0x178 * step;
-            if (self->field_0x170 > target) {
-                if (self->field_0x1D8 != -1) {
-                    for (u32 i = 0; i < 3; i++) {
-                        CScnNode80496B0C* n = child1->field_0x84[i];
-                        if (n == NULL) {
-                            continue;
+            if (prev > self->field_0x174 -
+                           self->field_0x178 *
+                               func_80496288(self->field_0x0)) {
+                int nodeId = self->field_0x1D8;
+                if (((u32)nodeId + 0x10000) != 0xFFFF) {
+                    // Countdown scan over child1's slots; first bound slot
+                    // wins. Compiled as mtctr/bdnz.
+                    CScnChild80496B0C* wk = self->field_0x8;
+                    for (int k = 3; k != 0; k--) {
+                        if (wk->field_0x84[0] != NULL) {
+                            nw4r::g3d::ResMdl mdl(self->field_0x8->field_0xA8);
+                            wk->field_0x84[0]->field_0x10->v19(&mdl, nodeId, 1);
+                            break;
                         }
-                        nw4r::g3d::ResMdl mdl(child1->field_0xA8);
-                        n->field_0x10->v19(&mdl, self->field_0x1D8, 1);
-                        break;
+                        wk = (CScnChild80496B0C*)((u8*)wk + 4);
                     }
                 }
             }
-        } else {
-            // Fade progressing normally: ease the weight toward the floor.
-            f32 span = (prev - acc) / prev;
-            weight = lbl_eu_8066AAC4 * span + lbl_eu_8066AAC4;
         }
     }
 
-    func_804986F8(child1, weight);
+    func_804986F8(self->field_0x8, weight);
 
     // When both heads reference the same item anim, retire the fading child.
-    CScnNode80496B0C* h2 = child2->field_0x84[0];
+    CScnNode80496B0C* h2 = fade->field_0x84[0];
+    if (h2 != NULL && (h2->field_0x2 & 8)) {
+        return;
+    }
     bool same = false;
-    if (!(h2 != NULL && (h2->field_0x2 & 8))) {
-        CScnNode80496B0C* h1 = child1->field_0x84[0];
-        if (h2 != NULL && h1 != NULL && child2->field_0x84[1] == NULL &&
-            child1->field_0x84[1] == NULL &&
-            h1->field_0x18 == h2->field_0x18 &&
-            h1->field_0x14 == h2->field_0x14) {
-            same = true;
+    if (h2 != NULL) {
+        CScnNode80496B0C* h1 = self->field_0x8->field_0x84[0];
+        if (h1 != NULL && fade->field_0x84[1] == NULL &&
+            self->field_0x8->field_0x84[1] == NULL &&
+            h1->field_0x18 == h2->field_0x18) {
+            // Equality compiled by MWCC as subf/cntlzw/srwi.
+            same = !(h2->field_0x14 - h1->field_0x14);
         }
     }
     if (!same) {
         return;
     }
 
-    for (u32 i = 0; i < 3; i++) {
-        CScnNode80496B0C* n = child2->field_0x84[i];
-        if (n == NULL) {
-            continue;
-        }
-        if (n->field_0x10 != NULL) {
-            child2->field_0x98->Detach(child2->field_0x90 * 3 + n->field_0x0);
-            child2->field_0x92--;
-            n->field_0x10->v11();
-            ((nw4r::g3d::G3dObj*)n->field_0x10)->Destroy();
-            n->field_0x10 = NULL;
-        }
-        n->field_0x18 = NULL;
-        child2->field_0x84[i] = NULL;
-        child2->field_0x9C = ml::CVec3::zero;
-    }
-    if (self->field_0x1D8 != -1) {
-        for (u32 i = 0; i < 3; i++) {
-            CScnNode80496B0C* n = child1->field_0x84[i];
-            if (n == NULL) {
-                continue;
+    // Retire every binding on the fading child (walking-pointer scan).
+    CScnChild80496B0C* walk2 = fade;
+    u32 i = 0;
+    while (i < 3) {
+        CScnNode80496B0C* node = walk2->field_0x84[0];
+        if (node != NULL) {
+            if (node->field_0x10 != NULL) {
+                fade->field_0x98->Detach(fade->field_0x90 * 3 + node->field_0x0);
+                fade->field_0x92--;
+                node->field_0x10->v11();
+                ((nw4r::g3d::G3dObj*)node->field_0x10)->Destroy();
+                node->field_0x10 = NULL;
             }
-            nw4r::g3d::ResMdl mdl2(child1->field_0xA8);
-            n->field_0x10->v18(&mdl2, self->field_0x1D8, 0);
-            break;
+            node->field_0x18 = NULL;
+            walk2->field_0x84[0] = NULL;
+            fade->field_0x9C = ml::CVec3::zero;
+        }
+        i++;
+        walk2 = (CScnChild80496B0C*)((u8*)walk2 + 4);
+    }
+
+    // Re-arm the model-node release on the surviving child's head binding.
+    if (((u32)self->field_0x1D8 + 0x10000) != 0xFFFF) {
+        int nodeId = self->field_0x1D8;
+        CScnChild80496B0C* wk = self->field_0x8;
+        for (int k = 3; k != 0; k--) {
+            if (wk->field_0x84[0] != NULL) {
+                nw4r::g3d::ResMdl mdl(self->field_0x8->field_0xA8);
+                wk->field_0x84[0]->field_0x10->v18(&mdl, nodeId, 0);
+                break;
+            }
+            wk = (CScnChild80496B0C*)((u8*)wk + 4);
         }
     }
-    func_804986F8(child2, lbl_eu_8066AAC4 - weight);
+    func_804986F8(fade, lbl_eu_8066AAC4 - weight);
 }
 
 // Child-object initializer: zeroes the three node-binding slots and the
@@ -711,23 +744,21 @@ u16 func_80498288(CScnChild80496B0C* self, s32* pFrame, VTarget* pAnmObj,
 
     rec->field_0x14 = *pFrame;
     rec->field_0x10 = pAnmObj;
-    // u32 -> float through the shared sdata2 magic double.
-    FConv conv;
-    conv.w[0] = 0x43300000u;
-    conv.w[1] = value;
-    rec->field_0x4 = conv.d - lbl_eu_8066AAC8;
+    rec->field_0x18 = tag;
+    // Plain int->float casts: MWCC emits its own 0x4330-magic sequence
+    // (lis/stw punning + single-precision fsubs + stfs).
+    rec->field_0x4 = (f32)value;
     rec->field_0x8 = lbl_eu_8066AAC0;
     rec->field_0xC = lbl_eu_8066AAC4;
     rec->field_0x20 = lbl_eu_8066AAC0;
-    rec->field_0x18 = tag;
-    nw4r::g3d::ResAnmChrData* data = pAnmObj->field_0x2C;
+    // Anm-resource guard: one load serves the null test and the frame-rate
+    // fetch; the later block reloads +0x2C (the flag stores force it).
+    nw4r::g3d::ResAnmChrData* data = ((VTarget*)pAnmObj)->field_0x2C;
     if (data == NULL) {
         nw4r::db::Panic(lbl_eu_8056E9D0, 0x27, lbl_eu_8056E9B4,
                         lbl_eu_8056E9A8, lbl_eu_806639E4);
     }
-    // s16 -> float through the signed conversion constant.
-    conv.w[1] = (u32)((VTarget*)data)->field_0x20 ^ 0x8000;
-    rec->field_0x1C = conv.d - lbl_eu_8066AAD0;
+    rec->field_0x1C = (f32)(s16)((VTarget*)data)->field_0x20;
     rec->field_0x2 = 0;
     if (flag != 0) {
         rec->field_0x2 |= 1;

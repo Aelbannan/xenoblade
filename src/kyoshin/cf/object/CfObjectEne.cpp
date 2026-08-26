@@ -16,10 +16,14 @@
 #include "kyoshin/cf/CfGameManagerData.hpp"  // H3 label-owner decl (lbl_eu_80663E14; lbl_eu_80663E24)
 #include "kyoshin/cf/object/CfObjectEne.hpp" // cf::CfObjectEne + CfEneVtables/CfEneTailView/CfEneReloadSlot views
 
-// Global gimmick-settings accessor; single typed view lives on CSuddenCommu.hpp
-// (member form) - this TU only null-tests it and forwards to void* helpers, so
-// use the plain extern "C" void* spelling (CtrlMoveEne.hpp convention).
-extern "C" void* getUnk80664658(void);
+// Global gimmick-settings singleton accessor (defined in code_801F3BE0.cpp);
+// this TU only null-tests it and forwards it to opaque-taking helpers. Typed
+// after the owner declaration on CSuddenCommu.hpp (the singleton behind the
+// lbl_eu_80664658 .sbss word).
+namespace cf {
+struct CSuddenCommuGlobal;
+}
+extern "C" cf::CSuddenCommuGlobal* getUnk80664658(); // getter for the lbl_eu_80664658 holder
 
 
 // Copy block: 0x00-0x78 (120 bytes), loaded from r4 then stored to self+0x17E4/0x1650
@@ -197,28 +201,21 @@ cf::CfObjectEne* __dt__Q22cf11CfObjectEneFv(cf::CfObjectEne* self, s32 deleteFla
 // (func_800BE33C / func_800BE824 on the subobject with 1), raises three
 // actor flags via func_80174B4C, seeds the +0x44A8 region via func_804B0AD4
 // (two sdata2 floats) and sets its u16 at +0xB2 to 0xC8. Returns 1.
-// The subobject address goes through a DIFFERENT struct member at each call
-// site so MWCC re-materializes addi r3, r31, 0x3e9c per call (retail keeps
-// only r31 = self; a CSE'd address would live in a callee-saved register and
-// grow the frame).
-// us-800ae3f8: CfObjectEne vf2. Runs the CfObjectMove subobject's
-// CfObject_UnkVirtualFunc2 (CfObjectModel slot), dispatches the subobject
-// vtable slot +0x158 with flag 1, clears two battle-state flag words
-// (func_800BE33C / func_800BE824 on the subobject with 1), raises three
-// actor flags via func_80174B4C, seeds the +0x44A8 region via func_804B0AD4
-// (two sdata2 floats) and sets its u16 at +0xB2 to 0xC8. Returns 1.
-// The dispatch is a real virtual call through CfEneSubFake (retail
-// folded-vptr + recomputed adjusted-this); KNOWN WALL: MWCC CSEs the three
-// plain subobject args into a callee-saved register (frame 0xB4 vs retail
-// 0xA8) - the cross-call address CSE is irreducible (cf. MWCC_CASES
-// HBMSYN NoteOn / GKI notes).
+// KNOWN WALL (allocation-grind; MWCC_PATTERMS 7j negative result): retail
+// recomputes addi r3,r31,0x3e9c per call keeping only r31=self, but MWCC
+// GVN-merges the three identical subobject-address expressions into one
+// value hoisted to a callee-saved reg (r31=sub, r30=self, frame 0x18 vs
+// 0x10). Probed without effect: distinct view types per site, u32-domain
+// arithmetic, typed-stride pointer arithmetic ((T*)self+1), per-site
+// always_inline wrappers - all normalize to the same value number. The
+// sibling dtor __dt__Q22cf11CfObjectEneFv matches only because it has a
+// single explicit expression (its other use is the folded virtual-dispatch
+// adjustment, which GVN does not model).
 int func_800ADB2C__Q22cf11CfObjectEneFv(cf::CfObjectEne* self) {
     CfObject_UnkVirtualFunc2__Q22cf13CfObjectModelFv(
         (cf::CfObjectModel*)&((cf::CfEneMoveBaseA*)self)->base);
     ((cf::CfEneSubFake*)self)->vf158(1);
-    // Mixed address forms (member vs arithmetic) stop MWCC from CSE-ing the
-    // subobject base into a callee-saved register across the calls.
-    func_800BE33C((u8*)self + 0x3E9C, 1);
+    func_800BE33C(&((cf::CfEneMoveBaseB*)self)->base, 1);
     func_80174B4C(self, 0x100000);
     func_80174B4C(self, 0x08000000);
     func_80174B4C(self, 0x10000000);
@@ -252,136 +249,178 @@ void cf::CfObjectEne::func_800ADBD4() {
             ((cf::CfEneB8V20*)this)->m20(0x35);
         }
     }
+    // local pins the scene-time source across the m8C() call into a
+    // callee-saved reg (retail r31); the subobject address is re-derived per
+    // site through distinct expression shapes (member-view / u32-domain /
+    // byte-add) so GVN cannot merge them into one cached register
+    CScn* sceneTimeSrc = lbl_eu_80663E14;
     f32 sub = ((cf::CfEneSubVt64*)this)->m8C();
-    // retail multiplies as sub * sceneTime (fmuls f1,f1,f31 with f31=sub)
-    f32 f = sub * func_80496288(lbl_eu_80663E14);
+    // retail multiplies as time * sub (fmuls f1,f1,f31 with f31=sub)
+    f32 t = func_80496288(sceneTimeSrc);
+    f32 f = t * sub;
     func_801765A4((u8*)this, f, 1);
     getInstance__Q22cf13CfGameManagerFv();
-    if (func_8006EF04__Fi(0x1000000) != 0) {
+    // retail flattens the nested guards into two branches on one shared
+    // else label (the CfObject_UnkVirtualFunc4 call); goto pins that shape
+    if (func_8006EF04__Fi(0x1000000) == 0)
+        goto defaultPath;
+    {
         u32 wordC = *((cf::CfActorUnk4Vt30*)((cf::CfActorField04*)this)->field_0x04)->vf30();
-        if (func_80174C98((void*)this, (int*)&wordC, 0x1) == 0) {
-            u8* p = ((cf::CfEneField3F34*)this)->field_0x3F34;
-            if (p != 0)
-                ((cf::CfEneField7A4*)p)->field_0x7A4 |= 0x80000000;
-            ((cf::CfEneSubVt64b*)this)->m80();
-            ((cf::CfEneSubVt64c*)this)->m64();
-        }
-    } else {
-        CfObject_UnkVirtualFunc4__Q22cf12CfObjectMoveFv((cf::CfObjectMove*)((cf::CfEneSubPad*)this));
+        if (func_80174C98(this, &wordC, 0x1) != 0)
+            goto defaultPath;
+        u8* p = ((cf::CfEneField3F34*)this)->field_0x3F34;
+        if (p != 0)
+            ((cf::CfEneField7A4*)p)->field_0x7A4 |= 0x80000000;
+        // three mutually-distinct expression families (member view /
+        // u32-cast address / u32 arithmetic) keep MWCC from CSE-ing the
+        // subobject base into a saved register - retail recomputes
+        // addi r3, rX, 0x3e9c per dispatch (cf. pluginBtl.cpp)
+        ((cf::CfEneSubVt64If*)((u8*)this + 0x3E9C))->m80();
+        ((cf::CfEneSubVt64If*)(u32)&((cf::CfEneVtables*)this)->vt3E9C)->m64();
     }
+    goto done;
+defaultPath:
+    // retail: direct bl to the concrete implementation (not a vdispatch)
+    CfObject_UnkVirtualFunc4__Q22cf12CfObjectMoveFv(
+        (cf::CfObjectMove*)&((cf::CfEneMoveBaseD*)this)->base);
+done:;
 }
 
 // us-800ae674: CfObjectEne::func_800ADDA8 (retail Fv; this in r3). Full
-// enemy-parameter setup: reads the +0x3F14-name bdat table and the
-// lbl_eu_80664094 arts bdat table, dispatches the +0x3E9C subobject
-// (+0x3C with the col-0 value, +0x1D4/+0x134 with the signed-byte
-// conversions, +0x13C with 1.0f) and the primary vtable setup slots
-// (+0xDC/+0xE4/+0xE8, +0x254..+0x26C, +0x170..+0x1BC), accumulates the
-// +0x1648/+0x164A/+0x164C status words, builds the rates record from the
-// +0x20C slot (+0xA2..+0xF9 columns, x100 weight, s16 offsets), writes the
-// level-name letters to lbl_eu_80661CB8/80661CBC (+3), scales the
-// +0x1604/+0x1608 weights by (s16+10)/10, initializes the +0x8 CBattleState
-// subobject (+0x18 buffer dispatch, gated on +0x3374 bit 0x40000) and the
-// +0x18 dispatches the tail vtable slots +0x21C/+0x330/+0x32C/+0x5E0;
-// gates the second buffer on +0x3374 bit 0x10000.
+// enemy-parameter setup from two bdat tables. The row id (+0x3F28) is
+// RE-LOADED before every column read (the bdat calls may modify it - retail
+// emits one lhz per call), so it is never cached in a local.
 void cf::CfObjectEne::func_800ADDA8() {
     cf::CfEneLookupView* v = (cf::CfEneLookupView*)this;
     cf::CfEneParamsView* p = (cf::CfEneParamsView*)this;
+    // Union-typed locals stay in memory (MWCC), reproducing retail's
+    // stw-home + narrow-reload pattern around every column call. Declared at
+    // top so each gets a distinct frame home in first-use order.
+    cf::CfEneColNarrow c5, cA, c10, c17, c37, c3F, c46, c53, c60, c6A, c80;
+    cf::CfEneColNarrow c8B, c96a, c96t, c96b, cA2, cA5, cAC, cB0, cB4, cBA;
+    cf::CfEneColNarrow cC9, cD7, cDF, cE7, cF0, u0A, u102, u10B, u115, u11F;
+    cf::CfEneColNarrow u129, elseA, w132, w139, base13F, n1634, c159, c165;
+    cf::CfEneColNarrow c16F, c17B, c18B, c191;
+    // arts-table pointer is materialised before the getFP call (retail r25)
     u8* bdatArts = lbl_eu_80664094;
     void* bdat = getFP(v->field_0x3F14);
-    u16 row = v->field_0x3F28;
-    u32 c0 = getBdatStringColumnValue(bdatArts, &lbl_eu_804FC168[0x0], row);
-    ((cf::CfEneSubVt3C*)this)->vf3C(c0);
-    ((cf::CfEneVtSetup1*)this)->vfE4((u8)getBdatStringColumnValue(bdat, &lbl_eu_804FC168[0x5], row));
-    ((cf::CfEneVtSetup1*)this)->vfE8((f32)(u8)getBdatStringColumnValue(bdat, &lbl_eu_804FC168[0xA], row) / lbl_eu_8066697C);
-    ((cf::CfEneVtSetup1*)this)->vfDC((u8)getBdatStringColumnValue(bdat, &lbl_eu_804FC168[0x10], row));
-    p->field_0x15F0 = (u32)(u8)getBdatStringColumnValue(bdat, &lbl_eu_804FC168[0x17], row);
-    u32 flags = p->field_0x3374;
-    flags |= (u32)getBdatStringColumnValue(bdat, &lbl_eu_804FC168[0x1D], row);
+    ((cf::CfEneSubVt3C*)this)->vf3C(getBdatStringColumnValue(bdatArts, &lbl_eu_804FC168[0x0], v->field_0x3F28));
+    c5.w = getBdatStringColumnValue(bdat, &lbl_eu_804FC168[0x5], v->field_0x3F28);
+    ((cf::CfEneVtSetup1*)this)->vfE4(c5.b);
+    cA.w = getBdatStringColumnValue(bdat, &lbl_eu_804FC168[0xA], v->field_0x3F28);
+    ((cf::CfEneVtSetup1*)this)->vfE8((f32)(u32)cA.b / lbl_eu_8066697C);
+    c10.w = getBdatStringColumnValue(bdat, &lbl_eu_804FC168[0x10], v->field_0x3F28);
+    ((cf::CfEneVtSetup1*)this)->vfDC(c10.b);
+    c17.w = getBdatStringColumnValue(bdat, &lbl_eu_804FC168[0x17], v->field_0x3F28);
+    p->field_0x15F0 = (u32)c17.b;
+    u32 flags = p->field_0x3374 | (u32)getBdatStringColumnValue(bdat, &lbl_eu_804FC168[0x1D], v->field_0x3F28);
     p->field_0x3374 = flags;
-    if (!(flags & 0x800)) {
-        u8 k22 = (u8)getBdatStringColumnValue(bdat, &lbl_eu_804FC168[0x22], row);
-        ((cf::CfEneSubVt3C*)this)->vf1D4((f32)(s32)k22);
-        u8 k2D = (u8)getBdatStringColumnValue(bdat, &lbl_eu_804FC168[0x2D], row);
-        ((cf::CfEneSubVt3C*)this)->vf134((f32)(s32)k2D);
+    // rlwinm bit 20 -> mask 0x00100000
+    if (!(flags & 0x00100000)) {
+        // k22/k2d live across later calls: retail keeps them in callee-saved regs
+        u8 k22 = (u8)getBdatStringColumnValue(bdat, &lbl_eu_804FC168[0x22], v->field_0x3F28);
+        ((cf::CfEneSubVt3C*)this)->vf1D4((f32)(s32)(u32)k22);
+        u8 k2d = (u8)getBdatStringColumnValue(bdat, &lbl_eu_804FC168[0x2D], v->field_0x3F28);
+        ((cf::CfEneSubVt3C*)this)->vf134((f32)(s32)(u32)k2d);
         ((cf::CfEneSubVt3C*)this)->vf13C(lbl_eu_80666980);
-        if (k22 == 0 || k2D == 0)
+        if (k22 == 0 || k2d == 0)
             p->field_0x3374 |= 0x1000;
     }
-    ((cf::CfEneVtSetup3*)this)->vf254((u8)getBdatStringColumnValue(bdat, &lbl_eu_804FC168[0x37], row));
-    ((cf::CfEneVtSetup3*)this)->vf25C((u8)getBdatStringColumnValue(bdat, &lbl_eu_804FC168[0x3F], row) != 0);
-    ((cf::CfEneVtSetup3*)this)->vf264((f32)(u16)getBdatStringColumnValue(bdat, &lbl_eu_804FC168[0x46], row));
-    ((cf::CfEneVtSetup3*)this)->vf26C((f32)(u16)getBdatStringColumnValue(bdat, &lbl_eu_804FC168[0x53], row) * lbl_eu_8066A210);
+    c37.w = getBdatStringColumnValue(bdat, &lbl_eu_804FC168[0x37], v->field_0x3F28);
+    ((cf::CfEneVtSetup3*)this)->vf254(c37.b);
+    c3F.w = getBdatStringColumnValue(bdat, &lbl_eu_804FC168[0x3F], v->field_0x3F28);
+    ((cf::CfEneVtSetup3*)this)->vf25C(c3F.b != 0);
+    c46.w = getBdatStringColumnValue(bdat, &lbl_eu_804FC168[0x46], v->field_0x3F28);
+    ((cf::CfEneVtSetup3*)this)->vf264((f32)(u32)c46.h);
+    c53.w = getBdatStringColumnValue(bdat, &lbl_eu_804FC168[0x53], v->field_0x3F28);
+    ((cf::CfEneVtSetup3*)this)->vf26C((f32)(u32)c53.h * lbl_eu_8066A210);
     ((cf::CfEneVtSetup2*)this)->vf170(1);
     ((cf::CfEneVtSetup2*)this)->vf188(1);
     ((cf::CfEneVtSetup2*)this)->vf198(lbl_eu_80666984);
     ((cf::CfEneVtSetup2*)this)->vf1A4(lbl_eu_80666984);
     ((cf::CfEneVtSetup2*)this)->vf1BC(lbl_eu_80666988 * (lbl_eu_8066A1F8 / lbl_eu_8066698C));
-    p->field_0x1648 |= (u8)getBdatStringColumnValue(bdat, &lbl_eu_804FC168[0x60], row);
-    p->field_0x164A |= (u8)getBdatStringColumnValue(bdat, &lbl_eu_804FC168[0x6A], row);
-    p->field_0x164C |= (u16)getBdatStringColumnValue(bdat, &lbl_eu_804FC168[0x80], row);
-    ((cf::CfBattleVt7C*)((u8*)this + 8))->vf7C((u16)getBdatStringColumnValue(bdat, &lbl_eu_804FC168[0x8B], row));
-    ((cf::CfBattleVt84*)((u8*)this + 8))->vf84((u16)getBdatStringColumnValue(bdat, &lbl_eu_804FC168[0x96], row));
-    u8 v96 = (u8)getBdatStringColumnValue(bdat, &lbl_eu_804FC168[0x96], row);
-    if (v96 != 0) {
-        ((cf::CfEneVtTail*)this)->vf334((lbl_eu_8066A1F8 / lbl_eu_80666990) *
-                                       (f32)(u8)getBdatStringColumnValue(bdat, &lbl_eu_804FC168[0x96], row));
+    c60.w = getBdatStringColumnValue(bdat, &lbl_eu_804FC168[0x60], v->field_0x3F28);
+    p->field_0x1648 |= c60.b;
+    c6A.w = getBdatStringColumnValue(bdat, &lbl_eu_804FC168[0x6A], v->field_0x3F28);
+    p->field_0x164A |= c6A.b;
+    c80.w = getBdatStringColumnValue(bdat, &lbl_eu_804FC168[0x80], v->field_0x3F28);
+    p->field_0x164C |= c80.h;
+    c8B.w = getBdatStringColumnValue(bdat, &lbl_eu_804FC168[0x8B], v->field_0x3F28);
+    ((cf::CfBattleVt7C*)((u8*)this + 8))->vf7C(c8B.h);
+    c96a.w = getBdatStringColumnValue(bdat, &lbl_eu_804FC168[0x96], v->field_0x3F28);
+    ((cf::CfBattleVt84*)((u8*)this + 8))->vf84(c96a.h);
+    c96t.w = getBdatStringColumnValue(bdat, &lbl_eu_804FC168[0x96], v->field_0x3F28);
+    if (c96t.b != 0) {
+        c96b.w = getBdatStringColumnValue(bdat, &lbl_eu_804FC168[0x96], v->field_0x3F28);
+        ((cf::CfEneVtTail*)this)->vf334((lbl_eu_8066A1F8 / lbl_eu_80666990) * (f32)(u32)c96b.b);
     }
     cf::CfEneRatesView* g = ((cf::CfEneVtActs*)this)->vf20C();
-    g->field_0x0 = (u32)(u8)getBdatStringColumnValue(bdat, &lbl_eu_804FC168[0xA2], row);
-    u16 wA5 = (u16)getBdatStringColumnValue(bdat, &lbl_eu_804FC168[0xA5], row);
-    f32 w = (f32)(s32)((u16)wA5 * 100);
+    cA2.w = getBdatStringColumnValue(bdat, &lbl_eu_804FC168[0xA2], v->field_0x3F28);
+    g->field_0x0 = (u32)cA2.b;
+    cA5.w = getBdatStringColumnValue(bdat, &lbl_eu_804FC168[0xA5], v->field_0x3F28);
+    f32 w = (f32)(s32)((u32)cA5.h * 100);
     g->field_0x10 = w;
     g->field_0x4 = w;
     g->field_0xC = lbl_eu_80666968;
     g->field_0x18 = lbl_eu_80666994;
-    g->field_0x1C = (s16)getBdatStringColumnValue(bdat, &lbl_eu_804FC168[0xAC], row);
-    g->field_0x1E = (s16)getBdatStringColumnValue(bdat, &lbl_eu_804FC168[0xB0], row);
-    g->field_0x20 = (s16)getBdatStringColumnValue(bdat, &lbl_eu_804FC168[0xB4], row);
-    g->field_0x40 = (f32)(u8)getBdatStringColumnValue(bdat, &lbl_eu_804FC168[0xBA], row) / lbl_eu_8066697C;
-    g->field_0x44 = (f32)(u16)getBdatStringColumnValue(bdat, &lbl_eu_804FC168[0xC9], row) / lbl_eu_80666994;
-    g->field_0x48 = (f32)(u16)getBdatStringColumnValue(bdat, &lbl_eu_804FC168[0xD7], row) / lbl_eu_80666994;
-    g->field_0x56 = (u8)getBdatStringColumnValue(bdat, &lbl_eu_804FC168[0xDF], row);
-    g->field_0x57 = (u8)getBdatStringColumnValue(bdat, &lbl_eu_804FC168[0xE7], row);
-    g->field_0x60 = (u16)(u8)getBdatStringColumnValue(bdat, &lbl_eu_804FC168[0xF0], row);
-    g->field_0x62 = (u16)(u8)getBdatStringColumnValue(bdat, &lbl_eu_804FC168[0xF9], row);
-    g->field_0x73 = (u8)(getBdatStringColumnValue(bdat, &lbl_eu_804FC168[0xF9], row) & 0xF);
-    getBdatStringColumnValue(bdat, &lbl_eu_804FC168[0xF9], row);
-    u8 zero = 0;
-    g->field_0x70 = zero;
-    getBdatStringColumnValue(bdat, &lbl_eu_804FC168[0xF9], row);
-    g->field_0x72 = zero;
-    p->field_0x1629 = zero;
-    p->field_0x162A = zero;
+    cAC.w = getBdatStringColumnValue(bdat, &lbl_eu_804FC168[0xAC], v->field_0x3F28);
+    g->field_0x1C = (s16)cAC.h;
+    cB0.w = getBdatStringColumnValue(bdat, &lbl_eu_804FC168[0xB0], v->field_0x3F28);
+    g->field_0x1E = (s16)cB0.h;
+    cB4.w = getBdatStringColumnValue(bdat, &lbl_eu_804FC168[0xB4], v->field_0x3F28);
+    g->field_0x20 = (s16)cB4.h;
+    cBA.w = getBdatStringColumnValue(bdat, &lbl_eu_804FC168[0xBA], v->field_0x3F28);
+    g->field_0x40 = (f32)(u32)cBA.b / lbl_eu_8066697C;
+    cC9.w = getBdatStringColumnValue(bdat, &lbl_eu_804FC168[0xC9], v->field_0x3F28);
+    g->field_0x44 = (f32)(u32)cC9.h / lbl_eu_80666994;
+    cD7.w = getBdatStringColumnValue(bdat, &lbl_eu_804FC168[0xD7], v->field_0x3F28);
+    g->field_0x48 = (f32)(u32)cD7.h / lbl_eu_80666994;
+    cDF.w = getBdatStringColumnValue(bdat, &lbl_eu_804FC168[0xDF], v->field_0x3F28);
+    g->field_0x56 = cDF.b;
+    cE7.w = getBdatStringColumnValue(bdat, &lbl_eu_804FC168[0xE7], v->field_0x3F28);
+    g->field_0x57 = cE7.b;
+    cF0.w = getBdatStringColumnValue(bdat, &lbl_eu_804FC168[0xF0], v->field_0x3F28);
+    g->field_0x60 = (u16)cF0.b;
+    g->field_0x62 = (u16)(u8)getBdatStringColumnValue(bdat, &lbl_eu_804FC168[0xF9], v->field_0x3F28);
+    // three redundant column reads follow; the first feeds field_0x73 from
+    // the raw return (clrlwi 28), the next two are dead with constant stores
+    g->field_0x73 = (u8)(getBdatStringColumnValue(bdat, &lbl_eu_804FC168[0xF9], v->field_0x3F28) & 0xF);
+    getBdatStringColumnValue(bdat, &lbl_eu_804FC168[0xF9], v->field_0x3F28);
+    g->field_0x70 = 0;
+    getBdatStringColumnValue(bdat, &lbl_eu_804FC168[0xF9], v->field_0x3F28);
+    g->field_0x72 = 0;
+    p->field_0x1629 = 0;
+    p->field_0x162A = 0;
     p->field_0x162B = 3;
     p->field_0x162C = 7;
-    u16 w456C = ((cf::CfObjectEne456CView*)this)->field_0x456C;
-    s32 half = (s32)w456C >> 4;
-    u32 lo = w456C & 0xF;
+    u16 w456c = ((cf::CfObjectEne456CView*)this)->field_0x456C;
+    s32 half = (s32)w456c >> 4;
     if (half != 0) {
-        u8 letter = (u8)(lo + 0x30);
+        // level-name letter written into both name strings at +3
+        u8 letter = (u8)((w456c & 0xF) + 0x30);
         lbl_eu_80661CB8[3] = letter;
         lbl_eu_80661CBC[3] = letter;
-        u8* bdat9C = lbl_eu_8066409C;
-        s8 sn = (s8)getBdatStringColumnValue(bdat9C, (const char*)lbl_eu_80661CBC, (u16)half);
-        u8 u0A = (u8)getBdatStringColumnValue(bdat, &lbl_eu_804FC168[0xA], row);
-        s8 s2 = (s8)getBdatStringColumnValue(bdat9C, (const char*)lbl_eu_80661CBC, (u16)half);
-        u16 u102 = (u16)getBdatStringColumnValue(bdat, &lbl_eu_804FC168[0x102], row);
-        u16 u10B = (u16)getBdatStringColumnValue(bdat, &lbl_eu_804FC168[0x10B], row);
-        u16 u115 = (u16)getBdatStringColumnValue(bdat, &lbl_eu_804FC168[0x115], row);
-        u16 u11F = (u16)getBdatStringColumnValue(bdat, &lbl_eu_804FC168[0x11F], row);
-        s32 sum = (s32)u0A + (s32)s2;
-        u8 u129 = (u8)getBdatStringColumnValue(bdat9C, &lbl_eu_804FC168[0x129], u11F);
-        if (u129 & 0x20) {
+        u8* bdat9c = lbl_eu_8066409C;
+        s8 sn = (s8)getBdatStringColumnValue(bdat9c, (const char*)lbl_eu_80661CBC, (u16)half);
+        u0A.w = getBdatStringColumnValue(bdat, &lbl_eu_804FC168[0xA], v->field_0x3F28);
+        s8 s2 = (s8)getBdatStringColumnValue(bdat9c, (const char*)lbl_eu_80661CBC, (u16)half);
+        u102.w = getBdatStringColumnValue(bdat, &lbl_eu_804FC168[0x102], v->field_0x3F28);
+        u10B.w = getBdatStringColumnValue(bdat, &lbl_eu_804FC168[0x10B], v->field_0x3F28);
+        u115.w = getBdatStringColumnValue(bdat, &lbl_eu_804FC168[0x115], v->field_0x3F28);
+        u11F.w = getBdatStringColumnValue(bdat, &lbl_eu_804FC168[0x11F], v->field_0x3F28);
+        u129.w = getBdatStringColumnValue(bdat9c, &lbl_eu_804FC168[0x129], u11F.h);
+        s32 sum = (s32)u0A.b + (s32)s2;
+        // rlwinm bit 26 -> mask 0x20 picks between raw and scaled HP scaling
+        if (u129.b & 0x20) {
             ((cf::CfEneVtSetup1*)this)->vfE8((f32)(s32)sum);
         } else {
             ((cf::CfEneVtSetup1*)this)->vfE8(lbl_eu_80666998 * (f32)(s32)sum);
         }
         g->field_0x0 = g->field_0x0 + (u32)sn;
-        g->field_0x4 = (f32)sn * (f32)u102 + g->field_0x4;
-        g->field_0x1C = (s16)((f32)sn * (f32)u10B + (f32)g->field_0x1C);
-        g->field_0x1E = (s16)((f32)sn * (f32)u115 + (f32)g->field_0x1E);
-        g->field_0x20 = (s16)((f32)sn * (f32)u11F + (f32)g->field_0x20);
+        g->field_0x4 = (f32)sn * (f32)u102.h + g->field_0x4;
+        g->field_0x1C = (s16)((f32)sn * (f32)u10B.h + (f32)g->field_0x1C);
+        g->field_0x1E = (s16)((f32)sn * (f32)u115.h + (f32)g->field_0x1E);
+        g->field_0x20 = (s16)((f32)sn * (f32)u11F.h + (f32)g->field_0x20);
         if (g->field_0x0 < 1) g->field_0x0 = 1;
         if (g->field_0x4 < lbl_eu_80666980) g->field_0x4 = lbl_eu_80666980;
         if (g->field_0x1C < 1) g->field_0x1C = 1;
@@ -389,29 +428,37 @@ void cf::CfObjectEne::func_800ADDA8() {
         if (g->field_0x20 < 1) g->field_0x20 = 1;
         g->field_0x10 = g->field_0x4;
     } else {
-        ((cf::CfEneVtSetup1*)this)->vfE8(lbl_eu_80666998 *
-                                         (f32)(s32)(u8)getBdatStringColumnValue(bdat, &lbl_eu_804FC168[0xA], row));
+        elseA.w = getBdatStringColumnValue(bdat, &lbl_eu_804FC168[0xA], v->field_0x3F28);
+        ((cf::CfEneVtSetup1*)this)->vfE8(lbl_eu_80666998 * (f32)(s32)(u32)elseA.b);
         p->field_0x3F00 |= 0x04000000;
     }
     u32 cap = g->field_0x0;
     if (cap > 0x63) cap = 0x63;
     u8* bdatDC = (u8*)lbl_eu_806640DC;
-    u16 w132 = (u16)getBdatStringColumnValue(bdatDC, &lbl_eu_804FC168[0x132], cap);
-    u16 w139 = (u16)getBdatStringColumnValue(bdatDC, &lbl_eu_804FC168[0x139], cap);
-    s32 base = (s32)(s16)getBdatStringColumnValue(bdat, &lbl_eu_804FC168[0x13F], row) + 10;
-    p->field_0x1604 = (u32)w132 * (u32)base / 10;
-    p->field_0x1608 = (u32)w139 * (u32)base / 10;
-    u8 n = (u8)getBdatStringColumnValue(bdat, &lbl_eu_804FC168[0x143], row);
-    p->field_0x1634 = n;
-    if (n != 0) {
-        u8 kind = (u8)getBdatStringColumnValue(bdat, &lbl_eu_804FC168[0x14E], row);
-        p->field_0x1638 = (u32)(u8)getBdatStringColumnValue(bdat, &lbl_eu_804FC168[0x159], row);
-        p->field_0x163C = (u32)((u8)getBdatStringColumnValue(bdat, &lbl_eu_804FC168[0x165], row) * 10);
-        p->field_0x1640 = (u32)(u8)getBdatStringColumnValue(bdat, &lbl_eu_804FC168[0x16F], row);
-        p->field_0x1644 = (u32)(u8)getBdatStringColumnValue(bdat, &lbl_eu_804FC168[0x17B], row);
+    w132.w = getBdatStringColumnValue(bdatDC, &lbl_eu_804FC168[0x132], cap);
+    w139.w = getBdatStringColumnValue(bdatDC, &lbl_eu_804FC168[0x139], cap);
+    base13F.w = getBdatStringColumnValue(bdat, &lbl_eu_804FC168[0x13F], v->field_0x3F28);
+    s32 base = (s32)base13F.h + 10;
+    // mulhwu 0xcccd/srwi 3 division: unsigned 32-bit domain throughout
+    p->field_0x1604 = (u32)((u32)w132.h * (u32)base) / 10;
+    p->field_0x1608 = (u32)((u32)w139.h * (u32)base) / 10;
+    n1634.w = getBdatStringColumnValue(bdat, &lbl_eu_804FC168[0x143], v->field_0x3F28);
+    p->field_0x1634 = (u32)n1634.b;
+    if (n1634.b != 0) {
+        // kind lives across later calls: retail keeps it in a callee-saved reg
+        u8 kind = (u8)getBdatStringColumnValue(bdat, &lbl_eu_804FC168[0x14E], v->field_0x3F28);
+        c159.w = getBdatStringColumnValue(bdat, &lbl_eu_804FC168[0x159], v->field_0x3F28);
+        p->field_0x1638 = (u32)c159.b;
+        c165.w = getBdatStringColumnValue(bdat, &lbl_eu_804FC168[0x165], v->field_0x3F28);
+        p->field_0x163C = (u32)(c165.b * 10);
+        c16F.w = getBdatStringColumnValue(bdat, &lbl_eu_804FC168[0x16F], v->field_0x3F28);
+        p->field_0x1640 = (u32)c16F.b;
+        c17B.w = getBdatStringColumnValue(bdat, &lbl_eu_804FC168[0x17B], v->field_0x3F28);
+        p->field_0x1644 = (u32)c17B.b;
         if (kind == 2) p->field_0x1634 = p->field_0x1634 + 5;
         if (kind == 3) p->field_0x1634 = p->field_0x1634 + 10;
-        if (!(p->field_0x3374 & 0x40000)) {
+        // rlwinm bit 13 -> mask 0x2000 gates the first setup-buffer dispatch
+        if (!(p->field_0x3374 & 0x2000)) {
             cf::CfEneSetupBuf bufa;
             std::memset(&bufa, 0, 0x34);
             bufa.field_0x0 = p->field_0x3F10;
@@ -427,25 +474,28 @@ void cf::CfObjectEne::func_800ADDA8() {
             ((cf::CfBattleVt18*)((u8*)this + 8))->m18(&bufa);
         }
     }
-    u8 cnt = (u8)getBdatStringColumnValue(bdat, &lbl_eu_804FC168[0x18B], row);
-    if (cnt != 0) {
+    c18B.w = getBdatStringColumnValue(bdat, &lbl_eu_804FC168[0x18B], v->field_0x3F28);
+    if (c18B.b != 0) {
         cf::CfEneSetupBuf bufb;
         std::memset(&bufb, 0, 0x34);
         bufb.field_0x0 = p->field_0x3F10;
         bufb.field_0x4 = 0;
         bufb.field_0xC = 0xC3;
-        bufb.field_0x10 = cnt;
+        bufb.field_0x10 = (u32)c18B.b;
         bufb.field_0x20 = lbl_eu_80666968;
         ((cf::CfBattleVt18*)((u8*)this + 8))->m18(&bufb);
     }
-    p->field_0x3370 = (u32)(u16)getBdatStringColumnValue(bdat, &lbl_eu_804FC168[0x191], row);
+    c191.w = getBdatStringColumnValue(bdat, &lbl_eu_804FC168[0x191], v->field_0x3F28);
+    p->field_0x3370 = (u32)c191.h;
     ((cf::CfEneVtSetup3*)this)->vf21C(((cf::CfEneVtActs*)this)->vf20C());
     ((cf::CfEneVtTail*)this)->vf330();
     ((cf::CfEneVtTail*)this)->vf32C();
     ((cf::CfEneVt5E0*)this)->vf5E0();
-    if (p->field_0x3374 & 0x80000) {
+    // rlwinm bit 12 -> mask 0x1000
+    if (p->field_0x3374 & 0x1000) {
         p->field_0x3F04 |= 0x20000000;
     }
+    // retail calls the getter twice (test + argument)
     if (getUnk80664658() != 0) {
         func_801F4D50(getUnk80664658(), this);
     }
@@ -468,8 +518,6 @@ void CActorParam_UnkVirtualFunc118__Q22cf11CActorParamFv(void* self, float val) 
 
 void CActorParam_UnkVirtualFunc168__Q22cf11CActorParamFv(void* self, float val) { *(float*)((u8*)self + 0x1630) = val; }
 
-void cf::CActorParam::CActorParam_UnkVirtualFunc98() {}
-
 // us-800af534: CfObjectEne::func_800AEC68 (retail Fv; this in r3). Resets
 // the bdat manager, reads the enemy bdat column value (getFP on the
 // +0x3F14 name, row id at +0x3F28), multiplies it by the vtable +0xF0
@@ -478,20 +526,22 @@ void cf::CActorParam::CActorParam_UnkVirtualFunc98() {}
 // subobject (func_8014B7B0 / func_8015396C).
 void cf::CfObjectEne::func_800AEC68() {
     func_8003AA34();
-    cf::CfEneLookupView* v = (cf::CfEneLookupView*)this;
-    u16 value = (u16)getBdatStringColumnValue(getFP(v->field_0x3F14),
-                                              &lbl_eu_804FC168[0x19A],
-                                              v->field_0x3F28);
+    // addressable union pins the raw column word to a frame home across the
+    // slot +0xF0 vcall; the u16 punned read narrows on reload (retail lhz)
+    cf::CfEneColNarrow col;
+    col.w = getBdatStringColumnValue(getFP(((cf::CfEneLookupView*)this)->field_0x3F14),
+                                     &lbl_eu_804FC168[0x19A],
+                                     ((cf::CfEneLookupView*)this)->field_0x3F28);
     f32 base = ((cf::CfEneVtD4*)this)->mF0();
-    cf::CfEneF64Conv conv;
-    conv.w[1] = (u32)value;
-    conv.w[0] = 0x43300000;
-    f32 f = (f32)(conv.d - lbl_eu_806669A0);
-    ((cf::CfEneVtD4*)this)->mD4(lbl_eu_806669B0 * f * base);
+    f32 scaled = lbl_eu_806669B0 * (f32)col.h;
+    ((cf::CfEneVtD4*)this)->mD4(scaled * base);
     for (int i = 0; i < 6; i++)
         ((cf::CfEneVtD4*)this)->m288();
-    func_8014B7B0(&((cf::CfEneAI3380View*)this)->field_0x3380);
-    func_8015396C(&((cf::CfEneAI3380View2*)this)->field_0x3380, 0, 0);
+    // Different syntax families (pointer-add vs &subscript) stop MWCC from
+    // CSE-ing the subobject address into a callee-saved register - retail
+    // re-materializes addi r3, rX, 0x3380 at each call (cf. pluginBtl.cpp).
+    func_8014B7B0((u8*)this + 0x3380);
+    func_8015396C(&((u8*)this)[0x3380], 0, 0);
 }
 
 // us-800afd5c: CfObjectEne::CActorParam_UnkVirtualFunc167 (retail Fv; this
@@ -506,42 +556,46 @@ void cf::CfObjectEne::func_800AEC68() {
 void cf::CfObjectEne::CActorParam_UnkVirtualFunc167() {
     func_8003AA34();
     void* bdat = getFP(((cf::CfEneLookupView*)this)->field_0x3F14);
-    u32 s0 = getBdatStringColumnValue(bdat, &lbl_eu_804FC168[0x2A7], ((cf::CfEneLookupView*)this)->field_0x3F28);
+    char* cols = lbl_eu_804FC168;
+    // each column result is a u32 frame temp live across the slot +0x288
+    // virtual call that publishes it (retail spills to 0x2c/0x28/0x24(sp))
+    u32 s0 = getBdatStringColumnValue(bdat, &cols[0x2A7], ((cf::CfEneLookupView*)this)->field_0x3F28);
     ((cf::CfEneVtActs*)this)->vf288()[0] = (u16)s0;
-    u32 s1 = getBdatStringColumnValue(bdat, &lbl_eu_804FC168[0x2AC], ((cf::CfEneLookupView*)this)->field_0x3F28);
+    u32 s1 = getBdatStringColumnValue(bdat, &cols[0x2AC], ((cf::CfEneLookupView*)this)->field_0x3F28);
     ((cf::CfEneVtActs*)this)->vf288()[1] = (u16)s1;
-    u32 s2 = getBdatStringColumnValue(bdat, &lbl_eu_804FC168[0x2B1], ((cf::CfEneLookupView*)this)->field_0x3F28);
+    u32 s2 = getBdatStringColumnValue(bdat, &cols[0x2B1], ((cf::CfEneLookupView*)this)->field_0x3F28);
     ((cf::CfEneVtActs*)this)->vf288()[2] = (u16)s2;
     ((cf::CfEneVtActs*)this)->vf288()[3] = 0;
     ((cf::CfEneVtActs*)this)->vf288()[4] = 0;
     ((cf::CfEneVtActs*)this)->vf288()[5] = 0;
 
     func_8003AA34();
-    void* bdat2 = getFP(&lbl_eu_804FC168[0x2B6]);
+    u8* bdat2 = (u8*)getFP(&cols[0x2B6]);
     f32 zero = lbl_eu_80666968;
     f32 scale = lbl_eu_8066A20C;
     for (int i = 0; i < 6; i++) {
-        u16* slots = ((cf::CfEneVtActs*)this)->vf288();
-        u16 atkId = slots[(s16)i];
+        // name column addresses the raw symbol; the rest go through the
+        // offset copy (retail keeps both r29/r30 base forms)
+        u16 atkId = ((cf::CfEneVtActs*)this)->vf288()[(s16)i];
         if (atkId == 0) continue;
         cf::CfEneAtkParamView* atk = (cf::CfEneAtkParamView*)getAtkParam(((cf::CfEneVtActs*)this)->vf288(), i);
-        char* nm = (char*)getBdatStringColumnValue(bdat2, &lbl_eu_804FC168[0x0], atkId);
+        char* nm = (char*)getBdatStringColumnValue(bdat2, lbl_eu_804FC168, atkId);
         atk->field_0x20 = strlen(nm);
         strcpy(atk->name, nm);
-        u16 v1D = (u16)getBdatStringColumnValue(bdat2, &lbl_eu_804FC168[0x1D], atkId);
-        atk->field_0x78 = v1D;
+        u32 v1D = getBdatStringColumnValue(bdat2, &cols[0x1D], atkId);
+        atk->field_0x78 = (u16)v1D;
         atk->field_0x2C = zero;
         atk->field_0x30 = zero;
-        s16 v1EF = (s16)(s8)getBdatStringColumnValue(bdat2, &lbl_eu_804FC168[0x1EF], atkId);
-        atk->field_0x36 = v1EF;
-        s16 v2BE = (s16)(u8)getBdatStringColumnValue(bdat2, &lbl_eu_804FC168[0x2BE], atkId);
-        atk->field_0x38 = v2BE;
+        u32 v1EF = getBdatStringColumnValue(bdat2, &cols[0x1EF], atkId);
+        atk->field_0x36 = (s16)(s8)v1EF;
+        u32 v2BE = getBdatStringColumnValue(bdat2, &cols[0x2BE], atkId);
+        atk->field_0x38 = (s16)(u8)v2BE;
         atk->field_0x3A = 0;
         atk->field_0x42 = 0;
-        s16 v209 = (s16)(u8)getBdatStringColumnValue(bdat2, &lbl_eu_804FC168[0x209], atkId);
-        atk->field_0x3C = v209;
-        s16 v212 = (s16)(u8)getBdatStringColumnValue(bdat2, &lbl_eu_804FC168[0x212], atkId);
-        atk->field_0x40 = v212;
+        u32 v209 = getBdatStringColumnValue(bdat2, &cols[0x209], atkId);
+        atk->field_0x3C = (s16)(u8)v209;
+        u32 v212 = getBdatStringColumnValue(bdat2, &cols[0x212], atkId);
+        atk->field_0x40 = (s16)(u8)v212;
         atk->field_0x43 = 1;
         atk->field_0x44 = 1;
         atk->field_0x46 = 0;
@@ -549,22 +603,20 @@ void cf::CfObjectEne::CActorParam_UnkVirtualFunc167() {
         atk->field_0x5A = 0;
         atk->field_0x5C = 1;
         atk->field_0x5E = 0;
-        cf::CfEneRatesView* gr = ((cf::CfEneVtActs*)this)->vf20C();
+        f32 g48 = ((cf::CfEneVtActs*)this)->vf20C()->field_0x48;
         f32 gauge;
-        if (gr->field_0x48 == zero) {
-            gr = ((cf::CfEneVtActs*)this)->vf20C();
-            gauge = gr->field_0x44;
+        if (g48 == zero) {
+            gauge = ((cf::CfEneVtActs*)this)->vf20C()->field_0x44;
         } else {
-            gr = ((cf::CfEneVtActs*)this)->vf20C();
-            gauge = gr->field_0x48;
+            gauge = ((cf::CfEneVtActs*)this)->vf20C()->field_0x48;
         }
         atk->field_0x60 = gauge;
         f32 rate = ((cf::CfEneVtActs*)this)->vf1C4()->field_0x0;
         atk->field_0x64 = (s16)(rate * scale);
-        u8 v256 = (u8)getBdatStringColumnValue(bdat2, &lbl_eu_804FC168[0x256], atkId);
-        atk->field_0x76 = v256;
-        u8 v25E = (u8)getBdatStringColumnValue(bdat2, &lbl_eu_804FC168[0x25E], atkId);
-        atk->field_0x77 = v25E;
+        u32 v256 = getBdatStringColumnValue(bdat2, &cols[0x256], atkId);
+        atk->field_0x76 = (u8)v256;
+        u32 v25E = getBdatStringColumnValue(bdat2, &cols[0x25E], atkId);
+        atk->field_0x77 = (u8)v25E;
     }
 }
 
@@ -578,98 +630,108 @@ void cf::CfObjectEne::CActorParam_UnkVirtualFunc167() {
 // unk44 == 0, accumulates the +0x78 flag bits (0x40000000 always,
 // 0x80000000 for unk42 == 1) and scales the +0x2C gauge by the 0x8000 bit.
 void cf::CfObjectEne::CActorParam_UnkVirtualFunc166() {
-    func_8003AA34();
+    // Retail pins two 0x4330xxxx conversion words (sp+0xA8/sp+0xB0) for the
+    // whole function; only the low word is refreshed per conversion.
+    cf::CfEneF64Conv cvA;
+    cf::CfEneF64Conv cvB;
+    cvA.w[0] = 0x43300000;
+    cvB.w[0] = 0x43300000;
     cf::CfEneLookupView* v = (cf::CfEneLookupView*)this;
+    func_8003AA34();
     void* bdat = getFP(v->field_0x3F14);
+    const char* tbl = (const char*)lbl_eu_804FC168;
     u16 row = v->field_0x3F28;
-    u32 a0 = getBdatStringColumnValue(bdat, &lbl_eu_804FC168[0x1A7], row);
-    setArtsSlotByIdx(((cf::CfEneVtActs*)this)->vf27C(), (u16)a0, 0);
-    u32 a1 = getBdatStringColumnValue(bdat, &lbl_eu_804FC168[0x1AD], row);
-    setArtsSlotByIdx(((cf::CfEneVtActs*)this)->vf27C(), (u16)a1, 1);
-    u32 a2 = getBdatStringColumnValue(bdat, &lbl_eu_804FC168[0x1B3], row);
-    setArtsSlotByIdx(((cf::CfEneVtActs*)this)->vf27C(), (u16)a2, 2);
-    u32 a3 = getBdatStringColumnValue(bdat, &lbl_eu_804FC168[0x1B9], row);
-    setArtsSlotByIdx(((cf::CfEneVtActs*)this)->vf27C(), (u16)a3, 3);
-    u32 a4 = getBdatStringColumnValue(bdat, &lbl_eu_804FC168[0x1BF], row);
-    setArtsSlotByIdx(((cf::CfEneVtActs*)this)->vf27C(), (u16)a4, 4);
-    u32 a5 = getBdatStringColumnValue(bdat, &lbl_eu_804FC168[0x1C5], row);
-    setArtsSlotByIdx(((cf::CfEneVtActs*)this)->vf27C(), (u16)a5, 5);
-    u32 a6 = getBdatStringColumnValue(bdat, &lbl_eu_804FC168[0x1CB], row);
-    setArtsSlotByIdx(((cf::CfEneVtActs*)this)->vf27C(), (u16)a6, 6);
-    u32 a7 = getBdatStringColumnValue(bdat, &lbl_eu_804FC168[0x1D1], row);
-    setArtsSlotByIdx(((cf::CfEneVtActs*)this)->vf27C(), (u16)a7, 7);
+    u32 a0 = getBdatStringColumnValue(bdat, tbl + 0x1A7, row);
+    setArtsSlotByIdx(((cf::CfEneVtActs*)this)->vf27C(), a0, 0);
+    u32 a1 = getBdatStringColumnValue(bdat, tbl + 0x1AD, row);
+    setArtsSlotByIdx(((cf::CfEneVtActs*)this)->vf27C(), a1, 1);
+    u32 a2 = getBdatStringColumnValue(bdat, tbl + 0x1B3, row);
+    setArtsSlotByIdx(((cf::CfEneVtActs*)this)->vf27C(), a2, 2);
+    u32 a3 = getBdatStringColumnValue(bdat, tbl + 0x1B9, row);
+    setArtsSlotByIdx(((cf::CfEneVtActs*)this)->vf27C(), a3, 3);
+    u32 a4 = getBdatStringColumnValue(bdat, tbl + 0x1BF, row);
+    setArtsSlotByIdx(((cf::CfEneVtActs*)this)->vf27C(), a4, 4);
+    u32 a5 = getBdatStringColumnValue(bdat, tbl + 0x1C5, row);
+    setArtsSlotByIdx(((cf::CfEneVtActs*)this)->vf27C(), a5, 5);
+    u32 a6 = getBdatStringColumnValue(bdat, tbl + 0x1CB, row);
+    setArtsSlotByIdx(((cf::CfEneVtActs*)this)->vf27C(), a6, 6);
+    u32 a7 = getBdatStringColumnValue(bdat, tbl + 0x1D1, row);
+    setArtsSlotByIdx(((cf::CfEneVtActs*)this)->vf27C(), a7, 7);
 
     func_8003AA34();
-    void* bdat2 = getFP(&lbl_eu_804FC168[0x1D7]);
-    cf::CfEneF64Conv cvA;   // magic conversion pairs (retail pins them to the frame
-    cf::CfEneF64Conv cvB;   // at 0xA8/0xB0 and hoists the magic double + divisors
-    for (int i = 0; i < 8; i++) {
+    void* bdat2 = getFP(&tbl[0x1D7]);
+    // Hoisted constants the loop keeps live across calls (retail f29/f30/f31/f28)
+    f32 subA = lbl_eu_806669A0;
+    f32 divB = lbl_eu_8066697C;
+    f32 cstFF = lbl_eu_806669B4;
+    f32 divC = lbl_eu_80666994;
+    int i;
+    s16 zero46 = 0;  // retail keeps a dedicated zero reg for field_0x46
+    for (i = 0; i < 8; i++) {
         u16 slot = func_80153CAC(((cf::CfEneVtActs*)this)->vf27C(), (s16)i);
         if (slot == 0) continue;
         cf::CfEneArtsParamView* arts = (cf::CfEneArtsParamView*)getArtsParamByIdx(((cf::CfEneVtActs*)this)->vf27C(), i);
-        char* nm = (char*)getBdatStringColumnValue(bdat2, &lbl_eu_804FC168[0x0], slot);
+        // name column referenced through the raw label (not tbl), as in retail
+        char* nm = (char*)getBdatStringColumnValue(bdat2, (char*)lbl_eu_804FC168, slot);
         arts->field_0x20 = strlen(nm);
         strcpy(arts->name, nm);
-        arts->field_0x78 = getBdatStringColumnValue(bdat2, &lbl_eu_804FC168[0x1D], slot);
-        cvA.w[0] = 0x43300000;
-        cvA.w[1] = (u32)(u8)getBdatStringColumnValue(bdat2, &lbl_eu_804FC168[0x1E0], slot);
-        arts->field_0x2C = ((f32)(cvA.d - lbl_eu_806669A0) / lbl_eu_8066697C);
-        u8 e5 = (u8)getBdatStringColumnValue(bdat2, &lbl_eu_804FC168[0x1E5], slot);
+        arts->field_0x78 = getBdatStringColumnValue(bdat2, tbl + 0x1D, slot);
+        cvA.w[1] = (u32)(u8)getBdatStringColumnValue(bdat2, tbl + 0x1E0, slot);
+        arts->field_0x2C = ((f32)(cvA.d - subA) / divB);
+        u8 e5 = (u8)getBdatStringColumnValue(bdat2, tbl + 0x1E5, slot);
         if (e5 == 0xFF) {
-            arts->field_0x30 = lbl_eu_806669B4;
+            arts->field_0x30 = cstFF;
         } else {
-            e5 = (u8)getBdatStringColumnValue(bdat2, &lbl_eu_804FC168[0x1E5], slot);
-            cvB.w[0] = 0x43300000;
+            e5 = (u8)getBdatStringColumnValue(bdat2, tbl + 0x1E5, slot);
             cvB.w[1] = (u32)e5;
-            arts->field_0x30 = (f32)(cvB.d - lbl_eu_806669A0);
+            arts->field_0x30 = (f32)(cvB.d - subA);
         }
-        arts->field_0x34 = (s16)(s8)getBdatStringColumnValue(bdat2, &lbl_eu_804FC168[0x1EC], slot);
-        arts->field_0x36 = (s16)(s8)getBdatStringColumnValue(bdat2, &lbl_eu_804FC168[0x1EF], slot);
-        arts->field_0x38 = (s16)getBdatStringColumnValue(bdat2, &lbl_eu_804FC168[0x1F3], slot);
-        arts->field_0x3A = (s16)getBdatStringColumnValue(bdat2, &lbl_eu_804FC168[0x1F9], slot);
-        arts->field_0x42 = (u8)getBdatStringColumnValue(bdat2, &lbl_eu_804FC168[0x1FF], slot);
-        u8 a2 = (u8)getBdatStringColumnValue(bdat2, &lbl_eu_804FC168[0xA2], slot);
-        if (a2 != 0)
-            arts->field_0x2A = (u8)getBdatStringColumnValue(bdat2, &lbl_eu_804FC168[0xA2], slot);
-        arts->field_0x3C = (u16)(u8)getBdatStringColumnValue(bdat2, &lbl_eu_804FC168[0x209], slot);
-        arts->field_0x40 = (u16)(u8)getBdatStringColumnValue(bdat2, &lbl_eu_804FC168[0x212], slot);
-        arts->field_0x43 = (u8)getBdatStringColumnValue(bdat2, &lbl_eu_804FC168[0x217], slot);
-        arts->field_0x44 = (u8)getBdatStringColumnValue(bdat2, &lbl_eu_804FC168[0x220], slot);
-        arts->field_0x46 = 0;
+        arts->field_0x34 = (s16)(s8)getBdatStringColumnValue(bdat2, tbl + 0x1EC, slot);
+        arts->field_0x36 = (s16)(s8)getBdatStringColumnValue(bdat2, tbl + 0x1EF, slot);
+        arts->field_0x38 = (s16)getBdatStringColumnValue(bdat2, tbl + 0x1F3, slot);
+        arts->field_0x3A = (s16)getBdatStringColumnValue(bdat2, tbl + 0x1F9, slot);
+        arts->field_0x42 = (u8)getBdatStringColumnValue(bdat2, tbl + 0x1FF, slot);
+        u8 a2b = (u8)getBdatStringColumnValue(bdat2, tbl + 0xA2, slot);
+        if (a2b != 0)
+            arts->field_0x2A = (u8)getBdatStringColumnValue(bdat2, tbl + 0xA2, slot);
+        arts->field_0x3C = (u16)(u8)getBdatStringColumnValue(bdat2, tbl + 0x209, slot);
+        arts->field_0x40 = (u16)(u8)getBdatStringColumnValue(bdat2, tbl + 0x212, slot);
+        arts->field_0x43 = (u8)getBdatStringColumnValue(bdat2, tbl + 0x217, slot);
+        arts->field_0x44 = (u8)getBdatStringColumnValue(bdat2, tbl + 0x220, slot);
+        arts->field_0x46 = zero46;
+        // simple attack classes (field_0x3C in {0,1}) without the 0x44 flag are
+        // initialized through the record vtable and skipped
         if ((u16)(arts->field_0x3C - 1) <= 1 && arts->field_0x44 == 0) {
             ((cf::CfEneAtkVtblRec*)arts)->vtInit();
             continue;
         }
-        arts->field_0x58 = (u16)(u8)getBdatStringColumnValue(bdat2, &lbl_eu_804FC168[0x229], slot);
-        arts->field_0x5A = (u16)(u8)getBdatStringColumnValue(bdat2, &lbl_eu_804FC168[0x231], slot);
-        arts->field_0x5C = (u16)(u8)getBdatStringColumnValue(bdat2, &lbl_eu_804FC168[0x237], slot);
-        arts->field_0x5E = (u16)(u8)getBdatStringColumnValue(bdat2, &lbl_eu_804FC168[0x23B], slot);
-        u16 w246 = (u16)getBdatStringColumnValue(bdat2, &lbl_eu_804FC168[0x246], slot);
+        arts->field_0x58 = (u16)(u8)getBdatStringColumnValue(bdat2, tbl + 0x229, slot);
+        arts->field_0x5A = (u16)(u8)getBdatStringColumnValue(bdat2, tbl + 0x231, slot);
+        arts->field_0x5C = (u16)(u8)getBdatStringColumnValue(bdat2, tbl + 0x237, slot);
+        arts->field_0x5E = (u16)(u8)getBdatStringColumnValue(bdat2, tbl + 0x23B, slot);
+        u16 w246 = (u16)getBdatStringColumnValue(bdat2, tbl + 0x246, slot);
         f32 r44 = ((cf::CfEneVtActs*)this)->vf20C()->field_0x44;
-        cvA.w[0] = 0x43300000;
         cvA.w[1] = (u32)w246;
-        arts->field_0x60 = (f32)(cvA.d - lbl_eu_806669A0) / lbl_eu_80666994 + r44;
-        arts->field_0x64 = (u16)getBdatStringColumnValue(bdat2, &lbl_eu_804FC168[0x24C], slot);
-        arts->field_0x76 = (u8)getBdatStringColumnValue(bdat2, &lbl_eu_804FC168[0x25E], slot);
-        arts->field_0x77 = (u8)getBdatStringColumnValue(bdat2, &lbl_eu_804FC168[0x262], slot);
-        arts->field_0x48 = (u16)getBdatStringColumnValue(bdat2, &lbl_eu_804FC168[0x26A], slot);
-        arts->field_0x4A = (u16)(u8)getBdatStringColumnValue(bdat2, &lbl_eu_804FC168[0x271], slot);
-        arts->field_0x4C = (u16)(u8)getBdatStringColumnValue(bdat2, &lbl_eu_804FC168[0x279], slot);
-        cvB.w[0] = 0x43300000;
-        cvB.w[1] = (u32)(u16)getBdatStringColumnValue(bdat2, &lbl_eu_804FC168[0x281], slot);
-        arts->field_0x50 = (f32)(cvB.d - lbl_eu_806669A0) / lbl_eu_8066697C;
-        cvA.w[0] = 0x43300000;
-        cvA.w[1] = (u32)(u8)getBdatStringColumnValue(bdat2, &lbl_eu_804FC168[0x288], slot);
-        arts->field_0x54 = (f32)(cvA.d - lbl_eu_806669A0) / lbl_eu_8066697C;
-        arts->field_0x66 = (u8)getBdatStringColumnValue(bdat2, &lbl_eu_804FC168[0x28F], slot);
-        arts->field_0x67 = (u8)getBdatStringColumnValue(bdat2, &lbl_eu_804FC168[0x297], slot);
-        arts->field_0x68 = (s16)getBdatStringColumnValue(bdat2, &lbl_eu_804FC168[0x29F], slot);
-        arts->field_0x6A = (s16)getBdatStringColumnValue(bdat2, &lbl_eu_804FC168[0x2A7], slot);
+        arts->field_0x60 = (f32)(cvA.d - subA) / divC + r44;
+        arts->field_0x64 = (u16)getBdatStringColumnValue(bdat2, tbl + 0x24C, slot);
+        arts->field_0x76 = (u8)getBdatStringColumnValue(bdat2, tbl + 0x25E, slot);
+        arts->field_0x77 = (u8)getBdatStringColumnValue(bdat2, tbl + 0x262, slot);
+        arts->field_0x48 = (u16)getBdatStringColumnValue(bdat2, tbl + 0x26A, slot);
+        arts->field_0x4A = (u16)(u8)getBdatStringColumnValue(bdat2, tbl + 0x271, slot);
+        arts->field_0x4C = (u16)(u8)getBdatStringColumnValue(bdat2, tbl + 0x279, slot);
+        cvB.w[1] = (u32)(u16)getBdatStringColumnValue(bdat2, tbl + 0x281, slot);
+        arts->field_0x50 = (f32)(cvB.d - subA) / divB;
+        cvA.w[1] = (u32)(u8)getBdatStringColumnValue(bdat2, tbl + 0x288, slot);
+        arts->field_0x54 = (f32)(cvA.d - subA) / divB;
+        arts->field_0x66 = (u8)getBdatStringColumnValue(bdat2, tbl + 0x28F, slot);
+        arts->field_0x67 = (u8)getBdatStringColumnValue(bdat2, tbl + 0x297, slot);
+        arts->field_0x68 = (s16)getBdatStringColumnValue(bdat2, tbl + 0x29F, slot);
+        arts->field_0x6A = (s16)getBdatStringColumnValue(bdat2, tbl + 0x2A7, slot);
         arts->field_0x78 |= 0x40000000;
         if (arts->field_0x42 == 1)
             arts->field_0x78 |= 0x80000000;
         if (arts->field_0x78 & 0x8000)
-            arts->field_0x2C *= lbl_eu_80666994;
+            arts->field_0x2C *= divC;
     }
 }
 // us-800b00b0: bdat lookup helper. Reads the u16 row id at self+0x456C
@@ -703,29 +765,39 @@ void func_800AF870(cf::CfObjectEne* self) {
     // retail reloads the +0x3F60 target for the flag test (short-lived r4)
     if (((((cf::CfEneMoveTgtView*)((cf::CfActorField3F60*)self)->field_0x3F60)->field_0x4EC) & 0x100) == 0) return;
     if (((cf::CfEneVt2BC*)self)->m2BC() != 0) return;
+    cf::CfEneBmView* bm = (cf::CfEneBmView*)getInstance__Q22cf14CBattleManagerFv();
+    // goto form blocks MWCC's unsigned range-check fusion
+    // (cf. CfObjectPc.cpp func_801575B0)
     int ok = 0;
-    u8 part = ((cf::CfEneBmView*)getInstance__Q22cf14CBattleManagerFv())->field_0x1AA;
-    if (part >= 1 && part <= 0x18) ok = 1;
+    if (bm->field_0x1AA < 1) goto bmCheck;
+    if (0x18 < bm->field_0x1AA) goto bmCheck;
+    ok = 1;
+bmCheck:
     if (ok != 0) return;
     if (func_801BA2C8(&((cf::CfEneBmView*)getInstance__Q22cf14CBattleManagerFv())->field_0x216C) != 0) return;
-    if (((cf::CfEneBmView*)getInstance__Q22cf14CBattleManagerFv())->field_0x20C8 != 0) return;
-    // channel = table halfword at byte offset mode*100, plus the offset itself
-    u32 modeOff = (u32)lbl_eu_80663E42 * 100;
+    cf::CfEneBmView* bm3 = (cf::CfEneBmView*)getInstance__Q22cf14CBattleManagerFv();
+    s16 idx = bm3->field_0x20C8;
+    if (idx != 0) return;
+    // mode word is read SDA-indexed by the (always-zero) idx register
+    u32 modeOff = (u32)*(u16*)((u8*)&lbl_eu_80663E42 + idx) * 100;
     int channel = (int)*(u16*)((u8*)&lbl_eu_80663E44 + modeOff) + (int)modeOff;
     s32 key = ((cf::CfEneMoveTgtView*)((cf::CfActorField3F60*)self)->field_0x3F60)->field_0x4B0;
     func_8003AA34();
     u8* bdat = (u8*)lbl_eu_806640D4;
-    const char* tbl = (const char*)lbl_eu_804FC168;
     int row = (int)func_8003B41C(bdat);
     int endRow = row + (int)func_8003B1EC(bdat);
+    const char* tbl = (const char*)lbl_eu_804FC168;
     for (; row < endRow; row++) {
         u8 model = (u8)getBdatStringColumnValue(bdat, tbl + 0x2C3, row);
         if ((s32)model != key) continue;
         u16 ch = (u16)getBdatStringColumnValue(bdat, tbl + 0x2CA, row);
         if ((s32)ch != channel) continue;
         u8 reward = (u8)getBdatStringColumnValue(bdat, tbl + 0x2CE, row);
+        // pin the scene-time source across the m8C() call so MWCC hoists
+        // the SDA load above the bctrl (retail keeps it in a saved reg)
+        CScn* sceneSrc = lbl_eu_80663E14;
         f32 sub = ((cf::CfEneSubVt64*)self)->m8C();
-        f32 t = func_80496288(lbl_eu_80663E14);
+        f32 t = func_80496288(sceneSrc);
         f32 now = t * sub + ((cf::CfEneTailView*)self)->field_0x45CC;
         // retail stores the accumulated time back BEFORE the threshold compare
         ((cf::CfEneTailView*)self)->field_0x45CC = now;
@@ -754,11 +826,11 @@ void func_800AF870(cf::CfObjectEne* self) {
     }
 }
 
-extern "C" int CfObjectActor_UnkVirtualFunc2__Q22cf13CfObjectActorFv(void* self) { return 1; }
+int CfObjectActor_UnkVirtualFunc2__Q22cf13CfObjectActorFv(cf::CfObjectActor* self) { return 1; }
 
-extern "C" void CActorParam_UnkVirtualFunc3__Q22cf13CfObjectActorFv(void) {}
+void CActorParam_UnkVirtualFunc3__Q22cf13CfObjectActorFv(void) {}
 
-extern "C" void CActorParam_UnkVirtualFunc2__Q22cf13CfObjectActorFv(void) {}
+void CActorParam_UnkVirtualFunc2__Q22cf13CfObjectActorFv(void) {}
 
 struct If38 {
     virtual void _v008(); virtual void _v00C(); virtual void _v010(); virtual void _v014();
@@ -766,17 +838,17 @@ struct If38 {
     virtual void _v028(); virtual void _v02C(); virtual void _v030(); virtual void _v034();
     virtual void vf38();
 };
-extern "C" void CActorState_UnkVirtualFunc1__Q22cf11CActorStateFv(cf::CActorState* self) {
+void CActorState_UnkVirtualFunc1__Q22cf11CActorStateFv(cf::CActorState* self) {
     reinterpret_cast<If38*>(*(void**)((u8*)self + 4))->vf38();
 }
 
-extern "C" void* CBattleState_UnkVirtualFunc28__Q22cf12CBattleStateFv(cf::CBattleState* self, unsigned long index) {
+u8* CBattleState_UnkVirtualFunc28__Q22cf12CBattleStateFv(cf::CBattleState* self, unsigned long index) {
     return ((cf::CBattleState*)self)->unk152C + (index << 4);
 }
 
-extern "C" void* CBattleState_UnkVirtualFunc27__Q22cf12CBattleStateFv(cf::CBattleState* self) { return (void*)((u8*)self + 0x152c); }
+u8* CBattleState_UnkVirtualFunc27__Q22cf12CBattleStateFv(cf::CBattleState* self) { return (u8*)self + 0x152c; }
 
-extern "C" void* CBattleState_UnkVirtualFunc25__Q22cf12CBattleStateFv(cf::CBattleState* self) { return (void*)((u8*)self + 0x8); }
+u8* CBattleState_UnkVirtualFunc25__Q22cf12CBattleStateFv(cf::CBattleState* self) { return (u8*)self + 0x8; }
 
 // us-800b0404: retail copies 0x1520 bytes (0x2a4 * 8) from src to this->unk8
 // (offset 0x8) with a counted lwzu/stwu loop - full struct assignment of the
@@ -789,32 +861,32 @@ void CBattleState_UnkVirtualFunc24__Q22cf12CBattleStateFv(cf::CBattleState* self
 
 
 
-extern "C" void CActorParam_UnkVirtualFunc181__Q22cf11CActorParamFv(cf::CActorParam* self, u32 val) { *(u32*)((u8*)self + 0x2A80) = val; }
+void CActorParam_UnkVirtualFunc181__Q22cf11CActorParamFv(cf::CActorParam* self, u32 val) { *(u32*)((u8*)self + 0x2A80) = val; }
 
-extern "C" int CActorParam_UnkVirtualFunc178__Q22cf11CActorParamFv(cf::CActorParam* self) { return 0; }
+int CActorParam_UnkVirtualFunc178__Q22cf11CActorParamFv(cf::CActorParam* self) { return 0; }
 
-extern "C" void CActorParam_UnkVirtualFunc173__Q22cf11CActorParamFv(void) {}
+void CActorParam_UnkVirtualFunc173__Q22cf11CActorParamFv(void) {}
 
-extern "C" u32 CActorParam_UnkVirtualFunc172__Q22cf11CActorParamFv(cf::CActorParam* self) { return *(u32*)((u8*)self + 0x3370); }
+u32 CActorParam_UnkVirtualFunc172__Q22cf11CActorParamFv(cf::CActorParam* self) { return *(u32*)((u8*)self + 0x3370); }
 
-extern "C" float CActorParam_UnkVirtualFunc171__Q22cf11CActorParamFv(cf::CActorParam* self) { return *(float*)((u8*)self + 0x1630); }
+float CActorParam_UnkVirtualFunc171__Q22cf11CActorParamFv(cf::CActorParam* self) { return *(float*)((u8*)self + 0x1630); }
 
-extern "C" float CActorParam_UnkVirtualFunc170__Q22cf11CActorParamFv(cf::CActorParam* self) {
-    extern float lbl_eu_8066A1F8;
+float CActorParam_UnkVirtualFunc170__Q22cf11CActorParamFv(cf::CActorParam* self) {
+    // lbl_eu_8066A1F8 declared (const form) in CfObjectEne.hpp / CChain.hpp
     return lbl_eu_8066A1F8 - *(float*)((char*)self + 0x1630);
 }
 
-extern "C" float CActorParam_UnkVirtualFunc169__Q22cf11CActorParamFv(cf::CActorParam* self) { return *(float*)((u8*)self + 0x1630); }
+float CActorParam_UnkVirtualFunc169__Q22cf11CActorParamFv(cf::CActorParam* self) { return *(float*)((u8*)self + 0x1630); }
 
-extern "C" void* CActorParam_UnkVirtualFunc164__Q22cf11CActorParamFv(cf::CActorParam* self) { return (void*)((u8*)self + 0x164a); }
+void* CActorParam_UnkVirtualFunc164__Q22cf11CActorParamFv(cf::CActorParam* self) { return (void*)((u8*)self + 0x164a); }
 
-extern "C" void* CActorParam_UnkVirtualFunc163__Q22cf11CActorParamFv(cf::CActorParam* self) { return (void*)((u8*)self + 0x1648); }
+void* CActorParam_UnkVirtualFunc163__Q22cf11CActorParamFv(cf::CActorParam* self) { return (void*)((u8*)self + 0x1648); }
 
-extern "C" u32 CActorParam_UnkVirtualFunc162__Q22cf11CActorParamFv(cf::CActorParam* self) { return *(u32*)((u8*)self + 0x336C); }
+u32 CActorParam_UnkVirtualFunc162__Q22cf11CActorParamFv(cf::CActorParam* self) { return *(u32*)((u8*)self + 0x336C); }
 
-extern "C" void CActorParam_UnkVirtualFunc161__Q22cf11CActorParamFv(cf::CActorParam* self, u32 val) { *(u32*)((u8*)self + 0x336C) = val; }
+void CActorParam_UnkVirtualFunc161__Q22cf11CActorParamFv(cf::CActorParam* self, u32 val) { *(u32*)((u8*)self + 0x336C) = val; }
 
-extern "C" void* CActorParam_UnkVirtualFunc151__Q22cf11CActorParamFv(cf::CActorParam* self) { return (void*)((u8*)self + 0x3358); }
+void* CActorParam_UnkVirtualFunc151__Q22cf11CActorParamFv(cf::CActorParam* self) { return (void*)((u8*)self + 0x3358); }
 
 // us-800b04d0: zeroes the 8-entry CActorParam_UnkStruct5 array at 0x1928.
 // Retail is fully unrolled (48 straight stores: the u32 slot then the five
@@ -846,9 +918,9 @@ void* CActorParam_UnkVirtualFunc145__Q22cf11CActorParamFv(cf::CActorParam* self,
     return &((cf::CActorParamUnk1928View*)self)->entries[idx];
 }
 
-extern "C" void* CActorParam_UnkVirtualFunc147__Q22cf11CActorParamFv(cf::CActorParam* self) { return (void*)((u8*)self + 0x1928); }
+void* CActorParam_UnkVirtualFunc147__Q22cf11CActorParamFv(cf::CActorParam* self) { return (void*)((u8*)self + 0x1928); }
 
-extern "C" u32 CActorParam_UnkVirtualFunc139__Q22cf11CActorParamFv(cf::CActorParam* self) { return *(u32*)((u8*)self + 0x2A80); }
+u32 CActorParam_UnkVirtualFunc139__Q22cf11CActorParamFv(cf::CActorParam* self) { return *(u32*)((u8*)self + 0x2A80); }
 
 void cf::CActorParam::CActorParam_UnkVirtualFunc134() {
     *(u8*)((u8*)this + 0x3354) = 0;
@@ -859,13 +931,13 @@ u8 CActorParam_UnkVirtualFunc133__Q22cf11CActorParamFv(cf::CActorParam* self) {
     return ((cf::CActorParam3354View*)self)->field_0x3354;
 }
 
-extern "C" void* CActorParam_UnkVirtualFunc131__Q22cf11CActorParamFv(cf::CActorParam* self) { return (void*)((u8*)self + 0x31dc); }
+void* CActorParam_UnkVirtualFunc131__Q22cf11CActorParamFv(cf::CActorParam* self) { return (void*)((u8*)self + 0x31dc); }
 
-extern "C" void* CActorParam_UnkVirtualFunc130__Q22cf11CActorParamFv(cf::CActorParam* self, unsigned long index) { return (u8*)self + index * 0xBC + 0x2A84; }
+void* CActorParam_UnkVirtualFunc130__Q22cf11CActorParamFv(cf::CActorParam* self, unsigned long index) { return (u8*)self + index * 0xBC + 0x2A84; }
 
-extern "C" u32 CActorParam_UnkVirtualFunc128__Q22cf11CActorParamFv(cf::CActorParam* self) { return *(u32*)((u8*)self + 0x15E0); }
+u32 CActorParam_UnkVirtualFunc128__Q22cf11CActorParamFv(cf::CActorParam* self) { return *(u32*)((u8*)self + 0x15E0); }
 
-extern "C" void* CActorParam_UnkVirtualFunc124__Q22cf11CActorParamFv(cf::CActorParam* self) { return (void*)((u8*)self + 0x2740); }
+void* CActorParam_UnkVirtualFunc124__Q22cf11CActorParamFv(cf::CActorParam* self) { return (void*)((u8*)self + 0x2740); }
 
 // us-800b0620: CActorParam::CActorParam_UnkVirtualFunc123. Retail symbol is
 // Fv but the real ABI passes (self, r4 = attack-set data block): copies the
@@ -938,7 +1010,7 @@ void CActorParam_UnkVirtualFunc123__Q22cf11CActorParamFv(cf::CActorParam* self,
     } while (d < end);
 }
 
-extern "C" void* CActorParam_UnkVirtualFunc121__Q22cf11CActorParamFv(cf::CActorParam* self) { return (void*)((u8*)self + 0x19e8); }
+void* CActorParam_UnkVirtualFunc121__Q22cf11CActorParamFv(cf::CActorParam* self) { return (void*)((u8*)self + 0x19e8); }
 
 // us-800b07e8: CActorParam::CActorParam_UnkVirtualFunc120 (Fv retail; real
 // ABI (self, r4 = arts-set data block)): copies the 0x34-byte arts-set
@@ -949,14 +1021,12 @@ extern "C" void* CActorParam_UnkVirtualFunc121__Q22cf11CActorParamFv(cf::CActorP
 void CActorParam_UnkVirtualFunc120__Q22cf11CActorParamFv(cf::CActorParam* self,
                                                          const cf::CfEneArtsData* src) {
     cf::CfEneArtsArea* dst = (cf::CfEneArtsArea*)self;
-    const cf::CfEneArtsEntry* s = &src->records[0];
-    cf::CfEneArtsEntry* d = &dst->records[0];
+    const volatile cf::CfEneArtsEntry* s = &src->records[0];
+    volatile cf::CfEneArtsEntry* d = &dst->records[0];
     cf::CfEneArtsEntry* end = &dst->records[24];
-    // retail expands the 0x34 header copy field-by-field, conservatively
-    // serialized (loads cannot move above earlier stores): both sides are
-    // accessed through one common view type.
-    // volatile keeps each access strictly in program order (retail never
-    // hoists the header loads above the early stores)
+    // retail expands the 0x34 header copy field-by-field; volatile keeps each
+    // access strictly in program order (plain assignments collapse into a
+    // block struct copy, which retail does not emit)
     volatile cf::CfEneArtsHdrBlock* vh = (volatile cf::CfEneArtsHdrBlock*)&dst->header;
     const volatile cf::CfEneArtsSrcHdrBlock* vsh =
         (const volatile cf::CfEneArtsSrcHdrBlock*)&src->header;
@@ -988,8 +1058,8 @@ void CActorParam_UnkVirtualFunc120__Q22cf11CActorParamFv(cf::CActorParam* self,
     vh->header.field_30 = tA;
     vh->header.field_2C = tB;
     do {
-        d->field_0x20 = strlen(s->name);
-        strcpy(d->name, s->name);
+        d->field_0x20 = strlen((char*)s->name);
+        strcpy((char*)d->name, (const char*)s->name);
         d->field_0x24 = s->field_0x24;
         d->field_0x28 = s->field_0x28;
         d->field_0x2A = s->field_0x2A;
@@ -1061,30 +1131,29 @@ void CActorParam_UnkVirtualFunc107__Q22cf11CActorParamFv(cf::CActorParam* self, 
     ((cf::CfObjectEne183AView*)self)->field_0x183A = val;
 }
 
-extern "C" void CActorParam_UnkVirtualFunc105__Q22cf11CActorParamFv(cf::CActorParam* self, float val) { *(float*)((u8*)self + 0x15fc) = val; }
+void CActorParam_UnkVirtualFunc105__Q22cf11CActorParamFv(cf::CActorParam* self, float val) { *(float*)((u8*)self + 0x15fc) = val; }
 
-extern "C" void* CActorParam_UnkVirtualFunc104__Q22cf11CActorParamFv(cf::CActorParam* self) { return (void*)((u8*)self + 0x15fc); }
+void* CActorParam_UnkVirtualFunc104__Q22cf11CActorParamFv(cf::CActorParam* self) { return (void*)((u8*)self + 0x15fc); }
 
-extern float lbl_eu_80666968;
+// (lbl_eu_80666968 declared in CfObjectEne.hpp)
 void cf::CActorParam::CActorParam_UnkVirtualFunc103() {
     *(f32*)((u8*)this + 0x15FC) = lbl_eu_80666968;
 }
 
-extern "C" void* CActorParam_UnkVirtualFunc102__Q22cf11CActorParamFv(cf::CActorParam* self) { return (void*)((u8*)self + 0x18d4); }
+void* CActorParam_UnkVirtualFunc102__Q22cf11CActorParamFv(cf::CActorParam* self) { return (void*)((u8*)self + 0x18d4); }
 
-extern "C" void* CActorParam_UnkVirtualFunc101__Q22cf11CActorParamFv(cf::CActorParam* self) { return (void*)((u8*)self + 0x185c); }
+void* CActorParam_UnkVirtualFunc101__Q22cf11CActorParamFv(cf::CActorParam* self) { return (void*)((u8*)self + 0x185c); }
 
-extern "C" void* CActorParam_UnkVirtualFunc99__Q22cf11CActorParamFv(cf::CActorParam* self) { return (void*)((u8*)self + 0x17e4); }
+void* CActorParam_UnkVirtualFunc99__Q22cf11CActorParamFv(cf::CActorParam* self) { return (void*)((u8*)self + 0x17e4); }
 
-extern "C" void* CActorParam_UnkVirtualFunc97__Q22cf11CActorParamFv(cf::CActorParam* self) { return (void*)((u8*)self + 0x1792); }
+void* CActorParam_UnkVirtualFunc97__Q22cf11CActorParamFv(cf::CActorParam* self) { return (void*)((u8*)self + 0x1792); }
 
-extern "C" void* CActorParam_UnkVirtualFunc96__Q22cf11CActorParamFv(cf::CActorParam* self) { return (void*)((u8*)self + 0x1740); }
+void* CActorParam_UnkVirtualFunc96__Q22cf11CActorParamFv(cf::CActorParam* self) { return (void*)((u8*)self + 0x1740); }
 
-extern "C" void* CActorParam_UnkVirtualFunc95__Q22cf11CActorParamFv(cf::CActorParam* self) { return (void*)((u8*)self + 0x16c8); }
+void* CActorParam_UnkVirtualFunc95__Q22cf11CActorParamFv(cf::CActorParam* self) { return (void*)((u8*)self + 0x16c8); }
 
-extern "C" void* CActorParam_UnkVirtualFunc93__Q22cf11CActorParamFv(cf::CActorParam* self) { return (void*)((u8*)self + 0x1650); }
+void* CActorParam_UnkVirtualFunc93__Q22cf11CActorParamFv(cf::CActorParam* self) { return (void*)((u8*)self + 0x1650); }
 
-void cf::CActorParam::CActorParam_UnkVirtualFunc92() {}
 
 // us-800b0be0: retail symbol is Fv; the real ABI passes (self, r4-unused,
 // arg, flag). Dispatches the primary vtable slots +0x1DC (no arg) and +0x1FC
@@ -1099,53 +1168,53 @@ void CActorParam_UnkVirtualFunc88__Q22cf11CActorParamFv(cf::CActorParam* self, i
     }
 }
 
-extern "C" u32 CActorParam_UnkVirtualFunc84__Q22cf11CActorParamFv(cf::CActorParam* self) { return *(u32*)((u8*)self + 0x1600) + *(u32*)((u8*)self + 0x1604); }
+u32 CActorParam_UnkVirtualFunc84__Q22cf11CActorParamFv(cf::CActorParam* self) { return *(u32*)((u8*)self + 0x1600) + *(u32*)((u8*)self + 0x1604); }
 
-extern "C" void* CActorParam_UnkVirtualFunc80__Q22cf11CActorParamFv(cf::CActorParam* self) { return (void*)((u8*)self + 0x1834); }
+void* CActorParam_UnkVirtualFunc80__Q22cf11CActorParamFv(cf::CActorParam* self) { return (void*)((u8*)self + 0x1834); }
 
-extern "C" void* CActorParam_UnkVirtualFunc79__Q22cf11CActorParamFv(cf::CActorParam* self) { return (void*)((u8*)self + 0x182c); }
+void* CActorParam_UnkVirtualFunc79__Q22cf11CActorParamFv(cf::CActorParam* self) { return (void*)((u8*)self + 0x182c); }
 
-extern "C" void CActorParam_UnkVirtualFunc78__Q22cf11CActorParamFv(cf::CActorParam* self, float val) { *(float*)((u8*)self + 0x1834) = val; }
+void CActorParam_UnkVirtualFunc78__Q22cf11CActorParamFv(cf::CActorParam* self, float val) { *(float*)((u8*)self + 0x1834) = val; }
 
-extern "C" void CActorParam_UnkVirtualFunc77__Q22cf11CActorParamFv(cf::CActorParam* self, float val) { *(float*)((u8*)self + 0x182c) = val; }
+void CActorParam_UnkVirtualFunc77__Q22cf11CActorParamFv(cf::CActorParam* self, float val) { *(float*)((u8*)self + 0x182c) = val; }
 
-extern "C" void* CActorParam_UnkVirtualFunc75__Q22cf11CActorParamFv(cf::CActorParam* self) { return (void*)((u8*)self + 0x1828); }
+void* CActorParam_UnkVirtualFunc75__Q22cf11CActorParamFv(cf::CActorParam* self) { return (void*)((u8*)self + 0x1828); }
 
-extern "C" void CActorParam_UnkVirtualFunc73__Q22cf11CActorParamFv(cf::CActorParam* self, float val) { *(float*)((u8*)self + 0x1828) = val; }
+void CActorParam_UnkVirtualFunc73__Q22cf11CActorParamFv(cf::CActorParam* self, float val) { *(float*)((u8*)self + 0x1828) = val; }
 
-extern "C" float CActorParam_UnkVirtualFunc72__Q22cf11CActorParamFv(cf::CActorParam* self) { return *(float*)((u8*)self + 0x1824); }
+float CActorParam_UnkVirtualFunc72__Q22cf11CActorParamFv(cf::CActorParam* self) { return *(float*)((u8*)self + 0x1824); }
 
-extern "C" void CActorParam_UnkVirtualFunc71__Q22cf11CActorParamFv(cf::CActorParam* self, float val) { *(float*)((u8*)self + 0x1824) = val; }
+void CActorParam_UnkVirtualFunc71__Q22cf11CActorParamFv(cf::CActorParam* self, float val) { *(float*)((u8*)self + 0x1824) = val; }
 
-extern "C" float CActorParam_UnkVirtualFunc69__Q22cf11CActorParamFv(cf::CActorParam* self) { return *(float*)((u8*)self + 0x1618); }
+float CActorParam_UnkVirtualFunc69__Q22cf11CActorParamFv(cf::CActorParam* self) { return *(float*)((u8*)self + 0x1618); }
 
-extern "C" float CActorParam_UnkVirtualFunc66__Q22cf11CActorParamFv(cf::CActorParam* self) { return *(float*)((u8*)self + 0x1610); }
+float CActorParam_UnkVirtualFunc66__Q22cf11CActorParamFv(cf::CActorParam* self) { return *(float*)((u8*)self + 0x1610); }
 
-extern "C" s16 CActorParam_UnkVirtualFunc63__Q22cf11CActorParamFv(cf::CActorParam* self) { return *(s16*)((u8*)self + 0x1616); }
+s16 CActorParam_UnkVirtualFunc63__Q22cf11CActorParamFv(cf::CActorParam* self) { return *(s16*)((u8*)self + 0x1616); }
 
-extern "C" s16 CActorParam_UnkVirtualFunc62__Q22cf11CActorParamFv(cf::CActorParam* self) { return *(s16*)((u8*)self + 0x1614); }
+s16 CActorParam_UnkVirtualFunc62__Q22cf11CActorParamFv(cf::CActorParam* self) { return *(s16*)((u8*)self + 0x1614); }
 
-extern "C" void CActorParam_UnkVirtualFunc59__Q22cf11CActorParamFv(cf::CActorParam* self, u16 val) { *(u16*)((u8*)self + 0x1614) = val; }
+void CActorParam_UnkVirtualFunc59__Q22cf11CActorParamFv(cf::CActorParam* self, u16 val) { *(u16*)((u8*)self + 0x1614) = val; }
 
-extern "C" s16 CActorParam_UnkVirtualFunc57__Q22cf11CActorParamFv(cf::CActorParam* self) { return *(s16*)((u8*)self + 0x160e); }
+s16 CActorParam_UnkVirtualFunc57__Q22cf11CActorParamFv(cf::CActorParam* self) { return *(s16*)((u8*)self + 0x160e); }
 
-extern "C" s16 CActorParam_UnkVirtualFunc56__Q22cf11CActorParamFv(cf::CActorParam* self) { return *(s16*)((u8*)self + 0x160c); }
+s16 CActorParam_UnkVirtualFunc56__Q22cf11CActorParamFv(cf::CActorParam* self) { return *(s16*)((u8*)self + 0x160c); }
 
-extern "C" void CActorParam_UnkVirtualFunc53__Q22cf11CActorParamFv(cf::CActorParam* self, u16 val) { *(u16*)((u8*)self + 0x160C) = val; }
+void CActorParam_UnkVirtualFunc53__Q22cf11CActorParamFv(cf::CActorParam* self, u16 val) { *(u16*)((u8*)self + 0x160C) = val; }
 
-extern "C" float CActorParam_UnkVirtualFunc51__Q22cf11CActorParamFv(cf::CActorParam* self) { return *(float*)((u8*)self + 0x17F0) / *(float*)((u8*)self + 0x17FC); }
+float CActorParam_UnkVirtualFunc51__Q22cf11CActorParamFv(cf::CActorParam* self) { return *(float*)((u8*)self + 0x17F0) / *(float*)((u8*)self + 0x17FC); }
 
-extern "C" float CActorParam_UnkVirtualFunc50__Q22cf11CActorParamFv(cf::CActorParam* self) { return *(float*)((u8*)self + 0x17fc); }
+float CActorParam_UnkVirtualFunc50__Q22cf11CActorParamFv(cf::CActorParam* self) { return *(float*)((u8*)self + 0x17fc); }
 
-extern "C" float CActorParam_UnkVirtualFunc49__Q22cf11CActorParamFv(cf::CActorParam* self) { return *(float*)((u8*)self + 0x17f0); }
+float CActorParam_UnkVirtualFunc49__Q22cf11CActorParamFv(cf::CActorParam* self) { return *(float*)((u8*)self + 0x17f0); }
 
-extern "C" void CActorParam_UnkVirtualFunc47__Q22cf11CActorParamFv(cf::CActorParam* self, float val) { *(float*)((u8*)self + 0x17f0) = val; }
+void CActorParam_UnkVirtualFunc47__Q22cf11CActorParamFv(cf::CActorParam* self, float val) { *(float*)((u8*)self + 0x17f0) = val; }
 
-extern "C" float CActorParam_UnkVirtualFunc45__Q22cf11CActorParamFv(cf::CActorParam* self) { return *(float*)((u8*)self + 0x17EC) / *(float*)((u8*)self + 0x17F8); }
+float CActorParam_UnkVirtualFunc45__Q22cf11CActorParamFv(cf::CActorParam* self) { return *(float*)((u8*)self + 0x17EC) / *(float*)((u8*)self + 0x17F8); }
 
-extern "C" float CActorParam_UnkVirtualFunc44__Q22cf11CActorParamFv(cf::CActorParam* self) { return *(float*)((u8*)self + 0x17f8); }
+float CActorParam_UnkVirtualFunc44__Q22cf11CActorParamFv(cf::CActorParam* self) { return *(float*)((u8*)self + 0x17f8); }
 
-extern "C" float CActorParam_UnkVirtualFunc43__Q22cf11CActorParamFv(cf::CActorParam* self) { return *(float*)((u8*)self + 0x17ec); }
+float CActorParam_UnkVirtualFunc43__Q22cf11CActorParamFv(cf::CActorParam* self) { return *(float*)((u8*)self + 0x17ec); }
 
 // us-800b0d38: add amount to the 0x17EC gauge and clamp into
 // [lbl_eu_80666968 (0.0f), field_0x17F8]. Same arg-reuse pattern as Func31
@@ -1164,9 +1233,9 @@ void CActorParam_UnkVirtualFunc42__Q22cf11CActorParamFv(cf::CActorParam* self, f
         ((cf::CActorParam17ECView*)self)->field_0x17EC = max;
 }
 
-extern "C" void CActorParam_UnkVirtualFunc41__Q22cf11CActorParamFv(cf::CActorParam* self, float val) { *(float*)((u8*)self + 0x17ec) = val; }
+void CActorParam_UnkVirtualFunc41__Q22cf11CActorParamFv(cf::CActorParam* self, float val) { *(float*)((u8*)self + 0x17ec) = val; }
 
-extern "C" float CActorParam_UnkVirtualFunc39__Q22cf11CActorParamFv(cf::CActorParam* self) { return *(float*)((u8*)self + 0x17E8) / *(float*)((u8*)self + 0x17F4); }
+float CActorParam_UnkVirtualFunc39__Q22cf11CActorParamFv(cf::CActorParam* self) { return *(float*)((u8*)self + 0x17E8) / *(float*)((u8*)self + 0x17F4); }
 
 // us-800b0d84: retail symbol is Fv; the real ABI passes (self, val). Scales
 // val by the gauge field at 0x17F4 and tail-dispatches vtable slot +0x11C
@@ -1203,7 +1272,7 @@ void CActorParam_UnkVirtualFunc34__Q22cf11CActorParamFv(cf::CActorParam* self, f
     }
 }
 
-extern "C" float CActorParam_UnkVirtualFunc32__Q22cf11CActorParamFv(cf::CActorParam* self) { return *(float*)((u8*)self + 0x1660); }
+float CActorParam_UnkVirtualFunc32__Q22cf11CActorParamFv(cf::CActorParam* self) { return *(float*)((u8*)self + 0x1660); }
 
 // us-800b0e40: add amount to the 0x1660 gauge and clamp at the 0.0f floor
 // (lbl_eu_80666968 = 0.0f). Retail emits lfs f2,cur; lfs f0,lbl(0.0f);
@@ -1222,17 +1291,17 @@ void CActorParam_UnkVirtualFunc31__Q22cf11CActorParamFv(cf::CActorParam* self, f
         ((cf::CActorParam1660View*)self)->field_0x1660 = amount;
 }
 
-extern "C" void CActorParam_UnkVirtualFunc30__Q22cf11CActorParamFv(cf::CActorParam* self, float val) { *(float*)((u8*)self + 0x1660) = val; }
+void CActorParam_UnkVirtualFunc30__Q22cf11CActorParamFv(cf::CActorParam* self, float val) { *(float*)((u8*)self + 0x1660) = val; }
 
-extern "C" void CActorParam_UnkVirtualFunc28__Q22cf11CActorParamFv(cf::CActorParam* self, u32 val) { *(u32*)((u8*)self + 0x17E4) += val; }
+void CActorParam_UnkVirtualFunc28__Q22cf11CActorParamFv(cf::CActorParam* self, u32 val) { *(u32*)((u8*)self + 0x17E4) += val; }
 
-extern "C" void CActorParam_UnkVirtualFunc27__Q22cf11CActorParamFv(cf::CActorParam* self, u32 val) { *(u32*)((u8*)self + 0x17E4) = val; }
+void CActorParam_UnkVirtualFunc27__Q22cf11CActorParamFv(cf::CActorParam* self, u32 val) { *(u32*)((u8*)self + 0x17E4) = val; }
 
-extern "C" void CActorParam_UnkVirtualFunc25__Q22cf11CActorParamFv(cf::CActorParam* self, u32 val) { *(u32*)((u8*)self + 0x1650) += val; }
+void CActorParam_UnkVirtualFunc25__Q22cf11CActorParamFv(cf::CActorParam* self, u32 val) { *(u32*)((u8*)self + 0x1650) += val; }
 
-extern "C" void CActorParam_UnkVirtualFunc24__Q22cf11CActorParamFv(cf::CActorParam* self, u32 val) { *(u32*)((u8*)self + 0x1650) = val; }
+void CActorParam_UnkVirtualFunc24__Q22cf11CActorParamFv(cf::CActorParam* self, u32 val) { *(u32*)((u8*)self + 0x1650) = val; }
 
-extern "C" float CActorParam_UnkVirtualFunc17__Q22cf11CActorParamFv(cf::CActorParam* self) { return *(float*)((u8*)self + 0x15f8); }
+float CActorParam_UnkVirtualFunc17__Q22cf11CActorParamFv(cf::CActorParam* self) { return *(float*)((u8*)self + 0x15f8); }
 
 u8 CActorParam_UnkVirtualFunc15__Q22cf11CActorParamFv(cf::CActorParam* self) {
     // retail: lbz r3, 0x15f4(r3) - the declared unk15F4[4] member is +8
@@ -1240,65 +1309,65 @@ u8 CActorParam_UnkVirtualFunc15__Q22cf11CActorParamFv(cf::CActorParam* self) {
     return ((cf::CfObjectEne15F4View*)self)->field_0x15F4;
 }
 
-extern "C" u32 CfObjectModel_UnkVirtualFunc20__Q22cf13CfObjectModelFv(cf::CfObjectModel* self) { return (*(u32*)((u8*)self + 104) >> 21) & 0x1u; }
+u32 CfObjectModel_UnkVirtualFunc20__Q22cf13CfObjectModelFv(cf::CfObjectModel* self) { return (*(u32*)((u8*)self + 104) >> 21) & 0x1u; }
 
-extern "C" u32 CfObjectModel_UnkVirtualFunc17__Q22cf13CfObjectModelFv(cf::CfObjectModel* self) { return *(u32*)((u8*)self + 0xB4); }
+u32 CfObjectModel_UnkVirtualFunc17__Q22cf13CfObjectModelFv(cf::CfObjectModel* self) { return *(u32*)((u8*)self + 0xB4); }
 
-extern "C" float CfObjectModel_UnkVirtualFunc11__Q22cf13CfObjectModelFv(cf::CfObjectModel* self) { return *(float*)((u8*)self + 0xac); }
+float CfObjectModel_UnkVirtualFunc11__Q22cf13CfObjectModelFv(cf::CfObjectModel* self) { return *(float*)((u8*)self + 0xac); }
 
-extern "C" float CfObjectModel_UnkVirtualFunc9__Q22cf13CfObjectModelFv(cf::CfObjectModel* self) { return *(float*)((u8*)self + 0xa8); }
+float CfObjectModel_UnkVirtualFunc9__Q22cf13CfObjectModelFv(cf::CfObjectModel* self) { return *(float*)((u8*)self + 0xa8); }
 
-extern "C" u32 CfObjectModel_UnkVirtualFunc5__Q22cf12CfObjectMoveFv(cf::CfObjectMove* self) { return *(u32*)((u8*)self + 0x704); }
+u32 CfObjectModel_UnkVirtualFunc5__Q22cf12CfObjectMoveFv(cf::CfObjectMove* self) { return *(u32*)((u8*)self + 0x704); }
 
-extern "C" u32 CfObjectModel_UnkVirtualFunc4__Q22cf12CfObjectMoveFv(cf::CfObjectMove* self) { return *(u32*)((u8*)self + 0x708); }
+u32 CfObjectModel_UnkVirtualFunc4__Q22cf12CfObjectMoveFv(cf::CfObjectMove* self) { return *(u32*)((u8*)self + 0x708); }
 
-extern "C" void CfObjectActor_UnkVirtualFunc13__Q22cf13CfObjectActorFv(cf::CfObjectActor* self) {
+void CfObjectActor_UnkVirtualFunc13__Q22cf13CfObjectActorFv(cf::CfObjectActor* self) {
     *(long*)((char*)self + 0x45bc) = -1;
 }
 
-extern "C" u32 CfObjectActor_UnkVirtualFunc12__Q22cf13CfObjectActorFv(cf::CfObjectActor* self) { return *(u32*)((u8*)self + 0x45BC); }
+u32 CfObjectActor_UnkVirtualFunc12__Q22cf13CfObjectActorFv(cf::CfObjectActor* self) { return *(u32*)((u8*)self + 0x45BC); }
 
-extern "C" void CBattleState_UnkVirtualFunc18__Q22cf13CfObjectActorFv(cf::CfObjectActor* self) { ((void(*)(void*))CActorParam_UnkVirtualFunc180__Q22cf13CfObjectActorFv)((char*)self - 0x8); }
+void CBattleState_UnkVirtualFunc18__Q22cf13CfObjectActorFv(cf::CfObjectActor* self) { ((void(*)(void*))CActorParam_UnkVirtualFunc180__Q22cf13CfObjectActorFv)((char*)self - 0x8); }
 
-extern "C" void CBattleState_UnkVirtualFunc17__Q22cf13CfObjectActorFv(cf::CfObjectActor* self) { ((void(*)(void*))CActorParam_UnkVirtualFunc179__Q22cf13CfObjectActorFv)((char*)self - 0x8); }
+void CBattleState_UnkVirtualFunc17__Q22cf13CfObjectActorFv(cf::CfObjectActor* self) { ((void(*)(void*))CActorParam_UnkVirtualFunc179__Q22cf13CfObjectActorFv)((char*)self - 0x8); }
 
-extern "C" void CBattleState_UnkVirtualFunc3__Q22cf13CfObjectActorFv(cf::CfObjectActor* self) { ((void(*)(void*))CActorParam_UnkVirtualFunc1__Q22cf13CfObjectActorFv)((char*)self - 0x8); }
+void CBattleState_UnkVirtualFunc3__Q22cf13CfObjectActorFv(cf::CfObjectActor* self) { ((void(*)(void*))CActorParam_UnkVirtualFunc1__Q22cf13CfObjectActorFv)((char*)self - 0x8); }
 
-extern "C" void CBattleState_UnkVirtualFunc1__Q22cf13CfObjectActorFv(cf::CfObjectActor* self) { ((void(*)(void*))CActorParam_UnkVirtualFunc2__Q22cf13CfObjectActorFv)((char*)self - 0x8); }
+void CBattleState_UnkVirtualFunc1__Q22cf13CfObjectActorFv(cf::CfObjectActor* self) { ((void(*)(void*))CActorParam_UnkVirtualFunc2__Q22cf13CfObjectActorFv)((char*)self - 0x8); }
 
-extern "C" void CBattleState_UnkVirtualFunc2__Q22cf13CfObjectActorFv(cf::CfObjectActor* self) { ((void(*)(void*))CActorParam_UnkVirtualFunc3__Q22cf13CfObjectActorFv)((char*)self - 0x8); }
+void CBattleState_UnkVirtualFunc2__Q22cf13CfObjectActorFv(cf::CfObjectActor* self) { ((void(*)(void*))CActorParam_UnkVirtualFunc3__Q22cf13CfObjectActorFv)((char*)self - 0x8); }
 
-extern "C" void CObjectParam_UnkVirtualFunc4__Q22cf11CfObjectEneFv(cf::CfObjectEne* self) { ((void(*)(void*))func_800ADDA8__Q22cf11CfObjectEneFv)((char*)self - 0x3e9c); }
+void CObjectParam_UnkVirtualFunc4__Q22cf11CfObjectEneFv(cf::CfObjectEne* self) { ((void(*)(void*))func_800ADDA8__Q22cf11CfObjectEneFv)((char*)self - 0x3e9c); }
 
-extern "C" void CfObject_UnkVirtualFunc31__Q22cf13CfObjectActorFv(cf::CfObjectActor* self) { ((void(*)(void*))CfObjectActor_UnkVirtualFunc6__Q22cf13CfObjectActorFv)((char*)self - 0x3e9c); }
+void CfObject_UnkVirtualFunc31__Q22cf13CfObjectActorFv(cf::CfObjectActor* self) { ((void(*)(void*))CfObjectActor_UnkVirtualFunc6__Q22cf13CfObjectActorFv)((char*)self - 0x3e9c); }
 
-extern "C" void CfObjectMove_UnkVirtualFunc15__Q22cf13CfObjectActorFv(cf::CfObjectActor* self) { ((void(*)(void*))CfObjectActor_UnkVirtualFunc2__Q22cf13CfObjectActorFv)((char*)self - 0x3e9c); }
+void CfObjectMove_UnkVirtualFunc15__Q22cf13CfObjectActorFv(cf::CfObjectActor* self) { ((void(*)(void*))CfObjectActor_UnkVirtualFunc2__Q22cf13CfObjectActorFv)((char*)self - 0x3e9c); }
 
 
-extern "C" void CObjectParam_UnkVirtualFunc2__Q22cf13CfObjectActorFv(cf::CfObjectActor* self) { ((void(*)(void*))CActorParam_UnkVirtualFunc1__Q22cf13CfObjectActorFv)((char*)self - 0x3e9c); }
+void CObjectParam_UnkVirtualFunc2__Q22cf13CfObjectActorFv(cf::CfObjectActor* self) { ((void(*)(void*))CActorParam_UnkVirtualFunc1__Q22cf13CfObjectActorFv)((char*)self - 0x3e9c); }
 
-extern "C" void CfObjectMove_UnkVirtualFunc6__Q22cf13CfObjectActorFv(cf::CfObjectActor* self) { ((void(*)(void*))CfObjectActor_UnkVirtualFunc11__Q22cf13CfObjectActorFv)((char*)self - 0x3e9c); }
+void CfObjectMove_UnkVirtualFunc6__Q22cf13CfObjectActorFv(cf::CfObjectActor* self) { ((void(*)(void*))CfObjectActor_UnkVirtualFunc11__Q22cf13CfObjectActorFv)((char*)self - 0x3e9c); }
 
-extern "C" void CfObject_UnkVirtualFunc14__Q22cf13CfObjectActorFf(cf::CfObjectActor* self, float value) { ((void(*)(void*))CfObjectActor_UnkVirtualFunc10__Q22cf13CfObjectActorFv)((char*)self - 0x3e9c); }
+void CfObject_UnkVirtualFunc14__Q22cf13CfObjectActorFf(cf::CfObjectActor* self, float value) { ((void(*)(void*))CfObjectActor_UnkVirtualFunc10__Q22cf13CfObjectActorFv)((char*)self - 0x3e9c); }
 
-extern "C" void CfObject_UnkVirtualFunc2__Q22cf11CfObjectEneFv(cf::CfObjectEne* self) { ((void(*)(void*))func_800ADB2C__Q22cf11CfObjectEneFv)((char*)self - 0x3e9c); }
+void CfObject_UnkVirtualFunc2__Q22cf11CfObjectEneFv(cf::CfObjectEne* self) { ((void(*)(void*))func_800ADB2C__Q22cf11CfObjectEneFv)((char*)self - 0x3e9c); }
 
-extern "C" void CfObject_UnkVirtualFunc4__Q22cf11CfObjectEneFv(cf::CfObjectEne* self) { ((void(*)(void*))func_800ADBD4__Q22cf11CfObjectEneFv)((char*)self - 0x3e9c); }
+void CfObject_UnkVirtualFunc4__Q22cf11CfObjectEneFv(cf::CfObjectEne* self) { ((void(*)(void*))func_800ADBD4__Q22cf11CfObjectEneFv)((char*)self - 0x3e9c); }
 
-extern "C" void func_800B069C__Q22cf11CfObjectEneFv(cf::CfObjectEne* self) { ((void(*)(void*))__dt__Q22cf11CfObjectEneFv)((char*)self - 0x3e9c); }
+void func_800B069C__Q22cf11CfObjectEneFv(cf::CfObjectEne* self) { ((void(*)(void*))__dt__Q22cf11CfObjectEneFv)((char*)self - 0x3e9c); }
 
-extern "C" void CBattleState_UnkVirtualFunc23__Q22cf12CBattleStateFv(cf::CBattleState* self) { reinterpret_cast<BSIf*>(self)->vf0044(); }
+void CBattleState_UnkVirtualFunc23__Q22cf12CBattleStateFv(cf::CBattleState* self) { reinterpret_cast<BSIf*>(self)->vf0044(); }
 
-extern "C" void CBattleState_UnkVirtualFunc22__Q22cf12CBattleStateFv(cf::CBattleState* self) { reinterpret_cast<BSIf*>(self)->vf0040(); }
+void CBattleState_UnkVirtualFunc22__Q22cf12CBattleStateFv(cf::CBattleState* self) { reinterpret_cast<BSIf*>(self)->vf0040(); }
 
-extern "C" void CBattleState_UnkVirtualFunc21__Q22cf12CBattleStateFv(cf::CBattleState* self) { reinterpret_cast<BSIf*>(self)->vf003C(); }
+void CBattleState_UnkVirtualFunc21__Q22cf12CBattleStateFv(cf::CBattleState* self) { reinterpret_cast<BSIf*>(self)->vf003C(); }
 
-extern "C" void CBattleState_UnkVirtualFunc20__Q22cf12CBattleStateFv(cf::CBattleState* self) { reinterpret_cast<BSIf*>(self)->vf0038(); }
+void CBattleState_UnkVirtualFunc20__Q22cf12CBattleStateFv(cf::CBattleState* self) { reinterpret_cast<BSIf*>(self)->vf0038(); }
 
-extern "C" void CActorParam_UnkVirtualFunc98__Q22cf11CActorParamFv(cf::CActorParam* self, const void* src) {
+void CActorParam_UnkVirtualFunc98__Q22cf11CActorParamFv(cf::CActorParam* self, const void* src) {
     *(ParamCopyBlock*)((u8*)self + 0x17e4) = *(const ParamCopyBlock*)src;
 }
 
-extern "C" void CActorParam_UnkVirtualFunc92__Q22cf11CActorParamFv(cf::CActorParam* self, const void* src) {
+void CActorParam_UnkVirtualFunc92__Q22cf11CActorParamFv(cf::CActorParam* self, const void* src) {
     *(ParamCopyBlock*)((u8*)self + 0x1650) = *(const ParamCopyBlock*)src;
 }

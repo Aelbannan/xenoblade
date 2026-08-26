@@ -40,7 +40,7 @@ public:
     virtual void* vfunc08();                             // vtable +0x30 (unused)
     virtual void* vfunc09();                             // vtable +0x34 (unused)
     virtual void* vfunc0A();                             // vtable +0x38 (unused)
-    virtual void* vfunc0B();                             // vtable +0x3C (unused)
+    virtual void* vfunc0B(void* entry);                  // vtable +0x3C - resolution probe (1 arg)
     virtual void* vfunc0C(void* entry);                  // vtable +0x40 - resolution probe (1 arg)
 };
 
@@ -59,11 +59,13 @@ struct ResInfoEntry {
     u32 field_0x24;             // 0x24
     CFileHandle* field_0x28;    // 0x28 - device file handle (CDeviceFile::cancel)
     CResLookup* field_0x2C;     // 0x2C - resource object (virtual lookup)
-    u8 field_0x30[2];           // 0x30 - 0x31
+    u16 field_0x30;             // 0x30 - logical id (lhz)
     u8 field_0x32;              // 0x32 - subtype
     u8 field_0x33;              // 0x33 - type
     s16 field_0x34;             // 0x34 - index
-    u8 field_0x36[6];           // 0x36 - 0x3B (pad; record stride is 0x3C)
+    s16 field_0x36;             // 0x36 - fade counter (lha/sth)
+    u16 field_0x38;             // 0x38
+    u16 field_0x3A;             // 0x3A
 };
 
 // Doubly-linked list node used by the reslist-style container at 0x1EB0
@@ -113,6 +115,31 @@ struct ResInfoWork {
     float counter;                // 0x1ED0
 };
 
+// 0x3C-byte record cleared by the container constructor (__ct__80066F9C).
+// Only the fields the constructor resets are declared; the gaps keep the
+// 0x3C stride.
+struct ResCtorEntry {
+    u32 field_0x00;
+    u32 field_0x04;
+    u32 field_0x08;
+    u8 _0C[4];
+    u32 field_0x10;
+    u8 _14[4];
+    u32 field_0x18;
+    u32 field_0x1C;
+    u8 _20[4];
+    u32 field_0x24;
+    u32 field_0x28;
+    u8 _2C[8];
+    s16 field_0x34;
+    u8 _36[2];
+    u16 field_0x38;
+    u16 field_0x3A;
+};
+
+// Constructor view of the IResInfo container - see ResCtorLayout below.
+struct ResCtorLayout;
+
 // reslist<unsigned short> / _reslist_base<unsigned short> layout mirror
 // (monolib util/reslist.hpp). The retail dtor symbols use the old flat
 // template mangling, so the deleting destructors are plain global functions
@@ -130,6 +157,20 @@ struct ResListUS {
     ResListUSNode* mList;       // 0x14 - slot array (freed on destroy)
     int mCapacity;              // 0x18
     u8 mOwnsList;               // 0x1C - 0 => slot array is owned
+};
+
+// Constructor view of the IResInfo container: flag word, then 130
+// 0x3C-stride records from +0x04 up to the scratch slot table.
+struct ResCtorLayout {
+    u32 flags;                    // 0x00
+    ResCtorEntry entries[0x82];   // 0x04 - 0x1E7C
+    void* slots[13];              // 0x1E7C - 0x1EB0 - per-category vtables
+    void* vtable;                 // 0x1EB0 - embedded reslist vtable
+    ResInfoListNode* mStartNodePtr; // 0x1EB4
+    ResInfoListNode mStartNode;   // 0x1EB8 - sentinel
+    ResListUSNode* mList;         // 0x1EC4 - node pool (allocated here)
+    int mCapacity;                // 0x1EC8
+    u8 mOwnsList;                 // 0x1ECC
 };
 
 // 0x3C-byte entry in the resource grid tables at 0x14DC / 0x16BC (indices
@@ -169,6 +210,9 @@ struct ResInfoContainer {
     u8 _1E3C[0x94];           // 0x1E3C - 0x1ED0
     float field_0x1ED0;       // 0x1ED0 - fade/state counter
 };
+
+// Global cf flag words owned by CfGameManagerData / CUICfManager.
+extern u32 lbl_eu_80663E30;
 
 // C-linkage imports (retail symbol names - keep linkage/signatures verbatim)
 extern "C" char* getEntryPtrGrid(char* self, int a, int b);

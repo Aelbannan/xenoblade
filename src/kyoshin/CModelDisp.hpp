@@ -48,9 +48,12 @@ public:
     u8 field_2FE4;               // 0x2FE4
 };
 
+// Opaque forward decls used by the alpha vtable views above.
+struct CModelDispSub;
+
 // --- retail data symbols (imports; global scope keeps names unmangled) ---
 extern u32 lbl_eu_80535390[];     // CModelDisp vtable (.data)
-extern f32 lbl_eu_806681E8;       // .sdata2 float -> field_2FDC
+extern const f32 lbl_eu_806681E8;  // .sdata2 float -> field_2FDC target
 extern f32 lbl_eu_806681EC;       // .sdata2 float -> field_2FE0
 extern const f32 lbl_eu_806681F0; // .sdata2 float (func_801FBFD8 vec arg)
 extern const f32 lbl_eu_806681F4; // .sdata2 float (func_801FBFD8 vec arg)
@@ -94,6 +97,16 @@ struct CDispVt40 {
     virtual void m08(); virtual void m09(); virtual void m0A(); virtual void m0B();
     virtual void m0C(); virtual void m0D();
     virtual u32 m40(CModelDispParamSlot* owner); // #14 => +0x40
+};
+
+// Alpha vtable view on a sub-object's controller: method at +0x48 takes the
+// current display alpha. 16 declared slots => byte offset (16+2)*4 = 0x48.
+struct CDispAlphaVt {
+    virtual void m00(); virtual void m01(); virtual void m02(); virtual void m03();
+    virtual void m04(); virtual void m05(); virtual void m06(); virtual void m07();
+    virtual void m08(); virtual void m09(); virtual void m0A(); virtual void m0B();
+    virtual void m0C(); virtual void m0D(); virtual void m0E(); virtual void m0F();
+    virtual void m48(f32 alpha); // lands at +0x48
 };
 
 // Local flush-vtable view (+0xE0 slot) - one filler larger than the shared

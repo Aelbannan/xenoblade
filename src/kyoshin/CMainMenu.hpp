@@ -113,8 +113,9 @@ public:
     u8 _04[0x08 - 0x04];                      // 0x04
     nw4r::lyt::Layout* field_0x08;             // 0x08 - layout holder read by func_800FEB14
     u8 _0C[0x10 - 0x0C];                      // 0x0C
-    // +0x10: CProcess vtable set by constructor
-    u8 _10[0x3C - 0x10];                      // 0x10-0x3B
+    // +0x10: CProcess vtable slot set by the constructor (temp, then composite)
+    void* mVtable;                             // 0x10
+    u8 _14[0x3C - 0x14];                       // 0x14-0x3B
     // PTMF at 0x3C (IWorkEvent vtable, 3 words)
     u32 field_0x3C;                            // 0x3C
     u32 field_0x40;                            // 0x40
@@ -270,16 +271,38 @@ extern "C" CMainMenuPad* getCurrentPad__Q22cf13CfGameManagerFv();
 
 // Cursor activate helper (defined in CCur.cpp).
 extern "C" void func_801D2174(CBaseCur* cur);
+// Cursor draw helper (defined in CCur.cpp; retail symbol is unmangled C linkage).
+extern "C" void func_801D20B0(void* cur, nw4r::lyt::DrawInfo* drawInfo);
+
+// Minimal CTaskGame decl (retail symbols getInstance__9CTaskGameFv /
+// func_800426F0__9CTaskGameFv). The full CTaskGame.hpp pulls monolib headers
+// whose declarations clash with this TU's include set.
+class CTaskGame {
+public:
+    static CTaskGame* getInstance();
+    static bool func_800426F0();
+};
 // Cursor per-frame update helper (defined in CCur.cpp).
 extern "C" void func_801D202C(void* cur);
 // Pane-config finish gate (defined in CUICfManager.cpp).
 extern "C" void func_8013D8A0();
 
 // Sub-menu pane-name table (14 words) and cursor->angle s16 table.
+struct CMainMenuNameTable {
+    const char* name[14];
+};
 extern u32 lbl_eu_804FCE50[];
 extern s16 lbl_eu_804FCD60[];
 // CBaseCur runtime vtable (stored over the stack temp after construction).
 extern void* lbl_eu_8052BF28[];
+
+// Constructor data symbols (see __ct__CMainMenu in CMainMenu.cpp).
+extern char lbl_eu_8052BF70[];   // interim CProcess composite vtable
+extern char lbl_eu_8052BE24[];  // CMainMenu composite vtable (+0x24/+0xAC slots)
+extern u32 lbl_eu_8052BDE8[3];   // move-callback PTMF hook
+extern u32 __ptmf_null[3];      // null pointer-to-member-function constant
+// CProcess base constructor (abstract class, out-of-line in retail).
+extern "C" void __ct__8CProcessFv(CProcess* self);
 
 // Player view structs for func_80101A88 (mirror CfGimmick.hpp layouts).
 // getPlayer returns the +0x3E9C embedded spot object; the player base is the

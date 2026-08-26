@@ -29,15 +29,33 @@ unk38(nullptr){
 
 // optimize_for_size on: retail __dt__ saves r30+r31 via stmw r30, not stw
 // (same pattern as CTTask/CRsrcData dtors).
+// operator delete(void*) (retail unmangled C symbol).
+extern "C" void __dl__FPv(void*);
+// CArcItem vtable, spelled by hand in the dissolved .data blob below.
+extern "C" u32 lbl_eu_8056FFE0[];
+
 #pragma optimize_for_size on
-// extern "C" free-function form (CFontLayer pattern): no member key function is
-// defined in this TU, so MWCC does not auto-emit __vt__8CArcItem here (the retail
-// vtable lives in the dissolved .data blob below).
-extern "C" void __dt__8CArcItemFv(CArcItem* self){
-    if(self->unk28 != nullptr){
-        CDeviceFile::cancel(self->unk28);
+// Installing destructor, spelled as an extern "C" free function against the
+// dissolved .data blob vtable below (CFontLayer pattern): no member key
+// function is defined in this TU, so MWCC does not auto-emit __vt__8CArcItem.
+// Retail body: hoist unk28, install the blob vptr, cancel the pending read,
+// free+clear the buffer, then operator-delete self when mode > 0.
+extern "C" void* __dt__8CArcItemFv(CArcItem* self, int mode) {
+    if (self != nullptr) {
+        CFileHandle* h = self->unk28;
+        *(u32*)self = (u32)&lbl_eu_8056FFE0;
+        if (h != nullptr) {
+            CDeviceFile::cancel(h);
+        }
+        if (self->unk38 != nullptr) {
+            mtl::MemManager::deallocate(self->unk38);
+            self->unk38 = nullptr;
+        }
+        if (mode > 0) {
+            __dl__FPv(self);
+        }
     }
-    DELETE_OBJ(self->unk38);
+    return self;
 }
 #pragma optimize_for_size off
 

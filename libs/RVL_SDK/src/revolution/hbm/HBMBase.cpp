@@ -2855,8 +2855,8 @@ inline void HomeButton::reset_window() {
 }
 
 inline void HomeButton::reset_battery(bool startPair) {
-    const char* const* row = &scBatteryPaneName[0][0];
     const char* const* pane;
+    const char* const* row = &scBatteryPaneName[0][0];
 
     for (int i = 0; i < WPAD_MAX_CONTROLLERS; i++) {
         pane = row;

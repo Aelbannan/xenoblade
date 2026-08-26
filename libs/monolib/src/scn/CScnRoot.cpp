@@ -4,11 +4,14 @@
 #include <types.h>
 #include <stdlib.h>                    // labs
 #include <revolution/MEM.h>
-#include "monolib/scn/CScnRoot.hpp"       // CScnRoot class (include path)
-#include "monolib/scn/CScnRootNw4r.hpp"   // __dt__12CScnRootNw4rFv import
 #include "monolib/util/MemManager.hpp"    // mtl::MemManager
 #include "libs/monolib/src/scn/CScnRoot.hpp"       // flat layouts + retail data symbols
 #include "libs/monolib/src/scn/CScnRootNw4r.hpp"   // CScnRootNw4r class (vf9, field_0xC)
+
+// CScnRoot is only used through pointers here; the shared header declares a
+// member ~CScnRoot whose mangled name would clash with the retail extern "C"
+// dtor symbol defined below.
+class CScnRoot;
 
 // --- CScnRoot class ---
 
@@ -19,18 +22,19 @@ CScnRootNw4r* __ct__CScnRootNw4r(CScnRootNw4r* obj, void* mgr, void* param);
 // installs the vtable, stores the mgr pointer, zeroes the reserved word.
 // extern "C" is required - as a plain C++ member-style name MWCC remangles
 // it to __ct__CScnRoot__FP8CScnRootPv, which no longer pairs with retail.
-extern "C" void __ct__CScnRoot(CScnRoot* root, void* mgr);
-void __ct__CScnRoot(CScnRoot* root, void* mgr) {
+// extern "C" pairs with the retail C-linkage symbol __ct__CScnRoot
+// (MWCC would otherwise remangle); noinline keeps the bl out-of-line.
+extern "C" __declspec(noinline) void __ct__CScnRoot(CScnRoot* root, void* mgr) {
     CScnRootLayout* s = (CScnRootLayout*)root;
     s->vtable = (void*)lbl_eu_8056E730;
     s->mpMgr = mgr;
     s->mReserved = 0;
 }
 
-// Destructor (extern "C" so the vtable reloc carries the un-mangled retail
-// name; the strong definition is the C++ member dtor CScnRoot::~CScnRoot
-// below, which MWCC mangles to the same symbol).
-extern "C" void __dt__8CScnRootFv(u8* self, int deleteFlag);
+// Destructor: defined below via the retail C-linkage symbol (the shared
+// header also declares the member ~CScnRoot, so the body lives on the
+// extern "C" function to avoid an illegal-overload clash).
+extern "C" void __dt__8CScnRootFv(void* self, int deleteFlag);
 
 // Shared-pool s32->f32 conversion magic (retail loads the named constant
 // lbl_eu_8066A9F8 instead of pooling a local .sdata2 entry). The helper
@@ -116,11 +120,12 @@ CScnRootNw4r* __ct__CScnRootNw4r(CScnRootNw4r* obj, void* mgr, void* param) {
         }
     }
 
-    // Size the scene-root buffers from the owning region's size.
-    CScnRootMgr* scene = (CScnRootMgr*)s->mpMgr;
+    // Size the scene-root buffers from the owning region's size. No local is
+    // held for the manager/region: retail reloads mpMgr->field_88 through the
+    // object on every use (calls clobber the pointees).
     scale *= lbl_eu_8066A9EC;
-    CScnRootMgrRegion* region = (CScnRootMgrRegion*)scene->field_0x88;
-    s32 v = labs(region->field_0xC);
+    s32 v = labs(
+        ((CScnRootMgrRegion*)((CScnRootMgr*)s->mpMgr)->field_0x88)->field_0xC);
 
     s32 bufsz = (s32)(s32ToF32_8066A9F8(v) * scale);
     if (bufsz & 0x1F) {
@@ -140,7 +145,9 @@ CScnRootNw4r* __ct__CScnRootNw4r(CScnRootNw4r* obj, void* mgr, void* param) {
     // scale is positive, otherwise fall back to the MEM2 handle.
     if (scale > lbl_eu_8066A9F4) {
         s->mGroup[0].mHandle =
-            mtl::MemManager::create(region->field_0x8, rem - 0x100, &lbl_eu_80523FE0[0]);
+            mtl::MemManager::create(
+                ((CScnRootMgrRegion*)((CScnRootMgr*)s->mpMgr)->field_0x88)->field_0x8,
+                rem - 0x100, &lbl_eu_80523FE0[0]);
     } else {
         s->mGroup[0].mHandle = mtl::MemManager::getHandleMEM2();
     }
@@ -153,7 +160,9 @@ CScnRootNw4r* __ct__CScnRootNw4r(CScnRootNw4r* obj, void* mgr, void* param) {
 
     if (scale > lbl_eu_8066A9F4) {
         s->mGroup[1].mHandle =
-            mtl::MemManager::create(region->field_0x8, rem2 - 0x100, &lbl_eu_80523FE0[9]);
+            mtl::MemManager::create(
+                ((CScnRootMgrRegion*)((CScnRootMgr*)s->mpMgr)->field_0x88)->field_0x8,
+                rem2 - 0x100, &lbl_eu_80523FE0[9]);
     } else {
         s->mGroup[1].mHandle = mtl::MemManager::getHandleMEM2();
     }
@@ -166,7 +175,9 @@ CScnRootNw4r* __ct__CScnRootNw4r(CScnRootNw4r* obj, void* mgr, void* param) {
 
     if (scale > lbl_eu_8066A9F4) {
         s->mGroup[2].mHandle =
-            mtl::MemManager::create(region->field_0x8, bufsz - 0x100, &lbl_eu_80523FE0[0x15]);
+            mtl::MemManager::create(
+                ((CScnRootMgrRegion*)((CScnRootMgr*)s->mpMgr)->field_0x88)->field_0x8,
+                bufsz - 0x100, &lbl_eu_80523FE0[0x15]);
     } else {
         s->mGroup[2].mHandle = mtl::MemManager::getHandleMEM2();
     }
@@ -177,9 +188,11 @@ CScnRootNw4r* __ct__CScnRootNw4r(CScnRootNw4r* obj, void* mgr, void* param) {
     s->mAlloc[2].heapParam1 = (u32)(uintptr_t)obj;
     s->mAlloc[2].heapParam2 = s->mGroup[2].mHandle;
 
+    // Retail passes the just-created group[2] handle as the heap (r3 is
+    // still holding it at this call in retail asm).
     if (scale > lbl_eu_8066A9F4) {
         s->mGroup[3].mHandle =
-            mtl::MemManager::create(region->field_0x8, bufsz / 2, &lbl_eu_80523FE0[0x21]);
+            mtl::MemManager::create(s->mGroup[2].mHandle, bufsz / 2, &lbl_eu_80523FE0[0x21]);
     } else {
         s->mGroup[3].mHandle = mtl::MemManager::getHandleMEM2();
     }
@@ -219,9 +232,11 @@ CScnRootNw4r* __ct__CScnRootNw4r(CScnRootNw4r* obj, void* mgr, void* param) {
     // Ten scn groups, each sized from the viewport rect and attached to the
     // scene root; the object itself registers as the group callback target.
     for (u32 i = 0; i < 10; i++) {
-        MEMAllocator* alloc = (s->mGroup[2].mHandle == 0xFFFFFFFF)
-                                  ? &s->mAlloc[0]
-                                  : &s->mAlloc[2];
+        // Invalid-handle test retail emits as addis+cmplwi (handle + 0x10000
+        // wraps to 0xFFFF exactly when handle == -1).
+        MEMAllocator* alloc = ((u32)(s->mGroup[2].mHandle + 0x10000) != 0xFFFF)
+                                  ? &s->mAlloc[2]
+                                  : &s->mAlloc[0];
         nw4r::g3d::ScnGroup* group =
             nw4r::g3d::ScnGroup::Construct(alloc, NULL, (u32)rect[i]);
         s->mScnRoot->PushBack(group);
@@ -237,17 +252,27 @@ CScnRootNw4r* __ct__CScnRootNw4r(CScnRootNw4r* obj, void* mgr, void* param) {
 // --- CScnRootNw4r helpers ---
 
 // Returns the scene-group alloc handle, resolving it lazily through vf9 when
-// the stored handle is still invalid (-1).
+// the stored handle is still invalid (-1). The (+ 0x10000) == 0xFFFF test is
+// the invalid-handle check retail emits as addis/cmplwi.
 u32 func_8048F2F0(CScnRootNw4r* self) {
     CScnRootNw4rLayout* s = (CScnRootNw4rLayout*)self;
-    u32 result = s->mGroup[2].mHandle;
-    if (result == 0xFFFFFFFF) {
+    u32 handle = s->mGroup[2].mHandle;
+    u32 result;
+    // Negated test + cheap-arm-first reproduces retail's beq-forward/b-over
+    // layout (MWCC_PATTERNS 7f).
+    if ((u32)(handle + 0x10000) != 0xFFFF) {
+        result = handle;
+    } else {
         result = self->vf9();
     }
     return result;
 }
 
-CScnRoot::~CScnRoot() {}
+// Destructor body: base object owns no resources.
+extern "C" void __dt__8CScnRootFv(void* self, int deleteFlag) {
+    (void)self;
+    (void)deleteFlag;
+}
 
 // ===== Dissolved monolibdata2 (blob surgery) data owned by this TU =====
 // Foreign .sdata RTTI locator referenced by the CScnRoot vtable (owned by

@@ -12,6 +12,20 @@
 
 using namespace ml;
 
+// Reads a single byte/halfword column from a bdat table: retail stores the
+// raw column word to its own frame slot, then reloads the low half
+// (stw + lhz round-trip).
+union BdatColS {
+    u32 w;
+    s16 h;
+};
+
+// Unsigned variant: lzh reload of the low half.
+union BdatColU {
+    u32 w;
+    u16 h;
+};
+
 // ---- static-initializer support (retail __sinit_\CfBdat_cpp) ----
 // Retail's sinit initializes an anonymous 4-byte prototype object at
 // lbl_eu_80664194 whose first word is the address of the lbl_eu_8052E718
@@ -279,7 +293,42 @@ void CfBdat::resetMapBdatFileDataPointers(){
     }
 
     const char* CfBdat::func_801421C4(u16 index){
-        return nullptr;
+        // Equip-slot name lookup: read the row's equip-type column (+0x38b)
+        // and name column (+0x394) from the shared equip table, then use the
+        // type to select one of the per-type item tables and return that
+        // table's name column for the row.
+        // Address-of deref reads keep the raw column words in frame slots
+        // (retail stw/lhz round-trip; see MWCC_CASES func_800BF920).
+        u32 typeVal;
+        u16 rowName;
+        u32 typeRaw;
+        u32 nameRaw;
+        typeRaw = getBdatStringColumnValue(lbl_eu_806640EC, &lbl_eu_80500FA4[0x38b], index);
+        typeVal = *(const u16*)&typeRaw;
+        nameRaw = getBdatStringColumnValue(lbl_eu_806640EC, &lbl_eu_80500FA4[0x394], index);
+        rowName = *(const u16*)&nameRaw;
+        if(index == 0){
+            return &lbl_eu_80500FA4[0x39b];
+        }
+        // Per-equip-type file-data table: index 3 shares the equip list,
+        // indexes 4-8 all map to ITM_equiplist.
+        BdatFileData* tables[] = {
+            (BdatFileData*)nullptr,
+            lbl_eu_806640F0,
+            lbl_eu_806640F4,
+            lbl_eu_806640D8,
+            lbl_eu_806640F8,
+            lbl_eu_806640F8,
+            lbl_eu_806640F8,
+            lbl_eu_806640F8,
+            lbl_eu_806640F8,
+            lbl_eu_806640FC,
+            lbl_eu_80664104,
+            lbl_eu_80664108,
+            lbl_eu_8066410C,
+            lbl_eu_80664110,
+        };
+        return (const char*)getBdatStringColumnValue(tables[typeVal], &lbl_eu_80500FA4[0x386], rowName);
     }
 
     u32 CfBdat::func_801422A8(u32 param1){
@@ -376,26 +425,37 @@ void func_80141C6C(u32 a, u32 b){
     // whose name column matches the string packed from (a, b), caching the row.
     // The reset/shared-store layout mirrors retail: fp==0 and the not-found
     // loop exit both fall into the same `li i,0` before the single store.
-    void* fp;
-    int i;
+    const char* nameCol;
+    int end;
+    int row;
+    u8* fp;
+    u32 prevRow;
+    // Cached-state update: retail loads both int values before the float
+    // copy, then stores (load-load-load / store-store schedule).
+    prevRow = lbl_eu_80664184;
+    fp = (u8*)lbl_eu_806640A8;
     lbl_eu_8066418C = lbl_eu_80667368;
-    lbl_eu_80664188 = lbl_eu_80664184;
-    fp = lbl_eu_806640A8;
+    lbl_eu_80664188 = prevRow;
     FixStr<64> nameBuf;
     func_800AA33C(nameBuf, func_800AA2BC(a, b), 0, 0);
     if(fp == nullptr) goto reset;
     {
-        int rowBase = (int)func_8003B41C(fp);
-        int rowCount = (int)func_8003B1EC(fp);
-        i = rowBase;
-        for(; i < rowBase + rowCount; i++){
-            if(strcmp(nameBuf.c_str(), (const char*)getBdatStringColumnValue(fp, &lbl_eu_80500FA4[0x34f], i)) == 0) goto store;
+        row = (int)func_8003B41C(fp);
+        end = row + (int)func_8003B1EC(fp);
+        // Column-name base stays in a register across the loop; the +0x34f
+        // column offset is applied per iteration.
+        nameCol = lbl_eu_80500FA4;
+        for(; row < end; ){
+            if(strcmp(nameBuf.c_str(), (const char*)getBdatStringColumnValue(fp, &nameCol[0x34f], row)) == 0){
+                goto store;
+            }
+            row++;
         }
     }
 reset:
-    i = 0;
+    row = 0;
 store:
-    lbl_eu_80664184 = (u32)i;
+    lbl_eu_80664184 = (u32)row;
 }
 u32 func_80141D48(u16* outA, u16* outB, int index){
     // Fld-map row lookup: resolve the row's name column into an id, then split
@@ -407,32 +467,24 @@ u32 func_80141D48(u16* outA, u16* outB, int index){
     *outB = ((id << 22) | (id >> 10)) & 0x3FF;
     return ((0 - id) | id) >> 31;
 }
-// Signed variant of CfGimmickItem's BdatCol spill union: retail stores the
-// raw column word to its own frame slot, then reloads the low half sign-
-// extended (stw + lha round-trip).
-union BdatColS {
-    u32 w;
-    s16 h;
-};
+// Signed variant of CfGimmickItem's BdatCol spill union.
 
 void func_80141DC4(float* out, int index){
     // Landmark bdat table: read three s16 landmark columns (0x358/0x35d/0x362)
     // and expose them as the landmark scale floats (s16->f32 via GQR5 fast cast).
     func_8003AA34();
     void* fp = lbl_eu_806640A0;
+    volatile BdatColS c0, c1, c2;
     s16 x, y, z;
-    volatile BdatColS c0;
     c0.w = getBdatStringColumnValue(fp, &lbl_eu_80500FA4[0x358], index);
     x = c0.h;
-    volatile BdatColS c1;
     c1.w = getBdatStringColumnValue(fp, &lbl_eu_80500FA4[0x35d], index);
     y = c1.h;
-    volatile BdatColS c2;
     c2.w = getBdatStringColumnValue(fp, &lbl_eu_80500FA4[0x362], index);
     z = c2.h;
-    out[0] = __OSs16tof32(&x);
-    out[1] = __OSs16tof32(&y);
-    out[2] = __OSs16tof32(&z);
+    OSs16tof32(&x, &out[0]);
+    OSs16tof32(&y, &out[1]);
+    OSs16tof32(&z, &out[2]);
 }
 u32 func_80141E90(u32 param1, u32 param2, u32 param3, u32 param4){
     // Skill/arts helper: grind an arts id into an item id, or translate an
@@ -447,13 +499,13 @@ u32 func_80141E90(u32 param1, u32 param2, u32 param3, u32 param4){
     }
     if(param2 != 0){
         snprintf(lbl_eu_80662228, 8, &lbl_eu_80500FA4[0x367], param1);
-        table = lbl_eu_806640F8;
-        u32 val1 = getBdatStringColumnValue(table, lbl_eu_80662228, param2);
+        BdatFileData* fpEquip = lbl_eu_806640F8;
+        u32 val1 = getBdatStringColumnValue(fpEquip, lbl_eu_80662228, param2);
         // Byte-read the first bytes of the stored u32s: retail spills the call
         // results to the stack then `lbz`es them back - taking the addresses
         // keeps the u32s memory-resident so MWCC reproduces that shape.
-        u8 v1 = *(const u8*)&val1;
-        u32 val2 = getBdatStringColumnValue(table, &lbl_eu_80500FA4[0x36c], param2);
+        int v1 = *(const u8*)&val1;
+        u32 val2 = getBdatStringColumnValue(fpEquip, &lbl_eu_80500FA4[0x36c], param2);
         u8 v2 = *(const u8*)&val2;
         if(param3 == 0) param3 = v2;
         u16 tsel = (u16)(param3 & 0xFFFF);
@@ -511,10 +563,12 @@ u32 func_8014235C(u32 param1, const char* column, u32 param3){
         u32 rowBase = func_8003B41C(fp);
         u32 rowCount = func_8003B1EC(fp);
         if(param1 < rowBase + rowCount){
-            u8 val = *(const u8*)getBdatStringColumnValue(fp, column, param1);
-            if(val == 3) return 1 + !param3;
-            if(val == 8) return 6 + !param3;
-            if(val == 1 || val == 6){
+            // Retail spills the call result to the stack and lbz's it back.
+            u32 val = getBdatStringColumnValue(fp, column, param1);
+            result = *(const u8*)&val;
+            if(result == 3) return 1 + !param3;
+            if(result == 8) return 6 + !param3;
+            if(result == 1 || result == 6){
                 if(param3 == 0){
                     result = 0;
                 }

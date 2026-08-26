@@ -836,7 +836,7 @@ extern "C" char* func_80138F78(u32);
 extern "C" u16 func_80136254(const void*, const void*, int);
 extern "C" u8 func_801361E8(u32, const char*, u32);
 extern "C" s16 func_80136330(u32, const char*, u32);
-extern "C" u32 func_8003B1EC(u32);
+extern "C" u32 func_8003B1EC(void* bdat);   // BDAT row count (canonical void* form)
 extern "C" void* getFP__FPCc(const char*);
 extern "C" void* func_8003AA34();
 extern "C" void func_80136400(const char* src, u16* dst, u32 destLen);

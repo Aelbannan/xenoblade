@@ -2124,15 +2124,20 @@ extern "C" bool func_804C5198(CScnEnvLgtCtrlLgtView* self, CScnEnvLgtCtrlLgtData
         // Decl order fixes the register colors; assignment order keeps the
         // retail load sequence.
         const u32* s = &src->field_0x00;
-        u32 tmp[4];
-        tmp[0] = s[0];
-        tmp[1] = s[1];
-        tmp[2] = s[2];
-        tmp[3] = s[3];
-        out->field_0x00 = tmp[0];
-        out->field_0x04 = tmp[1];
-        out->field_0x08 = tmp[2];
-        out->field_0x0C = tmp[3];
+        // Decl order fixes the register colors; the deferred descending
+        // assignment order keeps the retail load sequence.
+        u32 v8;
+        u32 v4;
+        u32 v0;
+        u32 vC;
+        v0 = s[0];
+        v4 = s[1];
+        v8 = s[2];
+        vC = s[3];
+        out->field_0x0C = vC;
+        out->field_0x08 = v8;
+        out->field_0x04 = v4;
+        out->field_0x00 = v0;
         return true;
     }
     return false;

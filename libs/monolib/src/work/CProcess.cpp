@@ -12,7 +12,7 @@ u32 lbl_eu_8056BB60[9] = {
     (u32)&Reset__14CChildListNodeFv, 0, 0, 0, 0, (u32)&Tail__8CProcessFv,
 };
 /* UNRESOLVED: lbl_eu_8056BB84 (0xC, TChildListHeader<CProcess> vtable
- * {&lbl_eu_806635D8, 0, &__dt__27TChildListHeader<8CProcess>Fv}) — the dtor
+ * {&lbl_eu_806635D8, 0, &__dt__27TChildListHeader<8CProcess>Fv}) - the dtor
  * reloc name cannot be written in C++ source (MWCC rejects '<' in extern "C"
  * ids and &T::~T). MWCC emits the equivalent weak __vt__27TChildListHeader
  * <8CProcess> (0xC, .data @+0x24: {&__RTTI__27TChildListHeader<8CProcess>, 0,
@@ -39,9 +39,11 @@ CProcess::CProcess() {
     CProcessMan::GetFreeProcessList().InsertEnd(this);
 }
 
-//TODO: find out why mwcc decides to go crazy only for this function's extab :p
 CProcess::~CProcess() {
-    //Delete child processes
+    // novtable: re-store the retail vptr (0x8056BB60, +0x10) like the ctor.
+    *(void**)((char*)this + 0x10) = (void*)&lbl_eu_8056BB60;
+
+    //Delete child processes (next fetched before the destructive delete)
     CProcess* iter;
     CProcess* next;
     for (iter = static_cast<CProcess*>(mChildren.Begin());
@@ -53,11 +55,13 @@ CProcess::~CProcess() {
 
     //Remove from process lists
     if (mParent == nullptr) {
-        TChildListHeader<CProcess>& list = !mIsRegist
-            ? CProcessMan::GetFreeProcessList()
-            : CProcessMan::GetRootProcessList();
+        //Retail shape: root list by default, overridden when unregistered.
+        TChildListHeader<CProcess>* list = &CProcessMan::GetRootProcessList();
+        if (!mIsRegist) {
+            list = &CProcessMan::GetFreeProcessList();
+        }
 
-        list.Remove(this);
+        list->Remove(this);
     }
     else {
         mParent->GetChildren().Remove(this);
@@ -251,8 +255,8 @@ void CProcessMan::TailImpl(CProcess* proc) {
     }
 }
 
+// Retail inlines DeleteList twice (no separate DeleteList symbol in this TU).
 void CProcessMan::Delete() {
-    // Retail inlines DeleteList twice (no separate DeleteList symbol in this TU).
     CProcess* proc;
     CProcess* next;
 
@@ -279,10 +283,10 @@ void CProcessMan::Delete() {
 
 void CProcessMan::DeleteImpl(CProcess* proc) {   
     //Recurse through child processes
-    TChildListHeader<CChildListNode>& children = proc->GetChildren();
-
     CProcess* iter;
     CProcess* next;
+    TChildListHeader<CChildListNode>& children = proc->GetChildren();
+
     for (iter = static_cast<CProcess*>(children.Begin());
         iter != nullptr; iter = next) {
 

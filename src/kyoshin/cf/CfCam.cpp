@@ -978,18 +978,18 @@ extern "C" __declspec(noinline) void* func_8006C670(void* self) { return *reinte
 extern "C" __declspec(noinline) int func_8006C678(void* self) { return *reinterpret_cast<unsigned short*>(reinterpret_cast<char*>(self) + 1328) & 1; }
 extern "C" __declspec(noinline) int func_8006C684(void* self) {
     unsigned short v = *reinterpret_cast<unsigned short*>(reinterpret_cast<char*>(self) + 1328);
-    return ((v >> 12) & 3) != 0 ? 1 : 0;
+    return (v & 0xC) != 0;
 }
 extern "C" __declspec(noinline) int func_8006C69C(void* self) {
     unsigned short v = *reinterpret_cast<unsigned short*>(reinterpret_cast<char*>(self) + 1328);
-    return (v & 0x60) != 0 ? 1 : 0;
+    return (v & 0x30) != 0;
 }
 // Retail func_8006C6B4: test the 0x1D4 flag word against a mask.
 extern "C" __declspec(noinline) int func_8006C6B4(int self, int mask) {
-    return (*reinterpret_cast<u32*>(self) & static_cast<u32>(mask)) != 0 ? 1 : 0;
+    return (*reinterpret_cast<u32*>(static_cast<char*>(reinterpret_cast<void*>(self)) + 0x1D4) & static_cast<u32>(mask)) != 0 ? 1 : 0;
 }
 // Retail func_8006C730: clear bits of the 0x1D4 flag word.
-extern "C" __declspec(noinline) void func_8006C730(void* self, u32 mask) {
+__declspec(noinline) void func_8006C730(cf::CfCamFollow* self, u32 mask) {
     *reinterpret_cast<u32*>(reinterpret_cast<char*>(self) + 0x1D4) &= ~mask;
 }
 // Retail func_80071A90: flag bit of the +4 word.
@@ -1001,7 +1001,31 @@ extern "C" __declspec(noinline) void func_80071A9C(void* self) {
     *reinterpret_cast<u32*>(reinterpret_cast<char*>(self) + 4) &= 0xFFFFEDFFu;
 }
 // Retail func_80071730: copy 16 bytes.
-extern "C" __declspec(noinline) void func_80071730(void* dst, const void* src) {
+// Retail func_8006E5A4: tail-call the event-manager check with flag 0.
+cf::CfObject* func_8006E5A4(CfCamEventManager* mgr) {
+    return reinterpret_cast<cf::CfObject*>(func_800755B0(mgr, 0));
+}
+// Retail func_8006D72C: tail-call the pad gate with mask 0x100.
+extern "C" __declspec(noinline) int func_8006D72C(void* self) { return func_8006BFC4(reinterpret_cast<int>(self), 0x100); }
+// Retail func_8006D410: multiply by the .sda2 constant at lbl_eu_8066A20C.
+__declspec(noinline) f32 func_8006D410(f32 x) { extern float lbl_eu_8066A20C; return x * lbl_eu_8066A20C; }
+// Retail func_8006D440: set bit 0x200 in the +4 word.
+extern "C" __declspec(noinline) void func_8006D440(void* self) {
+    *reinterpret_cast<u32*>(reinterpret_cast<char*>(self) + 4) |= 0x200;
+}
+// Retail func_80071B78: empty body.
+extern "C" __declspec(noinline) void func_80071B78(void* self, float f) { (void)self; (void)f; }
+// Retail func_80074CD4: test the word at +0 against a mask.
+__declspec(noinline) int func_80074CD4(void* obj, u32 mask) {
+    return (*reinterpret_cast<u32*>(obj) & mask) != 0 ? 1 : 0;
+}
+// Retail func_800743A4: fan a vec3 out to +0xC/+0x1C/+0x2C.
+extern "C" __declspec(noinline) void func_800743A4(float* mtx, const float* v) {
+    mtx[3] = v[0];
+    mtx[7] = v[1];
+    mtx[11] = v[2];
+}
+__declspec(noinline) void func_80071730(void* dst, void* src) {
     const u32* s = static_cast<const u32*>(src);
     u32* d = static_cast<u32*>(dst);
     d[0] = s[0];

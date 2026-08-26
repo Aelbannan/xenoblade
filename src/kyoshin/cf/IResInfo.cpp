@@ -2,6 +2,7 @@
 // Replace stubs with high-level C/C++ during decomp.
 
 #include <string.h>
+#include <new>
 #include "kyoshin/harness_catalog.hpp"
 #include "kyoshin/cf/IResInfo.hpp"
 #include "monolib/device/CFileHandle.hpp"
@@ -14,7 +15,6 @@
 // ============================================================
 extern "C" {
     extern u32 lbl_eu_80663E28;
-    extern u32 lbl_eu_80663E30;
     extern u32 lbl_eu_8065FC18[];
     extern float lbl_eu_80666200;
     extern float lbl_eu_80666204;
@@ -61,6 +61,7 @@ extern "C" {
     void func_800A9344(void*, int);
     void func_800B79A4(void*);
     void func_800B7A18(void);
+    void func_801BFE8C(u32, u32, u32);
     void func_804CC1BC(void*, void*);
     void func_804CC1D8(void*, void*);
     s32 func_800B1C40();
@@ -74,12 +75,14 @@ extern "C" {
     void __dl__FPv(void*);
     void CfRes_orBits_649B4(void*, int);
     void func_800A9CD0(void);
-    void func_800A8C90(void);
     void* func_80066E7C(ResInfoEntry*, u32);
     void* func_80066CF8(ResInfoEntry*);
     void* func_80066DAC(ResInfoEntry*, u32*);
-    bool func_80066788(void*, bool, bool, bool);
+    int func_800A8C90(void);
 }
+
+// Main per-entry update tick (defined below).
+bool func_80066788(ResInfoEntry* self, bool paramLoad, bool paramFade, bool paramCancel);
 
 // Named wrappers (forward decls)
 extern "C" bool testResInfoFlag(u32 flags);
@@ -284,22 +287,31 @@ extern "C" int func_80065FB4(int unused, ResInfoEntry* self, int param) {
 }
 
 // ============================================================
-// func_800661A8 (0xC4) - bit test
-// ============================================================
-extern "C" bool func_800661A8(u8* self, int r5, int r6) {
-    u8 type = *(u8*)((char*)self + 0x33);
-    int mask = 0;
+// func_800661A8 (0xC4) - range check: builds a per-type limit mask, then
+// returns value > mask (unsigned). The retail xor/cntlzw/slw/srwi tail is
+// MWCC's branchless expansion of that unsigned comparison.
+// Leading unused int keeps the retail free-function ABI (entry record in r4).
+// Types 7..10 have a zero limit, so they fall through to the same false
+// result; keeping them as labeled cases plus a real `default: return false`
+// preserves the dense 0..10 switch range MWCC needs to emit the retail jump
+// table (Wii/1.1 lowers cheaper switches to a compare chain).
+extern "C" bool func_800661A8(int unused, ResInfoEntry* entry, u32 value, u32 param) {
+    u32 slot = (param >> 20) & 0x7F;
+    u32 mask = 0;
+    u8 type = entry->field_0x33;
     switch (type) {
-    case 0: mask = func_800A86AC(r5, 0, 0); break;
+    case 0: mask = func_800A86AC(slot, type - 1, 0); break;
     case 1: mask = 0x10000; break;
     case 2: mask = 0x32000; break;
-    case 3: mask = -0x28000; break;
-    case 4: mask = 0x1C800; break;
+    case 3: mask = 0xC8000; break;
+    case 4: mask = 0xC800; break;
     case 5: mask = 0x62800; break;
-    case 6: mask = -0x57000; break;
+    case 6: mask = 0x99000; break;
+    default: return false;
+    case 7: case 8: case 9: case 10: break;
     }
     if (mask == 0) return false;
-    return (r6 ^ mask) == 0;
+    return value > mask;
 }
 
 // ============================================================
@@ -475,48 +487,192 @@ extern "C" void* func_80066E7C(ResInfoEntry* self, u32 id) {
 // ============================================================
 // func_80066788 (0x4D4) - main update
 // ============================================================
-extern "C" bool func_80066788(void* self, bool r4, bool r5, bool r6) {
-    if (self == 0 && r6 == 0) { r4 = true; r5 = true; }
-    
+// Per-record state machine tick. Drives the fade counter at +0x36 through
+// its load/unload thresholds, cancels in-flight device I/O when the lookup
+// object reports it, and releases the record's data buffer once the fade
+// finishes. paramLoad/paramFade/paramCancel select which caller policy
+// applies; when both load and cancel are false they default to true.
+bool func_80066788(ResInfoEntry* self, bool paramLoad, bool paramFade, bool paramCancel) {
+    if (paramLoad == false && paramCancel == false) {
+        paramLoad = true;
+        paramFade = true;
+    }
+
+    // Bit set while a system-wide clear is active (raises the unload floor).
     bool hasClear = false;
     if (func_800B1C40()) {
-        if (lbl_eu_80663E28 & (1 << 4)) hasClear = true;
-    }
-    bool flag25 = (lbl_eu_80663E28 >> 6) & 1;
-    bool didWork = false;
-    
-    u32* data = *(u32**)((char*)self + 0x08);
-    if (data != 0 && (*(u32*)((char*)self + 0x00) & 0x100)) {
-        void* obj = *(void**)((char*)self + 0x2C);
-        u32 (*ofn)(void*) = (u32 (*)(void*))*(void**)(*(u32*)obj + 0xC);
-        u32 of = ofn(obj);
-        
-        if (of & 0x10000) {
-            void* (*cfn)(void*, int) = (void* (*)(void*, int))*(void**)(*(u32*)obj + 0x3C);
-            if (cfn(obj, 0) != 0) {
-                if (r6) { cancel__11CDeviceFileFP11CFileHandle(*(void**)((char*)self + 0x28)); *(u32*)((char*)self + 0x28) = 0; }
-                else return false;
-            }
-            waitForDrawDone__9CDeviceVIFv();
-            u32* rd = *(u32**)((char*)self + 0x08);
-            if (func_800A8BD8(rd)) func_800A8C68(rd);
-            else if (func_800A9024(rd)) func_800A9344(rd, 1);
-            else if (rd != 0) { deallocate__Q23mtl10MemManagerFPv(rd); *(u32*)((char*)self + 0x08) = 0; }
-            didWork = true;
-        } else {
-            void* (*cfn)(void*, int) = (void* (*)(void*, int))*(void**)(*(u32*)obj + 0x3C);
-            if (cfn(obj, 0) != 0) {
-                cancel__11CDeviceFileFP11CFileHandle(*(void**)((char*)self + 0x28));
-                didWork = false;
-                *(u32*)((char*)self + 0x28) = 0;
-                u32* rd = *(u32**)((char*)self + 0x08);
-                if (func_800A8BD8(rd)) func_800A8C68(rd);
-                else if (func_800A9024(rd)) func_800A9344(rd, 1);
-                else if (rd != 0) { deallocate__Q23mtl10MemManagerFPv(rd); *(u32*)((char*)self + 0x08) = 0; }
-                didWork = true;
-            }
-            // ... rest of the function is very complex
+        if (lbl_eu_80663E28 & 0x10) {
+            hasClear = true;
         }
+    }
+
+    bool didWork = false;
+
+    u32* data = self->data;
+    u32 gbit6 = (lbl_eu_80663E28 >> 6) & 1;
+    if (data != 0) {
+        if (self->field_0x00 & 0x80) {
+            u32 flags = self->field_0x2C->getFlags();
+            if (flags & 0x10000) {
+                // Streaming path: probe first, optionally cancel pending IO.
+                if (self->field_0x2C->vfunc0B(self) != 0) {
+                    if (paramCancel) {
+                        CDeviceFile::cancel(self->field_0x28);
+                        self->field_0x28 = 0;
+                    } else {
+                        return false;
+                    }
+                }
+                CDeviceVI::waitForDrawDone();
+                if (func_800A8BD8(self->data)) {
+                    func_800A8C68(self->data);
+                } else {
+                    if (func_800A9024(self->data)) {
+                        func_800A9344(self->data, 1);
+                    } else if (self->data != 0) {
+                        deallocate__Q23mtl10MemManagerFPv(self->data);
+                        self->data = 0;
+                    }
+                }
+                didWork = true;
+            } else {
+                if (self->field_0x2C->vfunc0B(self) != 0) {
+                    CDeviceFile::cancel(self->field_0x28);
+                    self->field_0x28 = 0;
+                    if (func_800A8BD8(self->data)) {
+                        func_800A8C68(self->data);
+                    } else {
+                        if (func_800A9024(self->data)) {
+                            func_800A9344(self->data, 1);
+                        } else if (self->data != 0) {
+                            deallocate__Q23mtl10MemManagerFPv(self->data);
+                            self->data = 0;
+                        }
+                    }
+                    didWork = true;
+                }
+                if (paramLoad) {
+                    // Fade start: pick an initial counter value from the global
+                    // mode bits and the entry flags.
+                    int st = func_800A8C90();
+                    // Global mode word is read twice (retail keeps two loads).
+                    u32 f24a = *(volatile u32*)&lbl_eu_80663E24;
+                    int mode = 1;
+                    u32 f24b = *(volatile u32*)&lbl_eu_80663E24;
+                    if ((((f24a & 0x2000000) | (f24a & 0x400)) == 0) && ((f24b & 0x40000) == 0)) {
+                        mode = 0;
+                    }
+                    if (self->field_0x0C == 0) {
+                        self->field_0x0C = (u32)self->data;
+                        if (mode != 0) {
+                            if (lbl_eu_8065FC18 != 0 && self->field_0x10 != 0) {
+                                func_800B79A4((void*)self->field_0x10);
+                            }
+                            self->field_0x36 = 2;
+                        } else if (self->field_0x00 & 0x200) {
+                            self->field_0x36 = 5;
+                        } else if (hasClear) {
+                            self->field_0x36 = 3;
+                        } else if (paramFade) {
+                            self->field_0x36 = 0xf;
+                        } else {
+                            self->field_0x36 = 0x96;
+                        }
+                    } else {
+                        // Fade running: clamp the counter by priority, then step.
+                        if (hasClear) {
+                            if (self->field_0x36 > 3) {
+                                self->field_0x36 = 3;
+                            }
+                        } else if (gbit6 != 0) {
+                            if (self->field_0x36 > 5) {
+                                self->field_0x36 = 5;
+                            }
+                        }
+                        if (st == 0) {
+                            if (self->field_0x36 > 3) {
+                                self->field_0x36 = 3;
+                            }
+                        } else if ((u32)st < 1) {
+                            if (self->field_0x36 > 0xf) {
+                                self->field_0x36 = 0xf;
+                            }
+                        } else if ((u32)st < 2) {
+                            if (self->field_0x36 > 0x1e) {
+                                self->field_0x36 = 0x1e;
+                            }
+                        }
+                        s16 v = self->field_0x36 - 1;
+                        self->field_0x36 = v;
+                        if (v == 2) {
+                            // Fade threshold reached: unregister from the shared
+                            // list and notify the audio grid for ids 0x59..0x60.
+                            if (lbl_eu_8065FC18 != 0 && self->field_0x10 != 0) {
+                                func_800B79A4((void*)self->field_0x10);
+                            }
+                            // Keep the raw id live in r3: retail computes
+                            // id+0x10000 into a second register.
+                            u32 id = self->field_0x30;
+                            u32 n = id + 0x10000;
+                            if ((u16)(n - 0x59) <= 7) {
+                                func_800B7A18();
+                            }
+                            if (self->field_0x00 & 0x800) {
+                                func_801BFE8C(self->field_0x32 + 5, -1, 0);
+                            }
+                        } else if (v <= 0) {
+                            // Fade finished: release the sound voice and buffer.
+                            CDeviceVI::waitForDrawDone();
+                            if (self->field_0x00 & 0x800) {
+                                func_801BFA64(self->field_0x32 + 5);
+                                self->field_0x00 &= ~0x800;
+                            }
+                            func_800A8C68((void*)self->field_0x0C);
+                            didWork = true;
+                        }
+                    }
+                } else {
+                    CDeviceVI::waitForDrawDone();
+                    if (self->field_0x00 & 0x800) {
+                        func_801BFA64(self->field_0x32 + 5);
+                        self->field_0x00 &= ~0x800;
+                    }
+                    func_800A8C68((void*)self->data);
+                    didWork = true;
+                }
+            }
+        }
+    } else {
+        // No data attached: just drop any cached resource registration.
+        if (self->field_0x10 != 0 && lbl_eu_8065FC18 != 0) {
+            func_800B79A4((void*)self->field_0x10);
+            func_804CC1D8(lbl_eu_8065FC18, (void*)self->field_0x10);
+            self->field_0x10 = 0;
+        }
+    }
+
+    if (didWork) {
+        // Work was done this tick: clear the global reload bit and fully
+        // reset the record back to its empty state.
+        lbl_eu_80663E28 &= ~0x40;
+        if (lbl_eu_8065FC18 != 0 && self->field_0x10 != 0) {
+            func_800B79A4((void*)self->field_0x10);
+            func_804CC1D8(lbl_eu_8065FC18, (void*)self->field_0x10);
+            self->field_0x10 = 0;
+        }
+        u32 id = self->field_0x30;
+        u32 n = id + 0x10000;
+        if ((u16)(n - 0x59) <= 7) {
+            func_800B7A18();
+        }
+        self->data = 0;
+        self->field_0x1C = 0;
+        self->field_0x0C = 0;
+        self->field_0x36 = 0;
+        self->field_0x00 = 0;
+        self->field_0x38 = 0;
+        self->field_0x3A = 0;
+        self->field_0x04 = 0;
     }
     return didWork;
 }
@@ -611,61 +767,77 @@ u8* func_8006861C(u8* self, u32 id, u32* outIdx, u32* outVal) {
 // either resets the 0x1ED0 counter (param ? 3.0 : 120.0) or decrements it
 // toward 0; then walks both grids, unloading/resetting entries whose state
 // flags say they are done, and clearing the resolution probe for the rest.
+// Retail reads the global flag word twice (bit 0x20 gate, then the rest),
+// so the volatile alias keeps both loads distinct.
 extern "C" bool func_800686E4(ResInfoContainer* self, bool param) {
-    bool any = false;
+    // Declaration order mirrors retail callee-saved coloring:
+    // cond=r31, flag25=r30, res=r29, target=r28, base=r27, any=r26.
+    u32 fGate = *(volatile u32*)&lbl_eu_80663E24;
+    u32 flags = *(volatile u32*)&lbl_eu_80663E24;
+
     bool cond;
-    if ((lbl_eu_80663E24 & 0x20) != 0
-     || (lbl_eu_80663E24 & 0x2000000) != 0
-     || (lbl_eu_80663E24 & 0x400) != 0) {
-        cond = true;
-    } else {
+    bool flag25;
+    float minVal;
+    void* res;
+    ResGridEntry* target;
+    ResGridEntry* base;
+    bool any = false;
+    int i;
+
+    cond = true;
+    if (((fGate & 0x20) == 0)
+     && (((flags & 0x2000000) | (flags & 0x400)) == 0)) {
         cond = false;
     }
-    bool flag25 = (lbl_eu_80663E24 & 0x40000) != 0;
+    flag25 = (flags & 0x40000) != 0;
 
     if (func_800865E8__Q22cf13CfGameManagerFv()) return false;
     if (flag25) return false;
 
-    if (cond) {
+    minVal = lbl_eu_80666200;
+    if (cond || flag25) {
+        // Shared-store form: MWCC emits one stfs for both arms (retail).
         self->field_0x1ED0 = param ? lbl_eu_80666204 : lbl_eu_80666208;
-    } else if (flag25 == 0) {
+    } else {
         // flag25 is provably 0 here (early-returned above); the redundant
         // test mirrors the retail `beq cr1` reusing the earlier compare flag.
+        float limit = lbl_eu_80666200;
         self->field_0x1ED0 -= lbl_eu_8066620C;
-        if (self->field_0x1ED0 < lbl_eu_80666200) {
-            self->field_0x1ED0 = lbl_eu_80666200;
+        if (self->field_0x1ED0 < limit) {
+            self->field_0x1ED0 = limit;
         }
     }
 
-    float zero = lbl_eu_80666200;
-    ResGridEntry* base = self->grid;        // 0x14DC
-    ResGridEntry* target = self->grid + 1;  // 0x14E0
-    for (int i = 0x59; i < 0x81; i++) {
-        void* r = base->lookup->getResourceBase(target, 0);
-        if (r != 0 && func_800A8BD8(r)) {
-            bool cond2;
+    minVal = lbl_eu_80666200;
+    base = self->grid;                                  // 0x14DC
+    target = (ResGridEntry*)&self->grid[0].field_0x04;  // 0x14E0
+    for (i = 0x59; i < 0x81; i++, base++, target++) {
+        res = base->lookup->getResourceBase(target, 0);
+        if (res != 0 && func_800A8BD8(res)) {
+            bool unload;
             if (i >= 0x61) {
-                cond2 = self->field_0x1ED0 <= zero
-                     && ((ResGridEntryEx*)base)->field_0x3C == 0;
+                unload = (self->field_0x1ED0 <= minVal)
+                      && (((ResGridEntryEx*)base)->field_0x3C == 0);
+            } else if (param) {
+                unload = ((ResGridEntryEx*)base)->field_0x3E == 0;
             } else {
-                cond2 = (param ? ((ResGridEntryEx*)base)->field_0x3E
-                               : ((ResGridEntryEx*)base)->field_0x3C) == 0;
+                unload = ((ResGridEntryEx*)base)->field_0x3C == 0;
             }
-            if (cond2) {
+            if (unload) {
                 if (cond) {
                     if ((base->field_0x04 & 0x200) != 0
-                     && base->handle == (CFileHandle*)(u32)lbl_eu_80663E30) {
+                     && base->handle == (CFileHandle*)lbl_eu_80663E30) {
                         continue;
                     }
                 }
                 if (flag25) {
                     if ((base->field_0x04 & 0x400) != 0
-                     && base->handle == (CFileHandle*)(u32)lbl_eu_80663E30) {
+                     && base->handle == (CFileHandle*)lbl_eu_80663E30) {
                         continue;
                     }
                 }
-                if (r != 0) {
-                    if (func_80066788(target, true, param, false)) {
+                if (res != 0) {
+                    if (func_80066788((ResInfoEntry*)target, true, param, false)) {
                         any = true;
                     }
                 }
@@ -677,8 +849,6 @@ extern "C" bool func_800686E4(ResInfoContainer* self, bool param) {
                 }
             }
         }
-        base++;
-        target++;
     }
     if (any) {
         CDeviceVI::waitForDrawDone();
@@ -746,26 +916,27 @@ void func_80067D38(ResInfoEntry* entry) {
 // ============================================================
 
 // func_80067DB4 (0xC4) - init entries
+// Zeroes the overlapping s16 state words that trail every gridLow record
+// (they physically overlay the following record's first bytes), then walks
+// the 0x16BC grid resolving each entry's resource base and clearing its own
+// trailing state words.
 extern "C" void func_80067DB4(u8* self) {
-    memset((char*)self + 0x1518, 0, 8);
-    memset((char*)self + 0x1554, 0, 8);
-    memset((char*)self + 0x1590, 0, 8);
-    memset((char*)self + 0x15CC, 0, 8);
-    memset((char*)self + 0x1608, 0, 8);
-    memset((char*)self + 0x1644, 0, 8);
-    memset((char*)self + 0x1680, 0, 8);
-    memset((char*)self + 0x16BC, 0, 8);
-    
-    void* base = (char*)self + 0x16BC;
-    void* target = (char*)self + 0x16C0;
+    // Zero the trailing s16 state words of each gridLow record (they
+    // physically overlay the following record's first bytes). Written as an
+    // offset loop so MWCC unrolls to r3-relative halfword stores.
+    for (int k = 0; k < 8; k++) {
+        *(s16*)(self + 0x1518 + k * 0x3C) = 0;
+        *(s16*)(self + 0x151A + k * 0x3C) = 0;
+    }
+
+    ResGridEntry* target = (ResGridEntry*)(self + 0x16C0);
+    ResGridEntry* base = (ResGridEntry*)(self + 0x16BC);
     for (int i = 0x61; i < 0x81; i++) {
-        void* obj = *(void**)((char*)base + 0x30);
-        void* (*fn)(void*, int) = (void* (*)(void*, int))*(void**)(*(u32*)obj + 8);
-        fn(obj, 0);
-        *(u16*)((char*)base + 0x3C) = 0;
-        *(u16*)((char*)base + 0x3E) = 0;
-        base = (char*)base + 0x3C;
-        target = (char*)target + 0x3C;
+        base->lookup->getResourceBase(target, 0);
+        ((ResGridEntryEx*)base)->field_0x3C = 0;
+        ((ResGridEntryEx*)base)->field_0x3E = 0;
+        base++;
+        target++;
     }
 }
 
@@ -777,7 +948,7 @@ extern "C" void func_80067E78(u8* self, bool param) {
     ResGridEntry* base = (ResGridEntry*)(self + 0x16BC);
     for (int i = 0x61; i < 0x81; i++) {
         if (base->lookup->getResourceBase(target, 0) != 0) {
-            func_80066788(target, 0, 0, param);
+            func_80066788((ResInfoEntry*)target, 0, 0, param);
         }
         target++;
         base++;
@@ -795,7 +966,7 @@ extern "C" void func_80067F10(void* self, bool param) {
             u32 cat = base->id >> 27;
             bool skip = (cat == 8) || (cat == 11);
             if (skip) continue;
-            func_80066788(target, 0, 0, param);
+            func_80066788((ResInfoEntry*)target, 0, 0, param);
         }
     }
 }
@@ -809,7 +980,7 @@ extern "C" void func_80067FE0(u8* self) {
     for (int i = 0x61; i < 0x81; i++) {
         if (base->lookup->getResourceBase(target, 0) != 0) {
             if (base->field_0x04 & 0x3000) {
-                func_80066788(target, 0, 0, true);
+                func_80066788((ResInfoEntry*)target, 0, 0, true);
             }
         }
         target++;
@@ -829,7 +1000,7 @@ extern "C" void func_80068078(u8* self) {
         void* r = base->lookup->getResourceBase(target, 0);
         if (r != 0) {
             if (func_800A8BD8(r)) {
-                func_80066788(target, 1, 1, 0);
+                func_80066788((ResInfoEntry*)target, 1, 1, 0);
             }
         }
         target++;
@@ -856,11 +1027,11 @@ extern "C" void func_80068110(u8* self, bool param) {
                     u32 fl = base->field_0x04;
                     bool hasFlag2 = (fl & 0x200) || (fl & 0x400);
                     if (param && hasFlag2) {
-                        func_80066788(target, 0, 0, 1);
+                        func_80066788((ResInfoEntry*)target, 0, 0, 1);
                     } else if (!hasFlag2) {
                         u32 cat = base->id >> 27;
                         if (!(flagResult && (cat == 8 || cat == 11))) {
-                            func_80066788(target, 0, 0, 1);
+                            func_80066788((ResInfoEntry*)target, 0, 0, 1);
                         }
                     }
                 }
@@ -889,7 +1060,7 @@ extern "C" void func_80068254(u8* self) {
                     if (hasFlag2) {
                         if (!waited) CDeviceVI::waitForDrawDone();
                         waited = true;
-                        func_80066788(target, 0, 0, 1);
+                        func_80066788((ResInfoEntry*)target, 0, 0, 1);
                     }
                 }
             }
@@ -918,11 +1089,79 @@ extern "C" void func_80068358(void* self) {
 }
 
 // ============================================================
-// Constructor (stub)
+// Constructor: zeroes the header flag word and the 130-record entry
+// table (0x3C stride starting at +0x04), installs the per-category
+// resource vtables into the scratch slots, resets the embedded reslist
+// ring at 0x1EB4, then allocates the node pool (130 x 0xC) and clears
+// each node's next link.
+// Record 0 is spelled out so its stores stay r3-relative (retail peels
+// it); the rest runs as a pointer walk that MWCC unrolls x8.
 // ============================================================
-extern "C" void __ct__80066F9C(u8* self) {
-    // Large constructor - stub for now
-    memset(self, 0, 0x1E78);
+extern "C" void __ct__80066F9C(ResCtorLayout* self) {
+    self->flags = 0;
+    self->entries[0].field_0x00 = 0;
+    self->entries[0].field_0x04 = 0;
+    self->entries[0].field_0x08 = 0;
+    self->entries[0].field_0x10 = 0;
+    self->entries[0].field_0x18 = 0;
+    self->entries[0].field_0x1C = 0;
+    self->entries[0].field_0x24 = 0;
+    self->entries[0].field_0x28 = 0;
+    self->entries[0].field_0x34 = 0;
+    self->entries[0].field_0x38 = 0;
+    self->entries[0].field_0x3A = 0;
+
+    // Scratch lookup slots: each category's resource-object vtable.
+    ResCtorEntry* entry = &self->entries[1];
+    ResCtorEntry* end = &self->entries[0x82];
+    while (entry < end) {
+        entry->field_0x00 = 0;
+        entry->field_0x04 = 0;
+        entry->field_0x08 = 0;
+        entry->field_0x10 = 0;
+        entry->field_0x18 = 0;
+        entry->field_0x1C = 0;
+        entry->field_0x24 = 0;
+        entry->field_0x28 = 0;
+        entry->field_0x34 = 0;
+        entry->field_0x38 = 0;
+        entry->field_0x3A = 0;
+        entry++;
+    }
+
+    self->slots[0] = lbl_eu_80526D70;
+    self->slots[1] = lbl_eu_80526D10;
+    self->slots[2] = lbl_eu_80526CB0;
+    self->slots[3] = lbl_eu_80526C50;
+    self->slots[4] = lbl_eu_80526AD0;
+    self->slots[5] = lbl_eu_80526A70;
+    self->slots[6] = lbl_eu_80526A10;
+    self->slots[7] = lbl_eu_80526A10;
+    self->slots[8] = lbl_eu_805269AC;
+    self->slots[9] = lbl_eu_80526944;
+    self->slots[10] = lbl_eu_80526BF0;
+    self->slots[11] = lbl_eu_80526B30;
+    self->slots[12] = lbl_eu_80526938;
+
+    self->mList = NULL;
+    self->mCapacity = 0;
+    self->mOwnsList = 0;
+
+    // Close the embedded reslist ring on its sentinel.
+    self->mStartNodePtr = &self->mStartNode;
+    self->mStartNode.next = &self->mStartNode;
+    self->mStartNode.prev = &self->mStartNode;
+
+    // Retail keeps both vtable stores (reslist view, then the raw one).
+    self->vtable = lbl_eu_80526938;
+    self->vtable = lbl_eu_80526920;
+
+    u32 heapId = func_80061FFC();
+    self->mList = (ResListUSNode*)allocate_array__Q23mtl10MemManagerFUlUl(0x618, heapId);
+    for (int i = 0; i < 0x82; i++) {
+        self->mList[i].next = NULL;
+    }
+    self->mCapacity = 0x82;
 }
 
 // ============================================================
@@ -959,11 +1198,27 @@ void* __dt___reslist_base_unsigned_short(ResListUS* self, int mode) {
 }
 
 // reslist<unsigned short> deleting destructor (retail __dt__reslist_unsigned_short).
-// Retail shape = outer null guard around an inlined _reslist_base dtor call
-// (its own null check survives as the dead second beq) plus the delete tail.
 void* __dt__reslist_unsigned_short(ResListUS* self, int mode) {
+    // Doubled null check mirrors retail: MWCC keeps the dead second beq.
+    // NOTE residual: retail allocates the loop-carried node pointer in the
+    // register mHead was loaded into (r4); our toolchain consistently colors
+    // it r5 regardless of source shape (see session notes) - 7 pure reg-swaps.
     if (self != NULL) {
-        __dt___reslist_base_unsigned_short(self, 0);
+        if (self != NULL) {
+            self->vtable = lbl_eu_80526938;
+            ResListUSNode* cur = self->mHead->next;
+            while (cur != self->mHead) {
+                ResListUSNode* prev = cur;
+                cur = cur->next;
+                prev->next = NULL;
+            }
+            self->mHead->next = self->mHead;
+            self->mHead->prev = self->mHead;
+            if (self->mOwnsList == 0 && self->mList != NULL) {
+                __dla__FPv(self->mList);
+                self->mList = NULL;
+            }
+        }
         if (mode > 0) {
             __dl__FPv(self);
         }
@@ -976,22 +1231,31 @@ void* __dt__reslist_unsigned_short(ResListUS* self, int mode) {
 // freed unless ownership was transferred), zeroes the capacity, then runs
 // the same teardown for the reslist<unsigned short> view at +0x1EB0 (vtable
 // set to lbl_eu_80526938). Frees the container itself when mode > 0.
-extern "C" void* __dt__8006754C(u8* self, int mode) {
+// Shared teardown body (mirrors __dt__80067670); expanded inline in the
+// deleting destructor below.
+static void ResStorage_ClearFirstList(ResInfoStorage* obj) {
+    ResInfoListNode* tmp;
+    ResInfoListNode* head = obj->mStartNodePtr;
+    ResInfoListNode* node = head->next;
+    while (node != obj->mStartNodePtr) {
+        tmp = node;
+        node = tmp->next;
+        tmp->next = 0;
+    }
+    obj->mStartNodePtr->next = obj->mStartNodePtr;
+    obj->mStartNodePtr->prev = obj->mStartNodePtr;
+    if (obj->mOwnsList == 0 && obj->mList != 0) {
+        __dla__FPv(obj->mList);
+        obj->mList = 0;
+    }
+}
+
+void* __dt__8006754C(u8* self, int mode) {
     ResInfoStorage* obj = (ResInfoStorage*)self;
     if (obj != 0) {
-        for (ResInfoListNode* cur = obj->mStartNodePtr->next; cur != obj->mStartNodePtr;) {
-            ResInfoListNode* node = cur;
-            cur = cur->next;
-            node->next = 0;
-        }
-        obj->mStartNodePtr->next = obj->mStartNodePtr;
-        obj->mStartNodePtr->prev = obj->mStartNodePtr;
-        if (obj->mOwnsList == 0 && obj->mList != 0) {
-            __dla__FPv(obj->mList);
-            obj->mList = 0;
-        }
+        ResStorage_ClearFirstList(obj);
 
-        ResListUS* rl = (ResListUS*)((u8*)obj + 0x1EB0);
+        ResListUS* rl = (ResListUS*)(obj->_00 + 0x1EB0);
         obj->mCapacity = 0;
         if (rl != 0) {
             if (rl != 0) {
@@ -1046,10 +1310,27 @@ extern "C" void __dt__80067670(u8* self) {
 // Full initializer: bulk-clears everything after the flag word, sets bit 0,
 // resets the fade counter, re-closes the embedded reslist ring at 0x1EB4,
 // then fills the three 0x3C-stride record tables.
+//
+// Session notes (matching residual, best 362/1644B vs retail 1624B):
+// - The 0x2D0 fill MUST be two ranges (n<0x48 counted + n<0x50 unrolled).
+//   A single n<0x50 loop makes MWCC emit ctr=10 with NO 8-record tail block
+//   (-364B); do-while forms suppress the unroll entirely (addic. shape).
+// - The flags/counter/ring-clear region is schedule-sensitive: the explicit
+//   `u32 flags = self->flags | 1; counter = ...; self->flags = flags;`
+//   order reproduces retail's lfs/stfs placement; plain `|=` hoists the
+//   head load too early.
+// - Remaining residual: global GPR coloring cascade - our allocator splits
+//   the zero constant across r9/r11/r27/r29/r31 where retail unifies it in
+//   r0, and maps retail's per-category address regs one-to-many; plus ~5
+//   insns of size drift around the unrolled 8-record tail. Removing the
+//   cached `u32* slots` local (r31-relative addressing) frees one callee-
+//   saved reg but shifts ALL colors (_savegpr_19) and scores worse (383).
+//   Likely needs whole-function allocation alignment, not a local fix.
 extern "C" void func_800676F8(ResInfoWork* self) {
     memset(&self->_04, 0, 0x1E78);
-    self->flags |= 1;
+    u32 flags = self->flags | 1;
     self->counter = lbl_eu_80666200;
+    self->flags = flags;
 
     // Reset the embedded reslist ring: unlink every node, then close the
     // sentinel back on itself.
@@ -1063,11 +1344,10 @@ extern "C" void func_800676F8(ResInfoWork* self) {
     self->mStartNodePtr->prev = self->mStartNodePtr;
 
     // Scratch lookup slots baked into the record tables.
-
     u32* slots = self->slots;
 
     // Small type table at 0x78: sound categories 2..11, each bound to its
-    // manager slot (slot indices follow the retail assignment).
+    // manager slot. Statement order follows the retail store sequence.
     ResInitEntry* pre = self->preTable;
     pre[0].field_0x30 = (ResInfoListNode*)&slots[0];
     pre[0].field_0x36 = 2;
@@ -1089,10 +1369,6 @@ extern "C" void func_800676F8(ResInfoWork* self) {
     pre[4].field_0x36 = 6;
     pre[4].field_0x37 = 0;
     pre[4].field_0x34 = 6;
-    pre[5].field_0x30 = (ResInfoListNode*)&slots[11];
-    pre[5].field_0x36 = 7;
-    pre[5].field_0x37 = 0;
-    pre[5].field_0x34 = 7;
     pre[6].field_0x30 = (ResInfoListNode*)&slots[5];
     pre[6].field_0x36 = 8;
     pre[6].field_0x37 = 0;
@@ -1105,15 +1381,29 @@ extern "C" void func_800676F8(ResInfoWork* self) {
     pre[8].field_0x36 = 10;
     pre[8].field_0x37 = 0;
     pre[8].field_0x34 = 10;
+    pre[5].field_0x30 = (ResInfoListNode*)&slots[11];
+    pre[5].field_0x36 = 7;
+    pre[5].field_0x37 = 0;
+    pre[5].field_0x34 = 7;
     pre[9].field_0x30 = (ResInfoListNode*)&slots[12];
     pre[9].field_0x36 = 11;
     pre[9].field_0x37 = 0;
     pre[9].field_0x34 = 11;
 
-    // 0x2D0 table: 77 records forming an 11-wide grid (logical ids 0xC..0x58).
-    // field_0x36/0x37 decompose the linear index n into row/col.
+    // 0x2D0 table: records forming an 11-wide grid (logical ids 0xC..0x5B).
+    // field_0x36/0x37 decompose the linear index n into row/col. Written as
+    // two ranges (0..0x47 counted, 0x48..0x4F fully unrolled by MWCC); the
+    // last 3 records physically overlay gridLow[0..2], which the explicit
+    // block below re-initializes (retail does the same double write).
     ResInitEntry* e = self->entries;
-    for (int n = 0; n < 0x4D; n++, e++) {
+    int n = 0;
+    for (; n < 0x48; n++, e++) {
+        e->field_0x30 = (ResInfoListNode*)&slots[6];
+        e->field_0x36 = n / 11;
+        e->field_0x37 = n % 11;
+        e->field_0x34 = (s16)(0xC + n);
+    }
+    for (; n < 0x50; n++, e++) {
         e->field_0x30 = (ResInfoListNode*)&slots[6];
         e->field_0x36 = n / 11;
         e->field_0x37 = n % 11;

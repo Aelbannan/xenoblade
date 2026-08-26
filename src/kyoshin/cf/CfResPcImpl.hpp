@@ -618,7 +618,7 @@ extern "C" void func_80066714(cf::CfResPcLookupEntry* entry, bool cleanup);
 extern "C" ::CfFileEventIdsView* func_8009D5FC();
 extern "C" void func_8009EB2C(int a, int b, u8* c);
 extern "C" void func_8009F6D4(void* object);
-extern "C" cf::CfResPcCharData* func_8009EC9C(u32 idx);
+extern "C" void* func_8009EC9C(u32 idx);  // canonical owner-form (void*) shared by all TUs; callers cast to cf::CfResPcCharData*
 extern "C" void func_80068AEC(u8* name);
 extern "C" void func_8008413C__Q22cf13CfGameManagerFv(u16 a, u32 b);
 extern "C" void func_80084AD4__Q22cf13CfGameManagerFv(u32 mask);
@@ -659,7 +659,7 @@ extern "C" void* func_80063038();
 // the plain retail names.
 extern "C" u8* CfRes_getInstanceField();
 extern "C" void func_eu_80063174(int a, u8* b);
-extern "C" void func_801BFE8C(int a, int b, int c);
+extern "C" void func_801BFE8C(u32 a, u32 b, u32 c); // canonical u32 form (CVision/CfResReload/ImplPc/ImplEne)
 extern "C" int func_800625A0(int a, int b);
 extern "C" int func_80061A80(u32 a, u32 b, u32 c, u32 d, u32 e, u32 f);
 extern "C" void func_8007E864__Q22cf13CfGameManagerFv(u32 first, u32 second);

@@ -1,0 +1,5747 @@
+{
+"kyoshin/CGame": {
+"total": 57,
+"matched": 57,
+"remaining": 0
+},
+"PowerPC_EABI_Support/src/Runtime/__mem": {
+"total": 4,
+"matched": 4,
+"remaining": 0
+},
+"RVL_SDK/src/revolution/os/__start": {
+"total": 6,
+"matched": 6,
+"remaining": 0
+},
+"RVL_SDK/src/revolution/os/__ppc_eabi_init": {
+"total": 5,
+"matched": 5,
+"remaining": 0
+},
+"kyoshin/main": {
+"total": 9,
+"matched": 9,
+"remaining": 0
+},
+"kyoshin/plugin/pluginDeb": {
+"total": 4,
+"matched": 4,
+"remaining": 0
+},
+"kyoshin/plugin/pluginWait": {
+"total": 2,
+"matched": 2,
+"remaining": 0
+},
+"kyoshin/plugin/ocBuiltin": {
+"total": 4,
+"matched": 4,
+"remaining": 0
+},
+"kyoshin/plugin/ocThread": {
+"total": 11,
+"matched": 11,
+"remaining": 0
+},
+"kyoshin/plugin/ocMsg": {
+"total": 20,
+"matched": 19,
+"remaining": 1
+},
+"kyoshin/plugin/ocBdat": {
+"total": 27,
+"matched": 23,
+"remaining": 4
+},
+"kyoshin/plugin/ocUnit": {
+"total": 109,
+"matched": 97,
+"remaining": 12
+},
+"kyoshin/CTaskGame": {
+"total": 113,
+"matched": 103,
+"remaining": 10
+},
+"kyoshin/cf/CTaskGameCf": {
+"total": 25,
+"matched": 23,
+"remaining": 2
+},
+"kyoshin/CTaskGameEff": {
+"total": 28,
+"matched": 25,
+"remaining": 3
+},
+"kyoshin/plugin/ocCfp": {
+"total": 9,
+"matched": 9,
+"remaining": 0
+},
+"kyoshin/plugin/pluginMain": {
+"total": 1,
+"matched": 1,
+"remaining": 0
+},
+"kyoshin/plugin/pluginUi": {
+"total": 40,
+"matched": 35,
+"remaining": 5
+},
+"kyoshin/plugin/pluginEve": {
+"total": 20,
+"matched": 20,
+"remaining": 0
+},
+"kyoshin/plugin/pluginCfs": {
+"total": 73,
+"matched": 58,
+"remaining": 15
+},
+"kyoshin/plugin/pluginMath": {
+"total": 2,
+"matched": 2,
+"remaining": 0
+},
+"kyoshin/action/CActParamAnim": {
+"total": 144,
+"matched": 92,
+"remaining": 52
+},
+"kyoshin/action/CActParamData": {
+"total": 178,
+"matched": 152,
+"remaining": 26
+},
+"kyoshin/cf/CMcaFile": {
+"total": 3,
+"matched": 3,
+"remaining": 0
+},
+"kyoshin/cf/CTaskEnvironment": {
+"total": 36,
+"matched": 28,
+"remaining": 8
+},
+"kyoshin/CTimeLightGrp": {
+"total": 7,
+"matched": 6,
+"remaining": 1
+},
+"kyoshin/cf/CActParamAnimGame": {
+"total": 33,
+"matched": 13,
+"remaining": 20
+},
+"kyoshin/plugin/pluginCam": {
+"total": 27,
+"matched": 26,
+"remaining": 1
+},
+"kyoshin/cf/CTaskGameEffAfter": {
+"total": 8,
+"matched": 8,
+"remaining": 0
+},
+"kyoshin/plugin/pluginPad": {
+"total": 3,
+"matched": 3,
+"remaining": 0
+},
+"kyoshin/cf/CfRes": {
+"total": 224,
+"matched": 212,
+"remaining": 12
+},
+"kyoshin/cf/IResInfo": {
+"total": 76,
+"matched": 69,
+"remaining": 7
+},
+"kyoshin/cf/CfScript": {
+"total": 40,
+"matched": 39,
+"remaining": 1
+},
+"kyoshin/cf/CfTaskMain": {
+"total": 11,
+"matched": 10,
+"remaining": 1
+},
+"kyoshin/cf/CfTFile": {
+"total": 34,
+"matched": 26,
+"remaining": 8
+},
+"kyoshin/cf/CfCamEvent": {
+"total": 16,
+"matched": 15,
+"remaining": 1
+},
+"kyoshin/cf/CfCamDirectionIntf": {
+"total": 4,
+"matched": 4,
+"remaining": 0
+},
+"kyoshin/cf/CfCamLookatIntf": {
+"total": 4,
+"matched": 4,
+"remaining": 0
+},
+"kyoshin/cf/CfCamTargetIntf": {
+"total": 4,
+"matched": 4,
+"remaining": 0
+},
+"kyoshin/cf/CfCam": {
+"total": 181,
+"matched": 151,
+"remaining": 30
+},
+"kyoshin/cf/CfCamEvent_1": {
+"total": 39,
+"matched": 16,
+"remaining": 23
+},
+"kyoshin/cf/CfGameManager": {
+"total": 352,
+"matched": 314,
+"remaining": 38
+},
+"kyoshin/cf/CtrlEnemy": {
+"total": 41,
+"matched": 39,
+"remaining": 2
+},
+"kyoshin/cf/CtrlMoveBase": {
+"total": 20,
+"matched": 12,
+"remaining": 8
+},
+"kyoshin/cf/CtrlMoveEne": {
+"total": 45,
+"matched": 29,
+"remaining": 16
+},
+"kyoshin/cf/CtrlNpc": {
+"total": 34,
+"matched": 27,
+"remaining": 7
+},
+"kyoshin/cf/CtrlPc": {
+"total": 47,
+"matched": 37,
+"remaining": 10
+},
+"kyoshin/cf/CtrlRemote": {
+"total": 33,
+"matched": 24,
+"remaining": 9
+},
+"kyoshin/cf/CtrlObjectParam": {
+"total": 109,
+"matched": 73,
+"remaining": 36
+},
+"kyoshin/code_800A3B24": {
+"total": 27,
+"matched": 7,
+"remaining": 20
+},
+"kyoshin/code_800A75FC": {
+"total": 50,
+"matched": 46,
+"remaining": 4
+},
+"kyoshin/code_800AA008": {
+"total": 12,
+"matched": 7,
+"remaining": 5
+},
+"kyoshin/cf/CfCollCircleImpl": {
+"total": 2,
+"matched": 2,
+"remaining": 0
+},
+"kyoshin/cf/CfCollSphereImpl": {
+"total": 2,
+"matched": 2,
+"remaining": 0
+},
+"kyoshin/cf/CfCollAABBImpl": {
+"total": 2,
+"matched": 2,
+"remaining": 0
+},
+"kyoshin/cf/CfCollCylinderImpl": {
+"total": 2,
+"matched": 1,
+"remaining": 1
+},
+"kyoshin/cf/CfCollCapsuleImpl": {
+"total": 2,
+"matched": 2,
+"remaining": 0
+},
+"kyoshin/cf/object/CfObjectColl": {
+"total": 68,
+"matched": 58,
+"remaining": 10
+},
+"kyoshin/cf/object/CfObjectEff": {
+"total": 53,
+"matched": 52,
+"remaining": 1
+},
+"kyoshin/cf/object/CfObjectEne": {
+"total": 137,
+"matched": 130,
+"remaining": 7
+},
+"kyoshin/code_800B06A4": {
+"total": 253,
+"matched": 206,
+"remaining": 47
+},
+"kyoshin/cf/object/CfObjectMap": {
+"total": 20,
+"matched": 17,
+"remaining": 3
+},
+"kyoshin/cf/object/CfObjectModel": {
+"total": 61,
+"matched": 56,
+"remaining": 5
+},
+"kyoshin/cf/object/CfObjectMove": {
+"total": 127,
+"matched": 117,
+"remaining": 10
+},
+"kyoshin/cf/object/CfObjectNpc": {
+"total": 8,
+"matched": 5,
+"remaining": 3
+},
+"kyoshin/cf/object/CfObjectObj": {
+"total": 8,
+"matched": 7,
+"remaining": 1
+},
+"kyoshin/cf/object/CfObjectPc": {
+"total": 36,
+"matched": 31,
+"remaining": 5
+},
+"kyoshin/cf/object/CfObjectPoint": {
+"total": 10,
+"matched": 10,
+"remaining": 0
+},
+"kyoshin/cf/code_800C17DC": {
+"total": 12,
+"matched": 9,
+"remaining": 3
+},
+"kyoshin/cfsys/CfObjectImplWalker": {
+"total": 28,
+"matched": 18,
+"remaining": 10
+},
+"kyoshin/cfsys/CfObjectImplPc": {
+"total": 22,
+"matched": 10,
+"remaining": 12
+},
+"kyoshin/cfsys/CfObjectImplObj": {
+"total": 10,
+"matched": 10,
+"remaining": 0
+},
+"kyoshin/cfsys/CfObjectImplNpc": {
+"total": 11,
+"matched": 11,
+"remaining": 0
+},
+"kyoshin/cfsys/CfObjectImplMove": {
+"total": 36,
+"matched": 25,
+"remaining": 11
+},
+"kyoshin/cfsys/CfObjectImplEne": {
+"total": 18,
+"matched": 16,
+"remaining": 2
+},
+"kyoshin/cf/CtrlAct": {
+"total": 33,
+"matched": 14,
+"remaining": 19
+},
+"kyoshin/cf/CBattleManager": {
+"total": 78,
+"matched": 50,
+"remaining": 28
+},
+"kyoshin/cf/code_800F42AC": {
+"total": 9,
+"matched": 9,
+"remaining": 0
+},
+"kyoshin/cf/CfObjectEnumList": {
+"total": 42,
+"matched": 29,
+"remaining": 13
+},
+"kyoshin/cf/CfObjectSelectorObj": {
+"total": 18,
+"matched": 14,
+"remaining": 4
+},
+"kyoshin/CMainMenu": {
+"total": 31,
+"matched": 23,
+"remaining": 8
+},
+"kyoshin/menu/CMenuArtsSelect": {
+"total": 46,
+"matched": 30,
+"remaining": 16
+},
+"kyoshin/menu/CMenuBattleDamage": {
+"total": 27,
+"matched": 22,
+"remaining": 5
+},
+"kyoshin/menu/CMenuBattlePlayerState_ct": {
+"total": 1,
+"matched": 0,
+"remaining": 1
+},
+"kyoshin/menu/CMenuBattlePlayerState": {
+"total": 20,
+"matched": 11,
+"remaining": 9
+},
+"kyoshin/menu/CMenuEnemyState": {
+"total": 33,
+"matched": 23,
+"remaining": 10
+},
+"kyoshin/menu/CMenuFade": {
+"total": 14,
+"matched": 9,
+"remaining": 5
+},
+"kyoshin/menu/CMenuKeyAssign": {
+"total": 15,
+"matched": 10,
+"remaining": 5
+},
+"kyoshin/CMiniMap": {
+"total": 33,
+"matched": 15,
+"remaining": 18
+},
+"kyoshin/menu/CMenuQuestLog": {
+"total": 23,
+"matched": 15,
+"remaining": 8
+},
+"kyoshin/menu/CMenuSymbolMark": {
+"total": 31,
+"matched": 13,
+"remaining": 18
+},
+"kyoshin/CQuestWindow": {
+"total": 30,
+"matched": 26,
+"remaining": 4
+},
+"kyoshin/CSystemWindow": {
+"total": 8,
+"matched": 7,
+"remaining": 1
+},
+"kyoshin/CSysWinSelect": {
+"total": 15,
+"matched": 15,
+"remaining": 0
+},
+"kyoshin/CTagProcessor": {
+"total": 127,
+"matched": 114,
+"remaining": 13
+},
+"kyoshin/CTalkWindow": {
+"total": 18,
+"matched": 13,
+"remaining": 5
+},
+"kyoshin/CUIBattleManager": {
+"total": 37,
+"matched": 28,
+"remaining": 9
+},
+"kyoshin/CUICfManager": {
+"total": 89,
+"matched": 69,
+"remaining": 20
+},
+"kyoshin/code_80135FDC": {
+"total": 124,
+"matched": 83,
+"remaining": 41
+},
+"kyoshin/CUIWindowManager": {
+"total": 69,
+"matched": 52,
+"remaining": 17
+},
+"kyoshin/cf/CfBdat": {
+"total": 21,
+"matched": 18,
+"remaining": 3
+},
+"kyoshin/menu/CMenuUpdate": {
+"total": 36,
+"matched": 31,
+"remaining": 5
+},
+"kyoshin/menu/CMenuLandTelop": {
+"total": 18,
+"matched": 12,
+"remaining": 6
+},
+"kyoshin/cf/object/CBattleState": {
+"total": 39,
+"matched": 32,
+"remaining": 7
+},
+"kyoshin/menu/CMenuGetItem": {
+"total": 21,
+"matched": 15,
+"remaining": 6
+},
+"kyoshin/cf/object/CAIAction": {
+"total": 23,
+"matched": 11,
+"remaining": 12
+},
+"kyoshin/cf/CArtsSet": {
+"total": 15,
+"matched": 15,
+"remaining": 0
+},
+"kyoshin/cf/CArtsParam": {
+"total": 18,
+"matched": 11,
+"remaining": 7
+},
+"kyoshin/cf/CItem": {
+"total": 169,
+"matched": 134,
+"remaining": 35
+},
+"kyoshin/cf/CCharEffect": {
+"total": 22,
+"matched": 16,
+"remaining": 6
+},
+"kyoshin/cf/CCharEffectEne": {
+"total": 6,
+"matched": 6,
+"remaining": 0
+},
+"kyoshin/CCol6System": {
+"total": 45,
+"matched": 29,
+"remaining": 16
+},
+"kyoshin/CCol6Invite": {
+"total": 12,
+"matched": 11,
+"remaining": 1
+},
+"kyoshin/cf/CTaskREvent": {
+"total": 49,
+"matched": 40,
+"remaining": 9
+},
+"kyoshin/cf/CInfoCf": {
+"total": 21,
+"matched": 15,
+"remaining": 6
+},
+"kyoshin/menu/CMenuItem": {
+"total": 5,
+"matched": 3,
+"remaining": 2
+},
+"kyoshin/realtimeevt/CREvtMem": {
+"total": 7,
+"matched": 5,
+"remaining": 2
+},
+"kyoshin/cf/CTaskREvtSequence": {
+"total": 69,
+"matched": 54,
+"remaining": 15
+},
+"kyoshin/cf/CfResObjImpl": {
+"total": 14,
+"matched": 13,
+"remaining": 1
+},
+"kyoshin/cf/CfResReloadImpl": {
+"total": 42,
+"matched": 28,
+"remaining": 14
+},
+"kyoshin/cf/CfMapEffectManager": {
+"total": 16,
+"matched": 10,
+"remaining": 6
+},
+"kyoshin/cf/object/CfObjectActor": {
+"total": 26,
+"matched": 22,
+"remaining": 4
+},
+"kyoshin/realtimeevt/CREvtModel": {
+"total": 18,
+"matched": 14,
+"remaining": 4
+},
+"kyoshin/cf/CfMapItemManager": {
+"total": 24,
+"matched": 11,
+"remaining": 13
+},
+"kyoshin/cf/object/CActorParam": {
+"total": 60,
+"matched": 46,
+"remaining": 14
+},
+"kyoshin/menu/CMenuZeal": {
+"total": 13,
+"matched": 10,
+"remaining": 3
+},
+"kyoshin/realtimeevt/CREvtCamera": {
+"total": 15,
+"matched": 11,
+"remaining": 4
+},
+"kyoshin/realtimeevt/CREvtModelMap": {
+"total": 17,
+"matched": 11,
+"remaining": 6
+},
+"kyoshin/realtimeevt/CREvtModelObj": {
+"total": 22,
+"matched": 16,
+"remaining": 6
+},
+"kyoshin/realtimeevt/CREvtModelPc": {
+"total": 18,
+"matched": 12,
+"remaining": 6
+},
+"kyoshin/realtimeevt/CREvtEffect": {
+"total": 13,
+"matched": 8,
+"remaining": 5
+},
+"kyoshin/realtimeevt/CREvtObj": {
+"total": 6,
+"matched": 6,
+"remaining": 0
+},
+"kyoshin/plugin/pluginTime": {
+"total": 3,
+"matched": 3,
+"remaining": 0
+},
+"kyoshin/plugin/pluginBtl": {
+"total": 19,
+"matched": 14,
+"remaining": 5
+},
+"kyoshin/code_801862C0": {
+"total": 14,
+"matched": 6,
+"remaining": 8
+},
+"kyoshin/menu/CMenuPTGauge": {
+"total": 19,
+"matched": 15,
+"remaining": 4
+},
+"kyoshin/menu/code_80187F14": {
+"total": 33,
+"matched": 21,
+"remaining": 12
+},
+"kyoshin/menu/CMenuSelectShop": {
+"total": 15,
+"matched": 14,
+"remaining": 1
+},
+"kyoshin/menu/CMenuShopSell": {
+"total": 16,
+"matched": 12,
+"remaining": 4
+},
+"kyoshin/menu/CMenuShopBuy": {
+"total": 15,
+"matched": 11,
+"remaining": 4
+},
+"kyoshin/menu/code_8018C5FC": {
+"total": 4,
+"matched": 3,
+"remaining": 1
+},
+"kyoshin/cf/CfResPcImpl": {
+"total": 43,
+"matched": 40,
+"remaining": 3
+},
+"kyoshin/cf/code_8018F8D8": {
+"total": 42,
+"matched": 35,
+"remaining": 7
+},
+"kyoshin/menu/CMenuPTState": {
+"total": 8,
+"matched": 7,
+"remaining": 1
+},
+"kyoshin/cf/CPartsChange": {
+"total": 84,
+"matched": 59,
+"remaining": 25
+},
+"kyoshin/cf/CtrlMovePC": {
+"total": 20,
+"matched": 9,
+"remaining": 11
+},
+"kyoshin/cf/CtrlMoveNpc": {
+"total": 7,
+"matched": 3,
+"remaining": 4
+},
+"kyoshin/menu/CMenuBattleMode": {
+"total": 9,
+"matched": 8,
+"remaining": 1
+},
+"kyoshin/COccCulling": {
+"total": 12,
+"matched": 9,
+"remaining": 3
+},
+"kyoshin/CSimpleEveTalkWin": {
+"total": 12,
+"matched": 8,
+"remaining": 4
+},
+"kyoshin/cf/CTaskCulling": {
+"total": 28,
+"matched": 26,
+"remaining": 2
+},
+"kyoshin/cf/CVision": {
+"total": 38,
+"matched": 13,
+"remaining": 25
+},
+"kyoshin/code_801A929C": {
+"total": 16,
+"matched": 8,
+"remaining": 8
+},
+"kyoshin/plugin/pluginSnd": {
+"total": 19,
+"matched": 11,
+"remaining": 8
+},
+"kyoshin/plugin/pluginGame": {
+"total": 2,
+"matched": 2,
+"remaining": 0
+},
+"kyoshin/menu/CMenuVision": {
+"total": 19,
+"matched": 17,
+"remaining": 2
+},
+"kyoshin/menu/CMenuBattleCommu": {
+"total": 14,
+"matched": 11,
+"remaining": 3
+},
+"kyoshin/cf/CPcEffect07": {
+"total": 23,
+"matched": 19,
+"remaining": 4
+},
+"kyoshin/menu/CMenuGetItemMulti": {
+"total": 33,
+"matched": 19,
+"remaining": 14
+},
+"kyoshin/cf/CSuddenCommu": {
+"total": 31,
+"matched": 21,
+"remaining": 10
+},
+"kyoshin/menu/CMenuKizunaTalk": {
+"total": 19,
+"matched": 13,
+"remaining": 6
+},
+"kyoshin/menu/CMenuItemExchange": {
+"total": 24,
+"matched": 19,
+"remaining": 5
+},
+"kyoshin/cf/CfSoundMan": {
+"total": 63,
+"matched": 50,
+"remaining": 13
+},
+"kyoshin/cf/CfPadTask": {
+"total": 26,
+"matched": 26,
+"remaining": 0
+},
+"kyoshin/cf/code_801C2C14": {
+"total": 11,
+"matched": 6,
+"remaining": 5
+},
+"kyoshin/realtimeevt/CREvtLight": {
+"total": 7,
+"matched": 5,
+"remaining": 2
+},
+"kyoshin/CBgTex": {
+"total": 10,
+"matched": 10,
+"remaining": 0
+},
+"kyoshin/CTitleAHelp": {
+"total": 29,
+"matched": 27,
+"remaining": 2
+},
+"kyoshin/CItemBoxGrid": {
+"total": 144,
+"matched": 106,
+"remaining": 38
+},
+"kyoshin/CCur": {
+"total": 46,
+"matched": 46,
+"remaining": 0
+},
+"kyoshin/CSortMenu": {
+"total": 30,
+"matched": 23,
+"remaining": 7
+},
+"kyoshin/CItemBoxInfo": {
+"total": 110,
+"matched": 63,
+"remaining": 47
+},
+"kyoshin/CNumSelect": {
+"total": 22,
+"matched": 21,
+"remaining": 1
+},
+"kyoshin/CItemBoxLine": {
+"total": 77,
+"matched": 48,
+"remaining": 29
+},
+"kyoshin/CScrollBar": {
+"total": 17,
+"matched": 17,
+"remaining": 0
+},
+"kyoshin/code_801F3BE0": {
+"total": 27,
+"matched": 24,
+"remaining": 3
+},
+"kyoshin/cf/CfGimmickObject": {
+"total": 29,
+"matched": 16,
+"remaining": 13
+},
+"kyoshin/cf/object/CfObjectTbox": {
+"total": 4,
+"matched": 4,
+"remaining": 0
+},
+"kyoshin/cf/CfResTboxImpl": {
+"total": 10,
+"matched": 10,
+"remaining": 0
+},
+"kyoshin/CPartyStateWin": {
+"total": 45,
+"matched": 38,
+"remaining": 7
+},
+"kyoshin/CModelDisp": {
+"total": 20,
+"matched": 12,
+"remaining": 8
+},
+"kyoshin/CPartyState": {
+"total": 34,
+"matched": 28,
+"remaining": 6
+},
+"kyoshin/plugin/pluginUnit": {
+"total": 13,
+"matched": 9,
+"remaining": 4
+},
+"kyoshin/menu/parts/CModelDispEquip": {
+"total": 54,
+"matched": 51,
+"remaining": 3
+},
+"kyoshin/CEquipChange": {
+"total": 49,
+"matched": 40,
+"remaining": 9
+},
+"kyoshin/cf/CfMapMineManager": {
+"total": 20,
+"matched": 7,
+"remaining": 13
+},
+"kyoshin/CItemBoxGridSubMenu": {
+"total": 18,
+"matched": 13,
+"remaining": 5
+},
+"kyoshin/cf/CfGimmick": {
+"total": 51,
+"matched": 45,
+"remaining": 6
+},
+"kyoshin/cf/CfGimmickElv": {
+"total": 14,
+"matched": 7,
+"remaining": 7
+},
+"kyoshin/cf/CfGimmickLock": {
+"total": 9,
+"matched": 4,
+"remaining": 5
+},
+"kyoshin/cf/CfGimmickWarp": {
+"total": 15,
+"matched": 8,
+"remaining": 7
+},
+"kyoshin/cf/CfGimmickJump": {
+"total": 9,
+"matched": 4,
+"remaining": 5
+},
+"kyoshin/cf/CfGimmickItem": {
+"total": 9,
+"matched": 8,
+"remaining": 1
+},
+"kyoshin/makecrystal/CMenuMakeCrystal": {
+"total": 17,
+"matched": 13,
+"remaining": 4
+},
+"kyoshin/makecrystal/CMakeCrystalWin": {
+"total": 23,
+"matched": 17,
+"remaining": 6
+},
+"kyoshin/makecrystal/code_80213488": {
+"total": 11,
+"matched": 10,
+"remaining": 1
+},
+"kyoshin/makecrystal/CMCCrystalBox": {
+"total": 89,
+"matched": 74,
+"remaining": 15
+},
+"kyoshin/makecrystal/CMCCrystalInfo": {
+"total": 33,
+"matched": 28,
+"remaining": 5
+},
+"kyoshin/makecrystal/CModelDispMakeCrystal": {
+"total": 80,
+"matched": 45,
+"remaining": 35
+},
+"kyoshin/makecrystal/CMCCylinderGauge": {
+"total": 21,
+"matched": 21,
+"remaining": 0
+},
+"kyoshin/makecrystal/CMCCrystalList": {
+"total": 34,
+"matched": 28,
+"remaining": 6
+},
+"kyoshin/makecrystal/CMCEffStart": {
+"total": 96,
+"matched": 96,
+"remaining": 0
+},
+"kyoshin/menu/CMenuQstCnt": {
+"total": 32,
+"matched": 27,
+"remaining": 5
+},
+"kyoshin/CQstLogList": {
+"total": 35,
+"matched": 33,
+"remaining": 2
+},
+"kyoshin/CQstLogInfo": {
+"total": 26,
+"matched": 24,
+"remaining": 2
+},
+"kyoshin/CSysWin": {
+"total": 21,
+"matched": 18,
+"remaining": 3
+},
+"kyoshin/CSelShopWin": {
+"total": 15,
+"matched": 14,
+"remaining": 1
+},
+"kyoshin/CExchangeWin": {
+"total": 16,
+"matched": 16,
+"remaining": 0
+},
+"kyoshin/CPresentWin": {
+"total": 28,
+"matched": 25,
+"remaining": 3
+},
+"kyoshin/makecrystal/CMCCrystalSupport": {
+"total": 14,
+"matched": 9,
+"remaining": 5
+},
+"kyoshin/menu/CMenuArtsSet": {
+"total": 110,
+"matched": 91,
+"remaining": 19
+},
+"kyoshin/CArtsInfo": {
+"total": 93,
+"matched": 45,
+"remaining": 48
+},
+"kyoshin/cf/CfNandManager": {
+"total": 48,
+"matched": 33,
+"remaining": 15
+},
+"kyoshin/code_802405F4": {
+"total": 17,
+"matched": 10,
+"remaining": 7
+},
+"kyoshin/menu/CMenuMapSelect": {
+"total": 7,
+"matched": 3,
+"remaining": 4
+},
+"kyoshin/CMapSel": {
+"total": 26,
+"matched": 23,
+"remaining": 3
+},
+"kyoshin/CFade": {
+"total": 14,
+"matched": 14,
+"remaining": 0
+},
+"kyoshin/CFloorMap": {
+"total": 75,
+"matched": 30,
+"remaining": 45
+},
+"kyoshin/menu/CMenuMapSelectSC": {
+"total": 17,
+"matched": 13,
+"remaining": 4
+},
+"kyoshin/menu/CMenuPause": {
+"total": 12,
+"matched": 8,
+"remaining": 4
+},
+"kyoshin/menu/CMenuCollepedia": {
+"total": 16,
+"matched": 10,
+"remaining": 6
+},
+"kyoshin/CCollepedia": {
+"total": 80,
+"matched": 65,
+"remaining": 15
+},
+"kyoshin/menu/CMenuKizunagram": {
+"total": 21,
+"matched": 16,
+"remaining": 5
+},
+"kyoshin/CKizunagram": {
+"total": 83,
+"matched": 68,
+"remaining": 15
+},
+"kyoshin/CPcKizunagram": {
+"total": 46,
+"matched": 34,
+"remaining": 12
+},
+"kyoshin/code_8025FB10": {
+"total": 20,
+"matched": 15,
+"remaining": 5
+},
+"kyoshin/menu/CMenuPassiveSkill": {
+"total": 17,
+"matched": 10,
+"remaining": 7
+},
+"kyoshin/CPassiveSkill": {
+"total": 127,
+"matched": 108,
+"remaining": 19
+},
+"kyoshin/cf/CfGimmickEne": {
+"total": 15,
+"matched": 9,
+"remaining": 6
+},
+"kyoshin/menu/CMenuBattleEnd": {
+"total": 12,
+"matched": 8,
+"remaining": 4
+},
+"kyoshin/menu/CMenuPlayAward": {
+"total": 48,
+"matched": 42,
+"remaining": 6
+},
+"kyoshin/menu/CMenuKizunaTalkList": {
+"total": 14,
+"matched": 14,
+"remaining": 0
+},
+"kyoshin/CKizunaTalkList": {
+"total": 35,
+"matched": 28,
+"remaining": 7
+},
+"kyoshin/CSysWinBuff": {
+"total": 14,
+"matched": 13,
+"remaining": 1
+},
+"kyoshin/cf/ICamControlRemote": {
+"total": 10,
+"matched": 10,
+"remaining": 0
+},
+"kyoshin/cf/ICamControlGc": {
+"total": 4,
+"matched": 4,
+"remaining": 0
+},
+"kyoshin/cf/ICamControlClassic": {
+"total": 10,
+"matched": 10,
+"remaining": 0
+},
+"kyoshin/code_8027513C": {
+"total": 21,
+"matched": 20,
+"remaining": 1
+},
+"kyoshin/menu/CMenuLvUp": {
+"total": 16,
+"matched": 13,
+"remaining": 3
+},
+"kyoshin/cf/chain/CChain": {
+"total": 54,
+"matched": 43,
+"remaining": 11
+},
+"kyoshin/cf/chain/CChainActorList": {
+"total": 40,
+"matched": 29,
+"remaining": 11
+},
+"kyoshin/cf/chain/CChainTime": {
+"total": 4,
+"matched": 4,
+"remaining": 0
+},
+"kyoshin/cf/chain/CChainTimer": {
+"total": 11,
+"matched": 4,
+"remaining": 7
+},
+"kyoshin/CSysWinScenarioLog": {
+"total": 39,
+"matched": 24,
+"remaining": 15
+},
+"kyoshin/cf/chain/CChainActorEne": {
+"total": 14,
+"matched": 12,
+"remaining": 2
+},
+"kyoshin/cf/chain/CChainActorPc": {
+"total": 22,
+"matched": 16,
+"remaining": 6
+},
+"kyoshin/CEquipItemBox": {
+"total": 121,
+"matched": 93,
+"remaining": 28
+},
+"kyoshin/menu/CMenuSave": {
+"total": 14,
+"matched": 11,
+"remaining": 3
+},
+"kyoshin/CSaveLoad": {
+"total": 80,
+"matched": 76,
+"remaining": 4
+},
+"kyoshin/menu/CMenuPTChangeNotice": {
+"total": 16,
+"matched": 10,
+"remaining": 6
+},
+"kyoshin/cf/chain/CChainCombo": {
+"total": 4,
+"matched": 2,
+"remaining": 2
+},
+"kyoshin/CSysWinSave": {
+"total": 14,
+"matched": 14,
+"remaining": 0
+},
+"kyoshin/realtimeevt/CREvtMovie": {
+"total": 7,
+"matched": 4,
+"remaining": 3
+},
+"kyoshin/CTaskGamePic": {
+"total": 19,
+"matched": 19,
+"remaining": 0
+},
+"kyoshin/CTaskGameEvt": {
+"total": 18,
+"matched": 18,
+"remaining": 0
+},
+"kyoshin/cf/CHelpManager": {
+"total": 23,
+"matched": 18,
+"remaining": 5
+},
+"kyoshin/code_80296898": {
+"total": 5,
+"matched": 5,
+"remaining": 0
+},
+"kyoshin/makecrystal/CMCGetItemBox": {
+"total": 47,
+"matched": 34,
+"remaining": 13
+},
+"kyoshin/menu/CMenuTutorial": {
+"total": 14,
+"matched": 13,
+"remaining": 1
+},
+"kyoshin/CTutorial": {
+"total": 22,
+"matched": 14,
+"remaining": 8
+},
+"kyoshin/menu/CMenuOption": {
+"total": 14,
+"matched": 13,
+"remaining": 1
+},
+"kyoshin/COption": {
+"total": 48,
+"matched": 44,
+"remaining": 4
+},
+"kyoshin/menu/CMenuSkipTimer": {
+"total": 14,
+"matched": 14,
+"remaining": 0
+},
+"kyoshin/CSkipTimer": {
+"total": 44,
+"matched": 40,
+"remaining": 4
+},
+"kyoshin/cf/chain/CChainEffect": {
+"total": 9,
+"matched": 9,
+"remaining": 0
+},
+"kyoshin/cf/voice/CCharVoice": {
+"total": 8,
+"matched": 7,
+"remaining": 1
+},
+"kyoshin/cf/voice/CCharVoiceMan": {
+"total": 60,
+"matched": 52,
+"remaining": 8
+},
+"kyoshin/cf/voice/cvsys/CVS_THREAD": {
+"total": 14,
+"matched": 10,
+"remaining": 4
+},
+"kyoshin/cf/voice/cvsys/CVS_THREAD_BATTLE_END": {
+"total": 6,
+"matched": 6,
+"remaining": 0
+},
+"kyoshin/cf/voice/cvsys/CVS_THREAD_BUF": {
+"total": 6,
+"matched": 3,
+"remaining": 3
+},
+"kyoshin/cf/voice/cvsys/CVS_THREAD_CHAIN": {
+"total": 7,
+"matched": 6,
+"remaining": 1
+},
+"kyoshin/cf/voice/cvsys/CVS_THREAD_DOWN": {
+"total": 6,
+"matched": 5,
+"remaining": 1
+},
+"kyoshin/cf/voice/cvsys/CVS_THREAD_EHP": {
+"total": 10,
+"matched": 2,
+"remaining": 8
+},
+"kyoshin/cf/voice/cvsys/CVS_THREAD_FAINT": {
+"total": 7,
+"matched": 6,
+"remaining": 1
+},
+"kyoshin/cf/voice/cvsys/CVS_THREAD_HAGE": {
+"total": 6,
+"matched": 5,
+"remaining": 1
+},
+"kyoshin/cf/voice/cvsys/CVS_THREAD_HP": {
+"total": 20,
+"matched": 17,
+"remaining": 3
+},
+"kyoshin/cf/voice/cvsys/CVS_THREAD_PARTY_GAGE": {
+"total": 7,
+"matched": 6,
+"remaining": 1
+},
+"kyoshin/cf/voice/cvsys/CVS_THREAD_REVIVE": {
+"total": 8,
+"matched": 7,
+"remaining": 1
+},
+"kyoshin/cf/voice/cvsys/CVS_THREAD_SUDDEN": {
+"total": 5,
+"matched": 4,
+"remaining": 1
+},
+"kyoshin/cf/voice/cvsys/CVS_THREAD_TENSION_UP": {
+"total": 6,
+"matched": 5,
+"remaining": 1
+},
+"kyoshin/cf/voice/cvsys/CVS_THREAD_VISION_BREAK": {
+"total": 6,
+"matched": 4,
+"remaining": 2
+},
+"kyoshin/cf/voice/cvsys/CVS_THREAD_VISION_TELL": {
+"total": 6,
+"matched": 5,
+"remaining": 1
+},
+"kyoshin/menu/CMenuBattleChain": {
+"total": 23,
+"matched": 23,
+"remaining": 0
+},
+"kyoshin/cf/voice/cvsys/CVS_THREAD_BATTLE_END_SP": {
+"total": 5,
+"matched": 4,
+"remaining": 1
+},
+"kyoshin/cf/CfGimmickSaveOff": {
+"total": 3,
+"matched": 3,
+"remaining": 0
+},
+"kyoshin/menu/CMenuTutorialList": {
+"total": 18,
+"matched": 14,
+"remaining": 4
+},
+"kyoshin/CTutorialList": {
+"total": 38,
+"matched": 35,
+"remaining": 3
+},
+"kyoshin/CLoad": {
+"total": 15,
+"matched": 12,
+"remaining": 3
+},
+"kyoshin/CNandData": {
+"total": 3,
+"matched": 3,
+"remaining": 0
+},
+"kyoshin/CErrMes": {
+"total": 23,
+"matched": 22,
+"remaining": 1
+},
+"kyoshin/plugin/pluginHelp": {
+"total": 4,
+"matched": 4,
+"remaining": 0
+},
+"kyoshin/cf/voice/cvsys/CVS_THREAD_BATTLE_MAIN": {
+"total": 18,
+"matched": 7,
+"remaining": 11
+},
+"kyoshin/cf/voice/cvsys/CVS_THREAD_BATTLE_BEGIN": {
+"total": 9,
+"matched": 7,
+"remaining": 2
+},
+"kyoshin/menu/CMenuGCItem": {
+"total": 10,
+"matched": 6,
+"remaining": 4
+},
+"kyoshin/menu/CMenuGameClear": {
+"total": 12,
+"matched": 7,
+"remaining": 5
+},
+"kyoshin/cf/CfHikariItemManager": {
+"total": 24,
+"matched": 11,
+"remaining": 13
+},
+"kyoshin/CUIErrMesWin": {
+"total": 37,
+"matched": 33,
+"remaining": 4
+},
+"kyoshin/menu/CMenuTitle": {
+"total": 16,
+"matched": 15,
+"remaining": 1
+},
+"kyoshin/CTitle": {
+"total": 66,
+"matched": 65,
+"remaining": 1
+},
+"kyoshin/help/CHelp": {
+"total": 7,
+"matched": 7,
+"remaining": 0
+},
+"kyoshin/help/CHelp_ArtsAttack": {
+"total": 1,
+"matched": 1,
+"remaining": 0
+},
+"kyoshin/help/CHelp_ArtsSet": {
+"total": 1,
+"matched": 1,
+"remaining": 0
+},
+"kyoshin/help/CHelp_CkKizuna": {
+"total": 1,
+"matched": 1,
+"remaining": 0
+},
+"kyoshin/help/CHelp_CloseItemMenu": {
+"total": 1,
+"matched": 1,
+"remaining": 0
+},
+"kyoshin/help/CHelp_CloseSysMenu": {
+"total": 1,
+"matched": 1,
+"remaining": 0
+},
+"kyoshin/help/CHelp_EndEvent": {
+"total": 1,
+"matched": 1,
+"remaining": 0
+},
+"kyoshin/help/CHelp_EnemyCount": {
+"total": 2,
+"matched": 2,
+"remaining": 0
+},
+"kyoshin/help/CHelp_EnemyEnable": {
+"total": 1,
+"matched": 1,
+"remaining": 0
+},
+"kyoshin/help/CHelp_EtherMake": {
+"total": 2,
+"matched": 2,
+"remaining": 0
+},
+"kyoshin/help/CHelp_Exchange": {
+"total": 1,
+"matched": 1,
+"remaining": 0
+},
+"kyoshin/help/CHelp_GameOver": {
+"total": 1,
+"matched": 1,
+"remaining": 0
+},
+"kyoshin/help/CHelp_ItemCole": {
+"total": 1,
+"matched": 1,
+"remaining": 0
+},
+"kyoshin/help/CHelp_Kizuna": {
+"total": 1,
+"matched": 1,
+"remaining": 0
+},
+"kyoshin/help/CHelp_LandMark": {
+"total": 7,
+"matched": 7,
+"remaining": 0
+},
+"kyoshin/help/CHelp_LearnArts": {
+"total": 2,
+"matched": 1,
+"remaining": 1
+},
+"kyoshin/help/CHelp_ClosePartyMenu": {
+"total": 2,
+"matched": 2,
+"remaining": 0
+},
+"kyoshin/help/CHelp_OpenPartyMenu": {
+"total": 1,
+"matched": 1,
+"remaining": 0
+},
+"kyoshin/help/CHelp_Pg": {
+"total": 1,
+"matched": 1,
+"remaining": 0
+},
+"kyoshin/help/CHelp_CloseQuestMenu": {
+"total": 1,
+"matched": 1,
+"remaining": 0
+},
+"kyoshin/help/CHelp_ShopBuy": {
+"total": 1,
+"matched": 1,
+"remaining": 0
+},
+"kyoshin/help/CHelp_ShopSel": {
+"total": 1,
+"matched": 1,
+"remaining": 0
+},
+"kyoshin/help/CHelp_Sp": {
+"total": 1,
+"matched": 1,
+"remaining": 0
+},
+"kyoshin/help/CHelp_Talk": {
+"total": 2,
+"matched": 1,
+"remaining": 1
+},
+"kyoshin/help/CHelp_Target": {
+"total": 1,
+"matched": 1,
+"remaining": 0
+},
+"kyoshin/code_802B8A3C": {
+"total": 6,
+"matched": 4,
+"remaining": 2
+},
+"kyoshin/plugin/pluginVoice": {
+"total": 2,
+"matched": 2,
+"remaining": 0
+},
+"kyoshin/code_802B9064": {
+"total": 1,
+"matched": 1,
+"remaining": 0
+},
+"kyoshin/CBattery": {
+"total": 10,
+"matched": 10,
+"remaining": 0
+},
+"PowerPC_EABI_Support/src/Runtime/__va_arg": {
+"total": 1,
+"matched": 1,
+"remaining": 0
+},
+"PowerPC_EABI_Support/src/Runtime/global_destructor_chain": {
+"total": 2,
+"matched": 2,
+"remaining": 0
+},
+"PowerPC_EABI_Support/src/Runtime/NMWException": {
+"total": 8,
+"matched": 8,
+"remaining": 0
+},
+"PowerPC_EABI_Support/src/Runtime/ptmf": {
+"total": 3,
+"matched": 3,
+"remaining": 0
+},
+"PowerPC_EABI_Support/src/Runtime/MWRTTI": {
+"total": 3,
+"matched": 3,
+"remaining": 0
+},
+"PowerPC_EABI_Support/src/Runtime/runtime": {
+"total": 13,
+"matched": 13,
+"remaining": 0
+},
+"PowerPC_EABI_Support/src/Runtime/__init_cpp_exceptions": {
+"total": 2,
+"matched": 2,
+"remaining": 0
+},
+"PowerPC_EABI_Support/src/Runtime/Gecko_ExceptionPPC": {
+"total": 10,
+"matched": 10,
+"remaining": 0
+},
+"PowerPC_EABI_Support/src/Runtime/GCN_mem_alloc": {
+"total": 1,
+"matched": 1,
+"remaining": 0
+},
+"PowerPC_EABI_Support/src/MSL_C/MSL_Common/alloc": {
+"total": 4,
+"matched": 4,
+"remaining": 0
+},
+"PowerPC_EABI_Support/src/MSL_C/MSL_Common/ansi_files": {
+"total": 2,
+"matched": 2,
+"remaining": 0
+},
+"PowerPC_EABI_Support/src/MSL_C/MSL_Common_Embedded/ansi_fp": {
+"total": 10,
+"matched": 10,
+"remaining": 0
+},
+"PowerPC_EABI_Support/src/MSL_C/MSL_Common/arith": {
+"total": 2,
+"matched": 2,
+"remaining": 0
+},
+"PowerPC_EABI_Support/src/MSL_C/MSL_Common/buffer_io": {
+"total": 2,
+"matched": 2,
+"remaining": 0
+},
+"PowerPC_EABI_Support/src/MSL_C/MSL_Common/direct_io": {
+"total": 1,
+"matched": 1,
+"remaining": 0
+},
+"PowerPC_EABI_Support/src/MSL_C/MSL_Common/file_io": {
+"total": 2,
+"matched": 2,
+"remaining": 0
+},
+"PowerPC_EABI_Support/src/MSL_C/MSL_Common/FILE_POS": {
+"total": 3,
+"matched": 3,
+"remaining": 0
+},
+"PowerPC_EABI_Support/src/MSL_C/MSL_Common/mbstring": {
+"total": 5,
+"matched": 5,
+"remaining": 0
+},
+"PowerPC_EABI_Support/src/MSL_C/MSL_Common/mem": {
+"total": 4,
+"matched": 4,
+"remaining": 0
+},
+"PowerPC_EABI_Support/src/MSL_C/MSL_Common/mem_funcs": {
+"total": 4,
+"matched": 3,
+"remaining": 1
+},
+"PowerPC_EABI_Support/src/MSL_C/MSL_Common/math_api": {
+"total": 3,
+"matched": 3,
+"remaining": 0
+},
+"PowerPC_EABI_Support/src/MSL_C/MSL_Common/misc_io": {
+"total": 1,
+"matched": 1,
+"remaining": 0
+},
+"PowerPC_EABI_Support/src/MSL_C/MSL_Common/printf": {
+"total": 14,
+"matched": 14,
+"remaining": 0
+},
+"PowerPC_EABI_Support/src/MSL_C/MSL_Common/rand": {
+"total": 1,
+"matched": 1,
+"remaining": 0
+},
+"PowerPC_EABI_Support/src/MSL_C/MSL_Common/scanf": {
+"total": 4,
+"matched": 4,
+"remaining": 0
+},
+"PowerPC_EABI_Support/src/MSL_C/MSL_Common/signal": {
+"total": 1,
+"matched": 1,
+"remaining": 0
+},
+"PowerPC_EABI_Support/src/MSL_C/MSL_Common/string": {
+"total": 8,
+"matched": 8,
+"remaining": 0
+},
+"PowerPC_EABI_Support/src/MSL_C/MSL_Common/strtold": {
+"total": 2,
+"matched": 2,
+"remaining": 0
+},
+"PowerPC_EABI_Support/src/MSL_C/MSL_Common/strtoul": {
+"total": 4,
+"matched": 4,
+"remaining": 0
+},
+"PowerPC_EABI_Support/src/MSL_C/MSL_Common/wcstoul": {
+"total": 2,
+"matched": 2,
+"remaining": 0
+},
+"PowerPC_EABI_Support/src/MSL_C/MSL_Common/wmem": {
+"total": 2,
+"matched": 2,
+"remaining": 0
+},
+"PowerPC_EABI_Support/src/MSL_C/MSL_Common/wprintf": {
+"total": 9,
+"matched": 9,
+"remaining": 0
+},
+"PowerPC_EABI_Support/src/MSL_C/MSL_Common/wscanf": {
+"total": 1,
+"matched": 1,
+"remaining": 0
+},
+"PowerPC_EABI_Support/src/MSL_C/MSL_Common/wstring": {
+"total": 5,
+"matched": 5,
+"remaining": 0
+},
+"PowerPC_EABI_Support/src/MSL_C/MSL_Common/wchar_io": {
+"total": 1,
+"matched": 1,
+"remaining": 0
+},
+"PowerPC_EABI_Support/src/MSL_C/PPC_EABI/uart_console_io_gcn": {
+"total": 2,
+"matched": 2,
+"remaining": 0
+},
+"PowerPC_EABI_Support/src/MSL_C/PPC_EABI/abort_exit_ppc_eabi": {
+"total": 1,
+"matched": 1,
+"remaining": 0
+},
+"PowerPC_EABI_Support/src/MSL_C/MSL_Common/secure_error": {
+"total": 1,
+"matched": 1,
+"remaining": 0
+},
+"PowerPC_EABI_Support/src/MSL_C/MSL_Common/math_double": {
+"total": 1,
+"matched": 1,
+"remaining": 0
+},
+"PowerPC_EABI_Support/src/MSL_C/MSL_Common_Embedded/math_sun": {
+"total": 1,
+"matched": 1,
+"remaining": 0
+},
+"PowerPC_EABI_Support/src/MSL_C/MSL_Common_Embedded/Math/Double_precision/e_acos": {
+"total": 1,
+"matched": 1,
+"remaining": 0
+},
+"PowerPC_EABI_Support/src/MSL_C/MSL_Common_Embedded/Math/Double_precision/e_asin": {
+"total": 1,
+"matched": 1,
+"remaining": 0
+},
+"PowerPC_EABI_Support/src/MSL_C/MSL_Common_Embedded/Math/Double_precision/e_atan2": {
+"total": 1,
+"matched": 1,
+"remaining": 0
+},
+"PowerPC_EABI_Support/src/MSL_C/MSL_Common_Embedded/Math/Double_precision/e_fmod": {
+"total": 1,
+"matched": 1,
+"remaining": 0
+},
+"PowerPC_EABI_Support/src/MSL_C/MSL_Common_Embedded/Math/Double_precision/e_log": {
+"total": 1,
+"matched": 1,
+"remaining": 0
+},
+"PowerPC_EABI_Support/src/MSL_C/MSL_Common_Embedded/Math/Double_precision/e_log10": {
+"total": 1,
+"matched": 1,
+"remaining": 0
+},
+"PowerPC_EABI_Support/src/MSL_C/MSL_Common_Embedded/Math/Double_precision/e_pow": {
+"total": 1,
+"matched": 1,
+"remaining": 0
+},
+"PowerPC_EABI_Support/src/MSL_C/MSL_Common_Embedded/Math/Double_precision/e_rem_pio2": {
+"total": 1,
+"matched": 1,
+"remaining": 0
+},
+"PowerPC_EABI_Support/src/MSL_C/MSL_Common_Embedded/Math/Double_precision/k_cos": {
+"total": 1,
+"matched": 1,
+"remaining": 0
+},
+"PowerPC_EABI_Support/src/MSL_C/MSL_Common_Embedded/Math/Double_precision/k_rem_pio2": {
+"total": 1,
+"matched": 1,
+"remaining": 0
+},
+"PowerPC_EABI_Support/src/MSL_C/MSL_Common_Embedded/Math/Double_precision/k_sin": {
+"total": 1,
+"matched": 1,
+"remaining": 0
+},
+"PowerPC_EABI_Support/src/MSL_C/MSL_Common_Embedded/Math/Double_precision/k_tan": {
+"total": 1,
+"matched": 1,
+"remaining": 0
+},
+"PowerPC_EABI_Support/src/MSL_C/MSL_Common_Embedded/Math/Double_precision/s_atan": {
+"total": 1,
+"matched": 1,
+"remaining": 0
+},
+"PowerPC_EABI_Support/src/MSL_C/MSL_Common_Embedded/Math/Double_precision/s_ceil": {
+"total": 1,
+"matched": 1,
+"remaining": 0
+},
+"PowerPC_EABI_Support/src/MSL_C/MSL_Common_Embedded/Math/Double_precision/s_copysign": {
+"total": 1,
+"matched": 1,
+"remaining": 0
+},
+"PowerPC_EABI_Support/src/MSL_C/MSL_Common_Embedded/Math/Double_precision/s_cos": {
+"total": 1,
+"matched": 1,
+"remaining": 0
+},
+"PowerPC_EABI_Support/src/MSL_C/MSL_Common_Embedded/Math/Double_precision/s_floor": {
+"total": 1,
+"matched": 1,
+"remaining": 0
+},
+"PowerPC_EABI_Support/src/MSL_C/MSL_Common_Embedded/Math/Double_precision/s_frexp": {
+"total": 1,
+"matched": 1,
+"remaining": 0
+},
+"PowerPC_EABI_Support/src/MSL_C/MSL_Common_Embedded/Math/Double_precision/s_ldexp": {
+"total": 1,
+"matched": 1,
+"remaining": 0
+},
+"PowerPC_EABI_Support/src/MSL_C/MSL_Common_Embedded/Math/Double_precision/s_modf": {
+"total": 1,
+"matched": 1,
+"remaining": 0
+},
+"PowerPC_EABI_Support/src/MSL_C/MSL_Common_Embedded/Math/Double_precision/s_sin": {
+"total": 1,
+"matched": 1,
+"remaining": 0
+},
+"PowerPC_EABI_Support/src/MSL_C/MSL_Common_Embedded/Math/Double_precision/s_tan": {
+"total": 1,
+"matched": 1,
+"remaining": 0
+},
+"PowerPC_EABI_Support/src/MSL_C/MSL_Common_Embedded/Math/Double_precision/w_acos": {
+"total": 1,
+"matched": 1,
+"remaining": 0
+},
+"PowerPC_EABI_Support/src/MSL_C/MSL_Common_Embedded/Math/Double_precision/w_asin": {
+"total": 1,
+"matched": 1,
+"remaining": 0
+},
+"PowerPC_EABI_Support/src/MSL_C/MSL_Common_Embedded/Math/Double_precision/w_atan2": {
+"total": 1,
+"matched": 1,
+"remaining": 0
+},
+"PowerPC_EABI_Support/src/MSL_C/MSL_Common_Embedded/Math/Double_precision/w_fmod": {
+"total": 1,
+"matched": 1,
+"remaining": 0
+},
+"PowerPC_EABI_Support/src/MSL_C/MSL_Common_Embedded/Math/Double_precision/w_log": {
+"total": 1,
+"matched": 1,
+"remaining": 0
+},
+"PowerPC_EABI_Support/src/MSL_C/MSL_Common_Embedded/Math/Double_precision/w_log10": {
+"total": 1,
+"matched": 1,
+"remaining": 0
+},
+"PowerPC_EABI_Support/src/MSL_C/MSL_Common_Embedded/Math/Double_precision/w_pow": {
+"total": 1,
+"matched": 1,
+"remaining": 0
+},
+"PowerPC_EABI_Support/src/MSL_C/MSL_Common_Embedded/Math/Double_precision/e_sqrt": {
+"total": 1,
+"matched": 1,
+"remaining": 0
+},
+"PowerPC_EABI_Support/src/MSL_C/PPC_EABI/math_ppc": {
+"total": 1,
+"matched": 1,
+"remaining": 0
+},
+"PowerPC_EABI_Support/src/MSL_C/MSL_Common_Embedded/Math/Double_precision/w_sqrt": {
+"total": 1,
+"matched": 1,
+"remaining": 0
+},
+"PowerPC_EABI_Support/src/MSL_C/MSL_Common/extras": {
+"total": 1,
+"matched": 1,
+"remaining": 0
+},
+"PowerPC_EABI_Support/src/MetroTRK/custconn/cc_gdev": {
+"total": 10,
+"matched": 10,
+"remaining": 0
+},
+"PowerPC_EABI_Support/src/MetroTRK/custconn/MWCriticalSection_gc": {
+"total": 3,
+"matched": 3,
+"remaining": 0
+},
+"PowerPC_EABI_Support/src/MetroTRK/custconn/CircleBuffer": {
+"total": 4,
+"matched": 4,
+"remaining": 0
+},
+"PowerPC_EABI_Support/src/MetroTRK/flush_cache": {
+"total": 1,
+"matched": 1,
+"remaining": 0
+},
+"PowerPC_EABI_Support/src/MetroTRK/main_TRK": {
+"total": 1,
+"matched": 1,
+"remaining": 0
+},
+"PowerPC_EABI_Support/src/MetroTRK/mainloop": {
+"total": 1,
+"matched": 1,
+"remaining": 0
+},
+"PowerPC_EABI_Support/src/MetroTRK/mem_TRK": {
+"total": 2,
+"matched": 2,
+"remaining": 0
+},
+"PowerPC_EABI_Support/src/MetroTRK/dispatch": {
+"total": 1,
+"matched": 1,
+"remaining": 0
+},
+"PowerPC_EABI_Support/src/MetroTRK/dolphin_trk": {
+"total": 7,
+"matched": 7,
+"remaining": 0
+},
+"PowerPC_EABI_Support/src/MetroTRK/dolphin_trk_glue": {
+"total": 13,
+"matched": 13,
+"remaining": 0
+},
+"PowerPC_EABI_Support/src/MetroTRK/notify": {
+"total": 1,
+"matched": 1,
+"remaining": 0
+},
+"PowerPC_EABI_Support/src/MetroTRK/nubevent": {
+"total": 5,
+"matched": 5,
+"remaining": 0
+},
+"PowerPC_EABI_Support/src/MetroTRK/nubinit": {
+"total": 4,
+"matched": 4,
+"remaining": 0
+},
+"PowerPC_EABI_Support/src/MetroTRK/serpoll": {
+"total": 5,
+"matched": 5,
+"remaining": 0
+},
+"PowerPC_EABI_Support/src/MetroTRK/string_TRK": {
+"total": 1,
+"matched": 1,
+"remaining": 0
+},
+"PowerPC_EABI_Support/src/MetroTRK/support": {
+"total": 5,
+"matched": 5,
+"remaining": 0
+},
+"PowerPC_EABI_Support/src/MetroTRK/targcont": {
+"total": 1,
+"matched": 1,
+"remaining": 0
+},
+"PowerPC_EABI_Support/src/MetroTRK/mpc_7xx_603e": {
+"total": 2,
+"matched": 2,
+"remaining": 0
+},
+"PowerPC_EABI_Support/src/MetroTRK/msg": {
+"total": 1,
+"matched": 1,
+"remaining": 0
+},
+"PowerPC_EABI_Support/src/MetroTRK/msgbuf": {
+"total": 15,
+"matched": 15,
+"remaining": 0
+},
+"PowerPC_EABI_Support/src/MetroTRK/msghndlr": {
+"total": 13,
+"matched": 13,
+"remaining": 0
+},
+"PowerPC_EABI_Support/src/MetroTRK/mslsupp": {
+"total": 5,
+"matched": 5,
+"remaining": 0
+},
+"PowerPC_EABI_Support/src/MetroTRK/targimpl": {
+"total": 34,
+"matched": 34,
+"remaining": 0
+},
+"PowerPC_EABI_Support/src/MetroTRK/target_options": {
+"total": 2,
+"matched": 2,
+"remaining": 0
+},
+"NdevExi2A/src/DebuggerDriver": {
+"total": 9,
+"matched": 9,
+"remaining": 0
+},
+"NdevExi2A/src/exi2": {
+"total": 6,
+"matched": 6,
+"remaining": 0
+},
+"RVL_SDK/src/revolution/ai/ai": {
+"total": 12,
+"matched": 12,
+"remaining": 0
+},
+"RVL_SDK/src/revolution/arc/arc": {
+"total": 12,
+"matched": 12,
+"remaining": 0
+},
+"RVL_SDK/src/revolution/ax/AX": {
+"total": 3,
+"matched": 3,
+"remaining": 0
+},
+"RVL_SDK/src/revolution/ax/AXAlloc": {
+"total": 10,
+"matched": 10,
+"remaining": 0
+},
+"RVL_SDK/src/revolution/ax/AXAux": {
+"total": 23,
+"matched": 23,
+"remaining": 0
+},
+"RVL_SDK/src/revolution/ax/AXCL": {
+"total": 14,
+"matched": 14,
+"remaining": 0
+},
+"RVL_SDK/src/revolution/ax/AXOut": {
+"total": 13,
+"matched": 11,
+"remaining": 2
+},
+"RVL_SDK/src/revolution/ax/AXSPB": {
+"total": 7,
+"matched": 7,
+"remaining": 0
+},
+"RVL_SDK/src/revolution/ax/AXVPB": {
+"total": 15,
+"matched": 15,
+"remaining": 0
+},
+"RVL_SDK/src/revolution/ax/AXProf": {
+"total": 1,
+"matched": 1,
+"remaining": 0
+},
+"RVL_SDK/src/revolution/axfx/AXFXReverbHi": {
+"total": 3,
+"matched": 3,
+"remaining": 0
+},
+"RVL_SDK/src/revolution/axfx/AXFXReverbHiExp": {
+"total": 7,
+"matched": 7,
+"remaining": 0
+},
+"RVL_SDK/src/revolution/axfx/AXFXDelayExp": {
+"total": 7,
+"matched": 7,
+"remaining": 0
+},
+"RVL_SDK/src/revolution/axfx/AXFXDelayExpDpl2": {
+"total": 7,
+"matched": 6,
+"remaining": 1
+},
+"RVL_SDK/src/revolution/axfx/AXFXReverbStdExp": {
+"total": 10,
+"matched": 8,
+"remaining": 2
+},
+"RVL_SDK/src/revolution/axfx/AXFXReverbStdExpDpl2": {
+"total": 10,
+"matched": 8,
+"remaining": 2
+},
+"RVL_SDK/src/revolution/axfx/AXFXChorusExp": {
+"total": 7,
+"matched": 3,
+"remaining": 4
+},
+"RVL_SDK/src/revolution/axfx/AXFXChorusExpDpl2": {
+"total": 7,
+"matched": 3,
+"remaining": 4
+},
+"RVL_SDK/src/revolution/axfx/AXFXLfoTable": {
+"total": 1,
+"matched": 1,
+"remaining": 0
+},
+"RVL_SDK/src/revolution/axfx/AXFXSrcCoef": {
+"total": 1,
+"matched": 1,
+"remaining": 0
+},
+"RVL_SDK/src/revolution/axfx/AXFXHooks": {
+"total": 4,
+"matched": 4,
+"remaining": 0
+},
+"RVL_SDK/src/revolution/base/PPCArch": {
+"total": 23,
+"matched": 23,
+"remaining": 0
+},
+"RVL_SDK/src/revolution/bte/gki/gki_buffer": {
+"total": 18,
+"matched": 18,
+"remaining": 0
+},
+"RVL_SDK/src/revolution/bte/gki/gki_time": {
+"total": 8,
+"matched": 8,
+"remaining": 0
+},
+"RVL_SDK/src/revolution/bte/gki/gki_ppc": {
+"total": 13,
+"matched": 13,
+"remaining": 0
+},
+"RVL_SDK/src/revolution/bte/hci/hcisu_h2": {
+"total": 8,
+"matched": 6,
+"remaining": 2
+},
+"RVL_SDK/src/revolution/bte/hci/uusb_ppc": {
+"total": 11,
+"matched": 8,
+"remaining": 3
+},
+"RVL_SDK/src/revolution/bte/main/bte_hcisu": {
+"total": 4,
+"matched": 4,
+"remaining": 0
+},
+"RVL_SDK/src/revolution/bte/main/bte_init": {
+"total": 1,
+"matched": 1,
+"remaining": 0
+},
+"RVL_SDK/src/revolution/bte/main/bte_logmsg": {
+"total": 8,
+"matched": 8,
+"remaining": 0
+},
+"RVL_SDK/src/revolution/bte/main/bte_main": {
+"total": 4,
+"matched": 4,
+"remaining": 0
+},
+"RVL_SDK/src/revolution/bte/main/btu_task1": {
+"total": 4,
+"matched": 4,
+"remaining": 0
+},
+"RVL_SDK/src/revolution/bte/bta/sys/bd": {
+"total": 2,
+"matched": 2,
+"remaining": 0
+},
+"RVL_SDK/src/revolution/bte/bta/sys/bta_sys_conn": {
+"total": 8,
+"matched": 8,
+"remaining": 0
+},
+"RVL_SDK/src/revolution/bte/bta/sys/bta_sys_main": {
+"total": 9,
+"matched": 9,
+"remaining": 0
+},
+"RVL_SDK/src/revolution/bte/bta/sys/ptim": {
+"total": 4,
+"matched": 4,
+"remaining": 0
+},
+"RVL_SDK/src/revolution/bte/bta/sys/utl": {
+"total": 1,
+"matched": 1,
+"remaining": 0
+},
+"RVL_SDK/src/revolution/bte/bta/dm/bta_dm_act": {
+"total": 56,
+"matched": 53,
+"remaining": 3
+},
+"RVL_SDK/src/revolution/bte/bta/dm/bta_dm_api": {
+"total": 11,
+"matched": 11,
+"remaining": 0
+},
+"RVL_SDK/src/revolution/bte/bta/dm/bta_dm_main": {
+"total": 2,
+"matched": 2,
+"remaining": 0
+},
+"RVL_SDK/src/revolution/bte/bta/dm/bta_dm_pm": {
+"total": 8,
+"matched": 5,
+"remaining": 3
+},
+"RVL_SDK/src/revolution/bte/bta/hh/bta_hh_act": {
+"total": 18,
+"matched": 18,
+"remaining": 0
+},
+"RVL_SDK/src/revolution/bte/bta/hh/bta_hh_api": {
+"total": 8,
+"matched": 8,
+"remaining": 0
+},
+"RVL_SDK/src/revolution/bte/bta/hh/bta_hh_main": {
+"total": 3,
+"matched": 3,
+"remaining": 0
+},
+"RVL_SDK/src/revolution/bte/bta/hh/bta_hh_utils": {
+"total": 5,
+"matched": 5,
+"remaining": 0
+},
+"RVL_SDK/src/revolution/bte/stack/btm/btm_acl": {
+"total": 29,
+"matched": 28,
+"remaining": 1
+},
+"RVL_SDK/src/revolution/bte/stack/btm/btm_dev": {
+"total": 7,
+"matched": 7,
+"remaining": 0
+},
+"RVL_SDK/src/revolution/bte/stack/btm/btm_devctl": {
+"total": 33,
+"matched": 33,
+"remaining": 0
+},
+"RVL_SDK/src/revolution/bte/stack/btm/btm_discovery": {
+"total": 3,
+"matched": 3,
+"remaining": 0
+},
+"RVL_SDK/src/revolution/bte/stack/btm/btm_inq": {
+"total": 25,
+"matched": 21,
+"remaining": 4
+},
+"RVL_SDK/src/revolution/bte/stack/btm/btm_main": {
+"total": 1,
+"matched": 1,
+"remaining": 0
+},
+"RVL_SDK/src/revolution/bte/stack/btm/btm_pm": {
+"total": 10,
+"matched": 10,
+"remaining": 0
+},
+"RVL_SDK/src/revolution/bte/stack/btm/btm_sco": {
+"total": 15,
+"matched": 15,
+"remaining": 0
+},
+"RVL_SDK/src/revolution/bte/stack/btm/btm_sec": {
+"total": 31,
+"matched": 29,
+"remaining": 2
+},
+"RVL_SDK/src/revolution/bte/stack/btu/btu_hcif": {
+"total": 12,
+"matched": 11,
+"remaining": 1
+},
+"RVL_SDK/src/revolution/bte/stack/btu/btu_init": {
+"total": 2,
+"matched": 2,
+"remaining": 0
+},
+"RVL_SDK/src/revolution/bte/stack/wbt/wbt_ext": {
+"total": 1,
+"matched": 1,
+"remaining": 0
+},
+"RVL_SDK/src/revolution/bte/stack/gap/gap_api": {
+"total": 1,
+"matched": 1,
+"remaining": 0
+},
+"RVL_SDK/src/revolution/bte/stack/gap/gap_conn": {
+"total": 8,
+"matched": 8,
+"remaining": 0
+},
+"RVL_SDK/src/revolution/bte/stack/gap/gap_utils": {
+"total": 6,
+"matched": 6,
+"remaining": 0
+},
+"RVL_SDK/src/revolution/bte/stack/hcic/hcicmds": {
+"total": 59,
+"matched": 57,
+"remaining": 2
+},
+"RVL_SDK/src/revolution/bte/stack/hid/hidd_api": {
+"total": 1,
+"matched": 1,
+"remaining": 0
+},
+"RVL_SDK/src/revolution/bte/stack/hid/hidd_conn": {
+"total": 1,
+"matched": 1,
+"remaining": 0
+},
+"RVL_SDK/src/revolution/bte/stack/hid/hidd_mgmt": {
+"total": 1,
+"matched": 1,
+"remaining": 0
+},
+"RVL_SDK/src/revolution/bte/stack/hid/hidd_pm": {
+"total": 3,
+"matched": 3,
+"remaining": 0
+},
+"RVL_SDK/src/revolution/bte/stack/hid/hidh_api": {
+"total": 11,
+"matched": 11,
+"remaining": 0
+},
+"RVL_SDK/src/revolution/bte/stack/hid/hidh_conn": {
+"total": 16,
+"matched": 16,
+"remaining": 0
+},
+"RVL_SDK/src/revolution/bte/stack/l2cap/l2c_api": {
+"total": 13,
+"matched": 13,
+"remaining": 0
+},
+"RVL_SDK/src/revolution/bte/stack/l2cap/l2c_csm": {
+"total": 11,
+"matched": 9,
+"remaining": 2
+},
+"RVL_SDK/src/revolution/bte/stack/l2cap/l2c_link": {
+"total": 17,
+"matched": 16,
+"remaining": 1
+},
+"RVL_SDK/src/revolution/bte/stack/l2cap/l2c_main": {
+"total": 5,
+"matched": 3,
+"remaining": 2
+},
+"RVL_SDK/src/revolution/bte/stack/l2cap/l2c_utils": {
+"total": 33,
+"matched": 33,
+"remaining": 0
+},
+"RVL_SDK/src/revolution/bte/stack/rfcomm/port_api": {
+"total": 1,
+"matched": 1,
+"remaining": 0
+},
+"RVL_SDK/src/revolution/bte/stack/rfcomm/port_rfc": {
+"total": 18,
+"matched": 17,
+"remaining": 1
+},
+"RVL_SDK/src/revolution/bte/stack/rfcomm/port_utils": {
+"total": 7,
+"matched": 7,
+"remaining": 0
+},
+"RVL_SDK/src/revolution/bte/stack/rfcomm/rfc_l2cap_if": {
+"total": 10,
+"matched": 10,
+"remaining": 0
+},
+"RVL_SDK/src/revolution/bte/stack/rfcomm/rfc_mx_fsm": {
+"total": 10,
+"matched": 10,
+"remaining": 0
+},
+"RVL_SDK/src/revolution/bte/stack/rfcomm/rfc_port_fsm": {
+"total": 17,
+"matched": 17,
+"remaining": 0
+},
+"RVL_SDK/src/revolution/bte/stack/rfcomm/rfc_port_if": {
+"total": 12,
+"matched": 12,
+"remaining": 0
+},
+"RVL_SDK/src/revolution/bte/stack/rfcomm/rfc_ts_frames": {
+"total": 15,
+"matched": 15,
+"remaining": 0
+},
+"RVL_SDK/src/revolution/bte/stack/rfcomm/rfc_utils": {
+"total": 15,
+"matched": 15,
+"remaining": 0
+},
+"RVL_SDK/src/revolution/bte/stack/sdp/sdp_api": {
+"total": 9,
+"matched": 7,
+"remaining": 2
+},
+"RVL_SDK/src/revolution/bte/stack/sdp/sdp_db": {
+"total": 10,
+"matched": 9,
+"remaining": 1
+},
+"RVL_SDK/src/revolution/bte/stack/sdp/sdp_discovery": {
+"total": 10,
+"matched": 8,
+"remaining": 2
+},
+"RVL_SDK/src/revolution/bte/stack/sdp/sdp_main": {
+"total": 11,
+"matched": 10,
+"remaining": 1
+},
+"RVL_SDK/src/revolution/bte/stack/sdp/sdp_server": {
+"total": 4,
+"matched": 0,
+"remaining": 4
+},
+"RVL_SDK/src/revolution/bte/stack/sdp/sdp_utils": {
+"total": 13,
+"matched": 13,
+"remaining": 0
+},
+"RVL_SDK/src/revolution/cx/CXStreamingUncompression": {
+"total": 2,
+"matched": 1,
+"remaining": 1
+},
+"RVL_SDK/src/revolution/cx/CXUncompression": {
+"total": 2,
+"matched": 1,
+"remaining": 1
+},
+"RVL_SDK/src/revolution/cx/CXSecureUncompression": {
+"total": 1,
+"matched": 1,
+"remaining": 0
+},
+"RVL_SDK/src/revolution/db/db": {
+"total": 5,
+"matched": 5,
+"remaining": 0
+},
+"RVL_SDK/src/revolution/dsp/dsp": {
+"total": 9,
+"matched": 9,
+"remaining": 0
+},
+"RVL_SDK/src/revolution/dsp/dsp_debug": {
+"total": 1,
+"matched": 1,
+"remaining": 0
+},
+"RVL_SDK/src/revolution/dsp/dsp_task": {
+"total": 5,
+"matched": 5,
+"remaining": 0
+},
+"RVL_SDK/src/revolution/dvd/dvdfs": {
+"total": 11,
+"matched": 11,
+"remaining": 0
+},
+"RVL_SDK/src/revolution/dvd/dvd": {
+"total": 51,
+"matched": 51,
+"remaining": 0
+},
+"RVL_SDK/src/revolution/dvd/dvdqueue": {
+"total": 6,
+"matched": 6,
+"remaining": 0
+},
+"RVL_SDK/src/revolution/dvd/dvderror": {
+"total": 14,
+"matched": 14,
+"remaining": 0
+},
+"RVL_SDK/src/revolution/dvd/dvdidutils": {
+"total": 1,
+"matched": 1,
+"remaining": 0
+},
+"RVL_SDK/src/revolution/dvd/dvdFatal": {
+"total": 4,
+"matched": 4,
+"remaining": 0
+},
+"RVL_SDK/src/revolution/dvd/dvdDeviceError": {
+"total": 2,
+"matched": 2,
+"remaining": 0
+},
+"RVL_SDK/src/revolution/dvd/dvd_broadway": {
+"total": 32,
+"matched": 32,
+"remaining": 0
+},
+"RVL_SDK/src/revolution/enc/encutility": {
+"total": 3,
+"matched": 3,
+"remaining": 0
+},
+"RVL_SDK/src/revolution/enc/encunicode": {
+"total": 3,
+"matched": 3,
+"remaining": 0
+},
+"RVL_SDK/src/revolution/esp/esp": {
+"total": 9,
+"matched": 9,
+"remaining": 0
+},
+"RVL_SDK/src/revolution/euart/euart": {
+"total": 3,
+"matched": 3,
+"remaining": 0
+},
+"RVL_SDK/src/revolution/exi/EXIBios": {
+"total": 19,
+"matched": 19,
+"remaining": 0
+},
+"RVL_SDK/src/revolution/exi/EXIUart": {
+"total": 2,
+"matched": 2,
+"remaining": 0
+},
+"RVL_SDK/src/revolution/exi/EXICommon": {
+"total": 1,
+"matched": 1,
+"remaining": 0
+},
+"RVL_SDK/src/revolution/fs/fs": {
+"total": 25,
+"matched": 25,
+"remaining": 0
+},
+"RVL_SDK/src/revolution/gx/GXInit": {
+"total": 6,
+"matched": 6,
+"remaining": 0
+},
+"RVL_SDK/src/revolution/gx/GXFifo": {
+"total": 13,
+"matched": 12,
+"remaining": 1
+},
+"RVL_SDK/src/revolution/gx/GXAttr": {
+"total": 11,
+"matched": 11,
+"remaining": 0
+},
+"RVL_SDK/src/revolution/gx/GXMisc": {
+"total": 22,
+"matched": 22,
+"remaining": 0
+},
+"RVL_SDK/src/revolution/gx/GXGeometry": {
+"total": 9,
+"matched": 9,
+"remaining": 0
+},
+"RVL_SDK/src/revolution/gx/GXFrameBuf": {
+"total": 15,
+"matched": 15,
+"remaining": 0
+},
+"RVL_SDK/src/revolution/gx/GXLight": {
+"total": 16,
+"matched": 16,
+"remaining": 0
+},
+"RVL_SDK/src/revolution/gx/GXTexture": {
+"total": 32,
+"matched": 30,
+"remaining": 2
+},
+"RVL_SDK/src/revolution/gx/GXBump": {
+"total": 10,
+"matched": 10,
+"remaining": 0
+},
+"RVL_SDK/src/revolution/gx/GXTev": {
+"total": 16,
+"matched": 16,
+"remaining": 0
+},
+"RVL_SDK/src/revolution/gx/GXPixel": {
+"total": 13,
+"matched": 13,
+"remaining": 0
+},
+"RVL_SDK/src/revolution/gx/GXDisplayList": {
+"total": 1,
+"matched": 1,
+"remaining": 0
+},
+"RVL_SDK/src/revolution/gx/GXTransform": {
+"total": 16,
+"matched": 16,
+"remaining": 0
+},
+"RVL_SDK/src/revolution/gx/GXPerf": {
+"total": 2,
+"matched": 2,
+"remaining": 0
+},
+"RVL_SDK/src/revolution/hbm/HBMFrameController": {
+"total": 3,
+"matched": 3,
+"remaining": 0
+},
+"RVL_SDK/src/revolution/hbm/HBMAnmController": {
+"total": 3,
+"matched": 3,
+"remaining": 0
+},
+"RVL_SDK/src/revolution/hbm/HBMGUIManager": {
+"total": 56,
+"matched": 56,
+"remaining": 0
+},
+"RVL_SDK/src/revolution/hbm/HBMController": {
+"total": 25,
+"matched": 25,
+"remaining": 0
+},
+"RVL_SDK/src/revolution/hbm/HBMRemoteSpk": {
+"total": 15,
+"matched": 15,
+"remaining": 0
+},
+"RVL_SDK/src/revolution/hbm/HBMAxSound": {
+"total": 10,
+"matched": 10,
+"remaining": 0
+},
+"RVL_SDK/src/revolution/hbm/HBMCommon": {
+"total": 11,
+"matched": 11,
+"remaining": 0
+},
+"RVL_SDK/src/revolution/hbm/HBMBase": {
+"total": 33,
+"matched": 32,
+"remaining": 1
+},
+"RVL_SDK/src/revolution/hbm/nw4hbm/lyt/lyt_animation": {
+"total": 11,
+"matched": 11,
+"remaining": 0
+},
+"RVL_SDK/src/revolution/hbm/nw4hbm/lyt/lyt_arcResourceAccessor": {
+"total": 6,
+"matched": 5,
+"remaining": 1
+},
+"RVL_SDK/src/revolution/hbm/nw4hbm/lyt/lyt_bounding": {
+"total": 6,
+"matched": 6,
+"remaining": 0
+},
+"RVL_SDK/src/revolution/hbm/nw4hbm/lyt/lyt_common": {
+"total": 16,
+"matched": 15,
+"remaining": 1
+},
+"RVL_SDK/src/revolution/hbm/nw4hbm/lyt/lyt_drawInfo": {
+"total": 2,
+"matched": 2,
+"remaining": 0
+},
+"RVL_SDK/src/revolution/hbm/nw4hbm/lyt/lyt_group": {
+"total": 5,
+"matched": 5,
+"remaining": 0
+},
+"RVL_SDK/src/revolution/hbm/nw4hbm/lyt/lyt_layout": {
+"total": 15,
+"matched": 13,
+"remaining": 2
+},
+"RVL_SDK/src/revolution/hbm/nw4hbm/lyt/lyt_material": {
+"total": 23,
+"matched": 22,
+"remaining": 1
+},
+"RVL_SDK/src/revolution/hbm/nw4hbm/lyt/lyt_pane": {
+"total": 28,
+"matched": 22,
+"remaining": 6
+},
+"RVL_SDK/src/revolution/hbm/nw4hbm/lyt/lyt_picture": {
+"total": 11,
+"matched": 11,
+"remaining": 0
+},
+"RVL_SDK/src/revolution/hbm/nw4hbm/lyt/lyt_resourceAccessor": {
+"total": 3,
+"matched": 3,
+"remaining": 0
+},
+"RVL_SDK/src/revolution/hbm/nw4hbm/lyt/lyt_textBox": {
+"total": 16,
+"matched": 13,
+"remaining": 3
+},
+"RVL_SDK/src/revolution/hbm/nw4hbm/lyt/lyt_window": {
+"total": 20,
+"matched": 20,
+"remaining": 0
+},
+"RVL_SDK/src/revolution/hbm/nw4hbm/math/math_triangular": {
+"total": 3,
+"matched": 3,
+"remaining": 0
+},
+"RVL_SDK/src/revolution/hbm/nw4hbm/ut/ut_binaryFileFormat": {
+"total": 1,
+"matched": 1,
+"remaining": 0
+},
+"RVL_SDK/src/revolution/hbm/nw4hbm/ut/ut_CharStrmReader": {
+"total": 4,
+"matched": 4,
+"remaining": 0
+},
+"RVL_SDK/src/revolution/hbm/nw4hbm/ut/ut_CharWriter": {
+"total": 26,
+"matched": 25,
+"remaining": 1
+},
+"RVL_SDK/src/revolution/hbm/nw4hbm/ut/ut_Font": {
+"total": 1,
+"matched": 1,
+"remaining": 0
+},
+"RVL_SDK/src/revolution/hbm/nw4hbm/ut/ut_LinkList": {
+"total": 3,
+"matched": 3,
+"remaining": 0
+},
+"RVL_SDK/src/revolution/hbm/nw4hbm/ut/ut_list": {
+"total": 5,
+"matched": 5,
+"remaining": 0
+},
+"RVL_SDK/src/revolution/hbm/nw4hbm/ut/ut_ResFont": {
+"total": 4,
+"matched": 4,
+"remaining": 0
+},
+"RVL_SDK/src/revolution/hbm/nw4hbm/ut/ut_ResFontBase": {
+"total": 24,
+"matched": 24,
+"remaining": 0
+},
+"RVL_SDK/src/revolution/hbm/nw4hbm/ut/ut_TagProcessorBase": {
+"total": 12,
+"matched": 12,
+"remaining": 0
+},
+"RVL_SDK/src/revolution/hbm/nw4hbm/ut/ut_TextWriterBase": {
+"total": 83,
+"matched": 81,
+"remaining": 2
+},
+"RVL_SDK/src/revolution/hbm/mix": {
+"total": 15,
+"matched": 15,
+"remaining": 0
+},
+"RVL_SDK/src/revolution/hbm/syn": {
+"total": 8,
+"matched": 8,
+"remaining": 0
+},
+"RVL_SDK/src/revolution/hbm/synctrl": {
+"total": 4,
+"matched": 4,
+"remaining": 0
+},
+"RVL_SDK/src/revolution/hbm/synenv": {
+"total": 2,
+"matched": 1,
+"remaining": 1
+},
+"RVL_SDK/src/revolution/hbm/synmix": {
+"total": 5,
+"matched": 5,
+"remaining": 0
+},
+"RVL_SDK/src/revolution/hbm/synpitch": {
+"total": 4,
+"matched": 3,
+"remaining": 1
+},
+"RVL_SDK/src/revolution/hbm/synsample": {
+"total": 4,
+"matched": 4,
+"remaining": 0
+},
+"RVL_SDK/src/revolution/hbm/synvoice": {
+"total": 3,
+"matched": 3,
+"remaining": 0
+},
+"RVL_SDK/src/revolution/hbm/seq": {
+"total": 10,
+"matched": 6,
+"remaining": 4
+},
+"RVL_SDK/src/revolution/ipc/ipcMain": {
+"total": 7,
+"matched": 7,
+"remaining": 0
+},
+"RVL_SDK/src/revolution/ipc/ipcclt": {
+"total": 21,
+"matched": 21,
+"remaining": 0
+},
+"RVL_SDK/src/revolution/ipc/memory": {
+"total": 4,
+"matched": 4,
+"remaining": 0
+},
+"RVL_SDK/src/revolution/ipc/ipcProfile": {
+"total": 4,
+"matched": 4,
+"remaining": 0
+},
+"RVL_SDK/src/revolution/kpad/KPAD": {
+"total": 29,
+"matched": 19,
+"remaining": 10
+},
+"RVL_SDK/src/revolution/mem/mem_heapCommon": {
+"total": 3,
+"matched": 3,
+"remaining": 0
+},
+"RVL_SDK/src/revolution/mem/mem_expHeap": {
+"total": 8,
+"matched": 8,
+"remaining": 0
+},
+"RVL_SDK/src/revolution/mem/mem_frameHeap": {
+"total": 5,
+"matched": 5,
+"remaining": 0
+},
+"RVL_SDK/src/revolution/mem/mem_allocator": {
+"total": 5,
+"matched": 5,
+"remaining": 0
+},
+"RVL_SDK/src/revolution/mem/mem_list": {
+"total": 4,
+"matched": 4,
+"remaining": 0
+},
+"RVL_SDK/src/revolution/mix/mix": {
+"total": 10,
+"matched": 10,
+"remaining": 0
+},
+"RVL_SDK/src/revolution/mix/remote": {
+"total": 4,
+"matched": 4,
+"remaining": 0
+},
+"RVL_SDK/src/revolution/mtx/mtx": {
+"total": 19,
+"matched": 19,
+"remaining": 0
+},
+"RVL_SDK/src/revolution/mtx/mtxvec": {
+"total": 1,
+"matched": 1,
+"remaining": 0
+},
+"RVL_SDK/src/revolution/mtx/mtx44": {
+"total": 3,
+"matched": 3,
+"remaining": 0
+},
+"RVL_SDK/src/revolution/mtx/vec": {
+"total": 6,
+"matched": 6,
+"remaining": 0
+},
+"RVL_SDK/src/revolution/mtx/quat": {
+"total": 7,
+"matched": 7,
+"remaining": 0
+},
+"RVL_SDK/src/revolution/nand/nand": {
+"total": 25,
+"matched": 25,
+"remaining": 0
+},
+"RVL_SDK/src/revolution/nand/NANDOpenClose": {
+"total": 9,
+"matched": 9,
+"remaining": 0
+},
+"RVL_SDK/src/revolution/nand/NANDCore": {
+"total": 22,
+"matched": 22,
+"remaining": 0
+},
+"RVL_SDK/src/revolution/nand/NANDCheck": {
+"total": 2,
+"matched": 2,
+"remaining": 0
+},
+"RVL_SDK/src/revolution/nand/NANDLogging": {
+"total": 3,
+"matched": 2,
+"remaining": 1
+},
+"RVL_SDK/src/revolution/os/OS": {
+"total": 20,
+"matched": 19,
+"remaining": 1
+},
+"RVL_SDK/src/revolution/os/OSAlarm": {
+"total": 12,
+"matched": 12,
+"remaining": 0
+},
+"RVL_SDK/src/revolution/os/OSAlloc": {
+"total": 6,
+"matched": 6,
+"remaining": 0
+},
+"RVL_SDK/src/revolution/os/OSArena": {
+"total": 13,
+"matched": 13,
+"remaining": 0
+},
+"RVL_SDK/src/revolution/os/OSAudioSystem": {
+"total": 3,
+"matched": 3,
+"remaining": 0
+},
+"RVL_SDK/src/revolution/os/OSCache": {
+"total": 20,
+"matched": 20,
+"remaining": 0
+},
+"RVL_SDK/src/revolution/os/OSContext": {
+"total": 15,
+"matched": 15,
+"remaining": 0
+},
+"RVL_SDK/src/revolution/os/OSError": {
+"total": 4,
+"matched": 4,
+"remaining": 0
+},
+"RVL_SDK/src/revolution/os/OSExec": {
+"total": 11,
+"matched": 8,
+"remaining": 3
+},
+"RVL_SDK/src/revolution/os/OSFatal": {
+"total": 4,
+"matched": 4,
+"remaining": 0
+},
+"RVL_SDK/src/revolution/os/OSFont": {
+"total": 13,
+"matched": 12,
+"remaining": 1
+},
+"RVL_SDK/src/revolution/os/OSInterrupt": {
+"total": 11,
+"matched": 11,
+"remaining": 0
+},
+"RVL_SDK/src/revolution/os/OSLink": {
+"total": 1,
+"matched": 1,
+"remaining": 0
+},
+"RVL_SDK/src/revolution/os/OSMessage": {
+"total": 4,
+"matched": 4,
+"remaining": 0
+},
+"RVL_SDK/src/revolution/os/OSMemory": {
+"total": 15,
+"matched": 15,
+"remaining": 0
+},
+"RVL_SDK/src/revolution/os/OSMutex": {
+"total": 4,
+"matched": 4,
+"remaining": 0
+},
+"RVL_SDK/src/revolution/os/OSReboot": {
+"total": 2,
+"matched": 2,
+"remaining": 0
+},
+"RVL_SDK/src/revolution/os/OSReset": {
+"total": 11,
+"matched": 9,
+"remaining": 2
+},
+"RVL_SDK/src/revolution/os/OSRtc": {
+"total": 9,
+"matched": 9,
+"remaining": 0
+},
+"RVL_SDK/src/revolution/os/OSSync": {
+"total": 2,
+"matched": 2,
+"remaining": 0
+},
+"RVL_SDK/src/revolution/os/OSThread": {
+"total": 23,
+"matched": 22,
+"remaining": 1
+},
+"RVL_SDK/src/revolution/os/OSTime": {
+"total": 5,
+"matched": 5,
+"remaining": 0
+},
+"RVL_SDK/src/revolution/os/OSUtf": {
+"total": 4,
+"matched": 4,
+"remaining": 0
+},
+"RVL_SDK/src/revolution/os/OSIpc": {
+"total": 3,
+"matched": 3,
+"remaining": 0
+},
+"RVL_SDK/src/revolution/os/OSStateTM": {
+"total": 11,
+"matched": 11,
+"remaining": 0
+},
+"RVL_SDK/src/revolution/os/OSPlayRecord": {
+"total": 4,
+"matched": 4,
+"remaining": 0
+},
+"RVL_SDK/src/revolution/os/OSStateFlags": {
+"total": 2,
+"matched": 2,
+"remaining": 0
+},
+"RVL_SDK/src/revolution/os/OSNet": {
+"total": 8,
+"matched": 8,
+"remaining": 0
+},
+"RVL_SDK/src/revolution/os/OSNandbootInfo": {
+"total": 2,
+"matched": 2,
+"remaining": 0
+},
+"RVL_SDK/src/revolution/os/OSPlayTime": {
+"total": 8,
+"matched": 3,
+"remaining": 5
+},
+"RVL_SDK/src/revolution/os/OSCrc": {
+"total": 1,
+"matched": 1,
+"remaining": 0
+},
+"RVL_SDK/src/revolution/os/OSLaunch": {
+"total": 1,
+"matched": 1,
+"remaining": 0
+},
+"RVL_SDK/src/revolution/pad/Pad": {
+"total": 2,
+"matched": 2,
+"remaining": 0
+},
+"RVL_SDK/src/revolution/sc/scsystem": {
+"total": 21,
+"matched": 21,
+"remaining": 0
+},
+"RVL_SDK/src/revolution/sc/scapi": {
+"total": 19,
+"matched": 19,
+"remaining": 0
+},
+"RVL_SDK/src/revolution/sc/scapi_prdinfo": {
+"total": 3,
+"matched": 3,
+"remaining": 0
+},
+"RVL_SDK/src/revolution/si/SIBios": {
+"total": 11,
+"matched": 8,
+"remaining": 3
+},
+"RVL_SDK/src/revolution/si/SISamplingRate": {
+"total": 2,
+"matched": 2,
+"remaining": 0
+},
+"RVL_SDK/src/revolution/tpl/TPL": {
+"total": 3,
+"matched": 3,
+"remaining": 0
+},
+"RVL_SDK/src/revolution/usb/usb": {
+"total": 14,
+"matched": 14,
+"remaining": 0
+},
+"RVL_SDK/src/revolution/vi/vi": {
+"total": 28,
+"matched": 24,
+"remaining": 4
+},
+"RVL_SDK/src/revolution/vi/i2c": {
+"total": 3,
+"matched": 3,
+"remaining": 0
+},
+"RVL_SDK/src/revolution/vi/vi3in1": {
+"total": 16,
+"matched": 14,
+"remaining": 2
+},
+"RVL_SDK/src/revolution/wenc/wenc": {
+"total": 1,
+"matched": 1,
+"remaining": 0
+},
+"RVL_SDK/src/revolution/wpad/WPAD": {
+"total": 77,
+"matched": 70,
+"remaining": 7
+},
+"RVL_SDK/src/revolution/wpad/WPADHIDParser": {
+"total": 25,
+"matched": 10,
+"remaining": 15
+},
+"RVL_SDK/src/revolution/wpad/WPADEncrypt": {
+"total": 3,
+"matched": 2,
+"remaining": 1
+},
+"RVL_SDK/src/revolution/wpad/WPADMem": {
+"total": 2,
+"matched": 2,
+"remaining": 0
+},
+"RVL_SDK/src/revolution/wpad/debug_msg": {
+"total": 1,
+"matched": 1,
+"remaining": 0
+},
+"RVL_SDK/src/revolution/wud/WUD": {
+"total": 86,
+"matched": 64,
+"remaining": 22
+},
+"RVL_SDK/src/revolution/wud/WUDHidHost": {
+"total": 5,
+"matched": 5,
+"remaining": 0
+},
+"RVL_SDK/src/revolution/wud/debug_msg": {
+"total": 1,
+"matched": 1,
+"remaining": 0
+},
+"CriWare/src/adx/adxf/adx_fini": {
+"total": 2,
+"matched": 1,
+"remaining": 1
+},
+"CriWare/src/adx/adxf/adx_fs": {
+"total": 25,
+"matched": 17,
+"remaining": 8
+},
+"CriWare/src/adx/adxf/adx_fcch": {
+"total": 1,
+"matched": 1,
+"remaining": 0
+},
+"CriWare/src/adx/adxt/adx_fsvr": {
+"total": 2,
+"matched": 2,
+"remaining": 0
+},
+"CriWare/src/adx/adxt/adx_inis": {
+"total": 7,
+"matched": 5,
+"remaining": 2
+},
+"CriWare/src/adx/adxt/adx_lsc": {
+"total": 1,
+"matched": 1,
+"remaining": 0
+},
+"CriWare/src/adx/adxt/adx_mng": {
+"total": 2,
+"matched": 2,
+"remaining": 0
+},
+"CriWare/src/adx/adxt/adx_sfa": {
+"total": 2,
+"matched": 2,
+"remaining": 0
+},
+"CriWare/src/adx/adxt/adx_sjd": {
+"total": 44,
+"matched": 36,
+"remaining": 8
+},
+"CriWare/src/adx/adxt/adx_stmc": {
+"total": 32,
+"matched": 28,
+"remaining": 4
+},
+"CriWare/src/adx/adxt/adx_tlk2": {
+"total": 3,
+"matched": 3,
+"remaining": 0
+},
+"CriWare/src/adx/adxt/adx_tlk": {
+"total": 45,
+"matched": 38,
+"remaining": 7
+},
+"CriWare/src/adx/adxt/adx_tsvr": {
+"total": 11,
+"matched": 4,
+"remaining": 7
+},
+"CriWare/src/adx/adxt/adx_xpnd": {
+"total": 17,
+"matched": 17,
+"remaining": 0
+},
+"CriWare/src/adx/adxt/adx_amp": {
+"total": 4,
+"matched": 4,
+"remaining": 0
+},
+"CriWare/src/adx/adxt/adx_bahx": {
+"total": 4,
+"matched": 4,
+"remaining": 0
+},
+"CriWare/src/adx/adxt/adx_baif": {
+"total": 7,
+"matched": 2,
+"remaining": 5
+},
+"CriWare/src/adx/adxt/adx_bsc": {
+"total": 44,
+"matched": 41,
+"remaining": 3
+},
+"CriWare/src/adx/adxt/adx_bwav": {
+"total": 8,
+"matched": 4,
+"remaining": 4
+},
+"CriWare/src/adx/adxt/adx_crs": {
+"total": 6,
+"matched": 6,
+"remaining": 0
+},
+"CriWare/src/adx/adxt/adx_dcd5": {
+"total": 4,
+"matched": 1,
+"remaining": 3
+},
+"CriWare/src/adx/adxt/adx_dcd": {
+"total": 9,
+"matched": 9,
+"remaining": 0
+},
+"CriWare/src/adx/adxt/adx_errs": {
+"total": 6,
+"matched": 6,
+"remaining": 0
+},
+"CriWare/src/adx/ahx/ahx_ftbl": {
+"total": 1,
+"matched": 1,
+"remaining": 0
+},
+"CriWare/src/adx/ahx/ahx_link": {
+"total": 6,
+"matched": 6,
+"remaining": 0
+},
+"CriWare/src/adx/ahx/ahx_mflt_c": {
+"total": 1,
+"matched": 0,
+"remaining": 1
+},
+"CriWare/src/adx/ahx/ahx_mwin2_c": {
+"total": 16,
+"matched": 16,
+"remaining": 0
+},
+"CriWare/src/adx/ahx/ahx_sbf2": {
+"total": 1,
+"matched": 0,
+"remaining": 1
+},
+"CriWare/src/adx/ahx/ahx_sbf": {
+"total": 7,
+"matched": 6,
+"remaining": 1
+},
+"CriWare/src/adx/ahx/ahx_sjd": {
+"total": 17,
+"matched": 14,
+"remaining": 3
+},
+"CriWare/src/adx/ahx/ahx_wtbl": {
+"total": 1,
+"matched": 1,
+"remaining": 0
+},
+"CriWare/src/adx/ahx/adx_hdr": {
+"total": 3,
+"matched": 2,
+"remaining": 1
+},
+"CriWare/src/adx/ahx/ahx_atbl": {
+"total": 2,
+"matched": 2,
+"remaining": 0
+},
+"CriWare/src/adx/ahx/ahx_bsr": {
+"total": 8,
+"matched": 5,
+"remaining": 3
+},
+"CriWare/src/adx/ahx/ahx_cmn": {
+"total": 2,
+"matched": 2,
+"remaining": 0
+},
+"CriWare/src/adx/ahx/ahx_dcd": {
+"total": 24,
+"matched": 19,
+"remaining": 5
+},
+"CriWare/src/adx/cricfg/cfg_lib": {
+"total": 1,
+"matched": 1,
+"remaining": 0
+},
+"CriWare/src/adx/cvfs/cri_cvfs": {
+"total": 15,
+"matched": 10,
+"remaining": 5
+},
+"CriWare/src/adx/gcci/gcci": {
+"total": 17,
+"matched": 14,
+"remaining": 3
+},
+"CriWare/src/adx/gcci/gcci_sub": {
+"total": 1,
+"matched": 1,
+"remaining": 0
+},
+"CriWare/src/adx/lsc/lsc_err": {
+"total": 2,
+"matched": 2,
+"remaining": 0
+},
+"CriWare/src/adx/lsc/lsc_ini": {
+"total": 2,
+"matched": 2,
+"remaining": 0
+},
+"CriWare/src/adx/lsc/lsc_svr": {
+"total": 3,
+"matched": 1,
+"remaining": 2
+},
+"CriWare/src/adx/lsc/lsc": {
+"total": 16,
+"matched": 15,
+"remaining": 1
+},
+"CriWare/src/adx/lsc/lsc_crs": {
+"total": 4,
+"matched": 4,
+"remaining": 0
+},
+"CriWare/src/adx/mfci/mfci": {
+"total": 16,
+"matched": 10,
+"remaining": 6
+},
+"CriWare/src/adx/sj/sj_mem": {
+"total": 19,
+"matched": 17,
+"remaining": 2
+},
+"CriWare/src/adx/sj/sj_rbf": {
+"total": 23,
+"matched": 23,
+"remaining": 0
+},
+"CriWare/src/adx/sj/sj_uni": {
+"total": 21,
+"matched": 20,
+"remaining": 1
+},
+"CriWare/src/adx/sj/sj_utl": {
+"total": 2,
+"matched": 1,
+"remaining": 1
+},
+"CriWare/src/adx/sj/sj_crs": {
+"total": 4,
+"matched": 4,
+"remaining": 0
+},
+"CriWare/src/adx/sj/sj_err": {
+"total": 1,
+"matched": 1,
+"remaining": 0
+},
+"CriWare/src/adx/svm/svm": {
+"total": 25,
+"matched": 6,
+"remaining": 19
+},
+"CriWare/src/adx/adxt/adx_bsps": {
+"total": 4,
+"matched": 3,
+"remaining": 1
+},
+"CriWare/src/adx/adxt/adx_bau": {
+"total": 8,
+"matched": 3,
+"remaining": 5
+},
+"CriWare/src/adx/wiirna/rna_crs": {
+"total": 2,
+"matched": 2,
+"remaining": 0
+},
+"CriWare/src/adx/wiirna/rna_err": {
+"total": 2,
+"matched": 2,
+"remaining": 0
+},
+"CriWare/src/adx/wiirna/ax_rna": {
+"total": 24,
+"matched": 22,
+"remaining": 2
+},
+"CriWare/src/adx/adxt/srcwii/adx_mwii": {
+"total": 18,
+"matched": 12,
+"remaining": 6
+},
+"CriWare/src/adx/adxt/srcwii/adx_suwii": {
+"total": 2,
+"matched": 1,
+"remaining": 1
+},
+"CriWare/src/adx/adxt/srcwii/adx_rnawii": {
+"total": 18,
+"matched": 18,
+"remaining": 0
+},
+"CriWare/src/adx/std/cri_crw_std": {
+"total": 8,
+"matched": 8,
+"remaining": 0
+},
+"CriWare/src/sofdec/cft/srcgc/cftyp422_ppc": {
+"total": 2,
+"matched": 0,
+"remaining": 2
+},
+"CriWare/src/sofdec/cft/cft_common": {
+"total": 1,
+"matched": 1,
+"remaining": 0
+},
+"CriWare/src/sofdec/mwply/mwsfdfrm": {
+"total": 13,
+"matched": 7,
+"remaining": 6
+},
+"CriWare/src/sofdec/mwply/mwsfdrna": {
+"total": 2,
+"matched": 2,
+"remaining": 0
+},
+"CriWare/src/sofdec/mwply/mwsfdrsc": {
+"total": 2,
+"matched": 2,
+"remaining": 0
+},
+"CriWare/src/sofdec/mwply/mwsfdsl": {
+"total": 10,
+"matched": 5,
+"remaining": 5
+},
+"CriWare/src/sofdec/mwply/mwsfdsvm": {
+"total": 7,
+"matched": 6,
+"remaining": 1
+},
+"CriWare/src/sofdec/mwply/mwstm": {
+"total": 10,
+"matched": 10,
+"remaining": 0
+},
+"CriWare/src/sofdec/mwply/mwsfdsee": {
+"total": 2,
+"matched": 2,
+"remaining": 0
+},
+"CriWare/src/sofdec/mwply/mwsfdsfx": {
+"total": 22,
+"matched": 16,
+"remaining": 6
+},
+"CriWare/src/sofdec/mwply/mwsfdcre": {
+"total": 20,
+"matched": 7,
+"remaining": 13
+},
+"CriWare/src/sofdec/mwply/mwsfdlib": {
+"total": 9,
+"matched": 6,
+"remaining": 3
+},
+"CriWare/src/sofdec/mwply/mwsfdply": {
+"total": 13,
+"matched": 8,
+"remaining": 5
+},
+"CriWare/src/sofdec/mwply/mwsfdset": {
+"total": 15,
+"matched": 14,
+"remaining": 1
+},
+"CriWare/src/sofdec/mwply/mwsfdsvr": {
+"total": 18,
+"matched": 11,
+"remaining": 7
+},
+"CriWare/src/sofdec/mwply/mwsfdsst": {
+"total": 13,
+"matched": 12,
+"remaining": 1
+},
+"CriWare/src/sofdec/mwply/mwsfx_Y84C44": {
+"total": 1,
+"matched": 0,
+"remaining": 1
+},
+"CriWare/src/sofdec/mwply/code_803A3AE4": {
+"total": 5,
+"matched": 5,
+"remaining": 0
+},
+"CriWare/src/sofdec/sfdcore/mpv/mpv_bdec": {
+"total": 2,
+"matched": 1,
+"remaining": 1
+},
+"CriWare/src/sofdec/sfdcore/mpv/mpv_cdec": {
+"total": 5,
+"matched": 4,
+"remaining": 1
+},
+"CriWare/src/sofdec/sfdcore/mpv/mpv_cmc": {
+"total": 4,
+"matched": 4,
+"remaining": 0
+},
+"CriWare/src/sofdec/sfdcore/mpv/mpv_dec": {
+"total": 7,
+"matched": 2,
+"remaining": 5
+},
+"CriWare/src/sofdec/sfdcore/mpv/mpv_deli": {
+"total": 5,
+"matched": 5,
+"remaining": 0
+},
+"CriWare/src/sofdec/sfdcore/mpv/mpv_emp": {
+"total": 2,
+"matched": 0,
+"remaining": 2
+},
+"CriWare/src/sofdec/sfdcore/mpv/mpv_err": {
+"total": 4,
+"matched": 3,
+"remaining": 1
+},
+"CriWare/src/sofdec/sfdcore/mpv/mpv_frm": {
+"total": 4,
+"matched": 2,
+"remaining": 2
+},
+"CriWare/src/sofdec/sfdcore/mpv/mpv_get": {
+"total": 4,
+"matched": 3,
+"remaining": 1
+},
+"CriWare/src/sofdec/sfdcore/mpv/mpv_hdec": {
+"total": 17,
+"matched": 9,
+"remaining": 8
+},
+"CriWare/src/sofdec/sfdcore/mpv/mpv_lib": {
+"total": 13,
+"matched": 7,
+"remaining": 6
+},
+"CriWare/src/sofdec/sfdcore/mpv/mpv_mc": {
+"total": 5,
+"matched": 2,
+"remaining": 3
+},
+"CriWare/src/sofdec/sfdcore/mpv/mpv_vlc": {
+"total": 17,
+"matched": 8,
+"remaining": 9
+},
+"CriWare/src/sofdec/sfdcore/mpv/mpv_umc": {
+"total": 15,
+"matched": 5,
+"remaining": 10
+},
+"CriWare/src/sofdec/sfdcore/mpv/mpv_mcy": {
+"total": 5,
+"matched": 1,
+"remaining": 4
+},
+"CriWare/src/sofdec/sfdcore/mpv/mpv_m2v": {
+"total": 9,
+"matched": 9,
+"remaining": 0
+},
+"CriWare/src/sofdec/sfdcore/mpv/mpvabdec": {
+"total": 4,
+"matched": 1,
+"remaining": 3
+},
+"CriWare/src/sofdec/sfdcore/mpv/mpv_slice": {
+"total": 6,
+"matched": 5,
+"remaining": 1
+},
+"CriWare/src/sofdec/sfdcore/dct/dct_ac": {
+"total": 2,
+"matched": 0,
+"remaining": 2
+},
+"CriWare/src/sofdec/sfdcore/dct/dct_isr": {
+"total": 6,
+"matched": 2,
+"remaining": 4
+},
+"CriWare/src/sofdec/sfdcore/dct/dct_ver": {
+"total": 2,
+"matched": 2,
+"remaining": 0
+},
+"CriWare/src/sofdec/sfdcore/memcpy/mcp_not": {
+"total": 1,
+"matched": 1,
+"remaining": 0
+},
+"CriWare/src/sofdec/sfdcore/mps/mps_dec": {
+"total": 11,
+"matched": 7,
+"remaining": 4
+},
+"CriWare/src/sofdec/sfdcore/mps/mps_del": {
+"total": 1,
+"matched": 1,
+"remaining": 0
+},
+"CriWare/src/sofdec/sfdcore/mps/mps_get": {
+"total": 6,
+"matched": 6,
+"remaining": 0
+},
+"CriWare/src/sofdec/sfdcore/mps/mps_lib": {
+"total": 8,
+"matched": 7,
+"remaining": 1
+},
+"CriWare/src/sofdec/sfdcore/sfd/sfd_adxt": {
+"total": 30,
+"matched": 22,
+"remaining": 8
+},
+"CriWare/src/sofdec/sfdcore/sfd/sfd_aoap": {
+"total": 17,
+"matched": 17,
+"remaining": 0
+},
+"CriWare/src/sofdec/sfdcore/sfd/sfd_buf": {
+"total": 32,
+"matched": 24,
+"remaining": 8
+},
+"CriWare/src/sofdec/sfdcore/sfd/code_803BFD20": {
+"total": 1,
+"matched": 1,
+"remaining": 0
+},
+"CriWare/src/sofdec/sfdcore/sfd/sfd_con": {
+"total": 7,
+"matched": 7,
+"remaining": 0
+},
+"CriWare/src/sofdec/sfdcore/sfd/sfd_hds": {
+"total": 10,
+"matched": 7,
+"remaining": 3
+},
+"CriWare/src/sofdec/sfdcore/sfd/sfd_lib": {
+"total": 10,
+"matched": 9,
+"remaining": 1
+},
+"CriWare/src/sofdec/sfdcore/sfd/sfd_mem": {
+"total": 14,
+"matched": 14,
+"remaining": 0
+},
+"CriWare/src/sofdec/sfdcore/sfd/sfd_mps": {
+"total": 36,
+"matched": 27,
+"remaining": 9
+},
+"CriWare/src/sofdec/sfdcore/sfd/sfd_mpv": {
+"total": 51,
+"matched": 34,
+"remaining": 17
+},
+"CriWare/src/sofdec/sfdcore/sfd/sfd_mpvf": {
+"total": 26,
+"matched": 19,
+"remaining": 7
+},
+"CriWare/src/sofdec/sfdcore/sfd/sfd_pl2": {
+"total": 5,
+"matched": 3,
+"remaining": 2
+},
+"CriWare/src/sofdec/sfdcore/sfd/sfd_ply": {
+"total": 30,
+"matched": 20,
+"remaining": 10
+},
+"CriWare/src/sofdec/sfdcore/sfd/sfd_pts": {
+"total": 7,
+"matched": 6,
+"remaining": 1
+},
+"CriWare/src/sofdec/sfdcore/sfd/sfd_see": {
+"total": 11,
+"matched": 9,
+"remaining": 2
+},
+"CriWare/src/sofdec/sfdcore/sfd/sfd_set": {
+"total": 7,
+"matched": 7,
+"remaining": 0
+},
+"CriWare/src/sofdec/sfdcore/sfd/sfd_tim": {
+"total": 46,
+"matched": 38,
+"remaining": 8
+},
+"CriWare/src/sofdec/sfdcore/sfd/sfd_trn": {
+"total": 11,
+"matched": 11,
+"remaining": 0
+},
+"CriWare/src/sofdec/sfdcore/sfd/sfd_uo": {
+"total": 15,
+"matched": 15,
+"remaining": 0
+},
+"CriWare/src/sofdec/sfdcore/sfd/sfd_vom": {
+"total": 14,
+"matched": 14,
+"remaining": 0
+},
+"CriWare/src/sofdec/sfdcore/sfd/sfd_tmr": {
+"total": 4,
+"matched": 2,
+"remaining": 2
+},
+"CriWare/src/sofdec/sfdcore/sfd/sfd_tst": {
+"total": 13,
+"matched": 11,
+"remaining": 2
+},
+"CriWare/src/sofdec/sfdcore/sfd/sfd_seeki": {
+"total": 2,
+"matched": 2,
+"remaining": 0
+},
+"CriWare/src/sofdec/sfdcore/sfh/sfh_local": {
+"total": 4,
+"matched": 4,
+"remaining": 0
+},
+"CriWare/src/sofdec/sfdcore/sfh/sfh_main": {
+"total": 39,
+"matched": 39,
+"remaining": 0
+},
+"CriWare/src/sofdec/sfdcore/sfh/sfh_ver1": {
+"total": 38,
+"matched": 37,
+"remaining": 1
+},
+"CriWare/src/sofdec/sfdcore/sfh/sfh_ver2": {
+"total": 39,
+"matched": 33,
+"remaining": 6
+},
+"CriWare/src/sofdec/sfdcore/uty/cmptime": {
+"total": 1,
+"matched": 1,
+"remaining": 0
+},
+"CriWare/src/sofdec/sfdcore/uty/memcpyd": {
+"total": 1,
+"matched": 1,
+"remaining": 0
+},
+"CriWare/src/sofdec/sfdcore/uty/memsetd": {
+"total": 1,
+"matched": 1,
+"remaining": 0
+},
+"CriWare/src/sofdec/sfdcore/uty/muldiv": {
+"total": 1,
+"matched": 1,
+"remaining": 0
+},
+"CriWare/src/sofdec/sfdcore/uty/muldivr": {
+"total": 1,
+"matched": 1,
+"remaining": 0
+},
+"CriWare/src/sofdec/sfdcore/uty/uty_tmr": {
+"total": 5,
+"matched": 4,
+"remaining": 1
+},
+"CriWare/src/sofdec/sfx/sfx_set": {
+"total": 10,
+"matched": 10,
+"remaining": 0
+},
+"CriWare/src/sofdec/sfx/sfx_cnv": {
+"total": 16,
+"matched": 9,
+"remaining": 7
+},
+"CriWare/src/sofdec/sfx/sfx_inf": {
+"total": 1,
+"matched": 1,
+"remaining": 0
+},
+"CriWare/src/sofdec/sfx/sfx_lib": {
+"total": 8,
+"matched": 5,
+"remaining": 3
+},
+"CriWare/src/sofdec/sfx/sfx_alp": {
+"total": 7,
+"matched": 6,
+"remaining": 1
+},
+"CriWare/src/sofdec/sfx/sfx_zmv": {
+"total": 11,
+"matched": 4,
+"remaining": 7
+},
+"CriWare/src/sofdec/sfx/sfx_sud": {
+"total": 1,
+"matched": 1,
+"remaining": 0
+},
+"CriWare/src/sofdec/sfx/sfx_cnv_to_Y84C44": {
+"total": 1,
+"matched": 1,
+"remaining": 0
+},
+"CriWare/src/sofdec/sud/sud_lib": {
+"total": 4,
+"matched": 3,
+"remaining": 1
+},
+"nw4r/src/db/db_console": {
+"total": 2,
+"matched": 2,
+"remaining": 0
+},
+"nw4r/src/db/db_DbgPrintBase": {
+"total": 1,
+"matched": 1,
+"remaining": 0
+},
+"nw4r/src/db/db_assert": {
+"total": 2,
+"matched": 2,
+"remaining": 0
+},
+"nw4r/src/dw/dw_Window": {
+"total": 1,
+"matched": 1,
+"remaining": 0
+},
+"nw4r/src/g3d/res/g3d_rescommon": {
+"total": 5,
+"matched": 5,
+"remaining": 0
+},
+"nw4r/src/g3d/res/g3d_resdict": {
+"total": 6,
+"matched": 6,
+"remaining": 0
+},
+"nw4r/src/g3d/res/g3d_resfile": {
+"total": 25,
+"matched": 25,
+"remaining": 0
+},
+"nw4r/src/g3d/res/g3d_resmdl": {
+"total": 33,
+"matched": 33,
+"remaining": 0
+},
+"nw4r/src/g3d/res/g3d_resshp": {
+"total": 8,
+"matched": 8,
+"remaining": 0
+},
+"nw4r/src/g3d/res/g3d_restev": {
+"total": 14,
+"matched": 11,
+"remaining": 3
+},
+"nw4r/src/g3d/res/g3d_resmat": {
+"total": 56,
+"matched": 56,
+"remaining": 0
+},
+"nw4r/src/g3d/res/g3d_resvtx": {
+"total": 17,
+"matched": 17,
+"remaining": 0
+},
+"nw4r/src/g3d/res/g3d_restex": {
+"total": 7,
+"matched": 7,
+"remaining": 0
+},
+"nw4r/src/g3d/res/g3d_resnode": {
+"total": 3,
+"matched": 3,
+"remaining": 0
+},
+"nw4r/src/g3d/res/g3d_resanm": {
+"total": 2,
+"matched": 2,
+"remaining": 0
+},
+"nw4r/src/g3d/res/g3d_resanmclr": {
+"total": 1,
+"matched": 1,
+"remaining": 0
+},
+"nw4r/src/g3d/res/g3d_resanmtexpat": {
+"total": 3,
+"matched": 3,
+"remaining": 0
+},
+"nw4r/src/g3d/res/g3d_resanmtexsrt": {
+"total": 1,
+"matched": 1,
+"remaining": 0
+},
+"nw4r/src/g3d/res/g3d_resanmchr": {
+"total": 23,
+"matched": 23,
+"remaining": 0
+},
+"nw4r/src/g3d/res/g3d_reslightset": {
+"total": 1,
+"matched": 1,
+"remaining": 0
+},
+"nw4r/src/g3d/res/g3d_resanmamblight": {
+"total": 1,
+"matched": 1,
+"remaining": 0
+},
+"nw4r/src/g3d/res/g3d_resanmlight": {
+"total": 1,
+"matched": 1,
+"remaining": 0
+},
+"nw4r/src/g3d/res/g3d_resanmfog": {
+"total": 1,
+"matched": 1,
+"remaining": 0
+},
+"nw4r/src/g3d/res/g3d_resanmcamera": {
+"total": 1,
+"matched": 1,
+"remaining": 0
+},
+"nw4r/src/g3d/res/g3d_resanmscn": {
+"total": 19,
+"matched": 19,
+"remaining": 0
+},
+"nw4r/src/g3d/g3d_transform": {
+"total": 3,
+"matched": 3,
+"remaining": 0
+},
+"nw4r/src/g3d/g3d_anmvis": {
+"total": 2,
+"matched": 2,
+"remaining": 0
+},
+"nw4r/src/g3d/g3d_anmclr": {
+"total": 25,
+"matched": 19,
+"remaining": 6
+},
+"nw4r/src/g3d/g3d_anmtexpat": {
+"total": 23,
+"matched": 21,
+"remaining": 2
+},
+"nw4r/src/g3d/g3d_anmtexsrt": {
+"total": 24,
+"matched": 18,
+"remaining": 6
+},
+"nw4r/src/g3d/g3d_anmchr": {
+"total": 50,
+"matched": 44,
+"remaining": 6
+},
+"nw4r/src/g3d/g3d_anmshp": {
+"total": 1,
+"matched": 1,
+"remaining": 0
+},
+"nw4r/src/g3d/g3d_anmscn": {
+"total": 45,
+"matched": 40,
+"remaining": 5
+},
+"nw4r/src/g3d/g3d_obj": {
+"total": 5,
+"matched": 5,
+"remaining": 0
+},
+"nw4r/src/g3d/g3d_anmobj": {
+"total": 4,
+"matched": 4,
+"remaining": 0
+},
+"nw4r/src/g3d/platform/g3d_gpu": {
+"total": 7,
+"matched": 6,
+"remaining": 1
+},
+"nw4r/src/g3d/platform/g3d_cpu": {
+"total": 3,
+"matched": 3,
+"remaining": 0
+},
+"nw4r/src/g3d/g3d_state": {
+"total": 47,
+"matched": 31,
+"remaining": 16
+},
+"nw4r/src/g3d/g3d_draw1mat1shp": {
+"total": 2,
+"matched": 0,
+"remaining": 2
+},
+"nw4r/src/g3d/g3d_calcview": {
+"total": 11,
+"matched": 2,
+"remaining": 9
+},
+"nw4r/src/g3d/g3d_dcc": {
+"total": 2,
+"matched": 2,
+"remaining": 0
+},
+"nw4r/src/g3d/g3d_workmem": {
+"total": 5,
+"matched": 5,
+"remaining": 0
+},
+"nw4r/src/g3d/g3d_calcworld": {
+"total": 5,
+"matched": 3,
+"remaining": 2
+},
+"nw4r/src/g3d/g3d_draw": {
+"total": 13,
+"matched": 7,
+"remaining": 6
+},
+"nw4r/src/g3d/g3d_camera": {
+"total": 21,
+"matched": 21,
+"remaining": 0
+},
+"nw4r/src/g3d/dcc/g3d_basic": {
+"total": 2,
+"matched": 2,
+"remaining": 0
+},
+"nw4r/src/g3d/dcc/g3d_maya": {
+"total": 16,
+"matched": 7,
+"remaining": 9
+},
+"nw4r/src/g3d/dcc/g3d_xsi": {
+"total": 16,
+"matched": 8,
+"remaining": 8
+},
+"nw4r/src/g3d/dcc/g3d_3dsmax": {
+"total": 15,
+"matched": 8,
+"remaining": 7
+},
+"nw4r/src/g3d/g3d_scnobj": {
+"total": 39,
+"matched": 39,
+"remaining": 0
+},
+"nw4r/src/g3d/g3d_scnroot": {
+"total": 38,
+"matched": 32,
+"remaining": 6
+},
+"nw4r/src/g3d/g3d_scnmdlsmpl": {
+"total": 25,
+"matched": 20,
+"remaining": 5
+},
+"nw4r/src/g3d/g3d_scnmdl": {
+"total": 25,
+"matched": 22,
+"remaining": 3
+},
+"nw4r/src/g3d/g3d_scnmdlexpand": {
+"total": 10,
+"matched": 9,
+"remaining": 1
+},
+"nw4r/src/g3d/g3d_calcmaterial": {
+"total": 1,
+"matched": 0,
+"remaining": 1
+},
+"nw4r/src/g3d/g3d_init": {
+"total": 2,
+"matched": 2,
+"remaining": 0
+},
+"nw4r/src/g3d/g3d_scnproc": {
+"total": 6,
+"matched": 6,
+"remaining": 0
+},
+"nw4r/src/g3d/g3d_fog": {
+"total": 6,
+"matched": 6,
+"remaining": 0
+},
+"nw4r/src/g3d/g3d_light": {
+"total": 23,
+"matched": 23,
+"remaining": 0
+},
+"nw4r/src/g3d/g3d_calcvtx": {
+"total": 1,
+"matched": 0,
+"remaining": 1
+},
+"nw4r/src/lyt/lyt_init": {
+"total": 1,
+"matched": 1,
+"remaining": 0
+},
+"nw4r/src/lyt/lyt_pane": {
+"total": 36,
+"matched": 36,
+"remaining": 0
+},
+"nw4r/src/lyt/lyt_group": {
+"total": 5,
+"matched": 5,
+"remaining": 0
+},
+"nw4r/src/lyt/lyt_layout": {
+"total": 19,
+"matched": 11,
+"remaining": 8
+},
+"nw4r/src/lyt/lyt_picture": {
+"total": 13,
+"matched": 13,
+"remaining": 0
+},
+"nw4r/src/lyt/lyt_textBox": {
+"total": 25,
+"matched": 17,
+"remaining": 8
+},
+"nw4r/src/lyt/lyt_window": {
+"total": 21,
+"matched": 20,
+"remaining": 1
+},
+"nw4r/src/lyt/lyt_bounding": {
+"total": 5,
+"matched": 5,
+"remaining": 0
+},
+"nw4r/src/lyt/lyt_material": {
+"total": 78,
+"matched": 73,
+"remaining": 5
+},
+"nw4r/src/lyt/lyt_texMap": {
+"total": 5,
+"matched": 5,
+"remaining": 0
+},
+"nw4r/src/lyt/lyt_drawInfo": {
+"total": 2,
+"matched": 2,
+"remaining": 0
+},
+"nw4r/src/lyt/lyt_animation": {
+"total": 27,
+"matched": 18,
+"remaining": 9
+},
+"nw4r/src/lyt/lyt_resourceAccessor": {
+"total": 3,
+"matched": 3,
+"remaining": 0
+},
+"nw4r/src/lyt/lyt_arcResourceAccessor": {
+"total": 7,
+"matched": 7,
+"remaining": 0
+},
+"nw4r/src/lyt/lyt_common": {
+"total": 14,
+"matched": 14,
+"remaining": 0
+},
+"nw4r/src/lyt/lyt_util": {
+"total": 1,
+"matched": 1,
+"remaining": 0
+},
+"nw4r/src/math/math_arithmetic": {
+"total": 3,
+"matched": 3,
+"remaining": 0
+},
+"nw4r/src/math/math_triangular": {
+"total": 4,
+"matched": 4,
+"remaining": 0
+},
+"nw4r/src/math/math_types": {
+"total": 12,
+"matched": 11,
+"remaining": 1
+},
+"nw4r/src/math/math_geometry": {
+"total": 8,
+"matched": 8,
+"remaining": 0
+},
+"nw4r/src/snd/snd_AxManager": {
+"total": 26,
+"matched": 19,
+"remaining": 7
+},
+"nw4r/src/snd/snd_AxVoice": {
+"total": 35,
+"matched": 26,
+"remaining": 9
+},
+"nw4r/src/snd/snd_AxVoiceManager": {
+"total": 9,
+"matched": 9,
+"remaining": 0
+},
+"nw4r/src/snd/snd_AxfxImpl": {
+"total": 6,
+"matched": 6,
+"remaining": 0
+},
+"nw4r/src/snd/snd_Bank": {
+"total": 3,
+"matched": 2,
+"remaining": 1
+},
+"nw4r/src/snd/snd_BankFile": {
+"total": 5,
+"matched": 5,
+"remaining": 0
+},
+"nw4r/src/snd/snd_BasicPlayer": {
+"total": 12,
+"matched": 11,
+"remaining": 1
+},
+"nw4r/src/snd/snd_BasicSound": {
+"total": 35,
+"matched": 30,
+"remaining": 5
+},
+"nw4r/src/snd/snd_BiquadFilterPreset": {
+"total": 5,
+"matched": 5,
+"remaining": 0
+},
+"nw4r/src/snd/snd_Channel": {
+"total": 18,
+"matched": 16,
+"remaining": 2
+},
+"nw4r/src/snd/snd_DisposeCallbackManager": {
+"total": 6,
+"matched": 6,
+"remaining": 0
+},
+"nw4r/src/snd/snd_EnvGenerator": {
+"total": 10,
+"matched": 10,
+"remaining": 0
+},
+"nw4r/src/snd/snd_ExternalSoundPlayer": {
+"total": 3,
+"matched": 1,
+"remaining": 2
+},
+"nw4r/src/snd/snd_FxChorusDpl2": {
+"total": 9,
+"matched": 9,
+"remaining": 0
+},
+"nw4r/src/snd/snd_FxDelayDpl2": {
+"total": 9,
+"matched": 9,
+"remaining": 0
+},
+"nw4r/src/snd/snd_FxReverbStdDpl2": {
+"total": 9,
+"matched": 9,
+"remaining": 0
+},
+"nw4r/src/snd/snd_InstancePool": {
+"total": 5,
+"matched": 5,
+"remaining": 0
+},
+"nw4r/src/snd/snd_Lfo": {
+"total": 4,
+"matched": 4,
+"remaining": 0
+},
+"nw4r/src/snd/snd_McsSoundArchive": {
+"total": 3,
+"matched": 3,
+"remaining": 0
+},
+"nw4r/src/snd/snd_MemorySoundArchive": {
+"total": 21,
+"matched": 21,
+"remaining": 0
+},
+"nw4r/src/snd/snd_MidiSeqPlayer": {
+"total": 11,
+"matched": 11,
+"remaining": 0
+},
+"nw4r/src/snd/snd_MmlParser": {
+"total": 5,
+"matched": 3,
+"remaining": 2
+},
+"nw4r/src/snd/snd_MmlSeqTrack": {
+"total": 3,
+"matched": 3,
+"remaining": 0
+},
+"nw4r/src/snd/snd_MmlSeqTrackAllocator": {
+"total": 6,
+"matched": 6,
+"remaining": 0
+},
+"nw4r/src/snd/snd_PlayerHeap": {
+"total": 8,
+"matched": 8,
+"remaining": 0
+},
+"nw4r/src/snd/snd_RemoteSpeaker": {
+"total": 9,
+"matched": 8,
+"remaining": 1
+},
+"nw4r/src/snd/snd_RemoteSpeakerManager": {
+"total": 5,
+"matched": 5,
+"remaining": 0
+},
+"nw4r/src/snd/snd_SeqFile": {
+"total": 3,
+"matched": 2,
+"remaining": 1
+},
+"nw4r/src/snd/snd_SeqPlayer": {
+"total": 25,
+"matched": 19,
+"remaining": 6
+},
+"nw4r/src/snd/snd_SeqSound": {
+"total": 23,
+"matched": 14,
+"remaining": 9
+},
+"nw4r/src/snd/snd_SeqSoundHandle": {
+"total": 1,
+"matched": 0,
+"remaining": 1
+},
+"nw4r/src/snd/snd_SeqTrack": {
+"total": 18,
+"matched": 15,
+"remaining": 3
+},
+"nw4r/src/snd/snd_SoundArchive": {
+"total": 24,
+"matched": 23,
+"remaining": 1
+},
+"nw4r/src/snd/snd_SoundArchiveFile": {
+"total": 23,
+"matched": 19,
+"remaining": 4
+},
+"nw4r/src/snd/snd_SoundArchivePlayer": {
+"total": 32,
+"matched": 24,
+"remaining": 8
+},
+"nw4r/src/snd/snd_SoundHandle": {
+"total": 3,
+"matched": 3,
+"remaining": 0
+},
+"nw4r/src/snd/snd_SoundPlayer": {
+"total": 20,
+"matched": 20,
+"remaining": 0
+},
+"nw4r/src/snd/snd_SoundStartable": {
+"total": 1,
+"matched": 1,
+"remaining": 0
+},
+"nw4r/src/snd/snd_SoundSystem": {
+"total": 5,
+"matched": 5,
+"remaining": 0
+},
+"nw4r/src/snd/snd_SoundThread": {
+"total": 9,
+"matched": 9,
+"remaining": 0
+},
+"nw4r/src/snd/snd_StrmChannel": {
+"total": 4,
+"matched": 4,
+"remaining": 0
+},
+"nw4r/src/snd/snd_StrmFile": {
+"total": 9,
+"matched": 8,
+"remaining": 1
+},
+"nw4r/src/snd/snd_StrmPlayer": {
+"total": 45,
+"matched": 36,
+"remaining": 9
+},
+"nw4r/src/snd/snd_StrmSound": {
+"total": 16,
+"matched": 15,
+"remaining": 1
+},
+"nw4r/src/snd/snd_StrmSoundHandle": {
+"total": 1,
+"matched": 1,
+"remaining": 0
+},
+"nw4r/src/snd/snd_Task": {
+"total": 1,
+"matched": 1,
+"remaining": 0
+},
+"nw4r/src/snd/snd_TaskManager": {
+"total": 12,
+"matched": 12,
+"remaining": 0
+},
+"nw4r/src/snd/snd_TaskThread": {
+"total": 5,
+"matched": 5,
+"remaining": 0
+},
+"nw4r/src/snd/snd_Voice": {
+"total": 48,
+"matched": 44,
+"remaining": 4
+},
+"nw4r/src/snd/snd_VoiceManager": {
+"total": 11,
+"matched": 11,
+"remaining": 0
+},
+"nw4r/src/snd/snd_Util": {
+"total": 8,
+"matched": 8,
+"remaining": 0
+},
+"nw4r/src/snd/snd_WaveFile": {
+"total": 6,
+"matched": 4,
+"remaining": 2
+},
+"nw4r/src/snd/snd_WaveSound": {
+"total": 15,
+"matched": 14,
+"remaining": 1
+},
+"nw4r/src/snd/snd_WaveSoundHandle": {
+"total": 1,
+"matched": 1,
+"remaining": 0
+},
+"nw4r/src/snd/snd_WsdFile": {
+"total": 4,
+"matched": 4,
+"remaining": 0
+},
+"nw4r/src/snd/snd_WsdPlayer": {
+"total": 25,
+"matched": 23,
+"remaining": 2
+},
+"nw4r/src/snd/snd_adpcm": {
+"total": 1,
+"matched": 1,
+"remaining": 0
+},
+"nw4r/src/ut/ut_LinkList": {
+"total": 5,
+"matched": 5,
+"remaining": 0
+},
+"nw4r/src/ut/ut_binaryFileFormat": {
+"total": 1,
+"matched": 1,
+"remaining": 0
+},
+"nw4r/src/ut/ut_CharStrmReader": {
+"total": 4,
+"matched": 4,
+"remaining": 0
+},
+"nw4r/src/ut/ut_TagProcessorBase": {
+"total": 8,
+"matched": 8,
+"remaining": 0
+},
+"nw4r/src/ut/ut_IOStream": {
+"total": 5,
+"matched": 5,
+"remaining": 0
+},
+"nw4r/src/ut/ut_FileStream": {
+"total": 3,
+"matched": 3,
+"remaining": 0
+},
+"nw4r/src/ut/ut_DvdFileStream": {
+"total": 1,
+"matched": 1,
+"remaining": 0
+},
+"nw4r/src/ut/ut_LockedCache": {
+"total": 8,
+"matched": 8,
+"remaining": 0
+},
+"nw4r/src/ut/ut_Font": {
+"total": 1,
+"matched": 1,
+"remaining": 0
+},
+"nw4r/src/ut/ut_RomFont": {
+"total": 25,
+"matched": 25,
+"remaining": 0
+},
+"nw4r/src/ut/ut_ResFontBase": {
+"total": 29,
+"matched": 29,
+"remaining": 0
+},
+"nw4r/src/ut/ut_ResFont": {
+"total": 4,
+"matched": 4,
+"remaining": 0
+},
+"nw4r/src/ut/ut_ArchiveFontBase": {
+"total": 24,
+"matched": 20,
+"remaining": 4
+},
+"nw4r/src/ut/ut_PackedFont": {
+"total": 12,
+"matched": 3,
+"remaining": 9
+},
+"nw4r/src/ut/ut_CharWriter": {
+"total": 12,
+"matched": 7,
+"remaining": 5
+},
+"nw4r/src/ut/ut_TextWriterBase": {
+"total": 12,
+"matched": 5,
+"remaining": 7
+},
+"monolib/src/math/CAttrTransform": {
+"total": 2,
+"matched": 1,
+"remaining": 1
+},
+"monolib/src/math/CCamUtil": {
+"total": 1,
+"matched": 1,
+"remaining": 0
+},
+"monolib/src/util/MemManager": {
+"total": 34,
+"matched": 25,
+"remaining": 9
+},
+"monolib/src/util/CPathUtil": {
+"total": 4,
+"matched": 3,
+"remaining": 1
+},
+"monolib/src/math/MTRand": {
+"total": 6,
+"matched": 4,
+"remaining": 2
+},
+"monolib/src/math/CRect16": {
+"total": 2,
+"matched": 2,
+"remaining": 0
+},
+"monolib/src/math/CVec3": {
+"total": 2,
+"matched": 2,
+"remaining": 0
+},
+"monolib/src/math/CVec4": {
+"total": 1,
+"matched": 1,
+"remaining": 0
+},
+"monolib/src/math/Main": {
+"total": 1,
+"matched": 1,
+"remaining": 0
+},
+"monolib/src/math/Random": {
+"total": 4,
+"matched": 4,
+"remaining": 0
+},
+"monolib/src/math/FloatUtils": {
+"total": 1,
+"matched": 1,
+"remaining": 0
+},
+"monolib/src/math/CCol3": {
+"total": 1,
+"matched": 1,
+"remaining": 0
+},
+"monolib/src/math/CCol4": {
+"total": 1,
+"matched": 1,
+"remaining": 0
+},
+"monolib/src/math/CMat34": {
+"total": 5,
+"matched": 5,
+"remaining": 0
+},
+"monolib/src/math/CMat44": {
+"total": 1,
+"matched": 1,
+"remaining": 0
+},
+"monolib/src/math/CPlane": {
+"total": 2,
+"matched": 0,
+"remaining": 2
+},
+"monolib/src/math/CQuat": {
+"total": 4,
+"matched": 4,
+"remaining": 0
+},
+"monolib/src/work/CWorkThreadSystem": {
+"total": 4,
+"matched": 4,
+"remaining": 0
+},
+"monolib/src/work/CWorkThread": {
+"total": 20,
+"matched": 12,
+"remaining": 8
+},
+"monolib/src/work/CWorkUtil": {
+"total": 4,
+"matched": 3,
+"remaining": 1
+},
+"monolib/src/core/CProc": {
+"total": 11,
+"matched": 8,
+"remaining": 3
+},
+"monolib/src/core/CProcRoot": {
+"total": 5,
+"matched": 5,
+"remaining": 0
+},
+"monolib/src/core/CRsrc": {
+"total": 9,
+"matched": 9,
+"remaining": 0
+},
+"monolib/src/core/CRsrcData": {
+"total": 10,
+"matched": 10,
+"remaining": 0
+},
+"monolib/src/core/CScriptCode": {
+"total": 9,
+"matched": 2,
+"remaining": 7
+},
+"monolib/src/core/CToken": {
+"total": 7,
+"matched": 3,
+"remaining": 4
+},
+"monolib/src/work/CEvent1": {
+"total": 2,
+"matched": 2,
+"remaining": 0
+},
+"monolib/src/core/CSplitFrame": {
+"total": 8,
+"matched": 6,
+"remaining": 2
+},
+"monolib/src/core/CTaskManager": {
+"total": 16,
+"matched": 16,
+"remaining": 0
+},
+"monolib/src/core/CView": {
+"total": 45,
+"matched": 33,
+"remaining": 12
+},
+"monolib/src/core/CViewFrame": {
+"total": 15,
+"matched": 6,
+"remaining": 9
+},
+"monolib/src/core/CViewRoot": {
+"total": 21,
+"matched": 14,
+"remaining": 7
+},
+"monolib/src/work/CWorkControl": {
+"total": 9,
+"matched": 8,
+"remaining": 1
+},
+"monolib/src/work/CWorkFlowSetup": {
+"total": 5,
+"matched": 4,
+"remaining": 1
+},
+"monolib/src/work/CWorkFlowShutdownAll": {
+"total": 1,
+"matched": 1,
+"remaining": 0
+},
+"monolib/src/work/CWorkFlowWiiMenu": {
+"total": 1,
+"matched": 1,
+"remaining": 0
+},
+"monolib/src/work/CWorkFlowWiiReset": {
+"total": 1,
+"matched": 1,
+"remaining": 0
+},
+"monolib/src/work/CWorkFlowWiiPowerOff": {
+"total": 1,
+"matched": 1,
+"remaining": 0
+},
+"monolib/src/work/CWorkRoot": {
+"total": 23,
+"matched": 22,
+"remaining": 1
+},
+"monolib/src/work/CWorkSystem": {
+"total": 12,
+"matched": 11,
+"remaining": 1
+},
+"monolib/src/work/CWorkSystemMem": {
+"total": 5,
+"matched": 4,
+"remaining": 1
+},
+"monolib/src/work/CProcess": {
+"total": 21,
+"matched": 19,
+"remaining": 2
+},
+"monolib/src/util/CDoubleListNode": {
+"total": 5,
+"matched": 5,
+"remaining": 0
+},
+"monolib/src/util/CChildListNode": {
+"total": 2,
+"matched": 2,
+"remaining": 0
+},
+"monolib/src/core/CPadManager": {
+"total": 20,
+"matched": 16,
+"remaining": 4
+},
+"monolib/src/util/CStopwatchUtil": {
+"total": 4,
+"matched": 4,
+"remaining": 0
+},
+"monolib/src/device/CDeviceRemotePad": {
+"total": 13,
+"matched": 13,
+"remaining": 0
+},
+"monolib/src/device/CDeviceSC": {
+"total": 10,
+"matched": 10,
+"remaining": 0
+},
+"monolib/src/device/CDeviceVI": {
+"total": 38,
+"matched": 31,
+"remaining": 7
+},
+"monolib/src/device/CDeviceVICb": {
+"total": 2,
+"matched": 2,
+"remaining": 0
+},
+"monolib/src/core/CFontLayer": {
+"total": 10,
+"matched": 10,
+"remaining": 0
+},
+"monolib/src/device/CGXCache": {
+"total": 48,
+"matched": 32,
+"remaining": 16
+},
+"monolib/src/device/CDevice": {
+"total": 17,
+"matched": 16,
+"remaining": 1
+},
+"monolib/src/device/CDeviceClock": {
+"total": 12,
+"matched": 8,
+"remaining": 4
+},
+"monolib/src/device/CDeviceFile": {
+"total": 31,
+"matched": 24,
+"remaining": 7
+},
+"monolib/src/device/CDeviceFileCri": {
+"total": 25,
+"matched": 16,
+"remaining": 9
+},
+"monolib/src/device/CDeviceFileDvd": {
+"total": 23,
+"matched": 14,
+"remaining": 9
+},
+"monolib/src/device/CDeviceFileJob": {
+"total": 5,
+"matched": 5,
+"remaining": 0
+},
+"monolib/src/device/CDeviceFileJobReadDvd": {
+"total": 8,
+"matched": 8,
+"remaining": 0
+},
+"monolib/src/device/CDeviceFont": {
+"total": 25,
+"matched": 18,
+"remaining": 7
+},
+"monolib/src/device/CDeviceFontInfoExt": {
+"total": 15,
+"matched": 13,
+"remaining": 2
+},
+"monolib/src/device/CDeviceFontInfoRom": {
+"total": 15,
+"matched": 15,
+"remaining": 0
+},
+"monolib/src/device/CDeviceFontLayer": {
+"total": 20,
+"matched": 13,
+"remaining": 7
+},
+"monolib/src/device/CDeviceFontLoader": {
+"total": 6,
+"matched": 6,
+"remaining": 0
+},
+"monolib/src/device/CDeviceGX": {
+"total": 19,
+"matched": 18,
+"remaining": 1
+},
+"monolib/device/CDeviceGX": {
+"total": 1,
+"matched": 1,
+"remaining": 0
+},
+"monolib/src/core/CDesktop": {
+"total": 19,
+"matched": 17,
+"remaining": 2
+},
+"monolib/src/core/CDrawGX": {
+"total": 20,
+"matched": 19,
+"remaining": 1
+},
+"monolib/src/core/CException": {
+"total": 18,
+"matched": 11,
+"remaining": 7
+},
+"monolib/src/core/CViewRectDataCore": {
+"total": 3,
+"matched": 3,
+"remaining": 0
+},
+"monolib/src/lib/CLib": {
+"total": 6,
+"matched": 6,
+"remaining": 0
+},
+"monolib/src/lib/CLibCri": {
+"total": 35,
+"matched": 34,
+"remaining": 1
+},
+"monolib/src/lib/CLibCriMoviePlay": {
+"total": 22,
+"matched": 16,
+"remaining": 6
+},
+"monolib/src/lib/CLibCriStreamingPlay": {
+"total": 22,
+"matched": 11,
+"remaining": 11
+},
+"monolib/src/lib/CLibG3d": {
+"total": 6,
+"matched": 6,
+"remaining": 0
+},
+"monolib/src/lib/CLibHbm": {
+"total": 25,
+"matched": 25,
+"remaining": 0
+},
+"monolib/src/lib/CLibHbmControl": {
+"total": 8,
+"matched": 4,
+"remaining": 4
+},
+"monolib/src/lib/CLibLayout": {
+"total": 16,
+"matched": 14,
+"remaining": 2
+},
+"monolib/src/lib/UnkClass_8045F564": {
+"total": 6,
+"matched": 5,
+"remaining": 1
+},
+"monolib/src/lib/Class_8045F858": {
+"total": 2,
+"matched": 2,
+"remaining": 0
+},
+"monolib/src/lib/CLibStaticData": {
+"total": 12,
+"matched": 12,
+"remaining": 0
+},
+"monolib/src/lib/CLibVM": {
+"total": 7,
+"matched": 6,
+"remaining": 1
+},
+"monolib/src/lib/UnkClass_80460308": {
+"total": 2,
+"matched": 1,
+"remaining": 1
+},
+"monolib/src/lib/UnkClass_80460C34": {
+"total": 7,
+"matched": 4,
+"remaining": 3
+},
+"monolib/src/lod/CTaskLOD": {
+"total": 38,
+"matched": 38,
+"remaining": 0
+},
+"monolib/src/lod/CLODCacheManagerS": {
+"total": 10,
+"matched": 6,
+"remaining": 4
+},
+"monolib/src/lod/UnkClass_8046368C": {
+"total": 15,
+"matched": 8,
+"remaining": 7
+},
+"monolib/src/lod/code_804645CC": {
+"total": 14,
+"matched": 8,
+"remaining": 6
+},
+"monolib/src/lod/UnkClass_80466348": {
+"total": 67,
+"matched": 64,
+"remaining": 3
+},
+"monolib/src/lod/code_80468434": {
+"total": 17,
+"matched": 11,
+"remaining": 6
+},
+"monolib/src/lod/code_8046A530": {
+"total": 12,
+"matched": 5,
+"remaining": 7
+},
+"monolib/src/lod/LODMemMan": {
+"total": 80,
+"matched": 62,
+"remaining": 18
+},
+"monolib/src/mpfsys/UnkClass_80471EC8": {
+"total": 39,
+"matched": 31,
+"remaining": 8
+},
+"monolib/src/mpfsys/MPFDrawDisplayList": {
+"total": 22,
+"matched": 10,
+"remaining": 12
+},
+"monolib/src/mpfsys/MPFDrawMdlNoColor": {
+"total": 1,
+"matched": 1,
+"remaining": 0
+},
+"monolib/src/mpfsys/MPFDrawMdlColor": {
+"total": 5,
+"matched": 5,
+"remaining": 0
+},
+"monolib/src/mpfsys/MPFDrawBillboard": {
+"total": 1,
+"matched": 1,
+"remaining": 0
+},
+"monolib/src/mpfsys/MPFDrawCross": {
+"total": 1,
+"matched": 1,
+"remaining": 0
+},
+"monolib/src/mpfsys/MPFDrawBillLayTex": {
+"total": 11,
+"matched": 5,
+"remaining": 6
+},
+"monolib/src/mpfsys/code_8047BB54": {
+"total": 18,
+"matched": 14,
+"remaining": 4
+},
+"monolib/src/mpfsys/code_8047CA88": {
+"total": 3,
+"matched": 1,
+"remaining": 2
+},
+"monolib/src/scn/UnkClass_8047CD0C": {
+"total": 16,
+"matched": 15,
+"remaining": 1
+},
+"monolib/src/scn/code_8047D2AC": {
+"total": 9,
+"matched": 5,
+"remaining": 4
+},
+"monolib/src/scn/UnkClass_8047E110": {
+"total": 30,
+"matched": 11,
+"remaining": 19
+},
+"monolib/src/scn/CScnItemCameraNw4r": {
+"total": 9,
+"matched": 9,
+"remaining": 0
+},
+"monolib/src/scn/CScnItemId": {
+"total": 6,
+"matched": 5,
+"remaining": 1
+},
+"monolib/src/scn/CScnItemLight": {
+"total": 7,
+"matched": 7,
+"remaining": 0
+},
+"monolib/src/scn/CScnItemLightNw4r": {
+"total": 1,
+"matched": 1,
+"remaining": 0
+},
+"monolib/src/scn/CScnItemModel": {
+"total": 69,
+"matched": 61,
+"remaining": 8
+},
+"monolib/src/scn/CScnItemModelNw4r": {
+"total": 84,
+"matched": 69,
+"remaining": 15
+},
+"monolib/src/scn/CScnItemPool": {
+"total": 44,
+"matched": 37,
+"remaining": 7
+},
+"monolib/src/scn/CScnLightMan": {
+"total": 5,
+"matched": 4,
+"remaining": 1
+},
+"monolib/src/scn/CScnMaruShadowNw4r": {
+"total": 16,
+"matched": 10,
+"remaining": 6
+},
+"monolib/src/scn/CScnMem": {
+"total": 16,
+"matched": 16,
+"remaining": 0
+},
+"monolib/src/scn/CScnRoot": {
+"total": 8,
+"matched": 6,
+"remaining": 2
+},
+"monolib/src/scn/CScnRootNw4r": {
+"total": 25,
+"matched": 19,
+"remaining": 6
+},
+"monolib/src/scn/CScnTexWorkMan": {
+"total": 16,
+"matched": 11,
+"remaining": 5
+},
+"monolib/src/scn/CScnVirtualLight": {
+"total": 88,
+"matched": 80,
+"remaining": 8
+},
+"monolib/src/scn/code_8049431C": {
+"total": 5,
+"matched": 4,
+"remaining": 1
+},
+"monolib/src/scn/CVirtualLightAmb": {
+"total": 2,
+"matched": 2,
+"remaining": 0
+},
+"monolib/src/scn/CVirtualLightDir": {
+"total": 3,
+"matched": 3,
+"remaining": 0
+},
+"monolib/src/scn/CVirtualLightObj": {
+"total": 20,
+"matched": 14,
+"remaining": 6
+},
+"monolib/src/scn/CScn": {
+"total": 52,
+"matched": 44,
+"remaining": 8
+},
+"monolib/src/scn/CScn_80496B0C": {
+"total": 29,
+"matched": 19,
+"remaining": 10
+},
+"monolib/src/scn/CScnBlend": {
+"total": 5,
+"matched": 5,
+"remaining": 0
+},
+"monolib/src/scn/CScnBloom": {
+"total": 15,
+"matched": 11,
+"remaining": 4
+},
+"monolib/src/scn/CScnCameraMan": {
+"total": 17,
+"matched": 10,
+"remaining": 7
+},
+"monolib/src/scn/CScnEffectActNw4r": {
+"total": 27,
+"matched": 27,
+"remaining": 0
+},
+"monolib/src/scn/CScnFadeMan": {
+"total": 8,
+"matched": 4,
+"remaining": 4
+},
+"monolib/src/scn/CScnFilter": {
+"total": 3,
+"matched": 3,
+"remaining": 0
+},
+"monolib/src/scn/CScnFilterMan": {
+"total": 75,
+"matched": 68,
+"remaining": 7
+},
+"monolib/src/scn/CScnFogMan": {
+"total": 8,
+"matched": 7,
+"remaining": 1
+},
+"monolib/src/scn/CScnFrame": {
+"total": 3,
+"matched": 3,
+"remaining": 0
+},
+"monolib/src/scn/CScnIdMan": {
+"total": 4,
+"matched": 4,
+"remaining": 0
+},
+"monolib/src/scn/CScnItemAnim": {
+"total": 6,
+"matched": 6,
+"remaining": 0
+},
+"monolib/src/scn/CScnItemCamera": {
+"total": 16,
+"matched": 8,
+"remaining": 8
+},
+"monolib/src/vm/yvm2": {
+"total": 96,
+"matched": 81,
+"remaining": 15
+},
+"monolib/src/vm/yvm_debug": {
+"total": 4,
+"matched": 4,
+"remaining": 0
+},
+"monolib/src/coli/code_804A6C60": {
+"total": 108,
+"matched": 55,
+"remaining": 53
+},
+"monolib/src/coli/CColiProc": {
+"total": 12,
+"matched": 7,
+"remaining": 5
+},
+"monolib/src/coli/code_804B2FF0": {
+"total": 38,
+"matched": 20,
+"remaining": 18
+},
+"monolib/src/coli/code_804B59C8": {
+"total": 61,
+"matched": 19,
+"remaining": 42
+},
+"monolib/src/coli/code_804BAE10": {
+"total": 20,
+"matched": 11,
+"remaining": 9
+},
+"monolib/src/scn/code_804BC9EC": {
+"total": 12,
+"matched": 10,
+"remaining": 2
+},
+"monolib/src/scn/code_804BD8E8": {
+"total": 36,
+"matched": 27,
+"remaining": 9
+},
+"monolib/src/scn/code_804BF59C": {
+"total": 12,
+"matched": 6,
+"remaining": 6
+},
+"monolib/src/scn/CLight": {
+"total": 13,
+"matched": 6,
+"remaining": 7
+},
+"monolib/src/scn/CScnEnvLgtCtrl": {
+"total": 127,
+"matched": 89,
+"remaining": 38
+},
+"monolib/src/effect/code_804C8684": {
+"total": 5,
+"matched": 4,
+"remaining": 1
+},
+"monolib/src/effect/code_804C8718": {
+"total": 34,
+"matched": 25,
+"remaining": 9
+},
+"monolib/src/effect/code_804CC2B8": {
+"total": 55,
+"matched": 25,
+"remaining": 30
+},
+"monolib/src/effect/CETrail": {
+"total": 14,
+"matched": 8,
+"remaining": 6
+},
+"monolib/src/effect/code_804D854C": {
+"total": 8,
+"matched": 6,
+"remaining": 2
+},
+"monolib/src/work/CWorkSystemCache": {
+"total": 14,
+"matched": 14,
+"remaining": 0
+},
+"monolib/src/effect/code_804D9274": {
+"total": 7,
+"matched": 2,
+"remaining": 5
+},
+"monolib/src/nand/CNand": {
+"total": 14,
+"matched": 14,
+"remaining": 0
+},
+"monolib/src/nand/CNReqtaskSave": {
+"total": 33,
+"matched": 33,
+"remaining": 0
+},
+"monolib/src/nand/CNReqtaskLoad": {
+"total": 3,
+"matched": 3,
+"remaining": 0
+},
+"monolib/src/nand/CNReqtaskReaddir": {
+"total": 3,
+"matched": 3,
+"remaining": 0
+},
+"monolib/src/nand/CNReqtaskRemove": {
+"total": 3,
+"matched": 3,
+"remaining": 0
+},
+"monolib/src/nand/CNReqtaskCheck": {
+"total": 3,
+"matched": 3,
+"remaining": 0
+},
+"monolib/src/effect/CERand": {
+"total": 16,
+"matched": 2,
+"remaining": 14
+},
+"monolib/src/effect/code_804DB938": {
+"total": 12,
+"matched": 8,
+"remaining": 4
+},
+"monolib/src/work/CWorkSystemPack": {
+"total": 23,
+"matched": 18,
+"remaining": 5
+},
+"monolib/src/core/CPackItem": {
+"total": 9,
+"matched": 4,
+"remaining": 5
+},
+"monolib/src/core/CArcItem": {
+"total": 5,
+"matched": 4,
+"remaining": 1
+},
+"monolib/src/core/code_804DEDA8": {
+"total": 64,
+"matched": 25,
+"remaining": 39
+},
+"monolib/src/core/CSchedule": {
+"total": 4,
+"matched": 2,
+"remaining": 2
+},
+"monolib/src/core/code_804E36DC": {
+"total": 18,
+"matched": 13,
+"remaining": 5
+},
+"monolib/src/core/ScheduleList": {
+"total": 21,
+"matched": 16,
+"remaining": 5
+},
+"monolib/src/scn/CMdlMaterial": {
+"total": 10,
+"matched": 4,
+"remaining": 6
+},
+"monolib/src/scn/CMdlMouth": {
+"total": 7,
+"matched": 7,
+"remaining": 0
+},
+"monolib/src/scn/CMdlAnmUV": {
+"total": 5,
+"matched": 3,
+"remaining": 2
+},
+"monolib/src/scn/CMdlAnmEye": {
+"total": 5,
+"matched": 4,
+"remaining": 1
+},
+"monolib/src/scn/CMdlLook": {
+"total": 8,
+"matched": 5,
+"remaining": 3
+},
+"monolib/src/scn/CMdlDynamics": {
+"total": 66,
+"matched": 53,
+"remaining": 13
+},
+"monolib/src/util/CErrorWii": {
+"total": 14,
+"matched": 14,
+"remaining": 0
+},
+"monolib/src/core/code_804EE558": {
+"total": 12,
+"matched": 6,
+"remaining": 6
+},
+"monolib/src/core/code_804F0258": {
+"total": 22,
+"matched": 8,
+"remaining": 14
+},
+"monolib/src/nand/CNReqtaskSaveBanner": {
+"total": 5,
+"matched": 4,
+"remaining": 1
+},
+"monolib/src/nand/CNBanner": {
+"total": 9,
+"matched": 6,
+"remaining": 3
+},
+"monolib/src/core/monolib_eu_804F9E98": {
+"total": 3,
+"matched": 3,
+"remaining": 0
+}
+}

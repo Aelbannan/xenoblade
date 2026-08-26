@@ -39,7 +39,7 @@ static inline f32 u32ToF_AB98(u32 v) {
 // the extern "C" declarations below bind to those same symbols (MWCC keeps
 // the literal names for address-of).
 extern "C" void __dt__11CScnFadeManFv();
-extern "C" void cbRenderBefore__11CScnFadeManFv();
+extern "C" void cbRenderBefore__11CScnFadeManFv(const CScnFadeMan* self);
 
 // [.data] 0x8056EB50-0x8056EB60 (16B): CScnFadeMan vtable.
 extern "C" u32 lbl_eu_80663A38;
@@ -117,8 +117,11 @@ void CScnFadeMan::update() {
 
 // --- cbRenderBefore ---------------------------------------------------------
 
-void CScnFadeMan::cbRenderBefore() {
-    if (mCurrentColor.a == lbl_eu_8066AB78) {
+// Forced-name free function with const self (MWCC_CASES "const-self lever"):
+// constness lets MWCC hoist the sdata2 global lfs above the prologue stores,
+// matching retail's load schedule; the vtable word references this exact name.
+extern "C" void cbRenderBefore__11CScnFadeManFv(const CScnFadeMan* self) {
+    if (self->mCurrentColor.a == lbl_eu_8066AB78) {
         return;
     }
     CDeviceGX::getCacheInstance()->func_8044BE38();
@@ -128,7 +131,7 @@ void CScnFadeMan::cbRenderBefore() {
         CDrawGX draw;
         draw.func_80456570(0);
         draw.func_8045657C(0);
-        draw.setCol(mCurrentColor);
+        draw.setCol(self->mCurrentColor);
         draw.begin(0x9, 0x1);
         ml::CRect rect;
         CView::func_8043EA88(rect, CView::getCurrentView());

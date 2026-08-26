@@ -89,23 +89,19 @@ void hcisu_h2_usb_cback(int type, s8 event) {
    GKI buffer and forwards complete messages to the BTU task. */
 UINT16 hcisu_h2_receive_msg(UINT16 hcisu_event, tHCISU_H2_CB *cb) {
     UINT16 total = 0;
-    UINT16 ch;
-    UINT32 payload_len = 0;
-    UINT8 send_now = 0;
     UINT8 byte;
+    UINT16 payload_len;
+    UINT8 send_now;
+    UINT16 ch;
     UINT16 n;
     UINT16 mlen;
-    BT_HDR *p_msg;
-
-    if (cb->open != 2) {
+    BT_HDR *p_msg;    if (cb->open != 2) {
         return 0;
     }
 
     ch = (UINT16)(hcisu_event + 1);
-
     for (;;) {
-        n = UUSB_Read((UINT8)ch, &byte, 1);
-        if (n == 0) {
+        if (UUSB_Read((UINT8)ch, &byte, 1) == 0) {
             break;
         }
 
@@ -145,13 +141,12 @@ UINT16 hcisu_h2_receive_msg(UINT16 hcisu_event, tHCISU_H2_CB *cb) {
         case HCISU_H2_STATE_HEADER:
             p_msg = cb->msg[hcisu_event];
             mlen = p_msg->len;
-            ((UINT8 *)p_msg + BT_HDR_SIZE)[mlen] = byte;
+            ((UINT8 *)p_msg + BT_HDR_SIZE)[p_msg->len] = byte;
             p_msg->len = mlen + 1;
             if (--cb->len[hcisu_event] == 0) {
                 payload_len = byte;
                 if (cb->msgtype[hcisu_event] == 2) {
-                    payload_len =
-                        (UINT16)((byte << 8) + cb->last_byte[hcisu_event]);
+                    payload_len = (payload_len << 8) + cb->last_byte[hcisu_event];
                     p_msg = l2cap_link_chk_pkt_start(cb->msg[hcisu_event]);
                     cb->msg[hcisu_event] = p_msg;
                     if (p_msg == NULL) {
@@ -190,8 +185,7 @@ UINT16 hcisu_h2_receive_msg(UINT16 hcisu_event, tHCISU_H2_CB *cb) {
             if (--cb->len[hcisu_event] == 0) {
                 payload_len = byte;
                 if (cb->msgtype[hcisu_event] == 2) {
-                    payload_len =
-                        (UINT16)((byte << 8) + cb->last_byte[hcisu_event]);
+                    payload_len = (payload_len << 8) + cb->last_byte[hcisu_event];
                 }
                 cb->len[hcisu_event] = (UINT16)payload_len;
                 cb->state[hcisu_event] = HCISU_H2_STATE_BAD;
@@ -202,16 +196,16 @@ UINT16 hcisu_h2_receive_msg(UINT16 hcisu_event, tHCISU_H2_CB *cb) {
         case HCISU_H2_STATE_DATA:
             p_msg = cb->msg[hcisu_event];
             mlen = p_msg->len;
-            ((UINT8 *)p_msg + BT_HDR_SIZE)[mlen] = byte;
+            ((UINT8 *)p_msg + BT_HDR_SIZE)[p_msg->len] = byte;
             p_msg->len = mlen + 1;
             cb->len[hcisu_event] -= 1;
-            n = UUSB_Read((UINT8)(hcisu_event + 1),
-                          (UINT8 *)cb->msg[hcisu_event] + BT_HDR_SIZE +
-                              cb->msg[hcisu_event]->len,
-                          cb->len[hcisu_event]);
-            total += n;
-            cb->msg[hcisu_event]->len += n;
-            cb->len[hcisu_event] -= n;
+            mlen = UUSB_Read((UINT8)(hcisu_event + 1),
+                             (UINT8 *)cb->msg[hcisu_event] + BT_HDR_SIZE +
+                                 cb->msg[hcisu_event]->len,
+                             cb->len[hcisu_event]);
+            total += mlen;
+            cb->msg[hcisu_event]->len += mlen;
+            cb->len[hcisu_event] -= mlen;
             if (cb->len[hcisu_event] != 0) {
                 break;
             }
@@ -243,29 +237,28 @@ UINT16 hcisu_h2_receive_msg(UINT16 hcisu_event, tHCISU_H2_CB *cb) {
 #pragma auto_inline off
 void hcisu_h2_send_msg_now(tHCISU_H2_CB *p_cb, BT_HDR *p_buf)
 {
-    UINT16 event;
-    UINT16 h2type;
-    UINT8 h2type_hi;
+    UINT16 raw;
     UINT8 type;
     UINT8 *p_data;
     UINT8 *p;
+    UINT16 event;
 
+    p_data = ((UINT8 *)p_buf + p_buf->offset) + BT_HDR_SIZE;
     event = p_buf->event;
-    p_data = (UINT8 *)p_buf + p_buf->offset + BT_HDR_SIZE;
 
-    if (event == 0x2100) {
+    if (p_buf->event == 0x2100) {
         type = 2;
-    } else if (event == 0x2200) {
+    } else if (p_buf->event == 0x2200) {
         type = 3;
-    } else if (event == 0x2000) {
+    } else if (p_buf->event == 0x2000) {
         type = 0;
     }
 
-    if (event == 0x2100) {
+    if (p_buf->event == 0x2100) {
         if (p_buf->len > btu_cb.hcit_acl_pkt_size) {
-            h2type = (UINT16)(p_data[0] + ((p_data[1] << 8) & 0xff00));
-            h2type = (UINT16)((h2type & 0xCFFF) | 0x1000);
-            h2type_hi = (UINT8)(h2type >> 8);
+            /* connection handle rewrite: preserve the PB/BC flags boundary
+             * while forcing the handle into the ACL range */
+            raw = (UINT16)(p_data[0] + ((p_data[1] << 8) & 0xff00));
             p_data += 2;
 
             while (p_buf->len > btu_cb.hcit_acl_pkt_size) {
@@ -275,8 +268,8 @@ void hcisu_h2_send_msg_now(tHCISU_H2_CB *p_cb, BT_HDR *p_buf)
                 p = (UINT8 *)(p_buf + 1) + p_buf->offset;
                 p_buf->len = p_buf->len - btu_cb.hcit_acl_data_size;
 
-                p[0] = (UINT8)h2type;
-                p[1] = h2type_hi;
+                p[0] = (UINT8)((raw & 0xCFFF) | 0x1000);
+                p[1] = (UINT8)(((raw & 0xCFFF) | 0x1000) >> 8);
                 p_data = p + 2;
 
                 if (p_buf->len > btu_cb.hcit_acl_pkt_size) {

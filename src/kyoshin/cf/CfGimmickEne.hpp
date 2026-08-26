@@ -260,7 +260,9 @@ extern void func_804BCC3C(void* snd, u8 id);
 // Gimmick-state setter (CfGimmick.cpp) and sound playback (CfSoundMan, the
 // retail symbol returns the started sound id).
 extern void func_8020A068(int arg0, int flag, u32 value);
-extern unsigned short func_801BFC38__Q22cf10CfSoundManFUlUlUlUlf(
+// Single shared flat-name form (unmangled retail symbol; see
+// CfObjectImplMove.hpp).
+extern "C" u16 func_801BFC38__Q22cf10CfSoundManFUlUlUlUlf(
     u32 a, u32 b, u32 c, u32 d, f32 vol);
 
 // Scene / frame helpers (monolib scn).

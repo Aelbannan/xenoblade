@@ -375,6 +375,8 @@ DECOMP_FORCEACTIVE(g3d_xsi_cpp,
                    MakeTexSrtMtx_SRT, ProductTexSrtMtx_S, ProductTexSrtMtx_R,
                    ProductTexSrtMtx_T, ProductTexSrtMtx_SR, ProductTexSrtMtx_RT,
                    ProductTexSrtMtx_ST, ProductTexSrtMtx_SRT);
+// The emitter function itself is retail-absent; tools/postprocess_reloc_names.py
+// UNIT_RULES drops it from the link (drop_text_symbols, trailing-* prefix match).
 
 bool CalcTexMtx_Xsi(math::MTX34* pMtx, bool bSet, const TexSrt& rSrt,
                     TexSrt::Flag flag) {
@@ -454,9 +456,8 @@ u32 CalcWorldMtx_Xsi(math::MTX34* pW, math::VEC3* pS, const math::MTX34* pW1,
 } // namespace g3d
 } // namespace nw4r
 
-// Literal-pool constants owned by this TU in retail (.sdata2). Defined at
-// global scope so they adopt the extern "C" declarations from
-// include/nw4r/g3d/dcc/g3d_xsi.h and emit unmangled sdata2 symbols.
-const float lbl_eu_80669CB0 = 0.0f;
-const float lbl_eu_80669CB4 = 1.0f;
-const float lbl_eu_80669CB8 = 256.0f / 360.0f; // degrees -> FIdx scale
+// The literal-pool constants lbl_eu_80669CB0/B4/B8 are owned by the shared
+// nw4r_data.s blob in retail (.sdata2 0x248-0x250); this TU references them
+// through the extern "C" declarations in include/nw4r/g3d/dcc/g3d_xsi.h.
+// Do not define them here: local .sdata2 copies fail the unit data gate
+// against the retail split (retail size 0x0 != decomp 0xC).

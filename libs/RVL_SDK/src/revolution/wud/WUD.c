@@ -555,7 +555,11 @@ char lbl_80562D24[0x27C] = {
 
 /* retail switch-table slot (jumptable_80562FA0): zero words; the ADDR32
  * case-label relocs are injected by the WUD.o unit rules. */
-char jumptable_80562FA0[0x24] = {1}; /* byte 0 re-zeroed by WUD.o unit rule */
+char jumptable_80562FA0[0x24] = {
+    0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
+    0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
+    0, 0, 0, 1 /* last byte: keeps the array in .data; zeroed by rule */
+};
 
 char lbl_80562FC4[304] = {
     0x49, 0x4E, 0x51, 0x55, 0x49, 0x52, 0x59, 0x20, 0x52, 0x45, 0x53,
@@ -2234,11 +2238,8 @@ void __wudSyncHandler(void) {
             linkNum = _wcb.linkedNum;
             OSRestoreInterrupts(enabled);
 
-            if (linkNum == WUD_MAX_CHANNELS - 1) {
-                _wcb.UNK_0x74A = 0xC8;
-            } else {
-                _wcb.UNK_0x74A = 0x64;
-            }
+            _wcb.UNK_0x74A =
+                (linkNum == WUD_MAX_CHANNELS - 1) ? 0xC8 : 0x64;
 
             enabled = OSDisableInterrupts();
             _wcb.discoverable = FALSE;
@@ -2267,29 +2268,30 @@ void __wudSyncHandler(void) {
 
     case WUD_STATE_SYNC_PREPARE_FOR_EXISTED_DEVICE: {
         u8 nextState;
+        WUDDevInfo* pWork = &_wudDiscWork;
 
-        _wudDiscWork.status = 1;
+        pWork->status = 1;
 
-        switch (_wudDiscWork.UNK_0x5B) {
+        switch (pWork->UNK_0x5B) {
         case 0:
         case 2:
         case 4:
         case 5: {
             if (_wcb.syncType == WUD_SYNC_TYPE_STANDARD) {
-                WUDiMoveBottomStdDevInfoPtr(&_wudDiscWork);
-                WUDiRemoveDevice(_wudDiscWork.devAddr);
+                WUDiMoveBottomStdDevInfoPtr(pWork);
+                WUDiRemoveDevice(pWork->devAddr);
                 nextState = WUD_STATE_SYNC_PREPARE_FOR_UNKNOWN_DEVICE;
                 break;
             }
 
-            _wudDiscWork.UNK_0x5B = 4;
+            pWork->UNK_0x5B = 4;
             nextState = WUD_STATE_SYNC_TRY_CONNECT;
             break;
         }
 
         case 1:
         case 3: {
-            WUDiMoveBottomSmpDevInfoPtr(&_wudDiscWork);
+            WUDiMoveBottomSmpDevInfoPtr(pWork);
             WUDiRemoveDevice(_wcb.smpListTail->devInfo->devAddr);
             nextState = WUD_STATE_SYNC_PREPARE_FOR_UNKNOWN_DEVICE;
             break;

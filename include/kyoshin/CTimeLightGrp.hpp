@@ -2,6 +2,12 @@
 
 #include <types.h>
 #include "monolib/util/MemManager.hpp"
+#include "monolib/util/reslist.hpp"
+
+// Element type of the reslist managed by CTimeLightGrp.
+// Retail instantiated the list over `unsigned long` (mangled <Ul>), which
+// drives the mangled name of the implicitly referenced base-class vtable.
+typedef unsigned long CVirtualLightObjPtr;
 
 // Minimal layout of the per-node light object written by func_8005A374.
 // The retail class (CVirtualLightObj, monolib/scn) is not on this TU's include
@@ -30,3 +36,15 @@ extern "C" void __dl__FPv(void* ptr);
 extern "C" void __dla__FPv(void* ptr);
 extern "C" mtl::ALLOC_HANDLE func_80496004(void* ptr);
 extern "C" void* allocate_array__Q23mtl10MemManagerFUlUl(u32 size, u32 handle);
+
+// Time-light group: owns a reslist of virtual light object pointers.
+// Layout: own vptr @0x00, parent @0x04, embedded reslist subobject @0x08
+// (its vptr @0x08, sentinel ptr @0x0C, node array ptr @0x1C).
+class CTimeLightGrp {
+public:
+    ~CTimeLightGrp();
+
+    void* mVtable;                       // +0x00
+    void* mParent;                       // +0x04
+    reslist<CVirtualLightObjPtr> mList;  // +0x08
+};

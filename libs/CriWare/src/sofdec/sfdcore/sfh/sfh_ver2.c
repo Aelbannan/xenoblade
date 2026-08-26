@@ -250,7 +250,8 @@ int VER2_AnlyHdrToolVer(void *work, u32 *out1, u32 *out2) {
             p++;
         }
         p++;
-        for (t2 = 0; ; ) {
+        t2 = 0;
+        while (1) {
             c = *p;
             if (c == '.' || c == ' ' || c == 0) {
                 break;
@@ -397,42 +398,37 @@ int VER2_AnlyElemCodecAud(void *work, u32 stm_id, u32 *out) {
     if (f == NULL) {
         return 0;
     }
+    // For v2.0 headers (200) the codec lives in the high nibble, offset by 0x20.
     codec = SFHLOCAL_GetNbyteB(f + 0x1, SFHLOCAL_GetSizeofMember(0x1, 0x2));
     if (*(s32 *)((u8 *)work + 0x10) == 0xC8) {
         codec = ((codec >> 4) & 0xF) + 0x20;
     }
-    if (codec == 0x21) goto set1;
-    if (codec == 0x22) goto set7;
-    if (codec == 0x23) goto set8;
-    if (codec == 0x24) goto set3;
-    if (codec == 0x25) goto set4;
-    if (codec == 0x26) goto set5;
-    if (codec != 0x27) goto setdef;
-    goto set6;
-set1:
-    result = 1;
-    goto store;
-set7:
-    result = 7;
-    goto store;
-set8:
-    result = 8;
-    goto store;
-set3:
-    result = 3;
-    goto store;
-set4:
-    result = 4;
-    goto store;
-set5:
-    result = 5;
-    goto store;
-set6:
-    result = 6;
-    goto store;
-setdef:
-    result = 0;
-store:
+    switch (codec) {
+    case 0x21:
+        result = 1;
+        break;
+    case 0x22:
+        result = 7;
+        break;
+    case 0x23:
+        result = 8;
+        break;
+    case 0x24:
+        result = 3;
+        break;
+    case 0x25:
+        result = 4;
+        break;
+    case 0x26:
+        result = 5;
+        break;
+    case 0x27:
+        result = 6;
+        break;
+    default:
+        result = 0;
+        break;
+    }
     *out = result;
     return 1;
 }
@@ -446,27 +442,25 @@ int VER2_AnlyElemLayer(void *work, u32 stm_id, u32 *out) {
     if (f == NULL) {
         return 0;
     }
+    // Layer byte doubles as codec for v2.0 headers (200): low nibble is the layer.
     layer = SFHLOCAL_GetNbyteB(f + 0x1, SFHLOCAL_GetSizeofMember(0x1, 0x2));
     if (*(s32 *)((u8 *)work + 0x10) == 0xC8) {
         result = layer & 0xF;
-        goto store;
+    } else {
+        switch (layer) {
+        case 0x24:
+            result = 1;
+            break;
+        case 0x25:
+            result = 2;
+            break;
+        case 0x26:
+            result = 3;
+            break;
+        default:
+            return 0;
+        }
     }
-    if (layer == 0x24) goto set1;
-    if (layer == 0x25) goto set2;
-    if (layer != 0x26) goto ret0;
-    goto set3;
-set1:
-    result = 1;
-    goto store;
-set2:
-    result = 2;
-    goto store;
-set3:
-    result = 3;
-    goto store;
-ret0:
-    return 0;
-store:
     *out = result;
     return 1;
 }
@@ -502,50 +496,44 @@ int VER2_AnlyElemSmpHz(void *work, u32 stm_id, u32 *out) {
 int VER2_AnlyElemCodecVid(void *work, u32 stm_id, u32 *out) {
     u8 *f;
     u32 codec;
-    u32 result = 0;
 
+    // For v2.0 headers (200) the codec lives in the high nibble, offset by 0x40.
     *out = 0;
     f = searchStmId(work, stm_id);
     if (f == NULL) {
         return 0;
     }
-    codec = SFHLOCAL_GetNbyteB(f + 0x1, SFHLOCAL_GetSizeofMember(0x1, 0x2));
+    codec = SFHLOCAL_GetNbyteB(f + 1, SFHLOCAL_GetSizeofMember(1, 2));
     if (*(s32 *)((u8 *)work + 0x10) == 0xC8) {
         codec = ((codec >> 4) & 0xF) + 0x40;
     }
-    if (codec == 0x41) goto set1;
-    if (codec == 0x42) goto set3;
-    if (codec == 0x43) goto set4;
-    if (codec == 0x47) goto set5;
-    if (codec == 0x48) goto set6;
-    if (codec == 0x49) goto set7;
-    if (codec != 0x4A) goto setdef;
-    goto set8;
-set1:
-    result = 1;
-    goto done;
-set3:
-    result = 3;
-    goto done;
-set4:
-    result = 4;
-    goto done;
-set5:
-    result = 5;
-    goto done;
-set6:
-    result = 6;
-    goto done;
-set7:
-    result = 7;
-    goto done;
-set8:
-    result = 8;
-    goto done;
-setdef:
-    result = 0;
-done:
-    *out = result;
+    switch (codec) {
+    case 0x41:
+        codec = 1;
+        break;
+    case 0x42:
+        codec = 3;
+        break;
+    case 0x43:
+        codec = 4;
+        break;
+    case 0x47:
+        codec = 5;
+        break;
+    case 0x48:
+        codec = 6;
+        break;
+    case 0x49:
+        codec = 7;
+        break;
+    case 0x4A:
+        codec = 8;
+        break;
+    default:
+        codec = 0;
+        break;
+    }
+    *out = codec;
     return 1;
 }
 int VER2_AnlyElemAvrBitRate(void *work, u32 stm_id, u32 *out) {

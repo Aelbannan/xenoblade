@@ -132,6 +132,7 @@ extern "C" u32 lbl_eu_80663680[2] __attribute__((aligned(8))) = { (u32)&lbl_eu_8
 extern "C" u32 lbl_eu_80663688[2] __attribute__((aligned(8))) = { (u32)&lbl_eu_8066A3A8, (u32)&lbl_eu_8056C158 };
 
 extern FixStr<64> lbl_eu_806574F8;
+extern FixStr<64> lbl_eu_8065753C;
 
 // Inline copy of CWorkThread::isRunning() visible only in this TU so the
 // retail inline shape (no bl) reproduces in isInitialized/isAllReady.
@@ -193,6 +194,47 @@ namespace {
         // static CDeviceException* spInstance; -> extern "C" lbl_eu_80665654 below
     };
 }
+// Read-only mirror of the private CMsgParam<8> tail inside CWorkThread
+// (queue internals at 0x1A4-0x1B0): lets isInitialized run the retail's fully
+// inlined EVT_EXCEPTION ring scan without an out-of-line find() call
+// (CLibG3d / CDeviceSC pattern).
+struct CDeviceMsgQueueData {
+    u8 pad[0x48];                // vtable + thread header
+    int mState;                  //0x48 (CWorkThread::mState, signed compare)
+    u8 pad2[0x5C - 0x4C];        //0x4C
+    reslist<CWorkThread*> mChildren; //0x5C (CWorkThread::mChildren)
+    u32 mThreadFlags;            //0x7C (CWorkThread::mFlags)
+    u8 pad3[0x1A4 - 0x80];       //0x80..0x1A4 (queue vtable + entries)
+    CMsgParamEntry* mArrayPtr;   // 0x1A4 (mMsgQueue.mArrayPtr)
+    u32 mFront;                  // 0x1A8 (mMsgQueue.mFront)
+    u32 mSize;                   // 0x1AC (mMsgQueue.mSize)
+    u32 mCapacity;               // 0x1B0 (mMsgQueue.mCapacity)
+    u8 pad4[0x1C4 - 0x1B4];      //0x1B4
+    u32 unk1C4;                  // 0x1C4 (CDeviceBase::mFlags)
+};
+
+// TU-local stand-in for CDevice itself: identical layout (0x1c8), but with a
+// ctor whose store order matches the shape retail inlines into create()
+// (vtable, then singleton, then thread type).
+extern "C" CDevice* lbl_eu_80665650;
+namespace {
+    //size: 0x1c8
+    class CDeviceThread : public CWorkThread {
+    public:
+        CDeviceThread(const char* pName, CWorkThread* pParent) : CWorkThread(pName, pParent, MAX_CHILD) {
+            *(u32**)this = (u32*)lbl_eu_8056C0B8;
+            lbl_eu_80665650 = reinterpret_cast<CDevice*>(this);
+            mType = THREAD_CDEVICE;
+        }
+
+        //0x0: vtable
+        //0x0-1c4: CWorkThread
+        u32 unk1C4;
+
+    private:
+        static const int MAX_CHILD = 0x20;
+    };
+}
 // Defined at file scope with C linkage (was anon-namespace -> MWCC mangled the
 // symbol as lbl_eu_80665654__21@unnamed@CDevice_cpp@, drifting the reloc name).
 extern "C" CDeviceException* lbl_eu_80665654 = nullptr;
@@ -234,67 +276,209 @@ int CDevice::getDevSys2Handle(){
     return lbl_eu_8066367C;   // sDeviceRegion2Handle
 }
 
+// Intrusive child-list shapes used by the fully-inlined isReady scans below.
+// mChildren is a circular std::list-style list: the sentinel node pointer sits
+// at CWorkThread+0x60, nodes are {next, prev, value}.
+struct CDeviceChildNode {
+    CDeviceChildNode* next;     //0x0
+    void* prev;                 //0x4
+    CWorkThread* thread;        //0x8
+};
+struct CDeviceChildList {
+    u8 pad[0x60];
+    CDeviceChildNode* sentinel; //0x60
+};
+
 bool CDevice::isAllReady(){
     // Retail inlines isRunning() here and re-reads the instance from SDA in
     // the loop condition (the child pointer reuses the cached register).
-    if(!lbl_eu_80665650->isRunning()) return false;
+    // Retail caches the ring-scan counter in its own reg ahead of the SDA
+    // singleton load.
+    int i;
+    int foundIndex;
+    const CDeviceMsgQueueData* q = reinterpret_cast<const CDeviceMsgQueueData*>(lbl_eu_80665650);
 
-    bool result = true;
+    // Inlined exception check + ring scan (same shape as isInitialized).
+    bool busy;
+    if(q->mThreadFlags & THREAD_FLAG_EXCEPTION){
+        busy = true;
+    } else {
+        for(i = 0; i < q->mSize; i++){
+            if(q->mArrayPtr[(q->mFront + i) % q->mCapacity].command == EVT_EXCEPTION){
+                foundIndex = i;
+                goto done;
+            }
+        }
+        foundIndex = -1;
+    done:
+        busy = foundIndex >= 0;
+    }
 
-    for(reslist<CWorkThread*>::iterator it = lbl_eu_80665650->mChildren.begin(); it != lbl_eu_80665650->mChildren.end(); it++){
-        CWorkThread* thread = *it;
+    // isRunning() tail: not waiting on an exception and logged in / running.
+    bool running = !busy &&
+        (q->mState == THREAD_STATE_LOGIN || q->mState == THREAD_STATE_RUN);
+    if(!running) return false;
 
-        bool running = thread->isRunning();
+    // Declaration order drives callee-saved coloring (first declared -> r31):
+    // retail holds the node pointer in r31 and the accumulator in r30.
+    CDeviceChildNode* node;
+    bool result;
+    result = true;
 
-        //If a device that isn't running is found, save its name
-        if(!running){
-            // Keep the name pointer in a local so MWCC hoists it into a
-            // callee-saved register across the strlen call (retail r27).
-            const char* name = thread->mName.c_str();
-            lbl_eu_806574F8 = name;
+    // begin() folds the sentinel load into a scratch reg; the end sentinel is
+    // re-read through the SDA singleton every iteration (the name copy may
+    // alias-mutate the list, so MWCC cannot cache it).
+    node = reinterpret_cast<const CDeviceChildList*>(q)->sentinel->next;
+    for(;
+        node != reinterpret_cast<const CDeviceChildList*>(lbl_eu_80665650)->sentinel;
+        node = node->next)
+    {
+        CWorkThread* thread = node->thread;
+        const CDeviceMsgQueueData* tq = reinterpret_cast<const CDeviceMsgQueueData*>(thread);
+
+        // Inlined exception check + ring scan.
+        bool tBusy;
+        if(tq->mThreadFlags & THREAD_FLAG_EXCEPTION){
+            tBusy = true;
+        } else {
+            for(i = 0; i < tq->mSize; i++){
+                if(tq->mArrayPtr[(tq->mFront + i) % tq->mCapacity].command == EVT_EXCEPTION){
+                    foundIndex = i;
+                    goto tdone;
+                }
+            }
+            foundIndex = -1;
+        tdone:
+            tBusy = foundIndex >= 0;
         }
 
-        result &= running;
+        // isRunning() tail: not waiting on an exception and logged in / running.
+        bool tRunning = !tBusy &&
+            (tq->mState == THREAD_STATE_LOGIN || tq->mState == THREAD_STATE_RUN);
+
+        //If a device that isn't running is found, save its name
+        if(!tRunning){
+            lbl_eu_806574F8 = thread->mName.c_str();
+        }
+
+        result = result & tRunning;
     }
 
     return result;
 }
 
 bool CDevice::isColdStartReady(){
-    if(!spInstance->isRunning()) return false;
+    // Same fully-inlined shape as isAllReady: exception ring scan + state test
+    // on the singleton first, then a walk of the child list.
+    int i;
+    int foundIndex;
+    const CDeviceMsgQueueData* q = reinterpret_cast<const CDeviceMsgQueueData*>(lbl_eu_80665650);
 
-    bool result = true;
-
-    for(reslist<CWorkThread*>::iterator it = spInstance->mChildren.begin(); it != spInstance->mChildren.end(); it++){
-        //BUG: no check that cast is valid
-        CDeviceBase* device = static_cast<CDeviceBase*>(*it);
-
-        if(device->CDeviceBase_inline2()){
-            bool running = device->isRunning();
-
-            if(!running){
-                const char* name = device->mName.c_str();
-                spColdStartNotRunningDeviceName = name;
+    // Inlined exception check + ring scan.
+    bool busy;
+    if(q->mThreadFlags & THREAD_FLAG_EXCEPTION){
+        busy = true;
+    } else {
+        for(i = 0; i < q->mSize; i++){
+            if(q->mArrayPtr[(q->mFront + i) % q->mCapacity].command == EVT_EXCEPTION){
+                foundIndex = i;
+                goto done;
             }
+        }
+        foundIndex = -1;
+    done:
+        busy = foundIndex >= 0;
+    }
 
-            result &= running;
+    // isRunning() tail: not waiting on an exception and logged in / running.
+    bool running = !busy &&
+        (q->mState == THREAD_STATE_LOGIN || q->mState == THREAD_STATE_RUN);
+    if(!running) return false;
 
+    // Node pointer walks the list; the end sentinel is re-read through the SDA
+    // singleton every iteration (the name copy may alias-mutate the list).
+    // Node pointer walks the list; the end sentinel is re-read through the SDA
+    // singleton every iteration (the name copy may alias-mutate the list).
+    CDeviceChildNode* node;
+    bool result;
+    result = true;
+
+    node = reinterpret_cast<const CDeviceChildList*>(q)->sentinel->next;
+    for(;
+        node != reinterpret_cast<const CDeviceChildList*>(lbl_eu_80665650)->sentinel;
+        node = node->next)
+    {
+        //BUG: no check that cast is valid - skip devices that were never created.
+        //BUG: no check that cast is valid - skip devices that were never created.
+        if(!static_cast<CDeviceBase*>(node->thread)->CDeviceBase_inline2()) continue;
+        CWorkThread* thread = node->thread;
+        const CDeviceMsgQueueData* tq = reinterpret_cast<const CDeviceMsgQueueData*>(thread);
+        if(!(static_cast<CDeviceBase*>(thread)->CDeviceBase_inline2())) continue;
+
+        // Inlined exception check + ring scan.
+        bool tBusy;
+        if(tq->mThreadFlags & THREAD_FLAG_EXCEPTION){
+            tBusy = true;
+        } else {
+            for(i = 0; i < tq->mSize; i++){
+                if(tq->mArrayPtr[(tq->mFront + i) % tq->mCapacity].command == EVT_EXCEPTION){
+                    foundIndex = i;
+                    goto tdone;
+                }
+            }
+            foundIndex = -1;
+        tdone:
+            tBusy = foundIndex >= 0;
         }
 
+        // isRunning() tail: not waiting on an exception and logged in / running.
+        bool tRunning = !tBusy &&
+            (tq->mState == THREAD_STATE_LOGIN || tq->mState == THREAD_STATE_RUN);
+
+        //If a cold-start device isn't running yet, save its name.
+        if(!tRunning){
+            lbl_eu_8065753C = thread->mName.c_str();
+        }
+
+        result = result & tRunning;
     }
 
     return result;
 }
 
 bool CDevice::isInitialized(){
-    // Retail inlines isRunning() here; keep the instance in a local so the
-    // single SDA load is cached for the whole function (retail holds it in r7).
-    CDevice* instance = lbl_eu_80665650;
-    if(!instance->isRunning()) return false;
+    // Retail caches the SDA singleton load in a callee-saved reg for the whole
+    // frameless body; the ring-scan counter takes the other one.
+    int i;
+    int foundIndex;
+    // Retail caches the SDA singleton load in a callee-saved reg for the whole
+    // frameless body; the ring-scan counter takes the other one.
+    const CDeviceMsgQueueData* q = reinterpret_cast<const CDeviceMsgQueueData*>(lbl_eu_80665650);
+
+    // Inlined exception check + ring scan.
+    bool busy;
+    if(q->mThreadFlags & THREAD_FLAG_EXCEPTION){
+        busy = true;
+    } else {
+        for(i = 0; i < q->mSize; i++){
+            if(q->mArrayPtr[(q->mFront + i) % q->mCapacity].command == EVT_EXCEPTION){
+                foundIndex = i;
+                goto done;
+            }
+        }
+        foundIndex = -1;
+    done:
+        busy = foundIndex >= 0;
+    }
+
+    // isRunning() tail: not waiting on an exception and logged in / running.
+    bool running = !busy &&
+        (q->mState == THREAD_STATE_LOGIN || q->mState == THREAD_STATE_RUN);
+    if(!running) return false;
 
     bool result = true;
 
-    for(reslist<CWorkThread*>::iterator it = instance->mChildren.begin(); it != instance->mChildren.end(); it++){
+    for(reslist<CWorkThread*>::iterator it = q->mChildren.begin(); it != q->mChildren.end(); it++){
         CDeviceBase* deviceBase = static_cast<CDeviceBase*>(*it);
         if(!(deviceBase->mFlags & CDeviceBase::FLAG_CREATED)) result = false;
     }
@@ -302,38 +486,62 @@ bool CDevice::isInitialized(){
     return result;
 }
 
+// NOTE (open item): decomp's CDeviceVI is 4 bytes short (sizeof 0x2c4); retail
+// allocates 0x2c8 per device (likely one more tail word / align-8 member in the
+// retail class). Fixing it needs a one-line CDeviceVI.hpp change (add
+// `u32 unk2C4;` at the class tail), which is outside this session's writable
+// scope; initDevices therefore keeps one size-constant diff on the VI block.
+// Placement-new overload letting a call site pass the allocation size
+// explicitly: used by initDevices because retail allocates 0x2c8 bytes for
+// CDeviceVI while the frozen shared header layout sums to sizeof 0x2c4.
+inline void* operator new(size_t size, mtl::ALLOC_HANDLE handle, size_t overrideSize){
+    return mtl::MemManager::allocate(overrideSize, handle);
+}
+
+// Mirror of the CDeviceVI DECL_WORKTHREAD_CREATE body with the retail 0x2c8
+// allocation size passed explicitly (the shared header layout is 4 bytes
+// short); the parameterized inline keeps the retail register allocation.
+static inline CDeviceVI* createDeviceVI(const char* pName, CWorkThread* pParent){
+    CDeviceVI* device = new (CWorkThreadSystem::getWorkMem(), 0x2C8) CDeviceVI(pName, pParent);
+    CWorkUtil::entryWork(device, pParent, false);
+    device->mFlags |= CDeviceBase::FLAG_CREATED;
+    return device;
+}
+
 void CDevice::initDevices(){
+    // Device creation order fixes the TU literal-pool layout (retail
+    // lbl_eu_80522AD0): VI, GX, Font, RemotePAD, Clock, SC, File, Cri.
+    // VI/GX/Clock/SC use custom create() bodies that set FLAG_CREATED after
+    // entryWork; Font/RemotePad/File/Cri use the plain WORKTHREAD macro.
     if(CDeviceVI::getInstance() == nullptr){
-        CDeviceVI::create("CDeviceVI", spInstance);
+        // Retail allocates 0x2c8 bytes for CDeviceVI here; see the operator
+        // new overload above (the shared header layout is 4 bytes short).
+        createDeviceVI("CDeviceVI", lbl_eu_80665650);
     }
     if(CDeviceGX::getInstance() == nullptr){
-        CDeviceGX::create("CDeviceGX", spInstance);
-    }
-    if(CDeviceRemotePad::getInstance() == nullptr){
-        CDeviceRemotePad::create("CDeviceRemotePAD", spInstance);
-    }
-    if(CDeviceClock::getInstance() == nullptr){
-        CDeviceClock::create("CDeviceClock", spInstance);
-    }
-    if(CDeviceSC::getInstance() == nullptr){
-        CDeviceSC::create("CDeviceSC", spInstance);
+        CDeviceGX::create("CDeviceGX", lbl_eu_80665650);
     }
     if(CDeviceFont::getInstance() == nullptr){
-        CDeviceFont::create("CDeviceFont", spInstance);
+        CDeviceFont::create("CDeviceFont", lbl_eu_80665650);
+    }
+    if(CDeviceRemotePad::getInstance() == nullptr){
+        CDeviceRemotePad::create("CDeviceRemotePAD", lbl_eu_80665650);
+    }
+    if(CDeviceClock::getInstance() == nullptr){
+        CDeviceClock::create("CDeviceClock", lbl_eu_80665650);
+    }
+    if(CDeviceSC::getInstance() == nullptr){
+        CDeviceSC::create("CDeviceSC", lbl_eu_80665650);
     }
     if(CDeviceFile::getInstance() == nullptr){
-        CDeviceFile::create("CDeviceFile", spInstance);
+        CDeviceFile::create("CDeviceFile", lbl_eu_80665650);
     }
     if(CLibCri::getInstance() == nullptr){
-        CLibCri::create("CLibCri", spInstance);
+        CLibCri::create("CLibCri", lbl_eu_80665650);
     }
 
     //Feels a bit strange to put this in CDeviceGX
     CDeviceGX::setDevicesInitializedFlag(true);
-
-    // Keep the unreferenced retail getInstance__...CDeviceExceptionFv symbol
-    // emitted (MWCC drops unreferenced internal-linkage functions under -ipa).
-    (void)CDeviceException::getInstance();
 }
 
 
@@ -355,8 +563,20 @@ bool CDevice::wkStandbyLogout(){
     return false;
 }
 
+// Mirror of the DECL_WORKTHREAD_CREATE body for CDeviceThread; retail inlines
+// this into CDevice::create(), and keeping it a real function preserves the
+// parameter-driven register allocation of the inlined frame.
+static inline CDeviceThread* createDeviceThread(const char* pName, CWorkThread* pParent){
+    WORK_ID id = CWorkThreadSystem::getWorkMem();
+    CDeviceThread* thread = new (id) CDeviceThread(pName, pParent);
+    CWorkUtil::entryWork(thread, pParent, false);
+    return thread;
+}
+
 CDevice* CDevice::create(){
-    return create("CDevice", CWorkControl::getInstance());
+    // "CDevice" joins the TU string pool (@stringBase0 -> retail
+    // lbl_eu_80522AD0) at +0x6d.
+    return reinterpret_cast<CDevice*>(createDeviceThread("CDevice", CWorkControl::getInstance()));
 }
 
 void CDevice::createRegions(){

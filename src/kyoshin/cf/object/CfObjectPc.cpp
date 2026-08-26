@@ -207,7 +207,7 @@ struct PCIf {
     virtual void _v02FC();
     virtual void _v0300();
     virtual void _v0304();
-    virtual int _v0308(char* text);
+    virtual int _v0308();
     virtual void _v030C();
     virtual void _v0310();
     virtual void _v0314();
@@ -452,6 +452,19 @@ public:
 // the adjusted this (addi r3, rX, 0x3E9C), matching retail.
 struct PcSubPad { u8 _pad[0x3E9C]; };
 struct PcSubFake : PcSubPad, PcSubVtIf {};
+// Distinct type with identical layout: spelling call sites through both types
+// keeps MWCC from CSE-ing the sub-object address into one temp (retail
+// re-materializes addi rX, rX, 0x3E9C at every call).
+struct PcSubPadB { u8 _pad[0x3E9C]; };
+struct PcSubFakeB : PcSubPadB, PcSubVtIf {};
+// Third spelling for three-site alternation.
+struct PcSubPadC { u8 _pad[0x3E9C]; };
+struct PcSubFakeC : PcSubPadC, PcSubVtIf {};
+// Member-subobject spellings: retail fuses the +0x3E9C adjust into the
+// vptr load (lwzu r12, 0x3E9C(r3)), which MWCC emits for member
+// subobject calls rather than cast-produced pointer temps.
+struct PcWrapA { u8 _pad[0x3E9C]; PcSubVtIf mSub; };
+struct PcWrapB { u8 _pad[0x3E9C]; PcSubVtIf mSub; };
 
 // Interface over the arts-data entry object embedded at +0x17C (its vtable
 // slot 0x20C fills the entry).
@@ -580,14 +593,18 @@ cf::CfObjectPc* __dt__Q22cf10CfObjectPcFv(cf::CfObjectPc* self, s32 deleteFlag) 
         ((cf::CfPcVt*)self)->vt3380 = (u32)(v + 0x36C);
         ((cf::CfPcVt*)self)->vt3E9C = (u32)(v + 0x37C);
         reinterpret_cast<PCIf*>(self)->_v05E0();
-        __dt__Q22cf12CfObjectMoveFv((cf::CfObjectMove*)((u8*)self + 0x3E9C), 0);
-        cf::CfPcCAISub* ai = (cf::CfPcCAISub*)((u8*)self + 0x3380);
-        if (ai != NULL) {
-            CfPcCAIBlock* blk = (CfPcCAIBlock*)&ai->field_4;
-            if (blk != NULL) {
-                if (&blk->field_8 != NULL) {
-                    blk->field_210 = 0;
-                    blk->field_20C = 0;
+        // Retail re-checks self here (cmpwi/beq) before destroying the
+        // CfObjectMove subobject and running the CAIAction block cleanup.
+        if (self != 0) {
+            __dt__Q22cf12CfObjectMoveFv((cf::CfObjectMove*)((u8*)self + 0x3E9C), 0);
+            cf::CfPcCAISub* ai = (cf::CfPcCAISub*)((u8*)self + 0x3380);
+            if (ai != NULL) {
+                CfPcCAIBlock* blk = (CfPcCAIBlock*)&ai->field_4;
+                if (blk != NULL) {
+                    if (&blk->field_8 != NULL) {
+                        blk->field_210 = 0;
+                        blk->field_20C = 0;
+                    }
                 }
             }
         }
@@ -600,7 +617,8 @@ cf::CfObjectPc* __dt__Q22cf10CfObjectPcFv(cf::CfObjectPc* self, s32 deleteFlag) 
 // Per-frame PC setup: refreshes the CfResPcImpl resource object and runs
 // slots 0x5EC/0x330/0x5F4; when this is the active player's move sub-object
 // also resets the screen. For arts row 4, copies four bdat string bytes into
-// +0x1629..+0x162C using the row from func_800A32BC.
+// +0x1629..+0x162C using the row from func_800A32BC (the column getter
+// returns a string pointer; only its first byte is consumed).
 void func_800BFDE0(cf::CfObjectPc* obj) {
     CfObjectPcSubFields* f = (CfObjectPcSubFields*)obj;
     func_8018CBE8(f->mPtr3F4C);
@@ -609,44 +627,65 @@ void func_800BFDE0(cf::CfObjectPc* obj) {
     reinterpret_cast<PCIf*>(obj)->vf05F4();
     u8* moveSub = (u8*)obj;
     if (obj != NULL) {
-        moveSub += 0x3E9C;
+        moveSub = (u8*)obj + 0x3E9C;
     }
     if (moveSub == (u8*)getPlayer__Q22cf13CfGameManagerFi(0)) {
         func_8012FAA8();
     }
     if (f->field_0x3F28 == 4) {
-        CfObjectPcArtsData* data =
-            (CfObjectPcArtsData*)func_8009EC9C(f->field_0x3F28);
-        u32 file = (u32)lbl_eu_80664090;
-        u32 row = func_800A32BC((u8*)data) == 1 ? 0xC : 4;
-        const char* names = (const char*)lbl_eu_804FC5EC;
-        u32 c0 = getBdatStringColumnValue((void*)file, names + 0, row);
-        f->field_0x1629 = (u8)c0;
-        u32 c1 = getBdatStringColumnValue((void*)file, names + 7, row);
-        f->field_0x162A = (u8)c1;
-        u32 c2 = getBdatStringColumnValue((void*)file, names + 0xF, row);
-        f->field_0x162B = (u8)c2;
-        u32 c3 = getBdatStringColumnValue((void*)file, names + 0x19, row);
-        f->field_0x162C = (u8)c3;
+        // Declared in this order for MWCC register coloring
+        // (names/file/data/col -> r31/r30/r29/r28); assigned in retail's
+        // runtime order.
+        // Declared here for register coloring; the first call references
+        // the label directly so MWCC splits the @ha/@l address formation
+        // around the call like retail.
+        const char* names;
+        void* file;
+        CfObjectPcArtsData* data;
+        int col;
+        data = (CfObjectPcArtsData*)func_8009EC9C(f->field_0x3F28);
+        file = lbl_eu_80664090;
+        col = 4;
+        // Signed compare (cmpi) in retail.
+        if ((int)func_800A32BC(data) == 1) {
+            col = 0xC;
+        }
+        // Union memory round-trip (same shape as CBattleState): MWCC homes
+        // each union local to the stack, emitting stw/lbz pairs.
+        union { u32 w; u8 b; } u0, u1, u2, u3;
+        u0.w = getBdatStringColumnValue(file, (const char*)lbl_eu_804FC5EC, col);
+        f->field_0x1629 = u0.b;
+        names = (const char*)lbl_eu_804FC5EC;
+        u1.w = getBdatStringColumnValue(file, names + 7, col);
+        f->field_0x162A = u1.b;
+        u2.w = getBdatStringColumnValue(file, names + 0xF, col);
+        f->field_0x162B = u2.b;
+        u3.w = getBdatStringColumnValue(file, names + 0x19, col);
+        f->field_0x162C = u3.b;
         func_800A13C4((u8*)data, 1);
     }
 }
 
 // vf2 override: reset-style init (see CfObjectEne's func_800ADB2C for the
-// sibling shape).
+// sibling shape). All accesses go through the local `self` so MWCC keeps it
+// in the saved this-copy register and reassigns it to the +0x44A8 region
+// (retail reuses the same callee-saved register for both).
 int cf::CfObjectPc::func_800BFF20() {
     CfObject_UnkVirtualFunc2__Q22cf13CfObjectModelFv(
         (cf::CfObjectModel*)((u8*)this + 0x3E9C));
-    if ((((CfObjectPcSubFields*)this)->field_0x3F00 & 1) == 0) {
-        ((CfObjectPcSubFields*)this)->field_0x3F08 |= 1;
+    u8* self = (u8*)this;
+    // Retail tests this with a record-form mask keeping only bit 0 (msb):
+    // source shape (x & 0x80000000).
+    if (!(((CfObjectPcSubFields*)self)->field_0x3F00 & 0x80000000)) {
+        ((CfObjectPcSubFields*)self)->field_0x3F08 |= 1;
     }
-    ((PcSubFake*)this)->m158(1);
-    func_800BE33C((u8*)this + 0x3E9C, 1);
-    ((PcSubFake*)this)->m1C0(1);
-    func_80174B4C(this, 0x800);
-    func_80174B4C(this, 0x1000);
-    func_800BE824((u8*)this + 0x3E9C, 1);
-    u8* region = (u8*)this + 0x44A8;
+    ((PcSubFake*)self)->m158(1);
+    func_800BE33C((char*)self + 0x3E9C, 1);
+    ((PcSubFakeB*)((u32)self))->m1C0(1);
+    func_80174B4C(self, 0x8000000);
+    func_80174B4C(self, 0x10000000);
+    func_800BE824((u8*)((u32)self + 0x3E9C), 1);
+    u8* region = self + 0x44A8;
     func_804B0AD4(region, 0, lbl_eu_80666B0C, lbl_eu_80666B10);
     ((PcRegion44A8*)region)->field_B2 = 100;
     return 1;
@@ -693,15 +732,22 @@ extern "C" void func_800C00C0__Q22cf10CfObjectPcFv(cf::CfObjectPc* self) {
     ((CfObjectPcSubFields*)self)->field_0x15E0 = (u32)data2 + 0x3534;
     func_8009EF9C(data, 0);
     reinterpret_cast<PCIf*>(self)->vf05F4();
+    // NOTE: retail re-materializes addi r3, r30, 0x3E9C before EACH of the
+    // three calls below, but MWCC value-numbers the identical receiver
+    // conversions into one callee-saved temp (see MWCC_PATTERNS.md 7j
+    // negative result) - known unmatchable residual.
+    // NOTE: retail re-materializes addi r3, r30, 0x3E9C before EACH of the
+    // three calls below, but MWCC value-numbers the identical receiver
+    // conversions into one callee-saved temp regardless of spelling (MI-base
+    // cast, distinct types, member sub-object - all probed; see
+    // MWCC_PATTERNS.md 7j negative result). Known unmatchable residual.
     ((PcSubFake*)self)->m134(lbl_eu_80666B18);
     ((PcSubFake*)self)->m13C(lbl_eu_80666B1C);
     ((PcSubFake*)self)->m1D4(lbl_eu_80666B20);
 }
 
 
-extern "C" void func_800C0524__Q22cf10CfObjectPcFv(cf::CfObjectPc* self) {
-    static_cast<cf::CfObjectPc*>(self)->func_800C0524();
-}
+// (body defined below under its retail mangled name)
 
 // Vtable slot 16 override (CfObjectMove vtable): the adjuster thunk passes the
 // CfObjectMove sub-object, and the vtable caller supplies a second int in r4
@@ -743,8 +789,10 @@ void func_800C01D4(cf::CfObjectPc* self, void* dest, s32 itemId) {
         CfObjectPcArtsData* data =
             (CfObjectPcArtsData*)func_8009EC9C(itemId & 0xFFFF);
         reinterpret_cast<PCIf*>(self)->_v021C(((ArtsEntryFake*)data)->fill());
-        func_80175A50(&data->field_0x17C,
-            reinterpret_cast<PCIf*>(self)->_v028C());
+        // Copies the arts entry INTO this object's CActorParam (opposite
+        // direction of func_800BFFEC).
+        func_80175A50(reinterpret_cast<u8*>(reinterpret_cast<PCIf*>(self)->_v028C()),
+            reinterpret_cast<u32>(&data->field_0x17C));
     }
 }
 
@@ -790,9 +838,10 @@ void cf::CfObjectPc::func_800C032C() {
 // subobject: clear it, then install entries 0 and 1 (both 6-frame, kinds
 // 7 and 0xE, gauge 100).
 void cf::CfObjectPc::func_800C03A8() {
-    func_8014B7B0((u8*)this + 0x3380);
-    func_8014B804((u8*)this + 0x3380, 0, 1, 0, 6, 0, 0, 7, 0, 0, 0, 2, 100, 0);
-    func_8014B804((u8*)this + 0x3380, 1, 1, 0, 6, 0, 0, 0xE, 0, 0, 0, 2, 100, 0);
+    u8* self = (u8*)this;
+    func_8014B7B0(self + 0x3380);
+    func_8014B804(self + 0x3380, 0, 1, 0, 6, 0, 0, 7, 0, 0, 0, 2, 100, 0);
+    func_8014B804(self + 0x3380, 1, 1, 0, 6, 0, 0, 0xE, 0, 0, 0, 2, 100, 0);
 }
 
 void cf::CfObjectPc::func_800C0474() {
@@ -824,84 +873,97 @@ void cf::CfObjectPc::func_800C0474() {
 // player-only event branches; finally the move-subobject UnkVirtualFunc4.
 
 // Retail helper defined below (stub): gate check feeding the cancel path.
-int func_800C0DD4(cf::CfObjectPc* self, int flag);
+extern "C" int func_800C0DD4(cf::CfObjectPc* self, int flag);
 
-void cf::CfObjectPc::func_800C0524() {
-    CfObjectPcSubFields* f = (CfObjectPcSubFields*)this;
-    PcSub8Fake* sub8 = (PcSub8Fake*)this;
-
-    void* st1 = ((PcSub4Fake*)this)->_q030();
-    u32 chk1 = func_80174C98(this, (int*)&st1, 0xE);
-    void* st2 = ((PcSub4Fake*)this)->_q030();
-    u32 chk2 = func_80174C98(this, (int*)&st2, 0x803);
+// Retail symbol is the arg-less Fv member; defined as a free function with
+// C linkage so the first gate probe reads the state pointer straight off
+// the incoming parameter register like retail (lwz r3, 0x4(r3)).
+extern "C" void func_800C0524__Q22cf10CfObjectPcFv(cf::CfObjectPc* self) {
+    CfObjectPcSubFields* f = (CfObjectPcSubFields*)self;
+    // Two gate probes against the +0x4 sub-object state getter, written as
+    // single expressions (CSuddenCommu idiom): the state word is copied into
+    // a local through the pointer returned by slot 0x30.
+    void* st1;
+    void* st2;
+    void* st3;
+    int chk1 = func_80174C98(self, (int*)&(st1 = *(void**)((PcSub4Fake*)self)->_q030()), 0xE);
+    int chk2 = func_80174C98(self, (int*)&(st2 = *(void**)((PcSub4FakeB*)self)->_q030()), 0x803);
 
     int any = (chk1 | chk2) != 0;
-    int dd = func_800C0DD4(this, any);
-    bool skipMoveCall = false;
+    int dd = func_800C0DD4(self, any);
     if ((any | dd) != 0) {
-        if (func_80148778(sub8, 0x35)) {
-            sub8->_s020(0x35);
+        if (func_80148778((u8*)self + 8, 0x35)) {
+            ((PcSub8Fake*)self)->_s020(0x35);
         }
     } else {
-        BattleMgrListView* bm =
-            (BattleMgrListView*)getInstance__Q22cf14CBattleManagerFv();
-        BmListNode* head = &bm->mListHead;
+        // Count entries in the battle-manager list at +0x48.
+        BmListNode* head =
+            &((BattleMgrListView*)getInstance__Q22cf14CBattleManagerFv())
+                ->mListHead;
         int count = 0;
         for (BmListNode* n = head->mNext; n != head; n = n->mNext) {
             count++;
         }
-        bool matched = count != 0 ||
-            func_80148778(sub8, 0x65) || func_80148778(sub8, 0x66) ||
-            func_80148778(sub8, 0x67) || func_80148778(sub8, 0x67) ||
-            func_80148778(sub8, 0x69) || func_80148778(sub8, 0x6a) ||
-            func_80148778(sub8, 0x6b) || func_80148778(sub8, 0x6c) ||
-            func_80148778(sub8, 0x6d);
-        if (!matched) {
-            if (!func_80148778(sub8, 0x35)) {
-                sub8->_s014(0x35);
+        // Busy with any listed action -> clear action 0x35; idle -> install it.
+        if (count != 0 ||
+            func_80148778((u8*)self + 8, 0x65) ||
+            func_80148778((u8*)self + 8, 0x66) ||
+            func_80148778((u8*)self + 8, 0x67) ||
+            func_80148778((u8*)self + 8, 0x67) ||
+            func_80148778((u8*)self + 8, 0x69) ||
+            func_80148778((u8*)self + 8, 0x6a) ||
+            func_80148778((u8*)self + 8, 0x6b) ||
+            func_80148778((u8*)self + 8, 0x6c) ||
+            func_80148778((u8*)self + 8, 0x6d)) {
+            if (func_80148778((u8*)self + 8, 0x35)) {
+                ((PcSub8FakeB*)self)->_s020(0x35);
             }
-        } else if (func_80148778(sub8, 0x35)) {
-            sub8->_s020(0x35);
+        } else {
+            if (!func_80148778((u8*)self + 8, 0x35)) {
+                ((PcSub8FakeB*)self)->_s014(0x35);
+            }
         }
     }
 
     // Gauge scale: slot 0x8C value times the global scale factor.
-    float gauge = ((PcSubFake*)this)->_p08C();
+    float gauge = ((PcSubFakeB*)self)->_p08C();
     float scaled = func_80496288(lbl_eu_80663E14) * gauge;
-    func_801765A4(this, scaled, 1);
+    func_801765A4(self, scaled, 1);
 
-    void* st3 = ((PcSub4Fake*)this)->_q030();
-    u32 chkFlag = func_80174C98(this, (int*)&st3, 1);
+    int chkFlag = func_80174C98(self, (int*)&(st3 = *(void**)((PcSub4FakeC*)self)->_q030()), 1);
     if (chkFlag != 0 && f->mPtr3F60 != NULL) {
         f->mPtr3F60->field_0x4EC |= 0x1000;
     }
 
-    u8* moveSub = (u8*)this;
-    if (this != NULL) {
+    // Player-only event handling (null-checked adjust to the move sub-object).
+    u8* moveSub = (u8*)self;
+    if (self != NULL) {
         moveSub += 0x3E9C;
     }
     if (moveSub == (u8*)getPlayer__Q22cf13CfGameManagerFi(0)) {
         getInstance__Q22cf13CfGameManagerFv();
-        if (func_8006EF04__Fi(0x100)) {
-            if (chkFlag == 0 && ((PcSubFake*)this)->_p00C(1) == 0) {
+        if (func_8006EF04__Fi(0x100000)) {
+            // Distinct fake types per +0x3E9C dispatch so MWCC re-materializes
+            // addi r3, r31, 0x3E9C like retail instead of caching one temp.
+            if (chkFlag == 0 && ((PcSubFake*)self)->_p00C(1) == 0) {
                 if (f->field_0x3F34 != NULL) {
                     f->field_0x3F34->field_0x7A4 |= 0x8000;
                 }
-                ((PcSubFake*)this)->_p080();
-                ((PcSubFake*)this)->_p064();
-                skipMoveCall = true;
+                ((PcSubFakeB*)self)->_p080();
+                ((PcSubFakeB*)self)->_p064();
+                return;
             }
-        } else if (chkFlag == 0 && func_8013EB90(1) == 0) {
-            func_80174B4C(this, 3);
-            ((PcSubFake*)this)->_p050(0);
-            ((PcSubFake*)this)->_p1AC(0,
-                (const char*)lbl_eu_804FC5EC + 0x2D);
+        } else {
+            if (chkFlag != 0 && func_8013EB90(1) == 0) {
+                func_80174B4C(self, 3);
+                ((PcSubFake*)self)->_p050(0);
+                ((PcSubFake*)self)->_p1AC(0,
+                    (const char*)lbl_eu_804FC5EC + 0x2D);
+            }
         }
     }
-    if (!skipMoveCall) {
-        CfObject_UnkVirtualFunc4__Q22cf12CfObjectMoveFv(
-            (cf::CfObjectMove*)((u8*)this + 0x3E9C));
-    }
+    CfObject_UnkVirtualFunc4__Q22cf12CfObjectMoveFv(
+        (cf::CfObjectMove*)((u8*)self + 0x3E9C));
 }
 
 // Gauge-scale refresh: runs the CActorParam base handler, then reads a text
@@ -912,23 +974,23 @@ void cf::CfObjectPc::CActorParam_UnkVirtualFunc4() {
     // Direct (non-virtual) call to the CActorParam base implementation.
     ((cf::CActorParam*)this)->cf::CActorParam::CActorParam_UnkVirtualFunc4();
     Lit10 buf = lbl_eu_804FC5E0;
-    int n = reinterpret_cast<PCIf*>(this)->_v0308((char*)buf.d);
+    PCIf* p = reinterpret_cast<PCIf*>(this);
+    int n = p->_v0308();
     if (n <= 1) {
-        int idx = reinterpret_cast<PCIf*>(this)->_v0308(NULL);
-        float v = ((s16*)buf.d)[idx];
-        float b24 = lbl_eu_80666B24;
-        float b28 = lbl_eu_80666B28;
-        float b30 = lbl_eu_80666B30;
-        f->field_0x1824 = f->field_0x1824 * (b24 + ((v - b30) / b28));
+        int idx = p->_v0308();
+        // (float)(s32) builtin cast: MWCC emits the 0x43300000 biased-magic
+        // conversion (single-rounded fsubs) whose pooled constant is the
+        // retail lbl_eu_80666B30 literal.
+        float v = (float)((s16*)buf.d)[idx];
+        f->field_0x1824 =
+            f->field_0x1824 * (lbl_eu_80666B24 + v / lbl_eu_80666B28);
     } else {
-        int n2 = reinterpret_cast<PCIf*>(this)->_v0308(NULL);
+        int n2 = p->_v0308();
         if (n2 >= 3) {
-            int idx = reinterpret_cast<PCIf*>(this)->_v0308(NULL);
-            float v = ((s16*)buf.d)[idx];
-            float b24 = lbl_eu_80666B24;
-            float b28 = lbl_eu_80666B28;
-            float b30 = lbl_eu_80666B30;
-            f->field_0x1824 = f->field_0x1824 / (b24 + ((v - b30) / b28));
+            int idx = p->_v0308();
+            float v = (float)((s16*)buf.d)[idx];
+            f->field_0x1824 =
+                f->field_0x1824 / (lbl_eu_80666B24 + v / lbl_eu_80666B28);
         }
     }
 }
@@ -964,26 +1026,29 @@ u32 CActorParam_UnkVirtualFunc86__Q22cf10CfObjectPcFv(cf::CfObjectPc* self) {
 void CActorParam_UnkVirtualFunc88__Q22cf10CfObjectPcFv(
     cf::CfObjectPc* self, int arg1, int arg2, int arg3) {
     CfObjectPcSubFields* f = (CfObjectPcSubFields*)self;
+    // Declared before `arts` so MWCC colors arts into the higher callee-saved
+    // reg (retail: arts=r30, acted=r29).
+    int acted = 0;
     CfObjectPcArtsData* arts =
         (CfObjectPcArtsData*)func_8009EC9C(f->field_0x3F28);
-    u32 limit = 0x05F60000u - 0x1F01u;
+    // Clamp cap 0x5F5E0FF; keep the subtraction inline at each use so MWCC
+    // recomputes it (lis/subi) instead of caching it in a register.
     u32 v1604 = f->field_0x1604 + (u32)arg1;
     f->field_0x1604 = v1604;
-    if (v1604 > limit) {
-        f->field_0x1604 = limit;
+    if (v1604 > 0x05F60000u - 0x1F01u) {
+        f->field_0x1604 = 0x05F60000u - 0x1F01u;
     }
     u32 v1608 = f->field_0x1608 + (u32)arg2;
     f->field_0x1608 = v1608;
-    if (v1608 > limit) {
-        f->field_0x1608 = limit;
+    if (v1608 > 0x05F60000u - 0x1F01u) {
+        f->field_0x1608 = 0x05F60000u - 0x1F01u;
     }
     Obj89cField* obj = (Obj89cField*)reinterpret_cast<PCIf*>(self)->_v0290();
     func_802617B8((u8*)obj, obj->field_0x89C, arg3);
     // Drain the action queue through slot 0x35C.
-    int acted = 0;
     while (reinterpret_cast<PCIf*>(self)->_v035C() != 0) {
-        func_800A282C((u8*)arts, 1);
         acted = 1;
+        func_800A282C((u8*)arts, 1);
     }
     func_8010CE50(f->field_0x3F10, arg1, arg2, arg3);
     if (arg3 != 0 && func_800A2AF0((u8*)arts) != 0) {
@@ -994,18 +1059,24 @@ void CActorParam_UnkVirtualFunc88__Q22cf10CfObjectPcFv(
             reinterpret_cast<PCIf*>(self)->_v05EC());
         BattleMgrRangeView* bm =
             (BattleMgrRangeView*)getInstance__Q22cf14CBattleManagerFv();
-        bool inRange = false;
-        if (bm->field_0x1AA >= 1 && bm->field_0x1AA <= 0x18) {
-            inRange = true;
+        // Goto form mirrors retail: flag=0, two early-out compares
+        // (second commuted), flag=1, then shared check label. Commuting
+        // blocks MWCC's unsigned range-check fusion (MWCC_CASES
+        // func_801575B0).
+        int inBattle = 0;
+        if (bm->field_0x1AA < 1) goto bmCheck;
+        if (0x18 < bm->field_0x1AA) goto bmCheck;
+        inBattle = 1;
+    bmCheck:
+        if (inBattle != 0) goto actedDone;
+        if (bm->field_0x20C8 != 0) goto actedDone;
+        void* state = ((PcSub4Fake*)self)->_q030();
+        if (func_80174C98(self, (int*)&state, 6) ||
+            (((state = ((PcSub4Fake*)self)->_q030()),
+                func_80174C98(self, (int*)&state, 9)))) {
+            func_800BE12C((u8*)self + 0x3E9C, 0x1B, 0, 6, 1);
         }
-        if (!inRange && bm->field_0x20C8 == 0) {
-            void* state = ((PcSub4Fake*)self)->_q030();
-            if (func_80174C98(self, (int*)&state, 6) ||
-                (((state = ((PcSub4Fake*)self)->_q030()),
-                    func_80174C98(self, (int*)&state, 9)))) {
-                func_800BE12C((u8*)self + 0x3E9C, 0x1B, 0, 6, 1);
-            }
-        }
+    actedDone:;
     }
     func_800A13C4((u8*)arts, 0);
     func_801A891C((u8*)self, 0);
@@ -1023,9 +1094,13 @@ int CActorParam_UnkVirtualFunc178__Q22cf10CfObjectPcFv(cf::CfObjectPc* self) {
         func_800A11A4((u8*)data, 1);
         reinterpret_cast<PCIf*>(self)->_v0204(((ArtsEntryFake*)data)->fill());
         u32 gained = reinterpret_cast<PCIf*>(self)->_v01E8();
+        u32 cur = f->field_0x1600;
         u32 total = (u32)spent + gained;
-        total = f->field_0x1600 + total;
-        f->field_0x1600 = total;
+        // Best-of-N (19 formulations tried: inline chains x4 orders,
+        // signed/mixed-sign casts, compound assigns, guard-folded store,
+        // volatile pins, decl/textual reorders). MWCC collapses every
+        // variant to "add r4, r4, r0"; retail has "add r4, r0, r4".
+        total = cur + total;
         f->field_0x1600 = total;
         if (total > 0x05F60000u - 0x1F01u) {
             f->field_0x1600 = 0x05F60000u - 0x1F01u;
@@ -1042,25 +1117,25 @@ int CActorParam_UnkVirtualFunc178__Q22cf10CfObjectPcFv(cf::CfObjectPc* self) {
 // entry matching (level byte, key halfword), then applies the scaled
 // damage to the gauge (+0x45C0) with sound feedback. Returns 1 when the
 // matched row was applied.
-int func_800C0DD4(cf::CfObjectPc* self, int flag) {
+// C linkage: retail's symbol is the unmangled func_800C0DD4.
+extern "C" int func_800C0DD4(cf::CfObjectPc* self, int flag) {
     if ((lbl_eu_80663E24 & 0xAFA40000u) != 0) {
         return 0;
     }
     if (((CfObjectPcSubFields*)self)->mPtr3F60 != NULL) {
         if (((CfObjectPcSubFields*)self)->mPtr3F60->field_0x4EC & 0x100000) {
             // slot 0x210 false -> primary slot 0x608 cancel call
-            if (!((PcSubFake*)self)->_p210(0x25)) {
+            if (!((PcWrapA*)self)->mSub._p210(0x25)) {
                 reinterpret_cast<PCIf*>(self)->vf0608(0x25, 0, -1, 0, 0);
             }
         } else {
-            if (((PcSubFake*)self)->_p210(0x25)) {
-                ((PcSubFake*)self)->_p20C(0x25);
+            if (((PcWrapB*)self)->mSub._p210(0x25)) {
+                ((PcWrapA*)self)->mSub._p20C(0x25);
             }
         }
         if ((((CfObjectPcSubFields*)self)->mPtr3F60->field_0x4EC & 0x100) == 0 ||
             reinterpret_cast<PCIf*>(self)->_v02BC() != 0) {
-            ((CfObjectPcSubFields*)self)->field_0x45C0 = lbl_eu_80666B14;
-            return 0;
+            goto resetGauge;
         }
         BattleMgrRangeView* bm =
             (BattleMgrRangeView*)getInstance__Q22cf14CBattleManagerFv();
@@ -1076,8 +1151,10 @@ int func_800C0DD4(cf::CfObjectPc* self, int flag) {
         }
         u32 fourB0 =
             ((CfObjectPcSubFields*)self)->mPtr3F60->field_0x4B0;
-        u32 key = lbl_eu_80663E42 * 100;
-        key += lbl_eu_80663E44;
+        // key lookup mirrors CfObjectEne.cpp: area word indexes a table at
+        // lbl_eu_80663E44 with a x100 byte stride; result adds the offset back.
+        u32 modeOff = (u32)lbl_eu_80663E42 * 100;
+        int channel = (int)*(u16*)((u8*)&lbl_eu_80663E44 + modeOff) + (int)modeOff;
         func_8003AA34();
         void* mgr = lbl_eu_806640D4;
         int i = func_8003B41C(mgr);
@@ -1087,14 +1164,14 @@ int func_800C0DD4(cf::CfObjectPc* self, int flag) {
             u32 vA = getBdatStringColumnValue(mgr, names + 0x3E, i);
             if ((int)(u8)vA != (int)fourB0) continue;
             u32 vB = getBdatStringColumnValue(mgr, names + 0x45, i);
-            if ((int)(u16)vB != (int)key) continue;
+            if ((int)(u16)vB != channel) continue;
             u32 vC = getBdatStringColumnValue(mgr, names + 0x49, i);
-            float sv = ((PcSubFake*)self)->_p08C();
+            float sv = ((PcWrapB*)self)->mSub._p08C();
             float newGauge = func_80496288(lbl_eu_80663E14) * sv +
                 ((CfObjectPcSubFields*)self)->field_0x45C0;
             ((CfObjectPcSubFields*)self)->field_0x45C0 = newGauge;
             double thr = (double)(int)((vC & 0xFF) * 30);
-            if (!(newGauge >= thr)) break;
+            if (newGauge < thr) return 1;
             u32 vD = getBdatStringColumnValue(mgr, names + 0x52, i);
             double base = (double)(int)(vD & 0xFF) - lbl_eu_80666B40;
             float dmg = lbl_eu_80666B38 *
@@ -1105,7 +1182,7 @@ int func_800C0DD4(cf::CfObjectPc* self, int flag) {
                 dmg = dmg * (lbl_eu_80666B24 -
                     ((dT - lbl_eu_80666B30) / lbl_eu_80666B28));
             }
-            double dv = (int)dmg;
+            float dv = (float)(int)dmg;
             if (dv == lbl_eu_80666B14) dv = lbl_eu_80666B24;
             u8* moveSub = (u8*)self;
             if (self != NULL) {
@@ -1126,6 +1203,7 @@ int func_800C0DD4(cf::CfObjectPc* self, int flag) {
             return 1;
         }
     }
+resetGauge:
     ((CfObjectPcSubFields*)self)->field_0x45C0 = lbl_eu_80666B14;
     return 0;
 }

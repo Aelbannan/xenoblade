@@ -745,6 +745,12 @@ extern "C" void func_80183268(void* self) {
 
     if (FLD(u32, s, 0x20) != 0) {
         int val = func_8016A35C(self);
+        // Builtin i2f is required: instructions come out byte-identical to
+        // retail incl. schedule. Residual (open item): MWCC pools the
+        // 0x4330000080000000 magic TU-locally (@N) where retail lfds the
+        // shared blob lbl_eu_80667910 — single SDA21 reloc-name drift.
+        // §7i manual pattern regresses here (adds frsp / reschedules;
+        // 3 non-improving attempts, see attempts.jsonl).
         float ft = (float)val;
         func_80484F80(FLD(void*, s, 0x20), ft);
     }

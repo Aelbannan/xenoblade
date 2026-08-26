@@ -469,24 +469,34 @@ static PoolPair* poolPairAt(CViewRootPool* pool, u32 logicalIndex) {
 }
 
 void CViewRoot::func_80442C68() {
-    CViewRoot* root = lbl_eu_806655D0;
-    if (root == nullptr) {
+    s32 sum0;
+    s32 slot0;
+    s32 sum1;
+    s32 slot1;
+    s32 sum2;
+    s32 slot2;
+
+    // Each section uses its own singleton-pointer local so every live range
+    // stays short (retail keeps these in volatile regs r4/r7).
+    CViewRoot* rootA = lbl_eu_806655D0;
+    if (rootA == nullptr) {
         return;
     }
 
-    if (root->mPool0.mUsed != 0) {
-        root->mPool0.mUsed = root->mPool0.mUsed - 1;
+    // Pop one entry off each pool ring.
+    if (rootA->mPool0.mUsed != 0) {
+        rootA->mPool0.mUsed = rootA->mPool0.mUsed - 1;
     }
-    root = lbl_eu_806655D0;
-    if (root->mPool2.mUsed != 0) {
-        root->mPool2.mUsed = root->mPool2.mUsed - 1;
+    CViewRoot* rootB = lbl_eu_806655D0;
+    if (rootB->mPool2.mUsed != 0) {
+        rootB->mPool2.mUsed = rootB->mPool2.mUsed - 1;
     }
-    root = lbl_eu_806655D0;
-    if (root->mPool1.mUsed != 0) {
-        root->mPool1.mUsed = root->mPool1.mUsed - 1;
+    CViewRoot* rootC = lbl_eu_806655D0;
+    if (rootC->mPool1.mUsed != 0) {
+        rootC->mPool1.mUsed = rootC->mPool1.mUsed - 1;
     }
 
-    root = lbl_eu_806655D0;
+    CViewRoot* root = lbl_eu_806655D0;
     if (root->mPool0.mUsed == 0) {
         return;
     }
@@ -497,11 +507,19 @@ void CViewRoot::func_80442C68() {
         return;
     }
 
+    // Ring-slot addresses of the newest entry in each pool.
+    sum0 = *(u32*)&root->mPool0.mList + root->mPool0.mUsed;
+    slot0 = (sum0 - 1) % (s32)root->mPool0.mCapacity;
+    sum1 = *(u32*)&root->mPool1.mList + root->mPool1.mUsed;
+    slot1 = (sum1 - 1) % (s32)root->mPool1.mCapacity;
+    sum2 = *(u32*)&root->mPool2.mList + root->mPool2.mUsed;
+    slot2 = (sum2 - 1) % (s32)root->mPool2.mCapacity;
+
     func_8044B298__8CGXCacheFv(
         CDeviceGX::getCacheInstance(),
-        poolPairAt(&root->mPool0, root->mPool0.mUsed - 1),
-        poolPairAt(&root->mPool1, root->mPool1.mUsed - 1),
-        poolPairAt(&root->mPool2, root->mPool2.mUsed - 1));
+        &reinterpret_cast<PoolPair*>(root->mPool0.mStartNodePtr)[slot0],
+        &reinterpret_cast<PoolPair*>(root->mPool1.mStartNodePtr)[slot1],
+        &reinterpret_cast<PoolPair*>(root->mPool2.mStartNodePtr)[slot2]);
 }
 
 void CViewRoot::func_80442DA8() {
@@ -538,23 +556,27 @@ void CViewRoot::func_80442DA8() {
 }
 
 void CViewRoot::setCurrent(CView* view) {
-    u32 length;
-    CViewRoot* root;
-    _reslist_node<WORK_ID>* volatile node;
-    _reslist_node<WORK_ID>* endNode;
-    _reslist_node<WORK_ID>* volatile beginSave;
+    int length = 0;
     _reslist_node<WORK_ID>* volatile endCopy;
+    _reslist_node<WORK_ID>* volatile endNode;
+    _reslist_node<WORK_ID>* volatile beginSave;
     _reslist_node<WORK_ID>* volatile curNode;
-    _reslist_node<WORK_ID>* volatile frontNode;
+    CViewRoot* root;
+    _reslist_node<WORK_ID>* sentinel;
+    _reslist_node<WORK_ID>* frontNode;
+    _reslist_node<WORK_ID>* volatile node;
+    CWorkThread* thread;
     CProc* proc;
     CProc* rootProc;
     WORK_ID workId;
+    CViewRoot* stateRoot;
+    CViewRoot* histRoot;
     _reslist_node<WORK_ID>* historySentinel;
     _reslist_node<WORK_ID>* historyNode;
 
-    root = lbl_eu_806655D0;
+    root = getInstance();
 
-    if (root == nullptr) {
+    if (getInstance() == nullptr) {
         return;
     }
 
@@ -562,16 +584,16 @@ void CViewRoot::setCurrent(CView* view) {
         return;
     }
 
-    // unk238 POD twin of reslist<WORK_ID>: volatile cur/end preserve the
-    // original iterator walk, while push_back reaches the retail setItem path.
-    // Guarded §17.6 object patches close the exhausted frame/home soft cap.
-    length = 0;
-    endNode = (_reslist_node<WORK_ID>*)view->unk238.mStartNodePtr;
-    endCopy = endNode;
-    beginSave = endNode->mNext;
-    curNode = beginSave;
+    // Count the view's child-list entries (inlined reslist::size walk over
+    // the unk238 POD twin of reslist<WORK_ID>). Retail spills the sentinel
+    // and the first node twice each; volatile copies force those stores.
+    sentinel = (_reslist_node<WORK_ID>*)view->unk238.mStartNodePtr;
+    endCopy = sentinel;
+    curNode = sentinel->mNext;
+    endNode = sentinel;
+    beginSave = curNode;
 
-    while (curNode != endCopy) {
+    while (curNode != endNode) {
         length++;
         curNode = curNode->mNext;
     }
@@ -580,50 +602,39 @@ void CViewRoot::setCurrent(CView* view) {
         return;
     }
 
-    if (root->mCurrentView == view) {
+    if (getInstance()->mCurrentView == view) {
         return;
     }
 
-    // Retail spills the front node twice (sp+8 frontNode, sp+0x1c node) with
-    // the mItem load scheduled between the two volatile stores.
-    frontNode = endNode->mNext;
+    // Convert the first child entry to a CProc via the thread-type range
+    // check (retail inlines convertToProc); pssGetRoot runs even on a miss.
+    // Retail spills the front node twice (sp+8/sp+0x1c) around the mItem load.
+    frontNode = sentinel->mNext;
     node = frontNode;
-    proc = CProc::convertToProc(getWorkThread__9CWorkUtilFUl(node->mItem));
-    rootProc = pssGetRoot__5CProcFP5CProc(proc);
+    thread = CWorkUtil::getWorkThread(frontNode->mItem);
+    proc = CProc::convertToProc(thread);
+    rootProc = CProc::pssGetRoot(proc);
 
     if (proc == nullptr) {
         return;
     }
 
-    root = lbl_eu_806655D0;
+    stateRoot = lbl_eu_806655D0;
 
-    if (root->mCurrentView == nullptr) {
-        goto setCurrent_update;
-    }
-
-    if (root->mAttachedProc0 == nullptr) {
-        goto setCurrent_update;
-    }
-
-    if (root->mAttachedProc1 != rootProc) {
-        goto setCurrent_update;
-    }
-
-    if (root->mAttachedProc0->unk1E8 != 0) {
-        goto setCurrent_update;
-    }
-
-    if (proc->unk1E8 != 0) {
+    // Early-out only when the previous attach state is fully live and clean.
+    if (stateRoot->mCurrentView != nullptr && stateRoot->mAttachedProc0 != nullptr &&
+        stateRoot->mAttachedProc1 == rootProc && stateRoot->mAttachedProc0->unk1E8 == 0 &&
+        proc->unk1E8 != 0) {
         return;
     }
 
-setCurrent_update:
-    root->mCurrentView = view;
-    lbl_eu_806655D0->mAttachedProc1 = rootProc;
-    lbl_eu_806655D0->mAttachedProc0 = proc;
+    stateRoot->mCurrentView = view;
+    getInstance()->mAttachedProc1 = rootProc;
+    getInstance()->mAttachedProc0 = proc;
 
     workId = view->mWorkID;
-    historySentinel = lbl_eu_806655D0->mViewHistory.mStartNodePtr;
+    histRoot = lbl_eu_806655D0;
+    historySentinel = histRoot->mViewHistory.mStartNodePtr;
     historyNode = historySentinel->mNext;
 
     while (historyNode != historySentinel && workId != historyNode->mItem) {
@@ -634,20 +645,59 @@ setCurrent_update:
         return;
     }
 
-    lbl_eu_806655D0->mViewHistory.push_back(workId);
+    // Inlined reslist<WORK_ID>::push_back(workId) exactly as retail expands
+    // it: free-slot scan, setItem's try/catch guarded item store (which emits
+    // the exception-frame sp-save), then the splice onto the sentinel.
+    _reslist_node<WORK_ID>* startNode = histRoot->mViewHistory.mStartNodePtr;
+    _reslist_node<WORK_ID>* temp;
+    int capacity = histRoot->mViewHistory.mCapacity;
+    int i = 0;
+
+    // The scan reuses the count variable (retail colors them as one web).
+    length = 0;
+
+    goto queue_check;
+queue_body:
+    if (*(u32*)((u8*)histRoot->mViewHistory.mList + length) == 0) {
+        goto queue_found;
+    }
+    length += 0xc;
+    i++;
+queue_check:
+    if (i < capacity) {
+        goto queue_body;
+    }
+queue_found:
+    temp = (_reslist_node<WORK_ID>*)((u8*)histRoot->mViewHistory.mList + i * 0xc);
+    {
+        WORK_ID* ptr = &temp->mItem;
+        if (ptr != 0) {
+            try {
+                *ptr = workId;
+            } catch (...) {
+                throw;
+            }
+        }
+    }
+    temp->mNext = startNode;
+    temp->mPrev = startNode->mPrev;
+    startNode->mPrev->mNext = temp;
+    startNode->mPrev = temp;
 }
 // Remove the current view's history entry, then promote the history entry
 // whose view has the lowest unk460 value to be the new current view. The
 // per-entry view lookup is CViewRoot::getView inlined by retail (children
 // scan calling CWorkUtil::getWorkThread until it hits, then convertToView).
+// workId is assigned before the history-sentinel load so MWCC colors it
+// ahead of the walk node (retail: id=r3, sentinel=r4, node=r5).
 void CViewRoot::invalidCurrent(CView* view) {
+    WORK_ID id;
+    u32 count;
     _reslist_node<WORK_ID>* sentinel;
     _reslist_node<WORK_ID>* node;
-    _reslist_node<WORK_ID>* best;
-    _reslist_node<WORK_ID>* next;
     _reslist_node<WORK_ID>* prev;
-    u32 count;
-    WORK_ID id;
+    _reslist_node<WORK_ID>* next;
+    _reslist_node<WORK_ID>* best;
     CView* curView;
     CView* bestView;
 
@@ -655,15 +705,15 @@ void CViewRoot::invalidCurrent(CView* view) {
         return;
     }
 
-// Find-and-unlink (retail stops at the first match, unlike reslist::remove).
     // Find-and-unlink (retail stops at the first match, unlike reslist::remove).
-    sentinel = lbl_eu_806655D0->mViewHistory.mStartNodePtr;
     id = view->mWorkID;
+    sentinel = lbl_eu_806655D0->mViewHistory.mStartNodePtr;
     node = sentinel->mNext;
     while (node != sentinel && id != node->mItem) {
         node = node->mNext;
     }
     if (node != sentinel) {
+        // Unlink: prev<->next splice, then clear the removed node's mNext.
         prev = node->mPrev;
         next = node->mNext;
         prev->mNext = next;
@@ -671,29 +721,33 @@ void CViewRoot::invalidCurrent(CView* view) {
         node->mNext = nullptr;
     }
 
+    // Count remaining entries. Retail holds the singleton in a register
+    // across this whole stretch (count loop, empty-store, best init), then
+    // switches to per-iteration singleton reloads inside the selection walk.
+    CViewRoot* root = lbl_eu_806655D0;
     count = 0;
-    node = lbl_eu_806655D0->mViewHistory.mStartNodePtr->mNext;
-    while (node != lbl_eu_806655D0->mViewHistory.mStartNodePtr) {
+    node = root->mViewHistory.mStartNodePtr->mNext;
+    while (node != root->mViewHistory.mStartNodePtr) {
         node = node->mNext;
         count++;
     }
     if (count == 0) {
-        lbl_eu_806655D0->mCurrentView = nullptr;
-        return;
-    }
-
-    best = lbl_eu_806655D0->mViewHistory.mStartNodePtr->mNext;
-    node = best;
-    while (node != lbl_eu_806655D0->mViewHistory.mStartNodePtr) {
-        curView = getView((WORK_ID)node->mItem);
-        bestView = getView((WORK_ID)best->mItem);
-        if ((s32)curView->unk460 <= (s32)bestView->unk460) {
-            best = node;
+        root->mCurrentView = nullptr;
+    } else {
+        // Promote the entry whose view has the lowest unk460 value.
+        best = root->mViewHistory.mStartNodePtr->mNext;
+        node = best;
+        while (node != lbl_eu_806655D0->mViewHistory.mStartNodePtr) {
+            curView = getView((WORK_ID)node->mItem);
+            bestView = getView((WORK_ID)best->mItem);
+            if ((s32)bestView->unk460 >= (s32)curView->unk460) {
+                best = node;
+            }
+            node = node->mNext;
         }
-        node = node->mNext;
-    }
 
-    lbl_eu_806655D0->mCurrentView = getView((WORK_ID)best->mItem);
+        lbl_eu_806655D0->mCurrentView = getView((WORK_ID)best->mItem);
+    }
 }
 
 CView* CViewRoot::getFullScreenView() {
@@ -701,6 +755,10 @@ CView* CViewRoot::getFullScreenView() {
     s16 viewHeight;
     CView* childView;
     _reslist_node<CWorkThread*>* walkNode;
+    int foundIndex;
+
+    int i;
+
     u32 viewFlags;
     u32 msgQualified;
     u32 keepGoing;
@@ -711,6 +769,21 @@ CView* CViewRoot::getFullScreenView() {
     s16 posSumX;
     GXRenderModeObj* renderMode;
     CView* desktopView;
+
+    // Inlined CMsgParam<8>::find(EVT_EXCEPTION) scan over the child's
+    // message ring; overlay is based at &mMsgQueue (0x80), so the entry
+    // array lands at +0x124 (= absolute 0x1A4).
+    struct StatusEntry {
+        u32 field_0x00;
+        u8 pad[0x24 - 4];
+    };
+    struct StatusRing {
+        u8 pad[0x124];
+        StatusEntry* mEntries;
+        u32 mFront;
+        u32 mCount;
+        u32 mCapacity;
+    };
 
     if (lbl_eu_806655D0 == nullptr) {
         return nullptr;
@@ -732,7 +805,18 @@ CView* CViewRoot::getFullScreenView() {
         if (viewFlags & THREAD_FLAG_EXCEPTION) {
             msgQualified = true;
         } else {
-            msgQualified = (childView->mMsgQueue.find(EVT_EXCEPTION) >= 0);
+            const StatusRing* ring =
+                reinterpret_cast<const StatusRing*>(&childView->mMsgQueue);
+            for (i = 0; i < ring->mCount; i++) {
+                if (ring->mEntries[(ring->mFront + i) % ring->mCapacity].field_0x00 ==
+                    EVT_EXCEPTION) {
+                    foundIndex = i;
+                    goto done_find;
+                }
+            }
+            foundIndex = -1;
+        done_find:
+            msgQualified = (foundIndex >= 0);
         }
 
         // keepGoing=0 before the branch: retail cmpwi/li/bne shape.
@@ -820,35 +904,51 @@ void CViewRoot::renderView() {
     }
 
     _reslist_node<CWorkThread*>* walkNode = lbl_eu_806655D0->mChildren.mStartNodePtr->mNext;
-    u32 msgQualified;
-    u32 keepGoing;
-    bool loginRunKeep;
-    int rState;
+
+    // Inlined CMsgParam<8>::find(EVT_EXCEPTION) scan over the child's message
+    // ring (same overlay idiom as getFullScreenView: entries at +0x124 within
+    // mMsgQueue, stride 0x24).
+    struct StatusEntry {
+        u32 field_0x00;
+        u8 pad[0x24 - 4];
+    };
+    struct StatusRing {
+        u8 pad[0x124];
+        StatusEntry* mEntries;
+        u32 mFront;
+        u32 mCount;
+        u32 mCapacity;
+    };
+
     while (walkNode != lbl_eu_806655D0->mChildren.mStartNodePtr) {
         CView* childView = CView::convertToView(walkNode->mItem);
 
-        // isRunning() inlined to match retail: exception -> stateOK -> keepGoing.
-        if (childView->mFlags & THREAD_FLAG_EXCEPTION) {
-            msgQualified = true;
+        // Inlined isException(): EXCEPTION flag or an EVT_EXCEPTION message.
+        int exception;
+        if ((childView->mFlags & THREAD_FLAG_EXCEPTION) != 0) {
+            exception = 1;
         } else {
-            msgQualified = (childView->mMsgQueue.find(EVT_EXCEPTION) >= 0);
+            const StatusRing* ring = reinterpret_cast<const StatusRing*>(&childView->mMsgQueue);
+            int i;
+            int foundIndex;
+            for (i = 0; i < ring->mCount; i++) {
+                if (ring->mEntries[(ring->mFront + i) % ring->mCapacity].field_0x00 ==
+                    EVT_EXCEPTION) {
+                    foundIndex = i;
+                    goto done_find;
+                }
+            }
+            foundIndex = -1;
+        done_find:
+            exception = (foundIndex >= 0);
         }
 
-        keepGoing = 0;
-        if (msgQualified != 0) {
-        } else {
-            loginRunKeep = 1;
-            rState = childView->mState;
-            if (rState == THREAD_STATE_LOGIN) {
-            } else if (rState == THREAD_STATE_RUN) {
-            } else {
-                loginRunKeep = 0;
-            }
-            if (loginRunKeep != 0) {
-                keepGoing = 1;
-            }
-        }
-        if (keepGoing != 0) {
+        // Render non-exceptional children that are logged-in/running.
+        int doRender =
+            exception == 0 &&
+            (childView->mState == THREAD_STATE_LOGIN || childView->mState == THREAD_STATE_RUN);
+
+        if (doRender != 0) {
             childView->renderView();
         }
         walkNode = walkNode->mNext;
@@ -857,20 +957,19 @@ void CViewRoot::renderView() {
 
 CViewRoot* CViewRoot::create(CWorkThread* pParent) {
     const char* name;
-    CWorkThread* parent;
-    mtl::ALLOC_HANDLE handle;
     CViewRoot* root;
+    u32 historyIndex;
+    u32 historyNode;
 
     name = lbl_eu_8052266C;
-    parent = pParent;
-    handle = getWorkMem__17CWorkThreadSystemFv();
-    root = (CViewRoot*)allocate__Q23mtl10MemManagerFUlUl(0x520, handle);
+    root = (CViewRoot*)allocate__Q23mtl10MemManagerFUlUl(
+        0x520, getWorkMem__17CWorkThreadSystemFv());
 
     if (root == nullptr) {
         goto create_entry_work;
     }
 
-    __ct__11CWorkThreadFPCcP11CWorkThreadi(root, name, parent, 0x80);
+    __ct__11CWorkThreadFPCcP11CWorkThreadi(root, name, pParent, 0x80);
 
     // No retail CViewRoot ctor exists: lay the subobject down manually,
     // following the retail store order (pools, then the history reslist).
@@ -901,10 +1000,9 @@ CViewRoot* CViewRoot::create(CWorkThread* pParent) {
     root->mViewHistory.mList = NULL;
     root->mViewHistory.mCapacity = 0;
     root->mViewHistory.unk1C = false;
-    root->mViewHistory.mStartNodePtr = histSentinel;
-    histSentinel->mNext = histSentinel;
-    histSentinel = root->mViewHistory.mStartNodePtr;
-    histSentinel->mPrev = histSentinel;
+    root->mViewHistory.mStartNodePtr = &root->mViewHistory.mStartNode;
+    root->mViewHistory.mStartNodePtr->mNext = root->mViewHistory.mStartNodePtr;
+    root->mViewHistory.mStartNodePtr->mPrev = root->mViewHistory.mStartNodePtr;
     *reinterpret_cast<void**>(&root->mViewHistory) = lbl_eu_8056B280;
 
     root->mCurrentView = NULL;
@@ -916,17 +1014,18 @@ CViewRoot* CViewRoot::create(CWorkThread* pParent) {
 
     // Inlined reslist<WORK_ID>::reserve: array-new the node pool, clear every
     // node's mNext link, then publish the capacity.
-    u32 historyIndex;
     root->mViewHistory.mList =
         (_reslist_node<WORK_ID>*)allocate_array__Q23mtl10MemManagerFUlUl(0x600, root->mAllocHandle);
-    for (historyIndex = 0; historyIndex < 0x80; historyIndex++) {
-        root->mViewHistory.mList[historyIndex].mNext = NULL;
+    for (historyIndex = 0; historyIndex < 8; historyIndex++) {
+        for (historyNode = 0; historyNode < 16; historyNode++) {
+            root->mViewHistory.mList[historyIndex * 16 + historyNode].mNext = NULL;
+        }
     }
     root->mViewHistory.mCapacity = 0x80;
     lbl_eu_806655D4 = 0;
 
 create_entry_work:
-    entryWork__9CWorkUtilFP11CWorkThreadP11CWorkThreadb(root, parent, false);
+    entryWork__9CWorkUtilFP11CWorkThreadP11CWorkThreadb(root, pParent, false);
     root->func_804385CC(0);
 
     return root;
@@ -935,21 +1034,23 @@ create_entry_work:
 bool CViewRoot::wkStandbyLogin() {
     s16 height;
     s16 width;
-    CViewRoot* root;
     ml::CRect16 rect1;
     ml::CRect16 rect2;
-    PoolPair* pairBase;
-    u32 slot;
+    s32 sum;
+    s32 q;
+    PoolPair* dst;
+    u32 w1;
+    u32 w0;
+    CViewRoot* root;
 
-    if (!CDevice::isAllReady()) {
-        return false;
-    }
-    if (!CLib::isInitialized()) {
-        return false;
-    }
-
+    // Positive-form guard: both tests branch-equal to the single failure
+    // tail, matching retail's two beq -> li r3,0 layout.
+    if (CDevice::isAllReady() && CLib::isInitialized()) {
     height = getRenderModeObj__9CDeviceVIFv()->efbHeight;
     width = getRenderModeObj__9CDeviceVIFv()->fbWidth;
+
+    // Retail loads the root pointer before emitting the rect stores.
+    root = lbl_eu_806655D0;
 
     // Retail emits rect1's size.x store before its pos stores.
     rect1.mSize.x = width;
@@ -962,77 +1063,91 @@ bool CViewRoot::wkStandbyLogin() {
     rect2.mSize.x = width;
     rect2.mSize.y = height;
 
-    if (lbl_eu_806655D0 != nullptr) {
+    if (root != nullptr) {
         // Pool0 and pool1 both receive rect1; pool2 receives rect2.
-        root = lbl_eu_806655D0;
-        pairBase = reinterpret_cast<PoolPair*>(root->mPool0.mStartNodePtr);
-        slot = (*(u32*)&root->mPool0.mList + root->mPool0.mUsed) % (u32)root->mPool0.mCapacity;
-        pairBase[slot].w0 = *(u32*)&rect1.mPos;
-        pairBase[slot].w1 = *(u32*)&rect1.mSize;
+        // Signed sum/quotient decomposition gives retail's divw/mullw/subf.
+        sum = *(s32*)&root->mPool0.mList + root->mPool0.mUsed;
+        q = sum / root->mPool0.mCapacity;
+        dst = reinterpret_cast<PoolPair*>(root->mPool0.mStartNodePtr) +
+              (sum - q * root->mPool0.mCapacity);
+        w1 = *(u32*)&rect1.mSize;
+        w0 = *(u32*)&rect1.mPos;
+        dst[0].w0 = w0;
+        dst[0].w1 = w1;
         root->mPool0.mUsed = root->mPool0.mUsed + 1;
 
         root = lbl_eu_806655D0;
-        pairBase = reinterpret_cast<PoolPair*>(root->mPool1.mStartNodePtr);
-        slot = (*(u32*)&root->mPool1.mList + root->mPool1.mUsed) % (u32)root->mPool1.mCapacity;
-        pairBase[slot].w0 = *(u32*)&rect1.mPos;
-        pairBase[slot].w1 = *(u32*)&rect1.mSize;
+        sum = *(s32*)&root->mPool1.mList + root->mPool1.mUsed;
+        q = sum / root->mPool1.mCapacity;
+        dst = reinterpret_cast<PoolPair*>(root->mPool1.mStartNodePtr) +
+              (sum - q * root->mPool1.mCapacity);
+        w1 = *(u32*)&rect1.mSize;
+        w0 = *(u32*)&rect1.mPos;
+        dst[0].w0 = w0;
+        dst[0].w1 = w1;
         root->mPool1.mUsed = root->mPool1.mUsed + 1;
 
         root = lbl_eu_806655D0;
-        pairBase = reinterpret_cast<PoolPair*>(root->mPool2.mStartNodePtr);
-        slot = (*(u32*)&root->mPool2.mList + root->mPool2.mUsed) % (u32)root->mPool2.mCapacity;
-        pairBase[slot].w0 = *(u32*)&rect2.mPos;
-        pairBase[slot].w1 = *(u32*)&rect2.mSize;
+        sum = *(s32*)&root->mPool2.mList + root->mPool2.mUsed;
+        q = sum / root->mPool2.mCapacity;
+        dst = reinterpret_cast<PoolPair*>(root->mPool2.mStartNodePtr) +
+              (sum - q * root->mPool2.mCapacity);
+        w1 = *(u32*)&rect2.mSize;
+        w0 = *(u32*)&rect2.mPos;
+        dst[0].w0 = w0;
+        dst[0].w1 = w1;
         root->mPool2.mUsed = root->mPool2.mUsed + 1;
 
         func_8044B298__8CGXCacheFv(CDeviceGX::getCacheInstance(), &rect1, &rect1, &rect2);
     }
 
     return CWorkThread::wkStandbyLogin();
+    }
+
+    return false;
 }
 
 bool CViewRoot::wkStandbyLogout() {
-    CViewRoot* root;
+    // Combined guard: both failure paths fall into one trailing 'return false'
+    // block (retail's shared li r3,0 tail).
+    if (mChildren.empty() && CProcRoot::getInstance() == nullptr) {
+        CViewRoot* root = lbl_eu_806655D0;
+        if (root != nullptr) {
+            // Pop one entry off each pool ring (order: pool0, pool2, pool1);
+            // the singleton pointer is reloaded before every block and each
+            // mUsed access is re-read (retail lwz/cmpwi/beq + lwz/subi/stw).
+            if (*(volatile u32*)&root->mPool0.mUsed != 0) {
+                *(volatile u32*)&root->mPool0.mUsed = *(volatile u32*)&root->mPool0.mUsed - 1;
+            }
+            root = lbl_eu_806655D0;
+            if (*(volatile u32*)&root->mPool2.mUsed != 0) {
+                *(volatile u32*)&root->mPool2.mUsed = *(volatile u32*)&root->mPool2.mUsed - 1;
+            }
+            root = lbl_eu_806655D0;
+            if (*(volatile u32*)&root->mPool1.mUsed != 0) {
+                *(volatile u32*)&root->mPool1.mUsed = *(volatile u32*)&root->mPool1.mUsed - 1;
+            }
+            root = lbl_eu_806655D0;
+            if (*(volatile u32*)&root->mPool0.mUsed == 0 ||
+                *(volatile u32*)&root->mPool1.mUsed == 0 ||
+                *(volatile u32*)&root->mPool2.mUsed == 0) {
+                goto wkStandbyLogout_base;
+            }
 
-    if (!mChildren.empty()) {
-        return false;
-    }
-    if (CProcRoot::getInstance() != nullptr) {
-        return false;
-    }
-
-    root = lbl_eu_806655D0;
-    if (root != nullptr) {
-        if (root->mPool0.mUsed != 0) {
-            root->mPool0.mUsed = root->mPool0.mUsed - 1;
+            // Ring-slot addresses of the newest entry in each pool
+            // ((list + used - 1) % capacity), computed inline in the call.
+            func_8044B298__8CGXCacheFv(
+                CDeviceGX::getCacheInstance(),
+                &reinterpret_cast<PoolPair*>(root->mPool0.mStartNodePtr)[(*(s32*)&root->mPool0.mList + (s32)root->mPool0.mUsed - 1) % (s32)root->mPool0.mCapacity],
+                &reinterpret_cast<PoolPair*>(root->mPool1.mStartNodePtr)[(*(s32*)&root->mPool1.mList + (s32)root->mPool1.mUsed - 1) % (s32)root->mPool1.mCapacity],
+                &reinterpret_cast<PoolPair*>(root->mPool2.mStartNodePtr)[(*(s32*)&root->mPool2.mList + (s32)root->mPool2.mUsed - 1) % (s32)root->mPool2.mCapacity]);
         }
-        root = lbl_eu_806655D0;
-        if (root->mPool2.mUsed != 0) {
-            root->mPool2.mUsed = root->mPool2.mUsed - 1;
-        }
-        root = lbl_eu_806655D0;
-        if (root->mPool1.mUsed != 0) {
-            root->mPool1.mUsed = root->mPool1.mUsed - 1;
-        }
-        root = lbl_eu_806655D0;
-        if (root->mPool0.mUsed == 0) {
-            goto wkStandbyLogout_base;
-        }
-        if (root->mPool1.mUsed == 0) {
-            goto wkStandbyLogout_base;
-        }
-        if (root->mPool2.mUsed == 0) {
-            goto wkStandbyLogout_base;
-        }
-        func_8044B298__8CGXCacheFv(
-            CDeviceGX::getCacheInstance(),
-            poolPairAt(&root->mPool0, root->mPool0.mUsed - 1),
-            poolPairAt(&root->mPool1, root->mPool1.mUsed - 1),
-            poolPairAt(&root->mPool2, root->mPool2.mUsed - 1));
-    }
 
 wkStandbyLogout_base:
-    return CWorkThread::wkStandbyLogout();
+        return CWorkThread::wkStandbyLogout();
+    }
+
+    return false;
 }
 
 
@@ -1052,23 +1167,36 @@ extern "C" CView* convertToView__5CViewFP11CWorkThread(CWorkThread* pThread) {
     return static_cast<CView*>(pThread);
 }
 
-// Walk up self's parent chain (retail unrolls the walk 3x then recurses) to
+// Walk up view's parent chain (retail unrolls the walk 3x then recurses) to
 // find a "root" view that is neither the CViewRoot singleton nor the desktop.
-// Shape: one convertToView up front, then {checks, convertToView} twice,
-// then a final check set, then the recursive tail through the out-of-line
-// convertToView copy.
-extern "C" CView* getRootView__9CViewRootFP5CView(CViewRoot* self) {
+// Level 0 tests the raw mParent; each later level converts the candidate
+// through the inlined CView::convertToView range check first.
+// Walk up view's parent chain (retail unrolls the walk 3x then recurses) to
+// find a "root" view that is neither the CViewRoot singleton nor the desktop.
+// Level 0 tests the raw mParent; each later level converts the candidate
+// through the inlined CView::convertToView range check first. Keeping the
+// preamble reads in a named `parent` local while re-reading self->mParent
+// bare at the conversion reproduces retail's cached-load/post-call-reload
+// pairing (a fully-bare form over-CSEs into a single load).
+// KNOWN GAP vs retail: MWCC colors {param-copy, parent} as {r31, r30}
+// (retail: {r30, r31}) and stages iteration null-returns in r3 instead of
+// r31; the final convertToView/recursion pair is also inlined where retail
+// keeps out-of-line bl calls.
+extern "C" CView* getRootView__9CViewRootFP5CView(CView* self) {
+    CWorkThread* parent;
     CView* cur;
+    CView* cand;
     CViewRoot* root = lbl_eu_806655D0;
 
     if (root == nullptr) {
         return nullptr;
     }
-    if (root == (CViewRoot*)self->mParent) {
+    parent = self->mParent;
+    if (root == (CViewRoot*)parent) {
         return nullptr;
     }
-    if (getView__8CDesktopFv() == (CView*)self->mParent) {
-        return (CView*)self;
+    if (getView__8CDesktopFv() == (CView*)parent) {
+        return self;
     }
 
     cur = CView::convertToView(self->mParent);
@@ -1076,34 +1204,37 @@ extern "C" CView* getRootView__9CViewRootFP5CView(CViewRoot* self) {
     if (lbl_eu_806655D0 == nullptr) {
         return nullptr;
     }
-    if (lbl_eu_806655D0 == (CViewRoot*)cur->mParent) {
+    if (lbl_eu_806655D0 == (CViewRoot*)(cur->mParent)) {
         return nullptr;
     }
-    if (getView__8CDesktopFv() == (CView*)cur->mParent) {
+    if (getView__8CDesktopFv() == (CView*)(cur->mParent)) {
         return cur;
     }
-    cur = CView::convertToView(cur->mParent);
+    cand = CView::convertToView(cur->mParent);
 
     if (lbl_eu_806655D0 == nullptr) {
         return nullptr;
     }
-    if (lbl_eu_806655D0 == (CViewRoot*)cur->mParent) {
+    if (lbl_eu_806655D0 == (CViewRoot*)(cand->mParent)) {
         return nullptr;
     }
-    if (getView__8CDesktopFv() == (CView*)cur->mParent) {
-        return cur;
+    if (getView__8CDesktopFv() == (CView*)(cand->mParent)) {
+        return cand;
     }
-    cur = CView::convertToView(cur->mParent);
+    cur = cand;
+    cand = CView::convertToView(cand->mParent);
 
     if (lbl_eu_806655D0 == nullptr) {
         return nullptr;
     }
-    if (lbl_eu_806655D0 == (CViewRoot*)cur->mParent) {
+    if (lbl_eu_806655D0 == (CViewRoot*)(cand->mParent)) {
         return nullptr;
     }
-    if (getView__8CDesktopFv() == (CView*)cur->mParent) {
-        return cur;
+    if (getView__8CDesktopFv() == (CView*)(cand->mParent)) {
+        return cand;
     }
+    cur = cand;
 
-    return getRootView__9CViewRootFP5CView((CViewRoot*)convertToView__5CViewFP11CWorkThread(cur->mParent));
+    return getRootView__9CViewRootFP5CView(
+        (CView*)convertToView__5CViewFP11CWorkThread(cur->mParent));
 }

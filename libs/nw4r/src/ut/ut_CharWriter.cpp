@@ -8,15 +8,11 @@ extern f64 lbl_eu_8066A148;  // 0x4330000080000000 (signed int->f32 magic)
 extern f32 lbl_eu_8066A150;  // 0.5f
 extern f64 lbl_eu_8066A158;  // 0x4330000000000000 (2^52, unsigned u32->f32 magic)
 
-// int -> f32 conversion matching retail: build the 2^52+x double on the stack
-// (low word = x ^ 0x80000000, high word = 0x43300000) and subtract the shared
-// signed magic (MWCC_CASES 7i). Statement order matters: the value word
-// first, then 0x43300000.
+// int -> f32 conversion matching retail: plain builtin cast. Retail rounds
+// single (fsubs against the shared signed magic); the manual union form makes
+// MWCC emit double fsub + frsp (MWCC_CASES CActorParam UnkVirtualFunc11).
 inline f32 ConvF32S(s32 v) {
-    union { f64 d; u32 w[2]; } u;
-    u.w[1] = (u32)v ^ 0x80000000;
-    u.w[0] = 0x43300000;
-    return (f32)(u.d - lbl_eu_8066A148);
+    return (f32)v;
 }
 
 // u16/u32 -> f32 conversion matching retail (unsigned magic 2^52).

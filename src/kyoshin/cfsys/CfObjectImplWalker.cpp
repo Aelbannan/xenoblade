@@ -185,7 +185,7 @@ L2EE8:
             }
             if (count != 0) goto L3030;
         }
-        if (func_80043F18(&holder)->field_620 == 0) goto L3030;
+        if (((cf::CfWalkEnumList*)func_80043F18(&holder))->field_620 == 0) goto L3030;
 
         // Start the battle: notify the battle hooks, arm the move
         // sub-object's fight command and close the manager call.
@@ -208,7 +208,7 @@ L3030:
         CfWalkBMView* bm =
             (CfWalkBMView*)getInstance__Q22cf14CBattleManagerFv();
         if (bm->field_194 < 0x64) goto L30C4;
-        if (func_80043F18(&holder)->field_620 == 0) goto L30C4;
+        if (((cf::CfWalkEnumList*)func_80043F18(&holder))->field_620 == 0) goto L30C4;
         // Count live battles on the second list; an empty chain or the
         // multi-battle flag disarms.
         bm = (CfWalkBMView*)getInstance__Q22cf14CBattleManagerFv();
@@ -304,7 +304,7 @@ L3360:
         func_800F4A98(func_80043F18(&holder), 0x80000002, 0);
         void* selector = self->vf48();
         func_800F6ED0(func_80043F18(&holder), selector);
-        if (func_80043F18(&holder)->field_620 != 0) {
+        if (((cf::CfWalkEnumList*)func_80043F18(&holder))->field_620 != 0) {
             void* item = func_800F6E98(func_80043F18(&holder), 0);
             if (func_800FE6A4(func_800FE68C(), 0x80000003, 0,
                               (u32)(uintptr_t)item) != 0) {
@@ -481,7 +481,7 @@ void func_800C3878(cf::CfObjectImplWalker* self) {
     cf::CfWalkEnumHolder holder;
     func_80043D90(&holder);
     func_800F4A98(func_80043F18(&holder), 0x20, 1);
-    for (u32 i = 0; i < func_80043F18(&holder)->field_620; i++) {
+    for (u32 i = 0; i < ((cf::CfWalkEnumList*)func_80043F18(&holder))->field_620; i++) {
         void* obj = func_800B708C((int)(uintptr_t)func_800F6E98(
             func_80043F18(&holder), i));
         if (obj != getPlayer__Q22cf13CfGameManagerFi(0)) {
@@ -535,7 +535,7 @@ void func_800C3AD4(cf::CfObjectImplWalker* self) {
     cf::CfWalkEnumHolder holder;
     func_80043D90(&holder);
     func_800F4A98(func_80043F18(&holder), 0x300, 0);
-    for (u32 i = 0; i < func_80043F18(&holder)->field_620; i++) {
+    for (u32 i = 0; i < ((cf::CfWalkEnumList*)func_80043F18(&holder))->field_620; i++) {
         cf::CfWalkTalkSrc* src = (cf::CfWalkTalkSrc*)func_800BBC0C(
             func_800B708C((int)(uintptr_t)func_800F6E98(func_80043F18(&holder), i)));
         if (src == mgr) continue;
@@ -658,7 +658,7 @@ void func_800C3BF0(cf::CfObjectImplWalker* self) {
         cf::CfWalkEnumHolder holder;
         func_80043D90(&holder);
         func_800F4A98(func_80043F18(&holder), 0x300, 0);
-        for (u32 i = 0; i < func_80043F18(&holder)->field_620; i++) {
+        for (u32 i = 0; i < ((cf::CfWalkEnumList*)func_80043F18(&holder))->field_620; i++) {
             cf::CfWalkTalkSrc* src = (cf::CfWalkTalkSrc*)func_800BBC0C(
                 func_800B708C((int)(uintptr_t)func_800F6E98(
                     func_80043F18(&holder), i)));
@@ -692,7 +692,7 @@ void func_800C3BF0(cf::CfObjectImplWalker* self) {
         cf::CfWalkEnumHolder holder;
         func_80043D90(&holder);
         func_800F4A98(func_80043F18(&holder), 0x300, 0);
-        for (u32 i = 0; i < func_80043F18(&holder)->field_620; i++) {
+        for (u32 i = 0; i < ((cf::CfWalkEnumList*)func_80043F18(&holder))->field_620; i++) {
             cf::CfWalkTalkSrc* talk =
                 (cf::CfWalkTalkSrc*)func_800BBC0C(func_800B708C(
                     (int)(uintptr_t)func_800F6E98(func_80043F18(&holder), i)));
@@ -728,7 +728,7 @@ void func_800C2E3C(cf::CfObjectImplWalker* self) {
     // (lbl_eu_80666BA8) and the two comparison constants (B84, B8C) straight
     // into f29/f30/f31 in first-use order.
     s32 found = 0;
-    for (u32 i = 0; i < func_80043F18(&holder)->field_620; i++) {
+    for (u32 i = 0; i < ((cf::CfWalkEnumList*)func_80043F18(&holder))->field_620; i++) {
         cf::CfWalkEnumItem* item = (cf::CfWalkEnumItem*)func_800F6EC0(
             func_80043F18(&holder), i);
         cf::CfWalkTalkSrc* src =
@@ -804,7 +804,7 @@ L3C68:
         if (func_80122448() != 0) goto L4070;
         func_80043D90(&holder);
         func_800F4A98(func_80043F18(&holder), 0xa20, 0);
-        for (u32 i = 0; i < func_80043F18(&holder)->field_620; i++) {
+        for (u32 i = 0; i < ((cf::CfWalkEnumList*)func_80043F18(&holder))->field_620; i++) {
             void* obj = func_800B708C((int)(uintptr_t)func_800F6E98(
                 func_80043F18(&holder), i));
             void* msub = self->field_18;
@@ -823,7 +823,7 @@ L3C68:
         if (done != 0) goto L4064;
         if (func_8013EB90(1) != 0) goto L4064;
         func_800F4A98(func_80043F18(&holder), 0x300, 0);
-        for (u32 i = 0; i < func_80043F18(&holder)->field_620; i++) {
+        for (u32 i = 0; i < ((cf::CfWalkEnumList*)func_80043F18(&holder))->field_620; i++) {
             cf::CfWalkTalkSrc* src = (cf::CfWalkTalkSrc*)func_800BBC0C(
                 func_800B708C((int)(uintptr_t)func_800F6E98(
                     func_80043F18(&holder), i)));
@@ -1124,7 +1124,7 @@ void func_800C4888(cf::CfObjectImplWalker* self) {
         cf::CfWalkEnumHolder holder;
         func_80043D90(&holder);
         func_800F4A98(func_80043F18(&holder), 0x300, 0);
-        for (u32 i = 0; i < func_80043F18(&holder)->field_620; i++) {
+        for (u32 i = 0; i < ((cf::CfWalkEnumList*)func_80043F18(&holder))->field_620; i++) {
             cf::CfWalkTalkSrc* src = (cf::CfWalkTalkSrc*)func_800BBC0C(
                 func_800B708C((int)(uintptr_t)func_800F6E98(
                     func_80043F18(&holder), i)));
@@ -1173,7 +1173,7 @@ int func_800C4BD4(cf::CfObjectImplWalker* self, u32 a, u32 b) {
     int found = 0;
     func_80043D90(&holder);
     func_800F4A98(func_80043F18(&holder), 0x220, 0);
-    for (u32 i = 0; i < (u32)func_80043F18(&holder)->field_620; i++) {
+    for (u32 i = 0; i < (u32)((cf::CfWalkEnumList*)func_80043F18(&holder))->field_620; i++) {
         cf::CfWalkTalkSrc* talk =
             (cf::CfWalkTalkSrc*)func_800BBC0C(
                 func_800B708C((int)(uintptr_t)func_800F6E98(
@@ -1318,7 +1318,7 @@ void func_800C551C(cf::CfObjectImplWalker* self, u32 flag) {
     const u16 effA = 0x44;
     const u16 effB = 0x45;
     const u16 effC = 0x2;
-    for (u32 i = 0; i < (u32)func_80043F18(&holder)->field_620; i++) {
+    for (u32 i = 0; i < (u32)((cf::CfWalkEnumList*)func_80043F18(&holder))->field_620; i++) {
         cf::CfWalkPlayerRec* rec = (cf::CfWalkPlayerRec*)func_8016FE34(
             func_800F6EAC(func_80043F18(&holder), (int)i));
         if (rec->f162() == 0) continue;
@@ -1341,7 +1341,7 @@ void func_800C551C(cf::CfObjectImplWalker* self, u32 flag) {
             spawn.field_C = effA;
             spawn.field_10 = val10;
             spawn.field_20 = val8;
-            for (u32 j = 0; j < (u32)func_80043F18(&holder)->field_620; j++) {
+            for (u32 j = 0; j < (u32)((cf::CfWalkEnumList*)func_80043F18(&holder))->field_620; j++) {
                 void* item = func_8016FE34(
                     func_800F6EAC(func_80043F18(&holder), (int)j));
                 func_800EA9A8(getInstance__Q22cf14CBattleManagerFv(), item,
@@ -1356,7 +1356,7 @@ void func_800C551C(cf::CfObjectImplWalker* self, u32 flag) {
             spawn.field_C = effB;
             spawn.field_10 = val10;
             spawn.field_20 = val8;
-            for (u32 j = 0; j < (u32)func_80043F18(&holder)->field_620; j++) {
+            for (u32 j = 0; j < (u32)((cf::CfWalkEnumList*)func_80043F18(&holder))->field_620; j++) {
                 void* item = func_8016FE34(
                     func_800F6EAC(func_80043F18(&holder), (int)j));
                 func_800EA9A8(getInstance__Q22cf14CBattleManagerFv(), item,
@@ -1369,7 +1369,7 @@ void func_800C551C(cf::CfObjectImplWalker* self, u32 flag) {
             spawn.field_C = effC;
             spawn.field_10 = val10;
             spawn.field_20 = val8;
-            for (u32 j = 0; j < (u32)func_80043F18(&holder)->field_620; j++) {
+            for (u32 j = 0; j < (u32)((cf::CfWalkEnumList*)func_80043F18(&holder))->field_620; j++) {
                 void* item = func_8016FE34(
                     func_800F6EAC(func_80043F18(&holder), (int)j));
                 func_800EA9A8(getInstance__Q22cf14CBattleManagerFv(), item,
@@ -1378,7 +1378,7 @@ void func_800C551C(cf::CfObjectImplWalker* self, u32 flag) {
         }
         sub = rec->f162();
         if (func_80260264((void*)(uintptr_t)sub, 0x36, &val10) != 0) {
-            for (u32 j = 0; j < (u32)func_80043F18(&holder)->field_620; j++) {
+            for (u32 j = 0; j < (u32)((cf::CfWalkEnumList*)func_80043F18(&holder))->field_620; j++) {
                 cf::CfWalkPlayerRec* item = (cf::CfWalkPlayerRec*)func_8016FE34(
                     func_800F6EAC(func_80043F18(&holder), (int)j));
                 item->f188(val10);
@@ -1458,7 +1458,7 @@ void func_800C50F4(cf::CfObjectImplWalker* self) {
     func_801F8E20(actor, 1);
     func_8013EC6C(1, 0);
     lbl_eu_80663E24 |= 0x200000;
-    getInstance__Q22cf13CfGameManagerFv()->field_80 = actor->field_74;
+    ((cf::CfWalkGameMgr*)getInstance__Q22cf13CfGameManagerFv())->field_80 = actor->field_74;
     self->field_39C = 1;
 }
 
@@ -1472,7 +1472,7 @@ void func_800C525C(cf::CfObjectImplWalker* self) {
     if (self->field_39C == 0) return;
     if ((lbl_eu_80663E24 & 0x200000) == 0) return;
     cf::CfWalkActorObj* obj = (cf::CfWalkActorObj*)func_800B708C(
-        (int)(uintptr_t)getInstance__Q22cf13CfGameManagerFv()->field_80);
+        (int)(uintptr_t)((cf::CfWalkGameMgr*)getInstance__Q22cf13CfGameManagerFv())->field_80);
     if (obj == nullptr) return;
     if (!(obj->field_64 & 0x100)) return;
     // Validate that the player really is out of battle before leaving.
@@ -1498,7 +1498,7 @@ void func_800C525C(cf::CfObjectImplWalker* self) {
         if (obj != nullptr && obj->field_98 != nullptr)
             func_80485774(obj->field_98, 0);
         lbl_eu_80663E24 &= ~0x200000;
-        getInstance__Q22cf13CfGameManagerFv()->field_80 = nullptr;
+        ((cf::CfWalkGameMgr*)getInstance__Q22cf13CfGameManagerFv())->field_80 = nullptr;
     } else {
         cf::CfWalkSubC4* sub = obj->field_C4;
         if (sub != nullptr) {

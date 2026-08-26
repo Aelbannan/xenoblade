@@ -3341,8 +3341,8 @@ void func_801CBDE8(void* self) {
 void func_801CC0EC(void* self) {
     // sub-array pointer and grid index stay live across calls -> MWCC colors
     // them into the stmw-saved r29/r30; buf/tmp mirror retail's stack slots.
-    u8* sub;
     u32 entry;
+    u8* sub;
     u32 buf[3];
     u32 tmp[3];
     u8* p = (u8*)self;

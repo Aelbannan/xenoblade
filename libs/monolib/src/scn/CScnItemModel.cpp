@@ -1976,15 +1976,16 @@ extern "C" void func_80485804(CScnItemModel* self, CScnEnvLgtData* param) {
 // reference list (0x7B4), rejecting a node that is already present, then
 // notify the node via the slot-list link callback (vtable 0xD4) with `self`
 // as the parent. Returns 1 when a slot was found (or the list was full), 0
-// when the node was already linked. The duplicate checks fold the first
-// three slots to direct offsets and read slot 3 through the self+8 refs
-// view (retail keeps that base in r5).
+// when the node was already linked. Both scans are constant-trip loops:
+// MWCC fully unrolls the duplicate check, folding the first three slot
+// reads to direct offsets and re-materialising a self+8 base register for
+// the last two (same unroll shape as func_804859E8), and strength-reduces
+// the fill loop into a walked self+0x7B4 pointer while keeping the store
+// address as self + i*4.
 int func_804858C8(CScnItemModel* self, CScnItemModel* node) {
-    if (self->slots7B4[0] == node) return 0;
-    if (self->slots7B4[1] == node) return 0;
-    if (self->slots7B4[2] == node) return 0;
-    CScnItemModelRefs* refs = (CScnItemModelRefs*)((u8*)self + 8);
-    if (refs->slots[3] == node) return 0;
+    for (u32 i = 0; i < 4; i++) {
+        if (self->slots7B4[i] == node) return 0;
+    }
     for (u32 i = 0; i < 4; i++) {
         if (self->slots7B4[i] == 0) {
             self->slots7B4[i] = node;

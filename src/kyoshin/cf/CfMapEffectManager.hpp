@@ -87,8 +87,8 @@ void func_800ACC28(cf::CfObject* object, float first, float second);
 // CfGameManager phase/counter getters (same signatures as CfGimmickItem.hpp;
 // CfGimmickItem.hpp itself cannot be included here - its CfGimmick.hpp
 // re-declares func_8009CF8C with a conflicting signature).
-unsigned int func_800822F4__Q22cf13CfGameManagerFv(void);
-unsigned int func_80082354__Q22cf13CfGameManagerFv(unsigned int a);
+u32 func_800822F4__Q22cf13CfGameManagerFv(void);
+u32 func_80082354__Q22cf13CfGameManagerFv(u32 a);
 int func_8016EFD8(int unused, int index);
 void func_8016FC98(cf::CfMapEffectManager* pSelf, cf::CfObject* target);
 void func_8016FD84(float first, float second);

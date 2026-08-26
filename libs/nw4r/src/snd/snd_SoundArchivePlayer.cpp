@@ -1042,7 +1042,7 @@ struct SapSetupStartInfo {
 struct SapMgrBlock {
     char pool[4];                   // at 0x0 (detail::PoolImpl)
     u32 listSize;                   // at 0x4
-    ut::detail::LinkListNode listHead; // at 0x8
+    ut::LinkListNode listHead; // at 0x8
     OSMutex mutex;                  // at 0x10
 };
 
@@ -1190,8 +1190,8 @@ SoundStartable::StartResult SoundArchivePlayer::detail_SetupSoundImpl(
 
         if (pSeqSound != NULL) {
             // Sorted insert into the manager priority list.
-            ut::detail::LinkListNode* it = pMgr->listHead.GetNext();
-            ut::detail::LinkListNode* end = &pMgr->listHead;
+            ut::LinkListNode* it = pMgr->listHead.GetNext();
+            ut::LinkListNode* end = &pMgr->listHead;
 
             while (it != end) {
                 detail::BasicSound* pCur =
@@ -1205,7 +1205,7 @@ SoundStartable::StartResult SoundArchivePlayer::detail_SetupSoundImpl(
 
             reinterpret_cast<ut::detail::LinkListImpl*>(&pMgr->listSize)
                 ->Insert(ut::detail::LinkListImpl::Iterator(it),
-                         reinterpret_cast<ut::detail::LinkListNode*>(
+                         reinterpret_cast<ut::LinkListNode*>(
                              reinterpret_cast<char*>(pSeqSound) + 0xEC));
 
             OSUnlockMutex(&pMgr->mutex);
@@ -1265,8 +1265,8 @@ SoundStartable::StartResult SoundArchivePlayer::detail_SetupSoundImpl(
         }
 
         if (pStrmSound != NULL) {
-            ut::detail::LinkListNode* it = pMgr->listHead.GetNext();
-            ut::detail::LinkListNode* end = &pMgr->listHead;
+            ut::LinkListNode* it = pMgr->listHead.GetNext();
+            ut::LinkListNode* end = &pMgr->listHead;
 
             while (it != end) {
                 detail::BasicSound* pCur =
@@ -1280,7 +1280,7 @@ SoundStartable::StartResult SoundArchivePlayer::detail_SetupSoundImpl(
 
             reinterpret_cast<ut::detail::LinkListImpl*>(&pMgr->listSize)
                 ->Insert(ut::detail::LinkListImpl::Iterator(it),
-                         reinterpret_cast<ut::detail::LinkListNode*>(
+                         reinterpret_cast<ut::LinkListNode*>(
                              reinterpret_cast<char*>(pStrmSound) + 0xEC));
 
             OSUnlockMutex(&pMgr->mutex);
@@ -1339,8 +1339,8 @@ SoundStartable::StartResult SoundArchivePlayer::detail_SetupSoundImpl(
         }
 
         if (pWaveSound != NULL) {
-            ut::detail::LinkListNode* it = pMgr->listHead.GetNext();
-            ut::detail::LinkListNode* end = &pMgr->listHead;
+            ut::LinkListNode* it = pMgr->listHead.GetNext();
+            ut::LinkListNode* end = &pMgr->listHead;
 
             while (it != end) {
                 detail::BasicSound* pCur =
@@ -1354,7 +1354,7 @@ SoundStartable::StartResult SoundArchivePlayer::detail_SetupSoundImpl(
 
             reinterpret_cast<ut::detail::LinkListImpl*>(&pMgr->listSize)
                 ->Insert(ut::detail::LinkListImpl::Iterator(it),
-                         reinterpret_cast<ut::detail::LinkListNode*>(
+                         reinterpret_cast<ut::LinkListNode*>(
                              reinterpret_cast<char*>(pWaveSound) + 0xEC));
 
             OSUnlockMutex(&pMgr->mutex);

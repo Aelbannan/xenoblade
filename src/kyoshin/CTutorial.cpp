@@ -7,7 +7,46 @@
 
 #include "kyoshin/code_80135FDC.hpp"
 
+#include "monolib/device/CDeviceVI.hpp"
+#include "monolib/util/MemManager.hpp"
+#include "kyoshin/plugin/ocBdat.hpp"
+#include "monolib/device/CDeviceFile.hpp"
+#include <nw4r/lyt/lyt_resourceAccessor.h>
+
 #include <functions.hpp>
+
+// Fake SI interface for the nw4r::lyt::Layout deleting-destructor dispatch at
+// vtable slot 2 (+0x8); real virtual dispatch reproduces the retail
+// `lwz r12,0(r3); lwz r12,8(r12); mtctr; bctrl` sequence.
+struct CTutorialLayoutDtorVt {
+    virtual void destroy(u32 flags);
+};
+
+// Constructor: install the IWorkEvent vtable, construct the two memory
+// regions (in declaration order), null every pointer, then set the state
+// bytes - 0x47 defaults to visible; the two ctor args land at 0x48 (locale)
+// and 0x53 (region/flags).
+CTutorial::CTutorial(u8 param_1, u8 param_2) : CTutorialVtblBase() {
+    mFileHandle0 = nullptr;
+    mFileHandle1 = nullptr;
+    mFileHandle2 = nullptr;
+    mAccessor0 = nullptr;
+    mAccessor1 = nullptr;
+    mpLayout = nullptr;
+    mpAnimTrans0 = nullptr;
+    mpAnimTrans1 = nullptr;
+    field_44 = 0;
+    field_45 = 0;
+    field_46 = 0;
+    field_47 = 1;
+    field_48 = param_1;
+    field_4C = nullptr;
+    field_50 = 0;
+    field_51 = 0;
+    field_52 = 0;
+    field_53 = param_2;
+}
+
 u8 CTutorial::func_8029ACAC() { return this->field_46; }
 u8 CTutorial::func_8029ACB4() { return this->field_47; }
 u8 CTutorial::func_8029ACBC() { return this->field_52; }
@@ -83,18 +122,59 @@ __declspec(noinline) void CTutorial::func_8029B010() {
     }
 }
 
-void func_8029B05C(){}
+/* Refresh the tutorial page: set both text panes from the current/bound page
+ * counters, sprintf the locale-specific texture name, fetch it from the
+ * loaded locale archive (mFileHandle1 actually holds an accessor-like object)
+ * and bind it onto the layout. */
+void CTutorial::func_8029B124() {
+    char buf[0x28];
+    // (s8)(x+1) makes MWCC emit extsb-before-increment (retail shape).
+    func_80136910(mpLayout, &lbl_eu_80510290[0x79], (s8)(field_50 + 1));
+    func_80136910(mpLayout, &lbl_eu_80510290[0x82], field_51);
+    if (func_80086F9C__Q22cf13CfGameManagerFv(-1) != 0) {
+        sprintf(buf, &lbl_eu_80510290[0x8b], field_48, (s8)(field_50 + 1));
+    } else {
+        sprintf(buf, &lbl_eu_80510290[0xa0], field_48, (s8)(field_50 + 1));
+    }
+    void* tex = reinterpret_cast<nw4r::lyt::ResourceAccessor*>(mFileHandle1)
+                    ->GetResource(0x74696d67, buf, 0);
+    if (tex != NULL) {
+        func_80137E7C(mpLayout, &lbl_eu_80510290[0xb5], tex);
+    }
+}
 
-extern "C" __declspec(noinline) void func_8029B124(CTutorial* self) {}
+// Tutorial data reload: validate the loaded resources, resolve the BDAT
+// text-table pointer when the region gate (0x53) is clear, then reset the
+// page counters and refresh.
+extern "C" void func_8029B05C(CTutorial* self) {
+    if (self->field_53 != 0) {
+        if (self->mAccessor0 == nullptr || self->field_4C == nullptr ||
+            self->mAccessor1 == nullptr)
+            return;
+    } else {
+        if (self->mAccessor0 == nullptr || self->mAccessor1 == nullptr)
+            return;
+        // Resolve the tutorial BDAT table handle by its pooled tag string.
+        func_8003AA34();
+        lbl_eu_80664A30 = (u32)getFP__FPCc(&lbl_eu_80510290[0x6b]);
+    }
+    self->field_46 = 1;
+    self->field_44 = 1;
+    self->field_50 = 0;
+    self->field_51 =
+        (s8)func_801361E8(lbl_eu_80664A30, &lbl_eu_80510290[0x74], self->field_48);
+    self->func_8029B124();}
 
 // Reset a block of UI flags (0x3340..0x33BE) owned by this tutorial, then set
 // the owner id 0x270 entry to a heap/direct-address classification mask.
 void CTutorial::func_8029B498() {
-    for (s16 i = 0x3340; i < 0x33bf; i++) {
+    s16 i = 0x3340;
+    while (i < 0x33bf) {
         func_8009D018(i, (u32)this);
+        i++;
     }
-    // (a | -a) >> 31 is -1 for any nonzero address, 0 for null; masked to the
-    // 0x7F000000 window by the caller-side rlwinm.
+    // (a | -a) >> 31 (arithmetic) is -1 for any nonzero address, 0 for null;
+    // masked to the 0x7F000000 window.
     s32 addr = (s32)this;
     func_8009D018(0x270, ((addr | -addr) >> 31) & 0x7f000000);
 }
@@ -108,14 +188,72 @@ extern "C" void func_8029ADF8(CTutorial* self) {
     self->field_50 = (s8)next;
     if ((s8)next < 0)
         self->field_50 = 0;
-    func_8029B124(self);
+    self->func_8029B124();
 }
 
 bool CTutorial::OnFileEvent(CEventFile* pEventFile) { return false; }
 
 void func_8029B498(){}
 
-extern "C" void func_8029AA34() {}
+// Unload: wait for draw done, release BDAT index 4 when the region gate is
+// clear, close the three file handles, destroy + clear the layout, release
+// both accessors, free the data buffer, clear the shared BDAT pointer, then
+// tear down both memory regions in declaration order.
+void CTutorial::func_8029ABD8() {
+    CDeviceVI::waitForDrawDone();
+    if (field_53 != 0) {
+        CBdat::func_8003AA8C(4);
+    }
+    func_801390E0(&mFileHandle0);
+    func_801390E0(&mFileHandle1);
+    func_801390E0(&mFileHandle2);
+    field_44 = 0;
+    nw4r::lyt::Layout* layout = mpLayout;
+    if (layout != nullptr) {
+        if (layout != nullptr) {
+            reinterpret_cast<CTutorialLayoutDtorVt*>(layout)->destroy(1);
+        }
+        mpLayout = nullptr;
+    }
+    func_80139124(mAccessor0);
+    mAccessor0 = nullptr;
+    func_80139124(mAccessor1);
+    mAccessor1 = nullptr;
+    if (field_4C != nullptr) {
+        mtl::MemManager::deallocate(field_4C);
+        field_4C = nullptr;
+    }
+    lbl_eu_80664A30 = 0;
+    mRegion0.func_8045F778();
+    mRegion1.func_8045F778();
+}
+
+// Load the three tutorial data files: the layout arc, then (when the region
+// gate 0x53 is set) a locale-specific data file whose path is sprintf-ed, and
+// finally a game data file whose path depends on the CfGameManager flag.
+void CTutorial::func_8029AA34() {
+    char buf[0x40];
+    mFileHandle0 = CDeviceFile::readFile(
+        mtl::MemManager::getHandleMEM2(), lbl_eu_80510290,
+        reinterpret_cast<IWorkEvent*>(this), 0, 0);
+    if (field_53 != 0) {
+        // Format string has no conversions - retail passes no varargs here
+        // (the stale r5 in the retail asm is leftover from the previous call).
+        sprintf(buf, &lbl_eu_80510290[0x15]);
+        mFileHandle1 = CDeviceFile::readFile(
+            mtl::MemManager::getHandleMEM2(), buf,
+            reinterpret_cast<IWorkEvent*>(this), 0, 0);
+    }
+    if (func_80086F9C__Q22cf13CfGameManagerFv(-1) != 0) {
+        sprintf(buf, &lbl_eu_80510290[0x33], field_48);
+    } else {
+        sprintf(buf, &lbl_eu_80510290[0x4f], field_48);
+    }
+    mFileHandle2 = CDeviceFile::readFile(
+        mtl::MemManager::getHandleMEM2(), buf,
+        reinterpret_cast<IWorkEvent*>(this), 0, 0);
+    field_46 = 0;
+}
 extern "C" void func_8029AB28(CTutorial* self) {
     if (self->field_44 == 0) {
         return;
@@ -138,8 +276,19 @@ extern "C" void func_8029AB28(CTutorial* self) {
     }
     self->mpLayout->Animate(0);
 }
-extern "C" void func_8029ABD8() {}
-extern "C" void func_8029ACEC() {}
+
+/* Advance-anim fully finished: state 4, hide, swap back to anim0 (rewind
+ * transform) and re-tick the layout, then play the completion sound. */
+void CTutorial::func_8029ACEC() {
+    if (field_45 == 3) {
+        field_45 = 4;
+        field_47 = 0;
+        mpLayout->SetAnimationEnable(mpAnimTrans1, false);
+        mpLayout->SetAnimationEnable(mpAnimTrans0, true);
+        mpLayout->Animate(0);
+        func_80138078(9);
+    }
+}
 // Page-navigation helper: mark complete when the counter already sits on the
 // last page, else advance it clamped to bound-1, then refresh and play the
 // confirm sound.
@@ -152,7 +301,7 @@ void CTutorial::func_8029AD88() {
     if ((s8)(u8)(field_50) >= (s8)field_51) {
         field_50 = field_51 - 1;
     }
-    ::func_8029B124(this);
+    func_8029B124();
     func_80138078(8);
 }
 

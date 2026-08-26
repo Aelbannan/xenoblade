@@ -20,14 +20,12 @@ namespace ml {
     /* BUG: No check is done to see if the first dot product is near or less than 0 (the ray won't intersect).
     In that specific case, the function will return a nonsense value. */
     void CPlane::getCross(CVec3& outVec, const CPlane& plane, const CVec3& rayOrigin, const CVec3& rayDir){
+        CVec3 scaled;
         //Calculate the time t at which the ray will intersect the plane
         //Distance is flipped, so + distance is used
-        float dotNO = CVec3::dot(plane.mNormal, rayOrigin);
-        float dotND = CVec3::dot(plane.mNormal, rayDir);
-        float t = -(plane.mDist + dotNO) / dotND;
+        float t = -(plane.mDist + CVec3::dot(plane.mNormal, rayOrigin)) / CVec3::dot(plane.mNormal, rayDir);
         
         //Calculate the intersection point
-        CVec3 scaled;
         CVec3::scale(scaled, rayDir, t);
         CVec3::add(outVec, rayOrigin, scaled);
     }

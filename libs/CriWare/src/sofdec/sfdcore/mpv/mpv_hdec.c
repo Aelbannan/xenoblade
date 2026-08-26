@@ -10,6 +10,13 @@ typedef struct MpvSjChunk {
     s32 size;
 } MpvSjChunk;
 
+/* Per-codec user-data handler record (retail stride 12 from 0xD5C). */
+typedef struct MpvUdEntry {
+    void* udsc;               /* SJ chunk-reader object (0xD5C + 12*i) */
+    void* notify;             /* post-decode callback (0xD60 + 12*i) */
+    void* ctx;                /* callback context (0xD64 + 12*i) */
+} MpvUdEntry;
+
 /* MPV header-decode work structure (retail layout, offsets from self). */
 typedef struct MpvHdec {
     u8  pad00[0x9AC];
@@ -86,9 +93,8 @@ typedef struct MpvHdec {
     u8  padD34[0xD38 - 0xD34];
     s32 d38;                  /* 0xD38 */
     u8  padD3C[0xD58 - 0xD3C];
-    s32 d58;                  /* 0xD58 */
-    void (*d5c[3])(void);     /* 0xD5C */
-    u8  padD68[0xD8C - 0xD68];
+    s32 d58;                  /* 0xD58: active user-data slot count */
+    MpvUdEntry ud[4];         /* 0xD5C: one record per codec slot */
     void* d8c;                /* 0xD8C */
     void* d90;                /* 0xD90 */
     s32 d94;                  /* 0xD94 */
@@ -123,26 +129,40 @@ typedef struct MpvHdecTbl {
 
 void MPVHDEC_Init(void) {
     MpvHdecTbl* tbl = (MpvHdecTbl*)lbl_eu_80602A90;
+    void (*ppic)(void);
+    void (*bpic)(void);
+    void (*shc)(void);
+    void (*gsc)(void);
+    void (*esc)(void);
+    void (*udsc)(void);
+
     memset(&tbl->a, 0, sizeof(tbl->a));
     memset(&tbl->b, 0, sizeof(tbl->b));
     memset(&tbl->c, 0, sizeof(tbl->c));
     memset(&tbl->d, 0, sizeof(tbl->d));
     memset(&tbl->e, 0, sizeof(tbl->e));
-    tbl->a[1] = MPVUMC_PpicSkipped;
-    tbl->a[2] = MPVUMC_PpicSkipped;
-    tbl->a[3] = MPVUMC_BpicSkipped;
-    tbl->b[1] = fn_803AFDB0;
-    tbl->b[2] = fn_803AFDB0;
-    tbl->b[3] = fn_803AFDB0;
-    tbl->b[4] = fn_803AFDB0;
-    tbl->b[11] = fn_803AFDB0;
-    tbl->b[12] = fn_803AFDB0;
-    tbl->b[13] = fn_803AFDB0;
-    tbl->b[14] = fn_803AFDB0;
-    tbl->c[2] = fn_803AFFB4;
-    tbl->c[3] = fn_803AFFB4;
-    tbl->d[3] = fn_803B00B8;
-    tbl->e[3] = fn_803B01BC;
+
+    ppic = MPVUMC_PpicSkipped;
+    bpic = MPVUMC_BpicSkipped;
+    shc = fn_803AFDB0;
+    gsc = fn_803AFFB4;
+    esc = fn_803B00B8;
+    udsc = fn_803B01BC;
+    tbl->a[1] = ppic;
+    tbl->a[2] = ppic;
+    tbl->a[3] = bpic;
+    tbl->b[1] = shc;
+    tbl->b[2] = shc;
+    tbl->b[3] = shc;
+    tbl->b[4] = shc;
+    tbl->b[11] = shc;
+    tbl->b[12] = shc;
+    tbl->b[13] = shc;
+    tbl->b[14] = shc;
+    tbl->c[2] = gsc;
+    tbl->c[3] = gsc;
+    tbl->d[3] = esc;
+    tbl->e[3] = udsc;
 }
 
 void MPV_SetUsrSj(void* self, u32 idx, u32 a, u32 b, u32 c) {
@@ -173,7 +193,7 @@ extern s32 MPVM2V_DecodePicAtr(void* self, void* sj);
 extern s32 MPV_CheckDelim(const u8* p);
 extern s32 mpvhdec_GetCodec(void* self, s32* param);
 extern s32 mpvhdec_DecShcSj(void* self, void* sj);
-extern s32 mpvhdec_DecGscSj(void* self, void* sj);
+s32 mpvhdec_DecGscSj(MpvHdec* self, void* sj);
 extern s32 mpvhdec_DecPscSj(void* self, void* sj);
 extern s32 mpvhdec_DecEscSj(void* self, void* sj, s32 codec);
 extern s32 mpvhdec_DecUdscSj(void* self, void* sj, s32 codec);
@@ -212,7 +232,15 @@ s32 MPVHDEC_RecoverSj(void* self, s32 mask, void* sj) {
 }
 
 extern void* SJMEM_Create(void* pool_mem, u32 flags);
-extern s32 MPV_DecodePicAtrSj(void* self, void* sj);
+extern s32 MPV_DecodePicAtrSj(MpvHdec* self, void* sj);
+
+/* sj object method dispatch helpers (vtable calls at fixed indices) */
+static inline s32 SjRead(void* sj) {
+    return ((s32 (*)(void*, s32))((void**)*(void**)sj)[9])(sj, 1);
+}
+static inline void SjDelete(void* sj) {
+    ((void (*)(void*))((void**)*(void**)sj)[3])(sj);
+}
 
 s32 MPV_DecodePicAtr(void* self, MpvSjChunk* chunk, s32* out) {
     s32 ret;
@@ -221,26 +249,36 @@ s32 MPV_DecodePicAtr(void* self, MpvSjChunk* chunk, s32* out) {
     if (sj == NULL)
         return -1;
     ret = MPV_DecodePicAtrSj(self, sj);
-    {
-        s32 n = ((s32 (*)(void*, s32))*((void**)*(void**)sj + 9))(sj, 1);
-        *out = chunk->size - n;
-    }
-    ((void (*)(void*))*((void**)*(void**)sj + 3))((void*)sj);
+    *out = chunk->size - SjRead(sj);
+    SjDelete(sj);
     return ret;
 }
 
-s32 MPV_DecodePicAtrSj(void* self, void* sj) {
+/* SJ object method table (same layout as the retail SJRBF/SJMEM vtable:
+ * slot 6 = GetChunk @0x18, slot 7 = UngetChunk @0x1C). */
+struct MpvSjVtbl {
+    void (*reserved0)(void* self);
+    void (*reserved1)(void* self);
+    void (*reserved2)(void* self);
+    void (*destroy)(void* self);
+    void* (*getUuid)(void* self);
+    void (*reset)(void* self);
+    int (*getChunk)(void* self, int mode, int size, void* out);   /* 0x18 */
+    int (*ungetChunk)(void* self, int mode, void* chunk);         /* 0x1C */
+};
+
+#define MPV_SJ_VT(obj) (*(struct MpvSjVtbl**)(obj))
+
+s32 MPV_DecodePicAtrSj(MpvHdec* self, void* sj) {
     MpvSjChunk st;
     MpvSjChunk gc;
     s32 codec;
     s32 ret;
     if (MPVLIB_CheckHn(self))
         return MPVERR_SetCode(0, 0xFF03020C);
-    *(s32*)((u8*)self + 0xD94) = 0;
-    ((void (*)(void*, s32, s32, MpvSjChunk*))*(void**)((char*)*(void**)sj + 0x18))(
-        sj, 1, 0x7FFFFFFF, &st);
-    ((void (*)(void*, s32, MpvSjChunk*))*(void**)((char*)*(void**)sj + 0x1C))(
-        sj, 1, &st);
+    self->d94 = 0;
+    MPV_SJ_VT(sj)->getChunk(sj, 1, 0x7FFFFFFF, &st);
+    MPV_SJ_VT(sj)->ungetChunk(sj, 1, &st);
     gc = st;
     if (mpvhdec_GetCodec(self, (s32*)&gc) == 2)
         return MPVM2V_DecodePicAtr(self, sj);
@@ -249,10 +287,8 @@ s32 MPV_DecodePicAtrSj(void* self, void* sj) {
         ret = MPVHDEC_RecoverSj(self, -1, sj);
         if (ret != 0)
             return MPVERR_SetCode(self, ret);
-        ((void (*)(void*, s32, s32, MpvSjChunk*))*(void**)((char*)*(void**)sj + 0x18))(
-            sj, 1, 0x7FFFFFFF, &st);
-        ((void (*)(void*, s32, MpvSjChunk*))*(void**)((char*)*(void**)sj + 0x1C))(
-            sj, 1, &st);
+        MPV_SJ_VT(sj)->getChunk(sj, 1, 0x7FFFFFFF, &st);
+        MPV_SJ_VT(sj)->ungetChunk(sj, 1, &st);
         {
             s32 v = (st.size < 4) ? 0 : MPV_CheckDelim(st.p);
             if (v == 0 || (v & 3) != 0)
@@ -322,20 +358,21 @@ extern void UTY_MemsetDword(void* dst, u32 val, s32 n);
  */
 #define HDEC_READ(val, hi, lo, sh, ptr, n)                                   \
     do {                                                                     \
-        if (sh < 32 - (n)) {                                                 \
-            (val) = (hi) >> (32 - (n));                                      \
-            (hi) <<= (n);                                                    \
-            (sh) += (n);                                                     \
-        } else {                                                             \
-            (sh) -= 32 - (n);                                                \
+        const s32 nb_ = (n);                                                 \
+        if ((sh) >= 32 - nb_) {                                              \
+            (sh) -= 32 - nb_;                                                \
             if ((sh) == 0) {                                                 \
-                (val) = (hi) >> (32 - (n));                                  \
+                (val) = (hi) >> (32 - nb_);                                  \
                 (hi) = (lo);                                                 \
             } else {                                                         \
-                (hi) |= (lo) >> ((n) - (sh));                                \
-                (val) = (hi) >> (32 - (n));                                  \
+                (hi) |= (lo) >> (nb_ - (sh));                                \
+                (val) = (hi) >> (32 - nb_);                                  \
                 (hi) = (lo) << (sh);                                         \
             }                                                                \
+        } else {                                                             \
+            (val) = (hi) >> (32 - nb_);                                      \
+            (hi) <<= nb_;                                                    \
+            (sh) += nb_;                                                     \
         }                                                                    \
         (lo) = *(ptr)++;                                                     \
     } while (0)
@@ -346,7 +383,7 @@ s32 mpvhdec_DecPscSj(void* selfp, void* sj) {
     MpvHdec* self = (MpvHdec*)selfp;
     MpvSjChunk rest;
     u32 p, base;
-    u32 hi, lo, w1;
+    u32 hi, lo;
     u32 v1, v2, v3;
     u32* ptr;
     s32 sh;
@@ -361,10 +398,10 @@ s32 mpvhdec_DecPscSj(void* selfp, void* sj) {
     base = p & ~3u;
     mis = p - base;
     hi = *(u32*)(base + 4);
-    sh = mis * 8;
-    ptr = (u32*)(base + 12);
-    if (sh != 0) hi <<= sh;
+    if ((sh = mis * 8) != 0)
+        hi <<= sh;
     lo = *(u32*)(base + 8);
+    ptr = (u32*)(base + 12);
 
     /* temporal reference: 10 bits -> b70 */
     HDEC_READ(v1, hi, lo, sh, ptr, 10);
@@ -372,7 +409,7 @@ s32 mpvhdec_DecPscSj(void* selfp, void* sj) {
     /* 3 bits -> b74 */
     HDEC_READ(v2, hi, lo, sh, ptr, 3);
     self->b74 = v2;
- /* 16 bits -> c5c */
+    /* 16 bits -> c5c */
     HDEC_READ(v3, hi, lo, sh, ptr, 16);
     self->c5c = v3;
 
@@ -411,8 +448,8 @@ s32 mpvhdec_DecPscSj(void* selfp, void* sj) {
     self->c70 = *(u32*)((char*)tbl + 0x28 + off + self->b20 * 0x28 + idx);
     self->c78 = *(u32*)((char*)tbl + 0xa0 + off + idx);
     self->c7c = *(u32*)((char*)tbl + 0x78 + off + idx);
-    self->c74 = self->c7c;
     self->c80 = *(u32*)((char*)tbl + 0xc8 + off + idx);
+    self->c74 = self->c7c;
 
     /* scan forward for the next slice start marker */
     for (;;) {
@@ -452,14 +489,12 @@ s32 mpvhdec_DecPscSj(void* selfp, void* sj) {
 }
 
 /* Decode the group-of-pictures (GSC) header. */
-s32 mpvhdec_DecGscSj(void* selfp, void* sj) {
-    MpvHdec* self = (MpvHdec*)selfp;
+s32 mpvhdec_DecGscSj(MpvHdec* self, void* sj) {
     MpvSjChunk rest;
-    u32 p, base;
+    s32 p, base;
     u32 hi, lo, nxt;
     u32* ptr;
     s32 sh;
-    u32 mis;
 
     self->d58 = 2;
     self->b8c += 1;
@@ -469,16 +504,17 @@ s32 mpvhdec_DecGscSj(void* selfp, void* sj) {
     ((void (*)(void*, s32, s32, MpvSjChunk*))*(void**)((char*)*(void**)sj + 0x18))(
         sj, 1, 0x7FFFFFFF, &self->chunk);
 
-    p = (u32)(intptr_t)self->chunk.p;
-    base = p & ~3u;
-    mis = p - base;
+    p = (s32)(intptr_t)self->chunk.p;
+    base = p & ~3;
     hi = *(u32*)(base + 4);
-    sh = mis * 8;
+    sh = (p - base) * 8;
     if (sh != 0) hi <<= sh;
     lo = *(u32*)(base + 8);
     ptr = (u32*)(base + 12);
 
-    /* pull 25 bits; the GOP time code fields are peeled off the window below */
+    /* pull 25 bits; the GOP time code fields are peeled off the window below.
+     * nxt is only fetched when we started mid-word (sh >= 7): otherwise the
+     * 27 consumed bits all fit in the hi/lo window already in hand. */
     if (sh >= 7) {
         sh -= 7;
         if (sh != 0) {
@@ -488,12 +524,12 @@ s32 mpvhdec_DecGscSj(void* selfp, void* sj) {
         } else {
             hi >>= 7;
         }
+        nxt = *ptr++;
     } else {
         lo = hi << 25;
         hi >>= 7;
         sh += 25;
     }
-    nxt = *ptr++;
 
     self->b88 = hi & 0x3F;
     hi >>= 6;
@@ -507,8 +543,8 @@ s32 mpvhdec_DecGscSj(void* selfp, void* sj) {
     self->c54 = lo >> 31;
     if (sh == 31) {
         lo = nxt;
-        nxt = *ptr++;
         sh = 0;
+        ptr += 1;
     } else {
         lo <<= 1;
         sh += 1;
@@ -538,16 +574,14 @@ s32 mpvhdec_DecGscSj(void* selfp, void* sj) {
 s32 mpvhdec_DecShcSj(void* selfp, void* sj) {
     MpvHdec* self = (MpvHdec*)selfp;
     MpvSjChunk rest;
-    u32 p, base;
-    u32 hi, lo;
     u32* ptr;
+    u32 hi;
     s32 sh;
-    s32 i;
-    u32 v;
-    s32 idx;
-    u8* qtbl;
-    u8* mat;
+    u32 lo;
+    u32 p, base;
     u32 mis;
+    u32 v;
+    s32 i;
 
     self->d58 = 1;
     self->d00 = 0;
@@ -564,27 +598,28 @@ s32 mpvhdec_DecShcSj(void* selfp, void* sj) {
     base = p & ~3u;
     mis = p - base;
     hi = *(u32*)(base + 4);
-    sh = mis * 8;
-    ptr = (u32*)(base + 12);
-    if (sh != 0) hi <<= sh;
+    if ((sh = mis * 8) != 0)
+        hi <<= sh;
     lo = *(u32*)(base + 8);
+    ptr = (u32*)(base + 12);
 
     HDEC_READ(self->b5c, hi, lo, sh, ptr, 12); /* horizontal size */
     HDEC_READ(self->b60, hi, lo, sh, ptr, 12); /* vertical size */
     HDEC_READ(self->c44, hi, lo, sh, ptr, 4);  /* aspect ratio */
     HDEC_READ(self->b6c, hi, lo, sh, ptr, 4);  /* frame rate code */
     HDEC_READ(self->c48, hi, lo, sh, ptr, 18); /* bit rate */
-    HDEC_READ(self->c50, hi, lo, sh, ptr, 1);  /* marker */
+
+    /* marker bit: consumed but its value is never stored */
+    HDEC_READ(v, hi, lo, sh, ptr, 1);
 
     /* optional intra-quantisation matrix, zig-zag stored via the table */
-    HDEC_READ(v, hi, lo, sh, ptr, 1);
-    if (v != 0) {
-        qtbl = (u8*)(intptr_t)self->t9ac;
-        mat = (u8*)self + 0x300;
-        for (i = 0; i < 64; i++) {
+    HDEC_READ(self->c50, hi, lo, sh, ptr, 1);
+    if (self->c50 != 0) {
+        for (i = 0; i < 64; i += 2) {
             HDEC_READ(v, hi, lo, sh, ptr, 8);
-            idx = (s32)(s8)qtbl[i];
-            mat[idx] = (u8)v;
+            ((u8*)self + 0x300)[(s32)(s8)((u8*)(intptr_t)self->t9ac)[i]] = (u8)v;
+            HDEC_READ(v, hi, lo, sh, ptr, 8);
+            ((u8*)self + 0x300)[(s32)(s8)((u8*)(intptr_t)self->t9ac)[i + 1]] = (u8)v;
         }
     } else {
         UTY_MemcpyDword((u8*)self + 0x300, (const char*)lbl_eu_80602A5C + 8, 16);
@@ -593,12 +628,11 @@ s32 mpvhdec_DecShcSj(void* selfp, void* sj) {
     /* optional non-intra-quantisation matrix (defaults to a flat 16 table) */
     HDEC_READ(v, hi, lo, sh, ptr, 1);
     if (v != 0) {
-        qtbl = (u8*)(intptr_t)self->t9ac;
-        mat = (u8*)self + 0x340;
-        for (i = 0; i < 64; i++) {
+        for (i = 0; i < 64; i += 2) {
             HDEC_READ(v, hi, lo, sh, ptr, 8);
-            idx = (s32)(s8)qtbl[i];
-            mat[idx] = (u8)v;
+            ((u8*)self + 0x340)[(s32)(s8)((u8*)(intptr_t)self->t9ac)[i]] = (u8)v;
+            HDEC_READ(v, hi, lo, sh, ptr, 8);
+            ((u8*)self + 0x340)[(s32)(s8)((u8*)(intptr_t)self->t9ac)[i + 1]] = (u8)v;
         }
     } else {
         UTY_MemsetDword((u8*)self + 0x340, 0x10101010, 16);
@@ -667,51 +701,60 @@ s32 mpvhdec_DecUdscSj(void* selfp, void* sj, s32 codec) {
 extern s32 mpvhdec_DecSeqUdsc(void* self, const u8* p, s32 size);
 
 s32 mpvhdec_AnalyUd(void* self, const u8* p, s32 size) {
-    s32 i;
-    s32 found = 0;
+    MpvHdec* h = (MpvHdec*)self;
+    s32 found;
     s32 ret = 0;
-    s32 codec = *(s32*)((u8*)self + 0xD58);
+    s32 codec = h->d58;
+    s32 i;
+
+    found = 0;
+
+    /* scan past the user-data payload to the next start-code delimiter */
     for (i = 4; i < size - 3; i++) {
-        if (MPV_CheckDelim(p + i) != 0) break;
+        if (MPV_CheckDelim(p + i) != 0)
+            break;
     }
-    if (i == size - 3) found = -1;
+    if (i == size - 3)
+        found = -1;
+
     if (codec == 1) {
         ret = mpvhdec_DecSeqUdsc(self, p, i);
     }
     {
-        void* fn = *(void**)((u8*)self + codec * 12 + 0xD5C);
+        void* fn = h->ud[codec].udsc;
         if (fn != NULL) {
             MpvSjChunk st;
             MpvSjChunk rest;
             ((void (*)(void*, s32, s32, MpvSjChunk*))*(void**)((char*)*(void**)fn + 0x18))(
                 fn, 0, i, &st);
-            memcpy((void*)st.p, p, st.size);
+            memcpy(st.p, p, st.size);
             ((void (*)(void*, s32, MpvSjChunk*))*(void**)((char*)*(void**)fn + 0x20))(
                 fn, 1, &st);
             if (st.size < i) {
                 ((void (*)(void*, s32, s32, MpvSjChunk*))*(void**)((char*)*(void**)fn + 0x18))(
                     fn, 0, i - st.size, &rest);
-                memcpy((void*)rest.p, p + st.size, rest.size);
+                memcpy(rest.p, p + st.size, rest.size);
                 ((void (*)(void*, s32, MpvSjChunk*))*(void**)((char*)*(void**)fn + 0x20))(
                     fn, 1, &rest);
             }
-        }
-    }
-    {
-        void* fn2 = *(void**)((u8*)self + codec * 12 + 0xD60);
-        if (fn2 != NULL) {
-            ((void (*)(void*, s32))fn2)(*(void**)((u8*)self + codec * 12 + 0xD64), codec);
+            /* notify callback only runs when the reader object exists */
+            if (h->ud[codec].notify != NULL) {
+                ((void (*)(void*, s32))h->ud[codec].notify)(h->ud[codec].ctx, codec);
+            }
         }
     }
     if (codec == 3) {
-        if (*(void**)((u8*)self + 0xD8C) != NULL) {
-            s32 n = *(s32*)((u8*)self + 0xD90);
-            if (i < n) n = i;
-            *(s32*)((u8*)self + 0xD94) = n;
-            memcpy(*(void**)((u8*)self + 0xD8C), p, n);
+        if (h->d8c != NULL) {
+            /* snapshot at most i bytes of the user data into the picture-user buffer */
+            s32 n = (s32)h->d90;
+            if (i < n)
+                n = i;
+            h->d94 = n;
+            memcpy(h->d8c, p, n);
         }
     }
-    if (ret != 0) found = ret;
+    if (ret != 0)
+        found = ret;
     return found;
 }
 
@@ -721,29 +764,28 @@ extern int atoi(const char* s);
 
 s32 mpvhdec_DecSeqUdsc(void* selfp, const u8* p, s32 size) {
     MpvHdec* self = (MpvHdec*)selfp;
-    s32 limit = size - 4;
-    s32 i = 0;
     s32 ret = 0;
-    const char* tbl = (const char*)lbl_eu_8051C1F0;
-    while (i < limit) {
-        const u8* q = p + i + 4;
-        if (strncmp((const char*)q, lbl_eu_8051C1F0, 7) == 0) {
-            if (atoi((const char*)q + 16) == 0)
+    s32 i = 0;
+    while (i < size - 4) {
+        if (strncmp((const char*)(p + i + 4), lbl_eu_8051C1F0, 7) == 0) {
+            if (atoi((const char*)(p + i + 4) + 16) == 0)
                 self->d38 = 0;
             else
                 self->d38 = 3;
         }
-        if (strncmp((const char*)q, tbl + 8, 7) == 0) {
-            self->d00 = atoi((const char*)q + 16);
-            self->d04 = atoi((const char*)q + 24);
-            self->d08 = atoi((const char*)q + 32);
+        if (strncmp((const char*)(p + i + 4), lbl_eu_8051C1F0 + 8, 7) == 0) {
+            self->d00 = atoi((const char*)(p + i + 4) + 16);
+            self->d04 = atoi((const char*)(p + i + 4) + 24);
+            self->d08 = atoi((const char*)(p + i + 4) + 32);
         }
-        if (MPV_CheckDelim(q) == 0)
+        if (MPV_CheckDelim(p + i + 4) == 0)
             i++;
         else
             break;
     }
-    if (self->d00 == 8 || self->d00 == 9)
+    if (self->d00 == 8)
+        ret = -1;
+    if (self->d00 == 9)
         ret = -1;
     return ret;
 }

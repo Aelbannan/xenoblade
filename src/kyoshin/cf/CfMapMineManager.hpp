@@ -91,8 +91,8 @@ extern "C" void func_800B9404(void* obj);
 extern "C" void* func_80186BC8(int id);
 extern "C" void func_800BFBF4(u16 id, int mode);
 extern "C" void func_80462E58__8CTaskLODFv(u32 a, u32 b, f64 c);
-extern "C" void func_801BFC38__Q22cf10CfSoundManFUlUlUlUlf(u32 a, u32 b, u32 c,
-                                                           u32 d, f32 e);
+extern "C" u16 func_801BFC38__Q22cf10CfSoundManFUlUlUlUlf(u32 a, u32 b, u32 c,
+                                                          u32 d, f32 e);
 extern "C" CItemImplInstances* CItem_initItemImplInstances();
 extern "C" void func_801583E0(void* item);
 extern "C" void func_801570A0(void* item, u16 v);

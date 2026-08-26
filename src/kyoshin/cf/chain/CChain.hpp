@@ -904,8 +904,9 @@ extern "C" {
     int func_80107C54(void* menu, int index);
     // Arts-menu-up query (CtrlPc.cpp family) used by func_8027A58C.
     int func_801B202C();
-    // Battle-event dispatcher (defined in CBattleManager.cpp).
-    void func_800F3970(void* bm, void* obj1, void* obj2, int idx, int addVal);
+    // Battle-event dispatcher (defined in CBattleManager.cpp): single shared
+    // decl on kyoshin/cf/CBattleManagerApi.hpp (extern "C", retail-unmangled
+    // symbol); the C++-linkage copy here clashed with it (10197).
     // Voice-act / chain arts-combo helpers. func_801537F0 lives in
     // CVision.hpp (same signature, no clash); func_8014AE00 and
     // func_80293E24 have no header declaration, so they are declared here.

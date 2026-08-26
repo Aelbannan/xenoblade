@@ -13,16 +13,20 @@ extern const float lbl_eu_80668000;  // 1.0f literal pool (SDA21): animation com
 
 // Intra-TU forward declarations (definitions in this file; pre-existing missing
 // declarations - required for the TU to compile under -lang=c++)
-extern "C" void func_801D3878(CSortMenu*);
-extern "C" void func_801D390C(CSortMenu*);
-extern "C" void func_801D3958(CSortMenu*);
-extern "C" void func_801D39EC(CSortMenu*);
+// noinline: retail calls the state handlers via bl from func_801D3160;
+// without it MWCC -inline auto inlines them there and bloats the TU.
+extern "C" __declspec(noinline) void func_801D3878(CSortMenu*);
+extern "C" __declspec(noinline) void func_801D390C(CSortMenu*);
+extern "C" __declspec(noinline) void func_801D3958(CSortMenu*);
+extern "C" __declspec(noinline) void func_801D39EC(CSortMenu*);
 // noinline: retail calls func_801D3A3C via bl from every caller; without it MWCC
 // -inline auto inlines the loop body into each caller and bloats the TU.
 extern "C" __declspec(noinline) void func_801D3A3C(CSortMenu*);
 
 // Retail-named SDA2 constants for func_801D353C's pane resize.
 extern const float lbl_eu_80667FF0;  // 16.0f row height (SDA21)
+// Per-page scroll offset constant (SDA21).
+extern const float lbl_eu_80667FF8;  // scroll offset constant (SDA21)
 
 // ============================================================================
 // CSortMenu constructor
@@ -179,6 +183,8 @@ extern "C" u8 func_801D3328(CSortMenu* _this) {
 
 // ============================================================================
 // func_801D3330: Open / initialize sort menu
+// Each GetRootPane() is spelled out fresh - retail reloads mpLayout from the
+// object before every use instead of caching the root pane.
 // ============================================================================
 extern "C" void func_801D3330(CSortMenu* _this) {
     if (_this->field_0x2A != 0) return;
@@ -187,13 +193,11 @@ extern "C" void func_801D3330(CSortMenu* _this) {
     _this->field_0x2B = 0;
     _this->field_0x28 = 1;
 
-    // Each GetRootPane() is a fresh load (retail reloads mpLayout per use).
-    nw4r::lyt::Pane* paneTxt1 =
-        _this->mpLayout->GetRootPane()->FindPaneByName(lbl_eu_8050624C + 0x15, true);
+    char* s = lbl_eu_8050624C;
+    nw4r::lyt::Pane* paneTxt1 = _this->mpLayout->GetRootPane()->FindPaneByName(s + 0x15, true);
+    nw4r::lyt::Pane* paneTxt2 = _this->mpLayout->GetRootPane()->FindPaneByName(s + 0x1d, true);
     f32 textBuf[3];
-    func_80137924(textBuf, paneTxt1,
-                  _this->mpLayout->GetRootPane()->FindPaneByName(lbl_eu_8050624C + 0x1d, true),
-                  _this->mpLayout->GetRootPane());
+    func_80137924(textBuf, paneTxt1, paneTxt2, _this->mpLayout->GetRootPane());
 
     func_801F3670(&_this->mScrollBar, &textBuf);
     func_801F36BC(&_this->mScrollBar, 5, _this->mCount);
@@ -222,19 +226,24 @@ extern "C" void func_801D3430(CSortMenu* _this, const nw4r::math::VEC3* pos) {
 
 // ============================================================================
 // func_801D3454: Update pane text with formatted string
+// Declare-then-assign keeps the lis/addi pairs in retail order (strTable ->
+// r4, string base -> r31); the first rootPane stays live as the 4th arg while
+// the second FindPaneByName reloads it fresh.
 // ============================================================================
-extern "C" void func_801D3454(void* textObj, CSortMenu* _this) {
-    char buf[0x40];
-    int pageIdx = (s8)_this->mPage;
-    const char* fmtStr = (const char*)lbl_eu_805349B8[pageIdx];
-    sprintf(buf, lbl_eu_8050624C + 0x2c, fmtStr);
+extern "C" void func_801D3454(u8* textObj, CSortMenu* _this) {
+    char buf[0x1c];
+    void** strTable;
+    char* s;
+    strTable = lbl_eu_805349B8;
+    s = lbl_eu_8050624C;
+
+    sprintf(buf, s + 0x2c, strTable[(s8)_this->mPage]);
 
     nw4r::lyt::Pane* rootPane = _this->mpLayout->GetRootPane();
-    nw4r::lyt::Pane* pane1 = rootPane->FindPaneByName(lbl_eu_8050624C + 0x1d, true);
-    nw4r::lyt::Pane* pane2 = rootPane->FindPaneByName(buf, true);
+    nw4r::lyt::Pane* pane1 = rootPane->FindPaneByName(s + 0x1d, true);
+    nw4r::lyt::Pane* pane2 = _this->mpLayout->GetRootPane()->FindPaneByName(buf, true);
 
-    u8 newTextBuf[0x40];
-    func_80137924(newTextBuf, pane2, pane1, rootPane);
+    func_80137924(textObj, pane2, pane1, rootPane);
 }
 
 // ============================================================================
@@ -261,15 +270,22 @@ extern "C" void func_801D353C(CSortMenu* _this, s8 page) {
     nw4r::lyt::Pane* pane =
         _this->mpLayout->GetRootPane()->FindPaneByName(lbl_eu_8050624C + 0x2f, true);
 
-    // Read the pane size region up front (retail loads width/height before
-    // the count comparison), then resize height and write the region back.
-    PaneSizeRegion size = *(PaneSizeRegion*)pane;
+    // Local copy of the pane size region; member-wise so MWCC emits an
+    // lfs/stfs pair (a whole-struct copy collapses to lwz).
+    PaneSizeRegion size;
+    CSortMenuPaneSizeView* paneView = (CSortMenuPaneSizeView*)pane;
 
-    u32 count = _this->mCount;
-    u32 itemsPerPage = (count < 5) ? count : 5;
+    size.width = paneView->width;
+    size.height = paneView->height;
 
-    size.height = lbl_eu_80667FF0 * (f32)itemsPerPage;
-    *(PaneSizeRegion*)pane = size;
+    // Visible rows: 5 unless fewer items remain.
+    u32 rows = (_this->mCount < 5) ? (u32)_this->mCount : 5;
+
+    // Cast both operands to f32: MWCC folds the int->double conversion and
+    // the double constant into a single-precision fsubs.
+    size.height = lbl_eu_80667FF0 * ((f32)rows - lbl_eu_80667FF8);
+    paneView->width = size.width;
+    paneView->height = size.height;
 
     _this->mPage = page;
     _this->mSubPage = 0;
@@ -371,9 +387,10 @@ extern "C" void func_801D377C(CSortMenu* _this) {
         s32 maxSub = (s32)(count - 5);
         s32 sp5 = (s32)_this->mSubPage + 5;
         _this->mSubPage = (u8)sp5;
-        s8 sp5s = (s8)(u8)sp5;
-        if (sp5 > maxSub) {
-            s32 newPage = (s32)sp5s - maxSub;
+        u8 sp5u = (u8)sp5;
+        if ((s8)sp5u > maxSub) {
+            // New page comes from the truncated byte, not the sign-extended sum.
+            s32 newPage = (s32)sp5u - maxSub;
             _this->mPage = (u8)newPage;
             _this->mSubPage = (u8)maxSub;
             if ((s8)_this->mPage >= 5) {
@@ -428,7 +445,7 @@ extern "C" void func_801D3818(CSortMenu* _this, int value, u8* outPage, u8* outS
 // ============================================================================
 // func_801D3878: State 1 handler - opening animation
 // ============================================================================
-extern "C" void func_801D3878(CSortMenu* _this) {
+extern "C" __declspec(noinline) void func_801D3878(CSortMenu* _this) {
     if (func_80137444(_this->mpAnimTrans0, lbl_eu_80668000) != 0) {
         _this->field_0x2A = 2;
         _this->mpLayout->SetAnimationEnable(_this->mpAnimTrans0, false);
@@ -440,7 +457,7 @@ extern "C" void func_801D3878(CSortMenu* _this) {
 // ============================================================================
 // func_801D390C: State 2 handler - wait for anim1
 // ============================================================================
-extern "C" void func_801D390C(CSortMenu* _this) {
+extern "C" __declspec(noinline) void func_801D390C(CSortMenu* _this) {
     if (func_80137444(_this->mpAnimTrans1, 1.0f) != 0) {
         _this->field_0x2A = 3;
         _this->field_0x2B = 1;
@@ -450,7 +467,7 @@ extern "C" void func_801D390C(CSortMenu* _this) {
 // ============================================================================
 // func_801D3958: State 4 handler - scroll animation
 // ============================================================================
-extern "C" void func_801D3958(CSortMenu* _this) {
+extern "C" __declspec(noinline) void func_801D3958(CSortMenu* _this) {
     if (func_80137510(_this->mpAnimTrans1, lbl_eu_80668000) != 0) {
         _this->field_0x2A = 5;
         _this->mpLayout->SetAnimationEnable(_this->mpAnimTrans1, false);
@@ -462,7 +479,7 @@ extern "C" void func_801D3958(CSortMenu* _this) {
 // ============================================================================
 // func_801D39EC: State 5 handler - closing animation
 // ============================================================================
-extern "C" void func_801D39EC(CSortMenu* _this) {
+extern "C" __declspec(noinline) void func_801D39EC(CSortMenu* _this) {
     if (func_80137510(_this->mpAnimTrans0, 1.0f) != 0) {
         _this->field_0x2A = 0;
         _this->field_0x2B = 1;
@@ -472,65 +489,85 @@ extern "C" void func_801D39EC(CSortMenu* _this) {
 
 // ============================================================================
 // func_801D3A3C: Update pane text for all 5 slots
+// optimize_for_size: retail uses an stmw r28/lmw r28 block-save frame.
 // ============================================================================
+#pragma optimize_for_size on
 extern "C" __declspec(noinline) void func_801D3A3C(CSortMenu* _this) {
-    void** strTable = (void**)lbl_eu_805349B8;
-    char* resBase = (char*)lbl_eu_8050624C;
-    for (int i = 0; i < 5; i++) {
+    // Declare-then-assign: resBase is born first (takes r31), but strTable's
+    // lis/addi must be EMITTED first (retail schedule) into r30.
+    char* resBase;
+    void** strTable = lbl_eu_805349B8;
+    resBase = lbl_eu_8050624C;
+    // Slots past the entry count fall back to the shared "no item" string.
+    // u8 counter: retail masks i to 8 bits at every use (clrlwi/clrlslwi).
+    for (u8 i = 0; i < 5; i++) {
         int idx = i + (s8)_this->mSubPage;
         if (idx >= (int)_this->mCount) {
             func_80136B4C(_this->mpLayout, (char*)strTable[i], resBase + 0x3e, 0);
         } else {
-            func_80136B4C(_this->mpLayout, (char*)strTable[i], (char*)(uintptr_t)_this->mArray[idx], 0);
+            func_80136B4C(_this->mpLayout, (char*)strTable[i], (char*)_this->mArray[idx], 0);
         }
     }
-    func_801F3850((u8*)_this + 0x2C, (s8)_this->mSubPage);
+    // Single vreg for the converted value keeps the lbz/extsb/clrlwi chain
+    // in one register (retail does not split it across r0/r4).
+    u32 subPage = (u16)(s8)_this->mSubPage;
+    CScrollBarData* scrollBar = &_this->mScrollBar;
+    func_801F3850(scrollBar, subPage);
 }
+#pragma optimize_for_size off
 
 // ============================================================================
 // CSortMenu::OnFileEvent - file load completion callback
+// optimize_for_size: retail uses an stmw r29 block-save frame.
 // ============================================================================
-extern "C" int OnFileEvent__9CSortMenuFP10CEventFile(CSortMenu* _this, CEventFile* event) {
-    if (_this->mFileHandle == event->mFileHandle) {
+#pragma optimize_for_size on
+int CSortMenu::OnFileEvent(CEventFile* event) {
+    if (mFileHandle == event->mFileHandle) {
         char* s = lbl_eu_8050624C;  // resource-name string table base (r31)
 
-        createRegion__17UnkClass_8045F564FiiPCci(&_this->_04[0],
+        createRegion__17UnkClass_8045F564FiiPCci(&_04[0],
                                   (int)getHandleMEM2__Q23mtl10MemManagerFv(),
                                   0x2000, s + 0x3f, 1);
 
         u8 sp8[8];  // Class_8045F858 is 8 bytes (UnkClass* + u32)
-        __ct__14Class_8045F858FP17UnkClass_8045F564(sp8, &_this->_04[0]);
+        __ct__14Class_8045F858FP17UnkClass_8045F564(sp8, &_04[0]);
 
         // Save the file data buffer and clear the handle's reference to it.
-        void* fileData = _this->mFileHandle->getData();
+        void* fileData = mFileHandle->getData();
 
         func_80434A4C__Q23mtl10MemManagerFb(false);
-        _this->mArcResAcc = (nw4r::lyt::ArcResourceAccessor*)createArcResourceAccessor__10CLibLayoutFv();
-        _this->mArcResAcc->Attach(fileData, s + 0x49);
+        mArcResAcc = (nw4r::lyt::ArcResourceAccessor*)createArcResourceAccessor__10CLibLayoutFv();
+        mArcResAcc->Attach(fileData, s + 0x49);
 
-        func_80136E84(&_this->mpLayout, _this->mArcResAcc, s + 0x4d);
-        func_80136F08(_this->mpLayout, &_this->mpAnimTrans0, _this->mArcResAcc, s + 0x63);
-        func_80136F08(_this->mpLayout, &_this->mpAnimTrans1, _this->mArcResAcc, s + 0x7c);
+        func_80136E84(&mpLayout, mArcResAcc, s + 0x4d);
+        func_80136F08(mpLayout, &mpAnimTrans0, mArcResAcc, s + 0x63);
+        func_80136F08(mpLayout, &mpAnimTrans1, mArcResAcc, s + 0x7c);
 
-        // Root pane sits at Layout + 0x10 (direct field access, not a virtual call).
-        nw4r::lyt::Pane* rootPane = *(nw4r::lyt::Pane**)((u8*)_this->mpLayout + 0x10);
-        void* fontObj = func_80452C10__11CDeviceFontFUlPQ34nw4r3lyt6Layout(1, _this->mpLayout);
-        u32 result = ((u32 (*)(void*))(((void**)fontObj)[0x24 / 4]))(fontObj);
+        // Root pane sits at Layout + 0x10 (direct field access, not a virtual
+        // call). Retail order: load mpLayout, materialize the font-id constant,
+        // then read the root pane before calling the font builder.
+        nw4r::lyt::Layout* lyt = mpLayout;
+        int fontId = 1;
+        nw4r::lyt::Pane* rootPane = *(nw4r::lyt::Pane**)((u8*)lyt + 0x10);
+        void* fontObj = func_80452C10__11CDeviceFontFUlPQ34nw4r3lyt6Layout(fontId, lyt);
+        // Virtual call through the font object's vtable slot +0x24.
+        u32 result = ((CDeviceFontItf*)fontObj)->getResource();
         func_8013676C(rootPane, result);
 
-        _this->mpLayout->SetAnimationEnable(_this->mpAnimTrans1, false);
-        _this->mpLayout->SetAnimationEnable(_this->mpAnimTrans0, true);
-        _this->mpLayout->Animate(0);
+        mpLayout->SetAnimationEnable(mpAnimTrans1, false);
+        mpLayout->SetAnimationEnable(mpAnimTrans0, true);
+        mpLayout->Animate(0);
 
-        if (_this->mpLayout != NULL) {
-            _this->field_0x29 = 1;
+        if (mpLayout != NULL) {
+            field_0x29 = 1;
         }
 
-        _this->mFileHandle = NULL;
-        func_8045F810__17UnkClass_8045F564Fv(&_this->_04[0]);
+        mFileHandle = NULL;
+        func_8045F810__17UnkClass_8045F564Fv(&_04[0]);
         __dt__14Class_8045F858Fv(sp8, -1);
 
         return 1;
     }
     return 0;
 }
+#pragma optimize_for_size off

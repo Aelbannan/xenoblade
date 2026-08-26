@@ -4,32 +4,20 @@
 #include "kyoshin/CTaskGame.hpp"
 #include "kyoshin/menu/CMenuPTGauge.hpp"
 
-// getArtsSlotRC: CAIAction.hpp and CChainActorList.hpp declare conflicting
-// signatures (u16 vs int return); this TU calls neither. Pre-include
-// CAIAction.hpp with the rename (same recipe as CBattleManager.cpp) so its
-// include guard latches the renamed decls, then include CBattleManager.hpp
-// (which pulls CChainActorList.hpp) with the canonical names.
-#define getArtsSlotRC ptgauge_artsSlotRcUnused
-#define getArtsParamRC2 ptgauge_artsParamRc2Unused
-#define func_8009EC9C ptgauge_func8009EC9CUnused
-#define func_8016DF2C ptgauge_func8016DF2CUnused
 #include "kyoshin/cf/object/CAIAction.hpp"
-#undef getArtsSlotRC
-#undef getArtsParamRC2
-#undef func_8009EC9C
-#undef func_8016DF2C
-// func_8025FB10: u32 form (CChainActorList.hpp) is canonical; CChainTimer.hpp's
-// int form conflicts. Pre-include CChainActorList.hpp unguarded so its
-// include guards latch the canonical decls, then rename for CBattleManager.hpp
-// (same recipe as CBattleManager.cpp).
+// Owner headers (single winning decls):
+// - getArtsSlotRC / getArtsParamRC2 / func_8025FB10 -> CChainActorList.hpp
+//   (int/const void* arts-query forms match the CActorParam.cpp definitions;
+//   func_8025FB10 extern "C" int form is the single winning decl).
+// - func_800F3970 -> single shared import on CBattleManagerApi.hpp (pulled in
+//   via CBattleManager.hpp below; CChain.hpp's copy is gone).
+// - func_8016DF2C -> canonical extern "C" u16() form (CAIAction.hpp,
+//   matching CfMapEffectManager.hpp / code_80135FDC.hpp).
 #include "kyoshin/cf/chain/CChainActorList.hpp"
-// func_800F3970 is declared by both CBattleManagerApi.hpp and CChain.hpp;
-// this TU calls neither copy - rename both out of the way.
-#define func_800F3970 ptgauge_func800F3970Unused
-#define func_8025FB10 ptgauge_8025FB10Unused
+// (MWCC -ipa file quirk: keep at least one line between the two includes -
+// dropping the remap block's lines outright perturbs pool/regalloc in
+// func_80187B70/func_80187C90; see docs/MWCC_CASES.md IPA line-count note.)
 #include "kyoshin/cf/CBattleManager.hpp"
-#undef func_800F3970
-#undef func_8025FB10
 // code_80135FDC.hpp declares lbl_eu_8066A208 as u32 (line 188), conflicting
 // with the const float epsilon copies elsewhere; rename it out of the way.
 // This TU uses none of them.
@@ -448,7 +436,7 @@ struct CMenuPTGaugeCtorShim {
 // Retail constructs the gauge via the unmangled symbol __ct__CMenuPTGauge
 // (not a MWCC-mangled member ctor); extern "C" keeps the exact retail name
 // and avoids MWCC's auto-vtable/RTTI emission (CMdlAnmEye.cpp recipe).
-extern "C" void __ct__CMenuPTGauge(CMenuPTGauge* self, CProcess* arg) {
+extern "C" CMenuPTGauge* __ct__CMenuPTGauge(CMenuPTGauge* self, CProcess* arg) {
     // Byte-window alias over the object for the CProcess-region fields the
     // retail ctor fills by hand.
     CMenuPTGaugeCtorShim* p = reinterpret_cast<CMenuPTGaugeCtorShim*>(self);
@@ -484,9 +472,9 @@ extern "C" void __ct__CMenuPTGauge(CMenuPTGauge* self, CProcess* arg) {
     // Retail re-stores +0x10 with the composite vtable after the temp
     // (CProcess) vtable; +0x24/+0xac are the IWorkEvent / IScnRender
     // dispatch slots inside that cluster.
+    p->unk10 = (u32)lbl_eu_80532450;
     p->vt58 = (u32)lbl_eu_80532450 + 0x24;
     p->vt5c = (u32)lbl_eu_80532450 + 0xac;
-    p->unk10 = (u32)lbl_eu_80532450;
     p->scene = (u32)arg;
 
     __ct__17UnkClass_8045F564Fv(&self->mLayoutMem);
@@ -503,6 +491,7 @@ extern "C" void __ct__CMenuPTGauge(CMenuPTGauge* self, CProcess* arg) {
     self->mGaugePrev = 0;
     self->unk9C = 0;
     self->mGaugeInit = -1;
+    return self;
 }
 
 typedef CMenuPTGauge* (*PTGaugeCtorFn)(CMenuPTGauge*, CProcess*);
@@ -542,34 +531,50 @@ void func_80187718() {
         }
     }
 }
-// Named .sdata2 conversion magic definition (CFloorMap/CPassiveSkill idiom):
-// pins the bias blob into this TU's constant pool so the manual s32->double
-// conversion schedules with a single named fsubs. Exact bits 0x4330000080000000
-// (2^52 + 2^31).
-extern const double lbl_eu_806679F0 = 4503601774854144.0;
+// Named .sdata2 conversion-magic blob (bits 0x4330000080000000 = 2^52 +
+// 2^31); shared global defined elsewhere - declaration only, so int->float
+// cast pools bind to the named label instead of a private literal.
+extern const double lbl_eu_806679F0;
 extern float lbl_eu_806679F8;
 extern const float lbl_eu_806679FC;
-struct PTGaugeIf { virtual void _v008(); virtual void _v00C(); virtual void _v010(); virtual void _v014(); virtual void _v018(); virtual void _v01C(); virtual void _v020(); virtual void _v024(); virtual void _v028(); virtual void _v02C(); virtual void _v030(); virtual void _v034(); virtual void _v038(); virtual u8* vf3C(char* a, u32 b); };
-
-extern "C" void func_80187858(u8* self) {
-    s32 v = (s32)((float)*(s32*)(self + 0x9c) - 1.0f);
-    *(u32*)(self + 0x9c) = (u32)v;
+extern const float lbl_eu_80667A00;
+// Per-frame gauge counter tick: decrement unk9C by lbl_eu_806679F8 through
+// the .sdata2 double path, clamp at zero (resetting action/base state), then
+// when the value changed resize the gauge pane proportionally.
+void func_80187858(CMenuPTGauge* self) {
+    // Manual s32->double conversion (MWCC_PATTERNS 7i): xoris word first, then
+    // 0x43300000; subtracting the shared bias blob completes the conversion.
+    // lbl_eu_806679F0 is declaration-only here, so the fsubs keeps the named
+    // .sdata2 reloc instead of folding to a private literal.
+    // Decrement step, read early like retail's schedule.
+    const f32 step = lbl_eu_806679F8;
+    union {
+        double d;
+        u32 w[2];
+    } cv;
+    cv.w[1] = (u32)self->unk9C ^ 0x80000000;
+    cv.w[0] = 0x43300000;
+    s32 v = (s32)(cv.d - lbl_eu_806679F0 - step);
+    self->unk9C = v;
     if (v < 0) {
-        *(u32*)(self + 0x90) = 0;
-        *(u32*)(self + 0x94) = 0;
-        *(u32*)(self + 0x9c) = 0;
+        self->mActionIdx = 0;
+        self->mGaugeBase = 0;
+        self->unk9C = 0;
     }
-    u32 cur = *(u32*)(self + 0x9c);
-    u8* sub = *reinterpret_cast<u8**>(self + 0x74);
-    if (sub) {
-        if (*(u32*)(self + 0xa0) != cur) {
-            *(u32*)(self + 0xa0) = cur;
-            u8* r = (*reinterpret_cast<PTGaugeIf**>(sub + 0x10))->vf3C(lbl_eu_805039C8 + 0xd8, 1);
-            if (r) {
-                float old = *(float*)(r + 0x50);
-                *(float*)(r + 0x4c) = lbl_eu_806679E8 * ((float)(s32)cur / lbl_eu_806679E4);
-                *(float*)(r + 0x50) = old;
-            }
+    // Cached in a local (retail keeps it in r31 across the pane lookup).
+    s32 cur = self->unk9C;
+    if (self->mLayout != NULL && self->mGaugeInit != cur) {
+        self->mGaugeInit = cur;
+        nw4r::lyt::Pane* pane =
+            self->mLayout->GetRootPane()->FindPaneByName(lbl_eu_805039C8 + 0xd8, true); // +0xd8 = gauge pane name
+        if (pane != NULL) {
+            nw4r::lyt::Size size;
+            cv.w[1] = (u32)cur ^ 0x80000000;
+            cv.w[0] = 0x43300000;
+            size.height = pane->GetSize().height;
+            // 128.0f scaled by cur / 300.0f (cur converted via the bias blob).
+            size.width = lbl_eu_806679E8 * ((cv.d - lbl_eu_806679F0) / lbl_eu_806679E4);
+            pane->SetSize(size);
         }
     }
 }
@@ -641,9 +646,19 @@ void func_80187C90(CMenuPTGauge* self, s32 partyVal) {
     // Advance the close animation one frame (result unused).
     func_80137444(self->mAnimClose, lbl_eu_806679EC);
 
-    // partyVal -> double via the 0x4330 bias-subtract conversion idiom;
-    // lbl_eu_806679F0 holds the bias constant.
-    if ((double)partyVal - lbl_eu_806679F0 >= lbl_eu_806679E4) {
+    // Manual signed-int -> double conversion (MWCC_PATTERNS 7i): build the
+    // 0x4330000080000000 bit pattern so the fsubs names the shared .sdata2
+    // magic lbl_eu_806679F0 (a plain C cast pools a private constant).
+    // Manual signed-int -> double conversion (MWCC_PATTERNS 7i): build the
+    // 0x4330000080000000 bit pattern so the fsubs names the shared .sdata2
+    // magic lbl_eu_806679F0 (a plain C cast pools a private constant).
+    union {
+        double d;
+        u32 w[2];
+    } cv;
+    cv.w[1] = (u32)partyVal ^ 0x80000000;
+    cv.w[0] = 0x43300000;
+    if (cv.d - lbl_eu_806679F0 >= lbl_eu_806679E4) {
         self->mGaugeBase = 3;
         self->mLayout->Animate(0);
         self->mLayout->UnbindAllAnimation();
@@ -689,7 +704,31 @@ void func_80187A88(CMenuPTGauge* self, s32 partyVal) {
         func_80138078(0x65); // SE
     }
 }
-void func_80187B70(){}
+// Entry-action dispatch entry: re-seed the open animation to frame 1, then
+// switch between close state (value >= lbl_eu_80667A00) or reset-to-entry
+// (value < 100) with SE 0x65.
+void func_80187B70(CMenuPTGauge* self, s32 partyVal) {
+    // Retail seeds this frame through the out-of-line helper, not the inline
+    // SetFrame accessor.
+    func_80137444(self->mAnimOpen, lbl_eu_806679EC);
+    // The 0x43300000-magic blob (lbl_eu_806679F0) in retail is MWCC's own
+    // s32->double cast correction constant, not a source subtraction.
+    if ((float)partyVal >= lbl_eu_80667A00) {
+        self->mGaugeBase = 2;
+        self->mLayout->Animate(0);
+        self->mLayout->UnbindAllAnimation();
+        self->mLayout->BindAnimation(self->mAnimClose);
+        self->mLayout->SetAnimationEnable(self->mAnimClose, true);
+        self->mAnimClose->SetFrame(lbl_eu_806679E0);
+        self->mLayout->Animate(0);
+        func_80138078(0x65); // SE
+    } else {
+        if (partyVal < 100) {
+            self->mGaugeBase = 0;
+            self->mAnimOpen->SetFrame(lbl_eu_806679E0);
+        }
+    }
+}
 // PTMF type shared by both dispatch tables (lbl_eu_805323F8/lbl_eu_80532420).
 extern CMenuPTGaugePtmf lbl_eu_80532420[]; // Dispatch table indexed by mGaugeBase
 

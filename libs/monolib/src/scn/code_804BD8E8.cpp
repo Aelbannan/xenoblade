@@ -3,6 +3,8 @@
 
 #include <harness_catalog.h>
 #include <PowerPC_EABI_Support/Runtime/MWCPlusLib.h>
+#include <revolution/MTX.h>
+#include <nw4r/math/math_types.h>
 
 // [.bss] work areas defined at the bottom of this TU.
 extern u8 lbl_eu_8065F428[];
@@ -17,8 +19,12 @@ namespace ml {
         f32 y;
         f32 z;
     };
-    extern CVec3 zero;
+    extern CVec3 zero __attribute__((unused));
 }
+// Retail shares the vector as zero__Q22ml5CVec3 (plain C symbol).
+using ml::CVec3;
+extern "C" CVec3 zero__Q22ml5CVec3;
+#define ML_ZERO zero__Q22ml5CVec3
 
 // Cross-TU imports (monolib/coli code_804B59C8). C linkage keeps the retail
 // plain symbol names (MWCC would mangle C++-linkage declarations).
@@ -32,15 +38,21 @@ extern "C" void func_804B877C(char* state, const f32* offset, u32 flags, int mod
 extern "C" void func_804B7804(char* self);
 
 // Cross-TU imports (monolib/coli ray/query passes; retail plain symbols).
-extern "C" void func_804B8C2C(void* state, const void* a1, const void* a2,
-                               u32 a3, u32 a4, u32 a5);
-extern "C" void func_804B91E0(void* state, const void* pos, u32 filterA,
-                              u32 mode, u32 flag);
-extern "C" void func_804B9818(void* state);
-extern "C" void func_804BF59C();
-extern "C" void func_8004B0B0(void* obj);
+// Note: MWCC Wii/1.1 rejects extern "C" calls where all six arguments are
+// lvalues (10248); one argument is cast to an rvalue at each callsite.
+extern "C" {
+void func_804B8C2C(void* state, const void* a1, const void* a2,
+                   u32 a3, u32 a4, u32 a5);
+void func_804B91E0(void* state, const void* pos, u32 filterA,
+                   u32 mode, u32 flag);
+void func_804B9818(char* state);
+void func_804BF59C(void* obj, void* other);
+void func_8004B0B0(void* obj);
+}
 extern u8 lbl_eu_8066597F;
-extern "C" f32 PSVECMag(const f32* v);
+
+// Defined below; plain C symbol so cross-TU relocs match retail.
+extern "C" s32 func_804BE62C(ml::CVec3* out);
 void operator delete(void* ptr) throw();
 
 extern char lbl_eu_8065F32C[];
@@ -82,10 +94,9 @@ extern u32 lbl_eu_80665984;
 s32 func_804BF3EC(f32* v, f32* outLen, s32 flag, f32 scale);
 void func_804BEEEC();
 
-// nw4r math/db helpers (retail plain symbols).
-float FrSqrt__Q24nw4r4mathFf(float);
-void PSVECNormalize(const f32* src, f32* dst);
-void Warning__Q24nw4r2dbFPCciPCce(const char*, int, const char*, ...);
+// nw4r math/db helpers (retail plain symbols; C linkage keeps them unmangled).
+extern "C" float FrSqrt__Q24nw4r4mathFf(float);
+extern "C" void Warning__Q24nw4r2dbFPCciPCce(const char*, int, const char*, ...);
 extern const char lbl_eu_80526324[];
 extern const char lbl_eu_80526300[];
 
@@ -312,14 +323,14 @@ s32 func_804BE2E8(const f32* offset, u32 flags, int mode, int select) {
 
 // Forward the segment-query pass to the collision manager and surface the
 // shared entry count.
-u32 func_804BE348(const void* a1, const void* a2, const void* a3, u32 a4,
+u32 func_804BE348(const void* a1, const void* a2, u32 a3, u32 a4,
                   u32 a5) {
     func_804B8C2C((void*)lbl_eu_8065F32C, a1, a2, a3, a4, a5);
     return lbl_eu_80665988;
 }
 
 // Forward the vertical ray registration pass to the collision manager.
-u32 func_804BE398(const void* a1, const void* a2, u32 a3, u32 a4) {
+u32 func_804BE398(const void* a1, u32 a2, u32 a3, u32 a4) {
     func_804B91E0((void*)lbl_eu_8065F32C, a1, a2, a3, a4);
     return lbl_eu_80665988;
 }
@@ -331,7 +342,7 @@ void func_804BE3E0(u32 a1, u32 a2, u32 a3, u32 a4) {
 // Run the mover ray pass variant, then project the tracked position when
 // any resource entry is active.
 s32 func_804BE408(void* a1) {
-    func_804B9818((void*)lbl_eu_8065F32C);
+    func_804B9818(lbl_eu_8065F32C);
     if (lbl_eu_80665988 != 0) {
         return func_804BE62C((ml::CVec3*)a1);
     }
@@ -411,8 +422,9 @@ void func_804BE4B4(ScnResHead* dst, int index) {
 void func_804BE4E0(ScnResHead* dst, int index) {
     extern unsigned char lbl_eu_8065F428[];
     ScnResourceEntry* entries = (ScnResourceEntry*)lbl_eu_8065F428;
+    u32 mid0 = entries[index].mid.field_0x00;
     dst->field_0x04 = entries[index].mid.field_0x04;
-    dst->field_0x00 = entries[index].mid.field_0x00;
+    dst->field_0x00 = mid0;
     dst->field_0x08 = entries[index].mid.field_0x08;
 }
 
@@ -434,10 +446,9 @@ s32 func_804BE53C(f32* dst, s32 index) {
     u8 code = info[0x0F];
     if (code != 0) {
         s32 sel = code - 1;
-        ScnTblObj* obj = (ScnTblObj*)lbl_eu_8065F32C;
-        dst[0] = obj->field_0x4C[sel * 2];
+        dst[0] = ((ScnTblObj*)lbl_eu_8065F32C)->field_0x4C[sel * 2];
         dst[1] = lbl_eu_8066AF24;
-        dst[2] = obj->field_0x4C[sel * 2 + 1];
+        dst[2] = ((ScnTblObj*)lbl_eu_8065F32C)->field_0x4C[sel * 2 + 1];
         return 1;
     }
     return 0;
@@ -449,7 +460,7 @@ extern "C" int func_804BE5A0(u32 flags) { return func_804BEE54(flags); }
 extern "C" int func_804BEEAC(u32 flags, u32 index);
 extern "C" void func_804BE5A4(void) { ((int (*)())&func_804BEEAC)(); }
 
-extern "C" s32 func_804BEDFC(u8* dst, u32 mask, u32 index, u32 offset);
+extern "C" s32 func_804BEDFC(u32* dst, u32 mask, u32 index, u32 offset);
 extern "C" void func_804BE5A8(void) { ((s32 (*)())&func_804BEDFC)(); }
 
 int func_804BE5AC() {
@@ -465,17 +476,14 @@ u8 func_804BE5C0() { return lbl_eu_8066597D; }
 // Scan the resource entries for one whose info selects an enabled mask bit.
 s32 func_804BE5C8() {
     extern unsigned char lbl_eu_8065F428[];
-    ScnResourceEntry* entries = (ScnResourceEntry*)lbl_eu_8065F428;
     s32 count = lbl_eu_80665988;
-    if (count <= 0) {
-        return 0;
-    }
-    do {
+    ScnResourceEntry* entries = (ScnResourceEntry*)lbl_eu_8065F428;
+    for (; count > 0; --count) {
         if (entries->value != 0) {
             return 1;
         }
         entries++;
-    } while (--count != 0);
+    }
     return 0;
 }
 
@@ -485,8 +493,8 @@ int func_804BE604(int index) {
     return entries[index].value != 0;
 }
 
-extern "C" void func_804BF3B4();
-extern "C" void func_804BE628(void) { func_804BF3B4(); }
+extern "C" void func_804BF3B4(s32 flag);
+extern "C" void func_804BE628(void) { ((void (*)())&func_804BF3B4)(); }
 
 // Triangle descriptor referenced by the resource-entry header words.
 struct ScnTriInfo {
@@ -679,7 +687,7 @@ s32 func_804BE62C(ml::CVec3* out) {
 #pragma auto_inline off
 // Report whether resource entry [index]'s info selects a mask bit enabled by
 // 'mask', and store the following table record's byte at 'offset' into *dst.
-extern "C" s32 func_804BEDFC(u8* dst, u32 mask, u32 index, u32 offset) {
+extern "C" s32 func_804BEDFC(u32* dst, u32 mask, u32 index, u32 offset) {
     extern unsigned char lbl_eu_8065F428[];
     ScnResourceEntry* entries = (ScnResourceEntry*)lbl_eu_8065F428;
     u32* table = *(u32**)(lbl_eu_8065F32C + 40);
@@ -699,17 +707,16 @@ extern "C" s32 func_804BEDFC(u8* dst, u32 mask, u32 index, u32 offset) {
 extern "C" int func_804BEE54(u32 flags) {
     extern unsigned char lbl_eu_8065F428[];
     s32 count = lbl_eu_80665988;
-    if (count == 0) {
-        return 0;
-    }
-    u32* table = *(u32**)(lbl_eu_8065F32C + 40);
-    ScnResourceEntry* p = (ScnResourceEntry*)lbl_eu_8065F428;
-    for (; count > 0; --count) {
-        u32 sel = *(u16*)((u8*)p->field_0x18 + 0x12);
-        if (flags & table[sel]) {
-            return 1;
+    if (count != 0) {
+        ScnResourceEntry* p = (ScnResourceEntry*)lbl_eu_8065F428;
+        u32* table = *(u32**)(lbl_eu_8065F32C + 40);
+        for (; count > 0; --count) {
+            u32 sel = *(u16*)((u8*)p->field_0x18 + 0x12);
+            if (flags & table[sel]) {
+                return 1;
+            }
+            p++;
         }
-        p++;
     }
     return 0;
 }
@@ -724,7 +731,7 @@ extern "C" int func_804BEEAC(u32 flags, u32 index) {
     ScnResourceEntry* entries = (ScnResourceEntry*)lbl_eu_8065F428;
     u32* table = *(u32**)(lbl_eu_8065F32C + 40);
     u32 sel = *(u16*)((u8*)entries[index].field_0x18 + 0x12);
-    return (flags & table[sel]) != 0 ? 2 : 0;
+    return (flags & table[sel]) != 0 ? 1 : 0;
 }
 #pragma pop
 
@@ -744,89 +751,101 @@ void func_804BEEEC() {
 extern "C" s32 func_804BEEF8(s32 idx);
 s32 func_804BEEF8(s32 idx) {
     ScnWork* w = (ScnWork*)lbl_eu_8065F428;
-    // Indexed from element 0 like retail (addi 0 + add addressing shape).
-    ScnEntryF* e = &w->entries[0] + idx;
-    // Active position: the entry position itself when the entry is disabled,
-    // otherwise the (normalized) offset direction computed below.
-    ml::CVec3* pos = (ml::CVec3*)&e->field_0x0C;
+    ml::CVec3* ref;
+    s32 crossing;
     ml::CVec3 dir;
-    s32 enabled = 0;
+    ml::CVec3 diff;
+    ml::CVec3* pos = (ml::CVec3*)(&w->entries[0] + idx);
+    s32 mask = 1 << idx;
+    mask &= lbl_eu_8066598C;
+    ref = pos;
 
-    if ((1 << idx) & lbl_eu_8066598C) {
-        enabled = 1;
+    if (mask != 0) {
+        crossing = 1;
         ml::CVec3* cur = (ml::CVec3*)lbl_eu_80665970;
-        dir.x = cur->x - pos->x;
-        dir.y = cur->y - pos->y;
-        dir.z = cur->z - pos->z;
-        if (dir.x == 0.0f && dir.y == 0.0f && dir.z == 0.0f) {
-            dir.x = 0.0f;
-            dir.y = 1.0f;
-            dir.z = 0.0f;
+        VEC3Sub((Vec*)&diff, (const Vec*)cur, (const Vec*)pos);
+        if (diff.x == lbl_eu_8066AF44 && diff.y == lbl_eu_8066AF44 &&
+            diff.z == lbl_eu_8066AF44) {
+            dir.x = lbl_eu_8066AF44;
+            dir.y = lbl_eu_8066AF4C;
+            dir.z = lbl_eu_8066AF44;
         } else {
+            dir = diff;
             f32 mag2 = dir.x * dir.x + dir.y * dir.y + dir.z * dir.z;
-            if (mag2 == 0.0f) {
-                dir = ml::zero;
+            if (mag2 == lbl_eu_8066AF44) {
+                dir = ML_ZERO;
             } else {
                 PSVECNormalize(&dir.x, &dir.x);
             }
         }
-        pos = &dir;
+        ref = &dir;
+    } else {
+        crossing = 0;
     }
 
-    if (pos->y >= lbl_eu_8066AF60) {
-        if (pos->y < lbl_eu_80665980) {
-            if (enabled) {
-                if (dir.x * dir.x + dir.z * dir.z <= lbl_eu_8066AF64) {
+    if (ref->y >= lbl_eu_8066AF60) {
+        if (ref->y >= lbl_eu_80665980) {
+            if (crossing != 0) {
+                f32 flat = diff.z * diff.z + diff.x * diff.x;
+                if (flat <= lbl_eu_8066AF64) {
                     lbl_eu_8066597E = 1;
                 } else {
                     lbl_eu_80665978++;
                 }
             } else {
                 lbl_eu_80665978++;
-                if (pos->y >= lbl_eu_8066AF68) {
+                if (ref->y >= lbl_eu_8066AF68) {
                     return 0;
                 }
             }
+        } else {
+            if (ref->y < lbl_eu_8066AF6C) {
+                lbl_eu_80665978++;
+            }
+        }
 
-            if (lbl_eu_8066597E != 0) {
-                if (lbl_eu_80665974 >= 1) {
+        if (lbl_eu_8066597E != 0) {
+            if (lbl_eu_80665974 >= 1) {
+                return 1;
+            }
+        }
+
+        s32 n = lbl_eu_80665974;
+        Rec12* slot = &w->recs[n];
+        slot->x = ref->x;
+        slot->z = ref->z;
+        f32 mag2 = slot->z * slot->z + slot->x * slot->x;
+        if (mag2 < lbl_eu_8066AF44) {
+            Warning__Q24nw4r2dbFPCciPCce(lbl_eu_80526324, 0x273, lbl_eu_80526300);
+        }
+        f32 inv = (mag2 > lbl_eu_8066AF44)
+                      ? mag2 * FrSqrt__Q24nw4r4mathFf(mag2)
+                      : lbl_eu_8066AF44;
+        f32 scale = lbl_eu_8066AF4C / inv;
+        slot->x *= scale;
+        slot->z *= scale;
+        if (lbl_eu_80665978 != 0) {
+            for (s32 i = 0; i < lbl_eu_80665978; ++i) {
+                if (slot->x * w->recs[i].x + slot->z * w->recs[i].z <
+                    lbl_eu_8066AF74) {
                     return 1;
                 }
-            } else {
-                s32 n = lbl_eu_80665974;
-                Rec12* slot = &w->recs[n];
-                slot->x = dir.x;
-                slot->z = dir.z;
-                f32 mag2 = dir.x * dir.x + dir.z * dir.z;
-                if (mag2 != 0.0f) {
-                    Warning__Q24nw4r2dbFPCciPCce(lbl_eu_80526324, 0x273, lbl_eu_80526300);
-                }
-                f32 inv = (mag2 <= 0.0f) ? lbl_eu_8066AF4C : mag2 * FrSqrt__Q24nw4r4mathFf(mag2);
-                f32 scale = lbl_eu_8066AF4C / inv;
-                slot->x *= scale;
-                slot->z *= scale;
-                // Project the new crossing against every previous one.
-                if (lbl_eu_80665978 != 0) {
-                    for (s32 i = 0; i < lbl_eu_80665978; ++i) {
-                        if (slot->x * w->recs[i].x + slot->z * w->recs[i].z < lbl_eu_8066AF74) {
-                            return 1;
-                        }
-                    }
-                }
             }
-            lbl_eu_80665974++;
         }
+        lbl_eu_80665974++;
     }
 
     if (lbl_eu_8066597C == 0) {
-        bool checkAnchor = false;
-        if (pos->y < lbl_eu_80665980) {
-            checkAnchor = true;
-        } else if (enabled && !(pos->y > lbl_eu_8066AF78)) {
-            checkAnchor = true;
+        bool check;
+        if (ref->y < lbl_eu_80665980) {
+            check = true;
+        } else if (crossing != 0 && ref->y <= lbl_eu_8066AF78) {
+            check = true;
+        } else {
+            check = false;
         }
-        if (checkAnchor) {
-            f32 t = w->anchor[2] * pos->z + w->anchor[0] * pos->x;
+        if (check) {
+            f32 t = w->anchor[2] * ref->z + w->anchor[0] * ref->x;
             if (t < lbl_eu_8066AF44) {
                 lbl_eu_8066597C = 1;
             }
@@ -908,15 +927,13 @@ s32 func_804BF3EC(f32* v, f32* outLen, s32 flag, f32 scale) {
     if (v[0] == lbl_eu_8066AF44 && v[1] == lbl_eu_8066AF44 && v[2] == lbl_eu_8066AF44) {
         return result;
     }
-    f32 mag = PSVECMag(v);
+    f32 mag = PSVECMag((const Vec*)v);
     if (mag != lbl_eu_8066AF44) {
         s32 q = (s32)(mag / scale);
         if (q == 0) {
             if (flag != 0) {
                 outLen[0] = lbl_eu_8066AF6C;
-                v[0] *= lbl_eu_8066AF6C;
-                v[1] *= lbl_eu_8066AF6C;
-                v[2] *= lbl_eu_8066AF6C;
+                VEC3Scale((Vec*)v, (const Vec*)v, lbl_eu_8066AF6C);
                 result = 2;
             }
         } else {
@@ -938,6 +955,7 @@ s32 func_804BF3EC(f32* v, f32* outLen, s32 flag, f32 scale) {
 
 // --- hard-symbol stubs (scaffold_hard_symbols) ---
 // Construct the 32 resource-entry records and the 32 history slots.
+extern u8 lbl_eu_8065F8C0[384];
 void sinit_804BF540() {
     __construct_array(lbl_eu_8065F428, (ConstructorDestructor)func_804BF59C,
                       NULL, 0x24, 32);

@@ -480,10 +480,10 @@ range_312c_31f3: {
     // Decl-position experiments: mid-block decl shifts codePersist to r25; u16/u32
     // types break the clrlwi 24 call-site masks. r30 stays unreachable so far.
     {
-        u32 diff = id - 0x312c;
         u32 code = 200;
-        if ((u8)diff != 0) {
-            code = (u8)diff;
+        u8 diff8 = (u8)(id - 0x312c);
+        if (diff8 != 0) {
+            code = diff8;
         }
         codePersist = (u8)code;
     }
@@ -4301,55 +4301,42 @@ extern "C" bool OnFileEvent__12CUICfManagerFv(CUICfManager* self, CEventFile* ev
     // (bne -> trailing return false), matching retail layout.
     CFileHandle* handle = self->mFileHandle;
     if (handle == evt->mFileHandle) {
-    // Declaration order pins the saved-register colors (Rule A): retail
-    // colors the three font resource pointers r31/r28/r27, the label base
-    // r30, and keeps a zero holder in r29 for the final mFileHandle clear.
-    u8* fontData3;
-    const char* lblBase;
-    CFileHandle* cleared;
-    u8* fontData2;
-    u8* fontData1;
+    // Retail reuses ONE resource-pointer web (r27) across all three blocks,
+    // one buffer web (r28), keeps the label base in r30 and a zero in r29.
+    u8* fontData;
+    u8* fileData;
     u32 fontBytes;
     mtl::ALLOC_HANDLE devMem;
     u8* fontBuf;
 
-    u8* fileData = static_cast<u8*>(handle->getData());
+    fileData = static_cast<u8*>(handle->getData());
 
     self->mArcResourceAccessor = CLibLayout::createArcResourceAccessor();
-
-    // Label base hoisted once (retail keeps it in r30 across all three fonts);
-    // materialized after the create call like retail.
-    lblBase = reinterpret_cast<const char*>(lbl_eu_805000A8);
-    self->mArcResourceAccessor->Attach(fileData, lblBase + 3);
+    self->mArcResourceAccessor->Attach(fileData,
+                                       reinterpret_cast<const char*>(lbl_eu_805000A8) + 3);
 
     // Font blocks are independent: resource -> size -> buffer -> Construct,
     // reloading the accessor from self like retail (lwz r3, 0x5c(r26)).
-    fontData1 = static_cast<u8*>(self->mArcResourceAccessor->GetResource(
-        0x666e7461, lblBase + 7, NULL));
-    fontBytes = nw4r::ut::PackedFont::GetRequireBufferSize(fontData1, lbl_8066DCF8, lbl_eu_806672C8);
-    // Separate statement forces retail call order (size query, then handle).
-    devMem = CDevice::getDevSys2Handle();
-    fontBuf = static_cast<u8*>(mtl::MemManager::allocate_head(devMem, fontBytes, 0x20));
-    self->mPackedFont60.Construct(fontBuf, fontBytes, fontData1, lbl_8066DCF8);
-
-    fontData2 = static_cast<u8*>(self->mArcResourceAccessor->GetResource(
-        0x666e7461, lblBase + 0x1b, NULL));
-    fontBytes = nw4r::ut::PackedFont::GetRequireBufferSize(fontData2, lbl_8066DCF8, lbl_eu_806672C8);
-    devMem = CDevice::getDevSys2Handle();
-    fontBuf = static_cast<u8*>(mtl::MemManager::allocate_head(devMem, fontBytes, 0x20));
-    self->mPackedFont9C.Construct(fontBuf, fontBytes, fontData2, lbl_8066DCF8);
-
-    fontData3 = static_cast<u8*>(self->mArcResourceAccessor->GetResource(
-        0x666e7461, lblBase + 0x2f, NULL));
-    fontBytes = nw4r::ut::PackedFont::GetRequireBufferSize(fontData3, lbl_8066DCF8, lbl_eu_806672C8);
-    devMem = CDevice::getDevSys2Handle();
-    fontBuf = static_cast<u8*>(mtl::MemManager::allocate_head(devMem, fontBytes, 0x20));
-    self->mPackedFontD8.Construct(fontBuf, fontBytes, fontData3, lbl_8066DCF8);
+#define UICF_FONT_BLOCK(ctorTarget, nameOff)                                  \
+    do {                                                                       \
+        u8* fd = static_cast<u8*>(self->mArcResourceAccessor->GetResource(     \
+            0x666e7461,                                                        \
+            reinterpret_cast<const char*>(lbl_eu_805000A8) + (nameOff), NULL));\
+        u32 fb = nw4r::ut::PackedFont::GetRequireBufferSize(                   \
+            fd, lbl_8066DCF8, lbl_eu_806672C8);                                \
+        u8* fbuf = static_cast<u8*>(mtl::MemManager::allocate_head(            \
+            CDevice::getDevSys2Handle(), fb, 0x20));                           \
+        ctorTarget.Construct(fbuf, fb, fd, lbl_8066DCF8);                      \
+    } while (0)
+    UICF_FONT_BLOCK(self->mPackedFont60, 7);
+    UICF_FONT_BLOCK(self->mPackedFont9C, 0x1b);
+    UICF_FONT_BLOCK(self->mPackedFontD8, 0x2f);
+#undef UICF_FONT_BLOCK
 
     // Best-known tail shape: the null-guarded +0x58 IFlagEvent adjust is
     // computed inside the call (retail hoists it before func_8009D0B4 by
     // destroying its self copy - not reproducible without extra liveness).
-    self->mFileHandle = cleared = NULL;
+    self->mFileHandle = NULL;
     func_8009D0B4();
     func_8009D414(static_cast<cf::IFlagEvent*>(self));
     return true;

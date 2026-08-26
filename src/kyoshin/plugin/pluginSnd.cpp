@@ -18,7 +18,7 @@ extern "C" {
 
     extern s32 func_80189A04(s32 index);                        // sound-slot busy check
     extern s32 func_801897A0(const char* name, float vol, s32 flag);  // play archive voice
-    extern void func_801BFE8C(int a, int b, int c);             // CfSoundMan stop helper
+    extern "C" void func_801BFE8C(u32 a, u32 b, u32 c);        // CfSoundMan stop helper (matches CfObjectImplMove.hpp)
     extern void func_80189318(s32 clearName, float fadeTime);   // stop BGM slot (menu sound system)
     extern void func_8018986C(const char* name, float fadeTime); // stop voice by name
     extern void func_80188D34(const char* name, bool enable, float value, float fadeTime); // play BGM
@@ -79,7 +79,8 @@ int stopBgm(VMThread* pThread) {
     if (vmArgOmitChk(pThread, 1) != 0) {
         vol = lbl_eu_80667DA0;
     } else {
-        vol = (float)vmArgFixedGet(2, vmArgPtrGet(pThread, 1));
+        float converted = vmArgFixedGet(2, vmArgPtrGet(pThread, 1));
+        vol = converted;
     }
     func_80189318(1, (float)(int)vol / lbl_eu_80667D90);
     return 0;
@@ -179,7 +180,8 @@ int stopFieldBgm(VMThread* pThread) {
     if (vmArgOmitChk(pThread, 1) != 0) {
         vol = lbl_eu_80667DA0;
     } else {
-        vol = (float)vmArgFixedGet(2, vmArgPtrGet(pThread, 1));
+        float converted = vmArgFixedGet(2, vmArgPtrGet(pThread, 1));
+        vol = converted;
     }
     float fade = (float)(int)vol / lbl_eu_80667D90;
     func_8007C344__Q22cf13CfGameManagerFv(0, 0, 1, fade);
@@ -194,7 +196,8 @@ int stopTownBgm(VMThread* pThread) {
     if (vmArgOmitChk(pThread, 1) != 0) {
         vol = lbl_eu_80667DA0;
     } else {
-        vol = (float)vmArgFixedGet(2, vmArgPtrGet(pThread, 1));
+        float converted = vmArgFixedGet(2, vmArgPtrGet(pThread, 1));
+        vol = converted;
     }
     float fade = (float)(int)vol / lbl_eu_80667D90;
     func_8007C374__Q22cf13CfGameManagerFv(0, 0, fade, 1);
@@ -213,15 +216,17 @@ int forceFieldBgm(VMThread* pThread) {
 // (scaled by lbl_eu_80667D90), arg 2 an optional fixed-point fade time that
 // defaults to lbl_eu_80667DA0 when omitted.
 int setVolBgm(VMThread* pThread) {
+    float fade;
     int vol = vmArgFixedGet(2, vmArgPtrGet(pThread, 1));
-    double fade;
     if (vmArgOmitChk(pThread, 2) != 0) {
         fade = lbl_eu_80667DA0;
     } else {
-        fade = (float)vmArgFixedGet(3, vmArgPtrGet(pThread, 2));
+        float converted = vmArgFixedGet(3, vmArgPtrGet(pThread, 2));
+        fade = converted;
     }
+    int fadeInt = fade;
     func_801896A8(0, (float)vol / lbl_eu_80667D90,
-                  (float)(int)fade / lbl_eu_80667D90);
+                  (float)fadeInt / lbl_eu_80667D90);
     return 0;
 }
 
@@ -359,25 +364,25 @@ int playSeMap(VMThread* pThread) {
 // an optional fixed-point fade time (default lbl_eu_80667D94), arg 3 the
 // new volume (default 0 when omitted).
 int volSeMap(VMThread* pThread) {
-    int idx;
     int id;
-    int fadeInt;
+    int idx;
+    int vol;
     float fade;
     id = vmArgIntGet(2, vmArgPtrGet(pThread, 1));
     if (vmArgOmitChk(pThread, 2) != 0) {
-        idx = 3;
         fade = lbl_eu_80667D94;
+        idx = 3;
     } else {
         idx = 3;
-        fade = (float)vmArgFixedGet(3, vmArgPtrGet(pThread, 2));
+        VMArg* arg = vmArgPtrGet(pThread, 2);
+        fade = (float)vmArgFixedGet(idx, arg);
     }
-    fadeInt = (int)fade;
-    int vol;
-    if (vmArgOmitChk(pThread, idx) != 0) {
-        vol = 0;
-    } else {
+    int fadeInt = (int)fade;
+    if (vmArgOmitChk(pThread, idx) == 0) {
         VMArg* arg = vmArgPtrGet(pThread, idx++);
         vol = vmArgIntGet(idx, arg);
+    } else {
+        vol = 0;
     }
     func_801AAC70(id, vol, (float)fadeInt / lbl_eu_80667D90);
     return 0;

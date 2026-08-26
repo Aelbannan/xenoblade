@@ -10,7 +10,7 @@
 #include "monolib/util/CPathUtil.hpp"
 #include "kyoshin/code_802B8A3C.hpp"
 #include "kyoshin/cf/CfResPcImpl.hpp"
-#include <nw4r/math/math_triangular.h>
+
 #include "monolib/math/Random.hpp"
 
 
@@ -791,7 +791,6 @@ struct CfPartsElemObj {
 int func_80194264(f32 f, ml::CVec3* out, const ml::CVec3* in) {
     *out = ml::CVec3::zero;
     int count = 0;
-    F64Conv conv;
     ml::CVec3 push;
     CfActorList* list = (CfActorList*)func_800B6BC8();
     CfActorListNode* node = list->mHead->mNext;
@@ -811,6 +810,7 @@ int func_80194264(f32 f, ml::CVec3* out, const ml::CVec3* in) {
         // Named-magic u32->f32 conversion: assembling the 0x43300000-biased
         // double and subtracting the named sdata2 magic keeps the reloc on
         // lbl_eu_80667AF0 (CSelShopWin convention).
+        F64Conv conv;
         conv.w[1] = count ^ 0x80000000;
         conv.w[0] = 0x43300000;
         nw4r::math::VEC3Scale(*out, *out,
@@ -2987,8 +2987,8 @@ extern "C" void func_80198D44(CfPartsMoveSrc* src, CfPartsTri* dst) {
     dst->field_04 = w1;
     dst->field_00 = w0;
     dst->field_08 = src->field_08;
-    f32 angle = lbl_eu_80667B50 * src->field_18;
     f32 fv = (f32)(s32)src->field_14;
+    f32 angle = lbl_eu_80667B50 * src->field_18;
     f32 mag = fv * src->field_1C;
     *(f32*)&dst->field_00 -= mag * nw4r::math::SinFIdx(angle);
     *(f32*)&dst->field_08 -= mag * nw4r::math::CosFIdx(lbl_eu_80667B50 * src->field_18);

@@ -149,11 +149,6 @@ static DVDLowRegister controlRegister ALIGN(32);
 
 #define is_aligned(addr) (((u32)(addr) & 0x1F) == 0)
 
-// dvdContexts: referenced here (before any function body) so the .bss layout
-// matches retail (first-reference order); the retail .o keeps the .bss symbols
-// while GC'ing this emitter's text.
-DECOMP_FORCEACTIVE(dvd_broadway_c, dvdContexts);
-
 static void nextCommandBuf(void);
 static DVDLowContext* newContext(const DVDLowCallback callback, const callbackType_t type);
 
@@ -197,7 +192,12 @@ static BOOL allocateStructures(void) {
     return TRUE;
 }
 
-static void initDvdContexts(){
+// Non-static so MWCC emits an outline copy at this early position: its
+// dvdContexts reference pins .bss first-reference order (the inlined-only
+// static form pins nothing). The retail build inlined it into DVDLowInit,
+// so the outline copy is retail-absent; its text is dropped via
+// drop_text_symbols.
+void initDvdContexts(void){
     int i;
     for (i = 0; i < DVD_LOW_CTX_MAX; i++) {
         dvdContexts[i].callback = NULL;
@@ -477,28 +477,77 @@ BOOL DVDLowOpenPartition(const u32 offset, const ESTicket* const eTicket, const 
     return TRUE;
 }
 
-// unused in Xenoblade retail: DVDLowOpenPartitionWithTmdAndTicket (identifier + eTicket string kept in .data) (retail .data 0x410..0x458)
-u8 UnusedStr_pre410[0x48] = {
-    0x44, 0x56, 0x44, 0x4C, 0x6F, 0x77, 0x4F, 0x70, 0x65, 0x6E, 0x50, 0x61, 0x72, 0x74, 0x69, 0x74,
-    0x69, 0x6F, 0x6E, 0x57, 0x69, 0x74, 0x68, 0x54, 0x6D, 0x64, 0x41, 0x6E, 0x64, 0x54, 0x69, 0x63,
-    0x6B, 0x65, 0x74, 0x00, 0x28, 0x25, 0x73, 0x29, 0x20, 0x65, 0x54, 0x69, 0x63, 0x6B, 0x65, 0x74,
-    0x20, 0x6D, 0x65, 0x6D, 0x6F, 0x72, 0x79, 0x20, 0x69, 0x73, 0x20, 0x75, 0x6E, 0x61, 0x6C, 0x69,
-    0x67, 0x6E, 0x65, 0x64, 0x0A, 0x00, 0x00, 0x00,
-};
-// The two tmd strings below are also referenced (via -str reuse) by the matched
-// DVDLowOpenPartitionWithTmdAndTicketView, so they must stay as function-pool
-// literals emitted at this position. This minimal emitter keeps them pooled at
-// their retail offsets (retail-absent .text; dropped via drop_text_symbols).
-DECOMP_FORCEACTIVE(dvd_broadway_c,
-                   "(%s) tmd parameter cannot be NULL\n",
-                   "(%s) tmd memory is unaligned\n",
-                   &coverStatus, &coverRegister);
+// Present in retail source but GC'd from the retail image (never called).
+// Kept as real code: compiling it pools its string literals at their exact
+// retail .data offsets (0x410..0x4C8), shared with
+// DVDLowOpenPartitionWithTmdAndTicketView via -str reuse. Its retail-absent
+// .text is dropped via drop_text_symbols.
+BOOL DVDLowOpenPartitionWithTmdAndTicket(const u32 offset, const ESTicket* const eTicket, const u32 numTmdBytes, const ESTitleMeta* const tmd, const u32 numCertBytes, const u8* const certificates, DVDLowCallback callback) {
+    DVDLowContext* ctx;
+    IPCResult result;
 
-u8 UnusedStr_post49C[0x2C] = {
-    0x28, 0x25, 0x73, 0x29, 0x20, 0x65, 0x54, 0x69, 0x63, 0x6B, 0x65, 0x74, 0x20, 0x70, 0x61, 0x72,
-    0x61, 0x6D, 0x65, 0x74, 0x65, 0x72, 0x20, 0x63, 0x61, 0x6E, 0x6E, 0x6F, 0x74, 0x20, 0x62, 0x65,
-    0x20, 0x4E, 0x55, 0x4C, 0x4C, 0x0A, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,
-};
+    if (eTicket != 0 && !is_aligned(eTicket)) {
+        OSReport("(%s) eTicket memory is unaligned\n", __FUNCTION__);
+        return FALSE;
+    }
+
+    if (tmd == 0) {
+        OSReport("(%s) tmd parameter cannot be NULL\n", __FUNCTION__);
+        return FALSE;
+    } else if (!is_aligned(tmd)) {
+        OSReport("(%s) tmd memory is unaligned\n", __FUNCTION__);
+        return FALSE;
+    }
+
+    if (eTicket == 0) {
+        OSReport("(%s) eTicket parameter cannot be NULL\n", __FUNCTION__);
+        return FALSE;
+    }
+
+    requestInProgress = TRUE;
+    ctx = newContext(callback, TRANSACTION_CB);
+    nextCommandBuf();
+
+    diCommand[freeCommandBuf].command = DVD_IOCTLV_OPEN_PARTITION_TMD_TICKET;
+    diCommand[freeCommandBuf].arg1 = offset;
+
+    // Input vector 1: DI command
+    ioVec[0].base = &diCommand[freeCommandBuf];
+    ioVec[0].length = sizeof(DVDLowDICommand);
+
+    // Input vector 2: eTicket
+    ioVec[1].base = (void*)eTicket;
+    ioVec[1].length = sizeof(ESTicket);
+
+    // Input vector 3: TMD
+    ioVec[2].base = (void*)tmd;
+    ioVec[2].length = numTmdBytes;
+
+    // Input vector 4: Shared certs
+    ioVec[3].base = (void*)certificates;
+    if (certificates == 0) {
+        ioVec[3].length = 0;
+    } else {
+        ioVec[3].length = numCertBytes;
+    }
+
+    // Output vector 1: Ticket error
+    ioVec[4].base = &lastTicketError;
+    ioVec[4].length = sizeof(lastTicketError);
+
+    result = IOS_IoctlvAsync(DiFD, DVD_IOCTLV_OPEN_PARTITION_TMD_TICKET,
+                             4, 1, ioVec, doTransactionCallback, ctx);
+
+    if (result != IPC_RESULT_OK) {
+        OSReport("@@@ (DVDLowOpenPartition) IOS_IoctlvAsync returned error: %d\n",
+                result);
+        ctx->inUse = FALSE;
+
+        return FALSE;
+    }
+
+    return TRUE;
+}
 BOOL DVDLowOpenPartitionWithTmdAndTicketView(const u32 offset, const ESTicketView* const eTicketView, const u32 numTmdBytes, const ESTitleMeta* const tmd, const u32 numCertBytes, const u8* const certificates, DVDLowCallback callback) {
     DVDLowContext* ctx;
     IPCResult result;
@@ -917,18 +966,39 @@ BOOL DVDLowAudioBufferConfig(BOOL enable, u32 size, DVDLowCallback callback) {
     return TRUE;
 }
 
-// unused in Xenoblade retail: DVDLowGetCoverStatus (strings kept in .data)
-u8 UnusedStr_getCoverStatus[0x84] = {
-    0x28, 0x44, 0x56, 0x44, 0x4C, 0x6F, 0x77, 0x47, 0x65, 0x74, 0x43, 0x6F, 0x76, 0x65, 0x72, 0x53,
-    0x74, 0x61, 0x74, 0x75, 0x73, 0x29, 0x3A, 0x20, 0x53, 0x79, 0x6E, 0x63, 0x68, 0x20, 0x66, 0x75,
-    0x6E, 0x63, 0x74, 0x69, 0x6F, 0x6E, 0x73, 0x20, 0x63, 0x61, 0x6E, 0x27, 0x74, 0x20, 0x62, 0x65,
-    0x20, 0x63, 0x61, 0x6C, 0x6C, 0x65, 0x64, 0x20, 0x69, 0x6E, 0x20, 0x63, 0x61, 0x6C, 0x6C, 0x62,
-    0x61, 0x63, 0x6B, 0x73, 0x0A, 0x00, 0x00, 0x00, 0x40, 0x40, 0x40, 0x20, 0x28, 0x44, 0x56, 0x44,
-    0x4C, 0x6F, 0x77, 0x47, 0x65, 0x74, 0x43, 0x6F, 0x76, 0x65, 0x72, 0x53, 0x74, 0x61, 0x74, 0x75,
-    0x73, 0x29, 0x20, 0x49, 0x4F, 0x53, 0x5F, 0x49, 0x6F, 0x63, 0x74, 0x6C, 0x20, 0x72, 0x65, 0x74,
-    0x75, 0x72, 0x6E, 0x65, 0x64, 0x20, 0x65, 0x72, 0x72, 0x6F, 0x72, 0x3A, 0x20, 0x25, 0x64, 0x0A,
-    0x00, 0x00, 0x00, 0x00,
-};
+// Present in retail source but GC'd from the retail image (never called).
+// Kept as real code so its literals pool at their retail .data offsets and its
+// coverStatus reference pins the .bss symbol; text dropped via drop_text_symbols.
+BOOL DVDLowGetCoverStatus(DVDLowCallback callback) {
+    DVDLowContext* ctx;
+    IPCResult result;
+
+    if (callbackInProgress == TRUE) {
+        OSReport("(DVDLowGetCoverStatus): Synch functions can't be called in callbacks\n");
+        return FALSE;
+    }
+
+    requestInProgress = TRUE;
+    ctx = newContext(callback, TRANSACTION_CB);
+
+    nextCommandBuf();
+    diCommand[freeCommandBuf].command = DVD_IOCTL_GET_COVER_STATUS;
+
+    result = IOS_IoctlAsync(DiFD, DVD_IOCTL_GET_COVER_STATUS,
+                            &diCommand[freeCommandBuf], sizeof(DVDLowDICommand),
+                            &coverStatus, sizeof(DVDCoverStatus),
+                            doTransactionCallback, ctx);
+
+    if (result != IPC_RESULT_OK) {
+        OSReport("@@@ (DVDLowGetCoverStatus) IOS_Ioctl returned error: %d\n",
+                 result);
+        ctx->inUse = FALSE;
+
+        return FALSE;
+    }
+
+    return TRUE;
+}
 // unused in Xenoblade retail: DVDLowReadDvd, DVDLowReadDvdConfig, DVDLowReadDvdCopyright, DVDLowReadDvdPhysical, DVDLowReadDvdDiscKey (strings kept in .data)
 u8 UnusedStr_readDvdFamily[0x138] = {
     0x40, 0x40, 0x40, 0x20, 0x28, 0x44, 0x56, 0x44, 0x4C, 0x6F, 0x77, 0x52, 0x65, 0x61, 0x64, 0x44,
@@ -1092,17 +1162,39 @@ BOOL DVDLowSeek(u32 offset, DVDLowCallback callback) {
     return TRUE;
 }
 
-// unused in Xenoblade retail: DVDLowGetCoverReg (strings kept in .data)
-u8 UnusedStr_getCoverReg[0x7C] = {
-    0x28, 0x44, 0x56, 0x44, 0x4C, 0x6F, 0x77, 0x47, 0x65, 0x74, 0x43, 0x6F, 0x76, 0x65, 0x72, 0x52,
-    0x65, 0x67, 0x29, 0x3A, 0x20, 0x53, 0x79, 0x6E, 0x63, 0x68, 0x20, 0x66, 0x75, 0x6E, 0x63, 0x74,
-    0x69, 0x6F, 0x6E, 0x73, 0x20, 0x63, 0x61, 0x6E, 0x27, 0x74, 0x20, 0x62, 0x65, 0x20, 0x63, 0x61,
-    0x6C, 0x6C, 0x65, 0x64, 0x20, 0x69, 0x6E, 0x20, 0x63, 0x61, 0x6C, 0x6C, 0x62, 0x61, 0x63, 0x6B,
-    0x73, 0x0A, 0x00, 0x00, 0x40, 0x40, 0x40, 0x20, 0x28, 0x44, 0x56, 0x44, 0x4C, 0x6F, 0x77, 0x47,
-    0x65, 0x74, 0x43, 0x6F, 0x76, 0x65, 0x72, 0x52, 0x65, 0x67, 0x29, 0x20, 0x49, 0x4F, 0x53, 0x5F,
-    0x49, 0x6F, 0x63, 0x74, 0x6C, 0x20, 0x72, 0x65, 0x74, 0x75, 0x72, 0x6E, 0x65, 0x64, 0x20, 0x65,
-    0x72, 0x72, 0x6F, 0x72, 0x3A, 0x20, 0x25, 0x64, 0x0A, 0x00, 0x00, 0x00,
-};
+// Present in retail source but GC'd from the retail image (never called).
+// Kept as real code so its literals pool at their retail .data offsets and its
+// coverRegister reference pins the .bss symbol; text dropped via drop_text_symbols.
+BOOL DVDLowGetCoverReg(DVDLowCallback callback) {
+    DVDLowContext* ctx;
+    IPCResult result;
+
+    if (callbackInProgress == TRUE) {
+        OSReport("(DVDLowGetCoverReg): Synch functions can't be called in callbacks\n");
+        return FALSE;
+    }
+
+    nextCommandBuf();
+    diCommand[freeCommandBuf].command = DVD_IOCTL_PREPARE_COVER_REGISTER;
+
+    requestInProgress = TRUE;
+    ctx = newContext(callback, TRANSACTION_CB);
+
+    result = IOS_IoctlAsync(DiFD, DVD_IOCTL_PREPARE_COVER_REGISTER,
+                            &diCommand[freeCommandBuf], sizeof(DVDLowDICommand),
+                            &coverRegister, sizeof(DVDLowRegister),
+                            doPrepareCoverRegisterCallback, ctx);
+
+    if (result != IPC_RESULT_OK) {
+        OSReport("@@@ (DVDLowGetCoverReg) IOS_Ioctl returned error: %d\n",
+                 result);
+        ctx->inUse = FALSE;
+
+        return FALSE;
+    }
+
+    return TRUE;
+}
 u32 DVDLowGetCoverRegister(void) {
     return diRegValCache.dicvr;
 }

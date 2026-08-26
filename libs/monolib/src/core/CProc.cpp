@@ -2,7 +2,9 @@
 #include "monolib/core.hpp"
 #include "monolib/util.hpp"
 #include "monolib/data_vtables.hpp"
-extern double lbl_eu_8066A300; // 0x4330000080000000 (s16->f32 conversion magic, FloatUtils-owned)
+// FloatUtils-owned constants used by pssCreateView's rect scaling:
+extern const double lbl_eu_8066A280; // 0x4330000080000000 (s16->f32 conversion magic)
+extern float lbl_eu_8066A278; // 0.6f
 // s16 -> f32 conversion matching retail: build the 2^52+x double on the stack
 // (low word = x ^ 0x80000000, high word = 0x43300000) and subtract the shared
 // magic double (MWCC_CASES 7i; statement order matters).
@@ -10,13 +12,12 @@ inline float convF32(s32 v) {
     union { double d; u32 w[2]; } u;
     u.w[1] = (u32)v ^ 0x80000000;
     u.w[0] = 0x43300000;
-    return (float)(u.d - lbl_eu_8066A300);
+    return (float)(u.d - lbl_eu_8066A280);
 }
 
 
 extern "C" {
 extern const char lbl_eu_80522500[]; // "(View)" - retail .rodata pool string
-extern float lbl_eu_8066A278; // 0.6f
 void getFrame2ViewOffset__10CViewFrameFR7CRect16PC10CViewFrame(ml::CRect16* rect,
                                                                    const CViewFrame* frame);
 // Vtable/RTTI targets referenced by the CProc data definitions below.
@@ -89,16 +90,26 @@ const char lbl_eu_805224E0[32] = {0x5F,0x72,0x65,0x73,0x6C,0x69,0x73,0x74,0x5F,0
 // a named const definition would land in .sdata2 (7 bytes <= small-data limit)
 // instead of .rodata, so the pool entry is left as the definition.
 
+// Installs the manual (novtable) CProc vtable pointer.
+static inline void CProcInitVptr(void* obj){
+    *(void**)obj = (void*)&lbl_eu_8056B1E0;
+}
+
 CProc::CProc(const char* pName, CWorkThread* pParent, s16 capacity) :
 CWorkThread(pName, pParent, capacity),
-unk1E4(mtl::INVALID_HANDLE){
-    *(char**)this = (char*)&lbl_eu_8056B1E0;
+// Keep the whole post-base sequence (vptr install + view-list allocation)
+// inside the member-init phase: body stores always schedule below the
+// member-store group, while retail interleaves them.
+unk1E4((CProcInitVptr(this), (u32)mtl::INVALID_HANDLE)){
     unk1E8 = 2;
     mType = THREAD_CPROC;
     mViewIDList.reserve(mAllocHandle, 16);
 }
 
 CProc::~CProc(){
+    // Retail re-tags the object with the CProc vtable before destroying the
+    // member list (destructor path), then keeps a stubbed-out bare traversal.
+    *(char**)this = (char*)&lbl_eu_8056B1E0;
     //Empty loop. Maybe had stubbed code?
     for(reslist<u32>::iterator it = mViewIDList.begin(); it != mViewIDList.end(); it++){
     }
@@ -263,9 +274,10 @@ CView* CProc::pssCreateView(const char* pName, CWorkThread* pThread, int param3)
     CView* view = CView::create(viewName.c_str(), pThread);
     view->wkReplaceHasChild((s16)param3);
     view->attachRenderWork(this);
-    // Hoist mWorkID so the inlined free-slot walk matches retail preload
-    // schedule (loop offsets / beq 0x0c). Remaining r5/r8 and stack-home
-    // coloring remains a Chaitin near-miss -- keep iterating in high-level C.
+    // Hoist mWorkID so the inlined free-slot scan matches retail load order
+    // (item -> start node -> capacity).
+    // Hoist mWorkID so the inlined free-slot scan matches retail load order
+    // (item -> start node -> capacity, mList re-read each iteration).
     WORK_ID workId = view->mWorkID;
     mViewIDList.push_back(workId);
 

@@ -98,6 +98,24 @@ public:
 
     static bool IncludeName(const char* pList, const char* pName);
 
+    virtual bool HasGlyph(u16 ch) const; // at 0x54
+
+    virtual CharWidths GetCharWidths(u16 ch) const; // at 0x4C
+
+    // Inlined width-sheet remap shared by the index-adjust path.
+    // ResFontBase::mFontInfo (at 0x14) is private to the base class.
+    u16 GetAdjustedIndex(u16 index) const {
+        const FontTextureGlyph* pGlyph =
+            (*reinterpret_cast<FontInformation* const*>(
+                 reinterpret_cast<const char*>(this) + 0x14))
+                ->pGlyph;
+
+        int cellsInASheet = pGlyph->sheetRow * pGlyph->sheetLine;
+
+        u16 mapped = mWidth[index / cellsInASheet];
+        return (mapped == 0xFFFF) ? 0xFFFF : (u16)(index - mapped);
+    }
+
     int RequestData(ConstructContext* pCtx, CachedStreamReader* pReader, u32 size);
 
     static int ConstructOpCopy(ConstructContext* pCtx,
@@ -225,7 +243,14 @@ int ArchiveFontBase::ConstructOpAnalyzeFINF(ConstructContext* pCtx,
 
 int ArchiveFontBase::CachedStreamReader::RequestData(ConstructContext* pCtx,
                                                      u32 size) {
-    u32 remain = (mStreamEnd - mStreamPos) + (mBufferEnd - mBufferPos);
+    // The volatile qualifier pins the buffer-field loads at this point in
+    // the schedule (volatiles cannot be reordered); retail emits the stream
+    // diff first, then the buffer diff.
+    u32 streamDiff = mStreamEnd - mStreamPos;
+    u32 remain = streamDiff +
+                 (*reinterpret_cast<volatile u32*>(&mBufferEnd) -
+                  *reinterpret_cast<volatile u32*>(&mBufferPos));
+
     if (remain == 0) {
         mBufferStart = 0;
         mBufferPos = 0;
@@ -240,14 +265,19 @@ int ArchiveFontBase::CachedStreamReader::RequestData(ConstructContext* pCtx,
         return 0;
     }
 
-    u32 avail = mBufferEnd - mBufferPos;
+    // Retail recomputes the buffered count here (no CSE across the capacity
+    // check), so force the reload with volatile reads.
+    u32 avail = *reinterpret_cast<volatile u32*>(&mBufferEnd) -
+                *reinterpret_cast<volatile u32*>(&mBufferPos);
     u8* pDst = reinterpret_cast<u8*>(pCtx->field_0x4C) + size;
     if (avail >= remain) {
         memmove(pDst, mBufferPos, remain);
         mBufferPos += remain;
     } else {
-        u32 remaining = remain - avail;
+        // Retail computes the remainder length between the two memmoves;
+        // keep it there to preserve the short live range.
         memmove(pDst, mBufferPos, avail);
+        u32 remaining = remain - avail;
         memmove(pDst + avail, mStreamPos, remaining);
         mBufferPos = mBufferEnd;
         mStreamPos += remaining;
@@ -266,29 +296,43 @@ int ArchiveFontBase::ConstructOpDispatch(ConstructContext* pCtx,
         return 1;
     }
 
-    // Need at least an 8-byte block header in the stream cache.
-    if ((pCtx->field_0x8 - pCtx->field_0x4) +
-            (pCtx->field_0x14 - pCtx->field_0x10) <
+    // Need at least an 8-byte block header available across the stream and
+    // the font buffer.
+    // Diffs are unsigned (retail compares with cmpli).
+    if ((u32)(pReader->mStreamEnd - pReader->mStreamPos) +
+            (u32)(pReader->mBufferEnd - pReader->mBufferPos) <
         0x8) {
+        // Accumulate consumed bytes on the aliased font object, then pull in
+        // one more chunk.
         pCtx->field_0x18 = pCtx->field_0x18 +
-            (pCtx->field_0x4 - pCtx->field_0x0) +
-            (pCtx->field_0x10 - pCtx->field_0xC);
-        if (pReader->RequestData(pCtx, 0x8) == 0) {
-            return 2;
+                           (pReader->mStreamPos - pReader->mStreamStart) +
+                           (pReader->mBufferPos - pReader->mBufferStart);
+        int result = pReader->RequestData(pCtx, 0x8);
+        int ret = 2;
+        if (result != 0) {
+            ret = 0;
         }
-        return 0;
+        return ret;
     }
 
     // Copy the block header (kind + size) into the context at +0x10.
-    u32 avail = pCtx->field_0x14 - pCtx->field_0x10;
-    void* pDst = &pCtx->field_0x10;
+    // Retail recomputes the buffered count here (no CSE across the capacity
+    // check), so force the reload with volatile reads.
+    int remaining;
+    void* pDst;
+    u32 avail;
+
+    u32 bufferedPos = *reinterpret_cast<volatile u32*>(&pReader->mBufferPos);
+    avail = *reinterpret_cast<volatile u32*>(&pReader->mBufferEnd) - bufferedPos;
+    pDst = &pCtx->field_0x10;
     if (avail >= 0x8) {
-        memcpy(pDst, reinterpret_cast<const void*>(pCtx->field_0x10), 0x8);
+        memcpy(pDst, reinterpret_cast<u8*>(bufferedPos), 0x8);
         pReader->mBufferPos += 0x8;
     } else {
-        u32 remaining = 0x8 - avail;
-        memcpy(pDst, reinterpret_cast<const void*>(pCtx->field_0x10), avail);
-        memcpy(reinterpret_cast<u8*>(pDst) + avail, pReader->mStreamPos,
+        // Wrap: consume the buffer tail, then the rest from the stream.
+        remaining = 0x8 - avail;
+        memcpy(pDst, reinterpret_cast<u8*>(bufferedPos), avail);
+        memcpy(static_cast<u8*>(pDst) + avail, pReader->mStreamPos,
                remaining);
         pReader->mBufferPos = pReader->mBufferEnd;
         pReader->mStreamPos += remaining;
@@ -305,7 +349,9 @@ int ArchiveFontBase::ConstructOpDispatch(ConstructContext* pCtx,
     case 0x434D4150: // 'CMAP'
         pCtx->field_0xC = 4;
         break;
-    case 0x43574844: // 'CWHD'
+    // NOTE: retail's compare literal for this block kind is 0x43574448 (not
+    // the ASCII 'CWHD' = 0x43574844); kept byte-identical to retail.
+    case 0x43574448:
         pCtx->field_0xC = 5;
         break;
     case 0x54474C50: // 'TGLP'
@@ -323,34 +369,54 @@ int ArchiveFontBase::ConstructOpDispatch(ConstructContext* pCtx,
 
 int ArchiveFontBase::ConstructOpAnalyzeFileHeader(ConstructContext* pCtx,
                                                   CachedStreamReader* pReader) {
-    // Need at least a full 0x10-byte block header in the stream cache.
-    if ((pCtx->field_0x8 - pCtx->field_0x4) +
-            (pCtx->field_0x14 - pCtx->field_0x10) <
-        0x10) {
-        pCtx->field_0x18 = pCtx->field_0x18 +
-            (pCtx->field_0x4 - pCtx->field_0x0) +
-            (pCtx->field_0x10 - pCtx->field_0xC);
-        if (pReader->RequestData(pCtx, 0x10) == 0) {
-            return 2;
+    // Need at least a full 0x10-byte block header available across the stream
+    // and the font buffer. Diffs are unsigned (retail compares with cmplwi).
+    u8* bufferPos = pReader->mBufferPos;
+    u8* bufferEnd = pReader->mBufferEnd;
+    u8* streamPos = pReader->mStreamPos;
+    u8* streamEnd = pReader->mStreamEnd;
+
+    if ((u32)(streamEnd - streamPos) + (u32)(bufferEnd - bufferPos) < 0x10) {
+        // Accumulate the total consumed-byte count on the aliased font
+        // object (both cursor offsets measured from their buffer starts).
+        u32 total = pCtx->field_0x18 +
+                    (u32)(streamPos - pReader->mStreamStart);
+        pCtx->field_0x18 =
+            (u32)(bufferPos - pReader->mBufferStart) + total;
+        int result = pReader->RequestData(pCtx, 0x10);
+        int ret = 2;
+        if (result != 0) {
+            ret = 0;
         }
-        return 0;
+        return ret;
     }
 
     if (pCtx->field_0x48 - pCtx->field_0x4C < 0x10) {
         return 2;
     }
 
-    u32 avail = pCtx->field_0x14 - pCtx->field_0x10;
+    // Retail recomputes the buffered count here (fresh loads past the branch).
+    // Declaration order drives callee-saved coloring: remaining -> r29,
+    // pDst -> r28, avail -> r27 (retail).
+    int remaining;
+    void* pDst;
+    u32 avail;
+
+    u32 bufferedPos =
+        *reinterpret_cast<volatile u32*>(&pReader->mBufferPos);
+    avail = *reinterpret_cast<volatile u32*>(&pReader->mBufferEnd) -
+            bufferedPos;
+    pDst = reinterpret_cast<void*>(
+        *reinterpret_cast<volatile u32*>(&pCtx->field_0x4C));
     if (avail >= 0x10) {
-        memcpy(reinterpret_cast<void*>(pCtx->field_0x4C),
-               reinterpret_cast<const void*>(pCtx->field_0x10), 0x10);
+        memcpy(pDst, reinterpret_cast<u8*>(bufferedPos), 0x10);
         pReader->mBufferPos += 0x10;
     } else {
-        u32 remaining = 0x10 - avail;
-        memcpy(reinterpret_cast<void*>(pCtx->field_0x4C),
-               reinterpret_cast<const void*>(pCtx->field_0x10), avail);
-        memcpy(reinterpret_cast<void*>(pCtx->field_0x4C + avail),
-               pReader->mStreamPos, remaining);
+        // Wrap: consume the buffer tail, then the rest from the stream.
+        remaining = 0x10 - avail;
+        memcpy(pDst, reinterpret_cast<u8*>(bufferedPos), avail);
+        memcpy(static_cast<u8*>(pDst) + avail, pReader->mStreamPos,
+               remaining);
         pReader->mBufferPos = pReader->mBufferEnd;
         pReader->mStreamPos += remaining;
     }
@@ -361,17 +427,22 @@ int ArchiveFontBase::ConstructOpAnalyzeFileHeader(ConstructContext* pCtx,
 
 int ArchiveFontBase::ConstructOpAnalyzeTGLP(ConstructContext* pCtx,
                                             CachedStreamReader* pReader) {
-    // Need at least a full 0x18-byte TGLP header in the stream cache.
-    if ((pCtx->field_0x8 - pCtx->field_0x4) +
-            (pCtx->field_0x14 - pCtx->field_0x10) <
+    // Need at least a full 0x18-byte TGLP header available across the stream
+    // and the font buffer. Diffs are unsigned (retail compares with cmplwi).
+    if ((u32)(pReader->mStreamEnd - pReader->mStreamPos) +
+            (u32)(pReader->mBufferEnd - pReader->mBufferPos) <
         0x18) {
+        // Accumulate consumed bytes on the aliased font object, then pull in
+        // one more chunk.
         pCtx->field_0x18 = pCtx->field_0x18 +
-            (pCtx->field_0x4 - pCtx->field_0x0) +
-            (pCtx->field_0x10 - pCtx->field_0xC);
-        if (pReader->RequestData(pCtx, 0x18) == 0) {
-            return 2;
+                           (pReader->mStreamPos - pReader->mStreamStart) +
+                           (pReader->mBufferPos - pReader->mBufferStart);
+        int result = pReader->RequestData(pCtx, 0x18);
+        int ret = 2;
+        if (result != 0) {
+            ret = 0;
         }
-        return 0;
+        return ret;
     }
 
     if (pCtx->field_0x48 - pCtx->field_0x4C < 0x18) {
@@ -380,37 +451,53 @@ int ArchiveFontBase::ConstructOpAnalyzeTGLP(ConstructContext* pCtx,
 
     // The context's first word aliases the FontInformation of the font being
     // built: point its glyph sheet at the current write position.
+    // Retail reloads the write position past the capacity check (no CSE).
     reinterpret_cast<FontInformation*>(pCtx->field_0x0)->pGlyph =
-        reinterpret_cast<FontTextureGlyph*>(pCtx->field_0x4C);
+        reinterpret_cast<FontTextureGlyph*>(
+            *reinterpret_cast<volatile u32*>(&pCtx->field_0x4C));
 
-    u32 avail = pCtx->field_0x14 - pCtx->field_0x10;
+    // Retail recomputes the buffered count here (fresh loads past the branch).
+    // Declaration order drives callee-saved coloring: avail -> r29,
+    // pDst -> r28, remaining -> r27 (retail).
+    u32 avail;
+    void* pDst;
+    u32 remaining;
+
+    u32 bufferedPos =
+        *reinterpret_cast<volatile u32*>(&pReader->mBufferPos);
+    avail = *reinterpret_cast<volatile u32*>(&pReader->mBufferEnd) -
+            bufferedPos;
+    pDst = reinterpret_cast<void*>(pCtx->field_0x4C);
     if (avail >= 0x18) {
-        memcpy(reinterpret_cast<void*>(pCtx->field_0x4C),
-               reinterpret_cast<const void*>(pCtx->field_0x10), 0x18);
+        memcpy(pDst, reinterpret_cast<const u8*>(bufferedPos), 0x18);
         pReader->mBufferPos += 0x18;
     } else {
-        u32 remaining = 0x18 - avail;
-        memcpy(reinterpret_cast<void*>(pCtx->field_0x4C),
-               reinterpret_cast<const void*>(pCtx->field_0x10), avail);
-        memcpy(reinterpret_cast<void*>(pCtx->field_0x4C + avail),
-               pReader->mStreamPos, remaining);
+        // Wrap: consume the buffer tail, then the rest from the stream.
+        remaining = 0x18 - avail;
+        memcpy(pDst, reinterpret_cast<const u8*>(bufferedPos), avail);
+        memcpy(static_cast<u8*>(pDst) + avail, pReader->mStreamPos,
+               remaining);
         pReader->mBufferPos = pReader->mBufferEnd;
         pReader->mStreamPos += remaining;
     }
 
-    pCtx->field_0x4C += 0x18;
+    // Count init precedes the write-cursor advance in retail's schedule;
+    // pInfo is read BEFORE the advance store, pGlyph AFTER it.
+    u16 count = 0;
+
+    FontInformation* pInfo =
+        reinterpret_cast<FontInformation*>(pCtx->field_0x0);
+    u32 pos = pCtx->field_0x4C;
+    pCtx->field_0x4C = pos + 0x18;
 
     // TGLP header: clear the 'reverse' flag in sheetFormat and remember it.
-    u16 sheetFormat = reinterpret_cast<FontInformation*>(pCtx->field_0x0)
-                          ->pGlyph->sheetFormat;
-    reinterpret_cast<FontInformation*>(pCtx->field_0x0)->pGlyph->sheetFormat =
-        sheetFormat & 0x7FFF;
+    FontTextureGlyph* pGlyph = pInfo->pGlyph;
+    u16 sheetFormat = pGlyph->sheetFormat;
     u32 reverse = (sheetFormat >> 15) & 1;
 
-    // Count the glyphs whose code-map entry is not 0xFFFF.
-    u16 count = 0;
-    for (u32 i = 0; i < pCtx->field_0x62; i++) {
-        if (reinterpret_cast<const u16*>(pCtx->field_0x40)[i] != 0xFFFF) {
+    for (u16 i = 0; i < pCtx->field_0x62; i++) {
+        if (*reinterpret_cast<const u16*>(
+                pCtx->field_0x40 + i * sizeof(u16)) != 0xFFFF) {
             count++;
         }
     }
@@ -425,8 +512,14 @@ int ArchiveFontBase::ConstructOpAnalyzeTGLP(ConstructContext* pCtx,
     reinterpret_cast<FontInformation*>(pCtx->field_0x0)->pGlyph->sheetImage =
         reinterpret_cast<u8*>(pCtx->field_0x4C);
 
+    // Next op depends on the 'reverse' flag (branchy default + overwrite).
+    u32 opNext = 7;
+    if (reverse != 0) {
+        opNext = 8;
+    }
+
     pCtx->field_0xC = 0xA;
-    pCtx->field_0x50 = (reverse != 0) ? 8 : 7;
+    pCtx->field_0x50 = opNext;
     pCtx->field_0x54 =
         image -
         (pCtx->field_0x18 + (pReader->mStreamPos - pReader->mStreamStart) +
@@ -438,65 +531,72 @@ int ArchiveFontBase::ConstructOpAnalyzeTGLP(ConstructContext* pCtx,
 } // namespace ut
 } // namespace nw4r
 
+namespace nw4r {
+namespace ut {
+namespace detail {
+
 // ArchiveFontBase::GetCharWidths(u16) const - remaps the glyph index through
-// the archive width sheet (same logic as AdjustIndex below), falls back to
-// the alternate char, then forwards to ResFontBase::GetCharWidthsFromIndex.
-extern "C" nw4r::ut::CharWidths
-GetCharWidths__Q44nw4r2ut6detail15ArchiveFontBaseCFUs(const void* self,
-                                                      unsigned short ch) {
-    const unsigned char* pSelf = static_cast<const unsigned char*>(self);
-    unsigned short index = GetGlyphIndex__Q44nw4r2ut6detail11ResFontBaseCFUs(pSelf, ch);
-
+// the archive width sheet (inlined AdjustIndex: an unmapped sheet yields
+// 0xFFFF), falls back to the alternate char, then forwards to
+// ResFontBase::GetCharWidthsFromIndex.
+CharWidths ArchiveFontBase::GetCharWidths(unsigned short ch) const {
+    unsigned short index = GetGlyphIndex__Q44nw4r2ut6detail11ResFontBaseCFUs(this, ch);
     unsigned short charIndex = index;
-    const unsigned char* pInfo;
-    if (index != 0xffff) {
-        pInfo = *(const unsigned char**)(pSelf + 0x14);
-        const unsigned short* pTable = *(const unsigned short**)(pSelf + 0x1c);
-        const unsigned char* pSub = *(const unsigned char**)(pInfo + 8);
 
-        int cellsInASheet =
-            *(const unsigned short*)(pSub + 0xc) *
-            *(const unsigned short*)(pSub + 0xe);
+    // Inlined AdjustIndex: remap through the per-sheet width table; an
+    // unmapped (non-resident) sheet yields 0xFFFF.
+    unsigned short remapped = GetAdjustedIndex(index);
 
-        unsigned short mapped = pTable[index / cellsInASheet];
-        if (mapped != 0xffff) {
-            charIndex = index - mapped;
-        }
+    // ResFontBase::mFontInfo (at 0x14) is private to the base class.
+    FontInformation* pInfo = *reinterpret_cast<FontInformation* const*>(
+        reinterpret_cast<const char*>(this) + 0x14);
+
+    // Fall back to the alternate char when the glyph's sheet is not resident;
+    // otherwise use the original index.
+    if (remapped == 0xFFFF) {
+        charIndex = pInfo->alterCharIndex;
     }
-
-    if (charIndex == 0xffff) {
-        charIndex = *(const unsigned short*)(pInfo + 2);
-    }
-
-    return *(const nw4r::ut::CharWidths*)GetCharWidthsFromIndex__Q44nw4r2ut6detail11ResFontBaseCFUs(
-        pSelf, charIndex);
+    return *reinterpret_cast<const CharWidths*>(
+        GetCharWidthsFromIndex__Q44nw4r2ut6detail11ResFontBaseCFUs(
+            this, charIndex));
 }
-// ArchiveFontBase::HasGlyph(u16) const - a glyph exists when its sheet-remapped
-// index is valid.
-extern "C" bool
-HasGlyph__Q44nw4r2ut6detail15ArchiveFontBaseCFUs(const void* self,
-                                                 unsigned short ch) {
-    const unsigned char* pSelf = static_cast<const unsigned char*>(self);
-    unsigned short index = FindGlyphIndex__Q44nw4r2ut6detail11ResFontBaseCFUs(pSelf, ch);
-    if (index == 0xffff) {
-        return false;
-    }
 
-    const unsigned char* pInfo = *(const unsigned char**)(pSelf + 0x14);
+} // namespace detail
+} // namespace ut
+} // namespace nw4r
+// Sheet-remap of a glyph index through the archive width table; returns
+// 0xffff when the glyph's sheet is not resident.
+static inline unsigned short
+AdjustSheetIndex_(const unsigned char* pSelf, unsigned short index) {
+    const void* pInfo = *(const void**)(pSelf + 0x14);
     const unsigned short* pTable = *(const unsigned short**)(pSelf + 0x1c);
-    const unsigned char* pSub = *(const unsigned char**)(pInfo + 8);
+    const unsigned char* pSub =
+        *(const unsigned char**)((const unsigned char*)pInfo + 8);
 
     int cellsInASheet =
         *(const unsigned short*)(pSub + 0xc) *
         *(const unsigned short*)(pSub + 0xe);
 
-    unsigned short mapped = pTable[index / cellsInASheet];
-    unsigned short adjusted = 0xffff;
-    if (mapped != 0xffff) {
-        adjusted = index - mapped;
+    int sheet = index / cellsInASheet;
+    unsigned short mapped = pTable[sheet];
+    if (mapped == 0xffff) {
+        return 0xffff;
     }
 
-    return adjusted != 0xffff;
+    return index - mapped;
+}
+
+// ArchiveFontBase::HasGlyph(u16) const - a glyph exists when its sheet-remapped
+// index is valid.
+bool nw4r::ut::detail::ArchiveFontBase::HasGlyph(unsigned short ch) const {
+    const unsigned char* pSelf = reinterpret_cast<const unsigned char*>(this);
+    unsigned short index = FindGlyphIndex__Q44nw4r2ut6detail11ResFontBaseCFUs(pSelf, ch);
+
+    if (index != 0xffff) {
+        return AdjustSheetIndex_(pSelf, index) != 0xffff;
+    }
+
+    return false;
 }extern "C" unsigned short
 AdjustIndex__Q44nw4r2ut6detail15ArchiveFontBaseCFUs(const void* self,
                                                        unsigned short index) {
@@ -624,7 +724,6 @@ int nw4r::ut::detail::ArchiveFontBase::ConstructOpCopy(ConstructContext* pCtx,
     // Copy as much as the stream cache holds, bounded by the op's remaining
     // byte count. The second clamp re-reads the remaining count like retail
     // (the compiler does not know the first clamp capped it).
-    int result;
     u32 amount = pReader->mStreamEnd - pReader->mStreamPos;
     if (amount > pCtx->field_0x54) {
         amount = pCtx->field_0x54;
@@ -642,34 +741,38 @@ int nw4r::ut::detail::ArchiveFontBase::ConstructOpCopy(ConstructContext* pCtx,
 
     if (pCtx->field_0x54 == 0) {
         pCtx->field_0xC = pCtx->field_0x50;
-        result = 3;
     } else {
         // Still more to copy: account consumed bytes and pull in more data.
         pCtx->field_0x18 += (pReader->mStreamPos - pReader->mStreamStart) +
                             (pReader->mBufferPos - pReader->mBufferStart);
-        if (!pReader->RequestData(pCtx, pCtx->field_0x54)) {
-            result = 2;
-        } else {
-            result = 0;
+        int result = pReader->RequestData(pCtx, pCtx->field_0x54);
+        int ret = 2;
+        if (result != 0) {
+            ret = 0;
         }
+        return ret;
     }
-    return result;
+    return 3;
 }
 
 int nw4r::ut::detail::ArchiveFontBase::ConstructOpSkip(ConstructContext* pCtx,
-                                     CachedStreamReader* pReader) {
-    // Skip as much as the stream cache holds, bounded by the op's remaining
-    // byte count. The second clamp re-reads the remaining count like retail
-    // (the compiler does not know the first clamp capped it).
-    u32 streamAvail = pReader->mStreamEnd - pReader->mStreamPos;
+                                                       CachedStreamReader* pReader) {
+    // Skip up to what the stream cache holds, bounded by the op's remaining
+    // byte count (field_0x54). Retail re-reads the remaining count around the
+    // cursor updates, so each clamp/subtract performs its own reload.
+    // Retail keeps the call's `this` in a separate copy that interferes with
+    // the parameter (both stay live), so it survives as its own register web.
+    CachedStreamReader* pStream = pReader;
+
+    u32 avail = (pReader->mStreamEnd - pReader->mStreamPos) +
+                (pReader->mBufferEnd - pReader->mBufferPos);
     u32 amount = pCtx->field_0x54;
-    u32 avail = streamAvail + (pReader->mBufferEnd - pReader->mBufferPos);
     if (amount > avail) {
         amount = avail;
     }
 
-    // Consume the buffered range first, then the stream itself once the
-    // buffered range is exhausted.
+    // Consume the buffered range first; once it is exhausted, spill the rest
+    // of the skip into the stream itself.
     u32 buffered = pReader->mBufferEnd - pReader->mBufferPos;
     if (buffered > amount) {
         pReader->mBufferPos += amount;
@@ -678,13 +781,15 @@ int nw4r::ut::detail::ArchiveFontBase::ConstructOpSkip(ConstructContext* pCtx,
         pReader->mStreamPos += amount - buffered;
     }
 
-    u32 remaining = *reinterpret_cast<volatile u32*>(&pCtx->field_0x54);
+    u32 remaining = pCtx->field_0x54;
     if (amount > remaining) {
         amount = remaining;
     }
-    pCtx->field_0x54 -= amount;
 
-    if (pCtx->field_0x54 == 0) {
+    u32 left = pCtx->field_0x54 - amount;
+    pCtx->field_0x54 = left;
+
+    if (left == 0) {
         pCtx->field_0xC = pCtx->field_0x50;
         return 3;
     }
@@ -692,7 +797,7 @@ int nw4r::ut::detail::ArchiveFontBase::ConstructOpSkip(ConstructContext* pCtx,
     // Still more to skip: accumulate consumed bytes and pull in more data.
     pCtx->field_0x18 += (pReader->mStreamPos - pReader->mStreamStart) +
                         (pReader->mBufferPos - pReader->mBufferStart);
-    int result = pReader->RequestData(pCtx, pCtx->field_0x54);
+    int result = pStream->RequestData(pCtx, left);
     if (result == 0) {
         return 2;
     }
@@ -736,21 +841,18 @@ GetRemain__Q54nw4r2ut6detail15ArchiveFontBase18CachedStreamReaderCFv(const void*
 
 void nw4r::ut::detail::ArchiveFontBase::CachedStreamReader::CopyTo(
     void* pDst, u32 size) {
-    void* dst = pDst;
-    u32 len = size;
-    unsigned int* p = (unsigned int*)this;
-
-    unsigned int avail = p[5] - p[4];  // mStreamEnd - mBufferPos
-
-    if (avail >= len) {
-        memcpy(dst, (void*)p[4], len);
-        p[4] = p[4] + len;
+    // Fast path: requested range is fully inside the stream buffer.
+    if (mBufferEnd - mBufferPos >= size) {
+        memcpy(pDst, mBufferPos, size);
+        mBufferPos += size;
     } else {
-        unsigned int remaining = len - avail;
-        memcpy(dst, (void*)p[4], avail);
-        memcpy((void*)((unsigned int)dst + avail), (void*)p[1], remaining);
-        p[4] = p[5];
-        p[1] = p[1] + remaining;
+        // Wrap around: consume the buffer tail, then read the rest from the stream.
+        u32 buffered = mBufferEnd - mBufferPos;
+        u32 rest = size - buffered;
+        memcpy(pDst, mBufferPos, buffered);
+        memcpy(static_cast<u8*>(pDst) + buffered, mStreamPos, rest);
+        mBufferPos = mBufferEnd;
+        mStreamPos += rest;
     }
 }
 

@@ -11,10 +11,34 @@
 // Forward decl: CfGameManager.hpp's `static cf::CfGameManager* init(...)` relies
 // on the class name being declared before its include chain is entered.
 namespace cf { class CfGameManager; }
+// getPlayer__Q22cf13CfGameManagerFi needs no guard: all headers in this
+// TU's chain now share the extern "C" void*(int) form (CfObjectImplMove.hpp
+// was converted from C++ linkage).
+// Same treatment for the enum-list helper family (CfObjectImplMove/
+// CfObjectImplWalker/pluginUi headers declare typed C++-linkage variants).
+// Guards must precede harness_catalog.hpp: CfObjectImplMove.hpp arrives via
+// harness_catalog -> CTaskGameEff, so defining these any later leaves its
+// typed func_80043D90/func_80043F18/func_800F4A98/__dt__80043E88 decls live
+// and clashing with CAIAction.hpp's canonical void* forms (MWCC 10197).
+#define func_80043D90 visionCppEnumListCtorUnused
+#define func_80043F18 visionCppEnumListGetUnused
+#define func_800F6EAC visionCppEnumListElemUnused
+#define __dt__80043E88 visionCppEnumListDtorUnused
+#define func_800F4A98 visionCppEnumListFillUnused
+// func_8016FE34 / func_800F477C are dual-arity retail symbols: most headers
+// say void*(void*) / void*(void) but this TU's call sites pass an int id /
+// a self pointer. Guard BOTH names across every include (harness chain
+// included) so the local declarations below are the only ones visible.
+#define func_8016FE34 visionCppChainActorLookup
+#define func_800F477C visionCppVisionRefUnused
 #include "kyoshin/harness_catalog.hpp"
 #include "kyoshin/CTaskGameApi.hpp"
 // (CUIWindowManagerApi.hpp omitted: conflicts with this TU's closure.)
 extern "C" void* func_801412D0(u32 target);
+
+// The BFC38/BFE8C shields are gone: all headers in this TU's chain now share
+// one extern "C" form per symbol (BFC38 unified on the u16-returning
+// flat-name form; BFE8C on void(u32,u32,u32)).
 
 #include "kyoshin/cf/CVision.hpp"
 #include "kyoshin/cf/CArtsSet.hpp"
@@ -42,36 +66,37 @@ extern "C" void* __dt__801A36D0(cf::UnkClass_801A36D0* self, int deleting);
 // two headers are pre-included under a rename and CVision.cpp keeps its
 // (int id) declaration.
 #include "kyoshin/cf/CSuddenCommu.hpp"
-#define func_8016FE34 visionCppChainActorLookup
-// CAIAction.hpp recently switched func_8009EC9C to (u16); CVision.hpp's
-// (u32) import is what this TU uses (identical call-site codegen). Rename
-// the CAIAction form out of the way (MWCC 10197).
-#define func_8009EC9C visionCppAiActionEc9cUnused
-// CAIAction.hpp also gained a 2-param void* getBdatStringColumnValue; the
-// canonical 3-param u32 decl comes from plugin/ocBdat.hpp (via
-// harness_catalog.hpp). Rename theirs out of the way too.
-#define getBdatStringColumnValue visionCppAiActionBdatColUnused
-// ...and a third: u16 getArtsSlotRC(void*,int,int) vs CChainActorList.hpp's
-// int(const void*,short,short). Unused here; rename past the include.
-#define getArtsSlotRC visionCppAiActionArtsSlotRcUnused
-// ...and getArtsParamRC2 (const void* vs void* first param - illegal
-// overloading under C linkage).
-#define getArtsParamRC2 visionCppAiActionArtsParamRc2Unused
+// The former func_8009EC9C / getBdatStringColumnValue / getArtsSlotRC /
+// getArtsParamRC2 renames are gone: CAIAction.hpp no longer redeclares
+// func_8009EC9C, its getBdatStringColumnValue shim is type-identical to the
+// ocBdat.hpp owner decl, and getArtsSlotRC/getArtsParamRC2 live only on
+// chain/CChainActorList.hpp (canonical int/const-void* forms).
 // CAIAction.hpp declares func_80174C98 as void(const void*,void*,int), which
 // conflicts with CSuddenCommu.hpp's int(void*,int*,int) form (MWCC 10197).
 // This TU uses the CSuddenCommu form; rename the other out of the way.
 #include "kyoshin/cf/object/CAIAction.hpp"
-#undef func_8009EC9C
-#undef getBdatStringColumnValue
-#undef getArtsSlotRC
-#undef getArtsParamRC2
-#undef func_8016FE34
-#define func_8016FE34 visionCppChainTimerActorLookup
-#define func_8025FB10 visionCppChainTimer25fb10Unused
 #include "kyoshin/cf/chain/CChainTimer.hpp"
-#undef func_8025FB10
-#undef func_8016FE34
+// CBattleManager.hpp pulls CfObjectActor.hpp, whose func_8016FE34(int id)
+// and func_800F477C decls are dual-arity variants (retail call sites in some
+// TUs pass an int id / no arg). Rename both away for this TU; its own
+// declarations keep the forms this unit's call sites use.
 #include "kyoshin/cf/CBattleManager.hpp"
+#undef func_8016FE34
+#undef func_800F477C
+// Header decls for the renamed family are now all in; restore real names and
+// install exactly one canonical declaration per symbol.
+#undef func_80043D90
+#undef func_80043F18
+#undef func_800F6EAC
+#undef __dt__80043E88
+#undef func_800F4A98
+extern "C" u16 func_801BFC38__Q22cf10CfSoundManFUlUlUlUlf(u32 a, u32 b, u32 c, u32 d, f32 e);
+extern "C" void func_80043D90(void* list);
+extern "C" void* func_80043F18(void* list);
+extern "C" void __dt__80043E88(void* list, int tags);
+extern "C" void* func_800F6EAC(void* list, u32 idx);
+extern "C" void func_800F4A98(void* list, u32 type, u32 filter);
+extern "C" void func_801BFE8C(u32 a, u32 b, u32 c);
 
 using namespace cf;
 
@@ -307,9 +332,9 @@ public:
     virtual void f590(); virtual void f594(); virtual void f598(); virtual void f59C();
     virtual void f5A0(); virtual void f5A4(); virtual void f5A8(); virtual void f5AC();
     virtual void f5B0(); virtual void f5B4(); virtual void f5B8();
-    virtual void f5B8_2();
     // Slots dispatched by func_801A4CF8.
     virtual f32 vf5BC();        // 0x5BC
+    virtual void f5C0();        // unnamed slot @0x5C0
     virtual void vf5C4(f32 a);  // 0x5C4
     virtual void vf5C8(u32 a);  // 0x5C8
 };
@@ -335,7 +360,8 @@ public:
     virtual void f070(); virtual void f074(); virtual void f078(); virtual void f07C();
     virtual void f080(); virtual void f084(); virtual void f088(); virtual void f08C();
     virtual void f090(); virtual void f094(); virtual void f098();
-    virtual CVisionAcResult* vfAC();    // 0xAC
+    virtual void f09C(); virtual void f0A0();
+    virtual CVisionAcResult* vfAC();    // 0xAC (index 41 -> offset (41+2)*4)
 };
 
 struct CVisionFusion {
@@ -3032,10 +3058,10 @@ void func_801A64F8() {
 // us-801aa050: Release an arbitrary slot of the battle manager's vision
 // sub-object (retail func_801A891C). Args are forwarded untouched.
 // ---------------------------------------------------------------------------
-void func_801A891C(int a, int b) {
+void func_801A891C(void* a, int b) {
     if (CBattleManager::getInstance() &&
         &CBattleManager::getInstance()->mVision) {
-        func_801A897C(&CBattleManager::getInstance()->mVision, a, b);
+        func_801A897C(&CBattleManager::getInstance()->mVision, (int)a, b);
     }
 }
 

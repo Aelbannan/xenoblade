@@ -7,16 +7,11 @@
 // per-object runtime instance at +0x30 is lazily created through the game
 // manager's sub-object at +0x2F2C.
 
-// CfGameManager.hpp declares func_800D9354(CBattleManagerView*) while
-// CBattleManagerApi.hpp (pulled in by that same header) declares
-// func_800D9354(cf::CBattleManager*); MWCC rejects the mismatched extern "C"
-// pair (10197). This TU never calls it, so rename the declaration out of the
-// way for the duration of the includes (same shield as CBattleManager.cpp).
-#define func_800D9354 cfgGameMgr9354Unused
+// func_800D9354 has a single shared decl on kyoshin/cf/CBattleManagerApi.hpp;
+// CfGameManager.hpp carries no local copy.
 #include "kyoshin/harness_catalog.hpp"
 #include "kyoshin/cf/CtrlMoveBase.hpp"
 #include "kyoshin/cf/CfGameManager.hpp"
-#undef func_800D9354
 #include "monolib/math/Random.hpp"
 #include <nw4r/math.h>
 

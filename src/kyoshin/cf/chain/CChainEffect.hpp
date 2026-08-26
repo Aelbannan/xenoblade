@@ -64,7 +64,7 @@ void func_800ACC14(void* obj, s8 val);
 void func_800B3A88(void* self, void* target);
 struct CChainManager* func_800B6C34(void);
 void* func_800AC610(void* param);
-void func_801BFC38__Q22cf10CfSoundManFUlUlUlUlf(u32 a, u32 b, u32 c, u32 d, f32 e);
+extern "C" u16 func_801BFC38__Q22cf10CfSoundManFUlUlUlUlf(u32 a, u32 b, u32 c, u32 d, f32 e);
 extern f32 lbl_eu_80668C50;
 }
 // Plain global C++ callee (retail symbol func_800B07E8__Fv).

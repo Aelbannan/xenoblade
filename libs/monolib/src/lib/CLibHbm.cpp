@@ -603,6 +603,10 @@ void CLibHbm::renderHbmstopIcon(){
 //          foreign text symbol; its switch compiles in CLibHbmControl.cpp but
 //          the retail linker places the table in this unit's .data range)
 //   .sdata lbl_eu_806637C8 RTTI locator { "CLibHbm" pool string, base-list }
+//
+// The IWorkEvent default-handler slots, CWorkThread work-method slots, and
+// __RTTI__ symbols come from monolib/data_vtables.hpp (shared declarations for
+// all manual-vtable TUs). Only this class's own overrides are declared here.
 namespace HbmBlob {
 extern "C" void WorkEvent1__10IWorkEventFPvPCc();
 extern "C" void OnFileEvent__10IWorkEventFP10CEventFile();
@@ -648,9 +652,10 @@ extern "C" void wkUpdate__7CLibHbmFv();
 extern "C" void wkStandbyLogin__7CLibHbmFv();
 extern "C" void wkStandbyLogout__7CLibHbmFv();
 }
-extern "C" char lbl_eu_8066A568[8];   // .sdata2 "CLibHbm" RTTI name (shared pool)
 // Foreign switch-table target: CLibHbmControl::wkUpdate body.
-extern "C" char wkUpdate__14CLibHbmControlFv[];
+// Global-scope variable names are not mangled by MWCC, so no extern "C" needed.
+extern char wkUpdate__14CLibHbmControlFv[];
+extern "C" char lbl_eu_8066A568[8];   // .sdata2 "CLibHbm" RTTI name (shared pool)
 // [.data] 0x8056D1A8 (0xA0): __vt__7CLibHbm.
 extern "C" u32 lbl_eu_806637C8[2];
 extern "C" u32 lbl_eu_8056D1A8[40] = {

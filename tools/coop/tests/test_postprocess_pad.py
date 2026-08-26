@@ -42,9 +42,10 @@ def _build_elf(sections: list[dict]) -> bytes:
     there), honoring each section's alignment; .shstrtab and then the shdr
     table are appended after them.
     """
-    all_secs = list(sections) + [{"name": ".shstrtab", "type": SHT_STRTAB, "align": 1}]
-    names = [""] + [s["name"] for s in all_secs]
-    shstr, soff = _strtab(*names)
+    shstr, soff = _strtab("", *(s["name"] for s in sections), ".shstrtab")
+    all_secs = list(sections) + [
+        {"name": ".shstrtab", "type": SHT_STRTAB, "align": 1, "data": shstr}
+    ]
 
     ehsize = 52
     shentsize = 40
@@ -73,8 +74,9 @@ def _build_elf(sections: list[dict]) -> bytes:
     out[6] = 1  # EV_CURRENT
     struct.pack_into(">HHI", out, 16, 1, 20, 1)  # e_type=REL, PPC, version
     struct.pack_into(">III", out, 24, 0, 0, shoff)
+    struct.pack_into(">I", out, 36, 0)  # e_flags
     struct.pack_into(
-        ">HHHHHH", out, 36, 0, ehsize, 0, 0, shentsize, len(all_secs) + 1, len(all_secs)
+        ">HHHHHH", out, 40, ehsize, 0, 0, shentsize, len(all_secs) + 1, len(all_secs)
     )
 
     for i, s in enumerate(all_secs, start=1):
@@ -94,6 +96,7 @@ def _build_elf(sections: list[dict]) -> bytes:
             0,
             0,
             s.get("align", 1),
+            0,
         )
         struct.pack_into(">I", out, h, soff[s["name"]])
     # section bodies (shstrtab included)
@@ -169,8 +172,10 @@ class TestPadDataSectionFunc(unittest.TestCase):
                     self.assertEqual(o % a, 0, f"{n} offset {o:#x} not {a}-aligned")
                 if t != SHT_NOBITS and s:
                     self.assertLessEqual(o + s, len(data), f"{n} overruns file")
-            # shdr table readable at e_shoff (old bug read past EOF here)
-            self.assertLess(e_shoff + 12 * 40, len(data))
+            # shdr table readable at e_shoff (old bug read past EOF here):
+            # every header must parse with offsets/sizes inside the file.
+            num, = struct.unpack_from(">H", data, 48)
+            self.assertLessEqual(e_shoff + num * 40, len(data))
             # later-section contents preserved verbatim
             for n, want in wants.items():
                 _, o_, s_, _ = by[n]

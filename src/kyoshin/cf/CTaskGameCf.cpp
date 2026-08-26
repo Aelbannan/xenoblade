@@ -13,30 +13,6 @@
 #include "kyoshin/code_80296898.hpp"
 #include "monolib/device/CDeviceVI.hpp"
 
-// --- CTTask<cf::CTaskGameCf> out-of-line specializations ---
-// The canonical declared-only template emits no bodies; these explicit
-// specializations produce the retail standalone Move/Draw/dtor symbols.
-template<>
-void CTTask<cf::CTaskGameCf>::Move() {
-    if (mMoveFunc) {
-        (static_cast<cf::CTaskGameCf*>(this)->*mMoveFunc)();
-    }
-}
-
-template<>
-void CTTask<cf::CTaskGameCf>::Draw() {
-    if (mDrawFunc) {
-        (static_cast<cf::CTaskGameCf*>(this)->*mDrawFunc)();
-    }
-}
-
-// Retail __dt__26CTTask<Q22cf11CTaskGameCf>Fv is 0x50 (stmw r30 frame); keep
-// optimize_for_size on like CTaskGameEff's dtor.
-#pragma optimize_for_size on
-template<>
-CTTask<cf::CTaskGameCf>::~CTTask() {}
-#pragma optimize_for_size off
-
 // Minimal local declaration of cf::CTaskREvent: CTaskREvent.hpp currently
 // conflicts with CfGameManager.hpp (both declare a global func_8009D5FC with
 // different return types), so this TU re-declares only the members it uses.
@@ -49,11 +25,66 @@ namespace cf {
     };
 }
 
+// NOTE: function definitions in this TU are ordered to mirror the retail
+// .text layout (ctor first, CTTask<...> Move/Draw template specializations
+// last). MWCC emits functions in definition order, so keeping this order
+// aligns decomp .text offsets with the retail split object.
+
+extern const u32 lbl_eu_80525B9C[];
+extern const u32 lbl_eu_80525B54[];
+// __ptmf_null: declared (non-const u32[3]) by CfNandManager.hpp etc -
+// local const form conflicts (10563)
+extern u32 __ptmf_null[3];
+
+// optimize_for_size: retail prologue/epilogue use stmw/lmw r29.
+#pragma optimize_for_size on
+extern "C" cf::CTaskGameCf* __ct__cf_CTaskGameCf(cf::CTaskGameCf* pThis, CProcess* pParent, int arg2) {
+    __ct__8CProcessFv(pThis);
+
+    u32* p = reinterpret_cast<u32*>(pThis);
+
+    // Interim CTTask<CTaskGameCf> vtable, written before the callback slots
+    p[4] = reinterpret_cast<u32>(&lbl_eu_80525B9C[0]);
+
+    // Null PTMF copied into the CTTask move/draw callback slots
+    typedef void (cf::CTaskGameCf::*Ptmf)();
+    *(Ptmf*)((char*)pThis + 0x3C) = *(const Ptmf*)&__ptmf_null[0];
+    *(Ptmf*)((char*)pThis + 0x48) = *(const Ptmf*)&__ptmf_null[0];
+
+    // Final CTaskGameCf vtable (overwrites CTTask vtable)
+    p[4] = reinterpret_cast<u32>(&lbl_eu_80525B54[0]);
+
+    pThis->unk_54 = 0;
+    pThis->pTaskGame = reinterpret_cast<CTaskGame*>(pParent);
+    pThis->unk_5C = 1;
+    pThis->unk_5E = 1;
+    pThis->unk_60 = 16;
+    pThis->unk_62 = 0;
+    pThis->unk_64.mString[0] = 0;
+    pThis->unk_64.mLength = 0;
+
+    if (arg2 != 0) {
+        pThis->unk_54 |= 8;
+    } else {
+        pThis->unk_54 = 0;
+    }
+    return pThis;
+}
+#pragma optimize_for_size off
+
+// Retail __dt__26CTTask<Q22cf11CTaskGameCf>Fv is 0x50 (stmw r30 frame); keep
+// optimize_for_size on like CTaskGameEff's dtor.
+// Placed immediately after the ctor to mirror the retail .text layout.
+#pragma optimize_for_size on
+template<>
+CTTask<cf::CTaskGameCf>::~CTTask() {}
+#pragma optimize_for_size off
+
 namespace cf{
     CTaskGameCf* CTaskGameCf::spInstance;
 
     // Retail has no mangled ctor: the class ctor is the extern "C" __ct__cf_CTaskGameCf
-    // wrapper below (0xc8). The C++ ctor definition was removed to eliminate the extra
+    // wrapper above (0xc8). The C++ ctor definition was removed to eliminate the extra
     // 0xd8 function that inflated the unit past its split budget.
     // optimize_for_size emits the retail stmw/lmw r30 frame (0x54, not 0x5c).
     #pragma optimize_for_size on
@@ -74,7 +105,11 @@ CTaskGameCf* CTaskGameCf::getInstance() {
     }
 
 extern "C" const CTaskGameCf::MoveFunc lbl_eu_80525AB8;
+extern "C" const CTaskGameCf::MoveFunc lbl_eu_80525B30;
 extern "C" const u32 lbl_eu_80525B0C[3];
+// Pooled constant PTMF for startMission's mMoveFunc store (retail .data label);
+// referencing it by name keeps the pool reloc named instead of a private @label.
+extern "C" const CTaskGameCf::MoveFunc lbl_eu_80525AD0;
 
 void CTaskGameCf::func_8004431C() {
     mMoveFunc = lbl_eu_80525AB8;
@@ -93,7 +128,7 @@ void CTaskGameCf::func_8004433C() {
         unk_62 = 0;
         unk_64 = arg3;
         unk_88 = arg4;
-        mMoveFunc = &CTaskGameCf::func_800444DC;
+        mMoveFunc = lbl_eu_80525AD0;
     }
     #pragma optimize_for_size off
 
@@ -140,6 +175,7 @@ void cf::CTaskGameCf::func_800444DC(){
 }
 
 extern "C" CTaskGameCf::MoveFunc lbl_eu_80525B18;
+extern "C" const CTaskGameCf::MoveFunc lbl_eu_80525B24;
 
 void CTaskGameCf::func_800444FC(){
     mMoveFunc = lbl_eu_80525B18;
@@ -147,95 +183,116 @@ void CTaskGameCf::func_800444FC(){
 
     #pragma optimize_for_size on
     void CTaskGameCf::func_8004451C(){
+        // New-game/continue boot path: build the battle scene, managers and UI
+        // tasks. Bit 3 of unk_54 marks a restart (skip the scene-color reset).
         if(!(unk_54 & 8)){
             func_800407C8_tmp tmp;
-            pTaskGame->getScene()->func_8049602C(0, func_800407C8(&tmp, 0.0f, 0.0f, 0.0f, 1.0f));
+            func_8049602C(pTaskGame->getScene(), 0,
+                          reinterpret_cast<u32*>(func_800407C8(&tmp, lbl_eu_80665D88, lbl_eu_80665D88, lbl_eu_80665D88, lbl_eu_80665D8C)));
         }
 
-        CUICfManager::func_80135FDC();
-        CfObjectSelectorObj::create();
+        func_80135FDC();
+        __ct__800FDB4C();
 
-        bool v5 = !unk_5C && !unk_5E;
-        bool v6 = (unk_54 & 8) == 0;
-        if(v5){
-            v6 = false;
+        // No mission ids queued: fresh campaign (extra controller setup path).
+        bool newCampaign = unk_5C == 0 && unk_5E == 0;
+        bool padInit = (unk_54 & 8) == 0;
+        if(newCampaign){
+            padInit = false;
         }
 
-        CfGameManager::init(pTaskGame->getScene(), pTaskGame->unk70, v6);
-        CfGameManager::func_8007F930((unk_54 >> 3) & 1);
+        UnkClass_8007DAE0_init(pTaskGame->getScene(), pTaskGame->unk70, padInit);
+        func_8007F930__Q22cf13CfGameManagerFv((unk_54 >> 3) & 1);
 
-        if(!CfGameManager::checkUnkFlag(24)){
-            CUIWindowManager::create(this, pTaskGame->getScene(), mtl::MemManager::getHandleMEM2());
-            CUIBattleManager::create(this, pTaskGame->getScene(), mtl::INVALID_HANDLE);
-            CfGameManager::setUnkFlag(28, true);
+        if((lbl_eu_80663E28 & 0x01000000) == 0){
+            // Scene argument is evaluated before the MEM2 handle query.
+            CScnNw4r* wmScene = pTaskGame->getScene();
+            u32 memHandle = mtl::MemManager::getHandleMEM2();
+            func_8013CFDC(this, wmScene, memHandle);
+            func_8012F558(this, pTaskGame->getScene(), -1);
+            lbl_eu_80663E28 |= 0x10000000;
         }
 
         if(CTaskGame::func_800404F0()){
-            CfGameManager::setUnkFlag(30, true);
+            lbl_eu_80663E28 |= 0x40000000;
         } else {
-            CfGameManager::setUnkFlag(30, false);
+            lbl_eu_80663E28 &= ~0x40000000u;
         }
 
-        CUICfManager::create(CTaskManager::GetRootProcGame(), pTaskGame->getScene(), mtl::INVALID_HANDLE);
-        CTaskREvent::create(CTaskManager::GetRootProcRealTime(), pTaskGame->getScene(), pTaskGame->unk70);
+        func_801336E4(CTaskManager::GetRootProcGame(), pTaskGame->getScene(), -1);
+        func_801665A4(CTaskManager::GetRootProcRealTime(), pTaskGame->getScene(), pTaskGame->unk70);
 
-        if(v5){
+        if(newCampaign){
             func_8009ECB0();
             func_8009ECB0();
+            func_eu_8006B238();
         } else {
-            int* v18 = func_8009ECB0();
+            cf::CtrlObjectParamSlots* party = reinterpret_cast<cf::CtrlObjectParamSlots*>(func_8009ECB0());
             func_8009ECB0();
 
-            if(!cf::CfGameManager::checkUnkFlag(24)){
-                func_8009E574(v18, 2, 1, 1);
-                func_8009E574(v18, 4, 1, 2);
-                func_8009E574(v18, 3, 2, 0);
-                func_8009E574(v18, 5, 2, 1);
-                func_8009E574(v18, 6, 2, 2);
-                func_8009E574(v18, 7, 2, 3);
+            if((lbl_eu_80663E28 & 0x01000000) == 0){
+                func_8009E574(party, 2, 1, 1);
+                func_8009E574(party, 4, 1, 2);
+                func_8009E574(party, 3, 2, 0);
+                func_8009E574(party, 5, 2, 1);
+                func_8009E574(party, 6, 2, 2);
+                func_8009E574(party, 7, 2, 3);
             }
         }
 
-        CfGameManager::func_80086B5C(unk_60, unk_62, 0);
-        CfGameManager::func_8007E514(unk_5C, unk_5E, unk_64[0] ? unk_64.c_str() : nullptr, unk_88, CfNandManager::func_8024005C());
-        CTaskEnvironment::create(pTaskGame, pTaskGame->getScene());
+        func_80086B5C__Q22cf13CfGameManagerFv(unk_60, unk_62, 0);
+        func_8007E514__Q22cf13CfGameManagerFv(unk_5C, unk_5E,
+            unk_64.mString[0] ? unk_64.c_str() : nullptr, unk_88, func_8024005C());
+        func_80059C58(pTaskGame, pTaskGame->getScene());
         CTaskCulling::create(pTaskGame, pTaskGame->getScene());
-        if(!func_8009CF8C(32)) func_8009D018(32, 1);
+        if(func_8009CF8C((u32)0x20) == 0){
+            func_8009D018(0x20, 1);
+        }
         func_8004302C(1, 0);
-        mMoveFunc = &CTaskGameCf::func_800447B4;
+        // Switch to the running-state move handler (pooled PTMF copy from
+        // the retail .data constant at lbl_eu_80525B24).
+        MoveFunc nextMove = *(const MoveFunc*)&lbl_eu_80525B24;
+        mMoveFunc = nextMove;
     }
     #pragma optimize_for_size off
 
     void CTaskGameCf::func_800447B4(){
         if(Class_80296898::getInstance()->mFrameCount == 0){
-            Class_80296898::getInstance()->mFrameCount = 10;
+            u8 frame = 10;
+            Class_80296898::getInstance()->mFrameCount = frame;
         }
 
         CDeviceVI::func_804483DC(Class_80296898::getInstance()->mFrameCount - 1);
 
-        if(unk_54 & 1){
-            unk_54 &= ~1;
+        // volatile forces MWCC to emit the retail load/test + reload/clear shape
+        volatile u32& flags = unk_54;
+        if(flags & 1){
+            flags &= ~1u;
 
-            if(CTaskEnvironment::getInstance()){
-                CTaskEnvironment::getInstance()->SetRemove();
+            // Tear down the environment/culling/UI tasks (SetRemove = flag byte 0x39).
+            if(getGlobalSda()){
+                ((CProcess*)getGlobalSda())->SetRemove();
             }
 
             if(CTaskCulling::getInstance()){
                 CTaskCulling::getInstance()->SetRemove();
             }
 
-            if(!CfGameManager::checkUnkFlag(24)){
+            // Reset scene color while the message system is unloaded (bit 24 of lbl_eu_80663E28).
+            if(!(lbl_eu_80663E28 & 0x01000000)){
                 func_800407C8_tmp tmp;
-                pTaskGame->getScene()->func_8049602C(0, func_800407C8(&tmp, 0.0f, 0.0f, 0.0f, 1.0f));
+                func_8049602C(pTaskGame->getScene(), 0, func_800407C8(&tmp, lbl_eu_80665D88, lbl_eu_80665D88, lbl_eu_80665D88, lbl_eu_80665D8C));
             }
 
-            if(CUIWindowManager::getInstance()){
-                CUIWindowManager::getInstance()->SetRemove();
+            if(func_8013C54C()){
+                ((CProcess*)func_8013C54C())->SetRemove();
             }
 
-            CUIBattleManager::func_8012F87C(0);
-            CTaskREvent::getInstance()->SetRemove();
-            mMoveFunc = &CTaskGameCf::beginExit;
+            ::func_8012F87C(0);
+
+            ((CProcess*)func_801644B4())->SetRemove();
+
+            mMoveFunc = lbl_eu_80525B30;
         }
     }
 
@@ -270,55 +327,6 @@ void CTaskGameCf::finishExit() {
 
 } //namespace cf
 
-extern const u32 lbl_eu_80525B9C[];
-extern const u32 lbl_eu_80525B54[];
-// __ptmf_null: declared (non-const u32[3]) by CfNandManager.hpp etc -
-// local const form conflicts (10563)
-extern u32 __ptmf_null[3];
-
-extern "C" cf::CTaskGameCf* __ct__cf_CTaskGameCf(cf::CTaskGameCf* pThis, CProcess* pParent, int arg2) {
-    __ct__8CProcessFv(pThis);
-    
-    u32* p = reinterpret_cast<u32*>(pThis);
-    const u32* nullPt = &__ptmf_null[0];
-    
-    // Set CTTask<CTaskGameCf> vtable
-    p[4] = reinterpret_cast<u32>(&lbl_eu_80525B9C[0]);
-    
-    // Copy PTMF null to mMoveFunc (0x3C) in retail store order: 0x40, 0x3C, 0x44
-    // Then mDrawFunc (0x48) in same order: 0x4C, 0x48, 0x50
-    u32 w0 = nullPt[0];
-    u32 w1 = nullPt[1];
-    p[0x10] = w1;  // store word 1 to 0x40
-    p[0xF] = w0;   // store word 0 to 0x3C
-    p[0x11] = nullPt[2]; // store word 2 to 0x44
-    // Reload for second PTMF
-    w0 = nullPt[0];
-    w1 = nullPt[1];
-    p[0x13] = w1;  // store word 1 to 0x4C
-    p[0x12] = w0;  // store word 0 to 0x48
-    p[0x14] = nullPt[2]; // store word 2 to 0x50
-    
-    // Set CTaskGameCf vtable (overwrites CTTask vtable)
-    p[4] = reinterpret_cast<u32>(&lbl_eu_80525B54[0]);
-    
-    pThis->unk_54 = 0;
-    pThis->pTaskGame = reinterpret_cast<CTaskGame*>(pParent);
-    pThis->unk_5C = 1;
-    pThis->unk_5E = 1;
-    pThis->unk_60 = 16;
-    pThis->unk_62 = 0;
-    pThis->unk_64.mString[0] = 0;
-    pThis->unk_64.mLength = 0;
-    
-    if (arg2 == 0) goto zero_case;
-    pThis->unk_54 = 8;
-    return pThis;
-zero_case:
-    pThis->unk_54 = 0;
-    return pThis;
-}
-
 #pragma optimize_for_size on
 extern "C" cf::CTaskGameCf* create__Q22cf11CTaskGameCfFv(CProcess* pParent, int arg2) {
     u32 handle = getWorkMem__17CWorkThreadSystemFv();
@@ -332,3 +340,21 @@ extern "C" cf::CTaskGameCf* create__Q22cf11CTaskGameCfFv(CProcess* pParent, int 
     return task;
 }
 #pragma optimize_for_size off
+
+// --- CTTask<cf::CTaskGameCf> out-of-line specializations ---
+// The canonical declared-only template emits no bodies; these explicit
+// specializations produce the retail standalone Move/Draw/dtor symbols.
+// Kept LAST to match the retail .text layout (they sit after create()).
+template<>
+void CTTask<cf::CTaskGameCf>::Move() {
+    if (mMoveFunc) {
+        (static_cast<cf::CTaskGameCf*>(this)->*mMoveFunc)();
+    }
+}
+
+template<>
+void CTTask<cf::CTaskGameCf>::Draw() {
+    if (mDrawFunc) {
+        (static_cast<cf::CTaskGameCf*>(this)->*mDrawFunc)();
+    }
+}

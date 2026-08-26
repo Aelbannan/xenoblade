@@ -266,9 +266,9 @@ extern "C" s32 func_8047E390__17UnkClass_8047E110Fv(UnkClass_8047E110* self,
     f32 pzLo = pos->z - clearance; // f7
     f32 pxHi = pos->x + clearance; // f8
     f32 pzHi = pos->z + clearance; // f9
-    const ScnWalkNode* node = m.nodes;
     s32 count1 = ((const u16*)(m.field_0x8 + index * 12))[0];
     s32 count2 = ((const u16*)(m.field_0x8 + index * 12))[1];
+    const ScnWalkNode* node = m.nodes;
     node += count1;
     s32 best = -1;                  // r7
     f32 bestDist = lbl_eu_8066A894; // f5
@@ -277,18 +277,34 @@ extern "C" s32 func_8047E390__17UnkClass_8047E110Fv(UnkClass_8047E110* self,
     s32 haveFlagged = 1;            // r10: no flagged strict take yet
     for (s32 i = 0; i < count2; ++i, ++node) {
         // visibility gate: box-active flag plus two manager/node flag pairs
+        // (spelled as the retail branch tree; goto-gate per PLAN §17.6)
         u32 flags = m.field_0x38;
-        if (!(flags & 1)) {
-            if (node->reserved8 & 2)
-                continue;
-        }
-        if (!(flags & 2)) {
-            if (node->reserved8 & 4)
-                continue;
-        } else if (!(flags & 4)) {
-            if (node->reserved8 & 4)
-                continue;
-        }
+        u32 skip;
+        if (!(flags & 1))
+            goto gB;
+        if (!(node->reserved8 & 2))
+            goto gB;
+        skip = 0;
+        goto gEnd;
+gB:
+        if (!(flags & 2))
+            goto gC;
+        if (!(node->reserved8 & 4))
+            goto gSkip;
+        skip = 0;
+        goto gEnd;
+gC:
+        if (flags & 4)
+            goto gSkip;
+        if (!(node->reserved8 & 4))
+            goto gSkip;
+        skip = 0;
+        goto gEnd;
+gSkip:
+        skip = 1;
+gEnd:
+        if (skip)
+            continue;
         // rect expanded by clearance must contain pos
         f32 minX = lbl_eu_8066A898 * (f32)node->x;
         f32 minZ = lbl_eu_8066A898 * (f32)node->z;
@@ -305,7 +321,7 @@ extern "C" s32 func_8047E390__17UnkClass_8047E110Fv(UnkClass_8047E110* self,
         // vertical distance to the node plane must be within the threshold
         f32 dist = __fabs(pos->y - node->xPos); // f2
         if (dist >= m.field_0x20)
-            continue;
+            break;
         // priority update: strictly-inside candidates beat clearance-margin
         // ones; flagged nodes (bit 2, when both manager bits set) beat all
         if (pos->x >= minX && pos->z >= minZ && pos->x < maxX && pos->z < maxZ) {
@@ -314,34 +330,38 @@ extern "C" s32 func_8047E390__17UnkClass_8047E110Fv(UnkClass_8047E110* self,
                 best = i + count1;
                 haveStrict = 0;
                 haveMargin = 0;
-                if ((flags & 6) == 6 && (node->reserved8 & 4))
-                    haveFlagged = 0;
-            } else if ((flags & 6) != 6 || !(node->reserved8 & 4)) {
-                if (haveFlagged) {
-                    if (dist < bestDist) {
-                        bestDist = dist;
-                        best = i + count1;
-                    }
-                }
-            } else if (haveFlagged) {
+                if (!(flags & 4))
+                    continue;
+                if (!(node->reserved8 & 4))
+                    continue;
+                haveFlagged = 0;
+            } else if (!(flags & 4) || !(node->reserved8 & 4)) {
+                if (!haveFlagged)
+                    continue;
+                if (!(dist < bestDist))
+                    continue;
+                bestDist = dist;
+                best = i + count1;
+            } else {
+                if (!haveFlagged)
+                    continue;
                 bestDist = dist;
                 best = i + count1;
                 haveFlagged = 0;
-            } else if (dist < bestDist) {
-                bestDist = dist;
-                best = i + count1;
             }
         } else {
-            if (!haveStrict)
+            if (haveStrict)
+                return best;
+            if (!haveMargin)
                 continue;
-            if (haveMargin) {
-                bestDist = dist;
-                best = i + count1;
-                haveMargin = 0;
-            } else if (dist < bestDist) {
+            if (!(dist < bestDist)) {
                 best = i + count1;
                 bestDist = dist;
+                continue;
             }
+            bestDist = dist;
+            best = i + count1;
+            haveMargin = 0;
         }
     }
     return best;

@@ -324,6 +324,13 @@ struct CActorParam17ECView {
         u8 _pad[0x3E9C];
         u8 base; // 0x3E9C
     };
+    struct CfEneMoveBaseD {
+        u8 _pad[0x3E9C];
+        u8 base; // 0x3E9C
+    };
+    // NOTE: distinct view types do NOT stop MWCC from CSE-ing these
+    // addresses across calls in func_800ADB2C (value numbering ignores
+    // types); they only keep the source sites self-documenting.
 
     // Base of the +0x8 CBattleState subobject (func_80148778 arg and the
     // +0x14/+0x20 vtable dispatches in func_800ADBD4).
@@ -391,6 +398,15 @@ struct CActorParam17ECView {
     union CfEneF64Conv {
         u32 w[2];
         double d;
+    };
+
+    // Addressable raw-column holder for func_800AEC68: full-word store of the
+    // getBdatStringColumnValue result, punned u16 read on reload (retail's
+    // stw-then-lhz pair around the slot +0xF0 vcall).
+    union CfEneColNarrow {
+        u32 w;
+        u16 h;
+        u8 b;
     };
 
     // Primary-vtable call proxy for func_800AEC68: slots +0xD4 (float arg,
@@ -1413,7 +1429,7 @@ extern float lbl_eu_80666990;   // func_800ADDA8 vf334 ratio divisor
 extern float lbl_eu_80666994;   // 166 and func_800ADDA8 f32 divisor
 extern float lbl_eu_80666998;   // func_800ADDA8 scaled-vfE8 multiplier
 extern float lbl_eu_806669B4;   // 166 0xFF arts-gauge fallback
-extern float lbl_eu_8066A1F8;   // max gauge value (166 / func_800ADDA8)
+extern const float lbl_eu_8066A1F8;   // max gauge value (166 / func_800ADDA8); const form aligned with CChain.hpp / CBattleManager TU decls
 
 // lbl_eu_8066A20C / lbl_eu_8066A210 are already declared `const float` in
 // CfObjectModel.hpp (in the CfObjectActor.hpp chain) - reuse those.

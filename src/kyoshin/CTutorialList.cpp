@@ -1,18 +1,115 @@
 // Auto-scaffolded catalog TU for kyoshin/CTutorialList
 // Replace stubs with high-level C/C++ during decomp.
 
+// Headers in the harness_catalog.hpp chain declare lbl_eu_80526324/
+// lbl_eu_80526300 as const char[], while code_80135FDC.hpp (pulled in via
+// CTutorialList.hpp) declares them as u8[]. This TU never uses either -
+// keep the char decls unrenamed and rename every later (u8) expansion away.
 #include "kyoshin/harness_catalog.hpp"
+#define lbl_eu_80526324 lbl_eu_80526324_unused_u8_decl
+#define lbl_eu_80526300 lbl_eu_80526300_unused_u8_decl
 #include "kyoshin/CTutorialList.hpp"
 #include "kyoshin/CSortMenu.hpp"
-#include "kyoshin/code_80135FDC.hpp"
 #include "monolib/work/CEventFile.hpp"
+#include "kyoshin/code_80135FDC.hpp"
+#undef lbl_eu_80526324
+#undef lbl_eu_80526300
 
 #include <stdio.h>
+
+// Same-TU helper (defined below): zeroes the three summary halfwords at
+// +0x100/+0x102/+0x104 of the given table base.
+extern "C" void func_802ACBDC(u8* self);
 
 u8 CTutorialList::func_802AD300() { return ((u8*)this)[0x177]; }
 
 
-void __ct__CTutorialList(){}
+// Tutorial list constructor (retail __ct__CTutorialList). Constructs the
+// embedded sub-objects in place, primes the control bytes, then builds
+// temp CScrollBar / CSortMenu+extension bodies on the stack and copies them
+// into the members the same way retail does (region copy ctor, field copies,
+// rolled 8-byte block loops).
+// pragma optimize_for_size: retail keeps both block copies rolled (mtctr/bdnz).
+#pragma push
+#pragma optimize_for_size on
+CTutorialList::CTutorialList(u16 count) {
+    // Declaration order sets the retail stack slots: tmpSb 0x08, tmpMenu 0x48.
+    CScrollBarData tmpSb;
+    CTutorialListMenuData tmpMenu;
+
+    mVtbl = (void*)lbl_eu_8053A2A8;
+    __ct__17UnkClass_8045F564Fv(&mGap04[0]);
+    mField14 = 0;
+    mField18 = 0;
+    mField1C = 0;
+    mLayout20 = 0;
+    mAnim24 = 0;
+    mAnim28 = 0;
+    __ct__CCur18(&mGap2C[0], 0);
+    __ct__CScrollBar(&mScrollBar, 0);
+    __ct__CSortMenu(&mSortMenu84[0]);
+    mField174 = 0;
+    mState175 = 0;
+    mField176 = 0;
+    mInitialized = 1;
+    mField178 = 0;
+    mField17A = 0;
+    mField17C = count;
+    mField17E = 0;
+    // Zero-seed the member table's summary halfwords (+0x280..). Retail
+    // hoists the addi into the flag-store run.
+    func_802ACBDC(&mSubObj180[0]);
+
+    // Build a temp CScrollBar (flag 1) and copy its body into the member.
+    __ct__CScrollBar(&tmpSb, 1);
+    func_8011C998(&mScrollBar, &tmpSb);
+    __dt__10CScrollBarFv(&tmpSb, -1);
+
+    // Build a temp CSortMenu + extension body and copy it into the member's
+    // 0xF0-byte sort-menu storage, skipping the vtable at +0x00.
+    CTutorialListMenuData* menu = reinterpret_cast<CTutorialListMenuData*>(&mSortMenu84[0]);
+    __ct__CSortMenu(&tmpMenu.mVtbl);
+    __ct__UnkClass_8011C974(&menu->mUnk04[0], reinterpret_cast<const u32*>(&tmpMenu.mUnk04[0]));
+    menu->mFileHandle = tmpMenu.mFileHandle;
+    menu->mArcResAcc = tmpMenu.mArcResAcc;
+    menu->mpLayout = tmpMenu.mpLayout;
+    menu->mpAnimTrans0 = tmpMenu.mpAnimTrans0;
+    menu->mpAnimTrans1 = tmpMenu.mpAnimTrans1;
+    menu->field_28 = tmpMenu.field_28;
+    menu->field_29 = tmpMenu.field_29;
+    menu->field_2A = tmpMenu.field_2A;
+    menu->field_2B = tmpMenu.field_2B;
+    func_8011C998(reinterpret_cast<CScrollBarData*>(&menu->mScrollBar[0]),
+                  reinterpret_cast<const CScrollBarData*>(&tmpMenu.mScrollBar[0]));
+    // 0x80-byte block struct assign: MWCC emits its canonical lwz/lwzu +
+    // stw/stwu mtctr loop for whole-block copies.
+    {
+        struct MenuArrayBlock {
+            u32 words[32];
+        };
+        *reinterpret_cast<MenuArrayBlock*>(&menu->mArray[0]) =
+            *reinterpret_cast<const MenuArrayBlock*>(&tmpMenu.mArray[0]);
+    }
+    menu->mCount = tmpMenu.mCount;
+    menu->mPage = tmpMenu.mPage;
+    menu->mSubPage = tmpMenu.mSubPage;
+    __dt__9CSortMenuFv(&tmpMenu.mVtbl, -1);
+
+    // Zero-seed the temp id table summary halfwords, copy the table into the
+    // member sub-object at +0x180, then latch the three summary halfwords.
+    func_802ACBDC(&tmpMenu.mTable[0]);
+    {
+        struct TableBlock {
+            u32 words[64];
+        };
+        *reinterpret_cast<TableBlock*>(&mSubObj180[0]) =
+            *reinterpret_cast<const TableBlock*>(&tmpMenu.mTable[0]);
+    }
+    mField280 = tmpMenu.mField1F0;
+    mField282 = tmpMenu.mField1F2;
+    mField284 = tmpMenu.mField1F4;
+}
+#pragma pop
 
 // Deleting destructor (retail __dt__802ACBF0): free self when mode > 0,
 // return self.
@@ -76,16 +173,18 @@ extern "C" void func_802AD404(CTutorialList* self) {
         u8 cnt8 = (u8)content;
         self->mField178 = page - 1;
         if ((s8)(u8)(page - 1) < 0) {
-            s16 sel = self->mField17A;
             self->mField178 = 0;
+            s16 sel = self->mField17A;
             self->mField17A = sel - 1;
-            if (sel - 1 < 0) {
+            // explicit (s16) conversion -> separate subi + extsh. like retail
+            if ((s16)(sel - 1) < 0) {
                 if (cnt8 >= 10) {
                     self->mField178 = 9;
                     self->mField17A = cnt8 - 10;
                 } else {
+                    // retail reuses the zero reg here: both stores are 0
                     self->mField178 = cnt8 - 1;
-                    self->mField17A = content;
+                    self->mField17A = 0;
                     if ((s8)(u8)(cnt8 - 1) < 0)
                         self->mField178 = 0;
                 }
@@ -153,10 +252,11 @@ extern "C" void func_802AD638(CTutorialList* self) {
         s16 v = sel - 10;
         self->mField17A = v;
         if (v < 0) {
-            u8 b = v + 9;
+            // page byte = last row of the previous block; clamp when negative
+            int b = v + 9;
             self->mField178 = b;
             self->mField17A = 0;
-            if ((s8)b < 0)
+            if ((s8)(u8)b < 0)
                 self->mField178 = 0;
         }
     } else {
@@ -195,10 +295,12 @@ extern "C" void func_802AD728(CTutorialList* self) {
                     self->mField178 = 9;
             }
         } else {
-            count = count - 1;
-            self->mField178 = count;
+            // keep the decrement unmasked in an int so retail's single-reg
+            // subi/stb/extsb shape is reproduced
+            int last = count - 1;
+            self->mField178 = last;
             self->mField17A = 0;
-            if ((s8)(u8)count < 0)
+            if ((s8)(u8)last < 0)
                 self->mField178 = 0;
         }
         func_802ADCE8(self);
@@ -235,7 +337,7 @@ extern "C" __declspec(noinline) void func_802ADCE8(CTutorialList* self) {
         nw4r::lyt::Pane* text = pane->FindPaneByName(buf, true);
         func_80124270(text, 0);
         sprintf(buf, &lbl_eu_80510B78[0x6a], (u8)i + 1);
-        u16 sel = func_802ACE04((CTutorialWindowIds*)self->mSubObj180, idx);
+        register u16 sel = func_802ACE04((CTutorialWindowIds*)self->mSubObj180, idx);
         if (sel == 0) {
             func_80136B4C(self->mLayout20, buf, &lbl_eu_80510B78[0x76], 0);
         } else {
@@ -272,10 +374,11 @@ extern "C" void func_802AD858(CTutorialList* self) {
     }
     nw4r::math::VEC3 pos;
     nw4r::lyt::Pane* root = self->mLayout20->GetRootPane();
-    nw4r::lyt::Pane* barPane = root->FindPaneByName(&lbl_eu_80510B78[0x4e], true);
+    // Both panes resolved inline in the call: MWCC evaluates args
+    // right-to-left, so the bar pane (arg 3) is looked up and spilled first.
     func_80137924(&pos,
                   root->FindPaneByName(&lbl_eu_80510B78[0x46], true),
-                  barPane,
+                  root->FindPaneByName(&lbl_eu_80510B78[0x4e], true),
                   root);
     func_801D3430(&self->mSortMenu84[0], &pos);
     func_802ADEE4(self);
@@ -287,7 +390,8 @@ extern "C" void func_802AD858(CTutorialList* self) {
     func_80138078(2);
 }
 
-u8 CTutorialList::func_802AD984() { return (u8)func_801D3320(&mSortMenu84[0]); }
+// Tail-calls CSortMenu::func_801D3320 on the embedded sort menu (+0x84).
+int CTutorialList::func_802AD984() { return func_801D3320(&mSortMenu84[0]); }
 
 // func_802AD98C - advance the list: gate on the sort-menu active/button flags,
 // move the cursor, refresh the sort menu, run the per-frame helpers and (when
@@ -330,7 +434,7 @@ extern "C" int func_802ADAB8(void* self) {
 
 // Animation-finish handlers: the +0x24/+0x28 anim transform reached its end
 // frame (bound in .sdata2) -> latch the state byte and run the follow-up.
-extern "C" void func_802ADAE8(CTutorialList* self) {
+extern "C" __declspec(noinline) void func_802ADAE8(CTutorialList* self) {
     if (func_80137444(self->mAnim24, lbl_eu_80668DE4) != 0) {
         self->mState175 = 2;
         func_802ADC88(self);
@@ -338,7 +442,7 @@ extern "C" void func_802ADAE8(CTutorialList* self) {
     }
 }
 
-extern "C" void func_802ADB3C(CTutorialList* self) {
+extern "C" __declspec(noinline) void func_802ADB3C(CTutorialList* self) {
     if (func_80137444(self->mAnim28, lbl_eu_80668DE4) != 0) {
         self->mState175 = 3;
         func_802ADE18(self);
@@ -353,8 +457,8 @@ extern "C" __declspec(noinline) void func_802ADB90(CTutorialList* self) {
     }
 }
 
-extern "C" void func_802ADBDC(CTutorialList* self) {
-    if (func_80137510(self->mAnim28, lbl_eu_80668DE4) != 0) {
+extern "C" __declspec(noinline) void func_802ADBDC(CTutorialList* self) {
+    if (func_80137510(self->mAnim24, lbl_eu_80668DE4) != 0) {
         self->mState175 = 0;
         self->mInitialized = 1;
     }
@@ -379,16 +483,17 @@ extern "C" __declspec(noinline) void func_802ADC88(CTutorialList* self) {
 // scrollbar thumb pane, ask func_80137924 for the position between them and
 // feed it to the cursor's Move virtual (vtable +0x10).
 extern "C" __declspec(noinline) void func_802ADE18(CTutorialList* self) {
-    char name[0x2C];
-    nw4r::math::VEC3 pos;
+    // Retail frame: pos at sp+0x08 (16-byte slot), name buffer at sp+0x18.
+    char name[0x28];
+    f32 pos[4];
     sprintf(name, &lbl_eu_80510B78[0x82], (int)self->mField178 + 1);
     func_801D216C(&self->mGap2C[0], 1);
     nw4r::lyt::Pane* pagePane =
         self->mLayout20->GetRootPane()->FindPaneByName(name, true);
     nw4r::lyt::Pane* barPane =
         self->mLayout20->GetRootPane()->FindPaneByName(&lbl_eu_80510B78[0x4e], true);
-    func_80137924(&pos, pagePane, barPane, self->mLayout20->GetRootPane());
-    ((CTutorialCurView*)self->mGap2C)->vf2(&pos);
+    func_80137924((nw4r::math::VEC3*)pos, pagePane, barPane, self->mLayout20->GetRootPane());
+    ((CTutorialCurView*)self->mGap2C)->vf2((const nw4r::math::VEC3*)pos);
 }
 
 // func_802ADEE4 - rebuild the sort menu entries: reset the menu, push the
@@ -416,7 +521,8 @@ extern "C" __declspec(noinline) void func_802ADFA8(CTutorialList* self) {
 // func_802AE004 - open the tutorial list once the layout resource finished
 // loading: flag the visible selection, seed the sub-object at +0x180, copy the
 // row/selection ids and run the per-frame helper.
-extern "C" void func_802AE004(CTutorialList* self) {
+// noinline: retail calls this out-of-line from OnFileEvent.
+extern "C" __declspec(noinline) void func_802AE004(CTutorialList* self) {
     if (self->mField1C == 0 || self->mField18 != 0) return;
     self->mField176 = 1;
     self->mField174 = 1;
@@ -450,12 +556,14 @@ extern "C" CTutorialList* __dt__13CTutorialListFv(CTutorialList* _this,
 // its data to the BDAT layer and latch the shared table pointer.
 int CTutorialList::OnFileEvent(CEventFile* event) {
     if (mField14 == event->mFileHandle) {
-        // Layout archive finished loading: rebuild the whole scene.
+        // Layout archive finished loading: rebuild the whole scene. The
+        // string-pool base is written out at every use (no user local) so
+        // MWCC keeps it as a rematerializable CSE temp in r30, like retail.
         u8 regionBuf[8];
+        f32 paneWidth, paneHeight;
         void* mem2 = getHandleMEM2__Q23mtl10MemManagerFv();
-        char* const s = lbl_eu_80510B78;
-        createRegion__17UnkClass_8045F564FiiPCci(&mGap04[0], (int)mem2, 0x10000,
-                                                 &s[0xa4], 0);
+        createRegion__17UnkClass_8045F564FiiPCci(
+            &mGap04[0], (int)mem2, 0x10000, &lbl_eu_80510B78[0xa4], 0);
         __ct__14Class_8045F858FP17UnkClass_8045F564(regionBuf, &mGap04[0]);
 
         // getData() reads and clears the handle's buffer pointer.
@@ -464,63 +572,68 @@ int CTutorialList::OnFileEvent(CEventFile* event) {
 
         mField1C = createArcResourceAccessor__10CLibLayoutFv();
         Attach__Q34nw4r3lyt19ArcResourceAccessorFPvPCc(
-            (nw4r::lyt::ArcResourceAccessor*)mField1C, fileData, &s[0xb2]);
+            (nw4r::lyt::ArcResourceAccessor*)mField1C, fileData,
+            &lbl_eu_80510B78[0xb2]);
 
         func_80136E84(&mLayout20, (nw4r::lyt::ArcResourceAccessor*)mField1C,
-                      &s[0xb6]);
+                      &lbl_eu_80510B78[0xb6]);
         func_80136F08(mLayout20, &mAnim24,
-                      (nw4r::lyt::ArcResourceAccessor*)mField1C, &s[0xcf]);
+                      (nw4r::lyt::ArcResourceAccessor*)mField1C,
+                      &lbl_eu_80510B78[0xcf]);
         func_80136F08(mLayout20, &mAnim28,
-                      (nw4r::lyt::ArcResourceAccessor*)mField1C, &s[0xeb]);
+                      (nw4r::lyt::ArcResourceAccessor*)mField1C,
+                      &lbl_eu_80510B78[0xeb]);
 
         // Bind the device font onto the layout's root pane. Retail hoists
         // the root-pane fetch (+0x10 raw field) above the font lookup.
-        void* rootPane = *(void**)((char*)mLayout20 + 0x10);
-        void* fontObj = func_80452C10__11CDeviceFontFUlPQ34nw4r3lyt6Layout(1, mLayout20);
-        void** fontVtbl = *(void***)fontObj;
-        u32 fontResult = ((u32 (*)(void*))fontVtbl[0x24 / 4])(fontObj);
-        func_8013676C(rootPane, fontResult);
+        nw4r::lyt::Pane* rootPane = *(nw4r::lyt::Pane**)((char*)mLayout20 + 0x10);
+        CTutorialFontView* fontObj = reinterpret_cast<CTutorialFontView*>(
+            func_80452C10__11CDeviceFontFUlPQ34nw4r3lyt6Layout(1, mLayout20));
+        func_8013676C(rootPane, fontObj->fontData());
 
         func_802ADC28(this);
         mLayout20->Animate(0);
 
-        char* title = func_80136190(&s[0x8e], &s[0x97], 0x24);
-        func_80136B4C(mLayout20, &s[0x10c], title, 0);
+        char* title =
+            func_80136190(&lbl_eu_80510B78[0x8e], &lbl_eu_80510B78[0x97], 0x24);
+        func_80136B4C(mLayout20, &lbl_eu_80510B78[0x10c], title, 0);
 
         // Pick the message archive variant from the game-manager mode.
         const char* sel = func_80086F9C__Q22cf13CfGameManagerFv(-1) != 0
-                              ? &s[0x117]
-                              : &s[0x120];
-        u16 msgId = func_8013606C(&s[0x129], sel, 0x61);
+                              ? (const char*)&lbl_eu_80510B78[0x117]
+                              : (const char*)&lbl_eu_80510B78[0x120];
+        u16 msgId =
+            func_8013606C(&lbl_eu_80510B78[0x129], sel, 0x61);
         char* texName = func_80138F78((u32)msgId);
         CTutorialMsgObj* obj =
             (CTutorialMsgObj*)func_801355F4()->GetResource(0x74696d67, texName, 0);
         if (obj != 0) {
-            func_80137E7C(mLayout20, &s[0x137], obj);
-            CTutorialCoords* coords = obj->chain->pCoords;
-            u16 row = coords->c2;
-            u16 col = coords->c0;
+            func_80137E7C(mLayout20, &lbl_eu_80510B78[0x137], obj);
+            // Row/col counts are lhz-loaded before the pane lookup; the
+            // u16->f32 stores expand to MWCC's 0x4330-magic int-to-double
+            // sequence against the .sdata2 pool constant.
+            union {
+                u32 w[4];
+                double d[2];
+            } conv;
+            u16 row = obj->chain->pCoords->c2;
+            u16 col = obj->chain->pCoords->c0;
             nw4r::lyt::Pane* pane = *(nw4r::lyt::Pane**)((char*)mLayout20 + 0x10);
-            pane = pane->FindPaneByName(&s[0x137], true);
+            pane = pane->FindPaneByName(&lbl_eu_80510B78[0x137], true);
             if (pane != 0) {
-                // u16->f32 via the 2^52 magic: build 0x43300000_<v> on the
-                // stack and subtract the named .sdata2 double so the pool
-                // reloc stays on lbl_eu_80668DE8 (a plain (f32) cast
-                // synthesizes a TU-local @N entry).
-                union {
-                    struct { u32 hi; u32 lo; } w;
-                    double d;
-                } conv[2];
+                // u16 -> f32 through the 0x4330-magic double so the pool
+                // reloc lands on the named .sdata2 constant (a plain (f32)
+                // cast synthesizes a TU-local literal).
+                PaneSizeRegion* sz = reinterpret_cast<PaneSizeRegion*>(pane);
+                // Named local so the .sdata2 pool constant is loaded once
+                // into a preserved f-reg ahead of the union builds.
                 const double magic = lbl_eu_80668DE8;
-                conv[0].w.hi = 0x43300000u;
-                conv[0].w.lo = row;
-                conv[1].w.hi = 0x43300000u;
-                conv[1].w.lo = col;
-                float src[2];
-                src[0] = (f32)(conv[0].d - magic);
-                src[1] = (f32)(conv[1].d - magic);
-                reinterpret_cast<PaneSizeRegion*>(pane)->width = src[0];
-                reinterpret_cast<PaneSizeRegion*>(pane)->height = src[1];
+                conv.w[1] = row;
+                conv.w[0] = 0x43300000u;
+                sz->width = paneWidth = (f32)(conv.d[0] - magic);
+                conv.w[3] = col;
+                conv.w[2] = 0x43300000u;
+                sz->height = paneHeight = (f32)(conv.d[1] - magic);
             }
         }
 
@@ -577,7 +690,7 @@ extern "C" int func_802AE38C(CVoiceHandle* self) {
     return 0;
 }
 
-extern "C" void func_802ACBDC(u8* self) {
+extern "C" __declspec(noinline) void func_802ACBDC(u8* self) {
     *(unsigned short*)(self + 0x100) = 0;
     *(unsigned short*)(self + 0x102) = 0;
     *(unsigned short*)(self + 0x104) = 0;
@@ -667,52 +780,67 @@ struct CTutorialWindowIds {
 // collect every active tutorial whose BDAT category matches the filter
 // (all of them when filter==0), sort ascending by name key, then locate the
 // target id to derive the row/scroll split stored after the table.
-extern "C" __declspec(noinline) void func_802ACC30(u8* self, u16 target, int filter) {
+// pragma optimize_for_size: retail emits rolled mtctr/bdnz loops here
+// (same codegen class as the constructor above).
+#pragma push
+#pragma optimize_for_size on
+__declspec(noinline) void func_802ACC30(u8* self, u16 target, int filter) {
     if (lbl_eu_80664BF0 == 0) return;
     CTutorialWindowIds* list = (CTutorialWindowIds*)self;
     list->mCount = 0;
     void* table = (void*)lbl_eu_80664BF0;
-    u32 total = func_8003B1EC(table);
-    for (int id = 1; (u32)id <= total; id++) {
-        if (func_8009CF8C((u32)id + 0x333f) == 0) continue;
+    int total = func_8003B1EC(table);
+    const int catFilter = filter - 1;
+    for (int id = 1; id <= total; id++) {
+        if (func_8009CF8C(id + 0x333f) == 0) continue;
         if (filter != 0 &&
-            (int)func_801361E8((u32)table, lbl_eu_80510B78, (u32)id) != filter - 1)
+            (int)(u8)func_801361E8((u32)table, lbl_eu_80510B78, id) != catFilter)
             continue;
-        list->mIds[list->mCount++] = (u16)id;
+        list->mIds[list->mCount++] = id;
     }
-    // Bubble-sort ascending by each entry's name lookup key.
-    for (int i = 0; i < list->mCount;) {
+    // Bubble-sort ascending by each entry's name lookup key; stop as soon as
+    // a full pass performs no swap.
+    const char* names = lbl_eu_80510B78;
+    for (int i = 0; i < list->mCount; i++) {
         int swapped = 0;
         for (int j = 0; j < (int)(list->mCount - 1 - i); j++) {
             u16 a = list->mIds[j];
-            u16 b = list->mIds[j + 1];
-            if ((u32)func_801361E8((u32)table, &lbl_eu_80510B78[9], a) >
-                (u32)func_801361E8((u32)table, &lbl_eu_80510B78[9], b)) {
-                a ^= b;
-                b ^= a;
-                a ^= b;
-                list->mIds[j] = a;
-                list->mIds[j + 1] = b;
+            u16* p = &list->mIds[j];
+            u16 b = p[1];
+            if ((u8)func_801361E8((u32)table, names + 9, a) >
+                (u8)func_801361E8((u32)table, names + 9, b)) {
                 swapped = 1;
+                const u16 x = p[1] ^ p[0];
+                const u16 nb = p[1] ^ x;
+                p[1] = nb;
+                p[0] = x ^ nb;
             }
         }
         if (swapped == 0) break;
-        i++;
     }
     if (target != 0) {
         // Locate the target id and derive its page row / scroll base.
-        s16 pos = 0;
-        for (u16 j = 0; j < list->mCount; j++) {
-            if (list->mIds[j] == target) {
-                pos = j;
+        int pos = 0;
+        const u16* e = &list->mIds[0];
+        for (int idx = 0; idx < list->mCount; idx++) {
+            if (*e == target) {
+                pos = idx;
                 break;
             }
+            ++e;
         }
         list->mSelRow = pos >= 10 ? 9 : pos;
+        // Retail assigns the raw split then clamps negatives with a second
+        // store (sth before the extsh. sign test).
         s16 base = pos - 9;
-        list->mScrollBase = base >= 0 ? base : 0;
+        list->mScrollBase = base;
+        if (base < 0) {
+            list->mScrollBase = 0;
+        }
     }
 }
+#pragma optimize_for_size off
+#pragma pop
 
 extern "C" __declspec(noinline) u16 func_802ACE04(CTutorialWindowIds* self, u16 index) {
     if (index >= self->mCount)

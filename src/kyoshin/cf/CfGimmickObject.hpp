@@ -369,17 +369,19 @@ void func_80140E00(u32 a, u32 b, u32 c);
 void func_8015B25C(u16 id);
 void func_8020A6B0(void* reg, const CfGimmickVec3* point, u16 c, f32 d,
                   int e, int g);
-void func_800ACC64(void* obj, const void* src);
+extern "C" void func_800ACC64(void* obj, void* src);  // matches CfObjectImplMove.hpp (const void* is a distinct type)
 int func_801BFABC(int a);
-u16 func_801BFC38__Q22cf10CfSoundManFUlUlUlUlf(u32 a, u32 b, u32 c,
-                                                u32 d, f32 f);
+// Single shared flat-name form (extern "C" keeps MWCC from re-mangling;
+// see CfObjectImplMove.hpp).
+extern "C" u16 func_801BFC38__Q22cf10CfSoundManFUlUlUlUlf(u32 a, u32 b, u32 c,
+                                                         u32 d, f32 f);
 u16 func_80208C60(u16 id, f32* pos, f32 d);
 void func_801BFF78(int a, u16 b, int c);
 CfGimmickSoundSlot* func_801BFAE4(u16 handle);
 int func_80195B04(int id);
 void func_8007B0C8(int idx);
 void func_8020A0F8();
-CfGimmickObjectMgr* func_800817BC__Q22cf13CfGameManagerFv(u32 id, u32 mode);
+extern "C" void* func_800817BC__Q22cf13CfGameManagerFv(u32 id, u32 mode);  // void* form matches CTaskGameEff.hpp (return-type unity pending repo-wide)
 void* getPlayer__Q22cf13CfGameManagerFi(int index);
 void func_80199678(void* ctrl, int flag);  // CCtrlMovePC helper (CtrlMoveBase)
 void func_80080F44__Q22cf13CfGameManagerFv(void* obj);

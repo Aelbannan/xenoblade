@@ -9,17 +9,21 @@
 #include "monolib/work/CProcess.hpp"
 #include "monolib/work/CWorkThreadSystem.hpp"
 #include "kyoshin/cf/CfGameManagerData.hpp"  // H3 label-owner decl (lbl_eu_80663E14; lbl_eu_80663E24)
+#include <revolution/gx/GXPixel.h>                 // GXSetZMode
 
 // Globals shared across menu units
-extern "C" {
 extern u32 lbl_eu_80663E28;
 extern const f32 lbl_eu_80667DC0; // 0.0f
+extern const f32 lbl_eu_80667DD8;
+extern const f32 lbl_eu_80667DCC;
+extern const f32 lbl_eu_80667DDC;
+extern u32 lbl_eu_80575858[6];
 extern const f32 lbl_eu_80667DC4; // 1.0f
 extern const f32 lbl_eu_80667DC8; // scale factor
+// MWCC does not mangle global-scope data names.
 extern char lbl_eu_80504268[];    // string table base
 extern u32 lbl_eu_805041C0[];     // 6 pane-name pointers
 extern CMenuVision* lbl_eu_80664388;
-}
 
 namespace cf {
 class CBattleManager {
@@ -31,8 +35,14 @@ public:
 
 extern u32 func_801355A0();
 
-extern "C" void func_801AFAD0(CMenuVision*, CMenuVisionEntry*);
+void func_801AFAD0(CMenuVision*, CMenuVisionEntry*);
 extern "C" f32 func_800F4424(void*);
+
+// Read-only view of the current frame stored at AnimTransform+0x10.
+struct AnimFrameAccess {
+    u8 _pad[0x10];
+    f32 frame;
+};
 
 extern "C" {
 void* func_800B708C__Fi(int);
@@ -82,18 +92,18 @@ static inline void menuVisionCopyQuad(VisionQuad& dst, const VisionQuad& src) {
 
 
 
-extern "C" {
-extern VisionQuad lbl_eu_80664338;
-extern VisionQuad lbl_eu_80664340;
-extern VisionQuad lbl_eu_80664348;
-extern VisionQuad lbl_eu_80664350;
-extern VisionQuad lbl_eu_80664358;
-extern VisionQuad lbl_eu_80664360;
-extern VisionQuad lbl_eu_80664368;
-extern VisionQuad lbl_eu_80664370;
-extern VisionQuad lbl_eu_80664378;
-extern VisionQuad lbl_eu_80664380;
-}
+// Damage/status text colour tables (.sbss, filled at startup by
+// sinit_801AFCE8).
+VisionQuad lbl_eu_80664380;
+VisionQuad lbl_eu_80664378;
+VisionQuad lbl_eu_80664370;
+VisionQuad lbl_eu_80664368;
+VisionQuad lbl_eu_80664360;
+VisionQuad lbl_eu_80664358;
+VisionQuad lbl_eu_80664350;
+VisionQuad lbl_eu_80664348;
+VisionQuad lbl_eu_80664340;
+VisionQuad lbl_eu_80664338;
 
 // Pad accessor for pane float fields at known retail offsets
 struct PaneTransAccess {
@@ -200,10 +210,94 @@ static inline void menuVisionReplacePaneImage(nw4r::lyt::Pane* pane, void* image
 
 // --- CMenuVision ctor/dtor ---
 
+// Null-ptmf word triple view over __ptmf_null (3-word member-function pointer).
+struct PtmfWords;
+
 // Retail ctor symbol is unmangled (`__ct__CMenuVision`, C-ABI); kept as a
 // C-linkage out-of-line helper so the factory (func_801ACCE0) emits a real bl
 // to it, returning `this` in r3 like a real constructor (retail relies on it).
 extern "C" __declspec(noinline) CMenuVision* __ct__CMenuVision(CMenuVision* self, CProcess* parent) {
+    __ct__8CProcessFv(reinterpret_cast<CProcess*>(self));
+
+    // Retail forms both vtable-group addresses up front, then writes them.
+    void* baseVt = (void*)lbl_eu_8052C1C0;
+    char* finalVt = lbl_eu_80533538;
+    // Retail first stores the plain base vtable group, then overwrites the same
+    // slot with the final composite vtable group (both stores are live bytes).
+    self->field_0x10 = baseVt;
+
+    // Two null-ptmf callback slots copied as 12-byte word triples.
+    const PtmfWords* np = reinterpret_cast<const PtmfWords*>(__ptmf_null);
+    void* npFn = np->fn;
+    self->cbSlot0.adj1 = np->adj1;
+    self->cbSlot0.fn = npFn;
+    self->cbSlot0.adj2 = np->adj2;
+    void* npFn2 = np->fn;
+    self->cbSlot1.adj1 = np->adj1;
+    self->cbSlot1.fn = npFn2;
+    self->cbSlot1.adj2 = np->adj2;
+
+    self->field_0x54 = 0;
+    self->field_0x55 = 0;
+    self->field_0x10 = (void*)finalVt;
+    self->field_0x58 = (void*)(finalVt + 0x24);
+    self->field_0x5C = (void*)(finalVt + 0xac);
+    self->mScn = reinterpret_cast<CScn*>(parent);
+    __ct__17UnkClass_8045F564Fv(&self->mLayoutMem);
+
+    // Pass 1: clear slot 0 explicitly, then walk slots 1-5.
+    CMenuVisionEntry* e = &self->mEntries[1];
+    CMenuVisionEntry* end = &self->mEntries[6];
+    {
+        CMenuVisionEntry& e0 = self->mEntries[0];
+        e0.mLayout = 0;
+        e0.mAnim1 = 0;
+        e0.mAnim2 = 0;
+        e0.mAnim3 = 0;
+        e0.mAnim4 = 0;
+        e0.mAnim5 = 0;
+        e0.mAnim6 = 0;
+        e0.mAnim7 = 0;
+        e0.mAnim8 = 0;
+        e0.mState = 0;
+        e0.field_0x28 = 0;
+        e0.mTimer = lbl_eu_80667DC0;
+    }
+    while (e < end) {
+        e->mLayout = 0;
+        e->mAnim1 = 0;
+        e->mAnim2 = 0;
+        e->mAnim3 = 0;
+        e->mAnim4 = 0;
+        e->mAnim5 = 0;
+        e->mAnim6 = 0;
+        e->mAnim7 = 0;
+        e->mAnim8 = 0;
+        e->mState = 0;
+        e->field_0x28 = 0;
+        e->mTimer = lbl_eu_80667DC0;
+        ++e;
+    }
+    // Pass 2: stage a cleared slot through an address-taken local, then
+    // blit it over each pair.
+    for (int i = 0; i < 6; i += 2) {
+        CMenuVisionEntry entry;
+        CMenuVisionEntry* ep = &entry;
+        ep->mLayout = 0;
+        ep->mAnim1 = 0;
+        ep->mAnim2 = 0;
+        ep->mAnim3 = 0;
+        ep->mAnim4 = 0;
+        ep->mAnim5 = 0;
+        ep->mAnim6 = 0;
+        ep->mAnim7 = 0;
+        ep->mAnim8 = 0;
+        ep->mState = 0;
+        ep->field_0x28 = 0;
+        ep->mTimer = lbl_eu_80667DC0;
+        self->mEntries[i] = *ep;
+        self->mEntries[i + 1] = *ep;
+    }
     return self;
 }
 
@@ -257,8 +351,18 @@ extern "C" bool func_801AC09C(u32 flags) {
     return false;
 }
 
-void func_801AC124(){}
-
+// Returns true while any vision slot is still animating.
+extern "C" bool func_801AC124() {
+    CMenuVision* menu = lbl_eu_80664388;
+    if (menu != 0) {
+        for (u8 i = 0; i < 6; i++) {
+            if (menu->mEntries[i].mState != 0) {
+                return true;
+            }
+        }
+    }
+    return false;
+}
 // Mark the vision screen active (set flag byte at 0x54) when the singleton
 // instance exists.
 extern "C" void func_801AC1F8() {
@@ -274,7 +378,7 @@ void CMenuVision::Term() {
     // retail `mr r4,this; beq; addi r4,this,0x5c` shape.
     IScnRender* renderCB = reinterpret_cast<IScnRender*>(this);
     if (this != NULL) {
-        renderCB = reinterpret_cast<IScnRender*>(&unk55[0x07]);
+        renderCB = reinterpret_cast<IScnRender*>(&field_0x5C);
     }
     mScn->removeRenderCB(renderCB);
 
@@ -291,7 +395,48 @@ void CMenuVision::Term() {
     lbl_eu_80664388 = 0;
 }
 
-void CMenuVision::cbRenderBefore() {}
+// us-801ae288: render-before callback. Same gate chain as Move(); only draws
+// while some slot is animating, then renders all six layouts through a stack
+// DrawInfo with Z-testing disabled.
+void CMenuVision::cbRenderBefore() {
+    // Combined first guard via || reproduces retail's short-circuit branch
+    // shape (direct bne for clause 1, trampolined b for clause 2); the
+    // remaining guards fold to direct branches.
+    if (CTaskGame::getInstance()->func_800426F0() || (lbl_eu_80663E28 & 0x200000)) {
+        return;
+    }
+    if (!func_8013BE50()) {
+        return;
+    }
+    if (lbl_eu_80663E24 & 0x2000000) {
+        return;
+    }
+
+    bool allIdle = true;
+    for (u8 i = 0; i < 6; i++) {
+        if (mEntries[i].mState != 0) {
+            allIdle = false;
+            break;
+        }
+    }
+    if (allIdle) {
+        return;
+    }
+
+    GXSetZMode(GX_FALSE, GX_NEVER, GX_FALSE);
+
+    // Raw-storage DrawInfo built/destroyed via C-ABI pre-mangled ct/dt calls,
+    // matching the retail direct calls (a C++ local would virtual-dispatch its
+    // scope-exit destructor).
+    u8 drawInfo[0x54];
+    __ct__Q34nw4r3lyt8DrawInfoFv((nw4r::lyt::DrawInfo*)&drawInfo[0]);
+    func_80137250((nw4r::lyt::DrawInfo*)&drawInfo[0]);
+    for (u8 i = 0; i < 6; i++) {
+        func_80137038(mEntries[i].mLayout,
+                      (nw4r::lyt::DrawInfo*)&drawInfo[0], 0, 1);
+    }
+    __dt__Q34nw4r3lyt8DrawInfoFv((nw4r::lyt::DrawInfo*)&drawInfo[0], -1);
+}
 
 // Lazy singleton factory: allocate a CMenuVision from the work-thread heap,
 // construct it with the given parent, register it on `self`, and stash the
@@ -310,7 +455,143 @@ extern "C" CMenuVision* func_801ACCE0(CProcess* self, CProcess* parent) {
     return lbl_eu_80664388;
 }
 
-void func_801ACD5C(){}
+// Restart one slot into the state-5 sustain phase: disable anims 8 and 1-6,
+// enable anim7 and rewind it, latch state 5.
+static inline void menuVisionStartSustain(CMenuVisionEntry& e) {
+    e.mLayout->SetAnimationEnable(e.mAnim8, false);
+    e.mLayout->SetAnimationEnable(e.mAnim1, false);
+    e.mLayout->SetAnimationEnable(e.mAnim2, false);
+    e.mLayout->SetAnimationEnable(e.mAnim3, false);
+    e.mLayout->SetAnimationEnable(e.mAnim4, false);
+    e.mLayout->SetAnimationEnable(e.mAnim5, false);
+    e.mLayout->SetAnimationEnable(e.mAnim6, false);
+    e.mLayout->SetAnimationEnable(e.mAnim7, true);
+    e.mAnim7->SetFrame(lbl_eu_80667DC0);
+    e.mState = 5;
+}
+
+// Disable/enable pass only (no SetFrame/state latch).
+static inline void menuVisionResetAnims(CMenuVisionEntry& e) {
+    e.mLayout->SetAnimationEnable(e.mAnim8, false);
+    e.mLayout->SetAnimationEnable(e.mAnim1, false);
+    e.mLayout->SetAnimationEnable(e.mAnim2, false);
+    e.mLayout->SetAnimationEnable(e.mAnim3, false);
+    e.mLayout->SetAnimationEnable(e.mAnim4, false);
+    e.mLayout->SetAnimationEnable(e.mAnim5, false);
+    e.mLayout->SetAnimationEnable(e.mAnim6, false);
+    e.mLayout->SetAnimationEnable(e.mAnim7, true);
+}
+
+// Bitmask-triggered slot restart: bits 1/2/4/8/0x10 select slots 0/1/2/3/5
+// (bit 0x10 also restarts slot 4). Slots idle (0) or bar-sustaining (4)
+// abort the whole call. Each restarted slot gets a timer weighted by how many
+// lower slots are also in state 5.
+void func_801ACD5C(int flags) {
+    if (lbl_eu_80664388 == 0) {
+        return;
+    }
+
+    if (flags & 1) {
+        CMenuVisionEntry& e = lbl_eu_80664388->mEntries[0];
+        if (e.mState == 0) {
+            return;
+        }
+        if (e.mState == 4) {
+            return;
+        }
+        menuVisionStartSustain(e);
+        e.mTimer = lbl_eu_80667DC0;
+    }
+
+    if (flags & 2) {
+        CMenuVisionEntry& e = lbl_eu_80664388->mEntries[1];
+        if (e.mState == 0) {
+            return;
+        }
+        if (e.mState == 4) {
+            return;
+        }
+        menuVisionStartSustain(e);
+        f32 t = lbl_eu_80667DC0;
+        if (lbl_eu_80664388->mEntries[0].mState == 5) {
+            t = lbl_eu_80667DCC;
+        }
+        e.mTimer = t;
+    }
+
+    if (flags & 4) {
+        CMenuVisionEntry& e = lbl_eu_80664388->mEntries[2];
+        if (e.mState == 0) {
+            return;
+        }
+        if (e.mState == 4) {
+            return;
+        }
+        menuVisionStartSustain(e);
+        f32 t = lbl_eu_80667DC0;
+        if (lbl_eu_80664388->mEntries[1].mState == 5) {
+            t = t + lbl_eu_80667DC4;
+        }
+        if (lbl_eu_80664388->mEntries[0].mState == 5) {
+            t = t + lbl_eu_80667DC4;
+        }
+        e.mTimer = lbl_eu_80667DCC * t;
+    }
+
+    if (flags & 8) {
+        CMenuVisionEntry& e = lbl_eu_80664388->mEntries[3];
+        if (e.mState == 0) {
+            return;
+        }
+        if (e.mState == 4) {
+            return;
+        }
+        menuVisionStartSustain(e);
+        f32 t = lbl_eu_80667DC0;
+        if (lbl_eu_80664388->mEntries[2].mState == 5) {
+            t = t + lbl_eu_80667DC4;
+        }
+        if (lbl_eu_80664388->mEntries[1].mState == 5) {
+            t = t + lbl_eu_80667DC4;
+        }
+        if (lbl_eu_80664388->mEntries[0].mState == 5) {
+            t = t + lbl_eu_80667DC4;
+        }
+        e.mTimer = lbl_eu_80667DCC * t;
+    }
+
+    if (flags & 0x10) {
+        // Slot 5 restart also rewinds the HP-bar slot 4.
+        CMenuVisionEntry& e5 = lbl_eu_80664388->mEntries[5];
+        if (e5.mState == 0) {
+            return;
+        }
+        if (e5.mState == 4) {
+            return;
+        }
+        menuVisionStartSustain(e5);
+        CMenuVisionEntry& e4 = lbl_eu_80664388->mEntries[4];
+        menuVisionResetAnims(e4);
+        lbl_eu_80664388->mEntries[4].mAnim7->SetFrame(lbl_eu_80667DC0);
+        lbl_eu_80664388->mEntries[4].mState = 5;
+        f32 t = lbl_eu_80667DC0;
+        if (lbl_eu_80664388->mEntries[3].mState == 5) {
+            t = t + lbl_eu_80667DC4;
+        }
+        if (lbl_eu_80664388->mEntries[2].mState == 5) {
+            t = t + lbl_eu_80667DC4;
+        }
+        if (lbl_eu_80664388->mEntries[1].mState == 5) {
+            t = t + lbl_eu_80667DC4;
+        }
+        if (lbl_eu_80664388->mEntries[0].mState == 5) {
+            t = t + lbl_eu_80667DC4;
+        }
+        t = lbl_eu_80667DCC * t;
+        e5.mTimer = t;
+        lbl_eu_80664388->mEntries[4].mTimer = t;
+    }
+}
 
 extern "C" void func_801AD504(int flags) {
     if (lbl_eu_80664388 == 0) {
@@ -781,9 +1062,43 @@ extern "C" void func_801AD504(int flags) {
     }
 }
 
+// Static initializer: seed the ten .sbss colour quads above.
+
 #pragma pop
 
-void func_801AF934(){}
+// Reset every active vision slot to state 4 (bar-sustain anim): disable
+// anims 1-3 and 5-8, enable anim4 and rewind it to frame 0. When `sel` is
+// non-zero only the matching slot index is reset.
+void func_801AF934(int sel) {
+    if (lbl_eu_80664388 == 0) {
+        return;
+    }
+    if (func_800EA444(cf::CBattleManager::getInstance()) == 0) {
+        return;
+    }
+
+    const f32 startFrame = lbl_eu_80667DC0;
+    for (u8 i = 0; i < 6; i++) {
+        CMenuVisionEntry& e = lbl_eu_80664388->mEntries[i];
+        if (e.mState == 0) {
+            continue;
+        }
+        // sel == 0 means "reset all"; otherwise only slot `sel` is reset.
+        if ((signed char)sel != 0 && (signed char)sel != (int)i) {
+            continue;
+        }
+        e.mLayout->SetAnimationEnable(e.mAnim5, false);
+        e.mLayout->SetAnimationEnable(e.mAnim6, false);
+        e.mLayout->SetAnimationEnable(e.mAnim7, false);
+        e.mLayout->SetAnimationEnable(e.mAnim8, false);
+        e.mLayout->SetAnimationEnable(e.mAnim1, false);
+        e.mLayout->SetAnimationEnable(e.mAnim2, false);
+        e.mLayout->SetAnimationEnable(e.mAnim3, false);
+        e.mLayout->SetAnimationEnable(e.mAnim4, true);
+        e.mAnim4->SetFrame(startFrame);
+        e.mState = 4;
+    }
+}
 
 // Mangled linker names used by adjustor thunks below
 
@@ -793,7 +1108,51 @@ void func_801AFE0C(void* self) { ((void(*)(void*))cbRenderBefore__11CMenuVisionF
 
 void func_801AFE14(void* self) { ((void(*)(void*))__dt__11CMenuVisionFv)((char*)self - 0x5c); }
 
-void sinit_801AFCE8(){}
+// Static initializer: seed the ten .sbss colour quads above.
+void sinit_801AFCE8() {
+    // Component order matches retail's register allocation.
+    // Component order [3],[2],[1],[0] matches retail's register allocation.
+    lbl_eu_80664338.values[3] = 0;
+    lbl_eu_80664338.values[2] = 0x8a;
+    lbl_eu_80664338.values[1] = 0x73;
+    lbl_eu_80664338.values[0] = 0x3c;
+    lbl_eu_80664340.values[3] = 0xff;
+    lbl_eu_80664340.values[2] = 0xfa;
+    lbl_eu_80664340.values[1] = 0xf0;
+    lbl_eu_80664340.values[0] = 0xf0;
+    lbl_eu_80664348.values[3] = 0;
+    lbl_eu_80664348.values[2] = 0xd2;
+    lbl_eu_80664348.values[1] = 0x14;
+    lbl_eu_80664348.values[0] = 0x40;
+    lbl_eu_80664350.values[3] = 0xff;
+    lbl_eu_80664350.values[2] = 0xff;
+    lbl_eu_80664350.values[1] = 0xff;
+    lbl_eu_80664350.values[0] = 0xff;
+    lbl_eu_80664358.values[3] = 0;
+    lbl_eu_80664358.values[2] = 0x1d;
+    lbl_eu_80664358.values[1] = 0x2d;
+    lbl_eu_80664358.values[0] = 0xd4;
+    lbl_eu_80664360.values[3] = 0xff;
+    lbl_eu_80664360.values[2] = 0xff;
+    lbl_eu_80664360.values[1] = 0xff;
+    lbl_eu_80664360.values[0] = 0xff;
+    lbl_eu_80664368.values[3] = 0;
+    lbl_eu_80664368.values[2] = 0x10;
+    lbl_eu_80664368.values[1] = 0x9f;
+    lbl_eu_80664368.values[0] = 0x10;
+    lbl_eu_80664370.values[3] = 0xff;
+    lbl_eu_80664370.values[2] = 0xff;
+    lbl_eu_80664370.values[1] = 0xff;
+    lbl_eu_80664370.values[0] = 0xff;
+    lbl_eu_80664378.values[3] = 0;
+    lbl_eu_80664378.values[2] = 0xf;
+    lbl_eu_80664378.values[1] = 0xf;
+    lbl_eu_80664378.values[0] = 0xf;
+    lbl_eu_80664380.values[3] = 0xff;
+    lbl_eu_80664380.values[2] = 0xff;
+    lbl_eu_80664380.values[1] = 0xff;
+    lbl_eu_80664380.values[0] = 0xff;
+}
 
 // --- CMenuVision::Move ---
 void CMenuVision::Move() {
@@ -897,19 +1256,21 @@ L_continue:
 
 // --- CMenuVision::Init ---
 void CMenuVision::Init() {
+    char* strBase = lbl_eu_80504268;
     mtl::ALLOC_HANDLE handle = mtl::MemManager::getHandleMEM2();
-    mLayoutMem.createRegion(handle, 0x2C000, lbl_eu_80504268, 0);
+    mLayoutMem.createRegion(handle, 0x2C000, strBase, 0);
 
     Class_8045F858 regionGuard(&mLayoutMem);
 
     // Copy 6 pane-name pointers from lbl_eu_805041C0 to local array
-    const char* paneNames[6];
-    paneNames[0] = (const char*)lbl_eu_805041C0[0];
-    paneNames[1] = (const char*)lbl_eu_805041C0[1];
-    paneNames[2] = (const char*)lbl_eu_805041C0[2];
-    paneNames[3] = (const char*)lbl_eu_805041C0[3];
-    paneNames[4] = (const char*)lbl_eu_805041C0[4];
-    paneNames[5] = (const char*)lbl_eu_805041C0[5];
+    u32 paneNames[6];
+    u32* namePtr = lbl_eu_805041C0;
+    paneNames[0] = *namePtr++;
+    paneNames[1] = namePtr[0];
+    paneNames[2] = namePtr[1];
+    paneNames[3] = namePtr[2];
+    paneNames[4] = namePtr[3];
+    paneNames[5] = namePtr[4];
 
     nw4r::lyt::ArcResourceAccessor* accessor = func_801355F4();
 
@@ -952,18 +1313,16 @@ void CMenuVision::Init() {
         p = e.mLayout->GetRootPane()->FindPaneByName(lbl_eu_80504268 + 0x1a2, true);
         reinterpret_cast<PaneVisAccess*>(p)->visByte &= ~1;
 
-        // Show the entry-specific pane (retail re-finds it between the two ops)
-        p = e.mLayout->GetRootPane()->FindPaneByName(paneNames[i], true);
-        reinterpret_cast<PaneVisAccess*>(p)->visByte &= ~1;
-        p = e.mLayout->GetRootPane()->FindPaneByName(paneNames[i], true);
+        // Show the entry-specific pane (retail clears bit 0 first, then sets it)
+        p = e.mLayout->GetRootPane()->FindPaneByName((const char*)paneNames[i], true);
         reinterpret_cast<PaneVisAccess*>(p)->visByte &= ~1;
         reinterpret_cast<PaneVisAccess*>(p)->visByte |= 1;
 
         // Per-index special setup
         if (i == 1) {
-            typedef u32 (*FontVFn)(void*);
-            void* fontObj = func_80452C10__11CDeviceFontFUlPQ34nw4r3lyt6Layout(1);
-            u32 fontVal = (*reinterpret_cast<FontVFn**>(fontObj))[0x24 / 4](fontObj);
+            CMenuVisionFontView* fontObj = reinterpret_cast<CMenuVisionFontView*>(
+                func_80452C10__11CDeviceFontFUlPQ34nw4r3lyt6Layout(1));
+            u32 fontVal = fontObj->getFontHandle();
 
             func_801368C0(e.mLayout, lbl_eu_80504268 + 0x1ab, fontVal);
             func_801368C0(e.mLayout, lbl_eu_80504268 + 0x1b8, fontVal);
@@ -983,7 +1342,68 @@ void CMenuVision::Init() {
     // Register render-before callback (null-safe IScnRender subobject at +0x5C)
     IScnRender* cb = reinterpret_cast<IScnRender*>(this);
     if (this != NULL) {
-        cb = reinterpret_cast<IScnRender*>(&unk00[0x5C]);
+        cb = reinterpret_cast<IScnRender*>(&field_0x5C);
     }
     mScn->addRenderCB(cb, 0xF, 0);
+}
+
+// State-5 per-frame update: counts down the slot timer; once it lapses and
+// the damage anim (mAnim7) is still running below its end frame, picks the
+// first visible status pane, records the matching effect id, and latches the
+// slot's field_0x28 so the update runs only once.
+void func_801AFAD0(CMenuVision*, CMenuVisionEntry* entry) {
+    entry->mTimer -= lbl_eu_80667DC4;
+    if (entry->mTimer >= lbl_eu_80667DC0) {
+        return;
+    }
+    // Cue-frame jingle once the timer lapses to the exact cue value.
+    if (!(lbl_eu_80667DD8 == entry->mTimer)) {
+    } else {
+        func_80138078__FUl(0x1c4);
+    }
+    if (func_80137444(entry->mAnim7, lbl_eu_80667DC4)) {
+        entry->mState = 0;
+    }
+    if (!(reinterpret_cast<AnimFrameAccess*>(entry->mAnim7)->frame >= lbl_eu_80667DDC)) {
+        return;
+    }
+    if (entry->field_0x28 != 0) {
+        return;
+    }
+
+    nw4r::lyt::Pane* root = entry->mLayout->GetRootPane();
+    int index = -1;
+    int kind = 0;
+    nw4r::lyt::Pane* pane;
+    pane = root->FindPaneByName(lbl_eu_80504268 + 0x169, true);
+    if (reinterpret_cast<PaneVisAccess*>(pane)->visByte & 1) {
+        index = 0; kind = 4;
+    } else {
+    pane = root->FindPaneByName(lbl_eu_80504268 + 0x174, true);
+    if (reinterpret_cast<PaneVisAccess*>(pane)->visByte & 1) {
+        index = 1; kind = 5;
+    } else {
+    pane = root->FindPaneByName(lbl_eu_80504268 + 0x17f, true);
+    if (reinterpret_cast<PaneVisAccess*>(pane)->visByte & 1) {
+        index = 2; kind = 6;
+    } else {
+    pane = root->FindPaneByName(lbl_eu_80504268 + 0x18a, true);
+    if (reinterpret_cast<PaneVisAccess*>(pane)->visByte & 1) {
+        index = 3; kind = 7;
+    } else {
+    pane = root->FindPaneByName(lbl_eu_80504268 + 0x195, true);
+    if (reinterpret_cast<PaneVisAccess*>(pane)->visByte & 1) {
+        index = 4; kind = 8;
+    } else {
+    pane = root->FindPaneByName(lbl_eu_80504268 + 0x1a2, true);
+    if (reinterpret_cast<PaneVisAccess*>(pane)->visByte & 1) {
+        index = 5; kind = 9;
+    }
+    }}}}}
+    if (index < 0) {
+        return;
+    }
+    u32 eff = (u32)func_8008187C__Q22cf13CfGameManagerFv(kind);
+    lbl_eu_80575858[index] = eff;
+    entry->field_0x28 = 1;
 }

@@ -2499,20 +2499,21 @@ void CArtsInfo::initialize() {
 int CArtsInfo::OnFileEvent(CEventFile* event) {
     if ((u32)field_0x14 == (u32)event->field_04) {
         mMemRegion.createRegion((int)getHandleMEM2__Q23mtl10MemManagerFv(),
-                                0x1FFF8000, &lbl_eu_8050B00C[0x2CC], 0);
+                                0x18000, &lbl_eu_8050B00C[0x2CC], 0);
         Class_8045F858 host(&mMemRegion);
+        // NOTE: accessor is re-read from field_0x1C at every use (retail
+        // never caches it in a saved register).
         CFileHandle* fh = (CFileHandle*)field_0x14;
         void* arcData = fh->getData();
         func_80434A4C__Q23mtl10MemManagerFb(false);
-        nw4r::lyt::ArcResourceAccessor* acc = createArcResourceAccessor__10CLibLayoutFv();
-        field_0x1C = (int)acc;
-        acc->Attach(arcData, &lbl_eu_8050B00C[0x2D6]);
+        field_0x1C = (int)createArcResourceAccessor__10CLibLayoutFv();
+        ((nw4r::lyt::ArcResourceAccessor*)field_0x1C)->Attach(arcData, &lbl_eu_8050B00C[0x2D6]);
 
-        func_80136E84(&mpLayout1, acc, &lbl_eu_8050B00C[0x2DA]);
-        func_80136F08(mpLayout1, &mpAnimTrans1, acc, &lbl_eu_8050B00C[0x2F4]);
-        func_80136F08(mpLayout1, &mpAnimTrans2, acc, &lbl_eu_8050B00C[0x311]);
-        func_80136F08(mpLayout1, &mpAnimTrans3, acc, &lbl_eu_8050B00C[0x333]);
-        func_80136F08(mpLayout1, &mpAnimTrans4, acc, &lbl_eu_8050B00C[0x356]);
+        func_80136E84(&mpLayout1, (nw4r::lyt::ArcResourceAccessor*)field_0x1C, &lbl_eu_8050B00C[0x2DA]);
+        func_80136F08(mpLayout1, &mpAnimTrans1, (nw4r::lyt::ArcResourceAccessor*)field_0x1C, &lbl_eu_8050B00C[0x2F4]);
+        func_80136F08(mpLayout1, &mpAnimTrans2, (nw4r::lyt::ArcResourceAccessor*)field_0x1C, &lbl_eu_8050B00C[0x311]);
+        func_80136F08(mpLayout1, &mpAnimTrans3, (nw4r::lyt::ArcResourceAccessor*)field_0x1C, &lbl_eu_8050B00C[0x333]);
+        func_80136F08(mpLayout1, &mpAnimTrans4, (nw4r::lyt::ArcResourceAccessor*)field_0x1C, &lbl_eu_8050B00C[0x356]);
 
         nw4r::lyt::Pane* root1 = *(nw4r::lyt::Pane**)((u8*)mpLayout1 + 0x10);
         void* fontObj1 = func_80452C10__11CDeviceFontFUlPQ34nw4r3lyt6Layout(1, mpLayout1);
@@ -2555,30 +2556,29 @@ int CArtsInfo::OnFileEvent(CEventFile* event) {
         const char* detailPane = (func_80086F9C__Q22cf13CfGameManagerFv(-1) == 0)
                                      ? &lbl_eu_8050B00C[970]
                                      : &lbl_eu_8050B00C[961];
-        // Retail masks the formatted-string result to its low half and
-        // feeds it through func_80138F78 to get the message resource name.
+        // Retail masks the lookup result to its low half and feeds it through
+        // func_80138F78 to get the message resource name.
         char* resName = func_80138F78(
-            (u32)(func_80136190(&lbl_eu_8050B00C[0x3A2], detailPane, 43)) & 0xffff);
-        void* timg = reinterpret_cast<CArtsArcView*>(acc)->getResource("timg", (u32)resName, 0);
+            func_8013606C(&lbl_eu_8050B00C[0x3A2], detailPane, 43));
+        void* timg = reinterpret_cast<CArtsArcView*>(field_0x1C)->getResource("timg", (u32)resName, 0);
         if (timg != 0) {
+            CArtsMsgObj* msg = (CArtsMsgObj*)timg;
             func_80136B4C(mpLayout1, &lbl_eu_8050B00C[0x3D3], (char*)timg, 0);
+            func_80137E7C(mpLayout1, &lbl_eu_8050B00C[0x3D3], (u32)msg->chain);
             nw4r::lyt::Pane* msgPane1 =
                 root1->FindPaneByName(&lbl_eu_8050B00C[0x3D3], true);
             if (msgPane1 != 0) {
-                CArtsMsgObj* msg = (CArtsMsgObj*)timg;
                 u16 row = msg->chain->pCoords->row;
                 u16 col = msg->chain->pCoords->col;
                 CArtsPaneSize* ps = (CArtsPaneSize*)msgPane1;
-                float fw = (float)(int)row;
-                float fh2 = (float)(int)col;
-                ps->width.f = fw;
-                ps->height.f = fh2;
+                ps->width.f = (float)(int)row;
+                ps->height.f = (float)(int)col;
             }
         }
 
-        func_80136E84(&mpLayout2, acc, &lbl_eu_8050B00C[0x2DA]);
-        func_80136F08(mpLayout2, &mpAnimTrans5, acc, &lbl_eu_8050B00C[0x356]);
-        func_80136F08(mpLayout2, &mpAnimTrans6, acc, &lbl_eu_8050B00C[0x3DD]);
+        func_80136E84(&mpLayout2, (nw4r::lyt::ArcResourceAccessor*)field_0x1C, &lbl_eu_8050B00C[0x2DA]);
+        func_80136F08(mpLayout2, &mpAnimTrans5, (nw4r::lyt::ArcResourceAccessor*)field_0x1C, &lbl_eu_8050B00C[0x356]);
+        func_80136F08(mpLayout2, &mpAnimTrans6, (nw4r::lyt::ArcResourceAccessor*)field_0x1C, &lbl_eu_8050B00C[0x3DD]);
 
         nw4r::lyt::Pane* root2 = *(nw4r::lyt::Pane**)((u8*)mpLayout2 + 0x10);
         void* fontObj2 = func_80452C10__11CDeviceFontFUlPQ34nw4r3lyt6Layout(1, mpLayout2);
@@ -2600,10 +2600,9 @@ int CArtsInfo::OnFileEvent(CEventFile* event) {
         mpLayout2->SetAnimationEnable(mpAnimTrans5, true);
         mpLayout2->Animate(0);
 
-        // Detail panes on layout2: find each, hide/show, rotate the anchor
-        // position triple on the message pane, then hide the extras.
-        nw4r::lyt::Pane* pn1020 = root2->FindPaneByName(&lbl_eu_8050B00C[0x3FC], true);
-        func_80124270(pn1020, 0);
+        // Detail panes on layout2: hide each extra pane; the message pane's
+        // anchor triple is rotated before it is hidden.
+        func_80124270(root2->FindPaneByName(&lbl_eu_8050B00C[0x3FC], true), 0);
         nw4r::lyt::Pane* pn1028 = root2->FindPaneByName(&lbl_eu_8050B00C[0x404], true);
         if (pn1028 != 0) {
             CArtsPanePos* pos = (CArtsPanePos*)((char*)pn1028 + 0x2C);
@@ -2627,12 +2626,16 @@ int CArtsInfo::OnFileEvent(CEventFile* event) {
         CopyVec4s(reinterpret_cast<CArtsQuadColor*>(&lbl_eu_80664750), &col2);
 
         // Build a temporary cursor against the shared accessor and copy its
-        // body over the embedded one (vptr at +0 preserved).
+        // body over the embedded one (vptr at +0 preserved; word copies).
         u8 tmpCursor[0x18];
         __ct__CCur18(tmpCursor, func_801355F4());
-        for (int ci = 4; ci < 0x16; ci++) {
-            mCursor[ci] = tmpCursor[ci];
-        }
+        *(u32*)&mCursor[4] = *(u32*)&tmpCursor[4];
+        *(u32*)&mCursor[8] = *(u32*)&tmpCursor[8];
+        *(u32*)&mCursor[12] = *(u32*)&tmpCursor[12];
+        *(u32*)&mCursor[16] = *(u32*)&tmpCursor[16];
+        mCursor[20] = tmpCursor[20];
+        mCursor[21] = tmpCursor[21];
+        __dt__6CCur18Fv(tmpCursor, -1);
         reinterpret_cast<CArtsCurVt*>(mCursor)->bind();
         func_80236508(this);
         func_8023B430(this);
@@ -2641,8 +2644,7 @@ int CArtsInfo::OnFileEvent(CEventFile* event) {
         return 1;
     }
 
-    if ((u32)field_0x18 != (u32)event->field_04) return 0;
-    {
+    if ((u32)field_0x18 == (u32)event->field_04) {
         CFileHandle* fh2 = (CFileHandle*)field_0x18;
         void* data = fh2->getData();
         func_8003AA78__5CBdatFUlPv(2, data);
@@ -2650,14 +2652,13 @@ int CArtsInfo::OnFileEvent(CEventFile* event) {
         field_0x4C = (int)getFP__FPCc(&lbl_eu_8050B00C[1054]);
         func_8003AA34();
         field_0x50 = (int)getFP__FPCc(&lbl_eu_8050B00C[1063]);
-        // TODO(residual): split1 reset stub call with `this` (unresolved bl
-        // at +0x678c, no reloc name) — behaviourally a refresh notification.
+        // split1 refresh notification (retail bl at +0x678c)
+        func_8023B430(this);
         field_0x18 = 0;
         return 1;
     }
+    return 0;
 }
-
-
 
 // --- hard-symbol stubs (scaffold_hard_symbols) ---
 // Static constructor: initialise the arts font/colour small-data entries

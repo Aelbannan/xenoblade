@@ -51,14 +51,27 @@ struct CVoiceHandle {
     UnkTarget* unkTarget;                // 0x3F60
 };
 
+// ── Member-function-pointer dispatch support ───────────────────────────────
+
+// Polymorphic host class so the voice-node callback gets a full 12-byte
+// member-pointer type; MWCC lowers its compare/test/call to the retail
+// __ptmf_cmpr / __ptmf_test / __ptmf_scall runtime helpers.
+class CVoiceCbHost {
+public:
+    virtual void pad();
+};
+typedef void (CVoiceCbHost::*VoiceCb)();
+
+// Default voice-event handler ptmf installed into each CVS_THREAD
+// (.data blob, 12 bytes).
+extern VoiceCb lbl_eu_80539904;
+
 class CVS_THREAD{
 public:
-    u32* unk0;
-    u32 unk4;
-    u32 unk8;
+    VoiceCb unk0;   // 0x00-0x0B: installed voice-event handler ptmf
     u32 unkC;
     u32 unk10;
-    u32 unk14;
+    s32 unk14;
     u32 unk18;
 
     CVS_THREAD();
@@ -71,7 +84,32 @@ public:
     virtual void func_802A3740();
     virtual int blank2();
     int func_802A5ECC() { return 240; }
-    int func_802A3E88();
 };
 
+extern "C" int func_802A3E88(CVS_THREAD* thread);  // unmangled retail symbol (matches code_802B8A3C.hpp)
+
+// Raw ptmf reference the voice nodes are matched against (.data blob).
+extern unsigned char lbl_eu_805398F8[12];
+
+// MWCC member-function-pointer runtime helpers (compare / probe).
+extern "C" int __ptmf_cmpr(void* a, void* b);
+extern "C" long __ptmf_test(void* ptmf);
+
+// Node sweep entry point: invokes each voice-event node's stored handler.
+extern "C" void func_802A3ACC(void* node);
+
+// ── Scene-audio volume constants (sdata2 floats used by func_802A3D54) ────
+extern float lbl_eu_80668C88;   // base volume
+extern float lbl_eu_80662CB0;   // scale multiplier
+extern float lbl_eu_80662CB4;   // pan/pitch constant, normal branch
+extern float lbl_eu_80662CB8;   // pan/pitch constant, flag branch
+
 extern "C" unsigned int func_802A35A0(unsigned int value);
+
+// Scratch-buffer allocator shared by the cvsys voice threads (same
+// C-ABI import as kyoshin/code_802B8A3C.hpp).
+extern "C" CVoiceHandle* func_802A330C(int size, int align);
+
+// Equipment-category table lookup + category check used by func_802A4120.
+extern "C" void* func_8009EC9C(u32 index);
+extern "C" u32 func_800A32BC(void* mgr);

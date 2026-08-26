@@ -826,19 +826,20 @@ void func_801EDB80(CItemBoxLine* self) {
 #pragma optimize_for_size on
 void func_801EDC94(CItemBoxLine* self) {
     if (CSysWin_getUnk34(&self->mSysWin) != 0) {
-        if (self->field50 != 9) {
-            if (CSysWin_isActive(&self->mSysWin) != 0) {
-                u8 v = self->field3A3 - 1;
-                self->field3A3 = v;
-                if ((s8)v < 0) {
-                    self->field3A3 = 1;
-                }
-                u8 tmp[12];
-                func_8022C1B4(tmp, &self->mSysWin, self->field3A3);
-                reinterpret_cast<CIBLCur70View*>(&self->mCur70)->vf02(tmp);
-                func_80138078__FUl(1);
-            }
+        if (self->field50 == 9) {
+            return;
         }
+        if (CSysWin_isActive(&self->mSysWin) != 0) {
+            u8 v = self->field3A3 - 1;
+            self->field3A3 = v;
+            if ((s8)v < 0) {
+                self->field3A3 = 1;
+            }
+            u8 tmp[12];
+            func_8022C1B4(tmp, &self->mSysWin, self->field3A3);
+            reinterpret_cast<CIBLCur70View*>(&self->mCur70)->vf02(tmp);
+        }
+        func_80138078__FUl(1);
         return;
     }
     if (self->field3A0 != 0) {
@@ -861,7 +862,7 @@ void func_801EDC94(CItemBoxLine* self) {
         CIBLTab* tabs = &self->unk3A4;
         u16 lim = func_801EC284((void*)tabs, idx);
         self->field392 += 1;
-        if ((u16)self->field392 > lim) self->field392 = 1;
+        if (!((u16)self->field392 > lim)) self->field392 = 1;
         func_801EB218(&self->mNumSel);
         func_801EB04C(&self->mNumSel, (u8)self->field392);
         func_801EB064(&self->mNumSel, self->field392 * func_801EC260((void*)tabs, idx));
@@ -2513,8 +2514,7 @@ bool CItemBoxLine::OnFileEvent(CEventFile* evt) {
         reinterpret_cast<UnkClass_8045F564*>(&this->field04)->createRegion(
             mtl::MemManager::getHandleMEM2(), 0x18000, &lbl_eu_805071B0[0x700], 0);
         Class_8045F858 host(reinterpret_cast<UnkClass_8045F564*>(&this->field04));
-        CFileHandle* fh = (CFileHandle*)this->field24;
-        u8* data = (u8*)fh->getData();
+        u8* data = (u8*)((CFileHandle*)this->field24)->getData();
         mtl::MemManager::func_80434A4C(false);
         void* tpMem = mtl::MemManager::allocate(0x858,
                                                 getAllocHandle__10CLibLayoutFv());

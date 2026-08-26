@@ -790,7 +790,7 @@ extern "C" void func_804A7834(CColiObject* self, const CColiObject* other) {
 // gap from the +0x54 scalar. The +0x3c partner slot points at the caller's
 // index or the embedded proc itself. Returns self.
 extern "C" CColiObject* func_804A79B4(CColiObject* self, const CColiSubSpec804A7878* spec,
-                           f32 f1, f32 f2, u32 idx) {
+                           double f1, double f2, u32 idx) {
     __ct__CColiProc((CColiProcLocal*)&self->field_0x04);
     const u32* s = (const u32*)spec;
     u32* d = (u32*)&self->field_0x44;
@@ -802,16 +802,16 @@ extern "C" CColiObject* func_804A79B4(CColiObject* self, const CColiSubSpec804A7
     d[1] = s[1];   // +0x48
     self->field_0x40 = 5;
     d[0] = s[0];   // +0x44
-    self->field_0x44.y += f1;
+    self->field_0x44.y += (f32)f1;
     d[2] = s[2];   // +0x4c
     self->field_0x5c = f1;
     d[3] = s[0];   // +0x50
     self->field_0x60 = f2;
     d[4] = s[1];   // +0x54
     d[5] = s[2];   // +0x58
-    if (f2 > lbl_eu_8066AE38 * f1) {
+    if ((f32)f2 > lbl_eu_8066AE38 * (f32)f1) {
         self->field_0x8c |= 0x8;
-        self->field_0x310 = self->field_0x50.y + f2 - f1;
+        self->field_0x310 = self->field_0x50.y + (f32)f2 - (f32)f1;
     }
     self->field_0x8c = 0;
     self->field_0x210 = 0;

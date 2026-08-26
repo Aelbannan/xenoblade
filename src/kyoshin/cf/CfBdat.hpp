@@ -5,6 +5,9 @@
 #include "monolib/util.hpp"
 #include "kyoshin/plugin/ocBdat.hpp"
 
+// Opaque bdat file-data table type (actual layout handled by ocBdat helpers).
+struct BdatFileData;
+
 // C-linkage imports (retail symbol names - keep linkage/signatures verbatim)
 extern "C" const char lbl_eu_80500FA4[];
 extern "C" const char* lbl_eu_8052E6F0[];
@@ -25,14 +28,23 @@ extern "C" u32 func_80086B3C__Q22cf13CfGameManagerFv();
 // The CfBdat static members are kept for the file-data assignment functions.
 extern void* lbl_eu_806640A0;   // spLandmarkListFileData
 extern void* lbl_eu_806640A8;   // spFldMapListFileData
-extern void* lbl_eu_806640F4;   // spItmWpnListFileData
-extern void* lbl_eu_806640F8;   // spItmEquipListFileData
+extern BdatFileData* lbl_eu_806640F4;   // spItmWpnListFileData
+extern BdatFileData* lbl_eu_806640F8;   // spItmEquipListFileData
 extern void* lbl_eu_80664114;   // spItmHeadListFileData
 extern void* lbl_eu_80664118;   // spItmBodyListFileData
 extern void* lbl_eu_8066411C;   // spItmArmListFileData
 extern void* lbl_eu_80664120;   // spItmWaistListFileData
 extern void* lbl_eu_80664124;   // spItmLeggListFileData
 extern void* lbl_eu_80664190;   // sinit instance pointer
+// Additional sbss bdat file-data globals used by func_801421C4.
+extern BdatFileData* lbl_eu_806640D8;
+extern BdatFileData* lbl_eu_806640EC;
+extern BdatFileData* lbl_eu_806640F0;
+extern BdatFileData* lbl_eu_806640FC;
+extern BdatFileData* lbl_eu_80664104;
+extern BdatFileData* lbl_eu_80664108;
+extern BdatFileData* lbl_eu_8066410C;
+extern BdatFileData* lbl_eu_80664110;
 // Cached field-map row state written by func_80141C6C (retail sbss labels).
 extern u32 lbl_eu_80664184;     // cached fld-map row index
 extern u32 lbl_eu_80664188;     // cached fld-map row (mirror of 80664184)

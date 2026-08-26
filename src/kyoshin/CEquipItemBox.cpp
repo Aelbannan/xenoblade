@@ -2271,17 +2271,18 @@ extern "C" __declspec(noinline) int func_802882A4(CEquipItemBox* self) {
     table[6] = cfg->field_20;
     table[7] = cfg->field_22;
     table[8] = cfg->field_24;
-    // The selected page's entry; -1 means "no item" (item stays null).
+    // The selected entry; -1 means "no item" (item stays null). Retail
+    // passes the selected unk_36c[] byte itself as the category argument.
     s16 elem = table[page];
     void* item = 0;
     if (elem != -1) {
-        item = func_80157C4C(grid->cat, elem);
+        item = func_80157C4C(page, elem);
     }
     if (item == 0) return 1;
     u32 w = *(u32*)item;
     if (w == 0) return 1;
     u8 v = (u8)func_801361E8(lbl_eu_806640EC, &lbl_eu_8050EFDC[0x20], w >> 20);
-    if (v == 1) return 1;
+    if (((s8)(v - 1) & ~0x1F) == 0) return 1;
     if (func_8009CF8C(0x3508) != 0) return 1;
     self->unk_37c = 1;
     return 0;

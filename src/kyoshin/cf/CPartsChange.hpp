@@ -131,7 +131,7 @@ extern "C" u32 func_80063A60(void* obj);
 // Scene-probe API used by func_801987A4 (retail unmangled C-ABI; monolib
 // scn/coli units). func_804BE398 probes the scene query 0x4a05; the 0x4BExxx
 // helpers walk the probe result list.
-extern "C" int func_804BE398(void* vec, u32 a, u32 b, u32 c, f32 d, f32 e);
+extern "C" int func_804BE398(void* vec, int a, int b, int c, f32 d, f32 e);  // int spellings match CtrlMoveBase.hpp (u32/int made the two extern "C" decls distinct)
 extern "C" void* func_804BE520(int index);
 extern "C" void* func_804BE50C(u32 index);
 extern "C" u32 func_804BE5A4(u32 a, u32 b);
@@ -144,14 +144,15 @@ extern u16 lbl_eu_80662528[1];
 // Party-drop sound play (retail CfSoundMan static, mangled name; CfSoundMan.hpp
 // pulls nw4r/snd.h which conflicts with this TU's include chain, so the flat
 // C-ABI name is declared here - CUICfManager.hpp / CCol6System.hpp precedent).
-extern "C" void func_801BFC38__Q22cf10CfSoundManFUlUlUlUlf(u32 r3, u32 r4, u32 r5, u32 r6, f32 f1);
+extern "C" u16 func_801BFC38__Q22cf10CfSoundManFUlUlUlUlf(
+    u32 soundMan, u32 a, u32 b, u32 c, f32 e);  // single shared flat-name form
 // Position-offset added to the spawn position Y by func_80197C6C (.sdata2).
 extern const f32 lbl_eu_80667AE8;
 // Constant passed to the spawned object's vfDC by func_80197C6C (.sdata2).
 extern const f32 lbl_eu_80667B24;
 // nw4r Warning() file/message strings referenced by func_8019922C (.rodata).
-extern char lbl_eu_80526324[];
-extern char lbl_eu_80526300[];
+extern const char lbl_eu_80526324[];  // nw4r::db::Warning source file (const per CfObjectImplMove.hpp)
+extern const char lbl_eu_80526300[];  // nw4r::db::Warning message
 
 // Retail CPartsChange vtable (.data:0x80532AA8, split1). The retail ctor
 // symbol is the splitter-renamed `__ct__cf_CPartsChange` (not MWCC's

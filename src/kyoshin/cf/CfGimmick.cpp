@@ -11,9 +11,6 @@
 #include <nw4r/math.h>
 #include "kyoshin/cf/CfGameManagerData.hpp"  // H3 label-owner decl (lbl_eu_80663E14; lbl_eu_80663E24)
 
-// Forward declarations for cross-TU callees (resolved via the retail symbol map).
-class UnkClass_805764CC;
-
 namespace cf {
 // Minimal view of cf::CfGameManager for this TU (CfGameManager.hpp is not
 // included - its func_8007F91C is declared non-static, but retail callers
@@ -31,6 +28,9 @@ public:
 };
 } // namespace cf
 
+// Builds/inverts the gimmick collider placement matrix (see definition below).
+void func_802089BC(cf::CfGimmick* self, const f32* basis, const CfGimmickVec3* point);
+
 using namespace cf;
 
 namespace cf {
@@ -42,7 +42,6 @@ namespace cf {
     }
 
     void CfGimmick::func_80208988() {
-        extern void func_802089BC(CfGimmick*, const f32*, const CfGimmickVec3*);
         func_802089BC((CfGimmick*)((char*)this + 0x1c), (const f32*)((char*)this + 4),
                       (const CfGimmickVec3*)((char*)this + 0x10));
     }
@@ -77,64 +76,69 @@ cf::CfGimmick::~CfGimmick() {}
 // Build a rotation/placement matrix for the gimmick's collider box from its
 // axis-extents (field_30/34/38/3C) and the requested point direction, then
 // invert it in place.  field_44 records which placement shape was selected.
+// Retail never CSEs the float-pool constants: every test reloads lbl_eu_80668350
+// via lfs, so the source references the globals directly (no zero/one locals).
 void func_802089BC(CfGimmick* self, const f32* basis, const CfGimmickVec3* point) {
-    f32 zero = lbl_eu_80668350;
     f32* m = ((nw4r::math::MTX34*)self)->m[0];
 
-    if (self->field_38 > zero)
+    if (self->field_38 > lbl_eu_80668350)
         self->field_38 = -self->field_38;
 
-    // Retail compares (zero == field), so keep the constant on the left.
-    if (zero == self->field_30 && zero == self->field_34 && zero == self->field_3C) {
+    if (lbl_eu_80668350 == self->field_30 && lbl_eu_80668350 == self->field_34 &&
+        lbl_eu_80668350 == self->field_3C) {
         self->field_44 = 0;
         return;
     }
 
-    if (self->field_3C == zero) {
-        // No depth: horizontal-only placement.
-        if (point->x == zero && point->z == zero) {
-            self->field_44 = 1;
-            f32 one = lbl_eu_80668358;
-            m[0] = one; m[1] = zero; m[2] = zero; m[3] = basis[0];
-            m[4] = zero; m[5] = one; m[6] = zero; m[7] = basis[1];
-            m[8] = zero; m[9] = zero; m[10] = one; m[11] = basis[2];
-        } else {
-            f32 v[3];
-            v[0] = self->field_30;
-            v[1] = self->field_34;
-            v[2] = self->field_3C;
-            if (v[1] < -self->field_38)
-                v[1] = -self->field_38;
-            self->field_44 = 2;
-            self->field_40 = v[0] * v[0] + v[1] * v[1] + v[2] * v[2];
-            nw4r::math::MTX34RotXYZFIdx((nw4r::math::MTX34*)self, lbl_eu_80668354 * point->x,
-                                        lbl_eu_80668354 * point->y, lbl_eu_80668354 * point->z);
-            m[3] = basis[0];
-            m[7] = basis[1];
-            m[11] = basis[2];
-        }
-    } else {
-        // With depth: full placement.
-        f32 v[3];
-        v[0] = self->field_30;
-        v[1] = self->field_34;
-        v[2] = self->field_3C;
-        if (v[1] < -self->field_38)
-            v[1] = -self->field_38;
-        self->field_40 = v[0] * v[0] + v[1] * v[1] + v[2] * v[2];
-        if (point->x == zero && point->y == zero && point->z == zero) {
-            self->field_44 = 3;
-            f32 one = lbl_eu_80668358;
-            m[0] = one; m[1] = zero; m[2] = zero; m[3] = basis[0];
-            m[4] = zero; m[5] = one; m[6] = zero; m[7] = basis[1];
-            m[8] = zero; m[9] = zero; m[10] = one; m[11] = basis[2];
-        } else {
+    if (self->field_3C != lbl_eu_80668350) {
+        // With depth: full placement.  Extent/clamp/squared-length run before
+        // the direction test.
+        CfGimmickVec3 v;
+        v.x = self->field_30;
+        v.y = self->field_34;
+        v.z = self->field_3C;
+        if (v.y < -self->field_38)
+            v.y = -self->field_38;
+        // PS-paired kernel reproduces retail's psq_l/ps_mul/ps_madd/ps_sum0.
+        self->field_40 = VEC3LenSq((const nw4r::math::VEC3*)&v);
+        if (point->x != lbl_eu_80668350 || point->y != lbl_eu_80668350 ||
+            point->z != lbl_eu_80668350) {
             self->field_44 = 4;
             nw4r::math::MTX34RotXYZFIdx((nw4r::math::MTX34*)self, lbl_eu_80668354 * point->x,
                                         lbl_eu_80668354 * point->y, lbl_eu_80668354 * point->z);
             m[3] = basis[0];
             m[7] = basis[1];
             m[11] = basis[2];
+        } else {
+            self->field_44 = 3;
+            f32 one = lbl_eu_80668358;
+            m[0] = one; m[1] = lbl_eu_80668350; m[2] = lbl_eu_80668350; m[3] = basis[0];
+            m[4] = lbl_eu_80668350; m[5] = one; m[6] = lbl_eu_80668350; m[7] = basis[1];
+            m[8] = lbl_eu_80668350; m[9] = lbl_eu_80668350; m[10] = one; m[11] = basis[2];
+        }
+    } else {
+        // No depth: horizontal-only placement.  Direction test comes first;
+        // the extent/squared-length math only runs on the rotated path.
+        if (point->x != lbl_eu_80668350 || point->z != lbl_eu_80668350) {
+            CfGimmickVec3 v;
+            v.x = self->field_30;
+            v.y = self->field_34;
+            v.z = self->field_3C;
+            if (v.y < -self->field_38)
+                v.y = -self->field_38;
+            self->field_40 = VEC3LenSq((const nw4r::math::VEC3*)&v);
+            self->field_44 = 2;
+            nw4r::math::MTX34RotXYZFIdx((nw4r::math::MTX34*)self, lbl_eu_80668354 * point->x,
+                                        lbl_eu_80668354 * point->y, lbl_eu_80668354 * point->z);
+            m[3] = basis[0];
+            m[7] = basis[1];
+            m[11] = basis[2];
+        } else {
+            self->field_44 = 1;
+            f32 one = lbl_eu_80668358;
+            m[0] = one; m[1] = lbl_eu_80668350; m[2] = lbl_eu_80668350; m[3] = basis[0];
+            m[4] = lbl_eu_80668350; m[5] = one; m[6] = lbl_eu_80668350; m[7] = basis[1];
+            m[8] = lbl_eu_80668350; m[9] = lbl_eu_80668350; m[10] = one; m[11] = basis[2];
         }
     }
 
@@ -216,9 +220,7 @@ void func_80208E98() {
 }
 
 // retail: stw r3, lbl_eu_806646B8; blr - store arg to global
-extern unsigned long lbl_eu_806646B8;
-extern const f64 lbl_eu_80668368;
-extern "C" void func_80208EDC(u32 value) { lbl_eu_806646B8 = value; }
+void func_80208EDC(u32 value) { lbl_eu_806646B8 = value; }
 
 void func_80208EE4(cf::CfGimmick* self) {
     if (self->field_78) {
@@ -340,8 +342,11 @@ int func_8020971C(void* obj) {
     return (v == 1) ? 1 : 0;
 }
 
-void func_8009D018(void* self);
-void func_8020974C(void* self) { ((void(*)(void*))func_8009D018)((char*)self + 0x2cc8); }
+// Sound trigger helper; retail callers reach it through a single-argument
+// view (r4 is never initialised), so only the destination is named here.
+void func_8009D018(u32 destination);
+// `id` is the gimmick's resource-id base; the sound trigger lives at +0x2CC8.
+void func_8020974C(u32 id) { func_8009D018(id + 0x2CC8); }
 
 // Party/rotation-gated checker dispatch: when mask has the party bits (0x21)
 // the loaded-party flag and matching party id must hold; when mask has the
@@ -399,108 +404,186 @@ rotation:
     return 0;
 }
 
-// Resolve each list node to the object handed to the checkers by calling its
-// +0xAC vtable slot, then run every checker against the circular list until
-// one passes.
-static bool checkGimmickList(CfGimmickList* list, CfGimmick* gimmick,
-                             const CfGimmickVec3* point) {
-    CfGimmickListNode* n = list->head->next;
-    while (n != list->head) {
-        CfGimmickObject* obj = (CfGimmickObject*)n->object;
-        void* target = ((void* (*)(CfGimmickObject*))obj->vtable[0xAC >> 2])(obj);
-        if (jumptable_eu_80535830[gimmick->field_44](gimmick, target, point))
-            return true;
-        n = n->next;
-    }
-    return false;
-}
-
-// Enumerate the player whose +0x3E9C slot-object must be repelled, checking
-// the live-HP / state-condition gate before dispatching the checker.
-static bool checkGimmickPlayer(CfGimmick* gimmick, const CfGimmickVec3* point, int i) {
-    void* pmv = cf::CfGameManager::getPlayer(i);
-    if (pmv == 0)
-        return false;
-    CfPlayerBase* base = (CfPlayerBase*)((char*)pmv - 0x3E9C);
-    float hp = base->getHP();
-    if (hp <= 0.0f)
-        return false;
-    void* sub = base->subField3F60;
-    if (sub != 0 && (((CfPlayerSub3F60*)sub)->field_4EC & (1u << 20)))
-        return false;
-    void* target = ((void* (*)(CfPlayerSpot*))base->spot.vtable[0xAC >> 2])(&base->spot);
-    return jumptable_eu_80535830[gimmick->field_44](gimmick, target, point) != 0;
-}
-
-// Scan-all-players variant of checkGimmickPlayer, skipping any player whose
-// per-player presence bit is set in lbl_eu_806646BC (0x10 << i).
-static bool checkGimmickAllPlayers(CfGimmick* gimmick, const CfGimmickVec3* point) {
-    for (int i = 0; i < 3; ++i) {
-        if (lbl_eu_806646BC & (0x10 << i))
-            continue;
-        if (checkGimmickPlayer(gimmick, point, i))
-            return true;
-    }
-    return false;
-}
-
+// Gimmick trigger query.  Retail keeps every block fully inlined (the list
+// scans, player gates and player loops are duplicated verbatim), so the
+// source mirrors that duplication instead of factoring helpers.
+// Mask bits: 0x21 party guard, 0x4 rotation occlusion, 0x00C00000 fight-list
+// scan, 0x00800000 enable player scan after it, 0x01000000 player 0 only
+// (otherwise all players minus the 0x10<<i presence bits).  When neither the
+// fight-list nor the bc&4 enemy-list path runs, players are scanned alone.
 int func_802098EC(u32 mask, CfGimmick* gimmick, const CfGimmickVec3* point,
-                  const f32* ang, void* partyId) {
+                  const f32* ang, u32 partyId) {
     int partyValid = 0;
     if (mask & 0x21) {
         // Party-scoped queries require the loaded-party flag and a matching ID.
         if ((lbl_eu_806646BC & 1) == 0)
             return 0;
-        if (lbl_eu_806646B4 == 0)
+        if (lbl_eu_806646B4 != 0) {
+            if (partyId == lbl_eu_806646B4) {
+                partyValid = 1;
+            } else {
+                return 0;
+            }
+        } else {
             return 0;
-        if (partyId != (void*)(u32)lbl_eu_806646B4)
-            return 0;
-        partyValid = 1;
+        }
     }
 
     if (mask & 0x4) {
-        // Rotation-gated test: compare the relative bearing to a fixed angle.
-        // The scaled angle is recomputed for each call (not held in a local),
-        // matching the retail caller-saved FPR budget (f29-f31 only).
-        f32 sa = nw4r::math::SinFIdx(lbl_eu_80668354 * ang[1]);
-        f32 ca = nw4r::math::CosFIdx(lbl_eu_80668354 * ang[1]);
-        f32 sb = nw4r::math::SinFIdx(lbl_eu_80668354 * lbl_eu_806646B0);
-        f32 cb = nw4r::math::CosFIdx(lbl_eu_80668354 * lbl_eu_806646B0);
-        if (ca * cb + sa * sb <= 0.0f)
+        // Rotation-gated test: relative bearing dot product plus side test.
+        // The scaled angle is recomputed for each call (no shared local).
+        // Scoped angle temporaries force retail's load schedule: raw angle
+        // fetched first, then the fixed scale inside each product.
+        f32 sa;
+        f32 ca;
+        f32 sb;
+        f32 cb;
+        {
+            f32 a = ang[1];
+            sa = nw4r::math::SinFIdx(lbl_eu_80668354 * a);
+        }
+        {
+            f32 a = ang[1];
+            ca = nw4r::math::CosFIdx(lbl_eu_80668354 * a);
+        }
+        {
+            f32 b = lbl_eu_806646B0;
+            sb = nw4r::math::SinFIdx(lbl_eu_80668354 * b);
+        }
+        {
+            f32 b = lbl_eu_806646B0;
+            cb = nw4r::math::CosFIdx(lbl_eu_80668354 * b);
+        }
+        if (ca * cb + sa * sb <= lbl_eu_80668350)
             return 0;
-        if (ca * (lbl_eu_805765A0.z - point->z) + sa * (lbl_eu_805765A0.x - point->x) >= 0.0f)
+        if (ca * (lbl_eu_805765A0.z - point->z) +
+                sa * (lbl_eu_805765A0.x - point->x) >= lbl_eu_80668350)
             return 0;
     }
 
     if (partyValid) {
-        if (jumptable_eu_80535830[gimmick->field_44](gimmick, (void*)&lbl_eu_805765A0, point))
+        if (jumptable_eu_80535830[gimmick->field_44](gimmick, &lbl_eu_805765A0, point))
             return 1;
         return 0;
     }
 
-    if (mask & 0xC0) {
-        // Scan the fight-list; then optionally the player slots.
-        if (checkGimmickList(func_800B6BC8(), gimmick, point))
-            return 1;
-        if (mask & 0x80) {
-            if (mask & 0x10) {
-                if (checkGimmickPlayer(gimmick, point, 0))
-                    return 1;
-            } else if (checkGimmickAllPlayers(gimmick, point)) {
+    if (mask & 0x00C00000UL) {
+        // Fight-list scan, then optionally the player scan.
+        CfGimmickList* list = func_800B6BC8();
+        CfGimmickListNode* n = list->head->next;
+        while (n != list->head) {
+            CfGimmickVec3* target = ((CfGimmickPlayerFace*)n->object)->d41();
+            if (jumptable_eu_80535830[gimmick->field_44](gimmick, target, point))
                 return 1;
+            n = n->next;
+        }
+        if (mask & 0x00800000UL) {
+            if (mask & 0x01000000UL) {
+                // Player 0 only.
+                CfPlayerBase* base = (CfPlayerBase*)cf::CfGameManager::getPlayer(0);
+                if (base != 0)
+                    base = (CfPlayerBase*)((char*)base - 0x3E9C);
+                int ok;
+                if (base != 0 && base->getHP() > lbl_eu_80668350) {
+                    if (base->subField3F60 == 0 ||
+                        ((((CfPlayerSub3F60*)base->subField3F60)->field_4EC & 0x800) == 0))
+                        ok = 1;
+                    else
+                        ok = 0;
+                } else
+                    ok = 0;
+                if (ok == 0)
+                    return 0;
+                CfGimmickVec3* target = ((CfGimmickPlayerFace*)&base->spot)->d41();
+                if (jumptable_eu_80535830[gimmick->field_44](gimmick, target, point))
+                    return 1;
+            } else {
+                // All players, skipping present ones.  partyValid is dead by
+                // here; reusing it as the loop counter mirrors retail's
+                // register recycling.
+                f32 zero = lbl_eu_80668350;
+                for (partyValid = 0; partyValid < 3; ++partyValid) {
+                    if (lbl_eu_806646BC & (0x10 << partyValid))
+                        continue;
+                    CfPlayerBase* base =
+                        (CfPlayerBase*)cf::CfGameManager::getPlayer(partyValid);
+                    if (base != 0)
+                        base = (CfPlayerBase*)((char*)base - 0x3E9C);
+                    int ok;
+                    if (base != 0 && base->getHP() > zero) {
+                        if (base->subField3F60 == 0 ||
+                            ((((CfPlayerSub3F60*)base->subField3F60)->field_4EC & 0x800) == 0))
+                            ok = 1;
+                        else
+                            ok = 0;
+                    } else
+                        ok = 0;
+                    if (ok == 0)
+                        continue;
+                    CfGimmickVec3* target = ((CfGimmickPlayerFace*)&base->spot)->d41();
+                    if (jumptable_eu_80535830[gimmick->field_44](gimmick, target, point))
+                        return 1;
+                }
             }
         }
         return 0;
     }
 
-    // No fight-list flag: enemy list first, then player slots.
-    if (lbl_eu_806646BC & 4)
-        return checkGimmickList(func_800B6BEC(), gimmick, point) ? 1 : 0;
-    if (mask & 0x10) {
-        if (checkGimmickPlayer(gimmick, point, 0))
+    // No fight-list flag: enemy list first, then the player scan.
+    if (lbl_eu_806646BC & 4) {
+        CfGimmickList* list = func_800B6BEC();
+        CfGimmickListNode* n = list->head->next;
+        while (n != list->head) {
+            CfGimmickVec3* target = ((CfGimmickPlayerFace*)n->object)->d41();
+            if (jumptable_eu_80535830[gimmick->field_44](gimmick, target, point))
+                return 1;
+            n = n->next;
+        }
+        return 0;
+    }
+    if (mask & 0x01000000UL) {
+        // Player 0 only.
+        CfPlayerBase* base = (CfPlayerBase*)cf::CfGameManager::getPlayer(0);
+        if (base != 0)
+            base = (CfPlayerBase*)((char*)base - 0x3E9C);
+        int ok;
+        if (base != 0 && base->getHP() > lbl_eu_80668350) {
+            if (base->subField3F60 == 0 ||
+                ((((CfPlayerSub3F60*)base->subField3F60)->field_4EC & 0x800) == 0))
+                ok = 1;
+            else
+                ok = 0;
+        } else
+            ok = 0;
+        if (ok == 0)
+            return 0;
+        CfGimmickVec3* target = ((CfGimmickPlayerFace*)&base->spot)->d41();
+        if (jumptable_eu_80535830[gimmick->field_44](gimmick, target, point))
             return 1;
-    } else if (checkGimmickAllPlayers(gimmick, point)) {
-        return 1;
+        return 0;
+    }
+    // All players, skipping present ones.
+    f32 zero = lbl_eu_80668350;
+    for (partyValid = 0; partyValid < 3; ++partyValid) {
+        if (lbl_eu_806646BC & (0x10 << partyValid))
+            continue;
+        CfPlayerBase* base = (CfPlayerBase*)cf::CfGameManager::getPlayer(partyValid);
+        if (base != 0)
+            base = (CfPlayerBase*)((char*)base - 0x3E9C);
+        int ok;
+        if (base != 0 && base->getHP() > zero) {
+            if (base->subField3F60 == 0 ||
+                ((((CfPlayerSub3F60*)base->subField3F60)->field_4EC & 0x800) == 0))
+                ok = 1;
+            else
+                ok = 0;
+        } else
+            ok = 0;
+        if (ok == 0)
+            continue;
+        CfGimmickVec3* target = ((CfGimmickPlayerFace*)&base->spot)->d41();
+        if (jumptable_eu_80535830[gimmick->field_44](gimmick, target, point))
+            return 1;
     }
     return 0;
 }
@@ -607,7 +690,6 @@ int func_8020A294(u32 playerId) {
         CfPlayerBase* base = (CfPlayerBase*)node->object;
         if (base != 0)
             base = (CfPlayerBase*)((char*)base - 0x3E9C);
-        float hp;
         if ((int)((CfPlayerIdView*)base)->id456C >> 4 == playerId) {
             float hp = base->getHP();
             // Retail materializes the le-test through cror/mfcr/extrwi.
@@ -626,7 +708,7 @@ int func_8020A294(u32 playerId) {
 CfGimmickObject* func_8020A35C(const char* name, int other, const CfGimmickVec3* point) {
     CfGimmickVec3 pos;
     char buf[0x40];
-    CfGimmickObject* obj = func_800B20B4((UnkClass_805764CC*)func_800B07E8(), 0x4000, 0, 0);
+    CfGimmickObject* obj = func_800B20B4(func_800B07E8(), 0x4000, 0, 0);
     if (obj != 0) {
         if (strlen(name) >= 0x20) {
             strcpy(buf, name);
@@ -656,17 +738,12 @@ CfGimmickObject* func_8020A35C(const char* name, int other, const CfGimmickVec3*
 
 void func_8020A434(CfGimmickReg* self) {
     if (self->field_00) {
-        func_800B3A88((UnkClass_805764CC*)func_800B07E8(), self->field_00);
+        func_800B3A88(func_800B07E8(), self->field_00);
         self->field_00 = 0;
     }
 }
 
-// Look up a gimmick name from the bdat table: resolve the column for the
-// requested row (prefixing the column string with '3'), format it into the
-// shared message buffer and post the message.  The write-format path is
-// gated on func_8013C54C() (message system loaded) and func_80124B78() being
-// zero (via the inlined func_8020A5DC boolean).  When the row is out of range
-// (or the bdat file isn't loaded), the fallback name lbl_eu_80662788 is used.
+// Message-format gate shared by func_8020A484 / func_8020A6B0.
 unsigned int func_8020A5DC();
 
 // Look up a gimmick name from the bdat table: resolve the column for the
@@ -678,13 +755,13 @@ unsigned int func_8020A5DC();
 int func_8020A484(int index) {
     // One reused `name` local: retail colors the bdat/column-string web and
     // the cap/default-name web into r31/r30 respectively.
-    void* bdat;
+    u8* bdat;
     s32 cap;
     s32 cnt;
     const char* name;
     if (index != 0) {
         if (lbl_eu_80664148 != 0) {
-            bdat = lbl_eu_80664148;
+            bdat = (u8*)lbl_eu_80664148;
             func_8003AA34();
             // Named cap/cnt like the matched func_8020A608: B41C's result
             // stays callee-saved across the B1EC call.
@@ -725,7 +802,7 @@ unsigned int func_8020A5DC() {
 
 void* func_8020A608(int index, int mod) {
     if (index != 0) {
-        void* bdat = lbl_eu_80664148;
+        u8* bdat = (u8*)lbl_eu_80664148;
         if (bdat != 0) {
             func_8003AA34();
             // Sequence the two row-capacity calls so the first (B41C) result is
@@ -751,70 +828,87 @@ void func_8020A6B0(CfGimmickReg* self, const CfGimmickVec3* point, f32 radius,
     // Distance from the fixed reference point to the requested position.
     // VEC3Sub's paired-single kernel reproduces retail's psq_l/ps_sub/psq_st
     // block; radiusSq is folded into the same schedule (fmuls between loads).
+    // Distance from the fixed reference point to the requested position.
+    // The nw4r paired-single kernels reproduce retail's psq_l/ps_sub block.
     nw4r::math::VEC3 diff;
     VEC3Sub(&diff, (const nw4r::math::VEC3*)&lbl_eu_805765A0,
             (const nw4r::math::VEC3*)point);
     f32 radiusSq = radius * radius;
 
-    void* reg = self->field_00;
-    if (reg != 0) {
+    if (self->field_00 != 0) {
         // Registered object: unregister once the target leaves the radius.
         // Retail re-tests the entry-time null compare (cr1) after the length
         // check, keeping one shared return path for both guard fails.
-        if (VEC3LenSq(&diff) > radiusSq && reg != 0) {
-            func_800B3A88((UnkClass_805764CC*)func_800B07E8(), reg);
+        f32 lenSq = VEC3LenSq(&diff);
+        if (lenSq > radiusSq && self->field_00 != 0) {
+            func_800B3A88(func_800B07E8(), self->field_00);
             self->field_00 = 0;
         }
         return;
     }
 
     // No object yet: spawn one only when the target is within range.  Both
-    // paths recompute VEC3LenSq (retail duplicates the PS block per branch).
+    // paths recompute the length (retail duplicates the PS block per branch).
     if (VEC3LenSq(&diff) <= radiusSq) {
-        // Name lookup: default unless the bdat row resolves.  One shared
-        // default keeps retail's single lbl_eu_80662788 load site.
-        const char* name = (const char*)lbl_eu_80662788;
-        void* bdat = lbl_eu_80664148;
-        if (index != 0 && bdat != 0) {
-            func_8003AA34();
+        // Name lookup: flat control flow mirroring retail - one shared
+        // default-name load site (.L_8020C5EC), one bdat load held in a
+        // callee-saved register through the row-capacity calls.
+        const char* name;
+        u8* bdat;
+        if (index == 0)
+            goto defaultName;
+        bdat = (u8*)lbl_eu_80664148;
+        if (bdat == 0)
+            goto defaultName;
+        func_8003AA34();
+        {
             // B41C's result stays in a callee-saved register across B1EC.
             s32 cap = func_8003B41C(bdat);
             s32 cnt = func_8003B1EC(bdat);
-            if (cap + cnt > index) {
-                // Patch the requested column's prefix, then read its value.
-                u8* col = *(u8**)(lbl_eu_805357E8 + 0x44);
-                col[4] = (u8)(mod + 0x31);
-                name = (const char*)getBdatStringColumnValue(
-                    bdat, *(char**)(lbl_eu_805357E8 + 0x44), index);
-            }
+            if ((s32)(cap + cnt) <= index)
+                goto defaultName;
+            // Patch the requested column's prefix, then read its value.
+            u8* col = *(u8**)(lbl_eu_805357E8 + 0x44);
+            col[4] = (u8)(mod + 0x31);
+            name = (const char*)getBdatStringColumnValue(
+                bdat, *(char**)(lbl_eu_805357E8 + 0x44), index);
+            goto resolvedName;
         }
+defaultName:
+        name = (const char*)lbl_eu_80662788;
+resolvedName:;
 
-        CfGimmickObject* obj = func_800B20B4((UnkClass_805764CC*)func_800B07E8(), 0x4000, 0, 0);
+    CfGimmickObject* obj = func_800B20B4(func_800B07E8(), 0x4000, 0, 0);
+        CfGimmickObject* result;
         if (obj == 0) {
-            self->field_00 = 0;
-            return;
-        }
-
-        if (strlen(name) >= 0x20) {
-            // Truncate over-long names into a fixed 0x40 stack buffer.
-            char buf[0x40];
-            strcpy(buf, name);
-            buf[0x3F] = 0;
-            func_800C13FC(obj, buf, arg7);
+            result = 0;
         } else {
-            func_800C13FC(obj, name, arg7);
-        }
+            if (strlen(name) >= 0x20) {
+                // Truncate over-long names into a fixed 0x40 stack buffer.
+                char buf[0x40];
+                strcpy(buf, name);
+                buf[0x3F] = 0;
+                func_800C13FC(obj, buf, arg7);
+            } else {
+                func_800C13FC(obj, name, arg7);
+            }
 
-        // Activate, then reposition the object above the requested point.
-        ((CfGimmickSpawnIf*)obj)->activate(1);
-        CfGimmickVec3 pos;
-        f32 py = point->y + lbl_eu_80668378;
-        pos.x = point->x;
-        pos.y = py;
-        pos.z = point->z;
-        ((CfGimmickSpawnIf*)obj)->setPos(&pos);
-        obj->field_90 = 1;
-        self->field_00 = (void*)obj;
+            // Activate, then reposition the object above the requested point.
+            // FPR temp order mirrors matched func_8020A35C's tail exactly.
+            ((CfGimmickSpawnIf*)obj)->activate(1);
+            CfGimmickVec3 pos;
+            f32 x, y, z;
+            z = point->z;
+            y = lbl_eu_80668378 + point->y;
+            x = point->x;
+            pos.x = x;
+            pos.y = y;
+            pos.z = z;
+            ((CfGimmickSpawnIf*)obj)->setPos(&pos);
+            obj->field_90 = 1;
+            result = obj;
+        }
+        self->field_00 = result;
     }
 }
 

@@ -43,8 +43,7 @@ struct TextureFlipInfo {
 };
 
 // @typo
-TextureFlipInfo& GetTexutreFlipInfo(u8 flipType) {
-    static TextureFlipInfo flipInfos[TEXTUREFLIP_MAX] = {
+extern "C" TextureFlipInfo lbl_eu_80569AB8[TEXTUREFLIP_MAX] = {
         {{{0, 0}, {1, 0}, {0, 1}, {1, 1}}, {0, 1}}, // TEXTUREFLIP_NONE
         {{{1, 0}, {0, 0}, {1, 1}, {0, 1}}, {0, 1}}, // TEXTUREFLIP_H
         {{{0, 1}, {1, 1}, {0, 0}, {1, 0}}, {0, 1}}, // TEXTUREFLIP_V
@@ -53,8 +52,12 @@ TextureFlipInfo& GetTexutreFlipInfo(u8 flipType) {
         {{{1, 0}, {1, 1}, {0, 0}, {0, 1}}, {1, 0}}, // TEXTUREFLIP_270
     };
 
-    return flipInfos[flipType];
+// @typo
+TextureFlipInfo& GetTexutreFlipInfo(u8 flipType) {
+    return lbl_eu_80569AB8[flipType];
 }
+
+
 
 /******************************************************************************
  * Top-left frame
@@ -472,16 +475,16 @@ void Window::DrawFrame(const math::VEC2& rBase, const Frame& rFrame,
 
     Size texSize = detail::GetTextureSize(rFrame.pMaterial, 0);
     ut::Color vtxColors[VERTEXCOLOR_MAX];
-    detail::TexCoord texCoords[1];
+    math::VEC2 texCoords[VERTEXCOLOR_MAX];
 
     math::VEC2 point;
     Size size;
 
 #define DRAW_FRAME(FRAME, FLIP)                                                \
     Get##FRAME##FrameSize(&point, &size, rBase, mSize, rFrameSize);            \
-    Get##FRAME##TexCoord(texCoords[0], size, texSize, FLIP);                   \
+    Get##FRAME##TexCoord(texCoords, size, texSize, FLIP);                   \
                                                                                \
-    detail::DrawQuad(point, size, 1, texCoords,                                \
+    detail::DrawQuad(point, size, 1, &texCoords,                               \
                      useVtxColor ? vtxColors : NULL, alpha);
 
     DRAW_FRAME(LT, TEXTUREFLIP_NONE);

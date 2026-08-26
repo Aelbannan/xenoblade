@@ -1219,18 +1219,20 @@ extern "C" cf::CfObjectMove* func_800807BC__Q22cf13CfGameManagerFv(
     return object;
 }
 
-extern "C" CItemImplInstances* CItem_initItemImplInstances();
+// Unified pointer-arg form (owner ABI: CItem.cpp dispatches on the item);
+// retail callers here leave the live record in r3, so passing it adds no code.
+extern "C" void* CItem_initItemImplInstances(void* item);
 #pragma dont_inline on
 extern "C" u16 func_8007EF04__Q22cf13CfGameManagerFv(u32 value) {
-    return CItem_initItemImplInstances()->vfunc_0x30(value);
+    return ((CItemImplInstances*)CItem_initItemImplInstances((void*)value))->vfunc_0x30(value);
 }
 extern "C" UnkF0ACData* func_8007F054__Q22cf13CfGameManagerFv(u32 first, u32 second) {
-    return CItem_initItemImplInstances()->vfunc_0x2C(first, second);
+    return ((CItemImplInstances*)CItem_initItemImplInstances((void*)first))->vfunc_0x2C(first, second);
 }
 #pragma dont_inline reset
 #pragma dont_inline on
 extern "C" void func_8007F0C4__Q22cf13CfGameManagerFv(u32 first, u32 second) {
-    CItem_initItemImplInstances()->vfunc_0x40(first, second);
+    ((CItemImplInstances*)CItem_initItemImplInstances((void*)first))->vfunc_0x40(first, second);
 }
 #pragma dont_inline reset
 extern "C" void func_801421C4(u16 value);
@@ -2196,7 +2198,7 @@ extern "C" void func_800862D0__Q22cf13CfGameManagerFv() {
 }
 
 extern "C" float lbl_eu_8066653C;
-extern "C" void* func_80186C7C(void* object);
+extern "C" void func_80186C7C(void* object);
 extern "C" void func_80085E58__Q22cf13CfGameManagerFv(u32 first, u32 second) {
     func_800B94A0(0);
     lbl_eu_80663DF8 |= 0x600230;
@@ -3023,6 +3025,20 @@ struct SinitSingleton87470 {
 extern "C" void func_80087588(Unk87588Data* object);
 extern "C" void __construct_array(void* array, void* ctor, void* dtor,
                                     u32 size, u32 count);
+struct SinitBlockA {
+    u8 pad_0x0[0x20];
+    u32 field_0x20;
+    float field_0x24;
+    float field_0x28;
+};
+struct SinitBlockB {
+    u8 pad_0x0[0x20];
+    u32 field_0x20;
+    u8 field_0x24;
+    u8 pad_0x25[0x1F];
+    u32 field_0x44;
+    float field_0x48;
+};
 extern "C" void sinit_80087470() {
     u8* base = lbl_eu_80570CE0;
     SinitSingleton87470* object =

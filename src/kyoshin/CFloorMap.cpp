@@ -21,7 +21,7 @@ extern const double lbl_eu_80668788 = 0x4330000000000000ll;
 extern u32 lbl_eu_8066479C;
 extern u32 lbl_eu_80664184;
 extern u16 lbl_eu_8050B798[];
-extern u32 func_8003B1EC(u32);
+extern u32 func_8003B1EC(void* bdat);   // matches code_801862C0.hpp canonical decl
 extern u32 lbl_eu_8050BDF8[];
 extern s16 func_80136330(u32, const char*, u32);
 extern u8 lbl_eu_80664798;
@@ -281,7 +281,7 @@ void func_8024577C(void* self, u16 val) {
 // panes' flags for the current map.
 void func_80245950(void* self) {
     CFloorMapCursor* cur = (CFloorMapCursor*)self;
-    u8 count = func_8003B1EC(lbl_eu_8066479C);
+    u8 count = func_8003B1EC((void*)lbl_eu_8066479C);
     cur->field_30D0 = count;
 
     char buf2[0x20];
@@ -420,7 +420,7 @@ void func_80245DF8(void* self) {
     func_8003AA34();
 
     u32 fp = (u32)getFP__FPCc(&lbl_eu_8050BEA8[0x17F]);
-    u16 count = (u16)func_8003B1EC(fp);
+    u16 count = (u16)func_8003B1EC((void*)fp);
 
     u16 n = 0;
     for (u16 i = 1; i <= count; i++) {
@@ -592,7 +592,7 @@ void func_80246330(CFloorMapLayoutBlock* self) {
 
     func_8003AA34();
     u32 fp = (u32)getFP__FPCc(&tbl[0x17F]);
-    u32 count = func_8003B1EC(fp);
+    u32 count = func_8003B1EC((void*)fp);
 
     self->count = 0;
 
@@ -1026,7 +1026,7 @@ void func_8024808C(CFloorMapFull* self, u32 idx) {
     pos = tmp;
     f32 py = pos.y;
 
-    u8 count = (u8)func_8003B1EC(lbl_eu_8066479C);
+    u8 count = (u8)func_8003B1EC((void*)lbl_eu_8066479C);
     u8 found = 0;
     for (u8 i = 1; i <= count; i++) {
         s16 h = func_80136330(lbl_eu_8066479C, &lbl_eu_8050BEA8[0x15A], i);
@@ -1299,7 +1299,7 @@ void func_80248A6C(CFloorMapLayoutSlots* slots) {
     convB.w[0] = 0x43300000;
 
     u32 fp = (u32)getFP__FPCc(&tbl[0x315]);
-    int count = (int)func_8003B1EC(fp);
+    int count = (int)func_8003B1EC((void*)fp);
 
     // Constants hoisted before the walk so MWCC keeps them in f26-f31.
     const f64 convBias = lbl_eu_80668770;
@@ -1346,7 +1346,7 @@ void func_80248A6C(CFloorMapLayoutSlots* slots) {
         // Skip markers whose world y sits below the first map row taller than
         // it, unless that row is exactly the row currently displayed.
         u8 found = 0;
-        u8 count2 = (u8)func_8003B1EC(lbl_eu_8066479C);
+        u8 count2 = (u8)func_8003B1EC((void*)lbl_eu_8066479C);
         for (u8 j = 1; j <= count2; j++) {
             s16 h = func_80136330(lbl_eu_8066479C, &lbl_eu_8050BEA8[0x15A], j);
             convB.w[1] = (u32)(s16)h ^ 0x80000000;
@@ -1407,7 +1407,7 @@ void func_80248ED8(CFloorMapLayoutSlots* slots) {
     convB.w[0] = 0x43300000;
 
     u32 fp = (u32)getFP__FPCc(&tbl[0x315]);
-    int count = (int)func_8003B1EC(fp);
+    int count = (int)func_8003B1EC((void*)fp);
 
     // Constants hoisted before the walk so MWCC keeps them in f26-f31.
     const f64 convBias = lbl_eu_80668770;
@@ -1455,7 +1455,7 @@ void func_80248ED8(CFloorMapLayoutSlots* slots) {
         // Skip markers whose world y sits below the first map row taller than
         // it, unless that row is exactly the row currently displayed.
         u8 found = 0;
-        u8 count2 = (u8)func_8003B1EC(lbl_eu_8066479C);
+        u8 count2 = (u8)func_8003B1EC((void*)lbl_eu_8066479C);
         for (u8 j = 1; j <= count2; j++) {
             s16 h = func_80136330(lbl_eu_8066479C, &lbl_eu_8050BEA8[0x15A], j);
             convB.w[1] = (u32)(s16)h ^ 0x80000000;
@@ -1513,7 +1513,7 @@ void func_80249344(CFloorMapLayoutSlots* slots) {
     convB.w[0] = 0x43300000;
 
     u32 fp = (u32)getFP__FPCc(&tbl[0x315]);
-    int count = (int)func_8003B1EC(fp);
+    int count = (int)func_8003B1EC((void*)fp);
 
     // Constants hoisted before the walk so MWCC keeps them in f26-f31
     // (declared in reverse of retail's load order).
@@ -1564,7 +1564,7 @@ void func_80249344(CFloorMapLayoutSlots* slots) {
         // Skip markers whose world y sits below the first map row taller than
         // it, unless that row is exactly the row currently displayed.
         u8 found = 0;
-        u8 count2 = (u8)func_8003B1EC(lbl_eu_8066479C);
+        u8 count2 = (u8)func_8003B1EC((void*)lbl_eu_8066479C);
         for (u8 j = 1; j <= count2; j++) {
             s16 h = func_80136330(lbl_eu_8066479C, &lbl_eu_8050BEA8[0x15A], j);
             convB.w[1] = (u32)(s16)h ^ 0x80000000;
@@ -1643,7 +1643,7 @@ void func_802497B0(void* self) {
     convB.w[0] = 0x43300000;
 
     u32 fp = (u32)getFP__FPCc(&lbl_eu_8050BEA8[0x315]);
-    int count = (int)func_8003B1EC(fp);
+    int count = (int)func_8003B1EC((void*)fp);
 
     // Constants hoisted before the walk so MWCC keeps them in f26-f31
     // (declared in reverse of retail's load order).
@@ -1693,7 +1693,7 @@ void func_802497B0(void* self) {
         // Skip markers whose world y sits below the first map row taller than
         // it, unless that row is exactly the row currently displayed.
         u8 found = 0;
-        u8 count2 = (u8)func_8003B1EC(lbl_eu_8066479C);
+        u8 count2 = (u8)func_8003B1EC((void*)lbl_eu_8066479C);
         for (u8 j = 1; j <= count2; j++) {
             s16 h = func_80136330(lbl_eu_8066479C, &lbl_eu_8050BEA8[0x15A], j);
             convB.w[1] = (u32)(s16)h ^ 0x80000000;
@@ -1765,7 +1765,7 @@ void func_80249C1C(CFloorMapLayoutSlots* slots) {
     const u8 world = lbl_eu_80664184;
     func_8003AA34();
     u32 fp = (u32)getFP__FPCc(&tbl[0x17F]);
-    u32 count = func_8003B1EC(fp);
+    u32 count = func_8003B1EC((void*)fp);
 
     // Constants kept live across the whole walk (retail f27-f31).
     const f64 convBias = lbl_eu_80668770;
@@ -1914,7 +1914,7 @@ void func_80249C1C(CFloorMapLayoutSlots* slots) {
         // is exactly the currently displayed map row.
         f32 foundY = foundPos.y;
         u8 hit = 0;
-        u8 cntB = (u8)func_8003B1EC(lbl_eu_8066479C);
+        u8 cntB = (u8)func_8003B1EC((void*)lbl_eu_8066479C);
         for (u8 k = 1; k <= cntB; k++) {
             s16 h = func_80136330(lbl_eu_8066479C, &tbl[0x15A], k);
             convB.w[1] = (u32)(s16)h ^ 0x80000000;
@@ -2015,7 +2015,7 @@ void func_8024A448(void* self) {
         f32 py = pv.y;
 
         u8 found = 0;
-        u8 count = (u8)func_8003B1EC(lbl_eu_8066479C);
+        u8 count = (u8)func_8003B1EC((void*)lbl_eu_8066479C);
         for (u8 j = 1; j <= count; j++) {
             s16 h = func_80136330(lbl_eu_8066479C, &lbl_eu_8050BEA8[0x15A], j);
             convA.w[1] = (u32)(s16)h ^ 0x80000000;
@@ -2249,7 +2249,7 @@ void func_8024A748(void* self) {
     if (buf[0] != 0) {
         const f64 bias = lbl_eu_80668770;
         f32 y = vec.y;
-        u8 count = (u8)func_8003B1EC(lbl_eu_8066479C);
+        u8 count = (u8)func_8003B1EC((void*)lbl_eu_8066479C);
         u32 found = 0;
         for (u32 j = 1; j <= count; j++) {
             s16 h = func_80136330(lbl_eu_8066479C, tbl + 0x15A, j);
@@ -2318,7 +2318,7 @@ void func_8024AEEC(void* self) {
     f32 py = ppos.y;
 
     const char* tbl = lbl_eu_8050BEA8;
-    u8 count = (u8)func_8003B1EC(lbl_eu_8066479C);
+    u8 count = (u8)func_8003B1EC((void*)lbl_eu_8066479C);
     const f64 bias = lbl_eu_80668770;
     for (u8 i = 1; i <= count; i++) {
         s16 h = func_80136330(lbl_eu_8066479C, &tbl[0x15A], (u32)i);
@@ -2427,7 +2427,7 @@ void func_8024B234(CFloorMapFull* self) {
     ((u32*)&ppos)[2] = ((u32*)pos)[2];
     f32 py = ppos.y;
 
-    u32 count = (u32)(u8)func_8003B1EC(lbl_eu_8066479C);
+    u32 count = (u32)(u8)func_8003B1EC((void*)lbl_eu_8066479C);
     u32 found = 0;
     for (u32 i = 1; i <= count; i++) {
         s16 h = func_80136330(lbl_eu_8066479C, &lbl_eu_8050BEA8[0x15A], (u32)i);
@@ -2929,7 +2929,7 @@ void func_8024C1FC(void* self) {
             conv.w[1] = p->mLayouts150[i].mUnk ^ 0x80000000;
             f32 y = (f32)(conv.d - lbl_eu_80668770);
 
-            u8 count = (u8)func_8003B1EC(lbl_eu_8066479C);
+            u8 count = (u8)func_8003B1EC((void*)lbl_eu_8066479C);
             u8 found = 0;
             for (u8 j = 1; j <= count; j++) {
                 s16 hv = func_80136330(lbl_eu_8066479C, &lbl_eu_8050BEA8[0x15A], j);
@@ -4290,7 +4290,7 @@ void func_8024F5C4(void* self, u32 arg2) {
 }
 
 extern "C" unsigned char func_8024F630(void) {
-    return (unsigned char)func_8003B1EC(lbl_eu_8066479C);
+    return (unsigned char)func_8003B1EC((void*)lbl_eu_8066479C);
 }
 
 void func_8024F658(void* self) {
@@ -4468,7 +4468,7 @@ u32 func_8024FB78(void*) {
         if (lbl_eu_8066479C != 0) {
             void* player = cf::CfGameManager::getPlayer(0);
             if (player != NULL) {
-                int count = func_8003B1EC(lbl_eu_8066479C);
+                int count = func_8003B1EC((void*)lbl_eu_8066479C);
                 for (u8 i = 1; i <= count; i++) {
                     // Compare floor height against player y in double precision.
                     s16 val = func_80136330(lbl_eu_8066479C, &lbl_eu_8050BEA8[0x15A], i);
@@ -4489,7 +4489,7 @@ u32 func_8024FB78(void*) {
                 f32 tmp[3];
                 func_80141DC4(tmp, rowId);
                 nw4r::math::VEC3 pos = *(nw4r::math::VEC3*)tmp;
-                int count = func_8003B1EC(lbl_eu_8066479C);
+                int count = func_8003B1EC((void*)lbl_eu_8066479C);
                 for (u8 i = 1; i <= count; i++) {
                     s16 val = func_80136330(lbl_eu_8066479C, &lbl_eu_8050BEA8[0x15A], i);
                     conv.w[1] = (u32)(s16)val ^ 0x80000000;
@@ -5138,11 +5138,15 @@ void func_802452C4(void* self) {
         cur->mData->GetRootPane()->FindPaneByName(&lbl_eu_8050BEA8[0x136], 1);
     apos.x = apos.x * scalePane->GetScale().x;
 
-    dest = apos;
+    // Word-wise copy so MWCC keeps the retail integer-register copy instead
+    // of forwarding apos into the inlined SetTranslate (func_8024577C idiom).
+    ((u32*)&dest)[0] = ((u32*)&apos)[0];
+    ((u32*)&dest)[1] = ((u32*)&apos)[1];
+    ((u32*)&dest)[2] = ((u32*)&apos)[2];
     if (cur->field_3108) {
         CFloorMapCursorTarget* target = (CFloorMapCursorTarget*)cur->field_3108;
         target->pane->SetTranslate(dest);
     }
 
-    func_801F3850(cur->field_3134, (u16)(s8)cur->field_0B);
+    func_801F3850(cur->field_3134, (u16)cur->field_0B);
 }

@@ -118,7 +118,6 @@ void asyncRoutine(s32 result, void* ctxt) {
             int end;
             char* rbuf;
             char* line;
-            char* msg;
 
             rbuf = base + 0x100;
             {
@@ -132,13 +131,11 @@ void asyncRoutine(s32 result, void* ctxt) {
             strncpy(titleID, nandGetHomeDir() + 7, 8 + 1 + 8);
             titleID[8] = '-';
             titleID[8 + 1 + 8] = '\0';
-            msg = base + 0;
             end = snprintf(base + 0x200, 256, s_lineFmt,
                            result % (64 - 1) + 1, cal.year, cal.month + 1, cal.mday,
-                           cal.hour, cal.min, cal.sec, titleID, msg);
+                           cal.hour, cal.min, cal.sec, titleID, base);
             if (end < 256) {
-                line = base + 0x200;
-                line[end] = ' ';
+                (base + 0x200)[end] = ' ';
             }
             line = base + 0x200;
             line[254] = '\r';

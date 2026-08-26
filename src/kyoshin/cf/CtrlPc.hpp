@@ -105,7 +105,7 @@ public:
     virtual void v126(); virtual void v127(); virtual void v128();
     virtual void v129(); virtual void v130(); virtual void v131();
     virtual void v132(); virtual void v133();
-    virtual void* v134();                  // 0x220
+    virtual void* v134(int arg);           // 0x220
 };
 
 namespace cf {
@@ -241,7 +241,7 @@ extern "C" int func_80086F9C__Q22cf13CfGameManagerFv(int arg);
 extern "C" void* __dt__Q22cf6CtrlPcFv(cf::CtrlPc* obj, int flags);
 // CfObjEnumList stack-holder helpers (retail C-ABI names).
 extern "C" void func_80043D90(void* holder);
-extern "C" CfEnumList* func_80043F18(void* holder);
+extern "C" void* func_80043F18(void* holder);
 extern "C" void func_800F4A98(void* list, u32 type, u32 filter);
 extern "C" void* __ct__800FB044(void* list, f32 radius, void* pos, int arg);
 extern "C" void __dt__80043E88(void* holder, int flags);
@@ -370,8 +370,11 @@ struct ArtsSelStateViewPc {
 };
 extern "C" ArtsSelStateViewPc* CMenuArtsSelect_getSelectState(void);
 extern "C" void func_800ACF78(void* obj, void* target, u32 child);
+extern "C" void func_800BE12C(void* owner, int a, int b, int c, int d);
 extern "C" void func_800F6D50(CfEnumList* list, u32 val);
-extern "C" void* func_800F6E08(CfEnumList* list);
+// void* parameter form matches CAIAction.hpp's declaration (two extern "C"
+// overloads of the same name are illegal).
+extern "C" void* func_800F6E08(void* list);
 // Enum list with the extra word at +0x3030 cleared by func_80098194.
 struct CfListBig : CfEnumList {
     u8 _624[0x3030 - 0x624];
@@ -730,6 +733,18 @@ struct CAttackParamVt {
     virtual void v00();
     virtual int getComboId();        // vtable slot 0x0C
     virtual void applyCombo(int);    // vtable slot 0x10
+};
+// Polymorphic view of cf::CAttackParam with the vptr at +0x84 (retail
+// layout): lets func_80098810 issue true virtual dispatches through the
+// record's +0x84 table exactly as the retail code does.
+struct CAttackParam84Head {
+    u8 _00[0x84];
+};
+class CAttackParamVtObj : private CAttackParam84Head {
+public:
+    virtual void vt00();            // +0x08
+    virtual int getComboId();       // +0x0C
+    virtual void applyCombo(int);   // +0x10
 };
 extern "C" void* getArtsParamRC2(void* artsSet, int row, int col);
 extern "C" int func_801B202C(void);

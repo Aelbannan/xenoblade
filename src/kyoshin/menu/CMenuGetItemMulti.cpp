@@ -26,11 +26,11 @@
 #include <stdio.h>
 #include "revolution/gx/GXPixel.h"
 
-// CfGameManagerUnityHelpers.hpp (via the include chain) already declares a
-// no-arg extern "C" CItem_initItemImplInstances(); MWCC rejects this TU's
-// item-pointer form at global scope as an illegal overload, so keep it in a
-// namespace and shim the call sites through the macro (same pattern as
-// CItemBoxInfo.hpp).
+// CfGameManagerUnityHelpers.hpp (via the include chain) declares the unified
+// pointer-arg extern "C" CItem_initItemImplInstances(void*); this TU needs a
+// typed view (CMenuGetItemImpl* taking CMenuGetItemMultiEntry*), which still
+// conflicts at global scope, so keep it in a namespace and shim the call
+// sites through the macro (same pattern as CItemBoxInfo.hpp).
 namespace getMenuMultiItemImplShim {
 extern "C" CMenuGetItemImpl* CItem_initItemImplInstances(CMenuGetItemMultiEntry*);
 }

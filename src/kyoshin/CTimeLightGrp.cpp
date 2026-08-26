@@ -5,9 +5,11 @@
 #include "monolib/util/reslist.hpp"
 #include "kyoshin/CTimeLightGrp.hpp"
 
-// Element type of the reslist managed by CTimeLightGrp (pre-existing alias).
-typedef void* CVirtualLightObjPtr;
-
+// ================== __dt__13CTimeLightGrpFv ==================
+// Complete-object destructor. Installs the derived vtable, clears the light
+// list, then destroys the embedded reslist subobject (restores its base
+// vtable, re-clears the now-empty ring, and frees the node array when the
+// list owns it). mode > 0 frees self.
 // CTimeLightGrp inherits from _reslist_base<CVirtualLightObjPtr>.
 // The retail layout has _reslist_base fields starting at +0x08, with
 // a CTimeLightGrp-level vtable and parent pointer at +0x00/+0x04.
@@ -161,58 +163,10 @@ extern "C" void* __dt__reslist_CVirtualLightObj(void* self, int mode) {
     return self;
 }
 
-// ================== __dt__13CTimeLightGrpFv ==================
-extern "C" void __dt__13CTimeLightGrpFv(void* self, int mode) {
-    CTimeLightGrp_BaseLayout* p = (CTimeLightGrp_BaseLayout*)self;
-    _reslist_base<CVirtualLightObjPtr>* base;
-
-    if (self == nullptr) return;
-
-    // Step 1: clear the CTimeLightGrp-level list
-    p->vtbl = lbl_eu_80526418;
-    {
-        _reslist_node<CVirtualLightObjPtr>* cur;
-        _reslist_node<CVirtualLightObjPtr>* head;
-
-        head = p->mStartNodePtr;
-        cur = head->mNext;
-        while (cur != head) {
-            _reslist_node<CVirtualLightObjPtr>* prev = cur;
-            cur = cur->mNext;
-            prev->mNext = nullptr;
-        }
-        head->mNext = head;
-        head->mPrev = head;
-    }
-
-    // Step 2: destroy the reslist_base subobject
-    base = (_reslist_base<CVirtualLightObjPtr>*)((u8*)self + 8);
-    if (base != nullptr) {
-        *(void**)base = lbl_eu_80526448;
-
-        {
-            _reslist_node<CVirtualLightObjPtr>* cur;
-            _reslist_node<CVirtualLightObjPtr>* head;
-
-            head = base->mStartNodePtr;
-            cur = head->mNext;
-            while (cur != head) {
-                _reslist_node<CVirtualLightObjPtr>* prev = cur;
-                cur = cur->mNext;
-                prev->mNext = nullptr;
-            }
-            head->mNext = head;
-            head->mPrev = head;
-        }
-
-        if (!base->unk1C && base->mList != nullptr) {
-            __dla__FPv(base->mList);
-            base->mList = nullptr;
-        }
-    }
-
-    // Step 3: free self if mode > 0
-    if (mode > 0) __dl__FPv(self);
+CTimeLightGrp::~CTimeLightGrp() {
+    mVtable = lbl_eu_80526418;
+    mList.clearList();
+    // Implicit destruction of mList follows here.
 }
 
 // ================== func_8005A2F0 ==================

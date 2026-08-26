@@ -259,7 +259,8 @@ float func_80496288(void* self_) {
     else
         mul = lbl_eu_8066AAB8;
     ScnFloats* p = (ScnFloats*)*(void**)((u8*)self + 0x84);
-    return p->unk08 * mul;
+    float scale = p->unk08;
+    return scale * mul;
 }
 // retail: lwz r3,0x84(r3); stfs f1,0xC(r3); blr
 void func_80496294(CScn* self, float v) {
@@ -294,9 +295,35 @@ void func_80496998__Fv(void) { func_8049B408(); }
 extern "C" void func_eu_8049AB50(u8* self, unsigned char byte) {
     *(unsigned char*)((uintptr_t)self + 0x3e9) = byte;
 }
-void __dt__4CScnFv(void*, int);
+// CScn::~CScn() (retail __dt__4CScnFv). The public CScn class header is
+// outside this session's writable scope, so the retail mangled symbol is
+// preserved via C linkage (same precedent as Move__4CScnFv below).
+// Repoints the accessor table (+0x10) and secondary IWorkEvent vtable slot
+// (+0x54), destroys the +0x88 subobject, runs the ~CProcess base dtor, then
+// frees the object when the deleting flag is set.
+extern "C" void* __dt__4CScnFv(CScn* self, int flags) {
+    if (self != NULL) {
+        CScnDtorView* v = (CScnDtorView*)self;
+        v->unk10 = lbl_eu_8056E8D0;
+        v->unk54 = lbl_eu_8056E8D0 + 0x24;
+        if (v->unk88 != NULL) {
+            if (v->unk88 != NULL) {  // double guard matches retail's twin beq
+                v->unk88->~UnkScn8C();
+            }
+            v->unk88 = NULL;
+        }
+        if (self != NULL) {
+            self->CProcess::~CProcess();
+        }
+    }
+    if (flags > 0) {
+        ::operator delete(self);
+    }
+    return self;
+}
+
 extern "C" void func_80496B04(void* pThis, int r4) {
-    __dt__4CScnFv((char*)pThis - 0x54, r4);
+    __dt__4CScnFv((CScn*)((char*)pThis - 0x54), r4);
 }
 
 extern "C" void func_8049699C(u8* self) {
@@ -307,5 +334,19 @@ extern "C" void func_8049699C(u8* self) {
 
 extern "C" void func_804962B0__4CScnFUlUlPvUl() {}
 extern "C" void Term__4CScnFv() {}
-extern "C" void Move__4CScnFv() {}
+// CScn::Move(). The literal retail symbol name is preserved via C linkage
+// (the public CScn class header is outside this session's writable scope).
+// Runs every scene subsystem's per-frame update, gated by the pause/stop flags.
+extern "C" void Move__4CScnFv(CScnMoveView* self) {
+    if (self->unk3E4 == 0 && self->unk3E7 == 0) {
+        self->frame->update();
+        func_804C12A4(self->lgtCtrl);
+        self->itemPool->update();
+        self->filterMan->update();
+        self->fadeMan->update();
+        self->unk8C->vf14();
+        self->itemPool->func_8048CEDC();
+    }
+    self->unk3E8 = 0;
+}
 extern "C" void create__8CScnNw4rFv() {}

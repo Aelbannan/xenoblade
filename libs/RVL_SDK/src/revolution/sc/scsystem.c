@@ -9,9 +9,7 @@
 #define SC_CONF_MAX_SIZE 0x4000
 
 #define SC_CONF_BEGIN_MAGIC "SCv0"
-// Trailing NULs reproduce the retail .sdata padding after this literal
-// (retail .sdata ends at 0x110, "SCed\0" occupies 0x108..0x10D).
-#define SC_CONF_END_MAGIC "SCed\0\0\0"
+#define SC_CONF_END_MAGIC "SCed"
 
 #define SC_SMALLARRAY_MAX 0xFF
 #define SC_BIGARRAY_MAX 0xFFFF
@@ -110,7 +108,7 @@ static const char ConfFileName[] = "/shared2/sys/SYSCONF";
 // Trailing NULs reproduce the retail .rodata padding after this string
 // (retail .rodata ends at 0x58, this string occupies 0x28..0x52).
 static const char ProductInfoFileName[] =
-    "/title/00000001/00000002/data/setting.txt\0\0\0\0\0\0";
+    "/title/00000001/00000002/data/setting.txt";
 
 static u8 BgJobStatus = SC_STATUS_OK;
 

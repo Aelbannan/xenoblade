@@ -32,13 +32,6 @@ struct StrmSoundRetail {
 
 } // namespace
 
-#if 0 // TEMP: removed to stop hexdiff fuzzy-matching this ctor
-StrmSound::StrmSound(SoundInstanceManager<StrmSound>* pManager)
-    : BasicSound(0, 0), mManager(pManager), mTempSpecialHandle(NULL) {}
-#endif
-
-StrmSound::~StrmSound() {}
-
 // Local vtable emitted by this TU (retail lbl_eu_8056ACF0); the ctor stores
 // it explicitly because it is constructed as a free-standing placement object.
 extern "C" const u8 __vt__Q44nw4r3snd6detail9StrmSound[];
@@ -62,28 +55,49 @@ __ct__Q44nw4r3snd6detail9StrmSoundFPQ44nw4r3snd6detail50SoundInstanceManagerIQ44
     nw4r::snd::detail::SoundInstanceManager<nw4r::snd::detail::StrmSound>*
         pManager,
     int priority, int ambientPriority) {
-    __ct__Q44nw4r3snd6detail10BasicSoundFii(self, priority,
+    // Declared in retail save order: 'this' colors to r31, manager to r30.
+    nw4r::snd::detail::StrmSound* const pSound = self;
+    nw4r::snd::detail::SoundInstanceManager<nw4r::snd::detail::StrmSound>*
+        const pMgr = pManager;
+
+    __ct__Q44nw4r3snd6detail10BasicSoundFii(pSound, priority,
                                             ambientPriority);
 
-    *reinterpret_cast<const u8**>(self) =
+    *reinterpret_cast<const u8**>(pSound) =
         __vt__Q44nw4r3snd6detail9StrmSound;
 
-    StrmSoundRetail* sv = reinterpret_cast<StrmSoundRetail*>(self);
+    StrmSoundRetail* sv = reinterpret_cast<StrmSoundRetail*>(pSound);
     __ct__Q44nw4r3snd6detail10StrmPlayerFv(
         reinterpret_cast<StrmPlayer*>(sv->_strmPlayer));
 
     sv->mTempSpecialHandle = NULL;
-    sv->mManager = pManager;
+    sv->mManager = pMgr;
 
-    // Each track's move value starts settled at 1.0f: element 0 explicitly,
-    // the rest copied from it.
-    sv->moveValue[0].InitValue(lbl_eu_8066A088);
-    for (int i = 1; i < 8; i++) {
-        sv->moveValue[i] = sv->moveValue[0];
+    // Each track's move value starts settled at 1.0f.
+    // NOTE: retail expands the tail-fill into its generic two-path struct-fill
+    // idiom (hoisted guard over [&v1,&v8), fast 8-wide loop + remainder loop
+    // with overlap checks). Only this form - explicit element-0 InitValue plus
+    // a pointer-walk loop calling InitValue - makes MWCC fire that expansion;
+    // index loops, local-template copies and memcpy all stay compact.
+    MoveValue<f32, int>* pBase = sv->moveValue;
+    MoveValue<f32, int>* p = pBase + 1;
+    MoveValue<f32, int>* pEnd = pBase + 8;
+    pBase->InitValue(lbl_eu_8066A088);
+    for (; p < pEnd; ++p) {
+        p->InitValue(lbl_eu_8066A088);
     }
 
-    return self;
+    return pSound;
 }
+
+// NOTE: this definition must stay the FIRST function in this TU - MWCC emits
+// functions in definition order and the diff tooling pairs the retail
+// constructor by its leading .text offset.
+
+StrmSound::StrmSound(SoundInstanceManager<StrmSound>* pManager)
+    : BasicSound(0, 0), mManager(pManager), mTempSpecialHandle(NULL) {}
+
+StrmSound::~StrmSound() {}
 
 void StrmSound::InitParam() {
     BasicSound::InitParam();

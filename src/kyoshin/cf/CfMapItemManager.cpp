@@ -33,14 +33,14 @@ extern "C" void func_802808AC(s32 mode);
 // outside this session's writable scope).
 extern "C" bool func_80083118__Q22cf13CfGameManagerFv(s32 self);
 extern "C" void func_80086E6C__Q22cf13CfGameManagerFv(int self);
-extern "C" void* getPlayer__Q22cf13CfGameManagerFi(s32 idx);
+extern "C" void* getPlayer__Q22cf13CfGameManagerFi(int idx);  // int (not s32=long): must match CfObjectImplMove.hpp exactly
 // These CfGameManager helpers ignore their incoming r3 in retail; they are
 // declared argument-less so MWCC leaves the caller's r3 untouched (matching
 // the stale-register chain in the retail asm).
 extern "C" int func_80084BF4__Q22cf13CfGameManagerFv();
 extern "C" int func_8008585C__Q22cf13CfGameManagerFv();
 extern "C" int func_80085840__Q22cf13CfGameManagerFv();
-extern "C" u8* func_8016FE34(void* obj);
+extern "C" void* func_8016FE34(void* obj);  // void* form matches the harness-chain header decl
 extern "C" bool func_800FF8B0();
 extern "C" bool func_80251550();
 extern "C" void* func_801586D4(unsigned short id);
@@ -48,7 +48,7 @@ extern "C" bool func_802B37F4(u32 handle);
 extern "C" void* func_801351C4(int idx);
 extern "C" void func_8009D018(unsigned long index, unsigned long value);
 extern "C" int func_80140E00(int arg1, int arg2, int arg3, int arg4);
-extern "C" void func_801BFC38__Q22cf10CfSoundManFUlUlUlUlf(unsigned long a, unsigned long b, unsigned long c, unsigned long d, float e);
+extern "C" u16 func_801BFC38__Q22cf10CfSoundManFUlUlUlUlf(unsigned long a, unsigned long b, unsigned long c, unsigned long d, float e);
 // Extra imports for func_80173CA0.
 extern "C" int CfRes_getD80Flag();
 extern "C" u32 func_8016DF2C();
@@ -861,7 +861,7 @@ void func_801742D4(CfMapItemManager* self) {
     idx = func_80173CA0(self, &pos);
     if (idx == 0) return;
     if (!func_80083118__Q22cf13CfGameManagerFv(0)) return;
-    u8* loader = func_8016FE34((void*)pv);
+    u8* loader = (u8*)func_8016FE34((void*)pv);
     if (loader == 0) return;
     if (func_800FF8B0() != 0) return;
     if (func_80251550() != 0) return;

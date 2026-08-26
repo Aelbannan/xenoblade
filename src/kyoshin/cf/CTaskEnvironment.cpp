@@ -19,6 +19,8 @@ extern "C" void copyWord4Offset(u32* dst, const u32* src);
 // sdata2 constants at each use like retail (no cross-call register lifetime).
 #define FAC lbl_eu_80665FAC
 #define FC0 lbl_eu_80665FC0
+#define FC4 lbl_eu_80665FC4
+#define FC8 lbl_eu_80665FC8
 #include "kyoshin/cf/CTaskEnvironment.hpp"
 #include "monolib/math/CVec4.hpp"
 #include "monolib/util/MemManager.hpp"
@@ -39,34 +41,45 @@ extern double lbl_eu_80665FF0;
 // CREvtModelMap precedent). noinline keeps the create-site call a real bl.
 __declspec(noinline) CTaskEnvironment* __ct__CTaskEnvironment(
     CTaskEnvironment* self, CProcess* pArg) {
-    // The scene process argument doubles as the CTaskEnvScene provider; its
-    // +0x78 world object supplies the clock fields copied below. Declaring it
-    // first makes MWCC bind it to r31 like retail.
+    const CTaskEnvWorld* pWorld;
     CTaskEnvScene* scene = reinterpret_cast<CTaskEnvScene*>(pArg);
     __ct__8CProcessFv(self);
+
+    // Word view of the object; kept as a named local like the matched
+    // CTaskGameEvt ctor so MWCC allocates it identically.
     u32* p = reinterpret_cast<u32*>(self);
 
-    // Interim CTTask<CTaskEnvironment> vtable (overwritten later).
+    // Interim CTTask<CTaskEnvironment> vtable (overwritten below).
     p[4] = reinterpret_cast<u32>(lbl_eu_805263D8);
 
-    // NULL PTMF -> mMoveFunc (0x3C) / mDrawFunc (0x48), matching the retail
-    // load/store order.
-    p[0x10] = __ptmf_null[1];        // 0x40 mMoveFunc[1]
-    p[0xF] = __ptmf_null[0];         // 0x3C mMoveFunc[0]
-    p[0x11] = __ptmf_null[2];        // 0x44 mMoveFunc[2]
-    p[0x12] = __ptmf_null[0];        // 0x48 mDrawFunc[0]
-    p[0x13] = __ptmf_null[1];        // 0x4C mDrawFunc[1]
-    p[0x14] = __ptmf_null[2];        // 0x50 mDrawFunc[2]
+    // NULL PTMF -> mMoveFunc (0x3C) / mDrawFunc (0x48). Post-increment derefs
+    // of a local pointer fold the first access into `lwzu` and force the retail
+    // per-slot reloads (CTaskGameEvt precedent).
+    const u32* src = __ptmf_null;
+    u32 w0 = *src++;
+    u32 w1 = *src++;
+    p[0x10] = w1;        // 0x40 mMoveFunc[1]
+    p[0xF] = w0;         // 0x3C mMoveFunc[0]
+    u32 w2 = *src++;     // load [2] after the 0x3C store (retail order)
+    p[0x11] = w2;        // 0x44 mMoveFunc[2]
+    src = __ptmf_null;
+    w1 = *src++;
+    w0 = *src++;
+    p[0x13] = w0;        // 0x4C mDrawFunc[1]
+    p[0x12] = w1;        // 0x48 mDrawFunc[0]
+    w2 = *src++;
+    p[0x14] = w2;        // 0x50 mDrawFunc[2]
 
     // Final CTaskEnvironment vtable, then scalar member init.
     p[4] = reinterpret_cast<u32>(lbl_eu_80526390);
+    const u32 zero = 0;
     self->mScene = scene;
-    self->field_0x58 = 0;
+    self->field_0x58 = (u8)zero;
     self->field_0x5C = 2000;
-    self->field_0x60 = 0;
-    self->field_0x64 = 0;
+    self->field_0x60 = zero;
+    self->field_0x64 = zero;
     self->field_0x68 = 0x10;
-    self->field_0x6C = 0;
+    self->field_0x6C = zero;
     self->field_0x70 = lbl_eu_80665FA0;
     self->field_0x74 = lbl_eu_80665FA4;
     self->field_0x78 = lbl_eu_80665FA8;
@@ -75,35 +88,41 @@ __declspec(noinline) CTaskEnvironment* __ct__CTaskEnvironment(
     self->field_0x84 = lbl_eu_80665FAC;
     self->field_0x88 = lbl_eu_80665FA0;
     self->field_0x8C = lbl_eu_80665FA0;
-    self->field_0xA8 = 0;
-    p[0x2B] = 0;   // 0xAC
-    p[0x2C] = 0;   // 0xB0
-    p[0x2D] = 0;   // 0xB4
-    p[0x2E] = 0;   // 0xB8
-    p[0x2F] = 0;   // 0xBC
-    p[0x30] = 0;   // 0xC0
-    p[0x31] = 0;   // 0xC4
-    p[0x32] = 0;   // 0xC8
-    p[0x33] = 0;   // 0xCC
-    p[0x34] = 0;   // 0xD0
-    p[0x35] = 0;   // 0xD4
-    p[0x36] = 0;   // 0xD8
-    p[0x37] = 0;   // 0xDC
-    p[0x38] = 0;   // 0xE0
-    p[0x39] = 0;   // 0xE4
+    self->field_0xA8 = (u8)zero;
+    p[0x2B] = zero;   // 0xAC
+    p[0x2C] = zero;   // 0xB0
+    p[0x2D] = zero;   // 0xB4
+    p[0x2E] = zero;   // 0xB8
+    p[0x2F] = zero;   // 0xBC
+    p[0x30] = zero;   // 0xC0
+    p[0x31] = zero;   // 0xC4
+    p[0x32] = zero;   // 0xC8
+    p[0x33] = zero;   // 0xCC
+    p[0x34] = zero;   // 0xD0
+    p[0x35] = zero;   // 0xD4
+    p[0x36] = zero;   // 0xD8
+    p[0x37] = zero;   // 0xDC
+    p[0x38] = zero;   // 0xE0
+    p[0x39] = zero;   // 0xE4
     self->field_0xE8 = 0;
     self->field_0xE9 = 0;
     self->field_0xEA = 0;
 
     // Register as the global environment manager and snapshot the world clock.
     lbl_eu_80663D58 = reinterpret_cast<CTaskEnvGlobal*>(self);
-    CTaskEnvWorld* world = scene->field_0x78;
-    self->field_0x94 = world->field_0x68;
-    self->field_0x90 = world->field_0x64;
-    self->field_0x9C = world->field_0x70;
-    self->field_0x98 = world->field_0x6C;
-    self->field_0xA0 = world->field_0x54;
-    self->field_0xA4 = world->field_0x58;
+    // World pointer cached for the integer fields, then re-dereferenced for
+    // each float copy (retail reloads 0x78 twice).
+    pWorld = scene->field_0x78;
+    u32 day = pWorld->field_0x64;
+    u32 hour = pWorld->field_0x68;
+    self->field_0x94 = hour;
+    self->field_0x90 = day;
+    u32 minute = pWorld->field_0x6C;
+    u32 sec = pWorld->field_0x70;
+    self->field_0x9C = sec;
+    self->field_0x98 = minute;
+    self->field_0xA0 = scene->field_0x78->field_0x54;
+    self->field_0xA4 = scene->field_0x78->field_0x58;
     return self;
 }
 
@@ -150,109 +169,118 @@ extern "C" u32 getSubField7C(u8* self) { return *(u32*)((u8*)self + 0x7C); }
 
 // Clock helper: hours = minute/c + second/c/c (c = sdata2 rate constant,
 // 60.0f; the int->float conversion uses the retail double trick).
-// Clock helper: hours = second/c/c + minute/c (c = sdata2 rate constant,
-// 60.0f). The int->float conversion builds the 0x43300000 pattern manually
-// so the magic-double reloc matches retail.
+// Clock helper: hours = minute/c + second/c/c (c = sdata2 rate constant,
+// 60.0f). Two fixed-codegen residuals vs retail (do not re-grind):
+// 1. The minute int->float cast must stay a plain builtin cast: retail
+//    subtracts the pooled 0x43300000_80000000 magic with a SINGLE-rounded
+//    fsubs (no frsp), which only MWCC's builtin conversion idiom emits -
+//    a manual F64Conv union produces double fsub+frsp (+4 bytes) instead
+//    (MWCC_CASES CActorParam UnkVirtualFunc11 precedent; cf. sibling
+//    func_800599E0). The builtin's literal-pool cookie (@4023) cannot be
+//    named from source -> accepted EQUIVALENT_MATCH residual.
+// 2. Retail interleaves the conversion setup between the two /c divisions;
+//    our build clusters it early instead. Invariant across operand swaps,
+//    named locals, statement splits and union/builtin forms (scheduler-
+//    internal, wall-class "uncontrollable CSE/scheduling").
+// Operand order matters: seconds chain as the RIGHT + operand gives retail's
+// evaluation order AND its fadds operand placement (c lands in f1).
 extern "C" float func_800587F8(CTaskEnvTime* time) {
-    float c = lbl_eu_80665FB0;
-    float s = time->second / c;
-    float m = (float)time->minute;
-    float r = s / c;
-    return m / c + r;
+    return (float)time->minute / lbl_eu_80665FB0 +
+           time->second / lbl_eu_80665FB0 / lbl_eu_80665FB0;
 }
 
 extern "C" u32 getField5C(u8* self) { return *(u32*)((u8*)self + 0x5C); }
 
-// Build the environment lights: two CTimeLightGrp groups from the work heap,
-// then colour/ambient/directional lights registered into scene-manager slots,
-// and finally copy the world clock into +0x90..+0xA4. (Retail keeps this as an
-// unmangled C entry point taking the task.)
+// Build the environment lights: two CTimeLightGrp groups from the work heap
+// (constructed with the scene as parent), then colour/ambient/directional
+// lights registered into scene-manager slots, and finally copy the world clock
+// into +0x90..+0xA4. (Retail keeps this as an unmangled C entry point taking
+// the task.) No float is held live across a call here - every colour/direction
+// vector is materialised on the stack by its ctor - so retail needs no FP
+// callee-saves.
 extern "C" __declspec(noinline) void func_80058844(CTaskEnvironment* self) {
     func_804923F8(self->mScene->field_0x5C, 0);
-    u32 heap = (u32)func_80496004(self->mScene);
 
-    self->mUnkE0 = mtl::MemManager::allocate(0x3C, heap);
-    if (self->mUnkE0 != NULL) {
-        __ct__CTimeLightGrp((CTimeLightGrp*)self->mUnkE0, (void*)heap);
+    // Re-assign from the ctor's returned 'this' so the pointer lives only in
+    // r3 across the call (retail stores the post-ctor r3 at the merge point).
+    void* grpA = mtl::MemManager::allocate(0x3C,
+                                           (u32)func_80496004(self->mScene));
+    if (grpA != NULL) {
+        grpA = __ct__CTimeLightGrp(static_cast<CTimeLightGrp*>(grpA),
+                                   self->mScene);
     }
-    self->mUnkE4 = mtl::MemManager::allocate(0x3C, heap);
-    if (self->mUnkE4 != NULL) {
-        __ct__CTimeLightGrp((CTimeLightGrp*)self->mUnkE4, (void*)heap);
-    }
+    self->mUnkE0 = grpA;
 
-    ml::CVec4 colBlack(lbl_eu_80665FC0, lbl_eu_80665FC0, lbl_eu_80665FC0,
-                       lbl_eu_80665FAC);
-    self->mLgtDC =
-        func_804930BC(self->mScene->field_0x5C, self->mScene->field_0x5C->field_0x6C,
-                      &colBlack);
-    self->mScene->field_0x5C->field_0x19 = 1;
-    ml::CVec4 colWhite(lbl_eu_80665FAC, lbl_eu_80665FAC, lbl_eu_80665FAC,
-                       lbl_eu_80665FAC);
-    self->mLgtAC =
-        func_804930BC(self->mScene->field_0x5C, self->mScene->field_0x5C->field_0x0C,
-                      &colWhite);
-    ml::CVec3 dirDown(lbl_eu_80665FC4, lbl_eu_80665FC8, lbl_eu_80665FC4);
-    ml::CVec4 colAmbient(lbl_eu_80665FC0, lbl_eu_80665FC0, lbl_eu_80665FC0,
-                         lbl_eu_80665FAC);
-    self->mLgtB0 =
-        func_804933AC(self->mScene->field_0x5C, self->mScene->field_0x5C->field_0x0C,
-                      &colAmbient, &dirDown);
+    void* grpB = mtl::MemManager::allocate(0x3C,
+                                           (u32)func_80496004(self->mScene));
+    if (grpB != NULL) {
+        grpB = __ct__CTimeLightGrp(static_cast<CTimeLightGrp*>(grpB),
+                                   self->mScene);
+    }
+    self->mUnkE4 = grpB;
+
+    // Each colour/direction vector is an unnamed temporary at the call site:
+    // MWCC materialises temporaries into caller-stack slots (best of the
+    // shapes tried; ctor-arg load order still differs from retail by a swap).
+    self->mLgtDC = func_804930BC(
+        self->mScene->field_0x5C, self->mScene->field_0x5C->field_0x6C,
+        &ml::CVec4(FC0, FC0, FC0, FAC));
+    // Retail sets the +0x19 flag through the pointer func_804930BC returned.
+    self->mLgtDC->field_0x19 = 1;
+    self->mLgtAC = func_804930BC(
+        self->mScene->field_0x5C, self->mScene->field_0x5C->field_0x0C,
+        &ml::CVec4(FAC, FAC, FAC, FAC));
+    self->mLgtB0 = func_804933AC(
+        self->mScene->field_0x5C, self->mScene->field_0x5C->field_0x0C,
+        &ml::CVec4(FC0, FC0, FC0, FAC), &ml::CVec3(FC4, FC8, FC4));
     self->mLgtB8 =
         func_804930BC(self->mScene->field_0x5C, self->mScene->field_0x5C->field_0x4C,
                       lbl_eu_805708C0);
-    ml::CVec4 colWhite2(lbl_eu_80665FAC, lbl_eu_80665FAC, lbl_eu_80665FAC,
-                        lbl_eu_80665FAC);
-    self->mLgtBC =
-        func_804930BC(self->mScene->field_0x5C, self->mScene->field_0x5C->field_0x2C,
-                      &colWhite2);
+    self->mLgtBC = func_804930BC(
+        self->mScene->field_0x5C, self->mScene->field_0x5C->field_0x2C,
+        &ml::CVec4(FAC, FAC, FAC, FAC));
 
     // Sun colour/direction pair built from the sdata table scaled by FC0.
     const float* sunTable = lbl_eu_80570860;
-    float sunScale = lbl_eu_80665FC0;
-    ml::CVec3 dirSun(lbl_eu_80665FC4, lbl_eu_80665FC8, lbl_eu_80665FC4);
-    ml::CVec4 colSun(sunTable[0] * sunScale, sunTable[1] * sunScale,
-                     sunTable[2] * sunScale, sunTable[3]);
-    self->mLgtC0 =
-        func_804933AC(self->mScene->field_0x5C, self->mScene->field_0x5C->field_0x2C,
-                      &colSun, &dirSun);
-    ml::CVec4 colWhite3(lbl_eu_80665FAC, lbl_eu_80665FAC, lbl_eu_80665FAC,
-                        lbl_eu_80665FAC);
-    self->mLgtC4 =
-        func_804930BC(self->mScene->field_0x5C, self->mScene->field_0x5C->field_0x0C,
-                      &colWhite3);
-    ml::CVec3 dirDown2(lbl_eu_80665FC4, lbl_eu_80665FC8, lbl_eu_80665FC4);
-    ml::CVec4 colAmbient2(lbl_eu_80665FC0, lbl_eu_80665FC0, lbl_eu_80665FC0,
-                          lbl_eu_80665FAC);
-    self->mLgtC8 =
-        func_804933AC(self->mScene->field_0x5C, self->mScene->field_0x5C->field_0x0C,
-                      &colAmbient2, &dirDown2);
-    ml::CVec4 colWhite4(lbl_eu_80665FAC, lbl_eu_80665FAC, lbl_eu_80665FAC,
-                        lbl_eu_80665FAC);
-    self->mLgtD4 =
-        func_804930BC(self->mScene->field_0x5C, self->mScene->field_0x5C->field_0x2C,
-                      &colWhite4);
-    ml::CVec3 dirSun2(lbl_eu_80665FC4, lbl_eu_80665FC8, lbl_eu_80665FC4);
-    ml::CVec4 colSun2(sunTable[0] * sunScale, sunTable[1] * sunScale,
-                      sunTable[2] * sunScale, sunTable[3]);
-    self->mLgtD8 =
-        func_804933AC(self->mScene->field_0x5C, self->mScene->field_0x5C->field_0x2C,
-                      &colSun2, &dirSun2);
+    self->mLgtC0 = func_804933AC(
+        self->mScene->field_0x5C, self->mScene->field_0x5C->field_0x2C,
+        &ml::CVec4(sunTable[0] * FC0, sunTable[1] * FC0, sunTable[2] * FC0,
+                   sunTable[3]),
+        &ml::CVec3(FC4, FC8, FC4));
+    self->mLgtC4 = func_804930BC(
+        self->mScene->field_0x5C, self->mScene->field_0x5C->field_0x0C,
+        &ml::CVec4(FAC, FAC, FAC, FAC));
+    self->mLgtC8 = func_804933AC(
+        self->mScene->field_0x5C, self->mScene->field_0x5C->field_0x0C,
+        &ml::CVec4(FC0, FC0, FC0, FAC), &ml::CVec3(FC4, FC8, FC4));
+    self->mLgtD4 = func_804930BC(
+        self->mScene->field_0x5C, self->mScene->field_0x5C->field_0x2C,
+        &ml::CVec4(FAC, FAC, FAC, FAC));
+    self->mLgtD8 = func_804933AC(
+        self->mScene->field_0x5C, self->mScene->field_0x5C->field_0x2C,
+        &ml::CVec4(sunTable[0] * FC0, sunTable[1] * FC0, sunTable[2] * FC0,
+                   sunTable[3]),
+        &ml::CVec3(FC4, FC8, FC4));
 
-    func_8005A2F0((CTimeLightGrp*)self->mUnkE0, self->mLgtAC);
-    func_8005A2F0((CTimeLightGrp*)self->mUnkE0, self->mLgtB0);
-    func_8005A2F0((CTimeLightGrp*)self->mUnkE0, self->mLgtB8);
-    func_8005A2F0((CTimeLightGrp*)self->mUnkE0, self->mLgtBC);
-    func_8005A2F0((CTimeLightGrp*)self->mUnkE0, self->mLgtC0);
-    func_8005A2F0((CTimeLightGrp*)self->mUnkE4, self->mLgtC4);
-    func_8005A2F0((CTimeLightGrp*)self->mUnkE4, self->mLgtC8);
-    func_8005A2F0((CTimeLightGrp*)self->mUnkE4, self->mLgtD4);
-    func_8005A2F0((CTimeLightGrp*)self->mUnkE4, self->mLgtD8);
+    func_8005A2F0(static_cast<CTimeLightGrp*>(self->mUnkE0), self->mLgtAC);
+    func_8005A2F0(static_cast<CTimeLightGrp*>(self->mUnkE0), self->mLgtB0);
+    func_8005A2F0(static_cast<CTimeLightGrp*>(self->mUnkE0), self->mLgtB8);
+    func_8005A2F0(static_cast<CTimeLightGrp*>(self->mUnkE0), self->mLgtBC);
+    func_8005A2F0(static_cast<CTimeLightGrp*>(self->mUnkE0), self->mLgtC0);
+    func_8005A2F0(static_cast<CTimeLightGrp*>(self->mUnkE4), self->mLgtC4);
+    func_8005A2F0(static_cast<CTimeLightGrp*>(self->mUnkE4), self->mLgtC8);
+    func_8005A2F0(static_cast<CTimeLightGrp*>(self->mUnkE4), self->mLgtD4);
+    func_8005A2F0(static_cast<CTimeLightGrp*>(self->mUnkE4), self->mLgtD8);
 
     CTaskEnvWorld* world = self->mScene->field_0x78;
-    self->field_0x94 = world->field_0x68;
-    self->field_0x90 = world->field_0x64;
-    self->field_0x9C = world->field_0x70;
-    self->field_0x98 = world->field_0x6C;
+    u32 day = world->field_0x64;
+    u32 hour = world->field_0x68;
+    self->field_0x94 = hour;
+    self->field_0x90 = day;
+    u32 minute = world->field_0x6C;
+    u32 sec = world->field_0x70;
+    self->field_0x9C = sec;
+    self->field_0x98 = minute;
 }
 
 extern "C" void func_80058BD8(ml::CVec4* out, const ml::CVec4* in, float s) {
@@ -590,6 +618,8 @@ postUpdate:
 
 #undef FAC
 #undef FC0
+#undef FC4
+#undef FC8
 
 extern "C" void nopFunc() {}
 
@@ -613,35 +643,77 @@ extern "C" CTaskEnvRotMtx* func_80059610(CTaskEnvRotMtx* mtx, float angle) {
 extern const float lbl_eu_8066A210;
 extern "C" float scaleByGlobal(float val) { return val * lbl_eu_8066A210; }
 
-// Rotate the row vectors of 'mtx' about the X axis: the first row is scaled
-// by the identity constants, the second/third mix cos/-sin and sin/cos of the
-// fidx-scaled angle. The product lands in a local and is written back.
+// Rotate the row vectors of 'mtx' about the X axis. The rotation matrix is
+// built by an inlined helper that takes the matrix by pointer: the escaped
+// address keeps its member stores alive, and MWCC sinks them to just before
+// the '*mtx = out' write (which may alias 'rot').
+static void BuildRotX(CTaskEnvRotMtx* m, float angle) {
+    float s = nw4r::math::SinFIdx(lbl_eu_80665FEC * angle);
+    float c = nw4r::math::CosFIdx(lbl_eu_80665FEC * angle);
+    m->m00 = lbl_eu_80665FAC;
+    m->m01 = lbl_eu_80665FA0;
+    m->m02 = lbl_eu_80665FA0;
+    m->m10 = lbl_eu_80665FA0;
+    m->m11 = c;
+    m->m12 = -s;
+    m->m20 = lbl_eu_80665FA0;
+    m->m21 = s;
+    m->m22 = c;
+}
+
+static void MulRotX(CTaskEnvRotMtx* out, const CTaskEnvRotMtx* a,
+                    const CTaskEnvRotMtx* b) {
+    out->m00 = a->m00 * b->m00 + a->m01 * b->m10 + a->m02 * b->m20;
+    out->m01 = a->m00 * b->m01 + a->m01 * b->m11 + a->m02 * b->m21;
+    out->m02 = a->m00 * b->m02 + a->m01 * b->m12 + a->m02 * b->m22;
+    out->m10 = a->m10 * b->m00 + a->m11 * b->m10 + a->m12 * b->m20;
+    out->m11 = a->m10 * b->m01 + a->m11 * b->m11 + a->m12 * b->m21;
+    out->m12 = a->m10 * b->m02 + a->m11 * b->m12 + a->m12 * b->m22;
+    out->m20 = a->m20 * b->m00 + a->m21 * b->m10 + a->m22 * b->m20;
+    out->m21 = a->m20 * b->m01 + a->m21 * b->m11 + a->m22 * b->m21;
+    out->m22 = a->m20 * b->m02 + a->m21 * b->m12 + a->m22 * b->m22;
+}
+
+// Rotate the row vectors of 'mtx' about the X axis: build the X-rotation
+// matrix as a local (identity row plus cos/-sin and sin/cos of the
+// fidx-scaled angle), multiply into a temporary, then store back.
 extern "C" void func_800596B8(CTaskEnvRotMtx* mtx, float angle) {
     float s = nw4r::math::SinFIdx(lbl_eu_80665FEC * angle);
     float c = nw4r::math::CosFIdx(lbl_eu_80665FEC * angle);
     float ns = -s;
+    CTaskEnvRotMtx rot;
+    rot.m00 = lbl_eu_80665FAC;
+    rot.m01 = lbl_eu_80665FA0;
+    rot.m02 = lbl_eu_80665FA0;
+    rot.m10 = lbl_eu_80665FA0;
+    rot.m11 = c;
+    rot.m12 = ns;
+    rot.m20 = lbl_eu_80665FA0;
+    rot.m21 = s;
+    rot.m22 = c;
     CTaskEnvRotMtx out;
-    out.m00 = lbl_eu_80665FAC * mtx->m00 + lbl_eu_80665FA0 * mtx->m10 +
-              lbl_eu_80665FA0 * mtx->m20;
-    out.m01 = lbl_eu_80665FAC * mtx->m01 + lbl_eu_80665FA0 * mtx->m11 +
-              lbl_eu_80665FA0 * mtx->m21;
-    out.m02 = lbl_eu_80665FAC * mtx->m02 + lbl_eu_80665FA0 * mtx->m12 +
-              lbl_eu_80665FA0 * mtx->m22;
-    out.m10 = lbl_eu_80665FA0 * mtx->m00 + c * mtx->m10 + ns * mtx->m20;
-    out.m11 = lbl_eu_80665FA0 * mtx->m01 + c * mtx->m11 + ns * mtx->m21;
-    out.m12 = lbl_eu_80665FA0 * mtx->m02 + c * mtx->m12 + ns * mtx->m22;
-    out.m20 = lbl_eu_80665FA0 * mtx->m00 + s * mtx->m10 + c * mtx->m20;
-    out.m21 = lbl_eu_80665FA0 * mtx->m01 + s * mtx->m11 + c * mtx->m21;
-    out.m22 = lbl_eu_80665FA0 * mtx->m02 + s * mtx->m12 + c * mtx->m22;
+    out.m22 = rot.m20 * mtx->m02 + rot.m21 * mtx->m12 + rot.m22 * mtx->m22;
+    out.m01 = rot.m00 * mtx->m01 + rot.m01 * mtx->m11 + rot.m02 * mtx->m21;
+    out.m00 = rot.m00 * mtx->m00 + rot.m01 * mtx->m10 + rot.m02 * mtx->m20;
+    out.m10 = rot.m10 * mtx->m00 + rot.m11 * mtx->m10 + rot.m12 * mtx->m20;
+    out.m02 = rot.m00 * mtx->m02 + rot.m01 * mtx->m12 + rot.m02 * mtx->m22;
+    out.m20 = rot.m20 * mtx->m00 + rot.m21 * mtx->m10 + rot.m22 * mtx->m20;
+    out.m11 = rot.m10 * mtx->m01 + rot.m11 * mtx->m11 + rot.m12 * mtx->m21;
+    out.m12 = rot.m10 * mtx->m02 + rot.m11 * mtx->m12 + rot.m12 * mtx->m22;
+    out.m21 = rot.m20 * mtx->m01 + rot.m21 * mtx->m11 + rot.m22 * mtx->m21;
     *mtx = out;
 }
 
 // Row-major 3x3 matrix * vector, sequenced for the retail codegen order.
 extern "C" void func_800598A8(ml::CVec3* out, const CTaskEnvRotMtx* m,
                               const ml::CVec3* v) {
-    out->z = v->y * m->m21 + v->x * m->m20 + v->z * m->m22;
-    out->y = v->y * m->m11 + v->x * m->m10 + v->z * m->m12;
-    out->x = v->y * m->m01 + v->x * m->m00 + v->z * m->m02;
+    // Compute all three lanes before storing; retail stores z, x, y.
+    float zc = v->x * m->m20 + v->y * m->m21 + v->z * m->m22;
+    float yc = v->x * m->m10 + v->y * m->m11 + v->z * m->m12;
+    float xc = v->x * m->m00 + v->y * m->m01 + v->z * m->m02;
+    out->z = zc;
+    out->x = xc;
+    out->y = yc;
 }
 
 extern "C" u32 checkBitFlag(u8* self) { return (*(u32*)((u8*)self + 0) >> 1) & 0x1u; }
@@ -705,25 +777,38 @@ extern "C" void func_800599E0(CTaskEnvTime* time, int hour, int minute, int seco
 // Advance the clock by 'delta' seconds. Every field wraps with upward modulo
 // (negative deltas borrow): seconds wrap at 60 into minutes, minutes into
 // hours (24), hours into days (30), days into months (12); month carries
-// accumulate in 'total'. The truncated integer part is rebuilt as a double
-// through the 0x43300000 bit-pattern trick so the subtraction reloc names the
-// retail sdata2 magic lbl_eu_80665FB8 (CfTFile.cpp convention).
+// accumulate in 'total'. Seconds are finalized early: new value = fractional
+// part (s - trunc(s)) plus the wrapped remainder. Both conversions share one
+// F64Conv slot and reference the named sdata2 magic lbl_eu_80665FB8 twice,
+// matching retail's two lfd loads (CEquipItemBox.cpp convention).
 extern "C" void func_80059A48(CTaskEnvTime* time, float delta) {
+    // Single shared conversion slot; both int->float conversions reference
+    // the named sdata2 magic lbl_eu_80665FB8 so the pool relocs match retail.
     F64Conv conv;
     conv.w[0] = 0x43300000;
     float s = time->second + delta;
-    time->second = s;
+
+    // First conversion scheduled before the +0x70 store (retail order).
     int secs = (int)s;
+    conv.w[1] = (u32)(int)s ^ 0x80000000;
+    float frac = s - (float)(conv.d - lbl_eu_80665FB8);
+    time->second = s;
+
     int addMin = secs / 60;
     int rem = secs % 60;
+
     if (rem < 0) {
         rem += 60;
     }
-    conv.w[1] = (u32)(int)s ^ 0x80000000;
-    float whole = s - (conv.d - lbl_eu_80665FB8);
 
     int minute = time->minute + addMin;
+
+    conv.w[1] = (u32)rem ^ 0x80000000;
+
     int addHour = minute / 60;
+
+    time->second = frac + (float)(conv.d - lbl_eu_80665FB8);
+
     time->minute = minute % 60;
     if (time->minute < 0) {
         time->minute += 60;
@@ -747,9 +832,6 @@ extern "C" void func_80059A48(CTaskEnvTime* time, float delta) {
         time->month += 12;
     }
     time->total += addTotal;
-
-    conv.w[1] = (u32)rem ^ 0x80000000;
-    time->second = whole + (float)(conv.d - lbl_eu_80665FB8);
 }
 
 // Returns a 0/1/2 region code for the record at (global->field_6C +
@@ -793,8 +875,12 @@ template<> void CTTask<CTaskEnvironment>::Draw() {
     }
 }
 // Static initializer: fills the 10 four-float rows of the sdata table at
-// lbl_eu_80570830 with sdata2 constants (colour/light preset values). MWCC
-// hoists each distinct constant into a live register across the whole body.
+// lbl_eu_80570830 with sdata2 constants (colour/light preset values).
+// NOTE (open item): retail materializes ten addi row pointers among the
+// constant loads and uses qr0-form psq FP saves; every straight-line source
+// shape tested (flat indices, advancing pointer, 2-D array type, split
+// base/row pointers, struct rows, pointer-param helper) normalizes to the
+// same smaller body - schedule/form is compiler-version-bound.
 void sinit_80059D60() {
     float* t = lbl_eu_80570830;
     t[0x00] = lbl_eu_80665FF8;

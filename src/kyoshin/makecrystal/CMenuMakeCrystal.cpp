@@ -88,7 +88,7 @@ public:
 // UI sound effect (func_80138078__FUl).
 void func_80138078(u32 op);
 // func_802124AC helper: init the CBgTex sub-object and arm the state byte.
-void func_802124AC(CMenuMakeCrystal* self);
+// (declared extern "C" above — retail symbol is unmangled)
 
 // ---------------------------------------------------------------------------
 // Factory: create the singleton CMenuMakeCrystal under `parent`.
@@ -297,10 +297,13 @@ MCStateRecord* func_80212158(MCStateRecord* dst, volatile MCStateRecord* src) {
     return dst;
 }
 
-// CScn view exposing the render-callback removal (retail mangled name).
+// CScn view exposing the render-callback removal. The param type must be
+// IScnRender so MWCC mangles the call as removeRenderCB__4CScnFP10IScnRender
+// (retail name); a void* param mangles FPv and drifts the reloc name.
+class IScnRender;  // callback interface (sub-object at this+0x58)
 class CScn {
 public:
-    void removeRenderCB(void* cb);
+    void removeRenderCB(IScnRender* cb);
 };
 
 void CMenuMakeCrystal::Term() {
@@ -309,7 +312,7 @@ void CMenuMakeCrystal::Term() {
     func_804962A0(*(void**)((u8*)this + 0x5C), 1);
     void* render = this;
     if (this) render = (u8*)this + 0x58;
-    ((CScn*)*(void**)((u8*)this + 0x5C))->removeRenderCB(render);
+    ((CScn*)*(void**)((u8*)this + 0x5C))->removeRenderCB((IScnRender*)render);
     func_801C3D9C((u8*)this + 0x60);
     func_8021299C((u8*)this + 0x80);
     lbl_eu_806646C8 = 0;

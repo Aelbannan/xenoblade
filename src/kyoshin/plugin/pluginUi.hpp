@@ -47,7 +47,9 @@ struct CfSlotTable {
 extern CfSlotTable lbl_eu_804FA9F0;
 
 // RTTI typeinfo pair for __dynamic_cast in setTrust.
-extern const void* lbl_eu_806618D8;
+// Declared as complete scalar types so MWCC sdata-addresses them
+// (EMB_SDA21 `li rX, sym@sda21`) like retail.
+extern u32 lbl_eu_806618D8;
 extern const void* lbl_eu_806618F0;
 
 // sdata2 constant for fadeOut_1 (fade alpha value).
@@ -61,7 +63,9 @@ extern char lbl_eu_804FABF0[];
 extern char lbl_eu_80525D68[];
 
 // Player RTTI source type / pointer table entry used by the talk commands.
-extern char lbl_eu_806619A0[];
+// Complete scalar type so MWCC emits EMB_SDA21 addressing (retail `li @sda21`),
+// not lis/addi (incomplete array types are not SDA-eligible).
+extern u32 lbl_eu_806619A0;
 
 // Shared BDAT character-name table pointer (.sbss); resolved by
 // func_8013639C against lbl_eu_804FABF0 keys.
@@ -70,14 +74,32 @@ extern char* lbl_eu_80664090;
 // Sub-object hanging off the player at +0x3ED4: carries its own vtable with
 // a state probe at +0x40 (winTalkWait) and is handed to func_800C4244
 // (pcTalk).
-struct PcTalkSubVtbl {
-    u8 _00[0x40];
-    int (*probe)(); // +0x40: nonzero while the talk window is busy
+struct PcTalkSub;
+// Fake interface whose vtable slot 16 (+0x40) is the talk-busy probe; casting
+// the sub-object to this makes MWCC emit the retail folded r12 virtual-call
+// chain instead of a staged function-pointer temp.
+struct PcTalkProbeIf {
+    virtual void _v00();
+    virtual void _v01();
+    virtual void _v02();
+    virtual void _v03();
+    virtual void _v04();
+    virtual void _v05();
+    virtual void _v06();
+    virtual void _v07();
+    virtual void _v08();
+    virtual void _v09();
+    virtual void _v10();
+    virtual void _v11();
+    virtual void _v12();
+    virtual void _v13();
+    virtual int probe(int arg); // +0x40: nonzero while the talk window is busy
 };
 struct PcTalkSub {
-    PcTalkSubVtbl* vtable; // 0x0
+    PcTalkProbeIf* vtable; // 0x0
 };
 struct PcBattleTalkObj {
+    u8 _00[0x3ED4];
     PcTalkSub* field_3ED4; // +0x3ED4
 };
 
@@ -85,8 +107,10 @@ extern "C" {
 
 void pluginUiRegist();
 
-// Fade controller hook: (int mode, int arg, float a, float b, float c).
-void func_80135464(int r3, int r4, float f1, float f2, float f3);
+// Fade controller hook: (int mode, int arg, float a, float b, double c).
+// The last parameter is a double: retail fadeIn_1 passes the raw
+// int->double conversion result with no frsp.
+void func_80135464(int r3, int r4, float f1, float f2, double f3);
 
 // Item-grant helper: 8 register args + 1 stack arg.
 void func_8013E2E0(u32 a1, u32 a2, u32 a3, u32 a4, u32 a5, u32 a6, u32 a7,
@@ -145,8 +169,8 @@ int setKizunaTalk(VMThread* pThread);
 int winSys(VMThread* pThread);
 int winSysSelect(VMThread* pThread);
 int mesGetArts(VMThread* pThread);
-void pcTalk(VMThread* pThread);
-void winTalkWait(VMThread* pThread);
+int pcTalk(VMThread* pThread);
+int winTalkWait(VMThread* pThread);
 int getSelectNum(VMThread* pThread);
 int mesAddPT(VMThread* pThread);
 int mesSubPT(VMThread* pThread);

@@ -1,7 +1,12 @@
 // CfMapMineManager - mine-point management (field collection points)
 #include "kyoshin/cf/CfMapMineManager.hpp"
 #include "monolib/scn/CScnTimeApi.hpp"
+// CfGameManager.hpp now declares the unified pointer-arg form; this TU's
+// retail sites reproduce without materializing r3, so keep the TU-local
+// no-arg decl from CfMapMineManager.hpp and rename the shared copy away.
+#define CItem_initItemImplInstances mineMgrCfGameManagerCopyUnused
 #include "kyoshin/cf/CfGameManager.hpp"
+#undef CItem_initItemImplInstances
 // High-level C++ reconstruction from retail ASM (US, 0x8020785C..0x80209D20).
 // All 20 TU functions carry placeholder retail symbol names; they are emitted
 // with C linkage so the object exports the exact retail symbols.

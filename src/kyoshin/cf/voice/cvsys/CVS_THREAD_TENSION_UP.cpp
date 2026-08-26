@@ -19,8 +19,8 @@ extern "C" {
 // C-linkage imports previously supplied by CVS_THREAD_EHP.hpp, which is no
 // longer included here (it redefines CVoiceHandle; the canonical definition
 // now lives in the shared base header CVS_THREAD.hpp).
+// func_802A3E88 comes from CVS_THREAD.hpp (C++ linkage).
 extern "C" {
-    int func_802A3E88(CVS_THREAD* self);
     void func_802A3BEC(CVS_THREAD* self, CCharVoice* voicePtr);
     int func_802A3C44(CVS_THREAD* self, CCharVoice* voicePtr, int voiceId);
     CVoiceHandle* func_802A330C(int size, int align);
@@ -37,7 +37,7 @@ struct CVoiceFactory {
 };
 
 // Raw layout view exposing the init-state words and the implicit vtable
-// pointer at 0x1C so the factory can override it (same stores as retail).
+// Word-wise view of the installed ptmf + init words (same stores as retail).
 struct CVS_THREAD_TENSION_UP_raw {
     u32* state0;                // 0x00
     u32 state1;                 // 0x04
@@ -50,6 +50,12 @@ struct CVS_THREAD_TENSION_UP_raw {
     CVoiceHandle* field_0x20;   // 0x20
     s32 field_0x24;             // 0x24
     u8 field_0x28;              // 0x28
+};
+
+// PtMF-typed alias of offsets 0x00-0x0B: retail installs the default
+// voice-event handler by a 12-byte member-pointer copy.
+struct CVS_THREAD_TENSION_UP_ptmf {
+    VoiceCb cb;                 // 0x00-0x0B
 };
 
 // us-802ab968 (func_802A9230)
@@ -115,12 +121,12 @@ CVS_THREAD_TENSION_UP* __ct__802A8DE8(CVoiceFactory* factory, int index) {
     }
 
     // Copy the slot-state init data triple into the object's first 3 u32s.
-    register u32 v1;
-    u32 v0;
+    u32 v1;
+    u32* v0;
     const u32* base = (const u32*)(u32)lbl_eu_80539D20;
-    v0 = base[0];
     v1 = base[1];
-    ((CVS_THREAD_TENSION_UP_raw*)self)->state0 = (u32*)v0;
+    v0 = (u32*)base[0];
+    ((CVS_THREAD_TENSION_UP_raw*)self)->state0 = v0;
     ((CVS_THREAD_TENSION_UP_raw*)self)->state1 = v1;
     ((CVS_THREAD_TENSION_UP_raw*)self)->state2 = base[2];
 
@@ -130,70 +136,76 @@ CVS_THREAD_TENSION_UP* __ct__802A8DE8(CVoiceFactory* factory, int index) {
 // us-802ab628 (func_802A8EEC)
 // Update function: reloads the slot-state triple, checks voice state,
 // plays appropriate voice ID (0x5DE standard or 0x5DD reversed).
+// Control flow: a live voice (or a successful play) returns directly;
+// otherwise the playback-start virtual runs as a common tail.
 void func_802A8EEC(CVS_THREAD_TENSION_UP* self) {
-    const u32* src = lbl_eu_80539D2C;
-    u32 w0 = src[0];
-    self->unk0 = (u32*)w0;
-    self->unk4 = src[1];
-    self->unk8 = src[2];
-
+    // Init-state triple view over the CVS_THREAD base words at 0x00-0x08.
+    // First word is loaded before the slot read and kept in a temp so the
+    // load/store schedule matches retail (lwzu, then word1/word0/word2 stores).
+    CVS_THREAD_TENSION_UP_INIT* state = (CVS_THREAD_TENSION_UP_INIT*)self;
+    u32 state0;
+    u32* src = lbl_eu_80539D2C;
+    state0 = *src++;
     CVoiceHandle* handle = self->field_0x20;
+    state->word1 = *src++;
+    state->word0 = state0;
+    state->word2 = *src;
+
     if (handle != NULL) {
-        typedef int (*IsActiveFunc)(CVoiceHandle*);
-        IsActiveFunc isActive = (IsActiveFunc)handle->vtable[0x2BC / 4];
-        if (isActive(handle) != 0) {
-            goto fallback;
-        }
-    }
-
-    if (self->field_0x24 == 4) {
-        self->field_0x28 = 0;
-        CVoiceHandle* h = self->field_0x20;
-        CCharVoice* voicePtr = (CCharVoice*)h;
-        if (h != NULL) {
-            voicePtr = &h->voice;
-        }
-        if (func_802A3C44(self, voicePtr, 0x5DE) != 0) {
-            return;
-        }
-    }
-
-    if (self->field_0x24 == 3) {
-        int ownerState = func_802A77E8(self->field_0x20);
-        int isThird;
-        if (ownerState == 4) {
-            u32 x = cf::CfGameManager::func_800822F4();
-            u32 dif = 3u - x;        // subfic r0, x, 3
-            u32 mask = 3u | ~x;      // li r4, 3; orc
-            isThird = (int)((mask - (dif >> 1)) >> 31);  // srwi, subf, srwi
-        } else {
-            isThird = 0;
+        // Voice still active: nothing to do.
+        if (((CVS_THREAD_TENSION_UP_Vtbl*)handle)->isVoiceActive() != 0) {
+            goto tail;
         }
 
-        if (isThird != 0) {
+        if (self->field_0x24 == 4) {
+            handle = self->field_0x20;
             self->field_0x28 = 0;
-            CVoiceHandle* h = self->field_0x20;
-            CCharVoice* voicePtr = (CCharVoice*)h;
-            if (h != NULL) {
-                voicePtr = &h->voice;
+            CCharVoice* embedded = (CCharVoice*)handle;
+            if (handle != NULL) {
+                embedded = &handle->voice;
             }
-            if (func_802A3C44(self, voicePtr, 0x5DE) != 0) {
+            if (func_802A3C44(self, embedded, 0x5DE) != 0) {
                 return;
             }
-        } else {
-            self->field_0x28 = 1;
-            CVoiceHandle* h = self->field_0x20;
-            CCharVoice* voicePtr = (CCharVoice*)h;
-            if (h != NULL) {
-                voicePtr = &h->voice;
+        }
+
+        if (self->field_0x24 == 3) {
+            int ownerState = func_802A77E8(self->field_0x20);
+            int isThird;
+            if (ownerState != 4) {
+                isThird = 0;
+            } else {
+                u32 x = cf::CfGameManager::func_800822F4();
+                // Retail lowers this unsigned compare via the branchless
+                // subfic/li/orc/srwi/subf/srwi idiom.
+                isThird = (int)(x <= 3);
             }
-            if (func_802A3C44(self, voicePtr, 0x5DD) != 0) {
-                return;
+
+            if (isThird != 0) {
+                handle = self->field_0x20;
+                self->field_0x28 = 0;
+                CCharVoice* embedded = (CCharVoice*)handle;
+                if (handle != NULL) {
+                    embedded = &handle->voice;
+                }
+                if (func_802A3C44(self, embedded, 0x5DE) != 0) {
+                    return;
+                }
+            } else {
+                handle = self->field_0x20;
+                self->field_0x28 = 1;
+                CCharVoice* embedded = (CCharVoice*)handle;
+                if (handle != NULL) {
+                    embedded = &handle->voice;
+                }
+                if (func_802A3C44(self, embedded, 0x5DD) != 0) {
+                    return;
+                }
             }
         }
     }
 
-fallback:
+tail:
     self->func_802A3B50();
 }
 
@@ -205,39 +217,54 @@ void func_802A9030(CVS_THREAD_TENSION_UP* self) {
         return;
     }
 
-    // Reload the slot-state triple (pointer walk keeps retail's lwzu form).
-    const u32* src = lbl_eu_80539D38;
-    u32 w0 = src[0];
-    self->unk0 = (u32*)w0;
-    self->unk4 = src[1];
-    self->unk8 = src[2];
+    int voiceId;
 
-    CVoiceHandle* handle = func_802A7998(self->field_0x20);
+    // Reload the slot-state triple. First word is loaded via a pointer walk
+    // (retail lwzu) before the slot read, matching the retail load/store order.
+    CVS_THREAD_TENSION_UP_INIT* state = (CVS_THREAD_TENSION_UP_INIT*)self;
+    u32 state0;
+    const u32* src = lbl_eu_80539D38;
+    state0 = *src++;
+    CVoiceHandle* handle = self->field_0x20;
+    state->word1 = *src++;
+    state->word0 = state0;
+    state->word2 = *src;
+
+    handle = func_802A7998(handle);
     if (handle == NULL) {
         goto fallback;
     }
 
-    int voiceId;
-    int ownerState = func_802A77E8(self->field_0x20);
-    // Retail lowers this as a sequential cmpwi/beq if-else-if chain.
-    if (ownerState == 1) {
+    // Retail lowers this as a sequential cmpwi/beq chain over the owner state;
+    // each arm re-reads the flag byte.
+    switch (func_802A77E8(self->field_0x20)) {
+    case 1:
         voiceId = (self->field_0x28 != 0) ? 0x5DF : 0x5E6;
-    } else if (ownerState == 2) {
+        break;
+    case 2:
         voiceId = (self->field_0x28 != 0) ? 0x5E0 : 0x5E7;
-    } else if (ownerState == 3) {
+        break;
+    case 3:
         voiceId = (self->field_0x28 != 0) ? 0x5E1 : 0x5E8;
-    } else if (ownerState == 4) {
+        break;
+    case 4:
         voiceId = (self->field_0x28 != 0) ? 0x5E2 : 0x5E9;
-    } else if (ownerState == 5) {
+        break;
+    case 5:
         voiceId = (self->field_0x28 != 0) ? 0x5E3 : 0x5EA;
-    } else if (ownerState == 6) {
+        break;
+    case 6:
         voiceId = (self->field_0x28 != 0) ? 0x5E4 : 0x5EB;
-    } else if (ownerState == 7) {
+        break;
+    case 7:
         voiceId = (self->field_0x28 != 0) ? 0x5E5 : 0x5EC;
-    } else {
+        break;
+    default:
         voiceId = -1;
+        break;
     }
 
+    // Special-case overrides checked against the freshly selected ID.
     if (voiceId == 0x5E4 && func_802A7B90(handle, self->field_0x20) != 0) {
         voiceId = 0x89F;
     }
@@ -246,11 +273,12 @@ void func_802A9030(CVS_THREAD_TENSION_UP* self) {
     }
 
     if (voiceId > 0) {
-        CCharVoice* vp = (CCharVoice*)handle;
+        // Bias the handle to its embedded CCharVoice (+0x3E9C) IN PLACE -
+        // retail reuses the handle register for the biased pointer.
         if (handle != NULL) {
-            vp = &handle->voice;
+            handle = (CVoiceHandle*)&handle->voice;
         }
-        if (func_802A3C44(self, vp, voiceId) != 0) {
+        if (func_802A3C44(self, (CCharVoice*)handle, voiceId) != 0) {
             return;
         }
     }

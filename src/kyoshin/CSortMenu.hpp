@@ -36,14 +36,37 @@ struct PaneSizeRegion {
     f32 height;  // +0x50
 };
 
+// Whole-pane view so the size fields land at their real offsets (+0x4C/+0x50).
+struct CSortMenuPaneSizeView {
+    u8 _00[0x4c];
+    f32 width;
+    f32 height;
+};
+
+// Interface view of the font object returned by CDeviceFont::func_80452C10.
+// Slot layout mirrors the retail vtable: destructor pair (+0x00/+0x04), six
+// reserved slots (+0x08..+0x1c), then the resource getter at +0x24. Declared
+// only (never defined here) so no vtable/RTTI is emitted into this TU.
+class CDeviceFontItf {
+public:
+    virtual ~CDeviceFontItf();
+    virtual void slot3();
+    virtual void slot4();
+    virtual void slot5();
+    virtual void slot6();
+    virtual void slot7();
+    virtual void slot8();
+    virtual u32 getResource();  // +0x24
+};
+
 class CSortMenu {
 public:
     CSortMenu();
     virtual ~CSortMenu();
-    void OnFileEvent(CEventFile* event);
+    void func_801D3518(int value);
     u8 func_801D3320();
     u8 func_801D3328();
-    void func_801D3518(int value);
+    int OnFileEvent(CEventFile* event);
     u8 func_801D37F4();
     u8 func_801D3808();
     u8 func_801D3810();

@@ -28,13 +28,16 @@ public:
     }
 
     virtual ~_reslist_base() {
+        // Sentinel reloaded inside the loop condition (not cached) so MWCC
+        // keeps node in the low scratch and sentinel/cur in the high one.
+        _reslist_node<T>* sentinel;
         _reslist_node<T>* node = mStartNodePtr->mNext;
-        while (node != mStartNodePtr) {
+        while (node != (sentinel = mStartNodePtr)) {
             _reslist_node<T>* cur = node;
             node = node->mNext;
             cur->mNext = nullptr;
         }
-        mStartNodePtr->mNext = mStartNodePtr;
+        sentinel->mNext = sentinel;
         mStartNodePtr->mPrev = mStartNodePtr;
         if (unk1C == false && mList != nullptr) {
             delete[] mList;
@@ -423,7 +426,8 @@ void func_8048CB14(CScnItemPool* self, u32 key) {
     while ((func_8048C5AC((int*)&sentinel, &self->mList0C),
             func_8048C9D8((u32*)&node, (u32*)&sentinel)) != 0) {
         CScnItem* item = *(CScnItem**)func_8048C9F4((u8*)&node);
-        if (key == item->vfuncA8()) {
+        u32 itemId = item->vfuncA8();
+        if (itemId == key) {
             func_8048C8C4(self, *(CScnItem**)func_8048C9F4((u8*)&node));
             break;
         }

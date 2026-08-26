@@ -29,18 +29,19 @@ int winTalk(VMThread* pThread) {
 }
 // pcTalk: start a party-chat line. Args: (member id). The id is passed to
 // the battle sub-object of player 0; flag is set when the id equals 8.
-void pcTalk(VMThread* pThread) {
+int pcTalk(VMThread* pThread) {
     VMArg* arg = vmArgPtrGet(pThread, 1);
     int id = vmArgIntGet(2, arg);
     void* player = getPlayer__Q22cf13CfGameManagerFi(0);
     PcBattleTalkObj* obj =
         (PcBattleTalkObj*)__dynamic_cast(player, 0, &lbl_eu_806619A0,
                                          &lbl_eu_806618D8, 0);
-    func_800C4244(obj->field_3ED4, (u32)id, (u32)(id - 8) == 0);
+    func_800C4244(obj->field_3ED4, id, id == 8);
+    return 0;
 }
 
 // winTalkWait: park the thread while a talk window is open.
-void winTalkWait(VMThread* pThread) {
+int winTalkWait(VMThread* pThread) {
     if (func_8013EB90(1)) {
         vmWaitModeSet(pThread);
     } else {
@@ -49,10 +50,11 @@ void winTalkWait(VMThread* pThread) {
             (PcBattleTalkObj*)__dynamic_cast(player, 0, &lbl_eu_806619A0,
                                              &lbl_eu_806618D8, 0);
         // Probe vtable+0x40 on the +0x3ED4 sub-object: nonzero while busy.
-        if (obj->field_3ED4->vtable->probe() != 0) {
+        if (((PcTalkProbeIf*)obj->field_3ED4)->probe(0x8000) != 0) {
             vmWaitModeSet(pThread);
         }
     }
+    return 0;
 }
 // Talk window without a name plate: open with mode 0.
 int winTalkNoName(VMThread* pThread) {
@@ -88,9 +90,20 @@ int fadeIn_1(VMThread* pThread) {
     } else {
         v2 = vmArgIntGet(3, vmArgPtrGet(pThread, 2));
     }
-    // Manual int->float conversion; see ConvS32ToF32 above.
-    float alpha = lbl_eu_80665DB8;
-    func_80135464(2, v2, alpha, alpha, ConvS32ToF32(v1));
+    // Manual int->float conversion (docs/MWCC_PATTERNS.md 7i), written inline
+    // with the stores interleaved so MWCC schedules the retail sequence:
+    // xoris word, alpha load, 0x43300000 word, then the fsubs against the
+    // shared sdata2 magic lbl_eu_80665DC0.
+    union {
+        double d;
+        u32 w[2];
+    } u;
+    // Stores sequenced inside the conversion argument so MWCC walks the
+    // subtraction right-to-left like retail (magic constant lands in the
+    // destination register f3).
+    func_80135464(2, v2, lbl_eu_80665DB8, lbl_eu_80665DB8,
+                  (u.w[1] = (u32)v1 ^ 0x80000000, u.w[0] = 0x43300000,
+                   u.d - lbl_eu_80665DC0));
     return 0;
 }
 // Fade-out script command: (duration, count?). The duration is cast to float
@@ -449,10 +462,9 @@ int setLastTalkNpc(VMThread* pThread) {
     }
     char* tbl = lbl_eu_80664098;
     int count = func_8003B1EC(tbl);
-    const char* key = &lbl_eu_804FABF0[0x1f];
     for (int i = 1; i <= count; i++) {
         // Key compare is on the low 16 bits only.
-        if ((u16)func_80136254(tbl, key, i) == id) {
+        if ((u16)func_80136254(tbl, &lbl_eu_804FABF0[0x1f], i) == id) {
             func_8009ECD0(i);
             break;
         }

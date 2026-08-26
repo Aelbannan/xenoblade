@@ -208,7 +208,9 @@ void func_8008A2C8(cf::CfObjectMove* self) {
                                         *obj->mSub2.vtable
                                               ->fn_0xAC(&obj->mSub2) +
                                         vec;
-                                    if (func_804BE398(
+                                    typedef int (*BE398GroundProbe)(
+                                        void*, u32, u32, u32, f32, f32);
+                                    if (((BE398GroundProbe)func_804BE398)(
                                             &probe, 0x4A11, 0, 1,
                                             lbl_eu_806665DC,
                                             lbl_eu_806665DC) != 0) {
@@ -875,8 +877,10 @@ __declspec(noinline) int func_8008B9C0(cf::CfObjectMove* self,
         }
         // Ground probe at the candidate point.
         pos.y += lbl_eu_806665C4;
-        if (func_804BE398(&pos, 0x4a11, 0, 1, lbl_eu_80666614,
-                          lbl_eu_806665DC) == 0) {
+        typedef int (*BE398GroundProbe2)(void*, u32, u32, u32, f32, f32);
+        if (((BE398GroundProbe2)func_804BE398)(&pos, 0x4a11, 0, 1,
+                                               lbl_eu_80666614,
+                                               lbl_eu_806665DC) == 0) {
             return 0;
         }
         // Height-band scan over the collision-list objects near the candidate.

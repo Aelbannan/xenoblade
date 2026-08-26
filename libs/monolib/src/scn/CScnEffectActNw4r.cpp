@@ -1,38 +1,52 @@
-// Auto-scaffolded catalog TU for monolib/src/scn/CScnEffectActNw4r
-// Replace stubs with high-level C/C++ during decomp.
+// CScnEffectActNw4r: nw4r-model-backed effect-act table for scenes.
+//
+// The class keeps a fixed table of 64 effect acts (plus a parallel u16 id
+// table) harvested from named nodes of the scene model, and forwards most
+// lookups to the shared CScnEffectActMgr (its own local table first, then the
+// manager's act chain). The .data vtable below binds these functions to the
+// retail slots.
 
 #include <harness_catalog.h>
 #include <string.h>
 #include <nw4r/db/db_assert.h>
 #include <nw4r/g3d/res/g3d_resmdl.h>
 #include "libs/monolib/src/scn/CScnEffectActNw4r.hpp"
-#include "monolib/math/FloatUtils.hpp"  // H3 label-owner decl (lbl_eu_8066A208)
+
+// This TU's .data vtable (defined at the bottom of this file); the constructor
+// installs it. Global-scope data names are not mangled by MWCC.
+extern u32 lbl_eu_8056EAD8[];
 
 // Constructor: installs the vtable and clears the act-table count.
-extern "C" u32 lbl_eu_8056EAD8[];
-CScnEffectActNw4r::CScnEffectActNw4r() : mCount(0) { *(void**)this = (void*)lbl_eu_8056EAD8; }
+// Retail order: vtable store first, then mCount = 0 (body, not init list).
+CScnEffectActNw4r::CScnEffectActNw4r() { *(void**)this = (void*)lbl_eu_8056EAD8; mCount = 0; }
 
-CScnEffectActNw4r::~CScnEffectActNw4r() { *(void**)this = (void*)lbl_eu_8056EAD8; }
+// Dtor leaves the vtable untouched; as a virtual dtor MWCC generates the
+// deleting form (null-this guard + operator delete on flag bit 0).
+CScnEffectActNw4r::~CScnEffectActNw4r() {}
 
-// vtable stub thunks (retail: lwz r3,0x4(r3); b callee) - callees declared
-// extern "C" so the relocs carry the retail unmangled names.
-extern "C" bool func_80495E60(u8* self);
-extern "C" void func_80484E5C(u8* self);
-extern "C" void func_804838DC(u8* self);
-extern "C" void func_80482AB8(u8* self);
-extern "C" void func_8049BEA4(u8* self) { func_80495E60(*(u8**)(self + 4)); }
+// ===== Vtable slot implementations =====
+//
+// Retail names are unrecovered plain func_* symbols, so these definitions keep
+// C linkage to emit the exact linker names referenced by other TUs and by the
+// vtable relocs below.
 
-extern "C" void func_8049BEAC(u8* self) { func_80484E5C(*(u8**)(self + 4)); }
+// Most slots are one-line forwarders: load mpMgr and tail-call into the
+// manager's implementation.
+extern "C" void func_8049BEA4(CScnEffectActNw4r* self) { func_80495E60(self->mpMgr); }
 
-extern "C" void func_8049BEB4(u8* self) { func_804838DC(*(u8**)(self + 4)); }
+extern "C" void func_8049BEAC(CScnEffectActNw4r* self) { func_80484E5C(self->mpMgr); }
+
+extern "C" void func_8049BEB4(CScnEffectActNw4r* self) { func_804838DC(self->mpMgr); }
 
 extern "C" u8* func_8049BEE4(CScnEffectActNw4r* self) { return func_8048315C(self->mpMgr); }
 
-extern "C" void func_8049BEEC(u8* self, const void* other) {
-    u8* dst = *(u8**)((u8*)self + 4);
-    *(u32*)(dst + 0x304) = *(u32*)((u8*)other + 0);
-    *(u32*)(dst + 0x308) = *(u32*)((u8*)other + 4);
-    *(u32*)(dst + 0x30C) = *(u32*)((u8*)other + 8);
+// Copy the position triplet into the manager's scale/pos fields at 0x304.
+// Kept as integer word copies: retail moves the bits without float ops.
+extern "C" void func_8049BEEC(CScnEffectActNw4r* self, const void* other) {
+    CScnEffectActMgr* mgr = self->mpMgr;
+    *(u32*)&mgr->field_0x304 = *(u32*)other;
+    *(u32*)&mgr->field_0x308 = *(u32*)((const char*)other + 4);
+    *(u32*)&mgr->field_0x30c = *(u32*)((const char*)other + 8);
 }
 
 // Manager's effect-act getter, act slot at +0x48.
@@ -109,6 +123,7 @@ u32 func_8049C244(const CScnEffectActNw4r* self, u32 idx, ml::CVec3* out) {
     u32 count = self->mCount;
     for (u32 i = 0; i < count; i++) {
         if (self->mIds[i] == idx) {
+            // Named in z,y,x order so MWCC's load scheduler matches retail.
             CScnEffectAct* act = self->mActs[i];
             float z = act->field_0x2c.x;
             float y = act->field_0x1c.x;
@@ -161,14 +176,12 @@ void func_8049C060(ml::CVec3* out, const CScnEffectActNw4r* self, u32 idx) {
     out->z = ml::CVec3::zero.z;
 }
 
-extern "C" void func_8049C394(u8* self) { func_80482AB8(*(u8**)(self + 4)); }
+extern "C" void func_8049C394(CScnEffectActNw4r* self) { func_80482AB8(self->mpMgr); }
 
-extern void func_80482AD4(CScnEffectActMgr* mgr);
 void func_8049C39C(CScnEffectActNw4r* self) {
     func_80482AD4(self->mpMgr);
 }
 
-extern void func_8048856C(CScnEffectActMgr* mgr);
 void func_8049C3A4(CScnEffectActNw4r* self) {
     func_8048856C(self->mpMgr);
 }
@@ -177,111 +190,45 @@ void func_8049C3A4(CScnEffectActNw4r* self) {
 // inside [AB74 - A208, AB74 + A208], unless the manager's act flag disables
 // the whole check (then always usable). Returns 1 usable / 0 outside range.
 u32 func_8049C3AC(CScnEffectActNw4r* self) {
-    // Separate decl/init keeps three live values -> r3/r4/r5 in MWCC.
     u32 result;
     u32 ok;
     CScnEffectActMgr* mgr;
+    mgr = self->mpMgr;
     result = 1;
     ok = 1;
-    mgr = self->mpMgr;
     if ((mgr->field_0x7a4 & 0x20000000) == 0) {
-        if (mgr->field_0x304 < lbl_eu_8066AB74 + lbl_eu_8066A208) {
+        // Upper gate fails when val < AB74 + A208.
+        if (!(mgr->field_0x304 >= lbl_eu_8066AB74 + lbl_eu_8066A208)) {
             ok = 0;
         }
     }
-    if (ok != 0) {
-        return result;
+    if (ok == 0) {
+        // Below the low bound the act stays usable; only the gap band clears.
+        if (!(mgr->field_0x304 <= lbl_eu_8066AB74 - lbl_eu_8066A208)) {
+            result = 0;
+        }
     }
-    if (mgr->field_0x304 <= lbl_eu_8066AB74 - lbl_eu_8066A208) {
-        return result;
-    }
-    result = 0;
     return result;
 }
 
-extern "C" u32 func_8049C420(u8* self) { return (*(u32*)((char*)*(void**)((u8*)self + 4) + 0x7A4) >> 30) & 1; }
+// Bit 30 of the manager's flag word: the manager has a direct act ready.
+extern "C" u32 func_8049C420(CScnEffectActNw4r* self) { return (self->mpMgr->field_0x7a4 >> 30) & 1; }
 
-extern "C" u32 func_8049C430(u8* self) { return *(u32*)((u8*)self + 0x188); }
+extern "C" u32 func_8049C430(CScnEffectActNw4r* self) { return self->mCount; }
 
-// Virtual dispatch target: v_i at vtable offset 8+4*i (MWCC RTTI header).
-struct VTarget {
-    virtual void v0() = 0;
-    virtual void v1() = 0;
-    virtual void v2() = 0;
-    virtual void v3() = 0;
-    virtual void v4() = 0;
-    virtual void v5() = 0;
-    virtual void v6() = 0;
-    virtual void v7() = 0;
-    virtual void v8() = 0;
-    virtual void v9() = 0;
-    virtual void v10() = 0;
-    virtual void v11() = 0;
-    virtual void v12() = 0;
-    virtual void v13() = 0;
-    virtual void v14() = 0;
-    virtual void v15() = 0;
-    virtual void v16() = 0;
-    virtual void v17() = 0;
-    virtual void v18() = 0;
-    virtual void v19() = 0;
-    virtual void v20() = 0;
-    virtual void v21() = 0;
-    virtual void v22() = 0;
-    virtual void v23() = 0;
-    virtual void v24() = 0;
-    virtual void v25() = 0;
-    virtual void v26() = 0;
-    virtual void v27() = 0;
-    virtual void v28() = 0;
-    virtual void v29() = 0;
-    virtual void v30() = 0;
-    virtual void v31() = 0;
-    virtual void v32() = 0;
-    virtual void v33() = 0;
-    virtual void v34() = 0;
-    virtual void v35() = 0;
-    virtual void v36() = 0;
-    virtual void v37() = 0;
-    virtual void v38() = 0;
-    virtual void v39() = 0;
-    virtual void v40() = 0;
-    virtual void v41() = 0;
-    virtual void v42() = 0;
-    virtual void v43() = 0;
-    virtual ~VTarget() {}
-};
-
-extern "C" void func_8049BA44(u8* self) {
-    VTarget* obj = (VTarget*)*(void**)((u8*)self + 4);
-    obj->v4();
-}
-extern "C" void func_8049BEBC(u8* self) {
-    VTarget* obj = (VTarget*)*(void**)((u8*)self + 4);
-    obj->v43();
-}
-extern "C" void func_8049BED0(u8* self) {
-    VTarget* obj = (VTarget*)*(void**)((u8*)self + 4);
-    obj->v16();
-}
-
-// Node-name string of a ResNode with the retail header's validity assert:
-// ptr + name offset (NULL when the offset is absent). Only used for the digit
-// scan loop, where the two checks must share one fail tail (the `||` form);
-// the other sites inline the assert so MWCC merges it with surrounding checks.
-static inline const char* nodeName(const nw4r::g3d::ResNode* node) {
-    if (!node->IsValid()) {
-        nw4r::db::Panic(lbl_eu_8056E194, 0x2c, lbl_eu_8056E178,
-                        lbl_eu_80663910, lbl_eu_80663A34);
-    }
-    return node->ofs_to_ptr<char>(node->ref().name);
-}
+// Virtual dispatch thunks on the manager (slots 4 / 43 / 16).
+extern "C" void func_8049BA44(CScnEffectActNw4r* self) { self->mpMgr->v4(); }
+extern "C" void func_8049BEBC(CScnEffectActNw4r* self) { self->mpMgr->v43(); }
+extern "C" void func_8049BED0(CScnEffectActNw4r* self) { self->mpMgr->v16(); }
 
 // Recursively register every node whose name is "<tag><NNN>" (three digits at
 // offsets 2..4) into the effect-act table: the node's mtx id selects the act
 // slot (0x30-byte entries from mgr->field_0x147c->field_0xec), and the digits
 // parse into the u16 id stored next to the act pointer. Then descend into the
 // node's child and next sibling.
+// C linkage: the retail symbol (and the recursive self-calls) carry the plain
+// unmangled name func_8049BA58.
+extern "C" void func_8049BA58(CScnEffectActNw4r* self, nw4r::g3d::ResNode* node);
 void func_8049BA58(CScnEffectActNw4r* self, nw4r::g3d::ResNode* node) {
     if (node->ptr() == NULL) {
         return;
@@ -299,6 +246,9 @@ void func_8049BA58(CScnEffectActNw4r* self, nw4r::g3d::ResNode* node) {
                         lbl_eu_80663910, lbl_eu_80663A34);
     }
     const char* n2 = node->ofs_to_ptr<char>(node->ref().name);
+    // Link pointer for the tail recursion; declared before the gotos so its
+    // live range spans the end: merge like retail.
+    u8* lp;
     if (memcmp(n2, lbl_eu_80663A18, strlen(lbl_eu_80663A18)) != 0) {
         goto end;
     }
@@ -354,21 +304,32 @@ end:
         nw4r::db::Panic(lbl_eu_8056E850, 0x2c, lbl_eu_8056E834,
                         lbl_eu_80663910, lbl_eu_80663A30);
     }
-    nw4r::g3d::ResNode child = node->GetChildNode();
-    if ((u32)child.ptr() & 3) {
-        nw4r::db::Panic(lbl_eu_8056E820, 0x2c, lbl_eu_8056E7F8);
-        child = nw4r::g3d::ResNode(NULL);
+    // NOTE: retail reads the 0x64 link first, then 0x60 - the reverse of the
+    // header's toChildNode/toNextSibling field order. On a misaligned link the
+    // retail build asserts but recurses with the pointer as-is (no reset).
+    if (node->ptr()->toNextSibling != 0) {
+        lp = (u8*)node->ptr() + node->ptr()->toNextSibling;
+        if (((u32)lp & 3) != 0) {
+            nw4r::db::Panic(lbl_eu_8056E820, 0x2c, lbl_eu_8056E7F8);
+        }
+    } else {
+        lp = NULL;
     }
+    nw4r::g3d::ResNode child(lp);
     func_8049BA58(self, &child);
     if (!node->IsValid()) {
         nw4r::db::Panic(lbl_eu_8056E850, 0x2c, lbl_eu_8056E834,
                         lbl_eu_80663910, lbl_eu_80663A30);
     }
-    nw4r::g3d::ResNode next = node->GetNextSibling();
-    if ((u32)next.ptr() & 3) {
-        nw4r::db::Panic(lbl_eu_8056E820, 0x2c, lbl_eu_8056E7F8);
-        next = nw4r::g3d::ResNode(NULL);
+    if (node->ptr()->toChildNode != 0) {
+        lp = (u8*)node->ptr() + node->ptr()->toChildNode;
+        if (((u32)lp & 3) != 0) {
+            nw4r::db::Panic(lbl_eu_8056E820, 0x2c, lbl_eu_8056E7F8);
+        }
+    } else {
+        lp = NULL;
     }
+    nw4r::g3d::ResNode next(lp);
     func_8049BA58(self, &next);
 }
 
@@ -382,37 +343,27 @@ void func_8049B9EC(CScnEffectActNw4r* self, CScnEffectActMgr* mgr) {
     func_8049BA58(self, &node);
 }
 
-// ===== Dissolved monolibdata2 (blob surgery) data owned by this TU =====
-namespace EABlob {
-extern "C" void __dt__17CScnEffectActNw4rFv();
-extern "C" void func_8049BEA4(); extern "C" void func_8049BA44();
-extern "C" void func_8049BEAC(); extern "C" void func_8049BEB4();
-extern "C" void func_8049BEBC(); extern "C" void func_8049BED0();
-extern "C" void func_8049BEE4(); extern "C" void func_8049BEEC();
-extern "C" void func_8049BF0C(); extern "C" void func_8049BF34();
-extern "C" void func_8049BF5C(); extern "C" void func_8049BF84();
-extern "C" void func_8049BFAC(); extern "C" void func_8049C060();
-extern "C" void func_8049C18C(); extern "C" void func_8049C244();
-extern "C" void func_8049C430(); extern "C" void func_8049C314();
-extern "C" void func_8049C394(); extern "C" void func_8049C39C();
-extern "C" void func_8049C3A4(); extern "C" void func_8049C3AC();
-extern "C" void func_8049C420();
-}
-extern "C" u32 lbl_eu_80663A20;   // foreign .sdata
-extern "C" u32 lbl_eu_80663A28;   // foreign .sdata
+// ===== [.data] 0x8056EAD8-0x8056EB50: CScnEffectActNw4r vtable + sub-view =====
 
-// [.data] 0x8056EAD8-0x8056EB50 (120B): CScnEffectActNw4r vtable + sub-view
+// The compiler-generated deleting-dtor symbol has no C++ spelling; declare the
+// mangled name for the vtable slot (repo-wide recipe, cf. CDeviceFont.cpp).
+extern "C" void __dt__17CScnEffectActNw4rFv();
+
+// Foreign .sdata words (typeinfo headers for the two views).
+extern u32 lbl_eu_80663A20;
+extern u32 lbl_eu_80663A28;
+
 extern "C" u32 lbl_eu_8056EAD8[26] = {
     (u32)&lbl_eu_80663A20, 0x00000000,
-    (u32)&EABlob::__dt__17CScnEffectActNw4rFv,
-    (u32)&EABlob::func_8049BEA4, (u32)&EABlob::func_8049BA44, (u32)&EABlob::func_8049BEAC,
-    (u32)&EABlob::func_8049BEB4, (u32)&EABlob::func_8049BEBC, (u32)&EABlob::func_8049BED0,
-    (u32)&EABlob::func_8049BEE4, (u32)&EABlob::func_8049BEEC, (u32)&EABlob::func_8049BF0C,
-    (u32)&EABlob::func_8049BF34, (u32)&EABlob::func_8049BF5C, (u32)&EABlob::func_8049BF84,
-    (u32)&EABlob::func_8049BFAC, (u32)&EABlob::func_8049C060, (u32)&EABlob::func_8049C18C,
-    (u32)&EABlob::func_8049C244, (u32)&EABlob::func_8049C430, (u32)&EABlob::func_8049C314,
-    (u32)&EABlob::func_8049C394, (u32)&EABlob::func_8049C39C, (u32)&EABlob::func_8049C3A4,
-    (u32)&EABlob::func_8049C3AC, (u32)&EABlob::func_8049C420,
+    (u32)&__dt__17CScnEffectActNw4rFv,
+    (u32)&func_8049BEA4, (u32)&func_8049BA44, (u32)&func_8049BEAC,
+    (u32)&func_8049BEB4, (u32)&func_8049BEBC, (u32)&func_8049BED0,
+    (u32)&func_8049BEE4, (u32)&func_8049BEEC, (u32)&func_8049BF0C,
+    (u32)&func_8049BF34, (u32)&func_8049BF5C, (u32)&func_8049BF84,
+    (u32)&func_8049BFAC, (u32)&func_8049C060, (u32)&func_8049C18C,
+    (u32)&func_8049C244, (u32)&func_8049C430, (u32)&func_8049C314,
+    (u32)&func_8049C394, (u32)&func_8049C39C, (u32)&func_8049C3A4,
+    (u32)&func_8049C3AC, (u32)&func_8049C420,
 };
 extern "C" u32 lbl_eu_8056EB40[4] = {
     (u32)&lbl_eu_80663A28, 0x00000000, 0x00000000, 0x00000000,

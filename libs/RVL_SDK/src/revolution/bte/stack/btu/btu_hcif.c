@@ -287,8 +287,11 @@ extern void btu_hcif_esco_connection_comp_evt(UINT8 *p, UINT16 evt_len);
 void btu_hcif_process_event(BT_HDR *p_msg)
 {
     UINT8 *p = (UINT8 *)(p_msg + 1) + p_msg->offset;
+    UINT8 new_role;
     UINT8 event;
     UINT8 evt_len;
+    UINT8 reason;
+    UINT16 handle;
 
     event = *p;
     evt_len = *(p + 1);
@@ -320,15 +323,14 @@ void btu_hcif_process_event(BT_HDR *p_msg)
         btu_hcif_connection_request_evt(p + 2, evt_len);
         break;
 
-    case HCI_DISCONNECTION_COMP_EVT: {
-        UINT8 reason = p[5];
-        UINT16 handle = (UINT16)((p[3] + (p[4] << 8)) & 0x0FFF);
+    case HCI_DISCONNECTION_COMP_EVT:
+        reason = p[5];
+        handle = (UINT16)((p[3] + (p[4] << 8)) & 0x0FFF);
 
         if (!l2c_link_hci_disc_comp(handle, reason))
             btm_sco_removed(handle, reason);
         btm_sec_disconnected(handle, reason);
         break;
-    }
 
     case HCI_AUTHENTICATION_COMP_EVT:
         btm_sec_auth_complete((UINT16)(p[3] + (p[4] << 8)), p[2]);
@@ -338,9 +340,14 @@ void btu_hcif_process_event(BT_HDR *p_msg)
         BD_ADDR bd_name;
         UINT8 hci_status = p[2];
         UINT8 *p_name = p + 9;
-        UINT8 *p_off = p + 3;
 
-        STREAM_TO_BDADDR(bd_name, p_off);
+        /* BD_ADDR arrives little-endian in the event; stored reversed. */
+        bd_name[5] = p[3];
+        bd_name[4] = p[4];
+        bd_name[3] = p[5];
+        bd_name[2] = p[6];
+        bd_name[1] = p[7];
+        bd_name[0] = p[8];
         btm_process_remote_name(bd_name, p_name, (UINT16)(evt_len - 7),
                                 hci_status);
         btm_sec_rmt_name_request_complete(bd_name, p_name, hci_status);
@@ -348,9 +355,13 @@ void btu_hcif_process_event(BT_HDR *p_msg)
     }
 
     case HCI_ENCRYPTION_CHANGE_EVT: {
-        UINT16 handle = (UINT16)(p[3] + (p[4] << 8));
-        UINT8 encr_enable = p[5];
-        UINT8 hci_status = p[2];
+        UINT8 encr_enable;
+        UINT16 handle;
+        UINT8 hci_status;
+
+        handle = (UINT16)(p[3] + (p[4] << 8));
+        hci_status = p[2];
+        encr_enable = p[5];
 
         btm_acl_encrypt_change(handle, hci_status, encr_enable);
         btm_sec_encrypt_change(handle, hci_status, encr_enable);
@@ -388,12 +399,16 @@ void btu_hcif_process_event(BT_HDR *p_msg)
         break;
 
     case HCI_ROLE_CHANGE_EVT: {
-        BD_ADDR bd_addr;
-        UINT8 new_role;
         UINT8 hci_status = p[2];
-        UINT8 *p_off = p + 3;
+        BD_ADDR bd_addr;
 
-        STREAM_TO_BDADDR(bd_addr, p_off);
+        /* BD_ADDR arrives little-endian in the event; stored reversed. */
+        bd_addr[5] = p[3];
+        bd_addr[4] = p[4];
+        bd_addr[3] = p[5];
+        bd_addr[2] = p[6];
+        bd_addr[1] = p[7];
+        bd_addr[0] = p[8];
         new_role = p[9];
         if (hci_status == 0)
             l2c_link_role_changed(bd_addr, new_role);
@@ -406,10 +421,15 @@ void btu_hcif_process_event(BT_HDR *p_msg)
         break;
 
     case HCI_MODE_CHANGE_EVT: {
-        UINT16 hci_handle = (UINT16)(p[3] + (p[4] << 8));
-        UINT8 mode = p[5];
-        UINT16 interval = (UINT16)(p[6] + (p[7] << 8));
-        UINT8 hci_status = p[2];
+        UINT16 interval;
+        UINT8 mode;
+        UINT16 hci_handle;
+        UINT8 hci_status;
+
+        hci_handle = (UINT16)(p[3] + (p[4] << 8));
+        mode = p[5];
+        interval = (UINT16)(p[6] + (p[7] << 8));
+        hci_status = p[2];
 
         btm_sco_chk_pend_unpark(hci_status, hci_handle, mode);
         btm_pm_proc_mode_change(hci_status, hci_handle, mode, interval);
@@ -457,10 +477,14 @@ void btu_hcif_process_event(BT_HDR *p_msg)
 
     case HCI_READ_CLOCK_OFF_COMP_EVT:
         if (*(p + 2) == 0) {
+            UINT16 ha;
+            UINT16 hb;
             UINT16 clock_offset;
             UINT16 hci_handle;
 
-            hci_handle = (UINT16)((p[3] + (p[4] << 8)) & 0x0FFF);
+            ha = p[3];
+            hb = p[4];
+            hci_handle = (ha + (hb << 8)) & 0x0FFF;
             clock_offset = (UINT16)(p[5] + (p[6] << 8));
 
             btm_process_clk_off_comp_evt(hci_handle, clock_offset);

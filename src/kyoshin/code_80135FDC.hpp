@@ -265,8 +265,8 @@ extern u8 lbl_eu_8052E4E4[];
 extern u8 lbl_eu_8052E4C0[];
 extern u8 lbl_eu_8052E558[];
 extern u8 lbl_eu_8052E530[];
-extern u8 lbl_eu_80526324[];
-extern u8 lbl_eu_80526300[];
+extern const char lbl_eu_80526324[]; // const: matches CActParamAnimGame.cpp definition + CfSoundMan.hpp chain
+extern const char lbl_eu_80526300[];  // const char: matches CfSoundMan.hpp chain (u8/char variants broke CMiniMap TU)
 extern u8 lbl_eu_805262F0[];
 extern u8 lbl_eu_805262C8[];
 extern u8 lbl_eu_80500108[];

@@ -2,6 +2,7 @@
 // Replace stubs with high-level C/C++ during decomp.
 
 #include "kyoshin/harness_catalog.hpp"
+#include "kyoshin/plugin/ocBdat.hpp"  // getBdatStringColumnValue
 #include "monolib/math/CVec3.hpp"
 #include "kyoshin/cf/CfGameManagerData.hpp"  // H3 label-owner decl (lbl_eu_80663E14; lbl_eu_80663E24)
 
@@ -11,6 +12,9 @@ extern const f32 lbl_eu_80667D64; // 1.0f
 extern const f32 lbl_eu_80667D68;
 extern const f32 lbl_eu_80667D6C; // rad -> FIdx degrees
 extern const f32 lbl_eu_80667D70; // FIdx degrees multiplier for SinFIdx
+extern const f32 lbl_eu_80667D78; // bdat column float scale
+extern const f64 lbl_eu_80667D80; // 0x4330 double-conversion bias A
+extern const f64 lbl_eu_80667D88; // 0x4330 double-conversion bias B
 extern const f32 lbl_eu_8066A1F8; // pi
 extern const f32 lbl_eu_8066A1FC; // 2*pi
 
@@ -226,6 +230,7 @@ public:
     u8 mField18; // +0x18, cleared
     u8 _19[3];
     u16 mField1C; // +0x1C, set to 1
+    u16 _1E; // padding so entries start at +0x20
     CtrlEntry mEntries[128]; // +0x20 .. +0x1C20
 };
 
@@ -244,16 +249,127 @@ void func_801A9FC0(CtrlWork* work) {
     work->mField1C = 1;
     work->mField18 = 0;
     CtrlEntryFnBits cb;
-    cb.raw[0] = lbl_eu_805333EC[0];
-    cb.raw[1] = lbl_eu_805333EC[1];
-    cb.raw[2] = lbl_eu_805333EC[2];
+    // Single aggregate copy of the 12-byte ptmf from .data.
+    cb = *(CtrlEntryFnBits*)lbl_eu_805333EC;
+    // Second ptmf copy: __ptmf_scall consumes a stack temp, matching retail.
+    CtrlEntryFnBits cbCall;
+    cbCall.fn = cb.fn;
     CtrlEntry* end = &work->mEntries[128];
     for (CtrlEntry* it = work->mEntries; it != end; ++it) {
-        (it->*cb.fn)();
+        (it->*cbCall.fn)();
     }
 }
 
-void func_801AA04C(){}
+// ----------------------------------------------------------------------------
+// func_801AA04C - fill the ctrl-state work entries from the shared bdat table:
+// for every row of the table's row range, read named columns (rodata name blob
+// at lbl_eu_80503FA0) into one 0x38-byte entry slot of the caller's array.
+// Integer columns are converted to float through the 0x43300000 double trick:
+// the union high words are preset once up front, each value is placed (with
+// the sign-bit xor for signed columns) into the low word, the double bias is
+// subtracted, and the result scaled by lbl_eu_80667D78.
+// ----------------------------------------------------------------------------
+
+// Conversion scratch: w[0] = 0x43300000, w[1] holds the integer payload.
+union BdatConv {
+    u32 w[2];
+    f64 d;
+};
+
+// Column-value view: retail spills every narrow-column call result to its own
+// stack word, then re-reads it narrowed (stw/lhz or stw/lbz round-trip).
+union ColVal {
+    u32 v;
+    u16 h[2];
+    u8 b[4];
+};
+
+// Two views of the moving 0x38-byte slot: the three leading floats go through
+// the head cursor, everything else through offsets 0x38.. of the base cursor
+// (retail keeps both pointers live across the whole loop).
+struct CtrlRecHead {
+    f32 f00;
+    f32 f04;
+    f32 f08;
+};
+
+struct CtrlRecTail {
+    u8 pad00[0x18];
+    f32 f38;
+    u8 pad3C[8];
+    f32 f44;
+    u16 f4C;
+    u16 f4E;
+    u16 f50;
+    u8 f53;
+    u8 f54;
+    u8 f55;
+    u8 f56;
+    u8 f57;
+};
+
+// Bdat column-name blob (split1 rodata), byte-offset indexed.
+extern char lbl_eu_80503FA0[];
+
+// Bdat table handle owning the ctrl-state row range (import from split1).
+struct BdatTable;
+extern BdatTable* lbl_eu_806640B8;
+
+void func_801AA04C(void* param) {
+    BdatTable* tbl = lbl_eu_806640B8;
+    BdatConv convA;
+    BdatConv convB;
+    convA.w[0] = 0x43300000;
+    convB.w[0] = 0x43300000;
+    s32 i = func_8003B41C(tbl);   // first row of the range
+    s32 end = i + func_8003B1EC(tbl); // number of rows
+    const char* cols = lbl_eu_80503FA0;
+
+    CtrlRecHead* rec = (CtrlRecHead*)((u8*)param + i * 0x38);
+    CtrlRecTail* tail = (CtrlRecTail*)((u8*)param + i * 0x38);
+
+    for (; i < end; i++) {
+        // Local struct: field stores keep stack homes across the calls
+        // (retail stfs to sp), and the final copy is three lwz/stw moves.
+        CtrlRecHead h;
+        convA.w[1] = getBdatStringColumnValue(tbl, cols + 0x1b, i) ^ 0x8000;
+        h.f00 = (f32)(convA.d - lbl_eu_80667D80) * lbl_eu_80667D78;
+        convB.w[1] = getBdatStringColumnValue(tbl, cols + 0x20, i) ^ 0x8000;
+        h.f04 = (f32)(convB.d - lbl_eu_80667D80) * lbl_eu_80667D78;
+        convA.w[1] = getBdatStringColumnValue(tbl, cols + 0x2a, i) ^ 0x8000;
+        h.f08 = (f32)(convA.d - lbl_eu_80667D80) * lbl_eu_80667D78;
+        *rec = h;
+
+        ColVal t31;
+        t31.v = getBdatStringColumnValue(tbl, cols + 0x31, i);
+        convB.w[1] = t31.h[0];
+        tail->f38 = (f32)(convB.d - lbl_eu_80667D88);
+        tail->f50 = (u16)i;
+        ColVal t37;
+        t37.v = getBdatStringColumnValue(tbl, cols + 0x37, i);
+        tail->f4E = t37.h[0];
+        ColVal t3d;
+        t3d.v = getBdatStringColumnValue(tbl, cols + 0x3d, i);
+        tail->f53 = t3d.b[0];
+        ColVal t42;
+        t42.v = getBdatStringColumnValue(tbl, cols + 0x42, i);
+        tail->f56 = t42.b[0];
+        ColVal t49;
+        t49.v = getBdatStringColumnValue(tbl, cols + 0x49, i);
+        convA.w[1] = t49.b[0];
+        tail->f44 = (f32)(convA.d - lbl_eu_80667D88) * lbl_eu_80667D78;
+        ColVal t50;
+        t50.v = getBdatStringColumnValue(tbl, cols + 0x50, i);
+        tail->f54 = t50.b[0];
+        ColVal t57;
+        t57.v = getBdatStringColumnValue(tbl, cols + 0x57, i);
+        tail->f55 = t57.b[0];
+        tail->f4C = 0xFFFF;
+
+        rec = (CtrlRecHead*)((char*)rec + 0x38);
+        tail = (CtrlRecTail*)((char*)tail + 0x38);
+    }
+}
 
 void func_801AA2A8(){}
 
@@ -280,12 +396,95 @@ int func_801AA960(int, int b, int c, int d) {
 }
 
 
-void func_801AAAA0(){}
+// Bdat row queries; canonical extern "C" decls live in CfObjectEne.hpp /
+// CItem.hpp, whose full include closure clashes with this TU.
+extern "C" u32 func_8003B41C(void* bdat);   // bdat first row
+extern "C" u32 func_8003B1EC(void* bdat);   // bdat row count
+// Game-manager active gate; canonical member is cf::CfGameManager::func_80082900.
+extern "C" u32 func_80082900__Q22cf13CfGameManagerFv();
+// Sound-slot play entry (defined in CfSoundMan.cpp); C linkage so the call
+// reloc binds to the retail-unmangled name.
+extern "C" void func_801BFE58(s32 idx, u32 a, u32 b, float volume);
 
-void func_801AAB64(){}
+// Bdat table handle owning the ctrl-state row range (import from split1).
+struct BdatTable;
+extern BdatTable* lbl_eu_806640B8;
 
-extern "C" void func_801AAB64(void* a, void* b, int c, float d);
-extern "C" void func_801AAC70(void* self){ void* d; float dummy; func_801AAB64(self, d, 1, dummy); }
+// View of one 0x38-byte ctrl-state entry, exposing the match key at +0x2E.
+struct ScanEntry {
+    u8 _00[0x2E];
+    u16 m2E; // +0x2E
+};
+
+// ----------------------------------------------------------------------------
+// func_801AAAA0 - scan the shared ctrl-state singleton's entry table starting
+// at the bdat table's first-row index for the table's row count, returning
+// whether any entry's key (+0x2E) equals id.
+// ----------------------------------------------------------------------------
+bool func_801AAAA0(u32 id) {
+    if (func_80082900__Q22cf13CfGameManagerFv() == 0) {
+        return false;
+    }
+    extern unsigned char lbl_eu_80664330;
+    BdatTable* table = lbl_eu_806640B8;
+    if (*(void**)(&lbl_eu_80664330) == nullptr || table == nullptr) {
+        return false;
+    }
+    s32 row = func_8003B41C(table);   // first row of the range
+    s32 count = func_8003B1EC(table); // number of rows
+    // Re-read the singleton: scan its entry table from 'row' for 'count' rows.
+    CtrlStateWork* work2 = *(CtrlStateWork**)(&lbl_eu_80664330);
+    s32 endRow = row + count;
+    ScanEntry* it = (ScanEntry*)&work2->mEntries[row];
+    for (; row < endRow; row++) {
+        if (id == it->m2E) {
+            return true;
+        }
+        it = (ScanEntry*)((char*)it + 0x38);
+    }
+    return false;
+}
+
+// ----------------------------------------------------------------------------
+// func_801AAB64 - apply a sound-volume update over the shared ctrl-state
+// singleton's entry range (bdat table rows). For every entry whose key (+0x30)
+// equals id (or when id == 0, all entries) and whose sound index (+0x2C) is
+// valid, play index scaled by the entry's volume (+0x24) times scale. When
+// store is set, persist scale and kind into the entry.
+// The singleton global is re-read before each access, matching retail.
+// ----------------------------------------------------------------------------
+void func_801AAB64(u32 id, u32 kind, int store, float scale) {
+    extern unsigned char lbl_eu_80664330;
+    if (func_80082900__Q22cf13CfGameManagerFv() == 0) {
+        return;
+    }
+    BdatTable* table = lbl_eu_806640B8;
+    if (*(void**)(&lbl_eu_80664330) == nullptr || table == nullptr) {
+        return;
+    }
+    s32 row = func_8003B41C(table);   // first row of the range
+    s32 endRow = row + func_8003B1EC(table); // number of rows
+    for (; row < endRow; row++) {
+        // The singleton global is re-read for every statement (retail never
+        // caches it across statements).
+        if (id != 0 &&
+            (*(CtrlStateWork**)(&lbl_eu_80664330))->mEntries[row].m30 != id) {
+            continue;
+        }
+        if ((*(CtrlStateWork**)(&lbl_eu_80664330))->mEntries[row].m2C != -1) {
+            func_801BFE58(
+                1, (*(CtrlStateWork**)(&lbl_eu_80664330))->mEntries[row].m2C,
+                kind,
+                scale * (*(CtrlStateWork**)(&lbl_eu_80664330))->mEntries[row].m1C);
+        }
+        if (store != 0) {
+            (*(CtrlStateWork**)(&lbl_eu_80664330))->mEntries[row].m28 = scale;
+            (*(CtrlStateWork**)(&lbl_eu_80664330))->mEntries[row].m32 = kind;
+        }
+    }
+}
+
+void func_801AAC70(void* self){ float dummy; func_801AAB64(0, (u32)self, 1, dummy); }
 
 extern "C" void func_801AAC78(u8 v) {
     extern unsigned char lbl_eu_80664330;

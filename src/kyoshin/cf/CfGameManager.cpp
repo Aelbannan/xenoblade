@@ -1274,11 +1274,8 @@ void cf::CfGameManager::func_8007D84C() {
     func_801C028C(1, 0);
     func_8012F87C(0);
     func_80135568(0);
-    {
-        volatile u32* ee0 = &lbl_eu_80663EE0;
-        if ((*ee0 & 0x40) != 0) {
-            *ee0 &= ~0x40;
-        }
+    if ((lbl_eu_80663EE0 & 0x40) != 0) {
+        lbl_eu_80663EE0 &= ~0x40;
     }
     memset(unk94, 0, sizeof(unk94));
     unk90 = nullptr;

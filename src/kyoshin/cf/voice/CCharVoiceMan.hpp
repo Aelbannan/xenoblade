@@ -304,7 +304,7 @@ extern "C" cf::CSoundNode* func_802A8B6C();
 extern "C" cf::CSoundNode* func_802B5970();
 extern "C" cf::CSoundNode* __ct__CVS_THREAD_ORDER(int order);
 extern "C" cf::CSoundNode* __ct__802A8DE8();
-extern "C" cf::CSoundNode* func_802A6958();
+extern "C" cf::CSoundNode* func_802A6958(void* actor);
 extern "C" cf::CSoundNode* __ct__802A5830();
 extern "C" cf::CSoundNode* __ct__802A8C04();
 extern "C" cf::CSoundNode* func_802B8D4C();

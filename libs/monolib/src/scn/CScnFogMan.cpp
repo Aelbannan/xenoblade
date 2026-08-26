@@ -1,5 +1,29 @@
 // Auto-scaffolded catalog TU for monolib/src/scn/CScnFogMan
 #include <harness_catalog.h>
+#include "revolution/GX.h"
+#include "nw4r/db/db_assert.h"  // nw4r::db::Panic
+#include "nw4r/g3d/g3d_anmclr.h"
+#include "nw4r/g3d/g3d_anmobj.h"
+#include "nw4r/g3d/g3d_anmscn.h"
+#include "nw4r/g3d/g3d_anmtexpat.h"
+#include "nw4r/g3d/g3d_anmtexsrt.h"
+#include "nw4r/g3d/g3d_fog.h"
+#include "nw4r/g3d/g3d_scnmdl.h"
+#include "nw4r/g3d/g3d_scnobj.h"
+#include "nw4r/g3d/g3d_scnroot.h"
+#include "nw4r/g3d/res/g3d_resfile.h"
+#include "nw4r/g3d/res/g3d_resmdl.h"
+#include "nw4r/g3d/res/g3d_resanmchr.h"
+#include "nw4r/math/math_arithmetic.h"
+#include "nw4r/math/math_triangular.h"
+#include "revolution/MTX.h"
+// CScnItemModelNw4r.hpp declares func_8049DE74 with a void*/f32* view of the
+// signature; this TU defines it with the typed CScnFogMan*/SWordVec* view.
+// Rename the header's declaration out of the way for this inclusion so only
+// the definition below is visible (same technique as CScnEnvLgtCtrl.cpp).
+#define func_8049DE74 func_8049DE74_header_view
+#include "libs/monolib/src/scn/CScnItemModelNw4r.hpp"  // func_8048ECD8
+#undef func_8049DE74
 #include "libs/monolib/src/scn/CScnFogMan.hpp"
 
 // Retail flash constants (fog default colour/parameters). Referenced directly
@@ -15,6 +39,15 @@ extern const f32 lbl_eu_8066ABCC;
 extern const f32 lbl_eu_8066ABD0;
 extern const f32 lbl_eu_8066ABD4;
 extern const double lbl_eu_8066ABD8;
+
+// NW4R assert strings living in this TU's blob (see data below):
+// each Panic site references its own copy of the file/message pair.
+extern char lbl_eu_8056EBE0[];
+extern char lbl_eu_8056EC00[];
+extern char lbl_eu_8056EC10[];
+extern char lbl_eu_8056EC30[];
+extern char lbl_eu_8056EC40[];
+extern char lbl_eu_8056EC60[];
 
 // vtable (blob data defined below).
 extern "C" u32 lbl_eu_8056EBD0[4];
@@ -52,7 +85,7 @@ extern "C" __declspec(align(8)) char lbl_eu_8056EBE0[0x90] = {
 // mangled arg suffix), so it must be given extern "C" linkage to keep the name.
 extern "C" void __ct__CScnFogMan(CScnFogMan* self, u32 param) {
     *(void**)self = lbl_eu_8056EBD0;
-    self->unk04 = param;
+    self->field_0x04 = param;
     self->value08 = 0;
     self->field_0xC = lbl_eu_8066ABB0;
     self->field_0x10 = lbl_eu_8066ABB0;
@@ -85,8 +118,14 @@ extern "C" void __ct__CScnFogMan(CScnFogMan* self, u32 param) {
 extern "C" void func_8049DE68(u8* self, u32 val) {
     ((CScnFogMan*)self)->value08 = val;
 }
-extern "C" void func_8049DEC4();
-extern "C" void func_8049DE70(void) { func_8049DEC4(); }
+// Tail-call trampoline over func_8049DEC4 (retail is a single `b`).
+// Retail symbol is unmangled (C linkage); other TUs' relocs target
+// `func_8049DEC4` directly.
+extern "C" bool func_8049DEC4(CScnFogMan* self);
+bool func_8049DE70(CScnFogMan* self) {
+    return func_8049DEC4(self);
+}
+
 void func_8049E374(u8* self, float a, float b) { *(float*)(self + 0x20) = a; *(float*)(self + 0x1C) = b; }
 
 // Retail dtor (free-function form so MWCC emits no local vtable; the retail
@@ -130,7 +169,126 @@ extern "C" void func_8049DE74(CScnFogMan* self, u32 value, const SWordVec* src,
     self->field_0x20 = p0;
 }
 
-#pragma push
-#pragma auto_inline off
-extern "C" void func_8049DEC4() {}
-#pragma pop
+// Apply the fog-manager state to the scene root's slot-0 fog according to
+// value08, then optionally propagate a grayscaled fog colour to all 32 slots
+// (when field_0x28 is set). Fog mode 4 means "fog disabled".
+extern "C" bool func_8049DEC4(CScnFogMan* self) {
+    if (self->value08 == 4) {
+        return false;
+    }
+
+    nw4r::g3d::ScnRoot* root =
+        (nw4r::g3d::ScnRoot*)func_8048ECD8(self->rootView);
+    nw4r::g3d::Fog fog = root->GetFog(0);
+
+    // Comparison order matches the retail branch chain (1, 2, 0, 3).
+    if (self->value08 == 1) {
+        GXFogType newType = (GXFogType)self->field_0x2c;
+        if (fog.ptr() == NULL) {
+            nw4r::db::Panic(lbl_eu_8056EC00, 0x41, lbl_eu_8056EBE0);
+        }
+        if (fog.ptr() != NULL) {
+            fog.ref().type = newType;
+        }
+
+        if (fog.ptr() == NULL) {
+            nw4r::db::Panic(lbl_eu_8056EC30, 0x4b, lbl_eu_8056EC10);
+        }
+        if (fog.ptr() != NULL) {
+            fog.ref().startz = self->field_0x30;
+            fog.ref().endz = self->field_0x34;
+        }
+
+        // Pack the scaled channels through a byte temp so MWCC emits the
+        // retail stb/lwz/stw sequence.
+        u8 tmp1[4];
+        tmp1[0] = (u8)(lbl_eu_8066ABC4 * self->field_0x40);
+        tmp1[1] = (u8)(lbl_eu_8066ABC4 * self->field_0x44);
+        tmp1[2] = (u8)(lbl_eu_8066ABC4 * self->field_0x48);
+        tmp1[3] = (u8)(lbl_eu_8066ABC4 * self->field_0x4c);
+        GXColor color1 = *(GXColor*)tmp1;
+
+        if (fog.ptr() == NULL) {
+            nw4r::db::Panic(lbl_eu_8056EC60, 0x63, lbl_eu_8056EC40);
+        }
+        if (fog.ptr() != NULL) {
+            fog.ref().color.r = color1.r;
+            fog.ref().color.g = color1.g;
+            fog.ref().color.b = color1.b;
+            fog.ref().color.a = color1.a;
+        }
+        return true;
+    } else if (self->value08 == 2) {
+        func_804C1674(self->rootView->field_0x7c);
+    } else if (self->value08 == 0) {
+        GXFogType newType = (GXFogType)self->field_0x50;
+        if (fog.ptr() == NULL) {
+            nw4r::db::Panic(lbl_eu_8056EC00, 0x41, lbl_eu_8056EBE0);
+        }
+        if (fog.ptr() != NULL) {
+            fog.ref().type = newType;
+        }
+
+        GXColor color0 = {
+            (u8)(lbl_eu_8066ABC4 * self->field_0xC),
+            (u8)(lbl_eu_8066ABC4 * self->field_0x10),
+            (u8)(lbl_eu_8066ABC4 * self->field_0x14),
+            (u8)(lbl_eu_8066ABC4 * self->field_0x18),
+        };
+
+        if (fog.ptr() == NULL) {
+            nw4r::db::Panic(lbl_eu_8056EC60, 0x63, lbl_eu_8056EC40);
+        }
+        if (fog.ptr() != NULL) {
+            fog.ref().color.r = color0.r;
+            fog.ref().color.g = color0.g;
+            fog.ref().color.b = color0.b;
+            fog.ref().color.a = color0.a;
+        }
+
+        if (fog.ptr() == NULL) {
+            nw4r::db::Panic(lbl_eu_8056EC30, 0x4b, lbl_eu_8056EC10);
+        }
+        if (fog.ptr() != NULL) {
+            fog.ref().startz = self->field_0x20;
+            fog.ref().endz = self->field_0x1c;
+        }
+    } else if (self->value08 == 3) {
+        if (fog.ptr() == NULL) {
+            nw4r::db::Panic(lbl_eu_8056EC00, 0x41, lbl_eu_8056EBE0);
+        }
+        if (fog.ptr() != NULL) {
+            fog.ref().type = GX_FOG_NONE;
+        }
+    }
+
+    if (self->field_0x28 != 0) {
+        for (int i = 0; i < 0x20; i++) {
+            nw4r::g3d::Fog fogSlot = root->GetFog(i);
+            GXColor color;
+            fogSlot.GetFog(NULL, NULL, NULL, NULL, NULL, &color);
+
+            // Luminance-weighted grayscale of the current fog colour,
+            // clamped above only (retail has no lower clamp).
+            f32 lum = lbl_eu_8066ABD0 * color.g + lbl_eu_8066ABCC * color.r +
+                      lbl_eu_8066ABC8 * color.b;
+            s32 gray = (s32)lum;
+            if (gray > 255) {
+                gray = 255;
+            }
+            color.r = color.g = color.b = (u8)gray;
+
+            if (fogSlot.ptr() == NULL) {
+                nw4r::db::Panic(lbl_eu_8056EC60, 0x63, lbl_eu_8056EC40);
+            }
+            if (fogSlot.ptr() != NULL) {
+                fogSlot.ref().color.r = color.r;
+                fogSlot.ref().color.g = color.g;
+                fogSlot.ref().color.b = color.b;
+                fogSlot.ref().color.a = color.a;
+            }
+        }
+    }
+
+    return true;
+}

@@ -7,7 +7,6 @@
 
 #include "kyoshin/harness_catalog.hpp"
 #include "kyoshin/cf/code_800C17DC.hpp"
-#include "kyoshin/code_800AA008.hpp"
 
 /// Classify one decoded char stream: report whether the bytes at `str` form a
 /// plain char (type 1), a two-byte sequence (type 2) or a newline/end (type 3),
@@ -115,8 +114,7 @@ int func_800C1900(char* str, char** out, int maxLen) {
     int count = 0;
     char* s = str;
     char** o = out;
-    int offset = 0;
-    int inWord = 0;
+    int inWord = 0, offset = 0;
     while ((u8)s[0] != 0) {
         int type, lenz;
         int ch = func_800C17DC(s, &type, &lenz);
@@ -154,61 +152,49 @@ int func_800C1900(char* str, char** out, int maxLen) {
 /// Register a (filename-hash, id, seq) entry into the table set selected by
 /// `key` (0-5). `name` is hashed via func_800AA714; `value` (optional) is an
 /// atoi-able id.  `key==0` writes the single-entry base set.
+///
+/// Known residual vs retail (us-800c2578, HIGH_MATCH): retail reloads
+/// `self->buf` inside every key arm (per-branch `lwz`) and folds the key==0
+/// hash store into `stwux r31,r3,r5`; our hoisted `tbl` local keeps the size
+/// gate green but leaves that arm as `stwx`+`add`. The correct per-branch
+/// shape costs +4 TU bytes and fails split-size, so the hoisted form stays.
 void func_800C1B30(CmTextProc* self, int key, const char* name, const char* value) {
     u32 hash = func_800AA714(name);
     if (hash == 0) return;
     u16 seq = self->buf->cntAll;
-    u16 arg = 0;
-    if (value) arg = (u16)atoi(value);
-    switch (key) {
-    case 0: {
-        u16 i = self->buf->cnt0;
-        self->buf->cnt0 = i + 1;
-        self->buf->set0[i].hash = hash;
-        self->buf->set0[i].field4 = arg;
-        self->buf->set0[i].field6 = seq;
-        break;
-    }
-    case 1: {
-        u16 i = self->buf->cnt1;
-        self->buf->cnt1 = i + 1;
-        self->buf->set1[i].hash = hash;
-        self->buf->set1[i].field4 = arg;
-        self->buf->set1[i].field6 = seq;
-        break;
-    }
-    case 2: {
-        u16 i = self->buf->cnt2;
-        self->buf->cnt2 = i + 1;
-        self->buf->set2[i].hash = hash;
-        self->buf->set2[i].field4 = arg;
-        self->buf->set2[i].field6 = seq;
-        break;
-    }
-    case 3: {
-        u16 i = self->buf->cnt3;
-        self->buf->cnt3 = i + 1;
-        self->buf->set3[i].hash = hash;
-        self->buf->set3[i].field4 = arg;
-        self->buf->set3[i].field6 = seq;
-        break;
-    }
-    case 4: {
-        u16 i = self->buf->cnt4;
-        self->buf->cnt4 = i + 1;
-        self->buf->set4[i].hash = hash;
-        self->buf->set4[i].field4 = arg;
-        self->buf->set4[i].field6 = seq;
-        break;
-    }
-    case 5: {
-        u16 i = self->buf->cnt5;
-        self->buf->cnt5 = i + 1;
-        self->buf->set5[i].hash = hash;
-        self->buf->set5[i].field4 = arg;
-        self->buf->set5[i].field6 = seq;
-        break;
-    }
+    CmTextTable* tbl = self->buf;
+    u16 id = 0;
+    if (value != 0) id = (u16)atoi(value);
+    if (key == 0) {
+        u16 i = tbl->cnt0++;
+        tbl->set0[i].hash = hash;
+        tbl->set0[i].field4 = id;
+        tbl->set0[i].field6 = seq;
+    } else if (key == 1) {
+        u16 i = tbl->cnt1++;
+        tbl->set1[i].hash = hash;
+        tbl->set1[i].field4 = id;
+        tbl->set1[i].field6 = seq;
+    } else if (key == 2) {
+        u16 i = tbl->cnt2++;
+        tbl->set2[i].hash = hash;
+        tbl->set2[i].field4 = id;
+        tbl->set2[i].field6 = seq;
+    } else if (key == 3) {
+        u16 i = tbl->cnt3++;
+        tbl->set3[i].hash = hash;
+        tbl->set3[i].field4 = id;
+        tbl->set3[i].field6 = seq;
+    } else if (key == 4) {
+        u16 i = tbl->cnt4++;
+        tbl->set4[i].hash = hash;
+        tbl->set4[i].field4 = id;
+        tbl->set4[i].field6 = seq;
+    } else if (key == 5) {
+        u16 i = tbl->cnt5++;
+        tbl->set5[i].hash = hash;
+        tbl->set5[i].field4 = id;
+        tbl->set5[i].field6 = seq;
     }
 }
 
@@ -222,24 +208,27 @@ void func_800C1CC4(CmTextProc* self, const char* text, void* buf) {
     memset(self->buf, 0, 0x628);
     self->base = text;
     self->cursor = text;
+    char* names[0x10];
     for (;;) {
+        // Token buffer sits high in the frame in retail.
         char token[0x100];
-        if (!func_800C1A18(self, token, 0xff)) break;
-        if (token[0] == '#') continue;
-        if (token[0] == '/' && token[1] == '/') continue;
-        char* names[0x10];
-        names[1] = 0;
+        if (!func_800C1A18(self, token, 0xff)) return;
+        // Comment markers: '#' starts a comment, as does '//'.
+        if ((int)(u8)token[0] == 0x23) continue;
+        if ((int)(u8)token[0] == 0x2f && (int)(u8)token[1] == 0x2f) continue;
         names[2] = 0;
+        names[1] = 0;
         if (!func_800C1900(token, names, 0x10)) continue;
+        // Look the keyword up in the dispatch table; unknown keywords are skipped.
         int id = -1;
-        for (int i = 0; i < 6; i++) {
+        for (u32 i = 0; i < 6; i++) {
             if (stricmp(names[0], lbl_eu_8052A528[i].word) == 0) {
                 id = (int)lbl_eu_8052A528[i].id;
                 break;
             }
         }
         if (id == -1) continue;
-        if (id != 5) self->buf->cntAll = self->buf->cntAll + 1;
+        if (id != 5) self->buf->cntAll++;
         func_800C1B30(self, id, names[1], names[2]);
     }
 }

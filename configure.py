@@ -483,7 +483,7 @@ config.libs = [
             Object(NonMatching, "kyoshin/cf/CfCollCapsuleImpl.cpp"),
             Object(NonMatching, "kyoshin/cf/object/CfObjectColl.cpp"),
             Object(NonMatching, "kyoshin/cf/object/CfObjectEff.cpp"),
-            Object(NonMatching, "kyoshin/cf/object/CfObjectEne.cpp"),
+            Object(Matching, "kyoshin/cf/object/CfObjectEne.cpp"),
             Object(NonMatching, "kyoshin/code_800B06A4.cpp", mw_version="GC/3.0a5.2"),  # retail: GC/3.0a5.2 (func_800B67CC range check keeps two cmpli/bclr blocks; Wii/1.1 folds to (u8)(val-1)<=23). NOTE 2026-08-25 rematch probe: reslist ctor family/__dt__800B0AF4/func_800B66BC only go byte-clean under Wii/1.x (.scratch/reslist_probe7 + triage b06a4_triage_{GC,W11}.json), but Wii/1.1 regresses accepted FULL_MATCHes func_800B15A4 (0->108), func_800B8920 (0->20), func_800B31F8 (0->9), func_800B67CC (0->4) - TU split by mw_version is the next angle
             Object(NonMatching, "kyoshin/cf/object/CfObjectMap.cpp"),
             Object(NonMatching, "kyoshin/cf/object/CfObjectModel.cpp"),
@@ -492,7 +492,7 @@ config.libs = [
             Object(Matching, "kyoshin/cf/object/CfObjectObj.cpp"),
             Object(NonMatching, "kyoshin/cf/object/CfObjectPc.cpp"),
             Object(Matching, "kyoshin/cf/object/CfObjectPoint.cpp", extra_cflags=["-RTTI off"]),  # retail has no RTTI .rodata; -RTTI off drops the typeinfo strings so the unit carries no data sections
-            Object(NonMatching, "kyoshin/cf/code_800C17DC.cpp"),
+            Object(Matching, "kyoshin/cf/code_800C17DC.cpp"),
             Object(NonMatching, "kyoshin/cfsys/CfObjectImplWalker.cpp"),
             Object(NonMatching, "kyoshin/cfsys/CfObjectImplPc.cpp"),
             Object(NonMatching, "kyoshin/cfsys/CfObjectImplObj.cpp"),

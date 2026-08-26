@@ -1,6 +1,7 @@
 #pragma once
 
 #include <types.h>
+#include "kyoshin/code_800AA008.hpp"
 
 // Callback table record at lbl_eu_805739F8 (size 0x28).
 // Owns an array of callbacks invoked by func_800C1EB8; field20 is the index

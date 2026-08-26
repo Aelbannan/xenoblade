@@ -514,7 +514,11 @@ config.libs = [
             Object(NonMatching, "kyoshin/menu/CMenuFade.cpp"),
             Object(NonMatching, "kyoshin/menu/CMenuKeyAssign.cpp"),
             Object(NonMatching, "kyoshin/CMiniMap.cpp"),
-            Object(NonMatching, "kyoshin/menu/CMenuQuestLog.cpp", extra_cflags=["-O4,s"]),
+                        # -func_align 4: retail menu TU is packed on 4-byte boundaries
+            # (default -func_align 16 adds 0xB4 of inter-function padding,
+            # pushing .text over the split budget).
+            Object(Matching, "kyoshin/menu/CMenuQuestLog.cpp",
+                   extra_cflags=["-O4,s", "-func_align 4"]),
             Object(NonMatching, "kyoshin/menu/CMenuSymbolMark.cpp"),
             Object(NonMatching, "kyoshin/CQuestWindow.cpp", extra_cflags=["-O4,s"]),
             Object(Matching, "kyoshin/CSystemWindow.cpp"),
@@ -621,7 +625,8 @@ config.libs = [
             Object(NonMatching, "kyoshin/CItemBoxGrid.cpp"),
             Object(Matching, "kyoshin/CCur.cpp",
                    extra_cflags=["-O4,s", "-func_align 4"]),
-            Object(NonMatching, "kyoshin/CSortMenu.cpp", extra_cflags=["-O4,s"]),
+            Object(NonMatching, "kyoshin/CSortMenu.cpp",
+                   extra_cflags=["-O4,s", "-func_align 4"]),
             Object(NonMatching, "kyoshin/CItemBoxInfo.cpp", extra_cflags=["-func_align 16"]),
             Object(NonMatching, "kyoshin/CNumSelect.cpp"),
             Object(NonMatching, "kyoshin/CItemBoxLine.cpp"),
@@ -1972,7 +1977,7 @@ config.libs = [
             Object(NonMatching, "monolib/src/coli/code_804A6C60.cpp"),
             Object(NonMatching, "monolib/src/coli/CColiProc.cpp"),
             Object(NonMatching, "monolib/src/coli/code_804B2FF0.cpp"),
-            Object(NonMatching, "monolib/src/coli/code_804B59C8.cpp"),
+            Object(NonMatching, "monolib/src/coli/code_804B59C8.cpp", mw_version="GC/3.0a5.2"),  # EXPERIMENT(us-804bbf30): retail bit-set schedule (lwzx before slw, single li r3,1) not reproduced under default flags
             Object(NonMatching, "monolib/src/coli/code_804BAE10.cpp"),
             Object(NonMatching, "monolib/src/scn/code_804BC9EC.cpp"),
             Object(NonMatching, "monolib/src/scn/code_804BD8E8.cpp"),

@@ -9,7 +9,15 @@
 #include "kyoshin/menu/CMenuQuestLog.hpp"
 #undef func_8011C998
 
-#include "kyoshin/CTaskGame.hpp"          // CTaskGame::getInstance / func_800426F0
+// Minimal CTaskGame view: the full kyoshin/CTaskGame.hpp pulls in
+// monolib/scn.hpp (and with it the inline-dtor IScnRender.hpp that makes
+// MWCC emit a 0x40 __dt__10IScnRenderFv orphan in this TU -- see the note
+// in CMenuQuestLog.hpp). Only these two statics are used here.
+class CTaskGame {
+public:
+    static CTaskGame* getInstance();
+    static bool func_800426F0();
+};
 #include "kyoshin/cf/CfGameManager.hpp"  // cf::CfGameManager::getCurrentPad / func_80086F9C
 #include "kyoshin/code_80135FDC.hpp"     // func_8013BE50 / func_80137250
 #include "monolib/core/CPadManager.hpp"   // CPad::mPressedButtonFlags
@@ -165,14 +173,7 @@ void CMenuQuestLog::Init() {
         *(QstArrBlock*)((u8*)this + 0x1a4) = *(QstArrBlock*)(tmp.list + 0xec);
     }
     // Sort/list state scalars.
-    u8 countVal = tmp.list[0x16c];
-    // Quest-info records copied fieldwise (u16 + 6 bytes each).
-    CQstLogListQstInfo* qDst =
-        (CQstLogListQstInfo*)&mQstLogList.mQstData.mList[0];
-    CQstLogListQstInfo* qSrc = (CQstLogListQstInfo*)(tmp.list + 0x182);
-    CQstLogListQstInfo* qEnd =
-        (CQstLogListQstInfo*)&mQstLogList.mQstData.field_2000;
-    mQstLogList.mSortMenuData.mCount = countVal;
+    mQstLogList.mSortMenuData.mCount = tmp.list[0x16c];
     mQstLogList.mSortMenuData.mPage = tmp.list[0x16d];
     mQstLogList.mSortMenuData.mSubPage = tmp.list[0x16e];
     mQstLogList.field_0x170 = tmp.list[0x170];
@@ -185,6 +186,18 @@ void CMenuQuestLog::Init() {
     mQstLogList.field_0x17D = tmp.list[0x17d];
     mQstLogList.field_0x17E = *(s16*)(tmp.list + 0x17e);
     mQstLogList.field_0x180 = *(u16*)(tmp.list + 0x180);
+    // Quest-info records copied fieldwise (u16 + 6 bytes each).
+    // Residual vs retail (pure reg-swap, see attempts.jsonl): retail colors
+    // the scalar temporaries r3 and the loop pointers qDst=qSrc=r5/qEnd=r0
+    // (qEnd reuses the dead r0 from the preceding block-copy loop); this
+    // shape yields temps=r0, qDst=r3, qSrc=r4, qEnd=r5.
+    CQstLogListQstInfo* qDst =
+        (CQstLogListQstInfo*)&mQstLogList.mQstData.mList[0];
+    CQstLogList* srcList = (CQstLogList*)tmp.list;
+    CQstLogListQstInfo* qSrc =
+        (CQstLogListQstInfo*)&srcList->mQstData.mList[0];
+    CQstLogListQstInfo* qEnd =
+        (CQstLogListQstInfo*)&mQstLogList.mQstData.field_2000;
     do {
         *qDst = *qSrc;
         qDst++;
@@ -219,8 +232,7 @@ void CMenuQuestLog::Init() {
     // Register the render callback (this-adjusting IScnRender view at +0x58).
     IScnRender* renderCb = reinterpret_cast<IScnRender*>(this);
     if (this != 0) renderCb = reinterpret_cast<IScnRender*>(&mIScnRender);
-    addRenderCB__4CScnFP10IScnRenderUlUl(
-        reinterpret_cast<void*>(mScene), renderCb, 0x10, 0);
+    reinterpret_cast<CScn*>(mScene)->addRenderCB(renderCb, 0x10, 0);
 }
 
 // retail: lwz x4 from r4; stw x4 to r3 (4-word copy, const src avoids interleave)
@@ -265,7 +277,7 @@ void CMenuQuestLog::Term() {
     CDeviceVI::waitForDrawDone();
     IScnRender* render = reinterpret_cast<IScnRender*>(this);
     if (this) render = reinterpret_cast<IScnRender*>(&mIScnRender);
-    removeRenderCB__4CScnFP10IScnRender(reinterpret_cast<CScn*>(mScene), render);
+    reinterpret_cast<CScn*>(mScene)->removeRenderCB(render);
     func_801C3D9C(&mBgTex);
     func_801C40A0(&mTitleAHelp);
     func_80227BD8(&mQstLogList);

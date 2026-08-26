@@ -2,10 +2,30 @@
 
 #include <types.h>
 
-class CScn;
+// Local IScnRender declaration with NO destructor and no inline bodies (see
+// CMenuTutorial.hpp). The shared monolib/scn/IScnRender.hpp defines
+// `virtual ~IScnRender(){}` inline; odr-using that inline dtor from this TU
+// makes MWCC emit a standalone __dt__10IScnRenderFv strong copy (0x40) here
+// and blows the split budget (retail keeps that copy only in CTaskGame.o).
+// Omitting the dtor gives IScnRender an implicitly trivial one while keeping
+// the vtable layout identical (slot order: dtor slot, func_80043F20).
+class IScnRender {
+public:
+    virtual void func_80043F20();
+};
+
+// Minimal CScn view exposing only the render-callback registration used by
+// this TU (retail mangled member symbols; defined in the monolib CScn TU).
+// A local body-less declaration avoids pulling monolib/scn.hpp (see the
+// IScnRender note above).
+class CScn {
+public:
+    void addRenderCB(IScnRender* cb, u32 prio, u32 flag);
+    void removeRenderCB(IScnRender* cb);
+};
 
 #include "monolib/work/CProcess.hpp"
-#include "monolib/scn/IScnRender.hpp"
+
 #include "kyoshin/CBgTex.hpp"
 #include "kyoshin/CTitleAHelp.hpp"
 #include "kyoshin/CQstLogList.hpp"
@@ -122,8 +142,12 @@ extern "C" CMenuQuestLog* __ct__CMenuQuestLog(CMenuQuestLog* _this, CProcess* pa
 // Singleton pointer for the quest-log menu (.sbss).
 extern CMenuQuestLog* lbl_eu_80663FC0;
 
+// Global mode bitfield (bit 0x200000 gates the quest-log Move/render paths);
+// declared in kyoshin/CTaskGame.hpp, which this TU avoids including (see the
+// IScnRender note at the top).
+extern u32 lbl_eu_80663E28;
+
 // C-linkage imports (retail symbol names - keep linkage/signatures verbatim)
-extern "C" void removeRenderCB__4CScnFP10IScnRender(CScn* scn, IScnRender* cb);
 extern "C" bool isIdle__11CTitleAHelpFv(void*);
 extern "C" bool func_80227CCC(void*);
 extern "C" unsigned int func_80228394(void*);

@@ -963,7 +963,7 @@ void* MemManager::getMaxAllocData(ALLOC_HANDLE handle) {
 Gets the percentage of memory allocated in the region indicated by 'handle'.
 */
 f32 MemManager::getPercentAlloc(ALLOC_HANDLE handle) {
-    MemRegion* region = getRegion(handle);
+    MemRegion* region = sRegionBuffer__Q23mtl10MemManager[ALLOC_HANDLE_REGION(handle)];
 
     //No allocations have ever been performed
     if (region->mOldest == nullptr) {

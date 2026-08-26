@@ -264,7 +264,6 @@ void func_802A1610(){
                 iresult = 0;
             } else {
                 float limit = lbl_eu_80668C70;
-                // Walking pointer like retail (not arr[i] indexing).
                 cf::CVoiceActorState** it = arr2;
                 int i = 0;
                 while (i < n) {
@@ -294,13 +293,18 @@ interactStore:
             }
         }
 
-        // Field-id window [0x108, 0x116): flag byte 0x222 on a mask hit.
-        // Single && chain keeps retail's three sequential tests (MWCC folds
-        // nested range ifs into one unsigned compare, retail keeps two cmpis).
-        int phase = func_800822F4__Q22cf13CfGameManagerFv();
-        if (phase > 0x108 && phase < 0x116 &&
-            ((1 << (lbl_eu_80663E42 - 1)) & 0x7F))
-            m->unk222 = 1;
+        // Field-id window: retail lowers this as a dense-switch range check
+        // (cmpi 0x108/ble, cmpi 0x116/bge), so spell it as a switch over the
+        // 0x109..0x115 cases.
+        switch (func_800822F4__Q22cf13CfGameManagerFv()) {
+        case 0x109: case 0x10a: case 0x10b: case 0x10c: case 0x10d:
+        case 0x10e: case 0x10f: case 0x110: case 0x111: case 0x112:
+        case 0x113: case 0x114: case 0x115:
+            // Mask window folds to rlwinm. 0,16,22 (bits 16..22).
+            if ((1 << (lbl_eu_80663E42 - 1)) & 0x7F0000)
+                m->unk222 = 1;
+            break;
+        }
 
         // Battle voice auto-talk: resolve the current player and fire.
         if (m->unk223 != 0) {

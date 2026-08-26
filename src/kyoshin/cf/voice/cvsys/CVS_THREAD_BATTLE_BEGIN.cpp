@@ -32,11 +32,10 @@ CVS_THREAD_BATTLE_BEGIN* __ct__802AFA80(CVoiceHandle* handle, CVoiceHandle* A) {
     // is written as the right operand to land its +/-6 boundary between the
     // two virtual calls.
     s16 count;
-    if (((CVoiceHandleSizeView*)A)->getSize() <= ((CVoiceHandleSizeView*)h)->getSize() - 6) {
+    if (((CVoiceHandleSizeView*)A)->getSize() > ((CVoiceHandleSizeView*)h)->getSize() - 6)
+        count = (s16)((((CVoiceHandleSizeView*)A)->getSize() < ((CVoiceHandleSizeView*)h)->getSize() + 6) + 2);
+    else
         count = 0;
-    } else {
-        count = (s16)(2 - (((CVoiceHandleSizeView*)A)->getSize() < ((CVoiceHandleSizeView*)h)->getSize() + 6));
-    }
 
     // Allocate the (discarded) handle buffer and the object itself.
     if (func_802A330C(0x1e, 1) == NULL) {
@@ -61,13 +60,9 @@ CVS_THREAD_BATTLE_BEGIN* __ct__802AFA80(CVoiceHandle* handle, CVoiceHandle* A) {
         throw;
     }
 
-    // Final base-state triple (retail loads b,a then stores a,b, then c).
-    const u32* fin = lbl_eu_8053AC88;
-    u32 b = fin[1];
-    u32 a = fin[0];
-    obj->unk0 = (u32*)a;
-    obj->unk4 = b;
-    obj->unk8 = fin[2];
+    // Final base-state triple: whole-struct copy so MWCC emits the retail
+    // load-descending/store-ascending word-move pattern.
+    *(CVSThreadStateTriple*)obj = *(CVSThreadStateTriple*)lbl_eu_8053AC88;
     return obj;
 }
 
@@ -81,9 +76,9 @@ void func_802AFC54(CVS_THREAD_BATTLE_BEGIN* self) {
     u32 v0;
     const u32* p = lbl_eu_8053AC94;
     v0 = *p++;
-    self->unk4 = *p++;
-    self->unk0 = (u32*)v0;
-    self->unk8 = *p;
+    ((CVSThreadStateTriple*)self)->b = *p++;
+    ((CVSThreadStateTriple*)self)->a = v0;
+    ((CVSThreadStateTriple*)self)->c = *p;
 
     int cnt = func_802A7870(&self->field_0x28[0], 3, 0);
     s16 scnt = (s16)cnt;
@@ -103,9 +98,9 @@ void func_802B00EC(CVS_THREAD_BATTLE_BEGIN* self) {
     u32 v0;
     const u32* p = lbl_eu_8053ACAC;
     v0 = *p++;
-    self->unk4 = *p++;
-    self->unk0 = (u32*)v0;
-    self->unk8 = *p;
+    ((CVSThreadStateTriple*)self)->b = *p++;
+    ((CVSThreadStateTriple*)self)->a = v0;
+    ((CVSThreadStateTriple*)self)->c = *p;
 
     if (self->field_0x3a == 0) {
         // forward direction: bump the counter, wrap to 0 at the limit

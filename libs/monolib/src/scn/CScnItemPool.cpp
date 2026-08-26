@@ -30,14 +30,13 @@ public:
     virtual ~_reslist_base() {
         // Sentinel reloaded inside the loop condition (not cached) so MWCC
         // keeps node in the low scratch and sentinel/cur in the high one.
-        _reslist_node<T>* sentinel;
         _reslist_node<T>* node = mStartNodePtr->mNext;
-        while (node != (sentinel = mStartNodePtr)) {
+        while (node != mStartNodePtr) {
             _reslist_node<T>* cur = node;
             node = node->mNext;
             cur->mNext = nullptr;
         }
-        sentinel->mNext = sentinel;
+        mStartNodePtr->mNext = mStartNodePtr;
         mStartNodePtr->mPrev = mStartNodePtr;
         if (unk1C == false && mList != nullptr) {
             delete[] mList;

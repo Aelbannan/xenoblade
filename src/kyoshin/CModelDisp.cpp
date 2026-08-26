@@ -167,24 +167,31 @@ extern "C" void func_801FC13C(CModelDisp* self) {
 // lbl_eu_806681F4, decrements field_2FDC by lbl_eu_806681F8 (clamped to
 // lbl_eu_806681EC) and calls each sub-object's vmethod (+0x48).
 extern "C" __declspec(noinline) void func_801FC15C(CModelDisp* self) {
-    f32 t = self->field_2FE0 + lbl_eu_806681E8;
+    // Constant load order fixes MWCC's f-register assignment: threshold -> f0,
+    // increment -> f1 (kept live across the store/compare), then the timer -> f2.
+    f32 lim = lbl_eu_806681F4;
+    f32 inc = lbl_eu_806681E8;
+    f32 t = self->field_2FE0 + inc;
     self->field_2FE0 = t;
-    if (t >= lbl_eu_806681F4) {
-        self->field_2FDC -= lbl_eu_806681F8;
-        if (self->field_2FDC < lbl_eu_806681EC) {
-            self->field_2FDC = lbl_eu_806681EC;
+    if (t >= lim) {
+        // Same trick: floor -> f0, dec -> f1; the floor stays in f0 for the
+        // clamp store, avoiding a second sdata2 load.
+        f32 floorVal = lbl_eu_806681EC;
+        f32 dec = lbl_eu_806681F8;
+        f32 a = self->field_2FDC - dec;
+        self->field_2FDC = a;
+        if (a < floorVal) {
+            self->field_2FDC = floorVal;
             self->field_2FD8 = 2;
             self->field_2FE4 = 1;
         }
 
-        // Iterate over 3 sub-objects and call vmethod on controller pointer
+        // Iterate over 3 sub-objects and call vmethod (+0x48) on the
+        // controller pointer with the current display alpha.
         for (u8 i = 0; i < 3; i++) {
             CModelDispSub* sub = (CModelDispSub*)((u8*)self + i * 0xFF0);
             if (sub->mpController != NULL) {
-                // vcall: vtable[0x48/4 = 18] - takes field_2FDC as float arg
-                typedef void (*VMethod48)(void*, f32);
-                VMethod48* vtbl = *(VMethod48**)sub->mpController;
-                vtbl[18](sub->mpController, self->field_2FDC);
+                ((CDispAlphaVt*)sub->mpController)->m48(self->field_2FDC);
             }
         }
     }

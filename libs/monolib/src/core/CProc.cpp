@@ -3,17 +3,7 @@
 #include "monolib/util.hpp"
 #include "monolib/data_vtables.hpp"
 // FloatUtils-owned constants used by pssCreateView's rect scaling:
-extern const double lbl_eu_8066A280; // 0x4330000080000000 (s16->f32 conversion magic)
 extern float lbl_eu_8066A278; // 0.6f
-// s16 -> f32 conversion matching retail: build the 2^52+x double on the stack
-// (low word = x ^ 0x80000000, high word = 0x43300000) and subtract the shared
-// magic double (MWCC_CASES 7i; statement order matters).
-inline float convF32(s32 v) {
-    union { double d; u32 w[2]; } u;
-    u.w[1] = (u32)v ^ 0x80000000;
-    u.w[0] = 0x43300000;
-    return (float)(u.d - lbl_eu_8066A280);
-}
 
 
 extern "C" {
@@ -199,14 +189,14 @@ static inline ml::CRect16& pssMakeClientRectInline(
     const CProc* proc, PssCreateWalkFrame& wf) {
     u32 length = 0;
     _reslist_node<WORK_ID>* endNode = proc->mViewIDList.mStartNodePtr;
-    wf.size0 = endNode;
+    wf.size2_8 = endNode;
     _reslist_node<WORK_ID>* curNode = endNode->mNext;
-    wf.size8 = endNode;
-    wf.size4 = curNode;
-    wf.sizeC = curNode;
-    while (wf.sizeC != wf.size8) {
+    wf.size2_0 = endNode;
+    wf.size2_4 = curNode;
+    wf.size2_C = curNode;
+    while (wf.size2_C != wf.size2_0) {
         ++length;
-        wf.sizeC = ((_reslist_node<WORK_ID>*)wf.sizeC)->mNext;
+        wf.size2_C = ((_reslist_node<WORK_ID>*)wf.size2_C)->mNext;
     }
 
     if (length == 0) {
@@ -215,13 +205,13 @@ static inline ml::CRect16& pssMakeClientRectInline(
     }
 
     length = 0;
-    wf.size2_C = endNode;
-    wf.size2_4 = endNode;
-    wf.size2_8 = curNode;
-    wf.size2_0 = curNode;
-    while (wf.size2_0 != wf.size2_4) {
+    wf.size8 = endNode;
+    wf.size0 = endNode;
+    wf.size4 = curNode;
+    wf.sizeC = curNode;
+    while (wf.sizeC != wf.size0) {
         ++length;
-        wf.size2_0 = ((_reslist_node<WORK_ID>*)wf.size2_0)->mNext;
+        wf.sizeC = ((_reslist_node<WORK_ID>*)wf.sizeC)->mNext;
     }
 
     CView* parentView;
@@ -252,8 +242,8 @@ static inline ml::CRect16& pssMakeClientRectInline(
 
     s16 sizeX = parentView->mRectData.mViewSize.x;
     s16 sizeY = parentView->mRectData.mViewSize.y;
-    s16 scaledX = (s16)(convF32(sizeX) * lbl_eu_8066A278);
-    s16 scaledY = (s16)(convF32(sizeY) * lbl_eu_8066A278);
+    s16 scaledX = (s16)((float)sizeX * lbl_eu_8066A278);
+    s16 scaledY = (s16)((float)sizeY * lbl_eu_8066A278);
     s16 anotherX = (scaledX - sizeX) / 2;
     s16 anotherY = (scaledY - sizeY) / 2;
     s16 childOff = (s16)(numChildren * 20);

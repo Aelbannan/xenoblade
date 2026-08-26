@@ -9,6 +9,8 @@ class CScnItemPool;
 
 class CScnItemModel;
 
+class CScnItemModelNw4r;
+
 // Overlay view of the model reference-slot run at CScnItemModel+0x08. The
 // slots[4] array lands at absolute offsets 0x7B4..0x7C0. func_804859E8
 // clears slots matching a node; retail folds the first two slots to direct

@@ -66,22 +66,11 @@ int winSys(VMThread* pThread) {
     func_8013D55C(vmArgStringGet(2, vmArgPtrGet(pThread, 1)), 0, 0);
     return 0;
 }
-// Manual signed-int -> float conversion (docs/MWCC_PATTERNS.md 7i): build
-// the 0x4330000080000000 bit pattern and subtract the shared sdata2 magic so
-// the lfd references lbl_eu_80665DC0 instead of a TU-local pool label.
-static float ConvS32ToF32(s32 x) {
-    union {
-        double d;
-        u32 w[2];
-    } u;
-    // xoris word first, then 0x43300000, or MWCC hoists the lis out of order.
-    u.w[1] = (u32)x ^ 0x80000000;
-    u.w[0] = 0x43300000;
-    return u.d - lbl_eu_80665DC0;
-}
 
 // Fade-in script command: (duration, count?). Same shape as fadeOut_1 but
-// mode 2 and the converted duration goes in the last float slot.
+// mode 2; the duration reaches the controller as a double via MWCC's implicit
+// int->double expansion (xoris/0x43300000 word-pair + fsubs correction), and
+// the pooled sdata2 magic maps to lbl_eu_80665DC0 via the unit's pool rule.
 int fadeIn_1(VMThread* pThread) {
     int v1 = vmArgIntGet(2, vmArgPtrGet(pThread, 1));
     int v2;
@@ -90,20 +79,7 @@ int fadeIn_1(VMThread* pThread) {
     } else {
         v2 = vmArgIntGet(3, vmArgPtrGet(pThread, 2));
     }
-    // Manual int->float conversion (docs/MWCC_PATTERNS.md 7i), written inline
-    // with the stores interleaved so MWCC schedules the retail sequence:
-    // xoris word, alpha load, 0x43300000 word, then the fsubs against the
-    // shared sdata2 magic lbl_eu_80665DC0.
-    union {
-        double d;
-        u32 w[2];
-    } u;
-    // Stores sequenced inside the conversion argument so MWCC walks the
-    // subtraction right-to-left like retail (magic constant lands in the
-    // destination register f3).
-    func_80135464(2, v2, lbl_eu_80665DB8, lbl_eu_80665DB8,
-                  (u.w[1] = (u32)v1 ^ 0x80000000, u.w[0] = 0x43300000,
-                   u.d - lbl_eu_80665DC0));
+    func_80135464(2, v2, lbl_eu_80665DB8, lbl_eu_80665DB8, (float)v1);
     return 0;
 }
 // Fade-out script command: (duration, count?). The duration is cast to float

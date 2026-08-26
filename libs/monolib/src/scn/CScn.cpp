@@ -307,9 +307,7 @@ extern "C" void* __dt__4CScnFv(CScn* self, int flags) {
         v->unk10 = lbl_eu_8056E8D0;
         v->unk54 = lbl_eu_8056E8D0 + 0x24;
         if (v->unk88 != NULL) {
-            if (v->unk88 != NULL) {  // double guard matches retail's twin beq
-                v->unk88->~UnkScn8C();
-            }
+            v->unk88->~UnkScn8C();
             v->unk88 = NULL;
         }
         if (self != NULL) {

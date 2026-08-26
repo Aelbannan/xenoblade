@@ -108,7 +108,7 @@ int setFieldBgm(VMThread* pThread) {
         VMArg* arg = vmArgPtrGet(pThread, idx++);
         second = vmArgIntGet(idx, arg);
     }
-    float vol;
+    double vol;
     if (vmArgOmitChk(pThread, idx) != 0) {
         vol = lbl_eu_80667DA0;
         idx++;
@@ -124,7 +124,9 @@ int setFieldBgm(VMThread* pThread) {
         VMArg* arg = vmArgPtrGet(pThread, idx++);
         enable = vmArgBoolGet(idx, arg);
     }
-    func_8007C344__Q22cf13CfGameManagerFv(first, second, enable != 0,
+    // Booleanize via the neg/or/srwi idiom (see pluginCam.cpp setCamOfs).
+    func_8007C344__Q22cf13CfGameManagerFv(first, second,
+                                          (u32)(-enable | enable) >> 31,
                                           (float)volInt / lbl_eu_80667D90);
     return 0;
 }

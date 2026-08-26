@@ -287,20 +287,22 @@ void func_8049EB60(CScnItemCamera* self) {
 void func_8049F168(CScnItemCamera* self, ml::CVec3* v) {
     CScnItemCameraLayout* cam = (CScnItemCameraLayout*)self;
 
-    // Aim point (0x138) += v.
-    nw4r::math::VEC3Add((nw4r::math::VEC3*)&self->mCamParam0,
-                        (nw4r::math::VEC3*)&self->mCamParam0,
-                        (nw4r::math::VEC3*)v);
-
-    // Position (0x54) += v, staged through two temporaries: the helper
-    // writes the sum into newPos (paired stores), the CVec3 copy ctor
-    // makes a member-wise float copy, and the final field stores are
-    // raw-bit word copies (retail lwz/stw shape).
+    // Position (0x54) += v first: the helper writes the sum into newPos
+    // (paired stores), the CVec3 copy ctor makes a member-wise float
+    // copy, and the final field stores are raw-bit word copies
+    // (retail lwz/stw shape).
+    ml::CVec3 tmp;
     ml::CVec3 newPos;
     nw4r::math::VEC3Add((nw4r::math::VEC3*)&newPos,
                         (nw4r::math::VEC3*)&self->mTransform.mPos,
                         (nw4r::math::VEC3*)v);
-    ml::CVec3 tmp(newPos);
+    tmp.set(newPos);
+
+    // Aim point (0x138) += v (scalar adds; MWCC pairs the consecutive
+    // component updates itself).
+    self->mCamParam0 = self->mCamParam0 + v->x;
+    self->mCamParam1 = self->mCamParam1 + v->y;
+    self->mCamParam2 = self->mCamParam2 + v->z;
 
     cam->mPosX = *(u32*)&tmp.x;
     cam->mPosY = *(u32*)&tmp.y;

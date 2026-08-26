@@ -6,11 +6,13 @@ namespace nw4r {
 namespace math {
 
 // Shared MWCC float/double pool entries this function's constants resolve to
-// in the retail build.
-extern const f32 lbl_eu_806634D0; // 0.0001f
-extern const f32 lbl_eu_80669E5C; // 0.0f
-extern const f32 lbl_eu_80669E68; // 1.0f
-extern const f64 lbl_eu_80669E70; // 0.0
+// in the retail build. extern "C" keeps the flat blob-label names (a plain
+// C++ decl inside namespace nw4r::math gets mangled with __Q24nw4r4math and
+// the SDA21 relocs drift).
+extern "C" const f32 lbl_eu_806634D0; // 0.0001f
+extern "C" const f32 lbl_eu_80669E5C; // 0.0f
+extern "C" const f32 lbl_eu_80669E68; // 1.0f
+extern "C" const f64 lbl_eu_80669E70; // 0.0
 
 void PLANE::Set(const VEC3* p0, const VEC3* p1, const VEC3* p2) {
     VEC3 v0, v1, v2;

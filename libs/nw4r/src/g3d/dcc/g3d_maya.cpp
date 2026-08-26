@@ -374,21 +374,23 @@ void ProductTexSrtMtx_SRT(math::MTX34* pMtx, const TexSrt& rSrt) {
 
 } // namespace
 
-// This emitter is load-bearing: the TexSrt matrix builders are referenced only
-// through the retail dispatch tables (lbl_eu_8051D6C0/lbl_eu_8051D6DC in
-// nw4r_data.s), which are invisible to the compiler, so without it -ipa file
-// dead-strips all 14 retail-present functions (attempts 61552/61553).
-DECOMP_FORCEACTIVE(g3d_maya_cpp,
-                   MakeTexSrtMtx_S, MakeTexSrtMtx_R, MakeTexSrtMtx_T,
-                   MakeTexSrtMtx_SR, MakeTexSrtMtx_RT, MakeTexSrtMtx_ST,
-                   MakeTexSrtMtx_SRT, ProductTexSrtMtx_S, ProductTexSrtMtx_R,
-                   ProductTexSrtMtx_T, ProductTexSrtMtx_SR, ProductTexSrtMtx_RT,
-                   ProductTexSrtMtx_ST,
-                   ProductTexSrtMtx_SRT);
-// The emitter function itself is retail-absent;
-// tools/postprocess_reloc_names.py UNIT_RULES drops it from the link
-// (drop_text_symbols, trailing-* prefix match). #pragma force_active does NOT
-// replace this emitter (-ipa file DCE ignores it).
+// Retail dispatch tables (nw4r_data.s .rodata 0x8051D6C0/0x8051D6DC, 7
+// entries each in reverse declaration order). Defining them here gives
+// -ipa file real references to the 14 TexSrtMtx functions above, replacing
+// the former DECOMP_FORCEACTIVE emitter entirely (attempts 61552/61553 and
+// forceactive-retire/*: ((used)) and #pragma force_active are both ignored
+// by -ipa file DCE, and external linkage would break the @unnamed@g3d_maya_cpp@
+// mangled names). The tables must also be removed from nw4r_data.s to avoid
+// duplicate globals at link.
+extern "C" const TexSrtMtxFunc lbl_eu_8051D6C0[7] = {
+    MakeTexSrtMtx_SRT, MakeTexSrtMtx_RT, MakeTexSrtMtx_ST,
+    MakeTexSrtMtx_T, MakeTexSrtMtx_SR, MakeTexSrtMtx_R, MakeTexSrtMtx_S,
+};
+extern "C" const TexSrtMtxFunc lbl_eu_8051D6DC[7] = {
+    ProductTexSrtMtx_SRT, ProductTexSrtMtx_RT, ProductTexSrtMtx_ST,
+    ProductTexSrtMtx_T, ProductTexSrtMtx_SR, ProductTexSrtMtx_R,
+    ProductTexSrtMtx_S,
+};
 
 bool CalcTexMtx_Maya(math::MTX34* pMtx, bool bSet, const TexSrt& rSrt, TexSrt::Flag flag) {
     u32 idx = DECOMP_PPC_RLWINM(flag, 31, 29, 31);

@@ -203,13 +203,14 @@ extern "C" void func_800FEF4C(CMainMenu* self) {
         if (func_80137444__FPQ34nw4r3lyt13AnimTransformf(self->field_0x8C, lbl_eu_80666F18) == 0) {
             break;
         }
+        // Strings hoisted above the branch like case 1.
         {
+            char* s1;
+            char* s2;
             int n = self->field_0xC0 + 1;
             if (n > 0) {
-                char* s1 =
-                    func_80136190(lbl_eu_804FCEBC + 0x5e, lbl_eu_804FCEBC + 0x67, n);
-                char* s2 =
-                    func_80136190(lbl_eu_804FCEBC + 0x5e, lbl_eu_804FCEBC + 0x6c, n);
+                s1 = func_80136190(lbl_eu_804FCEBC + 0x5e, lbl_eu_804FCEBC + 0x67, n);
+                s2 = func_80136190(lbl_eu_804FCEBC + 0x5e, lbl_eu_804FCEBC + 0x6c, n);
                 func_80136B4C(self->field_0x7C, lbl_eu_804FCEBC + 0x71, s1, 0);
                 func_80136B4C(self->field_0x7C, lbl_eu_804FCEBC + 0x7c, s2, 0);
             } else {

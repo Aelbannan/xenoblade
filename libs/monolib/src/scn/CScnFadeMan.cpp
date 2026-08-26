@@ -121,7 +121,10 @@ void CScnFadeMan::update() {
 // constness lets MWCC hoist the sdata2 global lfs above the prologue stores,
 // matching retail's load schedule; the vtable word references this exact name.
 extern "C" void cbRenderBefore__11CScnFadeManFv(const CScnFadeMan* self) {
-    if (self->mCurrentColor.a == lbl_eu_8066AB78) {
+    // Named local first: birth-order allocator hoists this sdata load to the
+    // top of the function (retail issues it before the prologue stores).
+    const float fadeZero = lbl_eu_8066AB78;
+    if (fadeZero == self->mCurrentColor.a) {
         return;
     }
     CDeviceGX::getCacheInstance()->func_8044BE38();

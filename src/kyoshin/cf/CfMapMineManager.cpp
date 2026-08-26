@@ -1,12 +1,7 @@
 // CfMapMineManager - mine-point management (field collection points)
 #include "kyoshin/cf/CfMapMineManager.hpp"
 #include "monolib/scn/CScnTimeApi.hpp"
-// CfGameManager.hpp now declares the unified pointer-arg form; this TU's
-// retail sites reproduce without materializing r3, so keep the TU-local
-// no-arg decl from CfMapMineManager.hpp and rename the shared copy away.
-#define CItem_initItemImplInstances mineMgrCfGameManagerCopyUnused
 #include "kyoshin/cf/CfGameManager.hpp"
-#undef CItem_initItemImplInstances
 // High-level C++ reconstruction from retail ASM (US, 0x8020785C..0x80209D20).
 // All 20 TU functions carry placeholder retail symbol names; they are emitted
 // with C linkage so the object exports the exact retail symbols.
@@ -1079,7 +1074,7 @@ extern "C" int func_802067E4(CfMapMineManager* self, MinePoint* pt,
     }
 
     func_801583E0(item);
-    CItemImplInstances* impl = CItem_initItemImplInstances();
+    CItemImplInstances* impl = (CItemImplInstances*)CItem_initItemImplInstances(item);
     ((CItemInstVt1C*)impl)->_v1C(item);
 
     u8 colA;
@@ -1125,9 +1120,9 @@ extern "C" int func_802067E4(CfMapMineManager* self, MinePoint* pt,
     u8 hi = lbl_eu_80662750[rangeIdx * 2 + 1];
 
     for (int k = 0; k < 4; k++) {
-        CItemImplInstances* im = CItem_initItemImplInstances();
+        CItemImplInstances* im = (CItemImplInstances*)CItem_initItemImplInstances(item);
         ((CItemInstVt50*)im)->_v50(item, k, 0);
-        CItemImplInstances* im2 = CItem_initItemImplInstances();
+        CItemImplInstances* im2 = (CItemImplInstances*)CItem_initItemImplInstances(item);
         ((CItemInstVt68*)im2)->_v68(item, k, 0);
     }
 
@@ -1172,9 +1167,9 @@ extern "C" int func_802067E4(CfMapMineManager* self, MinePoint* pt,
             }
             if (dup == 0) {
                 u16 qty = mtRand__Q22ml4mathFii(lo, hi);
-                CItemImplInstances* im = CItem_initItemImplInstances();
+                CItemImplInstances* im = (CItemImplInstances*)CItem_initItemImplInstances(item);
                 ((CItemInstVt50*)im)->_v50(item, got, itemId);
-                CItemImplInstances* im2 = CItem_initItemImplInstances();
+                CItemImplInstances* im2 = (CItemImplInstances*)CItem_initItemImplInstances(item);
                 ((CItemInstVt68*)im2)->_v68(item, got, qty);
                 *dst++ = itemId;
                 got++;
@@ -1341,7 +1336,7 @@ extern "C" void func_802074F0(CfMapMineManager* self) {
     // Push a message into the ring buffer (evicting the oldest when full).
     char msgText[0x40];
     msgText[0] = 0;
-    CItemImplInstances* im = CItem_initItemImplInstances();
+    CItemImplInstances* im = (CItemImplInstances*)CItem_initItemImplInstances(&drop);
     const char* nm = ((CItemInstVt50*)im)->_v20(&drop);
     u32 msgLen = strlen(nm);
     strcpy(msgText, nm);
@@ -1375,7 +1370,7 @@ extern "C" void func_802074F0(CfMapMineManager* self) {
     else if (cval == 0x32) func_800826F0__Q22cf13CfGameManagerFv(0x71);
     else if (cval == 0x1F4) func_800826F0__Q22cf13CfGameManagerFv(0x72);
 
-    CItemImplInstances* im2 = CItem_initItemImplInstances();
+    CItemImplInstances* im2 = (CItemImplInstances*)CItem_initItemImplInstances(&drop);
     u32 rarity = ((CItemInstVt50*)im2)->_v08(&drop);
     if ((rarity & 0xFFFF) >= 5) {
         func_800826F0__Q22cf13CfGameManagerFv(0x76);

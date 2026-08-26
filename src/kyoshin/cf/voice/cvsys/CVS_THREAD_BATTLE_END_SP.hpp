@@ -94,7 +94,7 @@ struct CVoiceListNode {
 };
 
 struct CVoiceManager {
-    void* field_0;              // 0x00
+    u32 field_0;                // 0x00 (unused here)
     CVoiceListNode* field_4;    // 0x04: circular-list sentinel
 };
 

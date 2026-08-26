@@ -748,6 +748,26 @@ struct AnimTransformBasicData {
 // If I must return void, I can't return the pointer. But the ASM returns it.
 // I will assume the signature in the prompt is slightly off and the function actually returns a pointer.
 // But the prompt says "return_info": {"type": "void"}
+// Defined before the Pane variant so MWCC cannot inline it and instead
+// emits the retail `bl` to the Pane-variant symbol.
+int CalcAnimationNum__Q34nw4r3lyt12AnimResourceCFPQ34nw4r3lyt4Paneb(
+    const nw4r::lyt::AnimResource*, nw4r::lyt::Pane*, bool);
+
+int CalcAnimationNum__Q34nw4r3lyt12AnimResourceCFPQ34nw4r3lyt5Groupb(
+    const nw4r::lyt::AnimResource* _this, nw4r::lyt::Group* pGroup,
+    bool recursive) {
+
+    int num = 0;
+    nw4r::lyt::detail::PaneLinkList& rList = pGroup->GetPaneList();
+
+    NW4R_UT_LINKLIST_FOREACH (it, rList, {
+        num += CalcAnimationNum__Q34nw4r3lyt12AnimResourceCFPQ34nw4r3lyt4Paneb(
+            _this, it->mTarget, recursive);
+    })
+
+    return num;
+}
+
 int CalcAnimationNum__Q34nw4r3lyt12AnimResourceCFPQ34nw4r3lyt4Paneb(
     const nw4r::lyt::AnimResource* _this, nw4r::lyt::Pane* pPane,
     bool recursive) {
@@ -780,21 +800,6 @@ int CalcAnimationNum__Q34nw4r3lyt12AnimResourceCFPQ34nw4r3lyt4Paneb(
             }
         }
     }
-    return num;
-}
-
-int CalcAnimationNum__Q34nw4r3lyt12AnimResourceCFPQ34nw4r3lyt5Groupb(
-    const nw4r::lyt::AnimResource* _this, nw4r::lyt::Group* pGroup,
-    bool recursive) {
-
-    int num = 0;
-    nw4r::lyt::detail::PaneLinkList& rList = pGroup->GetPaneList();
-
-    NW4R_UT_LINKLIST_FOREACH (it, rList, {
-        num += CalcAnimationNum__Q34nw4r3lyt12AnimResourceCFPQ34nw4r3lyt4Paneb(
-            _this, it->mTarget, recursive);
-    })
-
     return num;
 }
 

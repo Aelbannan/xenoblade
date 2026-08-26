@@ -3,6 +3,12 @@
 
 #include <harness_catalog.h>
 #include "libs/monolib/src/scn/CScnItemModel.hpp"
+#include <nw4r/g3d/g3d_anmscn.h>
+#include <nw4r/g3d/g3d_fog.h>
+#include <nw4r/g3d/g3d_scnmdl.h>
+#include <nw4r/g3d/g3d_scnobj.h>
+#include <nw4r/g3d/g3d_scnroot.h>
+#include "libs/monolib/src/scn/CScnItemModelNw4r.hpp"
 #include "monolib/device/CDeviceVI.hpp"
 #include "monolib/scn/code_804BF59C.hpp"
 #include "monolib/util/MemManager.hpp"
@@ -2340,7 +2346,30 @@ extern "C" void func_804827DC(CScnItemModel* self, u32 param) {
         }
     }
 }
-extern "C" void func_80482918() {}
+// func_80482918: set/clear bit 0 of +0x7A4 on self, then recurse on every
+// live model in both 4-slot reference lists (0x7B4, 0x834) and the linked
+// model at 0x7C4. extern "C" keeps the self-recursion reloc name verbatim
+// (reloc-site gate).
+extern "C" void func_80482918(CScnItemModelNw4r* self, u32 enable) {
+    if (enable) {
+        self->field_0x7A4 |= 1;
+    } else {
+        self->field_0x7A4 &= ~1u;
+    }
+    for (u32 i = 0; i < 4; i++) {
+        if (self->slots7B4[i] != 0) {
+            func_80482918(self->slots7B4[i], enable);
+        }
+    }
+    if (self->field_0x7C4 != 0) {
+        func_80482918((CScnItemModelNw4r*)self->field_0x7C4, enable);
+    }
+    for (int i = 0; i < 4; i++) {
+        if (self->slots834[i] != 0) {
+            func_80482918(self->slots834[i], enable);
+        }
+    }
+}
 extern "C" void func_804829E8() {}
 // func_80482AD4: remove the first field_0x7F0 element equal to `value` by
 // shifting the tail down one slot and decrementing count820. count820 is

@@ -8,8 +8,8 @@
 #include "monolib/math/Random.hpp"
 
 // us-802ae1a8 (func_802ABA70)
-// If no voice is active, reset the base state triple in self->unk0..unk8
-// from the init table lbl_eu_8053A1AC.
+// If no voice is active, reset the base state triple in the object header
+// (offsets 0x00..0x08) from the init table lbl_eu_8053A1AC.
 void func_802ABA70(CVS_THREAD_BATTLE_END_SP* self) {
     if (func_802A3E88(self) == 0) {
         // Pointer increment reproduces the lwzu/spread load-with-update.

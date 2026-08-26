@@ -169,29 +169,33 @@ CtrlStateWork* func_801A9CCC(CtrlStateWork* work) {
     work->m19 = 0;
     work->m1A = 0;
     work->m1B = 0;
-    work->m1C = 1;
 
-    int i;
-    for (i = 0; i < 128; i++) {
-        CtrlState* it = &work->mEntries[i];
-        it->m1C = lbl_eu_80667D60;
-        it->m20 = lbl_eu_80667D64;
-        it->m28 = lbl_eu_80667D60;
+    // Default-initialize all 128 entries.
+    CtrlState* it = &work->mEntries[0];
+    CtrlState* tail = &work->mEntries[128];
+    while (it != tail) {
+        it->m1C = lbl_eu_80667D64;
+        it->m20 = lbl_eu_80667D60;
+        it->m28 = lbl_eu_80667D64;
         it->m2C = -1;
         it->m2E = 0;
         it->m30 = 0;
         it->m32 = 0;
+        ++it;
     }
 
     work->m1C = 1;
     work->m18 = 0;
 
+    // Load the shared pointer-to-member-function callback and invoke it on
+    // every entry.
     CtrlStateFnBits cb;
     cb.raw[0] = lbl_eu_805333E0[0];
     cb.raw[1] = lbl_eu_805333E0[1];
     cb.raw[2] = lbl_eu_805333E0[2];
+    CtrlStateFn fn = cb.fn;
     CtrlStateFnBits cbCall;
-    cbCall.fn = cb.fn;
+    cbCall.fn = fn;
     CtrlState* end = &work->mEntries[128];
     for (CtrlState* it = work->mEntries; it != end; ++it) {
         (it->*cbCall.fn)();

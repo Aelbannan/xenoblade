@@ -763,7 +763,7 @@ s32 func_804BEEF8(s32 idx) {
     if (mask != 0) {
         crossing = 1;
         ml::CVec3* cur = (ml::CVec3*)lbl_eu_80665970;
-        VEC3Sub((Vec*)&diff, (const Vec*)cur, (const Vec*)pos);
+        nw4r::math::VEC3Sub((nw4r::math::VEC3*)&diff, (const nw4r::math::VEC3*)cur, (const nw4r::math::VEC3*)pos);
         if (diff.x == lbl_eu_8066AF44 && diff.y == lbl_eu_8066AF44 &&
             diff.z == lbl_eu_8066AF44) {
             dir.x = lbl_eu_8066AF44;
@@ -775,7 +775,7 @@ s32 func_804BEEF8(s32 idx) {
             if (mag2 == lbl_eu_8066AF44) {
                 dir = ML_ZERO;
             } else {
-                PSVECNormalize(&dir.x, &dir.x);
+                PSVECNormalize((const Vec*)&dir, (Vec*)&dir);
             }
         }
         ref = &dir;
@@ -933,7 +933,7 @@ s32 func_804BF3EC(f32* v, f32* outLen, s32 flag, f32 scale) {
         if (q == 0) {
             if (flag != 0) {
                 outLen[0] = lbl_eu_8066AF6C;
-                VEC3Scale((Vec*)v, (const Vec*)v, lbl_eu_8066AF6C);
+                nw4r::math::VEC3Scale((nw4r::math::VEC3*)v, (const nw4r::math::VEC3*)v, lbl_eu_8066AF6C);
                 result = 2;
             }
         } else {

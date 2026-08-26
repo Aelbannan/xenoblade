@@ -107,10 +107,11 @@ extern "C" {
 
 void pluginUiRegist();
 
-// Fade controller hook: (int mode, int arg, float a, float b, double c).
-// The last parameter is a double: retail fadeIn_1 passes the raw
-// int->double conversion result with no frsp.
-void func_80135464(int r3, int r4, float f1, float f2, double f3);
+// Fade controller hook: (int mode, int arg, float a, float b, float c).
+// The last argument is an int->float cast: MWCC's inline expansion emits
+// xoris/0x43300000 word-pair + fsubs against the shared sdata2 magic
+// (renamed to lbl_eu_80665DC0 by the unit's postprocess pool rule).
+void func_80135464(int r3, int r4, float f1, float f2, float f3);
 
 // Item-grant helper: 8 register args + 1 stack arg.
 void func_8013E2E0(u32 a1, u32 a2, u32 a3, u32 a4, u32 a5, u32 a6, u32 a7,

@@ -480,11 +480,8 @@ extern "C" void* func_80157C4C(u32, s16);
 extern "C" u32 func_801392E4(u32);
 extern "C" u32 func_801361E8(u32, const char*, u32);
 extern "C" u32 func_80139358(u32);
-// CfGameManager.hpp (included transitively) declares
-// CItem_initItemImplInstances() with an empty parameter list; MWCC rejects a
-// differing one-argument redeclaration as an illegal overload, so keep the
-// retail symbol under its zero-arg declaration and cast at the call site.
-#define CItem_initItemImplInstances(item) ((void* (*)(void*))CItem_initItemImplInstances)(item)
+// CfGameManager.hpp (included transitively) now declares the unified
+// pointer-arg form, matching every call site here directly - no cast needed.
 extern "C" u32 func_801D3320(void*);
 extern "C" void func_80158118(void*, u32);
 extern "C" u32 func_80208360(void*);

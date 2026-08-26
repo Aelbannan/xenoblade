@@ -380,6 +380,8 @@ void SFTIM_VbIn(void) {
     u32** ppHn;
     s32 i;
     void* h;
+    s32 timeVal;
+    s32 timeUnit;
     u32 csB;
     u32 csA;
     u8* cb;
@@ -444,9 +446,6 @@ void SFTIM_VbIn(void) {
         }
 
         {
-            /* Out params for the per-handle time fetch */
-            s32 timeVal;
-            s32 timeUnit;
             u8* hp = (u8*)h;
             s32 mode;
             s32 (*getTimeFn)(void*, s32*, s32*);

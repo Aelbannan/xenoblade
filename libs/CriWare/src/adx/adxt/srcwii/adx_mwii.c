@@ -374,11 +374,14 @@ void ADXM_ShutdownThrd(void) {
     OSResumeThread(&base->field_0x78);
     while (base->field_0x9D4 == 0)
         OSResumeThread(&base->field_0x78);
-    if (base->field_0x10.field_0x14 != 16) {
+    /* retail materializes the param block pointer here (addi r3, r31, 0x10);
+     * derive it from the global (not via base) so MWCC keeps it a separate web */
+    struct AdxParams* prm = &lbl_eu_805F3A50.field_0x10;
+    if ((s32)prm->field_0x14 != 16) {
         s32 irq = OSDisableInterrupts();
         OSDisableScheduler();
         base->field_0x70 = 1;
-        OSSetThreadPriority(lbl_eu_805FBA78, (s32)lbl_eu_805FBA7C);
+        OSSetThreadPriority(lbl_eu_805FBA78, lbl_eu_805FBA7C);
         base->field_0x70 = 0;
         OSEnableScheduler();
         OSRestoreInterrupts(irq);

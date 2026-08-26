@@ -4167,3 +4167,32 @@ keeps sda21 away" trick (MWCC_CASES §1a) which only covers symbols defined in O
 - Result:    initialize FULL_MATCH 99.8% (from CODE_MATCH 98.5% with 13+ reg_swaps / 36 structural variants tried); standbyWork(thread,bool) refreshed to 100.0%.
 - Confidence: repo_proven
 - Applies to/a.k.a.: any TU where retail inlined a create/init factory into a caller — prefer helper-call-plus-literal over hand-inlining the body; register_mapping.md Rule A does not apply when an IPA-folded constant is the first-born web.
+
+### Literal try{...}catch(...){throw;} reproduces monolib reslist exception-frame codegen (ScheduleList func_804E4830, Wii/1.1 -O4,p -Cpp_exceptions on)
+
+MWCC_CASES ref:8303d15428 diagnosed that retail's dead `stw r1,N(r31)` saves and backchain-restoring
+epilogues come from `_reslist_node::setItem`'s `try{...}catch(...){throw;}` under `-Cpp_exceptions on`,
+but left "no source change needed" as the fix note (frame-size coupling). Follow-up proof from
+ScheduleList `func_804E4830`: writing the construct LITERALLY at the inlined store site
+
+```cpp
+if (temp != 0) {
+    if (temp != 0) {
+        try {
+            temp->mItem = p;
+        } catch (...) {
+            throw;
+        }
+    }
+}
+```
+
+reproduces from plain high-level C++: the exception sp-save (`stw sp,28(r31)`), the doubled
+`addic./beq` null-guards, AND the backchain epilogue (`or r10,r31,r31; lmw ...; lwz r10,0(sp);
+lwz r0,4(r10); or sp,r10,r10`) — function jumped 3.4% -> 37.9% with size gap -0x10 -> -0x4, zero
+regressions TU-wide. The unit must compile with `-Cpp_exceptions on` (cflags_game already sets it;
+the base list's `off` is overridden).
+
+Applies to/a.k.a.: any monolib reslist push_back/setItem/insert inlined into matched code
+(reslist-heavy TUs: effect, coli, scn); whenever a retail function shows a dead sp-store plus
+backchain-restore epilogue, suspect an inlined throwing member and write the try/catch literally.

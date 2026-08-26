@@ -1753,14 +1753,12 @@ PrepareStrmImpl__Q34nw4r3snd18SoundArchivePlayerFPQ44nw4r3snd6detail9StrmSoundPC
     const SoundArchive::StrmSoundInfo* pStrmInfo,
     SoundStartable::StartInfo::StartOffsetType startType, int startOffset) {
 
-    (void)self;
-
-    const StrmMgrState& rMgr = *reinterpret_cast<const StrmMgrState*>(this);
+    const StrmMgrState& rMgr = *reinterpret_cast<const StrmMgrState*>(self);
 
     // Setup may fail while every stream slot is busy; stop one sound and
     // retry until it succeeds or the situation proves unrecoverable.
     int setupResult = pSound->Setup(
-        &mStrmBufferPool,
+        &self->mStrmBufferPool,
         reinterpret_cast<const StrmSoundInfoLayout*>(pStrmInfo)->field_0x4,
         reinterpret_cast<const StrmSoundInfoLayout*>(pStrmInfo)->field_0x6);
 
@@ -1791,7 +1789,7 @@ PrepareStrmImpl__Q34nw4r3snd18SoundArchivePlayerFPQ44nw4r3snd6detail9StrmSoundPC
         pSound->Stop(0);
 
         setupResult = pSound->Setup(
-            &mStrmBufferPool,
+            &self->mStrmBufferPool,
             reinterpret_cast<const StrmSoundInfoLayout*>(pStrmInfo)
                 ->field_0x4,
             reinterpret_cast<const StrmSoundInfoLayout*>(pStrmInfo)
@@ -1824,7 +1822,7 @@ PrepareStrmImpl__Q34nw4r3snd18SoundArchivePlayerFPQ44nw4r3snd6detail9StrmSoundPC
     }
     }
 
-    ut::FileStream* pFileStream = mSoundArchive->detail_OpenFileStream(
+    ut::FileStream* pFileStream = self->mSoundArchive->detail_OpenFileStream(
         pSndInfo->fileId,
         reinterpret_cast<char*>(pSound) + 0xED0, // file stream buffer
         pSound->GetFileStreamBufferSize());

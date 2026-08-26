@@ -255,8 +255,7 @@ void func_80097598(cf::CtrlPc* self) {
 void func_80097A5C(cf::CtrlPc* self) {
     u32 mask;
     ArtsSelStateViewPc* sel;
-    int ok = func_80097E00(self);
-    if (ok == 0) {
+    if (func_80097E00(self) == 0) {
         return;
     }
     Fd44State* h = func_8017FD44();

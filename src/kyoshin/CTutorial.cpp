@@ -5,7 +5,10 @@
 
 #include "kyoshin/CTutorial.hpp"
 
-#include "kyoshin/code_80135FDC.hpp"
+// func_80136910 and friends are declared in CTutorial.hpp; the shared
+// code_80135FDC.hpp declaration of func_80136910 (u8 third parameter) is
+// deliberately NOT included here - retail's caller saw an int-width
+// parameter, which changes MWCC's argument-extension codegen.
 
 #include "monolib/device/CDeviceVI.hpp"
 #include "monolib/util/MemManager.hpp"
@@ -127,14 +130,14 @@ __declspec(noinline) void CTutorial::func_8029B010() {
  * loaded locale archive (mFileHandle1 actually holds an accessor-like object)
  * and bind it onto the layout. */
 void CTutorial::func_8029B124() {
-    char buf[0x28];
-    // (s8)(x+1) makes MWCC emit extsb-before-increment (retail shape).
-    func_80136910(mpLayout, &lbl_eu_80510290[0x79], (s8)(field_50 + 1));
+    char buf[0x20];
+    // Sign-extend before increment: retail computes extsb(field_50)+1.
+    func_80136910(mpLayout, &lbl_eu_80510290[0x79], field_50 + 1);
     func_80136910(mpLayout, &lbl_eu_80510290[0x82], field_51);
     if (func_80086F9C__Q22cf13CfGameManagerFv(-1) != 0) {
-        sprintf(buf, &lbl_eu_80510290[0x8b], field_48, (s8)(field_50 + 1));
+        sprintf(buf, &lbl_eu_80510290[0x8b], field_48, field_50 + 1);
     } else {
-        sprintf(buf, &lbl_eu_80510290[0xa0], field_48, (s8)(field_50 + 1));
+        sprintf(buf, &lbl_eu_80510290[0xa0], field_48, field_50 + 1);
     }
     void* tex = reinterpret_cast<nw4r::lyt::ResourceAccessor*>(mFileHandle1)
                     ->GetResource(0x74696d67, buf, 0);

@@ -7,9 +7,11 @@
 #include "monolib/math/Random.hpp"
 #include <string.h>
 
-// 0x4330000080000000 s32->f32 conversion magic (2^52 + 2^31): retail-named
-// sdata2 object referenced by the implicit-cast literal pool.
-extern f64 lbl_eu_80668C98;
+// 0x4330000080000000 s32->float conversion magic (2^52 + 2^31), defined in
+// .sdata2 under its retail pool name so MWCC's implicit-conversion literal
+// pool relocates to lbl_eu_80668C98 instead of a synthesised @N label.
+__declspec(section ".sdata2") extern const f64 lbl_eu_80668C98 =
+    4503601774854144.0;
 
 // Init-data tables (3 u32s each: {0, -1, callback}). Each slot state carries
 // a {field_0, field_4, callback} triple that the rotation function copies into
@@ -224,10 +226,10 @@ CVS_THREAD_EHP* __ct__802A5ED4(CVoiceHandle* handle, CVoiceHandle* owner2, s32 h
 
     // Gauge computation (textually duplicated in retail):
     //   frac = max / cur, ratio = (max - hp) / cur.
-    // The hp s32->double step must be recomputed inside each block (retail
-    // does not keep it live in an FPR across the virtual calls).
+    // The hp s32->float step is MWCC's builtin int->float lowering (recomputed
+    // inside each block; retail does not keep it live across the calls).
     cur = ((CVoiceChainVTV*)handle)->getCur();
-    ratio = (((CVoiceChainVTV*)handle)->getMax() - (double)hp) / cur;
+    ratio = (((CVoiceChainVTV*)handle)->getMax() - hp) / cur;
     cur = ((CVoiceChainVTV*)handle)->getCur();
     frac = ((CVoiceChainVTV*)handle)->getMax() / cur;
 
@@ -235,7 +237,7 @@ CVS_THREAD_EHP* __ct__802A5ED4(CVoiceHandle* handle, CVoiceHandle* owner2, s32 h
     if (ok == 0) {
         // Duplicated re-check with the 0.3 threshold.
         cur = ((CVoiceChainVTV*)handle)->getCur();
-        ratio = (((CVoiceChainVTV*)handle)->getMax() - (double)hp) / cur;
+        ratio = (((CVoiceChainVTV*)handle)->getMax() - hp) / cur;
         cur = ((CVoiceChainVTV*)handle)->getCur();
         frac = ((CVoiceChainVTV*)handle)->getMax() / cur;
 

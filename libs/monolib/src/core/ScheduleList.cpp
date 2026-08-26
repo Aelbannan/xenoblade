@@ -387,11 +387,16 @@ CSchedule* func_804E4830(SLList* self, ScheduleEntry* entries,
         i++;
     }
     temp = &self->mRes.mList[i];
-    // reslist setItem: the inlined member call carries null-guards (and, at
-    // retail frame sizes, an exception sp-save).
+    // reslist setItem: the original wraps the store in try/catch(...){throw;}
+    // - under -Cpp_exceptions on each inlined instance carries null-guards
+    // plus an exception-frame sp-save.
     if (temp != 0) {
         if (temp != 0) {
-            temp->mItem = p;
+            try {
+                temp->mItem = p;
+            } catch (...) {
+                throw;
+            }
         }
     }
     temp->mNext = sentinel;

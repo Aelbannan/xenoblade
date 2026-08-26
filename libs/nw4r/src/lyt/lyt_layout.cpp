@@ -1,6 +1,14 @@
 #include <nw4r/lyt.h>
 #include <nw4r/ut.h>
 
+// Retail CreateAnimTransform references the Layout allocator through its
+// sbss pool label (not the lbl_eu_80665488 slot the sibling lyt TUs use).
+extern MEMAllocator* lbl_eu_80665478;
+
+// TextBox's runtime type descriptor is resolved through the shared sbss
+// pool slot rather than the nw4r::lyt::TextBox::typeInfo symbol itself.
+extern const nw4r::ut::detail::RuntimeTypeInfo lbl_eu_80665488;
+
 /******************************************************************************
  *
  * Utility functions
@@ -12,9 +20,23 @@ using namespace nw4r;
 using namespace nw4r::lyt;
 
 void SetTagProcessorImpl(Pane* pPane, ut::WideTagProcessor* pProcessor) {
-    TextBox* pTextBox = ut::DynamicCast<TextBox*>(pPane);
-    if (pTextBox != NULL) {
-        pTextBox->SetTagProcessor(pProcessor);
+    // Inlined ut::DynamicCast<TextBox*> against the pool-slot type descriptor:
+    // walk the pane's RTTI parent chain looking for TextBox's typeInfo.
+    bool isTextBox = false;
+
+    if (pPane != NULL) {
+        for (const ut::detail::RuntimeTypeInfo* pIt =
+                 pPane->GetRuntimeTypeInfo();
+             pIt != NULL; pIt = pIt->mParentTypeInfo) {
+            if (pIt == &lbl_eu_80665488) {
+                isTextBox = true;
+                break;
+            }
+        }
+    }
+
+    if (isTextBox) {
+        static_cast<TextBox*>(pPane)->SetTagProcessor(pProcessor);
     }
 
     NW4R_UT_LINKLIST_FOREACH (it, pPane->GetChildList(),
@@ -75,6 +97,12 @@ bool IsIncludeAnimationGroupRef(nw4r::lyt::GroupContainer* pGroupContainer,
 
 extern void* LLMH_force_us_80402184 = (void*)&IsIncludeAnimationGroupRef;
 
+// Retail nw4r::lyt::AnimResource::Set(const void*) - its class members are
+// protected and the declaring header isn't extendable here, so reference the
+// retail symbol directly.
+extern "C" void Set__Q34nw4r3lyt12AnimResourceFPCv(
+    AnimResource* _this, const void* pAnmBinary);
+
 MEMAllocator* Layout::mspAllocator = NULL;
 
 /******************************************************************************
@@ -93,26 +121,33 @@ Layout::~Layout() {
 
     if (pGroupContainer != NULL) {
         pGroupContainer->~GroupContainer();
-        FreeMemory(pGroupContainer);
+        MEMFreeToAllocator(lbl_eu_80665478, pGroupContainer);
     }
 
-    // Loaded only now (retail schedules the mpRootPane load after the
-    // group-container block; hoisting it would add an extra instruction).
     Pane* pRootPane = mpRootPane;
 
-    if (pRootPane != NULL && !pRootPane->IsUserAllocated()) {
-        pRootPane->~Pane();
-        FreeMemory(pRootPane);
+    // Retail evaluates the null-check twice (CSE'd into one compare with a
+    // dead re-test); keep the duplicated test for byte parity.
+    if (pRootPane != NULL) {
+        if (!pRootPane->IsUserAllocated() && pRootPane != NULL) {
+            pRootPane->~Pane();
+            MEMFreeToAllocator(lbl_eu_80665478, pRootPane);
+        }
     }
 
     NW4R_UT_LINKLIST_FOREACH_SAFE (it, mAnimTransList, {
         mAnimTransList.Erase(it);
-        it->~AnimTransform();
-        Layout::FreeMemory(&*it);
-    })
 
-    nw4r::ut::detail::LinkListImpl &rListImpl = mAnimTransList;
-    rListImpl.~LinkListImpl();
+        // Object pointer formed after the erase (retail ordering); the
+        // destroy/free is guarded on it.
+        AnimTransform* pAnimTrans = &*it;
+        if (pAnimTrans != NULL) {
+            pAnimTrans->~AnimTransform();
+            MEMFreeToAllocator(lbl_eu_80665478, pAnimTrans);
+        }
+    })
+    // mAnimTransList's LinkListImpl destructor is emitted automatically as
+    // member destruction (guarded addic./beq call) - do not call it here.
 }
 
 bool Layout::Build(const void* pLytBinary, ResourceAccessor* pAccessor) {
@@ -254,62 +289,62 @@ bool Layout::Build(const void* pLytBinary, ResourceAccessor* pAccessor) {
 
 AnimTransform* Layout::CreateAnimTransform(const void* pAnmBinary,
                                            ResourceAccessor* pAccessor) {
+    // Wrap the raw animation binary in an AnimResource, then defer to the
+    // virtual AnimResource-based overload.
+    // Retail elides the trivial AnimResource constructor (-ipa), so use
+    // raw aligned storage instead of invoking the out-of-line ctor.
+    u32 resourceStorage[sizeof(AnimResource) / sizeof(u32)];
+    Set__Q34nw4r3lyt12AnimResourceFPCv(
+        reinterpret_cast<AnimResource*>(resourceStorage), pAnmBinary);
+    // The AnimResource overload returns void in this build; the transform
+    // pointer is left in r3 by the virtual call.
+    CreateAnimTransform(*reinterpret_cast<AnimResource*>(resourceStorage),
+                        pAccessor);
+}
 
-    const res::BinaryFileHeader* const pHeader =
-        static_cast<const res::BinaryFileHeader*>(pAnmBinary);
+// Mirror so we can read the protected AnimResource members (same pattern as
+// lyt_animation.cpp).
+namespace {
+struct AnimResourceData {
+    const res::BinaryFileHeader* mpFileHeader;    // at 0x0
+    const res::AnimationBlock* mpResBlock;        // at 0x4
+    const res::AnimationTagBlock* mpTagBlock;     // at 0x8
+    const res::AnimationShareBlock* mpShareBlock; // at 0xC
+};
+} // namespace
 
-    if (!detail::TestFileHeader(*pHeader)) {
-        return NULL;
+void Layout::CreateAnimTransform(const AnimResource& rResource,
+                                 ResourceAccessor* pAccessor) {
+    const res::AnimationBlock* pBlock =
+        reinterpret_cast<const AnimResourceData*>(&rResource)->mpResBlock;
+
+    if (pBlock == NULL) {
+        return;
     }
 
-    const res::AnimationBlock* pAnimBlock = NULL;
+    AnimTransform* pAnimTrans = CreateAnimTransform();
+    if (pAnimTrans != NULL) {
+        pAnimTrans->SetResource(pBlock, pAccessor);
+    }
+}
 
-    const res::DataBlockHeader* pBlockHeader =
-        detail::ConvertOffsToPtr<res::DataBlockHeader>(pHeader,
-                                                       pHeader->headerSize);
+AnimTransform* Layout::CreateAnimTransform() {
+    // Retail builds an AnimTransformBasic from the static allocator and
+    // registers it on the layout's animation list.
+    void* pMem = MEMAllocFromAllocator(lbl_eu_80665478, sizeof(AnimTransformBasic));
+    AnimTransform* pAnimTrans;
 
-    AnimTransform* pResult = NULL;
-
-    for (int i = 0; i < pHeader->dataBlocks; i++) {
-        switch (detail::GetSignatureInt(pBlockHeader->kind)) {
-        case SIGNATURE_ANIMATIONINFO: {
-
-            switch (detail::GetSignatureInt(pHeader->signature)) {
-            case SIGNATURE_ANIMATION:
-            case res::AnimationInfo::SIGNATURE_ANMPANESRT:
-            case res::AnimationInfo::SIGNATURE_ANMPANEVIS:
-            case res::AnimationInfo::SIGNATURE_ANMVTXCLR:
-            case res::AnimationInfo::SIGNATURE_ANMMATCLR:
-            case res::AnimationInfo::SIGNATURE_ANMTEXSRT:
-            case res::AnimationInfo::SIGNATURE_ANMTEXPAT: {
-                AnimTransformBasic* pAnimTrans =
-                    Layout::NewObj<AnimTransformBasic>();
-
-                if (pAnimTrans != NULL) {
-                    pAnimBlock = reinterpret_cast<const res::AnimationBlock*>(
-                        pBlockHeader);
-
-                    pAnimTrans->SetResource(pAnimBlock, pAccessor);
-                    pResult = pAnimTrans;
-                }
-
-                break;
-            }
-            }
-
-            if (pResult != NULL) {
-                mAnimTransList.PushBack(pResult);
-            }
-
-            break;
-        }
-        }
-
-        pBlockHeader = detail::ConvertOffsToPtr<res::DataBlockHeader>(
-            pBlockHeader, pBlockHeader->size);
+    if (pMem != NULL) {
+        pAnimTrans = new (pMem) AnimTransformBasic;
+    } else {
+        pAnimTrans = NULL;
     }
 
-    return pResult;
+    if (pAnimTrans != NULL) {
+        mAnimTransList.PushBack(pAnimTrans);
+    }
+
+    return pAnimTrans;
 }
 
 void Layout::BindAnimation(AnimTransform* pAnimTrans) {

@@ -3,6 +3,8 @@
 #include "monolib/util/MemManager.hpp"
 #include "monolib/data_vtables.hpp"
 
+class CScn;
+
 // Local mirror of the monolib reslist template (ScheduleList.cpp precedent):
 // the shared reslist.hpp instantiates remove()/find() which need operators the
 // opaque item type cannot provide, while the ctor/dtor/vtable codegen is
@@ -27,21 +29,27 @@ public:
         mStartNodePtr->mPrev = mStartNode.mNext;
     }
 
-    virtual ~_reslist_base() {
-        // Sentinel reloaded inside the loop condition (not cached) so MWCC
-        // keeps node in the low scratch and sentinel/cur in the high one.
-        _reslist_node<T>* node = mStartNodePtr->mNext;
-        while (node != mStartNodePtr) {
-            _reslist_node<T>* cur = node;
-            node = node->mNext;
-            cur->mNext = nullptr;
+    void func_8049CB6C(T* item) {}
+    void func_8049CB70(_reslist_node<T>* r4) { r4->mNext = nullptr; }
+
+    // Shared-reslist.hpp clearList shape (proven FULL_MATCH in CWorkThread/
+    // CDeviceVI/CView): walker declared first, cur copy inside the body.
+    void clearList() {
+        _reslist_node<T>* r5 = mStartNodePtr->mNext;
+        while (r5 != mStartNodePtr) {
+            _reslist_node<T>* r4 = r5;
+            r5 = r5->mNext;
+            func_8049CB6C(&r4->mItem);
+            func_8049CB70(r4);
         }
         mStartNodePtr->mNext = mStartNodePtr;
         mStartNodePtr->mPrev = mStartNodePtr;
-        if (unk1C == false && mList != nullptr) {
-            delete[] mList;
-            mList = nullptr;
-        }
+    }
+
+    virtual ~_reslist_base() {
+        clearList();
+
+        if (unk1C == false) DELETE_ARRAY(mList);
     }
 
     _reslist_node<T>* mStartNodePtr;  // 0x4
@@ -200,7 +208,11 @@ struct CScnItemPoolListData {
 //   0xD4/0xD8: big-slot pool (flags / 0x3A8-byte slots)
 class CScnItemPool {
 public:
-    u8 _00[0x0C];              // 0x00 bases + id
+    CScnItemPool(CScn* scene, u32 cnt0C, u32 cnt2C, u32 cnt4C, u32 cnt6C,
+                 u32 cnt8C);
+
+    u8 _00[0x08];              // 0x00 IWorkEvent / CDeviceVICb bases
+    u32 mId;                   // 0x08
     u8 mList0C[0x20];          // 0x0C reslist sub-pool #0
     u8 mList2C[0x20];          // 0x2C
     u8 mList4C[0x20];          // 0x4C
@@ -211,6 +223,7 @@ public:
     CScnItem* mSlotsD0;        // 0xD0
     u8* mFlagsD4;              // 0xD4
     CScnItemBig* mSlotsD8;     // 0xD8
+    u16 mSubCountDC;           // 0xDC
 
     void func_8048CEDC();
     void func_8048CF58();
@@ -331,7 +344,7 @@ extern "C" __declspec(noinline) void func_8048C750(CScnItemPool* self, CScnItem*
         self->mFlagsCC[((u32)item - (u32)self->mSlotsD0) / 0x58] = 0;
     } else if (func_8048C690((u8*)item) == 4) {
         item->vfunc08(-1);
-        self->mFlagsD4[(CScnItemBig*)item - self->mSlotsD8] = 0;
+        self->mFlagsD4[((u32)item - (u32)self->mSlotsD8) / 0x3A8] = 0;
     } else {
         if (item != nullptr) {
             if (item != nullptr) {
@@ -495,27 +508,39 @@ void func_8048CD0C(CScnItemPool* self) {
     }
 }
 
-// Node-array view of a reslist sub-pool (allocated node array + capacity),
-// used by func_8048C0EC.
+// Plain (non-template) node type mirroring the CScnFilterListNode precedent;
+// layout matches _reslist_node<CScnItem*> (next/prev/item).
+struct CScnItemPoolListNode {
+    CScnItemPoolListNode* mNext;  // 0x0 free marker when null
+    CScnItemPoolListNode* mPrev;  // 0x4
+    u8* mItem;                    // 0x8 opaque item payload
+};
+
+// Node-array view of a sub-pool reslist (allocated node array + capacity),
+// used by func_8048C0EC. Layout mirrors _reslist_base<CScnItem*>.
 struct CScnItemPoolNodeArray {
-    u8 _00[0x14];
-    _reslist_node<CScnItem*>* mNodes;  // 0x14
-    int mCapacity;                     // 0x18
+    u32* mVtable;                        // 0x00
+    CScnItemPoolLink* mStartNodePtr;     // 0x04
+    CScnItemPoolLink mStartNode;         // 0x08
+    u32 field_0x10;                      // 0x10
+    CScnItemPoolListNode* mList;         // 0x14
+    int mCapacity;                       // 0x18
+    bool field_0x1c;                     // 0x1C
 };
 
 // func_8048C0EC: (re)initializes sub-pool #0's node array: allocates `count`
-// nodes (0xC bytes each) from MemManager, clears every node's mNext (the free
-// marker used by func_8048C524), and records the capacity.
-extern "C" void func_8048C0EC(CScnItemPoolNodeArray* self, u32 handle, int count) {
-    self->mNodes = (_reslist_node<CScnItem*>*)mtl::MemManager::allocate_array(count * 12, handle);
-    _reslist_node<CScnItem*>* node;
-    int i;
-    for (i = 0; i < count; i++) {
-        node = &self->mNodes[i];
-        node->mNext = 0;
+// nodes from MemManager, clears every node's mNext (the free marker used by
+// func_8048C524), and records the capacity.
+// noinline: retail CALLS this from __ct__CScnItemPool (x5); without it -ipa
+// flattens the allocation loop into the constructor.
+__declspec(noinline) void func_8048C0EC(CScnItemPoolNodeArray* self, u32 handle, int count) {
+    self->mList = (CScnItemPoolListNode*)mtl::MemManager::allocate_array((u32)count * 0xC, handle);
+    for (int i = 0; i < count; i++) {
+        self->mList[i].mNext = nullptr;
     }
     self->mCapacity = count;
 }
+
 // us-8049056c: forwards (arg1, &slot) to func_8048C524 with arg2 stored in a
 // stack slot; the slot result is discarded. The first argument is unused
 // (retail copies r4 into r3 for the call).
@@ -675,6 +700,44 @@ void CScnItemPool::func_8048D01C() {
     ((void (*)(CScnItemPool*))__dt__12CScnItemPoolFv)((CScnItemPool*)((char*)this - 4));
 }
 
+// __ct__12CScnItemPoolFv: complete-object constructor. Base ctors run first
+// (IWorkEvent at 0x0, CDeviceVICb at 0x4), then the id, the manual vtable
+// stores (primary group at 0x0, CDeviceVICb sub-group at +0x88), the six
+// reslist sub-pool ctors, and finally the per-pool node/flag/slot allocations.
+extern "C" void __ct__IWorkEvent(void* self);
+extern "C" void __ct__11CDeviceVICbFv(void* self);
+extern "C" void __ct__reslist_CScnItem(void* self);
+extern "C" u32 lbl_eu_8056E488[];
+extern "C" u32 func_80496018(void* scene); // scene -> mtl::ALLOC_HANDLE
+CScnItemPool::CScnItemPool(CScn* scene, u32 cnt0C, u32 cnt2C, u32 cnt4C,
+                           u32 cnt6C, u32 cnt8C) {
+    __ct__IWorkEvent(this);
+    __ct__11CDeviceVICbFv((char*)this + 4);
+    mId = (u32)scene;
+    u32 vt = (u32)&lbl_eu_8056E488;
+    ((u32*)this)[0] = vt;
+    ((u32*)this)[1] = vt + 0x88;
+    __ct__reslist_CScnItem(&mList0C);
+    __ct__reslist_CScnItem(&mList2C);
+    __ct__reslist_CScnItem(&mList4C);
+    __ct__reslist_CScnItem(&mList6C);
+    __ct__reslist_CScnItem(&mList8C);
+    __ct__reslist_CScnItem(&mListAC);
+    mSubCountDC = 0;
+    // Node-array init order matches retail: 0xC, 0x4C, 0x6C, 0x2C, 0x8C.
+    func_8048C0EC((CScnItemPoolNodeArray*)&mList0C, func_80496018(scene), cnt0C);
+    func_8048C0EC((CScnItemPoolNodeArray*)&mList4C, func_80496018(scene), cnt4C);
+    func_8048C0EC((CScnItemPoolNodeArray*)&mList6C, func_80496018(scene), cnt6C);
+    func_8048C0EC((CScnItemPoolNodeArray*)&mList2C, func_80496018(scene), cnt2C);
+    func_8048C0EC((CScnItemPoolNodeArray*)&mList8C, func_80496018(scene), cnt8C);
+    mFlagsCC = (u8*)mtl::MemManager::allocate_head(func_80496018(scene), cnt2C, 4);
+    mSlotsD0 = (CScnItem*)mtl::MemManager::allocate_head(func_80496018(scene), cnt2C * 0x58, 4);
+    memset(mSlotsD0, 0, cnt2C);
+    mFlagsD4 = (u8*)mtl::MemManager::allocate_head(func_80496018(scene), cnt6C, 4);
+    mSlotsD8 = (CScnItemBig*)mtl::MemManager::allocate_head(func_80496018(scene), cnt6C * 0x3A8, 4);
+    memset(mSlotsD8, 0, cnt6C);
+}
+
 // __dt__12CScnItemPoolFv: complete-object destructor.
 extern "C" u32 lbl_eu_8056E488[];
 extern "C" __declspec(noinline) CScnItemPool* __dt__12CScnItemPoolFv(CScnItemPool* self, int flags) {
@@ -813,3 +876,4 @@ extern "C" void func_8048CF5C(CScnItemPool* self) {
     }
 }
 #pragma pop
+

@@ -1,3 +1,5 @@
+// Retail elides the empty ~IWorkEvent base-dtor call in ~CTaskCulling.
+#define IWORK_EVENT_INLINE_DTOR
 #include "kyoshin/cf/CTaskCulling.hpp"
 #include "kyoshin/cf/CfGameManager.hpp"
 #include "monolib/scn.hpp"

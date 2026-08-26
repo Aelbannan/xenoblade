@@ -32,18 +32,18 @@ namespace cf{
     CCharVoiceMan::CCharVoiceMan(){
         *(void**)this = (void*)lbl_eu_805398CC;  // shared-pool retail vtable
         const float resetFloat = lbl_eu_80668C68;
-        unk204 = 0;
-        unk208 = 0;
-        unk20C = 0;
-        unk210 = 0;
+        allocHead = 0;
+        headOffset = 0;
+        nodeHead = 0;
+        nodeTail = 0;
         unk214 = 1;
         unk215 = 0;
         unk218 = resetFloat;
         unk21C = 0;
         unk220 = 0;
         unk221 = 0;
-        unk222 = 0;
-        unk223 = 0;
+        fieldFlag = 0;
+        autoTalkPending = 0;
         unk224 = 0;
         unk229 = 0;
         unk22A = 0;
@@ -70,7 +70,7 @@ bool func_802A1EA0() { return true; }
 void func_802A1F9C() {
     cf::CCharVoiceMan* voice_man = lbl_eu_80664A58;
     if (voice_man != 0)
-        voice_man->unk222 = 0;
+        voice_man->fieldFlag = 0;
 }
 // If the character-voice-disable flag is clear, flag the manager's byte 0x229.
 void func_802A2CF0() {
@@ -79,30 +79,30 @@ void func_802A2CF0() {
     lbl_eu_80664A58->unk229 = 1;
 }
 // Ring-buffer allocate `size` bytes from CCharVoiceMan's 0x200-byte arena
-// [head ra_204 / tail ra_208]; returns 0 if full or the flag/cooldown gates are
-// active.
+// [head allocHead / tail headOffset]; returns 0 if full or the flag/cooldown
+// gates are active.
 u8* func_802A34E4(int size) {
     if (lbl_eu_80663E24 & 0x10000000)
         return 0;
     cf::CCharVoiceMan* m = lbl_eu_80664A58;
     if (m->unk215 != 0)
         return 0;
-    if ((int)m->unk204 < (int)m->unk208) {
+    if ((int)m->allocHead < (int)m->headOffset) {
         // Linear region still free before the tail.
-        if ((int)m->unk208 - (int)m->unk204 < size)
+        if ((int)m->headOffset - (int)m->allocHead < size)
             return 0;
-        m->unk204 = (int)m->unk204 + size;
-        return (u8*)lbl_eu_80664A58 + 4 + lbl_eu_80664A58->unk204 - size;
+        m->allocHead = (int)m->allocHead + size;
+        return (u8*)lbl_eu_80664A58 + 4 + lbl_eu_80664A58->allocHead - size;
     }
     // Wrapped: space up to the 0x200 limit, else restart at the buffer base.
-    if (0x200 - (int)m->unk204 < size) {
-        if ((int)m->unk208 < size)
+    if (0x200 - (int)m->allocHead < size) {
+        if ((int)m->headOffset < size)
             return 0;
-        m->unk204 = size;
+        m->allocHead = size;
         return (u8*)lbl_eu_80664A58 + 4;
     }
-    m->unk204 = (int)m->unk204 + size;
-    return (u8*)lbl_eu_80664A58 + 4 + lbl_eu_80664A58->unk204 - size;
+    m->allocHead = (int)m->allocHead + size;
+    return (u8*)lbl_eu_80664A58 + 4 + lbl_eu_80664A58->allocHead - size;
 }
 unsigned int func_802A35A0(unsigned int value) { unsigned int counter = lbl_eu_80664A5C; lbl_eu_80664A5C = counter + 1; return (counter << 16) | (value & 0xFFFF); }
 int func_802A3740(void* self) { return 0; }
@@ -122,7 +122,7 @@ void func_802A14B8() {
 void func_802A1500() {
     cf::CCharVoiceMan* m = lbl_eu_80664A58;
     m->unk215 = 0;
-    cf::CSoundNode* node = m->unk20C;
+    cf::CSoundNode* node = m->nodeHead;
     while (node != 0) {
         bool match = false;
         if (__ptmf_cmpr(node, &lbl_eu_805398C0) != 0 && __ptmf_test(node) != 0)
@@ -131,23 +131,23 @@ void func_802A1500() {
             ((cf::CVoiceNodeIf*)node)->vf08();
         node = node->next;
     }
-    m->unk20C = 0;
+    m->nodeHead = 0;
     float reset = lbl_eu_80668C68;
-    m->unk210 = 0;
-    m->unk204 = 0;
-    m->unk208 = 0;
+    m->nodeTail = 0;
+    m->allocHead = 0;
+    m->headOffset = 0;
     lbl_eu_80664A58->unk218 = lbl_eu_80668C68;
     lbl_eu_80664A58->unk21C = 0;
     lbl_eu_80664A58->unk220 = 0;
     lbl_eu_80664A58->unk221 = 0;
-    lbl_eu_80664A58->unk223 = 0;
+    lbl_eu_80664A58->autoTalkPending = 0;
     lbl_eu_80664A58->unk224 = 0;
     lbl_eu_80664A58->unk229 = 0;
     lbl_eu_80664A58->unk22A = 0;
     lbl_eu_80664A58->unk22C = 0;
     lbl_eu_80664A58->unk230 = 0;
 }
-// Party-gauge gate check (defined below); forward-declared for func_802A1610.
+// Battle-gauge gate check (defined below); forward-declared for func_802A1610.
 // Retail references this helper by its bare unmangled symbol (C linkage).
 extern "C" int func_802A38C8(cf::CCharVoiceMan* self);
 
@@ -156,10 +156,10 @@ extern "C" int func_802A38C8(cf::CCharVoiceMan* self);
 // id, per-player flags and random gauges) that can enqueue a voice node.
 void func_802A1610(){
     cf::CCharVoiceMan* m = lbl_eu_80664A58;
-    if (m->unk20C != 0 && (lbl_eu_80663E24 & 0x10000000)) {
+    if (m->nodeHead != 0 && (lbl_eu_80663E24 & 0x10000000)) {
         // Presentation pause: run every node's level-thread handler then flush.
         m->unk215 = 0;
-        cf::CSoundNode* node = m->unk20C;
+        cf::CSoundNode* node = m->nodeHead;
         while (node != 0) {
             bool match = false;
             if (__ptmf_cmpr(node, &lbl_eu_805398C0) != 0 && __ptmf_test(node) != 0)
@@ -168,10 +168,10 @@ void func_802A1610(){
                 ((cf::CVoiceNodeIf*)node)->vf08();
             node = node->next;
         }
-        m->unk20C = 0;
-        m->unk210 = 0;
-        m->unk204 = 0;
-        m->unk208 = 0;
+        m->nodeHead = 0;
+        m->nodeTail = 0;
+        m->allocHead = 0;
+        m->headOffset = 0;
     }
     m->unk229 = 0;
     if (m->unk215 == 0) {
@@ -188,14 +188,14 @@ void func_802A1610(){
             !(lbl_eu_80663E24 & 0x00400000)) {
             cf::CSoundNode* node = func_802A6820(count, oldCount);
             if (node != 0) {
-                cf::CSoundNode* tail = m->unk210;
+                cf::CSoundNode* tail = m->nodeTail;
                 if (tail != 0)
                     tail->next = node;
-                if (m->unk20C == 0) {
-                    m->unk20C = node;
-                    m->unk208 = (u32)node - (u32)&m->unk4[0];
+                if (m->nodeHead == 0) {
+                    m->nodeHead = node;
+                    m->headOffset = (u32)node - (u32)&m->unk4[0];
                 }
-                m->unk210 = node;
+                m->nodeTail = node;
             }
         }
 
@@ -213,14 +213,14 @@ void func_802A1610(){
                         if (src != 0) {
                             cf::CSoundNode* node = func_802B0344(src);
                             if (node != 0) {
-                                cf::CSoundNode* tail = m->unk210;
+                                cf::CSoundNode* tail = m->nodeTail;
                                 if (tail != 0)
                                     tail->next = node;
-                                if (m->unk20C == 0) {
-                                    m->unk20C = node;
-                                    m->unk208 = (u32)node - (u32)&m->unk4[0];
+                                if (m->nodeHead == 0) {
+                                    m->nodeHead = node;
+                                    m->headOffset = (u32)node - (u32)&m->unk4[0];
                                 }
-                                m->unk210 = node;
+                                m->nodeTail = node;
                             }
                         }
                     }
@@ -235,14 +235,14 @@ void func_802A1610(){
         if (oldGauge == 0 && m->unk220 != 0 && !(lbl_eu_80663E24 & 0x00400000)) {
             cf::CSoundNode* node = __ct__802AF5CC(1);
             if (node != 0) {
-                cf::CSoundNode* tail = m->unk210;
+                cf::CSoundNode* tail = m->nodeTail;
                 if (tail != 0)
                     tail->next = node;
-                if (m->unk20C == 0) {
-                    m->unk20C = node;
-                    m->unk208 = (u32)node - (u32)&m->unk4[0];
+                if (m->nodeHead == 0) {
+                    m->nodeHead = node;
+                    m->headOffset = (u32)node - (u32)&m->unk4[0];
                 }
-                m->unk210 = node;
+                m->nodeTail = node;
             }
         }
 
@@ -264,10 +264,11 @@ void func_802A1610(){
                 iresult = 0;
             } else {
                 float limit = lbl_eu_80668C70;
-                cf::CVoiceActorState** it = arr2;
                 int i = 0;
+                cf::CVoiceActorState** it = arr2;
                 while (i < n) {
-                    if (!(limit <= ((cf::CVoiceActorStateIf*)*it)->fn_130())) {
+                    // Fail (result 0) when any top gauge reaches the limit.
+                    if (limit <= ((cf::CVoiceActorStateIf*)*it)->fn_130()) {
                         iresult = 0;
                         goto interactStore;
                     }
@@ -282,32 +283,34 @@ interactStore:
         if (oldInteract == 0 && m->unk221 != 0 && !(lbl_eu_80663E24 & 0x00400000)) {
             cf::CSoundNode* node = __ct__802AF5CC(0);
             if (node != 0) {
-                cf::CSoundNode* tail = m->unk210;
+                cf::CSoundNode* tail = m->nodeTail;
                 if (tail != 0)
                     tail->next = node;
-                if (m->unk20C == 0) {
-                    m->unk20C = node;
-                    m->unk208 = (u32)node - (u32)&m->unk4[0];
+                if (m->nodeHead == 0) {
+                    m->nodeHead = node;
+                    m->headOffset = (u32)node - (u32)&m->unk4[0];
                 }
-                m->unk210 = node;
+                m->nodeTail = node;
             }
         }
 
-        // Field-id window: retail lowers this as a dense-switch range check
-        // (cmpi 0x108/ble, cmpi 0x116/bge), so spell it as a switch over the
-        // 0x109..0x115 cases.
-        switch (func_800822F4__Q22cf13CfGameManagerFv()) {
-        case 0x109: case 0x10a: case 0x10b: case 0x10c: case 0x10d:
-        case 0x10e: case 0x10f: case 0x110: case 0x111: case 0x112:
-        case 0x113: case 0x114: case 0x115:
-            // Mask window folds to rlwinm. 0,16,22 (bits 16..22).
-            if ((1 << (lbl_eu_80663E42 - 1)) & 0x7F0000)
-                m->unk222 = 1;
-            break;
-        }
+        // Field-id window [0x109,0x115]: retail keeps two separate signed
+        // cmpi branches; swapping the operand order (const OP v) blocks
+        // MWCC's unsigned range-fusion (MWCC_PATTERNS "swapped-operand
+        // range guards").
+        int phase = func_800822F4__Q22cf13CfGameManagerFv();
+        if (0x108 >= phase)
+            goto noFieldFlag;
+        if (0x116 <= phase)
+            goto noFieldFlag;
+        u32 gaugeBit = 1 << (lbl_eu_80663E42 - 1);
+        if (!(gaugeBit & 0xFE00))
+            goto noFieldFlag;
+        m->fieldFlag = 1;
+noFieldFlag:;
 
         // Battle voice auto-talk: resolve the current player and fire.
-        if (m->unk223 != 0) {
+        if (m->autoTalkPending != 0) {
             cf::CVoiceSrcNode* srcNode = (cf::CVoiceSrcNode*)func_802A7A54(1);
             cf::CfObjectMove* player = (cf::CfObjectMove*)getPlayer__Q22cf13CfGameManagerFi(0);
             if (player != 0)
@@ -315,17 +318,16 @@ interactStore:
             if (srcNode != 0 && player != 0) {
                 cf::CVoiceSrcInner* inner = srcNode->field_4;
                 u32 sv = *((u32*)((cf::CVoiceSrcInnerIf*)inner)->fn_30());
-                if (func_80174C98(srcNode, (int*)&sv, 6) != 0) {
-                    if (!(lbl_eu_80663E24 & 0x00400000))
-                        func_802AF9D0(player, 0xbb9, 0x14);
-                    // fn_08 resolved OK: clear the pending flag.
-                    m->unk223 = 0;
-                }
-                // func_80174C98 failed: keep the flag set to retry next frame.
-            } else {
-                m->unk223 = 0;
+                // Resolution failure keeps the pending flag set to retry next
+                // frame; every other path falls into the single clear store.
+                if (func_80174C98(srcNode, (int*)&sv, 6) == 0)
+                    goto noAutoTalkClear;
+                if (!(lbl_eu_80663E24 & 0x00400000))
+                    func_802AF9D0(player, 0xbb9, 0x14);
             }
+            m->autoTalkPending = 0;
         }
+noAutoTalkClear:;
 
         // No battle participants and the flag is clear: rolling gauge node.
         if (m->unk22A != 0) {
@@ -344,28 +346,28 @@ interactStore:
                 if (ml::math::mtRand(0x64) < 5) {
                     cf::CSoundNode* node = __ct__802AB5F0();
                     if (node != 0) {
-                        cf::CSoundNode* tail = m->unk210;
+                        cf::CSoundNode* tail = m->nodeTail;
                         if (tail != 0)
                             tail->next = node;
-                        if (m->unk20C == 0) {
-                            m->unk20C = node;
-                            m->unk208 = (u32)node - (u32)&m->unk4[0];
+                        if (m->nodeHead == 0) {
+                            m->nodeHead = node;
+                            m->headOffset = (u32)node - (u32)&m->unk4[0];
                         }
-                        m->unk210 = node;
+                        m->nodeTail = node;
                         appended = true;
                     }
                 }
                 if (!appended) {
                     cf::CSoundNode* node = __ct__802A4870((int)ge);
                     if (node != 0) {
-                        cf::CSoundNode* tail = m->unk210;
+                        cf::CSoundNode* tail = m->nodeTail;
                         if (tail != 0)
                             tail->next = node;
-                        if (m->unk20C == 0) {
-                            m->unk20C = node;
-                            m->unk208 = (u32)node - (u32)&m->unk4[0];
+                        if (m->nodeHead == 0) {
+                            m->nodeHead = node;
+                            m->headOffset = (u32)node - (u32)&m->unk4[0];
                         }
-                        m->unk210 = node;
+                        m->nodeTail = node;
                     }
                 }
             }
@@ -374,30 +376,35 @@ interactStore:
 
         // Non-presentation: sweep level-thread handlers then pop leading
         // non-matching nodes off the list.
-        if (m->unk20C != 0 && !(lbl_eu_80663E24 & 0x00400000)) {
-            cf::CSoundNode* cur = m->unk20C;
+        if (m->nodeHead != 0 && !(lbl_eu_80663E24 & 0x00400000)) {
+            cf::CSoundNode* cur = m->nodeHead;
             while (cur != 0) {
                 func_802A3ACC(cur);
                 cur = cur->next;
             }
-            cf::CSoundNode* head = m->unk20C;
-            while (head != 0) {
+            cf::CSoundNode* head;
+            // Reload the head from the manager every iteration like retail:
+            // the loop condition dereferences m->nodeHead fresh each pass.
+            while ((head = m->nodeHead) != 0) {
                 bool match = false;
                 if (__ptmf_cmpr(head, &lbl_eu_805398C0) != 0 && __ptmf_test(head) != 0)
                     match = true;
                 if (match)
                     break;
-                cf::CSoundNode* nxt = m->unk20C->next;
-                if (nxt == 0) {
-                    m->unk20C = 0;
-                    m->unk210 = 0;
-                    m->unk204 = 0;
-                    m->unk208 = 0;
-                } else {
-                    m->unk20C = nxt;
-                    m->unk208 = (u32)nxt - (u32)&m->unk4[0];
+                // Retail keeps an explicit re-read + null-guard here instead
+                // of reusing the loop-condition head pointer.
+                if (m->nodeHead != 0) {
+                    cf::CSoundNode* nxt = m->nodeHead->next;
+                    if (nxt != 0) {
+                        m->nodeHead = nxt;
+                        m->headOffset = (u32)nxt - (u32)&m->unk4[0];
+                    } else {
+                        m->nodeHead = 0;
+                        m->nodeTail = 0;
+                        m->allocHead = 0;
+                        m->headOffset = 0;
+                    }
                 }
-                head = m->unk20C;
             }
         }
 
@@ -424,7 +431,7 @@ void func_802A1C68(cf::CVoiceActorState* self) {
     {
         u8* t = (u8*)(v + 0x3508);
         if (func_8009CF8C((int)t) == 0 || ml::math::mtRand(0x64) < 0xF)
-            m->unk223 = 1;
+            m->autoTalkPending = 1;
         func_8009D018((u32)t, 1);
     }
 }
@@ -458,7 +465,7 @@ void func_802A1DA8() {
 // voice probe; nodes whose probe returns nonzero are handed to func_802A3E74.
 void func_802A1DF0(u8 flag) {
     lbl_eu_80664A58->unk215 = flag;
-    cf::CSoundNode* node = lbl_eu_80664A58->unk20C;
+    cf::CSoundNode* node = lbl_eu_80664A58->nodeHead;
     while (node != 0) {
         bool match = false;
         if (__ptmf_cmpr(node, (void*)&lbl_eu_805398C0) != 0 && __ptmf_test(node) != 0)
@@ -498,14 +505,14 @@ void func_802A1FB4() {
     cf::CSoundNode* node = func_802A9604();
     cf::CCharVoiceMan* m = lbl_eu_80664A58;
     if (node != 0) {
-        cf::CSoundNode* tail = m->unk210;
+        cf::CSoundNode* tail = m->nodeTail;
         if (tail != 0)
             tail->next = node;
-        if (m->unk20C == 0) {
-            m->unk20C = node;
-            m->unk208 = (u32)node - (u32)&m->unk4[0];
+        if (m->nodeHead == 0) {
+            m->nodeHead = node;
+            m->headOffset = (u32)node - (u32)&m->unk4[0];
         }
-        m->unk210 = node;
+        m->nodeTail = node;
     }
     lbl_eu_80664A58->unk22C = 0;
 }
@@ -514,14 +521,14 @@ void func_802A201C() {
     cf::CSoundNode* node = __ct__802A96C0();
     cf::CCharVoiceMan* m = lbl_eu_80664A58;
     if (node != 0) {
-        cf::CSoundNode* tail = m->unk210;
+        cf::CSoundNode* tail = m->nodeTail;
         if (tail != 0)
             tail->next = node;
-        if (m->unk20C == 0) {
-            m->unk20C = node;
-            m->unk208 = (u32)node - (u32)&m->unk4[0];
+        if (m->nodeHead == 0) {
+            m->nodeHead = node;
+            m->headOffset = (u32)node - (u32)&m->unk4[0];
         }
-        m->unk210 = node;
+        m->nodeTail = node;
     }
 }
 // Resolve a pending voice-action id (from the manager's 0x22C holder) and
@@ -536,28 +543,28 @@ void func_802A2078(void* a, void* b, void* c) {
         cf::CSoundNode* node = __ct__802A92D8(b, a);
         cf::CCharVoiceMan* m = lbl_eu_80664A58;
         if (node != 0) {
-            cf::CSoundNode* tail = m->unk210;
+            cf::CSoundNode* tail = m->nodeTail;
             if (tail != 0)
                 tail->next = node;
-            if (m->unk20C == 0) {
-                m->unk20C = node;
-                m->unk208 = (u32)node - (u32)&m->unk4[0];
+            if (m->nodeHead == 0) {
+                m->nodeHead = node;
+                m->headOffset = (u32)node - (u32)&m->unk4[0];
             }
-            m->unk210 = node;
+            m->nodeTail = node;
         }
     }
     if (c != 0) {
         cf::CSoundNode* node = func_802AF56C(c);
         cf::CCharVoiceMan* m = lbl_eu_80664A58;
         if (node != 0) {
-            cf::CSoundNode* tail = m->unk210;
+            cf::CSoundNode* tail = m->nodeTail;
             if (tail != 0)
                 tail->next = node;
-            if (m->unk20C == 0) {
-                m->unk20C = node;
-                m->unk208 = (u32)node - (u32)&m->unk4[0];
+            if (m->nodeHead == 0) {
+                m->nodeHead = node;
+                m->headOffset = (u32)node - (u32)&m->unk4[0];
             }
-            m->unk210 = node;
+            m->nodeTail = node;
         }
     }
 }
@@ -576,14 +583,14 @@ void func_802A216C(cf::CVoiceActorState* self) {
     cf::CSoundNode* node = __ct__802AFA80(self, actor);
     cf::CCharVoiceMan* m = lbl_eu_80664A58;
     if (node != 0) {
-        cf::CSoundNode* tail = m->unk210;
+        cf::CSoundNode* tail = m->nodeTail;
         if (tail != 0)
             tail->next = node;
-        if (m->unk20C == 0) {
-            m->unk20C = node;
-            m->unk208 = (u32)node - (u32)&m->unk4[0];
+        if (m->nodeHead == 0) {
+            m->nodeHead = node;
+            m->headOffset = (u32)node - (u32)&m->unk4[0];
         }
-        m->unk210 = node;
+        m->nodeTail = node;
     }
 }
 // If the passed actor is active, teed a u32 from +0x3F10 into unk230.
@@ -600,26 +607,26 @@ void func_802A2250(void* a, void* b, void* c) {
     cf::CSoundNode* node = func_802A5A14(a, c);
     cf::CCharVoiceMan* m = lbl_eu_80664A58;
     if (node != 0) {
-        cf::CSoundNode* tail = m->unk210;
+        cf::CSoundNode* tail = m->nodeTail;
         if (tail != 0)
             tail->next = node;
-        if (m->unk20C == 0) {
-            m->unk20C = node;
-            m->unk208 = (u32)node - (u32)&m->unk4[0];
+        if (m->nodeHead == 0) {
+            m->nodeHead = node;
+            m->headOffset = (u32)node - (u32)&m->unk4[0];
         }
-        m->unk210 = node;
+        m->nodeTail = node;
     }
     node = func_802AF43C(a, b, c);
     cf::CCharVoiceMan* m2 = lbl_eu_80664A58;
     if (node != 0) {
-        cf::CSoundNode* tail = m2->unk210;
+        cf::CSoundNode* tail = m2->nodeTail;
         if (tail != 0)
             tail->next = node;
-        if (m2->unk20C == 0) {
-            m2->unk20C = node;
-            m2->unk208 = (u32)node - (u32)&m2->unk4[0];
+        if (m2->nodeHead == 0) {
+            m2->nodeHead = node;
+            m2->headOffset = (u32)node - (u32)&m2->unk4[0];
         }
-        m2->unk210 = node;
+        m2->nodeTail = node;
     }
 }
 // Battle/interact voice trigger. If the actor's battle flag is set, resolve a
@@ -636,27 +643,27 @@ void func_802A232C(cf::CVoiceActorState* self) {
         cf::CSoundNode* node = func_802A5B04(self, useBattle);
         cf::CCharVoiceMan* m = lbl_eu_80664A58;
         if (node != 0) {
-            cf::CSoundNode* tail = m->unk210;
+            cf::CSoundNode* tail = m->nodeTail;
             if (tail != 0)
                 tail->next = node;
-            if (m->unk20C == 0) {
-                m->unk20C = node;
-                m->unk208 = (u32)node - (u32)&m->unk4[0];
+            if (m->nodeHead == 0) {
+                m->nodeHead = node;
+                m->headOffset = (u32)node - (u32)&m->unk4[0];
             }
-            m->unk210 = node;
+            m->nodeTail = node;
         }
     } else {
         cf::CSoundNode* node = func_802AF49C(self);
         cf::CCharVoiceMan* m = lbl_eu_80664A58;
         if (node != 0) {
-            cf::CSoundNode* tail = m->unk210;
+            cf::CSoundNode* tail = m->nodeTail;
             if (tail != 0)
                 tail->next = node;
-            if (m->unk20C == 0) {
-                m->unk20C = node;
-                m->unk208 = (u32)node - (u32)&m->unk4[0];
+            if (m->nodeHead == 0) {
+                m->nodeHead = node;
+                m->headOffset = (u32)node - (u32)&m->unk4[0];
             }
-            m->unk210 = node;
+            m->nodeTail = node;
         }
     }
 }
@@ -670,14 +677,14 @@ int func_802A2424(void) {
     if (node == 0) {
         appended = false;
     } else {
-        cf::CSoundNode* tail = m->unk210;
+        cf::CSoundNode* tail = m->nodeTail;
         if (tail != 0)
             tail->next = node;
-        if (m->unk20C == 0) {
-            m->unk20C = node;
-            m->unk208 = (u32)node - (u32)&m->unk4[0];
+        if (m->nodeHead == 0) {
+            m->nodeHead = node;
+            m->headOffset = (u32)node - (u32)&m->unk4[0];
         }
-        m->unk210 = node;
+        m->nodeTail = node;
         appended = true;
     }
     if (appended)
@@ -699,14 +706,14 @@ void func_802A24B4(cf::CVoiceActorState* self) {
     cf::CSoundNode* node = func_802A8628(self);
     cf::CCharVoiceMan* m = lbl_eu_80664A58;
     if (node != 0) {
-        cf::CSoundNode* tail = m->unk210;
+        cf::CSoundNode* tail = m->nodeTail;
         if (tail != 0)
             tail->next = node;
-        if (m->unk20C == 0) {
-            m->unk20C = node;
-            m->unk208 = (u32)node - (u32)&m->unk4[0];
+        if (m->nodeHead == 0) {
+            m->nodeHead = node;
+            m->headOffset = (u32)node - (u32)&m->unk4[0];
         }
-        m->unk210 = node;
+        m->nodeTail = node;
     }
 }
 // If the passed actor's move-base is the current player, raise the manager's
@@ -765,39 +772,39 @@ void func_802A26D8(cf::CVoiceActorState* self, int unused, void* c) {
         cf::CSoundNode* node = __ct__802A7254(self, c);
         cf::CCharVoiceMan* m = lbl_eu_80664A58;
         if (node != 0) {
-            cf::CSoundNode* tail = m->unk210;
+            cf::CSoundNode* tail = m->nodeTail;
             if (tail != 0)
                 tail->next = node;
-            if (m->unk20C == 0) {
-                m->unk20C = node;
-                m->unk208 = (u32)node - (u32)&m->unk4[0];
+            if (m->nodeHead == 0) {
+                m->nodeHead = node;
+                m->headOffset = (u32)node - (u32)&m->unk4[0];
             }
-            m->unk210 = node;
+            m->nodeTail = node;
         }
     } else {
         cf::CSoundNode* node = __ct__802A5ED4();
         cf::CCharVoiceMan* m = lbl_eu_80664A58;
         if (node != 0) {
-            cf::CSoundNode* tail = m->unk210;
+            cf::CSoundNode* tail = m->nodeTail;
             if (tail != 0)
                 tail->next = node;
-            if (m->unk20C == 0) {
-                m->unk20C = node;
-                m->unk208 = (u32)node - (u32)&m->unk4[0];
+            if (m->nodeHead == 0) {
+                m->nodeHead = node;
+                m->headOffset = (u32)node - (u32)&m->unk4[0];
             }
-            m->unk210 = node;
+            m->nodeTail = node;
         }
         cf::CSoundNode* node2 = func_802AF4FC(self, c);
         cf::CCharVoiceMan* m2 = lbl_eu_80664A58;
         if (node2 != 0) {
-            cf::CSoundNode* tail = m2->unk210;
+            cf::CSoundNode* tail = m2->nodeTail;
             if (tail != 0)
                 tail->next = node2;
-            if (m2->unk20C == 0) {
-                m2->unk20C = node2;
-                m2->unk208 = (u32)node2 - (u32)&m2->unk4[0];
+            if (m2->nodeHead == 0) {
+                m2->nodeHead = node2;
+                m2->headOffset = (u32)node2 - (u32)&m2->unk4[0];
             }
-            m2->unk210 = node2;
+            m2->nodeTail = node2;
         }
     }
 }void func_802A27F4() {
@@ -806,14 +813,14 @@ void func_802A26D8(cf::CVoiceActorState* self, int unused, void* c) {
     cf::CSoundNode* node = __ct__802A4E48();
     cf::CCharVoiceMan* m = lbl_eu_80664A58;
     if (node != 0) {
-        cf::CSoundNode* tail = m->unk210;
+        cf::CSoundNode* tail = m->nodeTail;
         if (tail != 0)
             tail->next = node;
-        if (m->unk20C == 0) {
-            m->unk20C = node;
-            m->unk208 = (u32)node - (u32)&m->unk4[0];
+        if (m->nodeHead == 0) {
+            m->nodeHead = node;
+            m->headOffset = (u32)node - (u32)&m->unk4[0];
         }
-        m->unk210 = node;
+        m->nodeTail = node;
     }
 }
 void func_802A285C() {
@@ -822,14 +829,14 @@ void func_802A285C() {
     cf::CSoundNode* node = __ct__802A4E48();
     cf::CCharVoiceMan* m = lbl_eu_80664A58;
     if (node != 0) {
-        cf::CSoundNode* tail = m->unk210;
+        cf::CSoundNode* tail = m->nodeTail;
         if (tail != 0)
             tail->next = node;
-        if (m->unk20C == 0) {
-            m->unk20C = node;
-            m->unk208 = (u32)node - (u32)&m->unk4[0];
+        if (m->nodeHead == 0) {
+            m->nodeHead = node;
+            m->headOffset = (u32)node - (u32)&m->unk4[0];
         }
-        m->unk210 = node;
+        m->nodeTail = node;
     }
 }
 void func_802A28C4(int a, int b, int c) {
@@ -839,14 +846,14 @@ void func_802A28C4(int a, int b, int c) {
         cf::CSoundNode* node = __ct__802A8DE8();
         cf::CCharVoiceMan* m = lbl_eu_80664A58;
         if (node != 0) {
-            cf::CSoundNode* tail = m->unk210;
+            cf::CSoundNode* tail = m->nodeTail;
             if (tail != 0)
                 tail->next = node;
-            if (m->unk20C == 0) {
-                m->unk20C = node;
-                m->unk208 = (u32)node - (u32)&m->unk4[0];
+            if (m->nodeHead == 0) {
+                m->nodeHead = node;
+                m->headOffset = (u32)node - (u32)&m->unk4[0];
             }
-            m->unk210 = node;
+            m->nodeTail = node;
         }
     }
 }
@@ -857,14 +864,14 @@ void func_802A293C() {
     cf::CSoundNode* node = __ct__CVS_THREAD_PARTY_GAGE();
     cf::CCharVoiceMan* m = lbl_eu_80664A58;
     if (node != 0) {
-        cf::CSoundNode* tail = m->unk210;
+        cf::CSoundNode* tail = m->nodeTail;
         if (tail != 0)
             tail->next = node;
-        if (m->unk20C == 0) {
-            m->unk20C = node;
-            m->unk208 = (u32)node - (u32)&m->unk4[0];
+        if (m->nodeHead == 0) {
+            m->nodeHead = node;
+            m->headOffset = (u32)node - (u32)&m->unk4[0];
         }
-        m->unk210 = node;
+        m->nodeTail = node;
     }
 }
 void func_802A29A4() {
@@ -873,14 +880,14 @@ void func_802A29A4() {
     cf::CSoundNode* node = __ct__802A6AA8();
     cf::CCharVoiceMan* m = lbl_eu_80664A58;
     if (node != 0) {
-        cf::CSoundNode* tail = m->unk210;
+        cf::CSoundNode* tail = m->nodeTail;
         if (tail != 0)
             tail->next = node;
-        if (m->unk20C == 0) {
-            m->unk20C = node;
-            m->unk208 = (u32)node - (u32)&m->unk4[0];
+        if (m->nodeHead == 0) {
+            m->nodeHead = node;
+            m->headOffset = (u32)node - (u32)&m->unk4[0];
         }
-        m->unk210 = node;
+        m->nodeTail = node;
     }
 }
 void func_802A2A0C() {
@@ -889,14 +896,14 @@ void func_802A2A0C() {
     cf::CSoundNode* node = __ct__802A5B88();
     cf::CCharVoiceMan* m = lbl_eu_80664A58;
     if (node != 0) {
-        cf::CSoundNode* tail = m->unk210;
+        cf::CSoundNode* tail = m->nodeTail;
         if (tail != 0)
             tail->next = node;
-        if (m->unk20C == 0) {
-            m->unk20C = node;
-            m->unk208 = (u32)node - (u32)&m->unk4[0];
+        if (m->nodeHead == 0) {
+            m->nodeHead = node;
+            m->headOffset = (u32)node - (u32)&m->unk4[0];
         }
-        m->unk210 = node;
+        m->nodeTail = node;
     }
 }
 void func_802A2A74() {
@@ -905,14 +912,14 @@ void func_802A2A74() {
     cf::CSoundNode* node = __ct__802A86CC();
     cf::CCharVoiceMan* m = lbl_eu_80664A58;
     if (node != 0) {
-        cf::CSoundNode* tail = m->unk210;
+        cf::CSoundNode* tail = m->nodeTail;
         if (tail != 0)
             tail->next = node;
-        if (m->unk20C == 0) {
-            m->unk20C = node;
-            m->unk208 = (u32)node - (u32)&m->unk4[0];
+        if (m->nodeHead == 0) {
+            m->nodeHead = node;
+            m->headOffset = (u32)node - (u32)&m->unk4[0];
         }
-        m->unk210 = node;
+        m->nodeTail = node;
     }
 }
 void func_802A2ADC() {
@@ -921,14 +928,14 @@ void func_802A2ADC() {
     cf::CSoundNode* node = __ct__802A6E84();
     cf::CCharVoiceMan* m = lbl_eu_80664A58;
     if (node != 0) {
-        cf::CSoundNode* tail = m->unk210;
+        cf::CSoundNode* tail = m->nodeTail;
         if (tail != 0)
             tail->next = node;
-        if (m->unk20C == 0) {
-            m->unk20C = node;
-            m->unk208 = (u32)node - (u32)&m->unk4[0];
+        if (m->nodeHead == 0) {
+            m->nodeHead = node;
+            m->headOffset = (u32)node - (u32)&m->unk4[0];
         }
-        m->unk210 = node;
+        m->nodeTail = node;
     }
 }
 void func_802A2B44() {
@@ -937,14 +944,14 @@ void func_802A2B44() {
     cf::CSoundNode* node = __ct__CVS_THREAD_ORDER(0);
     cf::CCharVoiceMan* m = lbl_eu_80664A58;
     if (node != 0) {
-        cf::CSoundNode* tail = m->unk210;
+        cf::CSoundNode* tail = m->nodeTail;
         if (tail != 0)
             tail->next = node;
-        if (m->unk20C == 0) {
-            m->unk20C = node;
-            m->unk208 = (u32)node - (u32)&m->unk4[0];
+        if (m->nodeHead == 0) {
+            m->nodeHead = node;
+            m->headOffset = (u32)node - (u32)&m->unk4[0];
         }
-        m->unk210 = node;
+        m->nodeTail = node;
     }
 }
 void func_802A2BB0() {
@@ -953,14 +960,14 @@ void func_802A2BB0() {
     cf::CSoundNode* node = __ct__CVS_THREAD_ORDER(1);
     cf::CCharVoiceMan* m = lbl_eu_80664A58;
     if (node != 0) {
-        cf::CSoundNode* tail = m->unk210;
+        cf::CSoundNode* tail = m->nodeTail;
         if (tail != 0)
             tail->next = node;
-        if (m->unk20C == 0) {
-            m->unk20C = node;
-            m->unk208 = (u32)node - (u32)&m->unk4[0];
+        if (m->nodeHead == 0) {
+            m->nodeHead = node;
+            m->headOffset = (u32)node - (u32)&m->unk4[0];
         }
-        m->unk210 = node;
+        m->nodeTail = node;
     }
 }
 void func_802A2C1C() {
@@ -969,14 +976,14 @@ void func_802A2C1C() {
     cf::CSoundNode* node = __ct__CVS_THREAD_ORDER(2);
     cf::CCharVoiceMan* m = lbl_eu_80664A58;
     if (node != 0) {
-        cf::CSoundNode* tail = m->unk210;
+        cf::CSoundNode* tail = m->nodeTail;
         if (tail != 0)
             tail->next = node;
-        if (m->unk20C == 0) {
-            m->unk20C = node;
-            m->unk208 = (u32)node - (u32)&m->unk4[0];
+        if (m->nodeHead == 0) {
+            m->nodeHead = node;
+            m->headOffset = (u32)node - (u32)&m->unk4[0];
         }
-        m->unk210 = node;
+        m->nodeTail = node;
     }
 }
 void func_802A2C88() {
@@ -985,14 +992,14 @@ void func_802A2C88() {
     cf::CSoundNode* node = func_802B9064();
     cf::CCharVoiceMan* m = lbl_eu_80664A58;
     if (node != 0) {
-        cf::CSoundNode* tail = m->unk210;
+        cf::CSoundNode* tail = m->nodeTail;
         if (tail != 0)
             tail->next = node;
-        if (m->unk20C == 0) {
-            m->unk20C = node;
-            m->unk208 = (u32)node - (u32)&m->unk4[0];
+        if (m->nodeHead == 0) {
+            m->nodeHead = node;
+            m->headOffset = (u32)node - (u32)&m->unk4[0];
         }
-        m->unk210 = node;
+        m->nodeTail = node;
     }
 }
 // Retail takes an actor argument that flows straight into func_802A6958;
@@ -1005,14 +1012,14 @@ void func_802A2D0C(void* actor) {
             cf::CSoundNode* node = func_802A6958(actor);
             m = lbl_eu_80664A58;
             if (node != 0) {
-                cf::CSoundNode* tail = m->unk210;
+                cf::CSoundNode* tail = m->nodeTail;
                 if (tail != 0)
                     tail->next = node;
-                if (m->unk20C == 0) {
-                    m->unk20C = node;
-                    m->unk208 = (u32)node - (u32)&m->unk4[0];
+                if (m->nodeHead == 0) {
+                    m->nodeHead = node;
+                    m->headOffset = (u32)node - (u32)&m->unk4[0];
                 }
-                m->unk210 = node;
+                m->nodeTail = node;
             }
         }
     }
@@ -1027,14 +1034,14 @@ void func_802A2D84() {
     cf::CSoundNode* node = func_802B8D4C();
     cf::CCharVoiceMan* m = lbl_eu_80664A58;
     if (node != 0) {
-        cf::CSoundNode* tail = m->unk210;
+        cf::CSoundNode* tail = m->nodeTail;
         if (tail != 0)
             tail->next = node;
-        if (m->unk20C == 0) {
-            m->unk20C = node;
-            m->unk208 = (u32)node - (u32)&m->unk4[0];
+        if (m->nodeHead == 0) {
+            m->nodeHead = node;
+            m->headOffset = (u32)node - (u32)&m->unk4[0];
         }
-        m->unk210 = node;
+        m->nodeTail = node;
     }
 }
 // If the battle-manager actor ring has any entries and the flag is clear,
@@ -1065,14 +1072,14 @@ void func_802A2E68(int id) {
     cf::CSoundNode* node = func_802A7744();
     cf::CCharVoiceMan* m = lbl_eu_80664A58;
     if (node != 0) {
-        cf::CSoundNode* tail = m->unk210;
+        cf::CSoundNode* tail = m->nodeTail;
         if (tail != 0)
             tail->next = node;
-        if (m->unk20C == 0) {
-            m->unk20C = node;
-            m->unk208 = (u32)node - (u32)&m->unk4[0];
+        if (m->nodeHead == 0) {
+            m->nodeHead = node;
+            m->headOffset = (u32)node - (u32)&m->unk4[0];
         }
-        m->unk210 = node;
+        m->nodeTail = node;
     }
 }
 void func_802A2EEC() {
@@ -1081,14 +1088,14 @@ void func_802A2EEC() {
     cf::CSoundNode* node = func_802A4798();
     cf::CCharVoiceMan* m = lbl_eu_80664A58;
     if (node != 0) {
-        cf::CSoundNode* tail = m->unk210;
+        cf::CSoundNode* tail = m->nodeTail;
         if (tail != 0)
             tail->next = node;
-        if (m->unk20C == 0) {
-            m->unk20C = node;
-            m->unk208 = (u32)node - (u32)&m->unk4[0];
+        if (m->nodeHead == 0) {
+            m->nodeHead = node;
+            m->headOffset = (u32)node - (u32)&m->unk4[0];
         }
-        m->unk210 = node;
+        m->nodeTail = node;
     }
 }
 // Enqueue a frequency-voice node [func_802A3EF0] and a level-up node
@@ -1099,26 +1106,26 @@ void func_802A2F54(void* self) {
     cf::CSoundNode* node = func_802A3EF0();
     cf::CCharVoiceMan* m = lbl_eu_80664A58;
     if (node != 0) {
-        cf::CSoundNode* tail = m->unk210;
+        cf::CSoundNode* tail = m->nodeTail;
         if (tail != 0)
             tail->next = node;
-        if (m->unk20C == 0) {
-            m->unk20C = node;
-            m->unk208 = (u32)node - (u32)&m->unk4[0];
+        if (m->nodeHead == 0) {
+            m->nodeHead = node;
+            m->headOffset = (u32)node - (u32)&m->unk4[0];
         }
-        m->unk210 = node;
+        m->nodeTail = node;
     }
     node = func_802AF3DC(self);
     cf::CCharVoiceMan* m2 = lbl_eu_80664A58;
     if (node != 0) {
-        cf::CSoundNode* tail = m2->unk210;
+        cf::CSoundNode* tail = m2->nodeTail;
         if (tail != 0)
             tail->next = node;
-        if (m2->unk20C == 0) {
-            m2->unk20C = node;
-            m2->unk208 = (u32)node - (u32)&m2->unk4[0];
+        if (m2->nodeHead == 0) {
+            m2->nodeHead = node;
+            m2->headOffset = (u32)node - (u32)&m2->unk4[0];
         }
-        m2->unk210 = node;
+        m2->nodeTail = node;
     }
 }
 void func_802A300C() {
@@ -1127,14 +1134,14 @@ void func_802A300C() {
     cf::CSoundNode* node = func_802AE38C();
     cf::CCharVoiceMan* m = lbl_eu_80664A58;
     if (node != 0) {
-        cf::CSoundNode* tail = m->unk210;
+        cf::CSoundNode* tail = m->nodeTail;
         if (tail != 0)
             tail->next = node;
-        if (m->unk20C == 0) {
-            m->unk20C = node;
-            m->unk208 = (u32)node - (u32)&m->unk4[0];
+        if (m->nodeHead == 0) {
+            m->nodeHead = node;
+            m->headOffset = (u32)node - (u32)&m->unk4[0];
         }
-        m->unk210 = node;
+        m->nodeTail = node;
     }
 }
 void func_802A3074() {
@@ -1143,14 +1150,14 @@ void func_802A3074() {
     cf::CSoundNode* node = func_802A7674();
     cf::CCharVoiceMan* m = lbl_eu_80664A58;
     if (node != 0) {
-        cf::CSoundNode* tail = m->unk210;
+        cf::CSoundNode* tail = m->nodeTail;
         if (tail != 0)
             tail->next = node;
-        if (m->unk20C == 0) {
-            m->unk20C = node;
-            m->unk208 = (u32)node - (u32)&m->unk4[0];
+        if (m->nodeHead == 0) {
+            m->nodeHead = node;
+            m->headOffset = (u32)node - (u32)&m->unk4[0];
         }
-        m->unk210 = node;
+        m->nodeTail = node;
     }
 }
 void func_802A30DC() {
@@ -1159,14 +1166,14 @@ void func_802A30DC() {
     cf::CSoundNode* node = func_802A8AC8();
     cf::CCharVoiceMan* m = lbl_eu_80664A58;
     if (node != 0) {
-        cf::CSoundNode* tail = m->unk210;
+        cf::CSoundNode* tail = m->nodeTail;
         if (tail != 0)
             tail->next = node;
-        if (m->unk20C == 0) {
-            m->unk20C = node;
-            m->unk208 = (u32)node - (u32)&m->unk4[0];
+        if (m->nodeHead == 0) {
+            m->nodeHead = node;
+            m->headOffset = (u32)node - (u32)&m->unk4[0];
         }
-        m->unk210 = node;
+        m->nodeTail = node;
     }
 }
 void func_802A3144() {
@@ -1175,14 +1182,14 @@ void func_802A3144() {
     cf::CSoundNode* node = func_802A8B6C();
     cf::CCharVoiceMan* m = lbl_eu_80664A58;
     if (node != 0) {
-        cf::CSoundNode* tail = m->unk210;
+        cf::CSoundNode* tail = m->nodeTail;
         if (tail != 0)
             tail->next = node;
-        if (m->unk20C == 0) {
-            m->unk20C = node;
-            m->unk208 = (u32)node - (u32)&m->unk4[0];
+        if (m->nodeHead == 0) {
+            m->nodeHead = node;
+            m->headOffset = (u32)node - (u32)&m->unk4[0];
         }
-        m->unk210 = node;
+        m->nodeTail = node;
     }
 }
 void func_802A31AC() {
@@ -1191,14 +1198,14 @@ void func_802A31AC() {
     cf::CSoundNode* node = func_802B5970();
     cf::CCharVoiceMan* m = lbl_eu_80664A58;
     if (node != 0) {
-        cf::CSoundNode* tail = m->unk210;
+        cf::CSoundNode* tail = m->nodeTail;
         if (tail != 0)
             tail->next = node;
-        if (m->unk20C == 0) {
-            m->unk20C = node;
-            m->unk208 = (u32)node - (u32)&m->unk4[0];
+        if (m->nodeHead == 0) {
+            m->nodeHead = node;
+            m->headOffset = (u32)node - (u32)&m->unk4[0];
         }
-        m->unk210 = node;
+        m->nodeTail = node;
     }
 }
 int func_802A3214() {
@@ -1208,14 +1215,14 @@ int func_802A3214() {
     if (node == 0) {
         appended = false;
     } else {
-        cf::CSoundNode* tail = m->unk210;
+        cf::CSoundNode* tail = m->nodeTail;
         if (tail != 0)
             tail->next = node;
-        if (m->unk20C == 0) {
-            m->unk20C = node;
-            m->unk208 = (u32)node - (u32)&m->unk4[0];
+        if (m->nodeHead == 0) {
+            m->nodeHead = node;
+            m->headOffset = (u32)node - (u32)&m->unk4[0];
         }
-        m->unk210 = node;
+        m->nodeTail = node;
         appended = true;
     }
     if (appended)
@@ -1229,14 +1236,14 @@ int func_802A3290() {
     if (node == 0) {
         appended = false;
     } else {
-        cf::CSoundNode* tail = m->unk210;
+        cf::CSoundNode* tail = m->nodeTail;
         if (tail != 0)
             tail->next = node;
-        if (m->unk20C == 0) {
-            m->unk20C = node;
-            m->unk208 = (u32)node - (u32)&m->unk4[0];
+        if (m->nodeHead == 0) {
+            m->nodeHead = node;
+            m->headOffset = (u32)node - (u32)&m->unk4[0];
         }
-        m->unk210 = node;
+        m->nodeTail = node;
         appended = true;
     }
     if (appended)
@@ -1253,7 +1260,7 @@ int func_802A330C(int a, int b) {
     if (lbl_eu_80664A58->unk214 == 0)
         return 0;
 
-    cf::CSoundNode* node = lbl_eu_80664A58->unk20C;
+    cf::CSoundNode* node = lbl_eu_80664A58->nodeHead;
     if (node == 0)
         goto success;
     while (node != 0) {
@@ -1267,7 +1274,7 @@ int func_802A330C(int a, int b) {
         node = node->next;
     }
 
-    node = lbl_eu_80664A58->unk20C;
+    node = lbl_eu_80664A58->nodeHead;
     while (node != 0) {
         bool match = false;
         if (__ptmf_cmpr(node, &lbl_eu_805398C0) != 0 && __ptmf_test(node) != 0)
@@ -1283,7 +1290,7 @@ int func_802A330C(int a, int b) {
         node = node->next;
     }
 
-    node = lbl_eu_80664A58->unk20C;
+    node = lbl_eu_80664A58->nodeHead;
     while (node != 0) {
         bool match = false;
         if (__ptmf_cmpr(node, &lbl_eu_805398C0) != 0 && __ptmf_test(node) != 0)
@@ -1302,7 +1309,7 @@ success:
 // but a helper with `return node' inside the loop keeps retail's
 // branch-over-branch split after inlining.
 static __inline cf::CSoundNode* FindVoiceNodeById(u32 id) {
-    for (cf::CSoundNode* node = lbl_eu_80664A58->unk20C; node != 0;
+    for (cf::CSoundNode* node = lbl_eu_80664A58->nodeHead; node != 0;
          node = node->next) {
         int match = __ptmf_cmpr(node, &lbl_eu_805398C0) != 0 &&
                     __ptmf_test(node) != 0;
@@ -1337,22 +1344,10 @@ void* func_802A3680(void* a, void* b, void* c) {
 // `arg`; if found, hand it to func_802A3E88 (0 if not found). The pmf
 // reference is passed as a direct address-of-global expression so MWCC hoists
 // `lis r31, lbl@ha` before the loop and emits `addi @l` per iteration.
-// for-loop + continue keeps the increment in a latch block like retail.
+// Uses the inline search helper so the id-compare keeps retail's
+// branch-over-branch split (`cmplw; bne latch; b found`).
 int func_802A3748(u32 arg) {
-    cf::CSoundNode* node;
-    // for-loop: `continue` jumps to the increment latch, giving retail's
-    // explicit `bne latch; b found` pair off the id-compare.
-    for (node = lbl_eu_80664A58->unk20C; node != 0; node = node->next) {
-        int match = __ptmf_cmpr(node, &lbl_eu_805398C0) != 0 && __ptmf_test(node) != 0;
-        if (match == 0)
-            continue;
-        if (arg != node->field_18)
-            continue;
-        goto found;
-    }
-    // Loop exhausted: null the node before the shared found-check.
-    node = 0;
-found:
+    cf::CSoundNode* node = FindVoiceNodeById(arg);
     if (node == 0)
         return 0;
     return (int)func_802A3E88(node);
@@ -1363,7 +1358,7 @@ void CCharVoiceMan_FactoryEvent2(void* self, void* actor) {
     u32 flags = ((cf::CVoiceFactoryActor*)actor)->field_64;
     if (!(flags & 0x2) && !(flags & 0x8) && !(flags & 0x4))
         return;
-    cf::CSoundNode* node = lbl_eu_80664A58->unk20C;
+    cf::CSoundNode* node = lbl_eu_80664A58->nodeHead;
     while (node != 0) {
         bool match = false;
         if (__ptmf_cmpr(node, (void*)&lbl_eu_805398C0) != 0 && __ptmf_test(node) != 0)
@@ -1418,17 +1413,14 @@ extern "C" int func_802A38C8(cf::CCharVoiceMan* self) {
         return 0;
 
     cf::CVoiceActorState* arr[3];
-    int n = func_802A7870(arr, 3, 0);
+    cf::CVoiceActorState** it;
     int cnt;
-    // Same assignment-in-condition shape: retail interleaves the count copy
+    int i;
+    // Same compare-then-copy shape: retail interleaves the count copy
     // between cmpwi r3,1 and bgt.
-    if ((cnt = n) <= 1)
+    if ((cnt = func_802A7870(arr, 3, 0)) <= 1)
         return 0;
     float limit = lbl_eu_80668C70;
-    // Named walking iterator: declaration order (cnt, it, i) colors
-    // cnt=r31, it=r30, i=r29 like retail.
-    cf::CVoiceActorState** it;
-    int i;
     for (it = arr, i = 0; i < cnt; i++) {
         cf::CVoiceActorState* obj = *it;
         if (((cf::CVoiceActorStateIf*)obj)->fn_130() < limit)

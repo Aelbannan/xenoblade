@@ -48,25 +48,43 @@ void mwsfsvr_SyncStartSst(void* self) {
 extern char lbl_eu_8051BE68[];
 extern s32 MWSTM_GetStat(void* stm);
 extern s32 MWSTM_ReqStart(void* stm);
+extern void MWSTM_SetFileRange(void* stm, s32 a, s32 b, s32 c, s32 d);
 extern void MWSFCRE_SetSupplySj(void* self);
 extern void MWSFSVM_Error(const char* fmt, ...);
 extern void MWSFLIB_SetErrCode(s32 code);
 
-s32 mwsfsvr_StartStream(void* self) {
-    if (MWSTM_GetStat(*(void**)((u8*)self + 0x5C)) == 2) return -1;
-    if (*(s32*)((u8*)self + 0x678) == 1) return 1;
-    if (*(void**)((u8*)self + 0x500) != NULL) {
-        void* obj = *(void**)((u8*)self + 0x500);
+// Player stream server handle layout (fields touched by the start path).
+typedef struct MwSvrHndl {
+    u8 _00[0x04];
+    s32 state;               // 0x04
+    u8 _08[0x54];
+    void* stm;               // 0x5C
+    u8 _60[0x488];
+    s32 filePos;             // 0x4E8
+    u8 _4EC[0x04];
+    s32 queuedFlag;          // 0x4F0
+    s32 rangeStart;          // 0x4F4
+    s32 rangeEnd;            // 0x4F8
+    s32 rangeSize;           // 0x4FC
+    void* obj;               // 0x500
+    u8 _508[0x170];
+    s32 stopFlag;            // 0x678
+} MwSvrHndl;
+
+s32 mwsfsvr_StartStream(MwSvrHndl* self) {
+    if (MWSTM_GetStat(self->stm) == 2) return -1;
+    if (self->stopFlag == 1) return 1;
+    if (self->obj != NULL) {
+        void* obj = self->obj;
         ((void (*)(void*))*(void**)((char*)*(void**)obj + 0x14))(obj);
     }
-    MWSTM_SetFileRange(*(void**)((u8*)self + 0x5C), *(s32*)((u8*)self + 0x4E8),
-                       *(s32*)((u8*)self + 0x4F4), *(s32*)((u8*)self + 0x4F8),
-                       *(s32*)((u8*)self + 0x4FC));
-    if (MWSTM_ReqStart(*(void**)((u8*)self + 0x5C)) == -1) {
-        *(s32*)((u8*)self + 4) = 4;
+    MWSTM_SetFileRange(self->stm, self->filePos, self->rangeStart,
+                       self->rangeEnd, self->rangeSize);
+    if (MWSTM_ReqStart(self->stm) == -1) {
+        self->state = 4;
         MWSFLIB_SetErrCode(-102);
-        MWSFSVM_Error(lbl_eu_8051BE68, *(s32*)((u8*)self + 0x4E8));
-        *(s32*)((u8*)self + 0x4F0) = 0;
+        MWSFSVM_Error(lbl_eu_8051BE68, self->filePos);
+        self->queuedFlag = 0;
         return -1;
     }
     MWSFCRE_SetSupplySj(self);
@@ -333,4 +351,33 @@ void MWSFD_SetProhibitServer(int val) {
     *(int*)((u8*)MWSFLIB_GetLibWorkPtr() + 0x34f0) = val;
 }
 
-void mwPlyExecRequestServer() {}
+extern s32 MWSFD_IsEndPrepareStop(void* self);
+extern void mwPlyStop(void* self);
+
+// Services queued start/stop requests on all 8 player streams while the
+// server is running and not prohibited.
+void mwPlyExecRequestServer() {
+    u8* w;
+    u8* h;
+    s32 i;
+
+    if ((s32)lbl_eu_805FF39C != 1) return;
+    w = (u8*)MWSFLIB_GetLibWorkPtr();
+    if (*(s32*)((u8*)MWSFLIB_GetLibWorkPtr() + 0x34F0) == 1) return;
+    h = w + 0x70;
+    for (i = 0; i < 8; i++) {
+        if (h != NULL) {
+            if (*(s32*)(h + 0x4F0) == 1) {
+                if (mwsfsvr_StartStream((MwSvrHndl*)h) == 1) {
+                    *(s32*)(h + 0x4F0) = 0;
+                }
+            }
+            if (*(s32*)(h + 0x678) == 1) {
+                if (MWSFD_IsEndPrepareStop(h) == 1) {
+                    mwPlyStop(h);
+                }
+            }
+        }
+        h += 0x690;
+    }
+}

@@ -153,6 +153,17 @@ extern "C" void* func_8003AA34();
 extern "C" void func_8029B05C(CTutorial* pTutorial);
 
 
+// Layout build helpers (retail relocs are the mangled C++ names).
+void func_80136E84(nw4r::lyt::Layout**, nw4r::lyt::ArcResourceAccessor*,
+                   const char*);
+void func_80136F08(nw4r::lyt::Layout*, nw4r::lyt::AnimTransform**,
+                   nw4r::lyt::ArcResourceAccessor*, char*);
+void func_801368C0(nw4r::lyt::Layout*, char*, u32);
+// Root-pane font bind (retail reloc is the literal unmangled name).
+extern "C" void func_8013676C(void*, u32);
+// BDAT field reader (retail reloc is the literal unmangled name).
+extern "C" u32 func_801361E8(u32, const char*, u32);
+
 // Retail calls the language-flag query through its unmangled Fv symbol with a
 // dummy -1 argument that the callee ignores.
 extern "C" int func_80086F9C__Q22cf13CfGameManagerFv(int arg);

@@ -2230,14 +2230,16 @@ void CArrow3D::Init() {
 // Retail emits 8-byte tail calls (addi this-adjust + branch). The C++ member-scoped
 // call form would inline the tiny bodies, so call the retail symbols directly as
 // extern "C" functions (same pattern as the CMenuMapSelect/CMapSel dtors).
-// Note: the dtors are declared 1-arg here (matching the retail thunk ABI - only
-// r3 is set before the tail branch; the flags arg is caller-leftover, as retail).
+// Note: thunks call the dtors through a one-arg pointer view (matching the
+// retail thunk ABI - only r3 is set before the tail branch; the flags arg is
+// caller-leftover, as retail).
 extern "C" void* __dt__15CMenuSymbolMarkFv(CMenuSymbolMark* self, int flags);
 extern "C" void cbRenderBefore__15CMenuSymbolMarkFv(CMenuSymbolMark* self);
 extern "C" void cbRenderBefore__8CArrow3DFv(CArrow3D* self);
 
 extern "C" void func_8012213C(void* self) {
-    __dt__15CMenuSymbolMarkFv((CMenuSymbolMark*)((char*)self - 0x58), 0);
+    // One-arg pointer view: retail thunk leaves r4 (delete flag) untouched.
+    ((void (*)(CMenuSymbolMark*))__dt__15CMenuSymbolMarkFv)((CMenuSymbolMark*)((char*)self - 0x58));
 }
 
 extern "C" void func_80122144(void* self) {
@@ -2245,7 +2247,7 @@ extern "C" void func_80122144(void* self) {
 }
 
 extern "C" void func_8012214C(void* self) {
-    __dt__15CMenuSymbolMarkFv((CMenuSymbolMark*)((char*)self - 0x5C), 0);
+    ((void (*)(CMenuSymbolMark*))__dt__15CMenuSymbolMarkFv)((CMenuSymbolMark*)((char*)self - 0x5C));
 }
 
 extern "C" void func_80122154(void* self) {
@@ -2253,5 +2255,5 @@ extern "C" void func_80122154(void* self) {
 }
 
 extern "C" void func_8012215C(void* self) {
-    __dt__8CArrow3DFv((CArrow3D*)((char*)self - 0x54), 0);
+    ((void (*)(CArrow3D*))__dt__8CArrow3DFv)((CArrow3D*)((char*)self - 0x54));
 }

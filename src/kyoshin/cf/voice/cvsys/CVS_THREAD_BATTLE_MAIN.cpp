@@ -2,17 +2,24 @@
 #include "kyoshin/harness_catalog.hpp"
 #include "kyoshin/cf/CfMapItemManager.hpp"
 #include "kyoshin/cf/voice/cvsys/CVS_THREAD.hpp"
-#include "kyoshin/code_802B8A3C.hpp" // func_802A3D54 playback helper decl
 #include "kyoshin/cf/CfGameManager.hpp"
 #include "monolib/math/Random.hpp"
 
 // C-linkage imports from sibling modules (no compatible declaring header in
-// scope; mirrors CVS_THREAD_CHAIN.hpp).
+// scope; mirrors CVS_THREAD_CHAIN.hpp).  Declared here instead of via
+// code_802B8A3C.hpp so the base-ctor import carries its self argument
+// (retail passes r3=self).
 extern "C" {
     int  func_802A3E88(CVS_THREAD* self);
     int  func_802A3C44(CVS_THREAD* self, CCharVoice* voicePtr, int voiceId);
-    void __ct__cf_CVS_THREAD();
+    int  func_802A3D54(CCharVoice* voicePtr, int voiceId, int arg);
+    void __ct__cf_CVS_THREAD(void* self);
     int  func_802A77E8(CVoiceHandle* handle);
+    void* func_802A34E4(int size);
+    // Runtime rethrow (NMWException.h): noreturn so MWCC elides the
+    // __end__catch epilogue of the catch-all handler.
+    __declspec(noreturn) void __throw(char* throwtype, u32 location,
+                                      u32 dtor);
 }
 
 // ── Shared views over the voice-owner object ─────────────────────────────
@@ -94,12 +101,15 @@ extern u32 lbl_eu_8053AA64[3];
 extern u32 lbl_eu_8053AA70[3];
 extern u32 lbl_eu_8053AA7C[7];
 
-// Float thresholds and the double bias constant used by func_802AF13C.
+// Float thresholds for func_802AF13C, plus the int->float conversion
+// magic (0x4330000080000000): planting it under its retail name makes
+// MWCC's literal pool unify the builtin cast's pooled magic onto this
+// label (ocUnit::turn pattern).
+const double lbl_eu_80668EB8 = 4503601774854144.0;
 extern float lbl_eu_80668EA8;
 extern float lbl_eu_80668EAC;
 extern float lbl_eu_80668EB0;
 extern float lbl_eu_80668EB4;
-extern double lbl_eu_80668EB8;
 
 // Battle-main voice thread object (0x24 bytes): derives from CVS_THREAD
 // (init triple at +0x00, hand-placed vtable pointer at +0x1C) plus a flag
@@ -163,6 +173,7 @@ struct BmOwnerFloatVTV {
 #undef BMF_VTV_N
     virtual float get128(); // slot 72 -> 0x128
     virtual float get12C(); // slot 73 -> 0x12C
+    virtual float get130(); // slot 74 -> 0x130
 };
 
 // Stack-frame record built by the factory __ct__802AF5CC (retail returns
@@ -171,8 +182,24 @@ struct BmCtorFrame {
     u32 field_0x00;
     u8 _pad4[4];
     u32 field_0x08;          // value captured via the handle->field_4 virtual
-    u8 _padC[0x24 - 0x0C];
-    void* field_0x24;        // self-pointer stored before construction
+};
+
+// View over the sub-object hanging off the voice handle at +0x04: its
+// vtable slot at byte offset 0x30 (declared slot 10) is probed before the
+// capture, and its leading word is re-read afterwards.
+struct BmSubResult {
+    u32 word0;               // +0x00: word captured into the frame local
+};
+struct BmSubVTV {
+#define BSUB_N(n) virtual void s##n();
+    BSUB_N(0) BSUB_N(1) BSUB_N(2) BSUB_N(3) BSUB_N(4) BSUB_N(5)
+    BSUB_N(6) BSUB_N(7) BSUB_N(8) BSUB_N(9)
+#undef BSUB_N
+    virtual BmSubResult* getResult(); // slot 10 -> vtable offset 0x30
+};
+struct BmHandleSubView {
+    u8 _pad[4];
+    BmSubVTV* field_0x04;    // +0x04: sub-object carrying the result slot
 };
 
 int func_802AED0C(BattleMainOwnerView* owner);
@@ -579,8 +606,6 @@ int func_802AF56C(CVoiceHandle* self) {
 // battle-main vtable and the caller's id, then seeds the init-state triple.
 // Retail returns the stack-frame record address.
 void* __ct__802AF5CC(int arg) {
-    BmCtorFrame f;
-
     CCharVoice* voice = (CCharVoice*)cf::CfGameManager::getPlayer(0);
     CVoiceHandle* handle = (CVoiceHandle*)voice;
     if (voice != NULL) {
@@ -589,9 +614,11 @@ void* __ct__802AF5CC(int arg) {
     if (handle == NULL)
         return 0;
 
-    // Capture a value through the sub-object's vtable slot 0x30.
-    f.field_0x08 = handle->unk4;
-    if (func_80174C98(handle, &f.field_0x08, 0x803) == 0)
+    // The sub-object's slot-0x30 virtual returns a result node; its leading
+    // word is the value captured into the frame local.
+    u32 captured =
+        ((BmHandleSubView*)handle)->field_0x04->getResult()->word0;
+    if (func_80174C98(handle, &captured, 0x803) == 0)
         return 0;
 
     // Idle check via the handle's vtable slot at 0x2BC.
@@ -608,8 +635,7 @@ void* __ct__802AF5CC(int arg) {
 
     if (self != NULL) {
         try {
-            f.field_0x24 = &f;
-            __ct__cf_CVS_THREAD();
+            __ct__cf_CVS_THREAD(self);
             ((BmThreadRaw*)self)->vptr = (BmThreadVTable*)lbl_eu_8053AA7C;
             self->field_0x20 = (u8)arg;
         } catch (...) {
@@ -618,16 +644,11 @@ void* __ct__802AF5CC(int arg) {
     }
 
     // Seed the init-state triple; load word 1 before word 0 so the register
-    // colours match retail (r0 = word 1, r4 = word 0).
-    BmStateTriple* st = (BmStateTriple*)&self->unk0;
-    const u32* base = lbl_eu_8053AA58;
-    u32 w1 = base[1];
-    u32 w0 = base[0];
-    st->unk0 = w0;
-    st->unk4 = w1;
-    st->unk8 = base[2];
+    // colours match retail (r0 = word 1, r4 = word 0).  Returns self (the
+    // constructed thread), which keeps r3 live to the epilogue.
+    self->unk0 = *(const VoiceCb*)lbl_eu_8053AA58;
 
-    return &f;
+    return self;
 }
 
 // ── us-802b2194 (func_802AF724) ─────────────────────────────────────────────
@@ -726,40 +747,58 @@ int func_802AF9C8() { return 270; }
 // ── us-802b1bac (func_802AF13C) ─────────────────────────────────────────────
 // Scan the table for the owner's sub-state like func_802AF02C, then compute
 // the ratio of the live pair of float virtuals (slots 0x12C/0x128) over an
-// argument-biased denominator, bucket it against four descending float
-// thresholds (each also required to exceed the second virtual's value), and
-// return the halfword pooled at entry+0x2E+bucket*2.
-extern "C" int func_802AF13C(BattleMainOwnerView* owner, int arg) {
+// argument-biased denominator, fetch a third float virtual (slot 0x130),
+// bucket the ratio against four descending float thresholds (each must also
+// exceed the third virtual's value), and return the halfword pooled at
+// entry+0x2E+bucket*2.
+// Same-TU inline search helper (bmFindEntry pattern): the inlined `return p`
+// lowers to retail's branch-over-branch `bne next; b found` split.
+static __inline VoiceIdListEntry* bmFindEntryBM(BattleMainOwnerView* owner) {
     VoiceIdListEntry* p = lbl_eu_8053A4B8;
-    for (;;) {
-        if ((s32)owner->field_0x3F28 == p->id)
-            break;
+    int cur;
+    while ((cur = p->id) != 0) {
+        if (cur == (s32)owner->field_0x3F28)
+            return p;
         p++;
-        if (p->id != 0)
-            continue;
-        p = NULL;
-        break;
     }
+    return NULL;
+}
+
+extern "C" int func_802AF13C(BattleMainOwnerView* owner, int arg) {
+    VoiceIdListEntry* p = bmFindEntryBM(owner);
     if (p == NULL)
         return -1;
 
-    float num = ((BmOwnerFloatVTV*)owner)->get12C();
-    float den2 = ((BmOwnerFloatVTV*)owner)->get128();
-    float ratio = (((double)arg - lbl_eu_80668EB8) + den2) / num;
+    BmOwnerFloatVTV* vtv = (BmOwnerFloatVTV*)owner;
+    float num = vtv->get12C();
+    float den = vtv->get128();
+    // Builtin int->float cast: MWCC lowers this to the 0x4330 trick whose
+    // final single-rounded fsubs both removes the bias and rounds; the
+    // pooled magic constant aliases the shared blob lbl_eu_80668EB8.
+    float ratio = ((float)arg + den) / num;
+    // Third virtual is fetched after the ratio; each threshold must also
+    // exceed this value for its bucket to win.
+    float c = vtv->get130();
 
     int idx;
-    if (ratio < lbl_eu_80668EA8 && lbl_eu_80668EA8 > den2)
+    // Guard shape: test1 is a plain inverted `ratio < T` branch (bge);
+    // test2 must stay as negated `T <= c` - folding it to `T > c` loses
+    // the cror eq,lt,eq fusion MWCC emits for the le-test.
+    if (ratio < lbl_eu_80668EA8 && lbl_eu_80668EA8 <= c)
         idx = 3;
-    else if (ratio < lbl_eu_80668EAC && lbl_eu_80668EAC > den2)
+    else if (ratio < lbl_eu_80668EAC && lbl_eu_80668EAC <= c)
         idx = 2;
-    else if (ratio < lbl_eu_80668EB0 && lbl_eu_80668EB0 > den2)
+    else if (ratio < lbl_eu_80668EB0 && lbl_eu_80668EB0 <= c)
         idx = 1;
-    else if (ratio < lbl_eu_80668EB4 && lbl_eu_80668EB4 > den2)
+    else if (ratio < lbl_eu_80668EB4 && lbl_eu_80668EB4 <= c)
         idx = 0;
     else
         idx = -1;
 
-    if (idx < 0 || idx >= 4)
+    // Commuted second bound blocks MWCC's unsigned range-check fusion.
+    if (idx < 0)
+        return -1;
+    if (4 <= idx)
         return -1;
     return *(s16*)((char*)p + idx * 2 + 0x2E);
 }

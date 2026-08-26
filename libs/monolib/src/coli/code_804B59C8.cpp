@@ -1214,15 +1214,16 @@ extern "C" void func_804B71CC(CColiSrc* a, CColiMover* b) {
 
 // func_804B74F0 - relocate the raycast object's table pointers from a base
 // record whose first words are byte-offsets into the record itself.
-void func_804B74F0(u32* self, u32* data) {
-    ((u32*)self)[0x50 / 4] = (u32)((u8*)data + data[0]);
-    ((u32*)self)[0x54 / 4] = (u32)((u8*)data + data[1]);
-    ((u32*)self)[0x58 / 4] = (u32)((u8*)data + data[2]);
-    ((u32*)self)[0x5C / 4] = (u32)((u8*)data + data[3]);
-    ((u32*)self)[0x74 / 4] = data[4];
-    Vec3* segs = (Vec3*)((u8*)data + data[5]);
-    Vec3* rays = (Vec3*)((u8*)data + data[6]);
-    for (;;) {}
+extern "C" void func_804BC9DC(void* self, u32 a, u32 b);
+
+extern "C" void func_804B74F0(u32* self, u8* data) {
+    u32* w = (u32*)data;
+    ((u32*)self)[0x50 / 4] = (u32)(data + w[0]);
+    ((u32*)self)[0x54 / 4] = (u32)(data + w[1]);
+    ((u32*)self)[0x58 / 4] = (u32)(data + w[2]);
+    ((u32*)self)[0x5C / 4] = (u32)(data + w[3]);
+    ((u32*)self)[0x74 / 4] = w[4];
+    func_804BC9DC(self, (u32)(data + w[5]), (u32)(data + w[6]));
 }
 
 // func_804B7540 - (re)allocate the mover-state entry table: free the old
@@ -1519,8 +1520,10 @@ bool func_804B7DD4(u32* self, int idx) {
     }
     u32* bits = (u32*)lbl_eu_8065F1A0;
     // Word fetched before the mask so the scheduler matches retail.
-    u32 word = bits[idx >> 5];
-    bits[idx >> 5] = word | (1u << (idx & 0x1F));
+    int word_idx = idx >> 5;
+    u32 word = bits[word_idx];
+    u32 new_bits = word | (1u << (idx & 0x1F));
+    bits[word_idx] = new_bits;
     return true;
 }
 

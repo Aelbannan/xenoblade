@@ -667,19 +667,13 @@ u32 PackedFont::CalcCopySize(const FontGlyphGroupsAcs& rGroups,
     u32 size3 = 0;  // D-group sizes
     u32 count = 0;  // included glyph count
 
-    // Shared pass counters: retail reuses the same registers across all three
-    // passes, so they live at function scope and are re-zeroed per pass.
-    u32 offMask;
-    int g;
-    u32 offSize;
-
     // B groups: add the per-glyph size of every sheet that is included.
     {
-        offMask = 0;
-        g = 0;
-        offSize = 0;
+        u32 offMask = 0;
+        int g = 0;
+        u32 offSize = 0;
         for (; g < reinterpret_cast<const GlyphGroupsBlock*>(rGroups.field_0x4)
-                       ->groupBCount;
+                    ->groupBCount;
              g += 0x20) {
             u32 maskB = 0;
             for (int i = 0;
@@ -687,11 +681,10 @@ u32 PackedFont::CalcCopySize(const FontGlyphGroupsAcs& rGroups,
                          rGroups.field_0x4)
                          ->glyphsPerGroup;
                  i++) {
-                u32 nameIdx =
-                    reinterpret_cast<const GlyphGroupsBlock*>(rGroups.field_0x4)
-                        ->nameIndices[i];
                 const char* pSheet = reinterpret_cast<const char*>(
-                    nameIdx + rGroups.field_0x0);
+                    rGroups.field_0x0 +
+                    reinterpret_cast<const GlyphGroupsBlock*>(rGroups.field_0x4)
+                        ->nameIndices[i]);
                 if (*pName == 0 || IncludeName(pName, pSheet)) {
                     maskB |= *(const u32*)(rGroups.field_0x18 + offMask +
                                            ((i * rGroups.field_0x24) & ~3));
@@ -711,11 +704,11 @@ u32 PackedFont::CalcCopySize(const FontGlyphGroupsAcs& rGroups,
 
     // C groups: each included glyph shares its 8-byte header with the sheet.
     {
-        offMask = 0;
-        g = 0;
-        offSize = 0;
+        u32 offMask = 0;
+        int g = 0;
+        u32 offSize = 0;
         for (; g < reinterpret_cast<const GlyphGroupsBlock*>(rGroups.field_0x4)
-                       ->groupCCount;
+                    ->groupCCount;
              g += 0x20) {
             u32 mask = 0;
             for (int i = 0;
@@ -723,11 +716,10 @@ u32 PackedFont::CalcCopySize(const FontGlyphGroupsAcs& rGroups,
                          rGroups.field_0x4)
                          ->glyphsPerGroup;
                  i++) {
-                u32 nameIdx =
-                    reinterpret_cast<const GlyphGroupsBlock*>(rGroups.field_0x4)
-                        ->nameIndices[i];
                 const char* pSheet = reinterpret_cast<const char*>(
-                    nameIdx + rGroups.field_0x0);
+                    rGroups.field_0x0 +
+                    reinterpret_cast<const GlyphGroupsBlock*>(rGroups.field_0x4)
+                        ->nameIndices[i]);
                 if (*pName == 0 || IncludeName(pName, pSheet)) {
                     mask |= *(const u32*)(rGroups.field_0x1C + offMask +
                                           ((i * rGroups.field_0x28) & ~3));
@@ -747,11 +739,11 @@ u32 PackedFont::CalcCopySize(const FontGlyphGroupsAcs& rGroups,
 
     // D groups: same header sharing as the C pass.
     {
-        offMask = 0;
-        g = 0;
-        offSize = 0;
+        u32 offMask = 0;
+        int g = 0;
+        u32 offSize = 0;
         for (; g < reinterpret_cast<const GlyphGroupsBlock*>(rGroups.field_0x4)
-                       ->groupDCount;
+                    ->groupDCount;
              g += 0x20) {
             u32 mask = 0;
             for (int i = 0;
@@ -759,11 +751,10 @@ u32 PackedFont::CalcCopySize(const FontGlyphGroupsAcs& rGroups,
                          rGroups.field_0x4)
                          ->glyphsPerGroup;
                  i++) {
-                u32 nameIdx =
-                    reinterpret_cast<const GlyphGroupsBlock*>(rGroups.field_0x4)
-                        ->nameIndices[i];
                 const char* pSheet = reinterpret_cast<const char*>(
-                    nameIdx + rGroups.field_0x0);
+                    rGroups.field_0x0 +
+                    reinterpret_cast<const GlyphGroupsBlock*>(rGroups.field_0x4)
+                        ->nameIndices[i]);
                 if (*pName == 0 || IncludeName(pName, pSheet)) {
                     mask |= *(const u32*)(rGroups.field_0x20 + offMask +
                                           ((i * rGroups.field_0x2C) & ~3));

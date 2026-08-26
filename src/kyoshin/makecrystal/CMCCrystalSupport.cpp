@@ -2,13 +2,6 @@
 #include <nw4r/lyt.h>
 #include "kyoshin/makecrystal/CMCCrystalSupport.hpp"
 
-namespace nw4r {
-namespace lyt {
-class ArcResourceAccessor;
-class AnimTransform;
-}
-} // namespace nw4r
-
 extern "C" {
 extern void* lbl_eu_80536770[];
 extern char lbl_eu_8050AA3C[];
@@ -27,33 +20,6 @@ void func_80137E7C(void*, const char*, void*);
 u32 func_80137444__FPQ34nw4r3lyt13AnimTransformf(nw4r::lyt::AnimTransform*,
                                                   float);
 void func_80138078__FUl(u32);
-}
-
-namespace {
-struct LayoutAnimateIf {
-    virtual void _v008();
-    virtual void _v00C();
-    virtual void _v010();
-    virtual void _v014();
-    virtual void _v018();
-    virtual void _v01C();
-    virtual void _v020();
-    virtual void _v024();
-    virtual void _v028();
-    virtual void _v02C();
-    virtual void _v030();
-    virtual void _v034();
-    virtual void animate(u32);
-};
-
-struct LayoutDestroyIf {
-    virtual void destroy(int);
-};
-
-struct AccessorGetResourceIf {
-    virtual void _v008();
-    virtual void* getResource(u32, const char*, void*);
-};
 }
 
 class __declspec(novtable) CMCCrystalSupport {
@@ -100,7 +66,7 @@ extern "C" void func_8022E988(CMCCrystalSupport* self) {
         if (self->mState == 1) {
             func_8022EB0C(self);
         }
-        ((LayoutAnimateIf*)self->mLayout)->animate(0);
+        self->mLayout->Animate(0);
     }
 }
 
@@ -135,8 +101,7 @@ extern "C" void func_8022EA88(CMCCrystalSupport* self, u16 index) {
     u16 key = func_80136254((const char*)lbl_eu_80664090, base + 0x2d,
                             (const char*)index);
     char* name = func_80138F78(key);
-    void* resource = ((AccessorGetResourceIf*)self->mAccessor)->getResource(
-        'timg', name, nullptr);
+    void* resource = self->mAccessor->GetResource('timg', name, nullptr);
     if (resource != nullptr) {
         func_80137E7C(self->mLayout, lbl_eu_8050AA3C + 0x38, resource);
     }

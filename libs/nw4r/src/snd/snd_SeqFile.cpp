@@ -95,22 +95,18 @@ bool ReadOffsetByLabel__Q44nw4r3snd6detail13SeqFileReaderCFPCcPUl(
     }
 
     u32 nameLen = strlen(label);
+    u32 entryCount = pLabelBlock->entryCount;
 
-    const u32* pOffsetIt = pLabelBlock->offset;
-
-    // Indexing offset[i] directly lets MWCC strength-reduce the address to a
-    // base-copy cursor with the 0xC folded into the load displacement.
-    for (u32 i = 0; i < pLabelBlock->entryCount; i++) {
+    u32 i = 0;
+    for (; i < entryCount; i++) {
         const SeqLabelEntry* pEntry =
-            static_cast<const SeqLabelEntry*>(AddPtrBaseFirst(pLabelBlock, *pOffsetIt));
+            static_cast<const SeqLabelEntry*>(AddPtrBaseFirst(pLabelBlock, pLabelBlock->offset[i]));
 
         if (nameLen == pEntry->nameLen &&
             strncmp(label, pEntry->name, nameLen) == 0) {
             *outOffset = pEntry->value;
             return true;
         }
-
-        pOffsetIt++;
     }
 
     return false;

@@ -299,17 +299,22 @@ typedef void (*TexSrtMtxFunc)(math::MTX34* pMtx, const TexSrt& rSrt);
 
 } // namespace
 
-// These TexSrt matrix builders are only referenced through the retail
-// dispatch tables (lbl_eu_8051D730 / lbl_eu_8051D74C), which the compiler
-// cannot see as in-TU references. Force-emit them so they survive DCE.
-DECOMP_FORCEACTIVE(g3d_3dsmax_cpp,
-                   MakeTexSrtMtx_S, MakeTexSrtMtx_R, MakeTexSrtMtx_T,
-                   MakeTexSrtMtx_SR, MakeTexSrtMtx_RT, MakeTexSrtMtx_ST,
-                   MakeTexSrtMtx_SRT, ProductTexSrtMtx_S, ProductTexSrtMtx_R,
-                   ProductTexSrtMtx_T, ProductTexSrtMtx_SR, ProductTexSrtMtx_RT,
-                   ProductTexSrtMtx_ST, ProductTexSrtMtx_SRT);
-// The emitter function itself is retail-absent; tools/postprocess_reloc_names.py
-// UNIT_RULES drops it from the link (drop_text_symbols, trailing-* prefix match).
+// Retail dispatch tables (nw4r_data.s .rodata 0x8051D730/0x8051D74C, 7
+// entries each in reverse declaration order). Defining them here gives
+// -ipa file real references to the 14 TexSrtMtx functions above, replacing
+// the former DECOMP_FORCEACTIVE emitter entirely ((used) and #pragma
+// force_active are both ignored by -ipa file DCE). The definitions are
+// stripped and converted to UNDEF by UNIT_RULES extern_data_sections so they
+// resolve to the nw4r_data.s blob copies at link.
+extern "C" const ::TexSrtMtxFunc lbl_eu_8051D730[7] = {
+    MakeTexSrtMtx_SRT, MakeTexSrtMtx_RT, MakeTexSrtMtx_ST,
+    MakeTexSrtMtx_T, MakeTexSrtMtx_SR, MakeTexSrtMtx_R, MakeTexSrtMtx_S,
+};
+extern "C" const ::TexSrtMtxFunc lbl_eu_8051D74C[7] = {
+    ProductTexSrtMtx_SRT, ProductTexSrtMtx_RT, ProductTexSrtMtx_ST,
+    ProductTexSrtMtx_T, ProductTexSrtMtx_SR, ProductTexSrtMtx_R,
+    ProductTexSrtMtx_S,
+};
 
 bool CalcTexMtx_3dsmax(math::MTX34* pMtx, bool bSet, const TexSrt& rSrt, TexSrt::Flag flag) {
     u32 idx = DECOMP_PPC_RLWINM(flag, 31, 29, 31);

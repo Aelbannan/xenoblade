@@ -604,7 +604,7 @@ void bta_dm_discover(struct bta_dm_msg *p_data) {
    remote-name request and let the result message continue the search. If no
    name request was started, finalize the search with a DISC_RESULT message. */
 void bta_dm_inq_cmpl(struct bta_dm_msg *p_data) {
-    unsigned char found = 1;
+    int found = 1;
     unsigned char inq_cmpl[0x108];
     struct bta_dm_disc_res_local_t disc_res;
     struct bta_dm_buf_t *p_buf;
@@ -679,9 +679,9 @@ void bta_dm_inq_cmpl(struct bta_dm_msg *p_data) {
    report the result of this message's device to the app. */
 void bta_dm_rmt_name(struct bta_dm_msg *p_data) {
     unsigned char found = 1;
-    struct bta_dm_buf_t *p_buf;
     struct bta_dm_disc_res_local_t disc_res;
     unsigned char *p_rem_addr;
+    struct bta_dm_buf_t *p_buf;
 
     while ((bta_dm_search_cb.p_cur = BTM_InqDbNext(bta_dm_search_cb.p_cur)) != NULL) {
         if (((unsigned char *)bta_dm_search_cb.p_cur)[0x10] != 0) {
@@ -697,13 +697,17 @@ void bta_dm_rmt_name(struct bta_dm_msg *p_data) {
             if (BTM_ReadRemoteDeviceName((unsigned char *)bta_dm_search_cb.p_cur + 2,
                                          (void *)bta_dm_remname_cback) != 1) {
                 bta_sys_stop_timer(&bta_dm_search_cb.svc_timer);
-                p_rem_addr = (unsigned char *)bta_dm_search_cb.p_cur + 2;
-                p_buf = (struct bta_dm_buf_t *)GKI_getbuf(0x110);
-                if (p_buf != NULL) {
-                    bdcpy(p_buf->data + 4, p_rem_addr);
-                    p_buf->data[0xa] = 0;
-                    p_buf->event = BTA_DM_REMT_NAME_EVT;
-                    bta_sys_sendmsg(p_buf);
+                {
+                    p_rem_addr = (unsigned char *)bta_dm_search_cb.p_cur + 2;
+
+                    p_buf = (struct bta_dm_buf_t *)GKI_getbuf(0x110);
+                    if (p_buf != NULL) {
+                        /* remote BD_ADDR copied into the message payload */
+                        bdcpy(p_buf->data + 4, p_rem_addr);
+                        p_buf->data[0xa] = 0;
+                        p_buf->event = BTA_DM_REMT_NAME_EVT;
+                        bta_sys_sendmsg(p_buf);
+                    }
                 }
             }
             found = 0;

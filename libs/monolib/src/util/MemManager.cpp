@@ -754,17 +754,14 @@ Allocates memory from the tail (or end) of the region indicated by 'handle'.
 The buffer's size and alignment can be configured.
 */
 void* MemManager::allocate_tail(ALLOC_HANDLE handle, u32 size, int align) {
-    MemRegion* region = getRegion(handle);
     void* buffer = nullptr;
+    MemRegion* region = getRegion(handle);
 
-    // Allocate a tail-aligned buffer; the null path is an explicit
-    // li r3,0 return (retail), so keep the early-return shape.
-    // OPEN ITEM: retail materializes buffer's null into a VOLATILE arg
-    // reg coalesced with the &buffer setup (3 saved regs); every source
-    // shape tried (decl order, late init, comma-expr inline init) makes
-    // MWCC put it in saved r31 -> 4th saved reg, +4 instrs.
-    if (MemManager::getTailBuffer(region, size, align, &buffer) == nullptr) {
-        return nullptr;
+    // Null path re-stores nullptr so the return folds to li r3,0 (retail)
+    // while keeping buffer live-out of the getTailBuffer call.
+    if (!MemManager::getTailBuffer(region, size, align, &buffer)) {
+        buffer = nullptr;
+        return buffer;
     }
 
     // Setup the block header in this custom buffer.
@@ -963,25 +960,18 @@ void* MemManager::getMaxAllocData(ALLOC_HANDLE handle) {
 Gets the percentage of memory allocated in the region indicated by 'handle'.
 */
 f32 MemManager::getPercentAlloc(ALLOC_HANDLE handle) {
-    MemRegion* region = sRegionBuffer__Q23mtl10MemManager[ALLOC_HANDLE_REGION(handle)];
+    MemRegion* region = getRegion(handle);
 
     //No allocations have ever been performed
     if (region->mOldest == nullptr) {
         return lbl_eu_8066A1C0;
     }
 
-    // u32 -> double via the shared 2^52 magic constant (retail pools it as
-    // lbl_eu_8066A1C8 in the FloatUtils-owned .sdata2 range; referencing the
-    // extern keeps this TU from pooling a local @N copy).
-    U32ToDouble total;
-    U32ToDouble used;
-    used.w[0] = 0x43300000;
-    used.w[1] = region->mSize - region->mFreeBytes;
-    total.w[0] = 0x43300000;
-    total.w[1] = region->mSize;
-
-    return static_cast<f32>(used.d - lbl_eu_8066A1C8) /
-        static_cast<f32>(total.d - lbl_eu_8066A1C8) * lbl_eu_8066A1C4;
+    // Plain u32->f32 casts: MWCC expands each as the store-0x43300000/lfd/
+    // fsubs-2^52 idiom in single precision (retail keeps lbl_eu_8066A1C8 as
+    // the shared .sdata2 correction constant).
+    return (f32)(region->mSize - region->mFreeBytes) /
+        (f32)region->mSize * lbl_eu_8066A1C4;
 }
 
 void MemManager::func_804348A4(ALLOC_HANDLE handle, u8 value) {
@@ -1059,15 +1049,11 @@ void* MemManager::allocate_array(u32 size, ALLOC_HANDLE handle) {
 Allocates aligned object memory from the specified region.
 Specify negative alignment to perform a tail allocation.
 */
-#pragma optimize_for_size on
 void* MemManager::allocate_ex(u32 size, ALLOC_HANDLE handle, int align) {
-    if (align < 0) {
-        return allocate_tail(handle, size, -align);
-    }
-
-    return allocate_head(handle, size, align);
+    //Negative alignment signifies tail allocation
+    return align < 0 ? allocate_tail(handle, size, -align)
+                     : allocate_head(handle, size, align);
 }
-#pragma optimize_for_size reset
 
 /*
 Allocates aligned array memory from the specified region.

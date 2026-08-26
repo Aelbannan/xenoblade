@@ -252,13 +252,10 @@ extern "C" void func_800B93AC();
 extern "C" void* func_800FE68C();
 extern "C" void __dt__800FDEF8();
 
-struct ResetVectorWords {
-    u32 x;
-    u32 y;
-    u32 z;
-};
-
-extern "C" ResetVectorWords zero__Q22ml5CVec3;
+// Canonical decl: ml::CVec3 (defined in CActParamAnimGame.cpp, declared in
+// CfObjectModel.hpp). Do NOT re-type this symbol here — divergent extern "C"
+// types trip MWCC 10563 when both headers land in one TU.
+extern ml::CVec3 zero__Q22ml5CVec3;
 extern "C" cf::CfGameManager lbl_eu_80570CF0;
 extern "C" void func_8007C5B8__Q22cf13CfGameManagerFv(
     cf::CfGameManager* manager) {
@@ -3025,20 +3022,6 @@ struct SinitSingleton87470 {
 extern "C" void func_80087588(Unk87588Data* object);
 extern "C" void __construct_array(void* array, void* ctor, void* dtor,
                                     u32 size, u32 count);
-struct SinitBlockA {
-    u8 pad_0x0[0x20];
-    u32 field_0x20;
-    float field_0x24;
-    float field_0x28;
-};
-struct SinitBlockB {
-    u8 pad_0x0[0x20];
-    u32 field_0x20;
-    u8 field_0x24;
-    u8 pad_0x25[0x1F];
-    u32 field_0x44;
-    float field_0x48;
-};
 extern "C" void sinit_80087470() {
     u8* base = lbl_eu_80570CE0;
     SinitSingleton87470* object =

@@ -253,6 +253,15 @@ extern u32 lbl_eu_805FBA7C;
 
 // Create the four worker threads (safe / vsync / fs / mwidle). Each thread's
 // stack top is the *end* of a dedicated stack buffer inside the framework state.
+// All addresses are derived straight from the global (not via a base local) so
+// MWCC keeps them as separate addi webs off the shared anchor, like retail.
+// Create the four worker threads (safe / vsync / fs / mwidle). Each thread's
+// stack top is the *end* of a dedicated stack buffer inside the framework state.
+// NOTE: retail emits each stack top as two addi (buffer base, then + size) and
+// materializes &prm once (r31); every source shape we tried (locals, casts,
+// volatile, inline helper, global-direct webs) folds to single addi/lwz under
+// Wii/1.1 -O4 - same wall class as the svm.c "two-add materialization" note
+// in docs/MWCC_CASES.md.
 static void adxm_create_base_thread(void) {
     struct AdxmBase* base = &lbl_eu_805F3A50;
     struct AdxParams* prm = &base->field_0x10;
@@ -292,12 +301,13 @@ void ADXM_SetupThrd(u8* arg) {
     struct AdxmBase* base = &lbl_eu_805F3A50;
 
     if (base->field_0x04 == 0) {
+        struct AdxParams* prm;
+        prm = &base->field_0x10;
         SVM_Init();
         SVM_SetCbLock((void*)adxm_lock, NULL);
         SVM_SetCbUnlock((void*)adxm_unlock, NULL);
         if (arg == NULL) {
-            /* Built-in defaults; prm is materialised lazily here in retail */
-            struct AdxParams* prm = &base->field_0x10;
+            /* Built-in defaults */
             prm->field_0x14 = 0x10;
             base->field_0x10.field_0x00 = 1;
             prm->field_0x04 = 8;
@@ -305,7 +315,6 @@ void ADXM_SetupThrd(u8* arg) {
             prm->field_0x10 = 0xE;
             prm->field_0x18 = 0x18;
         } else {
-            struct AdxParams* prm = &base->field_0x10;
             struct AdxSetupArgs* a = (struct AdxSetupArgs*)arg;
             prm->field_0x14 = a->field_0x10;
             base->field_0x10.field_0x00 = a->field_0x00;
@@ -362,6 +371,7 @@ done:
 // Drop one reference; only the last release actually tears the threads down.
 void ADXM_ShutdownThrd(void) {
     struct AdxmBase* base = &lbl_eu_805F3A50;
+    struct AdxParams* prm = &base->field_0x10;
     if (--base->field_0x04 != 0)
         return;
     base->field_0x9E8 = 0;
@@ -374,9 +384,6 @@ void ADXM_ShutdownThrd(void) {
     OSResumeThread(&base->field_0x78);
     while (base->field_0x9D4 == 0)
         OSResumeThread(&base->field_0x78);
-    /* retail materializes the param block pointer here (addi r3, r31, 0x10);
-     * derive it from the global (not via base) so MWCC keeps it a separate web */
-    struct AdxParams* prm = &lbl_eu_805F3A50.field_0x10;
     if ((s32)prm->field_0x14 != 16) {
         s32 irq = OSDisableInterrupts();
         OSDisableScheduler();

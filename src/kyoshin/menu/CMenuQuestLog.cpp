@@ -73,7 +73,155 @@ __declspec(noinline) CMenuQuestLog* __ct__CMenuQuestLog(CMenuQuestLog* _this, CP
 
 CMenuQuestLog::~CMenuQuestLog() {}
 
-void CMenuQuestLog::Init() {}
+// ---------------------------------------------------------------------------
+// ---- CMenuQuestLog::Init (us-8011d08c) -------------------------------------
+// Rebuild each embedded widget by constructing a stack temporary and copying
+// its body into the embedded storage (same pattern as CMenuCollepedia::Init),
+// then register the render-callback sub-object on the owning scene.
+// ---------------------------------------------------------------------------
+// Retail signature copy helper (the scaffold decl is renamed aside at include
+// time; this prototype serves the Init() call sites).
+extern "C" CScrollBarData* func_8011C998(CScrollBarData* dst, CScrollBarData* src);
+
+void CMenuQuestLog::Init() {
+    // Stack temporaries packed into one aggregate so the slot layout matches
+    // retail exactly: bg @sp+0x8, info @sp+0x28, title @sp+0x68, list
+    // @sp+0xa0 (frame 0x2230).
+    struct {
+        u8 bg[0x20];
+        u8 info[0x40];
+        u8 title[0x38];
+        u8 list[0x2188];
+    } tmp;
+
+    // --- CBgTex ---
+    __ct__CBgTex((CBgTex*)tmp.bg, 0);
+    __ct__UnkClass_8011C974((void*)&mBgTex.mMemRegion, (const u32*)(tmp.bg + 0x4));
+    mBgTex.mFileHandle = *(CFileHandle**)(tmp.bg + 0x14);
+    mBgTex.mLayout = *(nw4r::lyt::Layout**)(tmp.bg + 0x18);
+    mBgTex.mLayoutReady = *(bool*)(tmp.bg + 0x1c);
+    mBgTex.mLoaded = tmp.bg[0x1d];
+    mBgTex.mPtmMode = tmp.bg[0x1e];
+    __dt__6CBgTexFv((CBgTex*)tmp.bg, -1);
+    func_801C3C14(&mBgTex);
+
+    // --- CTitleAHelp ---
+    char* name = func_80136190(lbl_eu_804FE518, lbl_eu_804FE518 + 0xa, 1);
+    __ct__CTitleAHelp((CTitleAHelp*)tmp.title, name, 0x3c);
+    __ct__UnkClass_8011C974((void*)&mTitleAHelp.unk4, (const u32*)(tmp.title + 0x4));
+    mTitleAHelp.mFileHandle = *(CFileHandle**)(tmp.title + 0x14);
+    mTitleAHelp.mArcResourceAccessor =
+        *(nw4r::lyt::ArcResourceAccessor**)(tmp.title + 0x18);
+    mTitleAHelp.mLayout = *(nw4r::lyt::Layout**)(tmp.title + 0x1c);
+    mTitleAHelp.mAnimTrans20 = *(nw4r::lyt::AnimTransform**)(tmp.title + 0x20);
+    mTitleAHelp.mAnimTrans24 = *(nw4r::lyt::AnimTransform**)(tmp.title + 0x24);
+    mTitleAHelp.unk28 = tmp.title[0x28];
+    mTitleAHelp.unk2c = *(s32*)(tmp.title + 0x2c);
+    mTitleAHelp.mName = *(char**)(tmp.title + 0x30);
+    mTitleAHelp.unk34 = tmp.title[0x34];
+    mTitleAHelp.unk35 = tmp.title[0x35];
+    mTitleAHelp.unk36 = tmp.title[0x36];
+    mTitleAHelp.unk37 = tmp.title[0x37];
+    __dt__11CTitleAHelpFv((CTitleAHelp*)tmp.title, -1);
+    CTitleAHelp_load(&mTitleAHelp);
+
+    // --- CQstLogList ---
+    __ct__CQstLogList((CQstLogList*)tmp.list, (u16)field_2280);
+    __ct__UnkClass_8011C974((void*)&mQstLogList.mUnk04[0], (const u32*)(tmp.list + 0x4));
+    mQstLogList.mFileHandle = *(CFileHandle**)(tmp.list + 0x14);
+    mQstLogList.mArcResAcc = *(nw4r::lyt::ArcResourceAccessor**)(tmp.list + 0x18);
+    mQstLogList.mpLayout = *(nw4r::lyt::Layout**)(tmp.list + 0x1c);
+    mQstLogList.mpAnim0 = *(nw4r::lyt::AnimTransform**)(tmp.list + 0x20);
+    mQstLogList.mpAnim1 = *(nw4r::lyt::AnimTransform**)(tmp.list + 0x24);
+    // CCur18 cursor sub-object: copy everything except the vptr slot.
+    {
+        CCur18Data* dstCur = (CCur18Data*)&mQstLogList.mCur18[0];
+        CCur18Data* srcCur = (CCur18Data*)(tmp.list + 0x28);
+        dstCur->field_4 = srcCur->field_4;
+        dstCur->field_8 = srcCur->field_8;
+        dstCur->field_C = srcCur->field_C;
+        dstCur->field_10 = srcCur->field_10;
+        dstCur->field_14 = srcCur->field_14;
+        dstCur->field_15 = srcCur->field_15;
+    }
+    func_8011C998(&mQstLogList.mScrollBar, (CScrollBarData*)(tmp.list + 0x40));
+    __ct__UnkClass_8011C974((void*)&mQstLogList.mSortMenuData.mUnk04[0], (const u32*)(tmp.list + 0x84));
+    mQstLogList.mSortMenuData.mFileHandle = *(u32*)(tmp.list + 0x94);
+    mQstLogList.mSortMenuData.mArcResAcc = *(u32*)(tmp.list + 0x98);
+    mQstLogList.mSortMenuData.mpLayout = *(u32*)(tmp.list + 0x9c);
+    mQstLogList.mSortMenuData.mpAnimTrans0 = *(u32*)(tmp.list + 0xa0);
+    mQstLogList.mSortMenuData.mpAnimTrans1 = *(u32*)(tmp.list + 0xa4);
+    mQstLogList.mSortMenuData.field_0x28 = tmp.list[0xa8];
+    mQstLogList.mSortMenuData.field_0x29 = tmp.list[0xa9];
+    mQstLogList.mSortMenuData.field_0x2A = tmp.list[0xaa];
+    mQstLogList.mSortMenuData.field_0x2B = tmp.list[0xab];
+    func_8011C998(&mQstLogList.mSortMenuData.mScrollBar,
+                  (CScrollBarData*)(tmp.list + 0xac));
+    // Sort-menu entry table + quest-info buffer: aggregate assignments let
+    // MWCC emit its canonical copies (paired-update word loop; fieldwise
+    // record loop + halfword/byte tail).
+    {
+        struct QstArrBlock { u32 words[32]; };
+        *(QstArrBlock*)((u8*)this + 0x1a4) = *(QstArrBlock*)(tmp.list + 0xec);
+    }
+    // Sort/list state scalars.
+    u8 countVal = tmp.list[0x16c];
+    // Quest-info records copied fieldwise (u16 + 6 bytes each).
+    CQstLogListQstInfo* qDst =
+        (CQstLogListQstInfo*)&mQstLogList.mQstData.mList[0];
+    CQstLogListQstInfo* qSrc = (CQstLogListQstInfo*)(tmp.list + 0x182);
+    CQstLogListQstInfo* qEnd =
+        (CQstLogListQstInfo*)&mQstLogList.mQstData.field_2000;
+    mQstLogList.mSortMenuData.mCount = countVal;
+    mQstLogList.mSortMenuData.mPage = tmp.list[0x16d];
+    mQstLogList.mSortMenuData.mSubPage = tmp.list[0x16e];
+    mQstLogList.field_0x170 = tmp.list[0x170];
+    mQstLogList.field_0x174 = *(s32*)(tmp.list + 0x174);
+    mQstLogList.field_0x178 = tmp.list[0x178];
+    mQstLogList.mSortEnabled = tmp.list[0x179];
+    mQstLogList.mSortDescending = tmp.list[0x17a];
+    mQstLogList.field_0x17B = tmp.list[0x17b];
+    mQstLogList.field_0x17C = tmp.list[0x17c];
+    mQstLogList.field_0x17D = tmp.list[0x17d];
+    mQstLogList.field_0x17E = *(s16*)(tmp.list + 0x17e);
+    mQstLogList.field_0x180 = *(u16*)(tmp.list + 0x180);
+    do {
+        *qDst = *qSrc;
+        qDst++;
+        qSrc++;
+    } while (qDst < qEnd);
+    mQstLogList.mQstData.field_2000 = *(u16*)(tmp.list + 0x2182);
+    mQstLogList.mQstData.field_2002 = *(s16*)(tmp.list + 0x2184);
+    mQstLogList.mQstData.field_2004 = tmp.list[0x2186];
+    mQstLogList.mQstData.field_2005 = tmp.list[0x2187];
+    __dt__11CQstLogListFv((CQstLogList*)tmp.list, -1);
+    func_80227A60(&mQstLogList);
+
+    // --- CQstLogInfo ---
+    __ct__CQstLogInfo((CQstLogInfo*)tmp.info);
+    __ct__UnkClass_8011C974((void*)&mQstLogInfo.mMemRegion, (const u32*)(tmp.info + 0x4));
+    mQstLogInfo.mFileHandle = *(CFileHandle**)(tmp.info + 0x14);
+    mQstLogInfo.field_0x18 = *(CFileHandle**)(tmp.info + 0x18);
+    mQstLogInfo.field_0x1C = *(u32*)(tmp.info + 0x1c);
+    mQstLogInfo.mUnk20 = *(nw4r::lyt::Layout**)(tmp.info + 0x20);
+    mQstLogInfo.field_0x24 = *(nw4r::lyt::AnimTransform**)(tmp.info + 0x24);
+    mQstLogInfo.field_0x28 = *(nw4r::lyt::AnimTransform**)(tmp.info + 0x28);
+    mQstLogInfo.field_0x2C = *(u32*)(tmp.info + 0x2c);
+    mQstLogInfo.mUnk30 = tmp.info[0x30];
+    mQstLogInfo.field_0x34 = *(s32*)(tmp.info + 0x34);
+    mQstLogInfo.mField38 = tmp.info[0x38];
+    mQstLogInfo.mField39 = tmp.info[0x39];
+    mQstLogInfo.mField3A = *(u16*)(tmp.info + 0x3a);
+    mQstLogInfo.field_0x3C = *(u32*)(tmp.info + 0x3c);
+    __dt__11CQstLogInfoFv((CQstLogInfo*)tmp.info, -1);
+    func_802294C0(&mQstLogInfo);
+
+    // Register the render callback (this-adjusting IScnRender view at +0x58).
+    IScnRender* renderCb = reinterpret_cast<IScnRender*>(this);
+    if (this != 0) renderCb = reinterpret_cast<IScnRender*>(&mIScnRender);
+    addRenderCB__4CScnFP10IScnRenderUlUl(
+        reinterpret_cast<void*>(mScene), renderCb, 0x10, 0);
+}
 
 // retail: lwz x4 from r4; stw x4 to r3 (4-word copy, const src avoids interleave)
 extern "C" void __ct__UnkClass_8011C974(void* self, const u32* src) {

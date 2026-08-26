@@ -642,12 +642,10 @@ __declspec(noinline) int func_8012615C(nw4r::lyt::AnimTransform* tag,
     outbuf[0] = 0;
     // Talk-source / party-member / player lookups (r29/r28/r30).
     TagMemberObj* member = 0;
-    func_800B708C(msg->field_804);
-    TagTalkSrc* tsrc = (TagTalkSrc*)func_800BBC0C();
+    TagTalkSrc* tsrc = (TagTalkSrc*)func_800BBC0C(func_800B708C(msg->field_804));
     if (tsrc != 0)
         member = tsrc->field_98;
-    cf::CfGameManager::getPlayer(0);
-    TagTalkSrc* player = (TagTalkSrc*)func_800BBC0C();
+    TagTalkSrc* player = (TagTalkSrc*)func_800BBC0C(cf::CfGameManager::getPlayer(0));
 
     // Walk the tag dispatch table (25 x 12-byte entries).
     for (u32 o = 0; ; o += 12) {
@@ -1729,8 +1727,7 @@ __declspec(noinline) int func_80127FB4(nw4r::lyt::AnimTransform* tag,
         return 3;
     // Talk-source / party-member lookups (r31 / r23).
     TagMemberObj* member = 0;
-    func_800B708C(msg->field_804);
-    TagTalkSrc* tsrc = (TagTalkSrc*)func_800BBC0C();
+    TagTalkSrc* tsrc = (TagTalkSrc*)func_800BBC0C(func_800B708C(msg->field_804));
     if (tsrc != 0)
         member = tsrc->field_98;
 

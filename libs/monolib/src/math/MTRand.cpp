@@ -7,14 +7,6 @@ extern "C" {
     s8 lbl_eu_80665580;
 }
 
-// MWCC u32 -> f64 conversion: build the 0x43300000-prefixed bit pattern in
-// memory and subtract the named retail .sdata2 magic (lbl_eu_8066A1D8 = 2^52)
-// so the pool reloc matches retail (lfd lbl_eu_8066A1D8@sda21) instead of an
-// MWCC-synthesised @N entry (CFloorMap.cpp / CSysWinScenarioLog.cpp convention).
-union U32ToF64Conv {
-    u32 w[2];
-    f64 d;
-};
 
 namespace ml{
 
@@ -77,20 +69,15 @@ namespace ml{
         return rand32() >> 1;
     }
 
-    //func_80435B5C
+    //func_80435B5C -- retail is MWCC's builtin u32->f32 cast idiom
+    //(lis 0x4330/stw, lfd, fsubs vs the pooled 2^52 magic) -- KB ref:bc80cd6fac.
     float MTRand::randFloat() {
-        U32ToF64Conv conv;
-        conv.w[0] = 0x43300000;
-        conv.w[1] = rand32();
-        return (f32)(conv.d - lbl_eu_8066A1D8) * lbl_eu_8066A1D0;
+        return (f32)rand32() * lbl_eu_8066A1D0;
     }
 
     //func_80435BF8
     float MTRand::randFloat1() {
-        U32ToF64Conv conv;
-        conv.w[0] = 0x43300000;
-        conv.w[1] = rand32();
-        return (lbl_eu_8066A1E0 + (f32)(conv.d - lbl_eu_8066A1D8)) * lbl_eu_8066A1D0;
+        return (lbl_eu_8066A1E0 + (f32)rand32()) * lbl_eu_8066A1D0;
     }
 
 } //namespace ml

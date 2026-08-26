@@ -259,15 +259,17 @@ typedef struct MWSFDCfg {
     u32 self;      /* 0x04 */
 } MWSFDCfg;
 
-/* One-time SFD library init. The version global and the handle are passed
- * on to fn_803C3320 as a two-word config block; errors are recorded in the
- * lib work errCode slot and returned. */
+/* One-time SFD library init. Initializes the config block (handle + library
+ * version) up front, verifies the SFD core version, installs the shared error
+ * callback, then hands the config block to fn_803C3320. Errors are recorded
+ * in the lib work errCode slot and returned. */
 s32 mwPlySfdInit(void* self) {
     MWSFDCfg cfg;
     u32 version = lbl_eu_8051AB38;
 
     cfg.self = (u32)self;
     cfg.version = version;
+
     if (SFD_IsVersionCompatible(lbl_eu_8051ADD0 + 0xA8, 0x39B0) != 1) {
         MWSFSVM_Error(lbl_eu_8051ADD0 + 0xAE);
         return -1;

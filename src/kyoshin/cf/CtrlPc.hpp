@@ -36,12 +36,14 @@ struct CtrlPlayerSub298 {
 // 0x20-byte AI-action parameter slot (same layout as CVision.cpp's
 // CVisionFxParam); installed on player->mField3380 via func_8014AC38.
 struct CVisionFxParam {
-    u8 unk0[0x6];        // 0x00
-    u8 b_06;             // 0x06
-    u8 unk07[0xD - 0x07];
-    u8 b_0D;             // 0x0D
-    u8 unk0E[0x10 - 0x0E];
-    u16 h_10;            // 0x10
+    u32 w00;             // 0x00 (enum-list hit id / source word)
+    u8 pad04[2];         // 0x04
+    u8 b_06;             // 0x06 (action kind: 6 / 0x25)
+    u8 pad07[0xD - 0x07];
+    u8 b_0D;             // 0x0D (arts slot index)
+    u8 b_0E;             // 0x0E (0x64 = level/weight)
+    u8 pad0F;            // 0x0F
+    u16 h_10;            // 0x10 (pad mask 0x804 / 0x1800)
     u16 h_12;            // 0x12
     f32 f_14;            // 0x14
     u8 unk18[0x20 - 0x18];
@@ -370,7 +372,7 @@ struct ArtsSelStateViewPc {
 };
 extern "C" ArtsSelStateViewPc* CMenuArtsSelect_getSelectState(void);
 extern "C" void func_800ACF78(void* obj, void* target, u32 child);
-extern "C" void func_800BE12C(void* owner, int a, int b, int c, int d);
+extern "C" void func_800BE12C(u8* owner, int a, int b, int c, int d); // u8* (not void*) to match CfObjectMove.hpp/CfObjectMoveApi.hpp - distinct extern "C" first-param types are an illegal overload when co-visible
 extern "C" void func_800F6D50(CfEnumList* list, u32 val);
 // void* parameter form matches CAIAction.hpp's declaration (two extern "C"
 // overloads of the same name are illegal).
@@ -384,7 +386,7 @@ struct CfListBig : CfEnumList {
 // not inline the in-TU bodies).
 extern "C" void func_80098194(cf::CtrlPc* self, char arg1, char arg2);
 extern "C" int func_80097E00(cf::CtrlPc* self);
-extern "C" void func_800983B8(cf::CtrlPc* self, char arg);
+extern "C" void func_800983B8(cf::CtrlPc* self, s8 arg);
 
 namespace cf { class CAttackParam; }
 
@@ -641,7 +643,7 @@ public:
     virtual void vf357(); virtual void vf358(); virtual void vf359();
     virtual void vf360(); virtual void vf361(); virtual void vf362();
     virtual void vf363(); virtual void vf364(); virtual void vf365();
-    virtual void* vf5C0();              // vtable slot 0x5C0
+    virtual void* vf5C0(void* obj);     // vtable slot 0x5C0
 
     CtrlPlayerSub4* mField4;      // 0x04 (sub-object, vf30 -> u32* word holder)
     u8 mField8;                   // 0x08 (state region handed to func_80148778)

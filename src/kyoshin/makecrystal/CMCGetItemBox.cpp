@@ -1263,7 +1263,9 @@ __declspec(noinline) void func_80299490(CMCGetItemBox* self, int r4, u32 r5) {
 // -O4,s keeps the retail stmw r29 frame (self/arg/sub live across calls).
 #pragma push
 #pragma optimize_for_size on
-void func_80299530(CMCGetItemBox* self, u16 arg, void* unk, u8 byte) {
+// noinline: retail keeps this out-of-line; without it MWCC inlines the whole
+// body into func_80297D2C (late-definition inlining defeats auto_inline off).
+extern "C" __declspec(noinline) void func_80299530(CMCGetItemBox* self, u16 arg, void* unk, u8 byte) {
     CMCItemBoxSub* sub = &self->sub_314;
     // Retail calls func_80296BF0 with only r3 set (r4/r5/r6 carry garbage),
     // so invoke it through a 1-arg prototype to avoid li r4/r5/r6 setup.

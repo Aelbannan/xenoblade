@@ -92,6 +92,17 @@ extern "C" void func_801C416C(CTitleAHelp* self);
 extern "C" void func_801C4198(CTitleAHelp* self);
 extern "C" void func_80229724(CQstLogInfo* self);
 
+// Init() imports (retail unmangled names).
+extern char lbl_eu_804FE518[];   // menu text string pool (split1 .rodata)
+extern "C" bool func_801C3C14(CBgTex* self);
+extern "C" void CTitleAHelp_load(CTitleAHelp* self);
+extern "C" void func_80227A60(CQstLogList* self);
+extern "C" void func_802294C0(CQstLogInfo* self);
+extern "C" void __dt__6CBgTexFv(CBgTex* self, int flags);
+extern "C" void __dt__11CTitleAHelpFv(CTitleAHelp* self, int flags);
+extern "C" void __dt__11CQstLogListFv(CQstLogList* self, int flags);
+extern "C" void __dt__11CQstLogInfoFv(CQstLogInfo* self, int flags);
+
 // Widget teardown helpers called by Term (retail unmangled names).
 extern "C" void func_801C3D9C(CBgTex* self);
 extern "C" void func_801C40A0(CTitleAHelp* self);

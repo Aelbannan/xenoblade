@@ -29,7 +29,7 @@ extern s32 ADXSTM_Start2(void *, u32);
 extern void ADXSTM_Stop(void *);
 extern void ADXSTM_SetEos(void *, s32);
 extern s32 ADXSTM_SetReqRdSize(void *, u32);
-extern u64 ADXSTM_GetFileLen64(void *);
+extern s64 ADXSTM_GetFileLen64(void *);
 extern void ADXSTM_SetPause(void *, u32);
 extern void ADXSTM_SetSj(void *, void *);
 extern void ADXF_Ocbi(const void *, u32);
@@ -1095,7 +1095,9 @@ int ADXF_ReadNw(void *adxf, void *buffer, int sectors) {
         ADXERR_CallErrFunc1_(lbl_eu_805157E0 + 0x1c9);
         r = -3;
     } else {
-        r = adxf_ReadNw32(adxf, sectors, buffer);
+        /* retail passes (file, buf, len) positionally even though this TU's
+         * adxf_ReadNw32 declares its 2nd param as the length slot */
+        r = adxf_ReadNw32(adxf, (int)buffer, (void *)sectors);
     }
     ADXCRS_Leave();
     return r;
@@ -1185,6 +1187,8 @@ int adxf_Stop(void *adxf) {
 #pragma auto_inline off
 void adxf_ExecOne(struct AdxFsWork *work) {
     struct AdxFsCb *cb;
+    s32 tell;
+    u32 base;
     if (ADXSTM_GetStat(work->fstm) == 4) {
         if (work->sectCnt != 0 && work->b2 == 0) {
             if (lbl_eu_805E0614 == 1) {
@@ -1213,23 +1217,22 @@ void adxf_ExecOne(struct AdxFsWork *work) {
         }
         work->status = ADXSTM_GetStat(work->fstm);
         {
-            s32 tell = ADXSTM_Tell(work->fstm);
-            u32 base = work->field_10;
+            register s32 base;
+            tell = ADXSTM_Tell(work->fstm);
+            base = work->field_10;
             work->field_1C = tell - base;
-            if ((u8)((u8)work->status - 3) > 1) {
-                goto l70skip;
-            }
-            work->field_10 = base + work->field_1C;
-            if (work->sectCnt != 0 && work->b2 == 0) {
-                if (lbl_eu_805E0614 == 1) {
-                    ADXF_Ocbi((const void *)work->field_20, work->field_24);
+            if ((u8)((u8)work->status - 3) <= 1) {
+                work->field_10 = base + work->field_1C;
+                if (work->sectCnt != 0 && work->b2 == 0) {
+                    if (lbl_eu_805E0614 == 1) {
+                        ADXF_Ocbi((const void *)work->field_20, work->field_24);
+                    }
+                    cb = (struct AdxFsCb *)work->sectCnt;
+                    work->sectCnt = 0;
+                    cb->vt->destroy(cb);
                 }
-                cb = (struct AdxFsCb *)work->sectCnt;
-                work->sectCnt = 0;
-                cb->vt->destroy(cb);
             }
         }
-    l70skip:;
     }
     if (work->b3 == 1) {
         if (ADXSTM_GetStat(work->fstm) == 1) {
@@ -1398,9 +1401,11 @@ int ADXF_GetFsizeSct(void *adxf) {
                 ADXT_ExecFsSvr();
             }
             {
-                s64 len = ADXSTM_GetFileLen64(work->fstm) + 0x7FF;
-                r = (int)(len / 0x800);
-                work->field_0C = (u32)r;
+                /* round up to sectors; MWCC emits an inline 64-bit div here */
+                s64 size = ADXSTM_GetFileLen64(work->fstm);
+                size += 0x7FF;
+                work->field_0C = (u32)(size / 0x800);
+                r = (int)work->field_0C;
             }
             if (r >= 0xFFFFF) {
                 r = -1;

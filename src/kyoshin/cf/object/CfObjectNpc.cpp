@@ -7,9 +7,52 @@
 
 #include "kyoshin/cf/object/CfObjectNpc.hpp"
 #include "monolib/scn/CScnTimeApi.hpp"
+#include "monolib/util/MemManager.hpp"
 #include "kyoshin/cf/code_800F42AC.hpp"   // CfGameManager::getInstance, func_8006EF04
 #include "kyoshin/cf/CfGameManagerData.hpp"  // H3 label-owner decl (lbl_eu_80663E14; lbl_eu_80663E24)
 #include <string.h>
+
+// 0x800BFD48 - CfObjectNpc constructor (retail symbol __ct__Q22cf11CfObjectNpcFv).
+// See the hidden-parameter note on the header declaration: heapFlag selects
+// which resource-impl child is allocated into +0xB0 (0x44 bytes of
+// CfResPcImpl when spawning with full PC resources, 0x20 bytes of
+// CfResReloadImpl otherwise). Defined at global scope (outside namespace cf)
+// so MWCC emits the verbatim retail symbol.
+struct CfObjectNpcInitView {
+    void* vtable;                 // 0x00 - CfObjectNpc vtable
+    u8 pad_04[0xB0 - 0x04];
+    void* subObjB0;               // 0xB0 - CfResPcImpl / CfResReloadImpl child
+};
+
+cf::CfObjectNpc* __ct__Q22cf11CfObjectNpcFv(cf::CfObjectNpc* self, int heapFlag) {
+    __ct__Q22cf12CfObjectMoveFv((cf::CfObjectMove*)self);
+    CfObjectNpcInitView* view = (CfObjectNpcInitView*)self;
+    view->vtable = lbl_eu_805298B8;
+
+    if (heapFlag != 0) {
+        void* mem = mtl::MemManager::allocate(0x44, func_80061FFC());
+        if (mem != NULL) {
+            mem = __ct__cf_CfResPcImpl((u8*)mem, (cf::CfObjectMove*)self);
+        }
+        view->subObjB0 = mem;
+    } else {
+        void* mem = mtl::MemManager::allocate(0x20, func_80061FFC());
+        if (mem != NULL) {
+            mem = __ct__cf_CfResReloadImpl(mem, self);
+        }
+        view->subObjB0 = mem;
+    }
+
+    // Shared locals (CfResReloadImpl ctor idiom): values are computed before
+    // the member stores.
+    int zero = 0;
+    s16 invalid = -1;
+    *(u32*)self->unk34 = zero;
+    self->mIconType = (u8)zero;
+    self->mRltMeet = invalid;
+    self->mTimer = lbl_eu_80666AE0;
+    return self;
+}
 
 namespace cf {
 
@@ -25,9 +68,6 @@ struct CfObjectNpc_model98 {
 float CfObjectNpc::readSlot8c() {
     return reinterpret_cast<CfObjectNpcVt*>(this)->getScale8C();
 }
-
-// 0x800BFD48
-CfObjectNpc::CfObjectNpc() {}
 
 // 0x800BFE00
 CfObjectNpc::~CfObjectNpc() {
@@ -133,16 +173,28 @@ void CfObjectNpc::func_800BF764() {
     reinterpret_cast<CfObjectNpcVt*>(this)->setTime(lbl_eu_80666AF4);
     reinterpret_cast<CfObjectNpcVt*>(this)->moveTime(lbl_eu_80666AF8);
 
-    u32 col11 = getBdatStringColumnValue(
+    // Speed column (+0x11): the column result stays address-taken in memory
+    // and retail reads its low BYTE back through the stack slot. The u32 to
+    // double conversion is the classic MWCC 0x4330 bit-assembly, and the
+    // 2^52 bias is subtracted from the named sdata2 global (not a literal
+    // pool constant). Result is scaled by the model's current scale.
+    const char* col11 = (const char*)getBdatStringColumnValue(
         fp, (const char*)&lbl_eu_804FC580[0x11], unk8C_3);
-    f32 val1 = (f32)(u32)(u8)col11 /
-        *(f32*)reinterpret_cast<CfObjectNpcVt*>(this)->getScalePtr();
-    reinterpret_cast<CfObjectNpcVt*>(this)->setSpeed(val1);
+    double speedRaw =
+        ((double)(u32)*(const u8*)&col11) - lbl_eu_80666B00;
+    f32 speedVal =
+        (f32)speedRaw /
+        *(f32*)(void*)reinterpret_cast<CfObjectNpcVt*>(this)->getScalePtr();
+    reinterpret_cast<CfObjectNpcVt*>(this)->setSpeed(speedVal);
 
-    u32 col1c = getBdatStringColumnValue(
+    // Fade column (+0x1C): same memory round-trip idiom, this time reading a
+    // halfword back, divided by the named fade-scale constant.
+    const char* col1c = (const char*)getBdatStringColumnValue(
         fp, (const char*)&lbl_eu_804FC580[0x1C], unk8C_3);
-    f32 val2 = (f32)(u32)(u16)col1c / lbl_eu_80666AFC;
-    reinterpret_cast<CfObjectNpcVt*>(this)->setFade(val2);
+    double fadeRaw =
+        ((double)(u32)*(const u16*)&col1c) - lbl_eu_80666B00;
+    f32 fadeVal = (f32)fadeRaw / lbl_eu_80666AFC;
+    reinterpret_cast<CfObjectNpcVt*>(this)->setFade(fadeVal);
 
     reinterpret_cast<CfObjectNpcVt*>(this)->applyParams();
 }

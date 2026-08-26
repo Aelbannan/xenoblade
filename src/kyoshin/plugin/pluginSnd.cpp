@@ -22,7 +22,7 @@ extern "C" {
     extern void func_80189318(s32 clearName, float fadeTime);   // stop BGM slot (menu sound system)
     extern void func_8018986C(const char* name, float fadeTime); // stop voice by name
     extern void func_80188D34(const char* name, bool enable, float value, float fadeTime); // play BGM
-    extern void func_8007C344__Q22cf13CfGameManagerFv(u32 first, u32 second, u8 enabled, float value); // field BGM state
+    extern void func_8007C344__Q22cf13CfGameManagerFv(u32 first, u32 second, bool enabled, float value); // field BGM state
     extern void func_8007C374__Q22cf13CfGameManagerFv(u32 first, u32 second, float value, u8 enabled); // town BGM state
 }
 
@@ -94,6 +94,8 @@ int setFieldBgm(VMThread* pThread) {
     int second;
     int idx;
     int volInt;
+    int enable;
+    float vol;
     if (vmArgOmitChk(pThread, 1) != 0) {
         first = 0;
         idx = 2;
@@ -108,25 +110,22 @@ int setFieldBgm(VMThread* pThread) {
         VMArg* arg = vmArgPtrGet(pThread, idx++);
         second = vmArgIntGet(idx, arg);
     }
-    double vol;
     if (vmArgOmitChk(pThread, idx) != 0) {
         vol = lbl_eu_80667DA0;
         idx++;
     } else {
         VMArg* arg = vmArgPtrGet(pThread, idx++);
-        vol = (float)vmArgFixedGet(idx, arg);
+        float converted = vmArgFixedGet(idx, arg);
+        vol = converted;
     }
     volInt = (int)vol;
-    int enable;
     if (vmArgOmitChk(pThread, idx) != 0) {
         enable = 0;
     } else {
         VMArg* arg = vmArgPtrGet(pThread, idx++);
         enable = vmArgBoolGet(idx, arg);
     }
-    // Booleanize via the neg/or/srwi idiom (see pluginCam.cpp setCamOfs).
-    func_8007C344__Q22cf13CfGameManagerFv(first, second,
-                                          (u32)(-enable | enable) >> 31,
+    func_8007C344__Q22cf13CfGameManagerFv(first, second, enable != 0,
                                           (float)volInt / lbl_eu_80667D90);
     return 0;
 }
@@ -136,34 +135,33 @@ int setFieldBgm(VMThread* pThread) {
 int setTownBgm(VMThread* pThread) {
     int first;
     int second;
-    int idx;
-    int volInt;
-    if (vmArgOmitChk(pThread, 1) != 0) {
+    float vol;
+    int idx = 1;
+
+    if (vmArgOmitChk(pThread, 1)) {
         first = 0;
         idx = 2;
     } else {
-        VMArg* arg = vmArgPtrGet(pThread, 1);
-        idx = 2;
-        first = vmArgIntGet(2, arg);
+        VMArg* arg = vmArgPtrGet(pThread, idx++);
+        first = vmArgIntGet(idx, arg);
     }
-    if (vmArgOmitChk(pThread, idx) != 0) {
+    if (vmArgOmitChk(pThread, idx)) {
         second = 0;
         idx++;
     } else {
         VMArg* arg = vmArgPtrGet(pThread, idx++);
         second = vmArgIntGet(idx, arg);
     }
-    float vol;
-    if (vmArgOmitChk(pThread, idx) != 0) {
+    if (vmArgOmitChk(pThread, idx)) {
         vol = lbl_eu_80667DA0;
         idx++;
     } else {
         VMArg* arg = vmArgPtrGet(pThread, idx++);
         vol = (float)vmArgFixedGet(idx, arg);
     }
-    volInt = (int)vol;
+    int volInt = (int)vol;
     int enable;
-    if (vmArgOmitChk(pThread, idx) != 0) {
+    if (vmArgOmitChk(pThread, idx)) {
         enable = 0;
     } else {
         VMArg* arg = vmArgPtrGet(pThread, idx++);

@@ -134,8 +134,7 @@ private:
                                           void* pCallbackArg);
 
 private:
-    SeqPlayer mSeqPlayer;                     // at 0x10C
-    u8 mPad0x288[8];                          // at 0x288
+    SeqPlayer mSeqPlayer;                     // at 0x10C, ends 0x290
     SeqSoundHandle* mTempSpecialHandle;       // at 0x290
     SoundInstanceManager<SeqSound>* mManager; // at 0x294
 

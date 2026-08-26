@@ -73,6 +73,8 @@ struct HermiteKey {
  * Utility functions
  *
  ******************************************************************************/
+namespace nw4r {
+namespace lyt {
 namespace {
 
 using namespace nw4r;
@@ -90,6 +92,8 @@ inline bool RIsSameStep(f32 a, f32 b) {
     return lbl_eu_80669DD8 < c && c < lbl_eu_80669DDC;
 }
 
+// Retail emits this anonymous-namespace evaluator with the standard
+// @unnamed@lyt_animation_cpp@ mangling.
 u16 GetStepCurveValue(f32 frame, const res::StepKey* pKeys, u32 numKey) {
     if (numKey == 1 || frame <= pKeys[0].frame) {
         return pKeys[0].value;
@@ -178,6 +182,15 @@ f32 GetHermiteCurveValue(f32 frame, const res::HermiteKey* pKeys, u32 numKey) {
                (t1 + (t1_t1_t1_t2_t2 - lbl_eu_80669DE4 * t1_t1_t2)) +
            s1 * (t1_t1_t1_t2_t2 - t1_t1_t2);
 }
+
+} // namespace
+} // namespace lyt
+} // namespace nw4r
+
+namespace {
+
+using namespace nw4r;
+using namespace nw4r::lyt;
 
 // @typo
 void AnimatePainSRT(Pane* pPane, const res::AnimationInfo* pAnimInfo,
@@ -416,8 +429,8 @@ void AnimTransformBasic::Bind(Material* pMaterial, bool param) {
                 pLink = mAnimLinkAry;
             }
 
-            // Scan forward for the first unused entry.
-            const AnimationLink* pEnd = &mAnimLinkAry[mAnimLinkNum];
+            // Scan forward from the cursor for the first unused entry.
+            AnimationLink* pEnd = &mAnimLinkAry[mAnimLinkNum];
 
             while (pLink < pEnd && pLink->GetAnimTransform() != NULL) {
                 ++pLink;
@@ -427,16 +440,13 @@ void AnimTransformBasic::Bind(Material* pMaterial, bool param) {
                 pLink = NULL;
             }
 
-            AnimationLink* pNext = NULL;
-
             if (pLink != NULL) {
                 pLink->Set(this, i, param);
                 pMaterial->AddAnimationLink(pLink);
-                pNext = pLink + 1;
+                ++pLink;
             }
 
-            pLink = pNext;
-
+            // Out of free links: stop binding further contents.
             if (pLink == NULL) {
                 return;
             }
@@ -748,11 +758,13 @@ struct AnimTransformBasicData {
 // If I must return void, I can't return the pointer. But the ASM returns it.
 // I will assume the signature in the prompt is slightly off and the function actually returns a pointer.
 // But the prompt says "return_info": {"type": "void"}
-// Defined before the Pane variant so MWCC cannot inline it and instead
-// emits the retail `bl` to the Pane-variant symbol.
-#pragma dont_inline on
-int CalcAnimationNum__Q34nw4r3lyt12AnimResourceCFPQ34nw4r3lyt4Paneb(
-    const nw4r::lyt::AnimResource*, nw4r::lyt::Pane*, bool);
+// extern "C" keeps the retail unmangled-style symbol on BOTH the definition
+// and the Group overload's bl reloc (MWCC mangles plain C++ references to
+// this literal-mangled identifier); the C-vs-C++ linkage mismatch also
+// blocks -ipa file from folding the body into the Group overload.
+extern "C" int CalcAnimationNum__Q34nw4r3lyt12AnimResourceCFPQ34nw4r3lyt4Paneb(
+    const nw4r::lyt::AnimResource* _this, nw4r::lyt::Pane* pPane,
+    bool recursive);
 
 int CalcAnimationNum__Q34nw4r3lyt12AnimResourceCFPQ34nw4r3lyt5Groupb(
     const nw4r::lyt::AnimResource* _this, nw4r::lyt::Group* pGroup,
@@ -769,8 +781,12 @@ int CalcAnimationNum__Q34nw4r3lyt12AnimResourceCFPQ34nw4r3lyt5Groupb(
     return num;
 }
 
-// Retail keeps this variant outlined; the pragma above stops -ipa file
-// from folding it into the Group overload.
+// Retail keeps this variant outlined: the dont_inline span marks it
+// non-inlinable so the Group overload emits the retail bl. Because that
+// also disables callee inlining within this function, the ConvertOffsToPtr
+// uses below are spelled out explicitly (identical arithmetic to the
+// header template).
+#pragma dont_inline on
 int CalcAnimationNum__Q34nw4r3lyt12AnimResourceCFPQ34nw4r3lyt4Paneb(
     const nw4r::lyt::AnimResource* _this, nw4r::lyt::Pane* pPane,
     bool recursive) {
@@ -781,15 +797,15 @@ int CalcAnimationNum__Q34nw4r3lyt12AnimResourceCFPQ34nw4r3lyt4Paneb(
     // mpResBlock is read through the mirror each iteration (the loop body
     // calls Find*ByName, which may alias), reproducing the retail reload.
     int num = 0;
-    const u32* const pContentOffsetTbl =
-        nw4r::lyt::detail::ConvertOffsToPtr<u32>(
-            pData->mpResBlock, pData->mpResBlock->animContOffsetsOffset);
+    const u32* const pContentOffsetTbl = reinterpret_cast<const u32*>(
+        reinterpret_cast<const u8*>(pData->mpResBlock) +
+        pData->mpResBlock->animContOffsetsOffset);
 
     for (u16 i = 0; i < pData->mpResBlock->animContNum; i++) {
         const nw4r::lyt::res::AnimationContent& rContent =
-            *nw4r::lyt::detail::ConvertOffsToPtr<
-                nw4r::lyt::res::AnimationContent>(pData->mpResBlock,
-                                                  pContentOffsetTbl[i]);
+            *reinterpret_cast<const nw4r::lyt::res::AnimationContent*>(
+                reinterpret_cast<const u8*>(pData->mpResBlock) +
+                pContentOffsetTbl[i]);
 
         if (rContent.type == nw4r::lyt::res::AnimationContent::ANIMTYPE_PANE) {
             if (pPane->FindPaneByName(rContent.name, recursive) != NULL) {

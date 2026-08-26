@@ -131,7 +131,7 @@ u8 func_801361E8(u32, const char*, u32);
 u16 func_80136254(void*, const char*, u32);
 s16 func_80136330(void*, const char*, u32);
 u32 func_8003B1EC(void*);
-void __dt__80043E88(void* holder, s16);
+void __dt__80043E88(void* holder, int);
 void func_800F4A98(void* list, u32 type, u32 filter);
 void* __ct__800FB044(void* list, f32, void* obj, int);
 void* func_800BFC68__FPQ22cf12CfObjectMove(void* obj);

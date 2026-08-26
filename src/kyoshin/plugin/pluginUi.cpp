@@ -68,9 +68,11 @@ int winSys(VMThread* pThread) {
 }
 
 // Fade-in script command: (duration, count?). Same shape as fadeOut_1 but
-// mode 2; the duration reaches the controller as a double via MWCC's implicit
-// int->double expansion (xoris/0x43300000 word-pair + fsubs correction), and
-// the pooled sdata2 magic maps to lbl_eu_80665DC0 via the unit's pool rule.
+// mode 2; the duration converts through MWCC's implicit int->float expansion
+// (xoris/0x43300000 word-pair + fsubs against the shared sdata2 correction
+// constant). NOTE: the pooled magic lands on anon label @2067; the
+// pluginUi.o UnitRules exact_renames key in tools/postprocess_reloc_names.py
+// still says @2082 and must be refreshed to @2067 for the reloc-name gate.
 int fadeIn_1(VMThread* pThread) {
     int v1 = vmArgIntGet(2, vmArgPtrGet(pThread, 1));
     int v2;
@@ -196,6 +198,7 @@ int setTrust(VMThread* pThread) {
         func_80138078__FUl(0x36);
     }
 
+    // Clamp both slot indices into [0, 2].
     arg1--;
     arg2--;
     if (arg1 < 0) arg1 = 0;

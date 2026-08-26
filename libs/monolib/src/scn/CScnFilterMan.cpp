@@ -2,8 +2,10 @@
 // Replace stubs with high-level C/C++ during decomp.
 
 #include <harness_catalog.h>
+#include "PowerPC_EABI_Support/Runtime/MWCPlusLib.h"  // __construct_new_array
 #include "libs/monolib/src/scn/CScnFilterMan.hpp"
 #include "monolib/scn/CScn.hpp"
+#include "monolib/util/MemManager.hpp"
 #include "monolib/device/CGXCache.hpp"
 #include "monolib/core/CViewRoot.hpp"
 
@@ -229,27 +231,49 @@ extern "C" __declspec(noinline) CScnFilterListIter* __dt__reslist__reslist_itera
     return self;
 }
 
-extern "C" void func_8049CE18(void* list, void* val, int prio);
+// reserve the reslist node array (retail func_8049CE18): allocate
+// capacity*0xC bytes via MemManager::allocate_array (the alloc handle in r4
+// stays live in its incoming register, so retail emits no move), zero the
+// mNext of every node (MWCC auto-unrolls the fill loop 8x with overflow
+// guards), then store the capacity.
+extern "C" void func_8049CE18(CScnFilterReslist* list, u32 handle, int capacity);
 #pragma push
 #pragma auto_inline off
-extern "C" void func_8049CE14(void* list, void* val, int prio) { func_8049CE18(list, val, prio); }
+extern "C" void func_8049CE14(CScnFilterReslist* list, u32 handle, int capacity) { func_8049CE18(list, handle, capacity); }
 #pragma pop
 
 #pragma push
 #pragma auto_inline off
-extern "C" void func_8049CE18(void* list, void* val, int prio){
+extern "C" void func_8049CE18(CScnFilterReslist* list, u32 handle, int capacity) {
+    list->mList = (CScnFilterListNode*)mtl::MemManager::allocate_array((u32)capacity * 0xC, handle);
+    for (int i = 0; i < capacity; i++) {
+        list->mList[i].mNext = nullptr;
+    }
+    list->mCapacity = capacity;
 }
 #pragma pop
 
-extern "C" void func_8049CF48(void* list, void* val, int prio);
+extern "C" void func_8049CF48(CScnFilterIteratorReslist* list, u32 handle, int capacity);
 #pragma push
 #pragma auto_inline off
-extern "C" void func_8049CF44(void* list, void* val, int prio) { func_8049CF48(list, val, prio); }
+extern "C" void func_8049CF44(CScnFilterIteratorReslist* list, u32 handle, int capacity) { func_8049CF48(list, handle, capacity); }
 #pragma pop
 
+// reserve for the iterator reslist: the node item (CScnFilterIterator) has a
+// user-declared default ctor, so the node array carries MWCC's 0x10 cookie
+// (alloc size = capacity*0xC + 0x10) and element construction goes through
+// __construct_new_array with the flat init helper func_8049CC70 as the
+// per-element ctor. Afterwards clear every node's mNext.
 #pragma push
 #pragma auto_inline off
-extern "C" void func_8049CF48(void* list, void* val, int prio){
+extern "C" void func_8049CF48(CScnFilterIteratorReslist* list, u32 handle, int capacity) {
+    list->mList = (CScnFilterIterNode*)__construct_new_array(
+        mtl::MemManager::allocate_array((u32)capacity * 0xC + 0x10, handle),
+        (void (*)(void*))func_8049CC70, nullptr, 0xC, capacity);
+    for (int i = 0; i < capacity; i++) {
+        list->mList[i].mNext = nullptr;
+    }
+    list->mCapacity = capacity;
 }
 #pragma pop
 
@@ -282,8 +306,8 @@ extern "C" CScnFilterMan* __ct__CScnFilterMan(CScnFilterMan* self, CScn* scene) 
     __ct__8049CBD4((CScnFilterReslist*)&self->field_28);
     func_8049C9F8(&self->field_48);
     func_800B0A90(&self->field_48);
-    func_8049CE14(&self->field_08, func_80496018(scene), 4);
-    func_8049CF44(&self->field_28, func_80496018(scene), 4);
+    func_8049CE14(&self->field_08, (u32)func_80496018(scene), 4);
+    func_8049CF44(&self->field_28, (u32)func_80496018(scene), 4);
     scene->addRenderCB((IScnRender*)self, 3, 0);
     return self;
 }
@@ -656,11 +680,49 @@ extern "C" __declspec(noinline) u32 func_8049D9B0(const u32* a, const u32* b) { 
 extern "C" void func_8049CD34(CScnFilterIteratorReslist* self);
 extern "C" __declspec(noinline) void func_8049D9CC(CScnFilterIteratorReslist* self) { func_8049CD34(self); }
 
-// Guarded so -ipa cannot fold the stub body into func_8049DB14's call site.
-// Retail name is zero-param mangled although r3 (self) is live.
+extern "C" u8 func_8049DAF4(void* self);
+extern "C" s32 func_8049DAFC(CScnFilterListIter* a, CScnFilterListIter* b);
+
+// Bubble-sort the filter list by each filter's state byte (descending):
+// repeatedly walk the list swapping adjacent out-of-order items until a
+// full pass makes no swap. Slot layout follows retail (cur=0x1c ..
+// end2=0x8); declaration order drives MWCC's reverse allocation.
 #pragma push
 #pragma auto_inline off
-extern "C" void func_8049D9D0(CScnFilterMan* self) {}
+extern "C" __declspec(noinline) void func_8049D9D0(CScnFilterMan* self) {
+    bool swapped;
+    CScnFilterListIter itCur;   // 0x1c
+    CScnFilterListIter itAdj;   // 0x18
+    CScnFilterListIter itTmp;   // 0x14
+    CScnFilterListIter itEnd;   // 0x10
+    CScnFilterListIter itCopy;  // 0xc
+    CScnFilterListIter itEnd2;  // 0x8
+    do {
+        swapped = false;
+        func_8049D53C(&itCur, (CScnFilterList*)&self->field_08);
+        while (func_8049D26C(&itEnd2, (CScnFilterList*)&self->field_08),
+               func_8049D548((u32*)&itCur, (u32*)&itEnd2)) {
+            func_8049D564((int*)&itAdj, (int*)&itCur);
+            func_8049D914(&itTmp, &itAdj, 0);
+            func_8049D26C(&itEnd, (CScnFilterList*)&self->field_08);
+            // Adjacent iterator ran past the end: pass complete.
+            if (func_8049DAFC(&itAdj, &itEnd)) {
+                break;
+            }
+            u32 stateAdj = func_8049DAF4(func_8049D530(&itAdj));
+            u32 stateCur = func_8049DAF4(func_8049D530(&itCur));
+            if (stateCur > stateAdj) {
+                // Swap the item payloads (full-word moves in retail).
+                u32 valAdj = *(u32*)func_8049D530(&itAdj);
+                u32 valCur = *(u32*)func_8049D530(&itCur);
+                *(u32*)func_8049D530(&itAdj) = valCur;
+                *(u32*)func_8049D530(&itCur) = valAdj;
+                swapped = true;
+            }
+            func_8049D914(&itCopy, &itCur, 0);
+        }
+    } while (swapped);
+}
 #pragma pop
 
 struct CScnFilterState {
@@ -673,7 +735,7 @@ u8 func_8049DAF4(void* self) {
 }
 
 // reslist iterator equality: true when both iterators hold the same node.
-s32 func_8049DAFC(CScnFilterListIter* a, CScnFilterListIter* b) {
+extern "C" s32 func_8049DAFC(CScnFilterListIter* a, CScnFilterListIter* b) {
     return a->mNode == b->mNode;
 }
 

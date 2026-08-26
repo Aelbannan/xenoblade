@@ -35,11 +35,13 @@ namespace ut {
 
 // Shared nw4r .sdata2 float constants (retail ut_TextWriterBase.o has .sdata2
 // size 0 -- every constant is referenced from the shared pool, no TU-local
-// copies).
-extern f32 lbl_eu_8066A160;  // 0x7F7FFFFF (FLT_MAX)
-extern f32 lbl_eu_8066A164;  // lbl_eu_8066A164
-extern f64 lbl_eu_8066A168;  // 0x4330000080000000 (signed int->f32 magic)
-extern f32 lbl_eu_8066A170;  // 0.5f
+// copies). extern "C" so the relocs bind straight to the retail nw4r_data.s
+// linker names (plain C++ decls inside the namespace mangle as
+// lbl_eu_8066A164__Q24nw4r2ut and need postprocess renames).
+extern "C" f32 lbl_eu_8066A160; // 0x7F7FFFFF (FLT_MAX)
+extern "C" f32 lbl_eu_8066A164; // 0.0f
+extern "C" f64 lbl_eu_8066A168; // 0x4330000080000000 (signed int->f32 magic)
+extern "C" f32 lbl_eu_8066A170; // 0.5f
 
 // int -> f32 conversion matching retail (MWCC_CASES 7i): build the 2^52+x
 // double on the stack (low word = x ^ 0x80000000, high word = 0x43300000) and

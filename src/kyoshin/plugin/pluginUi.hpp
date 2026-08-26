@@ -54,9 +54,9 @@ extern const void* lbl_eu_806618F0;
 
 // sdata2 constant for fadeOut_1 (fade alpha value).
 extern f32 lbl_eu_80665DB8;
-// sdata2 int->double conversion magic (0x4330000080000000), referenced by
-// the fadeIn/fadeOut int-to-float conversions.
-extern double lbl_eu_80665DC0;
+// The int->double conversion magic (lbl_eu_80665DC0) is planted as a TU-local
+// static const double in pluginUi.cpp so MWCC unifies its implicit-cast magic
+// pool entry with it (see the comment there).
 
 // Message string tables / buffers used by the mesVision commands.
 extern char lbl_eu_804FABF0[];

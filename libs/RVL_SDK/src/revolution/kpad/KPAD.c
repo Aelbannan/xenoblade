@@ -160,7 +160,7 @@ u8 kp_wbc_zero_point_done;
 u8 kp_wbc_tgc_weight_issued;
 u8 kp_wbc_setup;
 u8 kp_wbc_enabled;
-u16 kp_wbc_issued;
+u8 kp_wbc_issued;
 f32 kp_dist_vv1;
 f32 kp_err_dist_min;
 

@@ -2018,6 +2018,14 @@ void SoundArchivePlayer::InvalidateWaveData(const void* pStart,
     }
 }
 
+// Retail names these SoundArchive readers WITHOUT the detail_ prefix
+// (symbols.txt); the locked header spells them detail_Read*. Declare the
+// retail-named entries so the NoteOn call relocs carry retail symbols.
+extern "C" bool ReadSeqSoundInfo__Q34nw4r3snd12SoundArchiveCFUlPQ44nw4r3snd12SoundArchive12SeqSoundInfo(
+    const SoundArchive* rArchive, u32 id, SoundArchive::SeqSoundInfo* pOut);
+extern "C" bool ReadBankInfo__Q34nw4r3snd12SoundArchiveCFUlPQ44nw4r3snd12SoundArchive8BankInfo(
+    const SoundArchive* rArchive, u32 id, SoundArchive::BankInfo* pOut);
+
 detail::Channel*
 SoundArchivePlayer::SeqNoteOnCallback::NoteOn(detail::SeqPlayer* pSeqPlayer,
                                               int bankNo,
@@ -2032,12 +2040,12 @@ SoundArchivePlayer::SeqNoteOnCallback::NoteOn(detail::SeqPlayer* pSeqPlayer,
     u32 soundId = pSeqPlayer->GetId();
 
     SoundArchive::SeqSoundInfo seqInfo;
-    if (!rArchive.detail_ReadSeqSoundInfo(soundId, &seqInfo)) {
+    if (!ReadSeqSoundInfo__Q34nw4r3snd12SoundArchiveCFUlPQ44nw4r3snd12SoundArchive12SeqSoundInfo(&rArchive, soundId, &seqInfo)) {
         return NULL;
     }
 
     SoundArchive::BankInfo bankInfo;
-    if (!rArchive.detail_ReadBankInfo(seqInfo.bankId, &bankInfo)) {
+    if (!ReadBankInfo__Q34nw4r3snd12SoundArchiveCFUlPQ44nw4r3snd12SoundArchive8BankInfo(&rArchive, seqInfo.bankId, &bankInfo)) {
         return NULL;
     }
 

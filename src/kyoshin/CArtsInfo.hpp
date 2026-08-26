@@ -140,9 +140,9 @@ struct CArtsColorPair {
 // GetResource(type-tag "timg", id, 0).
 class CArtsArcView {
 public:
+    // NOTE: MWCC -RTTI emits vcall offset = declared_index + 2 for these
+    // mirror casts; one dummy puts getResource at retail's slot 3 (+0x0C).
     virtual void a0() = 0;
-    virtual void a1() = 0;
-    virtual void a2() = 0;
     virtual void* getResource(const char* typeTag, u32 id, u32 flags) = 0; // +0x0C
 };
 

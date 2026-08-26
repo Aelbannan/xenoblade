@@ -120,8 +120,12 @@ struct If158 {
     virtual void _v148(); virtual void _v14C(); virtual void _v150(); virtual void _v154();
     virtual void vf158(u32 a);
 };
+struct ProbeVt {
+    virtual void pa();
+    virtual void pb(u32 a);
+};
 extern "C" void func_800AB498__Q22cf12CfObjectCollFv(cf::CfObjectColl* self) {
-    reinterpret_cast<If158*>(self)->vf158(1);
+    reinterpret_cast<ProbeVt*>(self)->pb(1);
 }
 
 // Interface view whose slot 0xAC returns a pointer to an embedded vector.

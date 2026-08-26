@@ -945,8 +945,8 @@ int func_8012968C(void* unused, void* unused2, TagWriterHolder* holder);
 void func_801375A0(f32* out, nw4r::lyt::Pane* pane);
 
 // func_8012615C's C-ABI imports: flat (or pre-mangled) retail names.
-void* func_800BBC0C();  // talk-source getter (r3 = prior call's result)
-void func_8004B9D4(void* w, int a, int b, int c, int d);  // icon display
+extern "C" void* func_800BBC0C(void* obj);  // talk-source getter (retail r3 = prior call's result)
+extern "C" void func_8004B9D4(void* w, int a, int b, int c, int d);
 u32 func_8009CF8C(u32 id);
 void func_8009D018(u32 owner, u32 value);
 void* func_800451D8(u32 cls, void* param);

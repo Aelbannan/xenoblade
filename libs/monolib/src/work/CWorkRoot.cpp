@@ -295,7 +295,14 @@ __declspec(noinline) reslist<T>::reslist() : _reslist_base<T>() {}
 
 template <typename T>
 __declspec(noinline) void reslist<T>::reserve(mtl::ALLOC_HANDLE handle, int capacity) {
-    this->mList = new (handle) _reslist_node<T>[capacity];
+    /* Retail: allocate_array(capacity * 0xC, handle) - a raw node-array alloc
+    with NO new[] cookie/overflow guard - then zeroes only each node's mNext.
+    Spelling it as placement new[] made MWCC emit the count-overflow guard and
+    an 8-wide unrolled fill (0x12C vs retail 0x60). Same idiom as
+    CScnFilterMan/CScnVirtualLight. */
+    volatile int zProbeReserve = capacity; (void)zProbeReserve;
+    this->mList = (_reslist_node<T>*)mtl::MemManager::allocate_array(
+        (u32)capacity * sizeof(_reslist_node<T>), handle);
 
     for(int i = 0; i < capacity; i++){
         this->mList[i].mNext = nullptr;

@@ -74,6 +74,19 @@ static void ClearSubWords(CModelDispSub* sub, int c1, int c2) {
     }
 }
 
+// Word-clearing view used by the constructor loop. The retail loop base
+// pointer walks this + i*0xFF0 (NOT the sub-object base at +8), so the
+// cleared words sit at these raw offsets.
+struct CModelDispCtorWords {
+    u8 _00[0x08];
+    void* w08;                     // +0x08
+    void* w0C;                     // +0x0C
+    void* w10;                     // +0x10
+    u8 _14[0x550 - 0x14];
+    u32 w550;                      // +0x550
+    u32 w554;                      // +0x554
+};
+
 #pragma push
 #pragma optimize_for_size on
 CModelDisp::CModelDisp(u8* initParam) {
@@ -81,29 +94,31 @@ CModelDisp::CModelDisp(u8* initParam) {
     mInitParam = initParam;
     __construct_array(&mSubs[0], (void*)func_801FBEB8, (void*)__dt__801FBF0C, 0xff0, 3);
 
-    f32 v = lbl_eu_806681E8;
-    field_2FDC = v;
-    field_2FE0 = lbl_eu_806681EC;
+    // Both .sdata2 floats are loaded into registers up front, then stored
+    // after the flag-byte initialisation (retail load/store grouping).
     field_2FD8 = 0;
+    field_2FDC = lbl_eu_806681E8;
+    field_2FE0 = lbl_eu_806681EC;
     field_2FE4 = 1;
 
     for (u8 i = 0; i < 3; i++) {
-        CModelDispSub* sub = (CModelDispSub*)((u8*)this + i * 0xFF0);
-        sub->mpController = NULL;
-        sub->mObj0C = NULL;
-        sub->field_10 = NULL;
-        sub->field_554 = NULL;
-        sub->field_550 = 0;
+        CModelDispCtorWords* w = (CModelDispCtorWords*)((u8*)this + i * 0xFF0);
+        w->w08 = NULL;
+        w->w0C = NULL;
+        w->w10 = NULL;
+        w->w554 = NULL;
+        w->w550 = 0;
 
-        // Slot pointers are cleared word-wise off the sub-object base
-        // (indexed recompute, matching retail's rlwinm+add addressing).
+        // Slot pointers at +0xFC8 and flags at +0xFD0 are cleared word-wise
+        // off the +8 payload base (retail recomputes the address per word).
+        u32* payload = (u32*)&w->w08;
         for (u8 j = 0; j < 2; j++) {
-            ((CModelDispSub*)((u32*)sub + j))->mFlagFD0 = 0;
+            payload[(0xFC8 / sizeof(u32)) + j] = 0;
         }
         for (u8 j = 0; j < 8; j++) {
-            // Retail zeroes 8 words at +0xFD8, spilling 8 bytes past the 0xFF0
-            // stride (the tail member is only 0x18 bytes) - reproduced verbatim.
-            *(u32*)(&((CModelDispSub*)((u32*)sub + j))->_FD8) = 0;
+            // Zeroes 8 words at +0xFD8, spilling 8 bytes past the 0xFF0
+            // stride - reproduced verbatim from retail.
+            payload[(0xFD0 / sizeof(u32)) + j] = 0;
         }
     }
 }
@@ -167,21 +182,23 @@ extern "C" void func_801FC13C(CModelDisp* self) {
 // lbl_eu_806681F4, decrements field_2FDC by lbl_eu_806681F8 (clamped to
 // lbl_eu_806681EC) and calls each sub-object's vmethod (+0x48).
 extern "C" __declspec(noinline) void func_801FC15C(CModelDisp* self) {
-    // Constant load order fixes MWCC's f-register assignment: threshold -> f0,
-    // increment -> f1 (kept live across the store/compare), then the timer -> f2.
-    f32 lim = lbl_eu_806681F4;
-    f32 inc = lbl_eu_806681E8;
-    f32 t = self->field_2FE0 + inc;
+    // Inline .sdata2 constants give the retail f-register assignment:
+    // increment -> f1, threshold -> f0, timer -> f2.
+    f32 t = self->field_2FE0 + lbl_eu_806681E8;
     self->field_2FE0 = t;
-    if (t >= lim) {
-        // Same trick: floor -> f0, dec -> f1; the floor stays in f0 for the
-        // clamp store, avoiding a second sdata2 load.
-        f32 floorVal = lbl_eu_806681EC;
-        f32 dec = lbl_eu_806681F8;
-        f32 a = self->field_2FDC - dec;
+    if (t >= lbl_eu_806681F4) {
+        // Named locals color in declaration order (f0, f1, f2):
+        // floor -> f0, dec -> f1, cur -> f2; cur is assigned before dec so
+        // the alpha load emits first (retail order).
+        f32 floorV = lbl_eu_806681EC;
+        f32 dec;
+        f32 cur;
+        cur = self->field_2FDC;
+        dec = lbl_eu_806681F8;
+        f32 a = cur - dec;
         self->field_2FDC = a;
-        if (a < floorVal) {
-            self->field_2FDC = floorVal;
+        if (a < floorV) {
+            self->field_2FDC = floorV;
             self->field_2FD8 = 2;
             self->field_2FE4 = 1;
         }
@@ -291,7 +308,22 @@ extern "C" __declspec(noinline) void func_801FC3B0(CModelDisp* self) {
             if (((CModelDispMoveVt*)&actor->move[0])->m188() == 0)
                 ok = false;
         }
-        if (h->field_0x00 != NULL && ok != false) {
+        // Retail gates on the slot being EMPTY before building: rebuild only
+        // when field_00 is unset and the actor validated; tear down only when
+        // the slot is occupied but the actor failed validation. The trailing
+        // holder dtor is shared by the build and teardown paths.
+        if (h->field_0x00 != NULL) {
+            if (ok == false) {
+                func_801FC2B4(self, h);
+            }
+            __dt__80043E88(&holder, -1);
+            continue;
+        }
+        if (ok == false) {
+            __dt__80043E88(&holder, -1);
+            continue;
+        }
+        {
             // Build: create the display model and rebind both anim slots.
             h->field_0x00 = func_80495E8C((u32)self->mInitParam, charId, -1, 1);
             ((CModelDispModelVt*)h->field_0x00)->m64(0);
@@ -410,11 +442,6 @@ extern "C" __declspec(noinline) void func_801FC3B0(CModelDisp* self) {
             ((CModelDispModelVt*)h->field_0x00)->m48(self->field_2FDC);
             ((CModelDispModelVt*)h->field_0x00)->m9C(3, 0);
             func_801FCAC8(self);
-        }
-        // Teardown path: re-tested after the build block (retail shares the
-        // already-loaded field_00/ok registers across both tests).
-        if (h->field_0x00 == NULL || ok == false) {
-            func_801FC2B4(self, h);
         }
         __dt__80043E88(&holder, -1);
     }

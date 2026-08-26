@@ -23,6 +23,7 @@ u8 *searchStmId(void *work, u32 stm_id) {
     int n_vid;
     u32 kind;
     u32 index;
+    u32 id;
     u32 is_v2;
     int i;
 
@@ -44,14 +45,16 @@ u8 *searchStmId(void *work, u32 stm_id) {
     index = stm_id & 0x1F;
     found = NULL;
     if (kind == 0xC0) goto caseC0;
-    else if (kind == 0xE0) goto caseE0;
-    else if (kind == 0xA0) goto caseA0;
-    else goto done;
+    if (kind == 0xE0) goto caseE0;
+    if (kind == 0xA0) goto caseA0;
+    goto done;
 caseC0:
     if (is_v2 != 0) {
-        u8 *tmp = base + (index << 4);
-        cur = tmp + 0x1C0;
-        if (SFHLOCAL_GetNbyteB(cur, SFHLOCAL_GetSizeofMember(0, 1)) == stm_id) {
+        // Direct index into the v2 audio table (stride 0x10) plus footer base.
+        // Direct index into the v2 audio table (stride 0x10) plus footer base.
+        cur = (base + (index << 4)) + 0x1C0;
+        id = SFHLOCAL_GetNbyteB(cur, SFHLOCAL_GetSizeofMember(0, 1));
+        if (id == stm_id) {
             found = cur;
         }
         goto done;
@@ -59,7 +62,8 @@ caseC0:
     cur = base + 0x1C0;
     i = 0;
     while (i < n_aud) {
-        if (SFHLOCAL_GetNbyteB(cur, SFHLOCAL_GetSizeofMember(0, 1)) == stm_id) {
+        id = SFHLOCAL_GetNbyteB(cur, SFHLOCAL_GetSizeofMember(0, 1));
+        if (id == stm_id) {
             found = cur;
             break;
         }
@@ -69,9 +73,11 @@ caseC0:
     goto done;
 caseE0:
     if (is_v2 != 0) {
-        u8 *tmp = base + (index << 6);
-        cur = tmp + 0x3C0;
-        if (SFHLOCAL_GetNbyteB(cur, SFHLOCAL_GetSizeofMember(0, 1)) == stm_id) {
+        // Direct index into the v2 video table (stride 0x40) plus footer base.
+        // Direct index into the v2 video table (stride 0x40) plus footer base.
+        cur = (base + (index << 6)) + 0x3C0;
+        id = SFHLOCAL_GetNbyteB(cur, SFHLOCAL_GetSizeofMember(0, 1));
+        if (id == stm_id) {
             found = cur;
         }
         goto done;
@@ -79,7 +85,8 @@ caseE0:
     cur = base + 0x3C0;
     i = 0;
     while (i < n_vid) {
-        if (SFHLOCAL_GetNbyteB(cur, SFHLOCAL_GetSizeofMember(0, 1)) == stm_id) {
+        id = SFHLOCAL_GetNbyteB(cur, SFHLOCAL_GetSizeofMember(0, 1));
+        if (id == stm_id) {
             found = cur;
             break;
         }
@@ -89,11 +96,13 @@ caseE0:
     goto done;
 caseA0:
     cur = base + 0x7C0;
-    if (SFHLOCAL_GetNbyteB(cur, SFHLOCAL_GetSizeofMember(0, 1)) == stm_id) {
+    id = SFHLOCAL_GetNbyteB(cur, SFHLOCAL_GetSizeofMember(0, 1));
+    if (id == stm_id) {
         found = cur;
     }
     cur = base + 0x7E0;
-    if (SFHLOCAL_GetNbyteB(cur, SFHLOCAL_GetSizeofMember(0, 1)) == stm_id) {
+    id = SFHLOCAL_GetNbyteB(cur, SFHLOCAL_GetSizeofMember(0, 1));
+    if (id == stm_id) {
         found = cur;
     }
     goto done;
@@ -216,11 +225,11 @@ int VER2_IsEffFtrInf(void *work, int stm_id, u32 *out) {
 
 int VER2_AnlyHdrToolVer(void *work, u32 *out1, u32 *out2) {
     char buf[0x40];
-    char *p;
     u32 t1;
     u32 t2;
     u32 ok;
     int c;
+    char *p;
 
     *out1 = 0;
     *out2 = 0;
@@ -249,7 +258,7 @@ int VER2_AnlyHdrToolVer(void *work, u32 *out1, u32 *out2) {
             t1 = t1 * 10 + c - '0';
             p++;
         }
-        p++;
+        ++p;
         t2 = 0;
         while (1) {
             c = *p;

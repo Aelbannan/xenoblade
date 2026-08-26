@@ -30,7 +30,7 @@ struct MakeCrystalTable {
 // CItem_initItemImplInstances comes from CfGameManager.hpp (harness chain).
 
 // Item-instance vtable shim (crystal-id getter lives at vtable offset 8). The
-// object comes from CItem_initItemImplInstances(); only the getter is
+// object comes from CItem_initItemImplInstances(obj); only the getter is
 // dispatched. The first declared virtual lands at memory slot 2 because MWCC
 // reserves two RTTI slots (0x0/0x4) at the head of the vtable.
 struct CrystalItemImpl {

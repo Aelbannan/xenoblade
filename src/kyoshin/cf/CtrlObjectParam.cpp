@@ -2648,8 +2648,8 @@ extern "C" void* func_800A36A4(cf::CtrlObjectParamArtsList* list, u32 value) {
     // hit wins. An exact match re-tags the whole row 0xAAAA; a larger row has
     // its surplus tail split off as a new 0xAAAA node. Returns the data area
     // (+0x20) of the winning node, or 0 when no row fits.
-    u32 need = (value + 31) >> 5;
     cf::CtrlObjectParamArtsListEntry* best = 0;
+    u32 need = (value + 31) >> 5;
     cf::CtrlObjectParamArtsListEntry* e = list->head;
     while (e->next != 0) e = e->next;
     while (e != 0) {
@@ -2662,25 +2662,27 @@ extern "C" void* func_800A36A4(cf::CtrlObjectParamArtsList* list, u32 value) {
         e = reinterpret_cast<cf::CtrlObjectParamArtsListEntry*>(e->prev);
     }
     if (best == 0) return 0;
-    u32 count = best->field_04;
     cf::CtrlObjectParamArtsListEntry* node = best;
-    if (count == need) {
+    if (best->field_04 == need) {
         best->field_00 = 0xAAAA;
         memset(&best->data[0], 0, 0xC);
     } else {
-        // Split the surplus (count - need) slots off the tail as a new node.
+        // Split the surplus (field_04 - need) slots off the tail as a new node.
+        cf::CtrlObjectParamArtsListEntry* old = best;
         node = reinterpret_cast<cf::CtrlObjectParamArtsListEntry*>(
-            reinterpret_cast<u8*>(best) + ((count - need) << 5));
+            reinterpret_cast<u8*>(best) +
+            ((best->field_04 - need) << 5));
         node->field_00 = 0xAAAA;
         memset(&node->data[0], 0, 0xC);
         node->field_04 = need;
-        node->prev = reinterpret_cast<u32>(best);
-        node->next = best->next;
+        node->prev = reinterpret_cast<u32>(old);
+        node->next = old->next;
         if (node->next != 0) {
             node->next->prev = reinterpret_cast<u32>(node);
         }
-        best->field_04 = count - need - 1;
-        best->next = node;
+        // retail re-reads best->field_04 here rather than reusing count
+        old->field_04 = old->field_04 - need - 1;
+        old->next = node;
     }
     return reinterpret_cast<u8*>(node) + 0x20;
 }

@@ -15,204 +15,12 @@ extern "C" int func_801537E0(void* self);
 // (func_800F3970: single shared decl on kyoshin/cf/CBattleManagerApi.hpp.)
 extern "C" void func_800BE12C(u8* obj, int a, int b, int c, int d);
 
-struct ChIf {
-    virtual void _v0008();
-    virtual void _v000C();
-    virtual void _v0010();
-    virtual void _v0014();
-    virtual void _v0018();
-    virtual void _v001C();
-    virtual void _v0020();
-    virtual void _v0024();
-    virtual void _v0028();
-    virtual void _v002C();
-    virtual void _v0030();
-    virtual void _v0034();
-    virtual void _v0038();
-    virtual void _v003C();
-    virtual void _v0040();
-    virtual void _v0044();
-    virtual void _v0048();
-    virtual void vf004C();
-    virtual void vf0050();
-};
-struct ChIf2 {
-    virtual void _v0008();
-    virtual void _v000C();
-    virtual void _v0010();
-    virtual void _v0014();
-    virtual void _v0018();
-    virtual void _v001C();
-    virtual void _v0020();
-    virtual void _v0024();
-    virtual void _v0028();
-    virtual void _v002C();
-    virtual void _v0030();
-    virtual void _v0034();
-    virtual void _v0038();
-    virtual void _v003C();
-    virtual void _v0040();
-    virtual void _v0044();
-    virtual void _v0048();
-    virtual void _v004C();
-    virtual void _v0050();
-    virtual void _v0054();
-    virtual void _v0058();
-    virtual void _v005C();
-    virtual void _v0060();
-    virtual void _v0064();
-    virtual void _v0068();
-    virtual void _v006C();
-    virtual void _v0070();
-    virtual void _v0074();
-    virtual void _v0078();
-    virtual void _v007C();
-    virtual void _v0080();
-    virtual void _v0084();
-    virtual void _v0088();
-    virtual void _v008C();
-    virtual void _v0090();
-    virtual void _v0094();
-    virtual void _v0098();
-    virtual void _v009C();
-    virtual void _v00A0();
-    virtual void _v00A4();
-    virtual void _v00A8();
-    virtual void _v00AC();
-    virtual void _v00B0();
-    virtual void _v00B4();
-    virtual void _v00B8();
-    virtual void _v00BC();
-    virtual void _v00C0();
-    virtual void _v00C4();
-    virtual void _v00C8();
-    virtual void _v00CC();
-    virtual void _v00D0();
-    virtual void _v00D4();
-    virtual void _v00D8();
-    virtual void _v00DC();
-    virtual void _v00E0();
-    virtual void _v00E4();
-    virtual void _v00E8();
-    virtual void _v00EC();
-    virtual void _v00F0();
-    virtual void _v00F4();
-    virtual void _v00F8();
-    virtual void _v00FC();
-    virtual void _v0100();
-    virtual void _v0104();
-    virtual void _v0108();
-    virtual void _v010C();
-    virtual void _v0110();
-    virtual void _v0114();
-    virtual void _v0118();
-    virtual void _v011C();
-    virtual void _v0120();
-    virtual void _v0124();
-    virtual void _v0128();
-    virtual void _v012C();
-    virtual void _v0130();
-    virtual void _v0134();
-    virtual void _v0138();
-    virtual void _v013C();
-    virtual void _v0140();
-    virtual void _v0144();
-    virtual void _v0148();
-    virtual void _v014C();
-    virtual void _v0150();
-    virtual void _v0154();
-    virtual void _v0158();
-    virtual void _v015C();
-    virtual void _v0160();
-    virtual void _v0164();
-    virtual void _v0168();
-    virtual void _v016C();
-    virtual void _v0170();
-    virtual void _v0174();
-    virtual void _v0178();
-    virtual void _v017C();
-    virtual void _v0180();
-    virtual void _v0184();
-    virtual void _v0188();
-    virtual void _v018C();
-    virtual void _v0190();
-    virtual void _v0194();
-    virtual void _v0198();
-    virtual void _v019C();
-    virtual void _v01A0();
-    virtual void _v01A4();
-    virtual void _v01A8();
-    virtual void _v01AC();
-    virtual void _v01B0();
-    virtual void _v01B4();
-    virtual void _v01B8();
-    virtual void _v01BC();
-    virtual void _v01C0();
-    virtual void _v01C4();
-    virtual void _v01C8();
-    virtual void _v01CC();
-    virtual void _v01D0();
-    virtual void _v01D4();
-    virtual void _v01D8();
-    virtual void _v01DC();
-    virtual void _v01E0();
-    virtual void _v01E4();
-    virtual void _v01E8();
-    virtual void _v01EC();
-    virtual void _v01F0();
-    virtual void _v01F4();
-    virtual void _v01F8();
-    virtual void _v01FC();
-    virtual void _v0200();
-    virtual void _v0204();
-    virtual void _v0208();
-    virtual void _v020C();
-    virtual void _v0210();
-    virtual void _v0214();
-    virtual void _v0218();
-    virtual void _v021C();
-    virtual void _v0220();
-    virtual void _v0224();
-    virtual void _v0228();
-    virtual void _v022C();
-    virtual void _v0230();
-    virtual void _v0234();
-    virtual void _v0238();
-    virtual void _v023C();
-    virtual void _v0240();
-    virtual void _v0244();
-    virtual void _v0248();
-    virtual void _v024C();
-    virtual void _v0250();
-    virtual void _v0254();
-    virtual void _v0258();
-    virtual void _v025C();
-    virtual void _v0260();
-    virtual void _v0264();
-    virtual void _v0268();
-    virtual void _v026C();
-    virtual void _v0270();
-    virtual void _v0274();
-    virtual void _v0278();
-    virtual void _v027C();
-    virtual void _v0280();
-    virtual void _v0284();
-    virtual void _v0288();
-    virtual void _v028C();
-    virtual void _v0290();
-    virtual void _v0294();
-    virtual void _v0298();
-    virtual void _v029C();
-    virtual void _v02A0();
-    virtual void _v02A4();
-    virtual void _v02A8();
-    virtual void _v02AC();
-    virtual void _v02B0();
-    virtual void _v02B4();
-    virtual void _v02B8();
-    virtual void vf02BC();
-};
-
+// (The former TU-local ChIf / ChIf2 vtable pads are gone. Their slots are
+// recovered: ChIf dispatched on the battle object's embedded voice
+// sub-object at +0x3E9C (slots +0x4C / +0x50 = cf::CChainVoiceSub::v17 /
+// v18 in CChainTimer.hpp); ChIf2 dispatched on the battle object itself at
+// slot +0x2BC (= cf::CChainBattleObj::v173). The three users below are the
+// cf::CChainActor manual-vtable slots +0x68 / +0x6C / +0x70.
 namespace cf {
     CChain::CChain(){
         // The member sub-objects construct implicitly before this body, in
@@ -309,11 +117,28 @@ void func_80277A7C(cf::CChain* self, cf::CChainFlag* flag, float f1) {
 extern "C" void func_8027711C(void* self);
 extern "C" void func_80277B34(void* self) { func_8027711C(self); }
 extern "C" void CChain_noop_78E00() {}
-extern "C" void func_80278F5C(u8* self) { reinterpret_cast<ChIf*>((u8*)*(void**)self + 0x3e9c)->vf0050(); }
-extern "C" void func_80278F70(u8* self) { reinterpret_cast<ChIf*>((u8*)*(void**)self + 0x3e9c)->vf004C(); }
+// cf::CChainActor manual-vtable slot +0x6C (base lbl_eu_80538290 and Ene
+// lbl_eu_80538458 store this; Pc lbl_eu_805384E0 overrides with
+// func_802822F8): forward the caller's run key (incoming r4, passed
+// through untouched - retail tail-calls with bctr) to the battle object's
+// embedded voice sub-object (+0x3E9C) slot +0x50.
+extern "C" void func_80278F5C(u8* self, u32 key) {
+    ((cf::CChainBattleObj*)*(void**)self)->mSub.v18(key);
+}
+// cf::CChainActor manual-vtable slot +0x68 (all three retail tables store
+// func_80278F70 here): query the battle object's embedded voice
+// sub-object (+0x3E9C) slot +0x4C - the run-key getter the chain state
+// machine reads back through the v024 dispatches. The CChainVoiceSub
+// mirror declares the slot void (CChainTimer.hpp is not this fork's file
+// to retype), so the result is dropped exactly as before.
+extern "C" void func_80278F70(u8* self) { ((cf::CChainBattleObj*)*(void**)self)->mSub.v17(); }
 extern "C" void CChain_noop_795D0() {}
 extern "C" void CChain_noop_79768() {}
-extern "C" void func_8027A324(u8* self) { reinterpret_cast<ChIf2*>(*(void**)self)->vf02BC(); }
+// cf::CChainActor manual-vtable slot +0x70 (base lbl_eu_80538290 and Ene
+// lbl_eu_80538458 store this; Pc lbl_eu_805384E0 overrides with
+// func_802821E0): notify the battle object itself through its base-vtable
+// slot +0x2BC (cf::CChainBattleObj::v173).
+extern "C" void func_8027A324(u8* self) { ((cf::CChainBattleObj*)*(void**)self)->v173(); }
 extern "C" void CChain_noop_A9E8() {}
 extern "C" void CChain_noop_AA0C() {}
 

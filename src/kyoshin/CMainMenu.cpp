@@ -180,7 +180,7 @@ extern "C" void func_800FEF4C(CMainMenu* self) {
         break;
     case 4:
         // Screen-open dispatch: act on the cursor while no other window is up.
-        if (func_80101A88() == 0 && func_8029A658() == 0) {
+        if (func_80101A88(self) == 0 && func_8029A658() == 0) {
             switch (self->field_0xC0) {
             case 0:
                 func_80134460();
@@ -477,7 +477,8 @@ extern "C" void* func_800FF6BC(void* parent, void* param) {
     if (lbl_eu_80663F18) {
         return NULL;
     }
-    CMainMenu* menu = (CMainMenu*)CWorkThreadSystem::getWorkMem();
+    u32 workMem = CWorkThreadSystem::getWorkMem();
+    CMainMenu* menu = (CMainMenu*)mtl::MemManager::allocate(0xE4, workMem);
     if (menu != NULL) {
         __ct__CMainMenu(menu, (CScn*)param);
     }
@@ -551,7 +552,307 @@ extern "C" void func_800FF914(CArtsInfo* self) {
     self->field_0x54 = 1;
 }
 
-extern "C" void func_800FF920(CMainMenu* self){}
+// Pane-flag setter used by the sub-menu open blocks: find the named pane
+// through a fresh layout-root load (retail reloads it every lookup) and
+// rewrite its enable bit (mFlag bit0). All lookups recurse except the last.
+#define MENU_SET_PANE_FLAG(self_, name_, on_, rec_)                              \
+    do {                                                                         \
+        nw4r::lyt::Pane* pane_ =                                                 \
+            (*(nw4r::lyt::Pane**)((u8*)(self_)->field_0x7C + 0x10))              \
+                ->FindPaneByName((name_), (rec_));                               \
+        if (on_) {                                            \
+            pane_->SetVisible(true);                          \
+        } else {                                              \
+            pane_->SetVisible(false);                         \
+        }                                                     \
+    } while (0)
+
+// Per-frame main-menu input handler (state 2): scroll the main cursor,
+// open the selected sub-screen, or cancel back to the exit state.
+void func_800FF920(CMainMenu* self) {
+    if (func_80101A88(self) != 0) {
+        // Input locked: stop the open animations, run the close animation,
+        // clear both number panes and drop to the exit state.
+        self->field_0x7C->SetAnimationEnable(self->field_0x88, false);
+        self->field_0x7C->SetAnimationEnable(self->field_0x8C, false);
+        self->field_0x7C->SetAnimationEnable(self->field_0x80, false);
+        self->field_0x7C->SetAnimationEnable(self->field_0x84, true);
+        // Retail materializes the rodata base only here, after the anim calls.
+        char* base = lbl_eu_804FCEBC;
+        func_80136B4C(self->field_0x7C, base + 0x71, base + 0x89, 0);
+        func_80136B4C(self->field_0x7C, base + 0x7c, base + 0x89, 0);
+        func_801D216C(&self->_90[0], 0);
+        func_80138078__FUl(9);
+        self->field_0xE0 = 3;
+        return;
+    }
+    if (func_8029A658() != 0) {
+        return;
+    }
+    CMainMenuPad* pad = getCurrentPad__Q22cf13CfGameManagerFv();
+    // Held-button early-outs per input style.
+    if (func_80086F9C__Q22cf13CfGameManagerFv(-1) != 0) {
+        if (pad->mHeldButtonFlags & 0x08000000) {
+            return;
+        }
+    } else {
+        if (pad->mHeldButtonFlags & 0x800) {
+            return;
+        }
+    }
+
+    u32 down, up, aPressed, bPressed, confirm;
+    if (func_80086F9C__Q22cf13CfGameManagerFv(-1) != 0) {
+        u32 p = pad->mPressedButtonFlags;
+        u32 t = pad->mTurboPressButtonFlags;
+        u32 cHi = p & 0x400000;
+        aPressed = (p >> 21) & 1;
+        u32 cLo = p & 0x400;
+        down = t & 1;
+        confirm = (cHi | cLo) != 0;
+        up = (t >> 1) & 1;
+        bPressed = (p >> 26) & 1;
+    } else {
+        u32 p = pad->mPressedButtonFlags;
+        u32 t = pad->mTurboPressButtonFlags;
+        u32 c = p & 0x420;
+        aPressed = (p >> 4) & 1;
+        down = t & 1;
+        up = (t >> 1) & 1;
+        bPressed = (p >> 12) & 1;
+        confirm = c != 0;
+    }
+
+    if (down != 0) {
+        // Down: wrap the main cursor backward and reposition it.
+        s32 idx = self->field_0xC0 - 1;
+        self->field_0xC0 = idx;
+        if (idx < 0) {
+            self->field_0xC0 = 6;
+        }
+        // "Param" anchor pane gives y/z; x comes from the cursor-x table.
+        nw4r::lyt::Pane* root = *(nw4r::lyt::Pane**)((u8*)self->field_0x7C + 0x10);
+        nw4r::lyt::Pane* pane = root->FindPaneByName(lbl_eu_804FCEBC + 0x53, true);
+        nw4r::math::VEC3 vec;
+        if (pane != NULL) {
+            vec = pane->GetTranslate();
+        }
+        // Retail spells out the s16->f32 magic-double conversion against the
+        // shared sdata2 constant.
+        vec.x = (f32)((f64)(s32)lbl_eu_804FCD60[self->field_0xC0] - lbl_eu_80666F10);
+        ((CMainMenuCurVt*)&self->_90[0])->vfn_0x10(&vec);
+        // Refresh the "N" counter panes for the new cursor index.
+        int n = self->field_0xC0 + 1;
+        if (n > 0) {
+            char* base = lbl_eu_804FCEBC;
+            char* s1 = func_80136190(base + 0x5e, base + 0x67, n);
+            char* s2 = func_80136190(base + 0x5e, base + 0x6c, n);
+            func_80136B4C(self->field_0x7C, base + 0x71, s1, 0);
+            func_80136B4C(self->field_0x7C, base + 0x7c, s2, 0);
+        } else {
+            char* base = lbl_eu_804FCEBC;
+            func_80136B4C(self->field_0x7C, base + 0x71, base + 0x89, 0);
+            func_80136B4C(self->field_0x7C, base + 0x7c, base + 0x89, 0);
+        }
+        func_80138078__FUl(0x6a);
+        return;
+    }
+    if (up != 0) {
+        // Up: wrap the main cursor forward and reposition it.
+        if (++self->field_0xC0 > 6) {
+            self->field_0xC0 = 0;
+        }
+        nw4r::lyt::Pane* root = *(nw4r::lyt::Pane**)((u8*)self->field_0x7C + 0x10);
+        nw4r::lyt::Pane* pane = root->FindPaneByName(lbl_eu_804FCEBC + 0x53, true);
+        nw4r::math::VEC3 vec;
+        if (pane != NULL) {
+            vec = pane->GetTranslate();
+        }
+        vec.x = (f32)((f64)(s32)lbl_eu_804FCD60[self->field_0xC0] - lbl_eu_80666F10);
+        ((CMainMenuCurVt*)&self->_90[0])->vfn_0x10(&vec);
+        int n = self->field_0xC0 + 1;
+        if (n > 0) {
+            char* base = lbl_eu_804FCEBC;
+            char* s1 = func_80136190(base + 0x5e, base + 0x67, n);
+            char* s2 = func_80136190(base + 0x5e, base + 0x6c, n);
+            func_80136B4C(self->field_0x7C, base + 0x71, s1, 0);
+            func_80136B4C(self->field_0x7C, base + 0x7c, s2, 0);
+        } else {
+            char* base = lbl_eu_804FCEBC;
+            func_80136B4C(self->field_0x7C, base + 0x71, base + 0x89, 0);
+            func_80136B4C(self->field_0x7C, base + 0x7c, base + 0x89, 0);
+        }
+        func_80138078__FUl(0x6a);
+        return;
+    }
+    if (aPressed == 0) {
+        if (confirm == 0) {
+            if (bPressed != 0) {
+                func_8013D8A0();
+            }
+            return;
+        }
+        // Cancel: same tail as the input-lock branch above.
+        self->field_0x7C->SetAnimationEnable(self->field_0x88, false);
+        self->field_0x7C->SetAnimationEnable(self->field_0x8C, false);
+        self->field_0x7C->SetAnimationEnable(self->field_0x80, false);
+        self->field_0x7C->SetAnimationEnable(self->field_0x84, true);
+        char* base = lbl_eu_804FCEBC;
+        func_80136B4C(self->field_0x7C, base + 0x71, base + 0x89, 0);
+        func_80136B4C(self->field_0x7C, base + 0x7c, base + 0x89, 0);
+        func_801D216C(&self->_90[0], 0);
+        func_80138078__FUl(9);
+        self->field_0xE0 = 3;
+        return;
+    }
+
+    // Confirm: reject unavailable entries, otherwise open the selected menu.
+    u32 sel = self->field_0xC0;
+    if (self->field_0xC8[sel] != 0) {
+        func_80138078__FUl(5);
+        return;
+    }
+    // Sub-menu open: reveal the four entries of the selected page (14 panes
+    // total), swap to the sub-cursor open animation and park the state at 5.
+    // Retail duplicates the anim tail inside every case, so each arm carries
+    // its own copy here too.
+    switch (sel) {
+    case 0:
+    case 3:
+        // Header entries: activate the main cursor and enter screen-open state.
+        func_801D2174((CBaseCur*)&self->_90[0]);
+        self->field_0xE0 = 4;
+        func_80138078__FUl(0x6b);
+        return;
+    case 1: {
+        char* base = lbl_eu_804FCEBC;
+        MENU_SET_PANE_FLAG(self, base + 0x142, 1, true);
+        MENU_SET_PANE_FLAG(self, base + 0x150, 1, true);
+        MENU_SET_PANE_FLAG(self, base + 0x15e, 1, true);
+        MENU_SET_PANE_FLAG(self, base + 0x16c, 1, true);
+        MENU_SET_PANE_FLAG(self, base + 0x17a, 0, true);
+        MENU_SET_PANE_FLAG(self, base + 0x188, 0, true);
+        MENU_SET_PANE_FLAG(self, base + 0x196, 0, true);
+        MENU_SET_PANE_FLAG(self, base + 0x1a4, 0, true);
+        MENU_SET_PANE_FLAG(self, base + 0x1b2, 0, true);
+        MENU_SET_PANE_FLAG(self, base + 0x1c0, 0, true);
+        MENU_SET_PANE_FLAG(self, base + 0x1ce, 0, true);
+        MENU_SET_PANE_FLAG(self, base + 0x1dc, 0, true);
+        MENU_SET_PANE_FLAG(self, base + 0x1ea, 0, true);
+        MENU_SET_PANE_FLAG(self, base + 0x1f8, 0, false);
+        self->field_0x7C->SetAnimationEnable(self->field_0x8C, false);
+        self->field_0x7C->SetAnimationEnable(self->field_0x80, false);
+        self->field_0x7C->SetAnimationEnable(self->field_0x84, false);
+        self->field_0x7C->SetAnimationEnable(self->field_0x88, true);
+        self->field_0x88->SetFrame(lbl_eu_80666F1C);
+        self->field_0xE0 = 5;
+        func_80138078__FUl(0x6c);
+        return;
+    }
+    case 2: {
+        char* base = lbl_eu_804FCEBC;
+        MENU_SET_PANE_FLAG(self, base + 0x142, 0, true);
+        MENU_SET_PANE_FLAG(self, base + 0x150, 0, true);
+        MENU_SET_PANE_FLAG(self, base + 0x15e, 0, true);
+        MENU_SET_PANE_FLAG(self, base + 0x16c, 0, true);
+        MENU_SET_PANE_FLAG(self, base + 0x17a, 1, true);
+        MENU_SET_PANE_FLAG(self, base + 0x188, 1, true);
+        MENU_SET_PANE_FLAG(self, base + 0x196, 0, true);
+        MENU_SET_PANE_FLAG(self, base + 0x1a4, 0, true);
+        MENU_SET_PANE_FLAG(self, base + 0x1b2, 0, true);
+        MENU_SET_PANE_FLAG(self, base + 0x1c0, 0, true);
+        MENU_SET_PANE_FLAG(self, base + 0x1ce, 0, true);
+        MENU_SET_PANE_FLAG(self, base + 0x1dc, 0, true);
+        MENU_SET_PANE_FLAG(self, base + 0x1ea, 0, true);
+        MENU_SET_PANE_FLAG(self, base + 0x1f8, 0, false);
+        self->field_0x7C->SetAnimationEnable(self->field_0x8C, false);
+        self->field_0x7C->SetAnimationEnable(self->field_0x80, false);
+        self->field_0x7C->SetAnimationEnable(self->field_0x84, false);
+        self->field_0x7C->SetAnimationEnable(self->field_0x88, true);
+        self->field_0x88->SetFrame(lbl_eu_80666F1C);
+        self->field_0xE0 = 5;
+        func_80138078__FUl(0x6c);
+        return;
+    }
+    case 4: {
+        char* base = lbl_eu_804FCEBC;
+        MENU_SET_PANE_FLAG(self, base + 0x142, 0, true);
+        MENU_SET_PANE_FLAG(self, base + 0x150, 0, true);
+        MENU_SET_PANE_FLAG(self, base + 0x15e, 0, true);
+        MENU_SET_PANE_FLAG(self, base + 0x16c, 0, true);
+        MENU_SET_PANE_FLAG(self, base + 0x17a, 0, true);
+        MENU_SET_PANE_FLAG(self, base + 0x188, 0, true);
+        MENU_SET_PANE_FLAG(self, base + 0x196, 1, true);
+        MENU_SET_PANE_FLAG(self, base + 0x1a4, 1, true);
+        MENU_SET_PANE_FLAG(self, base + 0x1b2, 1, true);
+        MENU_SET_PANE_FLAG(self, base + 0x1c0, 1, true);
+        MENU_SET_PANE_FLAG(self, base + 0x1ce, 0, true);
+        MENU_SET_PANE_FLAG(self, base + 0x1dc, 0, true);
+        MENU_SET_PANE_FLAG(self, base + 0x1ea, 0, true);
+        MENU_SET_PANE_FLAG(self, base + 0x1f8, 0, false);
+        self->field_0x7C->SetAnimationEnable(self->field_0x8C, false);
+        self->field_0x7C->SetAnimationEnable(self->field_0x80, false);
+        self->field_0x7C->SetAnimationEnable(self->field_0x84, false);
+        self->field_0x7C->SetAnimationEnable(self->field_0x88, true);
+        self->field_0x88->SetFrame(lbl_eu_80666F1C);
+        self->field_0xE0 = 5;
+        func_80138078__FUl(0x6c);
+        return;
+    }
+    case 5: {
+        char* base = lbl_eu_804FCEBC;
+        MENU_SET_PANE_FLAG(self, base + 0x142, 0, true);
+        MENU_SET_PANE_FLAG(self, base + 0x150, 0, true);
+        MENU_SET_PANE_FLAG(self, base + 0x15e, 0, true);
+        MENU_SET_PANE_FLAG(self, base + 0x16c, 0, true);
+        MENU_SET_PANE_FLAG(self, base + 0x17a, 0, true);
+        MENU_SET_PANE_FLAG(self, base + 0x188, 0, true);
+        MENU_SET_PANE_FLAG(self, base + 0x196, 0, true);
+        MENU_SET_PANE_FLAG(self, base + 0x1a4, 0, true);
+        MENU_SET_PANE_FLAG(self, base + 0x1b2, 0, true);
+        MENU_SET_PANE_FLAG(self, base + 0x1c0, 0, true);
+        MENU_SET_PANE_FLAG(self, base + 0x1ce, 1, true);
+        MENU_SET_PANE_FLAG(self, base + 0x1dc, 1, true);
+        MENU_SET_PANE_FLAG(self, base + 0x1ea, 0, true);
+        MENU_SET_PANE_FLAG(self, base + 0x1f8, 0, false);
+        self->field_0x7C->SetAnimationEnable(self->field_0x8C, false);
+        self->field_0x7C->SetAnimationEnable(self->field_0x80, false);
+        self->field_0x7C->SetAnimationEnable(self->field_0x84, false);
+        self->field_0x7C->SetAnimationEnable(self->field_0x88, true);
+        self->field_0x88->SetFrame(lbl_eu_80666F1C);
+        self->field_0xE0 = 5;
+        func_80138078__FUl(0x6c);
+        return;
+    }
+    case 6: {
+        char* base = lbl_eu_804FCEBC;
+        MENU_SET_PANE_FLAG(self, base + 0x142, 0, true);
+        MENU_SET_PANE_FLAG(self, base + 0x150, 0, true);
+        MENU_SET_PANE_FLAG(self, base + 0x15e, 0, true);
+        MENU_SET_PANE_FLAG(self, base + 0x16c, 0, true);
+        MENU_SET_PANE_FLAG(self, base + 0x17a, 0, true);
+        MENU_SET_PANE_FLAG(self, base + 0x188, 0, true);
+        MENU_SET_PANE_FLAG(self, base + 0x196, 0, true);
+        MENU_SET_PANE_FLAG(self, base + 0x1a4, 0, true);
+        MENU_SET_PANE_FLAG(self, base + 0x1b2, 0, true);
+        MENU_SET_PANE_FLAG(self, base + 0x1c0, 0, true);
+        MENU_SET_PANE_FLAG(self, base + 0x1ce, 0, true);
+        MENU_SET_PANE_FLAG(self, base + 0x1dc, 0, true);
+        MENU_SET_PANE_FLAG(self, base + 0x1ea, 1, true);
+        MENU_SET_PANE_FLAG(self, base + 0x1f8, 1, false);
+        self->field_0x7C->SetAnimationEnable(self->field_0x8C, false);
+        self->field_0x7C->SetAnimationEnable(self->field_0x80, false);
+        self->field_0x7C->SetAnimationEnable(self->field_0x84, false);
+        self->field_0x7C->SetAnimationEnable(self->field_0x88, true);
+        self->field_0x88->SetFrame(lbl_eu_80666F1C);
+        self->field_0xE0 = 5;
+        func_80138078__FUl(0x6c);
+        return;
+    }
+    default:
+        return;
+    }
+}
 
 extern "C" void func_80100E14(CMainMenu* self) {
     // Per-frame menu advance: update the sub-cursor pane names/positions from
@@ -627,7 +928,7 @@ extern "C" void func_801010B8(CMainMenu* self) {
     // Cursor-select sub-menu input: gate on the global input lock, then
     // handle sub-cursor movement / confirmation / cancel.
 
-    if (func_80101A88() != 0) {
+    if (func_80101A88(self) != 0) {
         // Input locked: stop the intro animations and move to the exit state.
         self->field_0x7C->SetAnimationEnable(self->field_0x80, false);
         self->field_0x7C->SetAnimationEnable(self->field_0x84, false);
@@ -645,25 +946,36 @@ extern "C" void func_801010B8(CMainMenu* self) {
     }
 
     CMainMenuPad* pad = getCurrentPad__Q22cf13CfGameManagerFv();
-    u32 down, up, aPressed, bPressed, confirm;
+    // First mode query: held-button early-outs per input style.
     if (func_80086F9C__Q22cf13CfGameManagerFv(-1) != 0) {
-        if (pad->mHeldButtonFlags & 0x08000000) return;
+        if (pad->mHeldButtonFlags & 0x08000000) {
+            return;
+        }
+    } else {
+        if (pad->mHeldButtonFlags & 0x800) {
+            return;
+        }
+    }
+    u32 down, up, aPressed, bPressed, confirm;
+    // Second mode query picks the button extraction.
+    if (func_80086F9C__Q22cf13CfGameManagerFv(-1) != 0) {
         u32 p = pad->mPressedButtonFlags;
         u32 t = pad->mTurboPressButtonFlags;
+        int c = ((p >> 22) & 1) | ((p >> 10) & 1);
         aPressed = (p >> 21) & 1;
         down = t & 1;
+        confirm = c != 0;
         up = (t >> 1) & 1;
         bPressed = (p >> 26) & 1;
-        confirm = (((p >> 22) & 1) | ((p >> 10) & 1)) != 0;
     } else {
-        if (pad->mHeldButtonFlags & 0x800) return;
         u32 p = pad->mPressedButtonFlags;
         u32 t = pad->mTurboPressButtonFlags;
+        int c = p & 0x420;
         aPressed = (p >> 4) & 1;
         down = t & 1;
+        confirm = c != 0;
         up = (t >> 1) & 1;
         bPressed = (p >> 12) & 1;
-        confirm = (p & 0x420) != 0;
     }
 
     if (down != 0) {
@@ -685,14 +997,19 @@ extern "C" void func_801010B8(CMainMenu* self) {
             if (--self->field_0xC4 < 0) self->field_0xC4 = 2;
             break;
         }
+        // Hoisted rodata base like retail (cached in a callee-saved reg).
+        char* base = lbl_eu_804FCEBC;
         char buf[0x20];
-        sprintf(buf, lbl_eu_804FCEBC + 0x121, self->field_0xC0 + 1, self->field_0xC4 + 1);
+        sprintf(buf, base + 0x121, self->field_0xC0 + 1, self->field_0xC4 + 1);
+        // Raw +0x10 root-pane loads like retail (no accessor call).
         nw4r::lyt::Pane* pane1 =
-            self->field_0x7C->GetRootPane()->FindPaneByName(buf, true);
+            (*(nw4r::lyt::Pane**)((u8*)self->field_0x7C + 0x10))->FindPaneByName(buf, true);
         nw4r::lyt::Pane* pane2 =
-            self->field_0x7C->GetRootPane()->FindPaneByName(lbl_eu_804FCEBC + 0x133, true);
+            (*(nw4r::lyt::Pane**)((u8*)self->field_0x7C + 0x10))
+                ->FindPaneByName(base + 0x133, true);
         nw4r::math::VEC3 vec;
-        func_80137924(&vec, pane1, pane2, self->field_0x7C->GetRootPane());
+        func_80137924(&vec, pane1, pane2,
+                      *(nw4r::lyt::Pane**)((u8*)self->field_0x7C + 0x10));
         ((CMainMenuCurVt*)&self->subCur)->vfn_0x10(&vec);
         func_80138078__FUl(0x6a);
         goto tail;
@@ -716,14 +1033,17 @@ extern "C" void func_801010B8(CMainMenu* self) {
             if (++self->field_0xC4 > 2) self->field_0xC4 = 0;
             break;
         }
+        char* base = lbl_eu_804FCEBC;
         char buf[0x20];
-        sprintf(buf, lbl_eu_804FCEBC + 0x121, self->field_0xC0 + 1, self->field_0xC4 + 1);
+        sprintf(buf, base + 0x121, self->field_0xC0 + 1, self->field_0xC4 + 1);
         nw4r::lyt::Pane* pane1 =
-            self->field_0x7C->GetRootPane()->FindPaneByName(buf, true);
+            (*(nw4r::lyt::Pane**)((u8*)self->field_0x7C + 0x10))->FindPaneByName(buf, true);
         nw4r::lyt::Pane* pane2 =
-            self->field_0x7C->GetRootPane()->FindPaneByName(lbl_eu_804FCEBC + 0x133, true);
+            (*(nw4r::lyt::Pane**)((u8*)self->field_0x7C + 0x10))
+                ->FindPaneByName(base + 0x133, true);
         nw4r::math::VEC3 vec;
-        func_80137924(&vec, pane1, pane2, self->field_0x7C->GetRootPane());
+        func_80137924(&vec, pane1, pane2,
+                      *(nw4r::lyt::Pane**)((u8*)self->field_0x7C + 0x10));
         ((CMainMenuCurVt*)&self->subCur)->vfn_0x10(&vec);
         func_80138078__FUl(0x6a);
         goto tail;
@@ -745,6 +1065,10 @@ extern "C" void func_801010B8(CMainMenu* self) {
             return;
         }
         if (self->field_0xC0 == 6 && self->field_0xC4 == 0) {
+            // Free-roam entry: open the party screen via the spot object.
+            // Retail biases the returned pointer back to the player base
+            // before the null check and dispatches slot 0x9C with the address
+            // of the sub-object's 0x3B4 region.
             func_8008294C__Q22cf13CfGameManagerFv(true);
             CMainMenuPlayer* player =
                 (CMainMenuPlayer*)getPlayer__Q22cf13CfGameManagerFi(0);
@@ -753,7 +1077,7 @@ extern "C" void func_801010B8(CMainMenu* self) {
             }
             if (player != 0 && player->spot.field_0xC4 != 0) {
                 ((CMainMenuSpotVt*)&player->spot)
-                    ->vfn_0x9C(player->spot.field_0xC4->field_0x3B4);
+                    ->vfn_0x9C(&player->spot.field_0xC4->field_0x3B4[0]);
             }
         }
         func_80138078__FUl(0x6b);
@@ -830,7 +1154,7 @@ extern "C" void func_801018F4(CMainMenu* self) {
     // Per-frame menu-state dispatch: while no other screen is open, run the
     // handler for the current (state, sub-state) pair, then park the state
     // at 6 (idle) for the next frame.
-    if (func_80101A88() == 0 && func_8029A658() == 0) {
+    if (func_80101A88(self) == 0 && func_8029A658() == 0) {
         switch (self->field_0xC0) {
         case 1:
             switch (self->field_0xC4) {
@@ -871,7 +1195,8 @@ extern "C" void func_801018F4(CMainMenu* self) {
     self->field_0xE0 = 6;
 }
 
-extern "C" int func_80101A88() {
+extern "C" int func_80101A88(CMainMenu* self) {
+    (void)self;
     // Gameplay-input gate: returns 1 while input should be blocked (dead
     // player, active battle list, closing menus, or presentation flags).
     CMainMenuPlayerSpot* spot = getPlayer__Q22cf13CfGameManagerFi(0);

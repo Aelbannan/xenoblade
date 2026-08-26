@@ -14,7 +14,11 @@
 #include "monolib/util/MemManager.hpp"
 #include "kyoshin/plugin/ocBdat.hpp"
 #include "monolib/device/CDeviceFile.hpp"
-#include <nw4r/lyt/lyt_resourceAccessor.h>
+#include "monolib/device/CDeviceFont.hpp"
+#include "monolib/lib/CLibLayout.hpp"
+#include "monolib/work/CEventFile.hpp"
+#include "monolib/device/CFileHandle.hpp"
+#include <nw4r/lyt.h>
 
 #include <functions.hpp>
 
@@ -132,8 +136,8 @@ __declspec(noinline) void CTutorial::func_8029B010() {
 void CTutorial::func_8029B124() {
     char buf[0x20];
     // Sign-extend before increment: retail computes extsb(field_50)+1.
-    func_80136910(mpLayout, &lbl_eu_80510290[0x79], field_50 + 1);
-    func_80136910(mpLayout, &lbl_eu_80510290[0x82], field_51);
+    func_80136910__FPQ34nw4r3lyt6LayoutPcUc(mpLayout, &lbl_eu_80510290[0x79], field_50 + 1);
+    func_80136910__FPQ34nw4r3lyt6LayoutPcUc(mpLayout, &lbl_eu_80510290[0x82], field_51);
     if (func_80086F9C__Q22cf13CfGameManagerFv(-1) != 0) {
         sprintf(buf, &lbl_eu_80510290[0x8b], field_48, field_50 + 1);
     } else {
@@ -159,7 +163,7 @@ extern "C" void func_8029B05C(CTutorial* self) {
             return;
         // Resolve the tutorial BDAT table handle by its pooled tag string.
         func_8003AA34();
-        lbl_eu_80664A30 = (u32)getFP__FPCc(&lbl_eu_80510290[0x6b]);
+        lbl_eu_80664A30 = (u32)getFP(&lbl_eu_80510290[0x6b]);
     }
     self->field_46 = 1;
     self->field_44 = 1;
@@ -194,9 +198,98 @@ extern "C" void func_8029ADF8(CTutorial* self) {
     self->func_8029B124();
 }
 
-bool CTutorial::OnFileEvent(CEventFile* pEventFile) { return false; }
+// Font object returned by CDeviceFont::func_80452C10: vtable slot 9 (+0x24)
+// yields the u32 font handle bound into the layout. Never instantiated, so no
+// vtable is emitted; a genuine virtual call reproduces the retail dispatch.
+struct CTutorialFontView {
+    virtual void sf2() = 0;
+    virtual void sf3() = 0;
+    virtual void sf4() = 0;
+    virtual void sf5() = 0;
+    virtual void sf6() = 0;
+    virtual void sf7() = 0;
+    virtual void sf8() = 0;
+    virtual u32 sf9() = 0; // vtable offset 0x24
+};
 
-void func_8029B498(){}
+/* File-completion dispatcher: whichever of the three requested files arrived
+ * determines the branch. Handle 0 (layout arc) builds the whole layout stack;
+ * handle 1 (locale data) registers the BDAT table; handle 2 (game data)
+ * attaches its archive then refreshes. Returns whether the event was ours. */
+bool CTutorial::OnFileEvent(CEventFile* pEventFile) {
+    if (mFileHandle0 == pEventFile->mFileHandle) {
+        // Scratch heap region (RAII Class_8045F858 guard).
+        mRegion0.createRegion(mtl::MemManager::getHandleMEM2(), 0x1800,
+                              &lbl_eu_80510290[0xbd], 0);
+        Class_8045F858 regionHost(&mRegion0);
+
+        // Take ownership of the loaded arc buffer.
+        void* arcData = mFileHandle0->getData();
+        mtl::MemManager::func_80434A4C(false);
+
+        mAccessor0 = CLibLayout::createArcResourceAccessor();
+        mAccessor0->Attach(arcData, &lbl_eu_80510290[0xc7]);
+
+        func_80136E84(&mpLayout, mAccessor0, &lbl_eu_80510290[0xcb]);
+        func_80136F08(mpLayout, &mpAnimTrans0, mAccessor0,
+                      &lbl_eu_80510290[0xe2]);
+        func_80136F08(mpLayout, &mpAnimTrans1, mAccessor0,
+                      &lbl_eu_80510290[0xfc]);
+
+        // Bind the shared font onto the root pane (retail loads the root pane
+        // before fetching the font handle from vtable slot 9).
+        nw4r::lyt::Pane* rootPane = mpLayout->GetRootPane();
+        u32 fontResult = static_cast<CTutorialFontView*>(
+                             CDeviceFont::func_80452C10(1, mpLayout))->sf9();
+        func_8013676C(rootPane, fontResult);
+
+        u32 lang = func_801355A0();
+        if (lang != 0) {
+            func_801368C0(mpLayout, &lbl_eu_80510290[0x79], lang);
+            func_801368C0(mpLayout, &lbl_eu_80510290[0x82], lang);
+        }
+
+        // Start paused on the rewind transform (anim0 enabled, anim1 not).
+        mpLayout->SetAnimationEnable(mpAnimTrans1, false);
+        mpLayout->SetAnimationEnable(mpAnimTrans0, true);
+        mpLayout->Animate(0);
+
+        mFileHandle0 = nullptr;
+        mRegion0.func_8045F810();
+        return true;
+    }
+    if (mFileHandle1 == pEventFile->mFileHandle) {
+        // Locale data: hand the buffer to the BDAT system, resolve the shared
+        // tutorial table, then refresh the page state.
+        void* data = mFileHandle1->mData;
+        mFileHandle1->mData = nullptr;
+        field_4C = (u8*)data;
+        CBdat::func_8003AA78(4, data);
+        func_8003AA34();
+        lbl_eu_80664A30 = (u32)getFP(&lbl_eu_80510290[0x6b]);
+        func_8029B05C(this);
+        mFileHandle1 = nullptr;
+        return true;
+    }
+    if (mFileHandle2 == pEventFile->mFileHandle) {
+        // Game data archive: attach to a fresh accessor, then refresh.
+        mRegion1.createRegion(mtl::MemManager::getHandleMEM2(), 0x1000,
+                              &lbl_eu_80510290[0x11b], 0);
+        Class_8045F858 regionHost(&mRegion1);
+
+        void* arcData = mFileHandle2->getData();
+        mtl::MemManager::func_80434A4C(false);
+
+        mAccessor1 = CLibLayout::createArcResourceAccessor();
+        mAccessor1->Attach(arcData, &lbl_eu_80510290[0xc7]);
+
+        func_8029B05C(this);
+        mFileHandle2 = nullptr;
+        mRegion1.func_8045F810();
+        return true;
+    }
+    return false;
+}
 
 // Unload: wait for draw done, release BDAT index 4 when the region gate is
 // clear, close the three file handles, destroy + clear the layout, release

@@ -164,7 +164,8 @@ public:
 };
 
 // Gameplay-input gate for the menu-frame dispatch (defined in this TU).
-extern "C" int func_80101A88();
+// Takes the owner like retail (the caller emits mr r3,r31 before the call).
+extern "C" int func_80101A88(CMainMenu* self);
 
 // Per-frame menu handlers (defined in this TU). extern "C" so every
 // referencing reloc carries the exact retail (unmangled) symbol.

@@ -226,12 +226,13 @@ CVS_THREAD_EHP* __ct__802A5ED4(CVoiceHandle* handle, CVoiceHandle* owner2, s32 h
 
     // Gauge computation (textually duplicated in retail):
     //   frac = max / cur, ratio = (max - hp) / cur.
-    // The hp s32->double step is MWCC's builtin int->double lowering (recomputed
+    // The hp s32->double step is MWCC's builtin int lowering (recomputed
     // inside each block; retail does not keep it live across the calls).
-    cur = ((CVoiceChainVTV*)handle)->getCur();
-    ratio = (((CVoiceChainVTV*)handle)->getMax() - (double)hp) / cur;
-    cur = ((CVoiceChainVTV*)handle)->getCur();
-    frac = ((CVoiceChainVTV*)handle)->getMax() / cur;
+    CVoiceChainVTV* gauge = (CVoiceChainVTV*)handle;
+    cur = gauge->getCur();
+    ratio = (gauge->getMax() - (double)hp) / cur;
+    cur = gauge->getCur();
+    frac = gauge->getMax() / cur;
 
     // Retail materializes the branch condition into a bool with the zero init
     // hoisted above the comparisons.
@@ -241,10 +242,10 @@ CVS_THREAD_EHP* __ct__802A5ED4(CVoiceHandle* handle, CVoiceHandle* owner2, s32 h
     }
     if (ok == 0) {
         // Duplicated re-check with the 0.3 threshold.
-        cur = ((CVoiceChainVTV*)handle)->getCur();
-        ratio = (((CVoiceChainVTV*)handle)->getMax() - (double)hp) / cur;
-        cur = ((CVoiceChainVTV*)handle)->getCur();
-        frac = ((CVoiceChainVTV*)handle)->getMax() / cur;
+        cur = gauge->getCur();
+        ratio = (gauge->getMax() - (double)hp) / cur;
+        cur = gauge->getCur();
+        frac = gauge->getMax() / cur;
 
         ok = 0;
         if (frac > lbl_eu_80668C94 && lbl_eu_80668C94 < ratio) {
@@ -286,13 +287,14 @@ CVS_THREAD_EHP* __ct__802A5ED4(CVoiceHandle* handle, CVoiceHandle* owner2, s32 h
     }
 
     // Install the default slot-state triple from the init table.
-    const u32* fin = lbl_eu_80539AB8;
-    u32 w1 = fin[1];
-    u32 w0 = fin[0];
-    u32* dst = (u32*)self;
-    dst[0] = w0;
-    dst[1] = w1;
-    dst[2] = fin[2];
+    u32 w1;
+    u32 w0;
+    const u32* src = (u32*)(u32)lbl_eu_80539AB8;
+    w1 = src[1];
+    w0 = src[0];
+    (*(CVSlotState*)self).field_0 = w0;
+    (*(CVSlotState*)self).field_4 = w1;
+    (*(CVSlotState*)self).callback = src[2];
     return self;
 }
 

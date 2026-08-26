@@ -217,6 +217,9 @@ float func_8006BAF0(u8* self) {
     x = __fabs(x);
     return (float)x;
 }
+extern "C" __declspec(noinline) float func_8006BB00(const void* v) {
+    return PSVECMag(reinterpret_cast<const Vec*>(v));
+}
 extern "C" float cfCam_vecMag(const float* v) {
     return PSVECMag(reinterpret_cast<const Vec*>(v));
 }
@@ -281,12 +284,11 @@ extern "C" void cfCam_setField1E0AndGlobal(cf::CfCamFollow* ptr, float f) {
     ptr->unk1E0 = f;
 }
 // Retail func_8006BBF4: set/clear the shared flag word at +4.
-extern "C" void cfCam_setOrClearUnk1D4Bits(cf::CfCamFollow* obj, unsigned int bits, int set_flag) {
-    cf::CfCamFollow* self = static_cast<cf::CfCamFollow*>(obj);
-    if (set_flag != 0)
-        *reinterpret_cast<unsigned int*>(reinterpret_cast<char*>(self) + 4) |= bits;
+extern "C" __declspec(noinline) void func_8006BBF4(void* obj, u32 mask, int flag) {
+    if (flag != 0)
+        *reinterpret_cast<unsigned int*>(reinterpret_cast<char*>(obj) + 4) |= mask;
     else
-        *reinterpret_cast<unsigned int*>(reinterpret_cast<char*>(self) + 4) &= ~bits;
+        *reinterpret_cast<unsigned int*>(reinterpret_cast<char*>(obj) + 4) &= ~mask;
 }
 extern "C" int cfCam_getUnkC4(void* self) { return *(int*)((char*)self + 0xc4); }
 extern "C" int cfCam_getBit0_0x530(void* p) {

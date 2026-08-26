@@ -3,12 +3,6 @@
 
 #include <harness_catalog.h>
 #include "libs/monolib/src/scn/CScnItemModel.hpp"
-#include <nw4r/g3d/g3d_anmscn.h>
-#include <nw4r/g3d/g3d_fog.h>
-#include <nw4r/g3d/g3d_scnmdl.h>
-#include <nw4r/g3d/g3d_scnobj.h>
-#include <nw4r/g3d/g3d_scnroot.h>
-#include "libs/monolib/src/scn/CScnItemModelNw4r.hpp"
 #include "monolib/device/CDeviceVI.hpp"
 #include "monolib/scn/code_804BF59C.hpp"
 #include "monolib/util/MemManager.hpp"
@@ -279,7 +273,97 @@ extern "C" u8* func_8048315C(CScnItemModel* self) {
     return (u8*)self->field_0x1F8;
 }
 
-void func_804831C4(){}
+// func_804831C4: when self has no linked model, fetch the model owned by
+// self's scene owner (func_80495E94), notify via the 1-arg virtual at vtable
+// 0xAC, mark the whole model tree with the 0x80000 flag (func_80482B3C walk
+// shape, recursing func_80482B3C(c, 1) at depth 3), then sync bit 9 of
+// self->flags7A4 onto the model (set 0x40 / clear 0x400000), notify via
+// vtable 0x64 and return 1. extern "C" keeps the call reloc names verbatim.
+extern "C" u32 func_804831C4(CScnItemModel* self) {
+    CScnItemModel* model = func_80495E94(self->field_04);
+    if (model == 0) {
+        return 0;
+    }
+    self->vfuncAC(model);
+    // 0x80000 flag tree walk (func_80482B3C shape, always set; recursion
+    // hands the depth-3+ nodes to func_80482B3C with enable = 1).
+    u32 i, j, k;
+    model->flags7A4 |= 0x80000;
+    for (i = 0; i < 4; i++) {
+        CScnItemModel* a = model->slots7B4[i];
+        if (a != 0) {
+            a->flags7A4 |= 0x80000;
+            for (j = 0; j < 4; j++) {
+                CScnItemModel* b = a->slots7B4[j];
+                if (b != 0) {
+                    b->flags7A4 |= 0x80000;
+                    for (k = 0; k < 4; k++) {
+                        CScnItemModel* c = b->slots7B4[k];
+                        if (c != 0) {
+                            func_80482B3C(c, 1);
+                        }
+                    }
+                    if (b->field_0x7C4 != 0) {
+                        func_80482B3C(b->field_0x7C4, 1);
+                    }
+                }
+            }
+            CScnItemModel* b = a->field_0x7C4;
+            if (b != 0) {
+                b->flags7A4 |= 0x80000;
+                for (k = 0; k < 4; k++) {
+                    CScnItemModel* c = b->slots7B4[k];
+                    if (c != 0) {
+                        func_80482B3C(c, 1);
+                    }
+                }
+                if (b->field_0x7C4 != 0) {
+                    func_80482B3C(b->field_0x7C4, 1);
+                }
+            }
+        }
+    }
+    CScnItemModel* b = model->field_0x7C4;
+    if (b != 0) {
+        b->flags7A4 |= 0x80000;
+        for (j = 0; j < 4; j++) {
+            CScnItemModel* c = b->slots7B4[j];
+            if (c != 0) {
+                c->flags7A4 |= 0x80000;
+                for (k = 0; k < 4; k++) {
+                    CScnItemModel* d = c->slots7B4[k];
+                    if (d != 0) {
+                        func_80482B3C(d, 1);
+                    }
+                }
+                if (c->field_0x7C4 != 0) {
+                    func_80482B3C(c->field_0x7C4, 1);
+                }
+            }
+        }
+        CScnItemModel* c2 = b->field_0x7C4;
+        if (c2 != 0) {
+            c2->flags7A4 |= 0x80000;
+            for (k = 0; k < 4; k++) {
+                CScnItemModel* d = c2->slots7B4[k];
+                if (d != 0) {
+                    func_80482B3C(d, 1);
+                }
+            }
+            if (c2->field_0x7C4 != 0) {
+                func_80482B3C(c2->field_0x7C4, 1);
+            }
+        }
+    }
+    // sync bit 9 of self->flags7A4 onto the model.
+    if (self->flags7A4 & 0x400000) {
+        model->flags7A4 |= 0x400000;
+    } else {
+        model->flags7A4 &= ~0x400000;
+    }
+    model->vfunc64(4);
+    return 1;
+}
 
 // func_80483448: model-coupling setup. When self has no linked model, create
 // one: fetch the model owned by self's scene owner (func_80495E94), copy
@@ -2349,29 +2433,61 @@ extern "C" void func_804827DC(CScnItemModel* self, u32 param) {
 }
 // func_80482918: set/clear bit 0 of +0x7A4 on self, then recurse on every
 // live model in both 4-slot reference lists (0x7B4, 0x834) and the linked
-// model at 0x7C4. extern "C" keeps the self-recursion reloc name verbatim
-// (reloc-site gate).
-extern "C" void func_80482918(CScnItemModelNw4r* self, u32 enable) {
-    if (enable) {
-        self->field_0x7A4 |= 1;
+// model at 0x7C4. Declared in CScnItemModelNw4r.hpp over the nw4r overlay
+// class; the referenced offsets share CScnItemModel's layout, so the walk
+// runs on a CScnItemModel view. extern "C" keeps the self-recursion reloc
+// name verbatim (reloc-site gate).
+// The flag update mirrors func_804828F0's body inlined with flags = 1.
+static inline void SetItemEnableBits(u32* word, u32 mask, u32 enable) {
+    if (enable != 0) {
+        *word |= mask;
     } else {
-        self->field_0x7A4 &= ~1u;
+        *word &= ~mask;
     }
+}
+extern "C" void func_80482918(CScnItemModelNw4r* overlay, u32 enable) {
+    CScnItemModel* self = (CScnItemModel*)overlay;
+    SetItemEnableBits(&self->flags7A4, 1, enable);
     for (u32 i = 0; i < 4; i++) {
-        if (self->slots7B4[i] != 0) {
-            func_80482918(self->slots7B4[i], enable);
+        CScnItemModel* item = self->slots7B4[i];
+        if (item != 0) {
+            func_80482918((CScnItemModelNw4r*)item, enable);
         }
     }
     if (self->field_0x7C4 != 0) {
         func_80482918((CScnItemModelNw4r*)self->field_0x7C4, enable);
     }
-    for (int i = 0; i < 4; i++) {
-        if (self->slots834[i] != 0) {
-            func_80482918(self->slots834[i], enable);
+    for (int j = 0; j < 4; j++) {
+        CScnItemModel* item = self->slots834[j];
+        if (item != 0) {
+            func_80482918((CScnItemModelNw4r*)item, enable);
         }
     }
 }
-extern "C" void func_804829E8() {}
+// func_804829E8: like func_80482918, but toggles the 0x1000000 flag at 0x7A4
+// and recurses on itself down the model tree.
+extern "C" void func_804829E8(CScnItemModel* self, u32 enable) {
+    if (enable != 0) {
+        self->flags7A4 |= 0x1000000;
+    } else {
+        self->flags7A4 &= ~0x1000000;
+    }
+    for (u32 i = 0; i < 4; i++) {
+        CScnItemModel* item = self->slots7B4[i];
+        if (item != 0) {
+            func_804829E8(item, enable);
+        }
+    }
+    if (self->field_0x7C4 != 0) {
+        func_804829E8(self->field_0x7C4, enable);
+    }
+    for (int j = 0; j < 4; j++) {
+        CScnItemModel* item = self->slots834[j];
+        if (item != 0) {
+            func_804829E8(item, enable);
+        }
+    }
+}
 // func_80482AD4: remove the first field_0x7F0 element equal to `value` by
 // shifting the tail down one slot and decrementing count820. count820 is
 // read fresh inside the shift loop (retail reloads it each iteration).
@@ -2445,47 +2561,49 @@ extern "C" void func_80482B3C(CScnItemModel* self, u32 param) {
             }
         }
     }
-    CScnItemModel* b = self->field_0x7C4;
-    if (b != 0) {
+    // Follow the linked-model chain two more levels, reusing `self` (retail
+    // overwrites its saved copy: mr r28, r22 after lwz r22, 0x7C4(r28)).
+    self = self->field_0x7C4;
+    if (self != 0) {
         if (param != 0) {
-            b->flags7A4 |= 0x80000;
+            self->flags7A4 |= 0x80000;
         } else {
-            b->flags7A4 &= ~0x80000;
+            self->flags7A4 &= ~0x80000;
         }
         for (u32 j = 0; j < 4; j++) {
-            CScnItemModel* c = b->slots7B4[j];
-            if (c != 0) {
+            CScnItemModel* a = self->slots7B4[j];
+            if (a != 0) {
                 if (param != 0) {
-                    c->flags7A4 |= 0x80000;
+                    a->flags7A4 |= 0x80000;
                 } else {
-                    c->flags7A4 &= ~0x80000;
+                    a->flags7A4 &= ~0x80000;
                 }
                 for (u32 k = 0; k < 4; k++) {
-                    CScnItemModel* d = c->slots7B4[k];
-                    if (d != 0) {
-                        func_80482B3C(d, param);
+                    CScnItemModel* b = a->slots7B4[k];
+                    if (b != 0) {
+                        func_80482B3C(b, param);
                     }
                 }
-                if (c->field_0x7C4 != 0) {
-                    func_80482B3C(c->field_0x7C4, param);
+                if (a->field_0x7C4 != 0) {
+                    func_80482B3C(a->field_0x7C4, param);
                 }
             }
         }
-        CScnItemModel* c = b->field_0x7C4;
-        if (c != 0) {
+        self = self->field_0x7C4;
+        if (self != 0) {
             if (param != 0) {
-                c->flags7A4 |= 0x80000;
+                self->flags7A4 |= 0x80000;
             } else {
-                c->flags7A4 &= ~0x80000;
+                self->flags7A4 &= ~0x80000;
             }
             for (u32 k = 0; k < 4; k++) {
-                CScnItemModel* d = c->slots7B4[k];
-                if (d != 0) {
-                    func_80482B3C(d, param);
+                CScnItemModel* a = self->slots7B4[k];
+                if (a != 0) {
+                    func_80482B3C(a, param);
                 }
             }
-            if (c->field_0x7C4 != 0) {
-                func_80482B3C(c->field_0x7C4, param);
+            if (self->field_0x7C4 != 0) {
+                func_80482B3C(self->field_0x7C4, param);
             }
         }
     }

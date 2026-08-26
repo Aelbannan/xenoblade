@@ -30,9 +30,7 @@ class CScn;
 class CMenuCollepedia : public CProcess {
 public:
     // CProcess overrides
-    // NOTE: no virtual dtor declaration - the retail destructor is emitted as
-    // the free function __dt__15CMenuCollepediaFv below (see CMenuSkipTimer),
-    // and a member dtor here would make MWCC emit the library base-dtor call.
+    virtual ~CMenuCollepedia();
     virtual void Init();
     virtual void Term();
     virtual void Move();

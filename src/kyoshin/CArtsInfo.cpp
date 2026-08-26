@@ -2580,9 +2580,9 @@ int CArtsInfo::OnFileEvent(CEventFile* event) {
         func_80136F08(mpLayout2, &mpAnimTrans5, (nw4r::lyt::ArcResourceAccessor*)field_0x1C, &lbl_eu_8050B00C[0x356]);
         func_80136F08(mpLayout2, &mpAnimTrans6, (nw4r::lyt::ArcResourceAccessor*)field_0x1C, &lbl_eu_8050B00C[0x3DD]);
 
-        nw4r::lyt::Pane* root2 = *(nw4r::lyt::Pane**)((u8*)mpLayout2 + 0x10);
         void* fontObj2 = func_80452C10__11CDeviceFontFUlPQ34nw4r3lyt6Layout(1, mpLayout2);
-        func_8013676C(root2, reinterpret_cast<CArtsFontView*>(fontObj2)->sf9());
+        func_8013676C(*(nw4r::lyt::Pane**)((u8*)mpLayout2 + 0x10),
+                      reinterpret_cast<CArtsFontView*>(fontObj2)->sf9());
 
         if (lang != 0) {
             func_801368C0(mpLayout2, &lbl_eu_8050B00C[238], (u32)lang);
@@ -2602,8 +2602,8 @@ int CArtsInfo::OnFileEvent(CEventFile* event) {
 
         // Detail panes on layout2: hide each extra pane; the message pane's
         // anchor triple is rotated before it is hidden.
-        func_80124270(root2->FindPaneByName(&lbl_eu_8050B00C[0x3FC], true), 0);
-        nw4r::lyt::Pane* pn1028 = root2->FindPaneByName(&lbl_eu_8050B00C[0x404], true);
+        func_80124270((*(nw4r::lyt::Pane**)((u8*)mpLayout2 + 0x10))->FindPaneByName(&lbl_eu_8050B00C[0x3FC], true), 0);
+        nw4r::lyt::Pane* pn1028 = (*(nw4r::lyt::Pane**)((u8*)mpLayout2 + 0x10))->FindPaneByName(&lbl_eu_8050B00C[0x404], true);
         if (pn1028 != 0) {
             CArtsPanePos* pos = (CArtsPanePos*)((char*)pn1028 + 0x2C);
             CArtsFpu x = pos->x, y = pos->y, z = pos->z;
@@ -2611,11 +2611,11 @@ int CArtsInfo::OnFileEvent(CEventFile* event) {
             pos->y.f = x.f;
             pos->z.f = y.f;
         }
-        func_80124270(root2->FindPaneByName(&lbl_eu_8050B00C[0x40B], true), 0);
-        func_80124270(root2->FindPaneByName(&lbl_eu_8050B00C[0x378], true), 0);
-        func_80124270(root2->FindPaneByName(&lbl_eu_8050B00C[0x184], true), 0);
-        func_80124270(root2->FindPaneByName(&lbl_eu_8050B00C[0x413], true), 0);
-        nw4r::lyt::Pane* pn238 = root2->FindPaneByName(&lbl_eu_8050B00C[0xEE], true);
+        func_80124270((*(nw4r::lyt::Pane**)((u8*)mpLayout2 + 0x10))->FindPaneByName(&lbl_eu_8050B00C[0x40B], true), 0);
+        func_80124270((*(nw4r::lyt::Pane**)((u8*)mpLayout2 + 0x10))->FindPaneByName(&lbl_eu_8050B00C[0x378], true), 0);
+        func_80124270((*(nw4r::lyt::Pane**)((u8*)mpLayout2 + 0x10))->FindPaneByName(&lbl_eu_8050B00C[0x184], true), 0);
+        func_80124270((*(nw4r::lyt::Pane**)((u8*)mpLayout2 + 0x10))->FindPaneByName(&lbl_eu_8050B00C[0x413], true), 0);
+        nw4r::lyt::Pane* pn238 = (*(nw4r::lyt::Pane**)((u8*)mpLayout2 + 0x10))->FindPaneByName(&lbl_eu_8050B00C[0xEE], true);
         func_80124270(pn238, 0);
 
         // Snapshot the message pane's two vertex-colour pairs into the sbss
@@ -2624,6 +2624,12 @@ int CArtsInfo::OnFileEvent(CEventFile* event) {
         CopyVec4s(reinterpret_cast<CArtsQuadColor*>(&lbl_eu_80664748), &col1);
         CArtsColorPair col2 = func_801397AC(pn238, 1);
         CopyVec4s(reinterpret_cast<CArtsQuadColor*>(&lbl_eu_80664750), &col2);
+
+        // Swap the last halfword of the two cached colour records (retail
+        // exchanges element [3] between lbl_eu_80664748/64750 via sda21).
+        s16 sw = *(s16*)((u8*)&lbl_eu_80664748 + 6);
+        *(s16*)((u8*)&lbl_eu_80664748 + 6) = *(s16*)((u8*)&lbl_eu_80664750 + 6);
+        *(s16*)((u8*)&lbl_eu_80664750 + 6) = sw;
 
         // Build a temporary cursor against the shared accessor and copy its
         // body over the embedded one (vptr at +0 preserved; word copies).

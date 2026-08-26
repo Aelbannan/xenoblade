@@ -28,33 +28,57 @@ CLibVM* CLibVM::getInstance() {
     return spInstance;
 }
 
-// Inline copy of CWorkThread::isRunning() visible only in this TU (same trick
-// as CDeviceGX.cpp): the retail isInitialized inlines the member call with the
-// this-arg bound to the instance, which births the global load before the
-// find-loop index (inst=r6 / index=r7). CWorkRoot.cpp keeps the strong
-// out-of-line definition.
-inline bool CWorkThread::isRunning() const {
+// View over the CWorkThread head + the inlined CMsgParam<8> queue so the
+// find() ring-walk can be written straight into isInitialized's body
+// (same recipe as CLibStaticData.cpp).
+class CMsgQueueView {
+public:
+    u8 field_0x0[0x1A4];             //0x0..0x1A4 (CWorkThread head + queue vtable + entries)
+    CMsgParamEntry* mArrayPtr;       //0x1A4 (CMsgParam::mArrayPtr)
+    u32 mFront;                      //0x1A8 (CMsgParam::mFront)
+    u32 mSize;                       //0x1AC (CMsgParam::mSize)
+    u32 mCapacity;                   //0x1B0 (CMsgParam::mCapacity)
+};
+
+// True once the VM thread has logged in and started running and no
+// EVT_EXCEPTION is pending -- either flagged in mFlags or still queued in the
+// message ring. The member isRunning() is inlined with 'this' bound to the
+// singleton global.
+bool CLibVM::isInitialized(){
+    const CLibVM* inst = lbl_eu_80665720;
+
     bool exception;
-    if (mFlags & THREAD_FLAG_EXCEPTION) {
+    if (inst->mFlags & THREAD_FLAG_EXCEPTION) {
         exception = true;
     } else {
-        exception = mMsgQueue.find(EVT_EXCEPTION) >= 0;
+        // Inlined CMsgParam<8>::find(EVT_EXCEPTION): ring walk over the queue.
+        const CMsgQueueView* queue = (const CMsgQueueView*)inst;
+        int found;
+        u32 i = 0;
+        for (; i < queue->mSize; i++) {
+            if (queue->mArrayPtr[(queue->mFront + i) % queue->mCapacity].command == EVT_EXCEPTION) {
+                found = (int)i;
+                goto merged;
+            }
+        }
+        found = -1;
+merged:
+        exception = found >= 0;
     }
 
+    // Running once the thread has logged in and started running.
     bool result = false;
     if (!exception) {
-        bool stateOK = mState == THREAD_STATE_LOGIN || mState == THREAD_STATE_RUN;
+        bool stateOK = true;
+        int state = inst->CWorkThread::mState;
+        if (state != THREAD_STATE_LOGIN && state != THREAD_STATE_RUN) {
+            stateOK = false;
+        }
         if (stateOK) {
             result = true;
         }
     }
     return result;
-}
-
-bool CLibVM::isInitialized() {
-    // Same shape as CDeviceGX::isInitialized: the inlined isRunning() member
-    // call reproduces the retail register layout (no call emitted).
-    return lbl_eu_80665720->isRunning();
 }
 
 void CLibVM::setCallbacks(void (*pLogin)(), void (*pLogout)()) {

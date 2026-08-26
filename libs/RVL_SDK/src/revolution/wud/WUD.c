@@ -4082,9 +4082,10 @@ void __wudInitSub(void) {
     int i;
     BOOL enabled;
 
-    *(u32*)devName = lbl_8066C260;
-    *(u16*)&devClass[0] = lbl_8066C264;
-    devClass[2] = lbl_8066C266;
+    /* retail loads these from .sdata2 - keep them opaque to the optimizer */
+    *(u32*)devName = *(volatile u32*)&lbl_8066C260;
+    *(u16*)&devClass[0] = *(volatile u16*)&lbl_8066C264;
+    devClass[2] = *(volatile u8*)&lbl_8066C266;
 
     DEBUGPrint(lbl_80562C2C);
 

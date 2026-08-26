@@ -357,15 +357,17 @@ CSchedule* func_804E4830(SLList* self, ScheduleEntry* entries,
     u32 capacity;
     u32 i;
     CSchedule* p;
+    CSchedule* tmp;
 
-    if (mtl::MemManager::getMaxAllocSize(slAllocHandle()) < 0xf0) {
-        p = 0;
-    } else {
-        p = (CSchedule*)mtl::MemManager::allocate(0xf0, slAllocHandle());
-        if (p != 0) {
-            __ct__CSchedule(p);
+    if (mtl::MemManager::getMaxAllocSize(slAllocHandle()) >= 0xf0) {
+        tmp = (CSchedule*)mtl::MemManager::allocate(0xf0, slAllocHandle());
+        if (tmp != 0) {
+            __ct__CSchedule(tmp);
         }
+    } else {
+        tmp = 0;
     }
+    p = tmp;
     if (p == 0) {
         return 0;
     }

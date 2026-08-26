@@ -15,7 +15,10 @@ struct VTarget {
     virtual ~VTarget() {}
 };
 
-#include "monolib/scn/CScn.hpp"
+// Inline-empty ~IWorkEvent for this TU so MWCC elides the empty base-dtor
+// call in CScn::~CScn (retail shape; see IWorkEvent.hpp note).
+#define IWORK_EVENT_INLINE_DTOR
+#include "monolib/work.hpp"
 #include "libs/monolib/src/scn/CScn.hpp"
 #include "monolib/core/CView.hpp"
 #include "monolib/device/CDeviceVI.hpp"
@@ -40,6 +43,30 @@ void CTTask<CScn>::Draw() {
 
 template<>
 CTTask<CScn>::~CTTask() {}
+
+// CScn::~CScn() (retail __dt__4CScnFv). Repoints the accessor table (+0x10)
+// and secondary IWorkEvent vtable slot (+0x54), destroys the +0x88
+// subobject, then runs the ~CProcess base dtor directly (the empty ~CTTask
+// specialization above is elided). The deleting-flag tail (operator delete)
+// is emitted automatically because the destructor is virtual.
+CScn::~CScn() {
+    CScnDtorView* v = (CScnDtorView*)this;
+    v->unk10 = lbl_eu_8056E8D0;
+    v->unk54 = lbl_eu_8056E8D0 + 0x24;
+    if (v->unk88 != NULL) {
+        if (v->unk88 != NULL) {  // twin guard matches retail's paired beq
+            ((ScnSubDtor*)v->unk88)->dtorSlot(1);
+        }
+        v->unk88 = NULL;
+    }
+}
+
+// Retail thunk: the IWorkEvent subobject at +0x54 delegates back to the
+// complete-object destructor with this-0x54.
+extern "C" void* __dt__4CScnFv(CScn* self, int flags);
+extern "C" void func_80496B04(void* pThis, int r4) {
+    __dt__4CScnFv((CScn*)((char*)pThis - 0x54), r4);
+}
 
 extern "C" {
 CScn* lbl_eu_80665908;
@@ -217,7 +244,73 @@ extern "C" void* func_80496110(u8* self) {
 extern "C" int func_80496118(void* _this) {
     return func_8049AED4(*(int*)((char*)_this + 0x68));
 }
-void func_80496120(){}
+// Fetches the camera item for `id` and copies its +0x194 projection matrix
+// (MTX44, 16 words) into dest. Per-slot coloring recipe (MWCC_CASES.md
+// LODMemMan rule): the hi-word temp is DECLARED first (colors r0 like
+// retail) while reads/stores run lo-word first (pins emission order); each
+// slot uses a fresh declaration pair so slots 1..7 keep the same colors.
+extern "C" void func_80496120(CScn* self, ScnCamParams* dest, s32 id) {
+    // Two-arg camera lookup (the TU-wide decl above is the 1-arg form kept
+    // for the already-matched single-arg callers).
+    extern ScnCamItemView* func_8049B158(void* camWork, s32 id);
+    ScnCamItemView* item = func_8049B158(self->mCamWork, id);
+    // Decl order colors the temps (hi -> r0, lo -> r4 like retail); the
+    // read/store order below pins the emission order (lo word first).
+    u32 w1;
+    u32 w0 = item->proj[0];
+    w1 = item->proj[1];
+    dest->w[1] = w1;
+    dest->w[0] = w0;
+    {
+        u32 h1;
+        u32 l1 = item->proj[2];
+        h1 = item->proj[3];
+        dest->w[3] = h1;
+        dest->w[2] = l1;
+    }
+    {
+        u32 h2;
+        u32 l2 = item->proj[4];
+        h2 = item->proj[5];
+        dest->w[5] = h2;
+        dest->w[4] = l2;
+    }
+    {
+        u32 h3;
+        u32 l3 = item->proj[6];
+        h3 = item->proj[7];
+        dest->w[7] = h3;
+        dest->w[6] = l3;
+    }
+    {
+        u32 h4;
+        u32 l4 = item->proj[8];
+        h4 = item->proj[9];
+        dest->w[9] = h4;
+        dest->w[8] = l4;
+    }
+    {
+        u32 h5;
+        u32 l5 = item->proj[10];
+        h5 = item->proj[11];
+        dest->w[11] = h5;
+        dest->w[10] = l5;
+    }
+    {
+        u32 h6;
+        u32 l6 = item->proj[12];
+        h6 = item->proj[13];
+        dest->w[13] = h6;
+        dest->w[12] = l6;
+    }
+    {
+        u32 h7;
+        u32 l7 = item->proj[14];
+        h7 = item->proj[15];
+        dest->w[15] = h7;
+        dest->w[14] = l7;
+    }
+}
 // Get the camera item handle, lazily creating id -1 when missing; returns
 // the item payload +0x9C (the sibling +0xCC variant mirrors it).
 extern "C" void* func_8049B1CC(void*);
@@ -294,34 +387,6 @@ void func_80496998__Fv(void) { func_8049B408(); }
 
 extern "C" void func_eu_8049AB50(u8* self, unsigned char byte) {
     *(unsigned char*)((uintptr_t)self + 0x3e9) = byte;
-}
-// CScn::~CScn() (retail __dt__4CScnFv). The public CScn class header is
-// outside this session's writable scope, so the retail mangled symbol is
-// preserved via C linkage (same precedent as Move__4CScnFv below).
-// Repoints the accessor table (+0x10) and secondary IWorkEvent vtable slot
-// (+0x54), destroys the +0x88 subobject, runs the ~CProcess base dtor, then
-// frees the object when the deleting flag is set.
-extern "C" void* __dt__4CScnFv(CScn* self, int flags) {
-    if (self != NULL) {
-        CScnDtorView* v = (CScnDtorView*)self;
-        v->unk10 = lbl_eu_8056E8D0;
-        v->unk54 = lbl_eu_8056E8D0 + 0x24;
-        if (v->unk88 != NULL) {
-            v->unk88->~UnkScn8C();
-            v->unk88 = NULL;
-        }
-        if (self != NULL) {
-            self->CProcess::~CProcess();
-        }
-    }
-    if (flags > 0) {
-        ::operator delete(self);
-    }
-    return self;
-}
-
-extern "C" void func_80496B04(void* pThis, int r4) {
-    __dt__4CScnFv((CScn*)((char*)pThis - 0x54), r4);
 }
 
 extern "C" void func_8049699C(u8* self) {

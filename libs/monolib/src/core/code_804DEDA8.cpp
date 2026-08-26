@@ -1707,8 +1707,10 @@ void func_804E1044(CSchedAnimItem* item, CEntryElem* entries, u8* arg3,
                 u8* b = (u8*)ret +
                         ((item->mField06 - item->mField05) & 0xFF) * 0x14;
                 func_804DD89C(&item->mField10, (u8*)ret + 4, b + 4, rate);
-                item->mField10 += item->mField1C;
-                item->mField14 += item->mField20;
+                f32 (&acc)[2] = *(f32(*)[2]) & item->mField10;
+                f32 (&inc)[2] = *(f32(*)[2]) & item->mField1C;
+                acc[0] += inc[0];
+                acc[1] += inc[1];
                 item->mField18 += item->mField24;
                 if (((item->field_0x04 >> 1) & 3) == 0) {
                     f32 startF = *(f32*)((u8*)ret + 0x10);

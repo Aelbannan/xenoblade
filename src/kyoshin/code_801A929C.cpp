@@ -20,6 +20,9 @@ extern const f32 lbl_eu_8066A1FC; // 2*pi
 
 // Global runtime-flag word (bit 0x2000 = bit 13 gates target selection).
 
+// Shared ctrl-state singleton pointer (retail .sdata).
+extern unsigned char lbl_eu_80664330;
+
 // Retail C-symbol import: camera/scene gate query.
 extern "C" int func_8007BAE4();
 
@@ -32,8 +35,8 @@ void func_801A9338(void* self) {
 // ----------------------------------------------------------------------------
 // func_801A9348 - compute a blend weight and attack direction toward a target.
 // Weight falls linearly from 1 to 0 between the outer/inner radii; direction
-// comes either from the camera-relative matrix transform or, when the shared
-// target singleton is active, from wrapped atan2 angle differences.
+// comes either from the source matrix transform or, when the shared target
+// singleton is active, from wrapped atan2 angle differences.
 // ----------------------------------------------------------------------------
 // Source object carrying a transform matrix (+0xCC) and position (+0x10C).
 struct DirSrc {
@@ -55,23 +58,26 @@ struct DirTargetInfo {
 void func_801A9348(ml::CVec3* outDir, float* outWeight, DirSrc* src,
                    ml::CVec3* posB, ml::CVec3* targetPos,
                    float innerRadius, float outerRadius) {
-    extern unsigned char lbl_eu_80664330;
-    DirTargetInfo* pTarget = *(DirTargetInfo**)(&lbl_eu_80664330);
 
-    // Choose the aim target point: blended point, singleton target, or source.
-    u8 useTargetObj = 0;
+    // Choose the aim point: when the presentation flag is clear and the camera
+    // gate query passes, blend the source position with posB; otherwise aim at
+    // the shared target singleton (when active) or the source itself.
+    // NOTE: retail re-reads the singleton global at each use (no caching).
+    s32 useTargetObj = 0;
     ml::CVec3 aim;
-    if ((lbl_eu_80663E24 & 0x2000) == 0 && func_8007BAE4() == 0) {
-        aim = (src->mPos + *posB) * lbl_eu_80667D68;
-    } else if (pTarget != 0 && pTarget->mFlag18 != 0) {
-        useTargetObj = 1;
-        aim = pTarget->m00;
+    if ((lbl_eu_80663E24 & 0x40000) != 0 || func_8007BAE4() != 0) {
+        DirTargetInfo* pTarget = *(DirTargetInfo**)(&lbl_eu_80664330);
+        if (pTarget != 0 && pTarget->mFlag18 != 0) {
+            useTargetObj = 1;
+            aim = pTarget->m00;
+        } else {
+            aim = src->mPos;
+        }
     } else {
-        aim = src->mPos;
+        aim = (src->mPos + *posB) * lbl_eu_80667D68;
     }
 
-    ml::CVec3 diff = *targetPos - aim;
-    float mag = PSVECMag((const Vec*)&diff);
+    float mag = PSVECMag(*targetPos - aim);
 
     // Linear falloff: 0 at/below innerRadius, 1 at/beyond outerRadius.
     *outWeight = lbl_eu_80667D64;
@@ -86,12 +92,20 @@ void func_801A9348(ml::CVec3* outDir, float* outWeight, DirSrc* src,
 
     if (useTargetObj != 0) {
         // Direction from the signed difference of two heading angles around
-        // the target object, wrapped into [-pi, pi].
-        ml::CVec3 v1 = pTarget->m0C - pTarget->m00;
-        float angSelf = lbl_eu_80667D6C * nw4r::math::Atan2FIdx(v1.x, v1.z);
-        ml::CVec3 v2 = *targetPos - pTarget->m0C;
-        float angGoal = lbl_eu_80667D6C * nw4r::math::Atan2FIdx(v2.x, v2.z);
-        float delta = angGoal - angSelf;
+        // the target object, wrapped into [-pi, pi]. Each block re-reads the
+        // singleton global, matching retail's separate loads around the calls.
+        float angSelf;
+        {
+            DirTargetInfo* t = *(DirTargetInfo**)(&lbl_eu_80664330);
+            ml::CVec3 v1 = t->m0C - t->m00;
+            angSelf = lbl_eu_80667D6C * nw4r::math::Atan2FIdx(v1.x, v1.z);
+        }
+        float delta;
+        {
+            DirTargetInfo* t = *(DirTargetInfo**)(&lbl_eu_80664330);
+            ml::CVec3 v2 = *targetPos - t->m0C;
+            delta = lbl_eu_80667D6C * nw4r::math::Atan2FIdx(v2.x, v2.z) - angSelf;
+        }
         while (lbl_eu_8066A1F8 <= delta) delta -= lbl_eu_8066A1FC;
         while (delta < -lbl_eu_8066A1F8) delta += lbl_eu_8066A1FC;
         outDir->x = -nw4r::math::SinFIdx(lbl_eu_80667D70 * delta);
@@ -100,7 +114,7 @@ void func_801A9348(ml::CVec3* outDir, float* outWeight, DirSrc* src,
         // back to the zero vector when the length squared matches exactly.
         ml::CVec3 dir;
         PSMTXMultVec(*mtxOf(src->mMatrix), (Vec*)targetPos, (Vec*)&dir);
-        float lenSq = dir.x * dir.x + (dir.y * dir.y + dir.z * dir.z);
+        float lenSq = dir.y * dir.y + (dir.x * dir.x + dir.z * dir.z);
         if (lenSq == lbl_eu_80667D64) {
             dir = ml::CVec3::zero;
         } else {
@@ -169,28 +183,19 @@ CtrlStateWork* func_801A9CCC(CtrlStateWork* work) {
     work->m19 = 0;
     work->m1A = 0;
     work->m1B = 0;
+    work->m1C = 1;
 
-    // Default-initialize all 128 entries (entry 0 written directly).
-    CtrlState* it0 = &work->mEntries[0];
-    it0->m1C = lbl_eu_80667D64;
-    it0->m20 = lbl_eu_80667D60;
-    it0->m28 = lbl_eu_80667D64;
-    it0->m2C = -1;
-    it0->m2E = 0;
-    it0->m30 = 0;
-    it0->m32 = 0;
-
-    CtrlState* it = &work->mEntries[1];
-    CtrlState* tail = &work->mEntries[128];
-    while (it != tail) {
-        it->m1C = lbl_eu_80667D64;
-        it->m20 = lbl_eu_80667D60;
-        it->m28 = lbl_eu_80667D64;
-        it->m2C = -1;
-        it->m2E = 0;
-        it->m30 = 0;
-        it->m32 = 0;
-        ++it;
+    // Default-initialize all 128 entries.
+    CtrlState* cur = &work->mEntries[0];
+    CtrlState* stop = &work->mEntries[128];
+    for (; cur < stop; ++cur) {
+        cur->m1C = lbl_eu_80667D60;
+        cur->m20 = lbl_eu_80667D64;
+        cur->m28 = lbl_eu_80667D64;
+        cur->m2C = -1;
+        cur->m2E = 0;
+        cur->m30 = 0;
+        cur->m32 = 0;
     }
 
     work->m1C = 1;

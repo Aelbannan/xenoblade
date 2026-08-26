@@ -136,7 +136,7 @@ public:
 
 } // namespace cf
 
-// Item implementation singleton returned by CItem_initItemImplInstances().
+// Item implementation singleton returned by CItem_initItemImplInstances(item).
 // Dispatch-only shim: fillers keep the real virtuals at their retail vtable
 // slots (RTTI consumes emitted slots 0,4; declared slot n lands at offset
 // 8+4n) -- 0x10 = item-id getter, 0x30 = weapon-slot getter, 0x34 =

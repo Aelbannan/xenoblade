@@ -129,6 +129,7 @@ extern "C" {
     CLibCri* getInstance__7CLibCriFv();
     bool wkStandbyLogout__5CProcFv(CProc* self);
     bool wkStandbyLogin__5CProcFv(CProc* self);
+    void __dt__5CProcFv(CProc* self, int flag);
     CException* getException__9CWorkRootFv();
     void func_8044A578__8CGXCacheFv(CGXCache* cache, const ml::CCol4* color, int flag);
     extern CGXCache* cacheInstance__9CDeviceGX;
@@ -177,6 +178,7 @@ extern "C" void* __dt__10CExceptionFv(CException* self, int flag) {
         if (lbl_eu_806656C0 == self) {
             lbl_eu_806656C0 = 0;
         }
+        __dt__5CProcFv(self, 0);
         if (flag > 0) {
             __dl__FPv(self);
         }

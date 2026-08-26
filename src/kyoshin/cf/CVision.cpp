@@ -942,8 +942,8 @@ void func_801A4194(CVision* self) {
 // us-801a5c98: Per-player vision callback management (retail func_801A4578).
 // ---------------------------------------------------------------------------
 void func_801A4578(CVision* self) {
-    CVisionFusion* p1;
     CVisionFusion* p2;
+    CVisionFusion* p1;
     CVisionSub* sub;
     if (self->sub.field_00 == 0) {
         sub = 0;

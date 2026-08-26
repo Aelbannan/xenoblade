@@ -152,7 +152,7 @@ struct CMCItemBoxSub {
 };
 
 /* Dispatch-only shim for the CItem impl-instance vtable returned by
-   CItem_initItemImplInstances(). Never instantiated; all virtuals are pure
+   CItem_initItemImplInstances(item). Never instantiated; all virtuals are pure
    (no vtable/code is emitted). MWCC RTTI occupies vtable slots 0,4, so a
    declared virtual slot N lands at vtable offset N*4+8: getKind = 0x08,
    getName = 0x20, getCount = 0x80. */

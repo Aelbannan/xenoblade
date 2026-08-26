@@ -24,7 +24,7 @@ public:
     void func_801C416C();
     void func_801C4198();
     void func_801C41C0(char*);
-    void func_801C41E8(u8);
+    // retail keeps func_801C41E8 unmangled (C linkage): free function in .cpp
     void func_801C4654(u32);
     void func_801C46B4(char*);
     void func_801C46DC(u32);
@@ -45,6 +45,21 @@ public:
     u8 unk36;
     u8 unk37;
     CTitleAHelp();
+};
+
+// View into the object returned by CDeviceFont::func_80452C10: vtable+0x24
+// (slot 9, no args) yields the u32 font handle bound by func_8013676C.
+// All-pure so no vtable is emitted.
+class CTitleAHelpFontView {
+public:
+    virtual void vf0() = 0; // +0x08
+    virtual void vf1() = 0; // +0x0C
+    virtual void vf2() = 0; // +0x10
+    virtual void vf3() = 0; // +0x14
+    virtual void vf4() = 0; // +0x18
+    virtual void vf5() = 0; // +0x1C
+    virtual void vf6() = 0; // +0x20
+    virtual u32 vf7() = 0;  // +0x24
 };
 
 bool func_801C4648(nw4r::lyt::Pane*);

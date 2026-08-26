@@ -2621,9 +2621,7 @@ extern "C" void func_8013ACFC() {
 }
 
 extern "C" void func_8013B1C4(u32 v) {
-    // nested guard: retail branches ble into the body, then b over it
-    if (v != 0) {
-    if (v <= 0x1D) {
+    if (v != 0 && v <= 0x1D) {
     // 136-byte struct assignment -> retail's inline 17x8 mtctr copy loop
     // (same idiom as XBMapTable3).
     struct Table805A8Copy {
@@ -2641,13 +2639,13 @@ extern "C" void func_8013B1C4(u32 v) {
             sum += func_8003B1EC((void*)fp) * 0x240;
         }
     }
-    void* fp = getFP__FPCc((const char*)table.w[v - 1]);
+    u32 last = v - 1;
+    void* fp = getFP__FPCc((const char*)table.w[last]);
     u32 n = func_8003B1EC((void*)fp);
     for (u8 j = 0; j < n; j++) {
         u32 base = sum + (u32)j * 0x240;
         for (u16 k = 0; k < 0x240; k++) {
             func_8009EB94(base + k, 1);
-        }
         }
     }
     }

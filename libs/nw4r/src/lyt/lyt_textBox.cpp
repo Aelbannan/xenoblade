@@ -513,10 +513,10 @@ void TextBox::AllocStringBuffer(u16 len) {
         wchar_t* pBuf = static_cast<wchar_t*>(MEMAllocFromAllocator(
             lbl_eu_80665478, chars * sizeof(wchar_t)));
 
+        // Zero-fill; retail re-tests the cursor inside the loop.
         if (pBuf != NULL) {
-            // Zero-fill; retail re-tests the cursor inside the loop.
             wchar_t* pStr = pBuf;
-            for (; chars > 0; chars--) {
+            for (int i = chars; i > 0; i--) {
                 if (pStr != NULL) {
                     *pStr = L'\0';
                     pStr++;
@@ -613,13 +613,15 @@ void TextBox::SetFont(const ut::Font* pFont) {
         mBits.bAllocFont = false;
     }
 
+    // Retail stores the size fields directly rather than calling SetFontSize.
     mpFont = pFont;
 
     if (mpFont != NULL) {
-        SetFontSize(Size(ConvF32S(mpFont->GetHeight()),
-                         ConvF32S(mpFont->GetWidth())));
+        mFontSize.height = ConvF32S(mpFont->GetHeight());
+        mFontSize.width = ConvF32S(mpFont->GetWidth());
     } else {
-        SetFontSize(Size(lbl_eu_80669D68, lbl_eu_80669D68));
+        mFontSize.height = lbl_eu_80669D68;
+        mFontSize.width = lbl_eu_80669D68;
     }
 }
 

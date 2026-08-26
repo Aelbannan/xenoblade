@@ -29,6 +29,12 @@ extern "C" void func_801C48E0(CTitleAHelp*);
 
 extern u16 lbl_eu_80533E60[];
 
+// Unmangled retail helper symbols defined below in this TU; global-qualified
+// calls from member functions must bind to these, not to the same-named
+// class members.
+extern "C" void func_801C41C0(CTitleAHelp* self, char* arg);
+extern "C" void func_801C41E8(CTitleAHelp* self, u8 arg);
+
 // Retail constructor symbol (extern "C" to avoid MWCC mangling to __ct__11CTitleAHelpFPcUc)
 #pragma optimize_for_size on
 // Retail dtor shares the ctor's optimize_for_size region (stmw frame).
@@ -134,13 +140,14 @@ void CTitleAHelp::func_801C4198() {
 }
 
 extern char lbl_eu_805054BC[];
-extern "C" void func_801C41C0(CTitleAHelp* self, char* arg) {
+extern "C" void __declspec(noinline) func_801C41C0(CTitleAHelp* self, char* arg) {
     if(self->mLayout == nullptr) return;
     func_80136B4C(self->mLayout, lbl_eu_805054BC + 0x17, arg, 0);
 }
 
-void CTitleAHelp::func_801C41E8(u8 arg) {
-    if (mLayout == nullptr) return;
+// Retail symbol is unmangled; noinline so OnFileEvent keeps the bl.
+extern "C" void __declspec(noinline) func_801C41E8(CTitleAHelp* self, u8 arg) {
+    if (self->mLayout == nullptr) return;
 
     u16* row = &lbl_eu_80533E60[arg * 7];
 
@@ -152,7 +159,7 @@ void CTitleAHelp::func_801C41E8(u8 arg) {
 
         u16 tableVal = row[i];
         if (tableVal != 0) {
-            nw4r::lyt::Pane* root = mLayout->GetRootPane();
+            nw4r::lyt::Pane* root = self->mLayout->GetRootPane();
             func_80124270(root->FindPaneByName(buf1, true), 1);
             func_80124270(root->FindPaneByName(buf2, true), 1);
 
@@ -168,9 +175,9 @@ void CTitleAHelp::func_801C41E8(u8 arg) {
             void* resource = resAcc->GetResource(nw4r::lyt::ArcResourceAccessor::RES_TYPE_TEXTURE, name, nullptr);
 
             if (resource != nullptr) {
-                func_80137E7C(mLayout, buf1, resource);
+                func_80137E7C(self->mLayout, buf1, resource);
 
-                nw4r::lyt::Pane* pane = mLayout->GetRootPane()->FindPaneByName(buf1, true);
+                nw4r::lyt::Pane* pane = self->mLayout->GetRootPane()->FindPaneByName(buf1, true);
                 if (pane != nullptr) {
                     u32* texPtr = *(u32**)((u8*)resource + 8);
                     u16 width = *(u16*)(*texPtr + 2);
@@ -180,9 +187,9 @@ void CTitleAHelp::func_801C41E8(u8 arg) {
             }
 
             char* helpText = (char*)func_80136190("MNU_kyeassign", "help", tableVal);
-            func_80136B4C(mLayout, buf2, helpText, 0);
+            func_80136B4C(self->mLayout, buf2, helpText, 0);
         } else {
-            nw4r::lyt::Pane* root = mLayout->GetRootPane();
+            nw4r::lyt::Pane* root = self->mLayout->GetRootPane();
             func_80124270(root->FindPaneByName(buf1, true), 0);
             func_80124270(root->FindPaneByName(buf2, true), 0);
         }
@@ -195,7 +202,7 @@ void CTitleAHelp::func_801C41E8(u8 arg) {
         char buf3[0x20];
         sprintf(buf3, "txt_hlp%02d", i);
 
-        nw4r::lyt::TextBox* textBox = (nw4r::lyt::TextBox*)mLayout->GetRootPane()->FindPaneByName(buf3, true);
+        nw4r::lyt::TextBox* textBox = (nw4r::lyt::TextBox*)self->mLayout->GetRootPane()->FindPaneByName(buf3, true);
         if (!func_801C4648(textBox)) return;
 
         if (i == 0) {
@@ -218,7 +225,7 @@ void CTitleAHelp::func_801C41E8(u8 arg) {
 
         char buf4[0x20];
         sprintf(buf4, "pic_btn%02d", i);
-        nw4r::lyt::Pane* picPane = mLayout->GetRootPane()->FindPaneByName(buf4, true);
+        nw4r::lyt::Pane* picPane = self->mLayout->GetRootPane()->FindPaneByName(buf4, true);
 
         copyVEC3(&newVec, &oldVec);
         newVec.x -= (f32)someWidth;
@@ -228,7 +235,7 @@ void CTitleAHelp::func_801C41E8(u8 arg) {
 
         if (i < 5) {
             sprintf(buf3, "txt_hlp%02d", i + 1);
-            nw4r::lyt::TextBox* nextPane = (nw4r::lyt::TextBox*)mLayout->GetRootPane()->FindPaneByName(buf3, true);
+            nw4r::lyt::TextBox* nextPane = (nw4r::lyt::TextBox*)self->mLayout->GetRootPane()->FindPaneByName(buf3, true);
             if (!func_801C4648(nextPane)) return;
 
             wchar_t firstChar = nextPane->GetString()[0];
@@ -311,40 +318,42 @@ extern "C" void __declspec(noinline) func_801C48E0(CTitleAHelp* self) {
     }
 }
 
+// Retail emits an stmw frame here: this function sits in the same
+// optimize_for_size region as the constructor.
+#pragma optimize_for_size on
 bool CTitleAHelp::OnFileEvent(CEventFile* pEventFile) {
     if(mFileHandle == pEventFile->mFileHandle) {
         u32 allocHandle = mtl::MemManager::getHandleMEM2();
-        unk4.createRegion(allocHandle, 0x3200, "CTitleAHelp", 1);
+        unk4.createRegion(allocHandle, 0x3200, &lbl_eu_805054BC[0x7c], 1);
 
-        Class_8045F858 unkClass8045F858(&unk4);
+        Class_8045F858 memRegion(&unk4);
         void* data = mFileHandle->getData();
         mtl::MemManager::func_80434A4C(false);
 
         mArcResourceAccessor = CLibLayout::createArcResourceAccessor();
-        mArcResourceAccessor->Attach(data, "arc");
+        mArcResourceAccessor->Attach(data, &lbl_eu_805054BC[0x88]);
 
-        func_80136E84(&mLayout, mArcResourceAccessor, "mf00_hlp_tit.brlyt");
-        func_80136F08(mLayout, &mAnimTrans20, mArcResourceAccessor, "mf00_hlp_tit_in.brlan");
-        func_80136F08(mLayout, &mAnimTrans24, mArcResourceAccessor, "mf00_hlp_tit_change.brlan");
+        func_80136E84(&mLayout, mArcResourceAccessor, &lbl_eu_805054BC[0x8c]);
+        func_80136F08(mLayout, &mAnimTrans20, mArcResourceAccessor, &lbl_eu_805054BC[0x9f]);
+        func_80136F08(mLayout, &mAnimTrans24, mArcResourceAccessor, &lbl_eu_805054BC[0xb5]);
 
+        // Retail loads the root pane (layout + 0x10) before the font call and
+        // keeps it live across func_8013676C.
         nw4r::lyt::Pane* rootPane = mLayout->GetRootPane();
-
-        void* fontObj = CDeviceFont::func_80452C10(1, mLayout);
-        void** vtable = *(void***)fontObj;
-        u32 (*slot9)(void*) = (u32 (*)(void*))vtable[0x24 / 4];
-        u32 result = slot9(fontObj);
-
-        func_8013676C(rootPane, result);
+        u32 fontHandle = static_cast<CTitleAHelpFontView*>(
+            CDeviceFont::func_80452C10(1, mLayout))->vf7();
+        func_8013676C(rootPane, fontHandle);
 
         mLayout->SetAnimationEnable(mAnimTrans24, false);
         mLayout->SetAnimationEnable(mAnimTrans20, true);
         mLayout->Animate(0);
 
-        nw4r::lyt::Pane* nulCautionPane = mLayout->GetRootPane()->FindPaneByName("nul_caution", true);
-        func_80124270(nulCautionPane, 0);
+        // Hide the caution pane; retail re-reads layout+0x10 here rather than
+        // reusing the root pane held for func_8013676C.
+        func_80124270(mLayout->GetRootPane()->FindPaneByName(&lbl_eu_805054BC[0x70], true), false);
 
-        func_801C41C0(mName);
-        func_801C41E8(unk34);
+        ::func_801C41C0(this, mName); // global (unmangled retail symbol)
+        ::func_801C41E8(this, unk34);
         unk35 = 1;
         unk28 = 1;
         mFileHandle = nullptr;
@@ -354,6 +363,7 @@ bool CTitleAHelp::OnFileEvent(CEventFile* pEventFile) {
     }
     return false;
 }
+#pragma optimize_for_size off
 
 /******************************************************************************
  *

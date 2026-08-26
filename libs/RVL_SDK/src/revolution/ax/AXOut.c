@@ -35,7 +35,7 @@ AXPROFILE __AXLocalProfile;
 
 static volatile u32 __AXOutFrame;
 static u32 __AXAiDmaFrame;
-static s32 __AXOutDspReady;
+static u32 __AXOutDspReady;
 
 static AXOutCallback __AXUserFrameCallback;
 static volatile BOOL __AXDSPInitFlag;

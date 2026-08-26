@@ -287,25 +287,20 @@ void func_8049EB60(CScnItemCamera* self) {
 void func_8049F168(CScnItemCamera* self, ml::CVec3* v) {
     CScnItemCameraLayout* cam = (CScnItemCameraLayout*)self;
 
-    // Position (0x54) += v first: the helper writes the sum into newPos
-    // (paired stores), the CVec3 copy ctor makes a member-wise float
-    // copy, and the final field stores are raw-bit word copies
-    // (retail lwz/stw shape).
+    // Position (0x54) += v: operator+ returns through a hidden sret temp
+    // (the asm writes it with paired stores); set() then makes the
+    // member-wise float copy into tmp so it cannot be elided.
     ml::CVec3 tmp;
-    ml::CVec3 newPos;
-    nw4r::math::VEC3Add((nw4r::math::VEC3*)&newPos,
-                        (nw4r::math::VEC3*)&self->mTransform.mPos,
-                        (nw4r::math::VEC3*)v);
-    ml::CVec3 tmp2(newPos);
+    tmp.set(self->mTransform.mPos + *v);
 
     // Aim point (0x138) += v.
     nw4r::math::VEC3Add((nw4r::math::VEC3*)&self->mCamParam0,
                         (nw4r::math::VEC3*)&self->mCamParam0,
                         (nw4r::math::VEC3*)v);
 
-    cam->mPosX = *(u32*)&tmp2.x;
-    cam->mPosY = *(u32*)&tmp2.y;
-    cam->mPosZ = *(u32*)&tmp2.z;
+    cam->mPosX = *(u32*)&tmp.x;
+    cam->mPosY = *(u32*)&tmp.y;
+    cam->mPosZ = *(u32*)&tmp.z;
 
     ((CScnItemCameraRefreshIf*)self)->refresh();
 }
@@ -344,24 +339,30 @@ void sinit_8049FC60() {
 void func_8049F6D4(CScnItemCamera* self, const ml::CVec3* v) {
     CScnItemCameraLayout* cam = (CScnItemCameraLayout*)self;
 
-    // Declared in retail stack-slot order (first -> highest offset):
-    // lenVec@0x14, diff@0x08.
-    ml::CVec3 lenVec;
-    ml::CVec3 diff;
-    nw4r::math::VEC3Sub((nw4r::math::VEC3*)&diff,
-                        (const nw4r::math::VEC3*)&self->mCamParam0,
-                        (const nw4r::math::VEC3*)v);
+    // Stack slots mirror retail: kernel-out@sp+0x08, dir@sp+0x14.
+    // The subtract kernel writes the LOW buffer and PSVECMag consumes the
+    // HIGH buffer, so both addresses escape into calls and stay live
+    // across each other like retail's two base registers.
+    ml::CVec3 dir;
+    ml::CVec3 work;
 
+    // Raw bit copy of v into mTransform.mPos (0x54).
     cam->mPosX = *(const u32*)&v->x;
     cam->mPosY = *(const u32*)&v->y;
     cam->mPosZ = *(const u32*)&v->z;
 
-    // Member-wise float copy: struct-assign lowers to word copies, retail
-    // uses lfs/stfs.
-    lenVec.x = diff.x;
-    lenVec.y = diff.y;
-    lenVec.z = diff.z;
-    self->mUnk1F4 = PSVECMag((const Vec*)&lenVec);
+    nw4r::math::VEC3Sub((nw4r::math::VEC3*)&work,
+                        (const nw4r::math::VEC3*)&self->mCamParam0,
+                        (const nw4r::math::VEC3*)v);
+
+    // Member-wise float copy - matches the retail lfs/stfs temporaries.
+    // The volatile view blocks register forwarding so all three components
+    // reload from memory like retail.
+    volatile ml::CVec3& vwork = work;
+    dir.x = vwork.x;
+    dir.y = vwork.y;
+    dir.z = vwork.z;
+    self->mUnk1F4 = PSVECMag((const Vec*)&dir);
 
     ((CScnItemCameraRefreshIf*)self)->refresh();
 }
@@ -385,38 +386,30 @@ void func_8049F774(CScnItemCamera* self, const ml::CMat34* mtx) {
 // by the camera position and write it into the camera parameter
 // vector (0x138) as raw bits.
 // ============================================================
-void func_8049F824(CScnItemCamera* self, f32 f1) {
-    ((CScnItemCameraLayout*)self)->mUnk1F4 = f1;
+void func_8049F824(CScnItemCamera* self, f32 dist) {
+    self->mUnk1F4 = dist;
 
-    // Declared in retail stack-slot order (first -> highest offset):
-    // normal@0x38, tmp@0x2C, v@0x20, out@0x14, sum@0x08. tmp's dummy init
-    // is dead (reassigned before any read); the final copy is member-wise
-    // so MWCC cannot copy-propagate tmp away.
-    ml::CVec3 normal(lbl_eu_8066ABF0, lbl_eu_8066ABF0, -f1);
-    ml::CVec3 tmp;
-    ml::CVec3 v;
+    ml::CVec3 normal(lbl_eu_8066ABF0, lbl_eu_8066ABF0, -dist);
     ml::CVec3 out;
-    ml::CVec3 sum;
     nw4r::math::VEC3TransformNormal(
         (nw4r::math::VEC3*)&out,
         (const nw4r::math::MTX34*)&self->mTransform.mLocalMatInv,
         (const nw4r::math::VEC3*)&normal);
 
-    // Member-wise float copies: struct/plain assigns lower to word copies.
+    // Member-wise copy of the kernel result (retail lfs/stfs temporaries).
+    ml::CVec3 v;
     v.x = out.x;
     v.y = out.y;
     v.z = out.z;
-    nw4r::math::VEC3Add((nw4r::math::VEC3*)&sum,
-                        (const nw4r::math::VEC3*)&v,
-                        (const nw4r::math::VEC3*)&self->mTransform.mPos);
 
-    tmp.x = sum.x;
-    tmp.y = sum.y;
-    tmp.z = sum.z;
+    // operator+ keeps its address-taken local alive (no NRVO): the inline
+    // paired-single add writes it first, then the return copy lands in tmp
+    // before the raw-bit stores into the camera parameters (0x138).
+    ml::CVec3 tmp = self->mTransform.mPos + v;
 
-    ((CScnItemCameraLayout*)self)->mCamParam0 = *(u32*)&tmp.x;
-    ((CScnItemCameraLayout*)self)->mCamParam1 = *(u32*)&tmp.y;
-    ((CScnItemCameraLayout*)self)->mCamParam2 = *(u32*)&tmp.z;
+    self->mCamParam0 = *(u32*)&tmp.x;
+    self->mCamParam1 = *(u32*)&tmp.y;
+    self->mCamParam2 = *(u32*)&tmp.z;
 }
 
 // ============================================================

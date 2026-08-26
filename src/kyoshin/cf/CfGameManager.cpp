@@ -1302,7 +1302,7 @@ void cf::CfGameManager::func_8007D84C() {
     }
     CfCamEventManager* camManager = unkB4;
     {
-        ResetVectorWords* zeroVec = &zero__Q22ml5CVec3;
+        ml::CVec3* zeroVec = &zero__Q22ml5CVec3;
         *reinterpret_cast<u32*>(reinterpret_cast<u8*>(this) + 0x18) = zeroVec->x;
         *reinterpret_cast<u32*>(reinterpret_cast<u8*>(this) + 0x1C) = zeroVec->y;
         *reinterpret_cast<u32*>(reinterpret_cast<u8*>(this) + 0x20) = zeroVec->z;

@@ -58,27 +58,7 @@ extern "C" __declspec(noinline) CMenuCollepedia* __ct__CMenuCollepedia(
     return self;
 }
 
-/* Retail destructor symbol (member-mangled name emitted verbatim through C
- * linkage). Written as a free function with an explicit flags parameter (same
- * scheme as CMenuSkipTimer / CMenuSave): a real member destructor would make
- * MWCC auto-emit the library __dt__8CProcessFv base call; retail instead
- * calls the game-side CProcess dtor wrapper __dt__800FED0C. Subobjects are
- * destroyed in reverse construction order with the -1 subobject flag, then
- * the base wrapper with flag 0, then conditional operator delete when
- * flags > 0. */
-extern "C" void __dt__800FED0C(CProcess* self, int flags);
-extern "C" CMenuCollepedia* __dt__15CMenuCollepediaFv(CMenuCollepedia* self, int flags) {
-    if (self != 0) {
-        __dt__11CCollepediaFv(&self->mCollepedia, -1);
-        __dt__11CTitleAHelpFv(&self->mTitleAHelp, -1);
-        __dt__6CBgTexFv(&self->mBgTex, -1);
-        __dt__800FED0C(self, 0);
-        if (flags > 0) {
-            operator delete(self);
-        }
-    }
-    return self;
-}
+CMenuCollepedia::~CMenuCollepedia() {}
 
 // Re-initialise the collepedia menu screen: rebuild each embedded widget
 // (CBgTex / CTitleAHelp / CCollepedia) by constructing a stack temporary and

@@ -17,11 +17,16 @@
 #define func_8017FD44 menuBpsFd44Get5
 #define func_800829B8__Q22cf13CfGameManagerFv menuBpsCfGameMgrCond5
 #define func_80043F18 menuBpsMoveEnumListGet5
+// CfObjectModel.hpp (via CfObjectActor.hpp) declares this symbol as ml::CVec3;
+// code_80135FDC.hpp re-types it as nw4r::math::VEC3 -> MWCC 10563. This TU
+// never touches the zero vector, so rename the header-local decl away.
+#define zero__Q22ml5CVec3 menuBpsZeroVecDecl5
 #include "kyoshin/code_80135FDC.hpp"
 #undef func_80043D90
 #undef func_8017FD44
 #undef func_800829B8__Q22cf13CfGameManagerFv
 #undef func_80043F18
+#undef zero__Q22ml5CVec3
 #include "monolib/device/CDeviceVI.hpp"
 #include "monolib/util/MemManager.hpp"
 #include "monolib/work/CWorkThreadSystem.hpp"

@@ -6,7 +6,7 @@ class UnkClass_800821F8;
 class CItemImplInstances;
 
 // Cast-only vtable interfaces for the CItemImplInstances object returned by
-// CItem_initItemImplInstances(). MWCC prepends 2 RTTI header entries, so the
+// CItem_initItemImplInstances(item). MWCC prepends 2 RTTI header entries, so the
 // first virtual sits at vtable+0x08.
 struct CItemInstVt1C {
     virtual void _v08();

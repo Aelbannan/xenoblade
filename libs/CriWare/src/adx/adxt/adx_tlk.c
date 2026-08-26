@@ -603,7 +603,10 @@ void adxt_GetTimeSfreq2(void* self, u32* time, u32* sfreq) {
         } else {
             obufNumSmpl = 0;
         }
-        *time = *(u32*)((u8*)self + 0xA4) + (decNumSmpl - (obufNumSmpl + ADXRNA_GetNumData(*(void**)((u8*)self + 0xC))));
+                {
+            u32 numData = ADXRNA_GetNumData(*(void**)((u8*)self + 0xC));
+            *time = (decNumSmpl - (numData + obufNumSmpl)) + *(u32*)((u8*)self + 0xA4);
+        }
     } else if ((s8)stat == 5) {
         *time = ADXSJD_GetTotalNumSmpl(*(void**)((u8*)self + 4));
         *sfreq = ADXSJD_GetSfreq(*(void**)((u8*)self + 4));
@@ -934,21 +937,21 @@ void ADXT_ExecServer(void) {
 }
 
 void adxt_ExecServer(void) {
-    u32* srv = (u32*)&lbl_eu_805E4EF0;
+    ADXT_SVR_* srv = (ADXT_SVR_*)&lbl_eu_805E4EF0;
     u8* p;
     s32 i;
     ADXCRS_Lock();
-    if (srv[9] != 0) {
+    if (srv->state != 0) {
         ADXCRS_Unlock();
         return;
     }
-    srv[9] = 1;
+    srv->state = 1;
     ADXCRS_Unlock();
-    if (*(void (**)(void*))&srv[0] != NULL) {
-        (*(void (**)(void*))&srv[0])(*(void**)&srv[1]);
+    if (srv->callback0 != NULL) {
+        srv->callback0(srv->callback0Arg);
     }
     ADXSJD_ExecServer();
-    srv[9] = 2;
+    srv->state = 2;
     p = lbl_eu_805E26E8;
     for (i = 0; i < 16; i++) {
         if ((s8)*p == 1) {
@@ -956,25 +959,27 @@ void adxt_ExecServer(void) {
         }
         p += 0xC4;
     }
+    /* state transitions happen between the NULL checks and the calls;
+     * volatile store pins the stw before the cmpwi like retail */
     {
-        void (*fn)(void*) = *(void (**)(void*))&srv[4];
-        srv[9] = 3;
+        void (*fn)(void*) = srv->callback2;
+        *(volatile u32*)&srv->state = 3;
         if (fn != NULL) {
-            fn(*(void**)&srv[5]);
+            fn(srv->callback2Arg);
         }
     }
     ADXRNA_ExecServer();
     {
-        void (*fn)(void*) = *(void (**)(void*))&srv[6];
+        void (*fn)(void*) = srv->callback3;
         if (fn != NULL) {
-            fn(*(void**)&srv[7]);
+            fn(srv->callback3Arg);
         }
     }
     {
-        void (*fn)(void*) = *(void (**)(void*))&srv[2];
-        srv[9] = 0;
+        void (*fn)(void*) = srv->callback1;
+        *(volatile u32*)&srv->state = 0;
         if (fn != NULL) {
-            fn(*(void**)&srv[3]);
+            fn(srv->callback1Arg);
         }
     }
 }

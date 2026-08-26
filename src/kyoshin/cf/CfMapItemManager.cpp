@@ -139,25 +139,26 @@ extern f64 lbl_eu_806677F0;
 extern char lbl_eu_805033C0[];
 
 // One map-item record; the manager's item array is 0x1C-byte strided.
+// True layout recovered from the retail ctor (__ct__cf_CfMapItemManager):
+// each record gets stws for handle/position, an stfs for the +0x10 scale
+// and an sth for the +0x14 kind.
 struct CfMapItem {
-    s16 field_00;              // 0x00
-    s16 field_02;              // 0x02 type selector (1..3), indexes data[]
     union {
-        u32 field_04;          // 0x04 raw word / scene-object pointer
-        u8 data[4];            // 0x04 per-type bytes (data[1..3])
-    };
-    u32 field_08;              // 0x08
-    union {
-        u32 field_0C;          // 0x0C
-        f32 field_0C_f;        // 0x0C (float view)
+        u32 handle;                // 0x00: hikari scene-object handle
+        struct {
+            s16 field_00;          // 0x00 low half (timer notch funcs)
+            s16 field_02;          // 0x02 type selector (1..3), indexes data[]
+        };
     };
     union {
-        u32 field_10;          // 0x10
-        f32 field_10_f;        // 0x10 (float view)
+        u8 data[12];               // 0x04 raw bytes over the position
+        ml::CVec3 pos;             // 0x04 world position
+        u32 field_04;              // 0x04 raw word view
     };
-    f32 field_14;              // 0x14
-    u16 field_18;              // 0x18
-    s16 field_1A;              // 0x1A
+    f32 field_10_f;                // 0x10 scale / respawn timer
+    u16 field_14;                  // 0x14 kind (0 = timer-only slot)
+    s16 field_16;                  // 0x16 respawn countdown
+    u32 field_18;                  // 0x18 state flags (row in top 12 bits)
 };
 
 // Buffer filled by CfMapItemManagerIf::getMapItem (vt +0x10 slot).

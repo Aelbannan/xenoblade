@@ -246,7 +246,7 @@ void func_80097598(cf::CtrlPc* self) {
     }
     self->mField14 = lbl_eu_80666720;
     self->mField5C->mSub3E9C.v47(self->mFieldC);
-    func_800BE12C(&self->mField5C->mSub3E9C, 3, 0, -1, 1);
+    func_800BE12C((u8*)&self->mField5C->mSub3E9C, 3, 0, -1, 1);
     self->mField5C->mSub3E9C.v02(4);
 }
 
@@ -441,21 +441,177 @@ __declspec(noinline) void* func_80098694(cf::CtrlPc* self) { return 0; }
 
 // Retail func_80098194 (0x80098B6C): install an AI-action slot built from the
 // player's arts-set slot and the enum-list selection, then sync the voice
-// owner handle. REBUILD-STUB: original draft lost; restore from history.
-extern "C" void func_80098194(cf::CtrlPc* self, char arg1, char arg2);
-__declspec(noinline) void func_80098194(cf::CtrlPc* self, char arg1, char arg2) {
-    CVisionFxParam p;
-    memset(&p, 0, sizeof(p));
-    (void)arg1;
-    (void)arg2;
+// owner handle.
+void func_80098194(cf::CtrlPc* self, char arg1, char arg2) {
+    CVisionFxParam slot;
+    std::memset((u8*)&slot + 4, 0, 0xE);
+    std::memset(&slot, 0, sizeof(slot));
+
+    // Arts slot index: base halfword from the CArtsSet holder (slot 0x27C),
+    // scaled by 8, offset by the selected entry + 0x11.
+    u16 artsBase = *(u16*)self->mField5C->vf157();
+    int scaled8 = ((int)(s16)artsBase << 3) + 0x11;
+    int slotIdx = arg1 + scaled8;
+
+    // Pad mask depends on whether a chain/counter state is active.
+    u32 mask = ((CBattleManagerViewPc*)getInstance__Q22cf14CBattleManagerFv())
+                   ->mField20C8 != 0
+                   ? 0x1800
+                   : 0x804;
+
+    if (arg2 != -1) {
+        // Build the enum list for the selected category, take its first hit.
+        CfEnumListHolder holder;
+        func_80043D90(&holder);
+        CfListBig* list = (CfListBig*)func_80043F18(&holder);
+        list->count = 0;
+        list->mField3030 = 0;
+        if (arg2 == 0) {
+            func_800F6D50((CfEnumList*)func_80043F18(&holder),
+                          self->mField5C->mField3F10);
+        } else if (arg2 == 1) {
+            func_800F4A98(func_80043F18(&holder), 0x100000, 0);
+        } else if (arg2 == 2) {
+            func_800F4A98(func_80043F18(&holder), 0x200000, 0);
+        }
+        slot.w00 = (u32)(intptr_t)func_800F6E08(func_80043F18(&holder));
+        slot.b_0D = slotIdx;
+        slot.b_0E = 0x64;
+        slot.h_12 = 0;
+        slot.f_14 = lbl_eu_80666720;
+        slot.h_10 = mask;
+        slot.b_06 = 0x25;
+        __dt__80043E88(&holder, -1);
+    } else {
+        slot.b_0D = slotIdx;
+        slot.h_12 = 0;
+        slot.f_14 = lbl_eu_80666720;
+        slot.h_10 = mask;
+        // Bit 9 of the pad mask picks the action kind (never set for the
+        // masks above, but retail tests it).
+        if ((mask & 0x200) == 0) {
+            slot.b_06 = 6;
+        } else {
+            slot.b_06 = 0x25;
+        }
+    }
+
+    // Voice-source sync: clear the owner's source handle when it still points
+    // at the player itself or the player accepts the resolved object.
+    void* src = func_8016FE34(
+        (void*)(intptr_t)func_800B708C__Fi(
+            (int)self->mField5C->mSub3E9C.v17()));
+    if (src == (void*)self->mField5C || self->mField5C->vf5C0(src) != 0) {
+        self->mField5C->mSub3E9C.v18(0);
+    }
+
+    func_8014AC38(&self->mField5C->mField3380, &slot);
 }
 
-// Retail func_800983B8 (0x80098D90): pad-action dispatcher. arg selects the
-// action route. REBUILD-STUB: original draft lost; restore from history.
-extern "C" void func_800983B8(cf::CtrlPc* self, char arg);
-__declspec(noinline) void func_800983B8(cf::CtrlPc* self, char arg) {
-    (void)self;
-    (void)arg;
+// Retail func_800983B8 (0x80098D90): pad-action dispatcher. arg is the menu
+// action code: 5 installs an AI-action slot derived from the player's combo
+// state, 6 starts a chain on the battle manager, and 1 fires the voice
+// call-out via the dynamic-cast sub-object.
+__declspec(noinline) void func_800983B8(cf::CtrlPc* self, s8 arg) {
+    CVisionFxParam slot;
+    switch (arg) {
+    case 5:
+        std::memset((u8*)&slot + 4, 0, 0xE);
+        std::memset(&slot, 0, sizeof(slot));
+
+        // Pad mask: wide chain mask when the battle manager's chain/timer
+        // state is live, narrow single-pad mask otherwise.
+        u32 mask;
+        if (((CBattleManagerViewPc*)getInstance__Q22cf14CBattleManagerFv())
+                ->mField20C8 != 0) {
+            mask = 0x1000;
+        } else {
+            mask = 4;
+        }
+
+        CtrlPlayerObj* p = self->mField5C;
+        if ((u32)p->mField3F28 != 4) {
+            if ((u32)p->mField3F28 == 7) {
+                // Counter/chain-attack state: reset the combo word, then
+                // install the default action slot.
+                self->mField5C->vf164()->mField7C = 0;
+                slot.b_0D = 5;
+                slot.h_12 = 0;
+                slot.f_14 = lbl_eu_80666720;
+                slot.h_10 = mask;
+                if ((mask & 0x200) == 0) {
+                    slot.b_06 = 6;
+                } else {
+                    slot.b_06 = 0x25;
+                }
+                func_8014AC38(&self->mField5C->mField3380, &slot);
+            } else {
+                slot.b_0D = 5;
+                slot.h_12 = 0;
+                slot.f_14 = lbl_eu_80666720;
+                slot.h_10 = mask;
+                if ((mask & 0x200) == 0) {
+                    slot.b_06 = 6;
+                } else {
+                    slot.b_06 = 0x25;
+                }
+                func_8014AC38(&self->mField5C->mField3380, &slot);
+            }
+            break;
+        }
+
+        // Combo-step window [7,9]: feed the current step into the arts slot
+        // and refresh the voice/battle target first.
+        if (p->vf164()->mField48 < 7 || p->vf164()->mField48 > 9) {
+            slot.b_0D = 5;
+            slot.h_12 = 0;
+            slot.f_14 = lbl_eu_80666720;
+            slot.h_10 = mask;
+            if ((mask & 0x200) == 0) {
+                slot.b_06 = 6;
+            } else {
+                slot.b_06 = 0x25;
+            }
+            func_8014AC38(&self->mField5C->mField3380, &slot);
+            break;
+        }
+        int step = self->mField5C->vf164()->mField48;
+        if (self->mField5C->mField3F60 != 0) {
+            func_8004DACC(self->mField5C->mField3F60);
+        }
+        slot.b_0D = step - 1;
+        slot.h_12 = 0;
+        slot.f_14 = lbl_eu_80666720;
+        slot.h_10 = mask;
+        if ((mask & 0x200) == 0) {
+            slot.b_06 = 6;
+        } else {
+            slot.b_06 = 0x25;
+        }
+        func_8014AC38(&self->mField5C->mField3380, &slot);
+        break;
+
+    case 6:
+        func_8027936C(
+            &((CBattleManagerViewPc*)getInstance__Q22cf14CBattleManagerFv())
+                 ->mField1A8,
+            0);
+        break;
+
+    case 1: {
+        // Reach the voice-callout interface behind the player's +0x3ED4
+        // sub-object and fire the call with the owner's current handle.
+        CtrlPlayerSub3ED4Cast* cast = (CtrlPlayerSub3ED4Cast*)__dynamic_cast(
+            (void*)self->mField5C->mSub3ED4, 0, &lbl_eu_80661C60,
+            &lbl_eu_80661BE8, 0);
+        if (cast == 0) {
+            break;
+        }
+        cast->vf60(self->mField5C->mSub3E9C.v17());
+        func_800BE12C((u8*)&self->mField5C->mSub3E9C, 0x1B, 0, 0x63, 1);
+        break;
+    }
+    }
 }
 
 u32 cf::CtrlPc::testBit20() { return 0; }

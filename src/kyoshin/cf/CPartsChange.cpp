@@ -2218,6 +2218,7 @@ extern "C" void func_80197538(unsigned long manager, int arg) {
     int j;                          // r25
     CfPartsChgObjFull* actor;       // r24
     CfPartsManager* mgr;            // r23
+    u32 i;                          // table-walk index
     actor = (CfPartsChgObjFull*)arg;
     mgr = (CfPartsManager*)manager;
     if (!(actor->field_3F00 & 4)) return;
@@ -2231,7 +2232,7 @@ extern "C" void func_80197538(unsigned long manager, int arg) {
                 tbl = 0;
                 u32 id = actor->field_45C0;
                 if (id != 0) {
-                u32 i = 0;
+                i = 0;
                 for (; i < 16; i++) {
                     if (id == mgr->mTable[i].field_94) {
                         tbl = (CfElemA4Full*)&mgr->mTable[i];
@@ -2501,6 +2502,7 @@ extern "C" int func_80198284(CfPartsSlots* self, CfPartsSlots* other);
 extern "C" void func_80197DE8(CfPartsManager* mgr, CfPartsChgObjFull* actor, int opt1, int opt2) {
     // Linear scan of the 16-entry 0xA4 table for the actor id (+0x94 key).
     CfElemA4* tbl;
+    u32 i;
     u16 id;
     int flag = 1;
     if (((cf::CfResPcPlayerVtIf*)actor)->_v2BC() == 0 && !(actor->field_3F08 & 0x08000000)) {
@@ -2509,7 +2511,7 @@ extern "C" void func_80197DE8(CfPartsManager* mgr, CfPartsChgObjFull* actor, int
     id = actor->field_45C0;
     tbl = 0;
     if (id != 0) {
-        for (u32 i = 0; i < 16; i++) {
+        for (i = 0; i < 16; i++) {
             if (id == mgr->mTable[i].field_94) {
                 tbl = &mgr->mTable[i];
                 break;

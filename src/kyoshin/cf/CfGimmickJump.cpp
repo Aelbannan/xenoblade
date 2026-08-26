@@ -62,58 +62,46 @@ extern void Warning__Q24nw4r2dbFPCciPCce(const char* file, int line,
 extern void __dl__FPv(void* value);
 }
 
-/* Cast-only interfaces.  Omitting the RTTI entries keeps these calls at their
- * retail vtable offsets while leaving the implementation in normal C++. */
-struct JumpMoveIf {
-    virtual void _v008();
-    virtual void _v00C();
-    virtual void _v010();
-    virtual void _v014();
-    virtual void _v018();
-    virtual void _v01C();
-    virtual void _v020();
-    virtual void _v024();
-    virtual void _v028();
-    virtual void _v02C();
-    virtual void _v030();
-    virtual void _v034();
-    virtual void _v038();
-    virtual void _v03C();
-    virtual void _v040();
-    virtual void _v044();
-    virtual void _v048();
-    virtual void _v04C();
-    virtual void _v050();
-    virtual void _v054();
-    virtual void _v058();
-    virtual void _v05C();
-    virtual void _v060();
-    virtual void _v064();
-    virtual void _v068();
-    virtual void _v06C();
-    virtual void _v070();
-    virtual void _v074();
-    virtual void _v078();
-    virtual void _v07C();
-    virtual void _v080();
-    virtual void _v084();
-    virtual void _v088();
-    virtual void _v08C();
-    virtual void _v090();
-    virtual void _v094();
-    virtual void _v098();
-    virtual void setPosition(const CfGimmickJumpVec3& position);
-    virtual void _v0A0();
-    virtual void _v0A4();
-    virtual void _v0A8();
-    virtual const CfGimmickJumpVec3* getPosition();
-    virtual void _v0B0();
-    virtual void _v0B4();
-    virtual void _v0B8();
-    virtual void _v0BC();
-    virtual void _v0C0();
-    virtual void _v0C4();
-    virtual void updateDirection();
+/*
+ * Dispatched-object identities (US split1.s tables):
+ * - State table lbl_eu_805359E8: four 12-byte member-function pointers over
+ *   cf::CfGimmickJump itself (motion states 1-4: func_8020F8C4 / F984 /
+ *   FC14 / FD2C).
+ * - Player object: the cf::CfObjectMove base embedded at
+ *   cf::CfObjectActor+0x3E9C (vtable lbl_eu_80529690, the cf-chain table:
+ *   CObjectState .. CObjectParam .. CfObject .. CfObjectModel ..
+ *   CfObjectMove). Slots dispatched here: +0x9C CfObject_UnkVirtualFunc19
+ *   (hidden r4 = position vector), +0xAC CfObject_UnkVirtualFunc23 (returns
+ *   the position vector), +0xC8 CfObject_UnkVirtualFunc30 (direction
+ *   update). The +0xAC/+0xC8 calls go through the real cf::CfObject
+ *   declarations; +0x9C still needs the minimal view below because the hot
+ *   shared header declares that slot no-arg.
+ * - Linked object (func_800817BC work object, back-pointer at +0xB0): owning
+ *   class not yet recovered anywhere in the tree (every gimmick TU keeps a
+ *   raw view: CfGimmickItemMgr / WarpObject / ...), so its +0x9C/+0xC4
+ *   dispatches stay on the minimal JumpLinkedObjectIf view.
+ */
+
+// Member-function-pointer state table over the real owning class.
+typedef void (CfGimmickJump::*JumpStateFn)();
+
+// Minimal view of the actor's embedded CfObjectMove base, used only for
+// vtable slot +0x9C (CfObject_UnkVirtualFunc19): retail passes the position
+// vector as a hidden r4, but CfObject.hpp (hot header, not owned here) still
+// declares that slot no-arg, so the call cannot go through cf::CfObject yet.
+class CfObjectActorMoveVt9C {
+public:
+    virtual void m08(); virtual void m0C(); virtual void m10(); virtual void m14();
+    virtual void m18(); virtual void m1C(); virtual void m20(); virtual void m24();
+    virtual void m28(); virtual void m2C(); virtual void m30(); virtual void m34();
+    virtual void m38(); virtual void m3C(); virtual void m40(); virtual void m44();
+    virtual void m48(); virtual void m4C(); virtual void m50(); virtual void m54();
+    virtual void m58(); virtual void m5C(); virtual void m60(); virtual void m64();
+    virtual void m68(); virtual void m6C(); virtual void m70(); virtual void m74();
+    virtual void m78(); virtual void m7C(); virtual void m80(); virtual void m84();
+    virtual void m88(); virtual void m8C(); virtual void m90(); virtual void m94();
+    virtual void m98();
+    virtual void setPosition(const CfGimmickJumpVec3& position);  // +0x9C
 };
 
 struct JumpLinkedObjectIf {
@@ -167,11 +155,6 @@ struct JumpLinkedObjectIf {
     virtual void setHeight(f32 height);
 };
 
-struct JumpDispatchTarget {};
-typedef int (JumpDispatchTarget::*JumpDispatchFn)(const CfGimmickJumpVec3*,
-                                                  const CfGimmickJumpVec3*);
-typedef void (JumpDispatchTarget::*JumpStateFn)();
-
 extern "C" {
 extern void* jumptable_eu_80535830[];
 extern void* lbl_eu_805359E8[];
@@ -194,24 +177,26 @@ struct JumpTargetData {
     u32 flags4EC;
 };
 
-static inline void* jumpActorFromPlayer(void* player) {
+static inline cf::CfObjectActor* jumpActorFromPlayer(void* player) {
     if (player == 0) {
         return 0;
     }
-    return (u8*)player - 0x3E9C;
+    return reinterpret_cast<cf::CfObjectActor*>((u8*)player - 0x3E9C);
 }
 
 static inline const CfGimmickJumpVec3* jumpPlayerPosition(int index) {
-    void* player = getPlayer__Q22cf13CfGameManagerFi(index);
-    if (player == 0) {
+    cf::CfObjectActor* actor =
+        jumpActorFromPlayer(getPlayer__Q22cf13CfGameManagerFi(index));
+    if (actor == 0) {
         return 0;
     }
-    return reinterpret_cast<JumpMoveIf*>(player)->getPosition();
+    // CfObject vtable +0xAC: returns the live position vector.
+    return reinterpret_cast<const CfGimmickJumpVec3*>(
+        actor->CfObject_UnkVirtualFunc23());
 }
 
-static inline f32 jumpPlayerAngle(void* actor) {
-    CfObjectActor* obj = reinterpret_cast<CfObjectActor*>(actor);
-    return obj->CfObjectActor_UnkVirtualFunc6();
+static inline f32 jumpPlayerAngle(cf::CfObjectActor* actor) {
+    return actor->CfObjectActor_UnkVirtualFunc6();
 }
 
 static inline f32 normalizeJumpAngle(f32 angle) {
@@ -320,10 +305,10 @@ extern "C" void func_8020F484(CfGimmickJump* self) {
     if ((lbl_eu_80663E24 & 0x4000000) == 0) {
         self->timer += func_80496288(lbl_eu_80663E14);
         // State handler dispatch: retail stores 12-byte member-function
-        // pointers (__ptmf_scall) indexed by motionState.
+        // pointers over CfGimmickJump (__ptmf_scall) indexed by motionState.
         JumpStateFn* stateTable = reinterpret_cast<JumpStateFn*>((void*)lbl_eu_805359E8);
         JumpStateFn& stateFn = stateTable[self->motionState];
-        (reinterpret_cast<JumpDispatchTarget*>(self)->*stateFn)();
+        (self->*stateFn)();
         func_8020F540(self);
     }
 
@@ -358,12 +343,16 @@ extern "C" void func_8020F540(CfGimmickJump* self) {
             continue;
         }
 
+        // Retail keeps the request bit set on frames where the pull below
+        // actually moved the player; this flag mirrors that register.
+        bool requestCleared = true;
+
         if (index == 0) {
             func_80209F5C();
         }
 
         void* player = getPlayer__Q22cf13CfGameManagerFi(index);
-        void* actor = jumpActorFromPlayer(player);
+        cf::CfObjectActor* actor = jumpActorFromPlayer(player);
         // Every failure path below still clears the request bit.
         if (actor == 0) {
             self->flags &= ~bit;
@@ -384,12 +373,16 @@ extern "C" void func_8020F540(CfGimmickJump* self) {
         f32 deltaZ = step * self->playerDeltaZ[index];
 
         // Retail re-queries the position getter once per component (no CSE
-        // across the virtual call), z first.
-        JumpMoveIf* move = reinterpret_cast<JumpMoveIf*>(player);
+        // across the virtual call), z first. Getter = CfObject vtable +0xAC.
         CfGimmickJumpVec3 result;
-        result.z = deltaZ + move->getPosition()->z;
-        result.y = move->getPosition()->y;
-        result.x = delta + move->getPosition()->x;
+        result.z =
+            deltaZ + reinterpret_cast<const CfGimmickJumpVec3*>(
+                         actor->CfObject_UnkVirtualFunc23())->z;
+        result.y = reinterpret_cast<const CfGimmickJumpVec3*>(
+            actor->CfObject_UnkVirtualFunc23())->y;
+        result.x =
+            delta + reinterpret_cast<const CfGimmickJumpVec3*>(
+                        actor->CfObject_UnkVirtualFunc23())->x;
 
         f32 dx = result.x - self->targetX;
         f32 dz = result.z - self->targetZ;
@@ -398,10 +391,13 @@ extern "C" void func_8020F540(CfGimmickJump* self) {
             continue;
         }
 
-        move->setPosition(result);
+        // Pull the player toward the platform: CfObject vtable +0x9C with the
+        // target position as hidden r4 (minimal view; see CfObjectActorMoveVt9C).
+        reinterpret_cast<CfObjectActorMoveVt9C*>(
+            (u8*)actor + 0x3E9C)->setPosition(result);
+        requestCleared = false;
         f32 angle = jumpPlayerAngle(actor);
         if (self->targetAngle == angle) {
-            self->flags &= ~bit;
             continue;
         }
 
@@ -417,7 +413,12 @@ extern "C" void func_8020F540(CfGimmickJump* self) {
         }
         (void)difference;
 
-        self->flags &= ~bit;
+        // Direction update on the actor's CfObjectMove base (vtable +0xC8);
+        // retail runs it only on this full-success path.
+        actor->CfObject_UnkVirtualFunc30();
+        if (requestCleared) {
+            self->flags &= ~bit;
+        }
     }
 }
 
@@ -545,7 +546,10 @@ extern "C" void func_8020FC14(CfGimmickJump* self) {
             void* player = getPlayer__Q22cf13CfGameManagerFi(0);
             if (player != 0) {
                 position.y =
-                    reinterpret_cast<JumpMoveIf*>(player)->getPosition()->y;
+                    reinterpret_cast<const CfGimmickJumpVec3*>(
+                        static_cast<cf::CfObjectMove*>(player)
+                            ->CfObject_UnkVirtualFunc23())
+                        ->y;
             }
             if (position.y > self->height + self->position.y) {
                 position.y = self->height + self->position.y;
@@ -573,7 +577,10 @@ extern "C" void func_8020FD2C(CfGimmickJump* self) {
             void* player = getPlayer__Q22cf13CfGameManagerFi(0);
             if (player != 0) {
                 position.y =
-                    reinterpret_cast<JumpMoveIf*>(player)->getPosition()->y;
+                    reinterpret_cast<const CfGimmickJumpVec3*>(
+                        static_cast<cf::CfObjectMove*>(player)
+                            ->CfObject_UnkVirtualFunc23())
+                        ->y;
             }
             if (position.y > self->position.y + self->height) {
                 position.y = self->position.y + self->height;
@@ -605,7 +612,7 @@ extern "C" void func_8020FD2C(CfGimmickJump* self) {
                 continue;
             }
             void* player = getPlayer__Q22cf13CfGameManagerFi(index);
-            void* actor = jumpActorFromPlayer(player);
+            cf::CfObjectActor* actor = jumpActorFromPlayer(player);
             if (actor == 0) {
                 continue;
             }
@@ -615,21 +622,26 @@ extern "C" void func_8020FD2C(CfGimmickJump* self) {
                 continue;
             }
 
-            JumpMoveIf* move = reinterpret_cast<JumpMoveIf*>(player);
+            const CfGimmickJumpVec3* playerPos =
+                reinterpret_cast<const CfGimmickJumpVec3*>(
+                    actor->CfObject_UnkVirtualFunc23());
             typedef int (*JumpDispatchFunction)(const CfGimmickJumpVec3*,
                                                 const CfGimmickJumpVec3*,
                                                 const CfGimmickJumpVec3*);
-            const CfGimmickJumpVec3* playerPos = move->getPosition();
             JumpDispatchFunction dispatch = reinterpret_cast<JumpDispatchFunction>(
                 jumptable_eu_80535830[self->savedState.words[8]]);
             if (dispatch(&self->transformedPosition, playerPos,
                          &self->position) == 0) {
                 continue;
             }
-            playerPos = move->getPosition();
+            playerPos = reinterpret_cast<const CfGimmickJumpVec3*>(
+                actor->CfObject_UnkVirtualFunc23());
             if (playerPos->y <= self->verticalOffset + self->position.y) {
                 self->flags |= moveBit;
-                self->playerHeight[index] = move->getPosition()->y;
+                self->playerHeight[index] =
+                    reinterpret_cast<const CfGimmickJumpVec3*>(
+                        actor->CfObject_UnkVirtualFunc23())
+                        ->y;
             }
         }
     } else if (self->linkedObject == 0) {
@@ -649,7 +661,7 @@ extern "C" void func_8020FD2C(CfGimmickJump* self) {
 
         finished = false;
         void* player = getPlayer__Q22cf13CfGameManagerFi(index);
-        void* actor = jumpActorFromPlayer(player);
+        cf::CfObjectActor* actor = jumpActorFromPlayer(player);
         if (actor == 0) {
             continue;
         }
@@ -663,13 +675,15 @@ extern "C" void func_8020FD2C(CfGimmickJump* self) {
 
         // Carry the player with the platform; the getter is re-queried per
         // component (no CSE across the virtual call).
-        JumpMoveIf* move = reinterpret_cast<JumpMoveIf*>(player);
         CfGimmickJumpVec3 position;
-        position.z = move->getPosition()->z;
+        position.z = reinterpret_cast<const CfGimmickJumpVec3*>(
+            actor->CfObject_UnkVirtualFunc23())->z;
         f32 carried = self->playerHeight[index];
-        position.x = move->getPosition()->x;
+        position.x = reinterpret_cast<const CfGimmickJumpVec3*>(
+            actor->CfObject_UnkVirtualFunc23())->x;
         position.y = carried;
-        move->setPosition(position);
+        reinterpret_cast<CfObjectActorMoveVt9C*>(
+            (u8*)actor + 0x3E9C)->setPosition(position);
         func_8004B840(target, zero);
         target->flags4EC |= 0x4000000;
         if (index == 0) {
@@ -682,9 +696,11 @@ extern "C" void func_8020FD2C(CfGimmickJump* self) {
             if ((self->flags & 0x1000) != 0) {
                 // Recompute the pull vector toward the jump target.
                 self->flags |= 0x80u << index;
-                const CfGimmickJumpVec3* p = move->getPosition();
+                const CfGimmickJumpVec3* p = reinterpret_cast<const CfGimmickJumpVec3*>(
+                    actor->CfObject_UnkVirtualFunc23());
                 self->playerDeltaX[index] = self->targetX - p->x;
-                p = move->getPosition();
+                p = reinterpret_cast<const CfGimmickJumpVec3*>(
+                    actor->CfObject_UnkVirtualFunc23());
                 self->playerDeltaZ[index] = self->targetZ - p->z;
                 f32 dx = self->playerDeltaX[index];
                 f32 dz = self->playerDeltaZ[index];

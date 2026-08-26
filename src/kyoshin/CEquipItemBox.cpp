@@ -2263,7 +2263,7 @@ extern "C" __declspec(noinline) int func_802882A4(CEquipItemBox* self) {
     if (page == 2 && (u8)func_802832D8(grid, idx) == catB) return 0;
 
     // Per-page slot table: zeroed words at [0],[4],[8],[12], slot ids patched
-    // in from the item view (retail interleaves word-clears and half stores).
+    // in from the item view.
     s16 table[14] = {0};
     table[2] = cfg->field_26;
     table[4] = cfg->field_1c;
@@ -2281,8 +2281,9 @@ extern "C" __declspec(noinline) int func_802882A4(CEquipItemBox* self) {
     if (item == 0) return 1;
     u32 w = *(u32*)item;
     if (w == 0) return 1;
-    u8 v = (u8)func_801361E8(lbl_eu_806640EC, &lbl_eu_8050EFDC[0x20], w >> 20);
-    if (((s8)(v - 1) & ~0x1F) == 0) return 1;
+    u8 v = (u8)func_801361E8(lbl_eu_806640EC, &lbl_eu_8050EFDC[0x20],
+                             w >> 20);
+    if ((((u32)(s8)(v - 1)) >> 5) == 0) return 1;
     if (func_8009CF8C(0x3508) != 0) return 1;
     self->unk_37c = 1;
     return 0;

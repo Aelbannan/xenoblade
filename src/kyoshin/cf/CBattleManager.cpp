@@ -553,7 +553,7 @@ extern "C" void func_800E64CC(cf::CBattleManager*, void*, void*, void*);
 extern "C" void func_800E9B54(void*, void*, void*, void*);
 extern "C" void func_800E08E8(void*, void*, void*, void*);
 extern "C" s32 func_800EAA2C(void*, void*, void*, void*, void*);
-extern "C" void func_800D9CA0(cf::CBattleManager*, void*);
+extern "C" void func_800D9CA0(void*, void*);   // canonical (void*,void*) form
 extern "C" f32 func_800D7EA0(u8*, void*);
 struct BattleEvent;
 struct BattleTargetData;
@@ -4158,7 +4158,9 @@ extern "C" void func_800D9354(cf::CBattleManager* self) {
 // busy check; unregistered idle actors are pushed into the lists, notified
 // through their vtable holders and the battle-event chain, and reset the
 // sudden-commu voice state when they become the lone list-2 member.
-extern "C" void func_800D9978(cf::CBattleManager* self, cf::CfObjectActor* actor) {
+extern "C" void func_800D9978(void* selfV, void* actorV) {
+    cf::CBattleManager* self = (cf::CBattleManager*)selfV;
+    cf::CfObjectActor* actor = (cf::CfObjectActor*)actorV;
     cf::CfGameManager::getInstance();
     if (func_8006EF04__Fi(0x4000000) != 0) return;
 
@@ -4224,7 +4226,9 @@ extern "C" void func_800D9978(cf::CBattleManager* self, cf::CfObjectActor* actor
         }
     }
 }
-void func_800D9CA0(cf::CBattleManager* mgr, BattleRemoveObjAccessor* target){
+void func_800D9CA0(void* mgrV, void* targetV){
+    cf::CBattleManager* mgr = (cf::CBattleManager*)mgrV;
+    BattleRemoveObjAccessor* target = (BattleRemoveObjAccessor*)targetV;
     cf::CfGameManager::getInstance();
     if(func_8006EF04__Fi(0x400) != 0) return;
 
@@ -11375,13 +11379,8 @@ extern "C" void func_800EA484(cf::CBattleManager* self, f32 value, int flags) {
                 void* r29 = __dynamic_cast(func_800F6EAC(func_80043F18(&h2), i), 0, &lbl_eu_80661970, &lbl_eu_806618F0, 0);
                 // Match the cast object's +0x9C pointer against either vision
                 // actor (or its embedded move sub-object at +0x3E9C).
-                // Fresh locals per iteration: retail recomputes the +0x3E9C
-                // adjustments mid-loop (after each null check), so they must
-                // not be hoisted.
-                void* adj26 = (r26 != nullptr) ? (u8*)r26 + 0x3E9C : r26;
-                void* adj27 = (r27 != nullptr) ? (u8*)r27 + 0x3E9C : r27;
-                if ((r26 != nullptr && ((E484_TypeObj*)r29)->field_9C == adj26) ||
-                    (r27 != nullptr && ((E484_TypeObj*)r29)->field_9C == adj27))
+                if ((r26 != nullptr && ((E484_TypeObj*)r29)->field_9C == (u8*)r26 + 0x3E9C) ||
+                    (r27 != nullptr && ((E484_TypeObj*)r29)->field_9C == (u8*)r27 + 0x3E9C))
                     reinterpret_cast<E484_Mirror*>(r29)->vt88(value);
                 if (r26 != nullptr) {
                     void* b = ((E484_VisionActor*)r26)->field_45B8;

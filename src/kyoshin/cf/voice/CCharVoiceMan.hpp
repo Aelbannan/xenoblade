@@ -253,10 +253,10 @@ namespace cf{
         virtual void FactoryEvent4();
 
         u8 unk4[0x200];
-        u32 unk204;
-        u32 unk208;
-        CSoundNode* unk20C;   // head of voice-event list
-        CSoundNode* unk210;   // tail of voice-event list
+        u32 allocHead;        // +0x204 ring-buffer allocation head offset
+        u32 headOffset;       // +0x208 nodeHead byte offset from &unk4[0]
+        CSoundNode* nodeHead; // +0x20C head of voice-event list
+        CSoundNode* nodeTail; // +0x210 tail of voice-event list
         u8 unk214;
         u8 unk215;
         u8 unk216[2]; //filler?
@@ -265,8 +265,8 @@ namespace cf{
         u32 unk21C;
         u8 unk220;
         u8 unk221;
-        u8 unk222;
-        u8 unk223;
+        u8 fieldFlag;         // +0x222 field-id window [0x109,0x115] flag
+        u8 autoTalkPending;   // +0x223 pending battle auto-talk flag
         u32 unk224;
         u8 unk228;
         u8 unk229;

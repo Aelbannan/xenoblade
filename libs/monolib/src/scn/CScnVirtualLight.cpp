@@ -343,13 +343,21 @@ extern "C" __declspec(noinline) CVirtualLightAmb* func_804930BC(CScnVirtualLight
 extern "C" __declspec(noinline) void func_804933AC(CScnVirtualLightData* self, u8* field,
                               const func_800407C8_tmp* data, const func_800407C8_tmp* val,
                               f32 value) {
-    // Direction-vector -> dir-light angles. The sqrt(z^2+x^2) result is unused
-    // by the call; retail still keeps the call (it may warn) and the dead fmr
-    // of the result (the two dead artifacts - the hoisted z load and the fmr -
-    // resist source-level reproduction).
+    // Direction-vector -> dir-light angles. The sqrt result is unused by the
+    // call; retail still keeps the call (it may warn). Writing x*x + z*z makes
+    // MWCC schedule the z load (f2) up front next to the x load, like retail.
+    // Direction-vector -> dir-light angles. Two retail artifacts live in this
+    // block: a dead early read of the z component (retail schedules it at the
+    // top of the stream, then reloads it for the multiply), and a dead sqrt
+    // (len) whose result the func_80493300 call setup overwrites - retail
+    // keeps both the call and the dead fmr of its result.
+    { const volatile f32& vz = val->unk00[2]; (void)vz; }
     f32 t1 = func_8006D410(-func_8004CC40(-val->unk00[0]));
-    f32 len = func_8004EC78(val->unk00[2] * val->unk00[2] + val->unk00[0] * val->unk00[0]);
+    f32 len = func_8004EC78(val->unk00[0] * val->unk00[0] + val->unk00[2] * val->unk00[2]);
     f32 t2 = func_8006D410(func_8004CC40(-val->unk00[1]));
+    // len is dead in retail too (its result register is overwritten by the
+    // func_80493300 argument setup); retail keeps the call regardless.
+    (void)len;
     func_80493300(self, field, data, value, t1, t2);
 }
 
@@ -1052,20 +1060,26 @@ void func_80494188(CScnVirtualLightPool* self, CScnVirtualLightPoolSlot* slot) {
 // (retail func_80494208).
 void func_80494208(CScnVirtualLightData* self, int flag) {
     if (flag != 0) {
-        // Comparison written limit-first: MWCC evaluates fcmpo operands
-        // left-to-right, and the resulting temp allocation order
-        // (sum, const, limit -> f2,f1,f0) matches retail.
-        self->field_0xBC += lbl_eu_8066AA78;
-        f32 v = self->field_0xBC;
+        // Declaration order fixes fpr assignment (lim=f0, step=f1,
+        // cur=f2); initializing cur before step puts the member load first
+        // in the instruction stream, as retail.
         f32 lim = lbl_eu_8066AA18;
-        if (lim < v) {
+        f32 step;
+        f32 cur = self->field_0xBC;
+        step = lbl_eu_8066AA78;
+        f32 v = cur + step;
+        self->field_0xBC = v;
+        if (v > lim) {
             self->field_0xBC = lim;
         }
     } else {
-        self->field_0xBC -= lbl_eu_8066AA78;
-        f32 v = self->field_0xBC;
         f32 lim = lbl_eu_8066AA24;
-        if (lim > v) {
+        f32 step;
+        f32 cur = self->field_0xBC;
+        step = lbl_eu_8066AA78;
+        f32 v = cur - step;
+        self->field_0xBC = v;
+        if (v < lim) {
             self->field_0xBC = lim;
         }
     }

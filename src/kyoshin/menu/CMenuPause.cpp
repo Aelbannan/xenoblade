@@ -27,14 +27,6 @@ extern u32 lbl_eu_80663E28;
 extern "C" void func_80252564(CMenuPause* p);
 
 void CMenuPause::Init() {
-    // u16 -> f32 conversion unions; the 0x43300000 high words are written up
-    // front so MWCC hoists the constant stores into the prologue. The
-    // subtraction is done in single precision so MWCC emits fsubs (the
-    // retail shape) instead of a double-precision fsub.
-    CMenuPauseF64Conv convH, convW;
-    convW.w[0] = 0x43300000;
-    convH.w[0] = 0x43300000;
-
     func_8008294C__Q22cf13CfGameManagerFv(true);
     func_80188890(1);
 
@@ -75,55 +67,56 @@ void CMenuPause::Init() {
     // resource, bind it (func_80137E7C) and set the pane size from the
     // texture's 2D dimension header (u16 w/h converted via the 2^52 trick).
     {
-        const char* msgName = func_80086F9C__Q22cf13CfGameManagerFv(-1)
-                                  ? &lbl_eu_8050C5C8[0x7d]
-                                  : &lbl_eu_8050C5C8[0x86];
-        u16 msg = func_8013606C(&lbl_eu_8050C5C8[0x5d], msgName, 0x6b);
+        u16 msg = func_8013606C(
+            &lbl_eu_8050C5C8[0x5d],
+            func_80086F9C__Q22cf13CfGameManagerFv(-1) ? &lbl_eu_8050C5C8[0x7d]
+                                                      : &lbl_eu_8050C5C8[0x86],
+            0x6b);
         char* handle = func_80138F78(msg);
-        nw4r::lyt::ArcResourceAccessor* acc = func_801355F4();
-        void* tex = acc->GetResource(0x74696D67, handle, NULL);
+        void* tex = func_801355F4()->GetResource(0x74696D67, handle, NULL);
         if (tex != NULL) {
             func_80137E7C(mLayout, (void*)&lbl_eu_8050C5C8[0x8f], tex);
+            // u16 -> f32 via MWCC's own 0x43300000 double-trick conversion:
+            // the width/height reads are hoisted ahead of FindPaneByName and
+            // the Size copy lands as two stfs pairs (pane + stack scratch).
             CMenuPauseTexDims* dims =
                 ((CMenuPauseTexObj*)tex)->mChain->mDims;
-            u16 v2 = dims->field_0x2;
-            u16 v0 = dims->field_0x0;
+            u16 texHeight = dims->field_0x2;
+            u16 texWidth = dims->field_0x0;
             nw4r::lyt::Pane* pane = mLayout->GetRootPane()
                                          ->FindPaneByName(&lbl_eu_8050C5C8[0x8f],
                                                           true);
             if (pane != NULL) {
-                convW.w[1] = v2;
-                convH.w[1] = v0;
+                // Plain u16 -> float assignment: MWCC emits its own
+                // 0x43300000/fsubs conversion idiom for this shape.
                 nw4r::lyt::Size size;
-                size.width = (f32)(convW.d - lbl_eu_806687D0);
-                size.height = (f32)(convH.d - lbl_eu_806687D0);
+                size.width = texHeight;
+                size.height = texWidth;
                 pane->SetSize(size);
             }
         }
     }
     {
-        const char* msgName = func_80086F9C__Q22cf13CfGameManagerFv(-1)
-                                  ? &lbl_eu_8050C5C8[0x7d]
-                                  : &lbl_eu_8050C5C8[0x86];
-        u16 msg = func_8013606C(&lbl_eu_8050C5C8[0x5d], msgName, 0x6c);
+        u16 msg = func_8013606C(
+            &lbl_eu_8050C5C8[0x5d],
+            func_80086F9C__Q22cf13CfGameManagerFv(-1) ? &lbl_eu_8050C5C8[0x7d]
+                                                      : &lbl_eu_8050C5C8[0x86],
+            0x6c);
         char* handle = func_80138F78(msg);
-        nw4r::lyt::ArcResourceAccessor* acc = func_801355F4();
-        void* tex = acc->GetResource(0x74696D67, handle, NULL);
+        void* tex = func_801355F4()->GetResource(0x74696D67, handle, NULL);
         if (tex != NULL) {
             func_80137E7C(mLayout, (void*)&lbl_eu_8050C5C8[0xa6], tex);
             CMenuPauseTexDims* dims =
                 ((CMenuPauseTexObj*)tex)->mChain->mDims;
-            u16 v2 = dims->field_0x2;
-            u16 v0 = dims->field_0x0;
+            u16 texHeight = dims->field_0x2;
+            u16 texWidth = dims->field_0x0;
             nw4r::lyt::Pane* pane = mLayout->GetRootPane()
                                          ->FindPaneByName(&lbl_eu_8050C5C8[0xa6],
                                                           true);
             if (pane != NULL) {
-                convW.w[1] = v2;
-                convH.w[1] = v0;
                 nw4r::lyt::Size size;
-                size.width = (f32)(convW.d - lbl_eu_806687D0);
-                size.height = (f32)(convH.d - lbl_eu_806687D0);
+                size.width = texHeight;
+                size.height = texWidth;
                 pane->SetSize(size);
             }
         }
@@ -215,12 +208,14 @@ body:
 
 void CMenuPause::cbRenderBefore() {
     CTaskGame::getInstance();
-    if (CTaskGame::func_800426F0()) {
-        goto done;
-    }
-    if (lbl_eu_80663E28 & (1u << 21)) {
-        goto done;
-    }
+    if (CTaskGame::func_800426F0()) goto done;
+    // Branch-over-branch guard, same trick as Move(): keeps MWCC from folding
+    // the bit test into the first bne -- retail emits `beq body; b done`.
+    if ((lbl_eu_80663E28 & (1u << 21)) != 0) goto done;
+    goto body;
+done:
+    return;
+body:
     if (!func_8013BE50()) {
         goto done;
     }
@@ -233,8 +228,6 @@ void CMenuPause::cbRenderBefore() {
             func_80137038(mLayout, &drawInfo, 0, 1);
         }
     }
-done:
-    ;
 }
 
 // Raw byte shim over the embedded CProcess region + CMenuPause fields so the
@@ -259,9 +252,12 @@ struct CMenuPauseCtorShim {
 };
 
 // Singleton-factory constructor: only the first allocation sticks (subsequent
-// calls return NULL). Reuses the proven CMenuMapSelect factory register
-// scheduling: CProcess ctor, PTMF callback block, flags, final vtable, the two
+// calls return NULL). Fill order mirrors retail: CProcess base ctor, provisional
+// CProcess vtable, the six PTMF callback slots, flags, final vtable, the two
 // IScnRender subobject vtables, mScene, then the memory-region ctor and zeros.
+// The PTMF slots are read through a volatile pointer: the intervening shim
+// stores must not let MWCC cache the loads, and retail re-reads slots 0/1/2 for
+// the second callback group (6 loads total).
 extern "C" CMenuPause* __ct__CMenuPause(CProcess* parent, CProcess* parent2) {
     if (lbl_eu_806647C8 != 0) {
         return 0;
@@ -272,32 +268,36 @@ extern "C" CMenuPause* __ct__CMenuPause(CProcess* parent, CProcess* parent2) {
         (CMenuPauseCtorShim*)allocate__Q23mtl10MemManagerFUlUl(0x88, handle);
 
     if (shim != 0) {
-        __ct__8CProcessFv((void*)shim);
+        __ct__8CProcessFv(shim);
+// The PTMF slots are read through a volatile u32* pointer: each read emits a
+// fresh load, matching retail's 6-load pattern (slots 0/1/2 re-read for the
+// second callback group). Slot 1 is read first to match retail's scheduling.
+        volatile u32* ptmf = (volatile u32*)__ptmf_null;
+        char* vtFinal = lbl_eu_805371A0;
         shim->vtable = lbl_eu_8052BF70;
 
-        u32* ptmf = __ptmf_null;
-        char* vtFinal = lbl_eu_805371A0;
         // Persistent zero used for all the flag/member zero-writes below; keeping
         // it live across the sub-object ctor makes MWCC allocate a callee-saved
-        // register (retail r31) and matches the 4-register prologue.
+        // register (retail r31).
         u8 zero = 0;
 
-        u32 ptmf1 = ptmf[1];
-        u32 ptmf0 = ptmf[0];
         char* iscnVtbl1 = vtFinal + 0x24;
         char* iscnVtbl2 = vtFinal + 0xac;
-        shim->callbacks[0] = ptmf0;
-        shim->callbacks[1] = ptmf1;
+        // Both group-1 PTMF reads happen before the callback stores (retail
+        // scheduling); volatile keeps each read a real load.
+        u32 t1 = ptmf[1];
+        u32 t0 = ptmf[0];
+        shim->callbacks[0] = t0;
+        shim->callbacks[1] = t1;
+        u32 t2 = ptmf[2];
+        shim->callbacks[2] = t2;
 
-        u32 ptmf2 = ptmf[2];
-        shim->callbacks[2] = ptmf2;
-
-        ptmf1 = ptmf[1];
-        ptmf0 = ptmf[0];
-        shim->callbacks[3] = ptmf0;
-        shim->callbacks[4] = ptmf1;
-        ptmf2 = ptmf[2];
-        shim->callbacks[5] = ptmf2;
+        t1 = ptmf[1];
+        t0 = ptmf[0];
+        shim->callbacks[3] = t0;
+        shim->callbacks[4] = t1;
+        t2 = ptmf[2];
+        shim->callbacks[5] = t2;
 
         shim->field54 = zero;
         shim->field55 = zero;
@@ -311,11 +311,11 @@ extern "C" CMenuPause* __ct__CMenuPause(CProcess* parent, CProcess* parent2) {
 
         shim->mLayout = 0;
         shim->mField80 = 0;
-        shim->mState = 0;
+        shim->mState = zero;
     }
 
     lbl_eu_806647C8 = (CMenuPause*)shim;
-    Regist__8CProcessFP8CProcessb((void*)shim, parent, 0);
+    Regist__8CProcessFP8CProcessb(shim, parent, 0);
     return lbl_eu_806647C8;
 }
 
@@ -355,7 +355,8 @@ extern "C" void func_80252564(CMenuPause* p) {
     CPad* pad = cf::CfGameManager::getCurrentPad();
     u32 first;
     u32 second;
-    if (cf::CfGameManager::func_80086F9C(-1) != 0) {
+    // Call the raw mangled import so the -1 channel argument reaches r3.
+    if (func_80086F9C__Q22cf13CfGameManagerFv(-1) != 0) {
         first = (pad->mPressedButtonFlags >> 21) & 1;
         second = (pad->mPressedButtonFlags >> 22) & 1;
     } else {

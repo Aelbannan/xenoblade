@@ -1489,7 +1489,7 @@ config.libs = [
             Object(NonMatching, "CriWare/src/adx/sj/sj_err.c", mw_version = "Wii/1.1"),
             Object(NonMatching, "CriWare/src/adx/svm/svm.c", mw_version = "Wii/1.1"),
             Object(NonMatching, "CriWare/src/adx/adxt/adx_dcd3.c", mw_version = "Wii/1.1"),
-            Object(NonMatching, "CriWare/src/adx/adxt/adx_bsps.c", mw_version = "Wii/1.1"),
+            Object(Matching, "CriWare/src/adx/adxt/adx_bsps.c", mw_version = "Wii/1.1"),
             Object(NonMatching, "CriWare/src/adx/adxt/adx_bau.c", mw_version = "Wii/1.1"),
             Object(NonMatching, "CriWare/src/adx/wiirna/rna_crs.c", mw_version = "Wii/1.1"),
             Object(Matching, "CriWare/src/adx/wiirna/rna_err.c", mw_version = "Wii/1.1"),
@@ -1955,7 +1955,7 @@ config.libs = [
             Object(NonMatching, "monolib/src/scn/CVirtualLightObj.cpp"),
             Object(NonMatching, "monolib/src/scn/CScn.cpp"),  # -O4,p (default): Draw needs separate r29-r31 spills; -O4,s emits stmw
             Object(NonMatching, "monolib/src/scn/CScn_80496B0C.cpp"),
-            Object(NonMatching, "monolib/src/scn/CScnBlend.cpp"),
+            Object(Matching, "monolib/src/scn/CScnBlend.cpp"),
             Object(NonMatching, "monolib/src/scn/CScnBloom.cpp"),
             Object(NonMatching, "monolib/src/scn/CScnCameraMan.cpp"),
             Object(NonMatching, "monolib/src/scn/CScnEffectActNw4r.cpp"),

@@ -43,10 +43,12 @@ struct AdxBsp {
     s32 field_0x6C;    // 0x6C - availWrPos
     s32 field_0x70;    // 0x70 - wrPos
     char field_0x74[4];// 0x74
-    void* field_0x78;  // 0x78 - getWr callback
-    void* field_0x7C;  // 0x7C - getWr context
-    void* field_0x80;  // 0x80 - end-of-stream callback
-    void* field_0x84;  // 0x84 - eos context
+    // getWr callback: reports (pcmOfst, availWrPos, wrPos) to the caller context.
+    // Both callbacks receive an opaque, caller-owned context object.
+    void (*field_0x78)(void*, s32*, s32*, s32*);  // 0x78 - getWr callback
+    struct AdxBspCbCtx* field_0x7C;               // 0x7C - getWr context
+    void (*field_0x80)(void*, u32, u32);          // 0x80 - end-of-stream callback
+    struct AdxBspCbCtx* field_0x84;               // 0x84 - eos context
     u32 field_0x88;    // 0x88
     u32 field_0x8C;    // 0x8C
     u32 field_0x90;    // 0x90 - decSmpl
@@ -55,6 +57,10 @@ struct AdxBsp {
     char field_0x9A[2];// 0x9A
     s16 field_0x9C;    // 0x9C - outX2
 };
+
+// Opaque caller-owned context passed back through the getWr / EOS callbacks;
+// the layout is private to the registering module.
+struct AdxBspCbCtx;
 
 // ADX SPSD info block layout (subset consumed by ADX_DecodeInfoSpsd).
 struct AdxsInfo {
@@ -68,7 +74,7 @@ struct AdxsInfo {
     u16 field_0x2A;    // 0x2A
 };
 
-int ADX_DecodeInfoSpsd(struct AdxsInfo *hdr, int size, u16 *outBps, s8 *outCodec,
+int ADX_DecodeInfoSpsd(struct AdxsInfo *hdr, int size, s16 *outBps, s8 *outCodec,
     u8 *outVer, s8 *outCh, s8 *outX, u32 *outNum, u32 *outSmp,
     u32 *outBlk, s16 *outX2)
 {
@@ -76,25 +82,31 @@ int ADX_DecodeInfoSpsd(struct AdxsInfo *hdr, int size, u16 *outBps, s8 *outCodec
     *outX = (hdr->field_0x9 & 3) + 1;
     *outNum = hdr->field_0x2A;
 
-    // Selector: 4-bit-per-sample family (values 2-3), else 16-bit / 8-bit.
-    if ((u32)(hdr->field_0x8 - 2) <= 1u) {
-        *outVer = 4;
-        *outCh = *outX;
-        *outBlk = 2;
-        *outSmp = hdr->field_0xC * 2;
-        *outX2 = 2;
-    } else if (hdr->field_0x8 == 0) {
+    // Selector codec switch: MWCC emits a decision tree - merged cases 2/3
+    // (4-bit family) are range-tested first, then equality tests for 0 and 1.
+    switch (hdr->field_0x8) {
+    case 0:
         *outVer = 0x10;
         *outCh = *outX << 1;
         *outBlk = 1;
         *outSmp = hdr->field_0xC / 2;
         *outX2 = 0;
-    } else if (hdr->field_0x8 == 1) {
+        break;
+    case 1:
         *outVer = 8;
         *outCh = *outX;
         *outBlk = 1;
         *outSmp = hdr->field_0xC;
         *outX2 = 1;
+        break;
+    case 2:
+    case 3:
+        *outVer = 4;
+        *outCh = *outX;
+        *outBlk = 2;
+        *outSmp = hdr->field_0xC * 2;
+        *outX2 = 2;
+        break;
     }
 
     // SPSD output is always fixed stereo/16-bit regardless of the source codec.
@@ -111,7 +123,7 @@ s16 ADXB_DecodeHeaderSpsd(struct AdxBsp* self, const u8* data, s32 size)
     u16 outBps;
 
     self->field_0x2 = 1;
-    if (ADX_DecodeInfoSpsd((struct AdxsInfo*)data, size, &outBps, &self->field_0xC,
+    if (ADX_DecodeInfoSpsd((struct AdxsInfo*)data, size, (s16*)&outBps, &self->field_0xC,
             &self->field_0xD, &self->field_0xF, &self->field_0xE,
             &self->field_0x14, &self->field_0x18, &self->field_0x10,
             &self->field_0x9C) < 0) {
@@ -142,47 +154,45 @@ extern u32 ADXPD_GetStat(void* self);
 
 void ADXB_ExecOneSpsd(struct AdxBsp* self)
 {
-    // Source sample buffer, kept live across the whole function (r31).
-    s16* src = (s16*)self->field_0x48;
-    s32 w;
+    u16* dst1;
     s32 i;
+    // Source sample buffer, kept live across the whole function (r31).
+    u16* src = (u16*)self->field_0x48;
+    s32 w;
 
-    if (self->field_0x4 == 1) {
-        if (ADXPD_GetStat(self->field_0x8) == 0) {
-            // Query the write position via the registered getWr callback
-            ((void (*)(void*, s32*, s32*, s32*))self->field_0x78)(
-                self->field_0x7C, &self->field_0x68, &self->field_0x6C, &self->field_0x70);
+    if (self->field_0x4 == 1 && ADXPD_GetStat(self->field_0x8) == 0) {
+        // Query the write position via the registered getWr callback
+        self->field_0x78(
+            self->field_0x7C, &self->field_0x68, &self->field_0x6C, &self->field_0x70);
 
-            w = self->field_0x60 - self->field_0x68;
-            if (w > self->field_0x6C) w = self->field_0x6C;
-            if (w > self->field_0x4C) w = self->field_0x4C;
+        // Clamp the decodable count: space to buffer end, writer distance, caller limit.
+        w = self->field_0x60 - self->field_0x68;
+        if (w > self->field_0x6C) w = self->field_0x6C;
+        if (w > self->field_0x4C) w = self->field_0x4C;
 
-            {
-                s32 ch = self->field_0xE;
-                // dst1 = pcmBase + pcmOfst*2 (in samples); stereo second buffer adds ch offset
-                s16* dst1 = (s16*)((u8*)self->field_0x5C + (self->field_0x68 << 1));
-                if (ch == 2) {
-                    s16* dst2 = (s16*)((u8*)self->field_0x5C + ((self->field_0x64 + self->field_0x68) << 1));
-                    for (i = 0; i < w; i++) {
-                        dst1[i] = src[i * 2];
-                        dst2[i] = src[i * 2 + 1];
-                    }
-                } else {
-                    for (i = 0; i < w; i++) {
-                        dst1[i] = src[i];
-                    }
+        // dst1 = pcmBase + pos*2 bytes; stereo splits L/R into two half buffers.
+        {
+            dst1 = (u16*)(self->field_0x5C + (self->field_0x68 << 1));
+            if (self->field_0xE == 2) {
+                u16* dst2 = (u16*)(self->field_0x5C + ((self->field_0x64 + self->field_0x68) << 1));
+                for (i = 0; i < w; i++) {
+                    dst1[i] = src[i * 2];
+                    dst2[i] = src[i * 2 + 1];
+                }
+            } else {
+                for (i = 0; i < w; i++) {
+                    dst1[i] = src[i];
                 }
             }
-            self->field_0x94 = (u32)(self->field_0xE * (w << 1));
-            self->field_0x90 = (u32)w;
-            self->field_0x4 = 2;
         }
+        self->field_0x90 = (u32)w;
+        self->field_0x94 = (u32)(self->field_0xE * (w << 1));
+        self->field_0x4 = 2;
     }
 
     if (self->field_0x4 == 2) {
         // End-of-stream callback with (decDtLen, decSmpl)
-        ((void (*)(void*, u32, u32))self->field_0x80)(
-            self->field_0x84, self->field_0x94, self->field_0x90);
+        self->field_0x80(self->field_0x84, self->field_0x94, self->field_0x90);
         self->field_0x4 = 3;
     }
 }

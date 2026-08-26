@@ -12,15 +12,7 @@ void CalcMaterialDirectly(ResMdl mdl, AnmObjTexPat* pAnmTexPat,
 
         // Texture pattern animation.
         if (pAnmTexPat != NULL && pAnmTexPat->TestExistence(i)) {
-            // Clear only the tex/pltt index arrays; the existence flags are
-            // written unconditionally by GetResult.
             TexPatAnmResult patResult;
-            for (int j = 0; j < TexPatAnmResult::NUM_OF_ANMS; j++) {
-                patResult.tex[j] = ResTex(NULL);
-            }
-            for (int j = 0; j < TexPatAnmResult::NUM_OF_ANMS; j++) {
-                patResult.pltt[j] = ResPltt(NULL);
-            }
 
             const TexPatAnmResult* pResult =
                 pAnmTexPat->GetResult(&patResult, i);
@@ -29,9 +21,12 @@ void CalcMaterialDirectly(ResMdl mdl, AnmObjTexPat* pAnmTexPat,
         }
 
         // Texture SRT animation.
+        // NOTE: texSrt is declared before indMtx to match retail instruction
+        // scheduling (the indMtx address computation must be hoisted into the
+        // GetResTexSrt load slot).
         if (pAnmTexSrt != NULL && pAnmTexSrt->TestExistence(i)) {
-            ResMatIndMtxAndScale indMtx = mat.GetResMatIndMtxAndScale();
             ResTexSrt texSrt = mat.GetResTexSrt();
+            ResMatIndMtxAndScale indMtx = mat.GetResMatIndMtxAndScale();
 
             TexSrtAnmResult srtResult;
             const TexSrtAnmResult* pResult =

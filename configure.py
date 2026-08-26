@@ -1658,7 +1658,7 @@ config.libs = [
             Object(NonMatching, "nw4r/src/g3d/g3d_scnmdlsmpl.cpp"),
             Object(NonMatching, "nw4r/src/g3d/g3d_scnmdl.cpp"),
             Object(NonMatching, "nw4r/src/g3d/g3d_scnmdlexpand.cpp"),
-            Object(NonMatching, "nw4r/src/g3d/g3d_calcmaterial.cpp"),
+            Object(Matching, "nw4r/src/g3d/g3d_calcmaterial.cpp"),
 
             Object(NonMatching, "nw4r/src/g3d/g3d_init.cpp"),
             Object(NonMatching, "nw4r/src/g3d/g3d_scnproc.cpp"),

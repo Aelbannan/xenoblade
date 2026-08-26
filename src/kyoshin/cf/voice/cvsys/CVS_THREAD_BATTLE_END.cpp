@@ -11,17 +11,21 @@
 // CCharVoice pointer against the one being freed.
 void func_802A4DC8(CVS_THREAD_BATTLE_END* self, CCharVoice* voicePtr) {
     func_802A3BEC(self, voicePtr);
-    CCharVoice* vp;
     CVoiceHandle* handle;
-    for (int i = 0; i < self->field_0x34; i++) {
-        handle = self->field_0x20[i];
+    CCharVoice* vp;
+    CVS_THREAD_BATTLE_END* p = self;
+    int i;
+    for (i = 0; i < self->field_0x34; i++) {
+        handle = p->field_0x20[0];
         vp = (CCharVoice*)handle;
         if (handle != NULL) {
             vp = &handle->voice;
         }
         if (vp == voicePtr) {
-            self->field_0x20[i] = NULL;
+            p->field_0x20[0] = NULL;
         }
+        // Walk one word per iteration (reproduces retail's cursor register).
+        p = (CVS_THREAD_BATTLE_END*)((u8*)p + 4);
     }
 }
 
@@ -49,17 +53,25 @@ void func_802A4D04(CVS_THREAD_BATTLE_END* self) {
         // v0 declared first so MWCC colours the lwzu destination into r3
         // and the base pointer into r4, matching retail.
         u32 v0;
+        CVS_THREAD_HEAD_VIEW* head = (CVS_THREAD_HEAD_VIEW*)self;
         const u32* p = lbl_eu_8053997C;
         v0 = *p++;
-        self->unk4 = *p++;
-        self->unk0 = (u32*)v0;
-        self->unk8 = *p;
+        head->word4 = *p++;
+        head->word0 = v0;
+        head->word8 = *p;
     } else {
         // Advance/process virtual (vtable offset 8 = func_802A3B50), not the
         // size-getter blank1 (offset 0x10).
         self->func_802A3B50();
     }
 }
+
+// Vtable shape for the CVoiceHandle polymorphic voice objects; method at
+// offset 0x2BC reports whether the voice is currently playing.
+struct VoiceVtbl {
+    u8 pad[0x2BC];
+    int (*isPlaying)(CVoiceHandle*);
+};
 
 // us-802a70b0 (func_802A497C)
 // (Re)initialise the thread: seed the slot array, pick a random starting
@@ -68,11 +80,12 @@ void func_802A497C(CVS_THREAD_BATTLE_END* self) {
     // Restore the base state triple via the lwzu/spread load-with-update
     // pattern (v0 declared first so the lwzu destination colours low).
     u32 v0;
+    CVS_THREAD_HEAD_VIEW* head = (CVS_THREAD_HEAD_VIEW*)self;
     const u32* p = lbl_eu_80539964;
     v0 = *p++;
-    self->unk4 = *p++;
-    self->unk0 = (u32*)v0;
-    self->unk8 = *p;
+    head->word4 = *p++;
+    head->word0 = v0;
+    head->word8 = *p;
 
     int cnt = func_802A7870(self->field_0x20, 3, 0);
     self->field_0x34 = cnt;
@@ -85,58 +98,89 @@ void func_802A497C(CVS_THREAD_BATTLE_END* self) {
     self->field_0x30 = rnd;
     self->field_0x2c = rnd;
 
-    if (self->field_0x3a != 0) {
-        self->field_0x39 = self->field_0x3a;
-        return;
-    }
-    // No forced direction: scan the manager's voice list for a live one.
-    {
+    // Flag value never crosses a call site (constants assigned after the
+    // calls), so MWCC keeps it in r0 and converges both paths onto one stb.
+    // Scan written as the fall-through of a ==0 test to match retail layout.
+    u8 live = self->field_0x3a;
+    if (live == 0) {
+        // No forced direction: scan the manager's voice list for a live one.
         ItemListManager* mgr = func_800B6BA4();
         ItemListNode* node = mgr->sentinel->next;
         while (node != mgr->sentinel) {
-            u8* obj = node->object;
-            CVoiceHandle* handle = (CVoiceHandle*)obj;
-            if (obj != NULL) {
-                handle = (CVoiceHandle*)((u8*)obj - 0x3E9C);
+            // node->object points at the embedded CCharVoice (handle+0x3E9C);
+            // recover the owning CVoiceHandle.
+            CVoiceHandle* handle = (CVoiceHandle*)node->object;
+            if (handle != NULL) {
+                handle = (CVoiceHandle*)((u8*)handle - 0x3E9C);
             }
-            if (((int (*)(CVoiceHandle*))handle->vtable[0x2BC / 4])(handle) != 0) {
-                self->field_0x39 = 1;
-                return;
+            // Vtable method at 0x2BC: "is voice playing".
+            VoiceVtbl* vtbl = *(VoiceVtbl**)handle;
+            if (vtbl->isPlaying(handle) != 0) {
+                live = 1;
+                goto store;
             }
             node = node->next;
         }
+        live = 0;
     }
-    self->field_0x39 = 0;
+store:
+    self->field_0x39 = live;
 }
 
 // us-802a6fa4 (__ct__802A4870)
-// Factory/constructor.  Allocates a handle buffer (discarded) and the object,
+// Placement factory for CVS_THREAD_BATTLE_END (retail keeps this as a free
+// function, not an actual class __ct__).  Allocates a handle buffer (discarded) and the object,
 // runs the base constructor, sets the subclass vtable, then initialises the
 // slot array and state flags (including a random scan direction).
-CVS_THREAD_BATTLE_END* __ct__802A4870(int owner) try {
-    CVoiceHandle* handleBuf = func_802A330C(0x46, 1);
-    if (handleBuf == NULL) return NULL;
+// The redundant `self != NULL` guard reproduces retail's re-test of the
+// allocation result guarding the EH region; the catch rethrows via
+// __throw(0,0,0) so MWCC elides the __end__catch epilogue.  The init-state
+// triple is copied outside the try.
+CVS_THREAD_BATTLE_END* __ct__802A4870(int owner) {
+    // handleBuf is validated then discarded (retail leaks it here).
+    if (func_802A330C(0x46, 1) == NULL) {
+        return NULL;
+    }
 
     CVS_THREAD_BATTLE_END* self = (CVS_THREAD_BATTLE_END*)func_802A34E4(0x3c);
-    if (self == NULL) return NULL;
+    if (self == NULL) {
+        return NULL;
+    }
 
-    __ct__cf_CVS_THREAD();
-    ((void**)self)[0x1C / 4] = (void*)lbl_eu_805399B8;
-    self->field_0x3a = (u8)owner;
-    memset(self->field_0x20, 0, 0xc);
-    self->field_0x2c = 0;
-    self->field_0x30 = 0;
-    self->field_0x34 = 0;
-    self->field_0x39 = 0;
-    self->field_0x38 = (u8)(ml::math::mtRand(2) != 0);
+    if (self != NULL) {
+        try {
+            __ct__cf_CVS_THREAD(self);
 
-    const u32* base = lbl_eu_80539958;
-    self->unk0 = (u32*)base[0];
-    self->unk4 = base[1];
-    self->unk8 = base[2];
+            // Override the vtable at 0x1C with the derived one, then seed
+            // the slot array and direction flag.
+            ((CVS_THREAD_BATTLE_END_raw*)self)->vtable = lbl_eu_805399B8;
+            self->field_0x3a = (u8)owner;
+            memset(self->field_0x20, 0, 0xc);
+
+            self->field_0x2c = 0;
+            self->field_0x30 = 0;
+            self->field_0x34 = 0;
+            self->field_0x39 = 0;
+            // Retail tests bit 0 only (rlwinm rotl-1 extract), not a full
+            // zero comparison.
+            self->field_0x38 = (u8)(ml::math::mtRand(2) & 1);
+        } catch (...) {
+            __throw(0, 0, 0);
+        }
+    }
+
+    // Copy the init-state triple (outside try). Load base[1] before base[0]:
+    // retail colors the first-loaded value r0 and the second r4, storing r4
+    // to +0 and r0 to +4. Single pointer initialized directly from the
+    // symbol keeps lis/addi materialized once (retail r5).
+    u32 v1;
+    u32* p0;
+    CVS_THREAD_HEAD_VIEW* head = (CVS_THREAD_HEAD_VIEW*)self;
+    v1 = (p0 = lbl_eu_80539958)[1];
+    head->word0 = p0[0];
+    head->word4 = v1;
+    head->word8 = p0[2];
     return self;
-} catch (...) {
-    throw;
 }
 
 // us-802a71ac (func_802A4A78)
@@ -144,11 +188,15 @@ CVS_THREAD_BATTLE_END* __ct__802A4870(int owner) try {
 // pick a random ending line; otherwise gate on the thread sub-state (via
 // func_802A77E8 mode) and play the appropriate variant ID.
 void func_802A4A78(CVS_THREAD_BATTLE_END* self) {
-    u32* base = (u32*)lbl_eu_80539970;
-    u32 v0 = base[0];
-    self->unk4 = base[1];
-    self->unk0 = (u32*)v0;
-    self->unk8 = base[2];
+    // Re-seed the state triple via the lwzu/spread load-with-update pattern
+    // (v0 declared first so MWCC colours the lwzu destination low).
+    u32 v0;
+    CVS_THREAD_HEAD_VIEW* head = (CVS_THREAD_HEAD_VIEW*)self;
+    const u32* p = lbl_eu_80539970;
+    v0 = *p++;
+    head->word4 = *p++;
+    head->word0 = v0;
+    head->word8 = *p;
 
     int idx = self->field_0x30;
     CVoiceHandle* handle = self->field_0x20[idx];
@@ -175,9 +223,8 @@ void func_802A4A78(CVS_THREAD_BATTLE_END* self) {
             }
         } else if (self->field_0x34 == 1 && func_802A77E8(h) == 7) {
             if (ml::math::mtRand(100) < 0x1e) {
-                int x = ml::math::mtRand(100);
-                if (x >= 0x32) voiceId = 0x5de;
-                else voiceId = 0x5dd;
+                // Bool-to-int add reproduces retail's branchless subfc/subfe.
+                voiceId = 0x5dd + (int)(ml::math::mtRand(100) >= 0x32);
             } else {
                 voiceId = -1;
             }

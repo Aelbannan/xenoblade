@@ -296,17 +296,16 @@ void func_8049F168(CScnItemCamera* self, ml::CVec3* v) {
     nw4r::math::VEC3Add((nw4r::math::VEC3*)&newPos,
                         (nw4r::math::VEC3*)&self->mTransform.mPos,
                         (nw4r::math::VEC3*)v);
-    tmp.set(newPos);
+    ml::CVec3 tmp2(newPos);
 
-    // Aim point (0x138) += v (scalar adds; MWCC pairs the consecutive
-    // component updates itself).
-    self->mCamParam0 = self->mCamParam0 + v->x;
-    self->mCamParam1 = self->mCamParam1 + v->y;
-    self->mCamParam2 = self->mCamParam2 + v->z;
+    // Aim point (0x138) += v.
+    nw4r::math::VEC3Add((nw4r::math::VEC3*)&self->mCamParam0,
+                        (nw4r::math::VEC3*)&self->mCamParam0,
+                        (nw4r::math::VEC3*)v);
 
-    cam->mPosX = *(u32*)&tmp.x;
-    cam->mPosY = *(u32*)&tmp.y;
-    cam->mPosZ = *(u32*)&tmp.z;
+    cam->mPosX = *(u32*)&tmp2.x;
+    cam->mPosY = *(u32*)&tmp2.y;
+    cam->mPosZ = *(u32*)&tmp2.z;
 
     ((CScnItemCameraRefreshIf*)self)->refresh();
 }

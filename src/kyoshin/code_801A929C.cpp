@@ -170,8 +170,17 @@ CtrlStateWork* func_801A9CCC(CtrlStateWork* work) {
     work->m1A = 0;
     work->m1B = 0;
 
-    // Default-initialize all 128 entries.
-    CtrlState* it = &work->mEntries[0];
+    // Default-initialize all 128 entries (entry 0 written directly).
+    CtrlState* it0 = &work->mEntries[0];
+    it0->m1C = lbl_eu_80667D64;
+    it0->m20 = lbl_eu_80667D60;
+    it0->m28 = lbl_eu_80667D64;
+    it0->m2C = -1;
+    it0->m2E = 0;
+    it0->m30 = 0;
+    it0->m32 = 0;
+
+    CtrlState* it = &work->mEntries[1];
     CtrlState* tail = &work->mEntries[128];
     while (it != tail) {
         it->m1C = lbl_eu_80667D64;

@@ -31,7 +31,7 @@ __declspec(noinline) void func_804828F0(u8* self, u32 flags, u32 enable);
 // Same-TU chain-walk helpers (defined below in this TU); forward-declared
 // so func_80483448 can inline their walk shapes with the depth-5/4 handle
 // calling the helper (the retail keeps those as real calls).
-extern "C" float func_80484EB0(CScnItemModel* self);
+extern "C" float func_80484EB0(void* self);
 extern "C" void func_80484E5C(CScnItemModel* self, float value);
 extern "C" void func_80485684(CScnItemModel* self, u32 param);
 extern "C" void func_80482B3C(CScnItemModel* self, u32 param);
@@ -1463,8 +1463,9 @@ extern "C" void func_80484E5C(CScnItemModel* self, float value) {
 // 0x7B0 value. Same hand-unrolled 5-level self tail-call shape as
 // func_80484E5C (MWCC does not auto-unroll pointer-chasing loops; retail is
 // this shape). extern "C" keeps the self tail-call reloc name verbatim.
-extern "C" float func_80484EB0(CScnItemModel* self) {
-    CScnItemModel* n1 = self->field_0x7C4;
+extern "C" float func_80484EB0(void* self) {
+    CScnItemModel* s = (CScnItemModel*)self;
+    CScnItemModel* n1 = s->field_0x7C4;
     if (n1 != 0) {
         CScnItemModel* n2 = n1->field_0x7C4;
         if (n2 != 0) {
@@ -1484,7 +1485,7 @@ extern "C" float func_80484EB0(CScnItemModel* self) {
         }
         return n1->value7B0;
     }
-    return self->value7B0;
+    return s->value7B0;
 }
 
 // func_80484F18: walk the field_0x7C4 chain to its last node and tail-call

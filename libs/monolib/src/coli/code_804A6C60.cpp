@@ -2658,10 +2658,10 @@ extern "C" bool func_804ABF08(CColiObject* self) {
     if (r * r >= dist2) return true;
     f32 rs = r + self->field_0x5c;
     if (rs * rs >= dist2) {
-        // Split so the scale-constant load lands immediately after the
-        // Atan2FIdx call and the phase-offset load follows it (retail order).
-        f32 scaled = lbl_eu_8066AE60 *
-                     nw4r::math::Atan2FIdx(diff.x, diff.z);
+        // Call first with both stack args staged, scale-constant load
+        // strictly after the call returns (retail order).
+        f32 atanv = nw4r::math::Atan2FIdx(diff.x, diff.z);
+        f32 scaled = lbl_eu_8066AE60 * atanv;
         f32 ang = scaled - self->field_0x64;
         while (lbl_eu_8066A1F8 <= ang) ang -= lbl_eu_8066A1FC;
         while (ang < -lbl_eu_8066A1F8) ang += lbl_eu_8066A1FC;

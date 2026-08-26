@@ -3871,6 +3871,16 @@ UNIT_RULES: dict[str, UnitRules] = {
             # CWorkRoot range). The 13 .text refs resolve at link.
             ("spInstance__Q217CWorkRootThreadNS15CWorkRootThread", "spInstance__Q223@unnamed@CWorkRoot_cpp@15CWorkRootThread"),
         ),
+        # Retail GC'd three MWCC-only text orphans: dummy1 (a source-side
+        # isRunning-emission forcing helper retail never had) and the
+        # reslist/_reslist_base dtors (strong copies live in CWorkThread.o;
+        # any surviving refs resolve there via UNDEF, same as retail).
+        drop_text_symbols=("dummy1__9CWorkRootFP11CWorkThread",),
+        drop_text_symbols_as_undef=(
+            "__dt__23reslist<P11CWorkThread>Fv",
+            "__dt__29_reslist_base<P11CWorkThread>Fv",
+        ),
+        repack_after_drop=16,
     ),
     "CScriptCode.o": UnitRules(
         # Class now derives from CWorkThread with out-of-line virtuals, so MWCC

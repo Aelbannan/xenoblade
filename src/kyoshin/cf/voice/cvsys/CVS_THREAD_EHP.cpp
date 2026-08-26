@@ -226,22 +226,30 @@ CVS_THREAD_EHP* __ct__802A5ED4(CVoiceHandle* handle, CVoiceHandle* owner2, s32 h
 
     // Gauge computation (textually duplicated in retail):
     //   frac = max / cur, ratio = (max - hp) / cur.
-    // The hp s32->float step is MWCC's builtin int->float lowering (recomputed
+    // The hp s32->double step is MWCC's builtin int->double lowering (recomputed
     // inside each block; retail does not keep it live across the calls).
     cur = ((CVoiceChainVTV*)handle)->getCur();
-    ratio = (((CVoiceChainVTV*)handle)->getMax() - hp) / cur;
+    ratio = (((CVoiceChainVTV*)handle)->getMax() - (double)hp) / cur;
     cur = ((CVoiceChainVTV*)handle)->getCur();
     frac = ((CVoiceChainVTV*)handle)->getMax() / cur;
 
-    ok = frac > lbl_eu_80668C90 && lbl_eu_80668C90 < ratio;
+    // Retail materializes the branch condition into a bool with the zero init
+    // hoisted above the comparisons.
+    ok = 0;
+    if (frac > lbl_eu_80668C90 && lbl_eu_80668C90 < ratio) {
+        ok = 1;
+    }
     if (ok == 0) {
         // Duplicated re-check with the 0.3 threshold.
         cur = ((CVoiceChainVTV*)handle)->getCur();
-        ratio = (((CVoiceChainVTV*)handle)->getMax() - hp) / cur;
+        ratio = (((CVoiceChainVTV*)handle)->getMax() - (double)hp) / cur;
         cur = ((CVoiceChainVTV*)handle)->getCur();
         frac = ((CVoiceChainVTV*)handle)->getMax() / cur;
 
-        ok = frac > lbl_eu_80668C94 && lbl_eu_80668C94 < ratio;
+        ok = 0;
+        if (frac > lbl_eu_80668C94 && lbl_eu_80668C94 < ratio) {
+            ok = 1;
+        }
         if (ok == 0) {
             return NULL;
         }

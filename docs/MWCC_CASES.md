@@ -10652,3 +10652,19 @@ intermediate forms do not break the coalescing.
 - Fix:       Aligned the decl to code_801862C0.hpp exactly and passed `self->unkEE` explicitly. Bonus: `func_8020D824` went 92.5%→94.6% (7→5 regsw, 0 structural) — the explicit arg let MWCC color two more swaps correctly.
 - Result:    CfGimmickWarp builds; near-miss improved as a side effect.
 - Applies to/a.k.a.: before reaching for a no-arg stale-register decl, check whether retail reuses an already-live argument register — passing the real value can be byte-correct AND close regswaps. Also: `extern "C"` cannot be used at block scope in MWCC C++.
+
+## monolib/src/lod/CTaskLOD — branch-reloc name drift `.Fi`/`.FP8CTaskLOD` vs retail `.Fv` → route through extern "C" retail-named wrappers (Wii/1.1, -ipa file, FULL_MATCH x15)
+- Symptom:   accessor functions byte-identical but each carries one R_PPC_REL24 whose decomp name has an argument suffix (`func_8046E594__Q23LOD9LODMemManFi`, `...FP8CTaskLOD`) while the retail symbol map says `.Fv`; objdiff fuzzy stuck at ~99.3 despite hexdiff 100%.
+- Cause:     TU-local class decl gave the delegate methods real parameter types, so member calls mangle with arg suffixes; retail was built from a header declaring them no-arg (args passed anyway via r4+).
+- Fix:       NOT unavoidable (earlier note claimed "MWCC refuses to pass an arg to a no-arg-declared method"): declare `extern "C" void func_XXXX__Q23LOD9LODMemManFv(LODMemMan* self, <args>);` and replace `obj->method(args)` with `func_XXXX__Q23LOD9LODMemManFv(obj, args)`. Codegen stays byte-identical; reloc names match. Watch return types: a wrapper declared `void*` for a float-returning retail fn fails to compile — use `float`.
+- Result:    all 15 assigned CTaskLOD rows FULL_MATCH instruction_match 100.0.
+- Confidence: repo_proven
+- Applies to/a.k.a.: any TU-local class-decl shadowing a shared header's no-arg methods (CTaskLOD.cpp pattern); complements MWCC_PATTERNS reloc-name drift row.
+
+## monolib/src/device/CDevice — MWCC 10322 triggered by *including* data_vtables.hpp alone; namespace-scoped extern "C" RTTI decls as the fix (-ipa file, -RTTI on)
+- Symptom:   `illegal name overloading` (10322) at EOF whenever `#include "monolib/data_vtables.hpp"` is present in a TU that fully defines IWorkEvent/CWorkThread — even with zero uses of the RTTI symbols; masked for days by build failures blamed on other edits.
+- Cause:     file-scope `extern "C" void* __RTTI__10IWorkEvent/__RTTI__11CWorkThread` declarations collide with MWCC's implicit RTTI names once the complete classes are visible under `-ipa file`; a duplicate local decl triggers the same way.
+- Fix:       drop the include, declare the needed vtable-slot functions locally (no RTTI names), and put the two RTTI declarations in a namespace scope (`namespace CDeviceBlob { extern "C" void* __RTTI__10IWorkEvent; }`) referencing them qualified — CLibVM.cpp CLibVMBlob pattern. Verified codegen byte-identical vs a stripped-header include variant (only TU-name strings differ). Also: an anon-namespace definition of a lbl_eu_* pointer emits/references the `__21@unnamed@<tu>@`-mangled symbol — move decl+def to file scope with `extern "C"`.
+- Result:    CDevice compiles; __sinit_/wkStandbyLogin/createRegions improved; unit unblocked after being uncompilable since Aug 22.
+- Confidence: repo_proven
+- Applies to/a.k.a.: extends MWCC_CASES CDeviceGX/LODMemMan 10322 entries and the CDeviceRemotePad `-RTTI off` workaround — prefer local slot decls + namespaced RTTI when the TU must keep -RTTI on.

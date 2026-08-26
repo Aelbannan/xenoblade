@@ -2415,6 +2415,30 @@
         ]
       }
     },
+    "lbl_eu_8051CC20": {
+      "R_PPC_ADDR16_HA": {
+        "addend_delta": 0,
+        "alternatives": [],
+        "count": 1,
+        "kind": "data",
+        "retail_addend": 37057,
+        "retail_symbol": "lbl_eu_8051CBF8",
+        "units": [
+          "main/CriWare/src/sofdec/sfdcore/sfd/sfd_tim"
+        ]
+      },
+      "R_PPC_ADDR16_LO": {
+        "addend_delta": 0,
+        "alternatives": [],
+        "count": 1,
+        "kind": "data",
+        "retail_addend": 36961,
+        "retail_symbol": "lbl_eu_8051CBF8",
+        "units": [
+          "main/CriWare/src/sofdec/sfdcore/sfd/sfd_tim"
+        ]
+      }
+    },
     "lbl_eu_80535AD0": {
       "R_PPC_ADDR16_HA": {
         "addend_delta": 1,
@@ -3195,32 +3219,6 @@
         "scoped": true,
         "units": [
           "main/CriWare/src/sofdec/sfdcore/mpv/mpvabdec"
-        ]
-      }
-    },
-    "main/CriWare/src/sofdec/sfdcore/sfd/sfd_tim@...rodata.0": {
-      "R_PPC_ADDR16_HA": {
-        "addend_delta": 0,
-        "alternatives": [],
-        "count": 1,
-        "kind": "data",
-        "retail_addend": 37057,
-        "retail_symbol": "lbl_eu_8051CBF8",
-        "scoped": true,
-        "units": [
-          "main/CriWare/src/sofdec/sfdcore/sfd/sfd_tim"
-        ]
-      },
-      "R_PPC_ADDR16_LO": {
-        "addend_delta": 0,
-        "alternatives": [],
-        "count": 1,
-        "kind": "data",
-        "retail_addend": 36961,
-        "retail_symbol": "lbl_eu_8051CBF8",
-        "scoped": true,
-        "units": [
-          "main/CriWare/src/sofdec/sfdcore/sfd/sfd_tim"
         ]
       }
     },
@@ -25297,8 +25295,8 @@
       }
     }
   },
-  "function_pairs": 13213,
-  "generated": "2026-08-26T18:54:49.233865",
+  "function_pairs": 13215,
+  "generated": "2026-08-26T18:55:21.813119",
   "region": "us",
   "units_scanned": 1148,
   "version": 1

@@ -750,6 +750,7 @@ struct AnimTransformBasicData {
 // But the prompt says "return_info": {"type": "void"}
 // Defined before the Pane variant so MWCC cannot inline it and instead
 // emits the retail `bl` to the Pane-variant symbol.
+#pragma dont_inline on
 int CalcAnimationNum__Q34nw4r3lyt12AnimResourceCFPQ34nw4r3lyt4Paneb(
     const nw4r::lyt::AnimResource*, nw4r::lyt::Pane*, bool);
 
@@ -768,6 +769,8 @@ int CalcAnimationNum__Q34nw4r3lyt12AnimResourceCFPQ34nw4r3lyt5Groupb(
     return num;
 }
 
+// Retail keeps this variant outlined; the pragma above stops -ipa file
+// from folding it into the Group overload.
 int CalcAnimationNum__Q34nw4r3lyt12AnimResourceCFPQ34nw4r3lyt4Paneb(
     const nw4r::lyt::AnimResource* _this, nw4r::lyt::Pane* pPane,
     bool recursive) {
@@ -802,6 +805,7 @@ int CalcAnimationNum__Q34nw4r3lyt12AnimResourceCFPQ34nw4r3lyt4Paneb(
     }
     return num;
 }
+#pragma dont_inline reset
 
 namespace nw4r {
 namespace lyt {

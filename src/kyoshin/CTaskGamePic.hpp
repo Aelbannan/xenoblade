@@ -64,7 +64,7 @@ extern const f64 lbl_eu_80668BC0;
 
 // cbRenderBefore imports: CView::func_8043EA88's retail symbol is the
 // pre-mangled global name (member `this` unused in the body, rect in r3 /
-// view in r4 — see monolib/src/core/CView.cpp); the C++ member declaration
+// view in r4 - see monolib/src/core/CView.cpp); the C++ member declaration
 // in CView.hpp passes this in r3 (wrong call shape), and a plain global
 // declaration would be re-mangled, so the import is pinned with C linkage
 // (same scheme as kyoshin/cf/CTaskREvent.hpp, which uses the raw name).

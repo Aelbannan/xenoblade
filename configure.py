@@ -638,7 +638,7 @@ config.libs = [
             Object(NonMatching, "kyoshin/CEquipChange.cpp"),
             Object(NonMatching, "kyoshin/cf/CfMapMineManager.cpp"),
             Object(NonMatching, "kyoshin/CItemBoxGridSubMenu.cpp"),
-            Object(NonMatching, "kyoshin/cf/CfGimmick.cpp"),
+            Object(Matching, "kyoshin/cf/CfGimmick.cpp"),
             Object(NonMatching, "kyoshin/cf/CfGimmickElv.cpp"),
             Object(NonMatching, "kyoshin/cf/CfGimmickLock.cpp"),
             Object(NonMatching, "kyoshin/cf/CfGimmickWarp.cpp"),
@@ -710,7 +710,7 @@ config.libs = [
             # the TU defines no data sections (same residual as promoted
             # kyoshin/realtimeevt/CREvtLight).
             Object(Matching, "kyoshin/realtimeevt/CREvtMovie.cpp"),
-            Object(NonMatching, "kyoshin/CTaskGamePic.cpp"),
+            Object(Matching, "kyoshin/CTaskGamePic.cpp"),
             Object(NonMatching, "kyoshin/CTaskGameEvt.cpp"),
             Object(NonMatching, "kyoshin/cf/CHelpManager.cpp"),
             Object(NonMatching, "kyoshin/code_80296898.cpp"),

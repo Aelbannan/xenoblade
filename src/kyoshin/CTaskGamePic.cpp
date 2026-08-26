@@ -19,10 +19,6 @@
 // Helper import from another TU (retail C-linkage symbol, no mangling).
 extern "C" void* func_80495FF0(const void* scene);
 
-// forward declarations for scaffold thunk references (non-target glue)
-void __dt__12CTaskGamePicFv(void*);
-void cbRenderBefore__12CTaskGamePicFv(void*);
-
 // CTTask<CTaskGamePic> out-of-line Move/Draw/dtors (retail emits these as
 // standalone functions; the inline CTTask header copy would mark them inline).
 #pragma optimize_for_size on
@@ -245,7 +241,15 @@ extern "C" bool func_8029539C(CTaskGamePic* self, CEventFile* pEvent) {
     return false;
 }
 
+// Forward declarations of this TU's out-of-line member symbols, seen from the
+// glue-thunk call sites as plain function pointers taking the subobject.
+void __dt__12CTaskGamePicFv(CTaskGamePic*);
+void cbRenderBefore__12CTaskGamePicFv(CTaskGamePic*);
+
 // Non-target glue thunks (preserved from scaffold; not part of the match set).
+// These are secondary-vtable entries for the +0x54 file-event / +0x58 render
+// subobjects: adjust `this` back to the CTaskGamePic primary, tail-call the
+// real member.
 void OnFileEvent__12CTaskGamePicFP10CEventFile(void* self) {
     ((void (*)(void*))func_8029539C)((char*)self - 0x54);
 }

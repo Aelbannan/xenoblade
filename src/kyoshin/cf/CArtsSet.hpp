@@ -5,8 +5,10 @@
 
 namespace cf {
 
-    //size: 0x88
-    class CAttackParam {
+    // Plain field storage (0x84 bytes, no vptr). Declaring the data in a
+    // non-polymorphic base makes MWCC place CAttackParam's own vptr AFTER
+    // the fields, at +0x84 - the retail layout (lbl_eu_8052F610 vtable).
+    class CAttackParamData {
     public:
         u8 unk0;
         u8 unk4[0x20 - 0x4];
@@ -52,52 +54,17 @@ namespace cf {
         u32 unk78;
         float unk7C;
         float unk80;
-        void* unk84;   // 0x84 - raw vtable (slot 3 = +0x0C hook, read by UnkVirtualFunc4)
+    };
 
+    //size: 0x88
+    class CAttackParam : public CAttackParamData {
+    public:
         CAttackParam();
 
-        void CAttackParam_UnkVirtualFunc1(){
-            unk0 = 0;
-            unk20 = 0;
-            unk24 = 0;
-            unk28 = 0;
-            unk2A = 1;
-            unk2B = 0;
-            unk2C = 0;
-            unk30 = 0;
-            unk34 = 0;
-            unk36 = 0;
-            unk3C = 0;
-            unk3E = 0;
-            unk40 = 0;
-            unk42 = 0;
-            unk43 = 0;
-            unk44 = 0;
-            unk46 = 0;
-            unk48 = 0;
-            unk4A = 0;
-            unk4C = 0;
-            unk50 = 0;
-            unk54 = 0;
-            unk58 = 0;
-            unk5A = 0;
-            unk5C = 0;
-            unk5E = 0;
-            unk60 = 0;
-            unk64 = 0;
-            unk66 = 0;
-            unk67 = 0;
-            unk68 = 0;
-            unk6A = 0;
-            unk72 = 0;
-            unk74 = 0;
-            unk77 = 0;
-            unk7C = 0;
-            unk80 = 0;  
-
-            std::memset(unk38, 0, sizeof(unk38));
-            std::memset(unk6C, 0, sizeof(unk6C));
-        }
+        // First declared virtual -> vtable byte +0x08 under -RTTI (two
+        // hidden RTTI words at 0/4). The ctors install the class vptr at
+        // +0x84 and dispatch here through it (r12 idiom).
+        virtual void CAttackParam_UnkVirtualFunc1();
         void CAttackParam_UnkVirtualFunc2();
         void CAttackParam_UnkVirtualFunc3(u8 r4);
         void CAttackParam_UnkVirtualFunc4();
@@ -122,8 +89,8 @@ namespace cf {
         UNKTYPE* unk88;
 
         CArtsParam();
-        void CArtsParam_UnkVirtualFunc1();
-        void CArtsParam_UnkVirtualFunc2();
+        virtual void CArtsParam_UnkVirtualFunc1();   // overrides base slot +0x08
+        u8 CArtsParam_UnkVirtualFunc2();
         void CArtsParam_UnkVirtualFunc3(u8 r4);
         void vtableFunc3(u8 val);
     };

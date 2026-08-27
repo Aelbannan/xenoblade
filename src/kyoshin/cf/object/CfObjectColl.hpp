@@ -14,51 +14,169 @@ extern const float lbl_eu_8066694C;
 extern const float lbl_eu_80666950;
 extern char lbl_eu_804FC134[];
 
-// Presentation/event bitfield owned by CUICfManager (.sbss).
+namespace ml { struct CVec3; }
 
-// Static coll-impl instance registry (lazily initialized singletons).
-extern s8 lbl_eu_80663EA0;
-extern s8 lbl_eu_80663EA8;
-extern s8 lbl_eu_80663EB0;
-extern s8 lbl_eu_80663EB8;
-extern s8 lbl_eu_80663EC0;
-extern u8* lbl_eu_80663EA4;
-extern u8* lbl_eu_80663EAC;
-extern u8* lbl_eu_80663EB4;
-extern u8* lbl_eu_80663EBC;
-extern u8* lbl_eu_80663EC4;
-extern u8* lbl_eu_805285E8[5];
-extern u8 lbl_eu_80528820[];
-extern u8 lbl_eu_80528800[];
-extern u8 lbl_eu_805287E0[];
-extern u8 lbl_eu_805287C0[];
-extern u8 lbl_eu_805287A0[];
+// Presentation/event bitfield owned by CUICfManager (.sbss).
 
 // Shared distance helper (defined in code_800A3B24.cpp); retail symbol is flat.
 extern "C" float func_800A4B5C(const ml::CVec3& a, const ml::CVec3& b, const ml::CVec3& c);
 
 namespace cf {
 
-class CfObjectPoint {
-public:
-    virtual ~CfObjectPoint();
-    void func_800C1638();
-    int func_800AC604();
+// ---------------------------------------------------------------------------
+// Real class tree, recovered from the retail vtable lbl_eu_80528600
+// (= split1.s __vt__Q22cf12CfObjectColl, 0x178 bytes: RTTI, 0, 92 slots).
+//
+// Slot ownership follows the linker symbols that fill each entry in the
+// retail table (JP __RTTI__ / *_typestr confirm the classes):
+//
+//   cf::CObjectState   +0x08..+0x38 (UnkVirtualFunc1..13)
+//   cf::CObjectParam   +0x3C..+0x50 (UnkVirtualFunc1..6)
+//   cf::CfObject       +0x54..+0x174 (dtor slot + the UnkVirtualFunc zoo)
+//   cf::CfObjectPoint  overrides +0x48/+0x60/+0x68/+0x70/+0x9C/+0xA0/
+//                                 +0x158/+0x160 (func_800C136C..AC604)
+//   cf::CfObjectColl   overrides +0x54/+0x58/+0x5C/+0x6C/+0xA8/+0xB8
+//
+// Intermediate tables are never constructed as most-derived in this TU and no
+// compiler __vt__ survives the build (postprocess strips .data and points the
+// dtor's lis/addi vptr store at the retail label), so only displacement
+// positions and the definitions compiled here matter.
+// ---------------------------------------------------------------------------
 
-    u8 pad04[0x68 - 0x4];
-    u32 field_0x68;
+class CObjectState {
+public:
+    virtual void CObjectState_UnkVirtualFunc1();    // +0x08
+    virtual void CObjectState_UnkVirtualFunc2();    // +0x0C
+    virtual void CObjectState_UnkVirtualFunc3();    // +0x10
+    virtual void CObjectState_UnkVirtualFunc4();    // +0x14
+    virtual void CObjectState_UnkVirtualFunc5();    // +0x18
+    virtual void CObjectState_UnkVirtualFunc6();    // +0x1C
+    virtual void CObjectState_UnkVirtualFunc7();    // +0x20
+    virtual void CObjectState_UnkVirtualFunc8();    // +0x24
+    virtual void CObjectState_UnkVirtualFunc9();    // +0x28
+    virtual void CObjectState_UnkVirtualFunc10();   // +0x2C
+    virtual void CObjectState_UnkVirtualFunc11();   // +0x30
+    virtual void CObjectState_UnkVirtualFunc12();   // +0x34
+    virtual void CObjectState_UnkVirtualFunc13();   // +0x38
+};
+
+class CObjectParam : public CObjectState {
+public:
+    virtual void CObjectParam_UnkVirtualFunc1();    // +0x3C
+    virtual void CObjectParam_UnkVirtualFunc2();    // +0x40
+    virtual void CObjectParam_UnkVirtualFunc3();    // +0x44
+    virtual void func_800C136C();                   // +0x48 (overridden by CfObjectPoint)
+    virtual void CObjectParam_UnkVirtualFunc5();    // +0x4C
+    virtual void CObjectParam_UnkVirtualFunc6();    // +0x50
+};
+
+class CfObject : public CObjectParam {
+public:
+    virtual ~CfObject() {}                                          // +0x54 (empty; not in retail D1/D2 chain)
+
+    virtual int func_800AB3EC();                    // +0x58 (overridden by CfObjectColl)
+    virtual void func_800AB498();                   // +0x5C (overridden by CfObjectColl)
+    virtual void func_800C14CC();                   // +0x60 (overridden by CfObjectPoint)
+    virtual void CfObject_UnkVirtualFunc5();        // +0x64
+    virtual void func_800C1444();                   // +0x68 (overridden by CfObjectPoint)
+    virtual void func_800AB57C();                   // +0x6C (overridden by CfObjectColl)
+    virtual void func_800C1658();                   // +0x70 (overridden by CfObjectPoint)
+    virtual int CfObject_UnkVirtualFunc9();         // +0x74
+    virtual void CfObject_UnkVirtualFunc10();       // +0x78
+    virtual int CfObject_UnkVirtualFunc11();        // +0x7C
+    virtual void CfObject_UnkVirtualFunc12();       // +0x80
+    virtual void CfObject_UnkVirtualFunc13();       // +0x84
+    virtual void* CfObject_UnkVirtualFunc14(float value); // +0x88
+    virtual float CfObject_UnkVirtualFunc15();      // +0x8C
+    virtual void* CfObject_UnkVirtualFunc16();      // +0x90
+    virtual float CfObject_UnkVirtualFunc17();      // +0x94
+    virtual int CfObject_UnkVirtualFunc18();        // +0x98
+    virtual void func_80047814(const void* pos);          // +0x9C (overridden by CfObjectPoint)
+    virtual void func_800C171C();                   // +0xA0 (overridden by CfObjectPoint)
+    virtual void CfObject_UnkVirtualFunc21();       // +0xA4
+    virtual void func_800AB798(const void* pos);          // +0xA8 (see spell-out definition in the .cpp)
+    virtual ml::CVec3* CfObject_UnkVirtualFunc23(); // +0xAC
+    virtual void* CfObject_UnkVirtualFunc24();      // +0xB0
+    virtual void CfObject_UnkVirtualFunc25();       // +0xB4
+    virtual void func_800AB7A8();                   // +0xB8 (overridden by CfObjectColl)
+    virtual void* CfObject_UnkVirtualFunc27(void* param); // +0xBC
+    virtual void* CfObject_UnkVirtualFunc28();      // +0xC0
+    virtual float CfObject_UnkVirtualFunc29(float value); // +0xC4
+    virtual void CfObject_UnkVirtualFunc30();       // +0xC8
+    virtual void CfObject_UnkVirtualFunc31();       // +0xCC
+    virtual void CfObject_UnkVirtualFunc32();       // +0xD0
+    virtual void CfObject_UnkVirtualFunc33();       // +0xD4
+    virtual void CfObject_UnkVirtualFunc34();       // +0xD8
+    virtual void CfObject_UnkVirtualFunc35(float value); // +0xDC
+    virtual float CfObject_UnkVirtualFunc36();      // +0xE0
+    virtual void CfObject_UnkVirtualFunc37();       // +0xE4
+    virtual int CfObject_UnkVirtualFunc38();        // +0xE8
+    virtual int CfObject_UnkVirtualFunc39();        // +0xEC
+    virtual int CfObject_UnkVirtualFunc40();        // +0xF0
+    virtual int CfObject_UnkVirtualFunc41();        // +0xF4
+    virtual int CfObject_UnkVirtualFunc42();        // +0xF8
+    virtual int CfObject_UnkVirtualFunc43();        // +0xFC
+    virtual int CfObject_UnkVirtualFunc44();        // +0x100
+    virtual void CfObject_UnkVirtualFunc45();       // +0x104
+    virtual void CfObject_UnkVirtualFunc46();       // +0x108
+    virtual void CfObject_UnkVirtualFunc47();       // +0x10C
+    virtual void CfObject_UnkVirtualFunc48();       // +0x110
+    virtual void CfObject_UnkVirtualFunc49();       // +0x114
+    virtual void CfObject_UnkVirtualFunc50();       // +0x118
+    virtual int CfObject_UnkVirtualFunc51();        // +0x11C
+    virtual void CfObject_UnkVirtualFunc52();       // +0x120
+    virtual void CfObject_UnkVirtualFunc53();       // +0x124
+    virtual void CfObject_UnkVirtualFunc54();       // +0x128
+    virtual void CfObject_UnkVirtualFunc55();       // +0x12C
+    virtual void CfObject_UnkVirtualFunc56();       // +0x130
+    virtual void CfObject_UnkVirtualFunc57();       // +0x134
+    virtual void CfObject_UnkVirtualFunc58();       // +0x138
+    virtual void CfObject_UnkVirtualFunc59();       // +0x13C
+    virtual float CfObject_UnkVirtualFunc60();      // +0x140
+    virtual void CfObject_UnkVirtualFunc61();       // +0x144
+    virtual int CfObject_UnkVirtualFunc62();        // +0x148
+    virtual void CfObject_UnkVirtualFunc63();       // +0x14C
+    virtual int CfObject_UnkVirtualFunc64(int id);  // +0x150
+    virtual void CfObject_UnkVirtualFunc65(int flag); // +0x154
+    virtual void func_800C16F4(u32 flag);           // +0x158 (overridden by CfObjectPoint)
+    virtual void CfObject_UnkVirtualFunc67(int flag); // +0x15C
+    virtual int func_800AC604();                    // +0x160 (defined by CfObjectPoint)
+    virtual int CfObject_UnkVirtualFunc69();        // +0x164
+    virtual void CfObject_UnkVirtualFunc70();       // +0x168
+    virtual float CfObject_UnkVirtualFunc71();      // +0x16C
+    virtual void CfObject_UnkVirtualFunc72();       // +0x170
+    virtual float CfObject_UnkVirtualFunc73();      // +0x174
+
+    u8 pad04[0x68 - 0x04];
+    u32 field_0x68;                    // shared flag word
+    u32 field_0x6C;
+};
+
+class CfObjectPoint : public CfObject {
+public:
+    virtual ~CfObjectPoint();          // +0x54 override; defined in CfObjectPoint.cpp
+
+    void func_800C1638();              // non-virtual helper (external)
+
+    virtual void func_800C136C();      // +0x48
+    virtual void func_800C14CC();      // +0x60
+    virtual void func_800C1444();      // +0x68
+    virtual void func_800C1658();      // +0x70
+    virtual void func_80047814(const void* pos); // +0x9C: copies pos[0..2] to this+0x3C
+    virtual void func_800C171C();      // +0xA0
+    virtual void func_800C16F4(u32 flag); // +0x158
+    virtual int func_800AC604();       // +0x160
 };
 
 class CfObjectColl : public CfObjectPoint {
 public:
-    virtual ~CfObjectColl();
-    int func_800AB3EC();
-    void func_800AB498();
-    void func_800AB57C();
-    void func_800AB798();
-    void func_800AB7A8();
+    ~CfObjectColl();                   // +0x54 most-derived destructor
+    int func_800AB3EC();               // +0x58
+    void func_800AB498();              // +0x5C
+    void func_800AB57C();              // +0x6C
+    void func_800AB7A8();              // +0xB8
 
-    u8 pad6C[0x94 - 0x6C];
+    u8 pad70[0x94 - 0x70];
     u32 field_0x94;
     u32 field_0x98;
     u32 field_0x9C;                    // packed resource id
@@ -103,53 +221,37 @@ struct CollVec {
     u32 w8;
 };
 
-namespace ml { struct CVec3; }
-
-
-class CfObject {
+// Stateless collision-implementation interface.
+// (CfCollCapsuleImpl / CfCollCylinderImpl / CfCollAABBImpl / CfCollSphereImpl /
+// CfCollCircleImpl) carry no data members: each instance is just its vptr
+// storage, and the registry slots below double as those instances.
+class CfCollImpl {
 public:
-    void CfObject_UnkVirtualFunc67();
-    void CfObject_UnkVirtualFunc65();
-    int CfObject_UnkVirtualFunc11();
-    void CfObject_UnkVirtualFunc10();
-
-    // note: non-polymorphic helper view; offsets are absolute from 0
-    u8 pad04[0x68];
-    u32 field_0x68; // shared flag word
-    u8 pad6C[0x6C - 0x68];
-    u32 field_0x6C;
-    void CfObject_UnkVirtualFunc73();
-    void CfObject_UnkVirtualFunc72();
-    void CfObject_UnkVirtualFunc71();
-    void CfObject_UnkVirtualFunc70(float value);
-    void CfObject_UnkVirtualFunc69();
-    void CfObject_UnkVirtualFunc62();
-    void CfObject_UnkVirtualFunc61();
-    void CfObject_UnkVirtualFunc60();
-    void CfObject_UnkVirtualFunc59();
-    void CfObject_UnkVirtualFunc57();
-    void CfObject_UnkVirtualFunc51();
-    void CfObject_UnkVirtualFunc45();
-    void CfObject_UnkVirtualFunc42();
-    void CfObject_UnkVirtualFunc43();
-    void CfObject_UnkVirtualFunc44();
-    void CfObject_UnkVirtualFunc39();
-    void CfObject_UnkVirtualFunc40();
-    void CfObject_UnkVirtualFunc41();
-    void CfObject_UnkVirtualFunc38();
-    void CfObject_UnkVirtualFunc37();
-    void CfObject_UnkVirtualFunc36();
-    void CfObject_UnkVirtualFunc35();
-    void CfObject_UnkVirtualFunc28();
-    void CfObject_UnkVirtualFunc24();
-    void CfObject_UnkVirtualFunc21();
-    void CfObject_UnkVirtualFunc18();
-    void CfObject_UnkVirtualFunc17();
-    void* CfObject_UnkVirtualFunc16(float value);
-    void CfObject_UnkVirtualFunc15();
-    void* CfObject_UnkVirtualFunc14(float value);
-    void CfObject_UnkVirtualFunc13();
-    void CfObject_UnkVirtualFunc12();
-    void CfObject_UnkVirtualFunc5();
+    virtual void CfCollImpl_UnkVirtualFunc1(); // +0x08
+    virtual int load(CfObjectColl* self, CfObject* obj, ml::CVec3* out,
+                     float angle);             // +0x0C
 };
+
 } // namespace cf
+
+// Static coll-impl instance registry (lazily initialized singletons). Each
+// lbl_eu_80663Exx word is the instance itself; its content becomes the vptr
+// (one of the five leaf vtables below) on first use.
+extern s8 lbl_eu_80663EA0;
+extern s8 lbl_eu_80663EA8;
+extern s8 lbl_eu_80663EB0;
+extern s8 lbl_eu_80663EB8;
+extern s8 lbl_eu_80663EC0;
+extern cf::CfCollImpl lbl_eu_80663EA4;
+extern cf::CfCollImpl lbl_eu_80663EAC;
+extern cf::CfCollImpl lbl_eu_80663EB4;
+extern cf::CfCollImpl lbl_eu_80663EBC;
+extern cf::CfCollImpl lbl_eu_80663EC4;
+extern cf::CfCollImpl* lbl_eu_805285E8[6];
+// Leaf vtables: CfCollCircleImpl / SphereImpl / AABBImpl / CylinderImpl /
+// CapsuleImpl (split1.s lbl_eu_80528820..87A0, RTTI typestrs confirmed).
+extern u8 lbl_eu_80528820[];
+extern u8 lbl_eu_80528800[];
+extern u8 lbl_eu_805287E0[];
+extern u8 lbl_eu_805287C0[];
+extern u8 lbl_eu_805287A0[];

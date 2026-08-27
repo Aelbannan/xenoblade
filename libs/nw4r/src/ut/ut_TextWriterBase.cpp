@@ -83,7 +83,10 @@ template <typename T> TextWriterBase<T>::~TextWriterBase() {}
 template <typename T> f32 TextWriterBase<T>::GetLineHeight() const {
     const Font* pFont = GetFont();
     int lf = pFont != NULL ? pFont->GetLineFeed() : 0;
-    return mLineSpace + GetScaleV() * ConvF32S(lf);
+    // Plain int->f32 conversion: MWCC's native signed path (xoris + 0x4330
+    // stack double + fsubs vs lbl_eu_8066A168) is exactly the retail body.
+    // The hand-rolled ConvF32S adds an frsp the retail doesn't have.
+    return mLineSpace + GetScaleV() * lf;
 }
 
 template <typename T>
@@ -445,7 +448,8 @@ f32 TextWriterBase<T>::AdjustCursor(f32* pX, f32* pY, const T* pStr, int len) {
     }
 
     if (IsDrawFlagSet(DRAWFLAG_MASK_ALIGN_TEXT, DRAWFLAG_ALIGN_TEXT_CENTER)) {
-        SetCursorX(*pX + (textWidth - CalcLineWidth(pStr, len)) * lbl_eu_8066A170);
+        f32 adjusted = textWidth - CalcLineWidth(pStr, len);
+        SetCursorX(*pX + adjusted * lbl_eu_8066A170);
     } else if (IsDrawFlagSet(DRAWFLAG_MASK_ALIGN_TEXT,
                              DRAWFLAG_ALIGN_TEXT_RIGHT)) {
         SetCursorX(*pX + (textWidth - CalcLineWidth(pStr, len)));
@@ -477,8 +481,31 @@ void TextWriterBase<T>::CalcStringRect(Rect* pRect, const T* pStr,
     clone.CalcStringRectImpl(pRect, pStr, len);
 }
 
-template struct TextWriterBase<char>;
-template struct TextWriterBase<wchar_t>;
+// Member-level explicit instantiations -- retail ut_TextWriterBase.o emits
+// exactly these 11 members (+ __sinit_), in this order. Whole-class
+// `template struct TextWriterBase<T>;` drags in both twins' full member sets
+// (VPrintf/CalcStringRect/GetCharSpace/IsDrawFlagSet/...) and overruns the
+// 0x2054 split by 0x2C28.
+template f32 TextWriterBase<char>::GetLineHeight() const;
+
+template TextWriterBase<wchar_t>::TextWriterBase();
+template TextWriterBase<wchar_t>::~TextWriterBase();
+template f32 TextWriterBase<wchar_t>::GetLineHeight() const;
+template f32 TextWriterBase<wchar_t>::CalcStringWidth(const wchar_t* pStr,
+                                                     int len) const;
+template f32 TextWriterBase<wchar_t>::Print(const wchar_t* pStr, int len);
+template f32 TextWriterBase<wchar_t>::PrintMutable(const wchar_t* pStr,
+                                                   int len);
+template bool TextWriterBase<wchar_t>::CalcLineRectImpl(Rect* pRect,
+                                                       const wchar_t** ppStr,
+                                                       int len);
+template void TextWriterBase<wchar_t>::CalcStringRectImpl(
+    Rect* pRect, const wchar_t* pStr, int len);
+template f32 TextWriterBase<wchar_t>::PrintImpl(const wchar_t* pStr, int len,
+                                               bool bMutable);
+template f32 TextWriterBase<wchar_t>::AdjustCursor(f32* pX, f32* pY,
+                                                  const wchar_t* pStr,
+                                                  int len);
 
 } // namespace ut
 } // namespace nw4r

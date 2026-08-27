@@ -209,13 +209,14 @@ void func_801F3CCC(CGimmickGlobal* self) {
     self->mFlags = 0;
     self->field_0x200 = 0;
     self->field_0x21C = lbl_eu_80668158;
-    for (s32 i = 0; i < self->mGimmickCount; i++) {
-        CGimmickEntry* g = self->mGimmicks[i];
-        if (g == NULL)
-            continue;
-        if (g)
+    // Walking-pointer teardown pass (retail advances a cursor by 4).
+    CGimmickEntry** p = self->mGimmicks;
+    for (s32 i = 0; i < self->mGimmickCount; i++, p++) {
+        CGimmickEntry* g = *p;
+        if (g != NULL) {
             ((CGimmickDispatch*)g)->d0(1);
-        self->mGimmicks[i] = 0;
+            *p = NULL;
+        }
     }
     self->mGimmickCount = 0;
     self->field_0x218 = 0;
@@ -233,11 +234,11 @@ void func_801F3CCC(CGimmickGlobal* self) {
         return;
     if (!func_801F4318(self))
         return;
-    bool ok;
+    // Spawn the save-off family inline; the enemy family only runs when
+    // every family so far fit inside the 0x80-slot container.
+    bool ok = true;
     u8* bdat = lbl_eu_80664140;
-    if (bdat == NULL) {
-        ok = true;
-    } else {
+    if (bdat != NULL) {
         func_8003AA34();
         s32 row = (s32)func_8003B41C(bdat);
         s32 n = (s32)func_8003B1EC(bdat);
@@ -250,13 +251,10 @@ void func_801F3CCC(CGimmickGlobal* self) {
             self->mGimmickCount++;
             if (self->mGimmickCount >= 0x80) {
                 ok = false;
-                goto check;
+                break;
             }
             row++;
         }
-        ok = true;
-    check:
-        ;
     }
     if (ok)
         func_801F43F8(self);

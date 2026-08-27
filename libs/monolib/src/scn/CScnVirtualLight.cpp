@@ -61,9 +61,8 @@ extern "C" CScnVirtualLight* __ct__CScnVirtualLight(CScnVirtualLight* self,
     func_80492030(&self->field_0x9C);
     func_80492030(&self->field_0xAC);
     f32 d4 = lbl_eu_8066AA10;
-    u8 en = 1;
-    self->enabled = en;
-    self->valueD4 = d4;
+    // comma sequencing pins the byte store ahead of the float store
+    self->enabled = 1, self->valueD4 = d4;
     u32 handle = ((CScnVirtualLightHandleSrc*)func_8048C8BC(src))->GetHandle();
     self->value08 = mtl::MemManager::create(handle, 0x10000, lbl_eu_80524044);
     func_80492168(&self->res_0C, self->value08, 8);
@@ -257,13 +256,14 @@ extern "C" void func_80492B40(CScnVirtualLight* self) {
     func_800407C8_tmp v_28;
     ml::CVec3 v_18;
     func_800407C8_tmp v_8;
+    // Direction-pointer group declared as plain locals (colors r30 in
+    // retail); the B60C result feeding func_80492DEC is a nested call temp,
+    // not a named local, so it takes its own callee-saved register (r31).
     ml::CVec3* p_b8;
     ml::CVec3* p_98;
     ml::CVec3* p_78;
     ml::CVec3* p_58;
     ml::CVec3* p_38;
-    ml::CVec3* p_18;
-
     func_804923F8(self, 0);
     func_80492DB8((CScnVirtualLightData*)self,
                   func_800407C8(&v_d8, lbl_eu_8066AA14, lbl_eu_8066AA14,
@@ -301,12 +301,13 @@ extern "C" void func_80492B40(CScnVirtualLight* self) {
                   (const func_800407C8_tmp*)p_38, lbl_eu_8066AA18);
     func_80492DD4((CScnVirtualLightData*)self, &lbl_eu_80658648, lbl_eu_8066AA18);
     func_80492DE0((CScnVirtualLightData*)self, &lbl_eu_80658648, lbl_eu_8066AA18);
-    p_18 = func_8004B60C(&v_18, lbl_eu_8066AA34, lbl_eu_8066AA10,
-                         lbl_eu_8066AA34);
     func_80492DEC((CScnVirtualLightData*)self,
                   func_800407C8(&v_28, lbl_eu_8066AA28, lbl_eu_8066AA2C,
                                 lbl_eu_8066AA30, lbl_eu_8066AA18),
-                  (const func_800407C8_tmp*)p_18, lbl_eu_8066AA18);
+                  (const func_800407C8_tmp*)func_8004B60C(
+                      &v_18, lbl_eu_8066AA34, lbl_eu_8066AA10,
+                      lbl_eu_8066AA34),
+                  lbl_eu_8066AA18);
     func_80492DFC((CScnVirtualLightData*)self, &lbl_eu_80658648, lbl_eu_8066AA18);
     func_800407C8_tmp* p_8 = func_800407C8(
         &v_8, lbl_eu_8066AA14, lbl_eu_8066AA14, lbl_eu_8066AA14, lbl_eu_8066AA18);
@@ -415,7 +416,9 @@ extern "C" void func_80492E08(CScnVirtualLight* self) {
     func_800407C8_tmp v_28;
     ml::CVec3 v_18;
     func_800407C8_tmp v_8;
-    ml::CVec3* p_18;
+    // No named local for the B60C result feeding func_80492DEC: as a nested
+    // call temp it gets its own callee-saved register (r31), leaving r30 for
+    // the lbl_eu_80658648 address constant, matching retail.
 
     func_804923F8(self, 0);
     func_80492DB8((CScnVirtualLightData*)self,
@@ -459,12 +462,13 @@ extern "C" void func_80492E08(CScnVirtualLight* self) {
                   (const func_800407C8_tmp*)&v_44, lbl_eu_8066AA18);
     func_80492DD4((CScnVirtualLightData*)self, &lbl_eu_80658648, lbl_eu_8066AA18);
     func_80492DE0((CScnVirtualLightData*)self, &lbl_eu_80658648, lbl_eu_8066AA18);
-    p_18 = func_8004B60C(&v_18, lbl_eu_8066AA34, lbl_eu_8066AA10,
-                         lbl_eu_8066AA34);
     func_80492DEC((CScnVirtualLightData*)self,
                   func_800407C8(&v_28, lbl_eu_8066AA28, lbl_eu_8066AA2C,
                                 lbl_eu_8066AA30, lbl_eu_8066AA18),
-                  (const func_800407C8_tmp*)p_18, lbl_eu_8066AA18);
+                  (const func_800407C8_tmp*)func_8004B60C(
+                      &v_18, lbl_eu_8066AA34, lbl_eu_8066AA10,
+                      lbl_eu_8066AA34),
+                  lbl_eu_8066AA18);
     // Fresh address expression for the tail call keeps the label web short.
     func_80492DFC((CScnVirtualLightData*)self, &lbl_eu_80658648, lbl_eu_8066AA18);
     func_800407C8_tmp* p_8 = func_800407C8(
@@ -664,6 +668,7 @@ void func_804936AC(CScnVirtualLight* self, CLightEnv* env) {
     u32 v14, v10;        // walk 3
     u32 vc, v8;          // walk 4
     f32 aa74;            // hoisted to function scope
+    f32 range;           // named so it lands in f30 like retail (AA74 takes f31)
 
     if (checkBitFlag(getSubField7C(self->mSub)) != 0) {
         func_804C1338(getSubField7C(self->mSub), env);
@@ -758,7 +763,7 @@ void func_804936AC(CScnVirtualLight* self, CLightEnv* env) {
                                                   (void*)self->mExtraAlloc[j]),
                                               (Vec*)&v38, camPos);
                                 f32 dist2 = func_8006DFC8(&v38);
-                                f32 range = func_80493C18((void*)self->mExtraAlloc[j]);
+                                range = func_80493C18((void*)self->mExtraAlloc[j]);
                                 if (range * range >= dist2) {
                                     func_804C02E4(
                                         (CLight*)(*p48 + *p68 * 64),
@@ -959,47 +964,52 @@ extern "C" __declspec(noinline) void* func_80493EFC(void* self, u32 idx){ return
 // 1 = ambient (func_804952C4), 2 = directional with Euler angles
 // (func_80495704), 3 = directional with a direction pointer (func_804957E4),
 // 4 = spot with full params (func_804958B8). The first parameter is unused
-// (retail keeps r3 untouched).
+// (retail keeps r3 untouched). The dispatch is an if/else-if compare chain in
+// retail (not a jump-table switch), and each case re-fetches the object via
+// func_80492A64 like retail (the call result is never cached).
 extern "C" void func_80493F08(void* unused, CLightEnv* env,
                               CScnVirtualLightNode* node) {
-    ml::CVec3 v38;
-    ml::CVec3 v28;
-    ml::CVec3 v18;
-    ml::CVec3 v8;
-    switch (func_80493574((void*)*func_80492A64(node))) {
-    case 1: {
-        CScnVirtualLightData* obj = (CScnVirtualLightData*)*func_80492A64(node);
+    ml::CVec3 v38;   // sp+0x38 (case 1 position)
+    ml::CVec3 v28;   // sp+0x28 (case 2 position)
+    ml::CVec3 v18;   // sp+0x18 (case 3 position)
+    ml::CVec3 v8;    // sp+0x08 (case 4 position)
+    CScnVirtualLightData* obj;
+    f32 angleY;
+    f32 angleX;
+    f32 color;
+    void* p34;
+    f32 a;
+    f32 b;
+    f32 c;
+    f32 d;
+    s32 type = func_80493574((void*)*func_80492A64(node));
+    if (type == 1) {
+        obj = (CScnVirtualLightData*)*func_80492A64(node);
         v38 = ((CVirtualLightDispatch*)(void*)obj)->GetPosition();
         func_804952C4(env, &v38);
-        break;
-    }
-    case 2: {
-        CScnVirtualLightData* obj = (CScnVirtualLightData*)*func_80492A64(node);
-        f32 angleY = func_804940E8((void*)obj);
-        f32 angleX = func_804940E0((void*)obj);
+    } else if (type == 2) {
+        obj = (CScnVirtualLightData*)*func_80492A64(node);
+        angleY = func_804940E8((void*)obj);
+        angleX = func_804940E0((void*)obj);
         v28 = ((CVirtualLightDispatch*)(void*)obj)->GetPosition();
         func_80495704(env, (u32)&v28, angleX, angleY);
-        break;
-    }
-    case 3: {
-        CScnVirtualLightData* obj = (CScnVirtualLightData*)*func_80492A64(node);
-        f32 color = func_804940F8((void*)obj);
-        void* p34 = func_804940F0((void*)obj);
+    } else if (type == 3) {
+        obj = (CScnVirtualLightData*)*func_80492A64(node);
+        color = func_804940F8((void*)obj);
+        p34 = func_804940F0((void*)obj);
         v18 = ((CVirtualLightDispatch*)(void*)obj)->GetPosition();
         func_804957E4(env, (u32)&v18, (u32)p34, color);
-        break;
-    }
-    case 4: {
-        CScnVirtualLightData* obj = (CScnVirtualLightData*)*func_80492A64(node);
-        f32 a = func_80494120((void*)obj);
-        f32 b = func_80494118((void*)obj);
-        void* p34 = func_80494110((void*)obj);
-        f32 c = func_80494108((void*)obj);
-        f32 d = func_80494100((void*)obj);
+    } else if (type == 4) {
+        obj = (CScnVirtualLightData*)*func_80492A64(node);
+        // Fetch order mirrors retail (+0x48, +0x4C, ptr, +0x44, +0x40); the
+        // spot helper receives d,c in f1/f2 and b,a in f3/f4.
+        a = func_80494120((void*)obj);
+        b = func_80494118((void*)obj);
+        p34 = func_80494110((void*)obj);
+        c = func_80494108((void*)obj);
+        d = func_80494100((void*)obj);
         v8 = ((CVirtualLightDispatch*)(void*)obj)->GetPosition();
         func_804958B8(env, d, c, &v8, p34, b, a);
-        break;
-    }
     }
 }
 
@@ -1156,8 +1166,8 @@ extern "C" void func_804923F8(CScnVirtualLight* self, int arg) {
     u32 e1;      // 0x70
     u32 e2;      // 0x6C
     u32 e3;      // 0x68
-    u32 endA;    // 0x60
     u32 itA;     // 0x64
+    u32 endA;    // 0x60
     u32 endA2;   // 0x5C
     u32 outA;    // 0x58
     u32 cpA;     // 0x54
@@ -1170,6 +1180,7 @@ extern "C" void func_804923F8(CScnVirtualLight* self, int arg) {
     u32 foundC;  // 0x38
     u32 itC;     // 0x34
     u32 endC;    // 0x30
+    u32 endC2;   // 0x2C
     u32 outC;    // 0x28
     u32 cpC;     // 0x24
     u32 foundD;  // 0x20
@@ -1285,8 +1296,8 @@ extern "C" void func_804923F8(CScnVirtualLight* self, int arg) {
     func_80492A50((CScnVirtualLightData*)&itC, (CScnVirtualLightValueSrc*)&self->res_4C);
     func_804929C0((int*)&foundC, &itC, &endC, (const u32*)&arg);
     func_80492B34((int*)&found, (int*)&foundC);
-    func_80492A80(&e2, &self->res_4C);
-    if (func_80492A88(&found, &e2) != 0) {
+    func_80492A80(&endC2, &self->res_4C);
+    if (func_80492A88(&found, &endC2) != 0) {
         if (*(u32*)func_80492A64(&found) != 0) {
             delete (CVirtualLightDispatch*)(*(void**)func_80492A64(&found));
             *(u32*)func_80492A64(&found) = 0;

@@ -20,8 +20,8 @@ extern const float lbl_eu_8066A1F8;
 // 2*pi (lbl_eu_8066A1FC)
 extern const float lbl_eu_8066A1FC;
 // nw4r FSqrt assert source-file string + message (retail .data)
-extern char lbl_eu_80526324[];
-extern char lbl_eu_80526300[];
+extern const char lbl_eu_80526324[];
+extern const char lbl_eu_80526300[];
 // squared-length guard used by the segment projection helper (lbl_eu_806667F8)
 extern const float lbl_eu_806667F8;
 // 0.5f (lbl_eu_806667F4) - random-direction offset
@@ -93,12 +93,12 @@ extern ColiProbeObj* lbl_eu_80665958;
 // parameters: the retail call site in func_800A7094 only sets r3-r6 and f1
 // (r4 = the second pointer argument), and the callee reads only the four GPR
 // arguments (the trailing float is ignored).
-extern "C" int func_804BE398(ml::CVec3* vec, ml::CVec3* a, int b, int c, f32 d, f32 e);
+extern "C" int func_804BE398(void* vec, int a, int b, int c, f32 d, f32 e);
 // Debug-draw setup: binds a CDrawGX to the scene + view (r5 = view, 0 = current).
 extern "C" void func_8049034C(void* a, void* b, CView* c);
 // Copy the 12-byte header / info block of scene-resource entry [index].
-extern "C" void func_804BE4B4(ml::CVec3* dst, int index);
-extern "C" void func_804BE4E0(ml::CVec3* dst, int index);
+extern "C" void func_804BE4B4(void* dst, int index);
+extern "C" void func_804BE4E0(void* dst, int index);
 // Segment-query walker (monolib coli unit).
 extern "C" int func_804B5088(ColiProbeObj* self, ml::CVec3* a, ml::CVec3* b,
                              int filter, int isFirst);

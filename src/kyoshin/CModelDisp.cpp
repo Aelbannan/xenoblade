@@ -254,6 +254,9 @@ extern "C" __declspec(noinline) void func_801FC218(CModelDisp* self) {
 // controller vtable chain, (re)builds the display model + two animation
 // objects, applies per-slot colors, and rearms the slot timer (150 frames).
 extern "C" __declspec(noinline) void func_801FC3B0(CModelDisp* self) {
+    // Declaration order steers MWCC's callee-saved allocation (retail:
+    // nameBase pair above the names-array base).
+    char* nameBase = lbl_eu_80507CF4; // NUL-separated name strings at +0/+4/+8/+C
     u32 names[3];
     // Post-increment loads fold the base materialization into the first
     // access (retail: lis + lwzu + +4/+8 displacements).
@@ -261,7 +264,6 @@ extern "C" __declspec(noinline) void func_801FC3B0(CModelDisp* self) {
     names[0] = *src++;
     names[1] = *src++;
     names[2] = *src++;
-    char* nameBase = lbl_eu_80507CF4; // NUL-separated name strings at +0/+4/+8/+C
     for (u8 i = 0; i < 3; i++) {
         CActParamHolder* h = (CActParamHolder*)((u8*)self + i * 0xFF0 + 8);
         CModelDispListHolder holder;
@@ -278,11 +280,11 @@ extern "C" __declspec(noinline) void func_801FC3B0(CModelDisp* self) {
             continue;
         }
         CModelDispActor* actor = func_800BFC68(slot->field_04);
-        // Retail recomputes actor+0x3E9C per vcall instead of caching the
-        // embedded-move pointer, freeing one callee-saved register.
+        // Retail tests actor twice: once branching on the pointer itself,
+        // once materializing ok via the subic/subfe carry trick.
         int ok = actor != NULL;
         u32 charId = 0;
-        if (ok) {
+        if (actor != NULL) {
             charId = actor->field_3F2C;
             if (charId == 0)
                 ok = false;
@@ -308,22 +310,11 @@ extern "C" __declspec(noinline) void func_801FC3B0(CModelDisp* self) {
             if (((CModelDispMoveVt*)&actor->move[0])->m188() == 0)
                 ok = false;
         }
-        // Retail gates on the slot being EMPTY before building: rebuild only
-        // when field_00 is unset and the actor validated; tear down only when
-        // the slot is occupied but the actor failed validation. The trailing
-        // holder dtor is shared by the build and teardown paths.
-        if (h->field_0x00 != NULL) {
-            if (ok == false) {
-                func_801FC2B4(self, h);
-            }
-            __dt__80043E88(&holder, -1);
-            continue;
-        }
-        if (ok == false) {
-            __dt__80043E88(&holder, -1);
-            continue;
-        }
-        {
+        // Retail gate: rebuild when the slot is empty and the actor validated
+        // (field_00 == NULL && ok); tear down when occupied-but-invalid. Both
+        // paths share the trailing holder dtor; the second condition re-tests
+        // both values like the retail branch chain.
+        if (h->field_0x00 == NULL && ok != false) {
             // Build: create the display model and rebind both anim slots.
             h->field_0x00 = func_80495E8C((u32)self->mInitParam, charId, -1, 1);
             ((CModelDispModelVt*)h->field_0x00)->m64(0);
@@ -384,7 +375,9 @@ extern "C" __declspec(noinline) void func_801FC3B0(CModelDisp* self) {
                     break;
                 }
             }
-            f32 vec[3];
+            // 4-element buffer (retail frame reserves 0x10 bytes here; only
+            // the RGB triple is stored).
+            f32 vec[4];
             vec[0] = f0;
             vec[1] = f1;
             vec[2] = f2;
@@ -394,23 +387,21 @@ extern "C" __declspec(noinline) void func_801FC3B0(CModelDisp* self) {
             ((CDispHolderWordView*)h)->owner40 = self;
             CModelDispParamSlot* e3 = func_80062DA4(idx2);
             if (actor->field_3F08 & 0x1000) {
-                CModelDispNameParam* np = e3->field_2C->m00(e3, 0);
-                CModelDispModelVt* am = func_80495E94((u32)self->mInitParam, np);
-                h->animModelPtrs[0] = am;
-                if (am != NULL) {
-                    CModelDispNameParam* bp =
-                        func_800BED80((CModelDispMoveVt*)&actor->move[0], 0);
-                    ((CModelDispSubVt*)h->field_0x00)->mC4(am, bp, NULL);
+                h->animModelPtrs[0] =
+                    func_80495E94((u32)self->mInitParam, e3->field_2C->m00(e3, 0));
+                if (h->animModelPtrs[0] != NULL) {
+                    ((CModelDispSubVt*)h->field_0x00)->mC4(
+                        h->animModelPtrs[0],
+                        func_800BED80((CModelDispMoveVt*)&actor->move[0], 0), NULL);
                 }
             }
             if (actor->field_3F08 & 0x2000) {
-                CModelDispNameParam* np = e3->field_2C->m00(e3, 0);
-                CModelDispModelVt* am = func_80495E94((u32)self->mInitParam, np);
-                h->animModelPtrs[1] = am;
-                if (am != NULL) {
-                    CModelDispNameParam* bp =
-                        func_800BED80((CModelDispMoveVt*)&actor->move[0], 1);
-                    ((CModelDispSubVt*)h->field_0x00)->mC4(am, bp, NULL);
+                h->animModelPtrs[1] =
+                    func_80495E94((u32)self->mInitParam, e3->field_2C->m00(e3, 0));
+                if (h->animModelPtrs[1] != NULL) {
+                    ((CModelDispSubVt*)h->field_0x00)->mC4(
+                        h->animModelPtrs[1],
+                        func_800BED80((CModelDispMoveVt*)&actor->move[0], 1), NULL);
                 }
             }
             if (actor->field_3F08 & 0x20000 &&
@@ -442,6 +433,8 @@ extern "C" __declspec(noinline) void func_801FC3B0(CModelDisp* self) {
             ((CModelDispModelVt*)h->field_0x00)->m48(self->field_2FDC);
             ((CModelDispModelVt*)h->field_0x00)->m9C(3, 0);
             func_801FCAC8(self);
+        } else if (h->field_0x00 != NULL && ok == false) {
+            func_801FC2B4(self, h);
         }
         __dt__80043E88(&holder, -1);
     }

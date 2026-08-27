@@ -56,10 +56,13 @@ extern void (cf::CfObjectEff::*const lbl_eu_80528858[])();
 
 namespace cf {
 
-// Vtable interface for CfObject sub-objects. Slot 0xC4 dispatches a float
-// scale value (CfObject_UnkVirtualFunc29); the remaining slots are declared
-// only to reach the right vtable offset.
-struct CfObjectEffIf {
+// Vtable view used by func_800AD3A4: slot 0x160 returns a status word whose
+// bit 3 is synced into the child's u16 bit 1. Slot +0x160 is occupied by
+// CfObjectEff::func_800AD4A4 (an override of the CfObject pure slot that
+// CfObject.hpp declares with a placeholder `void()` signature - the retail
+// function returns a status word), so the call cannot yet be spelled as a
+// base-name virtual until CfObject.hpp's signature is corrected.
+struct CfObjectEffVtable160If {
     virtual void _f08();
     virtual void _f0C();
     virtual void _f10();
@@ -107,20 +110,7 @@ struct CfObjectEffIf {
     virtual void _fB8();
     virtual void _fBC();
     virtual void _fC0();
-    virtual void setScale(float value);  // slot 0xC4
-};
-
-// Vtable view used by func_800AD68C: slot 0xC on the mFieldB0 object receives
-// the owning CfObjectEff.
-struct CfObjectEffVtable0CIf {
-    virtual void _f08();
-    virtual void func0C(CfObjectEff* owner);  // slot 0xC
-};
-
-// Vtable view used by func_800AD3A4: slot 0x160 returns a status word whose
-// bit 3 is synced into the child's u16 bit 1. CfObjectEffIf covers 0x08-0xC4;
-// the 38 fillers below land func160 on 0x160.
-struct CfObjectEffVtable160If : CfObjectEffIf {
+    virtual void _fC4();
     virtual void _fC8();
     virtual void _fCC();
     virtual void _fD0();
@@ -162,9 +152,105 @@ struct CfObjectEffVtable160If : CfObjectEffIf {
     virtual bool func160();  // slot 0x160 - returns a 0/1 status flag
 };
 
-// Vtable view used by func_800AD4B0: slot 0x198 receives the caller object
-// and returns a nonzero word to keep iterating.
-struct CfObjectEffVtable198If : CfObjectEffVtable160If {
+// Vtable view used by func_800AD68C: slot 0xC on the mFieldB0 object receives
+// the owning CfObjectEff. mFieldB0 is a foreign object (not part of the
+// CfObjectEff tree), so this stays a small named iface on the owner.
+struct CfObjectEffVtable0CIf {
+    virtual void _f08();
+    virtual void func0C(CfObjectEff* owner);  // slot 0xC
+};
+
+// Vtable view used by func_800AD68C: slot 0x1BC receives the owning
+// CfObjectEff. The 0x9C/0xA0 partners are foreign CfObject-family objects,
+// so this stays a small named iface on the owner.
+struct CfObjectEffVtable1BCIf {
+    virtual void _f08();
+    virtual void _f0C();
+    virtual void _f10();
+    virtual void _f14();
+    virtual void _f18();
+    virtual void _f1C();
+    virtual void _f20();
+    virtual void _f24();
+    virtual void _f28();
+    virtual void _f2C();
+    virtual void _f30();
+    virtual void _f34();
+    virtual void _f38();
+    virtual void _f3C();
+    virtual void _f40();
+    virtual void _f44();
+    virtual void _f48();
+    virtual void _f4C();
+    virtual void _f50();
+    virtual void _f54();
+    virtual void _f58();
+    virtual void _f5C();
+    virtual void _f60();
+    virtual void _f64();
+    virtual void _f68();
+    virtual void _f6C();
+    virtual void _f70();
+    virtual void _f74();
+    virtual void _f78();
+    virtual void _f7C();
+    virtual void _f80();
+    virtual void _f84();
+    virtual void _f88();
+    virtual void _f8C();
+    virtual void _f90();
+    virtual void _f94();
+    virtual void _f98();
+    virtual void _f9C();
+    virtual void _fA0();
+    virtual void _fA4();
+    virtual void _fA8();
+    virtual void _fAC();
+    virtual void _fB0();
+    virtual void _fB4();
+    virtual void _fB8();
+    virtual void _fBC();
+    virtual void _fC0();
+    virtual void _fC4();
+    virtual void _fC8();
+    virtual void _fCC();
+    virtual void _fD0();
+    virtual void _fD4();
+    virtual void _fD8();
+    virtual void _fDC();
+    virtual void _fE0();
+    virtual void _fE4();
+    virtual void _fE8();
+    virtual void _fEC();
+    virtual void _fF0();
+    virtual void _fF4();
+    virtual void _fF8();
+    virtual void _fFC();
+    virtual void _f100();
+    virtual void _f104();
+    virtual void _f108();
+    virtual void _f10C();
+    virtual void _f110();
+    virtual void _f114();
+    virtual void _f118();
+    virtual void _f11C();
+    virtual void _f120();
+    virtual void _f124();
+    virtual void _f128();
+    virtual void _f12C();
+    virtual void _f130();
+    virtual void _f134();
+    virtual void _f138();
+    virtual void _f13C();
+    virtual void _f140();
+    virtual void _f144();
+    virtual void _f148();
+    virtual void _f14C();
+    virtual void _f150();
+    virtual void _f154();
+    virtual void _f158();
+    virtual void _f15C();
+    virtual void _f160();
     virtual void _f164();
     virtual void _f168();
     virtual void _f16C();
@@ -178,12 +264,7 @@ struct CfObjectEffVtable198If : CfObjectEffVtable160If {
     virtual void _f18C();
     virtual void _f190();
     virtual void _f194();
-    virtual u32 func198(u8* caller);  // slot 0x198
-};
-
-// Vtable view used by func_800AD68C: slot 0x1BC receives the owning
-// CfObjectEff.
-struct CfObjectEffVtable1BCIf : CfObjectEffVtable198If {
+    virtual void _f198();
     virtual void _f19C();
     virtual void _f1A0();
     virtual void _f1A4();
@@ -230,10 +311,13 @@ struct CfObjectEffU32Vec3 {
     u32 z;  // 0x08
 };
 
-// Vtable view used by func_800ACD5C: slot 0xB4 (CfObject_UnkVirtualFunc25)
-// receives a float-array pointer (r4) and a float scale (f1). MWCC puts the
-// Nth declared virtual at vtable offset (N+1)*4 (slots 0x0/0x4 reserved), so
-// the 43 fillers land moveB4 on 0xB4.
+// Vtable view used by func_800ACD5C: slot 0xB4 receives a float-array
+// pointer (r4) and a float scale (f1). Slot +0xB4 is filled by
+// CfObjectEff::func_800ACCE4 (a CfObject-chain slot whose placeholder
+// signature in CfObject.hpp does not take these arguments), so the call
+// cannot yet be spelled as a base-name virtual. MWCC puts the Nth declared
+// virtual at vtable offset (N+1)*4 (slots 0x0/0x4 reserved), so the 43
+// fillers land moveB4 on 0xB4.
 struct CfObjectEffMoveIf {
     virtual void _f08();
     virtual void _f0C();

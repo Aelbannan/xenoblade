@@ -48,8 +48,9 @@ RttiBaseList2 lbl_eu_8056B920 = {
 // Retail sbss singleton slot lbl_eu_806655E0 (8 bytes; word 0 in use) - blob monolibdata1d dissolve
 CWorkFlowSetup* lbl_eu_806655E0[2];
 
-CWorkFlowSetup::CWorkFlowSetup(const char* pName, CWorkThread* pParent) : CWorkThread(pName, pParent, 0), unk1C4(0){
+CWorkFlowSetup::CWorkFlowSetup(const char* pName, CWorkThread* pParent) : CWorkThread(pName, pParent, 0){
     *(void**)this = &lbl_eu_8056B880;
+    unk1C4 = 0;
     lbl_eu_806655E0[0] = this;
 }
 

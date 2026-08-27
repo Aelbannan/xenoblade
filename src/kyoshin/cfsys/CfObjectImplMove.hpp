@@ -993,7 +993,7 @@ extern volatile u32 lbl_eu_80661D40;
 // Presentation / sound / effect helpers used by the move-event dispatchers.
 extern "C" void func_801A891C(void* actor, int param); // canonical (void*,int) form (CfObjectActor.hpp)
 extern "C" void func_80174C24(void* actor, u32 mask);
-extern "C" void* func_800F477C(void);
+// func_800F477C: TU-local no-arg view now in CfObjectImplMove.cpp (only caller).
 extern "C" void func_8014AC38(void* buf, void* req); // canonical void* form (CVision.hpp/CtrlPc.hpp)
 #include <string.h>
 // func_8049603C is declared once in libs/monolib/src/scn/CScn_8049603C.hpp;

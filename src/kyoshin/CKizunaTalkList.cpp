@@ -145,10 +145,12 @@ void func_802732F4(CKizunaTalkList* self) {
 
 // Per-frame update while visible (retail func_8027336C): advance the state
 // machine, then refresh the layout and the embedded widgets.
-__declspec(noinline) void func_80273938(CKizunaTalkList* self);
-__declspec(noinline) void func_80273984(CKizunaTalkList* self);
-__declspec(noinline) void func_802739D8(CKizunaTalkList* self);
-__declspec(noinline) void func_80273A24(CKizunaTalkList* self);
+// Retail symbols are unmangled (func_80273938 etc.), so these helpers are
+// declared with C linkage even though they take the list as a parameter.
+extern "C" __declspec(noinline) void func_80273938(CKizunaTalkList* self);
+extern "C" __declspec(noinline) void func_80273984(CKizunaTalkList* self);
+extern "C" __declspec(noinline) void func_802739D8(CKizunaTalkList* self);
+extern "C" __declspec(noinline) void func_80273A24(CKizunaTalkList* self);
 
 #pragma optimize_for_size on
 void func_8027336C(CKizunaTalkList* self) {
@@ -169,7 +171,7 @@ void func_8027336C(CKizunaTalkList* self) {
         }
 
         // Layout virtual slot 0x38/4: disable animation.
-        ((void (*)(void*, int))((void**)self->mpLayout20)[0x38 / 4])(self->mpLayout20, 0);
+        ((void (*)(void*, int))(*(void***)self->mpLayout20)[0x38 / 4])(self->mpLayout20, 0);
         func_801D202C(&self->mCursor);
         func_801F3540(&self->mScrollBar);
     }
@@ -609,7 +611,7 @@ void func_8027387C(CKizunaTalkList* self) {
     func_80138078__FUl(1);
 }
 
-__declspec(noinline) void func_80273938(CKizunaTalkList* self) {
+extern "C" __declspec(noinline) void func_80273938(CKizunaTalkList* self) {
     // Advance the entry-show animation; when it completes, step the state
     // machine forward (retail func_80273938).
     if (func_80137444(self->mpAnim24, lbl_eu_806689D4) != 0) {
@@ -618,7 +620,7 @@ __declspec(noinline) void func_80273938(CKizunaTalkList* self) {
     }
 }
 
-__declspec(noinline) void func_80273984(CKizunaTalkList* self) {
+extern "C" __declspec(noinline) void func_80273984(CKizunaTalkList* self) {
     if (func_80137444(self->mpAnim28, 2.0f) != 0) {
         self->mState85 = 3;
         func_802740E4(self);
@@ -626,14 +628,14 @@ __declspec(noinline) void func_80273984(CKizunaTalkList* self) {
     }
 }
 
-__declspec(noinline) void func_802739D8(CKizunaTalkList* self) {
+extern "C" __declspec(noinline) void func_802739D8(CKizunaTalkList* self) {
     if (func_80137510(self->mpAnim28, lbl_eu_806689D4) != 0) {
         self->mState85 = 5;
         func_80273A70(self);
     }
 }
 
-__declspec(noinline) void func_80273A24(CKizunaTalkList* self) {
+extern "C" __declspec(noinline) void func_80273A24(CKizunaTalkList* self) {
     if (func_80137510(self->mpAnim24, lbl_eu_806689D4) != 0) {
         self->mState85 = 0;
         self->mNeedsRebuild = 1;
@@ -801,14 +803,14 @@ void func_802741B0(CKizunaTalkList* self) {
     TalkListEntryArray tmp;
     __ct__802726F4(&tmp, accessor);
 
-    TalkListEntry* src = tmp.mEntries;
     TalkListEntry* dst = self->mEntryArray.mEntries;
+    TalkListEntry* src = tmp.mEntries;
     TalkListEntry* end = self->mEntryArray.mEntries + 256;
-    while (dst < end) {
+    do {
         func_80273004(dst, src);
         dst++;
         src++;
-    }
+    } while (dst < end);
     self->mEntryArray.mCount = tmp.mCount;
     self->mEntryArray.mParent = tmp.mParent;
     __destroy_arr(&tmp, (void*)__dt__80272774, 0x14, 0x100);

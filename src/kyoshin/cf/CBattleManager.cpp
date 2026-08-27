@@ -4994,7 +4994,9 @@ void func_800DB7F8(void* r3, void* r4, void* arg3, void* arg4) {
     if (flag != 0) goto tailcall;
 
     // Check sourceObj type
-    u16 type = sourceObj->type_58;
+    // int (not u16): retail loads via zero-extending lhz but compares with
+    // signed cmpi, which MWCC only emits for a signed local.
+    int type = sourceObj->type_58;
     if (type == 1) {
         if (func_80148778((u8*)arg3 + 8, 0xF)) goto tailcall;
         if (func_80148778((u8*)arg3 + 8, 0x10)) goto tailcall;
@@ -12379,10 +12381,7 @@ void func_800F38E0(void* self, u32 arg2, u16 arg3) {
 // anything else -> every entry of the manager's second actor list.
 // Signature matches the single shared decl on CBattleManagerApi.hpp; the
 // typed views are recovered up front (pointer casts emit no code).
-void func_800F3970(void* selfV, void* obj1V, void* obj2V, s32 idx, s32 addVal) {
-    cf::CBattleManager* self = (cf::CBattleManager*)selfV;
-    BattleObjAccessor* obj1 = (BattleObjAccessor*)obj1V;
-    BattleObjAccessor* obj2 = (BattleObjAccessor*)obj2V;
+void func_800F3970(void* self, void* obj1, void* obj2, s32 idx, s32 addVal) {
     // Declaration order drives the saved-register colors. Signed selector so
     // the dispatch compares with retail cmpwi (cmpli would come from unsigned).
     const BattleTableEntry* entry = &lbl_eu_804FC828[idx];
@@ -12390,7 +12389,7 @@ void func_800F3970(void* selfV, void* obj1V, void* obj2V, s32 idx, s32 addVal) {
     s32 val3 = entry->val;
     s32 val2 = -1;
     // Explicit copy pins the parameter homing (retail or r28,r5,r5).
-    cf::CfObjectActor* o2 = (cf::CfObjectActor*)obj2;
+    void* o2 = obj2;
 
     if (val3 == 0x3e7) {
         val2 = 4;
@@ -12405,8 +12404,8 @@ void func_800F3970(void* selfV, void* obj1V, void* obj2V, s32 idx, s32 addVal) {
     if (byteVal != 0) {
         // Cross-actor id lookup (CfGameManager); feeds a /1000 multiplier.
         s32 result = func_800824FC__Q22cf13CfGameManagerFv(
-            obj1->field_3f28,
-            ((BattleObjAccessor*)o2)->field_3f28);
+            ((BattleObjAccessor*)obj1)->field_3f28,
+            ((BattleObjAccessor*)obj2)->field_3f28);
         if (result != -1) {
             // mulhw 0x10624DD3 with >>38 is the signed /1000 magic (not /100).
             val3 += (result / 1000) * (s32)byteVal;
@@ -12444,8 +12443,8 @@ void func_800F3970(void* selfV, void* obj1V, void* obj2V, s32 idx, s32 addVal) {
     } else {
         // Iterate every node of mActorList2, dispatching to each item.
         _reslist_node<cf::CfObjectActor*>* cur =
-            self->mActorList2.mStartNodePtr->mNext;
-        while (cur != self->mActorList2.mStartNodePtr) {
+            ((cf::CBattleManager*)self)->mActorList2.mStartNodePtr->mNext;
+        while (cur != ((cf::CBattleManager*)self)->mActorList2.mStartNodePtr) {
             cf::CfObjectActor* actor = cur->mItem;
             if (val2 != -1) {
                 ((BMVtIfF3970*)actor)->vf304(val2);

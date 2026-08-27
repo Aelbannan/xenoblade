@@ -120,27 +120,7 @@ void CBattleState::CBattleState_UnkVirtualFunc29() {
 // sdata2 float pool constant read via lbl_eu_80667414@sda21 (0.9f).
 extern const float lbl_eu_80667414;
 
-// Cast-only SI iface for vt+0x48 tail-call (same RTTI omit as BattleStateV8If).
-struct BattleStateV6If {
-    virtual void _v008();
-    virtual void _v00C();
-    virtual void _v010();
-    virtual void _v014();
-    virtual void _v018();
-    virtual void _v01C();
-    virtual void _v020();
-    virtual void _v024();
-    virtual void _v028();
-    virtual void _v02C();
-    virtual void _v030();
-    virtual void _v034();
-    virtual void _v038();
-    virtual void _v03C();
-    virtual void _v040();
-    virtual void _v044();
-    virtual void vf48(cf::CBattleStateEntry* entry); // UnkVirtualFunc17 @0x48
-};
-
+// vt+0x48 tail-call: this->CBattleState_UnkVirtualFunc17(entry).
 void cf::CBattleState::CBattleState_UnkVirtualFunc6(cf::CBattleStateEntry* arg) {
     cf::CBattleStateEntry* entries;
     cf::CBattleStateEntry* p;
@@ -169,7 +149,7 @@ void cf::CBattleState::CBattleState_UnkVirtualFunc6(cf::CBattleStateEntry* arg) 
                     p->unk10 = arg->unk18;
                 }
             }
-            reinterpret_cast<BattleStateV6If*>(this)->vf48(p);
+            this->CBattleState_UnkVirtualFunc17(p);
             return;
         }
     }
@@ -195,7 +175,7 @@ void cf::CBattleState::CBattleState_UnkVirtualFunc6(cf::CBattleStateEntry* arg) 
             entries->unk30 = arg->unk30;
             entries->unk1C = entries->unk20;
             entries->unk28 = scaled;
-            reinterpret_cast<BattleStateV6If*>(this)->vf48(entries);
+            this->CBattleState_UnkVirtualFunc17(entries);
             return;
         }
     }
@@ -266,32 +246,8 @@ int cf::CBattleState::CBattleState_UnkVirtualFunc33(u32 id) {
     return (unk6 & mask) != 0;
 }
 
-// Cast-only SI iface for the vt+0x4C tail-call (UnkVirtualFunc18; same
-// RTTI-omit pattern as BattleStateV6If). Virtual dispatch emits retail
-// lwz r12,0(this) / lwz r12,0x4c(r12) / bctr instead of coloring the
-// vptr as r5 like a function-pointer vslot load.
-struct BattleStateV11If {
-    virtual void _v008();
-    virtual void _v00C();
-    virtual void _v010();
-    virtual void _v014();
-    virtual void _v018();
-    virtual void _v01C();
-    virtual void _v020();
-    virtual void _v024();
-    virtual void _v028();
-    virtual void _v02C();
-    virtual void _v030();
-    virtual void _v034();
-    virtual void _v038();
-    virtual void _v03C();
-    virtual void _v040();
-    virtual void _v044();
-    virtual void _v048();
-    virtual void vf4C(cf::CBattleStateEntry* entry); // UnkVirtualFunc18 @0x4C
-};
+// vt+0x4C tail-call: this->CBattleState_UnkVirtualFunc18(entry).
 
-// Batch 2026-07-14h: battlestate-vfunc11 owns CBattleState_UnkVirtualFunc11
 // exclusively. Do not touch the ctor / vfunc6 / other vfuncs above.
 //
 // symbols.txt mangles Fv, but retail leaves the caller's mask in r4 (same
@@ -318,7 +274,7 @@ void cf::CBattleState::CBattleState_UnkVirtualFunc11(u32 mask) {
         int stillActive;
 
         if ((entry->unk30 & mask) != 0) {
-            reinterpret_cast<BattleStateV11If*>(this)->vf4C(entry);
+            this->CBattleState_UnkVirtualFunc18(entry);
             id = entry->unk0C;
             memset(entry, 0, 0x34);
 
@@ -434,18 +390,7 @@ struct CBattleStateSrcEntry {
 };
 } // namespace cf
 
-// Cast-only SI: manual vslot loads color vptr as r5; virtual dispatch emits
-// retail lwz r12,0(this) / lwz r12,0x1c(r12) / bctr. Omit RTTI _v000/_v004 so
-// vf1C lands at 0x1C (same pattern as BattleStateV8If).
-struct BattleStateV26If {
-    virtual void _v008();
-    virtual void _v00C();
-    virtual void _v010();
-    virtual void _v014();
-    virtual void _v018();
-    virtual void vf1C(cf::CBattleStateEntry* entry); // UnkVirtualFunc6 @0x1C
-};
-
+// vt+0x1C dispatch: this->CBattleState_UnkVirtualFunc6(entry).
 void cf::CBattleState::CBattleState_UnkVirtualFunc26(const cf::CBattleStateSrcEntry* src) {
     const cf::CBattleStateSrcEntry* rec;
     const cf::CBattleStateSrcEntry* recFlags;
@@ -480,21 +425,22 @@ void cf::CBattleState::CBattleState_UnkVirtualFunc26(const cf::CBattleStateSrcEn
         // after the field fills, then a conditional direct overwrite of
         // unk08 with 0x4000 when src bit 0x8000 is set.
         {
-            u32 flags = entry.unk30;
-            entry.unk0C = rec->unk04;
+            cf::CBattleStateEntry* e = &entry;
+            e->unk0C = rec->unk04;
+            u32 flags = e->unk30;
             flags |= 1;
-            entry.unk08 = flag2000;
-            entry.unk10 = rec->unk08;
-            entry.unk14 = rec->unk0A;
-            entry.unk18 = rec->unk0C;
-            entry.unk1A = (s16)rec->unk06;
-            entry.unk30 = flags;
-            if ((((u32)recFlags->unk0E >> 15) & 1) != 0) {
-                entry.unk08 = flag4000;
+            e->unk08 = flag2000;
+            e->unk10 = rec->unk08;
+            e->unk14 = rec->unk0A;
+            e->unk18 = rec->unk0C;
+            e->unk1A = (s16)rec->unk06;
+            e->unk30 = flags;
+            if (recFlags->unk0E & 0x8000) {
+                e->unk08 = flag4000;
             }
         }
 
-        reinterpret_cast<BattleStateV26If*>(this)->vf1C(&entry);
+        this->CBattleState_UnkVirtualFunc6(&entry);
     }
 
     // Retail: mtctr/bdnz + lwzu/stwu from this+0x1528 / src-4. do-while(--i)
@@ -539,29 +485,8 @@ static int isBattleIdUsed(cf::CBattleState* self, u32 id) {
     return 0;
 }
 
-// Cast-only SI iface: function-pointer vslot loads color the vptr as r5;
-// virtual dispatch emits retail lwz r12,0(this) / lwz r12,off(r12) / bctr.
-// RTTI on: omit _v000/_v004 so _v008 lands at retail 0x8 (MenuBpsActorIf).
-struct BattleStateV8If {
-    virtual void _v008();
-    virtual void _v00C();
-    virtual void _v010();
-    virtual void _v014();
-    virtual void _v018();
-    virtual void _v01C();
-    virtual void _v020();
-    virtual void _v024();
-    virtual void _v028();
-    virtual void vf2C(cf::CBattleStateEntry* entry); // UnkVirtualFunc10 @0x2C
-    virtual void _v030();
-    virtual void _v034();
-    virtual void _v038();
-    virtual void _v03C();
-    virtual void _v040();
-    virtual void _v044();
-    virtual void vf48(cf::CBattleStateEntry* entry); // UnkVirtualFunc17 @0x48
-    virtual void vf4C(cf::CBattleStateEntry* entry); // UnkVirtualFunc18 @0x4C
-};
+// vt+0x2C/+0x48/+0x4C dispatches are direct member calls:
+// CBattleState_UnkVirtualFunc10 / 17 / 18.
 
 void cf::CBattleState::CBattleState_UnkVirtualFunc8(cf::CBattleStateEntry* entry) {
     // Function-scope slot/i reserve r31/r30 so Chaitin parks this/entry in
@@ -734,7 +659,7 @@ kind_done:
         *(u32*)this->unk1528 = 0;
     }
 
-    reinterpret_cast<BattleStateV8If*>(this)->vf2C(entry);
+    this->CBattleState_UnkVirtualFunc10(entry);
 
     // Retail init order after the first vt+0x2C call:
     //   slot=this+8, i=0, then one=1 / thirteen=13 into r26/r27.
@@ -807,7 +732,7 @@ kind_done:
         savedWords[12] = s[12];
         memset(slot, 0, 0x34);
 
-        reinterpret_cast<BattleStateV8If*>(this)->vf2C(
+        this->CBattleState_UnkVirtualFunc10(
             (cf::CBattleStateEntry*)savedWords);
 
         // Load halfword id into a wide local first (retail lhz -> r5).
@@ -825,7 +750,7 @@ kind_done:
             *(u32*)wordPtr &= ~(one << (savedId & 0x1F));
         }
 
-        reinterpret_cast<BattleStateV8If*>(this)->vf4C(
+        this->CBattleState_UnkVirtualFunc18(
             (cf::CBattleStateEntry*)savedWords);
 
         if (entry->unk0C == 0) {
@@ -846,8 +771,6 @@ kind_done:
 // unk15AC bit, then vt+0x4C (UnkVirtualFunc18). No recursive vt+0x2C;
 // walks all slots (no early break).
 void cf::CBattleState::CBattleState_UnkVirtualFunc10(cf::CBattleStateEntry* arg) {
-    typedef void (*Vfunc18Fn)(cf::CBattleState*, cf::CBattleStateEntry*);
-
     int one;
     int thirteen;
     cf::CBattleStateEntry* slot;
@@ -1133,8 +1056,8 @@ void cf::CBattleState::CBattleState_UnkVirtualFunc10(cf::CBattleStateEntry* arg)
             *(u32*)wordPtr &= ~(one << (savedId & 0x1F));
         }
 
-        ((Vfunc18Fn)(*(void***)this)[19])(
-            this, (cf::CBattleStateEntry*)savedWords);
+        this->CBattleState_UnkVirtualFunc18(
+            (cf::CBattleStateEntry*)savedWords);
     }
 }
 
@@ -1146,8 +1069,6 @@ void cf::CBattleState::CBattleState_UnkVirtualFunc10(cf::CBattleStateEntry* arg)
 // init, kind-based routing through vfunc1/2 helpers + sound/event dispatch,
 // then slot scan + copy/accumulate for entries sharing the same id/keys.
 void cf::CBattleState::CBattleState_UnkVirtualFunc5(cf::CBattleStateEntry* arg) {
-    typedef void (*Vfunc18Fn)(cf::CBattleState*, cf::CBattleStateEntry*);
-
     u32 id;
     int kind2;
 
@@ -1200,11 +1121,11 @@ P1_10:
     arg->unk00 = 0;
     {
         cf::CBattleState* obj;
-        obj = ((cf::CBattleState* (*)(cf::CBattleState*))(*(void***)this)[1])(this);
+        obj = (cf::CBattleState*)this->CBattleState_UnkVirtualFunc1();
         if (*(u32*)((u8*)obj + 0x3374) & 0x20) {
             arg->unk20 *= lbl_eu_80667404;
         } else {
-            obj = ((cf::CBattleState* (*)(cf::CBattleState*))(*(void***)this)[1])(this);
+            obj = (cf::CBattleState*)this->CBattleState_UnkVirtualFunc1();
             if (*(u32*)((u8*)obj + 0x3374) & 0x40) {
                 arg->unk20 = (float)((double)arg->unk20 * lbl_eu_80667408);
             }
@@ -1404,7 +1325,7 @@ BranchB:
             if (!(arg->unk30 & 0x200)) {
                 if (arg->unk2E == 0 || (arg->unk30 & 2) || !(arg->unk30 & 0x400)) {
                     cf::CBattleState* obj;
-                    obj = ((cf::CBattleState* (*)(cf::CBattleState*))(*(void***)this)[1])(this);
+                    obj = (cf::CBattleState*)this->CBattleState_UnkVirtualFunc1();
                     func_80109784((u8*)obj + 0x3F10, id, 1);
                     func_8013DB6C(6, id, 0, 0);
                     goto after_dispatch;
@@ -1468,7 +1389,7 @@ BranchB:
             if (!(arg->unk30 & 0x200)) {
                 if (arg->unk2E == 0 || (arg->unk30 & 2) || !(arg->unk30 & 0x400)) {
                     cf::CBattleState* obj;
-                    obj = ((cf::CBattleState* (*)(cf::CBattleState*))(*(void***)this)[1])(this);
+                    obj = (cf::CBattleState*)this->CBattleState_UnkVirtualFunc1();
                     if (arg->unk30 & 0x10000) {
                         func_80109784((u8*)obj + 0x3F10, id, 0x20);
                     } else {
@@ -1535,7 +1456,7 @@ BranchB:
         if (k == 3) {
             if (!(arg->unk30 & 0x200)) {
                 cf::CBattleState* obj;
-                obj = ((cf::CBattleState* (*)(cf::CBattleState*))(*(void***)this)[1])(this);
+                obj = (cf::CBattleState*)this->CBattleState_UnkVirtualFunc1();
                 func_80109784((u8*)obj + 0x3F10, id, 1);
                 func_8013DB6C(6, id, 0, 0);
             }
@@ -1598,7 +1519,7 @@ BranchA:
     A3_5f: if (id == 0x12d) { k = 0; goto A3_done; } if (id >= 0x12d) { k = 2; goto A3_done; } if (id == 0x11e) { k = 0; goto A3_done; } k = 2;
     A3_done:
         if (k == 0) {
-            cf::CBattleState* obj = ((cf::CBattleState* (*)(cf::CBattleState*))(*(void***)this)[1])(this);
+            cf::CBattleState* obj = (cf::CBattleState*)this->CBattleState_UnkVirtualFunc1();
             func_80109784((u8*)obj + 0x3F10, id, 5);
         }
     }
@@ -1656,7 +1577,7 @@ BranchA:
     A4_5f: if (id == 0x12d) { k = 0; goto A4_done; } if (id >= 0x12d) { k = 2; goto A4_done; } if (id == 0x11e) { k = 0; goto A4_done; } k = 2;
     A4_done:
         {
-            cf::CBattleState* obj = ((cf::CBattleState* (*)(cf::CBattleState*))(*(void***)this)[1])(this);
+            cf::CBattleState* obj = (cf::CBattleState*)this->CBattleState_UnkVirtualFunc1();
             if (k == 1) {
                 func_80109784((u8*)obj + 0x3F10, id, 6);
             } else {
@@ -1753,7 +1674,7 @@ after_dispatch:
                     slot->unk2C = arg->unk2C;
                     slot->unk2E = arg->unk2E;
                     slot->unk30 = arg->unk30 | 8;
-                    ((Vfunc18Fn)(*(void***)this)[18])(this, slot);
+                    this->CBattleState_UnkVirtualFunc17(slot);
                     goto F_slot_done;
                 }
 
@@ -1781,7 +1702,7 @@ after_dispatch:
                         slot->unk10 = slot->unk18;
                     slot->unk28 = old28;
                     slot->unk30 |= 8;
-                    ((Vfunc18Fn)(*(void***)this)[18])(this, slot);
+                    this->CBattleState_UnkVirtualFunc17(slot);
                     goto F_slot_done;
                 }
 
@@ -1810,7 +1731,7 @@ after_dispatch:
                     slot->unk1C = slot->unk20;
                     slot->unk28 = old28;
                     slot->unk30 |= 8;
-                    ((Vfunc18Fn)(*(void***)this)[18])(this, slot);
+                    this->CBattleState_UnkVirtualFunc17(slot);
                     goto F_slot_done;
                 }
 
@@ -1857,7 +1778,7 @@ after_dispatch:
                     if (lbl_eu_80667410 == dst->unk28) {
                         dst->unk28 = lbl_eu_80667414 * dst->unk24;
                     }
-                    ((Vfunc18Fn)(*(void***)this)[18])(this, dst);
+                    this->CBattleState_UnkVirtualFunc17(dst);
                     goto F_slot_done;
                 }
 

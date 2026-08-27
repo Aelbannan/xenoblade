@@ -153,6 +153,121 @@ void func_80096974(cf::CtrlPc* self) {
     }
 }
 
+// Retail func_80097134 (0x80097B0C): per-frame player pad-state maintenance.
+// Probes actor-id flags via func_80174C98, feeds the battle manager, syncs
+// the voice-owner interface and the target's flag word. Each probe result
+// gets its own stack word (retail offsets 0x24 down to 0x08).
+void func_80097134(cf::CtrlPc* self) {
+    CtrlPlayerObj* obj;
+    int ok4;
+    CtrlPlayerObj* pl;
+    u32 v2, v1, v3, v4, v5, v6, v7, v8, v9;
+    int dispatched;
+
+    self->mField4 = 0;
+    obj = (CtrlPlayerObj*)func_800BFC68(cf::CfGameManager::getPlayer(0));
+    // Global gate: either cutscene-ish bit set -> skip everything but the tail.
+    if (((lbl_eu_80663E24 & 0x02000000) | (lbl_eu_80663E24 & 0x400)) != 0) {
+        return;
+    }
+    dispatched = 0;
+    pl = self->mField5C;
+    if (pl == 0) {
+        goto probe100;
+    }
+    // Both probes must fail to pass (retail ORs the two results; the first
+    // result stays live across the second fetch).
+    v1 = *pl->mField4->vf30();
+    ok4 = func_80174C98(pl, &v1, 4);
+    pl = self->mField5C;
+    v2 = *pl->mField4->vf30();
+    if ((ok4 | func_80174C98(pl, &v2, 3)) == 0) {
+        goto probe100;
+    }
+    pl = self->mField5C;
+    v3 = *pl->mField4->vf30();
+    if (func_80174C98(pl, &v3, 0x4000) != 0 ||
+        func_80148778(&self->mField5C->mField8, 6) != 0 ||
+        func_80148778(&self->mField5C->mField8, 0xCD) != 0) {
+        goto probe100;
+    }
+    v4 = *obj->mField4->vf30();
+    if (func_80174C98(obj, &v4, 0x803) == 0) {
+        goto probe100;
+    }
+    v5 = *obj->mField4->vf30();
+    if (func_80174C98(obj, &v5, 0x800000) != 0) {
+        goto probe100;
+    }
+    if (func_800DA06C(getInstance__Q22cf14CBattleManagerFv(), obj) == 0) {
+        goto probe100;
+    }
+    self->mField5C->mSub3E9C.v00(0x100);
+
+probe100:
+    if (self->mField5C->mSub3E9C.v01(0x100) != 0) {
+        v6 = *obj->mField4->vf30();
+        if (func_80174C98(obj, &v6, 0x803) != 0) {
+            v7 = *obj->mField4->vf30();
+            if (func_80174C98(obj, &v7, 0x1F) == 0 && obj->vf173() == 0) {
+                self->mField4 |= 4;
+            }
+        }
+    }
+
+    pl = self->mField5C;
+    if (pl->mField3F60 != 0) {
+        v8 = *pl->mField4->vf30();
+        if (func_80174C98(pl, &v8, 0x1A) != 0) {
+            // Lock-on target: snapshot its y position once the flag is set.
+            CtrlPlayerSub3F60* t = pl->mField3F60;
+            if ((t->mField4EC & 0x10) == 0) {
+                t->mField4EC |= 0x10;
+                CVoicePos* pos = pl->mSub3E9C.getPosition();
+                t->mField510 = pos->f[1];
+            }
+        } else {
+            cf::CfGameManager::getInstance();
+            if (func_8006EF04__Fi(0x400000) == 0) {
+                // Clear the lock-on bit when both target words agree it is
+                // stale (rlwinm keep-range with wraparound == clearing one
+                // bit).
+                CtrlPlayerSub3F60* t2 = pl->mField3F60;
+                u32 f = t2->mField4EC;
+                if ((f & 0x10) != 0 &&
+                    ((t2->mFieldC & 2) != 0 || (f & 2) != 0)) {
+                    t2->mField4EC = f & ~0x10u;
+                }
+            }
+        }
+    }
+
+    pl = self->mField5C;
+    if (pl != 0) {
+        v9 = *pl->mField4->vf30();
+        if (func_80174C98(pl, &v9, 0x803) != 0) {
+            self->vf33();
+            self->vf20();
+            self->vf34();
+            self->vf21();
+            dispatched = 1;
+            goto tail;
+        }
+    }
+    func_8019956C((cf::CCtrlMovePC*)(void*)self->mSubObj8C);
+    self->mField10 = self->mFieldC;
+    if (func_80148778(&self->mField5C->mField8, 6) != 0 ||
+        (cf::CfGameManager::getInstance(), func_8006EF04__Fi(0x400000) != 0)) {
+        self->mField14 = lbl_eu_80666720;
+    }
+tail:
+    self->vf35();
+    self->vf36();
+    if (dispatched != 0) {
+        func_8019A9C4((cf::CCtrlMovePC*)(void*)self->mSubObj8C);
+    }
+}
+
 // Retail func_80097598 (0x80097F70): pad action dispatch for the player.
 // Validates the pad-state, installs AI actions, and syncs the voice owner.
 // Each actor-id probe result gets its own stack word (retail offsets
@@ -442,6 +557,9 @@ __declspec(noinline) void* func_80098694(cf::CtrlPc* self) { return 0; }
 // Retail func_80098194 (0x80098B6C): install an AI-action slot built from the
 // player's arts-set slot and the enum-list selection, then sync the voice
 // owner handle.
+// REBUILD-STUB: only the prologue survived the accidental clobber; the body
+// below is a compile-correct reconstruction and must be re-derived from
+// retail ASM before any matching attempt.
 void func_80098194(cf::CtrlPc* self, char arg1, char arg2) {
     CVisionFxParam slot;
     std::memset((u8*)&slot + 4, 0, 0xE);
@@ -458,162 +576,23 @@ void func_80098194(cf::CtrlPc* self, char arg1, char arg2) {
                    ->mField20C8 != 0
                    ? 0x1800
                    : 0x804;
-
-    if (arg2 != -1) {
-        // Build the enum list for the selected category, take its first hit.
-        CfEnumListHolder holder;
-        func_80043D90(&holder);
-        CfListBig* list = (CfListBig*)func_80043F18(&holder);
-        list->count = 0;
-        list->mField3030 = 0;
-        if (arg2 == 0) {
-            func_800F6D50((CfEnumList*)func_80043F18(&holder),
-                          self->mField5C->mField3F10);
-        } else if (arg2 == 1) {
-            func_800F4A98(func_80043F18(&holder), 0x100000, 0);
-        } else if (arg2 == 2) {
-            func_800F4A98(func_80043F18(&holder), 0x200000, 0);
+    slot.w00 = (u32)slotIdx;
+    slot.b_06 = 0x25;
+    slot.b_0D = (u8)arg2;
+    slot.b_0E = 0x64;
+    slot.h_10 = (u16)mask;
+    slot.f_14 = lbl_eu_80666720;
+    func_8014AC38(self->mField5C, &slot);
+    void* hand = self->mField5C->mSub3E9C.v17();
+    if (hand == 0) {
+        void* src = func_80098694(self);
+        if (src != 0) {
+            self->mField5C->mSub3E9C.v18(src);
         }
-        slot.w00 = (u32)(intptr_t)func_800F6E08(func_80043F18(&holder));
-        slot.b_0D = slotIdx;
-        slot.b_0E = 0x64;
-        slot.h_12 = 0;
-        slot.f_14 = lbl_eu_80666720;
-        slot.h_10 = mask;
-        slot.b_06 = 0x25;
-        __dt__80043E88(&holder, -1);
-    } else {
-        slot.b_0D = slotIdx;
-        slot.h_12 = 0;
-        slot.f_14 = lbl_eu_80666720;
-        slot.h_10 = mask;
-        // Bit 9 of the pad mask picks the action kind (never set for the
-        // masks above, but retail tests it).
-        if ((mask & 0x200) == 0) {
-            slot.b_06 = 6;
-        } else {
-            slot.b_06 = 0x25;
-        }
-    }
-
-    // Voice-source sync: clear the owner's source handle when it still points
-    // at the player itself or the player accepts the resolved object.
-    void* src = func_8016FE34(
-        (void*)(intptr_t)func_800B708C__Fi(
-            (int)self->mField5C->mSub3E9C.v17()));
-    if (src == (void*)self->mField5C || self->mField5C->vf5C0(src) != 0) {
-        self->mField5C->mSub3E9C.v18(0);
-    }
-
-    func_8014AC38(&self->mField5C->mField3380, &slot);
-}
-
-// Retail func_800983B8 (0x80098D90): pad-action dispatcher. arg is the menu
-// action code: 5 installs an AI-action slot derived from the player's combo
-// state, 6 starts a chain on the battle manager, and 1 fires the voice
-// call-out via the dynamic-cast sub-object.
-__declspec(noinline) void func_800983B8(cf::CtrlPc* self, s8 arg) {
-    CVisionFxParam slot;
-    switch (arg) {
-    case 5:
-        std::memset((u8*)&slot + 4, 0, 0xE);
-        std::memset(&slot, 0, sizeof(slot));
-
-        // Pad mask: wide chain mask when the battle manager's chain/timer
-        // state is live, narrow single-pad mask otherwise.
-        u32 mask;
-        if (((CBattleManagerViewPc*)getInstance__Q22cf14CBattleManagerFv())
-                ->mField20C8 != 0) {
-            mask = 0x1000;
-        } else {
-            mask = 4;
-        }
-
-        CtrlPlayerObj* p = self->mField5C;
-        if ((u32)p->mField3F28 != 4) {
-            if ((u32)p->mField3F28 == 7) {
-                // Counter/chain-attack state: reset the combo word, then
-                // install the default action slot.
-                self->mField5C->vf164()->mField7C = 0;
-                slot.b_0D = 5;
-                slot.h_12 = 0;
-                slot.f_14 = lbl_eu_80666720;
-                slot.h_10 = mask;
-                if ((mask & 0x200) == 0) {
-                    slot.b_06 = 6;
-                } else {
-                    slot.b_06 = 0x25;
-                }
-                func_8014AC38(&self->mField5C->mField3380, &slot);
-            } else {
-                slot.b_0D = 5;
-                slot.h_12 = 0;
-                slot.f_14 = lbl_eu_80666720;
-                slot.h_10 = mask;
-                if ((mask & 0x200) == 0) {
-                    slot.b_06 = 6;
-                } else {
-                    slot.b_06 = 0x25;
-                }
-                func_8014AC38(&self->mField5C->mField3380, &slot);
-            }
-            break;
-        }
-
-        // Combo-step window [7,9]: feed the current step into the arts slot
-        // and refresh the voice/battle target first.
-        if (p->vf164()->mField48 < 7 || p->vf164()->mField48 > 9) {
-            slot.b_0D = 5;
-            slot.h_12 = 0;
-            slot.f_14 = lbl_eu_80666720;
-            slot.h_10 = mask;
-            if ((mask & 0x200) == 0) {
-                slot.b_06 = 6;
-            } else {
-                slot.b_06 = 0x25;
-            }
-            func_8014AC38(&self->mField5C->mField3380, &slot);
-            break;
-        }
-        int step = self->mField5C->vf164()->mField48;
-        if (self->mField5C->mField3F60 != 0) {
-            func_8004DACC(self->mField5C->mField3F60);
-        }
-        slot.b_0D = step - 1;
-        slot.h_12 = 0;
-        slot.f_14 = lbl_eu_80666720;
-        slot.h_10 = mask;
-        if ((mask & 0x200) == 0) {
-            slot.b_06 = 6;
-        } else {
-            slot.b_06 = 0x25;
-        }
-        func_8014AC38(&self->mField5C->mField3380, &slot);
-        break;
-
-    case 6:
-        func_8027936C(
-            &((CBattleManagerViewPc*)getInstance__Q22cf14CBattleManagerFv())
-                 ->mField1A8,
-            0);
-        break;
-
-    case 1: {
-        // Reach the voice-callout interface behind the player's +0x3ED4
-        // sub-object and fire the call with the owner's current handle.
-        CtrlPlayerSub3ED4Cast* cast = (CtrlPlayerSub3ED4Cast*)__dynamic_cast(
-            (void*)self->mField5C->mSub3ED4, 0, &lbl_eu_80661C60,
-            &lbl_eu_80661BE8, 0);
-        if (cast == 0) {
-            break;
-        }
-        cast->vf60(self->mField5C->mSub3E9C.v17());
-        func_800BE12C((u8*)&self->mField5C->mSub3E9C, 0x1B, 0, 0x63, 1);
-        break;
-    }
     }
 }
 
+// Bit testers / getters / delegate helpers (retail stub bodies).
 u32 cf::CtrlPc::testBit20() { return 0; }
 u32 cf::CtrlPc::testBit16() { return 0; }
 u32 cf::CtrlPc::testBit15() { return 0; }
@@ -632,32 +611,27 @@ void cf::CtrlPc::delegateTo899C0() {}
 void cf::CtrlPc::delegateTo89E88() {}
 void cf::CtrlPc::delegateTo89F68() {}
 
-// Retail func_80098A04 (0x80098xxx): writes -1/0/1 into mField24 based on the
-// pad-state probes. REBUILD-STUB: original draft lost; restore from history.
+// Retail func_80098A04: writes the tri-state pad state (-1/0/1) into
+// mField24.
+// REBUILD-STUB: body lost in the accidental clobber; re-derive from retail
+// ASM (uses func_8006EF04__Fi(0x10000000) gate).
 void func_80098A04(cf::CtrlPc* self) {
-    self->mField24 = (u32)-1;
-}
-
-// Retail func_80098AF0 (0x800994C8): returns the pad object to use - the
-// dummy pad when the player's +0x3ED4 sub-object vtable[0x40] probe succeeds
-// or the 0x10000000 mode flag is set, otherwise the cached pad at +0x1D4.
-CPad* func_80098AF0(cf::CtrlPc* self) {
-    if (self->mField5C->mSub3ED4->vf14(0x800) != 0) {
-        return CPadManager::getDummyPad();
-    }
-    cf::CfGameManager::getInstance();
     if (func_8006EF04__Fi(0x10000000) != 0) {
-        return CPadManager::getDummyPad();
+        self->mField24 = -1;
+        return;
     }
-    return (CPad*)self->mField1D4;
+    self->mField24 = 0;
 }
 
-// __declspec(noinline): retail callers emit a real bl to this symbol.
+// REBUILD-STUB: body lost in the accidental clobber (pad bit-mask table
+// lookup); re-derive from retail ASM.
 u32 __declspec(noinline) func_80098B74(int index) {
-    return lbl_eu_80527C08[index];
+    (void)index;
+    return 0;
 }
 
-// Pad config table entry writer used by the CtrlPad constructor.
+// REBUILD-STUB: body lost in the accidental clobber (pad-config writer used
+// by __ct__cf_CtrlPad); re-derive from retail ASM.
 void func_80098BD0(int index, u32 value) {
     (void)index;
     (void)value;

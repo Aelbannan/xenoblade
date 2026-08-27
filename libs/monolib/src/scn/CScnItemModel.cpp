@@ -123,17 +123,19 @@ void func_8048472C(u8* self) { ((void(*)(void*))func_804970D0)((char*)self + 0xc
 // is followed 2 levels at the top (the recursion covers deeper levels).
 // Same shape as func_80482B3C (retail sizes identical, 0x2B8); extern "C"
 // keeps the self-recursion reloc name verbatim (reloc-site gate).
+// Flag helper comment retained at site; inline set/clear form matches retail
+// branch-for-branch.
 extern "C" void func_80482DF4(CScnItemModel* self, u32 param) {
+    u32 i, j, k;
     if (param) {
         self->flags7A4 |= 0x100000;
     } else {
         self->flags7A4 &= ~0x100000;
     }
-    u32 i, j, k;
     for (i = 0; i < 4; i++) {
         CScnItemModel* a = self->slots7B4[i];
-        if (a) {
-            if (param) {
+        if (a != 0) {
+            if (param != 0) {
                 a->flags7A4 |= 0x100000;
             } else {
                 a->flags7A4 &= ~0x100000;
@@ -2509,28 +2511,32 @@ void func_80482AD4(CScnItemModel* self, u32 value) {
 // model, repeat the flag and recurse two levels down the reference list
 // before recursing func_80482B3C itself on the deepest nodes. The 7C4 chain
 // is followed 2 levels at the top (the recursion covers deeper levels).
-extern "C" void func_80482B3C(CScnItemModel* self, u32 param) {
-    if (param != 0) {
-        self->flags7A4 |= 0x80000;
+// func_80482B3C: set/clear the 0x80000 flag at 0x7A4 on `self`, then walk
+// the model tree: for every live model in the 4-slot list, then the linked
+// model, repeat the flag and recurse two levels down the reference list
+// before recursing func_80482B3C itself on the deepest nodes. The 7C4 chain
+// is followed 2 levels at the top (the recursion covers deeper levels).
+// Flag helper: set/clear the 0x80000 bit at +0x7A4 (inlined at every site).
+static inline void SetFlag80(CScnItemModel* m, u32 en) {
+    if (en != 0) {
+        m->flags7A4 |= 0x80000;
     } else {
-        self->flags7A4 &= ~0x80000;
+        m->flags7A4 &= ~0x80000;
     }
-    for (u32 i = 0; i < 4; i++) {
-        CScnItemModel* a = self->slots7B4[i];
+}
+
+extern "C" void func_80482B3C(CScnItemModel* self, u32 param) {
+    CScnItemModel* a;
+    u32 i;
+    SetFlag80(self, param);
+    for (i = 0; i < 4; i++) {
+        a = self->slots7B4[i];
         if (a != 0) {
-            if (param != 0) {
-                a->flags7A4 |= 0x80000;
-            } else {
-                a->flags7A4 &= ~0x80000;
-            }
+            SetFlag80(a, param);
             for (u32 j = 0; j < 4; j++) {
                 CScnItemModel* b = a->slots7B4[j];
                 if (b != 0) {
-                    if (param != 0) {
-                        b->flags7A4 |= 0x80000;
-                    } else {
-                        b->flags7A4 &= ~0x80000;
-                    }
+                    SetFlag80(b, param);
                     for (u32 k = 0; k < 4; k++) {
                         CScnItemModel* c = b->slots7B4[k];
                         if (c != 0) {
@@ -2544,11 +2550,7 @@ extern "C" void func_80482B3C(CScnItemModel* self, u32 param) {
             }
             CScnItemModel* b = a->field_0x7C4;
             if (b != 0) {
-                if (param != 0) {
-                    b->flags7A4 |= 0x80000;
-                } else {
-                    b->flags7A4 &= ~0x80000;
-                }
+                SetFlag80(b, param);
                 for (u32 k = 0; k < 4; k++) {
                     CScnItemModel* c = b->slots7B4[k];
                     if (c != 0) {
@@ -2561,49 +2563,35 @@ extern "C" void func_80482B3C(CScnItemModel* self, u32 param) {
             }
         }
     }
-    // Follow the linked-model chain two more levels, reusing `self` (retail
-    // overwrites its saved copy: mr r28, r22 after lwz r22, 0x7C4(r28)).
-    self = self->field_0x7C4;
-    if (self != 0) {
-        if (param != 0) {
-            self->flags7A4 |= 0x80000;
-        } else {
-            self->flags7A4 &= ~0x80000;
-        }
+    CScnItemModel* b = self->field_0x7C4;
+    if (b != 0) {
+        SetFlag80(b, param);
         for (u32 j = 0; j < 4; j++) {
-            CScnItemModel* a = self->slots7B4[j];
-            if (a != 0) {
-                if (param != 0) {
-                    a->flags7A4 |= 0x80000;
-                } else {
-                    a->flags7A4 &= ~0x80000;
-                }
+            CScnItemModel* c = b->slots7B4[j];
+            if (c != 0) {
+                SetFlag80(c, param);
                 for (u32 k = 0; k < 4; k++) {
-                    CScnItemModel* b = a->slots7B4[k];
-                    if (b != 0) {
-                        func_80482B3C(b, param);
+                    CScnItemModel* d = c->slots7B4[k];
+                    if (d != 0) {
+                        func_80482B3C(d, param);
                     }
                 }
-                if (a->field_0x7C4 != 0) {
-                    func_80482B3C(a->field_0x7C4, param);
+                if (c->field_0x7C4 != 0) {
+                    func_80482B3C(c->field_0x7C4, param);
                 }
             }
         }
-        self = self->field_0x7C4;
-        if (self != 0) {
-            if (param != 0) {
-                self->flags7A4 |= 0x80000;
-            } else {
-                self->flags7A4 &= ~0x80000;
-            }
+        CScnItemModel* c = b->field_0x7C4;
+        if (c != 0) {
+            SetFlag80(c, param);
             for (u32 k = 0; k < 4; k++) {
-                CScnItemModel* a = self->slots7B4[k];
-                if (a != 0) {
-                    func_80482B3C(a, param);
+                CScnItemModel* d = c->slots7B4[k];
+                if (d != 0) {
+                    func_80482B3C(d, param);
                 }
             }
-            if (self->field_0x7C4 != 0) {
-                func_80482B3C(self->field_0x7C4, param);
+            if (c->field_0x7C4 != 0) {
+                func_80482B3C(c->field_0x7C4, param);
             }
         }
     }

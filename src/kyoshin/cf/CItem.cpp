@@ -771,22 +771,18 @@ void func_80156BE4(u32 unused, CItemData* self) {
     u32 word = self->field_00;
     void* handle = lbl_eu_806640D8;
     u32 v = (word >> 5) & 0x7FF;
-    union {
-        u32 value;
-        u8 b[4];
-    } tmp;
-    u32 f7;
-    u32 f18;
     if (v == 0) v = 1;
     *(u16*)&self->field_08[8] = 0;
     CItem_initItemImplInstances(self)->vf0C(self, 1);
     CItem_initItemImplInstances(self)->vf84(self, 1);
     self->field_08[0xE] = 1;
+    union {
+        u32 value;
+        u8 b[4];
+    } tmp;
     tmp.value = getBdatStringColumnValue(handle, lbl_eu_80501C58 + 0x6d, (u16)v);
-    f18 = self->field_18;
-    f7 = self->field_07;
-    f18 = __rlwimi(f18, v, 0, 17, 31);
-    f7 = __rlwimi(f7, tmp.b[0], 2, 24, 29);
+    u32 f18 = __rlwimi(self->field_18, v, 0, 17, 31);
+    u32 f7 = __rlwimi(self->field_07, tmp.b[0], 2, 24, 29);
     self->field_07 = (u8)f7;
     self->field_18 = (u16)f18;
     u16* slots = (u16*)self->field_08;

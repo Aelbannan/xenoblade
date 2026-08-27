@@ -2264,6 +2264,16 @@ u32 func_800B14FC(int* a, int* b) {
     int vb = *b;
     return va != vb;
 }
+// us-800b23a4 - func_800B1AD8: same dual-subf inequality idiom over two
+// iter words (retail: lwz/lwz/subf/subf/or/srwi 31).
+#pragma push
+#pragma auto_inline off
+extern "C" int func_800B1AD8(void* a, void* b) {
+    u32 va = *(u32*)a;
+    u32 vb = *(u32*)b;
+    return va != vb;
+}
+#pragma pop
 // us-800b35f4 - accessor returning field at +0x4
 // auto_inline off: retail calls this out-of-line (e.g. from func_800B97A0).
 #pragma push
@@ -2288,6 +2298,15 @@ extern "C" u32 func_800B31D4(u8* self) {
 #pragma auto_inline off
 extern "C" int func_800B31BC(void* self) {
     return (int)((*(u32*)((u8*)self + 0x64) >> 8) & 1);
+}
+#pragma pop
+// func_800B31F8: sibling predicate, bit 15 of field at +0x64 (retail leaf:
+// lwz r0,0x64(r3); rlwinm r3,r0,17,31,31; blr; called out-of-line from
+// func_800B4120). Definition was missing entirely (stale FULL_MATCH status).
+#pragma push
+#pragma auto_inline off
+extern "C" int func_800B31F8(void* self) {
+    return (int)((*(u32*)((u8*)self + 0x64) >> 15) & 1);
 }
 #pragma pop
 // us-800b4630 - return bit 31 of field at +0x64

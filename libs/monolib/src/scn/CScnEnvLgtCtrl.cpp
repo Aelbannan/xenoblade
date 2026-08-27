@@ -2144,12 +2144,22 @@ extern "C" bool func_804C5198(CScnEnvLgtCtrlLgtView* self, CScnEnvLgtCtrlLgtData
 }
 
 extern "C" bool func_804C51D4(void* r3, void* r4) {
-    if (!(*(unsigned int*)((char*)r3 + 4) & 0x400)) return false;
-    *(unsigned int*)((char*)r4 + 0) = *(unsigned int*)((char*)r3 + 0x64);
-    *(unsigned int*)((char*)r4 + 4) = *(unsigned int*)((char*)r3 + 0x68);
-    *(unsigned int*)((char*)r4 + 8) = *(unsigned int*)((char*)r3 + 0x6c);
-    *(unsigned int*)((char*)r4 + 0xc) = *(unsigned int*)((char*)r3 + 0x70);
-    return true;
+    if ((*(unsigned int*)((char*)r3 + 4) & 0x400)) {
+        unsigned int t2;
+        unsigned int t1;
+        unsigned int t0;
+        unsigned int t3;
+        t0 = *(unsigned int*)((char*)r3 + 0x64);
+        t1 = *(unsigned int*)((char*)r3 + 0x68);
+        t2 = *(unsigned int*)((char*)r3 + 0x6c);
+        t3 = *(unsigned int*)((char*)r3 + 0x70);
+        *(unsigned int*)((char*)r4 + 0xc) = t3;
+        *(unsigned int*)((char*)r4 + 8) = t2;
+        *(unsigned int*)((char*)r4 + 4) = t1;
+        *(unsigned int*)((char*)r4 + 0) = t0;
+        return true;
+    }
+    return false;
 }
 
 // Push the light view's ambient color triple into CScnEnvLgtData::mAmbColorBase.

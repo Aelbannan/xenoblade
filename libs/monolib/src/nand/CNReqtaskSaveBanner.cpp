@@ -43,13 +43,14 @@ extern "C" {
     // so the code bodies above can reference them.
     extern CNReqtaskSaveBannerVtbl* lbl_eu_80665A90;
     extern u32 lbl_eu_80570358[4];
-    extern u32 lbl_eu_80665A94;
+    extern u8 lbl_eu_80665A94;
     extern s32 lbl_eu_80663CD0;
     extern s32 lbl_eu_80663CD4;
     extern u32 lbl_eu_80663CD8[2];
     extern u32 lbl_eu_80570368[4];
     extern ml::FixStr<32> lbl_eu_80661850;
-    extern const char lbl_eu_80524894[0x1C];
+    extern const char lbl_eu_80524894[0x14];
+    extern const char lbl_eu_805248A8[8];
 
     // Foreign data labels referenced by the banner vtable / RTTI locators
     // (owned by other units; referenced only here).
@@ -104,7 +105,7 @@ CNandPath* func_804F50D0(CNReqtaskSaveBannerData* data) {
         lbl_eu_80661850.clear();  // zero mString[0] and mLength (offset 0x20)
         lbl_eu_80665A94 = 1;
     }
-    lbl_eu_80661850.format(&lbl_eu_80524894[0x14], lbl_eu_80663CD0, lbl_eu_80663CD4);
+    lbl_eu_80661850.format(lbl_eu_805248A8, lbl_eu_80663CD0, lbl_eu_80663CD4);
     return (CNandPath*)&lbl_eu_80661850;
 }
 
@@ -300,11 +301,14 @@ extern "C" __declspec(noinline) void sinit_804F5140() {
 // func_804F4D90 + a per-case offset), so only the two 16-byte vtables follow.
 // ============================================================================
 
-// === .rodata 0x1C: "CNReqtaskSaveBanner\0" + "%s%s\0" (single 0x1C blob so the
-// short format string stays in .rodata instead of being pooled to .sdata2).
-extern "C" __declspec(align(4)) const char lbl_eu_80524894[0x1C] = {
+// === .rodata 0x1C: "CNReqtaskSaveBanner\0" + "%s%s\0" (two arrays so the
+// retail substring symbol lbl_eu_805248A8 exists for func_804F50D0's format
+// arg; short format string stays in .rodata instead of pooling to .sdata2).
+extern "C" __declspec(align(4)) const char lbl_eu_80524894[0x14] = {
     0x43,0x4E,0x52,0x65,0x71,0x74,0x61,0x73,0x6B,0x53,0x61,0x76,0x65,0x42,0x61,0x6E,
     0x6E,0x65,0x72,0x00,
+};
+extern "C" __declspec(align(4)) const char lbl_eu_805248A8[8] = {
     0x25,0x73,0x25,0x73,0x00,0x00,0x00,0x00,
 };
 
@@ -328,4 +332,4 @@ ml::FixStr<32> lbl_eu_80661850;
 // === .sbss 8: task vtable pointer (4B) + banner-path cache init flag (4B,
 // low byte used) so the section totals retail's 8 bytes ===
 CNReqtaskSaveBannerVtbl* lbl_eu_80665A90;
-u32 lbl_eu_80665A94;
+u8 lbl_eu_80665A94;

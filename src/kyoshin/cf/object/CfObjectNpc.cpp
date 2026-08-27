@@ -20,8 +20,15 @@
 // so MWCC emits the verbatim retail symbol.
 struct CfObjectNpcInitView {
     void* vtable;                 // 0x00 - CfObjectNpc vtable
-    u8 pad_04[0xB0 - 0x04];
+    u8 pad_04[0x34 - 0x04];
+    u32 field_34;                 // 0x34 (cleared by the ctor)
+    u8 pad_38[0xB0 - 0x38];
     void* subObjB0;               // 0xB0 - CfResPcImpl / CfResReloadImpl child
+    u8 pad_B4[0x71C - 0xB4];
+    u8 iconType;                  // 0x71C - NPC icon type
+    u8 pad_71D;                   // 0x71D - alignment padding
+    s16 rltMeet;                  // 0x71E - relationship meet value (-1 = unset)
+    f32 timer;                    // 0x720 - dialogue trigger timer
 };
 
 cf::CfObjectNpc* __ct__Q22cf11CfObjectNpcFv(cf::CfObjectNpc* self, int heapFlag) {
@@ -45,12 +52,13 @@ cf::CfObjectNpc* __ct__Q22cf11CfObjectNpcFv(cf::CfObjectNpc* self, int heapFlag)
 
     // Shared locals (CfResReloadImpl ctor idiom): values are computed before
     // the member stores.
+    f32 timerInit = lbl_eu_80666AE0;
     int zero = 0;
     s16 invalid = -1;
-    *(u32*)self->unk34 = zero;
-    self->mIconType = (u8)zero;
-    self->mRltMeet = invalid;
-    self->mTimer = lbl_eu_80666AE0;
+    view->field_34 = (u32)zero;
+    view->iconType = (u8)zero;
+    view->rltMeet = invalid;
+    self->mTimer = timerInit;
     return self;
 }
 
@@ -173,28 +181,21 @@ void CfObjectNpc::func_800BF764() {
     reinterpret_cast<CfObjectNpcVt*>(this)->setTime(lbl_eu_80666AF4);
     reinterpret_cast<CfObjectNpcVt*>(this)->moveTime(lbl_eu_80666AF8);
 
-    // Speed column (+0x11): the column result stays address-taken in memory
-    // and retail reads its low BYTE back through the stack slot. The u32 to
-    // double conversion is the classic MWCC 0x4330 bit-assembly, and the
-    // 2^52 bias is subtracted from the named sdata2 global (not a literal
-    // pool constant). Result is scaled by the model's current scale.
-    const char* col11 = (const char*)getBdatStringColumnValue(
+    // Speed column (+0x11): byte payload scaled by the model's current scale.
+    // The plain (f32)(u32)(u8) casts emit MWCC's builtin 0x43300000 stack-slot
+    // conversion (TU-local @N pool constant - see MWCC_PATTERNS "magic
+    // constant" note); retail's schedule keeps the raw result in a register.
+    u32 col11 = getBdatStringColumnValue(
         fp, (const char*)&lbl_eu_804FC580[0x11], unk8C_3);
-    double speedRaw =
-        ((double)(u32)*(const u8*)&col11) - lbl_eu_80666B00;
-    f32 speedVal =
-        (f32)speedRaw /
-        *(f32*)(void*)reinterpret_cast<CfObjectNpcVt*>(this)->getScalePtr();
-    reinterpret_cast<CfObjectNpcVt*>(this)->setSpeed(speedVal);
+    f32 val1 = (f32)(u32)(u8)col11 /
+        *(f32*)reinterpret_cast<CfObjectNpcVt*>(this)->getScalePtr();
+    reinterpret_cast<CfObjectNpcVt*>(this)->setSpeed(val1);
 
-    // Fade column (+0x1C): same memory round-trip idiom, this time reading a
-    // halfword back, divided by the named fade-scale constant.
-    const char* col1c = (const char*)getBdatStringColumnValue(
+    // Fade column (+0x1C): halfword payload divided by the fade-scale factor.
+    u32 col1c = getBdatStringColumnValue(
         fp, (const char*)&lbl_eu_804FC580[0x1C], unk8C_3);
-    double fadeRaw =
-        ((double)(u32)*(const u16*)&col1c) - lbl_eu_80666B00;
-    f32 fadeVal = (f32)fadeRaw / lbl_eu_80666AFC;
-    reinterpret_cast<CfObjectNpcVt*>(this)->setFade(fadeVal);
+    f32 val2 = (f32)(u32)(u16)col1c / lbl_eu_80666AFC;
+    reinterpret_cast<CfObjectNpcVt*>(this)->setFade(val2);
 
     reinterpret_cast<CfObjectNpcVt*>(this)->applyParams();
 }

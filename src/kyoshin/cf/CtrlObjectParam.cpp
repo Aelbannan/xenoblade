@@ -770,8 +770,8 @@ extern "C" char* func_8009EB2C(u16 arg1, u16 arg2, const char* srcStr) {
         char str[0x20];
     };
     *(CopyWords*)&work->dst = *(CopyWords*)&work->src;
-    work->src.field_00 = arg2;
     work->src.field_02 = arg1;
+    work->src.field_00 = arg2;
     return strncpy(work->src.str, srcStr, 0x1f);
 }
 

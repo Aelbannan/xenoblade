@@ -244,6 +244,12 @@ __declspec(noinline) void func_8026E7F8(CfGimmickEne* self, int arg) {
     GXSetChanAmbColor(GX_COLOR0A0, color);
 
     GXBegin(GX_TRIANGLEFAN, GX_VTXFMT0, 4);
+    // NOTE: vertex corner constants MUST stay as literals. Named globals get
+    // CSE'd by MWCC (-inline auto/-ipa) so retail's per-FIFO-write reloads
+    // vanish; volatile lvalue reads keep the reloads but reschedule them
+    // (both variants regressed 100%->82-88%, see attempts.jsonl). The
+    // literals land in this TU's sdata2 at lbl_eu_80668974/78 exactly like
+    // retail; residual is reloc NAME only (@N vs lbl_eu_*).
     GXPosition3f32(-1.0f, 1.0f, -1.0f);
     GXPosition3f32(1.0f, 1.0f, -1.0f);
     GXPosition3f32(1.0f, -1.0f, 1.0f);

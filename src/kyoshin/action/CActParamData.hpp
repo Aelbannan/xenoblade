@@ -554,10 +554,10 @@ struct ActParamCb20 {
 // the data object and the source record.
 struct ActParamCb18 {
     virtual void _v00(); virtual void _v04(); virtual void _v08();
-    virtual void _v0C(); virtual void _v10();
+    virtual void _v0C();
     virtual void invoke18(void* obj, void* src); // vt+0x18
 };
-// Callback interface used by func_80057490: fires the vt+0x28 slot with the
+// Callback interface used by func_80057490
 // data object, the source mask word, two vals words, and the func_80053960
 // tick value.
 struct ActParamCb28 {

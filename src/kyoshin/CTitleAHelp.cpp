@@ -18,7 +18,6 @@
 
 // Retail symbol is unmangled (C linkage); extern "C" keeps the reloc name.
 extern "C" void func_80124270(nw4r::lyt::Pane*, u32);
-extern void copyVEC3(nw4r::math::VEC3*, nw4r::math::VEC3*);
 
 // Retail keeps these state-machine helpers unmangled (C linkage); declare
 // them extern "C" so the switch in func_801C3FF0 emits the retail relocs.
@@ -26,8 +25,6 @@ extern "C" void func_801C477C(CTitleAHelp*);
 extern "C" void func_801C47F8(CTitleAHelp*);
 extern "C" void func_801C484C(CTitleAHelp*);
 extern "C" void func_801C48E0(CTitleAHelp*);
-
-extern u16 lbl_eu_80533E60[];
 
 // Unmangled retail helper symbols defined below in this TU; global-qualified
 // calls from member functions must bind to these, not to the same-named
@@ -145,40 +142,43 @@ extern "C" void __declspec(noinline) func_801C41C0(CTitleAHelp* self, char* arg)
     func_80136B4C(self->mLayout, lbl_eu_805054BC + 0x17, arg, 0);
 }
 
+// Lays out the title-A help screen: swaps button textures by bdat key assign
+// and re-flows help text boxes left-to-right with the shared icon width.
 // Retail symbol is unmangled; noinline so OnFileEvent keeps the bl.
 extern "C" void __declspec(noinline) func_801C41E8(CTitleAHelp* self, u8 arg) {
     if (self->mLayout == nullptr) return;
 
-    u16* row = &lbl_eu_80533E60[arg * 7];
+    HelpRow* row = &lbl_eu_80533E60[arg];
+    char buf1[0x20];
+    char buf2[0x20];
 
     for (u8 i = 0; i < 6; i++) {
-        char buf1[0x20];
-        sprintf(buf1, "pic_btn%02d", i);
-        char buf2[0x20];
-        sprintf(buf2, "txt_hlp%02d", i);
+        sprintf(buf1, lbl_eu_805054BC + 0x1f, i);
+        sprintf(buf2, lbl_eu_805054BC + 0x2b, i);
 
-        u16 tableVal = row[i];
+        u16 tableVal = row->cell[i];
         if (tableVal != 0) {
-            nw4r::lyt::Pane* root = self->mLayout->GetRootPane();
-            func_80124270(root->FindPaneByName(buf1, true), 1);
-            func_80124270(root->FindPaneByName(buf2, true), 1);
+            func_80124270(self->mLayout->GetRootPane()->FindPaneByName(buf1, true), 1);
+            func_80124270(self->mLayout->GetRootPane()->FindPaneByName(buf2, true), 1);
 
-            const char* fileID = "fileID_1";
-            if (cf::CfGameManager::func_80086F9C(-1) != 0) {
-                fileID = "fileID_2";
+            const char* fileID = lbl_eu_805054BC + 0x37;
+            if (func_80086F9C__Q22cf13CfGameManagerFv(-1) != 0) {
+                fileID = lbl_eu_805054BC + 0x40;
             }
 
-            u16 keyVal = func_8013606C("MNU_kyeassign", (char*)fileID, tableVal);
-            char* name = func_80138F78(keyVal);
+            u16 keyVal = func_8013606C(lbl_eu_805054BC + 0x49, fileID, tableVal);
+            char* texName = func_80138F78(keyVal);
 
-            nw4r::lyt::ArcResourceAccessor* resAcc = CUICfManager::func_801355F4();
-            void* resource = resAcc->GetResource(nw4r::lyt::ArcResourceAccessor::RES_TYPE_TEXTURE, name, nullptr);
+            nw4r::lyt::ArcResourceAccessor* accessor = ::func_801355F4();
+            void* resource = accessor->GetResource(
+                nw4r::lyt::ArcResourceAccessor::RES_TYPE_TEXTURE, texName, NULL);
 
             if (resource != nullptr) {
                 func_80137E7C(self->mLayout, buf1, resource);
 
                 nw4r::lyt::Pane* pane = self->mLayout->GetRootPane()->FindPaneByName(buf1, true);
                 if (pane != nullptr) {
+                    // Resource -> pointer table -> image header (height @0, width @2).
                     u32* texPtr = *(u32**)((u8*)resource + 8);
                     u16 width = *(u16*)(*texPtr + 2);
                     u16 height = *(u16*)(*texPtr + 0);
@@ -186,55 +186,57 @@ extern "C" void __declspec(noinline) func_801C41E8(CTitleAHelp* self, u8 arg) {
                 }
             }
 
-            char* helpText = (char*)func_80136190("MNU_kyeassign", "help", tableVal);
+            char* helpText = func_80136190(lbl_eu_805054BC + 0x49, lbl_eu_805054BC + 0x57, tableVal);
             func_80136B4C(self->mLayout, buf2, helpText, 0);
         } else {
-            nw4r::lyt::Pane* root = self->mLayout->GetRootPane();
-            func_80124270(root->FindPaneByName(buf1, true), 0);
-            func_80124270(root->FindPaneByName(buf2, true), 0);
+            func_80124270(self->mLayout->GetRootPane()->FindPaneByName(buf1, true), 0);
+            func_80124270(self->mLayout->GetRootPane()->FindPaneByName(buf2, true), 0);
         }
     }
 
+    // Second pass: flow the text boxes left to right, placing each button icon
+    // just left of its text and advancing by measured text + icon width.
     u16 someWidth = 0;
     nw4r::math::VEC3 oldVec;
+    nw4r::math::VEC3 newVec;
+    char buf3[0x20];
+    char buf4[0x20];
 
     for (u8 i = 0; i < 6; i++) {
-        char buf3[0x20];
-        sprintf(buf3, "txt_hlp%02d", i);
+        sprintf(buf3, lbl_eu_805054BC + 0x2b, i);
 
         nw4r::lyt::TextBox* textBox = (nw4r::lyt::TextBox*)self->mLayout->GetRootPane()->FindPaneByName(buf3, true);
         if (!func_801C4648(textBox)) return;
 
         if (i == 0) {
-            oldVec = textBox->GetTranslate();
+            copyVEC3(&oldVec, &textBox->GetTranslate());
         }
 
-        nw4r::math::VEC3 newVec = oldVec;
+        newVec = oldVec;
         newVec.x -= (f32)someWidth;
-        textBox->SetTranslate(newVec);
+        copyVEC3((void*)&textBox->GetTranslate(), &newVec);
 
-        nw4r::ut::Font* font = (nw4r::ut::Font*)textBox->GetFont();
-        const wchar_t* str = textBox->GetString();
+        nw4r::ut::Font* font = const_cast<nw4r::ut::Font*>(textBox->GetFont());
+        const wchar_t* text = textBox->GetString();
 
         u8 j = 0;
-        while (str[j] != 0) {
-            someWidth += (u16)font->GetCharWidth(str[j]);
+        while (text[j] != 0) {
+            someWidth += (u16)font->GetCharWidth(text[j]);
             j++;
         }
         someWidth -= 4;
 
-        char buf4[0x20];
-        sprintf(buf4, "pic_btn%02d", i);
+        sprintf(buf4, lbl_eu_805054BC + 0x1f, i);
         nw4r::lyt::Pane* picPane = self->mLayout->GetRootPane()->FindPaneByName(buf4, true);
 
         copyVEC3(&newVec, &oldVec);
         newVec.x -= (f32)someWidth;
-        picPane->SetTranslate(newVec);
+        copyVEC3((void*)&picPane->GetTranslate(), &newVec);
 
         someWidth = (int)((f32)someWidth + picPane->GetSize().width);
 
         if (i < 5) {
-            sprintf(buf3, "txt_hlp%02d", i + 1);
+            sprintf(buf3, lbl_eu_805054BC + 0x2b, i + 1);
             nw4r::lyt::TextBox* nextPane = (nw4r::lyt::TextBox*)self->mLayout->GetRootPane()->FindPaneByName(buf3, true);
             if (!func_801C4648(nextPane)) return;
 

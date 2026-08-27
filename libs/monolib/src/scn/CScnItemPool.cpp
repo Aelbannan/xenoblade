@@ -211,7 +211,8 @@ public:
     CScnItemPool(CScn* scene, u32 cnt0C, u32 cnt2C, u32 cnt4C, u32 cnt6C,
                  u32 cnt8C);
 
-    u8 _00[0x08];              // 0x00 IWorkEvent / CDeviceVICb bases
+    u8 _00[0x04];              // 0x00 IWorkEvent base
+    u8 mViCb[0x04];            // 0x04 CDeviceVICb base
     u32 mId;                   // 0x08
     u8 mList0C[0x20];          // 0x0C reslist sub-pool #0
     u8 mList2C[0x20];          // 0x2C
@@ -532,8 +533,9 @@ struct CScnItemPoolNodeArray {
 // nodes from MemManager, clears every node's mNext (the free marker used by
 // func_8048C524), and records the capacity.
 // noinline: retail CALLS this from __ct__CScnItemPool (x5); without it -ipa
-// flattens the allocation loop into the constructor.
-__declspec(noinline) void func_8048C0EC(CScnItemPoolNodeArray* self, u32 handle, int count) {
+// flattens the allocation loop into the constructor. extern "C" matches the
+// retail address-named symbol func_8048C0EC.
+extern "C" __declspec(noinline) void func_8048C0EC(CScnItemPoolNodeArray* self, u32 handle, int count) {
     self->mList = (CScnItemPoolListNode*)mtl::MemManager::allocate_array((u32)count * 0xC, handle);
     for (int i = 0; i < count; i++) {
         self->mList[i].mNext = nullptr;
@@ -712,7 +714,7 @@ extern "C" u32 func_80496018(void* scene); // scene -> mtl::ALLOC_HANDLE
 CScnItemPool::CScnItemPool(CScn* scene, u32 cnt0C, u32 cnt2C, u32 cnt4C,
                            u32 cnt6C, u32 cnt8C) {
     __ct__IWorkEvent(this);
-    __ct__11CDeviceVICbFv((char*)this + 4);
+    __ct__11CDeviceVICbFv(&mViCb[0]);
     mId = (u32)scene;
     u32 vt = (u32)&lbl_eu_8056E488;
     ((u32*)this)[0] = vt;
@@ -730,12 +732,14 @@ CScnItemPool::CScnItemPool(CScn* scene, u32 cnt0C, u32 cnt2C, u32 cnt4C,
     func_8048C0EC((CScnItemPoolNodeArray*)&mList6C, func_80496018(scene), cnt6C);
     func_8048C0EC((CScnItemPoolNodeArray*)&mList2C, func_80496018(scene), cnt2C);
     func_8048C0EC((CScnItemPoolNodeArray*)&mList8C, func_80496018(scene), cnt8C);
+    // Sub-pool 0xAC shares the 0xC node count.
+    func_8048C0EC((CScnItemPoolNodeArray*)&mListAC, func_80496018(scene), cnt0C);
     mFlagsCC = (u8*)mtl::MemManager::allocate_head(func_80496018(scene), cnt2C, 4);
     mSlotsD0 = (CScnItem*)mtl::MemManager::allocate_head(func_80496018(scene), cnt2C * 0x58, 4);
-    memset(mSlotsD0, 0, cnt2C);
+    memset(mFlagsCC, 0, cnt2C);
     mFlagsD4 = (u8*)mtl::MemManager::allocate_head(func_80496018(scene), cnt6C, 4);
     mSlotsD8 = (CScnItemBig*)mtl::MemManager::allocate_head(func_80496018(scene), cnt6C * 0x3A8, 4);
-    memset(mSlotsD8, 0, cnt6C);
+    memset(mFlagsD4, 0, cnt6C);
 }
 
 // __dt__12CScnItemPoolFv: complete-object destructor.

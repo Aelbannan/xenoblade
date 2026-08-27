@@ -190,67 +190,78 @@ void SFX_CnvFrmByCbFunc(SFXConvertState* self, SFXStmInf* stmInf,
 void sfxcnv_MakeCftSrcBuf(SFXConvertState* self, SFXStmInf* stmInf,
                           SFXCnvSrcBuf* srcBuf);
 
+/* Parameter block handed to the frame-conversion callback (0x20 bytes). */
+typedef struct SFXCnvCbParam {
+    u32 table;       /* +0x00: color-adjust table no. (0 when unused) */
+    u32 _04;         /* +0x04: copy of SFXConvertState::_50 */
+    u8 _08[0x10];
+    u32 _18;         /* +0x18: src height check value */
+    u32 mergeField;  /* +0x1c: 1 when field-merge conversion */
+} SFXCnvCbParam;
+
 void sfxcnv_ExecCnvFrmByCbFunc(SFXConvertState* self, SFXStmInf* stmInf,
                                 SFXDstBufInf* dstBuf, BOOL useTable) {
     SFXCnvSrcBuf srcBuf;
-    u32 table;
-    u32 mergeFlag;
-    void (*cb)(SFXCnvSrcBuf*, SFXDstBufInf*, u32*);
+    SFXCnvCbParam param;
+    void (*cb)(SFXCnvSrcBuf*, SFXDstBufInf*, SFXCnvCbParam*);
 
     memset(&srcBuf, 0, sizeof(SFXCnvSrcBuf));
 
     sfxcnv_MakeCftSrcBuf(self, stmInf, &srcBuf);
 
     if (useTable == TRUE) {
-        table = self->_38;
+        param.table = self->_38;
     } else {
-        table = 0;
+        param.table = 0;
     }
 
+    param._04 = self->_50;
+
+    /* Zero source height: fall back to the line size and report. */
     if (self->_0C == 0) {
+        param._18 = stmInf->bytesPerLine;
         SFXLIB_Error(self, stmInf, (const char*)&lbl_eu_8051CF48[0xfa]);
+        goto heightDone;
     }
+    param._18 = self->_0C;
+heightDone:;
 
-    mergeFlag = (SFX_IsMergeField(self, stmInf) == TRUE) ? 1 : 0;
+    if (SFX_IsMergeField(self, stmInf) == TRUE) {
+        param.mergeField = 1;
+    } else {
+        param.mergeField = 0;
+    }
 
     if (SFX_GetCnvBottomUp(self) == 1) {
-        s32 stride = (s32)dstBuf->_10;
-        u32 height = dstBuf->_0C;
-        dstBuf->_10 = (u32)(-stride);
-        dstBuf->_04 += (u32)((height - 1) * stride);
+        /* Bottom-up output: negate the line pitch and point the plane at
+         * the last line instead of the first. */
+        dstBuf->_04 += dstBuf->_10 * ((s32)dstBuf->_0C - 1);
+        dstBuf->_10 = (u32)(-(s32)dstBuf->_10);
     }
 
-    cb = (void (*)(SFXCnvSrcBuf*, SFXDstBufInf*, u32*))self->makeCnvFrameCallback;
+    cb = (void (*)(SFXCnvSrcBuf*, SFXDstBufInf*, SFXCnvCbParam*))self->makeCnvFrameCallback;
     if (cb != NULL) {
-        cb(&srcBuf, dstBuf, &table);
+        cb(&srcBuf, dstBuf, &param);
     }
 }
 
 void sfxcnv_MakeCftSrcBuf(SFXConvertState* self, SFXStmInf* stmInf,
                           SFXCnvSrcBuf* srcBuf) {
-    memset(srcBuf, 0, sizeof(SFXCnvSrcBuf));
-
-    {
-        s32 type = stmInf->srcType;
-        if (type == 1) goto case1;
-        if (type == 2) goto case2;
-        if (type != 3) goto caseDefault;
-        goto case3;
-case1:
+    /* Retail dispatches on the source plane count with a compare chain
+     * (no jumptable); planes 1 and 2 share the same fill-out. */
+    if ((s32)stmInf->srcType == 1) {
         srcBuf->type = 1;
         srcBuf->_04 = stmInf->_04;
         srcBuf->_08 = stmInf->width;
         srcBuf->_0C = stmInf->_0C;
         srcBuf->_10 = stmInf->_08;
-        goto done;
-case2:
+    } else if ((s32)stmInf->srcType == 2) {
         srcBuf->type = 1;
         srcBuf->_04 = stmInf->_04;
         srcBuf->_08 = stmInf->width;
         srcBuf->_0C = stmInf->_0C;
         srcBuf->_10 = stmInf->_08;
-        goto done;
-case3:
+    } else if ((s32)stmInf->srcType == 3) {
         srcBuf->type = 3;
         srcBuf->_04 = stmInf->_04;
         srcBuf->_08 = stmInf->width;
@@ -264,11 +275,8 @@ case3:
         srcBuf->_28 = (u32)((s32)stmInf->width / 2);
         srcBuf->_2C = stmInf->_2C;
         srcBuf->_30 = stmInf->_28;
-        goto done;
-caseDefault:
+    } else {
         SFXLIB_Error(self, stmInf, (const char*)&lbl_eu_8051CF48[0x138]);
-done:
-        ;
     }
 }
 
@@ -380,8 +388,8 @@ void sfxcnv_MakeDstBufInf(SFXConvertState* self, SFXStmInf* stmInf,
 }
 
 void SFX_Make2PlaneCftDstBuf(SFXConvertState* self, SFXStmInf* stmInf,
-                             void* buf0, void* buf1, int xOfs, int yOfs,
-                             SFXDstBufInf* dstArray, u32 width, u32 bytesPerLine) {
+                             void* buf0, void* buf1, SFXDstBufInf* dstArray,
+                             int xOfs, int yOfs, u32 width, u32 bytesPerLine) {
     stmInf->width = width;
     stmInf->bytesPerLine = bytesPerLine;
 

@@ -95,10 +95,9 @@ bool ReadOffsetByLabel__Q44nw4r3snd6detail13SeqFileReaderCFPCcPUl(
     }
 
     u32 nameLen = strlen(label);
-    u32 entryCount = pLabelBlock->entryCount;
 
     u32 i = 0;
-    for (; i < entryCount; i++) {
+    for (; i < pLabelBlock->entryCount; i++) {
         const SeqLabelEntry* pEntry =
             static_cast<const SeqLabelEntry*>(AddPtrBaseFirst(pLabelBlock, pLabelBlock->offset[i]));
 

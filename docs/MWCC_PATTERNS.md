@@ -4196,3 +4196,30 @@ the base list's `off` is overridden).
 Applies to/a.k.a.: any monolib reslist push_back/setItem/insert inlined into matched code
 (reslist-heavy TUs: effect, coli, scn); whenever a retail function shows a dead sp-store plus
 backchain-restore epilogue, suspect an inlined throwing member and write the try/catch literally.
+
+## Fake-vtable kill on menu TUs: fold pads onto named virtuals, but preserve the CALLER's conversion flavor (CMenuBattlePlayerState, Wii/1.1 -O4,p -RTTI on)
+
+Killing TU-local `*If` pad structs (filler virtuals + `vfNNN()`) and retyping the receiver to the real
+class is codegen-neutral ONLY if every folded slot keeps the retail ABI. Three traps found while
+de-padding `kyoshin/menu/CMenuBattlePlayerState.cpp` (Move held 94% before and after; all seven Ifs
+deleted):
+
+1. **Signed/unsigned conversion flavor beats the shared header's return type.** The pad declared the
+   +0x1E8/+0x1F0 getters `int`; the hot header (`cf::CActorParam.hpp`) types both `u32`. Retail
+   converts +0x1E8 as SIGNED (no xoris before the biased lfd) in one caller and via explicit
+   `(u32)` in another. Fix: call the named u32 virtual through `static_cast<f32>(static_cast<int>(
+   actor->Func85()))` at signed sites — MWCC composes u32→int→f32 into the plain signed stw/lfd/
+   fsubs sequence. Getting this wrong regressed Move 94% → 4.6% (489 structural).
+2. **Missing arg setup ≠ no-arg call.** Retail `Animate()`-shaped dispatches (+0x38) that appear to
+   pass garbage r4 are actually `Animate(0)` with the `li r4,0` SCHEDULED EARLY across intervening
+   stores. Check a ±10-instruction window before concluding the prototype had no parameter.
+3. **Pad slot arithmetic**: first declared virtual lands at vtable+0x8 under `-RTTI on`; N fillers put
+   the next virtual at 0x8+4N. `range(0x008, 0x1FC, 4)` style off-by-ones shift the dispatch -0x4 and
+   show up as a single `lwz r12, K(r12)` diff.
+
+Also reusable: when retail chains a virtual's RETURN as the next lvalue base (`bcctrl; lbz r0,
+187(r3)` after Pane::FindPaneByName), spell it chained — `reinterpret_cast<V*>(root->FindPaneByName(
+n, true))->flagsBB &= ...` — not via a pre-loaded pointer temp.
+
+Applies to/a.k.a.: "Fake vtables -> real classes" playbook (CHelp flow); any TU-local dispatch pad over
+cf::/nw4r:: classes with named slots; conversion-flavor preservation when folding.

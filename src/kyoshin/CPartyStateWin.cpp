@@ -92,17 +92,24 @@ extern "C" __declspec(noinline) u8* func_801F9998(u8* dst, u8* src) {
     // (retail batches both loads; that shape needs -O4,s - unit flag, see
     // MWCC_CASES wall #6). The field_0xfc8 load is hoisted into a temp
     // so its store lands after the word0 copy (retail order).
+    // Retail schedule: hoist field_0xfc8 into a temp before the word0 copy,
+    // store word0, then field_0xfc8.
     u32 fc8 = s->field_0xfc8;
     u32 w0 = s->word0;
     u32* wd = &d->word0;
     u32* ws = &s->word0;
     d->word0 = w0;
     d->field_0xfc8 = fc8;
+    // Pair loop mirrors the retail load/store schedule exactly: both source
+    // words load first (second via a pre-increment walk, giving lwzu), then
+    // both stores land (second via pre-increment, giving stwu).
     for (int i = 0; i < 4; i++) {
-        wd[1] = ws[1];
-        wd[2] = ws[2];
-        wd += 2;
+        u32 a = ws[1];
         ws += 2;
+        u32 b = ws[0];
+        wd[1] = a;
+        wd += 2;
+        wd[0] = b;
     }
     return dst;
 }

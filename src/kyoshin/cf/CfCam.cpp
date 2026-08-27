@@ -782,7 +782,7 @@ extern "C" void cfCam_updateLbl61BA8() {
 // Class_80296898 selection bytes through the 0x80527208 / 0x8052721C /
 // 0x80527230 tables (func_8006B8E4 plus the +0x4 entry) and hands both args
 // to func_8006B720.
-void func_8006B980(int arg1, int arg2) {
+extern "C" __declspec(noinline) void func_8006B980(int arg1, int arg2) {
     lbl_eu_80661B60 = lbl_eu_806662B8;
     lbl_eu_80661B98 = lbl_eu_806662BC;
     lbl_eu_80661B9C = lbl_eu_806662C0;
@@ -878,10 +878,10 @@ void func_8006BFDC(cf::CfCamFollow* self) {
     lbl_eu_80661B6C = cBC;
     lbl_eu_80661B70 = cE0;
     lbl_eu_80661B78 = c30C;
+    lbl_eu_80661B88 = c304;
     lbl_eu_80661B7C = 4;
     lbl_eu_80661B80 = cF8;
     lbl_eu_80661B84 = cE0;
-    lbl_eu_80661B88 = c304;
     lbl_eu_80661B8C = cC4;
     lbl_eu_80661B90 = cC8;
     lbl_eu_80661B94 = cC0;
@@ -1006,6 +1006,25 @@ extern "C" __declspec(noinline) void func_80071A9C(void* self) {
 // Retail func_8006E5A4: tail-call the event-manager check with flag 0.
 cf::CfObject* func_8006E5A4(CfCamEventManager* mgr) {
     return reinterpret_cast<cf::CfObject*>(func_800755B0(mgr, 0));
+}
+// Retail func_8006DC4C: boolean-test the +0x4EC flag word against a mask.
+extern "C" __declspec(noinline) int func_8006DC4C(void* x, u32 mask) {
+    return (*reinterpret_cast<u32*>(reinterpret_cast<char*>(x) + 1260) & mask) != 0 ? 1 : 0;
+}
+// Retail func_8006BFC4: boolean-test the +4 flag word against a mask.
+extern "C" __declspec(noinline) int func_8006BFC4(int self, int mask) {
+    return (*reinterpret_cast<u32*>(self + 4) & static_cast<u32>(mask)) != 0 ? 1 : 0;
+}
+// Retail func_8006CE18: zero the 0x1D4 flag word.
+__declspec(noinline) void func_8006CE18(cf::CfCamFollow* self) {
+    *reinterpret_cast<u32*>(reinterpret_cast<char*>(self) + 0x1D4) = 0;
+}
+// Retail func_8006B948: refresh lbl_eu_80661BA8 from the 0x80527230 table
+// using Class_80296898 selection byte 4.
+extern "C" __declspec(noinline) void func_8006B948() {
+    const unsigned char* inst = reinterpret_cast<const unsigned char*>(Class_80296898::getInstance());
+    unsigned char idx = inst[4];
+    lbl_eu_80661BA8 = lbl_eu_80527230[idx];
 }
 // Retail func_8006D72C: tail-call the pad gate with mask 0x100.
 extern "C" __declspec(noinline) int func_8006D72C(void* self) { return func_8006BFC4(reinterpret_cast<int>(self), 0x100); }
@@ -2826,9 +2845,9 @@ int func_80070674(cf::CfCamFollow* arg1, float* arg2, float* arg3) {
     }
     return hit;
 }
-extern "C" void* cfCam_initAndGetSomething(void* a, void* b) {
+__declspec(noinline) void func_80070784(ml::CVec3* a, ml::CVec3* b) {
     func_804BE4B4(a, 0);
-    return func_804BE4E0(b, 0);
+    func_804BE4E0(b, 0);
 }
 __declspec(noinline) void func_800707C0(void* self, void* a, void* b){}
 // func_80070EBC: decay/accumulate the camera's +0x23C heading value. When the

@@ -167,6 +167,7 @@ void mwPlyInitSfdFx(MWSFDINITPRM* prm) {
     }
     memset(&initPrm, 0, sizeof(initPrm));
     initPrm.fps = prm->fps;
+    g->sfxParams = (u32)&lbl_eu_8051AAA8;
     MWSFDINITPRM* pInit = &initPrm;
     initPrm.a = 1;
     initPrm.b = 1;
@@ -175,7 +176,6 @@ void mwPlyInitSfdFx(MWSFDINITPRM* prm) {
     initPrm.field_0x14 = prm->field_0x14;
     initPrm.field_0x18 = prm->field_0x18;
     initPrm.field_0x1C = prm->field_0x1C;
-    g->sfxParams = (u32)&lbl_eu_8051AAA8;
     MWSFSVM_Init();
 
     initPrm.b = initPrm.b - 2;
@@ -291,18 +291,21 @@ void MWSFLIB_SfdErrFunc(u32 hndl, u32 err) {
     MWSFDGlobal* g = &lbl_eu_805FF398;
     MWSFDHndl* h = (MWSFDHndl*)hndl;
     u32 c;
+    void* sfdhn;
 
     if (h != NULL) {
-        g->sfdHn = mwPlyGetSfdHn(h);
+        sfdhn = mwPlyGetSfdHn(h);
         g->hndl = h;
+        g->sfdHn = sfdhn;
     } else {
-        g->hndl = NULL;
-        g->sfdHn = NULL;
+        h = NULL;
+        g->hndl = h;
+        g->sfdHn = h;
     }
     if (err != 0) {
         c = g->errCount;
         g->errStack[c] = err;
-        if ((s32)c < 0xF)
+        if ((int)c < 0xF)
             g->errCount = c + 1;
     }
     switch (err) {
@@ -336,6 +339,8 @@ void MWSFLIB_SfdErrFunc(u32 hndl, u32 err) {
             sprintf(g->errMsg, lbl_eu_8051ADD0 + 0x105, err);
         break;
     default:
+        /* Only -2 has a dedicated message among small negative codes; MWCC
+         * folds this range check into the switch comparison tree. */
         if ((s32)err >= -3) {
             if ((s32)err < -1)
                 sprintf(g->errMsg, lbl_eu_8051ADD0 + 0xE0, err);

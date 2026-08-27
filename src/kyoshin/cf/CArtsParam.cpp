@@ -61,19 +61,70 @@ namespace cf {
 
     typedef void (*AttackParamSlot)(CAttackParam* self);
 
+    // Out-of-line (retail keeps this a standalone 0xE8 function that callers
+    // reach with a direct bl; the in-class inline body made MWCC auto-inline
+    // it into CArtsParam::CArtsParam_UnkVirtualFunc1 instead).
+    #pragma auto_inline off
+    void CAttackParam::CAttackParam_UnkVirtualFunc1(){
+        unk0 = 0;
+        unk20 = 0;
+        unk24 = 0;
+        unk28 = 0;
+        unk2A = 1;
+        unk2B = 0;
+        unk2C = 0;
+        unk30 = 0;
+        unk34 = 0;
+        unk36 = 0;
+        unk3C = 0;
+        unk3E = 0;
+        unk40 = 0;
+        unk42 = 0;
+        unk43 = 0;
+        unk44 = 0;
+        unk46 = 0;
+        unk48 = 0;
+        unk4A = 0;
+        unk4C = 0;
+        unk50 = 0;
+        unk54 = 0;
+        unk58 = 0;
+        unk5A = 0;
+        unk5C = 0;
+        unk5E = 0;
+        unk60 = 0;
+        unk64 = 0;
+        unk66 = 0;
+        unk67 = 0;
+        unk68 = 0;
+        unk6A = 0;
+        unk72 = 0;
+        unk74 = 0;
+        unk77 = 0;
+        unk7C = 0;
+        unk80 = 0;
+
+        std::memset(unk38, 0, sizeof(unk38));
+        std::memset(unk6C, 0, sizeof(unk6C));
+    }
+    #pragma auto_inline on
+
     CArtsParam lbl_80577580;
 
     CAttackParam::CAttackParam(){
-        unk84 = lbl_eu_8052F610;
+        // implicit vptr store (lbl_eu_8052F610 -> +0x84) happens first;
+        // the hook call dispatches virtually through it (r12 idiom)
         unk0 = 0;
         unk20 = 0;
         unk78 = 0;
-        ((AttackParamSlot*)unk84)[2](this);
+        CAttackParam_UnkVirtualFunc1();
     }
 
     CArtsParam::CArtsParam(){
-        unk84 = lbl_eu_8052F5E8;
-        ((AttackParamSlot*)unk84)[2](this);
+        // implicit base ctor (inlined) runs first, then the derived vptr
+        // swap (lbl_eu_8052F5E8 -> +0x84); body calls the +0x08 hook
+        // virtually, reloading the swapped vptr through the member
+        CAttackParam_UnkVirtualFunc1();
     }
 
     void CArtsParam::CArtsParam_UnkVirtualFunc1(){
@@ -87,10 +138,12 @@ namespace cf {
         }
     }
 
-void cf::CArtsParam::CArtsParam_UnkVirtualFunc2(){
-    // NOTE: retail returns *(u8*)unk88 (or unk2A) in r3, but the
-    // (read-only) CArtsSet.hpp declares this slot as returning void,
-    // so the loaded byte cannot be returned here.
+u8 cf::CArtsParam::CArtsParam_UnkVirtualFunc2(){
+    // Retail returns *(u8*)unk88 when the slot is installed, else unk2A.
+    if (unk88 != nullptr) {
+        return *(u8*)unk88;
+    }
+    return unk2A;
 }
 }
 

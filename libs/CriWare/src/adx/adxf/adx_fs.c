@@ -983,10 +983,10 @@ int adxf_read_sj32(void *adxf, int n, void *sj) {
  * off adxf_read_sj32 under lock. Note the request is enqueued before the
  * parameter checks (matching retail). */
 int adxf_ReadNw32(void *a, int b, void *c) {
-    struct AdxFsWork *work = (struct AdxFsWork *)a;
-    struct AdxFsReq *req;
     s32 idx;
+    struct AdxFsReq *req;
     u16 seq;
+    struct AdxFsWork *work;
     s32 size;
     void *sj;
     int r;
@@ -997,6 +997,7 @@ int adxf_ReadNw32(void *a, int b, void *c) {
     req = &lbl_eu_805E04F0[idx];
     seq = lbl_eu_805E05F0[4] + 1;
     lbl_eu_805E05F0[4] = seq;
+    work = (struct AdxFsWork *)a;
     req->flag = 4;
     req->status = 0;
     req->seq = seq;
@@ -1060,7 +1061,8 @@ int adxf_ReadNw32(void *a, int b, void *c) {
     if (lbl_eu_805E0614 == 1) {
         ADXF_Ocbi(c, size);
     }
-    r = adxf_read_sj32(work, b, sj);
+    /* retail reloads the cache handle from the work item for the call */
+    r = adxf_read_sj32(work, b, (void *)work->sectCnt);
     if (r <= 0) {
         /* read failed: flush the just-created sector cache */
         ADXCRS_Lock();
@@ -1076,7 +1078,6 @@ int adxf_ReadNw32(void *a, int b, void *c) {
     idx = lbl_eu_805E0610 % 16;
     req = &lbl_eu_805E04F0[idx];
     seq = lbl_eu_805E05F0[4];
-    lbl_eu_805E05F0[4] = seq;
     req->flag = 4;
     req->status = 1;
     req->seq = seq;
@@ -1187,8 +1188,8 @@ int adxf_Stop(void *adxf) {
 #pragma auto_inline off
 void adxf_ExecOne(struct AdxFsWork *work) {
     struct AdxFsCb *cb;
+    s32 base;
     s32 tell;
-    u32 base;
     if (ADXSTM_GetStat(work->fstm) == 4) {
         if (work->sectCnt != 0 && work->b2 == 0) {
             if (lbl_eu_805E0614 == 1) {
@@ -1217,12 +1218,18 @@ void adxf_ExecOne(struct AdxFsWork *work) {
         }
         work->status = ADXSTM_GetStat(work->fstm);
         {
-            register s32 base;
+            u8 sdiff;
             tell = ADXSTM_Tell(work->fstm);
+            /* materialize the range-check temp before the base load: MWCC
+             * allocates temps last-created-first, so this lands in r5 and
+             * field_10 in r4, matching retail */
+            sdiff = (u8)((u8)work->status - 3);
             base = work->field_10;
             work->field_1C = tell - base;
-            if ((u8)((u8)work->status - 3) <= 1) {
-                work->field_10 = base + work->field_1C;
+            if (sdiff > 1) {
+                goto l70skip;
+            }
+            work->field_10 += work->field_1C;
                 if (work->sectCnt != 0 && work->b2 == 0) {
                     if (lbl_eu_805E0614 == 1) {
                         ADXF_Ocbi((const void *)work->field_20, work->field_24);
@@ -1231,7 +1238,7 @@ void adxf_ExecOne(struct AdxFsWork *work) {
                     work->sectCnt = 0;
                     cb->vt->destroy(cb);
                 }
-            }
+            l70skip:;
         }
     }
     if (work->b3 == 1) {
@@ -1289,35 +1296,38 @@ int adxf_Seek(void *a, int b, int c) {
     struct AdxFsReq *req;
     s32 idx;
     u16 seq;
+    s32 size;
 
     if (a == NULL) {
         ADXERR_CallErrFunc1_(lbl_eu_805157E0 + 0x5de);
         return -3;
     }
 
-    idx = lbl_eu_805E0610 % 16;
-    req = &lbl_eu_805E04F0[idx];
+    req = &lbl_eu_805E04F0[lbl_eu_805E0610 % 16];
     seq = lbl_eu_805E05F0[6] + 1;
     lbl_eu_805E05F0[6] = seq;
     req->flag = 6;
     req->status = 0;
-    req->seq = seq;
+    req->seq = (u16)seq;
     req->work = a;
     req->p1 = b;
     req->p2 = c;
-    lbl_eu_805E0610 = idx + 1;
+    lbl_eu_805E0610 = (lbl_eu_805E0610 % 16) + 1;
 
-    if (((struct AdxFsWork *)a)->field_0C == 0xFFFFF) {
-        /* file size unknown: drain pending I/O, then fetch it once */
-        s32 size;
-        if (a == NULL) {
-            ADXERR_CallErrFunc1_(lbl_eu_805157E0 + 0x356);
-            size = -3;
-        } else {
+    {
+        size = (s32)((struct AdxFsWork *)a)->field_0C;
+        if (size == 0xFFFFF) {
+            /* file size unknown: drain pending I/O, then fetch it once */
+            if (a == NULL) {
+                ADXERR_CallErrFunc1_(lbl_eu_805157E0 + 0x356);
+                size = -3;
+            } else if (((struct AdxFsWork *)a)->field_0C == 0xFFFFF) {
+            const char *msg = lbl_eu_805157E0;
+            /* re-checked: the drain loop's opaque calls may change it */
             while (1) {
                 int opened;
                 if (a == NULL) {
-                    ADXERR_CallErrFunc1_(lbl_eu_805157E0 + 0x9d);
+                    ADXERR_CallErrFunc1_(msg + 0x9d);
                     opened = 0;
                 } else {
                     opened = ADXSTM_IsOpened(((struct AdxFsWork *)a)->fstm);
@@ -1330,40 +1340,47 @@ int adxf_Seek(void *a, int b, int c) {
                 }
                 ADXT_ExecFsSvr();
             }
-            size = (s32)(((s64)ADXSTM_GetFileLen64(((struct AdxFsWork *)a)->fstm) + 0x7FF) / 0x800);
-            ((struct AdxFsWork *)a)->field_0C = (u32)size;
+            {
+                s64 len = ADXSTM_GetFileLen64(((struct AdxFsWork *)a)->fstm);
+                len += 0x7FF;
+                ((struct AdxFsWork *)a)->field_0C = (u32)(len / 0x800);
+            }
+            size = (s32)((struct AdxFsWork *)a)->field_0C;
             if (size >= 0xFFFFF) {
                 size = -1;
             }
         }
         ((struct AdxFsWork *)a)->field_0C = (u32)size;
+        }
     }
-    if (((struct AdxFsWork *)a)->status == 2) {
-        adxf_Stop(a);
-    }
-    if (c == 0) {
-        ((struct AdxFsWork *)a)->field_10 = (u32)b;
-    } else if (c == 1) {
-        ((struct AdxFsWork *)a)->field_10 = ((struct AdxFsWork *)a)->field_10 + b;
-    } else if (c == 2) {
-        ((struct AdxFsWork *)a)->field_10 = ((struct AdxFsWork *)a)->field_0C + b;
-    } else {
-        ADXERR_CallErrFunc1_(lbl_eu_805157E0 + 0x602);
-        return -3;
-    }
-    if ((s32)((struct AdxFsWork *)a)->field_10 < 0) {
-        ((struct AdxFsWork *)a)->field_10 = 0;
-    } else if ((s32)((struct AdxFsWork *)a)->field_10 > (s32)((struct AdxFsWork *)a)->field_0C) {
-        ((struct AdxFsWork *)a)->field_10 = ((struct AdxFsWork *)a)->field_0C;
+    {
+        struct AdxFsWork *w = (struct AdxFsWork *)a;
+        if (w->status == 2) {
+            adxf_Stop(a);
+        }
+        if (c == 0) {
+            w->field_10 = (u32)b;
+        } else if (c == 1) {
+            w->field_10 = w->field_10 + b;
+        } else if (c == 2) {
+            w->field_10 = w->field_0C + b;
+        } else {
+            ADXERR_CallErrFunc1_(lbl_eu_805157E0 + 0x602);
+            return -3;
+        }
+        if ((s32)w->field_10 < 0) {
+            w->field_10 = 0;
+        } else if ((s32)w->field_10 > (s32)w->field_0C) {
+            w->field_10 = w->field_0C;
+        }
     }
 
     idx = lbl_eu_805E0610 % 16;
     req = &lbl_eu_805E04F0[idx];
-    seq = lbl_eu_805E05F0[6];
-    lbl_eu_805E05F0[6] = seq;
     req->flag = 6;
     req->status = 1;
-    req->seq = seq;
+    seq = lbl_eu_805E05F0[6];
+    req->seq = (u16)seq;
     req->work = a;
     req->p1 = b;
     req->p2 = c;
@@ -1502,10 +1519,20 @@ int ADXF_GetFnameRangeEx(const char *fname, int flags, void *namebuf, u32 *a, u3
  * partition. The partition's file table is either a word table (field_0F==1:
  * u32 total length at 0x118, per-file u32 lengths at 0x11C) or a halfword
  * table (u16 length at 0x118, per-file u16 sector offsets at 0x11A). */
+/* Round a byte length up to sectors (2048-byte units). */
+static s32 adxf_SctRoundW(s32 v) {
+    s32 q = v / 0x800;
+    if (v % 0x800 > 0) {
+        q++;
+    }
+    return q;
+}
+
 int adxf_GetFnameRangeEx(const char *fname, int flags, char *namebuf, u32 *a, u32 *b, u32 *c, u32 *d) {
     struct AdxFsPt *pt;
     s32 sum;
     int i;
+    s32 *tbl;
     int r = adxf_ChkPrmGfr((int)fname, flags);
     if (r < 0) {
         if (namebuf != NULL) {
@@ -1525,23 +1552,12 @@ int adxf_GetFnameRangeEx(const char *fname, int flags, char *namebuf, u32 *a, u3
             sum++;
         }
         {
-            s32 *tbl = pt->field_11C;
+            /* word table: per-file byte lengths, each rounded up to sectors */
+            tbl = pt->field_11C;
             for (i = 0; i < flags; i++) {
-                s32 v = tbl[i];
-                s32 q = v / 0x800;
-                if (v % 0x800 > 0) {
-                    q++;
-                }
-                sum += q;
+                sum += adxf_SctRoundW(tbl[i]);
             }
-            {
-                s32 v = tbl[flags];
-                s32 q = v / 0x800;
-                if (v % 0x800 > 0) {
-                    q++;
-                }
-                *c = q;
-            }
+            *c = adxf_SctRoundW(tbl[flags]);
             *d = tbl[flags];
         }
     } else {

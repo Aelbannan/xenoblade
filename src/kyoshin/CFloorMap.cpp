@@ -19,7 +19,7 @@ extern const double lbl_eu_80668770 = 0x4330000080000000ll;
 extern const double lbl_eu_80668788 = 0x4330000000000000ll;
 
 extern u32 lbl_eu_8066479C;
-extern u32 lbl_eu_80664184;
+extern s32 lbl_eu_80664184;
 extern u16 lbl_eu_8050B798[];
 extern u32 func_8003B1EC(void* bdat);   // matches code_801862C0.hpp canonical decl
 extern u32 lbl_eu_8050BDF8[];
@@ -491,7 +491,11 @@ void func_80245DF8(void* self) {
         cur->mData->GetRootPane()->FindPaneByName(&lbl_eu_8050BEA8[0x136], 1);
     pos.x *= scalePane->GetScale().x;
 
-    dest = *(nw4r::math::_VEC3*)&pos;
+    // Word-wise copy so MWCC keeps the retail integer-register copy instead
+    // of forwarding pos into the inlined SetTranslate (func_8024577C idiom).
+    ((u32*)&dest)[0] = ((u32*)&pos)[0];
+    ((u32*)&dest)[1] = ((u32*)&pos)[1];
+    ((u32*)&dest)[2] = ((u32*)&pos)[2];
     if (cur->field_3108) {
         CFloorMapCursorTarget* target = (CFloorMapCursorTarget*)cur->field_3108;
         target->pane->SetTranslate(*(nw4r::math::VEC3*)&dest);

@@ -2,7 +2,7 @@
 #include "kyoshin/cf/CfGameManager.hpp"
 
 namespace cf {
-bool CHelp_ArtsSet::func_802B7D9C() {
+bool CHelp_ArtsSet::isHelpAvailable() {
     if (unkC != 0 && CfGameManager::func_800822F4() < unkC) {
         return false;
     }

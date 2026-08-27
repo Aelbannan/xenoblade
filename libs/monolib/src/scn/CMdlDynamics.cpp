@@ -1770,9 +1770,9 @@ extern "C" __declspec(noinline) s32 func_804EC514(const Quaternion* q, nw4r::mat
 // this TU does not code-pool its own copy into .sdata2 (retail .sdata2 is 0x0).
 extern "C" __declspec(noinline) nw4r::math::MTX34* func_804EC76C(nw4r::math::MTX34* mtx, const f32* v) {
     extern const f32 lbl_eu_8066B3F0; // 128/pi (retail .sdata2, foreign TU)
-    return nw4r::math::MTX34RotXYZFIdx(mtx, v[0] * lbl_eu_8066B3F0,
-                                       v[1] * lbl_eu_8066B3F0,
-                                       v[2] * lbl_eu_8066B3F0);
+    return nw4r::math::MTX34RotXYZFIdx(mtx, lbl_eu_8066B3F0 * v[0],
+                                       lbl_eu_8066B3F0 * v[1],
+                                       lbl_eu_8066B3F0 * v[2]);
 }
 
 // us-804f0c48: out = a + b (nw4r MTX34Add into a stack temp, then copy out

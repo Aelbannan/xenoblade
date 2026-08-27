@@ -82,43 +82,64 @@ void sfxzmv_SetTagGrp(void* self) {
 }
 extern int sscanf(const char* str, const char* fmt, ...);
 
-int SFXZ_GetZfrmRange(void* self, s32 a, s32* out1, s32* out0) {
-    const char* tag6a = lbl_eu_8051D254 + 6;
-    const char* tag21 = lbl_eu_8051D254 + 21;
-    s32 out1v;
-    u32 v1[2];
-    s32 t;
-    s32 out2v;
-    u32 v2[2];
-    s32 u1, u2, u3;
+// Looks up the "zfrm" tag string for this object, parses the frame offset
+// with sscanf, then seeks to (base + offset*a) and parses "min,max" from it.
+// On any lookup failure: *out1 = 0 / *out2 = 0x7FFFFFFF (empty range).
+typedef struct SFXZObj {
+    u8 pad[0x28];
+    s32 flag;   // 0x28: tag table valid flag (must be 1)
+    s32 tag;    // 0x2C: tag group id
+    s32 unk;    // 0x30
+} SFXZObj;
 
-    char* p;
-    if (*(s32*)((u8*)self + 0x28) != 1 || *(s32*)((u8*)self + 0x2C) == 0) {
-        out1v = 0;
+// tag-search key pair (group id + sub-key)
+typedef struct SFXZKey {
+    u32 grp;
+    u32 key;
+} SFXZKey;
+
+void SFXZ_GetZfrmRange(SFXZObj* self, s32 a, s32* out1, s32* out2) {
+    // tag payload format strings; precomputed so the address setup is hoisted
+    // above the flag checks (matches retail scheduling)
+    char* fmtB = lbl_eu_8051D254 + 6;
+    char* fmtA = lbl_eu_8051D254 + 0x15;
+    s32 p;
+    u32 found1;
+    SFXZKey key1;
+    u32 found2;
+    SFXZKey key2;
+    int base;
+    int v0;
+    int lo;
+    int hi;
+
+    if (self->flag != 1 || self->tag == 0) {
+        p = 0;
     } else {
-        v1[0] = *(u32*)((u8*)self + 0x2C);
-        v1[1] = *(u32*)((u8*)self + 0x30);
-        SJ_SearchTag(v1, tag21, tag6a, (u32*)&out1v);
+        key1.grp = self->tag;
+        key1.key = self->unk;
+        SJ_SearchTag((u32*)&key1, fmtA, fmtB, &found1);
+        p = found1;
     }
-    p = (char*)out1v;
     if (p == 0) {
         *out1 = 0;
-        *out0 = 0x7FFFFFFF;
+        *out2 = 0x7FFFFFFF;
     } else {
-        sscanf(p, lbl_eu_8051D254 + 29, &t);
-        if (*(s32*)((u8*)self + 0x28) != 1 || *(s32*)((u8*)self + 0x2C) == 0) {
-            out2v = 0;
+        sscanf((char*)p, lbl_eu_8051D254 + 0x1D, &base);
+        if (self->flag != 1 || self->tag == 0) {
+            p = 0;
         } else {
-            v2[0] = *(u32*)((u8*)self + 0x2C);
-            v2[1] = *(u32*)((u8*)self + 0x30);
-            SJ_SearchTag(v2, lbl_eu_8051D254 + 33, lbl_eu_8051D254 + 6, (u32*)&out2v);
+            key2.grp = self->tag;
+            key2.key = self->unk;
+            SJ_SearchTag((u32*)&key2, lbl_eu_8051D254 + 0x21, lbl_eu_8051D254 + 6, &found2);
+            p = found2;
         }
-        if (out2v == 0) {
+        if (p == 0) {
             *out1 = 0x7FFFFFFF;
         } else {
-            sscanf((const char*)(out2v + t * a), lbl_eu_8051D254 + 41, &u1, &u2, &u3);
-            *out1 = u2;
-            *out0 = u3;
+            sscanf((char*)(p + base * a), lbl_eu_8051D254 + 0x29, &v0, &lo, &hi);
+            *out1 = lo;
+            *out2 = hi;
         }
     }
 }
@@ -130,8 +151,8 @@ void sfxzmv_MakeZ16TblFromOrgZ32(void* self, u16* dst, u32* src);
 void sfxzmv_MakeZ32TblFromOrgZ32(void* self, u32* dst, u32* src);
 
 void SFXZ_MakeCnvZTbl(void* self, s32 a, void* buf) {
-    s32 o1, o0;
     u8* dst;
+    s32 o1, o0;
     s32 f0, f1;
     SFXZ_GetZfrmRange(self, a, &o1, &o0);
     dst = (u8*)buf + 0x400;
@@ -265,7 +286,20 @@ void sfxzmv_MakeZ32TblFromOrgZ32(void* self, u32* dst, u32* src) {
     }
 }
 
+// Double-constant pool shared by the Z16/Z32 converters (lbl_eu_8051D218).
+typedef struct SFXZDblTbl {
+    u8 pad[0x10];
+    double base;    // +0x10
+    double scale;   // +0x18
+    double two52;   // +0x20
+    double two31m1; // +0x28
+} SFXZDblTbl;
+
+// zmin/zmax are loaded before the mode test in retail (hoisted lfs), so the
+// field reads sit above the branch here too.
 void sfxzmv_MakeZ16TblFromOrgZ32(void* self, u16* dst, u32* src) {
+    f32 zmin = *(f32*)((u8*)self + 0x3C);
+    f32 zmax = *(f32*)((u8*)self + 0x40);
     if (*(u32*)((u8*)lbl_eu_8061A260 + 4) == 1) {
         u32 i, j;
         for (i = 0; i < 16; i++) {
@@ -276,16 +310,13 @@ void sfxzmv_MakeZ16TblFromOrgZ32(void* self, u16* dst, u32* src) {
             dst += 16;
         }
     } else {
-        f32 zmaxf = *(f32*)((u8*)self + 0x40);
-        double zmax = (double)zmaxf;
-        double b = 65535.0;
-        double b1 = b * 1.0;
-        double b2 = b * b1;
-        double b3 = b1 * b1;
-        double b4 = b2 * b3;
-        double zmaxb = zmax * b3;
-        double two52 = 4503599627370496.0;
-        double two31m1 = 2147483647.0;
+        SFXZDblTbl* ct = (SFXZDblTbl*)(void*)&lbl_eu_8051D218;
+        double zd = (double)zmax;
+        double range = zd - (double)zmin;
+        double f6 = ct->base / range;
+        double k0 = ct->scale * f6 * (double)zmin;
+        double k1 = ct->scale * zd * f6;
+        double num = zd * k0;
         u32 i;
         for (i = 0; i < 256; i++) {
             u32 value = *src;
@@ -301,12 +332,12 @@ void sfxzmv_MakeZ16TblFromOrgZ32(void* self, u16* dst, u32* src) {
                 cv.u[0] = 0x43300000;
                 cv.u[1] = value;
                 {
-                    double v = cv.d - two31m1;
-                    double t = zmax * v;
-                    double u = t / two52;
-                    double w = zmaxb / u;
-                    double r = b4 - w;
-                    dst[i] = (u16)(s32)r;
+                    double v = cv.d - ct->two31m1;
+                    double t = zd * v;
+                    double u = t / ct->two52;
+                    double w = num / u;
+                    double r = k1 - w;
+                    *dst++ = (u16)(s32)r;
                 }
             }
             src++;

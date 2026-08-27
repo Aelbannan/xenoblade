@@ -80,26 +80,28 @@ typedef struct _HBMMIDICHUNK {
 void __HBMSEQInitTracks(HBMSEQSEQUENCE *seq, u8 *data, int count)
 {
     HBMSEQTRACK* track = &seq->tracks[0];
-    while (count != 0) {
+    u8* p = data;
+    int n = count;
+    while (n != 0) {
     retry:
-        u32 tag = ((HBMMIDICHUNK *)data)->tag;
-        u32 len = ((HBMMIDICHUNK *)data)->length;
-        data += 8;
+        u32 tag = ((HBMMIDICHUNK *)p)->tag;
+        u32 len = ((HBMMIDICHUNK *)p)->length;
+        p += 8;
         if (tag == 0x4D54726B) {
             track->seq = seq;
-            track->start = data;
-            track->end = data + len;
-            track->cur = data;
+            track->start = p;
+            track->end = p + len;
+            track->cur = p;
             track->field_0x18 =
                 (u32)(65536.0f *
                       (96.0f / (16000.0f / (f32)(s16)seq->field_0x0A)));
-            data += len;
+            p += len;
             track->sub_state = 0;
         } else {
-            data += len;
+            p += len;
             goto retry;
         }
-        count--;
+        n--;
         track++;
     }
 }
@@ -108,11 +110,11 @@ void __HBMSEQInitTracks(HBMSEQSEQUENCE *seq, u8 *data, int count)
    (data_size includes the 6-byte signature+length prefix). */
 void __HBMSEQReadHeader(HBMSEQSEQUENCE *seq, u8 *data)
 {
-    u8 *track_data;
-    u8 *event_data;
     u32 num;
     u32 data_size;
     u16 field_a;
+    u8 *track_data;
+    u8 *event_data;
 
     data_size = ((HBMMIDICHUNK *)data)->length;
     track_data = data + 14;
@@ -120,7 +122,8 @@ void __HBMSEQReadHeader(HBMSEQSEQUENCE *seq, u8 *data)
     field_a = ((HBMMIDICHUNK *)data)->num_tracks;
 
     seq->num_tracks = field_a;
-    track_data += data_size;
+    /* cast barrier keeps the (size + base) tree order and blocks constant folding */
+    track_data = (u8 *)(data_size + (u32)track_data);
     seq->field_0x0A = ((HBMMIDICHUNK *)data)->division;
     event_data = track_data - 6;
 
@@ -135,6 +138,15 @@ void __HBMSEQReadHeader(HBMSEQSEQUENCE *seq, u8 *data)
     }
 
     seq->field_0x0C = seq->num_tracks;
+}
+
+extern "C" void HBMSEQInit()
+{
+    if (__init != 0) {
+        return;
+    }
+    __HBMSEQSequenceList = NULL;
+    __init = 1;
 }
 
 extern "C" void HBMSEQQuit()

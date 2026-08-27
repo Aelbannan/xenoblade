@@ -288,29 +288,30 @@ int waitVoice(VMThread* pThread) {
 // optional fixed-point volume (default lbl_eu_80667DA0).  Skipped while the
 // presentation/event bit 0x100 in lbl_eu_80663E24 is set.
 int playSeCommon(VMThread* pThread) {
-    int idx;
+    int argPos = 2;
     int id = vmArgIntGet(2, vmArgPtrGet(pThread, 1));
     float fade;
-    if (vmArgOmitChk(pThread, 2) != 0) {
-        idx = 3;
+    if (vmArgOmitChk(pThread, argPos) != 0) {
+        argPos++;
         fade = lbl_eu_80667D94;
     } else {
-        idx = 3;
-        fade = (float)vmArgFixedGet(3, vmArgPtrGet(pThread, 2));
+        VMArg* arg = vmArgPtrGet(pThread, argPos++);
+        fade = (float)vmArgFixedGet(argPos, arg);
     }
     int fadeInt = (int)fade;
     float vol;
-    if (vmArgOmitChk(pThread, idx) != 0) {
+    if (vmArgOmitChk(pThread, argPos) != 0) {
         vol = lbl_eu_80667DA0;
     } else {
-        VMArg* arg = vmArgPtrGet(pThread, idx++);
-        vol = (float)vmArgFixedGet(idx, arg);
+        VMArg* arg = vmArgPtrGet(pThread, argPos++);
+        vol = (float)vmArgFixedGet(argPos, arg);
     }
     int volInt = (int)vol;
     if ((lbl_eu_80663E24 & 0x100) == 0) {
+        float fadeF = (float)fadeInt / lbl_eu_80667D90;
+        int volScaled = (int)((float)volInt / lbl_eu_80667D90);
         u16 handle = func_801BFC38__Q22cf10CfSoundManFUlUlUlUlf(
-            0, id, (int)((float)volInt / lbl_eu_80667D90), 1,
-            (float)fadeInt / lbl_eu_80667D90);
+            0, id, volScaled, 1, fadeF);
         SoundSlotEntry* entry = func_801BFAE4(handle);
         if (entry != nullptr) {
             entry->field_0x2A |= 0x20;

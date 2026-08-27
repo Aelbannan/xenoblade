@@ -22,6 +22,12 @@ u32 func_80137444__FPQ34nw4r3lyt13AnimTransformf(nw4r::lyt::AnimTransform*,
 void func_80138078__FUl(u32);
 }
 
+// Retail vtable lbl_eu_80536770 proves this derives IWorkEvent (dtor @+0x08,
+// then WorkEvent1..31 / OnFileEvent / OnPauseTrigger). NOT inherited here on
+// purpose: any TU deriving IWorkEvent pulls a weak __dt__10IWorkEventFv stub
+// into its object, and retail's CMCCrystalSupport.o does not have one (checked
+// via nm). The ctor writes lbl_eu_80536770 explicitly, which carries the real
+// base tree; see .scratch/CDeviceFontVtblView-handoff.md sibling notes.
 class __declspec(novtable) CMCCrystalSupport {
 public:
     virtual ~CMCCrystalSupport();

@@ -273,7 +273,9 @@ extern "C" void func_80138078__FUl(u32);
 extern "C" void* lbl_eu_80537474[];
 extern "C" void func_801D20B0(void*, void*);
 extern "C" void func_8022B7C8(void*, nw4r::lyt::DrawInfo*);
-extern "C" u16 func_80136254(const void*, const void*, int);
+// u32 (not u16): retail returns the lookup result untruncated (tail-branch b
+// in func_8025424C); narrowing here would emit an extra rlwinm after the call.
+extern "C" u32 func_80136254(const void*, const void*, int);
 extern "C" void func_8013E2E0(u32, u32, u32, u32, u32, u32, u32, u32, u32);
 extern "C" void func_80137924(nw4r::math::VEC3*, nw4r::lyt::Pane*, nw4r::lyt::Pane*, nw4r::lyt::Pane*);
 extern "C" char* lbl_eu_806647DC;

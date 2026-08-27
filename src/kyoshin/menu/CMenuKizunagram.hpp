@@ -6,7 +6,34 @@
 
 #include "kyoshin/CFade.hpp"
 #include "kyoshin/CTitleAHelp.hpp"
+
+// Shield CLoad.hpp's C++-linkage helper declarations: this TU needs the
+// CLoad class, but declares the func_802AExxxx helpers itself below as
+// extern "C" so call relocs carry the retail UNMANGLED symbol names
+// (identical plain decls emit mangled __FP5CLoad refs). MWCC 10505.
+#define func_802AE508 func_802AE508_CLoadHdr
+#define func_802AE560 func_802AE560_CLoadHdr
+#define func_802AE5F0 func_802AE5F0_CLoadHdr
+#define func_802AE62C func_802AE62C_CLoadHdr
+#define func_802AE6AC func_802AE6AC_CLoadHdr
+#define func_802AE6B4 func_802AE6B4_CLoadHdr
+#define func_802AE6BC func_802AE6BC_CLoadHdr
+#define func_802AE6C4 func_802AE6C4_CLoadHdr
+#define func_802AE758 func_802AE758_CLoadHdr
+#define func_802AE7EC func_802AE7EC_CLoadHdr
+#define func_802AE894 func_802AE894_CLoadHdr
 #include "kyoshin/CLoad.hpp"
+#undef func_802AE508
+#undef func_802AE560
+#undef func_802AE5F0
+#undef func_802AE62C
+#undef func_802AE6AC
+#undef func_802AE6B4
+#undef func_802AE6BC
+#undef func_802AE6C4
+#undef func_802AE758
+#undef func_802AE7EC
+#undef func_802AE894
 
 // Opaque kizuna-chart sub-object at +0x98 (spans 0x98..0x178). Driven by
 // func_8025C78C (CKizunagram unit); detailed layout TBD.
@@ -89,7 +116,8 @@ extern "C" void func_80244518(CFade* self);
 // helpers (same scheme as CMenuMapSelectSC / CMakeCrystalWin). Return types
 // are int where retail compares r3 with cmpwi directly (no byte mask);
 // func_8025CBCC is u8 because retail masks its result with clrlwi.
-extern "C" int func_802AE6AC(CLoad* self);
+// Retail-unmangled views of the CLoad helpers (see include shield above).
+extern "C" u8 func_802AE6AC(CLoad* self);
 extern "C" void func_802AE6C4(CLoad* self);
 extern "C" void func_802AE758(CLoad* self);
 extern "C" int func_80244510(CFade* self);

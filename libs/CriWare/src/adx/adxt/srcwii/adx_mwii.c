@@ -301,8 +301,7 @@ void ADXM_SetupThrd(u8* arg) {
     struct AdxmBase* base = &lbl_eu_805F3A50;
 
     if (base->field_0x04 == 0) {
-        struct AdxParams* prm;
-        prm = &base->field_0x10;
+        struct AdxParams* prm = &base->field_0x10;
         SVM_Init();
         SVM_SetCbLock((void*)adxm_lock, NULL);
         SVM_SetCbUnlock((void*)adxm_unlock, NULL);

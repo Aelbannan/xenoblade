@@ -4409,7 +4409,18 @@ f32* func_804D5F54(void* this_, s32 count) {
 
 void func_804D6070(void) {}
 
-void func_804D6074(){}
+// Target: us-804da1e8 - trail segment builder (called from CETrail::draw).
+// Signature recovered from the CETrail.cpp call site:
+//   func_804D6074(&t->m_segCount, t, color, t->m_mode == 2, mode != 0,
+//                 &t->m_color, &t->m_scale);
+// Body (retail asm 0x9dd4-0xa91c, NOT yet reconstructed): walks the trail's
+// linked list of nodes; per node reads s16 type at +0, copies two 16-word
+// matrix blocks to node+0x6c/0x80, normalizes three direction vectors
+// (fdivs by magnitude), interpolates tone colors, and emits fixed-stride
+// records (28B) into an array grown via func_804D5F54; writes byte counts at
+// rec+24/rec+52 from a double->s8 conversion. Heavy paired-single use.
+void func_804D6074(void* trailSeg, void* trail, const void* color, u32 mode2,
+                   u32 modeNonZero, const void* color2, const void* scale) {}
 
 s32 func_804D6BC0(void* unused, Node2Control* c, Node2** p5, Node2** p6,
                Node2* volatile* p7,

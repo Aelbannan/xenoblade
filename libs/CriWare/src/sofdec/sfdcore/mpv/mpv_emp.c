@@ -20,6 +20,7 @@ int MPV_IsEmptyBpic(const u8 *data, int size, int flags) {
     int bitpos = (int)((d - (u32)p) << 3);
     u32 w1 = p[1];
     u32 cur;
+    u32 next;
     u32 first = p[0] << bitpos;
 
     /* First 32 bits: slice_start_code | vertical_position == 0x101 */
@@ -29,10 +30,10 @@ int MPV_IsEmptyBpic(const u8 *data, int size, int flags) {
     } else {
         cur = w1;
     }
-    u32 next = p[2];
+
+    next = p[2];
     p += 3;
     if (first != 0x101) return 0;
-
     /* quantiser_scale_code (5 bits) */
     if (bitpos >= 27) {
         bitpos -= 27;

@@ -65,7 +65,7 @@ extern u32 ADXT_ExecHndl(void*);
 extern void SJ_SplitChunk(void*, u32, void*, void*);
 extern u32 __cvt_fp2unsigned(float);
 extern u32 lbl_eu_805E26DC;
-extern void (*lbl_eu_805E4F20)(void);
+extern void (*lbl_eu_805E4F20)();
 extern void (*lbl_eu_805E4F24)(void*);
 extern u32 lbl_eu_805E4F10;
 extern u32 lbl_eu_805E4F18;
@@ -184,7 +184,8 @@ typedef struct ADXT_OBJ_ {
     u8 _pad3[0x72 - 0x6E];
     u8 pauseFlg;    /* 0x72 */
     u8 f73;         /* 0x73 */
-    u8 _pad4[0x88 - 0x74];
+    void* f74_amp;  /* 0x74 */
+    u8 _pad4[0x88 - 0x78];
     u32 timeOfst;   /* 0x88 */
     u8 _pad5[0x94 - 0x8C];
     void* lsc;      /* 0x94 */
@@ -332,93 +333,109 @@ void* ADXT_Create(void* a, void* b, s32 c) {
 
 // Tear down a handle: optional user callbacks, stop + release children,
 // per-channel object cleanup, then wipe the whole 0xC4-byte handle.
+// The channel loop walks the handle word-by-word (slots 0x18/0x78/0x80 are
+// parallel per-channel arrays), like retail.
 void adxt_Destroy(void* self) {
-    u8* p = (u8*)self;
-    if (self == NULL) {
+    ADXT_OBJ_* h = (ADXT_OBJ_*)self;
+    void** slot;
+    s32 i;
+    void* p;
+    void* obj;
+    s32 act;
+    s32 mode;
+
+    if (h == NULL) {
         ADXERR_CallErrFunc1_(lbl_eu_805162F8 + 0x7F);
         return;
     }
-    if (lbl_eu_805E4F20 != NULL) {
-        lbl_eu_805E4F20();
+    {
+        /* u32-local copy keeps the @ha base out of r3 like retail */
+        u32 fn = *(u32*)&lbl_eu_805E4F20;
+        if (fn != 0) {
+            ((void (*)(void))fn)();
+        }
     }
     if (lbl_eu_805E4F24 != NULL) {
-        lbl_eu_805E4F24(self);
+        lbl_eu_805E4F24(h);
     }
-    if (p[0] == 1) {
-        if (self == NULL) {
+    /* signed-int temps keep retail's lbz+cmpi shape (no extsb/cmpli) */
+    act = h->active;
+    if (act == 1) {
+        if (h == NULL) {
             ADXERR_CallErrFunc1_(lbl_eu_805162F8 + 0xA7);
-        }
-        if (*(void**)(p + 8) != NULL) {
-            ADXSTM_ReleaseFileNw(*(void**)(p + 8));
-        }
-        ADXCRS_Lock();
-        if ((s8)p[2] == 4) {
-            LSC_Stop(*(void**)(p + 0x94));
-            if (*(void**)(p + 0x14) != NULL) {
-                void* sj = *(void**)(p + 0x14);
-                ((ADX_VFN1*)*(void**)sj)[5](sj);
+        } else {
+            obj = h->stm;
+            if (obj != NULL) {
+                ADXSTM_ReleaseFileNw(obj);
             }
+            ADXCRS_Lock();
+            mode = h->mode;
+            if (mode == 4) {
+                LSC_Stop(h->lsc);
+                obj = h->inSj;
+                if (obj != NULL) {
+                    ((ADX_VFN1*)*(void**)obj)[5](obj);
+                }
+            }
+            adxt_StopWithoutLsc(h);
+            ADXCRS_Unlock();
         }
-        adxt_StopWithoutLsc(self);
-        ADXCRS_Unlock();
     }
-    if (*(void**)(p + 0xC) != NULL) {
-        void* rna = *(void**)(p + 0xC);
-        *(void**)(p + 0xC) = NULL;
-        ADXRNA_Destroy(rna);
+    /* p doubles as each child temp and the per-channel word-walker, like retail */
+    p = h->rna;
+    if (p != NULL) {
+        h->rna = NULL;
+        ADXRNA_Destroy(p);
     }
-    if (*(void**)(p + 4) != NULL) {
-        void* sjd = *(void**)(p + 4);
-        *(void**)(p + 4) = NULL;
-        ADXSJD_Destroy(sjd);
+    p = h->sjd;
+    if (p != NULL) {
+        h->sjd = NULL;
+        ADXSJD_Destroy(p);
     }
-    if (*(void**)(p + 8) != NULL) {
-        void* stm = *(void**)(p + 8);
-        *(void**)(p + 8) = NULL;
-        ADXSTM_EntryEosFunc(stm, NULL, NULL);
-        ADXSTM_Destroy(stm);
+    p = h->stm;
+    if (p != NULL) {
+        h->stm = NULL;
+        ADXSTM_EntryEosFunc(p, NULL, NULL);
+        ADXSTM_Destroy(p);
     }
-    if (*(void**)(p + 0x94) != NULL) {
-        void* lsc = *(void**)(p + 0x94);
-        *(void**)(p + 0x94) = NULL;
-        LSC_Destroy(lsc);
+    p = h->lsc;
+    if (p != NULL) {
+        h->lsc = NULL;
+        LSC_Destroy(p);
     }
     ADXCRS_Lock();
-    if (*(void**)(p + 0x10) != NULL) {
-        void* ob = *(void**)(p + 0x10);
-        *(void**)(p + 0x10) = NULL;
-        ((ADX_VFN1*)*(void**)ob)[3](ob);
+    obj = h->mainSj;
+    if (obj != NULL) {
+        h->mainSj = NULL;
+        ((ADX_VFN1*)*(void**)obj)[3](obj);
     }
-    {
-        u8* ch = p;
-        s32 i;
-        for (i = 0; i < (s32)(s8)p[3]; i++) {
-            void* o;
-            o = *(void**)(ch + 0x18);
-            if (o != NULL) {
-                *(void**)(ch + 0x18) = NULL;
-                ((ADX_VFN1*)*(void**)o)[3](o);
-            }
-            o = *(void**)(ch + 0x78);
-            if (o != NULL) {
-                *(void**)(ch + 0x78) = NULL;
-                ((ADX_VFN1*)*(void**)o)[3](o);
-            }
-            o = *(void**)(ch + 0x80);
-            if (o != NULL) {
-                *(void**)(ch + 0x80) = NULL;
-                ((ADX_VFN1*)*(void**)o)[3](o);
-            }
-            ch += 4;
+    /* per-channel arrays at 0x18/0x78/0x80, walked with one advancing pointer */
+    p = (void*)h;
+    for (i = 0; i < (s32)(s8)h->numChan; i++) {
+        obj = ((void**)p)[6];
+        if (obj != NULL) {
+            ((void**)p)[6] = NULL;
+            ((ADX_VFN1*)*(void**)obj)[3](obj);
         }
+        obj = ((void**)p)[0x1E];
+        if (obj != NULL) {
+            ((void**)p)[0x1E] = NULL;
+            ((ADX_VFN1*)*(void**)obj)[3](obj);
+        }
+        obj = ((void**)p)[0x20];
+        if (obj != NULL) {
+            ((void**)p)[0x20] = NULL;
+            ((ADX_VFN1*)*(void**)obj)[3](obj);
+        }
+        p = (void**)((u8*)p + 4);
     }
-    if (*(void**)(p + 0x74) != NULL) {
-        void* amp = *(void**)(p + 0x74);
-        *(void**)(p + 0x74) = NULL;
-        ADXAMP_Destroy(amp);
+    p = h->f74_amp;
+    if (p != NULL) {
+        h->f74_amp = NULL;
+        ADXAMP_Destroy(p);
     }
-    memset(self, 0, 0xC4);
-    p[0] = 0;
+    memset(h, 0, 0xC4);
+    h->active = 0;
     ADXCRS_Unlock();
 }
 
@@ -585,38 +602,43 @@ s32 ADXT_GetStat(void* self) {
     return stat;
 }
 
-void adxt_GetTimeSfreq2(void* self, u32* time, u32* sfreq) {
+void adxt_GetTimeSfreq2(void* self_, u32* time, u32* sfreq) {
+    ADXT_OBJ_* self = (ADXT_OBJ_*)self_;
     u8 stat;
-    stat = ((u8*)self)[1];
+    u32 decNumSmpl;
+    u32 obufNumSmpl;
+    stat = self->stat;
     if ((u8)(stat - 3) <= 1) {
-        u32 obufNumSmpl;
-        u32 decNumSmpl;
-        *sfreq = ADXSJD_GetSfreq(*(void**)((u8*)self + 4));
-        decNumSmpl = ADXSJD_GetDecNumSmpl(*(void**)((u8*)self + 4));
+        /* playing: extrapolate the decode position */
+        *sfreq = ADXSJD_GetSfreq(self->sjd);
+        decNumSmpl = ADXSJD_GetDecNumSmpl(self->sjd);
         if (self == NULL) {
             ADXERR_CallErrFunc1_(lbl_eu_805162F8 + 0x11C);
             obufNumSmpl = (u32)-1;
-        } else if (*(void**)((u8*)self + 0x18) != NULL) {
-            void** vtbl = *(void***)*(void**)((u8*)self + 0x18);
-            s32 v = ((s32 (*)(void*, s32))vtbl[9])(*(void**)((u8*)self + 0x18), 1);
+        } else if (self->chans[0] != NULL) {
+            void* ob = self->chans[0];
+            s32 v = ((ADX_VFN2*)*(void**)ob)[9](ob, 1);
             obufNumSmpl = (u32)(((v < 0) + v) >> 1);
         } else {
             obufNumSmpl = 0;
         }
-                {
-            u32 numData = ADXRNA_GetNumData(*(void**)((u8*)self + 0xC));
-            *time = (decNumSmpl - (numData + obufNumSmpl)) + *(u32*)((u8*)self + 0xA4);
-        }
+        /* NOTE: retail emits `add r3, r3, r28`; every source shape tried
+         * (anon call left/right, named temps, compound +=, signedness,
+         * declaration order) leaves this single commutative operand pair
+         * swapped, or shifts the whole r0/r3 chain - known fixed-codegen
+         * cap (cf. MWCC_CASES sfadxt_SetAdxtHd). */
+        *time = self->fA4 + (decNumSmpl - (ADXRNA_GetNumData(self->rna) + obufNumSmpl));
     } else if ((s8)stat == 5) {
-        *time = ADXSJD_GetTotalNumSmpl(*(void**)((u8*)self + 4));
-        *sfreq = ADXSJD_GetSfreq(*(void**)((u8*)self + 4));
-        *time = *time * (16 / (s32)ADXSJD_GetOutBps(*(void**)((u8*)self + 4)));
-        *time += *(u32*)((u8*)self + 0xA4);
+        /* finished: total samples scaled from output bit width */
+        *time = ADXSJD_GetTotalNumSmpl(self->sjd);
+        *sfreq = ADXSJD_GetSfreq(self->sjd);
+        *time = *time * (16 / (s32)ADXSJD_GetOutBps(self->sjd));
+        *time += self->fA4;
     } else {
         *time = 0;
         *sfreq = 1;
     }
-    *time = *time + *(u32*)((u8*)self + 0x88);
+    *time = *time + self->timeOfst;
     if ((s32)*time < 0) {
         *time = 0;
     }
@@ -1050,7 +1072,7 @@ void adxt_Pause(void* self, int pause) {
     }
     ADXCRS_Lock();
     ((u8*)self)[0x72] = (u8)pause;
-    if ((u8)(stat - 3) > 1) {
+    if ((u32)(stat - 3) > 1) {
         ADXCRS_Unlock();
         return;
     }
@@ -1228,17 +1250,23 @@ s32 ADXT_IsEndcode(void* self, s32 idx, u32* out) {
     return 1;
 }
 
-s32 adxt_InsertSilence(void* self, s32 ch, s32 smpl) {
+s32 adxt_InsertSilence(ADXT_OBJ_* self, s32 ch, s32 smpl) {
+    s32 numBytes;
     void* sj;
-    s32 chunkSize, numBytes, numBytes2;
+    s32 chunkSize;
+    s32 numBytes2;
     SJ_CHUNK_ data;
     SJ_CHUNK_ rest;
-    sj = *(void**)((u8*)self + 0x14);
+    sj = self->inSj;
     if (sj == NULL) {
         return 0;
     }
     chunkSize = ch * 0x12;
-    numBytes = (smpl / 32) * chunkSize;
+    {
+        /* temp forces the divide pseudo to be created before chunkSize */
+        s32 q = smpl / 32;
+        numBytes = q * chunkSize;
+    }
     {
         void** vtbl = *(void***)sj;
         ((void (*)(void*, s32, s32, void**))vtbl[6])(sj, 0, numBytes, (void**)&data);

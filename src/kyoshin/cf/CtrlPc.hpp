@@ -10,6 +10,12 @@
 class CtrlPlayerObj;
 class CtrlPlayerSub3ED4;
 
+namespace cf { class CCtrlMovePC; }
+// Declared fully in CtrlMovePC.hpp (not includable here - conflicting views);
+// retail C-ABI names for the CCtrlMovePC tick helpers used by func_80097134.
+extern "C" void func_8019956C(cf::CCtrlMovePC* self);
+extern "C" void func_8019A9C4(cf::CCtrlMovePC* self);
+
 // ---------------------------------------------------------------------------
 // Small layout views shared by the pad-handler functions (defined before the
 // cf namespace so CtrlPc/CtrlPlayerObj can use them as member/return types).

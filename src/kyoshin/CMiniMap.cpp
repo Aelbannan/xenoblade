@@ -8,7 +8,6 @@
 #include "monolib/device/CDeviceFile.hpp"
 #include "monolib/device/CDeviceVI.hpp"
 #include "monolib/lib/CLibLayout.hpp"
-#include "monolib/scn/IScnRender.hpp"
 #include "monolib/util/MemManager.hpp"
 #include "monolib/work/CWorkThreadSystem.hpp"
 #include "monolib/util/FixStr.hpp"
@@ -505,10 +504,10 @@ struct MiniMapObj {
 // (Body defined below, after the MiniMapSubObj view declaration.)
 // ============================================================================
 
-struct MiniMapDtorIf {
-    virtual void v008(int);          // vtable+0x8 deleting dtor
-};
-struct MiniMapEnumHolder {
+// (The former MiniMapDtorIf pad is gone: the pane teardown calls are explicit
+// virtual destructor invocations on nw4r::lyt::Pane -- MWCC dispatches vt+8
+// with flag -1 -- and the layout release is a plain delete, vt+8 with +1.)
+
     void* list;                      // 0x00
     u32 handle;                      // 0x04
 };
@@ -578,7 +577,7 @@ extern "C" void __declspec(noinline) func_80118058(CMiniMap* self) {
         MiniMapCleanupNode* end;
         MiniMapCleanupNode* next;
         MiniMapLayout* lay;
-        void* pane;
+        nw4r::lyt::Pane* pane;
         const char* pf;
         const char* ps;
         // Registered marker lists (per-row pane-name table).
@@ -598,7 +597,7 @@ extern "C" void __declspec(noinline) func_80118058(CMiniMap* self) {
                 if (pane && *(void**)((u8*)pane + 0x0C)) {
                     RemoveChild__Q34nw4r3lyt4PaneFPQ34nw4r3lyt4Pane(
                         *(void**)((u8*)pane + 0x0C), pane);
-                    ((MiniMapDtorIf*)pane)->v008(-1);
+                    pane->~Pane();
                     deleteTextboxOrPicture__10CLibLayoutFv(pane);
                 }
                 node = next;
@@ -609,21 +608,21 @@ extern "C" void __declspec(noinline) func_80118058(CMiniMap* self) {
         if (pane && *(void**)((u8*)pane + 0x0C)) {
             RemoveChild__Q34nw4r3lyt4PaneFPQ34nw4r3lyt4Pane(
                 *(void**)((u8*)pane + 0x0C), pane);
-            ((MiniMapDtorIf*)pane)->v008(-1);
+            pane->~Pane();
             deleteTextboxOrPicture__10CLibLayoutFv(pane);
         }
         pane = ((MiniMapLayout*)self->mLayout0C)->mgr->v03C(&lbl_eu_804FE1FC[0x20A], 1);
         if (pane && *(void**)((u8*)pane + 0x0C)) {
             RemoveChild__Q34nw4r3lyt4PaneFPQ34nw4r3lyt4Pane(
                 *(void**)((u8*)pane + 0x0C), pane);
-            ((MiniMapDtorIf*)pane)->v008(-1);
+            pane->~Pane();
             deleteTextboxOrPicture__10CLibLayoutFv(pane);
         }
         pane = ((MiniMapLayout*)self->mLayout0C)->mgr->v03C(&lbl_eu_804FE1FC[0x212], 1);
         if (pane && *(void**)((u8*)pane + 0x0C)) {
             RemoveChild__Q34nw4r3lyt4PaneFPQ34nw4r3lyt4Pane(
                 *(void**)((u8*)pane + 0x0C), pane);
-            ((MiniMapDtorIf*)pane)->v008(-1);
+            pane->~Pane();
             deleteTextboxOrPicture__10CLibLayoutFv(pane);
         }
         // 'panemapmark' holder list (layout pointer hoisted like retail).
@@ -643,7 +642,7 @@ extern "C" void __declspec(noinline) func_80118058(CMiniMap* self) {
             if (pane && *(void**)((u8*)pane + 0x0C)) {
                 RemoveChild__Q34nw4r3lyt4PaneFPQ34nw4r3lyt4Pane(
                     *(void**)((u8*)pane + 0x0C), pane);
-                ((MiniMapDtorIf*)pane)->v008(-1);
+                pane->~Pane();
                 deleteTextboxOrPicture__10CLibLayoutFv(pane);
             }
             node = next;
@@ -665,11 +664,10 @@ extern "C" void __declspec(noinline) func_80118058(CMiniMap* self) {
         view->mField594 = 0;
         self->mPad820 = 0;
 
-        // Release the layout (dead double null-check mirrors ~CMiniMap).
+        // Release the layout (delete emits its own null-check, giving the
+        // retail dead double-beq shape).
         if (self->mLayout0C != 0) {
-            if (self->mLayout0C != 0) {
-                ((MiniMapDtorIf*)self->mLayout0C)->v008(1);
-            }
+            delete self->mLayout0C;
             self->mLayout0C = 0;
         }
     }
@@ -728,11 +726,11 @@ extern "C" void func_80118854(MiniMapSelf* self) {
                                                (const char*)lbl_eu_8052CB1C);
                 }
                 MiniMapCleanupNode* next = node->next;
-                void* pane = self->m0C->m10->v03C(node->name, 1);
+                nw4r::lyt::Pane* pane = self->m0C->m10->v03C(node->name, 1);
                 if (pane && *(void**)((u8*)pane + 0x0C)) {
                     RemoveChild__Q34nw4r3lyt4PaneFPQ34nw4r3lyt4Pane(
                         *(void**)((u8*)pane + 0x0C), pane);
-                    ((MiniMapDtorIf*)pane)->v008(-1);
+                    pane->~Pane();
                     deleteTextboxOrPicture__10CLibLayoutFv(pane);
                 }
                 node = next;
@@ -1871,13 +1869,9 @@ void CMenuMiniMap2::Init() {
     char rowBuf[0x20];
     CMMSub sub;
 
-    // The `if (this)` is the MWCC idiom that splits mr r4 / beq / addi +0x5c
-    // for the IScnRender subobject passed to addRenderCB.
-    IScnRender* render = reinterpret_cast<IScnRender*>(this);
-    if (this != 0) {
-        render = reinterpret_cast<IScnRender*>(&mScnRender);
-    }
-    mScn->addRenderCB(render, 0xA, 0);
+    // `this` converts to the IScnRender secondary base at +0x5C; MWCC emits
+    // the mr/beq/addi adjusted-this sequence for the non-primary base cast.
+    mScn->addRenderCB(this, 0xA, 0);
 
     // Hand-built CMMClock temp: vtable + zeroed fields + gate bytes, embedded
     // UnkClass constructed explicitly so its bl lands after the field stores.
@@ -1983,13 +1977,8 @@ void CMenuMiniMap2::Init() {
 // clock's file request, free the clock layout/accessor/scratch region and the
 // minimap subobject, then clear the singleton.
 void CMenuMiniMap2::Term() {
-    // The `if (this)` is the MWCC idiom that splits mr r4 / beq / addi +0x5c
-    // for the IScnRender subobject passed to removeRenderCB.
-    IScnRender* render = reinterpret_cast<IScnRender*>(this);
-    if (this != 0) {
-        render = reinterpret_cast<IScnRender*>(&mScnRender);
-    }
-    mScn->removeRenderCB(render);
+    // `this` converts to the IScnRender secondary base at +0x5C.
+    mScn->removeRenderCB(this);
     CDeviceVI::waitForDrawDone();
 
     mClock.mReady = 0;

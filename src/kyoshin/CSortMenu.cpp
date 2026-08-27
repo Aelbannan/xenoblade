@@ -23,10 +23,8 @@ extern "C" __declspec(noinline) void func_801D39EC(CSortMenu*);
 // -inline auto inlines the loop body into each caller and bloats the TU.
 extern "C" __declspec(noinline) void func_801D3A3C(CSortMenu*);
 
-// Retail-named SDA2 constants for func_801D353C's pane resize.
-extern const float lbl_eu_80667FF0;  // 16.0f row height (SDA21)
-// Per-page scroll offset constant (SDA21).
-extern const float lbl_eu_80667FF8;  // scroll offset constant (SDA21)
+// Retail-named SDA2 constants.
+extern const float lbl_eu_80667FF0;  // row height (SDA21)
 
 // ============================================================================
 // CSortMenu constructor
@@ -278,12 +276,15 @@ extern "C" void func_801D353C(CSortMenu* _this, s8 page) {
     size.width = paneView->width;
     size.height = paneView->height;
 
-    // Visible rows: 5 unless fewer items remain.
-    u32 rows = (_this->mCount < 5) ? (u32)_this->mCount : 5;
+    // Visible rows: 5 unless fewer items remain (signed: retail converts
+    // via the xoris sign-flip path).
+    s32 rows = (_this->mCount < 5) ? (s32)_this->mCount : 5;
 
-    // Cast both operands to f32: MWCC folds the int->double conversion and
-    // the double constant into a single-precision fsubs.
-    size.height = lbl_eu_80667FF0 * ((f32)rows - lbl_eu_80667FF8);
+    // (f32)rows: MWCC seeds 0x4330xxxx on the stack and subtracts the
+    // int->double conversion magic via lfd (retail loads it from the shared
+    // DOL pool slot lbl_eu_80667FF8; UNIT_RULES retargets the TU-local
+    // literal there).
+    size.height = lbl_eu_80667FF0 * (f32)rows;
     paneView->width = size.width;
     paneView->height = size.height;
 

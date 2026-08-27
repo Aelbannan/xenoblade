@@ -763,12 +763,13 @@ s32 func_804BEEF8(s32 idx) {
     if (mask != 0) {
         crossing = 1;
         ml::CVec3* cur = (ml::CVec3*)lbl_eu_80665970;
+        const f32 zeroChk = lbl_eu_8066AF44;
+        ml::CVec3* dchk = &diff;
         nw4r::math::VEC3Sub((nw4r::math::VEC3*)&diff, (const nw4r::math::VEC3*)cur, (const nw4r::math::VEC3*)pos);
-        if (diff.x == lbl_eu_8066AF44 && diff.y == lbl_eu_8066AF44 &&
-            diff.z == lbl_eu_8066AF44) {
-            dir.x = lbl_eu_8066AF44;
+        if (dchk->x == zeroChk && dchk->y == zeroChk && dchk->z == zeroChk) {
+            dir.x = zeroChk;
             dir.y = lbl_eu_8066AF4C;
-            dir.z = lbl_eu_8066AF44;
+            dir.z = zeroChk;
         } else {
             dir = diff;
             f32 mag2 = dir.x * dir.x + dir.y * dir.y + dir.z * dir.z;

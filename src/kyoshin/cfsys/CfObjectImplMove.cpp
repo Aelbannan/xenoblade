@@ -15,9 +15,9 @@
 #include "monolib/math/CVec3.hpp"
 #include "kyoshin/cf/CfGameManagerData.hpp"  // H3 label-owner decl (lbl_eu_80663E14; lbl_eu_80663E24)
 
-// Variant func_804BE398 ABI (r7 ptr + f1 float) used by func_800CF064 /
-// func_800CF810 ground probes; retail marshals args that way there (see
-// those sites below). The header decl stays canonical.
+// Variant func_804BE398 ABI (r7 ptr + f1 float) for the func_800CF064 /
+// func_800CF810 ground probes; TU-local no-arg view of func_800F477C below.
+extern "C" void* func_800F477C();
 typedef int (*BE398PtrF32)(void*, u32, u32, u32, void*, f32);
 
 void func_800CEE80(CfObjectImplMoveObj* self);

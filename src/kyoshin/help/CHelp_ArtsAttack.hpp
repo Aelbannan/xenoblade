@@ -7,7 +7,7 @@ namespace cf {
 
 class __declspec(novtable) CHelp_ArtsAttack : public CHelpSwitch {
 public:
-    u32 func_802B7D00();
+    u32 checkHelpCondition();
 };
 
 } // namespace cf

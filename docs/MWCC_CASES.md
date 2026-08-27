@@ -10668,3 +10668,11 @@ intermediate forms do not break the coalescing.
 - Result:    CDevice compiles; __sinit_/wkStandbyLogin/createRegions improved; unit unblocked after being uncompilable since Aug 22.
 - Confidence: repo_proven
 - Applies to/a.k.a.: extends MWCC_CASES CDeviceGX/LODMemMan 10322 entries and the CDeviceRemotePad `-RTTI off` workaround — prefer local slot decls + namespaced RTTI when the TU must keep -RTTI on.
+
+## func_80197538 / func_80197DE8 — hoist loop-counter decl to function scope to fix volatile scan-trio colors (Wii/1.1 -O4,p)
+- Symptom:   pure reg_swap residual on the {id, walk-ptr, index} volatile trio of a 16-entry table-scan loop; index colored highest instead of matching retail's middle slot
+- Cause:     loop-local `for (u32 i = 0; ...)` births i's vreg late (loop phase), after the strength-reduced base pointer — retail's source declared the counter at function scope
+- Fix:       declare `u32 i;` at function top (before the id local's block) and use `i = 0; for (; i < 16; i++)`. Confirms register_mapping.md's creation-order rule extends to volatiles whose assignment is far from declaration
+- Result:    func_80197538 97.4% -> 98.3% (9 -> 6 swaps); func_80197DE8 79.5% -> 81.5% (41 -> 37 swaps)
+- Confidence: repo_proven (two independent functions, one build each)
+- Applies to/a.k.a.: any indexed table-scan loop with id/key + walk-pointer + counter volatile trio; pair with the ABI-boundary witness caveat (swaps touching r4/r5 at call sites still need FULL_MATCH)

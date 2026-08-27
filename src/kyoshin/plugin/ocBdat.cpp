@@ -133,7 +133,8 @@ extern "C" void* func_8003AA34() {
     if (!lbl_eu_80663D10) {
         lbl_eu_80663D10 = 1;
     }
-    return 0;
+    //retail returns &lbl_eu_80663D14 via SDA21 (li r3,0 + R_PPC_EMB_SDA21 reloc)
+    return &lbl_eu_80663D14;
 }
 
 void* CBdat::func_8003AA50() {

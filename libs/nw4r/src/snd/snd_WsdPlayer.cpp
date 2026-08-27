@@ -7,6 +7,27 @@ namespace nw4r {
 namespace snd {
 namespace detail {
 
+// Retail runtime wave descriptor filled by WsdCallback::GetWaveSoundData and
+// consumed by Channel::Start(const WaveInfo&, int, u32). Only numChannels,
+// sampleRate and loopEnd are read here; the trailing channel params
+// (channelParam[2], 0x34 each) are opaque to this function.
+struct WaveDataBlock {
+    u32 sampleFormat;  // at 0x00
+    u8 loopFlag;       // at 0x04
+    u8 _pad0x5[3];
+    u32 numChannels;   // at 0x08
+    u32 sampleRate;    // at 0x0C
+    u32 loopStart;     // at 0x10
+    u32 loopEnd;       // at 0x14
+    u8 _pad0x18[0x68]; // at 0x18
+};                     // sizeof 0x80
+
+// Retail Channel::Start overload takes const WaveInfo&; the locked header only
+// declares the WaveData form, so call the retail-mangled entry point directly
+// (same convention as snd_Channel.cpp / snd_StrmPlayer.cpp).
+extern "C" void Start__Q44nw4r3snd6detail7ChannelFRCQ44nw4r3snd6detail8WaveInfoiUl(
+    Channel* pChannel, const WaveDataBlock& rData, int length, u32 offset);
+
 WsdPlayer::WsdPlayer() : mActiveFlag(false) {}
 
 void WsdPlayer::InitParam(int voices, const WsdCallback* pCallback,
@@ -154,11 +175,12 @@ bool WsdPlayer::StartChannel(const WsdCallback* pCallback, u32 callbackArg) {
 
     int priority = GetChannelPriority() + DEFAULT_PRIORITY;
 
-    WaveData waveData;
+    WaveDataBlock waveData;
     WaveSoundNoteInfo waveSoundNoteInfo;
-    if (!pCallback->GetWaveSoundData(&mWaveSoundInfo, &waveSoundNoteInfo,
-                                     &waveData, mWsdData, mWsdIndex, 0,
-                                     callbackArg)) {
+    if (!pCallback->GetWaveSoundData(
+            &mWaveSoundInfo, &waveSoundNoteInfo,
+            reinterpret_cast<WaveData*>(&waveData), GetWsdDataAddress(),
+            mWsdIndex, 0, callbackArg)) {
         return false;
     }
 
@@ -166,8 +188,9 @@ bool WsdPlayer::StartChannel(const WsdCallback* pCallback, u32 callbackArg) {
     if (mStartOffsetType == START_OFFSET_TYPE_SAMPLE) {
         startSample = mStartOffset;
     } else if (mStartOffsetType == START_OFFSET_TYPE_MILLISEC) {
-        startSample =
-            (static_cast<s64>(mStartOffset) * waveData.sampleRate) / 1000;
+        startSample = (static_cast<s64>(mStartOffset) *
+                       static_cast<s32>(waveData.sampleRate)) /
+                      1000;
     }
 
     if (startSample > waveData.loopEnd) {
@@ -187,9 +210,11 @@ bool WsdPlayer::StartChannel(const WsdCallback* pCallback, u32 callbackArg) {
     pChannel->SetDecay(waveSoundNoteInfo.decay);
     pChannel->SetSustain(waveSoundNoteInfo.sustain);
     pChannel->SetRelease(waveSoundNoteInfo.release);
+    // Inline setter (Channel.h): retail emits a direct byte store to +0x39.
     pChannel->SetReleasePriorityFix(mReleasePriorityFixFlag);
 
-    pChannel->Start(waveData, -1, startSample);
+    Start__Q44nw4r3snd6detail7ChannelFRCQ44nw4r3snd6detail8WaveInfoiUl(
+        pChannel, waveData, -1, startSample);
     mChannel = pChannel;
     mWavePlayFlag = true;
 

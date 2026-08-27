@@ -131,8 +131,7 @@ struct CItemBoxInfoState {
     nw4r::lyt::Layout* layout;
     nw4r::lyt::AnimTransform* animTransform1;   // 0x38 - nw4r::lyt::AnimTransform
     nw4r::lyt::AnimTransform* animTransform2;   // 0x3C - nw4r::lyt::AnimTransform
-    u8 _40[0x30];                    // 0x40..0x70
-    nw4r::lyt::Pane* slotPanes[8];   // 0x70..0x90 - cached selection-row panes
+    nw4r::lyt::Pane* slotPanes[20];  // 0x40..0x8C - cached selection-row panes
                                      // (filled by CItemBoxInfo2::OnFileEvent)
     u8 active;
     u8 _91[3];

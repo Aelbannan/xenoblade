@@ -7,41 +7,62 @@ extern s32 SFD_GetHnStat(void* self);
 extern s32 MWSST_GetStat(void* sst);
 extern void MWSST_GetTime(void* sst, s32 flag);
 extern void mwPlyPause(void* self, s32 flag);
-extern void mwPlySfdStart(void* self);
+extern int mwPlySfdStart(void* self);
 
 typedef s32 (*SyncStartFn)(void*, s32);
 typedef s32 (*VtableFn)(void*, void*);
 
-void mwsfsvr_SyncStartSst(void* self) {
-    void* sync;
+// Sound stream handle owned by a player; obj at 0x14 gets the sync-start request.
+typedef struct MWSstHn {
+    s32 state;  // 0x00
+    u8 _04[0x10];
+    void* obj;  // 0x14
+    u8 _18[0x10];
+} MWSstHn;
 
-    if (SFD_GetHnStat(*(void**)((u8*)self + 0x58)) != 3)
+typedef struct MwPlySvr {
+    u8 _00[0x58];
+    void* hn;       // 0x58
+    u8 _5C[0x36];
+    s8 muteFlag;    // 0x92
+    u8 _93[0x545];
+    MWSstHn sst0;   // 0x5D8
+    MWSstHn sst1;   // 0x600
+} MwPlySvr;
+
+// Start both sound streams once the decoder handle is ready; pause immediately
+// if the player is muted, and reset stream times on unmute.
+void mwsfsvr_SyncStartSst(MwPlySvr* self) {
+    MWSstHn* sync;
+    void* obj;
+
+    if (SFD_GetHnStat(self->hn) != 3)
         return;
 
-    sync = (u8*)self + 0x5D8;
-    if (*(s32*)sync == 1) {
+    sync = &self->sst0;
+    if (sync->state == 1) {
         if (MWSST_GetStat(sync) != 2) {
-            void* obj = *(void**)((u8*)sync + 0x14);
+            obj = sync->obj;
             if (((SyncStartFn)(*(void***)obj)[9])(obj, 1) != 0)
                 return;
         }
     }
-    sync = (u8*)self + 0x600;
-    if (*(s32*)sync == 1) {
+    sync = &self->sst1;
+    if (sync->state == 1) {
         if (MWSST_GetStat(sync) != 2) {
-            void* obj = *(void**)((u8*)sync + 0x14);
+            obj = sync->obj;
             if (((SyncStartFn)(*(void***)obj)[9])(obj, 1) != 0)
                 return;
         }
     }
 
     mwPlySfdStart(self);
-    if ((s8)*(u8*)((u8*)self + 0x92) == 0) {
+    if (self->muteFlag == 0) {
         mwPlyPause(self, 0);
     }
-    if ((s8)*(u8*)((u8*)self + 0x92) == 0) {
-        MWSST_GetTime((u8*)self + 0x5D8, 0);
-        MWSST_GetTime((u8*)self + 0x600, 0);
+    if (self->muteFlag == 0) {
+        MWSST_GetTime(&self->sst0, 0);
+        MWSST_GetTime(&self->sst1, 0);
     }
 }
 
@@ -51,9 +72,11 @@ extern s32 MWSTM_ReqStart(void* stm);
 extern void MWSTM_SetFileRange(void* stm, s32 a, s32 b, s32 c, s32 d);
 extern void MWSFCRE_SetSupplySj(void* self);
 extern void MWSFSVM_Error(const char* fmt, ...);
-extern void MWSFLIB_SetErrCode(s32 code);
+extern s32 MWSFLIB_SetErrCode(s32 code);
 
-// Player stream server handle layout (fields touched by the start path).
+// Player stream server handle: start/stop request path.
+// NOTE: error-path scheduling (call-arg li floated above the preceding
+// field store) is fixed by the unit's -O4 scheduler; see session notes.
 typedef struct MwSvrHndl {
     u8 _00[0x04];
     s32 state;               // 0x04
@@ -67,7 +90,7 @@ typedef struct MwSvrHndl {
     s32 rangeEnd;            // 0x4F8
     s32 rangeSize;           // 0x4FC
     void* obj;               // 0x500
-    u8 _508[0x170];
+    u8 _508[0x174];
     s32 stopFlag;            // 0x678
 } MwSvrHndl;
 
@@ -113,48 +136,157 @@ void mwlSfdExecDecSvrPlaying(void* self) {
 }
 
 extern void* lbl_eu_805FF3A0;
-extern u8 lbl_eu_80566C70[];
-extern u8 lbl_eu_80567094[];
-extern u32 lbl_eu_805FF39C;
+extern u8 lbl_eu_80566D44[];
+extern u8 lbl_eu_80566EEC[];
+extern s32 lbl_eu_805FF39C;
+extern void mwPlyExecInfiniteLoopHandle(void* h);
+extern void mwPlyExecRequestServer(void* self);
+extern void* MWSFLIB_GetLibWorkPtr(void);
 extern u32 lbl_eu_806029F0;
 extern u32 lbl_eu_806029F4;
 extern void* MWSFLIB_GetLibWorkPtr(void);
 extern s32 MWSFSVM_TestAndSet(void* p);
 extern void SFD_VbIn(void);
 
-void MWSFSVR_VsyncThrdProc(void) {
-    u32 local = 0;
-    if (lbl_eu_805FF3A0 != NULL) {
-        void* obj = lbl_eu_805FF3A0;
-        ((VtableFn)(*(void***)obj)[9])(obj, lbl_eu_80566C70 + 4);
+// Shared library work area for the sofdec player servers.
+typedef void (*MWSFSVR_Callback)(void*);
+
+typedef struct MWSFLibWork {
+    u8 _00[0x10];
+    s32 state10;                // 0x10
+    u8 _14[0x14];
+    s32 pauseFlag;              // 0x24
+    u8 _28[0x18];
+    MWSFSVR_Callback preCb;     // 0x40
+    void* preCbArg;             // 0x44
+    MWSFSVR_Callback execCb;    // 0x48
+    void* execCbArg;            // 0x4C
+    MWSFSVR_Callback postCb;    // 0x50
+    void* postCbArg;            // 0x54
+    s32 serverLock;             // 0x58
+    u8 _5C[0x14];
+    u8 svrHndls[0x690 * 8];     // 0x70: 8 server handles, ends 0x34F0
+    s32 prohibitFlag;           // 0x34F0
+} MWSFLibWork;
+
+s32 MWSFSVR_VsyncThrdProc(void) {
+    s32 local;
+    void* h;
+
+    h = lbl_eu_805FF3A0;
+    if (h != NULL) {
+        /* Handle object: method table slot 9 dispatches a player callback. */
+        ((VtableFn)(*(void***)h)[9])(h, lbl_eu_80566C70 + 4);
     }
-    if (lbl_eu_805FF3A0 != NULL) {
-        void* obj = lbl_eu_805FF3A0;
-        ((VtableFn)(*(void***)obj)[9])(obj, lbl_eu_80567094 + 4);
+    local = 0;
+    h = lbl_eu_805FF3A0;
+    if (h != NULL) {
+        ((VtableFn)(*(void***)h)[9])(h, lbl_eu_80567094 + 4);
     }
-    if (lbl_eu_805FF39C == 1) {
-        void* w;
-        lbl_eu_806029F0++;
-        lbl_eu_806029F4++;
-        w = MWSFLIB_GetLibWorkPtr();
-        if (MWSFSVM_TestAndSet((u8*)w + 0x5C) == 1) {
-            if (lbl_eu_805FF39C == 1)
-                SFD_VbIn();
-            *(u32*)((u8*)w + 0x5C) = 0;
+    {
+        /* Per-frame tick counters; the vsync lock guards SFD_VbIn re-entry. */
+        MWSFLibWork* w;
+        /* Non-short-circuit &: both sides always evaluate, so the tick
+           counters update every frame while the body runs only on vsync. */
+        if ((lbl_eu_805FF39C == 1) & (lbl_eu_806029F0++, lbl_eu_806029F4++, 1)) {
+            w = MWSFLIB_GetLibWorkPtr();
+            if (MWSFSVM_TestAndSet((u8*)w + 0x5C) == 1) {
+                if (lbl_eu_805FF39C == 1)
+                    SFD_VbIn();
+                *(u32*)((u8*)w + 0x5C) = 0;
+            }
         }
     }
-    if (lbl_eu_805FF3A0 != NULL) {
-        void* obj = lbl_eu_805FF3A0;
-        ((VtableFn)(*(void***)obj)[9])(obj, lbl_eu_80567094 + 0x6C);
+    h = lbl_eu_805FF3A0;
+    if (h != NULL) {
+        ((VtableFn)(*(void***)h)[9])(h, lbl_eu_80567094 + 0x6C);
     }
-    if (lbl_eu_805FF3A0 != NULL) {
-        void* obj = lbl_eu_805FF3A0;
+    local = 0;
+    h = lbl_eu_805FF3A0;
+    if (h != NULL) {
         *(void**)((u8*)lbl_eu_80566C70 + 0x74) = &local;
-        ((VtableFn)(*(void***)obj)[9])(obj, (u8*)lbl_eu_80566C70 + 0x6C);
+        ((VtableFn)(*(void***)h)[9])(h, (u8*)lbl_eu_80566C70 + 0x6C);
     }
+    return local;
 }
 
-void MWSFSVR_MainThrdProc() {}
+// Player stream handle entry within a server handle (stride 0x690).
+typedef struct MwPlySvrHndl {
+    u8 _00[0x524];
+    void* obj;      // 0x524
+    u8 _528[0x08];
+    u8 timeBuf;     // 0x530: time buffer passed to the setter below
+    u8 _531[0x07];
+    s32 statFlag;   // 0x538
+} MwPlySvrHndl;
+
+// Main sound-server thread: run pre-callback, service all 8 handles, tick the
+// infinite-loop handlers, process start/stop requests, then run the decoder.
+s32 MWSFSVR_MainThrdProc(void* self) {
+    s32 local_c;
+    s32 local_10;
+    s32 local_8;
+
+    if (lbl_eu_805FF3A0 != NULL) {
+        ((void (*)(void*, void*))(*(void***)lbl_eu_805FF3A0)[9])(
+            lbl_eu_805FF3A0, lbl_eu_80566D44 + 4);
+    }
+    local_c = 0;
+    if (lbl_eu_805FF39C == 1) {
+        MWSFLibWork* wk = MWSFLIB_GetLibWorkPtr();
+        if (MWSFLIB_GetLibWorkPtr()->prohibitFlag != 1) {
+            MwPlySvrHndl* h = (MwPlySvrHndl*)((u8*)wk + 0x70);
+            s32 i;
+            for (i = 0; i < 8; i++) {
+                if (h != NULL && h->obj != NULL) {
+                    void* obj = h->obj;
+                    /* Query current time into local_10 (max sentinel arg). */
+                    ((void (*)(void*, s32, u32, void*))*(void**)((char*)*(void**)obj + 0x18))(
+                        obj, 0, 0x7FFFFFFF, &local_10);
+                    if (h->statFlag == 1) {
+                        s32 st = ((s32 (*)(void*, s32))*(void**)((char*)*(void**)obj + 0x24))(
+                            obj, 1);
+                        if (st <= 3) {
+                            ((void (*)(void*, s32, void*))*(void**)((char*)*(void**)obj + 0x20))(
+                                obj, 1, &h->timeBuf);
+                        }
+                    }
+                }
+                h = (MwPlySvrHndl*)((u8*)h + 0x690);
+            }
+        }
+    }
+    if (lbl_eu_805FF39C == 1) {
+        MwPlySvrHndl* h = (MwPlySvrHndl*)((u8*)MWSFLIB_GetLibWorkPtr() + 0x70);
+        s32 i;
+        for (i = 0; i < 8; i++) {
+            if (h != NULL) {
+                mwPlyExecInfiniteLoopHandle(h);
+            }
+            h = (MwPlySvrHndl*)((u8*)h + 0x690);
+        }
+    }
+    mwPlyExecRequestServer(self);
+    if (MWSFLIB_GetLibWorkPtr()->state10 == 1) {
+        if (lbl_eu_805FF3A0 != NULL) {
+            ((void (*)(void*, void*))(*(void***)lbl_eu_805FF3A0)[9])(
+                lbl_eu_805FF3A0, lbl_eu_80566EEC + 4);
+        }
+        local_8 = mwsfsvr_DecodeServer(self);
+        if (lbl_eu_805FF3A0 != NULL) {
+            *(void**)((u8*)lbl_eu_80566EEC + 0x74) = &local_8;
+            ((void (*)(void*, void*))(*(void***)lbl_eu_805FF3A0)[9])(
+                lbl_eu_805FF3A0, (u8*)lbl_eu_80566EEC + 0x6C);
+        }
+        local_c = local_8;
+    }
+    if (lbl_eu_805FF3A0 != NULL) {
+        *(void**)((u8*)lbl_eu_80566D44 + 0x74) = &local_c;
+        ((void (*)(void*, void*))(*(void***)lbl_eu_805FF3A0)[9])(
+            lbl_eu_805FF3A0, (u8*)lbl_eu_80566D44 + 0x6C);
+    }
+    return local_c;
+}
 
 extern u8 lbl_eu_80566E18[];
 extern u8 lbl_eu_80566EEC[];
@@ -197,38 +329,52 @@ static s32 criware_803A2908(void* self) {
 extern s32 MWSFSVM_TestAndSet(void* flag);
 extern s32 mwply_ExecSvrHndl(void* self);
 
+// Runs under vsync lock: services all 8 player server handles once per frame,
+// bracketed by the library's pre/exec/post callbacks.
 s32 mwsfsvr_DecodeServer(void* self) {
-    u8* lw;
-    s32 found = 0;
+    MWSFLibWork* w;
+    void* cbArg;
+    s32 i;
+    s32 found;
+
     if ((s32)lbl_eu_805FF39C != 1) return 0;
-    lw = (u8*)MWSFLIB_GetLibWorkPtr();
-    if (MWSFSVM_TestAndSet(lw + 0x58) != 1) return 0;
-    lw = (u8*)MWSFLIB_GetLibWorkPtr();
-    if (*(void**)(lw + 0x40) != NULL) {
-        ((void (*)(void*))*(void**)(lw + 0x40))(*(void**)(lw + 0x44));
-    }
-    lw = (u8*)MWSFLIB_GetLibWorkPtr();
-    if (*(s32*)(lw + 0x34F0) != 1) {
-        s32 i;
-        for (i = 0; i < 8; i++) {
-            void* h = lw + 0x70 + i * 0x690;
-            if (h != NULL && mwply_ExecSvrHndl(h) == 1) {
-                found = 1;
-            }
+    w = MWSFLIB_GetLibWorkPtr();
+    if (MWSFSVM_TestAndSet(&w->serverLock) != 1) return 0;
+    {
+        /* Fresh work-pointer read for the pre-callback; w stays live below. */
+        MWSFLibWork* wk = MWSFLIB_GetLibWorkPtr();
+        cbArg = wk->preCbArg;
+        if (wk->preCb != NULL) {
+            wk->preCb(cbArg);
         }
     }
-    lw = (u8*)MWSFLIB_GetLibWorkPtr();
-    *(s32*)(lw + 0x58) = 0;
-    lw = (u8*)MWSFLIB_GetLibWorkPtr();
-    if (*(void**)(lw + 0x48) != NULL) {
-        ((void (*)(void*))*(void**)(lw + 0x48))(*(void**)(lw + 0x4C));
+    found = 0;
+    if (((MWSFLibWork*)MWSFLIB_GetLibWorkPtr())->prohibitFlag != 1) {
+        /* Advance onto the 8 server-handle array and walk it in place. */
+        w = (MWSFLibWork*)w->svrHndls;
+        for (i = 0; i < 8; i++) {
+            if (w != NULL) {
+                if (mwply_ExecSvrHndl(w) == 1) {
+                    found = 1;
+                }
+            }
+            w = (MWSFLibWork*)((u8*)w + 0x690);
+        }
+    }
+    w = MWSFLIB_GetLibWorkPtr();
+    w->serverLock = 0;
+    w = MWSFLIB_GetLibWorkPtr();
+    cbArg = w->execCbArg;
+    if (w->execCb != NULL) {
+        w->execCb(cbArg);
     }
     if (found != 1) {
-        lw = (u8*)MWSFLIB_GetLibWorkPtr();
-        if (*(s32*)(lw + 0x24) != 1) {
-            lw = (u8*)MWSFLIB_GetLibWorkPtr();
-            if (*(void**)(lw + 0x50) != NULL) {
-                ((void (*)(void*))*(void**)(lw + 0x50))(*(void**)(lw + 0x54));
+        w = MWSFLIB_GetLibWorkPtr();
+        if (w->pauseFlag != 1) {
+            w = MWSFLIB_GetLibWorkPtr();
+            cbArg = w->postCbArg;
+            if (w->postCb != NULL) {
+                w->postCb(cbArg);
             }
         }
     }

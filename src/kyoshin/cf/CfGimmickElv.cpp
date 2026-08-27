@@ -16,7 +16,7 @@ typedef void (CfGimmickElvData::*CfGimmickElvStateFunc)();
 extern CfGimmickElvStateFunc lbl_eu_80535868[];   // PTMF state table
 extern u32 lbl_eu_805765B0[];  // bit array
 extern f32 lbl_eu_805765A0[3];  // vec3 constant (player-relative check center)
-extern f32 lbl_eu_80668380;    // float constant (0.0f)
+extern const f32 lbl_eu_80668380;    // float constant (0.0f)
 extern f32 lbl_eu_80668384;    // float constant (1.0f)
 extern f64 lbl_eu_80668388;    // double constant
 extern f32 lbl_eu_80668390;    // float constant
@@ -229,21 +229,21 @@ extern "C" void func_8020B20C(CfGimmickElvData* self) {
 // func_8020B264 (0x80 bytes) - LOD visibility toggle
 // ============================================================
 extern "C" void func_8020B264(CfGimmickElvData* self, int show) {
-    if (self->lod0 != 0) {
+    u8 lod = self->lod0;
+    if (lod != 0) {
         // Clear visibility/mode bits once, then set the appropriate one
         u32 f = self->flags & ~0x1000E0u;
         self->flags = f;
         if (show != 0) {
             self->flags = f | 0x40;
-            func_80462F10__8CTaskLODFv(self->lod0);
+            func_80462F10__8CTaskLODFv(lod);
         } else {
             self->flags = f | 0x20;
-            func_80462EF4__8CTaskLODFv(self->lod0, lbl_eu_80668380);
+            func_80462EF4__8CTaskLODFv(lod, lbl_eu_80668380);
         }
         func_80463014__8CTaskLODFv(self->lod0);
     }
 }
-
 // ============================================================
 // func_8020B2E4 (0x68 bytes) - copy sub-objects
 // ============================================================
@@ -291,41 +291,41 @@ extern "C" void func_8020B34C(CfGimmickElvData* self) {
 // func_8020B474 (0x150 bytes) - activation check
 // ============================================================
 extern "C" void func_8020B474(CfGimmickElvData* self) {
-    int allReady;
     if ((self->flags & 0x2000) == 0) {
-        // Set the "starting" flag group
+        // Latch the "starting" flag group (proximity + travel request bits)
         self->flags |= 0x1E00100;
         if (self->flags & 0x200) {
+            // Proximity gate active: if the player is NOT near, abort quietly;
+            // otherwise drop the gate bit and fall through to sub-object checks
             if (func_8020A5DC(self) != 0) {
-                // Player not close - just clear the proximity bit
-                self->flags &= ~0x200u;
+                return;
+            }
+            self->flags &= ~0x200u;
+        } else {
+            // All configured effects must report ready
+            bool ready = false;
+            if (self->unk66 & 1) {
+                ready = func_8020A87C(self, self->unk7C);
+            }
+            if (self->flag1B0 & 1) {
+                ready = ready | func_8020A87C(self, self->unk1A4);
+            }
+            if (self->flag1B1 & 1) {
+                ready = ready | func_8020A87C(self, self->unk1A8);
+            }
+            if (self->flag1B2 & 1) {
+                ready = ready | func_8020A87C(self, self->unk1AC);
+            }
+
+            if (ready) {
+                func_8020A484(self->unk6A);
+                self->flags |= 0x200;
                 return;
             }
         }
-
-        allReady = 0;
-
-        if (self->unk66 & 1) {
-            allReady = (func_8020A87C(self, self->unk7C) != 0);
-        }
-        if (self->flag1B0 & 1) {
-            allReady |= (func_8020A87C(self, self->unk1A4) != 0);
-        }
-        if (self->flag1B1 & 1) {
-            allReady |= (func_8020A87C(self, self->unk1A8) != 0);
-        }
-        if (self->flag1B2 & 1) {
-            allReady |= (func_8020A87C(self, self->unk1AC) != 0);
-        }
-
-        if (allReady) {
-            func_8020A484(self->unk6A);
-            self->flags |= 0x200;
-            return;
-        }
     }
 
-    // Common tail: start moving when no wait is configured or the wait ended
+    // Start moving when no wait is configured or the wait event finished
     if (self->val1B4 == 0 || func_8020971C(self->val1B4)) {
         self->state = 1;
     }

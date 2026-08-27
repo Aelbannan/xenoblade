@@ -425,11 +425,6 @@ void* MemManager::MemRegion::allocate(void* buffer, u32 size, int align) {
         && mHandle == MemManager::getHandleMEM2()
         && buffer == nullptr) {
 
-        //Reasonable minimum block size
-        u32 minSize = align + size;
-        minSize += MemBlock::MIN_SIZE;
-
-        //Best block found so far
         MemBlock* bestBlock = nullptr;
 
         //Look for the block which best fits the allocation
@@ -437,19 +432,22 @@ void* MemManager::MemRegion::allocate(void* buffer, u32 size, int align) {
             bool newBest;
 
             //Block is too small
-            if (it->size < minSize) {
+            if (it->size < align + size + MemBlock::MIN_SIZE) {
                 newBest = false;
             } else {
-                //Bytes that will be wasted
-                u32 overSize = it->size - minSize;
+                //Bytes that will be wasted by this allocation
+                u32 waste = it->size - (align + size + MemBlock::MIN_SIZE);
 
                 //First usable result
-                if (bestBlock == nullptr || bestBlock->size < minSize) {
+                if (bestBlock == nullptr ||
+                    bestBlock->size < align + size + MemBlock::MIN_SIZE) {
                     newBest = true;
                 }
                 //Potentially best result yet
                 else {
-                    newBest = overSize < bestBlock->size - minSize;
+                    u32 bestOver =
+                        bestBlock->size - (align + size + MemBlock::MIN_SIZE);
+                    newBest = waste < bestOver;
                 }
             }
 
@@ -620,15 +618,73 @@ ALLOC_HANDLE MemManager::create_tail(ALLOC_HANDLE handle, u32 size, const char* 
     //Extra space for the root block header
     u32 dataSize = size + sizeof(MemBlock);
 
-    //Zero specified size means maximum allocation in this region
+    /* Zero specified size means maximum allocation in this region.
+    Retail inlines getMaxAllocSize/getMaxBlock here (no out-of-line calls),
+    so the largest-block search is written out directly. */
     if (size == 0) {
-        dataSize = getMaxAllocSize(handle);
+        MemBlock* maxBlock = getRegion(handle)->mHead;
+
+        if (maxBlock == nullptr) {
+            dataSize = 0;
+        } else {
+            for (MemBlock* it = maxBlock; it != nullptr; it = it->next) {
+                if (maxBlock->size < it->size) {
+                    maxBlock = it;
+                }
+            }
+            dataSize = maxBlock->getDataSize();
+        }
     }
 
-    //Negative alignment to signify tail allocation
-    ALLOC_HANDLE child = create(
-        allocate_ex(dataSize, handle, -16), dataSize, name);
-    
+    //Negative alignment signifies a tail allocation (allocate_tail path)
+    void* buffer = nullptr;
+    MemRegion* region = getRegion(handle);
+
+    MemBlock* block;
+    if (!getTailBuffer(region, dataSize, 16, &buffer)) {
+        block = nullptr;
+    } else {
+        block = static_cast<MemBlock*>(region->allocate(buffer, dataSize, 16));
+    }
+
+    //Retail inlines create() wholesale; this mirrors its body exactly.
+    ALLOC_HANDLE child = INVALID_HANDLE;
+    for (int i = 0; i < MAX_ALLOC_REGION; i++) {
+        MemRegion* entry = sRegionBuffer__Q23mtl10MemManager[i];
+
+        //Region is already in-use
+        if (entry->mStartAddress != nullptr) {
+            continue;
+        }
+
+        //Allocation handle encodes a unique ID
+        child = static_cast<ALLOC_HANDLE>(lbl_eu_80665570++ << 8 | i);
+
+        entry->mHandle = child;
+        entry->mStartAddress = block;
+        entry->mEndAddress = static_cast<u8*>(block) + dataSize;
+        entry->mOldest = nullptr;
+        entry->mYoungest = nullptr;
+
+        //One memory block for the entire region
+        std::memset(block, 0, sizeof(MemBlock));
+        block->prev = nullptr;
+        block->next = nullptr;
+        block->size = dataSize;
+        block->aligned = BLOCK_ALIGNED_NULL;
+        block->region = ALLOC_HANDLE_REGION(child);
+
+        entry->mHead = block;
+        entry->mTail = block;
+        entry->mNumAlloc = 0;
+        entry->mSize = dataSize;
+        entry->mFreeBytes = dataSize;
+        entry->unk6C = 0;
+        entry->mName = name;
+
+        break;
+    }
+
     lbl_eu_80665574 = false;
     return child;
 }
@@ -1051,23 +1107,25 @@ Specify negative alignment to perform a tail allocation.
 */
 void* MemManager::allocate_ex(u32 size, ALLOC_HANDLE handle, int align) {
     //Negative alignment signifies tail allocation
-    return align < 0 ? allocate_tail(handle, size, -align)
-                     : allocate_head(handle, size, align);
-}
-
-/*
-Allocates aligned array memory from the specified region.
-Specify negative alignment to perform a tail allocation.
-*/
-#pragma optimize_for_size on
-void* MemManager::allocate_array_ex(u32 size, ALLOC_HANDLE handle, int align) {
     if (align < 0) {
         return allocate_tail(handle, size, -align);
     }
 
     return allocate_head(handle, size, align);
 }
-#pragma optimize_for_size reset
+
+/*
+Allocates aligned array memory from the specified region.
+Specify negative alignment to perform a tail allocation.
+*/
+void* MemManager::allocate_array_ex(u32 size, ALLOC_HANDLE handle, int align) {
+    //Negative alignment signifies tail allocation
+    if (align < 0) {
+        return allocate_tail(handle, size, -align);
+    }
+
+    return MemManager::allocate_head(handle, size, align);
+}
 
 } // namespace mtl
 

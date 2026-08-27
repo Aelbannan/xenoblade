@@ -7,6 +7,7 @@
 #include "monolib/math/CVec3.hpp"
 #include "monolib/work/CProcess.hpp"
 #include "kyoshin/cf/CfGameManagerData.hpp"  // H3 label-owner decl (lbl_eu_80663E14; lbl_eu_80663E24)
+#include "kyoshin/IUICf.hpp"
 
 // Forward declarations (full definitions live in the monolib/nw4r headers,
 // included by the TU that needs them).
@@ -20,7 +21,16 @@ class Pane;
 }
 }
 class CScn;
-class IScnRender;
+
+// Local render-callback interface WITHOUT a virtual destructor (CMenuFade /
+// CMenuSkipTimer idiom): retail fills the dtor slot of the +0x5C sub-vtable
+// (composite block lbl_eu_8052C858+0xAC) with the manual adjuster
+// func_8011C444, and a virtual dtor here would make MWCC emit an extra @88@
+// thunk that retail does not have.
+class IScnRender {
+public:
+    virtual void cbRenderBefore();
+};
 
 // Minimal CScn declaration (same guard scheme as CTaskGameEff.hpp): only the
 // render-callback members used by Term/cbRenderBefore, so member calls emit the
@@ -256,21 +266,30 @@ public:
     u32 m834[4];                           // 0x834..0x844 (destroyed first)
 };
 
-class CMenuMiniMap2 : public CProcess {
+// Intermediate base (CMenuFadeBase idiom, MWCC_CASES §190): holds the flag
+// bytes after IUICf/CTask<IUICf> (0x54 bytes) plus the raw IWorkEvent vtable
+// word at 0x58 so that the IScnRender secondary base lands at the retail
+// offset 0x5C. Do NOT inherit IWorkEvent directly (its out-of-line dtor pulls
+// weak stubs); the factory hand-writes the +0x58 table instead.
+class CMenuMiniMap2Base : public IUICf {
 public:
-    void Init();
-    void Term();
-    void Move();
-    void cbRenderBefore();
-
-    // 0x3C..0x58: IUIWindow/Move region - two null PMF triples + control words
-    u32 mPtMf3C[3];               // 0x3C..0x48 null pointer-to-member-function
-    u32 mPtMf48[3];               // 0x48..0x54 null pointer-to-member-function
     u8 mField54;                  // 0x54
     u8 mField55;                  // 0x55
     u8 mPad56[0x58 - 0x56];       // 0x56..0x58
-    u32 mFn58;                    // 0x58 (lbl_eu_8052C858 + 0x24 slot)
-    u32 mScnRender;               // 0x5C (IScnRender vtable slot; passed to CScn)
+    u32 mFn58;                    // 0x58 raw IWorkEvent vtable (lbl_eu_8052C858 + 0x24)
+};
+
+class CMenuMiniMap2 : public CMenuMiniMap2Base, public IScnRender {
+public:
+    // Declared only, never defined here: undefined key function suppresses
+    // compiler __vt__/@88@ thunk emission (the composite vtable data lives in
+    // the retail block lbl_eu_8052C858, written by hand by __ct__8011C1B8).
+    virtual ~CMenuMiniMap2();
+    void Init();
+    void Term();
+    void Move();
+    void cbRenderBefore();        // IScnRender override (+0x5C subobject)
+
     CScn* mScn;                   // 0x60 - owning scene (removeRenderCB receiver)
     CMMClock mClock;              // 0x64..0x90 (declared first -> destroyed last)
     CMiniMap mMiniMap;            // 0x90..0x8D4 (declared second -> destroyed first)

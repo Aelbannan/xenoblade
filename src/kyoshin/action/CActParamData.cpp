@@ -2122,9 +2122,10 @@ int func_80056EC8(u32 flags, ActParamHost5* host, ActParamVals5* vals, ActParamS
     fire = 1;
     {
         int pass = 0;
+        int ok = 0;
         if (t <= vals->mFloat54) {
-            int ok = (t > vals->mFloat50) &&
-                     (static_cast<ActParamData388*>(host->mObj04)->mFloat388 > lbl_eu_80665F80);
+            ok = (t > vals->mFloat50) &&
+                 (static_cast<ActParamData388*>(host->mObj04)->mFloat388 > lbl_eu_80665F80);
             if (ok != 0) {
                 pass = 1;
             }
@@ -2154,7 +2155,9 @@ int func_80056EC8(u32 flags, ActParamHost5* host, ActParamVals5* vals, ActParamS
     }
 invoke:
     if (fire == 0) {
-        if (src->mShort08 == 0) {
+        // Retail re-reads src+0x08 through the volatile view here; the
+        // load+compare survives even though both paths return 0.
+        if (src->mShort08v == 0) {
             return 0;
         }
         return 0;

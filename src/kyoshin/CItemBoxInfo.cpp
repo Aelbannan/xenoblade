@@ -7795,15 +7795,168 @@ bool CItemBoxInfo2::OnFileEvent(CEventFile* file) {
 
         char* base = lbl_eu_805063BC;
         u8 mode = *(u8*)((u8*)this + 0x9A);
-        (void)mode;
-        // Cache the selection-row panes for the renderer.
-        state.slotPanes[0] = root->FindPaneByName(base + 0x77e, true);
-        state.slotPanes[1] = root->FindPaneByName(base + 0x644, true);
-        state.slotPanes[2] = root->FindPaneByName(base + 0x78a, true);
-        state.slotPanes[3] = root->FindPaneByName(base + 0x62a, true);
-        state.slotPanes[4] = root->FindPaneByName(base + 0x766, true);
-        state.slotPanes[5] = root->FindPaneByName(base + 0x651, true);
-        state.slotPanes[6] = root->FindPaneByName(base + 0x796, true);
+
+        // Mode-gated pane clears (retail: mode!=1&&mode!=2 / mode!=3).
+        if (mode != 1 && mode != 2) {
+            func_80124270(root->FindPaneByName(&lbl_eu_805063BC[0x6dd], true), 0);
+        }
+        if (mode != 3) {
+            func_80124270(root->FindPaneByName(&lbl_eu_805063BC[0x6e6], true), 0);
+        }
+
+        // Fixed label texts: each pane gets string-table entry [len].
+        #define SEED_ITEMBOX2_LABEL(off, len) \
+            func_80136B4C((nw4r::lyt::Layout*)state.layout, &lbl_eu_805063BC[off], \
+                          func_80136190(&lbl_eu_805063BC[0x130], &lbl_eu_805063BC[0x139], len), 0)
+        SEED_ITEMBOX2_LABEL(0x2b6, 10);
+        SEED_ITEMBOX2_LABEL(0x2d7, 13);
+        SEED_ITEMBOX2_LABEL(0x2e2, 17);
+        SEED_ITEMBOX2_LABEL(0x2c1, 18);
+        SEED_ITEMBOX2_LABEL(0x2cc, 12);
+        SEED_ITEMBOX2_LABEL(0x2ed, 19);
+        SEED_ITEMBOX2_LABEL(0x6f2, 24);
+        SEED_ITEMBOX2_LABEL(0x6fd, 24);
+        SEED_ITEMBOX2_LABEL(0x708, 36);
+        SEED_ITEMBOX2_LABEL(0x713, 37);
+        SEED_ITEMBOX2_LABEL(0x71e, 112);
+        SEED_ITEMBOX2_LABEL(0x72a, 114);
+        SEED_ITEMBOX2_LABEL(0x736, 115);
+        SEED_ITEMBOX2_LABEL(0x742, 116);
+        SEED_ITEMBOX2_LABEL(0x74e, 121);
+        SEED_ITEMBOX2_LABEL(0x75a, 117);
+        SEED_ITEMBOX2_LABEL(0x766, 123);
+        SEED_ITEMBOX2_LABEL(0x772, 118);
+        SEED_ITEMBOX2_LABEL(0x77e, 119);
+        SEED_ITEMBOX2_LABEL(0x78a, 126);
+        SEED_ITEMBOX2_LABEL(0x796, 130);
+        SEED_ITEMBOX2_LABEL(0x2f8, 47);
+        SEED_ITEMBOX2_LABEL(0x6c6, 130);
+        #undef SEED_ITEMBOX2_LABEL
+
+        // Per-mode caption / detail text.
+        if (mode == 1 || mode == 2) {
+            ml::FixStr<32> caption(true);
+            caption.format(&lbl_eu_805063BC[0x13e], func_801571FC(),
+                           func_80136190(&lbl_eu_805063BC[0x130], &lbl_eu_805063BC[0x139], 3));
+            func_80136B4C((nw4r::lyt::Layout*)state.layout, &lbl_eu_805063BC[0x143],
+                          caption.c_str(), 0);
+        } else if (mode == 3) {
+            u16 itemId = *(u16*)((u8*)this + 0xAC);
+            u8 kind = (u8)func_80138E90(itemId);
+            char* s;
+            if (kind == 0) {
+                s = func_80136190(&lbl_eu_805063BC[0x7a2], &lbl_eu_805063BC[0x139], 0x24);
+            } else {
+                s = func_80136190(&lbl_eu_805063BC[0x7a2], &lbl_eu_805063BC[0x139], kind + 0x1F);
+            }
+            func_80136B4C((nw4r::lyt::Layout*)state.layout, &lbl_eu_805063BC[0x7ad], s, 0);
+            char* name = ((char* (*)(void*, const char*, u16))&func_8013639C)(
+                &lbl_eu_80664098, &lbl_eu_805063BC[0x139], itemId);
+            func_80136B4C((nw4r::lyt::Layout*)state.layout, &lbl_eu_805063BC[0x7b9],
+                          func_80138DA4(name), 0);
+            func_80136B4C((nw4r::lyt::Layout*)state.layout, &lbl_eu_805063BC[0x7c5],
+                          func_80136190(&lbl_eu_805063BC[0x130], &lbl_eu_805063BC[0x139], 0x2d), 0);
+            func_80136B4C((nw4r::lyt::Layout*)state.layout, &lbl_eu_805063BC[0x7d2],
+                          &lbl_eu_805063BC[0x2aa], 0);
+            func_80136B4C((nw4r::lyt::Layout*)state.layout, &lbl_eu_805063BC[0x7e0],
+                          &lbl_eu_805063BC[0x2aa], 0);
+        }
+
+        // Vertex colours: highlight pair onto this (+0x9C/+0xA4); the named
+        // panes' pairs go into the .sbss colour globals with their alpha
+        // halves propagated to the paired globals.
+        nw4r::lyt::Pane* hl = root->FindPaneByName(&lbl_eu_805063BC[0x7ee], true);
+        CItemBoxGXColor c = func_801397AC(hl, 0);
+        __as__11_GXColorS10FRC11_GXColorS10((u8*)this + 0x9C, &c);
+        c = func_801397AC(hl, 1);
+        __as__11_GXColorS10FRC11_GXColorS10((u8*)this + 0xA4, &c);
+
+        nw4r::lyt::Pane* p71e = root->FindPaneByName(&lbl_eu_805063BC[0x71e], true);
+        c = func_801397AC(p71e, 0);
+        __as__11_GXColorS10FRC11_GXColorS10(&lbl_eu_80664518, &c);
+        c = func_801397AC(p71e, 1);
+        __as__11_GXColorS10FRC11_GXColorS10(&lbl_eu_80664520, &c);
+        {
+            s16 a0 = *(s16*)((char*)&lbl_eu_80664518 + 6);
+            s16 a1 = *(s16*)((char*)&lbl_eu_80664520 + 6);
+            *(s16*)((char*)&lbl_eu_80664528 + 6) = a0;
+            *(s16*)((char*)&lbl_eu_80664530 + 6) = a1;
+            *(s16*)((char*)&lbl_eu_80664538 + 6) = a0;
+            *(s16*)((char*)&lbl_eu_80664540 + 6) = a1;
+            *(s16*)((char*)&lbl_eu_80664548 + 6) = a0;
+            *(s16*)((char*)&lbl_eu_80664550 + 6) = a1;
+        }
+
+        nw4r::lyt::Pane* p4e3 = root->FindPaneByName(&lbl_eu_805063BC[0x4e3], true);
+        c = func_801397AC(p4e3, 0);
+        __as__11_GXColorS10FRC11_GXColorS10(&lbl_eu_80664558, &c);
+        c = func_801397AC(p4e3, 1);
+        __as__11_GXColorS10FRC11_GXColorS10(&lbl_eu_80664560, &c);
+        {
+            s16 a0 = *(s16*)((char*)&lbl_eu_80664558 + 6);
+            s16 a1 = *(s16*)((char*)&lbl_eu_80664560 + 6);
+            *(s16*)((char*)&lbl_eu_80664568 + 6) = a0;
+            *(s16*)((char*)&lbl_eu_80664570 + 6) = a1;
+            *(s16*)((char*)&lbl_eu_80664578 + 6) = a0;
+            *(s16*)((char*)&lbl_eu_80664580 + 6) = a1;
+            *(s16*)((char*)&lbl_eu_80664588 + 6) = a0;
+            *(s16*)((char*)&lbl_eu_80664590 + 6) = a1;
+        }
+
+        nw4r::lyt::Pane* p2b6 = root->FindPaneByName(&lbl_eu_805063BC[0x2b6], true);
+        c = func_801397AC(p2b6, 0);
+        __as__11_GXColorS10FRC11_GXColorS10(&lbl_eu_80664598, &c);
+        c = func_801397AC(p2b6, 1);
+        __as__11_GXColorS10FRC11_GXColorS10(&lbl_eu_806645A0, &c);
+        *(s16*)((char*)&lbl_eu_806645A8 + 6) = *(s16*)((char*)&lbl_eu_80664598 + 6);
+        *(s16*)((char*)&lbl_eu_806645B0 + 6) = *(s16*)((char*)&lbl_eu_806645A0 + 6);
+
+        nw4r::lyt::Pane* p25b = root->FindPaneByName(&lbl_eu_805063BC[0x25b], true);
+        c = func_801397AC(p25b, 0);
+        __as__11_GXColorS10FRC11_GXColorS10(&lbl_eu_806645B8, &c);
+        c = func_801397AC(p25b, 1);
+        __as__11_GXColorS10FRC11_GXColorS10(&lbl_eu_806645C0, &c);
+        *(s16*)((char*)&lbl_eu_806645C8 + 6) = *(s16*)((char*)&lbl_eu_806645B8 + 6);
+        *(s16*)((char*)&lbl_eu_806645D0 + 6) = *(s16*)((char*)&lbl_eu_806645C0 + 6);
+
+        func_801E4194(this);
+
+        // Pane clears for the selection view.
+        func_80124270(root->FindPaneByName(&lbl_eu_805063BC[0xc2], true), 0);
+        func_80124270(root->FindPaneByName(&lbl_eu_805063BC[0xce], true), 0);
+        func_80124270(root->FindPaneByName(&lbl_eu_805063BC[0xda], true), 0);
+        func_80124270(root->FindPaneByName(&lbl_eu_805063BC[0xe6], true), 0);
+        func_80124270(root->FindPaneByName(&lbl_eu_805063BC[0xf2], true), 0);
+        func_80124270(root->FindPaneByName(&lbl_eu_805063BC[0xfe], true), 1);
+        func_80124270(root->FindPaneByName(&lbl_eu_805063BC[0x10b], true), 0);
+        func_80124270(root->FindPaneByName(&lbl_eu_805063BC[0x113], true), 0);
+        func_80124270(root->FindPaneByName(&lbl_eu_805063BC[0x121], true), 1);
+        func_80124270(root->FindPaneByName(&lbl_eu_805063BC[0x193], true), 0);
+
+        // Cache the 20 slot panes at +0x40..+0x8C for the renderer (retail
+        // keeps the layout's root pane live in r28 across all lookups).
+        state.slotPanes[0] = root->FindPaneByName(base + 0x5dc, true);
+        state.slotPanes[1] = root->FindPaneByName(base + 0x736, true);
+        state.slotPanes[2] = root->FindPaneByName(base + 0x5e9, true);
+        state.slotPanes[3] = root->FindPaneByName(base + 0x6c6, true);
+        state.slotPanes[4] = root->FindPaneByName(base + 0x5f6, true);
+        state.slotPanes[5] = root->FindPaneByName(base + 0x742, true);
+        state.slotPanes[6] = root->FindPaneByName(base + 0x603, true);
+        state.slotPanes[7] = root->FindPaneByName(base + 0x75a, true);
+        state.slotPanes[8] = root->FindPaneByName(base + 0x610, true);
+        state.slotPanes[9] = root->FindPaneByName(base + 0x772, true);
+        state.slotPanes[10] = root->FindPaneByName(base + 0x61d, true);
+        state.slotPanes[11] = root->FindPaneByName(base + 0x74e, true);
+        state.slotPanes[12] = root->FindPaneByName(base + 0x637, true);
+        state.slotPanes[13] = root->FindPaneByName(base + 0x77e, true);
+        state.slotPanes[14] = root->FindPaneByName(base + 0x644, true);
+        state.slotPanes[15] = root->FindPaneByName(base + 0x78a, true);
+        state.slotPanes[16] = root->FindPaneByName(base + 0x62a, true);
+        state.slotPanes[17] = root->FindPaneByName(base + 0x766, true);
+        state.slotPanes[18] = root->FindPaneByName(base + 0x651, true);
+        state.slotPanes[19] = root->FindPaneByName(base + 0x796, true);
+
+        func_801E4390(this);
         state.fileHandle1 = 0;
         state.memRegion1.func_8045F810();
         return true;

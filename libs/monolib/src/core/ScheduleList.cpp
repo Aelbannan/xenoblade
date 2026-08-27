@@ -521,6 +521,7 @@ void __ct__804E4B64(int arg) {
     } else {
         list = (SLList*)mtl::MemManager::allocate(0x24, slAllocHandle());
         if (list != 0) {
+            #pragma unroll(16)
             SCHEDULELIST_CTOR_BODY(list);
         }
     }
@@ -535,9 +536,6 @@ void __ct__804E4B64(int arg) {
 // __dt___reslist_base_CSchedule: clear ring, free slot array, optionally free
 // self. CW destructors return this; the entry null-guard and the vptr store
 // back to the base-class table are part of retail codegen.
-// Shared ~reslist_base body. Kept static with its address never taken so
-// MWCC auto-inlines it into both exported dtors - the derived-dtor inlining
-// context is what produces retail's register coloring there.
 SLResBase* __dt___reslist_base_CSchedule(SLResBase* base, int flag) {
     SLNode* node;
     SLNode* cur;

@@ -193,6 +193,11 @@ CPnt16 CDeviceVI::lbl_8065A6B8[] = {
     CPnt16(0,16)
 };
 
+// Retail .sbss layout: spInstance__9CDeviceVI (0x4) @+0, the
+// sUseStaticHandle byte @+4 (lbl_eu_8066564C). Definition order fixes the
+// MWCC small-data emission order; without this definition the TU's .sbss is
+// 1 byte short and every spInstance access stays UNDEF.
+CDeviceVI* CDeviceVI::spInstance;
 bool CDeviceVI::sUseStaticHandle;
 
 CDeviceVI::CDeviceVI(const char* pName, CWorkThread* pParent) : CDeviceBase(pName, pParent, MAX_CHILD),

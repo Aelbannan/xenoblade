@@ -7,6 +7,15 @@ u32 SFSET_GetCond(void* self, u32 idx);
 s32 SFTIM_IsGetFrmTime(void* self, void* frm);
 s32 SFTIM_ExecCyclicFrameOutput(void* self);
 
+// Global MPV parameter block layout (shared with InitPool/SetMpvParaTbl below).
+typedef struct SfdMpvPara {
+    u64 head[4];     /* 0x00 */
+    u32 field_0x20;
+    u32 stride[2];   /* 0x28 */
+    u32 buf[16];     /* 0x30 */
+    u32 field_0x70[3];
+} SfdMpvPara;
+
 extern u32 lbl_eu_80619B20[];
 void* memset(void* dst, int val, size_t n);
 void* memcpy(void* dst, const void* src, size_t n);
@@ -48,34 +57,32 @@ void SFD_SetMpvParaTbl(u32* src, u32* strides, u32* tbl) {
     }
 }
 
-typedef struct SfdMpvPara {
-    s32 words[16];
-} SfdMpvPara;
-
 s32 sfmpvf_CheckMpvPara(void* self) {
-    u32* g = lbl_eu_80619B20;
-    SfdMpvPara* s = (SfdMpvPara*)g;
-    s32 width = s->words[7];
-    if ((u32)(width - 1) > 0xF) {
+    SfdMpvPara* tbl = (SfdMpvPara*)lbl_eu_80619B20;
+    SfdMpvPara* p = tbl;
+    u32* st;
+    u32* b;
+    /* head[2].lo = width @0x10, head[3].hi = frm_cnt @0x1c */
+    s32 cnt = (s32)(p->head[3] >> 32);
+    s32 i;
+
+    if ((u32)(cnt - 1) > 0xF) {
         return -1;
     }
-    if (s->words[4] == 0 || s->words[8] == 0) {
-        u32* p = g + 10;
-        if (*p == 0) {
+    if ((u32)p->head[2] == 0 || p->field_0x20 == 0) {
+        st = tbl->stride;
+        if (*st == 0) {
             return -1;
         }
-        if (p[1] == 0) {
+        if (st[1] == 0) {
             return -1;
         }
-        {
-            u32* q = g + 12;
-            s32 i;
-            for (i = 0; i < width; i++) {
-                if (*q == 0) {
-                    return -1;
-                }
-                q++;
+        b = tbl->buf;
+        for (i = 0; i < cnt; i++) {
+            if (*b == 0) {
+                return -1;
             }
+            b++;
         }
     }
     return 0;
@@ -86,37 +93,49 @@ extern void SFLIB_LockCs(void* cs);
 extern void SFLIB_UnlockCs(void* cs);
 extern void* SFMPVF_HoldFrm(void* self);
 
+// Shared layout of the global MPV parameter block and its in-handle copy
+// (handle copy lives at self+0x2780).
+typedef struct SfdMpvParaView {
+    u64 head[4];     /* 0x00 */
+    u32 field_0x20;
+    u32 stride[2];   /* 0x28 */
+    u32 buf[16];     /* 0x30 */
+    u32 field_0x70[3];
+} SfdMpvParaView;
+
 s32 SFMPVF_ReadGlobalMpvPara(void* self) {
-    u64* s = (u64*)lbl_eu_80619B20;
-    u32* g = (u32*)lbl_eu_80619B20;
+    SfdMpvParaView* tbl = (SfdMpvParaView*)lbl_eu_80619B20;
+    SfdMpvParaView* dst = (SfdMpvParaView*)((u8*)self + 0x2780);
 
     if (sfmpvf_CheckMpvPara(self) != 0) {
         return SFLIB_SetErr(0, 0xff000f15);
     }
-    *(u64*)((u8*)self + 0x2780) = s[0];
-    *(u64*)((u8*)self + 0x2788) = s[1];
-    *(u64*)((u8*)self + 0x2790) = s[2];
-    *(u64*)((u8*)self + 0x2798) = s[3];
-    *(u32*)((u8*)self + 0x27a0) = g[8];
-    memcpy((u8*)self + 0x27a4, g + 0xa, 8);
-    memcpy((u8*)self + 0x27ac, g + 0xc, 0x40);
+    dst->head[0] = tbl->head[0];
+    dst->head[1] = tbl->head[1];
+    dst->head[2] = tbl->head[2];
+    dst->head[3] = tbl->head[3];
+    dst->field_0x20 = tbl->field_0x20;
+    memcpy(dst->stride, tbl->stride, sizeof(tbl->stride));
+    memcpy(dst->buf, tbl->buf, sizeof(tbl->buf));
     return 0;
 }
 
-s32 SFMPVF_WriteGlobalMpvPara(void* self) {
-    u64* d = (u64*)lbl_eu_80619B20;
-    u32* g = (u32*)lbl_eu_80619B20;
+void SFMPVF_WriteGlobalMpvPara(void* self) {
+    u8* s = (u8*)self;
+    SfdMpvParaView* pv = (SfdMpvParaView*)lbl_eu_80619B20;
+    u64* d = pv->head;
 
-    d[0] = *(u64*)((u8*)self + 0x2780);
-    d[1] = *(u64*)((u8*)self + 0x2788);
-    d[2] = *(u64*)((u8*)self + 0x2790);
-    d[3] = *(u64*)((u8*)self + 0x2798);
-    g[8] = *(u32*)((u8*)self + 0x27a0);
-    memcpy(g + 0xa, (u8*)self + 0x27a4, 8);
-    memcpy(g + 0xc, (u8*)self + 0x27ac, 0x40);
-    g[0x1c] = *(u32*)((u8*)self + 0x38f8);
-    g[0x1d] = *(u32*)((u8*)self + 0x38fc);
-    g[0x1e] = *(u32*)((u8*)self + 0x3900);
+    /* walking stores resist CSE so the table stays in two base registers */
+    *d++ = *(u64*)(s + 0x2780);
+    *d++ = *(u64*)(s + 0x2788);
+    *d++ = *(u64*)(s + 0x2790);
+    *d++ = *(u64*)(s + 0x2798);
+    pv->field_0x20 = *(u32*)(s + 0x27a0);
+    memcpy(pv->stride, s + 0x27a4, 8);
+    memcpy(pv->buf, s + 0x27ac, 0x40);
+    pv->field_0x70[0] = *(u32*)(s + 0x38f8);
+    pv->field_0x70[1] = *(u32*)(s + 0x38fc);
+    pv->field_0x70[2] = *(u32*)(s + 0x3900);
 }
 
 void SFD_CalcYccPlane(s32 base, s32 w, s32 h, void* out) {

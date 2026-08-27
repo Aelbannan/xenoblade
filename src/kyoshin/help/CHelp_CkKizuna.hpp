@@ -6,7 +6,7 @@
 namespace cf {
 class __declspec(novtable) CHelp_CkKizuna : public CHelpSwitch {
 public:
-    void func_802B7DEC();
+    void checkKizunaTalkClosed(); // was func_802B7DEC (retail 0x802BA85C)
 };
 } // namespace cf
 

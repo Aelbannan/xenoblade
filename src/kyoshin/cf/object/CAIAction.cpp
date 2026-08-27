@@ -297,8 +297,8 @@ void func_8014AE00(cf::CAIAction* self) {
 extern "C" int func_8014B120(cf::CAIAction* self, const cf::CAIActionSlot* in) {
     u32 i;
     for (i = 0; i < self->unk214; i++) {
-        u32 cap = self->unk218;
         u32 pos = self->unk210 + i;
+        u32 cap = self->unk218;
         const u8* sb = (const u8*)self->unk20C + ((pos % cap) << 5);
         // Byte-wise duplicate test over [0x5..0xD].
         u32 dup;

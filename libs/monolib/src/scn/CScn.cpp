@@ -22,6 +22,10 @@ struct VTarget {
 #include "libs/monolib/src/scn/CScn.hpp"
 #include "monolib/core/CView.hpp"
 #include "monolib/device/CDeviceVI.hpp"
+#include "monolib/util/MemManager.hpp"
+#include "monolib/work/CProcess.hpp"
+#include "monolib/work/CWorkThreadSystem.hpp"
+#include <new>
 
 // --- CTTask<CScn> out-of-line specializations ---
 // The canonical declared-only template emits no bodies; these explicit
@@ -59,6 +63,85 @@ CScn::~CScn() {
         }
         v->unk88 = NULL;
     }
+}
+
+// CScn constructor (retail flat symbol __ct__CScn). Runs the CProcess base
+// ctor, installs the intermediate then final vtable pointers, nulls the two
+// CTTask member-function pointers (MWCC materializes __ptmf_null for a null
+// ptmf store; the post-increment walk folds the first read into lwzu @l),
+// zeroes the 0x58..0x90 block and initializes the timing / render-callback
+// fields. Returns self (retail keeps an or r3,r31,r31 copy live to blr).
+extern "C" void __ct__8CProcessFv(CProcess* self);
+extern const u32 __ptmf_null[3];
+extern "C" CScn* __ct__CScn(CScn* self) {
+    CScnCtorView* v = (CScnCtorView*)self;
+    __ct__8CProcessFv((CProcess*)self);
+
+    // Intermediate accessor-table pointer, repointed below.
+    v->unk10 = lbl_eu_8056E984;
+
+    u32* move = (u32*)&v->mMoveFunc;
+    u32* draw = (u32*)&v->mDrawFunc;
+    const u32* n = __ptmf_null;
+    u32 m0 = *n++;
+    u32 m1 = *n++;
+    f32 f98 = lbl_eu_8066AAB0;
+    move[1] = m1;
+    move[0] = m0;
+    move[2] = *n++;
+    // Second copy re-reads from the null-ptmf base.
+    n = __ptmf_null;
+    u32 d0 = *n++;
+    draw[1] = *n++;
+    draw[0] = d0;
+    draw[2] = *n++;
+
+    // Final vtable pair (CTTask + IWorkEvent subobjects).
+    v->unk10 = lbl_eu_8056E8D0;
+    v->unk54 = lbl_eu_8056E8D0 + 0x24;
+
+    v->unk58[0] = 0;
+    v->unk58[1] = 0;
+    v->unk58[2] = 0;
+    v->unk58[3] = 0;
+    v->unk58[4] = 0;
+    v->unk58[5] = 0;
+    v->unk58[6] = 0;
+    v->unk58[7] = 0;
+    v->unk58[8] = 0;
+    v->unk58[9] = 0;
+    v->unk58[10] = 0;
+    v->unk58[11] = 0;
+    v->unk58[12] = 0;
+    v->unk58[13] = 0;
+    v->unk58[14] = 0;
+
+    v->unk98 = f98;
+    v->unk9C = 0x100;
+    v->unkB2 = 0x40;
+    v->unk9E[0] = 0x50;
+    v->unk9E[1] = 0x50;
+    v->unk9E[2] = 0x50;
+    v->unk9E[3] = 0x50;
+    v->unk9E[4] = 0x50;
+    v->unk9E[5] = 0x50;
+    v->unk9E[6] = 0x50;
+    v->unk9E[7] = 0x50;
+    v->unk9E[8] = 0x50;
+    v->unk9E[9] = 0x50;
+    v->unkB4 = 0;
+    v->unkB8 = 0;
+
+    self->mRenderCBCount = 0;      //0x3BC
+    ((u8*)self)[0x3C0] = 0;
+    *(u32*)((char*)self + 0x3E0) = 0;
+    self->unk_3E4 = 0;
+    self->unk_3E5 = 1;
+    self->unk_3E6 = 1;
+    self->unk_3E7 = 0;
+    self->unk_3E8 = 1;
+    ((u8*)self)[0x3E9] = 0;
+    return self;
 }
 
 // Retail thunk: the IWorkEvent subobject at +0x54 delegates back to the
@@ -395,8 +478,84 @@ extern "C" void func_8049699C(u8* self) {
 }
 
 
-extern "C" void func_804962B0__4CScnFUlUlPvUl() {}
-extern "C" void Term__4CScnFv() {}
+// CScn::Term() (retail Term__4CScnFv). Releases every subsystem handle in
+// retail order: each non-null field gets its first virtual slot called with
+// flag=1 behind a twin guard (paired beq), then the field is nulled. The
+// +0x7C subobject is destroyed via a direct destructor call instead.
+void CScn::Term() {
+    CScnTermView* v = (CScnTermView*)this;
+    if (v->unk80 != NULL) {
+        if (v->unk80 != NULL) {  // twin guard matches retail's paired beq
+            ((ScnTermRelease*)v->unk80)->release(1);
+        }
+        v->unk80 = NULL;
+    }
+    if (v->unk70 != NULL) {
+        if (v->unk70 != NULL) {
+            ((ScnTermRelease*)v->unk70)->release(1);
+        }
+        v->unk70 = NULL;
+    }
+    if (v->unk6C != NULL) {
+        if (v->unk6C != NULL) {
+            ((ScnTermRelease*)v->unk6C)->release(1);
+        }
+        v->unk6C = NULL;
+    }
+    if (v->unk74 != NULL) {
+        if (v->unk74 != NULL) {
+            ((ScnTermRelease*)v->unk74)->release(1);
+        }
+        v->unk74 = NULL;
+    }
+    if (v->unk64 != NULL) {
+        if (v->unk64 != NULL) {
+            ((ScnTermRelease*)v->unk64)->release(1);
+        }
+        v->unk64 = NULL;
+    }
+    if (v->unk78 != NULL) {
+        if (v->unk78 != NULL) {
+            ((ScnTermRelease*)v->unk78)->release(1);
+        }
+        v->unk78 = NULL;
+    }
+    // Direct destructor call, not a virtual dispatch.
+    if (v->unk7C != NULL) {
+        __dt__804C0E48(v->unk7C, 1);
+        v->unk7C = NULL;
+    }
+    if (v->unk68 != NULL) {
+        if (v->unk68 != NULL) {
+            ((ScnTermRelease*)v->unk68)->release(1);
+        }
+        v->unk68 = NULL;
+    }
+    if (v->unk5C != NULL) {
+        if (v->unk5C != NULL) {
+            ((ScnTermRelease*)v->unk5C)->release(1);
+        }
+        v->unk5C = NULL;
+    }
+    if (v->unk60 != NULL) {
+        if (v->unk60 != NULL) {
+            ((ScnTermRelease*)v->unk60)->release(1);
+        }
+        v->unk60 = NULL;
+    }
+    if (v->unk84 != NULL) {
+        if (v->unk84 != NULL) {
+            ((ScnTermRelease*)v->unk84)->release(1);
+        }
+        v->unk84 = NULL;
+    }
+    if (v->unk8C != NULL) {
+        if (v->unk8C != NULL) {
+            ((ScnTermRelease*)v->unk8C)->release(1);
+        }
+        v->unk8C = NULL;
+    }
+}
 // CScn::Move(). The literal retail symbol name is preserved via C linkage
 // (the public CScn class header is outside this session's writable scope).
 // Runs every scene subsystem's per-frame update, gated by the pause/stop flags.
@@ -412,4 +571,43 @@ extern "C" void Move__4CScnFv(CScnMoveView* self) {
     }
     self->unk3E8 = 0;
 }
-extern "C" void create__8CScnNw4rFv() {}
+// Scene factory. Retail exports it under the flat, unmangled symbol
+// create__8CScnNw4rFv (the public header declares it parameterless even
+// though every caller passes five arguments), so the definition keeps the
+// flat name via C linkage.
+class CScnNw4r {
+public:
+    // Flat-name ctor emitted by the CScnMem TU (retail calls __ct__CScnNw4r).
+};
+
+// Flat declarations so the emitted relocations carry the retail names.
+extern "C" void Regist__8CProcessFP8CProcessb(CProcess* self, CProcess* parent,
+                                              bool top);
+extern "C" void func_804962B0__4CScnFUlUlPvUl(CScn* self, u32 a, u32 b,
+                                              void* str, u32 d);
+extern "C" void* __ct__CScnNw4r(void* self);
+
+extern "C" CScnNw4r* create__8CScnNw4rFv(CProcess* parent, char* name,
+                                         u32 arg, u32 handle, void* param) {
+    // Inline clear(): mString[0] = 0, mLength = 0 (retail stores, no
+    // out-of-line FixStr ctor call).
+    ml::FixStr<32> str(true);
+    str.format(lbl_eu_80524090, lbl_eu_80524090 + 7, name);
+
+    // Default handle sentinel: fall back to the MEM1 region handle.
+    if ((u32)(handle + 0x10000) == 0xffff) {
+        handle = mtl::MemManager::getHandleMEM1();
+    }
+
+    CScnNw4r* scn = static_cast<CScnNw4r*>(mtl::MemManager::allocate(
+        sizeof(CScn), CWorkThreadSystem::getWorkMem()));
+    if (scn != NULL) {
+        scn = (CScnNw4r*)__ct__CScnNw4r(scn);
+    }
+
+    Regist__8CProcessFP8CProcessb((CProcess*)scn, parent, false);
+    func_804962B0__4CScnFUlUlPvUl((CScn*)scn, handle, arg, &str, (u32)param);
+    return scn;
+}
+
+

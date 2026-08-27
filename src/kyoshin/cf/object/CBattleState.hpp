@@ -53,7 +53,7 @@ namespace cf {
     // CActorParam::unk15E0 (object+0x15E0), NOT a CBattleState member.
     class CBattleState {
     public:
-        virtual void CBattleState_UnkVirtualFunc1();  //0x8
+        virtual void* CBattleState_UnkVirtualFunc1();  //0x8 (returns the owner object)
         virtual void CBattleState_UnkVirtualFunc2();  //0xC
         virtual int CBattleState_UnkVirtualFunc3();  //0x10
         virtual void CBattleState_UnkVirtualFunc4();  //0x14
@@ -69,8 +69,8 @@ namespace cf {
         virtual void CBattleState_UnkVirtualFunc14(); //0x3C
         virtual void CBattleState_UnkVirtualFunc15(); //0x40
         virtual void CBattleState_UnkVirtualFunc16(); //0x44
-        virtual void CBattleState_UnkVirtualFunc17(); //0x48
-        virtual void CBattleState_UnkVirtualFunc18(); //0x4C
+        virtual void CBattleState_UnkVirtualFunc17(cf::CBattleStateEntry* entry); //0x48
+        virtual void CBattleState_UnkVirtualFunc18(cf::CBattleStateEntry* entry); //0x4C
         virtual void CBattleState_UnkVirtualFunc19(); //0x50
         virtual void CBattleState_UnkVirtualFunc20(); //0x54
         virtual cf::CBattleStateEntry* CBattleState_UnkVirtualFunc21(int index); //0x58

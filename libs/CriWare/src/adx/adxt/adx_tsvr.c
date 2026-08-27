@@ -3,6 +3,8 @@
 
 #include <harness_catalog.h>
 
+extern char lbl_eu_80516A88[];
+
 // Forward declarations for external functions
 void ADXCRS_Enter(void);
 void ADXCRS_Leave(void);
@@ -26,6 +28,8 @@ u32 ADXRNA_GetNumRoom(void* rna);
 u32 ADXSJD_GetBlkSmpl(void* sjd);
 
 // Opaque type definitions
+struct ADXT_ChannelObj;
+typedef struct ADXAMP_State ADXAMP_State;
 typedef struct ADXSJD_State ADXSJD_State;
 typedef struct ADXSTM_State ADXSTM_State;
 typedef struct ADXRNA_State ADXRNA_State;
@@ -35,18 +39,25 @@ typedef struct ADXT_ChannelObj ADXT_ChannelObj;
 typedef struct ADXT_Tsvr {
     u8  field_0x00;         // field_0x00: unknown
     s8  state;              // field_0x01: state (1=?, 3=playing, 4=done?)
-    s8  format;             // field_0x02: format type
+    u8  format;             // field_0x02: format type
     u8  field_0x03;         // field_0x03: padding or unknown
     ADXSJD_State* sjd;      // field_0x04: sound job descriptor
     ADXSTM_State* stream;   // field_0x08: stream state
     ADXRNA_State* rna;      // field_0x0C: ring buffer/audio output
-    u8  field_0x10[8];      // fields 0x10-0x17: unknown
-    ADXT_ChannelObj* channels[9];  // field_0x18: array of channel/voice object pointers
+    ADXT_ChannelObj* field_0x10;  // field_0x10: linked object notified on stream restart
+    ADXT_ChannelObj* field_0x14;  // field_0x14: decoder/channel object
+    ADXT_ChannelObj* channels[8];  // field_0x18: array of channel/voice object pointers
+    u32 field_0x38;         // field_0x38: samples-per-block divisor
     u8  field_0x3C[2];      // fields 0x3C-0x3D: padding to align field_0x3E
     s16 field_0x3E;         // field_0x3E: loop end position
-    u8  field_0x40[8];      // fields 0x40-0x47: unknown
-    u32 field_0x48;         // field_0x48: limit value
-    u8  field_0x4C[12];     // fields 0x4C-0x57: unknown
+    s16 field_0x40;         // field_0x40: output volume
+    s16 field_0x42;         // field_0x42: pan for channel 0
+    s16 field_0x44;         // field_0x44: pan for channel 1
+    u8  field_0x46[2];      // fields 0x46-0x47: padding
+    s32 field_0x48;         // field_0x48: limit value (signed)
+    s32 field_0x4C;         // field_0x4C: trap entry counter
+    u32 field_0x50;         // field_0x50: required decode buffer length
+    u8  field_0x54[4];      // fields 0x54-0x57: unknown
     u8  field_0x58[8];      // fields 0x58-0x5F: unknown
     s16 field_0x60;         // field_0x60: stop position (-1 on EOS)
     u8  field_0x62[0xA];    // fields 0x62-0x6B: unknown
@@ -58,14 +69,22 @@ typedef struct ADXT_Tsvr {
     s8  flag_0x71;          // field_0x71: prepared flag
     s8  flag_0x72;          // field_0x72: flag (signed)
     s8  flag_0x73;          // field_0x73: flag (signed)
-    u8  field_0x74[0x1A];   // fields 0x74-0x8D: unknown
-    s16 numLoop;            // field_0x8E: number of loops (signed half word)
-    u8  field_0x90[4];      // fields 0x90-0x93: sample count
+    ADXAMP_State* field_0x74;  // field_0x74: attached amp (NULL when unused)
+    u8  field_0x78[0x14];   // fields 0x78-0x8B: unknown
+    u32 field_0x8C;         // field_0x8C: loop end sector
+    s32 field_0x90;         // field_0x90: loop span in samples
     struct LSC_State* lsc;  // field_0x94: LSC (loudness/sound control?) object
-    u8  field_0x98[4];      // fields 0x98-0x9B: unknown
+    s8  field_0x98;         // field_0x98: signed flag checked by nlp trap entry
+    u8  field_0x99[3];      // fields 0x99-0x9B: unknown
     u32 field_0x9C;         // field_0x9C: cleared on play start
     u32 field_0xA0;         // field_0xA0: callback/data word set on play start
-    u8  field_0xA4[0x1C];   // fields 0xA4-0xBF: unknown
+    u32 field_0xA4;         // field_0xA4: accumulated decoded sample count
+    s8  field_0xA8;         // field_0xA8: pending-stream-start flag
+    u8  field_0xA9[7];      // fields 0xA9-0xAF: padding
+    u32 field_0xB0;         // field_0xB0: stream start arg (file name/id)
+    u32 field_0xB4;         // field_0xB4: stream start sector offset
+    u32 field_0xB8;         // field_0xB8: stream start sector length
+    u32 field_0xBC;         // field_0xBC: stream start channel count
     u32 threshold;          // field_0xC0: threshold for decoded data length
 } ADXT_Tsvr;
 
@@ -78,20 +97,22 @@ struct ADXT_ChannelObj {
     struct ADXT_ChannelObj_VTable* vtable;  // vtable at offset 0
 };
 
-// VTable for ADXT_ChannelObj - functions at offsets 0x18, 0x20, 0x24
-struct ADXT_ChannelObj_VTable {
-    void (*reserved[6])(void);  // functions at offsets 0x00-0x14 (unknown)
-    void (*func_0x18)(ADXT_ChannelObj* self, int idx, u32 size, void* info);  // acquire decode buffers
-    void (*func_0x20)(ADXT_ChannelObj* self, int idx, void* info);            // release/commit buffers
-    int (*func_0x24)(ADXT_ChannelObj* self, int arg);  // at offset 0x24
-};
-
 // Buffer info block filled by func_0x18: data pointer + byte length.
 struct ADXT_BufInfo {
     void* data;
     u32   len;
 };
 typedef struct ADXT_BufInfo ADXT_BufInfo;
+
+// VTable for ADXT_ChannelObj - functions at offsets 0x18, 0x20, 0x24
+struct ADXT_ChannelObj_VTable {
+    void (*reserved[5])(void);  // functions at offsets 0x00-0x10 (unknown)
+    void (*func_0x14)(ADXT_ChannelObj* self);                                        // reset/rewind decoder
+    void (*func_0x18)(ADXT_ChannelObj* self, int idx, u32 size, ADXT_BufInfo* info); // acquire decode buffers
+    void (*func_0x1C)(ADXT_ChannelObj* self, int idx, ADXT_BufInfo* info);           // re-acquire buffers
+    void (*func_0x20)(ADXT_ChannelObj* self, int idx, ADXT_BufInfo* info);           // release/commit buffers
+    int (*func_0x24)(ADXT_ChannelObj* self, int arg);  // at offset 0x24
+};
 
 /**
  * Wrapper for adxt_ExecHndl that enters/leaves the ADX critical section.
@@ -128,7 +149,10 @@ extern void ADXSJD_SetTrapCnt(void* sj, s32 a);
 extern void ADXSJD_SetTrapDtLen(void* sj, s32 a);
 extern void ADXSJD_SetDecPos(void* sj, s32 a);
 extern void ADXSJD_EntryTrapFunc(void* sj, void* fn, void* a);
-void adxt_trap_entry(void);
+extern s32 ADXSJD_GetFormat(ADXSJD_State* sjd);
+extern void ADXSJD_SetMaxDecSmpl(ADXSJD_State* sjd, s32 val);
+extern s32 ADXSJD_GetTotalNumSmpl(ADXSJD_State* sjd);
+void adxt_trap_entry(ADXT_Tsvr* tsvr);
 
 // Loop-start trap entry: snapshot the SJD and arm the decoder trap so
 // decoding restarts from the loop begin offset.
@@ -152,42 +176,276 @@ void adxt_trap_entry_lps(void* self) {
     ADXSJD_EntryTrapFunc(sj, (void*)adxt_trap_entry, tsvr);
 }
 
-void adxt_trap_entry() {}
-
-extern s32 ADXSJD_GetLpStartOfst(void* sj);
-extern void ADXSTM_Seek(void* stm, s32 pos);
-extern void ADXSTM_SetEos(void* stm, s32 a);
+extern void ADXCRS_Lock(void);
+extern void ADXCRS_Unlock(void);
+extern s32 ADX_DecodeFooter(u8* data, s32 maxLen, s16* outLen);
+extern s32 ADX_ScanInfoCodeWav(const u8* codes, s32 size, u16* outLen);
+extern s32 ADX_ScanInfoCode(const u16* codes, s32 size, u16* outLen);
+extern void SJ_SplitChunk(const ADXT_BufInfo* src, int size, ADXT_BufInfo* dst1,
+                          ADXT_BufInfo* dst2);
 
 /**
- * End-of-stream handler.
- * Queries the loop start offset up front; then depending on format/loop flag,
- * either marks the stream EOS (0x7FFFFFFF), arms a decoder trap, or seeks the
- * stream to the loop point (offset >> 11, arithmetic shift).
+ * Non-loop trap handler: invoked when decoding reaches the end of the stream.
+ *
+ * Scans the final decoded chunks for metadata (footer / info codes), then
+ * either stops linked playback or splits the trailing chunks around the
+ * discovered metadata and restarts the decoder so the metadata is consumed.
+ * Finally restarts the SJD and re-arms trap parameters when the decoder
+ * reports state 2.
  */
-void adxt_eos_entry(ADXT_Tsvr* tsvr) {
-    ADXSTM_State* stm = tsvr->stream;
-    ADXSJD_State* sjd = tsvr->sjd;
-    s32 lpOfst;
-    if (stm == NULL || sjd == NULL) return;
-    lpOfst = ADXSJD_GetLpStartOfst(sjd);
-    if (tsvr->format == 4) {
-        ADXSTM_SetEos(tsvr->stream, 0x7FFFFFFF);
+void adxt_nlp_trap_entry(ADXT_Tsvr* tsvr) {
+    ADXSJD_State* sjd;
+    ADXT_ChannelObj* dec;
+    ADXT_BufInfo info28;
+    ADXT_BufInfo info20;
+    ADXT_BufInfo info18;
+    ADXT_BufInfo info10;
+    s16 posA;
+    s16 posB;
+    s32 oldA;
+    s32 res1;
+    s32 res2;
+
+    dec = tsvr->field_0x14;
+    sjd = tsvr->sjd;
+
+    if ((s8)tsvr->field_0x98 == 0) {
         return;
     }
-    if (tsvr->loopFlag == 0) {
-        if (!((s32)ADXSJD_GetDecDtLen(tsvr->sjd) < (s32)tsvr->threshold)) {
-            ADXSJD_SetTrapNumSmpl(tsvr->sjd, -1);
+    posB = 0;
+    posA = 0;
+
+    ADXCRS_Lock();
+    dec->vtable->func_0x18(dec, 1, 0x7FFFFFFF, &info28);
+    dec->vtable->func_0x18(dec, 1, 0x7FFFFFFF, &info18);
+
+    // Format 0: parse the footer; on failure just drop the link and finish.
+    if (ADXSJD_GetFormat(sjd) == 0 && ADX_DecodeFooter(info28.data, info28.len, &posA) != 0) {
+        ADXT_SetLnkSw(tsvr, 0);
+        dec->vtable->func_0x1C(dec, 1, &info18);
+        dec->vtable->func_0x1C(dec, 1, &info28);
+        ADXCRS_Unlock();
+        return;
+    }
+
+    // Scan both chunks for metadata codes starting after the footer position.
+    // A zero return means no metadata was found in that chunk.
+    oldA = posA;
+    if (ADXSJD_GetFormat(sjd) == 1) {
+        res1 = ADX_ScanInfoCodeWav((const u8*)info28.data + oldA, info28.len - oldA, (u16*)&posA);
+        if (res1 == 0) {
+            res2 = -1;
+        } else {
+            res2 = ADX_ScanInfoCodeWav((const u8*)info18.data, info18.len, (u16*)&posB);
         }
-        ADXSTM_SetEos(tsvr->stream, 0x7FFFFFFF);
+    } else {
+        res1 = ADX_ScanInfoCode((const u16*)info28.data + oldA, info28.len - oldA, (u16*)&posA);
+        if (res1 == 0) {
+            res2 = -1;
+        } else {
+            res2 = ADX_ScanInfoCode((const u16*)info18.data, info18.len, (u16*)&posB);
+        }
+    }
+
+    if (res1 != 0 && res2 != 0) {
+        // Metadata found in both chunks: unlink playback and release everything.
+        ADXT_SetLnkSw(tsvr, 0);
+        dec->vtable->func_0x1C(dec, 1, &info18);
+        dec->vtable->func_0x1C(dec, 1, &info28);
+        ADXCRS_Unlock();
         return;
     }
-    ADXSTM_Seek(stm, lpOfst / 2048);
+
+    if (res1 == 0) {
+        // No metadata in the first chunk: keep chunk 18 whole, trim chunk 28.
+        dec->vtable->func_0x1C(dec, 1, &info18);
+        SJ_SplitChunk(&info28, oldA + posA, &info28, &info20);
+        dec->vtable->func_0x20(dec, 0, &info28);
+        dec->vtable->func_0x1C(dec, 1, &info20);
+    } else {
+        // Metadata in the first chunk: commit chunk 28 whole, trim chunk 18.
+        dec->vtable->func_0x20(dec, 0, &info28);
+        SJ_SplitChunk(&info18, posB, &info18, &info10);
+        dec->vtable->func_0x20(dec, 0, &info18);
+        dec->vtable->func_0x1C(dec, 1, &info10);
+    }
+
+    ADXCRS_Unlock();
+    tsvr->field_0xA4 += ADXSJD_GetDecNumSmpl(sjd);
+    ADXSJD_Stop(sjd);
+    ADXSJD_Start(sjd);
+    ADXSJD_ExecHndl(sjd);
+
+    if (ADXSJD_GetStat(sjd) != 2) {
+        ADXT_SetLnkSw(tsvr, 0);
+        return;
+    }
+
+    // Decoder restarted cleanly: cap decode size and reset the trap counters.
+    ADXSJD_SetMaxDecSmpl(sjd, tsvr->field_0x48);
+    ADXSJD_SetTrapNumSmpl(sjd, ADXSJD_GetTotalNumSmpl(sjd));
+    ADXSJD_SetTrapDtLen(sjd, 0);
+    ADXSJD_SetTrapCnt(sjd, 0);
 }
 
-void adxt_nlp_trap_entry() {}
-
-extern void adxt_stat_decinfo(ADXT_Tsvr* self);
+extern void ADXSTM_SetEos(ADXSTM_State* stm, s32 val);
+extern void ADXSTM_EntryEosFunc(ADXSTM_State* stm, void (*fn)(void*), void* arg);
+extern void adxt_start_stm(ADXT_Tsvr* self, u32 fname, u32 sctOfst, u32 sctLen, s32 numChan);
+extern void adxt_eos_entry(void* stream);
+extern s32 ADXSJD_GetSfreq(ADXSJD_State* sjd);
+extern s32 ADXSJD_GetNumLoop(ADXSJD_State* sjd);
+extern s32 ADXSJD_GetLpEndOfst(ADXSJD_State* sjd);
+extern s32 ADXSJD_GetOutBps(ADXSJD_State* sjd);
+extern s32 ADXSJD_GetSpsdInfo(ADXSJD_State* sjd);
+extern void ADXRNA_SetBitPerSmpl(ADXRNA_State* rna, s32 val);
+extern void ADXRNA_SetSfreq(ADXRNA_State* rna, s32 val);
+extern void ADXRNA_SetNumChan(ADXRNA_State* rna, s32 val);
+extern void ADXRNA_SetTotalNumSmpl(ADXRNA_State* rna, s32 val);
+extern void ADXRNA_SetStmHdInfo(ADXRNA_State* rna, s32 info);
+extern void ADXT_Stop(ADXT_Tsvr* self);
+extern void ADXT_SetOutVol(ADXT_Tsvr* self, s16 vol);
+extern void ADXT_GetTranspose(ADXT_Tsvr* self, s32* outType, s32* outVal);
+extern void ADXT_SetTranspose(ADXT_Tsvr* self, s32 type, s32 val);
+extern void ADXT_SetOutPan(ADXT_Tsvr* self, s32 chan, s16 pan);
+extern void ADXAMP_SetSfreq(ADXAMP_State* amp, s32 sfreq);
+extern void ADXERR_ItoA2(s32 val1, s32 val2, char* buf, s32 bufSize);
+extern void ADXERR_CallErrFunc2_(char* msg, char* buf);
+// Optional observer invoked once decode parameters are configured
+extern void (*lbl_eu_805E4F70)(ADXT_Tsvr* tsvr, s32 sfreq, s32 nchan, s32 total);
 extern int ADXT_GetNumChan(ADXT_Tsvr* self);
+
+/**
+ * State 1 handler: fetch decode parameters from the decoder and configure
+ * output before playback starts.
+ *
+ * For streamed formats (<= 1) with a pending start flag, reset the linked
+ * decoder object and restart the stream unless it already reached its end.
+ * Then, when the decoder reports ready (stat 2), compute the decode block
+ * size from the sample rate / divisor, install loop or end traps, and push
+ * sample format info to the ring buffer, volume/pan/transpose settings to
+ * the server, and the sample rate to the attached amp. Stat 4 means the
+ * decoder hit an unrecoverable state: advance to state 6.
+ */
+void adxt_stat_decinfo(ADXT_Tsvr* tsvr) {
+    ADXSJD_State* sjd = tsvr->sjd;
+    char numBuf[0x10];
+    s32 transType = 0;
+    s32 transVal = 0;
+    s32 stat;
+
+    if ((u32)tsvr->format <= 1 && tsvr->field_0xA8 == 1) {
+        if (ADXSTM_GetStat(tsvr->stream) == 2) {
+            // Stream already exhausted: nothing left to configure.
+            return;
+        }
+        {
+            ADXT_ChannelObj* link = tsvr->field_0x10;
+            if (link != NULL) {
+                link->vtable->func_0x14(link);
+            }
+            adxt_start_stm(tsvr, tsvr->field_0xB0, tsvr->field_0xB4,
+                           tsvr->field_0xB8, tsvr->field_0xBC);
+            tsvr->field_0xA8 = 0;
+        }
+    }
+
+    stat = ADXSJD_GetStat(sjd);
+    if (stat == 2) {
+        s32 chan = ADXSJD_GetNumChan(sjd);
+        if (chan > (s8)tsvr->field_0x03) {
+            // More channels in the file than the handle was created for.
+            ADXERR_ItoA2(chan, tsvr->field_0x03, numBuf, 0x10);
+            ADXERR_CallErrFunc2_(&lbl_eu_80516A88[0x2a], numBuf);
+            ADXT_Stop(tsvr);
+            return;
+        }
+
+        {
+            s32 sfreq = ADXSJD_GetSfreq(sjd);
+            s32 numLoop = ADXSJD_GetNumLoop(sjd);
+            s32 blkSmpl;
+
+            if (ADXSJD_GetFormat(sjd) == 0xa) {
+                tsvr->field_0x48 = sfreq / tsvr->field_0x38;
+                blkSmpl = ADXSJD_GetBlkSmpl(sjd);
+            } else {
+                if (numLoop > 0) {
+                    s32 d = sfreq / tsvr->field_0x38;
+                    tsvr->field_0x48 = (d << 2) - d;
+                } else {
+                    s32 d = sfreq / tsvr->field_0x38;
+                    tsvr->field_0x48 = ((d << 2) - d) / 2;
+                }
+                blkSmpl = ADXSJD_GetBlkSmpl(sjd) * 2;
+            }
+            // Round the block size up to a whole multiple of blkSmpl.
+            tsvr->field_0x48 = (tsvr->field_0x48 + blkSmpl) / blkSmpl * blkSmpl;
+            ADXSJD_SetMaxDecSmpl(sjd, tsvr->field_0x48);
+
+            if (numLoop > 0) {
+                if (tsvr->format != 2) {
+                    s32 lpEndOfst = ADXSJD_GetLpEndOfst(sjd);
+                    // Loop end byte offset rounded up to whole sectors.
+                    tsvr->field_0x8C = (lpEndOfst + 0x7ff) >> 11;
+                    tsvr->field_0x50 = 0x800 - ((lpEndOfst + 0x7ff) >> 11);
+                    ADXSTM_SetEos(tsvr->stream, tsvr->field_0x8C);
+                    ADXSTM_EntryEosFunc(tsvr->stream, adxt_eos_entry, tsvr);
+                } else {
+                    tsvr->field_0x50 = 0;
+                }
+                (void)ADXSJD_GetLpEndPos(sjd);
+                tsvr->field_0x90 = ADXSJD_GetLpStartPos(sjd);
+                ADXSJD_SetTrapNumSmpl(sjd, tsvr->field_0x90);
+                ADXSJD_SetTrapDtLen(sjd, 0);
+                ADXSJD_SetTrapCnt(sjd, 0);
+                ADXSJD_EntryTrapFunc(sjd, adxt_trap_entry_lps, tsvr);
+            } else {
+                if (tsvr->stream != NULL) {
+                    ADXSTM_SetEos(tsvr->stream, 0x7fff);
+                }
+                ADXSJD_SetTrapNumSmpl(sjd, ADXSJD_GetTotalNumSmpl(sjd));
+                ADXSJD_SetTrapDtLen(sjd, 0);
+                ADXSJD_SetTrapCnt(sjd, 0);
+                ADXSJD_EntryTrapFunc(sjd, adxt_nlp_trap_entry, tsvr);
+            }
+        }
+
+        {
+            s32 sfreq = ADXSJD_GetSfreq(sjd);
+            s32 nchan = ADXSJD_GetNumChan(sjd);
+            s32 total = ADXSJD_GetTotalNumSmpl(sjd);
+
+            ADXRNA_SetBitPerSmpl(tsvr->rna, ADXSJD_GetOutBps(sjd));
+            ADXRNA_SetSfreq(tsvr->rna, sfreq);
+            ADXRNA_SetNumChan(tsvr->rna, nchan);
+            ADXRNA_SetTotalNumSmpl(tsvr->rna, total);
+            ADXT_SetOutVol(tsvr, tsvr->field_0x40);
+            ADXT_GetTranspose(tsvr, &transType, &transVal);
+            if (transType != 0 || transVal != 0) {
+                ADXT_SetTranspose(tsvr, transType, transVal);
+            }
+            if (ADXSJD_GetNumChan(tsvr->sjd) == 1) {
+                ADXT_SetOutPan(tsvr, 0, tsvr->field_0x42);
+            } else {
+                ADXT_SetOutPan(tsvr, 0, tsvr->field_0x42);
+                ADXT_SetOutPan(tsvr, 1, tsvr->field_0x44);
+            }
+            if (tsvr->field_0x74 != NULL) {
+                ADXAMP_SetSfreq(tsvr->field_0x74, sfreq);
+            }
+            if (ADXSJD_GetFormat(sjd) == 2) {
+                ADXRNA_SetStmHdInfo(tsvr->rna, ADXSJD_GetSpsdInfo(sjd));
+            }
+            ADXRNA_SetTransSw(tsvr->rna, 1);
+            if (lbl_eu_805E4F70 != NULL) {
+                lbl_eu_805E4F70(tsvr, sfreq, nchan, total);
+            }
+        }
+        tsvr->state = 2;
+    } else if (stat == 4) {
+        tsvr->state = 6;
+    }
+}
 extern u32 lbl_eu_805E26DC;
 
 /**
@@ -210,29 +468,27 @@ void adxt_stat_prep(ADXT_Tsvr* self) {
     u32 numRoom = ADXRNA_GetNumRoom(rna);
 
     // Cap the limit at 0x2000 samples.
-    u32 lim = self->field_0x48 < 0x2000 ? self->field_0x48 : 0x2000;
+    s32 lim = self->field_0x48 < 0x2000 ? self->field_0x48 : 0x2000;
 
     // Start output when the decoder has fallen behind OR the SJD is playing.
-    if (!((s32)numData < (s32)lim && (s32)numRoom > (s32)ADXSJD_GetBlkSmpl(sjd))
-        || ADXSJD_GetStat(sjd) == 3) {
-        if (self->flag_0x70 != 0) {
-            self->flag_0x71 = 1;
-        } else if (self->flag_0x72 != 0) {
+    if ((s32)numData >= lim || (s32)numRoom <= (s32)ADXSJD_GetBlkSmpl(sjd)
+        || ADXSJD_GetStat(self->sjd) == 3) {
+        // All paths set flag_0x71; non-paused paths also advance to state 3.
+        if (self->flag_0x70 == 0) {
+            if (self->flag_0x72 == 0) {
+                ADXRNA_SetPlaySw(rna, 1);
+                self->field_0x9C = 0;
+                self->field_0xA0 = lbl_eu_805E26DC;
+            }
             self->state = 3;
-            self->flag_0x71 = 1;
-        } else {
-            ADXRNA_SetPlaySw(rna, 1);
-            self->field_0x9C = 0;
-            self->field_0xA0 = lbl_eu_805E26DC;
-            self->state = 3;
-            self->flag_0x71 = 1;
         }
+        self->flag_0x71 = 1;
     }
 
-    if (ADXSJD_GetStat(sjd) == 3) {
+    if (ADXSJD_GetStat(self->sjd) == 3) {
+        int i;
         int numChan = ADXT_GetNumChan(self);
         u32 size = (self->field_0x48 * numChan) << 1;
-        int i;
         for (i = 0; i < numChan; i++) {
             ADXT_ChannelObj* ch = self->channels[i];
             ADXT_BufInfo info;
@@ -257,10 +513,8 @@ extern u32 lbl_eu_805E4F78;
  * It checks various conditions to determine when to start/stop audio output.
  *
  * The function uses a flag (flag_0x73) to track whether playback has been started:
- * - When flag_0x73 is 0: checks if conditions are right to start playback
- * - When flag_0x73 is non-zero: checks if conditions indicate we should stop
- *
- * @param self Pointer to the ADXT server struct
+ * - When flag_0x73 == 0: checks if conditions are right to start playback
+ * - When flag_0x73 != 0: checks if conditions indicate we should stop
  */
 void criware_80385320(ADXT_Tsvr* self) {
     // Load fields early to match register allocation pattern

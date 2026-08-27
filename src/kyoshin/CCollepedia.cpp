@@ -1730,7 +1730,9 @@ extern "C" __declspec(noinline) void func_8025629C(CCollepedia* this_) {
 // formatter, list view formats the current entry name and moves the cursor.
 #pragma push
 #pragma optimize_for_size on
-extern "C" void func_80256314(CCollepedia* this_) {
+// noinline: retail keeps this out-of-line; without it MWCC inlines the whole
+// body into its earlier callers (late-definition inlining defeats auto_inline off).
+extern "C" __declspec(noinline) void func_80256314(CCollepedia* this_) {
     // Scratch block: detail-path pane-name buffer at +0x00, cursor
     // position VEC3 at +0x0C, list-path page-name buffer at +0x18.
     u8 work[0x38];

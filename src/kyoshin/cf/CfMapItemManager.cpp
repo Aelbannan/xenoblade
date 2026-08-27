@@ -138,6 +138,12 @@ extern f32 lbl_eu_806677EC;
 extern f64 lbl_eu_806677F0;
 extern char lbl_eu_805033C0[];
 
+// Plain float triple so the record union stays trivial (MWCC rejects
+// nontrivial class members in unions).
+struct CfMapItemPos {
+    f32 x, y, z;
+};
+
 // One map-item record; the manager's item array is 0x1C-byte strided.
 // True layout recovered from the retail ctor (__ct__cf_CfMapItemManager):
 // each record gets stws for handle/position, an stfs for the +0x10 scale
@@ -152,16 +158,19 @@ struct CfMapItem {
     };
     union {
         u8 data[12];               // 0x04 raw bytes over the position
-        ml::CVec3 pos;             // 0x04 world position
+        CfMapItemPos pos;          // 0x04 world position
         u32 field_04;              // 0x04 raw word view
     };
     f32 field_10_f;                // 0x10 scale / respawn timer
     u16 field_14;                  // 0x14 kind (0 = timer-only slot)
     s16 field_16;                  // 0x16 respawn countdown
     u32 field_18;                  // 0x18 state flags (row in top 12 bits)
+
+    CfMapItem() : field_10_f(0.0f), field_14(0) {}
 };
 
-// Buffer filled by CfMapItemManagerIf::getMapItem (vt +0x10 slot).
+// Buffer filled by the +0x10 virtual (func_801737D4 / func_80173894).
+// Layout is identical to CfMapItem - callers copy it record-wise.
 struct MapItemBuffer {
     u32 field_00;              // 0x00
     u32 field_04;              // 0x04: pos x
@@ -173,29 +182,75 @@ struct MapItemBuffer {
     u32 field_18;              // 0x18
 };
 
-// Cast-only view of the manager's retail vtable (RTTI-on layout: typeinfo @0,
-// toffset @4, first declared virtual @+0x08). Never constructed.
-class CfMapItemManagerIf {
-public:
-    virtual void v008();
-    virtual bool unk00C();
-    virtual int getMapItem(int row, MapItemBuffer* buf);  // vtable +0x10
-    virtual void* getBdatTable();                         // vtable +0x14
+// Real class tree, recovered from the retail tables in split1.s:
+//   lbl_eu_805316F8 (JP __vt__Q22cf17CfMapItemManager), size 0x18,
+//       RTTI lbl_eu_80662438 -> typestr "cf::CfMapItemManager", no base:
+//       +0x08 func_801738AC  +0x0C func_801737CC
+//       +0x10 func_801737D4  +0x14 func_8017389C
+//   lbl_eu_805316D0 (JP __vt__Q22cf19CfValueItemManager), size 0x18,
+//       RTTI lbl_eu_80662430 -> typestr "cf::CfValueItemManager",
+//       hierarchy lists CfMapItemManager as base; all four slots overridden:
+//       +0x08 func_80173AEC  +0x0C func_80174650
+//       +0x10 func_80173894  +0x14 func_801738A4
+namespace cf {
+
+struct CfMapItemManagerVtbl {
+    void* mSlots[6];
 };
 
-// Field map item manager.  The item array starts at offset 0x00 and overlaps
-// the vtable pointer: slot 0 is never stored into (mCount is 1-based).
-class CfMapItemManager {
+// novtable: the retail .data holds the vtables (split1.s); this TU must not
+// emit its own. Object layout: vptr @0, mItems @+4, counts @+0x3804/06
+// (retail allocates 0x3808 bytes per manager).
+class __declspec(novtable) CfMapItemManager {
 public:
-    // 0x00: item array overlaps the vtable pointer (slot 0 is never stored
-    // into - mCount is 1-based - so the vtable stays intact).
-    CfMapItem mItems[512];       // 0x00 (0x1C * 512 = 0x3800)
-    u8 field_3800[4];             // 0x3800
-    u16 mCount;                   // 0x3804
-    u16 field_3806;               // 0x3806
+    virtual void func_801738AC();                   // +0x08 collect map items
+    virtual int func_801737CC();                    // +0x0C event-active gate
+    virtual int func_801737D4(u32 row, void* item); // +0x10 lottery/place
+    virtual u32 func_8017389C();                    // +0x14 bdat table handle
+
+    CfMapItem mItems[512];     // +0x04 (0x1C * 512 = 0x3800)
+    u16 mCount;                // +0x3804 (1-based)
+    u16 field_3806;            // +0x3806 active-item count
+
+    // Overlay on the vptr so ctors can write the retail table label.
+    CfMapItemManagerVtbl*& vtbl() {
+        return *reinterpret_cast<CfMapItemManagerVtbl**>(this);
+    }
+
+    // Member ctor: the mItems element constructors produce retail's
+    // array-initialization loop; kept inline so the extern "C" wrapper below
+    // carries the verbatim retail linker name.
+    CfMapItemManager() {
+        vtbl() = &lbl_eu_805316F8;
+        mCount = 0;
+        field_3806 = 0;
+        memset(mItems, 0, 0x3800);
+    }
 };
 
-void __ct__cf_CfMapItemManager(){}
+class __declspec(novtable) CfValueItemManager : public CfMapItemManager {
+public:
+    virtual void func_80173AEC();                   // +0x08 override
+    virtual int func_80174650();                    // +0x0C override
+    virtual int func_80173894(u32 row, void* item); // +0x10 override
+    virtual u32 func_801738A4();                    // +0x14 override
+};
+
+} // namespace cf
+
+using cf::CfMapItemManager;
+using cf::CfValueItemManager;
+extern cf::CfMapItemManagerVtbl lbl_eu_805316F8;
+
+// Retail ctor (0x801745B0): writes the retail table label at +0, runs the
+// mItems element constructors, clears the counters, then memsets the array.
+// Kept under the verbatim retail C-linkage name; the body delegates to the
+// inline member ctor so MWCC emits its array-construction idiom here.
+inline void* operator new(size_t size, void* ptr) { return ptr; }
+
+extern "C" void* __ct__cf_CfMapItemManager(CfMapItemManager* self) {
+    return new (self) CfMapItemManager;
+}
 
 // __dt__801732F8: deleting destructor - free self when mode > 0, return self.
 extern "C" void __dl__FPv(void*);
@@ -213,7 +268,7 @@ extern "C" void func_802B2938(void* mgr, u32 handle);
 void func_80173338(CfMapItemManager* self) {
     u32 zero = 0;
     for (u32 i = 1; i < self->mCount; i++) {
-        u32* handle = &self->mItems[i].field_04;
+        u32* handle = &self->mItems[i].handle;
         u32 h = *handle;
         if (h != 0) {
             func_802B2938(func_802B262C(), h);
@@ -222,8 +277,7 @@ void func_80173338(CfMapItemManager* self) {
     }
     self->mCount = 0;
     self->field_3806 = 0;
-    // Zero the whole item array but keep the vtable pointer at +0 intact.
-    memset(&self->mItems[0].field_04, 0, 0x3800);
+    memset(self->mItems, 0, 0x3800);
 }
 
 // Column-name scratch keys and sdata2 constants used by func_801733C0.
@@ -260,7 +314,7 @@ union BdatCell {
 int func_801733C0(CfMapItemManager* self, u32 row, void* c, int pick) {
     MapItemBuffer* buf = static_cast<MapItemBuffer*>(c);
 
-    void* table = reinterpret_cast<CfMapItemManagerIf*>(self)->getBdatTable();
+    void* table = (void*)self->func_8017389C();
     // Build the "itm<pick>Per" weight-column key for this lottery slot.
     char* key = (char*)lbl_eu_80662420;
     char* strBase = lbl_eu_805033C0;
@@ -339,7 +393,7 @@ int func_801733C0(CfMapItemManager* self, u32 row, void* c, int pick) {
                 continue;
             }
             float ang;
-            if (reinterpret_cast<CfMapItemManagerIf*>(self)->unk00C()) {
+            if (self->func_801737CC()) {
                 ang = lbl_eu_80667780;
             } else {
                 ang = nw4r::math::SinFIdx(sinC * (sinA * sinB));
@@ -354,7 +408,7 @@ int func_801733C0(CfMapItemManager* self, u32 row, void* c, int pick) {
         }
 
         // Snap to the ground height when the object supports it.
-        if (reinterpret_cast<CfMapItemManagerIf*>(self)->unk00C() && placed == 0) {
+        if (self->func_801737CC() && placed == 0) {
             placed = 1;
             cur = offs;
             buf->field_18 |= 0x2000;
@@ -375,7 +429,7 @@ int func_801733C0(CfMapItemManager* self, u32 row, void* c, int pick) {
             buf->field_10 = lbl_eu_80667780;
             buf->field_16 = 0;
         } else {
-            reinterpret_cast<CfMapItemManagerIf*>(self)->unk00C();
+            self->func_801737CC();
             sel = 0;
         }
     }
@@ -384,7 +438,8 @@ int func_801733C0(CfMapItemManager* self, u32 row, void* c, int pick) {
 }
 #pragma pop
 
-int func_801737CC(void* self) { return 0; }
+// cf::CfMapItemManager +0x0C slot: no event active.
+int cf::CfMapItemManager::func_801737CC() { return 0; }
 
 // sdata scratch key: "itm?Per" - byte 3 is rewritten each iteration with
 // '1'+i to select lottery weight column itm1Per..itm8Per.
@@ -394,12 +449,13 @@ extern u8 lbl_eu_80662428[8];
 // weights from the bdat row, and forward the winning column index.
 #pragma push
 #pragma auto_inline off
-int func_801737D4(CfMapItemManager* self, u32 row, CfMapItem* item) {
+// cf::CfMapItemManager +0x10 slot: weighted lottery over itm1Per..itm8Per,
+// then place via func_801733C0 with the winning column.
+int cf::CfMapItemManager::func_801737D4(u32 row, void* item) {
     // Declaration order controls callee-saved register assignment; this
     // ordering reproduces retail's r26-r31 allocation.
     int pick;
     int rnd;
-    CfMapItemManagerIf* iface;
     void* table;
     int i;
     int total;
@@ -413,8 +469,7 @@ int func_801737D4(CfMapItemManager* self, u32 row, CfMapItem* item) {
     total = 0;
     rnd = ml::math::mtRand(100);
     pick = 0;
-    iface = reinterpret_cast<CfMapItemManagerIf*>(self);
-    table = iface->getBdatTable();
+    table = (void*)func_8017389C();
     for (i = 0; i < 8; i++) {
         lbl_eu_80662428[3] = '1' + i;
         col.raw = getBdatStringColumnValue(table, (const char*)lbl_eu_80662428, row);
@@ -425,25 +480,31 @@ int func_801737D4(CfMapItemManager* self, u32 row, CfMapItem* item) {
         }
         total = next;
     }
-    return func_801733C0(self, row, item, pick);
+    return func_801733C0(this, row, item, pick);
 }
 #pragma pop
 
-extern "C" void func_80173894(void* self, u32 b, void* c) { func_801733C0((CfMapItemManager*)self, b, c, 0); }
+// cf::CfValueItemManager +0x10 override: place with lottery pick 0.
+int cf::CfValueItemManager::func_80173894(u32 row, void* item) {
+    return func_801733C0(this, row, item, 0);
+}
 
-extern "C" u32 func_8017389C() { return (u32)lbl_eu_806640C0; }
+// cf::CfMapItemManager +0x14: bdat table handle cached by CfBdat at 806640C0.
+u32 cf::CfMapItemManager::func_8017389C() { return (u32)lbl_eu_806640C0; }
 
-extern "C" u32 func_801738A4() { return (u32)lbl_eu_806640D0; }
+// cf::CfValueItemManager +0x14 override: table handle at 806640D0.
+u32 cf::CfValueItemManager::func_801738A4() { return (u32)lbl_eu_806640D0; }
 
-// func_801738AC - collect the current map's item entries into mItems.  When
-// lbl_eu_80664298 (fixed-position flag) is set, synthesize each entry from
-// ml::CVec3::zero instead of asking the vt callback.
-void func_801738AC(CfMapItemManager* self) {
+// cf::CfMapItemManager +0x08 slot: collect the current map's item entries
+// into mItems.  When lbl_eu_80664298 (fixed-position flag) is set, synthesize
+// each entry from ml::CVec3::zero instead of asking the +0x10 virtual.
+void cf::CfMapItemManager::func_801738AC() {
+    CfMapItemManager* self = this;
     func_8003AA34();
     // Declaration order drives callee-saved coloring (first -> highest reg):
     // retail maps zeroW>r30, cols>r29, table>r28, end>r27, row>r26,
     // count>r25, i>r24.
-    void* table = reinterpret_cast<CfMapItemManagerIf*>(self)->getBdatTable();
+    void* table = (void*)func_8017389C();
     s32 end;
     s32 row = (s32)func_8003B41C(table);
     end = row + (s32)func_8003B1EC(table);    f32 one;
@@ -489,26 +550,26 @@ void func_801738AC(CfMapItemManager* self) {
                 u16 n2 = self->mCount;
                 CfMapItem* item = &self->mItems[n2];
                 self->mCount = n2 + 1;
-                item->field_04 = buf.field_00;
-                item->field_08 = buf.field_04;
-                item->field_0C = buf.field_08;
-                item->field_10 = buf.field_0C;
-                item->field_14 = buf.field_10;
-                item->field_18 = buf.field_14;
-                item->field_1A = buf.field_16;
-                ((u32*)item)[7] = buf.field_18;
-            } else if (reinterpret_cast<CfMapItemManagerIf*>(self)->getMapItem(row, &buf)) {
+                item->handle = buf.field_00;
+                *(u32*)&item->pos.x = buf.field_04;
+                *(u32*)&item->pos.y = buf.field_08;
+                *(u32*)&item->pos.z = buf.field_0C;
+                item->field_10_f = buf.field_10;
+                item->field_14 = (u16)buf.field_14;
+                item->field_16 = (s16)buf.field_16;
+                item->field_18 = buf.field_18;
+            } else if (func_801737D4(row, &buf)) {
                 u16 n2 = self->mCount;
                 CfMapItem* item = &self->mItems[n2];
                 self->mCount = n2 + 1;
-                item->field_04 = buf.field_00;
-                item->field_08 = buf.field_04;
-                item->field_0C = buf.field_08;
-                item->field_10 = buf.field_0C;
-                item->field_14 = buf.field_10;
-                item->field_18 = buf.field_14;
-                item->field_1A = buf.field_16;
-                ((u32*)item)[7] = buf.field_18;
+                item->handle = buf.field_00;
+                *(u32*)&item->pos.x = buf.field_04;
+                *(u32*)&item->pos.y = buf.field_08;
+                *(u32*)&item->pos.z = buf.field_0C;
+                item->field_10_f = buf.field_10;
+                item->field_14 = (u16)buf.field_14;
+                item->field_16 = (s16)buf.field_16;
+                item->field_18 = buf.field_18;
             }
             i++;
         }
@@ -516,12 +577,12 @@ void func_801738AC(CfMapItemManager* self) {
     }
 }
 
-// func_80173AEC - collect item entries, filtering by the map's item-type
-// column and the flag table at row + 0x2b9c.
-void func_80173AEC(CfMapItemManager* self) {
+// cf::CfValueItemManager +0x08 override: collect item entries, filtering by
+// the map's item-type column and the flag table at row + 0x2b9c.
+void cf::CfValueItemManager::func_80173AEC() {
+    CfMapItemManager* self = this;
     func_8003AA34();
-    CfMapItemManagerIf* iface = reinterpret_cast<CfMapItemManagerIf*>(self);
-    void* table = iface->getBdatTable();
+    void* table = (void*)func_801738A4();
     s32 row = (s32)func_8003B41C(table);
     u32 cnt = func_8003B1EC(table);
     self->mCount = 1;
@@ -536,16 +597,16 @@ void func_80173AEC(CfMapItemManager* self) {
             buf.field_10 = one;
             buf.field_14 = 0;
             for (u16 i = 0; i < count; i++) {
-                if (iface->getMapItem(row, &buf)) {
+                if (func_80173894(row, &buf)) {
                     CfMapItem* item = &self->mItems[self->mCount];
-                    item->field_04 = buf.field_00;
-                    item->field_08 = buf.field_04;
-                    item->field_0C = buf.field_08;
-                    item->field_10 = buf.field_0C;
-                    item->field_14 = buf.field_10;
-                    item->field_18 = buf.field_14;
-                    item->field_1A = buf.field_16;
-                    *(u32*)&self->mItems[self->mCount + 1].field_00 = buf.field_18;
+                    item->handle = buf.field_00;
+                    *(u32*)&item->pos.x = buf.field_04;
+                    *(u32*)&item->pos.y = buf.field_08;
+                    *(u32*)&item->pos.z = buf.field_0C;
+                    item->field_10_f = buf.field_10;
+                    item->field_14 = (u16)buf.field_14;
+                    item->field_16 = (s16)buf.field_16;
+                    item->field_18 = buf.field_18;
                     self->mCount++;
                 }
             }
@@ -563,38 +624,6 @@ extern "C" void func_80173C6C(void* self, void* arg) {
     func_802B2AB8(func_802B262C(), (u32)arg);
 }
 
-// Cast view of one map-item record including the trailing flags word.
-struct MapItemRec {
-    s16 field_00;
-    s16 field_02;
-    union { u32 field_04; };
-    ml::CVec3 field_08;                   // 0x08: world position
-    union { f32 field_14_f; u32 field_14; };
-    u16 field_18;
-    s16 field_1A;
-    u32 field_1C;
-};
-
-// vtable gate view: slot +0xC on the manager returns the "event active" flag.
-class MgrGateView {
-public:
-    virtual void g008();
-    virtual bool g00C();
-};
-
-// Record view addressed by func_80173CA0 (base + running 0x1C stride).  The
-// state-flags word sits at record offset 0x1C - physically the next slot's
-// first word - so it is reached through a pointer just past the record.
-struct CaRec {
-    s16 f00;                   // 0x00
-    s16 f02;                   // 0x02
-    u32 handle;                // 0x04: hikari scene-object handle
-    ml::CVec3 pos;             // 0x08: world position
-    f32 timer;                 // 0x14: scale / respawn timer
-    u16 kind;                  // 0x18
-    s16 respawn;               // 0x1A: respawn countdown
-};
-
 // func_80173CA0 - per-frame map item update.  Walks every collected item,
 // ticks respawn timers, evaluates bdat gating columns (area / clock / story /
 // season), spawns or releases the associated hikari item, and finally picks
@@ -608,8 +637,7 @@ struct CaRec {
 // singleton-getter call, matching retail's callee-saved handle register.
 extern "C" int func_80173CA0(CfMapItemManager* self, ml::CVec3* pos) {
     func_8003AA34();
-    CfMapItemManagerIf* iface = reinterpret_cast<CfMapItemManagerIf*>(self);
-    void* table = iface->getBdatTable();
+    void* table = (void*)self->func_8017389C();
     u32 clock = func_8016DF2C();
     u16 curArea = func_80086DBC__Q22cf13CfGameManagerFv();
     u16 curMap = func_800822F4__Q22cf13CfGameManagerFv();
@@ -642,24 +670,22 @@ extern "C" int func_80173CA0(CfMapItemManager* self, ml::CVec3* pos) {
     const u32 nullHandle = 0;
 
     u32 i;
-    u32 off;
-    for (i = 1, off = 0x1C; i < self->mCount; i++, off += 0x1C) {
-        CaRec* rec = reinterpret_cast<CaRec*>(reinterpret_cast<u8*>(self) + off);
-        u32* flagsW = reinterpret_cast<u32*>(reinterpret_cast<u8*>(rec) + 0x1C);
+    for (i = 1; i < self->mCount; i++) {
+        CfMapItem* rec = &self->mItems[i];
+        u32* flagsW = &rec->field_18;
         *flagsW &= ~0xC000u;
-        if (rec->kind == 0) {
+        if (rec->field_14 == 0) {
             // Timer-only slot: decay timer back toward the default scale.
             if ((*flagsW & 0x10000) == 0) continue;
             CfRes_getD80Flag();
             f32 dec = func_80496288(lbl_eu_80663E14);
-            f32 t = rec->timer;
+            f32 t = rec->field_10_f;
             if (t > k80) {
-                rec->timer = t - dec;
+                rec->field_10_f = t - dec;
             } else {
-                rec->timer = k80;
-                if (func_801737D4(self, *flagsW >> 20,
-                                  reinterpret_cast<CfMapItem*>(&rec->handle)) == 0) {
-                    rec->timer = kB8;
+                rec->field_10_f = k80;
+                if (self->func_801737D4(*flagsW >> 20, rec) == 0) {
+                    rec->field_10_f = kB8;
                 }
             }
             continue;
@@ -724,7 +750,7 @@ extern "C" int func_80173CA0(CfMapItemManager* self, ml::CVec3* pos) {
             }
         }
 
-        if (!iface->unk00C()) {
+        if (!self->func_801737CC()) {
             // Story-flag gate: item hidden until the flag engine reports it.
             cStory.raw = getBdatStringColumnValue(table, cols + 0x4c, row);
             if (cStory.s != 0 && func_8020971C(cStory.s) == 0) {
@@ -764,17 +790,17 @@ extern "C" int func_80173CA0(CfMapItemManager* self, ml::CVec3* pos) {
 
         // Spawn a fresh hikari item, or tick down an armed respawn counter.
         if (rec->handle == 0) {
-            bool occupied = iface->unk00C();
+            bool occupied = self->func_801737CC() != 0;
             rec->handle = func_802B2894(reinterpret_cast<u8*>(func_802B262C()),
                                         reinterpret_cast<u32*>(&rec->pos.x),
                                         !occupied);
-            rec->respawn = spawnRespawn;
+            rec->field_16 = spawnRespawn;
             self->field_3806++;
-        } else if (rec->respawn > 0) {
-            rec->respawn--;
+        } else if (rec->field_16 > 0) {
+            rec->field_16--;
         }
 
-        if (rec->respawn > 0) continue;
+        if (rec->field_16 > 0) continue;
         *flagsW |= 0x4000;
         if (dyAbs < kCC && distSq < kD0) {
             resultIdx = i;
@@ -785,13 +811,10 @@ extern "C" int func_80173CA0(CfMapItemManager* self, ml::CVec3* pos) {
             nearestIdx = i;
         }
     }
-#undef CA_DESPAWN_HANDLE
-#undef CA_DESPAWN_DIRECT
 
     // Too many active items: drop the farthest candidate seen this frame.
     if (self->field_3806 > 0x32 && nearestIdx != 0) {
-        CaRec* recN = reinterpret_cast<CaRec*>(reinterpret_cast<u8*>(self)
-                                               + nearestIdx * 0x1C);
+        CfMapItem* recN = &self->mItems[nearestIdx];
         u32 h = recN->handle;
         if (h != 0) {
             func_802B2938(func_802B262C(), h);
@@ -841,7 +864,7 @@ void func_801742D4(CfMapItemManager* self) {
     // Declaration order drives callee-saved coloring; retail maps
     // pv(player/gate)>r28, self>r29, idx/kind>r30, pick>r31, loader>r27.
     u32 pv;                 // player pointer, later the battle-gate word
-    MapItemRec* pick;       // doubles as the final-ok flag (retail li r31,1)
+    CfMapItem* pick;        // doubles as the final-ok flag (retail li r31,1)
     int idx;
 
     pv = (u32)getPlayer__Q22cf13CfGameManagerFi(0);
@@ -892,32 +915,32 @@ void func_801742D4(CfMapItemManager* self) {
             flagv = *(u32*)po->field_4->p030();
             if (!func_80174C98(loader, &flagv, 4)) pv = 0;
         }
-        if (pv != 0) pick = (MapItemRec*)1;
+        if (pv != 0) pick = (CfMapItem*)1;
     }
     if (pick == 0) return;
 
-    MapItemRec* rec = pick = (MapItemRec*)&self->mItems[idx];
-    unsigned short kind = rec->field_18;
+    CfMapItem* rec = pick = &self->mItems[idx];
+    unsigned short kind = rec->field_14;
     void* helpRow = func_801586D4(kind);
     if (helpRow == 0) return;
     if (((*(u32*)helpRow >> 12) & 0xF) == 0xa) {
         *((u8*)lbl_eu_80664A10 + 0x14) = 1;
     }
-    if (rec->field_04 != 0) {
-        func_802B37F4(rec->field_04);
-        rec->field_04 = 0;
+    if (rec->handle != 0) {
+        func_802B37F4(rec->handle);
+        rec->handle = 0;
         if (self->field_3806 != 0) self->field_3806--;
     }
     func_801BFC38__Q22cf10CfSoundManFUlUlUlUlf(0, 0x45, 0, 0, lbl_eu_806677D4);
-    if (((MgrGateView*)self)->g00C()) {
+    if (self->func_801737CC()) {
         // No event: wipe the record and bump the flag-table reset counter.
         func_801351C4(kind);
-        func_8009D018((rec->field_1C >> 20) + 0x2b9c, 1);
-        rec->field_18 = 0;
-        rec->field_04 = 0;
-        rec->field_14_f = lbl_eu_80667780;
-        rec->field_1A = 0;
-        rec->field_1C = (rec->field_1C & 0xFFFF) & ~0x2000;
+        func_8009D018((rec->field_18 >> 20) + 0x2b9c, 1);
+        rec->field_14 = 0;
+        rec->handle = 0;
+        rec->field_10_f = lbl_eu_80667780;
+        rec->field_16 = 0;
+        rec->field_18 = (rec->field_18 & 0xFFFF) & ~0x2000;
     } else {
         // Event-driven respawn: read the timer column and arm the record.
         func_801351C4(kind);
@@ -927,22 +950,23 @@ void func_801742D4(CfMapItemManager* self) {
             union { double d; u32 w[2]; } cv;
             cv.w[0] = 0x43300000;
             cv.w[1] = secs;
-            rec->field_18 = 0;
-            rec->field_04 = 0;
-            rec->field_1C |= 0x10000;
-            rec->field_14_f = lbl_eu_806677A8 * (lbl_eu_80667794 * (cv.d - lbl_eu_806677B0));
+            rec->field_14 = 0;
+            rec->handle = 0;
+            rec->field_18 |= 0x10000;
+            rec->field_10_f = lbl_eu_806677A8 * (lbl_eu_80667794 * (cv.d - lbl_eu_806677B0));
         } else {
-            rec->field_18 = 0;
-            rec->field_04 = 0;
-            rec->field_14_f = lbl_eu_80667780;
-            rec->field_1A = 0;
-            rec->field_1C = (rec->field_1C & 0xFFFF) & ~0x2000;
+            rec->field_14 = 0;
+            rec->handle = 0;
+            rec->field_10_f = lbl_eu_80667780;
+            rec->field_16 = 0;
+            rec->field_18 = (rec->field_18 & 0xFFFF) & ~0x2000;
         }
     }
     func_80086E6C__Q22cf13CfGameManagerFv(func_80140E00(2, kind, 0, 0));
 }
 
-int func_80174650(void* self) { return 1; }
+// cf::CfValueItemManager +0x0C override: an event is always active.
+int cf::CfValueItemManager::func_80174650() { return 1; }
 
 // Init: zero the +0/+2 pair, memset the +4..+9 region, and load the two
 // +0xC/+0x10 floats from the constants.
@@ -983,8 +1007,8 @@ extern "C" s16 func_801748B8(CfMapItem* self, s16 delta);
 extern "C" void func_801746B4(CfMapItem* self, f32 delta) {
     // Compound assignment on the parameter keeps the running value in f1.
     delta /= lbl_eu_806677EC;
-    delta += self->field_0C_f;
-    self->field_0C_f = delta;
+    delta += self->pos.z;
+    self->pos.z = delta;
     // Declared after the arithmetic; MWCC emits these two independent
     // stores in reverse declaration order.
     // Declared in reverse: MWCC assigns later-declared locals the lower
@@ -993,7 +1017,7 @@ extern "C" void func_801746B4(CfMapItem* self, f32 delta) {
     ca.w[0] = 0x43300000;
     cb.w[0] = 0x43300000;
     if (delta < lbl_eu_806677E8) return;
-    self->field_0C_f = delta - lbl_eu_806677E8;
+    self->pos.z = delta - lbl_eu_806677E8;
 #define HALF(u) ((int)(self->field_10_f * (u.d - lbl_eu_806677F0)) / 2)
     switch (self->field_02) {
     case 3:

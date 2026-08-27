@@ -7,7 +7,7 @@ extern cf::CfObjectPc* func_800BFC68(cf::CfObjectMove* objMove);
 
 namespace cf {
 
-u32 CHelp_ArtsAttack::func_802B7D00() {
+u32 CHelp_ArtsAttack::checkHelpCondition() {
     CfObjectPc* objPc = func_800BFC68(CfGameManager::getPlayer(0));
 
     if (objPc != nullptr) {

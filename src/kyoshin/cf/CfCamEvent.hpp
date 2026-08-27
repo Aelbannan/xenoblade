@@ -2,7 +2,10 @@
 
 #include <types.h>
 #include "monolib/math.hpp"
-#include "kyoshin/cf/CfCam.hpp"
+
+namespace cf {
+class CfCamFollow;
+}
 
 namespace cf {
 
@@ -142,23 +145,33 @@ public:
 
 } // namespace cf
 
-// C-linkage imports (retail symbol names - keep verbatim).
+// C-linkage imports (retail symbol names - keep verbatim). Declared locally
+// because the shared CfCam.hpp closure carries conflicting signatures for
+// several of these (e.g. func_80071B78 takes one argument at this call site).
 extern "C" float func_800749AC(ml::CVec3* pos274, ml::CVec3* lookat, ml::CVec3* out);
 extern "C" void func_80074090(void* out);
 extern "C" cf::CfCamIntf* CfCamEvent_initCamIntfInstances(cf::CfCamEvent* self);
-extern "C" const f32 lbl_eu_80666268;
+extern const f32 lbl_eu_80666268;
 void func_8006BC1C(void* self, int mask);  // clears bits in the 0x04 flag word
 
-// C-linkage imports for the camera-event factory (retail symbol names verbatim).
+// Minimal layout view of CfCamFollow: only the vtable slot (offset 0x00) is
+// touched here, to install the camera-event vtable in the factory.
+struct CfCamFollowView {
+    void* vtable;  // 0x00
+};
+
+extern "C" cf::CfCamFollow* __ct__cf_CfCamFollow(void* self, void* arg1, void* arg2);
+
+// Camera-event factory imports.
 extern "C" u32 func_80061FE8();
 extern "C" void* allocate__Q23mtl10MemManagerFUlUl(u32 size, u32 heap);
-extern "C" cf::CfObject* func_8008221C__Q22cf13CfGameManagerFv();
-extern "C" void func_80085878__Q22cf13CfGameManagerFv();
-extern "C" u8 lbl_eu_80527048[];
+void* func_8008221C__Q22cf13CfGameManagerFv();       // CfGameManager active-camera lookup
+void func_80085878__Q22cf13CfGameManagerFv();
+extern u8 lbl_eu_80527048[];                          // CfCamEvent vtable label
 
-// C-linkage imports for func_8006ACC0 (retail symbol names verbatim).
+// Per-frame update (func_8006ACC0) imports.
 extern "C" void func_8007FE20__Q22cf13CfGameManagerFv(u32);
-int func_8007FE24__Q22cf13CfGameManagerFv(u32);
+extern "C" int func_8007FE24__Q22cf13CfGameManagerFv(u32);
 extern "C" int func_8007F91C__Q22cf13CfGameManagerFv();
 extern "C" cf::CfCamNodeList* func_80086B0C__Q22cf13CfGameManagerFv();
 extern "C" void func_80071B78(void*);
@@ -169,19 +182,21 @@ extern "C" void func_800707C0(void*, void*, void*);
 extern "C" int func_80073640(void*, ml::CVec3*, ml::CVec3*, ml::CVec3*, int);
 extern "C" void func_80071AB0(void*, void*, void*, int, float, float);
 extern "C" int CfRes_getD80Flag();
+extern "C" float func_80496288();                     // scene elapsed-time getter
 extern "C" int func_804BE398(void*, u32, u32, u32, f32, f32);
+extern "C" void func_804BE4B4(void*, int);
 extern "C" void func_804876DC();
 extern "C" void func_80484E04(void*, int);
 extern "C" void func_804876C0(void*);
 extern "C" void Warning__Q24nw4r2dbFPCciPCce(const char*, int, const char*, ...);
-extern "C" const f32 lbl_eu_8066626C;
-extern "C" const f32 lbl_eu_80666270;
-extern "C" const f32 lbl_eu_80666274;
-extern "C" const f32 lbl_eu_80666278;
-extern "C" const f32 lbl_eu_8066627C;
-extern "C" const f32 lbl_eu_80666280;
-extern "C" const f32 lbl_eu_80666284;
-extern "C" const f32 lbl_eu_8066A20C;
-extern const f32 lbl_eu_80661B58;
+extern const f32 lbl_eu_8066626C;
+extern const f32 lbl_eu_80666270;
+extern const f32 lbl_eu_80666274;
+extern const f32 lbl_eu_80666278;
+extern const f32 lbl_eu_8066627C;
+extern const f32 lbl_eu_80666280;
+extern const f32 lbl_eu_80666284;
+extern const f32 lbl_eu_8066A20C;
+extern f32 lbl_eu_80661B58;
 extern char lbl_eu_805262F0[];
 extern char lbl_eu_805262C8[];

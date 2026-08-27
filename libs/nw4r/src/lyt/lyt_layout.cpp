@@ -14,29 +14,32 @@ extern const nw4r::ut::detail::RuntimeTypeInfo lbl_eu_80665488;
  * Utility functions
  *
  ******************************************************************************/
+
+namespace nw4r {
+namespace lyt {
+
 namespace {
 
-using namespace nw4r;
-using namespace nw4r::lyt;
-
 void SetTagProcessorImpl(Pane* pPane, ut::WideTagProcessor* pProcessor) {
-    // Inlined ut::DynamicCast<TextBox*> against the pool-slot type descriptor:
-    // walk the pane's RTTI parent chain looking for TextBox's typeInfo.
-    bool isTextBox = false;
+    // Inlined ut::DynamicCast<TextBox*> against TextBox's type descriptor
+    // (retail resolves the descriptor through the shared sbss pool slot).
+    TextBox* pTextBox;
 
-    if (pPane != NULL) {
-        for (const ut::detail::RuntimeTypeInfo* pIt =
-                 pPane->GetRuntimeTypeInfo();
-             pIt != NULL; pIt = pIt->mParentTypeInfo) {
-            if (pIt == &lbl_eu_80665488) {
-                isTextBox = true;
-                break;
-            }
-        }
+    // Unconditional address materialization: retail loads the descriptor
+    // pointer before the pane null-test, so keep the assignment out of the
+    // short-circuiting condition.
+    const ut::detail::RuntimeTypeInfo* pDerivedTypeInfo;
+    pDerivedTypeInfo = &lbl_eu_80665488;
+
+    if (pPane != NULL &&
+        pPane->GetRuntimeTypeInfo()->IsDerivedFrom(pDerivedTypeInfo)) {
+        pTextBox = static_cast<TextBox*>(pPane);
+    } else {
+        pTextBox = NULL;
     }
 
-    if (isTextBox) {
-        static_cast<TextBox*>(pPane)->SetTagProcessor(pProcessor);
+    if (pTextBox != NULL) {
+        pTextBox->SetTagProcessor(pProcessor);
     }
 
     NW4R_UT_LINKLIST_FOREACH (it, pPane->GetChildList(),
@@ -44,9 +47,6 @@ void SetTagProcessorImpl(Pane* pPane, ut::WideTagProcessor* pProcessor) {
 }
 
 } // namespace
-
-namespace nw4r {
-namespace lyt {
 
 // IsIncludeAnimationGroupRef: anonymous-namespace helper (retail scope
 // nw4r::lyt::@unnamed@lyt_layout_cpp@). The extern reference keeps MWCC's
@@ -102,6 +102,43 @@ extern void* LLMH_force_us_80402184 = (void*)&IsIncludeAnimationGroupRef;
 // retail symbol directly.
 extern "C" void Set__Q34nw4r3lyt12AnimResourceFPCv(
     AnimResource* _this, const void* pAnmBinary);
+
+// Imports from lyt_animation.cpp (retail literal-mangled identifiers).
+extern "C" int CalcAnimationNum__Q34nw4r3lyt12AnimResourceCFPQ34nw4r3lyt5Groupb(
+    const AnimResource* _this, Group* pGroup, bool recursive);
+extern "C" void* GetAnimationShareInfoArray__Q34nw4r3lyt12AnimResourceCFv(
+    AnimResource* _this);
+extern "C" void BindAnimation__Q24nw4r3lytFPQ34nw4r3lyt5GroupPQ34nw4r3lyt13AnimTransformbb(
+    Group* pGroup, AnimTransform* pAnimTrans, bool descending, bool flag);
+
+// Share info entry from the "pah1" block. The pane name sits at offset 0x0
+// and the group name at 0x11; entries are walked with a 0x24-byte stride.
+struct AnimationShareInfo {
+    char name[NW4R_LYT_RES_NAME_LEN];      // at 0x0
+    u8 PADDING_0x10;                       // at 0x10
+    char groupName[NW4R_LYT_RES_NAME_LEN]; // at 0x11
+    u8 PADDING_0x21[3];                    // at 0x21
+};
+
+namespace detail {
+
+// Declaration-only mirror of lyt_animation.cpp's AnimPaneTree: this TU only
+// declares the automatic object and calls Init/Set/Bind out-of-line. The
+// AnimResource member makes the implicitly-generated constructor emit the
+// out-of-line AnimResource() call seen in retail.
+class AnimPaneTree {
+public:
+    void Init();
+    void Set(Pane* pPane, const AnimResource& rResource);
+    void Bind(Layout* pLayout, Pane* pPane,
+              ResourceAccessor* pAccessor) const;
+
+    AnimResource mResource; // at 0x0
+    u16 mPaneIdx;           // at 0x10
+    u16 mCount;             // at 0x12
+};
+
+} // namespace detail
 
 MEMAllocator* Layout::mspAllocator = NULL;
 
@@ -446,7 +483,110 @@ Pane* Layout::BuildPaneObj(s32 kind, const void* pBinary,
 } // namespace lyt
 } // namespace nw4r
 
-void BindAnimationAuto__Q34nw4r3lyt6LayoutFRCQ34nw4r3lyt12AnimResourcePQ34nw4r3lyt16ResourceAccessor(){}
+// Retail Layout::BindAnimationAuto. Defined as a global-scope literal-mangled
+// function because the retail vtable entry returns bool while the header
+// declares void (same pattern as the other literal-mangled symbols above).
+extern "C" bool BindAnimationAuto__Q34nw4r3lyt6LayoutFRCQ34nw4r3lyt12AnimResourcePQ34nw4r3lyt16ResourceAccessor(
+    nw4r::lyt::Layout* _this, const nw4r::lyt::AnimResource& rResource,
+    nw4r::lyt::ResourceAccessor* pAccessor) {
+    using namespace nw4r::lyt;
+
+    if (_this->GetRootPane() == NULL) {
+        return false;
+    }
+    // Mirror read of the protected mpResBlock pointer.
+    if (reinterpret_cast<const AnimResourceData*>(&rResource)->mpResBlock ==
+        NULL) {
+        return false;
+    }
+
+    AnimTransform* pAnimTrans = _this->CreateAnimTransform();
+
+    int groupNum = rResource.GetGroupNum();
+    int total = 0;
+
+    if ((u16)groupNum == 0) {
+        const res::AnimationBlock* pBlock =
+            reinterpret_cast<const AnimResourceData*>(&rResource)->mpResBlock;
+
+        // No tag groups: bind the whole animation to the root pane.
+        pAnimTrans->SetResource(pBlock, pAccessor, pBlock->animContNum);
+        _this->GetRootPane()->BindAnimation(pAnimTrans, true, true);
+    } else {
+        // Walkers mirror retail: loop 1 walks a copy of the array base, loop
+        // 2 consumes the base pointer itself.
+        const AnimationGroupRef* pGroupArray =
+            static_cast<const AnimationGroupRef*>(rResource.GetGroupArray());
+        const AnimationGroupRef* pIt = pGroupArray;
+
+        // First pass: total animation-content count across all named groups.
+        for (u16 i = 0; i < (u16)groupNum; i++) {
+            Group* pGroup =
+                _this->GetGroupContainer()->FindGroupByName(pIt->name);
+            total += CalcAnimationNum__Q34nw4r3lyt12AnimResourceCFPQ34nw4r3lyt5Groupb(
+                &rResource, pGroup, rResource.IsDescendingBind());
+            pIt++;
+        }
+
+        pAnimTrans->SetResource(
+            reinterpret_cast<const AnimResourceData*>(&rResource)->mpResBlock,
+            pAccessor, (u16)total);
+
+        // Second pass: bind each group's panes to the shared transform.
+        for (u16 i = 0; i < (u16)groupNum; i++) {
+            Group* pGroup =
+                _this->GetGroupContainer()->FindGroupByName(pGroupArray->name);
+            BindAnimation__Q24nw4r3lytFPQ34nw4r3lyt5GroupPQ34nw4r3lyt13AnimTransformbb(
+                pGroup, pAnimTrans, rResource.IsDescendingBind(), true);
+            pGroupArray++;
+        }
+    }
+
+    // Shared animations: each share info names a pane (and a group whose
+    // panes receive the same animation through an AnimPaneTree binding).
+    int shareNum = rResource.GetAnimationShareInfoNum();
+    if ((u16)shareNum != 0) {
+        const AnimationShareInfo* pShareInfo = static_cast<const AnimationShareInfo*>(
+            GetAnimationShareInfoArray__Q34nw4r3lyt12AnimResourceCFv(
+                const_cast<AnimResource*>(&rResource)));
+
+        for (u16 i = 0; i < (u16)shareNum; i++) {
+            Pane* pFoundPane =
+                _this->GetRootPane()->FindPaneByName(pShareInfo->name, true);
+
+            detail::AnimPaneTree animTree;
+            animTree.Init();
+            animTree.Set(pFoundPane, rResource);
+
+            if (animTree.mCount != 0) {
+                Group* pGroup = _this->GetGroupContainer()->FindGroupByName(
+                    pShareInfo->groupName);
+
+                NW4R_UT_LINKLIST_FOREACH (it, pGroup->GetPaneList(), {
+                    Pane* pTarget = it->mTarget;
+
+                    // Skip the pane already bound by the tree; other group
+                    // panes only bind when they belong to one of the
+                    // resource's groups (or when the resource has none).
+                    if (pTarget != pFoundPane &&
+                        ((u16)groupNum == 0 ||
+                         IsIncludeAnimationGroupRef(
+                             _this->GetGroupContainer(),
+                             static_cast<const AnimationGroupRef*>(
+                                 rResource.GetGroupArray()),
+                             (u16)groupNum, rResource.IsDescendingBind(),
+                             pTarget))) {
+                        animTree.Bind(_this, pTarget, pAccessor);
+                    }
+                })
+            }
+
+            pShareInfo++;
+        }
+    }
+
+    return true;
+}
 
 
 

@@ -75,7 +75,7 @@ extern "C" {
     int func_802A3E88(CVS_THREAD* self);
     void func_802A3BEC(CVS_THREAD* self, CCharVoice* voicePtr);
     int func_802A3C44(CVS_THREAD* self, CCharVoice* voicePtr, int voiceId);
-    CVS_THREAD_DOWN* func_802A330C(int size, int align);
+    CVoiceHandle* func_802A330C(int size, int align);
     u8* func_802A34E4(int size);
 }
 

@@ -384,9 +384,12 @@ int mesGetArts(VMThread* pThread) {
     return 0;
 }
 
+// Retail symbol is the .Fb form (bool param) though args pass via r4/r5.
+extern "C" void enablePadFlags__Q22cf13CfGameManagerFUlb(int, int);
+// Retail symbol is the unmangled .Fv-registered name (args pass via r4).
+extern "C" void func_8013E8E0(int);
+
 int ptChangeNotice(){
-    extern void enablePadFlags__Q22cf13CfGameManagerFUlb(int, int);
-    extern void func_8013E8E0(int);
     enablePadFlags__Q22cf13CfGameManagerFUlb(-1, 1);
     func_8013E8E0(0);
     return 0;

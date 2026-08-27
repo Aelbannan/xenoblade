@@ -386,30 +386,40 @@ void func_8049F774(CScnItemCamera* self, const ml::CMat34* mtx) {
 // by the camera position and write it into the camera parameter
 // vector (0x138) as raw bits.
 // ============================================================
-void func_8049F824(CScnItemCamera* self, f32 dist) {
-    self->mUnk1F4 = dist;
+void func_8049F824(CScnItemCamera* self, f32 f1) {
 
-    ml::CVec3 normal(lbl_eu_8066ABF0, lbl_eu_8066ABF0, -dist);
-    ml::CVec3 out;
-    nw4r::math::VEC3TransformNormal(
-        (nw4r::math::VEC3*)&out,
-        (const nw4r::math::MTX34*)&self->mTransform.mLocalMatInv,
-        (const nw4r::math::VEC3*)&normal);
+    // Declared in retail stack-slot order (first -> highest offset):
+    // normal@0x38, tmp@0x2C, v@0x20, out@0x14, sum@0x08.
+    // Matrix argument computed first: MWCC schedules this addi (base r3,
+    // before the self->r31 copy) at the top of the prologue like retail.
+    const nw4r::math::MTX34* invMtx =
+        (const nw4r::math::MTX34*)&self->mTransform.mLocalMatInv;
+    ((CScnItemCameraLayout*)self)->mUnk1F4 = f1;
 
-    // Member-wise copy of the kernel result (retail lfs/stfs temporaries).
+    ml::CVec3 normal;
+    ml::CVec3 tmp;
     ml::CVec3 v;
-    v.x = out.x;
-    v.y = out.y;
-    v.z = out.z;
+    ml::CVec3 out;
+    ml::CVec3 sum;
+    normal.set(lbl_eu_8066ABF0, lbl_eu_8066ABF0, -f1);
+    // set() from the callee's sret return pointer makes MWCC consume r3 as
+    // the copy source with member-wise lfs/stfs temporaries like retail.
+    v.set(*(ml::CVec3*)nw4r::math::VEC3TransformNormal(
+        (nw4r::math::VEC3*)&out,
+        invMtx,
+        (const nw4r::math::VEC3*)&normal));
 
-    // operator+ keeps its address-taken local alive (no NRVO): the inline
-    // paired-single add writes it first, then the return copy lands in tmp
-    // before the raw-bit stores into the camera parameters (0x138).
-    ml::CVec3 tmp = self->mTransform.mPos + v;
+    nw4r::math::VEC3Add((nw4r::math::VEC3*)&sum,
+                        (const nw4r::math::VEC3*)&v,
+                        (const nw4r::math::VEC3*)&self->mTransform.mPos);
 
-    self->mCamParam0 = *(u32*)&tmp.x;
-    self->mCamParam1 = *(u32*)&tmp.y;
-    self->mCamParam2 = *(u32*)&tmp.z;
+    tmp.x = sum.x;
+    tmp.y = sum.y;
+    tmp.z = sum.z;
+
+    ((CScnItemCameraLayout*)self)->mCamParam0 = *(u32*)&tmp.x;
+    ((CScnItemCameraLayout*)self)->mCamParam1 = *(u32*)&tmp.y;
+    ((CScnItemCameraLayout*)self)->mCamParam2 = *(u32*)&tmp.z;
 }
 
 // ============================================================
@@ -467,43 +477,54 @@ void func_8049EFF8(CScnItemCamera* self, const ml::CVec3* v,
                    const ml::CVec3* v2, f32 f1) {
     CScnItemCameraLayout* cam = (CScnItemCameraLayout*)self;
 
-    // Retail overwrites the camera parameters with v2 BEFORE deriving the
-    // direction vector: diff = (new mCamParam) - v.
+    // Overwrite the aim point with v2 first (raw bit words); the direction
+    // vector is derived as (new mCamParam) - v (the sub re-reads 0x138).
     cam->mCamParam0 = *(const u32*)&v2->x;
     cam->mCamParam1 = *(const u32*)&v2->y;
     cam->mCamParam2 = *(const u32*)&v2->z;
+
+    ml::CVec3 arg;
+    ml::CVec3 dir;
+    nw4r::math::VEC3 out;
+
+    // Copy the target position into mTransform.mPos as raw bit words.
     cam->mPosX = *(const u32*)&v->x;
     cam->mPosY = *(const u32*)&v->y;
     cam->mPosZ = *(const u32*)&v->z;
-    self->mTransform.mRot.z = f1;
 
-    ml::CVec3 sub;
-    nw4r::math::VEC3Sub((nw4r::math::VEC3*)&sub,
+    nw4r::math::VEC3Sub(&out,
                         (const nw4r::math::VEC3*)&self->mCamParam0,
                         (const nw4r::math::VEC3*)v);
 
-    // Retail keeps two intermediate copies of the difference vector
-    // (type-conversion temporaries) before the magnitude call.
-    ml::CVec3 diff = sub;
-    ml::CVec3 dir = diff;
+    self->mTransform.mRot.z = f1;
 
-    self->mUnk1F4 = PSVECMag((const Vec*)&dir);
+    // Two intermediate copies of the difference vector before the magnitude
+    // call: member-wise float copy via set(), then a bitwise word copy via
+    // the implicit trivial copy-assign.
+    dir.set(*(const ml::CVec3*)&out);
+    arg = dir;
+
+    self->mUnk1F4 = PSVECMag((const Vec*)&arg);
 
     // Yaw around Y from the x/z components (atan2(y=dx, x=-dz)).
     self->mTransform.mRot.y =
-        -(lbl_eu_8066AC14 * nw4r::math::Atan2FIdx(dir.x, -dir.z));
+        -(lbl_eu_8066AC14 * nw4r::math::Atan2FIdx(arg.x, -arg.z));
 
-    // Pitch from the y component against the horizontal length. The
-    // horizontal length is only well-defined when dx^2+dz^2 > 0.
-    f32 len2d = dir.x * dir.x + dir.z * dir.z;
-    if (len2d < lbl_eu_8066ABF0) {
+    // Pitch from the y component against the horizontal length. The length
+    // defaults to the 0.0f pool constant - shared with (and initialized
+    // after) the guard compares below.
+    f32 len2d = arg.x * arg.x + arg.z * arg.z;
+    if (!(len2d >= lbl_eu_8066ABF0)) {
         nw4r::db::Warning(lbl_eu_80526324, 0x273, lbl_eu_80526300);
     }
-    f32 lenXZ = len2d <= lbl_eu_8066ABF0
-                    ? lbl_eu_8066ABF0
-                    : len2d * nw4r::math::FrSqrt(len2d);
+    f32 lenXZ;
+    if (!(len2d <= lbl_eu_8066ABF0)) {
+        lenXZ = len2d * nw4r::math::FrSqrt(len2d);
+    } else {
+        lenXZ = lbl_eu_8066ABF0;
+    }
     self->mTransform.mRot.x =
-        lbl_eu_8066AC14 * nw4r::math::Atan2FIdx(dir.y, lenXZ);
+        lbl_eu_8066AC14 * nw4r::math::Atan2FIdx(arg.y, lenXZ);
 
     ((CScnItemCameraRefreshIf*)self)->refresh();
 }
@@ -833,40 +854,50 @@ CScnItemCamera* func_8049F9A8(CScnCameraItemHost* self, int arg2) {
     nw4r::math::VEC3Sub((nw4r::math::VEC3*)&diff,
                         (const nw4r::math::VEC3*)&cam->mCamParam0,
                         (const nw4r::math::VEC3*)&lbl_eu_80658658.v[0]);
-    nw4r::math::VEC3 dir = diff;
 
-    lay->mUnk1F4 = PSVECMag((const Vec*)&dir);
+    // Two intermediate copies before the magnitude call (retail sp+0x14 /
+    // sp+0x08 buffers): member-wise float copy via set(), then a bitwise
+    // word copy via the implicit trivial copy-assign.
+    ml::CVec3 dir;
+    ml::CVec3 arg;
+    dir.set(*(const ml::CVec3*)&diff);
+    arg = dir;
 
+    lay->mUnk1F4 = PSVECMag((const Vec*)&arg);
+
+    // Yaw around Y from the x/z components (atan2(y=dx, x=-dz)).
     cam->mTransform.mRot.y =
-        -(lbl_eu_8066AC14 * nw4r::math::Atan2FIdx(dir.x, -dir.z));
+        -(lbl_eu_8066AC14 * nw4r::math::Atan2FIdx(arg.x, -arg.z));
 
-    f32 len2d = dir.x * dir.x + dir.z * dir.z;
-    if (len2d < lbl_eu_8066ABF0) {
+    // Pitch from the y component against the horizontal length. Below the
+    // guard threshold the length is left as-is (retail keeps len2d).
+    f32 len2d = arg.x * arg.x + arg.z * arg.z;
+    if (!(len2d >= lbl_eu_8066ABF0)) {
         nw4r::db::Warning(lbl_eu_80526324, 0x273, lbl_eu_80526300);
     }
-    f32 lenXZ;
-    if (len2d <= lbl_eu_8066ABF0) {
-        lenXZ = lbl_eu_8066ABF0;
-    } else {
+    f32 lenXZ = len2d;
+    if (len2d > lbl_eu_8066ABF0) {
         lenXZ = len2d * nw4r::math::FrSqrt(len2d);
     }
     cam->mTransform.mRot.x =
-        lbl_eu_8066AC14 * nw4r::math::Atan2FIdx(dir.y, lenXZ);
+        lbl_eu_8066AC14 * nw4r::math::Atan2FIdx(arg.y, lenXZ);
 
     // vtable slot 9: rebuild the camera.
     ((CScnItemCameraRefreshIf*)cam)->refresh();
 
     // Rebuild the frustum parameters (fov 1.0, near/far from the camera).
+    // Each depth/fov field is read back through the struct after being
+    // written (retail forwards the register with an identity frsp).
     lay->mFovY = lbl_eu_8066ABF4;
-    f32 t = (f32)tan(lbl_eu_8066AC10 * lbl_eu_8066ABF4 * lbl_eu_8066A210 *
-                     lbl_eu_8066AC18 * lbl_eu_8066AC14);
+    f32 t = (f32)tan(lbl_eu_8066AC14 * (lbl_eu_8066AC18 *
+               (lbl_eu_8066AC10 * lay->mFovY * lbl_eu_8066A210)));
     f32 inv = lbl_eu_8066AC1C / t;
     lay->mUnk1E4 = inv;
-    f32 near = -lay->mNearZ / inv;
+    f32 near = -lay->mNearZ / lay->mUnk1E4;
     lay->mDepthNear = near;
-    lay->mDepthMid = -near;
-    lay->mDepthFarNear = near * lay->mAspectRatio;
-    lay->mDepthFar = -near * lay->mAspectRatio;
+    lay->mDepthMid = -lay->mDepthNear;
+    lay->mDepthFarNear = lay->mDepthNear * lay->mAspectRatio;
+    lay->mDepthFar = lay->mDepthMid * lay->mAspectRatio;
 
     func_8048C630(self->mPool, alloc, 0);
     return cam;

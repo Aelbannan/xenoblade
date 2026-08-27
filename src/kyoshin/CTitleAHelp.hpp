@@ -63,3 +63,19 @@ public:
 };
 
 bool func_801C4648(nw4r::lyt::Pane*);
+
+// One row of the title-A help table: 7 u16 cells indexed by button id.
+struct HelpRow {
+    u16 cell[7];
+};
+
+extern HelpRow lbl_eu_80533E60[];
+
+// Global (retail-unmangled) helper returning the UI layout resource accessor.
+extern "C" nw4r::lyt::ArcResourceAccessor* func_801355F4();
+
+// Retail-unmangled CfGameManager static helper (takes a selector mask).
+extern "C" int func_80086F9C__Q22cf13CfGameManagerFv(int selector);
+
+// Vector copy helper (defined in CTagProcessor.cpp).
+extern "C" void copyVEC3(void* dst, const void* src);

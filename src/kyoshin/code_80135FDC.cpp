@@ -2641,8 +2641,8 @@ extern "C" void func_8013B1C4(u32 v) {
     }
     u32 last = v - 1;
     void* fp = getFP__FPCc((const char*)table.w[last]);
-    u32 n = func_8003B1EC((void*)fp);
-    for (u8 j = 0; j < n; j++) {
+    int n = func_8003B1EC((void*)fp);
+    for (int j = 0; j < n; j++) {
         u32 base = sum + (u32)j * 0x240;
         for (u16 k = 0; k < 0x240; k++) {
             func_8009EB94(base + k, 1);

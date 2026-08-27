@@ -71,39 +71,135 @@ extern const char lbl_eu_80530EE0[];   // fmt
 
 // ===== Dissolved monolibdata2 (blob surgery) data owned by this TU =====
 // [.data] 0x8056E8B8-0x8056E9E8 (0x130): CVirtualLightObj / CScn / CTTask<CScn>
-// vtables followed by the chr-anm panic strings. Retail carries no reloc
-// entries for this slice and the split object keeps every pointer slot
-// ZEROED (the live pointer words ship from the monolibdata blob copy at
-// final link), so the pointer words below are zeroed post-link via the
-// UNIT_RULES zero_data_range entry (MWCC migrates all-zero arrays to .bss,
-// so the zeros cannot be spelled in source). Only the 0xFFFFFFAC constant
-// and the ASCII tail survive in the retail split. Declared in source order
-// so MWCC lays the section out contiguously at 0x130 with the retail
-// symbol offsets.
+// vtables followed by the chr-anm panic strings. Post blob-split the retail
+// slice carries REAL relocations against named targets (all defined in
+// sibling TUs: CVirtualLightObj.s / CScn.s / foreign libs), so every pointer
+// word below is an explicit &reloc; only the RTTI locators, the base-list
+// offset word (0xFFFFFFAC) and the CTTask<CScn> slots stay literal. Those
+// three slots carry unspellable template names (<...> cannot appear in a
+// C++ identifier) - they stay literal-zero words and are wired to their
+// retail symbols via UNIT_RULES inject_relocs (CDevice.o pattern). The
+// panic strings are defined here (non-const -> .data) with align(4) so
+// MWCC reproduces the retail inter-string gap words; the 5-byte section
+// tail is restored by pad_data_section.
+extern "C" void __dt__16CVirtualLightObjFv();
+extern "C" void func_804947EC();
+extern "C" void func_8049488C();
+extern "C" void __dt__4CScnFv();
+extern "C" void Reset__14CChildListNodeFv();
+extern "C" void Init__4CScnFv();
+extern "C" void Term__4CScnFv();
+extern "C" void Move__4CScnFv();
+extern "C" void Draw__4CScnFv();
+extern "C" void Tail__8CProcessFv();
+extern "C" void func_80496B04();
+extern "C" void func_80496970();
+extern "C" void func_8049695C();
+extern "C" int WorkEvent1__10IWorkEventFPvPCc(void*, const char*);
+extern "C" int OnFileEvent__10IWorkEventFP10CEventFile(void*);
+extern "C" int WorkEvent3__4CScnFPv(void*);
+extern "C" int WorkEvent4__4CScnFv();
+extern "C" void OnPauseTrigger__10IWorkEventFb(int);
+extern "C" int WorkEvent6__10IWorkEventFv();
+extern "C" int WorkEvent7__10IWorkEventFv();
+extern "C" int WorkEvent8__10IWorkEventFv();
+extern "C" int WorkEvent9__10IWorkEventFv();
+extern "C" int WorkEvent10__10IWorkEventFv();
+extern "C" int WorkEvent11__10IWorkEventFv();
+extern "C" int WorkEvent12__10IWorkEventFv();
+extern "C" int WorkEvent13__10IWorkEventFv();
+extern "C" int WorkEvent14__10IWorkEventFv();
+extern "C" int WorkEvent15__10IWorkEventFv();
+extern "C" int WorkEvent16__10IWorkEventFv();
+extern "C" int WorkEvent17__10IWorkEventFv();
+extern "C" int WorkEvent18__10IWorkEventFv();
+extern "C" int WorkEvent19__10IWorkEventFv();
+extern "C" int WorkEvent20__10IWorkEventFv();
+extern "C" int WorkEvent21__10IWorkEventFv();
+extern "C" int WorkEvent22__10IWorkEventFv();
+extern "C" int WorkEvent23__10IWorkEventFv();
+extern "C" int WorkEvent24__10IWorkEventFv();
+extern "C" int WorkEvent25__10IWorkEventFv();
+extern "C" int WorkEvent26__10IWorkEventFv();
+extern "C" int WorkEvent27__10IWorkEventFv();
+extern "C" int WorkEvent28__10IWorkEventFv();
+extern "C" int WorkEvent29__10IWorkEventFv();
+extern "C" int WorkEvent30__10IWorkEventFv();
+extern "C" int WorkEvent31__10IWorkEventFv();
+extern "C" u32 lbl_eu_806639D0[];
+extern "C" u32 lbl_eu_80663988[];
+extern "C" u32 lbl_eu_80663990[];
+
 extern "C" u32 lbl_eu_8056E8B8[6] = {
-    0x806639D0, 0x00000000, 0x804969F4, 0x80498860, 0x80498900, 0x00000000,
+    (u32)&lbl_eu_806639D0, 0x00000000,
+    (u32)&__dt__16CVirtualLightObjFv,
+    (u32)&func_804947EC,
+    (u32)&func_8049488C,
+    0x00000000,
 };
 extern "C" u32 lbl_eu_8056E8D0[45] = {
-    0x80663988, 0x00000000, 0x80499E30, 0x804490CC, 0x8049A65C, 0x8049A660,
-    0x8049A88C, 0x8049A918, 0x800444BC, 0x80663988, 0xFFFFFFAC, 0x8049ABE8,
-    0x8003A1D4, 0x8003A1CC, 0x80492D88, 0x80492D80, 0x8003A1B8, 0x8003A1B0,
-    0x8003A1A8, 0x8003A1A0, 0x8003A198, 0x8003A190, 0x8003A188, 0x8003A180,
-    0x8003A178, 0x8003A170, 0x8003A168, 0x8003A160, 0x8003A158, 0x8003A150,
-    0x8003A148, 0x8003A140, 0x8003A138, 0x8003A130, 0x8003A128, 0x8003A120,
-    0x8003A118, 0x8003A110, 0x8003A108, 0x8003A100, 0x8003A0F8, 0x8003A0F0,
-    0x8003A0EC, 0x8049AA4C, 0x8049AA38,
+    (u32)&lbl_eu_80663988, 0x00000000,
+    (u32)&__dt__4CScnFv,
+    (u32)&Reset__14CChildListNodeFv,
+    (u32)&Init__4CScnFv,
+    (u32)&Term__4CScnFv,
+    (u32)&Move__4CScnFv,
+    (u32)&Draw__4CScnFv,
+    (u32)&Tail__8CProcessFv,
+    (u32)&lbl_eu_80663988, 0xFFFFFFAC,
+    (u32)&func_80496B04,
+    (u32)&WorkEvent1__10IWorkEventFPvPCc,
+    (u32)&OnFileEvent__10IWorkEventFP10CEventFile,
+    (u32)&WorkEvent3__4CScnFPv,
+    (u32)&WorkEvent4__4CScnFv,
+    (u32)&OnPauseTrigger__10IWorkEventFb,
+    (u32)&WorkEvent6__10IWorkEventFv,
+    (u32)&WorkEvent7__10IWorkEventFv,
+    (u32)&WorkEvent8__10IWorkEventFv,
+    (u32)&WorkEvent9__10IWorkEventFv,
+    (u32)&WorkEvent10__10IWorkEventFv,
+    (u32)&WorkEvent11__10IWorkEventFv,
+    (u32)&WorkEvent12__10IWorkEventFv,
+    (u32)&WorkEvent13__10IWorkEventFv,
+    (u32)&WorkEvent14__10IWorkEventFv,
+    (u32)&WorkEvent15__10IWorkEventFv,
+    (u32)&WorkEvent16__10IWorkEventFv,
+    (u32)&WorkEvent17__10IWorkEventFv,
+    (u32)&WorkEvent18__10IWorkEventFv,
+    (u32)&WorkEvent19__10IWorkEventFv,
+    (u32)&WorkEvent20__10IWorkEventFv,
+    (u32)&WorkEvent21__10IWorkEventFv,
+    (u32)&WorkEvent22__10IWorkEventFv,
+    (u32)&WorkEvent23__10IWorkEventFv,
+    (u32)&WorkEvent24__10IWorkEventFv,
+    (u32)&WorkEvent25__10IWorkEventFv,
+    (u32)&WorkEvent26__10IWorkEventFv,
+    (u32)&WorkEvent27__10IWorkEventFv,
+    (u32)&WorkEvent28__10IWorkEventFv,
+    (u32)&WorkEvent29__10IWorkEventFv,
+    (u32)&WorkEvent30__10IWorkEventFv,
+    (u32)&WorkEvent31__10IWorkEventFv,
+    (u32)&func_80496970,
+    (u32)&func_8049695C,
 };
 extern "C" u32 lbl_eu_8056E984[9] = {
-    0x80663990, 0x00000000, 0x80499DD8, 0x804490CC, 0x00000000, 0x00000000,
-    0x8049AB58, 0x8049ABA0, 0x800444BC,
+    (u32)&lbl_eu_80663990, 0x00000000,
+    0x00000000,                      // -> __dt__13CTask<4CScn>Fv (inject_relocs)
+    (u32)&Reset__14CChildListNodeFv,
+    0x00000000,
+    0x00000000,
+    0x00000000,                      // -> Move__13CTask<4CScn>Fv (inject_relocs)
+    0x00000000,                      // -> Draw__13CTask<4CScn>Fv (inject_relocs)
+    (u32)&Tail__8CProcessFv,
 };
-// ASCII panic-string tail. Retail codegen references these as ordinary
-// named symbols; defining them in this TU makes MWCC treat their addresses
-// as compile-time-known constants (hoisted lis/addi pairs, section-relative
-// relocs), which breaks matching -- so they are only declared here.
-extern char lbl_eu_8056E9A8[];
-extern char lbl_eu_8056E9B4[];
-extern char lbl_eu_8056E9D0[];
+// ASCII panic-string tail, owned by THIS .data slice post blob-split.
+// Non-const so they land in .data; __declspec(align(4)) reproduces the
+// 2-byte linker gaps between them (retail layout). Retail loads these via
+// lis/addi @ha/@l at the Panic call sites, which is exactly what MWCC
+// emits for locally-defined .data objects.
+extern "C" __declspec(align(4)) char lbl_eu_8056E9A8[0xA] = "ResAnmChr";
+extern "C" __declspec(align(4)) char lbl_eu_8056E9B4[0x1A] = "%s::%s: Object not valid.";
+extern "C" __declspec(align(4)) char lbl_eu_8056E9D0[0x13] = "g3d_resanmchr_ac.h";
 
 // Default-constructible stand-in with nw4r::g3d::ResCommon's exact layout
 // (single data pointer). Used so a ResDic home can be declared without an
@@ -1438,3 +1534,14 @@ u32 func_804972E8(CScn80496B0C* self, CScnItemAnim* anim, int index,
     }
     return result;
 }
+
+// ===== CTTask<CScn> vtable-slot name carriers (kept last in emission order)
+// The three unspellable CTTask<CScn> retail symbols (<...> cannot be
+// declared in C++) must exist in the symtab for the injected .data vtable
+// relocs. These stubs are defined LAST so the UNIT_RULES
+// drop_text_symbols_as_undef pass removes their bytes from the .text tail
+// without shifting any matched function; the definitions become UNDEF and
+// resolve to CScn.o's real implementations at link.
+extern "C" void __ct_CTask_CScn_name_carrier_1(void) {}
+extern "C" void __ct_CTask_CScn_name_carrier_2(void) {}
+extern "C" void __ct_CTask_CScn_name_carrier_3(void) {}

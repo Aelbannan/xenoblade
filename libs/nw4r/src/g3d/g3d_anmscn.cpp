@@ -2,6 +2,11 @@
 
 #include <algorithm>
 
+// Shared anm play-policy table (retail .sdata object; accessed via
+// small-data addressing, so reference it directly instead of the header's
+// inline static-local table).
+extern const nw4r::g3d::PlayPolicyFunc lbl_eu_80663458[2];
+
 namespace nw4r {
 namespace g3d {
 
@@ -189,8 +194,11 @@ AnmScnRes::AnmScnRes(MEMAllocator* pAllocator, ResAnmScn res,
                      LightAnmResult* pLightCache, FogAnmResult* pFogCache,
                      CameraAnmResult* pCameraCache)
     : AnmScn(pAllocator),
-      FrameCtrl(0.0f, static_cast<f32>(res.ref().info.numFrame),
-                GetAnmPlayPolicy(res.ref().info.policy)),
+      // Signed intermediate forces MWCC's signed int->f32 conversion path
+      // (xoris 0x8000 + 0x43300000 magic), matching retail.
+      FrameCtrl(0.0f,
+                static_cast<f32>(static_cast<s32>(res.ref().info.numFrame)),
+                lbl_eu_80663458[res.ref().info.policy]),
       mRes(res) {
     mUpdateCacheFlag = 0;
     mpAmbLightCache = pAmbCache;
@@ -393,6 +401,9 @@ float GetUpdateRate__Q34nw4r3g3d9AnmScnResCFv(const nw4r::g3d::AnmScnRes* this_)
 // object (file scope so the symbol stays unmangled).
 extern const f32 lbl_eu_80663460;
 
+// Retail .sdata2 float 2.0f used by AnmScnRes::GetCamera's ortho height calc.
+extern const f32 lbl_eu_80669BB8;
+
 namespace nw4r {
 namespace g3d {
 
@@ -566,48 +577,45 @@ void AnmScnRes::GetLight(LightObj* pDiff, LightObj* pSpec, u32 refNumber) {
 
     LightAnmResult* pResult = GetLightResult(&result, refNumber);
 
-    if (!(pResult->flags & LightAnmResult::FLAG_LIGHT_ENABLE)) {
+    // Written as if/else so the disabled path lands at the end of the
+    // function like retail.
+    if (pResult->flags & LightAnmResult::FLAG_LIGHT_ENABLE) {
         if (pDiff != NULL) {
-            pDiff->mFlag &= ~(LightObj::FLAG_SPECULAR | LightObj::FLAG_ENABLE_LIGHT |
-                              LightObj::FLAG_SPECULAR_DIR);
+            MakeDiffuseLightObj(pDiff, pResult);
         }
 
         if (pSpec != NULL) {
-            pSpec->mFlag &= ~(LightObj::FLAG_SPECULAR | LightObj::FLAG_ENABLE_LIGHT |
-                              LightObj::FLAG_SPECULAR_DIR);
+            if (pResult->flags & LightAnmResult::FLAG_SPECULAR_ENABLE) {
+                math::VEC3 dir = pResult->aim - pResult->pos;
+
+                PSVECNormalize(reinterpret_cast<const Vec*>(&dir),
+                          reinterpret_cast<Vec*>(&dir));
+
+                pSpec->Clear();
+                pSpec->InitLightColor(static_cast<GXColor>(pResult->specColor));
+                pSpec->InitSpecularDir(dir.x, dir.y, dir.z);
+                pSpec->InitLightShininess(pResult->shininess);
+
+                if (!(pResult->flags & LightAnmResult::FLAG_COLOR_ENABLE)) {
+                    pSpec->DisableColor();
+                }
+
+                if (!(pResult->flags & LightAnmResult::FLAG_ALPHA_ENABLE)) {
+                    pSpec->DisableAlpha();
+                }
+
+                pSpec->Enable();
+            } else {
+                pSpec->Disable();
+            }
+        }
+    } else {
+        if (pDiff != NULL) {
+            pDiff->Disable();
         }
 
-        return;
-    }
-
-    if (pDiff != NULL) {
-        MakeDiffuseLightObj(pDiff, pResult);
-    }
-
-    if (pSpec != NULL) {
-        if (pResult->flags & LightAnmResult::FLAG_SPECULAR_ENABLE) {
-            math::VEC3 dir = pResult->aim - pResult->pos;
-
-            PSVECNormalize(reinterpret_cast<const Vec*>(&dir),
-                      reinterpret_cast<Vec*>(&dir));
-
-            pSpec->Clear();
-            pSpec->InitLightColor(static_cast<GXColor>(pResult->specColor));
-            pSpec->InitSpecularDir(dir.x, dir.y, dir.z);
-            pSpec->InitLightShininess(pResult->shininess);
-
-            if (!(pResult->flags & LightAnmResult::FLAG_COLOR_ENABLE)) {
-                pSpec->DisableColor();
-            }
-
-            if (!(pResult->flags & LightAnmResult::FLAG_ALPHA_ENABLE)) {
-                pSpec->DisableAlpha();
-            }
-
-            pSpec->Enable();
-        } else {
-            pSpec->mFlag &= ~(LightObj::FLAG_SPECULAR | LightObj::FLAG_ENABLE_LIGHT |
-                              LightObj::FLAG_SPECULAR_DIR);
+        if (pSpec != NULL) {
+            pSpec->Disable();
         }
     }
 }
@@ -626,17 +634,19 @@ void AnmScnRes::GetFog(Fog fog, u32 refNumber) {
 
     FogAnmResult* pResult = GetFogResult(&result, refNumber);
 
-    if (fog.ptr() != NULL) {
-        fog.ptr()->type = pResult->type;
-    }
+    GXFogType type = pResult->type;
 
     if (fog.ptr() != NULL) {
-        fog.ptr()->startz = pResult->startz;
-        fog.ptr()->endz = pResult->endz;
+        fog.ptr()->type = type;
     }
 
+    fog.SetZ(pResult->startz, pResult->endz);
+
+    // Copied through a local so the read is unconditional, matching retail
+    ut::Color color = pResult->color;
+
     if (fog.ptr() != NULL) {
-        fog.ptr()->color = pResult->color;
+        fog.ptr()->color = color;
     }
 }
 
@@ -663,7 +673,8 @@ bool AnmScnRes::GetCamera(Camera camera, u32 refNumber) {
         break;
     }
     case GX_ORTHOGRAPHIC: {
-        f32 height = pResult->orthoHeight * 2.0f;
+        // Named sdata2 constant so MWCC emits the retail sda21 reloc.
+        f32 height = pResult->orthoHeight * lbl_eu_80669BB8;
         f32 width = height * pResult->aspect;
 
         camera.SetOrtho(height, -height, -width, width, pResult->near,

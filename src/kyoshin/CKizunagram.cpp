@@ -54,7 +54,7 @@ void func_80138078(u32 number);
 // call, turning the retail `b func_8025CE78` into a bare return.
 extern "C" __declspec(noinline) void func_8025CE78(UnkKizunaSelfCE78* self);
 extern "C" void func_80257F9C(UnkKizunaSelf57D90* self, u32 a);
-extern "C" void func_8025CF1C(void* self) {
+extern "C" __declspec(noinline) void func_8025CF1C(void* self) {
     if (*(u8*)((char*)self + 0x8C) != 0) {
         func_80257F9C((UnkKizunaSelf57D90*)((char*)self + 0xAC), 1);
     } else {
@@ -1854,7 +1854,9 @@ extern "C" void func_8025CC70(void* self) {
 }
 
 // retail: if (field_62) { field_39 = 2; tail func_80259228(self+0x68) }
-extern "C" void func_8025CC88(void* self) {
+// noinline: retail keeps these dispatch handlers out-of-line; without the
+// attribute MWCC folds their bodies into func_8025C580's switch arms.
+extern "C" __declspec(noinline) void func_8025CC88(void* self) {
     if (*(u8*)((char*)self + 0x62) != 0) {
         *(u8*)((char*)self + 0x39) = 2;
         func_80259228((UnkKizunaSelf59228*)((char*)self + 0x68));
@@ -1863,7 +1865,7 @@ extern "C" void func_8025CC88(void* self) {
 
 // Gate: when both the +0x61 and +0x7D bytes are set, raise the +0x39/+0x3C
 // state and tail-call the +0xAC sub-object with the +0x8C flag.
-extern "C" void func_8025CCA8(void* self) {
+extern "C" __declspec(noinline) void func_8025CCA8(void* self) {
     if (*(u8*)((u8*)self + 0x61) == 0)
         return;
     if (*(u8*)((u8*)self + 0x7D) == 0)

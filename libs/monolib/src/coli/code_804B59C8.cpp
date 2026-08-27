@@ -1520,10 +1520,7 @@ bool func_804B7DD4(u32* self, int idx) {
     }
     u32* bits = (u32*)lbl_eu_8065F1A0;
     // Word fetched before the mask so the scheduler matches retail.
-    int word_idx = idx >> 5;
-    u32 word = bits[word_idx];
-    u32 new_bits = word | (1u << (idx & 0x1F));
-    bits[word_idx] = new_bits;
+    bits[idx >> 5] = bits[idx >> 5] | (1u << (idx & 0x1F));
     return true;
 }
 

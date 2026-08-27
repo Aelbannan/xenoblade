@@ -69,108 +69,32 @@ void pluginUnitRegist() {
 
 using namespace cf;
 
-// Cast-only interface for CfObject vtable. MWCC (-RTTI on) places two hidden
-// typeinfo slots before the first declared virtual, so we omit _v000/_v004
-// and start at 0x8 to make the declared vtable layout match the retail
-// CfObjectModel vtable. The slot at 0x128 (CfObject_UnkVirtualFunc54) is the
-// one getPcHp/getEneHp call: the recovered header declares it `void`, but the
-// retail caller treats the return as float (per PPC ABI f1), so we override
-// its signature here. Never constructed - only used for reinterpret_cast.
-struct CfObjectHpIf {
-    virtual void _v008();
-    virtual void _v00C();
-    virtual void _v010();
-    virtual void _v014();
-    virtual void _v018();
-    virtual void _v01C();
-    virtual void _v020();
-    virtual void _v024();
-    virtual void _v028();
-    virtual void _v02C();
-    virtual void _v030();
-    virtual void _v034();
-    virtual void _v038();
-    virtual void _v03C();
-    virtual void _v040();
-    virtual void _v044();
-    virtual void _v048();
-    virtual void _v04C();
-    virtual void _v050();
-    virtual void _v054();
-    virtual void _v058();
-    virtual void _v05C();
-    virtual void _v060();
-    virtual void _v064();
-    virtual void _v068();
-    virtual void _v06C();
-    virtual void _v070();
-    virtual void _v074();
-    virtual void _v078();
-    virtual void _v07C();
-    virtual void _v080();
-    virtual void _v084();
-    virtual void _v088();
-    virtual void _v08C();
-    virtual void _v090();
-    virtual void _v094();
-    virtual void _v098();
-    virtual void _v09C();
-    virtual void _v0A0();
-    virtual void _v0A4();
-    virtual void _v0A8();
-    virtual void _v0AC();
-    virtual void _v0B0();
-    virtual void _v0B4();
-    virtual void _v0B8();
-    virtual void _v0BC();
-    virtual void _v0C0();
-    virtual void _v0C4();
-    virtual void _v0C8();
-    virtual void _v0CC();
-    virtual void _v0D0();
-    virtual void _v0D4();
-    virtual void _v0D8();
-    virtual void _v0DC();
-    virtual void _v0E0();
-    virtual void _v0E4();
-    virtual void _v0E8();
-    virtual void _v0EC();
-    virtual void _v0F0();
-    virtual void _v0F4();
-    virtual void _v0F8();
-    virtual void _v0FC();
-    virtual void _v100();
-    virtual void _v104();
-    virtual void _v108();
-    virtual void _v10C();
-    virtual void _v110();
-    virtual void _v114();
-    virtual void _v118();
-    virtual void _v11C();
-    virtual void _v120();
-    virtual void _v124();
-    virtual float vf128();
-    virtual float vf12C();
-};
+// The actor HP getters dispatch real CActorParam-chain virtuals on the
+// resolved actor (cf::CfObjectActor, whose primary base at offset 0 is
+// cf::CActorParam). Retail slot map (US lbl_eu_80529DA0 CfObjectPc primary
+// vtable): +0x128 = CActorParam_UnkVirtualFunc37 (lfs f1, 0x17E8(r3); current
+// HP) and +0x12C = CActorParam_UnkVirtualFunc38 (lfs f1, 0x17F4(r3); max HP).
+// Both are declared with the correct float signature in object/CActorParam.hpp,
+// so the calls go through the real type - no cast-only interface needed.
+// (The earlier CfObjectHpIf pad guessed these were CfObject slots 54/55, whose
+// base implementations return int r3, not float f1.)
 
 /// Script command: return the current HP of a player character (PC) actor,
 /// ceiled and converted to int. The actor is resolved by id (arg 2) via
-/// func_800B8B94 (pc list lookup); the HP value comes from the
-/// CfObjectModel virtual at vtable+0x128 (the recovered header declares it
-/// `void`, but the retail caller treats the result as float). On miss,
-/// returns -1.
+/// func_800B8B94 (pc list lookup); the HP value comes from the CActorParam
+/// virtual at vtable+0x128 (CActorParam_UnkVirtualFunc37, float in f1). On
+/// miss, returns -1.
 extern "C" int getPcHp(VMThread* pThread) {
     int id = vmArgIntGet(2, vmArgPtrGet(pThread, 1));
     cf::CfObjectActor* actor = func_800B8B94(id);
     VMArg result;
     if (actor != nullptr) {
-        // Dispatch the CfObjectModel vtable slot at 0x128 through the
-        // cast-only interface so MWCC uses r12 for the vptr (matching
-        // retail's r12 coloring on the virtual-call path).
-        CfObjectHpIf* obj = reinterpret_cast<CfObjectHpIf*>(actor);
+        // Dispatch the CActorParam vtable slot at 0x128
+        // (CActorParam_UnkVirtualFunc37).
+        CActorParam* obj = reinterpret_cast<CActorParam*>(actor);
         result.type = VM_TYPE_INT;
         // Force ceil(double) and explicit float round before fctiwz.
-        float val = (float)ceil(obj->vf128());
+        float val = (float)ceil(obj->CActorParam_UnkVirtualFunc37());
         result.value.intVal = (int)val;
     } else {
         result.type = VM_TYPE_INT;
@@ -182,20 +106,21 @@ extern "C" int getPcHp(VMThread* pThread) {
 
 /// Script command: return the current HP rate (%) of a player character (PC)
 /// actor. Resolves the actor by id (arg 2) via func_800B8B94 (pc list
-/// lookup), then reads the max-HP value (vtable+0x12C) and current-HP value
-/// (vtable+0x128) from the CfObjectModel vtable, computing
+/// lookup), then reads the max-HP value (vtable+0x12C,
+/// CActorParam_UnkVirtualFunc38) and current-HP value (vtable+0x128,
+/// CActorParam_UnkVirtualFunc37) from the CActorParam vtable, computing
 /// `ceil(100.0f * (cur / max))`. On miss, returns -1.
 int getPcHpRate(VMThread* pThread) {
     int id = vmArgIntGet(2, vmArgPtrGet(pThread, 1));
-    CfObjectHpIf* actor = reinterpret_cast<CfObjectHpIf*>(func_800B8B94(id));
+    CActorParam* actor = reinterpret_cast<CActorParam*>(func_800B8B94(id));
     VMArg result;
     if (actor != nullptr) {
         result.type = VM_TYPE_INT;
         // First virtual: vtable+0x12C returns max-HP (saved in f31 by retail).
-        float maxHp = actor->vf12C();
+        float maxHp = actor->CActorParam_UnkVirtualFunc38();
         // Second virtual: vtable+0x128 returns current-HP (result in f1, then
         // fdivs against f31 yields cur/max). Order is fixed by retail codegen.
-        float curHp = actor->vf128();
+        float curHp = actor->CActorParam_UnkVirtualFunc37();
         // (float)ceil(...) forces MWCC to emit fdivs+fmuls before ceil,
         // then frsp+fctiwz to round to int (matching retail).
         result.value.intVal = (int)(float)ceil(lbl_eu_80668250 * (curHp / maxHp));
@@ -215,10 +140,10 @@ extern "C" int getEneHp(VMThread* pThread) {
     cf::CfObjectActor* actor = func_800B8C78(id);
     VMArg result;
     if (actor != nullptr) {
-        CfObjectHpIf* obj = reinterpret_cast<CfObjectHpIf*>(actor);
+        CActorParam* obj = reinterpret_cast<CActorParam*>(actor);
         result.type = VM_TYPE_INT;
         // Force ceil(double) and explicit float round before fctiwz.
-        float val = (float)ceil(obj->vf128());
+        float val = (float)ceil(obj->CActorParam_UnkVirtualFunc37());
         result.value.intVal = (int)val;
     } else {
         result.type = VM_TYPE_INT;
@@ -233,12 +158,12 @@ extern "C" int getEneHp(VMThread* pThread) {
 /// lookup). On miss, returns -1.
 int getEneHpRate(VMThread* pThread) {
     int id = vmArgIntGet(2, vmArgPtrGet(pThread, 1));
-    CfObjectHpIf* actor = reinterpret_cast<CfObjectHpIf*>(func_800B8C78(id));
+    CActorParam* actor = reinterpret_cast<CActorParam*>(func_800B8C78(id));
     VMArg result;
     if (actor != nullptr) {
         result.type = VM_TYPE_INT;
-        float maxHp = actor->vf12C();
-        float curHp = actor->vf128();
+        float maxHp = actor->CActorParam_UnkVirtualFunc38();
+        float curHp = actor->CActorParam_UnkVirtualFunc37();
         result.value.intVal = (int)(float)ceil(lbl_eu_80668250 * (curHp / maxHp));
     } else {
         result.type = VM_TYPE_INT;
@@ -247,9 +172,21 @@ int getEneHpRate(VMThread* pThread) {
     vmRetValSet(pThread, &result);
     return 1;
 }
-/// Forward declaration for the arts-state sub-object pointer stored at
-/// CfObjectActor+4. Cast-only: real layout is recovered in CActorParam.
-/// The vtable slots at +0x30 and +0x34 return u32* (dereferenced by caller).
+// Sub-object dispatched by the arts-attack script commands. RECOVERED TREE:
+// *(actor+4) is stored by __ct__Q22cf11CActorParamFPvPv as owner+0x3E9C - the
+// cf::CfObjectMove base-part of the actor (its vptr is blob+0x37C of the
+// CfObjectPc/CfObjectEne table, the cf::CObjectState chain). Retail slots
+// (US lbl_eu_80529DA0+0x3AC/+0x3B0):
+//   +0x30 CObjectState_UnkVirtualFunc11__Q22cf12CObjectStateFv
+//         (body: addi r3, r3, 0x8 -> returns a POINTER; object/CObjectState.hpp
+//          declares it `void` - hot header, ~50 TU include chain incl.
+//          CObjectParam.hpp; signature fix is out of scope for this TU)
+//   +0x34 CObjectState_UnkVirtualFunc12__Q22cf12CObjectStateFv
+//         (body: addi r3, r3, 0xC -> returns a pointer; declared `void*`)
+// NOTE: this local iface's virtual dtor shifts its two declared slots to
+// +0x10/+0xC - they do NOT land on the retail +0x30/+0x34. Folding onto the
+// real class waits on the CObjectState_UnkVirtualFunc11 signature fix above;
+// both call sites fold together once that lands.
 struct ArtsSubObjectIf {
     virtual ~ArtsSubObjectIf() {}
     virtual u32* subFunc0x30() = 0;

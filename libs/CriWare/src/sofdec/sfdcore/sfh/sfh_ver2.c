@@ -112,6 +112,7 @@ done:
 
 int VER2_IsSfdHeader(void *work, int *out) {
     char buf[0x40];
+    char *sig;
     char *p;
     u32 major;
     u32 minor;
@@ -123,21 +124,23 @@ int VER2_IsSfdHeader(void *work, int *out) {
     int c;
 
     *out = 0;
-    if (memcmp(((u8 **)work)[1] + 0x20, lbl_eu_8051CF00, 0x18) != 0) {
+    sig = lbl_eu_8051CF00;
+    if (memcmp(*(u8 **)((u8 *)work + 4) + 0x20, sig, 0x18) != 0) {
         *(s32 *)work = -1;
         return 0;
     }
-    major = SFHLOCAL_GetNbyteB(((u8 **)work)[1] + 0x38, SFHLOCAL_GetSizeofMember(0x38, 0x39));
-    minor = SFHLOCAL_GetNbyteB(((u8 **)work)[1] + 0x39, SFHLOCAL_GetSizeofMember(0x39, 0x3A));
+    major = SFHLOCAL_GetNbyteB(*(u8 **)((u8 *)work + 4) + 0x38, SFHLOCAL_GetSizeofMember(0x38, 0x39));
+    minor = SFHLOCAL_GetNbyteB(*(u8 **)((u8 *)work + 4) + 0x39, SFHLOCAL_GetSizeofMember(0x39, 0x3A));
     *(u32 *)((u8 *)work + 0x10) = (major << 8) | minor;
     memset(buf, 0, 0x40);
-    memcpy(buf, ((u8 **)work)[1] + 0x40, 0x40);
+    memcpy(buf, *(u8 **)((u8 *)work + 4) + 0x40, 0x40);
     t1 = 0;
     t2 = 0;
-    p = strstr(buf, lbl_eu_8051CF00 + 0x19);
+    p = strstr(buf, sig + 0x19);
     if (p == NULL) {
         ok = 0;
     } else {
+        // Parse "<major>.<minor>" tool-version digits following the tag.
         p += 4;
         t1 = 0;
         for (;;) {
@@ -179,10 +182,10 @@ int VER2_IsSfdHeader(void *work, int *out) {
         v2 = t2;
         *(u32 *)((u8 *)work + 0xC) = (v1 << 8) | v2;
     }
-    major = SFHLOCAL_GetNbyteB(((u8 **)work)[1] + 0x3A, SFHLOCAL_GetSizeofMember(0x3A, 0x3B));
-    minor = SFHLOCAL_GetNbyteB(((u8 **)work)[1] + 0x3B, SFHLOCAL_GetSizeofMember(0x3B, 0x3C));
+    major = SFHLOCAL_GetNbyteB(*(u8 **)((u8 *)work + 4) + 0x3A, SFHLOCAL_GetSizeofMember(0x3A, 0x3B));
+    minor = SFHLOCAL_GetNbyteB(*(u8 **)((u8 *)work + 4) + 0x3B, SFHLOCAL_GetSizeofMember(0x3B, 0x3C));
     *(u32 *)((u8 *)work + 0x14) = (major << 8) | minor;
-    *(u32 *)work = 2;
+    *(s32 *)work = 2;
     *out = 1;
     return 1;
 }

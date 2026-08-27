@@ -5,12 +5,6 @@
 #include <math.h>
 #include <string.h>
 
-// Shared .sdata2 pool constants (port/data_defs.cpp).
-extern const f32 float_8066BE90;
-extern const f32 float_8066BE98; // 1.0f
-extern const f32 float_8066BE9C; // 0.6f
-extern const f64 double_8066BEA0; // 4503599627370496.0 (f32-from-u32 magic)
-
 static u32 __EarlySizeTable[8] = {163, 317, 479, 641, 797, 967, 1123, 1283};
 
 static u32 __FilterSizeTable[7][4] = {
@@ -33,7 +27,7 @@ u32 AXFXReverbStdExpGetMemSizeDpl2(const AXFX_REVERBSTD_EXP_DPL2* reverb) {
     u32 f1 = __FilterSizeTable[6][1];
     u32 f2 = __FilterSizeTable[6][2];
     u32 f3 = __FilterSizeTable[6][3];
-    u32 ival = (u32)(s32)(float_8066BE90 * reverb->preDelayTimeMax);
+    u32 ival = (u32)(s32)(32000.0f * reverb->preDelayTimeMax);
     u32 tot = e7 + ival;
 
     tot += f0;
@@ -223,10 +217,10 @@ void AXFXReverbStdExpCallbackDpl2(AXFX_BUFFERUPDATE_DPL2* bufferUpdate, AXFX_REV
         outBusData[3] = reverb->busOut->right_surround;
     }
 
-    lpfCoef1 = float_8066BE98 - reverb->lpfCoef;
+    lpfCoef1 = 1.0f - reverb->lpfCoef;
     lpfCoef2 = reverb->lpfCoef;
-    earlyGain = float_8066BE9C * reverb->earlyGain;
-    fusedGain = float_8066BE9C * reverb->fusedGain;
+    earlyGain = 0.6f * reverb->earlyGain;
+    fusedGain = 0.6f * reverb->fusedGain;
     earlyCoef = reverb->earlyCoef;
     combCoef0 = reverb->combCoef[0];
     combCoef1 = reverb->combCoef[1];

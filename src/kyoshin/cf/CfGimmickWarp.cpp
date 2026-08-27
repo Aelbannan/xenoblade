@@ -351,8 +351,9 @@ u32 func_80082354__Q22cf13CfGameManagerFv(u32 resourceId);  // matches code_8018
 void func_80209F5C();
 void func_80209FB8();
 void func_80209FE4();
-void func_8020A124(WarpData*, f32);
-void func_8020A1DC(WarpData*);
+void func_8020A124(f32);
+// Retail call site passes the raw flags word (parameter is unused there).
+void func_8020A1DC(u32 flags);
 void func_801BFED0(int, u16, int);
 extern "C" void* func_800817BC__Q22cf13CfGameManagerFv(u32 value, u32 unused);  // canonical form (CTaskGameEff.hpp)
 void func_8006CC4C();
@@ -561,13 +562,9 @@ extern "C" void func_8020D824(WarpData* self) {
         return;
     }
 
-    /* retail issues two flag-word loads here (lwz r4/r5 + extrwi); the
-       volatile reference keeps MWCC from merging them into one load */
-    volatile u32& flagsRef = self->flags;
-    u32 flags = flagsRef;
-    bool objectReady = (flagsRef >> 8) & 1;
-    flagsRef = flags & ~0x100u;
-    if ((flags & 0x20) != 0) {
+    bool objectReady = (self->flags >> 8) & 1;
+    self->flags = (*(volatile u32*)&self->flags) & ~0x100u;
+    if ((self->flags & 0x20) != 0) {
         if (func_8020A5DC(self) != 0) {
             return;
         }
@@ -688,7 +685,7 @@ extern "C" void func_8020D998(WarpData* self) {
                 }
                 self->flags |= 1;
             }
-            func_8020A124(self, lbl_eu_806683D0);
+            func_8020A124(lbl_eu_806683D0);
         } else {
             self->state = 2;
             self->timer = lbl_eu_806683D4;
@@ -769,7 +766,7 @@ extern "C" void func_8020D998(WarpData* self) {
                 }
                 self->flags |= 1;
             }
-            func_8020A124(self, lbl_eu_806683D0);
+            func_8020A124(lbl_eu_806683D0);
         } else {
             self->state = 2;
             self->timer = lbl_eu_806683D4;
@@ -884,7 +881,7 @@ extern "C" void func_8020DF04(WarpData* self) {
         }
         self->flags |= 1;
     }
-    func_8020A124(self, lbl_eu_806683D0);
+    func_8020A124(lbl_eu_806683D0);
 }
 
 extern "C" void func_8020E27C(WarpData* self) {
@@ -920,40 +917,109 @@ extern "C" void func_8020E27C(WarpData* self) {
     self->flags = flags & ~1u;
 }
 
+/* Control-block header that precedes each player record by 0x3E9C bytes
+   inside the enclosing entity; +0x04 holds the status interface whose
+   vtable slot 0x30 reports the player state word checked below. */
+struct WarpCtlStateIf {
+    virtual void q00();
+    virtual void q04();
+    virtual void q08();
+    virtual void q0c();
+    virtual void q10();
+    virtual void q14();
+    virtual void q18();
+    virtual void q1c();
+    virtual void q20();
+    virtual void q24();
+    virtual u32* q30();
+};
+
+struct WarpCtlHeader {
+    u8 pad00[4];
+    WarpCtlStateIf* subIf; // 0x04
+};
+
 extern "C" void func_8020E3F0(WarpData* self) {
+    WarpCtlHeader* ctl;
     bool allReady = true;
     for (int i = 0; i < 3; ++i) {
-        WarpPlayer* player = playerFromTail((WarpPlayerTail*)cf::CfGameManager::getPlayer(i));
-        if (player == 0) {
+        cf::CfObjectMove* player = cf::CfGameManager::getPlayer(i);
+        ctl = (WarpCtlHeader*)player;
+        if (ctl != 0) {
+            /* The control block header sits 0x3E9C bytes in front of the
+               player record inside the same enclosing entity. */
+            ctl = (WarpCtlHeader*)((char*)player - 0x3E9C);
+        }
+        if (ctl == 0) {
             continue;
         }
-        WarpPlayerSubIf* sub = reinterpret_cast<WarpPlayerSubIf*>(player->subObject);
-        u32 value = *sub->v30();
-        if (func_80174C98(player, &value, 8) == 0) {
-            value = *sub->v30();
-            if (func_80174C98(player, &value, 7) != 0) {
-                allReady = false;
-                break;
+        u32 stateA = *ctl->subIf->q30();
+        if (func_80174C98(ctl, &stateA, 8) == 0) {
+            u32 stateB = *ctl->subIf->q30();
+            if (func_80174C98(ctl, &stateB, 7) == 0) {
+                continue;
             }
-        } else {
-            allReady = false;
-            break;
         }
+        allReady = false;
+        break;
     }
 
     self->timer += func_80496288(lbl_eu_80663E14);
-    if (self->timer < lbl_eu_806683D8 && (!allReady || self->timer < lbl_eu_806683D0)) {
+    if (lbl_eu_806683D8 <= self->timer ||
+        (allReady && lbl_eu_806683D0 <= self->timer)) {
         func_80209F5C();
         func_80209FB8();
+        self->state = 5;
         if (self->flagE7 != 0) {
-            self->state = 5;
-            preparePlayers(self);
-            self->timer = lbl_eu_806683D0;
-            func_8020A124(self, self->timer);
-        } else {
-            self->state = 2;
-            self->timer = lbl_eu_806683D4;
+            if (self->object7c != 0) {
+                func_800ACC14(self->object7c, 1);
+                self->object7c->owner = 0;
+                self->object7c = 0;
+            }
+            if (self->object100 != 0) {
+                func_800ACC14(self->object100, 1);
+                self->object100->owner = 0;
+                self->object100 = 0;
+            }
+            if (self->object104 != 0) {
+                func_800ACC14(self->object104, 1);
+                self->object104->owner = 0;
+                self->object104 = 0;
+            }
+            if (self->soundHandle != 0) {
+                func_801BFED0(1, self->soundHandle, 0xa);
+                self->soundHandle = 0;
+            }
+            self->flags &= ~1u;
+
+            self->object7c = (WarpObject*)func_800817BC__Q22cf13CfGameManagerFv(self->flagE7, 0);
+            if (self->object7c != 0) {
+                func_800ACF78(self->object7c, cf::CfGameManager::getPlayer(0), 0);
+            }
+            self->object100 = (WarpObject*)func_800817BC__Q22cf13CfGameManagerFv(self->flagE7, 0);
+            if (self->object100 != 0) {
+                func_800ACF78(self->object100, cf::CfGameManager::getPlayer(1), 0);
+            }
+            self->object104 = (WarpObject*)func_800817BC__Q22cf13CfGameManagerFv(self->flagE7, 0);
+            if (self->object104 != 0) {
+                func_800ACF78(self->object104, cf::CfGameManager::getPlayer(2), 0);
+            }
+
+            if (self->object7c != 0) {
+                self->object7c->owner = self;
+            }
+            if (self->object100 != 0) {
+                self->object100->owner = self;
+            }
+            if (self->object104 != 0) {
+                self->object104->owner = self;
+            }
+            if (self->unkE8 != 0) {
+                self->soundHandle = func_80208C48(self->unkE8, &lbl_eu_805765A0);
+            }
+            self->flags |= 1;
         }
+        func_8020A124(lbl_eu_806683D0);
     } else {
         func_80209F5C();
         func_80209FB8();
@@ -1049,53 +1115,105 @@ extern "C" void func_8020E704(WarpData* self) {
     }
 }
 
+/* Post-warp settle state: arms the transition request once the warp timer
+   expires, then tears down and rebuilds the per-player warp markers before
+   handing off to the next state. */
 extern "C" void func_8020EA2C(WarpData* self) {
     func_80209F5C();
     func_80209FB8();
-    if ((self->flags & 2) == 0) {
+
+    u32 flags = self->flags;
+    if ((flags & 2) == 0) {
+        /* Transition not yet requested: count down and fire the area
+           transition request once the timer hits zero. */
+        f32 limit = lbl_eu_806683C8;
         self->timer -= func_80496288(lbl_eu_80663E14);
-        if (self->timer > lbl_eu_806683CC) {
-            return;
+        if (self->timer <= limit) {
+            self->flags = flags | 2;
+            self->timer = lbl_eu_806683F8;
+            WarpVec4 area;
+            area.x = limit;
+            area.y = limit;
+            area.z = limit;
+            area.w = limit;
+            func_8008566C__Q22cf13CfGameManagerFv(0x14, &area, 1);
         }
-        self->flags |= 4;
-        func_8020A1DC(self);
         return;
     }
 
-    self->timer -= func_80496288(lbl_eu_80663E14);
-    if (self->timer > lbl_eu_806683D4) {
-        return;
-    }
-    if ((self->flags & 0x10) != 0) {
-        return;
-    }
-    if (self->flagE7 == 0) {
-        return;
-    }
+    f32 t = self->timer - func_80496288(lbl_eu_80663E14);
+    self->timer = t;
+    if ((flags & 4) == 0) {
+        if (t > lbl_eu_806683CC) {
+            if (t > lbl_eu_806683D4 || (flags & 8) != 0) {
+                /* still settling */
+            } else {
+                if (self->flagE7 != 0) {
+                    clearObject(self->object7c);
+                    clearObject(self->object100);
+                    clearObject(self->object104);
+                    if (self->soundHandle != 0) {
+                        func_801BFED0(1, self->soundHandle, 0xa);
+                        self->soundHandle = 0;
+                    }
+                    self->flags = flags & ~1u;
 
-    clearWarpObjects(self);
-    if (self->soundHandle != 0) {
-        func_801BFED0(1, self->soundHandle, 0xa);
-        self->soundHandle = 0;
-    }
-    self->flags &= ~1u;
-    preparePlayers(self);
-    self->flags |= 8;
+                    self->object7c = (WarpObject*)func_800817BC__Q22cf13CfGameManagerFv(self->flagE7, 0);
+                    if (self->object7c != 0) {
+                        func_800ACF78(self->object7c, cf::CfGameManager::getPlayer(0), 0);
+                    }
+                    self->object100 = (WarpObject*)func_800817BC__Q22cf13CfGameManagerFv(self->flagE7, 0);
+                    if (self->object100 != 0) {
+                        func_800ACF78(self->object100, cf::CfGameManager::getPlayer(1), 0);
+                    }
+                    self->object104 = (WarpObject*)func_800817BC__Q22cf13CfGameManagerFv(self->flagE7, 0);
+                    if (self->object104 != 0) {
+                        func_800ACF78(self->object104, cf::CfGameManager::getPlayer(2), 0);
+                    }
 
-    for (int i = 0; i < 3; ++i) {
-        WarpPlayer* player = playerFromTail((WarpPlayerTail*)cf::CfGameManager::getPlayer(i));
-        if (player != 0) {
-            reinterpret_cast<WarpPlayerHeadIf*>(player)->v168(lbl_eu_806683E8);
+                    if (self->object7c != 0) {
+                        self->object7c->owner = self;
+                    }
+                    if (self->object100 != 0) {
+                        self->object100->owner = self;
+                    }
+                    if (self->object104 != 0) {
+                        self->object104->owner = self;
+                    }
+                    if (self->unkE8 != 0) {
+                        self->soundHandle = func_80208C48(self->unkE8, &lbl_eu_805765A0);
+                    }
+                    self->flags |= 1;
+                }
+                self->flags |= 8;
+            }
+        } else {
+            /* First frame past the warp threshold: latch the warp-fired flag
+               and notify the manager (retail passes the pre-update flags). */
+            u32 cur = self->flags;
+            self->flags = cur | 4;
+            func_8020A1DC(cur);
+        }
+        /* Reset every active player's warp camera/state parameter. */
+        for (int i = 0; i < 3; ++i) {
+            WarpPlayerHeadIf* player = (WarpPlayerHeadIf*)cf::CfGameManager::getPlayer(i);
+            if (player != 0) {
+                player->v168(lbl_eu_806683E8);
+            }
         }
     }
 
-    if (self->timer <= lbl_eu_806683C8) {
-        self->timer = lbl_eu_806683C8;
-        if ((self->flags & 1) == 0) {
-            self->state = 8;
-            self->flags &= ~0x10u;
-        }
+    /* Once fully settled (timer exhausted and marker rebuild done, bit0
+       cleared), advance to state 8 keeping only the low five flag bits. */
+    if (self->timer > lbl_eu_806683C8) {
+        return;
     }
+    self->timer = lbl_eu_806683C8;
+    if ((self->flags & 1) != 0) {
+        return;
+    }
+    self->state = 8;
+    self->flags &= 0x1Fu;
 }
 
 extern "C" void func_8020ED2C(WarpData* self) {

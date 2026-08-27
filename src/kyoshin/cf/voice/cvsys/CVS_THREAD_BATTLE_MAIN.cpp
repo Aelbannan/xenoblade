@@ -101,15 +101,14 @@ extern u32 lbl_eu_8053AA64[3];
 extern u32 lbl_eu_8053AA70[3];
 extern u32 lbl_eu_8053AA7C[7];
 
-// Float thresholds for func_802AF13C, plus the int->float conversion
-// magic (0x4330000080000000): planting it under its retail name makes
-// MWCC's literal pool unify the builtin cast's pooled magic onto this
-// label (ocUnit::turn pattern).
-const double lbl_eu_80668EB8 = 4503601774854144.0;
+// Float thresholds and the double bias constant used by func_802AF13C.
+// lbl_eu_80668EB8 is the int->float conversion magic (0x4330000080000000);
+// the builtin cast's pooled literal is addend-equal to it.
 extern float lbl_eu_80668EA8;
 extern float lbl_eu_80668EAC;
 extern float lbl_eu_80668EB0;
 extern float lbl_eu_80668EB4;
+extern double lbl_eu_80668EB8;
 
 // Battle-main voice thread object (0x24 bytes): derives from CVS_THREAD
 // (init triple at +0x00, hand-placed vtable pointer at +0x1C) plus a flag
@@ -510,63 +509,99 @@ extern "C" int func_802AEDB8(BattleMainOwnerView* thread,
     // Declaration order (table, id copy, handle copy) drives MWCC's prologue
     // scheduling; the shared `cur` keeps the row word in one register for
     // both the terminator test and the match compare.
-    VoiceIdListEntry* e = lbl_eu_8053A4B8;
-    int cur;
-    goto check;
-top:
-    if (cur == thread->field_0x3F28)
-        goto found;
-    e++;
-check:
-    cur = e->id;
-    if (cur != 0)
-        goto top;
-    e = NULL;
+    // Scan via the shared inline finder: the inlined `return p` lowers to
+    // retail's pre-tested layout with the bne-over-increment / b-found
+    // two-way exit (same mechanism as func_802AF02C).
+    VoiceIdListEntry* e = bmFindEntry(thread);
 found:
     if (e == NULL)
         return -1;
 
     // Gate: flag bit 1, battle state 1, work state within [0x10,0x17].
-    int gated = 0;
-    if (handle->field_0x3F00 & 2) {
-        if (func_802A77E8((CVoiceHandle*)handle) == 1) {
-            UnkTargetInner* w = handle->unkTarget->field_0x08;
-            gated = (w->field_0x18 >= 0x10 && w->field_0x18 <= 0x17);
-        }
+    // Every arm assigns `gated` AFTER all calls and each arm ends with an
+    // explicit jump to the shared test, mirroring retail's li/b/li layout.
+    int gated;
+    if (!(handle->field_0x3F00 & 2)) {
+        gated = 0;
+        goto endg;
     }
+    if (func_802A77E8((CVoiceHandle*)handle) != 1) {
+        gated = 0;
+        goto endg;
+    }
+    {
+        UnkTargetInner* w = handle->unkTarget->field_0x08;
+        int st = w->field_0x18;
+        // Separate bounds (second one commuted) keep retail's two cmpi
+        // tests - MWCC otherwise fuses them into a subi/subfic range trick.
+        if (st < 0x10)
+            goto failg;
+        if (0x17 < st)
+            goto failg;
+        goto setg;
+    }
+failg:
+    gated = 0;
+    goto endg;
+setg:
+    gated = 1;
+endg:
 
     if (gated != 0) {
         // Walk the leading positive run of pool +0x36 (one step max).
+        // Pre-tested goto walk mirrors retail's b-over-increment layout.
         char* c = (char*)e;
         int i = 0;
-        while (i < 1 && *(s16*)(c + 0x36) > 0) {
-            c += 2;
-            i++;
-        }
-        s16 pick =
-            *(s16*)((char*)e + ml::math::mtRand(i < 1 ? 1 : i) * 2 + 0x36);
+        goto g36chk;
+g36inc:
+        c += 2;
+        i++;
+g36chk:
+        if (i >= 1)
+            goto g36done;
+        if (*(s16*)(c + 0x36) > 0)
+            goto g36inc;
+g36done:
+        int n = i < 1 ? 1 : i;
         // Only accept a positive draw; otherwise fall through to the pools.
+        s16 pick = *(s16*)((char*)e + ml::math::mtRand(n) * 2 + 0x36);
         if (pick > 0)
             return pick;
     }
 
     if (id != 0) {
+        // Walk the leading positive run of pool +0xA (one step max).
         char* c = (char*)e;
         int i = 0;
-        while (i < 1 && *(s16*)(c + 0xA) > 0) {
-            c += 2;
-            i++;
-        }
-        return *(s16*)((char*)e + ml::math::mtRand(i < 1 ? 1 : i) * 2 + 0xA);
-    }
-
-    char* c = (char*)e;
-    int i = 0;
-    while (i < 2 && *(s16*)(c + 6) > 0) {
+        goto ga_chk;
+ga_inc:
         c += 2;
         i++;
+ga_chk:
+        if (i >= 1)
+            goto ga_done;
+        if (*(s16*)(c + 0xA) > 0)
+            goto ga_inc;
+ga_done:
+        int n = i < 1 ? 1 : i;
+        return *(s16*)((char*)e + ml::math::mtRand(n) * 2 + 0xA);
     }
-    return *(s16*)((char*)e + ml::math::mtRand(i < 1 ? 1 : i) * 2 + 6);
+
+    // Walk the leading positive run of pool +6 (two steps max).
+    char* c = (char*)e;
+    int i = 0;
+    goto g06chk;
+g06inc:
+    c += 2;
+    i++;
+g06chk:
+    if (i >= 2)
+        goto g06done;
+    if (*(s16*)(c + 6) > 0)
+        goto g06inc;
+g06done:
+    int n = i < 1 ? 1 : i;
+    return *(s16*)((char*)e + ml::math::mtRand(n) * 2 + 6);
 }
 
 // Playback helper gated on a negative request parameter: only when param < 0
@@ -774,7 +809,8 @@ extern "C" int func_802AF13C(BattleMainOwnerView* owner, int arg) {
     float den = vtv->get128();
     // Builtin int->float cast: MWCC lowers this to the 0x4330 trick whose
     // final single-rounded fsubs both removes the bias and rounds; the
-    // pooled magic constant aliases the shared blob lbl_eu_80668EB8.
+    // pooled magic constant aliases lbl_eu_80668EB8 (same value,
+    // addend-equal reloc).
     float ratio = ((float)arg + den) / num;
     // Third virtual is fetched after the ratio; each threshold must also
     // exceed this value for its bucket to win.

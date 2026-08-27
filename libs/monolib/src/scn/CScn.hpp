@@ -7,14 +7,21 @@
 // NOTE: this header is included by explicit path ("libs/monolib/src/scn/CScn.hpp"),
 // separate from the public monolib/scn/CScn.hpp.
 
+// Format string for the scene name built by CScnNw4r::create.
+extern char lbl_eu_80524090[];
+
 // Float constants block referenced by scene timing helpers (.sdata2).
 extern f32 lbl_eu_8066AAB4;
 extern f32 lbl_eu_8066AAB8;
 extern f32 lbl_eu_8066AABC;
 
-// CScn vtable label (defined in the CScn_80496B0C TU data surgery; the
-// destructor repoints the +0x10 / +0x54 slots at it).
+// CScn vtable labels (defined in the CScn_80496B0C TU data surgery). The
+// constructor/destructor repoint the +0x10 / +0x54 slots at them.
 extern u8 lbl_eu_8056E8D0[];
+extern u8 lbl_eu_8056E984[];
+
+// .sdata2 constant initialized into CScn+0x98 by the constructor.
+extern f32 lbl_eu_8066AAB0;
 
 class IScnRender;
 class UnkScn8C;
@@ -52,6 +59,12 @@ struct ScnSubDtor {
     virtual void dtorSlot(int flag);
 };
 
+// Generic subsystem handle released by CScn::Term(): first virtual slot
+// (vt+8) called with flag=1.
+struct ScnTermRelease {
+    virtual void release(int flag);
+};
+
 // IScnRender draw callback shape: vt+0xC(cb, scn).
 struct IScnRenderDraw {
     virtual ~IScnRenderDraw() {}
@@ -65,6 +78,8 @@ public:
     virtual void Init();
     virtual void Draw();
     virtual ~CScn();
+    void Term();
+    void func_804962B0(u32 a, u32 b, void* str, u32 d);
 
     //0x000: vtable 1 (CTTask)
     //0x000-054: CTTask
@@ -146,6 +161,25 @@ public:
 class CScnEnvLgtCtrl;
 extern "C" u32 func_804C12A4(CScnEnvLgtCtrl* self);
 
+// Typed view of the CScn member fields written by __ct__CScn. Mirrors the
+// public-header layout without modifying it.
+struct CScnCtorView {
+    u8 pad00[0x10];          //0x00
+    void* unk10;             //0x10 primary vtable ptr
+    u8 pad14[0x3C - 0x14];   //0x14
+    u32 mMoveFunc[3];        //0x3C
+    u32 mDrawFunc[3];        //0x48
+    void* unk54;             //0x54 secondary (IWorkEvent) vtable ptr
+    u32 unk58[15];           //0x58..0x90 zeroed block
+    u8 pad94[4];             //0x94 (left uninitialized)
+    f32 unk98;               //0x98
+    u16 unk9C;               //0x9C
+    u16 unk9E[10];           //0x9E..0xB0
+    u16 unkB2;               //0xB2
+    u32 unkB4;               //0xB4
+    u8 unkB8;                //0xB8
+};
+
 // Typed view of the CScn member fields touched by CScn::~CScn(). Mirrors the
 // public-header layout without modifying it.
 struct CScnDtorView {
@@ -155,6 +189,29 @@ struct CScnDtorView {
     void* unk54;             //0x54 secondary (IWorkEvent) vtable ptr
     u8 pad58[0x88 - 0x58];   //0x58
     UnkScn8C* unk88;         //0x88 scene-root subobject
+};
+
+// Direct-call destructor hit by CScn::Term() on the +0x7c subobject
+// (retail flat symbol __dt__804C0E48).
+extern "C" void __dt__804C0E48(void* self, int flag);
+
+// Typed view of the CScn member fields touched by CScn::Term(). Mirrors the
+// public-header layout without modifying it.
+struct CScnTermView {
+    u8 pad00[0x5C];           //0x00
+    void* unk5C;              //0x5C
+    void* unk60;              //0x60
+    void* unk64;              //0x64
+    void* unk68;              //0x68
+    void* unk6C;              //0x6C
+    void* unk70;              //0x70
+    void* unk74;              //0x74
+    void* unk78;              //0x78
+    void* unk7C;              //0x7C
+    void* unk80;              //0x80
+    void* unk84;              //0x84
+    void* unk88;              //0x88
+    UnkScn8C* unk8C;          //0x8C
 };
 
 // Typed view of the CScn member fields touched by CScn::Move(). Mirrors the

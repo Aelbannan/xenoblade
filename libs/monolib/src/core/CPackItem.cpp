@@ -43,35 +43,26 @@ mWorkPackDataSize(0) {
 }
 #pragma optimize_for_size off
 
-// extern "C" free-function form (CArcItem pattern): no member key function is
-// defined in this TU, so MWCC does not auto-emit __vt__9CPackItem here (the retail
-// vtable lives in the dissolved .data blob below).
 #pragma optimize_for_size on
-extern "C" void __dt__9CPackItemFv(CPackItem* self){
-    if(self->mFileHandle != nullptr){
-        CDeviceFile::cancel(self->mFileHandle);
+// Compiler supplies the deleting-variant flag param and operator-delete tail;
+// externally-owned pack headers are dropped without freeing.
+CPackItem::~CPackItem(){
+    if(mFileHandle != nullptr){
+        CDeviceFile::cancel(mFileHandle);
     }
 
-    if(self->mPackHeaderExternal != 0){
-        self->mPackHeader = nullptr;
+    if(mPackHeaderExternal != 0){
+        mPackHeader = nullptr;
     }
 
-    if(self->mPackHeader != nullptr){
-        mtl::MemManager::deallocate(self->mPackHeader);
-        self->mPackHeader = nullptr;
+    if(mPackHeader != nullptr){
+        mtl::MemManager::deallocate(mPackHeader);
+        mPackHeader = nullptr;
     }
 
-    if(self->mAhxAdxBuffer != nullptr){
-        mtl::MemManager::deallocate(self->mAhxAdxBuffer);
-        self->mAhxAdxBuffer = nullptr;
-    }
-
-    if((s32)self->field_0x68 >= 0){
-        // field_0x68 >=0 triggers delete; retail delete call is via __dl__FPv after inline dtor elision
-    }
-    if((s32)self->field_0x68 >= 0){
-        extern void __dl__FPv(void*);
-        __dl__FPv(self);
+    if(mAhxAdxBuffer != nullptr){
+        mtl::MemManager::deallocate(mAhxAdxBuffer);
+        mAhxAdxBuffer = nullptr;
     }
 }
 #pragma optimize_for_size off
@@ -191,6 +182,17 @@ bool CPackItem::lookupFile(const char* filename, char** outPkbPath, u32* outEntr
 
 /* Tries to locate the hash of this item in the hash table. If successful,
 returns the corresponding index. If not successful, returns -1.
+
+MATCHING NOTE (us-804e2cf0): body semantics and size match retail exactly
+(204B); residual divergence is a single dead `ori r0,r0,0` alignment nop that
+this unit's `-func_align 16` cflag inserts before the mtctr/bdnz scan loop.
+Retail has no nop (loop head unaligned at fn+0x24), so retail was compiled
+with smaller loop/function alignment. Fixing requires changing this object's
+cflags to `-func_align 4` in configure.py, then re-verifying the tail-call
+duplication shape below (retail duplicates all four recursive tail-call
+blocks; the merged-tail shape here shares one pair and is the closest size
+match).
+
    Each hash table entry is two 32-bit words (hash lower half, then upper
    half) packed into one 8-byte slot, so the table is walked as u32 pairs.
    If the table is small (< 16 entries) a linear scan is used; otherwise a
@@ -224,16 +226,14 @@ int CPackItem::findHashIndex(int startIndex, int endIndex){
         if(entry[0] == mHashLowerHalf){
             //The middle entry matches the values of this item, return the index
             return midIndex;
-        }else if(entry[0] > mHashLowerHalf){
+        }
+        if(entry[0] > mHashLowerHalf){
             return findHashIndex(startIndex, midIndex);
-        }else{
-            return findHashIndex(midIndex, endIndex);
         }
     }else if(entry[1] > mHashUpperHalf){
         return findHashIndex(startIndex, midIndex);
-    }else{
-        return findHashIndex(midIndex, endIndex);
     }
+    return findHashIndex(midIndex, endIndex);
 }
 
 bool CPackItem::isNotLoaded(){
@@ -265,14 +265,22 @@ extern "C" bool OnFileEvent__9CPackItemFP10CEventFile(CPackItem* self, CEventFil
 /* Calculates the hash of the given file name string. This is used to
 find where the file is located in the pkb archive using the hash table
 in the pkh file. */
+#pragma optimize_for_size on
 bool CPackItem::calculatePackFileHash(const char* filename){
+    // Hoisted uninitialized decls: vreg birth order drives MWCC register
+    // coloring here (i, mask-base, table count, byte index, reverse index).
+    u32 i;
+    u32 one;
+    u32 count;
+    u32 byteIndex;
+    int revIndex;
     if(mPackHeader == nullptr){
         return false;
     }
 
     mHashLowerHalf = 0;
     mHashUpperHalf = 0;
-    
+
     int length = std::strlen(filename);
 
     //Return if the string is empty
@@ -280,26 +288,30 @@ bool CPackItem::calculatePackFileHash(const char* filename){
         return false;
     }
 
-    u32 hashValTableLength = mPackHeader->mHashValTableLength;
+    i = 0;
+    one = 1;
+    revIndex = length - 1;
+    count = mPackHeader->mHashValTableLength;
 
-    for(u32 i = 0; i < hashValTableLength; i++){
+    for(; i < count; i++){
         u8 val = mPackHeader->mHashValTable[i];
-        u32 byteIndex = val / 8;         // which byte of the filename this bit tests
-        u8 mask = (u8)(1u << (val % 8)); // bit position within that byte
-        if((u32)(length - 1) >= byteIndex){
-            u8 ch = (u8)filename[(length - 1) - byteIndex];
+        byteIndex = val / 8;         // which byte of the filename this bit tests
+        u8 mask = (u8)(one << (val % 8)); // bit position within that byte
+        if(revIndex >= byteIndex){
+            u8 ch = (u8)filename[revIndex - byteIndex];
             bool bit = (ch & mask) != 0;
             if(i < 32){
-                mHashLowerHalf |= (1u << i) * bit;
+                mHashLowerHalf |= (one << i) * bit;
             }else{
                 //The index is more than 32, write to the high 32 bit variable
-                mHashUpperHalf |= (1u << (i - 32)) * bit;
+                mHashUpperHalf |= (one << (i - 32)) * bit;
             }
         }
     }
 
     return true;
 }
+#pragma optimize_for_size off
 
 // ===== Dissolved monolibdata2 (blob surgery) data owned by this TU =====
 namespace CPackItemBlob {

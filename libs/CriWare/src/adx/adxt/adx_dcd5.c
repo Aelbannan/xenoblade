@@ -35,7 +35,8 @@ int ADX_DecodeMono4(const u8 *in, int nblocks, s16 *out, s16 *prev,
             return block;
 
         hist_val = hist[0];
-        scale_val = (s16)(((header ^ hist_val) & 0x1FFF) + 1);
+        /* no explicit s16 cast: MWCC defers the extsh to first use */
+        scale_val = ((header ^ hist_val) & 0x1FFF) + 1;
         hist[0] = (pitch + hist_val * scale) & 0x7FFF;
 
         in += 2;

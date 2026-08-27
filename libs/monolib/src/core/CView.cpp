@@ -2814,12 +2814,9 @@ extern "C" s32 func_8043CEAC__5CViewFv(CView* self) {
 
 // us-8043CAFC: like CEAC -- returns whether BOTH split-frame views exist.
 extern "C" s32 func_8043CAFC__5CViewFv(CView* self) {
-    s32 flag2 = 0;
-    s32 flag1 = 0;
-    if (self->unk45C != nullptr) {
-        if (getView1__11CSplitFrameFv(self->unk45C) != nullptr) {
-            flag1 = 1;
-        }
+    s32 flag2 = 0, flag1 = 0;
+    if (self->unk45C != nullptr && getView1__11CSplitFrameFv(self->unk45C) != nullptr) {
+        flag1 = 1;
     }
     if (flag1 != 0) {
         if (getView2__11CSplitFrameFv(self->unk45C) != nullptr) {

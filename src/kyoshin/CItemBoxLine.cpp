@@ -1395,6 +1395,8 @@ void func_801EED6C(void* self) {
 // slot 8), decompose it into page/column (field3A1 = slot/4, field3A2 =
 // slot%4 via a float multiply), prime the cursors and push the slot VEC3.
 // ============================================================================
+#pragma push
+#pragma optimize_for_size on
 void func_801EEDF8(CItemBoxLine* self) {
     if (func_801EB020(&self->mNumSel) != 0) return;
     if (self->field3A0 != 0) {
@@ -1449,6 +1451,7 @@ void func_801EEDF8(CItemBoxLine* self) {
         func_80138078__FUl(5);
     }
 }
+#pragma pop
 
 // ============================================================================
 // func_801EF0EC: item-box focus resolver. Returns a cursor/focus id based on

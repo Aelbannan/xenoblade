@@ -503,13 +503,11 @@ void CPadManager::updatePadInputs(){
 
 void CPad::updateMotor(){
     const float zero = lbl_eu_8066A324;
-    float timer = mMotorTimer;
-    if(timer > zero){
-        timer -= lbl_eu_8066A340;
-        mMotorTimer = timer;
+    if(mMotorTimer > zero){
+        mMotorTimer -= lbl_eu_8066A340;
 
         //If the motor timer reached zero, turn off the motor
-        if(timer <= zero){
+        if(mMotorTimer <= zero){
             mMotorTimer = zero;
 
             switch(mPadType){

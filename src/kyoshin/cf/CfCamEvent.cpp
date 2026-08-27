@@ -1,5 +1,4 @@
 #include "kyoshin/cf/CfCamEvent.hpp"
-#include "monolib/scn/CScnTimeApi.hpp"
 
 #include "kyoshin/cf/CfGameManagerData.hpp"
 #include <string.h>
@@ -156,8 +155,8 @@ extern "C" CfCamEvent* __ct__8006B310(void* self, void* arg2) {
     u32 heap = func_80061FE8();
     CfCamEvent* obj = (CfCamEvent*)allocate__Q23mtl10MemManagerFUlUl(0x298, heap);
     if (obj != nullptr) {
-        __ct__cf_CfCamFollow((CfCamFollow*)obj, self, arg2);
-        ((CfCamFollow*)obj)->vtable = lbl_eu_80527048;
+        __ct__cf_CfCamFollow(obj, self, arg2);
+        ((CfCamFollowView*)obj)->vtable = lbl_eu_80527048;
         obj->field_0x290 = 0;
         obj->field_0x294 = 0;
         obj->unk8 = 8;
@@ -173,129 +172,140 @@ extern "C" CfCamEvent* __ct__8006B310(void* self, void* arg2) {
 // follow hook, recompute the lookat from the source block, and gate a node
 // flush on the angle trigger countdown.
 void func_8006ACC0(CfCamEvent* self) {
+    // All locals declared at function top: MWCC's allocation order for this
+    // function matches the original TU's C-style declaration layout.
+    ml::CVec3 aim;
+    ml::CVec3 pos;
+    ml::CVec3 diff;
+    ml::CVec3 probe1;
+    ml::CVec3 probe2;
+    CfCamBlock48 srcBlock;
+    CfCamNodeList* nodeList;
+    CfCamNode* node;
+    CfCamNodePayload* payload;
+    void* o164;
+    int follow;
+    u8 flagByte;
+    u32 evtFlags;
+
     func_8007FE20__Q22cf13CfGameManagerFv(0x2000);
 
+    // Paused/cutscene gate: when flagged (or the manager state matches), run
+    // the follow dispatch once and bail out.
     if ((self->unk4 & 0x04000000) != 0 || func_8007FE24__Q22cf13CfGameManagerFv(8) != 0) {
         if ((self->unk4 & 0x04000000) != 0) {
-            self->v_20();
+            self->v_22();
             func_80071B78(self);
             return;
         }
     }
 
-    if (CfRes_getD80Flag() != 0 && func_80496288(lbl_eu_80663E14) != lbl_eu_80666268) {
-        // Refresh the position/aim copies and recompute the error-checked
-        // direction vector from the last lookat target.
-        self->unk28 = self->unk274;
-        ml::CVec3 aim = self->unk28;
-        ml::CVec3 pos = self->mLookat;
-        ml::CVec3 diff = pos - self->unk58;
-        self->unk18C = diff;
-        if (self->unk18C.isErr()) {
-            self->unk18C = ml::CVec3::zero;
-        }
+    if (CfRes_getD80Flag() == 0 || func_80496288() == lbl_eu_80666268) {
+        return;
+    }
 
-        void* o164 = self->unk164;
-        if (func_800B8920(o164) == 0) {
-            o164 = 0;
-        }
-        int r31 = 0;
-        u8 r25 = self->field_0x294;
-        if ((u32)self->unk8 >= 0x10 && (u32)self->unk8 <= 0x2B) {
-            r31 = 1;
-        }
-        u32 m = lbl_eu_80663E24;
-        if ((m & 0x00400000) != 0 || (m & 0x00040000) != 0) {
-            r25 = 0;
-            r31 = 0;
-        } else if (func_8007F91C__Q22cf13CfGameManagerFv() != 0) {
-            r31 = 1;
-        }
+    // Refresh the position/aim copies and recompute the error-checked
+    // direction vector from the last lookat target.
+    self->unk28 = self->unk274;
+    aim = self->unk28;
+    pos = self->mLookat;
+    diff = pos - self->unk58;
+    self->unk18C = diff;
+    if (self->unk18C.isErr()) {
+        self->unk18C = ml::CVec3::zero;
+    }
 
-        if (r25 != 0 || r31 != 0) {
-            func_8006D8D0(self, func_800BBC0C(o164));
-            if (r31 != 0) {
-                // Follow path: keep the aim point on-screen by clamping it
-                // against the ground-probe results, then forward to the
-                // follow hook.
-                ml::CVec3 probe1;
-                if (func_804BE398(&pos, 0, 0x04000000, 0, lbl_eu_8066626C,
-                                  lbl_eu_80666268) != 0) {
-                    func_804BE4B4(&probe1, 0);
-                    if (pos.y < probe1.y + lbl_eu_80661B58) {
-                        pos.y = probe1.y + lbl_eu_80661B58;
-                    }
-                }
-                ml::CVec3 probe2;
-                if (func_804BE398(&aim, 0, 0x04000000, 0, lbl_eu_80666270,
-                                  lbl_eu_80666268) != 0) {
-                    func_804BE4B4(&probe2, 0);
-                    if (aim.y < lbl_eu_80666274 + probe2.y) {
-                        aim.y = lbl_eu_80666274 + probe2.y;
-                    }
-                }
-                func_800707C0(self, &aim, &pos);
-            } else {
-                // Non-follow path: pull the aim point part-way toward the
-                // camera position.
-                if (func_80073640(self, &self->mLookat, &aim, &self->unk34, 0) != 0) {
-                    ml::CVec3 subTmp, subOut;
-                    nw4r::math::VEC3Sub(subTmp, aim, self->unk34);
-                    subOut.set(subTmp);
-                    ml::CVec3 scaleTmp, scaleOut;
-                    nw4r::math::VEC3Scale(scaleTmp, subOut, lbl_eu_80666278);
-                    scaleOut.set(scaleTmp);
-                    ml::CVec3 addTmp, addOut;
-                    nw4r::math::VEC3Add(addTmp, self->unk34, scaleOut);
-                    addOut.set(addTmp);
-                    aim = addOut;
-                    self->field_0x1DC = lbl_eu_80666268;
+    o164 = self->unk164;
+    if (func_800B8920(o164) == 0) {
+        o164 = 0;
+    }
+    follow = 0;
+    flagByte = self->field_0x294;
+    if ((u32)self->unk8 >= 0x10 && (u32)self->unk8 <= 0x2B) {
+        follow = 1;
+    }
+    evtFlags = lbl_eu_80663E24;
+    if ((evtFlags & 0x00400000) != 0 || (evtFlags & 0x00040000) != 0) {
+        flagByte = 0;
+        follow = 0;
+    } else if (func_8007F91C__Q22cf13CfGameManagerFv() != 0) {
+        follow = 1;
+    }
+
+    if (flagByte != 0 || follow != 0) {
+        func_8006D8D0(self, func_800BBC0C(o164));
+        if (follow != 0) {
+            // Follow path: keep the aim point on-screen by clamping it
+            // against the ground-probe results, then forward to the
+            // follow hook.
+            if (func_804BE398(&pos, 0, 0x04000000, 0, lbl_eu_8066626C,
+                              lbl_eu_80666268) != 0) {
+                func_804BE4B4(&probe1, 0);
+                if (pos.y < probe1.y + lbl_eu_80661B58) {
+                    pos.y = probe1.y + lbl_eu_80661B58;
                 }
             }
-        }
-
-        // Copy the source block, run the camera-position hook, then compute
-        // the yaw angle from the direction vector and gate the node flush on
-        // the countdown trigger.
-        CfCamSrc160* o160 = self->unk160;
-        CfCamBlock48 tmp = o160->block;
-        func_80071AB0(self, &aim, &pos, 0, self->unk280, self->unk25C.z);
-        self->unk34 = aim;
-        self->unk130 = o160->block;
-        self->unk58 = pos;
-        self->unk40 = pos;
-        if (r31 == 0) {
-            self->unk64 = pos;
-        }
-        f32 ang = ml::CVec3::dot(tmp.dir, o160->block.dir);
-        if (ang < lbl_eu_8066627C) {
-            ang = lbl_eu_8066627C;
-        } else if (ang > lbl_eu_80666280) {
-            ang = lbl_eu_80666280;
-        }
-        if (!(ang <= lbl_eu_80666280 && ang >= lbl_eu_8066627C)) {
-            Warning__Q24nw4r2dbFPCciPCce((const char*)lbl_eu_805262F0, 0xEF,
-                                         (const char*)lbl_eu_805262C8);
-        }
-        if (acos(ang) * lbl_eu_8066A20C < lbl_eu_80666284) {
-            self->field_0x290 = 1;
-        }
-        if (self->field_0x290 > 0 && --self->field_0x290 == 0) {
-            // Flush the camera event nodes once the trigger countdown hits 0.
-            for (CfCamNode* node =
-                     ((CfCamNodeList*)func_80086B0C__Q22cf13CfGameManagerFv())->sentinel->next;
-                 node !=
-                     ((CfCamNodeList*)func_80086B0C__Q22cf13CfGameManagerFv())->sentinel;
-                 node = node->next) {
-                CfCamNodePayload* p = (CfCamNodePayload*)node->field_8;
-                if (p->field_98 != 0) {
-                    if ((p->field_68 & 0x8000) == 0) {
-                        func_804876DC();
-                    }
-                    func_80484E04(p->field_98, 1);
-                    func_804876C0(p->field_98);
+            ml::CVec3 probe2_unused;
+            if (func_804BE398(&aim, 0, 0x04000000, 0, lbl_eu_80666270,
+                              lbl_eu_80666268) != 0) {
+                func_804BE4B4(&probe2, 0);
+                if (aim.y < lbl_eu_80666274 + probe2.y) {
+                    aim.y = lbl_eu_80666274 + probe2.y;
                 }
             }
+            func_800707C0(self, &aim, &pos);
+        } else {
+            // Non-follow path: pull the aim point part-way toward the
+            // camera position.
+            if (func_80073640(self, &self->mLookat, &aim, &self->unk34, 0) != 0) {
+                diff = aim - self->unk34;
+                probe1 = diff * lbl_eu_80666278;
+                aim = self->unk34 + probe1;
+                self->field_0x1DC = lbl_eu_80666268;
+            }
+        }
+    }
+
+    // Copy the source block, run the camera-position hook, then compute
+    // the yaw angle from the direction vector and gate the node flush on
+    // the countdown trigger.
+    srcBlock = self->unk160->block;
+    func_80071AB0(self, &aim, &pos, 0, self->unk280, self->unk25C.z);
+    self->unk34 = aim;
+    self->unk130 = self->unk160->block;
+    self->unk58 = pos;
+    self->unk40 = pos;
+    if (follow == 0) {
+        self->unk64 = pos;
+    }
+    f32 ang = ml::CVec3::dot(srcBlock.dir, self->unk160->block.dir);
+    if (ang < lbl_eu_8066627C) {
+        ang = lbl_eu_8066627C;
+    } else if (ang > lbl_eu_80666280) {
+        ang = lbl_eu_80666280;
+    }
+    if (!(ang <= lbl_eu_80666280 && ang >= lbl_eu_8066627C)) {
+        Warning__Q24nw4r2dbFPCciPCce((const char*)lbl_eu_805262F0, 0xEF,
+                                     (const char*)lbl_eu_805262C8);
+    }
+    // acos result is narrowed to f32 before the scaling multiply.
+    if ((f32)acos(ang) * lbl_eu_8066A20C < lbl_eu_80666284) {
+        self->field_0x290 = 1;
+    }
+    if (self->field_0x290 > 0 && --self->field_0x290 == 0) {
+        // Flush the camera event nodes once the trigger countdown hits 0.
+        nodeList = func_80086B0C__Q22cf13CfGameManagerFv();
+        node = nodeList->sentinel->next;
+        while (node != func_80086B0C__Q22cf13CfGameManagerFv()->sentinel) {
+            payload = (CfCamNodePayload*)node->field_8;
+            if (payload->field_98 != 0) {
+                if ((payload->field_68 & 0x8000) == 0) {
+                    func_804876DC();
+                }
+                func_80484E04(payload->field_98, 1);
+                func_804876C0(payload->field_98);
+            }
+            node = node->next;
         }
     }
 }

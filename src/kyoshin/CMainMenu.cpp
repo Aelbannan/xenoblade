@@ -480,7 +480,9 @@ extern "C" void* func_800FF6BC(void* parent, void* param) {
     u32 workMem = CWorkThreadSystem::getWorkMem();
     CMainMenu* menu = (CMainMenu*)mtl::MemManager::allocate(0xE4, workMem);
     if (menu != NULL) {
-        __ct__CMainMenu(menu, (CScn*)param);
+        // __ct__CMainMenu returns _this; keep the value in the return reg
+        // so MWCC needs no extra spill across the call.
+        menu = __ct__CMainMenu(menu, (CScn*)param);
     }
     lbl_eu_80663F18 = (u32)menu;
     Regist__8CProcessFP8CProcessb(menu, parent, false);
@@ -637,9 +639,7 @@ void func_800FF920(CMainMenu* self) {
         if (pane != NULL) {
             vec = pane->GetTranslate();
         }
-        // Retail spells out the s16->f32 magic-double conversion against the
-        // shared sdata2 constant.
-        vec.x = (f32)((f64)(s32)lbl_eu_804FCD60[self->field_0xC0] - lbl_eu_80666F10);
+        vec.x = lbl_eu_804FCD60[self->field_0xC0];
         ((CMainMenuCurVt*)&self->_90[0])->vfn_0x10(&vec);
         // Refresh the "N" counter panes for the new cursor index.
         int n = self->field_0xC0 + 1;
@@ -668,7 +668,7 @@ void func_800FF920(CMainMenu* self) {
         if (pane != NULL) {
             vec = pane->GetTranslate();
         }
-        vec.x = (f32)((f64)(s32)lbl_eu_804FCD60[self->field_0xC0] - lbl_eu_80666F10);
+        vec.x = lbl_eu_804FCD60[self->field_0xC0];
         ((CMainMenuCurVt*)&self->_90[0])->vfn_0x10(&vec);
         int n = self->field_0xC0 + 1;
         if (n > 0) {

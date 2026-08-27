@@ -14,23 +14,23 @@ namespace cf { class CfGameManager; }
 // getPlayer__Q22cf13CfGameManagerFi needs no guard: all headers in this
 // TU's chain now share the extern "C" void*(int) form (CfObjectImplMove.hpp
 // was converted from C++ linkage).
-// Same treatment for the enum-list helper family (CfObjectImplMove/
-// CfObjectImplWalker/pluginUi headers declare typed C++-linkage variants).
-// Guards must precede harness_catalog.hpp: CfObjectImplMove.hpp arrives via
-// harness_catalog -> CTaskGameEff, so defining these any later leaves its
-// typed func_80043D90/func_80043F18/func_800F4A98/__dt__80043E88 decls live
-// and clashing with CAIAction.hpp's canonical void* forms (MWCC 10197).
-#define func_80043D90 visionCppEnumListCtorUnused
-#define func_80043F18 visionCppEnumListGetUnused
-#define func_800F6EAC visionCppEnumListElemUnused
-#define __dt__80043E88 visionCppEnumListDtorUnused
-#define func_800F4A98 visionCppEnumListFillUnused
-// func_8016FE34 / func_800F477C are dual-arity retail symbols: most headers
-// say void*(void*) / void*(void) but this TU's call sites pass an int id /
-// a self pointer. Guard BOTH names across every include (harness chain
-// included) so the local declarations below are the only ones visible.
-#define func_8016FE34 visionCppChainActorLookup
-#define func_800F477C visionCppVisionRefUnused
+// Shield-clearing note (H3): the enum-list helper family (func_80043D90 /
+// func_80043F18 / func_800F6EAC / __dt__80043E88 / func_800F4A98) carries
+// ONE identical extern "C" void* form on every header in this TU's include
+// chain now -- CAIAction.hpp, CVision.hpp and CfObjectImplMove.hpp all agree
+// (return types, parameter lists and linkage) -- so the former
+// #define-sym-...Unused rename shields ahead of harness_catalog.hpp are gone.
+// The typed C++-linkage variants that used to clash under MWCC 10197 were
+// converted to the canonical forms by earlier H3 header-ownership passes.
+// func_8016FE34 likewise has a single extern "C" void*(void*) form across
+// the chain (CAIAction.hpp / CChainTimer.hpp / CfObjectImplMove.hpp); the
+// int-id view this TU used to keep behind a guard was a stale-r3 dual-arity
+// artifact, and its id-passing call sites below now cast their args to
+// (void*) instead of redeclaring the symbol with an int parameter.
+// func_800F477C keeps one extern "C" void*(void*) declaration in this TU;
+// the old no-arg copy on CfObjectImplMove.hpp moved TU-local into
+// CfObjectImplMove.cpp, which is the only caller of that ABI.
+// (Region line count preserved: MWCC -ipa file codegen is line-sensitive.)
 #include "kyoshin/harness_catalog.hpp"
 #include "kyoshin/CTaskGameApi.hpp"
 // (CUIWindowManagerApi.hpp omitted: conflicts with this TU's closure.)
@@ -61,10 +61,10 @@ extern "C" void* __dt__801A36D0(cf::UnkClass_801A36D0* self, int deleting);
 // func_80496288, func_8006EF04__Fi, func_80260264) resolve to the
 // chain-header / local declarations instead.
 //
-// func_8016FE34 is declared `void* (void*)` by CAIAction.hpp and
-// CChainTimer.hpp but takes an int id at the retail call sites here, so those
-// two headers are pre-included under a rename and CVision.cpp keeps its
-// (int id) declaration.
+// func_8016FE34's single canonical extern "C" void*(void*) chain form comes
+// from CAIAction.hpp / CChainTimer.hpp (identical copies); this TU no longer
+// pre-includes them under a rename nor keeps a divergent (int id)
+// redeclaration -- id-passing call sites cast to (void*) at the call.
 #include "kyoshin/cf/CSuddenCommu.hpp"
 // The former func_8009EC9C / getBdatStringColumnValue / getArtsSlotRC /
 // getArtsParamRC2 renames are gone: CAIAction.hpp no longer redeclares
@@ -76,20 +76,20 @@ extern "C" void* __dt__801A36D0(cf::UnkClass_801A36D0* self, int deleting);
 // This TU uses the CSuddenCommu form; rename the other out of the way.
 #include "kyoshin/cf/object/CAIAction.hpp"
 #include "kyoshin/cf/chain/CChainTimer.hpp"
-// CBattleManager.hpp pulls CfObjectActor.hpp, whose func_8016FE34(int id)
-// and func_800F477C decls are dual-arity variants (retail call sites in some
-// TUs pass an int id / no arg). Rename both away for this TU; its own
-// declarations keep the forms this unit's call sites use.
+// CBattleManager.hpp pulls CfObjectActor.hpp; its declarations of the
+// enum-list family and func_8016FE34/func_800F477C no longer diverge from
+// the canonical extern "C" void* forms, so the former #undef/rename
+// epilogue after this include is gone entirely.
 #include "kyoshin/cf/CBattleManager.hpp"
-#undef func_8016FE34
-#undef func_800F477C
-// Header decls for the renamed family are now all in; restore real names and
-// install exactly one canonical declaration per symbol.
-#undef func_80043D90
-#undef func_80043F18
-#undef func_800F6EAC
-#undef __dt__80043E88
-#undef func_800F4A98
+// The explicit extern "C" declarations below stay: they are identical
+// duplicates of the chain-header forms (legal redeclaration) and act as
+// this TU's visible import anchors.
+// Removed here: #undef func_8016FE34, #undef func_800F477C,
+// #undef func_80043D90, #undef func_80043F18, #undef func_800F6EAC,
+// #undef __dt__80043E88, #undef func_800F4A98 (no macros remain).
+// Region line count preserved: MWCC -ipa file codegen in this TU is
+// sensitive to downstream source line numbers (CMenuPTGauge case).
+//
 extern "C" u16 func_801BFC38__Q22cf10CfSoundManFUlUlUlUlf(u32 a, u32 b, u32 c, u32 d, f32 e);
 extern "C" void func_80043D90(void* list);
 extern "C" void* func_80043F18(void* list);
@@ -121,7 +121,7 @@ extern "C" const double lbl_eu_80667D58 = 0x4330000000000000ll;
 extern "C" void func_800EA484(cf::CBattleManager* bm, f32 volume, int id); // CBattleManager.cpp re-declares (float,u32) + defines stub
 extern "C" int func_80148778(void* obj, int id);   // CBattleManager.cpp declares with C++ linkage
 extern "C" void func_801AD504(int id);             // CMenuVision.cpp defines an empty stub
-extern "C" void* func_8016FE34(int id);            // 4 TUs declare a void* -param version
+// func_8016FE34: uses the chain headers' shared extern "C" void*(void*) form
 extern "C" void func_802A1DF0(u32 a);              // CCharVoiceMan.cpp defines an empty stub
 extern "C" int func_80260264(void* self, int id, void* result); // matches CSuddenCommu.hpp / CBattleManager.cpp
 
@@ -174,7 +174,7 @@ struct CVisionRefObj {
     u32 w_78;        // 0x78
 };
 // Kept inline (not moved to CVision.hpp): sibling TUs declare these.
-extern "C" CVisionRefObj* func_800F477C(void* self); // pluginUnit.cpp declares CfUnknownSub* version
+extern "C" void* func_800F477C(void* self); // canonical opaque owner form (code_800F42AC)
 extern "C" bool func_8006EF04__Fi(int mask);         // CfObjectActor.hpp/CChain.hpp declare bool(int); s32=long would clash
 
 // Object passed to func_801A6A7C / func_801A380C-family (battle object).
@@ -208,8 +208,8 @@ public:
 class CVisionBMView {
 public:
     virtual void f000();
-    virtual void f004();
-    virtual void f008();
+    // (f004/f008 removed: MWCC's RTTI slot arithmetic put vt34 at 0x3C;
+    // retail dispatches 0x34.)
     virtual void f00C();
     virtual void f010();
     virtual void f014();
@@ -821,7 +821,7 @@ void func_801A39D8(CVision* self) {
         for (int pi = 0; pi < 3; pi++) {
             CVisionFusion* p =
                 (CVisionFusion*)func_8016FE34(
-                    (int)getPlayer__Q22cf13CfGameManagerFi(pi));
+                    getPlayer__Q22cf13CfGameManagerFi(pi));
             if (p != 0) {
                 p->field_3388 &= ~0x8u;
             }
@@ -844,8 +844,8 @@ void func_801A4194(CVision* self) {
     } else {
         sub = &self->sub;
     }
-    CVisionFusion* p1 = (CVisionFusion*)func_8016FE34(func_800B708C__Fi(sub->field_00));
-    CVisionFusion* p2 = (CVisionFusion*)func_8016FE34(func_800B708C__Fi(sub->field_04));
+    CVisionFusion* p1 = (CVisionFusion*)func_8016FE34((void*)func_800B708C__Fi(sub->field_00));
+    CVisionFusion* p2 = (CVisionFusion*)func_8016FE34((void*)func_800B708C__Fi(sub->field_04));
     if (p1 == 0 || p2 == 0) {
         self->vt_20(1);
         return;
@@ -951,8 +951,8 @@ void func_801A4578(CVision* self) {
         sub = &self->sub;
     }
     if (sub->field_824 & 0x40000) {
-        p1 = (CVisionFusion*)func_8016FE34(func_800B708C__Fi(sub->field_00));
-        p2 = (CVisionFusion*)func_8016FE34(func_800B708C__Fi(sub->field_04));
+        p1 = (CVisionFusion*)func_8016FE34((void*)func_800B708C__Fi(sub->field_00));
+        p2 = (CVisionFusion*)func_8016FE34((void*)func_800B708C__Fi(sub->field_04));
         if (p1 == 0 || p2 == 0) {
             self->vt_20(1);
             return;
@@ -1034,8 +1034,8 @@ void func_801A47D0(CVision* self) {
     } else {
         sub = &self->sub;
     }
-    p1 = (CVisionFusion*)func_8016FE34(func_800B708C__Fi(sub->field_00));
-    p2 = (CVisionFusion*)func_8016FE34(func_800B708C__Fi(sub->field_04));
+    p1 = (CVisionFusion*)func_8016FE34((void*)func_800B708C__Fi(sub->field_00));
+    p2 = (CVisionFusion*)func_8016FE34((void*)func_800B708C__Fi(sub->field_04));
     if (p1 == 0 || p2 == 0) {
         self->vt_20(1);
         return;
@@ -1177,8 +1177,8 @@ void func_801A4CF8(CVision* self) {
         self->vt_20(1);
         return;
     }
-    CVisionFusion* p1 = (CVisionFusion*)func_8016FE34(func_800B708C__Fi(sub->field_00));
-    CVisionFusion* p2 = (CVisionFusion*)func_8016FE34(func_800B708C__Fi(sub->field_04));
+    CVisionFusion* p1 = (CVisionFusion*)func_8016FE34((void*)func_800B708C__Fi(sub->field_00));
+    CVisionFusion* p2 = (CVisionFusion*)func_8016FE34((void*)func_800B708C__Fi(sub->field_04));
     if (p1 == 0 || p2 == 0) {
         self->vt_20(1);
         return;
@@ -1279,7 +1279,7 @@ void func_801A506C(CVision* self) {
     } else {
         sub = &self->sub;
     }
-    CVisionFusion* p2 = (CVisionFusion*)func_8016FE34(func_800B708C__Fi(sub->field_04));
+    CVisionFusion* p2 = (CVisionFusion*)func_8016FE34((void*)func_800B708C__Fi(sub->field_04));
     if (p2->field_3F00 & 0x2) {
         bool cancel;
         if (p2 == 0 || p2->field_3F60 == 0) {
@@ -1421,7 +1421,7 @@ void func_801A5444(CVision* self, CVisionBattleObj* obj, CVisionBattleObj* r5) {
     } else {
         sub = &self->sub;
     }
-    CVisionBattleObj* fu = (CVisionBattleObj*)func_8016FE34(func_800B708C__Fi(sub->field_00));
+    CVisionBattleObj* fu = (CVisionBattleObj*)func_8016FE34((void*)func_800B708C__Fi(sub->field_00));
     if (fu == 0) {
         self->vt_20(1);
         return;
@@ -1570,7 +1570,7 @@ void func_801A5BA8(CVision* self) {
     }
     // Retail dereferences the conditional sub pointer unconditionally
     // (field_00 != 0 guarantees it is valid in practice).
-    p = (CVisionFusion*)func_8016FE34(func_800B708C__Fi(sub->field_00));
+    p = (CVisionFusion*)func_8016FE34((void*)func_800B708C__Fi(sub->field_00));
     cv = self;
     if (p == 0) {
         cv->vt_20(1);
@@ -1696,7 +1696,7 @@ void func_801A5E58(CVision* self) {
     if (w1) {
         f32 scl = lbl_eu_80667D38;
         if (func_800F477C(sub) != 0) {
-            if (func_800F477C(sub)->b_42 == 1) {
+            if (((CVisionRefObj*)func_800F477C(sub))->b_42 == 1) {
                 scl = lbl_eu_80667D3C;
             }
         }
@@ -1705,7 +1705,7 @@ void func_801A5E58(CVision* self) {
         // lbl_eu_80667D28 (hoisted into a saved FPR), then folds into the
         // running scale.
         for (i = 0; i < 3; i++) {
-            p = (CVisionFusionSub*)func_8016FE34((int)getPlayer__Q22cf13CfGameManagerFi(i));
+            p = (CVisionFusionSub*)func_8016FE34(getPlayer__Q22cf13CfGameManagerFi(i));
             if (p != 0) {
                 if (p->vf290() != 0) {
                     s32 out;
@@ -1826,8 +1826,8 @@ void func_801A60B0(CVision* self) {
 
 void func_801A6340(CVision* self) {
     CVisionSub* sub = (self->sub.field_00 == 0) ? 0 : &self->sub;
-    CVisionFusion* fr = (CVisionFusion*)func_8016FE34(func_800B708C__Fi(sub->field_00));
-    CVisionFusion* fr2 = (CVisionFusion*)func_8016FE34(func_800B708C__Fi(sub->field_04));
+    CVisionFusion* fr = (CVisionFusion*)func_8016FE34((void*)func_800B708C__Fi(sub->field_00));
+    CVisionFusion* fr2 = (CVisionFusion*)func_8016FE34((void*)func_800B708C__Fi(sub->field_04));
     // Retail materializes the equality test via mfcr/extrwi (value context).
     bool atBase = (lbl_eu_80667CD4 == self->field_2619C);
     if (atBase) {
@@ -1888,7 +1888,7 @@ void func_801A897C(CVision* self, void* slot, void* r28) {
         if (bs->w_00 != x && bs->w_04 != x) {
             return;
         }
-        CVisionBattleObj* fu = (CVisionBattleObj*)func_8016FE34(func_800B708C__Fi(bs->w_00));
+        CVisionBattleObj* fu = (CVisionBattleObj*)func_8016FE34((void*)func_800B708C__Fi(bs->w_00));
         if (fu == 0) {
             return;
         }
@@ -1952,9 +1952,9 @@ void func_801A897C(CVision* self, void* slot, void* r28) {
 #define VISION_VT30(subPtr) (*(u32*)((void* (*)(void*))(*(void***)(void*)(subPtr))[0x30 / 4])((void*)(subPtr)))
         // Retail reuses the incoming argument registers for the per-slot
         // working values (slot -> object, r28 -> effect kind).
-        slot = func_8016FE34(func_800B708C__Fi(p->w_00));
+        slot = func_8016FE34((void*)func_800B708C__Fi(p->w_00));
         // Second id lookup result is discarded (presence check only).
-        func_8016FE34(func_800B708C__Fi(p->w_04));
+        func_8016FE34((void*)func_800B708C__Fi(p->w_04));
         if (slot == 0) {
             self->vt_20(1);
             continue;
@@ -2049,7 +2049,7 @@ void func_801A897C(CVision* self, void* slot, void* r28) {
             r28 = (void*)4;
         }
         if (func_80148778((u8*)slot + 8, 0xc) != 0 &&
-            (func_800F477C(p) == 0 || !(func_800F477C(p)->w_78 & 1))) {
+            (func_800F477C(p) == 0 || !(((CVisionRefObj*)func_800F477C(p))->w_78 & 1))) {
             r28 = (void*)4;
         }
         if (!(p->w_824 & 4) && r28 == 0) {
@@ -2097,7 +2097,7 @@ void func_801A6540(CVision* self) {
         self->vt_20(1);
         return;
     }
-    CVisionBattleObj* fu = (CVisionBattleObj*)func_8016FE34(func_800B708C__Fi(sub->field_00));
+    CVisionBattleObj* fu = (CVisionBattleObj*)func_8016FE34((void*)func_800B708C__Fi(sub->field_00));
     if (fu == 0) {
         self->vt_20(1);
         return;
@@ -2342,11 +2342,11 @@ int func_801A6BCC(CVision* self, CVisionObjV* obj, CVisionObjV* r5) {
 
     // Target fusion from `r5` (+4 id, +0x50 actor requirement).
     CVisionActor50* actor = r5->field_50;
-    CVisionFusionV* target = (CVisionFusionV*)func_8016FE34(func_800B708C__Fi(r5->field_04));
+    CVisionFusionV* target = (CVisionFusionV*)func_8016FE34((void*)func_800B708C__Fi(r5->field_04));
     if (target == NULL || actor == NULL) {
         return 0;
     }
-    if (func_8016FE34((int)getPlayer__Q22cf13CfGameManagerFi(0)) == NULL) {
+    if (func_8016FE34(getPlayer__Q22cf13CfGameManagerFi(0)) == NULL) {
         return 0;
     }
 
@@ -2634,7 +2634,7 @@ void func_801A74DC(CVision* self) {
         // the stat is passed as a plain float (MWCC's int->float magic).
         int i = 0;
         do {
-            void* p = func_8016FE34((int)getPlayer__Q22cf13CfGameManagerFi(i));
+            void* p = func_8016FE34(getPlayer__Q22cf13CfGameManagerFi(i));
             if (p != 0) {
                 if (((s32 (*)(void*))((void**)p)[0x290 / 4])(p) != 0) {
                     void* r = ((void* (*)(void*))((void**)p)[0x290 / 4])(p);
@@ -2665,8 +2665,8 @@ void func_801A7704(CVision* self) {
     } else {
         sub = &self->sub;
     }
-    CVisionBattleObj* p1 = (CVisionBattleObj*)func_8016FE34(func_800B708C__Fi(sub->field_00));
-    CVisionBattleObj* p2 = (CVisionBattleObj*)func_8016FE34(func_800B708C__Fi(sub->field_04));
+    CVisionBattleObj* p1 = (CVisionBattleObj*)func_8016FE34((void*)func_800B708C__Fi(sub->field_00));
+    CVisionBattleObj* p2 = (CVisionBattleObj*)func_8016FE34((void*)func_800B708C__Fi(sub->field_04));
     if (p1 == 0) {
         self->vt_20(1);
         return;
@@ -2773,8 +2773,8 @@ void func_801A7D6C(CVision* self, void* r4) {
     func_800EA484(CBattleManager::getInstance(), lbl_eu_80667CF0, 0x13);
     func_801AF934(0);
     if (sub != 0) {
-        CVisionFusion* p1 = (CVisionFusion*)func_8016FE34(func_800B708C__Fi(sub->field_00));
-        CVisionFusion* p2 = (CVisionFusion*)func_8016FE34(func_800B708C__Fi(sub->field_04));
+        CVisionFusion* p1 = (CVisionFusion*)func_8016FE34((void*)func_800B708C__Fi(sub->field_00));
+        CVisionFusion* p2 = (CVisionFusion*)func_8016FE34((void*)func_800B708C__Fi(sub->field_04));
         if (p1 != 0) {
             p1->field_3388 &= 0xFFFD;
             p1->field_04->v20(0x4000);
@@ -2836,8 +2836,8 @@ void func_801A8138(CVision* self) {
 // many element-array pushes have happened so far; each push appends a
 // {tag, scaled stage, 0} entry to the ring at unk261C4.w60.
 void func_801A8244(CVision* self, void* r25, int r26, int r27, int r28) {
-    CVisionBattleObj* fu = (CVisionBattleObj*)func_8016FE34(func_800B708C__Fi(((CVisionBtlSlot*)r25)->w_00));
-    func_8016FE34(func_800B708C__Fi(((CVisionBtlSlot*)r25)->w_04));
+    CVisionBattleObj* fu = (CVisionBattleObj*)func_8016FE34((void*)func_800B708C__Fi(((CVisionBtlSlot*)r25)->w_00));
+    func_8016FE34((void*)func_800B708C__Fi(((CVisionBtlSlot*)r25)->w_04));
     if (fu == 0) {
         self->vt_20(1);
         return;
@@ -2866,7 +2866,7 @@ void func_801A8244(CVision* self, void* r25, int r26, int r27, int r28) {
         func_80043D90(vdlist);
         func_800F4A98(func_80043F18(vdlist), 0x20, 0);
         for (u32 i = 0; i < ((CVisionEnumList*)func_80043F18(vdlist))->count; i++) {
-            CVisionBattleObj* obj = (CVisionBattleObj*)func_8016FE34((int)func_800F6EAC(func_80043F18(vdlist), i));
+            CVisionBattleObj* obj = (CVisionBattleObj*)func_8016FE34(func_800F6EAC(func_80043F18(vdlist), i));
             if (obj->vf308() == 3) {
                 obj->vf304(4);
             } else if (obj->vf308() == 0) {
@@ -2985,7 +2985,7 @@ void func_801A8244(CVision* self, void* r25, int r26, int r27, int r28) {
     {
         CVisionArg5 data = *(CVisionArg5*)lbl_eu_80503F80;
         for (int i = 0; i < 3; i++) {
-            CVisionBattleObj* pl = (CVisionBattleObj*)func_8016FE34((int)getPlayer__Q22cf13CfGameManagerFi(i));
+            CVisionBattleObj* pl = (CVisionBattleObj*)func_8016FE34(getPlayer__Q22cf13CfGameManagerFi(i));
             if (pl == 0) continue;
             if (pl->vf290() == 0) continue;
             if (func_8026178C((void*)pl->vf290(), 0x8c) == 0) continue;

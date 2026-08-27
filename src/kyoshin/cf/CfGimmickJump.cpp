@@ -45,7 +45,7 @@ extern void func_8020A484(u16 resourceId);
 extern int func_8020A5DC(void* self);
 extern int func_8020A87C(void* self, void* effect);
 extern int func_8020971C(u16 duration);
-extern int func_80209754(u8 flags, void* first, void* second, void* third,
+extern int func_80209754(u16 flags, void* first, void* second, void* third,
                          void* effect);
 extern void func_80209F5C();
 extern void* func_8003AA34();
@@ -79,7 +79,7 @@ extern void __dl__FPv(void* value);
  * - Linked object (func_800817BC work object, back-pointer at +0xB0): owning
  *   class not yet recovered anywhere in the tree (every gimmick TU keeps a
  *   raw view: CfGimmickItemMgr / WarpObject / ...), so its +0x9C/+0xC4
- *   dispatches stay on the minimal JumpLinkedObjectIf view.
+ *   dispatches stay on the minimal CfGimmickJumpMgr view.
  */
 
 // Member-function-pointer state table over the real owning class.
@@ -104,7 +104,15 @@ public:
     virtual void setPosition(const CfGimmickJumpVec3& position);  // +0x9C
 };
 
-struct JumpLinkedObjectIf {
+/*
+ * Minimal view of the func_800817BC work object (the CfGameManager-owned
+ * object cached per gimmick id; CfGimmickJump stores its back-pointer at
+ * +0xB0). The owning class is not yet recovered anywhere in the tree -- every
+ * gimmick TU keeps a raw view of this same object (CfGimmickItemMgr,
+ * WarpObject, ...). Slots dispatched here: vtable +0x9C setPosition and
+ * +0xC4 setHeight (both arg-carrying in retail).
+ */
+struct CfGimmickJumpMgr {
     virtual void _v008();
     virtual void _v00C();
     virtual void _v010();
@@ -178,10 +186,9 @@ struct JumpTargetData {
 };
 
 static inline cf::CfObjectActor* jumpActorFromPlayer(void* player) {
-    if (player == 0) {
-        return 0;
-    }
-    return reinterpret_cast<cf::CfObjectActor*>((u8*)player - 0x3E9C);
+    return (player == 0)
+               ? 0
+               : reinterpret_cast<cf::CfObjectActor*>((u8*)player - 0x3E9C);
 }
 
 static inline const CfGimmickJumpVec3* jumpPlayerPosition(int index) {
@@ -445,11 +452,6 @@ extern "C" void func_8020F8C4(CfGimmickJump* self) {
 }
 
 extern "C" void func_8020F984(CfGimmickJump* self) {
-    void* player = getPlayer__Q22cf13CfGameManagerFi(0);
-    if (player == 0) {
-        return;
-    }
-
     const CfGimmickJumpVec3* playerPosition = jumpPlayerPosition(0);
     if (playerPosition == 0) {
         return;
@@ -478,7 +480,7 @@ extern "C" void func_8020F984(CfGimmickJump* self) {
     if ((self->flags & 1) == 0) {
         self->flags |= 0x400;
         if ((self->flags66 & 8) == 0 &&
-            func_80209754((u8)self->flags66, &self->initialState,
+            func_80209754(self->flags66, &self->initialState,
                           &self->position, &self->rotation, self->effect) == 0) {
             self->timer = lbl_eu_80668404;
             return;
@@ -486,21 +488,27 @@ extern "C" void func_8020F984(CfGimmickJump* self) {
         self->flags |= 1;
     }
 
-    if (self->timer < (f32)self->jumpFrames * lbl_eu_80668420) {
+    if (self->timer < (f32)(self->jumpFrames * 30)) {
         return;
     }
 
-    self->timer = (f32)self->jumpFrames * lbl_eu_80668420;
-    self->linkedObject = func_800817BC__Q22cf13CfGameManagerFv(self->jumpFrames, 0);
+    // Retail reuses the +0x88 flag byte for both the timer reload and the
+    // work-object id (converted through the shared 0x43300000 int->float
+    // magic, hence the plain integer source forms here).
+    self->timer = (f32)self->effectFlags;
+    self->linkedObject = func_800817BC__Q22cf13CfGameManagerFv(self->effectFlags, 0);
     if (self->linkedObject == 0) {
         return;
     }
 
     *(void**)((u8*)self->linkedObject + 0xB0) = self;
-    JumpLinkedObjectIf* linked = reinterpret_cast<JumpLinkedObjectIf*>(self->linkedObject);
+    // Retail reloads the linked-object field for each dispatch (the calls in
+    // between can clobber it); slots stay on the minimal view (see above).
     if ((self->jumpFlags & 0x10) != 0) {
-        linked->setPosition(self->position);
-        linked->setHeight(self->position.y);
+        reinterpret_cast<CfGimmickJumpMgr*>(self->linkedObject)
+            ->setPosition(self->position);
+        reinterpret_cast<CfGimmickJumpMgr*>(self->linkedObject)
+            ->setHeight(self->rotation.y);
     }
 
     if (self->soundHandle != 0) {
@@ -509,9 +517,13 @@ extern "C" void func_8020F984(CfGimmickJump* self) {
 
     if (self->effectId != 0) {
         CfGimmickJumpVec3 position = self->position;
-        const CfGimmickJumpVec3* playerPos = jumpPlayerPosition(0);
-        if (playerPos != 0) {
-            position.y = playerPos->y;
+        void* player = getPlayer__Q22cf13CfGameManagerFi(0);
+        if (player != 0) {
+            position.y =
+                reinterpret_cast<const CfGimmickJumpVec3*>(
+                    static_cast<cf::CfObjectMove*>(player)
+                        ->CfObject_UnkVirtualFunc23())
+                    ->y;
         }
         if (position.y > self->position.y + self->height) {
             position.y = self->position.y + self->height;
@@ -523,7 +535,6 @@ extern "C" void func_8020F984(CfGimmickJump* self) {
     }
 
     self->motionState = 2;
-    self->timer = lbl_eu_80668404;
     self->flags &= ~1u;
 }
 
@@ -531,10 +542,6 @@ extern "C" void func_8020F984(CfGimmickJump* self) {
 // (retail pool doubles lbl_eu_80668410 = 0x4330000080000000 and
 // lbl_eu_80668418 = 0x4330000000000000 ship from the split1 shared data
 // object; the int-to-float conversion sequences reference them directly.)
-
-static f32 jumpFrameThreshold(CfGimmickJump* self) {
-    return (f32)(self->jumpFrames * 30 + self->waitFrames);
-}
 
 extern "C" void func_8020FC14(CfGimmickJump* self) {
     CfGimmickJumpVec3 position;
@@ -562,7 +569,7 @@ extern "C" void func_8020FC14(CfGimmickJump* self) {
         }
     }
 
-    if (self->timer >= jumpFrameThreshold(self)) {
+    if (self->timer >= (f32)(self->jumpFrames * 30 + self->waitFrames)) {
         self->motionState = 3;
         self->timer = lbl_eu_80668404;
         self->verticalOffset = lbl_eu_80668404;

@@ -411,10 +411,9 @@ public:
     u32* mExtraAlloc;               // +0xC4 (deallocated by the dtor; 128 u32 slots)
     nw4r::g3d::LightObj* mLightObjs;  // +0xC8 (delete[]'d by the dtor)
     u32 valueCC;                    // +0xCC (slot bound in func_80493C30)
-    // volatile pins the byte store ahead of the independent float store
-    volatile u8 enabled;            // +0xD0 (armed flag, set to 1 by the ctor)
+    u8 enabled;                     // +0xD0 (armed flag, set to 1 by the ctor)
     u8 _D1[3];                      // +0xD1
-    volatile f32 valueD4;           // +0xD4
+    f32 valueD4;                    // +0xD4
     u8 _D8[0xA8];                   // +0xD8..+0x17F
     u32 value480;                   // +0x180
 };

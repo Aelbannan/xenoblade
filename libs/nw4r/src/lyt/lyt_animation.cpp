@@ -16,7 +16,6 @@ extern const float lbl_eu_80669DEC; // -2.0f
 // referencing the static member directly makes MWCC emit the mangled
 // lbl_eu_80665488 name instead of the retail sbss label.
 extern "C" MEMAllocator* lbl_eu_80665478;
-
 /******************************************************************************
  *
  * Private structures
@@ -381,6 +380,65 @@ void AnimTransformBasic::SetResource(const res::AnimationBlock* pBlock, Resource
     SetResource(pBlock, pAccessor, pBlock->animContNum);
 }
 
+void AnimTransformBasic::SetResource(const res::AnimationBlock* pBlock,
+                                     ResourceAccessor* pAccessor, u16 animNum) {
+    mpRes = pBlock;
+    mpFileResAry = NULL;
+
+    // Fetch the texture files referenced by this animation up front.
+    const u16 fileNum = pBlock->fileNum;
+
+    mpRes = pBlock;
+    mpFileResAry = NULL;
+
+    if (fileNum != 0) {
+        void** pFileRes = static_cast<void**>(
+            MEMAllocFromAllocator(lbl_eu_80665478,
+                                  static_cast<u32>(fileNum) * sizeof(void*)));
+
+        if (pFileRes != NULL) {
+            // Bound re-read through mpRes: the allocator call may legally have
+            // clobbered it, which is what preserves retail's entry/guard tests.
+            for (u32 i = 0; i < mpRes->fileNum; i++) {
+                if (pFileRes != NULL) { // per-element null guard reproduced from retail
+                    pFileRes[i] = NULL;
+                }
+            }
+        }
+
+        mpFileResAry = pFileRes;
+
+        if (mpFileResAry != NULL) {
+            const u32* pStrTable = detail::ConvertOffsToPtr<u32>(
+                mpRes, sizeof(res::AnimationBlock));
+
+            for (u16 i = 0; i < mpRes->fileNum; i++) {
+                const char* pName = detail::GetStrTableStr(pStrTable, i);
+
+                mpFileResAry[i] = pAccessor->GetResource(
+                    ArcResourceAccessor::RES_TYPE_TEXTURE, pName, NULL);
+            }
+        }
+    }
+
+    // One link slot per animated content.
+    AnimationLink* pLinkAry = static_cast<AnimationLink*>(
+        MEMAllocFromAllocator(lbl_eu_80665478,
+                              static_cast<u32>(animNum) * sizeof(AnimationLink)));
+
+    if (pLinkAry != NULL) {
+        for (u32 i = 0; i < animNum; i++) {
+            if (pLinkAry != NULL) { // per-element null guard reproduced from retail
+                new (&pLinkAry[i]) AnimationLink();
+            }
+        }
+
+        mAnimLinkNum = animNum;
+    }
+
+    mAnimLinkAry = pLinkAry;
+}
+
 void AnimTransformBasic::Bind(Pane* pPane, bool recursive) {
     const u32* const pContentOffsetTbl =
         detail::ConvertOffsToPtr<u32>(mpRes, mpRes->animContOffsetsOffset);
@@ -430,13 +488,15 @@ void AnimTransformBasic::Bind(Material* pMaterial, bool param) {
             }
 
             // Scan forward from the cursor for the first unused entry.
-            AnimationLink* pEnd = &mAnimLinkAry[mAnimLinkNum];
+            const AnimationLink* pEnd = &mAnimLinkAry[mAnimLinkNum];
 
-            while (pLink < pEnd && pLink->GetAnimTransform() != NULL) {
+            u32 n = static_cast<u32>(pEnd - pLink);
+            while (n != 0 && pLink->GetAnimTransform() != NULL) {
                 ++pLink;
+                --n;
             }
 
-            if (pLink >= pEnd) {
+            if (n == 0) {
                 pLink = NULL;
             }
 

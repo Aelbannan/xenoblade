@@ -39,7 +39,7 @@
 #include "monolib/device/CDeviceSC.hpp"
 
 // External function declarations
-void func_801F369C(void*);
+extern "C" void func_801F369C(void*);  // retail symbol is unmangled (CItemBoxLine/COption/CSortMenu.hpp pattern)
 void func_80138078(u32);
 u32 func_80137444(nw4r::lyt::AnimTransform*, float);
 // func_80137510 declared in code_80135FDC.hpp

@@ -2485,9 +2485,7 @@ void CEquipItemBox::func_80288A6C() {
 // emit a `bl` to the unmangled retail name.
 extern "C" __declspec(noinline) void func_80288AC0(CEquipItemBox* self) {
     if (self->field_38 == 0) return;
-    if (self->field_34 == 0)
-        return;
-    else {
+    if (!(self->field_34 == 0)) {
         func_80139198(0);
         self->unk_42 = 1;
     }
@@ -3130,14 +3128,13 @@ extern "C" void func_8028A5D8(CEquipItemBox* self, int a) {
     } else if ((s8)buf[1] >= self->unk_372) {
         buf[1] = 0;
     }
-    s8 b;
     u8 flagA = 0;
     u8 flagB = 0;
     u8 i;
     for (i = 0; i < 2; i++) {
+        s8 b = (s8)buf[i];
         char name1[0x20];
         char name2[0x20];
-        b = buf[i];
         s8 p = b + 1;
         sprintf(name1, &lbl_eu_8050EFDC[0x2df], p);
         sprintf(name2, &lbl_eu_8050EFDC[0x2ee], p);

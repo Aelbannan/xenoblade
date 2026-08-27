@@ -1391,7 +1391,9 @@ extern "C" __declspec(noinline) void func_802998C8(CMCGetItemBox* self) {
 // branch-local positions get disjoint stack slots (no overlay across branches).
 #pragma push
 #pragma optimize_for_size on
-extern "C" void func_802999B0(CMCGetItemBox* self) {
+// noinline: retail keeps this out-of-line; without it MWCC inlines the whole
+// body into its earlier callers (late-definition inlining defeats auto_inline off).
+extern "C" __declspec(noinline) void func_802999B0(CMCGetItemBox* self) {
     char nameBuf[0x20];
     nw4r::math::VEC3 posIf;
     nw4r::math::VEC3 posElse;

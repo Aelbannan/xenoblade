@@ -74,7 +74,8 @@ void __ct__17UnkClass_8045F564Fv(UnkClass_8045F564*);
 void __construct_array(void* ptr, void* ctor, void* dtor, u32 size, u32 n);
 // func_800B8B94 is declared (extern "C", s32) by CAIAction.hpp, included
 // transitively via CfObjectActor.hpp -> CBattleManager.hpp.
-void func_8010D1B4(CMenuBattlePlayerState* self, void* actor,
+void func_8010D1B4(CMenuBattlePlayerState* self,
+                   cf::CfObjectActor* actor,
                    CMenuBattlePlayerStateSlot* slot);
 void func_8010D4B0(CMenuBattlePlayerState* self,
                    CMenuBattlePlayerStateSlot* slot, u32 index);
@@ -128,9 +129,14 @@ struct MenuBpsPaneXlate {
 
 // Cast-only ifaces: MWCC virtual dispatch uses r12 (retail), unlike function-pointer
 // loads that color the vptr temp as r4. Never constructed.
-struct MenuBpsActorIf {
-    // MWCC (RTTI on) places two hidden slots before the first declared virtual;
-    // omit _v000/_v004 so vf108 lands at retail 0x108, etc.
+// Minimal dispatch surface for actor vtable slot +0x200
+// (CActorParam_UnkVirtualFunc91). Retail returns u32 (the impl in
+// CfGameManager.cpp reads the u32 at this+0x1608), but the shared
+// CActorParam.hpp declares the slot void and must not be edited here.
+// Everything else this TU dispatches on the actor folds onto the named
+// cf::CActorParam virtuals. MWCC (RTTI on) places the first declared
+// virtual at +0x8, hence the filler slots.
+struct MenuBpsActorVfunc91If {
     virtual void _v008();
     virtual void _v00C();
     virtual void _v010();
@@ -195,7 +201,7 @@ struct MenuBpsActorIf {
     virtual void _v0FC();
     virtual void _v100();
     virtual void _v104();
-    virtual u32 vf108();
+    virtual void _v108();
     virtual void _v10C();
     virtual void _v110();
     virtual void _v114();
@@ -203,8 +209,8 @@ struct MenuBpsActorIf {
     virtual void _v11C();
     virtual void _v120();
     virtual void _v124();
-    virtual f32 vf128();
-    virtual f32 vf12C();
+    virtual void _v128();
+    virtual void _v12C();
     virtual void _v130();
     virtual void _v134();
     virtual void _v138();
@@ -251,97 +257,16 @@ struct MenuBpsActorIf {
     virtual void _v1DC();
     virtual void _v1E0();
     virtual void _v1E4();
-    virtual int vf1E8();
+    virtual void _v1E8();
     virtual void _v1EC();
-    virtual int vf1F0();
+    virtual void _v1F0();
     virtual void _v1F4();
     virtual void _v1F8();
     virtual void _v1FC();
-    virtual u32 vf200();
-    virtual void _v204();
-    virtual void _v208();
-    virtual void _v20C();
-    virtual void _v210();
-    virtual void _v214();
-    virtual void _v218();
-    virtual void _v21C();
-    virtual void _v220();
-    virtual void _v224();
-    virtual void _v228();
-    virtual void _v22C();
-    virtual void _v230();
-    virtual void _v234();
-    virtual void _v238();
-    virtual void _v23C();
-    virtual void _v240();
-    virtual void _v244();
-    virtual void _v248();
-    virtual void _v24C();
-    virtual void _v250();
-    virtual void _v254();
-    virtual void _v258();
-    virtual void _v25C();
-    virtual void _v260();
-    virtual void _v264();
-    virtual void _v268();
-    virtual void _v26C();
-    virtual void _v270();
-    virtual void _v274();
-    virtual void _v278();
-    virtual void _v27C();
-    virtual void _v280();
-    virtual void _v284();
-    virtual void _v288();
-    virtual void _v28C();
-    virtual u32 vf290();
-    virtual void _v294();
-    virtual void _v298();
-    virtual void _v29C();
-    virtual void _v2A0();
-    virtual void _v2A4();
-    virtual void _v2A8();
-    virtual void _v2AC();
-    virtual void _v2B0();
-    virtual void _v2B4();
-    virtual void _v2B8();
-    virtual void _v2BC();
-    virtual void _v2C0();
-    virtual void _v2C4();
-    virtual void _v2C8();
-    virtual void _v2CC();
-    virtual void _v2D0();
-    virtual void _v2D4();
-    virtual void _v2D8();
-    virtual void _v2DC();
-    virtual void _v2E0();
-    virtual void _v2E4();
-    virtual void _v2E8();
-    virtual void _v2EC();
-    virtual void _v2F0();
-    virtual s16* vf2F4();
+    virtual u32 vf200(); // +0x200
 };
 
-struct MenuBpsMoveIf {
-    // Same two-slot MWCC adjustment as MenuBpsActorIf.
-    virtual void _v008();
-    virtual void _v00C();
-    virtual void _v010();
-    virtual void _v014();
-    virtual void _v018();
-    virtual void _v01C();
-    virtual void _v020();
-    virtual void _v024();
-    virtual void _v028();
-    virtual void _v02C();
-    virtual void _v030();
-    virtual void _v034();
-    virtual void _v038();
-    virtual void _v03C();
-    virtual void _v040();
-    virtual void _v044();
-    virtual void _v048();
-    virtual int vf4C();
-};
+
 
 // Pane mTranslate views: retail inlines SetTranslate here as raw-word x/z
 // copies plus a float Y update (out-of-line VEC3/SetTranslate calls do not
@@ -699,24 +624,33 @@ void CMenuBattlePlayerState::Init() {
             const f32 oneF = lbl_eu_80666F90;
 
             for (u8 i = 0; i < 3; i++) {
-                MenuBpsActorIf* actor =
-                    reinterpret_cast<MenuBpsActorIf*>(actors[i]);
+                cf::CfObjectActor* actor =
+                    reinterpret_cast<cf::CfObjectActor*>(actors[i]);
                 if (actor == NULL) {
                     continue;
                 }
                 CMenuBattlePlayerStateSlot& slot = mSlots[i];
 
-                slot.unk224 = static_cast<f32>(actor->vf1E8());
-                slot.unk228 = static_cast<f32>(static_cast<u32>(actor->vf1F0()));
+                // Retail converts the +0x1E8 getter as signed here (no xoris
+                // before the biased lfd); the shared header types the slot
+                // u32, so hop through int to keep the signed conversion.
+                slot.unk224 = static_cast<f32>(static_cast<int>(
+                    actor->CActorParam_UnkVirtualFunc85()));
+                slot.unk228 = static_cast<f32>(
+                    actor->CActorParam_UnkVirtualFunc87());
                 if (oneF == slot.unk228) {
                     slot.unk224 = zeroF2;
                 }
                 if (slot.unk22C < zeroF2) {
                     slot.unk22C = slot.unk224;
                 }
-                slot.unk218 = slot.unk21C = actor->vf200();
-                slot.unk210 = static_cast<u32>(actor->vf128());
-                slot.unk214 = static_cast<u32>(actor->vf12C());
+                // +0x200 stays on MenuBpsActorVfunc91If (hot-header typing).
+                slot.unk218 = slot.unk21C =
+                    reinterpret_cast<MenuBpsActorVfunc91If*>(actor)->vf200();
+                slot.unk210 = static_cast<u32>(
+                    actor->CActorParam_UnkVirtualFunc37());
+                slot.unk214 = static_cast<u32>(
+                    actor->CActorParam_UnkVirtualFunc38());
             }
         }
 
@@ -823,13 +757,13 @@ after_bit21:
         // int->float biases (lfd) before gauge floats; named f32 NVs force lfs-first.
 
         for (u8 i = 0; i < 3; i++) {
-            MenuBpsActorIf* actor;
+            cf::CfObjectActor* actor;
             CMenuBattlePlayerStateSlot* slot;
             u32 hp;
             u32 maxHp;
             f32 hpRatio;
 
-            actor = reinterpret_cast<MenuBpsActorIf*>(actors[i]);
+            actor = reinterpret_cast<cf::CfObjectActor*>(actors[i]);
             if (actor == NULL) {
                 continue;
             }
@@ -838,8 +772,8 @@ after_bit21:
             slot = &mSlots[i];
             func_8010D1B4(this, actor, slot);
 
-            hp = static_cast<u32>(actor->vf128());
-            maxHp = static_cast<u32>(actor->vf12C());
+            hp = static_cast<u32>(actor->CActorParam_UnkVirtualFunc37());
+            maxHp = static_cast<u32>(actor->CActorParam_UnkVirtualFunc38());
 
             // Retail: lfs f26, zero pool -- not fmr from a zero NV.
             hpRatio = lbl_eu_80666F94;
@@ -855,15 +789,16 @@ after_bit21:
 
             slot->unk204 = static_cast<u8>(
                 reinterpret_cast<MenuBpsActorFields*>(actor)->unk3f28);
-            slot->unk208 = actor->vf290();
+            slot->unk208 = reinterpret_cast<u32>(
+                actor->CActorParam_UnkVirtualFunc127());
 
             {
-                u32 statusId = actor->vf108();
+                u32 statusId = actor->CActorParam_UnkVirtualFunc29();
                 if (slot->unk20C != statusId) {
                     slot->unk25C |= 0x1;
                 }
             }
-            slot->unk20C = actor->vf108();
+            slot->unk20C = actor->CActorParam_UnkVirtualFunc29();
 
             if (slot->unk210 != hp) {
                 goto hp_dirty;
@@ -877,14 +812,18 @@ after_bit21:
         hp_clean:
             slot->unk210 = hp;
             slot->unk214 = maxHp;
-            slot->unk218 = actor->vf200();
+            slot->unk218 = reinterpret_cast<MenuBpsActorVfunc91If*>(actor)->vf200();
             slot->unk220 = hpRatio;
 
             {
-                f32 tB = static_cast<f32>(actor->vf1F0());
+                // Retail converts this getter as signed here (the pad
+                // declared it int); hop through int to keep the flavor.
+                f32 tB = static_cast<f32>(static_cast<int>(
+                    actor->CActorParam_UnkVirtualFunc87()));
                 // Constant on the left → retail fcmpu cr0,fNV,f0 (not f0,fNV).
                 if (lbl_eu_80666F90 == tB) {
-                    f32 tB2 = static_cast<f32>(actor->vf1F0());
+                    f32 tB2 = static_cast<f32>(static_cast<int>(
+                        actor->CActorParam_UnkVirtualFunc87()));
                     if (slot->unk228 != tB2) {
                         slot->unk25C |= 0x4;
                     }
@@ -894,11 +833,12 @@ after_bit21:
                 }
 
                 {
-                    f32 tA = static_cast<f32>(static_cast<u32>(actor->vf1E8()));
+                    f32 tA = static_cast<f32>(actor->CActorParam_UnkVirtualFunc85());
                     if (slot->unk224 != tA) {
                         goto tension_flag;
                     }
-                    f32 tB2 = static_cast<f32>(actor->vf1F0());
+                    f32 tB2 = static_cast<f32>(static_cast<int>(
+                        actor->CActorParam_UnkVirtualFunc87()));
                     if (slot->unk228 == tB2) {
                         goto tension_store;
                     }
@@ -907,8 +847,9 @@ after_bit21:
                 slot->unk25C |= 0x4;
             tension_store:
                 slot->unk224 =
-                    static_cast<f32>(static_cast<u32>(actor->vf1E8()));
-                slot->unk228 = static_cast<f32>(actor->vf1F0());
+                    static_cast<f32>(actor->CActorParam_UnkVirtualFunc85());
+                slot->unk228 = static_cast<f32>(static_cast<int>(
+                    actor->CActorParam_UnkVirtualFunc87()));
             }
         tension_done:
 
@@ -917,7 +858,8 @@ after_bit21:
             }
 
             {
-                s16* pair = actor->vf2F4();
+                s16* pair = reinterpret_cast<s16*>(
+                    actor->CActorParam_UnkVirtualFunc152());
                 slot->unk230 = pair[1];
                 slot->unk238 = pair[0];
             }
@@ -927,10 +869,10 @@ after_bit21:
                 u32 nonempty = menuBpsActorListSize(&bm->mActorList1) != 0;
                 slot->unk240 = static_cast<u8>(nonempty);
                 if (nonempty == 0) {
-                    MenuBpsMoveIf* move = reinterpret_cast<MenuBpsMoveIf*>(
-                        cf::CfGameManager::getPlayer(0));
-                    if (move != NULL) {
-                        int id = move->vf4C();
+                    cf::CfObjectMove* player =
+                        cf::CfGameManager::getPlayer(0);
+                    if (player != NULL) {
+                        int id = player->CObjectParam_UnkVirtualFunc5();
                         if (id != 0) {
                             Func800B708C_Ret* handle = reinterpret_cast<Func800B708C_Ret*>(func_800B708C(id));
                             if (handle != NULL) {
@@ -1489,52 +1431,21 @@ extern "C" void func_8010CF68(CMenuBattlePlayerState* self,
 // virtuals return void and fill fields on the inner object itself (id at
 // +0x0c, state at +0x30; 0x800 = empty slot); retail's caller keeps r3
 // pointing at the inner object across the call.
-struct MenuBpsActorInnerIf {
-    virtual void _v008();
-    virtual void _v00C();
-    virtual void _v010();
-    virtual void _v014();
-    virtual void _v018();
-    virtual void _v01C();
-    virtual void _v020();
-    virtual void _v024();
-    virtual void _v028();
-    virtual void _v02C();
-    virtual void _v030();
-    virtual void _v034();
-    virtual void _v038();
-    virtual void _v03C();
-    virtual void _v040();
-    virtual void _v044();
-    virtual void _v048();
-    virtual void _v04C();
-    virtual void _v050();
-    virtual void _v054();
-    virtual MenuBpsActorInnerIf* vf58(int idx);
-    virtual MenuBpsActorInnerIf* vf5C(int idx);
-
-    // Icon-result fields written by vf58/vf5C.
-    u8 pad04[0xC - 0x4];
-    u16 unk0C;
-    u8 pad0E[0x30 - 0x0E];
-    u32 unk30;
+// Battle-state head of the actor (cf::CBattleState base at +0x8): the
+// UnkVirtualFunc21 icon query fills the state object in place (id at
+// battle-state +0xC, state word at +0x30, 0x800 = empty slot); retail's
+// caller reads both straight off the sub-object after the call.
+struct MenuBpsActorBattleHead {
+    u8 pad00[0x14];       // actor+0x14 == CBattleState+0x0C
+    u16 unk14;
+    u8 pad16[0x38 - 0x16];
+    u32 unk38;            // actor+0x38 == CBattleState+0x30
 };
 
-struct MenuBpsMoveActorView {
-    u8 pad00[8];
-    MenuBpsActorInnerIf mInner; // +0x8 (member subobject, vptr at +0x8)
-};
-
-// Actor fields accessed past the inner object.
+// Actor field holding the level icon id (fed in as arts-slot entry 0x20).
 struct MenuBpsMoveActorFields {
     u8 pad00[0x1530];
     u32 unk1530; // +0x1530: level icon id (u16)
-};
-
-// Shared texture manager: binds a texture under the "timg" key (0x74696D67).
-struct MenuBpsTexMgrIf {
-    virtual void _v008();
-    virtual u32 assignTexture(u32 key, char* tex, u32 arg); // +0xC
 };
 
 // Pane flag byte view (layout-visible visible-gauge enable bit at +0xBB).
@@ -1556,24 +1467,6 @@ struct MenuBpsAnimFrameView {
     f32 frame;
 };
 
-// Layout field at +0x10 holding a pane pointer whose +0xBB flag is toggled.
-struct MenuBpsLytPaneRefView {
-    u8 pad00[0x10];
-    MenuBpsPaneFlagsView* paneRef;
-};
-
-// Layout method dispatched at vtable +0x24 (no args) - resets gauge anim state.
-struct MenuBpsLytVt24If {
-    virtual void _v008();
-    virtual void _v00C();
-    virtual void _v010();
-    virtual void _v014();
-    virtual void _v018();
-    virtual void _v01C();
-    virtual void _v020();
-    virtual void vf24(); // +0x24
-};
-
 // ---------------------------------------------------------------------------
 // Target us-8010dc90: per-actor arts-icon / auto-heal icon refresh for one
 // battle-party slot. Advances a wrap-around cursor over the 32 icon slots,
@@ -1583,10 +1476,9 @@ struct MenuBpsLytVt24If {
 // (unk268/unk6C pane), then over a snapshot plus the level icon at index 0x20
 // (unk26C/unk70 pane).
 // ---------------------------------------------------------------------------
-void func_8010D1B4(CMenuBattlePlayerState* self, void* actorPtr,
+void func_8010D1B4(CMenuBattlePlayerState* self,
+                   cf::CfObjectActor* actor,
                    CMenuBattlePlayerStateSlot* slot) {
-    MenuBpsMoveActorView* actor =
-        reinterpret_cast<MenuBpsMoveActorView*>(actorPtr);
     MenuBpsPaneFlagsView* starPane;
 
     // Tension timer: raises flag bit 0x800 when it exceeds FDC.
@@ -1608,26 +1500,32 @@ void func_8010D1B4(CMenuBattlePlayerState* self, void* actorPtr,
             if ((cursor & 0xFF) >= 0x20) {
                 cursor = 0;
             }
-            MenuBpsActorInnerIf* rec =
-                actor->mInner.vf5C(static_cast<int>(cursor & 0xFF));
+            cf::CBattleStateEntry* rec =
+                actor->CBattleState_UnkVirtualFunc22(
+                    static_cast<int>(cursor & 0xFF));
             if (rec->unk30 != 0x800 && rec->unk0C != 0 && rec->unk0C != 0xF &&
                 rec->unk0C != 0x10 && rec->unk0C != 0x12) {
                 u16 nameId = static_cast<u16>(
                     func_80136254(lbl_eu_806640E0, tbl + 0x42B, rec->unk0C));
                 if (nameId != 0) {
                     char* tex = func_80138F78(nameId);
-                    u32 bound = reinterpret_cast<MenuBpsTexMgrIf*>(
-                        func_801355F4())
-                                    ->assignTexture(texKey, tex, 0);
+                    u32 bound = reinterpret_cast<u32>(
+                        reinterpret_cast<nw4r::lyt::ArcResourceAccessor*>(
+                            func_801355F4())
+                            ->GetResource(texKey, tex, NULL));
                     if (bound != 0) {
-                        starPane->flagsBB |= 0x01;
+                        starPane->flagsBB =
+                            (starPane->flagsBB &
+                             static_cast<u8>(~0x01)) |
+                            0x01;
                         func_80137F88(starPane, bound);
-                        slot->unk268 = cursor & 0xFF;
+                        slot->unk268 = static_cast<u32>(static_cast<u8>(cursor));
                         break;
                     }
                 }
             }
-            if ((cursor & 0xFF) == slot->unk268) {
+            if (static_cast<int>(static_cast<u8>(cursor)) ==
+                static_cast<int>(slot->unk268)) {
                 break;
             }
             cursor += 1;
@@ -1639,11 +1537,15 @@ void func_8010D1B4(CMenuBattlePlayerState* self, void* actorPtr,
         starPane->flagsBB &= static_cast<u8>(~0x01);
 
         u16 ids[33];
-        for (int j = 0; j < 32; j++) {
-            actor->mInner.vf58(j);
-            ids[j] = (actor->mInner.unk30 == 0x800u) ? 0 : actor->mInner.unk0C;
+        // u8 counter: retail zero-extends it for the Func21 arg and derives
+        // the ids index as j*2 from the extended value.
+        for (u8 j = 0; j < 32; j++) {
+            actor->CBattleState_UnkVirtualFunc21(j);
+            MenuBpsActorBattleHead* head =
+                reinterpret_cast<MenuBpsActorBattleHead*>(actor);
+            ids[j] = (head->unk38 == 0x800u) ? 0 : head->unk14;
         }
-        ids[32] = reinterpret_cast<MenuBpsMoveActorFields*>(actorPtr)->unk1530;
+        ids[32] = reinterpret_cast<MenuBpsMoveActorFields*>(actor)->unk1530;
 
         u32 cur2 = (slot->unk26C + 1) & 0xFF;
         char* tbl2 = lbl_eu_804FD720;
@@ -1657,13 +1559,18 @@ void func_8010D1B4(CMenuBattlePlayerState* self, void* actorPtr,
                 if ((cur2 & 0xFF) == 0x20) {
                     // Fixed "level up" icon id, no BDAT lookup for entry 0x20.
                     char* tex = func_80138F78(0x13D);
-                    u32 bound = reinterpret_cast<MenuBpsTexMgrIf*>(
-                        func_801355F4())
-                                    ->assignTexture(texKey2, tex, 0);
+                    u32 bound = reinterpret_cast<u32>(
+                        reinterpret_cast<nw4r::lyt::ArcResourceAccessor*>(
+                            func_801355F4())
+                            ->GetResource(texKey2, tex, NULL));
                     if (bound != 0) {
-                        starPane->flagsBB |= 0x01;
+                        starPane->flagsBB =
+                            (starPane->flagsBB &
+                             static_cast<u8>(~0x01)) |
+                            0x01;
                         func_80137F88(starPane, bound);
-                        slot->unk26C = cur2 & 0xFF;
+                        slot->unk26C =
+                                static_cast<u32>(static_cast<u8>(cur2));
                         return;
                     }
                 } else {
@@ -1671,19 +1578,25 @@ void func_8010D1B4(CMenuBattlePlayerState* self, void* actorPtr,
                         func_80136254(lbl_eu_806640E0, tbl2 + 0x42B, v));
                     if (nameId != 0) {
                         char* tex = func_80138F78(nameId);
-                        u32 bound = reinterpret_cast<MenuBpsTexMgrIf*>(
-                            func_801355F4())
-                                        ->assignTexture(texKey2, tex, 0);
+                        u32 bound = reinterpret_cast<u32>(
+                            reinterpret_cast<nw4r::lyt::ArcResourceAccessor*>(
+                                func_801355F4())
+                                ->GetResource(texKey2, tex, NULL));
                         if (bound != 0) {
-                            starPane->flagsBB |= 0x01;
+                            starPane->flagsBB =
+                            (starPane->flagsBB &
+                             static_cast<u8>(~0x01)) |
+                            0x01;
                             func_80137F88(starPane, bound);
-                            slot->unk26C = cur2 & 0xFF;
+                            slot->unk26C =
+                                static_cast<u32>(static_cast<u8>(cur2));
                             return;
                         }
                     }
                 }
             }
-            if ((cur2 & 0xFF) == slot->unk26C) {
+            if (static_cast<int>(static_cast<u8>(cur2)) ==
+                static_cast<int>(slot->unk26C)) {
                 break;
             }
             cur2 += 1;
@@ -1767,8 +1680,6 @@ void func_8010D4B0(CMenuBattlePlayerState* self,
     func_8010D0D4(self, slot, slot->unk230);
 
     // Star-pane visibility follows the smoothed HP ratio.
-    MenuBpsLytPaneRefView* mainRef =
-        reinterpret_cast<MenuBpsLytPaneRefView*>(slot->unk08);
     if (slot->unk220 == lbl_eu_80666F94) {
         reinterpret_cast<MenuBpsPaneFlagsView*>(slot->unk5C)->flagsBB |= 0x01;
         reinterpret_cast<MenuBpsPaneFlagsView*>(slot->unk60)->flagsBB |= 0x01;
@@ -1776,7 +1687,8 @@ void func_8010D4B0(CMenuBattlePlayerState* self,
             static_cast<u8>(~0x01);
         reinterpret_cast<MenuBpsPaneFlagsView*>(slot->unk68)->flagsBB &=
             static_cast<u8>(~0x01);
-        mainRef->paneRef->flagsBB &= static_cast<u8>(~0x01);
+        reinterpret_cast<MenuBpsPaneFlagsView*>(slot->unk08->GetRootPane())
+            ->flagsBB &= static_cast<u8>(~0x01);
     } else {
         reinterpret_cast<MenuBpsPaneFlagsView*>(slot->unk5C)->flagsBB &=
             static_cast<u8>(~0x01);
@@ -1784,15 +1696,15 @@ void func_8010D4B0(CMenuBattlePlayerState* self,
             static_cast<u8>(~0x01);
         reinterpret_cast<MenuBpsPaneFlagsView*>(slot->unk64)->flagsBB |= 0x01;
         reinterpret_cast<MenuBpsPaneFlagsView*>(slot->unk68)->flagsBB |= 0x01;
-        mainRef->paneRef->flagsBB |= 0x01;
+        reinterpret_cast<MenuBpsPaneFlagsView*>(slot->unk08->GetRootPane())
+            ->flagsBB |= 0x01;
     }
 
-    reinterpret_cast<MenuBpsLytVt24If*>(slot->unk28)->vf24();
+    slot->unk28->UnbindAllAnimation();
     slot->unk254 = 0xB;
     reinterpret_cast<MenuBpsAnimFrameView*>(slot->unk24)->frame =
         lbl_eu_80666F94;
-    reinterpret_cast<MenuBpsPaneFlagsView*>(
-        reinterpret_cast<MenuBpsLytPaneRefView*>(slot->unk20)->paneRef)
+    reinterpret_cast<MenuBpsPaneFlagsView*>(slot->unk20->GetRootPane())
         ->flagsBB |= 0x01;
     slot->unk25C &= ~0x40000000u;
     reinterpret_cast<MenuBpsAnimFrameView*>(slot->unk0C)->frame =
@@ -1814,42 +1726,6 @@ void func_8010D4B0(CMenuBattlePlayerState* self,
         func_80138078(0x99);
     }
 }
-// Layout dispatch surface for the per-slot anim sequencer: BindAnimation
-// (+0x1c), anim reset (+0x24), SetAnimationEnable (+0x2c), Animate (+0x38).
-struct MenuBpsLytAnimIf {
-    virtual void _v008();
-    virtual void _v00C();
-    virtual void _v010();
-    virtual void _v014();
-    virtual void _v018();
-    virtual void vf1C(nw4r::lyt::AnimTransform*); // +0x1c: BindAnimation
-    virtual void _v020();
-    virtual void vf24(); // +0x24: reset anim state
-    virtual void _v028();
-    virtual void vf2C(nw4r::lyt::AnimTransform*, bool);
-    virtual void _v030();
-    virtual void _v034();
-    virtual void vf38();
-};
-
-// Pane sub-anim dispatch: +0x3c plays a named sub-animation.
-struct MenuBpsPaneMsgIf {
-    virtual void _v008();
-    virtual void _v00C();
-    virtual void _v010();
-    virtual void _v014();
-    virtual void _v018();
-    virtual void _v01C();
-    virtual void _v020();
-    virtual void _v024();
-    virtual void _v028();
-    virtual void _v02C();
-    virtual void _v030();
-    virtual void _v034();
-    virtual void _v038();
-    virtual void vf3C(const char*, int);
-};
-
 // ---------------------------------------------------------------------------
 // Target us-8010e3b0: per-slot battle-HUD update (state 2 of unk244). Refreshes
 // level/name text when flagged, redraws HP digits/colors, updates the tension
@@ -1920,8 +1796,6 @@ extern "C" void func_8010D8D4(CMenuBattlePlayerState* self,
         }
     }
 
-    MenuBpsLytPaneRefView* mainRef =
-        reinterpret_cast<MenuBpsLytPaneRefView*>(slot->unk08);
     if (slot->unk220 <= lbl_eu_80666F94) {
         // HP empty: light the party/tension stars, hide the arts/heal stars.
         reinterpret_cast<MenuBpsPaneFlagsView*>(slot->unk5C)->flagsBB =
@@ -1938,7 +1812,9 @@ extern "C" void func_8010D8D4(CMenuBattlePlayerState* self,
         reinterpret_cast<MenuBpsPaneFlagsView*>(slot->unk68)->flagsBB =
             reinterpret_cast<MenuBpsPaneFlagsView*>(slot->unk68)->flagsBB &
             ~0x100u;
-        mainRef->paneRef->flagsBB = mainRef->paneRef->flagsBB & ~0x100u;
+        MenuBpsPaneFlagsView* mainRoot = reinterpret_cast<MenuBpsPaneFlagsView*>(
+            slot->unk08->GetRootPane());
+        mainRoot->flagsBB = mainRoot->flagsBB & ~0x100u;
 
         u32 f4 = slot->unk25C;
         if ((f4 & 0x1000) == 0) {
@@ -1949,33 +1825,33 @@ extern "C" void func_8010D8D4(CMenuBattlePlayerState* self,
         slot->unk25C = slot->unk25C | 0x1000;
         if (mode != 6) {
             // Reset sequence: park every tension anim, re-arm unk0C, restart.
-            reinterpret_cast<MenuBpsLytAnimIf*>(slot->unk08)->vf2C(slot->unk0C,
+            slot->unk08->SetAnimationEnable(slot->unk0C,
                                                                    false);
-            reinterpret_cast<MenuBpsLytAnimIf*>(slot->unk08)->vf2C(slot->unk10,
+            slot->unk08->SetAnimationEnable(slot->unk10,
                                                                    false);
-            reinterpret_cast<MenuBpsLytAnimIf*>(slot->unk08)->vf2C(slot->unk14,
+            slot->unk08->SetAnimationEnable(slot->unk14,
                                                                    true);
             reinterpret_cast<MenuBpsAnimFrameView*>(slot->unk14)->frame =
                 lbl_eu_80666F94;
-            reinterpret_cast<MenuBpsLytAnimIf*>(slot->unk08)->vf38();
-            reinterpret_cast<MenuBpsLytAnimIf*>(slot->unk08)->vf2C(slot->unk14,
+            slot->unk08->Animate(0);
+            slot->unk08->SetAnimationEnable(slot->unk14,
                                                                    false);
-            reinterpret_cast<MenuBpsLytAnimIf*>(slot->unk08)->vf2C(slot->unk10,
+            slot->unk08->SetAnimationEnable(slot->unk10,
                                                                    false);
-            reinterpret_cast<MenuBpsLytAnimIf*>(slot->unk08)->vf2C(slot->unk10,
+            slot->unk08->SetAnimationEnable(slot->unk10,
                                                                    true);
             reinterpret_cast<MenuBpsAnimFrameView*>(slot->unk10)->frame =
                 lbl_eu_80666F94;
-            reinterpret_cast<MenuBpsLytAnimIf*>(slot->unk08)->vf38();
-            reinterpret_cast<MenuBpsLytAnimIf*>(slot->unk08)->vf2C(slot->unk10,
+            slot->unk08->Animate(0);
+            slot->unk08->SetAnimationEnable(slot->unk10,
                                                                    false);
-            reinterpret_cast<MenuBpsLytAnimIf*>(slot->unk08)->vf2C(slot->unk14,
+            slot->unk08->SetAnimationEnable(slot->unk14,
                                                                    false);
-            reinterpret_cast<MenuBpsLytAnimIf*>(slot->unk08)->vf2C(slot->unk0C,
+            slot->unk08->SetAnimationEnable(slot->unk0C,
                                                                    true);
             reinterpret_cast<MenuBpsAnimFrameView*>(slot->unk0C)->frame =
                 lbl_eu_80666F94;
-            reinterpret_cast<MenuBpsLytAnimIf*>(slot->unk08)->vf38();
+            slot->unk08->Animate(0);
             slot->unk250 = 6;
         }
         slot->unk230 = 0;
@@ -1997,8 +1873,12 @@ extern "C" void func_8010D8D4(CMenuBattlePlayerState* self,
             (reinterpret_cast<MenuBpsPaneFlagsView*>(slot->unk68)->flagsBB &
              ~0x100u) |
             1u;
-        mainRef->paneRef->flagsBB =
-            (mainRef->paneRef->flagsBB & ~0x100u) | 1u;
+        reinterpret_cast<MenuBpsPaneFlagsView*>(slot->unk08->GetRootPane())
+            ->flagsBB = (reinterpret_cast<MenuBpsPaneFlagsView*>(
+                             slot->unk08->GetRootPane())
+                             ->flagsBB &
+                         ~0x100u) |
+            1u;
     }
 
     {
@@ -2029,29 +1909,39 @@ extern "C" void func_8010D8D4(CMenuBattlePlayerState* self,
                     } else {
                         delta = slot->unk23C - slot->unk238;
                     }
-                    MenuBpsLytPaneRefView* ref20 =
-                        reinterpret_cast<MenuBpsLytPaneRefView*>(slot->unk20);
-                    MenuBpsPaneMsgIf* msgPane = reinterpret_cast<MenuBpsPaneMsgIf*>(
-                        ref20->paneRef);
-                    MenuBpsPaneFlagsView* flagPane =
-                        reinterpret_cast<MenuBpsPaneFlagsView*>(ref20->paneRef);
                     // Directional jingle: flash the gauge pane while playing
                     // one of two BDAT-named sub-anims, then a system sound.
+                    // Pane::FindPaneByName (+0x3C); retail keeps the returned
+                    // pane in r3 and toggles its +0xBB flag byte directly.
                     if (delta < 0) {
-                        msgPane->vf3C(tbl + 0x430, 1);
-                        flagPane->flagsBB = flagPane->flagsBB & ~0x100u;
-                        msgPane->vf3C(tbl + 0x43b, 1);
-                        flagPane->flagsBB =
-                            (flagPane->flagsBB & ~0x100u) | 1u;
+                        MenuBpsPaneFlagsView* flashA =
+                            reinterpret_cast<MenuBpsPaneFlagsView*>(
+                                slot->unk20->GetRootPane()->FindPaneByName(
+                                    tbl + 0x430, true));
+                        flashA->flagsBB &= static_cast<u8>(~0x01);
+                        MenuBpsPaneFlagsView* flashB =
+                            reinterpret_cast<MenuBpsPaneFlagsView*>(
+                                slot->unk20->GetRootPane()->FindPaneByName(
+                                    tbl + 0x43b, true));
+                        flashB->flagsBB =
+                            (flashB->flagsBB & static_cast<u8>(~0x01)) |
+                            0x01;
                         if (!func_8017FD44()) {
                             func_80138078(0x63);
                         }
                     } else if (delta > 0) {
-                        msgPane->vf3C(tbl + 0x430, 1);
-                        flagPane->flagsBB =
-                            (flagPane->flagsBB & ~0x100u) | 1u;
-                        msgPane->vf3C(tbl + 0x43b, 1);
-                        flagPane->flagsBB = flagPane->flagsBB & ~0x100u;
+                        MenuBpsPaneFlagsView* flashA =
+                            reinterpret_cast<MenuBpsPaneFlagsView*>(
+                                slot->unk20->GetRootPane()->FindPaneByName(
+                                    tbl + 0x430, true));
+                        flashA->flagsBB =
+                            (flashA->flagsBB & static_cast<u8>(~0x01)) |
+                            0x01;
+                        MenuBpsPaneFlagsView* flashB =
+                            reinterpret_cast<MenuBpsPaneFlagsView*>(
+                                slot->unk20->GetRootPane()->FindPaneByName(
+                                    tbl + 0x43b, true));
+                        flashB->flagsBB &= static_cast<u8>(~0x01);
                         if (!func_8017FD44()) {
                             func_80138078(0x64);
                         }
@@ -2083,11 +1973,11 @@ extern "C" void func_8010D8D4(CMenuBattlePlayerState* self,
     case 6:
         if (slot->unk220 <= lbl_eu_80666FE0) {
             if (slot->unk220 > lbl_eu_80666F94) {
-                reinterpret_cast<MenuBpsLytAnimIf*>(slot->unk08)->vf2C(
+                slot->unk08->SetAnimationEnable(
                     slot->unk10, false);
-                reinterpret_cast<MenuBpsLytAnimIf*>(slot->unk08)->vf2C(
+                slot->unk08->SetAnimationEnable(
                     slot->unk14, false);
-                reinterpret_cast<MenuBpsLytAnimIf*>(slot->unk08)->vf2C(
+                slot->unk08->SetAnimationEnable(
                     slot->unk0C, true);
                 slot->unk250 = 7;
                 changed1 = 1;
@@ -2098,27 +1988,27 @@ extern "C" void func_8010D8D4(CMenuBattlePlayerState* self,
         changed1 = 1;
         if (func_80137444(slot->unk0C, lbl_eu_80666F90) != 0) {
             if (slot->unk220 <= lbl_eu_80666FE4) {
-                reinterpret_cast<MenuBpsLytAnimIf*>(slot->unk08)->vf2C(
+                slot->unk08->SetAnimationEnable(
                     slot->unk0C, false);
-                reinterpret_cast<MenuBpsLytAnimIf*>(slot->unk08)->vf2C(
+                slot->unk08->SetAnimationEnable(
                     slot->unk10, false);
-                reinterpret_cast<MenuBpsLytAnimIf*>(slot->unk08)->vf2C(
+                slot->unk08->SetAnimationEnable(
                     slot->unk14, true);
                 slot->unk250 = 0xa;
             } else if (slot->unk220 <= lbl_eu_80666FE0) {
-                reinterpret_cast<MenuBpsLytAnimIf*>(slot->unk08)->vf2C(
+                slot->unk08->SetAnimationEnable(
                     slot->unk14, false);
-                reinterpret_cast<MenuBpsLytAnimIf*>(slot->unk08)->vf2C(
+                slot->unk08->SetAnimationEnable(
                     slot->unk0C, false);
-                reinterpret_cast<MenuBpsLytAnimIf*>(slot->unk08)->vf2C(
+                slot->unk08->SetAnimationEnable(
                     slot->unk10, true);
                 slot->unk250 = 8;
             } else {
-                reinterpret_cast<MenuBpsLytAnimIf*>(slot->unk08)->vf2C(
+                slot->unk08->SetAnimationEnable(
                     slot->unk10, false);
-                reinterpret_cast<MenuBpsLytAnimIf*>(slot->unk08)->vf2C(
+                slot->unk08->SetAnimationEnable(
                     slot->unk14, false);
-                reinterpret_cast<MenuBpsLytAnimIf*>(slot->unk08)->vf2C(
+                slot->unk08->SetAnimationEnable(
                     slot->unk0C, true);
                 slot->unk250 = 9;
             }
@@ -2128,19 +2018,19 @@ extern "C" void func_8010D8D4(CMenuBattlePlayerState* self,
         changed1 = 1;
         if (func_80137444(slot->unk10, lbl_eu_80666F90) != 0) {
             if (slot->unk220 <= lbl_eu_80666FE4) {
-                reinterpret_cast<MenuBpsLytAnimIf*>(slot->unk08)->vf2C(
+                slot->unk08->SetAnimationEnable(
                     slot->unk0C, false);
-                reinterpret_cast<MenuBpsLytAnimIf*>(slot->unk08)->vf2C(
+                slot->unk08->SetAnimationEnable(
                     slot->unk10, false);
-                reinterpret_cast<MenuBpsLytAnimIf*>(slot->unk08)->vf2C(
+                slot->unk08->SetAnimationEnable(
                     slot->unk14, true);
                 slot->unk250 = 0xa;
             } else if (slot->unk220 > lbl_eu_80666FE0) {
-                reinterpret_cast<MenuBpsLytAnimIf*>(slot->unk08)->vf2C(
+                slot->unk08->SetAnimationEnable(
                     slot->unk10, false);
-                reinterpret_cast<MenuBpsLytAnimIf*>(slot->unk08)->vf2C(
+                slot->unk08->SetAnimationEnable(
                     slot->unk14, false);
-                reinterpret_cast<MenuBpsLytAnimIf*>(slot->unk08)->vf2C(
+                slot->unk08->SetAnimationEnable(
                     slot->unk0C, true);
                 slot->unk250 = 9;
             }
@@ -2156,27 +2046,27 @@ extern "C" void func_8010D8D4(CMenuBattlePlayerState* self,
         changed1 = 1;
         if (func_80137444(slot->unk14, lbl_eu_80666F90) != 0) {
             if (slot->unk220 > lbl_eu_80666FE0) {
-                reinterpret_cast<MenuBpsLytAnimIf*>(slot->unk08)->vf2C(
+                slot->unk08->SetAnimationEnable(
                     slot->unk10, false);
-                reinterpret_cast<MenuBpsLytAnimIf*>(slot->unk08)->vf2C(
+                slot->unk08->SetAnimationEnable(
                     slot->unk14, false);
-                reinterpret_cast<MenuBpsLytAnimIf*>(slot->unk08)->vf2C(
+                slot->unk08->SetAnimationEnable(
                     slot->unk0C, true);
                 slot->unk250 = 9;
             } else if (slot->unk220 > lbl_eu_80666FE4) {
-                reinterpret_cast<MenuBpsLytAnimIf*>(slot->unk08)->vf2C(
+                slot->unk08->SetAnimationEnable(
                     slot->unk14, false);
-                reinterpret_cast<MenuBpsLytAnimIf*>(slot->unk08)->vf2C(
+                slot->unk08->SetAnimationEnable(
                     slot->unk0C, false);
-                reinterpret_cast<MenuBpsLytAnimIf*>(slot->unk08)->vf2C(
+                slot->unk08->SetAnimationEnable(
                     slot->unk10, true);
                 slot->unk250 = 8;
             } else if (slot->unk220 <= lbl_eu_80666F94) {
-                reinterpret_cast<MenuBpsLytAnimIf*>(slot->unk08)->vf2C(
+                slot->unk08->SetAnimationEnable(
                     slot->unk10, false);
-                reinterpret_cast<MenuBpsLytAnimIf*>(slot->unk08)->vf2C(
+                slot->unk08->SetAnimationEnable(
                     slot->unk14, false);
-                reinterpret_cast<MenuBpsLytAnimIf*>(slot->unk08)->vf2C(
+                slot->unk08->SetAnimationEnable(
                     slot->unk0C, true);
                 slot->unk250 = 9;
             }
@@ -2200,25 +2090,25 @@ extern "C" void func_8010D8D4(CMenuBattlePlayerState* self,
                 nw4r::lyt::Layout* lay = slot->unk28;
                 changed2 = 1;
                 nw4r::lyt::AnimTransform* anm = slot->unk2C;
-                reinterpret_cast<MenuBpsLytAnimIf*>(lay)->vf38();
-                reinterpret_cast<MenuBpsLytAnimIf*>(lay)->vf24();
-                reinterpret_cast<MenuBpsLytAnimIf*>(lay)->vf1C(anm);
-                reinterpret_cast<MenuBpsLytAnimIf*>(lay)->vf2C(anm, true);
+                lay->Animate(0);
+                lay->UnbindAllAnimation();
+                lay->BindAnimation(anm);
+                lay->SetAnimationEnable(anm, true);
                 reinterpret_cast<MenuBpsAnimFrameView*>(anm)->frame =
                     lbl_eu_80666F94;
-                reinterpret_cast<MenuBpsLytAnimIf*>(lay)->vf38();
+                lay->Animate(0);
                 slot->unk254 = 0xC;
             } else if (slot->unk230 == 0) {
                 nw4r::lyt::Layout* lay = slot->unk28;
                 changed2 = 1;
                 nw4r::lyt::AnimTransform* anm = slot->unk38;
-                reinterpret_cast<MenuBpsLytAnimIf*>(lay)->vf38();
-                reinterpret_cast<MenuBpsLytAnimIf*>(lay)->vf24();
-                reinterpret_cast<MenuBpsLytAnimIf*>(lay)->vf1C(anm);
-                reinterpret_cast<MenuBpsLytAnimIf*>(lay)->vf2C(anm, true);
+                lay->Animate(0);
+                lay->UnbindAllAnimation();
+                lay->BindAnimation(anm);
+                lay->SetAnimationEnable(anm, true);
                 reinterpret_cast<MenuBpsAnimFrameView*>(anm)->frame =
                     lbl_eu_80666F94;
-                reinterpret_cast<MenuBpsLytAnimIf*>(lay)->vf38();
+                lay->Animate(0);
                 slot->unk254 = 0xF;
             }
         }
@@ -2228,13 +2118,13 @@ extern "C" void func_8010D8D4(CMenuBattlePlayerState* self,
         if (func_80137444(slot->unk2C, lbl_eu_80666F90) != 0) {
             nw4r::lyt::Layout* lay = slot->unk28;
             nw4r::lyt::AnimTransform* anm = slot->unk30;
-            reinterpret_cast<MenuBpsLytAnimIf*>(lay)->vf38();
-            reinterpret_cast<MenuBpsLytAnimIf*>(lay)->vf24();
-            reinterpret_cast<MenuBpsLytAnimIf*>(lay)->vf1C(anm);
-            reinterpret_cast<MenuBpsLytAnimIf*>(lay)->vf2C(anm, true);
+            lay->Animate(0);
+            lay->UnbindAllAnimation();
+            lay->BindAnimation(anm);
+            lay->SetAnimationEnable(anm, true);
             reinterpret_cast<MenuBpsAnimFrameView*>(anm)->frame =
                 lbl_eu_80666F94;
-            reinterpret_cast<MenuBpsLytAnimIf*>(lay)->vf38();
+            lay->Animate(0);
             slot->unk254 = 0xD;
         }
         break;
@@ -2252,20 +2142,20 @@ extern "C" void func_8010D8D4(CMenuBattlePlayerState* self,
         {
             nw4r::lyt::Layout* lay = slot->unk28;
             nw4r::lyt::AnimTransform* anm = slot->unk34;
-            reinterpret_cast<MenuBpsLytAnimIf*>(lay)->vf38();
-            reinterpret_cast<MenuBpsLytAnimIf*>(lay)->vf24();
-            reinterpret_cast<MenuBpsLytAnimIf*>(lay)->vf1C(anm);
-            reinterpret_cast<MenuBpsLytAnimIf*>(lay)->vf2C(anm, true);
+            lay->Animate(0);
+            lay->UnbindAllAnimation();
+            lay->BindAnimation(anm);
+            lay->SetAnimationEnable(anm, true);
             reinterpret_cast<MenuBpsAnimFrameView*>(anm)->frame =
                 lbl_eu_80666F94;
-            reinterpret_cast<MenuBpsLytAnimIf*>(lay)->vf38();
+            lay->Animate(0);
             slot->unk254 = 0xE;
         }
         break;
     case 0xE:
         changed2 = 1;
         if (func_80137444(slot->unk34, lbl_eu_80666F90) != 0) {
-            reinterpret_cast<MenuBpsLytAnimIf*>(slot->unk28)->vf24();
+            slot->unk28->UnbindAllAnimation();
             slot->unk254 = 0xB;
         }
         break;
@@ -2274,13 +2164,13 @@ extern "C" void func_8010D8D4(CMenuBattlePlayerState* self,
         if (func_80137444(slot->unk38, lbl_eu_80666F90) != 0) {
             nw4r::lyt::Layout* lay = slot->unk28;
             nw4r::lyt::AnimTransform* anm = slot->unk3C;
-            reinterpret_cast<MenuBpsLytAnimIf*>(lay)->vf38();
-            reinterpret_cast<MenuBpsLytAnimIf*>(lay)->vf24();
-            reinterpret_cast<MenuBpsLytAnimIf*>(lay)->vf1C(anm);
-            reinterpret_cast<MenuBpsLytAnimIf*>(lay)->vf2C(anm, true);
+            lay->Animate(0);
+            lay->UnbindAllAnimation();
+            lay->BindAnimation(anm);
+            lay->SetAnimationEnable(anm, true);
             reinterpret_cast<MenuBpsAnimFrameView*>(anm)->frame =
                 lbl_eu_80666F94;
-            reinterpret_cast<MenuBpsLytAnimIf*>(lay)->vf38();
+            lay->Animate(0);
             slot->unk254 = 0x10;
         }
         break;
@@ -2296,20 +2186,20 @@ extern "C" void func_8010D8D4(CMenuBattlePlayerState* self,
         {
             nw4r::lyt::Layout* lay = slot->unk28;
             nw4r::lyt::AnimTransform* anm = slot->unk40;
-            reinterpret_cast<MenuBpsLytAnimIf*>(lay)->vf38();
-            reinterpret_cast<MenuBpsLytAnimIf*>(lay)->vf24();
-            reinterpret_cast<MenuBpsLytAnimIf*>(lay)->vf1C(anm);
-            reinterpret_cast<MenuBpsLytAnimIf*>(lay)->vf2C(anm, true);
+            lay->Animate(0);
+            lay->UnbindAllAnimation();
+            lay->BindAnimation(anm);
+            lay->SetAnimationEnable(anm, true);
             reinterpret_cast<MenuBpsAnimFrameView*>(anm)->frame =
                 lbl_eu_80666F94;
-            reinterpret_cast<MenuBpsLytAnimIf*>(lay)->vf38();
+            lay->Animate(0);
             slot->unk254 = 0x11;
         }
         break;
     case 0x11:
         changed2 = 1;
         if (func_80137444(slot->unk40, lbl_eu_80666F90) != 0) {
-            reinterpret_cast<MenuBpsLytAnimIf*>(slot->unk28)->vf24();
+            slot->unk28->UnbindAllAnimation();
             slot->unk254 = 0xB;
         }
         break;
@@ -2331,7 +2221,7 @@ extern "C" void func_8010D8D4(CMenuBattlePlayerState* self,
             func_8010ACC4(
                 reinterpret_cast<CMenuBattleDamageQueue*>(&slot->unk74));
         }
-        reinterpret_cast<MenuBpsLytAnimIf*>(slot->unk78)->vf38();
+        slot->unk78->Animate(0);
     }
 
     // Once the level-up cursor is armed, swap the gauge layout to its
@@ -2339,10 +2229,10 @@ extern "C" void func_8010D8D4(CMenuBattlePlayerState* self,
     if (slot->unk80 == 0 && slot->unk240 == 0 && self->unk7C8 != 0 &&
         slot->unk254 == 0xB) {
         MenuBpsPaneFlagsView* fp = reinterpret_cast<MenuBpsPaneFlagsView*>(
-            reinterpret_cast<MenuBpsLytPaneRefView*>(slot->unk20)->paneRef);
+            slot->unk20->GetRootPane());
         fp->flagsBB = fp->flagsBB & ~0x100u;
-        reinterpret_cast<MenuBpsLytAnimIf*>(slot->unk18)
-            ->vf2C(slot->unk1C, true);
+        slot->unk18->SetAnimationEnable(slot->unk1C,
+            true);
         slot->unk244 = 3;
     }
 }

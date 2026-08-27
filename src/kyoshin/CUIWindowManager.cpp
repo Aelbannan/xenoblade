@@ -835,28 +835,32 @@ extern "C" void* __dt__reslist_IUIWindow(void* self, s32 flags) {
     ResListBase* list = (ResListBase*)self;
     ResListNode* node;
     ResListNode* cur;
-    if (list != NULL) {
-        if (list != NULL) {
-            // Inlined base-dtor body (retail duplicates it verbatim here).
-            list->mVTable = (void*)lbl_eu_8052E61C;
-            node = list->mStart->mNext;
-            while (node != list->mStart) {
-                cur = node;
-                node = cur->mNext;
-                cur->mNext = NULL;
-            }
-            list->mStart->mNext = list->mStart;
-            list->mStart->mPrev = list->mStart;
-            if (list->field_0x1C == 0 && list->field_0x14 != NULL) {
-                __dla__FPv(list->field_0x14);
-                list->field_0x14 = NULL;
-            }
-        }
-        // Retail's inlined-base-guard path still reaches the delete guard.
-        if (flags > 0) {
-            __dl__FPv(list);
-        }
+    if (list == NULL) {
+        goto end;
     }
+    if (list == NULL) {
+        goto cleanup;
+    }
+    // Inlined base-dtor body (retail duplicates it verbatim here).
+    list->mVTable = (void*)lbl_eu_8052E61C;
+    node = list->mStart->mNext;
+    while (node != list->mStart) {
+        cur = node;
+        node = cur->mNext;
+        cur->mNext = NULL;
+    }
+    list->mStart->mNext = list->mStart;
+    list->mStart->mPrev = list->mStart;
+    if (list->field_0x1C == 0 && list->field_0x14 != NULL) {
+        __dla__FPv(list->field_0x14);
+        list->field_0x14 = NULL;
+    }
+cleanup:
+    // Retail's inlined-base-guard path still reaches the delete guard.
+    if (flags > 0) {
+        __dl__FPv(list);
+    }
+end:
     return self;
 }
 // Window factory: create a talk window on the secondary queue, removing any

@@ -3343,8 +3343,8 @@ void func_801CC0EC(void* self) {
     // them into the stmw-saved r29/r30; buf/tmp mirror retail's stack slots.
     u32 entry;
     u8* sub;
-    u32 buf[3];
     u32 tmp[3];
+    u32 buf[3];
     u8* p = (u8*)self;
     if (p[0x542]) return;
     if (CSysWin_getUnk34(p + 0x4ac)) return;
@@ -3387,11 +3387,12 @@ void func_801CC0EC(void* self) {
         return;
     }
     if (p[0x544]) {
-        s8 idx;
+        // idx born before sub so MWCC colors them like retail (idx=r30, sub=r29)
+        s8 idx = (s8)p[0x545] + 1;
         sub = p + 0x288;
         // scan forwards for a non-empty tab slot, wrapping at 3; retail
         // reloads p[0x545] for the wrap bound every iteration
-        for (idx = (s8)p[0x545] + 1; idx != (s8)p[0x545]; idx++) {
+        for (; idx != (s8)p[0x545]; idx++) {
             if (idx >= 3) idx = 0;
             u16 val = ArrayGet12((const u16*)sub, (u8)(p[0x546] + (u8)idx * 4));
             if (val) { p[0x545] = (u8)idx; break; }

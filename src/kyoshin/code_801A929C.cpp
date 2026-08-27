@@ -5,6 +5,7 @@
 #include "kyoshin/plugin/ocBdat.hpp"  // getBdatStringColumnValue
 #include "monolib/math/CVec3.hpp"
 #include "kyoshin/cf/CfGameManagerData.hpp"  // H3 label-owner decl (lbl_eu_80663E14; lbl_eu_80663E24)
+#include <math.h>
 
 // SDA/sdata2 float pool labels used by the direction helpers below.
 extern const f32 lbl_eu_80667D60; // 0.0f
@@ -32,6 +33,9 @@ void func_801A9338(void* self) {
     *(unsigned short*)((char*)self + 0x2c) = 0xFFFF;
 }
 
+// Retail exports the blend helper under a plain C symbol, so the definition
+// keeps C linkage for call-site reloc parity.
+
 // ----------------------------------------------------------------------------
 // func_801A9348 - compute a blend weight and attack direction toward a target.
 // Weight falls linearly from 1 to 0 between the outer/inner radii; direction
@@ -55,7 +59,7 @@ struct DirTargetInfo {
     u8 mFlag18;     // +0x18
 };
 
-void func_801A9348(ml::CVec3* outDir, float* outWeight, DirSrc* src,
+extern "C" void func_801A9348(ml::CVec3* outDir, float* outWeight, DirSrc* src,
                    ml::CVec3* posB, ml::CVec3* targetPos,
                    float innerRadius, float outerRadius) {
 
@@ -124,7 +128,317 @@ void func_801A9348(ml::CVec3* outDir, float* outWeight, DirSrc* src,
     }
 }
 
-void func_801A96A0(void*){}
+// ----------------------------------------------------------------------------
+// func_801A96A0 - per-frame update of one ctrl-sound state object.
+// Picks the listener aim point (game-manager position, overridden by the
+// shared ctrl-state singleton when presentation bit 13 / camera gate allow),
+// optionally syncs the entry position from a map object, then either scans
+// bdat rows for the nearest matching position (mode 2), stops the entry sound
+// when close enough, or (re)starts it and applies distance/flag volume.
+// ----------------------------------------------------------------------------
+
+// One 0x38-byte ctrl-sound state object (the unit's per-entry record).
+struct SndCtrlObj {
+    ml::CVec3 mVec0; // +0x00 current position
+    ml::CVec3 mVec1; // +0x0C previous/best position
+    f32 m18;         // +0x18 distance gate
+    f32 m1C;         // +0x1C blend weight / volume factor
+    f32 m20;         // +0x20 direction (written through func_801A9348)
+    f32 m24;         // +0x24 base volume
+    f32 m28;         // +0x28 stored volume scale
+    u16 m2C;         // +0x2C sound handle (0xFFFF = stopped)
+    u16 m2E;         // +0x2E sound id
+    u16 m30;         // +0x30 bdat row index
+    u8 m32;          // +0x32 fade counter
+    u8 m33;          // +0x33 mode (0=volume path, 2=nearest search)
+    u8 m34;          // +0x34 flag: alternate play entry
+    u8 m35;          // +0x35 map-object id for position sync
+    u8 pad36;
+    u8 m37;          // +0x37 bit0: far-volume attenuation flag
+};
+
+// Game-manager query chain: root -> +0xC node -> position at +0x10C.
+struct GmPosNode {
+    u8 _00[0x10C];
+    ml::CVec3 mPos;
+};
+struct GmRoot {
+    u8 _00[0xC];
+    GmPosNode* field_C;
+};
+
+// Map object returned by func_80186BC8: only the virtual at vtable offset
+// 0xB0 is invoked; it returns the object's current position triplet. With the
+// RTTI header word the 43rd declared virtual sits at +0xB0.
+struct SndMapObjVt {
+    virtual void vf00() = 0;
+    virtual void vf01() = 0;
+    virtual void vf02() = 0;
+    virtual void vf03() = 0;
+    virtual void vf04() = 0;
+    virtual void vf05() = 0;
+    virtual void vf06() = 0;
+    virtual void vf07() = 0;
+    virtual void vf08() = 0;
+    virtual void vf09() = 0;
+    virtual void vf10() = 0;
+    virtual void vf11() = 0;
+    virtual void vf12() = 0;
+    virtual void vf13() = 0;
+    virtual void vf14() = 0;
+    virtual void vf15() = 0;
+    virtual void vf16() = 0;
+    virtual void vf17() = 0;
+    virtual void vf18() = 0;
+    virtual void vf19() = 0;
+    virtual void vf20() = 0;
+    virtual void vf21() = 0;
+    virtual void vf22() = 0;
+    virtual void vf23() = 0;
+    virtual void vf24() = 0;
+    virtual void vf25() = 0;
+    virtual void vf26() = 0;
+    virtual void vf27() = 0;
+    virtual void vf28() = 0;
+    virtual void vf29() = 0;
+    virtual void vf30() = 0;
+    virtual void vf31() = 0;
+    virtual void vf32() = 0;
+    virtual void vf33() = 0;
+    virtual void vf34() = 0;
+    virtual void vf35() = 0;
+    virtual void vf36() = 0;
+    virtual void vf37() = 0;
+    virtual void vf38() = 0;
+    virtual void vf39() = 0;
+    virtual void vf40() = 0;
+    virtual void vf41() = 0;
+    virtual ml::CVec3* vf42_getPos() = 0; // vtable +0xB0
+};
+
+// Scene pose block carrying a D80-flagged volume object pointer.
+struct D80VolObj {
+    u8 _00[0xC];
+    f32 field_0xC;
+};
+
+// Minimal BasicSound interface: only SetPlayerPriority is dereferenced.
+namespace nw4r {
+namespace snd {
+namespace detail {
+class BasicSound {
+public:
+    void SetPlayerPriority(int priority);
+};
+} // namespace detail
+} // namespace snd
+} // namespace nw4r
+
+// Sound-slot record returned by func_801BFAE4 (+0x00 active sound object).
+struct SndSlotRef {
+    nw4r::snd::detail::BasicSound* mSound;
+};
+
+union SndConv {
+    u32 w[2];
+    f64 d;
+};
+
+void* func_80186BC8(int id);
+extern "C" u32 func_800821F8__Q22cf13CfGameManagerFv();
+int CfRes_getD80Flag();
+D80VolObj* func_8049603C();
+extern "C" float func_800A47C8(const ml::CVec3& a, const ml::CVec3& b,
+                               const ml::CVec3& c, float* outT, ml::CVec3* out);
+SndSlotRef* func_801BFAE4(u16 handle);
+extern "C" void func_801BFED0(int a, u16 b, int c);
+// func_801BFC38__Q22cf10CfSoundManFUlUlUlUlf is declared by the catalog
+// (CCol6System.hpp): returns the sound handle.
+extern "C" void func_801BFE58(s32 idx, u32 handle, u32 ticks, float volume);
+extern "C" void func_801BFF44(s32 idx, u16 handle, float value);
+extern const char lbl_eu_80526324[]; // nw4r::db::Warning source string
+extern const char lbl_eu_80526300[]; // nw4r::db::Warning format string
+extern char lbl_eu_80503FA0[];       // bdat column-name blob
+struct BdatTable;
+extern BdatTable* lbl_eu_806640B8;
+extern u32 lbl_eu_8057164C[3];       // reference aim-point vector
+extern f32 lbl_eu_80667D74;          // initial best-distance sentinel
+extern f32 lbl_eu_8066A208;          // column-match threshold
+
+extern "C" void func_801A96A0(SndCtrlObj* self, int unk4, int farArg,
+                               int entryBase) {
+    GmRoot* root = (GmRoot*)func_800821F8__Q22cf13CfGameManagerFv();
+    if (root == NULL) {
+        return;
+    }
+    ml::CVec3 aim = root->field_C->mPos;
+
+    if (self->m35 != 0) {
+        SndMapObjVt* obj = (SndMapObjVt*)func_80186BC8(self->m35);
+        if (obj == NULL) {
+            return;
+        }
+        self->mVec0 = *obj->vf42_getPos();
+    }
+
+    // Presentation bit 13 or the camera gate enables the shared-singleton
+    // aim override.
+    if ((lbl_eu_80663E24 & 0x40000) != 0 || func_8007BAE4() != 0) {
+        DirTargetInfo* tgt = *(DirTargetInfo**)(&lbl_eu_80664330);
+        if (tgt != NULL && tgt->mFlag18 != 0) {
+            aim = tgt->m00;
+        }
+    }
+
+    self->mVec1 = self->mVec0;
+
+    if (self->m33 != 0) {
+        if (self->m33 == 2) {
+            // Nearest-position scan: rows self->m30 of the shared bdat table,
+            // columns built from the name blob + index suffix (signed columns
+            // converted through the 0x43300000 double trick).
+            BdatTable* tbl = lbl_eu_806640B8;
+            f32 best = lbl_eu_80667D74;
+            f64 bias = lbl_eu_80667D80;
+            f32 scale = lbl_eu_80667D78;
+            f32 thr = lbl_eu_8066A208;
+            ml::CVec3 prev = self->mVec0;
+            char colStorage[sizeof(ml::FixStr<32>)];
+            ml::FixStr<32>& col = *reinterpret_cast<ml::FixStr<32>*>(colStorage);
+            SndConv conv;
+            conv.w[0] = 0x43300000;
+            for (s32 i = 1; i <= 10; i++) {
+                ml::CVec3 cur;
+                col.format(&lbl_eu_80503FA0[0], (char)i);
+                conv.w[1] = getBdatStringColumnValue(tbl, colStorage, self->m30) ^ 0x8000;
+                cur.x = (f32)(conv.d - bias) * scale;
+
+                col.format(&lbl_eu_80503FA0[9], (char)i);
+                conv.w[1] = getBdatStringColumnValue(tbl, colStorage, self->m30) ^ 0x8000;
+                cur.y = (f32)(conv.d - bias) * scale;
+
+                col.format(&lbl_eu_80503FA0[0x12], (char)i);
+                conv.w[1] = getBdatStringColumnValue(tbl, colStorage, self->m30);
+                cur.z = (f32)(conv.d - bias) * scale;
+
+                // All three coordinates within threshold: accept the current
+                // best and stop scanning.
+                int allClose = 0;
+                if ((f32)__fabs((f64)cur.x) < thr && (f32)__fabs((f64)cur.y) < thr) {
+                    if ((f32)__fabs((f64)cur.z) < thr) {
+                        allClose = 1;
+                    }
+                }
+                if (allClose == 0) {
+                    float tOut;
+                    ml::CVec3 closest;
+                    f32 dist = func_800A47C8(prev, cur, aim, &tOut, &closest);
+                    if (dist < best) {
+                        best = dist;
+                        self->mVec1 = closest;
+                    }
+                }
+                prev = cur;
+            }
+        }
+
+        // Distance gate against the updated position.
+        ml::CVec3 diff = self->mVec1 - aim;
+        f32 lenSq = diff.x * diff.x + diff.z * diff.z;
+        if (lenSq >= lbl_eu_80667D64) {
+            nw4r::db::Warning(lbl_eu_80526324, 0x273, lbl_eu_80526300);
+        }
+        f32 dist;
+        if (lenSq < lbl_eu_80667D64) {
+            dist = lenSq * nw4r::math::FrSqrt(lenSq);
+        } else {
+            dist = lbl_eu_80667D64;
+        }
+        // Close enough (or y-delta small): stop the entry sound and clear it.
+        if (dist >= self->m18 || (f32)__fabs((f64)diff.y) < self->m18) {
+            if (self->m2C != 0xFFFF) {
+                func_801BFED0(1, self->m2C, 0);
+            }
+            self->m2C = 0xFFFF;
+            return;
+        }
+    }
+
+    // Start the sound if nothing is playing (priority depends on the mode).
+    if (self->m2C == 0xFFFF) {
+        self->m20 = lbl_eu_80667D64;
+        self->m1C = self->m24;
+        u32 prio = 0x78;
+        if (self->m33 != 0) {
+            self->m1C = lbl_eu_80667D64;
+            prio = 0;
+        }
+        u16 h = func_801BFC38__Q22cf10CfSoundManFUlUlUlUlf(1, self->m2E, prio, 0,
+                                                           self->m1C);
+        self->m2C = h;
+        SndSlotRef* slot = (SndSlotRef*)func_801BFAE4((u16)h);
+        if (slot != NULL && slot->mSound != NULL) {
+            slot->mSound->SetPlayerPriority(0x50);
+        }
+    }
+
+    if (self->m2C == 0xFFFF) {
+        return;
+    }
+
+    if (self->m33 == 0) {
+        // Looping path: plain distance-attenuated volume updates.
+        f32 vol = self->m24;
+        if (CfRes_getD80Flag()) {
+            vol *= lbl_eu_80667D60 - func_8049603C()->field_0xC;
+        }
+        if ((lbl_eu_80663E24 & 0x40000) != 0) {
+            if (self->m32 != 0) {
+                self->m32--;
+                return;
+            }
+            vol *= self->m28;
+        } else {
+            self->m28 = lbl_eu_80667D60;
+            self->m32 = 0;
+        }
+        if (self->m34 != 0) {
+            if (farArg == 0) {
+                vol *= lbl_eu_80667D68;
+            }
+        } else {
+            if ((self->m37 & 1) != 0 && farArg == 0) {
+                vol *= lbl_eu_80667D68;
+            }
+        }
+        func_801BFE58(1, self->m2C, 0x1e, vol);
+        return;
+    }
+
+    // Directed path: recompute the blend toward the scene pose target, then
+    // apply the same D80/presentation-bit volume chain.
+    DirSrc* pose = (DirSrc*)func_80496264(lbl_eu_80663E14, -1);
+    func_801A9348((ml::CVec3*)&self->m20, &self->m1C, pose,
+                  (ml::CVec3*)lbl_eu_8057164C, &self->mVec1,
+                  lbl_eu_80667D68, lbl_eu_80667D68 + self->m18);
+    f32 vol = self->m1C * self->m24;
+    if (CfRes_getD80Flag()) {
+        vol *= lbl_eu_80667D60 - func_8049603C()->field_0xC;
+    }
+    if ((lbl_eu_80663E24 & 0x40000) != 0) {
+        if (self->m32 != 0) {
+            self->m32--;
+        }
+        vol *= self->m28;
+    } else {
+        self->m28 = lbl_eu_80667D60;
+        self->m32 = 0;
+    }
+    if (self->m32 == 0) {
+        func_801BFE58(1, self->m2C, 0, vol);
+    }
+    func_801BFF44(1, self->m2C, self->m20);
+}
 
 // ----------------------------------------------------------------------------
 // func_801A9CCC - construct the 128-entry state work object: fill the header
@@ -389,9 +703,348 @@ void func_801AA04C(void* param) {
     }
 }
 
-void func_801AA2A8(){}
+// ----------------------------------------------------------------------------
+// func_801AA2A8 - per-frame ctrl-state update driver.
+// Walks the shared bdat table rows, refreshing each ctrl-state entry: reads
+// named columns (rodata name blob), gates on play conditions (time window,
+// resource counts, far/near flags, presentation bits), then either starts /
+// updates the entry sound through func_801A96A0 or stops it.
+// ----------------------------------------------------------------------------
 
-int func_801AA960(int, int b, int c, int d) {
+// CfGameManager imports (retail mangled symbols).
+class CtrlPlayerVt;
+extern "C" void* getPlayer__Q22cf13CfGameManagerFi(int index);
+extern "C" u32 func_80086DBC__Q22cf13CfGameManagerFv();
+extern "C" u32 func_80086DA0__Q22cf13CfGameManagerFv();
+extern "C" void func_80086DA4__Q22cf13CfGameManagerFv();
+extern "C" u32 func_8008585C__Q22cf13CfGameManagerFv();
+extern "C" u8 func_8007F9BC__Q22cf13CfGameManagerFv();
+extern "C" u16 func_8016DF2C(void); // chapter/episode clock (CAIAction.hpp canonical form)
+extern "C" u32 func_80082354__Q22cf13CfGameManagerFv(u32 resourceId);
+
+// Player object view: field getter at vtable slot 43 (+0xAC).
+class CtrlPlayerVt {
+public:
+    virtual void q00();
+    virtual void q01();
+    virtual void q02();
+    virtual void q03();
+    virtual void q04();
+    virtual void q05();
+    virtual void q06();
+    virtual void q07();
+    virtual void q08();
+    virtual void q09();
+    virtual void q0A();
+    virtual void q0B();
+    virtual void q0C();
+    virtual void q0D();
+    virtual void q0E();
+    virtual void q0F();
+    virtual void q10();
+    virtual void q11();
+    virtual void q12();
+    virtual void q13();
+    virtual void q14();
+    virtual void q15();
+    virtual void q16();
+    virtual void q17();
+    virtual void q18();
+    virtual void q19();
+    virtual void q1A();
+    virtual void q1B();
+    virtual void q1C();
+    virtual void q1D();
+    virtual void q1E();
+    virtual void q1F();
+    virtual void q20();
+    virtual void q21();
+    virtual void q22();
+    virtual void q23();
+    virtual void q24();
+    virtual void q25();
+    virtual void q26();
+    virtual void q27();
+    virtual void q28();
+    virtual void q29();
+    virtual s32 getField(); // +0xAC
+};
+
+// One 0x38-byte ctrl-state entry (fields touched by the update driver).
+struct UpdEntry {
+    u8 _00[0x2E];
+    u16 m2E;      // +0x2E sound id / match key
+    u8 _30[0x1C];
+    u16 mHandle;  // +0x4C active sound handle (0xFFFF = stopped)
+};
+
+// Work-object header layout used by the driver (entries at +0x20).
+class UpdWork {
+public:
+    u8 _00[0x19];
+    u8 mFlag19;   // +0x19 mirror of the presentation/camera gate
+    u8 mFlag1A;   // +0x1A update-disable flag
+    u8 mFlag1B;   // +0x1B restrict-to-ids-1..6 flag
+    s16 mCount;   // +0x1C iteration cursor
+    u8 _1E[2];
+    UpdEntry mEntries[128]; // +0x20
+};
+
+// Shared bdat column reader with per-entry context (defining TU: ocBdat.cpp;
+// retail call passes an extra entry-base argument).
+extern "C" u32 func_8003B434(void* table, const char* col, u32 colHandle,
+                              s32 row, void* entryBase);
+extern "C" int func_801BFABC(int a);
+
+// Defined later in this TU (C linkage so call-site relocs bind to the
+// retail-unmangled names).
+extern "C" int func_801AA960(int self, int phase, int area, int mode);
+
+// View of one 0x38-byte ctrl-state entry, exposing the match key at +0x2E.
+struct ScanEntry {
+    u8 _00[0x2E];
+    u16 m2E; // +0x2E
+};
+
+void func_801AA2A8(UpdWork* self) {
+    CtrlPlayerVt* player = (CtrlPlayerVt*)getPlayer__Q22cf13CfGameManagerFi(0);
+    if (player == NULL) {
+        return;
+    }
+    if (func_801BFABC(1) == 0) {
+        return;
+    }
+    BdatTable* tbl = lbl_eu_806640B8;
+    if (tbl == NULL) {
+        return;
+    }
+
+    u32 phase = func_80086DBC__Q22cf13CfGameManagerFv();
+    u16 area = (u16)func_80086DA0__Q22cf13CfGameManagerFv();
+    func_80086DA4__Q22cf13CfGameManagerFv(); // result discarded (retail calls it)
+
+    s32 row = func_8003B41C(tbl);          // first row of the range
+    s32 endRow = row + func_8003B1EC(tbl); // one past the last row
+    u16 secs = func_8016DF2C();            // chapter/episode clock
+    u16 counter = (u16)func_800822F4__Q22cf13CfGameManagerFv();
+
+    // Key scans: is any entry keyed 0x65 (else 0x66) present in the singleton?
+    int keyFlag = 0;
+    if (func_80082900__Q22cf13CfGameManagerFv() != 0) {
+        CtrlStateWork* work = *(CtrlStateWork**)(&lbl_eu_80664330);
+        BdatTable* table = lbl_eu_806640B8;
+        if (work != NULL && table != NULL) {
+            s32 r = func_8003B41C(table);
+            s32 e = r + func_8003B1EC(table);
+            ScanEntry* it = (ScanEntry*)((char*)work + 0x20 + r * 0x38);
+            for (; r < e; r++) {
+                if (it->m2E == 0x65) {
+                    keyFlag = 1;
+                    break;
+                }
+                it = (ScanEntry*)((char*)it + 0x38);
+            }
+        }
+    }
+    if (keyFlag == 0 && func_80082900__Q22cf13CfGameManagerFv() != 0) {
+        CtrlStateWork* work = *(CtrlStateWork**)(&lbl_eu_80664330);
+        BdatTable* table = lbl_eu_806640B8;
+        if (work != NULL && table != NULL) {
+            s32 r = func_8003B41C(table);
+            s32 e = r + func_8003B1EC(table);
+            ScanEntry* it = (ScanEntry*)((char*)work + 0x20 + r * 0x38);
+            for (; r < e; r++) {
+                if (it->m2E == 0x66) {
+                    keyFlag = 1;
+                    break;
+                }
+                it = (ScanEntry*)((char*)it + 0x38);
+            }
+        }
+    }
+
+    // Presentation-gate latch: bit 22 enables, unless bit 14 of the re-read
+    // word clears it again; the scene query forces it on.
+    int gate14 = 0;
+    u32 flagWord = *(volatile u32*)&lbl_eu_80663E24;
+    if ((flagWord & 0x400000) != 0) {
+        gate14 = 1;
+        u32 flagWord2 = *(volatile u32*)&lbl_eu_80663E24;
+        if ((flagWord2 & 0x40000) == 0) {
+            gate14 = 0;
+        }
+    }
+    if (func_8008585C__Q22cf13CfGameManagerFv()) {
+        gate14 = 1;
+    }
+    if ((u8)gate14 != self->mFlag19) {
+        self->mFlag19 = gate14;
+    }
+
+    const char* cols = lbl_eu_80503FA0;
+
+    // Resolve all column handles once up front (retail spills these to a
+    // contiguous stack block, highest slot first).
+    u32 colH[12];
+    colH[11] = (u32)func_8003B4B0(tbl, cols + 0x5f);
+    colH[10] = (u32)func_8003B4B0(tbl, cols + 0x49);
+    colH[9] = (u32)func_8003B4B0(tbl, cols + 0x67);
+    colH[8] = (u32)func_8003B4B0(tbl, cols + 0x71);
+    colH[7] = (u32)func_8003B4B0(tbl, cols + 0x7b);
+    colH[6] = (u32)func_8003B4B0(tbl, cols + 0x85);
+    colH[5] = (u32)func_8003B4B0(tbl, cols + 0x91);
+    colH[4] = (u32)func_8003B4B0(tbl, cols + 0x9e);
+    colH[3] = (u32)func_8003B4B0(tbl, cols + 0xab);
+    colH[2] = (u32)func_8003B4B0(tbl, cols + 0xb5);
+    colH[1] = (u32)func_8003B4B0(tbl, cols + 0xbf);
+    colH[0] = (u32)func_8003B4B0(tbl, cols + 0xc9);
+
+    // Entries visited this frame: full range once the row span exceeds 15,
+    // otherwise a third of it.
+    s32 limit;
+    if (endRow <= 0xf) {
+        limit = endRow / 3;
+    } else {
+        limit = endRow;
+    }
+
+    s32 iter = 0;
+    while (row < endRow) {
+        if (self->mCount >= endRow) {
+            self->mCount = 1;
+        }
+        s16 idx = self->mCount;
+        u32 entryOff = idx * 0x38;
+        UpdEntry* entry = (UpdEntry*)((char*)self + entryOff);
+        u16 sid = entry->m2E;
+
+        // Gate column + clock/phase checks decide whether the entry plays.
+        ColVal t5f;
+        t5f.v = func_8003B434(tbl, cols + 0x5f, colH[11], idx, entry);
+        int gate = 0;
+        if (t5f.b[0] == 0 || (u32)t5f.b[0] == (u32)secs) {
+            gate = 1;
+        }
+        if (sid >= 1 && sid <= 3 && keyFlag == 0) {
+            gate = 1;
+        }
+
+        u8 farGate = func_8007F9BC__Q22cf13CfGameManagerFv();
+        ColVal t49;
+        t49.v = func_8003B434(tbl, cols + 0x49, colH[10], idx, entry);
+        int volOk = 1;
+        if (t49.b[0] == 1) {
+            if (farGate == 0) {
+                volOk = 0;
+            }
+        } else if (t49.b[0] == 2 && farGate != 0) {
+            volOk = 0;
+        }
+        // Priority override when the entry id sits in the 0x65/0x66 band.
+        int prio = 1;
+        if ((u32)(sid - 0x65) <= 1 && farGate != 0) {
+            prio = 0;
+        }
+
+        if (gate != 0 && volOk != 0) {
+            // Three mode columns feed the shared direction/mode selector.
+            ColVal t67;
+            ColVal t71;
+            ColVal t7b;
+            u16 modes[3];
+            t67.v = func_8003B434(tbl, cols + 0x67, colH[9], idx, entry);
+            modes[0] = t67.b[0];
+            t71.v = func_8003B434(tbl, cols + 0x71, colH[8], idx, entry);
+            modes[1] = t71.b[0];
+            t7b.v = func_8003B434(tbl, cols + 0x7b, colH[7], idx, entry);
+            modes[2] = t7b.b[0];
+            // When a later slot is zero it is skipped and the previous
+            // selector result stays live (retail reuses the register).
+            int v = 0;
+            for (int i = 0; i < 3; i++) {
+                if (i == 0 || modes[i] != 0) {
+                    if (modes[i] == 0) {
+                        v = 1;
+                    } else {
+                        v = func_801AA960((int)self, phase, area, modes[i]);
+                    }
+                }
+                gate |= (v != 0);
+            }
+        }
+
+        int doPlay = 0;
+        if (self->mFlag1A != 0) {
+            doPlay = 0;
+        } else if (gate != 0) {
+            ColVal t85;
+            ColVal t91;
+            ColVal t9e;
+            t85.v = func_8003B434(tbl, cols + 0x85, colH[6], idx, entry);
+            u16 resId = t85.h[0];
+            t91.v = func_8003B434(tbl, cols + 0x91, colH[5], idx, entry);
+            u8 loCnt = t91.b[0];
+            t9e.v = func_8003B434(tbl, cols + 0x9e, colH[4], idx, entry);
+            u8 hiCnt = t9e.b[0];
+            int rangeOk = 1;
+            if (resId != 0) {
+                u32 resCount = func_80082354__Q22cf13CfGameManagerFv(resId);
+                if (!((u32)loCnt <= resCount && resCount <= (u32)hiCnt)) {
+                    rangeOk = 0;
+                }
+            }
+            if (rangeOk != 0) {
+                // Time-window check against two alternative [lo,hi] pairs.
+                ColVal tab;
+                ColVal tbb;
+                ColVal tbf;
+                ColVal tc92;
+                tab.v = func_8003B434(tbl, cols + 0xab, colH[3], idx, entry);
+                u16 loA = tab.h[0];
+                tbb.v = func_8003B434(tbl, cols + 0xb5, colH[2], idx, entry);
+                u16 hiB = tbb.h[0];
+                tbf.v = func_8003B434(tbl, cols + 0xbf, colH[1], idx, entry);
+                u16 loC = tbf.h[0];
+                tc92.v = func_8003B434(tbl, cols + 0xc9, colH[0], idx, entry);
+                u16 hiD = tc92.h[0];
+                int ok = 0;
+                if ((u16)counter >= loA && (u16)counter <= hiB && hiB != 0) {
+                    ok = 1;
+                } else if ((u16)counter >= loC && (u16)counter <= hiD &&
+                           hiD != 0) {
+                    ok = 1;
+                }
+                doPlay = ok;
+            }
+        }
+        if (self->mFlag19 != 0) {
+            if (self->mFlag1B == 0 || sid < 1 || sid > 6) {
+                doPlay = 0;
+            }
+        }
+
+        if (doPlay != 0) {
+            s32 fieldVal = player->getField();
+            func_801A96A0((SndCtrlObj*)((char*)entry + 0x20), fieldVal, prio,
+                          (int)((char*)entry));
+        } else {
+            // Not playing this frame: fade out and clear any active handle.
+            if (entry->mHandle != 0xFFFF) {
+                func_801BFED0(1, entry->mHandle, 0x3c);
+            }
+            entry->mHandle = 0xFFFF;
+        }
+
+        self->mCount = self->mCount + 1;
+        iter++;
+        if (iter >= limit) {
+            break;
+        }
+        row++;
+    }
+}
+
+extern "C" int func_801AA960(int self, int b, int c, int d) {
     // Else-if chain over the mode: retail presets r3=0, exits immediately on
     // a match, and funnels the last test through the shared epilogue.
     int result = 0;
@@ -427,12 +1080,6 @@ extern "C" void func_801BFE58(s32 idx, u32 a, u32 b, float volume);
 // Bdat table handle owning the ctrl-state row range (import from split1).
 struct BdatTable;
 extern BdatTable* lbl_eu_806640B8;
-
-// View of one 0x38-byte ctrl-state entry, exposing the match key at +0x2E.
-struct ScanEntry {
-    u8 _00[0x2E];
-    u16 m2E; // +0x2E
-};
 
 // ----------------------------------------------------------------------------
 // func_801AAAA0 - scan the shared ctrl-state singleton's entry table starting

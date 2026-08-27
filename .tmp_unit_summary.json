@@ -1,0 +1,4598 @@
+{
+"kyoshin/CGame": [
+57,
+57
+],
+"PowerPC_EABI_Support/src/Runtime/__mem": [
+4,
+4
+],
+"RVL_SDK/src/revolution/os/__start": [
+6,
+6
+],
+"RVL_SDK/src/revolution/os/__ppc_eabi_init": [
+5,
+5
+],
+"kyoshin/main": [
+9,
+9
+],
+"kyoshin/plugin/pluginDeb": [
+4,
+4
+],
+"kyoshin/plugin/pluginWait": [
+2,
+2
+],
+"kyoshin/plugin/ocBuiltin": [
+4,
+4
+],
+"kyoshin/plugin/ocThread": [
+11,
+11
+],
+"kyoshin/plugin/ocMsg": [
+19,
+20
+],
+"kyoshin/plugin/ocBdat": [
+23,
+27
+],
+"kyoshin/plugin/ocUnit": [
+97,
+109
+],
+"kyoshin/CTaskGame": [
+104,
+113
+],
+"kyoshin/cf/CTaskGameCf": [
+24,
+25
+],
+"kyoshin/CTaskGameEff": [
+25,
+28
+],
+"kyoshin/plugin/ocCfp": [
+9,
+9
+],
+"kyoshin/plugin/pluginMain": [
+1,
+1
+],
+"kyoshin/plugin/pluginUi": [
+39,
+40
+],
+"kyoshin/plugin/pluginEve": [
+20,
+20
+],
+"kyoshin/plugin/pluginCfs": [
+58,
+73
+],
+"kyoshin/plugin/pluginMath": [
+2,
+2
+],
+"kyoshin/action/CActParamAnim": [
+92,
+144
+],
+"kyoshin/action/CActParamData": [
+154,
+178
+],
+"kyoshin/cf/CMcaFile": [
+3,
+3
+],
+"kyoshin/cf/CTaskEnvironment": [
+29,
+36
+],
+"kyoshin/CTimeLightGrp": [
+6,
+7
+],
+"kyoshin/cf/CActParamAnimGame": [
+13,
+33
+],
+"kyoshin/plugin/pluginCam": [
+26,
+27
+],
+"kyoshin/cf/CTaskGameEffAfter": [
+8,
+8
+],
+"kyoshin/plugin/pluginPad": [
+3,
+3
+],
+"kyoshin/cf/CfRes": [
+212,
+224
+],
+"kyoshin/cf/IResInfo": [
+69,
+76
+],
+"kyoshin/cf/CfScript": [
+39,
+40
+],
+"kyoshin/cf/CfTaskMain": [
+10,
+11
+],
+"kyoshin/cf/CfTFile": [
+26,
+34
+],
+"kyoshin/cf/CfCamEvent": [
+15,
+16
+],
+"kyoshin/cf/CfCamDirectionIntf": [
+4,
+4
+],
+"kyoshin/cf/CfCamLookatIntf": [
+4,
+4
+],
+"kyoshin/cf/CfCamTargetIntf": [
+4,
+4
+],
+"kyoshin/cf/CfCam": [
+151,
+181
+],
+"kyoshin/cf/CfCamEvent_1": [
+16,
+39
+],
+"kyoshin/cf/CfGameManager": [
+314,
+352
+],
+"kyoshin/cf/CtrlEnemy": [
+39,
+41
+],
+"kyoshin/cf/CtrlMoveBase": [
+12,
+20
+],
+"kyoshin/cf/CtrlMoveEne": [
+29,
+45
+],
+"kyoshin/cf/CtrlNpc": [
+27,
+34
+],
+"kyoshin/cf/CtrlPc": [
+41,
+47
+],
+"kyoshin/cf/CtrlRemote": [
+24,
+33
+],
+"kyoshin/cf/CtrlObjectParam": [
+73,
+109
+],
+"kyoshin/code_800A3B24": [
+7,
+27
+],
+"kyoshin/code_800A75FC": [
+46,
+50
+],
+"kyoshin/code_800AA008": [
+7,
+12
+],
+"kyoshin/cf/CfCollCircleImpl": [
+2,
+2
+],
+"kyoshin/cf/CfCollSphereImpl": [
+2,
+2
+],
+"kyoshin/cf/CfCollAABBImpl": [
+2,
+2
+],
+"kyoshin/cf/CfCollCylinderImpl": [
+1,
+2
+],
+"kyoshin/cf/CfCollCapsuleImpl": [
+2,
+2
+],
+"kyoshin/cf/object/CfObjectColl": [
+58,
+68
+],
+"kyoshin/cf/object/CfObjectEff": [
+52,
+53
+],
+"kyoshin/cf/object/CfObjectEne": [
+130,
+137
+],
+"kyoshin/code_800B06A4": [
+207,
+253
+],
+"kyoshin/cf/object/CfObjectMap": [
+17,
+20
+],
+"kyoshin/cf/object/CfObjectModel": [
+58,
+61
+],
+"kyoshin/cf/object/CfObjectMove": [
+117,
+127
+],
+"kyoshin/cf/object/CfObjectNpc": [
+6,
+8
+],
+"kyoshin/cf/object/CfObjectObj": [
+7,
+8
+],
+"kyoshin/cf/object/CfObjectPc": [
+31,
+36
+],
+"kyoshin/cf/object/CfObjectPoint": [
+10,
+10
+],
+"kyoshin/cf/code_800C17DC": [
+9,
+12
+],
+"kyoshin/cfsys/CfObjectImplWalker": [
+18,
+28
+],
+"kyoshin/cfsys/CfObjectImplPc": [
+10,
+22
+],
+"kyoshin/cfsys/CfObjectImplObj": [
+10,
+10
+],
+"kyoshin/cfsys/CfObjectImplNpc": [
+11,
+11
+],
+"kyoshin/cfsys/CfObjectImplMove": [
+25,
+36
+],
+"kyoshin/cfsys/CfObjectImplEne": [
+16,
+18
+],
+"kyoshin/cf/CtrlAct": [
+14,
+33
+],
+"kyoshin/cf/CBattleManager": [
+50,
+78
+],
+"kyoshin/cf/code_800F42AC": [
+9,
+9
+],
+"kyoshin/cf/CfObjectEnumList": [
+29,
+42
+],
+"kyoshin/cf/CfObjectSelectorObj": [
+14,
+18
+],
+"kyoshin/CMainMenu": [
+28,
+31
+],
+"kyoshin/menu/CMenuArtsSelect": [
+30,
+46
+],
+"kyoshin/menu/CMenuBattleDamage": [
+22,
+27
+],
+"kyoshin/menu/CMenuBattlePlayerState_ct": [
+0,
+1
+],
+"kyoshin/menu/CMenuBattlePlayerState": [
+11,
+20
+],
+"kyoshin/menu/CMenuEnemyState": [
+23,
+33
+],
+"kyoshin/menu/CMenuFade": [
+9,
+14
+],
+"kyoshin/menu/CMenuKeyAssign": [
+10,
+15
+],
+"kyoshin/CMiniMap": [
+15,
+33
+],
+"kyoshin/menu/CMenuQuestLog": [
+22,
+23
+],
+"kyoshin/menu/CMenuSymbolMark": [
+16,
+31
+],
+"kyoshin/CQuestWindow": [
+26,
+30
+],
+"kyoshin/CSystemWindow": [
+7,
+8
+],
+"kyoshin/CSysWinSelect": [
+15,
+15
+],
+"kyoshin/CTagProcessor": [
+114,
+127
+],
+"kyoshin/CTalkWindow": [
+13,
+18
+],
+"kyoshin/CUIBattleManager": [
+28,
+37
+],
+"kyoshin/CUICfManager": [
+69,
+89
+],
+"kyoshin/code_80135FDC": [
+83,
+124
+],
+"kyoshin/CUIWindowManager": [
+53,
+69
+],
+"kyoshin/cf/CfBdat": [
+18,
+21
+],
+"kyoshin/menu/CMenuUpdate": [
+31,
+36
+],
+"kyoshin/menu/CMenuLandTelop": [
+12,
+18
+],
+"kyoshin/cf/object/CBattleState": [
+32,
+39
+],
+"kyoshin/menu/CMenuGetItem": [
+15,
+21
+],
+"kyoshin/cf/object/CAIAction": [
+11,
+23
+],
+"kyoshin/cf/CArtsSet": [
+15,
+15
+],
+"kyoshin/cf/CArtsParam": [
+11,
+18
+],
+"kyoshin/cf/CItem": [
+134,
+169
+],
+"kyoshin/cf/CCharEffect": [
+16,
+22
+],
+"kyoshin/cf/CCharEffectEne": [
+6,
+6
+],
+"kyoshin/CCol6System": [
+29,
+45
+],
+"kyoshin/CCol6Invite": [
+11,
+12
+],
+"kyoshin/cf/CTaskREvent": [
+40,
+49
+],
+"kyoshin/cf/CInfoCf": [
+15,
+21
+],
+"kyoshin/menu/CMenuItem": [
+3,
+5
+],
+"kyoshin/realtimeevt/CREvtMem": [
+5,
+7
+],
+"kyoshin/cf/CTaskREvtSequence": [
+54,
+69
+],
+"kyoshin/cf/CfResObjImpl": [
+13,
+14
+],
+"kyoshin/cf/CfResReloadImpl": [
+28,
+42
+],
+"kyoshin/cf/CfMapEffectManager": [
+10,
+16
+],
+"kyoshin/cf/object/CfObjectActor": [
+22,
+26
+],
+"kyoshin/realtimeevt/CREvtModel": [
+14,
+18
+],
+"kyoshin/cf/CfMapItemManager": [
+11,
+24
+],
+"kyoshin/cf/object/CActorParam": [
+46,
+60
+],
+"kyoshin/menu/CMenuZeal": [
+10,
+13
+],
+"kyoshin/realtimeevt/CREvtCamera": [
+11,
+15
+],
+"kyoshin/realtimeevt/CREvtModelMap": [
+11,
+17
+],
+"kyoshin/realtimeevt/CREvtModelObj": [
+16,
+22
+],
+"kyoshin/realtimeevt/CREvtModelPc": [
+12,
+18
+],
+"kyoshin/realtimeevt/CREvtEffect": [
+8,
+13
+],
+"kyoshin/realtimeevt/CREvtObj": [
+6,
+6
+],
+"kyoshin/plugin/pluginTime": [
+3,
+3
+],
+"kyoshin/plugin/pluginBtl": [
+14,
+19
+],
+"kyoshin/code_801862C0": [
+6,
+14
+],
+"kyoshin/menu/CMenuPTGauge": [
+15,
+19
+],
+"kyoshin/menu/code_80187F14": [
+21,
+33
+],
+"kyoshin/menu/CMenuSelectShop": [
+14,
+15
+],
+"kyoshin/menu/CMenuShopSell": [
+12,
+16
+],
+"kyoshin/menu/CMenuShopBuy": [
+11,
+15
+],
+"kyoshin/menu/code_8018C5FC": [
+3,
+4
+],
+"kyoshin/cf/CfResPcImpl": [
+40,
+43
+],
+"kyoshin/cf/code_8018F8D8": [
+35,
+42
+],
+"kyoshin/menu/CMenuPTState": [
+7,
+8
+],
+"kyoshin/cf/CPartsChange": [
+59,
+84
+],
+"kyoshin/cf/CtrlMovePC": [
+9,
+20
+],
+"kyoshin/cf/CtrlMoveNpc": [
+3,
+7
+],
+"kyoshin/menu/CMenuBattleMode": [
+8,
+9
+],
+"kyoshin/COccCulling": [
+9,
+12
+],
+"kyoshin/CSimpleEveTalkWin": [
+8,
+12
+],
+"kyoshin/cf/CTaskCulling": [
+27,
+28
+],
+"kyoshin/cf/CVision": [
+13,
+38
+],
+"kyoshin/code_801A929C": [
+10,
+16
+],
+"kyoshin/plugin/pluginSnd": [
+16,
+19
+],
+"kyoshin/plugin/pluginGame": [
+2,
+2
+],
+"kyoshin/menu/CMenuVision": [
+17,
+19
+],
+"kyoshin/menu/CMenuBattleCommu": [
+11,
+14
+],
+"kyoshin/cf/CPcEffect07": [
+19,
+23
+],
+"kyoshin/menu/CMenuGetItemMulti": [
+19,
+33
+],
+"kyoshin/cf/CSuddenCommu": [
+22,
+31
+],
+"kyoshin/menu/CMenuKizunaTalk": [
+13,
+19
+],
+"kyoshin/menu/CMenuItemExchange": [
+19,
+24
+],
+"kyoshin/cf/CfSoundMan": [
+50,
+63
+],
+"kyoshin/cf/CfPadTask": [
+26,
+26
+],
+"kyoshin/cf/code_801C2C14": [
+6,
+11
+],
+"kyoshin/realtimeevt/CREvtLight": [
+5,
+7
+],
+"kyoshin/CBgTex": [
+10,
+10
+],
+"kyoshin/CTitleAHelp": [
+28,
+29
+],
+"kyoshin/CItemBoxGrid": [
+106,
+144
+],
+"kyoshin/CCur": [
+46,
+46
+],
+"kyoshin/CSortMenu": [
+28,
+30
+],
+"kyoshin/CItemBoxInfo": [
+63,
+110
+],
+"kyoshin/CNumSelect": [
+21,
+22
+],
+"kyoshin/CItemBoxLine": [
+48,
+77
+],
+"kyoshin/CScrollBar": [
+17,
+17
+],
+"kyoshin/code_801F3BE0": [
+24,
+27
+],
+"kyoshin/cf/CfGimmickObject": [
+16,
+29
+],
+"kyoshin/cf/object/CfObjectTbox": [
+4,
+4
+],
+"kyoshin/cf/CfResTboxImpl": [
+10,
+10
+],
+"kyoshin/CPartyStateWin": [
+38,
+45
+],
+"kyoshin/CModelDisp": [
+17,
+20
+],
+"kyoshin/CPartyState": [
+28,
+34
+],
+"kyoshin/plugin/pluginUnit": [
+9,
+13
+],
+"kyoshin/menu/parts/CModelDispEquip": [
+51,
+54
+],
+"kyoshin/CEquipChange": [
+40,
+49
+],
+"kyoshin/cf/CfMapMineManager": [
+7,
+20
+],
+"kyoshin/CItemBoxGridSubMenu": [
+13,
+18
+],
+"kyoshin/cf/CfGimmick": [
+45,
+51
+],
+"kyoshin/cf/CfGimmickElv": [
+7,
+14
+],
+"kyoshin/cf/CfGimmickLock": [
+4,
+9
+],
+"kyoshin/cf/CfGimmickWarp": [
+9,
+15
+],
+"kyoshin/cf/CfGimmickJump": [
+4,
+9
+],
+"kyoshin/cf/CfGimmickItem": [
+8,
+9
+],
+"kyoshin/makecrystal/CMenuMakeCrystal": [
+13,
+17
+],
+"kyoshin/makecrystal/CMakeCrystalWin": [
+17,
+23
+],
+"kyoshin/makecrystal/code_80213488": [
+10,
+11
+],
+"kyoshin/makecrystal/CMCCrystalBox": [
+74,
+89
+],
+"kyoshin/makecrystal/CMCCrystalInfo": [
+28,
+33
+],
+"kyoshin/makecrystal/CModelDispMakeCrystal": [
+47,
+80
+],
+"kyoshin/makecrystal/CMCCylinderGauge": [
+21,
+21
+],
+"kyoshin/makecrystal/CMCCrystalList": [
+28,
+34
+],
+"kyoshin/makecrystal/CMCEffStart": [
+96,
+96
+],
+"kyoshin/menu/CMenuQstCnt": [
+27,
+32
+],
+"kyoshin/CQstLogList": [
+33,
+35
+],
+"kyoshin/CQstLogInfo": [
+24,
+26
+],
+"kyoshin/CSysWin": [
+18,
+21
+],
+"kyoshin/CSelShopWin": [
+14,
+15
+],
+"kyoshin/CExchangeWin": [
+16,
+16
+],
+"kyoshin/CPresentWin": [
+25,
+28
+],
+"kyoshin/makecrystal/CMCCrystalSupport": [
+9,
+14
+],
+"kyoshin/menu/CMenuArtsSet": [
+91,
+110
+],
+"kyoshin/CArtsInfo": [
+45,
+93
+],
+"kyoshin/cf/CfNandManager": [
+33,
+48
+],
+"kyoshin/code_802405F4": [
+10,
+17
+],
+"kyoshin/menu/CMenuMapSelect": [
+3,
+7
+],
+"kyoshin/CMapSel": [
+23,
+26
+],
+"kyoshin/CFade": [
+14,
+14
+],
+"kyoshin/CFloorMap": [
+30,
+75
+],
+"kyoshin/menu/CMenuMapSelectSC": [
+13,
+17
+],
+"kyoshin/menu/CMenuPause": [
+11,
+12
+],
+"kyoshin/menu/CMenuCollepedia": [
+10,
+16
+],
+"kyoshin/CCollepedia": [
+70,
+80
+],
+"kyoshin/menu/CMenuKizunagram": [
+16,
+21
+],
+"kyoshin/CKizunagram": [
+68,
+83
+],
+"kyoshin/CPcKizunagram": [
+34,
+46
+],
+"kyoshin/code_8025FB10": [
+15,
+20
+],
+"kyoshin/menu/CMenuPassiveSkill": [
+10,
+17
+],
+"kyoshin/CPassiveSkill": [
+108,
+127
+],
+"kyoshin/cf/CfGimmickEne": [
+9,
+15
+],
+"kyoshin/menu/CMenuBattleEnd": [
+8,
+12
+],
+"kyoshin/menu/CMenuPlayAward": [
+42,
+48
+],
+"kyoshin/menu/CMenuKizunaTalkList": [
+14,
+14
+],
+"kyoshin/CKizunaTalkList": [
+28,
+35
+],
+"kyoshin/CSysWinBuff": [
+13,
+14
+],
+"kyoshin/cf/ICamControlRemote": [
+10,
+10
+],
+"kyoshin/cf/ICamControlGc": [
+4,
+4
+],
+"kyoshin/cf/ICamControlClassic": [
+10,
+10
+],
+"kyoshin/code_8027513C": [
+20,
+21
+],
+"kyoshin/menu/CMenuLvUp": [
+13,
+16
+],
+"kyoshin/cf/chain/CChain": [
+43,
+54
+],
+"kyoshin/cf/chain/CChainActorList": [
+29,
+40
+],
+"kyoshin/cf/chain/CChainTime": [
+4,
+4
+],
+"kyoshin/cf/chain/CChainTimer": [
+5,
+11
+],
+"kyoshin/CSysWinScenarioLog": [
+24,
+39
+],
+"kyoshin/cf/chain/CChainActorEne": [
+12,
+14
+],
+"kyoshin/cf/chain/CChainActorPc": [
+16,
+22
+],
+"kyoshin/CEquipItemBox": [
+93,
+121
+],
+"kyoshin/menu/CMenuSave": [
+11,
+14
+],
+"kyoshin/CSaveLoad": [
+76,
+80
+],
+"kyoshin/menu/CMenuPTChangeNotice": [
+10,
+16
+],
+"kyoshin/cf/chain/CChainCombo": [
+2,
+4
+],
+"kyoshin/CSysWinSave": [
+14,
+14
+],
+"kyoshin/realtimeevt/CREvtMovie": [
+4,
+7
+],
+"kyoshin/CTaskGamePic": [
+19,
+19
+],
+"kyoshin/CTaskGameEvt": [
+18,
+18
+],
+"kyoshin/cf/CHelpManager": [
+18,
+23
+],
+"kyoshin/code_80296898": [
+5,
+5
+],
+"kyoshin/makecrystal/CMCGetItemBox": [
+40,
+47
+],
+"kyoshin/menu/CMenuTutorial": [
+13,
+14
+],
+"kyoshin/CTutorial": [
+20,
+22
+],
+"kyoshin/menu/CMenuOption": [
+13,
+14
+],
+"kyoshin/COption": [
+44,
+48
+],
+"kyoshin/menu/CMenuSkipTimer": [
+14,
+14
+],
+"kyoshin/CSkipTimer": [
+40,
+44
+],
+"kyoshin/cf/chain/CChainEffect": [
+9,
+9
+],
+"kyoshin/cf/voice/CCharVoice": [
+7,
+8
+],
+"kyoshin/cf/voice/CCharVoiceMan": [
+55,
+60
+],
+"kyoshin/cf/voice/cvsys/CVS_THREAD": [
+10,
+14
+],
+"kyoshin/cf/voice/cvsys/CVS_THREAD_BATTLE_END": [
+6,
+6
+],
+"kyoshin/cf/voice/cvsys/CVS_THREAD_BUF": [
+3,
+6
+],
+"kyoshin/cf/voice/cvsys/CVS_THREAD_CHAIN": [
+6,
+7
+],
+"kyoshin/cf/voice/cvsys/CVS_THREAD_DOWN": [
+5,
+6
+],
+"kyoshin/cf/voice/cvsys/CVS_THREAD_EHP": [
+9,
+10
+],
+"kyoshin/cf/voice/cvsys/CVS_THREAD_FAINT": [
+6,
+7
+],
+"kyoshin/cf/voice/cvsys/CVS_THREAD_HAGE": [
+5,
+6
+],
+"kyoshin/cf/voice/cvsys/CVS_THREAD_HP": [
+17,
+20
+],
+"kyoshin/cf/voice/cvsys/CVS_THREAD_PARTY_GAGE": [
+6,
+7
+],
+"kyoshin/cf/voice/cvsys/CVS_THREAD_REVIVE": [
+7,
+8
+],
+"kyoshin/cf/voice/cvsys/CVS_THREAD_SUDDEN": [
+4,
+5
+],
+"kyoshin/cf/voice/cvsys/CVS_THREAD_TENSION_UP": [
+5,
+6
+],
+"kyoshin/cf/voice/cvsys/CVS_THREAD_VISION_BREAK": [
+4,
+6
+],
+"kyoshin/cf/voice/cvsys/CVS_THREAD_VISION_TELL": [
+5,
+6
+],
+"kyoshin/menu/CMenuBattleChain": [
+23,
+23
+],
+"kyoshin/cf/voice/cvsys/CVS_THREAD_BATTLE_END_SP": [
+4,
+5
+],
+"kyoshin/cf/CfGimmickSaveOff": [
+3,
+3
+],
+"kyoshin/menu/CMenuTutorialList": [
+14,
+18
+],
+"kyoshin/CTutorialList": [
+35,
+38
+],
+"kyoshin/CLoad": [
+12,
+15
+],
+"kyoshin/CNandData": [
+3,
+3
+],
+"kyoshin/CErrMes": [
+22,
+23
+],
+"kyoshin/plugin/pluginHelp": [
+4,
+4
+],
+"kyoshin/cf/voice/cvsys/CVS_THREAD_BATTLE_MAIN": [
+14,
+18
+],
+"kyoshin/cf/voice/cvsys/CVS_THREAD_BATTLE_BEGIN": [
+9,
+9
+],
+"kyoshin/menu/CMenuGCItem": [
+6,
+10
+],
+"kyoshin/menu/CMenuGameClear": [
+7,
+12
+],
+"kyoshin/cf/CfHikariItemManager": [
+11,
+24
+],
+"kyoshin/CUIErrMesWin": [
+33,
+37
+],
+"kyoshin/menu/CMenuTitle": [
+15,
+16
+],
+"kyoshin/CTitle": [
+65,
+66
+],
+"kyoshin/help/CHelp": [
+7,
+7
+],
+"kyoshin/help/CHelp_ArtsAttack": [
+1,
+1
+],
+"kyoshin/help/CHelp_ArtsSet": [
+1,
+1
+],
+"kyoshin/help/CHelp_CkKizuna": [
+1,
+1
+],
+"kyoshin/help/CHelp_CloseItemMenu": [
+1,
+1
+],
+"kyoshin/help/CHelp_CloseSysMenu": [
+1,
+1
+],
+"kyoshin/help/CHelp_EndEvent": [
+1,
+1
+],
+"kyoshin/help/CHelp_EnemyCount": [
+2,
+2
+],
+"kyoshin/help/CHelp_EnemyEnable": [
+1,
+1
+],
+"kyoshin/help/CHelp_EtherMake": [
+2,
+2
+],
+"kyoshin/help/CHelp_Exchange": [
+1,
+1
+],
+"kyoshin/help/CHelp_GameOver": [
+1,
+1
+],
+"kyoshin/help/CHelp_ItemCole": [
+1,
+1
+],
+"kyoshin/help/CHelp_Kizuna": [
+1,
+1
+],
+"kyoshin/help/CHelp_LandMark": [
+7,
+7
+],
+"kyoshin/help/CHelp_LearnArts": [
+1,
+2
+],
+"kyoshin/help/CHelp_ClosePartyMenu": [
+2,
+2
+],
+"kyoshin/help/CHelp_OpenPartyMenu": [
+1,
+1
+],
+"kyoshin/help/CHelp_Pg": [
+1,
+1
+],
+"kyoshin/help/CHelp_CloseQuestMenu": [
+1,
+1
+],
+"kyoshin/help/CHelp_ShopBuy": [
+1,
+1
+],
+"kyoshin/help/CHelp_ShopSel": [
+1,
+1
+],
+"kyoshin/help/CHelp_Sp": [
+1,
+1
+],
+"kyoshin/help/CHelp_Talk": [
+1,
+2
+],
+"kyoshin/help/CHelp_Target": [
+1,
+1
+],
+"kyoshin/code_802B8A3C": [
+4,
+6
+],
+"kyoshin/plugin/pluginVoice": [
+2,
+2
+],
+"kyoshin/code_802B9064": [
+1,
+1
+],
+"kyoshin/CBattery": [
+10,
+10
+],
+"PowerPC_EABI_Support/src/Runtime/__va_arg": [
+1,
+1
+],
+"PowerPC_EABI_Support/src/Runtime/global_destructor_chain": [
+2,
+2
+],
+"PowerPC_EABI_Support/src/Runtime/NMWException": [
+8,
+8
+],
+"PowerPC_EABI_Support/src/Runtime/ptmf": [
+3,
+3
+],
+"PowerPC_EABI_Support/src/Runtime/MWRTTI": [
+3,
+3
+],
+"PowerPC_EABI_Support/src/Runtime/runtime": [
+13,
+13
+],
+"PowerPC_EABI_Support/src/Runtime/__init_cpp_exceptions": [
+2,
+2
+],
+"PowerPC_EABI_Support/src/Runtime/Gecko_ExceptionPPC": [
+10,
+10
+],
+"PowerPC_EABI_Support/src/Runtime/GCN_mem_alloc": [
+1,
+1
+],
+"PowerPC_EABI_Support/src/MSL_C/MSL_Common/alloc": [
+4,
+4
+],
+"PowerPC_EABI_Support/src/MSL_C/MSL_Common/ansi_files": [
+2,
+2
+],
+"PowerPC_EABI_Support/src/MSL_C/MSL_Common_Embedded/ansi_fp": [
+10,
+10
+],
+"PowerPC_EABI_Support/src/MSL_C/MSL_Common/arith": [
+2,
+2
+],
+"PowerPC_EABI_Support/src/MSL_C/MSL_Common/buffer_io": [
+2,
+2
+],
+"PowerPC_EABI_Support/src/MSL_C/MSL_Common/direct_io": [
+1,
+1
+],
+"PowerPC_EABI_Support/src/MSL_C/MSL_Common/file_io": [
+2,
+2
+],
+"PowerPC_EABI_Support/src/MSL_C/MSL_Common/FILE_POS": [
+3,
+3
+],
+"PowerPC_EABI_Support/src/MSL_C/MSL_Common/mbstring": [
+5,
+5
+],
+"PowerPC_EABI_Support/src/MSL_C/MSL_Common/mem": [
+4,
+4
+],
+"PowerPC_EABI_Support/src/MSL_C/MSL_Common/mem_funcs": [
+3,
+4
+],
+"PowerPC_EABI_Support/src/MSL_C/MSL_Common/math_api": [
+3,
+3
+],
+"PowerPC_EABI_Support/src/MSL_C/MSL_Common/misc_io": [
+1,
+1
+],
+"PowerPC_EABI_Support/src/MSL_C/MSL_Common/printf": [
+14,
+14
+],
+"PowerPC_EABI_Support/src/MSL_C/MSL_Common/rand": [
+1,
+1
+],
+"PowerPC_EABI_Support/src/MSL_C/MSL_Common/scanf": [
+4,
+4
+],
+"PowerPC_EABI_Support/src/MSL_C/MSL_Common/signal": [
+1,
+1
+],
+"PowerPC_EABI_Support/src/MSL_C/MSL_Common/string": [
+8,
+8
+],
+"PowerPC_EABI_Support/src/MSL_C/MSL_Common/strtold": [
+2,
+2
+],
+"PowerPC_EABI_Support/src/MSL_C/MSL_Common/strtoul": [
+4,
+4
+],
+"PowerPC_EABI_Support/src/MSL_C/MSL_Common/wcstoul": [
+2,
+2
+],
+"PowerPC_EABI_Support/src/MSL_C/MSL_Common/wmem": [
+2,
+2
+],
+"PowerPC_EABI_Support/src/MSL_C/MSL_Common/wprintf": [
+9,
+9
+],
+"PowerPC_EABI_Support/src/MSL_C/MSL_Common/wscanf": [
+1,
+1
+],
+"PowerPC_EABI_Support/src/MSL_C/MSL_Common/wstring": [
+5,
+5
+],
+"PowerPC_EABI_Support/src/MSL_C/MSL_Common/wchar_io": [
+1,
+1
+],
+"PowerPC_EABI_Support/src/MSL_C/PPC_EABI/uart_console_io_gcn": [
+2,
+2
+],
+"PowerPC_EABI_Support/src/MSL_C/PPC_EABI/abort_exit_ppc_eabi": [
+1,
+1
+],
+"PowerPC_EABI_Support/src/MSL_C/MSL_Common/secure_error": [
+1,
+1
+],
+"PowerPC_EABI_Support/src/MSL_C/MSL_Common/math_double": [
+1,
+1
+],
+"PowerPC_EABI_Support/src/MSL_C/MSL_Common_Embedded/math_sun": [
+1,
+1
+],
+"PowerPC_EABI_Support/src/MSL_C/MSL_Common_Embedded/Math/Double_precision/e_acos": [
+1,
+1
+],
+"PowerPC_EABI_Support/src/MSL_C/MSL_Common_Embedded/Math/Double_precision/e_asin": [
+1,
+1
+],
+"PowerPC_EABI_Support/src/MSL_C/MSL_Common_Embedded/Math/Double_precision/e_atan2": [
+1,
+1
+],
+"PowerPC_EABI_Support/src/MSL_C/MSL_Common_Embedded/Math/Double_precision/e_fmod": [
+1,
+1
+],
+"PowerPC_EABI_Support/src/MSL_C/MSL_Common_Embedded/Math/Double_precision/e_log": [
+1,
+1
+],
+"PowerPC_EABI_Support/src/MSL_C/MSL_Common_Embedded/Math/Double_precision/e_log10": [
+1,
+1
+],
+"PowerPC_EABI_Support/src/MSL_C/MSL_Common_Embedded/Math/Double_precision/e_pow": [
+1,
+1
+],
+"PowerPC_EABI_Support/src/MSL_C/MSL_Common_Embedded/Math/Double_precision/e_rem_pio2": [
+1,
+1
+],
+"PowerPC_EABI_Support/src/MSL_C/MSL_Common_Embedded/Math/Double_precision/k_cos": [
+1,
+1
+],
+"PowerPC_EABI_Support/src/MSL_C/MSL_Common_Embedded/Math/Double_precision/k_rem_pio2": [
+1,
+1
+],
+"PowerPC_EABI_Support/src/MSL_C/MSL_Common_Embedded/Math/Double_precision/k_sin": [
+1,
+1
+],
+"PowerPC_EABI_Support/src/MSL_C/MSL_Common_Embedded/Math/Double_precision/k_tan": [
+1,
+1
+],
+"PowerPC_EABI_Support/src/MSL_C/MSL_Common_Embedded/Math/Double_precision/s_atan": [
+1,
+1
+],
+"PowerPC_EABI_Support/src/MSL_C/MSL_Common_Embedded/Math/Double_precision/s_ceil": [
+1,
+1
+],
+"PowerPC_EABI_Support/src/MSL_C/MSL_Common_Embedded/Math/Double_precision/s_copysign": [
+1,
+1
+],
+"PowerPC_EABI_Support/src/MSL_C/MSL_Common_Embedded/Math/Double_precision/s_cos": [
+1,
+1
+],
+"PowerPC_EABI_Support/src/MSL_C/MSL_Common_Embedded/Math/Double_precision/s_floor": [
+1,
+1
+],
+"PowerPC_EABI_Support/src/MSL_C/MSL_Common_Embedded/Math/Double_precision/s_frexp": [
+1,
+1
+],
+"PowerPC_EABI_Support/src/MSL_C/MSL_Common_Embedded/Math/Double_precision/s_ldexp": [
+1,
+1
+],
+"PowerPC_EABI_Support/src/MSL_C/MSL_Common_Embedded/Math/Double_precision/s_modf": [
+1,
+1
+],
+"PowerPC_EABI_Support/src/MSL_C/MSL_Common_Embedded/Math/Double_precision/s_sin": [
+1,
+1
+],
+"PowerPC_EABI_Support/src/MSL_C/MSL_Common_Embedded/Math/Double_precision/s_tan": [
+1,
+1
+],
+"PowerPC_EABI_Support/src/MSL_C/MSL_Common_Embedded/Math/Double_precision/w_acos": [
+1,
+1
+],
+"PowerPC_EABI_Support/src/MSL_C/MSL_Common_Embedded/Math/Double_precision/w_asin": [
+1,
+1
+],
+"PowerPC_EABI_Support/src/MSL_C/MSL_Common_Embedded/Math/Double_precision/w_atan2": [
+1,
+1
+],
+"PowerPC_EABI_Support/src/MSL_C/MSL_Common_Embedded/Math/Double_precision/w_fmod": [
+1,
+1
+],
+"PowerPC_EABI_Support/src/MSL_C/MSL_Common_Embedded/Math/Double_precision/w_log": [
+1,
+1
+],
+"PowerPC_EABI_Support/src/MSL_C/MSL_Common_Embedded/Math/Double_precision/w_log10": [
+1,
+1
+],
+"PowerPC_EABI_Support/src/MSL_C/MSL_Common_Embedded/Math/Double_precision/w_pow": [
+1,
+1
+],
+"PowerPC_EABI_Support/src/MSL_C/MSL_Common_Embedded/Math/Double_precision/e_sqrt": [
+1,
+1
+],
+"PowerPC_EABI_Support/src/MSL_C/PPC_EABI/math_ppc": [
+1,
+1
+],
+"PowerPC_EABI_Support/src/MSL_C/MSL_Common_Embedded/Math/Double_precision/w_sqrt": [
+1,
+1
+],
+"PowerPC_EABI_Support/src/MSL_C/MSL_Common/extras": [
+1,
+1
+],
+"PowerPC_EABI_Support/src/MetroTRK/custconn/cc_gdev": [
+10,
+10
+],
+"PowerPC_EABI_Support/src/MetroTRK/custconn/MWCriticalSection_gc": [
+3,
+3
+],
+"PowerPC_EABI_Support/src/MetroTRK/custconn/CircleBuffer": [
+4,
+4
+],
+"PowerPC_EABI_Support/src/MetroTRK/flush_cache": [
+1,
+1
+],
+"PowerPC_EABI_Support/src/MetroTRK/main_TRK": [
+1,
+1
+],
+"PowerPC_EABI_Support/src/MetroTRK/mainloop": [
+1,
+1
+],
+"PowerPC_EABI_Support/src/MetroTRK/mem_TRK": [
+2,
+2
+],
+"PowerPC_EABI_Support/src/MetroTRK/dispatch": [
+1,
+1
+],
+"PowerPC_EABI_Support/src/MetroTRK/dolphin_trk": [
+7,
+7
+],
+"PowerPC_EABI_Support/src/MetroTRK/dolphin_trk_glue": [
+13,
+13
+],
+"PowerPC_EABI_Support/src/MetroTRK/notify": [
+1,
+1
+],
+"PowerPC_EABI_Support/src/MetroTRK/nubevent": [
+5,
+5
+],
+"PowerPC_EABI_Support/src/MetroTRK/nubinit": [
+4,
+4
+],
+"PowerPC_EABI_Support/src/MetroTRK/serpoll": [
+5,
+5
+],
+"PowerPC_EABI_Support/src/MetroTRK/string_TRK": [
+1,
+1
+],
+"PowerPC_EABI_Support/src/MetroTRK/support": [
+5,
+5
+],
+"PowerPC_EABI_Support/src/MetroTRK/targcont": [
+1,
+1
+],
+"PowerPC_EABI_Support/src/MetroTRK/mpc_7xx_603e": [
+2,
+2
+],
+"PowerPC_EABI_Support/src/MetroTRK/msg": [
+1,
+1
+],
+"PowerPC_EABI_Support/src/MetroTRK/msgbuf": [
+15,
+15
+],
+"PowerPC_EABI_Support/src/MetroTRK/msghndlr": [
+13,
+13
+],
+"PowerPC_EABI_Support/src/MetroTRK/mslsupp": [
+5,
+5
+],
+"PowerPC_EABI_Support/src/MetroTRK/targimpl": [
+34,
+34
+],
+"PowerPC_EABI_Support/src/MetroTRK/target_options": [
+2,
+2
+],
+"NdevExi2A/src/DebuggerDriver": [
+9,
+9
+],
+"NdevExi2A/src/exi2": [
+6,
+6
+],
+"RVL_SDK/src/revolution/ai/ai": [
+12,
+12
+],
+"RVL_SDK/src/revolution/arc/arc": [
+12,
+12
+],
+"RVL_SDK/src/revolution/ax/AX": [
+3,
+3
+],
+"RVL_SDK/src/revolution/ax/AXAlloc": [
+10,
+10
+],
+"RVL_SDK/src/revolution/ax/AXAux": [
+23,
+23
+],
+"RVL_SDK/src/revolution/ax/AXCL": [
+14,
+14
+],
+"RVL_SDK/src/revolution/ax/AXOut": [
+13,
+13
+],
+"RVL_SDK/src/revolution/ax/AXSPB": [
+7,
+7
+],
+"RVL_SDK/src/revolution/ax/AXVPB": [
+15,
+15
+],
+"RVL_SDK/src/revolution/ax/AXProf": [
+1,
+1
+],
+"RVL_SDK/src/revolution/axfx/AXFXReverbHi": [
+3,
+3
+],
+"RVL_SDK/src/revolution/axfx/AXFXReverbHiExp": [
+7,
+7
+],
+"RVL_SDK/src/revolution/axfx/AXFXDelayExp": [
+7,
+7
+],
+"RVL_SDK/src/revolution/axfx/AXFXDelayExpDpl2": [
+6,
+7
+],
+"RVL_SDK/src/revolution/axfx/AXFXReverbStdExp": [
+8,
+10
+],
+"RVL_SDK/src/revolution/axfx/AXFXReverbStdExpDpl2": [
+8,
+10
+],
+"RVL_SDK/src/revolution/axfx/AXFXChorusExp": [
+3,
+7
+],
+"RVL_SDK/src/revolution/axfx/AXFXChorusExpDpl2": [
+3,
+7
+],
+"RVL_SDK/src/revolution/axfx/AXFXLfoTable": [
+1,
+1
+],
+"RVL_SDK/src/revolution/axfx/AXFXSrcCoef": [
+1,
+1
+],
+"RVL_SDK/src/revolution/axfx/AXFXHooks": [
+4,
+4
+],
+"RVL_SDK/src/revolution/base/PPCArch": [
+23,
+23
+],
+"RVL_SDK/src/revolution/bte/gki/gki_buffer": [
+18,
+18
+],
+"RVL_SDK/src/revolution/bte/gki/gki_time": [
+8,
+8
+],
+"RVL_SDK/src/revolution/bte/gki/gki_ppc": [
+13,
+13
+],
+"RVL_SDK/src/revolution/bte/hci/hcisu_h2": [
+6,
+8
+],
+"RVL_SDK/src/revolution/bte/hci/uusb_ppc": [
+8,
+11
+],
+"RVL_SDK/src/revolution/bte/main/bte_hcisu": [
+4,
+4
+],
+"RVL_SDK/src/revolution/bte/main/bte_init": [
+1,
+1
+],
+"RVL_SDK/src/revolution/bte/main/bte_logmsg": [
+8,
+8
+],
+"RVL_SDK/src/revolution/bte/main/bte_main": [
+4,
+4
+],
+"RVL_SDK/src/revolution/bte/main/btu_task1": [
+4,
+4
+],
+"RVL_SDK/src/revolution/bte/bta/sys/bd": [
+2,
+2
+],
+"RVL_SDK/src/revolution/bte/bta/sys/bta_sys_conn": [
+8,
+8
+],
+"RVL_SDK/src/revolution/bte/bta/sys/bta_sys_main": [
+9,
+9
+],
+"RVL_SDK/src/revolution/bte/bta/sys/ptim": [
+4,
+4
+],
+"RVL_SDK/src/revolution/bte/bta/sys/utl": [
+1,
+1
+],
+"RVL_SDK/src/revolution/bte/bta/dm/bta_dm_act": [
+53,
+56
+],
+"RVL_SDK/src/revolution/bte/bta/dm/bta_dm_api": [
+11,
+11
+],
+"RVL_SDK/src/revolution/bte/bta/dm/bta_dm_main": [
+2,
+2
+],
+"RVL_SDK/src/revolution/bte/bta/dm/bta_dm_pm": [
+5,
+8
+],
+"RVL_SDK/src/revolution/bte/bta/hh/bta_hh_act": [
+18,
+18
+],
+"RVL_SDK/src/revolution/bte/bta/hh/bta_hh_api": [
+8,
+8
+],
+"RVL_SDK/src/revolution/bte/bta/hh/bta_hh_main": [
+3,
+3
+],
+"RVL_SDK/src/revolution/bte/bta/hh/bta_hh_utils": [
+5,
+5
+],
+"RVL_SDK/src/revolution/bte/stack/btm/btm_acl": [
+28,
+29
+],
+"RVL_SDK/src/revolution/bte/stack/btm/btm_dev": [
+7,
+7
+],
+"RVL_SDK/src/revolution/bte/stack/btm/btm_devctl": [
+33,
+33
+],
+"RVL_SDK/src/revolution/bte/stack/btm/btm_discovery": [
+3,
+3
+],
+"RVL_SDK/src/revolution/bte/stack/btm/btm_inq": [
+21,
+25
+],
+"RVL_SDK/src/revolution/bte/stack/btm/btm_main": [
+1,
+1
+],
+"RVL_SDK/src/revolution/bte/stack/btm/btm_pm": [
+10,
+10
+],
+"RVL_SDK/src/revolution/bte/stack/btm/btm_sco": [
+15,
+15
+],
+"RVL_SDK/src/revolution/bte/stack/btm/btm_sec": [
+29,
+31
+],
+"RVL_SDK/src/revolution/bte/stack/btu/btu_hcif": [
+11,
+12
+],
+"RVL_SDK/src/revolution/bte/stack/btu/btu_init": [
+2,
+2
+],
+"RVL_SDK/src/revolution/bte/stack/wbt/wbt_ext": [
+1,
+1
+],
+"RVL_SDK/src/revolution/bte/stack/gap/gap_api": [
+1,
+1
+],
+"RVL_SDK/src/revolution/bte/stack/gap/gap_conn": [
+8,
+8
+],
+"RVL_SDK/src/revolution/bte/stack/gap/gap_utils": [
+6,
+6
+],
+"RVL_SDK/src/revolution/bte/stack/hcic/hcicmds": [
+57,
+59
+],
+"RVL_SDK/src/revolution/bte/stack/hid/hidd_api": [
+1,
+1
+],
+"RVL_SDK/src/revolution/bte/stack/hid/hidd_conn": [
+1,
+1
+],
+"RVL_SDK/src/revolution/bte/stack/hid/hidd_mgmt": [
+1,
+1
+],
+"RVL_SDK/src/revolution/bte/stack/hid/hidd_pm": [
+3,
+3
+],
+"RVL_SDK/src/revolution/bte/stack/hid/hidh_api": [
+11,
+11
+],
+"RVL_SDK/src/revolution/bte/stack/hid/hidh_conn": [
+16,
+16
+],
+"RVL_SDK/src/revolution/bte/stack/l2cap/l2c_api": [
+13,
+13
+],
+"RVL_SDK/src/revolution/bte/stack/l2cap/l2c_csm": [
+9,
+11
+],
+"RVL_SDK/src/revolution/bte/stack/l2cap/l2c_link": [
+16,
+17
+],
+"RVL_SDK/src/revolution/bte/stack/l2cap/l2c_main": [
+3,
+5
+],
+"RVL_SDK/src/revolution/bte/stack/l2cap/l2c_utils": [
+33,
+33
+],
+"RVL_SDK/src/revolution/bte/stack/rfcomm/port_api": [
+1,
+1
+],
+"RVL_SDK/src/revolution/bte/stack/rfcomm/port_rfc": [
+17,
+18
+],
+"RVL_SDK/src/revolution/bte/stack/rfcomm/port_utils": [
+7,
+7
+],
+"RVL_SDK/src/revolution/bte/stack/rfcomm/rfc_l2cap_if": [
+10,
+10
+],
+"RVL_SDK/src/revolution/bte/stack/rfcomm/rfc_mx_fsm": [
+10,
+10
+],
+"RVL_SDK/src/revolution/bte/stack/rfcomm/rfc_port_fsm": [
+17,
+17
+],
+"RVL_SDK/src/revolution/bte/stack/rfcomm/rfc_port_if": [
+12,
+12
+],
+"RVL_SDK/src/revolution/bte/stack/rfcomm/rfc_ts_frames": [
+15,
+15
+],
+"RVL_SDK/src/revolution/bte/stack/rfcomm/rfc_utils": [
+15,
+15
+],
+"RVL_SDK/src/revolution/bte/stack/sdp/sdp_api": [
+7,
+9
+],
+"RVL_SDK/src/revolution/bte/stack/sdp/sdp_db": [
+9,
+10
+],
+"RVL_SDK/src/revolution/bte/stack/sdp/sdp_discovery": [
+8,
+10
+],
+"RVL_SDK/src/revolution/bte/stack/sdp/sdp_main": [
+10,
+11
+],
+"RVL_SDK/src/revolution/bte/stack/sdp/sdp_server": [
+0,
+4
+],
+"RVL_SDK/src/revolution/bte/stack/sdp/sdp_utils": [
+13,
+13
+],
+"RVL_SDK/src/revolution/cx/CXStreamingUncompression": [
+1,
+2
+],
+"RVL_SDK/src/revolution/cx/CXUncompression": [
+1,
+2
+],
+"RVL_SDK/src/revolution/cx/CXSecureUncompression": [
+1,
+1
+],
+"RVL_SDK/src/revolution/db/db": [
+5,
+5
+],
+"RVL_SDK/src/revolution/dsp/dsp": [
+9,
+9
+],
+"RVL_SDK/src/revolution/dsp/dsp_debug": [
+1,
+1
+],
+"RVL_SDK/src/revolution/dsp/dsp_task": [
+5,
+5
+],
+"RVL_SDK/src/revolution/dvd/dvdfs": [
+11,
+11
+],
+"RVL_SDK/src/revolution/dvd/dvd": [
+51,
+51
+],
+"RVL_SDK/src/revolution/dvd/dvdqueue": [
+6,
+6
+],
+"RVL_SDK/src/revolution/dvd/dvderror": [
+14,
+14
+],
+"RVL_SDK/src/revolution/dvd/dvdidutils": [
+1,
+1
+],
+"RVL_SDK/src/revolution/dvd/dvdFatal": [
+4,
+4
+],
+"RVL_SDK/src/revolution/dvd/dvdDeviceError": [
+2,
+2
+],
+"RVL_SDK/src/revolution/dvd/dvd_broadway": [
+32,
+32
+],
+"RVL_SDK/src/revolution/enc/encutility": [
+3,
+3
+],
+"RVL_SDK/src/revolution/enc/encunicode": [
+3,
+3
+],
+"RVL_SDK/src/revolution/esp/esp": [
+9,
+9
+],
+"RVL_SDK/src/revolution/euart/euart": [
+3,
+3
+],
+"RVL_SDK/src/revolution/exi/EXIBios": [
+19,
+19
+],
+"RVL_SDK/src/revolution/exi/EXIUart": [
+2,
+2
+],
+"RVL_SDK/src/revolution/exi/EXICommon": [
+1,
+1
+],
+"RVL_SDK/src/revolution/fs/fs": [
+25,
+25
+],
+"RVL_SDK/src/revolution/gx/GXInit": [
+6,
+6
+],
+"RVL_SDK/src/revolution/gx/GXFifo": [
+12,
+13
+],
+"RVL_SDK/src/revolution/gx/GXAttr": [
+11,
+11
+],
+"RVL_SDK/src/revolution/gx/GXMisc": [
+22,
+22
+],
+"RVL_SDK/src/revolution/gx/GXGeometry": [
+9,
+9
+],
+"RVL_SDK/src/revolution/gx/GXFrameBuf": [
+15,
+15
+],
+"RVL_SDK/src/revolution/gx/GXLight": [
+16,
+16
+],
+"RVL_SDK/src/revolution/gx/GXTexture": [
+30,
+32
+],
+"RVL_SDK/src/revolution/gx/GXBump": [
+10,
+10
+],
+"RVL_SDK/src/revolution/gx/GXTev": [
+16,
+16
+],
+"RVL_SDK/src/revolution/gx/GXPixel": [
+13,
+13
+],
+"RVL_SDK/src/revolution/gx/GXDisplayList": [
+1,
+1
+],
+"RVL_SDK/src/revolution/gx/GXTransform": [
+16,
+16
+],
+"RVL_SDK/src/revolution/gx/GXPerf": [
+2,
+2
+],
+"RVL_SDK/src/revolution/hbm/HBMFrameController": [
+3,
+3
+],
+"RVL_SDK/src/revolution/hbm/HBMAnmController": [
+3,
+3
+],
+"RVL_SDK/src/revolution/hbm/HBMGUIManager": [
+56,
+56
+],
+"RVL_SDK/src/revolution/hbm/HBMController": [
+25,
+25
+],
+"RVL_SDK/src/revolution/hbm/HBMRemoteSpk": [
+15,
+15
+],
+"RVL_SDK/src/revolution/hbm/HBMAxSound": [
+10,
+10
+],
+"RVL_SDK/src/revolution/hbm/HBMCommon": [
+11,
+11
+],
+"RVL_SDK/src/revolution/hbm/HBMBase": [
+32,
+33
+],
+"RVL_SDK/src/revolution/hbm/nw4hbm/lyt/lyt_animation": [
+11,
+11
+],
+"RVL_SDK/src/revolution/hbm/nw4hbm/lyt/lyt_arcResourceAccessor": [
+5,
+6
+],
+"RVL_SDK/src/revolution/hbm/nw4hbm/lyt/lyt_bounding": [
+6,
+6
+],
+"RVL_SDK/src/revolution/hbm/nw4hbm/lyt/lyt_common": [
+15,
+16
+],
+"RVL_SDK/src/revolution/hbm/nw4hbm/lyt/lyt_drawInfo": [
+2,
+2
+],
+"RVL_SDK/src/revolution/hbm/nw4hbm/lyt/lyt_group": [
+5,
+5
+],
+"RVL_SDK/src/revolution/hbm/nw4hbm/lyt/lyt_layout": [
+13,
+15
+],
+"RVL_SDK/src/revolution/hbm/nw4hbm/lyt/lyt_material": [
+22,
+23
+],
+"RVL_SDK/src/revolution/hbm/nw4hbm/lyt/lyt_pane": [
+22,
+28
+],
+"RVL_SDK/src/revolution/hbm/nw4hbm/lyt/lyt_picture": [
+11,
+11
+],
+"RVL_SDK/src/revolution/hbm/nw4hbm/lyt/lyt_resourceAccessor": [
+3,
+3
+],
+"RVL_SDK/src/revolution/hbm/nw4hbm/lyt/lyt_textBox": [
+13,
+16
+],
+"RVL_SDK/src/revolution/hbm/nw4hbm/lyt/lyt_window": [
+20,
+20
+],
+"RVL_SDK/src/revolution/hbm/nw4hbm/math/math_triangular": [
+3,
+3
+],
+"RVL_SDK/src/revolution/hbm/nw4hbm/ut/ut_binaryFileFormat": [
+1,
+1
+],
+"RVL_SDK/src/revolution/hbm/nw4hbm/ut/ut_CharStrmReader": [
+4,
+4
+],
+"RVL_SDK/src/revolution/hbm/nw4hbm/ut/ut_CharWriter": [
+25,
+26
+],
+"RVL_SDK/src/revolution/hbm/nw4hbm/ut/ut_Font": [
+1,
+1
+],
+"RVL_SDK/src/revolution/hbm/nw4hbm/ut/ut_LinkList": [
+3,
+3
+],
+"RVL_SDK/src/revolution/hbm/nw4hbm/ut/ut_list": [
+5,
+5
+],
+"RVL_SDK/src/revolution/hbm/nw4hbm/ut/ut_ResFont": [
+4,
+4
+],
+"RVL_SDK/src/revolution/hbm/nw4hbm/ut/ut_ResFontBase": [
+24,
+24
+],
+"RVL_SDK/src/revolution/hbm/nw4hbm/ut/ut_TagProcessorBase": [
+12,
+12
+],
+"RVL_SDK/src/revolution/hbm/nw4hbm/ut/ut_TextWriterBase": [
+81,
+83
+],
+"RVL_SDK/src/revolution/hbm/mix": [
+15,
+15
+],
+"RVL_SDK/src/revolution/hbm/syn": [
+8,
+8
+],
+"RVL_SDK/src/revolution/hbm/synctrl": [
+4,
+4
+],
+"RVL_SDK/src/revolution/hbm/synenv": [
+1,
+2
+],
+"RVL_SDK/src/revolution/hbm/synmix": [
+5,
+5
+],
+"RVL_SDK/src/revolution/hbm/synpitch": [
+3,
+4
+],
+"RVL_SDK/src/revolution/hbm/synsample": [
+4,
+4
+],
+"RVL_SDK/src/revolution/hbm/synvoice": [
+3,
+3
+],
+"RVL_SDK/src/revolution/hbm/seq": [
+8,
+10
+],
+"RVL_SDK/src/revolution/ipc/ipcMain": [
+7,
+7
+],
+"RVL_SDK/src/revolution/ipc/ipcclt": [
+21,
+21
+],
+"RVL_SDK/src/revolution/ipc/memory": [
+4,
+4
+],
+"RVL_SDK/src/revolution/ipc/ipcProfile": [
+4,
+4
+],
+"RVL_SDK/src/revolution/kpad/KPAD": [
+23,
+29
+],
+"RVL_SDK/src/revolution/mem/mem_heapCommon": [
+3,
+3
+],
+"RVL_SDK/src/revolution/mem/mem_expHeap": [
+8,
+8
+],
+"RVL_SDK/src/revolution/mem/mem_frameHeap": [
+5,
+5
+],
+"RVL_SDK/src/revolution/mem/mem_allocator": [
+5,
+5
+],
+"RVL_SDK/src/revolution/mem/mem_list": [
+4,
+4
+],
+"RVL_SDK/src/revolution/mix/mix": [
+10,
+10
+],
+"RVL_SDK/src/revolution/mix/remote": [
+4,
+4
+],
+"RVL_SDK/src/revolution/mtx/mtx": [
+19,
+19
+],
+"RVL_SDK/src/revolution/mtx/mtxvec": [
+1,
+1
+],
+"RVL_SDK/src/revolution/mtx/mtx44": [
+3,
+3
+],
+"RVL_SDK/src/revolution/mtx/vec": [
+6,
+6
+],
+"RVL_SDK/src/revolution/mtx/quat": [
+7,
+7
+],
+"RVL_SDK/src/revolution/nand/nand": [
+25,
+25
+],
+"RVL_SDK/src/revolution/nand/NANDOpenClose": [
+9,
+9
+],
+"RVL_SDK/src/revolution/nand/NANDCore": [
+22,
+22
+],
+"RVL_SDK/src/revolution/nand/NANDCheck": [
+2,
+2
+],
+"RVL_SDK/src/revolution/nand/NANDLogging": [
+2,
+3
+],
+"RVL_SDK/src/revolution/os/OS": [
+19,
+20
+],
+"RVL_SDK/src/revolution/os/OSAlarm": [
+12,
+12
+],
+"RVL_SDK/src/revolution/os/OSAlloc": [
+6,
+6
+],
+"RVL_SDK/src/revolution/os/OSArena": [
+13,
+13
+],
+"RVL_SDK/src/revolution/os/OSAudioSystem": [
+3,
+3
+],
+"RVL_SDK/src/revolution/os/OSCache": [
+20,
+20
+],
+"RVL_SDK/src/revolution/os/OSContext": [
+15,
+15
+],
+"RVL_SDK/src/revolution/os/OSError": [
+4,
+4
+],
+"RVL_SDK/src/revolution/os/OSExec": [
+8,
+11
+],
+"RVL_SDK/src/revolution/os/OSFatal": [
+4,
+4
+],
+"RVL_SDK/src/revolution/os/OSFont": [
+12,
+13
+],
+"RVL_SDK/src/revolution/os/OSInterrupt": [
+11,
+11
+],
+"RVL_SDK/src/revolution/os/OSLink": [
+1,
+1
+],
+"RVL_SDK/src/revolution/os/OSMessage": [
+4,
+4
+],
+"RVL_SDK/src/revolution/os/OSMemory": [
+15,
+15
+],
+"RVL_SDK/src/revolution/os/OSMutex": [
+4,
+4
+],
+"RVL_SDK/src/revolution/os/OSReboot": [
+2,
+2
+],
+"RVL_SDK/src/revolution/os/OSReset": [
+9,
+11
+],
+"RVL_SDK/src/revolution/os/OSRtc": [
+9,
+9
+],
+"RVL_SDK/src/revolution/os/OSSync": [
+2,
+2
+],
+"RVL_SDK/src/revolution/os/OSThread": [
+22,
+23
+],
+"RVL_SDK/src/revolution/os/OSTime": [
+5,
+5
+],
+"RVL_SDK/src/revolution/os/OSUtf": [
+4,
+4
+],
+"RVL_SDK/src/revolution/os/OSIpc": [
+3,
+3
+],
+"RVL_SDK/src/revolution/os/OSStateTM": [
+11,
+11
+],
+"RVL_SDK/src/revolution/os/OSPlayRecord": [
+4,
+4
+],
+"RVL_SDK/src/revolution/os/OSStateFlags": [
+2,
+2
+],
+"RVL_SDK/src/revolution/os/OSNet": [
+8,
+8
+],
+"RVL_SDK/src/revolution/os/OSNandbootInfo": [
+2,
+2
+],
+"RVL_SDK/src/revolution/os/OSPlayTime": [
+3,
+8
+],
+"RVL_SDK/src/revolution/os/OSCrc": [
+1,
+1
+],
+"RVL_SDK/src/revolution/os/OSLaunch": [
+1,
+1
+],
+"RVL_SDK/src/revolution/pad/Pad": [
+2,
+2
+],
+"RVL_SDK/src/revolution/sc/scsystem": [
+21,
+21
+],
+"RVL_SDK/src/revolution/sc/scapi": [
+19,
+19
+],
+"RVL_SDK/src/revolution/sc/scapi_prdinfo": [
+3,
+3
+],
+"RVL_SDK/src/revolution/si/SIBios": [
+8,
+11
+],
+"RVL_SDK/src/revolution/si/SISamplingRate": [
+2,
+2
+],
+"RVL_SDK/src/revolution/tpl/TPL": [
+3,
+3
+],
+"RVL_SDK/src/revolution/usb/usb": [
+14,
+14
+],
+"RVL_SDK/src/revolution/vi/vi": [
+24,
+28
+],
+"RVL_SDK/src/revolution/vi/i2c": [
+3,
+3
+],
+"RVL_SDK/src/revolution/vi/vi3in1": [
+14,
+16
+],
+"RVL_SDK/src/revolution/wenc/wenc": [
+1,
+1
+],
+"RVL_SDK/src/revolution/wpad/WPAD": [
+70,
+77
+],
+"RVL_SDK/src/revolution/wpad/WPADHIDParser": [
+10,
+25
+],
+"RVL_SDK/src/revolution/wpad/WPADEncrypt": [
+2,
+3
+],
+"RVL_SDK/src/revolution/wpad/WPADMem": [
+2,
+2
+],
+"RVL_SDK/src/revolution/wpad/debug_msg": [
+1,
+1
+],
+"RVL_SDK/src/revolution/wud/WUD": [
+64,
+86
+],
+"RVL_SDK/src/revolution/wud/WUDHidHost": [
+5,
+5
+],
+"RVL_SDK/src/revolution/wud/debug_msg": [
+1,
+1
+],
+"CriWare/src/adx/adxf/adx_fini": [
+1,
+2
+],
+"CriWare/src/adx/adxf/adx_fs": [
+21,
+25
+],
+"CriWare/src/adx/adxf/adx_fcch": [
+1,
+1
+],
+"CriWare/src/adx/adxt/adx_fsvr": [
+2,
+2
+],
+"CriWare/src/adx/adxt/adx_inis": [
+5,
+7
+],
+"CriWare/src/adx/adxt/adx_lsc": [
+1,
+1
+],
+"CriWare/src/adx/adxt/adx_mng": [
+2,
+2
+],
+"CriWare/src/adx/adxt/adx_sfa": [
+2,
+2
+],
+"CriWare/src/adx/adxt/adx_sjd": [
+39,
+44
+],
+"CriWare/src/adx/adxt/adx_stmc": [
+28,
+32
+],
+"CriWare/src/adx/adxt/adx_tlk2": [
+3,
+3
+],
+"CriWare/src/adx/adxt/adx_tlk": [
+38,
+45
+],
+"CriWare/src/adx/adxt/adx_tsvr": [
+9,
+11
+],
+"CriWare/src/adx/adxt/adx_xpnd": [
+17,
+17
+],
+"CriWare/src/adx/adxt/adx_amp": [
+4,
+4
+],
+"CriWare/src/adx/adxt/adx_bahx": [
+4,
+4
+],
+"CriWare/src/adx/adxt/adx_baif": [
+2,
+7
+],
+"CriWare/src/adx/adxt/adx_bsc": [
+41,
+44
+],
+"CriWare/src/adx/adxt/adx_bwav": [
+4,
+8
+],
+"CriWare/src/adx/adxt/adx_crs": [
+6,
+6
+],
+"CriWare/src/adx/adxt/adx_dcd5": [
+1,
+4
+],
+"CriWare/src/adx/adxt/adx_dcd": [
+9,
+9
+],
+"CriWare/src/adx/adxt/adx_errs": [
+6,
+6
+],
+"CriWare/src/adx/ahx/ahx_ftbl": [
+1,
+1
+],
+"CriWare/src/adx/ahx/ahx_link": [
+6,
+6
+],
+"CriWare/src/adx/ahx/ahx_mflt_c": [
+0,
+1
+],
+"CriWare/src/adx/ahx/ahx_mwin2_c": [
+16,
+16
+],
+"CriWare/src/adx/ahx/ahx_sbf2": [
+0,
+1
+],
+"CriWare/src/adx/ahx/ahx_sbf": [
+6,
+7
+],
+"CriWare/src/adx/ahx/ahx_sjd": [
+16,
+17
+],
+"CriWare/src/adx/ahx/ahx_wtbl": [
+1,
+1
+],
+"CriWare/src/adx/ahx/adx_hdr": [
+2,
+3
+],
+"CriWare/src/adx/ahx/ahx_atbl": [
+2,
+2
+],
+"CriWare/src/adx/ahx/ahx_bsr": [
+5,
+8
+],
+"CriWare/src/adx/ahx/ahx_cmn": [
+2,
+2
+],
+"CriWare/src/adx/ahx/ahx_dcd": [
+19,
+24
+],
+"CriWare/src/adx/cricfg/cfg_lib": [
+1,
+1
+],
+"CriWare/src/adx/cvfs/cri_cvfs": [
+10,
+15
+],
+"CriWare/src/adx/gcci/gcci": [
+14,
+17
+],
+"CriWare/src/adx/gcci/gcci_sub": [
+1,
+1
+],
+"CriWare/src/adx/lsc/lsc_err": [
+2,
+2
+],
+"CriWare/src/adx/lsc/lsc_ini": [
+2,
+2
+],
+"CriWare/src/adx/lsc/lsc_svr": [
+1,
+3
+],
+"CriWare/src/adx/lsc/lsc": [
+15,
+16
+],
+"CriWare/src/adx/lsc/lsc_crs": [
+4,
+4
+],
+"CriWare/src/adx/mfci/mfci": [
+10,
+16
+],
+"CriWare/src/adx/sj/sj_mem": [
+17,
+19
+],
+"CriWare/src/adx/sj/sj_rbf": [
+23,
+23
+],
+"CriWare/src/adx/sj/sj_uni": [
+20,
+21
+],
+"CriWare/src/adx/sj/sj_utl": [
+1,
+2
+],
+"CriWare/src/adx/sj/sj_crs": [
+4,
+4
+],
+"CriWare/src/adx/sj/sj_err": [
+1,
+1
+],
+"CriWare/src/adx/svm/svm": [
+6,
+25
+],
+"CriWare/src/adx/adxt/adx_bsps": [
+3,
+4
+],
+"CriWare/src/adx/adxt/adx_bau": [
+3,
+8
+],
+"CriWare/src/adx/wiirna/rna_crs": [
+2,
+2
+],
+"CriWare/src/adx/wiirna/rna_err": [
+2,
+2
+],
+"CriWare/src/adx/wiirna/ax_rna": [
+22,
+24
+],
+"CriWare/src/adx/adxt/srcwii/adx_mwii": [
+12,
+18
+],
+"CriWare/src/adx/adxt/srcwii/adx_suwii": [
+1,
+2
+],
+"CriWare/src/adx/adxt/srcwii/adx_rnawii": [
+18,
+18
+],
+"CriWare/src/adx/std/cri_crw_std": [
+8,
+8
+],
+"CriWare/src/sofdec/cft/srcgc/cftyp422_ppc": [
+0,
+2
+],
+"CriWare/src/sofdec/cft/cft_common": [
+1,
+1
+],
+"CriWare/src/sofdec/mwply/mwsfdfrm": [
+7,
+13
+],
+"CriWare/src/sofdec/mwply/mwsfdrna": [
+2,
+2
+],
+"CriWare/src/sofdec/mwply/mwsfdrsc": [
+2,
+2
+],
+"CriWare/src/sofdec/mwply/mwsfdsl": [
+5,
+10
+],
+"CriWare/src/sofdec/mwply/mwsfdsvm": [
+6,
+7
+],
+"CriWare/src/sofdec/mwply/mwstm": [
+10,
+10
+],
+"CriWare/src/sofdec/mwply/mwsfdsee": [
+2,
+2
+],
+"CriWare/src/sofdec/mwply/mwsfdsfx": [
+16,
+22
+],
+"CriWare/src/sofdec/mwply/mwsfdcre": [
+7,
+20
+],
+"CriWare/src/sofdec/mwply/mwsfdlib": [
+6,
+9
+],
+"CriWare/src/sofdec/mwply/mwsfdply": [
+8,
+13
+],
+"CriWare/src/sofdec/mwply/mwsfdset": [
+14,
+15
+],
+"CriWare/src/sofdec/mwply/mwsfdsvr": [
+13,
+18
+],
+"CriWare/src/sofdec/mwply/mwsfdsst": [
+12,
+13
+],
+"CriWare/src/sofdec/mwply/mwsfx_Y84C44": [
+0,
+1
+],
+"CriWare/src/sofdec/mwply/code_803A3AE4": [
+5,
+5
+],
+"CriWare/src/sofdec/sfdcore/mpv/mpv_bdec": [
+1,
+2
+],
+"CriWare/src/sofdec/sfdcore/mpv/mpv_cdec": [
+4,
+5
+],
+"CriWare/src/sofdec/sfdcore/mpv/mpv_cmc": [
+4,
+4
+],
+"CriWare/src/sofdec/sfdcore/mpv/mpv_dec": [
+2,
+7
+],
+"CriWare/src/sofdec/sfdcore/mpv/mpv_deli": [
+5,
+5
+],
+"CriWare/src/sofdec/sfdcore/mpv/mpv_emp": [
+0,
+2
+],
+"CriWare/src/sofdec/sfdcore/mpv/mpv_err": [
+3,
+4
+],
+"CriWare/src/sofdec/sfdcore/mpv/mpv_frm": [
+2,
+4
+],
+"CriWare/src/sofdec/sfdcore/mpv/mpv_get": [
+3,
+4
+],
+"CriWare/src/sofdec/sfdcore/mpv/mpv_hdec": [
+11,
+17
+],
+"CriWare/src/sofdec/sfdcore/mpv/mpv_lib": [
+8,
+13
+],
+"CriWare/src/sofdec/sfdcore/mpv/mpv_mc": [
+2,
+5
+],
+"CriWare/src/sofdec/sfdcore/mpv/mpv_vlc": [
+8,
+17
+],
+"CriWare/src/sofdec/sfdcore/mpv/mpv_umc": [
+5,
+15
+],
+"CriWare/src/sofdec/sfdcore/mpv/mpv_mcy": [
+1,
+5
+],
+"CriWare/src/sofdec/sfdcore/mpv/mpv_m2v": [
+9,
+9
+],
+"CriWare/src/sofdec/sfdcore/mpv/mpvabdec": [
+1,
+4
+],
+"CriWare/src/sofdec/sfdcore/mpv/mpv_slice": [
+5,
+6
+],
+"CriWare/src/sofdec/sfdcore/dct/dct_ac": [
+0,
+2
+],
+"CriWare/src/sofdec/sfdcore/dct/dct_isr": [
+2,
+6
+],
+"CriWare/src/sofdec/sfdcore/dct/dct_ver": [
+2,
+2
+],
+"CriWare/src/sofdec/sfdcore/memcpy/mcp_not": [
+1,
+1
+],
+"CriWare/src/sofdec/sfdcore/mps/mps_dec": [
+7,
+11
+],
+"CriWare/src/sofdec/sfdcore/mps/mps_del": [
+1,
+1
+],
+"CriWare/src/sofdec/sfdcore/mps/mps_get": [
+6,
+6
+],
+"CriWare/src/sofdec/sfdcore/mps/mps_lib": [
+7,
+8
+],
+"CriWare/src/sofdec/sfdcore/sfd/sfd_adxt": [
+22,
+30
+],
+"CriWare/src/sofdec/sfdcore/sfd/sfd_aoap": [
+17,
+17
+],
+"CriWare/src/sofdec/sfdcore/sfd/sfd_buf": [
+27,
+32
+],
+"CriWare/src/sofdec/sfdcore/sfd/code_803BFD20": [
+1,
+1
+],
+"CriWare/src/sofdec/sfdcore/sfd/sfd_con": [
+7,
+7
+],
+"CriWare/src/sofdec/sfdcore/sfd/sfd_hds": [
+7,
+10
+],
+"CriWare/src/sofdec/sfdcore/sfd/sfd_lib": [
+9,
+10
+],
+"CriWare/src/sofdec/sfdcore/sfd/sfd_mem": [
+14,
+14
+],
+"CriWare/src/sofdec/sfdcore/sfd/sfd_mps": [
+28,
+36
+],
+"CriWare/src/sofdec/sfdcore/sfd/sfd_mpv": [
+34,
+51
+],
+"CriWare/src/sofdec/sfdcore/sfd/sfd_mpvf": [
+19,
+26
+],
+"CriWare/src/sofdec/sfdcore/sfd/sfd_pl2": [
+3,
+5
+],
+"CriWare/src/sofdec/sfdcore/sfd/sfd_ply": [
+20,
+30
+],
+"CriWare/src/sofdec/sfdcore/sfd/sfd_pts": [
+6,
+7
+],
+"CriWare/src/sofdec/sfdcore/sfd/sfd_see": [
+9,
+11
+],
+"CriWare/src/sofdec/sfdcore/sfd/sfd_set": [
+7,
+7
+],
+"CriWare/src/sofdec/sfdcore/sfd/sfd_tim": [
+38,
+46
+],
+"CriWare/src/sofdec/sfdcore/sfd/sfd_trn": [
+11,
+11
+],
+"CriWare/src/sofdec/sfdcore/sfd/sfd_uo": [
+15,
+15
+],
+"CriWare/src/sofdec/sfdcore/sfd/sfd_vom": [
+14,
+14
+],
+"CriWare/src/sofdec/sfdcore/sfd/sfd_tmr": [
+2,
+4
+],
+"CriWare/src/sofdec/sfdcore/sfd/sfd_tst": [
+11,
+13
+],
+"CriWare/src/sofdec/sfdcore/sfd/sfd_seeki": [
+2,
+2
+],
+"CriWare/src/sofdec/sfdcore/sfh/sfh_local": [
+4,
+4
+],
+"CriWare/src/sofdec/sfdcore/sfh/sfh_main": [
+39,
+39
+],
+"CriWare/src/sofdec/sfdcore/sfh/sfh_ver1": [
+37,
+38
+],
+"CriWare/src/sofdec/sfdcore/sfh/sfh_ver2": [
+36,
+39
+],
+"CriWare/src/sofdec/sfdcore/uty/cmptime": [
+1,
+1
+],
+"CriWare/src/sofdec/sfdcore/uty/memcpyd": [
+1,
+1
+],
+"CriWare/src/sofdec/sfdcore/uty/memsetd": [
+1,
+1
+],
+"CriWare/src/sofdec/sfdcore/uty/muldiv": [
+1,
+1
+],
+"CriWare/src/sofdec/sfdcore/uty/muldivr": [
+1,
+1
+],
+"CriWare/src/sofdec/sfdcore/uty/uty_tmr": [
+4,
+5
+],
+"CriWare/src/sofdec/sfx/sfx_set": [
+10,
+10
+],
+"CriWare/src/sofdec/sfx/sfx_cnv": [
+9,
+16
+],
+"CriWare/src/sofdec/sfx/sfx_inf": [
+1,
+1
+],
+"CriWare/src/sofdec/sfx/sfx_lib": [
+5,
+8
+],
+"CriWare/src/sofdec/sfx/sfx_alp": [
+6,
+7
+],
+"CriWare/src/sofdec/sfx/sfx_zmv": [
+4,
+11
+],
+"CriWare/src/sofdec/sfx/sfx_sud": [
+1,
+1
+],
+"CriWare/src/sofdec/sfx/sfx_cnv_to_Y84C44": [
+1,
+1
+],
+"CriWare/src/sofdec/sud/sud_lib": [
+3,
+4
+],
+"nw4r/src/db/db_console": [
+2,
+2
+],
+"nw4r/src/db/db_DbgPrintBase": [
+1,
+1
+],
+"nw4r/src/db/db_assert": [
+2,
+2
+],
+"nw4r/src/dw/dw_Window": [
+1,
+1
+],
+"nw4r/src/g3d/res/g3d_rescommon": [
+5,
+5
+],
+"nw4r/src/g3d/res/g3d_resdict": [
+6,
+6
+],
+"nw4r/src/g3d/res/g3d_resfile": [
+25,
+25
+],
+"nw4r/src/g3d/res/g3d_resmdl": [
+33,
+33
+],
+"nw4r/src/g3d/res/g3d_resshp": [
+8,
+8
+],
+"nw4r/src/g3d/res/g3d_restev": [
+11,
+14
+],
+"nw4r/src/g3d/res/g3d_resmat": [
+56,
+56
+],
+"nw4r/src/g3d/res/g3d_resvtx": [
+17,
+17
+],
+"nw4r/src/g3d/res/g3d_restex": [
+7,
+7
+],
+"nw4r/src/g3d/res/g3d_resnode": [
+3,
+3
+],
+"nw4r/src/g3d/res/g3d_resanm": [
+2,
+2
+],
+"nw4r/src/g3d/res/g3d_resanmclr": [
+1,
+1
+],
+"nw4r/src/g3d/res/g3d_resanmtexpat": [
+3,
+3
+],
+"nw4r/src/g3d/res/g3d_resanmtexsrt": [
+1,
+1
+],
+"nw4r/src/g3d/res/g3d_resanmchr": [
+23,
+23
+],
+"nw4r/src/g3d/res/g3d_reslightset": [
+1,
+1
+],
+"nw4r/src/g3d/res/g3d_resanmamblight": [
+1,
+1
+],
+"nw4r/src/g3d/res/g3d_resanmlight": [
+1,
+1
+],
+"nw4r/src/g3d/res/g3d_resanmfog": [
+1,
+1
+],
+"nw4r/src/g3d/res/g3d_resanmcamera": [
+1,
+1
+],
+"nw4r/src/g3d/res/g3d_resanmscn": [
+19,
+19
+],
+"nw4r/src/g3d/g3d_transform": [
+3,
+3
+],
+"nw4r/src/g3d/g3d_anmvis": [
+2,
+2
+],
+"nw4r/src/g3d/g3d_anmclr": [
+19,
+25
+],
+"nw4r/src/g3d/g3d_anmtexpat": [
+21,
+23
+],
+"nw4r/src/g3d/g3d_anmtexsrt": [
+18,
+24
+],
+"nw4r/src/g3d/g3d_anmchr": [
+44,
+50
+],
+"nw4r/src/g3d/g3d_anmshp": [
+1,
+1
+],
+"nw4r/src/g3d/g3d_anmscn": [
+40,
+45
+],
+"nw4r/src/g3d/g3d_obj": [
+5,
+5
+],
+"nw4r/src/g3d/g3d_anmobj": [
+4,
+4
+],
+"nw4r/src/g3d/platform/g3d_gpu": [
+6,
+7
+],
+"nw4r/src/g3d/platform/g3d_cpu": [
+3,
+3
+],
+"nw4r/src/g3d/g3d_state": [
+31,
+47
+],
+"nw4r/src/g3d/g3d_draw1mat1shp": [
+0,
+2
+],
+"nw4r/src/g3d/g3d_calcview": [
+2,
+11
+],
+"nw4r/src/g3d/g3d_dcc": [
+2,
+2
+],
+"nw4r/src/g3d/g3d_workmem": [
+5,
+5
+],
+"nw4r/src/g3d/g3d_calcworld": [
+3,
+5
+],
+"nw4r/src/g3d/g3d_draw": [
+7,
+13
+],
+"nw4r/src/g3d/g3d_camera": [
+21,
+21
+],
+"nw4r/src/g3d/dcc/g3d_basic": [
+2,
+2
+],
+"nw4r/src/g3d/dcc/g3d_maya": [
+7,
+16
+],
+"nw4r/src/g3d/dcc/g3d_xsi": [
+8,
+16
+],
+"nw4r/src/g3d/dcc/g3d_3dsmax": [
+8,
+15
+],
+"nw4r/src/g3d/g3d_scnobj": [
+39,
+39
+],
+"nw4r/src/g3d/g3d_scnroot": [
+32,
+38
+],
+"nw4r/src/g3d/g3d_scnmdlsmpl": [
+20,
+25
+],
+"nw4r/src/g3d/g3d_scnmdl": [
+22,
+25
+],
+"nw4r/src/g3d/g3d_scnmdlexpand": [
+9,
+10
+],
+"nw4r/src/g3d/g3d_calcmaterial": [
+0,
+1
+],
+"nw4r/src/g3d/g3d_init": [
+2,
+2
+],
+"nw4r/src/g3d/g3d_scnproc": [
+6,
+6
+],
+"nw4r/src/g3d/g3d_fog": [
+6,
+6
+],
+"nw4r/src/g3d/g3d_light": [
+23,
+23
+],
+"nw4r/src/g3d/g3d_calcvtx": [
+0,
+1
+],
+"nw4r/src/lyt/lyt_init": [
+1,
+1
+],
+"nw4r/src/lyt/lyt_pane": [
+36,
+36
+],
+"nw4r/src/lyt/lyt_group": [
+5,
+5
+],
+"nw4r/src/lyt/lyt_layout": [
+15,
+19
+],
+"nw4r/src/lyt/lyt_picture": [
+13,
+13
+],
+"nw4r/src/lyt/lyt_textBox": [
+19,
+25
+],
+"nw4r/src/lyt/lyt_window": [
+20,
+21
+],
+"nw4r/src/lyt/lyt_bounding": [
+5,
+5
+],
+"nw4r/src/lyt/lyt_material": [
+73,
+78
+],
+"nw4r/src/lyt/lyt_texMap": [
+5,
+5
+],
+"nw4r/src/lyt/lyt_drawInfo": [
+2,
+2
+],
+"nw4r/src/lyt/lyt_animation": [
+20,
+27
+],
+"nw4r/src/lyt/lyt_resourceAccessor": [
+3,
+3
+],
+"nw4r/src/lyt/lyt_arcResourceAccessor": [
+7,
+7
+],
+"nw4r/src/lyt/lyt_common": [
+14,
+14
+],
+"nw4r/src/lyt/lyt_util": [
+1,
+1
+],
+"nw4r/src/math/math_arithmetic": [
+3,
+3
+],
+"nw4r/src/math/math_triangular": [
+4,
+4
+],
+"nw4r/src/math/math_types": [
+11,
+12
+],
+"nw4r/src/math/math_geometry": [
+8,
+8
+],
+"nw4r/src/snd/snd_AxManager": [
+19,
+26
+],
+"nw4r/src/snd/snd_AxVoice": [
+32,
+35
+],
+"nw4r/src/snd/snd_AxVoiceManager": [
+9,
+9
+],
+"nw4r/src/snd/snd_AxfxImpl": [
+6,
+6
+],
+"nw4r/src/snd/snd_Bank": [
+2,
+3
+],
+"nw4r/src/snd/snd_BankFile": [
+5,
+5
+],
+"nw4r/src/snd/snd_BasicPlayer": [
+11,
+12
+],
+"nw4r/src/snd/snd_BasicSound": [
+30,
+35
+],
+"nw4r/src/snd/snd_BiquadFilterPreset": [
+5,
+5
+],
+"nw4r/src/snd/snd_Channel": [
+16,
+18
+],
+"nw4r/src/snd/snd_DisposeCallbackManager": [
+6,
+6
+],
+"nw4r/src/snd/snd_EnvGenerator": [
+10,
+10
+],
+"nw4r/src/snd/snd_ExternalSoundPlayer": [
+1,
+3
+],
+"nw4r/src/snd/snd_FxChorusDpl2": [
+9,
+9
+],
+"nw4r/src/snd/snd_FxDelayDpl2": [
+9,
+9
+],
+"nw4r/src/snd/snd_FxReverbStdDpl2": [
+9,
+9
+],
+"nw4r/src/snd/snd_InstancePool": [
+5,
+5
+],
+"nw4r/src/snd/snd_Lfo": [
+4,
+4
+],
+"nw4r/src/snd/snd_McsSoundArchive": [
+3,
+3
+],
+"nw4r/src/snd/snd_MemorySoundArchive": [
+21,
+21
+],
+"nw4r/src/snd/snd_MidiSeqPlayer": [
+11,
+11
+],
+"nw4r/src/snd/snd_MmlParser": [
+3,
+5
+],
+"nw4r/src/snd/snd_MmlSeqTrack": [
+3,
+3
+],
+"nw4r/src/snd/snd_MmlSeqTrackAllocator": [
+6,
+6
+],
+"nw4r/src/snd/snd_PlayerHeap": [
+8,
+8
+],
+"nw4r/src/snd/snd_RemoteSpeaker": [
+8,
+9
+],
+"nw4r/src/snd/snd_RemoteSpeakerManager": [
+5,
+5
+],
+"nw4r/src/snd/snd_SeqFile": [
+3,
+3
+],
+"nw4r/src/snd/snd_SeqPlayer": [
+19,
+25
+],
+"nw4r/src/snd/snd_SeqSound": [
+21,
+23
+],
+"nw4r/src/snd/snd_SeqSoundHandle": [
+1,
+1
+],
+"nw4r/src/snd/snd_SeqTrack": [
+15,
+18
+],
+"nw4r/src/snd/snd_SoundArchive": [
+23,
+24
+],
+"nw4r/src/snd/snd_SoundArchiveFile": [
+19,
+23
+],
+"nw4r/src/snd/snd_SoundArchivePlayer": [
+24,
+32
+],
+"nw4r/src/snd/snd_SoundHandle": [
+3,
+3
+],
+"nw4r/src/snd/snd_SoundPlayer": [
+20,
+20
+],
+"nw4r/src/snd/snd_SoundStartable": [
+1,
+1
+],
+"nw4r/src/snd/snd_SoundSystem": [
+5,
+5
+],
+"nw4r/src/snd/snd_SoundThread": [
+9,
+9
+],
+"nw4r/src/snd/snd_StrmChannel": [
+4,
+4
+],
+"nw4r/src/snd/snd_StrmFile": [
+8,
+9
+],
+"nw4r/src/snd/snd_StrmPlayer": [
+36,
+45
+],
+"nw4r/src/snd/snd_StrmSound": [
+15,
+16
+],
+"nw4r/src/snd/snd_StrmSoundHandle": [
+1,
+1
+],
+"nw4r/src/snd/snd_Task": [
+1,
+1
+],
+"nw4r/src/snd/snd_TaskManager": [
+12,
+12
+],
+"nw4r/src/snd/snd_TaskThread": [
+5,
+5
+],
+"nw4r/src/snd/snd_Voice": [
+44,
+48
+],
+"nw4r/src/snd/snd_VoiceManager": [
+11,
+11
+],
+"nw4r/src/snd/snd_Util": [
+8,
+8
+],
+"nw4r/src/snd/snd_WaveFile": [
+4,
+6
+],
+"nw4r/src/snd/snd_WaveSound": [
+14,
+15
+],
+"nw4r/src/snd/snd_WaveSoundHandle": [
+1,
+1
+],
+"nw4r/src/snd/snd_WsdFile": [
+4,
+4
+],
+"nw4r/src/snd/snd_WsdPlayer": [
+23,
+25
+],
+"nw4r/src/snd/snd_adpcm": [
+1,
+1
+],
+"nw4r/src/ut/ut_LinkList": [
+5,
+5
+],
+"nw4r/src/ut/ut_binaryFileFormat": [
+1,
+1
+],
+"nw4r/src/ut/ut_CharStrmReader": [
+4,
+4
+],
+"nw4r/src/ut/ut_TagProcessorBase": [
+8,
+8
+],
+"nw4r/src/ut/ut_IOStream": [
+5,
+5
+],
+"nw4r/src/ut/ut_FileStream": [
+3,
+3
+],
+"nw4r/src/ut/ut_DvdFileStream": [
+1,
+1
+],
+"nw4r/src/ut/ut_LockedCache": [
+8,
+8
+],
+"nw4r/src/ut/ut_Font": [
+1,
+1
+],
+"nw4r/src/ut/ut_RomFont": [
+25,
+25
+],
+"nw4r/src/ut/ut_ResFontBase": [
+29,
+29
+],
+"nw4r/src/ut/ut_ResFont": [
+4,
+4
+],
+"nw4r/src/ut/ut_ArchiveFontBase": [
+20,
+24
+],
+"nw4r/src/ut/ut_PackedFont": [
+4,
+12
+],
+"nw4r/src/ut/ut_CharWriter": [
+7,
+12
+],
+"nw4r/src/ut/ut_TextWriterBase": [
+6,
+12
+],
+"monolib/src/math/CAttrTransform": [
+1,
+2
+],
+"monolib/src/math/CCamUtil": [
+1,
+1
+],
+"monolib/src/util/MemManager": [
+27,
+34
+],
+"monolib/src/util/CPathUtil": [
+3,
+4
+],
+"monolib/src/math/MTRand": [
+6,
+6
+],
+"monolib/src/math/CRect16": [
+2,
+2
+],
+"monolib/src/math/CVec3": [
+2,
+2
+],
+"monolib/src/math/CVec4": [
+1,
+1
+],
+"monolib/src/math/Main": [
+1,
+1
+],
+"monolib/src/math/Random": [
+4,
+4
+],
+"monolib/src/math/FloatUtils": [
+1,
+1
+],
+"monolib/src/math/CCol3": [
+1,
+1
+],
+"monolib/src/math/CCol4": [
+1,
+1
+],
+"monolib/src/math/CMat34": [
+5,
+5
+],
+"monolib/src/math/CMat44": [
+1,
+1
+],
+"monolib/src/math/CPlane": [
+0,
+2
+],
+"monolib/src/math/CQuat": [
+4,
+4
+],
+"monolib/src/work/CWorkThreadSystem": [
+4,
+4
+],
+"monolib/src/work/CWorkThread": [
+13,
+20
+],
+"monolib/src/work/CWorkUtil": [
+3,
+4
+],
+"monolib/src/core/CProc": [
+9,
+11
+],
+"monolib/src/core/CProcRoot": [
+5,
+5
+],
+"monolib/src/core/CRsrc": [
+9,
+9
+],
+"monolib/src/core/CRsrcData": [
+10,
+10
+],
+"monolib/src/core/CScriptCode": [
+2,
+9
+],
+"monolib/src/core/CToken": [
+3,
+7
+],
+"monolib/src/work/CEvent1": [
+2,
+2
+],
+"monolib/src/core/CSplitFrame": [
+6,
+8
+],
+"monolib/src/core/CTaskManager": [
+16,
+16
+],
+"monolib/src/core/CView": [
+33,
+45
+],
+"monolib/src/core/CViewFrame": [
+6,
+15
+],
+"monolib/src/core/CViewRoot": [
+14,
+21
+],
+"monolib/src/work/CWorkControl": [
+8,
+9
+],
+"monolib/src/work/CWorkFlowSetup": [
+5,
+5
+],
+"monolib/src/work/CWorkFlowShutdownAll": [
+1,
+1
+],
+"monolib/src/work/CWorkFlowWiiMenu": [
+1,
+1
+],
+"monolib/src/work/CWorkFlowWiiReset": [
+1,
+1
+],
+"monolib/src/work/CWorkFlowWiiPowerOff": [
+1,
+1
+],
+"monolib/src/work/CWorkRoot": [
+23,
+23
+],
+"monolib/src/work/CWorkSystem": [
+11,
+12
+],
+"monolib/src/work/CWorkSystemMem": [
+4,
+5
+],
+"monolib/src/work/CProcess": [
+19,
+21
+],
+"monolib/src/util/CDoubleListNode": [
+5,
+5
+],
+"monolib/src/util/CChildListNode": [
+2,
+2
+],
+"monolib/src/core/CPadManager": [
+16,
+20
+],
+"monolib/src/util/CStopwatchUtil": [
+4,
+4
+],
+"monolib/src/device/CDeviceRemotePad": [
+13,
+13
+],
+"monolib/src/device/CDeviceSC": [
+10,
+10
+],
+"monolib/src/device/CDeviceVI": [
+31,
+38
+],
+"monolib/src/device/CDeviceVICb": [
+2,
+2
+],
+"monolib/src/core/CFontLayer": [
+10,
+10
+],
+"monolib/src/device/CGXCache": [
+32,
+48
+],
+"monolib/src/device/CDevice": [
+16,
+17
+],
+"monolib/src/device/CDeviceClock": [
+8,
+12
+],
+"monolib/src/device/CDeviceFile": [
+24,
+31
+],
+"monolib/src/device/CDeviceFileCri": [
+17,
+25
+],
+"monolib/src/device/CDeviceFileDvd": [
+14,
+23
+],
+"monolib/src/device/CDeviceFileJob": [
+5,
+5
+],
+"monolib/src/device/CDeviceFileJobReadDvd": [
+8,
+8
+],
+"monolib/src/device/CDeviceFont": [
+18,
+25
+],
+"monolib/src/device/CDeviceFontInfoExt": [
+13,
+15
+],
+"monolib/src/device/CDeviceFontInfoRom": [
+15,
+15
+],
+"monolib/src/device/CDeviceFontLayer": [
+13,
+20
+],
+"monolib/src/device/CDeviceFontLoader": [
+6,
+6
+],
+"monolib/src/device/CDeviceGX": [
+18,
+19
+],
+"monolib/device/CDeviceGX": [
+1,
+1
+],
+"monolib/src/core/CDesktop": [
+17,
+19
+],
+"monolib/src/core/CDrawGX": [
+19,
+20
+],
+"monolib/src/core/CException": [
+12,
+18
+],
+"monolib/src/core/CViewRectDataCore": [
+3,
+3
+],
+"monolib/src/lib/CLib": [
+6,
+6
+],
+"monolib/src/lib/CLibCri": [
+34,
+35
+],
+"monolib/src/lib/CLibCriMoviePlay": [
+16,
+22
+],
+"monolib/src/lib/CLibCriStreamingPlay": [
+11,
+22
+],
+"monolib/src/lib/CLibG3d": [
+6,
+6
+],
+"monolib/src/lib/CLibHbm": [
+25,
+25
+],
+"monolib/src/lib/CLibHbmControl": [
+4,
+8
+],
+"monolib/src/lib/CLibLayout": [
+14,
+16
+],
+"monolib/src/lib/UnkClass_8045F564": [
+5,
+6
+],
+"monolib/src/lib/Class_8045F858": [
+2,
+2
+],
+"monolib/src/lib/CLibStaticData": [
+12,
+12
+],
+"monolib/src/lib/CLibVM": [
+7,
+7
+],
+"monolib/src/lib/UnkClass_80460308": [
+1,
+2
+],
+"monolib/src/lib/UnkClass_80460C34": [
+4,
+7
+],
+"monolib/src/lod/CTaskLOD": [
+38,
+38
+],
+"monolib/src/lod/CLODCacheManagerS": [
+6,
+10
+],
+"monolib/src/lod/UnkClass_8046368C": [
+8,
+15
+],
+"monolib/src/lod/code_804645CC": [
+8,
+14
+],
+"monolib/src/lod/UnkClass_80466348": [
+64,
+67
+],
+"monolib/src/lod/code_80468434": [
+11,
+17
+],
+"monolib/src/lod/code_8046A530": [
+5,
+12
+],
+"monolib/src/lod/LODMemMan": [
+62,
+80
+],
+"monolib/src/mpfsys/UnkClass_80471EC8": [
+31,
+39
+],
+"monolib/src/mpfsys/MPFDrawDisplayList": [
+10,
+22
+],
+"monolib/src/mpfsys/MPFDrawMdlNoColor": [
+1,
+1
+],
+"monolib/src/mpfsys/MPFDrawMdlColor": [
+5,
+5
+],
+"monolib/src/mpfsys/MPFDrawBillboard": [
+1,
+1
+],
+"monolib/src/mpfsys/MPFDrawCross": [
+1,
+1
+],
+"monolib/src/mpfsys/MPFDrawBillLayTex": [
+5,
+11
+],
+"monolib/src/mpfsys/code_8047BB54": [
+14,
+18
+],
+"monolib/src/mpfsys/code_8047CA88": [
+1,
+3
+],
+"monolib/src/scn/UnkClass_8047CD0C": [
+15,
+16
+],
+"monolib/src/scn/code_8047D2AC": [
+5,
+9
+],
+"monolib/src/scn/UnkClass_8047E110": [
+11,
+30
+],
+"monolib/src/scn/CScnItemCameraNw4r": [
+9,
+9
+],
+"monolib/src/scn/CScnItemId": [
+5,
+6
+],
+"monolib/src/scn/CScnItemLight": [
+7,
+7
+],
+"monolib/src/scn/CScnItemLightNw4r": [
+1,
+1
+],
+"monolib/src/scn/CScnItemModel": [
+63,
+69
+],
+"monolib/src/scn/CScnItemModelNw4r": [
+69,
+84
+],
+"monolib/src/scn/CScnItemPool": [
+43,
+44
+],
+"monolib/src/scn/CScnLightMan": [
+4,
+5
+],
+"monolib/src/scn/CScnMaruShadowNw4r": [
+10,
+16
+],
+"monolib/src/scn/CScnMem": [
+16,
+16
+],
+"monolib/src/scn/CScnRoot": [
+7,
+8
+],
+"monolib/src/scn/CScnRootNw4r": [
+19,
+25
+],
+"monolib/src/scn/CScnTexWorkMan": [
+11,
+16
+],
+"monolib/src/scn/CScnVirtualLight": [
+81,
+88
+],
+"monolib/src/scn/code_8049431C": [
+4,
+5
+],
+"monolib/src/scn/CVirtualLightAmb": [
+2,
+2
+],
+"monolib/src/scn/CVirtualLightDir": [
+3,
+3
+],
+"monolib/src/scn/CVirtualLightObj": [
+14,
+20
+],
+"monolib/src/scn/CScn": [
+49,
+52
+],
+"monolib/src/scn/CScn_80496B0C": [
+19,
+29
+],
+"monolib/src/scn/CScnBlend": [
+5,
+5
+],
+"monolib/src/scn/CScnBloom": [
+11,
+15
+],
+"monolib/src/scn/CScnCameraMan": [
+10,
+17
+],
+"monolib/src/scn/CScnEffectActNw4r": [
+27,
+27
+],
+"monolib/src/scn/CScnFadeMan": [
+4,
+8
+],
+"monolib/src/scn/CScnFilter": [
+3,
+3
+],
+"monolib/src/scn/CScnFilterMan": [
+74,
+75
+],
+"monolib/src/scn/CScnFogMan": [
+7,
+8
+],
+"monolib/src/scn/CScnFrame": [
+3,
+3
+],
+"monolib/src/scn/CScnIdMan": [
+4,
+4
+],
+"monolib/src/scn/CScnItemAnim": [
+6,
+6
+],
+"monolib/src/scn/CScnItemCamera": [
+8,
+16
+],
+"monolib/src/vm/yvm2": [
+81,
+96
+],
+"monolib/src/vm/yvm_debug": [
+4,
+4
+],
+"monolib/src/coli/code_804A6C60": [
+55,
+108
+],
+"monolib/src/coli/CColiProc": [
+7,
+12
+],
+"monolib/src/coli/code_804B2FF0": [
+20,
+38
+],
+"monolib/src/coli/code_804B59C8": [
+20,
+61
+],
+"monolib/src/coli/code_804BAE10": [
+11,
+20
+],
+"monolib/src/scn/code_804BC9EC": [
+10,
+12
+],
+"monolib/src/scn/code_804BD8E8": [
+28,
+36
+],
+"monolib/src/scn/code_804BF59C": [
+6,
+12
+],
+"monolib/src/scn/CLight": [
+6,
+13
+],
+"monolib/src/scn/CScnEnvLgtCtrl": [
+89,
+127
+],
+"monolib/src/effect/code_804C8684": [
+4,
+5
+],
+"monolib/src/effect/code_804C8718": [
+25,
+34
+],
+"monolib/src/effect/code_804CC2B8": [
+25,
+55
+],
+"monolib/src/effect/CETrail": [
+8,
+14
+],
+"monolib/src/effect/code_804D854C": [
+7,
+8
+],
+"monolib/src/work/CWorkSystemCache": [
+14,
+14
+],
+"monolib/src/effect/code_804D9274": [
+2,
+7
+],
+"monolib/src/nand/CNand": [
+14,
+14
+],
+"monolib/src/nand/CNReqtaskSave": [
+33,
+33
+],
+"monolib/src/nand/CNReqtaskLoad": [
+3,
+3
+],
+"monolib/src/nand/CNReqtaskReaddir": [
+3,
+3
+],
+"monolib/src/nand/CNReqtaskRemove": [
+3,
+3
+],
+"monolib/src/nand/CNReqtaskCheck": [
+3,
+3
+],
+"monolib/src/effect/CERand": [
+4,
+16
+],
+"monolib/src/effect/code_804DB938": [
+8,
+12
+],
+"monolib/src/work/CWorkSystemPack": [
+18,
+23
+],
+"monolib/src/core/CPackItem": [
+5,
+9
+],
+"monolib/src/core/CArcItem": [
+5,
+5
+],
+"monolib/src/core/code_804DEDA8": [
+25,
+64
+],
+"monolib/src/core/CSchedule": [
+2,
+4
+],
+"monolib/src/core/code_804E36DC": [
+13,
+18
+],
+"monolib/src/core/ScheduleList": [
+16,
+21
+],
+"monolib/src/scn/CMdlMaterial": [
+4,
+10
+],
+"monolib/src/scn/CMdlMouth": [
+7,
+7
+],
+"monolib/src/scn/CMdlAnmUV": [
+3,
+5
+],
+"monolib/src/scn/CMdlAnmEye": [
+4,
+5
+],
+"monolib/src/scn/CMdlLook": [
+5,
+8
+],
+"monolib/src/scn/CMdlDynamics": [
+53,
+66
+],
+"monolib/src/util/CErrorWii": [
+14,
+14
+],
+"monolib/src/core/code_804EE558": [
+6,
+12
+],
+"monolib/src/core/code_804F0258": [
+8,
+22
+],
+"monolib/src/nand/CNReqtaskSaveBanner": [
+4,
+5
+],
+"monolib/src/nand/CNBanner": [
+6,
+9
+],
+"monolib/src/core/monolib_eu_804F9E98": [
+3,
+3
+]
+}

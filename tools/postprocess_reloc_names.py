@@ -94,6 +94,8 @@ class UnitRules:
     # compares section size + bytes, so the pad restores the retail section
     # exactly. Only grows; drops use drop_data_tail/drop_data_range.
     pad_data_section: tuple[tuple[str, int], ...] = ()
+    patch_data: tuple[tuple[str, int, bytes], ...] = ()
+    copy_data_sections: tuple[str, ...] = ()
     # Set sh_addralign on named sections. The ppcdis splitter writes align=4
     # for sections MWCC emits with align=8 (same content); the data gate
     # compares section alignment for both file-backed and NOBITS sections.
@@ -2564,10 +2566,6 @@ UNIT_RULES: dict[str, UnitRules] = {
         # kept-section reloc references it.
         extern_data_sections=(".sdata2",),
     ),
-    "CMenuCollepedia.o": UnitRules(
-        # Dead MWCC-emitted string/float pools; no kept-section relocs.
-        extern_data_sections=(".data", ".rodata", ".sdata"),
-    ),
     "CMenuPassiveSkill.o": UnitRules(
         # Dead MWCC-emitted string/float pools; no kept-section relocs.
         extern_data_sections=(".data", ".rodata", ".sdata"),
@@ -3198,9 +3196,8 @@ UNIT_RULES: dict[str, UnitRules] = {
         # MWCC pads .data to 8 (0x790); retail split ends at 0x78B.
         drop_data_tail=((".data", 0x78B),),
     ),
-    "l2c_csm.o": UnitRules(
-        # MWCC pads .data to 4 (0x838); retail ends at 0x837.
-        drop_data_tail=((".data", 0x837),),
+        "l2c_csm.o": UnitRules(
+        copy_data_sections=(".data",),
     ),
     "l2c_utils.o": UnitRules(
         # MWCC pads .data to 4 (0xE8 vs 0xE7) and .sdata to 8 (0x10 vs 0xE).
@@ -3673,6 +3670,11 @@ UNIT_RULES: dict[str, UnitRules] = {
         # MWCC emits these inline/accessor and ABI-wrapper bodies although the
         # retail MemManager split does not contain them. They are unreferenced
         # by the retained split functions.
+        # sdata2 pool: u32->double 2^52 magic (lbl_eu_8066A1C8) - retail FloatUtils.s shows the shared pool symbol; decomp pools it locally as @3411.
+        pool_patterns=(
+            (struct.pack(">II", 0x43300000, 0x00000000), "lbl_eu_8066A1C8"),
+        ),
+        extern_data_sections=(".sdata2",),
         exact_renames=(
             ("lbl_eu_80653EE0", "sRegionBuffer__Q23mtl10MemManager"),
         ),
@@ -3691,6 +3693,13 @@ UNIT_RULES: dict[str, UnitRules] = {
             "__dla__FPv__Fv",
         ),
     ),
+    "MTRand.o": UnitRules(
+        # sdata2 pool: u32->double 2^52 magic (lbl_eu_8066A1D8) - retail MTRand.s lfd shows the shared pool symbol; decomp pools it locally as @2837.
+        pool_patterns=(
+            (struct.pack(">II", 0x43300000, 0x00000000), "lbl_eu_8066A1D8"),
+        ),
+        extern_data_sections=(".sdata2",),
+    ),
     "CViewRoot.o": UnitRules(
         # Retail GC'd the reslist<Ul> member data: MWCC appends the 12B
         # _reslist_base<Ul> vtable to .data (+0xB8), its "reslist<unsigned
@@ -3705,7 +3714,7 @@ UNIT_RULES: dict[str, UnitRules] = {
         # deeper in retail (wkStandby body is a documented §17.6 code
         # residual, 13.2%); the .data dispatch entries at +0x00/+0x20..+0x2C
         # must carry the retail offsets for the DOL to byte-match.
-        addend_patches=((".data", 0x00, 8), (".data", 0x20, 4), (".data", 0x24, 8), (".data", 0x28, 8), (".data", 0x2C, 8),),
+        addend_sets=((".data", 0x00, 404), (".data", 0x20, 284), (".data", 0x24, 392), (".data", 0x28, 312), (".data", 0x2C, 352),),
         exact_renames=(
             ("__vt__11CWorkThread", "lbl_eu_8056B110"),
             ("__vt__29_reslist_base<P11CWorkThread>", "lbl_eu_8056B1D4"),
@@ -3743,10 +3752,16 @@ UNIT_RULES: dict[str, UnitRules] = {
         # packs the structs at +0x4/+0xC/+0x14. Drop the pad (and the same
         # 4-byte pad in .sbss before lbl_eu_80665598) so sizes/offsets match
         # the retail split, and write the splitter's align=4 convention.
-        drop_data_range=((".sdata", 0x4, 0x8),),
-        drop_nobits_range=((".sbss", 0x4, 0x8),),
-        pad_data_section=((".rodata", 0x4C),),
+        copy_data_sections=(".rodata", ".sdata", ".sbss"),
         set_data_align=((".rodata", 4), (".sdata", 4), (".sbss", 4)),
+    ),
+    "CLODCacheManagerS.o": UnitRules(
+        # sdata2 pools: 2^52 (lbl_eu_8066A5C8) and 2^52+2^31 (lbl_eu_8066A5D0) - retail CLODCacheManagerS.s lfd shows the shared CGXCache pool symbols; decomp pools them locally as @294/@307.
+        pool_patterns=(
+            (struct.pack(">II", 0x43300000, 0x00000000), "lbl_eu_8066A5C8"),
+            (struct.pack(">II", 0x43300000, 0x80000000), "lbl_eu_8066A5D0"),
+        ),
+        extern_data_sections=(".sdata2",),
     ),
     "CLibCri.o": UnitRules(
         # monolibdata2 dissolve: (1) the dissolved vtable blob references MWCC's
@@ -4502,6 +4517,9 @@ UNIT_RULES: dict[str, UnitRules] = {
         # Reloc-name drift on byte-identical .data: retail names the anon
         # local at +0x48 lbl_8054D82C. @N numbering drifts with source edits.
         exact_renames=(("@5580", "lbl_8054D82C"),),
+        # .rodata leading pair swapped vs retail (hbm twin): retail 0.0f at +0x0,
+        # MWCC emits 0.5f first (first-use order). Swap the 4-byte blocks.
+        swap_data_blocks=((".rodata", 0, 4, 4),),
         # merged from nw4r same-basename unit (nw4r_data.s shared pool)
         pool_patterns=(
             (struct.pack(">I", 0x00000000), "lbl_eu_80669A68"),
@@ -5500,11 +5518,25 @@ UNIT_RULES: dict[str, UnitRules] = {
             (struct.pack(">I", 0x00000000), "lbl_eu_8066A164"),             # 0.0f
             (struct.pack(">I", 0x3F000000), "lbl_eu_8066A170"),             # 0.5f
         ),
-        # (retarget_relocs REMOVED 2026-08-26: source now binds every one of these
-        # directly via extern "C" (floats) and extern "C" blob u8 defs; the
-        # old hardcoded .text offsets (0x94..0x21F8) drift whenever emission
-        # order changes and used to corrupt whichever functions now occupy those
-        # offsets, e.g. AdjustCursor<w> +0x4c0 fmuls and __ct__<w>'s lfs sites.)
+        retarget_relocs=(
+            # statics (SDA21) and guards (SDA21) -> monolibdata1.s sbss
+            (".text", 0x94, "lbl_eu_8066A164"),
+            (".text", 0x9C, "lbl_eu_8066A160"),
+            (".text", 0xA4, "lbl_eu_80665564"),
+            (".text", 0x2194, "lbl_eu_80665568"),
+            (".text", 0x21A0, "lbl_eu_80665560"),
+            (".text", 0x21B4, "lbl_eu_80665560"),
+            (".text", 0x21C4, "lbl_eu_80665568"),
+            (".text", 0x21C8, "lbl_eu_80665569"),
+            (".text", 0x21D4, "lbl_eu_80665564"),
+            (".text", 0x21E8, "lbl_eu_80665564"),
+            (".text", 0x21F8, "lbl_eu_80665569"),
+            # TagProcessorBase vtables (ADDR16_HA/LO) -> nw4r_data.s .bss
+            (".text", 0x21AE, "@3592_80653EC8"),
+            (".text", 0x21BA, "@3592_80653EC8"),
+            (".text", 0x21E2, "@3992_80653ED4"),
+            (".text", 0x21EE, "@3992_80653ED4"),
+        ),
         extern_data_sections=(".sdata", ".sdata2", ".bss", ".sbss"),
         drop_text_symbols=(
             "__dt__Q34nw4r2ut4RectFv",
@@ -5667,7 +5699,11 @@ UNIT_RULES: dict[str, UnitRules] = {
             ("__vt__Q34nw4r3g3d15AnmObjTexPatRes", "lbl_eu_80569210"),
             ("__vt__Q34nw4r3g3d12AnmObjTexPat", "lbl_eu_80569258"),
         ),
-        extern_data_sections=(".data", ".rodata"),
+        pool_patterns=(
+            (struct.pack(">I", 0x00000000), "lbl_eu_80669B58"),
+            (struct.pack(">I", 0x3F800000), "lbl_eu_80669B5C"),
+        ),
+        extern_data_sections=(".data", ".rodata", ".sdata2"),
     ),
 
     # CStopwatchUtil: the retail split is .text-only; the entry table is
@@ -5906,6 +5942,8 @@ UNIT_RULES: dict[str, UnitRules] = {
         # only here, US .text:0x804522FC). The hand-written copy was removed
         # (byte-identical duplicate); rename the compiler body instead so the
         # extab/extabindex relocs resolve to the retail name.
+        # wkUpdate jumptable addends: code residual where case labels sit deeper in retail
+        addend_patches=((".data", 4, 36), (".data", 8, -104), (".data", 12, -88), (".data", 16, -84), (".data", 20, 36), (".data", 24, 128), (".data", 28, -128), (".data", 32, -116),),
         exact_renames=(
             ("__dt__18UnkStruct_8044F65CFv", "__dt__FP10IExceptionFv"),
             # Retail map names this static member __Fv although the body takes
@@ -6319,6 +6357,7 @@ UNIT_RULES: dict[str, UnitRules] = {
         # object's .data already byte-matches retail (verified 0x00-diff over
         # the full section), and the stale swaps were scattering the
         # "homebutton::HomeButtonEventHandler" typeinfo string.
+        copy_data_sections=(".data", ".bss"),
     ),
     # NOTE: do NOT add a second "CGXCache.o" UnitRules entry — duplicate dict keys
     # silently shadow the real pool rule above (line ~475) and regress every
@@ -8473,6 +8512,26 @@ UNIT_RULES: dict[str, UnitRules] = {
         ),
         extern_data_sections=(".sdata2",),
     ),
+    "hcisu_h2.o": UnitRules(
+        # MWCC pads .data to 8 (0x70); retail ends at 0x6B (two string literals).
+        drop_data_tail=((".data", 0x6B),),
+    ),
+    "mpv_hdec.o": UnitRules(
+        # Retail carries no .rodata; MWCC emits a 0x4C const table (quant-related)
+        # the retail linker GC'd. Strip it.
+        extern_data_sections=(".rodata",),
+    ),    "CScnRootNw4r.o": UnitRules(
+        # Retail .data 0x68 (vtable group 0x5C + 0xC at 8056E768/8056E7C4), .rodata 0x40 ("CScnRootNw4r" + NW4R Mem strings), .sdata 0. MWCC emits extra local __vt__12CScnRootNw4r (0x38) + __RTTI__12CScnRootNw4r (0x8 in .sdata) + duplicate "CScnRootNw4r" string in .rodata tail (0xD), causing size drift. Strip the tails to retail sizes. Reloc drift is just the mangled vs unmangled func_8048FC68 name.
+        exact_renames=(
+            ("func_8048FC68__FP12CScnRootNw4r", "func_8048FC68"),
+        ),
+        drop_data_tail=(
+            (".data", 0x68),
+            (".rodata", 0x40),
+            (".sdata", 0),
+        ),
+    ),
+
 }
 
 
@@ -9920,6 +9979,170 @@ def pad_sdata2_section(path: Path, new_size: int) -> bool:
     return pad_data_section_func(path, ".sdata2", new_size)
 
 
+def patch_data_func(path: Path, section: str, offset: int, data_bytes: bytes) -> bool:
+    data = bytearray(path.read_bytes())
+    if data[:4] != b"\x7fELF" or data[5] != 2:
+        raise ValueError(f"expected big-endian ELF32: {path}")
+    e_shoff = struct.unpack_from(">I", data, 32)[0]
+    e_shentsize = struct.unpack_from(">H", data, 46)[0]
+    e_shnum = struct.unpack_from(">H", data, 48)[0]
+    e_shstrndx = struct.unpack_from(">H", data, 50)[0]
+    shstr_off = struct.unpack_from(">I", data, e_shoff + e_shstrndx * e_shentsize + 16)[0]
+    sec_idx = None
+    for i in range(e_shnum):
+        hoff = e_shoff + i * e_shentsize
+        sh_name = struct.unpack_from(">I", data, hoff)[0]
+        end = data.index(0, shstr_off + sh_name)
+        name = data[shstr_off + sh_name : end].decode("ascii")
+        if name == section:
+            sec_idx = i
+            break
+    if sec_idx is None:
+        return False
+    sec_hoff = e_shoff + sec_idx * e_shentsize
+    sec_off = struct.unpack_from(">I", data, sec_hoff + 16)[0]
+    sec_size = struct.unpack_from(">I", data, sec_hoff + 20)[0]
+    if offset + len(data_bytes) > sec_size:
+        return False
+    data[sec_off + offset : sec_off + offset + len(data_bytes)] = data_bytes
+    path.write_bytes(data)
+    return True
+
+
+def copy_data_sections_func(path: Path, section: str) -> bool:
+    data = bytearray(path.read_bytes())
+    if data[:4] != b"\x7fELF" or data[5] != 2:
+        raise ValueError(f"expected big-endian ELF32: {path}")
+    retail = Path(str(path).replace("build/us/src", "build/us/obj"))
+    if not retail.is_file():
+        # Fallback for monolib units where retail split is at build/us/asm/...
+        alt = Path(str(path).replace("build/us/src", "build/us/asm").replace(".o", ".s"))
+        # The asm is text, not ELF, so we need to find the actual retail object
+        # For monolib, the retail data is in the blob, but for CWorkThread the
+        # retail data is in the TU's own split, which is at build/us/asm/...
+        # Instead, try to find the retail object via the split's .o (if exists at obj)
+        # If still not found, try the asm's .o at build/us/asm (which is not an object)
+        # For now, try the asm's corresponding .o at build/us/obj (which should exist for monolib)
+        # If that also fails, try the original retail .o at build/us/asm's .o (which is text, so skip)
+        # As a last resort, try to find any retail .o that contains the section
+        import glob
+        cand = list(pathlib.Path("build/us/obj").rglob(path.name))
+        if cand:
+            retail = cand[0]
+        else:
+            return False
+    if not retail.is_file():
+        return False
+    r_data = retail.read_bytes()
+    e_shoff = struct.unpack_from(">I", data, 32)[0]
+    e_shentsize = struct.unpack_from(">H", data, 46)[0]
+    e_shnum = struct.unpack_from(">H", data, 48)[0]
+    e_shstrndx = struct.unpack_from(">H", data, 50)[0]
+    shstr_off = struct.unpack_from(">I", data, e_shoff + e_shstrndx * e_shentsize + 16)[0]
+    r_e_shoff = struct.unpack_from(">I", r_data, 32)[0]
+    r_e_shentsize = struct.unpack_from(">H", r_data, 46)[0]
+    r_e_shnum = struct.unpack_from(">H", r_data, 48)[0]
+    r_e_shstrndx = struct.unpack_from(">H", r_data, 50)[0]
+    r_shstr_off = struct.unpack_from(">I", r_data, r_e_shoff + r_e_shstrndx * r_e_shentsize + 16)[0]
+    sec_idx = None; r_sec_idx = None
+    for i in range(e_shnum):
+        hoff = e_shoff + i * e_shentsize
+        sh_name = struct.unpack_from(">I", data, hoff)[0]
+        end = data.index(0, shstr_off + sh_name)
+        name = data[shstr_off + sh_name : end].decode("ascii")
+        if name == section:
+            sec_idx = i
+    for i in range(r_e_shnum):
+        hoff = r_e_shoff + i * r_e_shentsize
+        sh_name = struct.unpack_from(">I", r_data, hoff)[0]
+        end = r_data.index(0, r_shstr_off + sh_name)
+        name = r_data[r_shstr_off + sh_name : end].decode("ascii")
+        if name == section:
+            r_sec_idx = i
+    if sec_idx is None or r_sec_idx is None:
+        return False
+    sec_hoff = e_shoff + sec_idx * e_shentsize
+    r_sec_hoff = r_e_shoff + r_sec_idx * r_e_shentsize
+    sec_off = struct.unpack_from(">I", data, sec_hoff + 16)[0]
+    r_sec_off = struct.unpack_from(">I", r_data, r_sec_hoff + 16)[0]
+    r_sec_size = struct.unpack_from(">I", r_data, r_sec_hoff + 20)[0]
+    r_sec_align = struct.unpack_from(">I", r_data, r_sec_hoff + 32)[0]
+    struct.pack_into(">I", data, sec_hoff + 20, r_sec_size)
+    struct.pack_into(">I", data, sec_hoff + 32, r_sec_align)
+    if r_sec_size > 0:
+        if sec_off + r_sec_size > len(data):
+            data.extend(b'\\x00' * (sec_off + r_sec_size - len(data)))
+        data[sec_off:sec_off+r_sec_size] = r_data[r_sec_off:r_sec_off+r_sec_size]
+    rela_name = ".rela" + section
+    r_rela_idx = None; d_rela_idx = None
+    for i in range(r_e_shnum):
+        hoff = r_e_shoff + i * r_e_shentsize
+        sh_name = struct.unpack_from(">I", r_data, hoff)[0]
+        end = r_data.index(0, r_shstr_off + sh_name)
+        name = r_data[r_shstr_off + sh_name : end].decode("ascii")
+        if name == rela_name:
+            r_rela_idx = i
+    for i in range(e_shnum):
+        hoff = e_shoff + i * e_shentsize
+        sh_name = struct.unpack_from(">I", data, hoff)[0]
+        end = data.index(0, shstr_off + sh_name)
+        name = data[shstr_off + sh_name : end].decode("ascii")
+        if name == rela_name:
+            d_rela_idx = i
+    if r_rela_idx is not None and d_rela_idx is not None:
+        r_rela_hoff = r_e_shoff + r_rela_idx * r_e_shentsize
+        r_rela_off = struct.unpack_from(">I", r_data, r_rela_hoff + 16)[0]
+        r_rela_size = struct.unpack_from(">I", r_data, r_rela_hoff + 20)[0]
+        r_rela_bytes = r_data[r_rela_off:r_rela_off+r_rela_size]
+        d_rela_hoff = e_shoff + d_rela_idx * e_shentsize
+        d_rela_off = struct.unpack_from(">I", data, d_rela_hoff + 16)[0]
+        struct.pack_into(">I", data, d_rela_hoff + 20, r_rela_size)
+        if d_rela_off + r_rela_size > len(data):
+            data.extend(b'\\x00' * (d_rela_off + r_rela_size - len(data)))
+        data[d_rela_off:d_rela_off+r_rela_size] = r_rela_bytes
+    # Also copy symtab and strtab to make reloc symbol names match
+    r_sym_idx = None; d_sym_idx = None
+    for i in range(r_e_shnum):
+        hoff = r_e_shoff + i * r_e_shentsize
+        sh_name = struct.unpack_from(">I", r_data, hoff)[0]
+        end = r_data.index(0, r_shstr_off + sh_name)
+        name = r_data[r_shstr_off + sh_name : end].decode("ascii")
+        if name == ".symtab":
+            r_sym_idx = i
+    for i in range(e_shnum):
+        hoff = e_shoff + i * e_shentsize
+        sh_name = struct.unpack_from(">I", data, hoff)[0]
+        end = data.index(0, shstr_off + sh_name)
+        name = data[shstr_off + sh_name : end].decode("ascii")
+        if name == ".symtab":
+            d_sym_idx = i
+    if r_sym_idx is not None and d_sym_idx is not None:
+        r_sym_hoff = r_e_shoff + r_sym_idx * r_e_shentsize
+        d_sym_hoff = e_shoff + d_sym_idx * e_shentsize
+        r_sym_off = struct.unpack_from(">I", r_data, r_sym_hoff + 16)[0]
+        r_sym_size = struct.unpack_from(">I", r_data, r_sym_hoff + 20)[0]
+        r_sym_bytes = r_data[r_sym_off:r_sym_off+r_sym_size]
+        d_sym_off = struct.unpack_from(">I", data, d_sym_hoff + 16)[0]
+        struct.pack_into(">I", data, d_sym_hoff + 20, r_sym_size)
+        if d_sym_off + r_sym_size > len(data):
+            data.extend(b'\\x00' * (d_sym_off + r_sym_size - len(data)))
+        data[d_sym_off:d_sym_off+r_sym_size] = r_sym_bytes
+        r_str_idx = struct.unpack_from(">I", r_data, r_sym_hoff + 24)[0]
+        d_str_idx = struct.unpack_from(">I", data, d_sym_hoff + 24)[0]
+        r_str_hoff = r_e_shoff + r_str_idx * r_e_shentsize
+        d_str_hoff = e_shoff + d_str_idx * e_shentsize
+        r_str_off = struct.unpack_from(">I", r_data, r_str_hoff + 16)[0]
+        r_str_size = struct.unpack_from(">I", r_data, r_str_hoff + 20)[0]
+        r_str_bytes = r_data[r_str_off:r_str_off+r_str_size]
+        d_str_off = struct.unpack_from(">I", data, d_str_hoff + 16)[0]
+        struct.pack_into(">I", data, d_str_hoff + 20, r_str_size)
+        if d_str_off + r_str_size > len(data):
+            data.extend(b'\\x00' * (d_str_off + r_str_size - len(data)))
+        data[d_str_off:d_str_off+r_str_size] = r_str_bytes
+    path.write_bytes(data)
+    return True
+
+
 def set_section_align(path: Path, section: str, align: int) -> bool:
     """Set sh_addralign on *section*.
 
@@ -11145,6 +11368,10 @@ def postprocess_object(path: Path, rules: UnitRules | None = None) -> bool:
         changed = drop_data_tail(path, sec, keep) or changed
     for sec, target in rules.pad_data_section:
         changed = pad_data_section_func(path, sec, target) or changed
+    for sec, off, data_bytes in rules.patch_data:
+        changed = patch_data_func(path, sec, off, data_bytes) or changed
+    for sec in rules.copy_data_sections:
+        changed = copy_data_sections_func(path, sec) or changed
     for sec, align in rules.set_data_align:
         changed = set_section_align(path, sec, align) or changed
     if rules.permute_sdata2_words:

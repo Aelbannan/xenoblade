@@ -11,12 +11,12 @@ The three `*shim`/`side-effect` rows are **fakematch-candidate** families: sourc
 
 | metric | count |
 |---|---|
-| extern "C" (total lines) | 15123 |
-| extern "C" declarations (non-lbl_*, imports) | 6528 |
+| extern "C" (total lines) | 15138 |
+| extern "C" declarations (non-lbl_*, imports) | 6530 |
 | extern "C" definitions (forced names) | 4211 |
 | `self`/register-style params | 14277 |
-| `void*` (params + locals) | 8049 |
-| raw pointer offset arithmetic | 7382 |
+| `void*` (params + locals) | 8047 |
+| raw pointer offset arithmetic | 7383 |
 | deref-through-cast arithmetic | 2767 |
 | inline asm / `register` | 126 |
 | rN-named params | 487 |
@@ -193,7 +193,7 @@ The three `*shim`/`side-effect` rows are **fakematch-candidate** families: sourc
 | libs/monolib/src/work/CWorkSystem.cpp | 0 | 0 | 4 | 0 | 0 | 0 | 0 | 4 | 0 | 0 | 0 | 0 |
 | libs/monolib/src/work/CWorkSystemCache.cpp | 39 | 3 | 7 | 12 | 2 | 2 | 0 | 0 | 0 | 0 | 0 | 0 |
 | libs/monolib/src/work/CWorkSystemPack.cpp | 42 | 3 | 13 | 9 | 3 | 0 | 0 | 0 | 0 | 0 | 0 | 0 |
-| libs/monolib/src/work/CWorkThread.cpp | 5 | 0 | 3 | 2 | 0 | 0 | 0 | 0 | 3 | 0 | 0 | 0 |
+| libs/monolib/src/work/CWorkThread.cpp | 7 | 0 | 3 | 2 | 0 | 0 | 0 | 0 | 3 | 0 | 0 | 0 |
 | libs/nw4r/src/db/db_assert.cpp | 0 | 0 | 0 | 0 | 0 | 0 | 2 | 0 | 0 | 0 | 0 | 0 |
 | libs/nw4r/src/g3d/g3d_anmchr.cpp | 0 | 0 | 1 | 10 | 1 | 1 | 0 | 0 | 0 | 0 | 0 | 0 |
 | libs/nw4r/src/g3d/g3d_anmclr.cpp | 0 | 0 | 1 | 3 | 1 | 1 | 0 | 0 | 0 | 0 | 0 | 0 |
@@ -320,7 +320,7 @@ The three `*shim`/`side-effect` rows are **fakematch-candidate** families: sourc
 | src/kyoshin/CLoad.cpp | 0 | 0 | 15 | 1 | 0 | 0 | 0 | 0 | 0 | 0 | 0 | 0 |
 | src/kyoshin/CMainMenu.cpp | 2 | 16 | 98 | 11 | 20 | 0 | 0 | 0 | 15 | 0 | 0 | 0 |
 | src/kyoshin/CMapSel.cpp | 14 | 20 | 50 | 9 | 13 | 9 | 0 | 0 | 0 | 0 | 0 | 0 |
-| src/kyoshin/CMiniMap.cpp | 51 | 13 | 35 | 106 | 126 | 83 | 0 | 0 | 6 | 0 | 0 | 0 |
+| src/kyoshin/CMiniMap.cpp | 51 | 13 | 35 | 104 | 126 | 83 | 0 | 0 | 6 | 0 | 0 | 0 |
 | src/kyoshin/CModelDisp.cpp | 7 | 12 | 33 | 16 | 14 | 4 | 0 | 0 | 0 | 0 | 0 | 0 |
 | src/kyoshin/CNumSelect.cpp | 4 | 11 | 24 | 2 | 0 | 0 | 0 | 2 | 0 | 0 | 0 | 0 |
 | src/kyoshin/COccCulling.cpp | 0 | 0 | 3 | 0 | 0 | 0 | 0 | 3 | 0 | 0 | 0 | 0 |
@@ -459,7 +459,7 @@ The three `*shim`/`side-effect` rows are **fakematch-candidate** families: sourc
 | src/kyoshin/cf/object/CfObjectNpc.cpp | 0 | 0 | 4 | 7 | 0 | 0 | 0 | 0 | 0 | 0 | 0 | 0 |
 | src/kyoshin/cf/object/CfObjectObj.cpp | 0 | 0 | 8 | 2 | 5 | 3 | 0 | 0 | 0 | 0 | 0 | 0 |
 | src/kyoshin/cf/object/CfObjectPc.cpp | 1 | 6 | 103 | 13 | 28 | 1 | 0 | 2 | 5 | 0 | 0 | 0 |
-| src/kyoshin/cf/object/CfObjectPoint.cpp | 3 | 1 | 5 | 0 | 0 | 0 | 0 | 0 | 2 | 0 | 0 | 0 |
+| src/kyoshin/cf/object/CfObjectPoint.cpp | 3 | 1 | 5 | 0 | 1 | 0 | 0 | 0 | 2 | 0 | 0 | 0 |
 | src/kyoshin/cf/object/CfObjectTbox.cpp | 0 | 1 | 1 | 2 | 1 | 0 | 0 | 0 | 0 | 0 | 0 | 0 |
 | src/kyoshin/cf/voice/CCharVoice.cpp | 14 | 0 | 1 | 0 | 11 | 7 | 0 | 0 | 0 | 0 | 0 | 0 |
 | src/kyoshin/cf/voice/CCharVoiceMan.cpp | 2 | 1 | 26 | 23 | 5 | 0 | 0 | 0 | 6 | 0 | 0 | 0 |
@@ -2190,7 +2190,7 @@ TUs with any of the three fakematch-candidate families above. Each row is a cand
  },
  "libs/monolib/src/work/CWorkThread.cpp": {
   "asm_insn_shim": 0,
-  "extern_c_nonlbl_decl": 5,
+  "extern_c_nonlbl_decl": 7,
   "goto_count": 3,
   "init_side_effect": 0,
   "schedule_pragma": 0,
@@ -3506,7 +3506,7 @@ TUs with any of the three fakematch-candidate families above. Each row is a cand
   "ptr_arith": 126,
   "schedule_pragma": 0,
   "self_params": 35,
-  "void_ptr": 106
+  "void_ptr": 104
  },
  "src/kyoshin/CModelDisp.cpp": {
   "asm_insn_shim": 0,
@@ -4943,6 +4943,7 @@ TUs with any of the three fakematch-candidate families above. Each row is a cand
   "extern_c_nonlbl_def": 1,
   "goto_count": 2,
   "init_side_effect": 0,
+  "ptr_arith": 1,
   "schedule_pragma": 0,
   "self_params": 5
  },

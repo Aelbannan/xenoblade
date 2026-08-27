@@ -34,9 +34,9 @@ CWorkThread** lbl_eu_80665598[2];
 
 // Reslist/CMsgParam subobject vtables (blob monolibdata labels, data in
 // port/data_defs.cpp). Referenced by the flat ctor below.
-extern u32 lbl_eu_8056B1B0[];
-extern u32 lbl_eu_8056B1BC[];
-extern u32 lbl_eu_8056B1D4[];
+extern "C" u32 lbl_eu_8056B1B0[];
+extern "C" u32 lbl_eu_8056B1BC[];
+extern "C" u32 lbl_eu_8056B1D4[];
 
 // CWorkThreadSystem::sAllocHandle (sdata; defined at the bottom of this TU).
 // Accessed by label because sAllocHandle is private and the flat ctor below
@@ -880,3 +880,20 @@ IWorkEventVtbl lbl_eu_8056B110 = {
 // - blob monolibdata1 dissolve. CWorkThreadSystem.cpp declares it extern and
 // is its user; the definition lives here (sdata lbl_eu_8066351C).
 u32 lbl_eu_8066351C = 0xFFFFFFFF;
+
+// Dissolved .data vtables (retail 0x8056B1B0/1BC/1C8) - explicit to fill the 0x24 gap
+// The sdata RTTI structs (80663520/28/30) and rodata strings are still handled
+// via the UNIT_RULES postprocess (rename_pool + drop pad), so we leave them
+// as auto-generated. Only the three missing .data vtables are defined here.
+extern "C" u32 lbl_eu_8056B1C8[3];
+extern "C" const char lbl_eu_80522474[] = "CMsgParam<8>";
+extern "C" const char lbl_eu_80522484[] = "reslist<CWorkThread *>";
+extern "C" const char lbl_eu_8052249C[] = "_reslist_base<CWorkThread *>";
+extern "C" u32 lbl_eu_80663520[2] = { (u32)lbl_eu_80522474, 0 };
+extern "C" u32 lbl_eu_80663528[2] = { (u32)lbl_eu_80522484, (u32)lbl_eu_8056B1C8 };
+extern "C" u32 lbl_eu_80663530[2] = { (u32)lbl_eu_8052249C, 0 };
+extern "C" void __dt__12CMsgParam__8Fv();
+extern "C" void __dt__23reslist__P11CWorkThreadFv();
+extern "C" u32 lbl_eu_8056B1B0[3] = { (u32)lbl_eu_80663520, 0, (u32)&__dt__12CMsgParam__8Fv };
+extern "C" u32 lbl_eu_8056B1BC[3] = { (u32)lbl_eu_80663528, 0, (u32)&__dt__23reslist__P11CWorkThreadFv };
+extern "C" u32 lbl_eu_8056B1C8[3] = { (u32)lbl_eu_80663530, 0, 0 };

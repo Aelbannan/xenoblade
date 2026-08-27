@@ -1754,7 +1754,7 @@
 <rect x="6066.0" y="450" width="3.0" height="1260" fill="#1f883d"/>
 <rect x="6069.0" y="450" width="3.0" height="1260" fill="#1f883d"/>
 <rect x="6072.0" y="450" width="3.0" height="1260" fill="#1f883d"/>
-<rect x="6075.0" y="450" width="3.0" height="1260" fill="#6e7681"/>
+<rect x="6075.0" y="450" width="3.0" height="1260" fill="#d4a72c"/>
 <rect x="6078.0" y="450" width="3.0" height="1260" fill="#1f883d"/>
 <rect x="6081.0" y="450" width="3.0" height="1260" fill="#1f883d"/>
 <rect x="6084.0" y="450" width="3.0" height="1260" fill="#1f883d"/>
@@ -2127,7 +2127,7 @@
 <rect x="1560" y="1980" width="120" height="120" rx="18" fill="#0969da"/>
 <text x="1716" y="2061" font-size="108" fill="#24292f">EQUIVALENT_MATCH · 233</text>
 <rect x="3274" y="1980" width="120" height="120" rx="18" fill="#d4a72c"/>
-<text x="3430" y="2061" font-size="108" fill="#24292f">in progress · 3273</text>
+<text x="3430" y="2061" font-size="108" fill="#24292f">in progress · 3276</text>
 <rect x="4738" y="1980" width="120" height="120" rx="18" fill="#6e7681"/>
-<text x="4894" y="2061" font-size="108" fill="#24292f">not started · 117</text>
+<text x="4894" y="2061" font-size="108" fill="#24292f">not started · 114</text>
 </svg>

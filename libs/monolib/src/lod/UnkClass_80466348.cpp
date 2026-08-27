@@ -108,24 +108,8 @@ extern const double lbl_eu_8066A638;  // u8->f32 magic (0x4330000000000000)
 // Builtin (f32) casts pool TU-local magic doubles; the retail object
 // references the blob pool entries (lbl_eu_8066A628/A638) instead. Union
 // helpers keep this TU's .sdata2 empty (retail shape).
-inline f32 s32ToF_a628(s32 v) {
-    union {
-        double d;
-        u32 w[2];
-    } c;
-    c.w[0] = 0x43300000u;
-    c.w[1] = (u32)v ^ 0x80000000u;
-    return (f32)(c.d - lbl_eu_8066A628);
-}
-inline f32 u8ToF_a638(u8 v) {
-    union {
-        double d;
-        u32 w[2];
-    } c;
-    c.w[0] = 0x43300000u;
-    c.w[1] = v;
-    return (f32)(c.d - lbl_eu_8066A638);
-}
+inline f32 s32ToF_a628(s32 v) { return (f32)v; }
+inline f32 u8ToF_a638(u8 v) { return (f32)v; }
 
 // LOD terrain state manager (sibling TU); only the fields referenced here.
 struct UnkClass_8046368C {
@@ -739,14 +723,13 @@ void func_80467CF0(GXColor* color) {
 }
 
 void LOD::UnkClass_80466348::func_80467E14() {
-    // Build the ambient color from this object's RGB bytes and a scaled alpha:
-    // the u32 alpha latch is converted through the s32->f32 path (MWCC's
-    // 0x4330/xoris double trick) and scaled by the shared alpha scale.
+    f32 conv = s32ToF_a628((s32)lbl_eu_80665814);
+    f32 scaled = conv * lbl_eu_80665808;
     GXColor color = {
         field_0x0,
         field_0x1,
         field_0x2,
-        (u8)(s32)(s32ToF_a628((s32)lbl_eu_80665814) * lbl_eu_80665808),
+        (u8)(s32)scaled,
     };
     GXSetChanAmbColor(GX_COLOR0A0, color);
 }

@@ -17,9 +17,9 @@ namespace cf {
 
     // Virtual-dispatch shim for the embedded voice sub-object at +0x3E9C of
     // the chain battle objects. Declared virtual N sits at vtable byte offset
-    // (N+2)*4 (-RTTI on). Only slot 0x50 (index 18) and 0xAC (index 41) are
-    // used by the chain timer code. Never instantiated, so no vtable emits
-    // and the declared (non-pure) virtuals need no bodies.
+    // (N+2)*4 (-RTTI on). Slots 0x4C (index 17, arts index), 0x50 (index 18)
+    // and 0xAC (index 41) are used by the chain code. Never instantiated, so
+    // no vtable emits and the declared (non-pure) virtuals need no bodies.
     class CChainVoiceSub {
     public:
         virtual void v00(); virtual void v01(); virtual void v02();
@@ -27,7 +27,7 @@ namespace cf {
         virtual void v06(); virtual void v07(); virtual void v08();
         virtual void v09(); virtual void v10(); virtual void v11();
         virtual void v12(); virtual void v13(); virtual void v14();
-        virtual void v15(); virtual void v16(); virtual void v17();
+        virtual void v15(); virtual void v16(); virtual u32 v17(); // index 17 -> vtable offset 0x4C (arts index, cf. CChainVoiceSub17)
         virtual void v18(u32 v); // index 18 -> vtable offset 0x50
         virtual void v19(); virtual void v20(); virtual void v21();
         virtual void v22(); virtual void v23(); virtual void v24();
@@ -64,13 +64,14 @@ namespace cf {
 
     // Embedded sub-object at +0x08 of the chain battle object: its vtable
     // pointer sits at the sub-object's own start (retail `lwzu r12, 0x8(r3)`
-    // virtual-dispatch form). Only slot 0x20 (index 6) is used by the chain
-    // timer code. Never instantiated, so the declared virtuals need no
-    // bodies.
+    // virtual-dispatch form). Slots 0x14 (index 3) and 0x20 (index 6) are used
+    // by the chain code (CChainSub8E). Never instantiated, so the declared
+    // virtuals need no bodies.
     class CChainSub8 {
     public:
         virtual void s00(); virtual void s01(); virtual void s02();
-        virtual void s03(); virtual void s04(); virtual void s05();
+        virtual void s03(u32 v); // index 3 -> vtable offset 0x14 (chain-voice enable, cf. CChainSub8E::e03)
+        virtual void s04(); virtual void s05();
         virtual void s06(u32 v); // index 6 -> vtable offset 0x20
         virtual void s07();
     };
@@ -152,11 +153,11 @@ namespace cf {
         virtual void v154() = 0; virtual void v155() = 0; virtual void v156() = 0;
         virtual void* v157() = 0; // index 157 -> vtable offset 0x27c (arts set)
         virtual void v158() = 0; virtual void v159() = 0; virtual void v160() = 0; virtual void v161() = 0;
-        virtual void* v162() = 0; // index 162 -> vtable offset 0x290
+        virtual int v162() = 0; // index 162 -> vtable offset 0x290 (delta gate, cf. CChainBattleObj750::v162)
         virtual void v163() = 0;
-        virtual void* v164() = 0; // index 164 -> vtable offset 0x298
+        virtual class CChainGaugeSub* v164() = 0; // index 164 -> vtable offset 0x298 (gauge sub-object)
         virtual void v165() = 0;
-        virtual void v166() = 0; virtual void v167() = 0; virtual void v168() = 0; virtual void v169() = 0;
+        virtual void v166() = 0; virtual class CChainCombo_ArtsCategoryHolder* v167() = 0; virtual int v168() = 0; virtual void v169() = 0; // 167->0x2A4 arts holder, 168->0x2A8 (cf. CChainBattleObj750)
         virtual void v170() = 0; virtual void v171() = 0; virtual void v172() = 0;
         virtual int v173() = 0;  // index 173 -> vtable offset 0x2bc
         virtual void v174() = 0; virtual void v175() = 0; virtual void v176() = 0; virtual void v177() = 0;
@@ -206,7 +207,7 @@ namespace cf {
         virtual void v350() = 0; virtual void v351() = 0; virtual void v352() = 0; virtual void v353() = 0;
         virtual void v354() = 0; virtual void v355() = 0; virtual void v356() = 0; virtual void v357() = 0;
         virtual void v358() = 0; virtual void v359() = 0; virtual void v360() = 0; virtual void v361() = 0;
-        virtual void v362() = 0; virtual void v363() = 0; virtual void v364() = 0; virtual void v365() = 0;
+        virtual void v362() = 0; virtual float v363() = 0; virtual void v364() = 0; virtual void v365() = 0; // 363->0x5b4 gauge float (cf. CChainBattleObj5B4)
         virtual void v366() = 0;
         virtual void v367(float v) = 0; // index 367 -> vtable offset 0x5c4
 

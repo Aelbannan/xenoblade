@@ -569,6 +569,11 @@ UNIT_RULES: dict[str, UnitRules] = {
         # unaligned extern declaration), so force it here.
         set_data_align=((".data", 4),),
     ),
+    "UnkClass_80466348.o": UnitRules(
+        # builtin-cast s32->f32 pools the signed magic locally as @1963;
+        # retail references the shared blob lbl_eu_8066A628.
+        exact_renames=(("@1963", "lbl_eu_8066A628"),),
+    ),
     "UnkClass_8047E110.o": UnitRules(
         # pool-coupled: this TU plants the conversion-magic double and the 1.0f
         # constant under their retail shared-pool names so the s32->f32 paths
@@ -6999,6 +7004,10 @@ UNIT_RULES: dict[str, UnitRules] = {
         # @8745 = 0xAC) and an unreferenced .sdata2 pool {128.0f, 0x80000000};
         # no reloc references any of them (the sinit tag-code ctor family and
         # all constants already use retail blob labels directly). Strip both.
+        # func_8012968C lfd site references the signed int->f32 magic pool
+        # that MWCC emits locally as @7872; retail uses the shared blob
+        # lbl_eu_80667200 in split1.s.
+        exact_renames=(("@7872", "lbl_eu_80667200"),),
         extern_data_sections=(".data", ".sdata2"),
     ),
 

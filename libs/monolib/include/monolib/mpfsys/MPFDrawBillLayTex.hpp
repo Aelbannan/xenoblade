@@ -7,6 +7,8 @@ namespace mpfsys {
 class MPFDrawBillLayTex {
 public:
     static MPFDrawBillLayTex* getInstance();
+    void drawIndexed();
+    void drawPaired();
 
 private:
     // The retail singleton occupies sixteen bytes.

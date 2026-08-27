@@ -45,9 +45,12 @@ extern u8 lbl_eu_8052FE08[];
 extern u8 lbl_eu_8052FE38[];
 extern u8 lbl_eu_8052FE68[];
 
+class CCharEffectSlot;
+class CCharEffectData;
+
 namespace cf {
 
-// Sub-object at +0x04 of the battle object stored at CCharEffect::mBattleObj:
+// Sub-object at +0x04
 // with -RTTI on MWCC reserves two leading vtable slots, so the virtual at
 // declared index N sits at vtable offset (N+2)*4. Declared index 10 is thus
 // vtable offset 0x30; it returns a pointer whose first word is the id
@@ -85,7 +88,7 @@ struct CCharEffectBattleObj {
 class __declspec(novtable) CCharEffect {
 public:
     virtual ~CCharEffect(); // vtable 0x08
-    virtual void func_8015BF04(CCharEffectSlot* p); // 0x0C
+    virtual void func_8015BF04(::CCharEffectSlot* p); // 0x0C
     virtual void func_8015C9A0(); // 0x10
     virtual void func_800CEE7C(); // 0x14
     virtual void* getObj(u32 idx, s32 mode) = 0; // 0x18 pure in base

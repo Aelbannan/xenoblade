@@ -4,7 +4,7 @@
 // ---------------------------------------------------------------------------
 // inflateReset  (retail func_80460C34__17UnkClass_80460C34Fv, 0x80)
 // ---------------------------------------------------------------------------
-extern "C" int func_80460C34__17UnkClass_80460C34Fv(z_stream* strm) {
+extern "C" int inflateReset__17UnkClass_80460C34Fv(z_stream* strm) {
     z_inflate_state* state;
 
     if (strm == 0 || strm->state == 0) return Z_STREAM_ERROR;
@@ -56,13 +56,13 @@ extern "C" int func_80460CB4__17UnkClass_80460C34Fv(
     }
     state->wbits = (z_uint)windowBits;
     state->window = 0;
-    return func_80460C34__17UnkClass_80460C34Fv(strm);
+    return inflateReset__17UnkClass_80460C34Fv(strm);
 }
 
 // ---------------------------------------------------------------------------
 // inflateInit_  (retail func_80460DCC__17UnkClass_80460C34Fv, 0x10)
 // ---------------------------------------------------------------------------
-extern "C" int func_80460DCC__17UnkClass_80460C34Fv(
+extern "C" int inflateInit___17UnkClass_80460C34Fv(
         z_stream* strm, const char* version, int stream_size) {
     return func_80460CB4__17UnkClass_80460C34Fv(strm, 15, version, stream_size);
 }
@@ -70,7 +70,7 @@ extern "C" int func_80460DCC__17UnkClass_80460C34Fv(
 // ---------------------------------------------------------------------------
 // updatewindow  (retail local func_80460DDC__17UnkClass_80460C34Fv, 0x17C)
 // ---------------------------------------------------------------------------
-extern "C" int func_80460DDC__17UnkClass_80460C34Fv(z_stream* strm, z_uint out) {
+extern "C" int updateWindow__17UnkClass_80460C34Fv(z_stream* strm, z_uint out) {
     z_inflate_state* state;
     z_uint copy, dist;
 
@@ -113,7 +113,7 @@ extern "C" int func_80460DDC__17UnkClass_80460C34Fv(z_stream* strm, z_uint out) 
 // ---------------------------------------------------------------------------
 // inflateEnd  (retail func_80461FE0__17UnkClass_80460C34Fv, 0x88)
 // ---------------------------------------------------------------------------
-extern "C" int func_80461FE0__17UnkClass_80460C34Fv(z_stream* strm) {
+extern "C" int inflateEnd__17UnkClass_80460C34Fv(z_stream* strm) {
     if (strm == 0 || strm->state == 0 || strm->zfree == 0)
         return Z_STREAM_ERROR;
     if (strm->state->window != 0)
@@ -761,7 +761,7 @@ extern "C" int func_80460F58__17UnkClass_80460C34Fv(
 inflate_leave:
     ZI_RESTORE();
     if (state->wsize || (state->mode < CHECK && out != strm->avail_out)) {
-        if (func_80460DDC__17UnkClass_80460C34Fv(strm, out)) {
+        if (updateWindow__17UnkClass_80460C34Fv(strm, out)) {
             state->mode = MEM;
             return Z_MEM_ERROR;
         }

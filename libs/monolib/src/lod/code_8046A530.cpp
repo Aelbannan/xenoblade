@@ -107,7 +107,7 @@ LOD::LODMemMan& LOD::UnkClass_8046A530::GetMemMan() {
  *   addi r3, r3, 0xa44
  *   b func_80471834__Q23LOD9LODMemManFv
  */
-void LOD::UnkClass_8046A530::func_8046CFD8() {
+void LOD::UnkClass_8046A530::forwardToMem() {
     GetMemMan().func_80471834();
 }
 
@@ -116,7 +116,7 @@ void LOD::UnkClass_8046A530::func_8046CFD8() {
 // 0x40 was set in the result, stop; otherwise clear bit 0x40 and set bit
 // 0x100.
 // ---------------------------------------------------------------------------
-void LOD::UnkClass_8046A530::func_8046CFB4() {
+void LOD::UnkClass_8046A530::setStateFlag() {
     LODLayout_8046A530* l = reinterpret_cast<LODLayout_8046A530*>(this);
     u32 v = l->field_0x00 | 0x20000;
     l->field_0x00 = v;
@@ -268,7 +268,7 @@ extern "C" void func_8046A5C4__Q23LOD17UnkClass_8046A530Fv(LOD::UnkClass_8046A53
 // These compile but do not yet produce matching code.
 // ---------------------------------------------------------------------------
 
-void LOD::UnkClass_8046A530::func_8046AAD8() { func_8046AB54(); }
+void LOD::UnkClass_8046A530::updateSimple() { func_8046AB54(); }
 
 // ---------------------------------------------------------------------------
 // func_8046AADC: record the type at 0x121c and set the 0x1200/0x1204/0x1208
@@ -276,7 +276,7 @@ void LOD::UnkClass_8046A530::func_8046AAD8() { func_8046AB54(); }
 // body reads r4 as its argument, so it is defined here with the exact
 // mangled name and a real parameter list.
 // ---------------------------------------------------------------------------
-void func_8046AADC__Q23LOD17UnkClass_8046A530Fv(LOD::UnkClass_8046A530* self, int type) {
+void setVariation__Q23LOD17UnkClass_8046A530Fv(LOD::UnkClass_8046A530* self, int type) {
     LODLayout_8046A530* l = reinterpret_cast<LODLayout_8046A530*>(self);
     l->field_0x121C = type;
     if (type == 0) {

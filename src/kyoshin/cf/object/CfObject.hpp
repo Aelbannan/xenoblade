@@ -15,7 +15,7 @@ namespace cf {
         //vtable 1 (CfObject)
         virtual ~CfObject();                      //0x54
         virtual void CfObject_UnkVirtualFunc2() = 0;  //0x58
-        virtual void CfObject_UnkVirtualFunc3(UnkClass_80082D90* data); //0x5C
+        virtual void CfObject_UnkVirtualFunc3(); //0x5C
         virtual void CfObject_UnkVirtualFunc4() = 0;  //0x60
         virtual void CfObject_UnkVirtualFunc5();      //0x64
         virtual void CfObject_UnkVirtualFunc6();      //0x68
@@ -80,7 +80,7 @@ namespace cf {
         virtual void CfObject_UnkVirtualFunc65();     //0x154
         virtual void CfObject_UnkVirtualFunc66(int) = 0; //0x158
         virtual void CfObject_UnkVirtualFunc67();     //0x15C
-        virtual void CfObject_UnkVirtualFunc68() = 0; //0x160
+        virtual int CfObject_UnkVirtualFunc68(); //0x160
         virtual void CfObject_UnkVirtualFunc69();     //0x164
         virtual void CfObject_UnkVirtualFunc70(float value); //0x168
         virtual void CfObject_UnkVirtualFunc71();     //0x16C

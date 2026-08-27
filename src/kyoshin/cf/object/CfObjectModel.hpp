@@ -223,7 +223,7 @@ namespace cf {
     void CfObject_UnkVirtualFunc67();
     void CfObject_UnkVirtualFunc70(float value);
     void CfObject_UnkVirtualFunc69();
-    void CfObject_UnkVirtualFunc68();
+    int CfObject_UnkVirtualFunc68();
     void CfObject_UnkVirtualFunc24();
     void CfObject_UnkVirtualFunc28();
     float CfObject_UnkVirtualFunc31();

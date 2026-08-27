@@ -271,25 +271,11 @@ bool CMMClock::OnFileEvent(CEventFile* pEventFile) {
 
 // ---- local SI types for retail virtual calls (fake SI iface pattern) ----
 struct MiniMapSelf;
-struct MiniMapPaneMgr {
-    virtual void v000(); virtual void v004(); virtual void v008(); virtual void v00C();
-    virtual void v010(); virtual void v014(); virtual void v018(); virtual void v01C();
-    virtual void v020(); virtual void v024(); virtual void v028(); virtual void v02C();
-    virtual void v030(); virtual void v034();
-    virtual void* v03C(const char* name, int create);  // vtable+0x3C
-};
-// Layout-side pane manager: the lookup helper sits at vtable+0x3C.
-struct MiniMapLayoutMgr {
-    virtual void v000(); virtual void v004(); virtual void v008();
-    virtual void v00C(); virtual void v010(); virtual void v014();
-    virtual void v018(); virtual void v01C(); virtual void v020();
-    virtual void v024(); virtual void v028(); virtual void v02C();
-    virtual void v030();
-    virtual void* v03C(const char* name, int create);
-};
+// (Former MiniMapPaneMgr pad was retail nw4r::lyt::Pane vt+0x3C FindPaneByName -- now real type.)
+// (Former MiniMapLayoutMgr likewise -- real Pane.)
 struct MiniMapLayout {
     u8 pad[0x10];
-    MiniMapLayoutMgr* mgr;       // 0x10 - pane manager (vtable+0x3C lookup)
+    nw4r::lyt::Pane* mgr;        // 0x10 - layout root pane (FindPaneByName @ +0x3C)
 };
 
 // ============================================================================
@@ -325,8 +311,8 @@ bool CMiniMap::OnFileEvent(CEventFile* pEventFile) {
         mLayout0C->Animate(0);
 
         // Clock label textboxes, attached to the 'panemapmark' pane.
-        nw4r::lyt::Pane* parent = (nw4r::lyt::Pane*)((MiniMapLayout*)mLayout0C)->mgr->v03C(
-            &lbl_eu_804FE1FC[0x1FA], 1);
+        nw4r::lyt::Pane* parent = (nw4r::lyt::Pane*)((MiniMapLayout*)mLayout0C)->mgr->FindPaneByName(
+            &lbl_eu_804FE1FC[0x1FA], true);
         if (parent != 0) {
             for (u8 i = 0; lbl_eu_8052C788[i] != 0; i++) {
                 nw4r::lyt::Pane* tb = (nw4r::lyt::Pane*)createTextbox__10CLibLayoutFv();
@@ -379,7 +365,7 @@ bool CMiniMap::OnFileEvent(CEventFile* pEventFile) {
         nw4r::lyt::Pane* tb = (nw4r::lyt::Pane*)createTextbox__10CLibLayoutFv();
         SetName__Q34nw4r3lyt4PaneFPCc(tb, &lbl_eu_804FE1FC[0x20A]);
         *(u8*)((u8*)tb + 0xBB) = (*(u8*)((u8*)tb + 0xBB) & 0xFE) | 1;
-        parent = (nw4r::lyt::Pane*)((MiniMapLayout*)mLayout0C)->mgr->v03C(&lbl_eu_804FE1FC[0x1FA], 1);
+        parent = (nw4r::lyt::Pane*)((MiniMapLayout*)mLayout0C)->mgr->FindPaneByName(&lbl_eu_804FE1FC[0x1FA], true);
         AppendChild__Q34nw4r3lyt4PaneFPQ34nw4r3lyt4Pane(parent, tb);
         AppendChild__Q34nw4r3lyt4PaneFPQ34nw4r3lyt4Pane(tb, pic);
 
@@ -406,7 +392,7 @@ bool CMiniMap::OnFileEvent(CEventFile* pEventFile) {
                 *(u8*)((u8*)clockPic + 0xBB) = (*(u8*)((u8*)clockPic + 0xBB) & 0xFE) | 1;
             }
         }
-        parent = (nw4r::lyt::Pane*)((MiniMapLayout*)mLayout0C)->mgr->v03C(&lbl_eu_804FE1FC[0x281], 1);
+        parent = (nw4r::lyt::Pane*)((MiniMapLayout*)mLayout0C)->mgr->FindPaneByName(&lbl_eu_804FE1FC[0x281], true);
         AppendChild__Q34nw4r3lyt4PaneFPQ34nw4r3lyt4Pane(parent, clockPic);
 
         func_801160A8(mField3C.mW, lbl_eu_80663FB8, mLayout0C, mField20);
@@ -421,14 +407,13 @@ bool CMiniMap::OnFileEvent(CEventFile* pEventFile) {
 }
 
 // ---- local SI types for retail virtual calls (fake SI iface pattern): ----
-// (MiniMapPaneMgr / MiniMapLayoutMgr / MiniMapLayout are defined above
-// CMiniMap::OnFileEvent so it can use the mgr v03C lookups.)
+// (MiniMapLayout is defined above CMiniMap::OnFileEvent so it can use the mgr FindPaneByName.)
 struct MiniMapSelf {
     void* vtable;                    // 0x00
     u8 pad04[0x0C - 0x04];
     struct MiniMapMgr {
         u8 pad[0x10];
-        MiniMapPaneMgr* m10;         // 0x10
+        nw4r::lyt::Pane* m10;        // 0x10 - root pane (FindPaneByName)
     }* m0C;                          // 0x0C
     u8 pad10[0x1B - 0x10];
     u8 m1B;                          // 0x1B (func_8011B05C result flag)
@@ -582,7 +567,7 @@ extern "C" void __declspec(noinline) func_80118058(CMiniMap* self) {
         // Registered marker lists (per-row pane-name table).
         for (u8 i = 0; lbl_eu_8052C7B8[i] != 0; i++) {
             list = (MiniMapCleanupList*)(
-                (MiniMapLayout*)self->mLayout0C)->mgr->v03C((const char*)lbl_eu_8052C7B8[i], 1);
+                (MiniMapLayout*)self->mLayout0C)->mgr->FindPaneByName((const char*)lbl_eu_8052C7B8[i], true);
             node = list->first;
             end = (MiniMapCleanupNode*)&list->first;
             lay = (MiniMapLayout*)self->mLayout0C;
@@ -592,7 +577,7 @@ extern "C" void __declspec(noinline) func_80118058(CMiniMap* self) {
                     Panic__Q24nw4r2dbFPCciPCce((const char*)lbl_eu_8052CB40, 573,
                                                (const char*)lbl_eu_8052CB1C);
                 }
-                pane = (nw4r::lyt::Pane*)lay->mgr->v03C(node->name, 1);
+                pane = (nw4r::lyt::Pane*)lay->mgr->FindPaneByName(node->name, true);
                 if (pane && *(void**)((u8*)pane + 0x0C)) {
                     RemoveChild__Q34nw4r3lyt4PaneFPQ34nw4r3lyt4Pane(
                         *(void**)((u8*)pane + 0x0C), pane);
@@ -603,21 +588,21 @@ extern "C" void __declspec(noinline) func_80118058(CMiniMap* self) {
             }
         }
         // Fixed clock-label textboxes created by OnFileEvent.
-        pane = (nw4r::lyt::Pane*)((MiniMapLayout*)self->mLayout0C)->mgr->v03C(&lbl_eu_804FE1FC[0x202], 1);
+        pane = (nw4r::lyt::Pane*)((MiniMapLayout*)self->mLayout0C)->mgr->FindPaneByName(&lbl_eu_804FE1FC[0x202], true);
         if (pane && *(void**)((u8*)pane + 0x0C)) {
             RemoveChild__Q34nw4r3lyt4PaneFPQ34nw4r3lyt4Pane(
                 *(void**)((u8*)pane + 0x0C), pane);
             pane->~Pane();
             deleteTextboxOrPicture__10CLibLayoutFv(pane);
         }
-        pane = (nw4r::lyt::Pane*)((MiniMapLayout*)self->mLayout0C)->mgr->v03C(&lbl_eu_804FE1FC[0x20A], 1);
+        pane = (nw4r::lyt::Pane*)((MiniMapLayout*)self->mLayout0C)->mgr->FindPaneByName(&lbl_eu_804FE1FC[0x20A], true);
         if (pane && *(void**)((u8*)pane + 0x0C)) {
             RemoveChild__Q34nw4r3lyt4PaneFPQ34nw4r3lyt4Pane(
                 *(void**)((u8*)pane + 0x0C), pane);
             pane->~Pane();
             deleteTextboxOrPicture__10CLibLayoutFv(pane);
         }
-        pane = (nw4r::lyt::Pane*)((MiniMapLayout*)self->mLayout0C)->mgr->v03C(&lbl_eu_804FE1FC[0x212], 1);
+        pane = (nw4r::lyt::Pane*)((MiniMapLayout*)self->mLayout0C)->mgr->FindPaneByName(&lbl_eu_804FE1FC[0x212], true);
         if (pane && *(void**)((u8*)pane + 0x0C)) {
             RemoveChild__Q34nw4r3lyt4PaneFPQ34nw4r3lyt4Pane(
                 *(void**)((u8*)pane + 0x0C), pane);
@@ -626,7 +611,7 @@ extern "C" void __declspec(noinline) func_80118058(CMiniMap* self) {
         }
         // 'panemapmark' holder list (layout pointer hoisted like retail).
         list = (MiniMapCleanupList*)(
-            (MiniMapLayout*)self->mLayout0C)->mgr->v03C(&lbl_eu_804FE1FC[0x1FA], 1);
+            (MiniMapLayout*)self->mLayout0C)->mgr->FindPaneByName(&lbl_eu_804FE1FC[0x1FA], true);
         node = list->first;
         end = (MiniMapCleanupNode*)&list->first;
         lay = (MiniMapLayout*)self->mLayout0C;
@@ -637,7 +622,7 @@ extern "C" void __declspec(noinline) func_80118058(CMiniMap* self) {
             if (!node) {
                 Panic__Q24nw4r2dbFPCciPCce(pf, 573, ps);
             }
-            pane = (nw4r::lyt::Pane*)lay->mgr->v03C(node->name, 1);
+            pane = (nw4r::lyt::Pane*)lay->mgr->FindPaneByName(node->name, true);
             if (pane && *(void**)((u8*)pane + 0x0C)) {
                 RemoveChild__Q34nw4r3lyt4PaneFPQ34nw4r3lyt4Pane(
                     *(void**)((u8*)pane + 0x0C), pane);
@@ -717,7 +702,7 @@ extern "C" void func_80118854(MiniMapSelf* self) {
         lbl_eu_80663FBC = 0;
         for (u8 i = 0; lbl_eu_8052C7B8[i] != 0; i++) {
             MiniMapCleanupList* clist =
-                (MiniMapCleanupList*)self->m0C->m10->v03C((const char*)lbl_eu_8052C7B8[i], 1);
+                (MiniMapCleanupList*)self->m0C->m10->FindPaneByName((const char*)lbl_eu_8052C7B8[i], true);
             MiniMapCleanupNode* node = clist->first;
             while (node != (MiniMapCleanupNode*)&clist->first) {
                 if (!node) {
@@ -725,7 +710,7 @@ extern "C" void func_80118854(MiniMapSelf* self) {
                                                (const char*)lbl_eu_8052CB1C);
                 }
                 MiniMapCleanupNode* next = node->next;
-                nw4r::lyt::Pane* pane = (nw4r::lyt::Pane*)self->m0C->m10->v03C(node->name, 1);
+                nw4r::lyt::Pane* pane = (nw4r::lyt::Pane*)self->m0C->m10->FindPaneByName(node->name, true);
                 if (pane && *(void**)((u8*)pane + 0x0C)) {
                     RemoveChild__Q34nw4r3lyt4PaneFPQ34nw4r3lyt4Pane(
                         *(void**)((u8*)pane + 0x0C), pane);
@@ -815,7 +800,7 @@ extern "C" void func_80118854(MiniMapSelf* self) {
                             }
                             s32 gx = -(s32)(diff1.x / self->m20);
                             s32 gz = (s32)(diff1.z / self->m20);
-                            void* pane = self->m0C->m10->v03C(name1, 1);
+                            void* pane = self->m0C->m10->FindPaneByName(name1, true);
                             if (pane) {
                                 f32 fgx = (f32)gx;
                                 f32 fgz = (f32)gz;
@@ -835,8 +820,8 @@ extern "C" void func_80118854(MiniMapSelf* self) {
                                     *(u8*)((u8*)pic + 0xBB) = (*(u8*)((u8*)pic + 0xBB) & 0xFE) | 1;
                                 }
                                 if (pic) {
-                                    void* parent = self->m0C->m10->v03C(
-                                        &lbl_eu_804FE1FC[105], 1);
+                                    void* parent = self->m0C->m10->FindPaneByName(
+                                        &lbl_eu_804FE1FC[105], true);
                                     AppendChild__Q34nw4r3lyt4PaneFPQ34nw4r3lyt4Pane(
                                         parent, pic);
                                 }
@@ -1060,7 +1045,7 @@ extern "C" void func_80118854(MiniMapSelf* self) {
                             }
                             s32 gx = -(s32)(diff2.x / self->m20);
                             s32 gz = (s32)(diff2.z / self->m20);
-                            void* pane = self->m0C->m10->v03C(name2, 1);
+                            void* pane = self->m0C->m10->FindPaneByName(name2, true);
                             if (pane) {
                                 f32 fgx = (f32)gx;
                                 f32 fgz = (f32)gz;
@@ -1080,8 +1065,8 @@ extern "C" void func_80118854(MiniMapSelf* self) {
                                     *(u8*)((u8*)pic + 0xBB) = (*(u8*)((u8*)pic + 0xBB) & 0xFE) | 1;
                                 }
                                 if (pic) {
-                                    void* parent = self->m0C->m10->v03C(
-                                        &lbl_eu_804FE1FC[105], 1);
+                                    void* parent = self->m0C->m10->FindPaneByName(
+                                        &lbl_eu_804FE1FC[105], true);
                                     AppendChild__Q34nw4r3lyt4PaneFPQ34nw4r3lyt4Pane(
                                         parent, pic);
                                 }
@@ -1151,7 +1136,7 @@ extern "C" void func_80118854(MiniMapSelf* self) {
                         sprintf(buf3, &lbl_eu_804FE1FC[125], id);
                         s32 gx = -(s32)(dx / self->m20);
                         s32 gz = (s32)(dz / self->m20);
-                        void* pane = self->m0C->m10->v03C(buf3, 1);
+                        void* pane = self->m0C->m10->FindPaneByName(buf3, true);
                         if (pane) {
                             f32 fgx = (f32)gx;
                             f32 fgz = (f32)gz;
@@ -1171,8 +1156,8 @@ extern "C" void func_80118854(MiniMapSelf* self) {
                                 *(u8*)((u8*)pic + 0xBB) = (*(u8*)((u8*)pic + 0xBB) & 0xFE) | 1;
                             }
                             if (pic) {
-                                void* parent = self->m0C->m10->v03C(
-                                    &lbl_eu_804FE1FC[692], 1);
+                                void* parent = self->m0C->m10->FindPaneByName(
+                                    &lbl_eu_804FE1FC[692], true);
                                 AppendChild__Q34nw4r3lyt4PaneFPQ34nw4r3lyt4Pane(
                                     parent, pic);
                             }
@@ -1243,7 +1228,7 @@ extern "C" void func_80118854(MiniMapSelf* self) {
                             sprintf(buf4, &lbl_eu_804FE1FC[115], o->m74);
                             s32 gx = -(s32)(dx / self->m20);
                             s32 gz = (s32)(dz / self->m20);
-                            void* pane = self->m0C->m10->v03C(buf4, 1);
+                            void* pane = self->m0C->m10->FindPaneByName(buf4, true);
                             if (pane) {
                                 f32 fgx = (f32)gx;
                                 f32 fgz = (f32)gz;
@@ -1263,8 +1248,8 @@ extern "C" void func_80118854(MiniMapSelf* self) {
                                     *(u8*)((u8*)pic + 0xBB) = (*(u8*)((u8*)pic + 0xBB) & 0xFE) | 1;
                                 }
                                 if (pic) {
-                                    void* parent = self->m0C->m10->v03C(
-                                        &lbl_eu_804FE1FC[709], 1);
+                                    void* parent = self->m0C->m10->FindPaneByName(
+                                        &lbl_eu_804FE1FC[709], true);
                                     AppendChild__Q34nw4r3lyt4PaneFPQ34nw4r3lyt4Pane(
                                         parent, pic);
                                 }
@@ -1325,7 +1310,7 @@ extern "C" void func_80118854(MiniMapSelf* self) {
                     sprintf(buf5, &lbl_eu_804FE1FC[115], id);
                     s32 gx = -(s32)(dx / self->m20);
                     s32 gz = (s32)(dz / self->m20);
-                    void* pane = self->m0C->m10->v03C(buf5, 1);
+                    void* pane = self->m0C->m10->FindPaneByName(buf5, true);
                     if (pane) {
                         f32 fgx = (f32)gx;
                         f32 fgz = (f32)gz;
@@ -1345,8 +1330,8 @@ extern "C" void func_80118854(MiniMapSelf* self) {
                             *(u8*)((u8*)pic + 0xBB) = (*(u8*)((u8*)pic + 0xBB) & 0xFE) | 1;
                         }
                         if (pic) {
-                            void* parent = self->m0C->m10->v03C(
-                                &lbl_eu_804FE1FC[718], 1);
+                            void* parent = self->m0C->m10->FindPaneByName(
+                                &lbl_eu_804FE1FC[718], true);
                             AppendChild__Q34nw4r3lyt4PaneFPQ34nw4r3lyt4Pane(
                                 parent, pic);
                         }
@@ -1405,7 +1390,7 @@ extern "C" void func_80118854(MiniMapSelf* self) {
                     sprintf(buf6, &lbl_eu_804FE1FC[125], id);
                     s32 gx = -(s32)(dx / self->m20);
                     s32 gz = (s32)(dz / self->m20);
-                    void* pane = self->m0C->m10->v03C(buf6, 1);
+                    void* pane = self->m0C->m10->FindPaneByName(buf6, true);
                     if (pane) {
                         f32 fgx = (f32)gx;
                         f32 fgz = (f32)gz;
@@ -1425,8 +1410,8 @@ extern "C" void func_80118854(MiniMapSelf* self) {
                             *(u8*)((u8*)pic + 0xBB) = (*(u8*)((u8*)pic + 0xBB) & 0xFE) | 1;
                         }
                         if (pic) {
-                            void* parent = self->m0C->m10->v03C(
-                                &lbl_eu_804FE1FC[727], 1);
+                            void* parent = self->m0C->m10->FindPaneByName(
+                                &lbl_eu_804FE1FC[727], true);
                             AppendChild__Q34nw4r3lyt4PaneFPQ34nw4r3lyt4Pane(
                                 parent, pic);
                         }
@@ -1484,7 +1469,7 @@ extern "C" void func_80118854(MiniMapSelf* self) {
                         sprintf(buf7, &lbl_eu_804FE1FC[115], id);
                         s32 gx = -(s32)(dx / self->m20);
                         s32 gz = (s32)(dz / self->m20);
-                        void* pane = self->m0C->m10->v03C(buf7, 1);
+                        void* pane = self->m0C->m10->FindPaneByName(buf7, true);
                         if (pane) {
                             f32 fgx = (f32)gx;
                             f32 fgz = (f32)gz;
@@ -1524,8 +1509,8 @@ extern "C" void func_80118854(MiniMapSelf* self) {
                                 }
                             }
                             if (pic) {
-                                void* parent = self->m0C->m10->v03C(
-                                    &lbl_eu_804FE1FC[739], 1);
+                                void* parent = self->m0C->m10->FindPaneByName(
+                                    &lbl_eu_804FE1FC[739], true);
                                 AppendChild__Q34nw4r3lyt4PaneFPQ34nw4r3lyt4Pane(
                                     parent, pic);
                             }
@@ -1587,7 +1572,7 @@ extern "C" void func_80118854(MiniMapSelf* self) {
                             s32 gx = -(s32)(dx / self->m20);
                             s32 gz = (s32)(dz / self->m20);
                             sprintf(buf8, &lbl_eu_804FE1FC[747], o->m74);
-                            void* pane = self->m0C->m10->v03C(buf8, 1);
+                            void* pane = self->m0C->m10->FindPaneByName(buf8, true);
                             if (pane) {
                                 f32 fgx = (f32)gx;
                                 f32 fgz = (f32)gz;
@@ -1607,8 +1592,8 @@ extern "C" void func_80118854(MiniMapSelf* self) {
                                     *(u8*)((u8*)pic + 0xBB) = (*(u8*)((u8*)pic + 0xBB) & 0xFE) | 1;
                                 }
                                 if (pic) {
-                                    void* parent = self->m0C->m10->v03C(
-                                        &lbl_eu_804FE1FC[762], 1);
+                                    void* parent = self->m0C->m10->FindPaneByName(
+                                        &lbl_eu_804FE1FC[762], true);
                                     PrependChild__Q34nw4r3lyt4PaneFPQ34nw4r3lyt4Pane(
                                         parent, pic);
                                 }
@@ -2447,7 +2432,7 @@ void func_801160A8(MiniMapTable* self, void* table, void* layout, f32 scale) {
     self->field_0C = scale;
 
     // Marker parent pane, looked up once through the layout's pane manager.
-    self->field_13C = (nw4r::lyt::Pane*)((MiniMapLayout*)layout)->mgr->v03C(&lbl_eu_804FE1FC[0xd], 1);
+    self->field_13C = (nw4r::lyt::Pane*)((MiniMapLayout*)layout)->mgr->FindPaneByName(&lbl_eu_804FE1FC[0xd], true);
 
     func_8003AA34();
     u16 count = func_8003B1EC((void*)self->field_04);
@@ -2578,7 +2563,7 @@ extern "C" void func_80116670(CMiniMapGimmickView* self, u32 table, void* layout
     self->field_0x08 = scale;
 
     // Marker parent pane, looked up once through the layout's pane manager.
-    self->field_0x14 = (u32)((MiniMapLayout*)layout)->mgr->v03C(&lbl_eu_804FE1FC[0x37], 1);
+    self->field_0x14 = (u32)((MiniMapLayout*)layout)->mgr->FindPaneByName(&lbl_eu_804FE1FC[0x37], true);
 
     self->field_0x0C = (s32)func_8003B1EC((void*)table);
 
@@ -2798,8 +2783,8 @@ extern "C" void __declspec(noinline) func_80116B40(void* self) {
 
     // Clock pane lookup through the BDAT table object's pane manager
     // (vtable+0x3C); flag it visible up front.
-    MiniMapLayoutMgr* tblMgr = *(MiniMapLayoutMgr**)((u8*)view->field_0x04 + 0x10);
-    nw4r::lyt::Pane* clockPane = (nw4r::lyt::Pane*)tblMgr->v03C(&strings[0x69], 1);
+    nw4r::lyt::Pane* tblMgr = *(nw4r::lyt::Pane**)((u8*)view->field_0x04 + 0x10);
+    nw4r::lyt::Pane* clockPane = (nw4r::lyt::Pane*)tblMgr->FindPaneByName(&strings[0x69], true);
     if (clockPane != NULL) {
         *(u8*)((u8*)clockPane + 0xBB) = (*(u8*)((u8*)clockPane + 0xBB) & 0xFE) | 1;
     }
@@ -3016,7 +3001,7 @@ extern "C" void __declspec(noinline) func_80116B40(void* self) {
 
         // Skip if a pane with this name already exists under the root.
         nw4r::lyt::Pane* root = (nw4r::lyt::Pane*)view->field_0x14;
-        if (((MiniMapPaneMgr*)root)->v03C(buf, 1) != NULL) continue;
+        if (((nw4r::lyt::Pane*)root)->FindPaneByName(buf, true) != NULL) continue;
 
         nw4r::lyt::Pane* pane = NULL;
         f32 zero = lbl_eu_80667090;

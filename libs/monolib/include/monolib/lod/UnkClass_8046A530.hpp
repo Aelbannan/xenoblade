@@ -22,15 +22,15 @@ class UnkClass_8046A530 {
 public:
     /* 8046E500 */ UnkClass_8046A530* func_8046A530();
     /* 8046E594 */ void func_8046A5C4();
-    /* 8046EAA8 */ void func_8046AAD8();
-    /* 8046EAAC */ void func_8046AADC();
+    /* 8046EAA8 */ void updateSimple();
+    /* 8046EAAC */ void setVariation();
     /* 8046EB24 */ void func_8046AB54();
     /* 8046ECFC */ void func_8046AD2C();
     /* 8046F07C */ void func_8046B0AC();
     /* 8046FAB0 */ void func_8046BAE0();
     /* 80470550 */ void func_8046C580();
-    /* 80470F84 */ void func_8046CFB4();
-    /* 80470FA8 */ void func_8046CFD8();
+    /* 80470F84 */ void setStateFlag();
+    /* 80470FA8 */ void forwardToMem();
 
     /** Access the LODMemMan sub-object embedded at offset 0xa44. */
     LODMemMan& GetMemMan();

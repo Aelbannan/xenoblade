@@ -34,9 +34,11 @@ import hashlib
 import json
 import os
 import shutil
+import signal
 import subprocess
 import sys
 import tempfile
+import time
 from pathlib import Path
 from typing import Optional
 
@@ -201,7 +203,74 @@ def cmd_ctx(project: Project, source: Path, output: Optional[Path]) -> int:
     return 0
 
 
-def _with_build_lock(region: str, fn) -> int:
+# Repo-wide build lock tuning — must match tools/pi_harness/build_lock.py so
+# `run.py` and `hexdiff.py` share the same stale-recovery policy. STALE_TIMEOUT
+# must exceed the longest legitimate hold (batch-cycle --timeout 1800s) or a
+# waiter would SIGKILL a working holder.
+STALE_TIMEOUT = 3600
+POLL_INTERVAL = 2
+MAX_WAIT = 0  # 0 = wait forever; set >0 to give up after N seconds
+
+
+def _pid_alive(pid: int) -> bool:
+    if pid <= 0:
+        return False
+    try:
+        os.kill(pid, 0)
+        return True
+    except OSError:
+        return False
+
+
+def _read_lock_meta(lock_path: Path) -> dict | None:
+    try:
+        with lock_path.open() as f:
+            data = json.load(f)
+        if isinstance(data, dict) and isinstance(data.get("pid"), int):
+            return data
+    except (OSError, json.JSONDecodeError, ValueError):
+        pass
+    return None
+
+
+def _write_lock_meta(fd: int) -> None:
+    meta = json.dumps({"pid": os.getpid(), "ts": time.monotonic()})
+    try:
+        os.ftruncate(fd, 0)
+        os.lseek(fd, 0, os.SEEK_SET)
+        os.write(fd, meta.encode())
+    except OSError:
+        pass
+
+
+def _try_kill_holder(lock_path: Path, stale_timeout: int = STALE_TIMEOUT) -> bool:
+    meta = _read_lock_meta(lock_path)
+    if meta is None:
+        return True
+    pid = meta.get("pid", 0)
+    ts = meta.get("ts", 0)
+    try:
+        age = time.monotonic() - float(ts)
+    except (TypeError, ValueError):
+        age = 0
+    if not _pid_alive(int(pid)):
+        return True
+    if age > stale_timeout:
+        print(
+            f"build_lock: holder PID {pid} alive for {age:.0f}s, sending SIGKILL...",
+            file=sys.stderr,
+            flush=True,
+        )
+        try:
+            os.kill(int(pid), signal.SIGKILL)
+        except OSError:
+            pass
+        time.sleep(0.5)
+        return True
+    return False
+
+
+def _with_build_lock(region: str, fn, stale_timeout: int = STALE_TIMEOUT) -> int:
     """Run *fn* while holding the repo-wide build lock.
 
     Same advisory flock as tools/coop/hexdiff.py (`build/<region>/.hexdiff.lock`)
@@ -210,18 +279,75 @@ def _with_build_lock(region: str, fn) -> int:
     witness / equivalence evaluation that follows in `cycle` must NOT run
     under it (a slow z3 simplify would freeze every other agent's builds,
     observed as a ~30 min lock hold on one acceptance, run30 incident).
+
+    Polling + stale-kill matches tools/pi_harness/build_lock.py so a hung
+    holder (e.g. self-deadlocked raw flock without JSON meta, 2026-08-27)
+    is SIGKILLed after STALE_TIMEOUT instead of blocking 29 waiters forever.
     """
     lock_path = Path("build") / region / ".hexdiff.lock"
     lock_path.parent.mkdir(parents=True, exist_ok=True)
     fd = os.open(str(lock_path), os.O_CREAT | os.O_RDWR)
+    acquired = False
     try:
         try:
-            fcntl.flock(fd, fcntl.LOCK_EX)
+            fcntl.flock(fd, fcntl.LOCK_EX | fcntl.LOCK_NB)
+            _write_lock_meta(fd)
+            acquired = True
         except OSError:
-            # Lock not supported on this filesystem (NFS etc.) — build anyway;
-            # ninja's own lock still applies.
-            os.close(fd)
-            fd = -1
+            # Check if flock is unsupported (NFS) vs contended
+            try:
+                fcntl.flock(fd, fcntl.LOCK_EX | fcntl.LOCK_NB)
+                _write_lock_meta(fd)
+                acquired = True
+            except OSError:
+                pass
+            if not acquired:
+                # Contended — poll with stale recovery (same as build_lock.py)
+                wait_start = time.monotonic()
+                warned = False
+                while True:
+                    try:
+                        fcntl.flock(fd, fcntl.LOCK_EX | fcntl.LOCK_NB)
+                        _write_lock_meta(fd)
+                        acquired = True
+                        break
+                    except OSError:
+                        pass
+                    if _try_kill_holder(lock_path, stale_timeout):
+                        try:
+                            fcntl.flock(fd, fcntl.LOCK_EX | fcntl.LOCK_NB)
+                            _write_lock_meta(fd)
+                            acquired = True
+                            break
+                        except OSError:
+                            pass
+                    elapsed = time.monotonic() - wait_start
+                    if MAX_WAIT > 0 and elapsed > MAX_WAIT:
+                        print(
+                            f"build_lock: gave up after {elapsed:.0f}s waiting for {lock_path}",
+                            file=sys.stderr,
+                        )
+                        os.close(fd)
+                        return 2
+                    if not warned:
+                        print(
+                            f"waiting for build lock ({lock_path})...",
+                            file=sys.stderr,
+                            flush=True,
+                        )
+                        warned = True
+                    time.sleep(POLL_INTERVAL)
+        # If flock is truly unsupported, fall through and run anyway (ninja's .ninja_lock still applies)
+        # Heuristic: if we never acquired and flock raises on NB, treat as unsupported only if no contender wrote meta
+        if not acquired:
+            # Try a blocking flock to detect unsupported vs deadlock; if it still fails quickly, assume unsupported
+            try:
+                fcntl.flock(fd, fcntl.LOCK_EX)
+                _write_lock_meta(fd)
+                acquired = True
+            except OSError:
+                os.close(fd)
+                fd = -1
         return fn()
     finally:
         if fd >= 0:
@@ -229,7 +355,10 @@ def _with_build_lock(region: str, fn) -> int:
                 fcntl.flock(fd, fcntl.LOCK_UN)
             except OSError:
                 pass
-            os.close(fd)
+            try:
+                os.close(fd)
+            except OSError:
+                pass
 
 
 def _build_unlocked(project: Project, hint: str) -> int:
@@ -263,25 +392,11 @@ def cmd_build(project: Project, hint: str) -> int:
     return _with_build_lock(project.config.region, lambda: _build_unlocked(project, hint))
 
 
-def _postprocess_reloc_object(project: Project, obj: Path | None) -> None:
-    """PLAN.md §17.6 reloc name drift — see tools/postprocess_reloc_names.py."""
-    if obj is None:
-        return
-    script = project.root / "tools" / "postprocess_reloc_names.py"
-    if not script.is_file():
-        return
-    # Script no-ops when the basename has no rules.
-    subprocess.run([sys.executable, str(script), str(obj)], cwd=project.root, check=False)
-
-
 def _postprocess_mtrand_object(project: Project, obj: Path | None) -> None:
-    # .note.split FIRST, then reloc-name post-processing: objcopy's --add-section
-    # rewrite collapses ABS symbols at st_value 0 (the trim/drop-created pool
-    # labels) into the null symbol, clobbering their .text relocs. Running the
-    # reloc postprocess last creates those ABS symbols after the last objcopy
-    # pass.
+    # Matching compares raw MWCC output. Copy .note.split so objdiff does not
+    # report empty data. Reloc-name reshape is link-only (ninja *.reloc.o);
+    # data diff may still apply UNIT_RULES to a temp copy.
     _postprocess_notesplit_object(project, obj)
-    _postprocess_reloc_object(project, obj)
 
 
 def _postprocess_notesplit_object(project: Project, obj: Path | None) -> None:
@@ -322,12 +437,12 @@ def _data_object_paths(project: Project, unit) -> tuple[Path | None, Path | None
 def _postprocess_data_copy(project: Project, decomp: Path) -> Path | None:
     """Return a postprocessed COPY of the decompiled object for the data gate.
 
-    The rest of the pipeline (``run.py diff`` / hexdiff) applies the
-    PLAN.md §17.6 reloc-name postprocess (tools/postprocess_reloc_names.py)
-    to the decompiled object before comparing; ``data diff`` applies the same
-    rules to a temp copy so the gate sees the postprocessed object while the
-    build .o is never mutated. Units without UNIT_RULES pass through
-    unchanged (None). Use --no-postprocess to compare the raw object.
+    Matching (hexdiff / cycle / size) compares the raw MWCC ``.o``. Ninja
+    applies ``postprocess_reloc_names.py`` to a ``*.reloc.o`` copy for the
+    DOL. The data gate may still apply UNIT_RULES to a temp copy so it can
+    see that reshape without mutating the build object. Units without
+    UNIT_RULES pass through unchanged (None). Use --no-postprocess to compare
+    the raw object.
     """
     script = project.root / "tools" / "postprocess_reloc_names.py"
     if not script.is_file():

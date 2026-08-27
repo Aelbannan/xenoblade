@@ -56,105 +56,15 @@ extern void (cf::CfObjectEff::*const lbl_eu_80528858[])();
 
 namespace cf {
 
-// Vtable view used by func_800AD3A4: slot 0x160 returns a status word whose
-// bit 3 is synced into the child's u16 bit 1. Slot +0x160 is occupied by
-// CfObjectEff::func_800AD4A4 (an override of the CfObject pure slot that
-// CfObject.hpp declares with a placeholder `void()` signature - the retail
-// function returns a status word), so the call cannot yet be spelled as a
-// base-name virtual until CfObject.hpp's signature is corrected.
-struct CfObjectEffVtable160If {
-    virtual void _f08();
-    virtual void _f0C();
-    virtual void _f10();
-    virtual void _f14();
-    virtual void _f18();
-    virtual void _f1C();
-    virtual void _f20();
-    virtual void _f24();
-    virtual void _f28();
-    virtual void _f2C();
-    virtual void _f30();
-    virtual void _f34();
-    virtual void _f38();
-    virtual void _f3C();
-    virtual void _f40();
-    virtual void _f44();
-    virtual void _f48();
-    virtual void _f4C();
-    virtual void _f50();
-    virtual void _f54();
-    virtual void _f58();
-    virtual void _f5C();
-    virtual void _f60();
-    virtual void _f64();
-    virtual void _f68();
-    virtual void _f6C();
-    virtual void _f70();
-    virtual void _f74();
-    virtual void _f78();
-    virtual void _f7C();
-    virtual void _f80();
-    virtual void _f84();
-    virtual void _f88();
-    virtual void _f8C();
-    virtual void _f90();
-    virtual void _f94();
-    virtual void _f98();
-    virtual void _f9C();
-    virtual void _fA0();
-    virtual void _fA4();
-    virtual void _fA8();
-    virtual void _fAC();
-    virtual void _fB0();
-    virtual void _fB4();
-    virtual void _fB8();
-    virtual void _fBC();
-    virtual void _fC0();
-    virtual void _fC4();
-    virtual void _fC8();
-    virtual void _fCC();
-    virtual void _fD0();
-    virtual void _fD4();
-    virtual void _fD8();
-    virtual void _fDC();
-    virtual void _fE0();
-    virtual void _fE4();
-    virtual void _fE8();
-    virtual void _fEC();
-    virtual void _fF0();
-    virtual void _fF4();
-    virtual void _fF8();
-    virtual void _fFC();
-    virtual void _f100();
-    virtual void _f104();
-    virtual void _f108();
-    virtual void _f10C();
-    virtual void _f110();
-    virtual void _f114();
-    virtual void _f118();
-    virtual void _f11C();
-    virtual void _f120();
-    virtual void _f124();
-    virtual void _f128();
-    virtual void _f12C();
-    virtual void _f130();
-    virtual void _f134();
-    virtual void _f138();
-    virtual void _f13C();
-    virtual void _f140();
-    virtual void _f144();
-    virtual void _f148();
-    virtual void _f14C();
-    virtual void _f150();
-    virtual void _f154();
-    virtual void _f158();
-    virtual void _f15C();
-    virtual bool func160();  // slot 0x160 - returns a 0/1 status flag
-};
+// Slots +0x5C (CfObject_UnkVirtualFunc3), +0xC4 (CfObject_UnkVirtualFunc29),
+// +0x9C/+0xB4/+0xD0 etc. are now spelled as base-name virtuals on CfObject
+// (signatures fixed in CfObject.hpp / CObjectParam.hpp), so the former
+// CfObjectEffIf / Vtable198If pads are gone. The remaining header Ifs are
+// foreign -object views (the objects at +0xB0/+0x9C/+0xA0 are not CfObjectEff).
 
 // Vtable view used by func_800AD68C: slot 0xC on the mFieldB0 object receives
-// the owning CfObjectEff. mFieldB0 is a foreign object (not part of the
-// CfObjectEff tree), so this stays a small named iface on the owner.
+// the owning CfObjectEff. mFieldB0 is a foreign object, so this stays a
+// small named iface on the owner.
 struct CfObjectEffVtable0CIf {
     virtual void _f08();
     virtual void func0C(CfObjectEff* owner);  // slot 0xC
@@ -311,59 +221,8 @@ struct CfObjectEffU32Vec3 {
     u32 z;  // 0x08
 };
 
-// Vtable view used by func_800ACD5C: slot 0xB4 receives a float-array
-// pointer (r4) and a float scale (f1). Slot +0xB4 is filled by
-// CfObjectEff::func_800ACCE4 (a CfObject-chain slot whose placeholder
-// signature in CfObject.hpp does not take these arguments), so the call
-// cannot yet be spelled as a base-name virtual. MWCC puts the Nth declared
-// virtual at vtable offset (N+1)*4 (slots 0x0/0x4 reserved), so the 43
-// fillers land moveB4 on 0xB4.
-struct CfObjectEffMoveIf {
-    virtual void _f08();
-    virtual void _f0C();
-    virtual void _f10();
-    virtual void _f14();
-    virtual void _f18();
-    virtual void _f1C();
-    virtual void _f20();
-    virtual void _f24();
-    virtual void _f28();
-    virtual void _f2C();
-    virtual void _f30();
-    virtual void _f34();
-    virtual void _f38();
-    virtual void _f3C();
-    virtual void _f40();
-    virtual void _f44();
-    virtual void _f48();
-    virtual void _f4C();
-    virtual void _f50();
-    virtual void _f54();
-    virtual void _f58();
-    virtual void _f5C();
-    virtual void _f60();
-    virtual void _f64();
-    virtual void _f68();
-    virtual void _f6C();
-    virtual void _f70();
-    virtual void _f74();
-    virtual void _f78();
-    virtual void _f7C();
-    virtual void _f80();
-    virtual void _f84();
-    virtual void _f88();
-    virtual void _f8C();
-    virtual void _f90();
-    virtual void _f94();
-    virtual void _f98();
-    virtual void _f9C();
-    virtual void _fA0();
-    virtual void _fA4();
-    virtual void _fA8();
-    virtual void _fAC();
-    virtual void _fB0();
-    virtual void moveB4(const float* vec, float scale);  // vtable 0xB4
-};
+// Slot +0xB4 is CfObject_UnkVirtualFunc25 - now fixed in CfObject.hpp
+// to (const float*, float) so func_800ACD5C's call is this->method(...).
 
 // View of the CfObjectEff tail used by func_800ACDA0: the 0x48-0x50 region
 // (spanning mField4C) is one 12-byte vector copied as a struct.
@@ -443,64 +302,55 @@ struct CfObjectEffCtorView {
     u16 field_8E;      // 0x8E
 };
 
-// Vtable view for func_800AD060's owner-side dispatch: slots 0x3C (effect
-// lookup result), 0x9C/0xBC (position/rotation vectors) and 0xDC (scale
-// float) receive the shown arguments.
+// Slots +0xBC (CfObject_UnkVirtualFunc27) is now base-name: void* arg
+// matches retail, so AD060's vfBC is this->CfObject_UnkVirtualFunc27(...).
+// Slots +0x3C/+0x9C/+0xDC remain views: their retail callees take
+// (void*), (void*) and (float) while the placeholder base decls are void(),
+// so those views stay until the hot headers are corrected.
 struct CfObjectEffOwnerIf {
-    virtual void _f08();
-    virtual void _f0C();
-    virtual void _f10();
-    virtual void _f14();
-    virtual void _f18();
-    virtual void _f1C();
-    virtual void _f20();
-    virtual void _f24();
-    virtual void _f28();
-    virtual void _f2C();
-    virtual void _f30();
-    virtual void _f34();
-    virtual void _f38();
-    virtual void vf3C(void* arg);   // slot 0x3C - effect lookup result
-    virtual void _f40();
-    virtual void _f44();
-    virtual void _f48();
-    virtual void _f4C();
-    virtual void _f50();
-    virtual void _f54();
-    virtual void _f58();
-    virtual void _f5C();
-    virtual void _f60();
-    virtual void _f64();
-    virtual void _f68();
-    virtual void _f6C();
-    virtual void _f70();
-    virtual void _f74();
-    virtual void _f78();
-    virtual void _f7C();
-    virtual void _f80();
-    virtual void _f84();
-    virtual void _f88();
-    virtual void _f8C();
-    virtual void _f90();
-    virtual void _f94();
-    virtual void _f98();
-    virtual void vf9C(void* arg);   // slot 0x9C
-    virtual void _fA0();
-    virtual void _fA4();
-    virtual void _fA8();
-    virtual void _fAC();
+    virtual void _f08(); virtual void _f0C(); virtual void _f10();
+    virtual void _f14(); virtual void _f18(); virtual void _f1C();
+    virtual void _f20(); virtual void _f24(); virtual void _f28();
+    virtual void _f2C(); virtual void _f30(); virtual void _f34();
+    virtual void _f38(); virtual void vf3C(void* arg);
+    virtual void _f40(); virtual void _f44(); virtual void _f48();
+    virtual void _f4C(); virtual void _f50(); virtual void _f54();
+    virtual void _f58(); virtual void _f5C(); virtual void _f60();
+    virtual void _f64(); virtual void _f68(); virtual void _f6C();
+    virtual void _f70(); virtual void _f74(); virtual void _f78();
+    virtual void _f7C(); virtual void _f80(); virtual void _f84();
+    virtual void _f88(); virtual void _f8C(); virtual void _f90();
+    virtual void _f94(); virtual void _f98(); virtual void vf9C(void* arg);
+    virtual void _fA0(); virtual void _fA4(); virtual void _fA8();
+    virtual void _fAC(); virtual void _fB0(); virtual void _fB4();
+    virtual void _fB8(); virtual void vfBC(void* arg);
+    virtual void _fC0(); virtual void _fC4(); virtual void _fC8();
+    virtual void _fCC(); virtual void _fD0(); virtual void _fD4();
+    virtual void _fD8(); virtual void vfDC(float value);
+};
+
+// Slot +0xB4 is CfObject_UnkVirtualFunc25 (void) - the retail occupant
+// ACCE4 is reached via the direct base call `CfObject::UVF25()` inside
+// ACCE4 itself, while ACD5C's `moveB4(arr,scale)` two-arg dispatch at the
+// same offset uses a view. The two-arg form cannot share the slot's
+// placeholder signature, so the view stays.
+struct CfObjectEffMoveIf {
+    virtual void _f08(); virtual void _f0C(); virtual void _f10();
+    virtual void _f14(); virtual void _f18(); virtual void _f1C();
+    virtual void _f20(); virtual void _f24(); virtual void _f28();
+    virtual void _f2C(); virtual void _f30(); virtual void _f34();
+    virtual void _f38(); virtual void _f3C(); virtual void _f40();
+    virtual void _f44(); virtual void _f48(); virtual void _f4C();
+    virtual void _f50(); virtual void _f54(); virtual void _f58();
+    virtual void _f5C(); virtual void _f60(); virtual void _f64();
+    virtual void _f68(); virtual void _f6C(); virtual void _f70();
+    virtual void _f74(); virtual void _f78(); virtual void _f7C();
+    virtual void _f80(); virtual void _f84(); virtual void _f88();
+    virtual void _f8C(); virtual void _f90(); virtual void _f94();
+    virtual void _f98(); virtual void _f9C(); virtual void _fA0();
+    virtual void _fA4(); virtual void _fA8(); virtual void _fAC();
     virtual void _fB0();
-    virtual void _fB4();
-    virtual void _fB8();
-    virtual void vfBC(void* arg);   // slot 0xBC
-    virtual void _fC0();
-    virtual void _fC4();
-    virtual void _fC8();
-    virtual void _fCC();
-    virtual void _fD0();
-    virtual void _fD4();
-    virtual void _fD8();
-    virtual void vfDC(float value); // slot 0xDC
+    virtual void moveB4(const float* vec, float scale);  // vtable 0xB4
 };
 
 // Minimal view of the effect-source objects (BDAT/CfRes entries) used by
@@ -531,39 +381,13 @@ struct CfObjectEffSourceSubIf {
     virtual u32 func40(void* obj);  // slot 0x40
 };
 
-// Real second-base interface of CfObjectEff (recovered from the retail
-// vtable group): the complete-object vtable lbl_eu_80528870 carries a second
-// group at +0x178 whose header is {typeinfo lbl_eu_80661970, offset-to-top
-// -0x90}, i.e. a polymorphic base sub-object living at object offset +0x90.
-// Its only virtual besides the destructor is func_800AD68C (the teardown
-// whose slot 0x1BC destinations take the owner pointer) - the adjusting
-// thunks at +0x180/+0x184 (func_800AD858/func_800AD850, `subi r3,r3,-0x90;
-// b ...`) are its complete/deleting destructor entries and the +0x184 thunk
-// pointing at the appended REAL at +0x18C. External effect-system code
-// receives this+0x90 handles (func_804E3D48/func_804E3D0C parent arguments).
-// US symbols carry no class name (JP typestr/hierarchy not available in this
-// fork), so the interface keeps a descriptive name; CfObjectEff's own eight
-// virtuals then append after this base's group, landing at +0x188..+0x1A4
-// exactly as the retail table shows.
-class __declspec(novtable) CfObjectEffSub {
+class __declspec(novtable) CfObjectEff : public CfObject {
 public:
-    virtual ~CfObjectEffSub() {}
-    virtual void func_800AD68C(u8* arg) = 0;
-};
-
-// Head sub-object: everything through +0x8F. The fields at +0x70..+0x8F are
-// CfObjectEff-specific but must precede the CfObjectEffSub vptr at +0x90,
-// so they live on this intermediate class (same trick as CHelpPrefix).
-class __declspec(novtable) CfObjectEffPrefix : public CfObject {
-public:
-    u32 mField70;   // 0x70 - packed type/id (top 5 bits = type, func_800AD060)
+    u32 mField70;                // 0x70 - packed type/id (top 5 bits = type, func_800AD060)
     u8 _pad74[0x8C - 0x74];
-    u16 mCount8C;   // 0x8C - effect count (func_800AD060 passes count-1)
-    u16 mCount8E;   // 0x8E - ptmf-table dispatch counter (func_800AD3A4)
-};
-
-class __declspec(novtable) CfObjectEff : public CfObjectEffPrefix, public CfObjectEffSub {
-public:
+    u16 mCount8C;                // 0x8C - effect count (func_800AD060 passes count-1)
+    u16 mCount8E;                // 0x8E - ptmf-table dispatch counter (func_800AD3A4)
+    u8* mSubObj90;               // 0x90 - secondary vtable (CfObjectEff vtable + 0x178)
     CfObjectEffChild* mChildEff;  // 0x94
     u8* mField98;            // 0x98 - object (cleared with mField9C in func_800ACA58)
     u8* mField9C;            // 0x9C - object (func_800ACF78)
@@ -600,18 +424,25 @@ public:
     void func_800AD3A4();
     int func_800AD4A4();
     virtual ~CfObjectEff();
-    // CfObjectEff's own virtuals. With the CfObjectEffSub second base they
-    // append after the sub's vtable group (header + dtor-thunk pair at
-    // +0x178..+0x184), landing at the retail slots +0x188..+0x1A4:
-    virtual u32 func_800AC7FC();              // +0x188 - active-sub-object check
-    virtual void func_800AD68C(u8* arg) override; // +0x18C - teardown (overrides Sub)
-    virtual void func_800AC810();             // +0x190 - detach child effect
-    virtual void func_800ACF50(bool flag);    // +0x194
-    virtual bool func_800AC990(u8* obj);      // +0x198 - detach partner
-    virtual bool func_800ACA58(u8* arg);      // +0x19C - detach bound object
-    virtual void func_800ACBCC(int flag);     // +0x1A0
-    virtual bool func_800AD818(u16 flags);    // +0x1A4 - flag test
-    void func_800AD830();
+    // Retail vtable lbl_eu_80528870 beyond CfObject's last slot (0x174) is
+    // a secondary group at +0x178: header {RTTI, -0x90}, thunks
+    // func_800AD858 (-0x90 -> dtor) and func_800AD850 (-0x90 ->
+    // func_800AD68C) at +0x180/+0x184, then CfObjectEff's own appended
+    // virtuals at +0x188..+0x1A4. The dummies _v178-_v184 cover the header/
+    // thunk words; the appended reals are the MI analysis from the probe
+    // (header+2 thunks + 8 appended = retail 0x188-0x1A4 exactly).
+    virtual void _v178();                      // +0x178 dummy (RTTI word)
+    virtual void _v17C();                      // +0x17C dummy (-0x90 word)
+    virtual void _v180();                      // +0x180 dummy (dtor-thunk slot)
+    virtual void _v184();                      // +0x184 dummy (AD68C-thunk slot)
+    virtual u32 func_800AC7FC();               // +0x188 - active-sub-object check
+    virtual void func_800AD68C(u8* arg);       // +0x18C - teardown (Sub iface op)
+    virtual void func_800AC810();              // +0x190 - detach child effect
+    virtual void func_800ACF50(bool flag);     // +0x194
+    virtual bool func_800AC990(u8* obj);       // +0x198 - detach partner
+    virtual bool func_800ACA58(u8* arg);       // +0x19C - detach bound object
+    virtual void func_800ACBCC(int flag);      // +0x1A0
+    virtual bool func_800AD818(u16 flags);     // +0x1A4 - flag test
     void func_800AD830();
     void func_800AD840();
     void func_800ACE44();

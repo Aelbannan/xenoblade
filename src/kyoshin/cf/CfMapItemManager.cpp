@@ -197,6 +197,7 @@ namespace cf {
 struct CfMapItemManagerVtbl {
     void* mSlots[6];
 };
+extern CfMapItemManagerVtbl lbl_eu_805316F8;
 
 // novtable: the retail .data holds the vtables (split1.s); this TU must not
 // emit its own. Object layout: vptr @0, mItems @+4, counts @+0x3804/06
@@ -240,7 +241,6 @@ public:
 
 using cf::CfMapItemManager;
 using cf::CfValueItemManager;
-extern cf::CfMapItemManagerVtbl lbl_eu_805316F8;
 
 // Retail ctor (0x801745B0): writes the retail table label at +0, runs the
 // mItems element constructors, clears the counters, then memsets the array.

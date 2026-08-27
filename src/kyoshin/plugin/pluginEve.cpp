@@ -212,8 +212,8 @@ int onTalk(VMThread* pThread) {
         0);
     CfActorTalkView* view = (CfActorTalkView*)actor;
     u8 ret;
-    if (view->CObjectState_UnkVirtualFunc10((void*)1, 1) != 0 ||
-        view->CObjectState_UnkVirtualFunc10((void*)2, 1) != 0) {
+    if (view->CObjectState_UnkVirtualFunc10((void*)0x10001) != 0 ||
+        view->CObjectState_UnkVirtualFunc10((void*)0x10002) != 0) {
         ret = 1;
     } else {
         ret = 2;
@@ -231,8 +231,8 @@ int onTalkEnd(VMThread* pThread) {
         0);
     CfActorTalkView* view = (CfActorTalkView*)actor;
     u8 ret;
-    if (view->CObjectState_UnkVirtualFunc10((void*)1, 0) != 0 ||
-        view->CObjectState_UnkVirtualFunc10((void*)2, 0) != 0) {
+    if (view->CObjectState_UnkVirtualFunc10((void*)0x10001) != 0 ||
+        view->CObjectState_UnkVirtualFunc10((void*)0x10002) != 0) {
         ret = 1;
     } else {
         ret = 2;

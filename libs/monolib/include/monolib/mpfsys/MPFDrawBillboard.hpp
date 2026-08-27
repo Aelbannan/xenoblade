@@ -7,8 +7,8 @@ namespace mpfsys {
 class MPFDrawBillboard {
 public:
     static MPFDrawBillboard* getInstance();
-    void func_8047A7B0();
-    void func_8047A86C();
+    void drawIndexed();
+    void drawPaired();
 };
 
 } // namespace mpfsys

@@ -1056,25 +1056,20 @@ def _object_paths_for_unit(project: Project, unit) -> tuple[Path | None, Path | 
 
 
 def _postprocess_mtrand_object(project: Project, obj: Path | None) -> None:
-    """Run reloc-name post-processing (PLAN.md §17.6)."""
+    """Copy .note.split from the retail object. Matching compares raw MWCC output.
+
+    Reloc-name reshape (tools/postprocess_reloc_names.py) is link-only: ninja
+    copies Foo.o → Foo.reloc.o and runs the script there. Do not mutate the
+    compile output here — that made cycle/size/objdiff see a rewritten object.
+    """
     if obj is None:
         return
-    # .note.split FIRST, then reloc-name post-processing: objcopy --add-section
-    # collapses ABS symbols at st_value 0 (trim/drop-created pool labels) into
-    # the null symbol. Create them after the last objcopy pass instead.
     notesplit_script = project.root / "tools" / "postprocess_notesplit.py"
     if notesplit_script.is_file():
         subprocess.run(
             [sys.executable, str(notesplit_script), str(obj)],
             cwd=project.root, check=False,
             capture_output=True,  # never pollute --json stdout
-        )
-    script = project.root / "tools" / "postprocess_reloc_names.py"
-    if script.is_file():
-        subprocess.run(
-            [sys.executable, str(script), str(obj)],
-            cwd=project.root, check=False,
-            capture_output=True,
         )
 
 

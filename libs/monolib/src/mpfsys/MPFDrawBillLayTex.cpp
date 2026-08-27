@@ -297,7 +297,7 @@ extern "C" void func_8047A570(MPFDrawBillData* billboard, Vec* positions, MPFDra
     }
 }
 
-extern "C" void func_8047A7B0__Q26mpfsys16MPFDrawBillboardFv(mpfsys::MPFDrawBillboard*, MPFDrawBillData* billboard, MPFDrawBillIndexList* list) {
+extern "C" void drawIndexed__Q26mpfsys16MPFDrawBillboardFv(mpfsys::MPFDrawBillboard*, MPFDrawBillData* billboard, MPFDrawBillIndexList* list) {
     Vec* positions = func_804B5A68();
     if (lbl_eu_80665860 != billboard) {
         func_804742BC__Q26mpfsys17UnkClass_80471EC8Fv();
@@ -320,7 +320,7 @@ extern "C" void func_8047A7B0__Q26mpfsys16MPFDrawBillboardFv(mpfsys::MPFDrawBill
     func_8047A330(billboard, positions, list);
 }
 
-extern "C" void func_8047A86C__Q26mpfsys16MPFDrawBillboardFv(mpfsys::MPFDrawBillboard*, MPFDrawBillData* billboard, MPFDrawBillPairList* list) {
+extern "C" void drawPaired__Q26mpfsys16MPFDrawBillboardFv(mpfsys::MPFDrawBillboard*, MPFDrawBillData* billboard, MPFDrawBillPairList* list) {
     Vec* positions = func_804B5A68();
     if (lbl_eu_80665860 != billboard) {
         func_804742BC__Q26mpfsys17UnkClass_80471EC8Fv();
@@ -642,7 +642,7 @@ extern "C" void func_8047B528(void* self, MPFDrawBillData* billboard, MPFDrawBil
     func_80474CC4__Q26mpfsys17UnkClass_80471EC8Fv();
 }
 
-extern "C" void func_8047B85C__Q26mpfsys17MPFDrawBillLayTexFv(mpfsys::MPFDrawBillLayTex*, MPFDrawBillData* billboard, MPFDrawBillIndexList* list) {
+extern "C" void drawIndexed__Q26mpfsys17MPFDrawBillLayTexFv(mpfsys::MPFDrawBillLayTex*, MPFDrawBillData* billboard, MPFDrawBillIndexList* list) {
     Vec* positions = func_804B5A68();
     if (lbl_eu_80665860 != billboard) {
         func_804737F0__Q26mpfsys17UnkClass_80471EC8Fv(billboard->texIndex, billboard->texScale);
@@ -676,7 +676,7 @@ extern "C" void func_8047B85C__Q26mpfsys17MPFDrawBillLayTexFv(mpfsys::MPFDrawBil
     GXSetTevOrder((GXTevStageID)0, (GXTexCoordID)0, (GXTexMapID)0, (GXChannelID)4);
 }
 
-extern "C" void func_8047B9DC__Q26mpfsys17MPFDrawBillLayTexFv(mpfsys::MPFDrawBillLayTex*, MPFDrawBillData* billboard, MPFDrawBillPairList* list) {
+extern "C" void drawPaired__Q26mpfsys17MPFDrawBillLayTexFv(mpfsys::MPFDrawBillLayTex*, MPFDrawBillData* billboard, MPFDrawBillPairList* list) {
     Vec* positions = func_804B5A68();
     if (lbl_eu_80665860 != billboard) {
         func_804737F0__Q26mpfsys17UnkClass_80471EC8Fv(billboard->texIndex, billboard->texScale);
@@ -724,8 +724,8 @@ extern "C" u32 lbl_eu_8056DC58[4];
 // (getInstance points the sdata slot at it).
 extern "C" u32 lbl_eu_8056DC00[4] = {
     (u32)&lbl_eu_80663888, 0x00000000,
-    (u32)&func_8047B85C__Q26mpfsys17MPFDrawBillLayTexFv,
-    (u32)&func_8047B9DC__Q26mpfsys17MPFDrawBillLayTexFv,
+    (u32)&drawIndexed__Q26mpfsys17MPFDrawBillLayTexFv,
+    (u32)&drawPaired__Q26mpfsys17MPFDrawBillLayTexFv,
 };
 extern "C" u32 lbl_eu_8056DC10[6] = {
     (u32)&lbl_eu_80663870, 0x00000000, (u32)&lbl_eu_80663898,
@@ -740,8 +740,8 @@ extern "C" u32 lbl_eu_8056DC38[4] = {
 };
 extern "C" u32 lbl_eu_8056DC48[4] = {
     (u32)&lbl_eu_80663898, 0x00000000,
-    (u32)&func_8047A7B0__Q26mpfsys16MPFDrawBillboardFv,
-    (u32)&func_8047A86C__Q26mpfsys16MPFDrawBillboardFv,
+    (u32)&drawIndexed__Q26mpfsys16MPFDrawBillboardFv,
+    (u32)&drawPaired__Q26mpfsys16MPFDrawBillboardFv,
 };
 extern "C" u32 lbl_eu_8056DC58[4] = {
     (u32)&lbl_eu_80663870, 0x00000000, 0x00000000, 0x00000000,

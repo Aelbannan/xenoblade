@@ -884,7 +884,9 @@ int onEvent(VMThread* pThread, int handle) {
     return 1;
 }
 
-extern "C" int CObjectState_UnkVirtualFunc10__Q22cf12CObjectStateFv(cf::CObjectState* self, void* arg, int flag) {
+extern "C" int CObjectState_UnkVirtualFunc10__Q22cf12CObjectStateFv(cf::CObjectState* self, void* arg) {
+    int flag = ((u32)arg >> 16) & 0xFFFF;
+    void* realArg = (void*)((u32)arg & 0xFFFF);
     // State query: slot 0x28 is a gate check; slot 0x24 (UnkVirtualFunc8)
     // tests the requested state bit. flag selects the required polarity.
     s32 result;
@@ -893,7 +895,7 @@ extern "C" int CObjectState_UnkVirtualFunc10__Q22cf12CObjectStateFv(cf::CObjectS
         if (((CfObjIf*)self)->_v0028() != 0) {
             goto done;
         }
-        if (self->CObjectState_UnkVirtualFunc8((int)arg) == 0) {
+        if (self->CObjectState_UnkVirtualFunc8((int)realArg) == 0) {
             goto done;
         }
         result = 1;
@@ -902,7 +904,7 @@ extern "C" int CObjectState_UnkVirtualFunc10__Q22cf12CObjectStateFv(cf::CObjectS
         if (((CfObjIf*)self)->_v0028() == 0) {
             goto done;
         }
-        if (self->CObjectState_UnkVirtualFunc8((int)arg) != 0) {
+        if (self->CObjectState_UnkVirtualFunc8((int)realArg) != 0) {
             goto done;
         }
         result = 1;
@@ -997,7 +999,7 @@ extern "C" int winTalk(VMThread* pThread, int handle) {
     func_8013D07C(*(void**)((u8*)obj + 0x74), str, 1);
     u32 flags = obj->unk64;
     if (flags & 0x8) {
-        if (((cf::CObjectState*)obj)->CObjectState_UnkVirtualFunc10((void*)1, 1) == 0) {
+        if (((cf::CObjectState*)obj)->CObjectState_UnkVirtualFunc10((void*)0x10001) == 0) {
             ((cf::CObjectState*)obj)->CObjectState_UnkVirtualFunc1(1);
         }
         if (!code80135FDC_getByte_64058()) {
@@ -1077,7 +1079,7 @@ extern "C" int func_8003DDF4(VMThread* pThread, int handle) {
     obj = (cf::CfObject*)func_801864DC(ctx, handle);
     func_8013D448(*(void**)((u8*)obj + 0x74), str);
     if (obj->unk64 & 0x8) {
-        if (!((cf::CObjectState*)obj)->CObjectState_UnkVirtualFunc10((void*)1, 1)) {
+        if (!((cf::CObjectState*)obj)->CObjectState_UnkVirtualFunc10((void*)0x10001)) {
             ((cf::CObjectState*)obj)->CObjectState_UnkVirtualFunc1(1);
         }
     } else if ((obj->unk64 & 0x4000) || (obj->unk64 & 0x8000)) {
